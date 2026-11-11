@@ -10,6 +10,7 @@ import {
 import {
   AnswerTooLongError,
   appendEventInTransaction,
+  completeMission,
   createExternalConversationRepos,
   createThreadMessageInTransaction,
   IsolationError,
@@ -550,6 +551,11 @@ export function threadsRoutes(ctx: RouterContext) {
         if (!answered) {
           throw new ORPCError("CONFLICT", {
             message: "This prompt is no longer awaiting an answer",
+          });
+        }
+        if (!input.dismiss) {
+          await completeMission(deps.prisma, context.actor, "decide").catch((error) => {
+            getLogger().error("thread answer mission", error);
           });
         }
         await deps.jobs.enqueue(runContinueJob(input.runId)).catch((error) => {

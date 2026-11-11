@@ -141,6 +141,7 @@ import {
   IntegrationProviderConfigSchema,
   IntegrationSetupStateSchema,
 } from "./integration-settings.js";
+import { MissionsViewSchema, NavPart } from "./missions.js";
 import { ModelHeadersSchema } from "./model-headers.js";
 import { ModelRoleSchema, ModelRoleUpdateSchema, ModelRoleViewSchema } from "./model-roles.js";
 import { PartnerAccountSchema, PartnerLimitsInput, PartnerTemplate } from "./partner.js";
@@ -1004,6 +1005,14 @@ export const appContract = {
         .output(z.object({ ok: z.literal(true) })),
       disconnect: oc.input(z.object({ serverId: Id })).output(z.object({ ok: z.literal(true) })),
     },
+  },
+  missions: {
+    /** Where the member is with the first missions; null when the full navigation shows. */
+    get: oc.output(MissionsViewSchema.nullable()),
+    /** The member opened a part a mission brought. */
+    seen: oc.input(z.object({ part: NavPart })).output(z.object({ ok: z.literal(true) })),
+    /** End the short navigation for good. */
+    showAll: oc.output(z.object({ ok: z.literal(true) })),
   },
   onboarding: {
     /** Record the optional signup survey; an empty submission marks it skipped. */

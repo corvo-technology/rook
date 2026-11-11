@@ -201,7 +201,13 @@ export function useComposerActions({
   }, [activeId, clearReply, groupId, inGroup]);
 
   const answerMessage = useCallback(
-    async (message: ThreadMessage, text: string, username?: string, dismiss?: boolean) => {
+    async (
+      message: ThreadMessage,
+      text: string,
+      username?: string,
+      dismiss?: boolean,
+      approvalEffectId?: string,
+    ) => {
       const botId = activeBotId.current;
       const groupId = activeGroupId.current;
       if (!botId && !groupId) return;
@@ -213,6 +219,7 @@ export function useComposerActions({
         answer: text,
         ...(username ? { username } : {}),
         ...(dismiss ? { dismiss: true as const } : {}),
+        ...(approvalEffectId ? { approvalEffectId } : {}),
       });
       // The answer is saved; live events can reconcile a failed refresh.
       try {
@@ -551,6 +558,35 @@ export function useComposerActions({
     }
   }, [sending, t]);
 
+  const [retryingRun, setRetryingRun] = useState(false);
+  const retryingRunRef = useRef(false);
+  /** Runs the failed message again on the server. It never posts a second copy of it. */
+  async function retryRun() {
+    const failedRunId = displayedRunErrorId;
+    if (!failedRunId || retryingRunRef.current) return;
+    const target = inGroup && groupId ? { groupId } : activeId ? { botId: activeId } : null;
+    if (!target) return;
+    retryingRunRef.current = true;
+    setRetryingRun(true);
+    try {
+      await rpc.threads.retry({ ...target, runId: failedRunId });
+    } catch (error) {
+      // CONFLICT: the run is no longer the one to retry, so the strip only goes away.
+      if (!(error instanceof Error && "code" in error && error.code === "CONFLICT")) {
+        setSendError(errorText(error, t`Failed to send message`));
+        return;
+      }
+    } finally {
+      retryingRunRef.current = false;
+      setRetryingRun(false);
+    }
+    rememberSeenRunErrorId(failedRunId);
+    setDismissedRunErrorIds((current) => new Set(current).add(failedRunId));
+    const refresh = inGroup ? refreshGroupThreadRef : refreshThreadRef;
+    const id = inGroup ? groupId : activeId;
+    if (id) await refresh.current(id).catch(() => undefined);
+  }
+
   function dismissComposerError() {
     // The strip shows one message at a time, so only dismiss the run failure when it is the
     // one on screen; otherwise a live run would be silenced before it has even failed.
@@ -587,6 +623,8 @@ export function useComposerActions({
     displayedRunErrorId,
     handleRunErrorPresented,
     dismissComposerError,
+    retryRun,
+    retryingRun,
     startFocusPrompt,
   };
 }

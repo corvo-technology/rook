@@ -15,6 +15,19 @@ export const ES_MESSAGES: Record<string, string> = {
   Auto: "Auto",
   Ask: "Preguntar",
   Block: "Bloquear",
+  "Asks before any change": "Pregunta antes de cualquier cambio",
+  "Does everything without asking": "Lo hace todo sin preguntar",
+  "Does what fits your request": "Hace lo que encaja con tu petición",
+  "How much does {name} do on its own?": "¿Cuánto hace {name} por su cuenta?",
+  "Let {name} act without asking?": "¿Dejar que {name} actúe sin preguntar?",
+  "Let bots act without asking?": "¿Dejar que los bots actúen sin preguntar?",
+  "Still asks before a security change after it read outside content. Blocked actions stay blocked.":
+    "Sigue preguntando antes de un cambio de seguridad después de leer contenido externo. Las acciones bloqueadas siguen bloqueadas.",
+  "Still asks before anything that changes something, and before opening a site you didn't mention.":
+    "Sigue preguntando antes de cualquier cosa que cambie algo y antes de abrir un sitio que no mencionaste.",
+  "Still asks when a second model finds it outside your request, and before security changes.":
+    "Sigue preguntando cuando un segundo modelo ve algo fuera de tu petición y antes de los cambios de seguridad.",
+  "Stop asking": "Dejar de preguntar",
   "Add a model in Settings to use this.": "Agrega un modelo en Configuración para usarlo.",
   "Approval model": "Modelo de aprobación",
   "Routing model": "Modelo de enrutamiento",
@@ -24,6 +37,9 @@ export const ES_MESSAGES: Record<string, string> = {
   "Main model": "Modelo principal",
   "Add fallback": "Añadir alternativo",
   "Manage {provider}": "Gestionar {provider}",
+  "Found on this computer": "Encontrado en este equipo",
+  "Local models": "Modelos locales",
+  Use: "Usar",
   "Add provider": "Añadir proveedor",
   "Choose a model": "Elige un modelo",
   "Use 80 characters or fewer": "Usa 80 caracteres o menos",
@@ -130,6 +146,9 @@ export const ES_MESSAGES: Record<string, string> = {
     "Claude Code se inició con herramientas que no se le habían dado, así que se detuvo la respuesta.",
   "{provider} couldn't be reached securely. A security program or network filter may be intercepting the connection.":
     "No se pudo conectar de forma segura con {provider}. Un programa de seguridad o un filtro de red puede estar interceptando la conexión.",
+  "{provider} sign-in is no longer valid.": "El inicio de sesión de {provider} ya no es válido.",
+  "{provider} couldn't be reached through the network proxy. Check the proxy settings.":
+    "No se pudo acceder a {provider} a través del proxy de red. Revisa la configuración del proxy.",
   "{provider} took too long to respond. Try again.":
     "{provider} tardó demasiado en responder. Vuelve a intentarlo.",
   "{provider} is overloaded right now. Try again in a moment.":
@@ -1095,8 +1114,19 @@ export const ES_MESSAGES: Record<string, string> = {
   "Added to the wiki": "Añadido a la wiki",
   Refused: "Rechazado",
   Undone: "Deshecho",
+  "Approve all": "Aprobar todo",
+  "Learn from this conversation": "Aprender de esta conversación",
   "A page changed since": "Una página cambió desde entonces",
   Refuse: "Rechazar",
   "Keep in the wiki": "Guardar en la wiki",
   "Could not load pages": "No se pudieron cargar las páginas",
+  "{position} of {total}": "{position} de {total}",
+  "Talk to your agent": "Habla con tu agente",
+  "Answer a request": "Responde una solicitud",
+  "Connect an app": "Conecta una aplicación",
+  "Add a second agent": "Añade un segundo agente",
+  "Schedule a routine": "Programa una rutina",
+  "Keep a memory": "Guarda un recuerdo",
+  Missions: "Misiones",
+  "Show everything": "Mostrar todo",
 };

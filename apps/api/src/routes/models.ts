@@ -50,6 +50,7 @@ import {
   prepareAllowedThinkingLevels,
   throwIfAborted,
 } from "../model-credentials.js";
+import { modelFailureError } from "../model-failure-error.js";
 import { assertCompatibleDefaultChange } from "../model-pins.js";
 import { withSerializableRetry } from "../serializable-retry.js";
 import type { RouterContext } from "./context.js";
@@ -273,9 +274,7 @@ export function modelsRoutes(ctx: RouterContext) {
             );
             return { models };
           } catch (error) {
-            throw new ORPCError("BAD_REQUEST", {
-              message: error instanceof Error ? error.message : "Could not list models",
-            });
+            throw modelFailureError(error, "Could not list models");
           }
         },
       ),
@@ -288,9 +287,7 @@ export function modelsRoutes(ctx: RouterContext) {
           );
           return { models };
         } catch (error) {
-          throw new ORPCError("BAD_REQUEST", {
-            message: error instanceof Error ? error.message : "Could not list models",
-          });
+          throw modelFailureError(error, "Could not list models");
         }
       }),
       beginOAuth: authed.models.beginOAuth.handler(async ({ context, input }) => {

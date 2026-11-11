@@ -107,6 +107,8 @@ export interface ApprovalState {
   pausePending: boolean;
   /** The first card of parallel calls that need approval; the others wait for it. */
   request: Promise<ApprovalPausedToolResult> | undefined;
+  /** Whether that first card is a fleet proposal, which later fleet proposals can join. */
+  requestIsProposal: boolean;
   /** Runtimes may dispatch parallel calls; a run can open only one proposal at a time. */
   proposalInFlight: boolean;
 }

@@ -28,6 +28,7 @@ import {
 import { Trans, useLingui } from "@lingui/react/macro";
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { ModelProblemNotice } from "../components/ModelProblemNotice";
 import type { ModelCredential } from "../lib/model-auth";
 import type { ModelRoleConnectIntent } from "./ModelRoleSettings";
 import { ModelRoleSettings } from "./ModelRoleSettings";
@@ -61,6 +62,7 @@ export function ModelSettingsOverlay({
     cancelOAuthAttempt,
     confirmDisconnect,
     connectKey,
+    connectProblem,
     credential,
     credentialByProvider,
     credentials,
@@ -257,6 +259,22 @@ export function ModelSettingsOverlay({
         <p className="mb-4 text-sm text-destructive" role="alert">
           {error}
         </p>
+      ) : null}
+      {connectProblem ? (
+        <ModelProblemNotice
+          className="mb-4"
+          problem={
+            connectProblem.action === "replace-key" || connectProblem.action === "sign-in"
+              ? connectProblem
+              : { ...connectProblem, action: undefined }
+          }
+          onRetry={() => void connectKey()}
+          onAction={(action) => {
+            if (action === "sign-in") model.beginSelectedSubscriptionSignIn();
+            else
+              panelRef.current?.querySelector<HTMLInputElement>('input[type="password"]')?.focus();
+          }}
+        />
       ) : null}
       {notice ? (
         <p className="mb-4 text-sm text-success" role="status">

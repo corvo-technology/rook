@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import type {
   AgentContextStrategy,
   AgentRuntime,
@@ -70,6 +71,7 @@ import {
   isComposioEnabled,
   isMessagingSurfaceEnabled,
   isPipedreamEnabled,
+  LocalSetupCheck,
   linkedWhatsAppEnabled,
   McpConnector,
   McpOAuthBroker,
@@ -81,6 +83,7 @@ import {
   PrismaPushTokenStore,
   pipedreamConfigFromEnv,
   piSessionsRoot,
+  probeLoopbackServers,
   RunJobPublisher,
   reconcileCloudAgents,
   reconcileComputerUpdates,
@@ -313,6 +316,14 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   const secrets = createSecretStore(env.encryptionKey, process.env, realtime);
   // Speech models live on the owner's own computer, so only the desktop engine gets them.
   const localSpeech = createLocalSpeech(env);
+  // Finding model servers on this host only makes sense where a found loopback server could be
+  // saved, so the same flag that allows private model endpoints turns detection on.
+  const localSetup = env.mcpAllowPrivateEndpoint
+    ? new LocalSetupCheck({
+        file: join(env.dataDir, "local-setup.json"),
+        probe: (signal) => probeLoopbackServers({ signal }),
+      })
+    : undefined;
   const audio = createAudioHold({ prisma, localSpeech });
   await secrets.start();
   if (secrets.describe().capabilities.degraded)
@@ -761,6 +772,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     home,
     secrets,
     localSpeech,
+    localSetup,
     audio,
     oauthLogins,
     integrationSettings,

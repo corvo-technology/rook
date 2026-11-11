@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  botDraftKey,
   composerDraftStorageKey,
+  prefillComposerDraft,
   readComposerDraft,
   writeComposerDraft,
 } from "./composer-draft.js";
@@ -38,5 +40,30 @@ describe("composer drafts", () => {
   it("tolerates missing storage", () => {
     expect(readComposerDraft("bot:1", null)).toBe("");
     expect(() => writeComposerDraft("bot:1", "hi", null)).not.toThrow();
+  });
+});
+
+describe("prefillComposerDraft", () => {
+  it("prefills an empty composer", () => {
+    const storage = memoryStorage();
+    expect(prefillComposerDraft("bot:1", "first task", storage)).toBe(true);
+    expect(readComposerDraft("bot:1", storage)).toBe("first task");
+  });
+
+  it("leaves a draft the person already typed", () => {
+    const storage = memoryStorage();
+    writeComposerDraft("bot:1", "mine", storage);
+    expect(prefillComposerDraft("bot:1", "first task", storage)).toBe(false);
+    expect(readComposerDraft("bot:1", storage)).toBe("mine");
+  });
+
+  it("does nothing for empty text", () => {
+    const storage = memoryStorage();
+    expect(prefillComposerDraft("bot:1", "", storage)).toBe(false);
+    expect(readComposerDraft("bot:1", storage)).toBe("");
+  });
+
+  it("keys a bot's chat the way the shell does", () => {
+    expect(botDraftKey("b1")).toBe("bot:b1");
   });
 });

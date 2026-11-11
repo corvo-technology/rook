@@ -1,4 +1,5 @@
 import type { Bot, BotSection, Group, Me, Space, ThreadSnapshot } from "@corvo/contracts";
+import { CHIEF_BOT_SPAWN_KEY } from "@corvo/core";
 import {
   BotAvatar,
   Button,
@@ -343,6 +344,11 @@ export function SidebarRoster({
                     render={<button type="button" />}
                     draggable={item.kind === "bot"}
                     data-roster-bot-id={item.kind === "bot" ? item.chat.id : undefined}
+                    data-coach={
+                      item.kind === "bot" && item.chat.spawnKey === CHIEF_BOT_SPAWN_KEY
+                        ? "chief"
+                        : undefined
+                    }
                     data-roster-unread={item.chat.unread ? "true" : undefined}
                     data-roster-error={rowError && (compact || mini) ? "true" : undefined}
                     aria-current={selected ? "page" : undefined}

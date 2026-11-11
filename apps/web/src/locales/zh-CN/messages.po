@@ -285,6 +285,10 @@ msgstr "已用 {percent}%"
 msgid "{percent}% used · {used} of {windowLabel} tokens"
 msgstr "已使用 {percent}% · {used} / {windowLabel} 个令牌"
 
+#: src/pages/shell/message-view.tsx
+msgid "{position} of {total}"
+msgstr "第 {position} 项，共 {total} 项"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} can't run this model."
@@ -294,6 +298,11 @@ msgstr "{provider}无法运行此模型。"
 #: src/lib/run-error.ts
 msgid "{provider} couldn't be reached securely. A security program or network filter may be intercepting the connection."
 msgstr "无法安全连接到{provider}。可能是安全软件或网络过滤器拦截了连接。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "{provider} couldn't be reached through the network proxy. Check the proxy settings."
+msgstr "无法通过网络代理连接到{provider}。请检查代理设置。"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -379,6 +388,11 @@ msgstr "{provider}已达到每周支出限额。"
 #: src/lib/run-error.ts
 msgid "{provider} rejected the API key. Check your connection settings."
 msgstr "{provider}拒绝了 API 密钥。请检查连接设置。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "{provider} sign-in is no longer valid."
+msgstr "{provider}的登录已失效。"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -471,6 +485,7 @@ msgid "A command's output"
 msgstr "命令的输出"
 
 #: src/components/WikiChangeCard.tsx
+#: src/pages/WikiBrowser.tsx
 msgid "A page changed since"
 msgstr "此后有页面已更改"
 
@@ -571,6 +586,7 @@ msgid "Add a label"
 msgstr "添加标签"
 
 #: src/components/ApprovalRulesSettings.tsx
+#: src/components/AutonomyPicker.tsx
 msgid "Add a model in Settings to use this."
 msgstr "请在设置中添加模型后再使用。"
 
@@ -581,6 +597,10 @@ msgstr "添加通行密钥以更快登录？"
 #: src/pages/shell/use-routine-editor.ts
 msgid "Add a run time for this one-shot."
 msgstr "为此一次性任务添加运行时间。"
+
+#: src/components/MissionList.tsx
+msgid "Add a second agent"
+msgstr "添加第二个智能体"
 
 #: src/pages/McpServersOverlay.tsx
 msgid "Add a server name."
@@ -883,6 +903,10 @@ msgctxt "incoming call"
 msgid "Answer"
 msgstr "回答"
 
+#: src/components/MissionList.tsx
+msgid "Answer a request"
+msgstr "回答一个请求"
+
 #: src/pages/shell/message-view.tsx
 msgid "answered"
 msgstr "已回答"
@@ -890,6 +914,11 @@ msgstr "已回答"
 #: src/components/AskCard.tsx
 msgid "Answered"
 msgstr "已回答"
+
+#. placeholder {0}: (result.ms / 1000).toFixed(1)
+#: src/pages/onboarding/LocalModelChoice.tsx
+msgid "Answered in {0} s"
+msgstr "{0} 秒内已响应"
 
 #: src/components/AskCard.tsx
 msgid "Answered: {answer}"
@@ -948,6 +977,10 @@ msgid "Appearance"
 msgstr "外观"
 
 #: src/components/AskCard.tsx
+msgid "Applied"
+msgstr "已应用"
+
+#: src/components/AskCard.tsx
 msgid "Apply"
 msgstr "应用"
 
@@ -969,6 +1002,10 @@ msgstr "审批"
 #: src/pages/shell/message-cards.tsx
 msgid "Approve"
 msgstr "批准"
+
+#: src/pages/WikiBrowser.tsx
+msgid "Approve all"
+msgstr "全部批准"
 
 #: src/pages/WikiBrowser.tsx
 msgid "Approve edits"
@@ -1013,6 +1050,10 @@ msgstr "产物"
 msgid "Ask"
 msgstr "询问"
 
+#: src/components/AutonomyPicker.tsx
+msgid "Asks before any change"
+msgstr "任何更改前都先询问"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Asks you before it changes anything."
 msgstr "更改任何内容前都会先询问你。"
@@ -1042,10 +1083,6 @@ msgstr "正在附加 {value}"
 #: src/pages/shell/chat-shared.ts
 msgid "Attachment"
 msgstr "附件"
-
-#: src/lib/model-connection-preflight.ts
-msgid "Authentication failed."
-msgstr "身份验证失败。"
 
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
@@ -1306,6 +1343,7 @@ msgid "Can't read images"
 msgstr "无法读取图像"
 
 #: src/components/AskCard.tsx
+#: src/components/AutonomyPicker.tsx
 #: src/components/ComputerMaintenanceActions.tsx
 #: src/components/markdown-link-prompt.tsx
 #: src/components/PasskeySettings.tsx
@@ -1428,14 +1466,6 @@ msgstr "检查更新"
 msgid "Check in."
 msgstr "报到。"
 
-#: src/lib/model-connection-preflight.ts
-msgid "Check the API key or sign-in, then test again."
-msgstr "请检查 API 密钥或登录，然后重新测试。"
-
-#: src/lib/model-connection-preflight.ts
-msgid "Check the server URL and network, then test again."
-msgstr "请检查服务器 URL 和网络，然后重新测试。"
-
 #: src/pages/shell/import-setup-card.tsx
 msgid "Check this yourself"
 msgstr "请自行检查"
@@ -1470,8 +1500,8 @@ msgstr "选择机器人"
 msgid "Choose a color or upload an image"
 msgstr "选择颜色或上传图片"
 
+#: src/lib/model-problem.ts
 #: src/pages/ModelSettingsOverlay.tsx
-#: src/pages/shell/composer-error.tsx
 msgid "Choose a model"
 msgstr "选择模型"
 
@@ -1762,10 +1792,6 @@ msgstr "确认删除"
 msgid "Confirm password"
 msgstr "确认密码"
 
-#: src/lib/model-connection-preflight.ts
-msgid "Confirm the URL is reachable from this browser session, then test again."
-msgstr "请确认此浏览器会话可以访问该 URL，然后重新测试。"
-
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/ChatAppsRow.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
@@ -1777,8 +1803,10 @@ msgstr "请确认此浏览器会话可以访问该 URL，然后重新测试。"
 msgid "Connect"
 msgstr "连接"
 
+#. placeholder {0}: app.name
 #. placeholder {0}: appName(slug)
 #: src/pages/AgentsStore.tsx
+#: src/pages/shell/chat-empty.tsx
 msgid "Connect {0}"
 msgstr "连接 {0}"
 
@@ -1786,8 +1814,8 @@ msgstr "连接 {0}"
 msgid "Connect {selectedProviderName}"
 msgstr "连接 {selectedProviderName}"
 
+#: src/lib/model-problem.ts
 #: src/pages/Onboarding.tsx
-#: src/pages/shell/composer-error.tsx
 msgid "Connect a model"
 msgstr "连接模型"
 
@@ -1795,6 +1823,10 @@ msgstr "连接模型"
 #: src/lib/run-error.ts
 msgid "Connect a model in Settings before running bots."
 msgstr "运行机器人前，请先在设置中连接模型。"
+
+#: src/components/MissionList.tsx
+msgid "Connect an app"
+msgstr "连接一个应用"
 
 #: src/pages/model-settings/connection-controls.tsx
 msgid "Connect API key"
@@ -1861,10 +1893,6 @@ msgstr "正在连接…"
 msgid "Connection"
 msgstr "连接"
 
-#: src/lib/model-connection-preflight.ts
-msgid "Connection test failed."
-msgstr "连接测试失败。"
-
 #. placeholder {0}: item.name
 #: src/pages/PluginsOverlay.tsx
 msgid "Connection to {0} is still pending. You can close this and check again."
@@ -1901,6 +1929,8 @@ msgstr "上下文限制"
 #: src/pages/onboarding-quick-connect.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/onboarding/ComputerStep.tsx
+#: src/pages/onboarding/FirstBotStep.tsx
+#: src/pages/onboarding/LocalModelChoice.tsx
 #: src/pages/onboarding/UseStep.tsx
 #: src/pages/onboarding/WorkspaceStep.tsx
 #: src/pages/shell/agent-import.tsx
@@ -2248,18 +2278,19 @@ msgstr "无法打开账单"
 msgid "Could not play a test clip"
 msgstr "无法播放测试片段"
 
-#: src/lib/model-connection-preflight.ts
-msgid "Could not reach the model server."
-msgstr "无法连接到模型服务器。"
-
 #: src/components/PasskeyOffer.tsx
 #: src/components/PasskeySettings.tsx
 #: src/lib/computer-sandbox.ts
+#: src/lib/model-problem.ts
 #: src/lib/user-error.ts
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
 msgid "Could not reach the server"
 msgstr "无法连接服务器"
+
+#: src/lib/model-connection-preflight.ts
+msgid "Could not reach this model server"
+msgstr "无法连接此模型服务器"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Could not read these files"
@@ -2339,6 +2370,7 @@ msgstr "无法保存群组"
 
 #: src/pages/onboarding-quick-connect.tsx
 #: src/pages/Onboarding.tsx
+#: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Could not save model"
 msgstr "无法保存模型"
 
@@ -2760,9 +2792,9 @@ msgstr "桌面控制"
 msgid "Desktop update"
 msgstr "桌面端更新"
 
+#: src/components/ModelProblemNotice.tsx
 #: src/pages/RoutineRunDetail.tsx
 #: src/pages/RoutineRunHistory.tsx
-#: src/pages/shell/composer-error.tsx
 msgid "Details"
 msgstr "详情"
 
@@ -2860,9 +2892,17 @@ msgstr "Docker 限制对你电脑的访问，以提高安全性。使用{hostLab
 msgid "Document changed. Reopen to edit the latest version."
 msgstr "文档已更改。请重新打开以编辑最新版本。"
 
+#: src/components/AutonomyPicker.tsx
+msgid "Does everything without asking"
+msgstr "无需询问，直接完成一切"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Does everything without asking. Best for bots you trust."
 msgstr "无需询问即可完成所有操作。适合你信任的机器人。"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Does what fits your request"
+msgstr "执行符合你请求的操作"
 
 #: src/pages/Auth.tsx
 msgid "Don’t have an account?"
@@ -3266,6 +3306,7 @@ msgid "Forgot password?"
 msgstr "忘记密码？"
 
 #: src/pages/onboarding-quick-connect.tsx
+#: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Found on this computer"
 msgstr "在这台电脑上找到"
 
@@ -3316,6 +3357,10 @@ msgstr "Git 事件"
 #: src/pages/shell/composer.tsx
 msgid "Goes to {recipient}"
 msgstr "将发送给 {recipient}"
+
+#: src/components/CoachLayer.tsx
+msgid "Got it"
+msgstr "知道了"
 
 #: src/lib/identity-display.ts
 #: src/pages/shell/chat-header.tsx
@@ -3418,6 +3463,10 @@ msgstr "小时"
 #: src/pages/ExternalConversationSettings.tsx
 msgid "hours"
 msgstr "小时"
+
+#: src/components/AutonomyPicker.tsx
+msgid "How much does {name} do on its own?"
+msgstr "{name}可以自行做多少事？"
 
 #: src/pages/RoutineSchedule.tsx
 msgid "How often"
@@ -3635,6 +3684,10 @@ msgstr "跳转到回复的消息：{excerpt}"
 msgid "just now"
 msgstr "刚刚"
 
+#: src/components/MissionList.tsx
+msgid "Keep a memory"
+msgstr "保存一段记忆"
+
 #: src/pages/shell/message-hover-actions.tsx
 msgid "Keep in the wiki"
 msgstr "保留到 Wiki"
@@ -3693,6 +3746,18 @@ msgstr "稍后"
 #: src/pages/WikiBrowser.tsx
 msgid "Learn from conversations"
 msgstr "从对话中学习"
+
+#: src/components/WikiCaptureSwitch.tsx
+msgid "Learn from this conversation"
+msgstr "从此对话中学习"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Let {name} act without asking?"
+msgstr "让{name}无需询问就行动？"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Let bots act without asking?"
+msgstr "让机器人无需询问就行动？"
 
 #: src/components/DesktopControlSettings.tsx
 msgid "Let bots see and use your apps. Actions ask first."
@@ -4073,6 +4138,10 @@ msgstr "分钟"
 msgid "Missed call"
 msgstr "未接来电"
 
+#: src/components/MissionList.tsx
+msgid "Missions"
+msgstr "任务"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Mode"
 msgstr "模式"
@@ -4081,6 +4150,7 @@ msgstr "模式"
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/model-settings/model-picker.tsx
 #: src/pages/Onboarding.tsx
+#: src/pages/onboarding/LocalModelChoice.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-panel.tsx
@@ -4262,6 +4332,7 @@ msgstr "需要：{names}"
 msgid "Never ask"
 msgstr "从不询问"
 
+#: src/components/NewDot.tsx
 #: src/pages/shell/chat-context.tsx
 msgid "New"
 msgstr "新消息"
@@ -4712,6 +4783,10 @@ msgstr "其他模型…"
 #: src/pages/onboarding-quick-connect.tsx
 msgid "Other providers"
 msgstr "其他服务商"
+
+#: src/pages/onboarding/LocalModelChoice.tsx
+msgid "Other ways to connect"
+msgstr "其他连接方式"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Output"
@@ -5238,7 +5313,7 @@ msgstr "替换 API 密钥"
 msgid "Replace its instructions"
 msgstr "替换其指令"
 
-#: src/pages/shell/composer-error.tsx
+#: src/lib/model-problem.ts
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Replace key"
 msgstr "替换密钥"
@@ -5383,10 +5458,6 @@ msgstr "返回 Rook"
 #: src/components/AskCard.tsx
 msgid "Review before {reviewing}"
 msgstr "执行前请确认：{reviewing}"
-
-#: src/lib/model-connection-preflight.ts
-msgid "Review provider settings and test again."
-msgstr "请检查提供方设置并重新测试。"
 
 #. placeholder {0}: revision.revision
 #: src/pages/WikiBrowser.tsx
@@ -5572,6 +5643,10 @@ msgstr "正在保存…"
 #: src/lib/call-session.ts
 msgid "Say yes or no, or answer in a sentence."
 msgstr "回答是或否，或一句话说明。"
+
+#: src/components/MissionList.tsx
+msgid "Schedule a routine"
+msgstr "安排一个例行任务"
 
 #: src/components/ModelCredits.tsx
 msgid "Scheduled routines"
@@ -5775,6 +5850,10 @@ msgstr "显示机器人"
 msgid "Show computer"
 msgstr "显示电脑"
 
+#: src/components/MissionList.tsx
+msgid "Show everything"
+msgstr "显示全部"
+
 #: src/pages/Artifacts.tsx
 msgid "Show list"
 msgstr "显示列表"
@@ -5822,6 +5901,7 @@ msgid "Sign in"
 msgstr "登录"
 
 #: src/components/AccountAccess.tsx
+#: src/lib/model-problem.ts
 #: src/lib/passkeys.ts
 #: src/lib/user-error.ts
 #: src/pages/model-settings/connection-controls.tsx
@@ -5888,6 +5968,10 @@ msgstr "跳过"
 #: src/lib/localized-provider-hint.ts
 msgid "Skip or deploy key"
 msgstr "跳过或使用部署密钥"
+
+#: src/components/CoachLayer.tsx
+msgid "Skip tour"
+msgstr "跳过引导"
 
 #. placeholder {0}: skipped.join(", ")
 #: src/pages/shell/use-composer-actions.ts
@@ -6031,12 +6115,28 @@ msgstr "步骤 {number}"
 msgid "Steps"
 msgstr "步骤"
 
+#: src/components/AutonomyPicker.tsx
+msgid "Still asks before a security change after it read outside content. Blocked actions stay blocked."
+msgstr "读取外部内容后，安全更改前仍会询问。被阻止的操作仍然被阻止。"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Still asks before anything that changes something, and before opening a site you didn't mention."
+msgstr "任何会更改内容的操作前，以及打开你未提及的网站前，仍会询问。"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Still asks when a second model finds it outside your request, and before security changes."
+msgstr "当第二个模型认为超出你的请求时，以及安全更改前，仍会询问。"
+
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/computer-overlay.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Stop"
 msgstr "停止"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Stop asking"
+msgstr "不再询问"
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Stop computer"
@@ -6073,6 +6173,10 @@ msgstr "已加密存储"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Stream replies"
 msgstr "流式回复"
+
+#: src/components/CoachLayer.tsx
+msgid "Stuck? Ask the Chief."
+msgstr "卡住了？问问 Chief。"
 
 #: src/lib/identity-display.ts
 msgid "subagent"
@@ -6151,6 +6255,10 @@ msgstr "表格"
 msgid "Take control"
 msgstr "接管控制权"
 
+#: src/components/MissionList.tsx
+msgid "Talk to your agent"
+msgstr "与你的智能体对话"
+
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Teach a task"
 msgstr "示范任务"
@@ -6183,8 +6291,14 @@ msgid "Telegram"
 msgstr "Telegram"
 
 #: src/components/teach/SkillDraftCard.tsx
+#: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Test"
 msgstr "测试"
+
+#. placeholder {0}: option.label
+#: src/pages/onboarding/LocalModelChoice.tsx
+msgid "Test {0}"
+msgstr "测试 {0}"
 
 #: src/components/ModelConnectionPreflightNotice.tsx
 msgid "Test API key"
@@ -6202,6 +6316,7 @@ msgstr "测试运行"
 #: src/components/ModelConnectionPreflightNotice.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/onboarding-quick-connect.tsx
+#: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Testing…"
 msgstr "正在测试…"
 
@@ -6212,10 +6327,6 @@ msgstr "此 Bot 及其导入添加的内容将被移除。"
 #: src/pages/shell/composer-error.tsx
 msgid "The bot can use the file but won't see the picture."
 msgstr "Bot 可以使用该文件，但看不到图片内容。"
-
-#: src/lib/model-connection-preflight.ts
-msgid "The connection timed out."
-msgstr "连接超时。"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -6231,10 +6342,6 @@ msgstr "模型提供商返回了错误。"
 #: src/lib/run-error.ts
 msgid "The model returned an unusable response. Try again."
 msgstr "模型返回了无法使用的回复。请重试。"
-
-#: src/lib/model-connection-preflight.ts
-msgid "The provider is rate-limiting requests."
-msgstr "提供方正在限制请求频率。"
 
 #: src/lib/computer-screen.ts
 msgid "The screen connection closed."
@@ -6339,6 +6446,10 @@ msgstr "此导入已更改。请重试。"
 #: src/lib/agent-import-errors.ts
 msgid "This import was already used. Choose the files again."
 msgstr "此导入已使用过。请重新选择文件。"
+
+#: src/components/CoachLayer.tsx
+msgid "This isn't sent yet. Edit it or send it."
+msgstr "这条还没有发送。可以编辑，也可以发送。"
 
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/Onboarding.tsx
@@ -6530,6 +6641,7 @@ msgstr "试用于 {day} 结束"
 msgid "Trigger"
 msgstr "触发器"
 
+#: src/components/ModelProblemNotice.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 msgid "Try again"
@@ -6811,10 +6923,6 @@ msgstr "与前一个月相比"
 msgid "vs. the same days last month"
 msgstr "与上月同期相比"
 
-#: src/lib/model-connection-preflight.ts
-msgid "Wait a moment and test again."
-msgstr "请稍候并重新测试。"
-
 #: src/pages/shell/message-view.tsx
 msgid "waiting"
 msgstr "等待中"
@@ -6924,6 +7032,10 @@ msgstr "监视内容"
 #: src/pages/RoutineEditor.tsx
 msgid "When a webhook fires"
 msgstr "当 Webhook 触发时"
+
+#: src/components/CoachLayer.tsx
+msgid "When an agent needs you, it asks here and waits."
+msgstr "当智能体需要你时，它会在这里提问并等待。"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "When it finishes or needs input"

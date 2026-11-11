@@ -20,7 +20,7 @@ export function transportFailureDetail(error: unknown, depth = 0): string | unde
 }
 
 /** The error code (`ETIMEDOUT`, `UNABLE_TO_VERIFY_LEAF_SIGNATURE`...) of the failure the network reported. */
-function transportFailureCode(error: unknown, depth = 0): string | undefined {
+export function transportFailureCode(error: unknown, depth = 0): string | undefined {
   if (depth >= MAX_CAUSE_DEPTH || !(error instanceof Error)) return undefined;
   if (error instanceof AggregateError) {
     for (const inner of error.errors) {

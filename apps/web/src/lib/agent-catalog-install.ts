@@ -1,8 +1,15 @@
 import type { AgentCatalogEntry, AgentCatalogLocale, McpServer } from "@corvo/contracts";
 import { agentCatalogSpawnKey } from "@corvo/contracts";
-import { SKILL_STORE } from "@corvo/core";
+import { AGENT_CATALOG, SKILL_STORE } from "@corvo/core";
 import { rpc } from "./rpc";
 import { installStoreSkill, isSkillInstalled } from "./skill-store-install";
+
+/** The catalog agent a bot was made from, found by its creation key. */
+export function catalogAgentOf(bot: { spawnKey?: string | null }): AgentCatalogEntry | undefined {
+  return bot.spawnKey
+    ? AGENT_CATALOG.find((entry) => agentCatalogSpawnKey(entry.slug) === bot.spawnKey)
+    : undefined;
+}
 
 /** The servers of `entry`'s apps that are already added and, when they sign in, signed in. */
 export function connectedServersFor(

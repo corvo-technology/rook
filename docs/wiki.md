@@ -78,8 +78,10 @@ call lasting is dropped, and so is a `replace` whose old text is not on the page
   space with other people a channel is read only when its own switch is on. A chat with one agent
   is read only when you keep a message ("Keep in the wiki" in a message's menu) or switch capture
   on for it. A conversation held by outsiders over a messaging channel is never read. An owner of
-  the space can turn the curator off. The per-conversation switch exists as a procedure and a
-  database column but has no screen yet.
+  the space can turn the curator off. Each conversation's settings (web, desktop and mobile) have
+  a switch, "Learn from this conversation", that shows what the curator does now and that only the
+  conversation's owner can change; it is hidden while the curator is off for the space. Turning it
+  stores an explicit on or off, so a later change of the default never flips a person's choice.
 - **What it keeps.** The stretch it read is stored as a source, as it was said (encrypted), and
   every change points to it. Tokens, keys and email addresses are masked before the model sees the
   text and before it is stored. Only the person whose conversation it was can read the quoted
@@ -89,7 +91,10 @@ call lasting is dropped, and so is a `replace` whose old text is not on the page
   settings). The conversation shows a card with what was kept and a way to approve, refuse or undo
   it, and the Wiki screen lists what waits. While a change waits, the card shows the text it would
   write (the old words and the new), so nobody approves blind. The reason and the title the model
-  gave are shown only to the person whose conversation it was, like the quoted source.
+  gave are shown only to the person whose conversation it was, like the quoted source. With two
+  or more changes waiting, "Approve all" on the Wiki screen applies them oldest first; one whose
+  page moved is marked conflicting, the rest still apply, and one another answer has already taken
+  is left to that answer.
 - **One answer at a time.** A change is claimed before its pages are written, so two answers (two
   members, the phone and the screen, an approval and a refusal) cannot both write pages. Refusing
   a change takes back the pages it had already written, unless someone edited them since.
@@ -102,9 +107,7 @@ call lasting is dropped, and so is a `replace` whose old text is not on the page
   stretch with too little text is not read yet and is read together with what follows. What the
   model costs is recorded as its own kind of usage.
 
-Not done yet: a switch on each conversation to turn the curator on or off (the procedure and the
-database column exist; no screen has the control), and a way to ask the curator to try a
-conflicting change again.
+Not done yet: a way to ask the curator to try a conflicting change again.
 
 ## Shared memory
 

@@ -3,12 +3,15 @@ import { useLingui } from "@lingui/react/macro";
 import { MoreHorizontal } from "lucide-react";
 import type { ComponentType } from "react";
 import { useState } from "react";
+import { NewDot } from "./NewDot";
 
 export type RailMoreItem = {
   key: string;
   label: string;
   Icon: ComponentType<{ className?: string; strokeWidth?: number }>;
   onSelect: () => void;
+  /** A mission brought this place and the person has not opened it yet. */
+  isNew?: boolean;
 };
 
 /** What the rail keeps out of sight: three dots that open the rest of the places, one click away. */
@@ -35,12 +38,13 @@ export function RailMore({
         className={className}
       >
         <MoreHorizontal className="size-5" />
+        {items.some((item) => item.isNew) ? <NewDot /> : null}
         <span aria-hidden className={labelClassName}>
           {t`More`}
         </span>
       </PopoverTrigger>
       <PopoverContent side="right" align="start" sideOffset={8} className="w-52 gap-0 p-1">
-        {items.map(({ key, label, Icon, onSelect }) => (
+        {items.map(({ key, label, Icon, onSelect, isNew }) => (
           <Button
             key={key}
             variant="ghost"
@@ -52,6 +56,7 @@ export function RailMore({
           >
             <Icon className="text-muted-foreground" strokeWidth={1.75} />
             {label}
+            {isNew ? <NewDot className="ms-auto" /> : null}
           </Button>
         ))}
       </PopoverContent>

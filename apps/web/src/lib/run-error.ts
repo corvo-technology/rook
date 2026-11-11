@@ -109,6 +109,19 @@ export const translateRunError: RunErrorTranslator = (message, values) => {
         message: "{provider} couldn't be reached. Check that it's running.",
         values,
       });
+    case "{provider} sign-in is no longer valid.":
+      return i18n._({
+        id: "{provider} sign-in is no longer valid.",
+        message: "{provider} sign-in is no longer valid.",
+        values,
+      });
+    case "{provider} couldn't be reached through the network proxy. Check the proxy settings.":
+      return i18n._({
+        id: "{provider} couldn't be reached through the network proxy. Check the proxy settings.",
+        message:
+          "{provider} couldn't be reached through the network proxy. Check the proxy settings.",
+        values,
+      });
     case "{provider} is overloaded right now. Try again in a moment.":
       return i18n._({
         id: "{provider} is overloaded right now. Try again in a moment.",

@@ -1,10 +1,12 @@
 import * as z from "zod";
 
-/** Fleet management tools. Only list_fleet, store_agents and list_routines are read-only. */
+/** Fleet management tools. The reads are list_fleet, store_agents, list_routines, guide_read and space_status. */
 export const FLEET_TOOL_NAMES = [
   "list_fleet",
   "store_agents",
   "list_routines",
+  "guide_read",
+  "space_status",
   "install_agent",
   "create_group",
   "update_group",
@@ -15,13 +17,19 @@ export const FLEET_TOOL_NAMES = [
   "add_routine_step",
 ] as const;
 
+export const FLEET_READ_TOOL_NAMES = [
+  "list_fleet",
+  "store_agents",
+  "list_routines",
+  "guide_read",
+  "space_status",
+] as const;
+
 export const FLEET_WRITE_TOOL_NAMES = FLEET_TOOL_NAMES.filter(
   (
     name,
-  ): name is Exclude<
-    (typeof FLEET_TOOL_NAMES)[number],
-    "list_fleet" | "store_agents" | "list_routines"
-  > => name !== "list_fleet" && name !== "store_agents" && name !== "list_routines",
+  ): name is Exclude<(typeof FLEET_TOOL_NAMES)[number], (typeof FLEET_READ_TOOL_NAMES)[number]> =>
+    !(FLEET_READ_TOOL_NAMES as readonly string[]).includes(name),
 );
 
 /** Built-in tool names a bot may disable. Kept aligned with the adapter tool list. */

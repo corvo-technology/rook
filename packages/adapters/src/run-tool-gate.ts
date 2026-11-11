@@ -13,6 +13,7 @@ import {
   connectorReadRequiresApproval,
   connectorToolRequiresApproval,
   displayName,
+  effectiveApprovalMode,
   newSiteOutcome,
   outboundSiteGate,
   planActionGate,
@@ -43,6 +44,7 @@ import {
 } from "./auto-review.js";
 import { reviewWithBackups } from "./auto-review-backups.js";
 import type { ExecutorDeps } from "./executor-deps.js";
+import { isFleetApprovalTool } from "./fleet-tools.js";
 import { isCatalogLookupCall } from "./lazy-tool-catalog.js";
 import { findConnectedModelCredential } from "./model-selection.js";
 import { autoReviewCheckerProvider } from "./run-auto-review.js";
@@ -239,7 +241,10 @@ export async function gateToolCall(
     unidentifiedAction && resolvedRules.decision === "allow"
       ? { ...resolvedRules, decision: "ask" as const }
       : resolvedRules;
-  const mode = approvalModeFromPreference(await ctx.trust.loadAutoReviewPreference());
+  const mode = effectiveApprovalMode(
+    ctx.bot.approvalMode,
+    approvalModeFromPreference(await ctx.trust.loadAutoReviewPreference()),
+  );
   const reviewable = mode === "auto" && !requiresMandatoryApproval;
   const injectedReview = reviewable ? deps.autoReview : undefined;
   const reviewSettings = !reviewable || injectedReview ? null : await ctx.trust.loadApprovalModel();
@@ -550,7 +555,14 @@ async function settleToolUncertainty(
   return settleUncertainEffect(ctx.deps.prisma, effectId, toolName, call.args);
 }
 
-/** Ask the owner through an approval card. Parallel calls share the first call's pause. */
+/** Most proposal cards one reply puts on a message; the database enforces it. */
+export { FLEET_CARD_BATCH_MAX } from "@corvo/db";
+
+/**
+ * Ask the owner through an approval card. Parallel calls share the first call's pause. Fleet
+ * proposals from one reply are added to that first card's message, so the owner decides them one
+ * by one and the run resumes once every card is decided.
+ */
 function requestApproval(
   ctx: RunContext,
   call: ToolCall,
@@ -560,7 +572,29 @@ function requestApproval(
   // Parallel calls can need approval at once. Only the first saves the turn and shows
   // its card; the others wait for that pause. Otherwise a later call's save could make
   // the turn resume a call other than the one the user approved.
-  if (approval.request) return approval.request.then(() => pauseForApproval(ctx));
+  if (approval.request) {
+    const joins = approval.requestIsProposal && isFleetApprovalTool(call.name) && card.summary;
+    return approval.request.then(async () => {
+      // When the first card was already answered the card cannot join, and this call keeps
+      // today's behaviour: it pauses again with its own card after the run resumes.
+      if (joins && call.applied) {
+        await ctx.deps.events.addApprovalAskToPausedRun({
+          spaceId: ctx.run.spaceId,
+          threadId: ctx.run.threadId,
+          runId: ctx.runId,
+          block: buildApprovalAskBlock(
+            call.applied.effect.id,
+            call.name,
+            call.args,
+            ctx.secrets,
+            card,
+          ),
+        });
+      }
+      return pauseForApproval(ctx);
+    });
+  }
+  approval.requestIsProposal = isFleetApprovalTool(call.name) && Boolean(card.summary);
   approval.request = showApprovalCard(ctx, call, card);
   return approval.request;
 }

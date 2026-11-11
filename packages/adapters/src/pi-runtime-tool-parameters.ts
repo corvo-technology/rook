@@ -1,5 +1,6 @@
 import type { ConnectorTool } from "@corvo/adapter-kit";
 import { BOT_INSTRUCTIONS_MAX_LENGTH } from "@corvo/contracts";
+import { GUIDE_PAGES } from "@corvo/core";
 import { getLogger } from "@corvo/logging";
 import { Type } from "@earendil-works/pi-ai";
 import {
@@ -116,7 +117,16 @@ function builtinParameters(tool: ConnectorTool) {
     });
   }
   if (tool.name === "list_fleet") return Type.Object({ bot_id: Type.Optional(Type.String()) });
-  if (tool.name === "list_routines") return Type.Object({});
+  if (tool.name === "list_routines" || tool.name === "space_status") return Type.Object({});
+  if (tool.name === "guide_read") {
+    return Type.Object({
+      page: stringEnum(
+        GUIDE_PAGES.map((page) => page.slug),
+        {},
+      ),
+      language: Type.String(),
+    });
+  }
   if (tool.name === "store_agents")
     return Type.Object({ language: Type.Optional(stringEnum(["en", "pt-BR"], {})) });
   if (tool.name === "plan_set") {

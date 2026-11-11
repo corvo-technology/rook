@@ -6,6 +6,7 @@ import {
   formatFileSize,
   isApprovalAskBlock,
   memberName,
+  proposalSteps,
   selectedAskActionLabel,
 } from "@corvo/core";
 import { fontWeight, typeScale } from "@corvo/ui-tokens";
@@ -52,12 +53,15 @@ function formatApprovalAnswer(
   answer: string | undefined,
   actions: AskAction[] | undefined,
   approval: boolean,
+  proposal?: boolean,
 ): string {
   if (!answer) return t("Answered");
   const selectedAction = actions?.find((action) => action.id === answer);
   const outcome = selectedAction?.outcome;
   if (approval && outcome === "created") return t("Created");
   if (approval && outcome === "cancelled") return t("Cancelled");
+  if (proposal && answer === "allow") return t("Applied");
+  if (proposal && answer === "deny") return t("Dismissed");
   if (approval && answer === "allow") return t("Allowed once");
   if (approval && answer === "always") return t("Always allowed");
   if (approval && answer === "deny") return t("Denied");
@@ -177,6 +181,7 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
     answer: string,
     username?: string,
     dismiss?: boolean,
+    approvalEffectId?: string,
   ) => Promise<void>;
   onOpenBot: (botId: string, name: string) => void;
   onOpenComputer: (botId: string, name: string) => void;
@@ -391,9 +396,12 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
       </View>
     );
   }
-  const askBlock = message.blocks.find(
-    (block) => block.kind === "ask" && Boolean(block.actions?.length),
-  );
+  // Several proposals from one reply are decided one at a time; the current one is shown.
+  const steps = proposalSteps(message.blocks);
+  const stepped = steps.total > 1;
+  const askBlock = stepped
+    ? message.blocks[steps.current ?? steps.indexes[steps.indexes.length - 1] ?? -1]
+    : message.blocks.find((block) => block.kind === "ask" && Boolean(block.actions?.length));
   if (askBlock?.kind === "ask" && askBlock.actions?.length) {
     return (
       <View style={{ gap: 8, width: "100%" }}>
@@ -415,6 +423,13 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
             />
           ) : (
             <>
+              {stepped && steps.current !== null ? (
+                <Text
+                  style={{ color: tokens.mutedForeground, marginBottom: 6, ...typeScale.caption }}
+                >
+                  {t("{position} of {total}", { position: steps.position, total: steps.total })}
+                </Text>
+              ) : null}
               {askBlock.text ? (
                 <Text {...actionProps} style={{ color: tokens.foreground, ...typeScale.cardTitle }}>
                   {askBlock.instructionUpdate
@@ -456,6 +471,7 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
                         askBlock.answer,
                         askBlock.actions,
                         isApprovalAskBlock(askBlock),
+                        askBlock.proposal,
                       )}
                 </Text>
               ) : canAnswer && onAnswer ? (
@@ -463,10 +479,13 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
                   actions={askBlock.actions}
                   site={askBlock.site}
                   approval={isApprovalAskBlock(askBlock)}
+                  proposal={askBlock.proposal}
                   instructions={askBlock.instructionUpdate?.after}
                   accessibilityActions={actionProps.accessibilityActions}
                   onAccessibilityAction={actionProps.onAccessibilityAction}
-                  onAnswer={(answer) => onAnswer(message, answer)}
+                  onAnswer={(answer) =>
+                    onAnswer(message, answer, undefined, undefined, askBlock.approvalEffectId)
+                  }
                 />
               ) : (
                 <Text

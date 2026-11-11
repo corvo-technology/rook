@@ -1,19 +1,28 @@
 import type { WikiChange, WikiPageInfo } from "@corvo/contracts";
-import { useFocusEffect, useRouter } from "expo-router";
+import { Stack, useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
 import { NativeActionButton } from "../components/native-action-button";
 import { WikiChangeCard, WikiList } from "../components/wiki-views";
 import { useI18n } from "../lib/i18n";
-import { native, useThemedStyles } from "../lib/native";
+import { native, useMobileTokens, useThemedStyles } from "../lib/native";
+import { iosAtLeast } from "../lib/native-controls";
 import { errorText } from "../lib/user-error";
-import { decideWikiChange, groupWikiPages, listWikiChanges, listWikiPages } from "../lib/wiki";
+import {
+  approveAllWikiChanges,
+  canApproveAll,
+  decideWikiChange,
+  groupWikiPages,
+  listWikiChanges,
+  listWikiPages,
+} from "../lib/wiki";
 
 /** What the team knows, as pages the agents read and cite. Read only on a phone. */
 export default function WikiScreen() {
   const { t } = useI18n();
   const router = useRouter();
   const styles = useThemedStyles(createStyles);
+  const tokens = useMobileTokens();
   const [pages, setPages] = useState<WikiPageInfo[] | null>(null);
   const [waiting, setWaiting] = useState<WikiChange[]>([]);
   const [deciding, setDeciding] = useState<string | null>(null);
@@ -51,21 +60,70 @@ export default function WikiScreen() {
     }
   }
 
+  async function approveAll() {
+    if (deciding) return;
+    setDeciding("all");
+    try {
+      const result = await approveAllWikiChanges();
+      if (result.conflicts > 0) Alert.alert(t("A page changed since"));
+    } catch {
+      // Someone may have answered first: what is on screen is what the server says now.
+    } finally {
+      await load();
+      setDeciding(null);
+    }
+  }
+
+  const approveAllOffered = canApproveAll(waiting);
+  const headerOptions = approveAllOffered
+    ? {
+        headerRight: () => (
+          <NativeActionButton
+            label={t("Approve all")}
+            size="compact"
+            disabled={deciding !== null}
+            onPress={() => void approveAll()}
+            style={{ borderRadius: 24 }}
+          />
+        ),
+        ...(iosAtLeast(26)
+          ? {
+              unstable_headerRightItems: () => [
+                {
+                  type: "button" as const,
+                  label: t("Approve all"),
+                  variant: "prominent" as const,
+                  tintColor: tokens.primary,
+                  disabled: deciding !== null,
+                  onPress: () => void approveAll(),
+                },
+              ],
+            }
+          : {}),
+      }
+    : {
+        headerRight: () => null,
+        ...(iosAtLeast(26) ? { unstable_headerRightItems: () => [] } : {}),
+      };
+
   if (pages?.length || waiting.length)
     return (
-      <WikiList
-        groups={groups}
-        onOpen={open}
-        header={waiting.map((change) => (
-          <WikiChangeCard
-            key={change.id}
-            change={change}
-            busy={deciding === change.id}
-            onDecide={(decision) => void decide(change.id, decision)}
-            onOpenPage={open}
-          />
-        ))}
-      />
+      <>
+        <Stack.Screen options={headerOptions} />
+        <WikiList
+          groups={groups}
+          onOpen={open}
+          header={waiting.map((change) => (
+            <WikiChangeCard
+              key={change.id}
+              change={change}
+              busy={deciding === change.id}
+              onDecide={(decision) => void decide(change.id, decision)}
+              onOpenPage={open}
+            />
+          ))}
+        />
+      </>
     );
   return (
     <View style={styles.empty}>

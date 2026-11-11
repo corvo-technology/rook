@@ -1,4 +1,4 @@
-import type { Bot, ComputerMode, ThinkingLevel } from "@corvo/contracts";
+import type { ApprovalMode, Bot, ComputerMode, ThinkingLevel } from "@corvo/contracts";
 import {
   BOT_AVATAR_SHAPE_COUNT,
   BOT_COLORS,
@@ -13,7 +13,9 @@ import {
   modelOptionKey,
   parseModelOptionKey,
   resolveSelectableModelId,
+  storedBotApprovalMode,
 } from "@corvo/core";
+import { MenuView } from "@expo/ui/community/menu";
 import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import type { Voice } from "expo-speech";
 import type { ReactNode } from "react";
@@ -41,8 +43,15 @@ import { NativeSwitch } from "../components/native-switch";
 import { NativeSymbol } from "../components/native-symbol";
 import { ProfileEditDialog } from "../components/profile-edit-dialog";
 import { Chevron } from "../components/row-accessories";
+import {
+  SettingsGroup as SettingsCard,
+  SettingsFooter,
+  SettingsRow,
+} from "../components/settings-group";
+import { WikiCaptureRow } from "../components/wiki-capture-row";
 import type { MobileMe, MobileModel, MobileModelCredential } from "../lib/api";
 import { rpc } from "../lib/api";
+import { autonomyLine, autonomyOptions, confirmNeverAsk } from "../lib/autonomy";
 import {
   avatarColor,
   avatarShape,
@@ -55,7 +64,7 @@ import { chatModelPickerChoices } from "../lib/chat-model";
 import { COMPUTER_LIFECYCLE_TIMEOUT_MS } from "../lib/computer";
 import { loadDeviceVoiceEnabled } from "../lib/device-voice";
 import { useI18n } from "../lib/i18n";
-import { native, useMobileTokens } from "../lib/native";
+import { native, useMobileTokens, useResolvedAppearance } from "../lib/native";
 import { createQueuedSave } from "../lib/queued-save";
 import { useSideInsets } from "../lib/side-insets";
 import { thinkingLevelLabel } from "../lib/thinking-level";
@@ -65,6 +74,7 @@ import { stopVoicePlayback } from "../lib/voice";
 export default function BotSettingsScreen() {
   const sideInsets = useSideInsets();
   const tokens = useMobileTokens();
+  const colorScheme = useResolvedAppearance();
   const { t } = useI18n();
   const router = useRouter();
   const {
@@ -90,6 +100,12 @@ export default function BotSettingsScreen() {
   const [crossSpaceCommunication, setCrossSpaceCommunication] = useState(false);
   const [fleetManagement, setFleetManagement] = useState(false);
   const [squadRouting, setSquadRouting] = useState(false);
+  // The bot's own answer; null follows the default, which `autoReview` says.
+  const [approvalMode, setApprovalMode] = useState<ApprovalMode | null>(null);
+  const [autoReview, setAutoReview] = useState<{
+    mode: ApprovalMode;
+    checkerAvailable: boolean;
+  } | null>(null);
   const [credentials, setCredentials] = useState<MobileModelCredential[]>([]);
   const [catalog, setCatalog] = useState<MobileModel[]>([]);
   const [me, setMe] = useState<MobileMe | null>(null);
@@ -123,6 +139,18 @@ export default function BotSettingsScreen() {
           await rpc("bots/update", { botId, squadRouting: value });
         },
         onChange: setSquadRouting,
+        onError: (err) => setError(errorText(err, t("Could not save bot"))),
+      }),
+    [botId, t],
+  );
+
+  const approvalSave = useMemo(
+    () =>
+      createQueuedSave<ApprovalMode | null>(null, {
+        save: async (value) => {
+          await rpc("bots/update", { botId, approvalMode: value });
+        },
+        onChange: setApprovalMode,
         onError: (err) => setError(errorText(err, t("Could not save bot"))),
       }),
     [botId, t],
@@ -194,9 +222,25 @@ export default function BotSettingsScreen() {
         fleetSave.reset(next.fleetManagement);
         setSquadRouting(next.squadRouting);
         squadSave.reset(next.squadRouting);
+        setApprovalMode(next.approvalMode ?? null);
+        approvalSave.reset(next.approvalMode ?? null);
       })
       .catch((err) => setError(errorText(err, t("Could not load bot"))));
-  }, [botId, crossSpaceSave, fleetSave, notifySave, profileSaves, squadSave]);
+  }, [approvalSave, botId, crossSpaceSave, fleetSave, notifySave, profileSaves, squadSave]);
+
+  useEffect(() => {
+    void rpc("autoReview/get", {})
+      .then((next) => setAutoReview({ mode: next.mode, checkerAvailable: next.checkerAvailable }))
+      .catch(() => setAutoReview(null));
+  }, []);
+
+  async function chooseAutonomy(choice: ApprovalMode) {
+    if (!botId || !autoReview) return;
+    if (choice === (approvalMode ?? autoReview.mode)) return;
+    if (choice === "never" && !(await confirmNeverAsk(t, name))) return;
+    setError(null);
+    approvalSave.update(storedBotApprovalMode(choice, autoReview.mode));
+  }
 
   useEffect(() => {
     void Promise.all([rpc("me"), rpc("models/list"), rpc("models/credentials")])
@@ -212,6 +256,28 @@ export default function BotSettingsScreen() {
         setModelMetaError(errorText(err, t("Could not load model settings")));
       });
   }, [t]);
+
+  // Until the default has loaded, the answer is never guessed: the row shows no value.
+  const autonomyMode = autoReview ? (approvalMode ?? autoReview.mode) : null;
+  const autonomyQuestion = t("How much does {name} do on its own?", { name });
+  const autonomyChoices =
+    autoReview && autonomyMode
+      ? autonomyOptions(t, { value: autonomyMode, checkerAvailable: autoReview.checkerAvailable })
+      : null;
+  const autonomyFooter =
+    autoReview && autonomyMode
+      ? autonomyLine(t, { mode: autonomyMode, checkerAvailable: autoReview.checkerAvailable })
+      : undefined;
+  const autonomyNeedsModel = autonomyMode === "auto" && autoReview?.checkerAvailable === false;
+  const autonomyRow = (
+    <SettingsRow
+      accessible
+      accessibilityRole="button"
+      dimmed={!autonomyChoices}
+      title={autonomyQuestion}
+      value={autonomyChoices?.find((choice) => choice.state === "on")?.title}
+    />
+  );
 
   const storedModel = modelKey ? parseModelOptionKey(modelKey) : null;
   const selectedModel = storedModel
@@ -645,6 +711,11 @@ export default function BotSettingsScreen() {
             </View>
           </SettingsGroup>
         </View>
+        {botId ? (
+          <View style={{ marginTop: 24 }}>
+            <WikiCaptureRow target={{ botId }} />
+          </View>
+        ) : null}
         {botId ? <BotContextCards key={botId} botId={botId} /> : null}
         <Pressable
           accessibilityRole="button"
@@ -710,6 +781,27 @@ export default function BotSettingsScreen() {
             <SettingsGroup label={t("Computer")}>
               <ComputerModePicker plain value={computerMode} onChange={setComputerMode} />
             </SettingsGroup>
+            <View style={{ gap: 7 }}>
+              <SettingsCard footer={autonomyFooter}>
+                {autonomyChoices ? (
+                  <MenuView
+                    actions={autonomyChoices}
+                    colorScheme={colorScheme}
+                    onPressAction={(event) =>
+                      void chooseAutonomy(event.nativeEvent.event as ApprovalMode)
+                    }
+                    title={autonomyQuestion}
+                  >
+                    {autonomyRow}
+                  </MenuView>
+                ) : (
+                  autonomyRow
+                )}
+              </SettingsCard>
+              {autonomyNeedsModel ? (
+                <SettingsFooter>{t("Add a model in Settings to use this.")}</SettingsFooter>
+              ) : null}
+            </View>
             <SettingsGroup label={t("Voice")}>
               <View style={styles.row}>
                 <Text style={[styles.rowLabel, { color: tokens.foreground }]}>

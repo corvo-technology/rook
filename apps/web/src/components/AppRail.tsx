@@ -1,4 +1,4 @@
-import type { AppBootstrap, NavLink as AppNavLink } from "@corvo/contracts";
+import type { AppBootstrap, NavLink as AppNavLink, NavPart } from "@corvo/contracts";
 import { useLingui } from "@lingui/react/macro";
 import { skipToken, useQuery } from "@tanstack/react-query";
 import {
@@ -21,8 +21,10 @@ import { isEmbedded } from "../lib/embed";
 import { useSpaceQueries } from "../lib/query";
 import type { Section } from "../lib/rail-section";
 import { railSection } from "../lib/rail-section";
+import { useMissions } from "../lib/use-missions";
 import { ShellSidebarFooter } from "../pages/shell/shell-sidebar";
 import { WindowChrome } from "../pages/WindowChrome";
+import { NewDot } from "./NewDot";
 import type { RailMoreItem } from "./RailMore";
 import { RailMore } from "./RailMore";
 import { SubscriptionRailRings } from "./SubscriptionRings";
@@ -53,6 +55,7 @@ export function AppRail({ ticketBoardEnabled }: { ticketBoardEnabled: boolean })
       queryFn: skipToken,
       select: (bootstrap: AppBootstrap) => bootstrap.me?.partner?.hide ?? [],
     }).data ?? [];
+  const missions = useMissions();
   const active = railSection(pathname, search);
   const items: Array<{
     section: Section;
@@ -74,15 +77,19 @@ export function AppRail({ ticketBoardEnabled }: { ticketBoardEnabled: boolean })
   const embedded = isEmbedded();
   // The rest of the places sit behind the three dots. Approvals and Memory are account settings,
   // which a partner's frame does not offer.
+  const goMore = (part: NavPart, to: string) => () => {
+    missions.open(part);
+    navigate(to);
+  };
   const more: RailMoreItem[] = [
-    { key: "usage", label: t`Usage`, Icon: Gauge, onSelect: () => navigate("/app/usage") },
+    { key: "usage", label: t`Usage`, Icon: Gauge, onSelect: goMore("usage", "/app/usage") },
     {
       key: "artifacts",
       label: t`Artifacts`,
       Icon: FolderOpen,
-      onSelect: () => navigate("/app/artifacts"),
+      onSelect: goMore("artifacts", "/app/artifacts"),
     },
-    { key: "wiki", label: t`Wiki`, Icon: BookOpen, onSelect: () => navigate("/app/wiki") },
+    { key: "wiki", label: t`Wiki`, Icon: BookOpen, onSelect: goMore("wiki", "/app/wiki") },
     ...(embedded
       ? []
       : [
@@ -90,16 +97,19 @@ export function AppRail({ ticketBoardEnabled }: { ticketBoardEnabled: boolean })
             key: "approvals",
             label: t`Approvals`,
             Icon: ShieldCheck,
-            onSelect: () => navigate("/app?settings=confirmations"),
+            onSelect: goMore("approvals", "/app?settings=confirmations"),
           },
           {
             key: "memory",
             label: t`Memory`,
             Icon: Brain,
-            onSelect: () => navigate("/app?settings=memory"),
+            onSelect: goMore("memory", "/app?settings=memory"),
           },
         ]),
-  ].filter((item) => !hidden.includes(item.key));
+  ]
+    .filter((item) => !hidden.includes(item.key))
+    .filter((item) => missions.shows(item.key as NavPart))
+    .map((item) => ({ ...item, isNew: missions.isNew(item.key as NavPart) }));
   return (
     <nav
       aria-label={t`Main`}
@@ -111,19 +121,24 @@ export function AppRail({ ticketBoardEnabled }: { ticketBoardEnabled: boolean })
       </div>
       {items
         .filter(({ section }) => !hidden.includes(section))
+        .filter(({ section }) => section === "agents" || missions.shows(section))
         .map(({ section, label, to, Icon }) => (
           <button
             key={section}
             type="button"
             aria-label={label}
             aria-current={active === section ? "page" : undefined}
-            onClick={() => navigate(to)}
+            onClick={() => {
+              if (section !== "agents") missions.open(section);
+              navigate(to);
+            }}
             className={`${RAIL_ITEM} before:absolute before:-start-[6px] before:top-1/2 before:h-0 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-primary before:transition-[height] before:duration-200 before:ease-out motion-reduce:before:transition-none aria-[current=page]:bg-sidebar-accent aria-[current=page]:text-foreground aria-[current=page]:before:h-5`}
           >
             <Icon className="size-5 transition-transform duration-150 ease-out motion-reduce:transition-none" />
             <span aria-hidden className={RAIL_LABEL}>
               {label}
             </span>
+            {section !== "agents" && missions.isNew(section) ? <NewDot /> : null}
           </button>
         ))}
       <RailMore

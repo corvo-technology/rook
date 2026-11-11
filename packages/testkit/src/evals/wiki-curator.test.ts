@@ -1,4 +1,8 @@
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
+import { runWikiCuratorSuite, wikiCuratorOutcome } from "../cli/wiki-curator-eval.js";
 import type { EvalJudge } from "./judge.js";
 import {
   gradeWikiCurator,
@@ -131,5 +135,61 @@ describe("wikiCuratorEvidence", () => {
       ops: [{ op: "replace", page: "Office Renovation", old: "Nov 18", new: "Nov 25" }],
     });
     expect(Object.keys(evidence).sort()).toEqual(["conversation", "existing", "kept"]);
+  });
+});
+
+describe("wiki curator live suite", () => {
+  const meta = {
+    codeRevision: null,
+    workingDiffHash: null,
+    readConnection: () => {
+      throw new Error("no connection is read without --live");
+    },
+  };
+
+  it("takes an answer that is not JSON as unparsed", () => {
+    expect(wikiCuratorOutcome("not json")).toEqual({ kind: "unparsed" });
+  });
+
+  it("keeps no operation from a proposal that says it is not worth keeping", () => {
+    const answer = JSON.stringify({ worth: false, reason: "small talk", changes: [] });
+    expect(wikiCuratorOutcome(answer)).toEqual({ kind: "proposal", ops: [] });
+  });
+
+  it("writes a not-run report and calls no model without --live", async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "wiki-curator-eval-"));
+    const output = path.join(dir, "report.json");
+    try {
+      await expect(
+        runWikiCuratorSuite(
+          { trials: "1", "timeout-ms": "5000", "spend-cap-usd": "1", output },
+          meta,
+        ),
+      ).rejects.toThrow("--live");
+      const report = JSON.parse(readFileSync(output, "utf8"));
+      expect(report).toMatchObject({
+        kind: "wiki-curator-eval",
+        rubricVersion: WIKI_CURATOR_RUBRIC_VERSION,
+        status: "not-run",
+        subjectCostUsd: null,
+        judgeCostUsd: null,
+      });
+      expect(report.results.every((r: { status: string }) => r.status === "not-run")).toBe(true);
+      expect(report.results).toHaveLength(WIKI_CURATOR_CASES.length);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("lists every case id", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    try {
+      await runWikiCuratorSuite({ list: true }, meta);
+      const printed = log.mock.calls.map((call) => String(call[0]));
+      for (const c of WIKI_CURATOR_CASES)
+        expect(printed.some((line) => line.startsWith(`${c.id}:`))).toBe(true);
+    } finally {
+      log.mockRestore();
+    }
   });
 });

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { normalizeRunError } from "@corvo/core";
+import { describeModelProblem } from "@corvo/core";
 import * as Clipboard from "expo-clipboard";
 import type { ReactNode } from "react";
 import { act, createElement } from "react";
@@ -127,7 +127,7 @@ describe("run error recovery", () => {
     "This model's context window is too small. Choose another model.",
     "The model hit its output limit before finishing its reply.",
   ])("offers model recovery without suggesting a key failure for %s", (details) => {
-    const label = runErrorActionLabel((key) => key, normalizeRunError(details));
+    const label = runErrorActionLabel((key) => key, describeModelProblem({ details }).action);
     expect(label).toBe("Change model");
     const node = mount(
       createElement(RunErrorSheet, {
@@ -139,6 +139,44 @@ describe("run error recovery", () => {
     expect(node.textContent).toContain("Change model");
     expect(node.textContent).not.toContain("Replace key");
     expect(node.textContent).not.toContain("your key or a shared key");
+  });
+  it("shows Sign in again and Try again for an OAuth failure, and masks the key in the details", () => {
+    const body = '401: {"message":"Bearer sk-test-0000000000 invalid"}';
+    const onRetry = vi.fn();
+    const node = mount(
+      createElement(RunErrorSheet, {
+        details: body,
+        authKind: "oauth",
+        onClose: vi.fn(),
+        onRetry,
+        action: { label: "Sign in again", onPress: vi.fn() },
+      }),
+    );
+    expect(node.textContent).toContain("sign-in is no longer valid");
+    expect(node.textContent).toContain("Sign in again");
+    act(() => {
+      Array.from(node.querySelectorAll("button"))
+        .find((button) => button.textContent === "Try again")
+        ?.click();
+    });
+    expect(onRetry).toHaveBeenCalledOnce();
+    act(() => {
+      Array.from(node.querySelectorAll("button"))
+        .find((button) => button.textContent === "Technical details")
+        ?.click();
+    });
+    expect(node.textContent).toContain("Bearer redacted");
+    expect(node.textContent).not.toContain("sk-test");
+  });
+  it("does not offer Try again for a context-length error", () => {
+    const node = mount(
+      createElement(RunErrorSheet, {
+        details: '400: {"error":{"code":"context_length_exceeded","message":"too long"}}',
+        onClose: vi.fn(),
+        onRetry: vi.fn(),
+      }),
+    );
+    expect(node.textContent).not.toContain("Try again");
   });
   it("omits the reset field after its date passes while the sheet remains open", () => {
     vi.useFakeTimers();
@@ -174,7 +212,7 @@ describe("inline error card", () => {
     const onDetails = vi.fn();
     function Notice() {
       const error = useRunError(details, false);
-      const actionLabel = error ? runErrorActionLabel((key) => key, error) : null;
+      const actionLabel = error ? runErrorActionLabel((key) => key, error.problem.action) : null;
       return createElement(ThreadErrorNotice, {
         error: null,
         summary: error?.summary ?? null,

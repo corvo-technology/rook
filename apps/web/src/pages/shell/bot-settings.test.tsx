@@ -16,6 +16,14 @@ vi.mock("../../lib/rpc", () => {
       list: vi.fn(async () => []),
     },
     me: vi.fn(async () => ({})),
+    autoReview: {
+      get: vi.fn(async () => ({
+        mode: "ask",
+        enabled: false,
+        skipApprovals: false,
+        checkerAvailable: false,
+      })),
+    },
   };
   return {
     rpc,
@@ -29,7 +37,8 @@ vi.mock("@lingui/react/macro", () => {
     parts.reduce((text, part, index) => `${text}${index > 0 ? values[index - 1] : ""}${part}`, "");
   return { useLingui: () => ({ t }), Trans: ({ children }: { children: ReactNode }) => children };
 });
-vi.mock("@corvo/ui-web", () => ({
+vi.mock("@corvo/ui-web", async () => ({
+  ...(await import("../../test-support/ui-web-choice-doubles")).choiceDoubles,
   Button: ({
     variant: _variant,
     size: _size,

@@ -399,6 +399,14 @@ msgstr "La connexion à {provider} n'est plus valide."
 msgid "{provider} took too long to respond. Try again."
 msgstr "{provider} a mis trop de temps à répondre. Réessayez."
 
+#: src/pages/board/BoardLanes.tsx
+msgid "{ref} is over {lane}."
+msgstr "{ref} est au-dessus de {lane}."
+
+#: src/pages/board/BoardLanes.tsx
+msgid "{ref} stays in {lane}."
+msgstr "{ref} reste dans {lane}."
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "{remaining} left"
 msgstr "{remaining} restant"
@@ -617,6 +625,10 @@ msgstr "Ajoutez une commande stdio."
 #: src/pages/Workflows.tsx
 msgid "Add a step here"
 msgstr "Ajouter une étape ici"
+
+#: src/pages/board/BoardLanes.tsx
+msgid "Add a ticket to {lane}"
+msgstr "Ajouter un ticket à {lane}"
 
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/use-routine-editor.ts
@@ -4302,6 +4314,10 @@ msgstr "Déplacer vers"
 msgid "Move up"
 msgstr "Monter"
 
+#: src/pages/board/BoardLanes.tsx
+msgid "Moved {ref} to {lane}."
+msgstr "{ref} déplacé vers {lane}."
+
 #: src/components/call/CallCard.tsx
 msgid "Mute"
 msgstr "Couper le micro"
@@ -4365,6 +4381,7 @@ msgstr "Nécessite une saisie"
 msgid "Needs takeover"
 msgstr "Nécessite une intervention"
 
+#: src/components/AskCard.tsx
 #: src/lib/roster-status.ts
 #: src/pages/shell/computer-overlay.tsx
 msgid "Needs you"
@@ -4991,6 +5008,10 @@ msgstr "Choisissez un modèle dans la liste ou saisissez un identifiant de modè
 msgid "Pick a tool to check"
 msgstr "Choisissez un outil à vérifier"
 
+#: src/pages/board/BoardLanes.tsx
+msgid "Picked up {ref}."
+msgstr "{ref} pris."
+
 #: src/pages/BotContextMenu.tsx
 msgid "Pin"
 msgstr "Épingler"
@@ -5022,6 +5043,10 @@ msgstr "POST vers"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Preferences"
 msgstr "Préférences"
+
+#: src/pages/board/BoardLanes.tsx
+msgid "Press space to pick up a ticket, the arrow keys to choose a column, and space again to drop it."
+msgstr "Appuyez sur espace pour prendre un ticket, sur les flèches pour choisir une colonne, puis sur espace pour le déposer."
 
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx

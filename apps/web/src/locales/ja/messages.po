@@ -399,6 +399,14 @@ msgstr "{provider}のログインは無効になりました。"
 msgid "{provider} took too long to respond. Try again."
 msgstr "{provider}の応答に時間がかかりすぎました。もう一度お試しください。"
 
+#: src/pages/board/BoardLanes.tsx
+msgid "{ref} is over {lane}."
+msgstr "{ref} は {lane} の上にあります。"
+
+#: src/pages/board/BoardLanes.tsx
+msgid "{ref} stays in {lane}."
+msgstr "{ref} は {lane} のままです。"
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "{remaining} left"
 msgstr "残り{remaining}"
@@ -617,6 +625,10 @@ msgstr "stdioコマンドを追加してください。"
 #: src/pages/Workflows.tsx
 msgid "Add a step here"
 msgstr "ここにステップを追加"
+
+#: src/pages/board/BoardLanes.tsx
+msgid "Add a ticket to {lane}"
+msgstr "{lane} にチケットを追加"
 
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/use-routine-editor.ts
@@ -4302,6 +4314,10 @@ msgstr "移動先"
 msgid "Move up"
 msgstr "上へ移動"
 
+#: src/pages/board/BoardLanes.tsx
+msgid "Moved {ref} to {lane}."
+msgstr "{ref} を {lane} に移動しました。"
+
 #: src/components/call/CallCard.tsx
 msgid "Mute"
 msgstr "ミュート"
@@ -4365,6 +4381,7 @@ msgstr "入力が必要"
 msgid "Needs takeover"
 msgstr "引き継ぎが必要"
 
+#: src/components/AskCard.tsx
 #: src/lib/roster-status.ts
 #: src/pages/shell/computer-overlay.tsx
 msgid "Needs you"
@@ -4991,6 +5008,10 @@ msgstr "一覧からモデルを選択するか、このエンドポイントで
 msgid "Pick a tool to check"
 msgstr "確認するツールを選択"
 
+#: src/pages/board/BoardLanes.tsx
+msgid "Picked up {ref}."
+msgstr "{ref} を持ち上げました。"
+
 #: src/pages/BotContextMenu.tsx
 msgid "Pin"
 msgstr "ピン留め"
@@ -5022,6 +5043,10 @@ msgstr "POST先"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Preferences"
 msgstr "環境設定"
+
+#: src/pages/board/BoardLanes.tsx
+msgid "Press space to pick up a ticket, the arrow keys to choose a column, and space again to drop it."
+msgstr "スペースキーでチケットを持ち上げ、矢印キーで列を選び、もう一度スペースキーで置きます。"
 
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx

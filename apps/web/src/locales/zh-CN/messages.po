@@ -399,6 +399,14 @@ msgstr "{provider}的登录已失效。"
 msgid "{provider} took too long to respond. Try again."
 msgstr "{provider}响应超时。请重试。"
 
+#: src/pages/board/BoardLanes.tsx
+msgid "{ref} is over {lane}."
+msgstr "{ref} 位于 {lane} 上方。"
+
+#: src/pages/board/BoardLanes.tsx
+msgid "{ref} stays in {lane}."
+msgstr "{ref} 保留在 {lane}。"
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "{remaining} left"
 msgstr "剩余 {remaining}"
@@ -617,6 +625,10 @@ msgstr "请填写 stdio 命令。"
 #: src/pages/Workflows.tsx
 msgid "Add a step here"
 msgstr "在此添加步骤"
+
+#: src/pages/board/BoardLanes.tsx
+msgid "Add a ticket to {lane}"
+msgstr "向 {lane} 添加工单"
 
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/use-routine-editor.ts
@@ -4302,6 +4314,10 @@ msgstr "移动到"
 msgid "Move up"
 msgstr "上移"
 
+#: src/pages/board/BoardLanes.tsx
+msgid "Moved {ref} to {lane}."
+msgstr "已将 {ref} 移至 {lane}。"
+
 #: src/components/call/CallCard.tsx
 msgid "Mute"
 msgstr "静音"
@@ -4365,6 +4381,7 @@ msgstr "需要输入"
 msgid "Needs takeover"
 msgstr "需要接管"
 
+#: src/components/AskCard.tsx
 #: src/lib/roster-status.ts
 #: src/pages/shell/computer-overlay.tsx
 msgid "Needs you"
@@ -4991,6 +5008,10 @@ msgstr "请从列表中选择模型，或输入此端点提供的模型 ID。"
 msgid "Pick a tool to check"
 msgstr "选择要检查的工具"
 
+#: src/pages/board/BoardLanes.tsx
+msgid "Picked up {ref}."
+msgstr "已拿起 {ref}。"
+
 #: src/pages/BotContextMenu.tsx
 msgid "Pin"
 msgstr "置顶"
@@ -5022,6 +5043,10 @@ msgstr "POST 到"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Preferences"
 msgstr "偏好设置"
+
+#: src/pages/board/BoardLanes.tsx
+msgid "Press space to pick up a ticket, the arrow keys to choose a column, and space again to drop it."
+msgstr "按空格键拿起工单，用方向键选择列，再按空格键放下。"
 
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx

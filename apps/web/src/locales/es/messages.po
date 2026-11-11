@@ -399,6 +399,14 @@ msgstr "El inicio de sesión de {provider} ya no es válido."
 msgid "{provider} took too long to respond. Try again."
 msgstr "{provider} tardó demasiado en responder. Vuelve a intentarlo."
 
+#: src/pages/board/BoardLanes.tsx
+msgid "{ref} is over {lane}."
+msgstr "{ref} está sobre {lane}."
+
+#: src/pages/board/BoardLanes.tsx
+msgid "{ref} stays in {lane}."
+msgstr "{ref} se queda en {lane}."
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "{remaining} left"
 msgstr "Quedan {remaining}"
@@ -617,6 +625,10 @@ msgstr "Agrega un comando stdio."
 #: src/pages/Workflows.tsx
 msgid "Add a step here"
 msgstr "Añadir un paso aquí"
+
+#: src/pages/board/BoardLanes.tsx
+msgid "Add a ticket to {lane}"
+msgstr "Añadir un ticket a {lane}"
 
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/use-routine-editor.ts
@@ -4302,6 +4314,10 @@ msgstr "Mover a"
 msgid "Move up"
 msgstr "Subir"
 
+#: src/pages/board/BoardLanes.tsx
+msgid "Moved {ref} to {lane}."
+msgstr "{ref} movido a {lane}."
+
 #: src/components/call/CallCard.tsx
 msgid "Mute"
 msgstr "Silenciar"
@@ -4365,6 +4381,7 @@ msgstr "Necesita entrada"
 msgid "Needs takeover"
 msgstr "Necesita toma de control"
 
+#: src/components/AskCard.tsx
 #: src/lib/roster-status.ts
 #: src/pages/shell/computer-overlay.tsx
 msgid "Needs you"
@@ -4991,6 +5008,10 @@ msgstr "Elige un modelo de la lista o introduce un id de modelo que sirva este e
 msgid "Pick a tool to check"
 msgstr "Elige una herramienta para comprobar"
 
+#: src/pages/board/BoardLanes.tsx
+msgid "Picked up {ref}."
+msgstr "{ref} recogido."
+
 #: src/pages/BotContextMenu.tsx
 msgid "Pin"
 msgstr "Fijar"
@@ -5022,6 +5043,10 @@ msgstr "POST a"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Preferences"
 msgstr "Preferencias"
+
+#: src/pages/board/BoardLanes.tsx
+msgid "Press space to pick up a ticket, the arrow keys to choose a column, and space again to drop it."
+msgstr "Pulsa espacio para coger un ticket, las flechas para elegir una columna y espacio otra vez para soltarlo."
 
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx

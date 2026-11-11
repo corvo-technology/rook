@@ -399,6 +399,14 @@ msgstr "Die Anmeldung bei {provider} ist nicht mehr gültig."
 msgid "{provider} took too long to respond. Try again."
 msgstr "{provider} hat zu lange zum Antworten gebraucht. Versuche es erneut."
 
+#: src/pages/board/BoardLanes.tsx
+msgid "{ref} is over {lane}."
+msgstr "{ref} liegt über {lane}."
+
+#: src/pages/board/BoardLanes.tsx
+msgid "{ref} stays in {lane}."
+msgstr "{ref} bleibt in {lane}."
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "{remaining} left"
 msgstr "Noch {remaining}"
@@ -617,6 +625,10 @@ msgstr "Gib einen stdio-Befehl ein."
 #: src/pages/Workflows.tsx
 msgid "Add a step here"
 msgstr "Hier einen Schritt hinzufügen"
+
+#: src/pages/board/BoardLanes.tsx
+msgid "Add a ticket to {lane}"
+msgstr "Ticket zu {lane} hinzufügen"
 
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/use-routine-editor.ts
@@ -4302,6 +4314,10 @@ msgstr "Verschieben nach"
 msgid "Move up"
 msgstr "Nach oben"
 
+#: src/pages/board/BoardLanes.tsx
+msgid "Moved {ref} to {lane}."
+msgstr "{ref} nach {lane} verschoben."
+
 #: src/components/call/CallCard.tsx
 msgid "Mute"
 msgstr "Stummschalten"
@@ -4365,6 +4381,7 @@ msgstr "Eingabe erforderlich"
 msgid "Needs takeover"
 msgstr "Übernahme erforderlich"
 
+#: src/components/AskCard.tsx
 #: src/lib/roster-status.ts
 #: src/pages/shell/computer-overlay.tsx
 msgid "Needs you"
@@ -4991,6 +5008,10 @@ msgstr "Wähle ein Modell aus der Liste oder gib eine Modell-ID ein, die dieser 
 msgid "Pick a tool to check"
 msgstr "Wähle ein Tool zum Prüfen"
 
+#: src/pages/board/BoardLanes.tsx
+msgid "Picked up {ref}."
+msgstr "{ref} aufgenommen."
+
 #: src/pages/BotContextMenu.tsx
 msgid "Pin"
 msgstr "Anheften"
@@ -5022,6 +5043,10 @@ msgstr "POST an"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Preferences"
 msgstr "Präferenzen"
+
+#: src/pages/board/BoardLanes.tsx
+msgid "Press space to pick up a ticket, the arrow keys to choose a column, and space again to drop it."
+msgstr "Mit der Leertaste ein Ticket aufnehmen, mit den Pfeiltasten eine Spalte wählen und mit der Leertaste erneut ablegen."
 
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx

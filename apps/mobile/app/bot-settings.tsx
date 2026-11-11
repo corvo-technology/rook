@@ -38,6 +38,7 @@ import type { MenuPickerChoice } from "../components/menu-picker";
 import { MenuPicker, MenuPickerMenu } from "../components/menu-picker";
 import { NativeActionButton } from "../components/native-action-button";
 import { NativeSwitch } from "../components/native-switch";
+import { WikiCaptureRow } from "../components/wiki-capture-row";
 import { NativeSymbol } from "../components/native-symbol";
 import { ProfileEditDialog } from "../components/profile-edit-dialog";
 import { Chevron } from "../components/row-accessories";
@@ -645,6 +646,11 @@ export default function BotSettingsScreen() {
             </View>
           </SettingsGroup>
         </View>
+        {botId ? (
+          <View style={{ marginTop: 24 }}>
+            <WikiCaptureRow target={{ botId }} />
+          </View>
+        ) : null}
         {botId ? <BotContextCards key={botId} botId={botId} /> : null}
         <Pressable
           accessibilityRole="button"

@@ -1130,6 +1130,8 @@ export const JA_MESSAGES: Record<string, string> = {
   "Added to the wiki": "Wikiに追加しました",
   Refused: "却下しました",
   Undone: "元に戻しました",
+  "Approve all": "すべて承認",
+  "Learn from this conversation": "この会話から学ぶ",
   "A page changed since": "その後ページが変更されました",
   Refuse: "却下",
   "Keep in the wiki": "Wikiに保存",

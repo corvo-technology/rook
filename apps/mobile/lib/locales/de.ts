@@ -1145,6 +1145,8 @@ export const DE_MESSAGES: Record<string, string> = {
   "Added to the wiki": "Zum Wiki hinzugefügt",
   Refused: "Abgelehnt",
   Undone: "Rückgängig gemacht",
+  "Approve all": "Alle genehmigen",
+  "Learn from this conversation": "Aus diesem Gespräch lernen",
   "A page changed since": "Eine Seite hat sich seitdem geändert",
   Refuse: "Ablehnen",
   "Keep in the wiki": "Im Wiki behalten",

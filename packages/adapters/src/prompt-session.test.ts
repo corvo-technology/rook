@@ -1,5 +1,7 @@
+import type { Message } from "@earendil-works/pi-ai";
 import { describe, expect, it } from "vitest";
 import {
+  assembleTranscript,
   MAX_STALE_LIVE_TOKENS,
   type PromptSessionPlan,
   PromptSessions,
@@ -7,6 +9,7 @@ import {
   type ShownMessage,
   shownMessage,
 } from "./prompt-session.js";
+import { EMPTY_LIVE_CONTEXT } from "./run-instructions.js";
 
 const shown = (...ids: string[]): ShownMessage[] =>
   ids.map((id) => shownMessage({ id, content: `text ${id}` }));
@@ -214,5 +217,77 @@ describe("keys and hashes", () => {
       { modelId: "m2" },
     ])
       expect(promptSessionKey({ ...base, ...change })).not.toBe(promptSessionKey(base));
+  });
+});
+
+describe("assembleTranscript", () => {
+  const user = (id: string, current = false): Message =>
+    ({
+      role: "user",
+      content: id,
+      timestamp: 0,
+      corvoMessageId: id,
+      ...(current ? { corvoCurrentTurn: true } : {}),
+    }) as Message;
+  const contents = (messages: Message[]) => messages.map((message) => message.content);
+
+  it("places replayed blocks and the new block", () => {
+    const plan: PromptSessionPlan = {
+      resume: true,
+      replay: [{ beforeId: "u1", text: "L1" }],
+      sendLive: "changed",
+      owner: true,
+    };
+    const result = assembleTranscript([user("u1"), user("a1"), user("u2", true)], plan, "L2", "u2");
+    expect(contents(result.messages)).toEqual(["L1", "u1", "a1", "L2", "u2"]);
+    expect(result.sent).toEqual({ beforeId: "u2", text: "L2" });
+    expect(result.staleLiveTokens).toBe(1);
+  });
+
+  it("replays without sending again, and sends the empty block when emptied", () => {
+    const replay = [{ beforeId: "u1", text: "L1" }];
+    const history = [user("u1"), user("u2", true)];
+    const same = assembleTranscript(
+      history,
+      { resume: true, replay, sendLive: false, owner: true },
+      "L1",
+      "u2",
+    );
+    expect(contents(same.messages)).toEqual(["L1", "u1", "u2"]);
+    expect(same.sent).toBeUndefined();
+    expect(same.staleLiveTokens).toBe(0);
+    const emptied = assembleTranscript(
+      history,
+      { resume: true, replay, sendLive: "emptied", owner: true },
+      "",
+      "u2",
+    );
+    expect(contents(emptied.messages)).toEqual(["L1", "u1", EMPTY_LIVE_CONTEXT, "u2"]);
+  });
+
+  it("starts fresh with the current block only, and appends it without a current message", () => {
+    const fresh: PromptSessionPlan = { resume: false, reason: "edited", owner: true };
+    expect(contents(assembleTranscript([user("u1", true)], fresh, "L", "u1").messages)).toEqual([
+      "L",
+      "u1",
+    ]);
+    expect(contents(assembleTranscript([user("u1")], fresh, "L", undefined).messages)).toEqual([
+      "u1",
+      "L",
+    ]);
+    expect(contents(assembleTranscript([user("u1")], fresh, "", undefined).messages)).toEqual([
+      "u1",
+    ]);
+  });
+
+  it("throws when a replayed block lost its message", () => {
+    expect(() =>
+      assembleTranscript(
+        [user("u1")],
+        { resume: true, replay: [{ beforeId: "gone", text: "L" }], sendLive: false, owner: true },
+        "L",
+        undefined,
+      ),
+    ).toThrow();
   });
 });

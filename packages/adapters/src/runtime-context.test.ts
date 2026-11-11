@@ -443,6 +443,40 @@ describe("runtime context policy", () => {
       );
     },
   );
+  it("treats the flagged source message as the current request and keeps the latest live block", () => {
+    const { request, context } = fixture(30);
+    const history = context.messages.slice(0, 30);
+    const live = (text: string) =>
+      ({ role: "user", content: text, timestamp: 1, corvoLiveContext: true }) as Message;
+    const current = {
+      role: "user",
+      content: "Current question",
+      timestamp: 2,
+      corvoHistory: true,
+      corvoMessageId: "message-current",
+      corvoCurrentTurn: true,
+    } as Message;
+    const note = { role: "user", content: "Turn note", timestamp: 3 } as Message;
+    const old = live("Old live block");
+    const latest = live("Latest live block");
+    const messages = [old, ...history, latest, current, note];
+    request.history.push({
+      id: "message-current",
+      role: "user",
+      content: "Current question",
+    });
+    const prepared = createRuntimeContextPolicy({
+      ...request,
+      contextStrategy: "retrieval",
+    }).prepareContext({ ...context, messages }, model);
+    const at = (message: Message) => prepared.messages.indexOf(message);
+    expect(at(latest)).toBeGreaterThan(-1);
+    expect(at(current)).toBe(at(latest) + 1);
+    expect(at(note)).toBe(at(current) + 1);
+    // Old history is bounded, and the superseded block goes with it.
+    expect(prepared.messages.length).toBeLessThan(messages.length);
+    expect(at(old)).toBe(-1);
+  });
   it("retains current request and subsequent steering while bounding old history", () => {
     const { request, context } = fixture();
     context.messages.push({ role: "user", content: "New constraint", timestamp: 200 });

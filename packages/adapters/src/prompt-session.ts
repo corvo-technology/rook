@@ -1,4 +1,6 @@
 import { createHash } from "node:crypto";
+import type { Message } from "@earendil-works/pi-ai";
+import { EMPTY_LIVE_CONTEXT } from "./run-instructions.js";
 
 export interface ShownMessage {
   id: string;
@@ -167,4 +169,58 @@ export class PromptSessions {
       this.records.delete(oldest);
     }
   }
+}
+
+interface TranscriptMetadata {
+  corvoMessageId?: string;
+  corvoCurrentTurn?: true;
+  corvoLiveContext?: true;
+}
+
+const liveBlock = (text: string): Message =>
+  ({
+    role: "user",
+    content: text,
+    timestamp: 0,
+    corvoLiveContext: true,
+  }) as Message;
+
+/**
+ * Places live context in the history: replayed blocks before the message each was first sent
+ * with, then the block for this turn right before the current user message (or at the end of
+ * the history when there is none). A fresh start drops every earlier block.
+ */
+export function assembleTranscript(
+  history: Message[],
+  plan: PromptSessionPlan,
+  live: string,
+  beforeId: string | undefined,
+): { messages: Message[]; sent?: LiveBlock; staleLiveTokens: number } {
+  const replay = plan.resume ? plan.replay : [];
+  const sendLive = plan.resume ? plan.sendLive : live ? "changed" : false;
+  const newText = sendLive === "emptied" ? EMPTY_LIVE_CONTEXT : sendLive ? live : undefined;
+  const messages: Message[] = [];
+  const pending = new Map(replay.map((block) => [block.beforeId, block]));
+  const currentIndex = history.findIndex(
+    (message) => (message as Message & TranscriptMetadata).corvoCurrentTurn,
+  );
+  history.forEach((message, index) => {
+    const id = (message as Message & TranscriptMetadata).corvoMessageId;
+    const block = id ? pending.get(id) : undefined;
+    if (block) {
+      messages.push(liveBlock(block.text));
+      pending.delete(id!);
+    }
+    if (newText !== undefined && index === currentIndex) messages.push(liveBlock(newText));
+    messages.push(message);
+  });
+  if (pending.size > 0) throw new Error("A replayed live context block lost its message");
+  if (newText !== undefined && currentIndex < 0) messages.push(liveBlock(newText));
+  // The latest block still applies; every other one is only dead weight in the prefix.
+  const superseded = newText !== undefined ? replay : replay.slice(0, -1);
+  return {
+    messages,
+    ...(newText !== undefined && beforeId ? { sent: { beforeId, text: newText } } : {}),
+    staleLiveTokens: superseded.reduce((sum, block) => sum + Math.ceil(block.text.length / 4), 0),
+  };
 }

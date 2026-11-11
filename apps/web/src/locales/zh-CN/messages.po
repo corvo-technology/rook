@@ -582,6 +582,10 @@ msgstr "添加通行密钥以更快登录？"
 msgid "Add a run time for this one-shot."
 msgstr "为此一次性任务添加运行时间。"
 
+#: src/components/MissionList.tsx
+msgid "Add a second agent"
+msgstr "添加第二个智能体"
+
 #: src/pages/McpServersOverlay.tsx
 msgid "Add a server name."
 msgstr "请填写服务器名称。"
@@ -882,6 +886,10 @@ msgstr "回答"
 msgctxt "incoming call"
 msgid "Answer"
 msgstr "回答"
+
+#: src/components/MissionList.tsx
+msgid "Answer a request"
+msgstr "回答一个请求"
 
 #: src/pages/shell/message-view.tsx
 msgid "answered"
@@ -1780,6 +1788,10 @@ msgstr "连接模型"
 #: src/lib/run-error.ts
 msgid "Connect a model in Settings before running bots."
 msgstr "运行机器人前，请先在设置中连接模型。"
+
+#: src/components/MissionList.tsx
+msgid "Connect an app"
+msgstr "连接一个应用"
 
 #: src/pages/model-settings/connection-controls.tsx
 msgid "Connect API key"
@@ -3620,6 +3632,10 @@ msgstr "跳转到回复的消息：{excerpt}"
 msgid "just now"
 msgstr "刚刚"
 
+#: src/components/MissionList.tsx
+msgid "Keep a memory"
+msgstr "保存一段记忆"
+
 #: src/pages/shell/message-hover-actions.tsx
 msgid "Keep in the wiki"
 msgstr "保留到 Wiki"
@@ -4058,6 +4074,10 @@ msgstr "分钟"
 msgid "Missed call"
 msgstr "未接来电"
 
+#: src/components/MissionList.tsx
+msgid "Missions"
+msgstr "任务"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Mode"
 msgstr "模式"
@@ -4247,6 +4267,7 @@ msgstr "需要：{names}"
 msgid "Never ask"
 msgstr "从不询问"
 
+#: src/components/NewDot.tsx
 #: src/pages/shell/chat-context.tsx
 msgid "New"
 msgstr "新消息"
@@ -5558,6 +5579,10 @@ msgstr "正在保存…"
 msgid "Say yes or no, or answer in a sentence."
 msgstr "回答是或否，或一句话说明。"
 
+#: src/components/MissionList.tsx
+msgid "Schedule a routine"
+msgstr "安排一个例行任务"
+
 #: src/components/ModelCredits.tsx
 msgid "Scheduled routines"
 msgstr "已计划的例行任务"
@@ -5759,6 +5784,10 @@ msgstr "显示机器人"
 #: src/pages/shell/side-panel.tsx
 msgid "Show computer"
 msgstr "显示电脑"
+
+#: src/components/MissionList.tsx
+msgid "Show everything"
+msgstr "显示全部"
 
 #: src/pages/Artifacts.tsx
 msgid "Show list"
@@ -6135,6 +6164,10 @@ msgstr "表格"
 #: src/pages/shell/computer-overlay.tsx
 msgid "Take control"
 msgstr "接管控制权"
+
+#: src/components/MissionList.tsx
+msgid "Talk to your agent"
+msgstr "与你的智能体对话"
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Teach a task"

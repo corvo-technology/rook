@@ -582,6 +582,10 @@ msgstr "Add a passkey for faster sign-in?"
 msgid "Add a run time for this one-shot."
 msgstr "Add a run time for this one-shot."
 
+#: src/components/MissionList.tsx
+msgid "Add a second agent"
+msgstr "Add a second agent"
+
 #: src/pages/McpServersOverlay.tsx
 msgid "Add a server name."
 msgstr "Add a server name."
@@ -882,6 +886,10 @@ msgstr "Answer"
 msgctxt "incoming call"
 msgid "Answer"
 msgstr "Answer"
+
+#: src/components/MissionList.tsx
+msgid "Answer a request"
+msgstr "Answer a request"
 
 #: src/pages/shell/message-view.tsx
 msgid "answered"
@@ -1780,6 +1788,10 @@ msgstr "Connect a model"
 #: src/lib/run-error.ts
 msgid "Connect a model in Settings before running bots."
 msgstr "Connect a model in Settings before running bots."
+
+#: src/components/MissionList.tsx
+msgid "Connect an app"
+msgstr "Connect an app"
 
 #: src/pages/model-settings/connection-controls.tsx
 msgid "Connect API key"
@@ -3620,6 +3632,10 @@ msgstr "Jump to replied message: {excerpt}"
 msgid "just now"
 msgstr "just now"
 
+#: src/components/MissionList.tsx
+msgid "Keep a memory"
+msgstr "Keep a memory"
+
 #: src/pages/shell/message-hover-actions.tsx
 msgid "Keep in the wiki"
 msgstr "Keep in the wiki"
@@ -4058,6 +4074,10 @@ msgstr "minutes"
 msgid "Missed call"
 msgstr "Missed call"
 
+#: src/components/MissionList.tsx
+msgid "Missions"
+msgstr "Missions"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Mode"
 msgstr "Mode"
@@ -4247,6 +4267,7 @@ msgstr "Needs: {names}"
 msgid "Never ask"
 msgstr "Never ask"
 
+#: src/components/NewDot.tsx
 #: src/pages/shell/chat-context.tsx
 msgid "New"
 msgstr "New"
@@ -5558,6 +5579,10 @@ msgstr "Saving…"
 msgid "Say yes or no, or answer in a sentence."
 msgstr "Say yes or no, or answer in a sentence."
 
+#: src/components/MissionList.tsx
+msgid "Schedule a routine"
+msgstr "Schedule a routine"
+
 #: src/components/ModelCredits.tsx
 msgid "Scheduled routines"
 msgstr "Scheduled routines"
@@ -5759,6 +5784,10 @@ msgstr "Show bots"
 #: src/pages/shell/side-panel.tsx
 msgid "Show computer"
 msgstr "Show computer"
+
+#: src/components/MissionList.tsx
+msgid "Show everything"
+msgstr "Show everything"
 
 #: src/pages/Artifacts.tsx
 msgid "Show list"
@@ -6135,6 +6164,10 @@ msgstr "Table"
 #: src/pages/shell/computer-overlay.tsx
 msgid "Take control"
 msgstr "Take control"
+
+#: src/components/MissionList.tsx
+msgid "Talk to your agent"
+msgstr "Talk to your agent"
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Teach a task"

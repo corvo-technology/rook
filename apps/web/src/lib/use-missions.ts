@@ -84,6 +84,7 @@ export function useMissions() {
     [isNew, queryClient, key, seen],
   );
   const showAll = useCallback(() => {
+    if (showAllMutation.isPending) return;
     showAllMutation.mutate(undefined, {
       onSuccess: () => {
         void queryClient.invalidateQueries({ queryKey: key });

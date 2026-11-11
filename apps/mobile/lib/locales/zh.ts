@@ -1101,4 +1101,5 @@ export const ZH_MESSAGES: Record<string, string> = {
   Refuse: "拒绝",
   "Keep in the wiki": "保留到 Wiki",
   "Could not load pages": "无法加载页面",
+  "{position} of {total}": "第 {position} 项，共 {total} 项",
 };

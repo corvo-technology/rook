@@ -1149,4 +1149,5 @@ export const DE_MESSAGES: Record<string, string> = {
   Refuse: "Ablehnen",
   "Keep in the wiki": "Im Wiki behalten",
   "Could not load pages": "Seiten konnten nicht geladen werden",
+  "{position} of {total}": "{position} von {total}",
 };

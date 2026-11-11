@@ -72,6 +72,7 @@ export * from "./peer-history.js";
 export * from "./peer-messages.js";
 export * from "./product-analytics.js";
 export * from "./prompt-data.js";
+export * from "./proposal-steps.js";
 export * from "./refresh-coalescer.js";
 export * from "./remote-images.js";
 export * from "./response-bytes.js";

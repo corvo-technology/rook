@@ -6,6 +6,7 @@ import {
   isPeerReceiptBlocks,
   isSecretAskBlock,
   isToolActivityBlock,
+  proposalSteps,
 } from "@corvo/core";
 import { BotAvatar, Button, cn, resolvePersonaColorDef } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
@@ -95,6 +96,7 @@ export const MessageView = memo(function MessageView({
     text: string,
     username?: string,
     dismiss?: boolean,
+    approvalEffectId?: string,
   ) => Promise<void>;
   onOpenBot: (botId: string) => void;
   onOpenPeerMessages: (peer: { peerBotId: string; peerBotName: string }) => void;
@@ -159,6 +161,9 @@ export const MessageView = memo(function MessageView({
     [message.blocks, mentions],
   );
   const visibleNarrationBlocks = renderableMessageBlocks(blocks, showToolActivity);
+  // Several proposals from one reply are decided one at a time.
+  const steps = proposalSteps(blocks);
+  const { position, total } = steps;
   const renderMention = (id: string) => {
     const block = mentions?.find((bot) => bot.botId === id);
     return block ? (
@@ -597,16 +602,27 @@ export const MessageView = memo(function MessageView({
             );
           }
           if (block.kind === "ask") {
+            const stepped = steps.total > 1 && block.proposal === true;
+            if (stepped && block.status !== "answered" && i !== steps.current) return null;
             return (
               <div
                 key={i}
                 className={`relative w-full min-w-0 ${isSecretAskBlock(block) ? "" : "max-w-xl"}`}
               >
+                {stepped && i === steps.current ? (
+                  <p className="mb-1.5 text-[13px] text-muted-foreground">
+                    <Trans>
+                      {position} of {total}
+                    </Trans>
+                  </p>
+                ) : null}
                 <AskCard
                   block={block}
                   canAnswer={canAnswer}
                   canDismiss={canDismiss}
-                  onAnswer={(text, username) => onAnswer(message, text, username)}
+                  onAnswer={(text, username, approvalEffectId) =>
+                    onAnswer(message, text, username, undefined, approvalEffectId)
+                  }
                   onDismiss={() => onAnswer(message, "", undefined, true)}
                 />
                 {i === hoverAnchorIndex ? hoverActions : null}

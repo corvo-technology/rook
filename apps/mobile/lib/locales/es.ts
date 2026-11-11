@@ -1093,4 +1093,5 @@ export const ES_MESSAGES: Record<string, string> = {
   Refuse: "Rechazar",
   "Keep in the wiki": "Guardar en la wiki",
   "Could not load pages": "No se pudieron cargar las páginas",
+  "{position} of {total}": "{position} de {total}",
 };

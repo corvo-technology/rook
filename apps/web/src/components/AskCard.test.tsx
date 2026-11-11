@@ -272,9 +272,26 @@ it("sizes approval buttons like the other card buttons", async () => {
     ],
   });
   for (const label of ["Allow once", "Deny"]) {
-    expect(button(label)?.classList.contains("min-h-8")).toBe(true);
+    expect(button(label)?.classList.contains("min-h-9")).toBe(true);
+    expect(button(label)?.classList.contains("rounded-full")).toBe(true);
     expect(button(label)?.classList.contains("py-3")).toBe(false);
   }
+});
+
+it("labels a pending approval as waiting for the person, and not once answered", async () => {
+  const block = {
+    kind: "ask" as const,
+    approvalEffectId: "effect-1",
+    text: "Send it?",
+    actions: [
+      { id: "allow", label: "Allow once" },
+      { id: "deny", label: "Deny" },
+    ],
+  };
+  await render({ ...block, status: "pending" });
+  expect(container.textContent).toContain("Needs you");
+  await render({ ...block, status: "answered", answer: "allow" });
+  expect(container.textContent).not.toContain("Needs you");
 });
 
 it("gives onboarding choices the same lettered rows as questions", async () => {

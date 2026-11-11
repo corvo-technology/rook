@@ -245,8 +245,13 @@ export function AskCard({
             ? "instruction-approval-card"
             : undefined
       }
-      className="w-full min-w-0 max-w-xl px-5 py-4"
+      className="w-full min-w-0 max-w-xl rounded-3xl border border-border px-5 py-4"
     >
+      {approvalActions && !answered && canAnswer && !ownerOnly ? (
+        <div className="mb-1 text-[13px] text-success">
+          <Trans>Needs you</Trans>
+        </div>
+      ) : null}
       <div className="text-[15.5px] leading-[1.5] text-foreground">
         {block.instructionUpdate ? (
           <Trans>Update instructions?</Trans>
@@ -354,7 +359,7 @@ export function AskCard({
               key={action.id}
               variant={action.id === "allow" ? "default" : "outline"}
               // Wraps long site names like the other cards' buttons.
-              className="h-auto min-h-8 min-w-0 whitespace-normal py-1 text-start"
+              className="h-auto min-h-9 min-w-0 whitespace-normal rounded-full px-5 py-1.5 text-start"
               disabled={submitting}
               onClick={() =>
                 action.id === "edit" && block.instructionUpdate

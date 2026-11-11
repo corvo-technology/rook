@@ -420,6 +420,18 @@ describe("group routing metadata", () => {
     expect(directory.split("</bot_groups>")).toHaveLength(2);
   });
 
+  it("sends team work into the group, one handoff per member, and keeps message_bot for one-to-one asks", () => {
+    const directory = renderBotGroupDirectory(
+      [{ id: "g_1", name: "Sales", members: [{ id: "b_1", name: "Ana" }] }],
+      { routing: true },
+    )!;
+    expect(directory).toContain("message_bot for a genuine one-to-one ask");
+    expect(directory).toContain(
+      "not to its members' direct chats: call handoff_to_bot with the group_id and a member's bot_id, once per member who should act",
+    );
+    expect(directory).toContain("or the group the user names");
+  });
+
   it("shows a squad's purpose, escaped, and keeps the old line when there is none", () => {
     const directory = renderBotGroupDirectory([
       {

@@ -244,6 +244,9 @@ function fleetClause(offered: readonly string[] | undefined): string | undefined
     names.has("install_agent")
       ? "store_agents lists the ready-made agents the owner can add from the Store; call it before suggesting one, and call install_agent only after the owner said yes in this chat."
       : undefined,
+    names.has("create_group")
+      ? "When the owner asks a team to do something, put the request in the team's group with handoff_to_bot (create_group returns the group_id), one call per member who should act, never in each member's direct chat; the replies and hand-offs then happen in the group."
+      : undefined,
     names.has("set_child_instructions")
       ? "Instruction edits use set_child_instructions with expected_version from list_fleet; the owner sees the whole new text on the card, and you get one instruction edit per bot per run."
       : undefined,

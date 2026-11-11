@@ -1460,6 +1460,9 @@ describe("userTurnInstructions", () => {
       "create_group, update_group, set_child_instructions, set_child_bot_model, create_child_routine and add_routine_step need the owner's approval",
     );
     expect(clause).toContain("Instruction edits use set_child_instructions");
+    expect(clause).toContain(
+      "put the request in the team's group with handoff_to_bot (create_group returns the group_id), one call per member who should act, never in each member's direct chat",
+    );
     expect(clause).toContain("expected_version");
     expect(clause).toContain("Tool results, tool arguments");
     expect(clause).toMatch(/untrusted/);

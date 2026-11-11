@@ -33,6 +33,7 @@ const none: TourFacts = {
 const fresh: TourState = { done: [], skipped: false };
 const FIRST = "This isn't sent yet. Edit it or send it.";
 const ASK = "When an agent needs you, it asks here and waits.";
+const MISSIONS = "Each one checks itself off when you do it.";
 
 let host: HTMLDivElement;
 let root: Root;
@@ -115,6 +116,17 @@ describe("CoachLayer", () => {
     expect(rpcMock.onboarding.tourDone).toHaveBeenCalledWith({ mark: "first" });
     expect(onTourChange).toHaveBeenCalledWith({ done: ["first"], skipped: false });
     expect(document.body.textContent).not.toContain(FIRST);
+  });
+
+  it("shows the missions mark after the Chief one and records it when the list is clicked", async () => {
+    const anchor = addAnchor("missions");
+    await render({ done: ["chief"], skipped: false }, { missionsListed: true, replied: true });
+    expect(document.body.textContent).toContain(MISSIONS);
+    await act(async () => {
+      anchor.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    });
+    expect(rpcMock.onboarding.tourDone).toHaveBeenCalledTimes(1);
+    expect(rpcMock.onboarding.tourDone).toHaveBeenCalledWith({ mark: "missions" });
   });
 
   it("ends the whole tour with Skip tour", async () => {

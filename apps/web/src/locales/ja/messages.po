@@ -2983,6 +2983,10 @@ msgstr "複製"
 msgid "Each name can be used once."
 msgstr "各名前は一度だけ使用できます。"
 
+#: src/components/CoachLayer.tsx
+msgid "Each one checks itself off when you do it."
+msgstr "それぞれ、実行すると自動でチェックされます。"
+
 #: src/components/AskCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/McpServersOverlay.tsx

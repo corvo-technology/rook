@@ -2983,6 +2983,10 @@ msgstr "Duplicar"
 msgid "Each name can be used once."
 msgstr "Cada nome só pode ser usado uma vez."
 
+#: src/components/CoachLayer.tsx
+msgid "Each one checks itself off when you do it."
+msgstr "Cada uma é marcada sozinha quando você a faz."
+
 #: src/components/AskCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/McpServersOverlay.tsx

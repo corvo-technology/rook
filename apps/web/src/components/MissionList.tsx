@@ -35,7 +35,7 @@ export function MissionList({
   };
   return (
     <div className="flex flex-col gap-1 px-3 pb-2">
-      <ol aria-label={t`Missions`} className="flex flex-col">
+      <ol aria-label={t`Missions`} data-coach="missions" className="flex flex-col">
         {MISSIONS.map(({ id }) => {
           const done = view.completed.includes(id);
           const to = DESTINATION[id];

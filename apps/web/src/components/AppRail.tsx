@@ -1,9 +1,9 @@
 import type { AppBootstrap, NavLink as AppNavLink, NavPart } from "@corvo/contracts";
+import { RookGlyph } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { skipToken, useQuery } from "@tanstack/react-query";
 import {
   BookOpen,
-  Bot,
   Brain,
   CalendarClock,
   FolderOpen,
@@ -28,6 +28,11 @@ import { NewDot } from "./NewDot";
 import type { RailMoreItem } from "./RailMore";
 import { RailMore } from "./RailMore";
 import { SubscriptionRailRings } from "./SubscriptionRings";
+
+/** Agents wear the rook itself, in ink, so the bots read as part of the navigation. */
+function AgentsGlyph({ className }: { className?: string }) {
+  return <RookGlyph size={20} className={className} />;
+}
 
 /** An area with its name under the icon: people who are new to the app should not have to hover to learn it. */
 const RAIL_ITEM =
@@ -63,7 +68,7 @@ export function AppRail({ ticketBoardEnabled }: { ticketBoardEnabled: boolean })
     to: string;
     Icon: ComponentType<{ className?: string }>;
   }> = [
-    { section: "agents", label: t`Agents`, to: "/app", Icon: Bot },
+    { section: "agents", label: t`Agents`, to: "/app", Icon: AgentsGlyph },
     // The board is optional: it has a place only where the deployment turns it on.
     ...(ticketBoardEnabled
       ? [{ section: "board" as const, label: t`Board`, to: "/app/board", Icon: KanbanSquare }]

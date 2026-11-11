@@ -1,4 +1,4 @@
-import { cn } from "@corvo/ui-web";
+import { cn, RookGlyph } from "@corvo/ui-web";
 import { useEffect, useState } from "react";
 import "./beautiful-ui.css";
 
@@ -16,13 +16,6 @@ export function Shimmer({ children }: { children: React.ReactNode }) {
     </span>
   );
 }
-
-// Chevron wavefront: each 3×3 cell fires by column distance from the center row.
-const CHEVRON_DELAYS = Array.from({ length: 9 }, (_, i) => {
-  const row = Math.floor(i / 3);
-  const column = i % 3;
-  return (column + Math.abs(row - 1)) * 90;
-});
 
 /** Format wall-clock seconds since `startedAtMs` as `0.0s` / `1m 2.3s`. */
 export function formatElapsed(startedAtMs: number, nowMs: number): string {
@@ -43,23 +36,13 @@ function useElapsed(startedAtMs?: number): string {
   return formatElapsed(startedAtMs ?? mountedAt, now);
 }
 
-/** Pixel-grid loader with shimmering label and live elapsed timer. */
+/** The thinking rook with its label and a live elapsed timer. */
 function DefaultLoadingState({ label, startedAt }: { label: string; startedAt?: number }) {
   const elapsed = useElapsed(startedAt);
   return (
     <>
-      <span aria-hidden className="grid grid-cols-[repeat(3,4px)] gap-[1.5px]">
-        {CHEVRON_DELAYS.map((delay, i) => (
-          <span
-            key={i}
-            className="h-[4px] w-[4px] rounded-[1px] bg-foreground opacity-15"
-            style={{ animation: `bui-pixel-on 650ms ease-in-out ${delay}ms infinite` }}
-          />
-        ))}
-      </span>
-      <span className="text-[13.5px] font-medium">
-        <Shimmer>{label}</Shimmer>
-      </span>
+      <RookGlyph state="thinking" size={18} className="text-foreground" />
+      <span className="text-[13.5px] font-medium text-muted-foreground">{label}</span>
       <span className="font-mono text-[12px] tabular-nums text-muted-foreground">{elapsed}</span>
     </>
   );

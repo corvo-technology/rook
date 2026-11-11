@@ -127,6 +127,17 @@ describe("QuickKeyConnect", () => {
     expect(submit().disabled).toBe(false);
   });
 
+  it("does not save a key when the provider fails for an unrecognized reason", async () => {
+    rpcMock.models.probeCatalog.mockRejectedValue(new Error(""));
+    await render();
+    await paste("sk-or-v1-abcdef123456");
+    await act(async () => submit().click());
+    expect(rpcMock.models.connect).not.toHaveBeenCalled();
+    expect(text()).toContain("Could not reach this model server");
+    const labels = [...container.querySelectorAll("button")].map((item) => item.textContent);
+    expect(labels).toContain("Try again");
+  });
+
   it("offers Replace key and Try again when saving fails with a rejected key", async () => {
     rpcMock.models.connect.mockRejectedValueOnce(rejected(401, "invalid api key"));
     await render();

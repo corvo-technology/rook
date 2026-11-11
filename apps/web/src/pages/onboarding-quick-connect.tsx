@@ -62,13 +62,9 @@ export function QuickKeyConnect({
       catalogProbe: true,
       probeCatalog: rpc.models.probeCatalog,
     });
-    // A provider that cannot be listed in advance, or whose failure says nothing, is verified
-    // by saving, as in the full form.
-    if (
-      !checked.ok &&
-      checked.failure.outcome !== "unknown" &&
-      !(checked.failure.outcome === "provider" && checked.failure.problem.kind === "other")
-    ) {
+    // A provider that cannot be listed in advance is verified by saving, as in the full form.
+    // Any failure the provider itself reports blocks, so a key that did not check is never saved.
+    if (!checked.ok && checked.failure.outcome !== "unknown") {
       if (checked.failure.outcome === "provider") setProblem(checked.failure.problem);
       else setError(`${checked.failure.message} ${checked.failure.nextAction}`);
       setPending(false);

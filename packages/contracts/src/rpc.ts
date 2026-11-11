@@ -530,6 +530,8 @@ export const appContract = {
       )
       .output(z.object({ ok: z.literal(true), runIds: z.array(Id).optional() })),
     stop: oc.input(threadTarget).output(z.object({ ok: z.literal(true) })),
+    /** Runs a failed chat run's message again. It posts no message of its own. */
+    retry: oc.input(threadTarget.safeExtend({ runId: Id })).output(z.object({ runId: Id })),
     followUp: oc
       .input(
         threadTarget.safeExtend({

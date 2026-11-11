@@ -85,3 +85,13 @@ export function reviewBeforeSummary(text: string): string | undefined {
   const words = summary.replaceAll("_", " ").trim().toLowerCase();
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
+
+const APPROVAL_NOTICE = /^(.+) is waiting for your approval\.$/s;
+
+/**
+ * The bot named in the line a parent's chat gets when a bot it created waits for approval, so each
+ * surface can say it in the person's language. Undefined for any other text.
+ */
+export function approvalNoticeBot(text: string): string | undefined {
+  return APPROVAL_NOTICE.exec(text)?.[1];
+}

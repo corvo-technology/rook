@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseActivityLabel, reviewBeforeSummary } from "./activity-label.js";
+import { approvalNoticeBot, parseActivityLabel, reviewBeforeSummary } from "./activity-label.js";
 
 describe("parseActivityLabel", () => {
   it.each([
@@ -65,5 +65,16 @@ describe("reviewBeforeSummary", () => {
   it("answers nothing for any other title", () => {
     expect(reviewBeforeSummary("Update instructions?")).toBeUndefined();
     expect(reviewBeforeSummary("Create space “Docs”?")).toBeUndefined();
+  });
+});
+
+describe("approvalNoticeBot", () => {
+  it("names the bot a parent's chat says is waiting", () => {
+    expect(approvalNoticeBot("Sales Analyst is waiting for your approval.")).toBe("Sales Analyst");
+  });
+
+  it("answers nothing for any other text", () => {
+    expect(approvalNoticeBot("Waiting for your approval.")).toBeUndefined();
+    expect(approvalNoticeBot("Ana is waiting for your approval. Reply soon.")).toBeUndefined();
   });
 });

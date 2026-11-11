@@ -34,6 +34,7 @@ import {
 } from "../../components/ToolActivityDisclosure";
 import { SkillDraftCard } from "../../components/teach/SkillDraftCard";
 import { WikiChangeBlock } from "../../components/WikiChangeBlock";
+import { approvalTextLabel } from "../../lib/activity-label";
 import type { ArtifactTarget } from "../../lib/artifact-open";
 import type { DelegationState } from "../../lib/delegation-states";
 import { delegationKey } from "../../lib/delegation-states";
@@ -659,7 +660,9 @@ export const MessageView = memo(function MessageView({
               >
                 <div data-testid="message-bot-bubble" className={botBubble} dir="auto">
                   <div data-quote-message-id={quoteMessageId}>
-                    <ChatMarkdown renderMention={renderMention}>{block.text}</ChatMarkdown>
+                    <ChatMarkdown renderMention={renderMention}>
+                      {approvalTextLabel(block.text)}
+                    </ChatMarkdown>
                   </div>
                   {voiceReady ? (
                     <Button

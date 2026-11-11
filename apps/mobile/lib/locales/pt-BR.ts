@@ -703,6 +703,7 @@ export const PT_BR_MESSAGES: Record<string, string> = {
   "Passwords do not match": "As senhas não coincidem",
   "Allow once": "Permitir uma vez",
   "Review before {summary}": "Confirme antes: {summary}",
+  "{name} is waiting for your approval.": "{name} está aguardando a sua aprovação.",
   "Always allow": "Sempre permitir",
   "Always allow this tool": "Permitir sempre esta ferramenta",
   "Always allow {site}": "Permitir sempre {site}",

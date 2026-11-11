@@ -19,7 +19,7 @@ import { blockText, messagingProviderLabel } from "../../lib/api";
 import { mobileTokens } from "../../lib/appearance";
 import type { MobileArtifactTarget } from "../../lib/artifact-open";
 import { openMobileArtifact } from "../../lib/artifact-open";
-import { plainAskTitle } from "../../lib/ask-title";
+import { approvalNoticeText, plainAskTitle } from "../../lib/ask-title";
 import { t, useI18n } from "../../lib/i18n";
 import { isInlineImageMimeType } from "../../lib/inline-image";
 import { messagePresentationSegments } from "../../lib/message-presentation";
@@ -769,7 +769,8 @@ function MessageTextCard({
 }) {
   const colorScheme = useResolvedAppearance();
   const tokens = withUserBubble(mobileTokens(), userBubble);
-  const contentText = blockText(message);
+  const contentText =
+    message.role === "user" ? blockText(message) : approvalNoticeText(blockText(message));
   if (!contentText) return null;
   // The menu wrapper owns surface gestures; links and code controls remain responders.
   const Surface = doubleTapSurface ? View : Pressable;

@@ -269,6 +269,10 @@ msgstr "{name} 失败"
 msgid "{name} finished"
 msgstr "{name} 已完成"
 
+#: src/lib/activity-label.ts
+msgid "{name} is waiting for your approval."
+msgstr "{name} 正在等待你的批准。"
+
 #: src/pages/shell/use-board-notifications.ts
 msgid "{name} moved {ref} to {status}"
 msgstr "{name} 已将 {ref} 移至 {status}"
@@ -5555,6 +5559,7 @@ msgid "Return to Rook"
 msgstr "返回 Rook"
 
 #: src/components/AskCard.tsx
+#: src/lib/activity-label.ts
 msgid "Review before {reviewing}"
 msgstr "执行前请确认：{reviewing}"
 

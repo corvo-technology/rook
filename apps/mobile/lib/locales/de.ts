@@ -725,6 +725,7 @@ export const DE_MESSAGES: Record<string, string> = {
   // components/AskActions.tsx
   "Allow once": "Einmal erlauben",
   "Review before {summary}": "Vor dem Ausführen prüfen: {summary}",
+  "{name} is waiting for your approval.": "{name} wartet auf deine Genehmigung.",
   "Always allow": "Immer erlauben",
   "Always allow this tool": "Dieses Tool immer erlauben",
   "Always allow {site}": "{site} immer erlauben",

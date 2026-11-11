@@ -19,6 +19,7 @@ import { ChevronDown, CircleAlert, Lock, MoreHorizontal, Pencil, Trash2 } from "
 import type { Dispatch, ReactNode, RefObject, SetStateAction } from "react";
 import { Suspense } from "react";
 import { IconTooltip } from "../../components/IconTooltip";
+import { approvalTextLabel } from "../../lib/activity-label";
 import type { BotsSidebarDensity } from "../../lib/bots-sidebar-density-pref";
 import { useFlipRows } from "../../lib/flip";
 import {
@@ -294,8 +295,8 @@ export function SidebarRoster({
                   : (workStatusLabel ??
                     attentionLabel ??
                     (item.kind === "bot"
-                      ? item.chat.preview
-                      : item.chat.preview ||
+                      ? approvalTextLabel(item.chat.preview)
+                      : approvalTextLabel(item.chat.preview) ||
                         item.chat.members.map((member) => member.name).join(", ")));
                 const rowDropTarget: RosterDropTarget | null =
                   item.chat.spaceId !== bootstrapMe?.spaceId

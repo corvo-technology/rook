@@ -571,6 +571,7 @@ msgid "Add a label"
 msgstr "Add a label"
 
 #: src/components/ApprovalRulesSettings.tsx
+#: src/components/AutonomyPicker.tsx
 msgid "Add a model in Settings to use this."
 msgstr "Add a model in Settings to use this."
 
@@ -1013,6 +1014,10 @@ msgstr "Artifacts"
 msgid "Ask"
 msgstr "Ask"
 
+#: src/components/AutonomyPicker.tsx
+msgid "Asks before any change"
+msgstr "Asks before any change"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Asks you before it changes anything."
 msgstr "Asks you before it changes anything."
@@ -1306,6 +1311,7 @@ msgid "Can't read images"
 msgstr "Can't read images"
 
 #: src/components/AskCard.tsx
+#: src/components/AutonomyPicker.tsx
 #: src/components/ComputerMaintenanceActions.tsx
 #: src/components/markdown-link-prompt.tsx
 #: src/components/PasskeySettings.tsx
@@ -2845,9 +2851,17 @@ msgstr "Docker limits access to your computer for added security. Using {hostLab
 msgid "Document changed. Reopen to edit the latest version."
 msgstr "Document changed. Reopen to edit the latest version."
 
+#: src/components/AutonomyPicker.tsx
+msgid "Does everything without asking"
+msgstr "Does everything without asking"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Does everything without asking. Best for bots you trust."
 msgstr "Does everything without asking. Best for bots you trust."
+
+#: src/components/AutonomyPicker.tsx
+msgid "Does what fits your request"
+msgstr "Does what fits your request"
 
 #: src/pages/Auth.tsx
 msgid "Don’t have an account?"
@@ -3404,6 +3418,10 @@ msgstr "hour"
 msgid "hours"
 msgstr "hours"
 
+#: src/components/AutonomyPicker.tsx
+msgid "How much does {name} do on its own?"
+msgstr "How much does {name} do on its own?"
+
 #: src/pages/RoutineSchedule.tsx
 msgid "How often"
 msgstr "How often"
@@ -3678,6 +3696,14 @@ msgstr "Later"
 #: src/pages/WikiBrowser.tsx
 msgid "Learn from conversations"
 msgstr "Learn from conversations"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Let {name} act without asking?"
+msgstr "Let {name} act without asking?"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Let bots act without asking?"
+msgstr "Let bots act without asking?"
 
 #: src/components/DesktopControlSettings.tsx
 msgid "Let bots see and use your apps. Actions ask first."
@@ -6016,12 +6042,28 @@ msgstr "Step {number}"
 msgid "Steps"
 msgstr "Steps"
 
+#: src/components/AutonomyPicker.tsx
+msgid "Still asks before a security change after it read outside content. Blocked actions stay blocked."
+msgstr "Still asks before a security change after it read outside content. Blocked actions stay blocked."
+
+#: src/components/AutonomyPicker.tsx
+msgid "Still asks before anything that changes something, and before opening a site you didn't mention."
+msgstr "Still asks before anything that changes something, and before opening a site you didn't mention."
+
+#: src/components/AutonomyPicker.tsx
+msgid "Still asks when a second model finds it outside your request, and before security changes."
+msgstr "Still asks when a second model finds it outside your request, and before security changes."
+
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/computer-overlay.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Stop"
 msgstr "Stop"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Stop asking"
+msgstr "Stop asking"
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Stop computer"

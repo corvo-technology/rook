@@ -571,6 +571,7 @@ msgid "Add a label"
 msgstr "添加标签"
 
 #: src/components/ApprovalRulesSettings.tsx
+#: src/components/AutonomyPicker.tsx
 msgid "Add a model in Settings to use this."
 msgstr "请在设置中添加模型后再使用。"
 
@@ -1013,6 +1014,10 @@ msgstr "产物"
 msgid "Ask"
 msgstr "询问"
 
+#: src/components/AutonomyPicker.tsx
+msgid "Asks before any change"
+msgstr "任何更改前都先询问"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Asks you before it changes anything."
 msgstr "更改任何内容前都会先询问你。"
@@ -1306,6 +1311,7 @@ msgid "Can't read images"
 msgstr "无法读取图像"
 
 #: src/components/AskCard.tsx
+#: src/components/AutonomyPicker.tsx
 #: src/components/ComputerMaintenanceActions.tsx
 #: src/components/markdown-link-prompt.tsx
 #: src/components/PasskeySettings.tsx
@@ -2845,9 +2851,17 @@ msgstr "Docker 限制对你电脑的访问，以提高安全性。使用{hostLab
 msgid "Document changed. Reopen to edit the latest version."
 msgstr "文档已更改。请重新打开以编辑最新版本。"
 
+#: src/components/AutonomyPicker.tsx
+msgid "Does everything without asking"
+msgstr "无需询问，直接完成一切"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Does everything without asking. Best for bots you trust."
 msgstr "无需询问即可完成所有操作。适合你信任的机器人。"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Does what fits your request"
+msgstr "执行符合你请求的操作"
 
 #: src/pages/Auth.tsx
 msgid "Don’t have an account?"
@@ -3404,6 +3418,10 @@ msgstr "小时"
 msgid "hours"
 msgstr "小时"
 
+#: src/components/AutonomyPicker.tsx
+msgid "How much does {name} do on its own?"
+msgstr "{name}可以自行做多少事？"
+
 #: src/pages/RoutineSchedule.tsx
 msgid "How often"
 msgstr "频率"
@@ -3678,6 +3696,14 @@ msgstr "稍后"
 #: src/pages/WikiBrowser.tsx
 msgid "Learn from conversations"
 msgstr "从对话中学习"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Let {name} act without asking?"
+msgstr "让{name}无需询问就行动？"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Let bots act without asking?"
+msgstr "让机器人无需询问就行动？"
 
 #: src/components/DesktopControlSettings.tsx
 msgid "Let bots see and use your apps. Actions ask first."
@@ -6016,12 +6042,28 @@ msgstr "步骤 {number}"
 msgid "Steps"
 msgstr "步骤"
 
+#: src/components/AutonomyPicker.tsx
+msgid "Still asks before a security change after it read outside content. Blocked actions stay blocked."
+msgstr "读取外部内容后，安全更改前仍会询问。被阻止的操作仍然被阻止。"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Still asks before anything that changes something, and before opening a site you didn't mention."
+msgstr "任何会更改内容的操作前，以及打开你未提及的网站前，仍会询问。"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Still asks when a second model finds it outside your request, and before security changes."
+msgstr "当第二个模型认为超出你的请求时，以及安全更改前，仍会询问。"
+
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/computer-overlay.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Stop"
 msgstr "停止"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Stop asking"
+msgstr "不再询问"
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Stop computer"

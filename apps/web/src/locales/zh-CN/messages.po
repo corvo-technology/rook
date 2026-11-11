@@ -780,7 +780,7 @@ msgstr "智能体"
 msgid "Agent computer"
 msgstr "Agent 电脑"
 
-#: src/components/SidebarNav.tsx
+#: src/components/AppRail.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Agents"
@@ -996,7 +996,7 @@ msgstr "审批边界"
 msgid "Approval model"
 msgstr "审批模型"
 
-#: src/components/SidebarNav.tsx
+#: src/components/AppRail.tsx
 #: src/pages/SettingsOverlay.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Approvals"
@@ -1043,7 +1043,8 @@ msgstr "已归档"
 msgid "Arguments"
 msgstr "参数"
 
-#: src/components/SidebarNav.tsx
+#: src/components/AppRail.tsx
+#: src/components/SidebarFooter.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Artifacts"
@@ -1201,8 +1202,8 @@ msgstr "阻止"
 msgid "Blocked"
 msgstr "已屏蔽"
 
+#: src/components/AppRail.tsx
 #: src/components/SidebarFooter.tsx
-#: src/components/SidebarNav.tsx
 #: src/pages/Board.tsx
 msgid "Board"
 msgstr "看板"
@@ -3948,7 +3949,7 @@ msgstr "低"
 msgid "Lowercase letters, numbers, hyphens and underscores, starting with a letter."
 msgstr "使用小写字母、数字、连字符和下划线，并以字母开头。"
 
-#: src/components/SidebarNav.tsx
+#: src/components/AppRail.tsx
 msgid "Main"
 msgstr "主要"
 
@@ -4064,7 +4065,7 @@ msgstr "成员"
 msgid "Members ({0})"
 msgstr "成员（{0}）"
 
-#: src/components/SidebarNav.tsx
+#: src/components/AppRail.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/SettingsOverlay.tsx
@@ -4364,7 +4365,6 @@ msgstr "需要输入"
 msgid "Needs takeover"
 msgstr "需要接管"
 
-#: src/components/AskCard.tsx
 #: src/lib/roster-status.ts
 #: src/pages/shell/computer-overlay.tsx
 msgid "Needs you"
@@ -5550,7 +5550,8 @@ msgstr "将工作分派给小队"
 msgid "Routine"
 msgstr "例行任务"
 
-#: src/components/SidebarNav.tsx
+#: src/components/AppRail.tsx
+#: src/components/SidebarFooter.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
@@ -6228,8 +6229,8 @@ msgstr "已停止。"
 msgid "Stopping…"
 msgstr "正在停止…"
 
+#: src/components/AppRail.tsx
 #: src/components/SidebarFooter.tsx
-#: src/components/SidebarNav.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Store"
@@ -6336,7 +6337,7 @@ msgstr "示范任务"
 msgid "Teaching in progress. Stop teaching before sending a new message."
 msgstr "正在示范，发送新消息前请先停止示范。"
 
-#: src/components/SidebarNav.tsx
+#: src/components/AppRail.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/TeamPage.tsx
 msgid "Team"
@@ -6868,8 +6869,8 @@ msgstr "上传"
 msgid "Urgent"
 msgstr "紧急"
 
+#: src/components/AppRail.tsx
 #: src/components/SidebarFooter.tsx
-#: src/components/SidebarNav.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/SettingsOverlay.tsx
 #: src/pages/Usage.tsx
@@ -7154,7 +7155,7 @@ msgstr "Bot 应在哪里运行？"
 msgid "Where to import"
 msgstr "导入到哪里"
 
-#: src/components/SidebarNav.tsx
+#: src/components/AppRail.tsx
 #: src/pages/WikiPage.tsx
 msgid "Wiki"
 msgstr "Wiki"
@@ -7171,7 +7172,7 @@ msgstr "不会做"
 msgid "Work"
 msgstr "工作"
 
-#: src/components/SidebarNav.tsx
+#: src/components/AppRail.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/Workflows.tsx
 msgid "Workflows"

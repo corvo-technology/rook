@@ -537,7 +537,7 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
                   message: "Registration is closed",
                 });
               }
-              await bootstrapUserSpace(prisma, user, env, { shortNavigation: true });
+              await bootstrapUserSpace(prisma, user, env);
             }
           },
           after: async (session, ctx) => {

@@ -14,7 +14,7 @@ export type RailMoreItem = {
   isNew?: boolean;
 };
 
-/** What the list keeps out of sight: a row that opens the rest of the places, one click away. */
+/** What the rail keeps out of sight: three dots that open the rest of the places, one click away. */
 export function RailMore({
   items,
   active,

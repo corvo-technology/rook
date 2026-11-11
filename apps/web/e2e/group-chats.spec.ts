@@ -259,7 +259,7 @@ test("create group from + and see two bots in one transcript", async ({ page }, 
 
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole("button", { name: "Open navigation" })).toBeVisible();
-  await expect(page.getByTestId("app-nav-sidebar")).toHaveCount(0);
+  await expect(page.getByTestId("app-rail")).toHaveCount(0);
   // Chat fills the phone width.
   const transcriptBox = await transcript.boundingBox();
   expect(transcriptBox?.x).toBeLessThanOrEqual(16);

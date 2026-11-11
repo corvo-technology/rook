@@ -55,6 +55,8 @@ async function render(
           onOpenChange={() => {}}
           onIntegrations={onIntegrations}
           onBoard={onBoard}
+          onArtifacts={() => {}}
+          onRoutines={() => {}}
           onSettings={() => {}}
           onUsage={() => {}}
           onLogOut={() => {}}
@@ -143,6 +145,8 @@ it("opens integrations and keeps the existing account actions", async () => {
   expect([...menu.querySelectorAll("button, a")].map((row) => row.textContent)).toEqual([
     "Usage",
     "Board",
+    "Routines",
+    "Artifacts",
     "Settings",
     "Log out",
   ]);

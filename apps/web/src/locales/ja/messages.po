@@ -780,7 +780,7 @@ msgstr "エージェント"
 msgid "Agent computer"
 msgstr "エージェントのコンピューター"
 
-#: src/components/SidebarNav.tsx
+#: src/components/AppRail.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Agents"
@@ -996,7 +996,7 @@ msgstr "承認の範囲"
 msgid "Approval model"
 msgstr "承認モデル"
 
-#: src/components/SidebarNav.tsx
+#: src/components/AppRail.tsx
 #: src/pages/SettingsOverlay.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Approvals"
@@ -1043,7 +1043,8 @@ msgstr "アーカイブ済み"
 msgid "Arguments"
 msgstr "引数"
 
-#: src/components/SidebarNav.tsx
+#: src/components/AppRail.tsx
+#: src/components/SidebarFooter.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Artifacts"
@@ -1201,8 +1202,8 @@ msgstr "ブロック"
 msgid "Blocked"
 msgstr "ブロック中"
 
+#: src/components/AppRail.tsx
 #: src/components/SidebarFooter.tsx
-#: src/components/SidebarNav.tsx
 #: src/pages/Board.tsx
 msgid "Board"
 msgstr "ボード"
@@ -3948,7 +3949,7 @@ msgstr "低"
 msgid "Lowercase letters, numbers, hyphens and underscores, starting with a letter."
 msgstr "小文字、数字、ハイフン、アンダースコアのみ使用でき、先頭は文字にしてください。"
 
-#: src/components/SidebarNav.tsx
+#: src/components/AppRail.tsx
 msgid "Main"
 msgstr "メイン"
 
@@ -4064,7 +4065,7 @@ msgstr "メンバー"
 msgid "Members ({0})"
 msgstr "メンバー（{0}）"
 
-#: src/components/SidebarNav.tsx
+#: src/components/AppRail.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/SettingsOverlay.tsx
@@ -4364,7 +4365,6 @@ msgstr "入力が必要"
 msgid "Needs takeover"
 msgstr "引き継ぎが必要"
 
-#: src/components/AskCard.tsx
 #: src/lib/roster-status.ts
 #: src/pages/shell/computer-overlay.tsx
 msgid "Needs you"
@@ -5550,7 +5550,8 @@ msgstr "作業をスクワッドに振り分ける"
 msgid "Routine"
 msgstr "ルーティン"
 
-#: src/components/SidebarNav.tsx
+#: src/components/AppRail.tsx
+#: src/components/SidebarFooter.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
@@ -6228,8 +6229,8 @@ msgstr "停止しました。"
 msgid "Stopping…"
 msgstr "停止中…"
 
+#: src/components/AppRail.tsx
 #: src/components/SidebarFooter.tsx
-#: src/components/SidebarNav.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Store"
@@ -6336,7 +6337,7 @@ msgstr "タスクを教える"
 msgid "Teaching in progress. Stop teaching before sending a new message."
 msgstr "ティーチング中です。新しいメッセージを送信する前にティーチングを停止してください。"
 
-#: src/components/SidebarNav.tsx
+#: src/components/AppRail.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/TeamPage.tsx
 msgid "Team"
@@ -6868,8 +6869,8 @@ msgstr "アップロード"
 msgid "Urgent"
 msgstr "緊急"
 
+#: src/components/AppRail.tsx
 #: src/components/SidebarFooter.tsx
-#: src/components/SidebarNav.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/SettingsOverlay.tsx
 #: src/pages/Usage.tsx
@@ -7154,7 +7155,7 @@ msgstr "ボットをどこで実行しますか？"
 msgid "Where to import"
 msgstr "インポート先"
 
-#: src/components/SidebarNav.tsx
+#: src/components/AppRail.tsx
 #: src/pages/WikiPage.tsx
 msgid "Wiki"
 msgstr "Wiki"
@@ -7171,7 +7172,7 @@ msgstr "対応しない"
 msgid "Work"
 msgstr "仕事"
 
-#: src/components/SidebarNav.tsx
+#: src/components/AppRail.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/Workflows.tsx
 msgid "Workflows"

@@ -15,12 +15,9 @@ import { useState } from "react";
 import { MissionList } from "../../components/MissionList";
 import { PasskeyOffer } from "../../components/PasskeyOffer";
 import { SidebarFooter } from "../../components/SidebarFooter";
-import { SidebarNav } from "../../components/SidebarNav";
 import { useBilling } from "../../components/SubscriptionGate";
-import { SubscriptionRailRings } from "../../components/SubscriptionRings";
 import { formatBillingDate } from "../../lib/billing";
 import type { BotsSidebarDensity } from "../../lib/bots-sidebar-density-pref";
-import { isEmbedded } from "../../lib/embed";
 import { useLocalEdition } from "../../lib/local-edition";
 import type { Panel } from "../../lib/right-panel-state";
 import { clearSpaceSelection } from "../../lib/rpc";
@@ -191,11 +188,6 @@ export function ShellSidebar({
             }}
           />
         ) : null}
-        <SidebarNav
-          ticketBoardEnabled={ticketBoardEnabled}
-          mini={mini}
-          onNavigate={() => setMobileOpen(false)}
-        />
         {mini || !(activityMode || searchOpen || query) ? null : (
           <InputGroup
             data-testid="sidebar-search"
@@ -280,11 +272,10 @@ export function ShellSidebar({
         </div>
         <ShellSidebarFooter
           mini={mini}
-          account={!isEmbedded()}
+          account={isMobile}
           logos={footerLogos}
           user={user}
-          // The navigation list above has its own Board, so the account menu does not repeat it.
-          ticketBoardEnabled={false}
+          ticketBoardEnabled={ticketBoardEnabled}
           navLinks={navLinks}
           closeMobileSidebar={() => setMobileOpen(false)}
           navigate={navigate}
@@ -309,7 +300,7 @@ export function ShellSidebarFooter({
   openIntegrations,
 }: {
   mini: boolean;
-  /** Whether this footer carries the account menu; a partner's frame has none. */
+  /** Whether this footer carries the account menu; on wide screens the narrow bar does. */
   account: boolean;
   logos: Array<{ name: string; logo?: string | null }>;
   user: User | undefined;
@@ -351,7 +342,6 @@ export function ShellSidebarFooter({
           ) : null}
         </div>
       ) : null}
-      {account && !mini ? <SubscriptionRailRings /> : null}
       {account ? (
         <SidebarFooter
           mini={mini}
@@ -383,6 +373,16 @@ export function ShellSidebarFooter({
             setMenuOpen(false);
             closeMobileSidebar();
             navigate(`/app/x/${link.id}`);
+          }}
+          onRoutines={() => {
+            setMenuOpen(false);
+            closeMobileSidebar();
+            navigate("/app/routines");
+          }}
+          onArtifacts={() => {
+            setMenuOpen(false);
+            closeMobileSidebar();
+            navigate("/app/artifacts");
           }}
           onSettings={() => {
             setMenuOpen(false);

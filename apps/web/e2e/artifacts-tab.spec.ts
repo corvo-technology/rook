@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { activeBotId, captureScreenshot, completeOnboarding, rpc, signup } from "./helpers";
 
-test("opens Artifacts from the navigation list and lists created files", async ({
+test("opens Artifacts from the account menu and lists created files", async ({
   page,
 }, testInfo) => {
   const stamp = Date.now();
@@ -11,20 +11,36 @@ test("opens Artifacts from the navigation list and lists created files", async (
   await page.waitForURL(/\/app\/(?!artifacts(?:\/|$))[^/]+$/);
   const chiefId = activeBotId(page);
 
-  // Navigation sits at the top of the one sidebar, with the account at its bottom.
+  const rail = page.getByTestId("app-rail");
+  await expect(rail).toBeVisible();
+  expect((await rail.boundingBox())?.x).toBe(0);
+  // The agent list sits beside the bar, never over it.
+  const railWidth = (await rail.boundingBox())?.width ?? 0;
   const sidebar = page.getByTestId("bots-sidebar");
   await expect(sidebar).toBeVisible();
-  const nav = sidebar.getByTestId("sidebar-nav");
-  await expect(nav.getByRole("button", { name: "Agents" })).toBeInViewport();
-  await expect(nav.getByRole("button", { name: "Store" })).toBeVisible();
-  await expect(nav.getByRole("button", { name: "Agents" })).toHaveAttribute("aria-current", "page");
+  expect((await sidebar.boundingBox())?.x).toBe(railWidth);
+  await expect(rail.getByRole("button", { name: "Agents" })).toBeInViewport();
+  expect(
+    await rail.getByRole("button", { name: "Agents" }).evaluate((button) => {
+      const box = button.getBoundingClientRect();
+      return (
+        document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2) === button ||
+        button.contains(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2))
+      );
+    }),
+  ).toBe(true);
+  await expect(rail.getByRole("button", { name: "Store" })).toBeVisible();
+  await expect(rail.getByRole("button", { name: "Agents" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
   await page.getByTestId("user-menu-trigger").click();
   await expect(page.getByRole("button", { name: "Settings", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Artifacts", exact: true })).toHaveCount(0);
   await captureScreenshot(page, testInfo, "account-menu-artifacts");
   await page.keyboard.press("Escape");
 
-  await nav.getByRole("button", { name: "More" }).click();
-  await page.getByRole("button", { name: "Artifacts", exact: true }).click();
+  await rail.getByRole("button", { name: "Artifacts" }).click();
   await expect(page).toHaveURL(/\/app\/artifacts$/);
   await expect(page.getByRole("heading", { name: "Artifacts", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Filters" })).toBeVisible();
@@ -69,10 +85,9 @@ test("opens Artifacts from the navigation list and lists created files", async (
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole("button", { name: "Open navigation" }).click();
   const mobileSidebar = page.getByTestId("bots-sidebar");
-  await mobileSidebar.getByRole("button", { name: "More" }).click();
-  await expect(page.getByRole("button", { name: "Artifacts", exact: true })).toBeVisible();
-  await page.keyboard.press("Escape");
   await mobileSidebar.getByTestId("user-menu-trigger").click();
+  const mobileArtifacts = page.getByRole("button", { name: "Artifacts", exact: true });
+  await expect(mobileArtifacts).toBeVisible();
   await expect(page.getByRole("button", { name: "Settings", exact: true })).toBeVisible();
   await captureScreenshot(page, testInfo, "account-menu-artifacts-mobile");
 });

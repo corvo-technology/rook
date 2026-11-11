@@ -14,11 +14,10 @@ export function findCoachAnchor(mark: TourMark, root: ParentNode = document): HT
   return null;
 }
 
-const SIDE: Record<TourMark, "top" | "right"> = {
+const SIDE: Partial<Record<TourMark, "top" | "right">> = {
   ask: "top",
   first: "top",
   chief: "right",
-  missions: "right",
 };
 
 /**
@@ -95,31 +94,26 @@ export function CoachLayer({
     showing.current = shown;
   });
 
-  useEffect(() => {
-    if (shown !== "missions" || !anchor) return;
-    const onPointerDown = () => record("missions");
-    anchor.addEventListener("pointerdown", onPointerDown);
-    return () => anchor.removeEventListener("pointerdown", onPointerDown);
-  }, [shown, anchor, record]);
-
   if (!shown || !anchor) return null;
-  const sentence: Record<TourMark, string> = {
+  // A mark without a sentence has no moment to show in yet.
+  const sentence: Partial<Record<TourMark, string>> = {
     ask: t`When an agent needs you, it asks here and waits.`,
     first: t`This isn't sent yet. Edit it or send it.`,
     chief: t`Stuck? Ask the Chief.`,
-    missions: t`Each one checks itself off when you do it.`,
   };
+  const text = sentence[shown];
+  if (!text) return null;
   return (
     <Popover open onOpenChange={() => undefined}>
       <PopoverContent
         anchor={anchor}
-        side={SIDE[shown]}
+        side={SIDE[shown] ?? "right"}
         align="start"
         initialFocus={false}
         finalFocus={false}
         aria-live="polite"
       >
-        <PopoverDescription className="text-foreground">{sentence[shown]}</PopoverDescription>
+        <PopoverDescription className="text-foreground">{text}</PopoverDescription>
         <div className="flex justify-end gap-1">
           <Button size="sm" variant="ghost" onClick={skip}>
             {t`Skip tour`}

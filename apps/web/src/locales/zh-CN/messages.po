@@ -2913,10 +2913,6 @@ msgstr "复制"
 msgid "Each name can be used once."
 msgstr "每个名称只能使用一次。"
 
-#: src/components/CoachLayer.tsx
-msgid "Each one checks itself off when you do it."
-msgstr "每一项在你完成后会自动打勾。"
-
 #: src/components/AskCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/McpServersOverlay.tsx

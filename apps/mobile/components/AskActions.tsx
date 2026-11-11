@@ -14,6 +14,7 @@ export function AskActions({
   actions,
   site,
   approval,
+  proposal,
   instructions,
   disabled,
   onAnswer,
@@ -23,6 +24,8 @@ export function AskActions({
   actions: AskAction[];
   site?: string;
   approval: boolean;
+  /** A proposed change: its buttons read Apply and Dismiss. */
+  proposal?: boolean;
   instructions?: string;
   disabled?: boolean;
   onAnswer: (answer: string) => Promise<void>;
@@ -123,7 +126,7 @@ export function AskActions({
               >
                 {pendingAction === action.id
                   ? t("Sending…")
-                  : askActionLabel(action, { approval, site }, t)}
+                  : askActionLabel(action, { approval, site, proposal }, t)}
               </Text>
             </Pressable>
           );

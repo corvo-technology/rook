@@ -1,4 +1,4 @@
-import { redactSecrets } from "@corvo/core";
+import { readGuidePage, redactSecrets } from "@corvo/core";
 import {
   createSpaceForMember,
   InstructionConflictError,
@@ -28,6 +28,7 @@ import { mayOpenModelStream } from "./run-lifecycle.js";
 import { persistMessageInTransaction, publishMessage } from "./run-messages.js";
 import { fleetPrepareDeps } from "./run-model.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
+import { spaceStatus } from "./space-status.js";
 import { installStoreAgent, listStoreAgents } from "./store-agents.js";
 import { argumentGiven } from "./update-bot-patch.js";
 
@@ -206,6 +207,12 @@ export const fleetTools: ToolHandlers = {
   },
   async list_routines(ctx, call) {
     return call.finish(await listRoutines(ctx.deps, ctx.fleetRun));
+  },
+  async guide_read(_ctx, call) {
+    return call.finish(readGuidePage(call.args.page, call.args.language));
+  },
+  async space_status(ctx, call) {
+    return call.finish(await spaceStatus(ctx.deps, ctx.fleetRun, ctx.secrets));
   },
   async install_agent(ctx, call) {
     const { deps, run, bot, thread } = ctx;

@@ -414,6 +414,16 @@ cache causes zero automatic summarization calls by itself.
       Implemented and verified in outgoing provider requests. A separate four-call
       fresh-prefix/immediate-replay probe observed cache reads and lower charges;
       this does not establish production savings or a cache expiration deadline.
+- [x] Keep the prefix stable from one turn to the next. The system prompt depends only
+      on the bot's setup. Memory, notes, team, connections and skills form a live context
+      block that sits before the user message of the turn that first sent it and is
+      replayed there until it changes. Per-run content (time, reply target, approvals,
+      recalled memory, ticket matches) goes in a turn note after the user message and is
+      never replayed. A per-thread session fingerprint decides whether the next turn can
+      go on from the last one or must start fresh (edited, deleted or inserted messages,
+      a changed setup, a failed turn, an expired cache window), the cache tracker records
+      the user message boundary so selection predicts a warm cache, and Anthropic-format
+      payloads get one extra cache marker there. The history window moves in steps.
 - [x] Verify stable tool ordering, instruction serialization, and prefix continuity
       in actual outgoing provider requests, not just the assembled instruction string.
 - [x] Expose supported retention modes, minimum cacheable sizes, cache pricing,

@@ -1,4 +1,5 @@
 import type { AgentRunModel } from "@corvo/adapter-kit";
+import { ModelRequestError } from "@corvo/adapter-kit";
 import type { LocalModelTest } from "@corvo/contracts";
 import { normalizeRunError } from "@corvo/core";
 import type { Context } from "@earendil-works/pi-ai";
@@ -78,7 +79,8 @@ export async function verifyModelServesAgents(
   const result = await stream.result();
   if (result.stopReason !== "error" || !result.errorMessage) return;
   const failure = normalizeRunError(result.errorMessage);
-  if (failure.kind && BLOCKING_KINDS.has(failure.kind)) throw new Error(failure.summary);
+  if (failure.kind && BLOCKING_KINDS.has(failure.kind))
+    throw new ModelRequestError(failure.summary, { details: result.errorMessage });
 }
 
 /** A local model may load cold on its first prompt, so a test waits far longer than Connect. */

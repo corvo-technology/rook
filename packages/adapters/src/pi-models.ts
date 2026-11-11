@@ -1,3 +1,4 @@
+import { ModelRequestError } from "@corvo/adapter-kit";
 import type { ModelOAuthSignInMode, ThinkingLevel } from "@corvo/contracts";
 import {
   assertHeaderSafeApiKey,
@@ -16,6 +17,7 @@ import {
   registerOpenAiCompatibleCatalog,
 } from "./pi-openai-compatible-provider.js";
 import { MODEL_CONNECT_TIMEOUT_MS } from "./pi-runtime-limits.js";
+import { transportFailureCode } from "./transport-failure.js";
 
 export type PiCatalogAuth = "api-key" | "oauth" | "both";
 
@@ -183,9 +185,11 @@ export async function verifyCatalogProviderApiKey(
         ...(signal ? [signal] : []),
       ]),
     });
-  } catch {
-    // Transport errors may contain the request's credential. Never forward them.
-    throw new Error("Could not verify the API key. Try again.");
+  } catch (error) {
+    // Transport errors may contain the request's credential. Only the code is forwarded.
+    throw new ModelRequestError("Could not verify the API key. Try again.", {
+      code: transportFailureCode(error),
+    });
   }
   const rejected =
     provider === "google" && response.status === 400
@@ -193,9 +197,16 @@ export async function verifyCatalogProviderApiKey(
       : response.status === 401 || response.status === 403;
   void response.body?.cancel().catch(() => undefined);
   if (rejected) {
-    throw new Error(MODEL_KEY_REJECTED_ERROR);
+    // Google answers a bad key with 400; the fact recorded is that the key was refused.
+    throw new ModelRequestError(MODEL_KEY_REJECTED_ERROR, {
+      status: response.status === 400 ? 401 : response.status,
+    });
   }
-  if (!response.ok) throw new Error("Could not verify the API key. Try again.");
+  if (!response.ok) {
+    throw new ModelRequestError("Could not verify the API key. Try again.", {
+      status: response.status,
+    });
+  }
 }
 
 /**

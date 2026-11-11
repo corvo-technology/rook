@@ -149,6 +149,7 @@ function setup(
       })),
     },
     partnerTenant: { findFirst: vi.fn(async () => null) },
+    missionState: { findUnique: vi.fn(async () => null) },
     bot: { findMany: vi.fn(async () => []) },
     routine: { findMany: vi.fn(async () => []) },
     space: { findFirst: vi.fn(async () => ({ organization: { modelCredits: { mode: "off" } } })) },

@@ -20,6 +20,15 @@ describe("askActionLabel", () => {
   });
 
   it.each([
+    ["allow", "Apply"],
+    ["deny", "Dismiss"],
+  ])("words a proposal's %s as %s, not a permission", (id, expected) => {
+    expect(
+      askActionLabel({ id, label: "Server label" }, { approval: true, proposal: true }, fakeT),
+    ).toBe(expected);
+  });
+
+  it.each([
     ["always", "example.test", "Always allow example.test"],
     ["always", undefined, "Always allow this tool"],
     ["always", "", "Always allow this tool"],

@@ -123,6 +123,9 @@ export const JA_MESSAGES: Record<string, string> = {
   "{provider} can't run this model.": "{provider}ではこのモデルを実行できません。",
   "{provider} couldn't be reached securely. A security program or network filter may be intercepting the connection.":
     "{provider}に安全に接続できませんでした。セキュリティソフトまたはネットワークフィルターが接続を妨げている可能性があります。",
+  "{provider} sign-in is no longer valid.": "{provider}のログインは無効になりました。",
+  "{provider} couldn't be reached through the network proxy. Check the proxy settings.":
+    "{provider}にネットワークプロキシ経由で接続できませんでした。プロキシ設定を確認してください。",
   "{provider} took too long to respond. Try again.":
     "{provider}の応答に時間がかかりすぎました。もう一度お試しください。",
   "{provider} is overloaded right now. Try again in a moment.":
@@ -1137,4 +1140,13 @@ export const JA_MESSAGES: Record<string, string> = {
   Refuse: "却下",
   "Keep in the wiki": "Wikiに保存",
   "Could not load pages": "ページを読み込めませんでした",
+  "{position} of {total}": "{position} / {total}",
+  "Talk to your agent": "エージェントに話しかける",
+  "Answer a request": "リクエストに答える",
+  "Connect an app": "アプリを接続する",
+  "Add a second agent": "2人目のエージェントを追加する",
+  "Schedule a routine": "ルーティンをスケジュールする",
+  "Keep a memory": "記憶を残す",
+  Missions: "ミッション",
+  "Show everything": "すべて表示",
 };

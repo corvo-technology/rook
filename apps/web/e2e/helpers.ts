@@ -76,17 +76,22 @@ export async function completeOnboarding(page: Page, testInfo?: TestInfo) {
 
 /**
  * Creates the account through the auth API, as the sign-up form does, and opens the page the form
- * would land on: onboarding at its first step, for specs that test onboarding. Passing testInfo
- * goes through the form to capture it; tests of the form itself use signupThroughForm.
+ * would land on. Returns false when the account must verify its email first and has no session.
  */
-export async function signupToOnboarding(
+async function createAccount(
   page: Page,
   email: string,
   password: string,
   name: string,
   testInfo?: TestInfo,
-) {
-  if (testInfo) return signupThroughForm(page, email, password, name, testInfo);
+): Promise<boolean> {
+  if (testInfo) {
+    await signupThroughForm(page, email, password, name, testInfo);
+    return page
+      .waitForURL(/\/(onboarding|app)/, { timeout: 20_000 })
+      .then(() => true)
+      .catch(() => false);
+  }
   const baseURL = test.info().project.use.baseURL;
   if (!baseURL) throw new Error("signup needs a baseURL");
   const response = await page.request.post("/api/auth/sign-up/email", {
@@ -97,6 +102,30 @@ export async function signupToOnboarding(
   if (!response.ok()) throw new Error(`sign-up ${response.status()}: ${await response.text()}`);
   const verify = signupRequiresEmailVerification(await response.json());
   await page.goto(verify ? "/sign-up?verify=email" : "/onboarding");
+  return !verify;
+}
+
+/**
+ * Creates the account and opens the page the form would land on: onboarding at its first step,
+ * for specs that test onboarding. Passing testInfo goes through the form to capture it; tests of
+ * the form itself use signupThroughForm. The coach tour is skipped so its marks never cover what
+ * a spec clicks; specs that test the tour use signupKeepingTour.
+ */
+export async function signupToOnboarding(
+  page: Page,
+  email: string,
+  password: string,
+  name: string,
+  testInfo?: TestInfo,
+) {
+  if (await createAccount(page, email, password, name, testInfo)) {
+    await rpc(page, "onboarding/tourSkip", {});
+  }
+}
+
+/** Creates the account like signupToOnboarding but leaves the coach tour on. */
+export async function signupKeepingTour(page: Page, email: string, password: string, name: string) {
+  await createAccount(page, email, password, name);
 }
 
 /** Creates the account and moves through onboarding to the Chief's chat. */

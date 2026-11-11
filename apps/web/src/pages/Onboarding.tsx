@@ -70,10 +70,10 @@ import { errorText } from "../lib/user-error";
 import { CompatibleKeyField } from "./model-settings/compatible-key-field";
 import { ComputerStep } from "./onboarding/ComputerStep";
 import { FirstBotStep } from "./onboarding/FirstBotStep";
+import { LocalModelStep } from "./onboarding/LocalModelStep";
 import { OnboardingLayout } from "./onboarding/OnboardingLayout";
 import { UseStep } from "./onboarding/UseStep";
 import { WorkspaceStep } from "./onboarding/WorkspaceStep";
-import { QuickKeyConnect } from "./onboarding-quick-connect";
 
 const CUSTOM_MODEL_OPTION = "__corvo_custom_model__";
 /** Rook credits sit among the providers as the one choice that needs no account of its own. */
@@ -593,7 +593,7 @@ export function OnboardingPage() {
             <Trans>Connect a model</Trans>
           </h1>
           {quickConnect ? (
-            <QuickKeyConnect
+            <LocalModelStep
               catalog={catalog}
               signInOptions={providerOptions.main.filter(
                 (option) => option.value === "openai-codex" || option.value === "anthropic:sign-in",

@@ -18,6 +18,7 @@ export function QuickKeyConnect({
   onSelectProvider,
   onMore,
   onConnected,
+  onEdit,
 }: {
   catalog: readonly ModelCatalogEntry[];
   /** Sign-in with a subscription, as the provider list names them. */
@@ -25,6 +26,8 @@ export function QuickKeyConnect({
   onSelectProvider: (option: string) => void;
   onMore: () => void;
   onConnected: () => void;
+  /** The person started typing a key. */
+  onEdit?: () => void;
 }) {
   const { t } = useLingui();
   const fieldId = useId();
@@ -114,6 +117,7 @@ export function QuickKeyConnect({
           value={key}
           onChange={(event) => {
             setKey(event.target.value);
+            onEdit?.();
             setError(null);
           }}
           aria-label={t`API key`}

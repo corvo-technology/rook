@@ -891,6 +891,11 @@ msgstr "已回答"
 msgid "Answered"
 msgstr "已回答"
 
+#. placeholder {0}: (result.ms / 1000).toFixed(1)
+#: src/pages/onboarding/LocalModelChoice.tsx
+msgid "Answered in {0} s"
+msgstr "{0} 秒内已响应"
+
 #: src/components/AskCard.tsx
 msgid "Answered: {answer}"
 msgstr "已回答：{answer}"
@@ -1886,6 +1891,7 @@ msgstr "上下文限制"
 #: src/pages/onboarding-quick-connect.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/onboarding/ComputerStep.tsx
+#: src/pages/onboarding/LocalModelChoice.tsx
 #: src/pages/onboarding/UseStep.tsx
 #: src/pages/onboarding/WorkspaceStep.tsx
 #: src/pages/shell/agent-import.tsx
@@ -2324,6 +2330,7 @@ msgstr "无法保存群组"
 
 #: src/pages/onboarding-quick-connect.tsx
 #: src/pages/Onboarding.tsx
+#: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Could not save model"
 msgstr "无法保存模型"
 
@@ -3251,6 +3258,7 @@ msgid "Forgot password?"
 msgstr "忘记密码？"
 
 #: src/pages/onboarding-quick-connect.tsx
+#: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Found on this computer"
 msgstr "在这台电脑上找到"
 
@@ -4066,6 +4074,7 @@ msgstr "模式"
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/model-settings/model-picker.tsx
 #: src/pages/Onboarding.tsx
+#: src/pages/onboarding/LocalModelChoice.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-panel.tsx
@@ -4697,6 +4706,10 @@ msgstr "其他模型…"
 #: src/pages/onboarding-quick-connect.tsx
 msgid "Other providers"
 msgstr "其他服务商"
+
+#: src/pages/onboarding/LocalModelChoice.tsx
+msgid "Other ways to connect"
+msgstr "其他连接方式"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Output"
@@ -6168,8 +6181,14 @@ msgid "Telegram"
 msgstr "Telegram"
 
 #: src/components/teach/SkillDraftCard.tsx
+#: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Test"
 msgstr "测试"
+
+#. placeholder {0}: option.label
+#: src/pages/onboarding/LocalModelChoice.tsx
+msgid "Test {0}"
+msgstr "测试 {0}"
 
 #: src/components/ModelConnectionPreflightNotice.tsx
 msgid "Test API key"
@@ -6187,6 +6206,7 @@ msgstr "测试运行"
 #: src/components/ModelConnectionPreflightNotice.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/onboarding-quick-connect.tsx
+#: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Testing…"
 msgstr "正在测试…"
 

@@ -891,6 +891,11 @@ msgstr "回答済み"
 msgid "Answered"
 msgstr "回答済み"
 
+#. placeholder {0}: (result.ms / 1000).toFixed(1)
+#: src/pages/onboarding/LocalModelChoice.tsx
+msgid "Answered in {0} s"
+msgstr "{0} 秒で応答しました"
+
 #: src/components/AskCard.tsx
 msgid "Answered: {answer}"
 msgstr "回答済み: {answer}"
@@ -1886,6 +1891,7 @@ msgstr "コンテキスト上限"
 #: src/pages/onboarding-quick-connect.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/onboarding/ComputerStep.tsx
+#: src/pages/onboarding/LocalModelChoice.tsx
 #: src/pages/onboarding/UseStep.tsx
 #: src/pages/onboarding/WorkspaceStep.tsx
 #: src/pages/shell/agent-import.tsx
@@ -2324,6 +2330,7 @@ msgstr "グループを保存できませんでした"
 
 #: src/pages/onboarding-quick-connect.tsx
 #: src/pages/Onboarding.tsx
+#: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Could not save model"
 msgstr "モデルを保存できませんでした"
 
@@ -3251,6 +3258,7 @@ msgid "Forgot password?"
 msgstr "パスワードをお忘れですか？"
 
 #: src/pages/onboarding-quick-connect.tsx
+#: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Found on this computer"
 msgstr "このコンピューターで検出"
 
@@ -4066,6 +4074,7 @@ msgstr "モード"
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/model-settings/model-picker.tsx
 #: src/pages/Onboarding.tsx
+#: src/pages/onboarding/LocalModelChoice.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-panel.tsx
@@ -4697,6 +4706,10 @@ msgstr "その他のモデル…"
 #: src/pages/onboarding-quick-connect.tsx
 msgid "Other providers"
 msgstr "その他のプロバイダー"
+
+#: src/pages/onboarding/LocalModelChoice.tsx
+msgid "Other ways to connect"
+msgstr "その他の接続方法"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Output"
@@ -6168,8 +6181,14 @@ msgid "Telegram"
 msgstr "Telegram"
 
 #: src/components/teach/SkillDraftCard.tsx
+#: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Test"
 msgstr "テスト"
+
+#. placeholder {0}: option.label
+#: src/pages/onboarding/LocalModelChoice.tsx
+msgid "Test {0}"
+msgstr "{0} をテスト"
 
 #: src/components/ModelConnectionPreflightNotice.tsx
 msgid "Test API key"
@@ -6187,6 +6206,7 @@ msgstr "テスト実行"
 #: src/components/ModelConnectionPreflightNotice.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/onboarding-quick-connect.tsx
+#: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Testing…"
 msgstr "テスト中…"
 

@@ -48,14 +48,21 @@ describe("index.html theme bootstrap", () => {
     expect(read("../styles.css")).toContain("font-weight: var(--font-weight-normal);");
   });
 
-  it("ships its own font instead of asking a font service for it", () => {
+  it("ships its own fonts instead of asking a font service for them", () => {
     const sans = read("../../../../packages/ui-web/src/styles.css");
-    expect(sans).toMatch(/--font-sans:\s*"Instrument Sans",/);
+    expect(sans).toMatch(/--font-sans:\s*"Inter",/);
+    expect(sans).toMatch(/--font-display:\s*"Inter Tight",/);
     const app = read("../styles.css");
-    const file = app.match(/@font-face\s*{[^}]*url\("\/(fonts\/[^"]+\.woff2)"\)/)?.[1];
-    expect(file).toBeDefined();
-    expect(existsSync(fileURLToPath(new URL(`../../public/${file}`, import.meta.url)))).toBe(true);
-    expect(html).toContain(`rel="preload" href="/${file}" as="font"`);
+    const files = [...app.matchAll(/@font-face\s*{[^}]*url\("\/(fonts\/[^"]+\.woff2)"\)/g)].map(
+      (match) => match[1],
+    );
+    expect(files).toHaveLength(2);
+    for (const file of files) {
+      expect(existsSync(fileURLToPath(new URL(`../../public/${file}`, import.meta.url)))).toBe(
+        true,
+      );
+      expect(html).toContain(`rel="preload" href="/${file}" as="font"`);
+    }
     for (const page of [html, app, sans]) expect(page).not.toMatch(/fonts\.(googleapis|gstatic)/);
   });
 });

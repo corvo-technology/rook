@@ -6,10 +6,11 @@
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-/* Web type: Instrument Sans (bundled by the app, with the system font as fallback) and a 14/20 base
-   scale. Mobile sets its own type natively. */
+/* Web type: Inter for text and Inter Tight for headings and titles (both bundled by the app, with the
+   system font as fallback) on a 14/20 base scale. Mobile sets its own type natively. */
 @theme {
-  --font-sans: "Instrument Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Inter Tight", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
     monospace;
@@ -59,6 +60,8 @@
   --color-faint-foreground: var(--faint-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-fill: var(--destructive-fill);
   --color-destructive-foreground: var(--destructive-foreground);
@@ -105,6 +108,10 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  /* Titles and section headings use the display face; the size tokens set the rest. */
+  :is(h1, h2, h3, h4, [class*="text-heading"]) {
+    font-family: var(--font-display);
   }
   button:not(:disabled),
   [role="button"]:not(:disabled) {
@@ -181,7 +188,7 @@
     0 0 10px color-mix(in srgb, var(--status-working) 60%, transparent);
 }
 
-/* The whole chick is one SVG on a 100-unit tile; the crest and an accessory reach past its edge. */
+/* The whole rook is one SVG on a 100-unit tile. */
 .corvo-mascot-eyes {
   position: absolute;
   inset: 0;
@@ -194,33 +201,8 @@
   fill: #0f0f0f;
 }
 
-.corvo-mascot-eye-light {
-  fill: #fff;
-}
-
 .corvo-mascot-smile {
   stroke: #0f0f0f;
-}
-
-/* The crest sways while the chick works or is pointed at, and is still in a quiet list. */
-.corvo-mascot-crest {
-  transform-box: fill-box;
-  transform-origin: 50% 100%;
-}
-
-.corvo-mascot-avatar[data-working="true"] .corvo-mascot-crest,
-.corvo-mascot-avatar:hover .corvo-mascot-crest {
-  animation: corvo-mascot-sway 3s ease-in-out infinite;
-}
-
-@keyframes corvo-mascot-sway {
-  0%,
-  100% {
-    transform: rotate(0);
-  }
-  50% {
-    transform: rotate(-5deg);
-  }
 }
 
 .corvo-mascot-gaze {
@@ -275,11 +257,6 @@
   }
 }
 
-/* Waiting for you: wide open. */
-.corvo-mascot-eyes[data-mood="alert"] .corvo-mascot-eye {
-  transform: scale(1.14);
-}
-
 /* Failed: tired eyes that do not blink. */
 .corvo-mascot-eyes[data-mood="failed"] .corvo-mascot-eye {
   transform: translateY(2px) scaleY(0.6);
@@ -289,7 +266,7 @@
   animation: none;
 }
 
-/* Done: a smile that pops in. */
+/* Done: happy arcs that pop in. */
 .corvo-mascot-eyes[data-mood="happy"] .corvo-mascot-smile {
   transform-box: fill-box;
   transform-origin: center;
@@ -497,9 +474,6 @@
   .corvo-message-in,
   .corvo-mascot-blink,
   .corvo-mascot-gaze,
-  .corvo-mascot-crest,
-  .corvo-mascot-avatar:hover .corvo-mascot-crest,
-  .corvo-mascot-avatar[data-working="true"] .corvo-mascot-crest,
   .corvo-mascot-eye,
   .corvo-mascot-eyes[data-mood="thinking"] .corvo-mascot-scan,
   .corvo-mascot-eyes[data-mood="happy"] .corvo-mascot-smile,

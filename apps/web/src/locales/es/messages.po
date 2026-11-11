@@ -581,6 +581,7 @@ msgid "Add a label"
 msgstr "Añadir una etiqueta"
 
 #: src/components/ApprovalRulesSettings.tsx
+#: src/components/AutonomyPicker.tsx
 msgid "Add a model in Settings to use this."
 msgstr "Agrega un modelo en Configuración para usarlo."
 
@@ -1023,6 +1024,10 @@ msgstr "Artefactos"
 msgid "Ask"
 msgstr "Preguntar"
 
+#: src/components/AutonomyPicker.tsx
+msgid "Asks before any change"
+msgstr "Pregunta antes de cualquier cambio"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Asks you before it changes anything."
 msgstr "Te pregunta antes de cambiar cualquier cosa."
@@ -1312,6 +1317,7 @@ msgid "Can't read images"
 msgstr "No puede leer imágenes"
 
 #: src/components/AskCard.tsx
+#: src/components/AutonomyPicker.tsx
 #: src/components/ComputerMaintenanceActions.tsx
 #: src/components/markdown-link-prompt.tsx
 #: src/components/PasskeySettings.tsx
@@ -1878,6 +1884,7 @@ msgstr "Límite de contexto"
 #: src/pages/onboarding-quick-connect.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/onboarding/ComputerStep.tsx
+#: src/pages/onboarding/FirstBotStep.tsx
 #: src/pages/onboarding/UseStep.tsx
 #: src/pages/onboarding/WorkspaceStep.tsx
 #: src/pages/shell/agent-import.tsx
@@ -2839,9 +2846,17 @@ msgstr "Docker limita el acceso a tu computadora para mayor seguridad. Usar {hos
 msgid "Document changed. Reopen to edit the latest version."
 msgstr "El documento ha cambiado. Vuelve a abrirlo para editar la última versión."
 
+#: src/components/AutonomyPicker.tsx
+msgid "Does everything without asking"
+msgstr "Lo hace todo sin preguntar"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Does everything without asking. Best for bots you trust."
 msgstr "Lo hace todo sin preguntar. Ideal para bots de tu confianza."
+
+#: src/components/AutonomyPicker.tsx
+msgid "Does what fits your request"
+msgstr "Hace lo que encaja con tu petición"
 
 #: src/pages/Auth.tsx
 msgid "Don’t have an account?"
@@ -3398,6 +3413,10 @@ msgstr "hora"
 msgid "hours"
 msgstr "horas"
 
+#: src/components/AutonomyPicker.tsx
+msgid "How much does {name} do on its own?"
+msgstr "¿Cuánto hace {name} por su cuenta?"
+
 #: src/pages/RoutineSchedule.tsx
 msgid "How often"
 msgstr "Con qué frecuencia"
@@ -3672,6 +3691,14 @@ msgstr "Más tarde"
 #: src/pages/WikiBrowser.tsx
 msgid "Learn from conversations"
 msgstr "Aprender de las conversaciones"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Let {name} act without asking?"
+msgstr "¿Dejar que {name} actúe sin preguntar?"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Let bots act without asking?"
+msgstr "¿Dejar que los bots actúen sin preguntar?"
 
 #: src/components/DesktopControlSettings.tsx
 msgid "Let bots see and use your apps. Actions ask first."
@@ -6008,12 +6035,28 @@ msgstr "Paso {number}"
 msgid "Steps"
 msgstr "Pasos"
 
+#: src/components/AutonomyPicker.tsx
+msgid "Still asks before a security change after it read outside content. Blocked actions stay blocked."
+msgstr "Sigue preguntando antes de un cambio de seguridad después de leer contenido externo. Las acciones bloqueadas siguen bloqueadas."
+
+#: src/components/AutonomyPicker.tsx
+msgid "Still asks before anything that changes something, and before opening a site you didn't mention."
+msgstr "Sigue preguntando antes de cualquier cosa que cambie algo y antes de abrir un sitio que no mencionaste."
+
+#: src/components/AutonomyPicker.tsx
+msgid "Still asks when a second model finds it outside your request, and before security changes."
+msgstr "Sigue preguntando cuando un segundo modelo ve algo fuera de tu petición y antes de los cambios de seguridad."
+
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/computer-overlay.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Stop"
 msgstr "Detener"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Stop asking"
+msgstr "Dejar de preguntar"
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Stop computer"

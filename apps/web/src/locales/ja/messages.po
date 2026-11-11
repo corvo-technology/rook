@@ -581,6 +581,7 @@ msgid "Add a label"
 msgstr "ラベルを追加"
 
 #: src/components/ApprovalRulesSettings.tsx
+#: src/components/AutonomyPicker.tsx
 msgid "Add a model in Settings to use this."
 msgstr "これを使用するには、設定でモデルを追加してください。"
 
@@ -1023,6 +1024,10 @@ msgstr "成果物"
 msgid "Ask"
 msgstr "確認"
 
+#: src/components/AutonomyPicker.tsx
+msgid "Asks before any change"
+msgstr "変更の前に必ず確認する"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Asks you before it changes anything."
 msgstr "変更する前に確認します。"
@@ -1312,6 +1317,7 @@ msgid "Can't read images"
 msgstr "画像を読み取れません"
 
 #: src/components/AskCard.tsx
+#: src/components/AutonomyPicker.tsx
 #: src/components/ComputerMaintenanceActions.tsx
 #: src/components/markdown-link-prompt.tsx
 #: src/components/PasskeySettings.tsx
@@ -1878,6 +1884,7 @@ msgstr "コンテキスト上限"
 #: src/pages/onboarding-quick-connect.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/onboarding/ComputerStep.tsx
+#: src/pages/onboarding/FirstBotStep.tsx
 #: src/pages/onboarding/UseStep.tsx
 #: src/pages/onboarding/WorkspaceStep.tsx
 #: src/pages/shell/agent-import.tsx
@@ -2839,9 +2846,17 @@ msgstr "Dockerはセキュリティ強化のため、コンピューターへの
 msgid "Document changed. Reopen to edit the latest version."
 msgstr "ドキュメントが変更されました。最新版を編集するには開き直してください。"
 
+#: src/components/AutonomyPicker.tsx
+msgid "Does everything without asking"
+msgstr "確認せずにすべて行う"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Does everything without asking. Best for bots you trust."
 msgstr "確認なしですべて実行します。信頼できるボット向けです。"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Does what fits your request"
+msgstr "依頼に合うことを行う"
 
 #: src/pages/Auth.tsx
 msgid "Don’t have an account?"
@@ -3398,6 +3413,10 @@ msgstr "時間"
 msgid "hours"
 msgstr "時間"
 
+#: src/components/AutonomyPicker.tsx
+msgid "How much does {name} do on its own?"
+msgstr "{name}はどこまで自分で行いますか？"
+
 #: src/pages/RoutineSchedule.tsx
 msgid "How often"
 msgstr "頻度"
@@ -3672,6 +3691,14 @@ msgstr "後で"
 #: src/pages/WikiBrowser.tsx
 msgid "Learn from conversations"
 msgstr "会話から学ぶ"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Let {name} act without asking?"
+msgstr "{name}が確認なしで動くことを許可しますか？"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Let bots act without asking?"
+msgstr "ボットが確認なしで動くことを許可しますか？"
 
 #: src/components/DesktopControlSettings.tsx
 msgid "Let bots see and use your apps. Actions ask first."
@@ -6008,12 +6035,28 @@ msgstr "ステップ {number}"
 msgid "Steps"
 msgstr "手順"
 
+#: src/components/AutonomyPicker.tsx
+msgid "Still asks before a security change after it read outside content. Blocked actions stay blocked."
+msgstr "外部のコンテンツを読んだあとのセキュリティ変更の前には、引き続き確認します。ブロックされた操作はブロックされたままです。"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Still asks before anything that changes something, and before opening a site you didn't mention."
+msgstr "何かを変更する操作の前と、あなたが指定していないサイトを開く前には、引き続き確認します。"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Still asks when a second model finds it outside your request, and before security changes."
+msgstr "2つ目のモデルが依頼の範囲外だと判断したときと、セキュリティ変更の前には、引き続き確認します。"
+
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/computer-overlay.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Stop"
 msgstr "停止"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Stop asking"
+msgstr "確認をやめる"
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Stop computer"

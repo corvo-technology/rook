@@ -1,5 +1,6 @@
 import type { Actor, Bot, BotSection, MessageBlock, SpaceBot } from "@corvo/contracts";
 import {
+  ApprovalModeSchema,
   BotStartersSchema,
   canonicalPiProviderId,
   InstructionVersionSchema,
@@ -95,6 +96,7 @@ function mapBot(
     crossSpaceCommunication?: boolean;
     fleetManagement?: boolean;
     squadRouting?: boolean;
+    approvalMode?: string | null;
     dailyCapMicros?: bigint | null;
     disabledBuiltinTools?: string[];
     webhookSecretId?: string | null;
@@ -144,6 +146,7 @@ function mapBot(
     crossSpaceCommunication: bot.crossSpaceCommunication ?? false,
     fleetManagement: bot.fleetManagement ?? false,
     squadRouting: bot.squadRouting ?? false,
+    approvalMode: ApprovalModeSchema.safeParse(bot.approvalMode).data ?? null,
     dailyCapUsd: bot.dailyCapMicros == null ? null : Number(bot.dailyCapMicros) / 1_000_000,
     disabledBuiltinTools: bot.disabledBuiltinTools ?? [],
     webhookConfigured: Boolean(bot.webhookSecretId),

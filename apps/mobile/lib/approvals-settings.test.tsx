@@ -19,6 +19,8 @@ const state = vi.hoisted(() => ({
   spaceId: undefined as string | undefined,
   settings: { mode: "ask", enabled: false, skipApprovals: false, checkerAvailable: false },
   rules: [] as Rule[],
+  confirm: true,
+  alert: vi.fn(),
 }));
 const { element } = vi.hoisted(() => ({
   element:
@@ -48,6 +50,14 @@ vi.mock("expo-router", () => ({
   useLocalSearchParams: () => ({ spaceId: state.spaceId }),
 }));
 vi.mock("react-native", () => ({
+  Alert: {
+    alert: (title: string, message: string, buttons: { style?: string; onPress: () => void }[]) => {
+      state.alert(title, message);
+      buttons
+        .find((button) => button.style === (state.confirm ? "destructive" : "cancel"))
+        ?.onPress();
+    },
+  },
   ScrollView: element("div"),
   StyleSheet: { create: <T,>(styles: T) => styles },
   Text: element("p"),
@@ -150,6 +160,8 @@ beforeEach(() => {
   state.spaceId = undefined;
   state.settings = { mode: "ask", enabled: false, skipApprovals: false, checkerAvailable: false };
   state.rules = [];
+  state.confirm = true;
+  state.alert.mockReset();
   state.rpc
     .mockReset()
     .mockImplementation(async (proc: string, input?: Record<string, unknown>) => {
@@ -196,6 +208,18 @@ it("offers Auto only once an approval model can decide, and saves the chosen mod
   expect(container.querySelector("small")?.textContent).toBe(
     "Add a model in Settings to use this.",
   );
+});
+
+it("asks before Never ask and keeps the mode, sending nothing, when cancelled", async () => {
+  state.confirm = false;
+  await render();
+  await act(async () => (container.querySelector('[role="radio"]') as HTMLElement).click());
+  expect(state.alert).toHaveBeenCalledWith(
+    "Let bots act without asking?",
+    "Still asks before a security change after it read outside content. Blocked actions stay blocked.",
+  );
+  expect(state.rpc).not.toHaveBeenCalledWith("autoReview/set", expect.anything());
+  expect(modes()).toEqual(["Never ask", "Ask*"]);
 });
 
 it("switches and removes rules, keeping legacy category rules removable only", async () => {

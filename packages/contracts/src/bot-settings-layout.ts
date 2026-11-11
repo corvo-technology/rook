@@ -7,6 +7,7 @@ export const BOT_SETTINGS_SECTIONS = {
     "model",
     "thinking",
     "computer",
+    "autonomy",
     "memoryScope",
     "readAloud",
     "voice",

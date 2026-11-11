@@ -376,6 +376,7 @@ export function botsRoutes(ctx: RouterContext) {
               ? { fleetManagement: input.fleetManagement }
               : {}),
             ...(input.squadRouting !== undefined ? { squadRouting: input.squadRouting } : {}),
+            ...(input.approvalMode !== undefined ? { approvalMode: input.approvalMode } : {}),
             ...(input.dailyCapUsd !== undefined
               ? {
                   dailyCapMicros:

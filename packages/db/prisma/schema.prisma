@@ -59,6 +59,7 @@ model User {
   ticketComments              TicketComment[]                 @relation("TicketCommentAuthorUser")
   pushToken                   PushToken?
   signupSurvey                SignupSurvey?
+  coachTour                   CoachTour?
   computerRuns                ComputerRun[]
   messagingInstallations      MessagingInstallation[]
   messagingInstallSessions    MessagingInstallSession[]
@@ -78,6 +79,17 @@ model SignupSurvey {
   createdAt DateTime @default(now())
 
   @@map("signup_surveys")
+}
+
+/// A person's coach tour progress. No row means the tour has not started (a new account).
+model CoachTour {
+  userId    String   @id
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  done      String[] @default([])
+  skipped   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("coach_tours")
 }
 
 model Session {
@@ -298,6 +310,7 @@ model Space {
   mcpOAuthSessions            McpOAuthSession[]
   modelOAuthSessions          ModelOAuthSession[]
   providerQuotas              ProviderQuota[]
+  missionStates               MissionState[]
   wikiSettings                WikiSettings?
   wikiSources                 WikiSource[]
   artifactTranscripts         ArtifactTranscript[]
@@ -535,6 +548,8 @@ model Bot {
   crossSpaceCommunication  Boolean           @default(false)
   fleetManagement          Boolean           @default(true)
   squadRouting             Boolean           @default(false)
+  /// This bot's own approval mode (never, auto, ask); null follows the member's default.
+  approvalMode             String?
   /// Most a bot may spend on hosted model credits in a UTC day; null means no limit.
   dailyCapMicros           BigInt?
   routines                 Routine[]
@@ -1554,6 +1569,25 @@ model ProviderQuota {
 
   @@unique([spaceId, userId, provider])
   @@map("provider_quotas")
+}
+
+/// How far a member of a space has come with the first missions. A row exists only for an account
+/// that started with the short navigation; without one the full navigation shows.
+model MissionState {
+  id         String    @id @default(cuid())
+  spaceId    String
+  space      Space     @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId     String
+  /// Mission ids already completed; a mission never leaves the list.
+  completed  String[]  @default([])
+  /// Navigation parts a mission brought that the member has opened.
+  seenParts  String[]  @default([])
+  /// When the member chose to show everything; null while the navigation is still growing.
+  shownAllAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@unique([spaceId, userId])
+  @@map("mission_states")
 }
 
 model BotMcpServer {

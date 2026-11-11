@@ -107,6 +107,8 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     kind: z.literal("ask"),
     text: z.string(),
     approvalEffectId: Id.optional(),
+    /** A proposed change to something that exists; shown as Apply or Dismiss, one card at a time. */
+    proposal: z.literal(true).optional(),
     instructionUpdate: z
       .object({
         botId: Id,

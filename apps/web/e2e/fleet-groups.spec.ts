@@ -37,14 +37,14 @@ test("a group a bot creates after approval appears in the sidebar without a relo
   ).toBeVisible({
     timeout: 30_000,
   });
-  await expect(page.getByRole("button", { name: "Allow once", exact: true })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Apply", exact: true })).toBeEnabled();
   await expect(page.getByRole("button", { name: "Send it", exact: true })).toBeEnabled();
   await captureScreenshot(page, testInfo, "pending-cards-never-block-chat");
   await page.reload();
-  await expect(page.getByRole("button", { name: "Allow once", exact: true })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Apply", exact: true })).toBeEnabled();
   await expect(page.getByRole("button", { name: "Send it", exact: true })).toBeEnabled();
 
-  await page.getByRole("button", { name: "Allow once", exact: true }).click();
+  await page.getByRole("button", { name: "Apply", exact: true }).click();
   await expect(sidebar.getByRole("button", { name: /^Crew/ })).toBeVisible({ timeout: 30_000 });
 });
 
@@ -87,8 +87,8 @@ test("model approvals use catalog labels and fit wide and narrow chats", async (
     timeout: 30_000,
   });
   await expect(card.getByText("To: OpenAI: GPT-6 Luna", { exact: false })).toBeVisible();
-  const allow = card.getByRole("button", { name: "Allow once", exact: true });
-  const deny = card.getByRole("button", { name: "Deny", exact: true });
+  const allow = card.getByRole("button", { name: "Apply", exact: true });
+  const deny = card.getByRole("button", { name: "Dismiss", exact: true });
   const a = await allow.boundingBox();
   const d = await deny.boundingBox();
   expect(a?.y).toBe(d?.y);
@@ -105,5 +105,5 @@ test("model approvals use catalog labels and fit wide and narrow chats", async (
   await deny.scrollIntoViewIfNeeded();
   await captureScreenshot(page, testInfo, "fleet-model-change-approval-narrow");
   await deny.click();
-  await expect(card.getByText("Denied", { exact: true })).toHaveClass(/text-muted-foreground/);
+  await expect(card.getByText("Dismissed", { exact: true })).toHaveClass(/text-muted-foreground/);
 });

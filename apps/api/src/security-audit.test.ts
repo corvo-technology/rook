@@ -28,6 +28,24 @@ describe("procedureSecurityEvent", () => {
     });
   });
 
+  it("audits a bot's approval mode change and nothing else on bots.update", () => {
+    expect(
+      procedureSecurityEvent(["bots", "update"], { botId: "b", approvalMode: "never" }, actor),
+    ).toEqual({
+      type: "approval.policy.changed",
+      userId: "user-1",
+      spaceId: "space-1",
+      metadata: { procedure: "bots.update", kind: "bot", botId: "b", approvalMode: "never" },
+    });
+    expect(
+      procedureSecurityEvent(["bots", "update"], { botId: "b", approvalMode: null }, actor)
+        ?.metadata,
+    ).toEqual({ procedure: "bots.update", kind: "bot", botId: "b", approvalMode: null });
+    expect(procedureSecurityEvent(["bots", "update"], { botId: "b", name: "x" }, actor)).toBe(
+      undefined,
+    );
+  });
+
   it("keeps secret names but never secret values", () => {
     const event = procedureSecurityEvent(
       ["botSecrets", "put"],

@@ -441,3 +441,34 @@ it("shows an approval's raw tool name as words", async () => {
   expect(container.textContent).toContain("Review before Canva create design import job");
   expect(container.textContent).not.toContain("CANVA_CREATE");
 });
+
+const proposal: AskBlock = {
+  kind: "ask",
+  text: "Change the model of Scout?",
+  status: "pending",
+  approvalEffectId: "effect-7",
+  proposal: true,
+  actions: [
+    { id: "allow", label: "Apply" },
+    { id: "deny", label: "Dismiss" },
+  ],
+};
+
+it("words a proposal as Apply and Dismiss and answers with its effect id", async () => {
+  const onAnswer = vi.fn(async () => undefined);
+  await render(proposal, undefined, onAnswer);
+
+  const labels = [...container.querySelectorAll("button")].map((node) => node.textContent);
+  expect(labels).toEqual(["Apply", "Dismiss"]);
+  expect(container.textContent).not.toContain("Allow once");
+
+  await act(async () => container.querySelector("button")!.click());
+  expect(onAnswer).toHaveBeenCalledWith("allow", undefined, "effect-7");
+});
+
+it("says a proposal was applied or dismissed once answered", async () => {
+  await render({ ...proposal, status: "answered", answer: "allow" });
+  expect(container.textContent).toContain("Applied");
+  await render({ ...proposal, status: "answered", answer: "deny" });
+  expect(container.textContent).toContain("Dismissed");
+});

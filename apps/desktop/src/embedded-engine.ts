@@ -583,6 +583,11 @@ export class EmbeddedEngineController {
       SCREEN_PROXY_SECRET: secrets.screenProxySecret,
       // No web server runs in this app, so the API also serves the computer screen.
       SCREEN_PROXY_IN_API: "1",
+      // The engine binds 127.0.0.1, its only account is the owner, and its computer is the
+      // owner's own machine, so reaching a model, MCP or voice server on that machine grants
+      // nothing the host computer tool does not. It also lets a model server found on this
+      // computer be saved and run.
+      MCP_ALLOW_PRIVATE_ENDPOINT: "true",
       // Content stays on this computer, under its own disk encryption; a lost key would
       // otherwise lose every conversation. Existing ciphertext still reads.
       CONTENT_ENCRYPTION: "off",

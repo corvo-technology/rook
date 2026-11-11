@@ -69,6 +69,17 @@ export function providerQuotaResetAt(text: string, now = Date.now()): number | u
   return resetAt !== undefined && resetAt - now > PROVIDER_QUOTA_MIN_RESET_MS ? resetAt : undefined;
 }
 
+/** Marks an RPC error whose `data.modelFailure` carries the facts behind a failed model call. */
+export const MODEL_FAILURE_REASON = "model_failure";
+
+/** What a model probe or run knows about a failure, as structured signals plus the raw text. */
+export const ModelFailureDataSchema = z.object({
+  details: z.string().max(8000),
+  status: z.number().int().min(100).max(599).optional(),
+  code: z.string().max(64).optional(),
+});
+export type ModelFailureData = z.infer<typeof ModelFailureDataSchema>;
+
 export const RoutineRunSchema = z.object({
   id: Id,
   botId: Id,

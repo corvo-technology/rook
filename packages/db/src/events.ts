@@ -79,6 +79,7 @@ export interface AppendEventInput {
 }
 
 export interface ThreadEvents {
+  addApprovalAskToPausedRun(input: AddApprovalAskInput): Promise<boolean>;
   answerRunInput(input: AnswerRunInput): Promise<boolean>;
   append(input: AppendEventInput): Promise<ProductEvent>;
   claimSteering(input: ClaimSteeringInput): Promise<ClaimedSteeringMessage[]>;
@@ -91,6 +92,7 @@ export interface ThreadEvents {
   pauseRunForInput(input: PauseRunForInput): Promise<FinalizeRunResult | false>;
   pauseRunForTakeover(input: PauseRunForTakeover): Promise<boolean>;
   sendUserMessage(input: SendUserMessageInput): Promise<SendUserMessageResult>;
+  retryFailedRun(input: RetryFailedRunInput): Promise<RetryFailedRunResult | null>;
   follow(threadId: string, cursor: number, signal?: AbortSignal): AsyncGenerator<ProductEvent>;
 }
 
@@ -243,6 +245,16 @@ export interface PauseRunForTakeover {
   computerId: string;
 }
 
+/** Most proposal cards one reply can put on a paused message. */
+export const FLEET_CARD_BATCH_MAX = 5;
+
+export interface AddApprovalAskInput {
+  spaceId: string;
+  threadId: string;
+  runId: string;
+  block: MessageBlock;
+}
+
 export interface AnswerRunInput {
   spaceId: string;
   threadId: string;
@@ -256,6 +268,8 @@ export interface AnswerRunInput {
   username?: string;
   /** Turns down a pending secret request; only the run's user can, and nothing is stored. */
   dismiss?: boolean;
+  /** Which card of several pending approvals this answers; required while more than one waits. */
+  approvalEffectId?: string;
 }
 
 /** What request_secret returns to the bot once the user dismissed its card. */
@@ -293,6 +307,19 @@ export interface SendUserMessageResult {
   runId: string | null;
 }
 
+export interface RetryFailedRunInput {
+  spaceId: string;
+  userId: string;
+  threadId: string;
+  runId: string;
+}
+
+export interface RetryFailedRunResult {
+  runId: string;
+  /** False when this retry already exists, so the caller starts nothing. */
+  created: boolean;
+}
+
 export interface RunSecretWriter {
   withPrepared?<T>(
     prisma: PrismaClient,
@@ -320,6 +347,7 @@ export function createThreadEvents(
   } = {},
 ): ThreadEvents {
   return {
+    addApprovalAskToPausedRun: (input) => addApprovalAskToPausedRun(prisma, input, realtime),
     answerRunInput: (input) => answerRunInput(prisma, input, realtime, options.runSecretWriter),
     append: (input) => appendEvent(prisma, input, realtime, options.analytics),
     claimSteering: (input) => claimSteering(prisma, input),
@@ -332,6 +360,7 @@ export function createThreadEvents(
     pauseRunForInput: (input) => pauseRunForInput(prisma, input, realtime),
     pauseRunForTakeover: (input) => pauseRunForTakeover(prisma, input, realtime),
     sendUserMessage: (input) => sendUserMessage(prisma, input, realtime, options.analytics),
+    retryFailedRun: (input) => retryFailedRun(prisma, input),
     follow: (threadId, cursor, signal) =>
       followThreadEvents(prisma, threadId, cursor, realtime, signal, options.catchUpMs),
   };
@@ -597,6 +626,105 @@ export async function sendUserMessage(
   };
 }
 
+/**
+ * Runs the same message again after a failed chat run, without posting a second copy of it. Only
+ * the newest run of the bot in the thread can be retried, and only while nothing else is working,
+ * so a retry never re-runs an older failure or races a newer message. The retry's nonce makes a
+ * double tap start one run.
+ */
+export async function retryFailedRun(
+  prisma: PrismaClient,
+  input: RetryFailedRunInput,
+): Promise<RetryFailedRunResult | null> {
+  const clientNonce = `retry:${input.runId}`;
+  const existing = async (): Promise<RetryFailedRunResult | null> => {
+    const run = await prisma.run.findFirst({
+      where: { spaceId: input.spaceId, clientNonce },
+      select: { id: true },
+    });
+    return run ? { runId: run.id, created: false } : null;
+  };
+  const replay = await existing();
+  if (replay) return replay;
+  try {
+    return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const failed = await tx.run.findUnique({
+        where: { id: input.runId },
+        select: {
+          spaceId: true,
+          threadId: true,
+          userId: true,
+          botId: true,
+          taskId: true,
+          status: true,
+          trigger: true,
+          sourceMessageId: true,
+          modelPinned: true,
+          modelProvider: true,
+          modelId: true,
+          thinkingLevel: true,
+        },
+      });
+      if (
+        !failed ||
+        failed.spaceId !== input.spaceId ||
+        failed.threadId !== input.threadId ||
+        failed.userId !== input.userId ||
+        failed.status !== "failed" ||
+        !failed.sourceMessageId ||
+        !isConversationalRun(failed.trigger)
+      ) {
+        return null;
+      }
+      const newest = await tx.run.findFirst({
+        where: { threadId: failed.threadId, botId: failed.botId },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        select: { id: true },
+      });
+      if (newest?.id !== input.runId) return null;
+      const active = await tx.run.findFirst({
+        where: {
+          threadId: failed.threadId,
+          botId: failed.botId,
+          status: { in: [...QUEUE_HOLDING_RUN_STATUSES] },
+        },
+        select: { id: true },
+      });
+      if (active) return null;
+      // A model the person changed since the failure is used; only a pin is kept.
+      const run = await tx.run.create({
+        data: {
+          spaceId: failed.spaceId,
+          botId: failed.botId,
+          threadId: failed.threadId,
+          taskId: failed.taskId,
+          userId: failed.userId,
+          status: "queued",
+          trigger: failed.trigger,
+          clientNonce,
+          sourceMessageId: failed.sourceMessageId,
+          ...(failed.modelPinned
+            ? {
+                modelProvider: failed.modelProvider,
+                modelId: failed.modelId,
+                thinkingLevel: failed.thinkingLevel,
+                modelPinned: true,
+              }
+            : {}),
+        },
+        select: { id: true },
+      });
+      await tx.task.update({ where: { id: failed.taskId }, data: { status: "queued" } });
+      return { runId: run.id, created: true };
+    });
+  } catch (error) {
+    // A concurrent tap created the retry first.
+    const winner = await existing();
+    if (winner) return winner;
+    throw error;
+  }
+}
+
 export async function claimSteering(
   prisma: PrismaClient,
   input: ClaimSteeringInput,
@@ -701,7 +829,8 @@ async function findPendingAsk(
     const pendingAsk = parsed.data.find(
       (block) => block.kind === "ask" && block.status !== "answered",
     );
-    if (pendingAsk?.kind === "ask") return { messageId: message.id, pendingAsk };
+    if (pendingAsk?.kind === "ask")
+      return { messageId: message.id, pendingAsk, blocks: parsed.data };
   }
   return null;
 }
@@ -744,11 +873,21 @@ async function commitAnswerRunInput(
   });
   const parsed = MessageBlockSchema.array().safeParse(message?.blocks);
   if (!message || !parsed.success) return null;
-  const pendingAsk = parsed.data.find(
-    (block) => block.kind === "ask" && block.status !== "answered",
+  const pendingAsks = parsed.data.filter(
+    (block): block is Extract<MessageBlock, { kind: "ask" }> =>
+      block.kind === "ask" && block.status !== "answered",
   );
-  if (pendingAsk?.kind !== "ask") return null;
+  // With several cards waiting, the answer names its card. An older client that cannot name one
+  // is refused while more than one waits, so it never decides a card it did not show.
+  const pendingAsk = input.approvalEffectId
+    ? pendingAsks.find((block) => block.approvalEffectId === input.approvalEffectId)
+    : pendingAsks.length === 1
+      ? pendingAsks[0]
+      : undefined;
+  if (!pendingAsk) return null;
   const approvalAsk = isApprovalAskBlock(pendingAsk);
+  // The run resumes only once every card of the message is decided.
+  const otherCardsWait = approvalAsk && pendingAsks.length > 1;
   const secretAsk = isSecretAskBlock(pendingAsk);
   const choiceAsk = !approvalAsk && !secretAsk && Boolean(pendingAsk.actions?.length);
   const selectedChoice = choiceAsk ? resolveAskChoice(input.answer, pendingAsk.actions) : undefined;
@@ -828,20 +967,22 @@ async function commitAnswerRunInput(
   // the user's turn: with the conversation and every tool, to get going on that answer.
   const resumedTrigger =
     run.trigger === "created" && !approvalAsk && !secretAsk ? "user" : run.trigger;
-  const queued = await tx.run.updateMany({
-    where: {
-      id: input.runId,
-      spaceId: input.spaceId,
-      threadId: input.threadId,
-      status: "waiting_input",
-    },
-    data: {
-      status: "queued",
-      ...(resumedTrigger !== run.trigger ? { trigger: resumedTrigger } : {}),
-      ...(choiceAsk ? { checkpoint: null } : {}),
-    },
-  });
-  if (queued.count !== 1) return null;
+  if (!otherCardsWait) {
+    const queued = await tx.run.updateMany({
+      where: {
+        id: input.runId,
+        spaceId: input.spaceId,
+        threadId: input.threadId,
+        status: "waiting_input",
+      },
+      data: {
+        status: "queued",
+        ...(resumedTrigger !== run.trigger ? { trigger: resumedTrigger } : {}),
+        ...(choiceAsk ? { checkpoint: null } : {}),
+      },
+    });
+    if (queued.count !== 1) return null;
+  }
 
   const recordedAnswer = secretAsk ? "" : (selectedChoice?.id ?? approvalAnswer);
   const callId = callIdFromClientNonce(input.clientNonce);
@@ -1171,6 +1312,60 @@ export async function answerWaitingRunWithTextInTransaction(
   return messageId
     ? commitAnswerRunInput(tx, { ...input, messageId, answer: input.answer.trim() })
     : null;
+}
+
+/**
+ * Adds a proposal card to the message a paused run already shows, so several changes proposed in
+ * one reply are decided on one message. Changes nothing, and returns false, unless the run waits on
+ * a proposal card and the message holds fewer than FLEET_CARD_BATCH_MAX of them.
+ */
+export async function addApprovalAskToPausedRun(
+  prisma: PrismaClient,
+  input: AddApprovalAskInput,
+  realtime?: RealtimeFanout,
+): Promise<boolean> {
+  const { block } = input;
+  if (block.kind !== "ask" || !block.proposal || !block.approvalEffectId) return false;
+  const committed = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    await tx.$queryRaw`SELECT id FROM threads WHERE id = ${input.threadId} FOR UPDATE`;
+    const run = await tx.run.findFirst({
+      where: {
+        id: input.runId,
+        spaceId: input.spaceId,
+        threadId: input.threadId,
+        status: "waiting_input",
+      },
+      select: { botId: true },
+    });
+    if (!run) return null;
+    const found = await findPendingAsk(tx, input);
+    if (!found?.pendingAsk.proposal) return null;
+    const proposals = found.blocks.filter((item) => item.kind === "ask" && item.proposal);
+    if (proposals.length >= FLEET_CARD_BATCH_MAX) return null;
+    const effect = await tx.externalEffect.findFirst({
+      where: {
+        id: block.approvalEffectId,
+        spaceId: input.spaceId,
+        runId: input.runId,
+        status: "intended",
+      },
+      select: { id: true },
+    });
+    if (!effect) return null;
+    const blocks = [...found.blocks, block];
+    await tx.message.update({ where: { id: found.messageId }, data: { blocks } });
+    return appendEventInTransaction(tx, {
+      spaceId: input.spaceId,
+      threadId: input.threadId,
+      botId: run.botId,
+      runId: input.runId,
+      type: "thread.message.updated",
+      payload: { messageId: found.messageId, role: "bot", blocks },
+    });
+  });
+  if (!committed) return false;
+  await notifyRealtime(realtime, committed.threadId, committed.seq);
+  return true;
 }
 
 export async function pauseRunForInput(

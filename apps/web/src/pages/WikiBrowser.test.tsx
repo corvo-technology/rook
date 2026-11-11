@@ -132,6 +132,20 @@ function fakeApi(seed: Record<string, { body: string; kind?: string }> = {}) {
       list: vi.fn(async ({ state }: { state?: string[] } = {}) =>
         changes.filter((change) => !state || state.includes(change.state)),
       ),
+      applyAll: vi.fn(async () => {
+        let applied = 0;
+        let conflicts = 0;
+        for (const change of changes.filter((item) => item.state === "pending")) {
+          if (change.id.startsWith("moved")) {
+            change.state = "conflict";
+            conflicts += 1;
+          } else {
+            change.state = "applied";
+            applied += 1;
+          }
+        }
+        return { applied, conflicts };
+      }),
       decide: vi.fn(async ({ changeId, decision }: { changeId: string; decision: string }) => {
         const change = changes.find((item) => item.id === changeId)!;
         change.state = decision === "apply" ? "applied" : "refused";
@@ -462,5 +476,37 @@ it("keeps the Space's two wiki settings as two switches, each changed on its own
   expect(api.settings.set).toHaveBeenLastCalledWith({ capture: false });
   expect(button("Approve edits")?.getAttribute("aria-checked")).toBe("false");
   expect(button("Learn from conversations")?.getAttribute("aria-checked")).toBe("false");
+  await unmount();
+});
+
+it("offers Approve all only when two or more changes wait", async () => {
+  const { api, changes } = fakeApi({ Plan: { body: "Status: planning." } });
+  changes.push(waiting("c1", "Plan"));
+  const unmount = await mount(api);
+  expect(button("Approve all")).toBeUndefined();
+  await unmount();
+  changes.push(waiting("c2", "Plan"));
+  const again = await mount(api);
+  expect(button("Approve all")).toBeDefined();
+  await again();
+});
+
+it("approves every waiting change with one call and clears the list", async () => {
+  const { api, changes } = fakeApi({ Plan: { body: "Status: planning." } });
+  changes.push(waiting("c1", "Plan"), waiting("c2", "Plan"));
+  const unmount = await mount(api);
+  await click(button("Approve all"));
+  expect(api.changes.applyAll).toHaveBeenCalledTimes(1);
+  expect(q("wiki-pending")).toBeNull();
+  expect(q("wiki-moved")).toBeNull();
+  await unmount();
+});
+
+it("says a page changed when approving all leaves a conflict", async () => {
+  const { api, changes } = fakeApi({ Plan: { body: "Status: planning." } });
+  changes.push(waiting("c1", "Plan"), waiting("moved2", "Plan"));
+  const unmount = await mount(api);
+  await click(button("Approve all"));
+  expect(q("wiki-moved")?.textContent).toContain("A page changed since");
   await unmount();
 });

@@ -1,5 +1,6 @@
+import type { OnboardingPicks } from "@corvo/contracts";
 import { describe, expect, it } from "vitest";
-import { loadDoneSteps, saveDoneSteps } from "./onboarding-progress";
+import { loadDoneSteps, loadPicks, saveDoneSteps, savePicks } from "./onboarding-progress";
 
 function memoryStorage(): Storage {
   const items = new Map<string, string>();
@@ -48,5 +49,24 @@ describe("onboarding progress", () => {
     expect(loadDoneSteps("u", blocked)).toEqual(new Set());
     expect(() => saveDoneSteps("u", new Set(["bot"]), blocked)).not.toThrow();
     expect(loadDoneSteps("u", null)).toEqual(new Set());
+  });
+
+  it("keeps the picks for the same account and drops them for another", () => {
+    const storage = memoryStorage();
+    const picks: OnboardingPicks = { use: "work", categories: ["support", "sales"] };
+    savePicks("user-1", picks, storage);
+    expect(loadPicks("user-1", storage)).toEqual(picks);
+    expect(loadPicks("user-2", storage)).toBeNull();
+  });
+
+  it("ignores stored picks that do not parse", () => {
+    const storage = memoryStorage();
+    storage.setItem(
+      "corvo:onboarding-picks",
+      JSON.stringify({ userId: "user-1", picks: { categories: ["nonsense"] } }),
+    );
+    expect(loadPicks("user-1", storage)).toBeNull();
+    storage.setItem("corvo:onboarding-picks", "not json");
+    expect(loadPicks("user-1", storage)).toBeNull();
   });
 });

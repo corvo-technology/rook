@@ -1,4 +1,4 @@
-import type { RunErrorKind, TurnGuardKind } from "@corvo/contracts";
+import type { CliEngineId, RunErrorKind, TurnGuardKind } from "@corvo/contracts";
 import { COMPUTER_RATE_LIMIT_ERROR, providerQuotaResetAt } from "@corvo/contracts";
 import { stuckWorkStatusMessages } from "./stuck-work.js";
 
@@ -121,7 +121,22 @@ const MODEL_CONNECTION_RUN_ERRORS = new Set([
   MISSING_MODEL_RUN_ERROR,
   HOSTED_MODEL_CREDITS_REQUIRED_ERROR,
 ]);
+/** What a run says when the coding-agent CLI it needs is not usable, or started with tools it was not given. */
+export const CLI_ENGINE_RUN_ERRORS: Record<
+  CliEngineId,
+  { missing: string; signedOut: string; unsafe: string }
+> = {
+  claude: {
+    missing: "Claude Code isn't installed where this bot runs.",
+    signedOut: "Claude Code isn't signed in to a Claude plan where this bot runs.",
+    unsafe: "Claude Code started with tools it wasn't given, so the reply was stopped.",
+  },
+};
+const CLI_ENGINE_RUN_ERROR_SET = new Set(
+  Object.values(CLI_ENGINE_RUN_ERRORS).flatMap((errors) => Object.values(errors)),
+);
 const APP_RUN_ERRORS = new Set([
+  ...CLI_ENGINE_RUN_ERROR_SET,
   ...MODEL_OUTPUT_RUN_ERRORS,
   ...MODEL_CONNECTION_RUN_ERRORS,
   MODEL_ACCESS_REQUIRED_RUN_ERROR,
@@ -237,6 +252,8 @@ export function normalizeRunError(
   recovery?: "connection" | "model";
   resetAt?: number;
   kind?: RunErrorKind;
+  /** What kind of network or capacity failure this was, when it is not one of the run error kinds. */
+  transport?: "unreachable" | "tls" | "timeout" | "overloaded";
   period?: "none" | "daily" | "weekly" | "monthly";
 } {
   const trimmed = details.trim();
@@ -277,6 +294,7 @@ export function normalizeRunError(
   const guardKind = TURN_GUARD_KIND_BY_ERROR.get(trimmed);
   if (guardKind) return { summary: translate(trimmed), details, kind: guardKind };
   // Preserve only known recovery advice: provider diagnostics can also be plain text.
+  if (CLI_ENGINE_RUN_ERROR_SET.has(trimmed)) return { summary: translate(trimmed), details };
   if (APP_RUN_ERRORS.has(trimmed)) {
     return MODEL_OUTPUT_RUN_ERRORS.has(trimmed)
       ? { summary: details, details, kind: "output" }
@@ -344,6 +362,7 @@ export function normalizeRunError(
   let kind: RunErrorKind | undefined;
   let period: "none" | "daily" | "weekly" | "monthly" | undefined;
   let recovery: "connection" | "model" | undefined;
+  let transport: "unreachable" | "tls" | "timeout" | "overloaded" | undefined;
   let summary = translate("The model provider returned an error.");
   const financialQuota =
     /insufficient[_ ](?:quota|balance)|credits?|funds|spend|budget|billing|openrouter_key_limit/i.test(
@@ -479,6 +498,7 @@ export function normalizeRunError(
     status === 529 ||
     /overload|over capacity|temporarily unavailable|service unavailable/i.test(signals)
   ) {
+    transport = "overloaded";
     summary = translate("{provider} is overloaded right now. Try again in a moment.", { provider });
   } else if (
     // A security program or network filter that inspects HTTPS presents its own certificate, which
@@ -487,6 +507,7 @@ export function normalizeRunError(
       signals,
     )
   ) {
+    transport = "tls";
     summary = translate(
       "{provider} couldn't be reached securely. A security program or network filter may be intercepting the connection.",
       { provider },
@@ -498,6 +519,7 @@ export function normalizeRunError(
       signals,
     )
   ) {
+    transport = "unreachable";
     summary = translate("{provider} couldn't be reached. Check that it's running.", { provider });
   } else if (
     status === 408 ||
@@ -506,6 +528,7 @@ export function normalizeRunError(
       signals,
     )
   ) {
+    transport = "timeout";
     summary = translate("{provider} took too long to respond. Try again.", { provider });
   } else if (
     trimmed === MODEL_OUTPUT_LIMIT_ERROR ||
@@ -520,6 +543,7 @@ export function normalizeRunError(
     summary,
     details,
     ...(kind ? { kind } : {}),
+    ...(transport ? { transport } : {}),
     ...(period ? { period } : {}),
     ...(recovery ? { recovery } : {}),
     ...(resetAt ? { resetAt } : {}),

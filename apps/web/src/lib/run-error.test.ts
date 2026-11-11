@@ -1,5 +1,10 @@
 import { TURN_GUARD_KINDS } from "@corvo/contracts";
-import { MODEL_OUTPUT_CUT_ERROR, normalizeRunError, TURN_GUARD_RUN_ERRORS } from "@corvo/core";
+import {
+  CLI_ENGINE_RUN_ERRORS,
+  MODEL_OUTPUT_CUT_ERROR,
+  normalizeRunError,
+  TURN_GUARD_RUN_ERRORS,
+} from "@corvo/core";
 import { i18n } from "@lingui/core";
 import { afterEach, expect, it } from "vitest";
 import { translateRunError } from "./run-error";
@@ -45,3 +50,14 @@ it.each(TURN_GUARD_KINDS)("translates the %s stop sentence without a recovery ac
   expect(result.summary).toBe(`marker:${kind}`);
   expect(result.recovery).toBeUndefined();
 });
+
+it.each(Object.values(CLI_ENGINE_RUN_ERRORS.claude))(
+  "translates the CLI engine error %s",
+  (sentence) => {
+    i18n.load("de", { [sentence]: `translated: ${sentence}` });
+    i18n.activate("de");
+    expect(normalizeRunError(sentence, translateRunError, "en").summary).toBe(
+      `translated: ${sentence}`,
+    );
+  },
+);

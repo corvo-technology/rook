@@ -68,6 +68,30 @@ test("onboarding preflight stays on the connection being tested", async ({ page 
   await expect(page.getByText(/Found \d+ model/)).toHaveCount(0);
   await captureScreenshot(page, testInfo, "onboarding-preflight-unavailable-model");
 
+  const failProbe = async (route: import("@playwright/test").Route) =>
+    route.fulfill({
+      status: 400,
+      contentType: "application/json",
+      body: JSON.stringify({
+        json: {
+          defined: false,
+          code: "BAD_REQUEST",
+          status: 400,
+          message: "Model server returned 401.",
+          data: {
+            reason: "model_failure",
+            modelFailure: { details: "401: unauthorized", status: 401 },
+          },
+        },
+      }),
+    });
+  await page.route("**/rpc/models/probeOpenAiCompatible", failProbe);
+  await page.getByRole("button", { name: "Find models" }).click();
+  await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
+  await expect(page.getByText("Details")).toBeVisible();
+  await captureScreenshot(page, testInfo, "onboarding-preflight-provider-problem");
+  await page.unroute("**/rpc/models/probeOpenAiCompatible", failProbe);
+
   holdProbe = true;
   const held = page.waitForRequest("**/rpc/models/probeOpenAiCompatible");
   await page.getByRole("button", { name: "Find models" }).click();

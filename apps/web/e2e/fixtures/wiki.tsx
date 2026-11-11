@@ -127,12 +127,39 @@ const changes: WikiChange[] =
             "Marina: the quote is approved, we start on Nov 18.\nLeo: noted, I will update the plan.",
         },
       ];
+// ?changes=two leaves a second edit waiting, which is when Approve all shows.
+if (params.get("changes") === "two")
+  changes.push({
+    id: "change-2",
+    state: "pending",
+    reason: "The invoice day was agreed.",
+    sourceTitle: "Billing chat",
+    pages: [{ title: "Invoice Policy", op: "replace" }],
+    edits: [
+      {
+        title: "Invoice Policy",
+        op: "replace",
+        removed: "net 15",
+        added: "net 30",
+      },
+    ],
+    createdAt: ago(HOUR / 2),
+    canSeeSource: false,
+  });
 let settings: WikiSettings = { capture: true, edits: "approve" };
 
 const api: WikiApi = {
   changes: {
     list: async ({ state } = {}) =>
       changes.filter((change) => !state || state.includes(change.state)),
+    applyAll: async () => {
+      let applied = 0;
+      for (const change of changes.filter((item) => item.state === "pending")) {
+        change.state = "applied";
+        applied += 1;
+      }
+      return { applied, conflicts: 0 };
+    },
     decide: async ({ changeId, decision }) => {
       const change = changes.find((item) => item.id === changeId)!;
       change.state =

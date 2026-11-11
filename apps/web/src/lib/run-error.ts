@@ -109,6 +109,19 @@ export const translateRunError: RunErrorTranslator = (message, values) => {
         message: "{provider} couldn't be reached. Check that it's running.",
         values,
       });
+    case "{provider} sign-in is no longer valid.":
+      return i18n._({
+        id: "{provider} sign-in is no longer valid.",
+        message: "{provider} sign-in is no longer valid.",
+        values,
+      });
+    case "{provider} couldn't be reached through the network proxy. Check the proxy settings.":
+      return i18n._({
+        id: "{provider} couldn't be reached through the network proxy. Check the proxy settings.",
+        message:
+          "{provider} couldn't be reached through the network proxy. Check the proxy settings.",
+        values,
+      });
     case "{provider} is overloaded right now. Try again in a moment.":
       return i18n._({
         id: "{provider} is overloaded right now. Try again in a moment.",
@@ -234,6 +247,24 @@ export const translateRunError: RunErrorTranslator = (message, values) => {
       return i18n._({
         id: "I stopped because I kept waiting for something that didn't arrive.",
         message: "I stopped because I kept waiting for something that didn't arrive.",
+        values,
+      });
+    case "Claude Code isn't installed where this bot runs.":
+      return i18n._({
+        id: "Claude Code isn't installed where this bot runs.",
+        message: "Claude Code isn't installed where this bot runs.",
+        values,
+      });
+    case "Claude Code isn't signed in to a Claude plan where this bot runs.":
+      return i18n._({
+        id: "Claude Code isn't signed in to a Claude plan where this bot runs.",
+        message: "Claude Code isn't signed in to a Claude plan where this bot runs.",
+        values,
+      });
+    case "Claude Code started with tools it wasn't given, so the reply was stopped.":
+      return i18n._({
+        id: "Claude Code started with tools it wasn't given, so the reply was stopped.",
+        message: "Claude Code started with tools it wasn't given, so the reply was stopped.",
         values,
       });
     default:

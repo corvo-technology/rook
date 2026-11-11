@@ -1,5 +1,5 @@
 import { TURN_GUARD_KINDS } from "@corvo/contracts";
-import { normalizeRunError } from "@corvo/core";
+import { describeModelProblem } from "@corvo/core";
 import { describe, expect, it } from "vitest";
 import {
   parseRunDiagnostic,
@@ -77,7 +77,11 @@ describe("the one recovery action", () => {
     ["Request timed out.", null],
     ['429: {"message":"Too many requests"}', null],
   ])("labels %s", (details, label) => {
-    expect(runErrorActionLabel(t, normalizeRunError(details))).toBe(label);
+    expect(runErrorActionLabel(t, describeModelProblem({ details }).action)).toBe(label);
+  });
+
+  it("names the sign-in action", () => {
+    expect(runErrorActionLabel(t, "sign-in")).toBe("Sign in again");
   });
 });
 

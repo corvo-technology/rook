@@ -22,6 +22,9 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Main model": "主模型",
   "Add fallback": "添加备用模型",
   "Manage {provider}": "管理 {provider}",
+  "Found on this computer": "在此电脑上找到",
+  "Local models": "本地模型",
+  Use: "使用",
   "Add provider": "添加提供商",
   "Choose a model": "选择模型",
   "Use 80 characters or fewer": "请使用不超过 80 个字符",
@@ -113,8 +116,16 @@ export const ZH_MESSAGES: Record<string, string> = {
   "The model returned an unusable response. Try again.": "模型返回了无法使用的回复。请重试。",
   "This model's context window is too small. Choose another model.":
     "此模型的上下文窗口太小。请选择其他模型。",
+  "Claude Code isn't installed where this bot runs.": "运行此机器人的位置未安装 Claude Code。",
+  "Claude Code isn't signed in to a Claude plan where this bot runs.":
+    "运行此机器人的位置上，Claude Code 未登录 Claude 套餐。",
+  "Claude Code started with tools it wasn't given, so the reply was stopped.":
+    "Claude Code 启动时带有未授予它的工具，因此已停止回复。",
   "{provider} couldn't be reached securely. A security program or network filter may be intercepting the connection.":
     "无法安全连接到{provider}。可能是安全软件或网络过滤器拦截了连接。",
+  "{provider} sign-in is no longer valid.": "{provider}的登录已失效。",
+  "{provider} couldn't be reached through the network proxy. Check the proxy settings.":
+    "无法通过网络代理连接到{provider}。请检查代理设置。",
   "{provider} took too long to respond. Try again.": "{provider}响应超时。请重试。",
   "{provider} is overloaded right now. Try again in a moment.":
     "{provider}当前负载过高。请稍后再试。",
@@ -1105,8 +1116,19 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Added to the wiki": "已添加到 Wiki",
   Refused: "已拒绝",
   Undone: "已撤销",
+  "Approve all": "全部批准",
+  "Learn from this conversation": "从此对话中学习",
   "A page changed since": "此后有页面已更改",
   Refuse: "拒绝",
   "Keep in the wiki": "保留到 Wiki",
   "Could not load pages": "无法加载页面",
+  "{position} of {total}": "第 {position} 项，共 {total} 项",
+  "Talk to your agent": "与你的智能体对话",
+  "Answer a request": "回答一个请求",
+  "Connect an app": "连接一个应用",
+  "Add a second agent": "添加第二个智能体",
+  "Schedule a routine": "安排一个例行任务",
+  "Keep a memory": "保存一段记忆",
+  Missions: "任务",
+  "Show everything": "显示全部",
 };

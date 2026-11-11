@@ -1,14 +1,35 @@
-import type { RunErrorTranslator } from "@corvo/core";
+import type { ModelProblemAction, RunErrorTranslator } from "@corvo/core";
 
 /** The label of the one action that fixes the failure; transient failures have none. */
-export function runErrorActionLabel(
+export function runErrorActionLabel(t: RunErrorTranslator, action: ModelProblemAction | undefined) {
+  switch (action) {
+    case "sign-in":
+      return t("Sign in again");
+    case "replace-key":
+      return t("Replace key");
+    case "connect":
+      return t("Add Model");
+    case "change-model":
+      return t("Change model");
+    default:
+      return null;
+  }
+}
+
+/** The shared classifier's copy in the app's language; provider names stay as the provider spells them. */
+export function modelProblemTranslator(
   t: RunErrorTranslator,
-  error: { recovery?: "connection" | "model"; kind?: string },
-) {
-  if (error.recovery === "model") return t("Change model");
-  if (error.recovery === "connection")
-    return error.kind === "auth" ? t("Replace key") : t("Add Model");
-  return null;
+  includeReset = true,
+): RunErrorTranslator {
+  return (message, values) => {
+    if (!includeReset && message === "{summary} Resets {date}.")
+      return String(values?.summary ?? "");
+    if (message === "Your OpenRouter") return "OpenRouter";
+    if (message === "Your OpenAI") return "OpenAI";
+    if (message === "Your Anthropic") return "Anthropic";
+    if (message === "Your model provider") return t("Model provider");
+    return t(message, values);
+  };
 }
 
 /** Only human-readable fields leave this boundary. Copy retains the original diagnostic. */

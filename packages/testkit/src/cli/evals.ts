@@ -31,6 +31,7 @@ import { TOOL_CHOICE_CASES } from "../evals/tool-choice-cases.js";
 import type { DiagnosticWireObservation } from "../evals/wire-observer.js";
 import { diagnosticWireFetch } from "../evals/wire-observer.js";
 import { runApprovalSuite } from "./approval-eval.js";
+import { runWikiCuratorSuite } from "./wiki-curator-eval.js";
 
 async function main() {
   const { values } = parseArgs({
@@ -70,6 +71,12 @@ async function main() {
       workingDiffHash: workingDiffHash(),
       readConnection,
     });
+  if (values.suite === "wiki-curator")
+    return runWikiCuratorSuite(values, {
+      codeRevision: codeRevision(),
+      workingDiffHash: workingDiffHash(),
+      readConnection,
+    });
   const suites = {
     product: { cases: EVAL_CASES, fixtureVersion: "product-v1" },
     history: { cases: HISTORY_EVAL_CASES, fixtureVersion: HISTORY_FIXTURE_VERSION },
@@ -77,7 +84,9 @@ async function main() {
     "tool-choice": { cases: TOOL_CHOICE_CASES, fixtureVersion: TOOL_CHOICE_FIXTURE_VERSION },
   };
   if (!Object.hasOwn(suites, values.suite!))
-    throw new Error("Unknown suite; use product, history, silence, tool-choice, or approval");
+    throw new Error(
+      "Unknown suite; use product, history, silence, tool-choice, approval, or wiki-curator",
+    );
   const suite = suites[values.suite as keyof typeof suites];
   const extraCases = values["cases-file"] ? loadToolChoiceCases(values["cases-file"]) : [];
   const cases = [...suite.cases, ...extraCases];

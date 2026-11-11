@@ -1,5 +1,5 @@
 import type { UsageOverview, UsagePeriod } from "@corvo/contracts";
-import { normalizeRunError } from "@corvo/core";
+import { normalizeRunError, usageTokens } from "@corvo/core";
 
 export interface UsageRow {
   botId: string | null;
@@ -50,8 +50,7 @@ export function usageWindow(period: UsagePeriod, now: Date) {
 }
 
 /** Tokens of one call: what the provider totalled, else what went in and out. */
-export const rowTokens = (row: UsageRow): number =>
-  row.totalTokens ?? (row.inputTokens ?? 0) + (row.outputTokens ?? 0);
+export const rowTokens = (row: UsageRow): number => usageTokens(row);
 
 export interface RunOutcomeRow {
   botId: string;

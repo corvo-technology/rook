@@ -40,6 +40,11 @@ export const RUN_ERROR_KINDS = [
 ] as const;
 export type RunErrorKind = (typeof RUN_ERROR_KINDS)[number];
 
+/** Why a run was ended by a rule of the app rather than by the model or a fault. */
+export const RUN_STOP_REASONS = ["reply_cap", "monthly_limit", "paused"] as const;
+export const RunStopReasonSchema = z.enum(RUN_STOP_REASONS);
+export type RunStopReason = z.infer<typeof RunStopReasonSchema>;
+
 /** A limit that resets later than this is a quota to wait out, not a rate limit to retry. */
 const PROVIDER_QUOTA_MIN_RESET_MS = 60 * 60_000;
 

@@ -188,6 +188,8 @@ describe.each([
   // palette matches the iOS design there instead of 4.5:1; they are not listed.
   const pairs: [keyof ColorTokens, keyof ColorTokens][] = [
     ["foreground", "background"],
+    ["brandForeground", "brand"],
+    ["brand", "background"],
     ["foreground", "dialog"],
     ["cardForeground", "card"],
     ["popoverForeground", "popover"],
@@ -232,106 +234,33 @@ describe("tokens.css", () => {
 });
 
 describe("web palette", () => {
-  // Mobile follows the iOS system palette; web overrides only some tokens on top of it.
-  const mobileDark = {
-    background: "#141414",
-    dialog: "#1E1E1E",
-    foreground: "#FFFFFF",
-    card: "#202020",
-    cardForeground: "#FFFFFF",
-    popover: "#202020",
-    popoverForeground: "#FFFFFF",
-    glassFill: "#2C2C2E",
-    glassStroke: "#FCFCFC26",
-    primary: "#FFFFFF",
-    primaryForeground: "#000000",
-    secondary: "#7676803D",
-    secondaryForeground: "#FFFFFF",
-    chatUser: "#5C5C5C",
-    chatUserForeground: "#FFFFFF",
-    muted: "#202020",
-    mutedForeground: "#EBEBF599",
-    faintForeground: "#EBEBF573",
-    accent: "#78788052",
-    accentForeground: "#FFFFFF",
-    destructive: "#FF9592",
-    destructiveFill: "#E5484D",
-    destructiveForeground: "#FFFFFF",
-    border: "#FCFCFC14",
-    input: "#54545899",
-    ring: "#3B82F6",
-    sidebar: "#1E1E1E",
-    sidebarForeground: "#FFFFFF",
-    sidebarBorder: "#FCFCFC14",
-    sidebarAccent: "#2B2B2E",
-    sidebarAccentForeground: "#FFFFFF",
-    link: "#459FFE",
-    faviconPlate: "#FFFFFF",
-    success: "#3FA266",
-    warning: "#DB941E",
-    statusWorking: "#459FFE",
-    unread: "#006CEB",
-    workingDot: "#3FA266",
-    overlay: "rgba(0, 0, 0, 0.28)",
-    scrollbar: "#1E2026",
-    scrollbarHover: "#2E313A",
-  };
-  const mobileLight = {
-    background: "#FCFCFC",
-    dialog: "#FFFFFF",
-    foreground: "#000000",
-    card: "#EFEFEF",
-    cardForeground: "#000000",
-    popover: "#FFFFFF",
-    popoverForeground: "#000000",
-    glassFill: "#FFFFFF",
-    glassStroke: "#14141416",
-    primary: "#000000",
-    primaryForeground: "#FFFFFF",
-    secondary: "#7676801F",
-    secondaryForeground: "#000000",
-    chatUser: "#0B0B0B",
-    chatUserForeground: "#FFFFFF",
-    muted: "#F2F2F1",
-    mutedForeground: "#3C3C43B3",
-    faintForeground: "#3C3C4394",
-    accent: "#78788029",
-    accentForeground: "#000000",
-    destructive: "#CE2C31",
-    destructiveFill: "#E5484D",
-    destructiveForeground: "#FFFFFF",
-    border: "#14141414",
-    input: "#3C3C434A",
-    ring: "#6C6C70",
-    sidebar: "#F7F7F7",
-    sidebarForeground: "#000000",
-    sidebarBorder: "#14141414",
-    sidebarAccent: "#FFFFFF",
-    sidebarAccentForeground: "#000000",
-    link: "#0C64C1",
-    faviconPlate: "#FFFFFF",
-    success: "#007041",
-    warning: "#885A07",
-    statusWorking: "#0C64C1",
-    unread: "#006CEB",
-    workingDot: "#3FA266",
-    overlay: "rgba(0, 0, 0, 0.19)",
-    scrollbar: "#C8C8C4",
-    scrollbarHover: "#A8A8A4",
-  };
-
-  it("leaves the mobile palettes unchanged", () => {
-    expect(darkTokens).toEqual(mobileDark);
-    expect(lightTokens).toEqual(mobileLight);
+  it("shares the Clean palette between mobile and web", () => {
+    expect(darkTokens).toMatchObject({
+      background: "#0A0A0A",
+      card: "#111113",
+      border: "#1F1F23",
+      foreground: "#F4F4F5",
+      mutedForeground: "#A3A3AA",
+      faintForeground: "#6E6E76",
+      brand: "#54C398",
+    });
+    expect(lightTokens.card).toBe("#FFFFFF");
+    expect(lightTokens.foreground).toBe("#0A0A0A");
     expect(tokensForAppearance("dark")).toBe(darkTokens);
     expect(tokensForAppearance("light")).toBe(lightTokens);
+  });
+
+  it("keeps the ink as the primary fill and the mint for the brand", () => {
+    expect(darkTokens.primary).toBe(darkTokens.foreground);
+    expect(lightTokens.primary).toBe(lightTokens.foreground);
+    expect(darkTokens.primary).not.toBe(darkTokens.brand);
   });
 
   it.each([
     ["dark", darkTokens, webDarkOverrides, webDarkTokens],
     ["light", lightTokens, webLightOverrides, webLightTokens],
   ] as const)(
-    "differs from the %s mobile palette only in its overrides",
+    "differs from the %s mobile palette only by the web-only states",
     (theme, mobile, overrides, web) => {
       expect(webTokensForAppearance(theme)).toBe(web);
       for (const key of Object.keys(mobile) as (keyof ColorTokens)[]) {
@@ -346,11 +275,11 @@ describe("web palette", () => {
     const css = renderTokensCss();
     expect(css).toContain(`--muted-foreground: ${webDarkTokens.mutedForeground.toLowerCase()};`);
     expect(css).toContain(`--muted-foreground: ${webLightTokens.mutedForeground.toLowerCase()};`);
-    expect(css).not.toContain(`--muted-foreground: ${darkTokens.mutedForeground.toLowerCase()};`);
+    expect(css).toContain("--brand: #54c398;");
   });
 
   it.each([
-    ["dark", webDarkTokens, { primaryHover: "#33C097", primaryDisabled: "#3FD6A829" }],
+    ["dark", webDarkTokens, { primaryHover: "#E2E2E5", primaryDisabled: "#F4F4F529" }],
     ["light", webLightTokens, { primaryHover: "#262626", primaryDisabled: "#0A0A0A26" }],
   ] as const)("gives the %s primary fill web-only hover and disabled states", (_, web, states) => {
     expect(web).toMatchObject(states);
@@ -370,6 +299,8 @@ describe.each([
   // sit below 4.5:1 and are not listed.
   const pairs: [keyof ColorTokens, keyof ColorTokens][] = [
     ["foreground", "background"],
+    ["brandForeground", "brand"],
+    ["brand", "background"],
     ["foreground", "dialog"],
     ["cardForeground", "card"],
     ["popoverForeground", "popover"],

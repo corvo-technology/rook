@@ -1,4 +1,10 @@
-import { ACTIVE_RUN_STATUSES, customMascotBody, MASCOT_COLORS, MASCOT_LOOKS } from "@corvo/core";
+import {
+  ACTIVE_RUN_STATUSES,
+  customMascotBody,
+  MASCOT_COLORS,
+  MASCOT_LOOKS,
+  ROOK_ASLEEP_COLOR,
+} from "@corvo/core";
 import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import {
@@ -55,20 +61,30 @@ describe("BotAvatar", () => {
     }
   });
 
-  it("wears the plain chick in a color of one's own, not what the nearest mascot wears", () => {
-    // #14B8D6 is nearest to the cyan chick (a bow, sleepy eyes); #18B67C to the mint one
-    // (a headset and a blush).
-    for (const [own, preset, marks] of [
-      ["#14B8D6", "#06B6D4", ["#c5256d"]],
-      ["#18B67C", "#10B981", ["#1c1c1e", "#ff82a0"]],
-    ] as const) {
-      const wornPreset = renderToString(<BotAvatar color={preset} size={40} />);
-      const wornOwn = renderToString(<BotAvatar color={own} size={40} />);
-      for (const mark of marks) {
-        expect(wornPreset, `${preset} wears ${mark}`).toContain(mark);
-        expect(wornOwn, `${own} does not wear ${mark}`).not.toContain(mark);
-      }
-    }
+  it("draws the rook: three battlements, one block and two eyes, with no chick details", () => {
+    const html = renderToString(<BotAvatar color="#3B82F6" size={40} />);
+    expect(html.match(/corvo-mascot-battlement/g)).toHaveLength(3);
+    expect(html.match(/corvo-mascot-eye-ball/g)).toHaveLength(2);
+    for (const gone of [
+      "polygon",
+      "#f9b64f",
+      "#c5256d",
+      "#1c1c1e",
+      "#ff82a0",
+      "corvo-mascot-crest",
+    ])
+      expect(html).not.toContain(gone);
+  });
+
+  it("changes only the eyes and the color with its state", () => {
+    const eyes = (status: string) => renderToString(<BotAvatar color="#3B82F6" status={status} />);
+    expect(eyes("waiting_input")).toContain('cy="52"');
+    expect(eyes("waiting_input")).toContain(`fill="${MASCOT_LOOKS.blue.color}"`);
+    expect(eyes("running")).toContain('cy="56"');
+    const asleep = eyes("asleep");
+    expect(asleep).toContain("M32 57 L44 57");
+    expect(asleep).toContain(`fill="${ROOK_ASLEEP_COLOR}"`);
+    expect(asleep).not.toContain("corvo-mascot-eye-ball");
   });
 
   it.each([...ACTIVE_RUN_STATUSES])(
@@ -170,11 +186,10 @@ describe("resolvePersonaColorDef", () => {
 describe("the mascot's eyes", () => {
   const moodOf = (html: string) => html.match(/data-mood="([a-z]+)"/)?.[1];
 
-  it("are drawn over the tile, white with a pupil that can move", () => {
+  it("are drawn on the rook as two dark ovals that can move", () => {
     const html = renderToString(<BotAvatar color="#3B82F6" />);
     expect(html).toContain("corvo-mascot-eyes");
     expect(html).toContain("corvo-mascot-eye-ball");
-    expect(html).toContain("corvo-mascot-eye-light");
     expect(moodOf(html)).toBe("idle");
   });
 
@@ -202,32 +217,5 @@ describe("the mascot's eyes", () => {
   it("fill the tile with the shade of the chick the bot's color gives it", () => {
     expect(renderToString(<BotAvatar color="#8B5CF6" />)).toContain('fill="#b797ef"');
     expect(renderToString(<BotAvatar color="#10B981" />)).toContain('fill="#54c398"');
-  });
-});
-
-describe("the chick", () => {
-  it("has a beak and two eyes", () => {
-    const html = renderToString(<BotAvatar color="#3B82F6" size={40} />);
-    expect(html).toContain('fill="#f9b64f"');
-    expect(html.match(/corvo-mascot-eye-ball/g)).toHaveLength(2);
-  });
-
-  it("wears a crest and its accessory when big enough to see them", () => {
-    const big = renderToString(<BotAvatar color="#8B5CF6" size={48} />);
-    expect(big).toContain("corvo-mascot-crest");
-    expect(big).toContain('fill="#c5256d"');
-    const headset = renderToString(<BotAvatar color="#10B981" size={48} />);
-    expect(headset).toContain('fill="#1c1c1e"');
-  });
-
-  it("is a plain tile with a beak when too small for the fine parts", () => {
-    const small = renderToString(<BotAvatar color="#8B5CF6" size={22} />);
-    expect(small).not.toContain("corvo-mascot-crest");
-    expect(small).not.toContain('fill="#c5256d"');
-  });
-
-  it("sleeps with a thin line for eyes when its look says so", () => {
-    const sleepy = renderToString(<BotAvatar color="#EF4444" size={40} />);
-    expect(sleepy).not.toContain("corvo-mascot-eye-light");
   });
 });

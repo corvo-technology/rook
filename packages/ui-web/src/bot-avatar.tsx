@@ -134,7 +134,7 @@ export const BotAvatar = memo(function BotAvatar({
     () => resolvePersonaColorDef(identity || parsed.color || "agent", parsed.color).eyeColor,
     [identity, parsed.color],
   );
-  // A color of one's own gives the chick that body; a swatch keeps the shade it was drawn in.
+  // A color of one's own gives the rook that body; a swatch keeps the shade it was drawn in.
   const body = useMemo(() => customMascotBody(parsed.color), [parsed.color]);
 
   if (parsed.isImage && parsed.imageUrl) {
@@ -181,13 +181,7 @@ export const BotAvatar = memo(function BotAvatar({
       style={{ width: size, height: size }}
     >
       <span className="corvo-mascot-avatar-image relative block h-full w-full">
-        <MascotFace
-          mascot={mascot}
-          mood={mood}
-          blink={blinkBeat(identity || mascot)}
-          detailed={size >= 30}
-          body={body}
-        />
+        <MascotFace mascot={mascot} mood={mood} blink={blinkBeat(identity || mascot)} body={body} />
       </span>
       {isWorking ? <WorkingRing size={size} /> : null}
     </div>

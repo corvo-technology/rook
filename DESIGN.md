@@ -37,33 +37,33 @@ The dashboard is less dense than a typical operate surface on purpose: the audie
 Semantic tokens live in `@corvo/ui-tokens` (one TypeScript source generates `tokens.css`). Components use the names, never the values.
 
 ```design-tokens
-fonts: Instrument Sans, ui-monospace
-colors: #0b0b0c, #151517, #19191c, #f5f5f5, #3fd6a8, #ff6463, #00ba69, #e28600, #ffffff, #f2f2f2, #1c1c1c, #0a0a0a, #0b7a5a, #cd2834, #00854a, #aa6300
-radii: 0.75rem, 9999px
+fonts: Inter, Inter Tight, ui-monospace
+colors: #0a0a0a, #111113, #1f1f23, #f4f4f5, #54c398, #ff6463, #f2f2ef, #ffffff, #197b56, #cd2834, #007a43, #945600
+radii: 1rem, 9999px
 ```
 
 | Token | Dark | Light | Job |
 |---|---|---|---|
-| `--background` | `#0b0b0c` | `#ffffff` | page |
-| `--card` | `#151517` | `#f2f2f2` | raised surface |
-| `--dialog` | `#19191c` | `#ffffff` | dialogs and menus |
-| `--foreground` | `#f5f5f5` | `#1c1c1c` | text |
-| `--primary` | `#3fd6a8` | `#0a0a0a` | the main action and the current state only |
+| `--background` | `#0a0a0a` | `#f2f2ef` | page |
+| `--card` | `#111113` | `#ffffff` | raised surface |
+| `--border` | `#1f1f23` | `#e7e7e2` | hairlines |
+| `--foreground` / `--primary` | `#f4f4f5` | `#0a0a0a` | text and the main action: the ink |
+| `--brand` | `#54c398` | `#197b56` | the rook's mint: an approval's action, "waiting for you", the logo |
 | `--destructive` | `#ff6463` | `#cd2834` | errors and deletion |
-| `--success` / `--warning` | `#00ba69` / `#e28600` | `#00854a` / `#aa6300` | status |
+| `--success` / `--warning` | `#54c398` / `#e28600` | `#007a43` / `#945600` | status |
 
 The theme follows the system unless the person chooses one.
 
 ## 5. Typography
 
-- Text: Instrument Sans, bundled with the app (one variable file, weights 400 to 700). The system font is the fallback. Why: it is the typeface of the landing page, so the two read as one product.
+- Text: Inter; titles and headings: Inter Tight (light for big titles, regular to medium for screens and sections). Both bundled with the app, one variable file each. The system font is the fallback. Why: they are the faces of the Clean look shared with the landing page.
 - Mono: the system monospace, for code and credentials.
 - Scale: 11, 12, 13, 14 (body), 17, 22, 26 pixels, defined as tokens (`text-caption` to `text-heading1`). New text uses a token, not a raw size.
 - Titles balance (`text-balance`), descriptions do not widow (`text-pretty`).
 
 ## 6. Spacing and layout
 
-- Radius by role: controls 0.5rem to 0.75rem, cards and containers 0.75rem to 1rem, avatars and pills round.
+- Radius by role: buttons are pills, inputs 1.25rem, cards and containers 1.25rem to 1.5rem, avatars round.
 - The main navigation bar is 76 pixels wide; every item has a name under its icon.
 - One idea per screen in onboarding; settings groups, not walls of controls.
 
@@ -108,6 +108,8 @@ Short and functional: 150 to 200 milliseconds for hover and press, `opacity` and
 
 - **2026-11-01, mascots with moving eyes:** the mascot picture is now the same art without its eyes (`apps/web/public/mascot/<color>-blank.webp`, made by filling the eye areas of the original in from the surrounding body), and the eyes are drawn over it as vectors. They follow the pointer, blink on a beat of their own per agent, scan while the agent works, widen when it waits for the person, squint after a failure and smile for a moment when work ends. Why: a static picture gave the list no life, and the eyes are the one place the identity of an agent can react. Limits: transform only, off for `prefers-reduced-motion`, one pointer listener for the whole page, nothing for touch screens. The original art stays for places that show a still picture.
 - **2026-11-01, mascot tile and quiet list:** the mascot's tile takes a wash of its own colour over the card instead of near-black, so a list reads as colours in either theme (the picture is a bust cropped at the base, so the tile stays). A row's time shows on the open chat, an unread one and the row under the pointer.
+
+- **2026-11-11, Clean look:** near-black page, hairline borders, large radii, pill buttons, Inter and Inter Tight, and the ink as the primary color with the rook's mint (`--brand`) kept for the approval moment. Light mode keeps the same treatment on a calm off-white. The mascot becomes the rook: one shape in the agent's color, where only the eyes show state (open at work, up when it waits for you, dashes asleep, arcs when done). Why: one calm language across the landing, the app and the icon.
 
 ## 12. References
 

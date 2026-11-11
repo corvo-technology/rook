@@ -91,22 +91,29 @@ export function mascotHex(id: MascotId): string {
   return MASCOT_COLORS.find((color) => color.id === id)?.hex ?? "#FFFFFF";
 }
 
-/** The chick each color wears: its own shade, a crest, and the little things that tell the ten apart. */
-export const MASCOT_LOOKS: Record<
-  MascotId,
-  { color: string; accessory: "headset" | "bow" | null; blush: boolean; sleepy: boolean }
-> = {
-  mint: { color: "#54c398", accessory: "headset", blush: true, sleepy: false },
-  blue: { color: "#75aef5", accessory: null, blush: false, sleepy: false },
-  violet: { color: "#b797ef", accessory: "bow", blush: true, sleepy: false },
-  pink: { color: "#e788b6", accessory: null, blush: false, sleepy: false },
-  red: { color: "#f48877", accessory: null, blush: false, sleepy: true },
-  orange: { color: "#e59651", accessory: null, blush: false, sleepy: false },
-  lime: { color: "#87bd68", accessory: null, blush: true, sleepy: false },
-  yellow: { color: "#cda448", accessory: null, blush: false, sleepy: false },
-  cyan: { color: "#4bbdcf", accessory: "bow", blush: false, sleepy: true },
-  neutral: { color: "#55555c", accessory: null, blush: false, sleepy: false },
+/** Each color's rook: its own shade, soft enough for dark eyes and a dark page. */
+export const MASCOT_LOOKS: Record<MascotId, { color: string }> = {
+  mint: { color: "#54c398" },
+  blue: { color: "#75aef5" },
+  violet: { color: "#b797ef" },
+  pink: { color: "#e788b6" },
+  red: { color: "#f48877" },
+  orange: { color: "#e59651" },
+  lime: { color: "#87bd68" },
+  yellow: { color: "#cda448" },
+  cyan: { color: "#4bbdcf" },
+  neutral: { color: "#55555c" },
 };
+
+/** The rook on a 100-unit tile: one rounded block under three rounded battlements. */
+export const ROOK = {
+  viewBox: "0 0 100 100",
+  body: { x: 18, y: 28, width: 64, height: 60, rx: 18 },
+  battlements: [18, 42, 66].map((x) => ({ x, y: 12, width: 16, height: 26, rx: 5 })),
+} as const;
+
+/** The rook of an agent that is asleep: gray, whatever its color. */
+export const ROOK_ASLEEP_COLOR = "#4a4a52";
 
 const FULL_HEX = /^#[0-9a-f]{6}$/i;
 const SHORT_HEX = /^#[0-9a-f]{3}$/i;
@@ -161,7 +168,7 @@ const BODY_LIGHTNESS = { min: 0.42, max: 0.78 } as const;
 const BODY_MAX_SATURATION = 0.75;
 
 /**
- * The body a chick wears in a color of one's own: the hue that was chosen, softened like the
+ * The body a rook wears in a color of one's own: the hue that was chosen, softened like the
  * drawn ones, and kept light enough for its dark eyes and dark enough for a white page. Nothing
  * for a swatch, which already has a look, or for what is not a color.
  */

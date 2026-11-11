@@ -19,8 +19,6 @@ const ALLOWED: Record<string, string> = {
     "the default identity color of a bot, which is data, not chrome",
   "apps/web/src/pages/shell/chat-shared.ts": "the identity color shown for a bot that has none",
   "packages/ui-web/src/group-avatar.tsx": "a neutral black shadow under overlapping avatars",
-  "packages/ui-web/src/mascot-face.tsx":
-    "the baby crow is drawn art: its beak, bow, headset and eye ink belong to the character",
   "apps/web/src/pages/RoutineEditor.tsx": "the brand colors of the apps a routine can connect to",
 };
 

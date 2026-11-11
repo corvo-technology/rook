@@ -4441,3 +4441,185 @@ describe("call_user availability", () => {
     expect(offered({ voiceCall: true })).toBe(false);
   });
 });
+
+/** A queued run whose gates (partner, daily, monthly, pause) are the only thing under test. */
+function gateHarness(
+  options: {
+    bot?: Record<string, unknown>;
+    trigger?: string;
+    routineId?: string | null;
+    spacePausedAt?: Date | null;
+    monthTokens?: bigint;
+  } = {},
+) {
+  const runtimeRun = vi.fn();
+  const finalizeRun = vi.fn(async () => ({ continuationRunId: null }));
+  const append = vi.fn(async () => undefined);
+  const routineRow = { accountFailures: 0 };
+  const run = {
+    id: "run-1",
+    botId: "bot-1",
+    threadId: "thread-1",
+    taskId: "task-1",
+    userId: "user-1",
+    spaceId: "ws-1",
+    status: "queued",
+    trigger: options.trigger ?? "user",
+    routineId: options.routineId ?? null,
+    modelProvider: null,
+    modelId: null,
+    thinkingLevel: null,
+    modelPinned: false,
+    sourceMessageId: null,
+    checkpoint: null,
+    leaseFence: 0,
+  };
+  const routine = {
+    count: vi.fn(async () => 0),
+    findUnique: vi.fn(async () => ({
+      active: true,
+      crons: ["*/1 * * * *"],
+      timezone: "UTC",
+      watch: null,
+      nextRunAt: new Date("2030-01-01T00:00:00Z"),
+      accountFailures: routineRow.accountFailures,
+    })),
+    update: vi.fn(async ({ data }: { data: { accountFailures: number } }) => {
+      routineRow.accountFailures = data.accountFailures;
+    }),
+  };
+  const prisma = {
+    $queryRaw: vi.fn(async () => [{ tokens: options.monthTokens ?? 0n }]),
+    $transaction: vi.fn(async (work: (tx: unknown) => Promise<unknown>) =>
+      work({ routine, $queryRaw: vi.fn(async () => []) }),
+    ),
+    routine,
+    run: {
+      findUnique: vi.fn(async () => run),
+      findUniqueOrThrow: vi.fn(async () => ({ status: "leased", startedAt: null })),
+      updateMany: vi.fn(async () => ({ count: 1 })),
+    },
+    bot: {
+      findUniqueOrThrow: vi.fn(async (args: { select?: { computerId?: boolean } }) =>
+        args.select?.computerId
+          ? { computerId: "computer-1", computerSwitching: false }
+          : {
+              id: "bot-1",
+              name: "Assistant",
+              modelProvider: null,
+              modelId: null,
+              thinkingLevel: null,
+              memoryScope: "isolated",
+              computer: { id: "computer-1", scope: "private" },
+              ...options.bot,
+            },
+      ),
+    },
+    computer: {
+      findUniqueOrThrow: vi.fn(async () => ({ scope: "private", state: "running" })),
+    },
+    attempt: {
+      create: vi.fn(async () => ({ id: "attempt-1" })),
+      updateMany: vi.fn(async () => ({ count: 1 })),
+    },
+    thread: {
+      findUniqueOrThrow: vi.fn(async () => ({
+        id: "thread-1",
+        groupId: null,
+        historyCompactionSummary: null,
+        historyCompactedUpToSeq: null,
+        historyCompactionGeneration: 0,
+      })),
+    },
+    message: { findMany: vi.fn(async () => []) },
+    task: { findUniqueOrThrow: vi.fn(async () => ({ id: "task-1", prompt: "hello" })) },
+    connection: { findMany: vi.fn(async () => []) },
+    space: {
+      findFirst: vi.fn(async () => ({
+        pausedAt: options.spacePausedAt ?? null,
+        organization: { modelCredits: { mode: "byok" } },
+      })),
+      findUnique: vi.fn(async () => ({
+        pausedAt: options.spacePausedAt ?? null,
+        organization: {
+          modelCredits: {
+            mode: "byok",
+            balanceMicros: 0n,
+            byokFreeUntil: new Date(Date.now() - 1000),
+          },
+          billing: null,
+        },
+      })),
+    },
+    userModelPreference: {
+      findFirst: vi.fn(async (args: { where: { isDefault?: boolean } }) =>
+        args.where.isDefault
+          ? modelPreference({
+              provider: "openrouter",
+              secretId: "secret-or",
+              modelId: "deepseek/deepseek-v4-flash-0731",
+            })
+          : null,
+      ),
+    },
+    userModelCredential: { findMany: vi.fn(async () => []), findFirst: vi.fn(async () => null) },
+    deploymentSettings: { findUnique: vi.fn(async () => null) },
+    taughtSkill: { findMany: vi.fn(async () => []) },
+    botSecret: { findMany: vi.fn(async () => []) },
+    agentSecret: { findMany: vi.fn(async () => []) },
+    agentSkill: { findMany: vi.fn(async () => []) },
+    scratchpadItem: { findMany: vi.fn(async () => []) },
+  } as unknown as PrismaClient;
+  withSpaceMain(prisma, "openrouter", "deepseek/deepseek-v4-flash-0731");
+  const executor = createExecutor({
+    prisma,
+    spacePartnerState: vi.fn(async () => "enabled" as const),
+    runtime: { describe: () => ({ capabilities: { scripted: false } }), run: runtimeRun },
+    memoryProviders: { resolve: vi.fn(async () => null) },
+    memory: { read: vi.fn(async () => ({ documents: [] })) },
+    events: { append, finalizeRun },
+    jobs: { enqueue: vi.fn(async () => undefined) },
+    secrets: [],
+  } as unknown as Parameters<typeof createExecutor>[0]);
+  return { executor, runtimeRun, finalizeRun, routineRow };
+}
+
+describe("monthly token limit gate", () => {
+  it("fails a run before the model once the bot has used its monthly token limit", async () => {
+    const { executor, runtimeRun, finalizeRun } = gateHarness({
+      bot: { monthlyTokenLimit: 1_000n },
+      monthTokens: 1_000n,
+    });
+    await executor.continueRun("run-1", "worker-1");
+    expect(finalizeRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        outcome: "failed",
+        error: "This bot reached its monthly token limit.",
+        stopReason: "monthly_limit",
+      }),
+    );
+    expect(runtimeRun).not.toHaveBeenCalled();
+  });
+
+  it.each([0n, -5n, null])("starts the run when the monthly limit is %s", async (limit) => {
+    const { executor, finalizeRun } = gateHarness({
+      bot: { monthlyTokenLimit: limit },
+      monthTokens: 10n ** 12n,
+    });
+    await executor.continueRun("run-1", "worker-1");
+    expect(finalizeRun).not.toHaveBeenCalledWith(
+      expect.objectContaining({ stopReason: "monthly_limit" }),
+    );
+  });
+
+  it("backs the routine off when its bot is at the monthly limit", async () => {
+    const { executor, routineRow } = gateHarness({
+      bot: { monthlyTokenLimit: 1_000n },
+      monthTokens: 1_000n,
+      trigger: "routine",
+      routineId: "routine-1",
+    });
+    await executor.continueRun("run-1", "worker-1");
+    expect(routineRow.accountFailures).toBe(1);
+  });
+});

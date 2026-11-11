@@ -1,11 +1,12 @@
 import type { AgentRunRequest, SemanticMemoryProvider } from "@corvo/adapter-kit";
 import { DEFAULT_CONTEXT_STRATEGY, runContinueJob } from "@corvo/adapter-kit";
-import type { MessageBlock, ModelRoleChoice, RunStatus } from "@corvo/contracts";
+import type { MessageBlock, ModelRoleChoice, RunStatus, RunStopReason } from "@corvo/contracts";
 import { disabledBuiltinToolSet } from "@corvo/contracts";
 import {
   ACCOUNT_PAUSED_RUN_ERROR,
   assertTransition,
   BOT_DAILY_LIMIT_RUN_ERROR,
+  BOT_MONTHLY_LIMIT_RUN_ERROR,
   botMessageAllowsSilence,
   expandSkillReferencesInPrompt,
   formatSkillRunPrompt,
@@ -21,6 +22,7 @@ import {
   messagingChannelId,
   messagingChannelPrivacyBlock,
   messagingDmSurfaceNote,
+  monthlyLimitReached,
   nextFence,
   PARTNER_CREDIT_USED_UP_RUN_ERROR,
   promptInvokesSkill,
@@ -50,6 +52,7 @@ import { createApprovedEffectReplayQueue } from "./approval-effect.js";
 import { PARTIAL_REPLY_NOTE } from "./automated-messages.js";
 import { botDailyLimitReached } from "./bot-daily-limit.js";
 import { loadBotMessageContext } from "./bot-messages.js";
+import { botMonthUsage } from "./bot-monthly-limit.js";
 import {
   commandCredentialRedactions,
   loadBotCommandEnvironment,
@@ -770,13 +773,18 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const runModelProvider = selected.provider ?? runtimeFallback?.provider;
         const runModelId = selected.id ?? runtimeFallback?.id;
         // A missing or refused connection of the user's own fails every scheduled run alike.
-        const failRunBeforeModel = async (message: string, accountFailure = false) => {
+        const failRunBeforeModel = async (
+          message: string,
+          accountFailure = false,
+          options?: { stopReason?: RunStopReason; silent?: boolean },
+        ) => {
           const failed = await failRunBeforeTurn(
             deps,
             run,
             bot.name,
             { attemptId: attempt.id, workerId, fence },
             message,
+            options,
           );
           if (failed && accountFailure && run.trigger === "routine" && run.routineId) {
             await backOffRoutineAfterAccountError(deps, run.routineId);
@@ -789,6 +797,13 @@ export function createRunExecutor(deps: ExecutorDeps) {
         }
         if (await botDailyLimitReached(deps.prisma, bot)) {
           await failRunBeforeModel(BOT_DAILY_LIMIT_RUN_ERROR, true);
+          return;
+        }
+        const monthUsage = await botMonthUsage(deps.prisma, bot);
+        if (monthlyLimitReached(monthUsage.used, monthUsage.limit)) {
+          await failRunBeforeModel(BOT_MONTHLY_LIMIT_RUN_ERROR, true, {
+            stopReason: "monthly_limit",
+          });
           return;
         }
         if (pinError) {

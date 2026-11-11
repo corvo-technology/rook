@@ -1,4 +1,5 @@
 import { runContinueJob } from "@corvo/adapter-kit";
+import type { RunStopReason } from "@corvo/contracts";
 import { displayName } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
@@ -67,6 +68,7 @@ export async function failRunBeforeTurn(
   botName: string,
   lease: { attemptId: string; workerId: string; fence: number },
   message: string,
+  options: { stopReason?: RunStopReason; silent?: boolean } = {},
 ): Promise<boolean> {
   const failed = await deps.events.finalizeRun({
     spaceId: run.spaceId,
@@ -79,6 +81,7 @@ export async function failRunBeforeTurn(
     leaseFence: lease.fence,
     outcome: "failed",
     error: message,
+    ...(options.stopReason ? { stopReason: options.stopReason } : {}),
   });
   if (!failed) return false;
   if (failed.continuationRunId) {
@@ -96,7 +99,7 @@ export async function failRunBeforeTurn(
       { forceUnread: true, failed: true },
     ).catch((error) => getLogger().error("bot message failure return", error));
   }
-  if (!failed.continuationRunId) {
+  if (!failed.continuationRunId && !options.silent) {
     await notifyRun(deps, run, {
       kind: "failure",
       title: `${displayName(botName, "Bot")} failed`,

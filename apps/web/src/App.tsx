@@ -12,7 +12,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { Navigate, Outlet, Route, Routes, useLocation, useSearchParams } from "react-router-dom";
-import { AppRail } from "./components/AppRail";
+import { AppNavSidebar } from "./components/AppNavSidebar";
 import { LoadingState } from "./components/ai/primitives";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { PageLoading } from "./components/PageLoading";
@@ -245,7 +245,7 @@ function SessionApp() {
   );
 }
 
-/** The narrow bar beside every signed-in screen; the wide agent list belongs to the agents screen. */
+/** The frame of every signed-in screen: the agents screen brings its own sidebar, the others get the navigation one. */
 function AppFrame({ ticketBoardEnabled }: { ticketBoardEnabled: boolean }) {
   useBoardNotifications(ticketBoardEnabled);
   // Moving between areas fades the new one in; moving between agents keeps the same screen.
@@ -264,13 +264,14 @@ function AppFrame({ ticketBoardEnabled }: { ticketBoardEnabled: boolean }) {
   }, []);
   return (
     <div className="flex h-full min-w-0">
-      <AppRail ticketBoardEnabled={ticketBoardEnabled} />
-      {/* The transform makes the wide sidebar's fixed position start beside the bar, not under it. */}
+      {/* The agents screen carries its own sidebar; every other area gets the navigation one. */}
+      {area === "agents" ? null : <AppNavSidebar ticketBoardEnabled={ticketBoardEnabled} />}
+      {/* The transform makes the agents sidebar's fixed position start inside this area. */}
       <div
         key={area}
         className="h-full min-w-0 flex-1 transform-gpu animate-in fade-in-0 duration-200 motion-reduce:animate-none"
       >
-        {/* Only this area waits for its page; the bar stays where it is. */}
+        {/* Only this area waits for its page; the sidebar stays where it is. */}
         <Suspense fallback={<PageLoading />}>
           <Outlet />
         </Suspense>

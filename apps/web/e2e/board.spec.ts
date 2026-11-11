@@ -10,7 +10,7 @@ test("board creates a ticket and opens it", async ({ page }, testInfo) => {
   await completeOnboarding(page);
   await createNamedBot(page, "Planner");
 
-  await page.getByTestId("app-rail").getByRole("button", { name: "Board", exact: true }).click();
+  await page.getByTestId("sidebar-nav").getByRole("button", { name: "Board", exact: true }).click();
   await expect(page).toHaveURL(/\/app\/board$/);
   await expect(page.getByTestId("board-columns")).toBeVisible();
   await expect(page.getByText("No tickets yet", { exact: true })).toBeVisible();

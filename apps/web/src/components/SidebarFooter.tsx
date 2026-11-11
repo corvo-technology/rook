@@ -1,17 +1,7 @@
 import type { NavLink } from "@corvo/contracts";
 import { AppMarkStack, Button, Popover, PopoverContent, PopoverTrigger } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
-import {
-  CalendarClock,
-  Download,
-  FolderOpen,
-  Gauge,
-  Link2,
-  LogOut,
-  Settings,
-  SquareKanban,
-  UserRound,
-} from "lucide-react";
+import { Download, Gauge, Link2, LogOut, Settings, SquareKanban, UserRound } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { useSidebarUpdate } from "./DesktopUpdates";
 import { IconTooltip } from "./IconTooltip";
@@ -29,8 +19,6 @@ type Props = {
   onBoard?: () => void;
   links?: NavLink[];
   onLink?: (link: NavLink) => void;
-  onArtifacts: () => void;
-  onRoutines: () => void;
   onSettings: () => void;
   onUsage: () => void;
   onLogOut: () => void;
@@ -58,8 +46,6 @@ export function SidebarFooter({
   onBoard,
   links = [],
   onLink,
-  onArtifacts,
-  onRoutines,
   onSettings,
   onUsage,
   onLogOut,
@@ -164,26 +150,6 @@ export function SidebarFooter({
                 {link.label}
               </Button>
             ))}
-            {mini ? null : (
-              <Button
-                variant="ghost"
-                className="h-9 w-full justify-start gap-2.5 font-normal"
-                onClick={onRoutines}
-              >
-                <CalendarClock className="text-muted-foreground" strokeWidth={1.75} />
-                <Trans>Routines</Trans>
-              </Button>
-            )}
-            {mini ? null : (
-              <Button
-                variant="ghost"
-                className="h-9 w-full justify-start gap-2.5 font-normal"
-                onClick={onArtifacts}
-              >
-                <FolderOpen className="text-muted-foreground" strokeWidth={1.75} />
-                <Trans>Artifacts</Trans>
-              </Button>
-            )}
             <Button
               variant="ghost"
               className="h-9 w-full justify-start gap-2.5 font-normal"

@@ -8,15 +8,10 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 import { beforeEach, expect, it, vi } from "vitest";
 
 const takeInitialBootstrap = vi.hoisted(() => vi.fn());
-const footer = vi.hoisted(() => vi.fn());
-const footerBoard = vi.hoisted(() => vi.fn());
 const embedded = vi.hoisted(() => ({ value: false }));
 const missionsApi = vi.hoisted(() => ({ get: vi.fn(), seen: vi.fn(), showAll: vi.fn() }));
 vi.mock("../lib/embed", () => ({ isEmbedded: () => embedded.value }));
 vi.mock("../lib/bootstrap", () => ({ takeInitialBootstrap }));
-vi.mock("../lib/auth", () => ({
-  authClient: { useSession: () => ({ data: { user: { name: "Ada" } } }) },
-}));
 vi.mock("../lib/query", () => ({
   useSpaceQueries: () => ({
     bootstrap: { queryOptions: () => ({ queryKey: ["bootstrap"] }) },
@@ -35,14 +30,6 @@ vi.mock("../lib/query", () => ({
     },
   }),
 }));
-vi.mock("../pages/shell/shell-sidebar", () => ({
-  ShellSidebarFooter: (props: { navLinks: unknown[]; ticketBoardEnabled: boolean }) => {
-    footer(props.navLinks);
-    footerBoard(props.ticketBoardEnabled);
-    return null;
-  },
-}));
-vi.mock("../pages/WindowChrome", () => ({ WindowChrome: () => null }));
 vi.mock("./IconTooltip", () => ({
   IconTooltip: ({ children }: { children: ReactElement }) => children,
 }));
@@ -51,7 +38,7 @@ vi.mock("@lingui/react/macro", () => ({
   Trans: ({ children }: { children: ReactNode }) => children,
 }));
 
-import { AppRail } from "./AppRail";
+import { SidebarNav } from "./SidebarNav";
 
 let queryClient: QueryClient;
 beforeEach(() => {
@@ -60,8 +47,6 @@ beforeEach(() => {
   missionsApi.get.mockReset();
   missionsApi.seen.mockReset().mockResolvedValue({ ok: true });
   missionsApi.showAll.mockReset().mockResolvedValue({ ok: true });
-  footer.mockReset();
-  footerBoard.mockReset();
   embedded.value = false;
 });
 
@@ -80,7 +65,7 @@ async function openMore(container: HTMLElement) {
     .filter(Boolean);
 }
 
-async function renderRail(ticketBoardEnabled = false, path = "/app") {
+async function renderNav(ticketBoardEnabled = false, path = "/app", mini = false) {
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
@@ -88,7 +73,7 @@ async function renderRail(ticketBoardEnabled = false, path = "/app") {
     root.render(
       <QueryClientProvider client={queryClient}>
         <MemoryRouter initialEntries={[path]}>
-          <AppRail ticketBoardEnabled={ticketBoardEnabled} />
+          <SidebarNav ticketBoardEnabled={ticketBoardEnabled} mini={mini} />
           <Where />
         </MemoryRouter>
       </QueryClientProvider>,
@@ -108,20 +93,13 @@ async function renderRail(ticketBoardEnabled = false, path = "/app") {
 }
 
 it("never takes the first bootstrap, which the agents screen needs for itself", async () => {
-  const { cleanup } = await renderRail();
+  const { cleanup } = await renderNav();
   expect(takeInitialBootstrap).not.toHaveBeenCalled();
   await cleanup();
 });
 
-it("shows the links a screen beside it has already loaded", async () => {
-  queryClient.setQueryData(["bootstrap"], { me: { navLinks: [{ id: "docs", label: "Docs" }] } });
-  const { cleanup } = await renderRail();
-  expect(footer).toHaveBeenLastCalledWith([{ id: "docs", label: "Docs" }]);
-  await cleanup();
-});
-
-it("keeps four areas in sight and the rest behind three dots", async () => {
-  const { container, cleanup } = await renderRail();
+it("keeps the areas in the list and the rest behind More", async () => {
+  const { container, cleanup } = await renderNav();
   const buttons = [...container.querySelectorAll("nav button")];
   expect(buttons.map((button) => button.getAttribute("aria-label"))).toEqual([
     "Agents",
@@ -129,7 +107,6 @@ it("keeps four areas in sight and the rest behind three dots", async () => {
     "Routines",
     "Workflows",
     "More",
-    "Store",
   ]);
   expect(buttons[0]?.getAttribute("aria-current")).toBe("page");
   expect(buttons[4]?.getAttribute("aria-current")).toBeNull();
@@ -137,7 +114,7 @@ it("keeps four areas in sight and the rest behind three dots", async () => {
 });
 
 it("puts the board right under Agents when the board is on, and nowhere when it is off", async () => {
-  const on = await renderRail(true);
+  const on = await renderNav(true);
   const labels = [...on.container.querySelectorAll("nav button")].map((button) =>
     button.getAttribute("aria-label"),
   );
@@ -147,19 +124,13 @@ it("puts the board right under Agents when the board is on, and nowhere when it 
   expect(on.container.querySelector('[data-testid="where"]')?.textContent).toBe("/app/board");
   expect(board?.getAttribute("aria-current")).toBe("page");
   await on.cleanup();
-  const off = await renderRail(false);
+  const off = await renderNav(false);
   expect(off.container.querySelector('nav button[aria-label="Board"]')).toBeNull();
   await off.cleanup();
 });
 
-it("leaves the board out of the account menu the rail carries, which would repeat it", async () => {
-  const { cleanup } = await renderRail(true);
-  expect(footerBoard).toHaveBeenLastCalledWith(false);
-  await cleanup();
-});
-
-it("lists Usage, Artifacts, Wiki, Approvals and Memory behind the dots, and goes where one points", async () => {
-  const { container, cleanup } = await renderRail();
+it("lists Usage, Artifacts, Wiki, Approvals and Memory behind More, and goes where one points", async () => {
+  const { container, cleanup } = await renderNav();
   expect(await openMore(container)).toEqual(["Usage", "Artifacts", "Wiki", "Approvals", "Memory"]);
   const wiki = [...document.querySelectorAll("button")].find(
     (button) => button.textContent === "Wiki",
@@ -179,9 +150,8 @@ it("lists Usage, Artifacts, Wiki, Approvals and Memory behind the dots, and goes
 
 it("keeps only the places that are not account settings inside a partner's frame", async () => {
   embedded.value = true;
-  const { container, cleanup } = await renderRail();
+  const { container, cleanup } = await renderNav();
   expect(await openMore(container)).toEqual(["Usage", "Artifacts", "Wiki"]);
-  expect(footer).not.toHaveBeenCalled();
   await cleanup();
 });
 
@@ -189,7 +159,7 @@ it("leaves out what a partner hides from its customers, never the agents", async
   queryClient.setQueryData(["bootstrap"], {
     me: { partner: { name: "Acme", hide: ["usage", "store"] } },
   });
-  const { container, cleanup } = await renderRail();
+  const { container, cleanup } = await renderNav();
   const buttons = [...container.querySelectorAll("nav button")];
   expect(buttons.map((button) => button.getAttribute("aria-label"))).toEqual([
     "Agents",
@@ -212,17 +182,17 @@ function shortAccount(view: unknown, hide: string[] = []) {
 const labelsOf = (container: HTMLElement) =>
   [...container.querySelectorAll("nav button")].map((button) => button.getAttribute("aria-label"));
 
-it("starts short: only Agents and the Store until a mission brings more", async () => {
+it("starts short: only Agents until a mission brings more", async () => {
   shortAccount({ short: true, completed: [], has: [], seen: [] });
-  const { container, cleanup } = await renderRail(true);
-  expect(labelsOf(container)).toEqual(["Agents", "Store"]);
+  const { container, cleanup } = await renderNav(true);
+  expect(labelsOf(container)).toEqual(["Agents"]);
   await cleanup();
 });
 
 it("brings Team and Workflows with the second agent, and the board only where it is on", async () => {
   shortAccount({ short: true, completed: ["second"], has: [], seen: ["team", "workflows"] });
-  const { container, cleanup } = await renderRail(false);
-  expect(labelsOf(container)).toEqual(["Agents", "Team", "Workflows", "Store"]);
+  const { container, cleanup } = await renderNav(false);
+  expect(labelsOf(container)).toEqual(["Agents", "Team", "Workflows"]);
   await cleanup();
 });
 
@@ -237,7 +207,7 @@ it("marks a brought part new, and clears the mark when it is opened", async () =
     });
     return { ok: true };
   });
-  const { container, cleanup } = await renderRail();
+  const { container, cleanup } = await renderNav();
   const routines = container.querySelector<HTMLButtonElement>('nav button[aria-label="Routines"]');
   expect(routines?.textContent).toContain("New");
   await act(async () => routines?.click());
@@ -249,7 +219,7 @@ it("marks a brought part new, and clears the mark when it is opened", async () =
 
 it("shows the page the person is on even before its mission is done", async () => {
   shortAccount({ short: true, completed: [], has: [], seen: [] });
-  const { container, cleanup } = await renderRail(false, "/app/routines");
+  const { container, cleanup } = await renderNav(false, "/app/routines");
   const routines = container.querySelector('nav button[aria-label="Routines"]');
   expect(routines?.getAttribute("aria-current")).toBe("page");
   expect(routines?.textContent).not.toContain("New");
@@ -258,7 +228,7 @@ it("shows the page the person is on even before its mission is done", async () =
 
 it("never brings back what a partner hides", async () => {
   shortAccount({ short: true, completed: ["routine"], has: [], seen: [] }, ["routines"]);
-  const { container, cleanup } = await renderRail();
+  const { container, cleanup } = await renderNav();
   expect(labelsOf(container)).not.toContain("Routines");
   await cleanup();
 });
@@ -266,14 +236,29 @@ it("never brings back what a partner hides", async () => {
 it("keeps only the ungated items while the missions are loading", async () => {
   queryClient.setQueryData(["bootstrap"], { me: { shortNav: true } });
   missionsApi.get.mockReturnValue(new Promise(() => {}));
-  const { container, cleanup } = await renderRail();
-  expect(labelsOf(container)).toEqual(["Agents", "Store"]);
+  const { container, cleanup } = await renderNav();
+  expect(labelsOf(container)).toEqual(["Agents"]);
   await cleanup();
 });
 
-it("lists the places a mission brought behind the dots and marks them", async () => {
+it("lists the places a mission brought behind More and marks them", async () => {
   shortAccount({ short: true, completed: ["talk"], has: [], seen: [] });
-  const { container, cleanup } = await renderRail();
+  const { container, cleanup } = await renderNav();
   expect(await openMore(container)).toEqual(["UsageNew", "ArtifactsNew"]);
+  await cleanup();
+});
+
+it("keeps the Store in the collapsed sidebar, where the footer has no room for it", async () => {
+  const { container, cleanup } = await renderNav(false, "/app", true);
+  expect(labelsOf(container)).toContain("Store");
+  const store = container.querySelector<HTMLButtonElement>('nav button[aria-label="Store"]');
+  await act(async () => store?.click());
+  expect(container.querySelector('[data-testid="where"]')?.textContent).toBe("/app?integrations");
+  await cleanup();
+});
+
+it("leaves the Store to the footer when the sidebar is open", async () => {
+  const { container, cleanup } = await renderNav();
+  expect(labelsOf(container)).not.toContain("Store");
   await cleanup();
 });

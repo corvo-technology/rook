@@ -57,7 +57,7 @@ vi.mock("./lib/rpc", () => ({ rpc: { analytics: { screen: capability.screen } } 
 vi.mock("./components/SubscriptionGate", () => ({
   SubscriptionGate: ({ children }: { children: ReactNode }) => children,
 }));
-vi.mock("./components/AppRail", () => ({ AppRail: () => <i data-rail /> }));
+vi.mock("./components/AppNavSidebar", () => ({ AppNavSidebar: () => <i data-rail /> }));
 // An area that is still loading: its chunk never arrives.
 vi.mock("./pages/Usage", () => new Promise(() => {}));
 vi.mock("./pages/Shell", () => ({ ShellPage: () => <div>Shell</div> }));
@@ -202,7 +202,7 @@ it("keeps the bar and the frame in place while an area's page is still loading",
         </MemoryRouter>,
       ),
     );
-    // Only the content area waits; the bar never disappears behind a whole-page loader.
+    // Only the content area waits; the sidebar never disappears behind a whole-page loader.
     expect(container.querySelector("[data-rail]")).not.toBeNull();
   } finally {
     await act(async () => root.unmount());

@@ -780,7 +780,7 @@ msgstr "Agent"
 msgid "Agent computer"
 msgstr "Agent computer"
 
-#: src/components/AppRail.tsx
+#: src/components/SidebarNav.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Agents"
@@ -996,7 +996,7 @@ msgstr "Approval boundaries"
 msgid "Approval model"
 msgstr "Approval model"
 
-#: src/components/AppRail.tsx
+#: src/components/SidebarNav.tsx
 #: src/pages/SettingsOverlay.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Approvals"
@@ -1043,8 +1043,7 @@ msgstr "Archived"
 msgid "Arguments"
 msgstr "Arguments"
 
-#: src/components/AppRail.tsx
-#: src/components/SidebarFooter.tsx
+#: src/components/SidebarNav.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Artifacts"
@@ -1202,8 +1201,8 @@ msgstr "Block"
 msgid "Blocked"
 msgstr "Blocked"
 
-#: src/components/AppRail.tsx
 #: src/components/SidebarFooter.tsx
+#: src/components/SidebarNav.tsx
 #: src/pages/Board.tsx
 msgid "Board"
 msgstr "Board"
@@ -3949,7 +3948,7 @@ msgstr "Low"
 msgid "Lowercase letters, numbers, hyphens and underscores, starting with a letter."
 msgstr "Lowercase letters, numbers, hyphens and underscores, starting with a letter."
 
-#: src/components/AppRail.tsx
+#: src/components/SidebarNav.tsx
 msgid "Main"
 msgstr "Main"
 
@@ -4065,7 +4064,7 @@ msgstr "Member"
 msgid "Members ({0})"
 msgstr "Members ({0})"
 
-#: src/components/AppRail.tsx
+#: src/components/SidebarNav.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/SettingsOverlay.tsx
@@ -4365,6 +4364,7 @@ msgstr "Needs input"
 msgid "Needs takeover"
 msgstr "Needs takeover"
 
+#: src/components/AskCard.tsx
 #: src/lib/roster-status.ts
 #: src/pages/shell/computer-overlay.tsx
 msgid "Needs you"
@@ -5550,8 +5550,7 @@ msgstr "Route work to squads"
 msgid "Routine"
 msgstr "Routine"
 
-#: src/components/AppRail.tsx
-#: src/components/SidebarFooter.tsx
+#: src/components/SidebarNav.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
@@ -6229,8 +6228,8 @@ msgstr "Stopped."
 msgid "Stopping…"
 msgstr "Stopping…"
 
-#: src/components/AppRail.tsx
 #: src/components/SidebarFooter.tsx
+#: src/components/SidebarNav.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Store"
@@ -6337,7 +6336,7 @@ msgstr "Teach a task"
 msgid "Teaching in progress. Stop teaching before sending a new message."
 msgstr "Teaching in progress. Stop teaching before sending a new message."
 
-#: src/components/AppRail.tsx
+#: src/components/SidebarNav.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/TeamPage.tsx
 msgid "Team"
@@ -6869,8 +6868,8 @@ msgstr "Upload"
 msgid "Urgent"
 msgstr "Urgent"
 
-#: src/components/AppRail.tsx
 #: src/components/SidebarFooter.tsx
+#: src/components/SidebarNav.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/SettingsOverlay.tsx
 #: src/pages/Usage.tsx
@@ -7155,7 +7154,7 @@ msgstr "Where should bots run?"
 msgid "Where to import"
 msgstr "Where to import"
 
-#: src/components/AppRail.tsx
+#: src/components/SidebarNav.tsx
 #: src/pages/WikiPage.tsx
 msgid "Wiki"
 msgstr "Wiki"
@@ -7172,7 +7171,7 @@ msgstr "Won't do"
 msgid "Work"
 msgstr "Work"
 
-#: src/components/AppRail.tsx
+#: src/components/SidebarNav.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/Workflows.tsx
 msgid "Workflows"

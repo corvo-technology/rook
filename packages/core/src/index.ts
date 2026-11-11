@@ -63,6 +63,7 @@ export * from "./model-connection-form.js";
 export * from "./model-key-detect.js";
 export * from "./model-oauth.js";
 export * from "./model-probe.js";
+export * from "./model-problem.js";
 export * from "./model-providers.js";
 export * from "./model-role-settings.js";
 export * from "./passkey-offer.js";

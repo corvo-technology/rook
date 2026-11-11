@@ -48,6 +48,8 @@ const BotSetupSchema = z
     notifyOnFinish: z.boolean().optional(),
     autoSpeak: z.boolean().optional(),
     thinkingLevel: z.string().optional(),
+    /** The Chief's switch: only a bot with it on is offered the guide and the space status. */
+    fleetManagement: z.boolean().optional(),
   })
   .strict();
 export type BotSetup = z.infer<typeof BotSetupSchema>;

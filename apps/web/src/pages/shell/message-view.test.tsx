@@ -375,6 +375,52 @@ it("shows a follow-up from the same agent without its name or face, keeping its 
   );
 });
 
+function renderAsk(canAnswer: boolean, status?: "pending" | "answered") {
+  const message: ThreadMessage = {
+    id: "ask-message",
+    threadId: "thread",
+    seq: 1,
+    role: "bot",
+    createdAt: new Date().toISOString(),
+    blocks: [{ kind: "ask", text: "Which city?", ...(status ? { status } : {}) }],
+  };
+  act(() =>
+    root.render(
+      <MessageView
+        artifactTarget={{ botId: "parent" }}
+        canAnswer={canAnswer}
+        canDismiss={false}
+        message={message}
+        onAnswer={vi.fn()}
+        onOpenBot={vi.fn()}
+        onOpenPeerMessages={vi.fn()}
+        onTogglePeerReplies={vi.fn()}
+        peerBot={() => undefined}
+        onRefresh={vi.fn()}
+        onBotChanged={vi.fn()}
+        onAddRoutine={vi.fn()}
+        voiceReady={false}
+        speaking={false}
+        onSpeak={vi.fn()}
+        onOpenComputer={vi.fn()}
+        showToolActivity={false}
+        onReply={vi.fn()}
+        onMarkUnread={vi.fn()}
+        onReact={vi.fn()}
+      />,
+    ),
+  );
+}
+
+it("marks an answerable unanswered ask as the coach anchor, and no other", () => {
+  renderAsk(true, "pending");
+  expect(container.querySelectorAll('[data-coach="ask"]')).toHaveLength(1);
+  renderAsk(true, "answered");
+  expect(container.querySelector("[data-coach]")).toBeNull();
+  renderAsk(false, "pending");
+  expect(container.querySelector("[data-coach]")).toBeNull();
+});
+
 it("steps through several proposal cards one at a time with a counter", () => {
   const card = (id: string, status: "pending" | "answered" = "pending") => ({
     kind: "ask" as const,

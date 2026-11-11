@@ -391,8 +391,15 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     activeBotId,
   });
 
-  const { runError, normalizedRunError, runErrorAction, detailsOpen, setDetailsOpen } =
-    useThreadRunError(snap?.run, botId);
+  const {
+    runError,
+    normalizedRunError,
+    runErrorAction,
+    authKind,
+    retryRun,
+    detailsOpen,
+    setDetailsOpen,
+  } = useThreadRunError(snap?.run, botId, groupId, refresh);
 
   // Event actions read the latest committed screen state without invalidating settled rows.
   const rowActions = useLatestRowActions({
@@ -609,6 +616,8 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
           details={detailsOpen ? runError : null}
           onClose={() => setDetailsOpen(false)}
           action={runErrorAction}
+          authKind={authKind}
+          onRetry={() => void retryRun()}
         />
         {markdownPreview && artifactTarget ? (
           <MarkdownArtifactPreview

@@ -94,7 +94,15 @@ interface OriginalMetadata {
   corvoHistory?: boolean;
   corvoMessageId?: string;
   corvoCreatedAt?: string;
+  /** The stored source message of this turn; the turn note follows it. */
+  corvoCurrentTurn?: boolean;
+  /** A live context block; only the latest one applies. */
+  corvoLiveContext?: boolean;
 }
+const isCurrentTurn = (message: Message) =>
+  Boolean((message as Message & OriginalMetadata).corvoCurrentTurn);
+const isLiveContext = (message: Message) =>
+  Boolean((message as Message & OriginalMetadata).corvoLiveContext);
 function text(message: Message): string {
   if (typeof message.content === "string") return message.content;
   return message.content
@@ -154,6 +162,8 @@ export function createRuntimeContextPolicy(
       .update(JSON.stringify([accountScope, connectionIdentity(model), model.id]))
       .digest("hex");
   let pending: CacheRequest | undefined;
+  /** The same request cut right after the user message: where the next turn's prefix starts. */
+  let pendingBoundary: CacheRequest | undefined;
   let pendingProjection: { scope: string; entries: ProjectionEntry[] } | undefined;
   let decision: RuntimeContextDecision | undefined;
   let metadataPresent = false;
@@ -327,10 +337,15 @@ export function createRuntimeContextPolicy(
     let messages = (projected?.messages ?? ctx.messages).map(
       (message) => shortenedResults.get(hash(message)) ?? message,
     );
-    let currentIndex = messages.findIndex(
-      (message) =>
-        message.role === "user" && message !== projected?.navigation && !original(message),
-    );
+    let currentIndex = messages.findIndex(isCurrentTurn);
+    if (currentIndex < 0)
+      currentIndex = messages.findIndex(
+        (message) =>
+          message.role === "user" &&
+          message !== projected?.navigation &&
+          !isLiveContext(message) &&
+          !original(message),
+      );
     if (currentIndex < 0)
       currentIndex = messages.findLastIndex((message) => message.role === "user");
     if (currentIndex < 0) currentIndex = 0;
@@ -453,6 +468,17 @@ export function createRuntimeContextPolicy(
         protectedIndexes = protectedIndexes.map((index) => index + Number(index >= insertIndex));
       }
       protectedIndexes.push(messages.indexOf(summary));
+    }
+    // The latest live block describes what is current now; it stays right before the user message.
+    const latestLive = ctx.messages.findLast(isLiveContext);
+    if (latestLive) {
+      if (!messages.includes(latestLive)) {
+        const currentAt = messages.findLastIndex(isCurrentTurn);
+        const insertIndex = currentAt >= 0 ? currentAt : messages.length;
+        messages.splice(insertIndex, 0, latestLive);
+        protectedIndexes = protectedIndexes.map((index) => index + Number(index >= insertIndex));
+      }
+      protectedIndexes.push(messages.indexOf(latestLive));
     }
     // Completed loop steps remain useful task state even when their verbose
     // evidence is old. Keep the protocol and controls so dropping large bodies
@@ -577,6 +603,19 @@ export function createRuntimeContextPolicy(
         ? built.decision.estimatedInputTokens
         : estimateContextTokens(prefix, options.imageTokens);
     pending = { ...built.cacheRequest, prefix, prefixTokens };
+    const boundaryIndex = context.messages.findIndex(isCurrentTurn);
+    if (boundaryIndex >= 0) {
+      const boundary = providerContextPrefix(
+        context.systemPrompt ?? "",
+        context.tools ?? [],
+        context.messages.slice(0, boundaryIndex + 1),
+      );
+      pendingBoundary = {
+        ...built.cacheRequest,
+        prefix: boundary,
+        prefixTokens: estimateContextTokens(boundary, options.imageTokens),
+      };
+    } else pendingBoundary = undefined;
     pendingProjection = { scope: projectionScope(model), entries: projection };
     decision = {
       ...built.decision,
@@ -727,10 +766,13 @@ export function createRuntimeContextPolicy(
         ].some((value) => typeof value === "number" && Number.isFinite(value));
       if (!reported) {
         pending = undefined;
+        pendingBoundary = undefined;
         pendingProjection = undefined;
         return;
       }
       const observation = cache.record(pending, usage?.cacheReadTokens);
+      if (pendingBoundary) cache.record(pendingBoundary, usage?.cacheReadTokens);
+      pendingBoundary = undefined;
       if (decision) decision.observedReuse = observation.observedReuse;
       pending = undefined;
       if (pendingProjection) {

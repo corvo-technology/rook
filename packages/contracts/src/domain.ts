@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { STORE_CATEGORIES } from "./agent-catalog.js";
 import { AGENT_SECRET_NAME_PATTERN } from "./agent-secret-name.js";
 import { BotAvatarValueSchema } from "./bot-avatar.js";
 import { BotStartersSchema } from "./bot-starters.js";
@@ -9,6 +10,7 @@ import {
   isCloudflareAiGatewayProvider,
   isCloudflareModelProvider,
 } from "./cloudflare-ai-gateway.js";
+import { TourStateSchema } from "./coach-tour.js";
 import { ThreadMessageSchema } from "./events.js";
 import { Id, IsoDate, MemoryScope, RunStatus, SandboxKind } from "./ids.js";
 import {
@@ -90,6 +92,10 @@ export const InstructionVersionSchema = z.object({
   createdAt: z.string(),
 });
 
+/** How much a space asks before acting; see VISION.md. */
+export const ApprovalModeSchema = z.enum(["never", "auto", "ask"]);
+export type ApprovalMode = z.infer<typeof ApprovalModeSchema>;
+
 export const BotSchema = z.object({
   id: Id,
   spaceId: Id,
@@ -126,6 +132,8 @@ export const BotSchema = z.object({
   crossSpaceCommunication: z.boolean().optional(),
   fleetManagement: z.boolean().default(false),
   squadRouting: z.boolean().default(false),
+  /** This bot's own approval mode; null follows the member's default. */
+  approvalMode: ApprovalModeSchema.nullable().default(null),
   /** Most the bot may spend on hosted credits in a UTC day, in US dollars; null means no limit. */
   dailyCapUsd: z.number().nullable().default(null),
   disabledBuiltinTools: z.array(z.string()).default([]),
@@ -451,6 +459,8 @@ export const UpdateBotInput = z
     crossSpaceCommunication: z.boolean().optional(),
     fleetManagement: z.boolean().optional(),
     squadRouting: z.boolean().optional(),
+    /** null clears the bot's own mode so it follows the default again. */
+    approvalMode: ApprovalModeSchema.nullable().optional(),
     disabledBuiltinTools: DisabledBuiltinToolsSchema.optional(),
   })
   .superRefine((value, ctx) => {
@@ -808,10 +818,6 @@ export const ActionApprovalRuleSchema = z.object({
   createdAt: z.string(),
 });
 export type ActionApprovalRule = z.infer<typeof ActionApprovalRuleSchema>;
-
-/** How much a space asks before acting; see VISION.md. */
-export const ApprovalModeSchema = z.enum(["never", "auto", "ask"]);
-export type ApprovalMode = z.infer<typeof ApprovalModeSchema>;
 
 export const ActionAutoReviewSettingsSchema = z.object({
   mode: ApprovalModeSchema,
@@ -1759,6 +1765,8 @@ export const MeSchema = z.object({
   phoneCallsEnabled: z.boolean().default(false),
   /** Operator-configured menu links. Absent from older servers. */
   navLinks: z.array(NavLinkSchema).default([]),
+  /** True while this member's navigation is still growing in this space. Absent from older servers. */
+  shortNav: z.boolean().optional(),
   userId: Id,
   email: z.string().email(),
   name: z.string(),
@@ -1787,6 +1795,8 @@ export const MeSchema = z.object({
   billingEnabled: z.boolean(),
   /** True until a user of a billing deployment answers or skips the signup survey. Absent from older servers. */
   needsSignupSurvey: z.boolean().optional(),
+  /** The person's coach tour; null when they get none. Absent from older servers. */
+  tour: TourStateSchema.nullable().optional(),
   /** Set for the person a partner's system opened this account for; they see no billing or setup. */
   partner: z
     .object({
@@ -1826,6 +1836,13 @@ export const SignupSurveySchema = z.object({
   source: z.string().trim().max(500).optional(),
 });
 export type SignupSurvey = z.infer<typeof SignupSurveySchema>;
+
+/** The structured picks onboarding keeps: what Rook is for and the Store categories tapped, in order. */
+export const OnboardingPicksSchema = z.object({
+  use: z.enum(SIGNUP_SURVEY_USES).optional(),
+  categories: z.array(z.enum(STORE_CATEGORIES)).max(STORE_CATEGORIES.length).default([]),
+});
+export type OnboardingPicks = z.infer<typeof OnboardingPicksSchema>;
 
 export function signupSurveyAsksTeamSize(use: SignupSurvey["use"]): boolean {
   return use === "work" || use === "both";

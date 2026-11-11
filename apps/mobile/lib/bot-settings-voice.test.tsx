@@ -13,6 +13,8 @@ const mocks = vi.hoisted(() => ({
   instructions: "",
   description: "",
   crossSpaceCommunication: false,
+  approvalMode: null as string | null,
+  defaultMode: { mode: "auto", checkerAvailable: true } as unknown,
   focus: undefined as string | undefined,
   os: "ios",
   work: [] as unknown[],
@@ -87,11 +89,16 @@ vi.mock("./api", () => ({
         computerMode: "team",
         fleetManagement: false,
         squadRouting: false,
+        approvalMode: mocks.approvalMode,
         crossSpaceCommunication: mocks.crossSpaceCommunication,
       };
     if (procedure === "scratchpad/list") return mocks.work;
     if (procedure === "memory/list") return mocks.docs;
     if (procedure === "me") return {};
+    if (procedure === "autoReview/get") {
+      if (mocks.defaultMode === "offline") throw new Error("offline");
+      return mocks.defaultMode;
+    }
     return [];
   },
 }));
@@ -341,6 +348,8 @@ describe("bot settings device voice menu", () => {
   let container: HTMLDivElement;
   beforeEach(() => {
     mocks.crossSpaceCommunication = false;
+    mocks.approvalMode = null;
+    mocks.defaultMode = { mode: "auto", checkerAvailable: true };
     vi.clearAllMocks();
     mocks.focus = undefined;
     mocks.instructions = "";
@@ -690,6 +699,83 @@ describe("bot settings device voice menu", () => {
 
     await expand();
     expect(container.textContent).not.toContain("Read replies aloud");
+  });
+
+  describe("autonomy", () => {
+    const question = "How much does Fixture do on its own?";
+    const answer = (title: string) =>
+      [...container.querySelectorAll<HTMLButtonElement>(`[data-menu="${question}"] button`)].find(
+        (node) => node.textContent === title,
+      )!;
+    const updates = () => mocks.rpc.mock.calls.filter(([procedure]) => procedure === "bots/update");
+    const confirmation = () => mocks.alert.mock.calls.at(-1) as unknown[];
+    const press = (text: string) =>
+      (confirmation()[2] as { text: string; onPress: () => void }[])
+        .find((button) => button.text === text)!
+        .onPress();
+
+    it("shows the default answer for a bot with none of its own, with the line under it", async () => {
+      await render();
+      expect(container.textContent).toContain(question);
+      expect(container.textContent).toContain("Does what fits your request");
+      expect(container.textContent).toContain(
+        "Still asks when a second model finds it outside your request, and before security changes.",
+      );
+    });
+
+    it("saves the careful answer once", async () => {
+      await render();
+      await act(async () => answer("Asks before any change").click());
+      expect(updates()).toEqual([["bots/update", { botId: "bot-fixture", approvalMode: "ask" }]]);
+      expect(container.textContent).toContain("Asks before any change");
+    });
+
+    it("stores nothing when the default answer is picked again", async () => {
+      mocks.approvalMode = "ask";
+      await render();
+      await act(async () => answer("Does what fits your request").click());
+      expect(updates()).toEqual([["bots/update", { botId: "bot-fixture", approvalMode: null }]]);
+    });
+
+    it("sends nothing when free is cancelled, and saves it once confirmed", async () => {
+      await render();
+      await act(async () => answer("Does everything without asking").click());
+      expect(confirmation()[0]).toBe("Let Fixture act without asking?");
+      await act(async () => press("Cancel"));
+      expect(updates()).toEqual([]);
+      expect(container.textContent).toContain("Does what fits your request");
+
+      await act(async () => answer("Does everything without asking").click());
+      await act(async () => press("Stop asking"));
+      expect(updates()).toEqual([["bots/update", { botId: "bot-fixture", approvalMode: "never" }]]);
+    });
+
+    it("restores the shown answer when the save fails", async () => {
+      mocks.rpc.mockRejectedValueOnce(new Error("offline"));
+      await render();
+      await act(async () => answer("Asks before any change").click());
+      expect(container.textContent).toContain("Does what fits your request");
+      expect(container.textContent).toContain("offline");
+    });
+
+    it("keeps normal selected without a model, with the hint", async () => {
+      mocks.defaultMode = { mode: "ask", checkerAvailable: false };
+      mocks.approvalMode = "auto";
+      await render();
+      expect(container.textContent).toContain("Does what fits your request");
+      expect(container.textContent).toContain("Add a model in Settings to use this.");
+      expect(
+        container.textContent?.includes(
+          "Still asks before anything that changes something, and before opening a site you didn't mention.",
+        ),
+      ).toBe(true);
+    });
+
+    it("offers no answers until the default has loaded", async () => {
+      mocks.defaultMode = "offline";
+      await render();
+      expect(container.querySelector(`[data-menu="${question}"]`)).toBeNull();
+    });
   });
 
   it("queues notifications and ignores an older failure before saving the latest choice", async () => {

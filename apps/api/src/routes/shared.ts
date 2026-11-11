@@ -7,6 +7,7 @@ import {
 } from "@corvo/adapters";
 import type { Actor, Me } from "@corvo/contracts";
 import { attachmentMaxBytes, canonicalPiProviderId, PartnerTemplate } from "@corvo/contracts";
+import { parseTourDone } from "@corvo/core";
 import { runAsSystem } from "@corvo/db";
 import type { RouterDeps } from "../router.js";
 import { isPartnerAdmin } from "./partner.js";
@@ -28,6 +29,7 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
         name: true,
         timezone: true,
         signupSurvey: { select: { userId: true } },
+        coachTour: { select: { done: true, skipped: true } },
       },
     }),
     modelSetup(deps, actor),
@@ -39,6 +41,10 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
       }),
     ),
   ]);
+  const missionState = await deps.prisma.missionState.findUnique({
+    where: { spaceId_userId: { spaceId: actor.spaceId, userId: actor.userId } },
+    select: { shownAllAt: true },
+  });
   const hostOffer = hostComputerOffer({
     provider: deps.env.sandboxProvider,
     hostConnected: deps.env.sandboxHostComputer === true,
@@ -49,6 +55,7 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
     ticketBoardEnabled: deps.env.ticketBoardEnabled === true,
     phoneCallsEnabled: deps.env.phoneCallsEnabled === true,
     navLinks: deps.env.navLinks ?? [],
+    shortNav: missionState !== null && missionState.shownAllAt === null,
     maxUploadSizeBytes: attachmentMaxBytes(deps.env),
     userId: actor.userId,
     email: user.email,
@@ -80,6 +87,12 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
     billingEnabled: Boolean(deps.billing) && !partner,
     // Only billing deployments ask; self-hosted installs never see the survey.
     needsSignupSurvey: Boolean(deps.billing) && !partner && !user.signupSurvey,
+    tour: partner
+      ? null
+      : {
+          done: parseTourDone(user.coachTour?.done ?? []),
+          skipped: user.coachTour?.skipped ?? false,
+        },
     partner: partner
       ? {
           name: partner.partner.name,

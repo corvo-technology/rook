@@ -13,6 +13,7 @@ import {
   connectorReadRequiresApproval,
   connectorToolRequiresApproval,
   displayName,
+  effectiveApprovalMode,
   newSiteOutcome,
   outboundSiteGate,
   planActionGate,
@@ -240,7 +241,10 @@ export async function gateToolCall(
     unidentifiedAction && resolvedRules.decision === "allow"
       ? { ...resolvedRules, decision: "ask" as const }
       : resolvedRules;
-  const mode = approvalModeFromPreference(await ctx.trust.loadAutoReviewPreference());
+  const mode = effectiveApprovalMode(
+    ctx.bot.approvalMode,
+    approvalModeFromPreference(await ctx.trust.loadAutoReviewPreference()),
+  );
   const reviewable = mode === "auto" && !requiresMandatoryApproval;
   const injectedReview = reviewable ? deps.autoReview : undefined;
   const reviewSettings = !reviewable || injectedReview ? null : await ctx.trust.loadApprovalModel();

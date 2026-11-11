@@ -65,6 +65,7 @@ describe("account preferences", () => {
         findUniqueOrThrow: vi.fn().mockResolvedValue(user),
       },
       partnerTenant: { findFirst: vi.fn().mockResolvedValue(null) },
+      missionState: { findUnique: vi.fn(async () => null) },
       userModelPreference: { findFirst: vi.fn().mockResolvedValue(null) },
       deploymentSettings: { findUnique: vi.fn().mockResolvedValue(null) },
     } as unknown as PrismaClient;
@@ -410,6 +411,7 @@ describe("account preferences", () => {
 describe("billing", () => {
   const surveyCreatedAt = new Date("2026-10-23T12:00:00Z");
   const upsertSignupSurvey = vi.fn().mockResolvedValue({ createdAt: surveyCreatedAt });
+  const $executeRaw = vi.fn().mockResolvedValue(1);
 
   function billingDeps(
     isDeploymentOwner: boolean,
@@ -417,8 +419,11 @@ describe("billing", () => {
     signupSurvey: { userId: string } | null = null,
     analytics?: RouterDeps["analytics"],
     partner: { name: string } | null = null,
+    coachTour: { done: string[]; skipped: boolean } | null = null,
   ) {
     const prisma = {
+      $executeRaw,
+      missionState: { findUnique: vi.fn(async () => null) },
       partnerTenant: {
         findFirst: vi.fn().mockResolvedValue(partner ? { partner } : null),
       },
@@ -428,6 +433,7 @@ describe("billing", () => {
           name: "Test User",
           avatarStyle: "robot",
           signupSurvey,
+          coachTour,
         }),
       },
       signupSurvey: { upsert: upsertSignupSurvey },
@@ -510,6 +516,35 @@ describe("billing", () => {
     });
   });
 
+  it("serves the coach tour on me, dropping marks this release does not know", async () => {
+    await expect(billingDeps(false).me()).resolves.toMatchObject({
+      tour: { done: [], skipped: false },
+    });
+    await expect(
+      billingDeps(false, undefined, null, undefined, null, {
+        done: ["first", "bogus"],
+        skipped: false,
+      }).me(),
+    ).resolves.toMatchObject({ tour: { done: ["first"], skipped: false } });
+    await expect(
+      billingDeps(false, undefined, null, undefined, null, { done: [], skipped: true }).me(),
+    ).resolves.toMatchObject({ tour: { skipped: true } });
+    await expect(
+      billingDeps(false, undefined, null, undefined, { name: "Acme SaaS" }).me(),
+    ).resolves.toMatchObject({ tour: null });
+  });
+
+  it("records coach tour progress for the caller only", async () => {
+    const client = billingDeps(false);
+    $executeRaw.mockClear();
+    await expect(client.onboarding.tourDone({ mark: "chief" })).resolves.toEqual({ ok: true });
+    expect($executeRaw.mock.calls[0]?.slice(1)).toEqual(["user-1", "chief", "chief", "chief"]);
+    await expect(client.onboarding.tourDone({ mark: "bogus" as never })).rejects.toBeDefined();
+    expect($executeRaw).toHaveBeenCalledTimes(1);
+    await expect(client.onboarding.tourSkip()).resolves.toEqual({ ok: true });
+    expect($executeRaw.mock.calls[1]?.slice(1)).toEqual(["user-1"]);
+  });
+
   it("sends only the fixed survey choices to analytics", async () => {
     const capture = vi.fn();
     const client = billingDeps(false, undefined, null, { capture, flush: async () => undefined });
@@ -585,6 +620,7 @@ describe("model setup gate", () => {
   }) {
     const prisma = {
       partnerTenant: { findFirst: vi.fn().mockResolvedValue(null) },
+      missionState: { findUnique: vi.fn(async () => null) },
       user: {
         findUniqueOrThrow: vi.fn().mockResolvedValue({
           email: "user@corvo.test",
@@ -2102,6 +2138,9 @@ describe("MCP server health", () => {
     (h.deps.prisma as unknown as Record<string, unknown>).partnerTenant = {
       findFirst: vi.fn().mockResolvedValue(null),
     };
+    (h.deps.prisma as unknown as Record<string, unknown>).missionState = {
+      findUnique: vi.fn(async () => null),
+    };
     (h.deps.prisma as unknown as Record<string, unknown>).user = {
       findUniqueOrThrow: vi.fn(async () => ({ email: "owner@corvo.test", name: "Owner" })),
     };
@@ -3126,6 +3165,7 @@ describe("updater owner gate", () => {
   function updaterDeps() {
     const prisma = {
       partnerTenant: { findFirst: vi.fn().mockResolvedValue(null) },
+      missionState: { findUnique: vi.fn(async () => null) },
       user: {
         findUniqueOrThrow: vi.fn().mockResolvedValue({
           email: "user@corvo.test",
@@ -6145,6 +6185,7 @@ describe("bot model auth on save", () => {
       userModelCredential: { findFirst: vi.fn(async () => null) },
       secret: { findFirst: secretFindFirst },
       partnerTenant: { findFirst: vi.fn(async () => null) },
+      missionState: { findUnique: vi.fn(async () => null) },
       $transaction: vi.fn(async (fn: (client: typeof tx) => unknown) => fn(tx)),
     };
     const deps = {
@@ -7063,6 +7104,7 @@ describe("openai-compatible enabled models", () => {
       },
       deploymentSettings: { findUnique: vi.fn(async () => null) },
       partnerTenant: { findFirst: vi.fn().mockResolvedValue(null) },
+      missionState: { findUnique: vi.fn(async () => null) },
       user: {
         findUniqueOrThrow: vi.fn(async () => ({
           email: actor.email,

@@ -18,6 +18,14 @@ describe("AGENT_CATALOG", () => {
     expect(new Set(slugs).size).toBe(slugs.length);
   });
 
+  it("parses every entry, first tasks included", () => {
+    for (const entry of AGENT_CATALOG) {
+      const parsed = AgentCatalogEntrySchema.parse(entry);
+      expect(parsed.firstTask).toEqual(entry.firstTask);
+    }
+    expect(AGENT_CATALOG.filter((entry) => entry.firstTask).length).toBe(10);
+  });
+
   it("only names apps that are in the app catalog", () => {
     const apps = new Set(APP_CATALOG.map((entry) => entry.slug));
     for (const entry of AGENT_CATALOG)

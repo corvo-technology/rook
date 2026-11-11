@@ -607,6 +607,7 @@ export const MessageView = memo(function MessageView({
             return (
               <div
                 key={i}
+                data-coach={canAnswer && block.status !== "answered" ? "ask" : undefined}
                 className={`relative w-full min-w-0 ${isSecretAskBlock(block) ? "" : "max-w-xl"}`}
               >
                 {stepped && i === steps.current ? (

@@ -1,6 +1,6 @@
 import { AGENT_CATALOG } from "@corvo/core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { addCatalogAgent, connectedServersFor } from "./agent-catalog-install";
+import { addCatalogAgent, catalogAgentOf, connectedServersFor } from "./agent-catalog-install";
 
 const create = vi.hoisted(() => vi.fn());
 const replace = vi.hoisted(() => vi.fn());
@@ -136,5 +136,17 @@ describe("an agent's skills", () => {
   it("does nothing for an agent without skills", async () => {
     await addCatalogAgent(agent("translator"), "en", []);
     expect(createSkill).not.toHaveBeenCalled();
+  });
+});
+
+describe("catalogAgentOf", () => {
+  it("finds the catalog agent a bot was made from", () => {
+    expect(catalogAgentOf({ spawnKey: "agent-catalog:bug-triage" })?.slug).toBe("bug-triage");
+  });
+
+  it("finds none for a bot made by hand", () => {
+    expect(catalogAgentOf({ spawnKey: null })).toBeUndefined();
+    expect(catalogAgentOf({ spawnKey: "onboarding:first" })).toBeUndefined();
+    expect(catalogAgentOf({})).toBeUndefined();
   });
 });

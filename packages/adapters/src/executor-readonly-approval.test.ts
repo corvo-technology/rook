@@ -92,6 +92,7 @@ function fixture({
   nativeReview = false,
   checkerConnected = true,
   skipApprovals = false,
+  botApprovalMode = null,
   trigger = "user",
   secrets = [] as string[],
   prompt = "Read the item",
@@ -145,6 +146,8 @@ function fixture({
   nativeReview?: boolean;
   checkerConnected?: boolean;
   skipApprovals?: boolean;
+  /** The bot's own approval mode; null follows the account or space default. */
+  botApprovalMode?: string | null;
   trigger?: string;
   secrets?: string[];
   prompt?: string;
@@ -270,6 +273,7 @@ function fixture({
         description: bot.description,
         disabledBuiltinTools,
         fleetManagement,
+        approvalMode: botApprovalMode,
         computerId: "computer-1",
         computer: { id: "computer-1", scope: "dedicated" },
       })),
@@ -2430,4 +2434,175 @@ it("uses the OpenRouter environment key for a decision checker on another deploy
     vi.unstubAllGlobals();
     vi.unstubAllEnvs();
   }
+});
+
+describe("a bot's own approval mode", () => {
+  type Mode = "ask" | "auto" | "never";
+  const defaults = {
+    ask: {},
+    auto: { autoReview: true },
+    never: { skipApprovals: true },
+  } satisfies Record<Mode, Parameters<typeof fixture>[0]>;
+  const write = { name: "demo_send_message", readOnly: false } as const;
+  const search = { name: "web_search", args: { query: "news" }, executionId: "call-0" };
+  const allow = (name: string) => ({
+    effect: "always_allow" as const,
+    matchKind: "tool" as const,
+    matchValue: name,
+  });
+
+  beforeEach(() => reviewMock.mockReset());
+
+  it("asks for a write when the bot is careful and the default never asks", async () => {
+    const f = fixture({ ...write, ...defaults.never, botApprovalMode: "ask" });
+    await f.run();
+    expect(f.execute).not.toHaveBeenCalled();
+    expect(isApprovalPausedResult(f.results[0])).toBe(true);
+  });
+
+  it("runs a write when the bot is free and the default asks", async () => {
+    const f = fixture({ ...write, ...defaults.ask, botApprovalMode: "never" });
+    await f.run();
+    expect(f.execute).toHaveBeenCalledOnce();
+    expect(f.pauseRunForInput).not.toHaveBeenCalled();
+    expect(reviewMock).not.toHaveBeenCalled();
+  });
+
+  it("has the approval model judge a write when the bot is normal and the default asks", async () => {
+    reviewMock.mockResolvedValue({ decision: "pass", reason: "Fits the task", model: "mock" });
+    const f = fixture({ ...write, autoReview: false, botApprovalMode: "auto" });
+    // The default is Ask, so the approval-model preference must come from the bot alone.
+    await f.run();
+    expect(reviewMock).toHaveBeenCalledOnce();
+    expect(f.execute).toHaveBeenCalledOnce();
+  });
+
+  it("asks when the bot is normal but no approval model is configured", async () => {
+    const f = fixture({ ...write, nativeReview: true, botApprovalMode: "auto" });
+    await f.run();
+    expect(f.execute).not.toHaveBeenCalled();
+    expect(isApprovalPausedResult(f.results[0])).toBe(true);
+  });
+
+  it("follows the default when the bot has no mode of its own", async () => {
+    reviewMock.mockResolvedValue({ decision: "pass", reason: "Fits the task", model: "mock" });
+    const auto = fixture({ ...write, ...defaults.auto, botApprovalMode: null });
+    await auto.run();
+    expect(reviewMock).toHaveBeenCalledOnce();
+    expect(auto.execute).toHaveBeenCalledOnce();
+
+    const never = fixture({ ...write, ...defaults.never, botApprovalMode: null });
+    await never.run();
+    expect(never.execute).toHaveBeenCalledOnce();
+    expect(never.pauseRunForInput).not.toHaveBeenCalled();
+  });
+
+  it("refuses a blocked tool at every level without asking", async () => {
+    for (const botApprovalMode of ["ask", "auto", "never"] as const) {
+      const f = fixture({
+        ...write,
+        ...defaults.ask,
+        botApprovalMode,
+        rules: [{ effect: "deny", matchKind: "tool", matchValue: "demo_send_message" }],
+      });
+      await f.run();
+      expect(f.execute).not.toHaveBeenCalled();
+      expect(f.pauseRunForInput).not.toHaveBeenCalled();
+      expect(JSON.stringify(f.results[0])).toContain("is blocked");
+    }
+  });
+
+  it("lets an always-allow rule run a write for a careful bot", async () => {
+    const f = fixture({
+      ...write,
+      ...defaults.never,
+      botApprovalMode: "ask",
+      rules: [allow("demo_send_message")],
+    });
+    await f.run();
+    expect(f.execute).toHaveBeenCalledOnce();
+    expect(f.pauseRunForInput).not.toHaveBeenCalled();
+  });
+
+  it("runs past an ask rule for a free bot, as Never ask does", async () => {
+    const f = fixture({
+      ...write,
+      ...defaults.ask,
+      botApprovalMode: "never",
+      rules: [{ effect: "require_approval", matchKind: "tool", matchValue: "demo_send_message" }],
+    });
+    await f.run();
+    expect(f.execute).toHaveBeenCalledOnce();
+    expect(f.pauseRunForInput).not.toHaveBeenCalled();
+  });
+
+  describe("a security change", () => {
+    const createSpace = {
+      name: "create_space",
+      builtin: true,
+      ...defaults.ask,
+      botApprovalMode: "never",
+    } as const;
+    const call = { name: "create_space", args: { name: "Support" }, executionId: "call-1" };
+
+    it("runs for a free bot when the owner started the run and nothing outside entered it", async () => {
+      const f = fixture(createSpace);
+      f.setCalls([call]);
+      await f.run(true);
+      expect(f.pauseRunForInput).not.toHaveBeenCalled();
+    });
+
+    it("asks the owner when a free bot's run read outside content first", async () => {
+      const f = fixture(createSpace);
+      f.setCalls([search, call]);
+      await f.run(true);
+      expect(f.pauseRunForInput).toHaveBeenCalledOnce();
+    });
+
+    it("is refused for a free bot in a webhook run, with nobody to ask", async () => {
+      const f = fixture({ ...createSpace, trigger: "webhook" });
+      f.setCalls([call]);
+      await f.run(true);
+      expect(f.pauseRunForInput).not.toHaveBeenCalled();
+      expect(JSON.stringify(f.results[0])).toContain("error");
+    });
+
+    it("asks at every level below free, whatever the default", async () => {
+      for (const botApprovalMode of ["ask", "auto"] as const) {
+        const f = fixture({ ...createSpace, ...defaults.never, botApprovalMode });
+        f.setCalls([call]);
+        await f.run(true);
+        expect(f.pauseRunForInput).toHaveBeenCalledOnce();
+      }
+    });
+  });
+
+  it("does not review a read on a new connector for a careful bot after outside content", async () => {
+    const f = fixture({ ...defaults.never, botApprovalMode: "ask" });
+    f.setCalls([search, { args: { id: "item-1" }, executionId: "call-1" }]);
+    await f.run();
+    expect(reviewMock).not.toHaveBeenCalled();
+    expect(f.execute).toHaveBeenCalledOnce();
+    expect(f.pauseRunForInput).not.toHaveBeenCalled();
+  });
+
+  it("treats a stored mode it does not know as asking", async () => {
+    const f = fixture({ ...write, ...defaults.never, botApprovalMode: "free" });
+    await f.run();
+    expect(f.execute).not.toHaveBeenCalled();
+    expect(isApprovalPausedResult(f.results[0])).toBe(true);
+  });
+
+  it("never asks because of the level for a built-in read", async () => {
+    for (const botApprovalMode of [null, "ask", "auto", "never", "free"]) {
+      for (const base of [defaults.ask, defaults.auto, defaults.never]) {
+        const f = fixture({ builtin: true, name: "read_file", ...base, botApprovalMode });
+        f.setCalls([{ name: "read_file", args: { path: "notes.md" }, executionId: "call-1" }]);
+        await f.run(true);
+        expect(f.pauseRunForInput).not.toHaveBeenCalled();
+        expect(reviewMock).not.toHaveBeenCalled();
+        expect(isApprovalPausedResult(f.results[0])).toBe(false);
+      }
+    }
+  });
 });

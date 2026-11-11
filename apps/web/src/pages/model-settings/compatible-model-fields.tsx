@@ -132,7 +132,11 @@ export function CompatibleModelFields({
         </Disclosure>
       ) : null}
       {preflightTarget === "compatible" ? (
-        <ModelPreflightFeedback success={null} failure={preflightFailure} />
+        <ModelPreflightFeedback
+          success={null}
+          failure={preflightFailure}
+          onRetry={() => void probeServerModels()}
+        />
       ) : null}
       <div className="mt-4 block">
         <span>

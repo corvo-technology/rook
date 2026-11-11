@@ -87,6 +87,7 @@ export interface ThreadEvents {
   pauseRunForInput(input: PauseRunForInput): Promise<FinalizeRunResult | false>;
   pauseRunForTakeover(input: PauseRunForTakeover): Promise<boolean>;
   sendUserMessage(input: SendUserMessageInput): Promise<SendUserMessageResult>;
+  retryFailedRun(input: RetryFailedRunInput): Promise<RetryFailedRunResult | null>;
   follow(threadId: string, cursor: number, signal?: AbortSignal): AsyncGenerator<ProductEvent>;
 }
 
@@ -299,6 +300,19 @@ export interface SendUserMessageResult {
   runId: string | null;
 }
 
+export interface RetryFailedRunInput {
+  spaceId: string;
+  userId: string;
+  threadId: string;
+  runId: string;
+}
+
+export interface RetryFailedRunResult {
+  runId: string;
+  /** False when this retry already exists, so the caller starts nothing. */
+  created: boolean;
+}
+
 export interface RunSecretWriter {
   withPrepared?<T>(
     prisma: PrismaClient,
@@ -339,6 +353,7 @@ export function createThreadEvents(
     pauseRunForInput: (input) => pauseRunForInput(prisma, input, realtime),
     pauseRunForTakeover: (input) => pauseRunForTakeover(prisma, input, realtime),
     sendUserMessage: (input) => sendUserMessage(prisma, input, realtime, options.analytics),
+    retryFailedRun: (input) => retryFailedRun(prisma, input),
     follow: (threadId, cursor, signal) =>
       followThreadEvents(prisma, threadId, cursor, realtime, signal, options.catchUpMs),
   };
@@ -602,6 +617,105 @@ export async function sendUserMessage(
     taskId: committed.task?.id ?? null,
     runId: committed.run?.id ?? committed.busy?.id ?? null,
   };
+}
+
+/**
+ * Runs the same message again after a failed chat run, without posting a second copy of it. Only
+ * the newest run of the bot in the thread can be retried, and only while nothing else is working,
+ * so a retry never re-runs an older failure or races a newer message. The retry's nonce makes a
+ * double tap start one run.
+ */
+export async function retryFailedRun(
+  prisma: PrismaClient,
+  input: RetryFailedRunInput,
+): Promise<RetryFailedRunResult | null> {
+  const clientNonce = `retry:${input.runId}`;
+  const existing = async (): Promise<RetryFailedRunResult | null> => {
+    const run = await prisma.run.findFirst({
+      where: { spaceId: input.spaceId, clientNonce },
+      select: { id: true },
+    });
+    return run ? { runId: run.id, created: false } : null;
+  };
+  const replay = await existing();
+  if (replay) return replay;
+  try {
+    return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const failed = await tx.run.findUnique({
+        where: { id: input.runId },
+        select: {
+          spaceId: true,
+          threadId: true,
+          userId: true,
+          botId: true,
+          taskId: true,
+          status: true,
+          trigger: true,
+          sourceMessageId: true,
+          modelPinned: true,
+          modelProvider: true,
+          modelId: true,
+          thinkingLevel: true,
+        },
+      });
+      if (
+        !failed ||
+        failed.spaceId !== input.spaceId ||
+        failed.threadId !== input.threadId ||
+        failed.userId !== input.userId ||
+        failed.status !== "failed" ||
+        !failed.sourceMessageId ||
+        !isConversationalRun(failed.trigger)
+      ) {
+        return null;
+      }
+      const newest = await tx.run.findFirst({
+        where: { threadId: failed.threadId, botId: failed.botId },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        select: { id: true },
+      });
+      if (newest?.id !== input.runId) return null;
+      const active = await tx.run.findFirst({
+        where: {
+          threadId: failed.threadId,
+          botId: failed.botId,
+          status: { in: [...QUEUE_HOLDING_RUN_STATUSES] },
+        },
+        select: { id: true },
+      });
+      if (active) return null;
+      // A model the person changed since the failure is used; only a pin is kept.
+      const run = await tx.run.create({
+        data: {
+          spaceId: failed.spaceId,
+          botId: failed.botId,
+          threadId: failed.threadId,
+          taskId: failed.taskId,
+          userId: failed.userId,
+          status: "queued",
+          trigger: failed.trigger,
+          clientNonce,
+          sourceMessageId: failed.sourceMessageId,
+          ...(failed.modelPinned
+            ? {
+                modelProvider: failed.modelProvider,
+                modelId: failed.modelId,
+                thinkingLevel: failed.thinkingLevel,
+                modelPinned: true,
+              }
+            : {}),
+        },
+        select: { id: true },
+      });
+      await tx.task.update({ where: { id: failed.taskId }, data: { status: "queued" } });
+      return { runId: run.id, created: true };
+    });
+  } catch (error) {
+    // A concurrent tap created the retry first.
+    const winner = await existing();
+    if (winner) return winner;
+    throw error;
+  }
 }
 
 export async function claimSteering(

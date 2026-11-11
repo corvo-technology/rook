@@ -224,6 +224,8 @@ export function normalizeRunError(
   recovery?: "connection" | "model";
   resetAt?: number;
   kind?: RunErrorKind;
+  /** What kind of network or capacity failure this was, when it is not one of the run error kinds. */
+  transport?: "unreachable" | "tls" | "timeout" | "overloaded";
   period?: "none" | "daily" | "weekly" | "monthly";
 } {
   const trimmed = details.trim();
@@ -329,6 +331,7 @@ export function normalizeRunError(
   let kind: RunErrorKind | undefined;
   let period: "none" | "daily" | "weekly" | "monthly" | undefined;
   let recovery: "connection" | "model" | undefined;
+  let transport: "unreachable" | "tls" | "timeout" | "overloaded" | undefined;
   let summary = translate("The model provider returned an error.");
   const financialQuota =
     /insufficient[_ ](?:quota|balance)|credits?|funds|spend|budget|billing|openrouter_key_limit/i.test(
@@ -464,6 +467,7 @@ export function normalizeRunError(
     status === 529 ||
     /overload|over capacity|temporarily unavailable|service unavailable/i.test(signals)
   ) {
+    transport = "overloaded";
     summary = translate("{provider} is overloaded right now. Try again in a moment.", { provider });
   } else if (
     // A security program or network filter that inspects HTTPS presents its own certificate, which
@@ -472,6 +476,7 @@ export function normalizeRunError(
       signals,
     )
   ) {
+    transport = "tls";
     summary = translate(
       "{provider} couldn't be reached securely. A security program or network filter may be intercepting the connection.",
       { provider },
@@ -483,6 +488,7 @@ export function normalizeRunError(
       signals,
     )
   ) {
+    transport = "unreachable";
     summary = translate("{provider} couldn't be reached. Check that it's running.", { provider });
   } else if (
     status === 408 ||
@@ -491,6 +497,7 @@ export function normalizeRunError(
       signals,
     )
   ) {
+    transport = "timeout";
     summary = translate("{provider} took too long to respond. Try again.", { provider });
   } else if (
     trimmed === MODEL_OUTPUT_LIMIT_ERROR ||
@@ -505,6 +512,7 @@ export function normalizeRunError(
     summary,
     details,
     ...(kind ? { kind } : {}),
+    ...(transport ? { transport } : {}),
     ...(period ? { period } : {}),
     ...(recovery ? { recovery } : {}),
     ...(resetAt ? { resetAt } : {}),

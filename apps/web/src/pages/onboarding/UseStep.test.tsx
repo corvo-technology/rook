@@ -46,11 +46,12 @@ afterEach(() => {
 });
 
 describe("UseStep", () => {
-  it("hands the picked categories on in the order the grid lists them", async () => {
+  it("hands on the use answer and the categories in the order tapped", async () => {
     await click("Support");
     await click("Sales");
+    await click("Work");
     await click("Continue");
-    expect(onDone).toHaveBeenCalledWith(["sales", "support"]);
+    expect(onDone).toHaveBeenCalledWith({ use: "work", categories: ["support", "sales"] });
   });
 
   it("saves how the person will use Rook", async () => {
@@ -62,14 +63,14 @@ describe("UseStep", () => {
   it("continues with nothing picked and leaves saved answers alone", async () => {
     await click("Continue");
     expect(signupSurvey).not.toHaveBeenCalled();
-    expect(onDone).toHaveBeenCalledWith([]);
+    expect(onDone).toHaveBeenCalledWith({ categories: [] });
   });
 
   it("does not wait for or fail on a survey that cannot be saved", async () => {
     signupSurvey.mockRejectedValue(new Error("down"));
     await click("Work");
     await click("Continue");
-    expect(onDone).toHaveBeenCalledWith([]);
+    expect(onDone).toHaveBeenCalledWith({ use: "work", categories: [] });
   });
 
   it("exposes which categories are picked", async () => {

@@ -10,6 +10,7 @@ import {
 import {
   AnswerTooLongError,
   appendEventInTransaction,
+  completeMission,
   createExternalConversationRepos,
   createThreadMessageInTransaction,
   IsolationError,
@@ -224,6 +225,28 @@ export function threadsRoutes(ctx: RouterContext) {
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);
         await stopThreadRuns(deps, context.actor, target);
         return { ok: true as const };
+      }),
+      retry: authed.threads.retry.handler(async ({ context, input }) => {
+        const setup = await modelSetup(deps, context.actor);
+        if (setup.needsModel) {
+          throw new ORPCError("BAD_REQUEST", { message: MODEL_REQUIRED_SEND_ERROR });
+        }
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        const retried = await deps.events.retryFailedRun({
+          spaceId: context.actor.spaceId,
+          userId: context.actor.userId,
+          threadId: target.threadId,
+          runId: input.runId,
+        });
+        // The client only refreshes: the run is no longer the one to retry.
+        if (!retried) throw new ORPCError("CONFLICT");
+        if (retried.created) {
+          await deps.jobs.enqueue(runContinueJob(retried.runId)).catch((error) => {
+            // The queued run is durable; the reconciler repairs a missed immediate wake.
+            getLogger().error("thread retry enqueue", error);
+          });
+        }
+        return { runId: retried.runId };
       }),
       clear: authed.threads.clear.handler(async ({ context, input }) => {
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);
@@ -551,6 +574,11 @@ export function threadsRoutes(ctx: RouterContext) {
         if (!answered) {
           throw new ORPCError("CONFLICT", {
             message: "This prompt is no longer awaiting an answer",
+          });
+        }
+        if (!input.dismiss) {
+          await completeMission(deps.prisma, context.actor, "decide").catch((error) => {
+            getLogger().error("thread answer mission", error);
           });
         }
         await deps.jobs.enqueue(runContinueJob(input.runId)).catch((error) => {

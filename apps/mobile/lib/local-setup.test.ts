@@ -53,10 +53,17 @@ describe("localFoundRows", () => {
     expect(rows[0]?.title).toBe("translated:Local models");
   });
 
-  it("leaves out connections the account already has", () => {
+  it("lists connections the account already has", () => {
     expect(
       localFoundRows(report([{ ...server, id: "connection:one", kind: "connection" }])),
-    ).toEqual([]);
+    ).toEqual([
+      {
+        optionId: "connection:one",
+        modelId: "fake-model",
+        title: "Ollama",
+        subtitle: "fake-model",
+      },
+    ]);
   });
 
   it("keys exist in every locale", () => {

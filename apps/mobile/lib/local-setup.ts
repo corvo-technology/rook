@@ -9,20 +9,18 @@ export type LocalFoundRow = {
 
 /**
  * What the engine found on its own computer, one row each. Mobile detects nothing and runs no
- * test: it only lists what the engine reports and lets the person use it. Connections the
- * account already has are listed under Providers, not here.
+ * test: it only lists what the engine reports, including the account's existing connections, and
+ * lets the person use it.
  */
 export function localFoundRows(
   report: LocalSetupReport | undefined,
   t: (message: string) => string = (message) => message,
 ): LocalFoundRow[] {
   if (!report?.enabled) return [];
-  return report.options
-    .filter((option) => option.kind !== "connection")
-    .map((option) => ({
-      optionId: option.id,
-      modelId: option.modelId,
-      title: option.kind === "local" ? t("Local models") : option.label,
-      subtitle: option.modelId,
-    }));
+  return report.options.map((option) => ({
+    optionId: option.id,
+    modelId: option.modelId,
+    title: option.kind === "local" ? t("Local models") : option.label,
+    subtitle: option.modelId,
+  }));
 }

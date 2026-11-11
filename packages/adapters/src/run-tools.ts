@@ -4,10 +4,11 @@ import { IMAGE_RETURNING_COMPUTER_TOOLS, MODEL_CANNOT_SEE_MESSAGE } from "./mode
 import { refuseToolAtCap } from "./reply-budget.js";
 import type { RunContext } from "./run-context.js";
 import { pauseForApproval } from "./run-context.js";
+import { guardedToolCall } from "./run-guards.js";
 import type { ToolHandler } from "./run-tool-gate.js";
 import { gateToolCall } from "./run-tool-gate.js";
 import { prepareToolRequest, resolveToolRequest } from "./run-tool-request.js";
-import { PAGE_BROWSER_TOOL_NAMES } from "./run-tool-selection.js";
+import { BUILTIN_AGENT_TOOL_NAMES, PAGE_BROWSER_TOOL_NAMES } from "./run-tool-selection.js";
 import { computerTools, pageBrowserTool } from "./run-tools-computer.js";
 import { documentTools } from "./run-tools-documents.js";
 import { fileTools } from "./run-tools-files.js";
@@ -49,7 +50,18 @@ export async function applyTool(
   observer?: AgentToolExecutionObserver,
 ) {
   try {
-    return await dispatchOneTool(ctx, name, args, executionId, observer);
+    return await guardedToolCall(
+      {
+        guards: ctx.state.guards,
+        signal: ctx.context.signal,
+        readOnlyConnectorTool: (tool) =>
+          !BUILTIN_AGENT_TOOL_NAMES.has(tool) && ctx.tools.connector.get(tool)?.readOnly === true,
+      },
+      name,
+      args,
+      observer,
+      (watched) => dispatchOneTool(ctx, name, args, executionId, watched),
+    );
   } finally {
     if (toolResultTaintsRun(name)) ctx.state.tainted = true;
   }

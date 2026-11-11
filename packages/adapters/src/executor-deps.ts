@@ -17,13 +17,17 @@ import type {
 } from "@corvo/adapter-kit";
 import type { PrismaClient, ThreadEvents } from "@corvo/db";
 import type { CloudAgentConnection } from "./cloud-agent-factory.js";
+import type { ConnectorWaitLimits } from "./connector-wait.js";
 import type { McpStdioPolicy } from "./mcp-transport.js";
 import type { MemoryProviderResolver } from "./memory-provider-factory.js";
 import type { CodexLiveCatalog } from "./pi-codex-catalog.js";
 import type { RemoteTransportDependencies } from "./remote-mcp.js";
 import type { TicketChangeNotifier } from "./ticket-changes.js";
+import type { TurnGuardLimits } from "./turn-guard-calls.js";
 
 export interface ExecutorDeps {
+  /** Overrides the run guard thresholds; for the composition root and tests only. */
+  turnGuardLimits?: Partial<TurnGuardLimits>;
   maxUploadSizeBytes?: number;
   contextStrategy?: AgentContextStrategy;
   prisma: PrismaClient;
@@ -78,6 +82,12 @@ export interface ExecutorDeps {
    * can still run for the OAuth account whose backend lists it.
    */
   codexCatalog?: CodexLiveCatalog;
+  /** Test seam for connector waits: a fake clock and shorter limits. */
+  connectorWait?: {
+    sleep?: (ms: number, signal: AbortSignal) => Promise<void>;
+    now?: () => number;
+    limits?: Partial<ConnectorWaitLimits>;
+  };
   /** Aborted when createApp stop() begins so in-flight continueRun boot waits exit promptly. */
   shutdownSignal?: AbortSignal;
 }

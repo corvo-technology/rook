@@ -1,4 +1,4 @@
-import { COMPUTER_RATE_LIMIT_ERROR } from "@corvo/contracts";
+import { AnalyticsErrorKind, COMPUTER_RATE_LIMIT_ERROR, TURN_GUARD_KINDS } from "@corvo/contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ACCOUNT_PAUSED_RUN_ERROR,
@@ -21,6 +21,7 @@ import {
   normalizeRunError,
   PARTNER_CREDIT_USED_UP_RUN_ERROR,
   SPACE_PAUSED_RUN_ERROR,
+  TURN_GUARD_RUN_ERRORS,
   userRunError,
 } from "./run-error.js";
 
@@ -876,6 +877,29 @@ describe("the one action that fixes a failed run", () => {
       });
     },
   );
+});
+
+describe("turn guard run errors", () => {
+  it.each(TURN_GUARD_KINDS)("recognizes the %s sentence by exact equality", (kind) => {
+    const sentence = TURN_GUARD_RUN_ERRORS[kind];
+    expect(normalizeRunError(sentence)).toEqual({ summary: sentence, details: sentence, kind });
+  });
+
+  it("does not match a sentence inside other text", () => {
+    expect(normalizeRunError(`Provider said: ${TURN_GUARD_RUN_ERRORS.loop}`).kind).toBeUndefined();
+  });
+
+  it("translates the summary and not the details", () => {
+    const sentence = TURN_GUARD_RUN_ERRORS.stall;
+    expect(normalizeRunError(sentence, (message) => message.toUpperCase())).toMatchObject({
+      summary: sentence.toUpperCase(),
+      details: sentence,
+    });
+  });
+
+  it("is a known analytics error kind", () => {
+    expect(AnalyticsErrorKind.parse("stall")).toBe("stall");
+  });
 });
 
 describe("CLI engine run errors", () => {

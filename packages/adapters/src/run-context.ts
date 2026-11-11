@@ -27,6 +27,7 @@ import type { FleetRun } from "./fleet-tools.js";
 import { namedAgentTools } from "./pi-runtime-tools.js";
 import type { ReplyBudget } from "./reply-budget.js";
 import type { lazyRunComputer } from "./run-computer.js";
+import type { RunGuards } from "./run-guards.js";
 import type { createRunWorkspaceCheckpoint } from "./run-lifecycle.js";
 import { publishMessage } from "./run-messages.js";
 import { subagentMarksUnread } from "./run-notifications.js";
@@ -145,6 +146,8 @@ export interface RunState {
   approval: ApprovalState;
   effects: EffectState;
   screen: ScreenState;
+  /** The loop, failure, stall and idle-sleep guards of this attempt, shared with sub-agents. */
+  guards: RunGuards;
   toolCallStreak: ToolCallStreak;
   /** Consecutive `computer_act`/`browser_act` batches over the action limit, this one included. */
   overLimitActionCalls: number;

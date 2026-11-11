@@ -243,6 +243,30 @@ export const translateRunError: RunErrorTranslator = (message, values) => {
         message: "Bots are paused in this space.",
         values,
       });
+    case "I stopped because I kept repeating the same step and getting the same result.":
+      return i18n._({
+        id: "I stopped because I kept repeating the same step and getting the same result.",
+        message: "I stopped because I kept repeating the same step and getting the same result.",
+        values,
+      });
+    case "I stopped because my tools kept failing.":
+      return i18n._({
+        id: "I stopped because my tools kept failing.",
+        message: "I stopped because my tools kept failing.",
+        values,
+      });
+    case "I stopped because I got stuck and nothing was moving.":
+      return i18n._({
+        id: "I stopped because I got stuck and nothing was moving.",
+        message: "I stopped because I got stuck and nothing was moving.",
+        values,
+      });
+    case "I stopped because I kept waiting for something that didn't arrive.":
+      return i18n._({
+        id: "I stopped because I kept waiting for something that didn't arrive.",
+        message: "I stopped because I kept waiting for something that didn't arrive.",
+        values,
+      });
     case "Claude Code isn't installed where this bot runs.":
       return i18n._({
         id: "Claude Code isn't installed where this bot runs.",

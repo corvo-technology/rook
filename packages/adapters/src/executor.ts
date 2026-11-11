@@ -132,6 +132,7 @@ import type {
 } from "./run-context.js";
 import { restoreTurnCheckpointEffects, settleRunningHelpers } from "./run-context.js";
 import { APPROVED_EFFECT_REPLAY_ORDER, buildApprovalContinuation } from "./run-effects.js";
+import { createRunGuards, type RunGuards, TurnGuardStopError } from "./run-guards.js";
 import {
   BOT_DIRECTORY_LIMIT,
   dockerComputerToolInstruction,
@@ -381,6 +382,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
         screenRelease: undefined,
       };
       let runAbortController: AbortController | null = null;
+      let guardsToDispose: RunGuards | undefined;
       const runningHelpers = new Map<string, RunningHelper>();
       const settleHelpers = () => settleRunningHelpers(deps, run, runningHelpers);
 
@@ -1176,6 +1178,13 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const script = scripted ? inferScript(task.prompt, takeoverResume?.checkpoint) : undefined;
         // The first attempt has spent nothing yet; a later one resumes what the earlier ones spent.
         const spentBeforeAttempt = fence > 1 ? await runTokens(deps.prisma, runId) : 0;
+        const guards = createRunGuards({
+          abort: () => runAbortController?.abort(),
+          limits: deps.turnGuardLimits,
+          onHalt: (kind, detail) =>
+            getLogger().warn("run.guard_stopped", { "guard.kind": kind, ...detail }),
+        });
+        guardsToDispose = guards;
         const state: RunState = {
           lease,
           computerUse,
@@ -1196,6 +1205,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
             storedTurnCheckpoint,
           },
           screen: { lastFrameId: undefined, unchangedVisualStreak: { count: 0 } },
+          guards,
           toolCallStreak: { key: undefined, count: 0 },
           overLimitActionCalls: 0,
           tainted: initiallyTainted,
@@ -1777,7 +1787,13 @@ export function createRunExecutor(deps: ExecutorDeps) {
             },
             context,
           );
-          if (await consumeRunEvents(ctx, runtimeEvents)) return;
+          // The stop wins over a stream that never ends, so a stopped run is always failed.
+          const consuming = consumeRunEvents(ctx, runtimeEvents);
+          consuming.catch(() => undefined);
+          if (await Promise.race([consuming, guards.stop])) {
+            if (guards.stopped) throw new TurnGuardStopError(guards.stopped);
+            return;
+          }
           await completeRun(ctx);
         } catch (caughtError) {
           await failRun(ctx, caughtError, {
@@ -1854,6 +1870,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
           ready: Boolean(computerUse.screenRelease),
         });
         detachShutdown?.();
+        guardsToDispose?.dispose();
         clearInterval(heartbeat);
         if (!lease.retainComputer) {
           if (computerUse.screenRelease) {

@@ -35,6 +35,7 @@ import {
 import { startWorkflowStepAfter } from "./routine-steps.js";
 import type { RunContext } from "./run-context.js";
 import { persistTurnCheckpoint } from "./run-context.js";
+import { TurnGuardStopError } from "./run-guards.js";
 import { renewRunLease, requeueComputerRun } from "./run-lifecycle.js";
 import { publishMessage, redactBlocks } from "./run-messages.js";
 import {
@@ -49,6 +50,7 @@ import {
   canPublishDurableNarration,
   flushPendingTools,
   flushProgress,
+  publishActivityLine,
   publishMidTurnNarration,
   recordExplicitNoResponse,
   tryFlushPendingTools,
@@ -97,6 +99,8 @@ export async function consumeRunEvents(
   const { deps, run, runId, bot } = ctx;
   const { reply } = ctx.state;
   for await (const event of withRuntimeCleanup(events, ctx.abortController)) {
+    if (ctx.state.guards.stopped) return true;
+    ctx.state.guards.sign();
     if (ctx.state.approval.pausePending) return true;
     if (!ctx.state.lease.valid) return true;
     if (await runLeaseLost(ctx)) return true;
@@ -208,35 +212,8 @@ async function streamText(ctx: RunContext, event: RuntimeEvent<"text">) {
 }
 
 async function streamProgress(ctx: RunContext, event: RuntimeEvent<"progress">) {
-  const { deps, run, runId, bot, thread } = ctx;
-  const { reply } = ctx.state;
   ctx.state.toolCallStreak = { key: undefined, count: 0 };
-  if (run.trigger === "routine" || isBackgroundRunTrigger(run.trigger)) return;
-  // Flush batched text deltas first so an activity line cannot land
-  // ahead of text the model streamed before the tool call.
-  if (reply.pendingProgress) {
-    await deps.events.append({
-      spaceId: run.spaceId,
-      threadId: thread.id,
-      botId: bot.id,
-      type: "thread.progress",
-      runId,
-      payload: { delta: reply.pendingProgress, streaming: true },
-    });
-    reply.pendingProgress = "";
-    reply.lastProgressAt = Date.now();
-  }
-  await deps.events.append({
-    spaceId: run.spaceId,
-    threadId: thread.id,
-    botId: bot.id,
-    type: "thread.progress",
-    runId,
-    payload: {
-      text: redactSecrets(event.text, ctx.secrets),
-      ...(event.activity ? { activity: true } : {}),
-    },
-  });
+  await publishActivityLine(ctx, event.text, event.activity === true);
 }
 
 async function pauseForAnswer(ctx: RunContext, event: RuntimeEvent<"ask">) {
@@ -753,7 +730,9 @@ export async function failRun(
 ) {
   const { deps, run, runId, bot, thread } = ctx;
   const { reply } = ctx.state;
-  let error = caughtError;
+  let error: unknown = ctx.state.guards.stopped
+    ? new TurnGuardStopError(ctx.state.guards.stopped)
+    : caughtError;
   // A refused account limit needs user/operator action, not setup-job retries.
   // Keep the provisioning error even if aborting the model masked it.
   try {
@@ -796,6 +775,7 @@ export async function failRun(
     outcome: "failed",
     error: message,
     ...(error instanceof ReplyCapExceededError ? { stopReason: "reply_cap" as const } : {}),
+    ...(error instanceof TurnGuardStopError ? { stopReason: error.kind } : {}),
     ...(partialReply.length > 0 ? { partialReply } : {}),
   });
   if (!failed) return;
@@ -804,7 +784,8 @@ export async function failRun(
     error instanceof ModelAccountError ||
     error instanceof ModelOutputError ||
     error instanceof SandboxRateLimitError ||
-    error instanceof ReplyCapExceededError
+    error instanceof ReplyCapExceededError ||
+    error instanceof TurnGuardStopError
   ) {
     // Provider outages that outlasted retries, provider accounts, plans and model
     // choices the user fixes, unusable model output and the computer provider's own
@@ -815,6 +796,7 @@ export async function failRun(
       reason: message,
       // `reason` is what the user reads; this is what the provider or the network actually said.
       detail: redactSecrets(error.message, ctx.secrets),
+      ...(error instanceof TurnGuardStopError ? { "guard.kind": error.kind } : {}),
       ...model.active,
     });
   } else {

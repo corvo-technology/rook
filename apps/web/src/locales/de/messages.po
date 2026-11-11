@@ -3491,6 +3491,26 @@ msgstr "So wird geprüft"
 msgid "How will you use Rook?"
 msgstr "Wie werden Sie Rook nutzen?"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "I stopped because I got stuck and nothing was moving."
+msgstr "Ich habe angehalten, weil ich feststeckte und nichts voranging."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "I stopped because I kept repeating the same step and getting the same result."
+msgstr "Ich habe angehalten, weil ich denselben Schritt immer wieder wiederholt und dasselbe Ergebnis bekommen habe."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "I stopped because I kept waiting for something that didn't arrive."
+msgstr "Ich habe angehalten, weil ich immer wieder auf etwas gewartet habe, das nicht kam."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "I stopped because my tools kept failing."
+msgstr "Ich habe angehalten, weil meine Tools immer wieder fehlgeschlagen sind."
+
 #: src/pages/shell/computer-release-actions.tsx
 msgid "I’m done"
 msgstr "Ich bin fertig"
@@ -6978,6 +6998,10 @@ msgstr "wartet"
 #: src/components/PlanCard.tsx
 msgid "Waiting"
 msgstr "Wartet"
+
+#: src/lib/activity-label.ts
+msgid "Waiting for {value}"
+msgstr "Wartet auf {value}"
 
 #: src/components/WikiChangeCard.tsx
 msgid "Waiting for approval"

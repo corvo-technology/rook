@@ -1,6 +1,11 @@
+import { TURN_GUARD_KINDS } from "@corvo/contracts";
 import { describeModelProblem } from "@corvo/core";
 import { describe, expect, it } from "vitest";
-import { parseRunDiagnostic, runErrorActionLabel } from "./run-error-presentation";
+import {
+  parseRunDiagnostic,
+  runErrorActionLabel,
+  runErrorWhatHappened,
+} from "./run-error-presentation";
 
 describe("readable provider diagnostics", () => {
   it.each(["", "403: "])("parses JSON with prefix %s", (prefix) => {
@@ -85,5 +90,22 @@ describe("budget and pause actions", () => {
   it("labels the limit and pause actions", () => {
     expect(runErrorActionLabel(t, "raise-limit")).toBe("Raise limit");
     expect(runErrorActionLabel(t, "resume")).toBe("Resume");
+  });
+});
+
+describe("runErrorWhatHappened for a stopped run", () => {
+  const t = (message: string) => `t:${message}`;
+
+  it.each(TURN_GUARD_KINDS)("points a %s stop at sending again", (kind) => {
+    expect(runErrorWhatHappened(t, { kind })).toBe(t("Send your message again to try once more."));
+  });
+
+  it("leaves other kinds alone", () => {
+    expect(runErrorWhatHappened(t, { kind: "rate" })).toBe(
+      t("The provider received too many requests to answer this bot."),
+    );
+    expect(runErrorWhatHappened(t, {})).toBe(
+      t("The bot couldn't finish its reply. Technical details includes the reported error."),
+    );
   });
 });

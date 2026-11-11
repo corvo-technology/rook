@@ -168,3 +168,36 @@ export async function publishMidTurnNarration(ctx: RunContext, beforeConnectCard
   reply.midTurnUserTexts.push(narration);
   reply.publishedMidTurnUserMessage = true;
 }
+
+/** Publish one live progress line, after any streamed text that came before it. */
+export async function publishActivityLine(
+  ctx: RunContext,
+  text: string,
+  activity = true,
+): Promise<void> {
+  const { deps, run, runId, bot, thread } = ctx;
+  const { reply } = ctx.state;
+  if (run.trigger === "routine" || isBackgroundRunTrigger(run.trigger)) return;
+  // Flush batched text deltas first so an activity line cannot land
+  // ahead of text the model streamed before the tool call.
+  if (reply.pendingProgress) {
+    await deps.events.append({
+      spaceId: run.spaceId,
+      threadId: thread.id,
+      botId: bot.id,
+      type: "thread.progress",
+      runId,
+      payload: { delta: reply.pendingProgress, streaming: true },
+    });
+    reply.pendingProgress = "";
+    reply.lastProgressAt = Date.now();
+  }
+  await deps.events.append({
+    spaceId: run.spaceId,
+    threadId: thread.id,
+    botId: bot.id,
+    type: "thread.progress",
+    runId,
+    payload: { text: redactSecrets(text, ctx.secrets), ...(activity ? { activity: true } : {}) },
+  });
+}

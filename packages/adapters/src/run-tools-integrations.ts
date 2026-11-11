@@ -4,6 +4,7 @@ import { collectLogIds } from "./composio-connector.js";
 import { connectApp } from "./connect-app.js";
 import { requestSpaceAppAccess } from "./mcp-access.js";
 import { addMcpServerFromTool } from "./mcp-server-tool.js";
+import { waitForConnectorResult } from "./run-connector-wait.js";
 import type { RunContext } from "./run-context.js";
 import { runScopedToolExecutionId } from "./run-effects.js";
 import { flushProgress, publishMidTurnNarration } from "./run-progress.js";
@@ -61,7 +62,7 @@ export async function connectorTool(ctx: RunContext, call: ToolCall) {
         }
       }
     }
-    return call.finish(result);
+    return call.finish(await waitForConnectorResult(ctx, call, result));
   }
   return call.finish({ error: `unknown tool ${name}` });
 }

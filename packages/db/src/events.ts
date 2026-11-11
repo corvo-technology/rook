@@ -165,7 +165,7 @@ export type FinalizeRunInput = FinalizeRunBase &
     | {
         outcome: "failed";
         error: string;
-        /** Set when a rule of the app, not a fault, ended the run. */
+        /** Set when a rule of the app or a run guard, not a fault, ended the run. */
         stopReason?: RunStopReason;
         /** Reply text the user saw streaming before the failure, kept as a bot message. */
         partialReply?: MessageBlock[];
@@ -1834,7 +1834,7 @@ async function finalizeRunOnce(
       data: {
         status: input.outcome,
         error: input.outcome === "failed" ? input.error : null,
-        ...(input.outcome === "failed" && input.stopReason ? { stopReason: input.stopReason } : {}),
+        stopReason: input.outcome === "failed" ? (input.stopReason ?? null) : null,
         completedAt: now,
         leaseOwner: null,
         leaseExpiresAt: null,

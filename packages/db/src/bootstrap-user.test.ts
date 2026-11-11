@@ -26,6 +26,7 @@ function makePrisma(settings: { id: string; ownerUserId: string | null } | null)
       updateMany: vi.fn(async () => ({ count: settings && !settings.ownerUserId ? 1 : 0 })),
     },
     memoryDocument: { findFirst: vi.fn(async () => null), create: create() },
+    missionState: { create: create() },
     notificationPreference: { create: create() },
   };
   return prisma;
@@ -88,6 +89,17 @@ describe("bootstrapUserSpace", () => {
         userId: "user-1",
       }),
     );
+  });
+
+  it("starts the short navigation only when asked", async () => {
+    const plain = makePrisma(null);
+    await bootstrapUserSpace(plain as unknown as PrismaClient, { id: "user-1" }, env);
+    expect(plain.missionState.create).not.toHaveBeenCalled();
+    const signup = makePrisma(null);
+    await bootstrapUserSpace(signup as unknown as PrismaClient, { id: "user-1" }, env, {
+      shortNavigation: true,
+    });
+    expect(signup.missionState.create).toHaveBeenCalledTimes(1);
   });
 
   it("seeds deployment settings from the env policy when none exist", async () => {

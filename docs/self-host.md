@@ -709,6 +709,8 @@ and worker to block them.
 Literal private IP, loopback, and `host.docker.internal` targets do not, but only the deployment
 owner can use them, checked on save, on model discovery, and on every run. Set
 `MCP_ALLOW_PRIVATE_ENDPOINT=true` on the API and worker to allow them for every user.
+With that flag set, onboarding also offers the model servers it finds on the API host's default
+local ports (11434, 1234 and 8080).
 For a self-hosted endpoint whose hostname resolves to private IPs, set
 `CORVO_OPENAI_COMPAT_PRIVATE_HOSTS=models.example.test,other.example.test` in the deployment
 environment for both API and worker, then recreate those containers. Entries are exact hostnames
@@ -1054,6 +1056,10 @@ Slack identities/conversations must be relinked before using workspace installs.
 not override workspace installations or personal DMs. Slack tools authorized from
 the Integrations screen are a separate connection from this messaging surface.
 
+
+### Coding-agent CLIs
+
+On a machine where Claude Code is installed and signed in, bots can use it as a model without an API key. See [CLI engines](cli-engines.md).
 
 ### Settings with names you choose
 

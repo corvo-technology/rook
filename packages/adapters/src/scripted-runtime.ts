@@ -821,6 +821,17 @@ function childEditCalls(
       },
     }));
   }
+  // Several changes proposed in one reply, so journeys can drive the stepped proposal cards.
+  const models =
+    /set the models of bots\s+([A-Za-z0-9_-]+)\s+and\s+([A-Za-z0-9_-]+)\s+to\s+([A-Za-z0-9_.-]+)\/([^\s<&]+)/i.exec(
+      prompt,
+    );
+  if (models) {
+    return [models[1]!, models[2]!].map((botId) => ({
+      name: "set_child_bot_model",
+      args: { bot_id: botId, provider: models[3], model: clean(models[4]!) },
+    }));
+  }
   const renamed = /rename bot\s+([A-Za-z0-9_-]+)\s+to\s+([^\n<&]+)/i.exec(prompt);
   if (renamed)
     return [{ name: "update_bot", args: { bot_id: renamed[1], name: clean(renamed[2]!) } }];

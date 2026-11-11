@@ -1,10 +1,10 @@
-import { describe, expect, it, vi } from "vitest";
+import { i18n } from "@lingui/core";
+import { beforeAll, describe, expect, it, vi } from "vitest";
+import type { ModelPreflightFailure } from "./model-connection-preflight.js";
 import {
-  classifyModelConnectionFailure,
   loadStoredModelAuth,
   modelPreflightSuccessMessage,
   runModelConnectionPreflight,
-  sanitizeModelConnectionError,
   unavailableSelectedModel,
 } from "./model-connection-preflight.js";
 
@@ -14,30 +14,63 @@ vi.mock("@lingui/core/macro", () => ({
     (value === 1 ? forms.one : forms.other).replaceAll("#", String(value)),
 }));
 
-describe("sanitizeModelConnectionError", () => {
-  it("redacts api key patterns", () => {
-    expect(sanitizeModelConnectionError("Invalid sk-secretkey1234567890")).not.toContain(
-      "sk-secretkey1234567890",
+/** A failure that carries copy of its own, as opposed to a provider problem. */
+function plain(failure: ModelPreflightFailure) {
+  if (failure.outcome === "provider") throw new Error("expected a plain failure");
+  return failure;
+}
+
+describe("unavailableSelectedModel copy", () => {
+  it("keeps manual model entry for custom servers and catalog picks for catalog providers", () => {
+    const custom = unavailableSelectedModel("gpt-missing", ["gpt-test"]);
+    expect(custom?.outcome === "unavailable_model" && custom.nextAction).toMatch(
+      /enter a model id/,
+    );
+    const catalog = unavailableSelectedModel("gpt-missing", ["gpt-test"], { manualEntry: false });
+    expect(catalog?.outcome === "unavailable_model" && catalog.nextAction).toBe(
+      "Pick a model from the catalog.",
     );
   });
 });
 
-describe("classifyModelConnectionFailure", () => {
-  it("detects rate limits and timeouts", () => {
-    expect(classifyModelConnectionFailure(new Error("429 rate limit")).outcome).toBe("rate_limit");
-    expect(classifyModelConnectionFailure(new Error("probe timed out")).outcome).toBe("timeout");
-    expect(classifyModelConnectionFailure(new Error("The operation was aborted")).outcome).toBe(
-      "unknown",
-    );
+describe("provider failures", () => {
+  beforeAll(() => {
+    i18n.load("en", {});
+    i18n.activate("en");
   });
 
-  it("keeps manual model entry for custom servers and catalog picks for catalog providers", () => {
-    expect(unavailableSelectedModel("gpt-missing", ["gpt-test"])?.nextAction).toMatch(
-      /enter a model id/,
-    );
-    expect(
-      unavailableSelectedModel("gpt-missing", ["gpt-test"], { manualEntry: false })?.nextAction,
-    ).toBe("Pick a model from the catalog.");
+  const run = (probeCatalog: () => Promise<{ models: string[] }>) =>
+    runModelConnectionPreflight({
+      authKind: "api-key",
+      provider: "openrouter",
+      apiKey: "sk-test-key-12345678",
+      catalogProbe: true,
+      probeCatalog,
+    });
+
+  it("classifies a structured failure by its status", async () => {
+    const result = await run(async () => {
+      throw {
+        data: { reason: "model_failure", modelFailure: { details: "x", status: 429 } },
+      };
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok && result.failure.outcome === "provider") {
+      expect(result.failure.problem.kind).toBe("rate");
+    } else {
+      expect.unreachable();
+    }
+  });
+
+  it("says offline when the browser could not reach the server", async () => {
+    const result = await run(async () => {
+      throw new TypeError("Failed to fetch");
+    });
+    if (!result.ok && result.failure.outcome === "provider") {
+      expect(result.failure.problem.kind).toBe("offline");
+    } else {
+      expect.unreachable();
+    }
   });
 });
 
@@ -170,8 +203,8 @@ describe("runModelConnectionPreflight", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.failure.outcome).toBe("unavailable_model");
-      expect(result.failure.message).toBe('Model "missing-model" was not listed.');
-      expect(result.failure.nextAction).toBe("Pick a model from the catalog.");
+      expect(plain(result.failure).message).toBe('Model "missing-model" was not listed.');
+      expect(plain(result.failure).nextAction).toBe("Pick a model from the catalog.");
     }
   });
 
@@ -183,7 +216,8 @@ describe("runModelConnectionPreflight", () => {
       catalogProbe: false,
     });
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.failure.message).toMatch(/cannot be tested without saving/);
+    if (!result.ok)
+      expect(plain(result.failure).message).toMatch(/cannot be tested without saving/);
   });
 
   it("reports oauth when not connected", async () => {
@@ -205,7 +239,7 @@ describe("runModelConnectionPreflight", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.failure.outcome).toBe("needs_sign_in");
-      expect(result.failure.message).toMatch(/API key is stored/);
+      expect(plain(result.failure).message).toMatch(/API key is stored/);
     }
   });
 
@@ -227,7 +261,7 @@ describe("runModelConnectionPreflight", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.failure.outcome).toBe("unknown");
-      expect(result.failure.message).toMatch(/Could not check stored credentials/);
+      expect(plain(result.failure).message).toMatch(/Could not check stored credentials/);
     }
   });
 
@@ -240,7 +274,7 @@ describe("runModelConnectionPreflight", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.failure.outcome).toBe("unknown");
-      expect(result.failure.message).toMatch(/Could not check stored credentials/);
+      expect(plain(result.failure).message).toMatch(/Could not check stored credentials/);
     }
   });
 });

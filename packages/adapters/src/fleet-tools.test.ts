@@ -13,6 +13,9 @@ import {
   setChildInstructions,
   updateChildBot,
 } from "./fleet-tools.js";
+import type { RunContext } from "./run-context.js";
+import type { ToolCall } from "./run-tool-gate.js";
+import { fleetTools } from "./run-tools-fleet.js";
 
 type FakeBot = {
   id: string;
@@ -1950,5 +1953,24 @@ describe("routines that already exist", () => {
         instruction: "Check the facts",
       }),
     ).toEqual({ error: expect.stringContaining("try again") });
+  });
+});
+
+describe("the guide_read tool", () => {
+  async function read(args: Record<string, unknown>) {
+    const finish = vi.fn((result: unknown) => result);
+    await fleetTools.guide_read?.({} as RunContext, { args, finish } as unknown as ToolCall);
+    return finish.mock.calls[0]?.[0] as { page?: string; error?: string };
+  }
+
+  it("finishes with the page in the language asked for", async () => {
+    const result = await read({ page: "approvals", language: "pt-BR" });
+    expect(result.page).toContain("Aprovações");
+    expect(result.page).not.toContain("This page is in");
+  });
+
+  it("finishes with the list of pages for an unknown page", async () => {
+    const result = await read({ page: "nope", language: "en" });
+    expect(result.error).toContain("approvals");
   });
 });

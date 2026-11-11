@@ -7,10 +7,12 @@ import {
   restoreWikiRevision,
   WikiConflictError,
   WikiNotFoundError,
+  wikiHistory,
   writeWikiPage,
 } from "./wiki.js";
 import {
   advanceWikiCursor,
+  applyAllWikiChanges,
   createWikiChange,
   decideWikiChange,
   getWikiSettings,
@@ -415,4 +417,67 @@ describePostgres("wiki changes (PostgreSQL)", () => {
         { title: "Preview Page", op: "replace", removed: "planning", added: "building" },
       ]);
     }));
+
+  describe("approving everything that waits", () => {
+    const clearWaiting = async () => {
+      await fx.prisma.wikiChange.updateMany({
+        where: { spaceId: fx.spaceId, state: "pending" },
+        data: { claimedAt: null },
+      });
+      for (const change of await listWikiChanges(fx.prisma, mine(), { state: ["pending"] }))
+        await decideWikiChange(fx.prisma, mine(), change.id, "refuse");
+    };
+
+    it("applies each waiting change oldest first and marks the one whose page moved", () =>
+      system(async () => {
+        await clearWaiting();
+        await write("Bulk One", "Status: planning.");
+        await write("Bulk Two", "Status: planning.");
+        await write("Bulk Three", "Status: planning.");
+        const first = await propose([
+          { op: "replace", page: "Bulk One", old: "planning", new: "building" },
+        ]);
+        const moved = await propose([
+          { op: "replace", page: "Bulk Two", old: "planning", new: "building" },
+        ]);
+        const last = await propose([
+          { op: "append", page: "Bulk Three", section: "Risks", text: "Permit delay." },
+        ]);
+        await write("Bulk Two", "Status: planning. Budget approved.");
+        expect(await applyAllWikiChanges(fx.prisma, mine())).toEqual({ applied: 2, conflicts: 1 });
+        expect(await body("Bulk One")).toBe("Status: building.");
+        expect(await body("Bulk Two")).toBe("Status: planning. Budget approved.");
+        expect(await body("Bulk Three")).toContain("Permit delay.");
+        const state = async (id: string) =>
+          (await listWikiChanges(fx.prisma, mine())).find((change) => change.id === id)?.state;
+        expect(await state(first!.id)).toBe("applied");
+        expect(await state(moved!.id)).toBe("conflict");
+        expect(await state(last!.id)).toBe("applied");
+        expect(await wikiHistory(fx.prisma, mine(), "Bulk One")).toHaveLength(2);
+      }));
+
+    it("skips a change another answer has claimed, without counting it", () =>
+      system(async () => {
+        await clearWaiting();
+        await write("Bulk Four", "Status: planning.");
+        await write("Bulk Five", "Status: planning.");
+        const claimed = await propose([
+          { op: "replace", page: "Bulk Four", old: "planning", new: "building" },
+        ]);
+        await propose([{ op: "replace", page: "Bulk Five", old: "planning", new: "building" }]);
+        await fx.prisma.wikiChange.update({
+          where: { id: claimed!.id },
+          data: { claimedAt: new Date() },
+        });
+        expect(await applyAllWikiChanges(fx.prisma, mine())).toEqual({ applied: 1, conflicts: 0 });
+        expect(await body("Bulk Four")).toBe("Status: planning.");
+        expect(await body("Bulk Five")).toBe("Status: building.");
+      }));
+
+    it("does nothing when nothing waits", () =>
+      system(async () => {
+        await clearWaiting();
+        expect(await applyAllWikiChanges(fx.prisma, mine())).toEqual({ applied: 0, conflicts: 0 });
+      }));
+  });
 });

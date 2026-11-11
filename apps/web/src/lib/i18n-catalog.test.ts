@@ -138,7 +138,7 @@ describe("lingui catalogs", () => {
       'Model "{modelId}" was not listed.',
       "Models list OK. {modelCount, plural, one {# model} other {# models}} available. " +
         "Chat was not tested.",
-      "Connection test failed.",
+      "Could not reach this model server",
       "Test API key",
       "Testing…",
     ];

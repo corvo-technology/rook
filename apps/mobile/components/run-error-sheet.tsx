@@ -1,36 +1,38 @@
-import { normalizeRunError } from "@corvo/core";
+import type { ModelProblemOptions } from "@corvo/core";
+import { describeModelProblem, maskSecrets, normalizeRunError } from "@corvo/core";
 import * as Clipboard from "expo-clipboard";
 import { useEffect, useReducer, useState } from "react";
 import { Platform, ScrollView, Text, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useI18n } from "../lib/i18n";
 import { useMobileTokens } from "../lib/native";
-import { parseRunDiagnostic, runErrorWhatHappened } from "../lib/run-error-presentation";
+import {
+  modelProblemTranslator,
+  parseRunDiagnostic,
+  runErrorWhatHappened,
+} from "../lib/run-error-presentation";
 import { NativeSymbol } from "./native-symbol";
 import { RunErrorAction, RunErrorTextAction } from "./run-error-actions";
 import { RunErrorSheetContainer } from "./run-error-sheet-container";
 import { SheetCloseButton } from "./sheet-close-button";
 
 /** Saved provider diagnostics do not identify the credential owner. */
-export function useRunError(details: string | null, includeReset = true) {
+export function useRunError(
+  details: string | null,
+  includeReset = true,
+  authKind?: ModelProblemOptions["authKind"],
+) {
   const { t, locale } = useI18n();
   const [clockVersion, refreshClock] = useReducer((version: number) => version + 1, 0);
-  const error = details
-    ? normalizeRunError(
-        details,
-        (message, values) => {
-          if (!includeReset && message === "{summary} Resets {date}.")
-            return String(values?.summary ?? "");
-          if (message === "Your OpenRouter") return "OpenRouter";
-          if (message === "Your OpenAI") return "OpenAI";
-          if (message === "Your Anthropic") return "Anthropic";
-          if (message === "Your model provider") return t("Model provider");
-          return t(message, values);
-        },
-        locale,
-        Date.now(),
-      )
+  const translate = modelProblemTranslator(t, includeReset);
+  const now = Date.now();
+  const normalized = details ? normalizeRunError(details, translate, locale, now) : null;
+  // The line, action and masked details every surface shows; the OAuth and transport kinds
+  // come from here, the persisted kinds and periods from the normalized result.
+  const problem = details
+    ? describeModelProblem({ details }, { authKind, translate, locale, now })
     : null;
+  const error = normalized && problem ? { ...normalized, summary: problem.line, problem } : null;
   useEffect(() => {
     if (!error?.resetAt) return;
     const timer = setTimeout(
@@ -46,21 +48,26 @@ export function RunErrorSheet({
   details,
   onClose,
   action,
+  onRetry,
+  authKind,
 }: {
   details: string | null;
   onClose: () => void;
   /** The one action that fixes the failure. */
   action?: { label: string; onPress: () => void } | null;
+  onRetry?: () => void;
+  authKind?: ModelProblemOptions["authKind"];
 }) {
   const { t, locale } = useI18n();
   const tokens = useMobileTokens();
   const insets = useSafeAreaInsets();
   const { fontScale, height } = useWindowDimensions();
-  const error = useRunError(details, false);
+  const error = useRunError(details, false, authKind);
   const [technical, setTechnical] = useState(false);
   useEffect(() => setTechnical(false), [details]);
   if (!error) return null;
-  const diagnostic = parseRunDiagnostic(error.details, locale);
+  const masked = maskSecrets(error.details);
+  const diagnostic = parseRunDiagnostic(masked, locale);
   const textStyle = { color: tokens.foreground, fontSize: 16, lineHeight: 24 };
   return (
     <RunErrorSheetContainer onClose={onClose} expanded={technical} label={error.summary}>
@@ -119,6 +126,9 @@ export function RunErrorSheet({
             {runErrorWhatHappened(t, error)}
           </Text>
           {action ? <RunErrorAction label={action.label} onPress={action.onPress} /> : null}
+          {onRetry && error.problem.retry ? (
+            <RunErrorTextAction label={t("Try again")} onPress={onRetry} />
+          ) : null}
           <RunErrorTextAction
             label={t("Technical details")}
             expanded={technical}
@@ -144,7 +154,7 @@ export function RunErrorSheet({
               <RunErrorTextAction
                 label={t("Copy")}
                 onPress={() => {
-                  void Clipboard.setStringAsync(details ?? "");
+                  void Clipboard.setStringAsync(masked);
                 }}
               />
             </>

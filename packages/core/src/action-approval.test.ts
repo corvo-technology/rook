@@ -705,6 +705,13 @@ describe("toolResultTaintsRun", () => {
     }
   });
 
+  it("lets the guide through but taints on the space status, which carries outside error text", () => {
+    expect(toolResultTaintsRun("guide_read")).toBe(false);
+    expect(toolResultTaintsRun("space_status")).toBe(true);
+    expect(toolRequiresApproval("guide_read", false)).toBe(false);
+    expect(toolRequiresApproval("space_status", false)).toBe(false);
+  });
+
   it("does not taint on the bot's own writes and saved state", () => {
     for (const tool of ["ask_user", "remember", "recall_memory", "skill_read", "write_file"]) {
       expect(toolResultTaintsRun(tool)).toBe(false);

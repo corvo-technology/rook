@@ -95,6 +95,20 @@ test("a change the curator left waits in the list, and approving it clears it", 
   await expect(page.getByTestId("wiki-pending")).toHaveCount(0);
 });
 
+test("with two changes waiting, Approve all applies them together", async ({ page }, testInfo) => {
+  await page.goto(url("light", "&changes=two"));
+  const waiting = page.getByTestId("wiki-pending");
+  await expect(waiting.getByTestId("wiki-change")).toHaveCount(2);
+  await captureScreenshot(page, testInfo, "wiki-approve-all");
+  await waiting.getByRole("button", { name: "Approve all" }).click();
+  await expect(page.getByTestId("wiki-pending")).toHaveCount(0);
+});
+
+test("one waiting change has no Approve all", async ({ page }) => {
+  await page.goto(url("light"));
+  await expect(page.getByRole("button", { name: "Approve all" })).toHaveCount(0);
+});
+
 test("nothing about changes shows while none waits", async ({ page }) => {
   await page.goto(url("light", "&changes=none"));
   await expect(page.getByTestId("wiki-kind-Person")).toBeVisible();

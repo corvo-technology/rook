@@ -659,6 +659,15 @@ export default function Account() {
               onPress={() => router.push("/billing")}
             />
           ) : null}
+          {me?.shortNav ? (
+            <SettingsRow
+              accessibilityRole="button"
+              chevron="right"
+              disabled={pending}
+              onPress={() => openFromSettingsSheet(router, "/missions")}
+              title={t("Missions")}
+            />
+          ) : null}
           {(
             [
               { title: t("Artifacts"), href: "/artifacts" },

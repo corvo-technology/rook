@@ -5,13 +5,17 @@ const rpc = vi.hoisted(() => vi.fn());
 vi.mock("./api", () => ({ rpc }));
 
 import {
+  approveAllWikiChanges,
+  canApproveAll,
   decideWikiChange,
+  getWikiCapture,
   getWikiChange,
   groupWikiPages,
   keepMessageInWiki,
   listWikiChanges,
   listWikiPages,
   readWikiPage,
+  setWikiCapture,
   wikiDisplayBody,
 } from "./wiki";
 
@@ -79,4 +83,25 @@ it("keeps a message of a chat or of a channel", async () => {
   expect(rpc).toHaveBeenLastCalledWith("wiki/keep", { botId: "b1", messageId: "m1" });
   await keepMessageInWiki({ groupId: "g1" }, "m2");
   expect(rpc).toHaveBeenLastCalledWith("wiki/keep", { groupId: "g1", messageId: "m2" });
+});
+
+it("approves every waiting change in one call and returns the counts", async () => {
+  rpc.mockResolvedValue({ applied: 2, conflicts: 1 });
+  expect(await approveAllWikiChanges()).toEqual({ applied: 2, conflicts: 1 });
+  expect(rpc).toHaveBeenCalledWith("wiki/changes/applyAll");
+});
+
+it("reads and sets a conversation's switch for the target given, always with a boolean", async () => {
+  rpc.mockResolvedValue({ available: true, capture: null, on: false, canChange: true });
+  await getWikiCapture({ botId: "b1" });
+  expect(rpc).toHaveBeenCalledWith("wiki/capture/get", { botId: "b1" });
+  rpc.mockResolvedValue({ ok: true });
+  await setWikiCapture({ groupId: "g1" }, false);
+  expect(rpc).toHaveBeenLastCalledWith("wiki/capture/set", { groupId: "g1", capture: false });
+});
+
+it("offers Approve all only with two or more waiting changes", () => {
+  expect(canApproveAll([])).toBe(false);
+  expect(canApproveAll([1])).toBe(false);
+  expect(canApproveAll([1, 2])).toBe(true);
 });

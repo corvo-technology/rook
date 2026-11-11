@@ -1,6 +1,8 @@
 import { wikiCurateJob } from "@corvo/adapter-kit";
+import { threadIsCurated } from "@corvo/adapters";
 import type { WikiChange } from "@corvo/contracts";
 import {
+  applyAllWikiChanges,
   decideWikiChange,
   getWikiChange,
   getWikiSettings,
@@ -131,6 +133,9 @@ export function wikiRoutes(ctx: RouterContext) {
             ),
           ),
         ),
+        applyAll: authed.wiki.changes.applyAll.handler(({ context }) =>
+          applyAllWikiChanges(db, scopeOf(context.actor)),
+        ),
       },
       settings: {
         get: authed.wiki.settings.get.handler(({ context }) =>
@@ -157,6 +162,31 @@ export function wikiRoutes(ctx: RouterContext) {
         return { ok: true as const };
       }),
       capture: {
+        get: authed.wiki.capture.get.handler(async ({ context, input }) => {
+          const target = await resolveThreadTarget(db, context.actor, input);
+          const thread = await db.thread.findFirst({
+            where: { id: target.threadId, spaceId: context.actor.spaceId },
+            select: {
+              id: true,
+              spaceId: true,
+              userId: true,
+              groupId: true,
+              botId: true,
+              externalConversationId: true,
+              wikiCapture: true,
+            },
+          });
+          if (!thread)
+            throw new ORPCError("NOT_FOUND", { message: "There is no such conversation." });
+          const settings = await getWikiSettings(db, thread.spaceId);
+          const available = settings.capture && Boolean(thread.groupId ?? thread.botId);
+          return {
+            available,
+            capture: thread.wikiCapture,
+            on: available && (await threadIsCurated(db, thread)),
+            canChange: thread.userId === context.actor.userId,
+          };
+        }),
         set: authed.wiki.capture.set.handler(async ({ context, input }) => {
           const target = await resolveThreadTarget(db, context.actor, input);
           const saved = await setThreadWikiCapture(

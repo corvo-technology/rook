@@ -15,6 +15,19 @@ export const PT_BR_MESSAGES: Record<string, string> = {
   Auto: "Auto",
   Ask: "Perguntar",
   Block: "Bloquear",
+  "Asks before any change": "Pergunta antes de qualquer mudança",
+  "Does everything without asking": "Faz tudo sem perguntar",
+  "Does what fits your request": "Faz o que cabe no seu pedido",
+  "How much does {name} do on its own?": "Quanto {name} faz por conta própria?",
+  "Let {name} act without asking?": "Deixar {name} agir sem perguntar?",
+  "Let bots act without asking?": "Deixar os bots agirem sem perguntar?",
+  "Still asks before a security change after it read outside content. Blocked actions stay blocked.":
+    "Ainda pergunta antes de uma mudança de segurança depois de ler conteúdo externo. Ações bloqueadas continuam bloqueadas.",
+  "Still asks before anything that changes something, and before opening a site you didn't mention.":
+    "Ainda pergunta antes de qualquer coisa que muda algo e antes de abrir um site que você não mencionou.",
+  "Still asks when a second model finds it outside your request, and before security changes.":
+    "Ainda pergunta quando um segundo modelo vê algo fora do seu pedido e antes de mudanças de segurança.",
+  "Stop asking": "Parar de perguntar",
   "Add a model in Settings to use this.": "Adicione um modelo em Configurações para usar isto.",
   "Approval model": "Modelo de aprovação",
   "Routing model": "Modelo de roteamento",
@@ -24,6 +37,9 @@ export const PT_BR_MESSAGES: Record<string, string> = {
   "Main model": "Modelo principal",
   "Add fallback": "Adicionar alternativo",
   "Manage {provider}": "Gerenciar {provider}",
+  "Found on this computer": "Encontrado neste computador",
+  "Local models": "Modelos locais",
+  Use: "Usar",
   "Add provider": "Adicionar provedor",
   "Choose a model": "Escolha um modelo",
   "Use 80 characters or fewer": "Use no máximo 80 caracteres",
@@ -120,8 +136,17 @@ export const PT_BR_MESSAGES: Record<string, string> = {
     "O modelo retornou uma resposta inutilizável. Tente novamente.",
   "This model's context window is too small. Choose another model.":
     "A janela de contexto deste modelo é pequena demais. Escolha outro modelo.",
+  "Claude Code isn't installed where this bot runs.":
+    "O Claude Code não está instalado onde este bot é executado.",
+  "Claude Code isn't signed in to a Claude plan where this bot runs.":
+    "O Claude Code não está conectado a um plano Claude onde este bot é executado.",
+  "Claude Code started with tools it wasn't given, so the reply was stopped.":
+    "O Claude Code iniciou com ferramentas que não lhe foram dadas, então a resposta foi interrompida.",
   "{provider} couldn't be reached securely. A security program or network filter may be intercepting the connection.":
     "Não foi possível conectar com {provider} de forma segura. Um programa de segurança ou filtro de rede pode estar interceptando a conexão.",
+  "{provider} sign-in is no longer valid.": "O login em {provider} não é mais válido.",
+  "{provider} couldn't be reached through the network proxy. Check the proxy settings.":
+    "Não foi possível acessar {provider} pelo proxy de rede. Confira as configurações do proxy.",
   "{provider} took too long to respond. Try again.":
     "{provider} demorou demais para responder. Tente novamente.",
   "{provider} is overloaded right now. Try again in a moment.":
@@ -1082,8 +1107,19 @@ export const PT_BR_MESSAGES: Record<string, string> = {
   "Added to the wiki": "Adicionado à wiki",
   Refused: "Recusado",
   Undone: "Desfeito",
+  "Approve all": "Aprovar tudo",
+  "Learn from this conversation": "Aprender com esta conversa",
   "A page changed since": "Uma página mudou desde então",
   Refuse: "Recusar",
   "Keep in the wiki": "Guardar na wiki",
   "Could not load pages": "Não foi possível carregar as páginas",
+  "{position} of {total}": "{position} de {total}",
+  "Talk to your agent": "Converse com seu agente",
+  "Answer a request": "Responda a um pedido",
+  "Connect an app": "Conecte um app",
+  "Add a second agent": "Adicione um segundo agente",
+  "Schedule a routine": "Agende uma rotina",
+  "Keep a memory": "Guarde uma memória",
+  Missions: "Missões",
+  "Show everything": "Mostrar tudo",
 };

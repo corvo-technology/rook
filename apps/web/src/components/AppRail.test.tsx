@@ -11,6 +11,7 @@ const takeInitialBootstrap = vi.hoisted(() => vi.fn());
 const footer = vi.hoisted(() => vi.fn());
 const footerBoard = vi.hoisted(() => vi.fn());
 const embedded = vi.hoisted(() => ({ value: false }));
+const missionsApi = vi.hoisted(() => ({ get: vi.fn(), seen: vi.fn(), showAll: vi.fn() }));
 vi.mock("../lib/embed", () => ({ isEmbedded: () => embedded.value }));
 vi.mock("../lib/bootstrap", () => ({ takeInitialBootstrap }));
 vi.mock("../lib/auth", () => ({
@@ -19,6 +20,14 @@ vi.mock("../lib/auth", () => ({
 vi.mock("../lib/query", () => ({
   useSpaceQueries: () => ({
     bootstrap: { queryOptions: () => ({ queryKey: ["bootstrap"] }) },
+    missions: {
+      get: {
+        queryKey: () => ["missions"],
+        queryOptions: () => ({ queryKey: ["missions"], queryFn: missionsApi.get }),
+      },
+      seen: { mutationOptions: () => ({ mutationFn: missionsApi.seen }) },
+      showAll: { mutationOptions: () => ({ mutationFn: missionsApi.showAll }) },
+    },
     usage: {
       subscriptions: {
         queryOptions: () => ({ queryKey: ["subscriptions"], queryFn: async () => [] }),
@@ -48,6 +57,9 @@ let queryClient: QueryClient;
 beforeEach(() => {
   queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   takeInitialBootstrap.mockReset();
+  missionsApi.get.mockReset();
+  missionsApi.seen.mockReset().mockResolvedValue({ ok: true });
+  missionsApi.showAll.mockReset().mockResolvedValue({ ok: true });
   footer.mockReset();
   footerBoard.mockReset();
   embedded.value = false;
@@ -82,6 +94,10 @@ async function renderRail(ticketBoardEnabled = false, path = "/app") {
       </QueryClientProvider>,
     ),
   );
+  // The missions answer arrives after the first render.
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
   return {
     container,
     async cleanup() {
@@ -183,5 +199,81 @@ it("leaves out what a partner hides from its customers, never the agents", async
     "More",
   ]);
   expect(await openMore(container)).toEqual(["Artifacts", "Wiki", "Approvals", "Memory"]);
+  await cleanup();
+});
+
+function shortAccount(view: unknown, hide: string[] = []) {
+  queryClient.setQueryData(["bootstrap"], {
+    me: { shortNav: true, partner: hide.length ? { name: "Acme", hide } : null },
+  });
+  missionsApi.get.mockResolvedValue(view);
+}
+
+const labelsOf = (container: HTMLElement) =>
+  [...container.querySelectorAll("nav button")].map((button) => button.getAttribute("aria-label"));
+
+it("starts short: only Agents and the Store until a mission brings more", async () => {
+  shortAccount({ short: true, completed: [], has: [], seen: [] });
+  const { container, cleanup } = await renderRail(true);
+  expect(labelsOf(container)).toEqual(["Agents", "Store"]);
+  await cleanup();
+});
+
+it("brings Team and Workflows with the second agent, and the board only where it is on", async () => {
+  shortAccount({ short: true, completed: ["second"], has: [], seen: ["team", "workflows"] });
+  const { container, cleanup } = await renderRail(false);
+  expect(labelsOf(container)).toEqual(["Agents", "Team", "Workflows", "Store"]);
+  await cleanup();
+});
+
+it("marks a brought part new, and clears the mark when it is opened", async () => {
+  shortAccount({ short: true, completed: ["routine"], has: [], seen: [] });
+  missionsApi.seen.mockImplementation(async () => {
+    missionsApi.get.mockResolvedValue({
+      short: true,
+      completed: ["routine"],
+      has: [],
+      seen: ["routines"],
+    });
+    return { ok: true };
+  });
+  const { container, cleanup } = await renderRail();
+  const routines = container.querySelector<HTMLButtonElement>('nav button[aria-label="Routines"]');
+  expect(routines?.textContent).toContain("New");
+  await act(async () => routines?.click());
+  expect(missionsApi.seen.mock.calls[0]?.[0]).toEqual({ part: "routines" });
+  expect(container.querySelector('[data-testid="where"]')?.textContent).toBe("/app/routines");
+  expect(routines?.textContent).not.toContain("New");
+  await cleanup();
+});
+
+it("shows the page the person is on even before its mission is done", async () => {
+  shortAccount({ short: true, completed: [], has: [], seen: [] });
+  const { container, cleanup } = await renderRail(false, "/app/routines");
+  const routines = container.querySelector('nav button[aria-label="Routines"]');
+  expect(routines?.getAttribute("aria-current")).toBe("page");
+  expect(routines?.textContent).not.toContain("New");
+  await cleanup();
+});
+
+it("never brings back what a partner hides", async () => {
+  shortAccount({ short: true, completed: ["routine"], has: [], seen: [] }, ["routines"]);
+  const { container, cleanup } = await renderRail();
+  expect(labelsOf(container)).not.toContain("Routines");
+  await cleanup();
+});
+
+it("keeps only the ungated items while the missions are loading", async () => {
+  queryClient.setQueryData(["bootstrap"], { me: { shortNav: true } });
+  missionsApi.get.mockReturnValue(new Promise(() => {}));
+  const { container, cleanup } = await renderRail();
+  expect(labelsOf(container)).toEqual(["Agents", "Store"]);
+  await cleanup();
+});
+
+it("lists the places a mission brought behind the dots and marks them", async () => {
+  shortAccount({ short: true, completed: ["talk"], has: [], seen: [] });
+  const { container, cleanup } = await renderRail();
+  expect(await openMore(container)).toEqual(["UsageNew", "ArtifactsNew"]);
   await cleanup();
 });

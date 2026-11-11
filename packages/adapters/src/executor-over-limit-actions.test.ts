@@ -1,8 +1,10 @@
 import { once } from "node:events";
 import { createServer } from "node:http";
+import { TURN_GUARD_RUN_ERRORS } from "@corvo/core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type * as ComputerLifecycleModule from "./computer-lifecycle.js";
 import { isLoopGuardStopText, MAX_CONSECUTIVE_OVER_LIMIT_ACTION_CALLS } from "./tool-loop.js";
+import { REPEAT_NOTE } from "./turn-guard-calls.js";
 
 const provisionComputer = vi.hoisted(() => vi.fn());
 
@@ -57,7 +59,16 @@ function toolResultTexts(messages: Array<Record<string, unknown>>): string[] {
  * server whose every answer is a computer_act call. `sizes` gives the batch size per request;
  * the last size repeats.
  */
-async function runWithBatches(sizes: number[], vary = true) {
+async function runWithBatches(
+  sizes: number[],
+  vary = true,
+  options: {
+    turnGuardLimits?: Record<string, number>;
+    /** What the fake model answers instead of a tool call: it never ends, or it fails. */
+    answer?: "hang" | "provider_error";
+  } = {},
+) {
+  const { turnGuardLimits, answer } = options;
   vi.stubEnv("CORVO_LOCAL_MODELS", "example-model");
   vi.stubEnv("CORVO_LOCAL_VISION_MODELS", "example-model");
   vi.stubEnv("CORVO_LOCAL_CONTEXT_WINDOW", "120000");
@@ -68,6 +79,15 @@ async function runWithBatches(sizes: number[], vary = true) {
       for await (const chunk of request) chunks.push(Buffer.from(chunk));
       requests.push(JSON.parse(Buffer.concat(chunks).toString("utf8")));
       const n = requests.length;
+      if (answer === "hang") {
+        response.writeHead(200, { "content-type": "text/event-stream" });
+        return;
+      }
+      if (answer === "provider_error") {
+        response.writeHead(400, { "content-type": "application/json" });
+        response.end(JSON.stringify({ error: { message: "Invalid request", code: 400 } }));
+        return;
+      }
       const chunk = (delta: object, finish: string | null = null) =>
         `data: ${JSON.stringify({ id: `fixture-${n}`, choices: [{ index: 0, delta, finish_reason: finish }] })}\n\n`;
       const args = JSON.stringify(clickBatch(sizes[Math.min(n - 1, sizes.length - 1)]!, n, vary));
@@ -312,6 +332,7 @@ async function runWithBatches(sizes: number[], vary = true) {
     jobs: { enqueue: vi.fn(async () => undefined) },
     notifications: { send: vi.fn(async () => undefined) },
     secrets: [],
+    turnGuardLimits,
     // Ends the run if the guard is missing, instead of letting the fake server answer forever.
     shutdownSignal: AbortSignal.timeout(20_000),
   } as unknown as Parameters<typeof createRunExecutor>[0]);
@@ -351,7 +372,12 @@ describe("over-limit computer_act batches through the run loop", () => {
 
   it("starts the count over after a batch within the limit", async () => {
     // over, over, in-limit, then over until the run is stopped.
-    const { requests, act, finalText } = await runWithBatches([30, 30, 24, 30]);
+    // Refused batches also count as failing tools. The checkpoint lag below lets the run reach
+    // the failure limit about when the over-limit stop lands, so this test raises that limit to
+    // keep what it checks (the over-limit count) apart from it.
+    const { requests, act, finalText } = await runWithBatches([30, 30, 24, 30], true, {
+      turnGuardLimits: { errorsStop: 1000 },
+    });
 
     // Not stopped by the first two, nor by the three after the reset: the fourth ends it. The
     // checkpoint flush of the executed batch lets a few more requests out before the abort lands.
@@ -370,5 +396,51 @@ describe("over-limit computer_act batches through the run loop", () => {
     expect(act).not.toHaveBeenCalled();
     expect(finalText).toContain("with too many actions 4 times in a row");
     expect(finalText).not.toContain("the same input");
+  }, 30_000);
+});
+
+describe("identical in-limit batches through the run loop", () => {
+  it("stops identical in-limit batches that keep returning the same result", async () => {
+    const { requests, finalizeRun } = await runWithBatches([3], false);
+
+    const calls = finalizeRun.mock.calls as unknown as Array<
+      [{ outcome: string; error?: string; stopReason?: string }]
+    >;
+    expect(calls.at(-1)![0]).toMatchObject({
+      outcome: "failed",
+      error: TURN_GUARD_RUN_ERRORS.loop,
+      stopReason: "loop",
+    });
+    expect(requests.length).toBeGreaterThanOrEqual(5);
+    expect(requests.length).toBeLessThan(REQUEST_CAP);
+    expect(toolResultTexts(requests[3]!.messages).at(-1)).toContain(REPEAT_NOTE);
+  }, 30_000);
+});
+
+describe("stop reason through the run loop", () => {
+  const lastFinalize = (finalizeRun: { mock: { calls: unknown[][] } }) =>
+    (
+      finalizeRun.mock.calls.at(-1) as [{ outcome: string; error?: string; stopReason?: string }]
+    )[0];
+
+  it("fails a silent run as a stall and records why", async () => {
+    const { finalizeRun } = await runWithBatches([3], false, {
+      answer: "hang",
+      turnGuardLimits: { stallMs: 150, stallTickMs: 30 },
+    });
+
+    expect(lastFinalize(finalizeRun)).toMatchObject({
+      outcome: "failed",
+      error: TURN_GUARD_RUN_ERRORS.stall,
+      stopReason: "stall",
+    });
+  }, 30_000);
+
+  it("leaves the stop reason empty when the provider fails the run", async () => {
+    const { finalizeRun } = await runWithBatches([3], false, { answer: "provider_error" });
+
+    const final = lastFinalize(finalizeRun);
+    expect(final.outcome).toBe("failed");
+    expect(final.stopReason).toBeUndefined();
   }, 30_000);
 });

@@ -22,8 +22,11 @@ import type { MemoryProviderResolver } from "./memory-provider-factory.js";
 import type { CodexLiveCatalog } from "./pi-codex-catalog.js";
 import type { RemoteTransportDependencies } from "./remote-mcp.js";
 import type { TicketChangeNotifier } from "./ticket-changes.js";
+import type { TurnGuardLimits } from "./turn-guard-calls.js";
 
 export interface ExecutorDeps {
+  /** Overrides the run guard thresholds; for the composition root and tests only. */
+  turnGuardLimits?: Partial<TurnGuardLimits>;
   maxUploadSizeBytes?: number;
   contextStrategy?: AgentContextStrategy;
   prisma: PrismaClient;

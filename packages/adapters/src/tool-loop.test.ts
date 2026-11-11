@@ -23,18 +23,18 @@ describe("advanceToolCallLoopGuard", () => {
     }
   });
 
-  it("stops six consecutive calls with identical inputs", () => {
+  it("does not stop identical calls before the near-identical limit", () => {
     let streak = { key: undefined as string | undefined, count: 0 };
-    let stuck = false;
+    const stuck: boolean[] = [];
 
-    for (let index = 0; index < 6; index += 1) {
+    for (let index = 0; index < 25; index += 1) {
       const result = advanceToolCallLoopGuard(streak, "shell", { command: "npm test" });
       streak = result.streak;
-      stuck = result.stuck;
+      stuck.push(result.stuck);
     }
 
-    expect(stuck).toBe(true);
-    expect(streak.count).toBe(6);
+    expect(stuck.slice(0, 24).every((value) => !value)).toBe(true);
+    expect(stuck[24]).toBe(true);
   });
 
   it("stops calls that differ only by a number in a text argument", () => {
@@ -53,7 +53,7 @@ describe("advanceToolCallLoopGuard", () => {
     expect(toolCallStreakLength(streak)).toBe(25);
   });
 
-  it("reports the run that stopped it, identical or near-identical, in the stop text", () => {
+  it("reports the run that stopped it in the stop text", () => {
     const stopText = (command: (call: number) => string) => {
       let streak = { key: undefined as string | undefined, count: 0 };
       for (let call = 1; call < 50; call += 1) {
@@ -64,24 +64,19 @@ describe("advanceToolCallLoopGuard", () => {
       throw new Error("never stopped");
     };
 
-    expect(stopText(() => "npm test")).toContain(" with the same input 6 times in a row");
+    expect(stopText(() => "npm test")).toContain(" with nearly the same input 25 times in a row");
     expect(stopText((call) => `echo noop-${call}`)).toContain(
       " with nearly the same input 25 times",
     );
     expect(isLoopGuardStopText(stopText(() => "npm test"))).toBe(true);
     expect(isLoopGuardStopText("An ordinary reply")).toBe(false);
+    // Rows saved before identical calls stopped being a reason keep their wording.
+    expect(
+      isLoopGuardStopText(
+        "I got stuck calling shell with the same input 6 times in a row without making progress, so I stopped early. Try rephrasing this, or ask me to try a different approach.",
+      ),
+    ).toBe(true);
     expect(isLoopGuardStopText(stopText((call) => `echo noop-${call}`))).toBe(true);
-  });
-
-  it("keeps the identical stop count when a longer similar streak precedes it", () => {
-    let streak = { key: undefined as string | undefined, count: 0 };
-    for (let call = 1; call <= 10; call += 1) {
-      streak = advanceToolCallLoopGuard(streak, "shell", { command: `echo noop-${call}` }).streak;
-    }
-    for (let call = 0; call < 6; call += 1) {
-      streak = advanceToolCallLoopGuard(streak, "shell", { command: "echo noop-11" }).streak;
-    }
-    expect(loopGuardStopText("shell", streak)).toContain(" with the same input 6 times in a row");
   });
 
   it.each([

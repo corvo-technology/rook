@@ -16,6 +16,7 @@ const rpcMock = vi.hoisted(() => ({
     probeCatalog: vi.fn(),
     connect: vi.fn(),
   },
+  engines: { setupState: vi.fn(), cancelLogin: vi.fn() },
 }));
 vi.mock("../../lib/rpc", () => ({ rpc: rpcMock }));
 vi.mock("@lingui/react/macro", () => {
@@ -51,6 +52,7 @@ let root: Root;
 beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   for (const fn of Object.values(rpcMock.models)) fn.mockReset();
+  rpcMock.engines.setupState.mockReset().mockResolvedValue([]);
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
@@ -119,6 +121,41 @@ describe("LocalModelStep", () => {
 
   it("is today's step while nothing has been reported", async () => {
     rpcMock.models.localSetup.mockReturnValue(new Promise(() => undefined));
+    await render();
+    expect(container.querySelector('input[aria-label="API key"]')).not.toBeNull();
+  });
+
+  it("shows a signed-out CLI even when nothing else was found", async () => {
+    rpcMock.models.localSetup.mockResolvedValue({
+      ...empty,
+      cliEngines: [
+        {
+          id: "claude",
+          state: "signed_out",
+          version: "2.5.0",
+          models: [],
+          checkedAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+    });
+    await render();
+    expect(container.textContent).toContain("Found on this computer");
+    expect(container.querySelector('input[aria-label="API key"]')).toBeNull();
+  });
+
+  it("a CLI that is missing alone leaves today's step", async () => {
+    rpcMock.models.localSetup.mockResolvedValue({
+      ...empty,
+      cliEngines: [
+        {
+          id: "claude",
+          state: "missing",
+          version: null,
+          models: [],
+          checkedAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+    });
     await render();
     expect(container.querySelector('input[aria-label="API key"]')).not.toBeNull();
   });

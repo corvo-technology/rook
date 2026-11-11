@@ -14,6 +14,7 @@ import { CLI_ENGINE_RUN_ERRORS } from "@corvo/core";
 import { findAgentBinary } from "./agent-process.js";
 import type { CliEngineDefinition } from "./cli-engine-parser.js";
 import type { CliEngineLocator } from "./cli-engine-runtime.js";
+import { installedEngineBinary } from "./cli-engines/install.js";
 
 const VIEW_TTL_MS = 60_000;
 const PROBE_TIMEOUT_MS = 15_000;
@@ -87,7 +88,10 @@ export class CliEngineHost implements CliEngineLocator {
     this.now = options.now ?? Date.now;
     this.locate =
       options.locate ??
-      ((engine) => findAgentBinary(engine.binaryName, engine.installDirs(os.homedir())));
+      (async (engine) =>
+        (await findAgentBinary(engine.binaryName, engine.installDirs(os.homedir()))) ??
+        // A build Corvo installed itself, for a machine that has none of its own.
+        installedEngineBinary(options.dataDir, engine.id, engine.binaryName));
   }
 
   configDir(id: CliEngineId): string {

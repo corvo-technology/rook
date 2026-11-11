@@ -22,6 +22,7 @@ export {
   pageUrlOrigin,
   storeBotSecret,
 } from "./bot-secrets.js";
+export * from "./bounded-process.js";
 export * from "./browser-emulator.js";
 export * from "./browser-provider-factory.js";
 export * from "./browser-tools.js";
@@ -35,6 +36,10 @@ export * from "./child-bots.js";
 export * from "./cli-engine-claude.js";
 export * from "./cli-engine-host.js";
 export * from "./cli-engine-runtime.js";
+export * from "./cli-engines/browser-login.js";
+export * from "./cli-engines/install.js";
+export * from "./cli-engines/login-terminal.js";
+export * from "./cli-engines/setup.js";
 export * from "./cli-tool-gateway.js";
 export * from "./cloud-agent-emulator.js";
 export * from "./cloud-agent-factory.js";
@@ -189,6 +194,7 @@ export * from "./third-party-connector-emulator.js";
 export * from "./ticket-changes.js";
 export * from "./ticket-tools.js";
 export { dispatcherFetch } from "./undici-fetch.js";
+export * from "./verified-download.js";
 export * from "./voice-factory.js";
 export * from "./wakeup.js";
 export * from "./web-limits.js";

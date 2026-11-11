@@ -1,8 +1,9 @@
 import * as z from "zod";
+import { CliEngineStatusSchema } from "./cli-engines.js";
 
 export const LocalModelOptionSchema = z.object({
   id: z.string().max(200),
-  kind: z.enum(["server", "local", "connection"]),
+  kind: z.enum(["server", "local", "connection", "cli"]),
   label: z.string(),
   provider: z.string(),
   credentialId: z.string().optional(),
@@ -18,6 +19,8 @@ export const LocalSetupReportSchema = z.object({
   checking: z.boolean(),
   checkedAt: z.number().nullable(),
   options: z.array(LocalModelOptionSchema),
+  /** The coding-agent CLIs on the engine; absent where CLI engines are not offered. */
+  cliEngines: z.array(CliEngineStatusSchema).optional(),
 });
 export type LocalSetupReport = z.infer<typeof LocalSetupReportSchema>;
 

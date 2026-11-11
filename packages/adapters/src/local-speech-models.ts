@@ -1,8 +1,8 @@
 import { spawn } from "node:child_process";
-import { createHash } from "node:crypto";
 import { mkdir, open, readFile, rename, rm, stat, utimes, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { LocalSpeechModel } from "@corvo/contracts";
+import { downloadVerified } from "./verified-download.js";
 
 const ORIGIN = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/";
 
@@ -295,57 +295,26 @@ export class LocalModelStore {
   }
 
   private async download(spec: LocalSpeechModelSpec, controller: AbortController) {
-    const response = await this.fetchImpl(spec.url, { signal: controller.signal });
-    if (!response.ok || !response.body) {
-      throw new Error(`Download failed (HTTP ${response.status}).`);
-    }
-    const reader = response.body.getReader();
-    const file = await open(this.partialFile(spec.id), "w");
-    const hash = createHash("sha256");
-    let done = 0;
     let lastReport = 0;
-    const aborted = new Promise<never>((_, reject) => {
-      controller.signal.addEventListener("abort", () => reject(new Error("Download cancelled.")), {
-        once: true,
-      });
-    });
-    aborted.catch(() => undefined);
-    try {
-      for (;;) {
-        let timer: NodeJS.Timeout | undefined;
-        const stalled = new Promise<never>((_, reject) => {
-          timer = setTimeout(
-            () => reject(new Error(`Download stalled: no data for ${this.stallMs} ms.`)),
-            this.stallMs,
-          );
-        });
-        const next = await Promise.race([reader.read(), stalled, aborted]).finally(() =>
-          clearTimeout(timer),
-        );
-        if (next.done) break;
-        hash.update(next.value);
-        await file.write(next.value);
-        done += next.value.byteLength;
+    await downloadVerified({
+      url: spec.url,
+      sha256: spec.sha256,
+      file: this.partialFile(spec.id),
+      fetch: this.fetchImpl,
+      signal: controller.signal,
+      stallMs: this.stallMs,
+      onProgress: async (done) => {
         this.progress.set(spec.id, done);
-        if (Date.now() - lastReport >= PROGRESS_EVERY_MS) {
-          lastReport = Date.now();
-          await this.writeState(spec.id, {
-            state: "downloading",
-            bytesDone: done,
-            updatedAt: lastReport,
-          });
-          if (await this.exists(this.cancelFile(spec.id))) controller.abort();
-        }
-      }
-    } catch (error) {
-      await reader.cancel().catch(() => undefined);
-      throw error;
-    } finally {
-      await file.close();
-    }
-    if (hash.digest("hex") !== spec.sha256) {
-      throw new Error("Download failed: the file's digest does not match the expected one.");
-    }
+        if (Date.now() - lastReport < PROGRESS_EVERY_MS) return;
+        lastReport = Date.now();
+        await this.writeState(spec.id, {
+          state: "downloading",
+          bytesDone: done,
+          updatedAt: lastReport,
+        });
+        if (await this.exists(this.cancelFile(spec.id))) controller.abort();
+      },
+    });
   }
 
   private async install(spec: LocalSpeechModelSpec) {

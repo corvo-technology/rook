@@ -99,6 +99,50 @@ describe("LocalSetupCheck", () => {
     expect(check.current().findings?.servers[0]?.baseUrl).toBe("http://127.0.0.1:11434/v1");
   });
 
+  it("a version 1 cache reads with no CLI engines", async () => {
+    const file = path.join(dir, "local-setup.json");
+    await writeFile(
+      file,
+      JSON.stringify({ version: 1, checkedAt: 7, servers: [{ port: 11434, models: ["m"] }] }),
+    );
+    const check = new LocalSetupCheck({ file, probe: async () => [] });
+    expect(check.current().findings?.cliEngines).toEqual([]);
+    expect(check.current().findings?.servers).toHaveLength(1);
+  });
+
+  it("the CLI probe shares the deadline and never delays the servers", async () => {
+    vi.useFakeTimers();
+    const check = new LocalSetupCheck({
+      file: path.join(dir, "f.json"),
+      probe: async () => [server()],
+      cliProbe: () => new Promise(() => undefined),
+    });
+    const refreshed = check.refresh();
+    await vi.advanceTimersByTimeAsync(5_000);
+    const findings = await refreshed;
+    expect(findings.servers).toHaveLength(1);
+    expect(findings.cliEngines).toEqual([]);
+  });
+
+  it("keeps what the CLI probe reported", async () => {
+    const status = {
+      id: "claude" as const,
+      state: "ready" as const,
+      version: "2.1.0",
+      models: ["claude/sonnet"],
+      checkedAt: "2026-01-01T00:00:00.000Z",
+    };
+    const file = path.join(dir, "f.json");
+    const first = new LocalSetupCheck({
+      file,
+      probe: async () => [],
+      cliProbe: async () => [status],
+    });
+    await first.refresh();
+    const second = new LocalSetupCheck({ file, probe: async () => [] });
+    expect(second.current().findings?.cliEngines).toEqual([status]);
+  });
+
   it("ignores a kept server on a port that is not probed", async () => {
     const file = path.join(dir, "local-setup.json");
     await writeFile(

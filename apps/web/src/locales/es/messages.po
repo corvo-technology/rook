@@ -2182,6 +2182,10 @@ msgstr "No se pudo descargar {0}. Inténtalo de nuevo."
 msgid "Could not download {name}. Try again."
 msgstr "No se pudo descargar {name}. Inténtalo de nuevo."
 
+#: src/pages/onboarding/CliEngineRows.tsx
+msgid "Could not install"
+msgstr "No se pudo instalar"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not install connector"
 msgstr "No se pudo instalar el conector"
@@ -3595,6 +3599,7 @@ msgstr "Entrada"
 msgid "Inputs"
 msgstr "Entradas"
 
+#: src/pages/onboarding/CliEngineRows.tsx
 #: src/pages/SkillsStore.tsx
 msgid "Install"
 msgstr "Instalar"
@@ -3608,6 +3613,7 @@ msgid "Installed"
 msgstr "Instalado"
 
 #: src/components/McpServerHealthLine.tsx
+#: src/pages/onboarding/CliEngineRows.tsx
 msgid "Installing…"
 msgstr "Instalando…"
 
@@ -5955,6 +5961,7 @@ msgstr "Densidad de la barra lateral"
 #: src/pages/Auth.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
+#: src/pages/onboarding/CliEngineRows.tsx
 msgid "Sign in"
 msgstr "Iniciar sesión"
 
@@ -6063,6 +6070,7 @@ msgstr "Algo salió mal"
 
 #: src/App.tsx
 #: src/lib/user-error.ts
+#: src/pages/onboarding/CliEngineRows.tsx
 msgid "Something went wrong. Try again."
 msgstr "Algo salió mal. Inténtalo de nuevo."
 
@@ -6348,6 +6356,10 @@ msgstr "Teams no activado"
 msgid "Telegram"
 msgstr "Telegram"
 
+#: src/pages/onboarding/CliEngineRows.tsx
+msgid "Terminal input"
+msgstr "Entrada de terminal"
+
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Test"
@@ -6385,6 +6397,10 @@ msgstr "Se eliminarán el bot y lo que añadió su importación."
 #: src/pages/shell/composer-error.tsx
 msgid "The bot can use the file but won't see the picture."
 msgstr "El bot puede usar el archivo, pero no verá la imagen."
+
+#: src/pages/onboarding/CliEngineRows.tsx
+msgid "The download did not match the published file. Nothing was installed."
+msgstr "La descarga no coincidía con el archivo publicado. No se instaló nada."
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts

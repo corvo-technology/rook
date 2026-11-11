@@ -2182,6 +2182,10 @@ msgstr "Impossible de télécharger {0}. Réessayez."
 msgid "Could not download {name}. Try again."
 msgstr "Impossible de télécharger {name}. Réessayez."
 
+#: src/pages/onboarding/CliEngineRows.tsx
+msgid "Could not install"
+msgstr "Installation impossible"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not install connector"
 msgstr "Impossible d'installer le connecteur"
@@ -3595,6 +3599,7 @@ msgstr "Entrée"
 msgid "Inputs"
 msgstr "Entrées"
 
+#: src/pages/onboarding/CliEngineRows.tsx
 #: src/pages/SkillsStore.tsx
 msgid "Install"
 msgstr "Installer"
@@ -3608,6 +3613,7 @@ msgid "Installed"
 msgstr "Installé"
 
 #: src/components/McpServerHealthLine.tsx
+#: src/pages/onboarding/CliEngineRows.tsx
 msgid "Installing…"
 msgstr "Installation…"
 
@@ -5955,6 +5961,7 @@ msgstr "Densité de la barre latérale"
 #: src/pages/Auth.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
+#: src/pages/onboarding/CliEngineRows.tsx
 msgid "Sign in"
 msgstr "Se connecter"
 
@@ -6063,6 +6070,7 @@ msgstr "Une erreur s’est produite"
 
 #: src/App.tsx
 #: src/lib/user-error.ts
+#: src/pages/onboarding/CliEngineRows.tsx
 msgid "Something went wrong. Try again."
 msgstr "Un problème est survenu. Réessayez."
 
@@ -6348,6 +6356,10 @@ msgstr "Teams non activé"
 msgid "Telegram"
 msgstr "Telegram"
 
+#: src/pages/onboarding/CliEngineRows.tsx
+msgid "Terminal input"
+msgstr "Saisie du terminal"
+
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Test"
@@ -6385,6 +6397,10 @@ msgstr "Le bot et ce que son import a ajouté seront supprimés."
 #: src/pages/shell/composer-error.tsx
 msgid "The bot can use the file but won't see the picture."
 msgstr "Le bot peut utiliser le fichier, mais ne verra pas l'image."
+
+#: src/pages/onboarding/CliEngineRows.tsx
+msgid "The download did not match the published file. Nothing was installed."
+msgstr "Le téléchargement ne correspondait pas au fichier publié. Rien n'a été installé."
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts

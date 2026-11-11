@@ -61,3 +61,47 @@ test("onboarding shows a found local server and continues in one click", async (
   });
   await expect(page.getByRole("heading", { name: "Connect a model" })).toBeHidden();
 });
+
+test("onboarding offers to sign in to an installed coding-agent CLI", async ({
+  page,
+}, testInfo) => {
+  await page.route("**/rpc/me", async (route) => {
+    const response = await route.fetch();
+    const body = (await response.json()) as { json: Record<string, unknown> };
+    await route.fulfill({ response, json: { json: { ...body.json, needsModel: true } } });
+  });
+  await page.route("**/rpc/models/localSetup", (route) =>
+    route.fulfill({
+      json: {
+        json: {
+          enabled: true,
+          checking: false,
+          checkedAt: 1,
+          options: [],
+          cliEngines: [
+            {
+              id: "claude",
+              state: "signed_out",
+              version: "2.5.0",
+              models: [],
+              checkedAt: "2026-01-01T00:00:00.000Z",
+            },
+          ],
+        },
+      },
+    }),
+  );
+  await page.route("**/rpc/engines/setupState", (route) =>
+    route.fulfill({
+      json: { json: [{ id: "claude", installable: true, signIn: "terminal" }] },
+    }),
+  );
+
+  const stamp = Date.now();
+  await signup(page, `local-cli-${stamp}@corvo.test`, "password12", "Local CLI");
+
+  await expect(page.getByRole("heading", { name: "Connect a model" })).toBeVisible();
+  await expect(page.getByText("Claude Code")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Sign in", exact: true })).toBeVisible();
+  await captureScreenshot(page, testInfo, "onboarding-local-cli");
+});

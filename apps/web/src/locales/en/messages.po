@@ -2182,6 +2182,10 @@ msgstr "Could not download {0}. Try again."
 msgid "Could not download {name}. Try again."
 msgstr "Could not download {name}. Try again."
 
+#: src/pages/onboarding/CliEngineRows.tsx
+msgid "Could not install"
+msgstr "Could not install"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not install connector"
 msgstr "Could not install connector"
@@ -3595,6 +3599,7 @@ msgstr "Input"
 msgid "Inputs"
 msgstr "Inputs"
 
+#: src/pages/onboarding/CliEngineRows.tsx
 #: src/pages/SkillsStore.tsx
 msgid "Install"
 msgstr "Install"
@@ -3608,6 +3613,7 @@ msgid "Installed"
 msgstr "Installed"
 
 #: src/components/McpServerHealthLine.tsx
+#: src/pages/onboarding/CliEngineRows.tsx
 msgid "Installing…"
 msgstr "Installing…"
 
@@ -5955,6 +5961,7 @@ msgstr "Sidebar density"
 #: src/pages/Auth.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
+#: src/pages/onboarding/CliEngineRows.tsx
 msgid "Sign in"
 msgstr "Sign in"
 
@@ -6063,6 +6070,7 @@ msgstr "Something went wrong"
 
 #: src/App.tsx
 #: src/lib/user-error.ts
+#: src/pages/onboarding/CliEngineRows.tsx
 msgid "Something went wrong. Try again."
 msgstr "Something went wrong. Try again."
 
@@ -6348,6 +6356,10 @@ msgstr "Teams not enabled"
 msgid "Telegram"
 msgstr "Telegram"
 
+#: src/pages/onboarding/CliEngineRows.tsx
+msgid "Terminal input"
+msgstr "Terminal input"
+
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Test"
@@ -6385,6 +6397,10 @@ msgstr "The bot and what its import added will be removed."
 #: src/pages/shell/composer-error.tsx
 msgid "The bot can use the file but won't see the picture."
 msgstr "The bot can use the file but won't see the picture."
+
+#: src/pages/onboarding/CliEngineRows.tsx
+msgid "The download did not match the published file. Nothing was installed."
+msgstr "The download did not match the published file. Nothing was installed."
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts

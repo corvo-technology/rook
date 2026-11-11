@@ -9,6 +9,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const rpcMock = vi.hoisted(() => ({
   models: { testLocal: vi.fn(), useLocal: vi.fn() },
+  engines: {
+    setupState: vi.fn(),
+    install: vi.fn(),
+    signIn: vi.fn(),
+    loginScreen: vi.fn(),
+    loginInput: vi.fn(),
+    cancelLogin: vi.fn(),
+  },
 }));
 vi.mock("../../lib/rpc", () => ({ rpc: rpcMock }));
 vi.mock("@lingui/react/macro", () => {
@@ -57,6 +65,8 @@ beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   rpcMock.models.testLocal.mockReset();
   rpcMock.models.useLocal.mockReset().mockResolvedValue({ ok: true });
+  for (const fn of Object.values(rpcMock.engines)) fn.mockReset();
+  rpcMock.engines.cancelLogin.mockResolvedValue({ ok: true });
   onContinue.mockReset();
   onFallback.mockReset();
   container = document.createElement("div");
@@ -69,12 +79,18 @@ afterEach(() => {
   container.remove();
 });
 
-async function render() {
+async function render(shown: LocalSetupReport = report, onRefresh = vi.fn()) {
   await act(async () => {
     root.render(
-      <LocalModelChoice report={report} onContinue={onContinue} onFallback={onFallback} />,
+      <LocalModelChoice
+        report={shown}
+        onContinue={onContinue}
+        onFallback={onFallback}
+        onRefresh={onRefresh}
+      />,
     );
   });
+  return onRefresh;
 }
 
 const button = (name: string) =>
@@ -144,5 +160,115 @@ describe("LocalModelChoice", () => {
     await render();
     await act(async () => button("Other ways to connect")?.click());
     expect(onFallback).toHaveBeenCalledTimes(1);
+  });
+
+  describe("coding-agent CLIs", () => {
+    const engine = (state: "missing" | "signed_out" | "ready") => ({
+      id: "claude" as const,
+      state,
+      version: state === "missing" ? null : "2.5.0",
+      models: [],
+      checkedAt: "2026-01-01T00:00:00.000Z",
+    });
+    const withEngine = (state: "missing" | "signed_out" | "ready"): LocalSetupReport => ({
+      ...report,
+      cliEngines: [engine(state)],
+    });
+
+    it("Install appears only for an installable CLI that is not installed", async () => {
+      rpcMock.engines.setupState.mockResolvedValue([
+        { id: "claude", installable: true, signIn: "terminal" },
+      ]);
+      await render(withEngine("missing"));
+      expect(button("Install")).toBeDefined();
+      expect(button("Sign in")).toBeUndefined();
+      await act(async () => root.unmount());
+      root = createRoot(container);
+      rpcMock.engines.setupState.mockResolvedValue([
+        { id: "claude", installable: false, signIn: null },
+      ]);
+      await render(withEngine("missing"));
+      expect(button("Install")).toBeUndefined();
+    });
+
+    it("Sign in appears only for an installed CLI that is signed out", async () => {
+      rpcMock.engines.setupState.mockResolvedValue([
+        { id: "claude", installable: true, signIn: "browser" },
+      ]);
+      await render(withEngine("signed_out"));
+      expect(button("Sign in")).toBeDefined();
+      expect(button("Install")).toBeUndefined();
+    });
+
+    it("nothing is offered for a CLI that is ready", async () => {
+      await render(withEngine("ready"));
+      expect(rpcMock.engines.setupState).not.toHaveBeenCalled();
+      expect(button("Install")).toBeUndefined();
+      expect(button("Sign in")).toBeUndefined();
+    });
+
+    it("a mismatch shows the nothing-installed sentence", async () => {
+      rpcMock.engines.setupState.mockResolvedValue([
+        { id: "claude", installable: true, signIn: "terminal" },
+      ]);
+      rpcMock.engines.install.mockResolvedValue({ state: "mismatch" });
+      const onRefresh = await render(withEngine("missing"));
+      await act(async () => button("Install")?.click());
+      expect(text()).toContain(
+        "The download did not match the published file. Nothing was installed.",
+      );
+      expect(onRefresh).not.toHaveBeenCalled();
+    });
+
+    it("a finished install asks for a fresh report", async () => {
+      rpcMock.engines.setupState.mockResolvedValue([
+        { id: "claude", installable: true, signIn: "terminal" },
+      ]);
+      rpcMock.engines.install.mockResolvedValue({ state: "installed" });
+      const onRefresh = await render(withEngine("missing"));
+      await act(async () => button("Install")?.click());
+      expect(onRefresh).toHaveBeenCalledTimes(1);
+    });
+
+    it("the relay renders lines and sends typed text", async () => {
+      vi.useFakeTimers();
+      try {
+        rpcMock.engines.setupState.mockResolvedValue([
+          { id: "claude", installable: true, signIn: "terminal" },
+        ]);
+        rpcMock.engines.signIn.mockResolvedValue({ sessionId: "s1", mode: "terminal" });
+        rpcMock.engines.loginScreen.mockResolvedValue({
+          state: "running",
+          lines: ["Paste the code:"],
+        });
+        rpcMock.engines.loginInput.mockResolvedValue({ ok: true });
+        await render(withEngine("signed_out"));
+        await act(async () => button("Sign in")?.click());
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(1_600);
+        });
+        expect(container.querySelector("pre")?.textContent).toBe("Paste the code:");
+        const input = container.querySelector(
+          'input[aria-label="Terminal input"]',
+        ) as HTMLInputElement;
+        await act(async () => {
+          Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(
+            input,
+            "abc-123",
+          );
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+        });
+        await act(async () => {
+          input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+        });
+        expect(rpcMock.engines.loginInput).toHaveBeenCalledWith({
+          sessionId: "s1",
+          text: "abc-123",
+          key: "enter",
+        });
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 });

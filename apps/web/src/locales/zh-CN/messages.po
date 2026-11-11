@@ -2182,6 +2182,10 @@ msgstr "无法下载 {0}。请重试。"
 msgid "Could not download {name}. Try again."
 msgstr "无法下载 {name}。请重试。"
 
+#: src/pages/onboarding/CliEngineRows.tsx
+msgid "Could not install"
+msgstr "无法安装"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not install connector"
 msgstr "无法安装连接器"
@@ -3595,6 +3599,7 @@ msgstr "输入"
 msgid "Inputs"
 msgstr "输入"
 
+#: src/pages/onboarding/CliEngineRows.tsx
 #: src/pages/SkillsStore.tsx
 msgid "Install"
 msgstr "安装"
@@ -3608,6 +3613,7 @@ msgid "Installed"
 msgstr "已安装"
 
 #: src/components/McpServerHealthLine.tsx
+#: src/pages/onboarding/CliEngineRows.tsx
 msgid "Installing…"
 msgstr "正在安装…"
 
@@ -5955,6 +5961,7 @@ msgstr "侧边栏密度"
 #: src/pages/Auth.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
+#: src/pages/onboarding/CliEngineRows.tsx
 msgid "Sign in"
 msgstr "登录"
 
@@ -6063,6 +6070,7 @@ msgstr "出了点问题"
 
 #: src/App.tsx
 #: src/lib/user-error.ts
+#: src/pages/onboarding/CliEngineRows.tsx
 msgid "Something went wrong. Try again."
 msgstr "出了点问题。请重试。"
 
@@ -6348,6 +6356,10 @@ msgstr "未启用 Teams"
 msgid "Telegram"
 msgstr "Telegram"
 
+#: src/pages/onboarding/CliEngineRows.tsx
+msgid "Terminal input"
+msgstr "终端输入"
+
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Test"
@@ -6385,6 +6397,10 @@ msgstr "此 Bot 及其导入添加的内容将被移除。"
 #: src/pages/shell/composer-error.tsx
 msgid "The bot can use the file but won't see the picture."
 msgstr "Bot 可以使用该文件，但看不到图片内容。"
+
+#: src/pages/onboarding/CliEngineRows.tsx
+msgid "The download did not match the published file. Nothing was installed."
+msgstr "下载内容与已发布的文件不一致。未安装任何内容。"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts

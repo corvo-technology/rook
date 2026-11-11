@@ -35,6 +35,27 @@ const report = (options: LocalModelOption[]): LocalSetupReport => ({
 });
 
 describe("localFoundRows", () => {
+  it("lists a signed-in coding-agent CLI like any other found option", () => {
+    const cli: LocalModelOption = {
+      ...server,
+      id: "cli:claude",
+      kind: "cli",
+      label: "Claude Code",
+      provider: "cli-engine",
+      models: ["claude/sonnet"],
+      modelId: "claude/sonnet",
+      testable: false,
+    };
+    expect(localFoundRows(report([cli]))).toEqual([
+      {
+        optionId: "cli:claude",
+        modelId: "claude/sonnet",
+        title: "Claude Code",
+        subtitle: "claude/sonnet",
+      },
+    ]);
+  });
+
   it("no rows for a disabled report", () => {
     expect(localFoundRows(DISABLED_LOCAL_SETUP)).toEqual([]);
     expect(localFoundRows(undefined)).toEqual([]);

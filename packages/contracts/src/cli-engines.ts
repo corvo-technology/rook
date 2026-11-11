@@ -44,3 +44,39 @@ export function parseCliEngineModelId(
   const engine = CliEngineIdSchema.safeParse(parts[0]);
   return engine.success ? { engine: engine.data, model: parts[1] } : undefined;
 }
+
+/** What the page may offer for one engine on this machine. Nothing here names a path or account. */
+export const CliEngineSetupSchema = z.object({
+  id: CliEngineIdSchema,
+  installable: z.boolean(),
+  /** How the engine signs in here: its own browser flow, a relayed terminal, or not at all. */
+  signIn: z.enum(["browser", "terminal"]).nullable(),
+});
+export type CliEngineSetup = z.infer<typeof CliEngineSetupSchema>;
+
+export const CliEngineInstallResultSchema = z.object({
+  state: z.enum(["installed", "mismatch", "failed"]),
+});
+export type CliEngineInstallResult = z.infer<typeof CliEngineInstallResultSchema>;
+
+export const CliLoginStartSchema = z.object({
+  sessionId: z.string(),
+  mode: z.enum(["browser", "terminal"]),
+});
+
+/** One sign-in session: a page address for the browser flow, text lines for the terminal one. */
+export const CliLoginSessionSchema = z.object({
+  state: z.enum(["running", "done", "failed", "cancelled"]),
+  lines: z.array(z.string()),
+  url: z.string().optional(),
+  error: z.string().optional(),
+});
+export type CliLoginSession = z.infer<typeof CliLoginSessionSchema>;
+
+export const CLI_LOGIN_KEYS = ["enter", "up", "down", "esc", "tab", "backspace"] as const;
+
+export const CliLoginInputSchema = z.object({
+  sessionId: z.string().max(100),
+  text: z.string().max(2000).optional(),
+  key: z.enum(CLI_LOGIN_KEYS).optional(),
+});

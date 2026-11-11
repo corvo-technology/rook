@@ -1,13 +1,19 @@
 import type { LocalSetupReport } from "@corvo/contracts";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { rpc } from "./rpc";
 
 /**
  * What the engine found on its own computer. The first answer comes from memory at once and the
  * second waits for the fresh check, so the latest report replaces the one before it.
  */
-export function useLocalSetup(): { report: LocalSetupReport | null } {
+export function useLocalSetup(): { report: LocalSetupReport | null; refresh: () => void } {
   const [report, setReport] = useState<LocalSetupReport | null>(null);
+  const refresh = useCallback(() => {
+    rpc.models
+      .localSetup({ wait: true })
+      .then(setReport)
+      .catch(() => undefined);
+  }, []);
   useEffect(() => {
     let active = true;
     void (async () => {
@@ -26,5 +32,5 @@ export function useLocalSetup(): { report: LocalSetupReport | null } {
       active = false;
     };
   }, []);
-  return { report };
+  return { report, refresh };
 }

@@ -126,9 +126,12 @@ import { APPROVED_EFFECT_REPLAY_ORDER, buildApprovalContinuation } from "./run-e
 import {
   BOT_DIRECTORY_LIMIT,
   dockerComputerToolInstruction,
+  liveContextBlock,
   persistentComputerInstruction,
   runIdentityInstruction,
   threadContextForRun,
+  turnNote,
+  turnNoteApplies,
   userTurnInstructions,
   voiceCallInstruction,
 } from "./run-instructions.js";
@@ -1300,19 +1303,6 @@ export function createRunExecutor(deps: ExecutorDeps) {
             // Lateness is optional context; a lookup failure must not prevent a run.
           }
         }
-        const prompt = [
-          replyContext,
-          run.trigger === "reaction" && replyContext ? undefined : basePrompt,
-          takeoverResume?.promptNote,
-          approvalContinuation,
-          // A hang-up turn is read, not heard: no spoken-reply constraint.
-          voiceCall && !callEndRun ? voiceCallInstruction(disabledBuiltinTools) : undefined,
-          // Per-turn, not in the system prompt: the timestamp changes every call and would break the cacheable prefix.
-          formatCurrentTimeInstruction(new Date(), userTimeZone),
-          lateRoutineNote,
-        ]
-          .filter(Boolean)
-          .join("\n\n");
         const historicalContext: AgentRunRequest["history"] = [];
         if (compactedHistory.usedLocalSummary && compactedHistory.summary) {
           historicalContext.push({
@@ -1321,12 +1311,6 @@ export function createRunExecutor(deps: ExecutorDeps) {
               formatCompactedSummary(compactedHistory.summary, thread.historyCompactedUpToSeq!),
               runSecrets,
             ),
-          });
-        }
-        if (recalledMemory) {
-          historicalContext.push({
-            role: "user",
-            content: redactSecrets(recalledMemory, runSecrets),
           });
         }
         const modelImageBudget =
@@ -1417,10 +1401,76 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 },
               )
             : undefined;
-        const botDirectory =
-          [renderBotDirectory(teammates), groupDirectory, routingHint, repeatHint]
-            .filter(Boolean)
-            .join("\n\n") || undefined;
+        const redactedTicketContext = ticketContext
+          ? redactSecrets(ticketContext, runSecrets)
+          : undefined;
+        const redactedRecalledMemory = recalledMemory
+          ? redactSecrets(recalledMemory, runSecrets)
+          : undefined;
+        // Everything below changes without the bot's setup changing, so it rides in the
+        // transcript: the system prompt and the earlier conversation stay byte-stable.
+        const liveContext = liveContextBlock({
+          groupContext,
+          messagingContext,
+          redactedMemoryContext: memoryContext
+            ? redactSecrets(memoryContext, runSecrets)
+            : undefined,
+          redactedScratchpadContext: scratchpadContext
+            ? redactSecrets(scratchpadContext, runSecrets)
+            : undefined,
+          teamDirectory:
+            [renderBotDirectory(teammates), groupDirectory].filter(Boolean).join("\n\n") ||
+            undefined,
+          pluginLine,
+          agentSkillsLine,
+          taughtSkillsLine,
+        });
+        const voiceInstruction =
+          // A hang-up turn is read, not heard: no spoken-reply constraint.
+          voiceCall && !callEndRun ? voiceCallInstruction(disabledBuiltinTools) : undefined;
+        const currentTime = formatCurrentTimeInstruction(new Date(), userTimeZone);
+        const replyOnlyContext = run.trigger === "reaction" && replyContext;
+        // The combined prompt, for turns that cannot send the source message as its own block.
+        const prompt = [
+          replyContext,
+          replyOnlyContext ? undefined : basePrompt,
+          takeoverResume?.promptNote,
+          approvalContinuation,
+          voiceInstruction,
+          currentTime,
+          lateRoutineNote,
+          routingHint,
+          repeatHint,
+          redactedTicketContext,
+          redactedRecalledMemory,
+        ]
+          .filter(Boolean)
+          .join("\n\n");
+        const unexpandedTaskPrompt = [task.prompt, attachedFilesPrompt, missingImagesInstruction]
+          .filter(Boolean)
+          .join("\n\n");
+        const note = turnNoteApplies({
+          sourceMessageId: run.sourceMessageId,
+          trigger: run.trigger,
+          invokedSkill: Boolean(invokedSkill),
+          promptExpanded: taskPrompt !== unexpandedTaskPrompt,
+          hasCurrentTurnImages: Boolean(currentTurnImages?.length),
+        })
+          ? turnNote({
+              replyContext,
+              attachedFilesPrompt,
+              missingImagesInstruction,
+              takeoverNote: takeoverResume?.promptNote,
+              approvalContinuation,
+              voiceInstruction,
+              currentTime,
+              lateRoutineNote,
+              routingHint,
+              repeatHint,
+              redactedTicketContext,
+              redactedRecalledMemory,
+            })
+          : undefined;
 
         if (heldForTakeover) {
           const releasedCheckpoint = takeoverCheckpointOf(
@@ -1520,19 +1570,13 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 ).catch(() => undefined);
               },
               prompt,
+              turnNote: note,
+              liveContext,
               // Keep an explicit executor override, but let the runtime select
               // cache-aware context for connections declaring a cache window.
               contextStrategy: deps.contextStrategy,
               instructions: userTurnInstructions({
                 botInstructions: runIdentityInstruction(bot, run.trigger),
-                groupContext,
-                messagingContext,
-                redactedMemoryContext: memoryContext
-                  ? redactSecrets(memoryContext, runSecrets)
-                  : undefined,
-                redactedScratchpadContext: scratchpadContext
-                  ? redactSecrets(scratchpadContext, runSecrets)
-                  : undefined,
                 hasHistoricalContext: historicalContext.length > 0,
                 historyRetrievalEnabled: contextStrategy !== "current",
                 computerInstruction,
@@ -1540,10 +1584,6 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 taskCatalogInstruction,
                 workspaceInstruction,
                 agentEnvironmentInstruction,
-                teamDirectory: botDirectory,
-                pluginLine,
-                agentSkillsLine,
-                taughtSkillsLine,
                 replyGuidance: runReplyGuidance(run.trigger),
                 disabledBuiltinTools,
                 offeredFleetTools: offeredFleetTools(builtins),

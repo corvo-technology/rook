@@ -5,7 +5,7 @@ import sharp from "sharp";
 import { describe, expect, it, vi } from "vitest";
 import { PiAgentRuntime } from "./pi-runtime.js";
 import { resolveRuntimeModel } from "./pi-runtime-models.js";
-import { userTurnInstructions } from "./run-instructions.js";
+import { liveContextBlock, userTurnInstructions } from "./run-instructions.js";
 
 describe("Pi outgoing provider prefixes", () => {
   it.each(["png", "gif"] as const)(
@@ -280,10 +280,6 @@ describe("Pi outgoing provider prefixes", () => {
               pageBrowserAllowed: true,
               workspaceInstruction: "Stable workspace guidance.",
               replyGuidance: "Stable reply guidance.",
-              groupContext: `Group context: ${index}`,
-              messagingContext: `Messaging context: ${index}`,
-              redactedMemoryContext: `Memory: ${index === 0 ? "first" : "second"}`,
-              redactedScratchpadContext: `Scratchpad: ${index}`,
               hasHistoricalContext: true,
               agentEnvironmentInstruction: undefined,
               pluginLine: undefined,
@@ -292,6 +288,12 @@ describe("Pi outgoing provider prefixes", () => {
             })
               .filter(Boolean)
               .join("\n\n"),
+            liveContext: liveContextBlock({
+              groupContext: `Group context: ${index}`,
+              messagingContext: `Messaging context: ${index}`,
+              redactedMemoryContext: `Memory: ${index === 0 ? "first" : "second"}`,
+              redactedScratchpadContext: `Scratchpad: ${index}`,
+            }),
             history: [],
             tools,
             model: {
@@ -333,13 +335,14 @@ describe("Pi outgoing provider prefixes", () => {
         "Treat pagination cursors as opaque: copy the returned continuation value exactly, never calculate or guess it. When the tool reports no next page, stop; if a cursor is rejected, recheck the last successful result before retrying.";
       expect(first).toContain(cursorRule);
       expect(second).toContain(cursorRule);
-      expect(first.split("\n\nGroup context:")[0]).toBe(second.split("\n\nGroup context:")[0]);
-      expect(first.indexOf("Treat connector tool descriptions")).toBeLessThan(
-        first.indexOf("Memory:"),
-      );
-      expect(second).toContain("Scratchpad: 1");
-      expect(requests[0]!.messages[0]!.content).toContain("Memory: first");
-      expect(requests[1]!.messages[0]!.content).toContain("Memory: second");
+      // Memory, scratchpad and group context never reach the system prompt.
+      expect(first).toBe(second);
+      expect(first).not.toContain("Memory:");
+      const live = (request: (typeof requests)[number]) =>
+        JSON.stringify(request.messages.slice(1));
+      expect(live(requests[0]!)).toContain("Memory: first");
+      expect(live(requests[1]!)).toContain("Memory: second");
+      expect(live(requests[1]!)).toContain("Scratchpad: 1");
     } finally {
       server.close();
       server.closeAllConnections();

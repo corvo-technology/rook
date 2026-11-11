@@ -267,13 +267,19 @@ export class PiAgentRuntime implements AgentRuntime {
               id: model.id,
             })
           : undefined;
+        const sentHistory = restored
+          ? undefined
+          : toHistory(
+              withoutSteeringMessages(request.history, initialSteering),
+              request.prompt,
+              request.sourceMessageId,
+              Boolean(request.turnNote),
+            );
         const history =
-          restored?.messages ??
-          toHistory(
-            withoutSteeringMessages(request.history, initialSteering),
-            request.prompt,
-            request.sourceMessageId,
-          );
+          restored?.messages ?? withLiveContext(sentHistory ?? [], request.liveContext);
+        const noteTurn = Boolean(
+          sentHistory?.some((message) => (message as Message & TurnMetadata).corvoCurrentTurn),
+        );
         const representedHistoryIds = new Set(
           restored
             ? (restored.historyMessageIds ??
@@ -287,11 +293,12 @@ export class PiAgentRuntime implements AgentRuntime {
                 ...initialSteering.map((item) => item.messageId),
               ],
         );
+        const turnPrompt = noteTurn ? (request.turnNote ?? request.prompt) : request.prompt;
         const initialPrompt = initialSteering.length
-          ? `${request.prompt}\n\nAdditional user context:\n${initialSteering
+          ? `${turnPrompt}\n\nAdditional user context:\n${initialSteering
               .map((item) => item.text)
               .join("\n")}`
-          : request.prompt;
+          : turnPrompt;
         const systemPrompt =
           restored?.systemPrompt ??
           (request.instructions ||
@@ -989,13 +996,40 @@ function toPiImages(images: AgentRunRequest["currentTurnImages"]) {
   }));
 }
 
+interface TurnMetadata {
+  /** The stored source message sent as its own block, with the turn note after it. */
+  corvoCurrentTurn?: true;
+  /** A live context block. */
+  corvoLiveContext?: true;
+}
+
+/** Puts a non-empty live block right before the user message of this turn, or at the end. */
+function withLiveContext(history: Message[], live: string | undefined): Message[] {
+  if (!live) return history;
+  const block = {
+    role: "user" as const,
+    content: live,
+    timestamp: Date.now(),
+    corvoLiveContext: true as const,
+  };
+  const at = history.findIndex((message) => (message as Message & TurnMetadata).corvoCurrentTurn);
+  return at < 0 ? [...history, block] : [...history.slice(0, at), block, ...history.slice(at)];
+}
+
 function toHistory(
   history: AgentRunRequest["history"],
   prompt: string,
   sourceMessageId?: string | null,
-) {
+  keepSource = false,
+): Message[] {
+  const last = history.at(-1);
+  // With a turn note the newest source message stays in the transcript as its stored block.
+  const kept =
+    keepSource && sourceMessageId && last?.role === "user" && last.id === sourceMessageId
+      ? last
+      : undefined;
   let duplicatePromptIndex = -1;
-  for (let index = history.length - 1; index >= 0; index -= 1) {
+  for (let index = history.length - 1; index >= 0 && !kept; index -= 1) {
     const message = history[index];
     if (
       message?.role === "user" &&
@@ -1021,6 +1055,7 @@ function toHistory(
         corvoHistory: true,
         corvoMessageId: m.id,
         corvoCreatedAt: m.createdAt,
+        ...(m === kept ? { corvoCurrentTurn: true as const } : {}),
       };
     });
 }

@@ -51,7 +51,9 @@ describePostgres("missions (PostgreSQL)", () => {
         emailVerified: false,
       },
     });
-    const { spaceId } = await bootstrapUserSpace(prisma, { id: userId }, env);
+    const { spaceId } = await bootstrapUserSpace(prisma, { id: userId }, env, {
+      shortNavigation: true,
+    });
     if (!started) await system.missionState.deleteMany({ where: { spaceId } });
     const scope = { spaceId, userId };
     const read = () => runAsTenant(scope, () => readMissions(prisma, scope));
@@ -95,13 +97,27 @@ describePostgres("missions (PostgreSQL)", () => {
 
   it("starts for a new account once", async () => {
     const { scope } = await account();
-    await bootstrapUserSpace(prisma, { id: scope.userId }, env);
+    await bootstrapUserSpace(prisma, { id: scope.userId }, env, { shortNavigation: true });
     expect(await system.missionState.count({ where: scope })).toBe(1);
+  });
+
+  it("does not start for an account made outside signup", async () => {
+    const userId = `${randomUUID().replaceAll("-", "")}-${suffix}-cmd`;
+    await system.user.create({
+      data: {
+        id: userId,
+        name: "Missions Test",
+        email: `${userId}@corvo.test`,
+        emailVerified: false,
+      },
+    });
+    const { spaceId } = await bootstrapUserSpace(prisma, { id: userId }, env);
+    expect(await system.missionState.count({ where: { spaceId, userId } })).toBe(0);
   });
 
   it("does not start for a space that was already there", async () => {
     const { scope } = await account(false);
-    await bootstrapUserSpace(prisma, { id: scope.userId }, env);
+    await bootstrapUserSpace(prisma, { id: scope.userId }, env, { shortNavigation: true });
     expect(await system.missionState.count({ where: scope })).toBe(0);
   });
 

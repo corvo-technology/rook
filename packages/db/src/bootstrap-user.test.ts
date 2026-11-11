@@ -91,6 +91,17 @@ describe("bootstrapUserSpace", () => {
     );
   });
 
+  it("starts the short navigation only when asked", async () => {
+    const plain = makePrisma(null);
+    await bootstrapUserSpace(plain as unknown as PrismaClient, { id: "user-1" }, env);
+    expect(plain.missionState.create).not.toHaveBeenCalled();
+    const signup = makePrisma(null);
+    await bootstrapUserSpace(signup as unknown as PrismaClient, { id: "user-1" }, env, {
+      shortNavigation: true,
+    });
+    expect(signup.missionState.create).toHaveBeenCalledTimes(1);
+  });
+
   it("seeds deployment settings from the env policy when none exist", async () => {
     const prisma = makePrisma(null);
     await bootstrapUserSpace(prisma as unknown as PrismaClient, { id: "user-1" }, env);

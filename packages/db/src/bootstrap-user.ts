@@ -26,14 +26,16 @@ export function bootstrapUserSpace(
   prisma: PrismaClient,
   user: { id: string },
   env: SignupPolicyEnv,
+  options: { shortNavigation?: boolean } = {},
 ): Promise<{ spaceId: string }> {
-  return runAsSystem("bootstrap user space", () => createUserSpace(prisma, user, env));
+  return runAsSystem("bootstrap user space", () => createUserSpace(prisma, user, env, options));
 }
 
 async function createUserSpace(
   prisma: PrismaClient,
   user: { id: string },
   env: SignupPolicyEnv,
+  options: { shortNavigation?: boolean },
 ): Promise<{ spaceId: string }> {
   // Concurrent bootstraps for the same user (e.g. overlapping first phone
   // inbounds) race on every unique key below; each step either wins or
@@ -91,8 +93,10 @@ async function createUserSpace(
     .catch((error: unknown) => {
       if (!isUniqueViolation(error)) throw error;
     });
-  // Only an account's first space starts short; a space that was already there keeps what it had.
-  if (spaceCreated) await startShortNavigation(prisma, { spaceId: orgId, userId: user.id });
+  // Only an account created by signup starts short, and only with its first space; accounts made by
+  // command or by phone message, and spaces that were already there, keep the full navigation.
+  if (spaceCreated && options.shortNavigation)
+    await startShortNavigation(prisma, { spaceId: orgId, userId: user.id });
   const policy = signupPolicyFromEnv(env);
   await prisma.deploymentSettings.upsert({
     where: { id: "default" },

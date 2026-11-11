@@ -91,6 +91,7 @@ import {
   LEGACY_HISTORY_WINDOW_SIZE,
   MAX_RECALLED_MEMORIES,
   selectCompactedHistory,
+  stableHistoryWindow,
 } from "./history-compaction.js";
 import { createMediaGenerationProvider } from "./media-generation-factory.js";
 import { loadAgentMemoryContext } from "./memory-context.js";
@@ -624,12 +625,16 @@ export function createRunExecutor(deps: ExecutorDeps) {
           summary: threadContext.summary,
           historyCompactedUpToSeq: threadContext.historyCompactedUpToSeq,
         });
-        let history = compactedHistory.history.map(({ id, role, content, createdAt }) => ({
-          id,
-          createdAt,
-          role,
-          content,
-        }));
+        // Keep seq until the window is cut: it moves in steps of message sequence numbers.
+        let sequencedHistory = compactedHistory.history.map(
+          ({ id, role, content, createdAt, seq }) => ({
+            id,
+            createdAt,
+            role,
+            content,
+            seq,
+          }),
+        );
         const historyMessages = messages.map((message) => ({
           id: message.id,
           role: message.role,
@@ -742,14 +747,16 @@ export function createRunExecutor(deps: ExecutorDeps) {
           }
         }
         if (!compactedHistory.usedLocalSummary) {
-          history = history.slice(
-            -historyWindowSize({
+          sequencedHistory = stableHistoryWindow(
+            sequencedHistory,
+            historyWindowSize({
               semanticMemoryEnabled: semanticMemoryEnabled && !thread.historyCompactionSummary,
               compacted: thread.historyCompactedUpToSeq != null,
               recallSucceeded,
             }),
           );
         }
+        const history = sequencedHistory.map(({ seq: _seq, ...message }) => message);
         const runDeployment = deps.deploymentModelConfigured ? resolveDeploymentModel() : null;
         const runtimeFallback = runtimeFallbackModel(deps.runtime);
         const pinError =

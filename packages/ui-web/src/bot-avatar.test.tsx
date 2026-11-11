@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 import {
   BOT_AVATAR_COLORS,
   BotAvatar,
+  botAccent,
   DEFAULT_BOT_AVATAR_COLOR,
   defaultBotAvatarValue,
   parseBotAvatar,
@@ -231,5 +232,14 @@ describe("the mascot's eyes", () => {
   it("fill the tile with the shade of the chick the bot's color gives it", () => {
     expect(renderToString(<BotAvatar color="#8B5CF6" />)).toContain('fill="#b797ef"');
     expect(renderToString(<BotAvatar color="#10B981" />)).toContain('fill="#54c398"');
+  });
+});
+
+describe("botAccent", () => {
+  it("is the shade the bot's rook is drawn in, and nothing for a picture", () => {
+    expect(botAccent("#3B82F6")).toBe(MASCOT_LOOKS.blue.color);
+    expect(botAccent("#8B5CF6::char_cat")).toBe(MASCOT_LOOKS.violet.color);
+    expect(botAccent("#14B8A6")).toBe(customMascotBody("#14B8A6"));
+    expect(botAccent("data:image/png;base64,abc")).toBeUndefined();
   });
 });

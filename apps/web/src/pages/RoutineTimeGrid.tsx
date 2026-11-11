@@ -1,20 +1,31 @@
 import type { Bot, RoutineOccurrence } from "@corvo/contracts";
-import { BotAvatar, Spinner } from "@corvo/ui-web";
+import { BotAvatar, botAccent, Spinner } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
-import { Check, Clock, X } from "lucide-react";
+import { X } from "lucide-react";
+import type { CSSProperties } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { dayKey, HOUR_HEIGHT, layoutDayEvents, nowOffset } from "../lib/routine-calendar";
 
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
 const GUTTER = "3rem";
 
-/** Each state reads at a glance: tinted for what ran, dashed for what is still to come. */
-const TONE: Record<RoutineOccurrence["state"], string> = {
-  done: "border-success/40 bg-success/15 text-foreground",
-  failed: "border-destructive/50 bg-destructive/15 text-foreground",
-  running: "border-warning/50 bg-warning/15 text-foreground",
-  upcoming: "border-dashed border-border bg-transparent text-muted-foreground",
+/** How much of the bot's color a block carries: what is still to come is the lightest. */
+const FILL: Record<RoutineOccurrence["state"], number> = {
+  done: 22,
+  failed: 22,
+  running: 30,
+  upcoming: 12,
 };
+
+/** A solid block in the bot's color at low opacity; failures read in the destructive color. */
+export function blockStyle(item: RoutineOccurrence, accent: string | undefined): CSSProperties {
+  const base =
+    item.state === "failed" ? "var(--destructive)" : (accent ?? "var(--muted-foreground)");
+  return {
+    "--block": base,
+    backgroundColor: `color-mix(in srgb, var(--block) ${FILL[item.state]}%, transparent)`,
+  } as CSSProperties;
+}
 
 /**
  * One or seven days laid out by the hour, so a person sees when each routine ran, whether it
@@ -73,9 +84,9 @@ export function RoutineTimeGrid({
   );
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border/60 bg-card">
       <div
-        className="grid shrink-0 border-b border-border"
+        className="grid shrink-0 border-b border-border/60"
         style={{ gridTemplateColumns: columns }}
       >
         <div />
@@ -88,7 +99,7 @@ export function RoutineTimeGrid({
               </span>
               <span
                 className={`mx-auto mt-0.5 grid size-8 place-items-center rounded-full text-heading3 ${
-                  isToday ? "bg-primary text-primary-foreground" : "text-foreground"
+                  isToday ? "bg-brand text-brand-foreground" : "text-foreground"
                 }`}
               >
                 {dayNumber.format(day)}
@@ -102,7 +113,7 @@ export function RoutineTimeGrid({
               aria-label={t`Open ${fullDay.format(day)}`}
               aria-current={isToday ? "date" : undefined}
               onClick={() => onOpenDay(day)}
-              className="py-2 text-center transition-colors outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+              className={`py-2 text-center transition-colors outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring ${isToday ? "bg-brand/5" : ""}`}
             >
               {content}
             </button>
@@ -110,7 +121,7 @@ export function RoutineTimeGrid({
             <div
               key={dayKey(day)}
               aria-current={isToday ? "date" : undefined}
-              className="py-2 text-center"
+              className={`py-2 text-center ${isToday ? "bg-brand/5" : ""}`}
             >
               {content}
             </div>
@@ -128,7 +139,7 @@ export function RoutineTimeGrid({
                 style={{ height: HOUR_HEIGHT }}
               >
                 {hour === 0 ? null : (
-                  <span className="absolute -top-2 end-2 tabular-nums">
+                  <span className="absolute -top-2 end-2 font-mono text-[11px] tabular-nums">
                     {hourLabel.format(new Date(2026, 0, 1, hour))}
                   </span>
                 )}
@@ -144,13 +155,13 @@ export function RoutineTimeGrid({
                 role="group"
                 data-testid="routine-day"
                 aria-label={fullDay.format(day)}
-                className="relative border-s border-border"
+                className={`relative border-s border-border/40 ${isToday ? "bg-brand/5" : ""}`}
                 style={{ height: HOUR_HEIGHT * 24 }}
               >
                 {HOURS.map((hour) => (
                   <div
                     key={hour}
-                    className="border-t border-border/60"
+                    className="border-t border-border/30"
                     style={{ height: HOUR_HEIGHT }}
                   />
                 ))}
@@ -163,27 +174,15 @@ export function RoutineTimeGrid({
                       type="button"
                       aria-label={`${item.name}, ${time}, ${stateLabel[item.state]}`}
                       onClick={() => onOpen(item)}
-                      className={`absolute flex items-start gap-1 overflow-hidden rounded-lg border px-1.5 py-1 text-start text-label transition-colors outline-none hover:brightness-125 focus-visible:ring-2 focus-visible:ring-ring ${TONE[item.state]}`}
+                      className="absolute flex items-start gap-1.5 overflow-hidden rounded-xl px-2 py-1.5 text-start text-label text-foreground transition-[filter,transform] duration-150 outline-none hover:brightness-125 focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.98] motion-reduce:transition-none"
                       style={{
                         top,
                         height: height - 2,
                         insetInlineStart: `calc(${(column / lanes) * 100}% + 2px)`,
                         width: `calc(${100 / lanes}% - 4px)`,
+                        ...blockStyle(item, bot ? botAccent(bot.color, bot.id) : undefined),
                       }}
                     >
-                      {item.state === "done" ? (
-                        <Check className="mt-0.5 size-3 shrink-0 text-success" aria-hidden />
-                      ) : item.state === "failed" ? (
-                        <X className="mt-0.5 size-3 shrink-0 text-destructive" aria-hidden />
-                      ) : item.state === "running" ? (
-                        <Spinner className="mt-0.5 size-3 shrink-0" />
-                      ) : (
-                        <Clock className="mt-0.5 size-3 shrink-0" aria-hidden />
-                      )}
-                      <span className="min-w-0 flex-1 leading-4">
-                        <span className="block truncate font-medium">{item.name}</span>
-                        <span className="block truncate tabular-nums opacity-80">{time}</span>
-                      </span>
                       {bot && lanes < 3 ? (
                         <BotAvatar
                           color={bot.color}
@@ -192,16 +191,27 @@ export function RoutineTimeGrid({
                           status={bot.status}
                         />
                       ) : null}
+                      <span className="min-w-0 flex-1 leading-4">
+                        <span className="block truncate font-medium">{item.name}</span>
+                        <span className="block truncate font-mono text-[11px] tabular-nums text-muted-foreground">
+                          {time}
+                        </span>
+                      </span>
+                      {item.state === "failed" ? (
+                        <X className="mt-0.5 size-3 shrink-0 text-destructive" aria-hidden />
+                      ) : item.state === "running" ? (
+                        <Spinner className="mt-0.5 size-3 shrink-0" />
+                      ) : null}
                     </button>
                   );
                 })}
                 {isToday ? (
                   <div
                     aria-hidden
-                    className="pointer-events-none absolute inset-x-0 z-10 h-0.5 bg-destructive"
+                    className="pointer-events-none absolute inset-x-0 z-10 h-px bg-brand"
                     style={{ top: nowOffset(now) }}
                   >
-                    <span className="absolute -start-1 -top-[3px] size-2 rounded-full bg-destructive" />
+                    <span className="absolute -start-1 -top-[3px] size-[7px] rounded-full bg-brand" />
                   </div>
                 ) : null}
               </div>

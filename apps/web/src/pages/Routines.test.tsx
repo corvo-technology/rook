@@ -34,6 +34,7 @@ vi.mock("@corvo/ui-web", () => {
   const Container = ({ children }: { children?: ReactNode }) => <div>{children}</div>;
   return {
     BotAvatar: () => <span />,
+    botAccent: () => "#3b82f6",
     Spinner: (props: ComponentProps<"svg">) => <svg role="status" {...props} />,
     Button: (props: ComponentProps<"button">) => <button {...props} />,
     ToggleGroup: Container,
@@ -223,5 +224,20 @@ it("lays the week out by the hour, with each entry named for its state", async (
   expect(
     labels.some((label) => label?.startsWith("Weekly report") && label.endsWith("Failed")),
   ).toBe(true);
+  await cleanup();
+});
+
+it("paints each entry in its bot's color and marks the present in the brand color", async () => {
+  calendar.mockResolvedValue({
+    occurrences: [occurrence("Morning summary", "done", 1)],
+    truncated: false,
+  });
+  const { container, cleanup } = await renderPage();
+  const block = [...container.querySelectorAll<HTMLElement>("button[aria-label]")].find((button) =>
+    button.getAttribute("aria-label")?.startsWith("Morning summary"),
+  )!;
+  expect(block.style.getPropertyValue("--block")).toBe("#3b82f6");
+  expect(block.className).not.toContain("border-dashed");
+  expect(container.querySelector(".bg-brand")).not.toBeNull();
   await cleanup();
 });

@@ -1,5 +1,5 @@
 import type { Bot, RoutineOccurrence } from "@corvo/contracts";
-import { BotAvatar, Button, Spinner, ToggleGroup, ToggleGroupItem } from "@corvo/ui-web";
+import { BotAvatar, Button, botAccent, Spinner, ToggleGroup, ToggleGroupItem } from "@corvo/ui-web";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronLeft, ChevronRight, Clock, Plus, X } from "lucide-react";
@@ -19,13 +19,15 @@ import {
 import { errorText } from "../lib/user-error";
 import { NewRoutineDialog } from "./NewRoutineDialog";
 import { RoutineCard } from "./RoutineCard";
-import { RoutineTimeGrid } from "./RoutineTimeGrid";
+import { blockStyle, RoutineTimeGrid } from "./RoutineTimeGrid";
 import { WindowChrome } from "./WindowChrome";
 
 const NO_BOTS: Bot[] = [];
 const MONTH_CHIPS_PER_DAY = 3;
 const UPCOMING_COUNT = 6;
 const DAY_MS = 24 * 60 * 60_000;
+const segment =
+  "h-7 rounded-full px-3 text-[13px] hover:bg-transparent aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-sm";
 
 /** Every routine in one place: what ran, what failed and what is due, with a way to add one. */
 export function RoutinesPage() {
@@ -115,19 +117,21 @@ export function RoutinesPage() {
         >
           <ChevronRight />
         </Button>
-        <h1 className="ms-2 text-base font-medium capitalize">{title}</h1>
+        <h1 className="ms-2 text-lg font-normal tracking-tight capitalize">{title}</h1>
         <div className="ms-auto flex items-center gap-2">
           <ToggleGroup
+            spacing={0}
+            className="rounded-full bg-muted p-0.5"
             value={[view]}
             onValueChange={(next) => next[0] && setView(next[0] as CalendarView)}
           >
-            <ToggleGroupItem value="day">
+            <ToggleGroupItem value="day" className={segment}>
               <Trans>Day</Trans>
             </ToggleGroupItem>
-            <ToggleGroupItem value="week">
+            <ToggleGroupItem value="week" className={segment}>
               <Trans>Week</Trans>
             </ToggleGroupItem>
-            <ToggleGroupItem value="month">
+            <ToggleGroupItem value="month" className={segment}>
               <Trans>Month</Trans>
             </ToggleGroupItem>
           </ToggleGroup>
@@ -207,8 +211,8 @@ export function RoutinesPage() {
                 return (
                   <section
                     key={key}
-                    className={`min-h-24 rounded-xl border p-2 ${
-                      key === today ? "border-primary" : "border-border"
+                    className={`min-h-24 rounded-2xl border p-2 ${
+                      key === today ? "border-brand/40 bg-brand/5" : "border-border/60"
                     } ${outside ? "opacity-50" : ""}`}
                   >
                     <h2 className="mb-1.5 text-[13px] text-muted-foreground">
@@ -270,20 +274,37 @@ export function RoutinesPage() {
         </div>
 
         <aside className="hidden w-72 shrink-0 overflow-y-auto lg:block">
-          <h2 className="mb-2 text-sm text-muted-foreground">
+          <h2 className="mb-2 px-2 text-sm text-muted-foreground">
             <Trans>Upcoming</Trans>
           </h2>
-          <ul className="flex flex-col gap-1">
-            {next.map((item) => (
-              <li key={`${item.routineId}-${item.at}`}>
-                <OccurrenceChip
-                  item={item}
-                  bot={botById.get(item.botId)}
-                  time={`${weekday.format(new Date(item.at))} ${clock.format(new Date(item.at))}`}
-                  onOpen={() => openRoutine(item)}
-                />
-              </li>
-            ))}
+          <ul className="flex flex-col">
+            {next.map((item) => {
+              const bot = botById.get(item.botId);
+              return (
+                <li key={`${item.routineId}-${item.at}`}>
+                  <button
+                    type="button"
+                    onClick={() => openRoutine(item)}
+                    className="flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-start transition-colors outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    {bot ? (
+                      <BotAvatar
+                        color={bot.color}
+                        identity={bot.id}
+                        size={22}
+                        status={bot.status}
+                      />
+                    ) : null}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm">{item.name}</span>
+                      <span className="block font-mono text-[11px] tabular-nums text-muted-foreground">
+                        {weekday.format(new Date(item.at))} {clock.format(new Date(item.at))}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </aside>
       </div>
@@ -325,30 +346,24 @@ function OccurrenceChip({
   time: string;
   onOpen: () => void;
 }) {
-  const tone =
-    item.state === "failed"
-      ? "border-destructive/40 bg-destructive/10"
-      : item.state === "upcoming"
-        ? "border-dashed border-border text-muted-foreground"
-        : "border-border";
+  const accent = bot ? botAccent(bot.color, bot.id) : undefined;
   return (
     <button
       type="button"
       onClick={onOpen}
-      className={`flex w-full items-center gap-1.5 rounded-lg border px-2 py-1 text-start text-xs ${tone}`}
+      style={blockStyle(item, accent)}
+      className="flex w-full items-center gap-1.5 rounded-lg px-2 py-1 text-start text-xs transition-[filter,transform] duration-150 outline-none hover:brightness-125 focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.98] motion-reduce:transition-none"
     >
-      {item.state === "done" ? (
-        <Check className="size-3 shrink-0 text-success" aria-hidden="true" />
-      ) : item.state === "failed" ? (
+      {bot ? <BotAvatar color={bot.color} identity={bot.id} size={14} status={bot.status} /> : null}
+      <span className="min-w-0 flex-1 truncate text-foreground">{item.name}</span>
+      {item.state === "failed" ? (
         <X className="size-3 shrink-0 text-destructive" aria-hidden="true" />
       ) : item.state === "running" ? (
         <Spinner className="size-3 shrink-0" />
-      ) : (
-        <Clock className="size-3 shrink-0" aria-hidden="true" />
-      )}
-      <span className="shrink-0 tabular-nums">{time}</span>
-      <span className="min-w-0 flex-1 truncate text-foreground">{item.name}</span>
-      {bot ? <BotAvatar color={bot.color} identity={bot.id} size={14} status={bot.status} /> : null}
+      ) : null}
+      <span className="shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
+        {time}
+      </span>
     </button>
   );
 }

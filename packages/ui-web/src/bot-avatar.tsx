@@ -69,6 +69,21 @@ export function defaultBotAvatarValue(rawColor: string): string {
   return DEFAULT_BOT_AVATAR_COLOR;
 }
 
+/**
+ * The shade a bot's rook is drawn in, for tinting what belongs to it (its calendar events, its
+ * row). Nothing for a bot that shows a picture.
+ */
+export function botAccent(rawColor: string, identity = ""): string | undefined {
+  const parsed = parseBotAvatar(rawColor, identity);
+  if (parsed.isImage) return undefined;
+  return (
+    customMascotBody(parsed.color) ??
+    MASCOT_LOOKS[
+      mascotForColorDef(resolvePersonaColorDef(identity || parsed.color || "agent", parsed.color))
+    ].color
+  );
+}
+
 export interface BotAvatarProps {
   color: string;
   size?: number;

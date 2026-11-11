@@ -29,6 +29,7 @@ import {
 import { hostname, tmpdir } from "node:os";
 import { basename, join, resolve, sep } from "node:path";
 import { getDefaultEnvironment } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { killProcessTree } from "./bounded-process.js";
 
 export const DEFAULT_MCP_INSTALL_TIMEOUT_MS = 180_000;
 const READY_MARKER = ".ready";
@@ -442,7 +443,7 @@ function runNpmInstall(plan: InstallPlan, prefix: string): Promise<void> {
     let timedOut = false;
     const timer = setTimeout(() => {
       timedOut = true;
-      killTree(child);
+      killProcessTree(child);
     }, plan.timeoutMs);
     timer.unref?.();
     child.on("error", (error) => {
@@ -462,15 +463,6 @@ function runNpmInstall(plan: InstallPlan, prefix: string): Promise<void> {
       reject(new Error(`npm install ${plan.target} ${reason}${tail ? `: ${tail}` : ""}`));
     });
   });
-}
-
-function killTree(child: ChildProcess): void {
-  try {
-    if (child.pid && process.platform !== "win32") process.kill(-child.pid, "SIGKILL");
-    else child.kill("SIGKILL");
-  } catch {
-    child.kill("SIGKILL");
-  }
 }
 
 type DeclaredBins = { packageDir: string; unscoped: string; bins: Array<[string, string]> };

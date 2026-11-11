@@ -1464,7 +1464,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
           hasCurrentTurnImages: Boolean(currentTurnImages?.length),
         })
           ? turnNote({
-              replyContext,
+              // The stored source message already carries its reply context.
               attachedFilesPrompt,
               missingImagesInstruction,
               takeoverNote: takeoverResume?.promptNote,

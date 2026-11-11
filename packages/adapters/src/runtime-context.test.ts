@@ -630,6 +630,45 @@ describe("runtime context policy", () => {
     );
     expect(cold.getDecision()!.predictedCache).toBe("likely-cold");
   });
+  it("predicts the next turn warm from the boundary after the user message", () => {
+    let now = 0;
+    const tracker = new ContextCacheTracker(() => now);
+    const { request } = fixture(0);
+    request.model.cacheCapabilities = { scope: "account", retentionMs: 300000, minimumTokens: 1 };
+    request.contextStrategy = "cache-aware";
+    const user = (id: string, content: string, current = false) =>
+      ({
+        role: "user",
+        content,
+        timestamp: 0,
+        corvoHistory: true,
+        corvoMessageId: id,
+        ...(current ? { corvoCurrentTurn: true } : {}),
+      }) as Message;
+    const note = (text: string) => ({ role: "user", content: text, timestamp: 0 }) as Message;
+    const turn = (messages: Message[]) => {
+      const policy = createRuntimeContextPolicy(request, undefined, { cacheTracker: tracker });
+      const prepared = policy.prepareContext(
+        { systemPrompt: request.instructions, tools: [], messages },
+        model,
+      );
+      return { policy, prepared };
+    };
+    const first = turn([user("u1", "first question ".repeat(50), true), note("note one")]);
+    first.policy.onUsage({ inputTokens: 100, outputTokens: 5, cacheReadTokens: 0 });
+    const history = [
+      user("u1", "first question ".repeat(50)),
+      user("a1", "Assistant: answer ".repeat(50)),
+      user("u2", "second question", true),
+      note("a different note"),
+    ];
+    now = 10_000;
+    const second = turn(history);
+    expect(second.policy.getDecision()!.predictedCache).toBe("likely-warm");
+    expect(second.prepared.messages).toHaveLength(history.length);
+    now = 400_000;
+    expect(turn(history).policy.getDecision()!.predictedCache).toBe("likely-cold");
+  });
   it("does not extend cache retention by a long model response", () => {
     let now = 0;
     const tracker = new ContextCacheTracker(() => now);

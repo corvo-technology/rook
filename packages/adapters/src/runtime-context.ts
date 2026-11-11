@@ -158,6 +158,8 @@ export function createRuntimeContextPolicy(
       .update(JSON.stringify([accountScope, connectionIdentity(model), model.id]))
       .digest("hex");
   let pending: CacheRequest | undefined;
+  /** The same request cut right after the user message: where the next turn's prefix starts. */
+  let pendingBoundary: CacheRequest | undefined;
   let pendingProjection: { scope: string; entries: ProjectionEntry[] } | undefined;
   let decision: RuntimeContextDecision | undefined;
   let metadataPresent = false;
@@ -597,6 +599,19 @@ export function createRuntimeContextPolicy(
         ? built.decision.estimatedInputTokens
         : estimateContextTokens(prefix, options.imageTokens);
     pending = { ...built.cacheRequest, prefix, prefixTokens };
+    const boundaryIndex = context.messages.findIndex(isCurrentTurn);
+    if (boundaryIndex >= 0) {
+      const boundary = providerContextPrefix(
+        context.systemPrompt ?? "",
+        context.tools ?? [],
+        context.messages.slice(0, boundaryIndex + 1),
+      );
+      pendingBoundary = {
+        ...built.cacheRequest,
+        prefix: boundary,
+        prefixTokens: estimateContextTokens(boundary, options.imageTokens),
+      };
+    } else pendingBoundary = undefined;
     pendingProjection = { scope: projectionScope(model), entries: projection };
     decision = {
       ...built.decision,
@@ -747,10 +762,13 @@ export function createRuntimeContextPolicy(
         ].some((value) => typeof value === "number" && Number.isFinite(value));
       if (!reported) {
         pending = undefined;
+        pendingBoundary = undefined;
         pendingProjection = undefined;
         return;
       }
       const observation = cache.record(pending, usage?.cacheReadTokens);
+      if (pendingBoundary) cache.record(pendingBoundary, usage?.cacheReadTokens);
+      pendingBoundary = undefined;
       if (decision) decision.observedReuse = observation.observedReuse;
       pending = undefined;
       if (pendingProjection) {

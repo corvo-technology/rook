@@ -31,6 +31,7 @@ import { validateToolArguments } from "@earendil-works/pi-ai";
 import { uncertainEffectResult } from "./approval-effect.js";
 import { automated, withAutomatedLabels } from "./automated-messages.js";
 import { withCloudflareAuth } from "./cloudflare-ai-gateway.js";
+import { withCacheBoundary } from "./pi-cache-boundary.js";
 import { estimatePiImageTokens } from "./pi-image-context.js";
 import {
   assistantText,
@@ -390,6 +391,15 @@ export class PiAgentRuntime implements AgentRuntime {
             history = withLiveContext(sentHistory ?? [], request.liveContext);
           }
         }
+        const currentTurnMessage = history.find(
+          (message) => (message as Message & TurnMetadata).corvoCurrentTurn,
+        );
+        const boundaryText =
+          typeof currentTurnMessage?.content === "string"
+            ? currentTurnMessage.content
+            : currentTurnMessage?.content
+                .map((part) => (part.type === "text" ? part.text : ""))
+                .find(Boolean);
         const thinkingLevel = thinkingLevelFor(model, request.model.thinkingLevel);
         let piSession: PiSessionHandle | undefined;
         // Never write an unscoped transcript. Production requests carry userId;
@@ -530,7 +540,10 @@ export class PiAgentRuntime implements AgentRuntime {
             fallbackAwareModelStream(
               fallbackState,
               ctx,
-              withAutomatedLabels({ ...options, fetch: this.modelFetch ?? options?.fetch }),
+              withCacheBoundary(
+                withAutomatedLabels({ ...options, fetch: this.modelFetch ?? options?.fetch }),
+                () => boundaryText,
+              ),
             ),
           getApiKey: hasBackups
             ? async () => activeStreamTarget.credentials?.accessToken ?? activeStreamTarget.apiKey

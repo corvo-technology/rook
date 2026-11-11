@@ -1,7 +1,7 @@
 import type { SpaceSetting } from "@corvo/contracts";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Text } from "react-native";
+import { Alert, ScrollView, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LoadFailure } from "../../components/load-failure";
 import { NativeSwitch } from "../../components/native-switch";
@@ -26,6 +26,7 @@ export default function SpaceSettings() {
   const sideInsets = useSideInsets();
   const styles = useThemedStyles(createStyles);
   const [overrides, setOverrides] = useState<SpaceSetting[] | null>(null);
+  const [pause, setPause] = useState<{ canPause: boolean; paused: boolean } | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -44,6 +45,13 @@ export default function SpaceSettings() {
         .catch((err: unknown) => {
           if (current) setLoadError(errorText(err, t("Something went wrong. Try again.")));
         });
+      void rpc("spaces/list")
+        .then((navigation) => {
+          const found = navigation.spaces.find((item) => item.id === target.spaceId);
+          if (current && found)
+            setPause({ canPause: found.canPause === true, paused: !!found.pausedAt });
+        })
+        .catch(() => undefined);
       return () => {
         current = false;
       };
@@ -66,6 +74,19 @@ export default function SpaceSettings() {
     try {
       setOverrides(await rpc("spaceSettings/setOverride", { setting, enabled }));
       if (enabled) open(setting);
+    } catch (err) {
+      setError(errorText(err, t("Could not save that preference")));
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function setPaused(paused: boolean) {
+    setPending(true);
+    setError(null);
+    try {
+      const result = await rpc("spaces/setPaused", { spaceId: space, paused });
+      setPause({ canPause: true, paused: !!result.pausedAt });
     } catch (err) {
       setError(errorText(err, t("Could not save that preference")));
     } finally {
@@ -123,6 +144,35 @@ export default function SpaceSettings() {
           {row("voice", t("Voice"))}
           {row("confirmations", t("Approvals"))}
         </SettingsGroup>
+        {pause?.canPause ? (
+          <SettingsGroup>
+            <SettingsRow
+              title={t("Pause all bots")}
+              trailing={
+                <NativeSwitch
+                  accessibilityLabel={t("Pause all bots")}
+                  value={pause.paused}
+                  disabled={pending}
+                  onValueChange={(next) => {
+                    if (!next) return void setPaused(false);
+                    Alert.alert(
+                      t("Pause all bots"),
+                      t("Running work stops and nothing starts until you resume."),
+                      [
+                        { text: t("Cancel"), style: "cancel" },
+                        {
+                          text: t("Pause all bots"),
+                          style: "destructive",
+                          onPress: () => void setPaused(true),
+                        },
+                      ],
+                    );
+                  }}
+                />
+              }
+            />
+          </SettingsGroup>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );

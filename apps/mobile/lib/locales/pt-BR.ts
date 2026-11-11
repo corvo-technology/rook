@@ -1086,4 +1086,15 @@ export const PT_BR_MESSAGES: Record<string, string> = {
   Refuse: "Recusar",
   "Keep in the wiki": "Guardar na wiki",
   "Could not load pages": "Não foi possível carregar as páginas",
+  Resume: "Retomar",
+  "No limit": "Sem limite",
+  "Raise limit": "Aumentar limite",
+  "Monthly token limit": "Limite mensal de tokens",
+  "Pause all bots": "Pausar todos os bots",
+  "Running work stops and nothing starts until you resume.":
+    "O trabalho em andamento para e nada começa até você retomar.",
+  "This bot reached its monthly token limit.": "Este bot atingiu o limite mensal de tokens.",
+  "This reply reached its token cap.": "Esta resposta atingiu o limite de tokens.",
+  "Bots are paused in this space.": "Os bots estão pausados neste espaço.",
+  "{used} of {limit}": "{used} de {limit}",
 };

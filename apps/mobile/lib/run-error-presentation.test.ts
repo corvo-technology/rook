@@ -75,3 +75,14 @@ describe("the one recovery action", () => {
     expect(runErrorActionLabel(t, normalizeRunError(details))).toBe(label);
   });
 });
+
+describe("budget and pause actions", () => {
+  const t: Parameters<typeof runErrorActionLabel>[0] = (message) => message;
+  it("offers Raise limit for a limit error", () => {
+    expect(runErrorActionLabel(t, { recovery: "budget" })).toBe("Raise limit");
+  });
+  it("offers Resume only to a member who can resume", () => {
+    expect(runErrorActionLabel(t, { recovery: "resume" })).toBeNull();
+    expect(runErrorActionLabel(t, { recovery: "resume" }, true)).toBe("Resume");
+  });
+});

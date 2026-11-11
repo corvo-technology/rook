@@ -3,8 +3,11 @@ import type { RunErrorTranslator } from "@corvo/core";
 /** The label of the one action that fixes the failure; transient failures have none. */
 export function runErrorActionLabel(
   t: RunErrorTranslator,
-  error: { recovery?: "connection" | "model"; kind?: string },
+  error: { recovery?: "connection" | "model" | "budget" | "resume"; kind?: string },
+  canResume = false,
 ) {
+  if (error.recovery === "budget") return t("Raise limit");
+  if (error.recovery === "resume") return canResume ? t("Resume") : null;
   if (error.recovery === "model") return t("Change model");
   if (error.recovery === "connection")
     return error.kind === "auth" ? t("Replace key") : t("Add Model");

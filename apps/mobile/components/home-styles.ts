@@ -207,6 +207,13 @@ export function createHomeStyles() {
       minHeight: 44,
       justifyContent: "center",
     },
+    paused: {
+      color: tokens.warning,
+      fontSize: 13,
+      fontWeight: "600",
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+    },
     spaceTitle: {
       color: native.label,
       fontSize: 14,

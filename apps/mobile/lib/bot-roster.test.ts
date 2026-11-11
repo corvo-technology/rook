@@ -36,6 +36,7 @@ function bot(id = "bot-1"): Bot {
     fleetManagement: false,
     squadRouting: false,
     dailyCapUsd: null,
+    monthlyTokenLimit: null,
     disabledBuiltinTools: [],
     webhookConfigured: false,
     spawnKey: null,

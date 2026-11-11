@@ -1,7 +1,7 @@
 # App icon source
 
 `Corvo.icon` is the shared editable source for macOS and iOS. Open it in Apple's
-Icon Composer with Xcode 26 or newer. is Ana, the baby crow, drawn as `Assets/ana.svg` and centered on the system dark
+Icon Composer with Xcode 26 or newer. is the mint rook, drawn as `Assets/ana.svg` and centered on the system dark
 background. The same drawing is the site's logo.
 
 macOS packaging compiles the source into a Tahoe asset catalog and generates the
@@ -14,7 +14,7 @@ The platform exports are:
 - `apps/mobile/assets/icon.png`: opaque 1024-pixel square for the generic/legacy icon,
   with no rounded mask or Dock margins.
 - `apps/mobile/assets/adaptive-icon.png`: transparent 1024-pixel Android foreground;
-  Ana's view box is half the canvas, centered, so her whole figure stays inside the launcher's
+  The rook's view box is half the canvas, centered, so the whole figure stays inside the launcher's
   safe circle.
 - `apps/mobile/assets/icon-background.png`: opaque Android background using the
   shared dark background token.

@@ -1,10 +1,13 @@
 import type { ModelCatalogEntry } from "@corvo/contracts";
-import { detectProviderFromKey, pickCatalogModelId } from "@corvo/core";
+import type { ModelProblem } from "@corvo/core";
+import { detectProviderFromKey, modelFailureData, pickCatalogModelId } from "@corvo/core";
 import { Button, Input } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
+import { ModelProblemNotice } from "../components/ModelProblemNotice";
 import { useLocalTools } from "../lib/local-tools";
 import { runModelConnectionPreflight } from "../lib/model-connection-preflight";
+import { webModelProblem } from "../lib/model-problem";
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
 
@@ -31,6 +34,8 @@ export function QuickKeyConnect({
   const [key, setKey] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [problem, setProblem] = useState<ModelProblem | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const tools = useLocalTools();
   // A subscription whose tool is already installed here is the one this person most likely has.
   const found = (option: { value: string }) =>
@@ -46,6 +51,7 @@ export function QuickKeyConnect({
     if (!provider || !entry || pending) return;
     setPending(true);
     setError(null);
+    setProblem(null);
     const apiKey = key.trim();
     const modelId = pickCatalogModelId([...catalog], provider);
     const checked = await runModelConnectionPreflight({
@@ -56,9 +62,15 @@ export function QuickKeyConnect({
       catalogProbe: true,
       probeCatalog: rpc.models.probeCatalog,
     });
-    // A provider that cannot be listed in advance is verified by saving, as in the full form.
-    if (!checked.ok && checked.failure.outcome !== "unknown") {
-      setError(`${checked.failure.message} ${checked.failure.nextAction}`);
+    // A provider that cannot be listed in advance, or whose failure says nothing, is verified
+    // by saving, as in the full form.
+    if (
+      !checked.ok &&
+      checked.failure.outcome !== "unknown" &&
+      !(checked.failure.outcome === "provider" && checked.failure.problem.kind === "other")
+    ) {
+      if (checked.failure.outcome === "provider") setProblem(checked.failure.problem);
+      else setError(`${checked.failure.message} ${checked.failure.nextAction}`);
       setPending(false);
       return;
     }
@@ -71,7 +83,9 @@ export function QuickKeyConnect({
       });
       onConnected();
     } catch (err) {
-      setError(errorText(err, t`Could not save model`));
+      if (modelFailureData(err))
+        setProblem(webModelProblem(err, t`Could not save model`, "api_key"));
+      else setError(errorText(err, t`Could not save model`));
       setPending(false);
     }
   }
@@ -110,11 +124,13 @@ export function QuickKeyConnect({
         </label>
         <Input
           id={fieldId}
+          ref={inputRef}
           type="password"
           value={key}
           onChange={(event) => {
             setKey(event.target.value);
             setError(null);
+            setProblem(null);
           }}
           aria-label={t`API key`}
           placeholder={t`Paste your API key`}
@@ -135,6 +151,18 @@ export function QuickKeyConnect({
           <p className="mt-3 text-sm text-destructive" role="alert">
             {error}
           </p>
+        ) : null}
+        {problem ? (
+          <ModelProblemNotice
+            className="mt-3"
+            problem={problem}
+            retrying={pending}
+            onRetry={() => void connect()}
+            onAction={(action) => {
+              if (action === "replace-key") inputRef.current?.focus();
+              else onMore();
+            }}
+          />
         ) : null}
         <Button className="mt-6" type="submit" disabled={!entry || pending}>
           {pending ? <Trans>Testing…</Trans> : <Trans>Continue</Trans>}

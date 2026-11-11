@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import type { ModelCatalogEntry } from "@corvo/contracts";
+import { i18n } from "@lingui/core";
 import type { ReactNode } from "react";
 import { act } from "react";
 import type { Root } from "react-dom/client";
@@ -31,6 +32,8 @@ const onMore = vi.fn();
 const onConnected = vi.fn();
 
 beforeEach(() => {
+  i18n.load("en", {});
+  i18n.activate("en");
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   rpcMock.models.probeCatalog.mockReset().mockResolvedValue({ models: ["openai/gpt-x"] });
   rpcMock.models.connect.mockReset().mockResolvedValue({});
@@ -71,6 +74,12 @@ async function paste(value: string) {
   });
 }
 
+function rejected(status: number, details: string) {
+  return Object.assign(new Error(details), {
+    data: { reason: "model_failure", modelFailure: { details, status } },
+  });
+}
+
 const submit = () => container.querySelector('button[type="submit"]') as HTMLButtonElement;
 const text = () => container.textContent ?? "";
 
@@ -108,7 +117,7 @@ describe("QuickKeyConnect", () => {
   });
 
   it("does not save a key that the provider rejects, and says why", async () => {
-    rpcMock.models.probeCatalog.mockRejectedValue(new Error("401 invalid api key"));
+    rpcMock.models.probeCatalog.mockRejectedValue(rejected(401, "invalid api key"));
     await render();
     await paste("sk-or-v1-abcdef123456");
     await act(async () => submit().click());
@@ -116,6 +125,31 @@ describe("QuickKeyConnect", () => {
     expect(onConnected).not.toHaveBeenCalled();
     expect(container.querySelector('[role="alert"]')).not.toBeNull();
     expect(submit().disabled).toBe(false);
+  });
+
+  it("offers Replace key and Try again when saving fails with a rejected key", async () => {
+    rpcMock.models.connect.mockRejectedValueOnce(rejected(401, "invalid api key"));
+    await render();
+    await paste("sk-or-v1-abcdef123456");
+    await act(async () => submit().click());
+    const labels = [...container.querySelectorAll("button")].map((item) => item.textContent);
+    expect(labels).toContain("Replace key");
+    expect(labels).toContain("Try again");
+    await act(async () =>
+      [...container.querySelectorAll("button")]
+        .find((item) => item.textContent === "Try again")
+        ?.click(),
+    );
+    expect(rpcMock.models.connect).toHaveBeenCalledTimes(2);
+    expect(onConnected).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows a plain save error as it is", async () => {
+    rpcMock.models.connect.mockRejectedValueOnce(new Error("Name is taken"));
+    await render();
+    await paste("sk-or-v1-abcdef123456");
+    await act(async () => submit().click());
+    expect(text()).toContain("Name is taken");
   });
 
   it("keeps the other ways in: a subscription sign-in and the full provider list", async () => {

@@ -1,4 +1,9 @@
-import type { ModelProblem, ModelProblemAction, ModelProblemOptions } from "@corvo/core";
+import type {
+  ModelProblem,
+  ModelProblemAction,
+  ModelProblemOptions,
+  RunErrorTranslator,
+} from "@corvo/core";
 import { describeModelProblem, modelProblemFromError } from "@corvo/core";
 import { i18n } from "@lingui/core";
 import { t } from "@lingui/core/macro";
@@ -6,8 +11,14 @@ import { translateRunError } from "./run-error";
 
 type AuthKind = ModelProblemOptions["authKind"];
 
+/** The offline line is the one every screen already shows; it keeps its existing catalog entry. */
+const translate: RunErrorTranslator = (message, values) =>
+  message === "Could not reach the server"
+    ? t`Could not reach the server`
+    : translateRunError(message, values);
+
 function options(authKind: AuthKind): ModelProblemOptions {
-  return { authKind, translate: translateRunError, locale: i18n.locale || "en" };
+  return { authKind, translate, locale: i18n.locale || "en" };
 }
 
 /** A failed model call (probe, connect, save) as one line, one action and masked details. */

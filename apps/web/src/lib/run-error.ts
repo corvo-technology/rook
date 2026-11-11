@@ -122,12 +122,6 @@ export const translateRunError: RunErrorTranslator = (message, values) => {
           "{provider} couldn't be reached through the network proxy. Check the proxy settings.",
         values,
       });
-    case "Could not reach the server":
-      return i18n._({
-        id: "Could not reach the server",
-        message: "Could not reach the server",
-        values,
-      });
     case "{provider} is overloaded right now. Try again in a moment.":
       return i18n._({
         id: "{provider} is overloaded right now. Try again in a moment.",

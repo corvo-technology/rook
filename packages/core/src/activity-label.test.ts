@@ -14,6 +14,10 @@ describe("parseActivityLabel", () => {
     ["Searching the web: node version", { id: "searching", value: "node version" }],
     ["Reading skill: carrossel", { id: "readingSkill", value: "carrossel" }],
     ["Delegating to helper: Researcher", { id: "delegating", value: "Researcher" }],
+    [
+      "Waiting for db: execute_sql_read_only",
+      { id: "waitingFor", value: "db: execute_sql_read_only" },
+    ],
     ["Using github: create_issue", { id: "using", value: "github: create_issue" }],
     ["Using CANVA_CREATE_DESIGN", { id: "using", value: "CANVA_CREATE_DESIGN" }],
     ["Finding a tool", { id: "findingTool" }],

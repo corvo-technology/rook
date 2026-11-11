@@ -6808,6 +6808,10 @@ msgstr "等待中"
 msgid "Waiting"
 msgstr "等待中"
 
+#: src/lib/activity-label.ts
+msgid "Waiting for {value}"
+msgstr "正在等待 {value}"
+
 #: src/components/WikiChangeCard.tsx
 msgid "Waiting for approval"
 msgstr "等待批准"

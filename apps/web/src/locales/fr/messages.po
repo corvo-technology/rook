@@ -6808,6 +6808,10 @@ msgstr "en attente"
 msgid "Waiting"
 msgstr "En attente"
 
+#: src/lib/activity-label.ts
+msgid "Waiting for {value}"
+msgstr "En attente de {value}"
+
 #: src/components/WikiChangeCard.tsx
 msgid "Waiting for approval"
 msgstr "En attente d'approbation"

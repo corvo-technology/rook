@@ -214,9 +214,18 @@ export function describeToolActivity(toolName: string, args: unknown): string {
     return `Updating skill: ${detail(record.name ?? record.skillId)}`;
   if (toolName === "skill_delete")
     return `Deleting skill: ${detail(record.name ?? record.skillId)}`;
+  return `Using ${toolActivityName(toolName)}`;
+}
+
+/** A connector tool as people read it: "<server>: <tool>" for an MCP tool. */
+export function toolActivityName(toolName: string): string {
   const mcp = toolName.match(/^mcp__(.+?)__(.+)$/);
-  if (mcp) return `Using ${mcp[1]}: ${mcp[2]}`;
-  return `Using ${toolName}`;
+  return mcp ? `${mcp[1]}: ${mcp[2]}` : toolName;
+}
+
+/** The live line shown while the backend waits for a connector to finish a call. */
+export function waitingActivityText(toolName: string): string {
+  return `Waiting for ${toolActivityName(toolName)}`;
 }
 
 export function normalizeAgentToolNames(tools: readonly ConnectorTool[]): string[] {

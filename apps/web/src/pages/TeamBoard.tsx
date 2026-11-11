@@ -1,5 +1,5 @@
 import type { SpaceBot, Ticket } from "@corvo/contracts";
-import { BotAvatar, Button } from "@corvo/ui-web";
+import { BotAvatar, Button, RookGlyph } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import type { ReactNode } from "react";
 import { formatRelativeTime } from "../lib/relative-time";
@@ -34,8 +34,19 @@ export function TeamBoard({
     working: rosterWorkStatusLabel(bot.status) !== null,
     needsYou: botNeedsYou(bot.status),
   });
+  if (!roster.chief && roster.teams.length === 0 && roster.unassigned.length === 0) {
+    return (
+      <p
+        data-testid="team-empty"
+        className="flex flex-col items-center gap-3 py-16 text-sm text-muted-foreground"
+      >
+        <RookGlyph state="asleep" size={36} />
+        {t`No bots`}
+      </p>
+    );
+  }
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
       {roster.chief ? (
         <MemberButton
           member={asMember(roster.chief)}
@@ -45,9 +56,9 @@ export function TeamBoard({
         />
       ) : null}
       {/* Columns, not rows, so a short team fills the space under another and none leaves a gap. */}
-      <ul className="columns-[320px] gap-4">
+      <ul className="flex flex-col gap-8">
         {roster.teams.map((team) => (
-          <li key={team.group.id} className="mb-4 break-inside-avoid">
+          <li key={team.group.id}>
             <Panel
               testId={`team-${team.group.id}`}
               name={team.group.name}
@@ -74,7 +85,7 @@ export function TeamBoard({
           </li>
         ))}
         {roster.unassigned.length > 0 ? (
-          <li className="mb-4 break-inside-avoid">
+          <li>
             <Panel
               testId="team-unassigned"
               name={t`Not in a team`}
@@ -119,8 +130,22 @@ function Panel({
   const { t } = useLingui();
   const title = (
     <>
-      <span className="block truncate text-[15px] font-semibold text-foreground" dir="auto">
-        {name}
+      <span className="flex items-baseline gap-2">
+        <span className="truncate text-sm font-medium text-foreground" dir="auto">
+          {name}
+        </span>
+        <span className="flex items-center gap-2 text-xs font-normal text-muted-foreground">
+          {count > 1 ? <span className="font-mono tabular-nums">{t`${count} agents`}</span> : null}
+          {working > 0 ? (
+            <span className="flex items-center gap-1.5">
+              <span
+                aria-hidden="true"
+                className="corvo-presence-dot size-1.5 shrink-0 rounded-full bg-status-working"
+              />
+              {t`${working} working`}
+            </span>
+          ) : null}
+        </span>
       </span>
       {purpose ? (
         <span
@@ -130,38 +155,22 @@ function Panel({
           {purpose}
         </span>
       ) : null}
-      <span className="mt-1 flex items-center gap-2 text-xs font-normal text-muted-foreground">
-        {count > 1 ? <span>{t`${count} agents`}</span> : null}
-        {working > 0 ? (
-          <span className="flex items-center gap-1.5">
-            <span
-              aria-hidden="true"
-              className="corvo-presence-dot size-1.5 shrink-0 rounded-full bg-status-working"
-            />
-            {t`${working} working`}
-          </span>
-        ) : null}
-      </span>
     </>
   );
   return (
-    <section
-      data-testid={testId}
-      aria-label={name}
-      className="flex flex-col gap-1 rounded-2xl border border-border bg-card p-2"
-    >
+    <section data-testid={testId} aria-label={name} className="flex flex-col">
       {onOpenTeam ? (
         <Button
           variant="ghost"
-          className="h-auto w-full flex-col items-start justify-start rounded-xl px-2 py-2 text-start whitespace-normal"
+          className="h-auto w-full flex-col items-start justify-start rounded-xl px-3 py-1.5 text-start whitespace-normal"
           onClick={onOpenTeam}
         >
           {title}
         </Button>
       ) : (
-        <div className="px-2 py-2">{title}</div>
+        <div className="px-3 py-1.5">{title}</div>
       )}
-      <div className="flex flex-col gap-0.5">{children}</div>
+      <div className="mt-1 flex flex-col divide-y divide-border/50">{children}</div>
     </section>
   );
 }
@@ -189,49 +198,49 @@ function MemberButton({
 }) {
   const { bot } = member;
   const state = stateOf(member);
+  const failed = bot.status === "failed";
   return (
     <Button
       variant="ghost"
       data-testid={testId}
       data-state={member.needsYou ? "needs-you" : member.working ? "working" : "idle"}
-      className={
-        lead
-          ? "h-auto w-full justify-start gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-start"
-          : "h-auto w-full justify-start gap-3 rounded-xl px-2 py-2 text-start"
-      }
+      className={`h-auto w-full justify-start gap-3 rounded-xl px-3 text-start transition-transform duration-150 active:scale-[0.99] motion-reduce:transition-none ${
+        lead ? "py-3" : "py-2"
+      }`}
       onClick={onOpen}
     >
-      <BotAvatar color={bot.color} identity={bot.id} size={lead ? 40 : 30} status={bot.status} />
-      <span className="min-w-0 flex-1">
-        <span className="flex items-baseline justify-between gap-3">
-          <span className="truncate text-[14px] font-medium text-foreground" dir="auto">
-            {bot.name}
-          </span>
-          {state.text ? (
-            <span
-              className={`shrink-0 text-xs font-normal ${
-                state.tone === "working"
-                  ? "text-shimmer"
-                  : state.tone === "attention"
-                    ? bot.status === "failed"
-                      ? "text-destructive"
-                      : "text-warning"
-                    : "text-muted-foreground"
-              }`}
-            >
-              {state.text}
-            </span>
-          ) : null}
+      <BotAvatar color={bot.color} identity={bot.id} size={lead ? 36 : 28} status={bot.status} />
+      <span className="flex min-w-0 flex-1 items-baseline gap-2">
+        <span className="shrink-0 text-[14px] font-medium text-foreground" dir="auto">
+          {bot.name}
         </span>
         {bot.title ? (
           <span
             dir="auto"
-            className="mt-0.5 block truncate text-[13px] font-normal text-muted-foreground"
+            className="min-w-0 truncate text-[13px] font-normal text-muted-foreground"
           >
             {bot.title}
           </span>
         ) : null}
       </span>
+      {state.text ? (
+        <span
+          className={`flex shrink-0 items-center gap-1.5 text-xs font-normal ${
+            state.tone === "working"
+              ? "text-shimmer"
+              : state.tone === "attention"
+                ? failed
+                  ? "text-destructive"
+                  : "text-brand"
+                : "text-muted-foreground"
+          }`}
+        >
+          {state.tone === "attention" && !failed ? (
+            <span aria-hidden="true" className="size-1.5 rounded-full bg-brand" />
+          ) : null}
+          {state.text}
+        </span>
+      ) : null}
     </Button>
   );
 }
@@ -248,7 +257,7 @@ function MemberTickets({
 }) {
   if (!tickets?.length) return null;
   return (
-    <ul data-testid={`member-tickets-${botId}`} className="ms-11 flex flex-col pb-1">
+    <ul data-testid={`member-tickets-${botId}`} className="ms-14 flex flex-col pb-1">
       {tickets.map((ticket) => (
         <li key={ticket.id}>
           <Button
@@ -256,7 +265,7 @@ function MemberTickets({
             className="h-auto w-full justify-start gap-2 rounded-lg px-2 py-1 text-start text-xs font-normal text-muted-foreground"
             onClick={() => onOpen(`/app/board?ticket=${ticket.ref}`)}
           >
-            <span className="shrink-0">{ticket.ref}</span>
+            <span className="shrink-0 font-mono text-[11px] tabular-nums">{ticket.ref}</span>
             <span className="truncate" dir="auto">
               {ticket.title}
             </span>

@@ -316,14 +316,6 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   const secrets = createSecretStore(env.encryptionKey, process.env, realtime);
   // Speech models live on the owner's own computer, so only the desktop engine gets them.
   const localSpeech = createLocalSpeech(env);
-  // Finding model servers on this host only makes sense where a found loopback server could be
-  // saved, so the same flag that allows private model endpoints turns detection on.
-  const localSetup = env.mcpAllowPrivateEndpoint
-    ? new LocalSetupCheck({
-        file: join(env.dataDir, "local-setup.json"),
-        probe: (signal) => probeLoopbackServers({ signal }),
-      })
-    : undefined;
   const audio = createAudioHold({ prisma, localSpeech });
   await secrets.start();
   if (secrets.describe().capabilities.degraded)
@@ -544,6 +536,20 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     installCliEngineHost(host);
     host.refresh().catch((error) => getLogger().error("cli engine detection failed", error));
   }
+  // Finding model servers on this host only makes sense where a found loopback server could be
+  // saved, so the same flag that allows private model endpoints turns server detection on.
+  // The same check also reads the coding-agent CLIs, wherever the engine offers them.
+  const localSetup =
+    env.mcpAllowPrivateEndpoint || cliGateway
+      ? new LocalSetupCheck({
+          file: join(env.dataDir, "local-setup.json"),
+          probe: (signal) =>
+            env.mcpAllowPrivateEndpoint ? probeLoopbackServers({ signal }) : Promise.resolve([]),
+          cliProbe: cliGateway
+            ? async () => (await cliEngineHost()?.refresh())?.engines ?? []
+            : undefined,
+        })
+      : undefined;
   const piRuntime = new PiAgentRuntime({
     sessionRoot: env.piSessionRecording ? piSessionsRoot(env.dataDir) : undefined,
   });

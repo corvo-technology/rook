@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { mkdir, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import type { CliEngineStatus } from "@corvo/contracts";
+import { CliEngineStatusSchema } from "@corvo/contracts";
 import * as z from "zod";
 import {
   type FoundServer,
@@ -11,8 +13,10 @@ import {
 const DEFAULT_DEADLINE_MS = 5_000;
 
 const FindingsFileSchema = z.object({
-  version: z.literal(1),
+  // Version 1 files were written before the CLI probe existed and read with no engines.
+  version: z.union([z.literal(1), z.literal(2)]),
   checkedAt: z.number(),
+  cliEngines: z.array(CliEngineStatusSchema).max(20).optional(),
   servers: z.array(
     z.object({
       port: z.number().int(),
@@ -31,7 +35,12 @@ function readKept(file: string): MachineFindings | null {
       const known = LOOPBACK_MODEL_SERVERS.find((server) => server.port === kept.port);
       if (known && kept.models.length > 0) servers.push({ ...known, models: kept.models });
     }
-    return { version: 1, checkedAt: parsed.data.checkedAt, servers };
+    return {
+      version: 2,
+      checkedAt: parsed.data.checkedAt,
+      servers,
+      cliEngines: parsed.data.cliEngines ?? [],
+    };
   } catch {
     return null;
   }
@@ -47,17 +56,21 @@ export class LocalSetupCheck {
   #running: Promise<MachineFindings> | null = null;
   readonly #file: string;
   readonly #probe: (signal: AbortSignal) => Promise<FoundServer[]>;
+  readonly #cliProbe: ((signal: AbortSignal) => Promise<CliEngineStatus[]>) | undefined;
   readonly #deadlineMs: number;
   readonly #now: () => number;
 
   constructor(options: {
     file: string;
     probe: (signal: AbortSignal) => Promise<FoundServer[]>;
+    /** Reads the coding-agent CLIs; it shares the deadline but never holds the servers up. */
+    cliProbe?: (signal: AbortSignal) => Promise<CliEngineStatus[]>;
     deadlineMs?: number;
     now?: () => number;
   }) {
     this.#file = options.file;
     this.#probe = options.probe;
+    this.#cliProbe = options.cliProbe;
     this.#deadlineMs = options.deadlineMs ?? DEFAULT_DEADLINE_MS;
     this.#now = options.now ?? Date.now;
     this.#findings = readKept(this.#file);
@@ -77,18 +90,25 @@ export class LocalSetupCheck {
   async #run(): Promise<MachineFindings> {
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout> | undefined;
-    const deadline = new Promise<FoundServer[]>((resolve) => {
+    const deadline = new Promise<"deadline">((resolve) => {
       timer = setTimeout(() => {
         controller.abort();
-        resolve([]);
+        resolve("deadline");
       }, this.#deadlineMs);
     });
-    const servers = await Promise.race([
-      this.#probe(controller.signal).catch((): FoundServer[] => []),
-      deadline,
+    // Each source settles by the deadline on its own, so a hung one contributes nothing.
+    const within = async <T>(probe: Promise<T>, empty: T): Promise<T> => {
+      const result = await Promise.race([probe.catch(() => empty), deadline]);
+      return result === "deadline" ? empty : result;
+    };
+    const [servers, cliEngines] = await Promise.all([
+      within(this.#probe(controller.signal), [] as FoundServer[]),
+      this.#cliProbe
+        ? within(this.#cliProbe(controller.signal), [] as CliEngineStatus[])
+        : Promise.resolve([] as CliEngineStatus[]),
     ]);
     clearTimeout(timer);
-    const findings: MachineFindings = { version: 1, checkedAt: this.#now(), servers };
+    const findings: MachineFindings = { version: 2, checkedAt: this.#now(), servers, cliEngines };
     this.#findings = findings;
     await this.#persist(findings);
     return findings;

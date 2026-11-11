@@ -1,5 +1,7 @@
 import type { FoundServer, MachineFindings } from "@corvo/adapters";
 import {
+  CLAUDE_ENGINE,
+  cliEngineHost,
   LOCAL_MODEL_TEST_TIMEOUT_MS,
   LOCAL_PROVIDER_ID,
   LOOPBACK_MODEL_SERVERS,
@@ -12,12 +14,14 @@ import {
 } from "@corvo/adapters";
 import type {
   Actor,
+  CliEngineStatus,
   LocalModelOption,
   LocalSetupReport,
   ModelCatalogEntry,
   ModelRole,
 } from "@corvo/contracts";
 import {
+  CLI_ENGINE_PROVIDER_ID,
   canonicalPiProviderId,
   DISABLED_LOCAL_SETUP,
   MAX_ENABLED_MODEL_IDS,
@@ -42,6 +46,10 @@ type ConnectionInput = {
   models?: string[];
 };
 
+function cliEngineLabel(id: CliEngineStatus["id"]): string {
+  return [CLAUDE_ENGINE].find((engine) => engine.id === id)?.displayName ?? id;
+}
+
 type BackgroundCosts = Parameters<typeof pickBackgroundModelId>[0]["costs"];
 
 /** Existing connection, then loopback server in port order, then operator-local models. */
@@ -51,6 +59,8 @@ export function buildLocalSetupReport(input: {
   operatorModels: string[];
   connections: ConnectionInput[];
   catalog: ModelCatalogEntry[];
+  /** Left out where CLI engines are not offered, so no CLI option or row appears. */
+  cliEngines?: CliEngineStatus[];
   costs?: BackgroundCosts;
 }): LocalSetupReport {
   const option = (
@@ -117,6 +127,19 @@ export function buildLocalSetupReport(input: {
       });
       return found ? [found] : [];
     });
+  const cliOptions = (input.cliEngines ?? []).flatMap((status) => {
+    if (status.state !== "ready") return [];
+    const found = option({
+      id: `cli:${status.id}`,
+      kind: "cli",
+      label: cliEngineLabel(status.id),
+      provider: CLI_ENGINE_PROVIDER_ID,
+      models: status.models,
+      // A plan sign-in was verified by the status check; a run is the only real test.
+      testable: false,
+    });
+    return found ? [found] : [];
+  });
   const local = option({
     id: "local",
     kind: "local",
@@ -129,7 +152,8 @@ export function buildLocalSetupReport(input: {
     enabled: true,
     checking: input.checking,
     checkedAt: input.findings?.checkedAt ?? null,
-    options: [...connections, ...servers, ...(local ? [local] : [])],
+    options: [...connections, ...servers, ...cliOptions, ...(local ? [local] : [])],
+    ...(input.cliEngines ? { cliEngines: input.cliEngines } : {}),
   };
 }
 
@@ -183,6 +207,7 @@ export function localSetupRoutes(ctx: RouterContext) {
           .map((model) => model.id) ?? [],
       connections: await connectionInputs(actor),
       catalog: await chatCatalog(actor),
+      cliEngines: cliEngineHost() ? (state.findings?.cliEngines ?? []) : undefined,
     });
   }
 
@@ -312,7 +337,10 @@ export function localSetupRoutes(ctx: RouterContext) {
       useLocal: authed.models.useLocal.handler(async ({ context, input }) => {
         const { actor, signal } = context;
         // A cached server may have stopped since it was found; never save a dead connection.
-        if (deps.localSetup && input.optionId.startsWith("server:"))
+        if (
+          deps.localSetup &&
+          (input.optionId.startsWith("server:") || input.optionId.startsWith("cli:"))
+        )
           await deps.localSetup.refresh();
         const { option, server } = await resolveLocalOption(actor, input.optionId, input.modelId);
         const modelId = input.modelId;

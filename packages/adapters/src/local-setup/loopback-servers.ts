@@ -1,3 +1,4 @@
+import type { CliEngineStatus } from "@corvo/contracts";
 import { probeOpenAiCompatibleModels } from "../pi-openai-compatible-provider.js";
 
 /** The only addresses ever probed. No caller supplies a URL. */
@@ -9,7 +10,13 @@ export const LOOPBACK_MODEL_SERVERS: readonly { port: number; label: string; bas
 
 export type FoundServer = { port: number; label: string; baseUrl: string; models: string[] };
 
-export type MachineFindings = { version: 1; checkedAt: number; servers: FoundServer[] };
+export type MachineFindings = {
+  version: 2;
+  checkedAt: number;
+  servers: FoundServer[];
+  /** What the coding-agent CLI probe reported; empty where there is none. */
+  cliEngines: CliEngineStatus[];
+};
 
 const DEFAULT_PROBE_TIMEOUT_MS = 1_500;
 

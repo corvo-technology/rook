@@ -1,7 +1,13 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { type FoundServer, LocalSetupCheck } from "@corvo/adapters";
+import {
+  CLAUDE_ENGINE,
+  CliEngineHost,
+  type FoundServer,
+  installCliEngineHost,
+  LocalSetupCheck,
+} from "@corvo/adapters";
 import type { Actor, ModelCatalogEntry } from "@corvo/contracts";
 import { DISABLED_LOCAL_SETUP } from "@corvo/contracts";
 import type { PrismaClient } from "@corvo/db";
@@ -291,7 +297,7 @@ describe("buildLocalSetupReport", () => {
   it("sets backgroundModelId from catalog prices for a connection, null for a server", () => {
     const report = buildLocalSetupReport({
       ...base,
-      findings: { version: 1, checkedAt: 1, servers: [server()] },
+      findings: { version: 2, checkedAt: 1, servers: [server()], cliEngines: [] },
       connections: [
         { id: "c1", provider: "acme", label: "Acme", defaultModel: "big", kind: "api_key" },
       ],
@@ -309,6 +315,47 @@ describe("buildLocalSetupReport", () => {
       backgroundModelId: "small",
     });
     expect(report.options[1]).toMatchObject({ id: "server:11434", backgroundModelId: null });
+  });
+
+  it("omits cliEngines where CLI engines are not allowed", () => {
+    const report = buildLocalSetupReport({ ...base, connections: [], catalog: [] });
+    expect(report).not.toHaveProperty("cliEngines");
+    expect(report.options.some((option) => option.kind === "cli")).toBe(false);
+  });
+
+  it("offers a ready CLI engine as an option that cannot be tested, and not a signed-out one", () => {
+    const status = (state: "ready" | "signed_out") => ({
+      id: "claude" as const,
+      state,
+      version: "2.5.0",
+      models: state === "ready" ? ["claude/sonnet", "claude/opus"] : [],
+      checkedAt: "2026-01-01T00:00:00.000Z",
+    });
+    const ready = buildLocalSetupReport({
+      ...base,
+      connections: [],
+      catalog: [],
+      cliEngines: [status("ready")],
+    });
+    expect(ready.options).toEqual([
+      expect.objectContaining({
+        id: "cli:claude",
+        kind: "cli",
+        label: "Claude Code",
+        provider: "cli-engine",
+        modelId: "claude/sonnet",
+        testable: false,
+      }),
+    ]);
+    expect(ready.cliEngines).toHaveLength(1);
+    const signedOut = buildLocalSetupReport({
+      ...base,
+      connections: [],
+      catalog: [],
+      cliEngines: [status("signed_out")],
+    });
+    expect(signedOut.options).toEqual([]);
+    expect(signedOut.cliEngines).toHaveLength(1);
   });
 
   it("marks oauth connections not testable", () => {
@@ -468,5 +515,36 @@ describe("models.useLocal", () => {
   it("is NOT_FOUND where detection is off", async () => {
     const { call } = setup({});
     expect((await call("models/useLocal", { optionId: "local", modelId: "x" })).status).toBe(404);
+  });
+});
+
+describe("models.useLocal with a CLI engine", () => {
+  afterEach(() => installCliEngineHost(undefined));
+
+  it("sets the main role to the engine's model once it is signed in", async () => {
+    const host = new CliEngineHost({
+      dataDir: dir,
+      engines: [CLAUDE_ENGINE],
+      locate: async () => "/bin/claude",
+      run: async (_bin, args) =>
+        args[0] === "--version"
+          ? { code: 0, stdout: "2.5.0 (Claude Code)" }
+          : { code: 0, stdout: '{"loggedIn":true,"authMethod":"claude.ai"}' },
+    });
+    installCliEngineHost(host);
+    const setupCheckWithCli = new LocalSetupCheck({
+      file: path.join(dir, "local-setup.json"),
+      probe: async () => [],
+      cliProbe: async () => (await host.refresh()).engines,
+    });
+    const { call } = setup({ localSetup: setupCheckWithCli });
+    const report = await call("models/localSetup", { wait: true });
+    expect(report.json.options.map((option: { id: string }) => option.id)).toContain("cli:claude");
+    const used = await call("models/useLocal", {
+      optionId: "cli:claude",
+      modelId: "claude/sonnet",
+    });
+    expect(used).toEqual({ status: 200, json: { ok: true } });
+    expect((await call("me")).json.needsModel).toBe(false);
   });
 });

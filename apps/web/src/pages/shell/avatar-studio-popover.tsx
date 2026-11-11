@@ -141,7 +141,7 @@ export function BotLookPicker({
   );
 }
 
-/** The default chick and the characters of Open Bot Avatar, each in the color the agent wears. */
+/** The default rook and the characters of Open Bot Avatar, each in the color the agent wears. */
 export function BotCharacterPicker({
   value,
   onChange,

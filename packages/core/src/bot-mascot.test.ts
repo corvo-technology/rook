@@ -7,6 +7,7 @@ import {
   MASCOT_LOOKS,
   mascotForColorDef,
   mascotHex,
+  ROOK,
 } from "./bot-mascot.js";
 
 describe("mascotForColorDef", () => {
@@ -55,15 +56,21 @@ describe("the mascot colors", () => {
   });
 });
 
-describe("the chick of each mascot", () => {
+describe("the rook of each mascot", () => {
   it("has a look for every color, each in a shade of its own", () => {
     const shades = MASCOT_COLORS.map(({ id }) => MASCOT_LOOKS[id].color);
     expect(new Set(shades).size).toBe(MASCOT_COLORS.length);
     for (const shade of shades) expect(shade).toMatch(/^#[0-9a-f]{6}$/);
   });
 
-  it("keeps the uncolored chick graphite, so a white one is never lost on a white page", () => {
+  it("keeps the uncolored rook graphite, so a white one is never lost on a white page", () => {
     expect(MASCOT_LOOKS.neutral.color).toBe("#55555c");
+  });
+
+  it("is one block under three battlements, with nothing else to tell the colors apart", () => {
+    expect(ROOK.body).toEqual({ x: 18, y: 28, width: 64, height: 60, rx: 18 });
+    expect(ROOK.battlements.map((battlement) => battlement.x)).toEqual([18, 42, 66]);
+    for (const color of Object.values(MASCOT_LOOKS)) expect(Object.keys(color)).toEqual(["color"]);
   });
 });
 

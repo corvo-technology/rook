@@ -539,6 +539,7 @@ export const Composer = memo(function Composer({
   return (
     <fieldset
       aria-label={t`Message composer`}
+      data-coach="first"
       data-dragging={draggingFiles ? "files" : undefined}
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}

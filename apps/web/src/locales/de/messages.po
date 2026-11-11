@@ -1484,7 +1484,6 @@ msgstr "Wählen Sie eine Farbe oder laden Sie ein Bild hoch"
 
 #: src/lib/model-problem.ts
 #: src/pages/ModelSettingsOverlay.tsx
-#: src/pages/shell/composer-error.tsx
 msgid "Choose a model"
 msgstr "Modell auswählen"
 
@@ -1784,7 +1783,6 @@ msgstr "{selectedProviderName} verbinden"
 
 #: src/lib/model-problem.ts
 #: src/pages/Onboarding.tsx
-#: src/pages/shell/composer-error.tsx
 msgid "Connect a model"
 msgstr "Modell verbinden"
 
@@ -2762,7 +2760,6 @@ msgstr "Desktop-Update"
 #: src/components/ModelProblemNotice.tsx
 #: src/pages/RoutineRunDetail.tsx
 #: src/pages/RoutineRunHistory.tsx
-#: src/pages/shell/composer-error.tsx
 msgid "Details"
 msgstr "Details"
 
@@ -3324,6 +3321,10 @@ msgstr "Git-Ereignis"
 #: src/pages/shell/composer.tsx
 msgid "Goes to {recipient}"
 msgstr "Geht an {recipient}"
+
+#: src/components/CoachLayer.tsx
+msgid "Got it"
+msgstr "Verstanden"
 
 #: src/lib/identity-display.ts
 #: src/pages/shell/chat-header.tsx
@@ -5268,7 +5269,6 @@ msgid "Replace its instructions"
 msgstr "Anweisungen ersetzen"
 
 #: src/lib/model-problem.ts
-#: src/pages/shell/composer-error.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Replace key"
 msgstr "Schlüssel ersetzen"
@@ -5924,6 +5924,10 @@ msgstr "Überspringen"
 msgid "Skip or deploy key"
 msgstr "Überspringen oder Deploy-Key"
 
+#: src/components/CoachLayer.tsx
+msgid "Skip tour"
+msgstr "Tour überspringen"
+
 #. placeholder {0}: skipped.join(", ")
 #: src/pages/shell/use-composer-actions.ts
 msgid "Skipped {0}"
@@ -6124,6 +6128,10 @@ msgstr "Verschlüsselt gespeichert"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Stream replies"
 msgstr "Antworten streamen"
+
+#: src/components/CoachLayer.tsx
+msgid "Stuck? Ask the Chief."
+msgstr "Hängst du fest? Frag den Chief."
 
 #: src/lib/identity-display.ts
 msgid "subagent"
@@ -6386,6 +6394,10 @@ msgstr "Dieser Import hat sich geändert. Versuche es erneut."
 #: src/lib/agent-import-errors.ts
 msgid "This import was already used. Choose the files again."
 msgstr "Dieser Import wurde bereits verwendet. Wähle die Dateien erneut aus."
+
+#: src/components/CoachLayer.tsx
+msgid "This isn't sent yet. Edit it or send it."
+msgstr "Das ist noch nicht gesendet. Bearbeite es oder sende es."
 
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/Onboarding.tsx
@@ -6968,6 +6980,10 @@ msgstr "Was überwachen"
 #: src/pages/RoutineEditor.tsx
 msgid "When a webhook fires"
 msgstr "Wenn ein Webhook ausgelöst wird"
+
+#: src/components/CoachLayer.tsx
+msgid "When an agent needs you, it asks here and waits."
+msgstr "Wenn ein Agent dich braucht, fragt er hier nach und wartet."
 
 #: src/pages/shell/bot-panel.tsx
 msgid "When it finishes or needs input"

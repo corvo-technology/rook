@@ -59,6 +59,7 @@ model User {
   ticketComments              TicketComment[]                 @relation("TicketCommentAuthorUser")
   pushToken                   PushToken?
   signupSurvey                SignupSurvey?
+  coachTour                   CoachTour?
   computerRuns                ComputerRun[]
   messagingInstallations      MessagingInstallation[]
   messagingInstallSessions    MessagingInstallSession[]
@@ -78,6 +79,17 @@ model SignupSurvey {
   createdAt DateTime @default(now())
 
   @@map("signup_surveys")
+}
+
+/// A person's coach tour progress. No row means the tour has not started (a new account).
+model CoachTour {
+  userId    String   @id
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  done      String[] @default([])
+  skipped   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("coach_tours")
 }
 
 model Session {

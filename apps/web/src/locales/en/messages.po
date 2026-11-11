@@ -1484,7 +1484,6 @@ msgstr "Choose a color or upload an image"
 
 #: src/lib/model-problem.ts
 #: src/pages/ModelSettingsOverlay.tsx
-#: src/pages/shell/composer-error.tsx
 msgid "Choose a model"
 msgstr "Choose a model"
 
@@ -1784,7 +1783,6 @@ msgstr "Connect {selectedProviderName}"
 
 #: src/lib/model-problem.ts
 #: src/pages/Onboarding.tsx
-#: src/pages/shell/composer-error.tsx
 msgid "Connect a model"
 msgstr "Connect a model"
 
@@ -2762,7 +2760,6 @@ msgstr "Desktop update"
 #: src/components/ModelProblemNotice.tsx
 #: src/pages/RoutineRunDetail.tsx
 #: src/pages/RoutineRunHistory.tsx
-#: src/pages/shell/composer-error.tsx
 msgid "Details"
 msgstr "Details"
 
@@ -3324,6 +3321,10 @@ msgstr "Git event"
 #: src/pages/shell/composer.tsx
 msgid "Goes to {recipient}"
 msgstr "Goes to {recipient}"
+
+#: src/components/CoachLayer.tsx
+msgid "Got it"
+msgstr "Got it"
 
 #: src/lib/identity-display.ts
 #: src/pages/shell/chat-header.tsx
@@ -5268,7 +5269,6 @@ msgid "Replace its instructions"
 msgstr "Replace its instructions"
 
 #: src/lib/model-problem.ts
-#: src/pages/shell/composer-error.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Replace key"
 msgstr "Replace key"
@@ -5924,6 +5924,10 @@ msgstr "Skip"
 msgid "Skip or deploy key"
 msgstr "Skip or deploy key"
 
+#: src/components/CoachLayer.tsx
+msgid "Skip tour"
+msgstr "Skip tour"
+
 #. placeholder {0}: skipped.join(", ")
 #: src/pages/shell/use-composer-actions.ts
 msgid "Skipped {0}"
@@ -6124,6 +6128,10 @@ msgstr "Stored encrypted"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Stream replies"
 msgstr "Stream replies"
+
+#: src/components/CoachLayer.tsx
+msgid "Stuck? Ask the Chief."
+msgstr "Stuck? Ask the Chief."
 
 #: src/lib/identity-display.ts
 msgid "subagent"
@@ -6386,6 +6394,10 @@ msgstr "This import changed. Try again."
 #: src/lib/agent-import-errors.ts
 msgid "This import was already used. Choose the files again."
 msgstr "This import was already used. Choose the files again."
+
+#: src/components/CoachLayer.tsx
+msgid "This isn't sent yet. Edit it or send it."
+msgstr "This isn't sent yet. Edit it or send it."
 
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/Onboarding.tsx
@@ -6968,6 +6980,10 @@ msgstr "What to watch"
 #: src/pages/RoutineEditor.tsx
 msgid "When a webhook fires"
 msgstr "When a webhook fires"
+
+#: src/components/CoachLayer.tsx
+msgid "When an agent needs you, it asks here and waits."
+msgstr "When an agent needs you, it asks here and waits."
 
 #: src/pages/shell/bot-panel.tsx
 msgid "When it finishes or needs input"

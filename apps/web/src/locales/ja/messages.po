@@ -1484,7 +1484,6 @@ msgstr "色を選ぶか、画像をアップロード"
 
 #: src/lib/model-problem.ts
 #: src/pages/ModelSettingsOverlay.tsx
-#: src/pages/shell/composer-error.tsx
 msgid "Choose a model"
 msgstr "モデルを選択"
 
@@ -1784,7 +1783,6 @@ msgstr "{selectedProviderName} に接続"
 
 #: src/lib/model-problem.ts
 #: src/pages/Onboarding.tsx
-#: src/pages/shell/composer-error.tsx
 msgid "Connect a model"
 msgstr "モデルを接続"
 
@@ -2762,7 +2760,6 @@ msgstr "デスクトップの更新"
 #: src/components/ModelProblemNotice.tsx
 #: src/pages/RoutineRunDetail.tsx
 #: src/pages/RoutineRunHistory.tsx
-#: src/pages/shell/composer-error.tsx
 msgid "Details"
 msgstr "詳細"
 
@@ -3324,6 +3321,10 @@ msgstr "Gitイベント"
 #: src/pages/shell/composer.tsx
 msgid "Goes to {recipient}"
 msgstr "{recipient} に届きます"
+
+#: src/components/CoachLayer.tsx
+msgid "Got it"
+msgstr "わかりました"
 
 #: src/lib/identity-display.ts
 #: src/pages/shell/chat-header.tsx
@@ -5268,7 +5269,6 @@ msgid "Replace its instructions"
 msgstr "既存の指示を置き換える"
 
 #: src/lib/model-problem.ts
-#: src/pages/shell/composer-error.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Replace key"
 msgstr "キーを置き換え"
@@ -5924,6 +5924,10 @@ msgstr "スキップ"
 msgid "Skip or deploy key"
 msgstr "スキップまたはデプロイキーを使用"
 
+#: src/components/CoachLayer.tsx
+msgid "Skip tour"
+msgstr "ツアーをスキップ"
+
 #. placeholder {0}: skipped.join(", ")
 #: src/pages/shell/use-composer-actions.ts
 msgid "Skipped {0}"
@@ -6124,6 +6128,10 @@ msgstr "暗号化して保存済み"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Stream replies"
 msgstr "返信をストリーミング"
+
+#: src/components/CoachLayer.tsx
+msgid "Stuck? Ask the Chief."
+msgstr "困ったら、Chief に聞いてください。"
 
 #: src/lib/identity-display.ts
 msgid "subagent"
@@ -6386,6 +6394,10 @@ msgstr "このインポートは変更されました。もう一度お試しく
 #: src/lib/agent-import-errors.ts
 msgid "This import was already used. Choose the files again."
 msgstr "このインポートはすでに使用されています。もう一度ファイルを選択してください。"
+
+#: src/components/CoachLayer.tsx
+msgid "This isn't sent yet. Edit it or send it."
+msgstr "まだ送信されていません。編集するか、送信してください。"
 
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/Onboarding.tsx
@@ -6968,6 +6980,10 @@ msgstr "監視する対象"
 #: src/pages/RoutineEditor.tsx
 msgid "When a webhook fires"
 msgstr "Webhookが呼び出されたとき"
+
+#: src/components/CoachLayer.tsx
+msgid "When an agent needs you, it asks here and waits."
+msgstr "エージェントがあなたの助けを必要とすると、ここで尋ねて待ちます。"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "When it finishes or needs input"

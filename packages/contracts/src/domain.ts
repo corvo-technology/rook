@@ -10,6 +10,7 @@ import {
   isCloudflareAiGatewayProvider,
   isCloudflareModelProvider,
 } from "./cloudflare-ai-gateway.js";
+import { TourStateSchema } from "./coach-tour.js";
 import { ThreadMessageSchema } from "./events.js";
 import { Id, IsoDate, MemoryScope, RunStatus, SandboxKind } from "./ids.js";
 import {
@@ -1794,6 +1795,8 @@ export const MeSchema = z.object({
   billingEnabled: z.boolean(),
   /** True until a user of a billing deployment answers or skips the signup survey. Absent from older servers. */
   needsSignupSurvey: z.boolean().optional(),
+  /** The person's coach tour; null when they get none. Absent from older servers. */
+  tour: TourStateSchema.nullable().optional(),
   /** Set for the person a partner's system opened this account for; they see no billing or setup. */
   partner: z
     .object({

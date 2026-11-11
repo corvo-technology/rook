@@ -30,6 +30,7 @@ export * from "./call-session.js";
 export * from "./chief-agent.js";
 export * from "./client-id.js";
 export * from "./cloud-agent.js";
+export * from "./coach-tour.js";
 export * from "./compose-update.js";
 export * from "./composer-mention-picker.js";
 export * from "./composer-mentions.js";

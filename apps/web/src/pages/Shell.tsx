@@ -6,11 +6,12 @@ import type {
   ThreadMessage,
   VoiceStatus,
 } from "@corvo/contracts";
-import type { AgentImportReader, ModelProblemAction } from "@corvo/core";
+import type { AgentImportReader, ModelProblemAction, TourFacts } from "@corvo/core";
 import {
   APP_CATALOG,
   answerableAskMessageIds,
   appsForSurface,
+  CHIEF_BOT_SPAWN_KEY,
   channelMessageSender,
   chatUserBubbleColors,
   dismissableAskMessageIds,
@@ -40,6 +41,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { useParams } from "react-router-dom";
+import { CoachLayer } from "../components/CoachLayer";
 import { ComputerUpdateProgress } from "../components/ComputerUpdateProgress";
 import { CallCard, CallReturnBar } from "../components/call/CallCard";
 import { IncomingCall } from "../components/call/IncomingCall";
@@ -56,7 +58,7 @@ import {
 } from "../lib/bots-sidebar-density-pref";
 import { readBotsSidebarCollapsed, writeBotsSidebarCollapsed } from "../lib/bots-sidebar-pref";
 import { setCallMinimized, startCall, useCallSession } from "../lib/call-session";
-import { botDraftKey } from "../lib/composer-draft";
+import { botDraftKey, readComposerDraft } from "../lib/composer-draft";
 import {
   getComposerEnterToSend,
   subscribeComposerEnterToSend,
@@ -439,6 +441,28 @@ function SpaceShell() {
     () => foldPeerReplies(activeSnapshot?.messages ?? [], { includePeerReceipts: true }),
     [activeSnapshot?.messages],
   );
+  const draftKey = inGroup ? `group:${groupId}` : `bot:${active?.id}`;
+  // Whether this bot chat opened with an unsent draft; read once per chat, not as the person types.
+  const draftWaiting = useMemo(
+    () => !inGroup && Boolean(active) && readComposerDraft(draftKey).trim() !== "",
+    [draftKey],
+  );
+  const tourFacts = useMemo<TourFacts>(() => {
+    const messages = transcript.messages;
+    const firstPersonMessage = messages.findIndex((message) => message.role === "user");
+    return {
+      draftWaiting,
+      personSent: firstPersonMessage >= 0,
+      replied:
+        firstPersonMessage >= 0 &&
+        messages.slice(firstPersonMessage + 1).some((message) => message.role === "bot"),
+      askWaiting: answerableAskIds.size > 0,
+      hasChief: bots.some((bot) => bot.spawnKey === CHIEF_BOT_SPAWN_KEY),
+      inChiefChat: active?.spawnKey === CHIEF_BOT_SPAWN_KEY,
+      // The missions list is not in this release yet.
+      missionsListed: false,
+    };
+  }, [draftWaiting, transcript, answerableAskIds, bots, active?.spawnKey]);
   // A catalog agent's empty chat offers one app it works with that signs in with a click.
   const catalogAgent = inGroup || !active ? undefined : catalogAgentOf(active);
   const offersApp = Boolean(catalogAgent?.apps.length) && activeSnapshot?.messages.length === 0;
@@ -781,6 +805,13 @@ function SpaceShell() {
           if (active) void refreshThread(active.id);
         }}
       />
+      {bootstrapMe ? (
+        <CoachLayer
+          tour={bootstrapMe.tour}
+          facts={tourFacts}
+          onTourChange={(tour) => setBootstrapMe((prev) => (prev ? { ...prev, tour } : prev))}
+        />
+      ) : null}
       {bootstrapMe !== undefined ? (
         <HostComputerPrompt initialMe={bootstrapMe ?? undefined} onMeUpdated={setBootstrapMe} />
       ) : null}
@@ -1014,7 +1045,7 @@ function SpaceShell() {
             ) : null}
             <Composer
               key={inGroup ? `group:${groupId}` : botDraftKey(String(active?.id))}
-              draftKey={inGroup ? `group:${groupId}` : `bot:${active?.id}`}
+              draftKey={draftKey}
               enterToSend={enterToSend}
               onImportAgent={(agent) => openImport(agent, false)}
               activeName={

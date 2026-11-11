@@ -36,6 +36,7 @@ import {
   UpdateTicketInput,
 } from "./board.js";
 import { BotSecretMetadata, BotSecretPutInput, StoredBotSecretName } from "./bot-secrets.js";
+import { CliEnginesViewSchema } from "./cli-engines.js";
 import {
   ActionApprovalRuleSchema,
   ActionAutoReviewSettingsSchema,
@@ -346,6 +347,10 @@ export const appContract = {
       )
       .output(ModelRoleViewSchema),
     list: oc.output(z.array(ModelCatalogEntrySchema)),
+    /** The coding-agent CLIs on this engine, from the last detection. */
+    cliEngines: oc.output(CliEnginesViewSchema),
+    /** Detects the coding-agent CLIs again. */
+    refreshCliEngines: oc.output(CliEnginesViewSchema),
     credentials: oc.output(z.array(ModelCredentialSchema)),
     backups: oc.output(z.array(ModelBackupChoiceSchema)),
     setBackups: oc.input(ModelBackupListSchema).output(z.object({ ok: z.literal(true) })),

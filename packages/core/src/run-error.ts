@@ -1,4 +1,4 @@
-import type { RunErrorKind } from "@corvo/contracts";
+import type { CliEngineId, RunErrorKind } from "@corvo/contracts";
 import { COMPUTER_RATE_LIMIT_ERROR, providerQuotaResetAt } from "@corvo/contracts";
 import { stuckWorkStatusMessages } from "./stuck-work.js";
 
@@ -108,7 +108,22 @@ const MODEL_CONNECTION_RUN_ERRORS = new Set([
   MISSING_MODEL_RUN_ERROR,
   HOSTED_MODEL_CREDITS_REQUIRED_ERROR,
 ]);
+/** What a run says when the coding-agent CLI it needs is not usable, or started with tools it was not given. */
+export const CLI_ENGINE_RUN_ERRORS: Record<
+  CliEngineId,
+  { missing: string; signedOut: string; unsafe: string }
+> = {
+  claude: {
+    missing: "Claude Code isn't installed where this bot runs.",
+    signedOut: "Claude Code isn't signed in to a Claude plan where this bot runs.",
+    unsafe: "Claude Code started with tools it wasn't given, so the reply was stopped.",
+  },
+};
+const CLI_ENGINE_RUN_ERROR_SET = new Set(
+  Object.values(CLI_ENGINE_RUN_ERRORS).flatMap((errors) => Object.values(errors)),
+);
 const APP_RUN_ERRORS = new Set([
+  ...CLI_ENGINE_RUN_ERROR_SET,
   ...MODEL_OUTPUT_RUN_ERRORS,
   ...MODEL_CONNECTION_RUN_ERRORS,
   MODEL_ACCESS_REQUIRED_RUN_ERROR,
@@ -262,6 +277,7 @@ export function normalizeRunError(
     };
   }
   // Preserve only known recovery advice: provider diagnostics can also be plain text.
+  if (CLI_ENGINE_RUN_ERROR_SET.has(trimmed)) return { summary: translate(trimmed), details };
   if (APP_RUN_ERRORS.has(trimmed)) {
     return MODEL_OUTPUT_RUN_ERRORS.has(trimmed)
       ? { summary: details, details, kind: "output" }

@@ -4,6 +4,7 @@ import {
   ACCOUNT_PAUSED_RUN_ERROR,
   APPROVED_ACTION_NOT_RUN_ERROR,
   BOT_DAILY_LIMIT_RUN_ERROR,
+  CLI_ENGINE_RUN_ERRORS,
   HOSTED_MODEL_CREDITS_REQUIRED_ERROR,
   isImageInputConfirmation,
   isModelRequiredSendError,
@@ -849,4 +850,11 @@ describe("the one action that fixes a failed run", () => {
       });
     },
   );
+});
+
+describe("CLI engine run errors", () => {
+  it.each(Object.values(CLI_ENGINE_RUN_ERRORS.claude))("keeps and translates %s", (sentence) => {
+    expect(normalizeRunError(sentence).summary).toBe(sentence);
+    expect(normalizeRunError(sentence, (message) => `t:${message}`).summary).toBe(`t:${sentence}`);
+  });
 });

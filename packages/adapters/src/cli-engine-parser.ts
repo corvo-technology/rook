@@ -23,6 +23,8 @@ export interface CliStreamExpectations {
 /** Everything that is specific to one coding-agent CLI; the runtime, gateway and host are not. */
 export interface CliEngineDefinition {
   id: CliEngineId;
+  /** How the CLI is named where people see it, such as in the model catalog. */
+  displayName: string;
   binaryName: string;
   /** The name the CLI gives the tool gateway in its start report. */
   gatewayName: string;
@@ -36,5 +38,7 @@ export interface CliEngineDefinition {
   models: readonly string[];
   args(turn: { model: string; systemPromptFile: string }): string[];
   env(input: { configDir: string; mcpUrl: string }): Record<string, string>;
+  /** The environment of a status probe: the CLI's own config folder and nothing else. */
+  probeEnv(input: { configDir: string }): Record<string, string>;
   parser(expect: CliStreamExpectations, model: string): CliStreamParser;
 }

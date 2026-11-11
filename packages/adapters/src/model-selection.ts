@@ -20,7 +20,7 @@ import {
 import type { CodexLiveCatalog, CodexLiveReadOptions } from "./pi-codex-catalog.js";
 import { codexLiveListsModel } from "./pi-codex-catalog.js";
 import { liveCatalogEntry, providerLiveListsModel } from "./pi-live-catalog.js";
-import { isOperatorLocalModel } from "./pi-local-provider.js";
+import { isOperatorOfferedModel } from "./pi-local-provider.js";
 import { listPiCatalog, offeredCatalog, scriptedCatalogEntry } from "./pi-models.js";
 import type { StoredModelSecret } from "./pi-oauth.js";
 import { parseModelSecret } from "./pi-oauth.js";
@@ -564,7 +564,7 @@ export async function validateBotModelChange(
     if (!credential) {
       // A model the operator listed for the local server runs without any connection. It has no
       // thinking levels to pick from, so none is kept.
-      if (isOperatorLocalModel(provider, model)) {
+      if (isOperatorOfferedModel(provider, model)) {
         return { ok: true, provider, model, thinkingLevel: null };
       }
       if (hosted && isCatalogModelChoice(provider, model)) {
@@ -851,7 +851,7 @@ export function pinnedModelCredentialError(
 ): string | undefined {
   if (!choice.modelProvider || !usableModelId(choice.modelId)) return undefined;
   if (!credential) {
-    return isOperatorLocalModel(choice.modelProvider, usableModelId(choice.modelId))
+    return isOperatorOfferedModel(choice.modelProvider, usableModelId(choice.modelId))
       ? undefined
       : PINNED_PROVIDER_NOT_CONNECTED;
   }

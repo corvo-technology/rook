@@ -3,6 +3,7 @@ import {
   applyProviderLiveCatalog,
   CHATGPT_OAUTH_PROVIDER,
   CodexCatalogCache,
+  cliEngineHost,
   codexLiveCatalogsForSpace,
   connectionServesModel,
   createFaviconResolver,
@@ -180,7 +181,7 @@ export function createRouterContext(deps: RouterDeps) {
       )
     )
       selected = await savedCatalogSelections(deps.prisma, actor.userId);
-    return offeredCatalog(merged, selected).map((entry) =>
+    const offered = offeredCatalog(merged, selected).map((entry) =>
       entry.provider === auth.managedProvider
         ? {
             ...entry,
@@ -194,6 +195,8 @@ export function createRouterContext(deps: RouterDeps) {
         : // A model the operator listed for the local server is offered without a connection.
           withLocalModelsOffered(entry),
     );
+    // The models of a coding-agent CLI the operator turned on, only while it is ready.
+    return [...offered, ...(cliEngineHost()?.catalog() ?? [])];
   };
 
   // Shown where a member chose no model, so the list names what actually runs.

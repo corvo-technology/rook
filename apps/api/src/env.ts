@@ -147,6 +147,8 @@ export interface AppEnv {
   defaultProvider: string;
   defaultModel: string;
   wakeupDriver: string;
+  /** The operator allows coding-agent CLIs on this machine to serve models. */
+  cliEnginesEnabled: boolean;
   mcpStdioEnabled: boolean;
   mcpStdioAllowedCommands: string[];
   /** Package dir, install/startup timeouts and idle reaping for stdio MCP servers. */
@@ -321,6 +323,7 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     defaultProvider: deploymentModel.provider,
     defaultModel: deploymentModel.model,
     wakeupDriver: source.WAKEUP_DRIVER ?? "graphile",
+    cliEnginesEnabled: source.CLI_ENGINES_ENABLED === "true",
     mcpStdioEnabled: source.MCP_STDIO_ENABLED === "true",
     mcpStdioAllowedCommands: (source.MCP_STDIO_ALLOWED_COMMANDS ?? "")
       .split(",")

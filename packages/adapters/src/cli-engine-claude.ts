@@ -247,6 +247,7 @@ export function claudeStatus(probe: {
 
 export const CLAUDE_ENGINE: CliEngineDefinition = {
   id: "claude",
+  displayName: "Claude Code",
   binaryName: "claude",
   gatewayName: CLAUDE_GATEWAY_NAME,
   installDirs: (home) => [path.join(home, ".local", "bin"), path.join(home, ".claude", "local")],
@@ -255,5 +256,6 @@ export const CLAUDE_ENGINE: CliEngineDefinition = {
   models: CLAUDE_MODELS,
   args: claudeArgs,
   env: (input) => claudeEnv(input),
+  probeEnv: ({ configDir }) => agentChildEnv({ CLAUDE_CONFIG_DIR: configDir }),
   parser: claudeStreamParser,
 };

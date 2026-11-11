@@ -6,6 +6,7 @@ import type {
   ModelCredentialRetireReason,
 } from "@corvo/adapter-kit";
 import {
+  CLI_ENGINE_PROVIDER_ID,
   CLOUDFLARE_AI_GATEWAY_CONFIG_MESSAGE,
   CLOUDFLARE_WORKERS_AI_PROVIDER_ID,
   cloudflareModelConfigMessage,
@@ -39,7 +40,7 @@ import { modelIdSupportsImages } from "./model-vision.js";
 import { assertAllowedOpenAiCompatibleUrl } from "./openai-compatible-url.js";
 import { codexLiveListsModel } from "./pi-codex-catalog.js";
 import { toOAuthCredential } from "./pi-credentials.js";
-import { LOCAL_PROVIDER_ID } from "./pi-local-provider.js";
+import { isOperatorOfferedModel, LOCAL_PROVIDER_ID } from "./pi-local-provider.js";
 import type { StoredModelSecret } from "./pi-oauth.js";
 import {
   isRetiredModelCredentialError,
@@ -169,6 +170,8 @@ export async function resolveModelKey(...args: Parameters<typeof resolveModelKey
   // allowed only for the deployment provider that explicitly opted into it.
   const keyless =
     provider === LOCAL_PROVIDER_ID ||
+    // A CLI engine signs in on its own machine, so there is no key to hold; only while offered.
+    (provider === CLI_ENGINE_PROVIDER_ID && isOperatorOfferedModel(provider, args[5])) ||
     (provider === OPENAI_COMPATIBLE_PROVIDER_ID && Boolean(material.baseUrl)) ||
     (provider === "scripted" && deps.runtime?.describe().capabilities.scripted) ||
     (!credential && deployment.provider === provider && deployment.hostCredentials);

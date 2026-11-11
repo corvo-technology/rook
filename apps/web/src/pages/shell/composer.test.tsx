@@ -979,3 +979,10 @@ it("says nothing about a recipient outside a group, or when several would get it
   renderComposer(vi.fn(), { groupRecipient: () => undefined });
   expect(container!.querySelector('[data-testid="group-recipient"]')).toBeNull();
 });
+
+it("marks the composer as the anchor for the first-message coach mark", () => {
+  renderComposer(async () => true);
+  expect(
+    container?.querySelector('fieldset[aria-label="Message composer"]')?.getAttribute("data-coach"),
+  ).toBe("first");
+});

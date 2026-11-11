@@ -23,6 +23,9 @@ export const JA_MESSAGES: Record<string, string> = {
   "Main model": "メインモデル",
   "Add fallback": "バックアップモデルを追加",
   "Manage {provider}": "{provider} を管理",
+  "Found on this computer": "このコンピューターで見つかりました",
+  "Local models": "ローカルモデル",
+  Use: "使う",
   "Add provider": "プロバイダーを追加",
   "Choose a model": "モデルを選択",
   "The model hit its output limit before finishing its reply.":
@@ -31,6 +34,12 @@ export const JA_MESSAGES: Record<string, string> = {
     "モデルが利用できない応答を返しました。もう一度お試しください。",
   "This model's context window is too small. Choose another model.":
     "このモデルのコンテキストウィンドウは小さすぎます。別のモデルを選択してください。",
+  "Claude Code isn't installed where this bot runs.":
+    "このボットが動作する場所に Claude Code がインストールされていません。",
+  "Claude Code isn't signed in to a Claude plan where this bot runs.":
+    "このボットが動作する場所で、Claude Code が Claude プランにサインインしていません。",
+  "Claude Code started with tools it wasn't given, so the reply was stopped.":
+    "Claude Code が与えられていないツールを使って起動したため、返信を停止しました。",
   "{provider} denied access to this model.": "{provider}がこのモデルへのアクセスを拒否しました。",
   "{summary} Backup models failed or were unavailable for this request.":
     "{summary} 予備のモデルでエラーが発生したか、このリクエストでは利用できませんでした。",
@@ -120,6 +129,9 @@ export const JA_MESSAGES: Record<string, string> = {
   "{provider} can't run this model.": "{provider}ではこのモデルを実行できません。",
   "{provider} couldn't be reached securely. A security program or network filter may be intercepting the connection.":
     "{provider}に安全に接続できませんでした。セキュリティソフトまたはネットワークフィルターが接続を妨げている可能性があります。",
+  "{provider} sign-in is no longer valid.": "{provider}のログインは無効になりました。",
+  "{provider} couldn't be reached through the network proxy. Check the proxy settings.":
+    "{provider}にネットワークプロキシ経由で接続できませんでした。プロキシ設定を確認してください。",
   "{provider} took too long to respond. Try again.":
     "{provider}の応答に時間がかかりすぎました。もう一度お試しください。",
   "{provider} is overloaded right now. Try again in a moment.":
@@ -1130,10 +1142,21 @@ export const JA_MESSAGES: Record<string, string> = {
   "Added to the wiki": "Wikiに追加しました",
   Refused: "却下しました",
   Undone: "元に戻しました",
+  "Approve all": "すべて承認",
+  "Learn from this conversation": "この会話から学ぶ",
   "A page changed since": "その後ページが変更されました",
   Refuse: "却下",
   "Keep in the wiki": "Wikiに保存",
   "Could not load pages": "ページを読み込めませんでした",
+  "{position} of {total}": "{position} / {total}",
+  "Talk to your agent": "エージェントに話しかける",
+  "Answer a request": "リクエストに答える",
+  "Connect an app": "アプリを接続する",
+  "Add a second agent": "2人目のエージェントを追加する",
+  "Schedule a routine": "ルーティンをスケジュールする",
+  "Keep a memory": "記憶を残す",
+  Missions: "ミッション",
+  "Show everything": "すべて表示",
   Resume: "再開",
   "No limit": "上限なし",
   "Raise limit": "上限を上げる",

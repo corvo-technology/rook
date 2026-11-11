@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { MessageBlock } from "./events.js";
 import {
   WIKI_BODY_MAX,
+  WikiApplyAllResultSchema,
+  WikiCaptureStateSchema,
   WikiCaptureValueSchema,
   WikiChangeDecideInputSchema,
   WikiChangeSchema,
@@ -133,5 +135,21 @@ describe("wiki curator contracts", () => {
     const block = { kind: "wiki_change", changeId: "chg1", pages: change.pages };
     expect(MessageBlock.parse(block)).toEqual(block);
     expect(MessageBlock.safeParse({ kind: "wiki_change", pages: [] }).success).toBe(false);
+  });
+
+  it("reads a conversation's switch as stored and as it comes to", () => {
+    const state = { available: true, capture: null, on: false, canChange: true };
+    expect(WikiCaptureStateSchema.parse(state)).toEqual(state);
+    expect(
+      WikiCaptureStateSchema.safeParse({ available: true, capture: null, on: false }).success,
+    ).toBe(false);
+  });
+
+  it("says how many waiting changes applied and how many conflicted", () => {
+    expect(WikiApplyAllResultSchema.parse({ applied: 2, conflicts: 1 })).toEqual({
+      applied: 2,
+      conflicts: 1,
+    });
+    expect(WikiApplyAllResultSchema.safeParse({ applied: 2 }).success).toBe(false);
   });
 });

@@ -45,7 +45,7 @@ export type WikiCuratorDeps = {
   }) => Promise<AgentRunRequest["model"] | undefined>;
 };
 
-type ThreadFacts = {
+export type CuratorThreadFacts = {
   id: string;
   spaceId: string;
   groupId: string | null;
@@ -55,7 +55,7 @@ type ThreadFacts = {
 };
 
 /** A channel is a group's, a chat with one agent is a bot's, and anything else came from outside. */
-function kindOf(thread: ThreadFacts): CuratorThreadKind {
+function kindOf(thread: CuratorThreadFacts): CuratorThreadKind {
   if (thread.groupId) return "channel";
   if (thread.botId) return "agent";
   return "external";
@@ -66,24 +66,30 @@ async function hasOtherMembers(prisma: PrismaClient, spaceId: string): Promise<b
   return (await prisma.spaceMember.count({ where: { spaceId } })) > 1;
 }
 
-/**
- * The quiet read to queue after a reply, or nothing when the curator does not read this
- * conversation (a chat with one agent unless asked, anything an outsider said, or the Space has it off).
- */
-export async function wikiCurateJobAfterTurn(
+/** Whether the curator reads this conversation now: its own switch, else the default for its kind. */
+export async function threadIsCurated(
   prisma: PrismaClient,
-  thread: ThreadFacts,
-  now: Date = new Date(),
-): Promise<BackgroundJob | undefined> {
+  thread: CuratorThreadFacts,
+): Promise<boolean> {
   const settings = await getWikiSettings(prisma, thread.spaceId);
   return curatesThread({
     kind: kindOf(thread),
     threadCapture: thread.wikiCapture,
     settingsCapture: settings.capture,
     sharedSpace: await hasOtherMembers(prisma, thread.spaceId),
-  })
-    ? wikiCurateJob(thread.id, { now })
-    : undefined;
+  });
+}
+
+/**
+ * The quiet read to queue after a reply, or nothing when the curator does not read this
+ * conversation (a chat with one agent unless asked, anything an outsider said, or the Space has it off).
+ */
+export async function wikiCurateJobAfterTurn(
+  prisma: PrismaClient,
+  thread: CuratorThreadFacts,
+  now: Date = new Date(),
+): Promise<BackgroundJob | undefined> {
+  return (await threadIsCurated(prisma, thread)) ? wikiCurateJob(thread.id, { now }) : undefined;
 }
 
 const proseOf = (blocks: unknown): string =>
@@ -128,18 +134,9 @@ export async function curateWiki(
   const kind = kindOf(thread);
   // What outsiders say in a messaging conversation is never read, kept on purpose or not.
   if (kind === "external") return;
-  const settings = await getWikiSettings(prisma, thread.spaceId);
   const kept = Boolean(payload.messageId);
-  if (
-    !kept &&
-    !curatesThread({
-      kind,
-      threadCapture: thread.wikiCapture,
-      settingsCapture: settings.capture,
-      sharedSpace: await hasOtherMembers(prisma, thread.spaceId),
-    })
-  )
-    return;
+  if (!kept && !(await threadIsCurated(prisma, thread))) return;
+  const settings = await getWikiSettings(prisma, thread.spaceId);
 
   const scope = { spaceId: thread.spaceId, userId: thread.userId };
   const model = await deps.resolveFastModel?.(scope);
@@ -292,7 +289,7 @@ export async function curateWiki(
  */
 export async function postWikiChangeCard(
   deps: Pick<WikiCuratorDeps, "prisma" | "events">,
-  thread: ThreadFacts,
+  thread: CuratorThreadFacts,
   change: { id: string; pages: { title: string; op: "create" | "append" | "replace" }[] },
   speakingBotId?: string,
 ): Promise<void> {

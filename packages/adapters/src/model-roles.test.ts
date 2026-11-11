@@ -1,5 +1,7 @@
 import type { PrismaClient } from "@corvo/db";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { CLAUDE_ENGINE } from "./cli-engine-claude.js";
+import { CliEngineHost, installCliEngineHost } from "./cli-engine-host.js";
 import type { DeploymentModelDefaults, MemberMainModel } from "./model-roles.js";
 import {
   deploymentModelRole,
@@ -103,6 +105,41 @@ describe("a model the operator configured on this server", () => {
         }),
       ).toMatchObject({ provider: "space-provider", id: "space-model" });
     }));
+});
+
+describe("a model of a CLI engine the operator turned on", () => {
+  afterEach(() => installCliEngineHost(undefined));
+  const override = {
+    modelProvider: "cli-engine",
+    modelId: "claude/sonnet",
+    thinkingLevel: null,
+  };
+
+  it("is kept without any connection when the host offers it", async () => {
+    const host = new CliEngineHost({
+      dataDir: "/data",
+      engines: [CLAUDE_ENGINE],
+      locate: async () => "/bin/claude",
+      run: async (_bin, args) =>
+        args[0] === "--version"
+          ? { code: 0, stdout: "2.5.0" }
+          : { code: 0, stdout: '{"loggedIn":true,"authMethod":"claude.ai"}' },
+    });
+    await host.view();
+    installCliEngineHost(host);
+    expect(selectConfiguredModel({ ...defaults, override })).toMatchObject({
+      provider: "cli-engine",
+      id: "claude/sonnet",
+      credential: null,
+    });
+  });
+
+  it("falls back to the main model when no host is installed", () => {
+    expect(selectConfiguredModel({ ...defaults, override })).toMatchObject({
+      provider: "space-provider",
+      id: "space-model",
+    });
+  });
 });
 
 describe("configured model selection", () => {

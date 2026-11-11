@@ -1,8 +1,7 @@
-import { constants } from "node:fs";
-import { access } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import type { AcpCommand } from "./acp-client.js";
+import { findAgentBinary } from "./agent-process.js";
 
 /** Tells a person why `opencode acp` stopped, from what it printed. */
 export function explainOpenCodeExit(output: string): string | undefined {
@@ -37,18 +36,5 @@ export async function findOpenCode(
   env: NodeJS.ProcessEnv = process.env,
   home: string = os.homedir(),
 ): Promise<string | undefined> {
-  const folders = [
-    ...(env.PATH ?? "").split(path.delimiter).filter(Boolean),
-    path.join(home, ".opencode", "bin"),
-  ];
-  for (const folder of folders) {
-    const candidate = path.join(folder, "opencode");
-    try {
-      await access(candidate, constants.X_OK);
-      return candidate;
-    } catch {
-      // Not here; try the next folder.
-    }
-  }
-  return undefined;
+  return findAgentBinary("opencode", [path.join(home, ".opencode", "bin")], env);
 }

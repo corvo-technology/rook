@@ -27,7 +27,11 @@ import {
   isSubagentToolExecution,
 } from "./run-effects.js";
 import { fleetPrepareDeps } from "./run-model.js";
-import { BUILTIN_AGENT_TOOL_NAMES, FLEET_WRITE_TOOL_NAMES_SET } from "./run-tool-selection.js";
+import {
+  BUILTIN_AGENT_TOOL_NAMES,
+  FLEET_READ_TOOL_NAMES_SET,
+  FLEET_WRITE_TOOL_NAMES_SET,
+} from "./run-tool-selection.js";
 import { argumentGiven } from "./update-bot-patch.js";
 
 /** A tool call resolved to the tool it runs and the exact request an approval covers. */
@@ -265,7 +269,7 @@ export async function prepareToolRequest(
     FLEET_WRITE_TOOL_NAMES_SET.has(name) ||
     name === "archive_bot" ||
     (name === "update_bot" && argumentGiven(args.bot_id));
-  if (fleetWrite || name === "list_fleet" || name === "store_agents" || name === "list_routines") {
+  if (fleetWrite || FLEET_READ_TOOL_NAMES_SET.has(name)) {
     if (isSubagentToolExecution(executionId))
       return { error: "Helpers cannot use bot management tools." };
     // The run-start snapshot is not enough: the owner can turn the switch off mid-run.

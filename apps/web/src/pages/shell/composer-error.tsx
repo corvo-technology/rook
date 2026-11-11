@@ -1,11 +1,12 @@
-import { isModelRequiredSendError, normalizeRunError } from "@corvo/core";
+import type { ModelProblemAction, ModelProblemOptions } from "@corvo/core";
+import { isModelRequiredSendError } from "@corvo/core";
 import { Button } from "@corvo/ui-web";
-import { i18n } from "@lingui/core";
 import { useLingui } from "@lingui/react/macro";
 import { FileIcon, X } from "lucide-react";
 import type { RefObject } from "react";
 import { useEffect, useId, useRef } from "react";
-import { translateRunError } from "../../lib/run-error";
+import { ModelProblemNotice } from "../../components/ModelProblemNotice";
+import { webRunProblem } from "../../lib/model-problem";
 
 export function ComposerError({
   sendError,
@@ -18,6 +19,9 @@ export function ComposerError({
   onOpenConnections,
   onOpenBotSettings,
   onResumeSpace,
+  runAuthKind,
+  onRetryRun,
+  retryingRun = false,
   onDismissError,
   textareaRef,
 }: {
@@ -29,9 +33,12 @@ export function ComposerError({
   runErrorId: string | null;
   onRunErrorPresented: (runId: string) => void;
   onOpenModels: () => void;
-  onOpenConnections: () => void;
   onOpenBotSettings: () => void;
   onResumeSpace?: () => void;
+  onOpenConnections: (action: ModelProblemAction) => void;
+  runAuthKind?: ModelProblemOptions["authKind"];
+  onRetryRun?: () => void;
+  retryingRun?: boolean;
   onDismissError: () => void;
   textareaRef: RefObject<HTMLTextAreaElement | null>;
 }) {
@@ -72,24 +79,12 @@ export function ComposerError({
       document.removeEventListener("visibilitychange", recordIfPresented);
     };
   }, [onRunErrorPresented, runError, runErrorId]);
-  const normalizedRunError = runError
-    ? normalizeRunError(runError, translateRunError, i18n.locale || "en")
-    : null;
-  // The one action that fixes the failure; a transient one already says to try again.
-  const recovery = sendError ? undefined : normalizedRunError?.recovery;
-  const recoveryAction =
-    recovery === "model"
-      ? { label: t`Choose a model`, onClick: onOpenModels }
-      : recovery === "connection"
-        ? {
-            label: normalizedRunError?.kind === "auth" ? t`Replace key` : t`Connect a model`,
-            onClick: onOpenConnections,
-          }
-        : recovery === "budget"
-          ? { label: t`Raise limit`, onClick: onOpenBotSettings }
-          : recovery === "resume" && onResumeSpace
-            ? { label: t`Resume`, onClick: onResumeSpace }
-            : null;
+  const rawRunProblem = runError && !sendError ? webRunProblem(runError, runAuthKind) : null;
+  // Only a space owner can resume a paused space.
+  const runProblem =
+    rawRunProblem?.action === "resume" && !onResumeSpace
+      ? { ...rawRunProblem, action: undefined }
+      : rawRunProblem;
 
   const warning = Boolean(sendError) && imageConfirmation;
   return sendError || runError ? (
@@ -100,7 +95,19 @@ export function ComposerError({
       className={`mb-3 flex items-center gap-2 rounded-[14px] border px-4 py-2 text-[13px] animate-in fade-in-0 slide-in-from-bottom-1 duration-150 motion-reduce:animate-none ${warning ? "border-warning/40 bg-warning/10 text-warning" : "border-destructive/40 bg-destructive/10 text-destructive"}`}
     >
       <div className="min-w-0 flex-1">
-        {isModelRequiredSendError(sendError) ? (
+        {runProblem ? (
+          <ModelProblemNotice
+            problem={runProblem}
+            retrying={retryingRun}
+            onRetry={onRetryRun}
+            onAction={(action) => {
+              if (action === "change-model") onOpenModels();
+              else if (action === "raise-limit") onOpenBotSettings();
+              else if (action === "resume") onResumeSpace?.();
+              else onOpenConnections(action);
+            }}
+          />
+        ) : isModelRequiredSendError(sendError) ? (
           <button
             type="button"
             data-testid="composer-error-open-models"
@@ -110,7 +117,7 @@ export function ComposerError({
             {sendError}
           </button>
         ) : (
-          (sendError ?? normalizedRunError?.summary ?? null)
+          sendError
         )}
         {warning && onSendAsFile ? (
           <div className="mt-2 flex flex-wrap gap-2">
@@ -131,27 +138,6 @@ export function ComposerError({
               {t`The bot can use the file but won't see the picture.`}
             </p>
           </div>
-        ) : null}
-        {recoveryAction ? (
-          <>
-            {" "}
-            <button
-              type="button"
-              data-testid="composer-error-action"
-              onClick={recoveryAction.onClick}
-              className="font-medium underline underline-offset-2 hover:text-foreground"
-            >
-              {recoveryAction.label}
-            </button>
-          </>
-        ) : null}
-        {!sendError && runError ? (
-          <details key={runError} className="mt-1">
-            <summary className="w-fit cursor-pointer">{t`Details`}</summary>
-            <pre className="mt-2 whitespace-pre-wrap break-words text-xs">
-              {normalizedRunError?.details}
-            </pre>
-          </details>
         ) : null}
       </div>
       <button

@@ -11,7 +11,7 @@ import {
 import { signupSurveyAsksTeamSize } from "@corvo/contracts";
 import { containsSecret } from "@corvo/core";
 import type { Prisma } from "@corvo/db";
-import { IsolationError } from "@corvo/db";
+import { IsolationError, markTourDone, skipTour } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import { ORPCError } from "@orpc/server";
 import { searchIntegrationCatalog } from "../integration-catalog.js";
@@ -797,8 +797,16 @@ export function mcpRoutes(ctx: RouterContext) {
         );
         return { ok: true as const };
       }),
+      tourDone: authed.onboarding.tourDone.handler(async ({ context, input }) => {
+        await markTourDone(deps.prisma, context.actor.userId, input.mark);
+        return { ok: true as const };
+      }),
+      tourSkip: authed.onboarding.tourSkip.handler(async ({ context }) => {
+        await skipTour(deps.prisma, context.actor.userId);
+        return { ok: true as const };
+      }),
       ensureTeam: authed.onboarding.ensureTeam.handler(async ({ context, input }) =>
-        startStarterTeam(deps, context.actor, input.locale),
+        startStarterTeam(deps, context.actor, input.locale, undefined, input.picks),
       ),
       start: authed.onboarding.start.handler(async ({ context, input }) => {
         await startOnboarding(onboardingDeps, context.actor, input.botId);

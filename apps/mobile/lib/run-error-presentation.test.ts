@@ -1,4 +1,4 @@
-import { normalizeRunError } from "@corvo/core";
+import { describeModelProblem } from "@corvo/core";
 import { describe, expect, it } from "vitest";
 import { parseRunDiagnostic, runErrorActionLabel } from "./run-error-presentation";
 
@@ -72,17 +72,18 @@ describe("the one recovery action", () => {
     ["Request timed out.", null],
     ['429: {"message":"Too many requests"}', null],
   ])("labels %s", (details, label) => {
-    expect(runErrorActionLabel(t, normalizeRunError(details))).toBe(label);
+    expect(runErrorActionLabel(t, describeModelProblem({ details }).action)).toBe(label);
+  });
+
+  it("names the sign-in action", () => {
+    expect(runErrorActionLabel(t, "sign-in")).toBe("Sign in again");
   });
 });
 
 describe("budget and pause actions", () => {
   const t: Parameters<typeof runErrorActionLabel>[0] = (message) => message;
-  it("offers Raise limit for a limit error", () => {
-    expect(runErrorActionLabel(t, { recovery: "budget" })).toBe("Raise limit");
-  });
-  it("offers Resume only to a member who can resume", () => {
-    expect(runErrorActionLabel(t, { recovery: "resume" })).toBeNull();
-    expect(runErrorActionLabel(t, { recovery: "resume" }, true)).toBe("Resume");
+  it("labels the limit and pause actions", () => {
+    expect(runErrorActionLabel(t, "raise-limit")).toBe("Raise limit");
+    expect(runErrorActionLabel(t, "resume")).toBe("Resume");
   });
 });

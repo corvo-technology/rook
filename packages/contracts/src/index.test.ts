@@ -4,6 +4,7 @@ import {
   BOT_INSTRUCTIONS_MAX_LENGTH,
   BOT_MONTHLY_TOKEN_LIMIT_MAX,
   BOT_TITLE_MAX_LENGTH,
+  BotSchema,
   CLOUDFLARE_AI_GATEWAY_CONFIG_MESSAGE,
   CLOUDFLARE_AI_GATEWAY_PROVIDER_ID,
   CreateBotInput,
@@ -305,6 +306,19 @@ describe("contracts", () => {
     expect(CreateBotInput.parse({ name: "New bot", squadRouting: true }).squadRouting).toBe(true);
     expect(UpdateBotInput.parse({ botId: "bot-1", squadRouting: true }).squadRouting).toBe(true);
     expect(UpdateBotInput.safeParse({ botId: "bot-1", squadRouting: "yes" }).success).toBe(false);
+  });
+
+  it("keeps a bot's own approval mode on update only, with null clearing it", () => {
+    expect(UpdateBotInput.parse({ botId: "bot-1", approvalMode: "never" }).approvalMode).toBe(
+      "never",
+    );
+    expect(UpdateBotInput.parse({ botId: "bot-1", approvalMode: null }).approvalMode).toBeNull();
+    expect(UpdateBotInput.parse({ botId: "bot-1" }).approvalMode).toBeUndefined();
+    expect(UpdateBotInput.safeParse({ botId: "bot-1", approvalMode: "free" }).success).toBe(false);
+    expect(CreateBotInput.parse({ name: "New bot", approvalMode: "never" })).not.toHaveProperty(
+      "approvalMode",
+    );
+    expect(BotSchema.shape.approvalMode.parse(undefined)).toBeNull();
   });
 
   it("accepts a purpose when creating a group and bounds it the same way", () => {

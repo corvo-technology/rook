@@ -10,7 +10,12 @@ loadRootEnv();
 
 import {
   ChatSdkMessagingSurface,
+  CLAUDE_ENGINE,
+  CliEngineHost,
+  CliEngineRuntime,
+  CliToolGateway,
   CodexCatalogCache,
+  cliEngineHost,
   contentKeyProviderFromEnv,
   createAgentHomeStore,
   createArtifactStore,
@@ -39,6 +44,7 @@ import {
   homeStorageSweeper,
   InMemoryJobQueue,
   InstalledConnectorProvider,
+  installCliEngineHost,
   installedMessaging,
   isComposioEnabled,
   isMessagingSurfaceEnabled,
@@ -60,6 +66,7 @@ import {
   resolveDeploymentModel,
   resolvePiSessionRoot,
   resolveSandboxProvider,
+  routeAgentRuntime,
   ScriptedAgentRuntime,
   SpaceMemoryProviderResolver,
   sandboxProviderOptionsFromEnv,
@@ -132,10 +139,26 @@ async function main() {
   const ticketBoardEnabled = process.env.TICKET_BOARD_ENABLED === "true";
   const boardEvents = createBoardEvents(realtime);
   const dataDir = process.env.DATA_DIR ?? "./data";
+  const cliGateway = new CliToolGateway();
+  if (cliGateway) {
+    const host = new CliEngineHost({ dataDir, engines: [CLAUDE_ENGINE] });
+    installCliEngineHost(host);
+    host.refresh().catch((error) => logger.error("cli engine detection failed", error));
+  }
+  const piRuntime = new PiAgentRuntime({ sessionRoot: resolvePiSessionRoot(dataDir) });
   const runtime =
     process.env.AGENT_RUNTIME === "scripted"
       ? new ScriptedAgentRuntime()
-      : new PiAgentRuntime({ sessionRoot: resolvePiSessionRoot(dataDir) });
+      : cliGateway
+        ? routeAgentRuntime(
+            piRuntime,
+            new CliEngineRuntime({
+              engines: [CLAUDE_ENGINE],
+              locator: cliEngineHost()!,
+              gateway: cliGateway,
+            }),
+          )
+        : piRuntime;
   // Same resolver the API uses, so both processes agree on provider, model and key.
   const { key: deploymentModelKey, configured: deploymentModelConfigured } =
     resolveDeploymentModel();
@@ -362,6 +385,7 @@ async function main() {
       await secrets.close();
       await realtime.close();
       await mcp.close();
+      await cliGateway?.stop();
       await prisma.$disconnect().catch(() => undefined);
       await pool.end().catch(() => undefined);
     } finally {

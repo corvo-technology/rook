@@ -384,6 +384,7 @@ export function botsRoutes(ctx: RouterContext) {
                       : BigInt(input.monthlyTokenLimit),
                 }
               : {}),
+            ...(input.approvalMode !== undefined ? { approvalMode: input.approvalMode } : {}),
             ...(input.dailyCapUsd !== undefined
               ? {
                   dailyCapMicros:

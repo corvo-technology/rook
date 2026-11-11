@@ -35,6 +35,7 @@ function bot(id = "bot-1"): Bot {
     teamChatRules: "",
     fleetManagement: false,
     squadRouting: false,
+    approvalMode: null,
     dailyCapUsd: null,
     monthlyTokenLimit: null,
     disabledBuiltinTools: [],

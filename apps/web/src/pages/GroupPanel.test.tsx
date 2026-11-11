@@ -13,6 +13,7 @@ vi.mock("@lingui/react/macro", () => {
     parts.reduce((text, part, index) => `${text}${index > 0 ? values[index - 1] : ""}${part}`, "");
   return { useLingui: () => ({ t }), Trans: ({ children }: { children: ReactNode }) => children };
 });
+vi.mock("../components/WikiCaptureSwitch", () => ({ WikiCaptureSwitch: () => null }));
 // The alert dialog's Cancel closes it through onOpenChange, as Base UI does.
 let dismissDialog: (() => void) | undefined;
 vi.mock("@corvo/ui-web", async (importOriginal) => {
@@ -108,6 +109,7 @@ function fakeBot(id: string, name: string, title: string): Bot {
     webhookConfigured: false,
     fleetManagement: false,
     squadRouting: false,
+    approvalMode: null,
     dailyCapUsd: null,
     monthlyTokenLimit: null,
     spawnKey: null,

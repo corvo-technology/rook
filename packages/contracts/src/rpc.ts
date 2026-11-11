@@ -36,6 +36,8 @@ import {
   UpdateTicketInput,
 } from "./board.js";
 import { BotSecretMetadata, BotSecretPutInput, StoredBotSecretName } from "./bot-secrets.js";
+import { CliEnginesViewSchema } from "./cli-engines.js";
+import { TourMark } from "./coach-tour.js";
 import {
   ActionApprovalRuleSchema,
   ActionAutoReviewSettingsSchema,
@@ -96,6 +98,7 @@ import {
   ModelCredentialSchema,
   ModelCreditAmountSchema,
   ModelOAuthBeginSchema,
+  OnboardingPicksSchema,
   OPENAI_COMPATIBLE_PROVIDER_ID,
   REPLY_QUOTE_MAX_LENGTH,
   ReorderBotsInput,
@@ -142,6 +145,12 @@ import {
   IntegrationProviderConfigSchema,
   IntegrationSetupStateSchema,
 } from "./integration-settings.js";
+import {
+  LocalModelTestSchema,
+  LocalOptionChoiceSchema,
+  LocalSetupReportSchema,
+} from "./local-setup.js";
+import { MissionsViewSchema, NavPart } from "./missions.js";
 import { ModelHeadersSchema } from "./model-headers.js";
 import { ModelRoleSchema, ModelRoleUpdateSchema, ModelRoleViewSchema } from "./model-roles.js";
 import { PartnerAccountSchema, PartnerLimitsInput, PartnerTemplate } from "./partner.js";
@@ -158,6 +167,8 @@ import { SearchQueryOutputSchema } from "./search.js";
 import { SecurityEventListInputSchema, SecurityEventSchema } from "./security-events.js";
 import { SettingsScopeSchema, SpaceSettingSchema, settingsScopeInput } from "./settings-scope.js";
 import {
+  WikiApplyAllResultSchema,
+  WikiCaptureStateSchema,
   WikiCaptureValueSchema,
   WikiChangeDecideInputSchema,
   WikiChangeSchema,
@@ -351,7 +362,16 @@ export const appContract = {
       )
       .output(ModelRoleViewSchema),
     list: oc.output(z.array(ModelCatalogEntrySchema)),
+    /** The coding-agent CLIs on this engine, from the last detection. */
+    cliEngines: oc.output(CliEnginesViewSchema),
+    /** Detects the coding-agent CLIs again. */
+    refreshCliEngines: oc.output(CliEnginesViewSchema),
     credentials: oc.output(z.array(ModelCredentialSchema)),
+    localSetup: oc
+      .input(z.object({ wait: z.boolean().default(false) }))
+      .output(LocalSetupReportSchema),
+    testLocal: oc.input(LocalOptionChoiceSchema).output(LocalModelTestSchema),
+    useLocal: oc.input(LocalOptionChoiceSchema).output(z.object({ ok: z.literal(true) })),
     backups: oc.output(z.array(ModelBackupChoiceSchema)),
     setBackups: oc.input(ModelBackupListSchema).output(z.object({ ok: z.literal(true) })),
     connect: oc.input(ModelConnectInputSchema).output(ModelCredentialSchema),
@@ -535,6 +555,8 @@ export const appContract = {
       )
       .output(z.object({ ok: z.literal(true), runIds: z.array(Id).optional() })),
     stop: oc.input(threadTarget).output(z.object({ ok: z.literal(true) })),
+    /** Runs a failed chat run's message again. It posts no message of its own. */
+    retry: oc.input(threadTarget.safeExtend({ runId: Id })).output(z.object({ runId: Id })),
     followUp: oc
       .input(
         threadTarget.safeExtend({
@@ -603,6 +625,8 @@ export const appContract = {
             username: z.string().min(1).max(512).optional(),
             /** Turns down a pending secret request; `answer` is then empty. */
             dismiss: z.literal(true).optional(),
+            /** Which card of several pending approvals this answers. */
+            approvalEffectId: Id.optional(),
           })
           .refine(
             (input) =>
@@ -706,6 +730,8 @@ export const appContract = {
         .output(z.array(WikiChangeSchema)),
       get: oc.input(z.object({ changeId: Id })).output(WikiChangeSchema),
       decide: oc.input(WikiChangeDecideInputSchema).output(WikiChangeSchema),
+      /** Applies every waiting change, oldest first. */
+      applyAll: oc.output(WikiApplyAllResultSchema),
     },
     settings: {
       get: oc.output(WikiSettingsSchema),
@@ -717,6 +743,7 @@ export const appContract = {
       .output(z.object({ ok: z.literal(true) })),
     /** One conversation's switch for the curator. */
     capture: {
+      get: oc.input(threadTarget).output(WikiCaptureStateSchema),
       set: oc
         .input(threadTarget.safeExtend({ capture: WikiCaptureValueSchema }))
         .output(z.object({ ok: z.literal(true) })),
@@ -1010,16 +1037,41 @@ export const appContract = {
       disconnect: oc.input(z.object({ serverId: Id })).output(z.object({ ok: z.literal(true) })),
     },
   },
+  missions: {
+    /** Where the member is with the first missions; null when the full navigation shows. */
+    get: oc.output(MissionsViewSchema.nullable()),
+    /** The member opened a part a mission brought. */
+    seen: oc.input(z.object({ part: NavPart })).output(z.object({ ok: z.literal(true) })),
+    /** End the short navigation for good. */
+    showAll: oc.output(z.object({ ok: z.literal(true) })),
+  },
   onboarding: {
     /** Record the optional signup survey; an empty submission marks it skipped. */
     signupSurvey: oc.input(SignupSurveySchema).output(z.object({ ok: z.literal(true) })),
+    /** Record that a coach mark is done for this person. Safe to repeat. */
+    tourDone: oc.input(z.object({ mark: TourMark })).output(z.object({ ok: z.literal(true) })),
+    /** End the coach tour for good. */
+    tourSkip: oc.output(z.object({ ok: z.literal(true) })),
     /**
      * Give a new account its Chief and a starting team of agents, in the person's language.
      * Safe to call again: it returns the Chief that is already there.
      */
     ensureTeam: oc
-      .input(z.object({ locale: z.enum(AGENT_CATALOG_LOCALES).default("en") }))
-      .output(z.object({ botId: Id, created: z.boolean() })),
+      .input(
+        z.object({
+          locale: z.enum(AGENT_CATALOG_LOCALES).default("en"),
+          /** What onboarding asked; the category tapped first adds one ready-made agent. */
+          picks: OnboardingPicksSchema.optional(),
+        }),
+      )
+      .output(
+        z.object({
+          botId: Id,
+          created: z.boolean(),
+          /** The agent the picks named, with the first task to leave unsent in its composer. */
+          pickedAgent: z.object({ botId: Id, task: z.string().nullable() }).optional(),
+        }),
+      ),
     /** Seed the first-run greeting into the bot's thread (focus card is separate). */
     start: oc.input(z.object({ botId: Id })).output(z.object({ ok: z.literal(true) })),
     /** Post the focus choice card when the thread is still idle. */

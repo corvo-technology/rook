@@ -4,7 +4,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import type { Evidence } from "./cases.js";
 import { EMPTY_SETTINGS } from "./cases.js";
-import { gradeToolChoice, loadToolChoiceCases } from "./tool-choice.js";
+import { gradeToolChoice, loadToolChoiceCases, ToolChoiceCaseSchema } from "./tool-choice.js";
 import { TOOL_CHOICE_CASES, TOOL_CHOICE_DEFINITIONS } from "./tool-choice-cases.js";
 
 function evidence(overrides: Partial<Evidence> = {}): Evidence {
@@ -176,5 +176,18 @@ describe("tool-choice grading", () => {
       ]),
     );
     expect(() => loadToolChoiceCases(file)).toThrow(/guard needs/);
+  });
+
+  it("defines the Chief guide cases, each with fleet management on", () => {
+    const cases = TOOL_CHOICE_DEFINITIONS.filter((c) => c.area === "chief-guide");
+    expect(cases.map((c) => c.id).sort()).toEqual([
+      "guide-before-explaining",
+      "guide-control",
+      "guide-language",
+      "status-before-diagnosing",
+    ]);
+    for (const definition of cases) {
+      expect(ToolChoiceCaseSchema.parse(definition).bot?.fleetManagement).toBe(true);
+    }
   });
 });

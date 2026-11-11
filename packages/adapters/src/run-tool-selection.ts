@@ -1,4 +1,9 @@
-import { disabledBuiltinToolSet, FLEET_TOOL_NAMES, FLEET_WRITE_TOOL_NAMES } from "@corvo/contracts";
+import {
+  disabledBuiltinToolSet,
+  FLEET_READ_TOOL_NAMES,
+  FLEET_TOOL_NAMES,
+  FLEET_WRITE_TOOL_NAMES,
+} from "@corvo/contracts";
 import { isBackgroundRunTrigger, isOwnerStartedRun } from "@corvo/core";
 import { builtinAgentTools } from "./builtin-tools.js";
 import { selectCloudAgentTools } from "./cloud-agent-tools-select.js";
@@ -12,6 +17,8 @@ export const READ_ONLY_AGENT_TOOLS = new Set([
   "list_fleet",
   "store_agents",
   "list_routines",
+  "guide_read",
+  "space_status",
   "read_file",
   "read_history",
   "search_history",
@@ -77,6 +84,8 @@ export const BUILTIN_AGENT_TOOL_NAMES = new Set(builtinAgentTools.map((tool) => 
 const FLEET_TOOL_NAMES_SET: ReadonlySet<string> = new Set(FLEET_TOOL_NAMES);
 
 export const FLEET_WRITE_TOOL_NAMES_SET: ReadonlySet<string> = new Set(FLEET_WRITE_TOOL_NAMES);
+
+export const FLEET_READ_TOOL_NAMES_SET: ReadonlySet<string> = new Set(FLEET_READ_TOOL_NAMES);
 
 /**
  * The creation intro asks what the bot is for and records the answer on its own profile.

@@ -117,3 +117,22 @@ export const WikiSettingsPatchSchema = WikiSettingsSchema.partial();
 
 /** One conversation's switch: on, off, or null to follow its kind (channels on, chats with one agent off). */
 export const WikiCaptureValueSchema = z.boolean().nullable();
+
+/** One conversation's switch as the curator reads it: what is stored and what it comes to. */
+export const WikiCaptureStateSchema = z.object({
+  /** False when the curator cannot read this conversation (off for the Space, or held by outsiders). */
+  available: z.boolean(),
+  /** The conversation's own value; null follows the default for its kind and Space. */
+  capture: WikiCaptureValueSchema,
+  /** Whether the curator reads the conversation now. */
+  on: z.boolean(),
+  /** Only the conversation's owner changes the switch. */
+  canChange: z.boolean(),
+});
+export type WikiCaptureState = z.infer<typeof WikiCaptureStateSchema>;
+
+export const WikiApplyAllResultSchema = z.object({
+  applied: z.number().int(),
+  conflicts: z.number().int(),
+});
+export type WikiApplyAllResult = z.infer<typeof WikiApplyAllResultSchema>;

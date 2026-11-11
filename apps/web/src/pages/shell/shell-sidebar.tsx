@@ -12,6 +12,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { Search, SlidersHorizontal } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 import { useState } from "react";
+import { MissionList } from "../../components/MissionList";
 import { PasskeyOffer } from "../../components/PasskeyOffer";
 import { SidebarFooter } from "../../components/SidebarFooter";
 import { useBilling } from "../../components/SubscriptionGate";
@@ -267,6 +268,7 @@ export function ShellSidebar({
         </div>
         <div className={mini ? "hidden" : "contents"}>
           <PasskeyOffer />
+          <MissionList navigate={navigate} onNavigate={() => setMobileOpen(false)} />
         </div>
         <ShellSidebarFooter
           mini={mini}

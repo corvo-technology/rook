@@ -147,6 +147,7 @@ export interface AppEnv {
   defaultProvider: string;
   defaultModel: string;
   wakeupDriver: string;
+  /** The operator allows coding-agent CLIs on this machine to serve models. */
   mcpStdioEnabled: boolean;
   mcpStdioAllowedCommands: string[];
   /** Package dir, install/startup timeouts and idle reaping for stdio MCP servers. */

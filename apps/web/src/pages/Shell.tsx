@@ -1,21 +1,27 @@
 import type {
   AgentSkillCatalogEntry,
   Bot,
+  McpServer,
   SpaceMemoryConfig,
   ThreadMessage,
   VoiceStatus,
 } from "@corvo/contracts";
-import type { AgentImportReader } from "@corvo/core";
+import type { AgentImportReader, ModelProblemAction, TourFacts } from "@corvo/core";
 import {
+  APP_CATALOG,
   answerableAskMessageIds,
+  appsForSurface,
+  CHIEF_BOT_SPAWN_KEY,
   channelMessageSender,
   chatUserBubbleColors,
   dismissableAskMessageIds,
   foldPeerReplies,
   isActive,
   isRunWorking,
+  matchAddedServer,
   memberName,
   newClientId,
+  oneClickAppFor,
 } from "@corvo/core";
 import { fetchFresh, writeSaved } from "@corvo/core/query";
 import type { GroupAvatarMember } from "@corvo/ui-web";
@@ -35,10 +41,13 @@ import {
   useSyncExternalStore,
 } from "react";
 import { useParams } from "react-router-dom";
+import { CoachLayer } from "../components/CoachLayer";
 import { ComputerUpdateProgress } from "../components/ComputerUpdateProgress";
 import { CallCard, CallReturnBar } from "../components/call/CallCard";
 import { IncomingCall } from "../components/call/IncomingCall";
 import { PageLoading } from "../components/PageLoading";
+import { catalogAgentOf, connectedServersFor } from "../lib/agent-catalog-install";
+import { connectCatalogApp } from "../lib/app-catalog-connect";
 import type { ArtifactTarget } from "../lib/artifact-open";
 import { authClient } from "../lib/auth";
 import { peekBootstrapSeed } from "../lib/bootstrap";
@@ -49,6 +58,7 @@ import {
 } from "../lib/bots-sidebar-density-pref";
 import { readBotsSidebarCollapsed, writeBotsSidebarCollapsed } from "../lib/bots-sidebar-pref";
 import { setCallMinimized, startCall, useCallSession } from "../lib/call-session";
+import { botDraftKey, readComposerDraft } from "../lib/composer-draft";
 import {
   getComposerEnterToSend,
   subscribeComposerEnterToSend,
@@ -188,6 +198,10 @@ function SpaceShell() {
     peerBotId: string;
     peerBotName: string;
   } | null>("peerConversation", null);
+  const credentialsQuery = useQuery({
+    queryKey: queries.models.credentials.queryKey(),
+    queryFn: () => rpc.models.credentials(),
+  });
   const agentSkillsQuery = useQuery(queries.agentSkills.list.queryOptions());
   const agentSkills = agentSkillsQuery.data ?? NO_AGENT_SKILLS;
   const setAgentSkills = useCallback(
@@ -430,6 +444,67 @@ function SpaceShell() {
     () => foldPeerReplies(activeSnapshot?.messages ?? [], { includePeerReceipts: true }),
     [activeSnapshot?.messages],
   );
+  const draftKey = inGroup ? `group:${groupId}` : `bot:${active?.id}`;
+  // Whether this bot chat opened with an unsent draft; read once per chat, not as the person types.
+  const draftWaiting = useMemo(
+    () => !inGroup && Boolean(active) && readComposerDraft(draftKey).trim() !== "",
+    [draftKey],
+  );
+  const tourFacts = useMemo<TourFacts>(() => {
+    const messages = transcript.messages;
+    const firstPersonMessage = messages.findIndex((message) => message.role === "user");
+    return {
+      draftWaiting,
+      personSent: firstPersonMessage >= 0,
+      replied:
+        firstPersonMessage >= 0 &&
+        messages.slice(firstPersonMessage + 1).some((message) => message.role === "bot"),
+      askWaiting: answerableAskIds.size > 0,
+      hasChief: bots.some((bot) => bot.spawnKey === CHIEF_BOT_SPAWN_KEY),
+      inChiefChat: active?.spawnKey === CHIEF_BOT_SPAWN_KEY,
+      // The missions list is not in this release yet.
+      missionsListed: false,
+    };
+  }, [draftWaiting, transcript, answerableAskIds, bots, active?.spawnKey]);
+  // A catalog agent's empty chat offers one app it works with that signs in with a click.
+  const catalogAgent = inGroup || !active ? undefined : catalogAgentOf(active);
+  const offersApp = Boolean(catalogAgent?.apps.length) && activeSnapshot?.messages.length === 0;
+  const [appServers, setAppServers] = useState<McpServer[] | null>(null);
+  const [appPending, setAppPending] = useState(false);
+  const loadAppServers = useCallback(
+    () => rpc.mcp.servers.list().then(setAppServers, () => setAppServers(null)),
+    [rpc],
+  );
+  useEffect(() => {
+    if (offersApp) void loadAppServers();
+  }, [offersApp, active?.id, loadAppServers]);
+  const offeredApp =
+    offersApp && catalogAgent && appServers
+      ? oneClickAppFor(
+          catalogAgent,
+          appsForSurface(APP_CATALOG, { systemBrowser: Boolean(desktopBridge()?.oauth?.open) }),
+          new Set(connectedServersFor(catalogAgent, appServers).map((server) => server.slug)),
+        )
+      : null;
+  const emptyChatApp =
+    offeredApp && active && appServers
+      ? {
+          name: offeredApp.name,
+          pending: appPending,
+          onConnect: () => {
+            setAppPending(true);
+            // Signing in gives the agent the app unless the person cancels; either way the offer
+            // is recomputed from the servers, and the composer draft is never touched.
+            void connectCatalogApp(offeredApp, {
+              existing: matchAddedServer(offeredApp, appServers),
+              botId: active.id,
+            })
+              .catch(() => undefined)
+              .then(loadAppServers)
+              .finally(() => setAppPending(false));
+          },
+        }
+      : undefined;
   const transcriptArtifactTarget = useMemo<ArtifactTarget>(
     () => (inGroup ? { groupId: groupId ?? "" } : { botId: active?.id ?? "" }),
     [active?.id, groupId, inGroup],
@@ -743,6 +818,13 @@ function SpaceShell() {
           if (active) void refreshThread(active.id);
         }}
       />
+      {bootstrapMe ? (
+        <CoachLayer
+          tour={bootstrapMe.tour}
+          facts={tourFacts}
+          onTourChange={(tour) => setBootstrapMe((prev) => (prev ? { ...prev, tour } : prev))}
+        />
+      ) : null}
       {bootstrapMe !== undefined ? (
         <HostComputerPrompt initialMe={bootstrapMe ?? undefined} onMeUpdated={setBootstrapMe} />
       ) : null}
@@ -917,6 +999,7 @@ function SpaceShell() {
               }
               starters={inGroup ? undefined : active?.starters}
               onStarter={(text) => void composer.sendMessage(text, [], newClientId())}
+              app={emptyChatApp}
               onLoadOlder={loadOlder}
               onOpenBot={openBot}
               onAnswer={composer.answerMessage}
@@ -980,8 +1063,8 @@ function SpaceShell() {
               </div>
             ) : null}
             <Composer
-              key={inGroup ? `group:${groupId}` : `bot:${active?.id}`}
-              draftKey={inGroup ? `group:${groupId}` : `bot:${active?.id}`}
+              key={inGroup ? `group:${groupId}` : botDraftKey(String(active?.id))}
+              draftKey={draftKey}
               enterToSend={enterToSend}
               onImportAgent={(agent) => openImport(agent, false)}
               activeName={
@@ -1019,6 +1102,13 @@ function SpaceShell() {
                   ? () => void setSpacePaused(appSpace.id, false).catch(() => undefined)
                   : undefined
               }
+              runAuthKind={
+                credentialsQuery.data?.find(
+                  (credential) => credential.provider === activeSnapshot?.run?.modelProvider,
+                )?.authKind
+              }
+              onRetryRun={() => void composer.retryRun()}
+              retryingRun={composer.retryingRun}
               runError={composer.displayedRunError}
               runErrorId={composer.displayedRunErrorId}
               onRunErrorPresented={composer.handleRunErrorPresented}

@@ -3,6 +3,8 @@ import type { Actor } from "@corvo/contracts";
 import { credentialForModel } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
 import { describe, expect, it, vi } from "vitest";
+import { CLAUDE_ENGINE } from "./cli-engine-claude.js";
+import { CliEngineHost, installCliEngineHost } from "./cli-engine-host.js";
 import { selectConfiguredModel } from "./model-roles.js";
 import {
   connectionServesModel,
@@ -1335,6 +1337,53 @@ describe("bot model change validation", () => {
     } finally {
       if (saved === undefined) delete process.env.CORVO_LOCAL_MODELS;
       else process.env.CORVO_LOCAL_MODELS = saved;
+    }
+  });
+
+  it("lets a bot switch to a CLI engine model only while the host offers it", async () => {
+    const host = new CliEngineHost({
+      dataDir: "/data",
+      engines: [CLAUDE_ENGINE],
+      locate: async () => "/bin/claude",
+      run: async (_bin, args) =>
+        args[0] === "--version"
+          ? { code: 0, stdout: "2.5.0" }
+          : { code: 0, stdout: '{"loggedIn":true,"authMethod":"claude.ai"}' },
+    });
+    const deps = changeDeps({});
+    const input = {
+      ...scope,
+      provider: "cli-engine",
+      model: "claude/sonnet",
+      thinkingLevel: "high",
+    };
+    await expect(validateBotModelChange(deps, input)).resolves.toEqual({
+      ok: false,
+      error: "Connect that model provider first",
+    });
+    expect(
+      pinnedModelCredentialError(
+        { modelProvider: "cli-engine", modelId: "claude/sonnet", thinkingLevel: null },
+        null,
+      ),
+    ).toBe("Connect that model provider first");
+    await host.view();
+    installCliEngineHost(host);
+    try {
+      await expect(validateBotModelChange(deps, input)).resolves.toEqual({
+        ok: true,
+        provider: "cli-engine",
+        model: "claude/sonnet",
+        thinkingLevel: null,
+      });
+      expect(
+        pinnedModelCredentialError(
+          { modelProvider: "cli-engine", modelId: "claude/sonnet", thinkingLevel: null },
+          null,
+        ),
+      ).toBeUndefined();
+    } finally {
+      installCliEngineHost(undefined);
     }
   });
 

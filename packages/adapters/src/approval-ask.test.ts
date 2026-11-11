@@ -122,7 +122,7 @@ describe("bot management approval cards", () => {
     "set_child_bot_model",
     "create_child_routine",
     "add_routine_step",
-  ])("builds the %s card from the resolved summary with allow and deny only", (toolName) => {
+  ])("builds the %s proposal card from the resolved summary with Apply and Dismiss", (toolName) => {
     const block = buildApprovalAskBlock(
       "effect-1",
       toolName,
@@ -142,9 +142,10 @@ describe("bot management approval cards", () => {
       detail: "Members: Scout, Writer\nPrompt: use [redacted]",
       detailFormat: toolName === "set_child_instructions" ? "code" : "text",
       status: "pending",
+      proposal: true,
       actions: [
-        { id: "allow", label: "Allow once" },
-        { id: "deny", label: "Deny" },
+        { id: "allow", label: "Apply" },
+        { id: "deny", label: "Dismiss" },
       ],
     });
   });

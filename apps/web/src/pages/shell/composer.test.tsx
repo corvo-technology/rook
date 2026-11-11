@@ -143,7 +143,7 @@ it.each([
     onOpenConnections,
   });
   const actions = container?.querySelectorAll<HTMLButtonElement>(
-    '[data-testid="composer-error-action"]',
+    '[data-testid="model-problem-action"]',
   );
   expect(actions?.length).toBe(label ? 1 : 0);
   if (!label) return;
@@ -153,7 +153,7 @@ it.each([
   expect(onOpenConnections).toHaveBeenCalledTimes(opens === "connections" ? 1 : 0);
 
   rerenderComposer({ sendError: "Could not send the message." });
-  expect(container?.querySelector('[data-testid="composer-error-action"]')).toBeNull();
+  expect(container?.querySelector('[data-testid="model-problem-action"]')).toBeNull();
 });
 
 it.each(["This bot reached its monthly token limit.", "This reply reached its token cap."])(
@@ -162,7 +162,7 @@ it.each(["This bot reached its monthly token limit.", "This reply reached its to
     const onOpenBotSettings = vi.fn();
     renderComposer(async () => true, { runError, runErrorId: "failed-run", onOpenBotSettings });
     const action = container?.querySelector<HTMLButtonElement>(
-      '[data-testid="composer-error-action"]',
+      '[data-testid="model-problem-action"]',
     );
     expect(action?.textContent).toBe("Raise limit");
     act(() => action?.click());
@@ -174,10 +174,10 @@ it("offers Resume after the pause error only when the member can resume", () => 
   const runError = "Bots are paused in this space.";
   const onResumeSpace = vi.fn();
   renderComposer(async () => true, { runError, runErrorId: "failed-run" });
-  expect(container?.querySelector('[data-testid="composer-error-action"]')).toBeNull();
+  expect(container?.querySelector('[data-testid="model-problem-action"]')).toBeNull();
   rerenderComposer({ onResumeSpace });
   const action = container?.querySelector<HTMLButtonElement>(
-    '[data-testid="composer-error-action"]',
+    '[data-testid="model-problem-action"]',
   );
   expect(action?.textContent).toBe("Resume");
   act(() => action?.click());
@@ -1007,4 +1007,11 @@ it("says nothing about a recipient outside a group, or when several would get it
   container?.remove();
   renderComposer(vi.fn(), { groupRecipient: () => undefined });
   expect(container!.querySelector('[data-testid="group-recipient"]')).toBeNull();
+});
+
+it("marks the composer as the anchor for the first-message coach mark", () => {
+  renderComposer(async () => true);
+  expect(
+    container?.querySelector('fieldset[aria-label="Message composer"]')?.getAttribute("data-coach"),
+  ).toBe("first");
 });

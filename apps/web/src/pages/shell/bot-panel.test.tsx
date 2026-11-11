@@ -19,6 +19,7 @@ vi.mock("../../lib/rpc", () => {
       list: vi.fn().mockResolvedValue([]),
     },
     me: vi.fn().mockResolvedValue(null),
+    autoReview: { get: vi.fn() },
   };
   return {
     rpc,
@@ -32,7 +33,8 @@ vi.mock("@lingui/react/macro", () => {
     parts.reduce((text, part, index) => `${text}${index > 0 ? values[index - 1] : ""}${part}`, "");
   return { useLingui: () => ({ t }), Trans: ({ children }: { children: ReactNode }) => children };
 });
-vi.mock("@corvo/ui-web", () => ({
+vi.mock("@corvo/ui-web", async () => ({
+  ...(await import("../../test-support/ui-web-choice-doubles")).choiceDoubles,
   Button: ({
     variant: _variant,
     size: _size,
@@ -104,6 +106,13 @@ import { spaceQueries } from "../../lib/query";
 import { rpc } from "../../lib/rpc";
 import { BotSettings } from "./bot-panel";
 
+const defaultSettings = (mode: "ask" | "auto" | "never", checkerAvailable = true) => ({
+  mode,
+  enabled: mode === "auto",
+  skipApprovals: mode === "never",
+  checkerAvailable,
+});
+
 const longInstructions = "I".repeat(4_000);
 
 function bot(description = "Billing", overrides: Partial<Bot> = {}): Bot {
@@ -138,6 +147,7 @@ function bot(description = "Billing", overrides: Partial<Bot> = {}): Bot {
     teamChatRules: "",
     fleetManagement: false,
     squadRouting: false,
+    approvalMode: null,
     dailyCapUsd: null,
     monthlyTokenLimit: null,
     disabledBuiltinTools: [],
@@ -225,6 +235,7 @@ beforeEach(() => {
   onSave.mockReset().mockResolvedValue(undefined);
   vi.mocked(rpc.bots.update).mockReset();
   vi.mocked(rpc.bots.get).mockReset();
+  vi.mocked(rpc.autoReview.get).mockReset().mockResolvedValue(defaultSettings("auto"));
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
@@ -840,5 +851,75 @@ describe("BotSettings cached data", () => {
     const patch = onSave.mock.lastCall?.[0];
     expect(patch).toMatchObject({ description: "Invoices", computerMode: "dedicated" });
     expect(patch).not.toHaveProperty("name");
+  });
+});
+
+describe("BotSettings autonomy", () => {
+  const radios = () => [...container.querySelectorAll<HTMLElement>('[role="radio"]')];
+  const radio = (mode: string) => radios().find((node) => node.dataset.value === mode)!;
+  const checked = () => radios().find((node) => node.getAttribute("aria-checked") === "true");
+
+  it("shows the default as the answer for a bot with none of its own", async () => {
+    await render("Billing", { approvalMode: null });
+    await expandAdvanced();
+    expect(container.textContent).toContain("How much does Ada do on its own?");
+    expect(checked()?.dataset.value).toBe("auto");
+  });
+
+  it("shows the bot's own answer over the default", async () => {
+    await render("Billing", { approvalMode: "ask" });
+    await expandAdvanced();
+    expect(checked()?.dataset.value).toBe("ask");
+  });
+
+  it("saves only the chosen answer", async () => {
+    await render();
+    await expandAdvanced();
+    await act(async () => radio("ask").click());
+    expect(onSave).toHaveBeenCalledExactlyOnceWith({ approvalMode: "ask" });
+    expect(checked()?.dataset.value).toBe("ask");
+  });
+
+  it("stores nothing when the answer is the default", async () => {
+    await render("Billing", { approvalMode: "ask" });
+    await expandAdvanced();
+    await act(async () => radio("auto").click());
+    expect(onSave).toHaveBeenCalledExactlyOnceWith({ approvalMode: null });
+  });
+
+  it("restores the previous answer when the save is rejected", async () => {
+    onSave.mockRejectedValueOnce(new Error("nope"));
+    await render();
+    await expandAdvanced();
+    await act(async () => radio("ask").click());
+    expect(checked()?.dataset.value).toBe("auto");
+  });
+
+  it("saves nothing when free is cancelled", async () => {
+    await render();
+    await expandAdvanced();
+    await act(async () => radio("never").click());
+    const cancel = [...container.querySelectorAll("button")].find(
+      (b) => b.textContent === "Cancel",
+    );
+    await act(async () => cancel!.click());
+    expect(onSave).not.toHaveBeenCalled();
+    expect(checked()?.dataset.value).toBe("auto");
+  });
+
+  it("disables the picker until the default has loaded", async () => {
+    vi.mocked(rpc.autoReview.get).mockRejectedValue(new Error("offline"));
+    await render();
+    await expandAdvanced();
+    expect(radios().every((node) => (node as HTMLButtonElement).disabled)).toBe(true);
+  });
+
+  it("keeps normal selected without an approval model", async () => {
+    vi.mocked(rpc.autoReview.get).mockResolvedValue(defaultSettings("ask", false));
+    await render("Billing", { approvalMode: "auto" });
+    await expandAdvanced();
+    expect(radios().map((node) => node.dataset.value)).toEqual(["ask", "auto", "never"]);
+    expect(checked()?.dataset.value).toBe("auto");
+    expect(container.textContent).toContain("Add a model in Settings to use this.");
   });
 });

@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -39,7 +40,12 @@ describePostgres("the wiki curator procedures", () => {
   const call = async (name: string, procedure: string, input: unknown = {}) => {
     const response = await handles.app.request(`/rpc/${procedure}`, {
       method: "POST",
-      headers: { "content-type": "application/json", cookie: people[name]!.cookie, origin },
+      headers: {
+        "content-type": "application/json",
+        cookie: people[name]!.cookie,
+        origin,
+        "x-corvo-space-id": people[name]!.spaceId,
+      },
       body: JSON.stringify({ json: input }),
     });
     const text = await response.text();
@@ -236,5 +242,145 @@ describePostgres("the wiki curator procedures", () => {
       messageId: mine.messageId,
     });
     expect(theirs.status).toBeGreaterThanOrEqual(400);
+  });
+
+  /** A channel of the person's with two agents in it and its own thread. */
+  async function channel(name: string) {
+    const { userId, spaceId } = people[name]!;
+    return system(async () => {
+      const bots = await Promise.all(
+        [1, 2].map((n) =>
+          handles.prisma.bot.create({
+            data: { spaceId, userId, name: `Member ${n} ${Date.now()}`, color: "ink" },
+          }),
+        ),
+      );
+      const group = await handles.prisma.chatGroup.create({
+        data: {
+          spaceId,
+          userId,
+          name: "Engineering",
+          members: { create: bots.map((bot) => ({ botId: bot.id })) },
+        },
+      });
+      const thread = await handles.prisma.thread.create({
+        data: { spaceId, userId, groupId: group.id },
+      });
+      return { groupId: group.id, threadId: thread.id };
+    });
+  }
+
+  describe("one conversation's switch", () => {
+    const setSpaceCapture = (name: string, capture: boolean) =>
+      system(() =>
+        handles.prisma.wikiSettings.upsert({
+          where: { spaceId: people[name]!.spaceId },
+          create: { spaceId: people[name]!.spaceId, capture },
+          update: { capture },
+        }),
+      );
+
+    it("shows a chat with one agent off until its owner turns it on", async () => {
+      const mine = await chat("ada");
+      expect((await call("ada", "wiki/capture/get", { botId: mine.botId })).body).toEqual({
+        available: true,
+        capture: null,
+        on: false,
+        canChange: true,
+      });
+      await call("ada", "wiki/capture/set", { botId: mine.botId, capture: true });
+      expect((await call("ada", "wiki/capture/get", { botId: mine.botId })).body).toMatchObject({
+        capture: true,
+        on: true,
+      });
+    });
+
+    it("is not available while the Space has the curator off", async () => {
+      const mine = await chat("grace");
+      await setSpaceCapture("grace", false);
+      try {
+        expect((await call("grace", "wiki/capture/get", { botId: mine.botId })).body).toMatchObject(
+          {
+            available: false,
+            on: false,
+          },
+        );
+      } finally {
+        await setSpaceCapture("grace", true);
+      }
+    });
+
+    it("follows a channel's default, off once other people share the Space, and refuses another member", async () => {
+      const group = await channel("ada");
+      expect(
+        (await call("ada", "wiki/capture/get", { groupId: group.groupId })).body,
+      ).toMatchObject({
+        capture: null,
+        on: true,
+        canChange: true,
+      });
+      const extra = people.ada!;
+      await signUp("linus");
+      await system(async () => {
+        const owner = await handles.prisma.spaceMember.findFirstOrThrow({
+          where: { spaceId: extra.spaceId, userId: extra.userId },
+        });
+        await handles.prisma.member.create({
+          data: {
+            id: randomUUID(),
+            organizationId: owner.organizationId,
+            userId: people.linus!.userId,
+            role: "member",
+            createdAt: new Date(),
+          },
+        });
+        // Joining the organization seats the person in its Space; one that is not seated is added.
+        const seated = await handles.prisma.spaceMember.findFirst({
+          where: { spaceId: extra.spaceId, userId: people.linus!.userId },
+        });
+        if (!seated)
+          await handles.prisma.spaceMember.create({
+            data: {
+              id: randomUUID(),
+              organizationId: owner.organizationId,
+              spaceId: extra.spaceId,
+              userId: people.linus!.userId,
+              createdAt: new Date(),
+            },
+          });
+      });
+      const linus = { ...people.linus!, spaceId: extra.spaceId };
+      people.linus = linus;
+      expect(
+        (await call("ada", "wiki/capture/get", { groupId: group.groupId })).body,
+      ).toMatchObject({
+        capture: null,
+        on: false,
+      });
+      await call("ada", "wiki/capture/set", { groupId: group.groupId, capture: true });
+      expect(
+        (await call("ada", "wiki/capture/get", { groupId: group.groupId })).body,
+      ).toMatchObject({
+        capture: true,
+        on: true,
+      });
+      const theirs = await call("linus", "wiki/capture/get", { groupId: group.groupId });
+      expect(theirs.status === 200 ? theirs.body.canChange : false).toBe(false);
+      const refused = await call("linus", "wiki/capture/set", {
+        groupId: group.groupId,
+        capture: false,
+      });
+      expect(refused.status).toBeGreaterThanOrEqual(400);
+    });
+  });
+
+  it("applies the changes another member left waiting", async () => {
+    const change = await pendingChange();
+    const result = await call("linus", "wiki/changes/applyAll");
+    expect(result.status).toBe(200);
+    expect(result.body.applied).toBeGreaterThanOrEqual(1);
+    expect((await call("ada", "wiki/changes/get", { changeId: change.id })).body.state).toBe(
+      "applied",
+    );
   });
 });

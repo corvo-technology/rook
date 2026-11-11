@@ -9,14 +9,20 @@ import { LocalModelChoice } from "./LocalModelChoice";
  * the person has opened the key step or started typing a key, a later report never replaces it.
  */
 export function LocalModelStep(props: ComponentProps<typeof QuickKeyConnect>) {
-  const { report } = useLocalSetup();
+  const { report, refresh } = useLocalSetup();
   const [touched, setTouched] = useState(false);
-  if (report?.enabled && report.options.length > 0 && !touched) {
+  // An engine whose CLI is installed but signed out is worth showing too: signing in adds an option.
+  const found =
+    report?.enabled &&
+    (report.options.length > 0 ||
+      report.cliEngines?.some((engine) => engine.state === "signed_out"));
+  if (report && found && !touched) {
     return (
       <LocalModelChoice
         report={report}
         onContinue={props.onConnected}
         onFallback={() => setTouched(true)}
+        onRefresh={refresh}
       />
     );
   }

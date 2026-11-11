@@ -14,6 +14,16 @@ Whoever can pick models on the deployment may use the engine, because the person
 
 > Note for operators: whether the CLI vendor's terms of use allow another application to run the CLI non-interactively on your own machine with your own plan is the maintainer's call; read those terms before sharing the machine with anyone but yourself.
 
+## Install and sign in from onboarding
+
+The model step can install Claude Code and sign it in without a terminal, wherever CLI engines are offered.
+
+- **Install.** Corvo reads the vendor's latest release and its manifest, downloads the binary over HTTPS from the vendor's release host only (also after redirects), checks it against the SHA-256 the manifest lists, and stores it unmodified under `DATA_DIR/engines/claude/<version>/`. A mismatch installs nothing. No shell runs, and a binary already on `PATH` wins over the installed one.
+- **Sign in on the owner's computer** (the desktop engine): the CLI's own browser login runs, and the status check is polled for up to 15 minutes.
+- **Sign in on a server:** the CLI's login runs in a pseudo-terminal made by the system `script` command. Its screen reaches the page as text lines, and typed text and a fixed key set go back. Nothing it prints is stored or logged. Without `script`, no sign-in button is shown.
+
+Anyone who can pick models on the deployment can start either, because the person who runs the machine chose to share it. Every procedure is forbidden where CLI engines are not offered.
+
 ## Where things live
 
 - The CLI's own settings and sign-in live in `DATA_DIR/engines/claude/config`, a folder created with mode `0700` that belongs to Corvo. Sign the CLI in once inside that folder. Your own `CLAUDE.md`, skills, plugins, agents, hooks and MCP servers never load.

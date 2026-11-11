@@ -96,6 +96,7 @@ function mapBot(
     fleetManagement?: boolean;
     squadRouting?: boolean;
     dailyCapMicros?: bigint | null;
+    monthlyTokenLimit?: bigint | null;
     disabledBuiltinTools?: string[];
     webhookSecretId?: string | null;
     spawnKey?: string | null;
@@ -145,6 +146,7 @@ function mapBot(
     fleetManagement: bot.fleetManagement ?? false,
     squadRouting: bot.squadRouting ?? false,
     dailyCapUsd: bot.dailyCapMicros == null ? null : Number(bot.dailyCapMicros) / 1_000_000,
+    monthlyTokenLimit: bot.monthlyTokenLimit == null ? null : Number(bot.monthlyTokenLimit),
     disabledBuiltinTools: bot.disabledBuiltinTools ?? [],
     webhookConfigured: Boolean(bot.webhookSecretId),
     spawnKey: bot.spawnKey ?? null,

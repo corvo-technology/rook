@@ -270,6 +270,8 @@ model Space {
   createdByUser               User?                        @relation("SpaceCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
   createdAt                   DateTime                     @default(now())
   deletingAt                  DateTime?
+  /// When the owner paused every bot in the space; null means running.
+  pausedAt                    DateTime?
   deletionClaimId             String?
   memberships                 SpaceMember[]
   bots                        Bot[]
@@ -537,6 +539,10 @@ model Bot {
   squadRouting             Boolean           @default(false)
   /// Most a bot may spend on hosted model credits in a UTC day; null means no limit.
   dailyCapMicros           BigInt?
+  /// Tokens the bot may use in a UTC month; null (or 0) means no limit.
+  monthlyTokenLimit        BigInt?
+  /// The UTC month ("2026-11") the 80% warning was last sent for.
+  budgetAlertMonth         String?
   routines                 Routine[]
   routineSteps             RoutineStep[]
   scratchpadItems          ScratchpadItem[]
@@ -752,6 +758,8 @@ model Run {
   task                 Task              @relation(fields: [taskId], references: [id], onDelete: Cascade)
   userId               String
   status               String
+  /// Set when a rule of the app ended the run: reply_cap, monthly_limit or paused.
+  stopReason           String?
   trigger              String
   modelProvider        String?
   modelId              String?
@@ -1354,6 +1362,7 @@ model UsageRecord {
   createdAt          DateTime @default(now())
 
   @@index([spaceId, userId, createdAt])
+  @@index([botId, createdAt], map: "usage_records_bot_created_idx")
   @@map("usage_records")
 }
 

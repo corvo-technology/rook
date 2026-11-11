@@ -90,6 +90,9 @@ export const InstructionVersionSchema = z.object({
   createdAt: z.string(),
 });
 
+/** Largest monthly token limit a bot may be given. */
+export const BOT_MONTHLY_TOKEN_LIMIT_MAX = 1_000_000_000_000;
+
 export const BotSchema = z.object({
   id: Id,
   spaceId: Id,
@@ -128,6 +131,8 @@ export const BotSchema = z.object({
   squadRouting: z.boolean().default(false),
   /** Most the bot may spend on hosted credits in a UTC day, in US dollars; null means no limit. */
   dailyCapUsd: z.number().nullable().default(null),
+  /** Most tokens the bot may use in a UTC month; null means no limit. */
+  monthlyTokenLimit: z.number().nullable().default(null),
   disabledBuiltinTools: z.array(z.string()).default([]),
   webhookConfigured: z.boolean(),
   /** Present when created with an idempotency key (e.g. onboarding:first). */
@@ -447,6 +452,13 @@ export const UpdateBotInput = z
     thinkingLevel: ThinkingLevelSchema.nullable().optional(),
     teamChatAmbientEnabled: z.boolean().optional(),
     dailyCapUsd: z.number().positive().max(10_000).nullable().optional(),
+    monthlyTokenLimit: z
+      .number()
+      .int()
+      .min(0)
+      .max(BOT_MONTHLY_TOKEN_LIMIT_MAX)
+      .nullable()
+      .optional(),
     teamChatRules: z.string().max(TEAM_CHAT_RULES_MAX_LENGTH).optional(),
     crossSpaceCommunication: z.boolean().optional(),
     fleetManagement: z.boolean().optional(),

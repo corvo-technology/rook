@@ -6,11 +6,11 @@ import {
   awaitConnectorResult,
   CONNECTOR_WAIT_LIMITS,
   connectorWaitNote,
-  withWaitNote,
 } from "./connector-wait.js";
 import { CATALOG_EXECUTE } from "./lazy-tool-catalog.js";
 import { waitingActivityText } from "./pi-runtime-tools.js";
 import type { RunContext } from "./run-context.js";
+import { withGuardNote } from "./run-guards.js";
 import { publishActivityLine } from "./run-progress.js";
 import type { ToolCall } from "./run-tool-gate.js";
 import { statusCallAllowed } from "./run-tool-gate.js";
@@ -81,7 +81,7 @@ export async function waitForConnectorResult(
     "wait.outcome": outcome.kind,
   });
   if (outcome.kind === "time" || outcome.kind === "status_error") {
-    return withWaitNote(
+    return withGuardNote(
       outcome.result,
       connectorWaitNote(outcome, statusTool.name, args as Record<string, ConnectorStatusId>),
     );

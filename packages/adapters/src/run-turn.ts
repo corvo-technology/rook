@@ -33,6 +33,7 @@ import {
 import { startWorkflowStepAfter } from "./routine-steps.js";
 import type { RunContext } from "./run-context.js";
 import { persistTurnCheckpoint } from "./run-context.js";
+import { TurnGuardStopError } from "./run-guards.js";
 import { renewRunLease, requeueComputerRun } from "./run-lifecycle.js";
 import { publishMessage, redactBlocks } from "./run-messages.js";
 import {
@@ -96,6 +97,8 @@ export async function consumeRunEvents(
   const { deps, run, runId, bot } = ctx;
   const { reply } = ctx.state;
   for await (const event of withRuntimeCleanup(events, ctx.abortController)) {
+    if (ctx.state.guards.stopped) return true;
+    ctx.state.guards.sign();
     if (ctx.state.approval.pausePending) return true;
     if (!ctx.state.lease.valid) return true;
     if (await runLeaseLost(ctx)) return true;
@@ -720,7 +723,9 @@ export async function failRun(
 ) {
   const { deps, run, runId, bot, thread } = ctx;
   const { reply } = ctx.state;
-  let error = caughtError;
+  let error: unknown = ctx.state.guards.stopped
+    ? new TurnGuardStopError(ctx.state.guards.stopped)
+    : caughtError;
   // A refused account limit needs user/operator action, not setup-job retries.
   // Keep the provisioning error even if aborting the model masked it.
   try {
@@ -762,6 +767,7 @@ export async function failRun(
     leaseFence: ctx.fence,
     outcome: "failed",
     error: message,
+    ...(error instanceof TurnGuardStopError ? { stopReason: error.kind } : {}),
     ...(partialReply.length > 0 ? { partialReply } : {}),
   });
   if (!failed) return;
@@ -769,7 +775,8 @@ export async function failRun(
     error instanceof TransientModelError ||
     error instanceof ModelAccountError ||
     error instanceof ModelOutputError ||
-    error instanceof SandboxRateLimitError
+    error instanceof SandboxRateLimitError ||
+    error instanceof TurnGuardStopError
   ) {
     // Provider outages that outlasted retries, provider accounts, plans and model
     // choices the user fixes, unusable model output and the computer provider's own
@@ -780,6 +787,7 @@ export async function failRun(
       reason: message,
       // `reason` is what the user reads; this is what the provider or the network actually said.
       detail: redactSecrets(error.message, ctx.secrets),
+      ...(error instanceof TurnGuardStopError ? { "guard.kind": error.kind } : {}),
       ...model.active,
     });
   } else {

@@ -124,15 +124,3 @@ export function connectorWaitNote(
   }
   return `${statusTool} failed while waiting (${outcome.error}). The last state was ${outcome.status.state} (${ids}). Do not sleep: continue with what you can, or call ${statusTool} once more before you finish.`;
 }
-
-/** Add a note to a tool result without changing what it already says. */
-export function withWaitNote(result: unknown, note: string): unknown {
-  if (typeof result === "object" && result !== null && !Array.isArray(result)) {
-    const content = (result as { content?: unknown }).content;
-    if (Array.isArray(content)) {
-      return { ...result, content: [...content, { type: "text", text: note }] };
-    }
-    return { ...result, wait_note: note };
-  }
-  return { result, wait_note: note };
-}

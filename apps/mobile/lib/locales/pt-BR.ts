@@ -974,6 +974,16 @@ export const PT_BR_MESSAGES: Record<string, string> = {
     "O provedor recusou a chave que este bot usou na resposta.",
   "The provider couldn't serve the model selected for this bot.":
     "O provedor não conseguiu atender o modelo escolhido para este bot.",
+  "I stopped because I kept repeating the same step and getting the same result.":
+    "Parei porque fiquei repetindo o mesmo passo e obtendo o mesmo resultado.",
+  "I stopped because my tools kept failing.":
+    "Parei porque minhas ferramentas continuaram falhando.",
+  "I stopped because I got stuck and nothing was moving.":
+    "Parei porque fiquei travado e nada avançava.",
+  "I stopped because I kept waiting for something that didn't arrive.":
+    "Parei porque fiquei esperando algo que não chegava.",
+  "Send your message again to try once more.":
+    "Envie sua mensagem de novo para tentar mais uma vez.",
   "The bot couldn't finish its reply. Technical details includes the reported error.":
     "O bot não conseguiu terminar a resposta. Os detalhes técnicos incluem o erro informado.",
   "This bot's reply stopped at its key's daily limit. Your own key has its own limits.":

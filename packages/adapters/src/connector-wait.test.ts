@@ -13,7 +13,6 @@ import {
   type ConnectorWaitLimits,
   type ConnectorWaitOutcome,
   connectorWaitNote,
-  withWaitNote,
 } from "./connector-wait.js";
 
 const args = { statement_id: "stmt-0001" };
@@ -146,13 +145,5 @@ describe("notes", () => {
     );
     expect(note).toContain("Still PENDING after waiting 5 min (23 checks with get_statement)");
     expect(note).toContain("statement_id=stmt-0001");
-  });
-
-  it("adds the note to a result without dropping its content", () => {
-    const note = "wait";
-    const noted = withWaitNote(sqlPendingText, note) as typeof sqlPendingText;
-    expect(noted.content).toEqual([...sqlPendingText.content, { type: "text", text: note }]);
-    expect(withWaitNote({ a: 1 }, note)).toEqual({ a: 1, wait_note: note });
-    expect(withWaitNote("x", note)).toEqual({ result: "x", wait_note: note });
   });
 });

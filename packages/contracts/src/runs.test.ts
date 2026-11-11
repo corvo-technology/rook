@@ -4,7 +4,9 @@ import {
   providerQuotaResetAt,
   RUN_TRIGGERS,
   RunActivityRowSchema,
+  RunStopReasonSchema,
   RunTriggerSchema,
+  TURN_GUARD_KINDS,
 } from "./runs.js";
 
 describe("run triggers", () => {
@@ -114,5 +116,11 @@ describe("providerQuotaResetAt", () => {
     ["no reset", '429: {"message":"Rate limit reached"}'],
   ])("ignores %s", (_label, text) => {
     expect(providerQuotaResetAt(text, now)).toBeUndefined();
+  });
+});
+
+describe("run stop reasons", () => {
+  it.each(TURN_GUARD_KINDS)("accepts the %s guard kind", (kind) => {
+    expect(RunStopReasonSchema.parse(kind)).toBe(kind);
   });
 });

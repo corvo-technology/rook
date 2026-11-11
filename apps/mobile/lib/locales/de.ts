@@ -1021,6 +1021,16 @@ export const DE_MESSAGES: Record<string, string> = {
     "Der Anbieter hat den Schlüssel abgelehnt, den dieser Bot für seine Antwort verwendet hat.",
   "The provider couldn't serve the model selected for this bot.":
     "Der Anbieter konnte das für diesen Bot ausgewählte Modell nicht bereitstellen.",
+  "I stopped because I kept repeating the same step and getting the same result.":
+    "Ich habe angehalten, weil ich denselben Schritt immer wieder wiederholt und dasselbe Ergebnis bekommen habe.",
+  "I stopped because my tools kept failing.":
+    "Ich habe angehalten, weil meine Tools immer wieder fehlgeschlagen sind.",
+  "I stopped because I got stuck and nothing was moving.":
+    "Ich habe angehalten, weil ich feststeckte und nichts voranging.",
+  "I stopped because I kept waiting for something that didn't arrive.":
+    "Ich habe angehalten, weil ich immer wieder auf etwas gewartet habe, das nicht kam.",
+  "Send your message again to try once more.":
+    "Sende deine Nachricht erneut, um es noch einmal zu versuchen.",
   "The bot couldn't finish its reply. Technical details includes the reported error.":
     "Der Bot konnte seine Antwort nicht abschließen. Die technischen Details enthalten den gemeldeten Fehler.",
   "This bot's reply stopped at its key's daily limit. Your own key has its own limits.":

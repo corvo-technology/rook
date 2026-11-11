@@ -1,4 +1,10 @@
-import { CLI_ENGINE_RUN_ERRORS, MODEL_OUTPUT_CUT_ERROR, normalizeRunError } from "@corvo/core";
+import { TURN_GUARD_KINDS } from "@corvo/contracts";
+import {
+  CLI_ENGINE_RUN_ERRORS,
+  MODEL_OUTPUT_CUT_ERROR,
+  normalizeRunError,
+  TURN_GUARD_RUN_ERRORS,
+} from "@corvo/core";
 import { i18n } from "@lingui/core";
 import { afterEach, expect, it } from "vitest";
 import { translateRunError } from "./run-error";
@@ -34,6 +40,15 @@ it("translates the summary of a reply cut off at the output limit", () => {
       "Das Modell hat sein Ausgabelimit erreicht, bevor es die Antwort fertig geschrieben hat.",
     recovery: "model",
   });
+});
+
+it.each(TURN_GUARD_KINDS)("translates the %s stop sentence without a recovery action", (kind) => {
+  const sentence = TURN_GUARD_RUN_ERRORS[kind];
+  i18n.load("de", { [sentence]: `marker:${kind}` });
+  i18n.activate("de");
+  const result = normalizeRunError(sentence, translateRunError, i18n.locale);
+  expect(result.summary).toBe(`marker:${kind}`);
+  expect(result.recovery).toBeUndefined();
 });
 
 it.each(Object.values(CLI_ENGINE_RUN_ERRORS.claude))(

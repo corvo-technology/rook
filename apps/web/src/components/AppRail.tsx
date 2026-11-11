@@ -134,10 +134,7 @@ export function AppRail({ ticketBoardEnabled }: { ticketBoardEnabled: boolean })
             }}
             className={`${RAIL_ITEM} aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-foreground`}
           >
-            <Icon
-              strokeWidth={1.6}
-              className="size-5 transition-transform duration-150 ease-out motion-reduce:transition-none"
-            />
+            <Icon className="size-5 transition-transform duration-150 ease-out motion-reduce:transition-none" />
             <span aria-hidden className={RAIL_LABEL}>
               {label}
             </span>

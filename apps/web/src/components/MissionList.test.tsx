@@ -68,6 +68,7 @@ it("renders nothing when the list is not shown", async () => {
 it("lists the six missions in order", async () => {
   const { container, cleanup } = await render();
   expect(container.querySelector("ol")?.getAttribute("aria-label")).toBe("Missions");
+  expect(container.querySelector("ol")?.getAttribute("data-coach")).toBe("missions");
   expect([...container.querySelectorAll("li")].map((li) => li.textContent)).toEqual([
     "Talk to your agent",
     "Answer a request",

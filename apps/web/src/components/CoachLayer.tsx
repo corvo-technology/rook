@@ -18,6 +18,7 @@ const SIDE: Partial<Record<TourMark, "top" | "right">> = {
   ask: "top",
   first: "top",
   chief: "right",
+  missions: "right",
 };
 
 /**
@@ -86,6 +87,14 @@ export function CoachLayer({
       .catch(() => undefined);
   };
 
+  // Clicking a mission ends its mark: the person has seen what the list is for.
+  useEffect(() => {
+    if (due !== "missions" || !anchor) return;
+    const onPointerDown = () => record("missions");
+    anchor.addEventListener("pointerdown", onPointerDown);
+    return () => anchor.removeEventListener("pointerdown", onPointerDown);
+  }, [due, anchor, record]);
+
   // The mark rendered on the previous pass: an ask is fulfilled only after it was on screen.
   const showing = useRef<TourMark | null>(null);
   const shown = due && anchor ? due : null;
@@ -100,6 +109,7 @@ export function CoachLayer({
     ask: t`When an agent needs you, it asks here and waits.`,
     first: t`This isn't sent yet. Edit it or send it.`,
     chief: t`Stuck? Ask the Chief.`,
+    missions: t`Each one checks itself off when you do it.`,
   };
   const text = sentence[shown];
   if (!text) return null;

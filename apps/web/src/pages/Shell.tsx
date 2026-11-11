@@ -74,6 +74,7 @@ import { markShellReady, useSpaceEpoch } from "../lib/space-switch";
 import { activeThreadRuns } from "../lib/thread-events";
 import { getToolActivityEnabled, subscribeToolActivity } from "../lib/tool-activity-preference";
 import { useDesktopBadge } from "../lib/use-desktop-badge";
+import { useMissions } from "../lib/use-missions";
 import { HostComputerPrompt } from "./HostComputerPrompt";
 import { ArchivedChats } from "./shell/archived-chats";
 import { ChatContextMenu } from "./shell/chat-context-menu";
@@ -444,6 +445,7 @@ function SpaceShell() {
     () => foldPeerReplies(activeSnapshot?.messages ?? [], { includePeerReceipts: true }),
     [activeSnapshot?.messages],
   );
+  const { listed: missionsListed } = useMissions();
   const draftKey = inGroup ? `group:${groupId}` : `bot:${active?.id}`;
   // Whether this bot chat opened with an unsent draft; read once per chat, not as the person types.
   const draftWaiting = useMemo(
@@ -462,10 +464,9 @@ function SpaceShell() {
       askWaiting: answerableAskIds.size > 0,
       hasChief: bots.some((bot) => bot.spawnKey === CHIEF_BOT_SPAWN_KEY),
       inChiefChat: active?.spawnKey === CHIEF_BOT_SPAWN_KEY,
-      // The missions list is not in this release yet.
-      missionsListed: false,
+      missionsListed,
     };
-  }, [draftWaiting, transcript, answerableAskIds, bots, active?.spawnKey]);
+  }, [draftWaiting, transcript, answerableAskIds, bots, active?.spawnKey, missionsListed]);
   // A catalog agent's empty chat offers one app it works with that signs in with a click.
   const catalogAgent = inGroup || !active ? undefined : catalogAgentOf(active);
   const offersApp = Boolean(catalogAgent?.apps.length) && activeSnapshot?.messages.length === 0;

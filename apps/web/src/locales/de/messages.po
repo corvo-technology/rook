@@ -4365,6 +4365,7 @@ msgstr "Eingabe erforderlich"
 msgid "Needs takeover"
 msgstr "Übernahme erforderlich"
 
+#: src/components/AskCard.tsx
 #: src/lib/roster-status.ts
 #: src/pages/shell/computer-overlay.tsx
 msgid "Needs you"
@@ -4477,6 +4478,7 @@ msgid "No authentication"
 msgstr "Keine Authentifizierung"
 
 #: src/pages/shell/command-palette.tsx
+#: src/pages/TeamBoard.tsx
 msgid "No bots"
 msgstr "Keine Bots"
 
@@ -4548,6 +4550,10 @@ msgstr "Keine Remote-MCP-Server gefunden"
 #: src/pages/SpaceSearch.tsx
 msgid "No results"
 msgstr "Keine Ergebnisse"
+
+#: src/pages/Routines.tsx
+msgid "No routines yet"
+msgstr "Noch keine Routinen"
 
 #: src/components/markdown-copy.tsx
 msgid "No rows"

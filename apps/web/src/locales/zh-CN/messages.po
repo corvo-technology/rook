@@ -4365,6 +4365,7 @@ msgstr "需要输入"
 msgid "Needs takeover"
 msgstr "需要接管"
 
+#: src/components/AskCard.tsx
 #: src/lib/roster-status.ts
 #: src/pages/shell/computer-overlay.tsx
 msgid "Needs you"
@@ -4477,6 +4478,7 @@ msgid "No authentication"
 msgstr "无认证"
 
 #: src/pages/shell/command-palette.tsx
+#: src/pages/TeamBoard.tsx
 msgid "No bots"
 msgstr "没有机器人"
 
@@ -4548,6 +4550,10 @@ msgstr "未找到远程 MCP 服务器"
 #: src/pages/SpaceSearch.tsx
 msgid "No results"
 msgstr "无结果"
+
+#: src/pages/Routines.tsx
+msgid "No routines yet"
+msgstr "还没有例行任务"
 
 #: src/components/markdown-copy.tsx
 msgid "No rows"

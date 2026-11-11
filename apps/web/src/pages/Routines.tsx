@@ -1,5 +1,13 @@
 import type { Bot, RoutineOccurrence } from "@corvo/contracts";
-import { BotAvatar, Button, botAccent, Spinner, ToggleGroup, ToggleGroupItem } from "@corvo/ui-web";
+import {
+  BotAvatar,
+  Button,
+  botAccent,
+  RookGlyph,
+  Spinner,
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@corvo/ui-web";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronLeft, ChevronRight, Clock, Plus, X } from "lucide-react";
@@ -196,6 +204,14 @@ export function RoutinesPage() {
             <div className="flex justify-center py-16">
               <Spinner />
             </div>
+          ) : !calendar.data?.occurrences.length && next.length === 0 ? (
+            <p
+              data-testid="routines-empty"
+              className="flex flex-col items-center gap-3 py-24 text-sm text-muted-foreground"
+            >
+              <RookGlyph state="asleep" size={36} />
+              <Trans>No routines yet</Trans>
+            </p>
           ) : view === "month" ? (
             <div className="grid min-h-0 flex-1 grid-cols-7 grid-rows-6 gap-2 overflow-y-auto">
               {days.map((day) => {

@@ -35,6 +35,7 @@ vi.mock("@corvo/ui-web", () => {
   return {
     BotAvatar: () => <span />,
     botAccent: () => "#3b82f6",
+    RookGlyph: ({ state }: { state: string }) => <i data-rook={state} />,
     Spinner: (props: ComponentProps<"svg">) => <svg role="status" {...props} />,
     Button: (props: ComponentProps<"button">) => <button {...props} />,
     ToggleGroup: Container,
@@ -239,5 +240,14 @@ it("paints each entry in its bot's color and marks the present in the brand colo
   expect(block.style.getPropertyValue("--block")).toBe("#3b82f6");
   expect(block.className).not.toContain("border-dashed");
   expect(container.querySelector(".bg-brand")).not.toBeNull();
+  await cleanup();
+});
+
+it("shows a sleeping rook when there is nothing in the calendar", async () => {
+  calendar.mockResolvedValue({ occurrences: [], truncated: false });
+  const { container, cleanup } = await renderPage();
+  expect(
+    container.querySelector("[data-testid='routines-empty'] [data-rook='asleep']"),
+  ).not.toBeNull();
   await cleanup();
 });

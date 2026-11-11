@@ -72,13 +72,12 @@ export type LaunchCopy = {
     privacy: string;
     terms: string;
   };
+  /** The headline reads `line1`, the rook mascot, then `line2`; `lead` is the two lines under it. */
   hero: {
     line1: string;
     line2: string;
-    lead: string;
-    githubLabel: string;
+    lead: [string, string];
     note: string;
-    tags: LaunchAgent[];
   };
   /** What an agent is, in the product's own terms. */
   agent: {
@@ -94,8 +93,8 @@ export type LaunchCopy = {
     heading: string;
     accent: string;
     copy: string;
-    /** Holds `{count}`, the number of agents in the catalog. */
-    count: string;
+    /** The link to the full catalog. */
+    all: string;
     categories: Record<StoreCategory, string>;
   };
   preview: {
@@ -155,5 +154,5 @@ export type LaunchCopy = {
     copiedLabel: string;
     note: string;
   };
-  cta: { heading: string; copy: string; download: string; github: string };
+  cta: { heading: string; copy: string; download: string };
 };

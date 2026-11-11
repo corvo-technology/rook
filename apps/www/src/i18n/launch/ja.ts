@@ -48,16 +48,10 @@ const COPY: LaunchCopy = {
     terms: "利用規約",
   },
   hero: {
-    line1: "チームで働く AI エージェント。",
-    line2: "動く前に、必ず確認します。",
-    lead: "Rook は、オープンソースの AI エージェントのチームです。それぞれに仕事と専用のツール、専用の会話があります。あなたのコンピューター上のチャンネルで協力して働き、本物に触れる前にあなたに確認します。",
-    githubLabel: "GitHub でスターを付ける",
+    line1: "あなたの",
+    line2: "チームに会おう。",
+    lead: ["チームで働く AI エージェント。", "動く前に、必ず確認します。"],
     note: "{windows} と {linux} にも",
-    tags: [
-      { name: "Davi", role: "メールエージェント", hue: "rosa" },
-      { name: "Bento", role: "支払い監視", hue: "azul" },
-      { name: "Fabio", role: "バグの仕分け", hue: "laranja" },
-    ],
   },
   agent: {
     heading: "エージェントとは？",
@@ -78,7 +72,7 @@ const COPY: LaunchCopy = {
     heading: "すぐ使えるエージェントのストア。",
     accent: "選ぶか、自分で書くか。",
     copy: "エージェントをワンクリックで入れて、あなたのツールを渡します。どれも仕事の説明と必要なスキルが付いていて、すべて編集できます。",
-    count: "ストアに {count} 件のエージェント",
+    all: "ストアのすべてのエージェントを見る",
     categories: {
       marketing: "マーケティング",
       operations: "オペレーション",
@@ -337,7 +331,6 @@ const COPY: LaunchCopy = {
     heading: "最初のエージェントを迎えましょう。",
     copy: "ストアから 1 つ選び、仕事と次のタスクを渡してください。大事なことをする前に、必ず確認します。",
     download: "Mac 版をダウンロード",
-    github: "GitHub で見る",
   },
 };
 

@@ -48,16 +48,10 @@ const COPY: LaunchCopy = {
     terms: "Terms",
   },
   hero: {
-    line1: "AI agents that work as a team.",
-    line2: "They ask before they act.",
-    lead: "Rook is an open source team of AI agents. Each one has a job, its own tools and its own conversation. They work together in channels, on your computer, and check with you before anything real.",
-    githubLabel: "Star on GitHub",
+    line1: "Meet",
+    line2: "your team.",
+    lead: ["AI agents that work as a team.", "They ask before they act."],
     note: "Also for {windows} and {linux}",
-    tags: [
-      { name: "Davi", role: "Email agent", hue: "rosa" },
-      { name: "Bento", role: "Payments Watcher", hue: "azul" },
-      { name: "Fabio", role: "Bug Triage", hue: "laranja" },
-    ],
   },
   agent: {
     heading: "What is an agent?",
@@ -78,7 +72,7 @@ const COPY: LaunchCopy = {
     heading: "A Store of ready-made agents.",
     accent: "Pick one, or write your own.",
     copy: "Install an agent in one click and give it your tools. Each one comes with a job description and the skills it needs, and you can edit all of it.",
-    count: "{count} agents in the Store",
+    all: "See every agent in the Store",
     categories: {
       marketing: "Marketing",
       operations: "Operations",
@@ -337,7 +331,6 @@ const COPY: LaunchCopy = {
     heading: "Hire your first agent.",
     copy: "Pick one from the Store, give it a job and your next task. It asks before it does anything that matters.",
     download: "Download for Mac",
-    github: "View on GitHub",
   },
 };
 

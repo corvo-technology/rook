@@ -147,45 +147,51 @@
   }
 }
 
+/* A busy bot wears a ring of eight dots in its own color that light up one after another. */
 .corvo-bot-avatar-ring {
-  animation: corvo-avatar-spin 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   opacity: 0;
   transition: opacity 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:is(.corvo-bot-avatar, .corvo-mascot-avatar)[data-working="true"] .corvo-bot-avatar-ring {
+  opacity: 1;
+}
+
+.corvo-bot-avatar-ring circle,
+.corvo-rook-glyph-dot {
+  animation: corvo-rook-dot 1s ease-in-out infinite both;
+}
+
+@keyframes corvo-rook-dot {
+  0%,
+  100% {
+    opacity: 0.22;
+  }
+  30% {
+    opacity: 1;
+  }
 }
 
 .corvo-bot-avatar {
   transition: box-shadow 180ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.corvo-bot-avatar[data-working="true"] .corvo-bot-avatar-ring {
-  opacity: 1;
+/* Waiting for the person: a small dot in the brand color. */
+.corvo-rook-needs-you {
+  animation: corvo-rook-dot-in 260ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
-@keyframes corvo-avatar-breathe {
-  0%,
-  100% {
-    transform: scale(1);
-    filter: brightness(1);
+@keyframes corvo-rook-dot-in {
+  from {
+    transform: scale(0);
   }
-  50% {
-    transform: scale(1.07);
-    filter: brightness(1.12);
+  to {
+    transform: scale(1);
   }
 }
 
 .corvo-bot-avatar-picture {
   box-shadow: 0 2px 5px rgb(0 0 0 / 0.5);
-}
-
-.corvo-bot-avatar-ring-working {
-  filter: drop-shadow(0 0 4px var(--status-working));
-}
-
-.corvo-bot-avatar[data-working="true"] .corvo-bot-avatar-picture {
-  animation: corvo-avatar-breathe 1.6s ease-in-out infinite;
-  box-shadow:
-    0 0 0 2px var(--status-working),
-    0 0 10px color-mix(in srgb, var(--status-working) 60%, transparent);
 }
 
 /* The whole rook is one SVG on a 100-unit tile. */
@@ -285,19 +291,37 @@
 }
 
 .corvo-mascot-avatar-image {
-  transform-origin: 50% 90%;
+  transform-origin: 50% 85%;
+  transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.corvo-mascot-avatar[data-working="true"] .corvo-mascot-avatar-image {
-  animation: corvo-mascot-bob 1.6s ease-in-out infinite;
+/* Pointing at an agent, or at the row it is in, tilts its rook; the eyes already follow the pointer. */
+.corvo-mascot-avatar:hover .corvo-mascot-avatar-image,
+:is(button, a, [role="button"], [role="option"], li):hover .corvo-mascot-avatar-image {
+  transform: rotate(-4deg);
 }
 
-/* Pointing at an agent, or at the row it is in, makes its mascot hop once. Working mascots keep bobbing. */
-.corvo-mascot-avatar:not([data-working="true"]):hover .corvo-mascot-avatar-image,
-:is(button, a, [role="button"], [role="option"], li):hover
-  .corvo-mascot-avatar:not([data-working="true"])
-  .corvo-mascot-avatar-image {
-  animation: corvo-mascot-hop 460ms cubic-bezier(0.34, 1.56, 0.64, 1);
+/* When it starts waiting for the person, the battlements hop once. */
+.corvo-mascot-eyes[data-mood="alert"] .corvo-mascot-battlement {
+  animation: corvo-rook-battlement-hop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.corvo-mascot-eyes[data-mood="alert"] .corvo-mascot-battlement:nth-child(2) {
+  animation-delay: 60ms;
+}
+
+.corvo-mascot-eyes[data-mood="alert"] .corvo-mascot-battlement:nth-child(3) {
+  animation-delay: 120ms;
+}
+
+@keyframes corvo-rook-battlement-hop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  45% {
+    transform: translateY(-7px);
+  }
 }
 
 /* A message that arrives while the chat is open rises in; history never animates. */
@@ -331,28 +355,100 @@
   }
 }
 
-@keyframes corvo-mascot-hop {
-  0% {
-    transform: translateY(0) rotate(0) scale(1);
-  }
-  35% {
-    transform: translateY(-3px) rotate(-7deg) scale(1.1);
-  }
-  70% {
-    transform: translateY(0) rotate(4deg) scale(1.04);
-  }
+/* The small rook glyph. Its eyes glance aside now and then, and blink. */
+.corvo-rook-glyph-body,
+.corvo-rook-glyph-eyes,
+.corvo-rook-glyph-eye,
+.corvo-rook-glyph-spinner,
+.corvo-rook-glyph-arcs {
+  transform-box: view-box;
+  transform-origin: 50px 50px;
+}
+
+.corvo-rook-glyph-eyes {
+  animation: corvo-rook-glance 7s ease-in-out infinite;
+}
+
+.corvo-rook-glyph-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: corvo-mascot-blink 5.2s ease-in-out infinite;
+}
+
+@keyframes corvo-rook-glance {
+  0%,
+  30%,
   100% {
-    transform: translateY(0) rotate(0) scale(1);
+    transform: translateX(0);
+  }
+  38%,
+  62% {
+    transform: translateX(4px);
+  }
+  70%,
+  86% {
+    transform: translateX(-3px);
   }
 }
 
-@keyframes corvo-mascot-bob {
+.corvo-rook-glyph-body {
+  transition: transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Thinking: the rook steps back into the middle of its ring of dots. */
+.corvo-rook-glyph[data-state="thinking"] .corvo-rook-glyph-body {
+  transform: scale(0.56);
+}
+
+.corvo-rook-glyph[data-state="thinking"] .corvo-rook-glyph-eyes {
+  animation: corvo-mascot-scan 2.6s ease-in-out infinite;
+}
+
+/* Done: the arcs pop in. */
+.corvo-rook-glyph[data-state="done"] .corvo-rook-glyph-arcs {
+  animation: corvo-mascot-smile 320ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.corvo-rook-glyph[data-state="asleep"] {
+  opacity: 0.55;
+}
+
+/* Loading: the rook folds into a spinning arc and unfolds again. */
+.corvo-rook-glyph[data-state="loading"] .corvo-rook-glyph-body {
+  animation: corvo-rook-fold 2.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+.corvo-rook-glyph-spinner {
+  animation:
+    corvo-rook-unfold 2.4s cubic-bezier(0.65, 0, 0.35, 1) infinite,
+    corvo-avatar-spin 0.9s linear infinite;
+}
+
+@keyframes corvo-rook-fold {
   0%,
+  22%,
+  92%,
   100% {
-    transform: translateY(0) scale(1);
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
   }
-  50% {
-    transform: translateY(-3%) scale(1.04);
+  36%,
+  78% {
+    opacity: 0;
+    transform: scale(0.3) rotate(90deg);
+  }
+}
+
+@keyframes corvo-rook-unfold {
+  0%,
+  24%,
+  90%,
+  100% {
+    opacity: 0;
+  }
+  38%,
+  76% {
+    opacity: 1;
   }
 }
 
@@ -470,23 +566,39 @@
 
 @media (prefers-reduced-motion: reduce) {
   .corvo-bot-avatar-ring,
-  .corvo-mascot-avatar[data-working="true"] .corvo-mascot-avatar-image,
+  .corvo-bot-avatar-ring circle,
+  .corvo-rook-needs-you,
+  .corvo-mascot-avatar-image,
+  .corvo-mascot-eyes[data-mood="alert"] .corvo-mascot-battlement,
+  .corvo-rook-glyph *,
   .corvo-message-in,
   .corvo-mascot-blink,
   .corvo-mascot-gaze,
   .corvo-mascot-eye,
   .corvo-mascot-eyes[data-mood="thinking"] .corvo-mascot-scan,
   .corvo-mascot-eyes[data-mood="happy"] .corvo-mascot-smile,
-  .corvo-mascot-avatar:hover .corvo-mascot-avatar-image,
-  :is(button, a, [role="button"], [role="option"], li):hover .corvo-mascot-avatar-image,
-  .corvo-presence-dot,
-  .corvo-bot-avatar[data-working="true"] .corvo-bot-avatar-picture {
+  .corvo-presence-dot {
     animation: none;
     transition: none;
   }
 
   .corvo-bot-avatar {
     transition: none;
+  }
+
+  .corvo-mascot-avatar:hover .corvo-mascot-avatar-image,
+  :is(button, a, [role="button"], [role="option"], li):hover .corvo-mascot-avatar-image {
+    transform: none;
+  }
+
+  /* Still dots and a still rook say the same without moving. */
+  .corvo-bot-avatar-ring circle,
+  .corvo-rook-glyph-dot {
+    opacity: 0.6;
+  }
+
+  .corvo-rook-glyph-spinner {
+    display: none;
   }
 
   /* Decorative loops stop; a spinner keeps turning, slowly, because it is the only sign that work is running. */

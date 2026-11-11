@@ -27,12 +27,25 @@ export function ModelProblemNotice({
       {showAction || showRetry ? (
         <div className="flex flex-wrap gap-2">
           {showAction ? (
-            <Button type="button" variant="outline" size="sm" onClick={() => onAction(action)}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              data-testid="model-problem-action"
+              onClick={() => onAction(action)}
+            >
               {modelProblemActionLabel(action)}
             </Button>
           ) : null}
           {showRetry ? (
-            <Button type="button" variant="ghost" size="sm" disabled={retrying} onClick={onRetry}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              data-testid="model-problem-retry"
+              disabled={retrying}
+              onClick={onRetry}
+            >
               {t`Try again`}
             </Button>
           ) : null}

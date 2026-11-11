@@ -7,6 +7,7 @@ import {
   MASCOT_LOOKS,
   mascotForColorDef,
   mascotHex,
+  nextBotColor,
   ROOK,
 } from "./bot-mascot.js";
 
@@ -129,3 +130,36 @@ function lightnessOf(hex: string) {
   const [r, g, b] = rgb(hex);
   return (Math.max(r, g, b) + Math.min(r, g, b)) / 2;
 }
+
+describe("nextBotColor", () => {
+  const hex = (id: string) => MASCOT_COLORS.find((color) => color.id === id)!.hex;
+
+  it("starts with the first hue in picker order", () => {
+    expect(nextBotColor([])).toBe(hex("mint"));
+  });
+
+  it("gives the first hue no other bot wears", () => {
+    expect(nextBotColor([hex("mint"), hex("violet")])).toBe(hex("blue"));
+  });
+
+  it("counts characters and old shapes by their color, and skips pictures", () => {
+    expect(
+      nextBotColor([
+        `${hex("mint")}::char_cat`,
+        `${hex("blue")}::shape_2`,
+        "data:image/png;base64,x",
+      ]),
+    ).toBe(hex("violet"));
+  });
+
+  it("matches a color of one's own to the nearest hue", () => {
+    expect(nextBotColor(["#3EC5A8"])).toBe(hex("blue"));
+  });
+
+  it("cycles through the hues once every one is taken, never to gray", () => {
+    const colored = MASCOT_COLORS.filter((color) => color.id !== "neutral").map((c) => c.hex);
+    expect(nextBotColor(colored)).toBe(hex("mint"));
+    expect(nextBotColor([...colored, hex("mint")])).toBe(hex("blue"));
+    expect(nextBotColor(colored)).not.toBe(hex("neutral"));
+  });
+});

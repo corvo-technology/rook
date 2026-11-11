@@ -1,4 +1,5 @@
 import type { AgentRuntimeEvent } from "@corvo/adapter-kit";
+import type { CliEngineId, CliEngineState } from "@corvo/contracts";
 
 /** What a CLI's output becomes: runtime events, plus the two ways a turn can stop early. */
 export type CliEngineEvent =
@@ -17,4 +18,23 @@ export interface CliStreamParser {
 export interface CliStreamExpectations {
   gatewayName: string;
   toolNames: ReadonlySet<string>;
+}
+
+/** Everything that is specific to one coding-agent CLI; the runtime, gateway and host are not. */
+export interface CliEngineDefinition {
+  id: CliEngineId;
+  binaryName: string;
+  /** The name the CLI gives the tool gateway in its start report. */
+  gatewayName: string;
+  installDirs(home: string): string[];
+  statusArgs: { version: string[]; auth: string[] };
+  status(probe: {
+    version: { code: number; stdout: string };
+    auth: { code: number; stdout: string };
+  }): { state: CliEngineState; version: string | null };
+  /** Model names as the CLI knows them; ids are `<engine>/<model>`. */
+  models: readonly string[];
+  args(turn: { model: string; systemPromptFile: string }): string[];
+  env(input: { configDir: string; mcpUrl: string }): Record<string, string>;
+  parser(expect: CliStreamExpectations, model: string): CliStreamParser;
 }

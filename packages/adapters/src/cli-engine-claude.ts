@@ -1,6 +1,8 @@
+import path from "node:path";
 import type { CliEngineState } from "@corvo/contracts";
 import { agentChildEnv } from "./agent-process.js";
 import type {
+  CliEngineDefinition,
   CliEngineEvent,
   CliStreamExpectations,
   CliStreamParser,
@@ -242,3 +244,16 @@ export function claudeStatus(probe: {
   if (auth.authMethod !== "claude.ai") return { state: "api_key", version };
   return { state: "ready", version };
 }
+
+export const CLAUDE_ENGINE: CliEngineDefinition = {
+  id: "claude",
+  binaryName: "claude",
+  gatewayName: CLAUDE_GATEWAY_NAME,
+  installDirs: (home) => [path.join(home, ".local", "bin"), path.join(home, ".claude", "local")],
+  statusArgs: CLAUDE_STATUS_ARGS,
+  status: claudeStatus,
+  models: CLAUDE_MODELS,
+  args: claudeArgs,
+  env: (input) => claudeEnv(input),
+  parser: claudeStreamParser,
+};

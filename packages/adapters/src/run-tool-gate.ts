@@ -3,6 +3,7 @@ import type {
   AgentToolExecutionObserver,
   AutoReviewRequest,
   ConnectorCall,
+  ConnectorTool,
 } from "@corvo/adapter-kit";
 import { runContinueJob } from "@corvo/adapter-kit";
 import {
@@ -489,6 +490,29 @@ export async function gateToolCall(
     for (const trust of connectorTrusts) trusted.add(trust);
   }
   return { call };
+}
+
+/**
+ * Whether the backend may call a connector's status tool for the agent: only where the agent's
+ * own call to it would run without asking, under the same rules, trigger and taint checks.
+ */
+export async function statusCallAllowed(ctx: RunContext, tool: ConnectorTool): Promise<boolean> {
+  const providers = ctx.tools.connectedPlugins.map((plugin) => plugin.provider);
+  const connectorKind = connectorKindFromToolName(tool.name, providers);
+  const resolved = resolveActionApprovalForTools({
+    tools: [{ name: tool.name, connectorKind, readOnly: true }],
+    rules: await ctx.trust.loadApprovalRules(),
+  });
+  if (resolved.decision !== "allow") return false;
+  if (resolved.source !== "always_allow" && connectorToolRequiresApproval(tool.name, true))
+    return false;
+  if (unattendedTriggerToolRequiresApproval(ctx.run.trigger, tool.name, true, true)) return false;
+  const trusts = connectorTrustKeys(tool.name, {}, tool.route, connectorKind, providers);
+  const trusted = await ctx.trust.loadTrustedConnectors();
+  return !connectorReadRequiresApproval({
+    tainted: await isRunTainted(ctx),
+    connectorTrusted: trusts.every((trust) => trusted.has(trust)),
+  });
 }
 
 function createToolCall(

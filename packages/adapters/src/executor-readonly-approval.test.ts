@@ -15,7 +15,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { isApprovalPausedResult } from "./approval-effect.js";
 import { MAX_SHARED_MEMORY_CHARS } from "./builtin-tools.js";
 import type * as ComputerLifecycleModule from "./computer-lifecycle.js";
+import {
+  prosePending,
+  rowsWithPending,
+  sqlPendingText,
+  sqlRunningStructured,
+  sqlSucceeded,
+} from "./connector-status.fixtures.js";
 import { createRunExecutor } from "./executor.js";
+import type { ExecutorDeps } from "./executor-deps.js";
 import { FakeWebProvider } from "./fake-web.js";
 import type * as FleetToolsModule from "./fleet-tools.js";
 import { catalogEntries, resolveCatalogCall } from "./lazy-tool-catalog.js";
@@ -114,7 +122,13 @@ function fixture({
   secondResource = false,
   routines = [] as { name: string; prompt: string }[],
   connectedApps = [] as string[],
+  extraTools = [] as ConnectorTool[],
+  connectorWait,
 }: {
+  /** Connector tools offered next to the fixture's own, on the same installed resource by default. */
+  extraTools?: ConnectorTool[];
+  /** Test seam for connector waits. */
+  connectorWait?: ExecutorDeps["connectorWait"];
   /** Apps connected through Composio. */
   connectedApps?: string[];
   /** The bot's routines, as the owner wrote them. */
@@ -448,6 +462,7 @@ function fixture({
     yield { type: "done" as const, text: "Done" };
   });
   const enqueue = vi.fn(async (_job: unknown) => undefined);
+  const append = vi.fn(async (_event: unknown) => undefined);
   const executor = createRunExecutor({
     deploymentModelKey: "fixture-model-key",
     prisma: transactionalPrisma,
@@ -477,8 +492,9 @@ function fixture({
                       toolName: "demo_get_other",
                     },
                   },
+                  ...extraTools,
                 ]
-              : [tool],
+              : [tool, ...extraTools],
       resolveCall: async (call: ConnectorCall) =>
         catalog ? resolveCatalogCall(call, catalogEntries([tool])) : undefined,
       execute,
@@ -510,7 +526,7 @@ function fixture({
     },
     memoryProviders: { resolve: async () => null },
     events: {
-      append: vi.fn(async () => undefined),
+      append,
       notify: vi.fn(async () => undefined),
       pauseRunForInput,
       finalizeRun,
@@ -520,6 +536,7 @@ function fixture({
     autoReview: nativeReview ? undefined : autoReviewProvider,
     secretStore: { load: async () => "fake-review-api-key" },
     shutdownSignal,
+    connectorWait,
     web,
   } as unknown as Parameters<typeof createRunExecutor>[0]);
   return {
@@ -542,6 +559,7 @@ function fixture({
     },
     results,
     execute,
+    append,
     commit,
     sharedMemoryState,
     pauseRunForInput,
@@ -2320,4 +2338,188 @@ it("uses the OpenRouter environment key for a decision checker on another deploy
     vi.unstubAllGlobals();
     vi.unstubAllEnvs();
   }
+});
+
+describe("connector waits", () => {
+  const clock = { t: 0 };
+  const fakeWait = {
+    sleep: async (ms: number) => {
+      clock.t += ms;
+    },
+    now: () => clock.t,
+  };
+  const statusTool: ConnectorTool = {
+    name: "demo_get_statement",
+    description: "Statement status",
+    readOnly: true,
+    inputSchema: {
+      type: "object",
+      properties: { statement_id: { type: "string" } },
+      required: ["statement_id"],
+    },
+    route: { connectorId: "demo", resourceId: "resource-1", toolName: "demo_get_statement" },
+  };
+  const setup = (
+    options: Parameters<typeof fixture>[0] = {},
+    answers: unknown[] = [sqlPendingText, sqlPendingText, sqlSucceeded],
+    first: unknown = sqlPendingText,
+  ) => {
+    clock.t = 0;
+    const tool = options.extraTools?.[0] ?? statusTool;
+    const f = fixture({ extraTools: [statusTool], connectorWait: fakeWait, ...options });
+    let n = 0;
+    f.execute.mockImplementation(async function* (call: ConnectorCall) {
+      if (call.tool === tool.name) {
+        yield {
+          type: "result" as const,
+          data: answers[Math.min(n++, answers.length - 1)] as { item: unknown },
+        };
+      } else {
+        yield { type: "result" as const, data: first as { item: unknown } };
+      }
+    });
+    return f;
+  };
+  const statusCalls = (f: ReturnType<typeof setup>) =>
+    f.execute.mock.calls.filter(([call]) => call.tool !== "demo_get_item");
+
+  it("hands back the finished result inside the one call", async () => {
+    const f = setup();
+    await f.run();
+    expect(f.results[0]).toEqual(sqlSucceeded);
+    expect(f.execute).toHaveBeenCalledTimes(4);
+    for (const [call] of statusCalls(f)) {
+      expect(call).toMatchObject({
+        tool: "demo_get_statement",
+        args: { statement_id: "stmt-0001" },
+        route: { resourceId: "resource-1" },
+      });
+    }
+    const lines = f.append.mock.calls.filter(
+      ([event]) =>
+        (event as { payload?: { text?: string } }).payload?.text === "Waiting for demo_get_item",
+    );
+    expect(lines).toHaveLength(1);
+    expect(lines[0]?.[0]).toMatchObject({
+      payload: { text: "Waiting for demo_get_item", activity: true },
+    });
+    expect(f.effects[0]?.result).toEqual(sqlSucceeded);
+  });
+
+  it("returns the last pending result with a note once the cap is reached", async () => {
+    const f = setup(
+      {
+        connectorWait: { ...fakeWait, limits: { maxWaitMs: 60_000 } },
+      },
+      [sqlPendingText],
+    );
+    await f.run();
+    expect(JSON.stringify(f.results[0])).toContain(
+      "Still PENDING after waiting 1 min (7 checks with demo_get_statement)",
+    );
+  });
+
+  it("never uses a status tool of another resource", async () => {
+    const f = setup({
+      extraTools: [{ ...statusTool, route: { ...statusTool.route!, resourceId: "resource-2" } }],
+    });
+    await f.run();
+    expect(f.execute).toHaveBeenCalledOnce();
+    expect(f.results[0]).toEqual(sqlPendingText);
+  });
+
+  it("does not call a status tool that is not declared read-only", async () => {
+    const f = setup({ extraTools: [{ ...statusTool, readOnly: false }] });
+    await f.run();
+    expect(f.execute).toHaveBeenCalledOnce();
+  });
+
+  it("does not call a status tool named as a write", async () => {
+    const f = setup({
+      extraTools: [{ ...statusTool, name: "demo_cancel_statement" }],
+    });
+    await f.run();
+    expect(f.execute).toHaveBeenCalledOnce();
+  });
+
+  it("does not call a status tool the space denies", async () => {
+    const f = setup({
+      rules: [{ effect: "deny", matchKind: "tool", matchValue: "demo_get_statement" }],
+    });
+    await f.run();
+    expect(f.execute).toHaveBeenCalledOnce();
+  });
+
+  describe("a status tool that does not read as a read", () => {
+    const poll = { ...statusTool, name: "demo_poll_statement" };
+    const allow = [
+      { effect: "always_allow", matchKind: "tool", matchValue: "demo_poll_statement" },
+    ] as ActionApprovalRule[];
+
+    it("is not called by a webhook run", async () => {
+      const f = setup({ trigger: "webhook", extraTools: [poll], rules: allow });
+      await f.run();
+      expect(f.execute).toHaveBeenCalledOnce();
+    });
+
+    it("is called for a person's run that allowed it", async () => {
+      const f = setup({ trigger: "user", extraTools: [poll], rules: allow });
+      await f.run();
+      expect(f.execute.mock.calls.length).toBeGreaterThan(1);
+    });
+
+    it("is not called without the allow rule", async () => {
+      const f = setup({ trigger: "user", extraTools: [poll] });
+      await f.run();
+      expect(f.execute).toHaveBeenCalledOnce();
+    });
+  });
+
+  it("does not wait when the agent calls the status tool itself", async () => {
+    const f = setup({}, [sqlRunningStructured]);
+    f.setCalls([
+      { name: "demo_get_statement", args: { statement_id: "stmt-0001" }, executionId: "call-1" },
+    ]);
+    await f.run();
+    expect(f.execute).toHaveBeenCalledOnce();
+  });
+
+  it("does not wait on an id the call itself passed", async () => {
+    const f = setup();
+    f.setCalls([{ name: "demo_get_item", args: { id: "stmt-0001" }, executionId: "call-1" }]);
+    await f.run();
+    expect(f.execute).toHaveBeenCalledOnce();
+  });
+
+  it("keeps the first result when the status tool answers something else", async () => {
+    const f = setup({}, [rowsWithPending]);
+    await f.run();
+    expect(f.results[0]).toEqual(sqlPendingText);
+  });
+
+  it("does not wait on prose", async () => {
+    const f = setup({}, [sqlSucceeded], prosePending);
+    await f.run();
+    expect(f.execute).toHaveBeenCalledOnce();
+  });
+
+  it("stops polling once the run is cancelled", async () => {
+    const shutdown = new AbortController();
+    let sleeps = 0;
+    const f = setup(
+      {
+        shutdownSignal: shutdown.signal,
+        connectorWait: {
+          now: fakeWait.now,
+          sleep: async (ms: number) => {
+            clock.t += ms;
+            if (++sleeps === 2) shutdown.abort();
+          },
+        },
+      },
+      [sqlPendingText],
+    );
+    await f.run(true);
+    expect(f.execute.mock.calls.length).toBeLessThanOrEqual(2);
+  });
 });

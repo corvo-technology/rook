@@ -10,6 +10,7 @@ import {
   abortableSleep,
   awaitConnectorResult,
   CONNECTOR_WAIT_LIMITS,
+  type ConnectorWaitLimits,
   type ConnectorWaitOutcome,
   connectorWaitNote,
   withWaitNote,
@@ -21,7 +22,7 @@ const firstStatus = readConnectorStatus(sqlPendingText)!;
 function run(
   poll: (n: number, t: number) => { result: unknown } | { error: string },
   over: {
-    limits?: Partial<typeof CONNECTOR_WAIT_LIMITS>;
+    limits?: Partial<ConnectorWaitLimits>;
     controller?: AbortController;
     active?: () => boolean;
     onFirstPause?: () => Promise<void>;
@@ -68,9 +69,9 @@ describe("awaitConnectorResult", () => {
   it("returns the last pending result when the cap is reached", async () => {
     const outcome = await run(() => pending, { limits: { maxWaitMs: 60_000 } });
     expect(outcome).toMatchObject({ kind: "time", ms: 60_000, polls: 7 });
-    expect((outcome as Extract<ConnectorWaitOutcome, { kind: "time" }>).status.state).toBe(
-      "PENDING",
-    );
+    expect(
+      (outcome as Extract<ConnectorWaitOutcome, { kind: "time" | "status_error" }>).status.state,
+    ).toBe("PENDING");
   });
 
   it("ends at once on a failed state or an error result", async () => {

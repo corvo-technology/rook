@@ -14,6 +14,7 @@ import type {
   ConnectorRegistry,
   FaviconResolver,
   IntegrationProviderSettings,
+  LocalSetupCheck,
   LocalSpeech,
   McpConnector,
   McpOAuthBroker,
@@ -24,6 +25,7 @@ import type {
   PushTokenStore,
   RemoteConnectorDependencies,
   TicketChangeNotifier,
+  testModelOnce,
   verifyModelServesAgents,
   WhatsAppLinkSurface,
 } from "@corvo/adapters";
@@ -40,6 +42,7 @@ import { connectionsRoutes } from "./routes/connections.js";
 import { contentRoutes } from "./routes/content.js";
 import { createRouterContext } from "./routes/context.js";
 import { emailAgentRoutes } from "./routes/email-agent.js";
+import { localSetupRoutes } from "./routes/local-setup.js";
 import { mcpRoutes } from "./routes/mcp.js";
 import { memoryRoutes } from "./routes/memory.js";
 import { messagingRoutes } from "./routes/messaging.js";
@@ -58,6 +61,13 @@ export { HEARTBEAT_MS, SESSION_RECHECK_MS } from "./routes/shared.js";
 export { callMarkerClientNonce } from "./routes/threads.js";
 
 export interface RouterDeps {
+  /**
+   * Present only where the deployment may reach private addresses: it finds the model servers
+   * on this host. Absent (hosted cloud) the model step probes nothing.
+   */
+  localSetup?: LocalSetupCheck;
+  /** The one-prompt model test; injectable so tests never reach a model. */
+  testLocalModel?: typeof testModelOnce;
   /** Present only on the desktop app's own engine, where speech models can live. */
   localSpeech?: LocalSpeech;
   /** Where voice notes can be transcribed; absent keeps them as files. */
@@ -163,7 +173,7 @@ export function createRouter(deps: RouterDeps) {
     ...accountRoutes(ctx),
     ...spacesRoutes(ctx),
     ...missionsRoutes(ctx),
-    ...modelsRoutes(ctx),
+    models: { ...modelsRoutes(ctx).models, ...localSetupRoutes(ctx).models },
     ...botsRoutes(ctx),
     ...threadsRoutes(ctx),
     ...computerRoutes(ctx),

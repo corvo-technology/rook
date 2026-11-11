@@ -1,6 +1,7 @@
 import { ModelRequestError } from "@corvo/adapter-kit";
+import { normalizeRunError } from "@corvo/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { verifyModelServesAgents } from "./model-connect-check.js";
+import { testModelOnce, verifyModelServesAgents } from "./model-connect-check.js";
 
 const apiKey = "fixture-api-key";
 
@@ -173,5 +174,89 @@ describe("connect-time model check", () => {
         { fetch: acceptedStream(), signal: caller.signal },
       ),
     ).rejects.toThrow("cancelled");
+  });
+});
+
+function completion(text: string): Response {
+  const chunk = (delta: Record<string, unknown>, finish: string | null) =>
+    `data: ${JSON.stringify({
+      id: "fixture",
+      object: "chat.completion.chunk",
+      choices: [{ index: 0, delta, finish_reason: finish }],
+    })}\n\n`;
+  const body = [
+    chunk({ role: "assistant", ...(text ? { content: text } : {}) }, null),
+    chunk({}, "stop"),
+    "data: [DONE]\n\n",
+  ].join("");
+  return new Response(body, { status: 200, headers: { "content-type": "text/event-stream" } });
+}
+
+describe("testModelOnce", () => {
+  const config = { provider: "groq", id: "openai/gpt-oss-120b", apiKey };
+
+  afterEach(() => vi.useRealTimers());
+
+  it("reports ok and the elapsed time", async () => {
+    const times = [0, 1200];
+    const fetchImpl = vi.fn<typeof fetch>(async () => completion("Hi"));
+    await expect(
+      testModelOnce(config, { fetch: fetchImpl, now: () => times.shift() ?? 1200 }),
+    ).resolves.toEqual({ ok: true, ms: 1200 });
+    expect(requestBody(fetchImpl)).toMatchObject({ max_completion_tokens: 16 });
+    expect(requestBody(fetchImpl).tools).toBeUndefined();
+  });
+
+  it("does not read the reply text", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(async () => completion(""));
+    const result = await testModelOnce(config, { fetch: fetchImpl });
+    expect(result.ok).toBe(true);
+  });
+
+  it("reports the normalized summary on a 401", async () => {
+    const fetchImpl = rejection(401, { error: { message: "401 Incorrect API key provided" } });
+    const result = await testModelOnce(config, { fetch: fetchImpl });
+    expect(result).toMatchObject({
+      ok: false,
+      error: normalizeRunError("401 Incorrect API key provided").summary,
+    });
+    expect(fetchImpl).toHaveBeenCalledOnce();
+  });
+
+  it("waits up to 60 s for a cold local model", async () => {
+    vi.useFakeTimers();
+    const fetchImpl = vi.fn<typeof fetch>(
+      () => new Promise((resolve) => setTimeout(() => resolve(completion("Hi")), 45_000)),
+    );
+    const pending = testModelOnce(config, { fetch: fetchImpl });
+    await vi.advanceTimersByTimeAsync(45_000);
+    await expect(pending).resolves.toEqual({ ok: true, ms: 45_000 });
+  });
+
+  it("stops at the timeout", async () => {
+    vi.useFakeTimers();
+    const fetchImpl = vi.fn<typeof fetch>(
+      (_input, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => reject(new Error("aborted")), {
+            once: true,
+          });
+        }),
+    );
+    const pending = testModelOnce(config, { fetch: fetchImpl });
+    await vi.advanceTimersByTimeAsync(60_000);
+    await expect(pending).resolves.toEqual({
+      ok: false,
+      ms: 60_000,
+      error: normalizeRunError("Request timed out.").summary,
+    });
+  });
+
+  it("honours a shorter timeout for connections", async () => {
+    vi.useFakeTimers();
+    const fetchImpl = vi.fn<typeof fetch>(() => new Promise(() => undefined));
+    const pending = testModelOnce(config, { fetch: fetchImpl, timeoutMs: 15_000 });
+    await vi.advanceTimersByTimeAsync(15_000);
+    await expect(pending).resolves.toMatchObject({ ok: false, ms: 15_000 });
   });
 });

@@ -914,6 +914,11 @@ msgstr "respondida"
 msgid "Answered"
 msgstr "Respondido"
 
+#. placeholder {0}: (result.ms / 1000).toFixed(1)
+#: src/pages/onboarding/LocalModelChoice.tsx
+msgid "Answered in {0} s"
+msgstr "Respondió en {0} s"
+
 #: src/components/AskCard.tsx
 msgid "Answered: {answer}"
 msgstr "Respondido: {answer}"
@@ -1905,6 +1910,7 @@ msgstr "Límite de contexto"
 #: src/pages/Onboarding.tsx
 #: src/pages/onboarding/ComputerStep.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
+#: src/pages/onboarding/LocalModelChoice.tsx
 #: src/pages/onboarding/UseStep.tsx
 #: src/pages/onboarding/WorkspaceStep.tsx
 #: src/pages/shell/agent-import.tsx
@@ -2344,6 +2350,7 @@ msgstr "No se pudo guardar el grupo"
 
 #: src/pages/onboarding-quick-connect.tsx
 #: src/pages/Onboarding.tsx
+#: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Could not save model"
 msgstr "No se pudo guardar el modelo"
 
@@ -3279,6 +3286,7 @@ msgid "Forgot password?"
 msgstr "¿Olvidaste la contraseña?"
 
 #: src/pages/onboarding-quick-connect.tsx
+#: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Found on this computer"
 msgstr "Encontrado en este equipo"
 
@@ -4118,6 +4126,7 @@ msgstr "Modo"
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/model-settings/model-picker.tsx
 #: src/pages/Onboarding.tsx
+#: src/pages/onboarding/LocalModelChoice.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-panel.tsx
@@ -4750,6 +4759,10 @@ msgstr "Otro modelo…"
 #: src/pages/onboarding-quick-connect.tsx
 msgid "Other providers"
 msgstr "Otros proveedores"
+
+#: src/pages/onboarding/LocalModelChoice.tsx
+msgid "Other ways to connect"
+msgstr "Otras formas de conectar"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Output"
@@ -6254,8 +6267,14 @@ msgid "Telegram"
 msgstr "Telegram"
 
 #: src/components/teach/SkillDraftCard.tsx
+#: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Test"
 msgstr "Probar"
+
+#. placeholder {0}: option.label
+#: src/pages/onboarding/LocalModelChoice.tsx
+msgid "Test {0}"
+msgstr "Probar {0}"
 
 #: src/components/ModelConnectionPreflightNotice.tsx
 msgid "Test API key"
@@ -6273,6 +6292,7 @@ msgstr "Ejecución de prueba"
 #: src/components/ModelConnectionPreflightNotice.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/onboarding-quick-connect.tsx
+#: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Testing…"
 msgstr "Probando…"
 

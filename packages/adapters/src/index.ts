@@ -9,6 +9,7 @@ export * from "./auto-review.js";
 export * from "./auto-review-factory.js";
 export * from "./aws-kms-key-provider.js";
 export * from "./background-job-handlers.js";
+export * from "./background-model.js";
 export * from "./billing-emulator.js";
 export * from "./boat-sandbox.js";
 export * from "./bot-avatar.js";
@@ -89,6 +90,8 @@ export * from "./keenable-web.js";
 export * from "./key-provider-factory.js";
 export * from "./keyless-http-web.js";
 export * from "./kubernetes-sandbox.js";
+export * from "./local-setup/check.js";
+export * from "./local-setup/loopback-servers.js";
 export * from "./local-speech.js";
 export * from "./local-speech-models.js";
 export * from "./local-voice.js";
@@ -130,6 +133,7 @@ export * from "./pi-live-model.js";
 export {
   isOperatorLocalModel,
   LOCAL_PROVIDER_ID,
+  localProvider,
   withLocalModelsOffered,
 } from "./pi-local-provider.js";
 export * from "./pi-models.js";

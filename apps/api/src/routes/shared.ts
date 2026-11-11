@@ -2,6 +2,7 @@ import {
   deploymentModelRole,
   hasHostedModelCredits,
   hostCredentialSource,
+  isOperatorLocalModel,
   mcpStdioAvailable,
   resolveMemberMainModel,
 } from "@corvo/adapters";
@@ -154,6 +155,7 @@ export async function modelSetup(deps: RouterDeps, actor: Actor) {
   const main =
     member &&
     (member.credential ||
+      isOperatorLocalModel(member.provider, member.modelId) ||
       (deps.billing?.modelCreditsEnabled &&
         (await hasHostedModelCredits(deps.prisma, actor, member.provider))))
       ? member

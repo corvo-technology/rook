@@ -143,6 +143,11 @@ import {
   IntegrationProviderConfigSchema,
   IntegrationSetupStateSchema,
 } from "./integration-settings.js";
+import {
+  LocalModelTestSchema,
+  LocalOptionChoiceSchema,
+  LocalSetupReportSchema,
+} from "./local-setup.js";
 import { MissionsViewSchema, NavPart } from "./missions.js";
 import { ModelHeadersSchema } from "./model-headers.js";
 import { ModelRoleSchema, ModelRoleUpdateSchema, ModelRoleViewSchema } from "./model-roles.js";
@@ -350,6 +355,11 @@ export const appContract = {
       .output(ModelRoleViewSchema),
     list: oc.output(z.array(ModelCatalogEntrySchema)),
     credentials: oc.output(z.array(ModelCredentialSchema)),
+    localSetup: oc
+      .input(z.object({ wait: z.boolean().default(false) }))
+      .output(LocalSetupReportSchema),
+    testLocal: oc.input(LocalOptionChoiceSchema).output(LocalModelTestSchema),
+    useLocal: oc.input(LocalOptionChoiceSchema).output(z.object({ ok: z.literal(true) })),
     backups: oc.output(z.array(ModelBackupChoiceSchema)),
     setBackups: oc.input(ModelBackupListSchema).output(z.object({ ok: z.literal(true) })),
     connect: oc.input(ModelConnectInputSchema).output(ModelCredentialSchema),

@@ -10,17 +10,19 @@ import { isCancelledError, useQuery } from "@tanstack/react-query";
 import type { Href } from "expo-router";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text } from "react-native";
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LoadFailure } from "../../components/load-failure";
 import { ModelProviders } from "../../components/model-providers";
 import type { ConnectableProvider, ModelConnectIntent } from "../../components/model-role-settings";
 import { ModelRoleSettings } from "../../components/model-role-settings";
+import { SettingsGroup, SettingsRow } from "../../components/settings-group";
 import type { MobileModel, MobileModelCredential } from "../../lib/api";
 // Connections belong to the account, so renaming and removing them go to the selected Space.
 import { rpc } from "../../lib/api";
 import { mobileTokens } from "../../lib/appearance";
 import { useI18n } from "../../lib/i18n";
+import { localFoundRows } from "../../lib/local-setup";
 import type { ModelConnectionRequest } from "../../lib/model-connection-request";
 import { closeModelConnection, openModelConnection } from "../../lib/model-connection-request";
 import type { ModelPickerRequest } from "../../lib/model-picker-selection";
@@ -60,6 +62,13 @@ export default function Models() {
       },
       queryClient,
     ).data ?? noCredentials;
+  const found = localFoundRows(
+    useQuery(
+      { ...rpcQuery("models/localSetup", { wait: false }, spaceId), enabled: false },
+      queryClient,
+    ).data,
+    t,
+  );
   const [error, setError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const openedRef = useRef(false);
@@ -85,6 +94,10 @@ export default function Models() {
             reuse,
           }),
           fetchFresh(queryClient, rpcQuery("models/credentials", undefined, spaceId), {
+            reuse,
+          }),
+          // Answers from memory at once; the engine checks behind it.
+          fetchFresh(queryClient, rpcQuery("models/localSetup", { wait: false }, spaceId), {
             reuse,
           }),
         ]);
@@ -149,6 +162,15 @@ export default function Models() {
         target,
       }),
     );
+
+  async function chooseFound(optionId: string, modelId: string) {
+    try {
+      await rpc("models/useLocal", { optionId, modelId });
+      await load();
+    } catch (err) {
+      Alert.alert(errorText(err, t("Something went wrong. Try again.")));
+    }
+  }
 
   /** Every provider, popular first, plus the Ollama Cloud preset of the compatible one. */
   const allProviders = useMemo(() => {
@@ -290,6 +312,23 @@ export default function Models() {
               title={t("Light tasks model")}
               defaultLabel={t("Choose a model")}
             />
+            {target.scope === "account" && found.length > 0 ? (
+              <SettingsGroup
+                accessibilityLabel={t("Found on this computer")}
+                label={t("Found on this computer")}
+              >
+                {found.map((row) => (
+                  <SettingsRow
+                    key={row.optionId}
+                    accessibilityRole="button"
+                    title={row.title}
+                    detail={row.subtitle}
+                    value={t("Use")}
+                    onPress={() => void chooseFound(row.optionId, row.modelId)}
+                  />
+                ))}
+              </SettingsGroup>
+            ) : null}
             {/* Connections are the account's in every Space, so a Space's override lists only its models. */}
             {target.scope === "account" ? (
               <ModelProviders

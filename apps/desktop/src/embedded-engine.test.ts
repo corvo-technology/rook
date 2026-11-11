@@ -286,6 +286,15 @@ describe("EmbeddedEngineController", () => {
     expect(await without.hostConfigMatches()).toBe(false);
   });
 
+  it("the engine allows private model endpoints on the owner's computer", async () => {
+    const engine = new EmbeddedEngineController(deps());
+    await engine.start();
+    const api = children.find((child) => base(child) === "api.mjs");
+    const worker = children.find((child) => base(child) === "worker.mjs");
+    expect(api?.env.MCP_ALLOW_PRIVATE_ENDPOINT).toBe("true");
+    expect(worker?.env.MCP_ALLOW_PRIVATE_ENDPOINT).toBe("true");
+  });
+
   it("keeps stdio MCP servers off when there is no launcher", async () => {
     const engine = new EmbeddedEngineController(deps());
     await engine.start();

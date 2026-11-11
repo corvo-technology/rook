@@ -61,6 +61,7 @@ import {
   loadLoginPasswordRedactions,
 } from "./bot-secrets.js";
 import { createBrowserProvider } from "./browser-provider-factory.js";
+import { alertIfMonthCrossed } from "./budget-alert.js";
 import { partitionTools } from "./builtin-tool-bridge.js";
 import { agentConnectionTools, builtinAgentTools } from "./builtin-tools.js";
 import { cloudAgentsEnabled } from "./cloud-agent-factory.js";
@@ -1723,6 +1724,12 @@ export function createRunExecutor(deps: ExecutorDeps) {
           await failRun(ctx, caughtError, {
             ownCredential: resolved.ownCredential,
             active: activeModel,
+          });
+        } finally {
+          await alertIfMonthCrossed(deps, run, bot, {
+            usedBefore: monthUsage.used,
+            spentThisAttempt: state.replyBudget.spent - spentBeforeAttempt,
+            limit: monthUsage.limit,
           });
         }
       } catch (setupError) {

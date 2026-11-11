@@ -23,6 +23,15 @@ export const RUN_TRIGGERS = [
 export const RunTriggerSchema = z.enum(RUN_TRIGGERS);
 export type RunTrigger = z.infer<typeof RunTriggerSchema>;
 
+/** Why the run guards ended a run that was going nowhere; each has its own fixed run error. */
+export const TURN_GUARD_KINDS = ["loop", "tool_errors", "stall", "waiting"] as const;
+export type TurnGuardKind = (typeof TURN_GUARD_KINDS)[number];
+
+/** Why a run was stopped on purpose, saved beside its error. Null for a run that failed on its own. */
+export const RUN_STOP_REASONS = [...TURN_GUARD_KINDS] as const;
+export const RunStopReasonSchema = z.enum(RUN_STOP_REASONS);
+export type RunStopReason = z.infer<typeof RunStopReasonSchema>;
+
 /**
  * Whose problem a failed run is. Every kind except "output" is the user's provider account,
  * key, plan or model choice; "output" is a model that returned nothing usable.
@@ -37,6 +46,7 @@ export const RUN_ERROR_KINDS = [
   "model",
   "context",
   "output",
+  ...TURN_GUARD_KINDS,
 ] as const;
 export type RunErrorKind = (typeof RUN_ERROR_KINDS)[number];
 

@@ -1,4 +1,4 @@
-import type { RunErrorKind } from "@corvo/contracts";
+import type { RunErrorKind, TurnGuardKind } from "@corvo/contracts";
 import { COMPUTER_RATE_LIMIT_ERROR, providerQuotaResetAt } from "@corvo/contracts";
 import { stuckWorkStatusMessages } from "./stuck-work.js";
 
@@ -63,6 +63,19 @@ export function isModelRequiredSendError(error: unknown): boolean {
         : undefined;
   return typeof message === "string" && message.trim() === MODEL_REQUIRED_SEND_ERROR;
 }
+
+/** The run was stopped because it was going nowhere. Matched by exact equality. */
+export const TURN_GUARD_RUN_ERRORS: Record<TurnGuardKind, string> = {
+  loop: "I stopped because I kept repeating the same step and getting the same result.",
+  tool_errors: "I stopped because my tools kept failing.",
+  stall: "I stopped because I got stuck and nothing was moving.",
+  waiting: "I stopped because I kept waiting for something that didn't arrive.",
+};
+const TURN_GUARD_KIND_BY_ERROR = new Map(
+  (Object.entries(TURN_GUARD_RUN_ERRORS) as Array<[TurnGuardKind, string]>).map(
+    ([kind, sentence]) => [sentence, kind],
+  ),
+);
 
 /** What the API itself answers for an unexpected failure. */
 const INTERNAL_RUN_ERROR = "Internal server error";
@@ -261,6 +274,8 @@ export function normalizeRunError(
       ].join("\n"),
     };
   }
+  const guardKind = TURN_GUARD_KIND_BY_ERROR.get(trimmed);
+  if (guardKind) return { summary: translate(trimmed), details, kind: guardKind };
   // Preserve only known recovery advice: provider diagnostics can also be plain text.
   if (APP_RUN_ERRORS.has(trimmed)) {
     return MODEL_OUTPUT_RUN_ERRORS.has(trimmed)

@@ -1,5 +1,10 @@
 import type { ProductAnalytics, RealtimeFanout } from "@corvo/adapter-kit";
-import type { BotSecretDestination, MessageBlock, ProductEvent } from "@corvo/contracts";
+import type {
+  BotSecretDestination,
+  MessageBlock,
+  ProductEvent,
+  RunStopReason,
+} from "@corvo/contracts";
 import {
   AnalyticsTrigger,
   BOT_INSTRUCTIONS_MAX_LENGTH,
@@ -158,6 +163,8 @@ export type FinalizeRunInput = FinalizeRunBase &
     | {
         outcome: "failed";
         error: string;
+        /** Set when a run guard ended the run on purpose. */
+        stopReason?: RunStopReason;
         /** Reply text the user saw streaming before the failure, kept as a bot message. */
         partialReply?: MessageBlock[];
       }
@@ -1632,6 +1639,7 @@ async function finalizeRunOnce(
       data: {
         status: input.outcome,
         error: input.outcome === "failed" ? input.error : null,
+        stopReason: input.outcome === "failed" ? (input.stopReason ?? null) : null,
         completedAt: now,
         leaseOwner: null,
         leaseExpiresAt: null,

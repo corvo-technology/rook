@@ -1762,8 +1762,10 @@ msgstr "このブラウザセッションからURLにアクセスできること
 msgid "Connect"
 msgstr "接続"
 
+#. placeholder {0}: app.name
 #. placeholder {0}: appName(slug)
 #: src/pages/AgentsStore.tsx
+#: src/pages/shell/chat-empty.tsx
 msgid "Connect {0}"
 msgstr "{0} を接続"
 

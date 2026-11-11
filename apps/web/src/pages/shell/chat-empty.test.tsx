@@ -8,6 +8,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@corvo/ui-web", () => ({
   BotAvatar: ({ size }: { size: number }) => <i data-avatar={size} />,
+  Button: ({ children, ...props }: { children: ReactNode }) => (
+    <button type="button" {...props}>
+      {children}
+    </button>
+  ),
 }));
 vi.mock("@lingui/react/macro", () => ({
   Trans: ({ children }: { children: ReactNode }) => children,
@@ -50,5 +55,42 @@ describe("ChatEmpty", () => {
     );
     expect(container.textContent).toBe("Atendente");
     expect(container.querySelector("button")).toBeNull();
+  });
+
+  it("shows no app button without an app", async () => {
+    await act(async () => root.render(<ChatEmpty intro={intro} starters={[]} onPick={vi.fn()} />));
+    expect(container.querySelector("button")).toBeNull();
+  });
+
+  it("offers the app by name and calls back once", async () => {
+    const onConnect = vi.fn();
+    await act(async () =>
+      root.render(
+        <ChatEmpty
+          intro={intro}
+          starters={[]}
+          onPick={vi.fn()}
+          app={{ name: "Todoist", pending: false, onConnect }}
+        />,
+      ),
+    );
+    const button = container.querySelector("button");
+    expect(button?.textContent).toBe("Connect Todoist");
+    await act(async () => button?.click());
+    expect(onConnect).toHaveBeenCalledTimes(1);
+  });
+
+  it("disables the button while connecting", async () => {
+    await act(async () =>
+      root.render(
+        <ChatEmpty
+          intro={intro}
+          starters={[]}
+          onPick={vi.fn()}
+          app={{ name: "Todoist", pending: true, onConnect: vi.fn() }}
+        />,
+      ),
+    );
+    expect(container.querySelector("button")?.disabled).toBe(true);
   });
 });

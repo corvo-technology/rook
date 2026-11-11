@@ -1762,8 +1762,10 @@ msgstr "Confirm the URL is reachable from this browser session, then test again.
 msgid "Connect"
 msgstr "Connect"
 
+#. placeholder {0}: app.name
 #. placeholder {0}: appName(slug)
 #: src/pages/AgentsStore.tsx
+#: src/pages/shell/chat-empty.tsx
 msgid "Connect {0}"
 msgstr "Connect {0}"
 

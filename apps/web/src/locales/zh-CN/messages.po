@@ -1762,8 +1762,10 @@ msgstr "请确认此浏览器会话可以访问该 URL，然后重新测试。"
 msgid "Connect"
 msgstr "连接"
 
+#. placeholder {0}: app.name
 #. placeholder {0}: appName(slug)
 #: src/pages/AgentsStore.tsx
+#: src/pages/shell/chat-empty.tsx
 msgid "Connect {0}"
 msgstr "连接 {0}"
 

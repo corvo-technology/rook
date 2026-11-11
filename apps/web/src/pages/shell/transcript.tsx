@@ -96,12 +96,15 @@ export const Transcript = memo(function Transcript({
   intro,
   starters,
   onStarter,
+  app,
 }: {
   /** Who the chat is with, shown with the starters while the chat has no message. */
   intro?: { id: string; name: string; title: string; color: string };
   /** Tappable first messages, shown only while the chat has no message. */
   starters?: readonly string[];
   onStarter?: (text: string) => void;
+  /** One app to connect, offered with the intro while the chat has no message. */
+  app?: { name: string; pending: boolean; onConnect: () => void };
   scrollRef: RefObject<HTMLDivElement | null>;
   scrollRequest: { messageId: string; nonce: number } | null;
   onScrollRequestHandled: () => void;
@@ -479,7 +482,7 @@ export const Transcript = memo(function Transcript({
           </Button>
         ) : null}
         {reactionView.visibleMessages.length === 0 && !running && intro && onStarter ? (
-          <ChatEmpty intro={intro} starters={starters ?? []} onPick={onStarter} />
+          <ChatEmpty intro={intro} starters={starters ?? []} onPick={onStarter} app={app} />
         ) : null}
         {groupVoiceChats(reactionView.visibleMessages).map((item) => {
           if (item.kind === "voiceChat") {

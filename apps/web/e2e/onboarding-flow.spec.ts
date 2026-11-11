@@ -25,7 +25,20 @@ test("a new user who picks Sales lands in the prospector's chat with the first t
     botId: activeBotId(page),
   });
   expect(thread.messages).toHaveLength(0);
+  // The prospector has no app that signs in with one click, so no app is offered.
+  await expect(page.getByRole("button", { name: /^Connect / })).toHaveCount(0);
   await captureScreenshot(page, testInfo, "flow-first-task-waiting");
+});
+
+test("the picked agent's chat offers its one-click app", async ({ page }, testInfo) => {
+  await signupToOnboarding(page, `flow-app-${Date.now()}@corvo.test`, "password12", "Flow");
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Personal", exact: true }).click();
+  await page.getByRole("button", { name: "Operations", exact: true }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.waitForURL(/\/app\//, { timeout: 20_000 });
+  await expect(page.getByRole("button", { name: "Connect Todoist", exact: true })).toBeVisible();
+  await captureScreenshot(page, testInfo, "flow-agent-app-offer");
 });
 
 test("a new user who picks nothing lands in the Chief's chat with an empty composer", async ({

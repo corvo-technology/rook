@@ -8,6 +8,7 @@ import type {
   SecretStore,
 } from "@corvo/adapter-kit";
 import type {
+  CliEngineSetupService,
   CloudAgentConnection,
   CodexLiveCatalog,
   ComposioProvider,
@@ -42,6 +43,7 @@ import { connectionsRoutes } from "./routes/connections.js";
 import { contentRoutes } from "./routes/content.js";
 import { createRouterContext } from "./routes/context.js";
 import { emailAgentRoutes } from "./routes/email-agent.js";
+import { enginesRoutes } from "./routes/engines.js";
 import { localSetupRoutes } from "./routes/local-setup.js";
 import { mcpRoutes } from "./routes/mcp.js";
 import { memoryRoutes } from "./routes/memory.js";
@@ -66,6 +68,8 @@ export interface RouterDeps {
    * on this host. Absent (hosted cloud) the model step probes nothing.
    */
   localSetup?: LocalSetupCheck;
+  /** Installs and signs in coding-agent CLIs; absent where CLI engines are not offered. */
+  cliEngineSetup?: CliEngineSetupService;
   /** The one-prompt model test; injectable so tests never reach a model. */
   testLocalModel?: typeof testModelOnce;
   /** Present only on the desktop app's own engine, where speech models can live. */
@@ -171,6 +175,7 @@ export function createRouter(deps: RouterDeps) {
 
   return os.router({
     ...accountRoutes(ctx),
+    ...enginesRoutes(ctx),
     ...spacesRoutes(ctx),
     ...missionsRoutes(ctx),
     models: { ...modelsRoutes(ctx).models, ...localSetupRoutes(ctx).models },

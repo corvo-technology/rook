@@ -36,7 +36,15 @@ import {
   UpdateTicketInput,
 } from "./board.js";
 import { BotSecretMetadata, BotSecretPutInput, StoredBotSecretName } from "./bot-secrets.js";
-import { CliEnginesViewSchema } from "./cli-engines.js";
+import {
+  CliEngineIdSchema,
+  CliEngineInstallResultSchema,
+  CliEngineSetupSchema,
+  CliEnginesViewSchema,
+  CliLoginInputSchema,
+  CliLoginSessionSchema,
+  CliLoginStartSchema,
+} from "./cli-engines.js";
 import { TourMark } from "./coach-tour.js";
 import {
   ActionApprovalRuleSchema,
@@ -338,6 +346,19 @@ export const appContract = {
     status: oc.output(ServerUpdateStatusSchema),
     check: oc.input(ServerUpdateRequestSchema).output(ServerUpdateCheckSchema),
     apply: oc.input(ServerUpdateRequestSchema).output(ServerUpdateRunSchema),
+  },
+  /** Installing and signing in to coding-agent CLIs on the engine; forbidden where they are not offered. */
+  engines: {
+    setupState: oc.output(z.array(CliEngineSetupSchema)),
+    install: oc.input(z.object({ id: CliEngineIdSchema })).output(CliEngineInstallResultSchema),
+    signIn: oc.input(z.object({ id: CliEngineIdSchema })).output(CliLoginStartSchema),
+    loginScreen: oc
+      .input(z.object({ sessionId: z.string().max(100) }))
+      .output(CliLoginSessionSchema),
+    loginInput: oc.input(CliLoginInputSchema).output(z.object({ ok: z.literal(true) })),
+    cancelLogin: oc
+      .input(z.object({ sessionId: z.string().max(100) }))
+      .output(z.object({ ok: z.literal(true) })),
   },
   models: {
     forRole: oc

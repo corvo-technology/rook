@@ -30,6 +30,7 @@ import {
   CLAUDE_ENGINE,
   CliEngineHost,
   CliEngineRuntime,
+  CliEngineSetupService,
   CliToolGateway,
   CodexCatalogCache,
   ComposioConnector,
@@ -550,6 +551,14 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
             : undefined,
         })
       : undefined;
+  const cliEngineSetup = cliGateway
+    ? new CliEngineSetupService({
+        host: cliEngineHost()!,
+        dataDir: env.dataDir,
+        // Only the engine the desktop app starts has this token, and its computer is the owner's.
+        ownersComputer: Boolean(env.desktopStackToken),
+      })
+    : undefined;
   const piRuntime = new PiAgentRuntime({
     sessionRoot: env.piSessionRecording ? piSessionsRoot(env.dataDir) : undefined,
   });
@@ -779,6 +788,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     secrets,
     localSpeech,
     localSetup,
+    cliEngineSetup,
     audio,
     oauthLogins,
     integrationSettings,

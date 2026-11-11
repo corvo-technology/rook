@@ -39,6 +39,7 @@ export * from "./cli-engine-runtime.js";
 export * from "./cli-engines/browser-login.js";
 export * from "./cli-engines/install.js";
 export * from "./cli-engines/login-terminal.js";
+export * from "./cli-engines/setup.js";
 export * from "./cli-tool-gateway.js";
 export * from "./cloud-agent-emulator.js";
 export * from "./cloud-agent-factory.js";

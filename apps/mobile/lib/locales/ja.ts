@@ -23,6 +23,9 @@ export const JA_MESSAGES: Record<string, string> = {
   "Main model": "メインモデル",
   "Add fallback": "バックアップモデルを追加",
   "Manage {provider}": "{provider} を管理",
+  "Found on this computer": "このコンピューターで見つかりました",
+  "Local models": "ローカルモデル",
+  Use: "使う",
   "Add provider": "プロバイダーを追加",
   "Choose a model": "モデルを選択",
   "The model hit its output limit before finishing its reply.":

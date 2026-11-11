@@ -133,6 +133,7 @@ export * from "./pi-live-model.js";
 export {
   isOperatorLocalModel,
   LOCAL_PROVIDER_ID,
+  localProvider,
   withLocalModelsOffered,
 } from "./pi-local-provider.js";
 export * from "./pi-models.js";

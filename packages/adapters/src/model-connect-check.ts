@@ -95,7 +95,15 @@ const TEST_CONTEXT: Context = {
 export async function testModelOnce(
   config: Pick<
     AgentRunModel,
-    "provider" | "id" | "apiKey" | "baseUrl" | "maxTokens" | "allowPrivateEndpoint"
+    | "provider"
+    | "id"
+    | "apiKey"
+    | "accountId"
+    | "gatewayId"
+    | "baseUrl"
+    | "headers"
+    | "maxTokens"
+    | "allowPrivateEndpoint"
   >,
   options: {
     fetch?: typeof globalThis.fetch;

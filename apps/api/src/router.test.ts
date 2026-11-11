@@ -816,6 +816,7 @@ describe("thread answer delivery", () => {
             messageId: "message-1",
             answer: "Paris",
             clientNonce: "call:call-1:spoken-answer",
+            approvalEffectId: "effect-2",
           },
         }),
       }),
@@ -831,6 +832,7 @@ describe("thread answer delivery", () => {
         threadId: "thread-1",
         runId: "run-1",
         clientNonce: "call:call-1:spoken-answer",
+        approvalEffectId: "effect-2",
       }),
     );
     expect(enqueue).toHaveBeenCalledOnce();

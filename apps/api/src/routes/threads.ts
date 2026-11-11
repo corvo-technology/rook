@@ -540,6 +540,7 @@ export function threadsRoutes(ctx: RouterContext) {
             clientNonce: input.clientNonce,
             username: input.username,
             dismiss: input.dismiss,
+            approvalEffectId: input.approvalEffectId,
           })
           .catch((error: unknown) => {
             if (error instanceof AnswerTooLongError)

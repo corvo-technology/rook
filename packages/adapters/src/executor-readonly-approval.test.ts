@@ -410,6 +410,7 @@ function fixture({
     run.status = "waiting_input";
     return { continuationRunId: null as string | null };
   });
+  const addApprovalAskToPausedRun = vi.fn(async (_input: unknown) => true);
   const finalizeRun = vi.fn(async () => ({ continuationRunId: null }));
   const execute = vi.fn(async function* (call: ConnectorCall) {
     yield { type: "result" as const, data: { item: call.args.id } };
@@ -513,6 +514,7 @@ function fixture({
       append: vi.fn(async () => undefined),
       notify: vi.fn(async () => undefined),
       pauseRunForInput,
+      addApprovalAskToPausedRun,
       finalizeRun,
     },
     jobs: { enqueue },
@@ -545,6 +547,7 @@ function fixture({
     commit,
     sharedMemoryState,
     pauseRunForInput,
+    addApprovalAskToPausedRun,
     enqueue,
     async deliverInbound(promptText: string, busyTrigger?: string) {
       const pending: Array<Record<string, unknown>> = [];
@@ -1613,9 +1616,10 @@ describe("bot management approvals", () => {
           expect.objectContaining({
             text: "Create group “Crew”?",
             detail: "Members: Alpha, Beta",
+            proposal: true,
             actions: [
-              { id: "allow", label: "Allow once" },
-              { id: "deny", label: "Deny" },
+              { id: "allow", label: "Apply" },
+              { id: "deny", label: "Dismiss" },
             ],
           }),
         ],
@@ -1656,6 +1660,112 @@ describe("bot management approvals", () => {
     expect(f.effects[0]).toMatchObject({ status: "completed", result: created });
     expect(f.results.at(-1)).toEqual(created);
     expect(f.execute).not.toHaveBeenCalled();
+  });
+
+  describe("several proposals from one reply", () => {
+    const names = ["Crew A", "Crew B", "Crew C"];
+    const batch = () => {
+      const f = fixture({
+        name: "create_group",
+        builtin: true,
+        fleetManagement: true,
+        parallelCalls: true,
+        fleetBots: [
+          { id: "bot-a", name: "Alpha" },
+          { id: "bot-b", name: "Beta" },
+        ],
+      });
+      const calls = names.map((name, i) => ({
+        args: { name, bot_names: ["Alpha", "Beta"] },
+        executionId: `call-${i + 1}`,
+      }));
+      f.setCalls(calls);
+      return { f, calls };
+    };
+
+    it("puts every card on the first card's paused message", async () => {
+      const { f } = batch();
+      await f.run();
+      expect(f.pauseRunForInput).toHaveBeenCalledOnce();
+      expect(f.effects).toHaveLength(3);
+      expect(f.effects.map((effect) => effect.status)).toEqual([
+        "intended",
+        "intended",
+        "intended",
+      ]);
+      expect(f.addApprovalAskToPausedRun).toHaveBeenCalledTimes(2);
+      for (const [input] of f.addApprovalAskToPausedRun.mock.calls as unknown as [
+        { block: { proposal?: boolean; approvalEffectId: string } },
+      ][]) {
+        expect(input.block.proposal).toBe(true);
+      }
+      const shown = [
+        ...(
+          f.pauseRunForInput.mock.calls as unknown as [
+            { blocks: Array<{ approvalEffectId: string }> },
+          ][]
+        ).flatMap(([input]) => input.blocks),
+        ...(
+          f.addApprovalAskToPausedRun.mock.calls as unknown as [
+            { block: { approvalEffectId: string } },
+          ][]
+        ).map(([input]) => input.block),
+      ].map((block) => block.approvalEffectId);
+      expect(new Set(shown)).toEqual(new Set(f.effects.map((effect) => effect.id)));
+    });
+
+    it("applies the approved changes once each and returns the denial for the dismissed one", async () => {
+      const { f, calls } = batch();
+      await f.run();
+      f.effects[0]!.status = "approved";
+      f.effects[1]!.status = "approved";
+      f.effects[2]!.status = "denied";
+      createFleetGroupMock.mockReset();
+      createFleetGroupMock.mockImplementation(
+        async (_deps: unknown, _run: unknown, request: { name: string }) => ({
+          groupId: `group-${request.name}`,
+          name: request.name,
+        }),
+      );
+      f.addApprovalAskToPausedRun.mockClear();
+      f.pauseRunForInput.mockClear();
+      f.setCalls(calls.map((call, i) => ({ ...call, executionId: `resume-${i + 1}` })));
+      await f.run();
+      expect(createFleetGroupMock).toHaveBeenCalledTimes(2);
+      expect(f.addApprovalAskToPausedRun).not.toHaveBeenCalled();
+      expect(f.pauseRunForInput).not.toHaveBeenCalled();
+      expect(f.results.slice(-3)).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ name: "Crew A" }),
+          expect.objectContaining({ name: "Crew B" }),
+          expect.objectContaining({
+            error: expect.stringContaining("The user denied this action"),
+          }),
+        ]),
+      );
+      expect(f.effects.map((effect) => effect.status)).toEqual([
+        "completed",
+        "completed",
+        "denied",
+      ]);
+    });
+
+    it("falls back to a card after the resume when the first was answered before a sibling joined", async () => {
+      const { f, calls } = batch();
+      f.addApprovalAskToPausedRun.mockResolvedValue(false);
+      await f.run();
+      // Only the first card was shown; the siblings' effects wait with no card yet.
+      expect(f.pauseRunForInput).toHaveBeenCalledOnce();
+      f.effects[0]!.status = "approved";
+      createFleetGroupMock.mockReset();
+      createFleetGroupMock.mockResolvedValue({ groupId: "group-a", name: "Crew A" });
+      f.pauseRunForInput.mockClear();
+      f.setCalls(calls.map((call, i) => ({ ...call, executionId: `resume-${i + 1}` })));
+      await f.run();
+      // The approved change runs once; a sibling pauses again with its own card.
+      expect(createFleetGroupMock).toHaveBeenCalledTimes(1);
+      expect(f.pauseRunForInput).toHaveBeenCalledOnce();
+    });
   });
 
   it("returns a refused target to the model without a card", async () => {

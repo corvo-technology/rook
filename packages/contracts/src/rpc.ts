@@ -598,6 +598,8 @@ export const appContract = {
             username: z.string().min(1).max(512).optional(),
             /** Turns down a pending secret request; `answer` is then empty. */
             dismiss: z.literal(true).optional(),
+            /** Which card of several pending approvals this answers. */
+            approvalEffectId: Id.optional(),
           })
           .refine(
             (input) =>

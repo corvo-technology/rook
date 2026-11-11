@@ -1141,7 +1141,12 @@ export function createRunExecutor(deps: ExecutorDeps) {
           computerUse,
           runningHelpers,
           reply,
-          approval: { pausePending: false, request: undefined, proposalInFlight: false },
+          approval: {
+            pausePending: false,
+            request: undefined,
+            requestIsProposal: false,
+            proposalInFlight: false,
+          },
           effects: {
             counts: new Map(),
             occurrences: [],

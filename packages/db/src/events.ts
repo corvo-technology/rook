@@ -74,6 +74,7 @@ export interface AppendEventInput {
 }
 
 export interface ThreadEvents {
+  addApprovalAskToPausedRun(input: AddApprovalAskInput): Promise<boolean>;
   answerRunInput(input: AnswerRunInput): Promise<boolean>;
   append(input: AppendEventInput): Promise<ProductEvent>;
   claimSteering(input: ClaimSteeringInput): Promise<ClaimedSteeringMessage[]>;
@@ -236,6 +237,16 @@ export interface PauseRunForTakeover {
   computerId: string;
 }
 
+/** Most proposal cards one reply can put on a paused message. */
+export const FLEET_CARD_BATCH_MAX = 5;
+
+export interface AddApprovalAskInput {
+  spaceId: string;
+  threadId: string;
+  runId: string;
+  block: MessageBlock;
+}
+
 export interface AnswerRunInput {
   spaceId: string;
   threadId: string;
@@ -249,6 +260,8 @@ export interface AnswerRunInput {
   username?: string;
   /** Turns down a pending secret request; only the run's user can, and nothing is stored. */
   dismiss?: boolean;
+  /** Which card of several pending approvals this answers; required while more than one waits. */
+  approvalEffectId?: string;
 }
 
 /** What request_secret returns to the bot once the user dismissed its card. */
@@ -313,6 +326,7 @@ export function createThreadEvents(
   } = {},
 ): ThreadEvents {
   return {
+    addApprovalAskToPausedRun: (input) => addApprovalAskToPausedRun(prisma, input, realtime),
     answerRunInput: (input) => answerRunInput(prisma, input, realtime, options.runSecretWriter),
     append: (input) => appendEvent(prisma, input, realtime, options.analytics),
     claimSteering: (input) => claimSteering(prisma, input),
@@ -694,7 +708,8 @@ async function findPendingAsk(
     const pendingAsk = parsed.data.find(
       (block) => block.kind === "ask" && block.status !== "answered",
     );
-    if (pendingAsk?.kind === "ask") return { messageId: message.id, pendingAsk };
+    if (pendingAsk?.kind === "ask")
+      return { messageId: message.id, pendingAsk, blocks: parsed.data };
   }
   return null;
 }
@@ -737,11 +752,21 @@ async function commitAnswerRunInput(
   });
   const parsed = MessageBlockSchema.array().safeParse(message?.blocks);
   if (!message || !parsed.success) return null;
-  const pendingAsk = parsed.data.find(
-    (block) => block.kind === "ask" && block.status !== "answered",
+  const pendingAsks = parsed.data.filter(
+    (block): block is Extract<MessageBlock, { kind: "ask" }> =>
+      block.kind === "ask" && block.status !== "answered",
   );
-  if (pendingAsk?.kind !== "ask") return null;
+  // With several cards waiting, the answer names its card. An older client that cannot name one
+  // is refused while more than one waits, so it never decides a card it did not show.
+  const pendingAsk = input.approvalEffectId
+    ? pendingAsks.find((block) => block.approvalEffectId === input.approvalEffectId)
+    : pendingAsks.length === 1
+      ? pendingAsks[0]
+      : undefined;
+  if (!pendingAsk) return null;
   const approvalAsk = isApprovalAskBlock(pendingAsk);
+  // The run resumes only once every card of the message is decided.
+  const otherCardsWait = approvalAsk && pendingAsks.length > 1;
   const secretAsk = isSecretAskBlock(pendingAsk);
   const choiceAsk = !approvalAsk && !secretAsk && Boolean(pendingAsk.actions?.length);
   const selectedChoice = choiceAsk ? resolveAskChoice(input.answer, pendingAsk.actions) : undefined;
@@ -821,20 +846,22 @@ async function commitAnswerRunInput(
   // the user's turn: with the conversation and every tool, to get going on that answer.
   const resumedTrigger =
     run.trigger === "created" && !approvalAsk && !secretAsk ? "user" : run.trigger;
-  const queued = await tx.run.updateMany({
-    where: {
-      id: input.runId,
-      spaceId: input.spaceId,
-      threadId: input.threadId,
-      status: "waiting_input",
-    },
-    data: {
-      status: "queued",
-      ...(resumedTrigger !== run.trigger ? { trigger: resumedTrigger } : {}),
-      ...(choiceAsk ? { checkpoint: null } : {}),
-    },
-  });
-  if (queued.count !== 1) return null;
+  if (!otherCardsWait) {
+    const queued = await tx.run.updateMany({
+      where: {
+        id: input.runId,
+        spaceId: input.spaceId,
+        threadId: input.threadId,
+        status: "waiting_input",
+      },
+      data: {
+        status: "queued",
+        ...(resumedTrigger !== run.trigger ? { trigger: resumedTrigger } : {}),
+        ...(choiceAsk ? { checkpoint: null } : {}),
+      },
+    });
+    if (queued.count !== 1) return null;
+  }
 
   const recordedAnswer = secretAsk ? "" : (selectedChoice?.id ?? approvalAnswer);
   const callId = callIdFromClientNonce(input.clientNonce);
@@ -1164,6 +1191,60 @@ export async function answerWaitingRunWithTextInTransaction(
   return messageId
     ? commitAnswerRunInput(tx, { ...input, messageId, answer: input.answer.trim() })
     : null;
+}
+
+/**
+ * Adds a proposal card to the message a paused run already shows, so several changes proposed in
+ * one reply are decided on one message. Changes nothing, and returns false, unless the run waits on
+ * a proposal card and the message holds fewer than FLEET_CARD_BATCH_MAX of them.
+ */
+export async function addApprovalAskToPausedRun(
+  prisma: PrismaClient,
+  input: AddApprovalAskInput,
+  realtime?: RealtimeFanout,
+): Promise<boolean> {
+  const { block } = input;
+  if (block.kind !== "ask" || !block.proposal || !block.approvalEffectId) return false;
+  const committed = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    await tx.$queryRaw`SELECT id FROM threads WHERE id = ${input.threadId} FOR UPDATE`;
+    const run = await tx.run.findFirst({
+      where: {
+        id: input.runId,
+        spaceId: input.spaceId,
+        threadId: input.threadId,
+        status: "waiting_input",
+      },
+      select: { botId: true },
+    });
+    if (!run) return null;
+    const found = await findPendingAsk(tx, input);
+    if (!found?.pendingAsk.proposal) return null;
+    const proposals = found.blocks.filter((item) => item.kind === "ask" && item.proposal);
+    if (proposals.length >= FLEET_CARD_BATCH_MAX) return null;
+    const effect = await tx.externalEffect.findFirst({
+      where: {
+        id: block.approvalEffectId,
+        spaceId: input.spaceId,
+        runId: input.runId,
+        status: "intended",
+      },
+      select: { id: true },
+    });
+    if (!effect) return null;
+    const blocks = [...found.blocks, block];
+    await tx.message.update({ where: { id: found.messageId }, data: { blocks } });
+    return appendEventInTransaction(tx, {
+      spaceId: input.spaceId,
+      threadId: input.threadId,
+      botId: run.botId,
+      runId: input.runId,
+      type: "thread.message.updated",
+      payload: { messageId: found.messageId, role: "bot", blocks },
+    });
+  });
+  if (!committed) return false;
+  await notifyRealtime(realtime, committed.threadId, committed.seq);
+  return true;
 }
 
 export async function pauseRunForInput(

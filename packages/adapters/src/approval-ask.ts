@@ -48,9 +48,10 @@ export function buildApprovalAskBlock(
       ),
       detailFormat: toolName === "set_child_instructions" ? "code" : "text",
       status: "pending",
+      proposal: true,
       actions: [
-        { id: "allow", label: "Allow once" },
-        { id: "deny", label: "Deny" },
+        { id: "allow", label: "Apply" },
+        { id: "deny", label: "Dismiss" },
       ],
     };
   }

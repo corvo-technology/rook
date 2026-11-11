@@ -194,3 +194,4 @@ export * from "./whatsapp/enabled.js";
 export * from "./whatsapp/link-surface.js";
 export * from "./whatsapp/number-lock.js";
 export * from "./whatsapp/outbox-drain.js";
+export { type CuratorThreadFacts, threadIsCurated } from "./wiki-curator-run.js";

@@ -9,19 +9,13 @@ export const memory: GuidePage = {
         "What agents remember, shared notes and open work, and connecting a memory provider.",
       body: `## What agents remember
 
-Agents keep notes between conversations. Open **Settings** › **Memory** to see and edit what is kept.
+Agents keep notes between conversations. A bot's settings show its notes and its **Open work**: items still to do, which you can add yourself with **Add open work**. Under **Advanced**, **Skills** lists its saved how-tos, which you can edit or delete.
 
-- **Shared memory**: notes every agent in the space reads and keeps up to date.
-- **Open work**: items still to do, which you can add yourself with **Add open work**.
-- **Skills**: saved how-tos, which you can edit or delete.
-
-## Shared or isolated
-
-A bot's **Memory scope** is **Shared** or **Isolated**. **Shared** lets it read the space's notes; **Isolated** keeps its notes to itself. **Default scope** sets the choice for new bots, and a bot can override it in its own settings.
+Open **Settings** › **Memory** for **Shared memory**: notes every agent in the space reads and keeps up to date.
 
 ## Memory providers
 
-By default memory is **Built-in**. A space can instead **Connect** an outside memory provider, as a plugin, in the cloud or on a server you run. The access level is **Recall and write** or **Recall only**. **Disconnect** returns to the built-in memory.
+By default memory is the built-in notes. A space can also use **Connect memory provider** to add an outside provider (Supermemory, Serenity or Honcho), in the cloud or on a server you run. With one connected, **Default scope** is **Isolated** or **Shared** for new bots, and a bot can override it with **Memory scope** under **Advanced**. Serenity also offers **Recall and write** or **Recall only**. **Disconnect** returns to the built-in notes.
 
 ## Memory and the wiki
 
@@ -29,7 +23,7 @@ Memory is private working notes. Pages the whole team should keep live in the wi
 
 ## When it goes wrong
 
-If an agent forgets something, check **Shared memory** for whether it was kept, and that the bot's scope is not **Isolated** if another agent should know it. A provider that fails to connect keeps the built-in memory working.`,
+If an agent forgets something, check **Shared memory** and the bot's own notes for whether it was kept. With a provider, check the bot's **Memory scope** is not **Isolated** when another agent should know it. A provider that fails to connect leaves the built-in notes working.`,
     },
     "pt-BR": {
       title: "Memória",
@@ -37,19 +31,13 @@ If an agent forgets something, check **Shared memory** for whether it was kept, 
         "O que os agentes lembram, notas compartilhadas e trabalho aberto, e como conectar um provedor de memória.",
       body: `## O que os agentes lembram
 
-Os agentes guardam notas entre conversas. Abra **Configurações** › **Memória** para ver e editar o que foi guardado.
+Os agentes guardam notas entre conversas. As configurações de um bot mostram as notas dele e o **Trabalho aberto**: itens ainda por fazer, que você mesmo pode adicionar com **Adicionar trabalho pendente**. Em **Avançado**, **Habilidades** lista os roteiros salvos, que você pode editar ou excluir.
 
-- **Memória compartilhada**: notas que todos os agentes do espaço leem e mantêm atualizadas.
-- **Trabalho aberto**: itens ainda por fazer, que você mesmo pode adicionar com **Adicionar trabalho pendente**.
-- **Habilidades**: roteiros salvos, que você pode editar ou excluir.
-
-## Compartilhada ou isolada
-
-O **Escopo de memória** de um bot é **Compartilhado** ou **Isolado**. **Compartilhado** deixa o bot ler as notas do espaço; **Isolado** mantém as notas só para ele. **Escopo padrão** define a escolha para bots novos, e um bot pode mudar isso nas próprias configurações.
+Abra **Configurações** › **Memória** para ver a **Memória compartilhada**: notas que todos os agentes do espaço leem e mantêm atualizadas.
 
 ## Provedores de memória
 
-Por padrão a memória é **Integrado**. Um espaço pode, em vez disso, **Conectar** um provedor de memória externo, como plugin, na nuvem ou em um servidor seu. O nível de acesso é **Lembrar e escrever** ou **Só lembrar**. **Desconectar** volta para a memória integrada.
+Por padrão a memória são as notas integradas. Um espaço também pode usar **Conectar provedor de memória** para adicionar um provedor externo (Supermemory, Serenity ou Honcho), na nuvem ou em um servidor seu. Com um conectado, o **Escopo padrão** é **Isolado** ou **Compartilhado** para bots novos, e um bot pode mudar isso com **Escopo de memória** em **Avançado**. O Serenity também oferece **Lembrar e escrever** ou **Só lembrar**. **Desconectar** volta para as notas integradas.
 
 ## Memória e a wiki
 
@@ -57,7 +45,7 @@ A memória são notas de trabalho privadas. Páginas que a equipe toda deve mant
 
 ## Quando algo dá errado
 
-Se um agente esqueceu algo, veja em **Memória compartilhada** se foi guardado e se o escopo do bot não está **Isolado** quando outro agente deveria saber. Um provedor que não conecta deixa a memória integrada funcionando.`,
+Se um agente esqueceu algo, veja na **Memória compartilhada** e nas notas do próprio bot se foi guardado. Com um provedor, confira se o **Escopo de memória** do bot não está **Isolado** quando outro agente deveria saber. Um provedor que não conecta deixa as notas integradas funcionando.`,
     },
   },
 };

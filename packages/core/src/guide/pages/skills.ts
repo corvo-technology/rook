@@ -20,7 +20,7 @@ Ask an agent to remember how you do something. It writes a **Draft skill** card 
 
 ## Using a skill
 
-Type / in the chat to pick a skill, or just ask: agents see the skills that fit the task. Saved skills can also be edited or deleted under **Settings** › **Memory** › **Skills**.
+Type / in the chat to pick a skill, or just ask: agents see the skills that fit the task. Saved skills can be edited or deleted under **Advanced** › **Skills** in any bot's settings.
 
 ## When it goes wrong
 
@@ -43,7 +43,7 @@ Peça a um agente para lembrar como você faz algo. Ele escreve um cartão de **
 
 ## Usando uma habilidade
 
-Digite / no chat para escolher uma habilidade, ou apenas peça: os agentes veem as habilidades que servem para a tarefa. As habilidades salvas também podem ser editadas ou excluídas em **Configurações** › **Memória** › **Habilidades**.
+Digite / no chat para escolher uma habilidade, ou apenas peça: os agentes veem as habilidades que servem para a tarefa. As habilidades salvas podem ser editadas ou excluídas em **Avançado** › **Habilidades** nas configurações de qualquer bot.
 
 ## Quando algo dá errado
 

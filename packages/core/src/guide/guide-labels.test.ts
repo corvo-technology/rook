@@ -67,4 +67,45 @@ describe("guide labels", () => {
     }
     expect(missing).toEqual([]);
   });
+
+  it("names in Portuguese what the English page names, label for label", () => {
+    // Every pt-BR label must be the catalog translation of the English label at the same place,
+    // on the surface (web or mobile) that has the English label.
+    const wrong: string[] = [];
+    for (const page of GUIDE_PAGES) {
+      const en = guideLabels(page.text.en.body);
+      const pt = guideLabels(page.text["pt-BR"].body);
+      if (en.length !== pt.length) {
+        wrong.push(`${page.slug}: ${en.length} English labels, ${pt.length} Portuguese`);
+        continue;
+      }
+      en.forEach((label, index) => {
+        const accepted = [web.get(label), PT_BR_MESSAGES[label]].filter(Boolean);
+        if (!accepted.includes(pt[index])) wrong.push(`${page.slug}: ${label} -> ${pt[index]}`);
+      });
+    }
+    expect(wrong).toEqual([]);
+  });
+
+  it("keeps the same sections in both languages", () => {
+    const headings = (body: string) => body.match(/^## /gm)?.length ?? 0;
+    for (const page of GUIDE_PAGES) {
+      expect(headings(page.text["pt-BR"].body), page.slug).toBe(headings(page.text.en.body));
+    }
+  });
+
+  it("points only to pages that exist", () => {
+    const slugs = new Set(GUIDE_PAGES.map((page) => page.slug));
+    const unknown: string[] = [];
+    for (const page of GUIDE_PAGES) {
+      for (const match of page.text.en.body.matchAll(
+        /the ([a-z-]+)(?: and ([a-z-]+))? pages?\b/g,
+      )) {
+        for (const slug of [match[1], match[2]]) {
+          if (slug && !slugs.has(slug)) unknown.push(`${page.slug}: ${slug}`);
+        }
+      }
+    }
+    expect(unknown).toEqual([]);
+  });
 });

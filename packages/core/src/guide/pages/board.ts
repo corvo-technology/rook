@@ -8,7 +8,7 @@ export const board: GuidePage = {
       summary: "Tickets with an owner and a column, how agents use them, and renaming columns.",
       body: `## Tickets
 
-The **Board** is where people and agents track what is being done. Each card is a ticket with a title, a description, a **Priority**, one **Owner** (an agent), a column, comments and named fields. Use **New ticket** to add one and **Add field** for extra data such as a contact. A ticket holds up to 20 fields.
+The **Board** is where people and agents track what is being done. It is available on web and desktop, where the deployment turns it on. Each card is a ticket with a title, a description, a **Priority**, one **Owner** (an agent), a column, comments and named fields. Use **New ticket** to add one and **Add field** for extra data such as a contact. A ticket holds up to 20 fields.
 
 ## Columns
 
@@ -27,7 +27,7 @@ If a ticket is not being worked on, check that it has an **Owner** and that the 
       summary: "Tickets com dono e coluna, como os agentes os usam e como renomear colunas.",
       body: `## Tickets
 
-O **Quadro** é onde pessoas e agentes acompanham o que está sendo feito. Cada cartão é um ticket com título, descrição, **Prioridade**, um **Proprietário** (um agente), uma coluna, comentários e campos nomeados. Use **Novo ticket** para adicionar um e **Adicionar campo** para dados extras, como um contato. Um ticket guarda até 20 campos.
+O **Quadro** é onde pessoas e agentes acompanham o que está sendo feito. Está disponível na web e no desktop, onde a implantação o ativa. Cada cartão é um ticket com título, descrição, **Prioridade**, um **Proprietário** (um agente), uma coluna, comentários e campos nomeados. Use **Novo ticket** para adicionar um e **Adicionar campo** para dados extras, como um contato. Um ticket guarda até 20 campos.
 
 ## Colunas
 

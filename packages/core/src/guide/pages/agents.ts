@@ -17,7 +17,7 @@ Open a bot's settings to change its name, its **Instructions**, its model and it
 
 - **Manage the bots it creates**: lets the bot create groups, rewrite the instructions of bots it created, pick their model and schedule them. On by default, and it only works in runs you started.
 - **Route work to squads**: lets the bot hand a request to one of your groups.
-- **Credentials**: saved logins and keys for that bot, listed without their values.
+- **Credentials**: saved logins and keys for that bot, listed without their values. Web and desktop only.
 
 ## Changing a bot's instructions
 
@@ -25,7 +25,7 @@ When a bot proposes new instructions, a card shows the whole text. Nothing chang
 
 ## When it goes wrong
 
-If a bot cannot use an app, check **Agents that can use it** in the app's settings under **Connections**. If a bot has no model of its own it uses the space default; see the models page.`,
+If a bot cannot use an app, open the app in the **Store** and check **Agents that can use it**. If a bot has no model of its own it uses the space default; see the models page.`,
     },
     "pt-BR": {
       title: "Agentes",
@@ -41,7 +41,7 @@ Abra as configurações de um bot para mudar o nome, as **Instruções**, o mode
 
 - **Gerenciar os bots que cria**: deixa o bot criar grupos, reescrever as instruções dos bots que ele criou, escolher o modelo deles e agendá-los. Vem ligado por padrão e só funciona em execuções que você iniciou.
 - **Encaminhar trabalho para squads**: deixa o bot passar um pedido para um dos seus grupos.
-- **Credenciais**: logins e chaves salvos daquele bot, listados sem os valores.
+- **Credenciais**: logins e chaves salvos daquele bot, listados sem os valores. Só na web e no desktop.
 
 ## Mudando as instruções de um bot
 
@@ -49,7 +49,7 @@ Quando um bot propõe novas instruções, um cartão mostra o texto inteiro. Nad
 
 ## Quando algo dá errado
 
-Se um bot não consegue usar um app, confira **Agentes que podem usar** nas configurações do app, em **Conexões**. Se um bot não tem modelo próprio, ele usa o padrão do espaço; veja a página de modelos.`,
+Se um bot não consegue usar um app, abra o app na **Loja** e confira **Agentes que podem usar**. Se um bot não tem modelo próprio, ele usa o padrão do espaço; veja a página de modelos.`,
     },
   },
 };

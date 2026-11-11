@@ -22,11 +22,11 @@ Ask the Chief for a team. It can create the group from agents you already have, 
 
 ## Squad view
 
-Open a group and use **Squad** in the header to see each agent's state, its last tools and the work handed to it. It is available on web and desktop; on mobile you can edit a purpose.
+Open a group and use **Squad** in the header to see each agent's state, its last tools and the work handed to it. It is available on web and desktop. Team and the squad view are not on mobile, where you can still edit a group's purpose.
 
 ## When it goes wrong
 
-If the Chief does not send work to a group, check that the group has a **Purpose** and that the Chief has **Route work to squads** on in its **Advanced** settings. Routing only works in runs you started.`,
+If the Chief does not send work to a group, check that the group has a **Purpose** and that the Chief has **Route work to squads** on in its **Advanced** settings. Routing works in runs you started and in your routines, not in runs from a webhook or a chat app.`,
     },
     "pt-BR": {
       title: "Equipe e grupos",
@@ -47,11 +47,11 @@ Peça uma equipe ao Chefe. Ele pode criar o grupo com agentes que você já tem,
 
 ## Visão de squad
 
-Abra um grupo e use **Squad** no cabeçalho para ver o estado de cada agente, as últimas ferramentas e o trabalho entregue a ele. Está disponível na web e no desktop; no celular você pode editar um propósito.
+Abra um grupo e use **Squad** no cabeçalho para ver o estado de cada agente, as últimas ferramentas e o trabalho entregue a ele. Está disponível na web e no desktop. Equipe e a visão de squad não existem no celular, onde você ainda pode editar o propósito de um grupo.
 
 ## Quando algo dá errado
 
-Se o Chefe não envia trabalho a um grupo, confira se o grupo tem um **Propósito** e se o Chefe tem **Encaminhar trabalho para squads** ligado em **Avançado**. O encaminhamento só funciona em execuções que você iniciou.`,
+Se o Chefe não envia trabalho a um grupo, confira se o grupo tem um **Propósito** e se o Chefe tem **Encaminhar trabalho para squads** ligado em **Avançado**. O encaminhamento funciona em execuções que você iniciou e em suas rotinas, não em execuções de webhook ou de app de chat.`,
     },
   },
 };

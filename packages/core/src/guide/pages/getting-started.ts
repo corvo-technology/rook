@@ -8,7 +8,7 @@ export const gettingStarted: GuidePage = {
       summary: "The first steps in the app, the Chief, and how the first agents get added.",
       body: `## Setup
 
-The first time, the app asks a few things once: how you will use it, a name for your **Workspace**, a model (**Connect a model**), where bots run (**Where should bots run?**) and what your bots should help with. The name can be changed later in **Settings** › **Space**.
+The first time, the app asks a few things once: how you will use it and what your bots should help with, a name for your **Workspace**, and a model (**Connect a model**) when none is connected. The desktop app also asks where bots run (**Where should bots run?**). The space name can be changed later in the space's settings.
 
 ## The Chief
 
@@ -16,15 +16,15 @@ You start with the Chief, the agent you talk to first. Tell it what you need. It
 
 ## Adding agents
 
-With no other agents yet, the Chief suggests one to three agents from the **Store** and adds the ones you accept. If an agent needs an app that is not connected, the Chief asks for approval in the chat; connecting is done in the **Store** under **Apps**. You can also browse the **Store** under **Agents** and use **Add** yourself.
+With no other agents yet, the Chief suggests one to three agents from the **Store** and adds the ones you accept. If an agent needs an app that is not connected, the Chief asks for access with a card in the chat; apps are connected in the **Store** under **Apps**. You can also open the **Store**, go to **Agents** and use **Add** yourself.
 
 ## Where things are
 
 - **Team**: your agents and groups.
 - **Routines**: work that runs on its own.
-- **Board**: tickets and who works on them.
+- **Board**: tickets and who works on them, where the deployment turns it on.
 - **Wiki**: what the team knows.
-- **Settings**: models, memory, connections, approvals and usage.
+- **Settings**: models, voice, approvals, memory and usage.
 
 ## When it goes wrong
 
@@ -35,7 +35,7 @@ If no model is connected, nothing can answer: open **Settings** › **Models** a
       summary: "Os primeiros passos no app, o Chefe e como os primeiros agentes são adicionados.",
       body: `## Configuração
 
-Na primeira vez, o app pergunta algumas coisas uma só vez: como você vai usá-lo, um nome para o seu **Espaço**, um modelo (**Conectar um modelo**), onde os bots devem ser executados (**Onde os bots devem ser executados?**) e com o que seus bots devem ajudar. O nome pode ser mudado depois em **Configurações** › **Espaço**.
+Na primeira vez, o app pergunta algumas coisas uma só vez: como você vai usá-lo e com o que seus bots devem ajudar, um nome para o seu **Espaço** e um modelo (**Conectar um modelo**) quando nenhum está conectado. O app desktop também pergunta onde os bots são executados (**Onde os bots devem ser executados?**). O nome do espaço pode ser mudado depois nas configurações do espaço.
 
 ## O Chefe
 
@@ -43,15 +43,15 @@ Você começa com o Chefe, o agente com quem fala primeiro. Diga o que precisa. 
 
 ## Adicionando agentes
 
-Sem outros agentes ainda, o Chefe sugere de um a três agentes da **Loja** e adiciona os que você aceitar. Se um agente precisa de um app que não está conectado, o Chefe pede aprovação no chat; a conexão é feita na **Loja**, em **Apps**. Você também pode ver a **Loja** em **Agentes** e usar **Adicionar** por conta própria.
+Sem outros agentes ainda, o Chefe sugere de um a três agentes da **Loja** e adiciona os que você aceitar. Se um agente precisa de um app que não está conectado, o Chefe pede acesso com um cartão no chat; os apps são conectados na **Loja**, em **Apps**. Você também pode abrir a **Loja**, ir em **Agentes** e usar **Adicionar** por conta própria.
 
 ## Onde ficam as coisas
 
 - **Equipe**: seus agentes e grupos.
 - **Rotinas**: trabalho que roda sozinho.
-- **Quadro**: tickets e quem trabalha neles.
+- **Quadro**: tickets e quem trabalha neles, onde a implantação ativa.
 - **Wiki**: o que a equipe sabe.
-- **Configurações**: modelos, memória, conexões, aprovações e uso.
+- **Configurações**: modelos, voz, aprovações, memória e uso.
 
 ## Quando algo dá errado
 

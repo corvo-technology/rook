@@ -119,3 +119,39 @@ in the last two minutes (use the deployment's configured dataset):
 
 The application emits the signal; notification routing belongs in the deployment's
 monitor configuration. No hosted monitoring service is required for dispatch.
+
+## Turn guards
+
+A run that is going nowhere is stopped and ends `failed` with one sentence. The
+guards read only what the run did (tool names, arguments, result hashes, failure
+flags, shell command syntax and timestamps), never what the model wrote. Their
+thresholds are the constants in `TURN_GUARD_LIMITS`; `ExecutorDeps.turnGuardLimits`
+overrides them for the composition root and tests only.
+
+| Guard | Stops the run when |
+| --- | --- |
+| Loop | The same tool with the same canonicalized arguments returns the same result 5 times in a row for that call (a note on the 3rd tells the agent to change approach). Another result for that call restarts the count; other calls in between do not reset it. |
+| Errors | 8 tool calls fail in a row, whatever they are. A failure is a thrown error, an `error` field or `isError: true`; a shell command that exits non-zero is a result. One success resets the count. |
+| Stall | 20 minutes pass with no sign of life while no tool is in flight. |
+| Waiting | A `shell` command that only sleeps 20 seconds or more (followed at most by `echo`, `printf`, `true`, `:` or `date`) was already run once; each later one is refused, and the 4th refusal stops the run. A sleep followed by a real check, or inside a loop, always runs. |
+| Per-tool counter | A read-only connector tool is called past 60 times in a run: further calls are refused (a note on the 15th asks for narrower requests) and the 4th refusal stops the run as a loop. Built-in tools and tools not declared read-only are never counted. |
+
+Signs of life are any runtime event (text, progress, tool start, sub-agent
+progress, usage) and any tool call starting or finishing. A tool in flight, a
+shell command still running in the background and an approval being reviewed all
+count as in flight. A gap between two watch ticks longer than four ticks plus 30
+seconds means the machine was suspended: the silence clock restarts and the gap
+never counts. The stall guard measures silence, not duration, so the sentence
+"Active model streams have no new duration limit" still holds.
+
+Guard state lives in memory for one attempt and is shared with sub-agents, whose
+tool calls go through the same boundary. A run that paused for a person or that
+another worker recovers starts its counters at zero. A stop ends the run through
+the normal failure path with one of four fixed sentences, matched by exact
+equality, that map to the run error kinds `loop`, `tool_errors`, `stall` and
+`waiting`, and are also saved in the nullable `runs.stopReason` column. Text the
+person already saw stream stays above the sentence. A stopped routine run is not
+retried automatically (only transient model errors are), its failure
+notification carries the sentence and its schedule keeps its next tick. The stop
+is logged as `run.guard_stopped` with a `guard.kind` field and no tool arguments
+or results.

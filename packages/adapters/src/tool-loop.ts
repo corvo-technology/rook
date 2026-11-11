@@ -2,6 +2,7 @@ import type { ToolCallStreak } from "@corvo/core";
 import { trackToolCallStreak } from "@corvo/core";
 
 const LOOP_GUARD_STOP_PREFIX = "I got stuck calling ";
+// "the same input" is the wording of rows saved before identical calls stopped being a reason.
 const LOOP_GUARD_STOP_COUNT_PATTERN = " with (?:(?:nearly )?the same input|too many actions) ";
 const LOOP_GUARD_STOP_SUFFIX =
   " times in a row without making progress, so I stopped early. Try rephrasing this, or ask me to try a different approach.";
@@ -10,9 +11,7 @@ const LOOP_GUARD_STOP_PATTERN = new RegExp(
 );
 
 export function loopGuardStopText(toolName: string, streak: ToolCallStreak): string {
-  const identical = streak.count >= MAX_CONSECUTIVE_IDENTICAL_TOOL_CALLS;
-  const count = identical ? streak.count : toolCallStreakLength(streak);
-  return `${LOOP_GUARD_STOP_PREFIX}${toolName} with ${identical ? "" : "nearly "}the same input ${count}${LOOP_GUARD_STOP_SUFFIX}`;
+  return `${LOOP_GUARD_STOP_PREFIX}${toolName} with nearly the same input ${toolCallStreakLength(streak)}${LOOP_GUARD_STOP_SUFFIX}`;
 }
 
 export function overLimitStopText(toolName: string, count: number): string {
@@ -23,10 +22,10 @@ export function isLoopGuardStopText(text: string): boolean {
   return LOOP_GUARD_STOP_PATTERN.test(text);
 }
 
-// Same tool, same arguments, this many times in a row means the agent is stuck, not paginating.
-const MAX_CONSECUTIVE_IDENTICAL_TOOL_CALLS = 6;
-// Arguments that differ only by digits in their text (`echo noop-1`, `echo noop-2`) can be a real
-// sequence such as reading a file in chunks or paging through a site, so they get more room.
+// Identical calls that return the same result are stopped by the result-aware run guards. This
+// streak only looks at call inputs: arguments that differ at most by digits in their text
+// (`echo noop-1`, `echo noop-2`) can be a real sequence such as reading a file in chunks or
+// paging through a site, so they get a lot of room.
 const MAX_CONSECUTIVE_SIMILAR_TOOL_CALLS = 25;
 
 // A batch over the action limit is refused unrun. Sending another one is a loop the model rarely
@@ -67,8 +66,6 @@ export function advanceToolCallLoopGuard(
   const next = trackToolCallStreak(streak, name, args);
   return {
     streak: next,
-    stuck:
-      next.count >= MAX_CONSECUTIVE_IDENTICAL_TOOL_CALLS ||
-      (next.shapeCount ?? 0) >= MAX_CONSECUTIVE_SIMILAR_TOOL_CALLS,
+    stuck: (next.shapeCount ?? 0) >= MAX_CONSECUTIVE_SIMILAR_TOOL_CALLS,
   };
 }

@@ -1,4 +1,4 @@
-import type { AgentSkillCatalogEntry, ThreadMessage } from "@corvo/contracts";
+import type { AgentSkillCatalogEntry, GroupMember, ThreadMessage } from "@corvo/contracts";
 import type {
   AgentImportReader,
   ComposerMention,
@@ -16,7 +16,7 @@ import {
   serializeComposerPrompt,
   truncateSlashDescription,
 } from "@corvo/core";
-import { Button } from "@corvo/ui-web";
+import { BotAvatar, Button } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { ArrowUp, Box, Paperclip, Plus, Settings, Square, X } from "lucide-react";
 import type { ClipboardEvent, DragEvent, RefObject } from "react";
@@ -133,7 +133,7 @@ export const Composer = memo(function Composer({
   onClearReply?: () => void;
   mentionTargets?: ComposerMention[];
   /** In a group: who a message with this text and these @mentioned bots would go to. */
-  groupRecipient?: (text: string, mentionBotIds: string[]) => string | undefined;
+  groupRecipient?: (text: string, mentionBotIds: string[]) => GroupMember | undefined;
   agentSkills?: AgentSkillCatalogEntry[];
   onSlashOpen?: () => void;
   onSlashAction?: (action: SlashActionId) => void;
@@ -211,10 +211,11 @@ export const Composer = memo(function Composer({
   const replyAnnouncementKind = useRef<"reply" | "cancelled" | null>(null);
   const prevReplyTarget = useRef<ThreadMessage | null>(null);
   const mentionListboxId = useId();
-  const recipient = groupRecipient?.(
+  const recipientMember = groupRecipient?.(
     draft,
     selectedMentions.filter((mention) => mention.kind === "bot").map((mention) => mention.id),
   );
+  const recipient = recipientMember?.name;
   const dragDepth = useRef(0);
   const [draggingFiles, setDraggingFiles] = useState(false);
   const [fileDragActive, setFileDragActive] = useState(false);
@@ -589,12 +590,13 @@ export const Composer = memo(function Composer({
           }}
         />
       ) : null}
-      {recipient ? (
+      {recipientMember ? (
         <div
           data-testid="group-recipient"
-          className="mb-1 px-1 text-[12.5px] text-muted-foreground"
+          className="mb-1 flex items-center gap-1.5 px-1 text-[12.5px] text-muted-foreground"
         >
-          {t`Goes to ${recipient}`}
+          <BotAvatar color={recipientMember.color} identity={recipientMember.botId} size={16} />
+          <span dir="auto">{t`Goes to ${recipient}`}</span>
         </div>
       ) : null}
       {agentDrop ? (

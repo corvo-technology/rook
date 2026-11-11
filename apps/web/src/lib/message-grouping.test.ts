@@ -54,3 +54,18 @@ it("starts over after a hand-off receipt", () => {
   const continued = continuedMessageIds([say("a", "leo", 0), receipt, say("b", "leo", 2)], none);
   expect(continued.has("b")).toBe(false);
 });
+
+it("groups the person's own messages when asked, as a channel does", () => {
+  const continued = continuedMessageIds(
+    [
+      say("me1", undefined, 0, "user"),
+      say("me2", undefined, 1, "user"),
+      say("a", "leo", 2),
+      say("me3", undefined, 3, "user"),
+      say("me4", undefined, 9, "user"),
+    ],
+    none,
+    { people: true },
+  );
+  expect([...continued]).toEqual(["me2"]);
+});

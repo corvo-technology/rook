@@ -1,4 +1,4 @@
-import type { MessageReaction, ThreadMessage } from "@corvo/contracts";
+import type { GroupMember, MessageReaction, ThreadMessage } from "@corvo/contracts";
 import type { FoldedTranscript } from "@corvo/core";
 import {
   expandPeerReplies,
@@ -34,6 +34,7 @@ import type { ArtifactTarget } from "../../lib/artifact-open";
 import { delegationStates } from "../../lib/delegation-states";
 import { isFreshMessage, newestCreatedAt } from "../../lib/fresh-messages";
 import { continuedMessageIds } from "../../lib/message-grouping";
+import { peerThreadSummary } from "../../lib/peer-thread";
 import { quoteDraftForSelection } from "../../lib/quote-selection";
 import { messageHasVisibleBlocks } from "../../lib/tool-activity-view";
 import {
@@ -83,6 +84,7 @@ export const Transcript = memo(function Transcript({
   onJumpToMessage,
   onOpenPeerMessages,
   memberName,
+  members,
   peerBot,
   onRefresh,
   onBotChanged,
@@ -141,7 +143,11 @@ export const Transcript = memo(function Transcript({
   onJumpToMessage: (messageId: string) => void;
   onOpenPeerMessages: (peer: { peerBotId: string; peerBotName: string }) => void;
   memberName?: (botId: string | undefined) => string | undefined;
-  peerBot: (botId: string) => { name?: string; color: string; status?: string } | undefined;
+  /** The agents of a channel; set only in one, where everyone speaks from a single column. */
+  members?: readonly GroupMember[];
+  peerBot: (
+    botId: string,
+  ) => { name?: string; title?: string; color: string; status?: string } | undefined;
   onRefresh: () => Promise<void>;
   onBotChanged: () => Promise<void>;
   onAddRoutine: (name: string, prompt: string) => void;
@@ -153,6 +159,7 @@ export const Transcript = memo(function Transcript({
   onOpenImport?: () => void;
 }) {
   const { t } = useLingui();
+  const channel = Boolean(members);
   const [atEnd, setAtEnd] = useState(true);
   const following = useRef(true);
   const autoScrolling = useRef(false);
@@ -180,6 +187,10 @@ export const Transcript = memo(function Transcript({
       expanded.has(markerId) ? expanded : new Set(expanded).add(markerId),
     );
   }, [scrollRequest, transcript]);
+  const channelMembers = useMemo(
+    () => members?.map((member) => ({ id: member.botId, name: member.name })),
+    [members],
+  );
   const messages = useMemo(
     () => expandPeerReplies(transcript, expandedPeerMarkers),
     [transcript, expandedPeerMarkers],
@@ -211,6 +222,7 @@ export const Transcript = memo(function Transcript({
   const continued = continuedMessageIds(
     shownMessages,
     (id) => separatorIds.has(id) || id === unreadDividerId,
+    { people: channel },
   );
   const workingLabel = liveActivityLine(messages) ?? t`Working…`;
   const [quoteDraft, setQuoteDraft] = useState<{
@@ -540,7 +552,7 @@ export const Transcript = memo(function Transcript({
                   className={
                     peerReceipt
                       ? undefined
-                      : `relative flex ${message.role === "user" ? "justify-end" : "justify-start"}`
+                      : `relative flex ${message.role === "user" && !channel ? "justify-end" : "justify-start"}`
                   }
                 >
                   <div
@@ -548,7 +560,8 @@ export const Transcript = memo(function Transcript({
                     className={
                       peerReceipt
                         ? undefined
-                        : message.blocks.some(
+                        : channel ||
+                            message.blocks.some(
                               (block) => block.kind === "ask" || block.kind === "mcp_approval",
                             )
                           ? "relative w-full min-w-0 max-w-full"
@@ -571,6 +584,10 @@ export const Transcript = memo(function Transcript({
                             : "collapsed"
                           : undefined
                       }
+                      threadSummary={
+                        channel ? peerThreadSummary(transcript.folded.get(message.id)) : undefined
+                      }
+                      channelMembers={channelMembers}
                       onTogglePeerReplies={togglePeerReplies}
                       onAnswer={onAnswer}
                       continued={continued.has(message.id)}
@@ -579,7 +596,14 @@ export const Transcript = memo(function Transcript({
                           ? undefined
                           : message.role === "bot"
                             ? memberName?.(message.botId)
-                            : undefined
+                            : channel && message.role === "user"
+                              ? t`You`
+                              : undefined
+                      }
+                      speakerRole={
+                        channel && message.role === "bot" && message.botId
+                          ? peerBot(message.botId)?.title
+                          : undefined
                       }
                       memberName={memberName}
                       peerBot={peerBot}
@@ -612,7 +636,7 @@ export const Transcript = memo(function Transcript({
                     data-testid="message-reactions"
                     className={cn(
                       "mt-1 flex flex-wrap gap-1",
-                      message.role === "user" && "justify-end",
+                      message.role === "user" && !channel && "justify-end",
                     )}
                   >
                     {[...messageReactions].map(([emoji, count]) => (

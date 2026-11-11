@@ -1,4 +1,4 @@
-import type { ThreadSnapshot } from "@corvo/contracts";
+import type { GroupMember, ThreadSnapshot } from "@corvo/contracts";
 import { resolveGroupTargetBotIds, WAITING_ON_USER_RUN_STATUSES } from "@corvo/core";
 
 /** The member whose work waits on the person; otherwise the one who spoke last. */
@@ -20,11 +20,11 @@ function conversationOwner(snapshot: ThreadSnapshot): string | undefined {
  * Who a message typed now would go to, by the same rule the server uses, when it is exactly one
  * member of a group. Undefined outside a group and when several members would get it.
  */
-export function groupRecipientName(
+export function groupRecipient(
   snapshot: ThreadSnapshot | null | undefined,
   text: string,
   mentionBotIds: readonly string[],
-): string | undefined {
+): GroupMember | undefined {
   const members = snapshot?.members;
   if (!snapshot || !members || members.length < 2) return undefined;
   const targets = resolveGroupTargetBotIds({
@@ -34,5 +34,5 @@ export function groupRecipientName(
     fallbackBotId: conversationOwner(snapshot),
   });
   if (targets.length !== 1) return undefined;
-  return members.find((member) => member.botId === targets[0])?.name;
+  return members.find((member) => member.botId === targets[0]);
 }

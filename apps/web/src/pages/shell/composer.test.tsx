@@ -989,7 +989,11 @@ it("accepts file drops in transparent padding only during file drags", () => {
 });
 
 it("tells a group who a message would go to, and follows what is typed", () => {
-  const groupRecipient = vi.fn((text: string) => (text.startsWith("@Bob") ? "Bob" : "Ada"));
+  const groupRecipient = vi.fn((text: string) =>
+    text.startsWith("@Bob")
+      ? { botId: "bob", name: "Bob", color: "sky" }
+      : { botId: "ada", name: "Ada", color: "mint" },
+  );
   const textarea = renderComposer(vi.fn(), { groupRecipient });
   expect(container!.querySelector('[data-testid="group-recipient"]')?.textContent).toBe(
     "Goes to Ada",

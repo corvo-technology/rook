@@ -285,6 +285,10 @@ msgstr "{percent}% utilisé"
 msgid "{percent}% used · {used} of {windowLabel} tokens"
 msgstr "{percent} % utilisé · {used} sur {windowLabel} jetons"
 
+#: src/pages/shell/message-view.tsx
+msgid "{position} of {total}"
+msgstr "{position} sur {total}"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} can't run this model."
@@ -965,6 +969,10 @@ msgstr "Les clés API restent connectées."
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Appearance"
 msgstr "Apparence"
+
+#: src/components/AskCard.tsx
+msgid "Applied"
+msgstr "Appliqué"
 
 #: src/components/AskCard.tsx
 msgid "Apply"

@@ -285,6 +285,10 @@ msgstr ""
 msgid "{percent}% used · {used} of {windowLabel} tokens"
 msgstr "{percent}% used · {used} of {windowLabel} tokens"
 
+#: src/pages/shell/message-view.tsx
+msgid "{position} of {total}"
+msgstr "{position} of {total}"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} can't run this model."
@@ -965,6 +969,10 @@ msgstr "API keys stay connected."
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Appearance"
 msgstr "Appearance"
+
+#: src/components/AskCard.tsx
+msgid "Applied"
+msgstr "Applied"
 
 #: src/components/AskCard.tsx
 msgid "Apply"

@@ -420,3 +420,69 @@ it("marks an answerable unanswered ask as the coach anchor, and no other", () =>
   renderAsk(false, "pending");
   expect(container.querySelector("[data-coach]")).toBeNull();
 });
+
+it("steps through several proposal cards one at a time with a counter", () => {
+  const card = (id: string, status: "pending" | "answered" = "pending") => ({
+    kind: "ask" as const,
+    text: `Change ${id}?`,
+    status,
+    approvalEffectId: id,
+    proposal: true as const,
+    actions: [
+      { id: "allow", label: "Apply" },
+      { id: "deny", label: "Dismiss" },
+    ],
+  });
+  const message: ThreadMessage = {
+    id: "message",
+    threadId: "thread",
+    seq: 1,
+    role: "bot",
+    createdAt: new Date().toISOString(),
+    blocks: [card("a"), card("b"), card("c")],
+  };
+  const onAnswer = vi.fn();
+  const view = (current: ThreadMessage) =>
+    act(() =>
+      root.render(
+        <MessageView
+          artifactTarget={{ botId: "parent" }}
+          canAnswer
+          canDismiss={false}
+          message={current}
+          onAnswer={onAnswer}
+          onOpenBot={vi.fn()}
+          onOpenPeerMessages={vi.fn()}
+          onTogglePeerReplies={vi.fn()}
+          peerBot={existingBot}
+          onRefresh={vi.fn()}
+          onBotChanged={vi.fn()}
+          onAddRoutine={vi.fn()}
+          voiceReady={false}
+          speaking={false}
+          onSpeak={vi.fn()}
+          onOpenComputer={vi.fn()}
+          showToolActivity={false}
+          onReply={vi.fn()}
+          onMarkUnread={vi.fn()}
+          onReact={vi.fn()}
+        />,
+      ),
+    );
+  view(message);
+  expect(container.textContent).toContain("1 of 3");
+  expect(container.textContent).toContain("Change a?");
+  expect(container.textContent).not.toContain("Change b?");
+  const labelled = () =>
+    [...container.querySelectorAll("button")].filter((node) => node.textContent);
+  expect(labelled().map((node) => node.textContent)).toEqual(["Apply", "Dismiss"]);
+
+  act(() => labelled()[0]!.click());
+  expect(onAnswer).toHaveBeenCalledWith(message, "allow", undefined, undefined, "a");
+
+  view({ ...message, blocks: [card("a", "answered"), card("b"), card("c")] });
+  expect(container.textContent).toContain("2 of 3");
+  expect(container.textContent).toContain("Change a?");
+  expect(container.textContent).toContain("Change b?");
+  expect(container.textContent).not.toContain("Change c?");
+});

@@ -130,6 +130,7 @@ export const Transcript = memo(function Transcript({
     text: string,
     username?: string,
     dismiss?: boolean,
+    approvalEffectId?: string,
   ) => Promise<void>;
   onReply: (message: ThreadMessage) => void;
   onMarkUnread: (message: ThreadMessage) => void;

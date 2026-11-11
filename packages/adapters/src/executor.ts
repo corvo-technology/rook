@@ -29,6 +29,7 @@ import {
   redactSecrets,
   renderBotDirectory,
   renderBotGroupDirectory,
+  usageTokens,
   userRunError,
   userTurnMessageForRun,
   visitorInstallationId,
@@ -42,6 +43,7 @@ import {
   parseComputerMode,
   readRunTimingFields,
   recordUsage,
+  runTokens,
   settleReleasedTakeoverCards,
   spaceHasModelAccess,
 } from "@corvo/db";
@@ -112,6 +114,7 @@ import {
 import { modelAcceptsImageInput } from "./model-vision.js";
 import { isRetiredModelCredentialError } from "./pi-oauth.js";
 import { parseQuotaHeaders, recordProviderQuota } from "./provider-quota.js";
+import { addReplyUsage, createReplyBudget } from "./reply-budget.js";
 import { loadReplyContext, messageToAgentHistoryText } from "./reply-context.js";
 import { backOffRoutineAfterAccountError } from "./routine-backoff.js";
 import { lateRoutineRunInstruction } from "./routine-lateness.js";
@@ -1151,6 +1154,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const reply = await createReplyState(deps, run, runSecrets);
         const scripted = deps.runtime.describe().capabilities.scripted;
         const script = scripted ? inferScript(task.prompt, takeoverResume?.checkpoint) : undefined;
+        const spentBeforeAttempt = await runTokens(deps.prisma, runId);
         const state: RunState = {
           lease,
           computerUse,
@@ -1171,6 +1175,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
           tainted: initiallyTainted,
           earlierAttempt: undefined,
           handedOff: false,
+          replyBudget: createReplyBudget(monthUsage.limit, spentBeforeAttempt),
           terminalCheckpointComplete: false,
         };
         const { effects } = state;
@@ -1521,6 +1526,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
                   parentRunId: runId,
                   operationId: runId,
                 });
+                addReplyUsage(state.replyBudget, usageTokens(event));
               },
               onProviderResponse: ({ provider, headers }) => {
                 const windows = parseQuotaHeaders(provider, headers);

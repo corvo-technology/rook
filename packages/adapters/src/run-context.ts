@@ -25,6 +25,7 @@ import type { selectRunConnections } from "./connection-context.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import type { FleetRun } from "./fleet-tools.js";
 import { namedAgentTools } from "./pi-runtime-tools.js";
+import type { ReplyBudget } from "./reply-budget.js";
 import type { lazyRunComputer } from "./run-computer.js";
 import type { createRunWorkspaceCheckpoint } from "./run-lifecycle.js";
 import { publishMessage } from "./run-messages.js";
@@ -152,6 +153,8 @@ export interface RunState {
   tainted: boolean;
   earlierAttempt: Promise<boolean> | undefined;
   handedOff: boolean;
+  /** Tokens this run has spent against its reply cap, earlier attempts included. */
+  replyBudget: ReplyBudget;
   terminalCheckpointComplete: boolean;
 }
 

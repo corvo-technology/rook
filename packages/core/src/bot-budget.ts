@@ -37,9 +37,9 @@ export function crossedMonthAlert(before: number, after: number, limit: Limit): 
 
 /** Tokens of one call: what the provider totalled, else what went in and out, else 0. */
 export function usageTokens(row: {
-  totalTokens: number | null;
-  inputTokens: number | null;
-  outputTokens: number | null;
+  totalTokens?: number | null;
+  inputTokens?: number | null;
+  outputTokens?: number | null;
 }): number {
   return row.totalTokens ?? (row.inputTokens ?? 0) + (row.outputTokens ?? 0);
 }

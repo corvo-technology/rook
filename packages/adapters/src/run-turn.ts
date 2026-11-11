@@ -14,6 +14,7 @@ import {
   isBackgroundRunTrigger,
   redactSecrets,
   TAKEOVER_COMPUTER_PENDING_STATE,
+  usageTokens,
   userRunError,
 } from "@corvo/core";
 import { recordUsage } from "@corvo/db";
@@ -25,6 +26,7 @@ import { scheduleComputerSleep } from "./computer-idle.js";
 import { holdComputerExecutionLeaseForTakeover } from "./computer-lifecycle.js";
 import { resolveBotWorkspacePath } from "./computer-support.js";
 import { compactionJobAfterTurn } from "./history-compaction.js";
+import { addReplyUsage, ReplyCapExceededError } from "./reply-budget.js";
 import {
   backOffRoutineAfterAccountError,
   clearRoutineBackoff,
@@ -98,6 +100,10 @@ export async function consumeRunEvents(
     if (ctx.state.approval.pausePending) return true;
     if (!ctx.state.lease.valid) return true;
     if (await runLeaseLost(ctx)) return true;
+    if (ctx.state.replyBudget.cut) {
+      ctx.abortController.abort();
+      throw new ReplyCapExceededError();
+    }
 
     // Check complete assistant turns so split sentinel chunks are recognized
     // without treating a partial identifier (NO_RESPONSE_POLICY) as silence.
@@ -130,6 +136,7 @@ export async function consumeRunEvents(
         parentRunId: runId,
         operationId: runId,
       });
+      addReplyUsage(ctx.state.replyBudget, usageTokens(event));
     } else if (event.type === "done") {
       recordExplicitNoResponse(reply, event.text ?? "");
       if (!reply.assembled && event.text) {
@@ -788,6 +795,7 @@ export async function failRun(
     leaseFence: ctx.fence,
     outcome: "failed",
     error: message,
+    ...(error instanceof ReplyCapExceededError ? { stopReason: "reply_cap" as const } : {}),
     ...(partialReply.length > 0 ? { partialReply } : {}),
   });
   if (!failed) return;
@@ -795,7 +803,8 @@ export async function failRun(
     error instanceof TransientModelError ||
     error instanceof ModelAccountError ||
     error instanceof ModelOutputError ||
-    error instanceof SandboxRateLimitError
+    error instanceof SandboxRateLimitError ||
+    error instanceof ReplyCapExceededError
   ) {
     // Provider outages that outlasted retries, provider accounts, plans and model
     // choices the user fixes, unusable model output and the computer provider's own

@@ -9,11 +9,10 @@ import { downloadVerified } from "../verified-download.js";
  * download may use, including after redirects.
  */
 export const ENGINE_RELEASE_HOSTS: Record<CliEngineId, readonly string[]> = {
-  claude: ["storage.googleapis.com"],
+  claude: ["downloads.claude.ai"],
 };
 
-const CLAUDE_RELEASES_BASE =
-  "https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases";
+const CLAUDE_RELEASES_BASE = "https://downloads.claude.ai/claude-code-releases";
 
 const SEMVER = /^\d+\.\d+\.\d+$/;
 const SHA256 = /^[0-9a-f]{64}$/;

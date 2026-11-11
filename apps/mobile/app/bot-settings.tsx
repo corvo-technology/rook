@@ -38,10 +38,10 @@ import type { MenuPickerChoice } from "../components/menu-picker";
 import { MenuPicker, MenuPickerMenu } from "../components/menu-picker";
 import { NativeActionButton } from "../components/native-action-button";
 import { NativeSwitch } from "../components/native-switch";
-import { WikiCaptureRow } from "../components/wiki-capture-row";
 import { NativeSymbol } from "../components/native-symbol";
 import { ProfileEditDialog } from "../components/profile-edit-dialog";
 import { Chevron } from "../components/row-accessories";
+import { WikiCaptureRow } from "../components/wiki-capture-row";
 import type { MobileMe, MobileModel, MobileModelCredential } from "../lib/api";
 import { rpc } from "../lib/api";
 import {

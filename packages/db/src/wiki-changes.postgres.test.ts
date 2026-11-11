@@ -6,8 +6,8 @@ import {
   removeWikiPage,
   restoreWikiRevision,
   WikiConflictError,
-  wikiHistory,
   WikiNotFoundError,
+  wikiHistory,
   writeWikiPage,
 } from "./wiki.js";
 import {

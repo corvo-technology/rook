@@ -26,6 +26,7 @@ function makePrisma(settings: { id: string; ownerUserId: string | null } | null)
       updateMany: vi.fn(async () => ({ count: settings && !settings.ownerUserId ? 1 : 0 })),
     },
     memoryDocument: { findFirst: vi.fn(async () => null), create: create() },
+    missionState: { create: create() },
     notificationPreference: { create: create() },
   };
   return prisma;

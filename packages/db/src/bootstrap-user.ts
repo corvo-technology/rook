@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { signupPolicyFromEnv } from "@corvo/core";
 import type { PrismaClient } from "./client.js";
+import { startShortNavigation } from "./missions.js";
 import { runAsSystem } from "./row-security.js";
 
 export interface SignupPolicyEnv {
@@ -60,6 +61,7 @@ async function createUserSpace(
     .catch((error: unknown) => {
       if (!isUniqueViolation(error)) throw error;
     });
+  let spaceCreated = true;
   await prisma.space
     .create({
       data: {
@@ -73,6 +75,7 @@ async function createUserSpace(
     })
     .catch((error: unknown) => {
       if (!isUniqueViolation(error)) throw error;
+      spaceCreated = false;
     });
   await prisma.spaceMember
     .create({
@@ -88,6 +91,8 @@ async function createUserSpace(
     .catch((error: unknown) => {
       if (!isUniqueViolation(error)) throw error;
     });
+  // Only an account's first space starts short; a space that was already there keeps what it had.
+  if (spaceCreated) await startShortNavigation(prisma, { spaceId: orgId, userId: user.id });
   const policy = signupPolicyFromEnv(env);
   await prisma.deploymentSettings.upsert({
     where: { id: "default" },

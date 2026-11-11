@@ -1510,6 +1510,21 @@ msgstr "ボットの実行場所を選ぶ"
 msgid "Cited by"
 msgstr "引用元"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "Claude Code isn't installed where this bot runs."
+msgstr "このボットが動作する場所に Claude Code がインストールされていません。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "Claude Code isn't signed in to a Claude plan where this bot runs."
+msgstr "このボットが動作する場所で、Claude Code が Claude プランにサインインしていません。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "Claude Code started with tools it wasn't given, so the reply was stopped."
+msgstr "Claude Code が与えられていないツールを使って起動したため、返信を停止しました。"
+
 #: src/lib/localized-provider-hint.ts
 msgid "Claude subscription"
 msgstr "Claudeサブスクリプション"

@@ -286,6 +286,14 @@ describe("EmbeddedEngineController", () => {
     expect(await without.hostConfigMatches()).toBe(false);
   });
 
+  it("lets the engine offer a coding-agent CLI on this computer", async () => {
+    const engine = new EmbeddedEngineController(deps());
+    await engine.start();
+    for (const file of ["api.mjs", "worker.mjs"]) {
+      expect(children.find((child) => base(child) === file)?.env.CLI_ENGINES_ENABLED).toBe("true");
+    }
+  });
+
   it("keeps stdio MCP servers off when there is no launcher", async () => {
     const engine = new EmbeddedEngineController(deps());
     await engine.start();

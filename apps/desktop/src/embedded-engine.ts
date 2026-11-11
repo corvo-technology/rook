@@ -589,6 +589,8 @@ export class EmbeddedEngineController {
       // Docker is not part of the app; computers come from "this Mac" through the host credentials.
       // The board is part of the app: agents and people share it from the first run.
       TICKET_BOARD_ENABLED: "true",
+      // The person's own machine can lend a coding-agent CLI they signed in to; nothing is offered until it is ready.
+      CLI_ENGINES_ENABLED: "true",
       SANDBOX_PROVIDER: supervisorEnv ? "docker" : "none",
       ...(supervisorEnv
         ? {

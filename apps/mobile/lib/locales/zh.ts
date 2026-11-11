@@ -113,6 +113,11 @@ export const ZH_MESSAGES: Record<string, string> = {
   "The model returned an unusable response. Try again.": "模型返回了无法使用的回复。请重试。",
   "This model's context window is too small. Choose another model.":
     "此模型的上下文窗口太小。请选择其他模型。",
+  "Claude Code isn't installed where this bot runs.": "运行此机器人的位置未安装 Claude Code。",
+  "Claude Code isn't signed in to a Claude plan where this bot runs.":
+    "运行此机器人的位置上，Claude Code 未登录 Claude 套餐。",
+  "Claude Code started with tools it wasn't given, so the reply was stopped.":
+    "Claude Code 启动时带有未授予它的工具，因此已停止回复。",
   "{provider} couldn't be reached securely. A security program or network filter may be intercepting the connection.":
     "无法安全连接到{provider}。可能是安全软件或网络过滤器拦截了连接。",
   "{provider} took too long to respond. Try again.": "{provider}响应超时。请重试。",

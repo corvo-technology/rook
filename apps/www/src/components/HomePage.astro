@@ -1,11 +1,9 @@
 ---
 import Footer from "./Footer.astro";
-import DownloadActions from "./DownloadActions.astro";
-import GithubMark from "./GithubMark.astro";
 import Header from "./Header.astro";
-import Mascot from "./Mascot.astro";
+import { Rook } from "./Rook";
 import { ProductPreview } from "./ProductPreview";
-import { AGENT_CATALOG, APP_CATALOG } from "@corvo/core";
+import { AGENT_CATALOG } from "@corvo/core";
 import type { StoreCategory } from "../i18n/launch";
 import type { Locale } from "../i18n/locales";
 import { getLaunchCopy } from "../i18n/launch";
@@ -43,31 +41,19 @@ const ogImage = OG_LOCALES.includes(locale) ? `/og-image-${locale}.png` : "/og-i
 
 const { works } = copy;
 
-// The Store's agents and the apps come from the product's own catalogs, so the page says what is there.
+// The Store's agents come from the product's own catalog, so the page says what is there.
 const catalogLocale = locale === "pt" ? "pt-BR" : "en";
-const CATEGORY_ORDER: StoreCategory[] = [
-  "finance",
-  "operations",
-  "marketing",
-  "development",
-  "support",
-  "sales",
-  "design",
-  "knowledge",
-  "people",
-];
+const CATEGORY_ORDER: StoreCategory[] = ["finance", "operations", "marketing", "support"];
 const storeGroups = CATEGORY_ORDER.map((category) => ({
   category,
-  names: AGENT_CATALOG.filter((entry) => entry.category === category).map(
-    (entry) => entry.name[catalogLocale] ?? entry.name.en,
-  ),
-})).filter((group) => group.names.length > 0);
-const appNames = APP_CATALOG.filter((app) => app.featured).map((app) => app.name).slice(0, 8);
-// The rings show a Claude subscription at 34% of its 5 hour window and 58% of its week.
-const RINGS = [
-  { radius: 27, percent: 58 },
-  { radius: 19, percent: 34 },
-].map(({ radius, percent }) => ({ radius, length: 2 * Math.PI * radius, percent }));
+  names: AGENT_CATALOG.filter((entry) => entry.category === category)
+    .slice(0, 3)
+    .map((entry) => entry.name[catalogLocale] ?? entry.name.en),
+}));
+const CATALOG_URL = `${GITHUB_URL}/blob/HEAD/packages/core/src/agent-catalog-data.ts`;
+// Brand names, the same in every language.
+const MODEL_CHIPS = ["Claude", "ChatGPT", "OpenRouter"];
+const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3)];
 ---
 
 <BaseLayout
@@ -85,18 +71,16 @@ const RINGS = [
 
     <main id="main">
       <section class="lp-hero">
-        <div class="lp-hero__copy">
-          <h1>
-            {copy.hero.line1}
-            <span class="lp-underline">{copy.hero.line2}</span>
-          </h1>
-          <p class="lead">{copy.hero.lead}</p>
-          <DownloadActions
-            class="lp-hero__actions"
-            download={copy.cta.download}
-            github={copy.hero.githubLabel}
-            placement="hero"
-          />
+        <h1>
+          <span>{copy.hero.line1}</span>
+          <Rook hue="menta" size={108} mood="working" float label="Rook" />
+          <span>{copy.hero.line2}</span>
+        </h1>
+        <p class="lp-hero__lead">{copy.hero.lead[0]}<br />{copy.hero.lead[1]}</p>
+        <div class="lp-hero__actions">
+          <a class="button button--primary" href={DOWNLOAD_URL} target="_blank" rel="noopener" data-attr="hero-download">
+            {copy.cta.download}
+          </a>
           <p class="download-note">
             {
               copy.hero.note.split(/(\{windows\}|\{linux\})/).map((part) =>
@@ -110,40 +94,18 @@ const RINGS = [
               )
             }
           </p>
-          <div class="lp-command lp-hero__command">
-            <div>
-              <code id="hero-install">{INSTALL_COMMAND}</code>
-              <button type="button" data-copy="#hero-install" data-copied={copy.install.copiedLabel}>
-                {copy.install.copyLabel}
-              </button>
-            </div>
-          </div>
         </div>
-        <div class="lp-hero__stage">
-          <Mascot hue="menta" size={250} float interactive />
-          {
-            copy.hero.tags.map((tag, index) => (
-              <div class={`lp-tag lp-tag--${index + 1}`}>
-                <Mascot hue={tag.hue} size={34} />
-                <span>
-                  <b>{tag.name}</b>
-                  {tag.role}
-                </span>
-              </div>
-            ))
-          }
+        <div class="lp-hero__demo">
+          <ProductPreview copy={copy.preview} client:visible />
         </div>
       </section>
 
       <section id="agents" class="lp-agent" aria-labelledby="agent-heading">
-        <div class="lp-agent__intro" data-reveal>
-          <h2 id="agent-heading" class="lp-title">
-            {copy.agent.heading}
-            <span class="lp-accent">{copy.agent.accent}</span>
-          </h2>
-          <p>{copy.agent.copy}</p>
+        <div class="lp-center" data-reveal>
+          <h2 id="agent-heading" class="lp-title">{copy.agent.accent}</h2>
+          <p class="lp-lead">{copy.agent.copy}</p>
         </div>
-        <ul class="lp-agent__traits" data-reveal>
+        <ul class="lp-traits" data-reveal>
           {
             copy.agent.traits.map((trait) => (
               <li>
@@ -155,56 +117,43 @@ const RINGS = [
         </ul>
       </section>
 
-      <section id="demo" class="lp-live" aria-labelledby="live-heading">
-        <div class="lp-live__head" data-reveal>
-          <h2 id="live-heading" class="lp-title">
-            {copy.team.heading}
-            <span class="lp-accent">{copy.team.accent}</span>
-          </h2>
-          <p>{copy.team.copy}</p>
-        </div>
-        <div class="lp-live__stage" data-reveal>
-          <ProductPreview copy={copy.preview} client:visible />
-        </div>
-      </section>
-
       <section id="store" class="lp-store" aria-labelledby="store-heading">
         <div class="lp-store__intro" data-reveal>
-          <h2 id="store-heading" class="lp-title">
-            {copy.store.heading}
-            <span class="lp-accent">{copy.store.accent}</span>
-          </h2>
-          <p>{copy.store.copy}</p>
-          <p class="lp-store__count">{copy.store.count.replace("{count}", String(AGENT_CATALOG.length))}</p>
+          <h2 id="store-heading" class="lp-title">{copy.store.accent}</h2>
+          <p class="lp-lead">{copy.store.copy}</p>
         </div>
-        <dl class="lp-store__groups" data-reveal>
+        <div class="lp-rows" data-reveal>
           {
             storeGroups.map((group) => (
-              <div>
-                <dt>{copy.store.categories[group.category]}</dt>
-                <dd>
+              <div class="lp-store__row">
+                <h3>{copy.store.categories[group.category]}</h3>
+                <ul>
                   {group.names.map((name) => (
-                    <span>{name}</span>
+                    <li>{name}</li>
                   ))}
-                </dd>
+                </ul>
               </div>
             ))
           }
-        </dl>
+          <p class="lp-store__all">
+            <a href={CATALOG_URL} target="_blank" rel="noopener" data-attr="store-catalog">{copy.store.all}</a>
+          </p>
+        </div>
       </section>
 
       <section id="features" class="lp-works" aria-labelledby="works-heading">
-        <h2 id="works-heading" class="lp-title" data-reveal>
+        <h2 id="works-heading" class="lp-title lp-title--center" data-reveal>
           {works.heading}
-          <span class="lp-accent">{works.accent}</span>
+          <br />
+          {works.accent}
         </h2>
-        <div class="lp-bento">
-          <article class="lp-card lp-card--routines" data-reveal>
-            <h3>{works.cards[0].title}</h3>
-            <p>{works.cards[0].body}</p>
+        <div class="lp-cards" data-reveal>
+          <article class="lp-card">
+            <h3>{featureCards[0]!.title}</h3>
+            <p>{featureCards[0]!.body}</p>
             <ul class="lp-routines">
               {
-                works.routines.map((routine) => (
+                works.routines.slice(0, 3).map((routine) => (
                   <li>
                     <time>{routine.when}</time>
                     <span>{routine.what}</span>
@@ -213,101 +162,46 @@ const RINGS = [
               }
             </ul>
           </article>
-
-          <article class="lp-card lp-card--computer" data-reveal>
-            <h3>{works.cards[1].title}</h3>
-            <p>{works.cards[1].body}</p>
-            <div class="lp-term">
-              <b>{works.computer.title}</b>
-              {works.computer.lines.map((line) => <code>{line}</code>)}
+          <article class="lp-card">
+            <h3>{featureCards[1]!.title}</h3>
+            <p>{featureCards[1]!.body}</p>
+            <div class="lp-term" role="img" aria-label={works.computer.title}>
+              {works.computer.lines.map((line) => <code data-ok={line.startsWith("✓") ? "" : undefined}>{line}</code>)}
             </div>
           </article>
-
-          <article class="lp-card lp-card--models" data-reveal>
-            <h3>{works.cards[2].title}</h3>
-            <p>{works.cards[2].body}</p>
-            <div class="lp-models">
-              <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-                {
-                  RINGS.map((ring) => (
-                    <>
-                      <circle cx="32" cy="32" r={ring.radius} class="lp-ring__track" />
-                      <circle
-                        cx="32"
-                        cy="32"
-                        r={ring.radius}
-                        class="lp-ring__fill"
-                        stroke-dasharray={`${(ring.length * ring.percent) / 100} ${ring.length}`}
-                        transform="rotate(-90 32 32)"
-                      />
-                    </>
-                  ))
-                }
-              </svg>
-              <ul>
-                <li><b>{works.models.primary}</b></li>
-                <li><span>{works.models.window5h}</span> 34%</li>
-                <li><span>{works.models.weekly}</span> 58%</li>
-                <li class="lp-models__reset">{works.models.resets}</li>
-              </ul>
-            </div>
-            <p class="lp-models__local"><i class="lp-pill">{works.models.local}</i></p>
-          </article>
-
-          <article class="lp-card lp-card--usage" data-reveal>
-            <h3>{works.cards[3].title}</h3>
-            <p>{works.cards[3].body}</p>
-            <div class="lp-usage">
-              <b>{works.usage.title}</b>
-              {
-                works.usage.agents.map((agent) => (
-                  <div class="lp-usage__row">
-                    <Mascot hue={agent.hue} size={24} />
-                    <span>{agent.name}</span>
-                    <span class="lp-usage__bar"><i style={`width:${agent.share * 100}%`} /></span>
-                    <span class="lp-usage__pct">{Math.round(agent.share * 100)}%</span>
-                  </div>
-                ))
-              }
-            </div>
-          </article>
-
-          <article class="lp-card lp-card--apps" data-reveal>
-            <h3>{works.cards[4].title}</h3>
-            <p>{works.cards[4].body}</p>
+          <article class="lp-card">
+            <h3>{featureCards[2]!.title}</h3>
+            <p>{featureCards[2]!.body}</p>
             <ul class="lp-chips">
-              {appNames.map((name) => <li>{name}</li>)}
-            </ul>
-          </article>
-
-          <article class="lp-card lp-card--reach" data-reveal>
-            <div>
-              <h3>{works.cards[5].title}</h3>
-              <p>{works.cards[5].body}</p>
-            </div>
-            <ul class="lp-chips lp-chips--big">
-              {works.reach.map((name) => <li>{name}</li>)}
+              {MODEL_CHIPS.map((name) => <li>{name}</li>)}
+              <li>{works.models.local}</li>
             </ul>
           </article>
         </div>
+        <ul class="lp-items" data-reveal>
+          {
+            plainItems.map((item) => (
+              <li>
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
+              </li>
+            ))
+          }
+        </ul>
       </section>
 
       <section id="open" class="lp-open" aria-labelledby="open-heading">
         <div class="lp-open__intro" data-reveal>
-          <h2 id="open-heading" class="lp-title">
-            {copy.open.heading}
-            <span class="lp-accent">{copy.open.accent}</span>
-          </h2>
-          <p>{copy.open.copy}</p>
+          <h2 id="open-heading" class="lp-title">{copy.open.heading} {copy.open.accent}</h2>
+          <p class="lp-lead">{copy.open.copy}</p>
           <div class="lp-open__actions">
-            <a class="button button--primary" href={GITHUB_URL} target="_blank" rel="noopener" data-attr="open-github">
-              <GithubMark class="button__icon" />
+            <a class="button button--secondary" href={GITHUB_URL} target="_blank" rel="noopener" data-attr="open-github">
               {copy.open.github}
             </a>
             <span class="lp-license">{copy.open.license}</span>
           </div>
         </div>
-        <ul class="lp-open__points" data-reveal>
+        <ul class="lp-rows lp-points" data-reveal>
           {
             copy.open.points.map((point) => (
               <li>
@@ -319,10 +213,10 @@ const RINGS = [
         </ul>
       </section>
 
-      <section id="install" class="lp-install-section" aria-labelledby="install-heading">
-        <div class="lp-install-section__intro" data-reveal>
+      <section id="install" class="lp-install" aria-labelledby="install-heading">
+        <div class="lp-center" data-reveal>
           <h2 id="install-heading" class="lp-title">{copy.install.heading}</h2>
-          <p>{copy.install.copy}</p>
+          <p class="lp-lead">{copy.install.copy}</p>
           <a
             class="button button--primary"
             href={DOWNLOAD_URL}
@@ -333,32 +227,27 @@ const RINGS = [
             {copy.install.download}
           </a>
         </div>
-        <div class="lp-install-section__commands" data-reveal>
-          <p class="lp-install-section__also">{copy.install.alsoFor}</p>
+        <div class="lp-commands" data-reveal>
           <div class="lp-command">
             <span>{copy.install.macLinux}</span>
-            <div>
-              <code id="install-unix">{INSTALL_COMMAND}</code>
-              <button type="button" data-copy="#install-unix" data-copied={copy.install.copiedLabel}>
-                {copy.install.copyLabel}
-              </button>
-            </div>
+            <code id="install-unix">{INSTALL_COMMAND}</code>
+            <button type="button" data-copy="#install-unix" data-copied={copy.install.copiedLabel}>
+              {copy.install.copyLabel}
+            </button>
           </div>
           <div class="lp-command">
             <span>{copy.install.windows}</span>
-            <div>
-              <code id="install-windows">{INSTALL_COMMAND_WINDOWS}</code>
-              <button type="button" data-copy="#install-windows" data-copied={copy.install.copiedLabel}>
-                {copy.install.copyLabel}
-              </button>
-            </div>
+            <code id="install-windows">{INSTALL_COMMAND_WINDOWS}</code>
+            <button type="button" data-copy="#install-windows" data-copied={copy.install.copiedLabel}>
+              {copy.install.copyLabel}
+            </button>
           </div>
           <p class="download-note">{copy.install.note}</p>
         </div>
       </section>
 
       <section id="faq" class="lp-faq" aria-labelledby="faq-heading">
-        <h2 id="faq-heading" class="lp-title lp-title--small" data-reveal>{copy.faq.heading}</h2>
+        <h2 id="faq-heading" class="lp-title" data-reveal>{copy.faq.heading}</h2>
         <div class="home-faq" data-reveal>
           {
             copy.faq.items.map((item, index) => (
@@ -374,24 +263,19 @@ const RINGS = [
         </div>
       </section>
 
-      <section class="lp-cta" aria-labelledby="cta-heading">
-        <div data-reveal>
-          <h2 id="cta-heading" class="lp-title">{copy.cta.heading}</h2>
-          <p>{copy.cta.copy}</p>
-          <DownloadActions
-            class="lp-hero__actions"
-            download={copy.cta.download}
-            github={copy.cta.github}
-            placement="cta"
-          />
-        </div>
+      <section class="lp-cta" aria-labelledby="cta-heading" data-reveal>
         <div class="lp-cta__flock" aria-hidden="true">
-          <Mascot hue="azul" size={64} />
-          <Mascot hue="laranja" size={84} />
-          <Mascot hue="menta" size={112} float />
-          <Mascot hue="violeta" size={84} />
-          <Mascot hue="rosa" size={64} />
+          <Rook hue="azul" size={64} />
+          <Rook hue="laranja" size={76} />
+          <Rook hue="menta" size={104} mood="done" float />
+          <Rook hue="violeta" size={76} />
+          <Rook hue="rosa" size={64} />
         </div>
+        <h2 id="cta-heading" class="lp-title lp-title--cta">{copy.cta.heading}</h2>
+        <p class="lp-lead">{copy.cta.copy}</p>
+        <a class="button button--primary" href={DOWNLOAD_URL} target="_blank" rel="noopener" data-attr="cta-download">
+          {copy.cta.download}
+        </a>
       </section>
     </main>
 

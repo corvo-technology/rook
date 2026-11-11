@@ -48,16 +48,10 @@ const COPY: LaunchCopy = {
     terms: "Termos",
   },
   hero: {
-    line1: "Agentes de IA que trabalham em equipe.",
-    line2: "Eles perguntam antes de agir.",
-    lead: "O Rook é uma equipe de agentes de IA de código aberto. Cada um tem um trabalho, as próprias ferramentas e a própria conversa. Eles trabalham juntos em canais, no seu computador, e confirmam com você antes de qualquer coisa real.",
-    githubLabel: "Dar estrela no GitHub",
+    line1: "Conheça",
+    line2: "sua equipe.",
+    lead: ["Agentes de IA que trabalham em equipe.", "Eles perguntam antes de agir."],
     note: "Também pra {windows} e {linux}",
-    tags: [
-      { name: "Davi", role: "Agente de email", hue: "rosa" },
-      { name: "Bento", role: "Monitor de pagamentos", hue: "azul" },
-      { name: "Fábio", role: "Triagem de bugs", hue: "laranja" },
-    ],
   },
   agent: {
     heading: "O que é um agente?",
@@ -78,7 +72,7 @@ const COPY: LaunchCopy = {
     heading: "Uma Loja de agentes prontos.",
     accent: "Escolha um, ou escreva o seu.",
     copy: "Instale um agente com um clique e dê as suas ferramentas a ele. Cada um vem com uma descrição de trabalho e as skills de que precisa, e você pode editar tudo.",
-    count: "{count} agentes na Loja",
+    all: "Ver todos os agentes da Loja",
     categories: {
       marketing: "Marketing",
       operations: "Operações",
@@ -337,7 +331,6 @@ const COPY: LaunchCopy = {
     heading: "Contrate o seu primeiro agente.",
     copy: "Escolha um na Loja, dê um trabalho e a sua próxima tarefa a ele. Ele pergunta antes de fazer qualquer coisa que importa.",
     download: "Baixar pro Mac",
-    github: "Ver no GitHub",
   },
 };
 

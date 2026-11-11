@@ -18,7 +18,7 @@ export const HOME_MARKDOWN = `# Rook
 
 ${home.hero.line1} ${home.hero.line2}
 
-${home.hero.lead}
+${home.hero.lead.join(" ")}
 
 ## ${home.agent.heading} ${home.agent.accent}
 

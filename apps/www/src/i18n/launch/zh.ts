@@ -48,16 +48,10 @@ const COPY: LaunchCopy = {
     terms: "条款",
   },
   hero: {
-    line1: "以团队方式工作的 AI 智能体。",
-    line2: "行动之前，它们先问你。",
-    lead: "Rook 是一支开源的 AI 智能体团队。每个智能体都有自己的工作、工具和对话。它们在你电脑上的频道里协作，并在碰任何真实的东西之前先和你确认。",
-    githubLabel: "在 GitHub 上加星标",
+    line1: "认识",
+    line2: "你的团队。",
+    lead: ["以团队方式工作的 AI 智能体。", "行动之前，它们先问你。"],
     note: "也支持 {windows} 和 {linux}",
-    tags: [
-      { name: "Davi", role: "邮件智能体", hue: "rosa" },
-      { name: "Bento", role: "支付监控", hue: "azul" },
-      { name: "Fabio", role: "缺陷分流", hue: "laranja" },
-    ],
   },
   agent: {
     heading: "什么是智能体？",
@@ -78,7 +72,7 @@ const COPY: LaunchCopy = {
     heading: "现成智能体的商店。",
     accent: "选一个，或自己写一个。",
     copy: "一键安装一个智能体，再把你的工具交给它。每个都带有岗位说明和所需的技能，全部可以编辑。",
-    count: "商店里有 {count} 个智能体",
+    all: "查看商店里的所有智能体",
     categories: {
       marketing: "营销",
       operations: "运营",
@@ -337,7 +331,6 @@ const COPY: LaunchCopy = {
     heading: "雇下你的第一个智能体。",
     copy: "从商店里选一个，给它一份工作和你的下一件任务。做任何要紧的事之前，它都会先问你。",
     download: "下载 Mac 版",
-    github: "在 GitHub 上查看",
   },
 };
 

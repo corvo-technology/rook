@@ -48,16 +48,10 @@ const COPY: LaunchCopy = {
     terms: "Bedingungen",
   },
   hero: {
-    line1: "KI-Agenten, die als Team arbeiten.",
-    line2: "Sie fragen nach, bevor sie handeln.",
-    lead: "Rook ist ein Open-Source-Team aus KI-Agenten. Jeder hat eine Aufgabe, eigene Tools und eine eigene Unterhaltung. Sie arbeiten in Kanälen auf deinem Computer zusammen und sprechen sich mit dir ab, bevor sie etwas Echtes anfassen.",
-    githubLabel: "Auf GitHub einen Stern geben",
+    line1: "Triff",
+    line2: "dein Team.",
+    lead: ["KI-Agenten, die als Team arbeiten.", "Sie fragen nach, bevor sie handeln."],
     note: "Auch für {windows} und {linux}",
-    tags: [
-      { name: "Davi", role: "E-Mail-Agent", hue: "rosa" },
-      { name: "Bento", role: "Zahlungswächter", hue: "azul" },
-      { name: "Fabio", role: "Bug-Triage", hue: "laranja" },
-    ],
   },
   agent: {
     heading: "Was ist ein Agent?",
@@ -78,7 +72,7 @@ const COPY: LaunchCopy = {
     heading: "Ein Store fertiger Agenten.",
     accent: "Wähle einen oder schreib deinen eigenen.",
     copy: "Installiere einen Agenten mit einem Klick und gib ihm deine Tools. Jeder bringt eine Stellenbeschreibung und die nötigen Skills mit, und du kannst alles bearbeiten.",
-    count: "{count} Agenten im Store",
+    all: "Alle Agenten im Store ansehen",
     categories: {
       marketing: "Marketing",
       operations: "Betrieb",
@@ -337,7 +331,6 @@ const COPY: LaunchCopy = {
     heading: "Stell deinen ersten Agenten ein.",
     copy: "Wähle einen im Store, gib ihm eine Aufgabe und deine nächste Aufgabe. Er fragt nach, bevor er etwas tut, das zählt.",
     download: "Für Mac laden",
-    github: "Auf GitHub ansehen",
   },
 };
 

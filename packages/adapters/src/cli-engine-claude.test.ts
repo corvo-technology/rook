@@ -2,7 +2,13 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { CLAUDE_GATEWAY_NAME, claudeStreamParser } from "./cli-engine-claude.js";
+import {
+  CLAUDE_GATEWAY_NAME,
+  claudeArgs,
+  claudeEnv,
+  claudeStatus,
+  claudeStreamParser,
+} from "./cli-engine-claude.js";
 import type { CliEngineEvent } from "./cli-engine-parser.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -112,5 +118,69 @@ describe("Claude Code stream parser", () => {
   it("ignores lines that are not JSON objects", () => {
     const events = parse(["not json", init(), "also not json", "[1]"]);
     expect(events).toEqual([]);
+  });
+});
+
+describe("claudeArgs", () => {
+  const args = claudeArgs({ model: "sonnet", systemPromptFile: "/t/system.md" });
+  it("turns every built-in tool and outside setting off", () => {
+    expect(args[args.indexOf("--tools") + 1]).toBe("");
+    expect(args).toContain("--strict-mcp-config");
+    expect(args[args.indexOf("--setting-sources") + 1]).toBe("");
+  });
+  it("keeps the gateway URL out of the arguments", () => {
+    const config = JSON.parse(args[args.indexOf("--mcp-config") + 1] as string);
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: the literal placeholder
+    expect(config.mcpServers.corvo.url).toBe("${CORVO_MCP_URL}");
+    for (const arg of args) {
+      expect(arg).not.toContain("/mcp/");
+      expect(arg).not.toMatch(/[0-9a-f]{48}/);
+    }
+  });
+});
+
+describe("claudeEnv", () => {
+  it("passes the gateway URL and config dir, and no secret", () => {
+    const url = `http://127.0.0.1:1/mcp/${"a".repeat(48)}`;
+    const env = claudeEnv(
+      { configDir: "/c", mcpUrl: url },
+      { PATH: "/bin", ANTHROPIC_API_KEY: "k", DATABASE_URL: "d" },
+    );
+    expect(env).not.toHaveProperty("ANTHROPIC_API_KEY");
+    expect(env).not.toHaveProperty("DATABASE_URL");
+    expect(env.CLAUDE_CONFIG_DIR).toBe("/c");
+    expect(env.CORVO_MCP_URL).toBe(url);
+  });
+});
+
+describe("claudeStatus", () => {
+  const ok = { code: 0, stdout: "2.5.0 (Claude Code)" };
+  it("is unsupported when too old or silent", () => {
+    expect(claudeStatus({ version: { code: 0, stdout: "2.0.0" }, auth: ok })).toEqual({
+      state: "unsupported",
+      version: "2.0.0",
+    });
+    expect(claudeStatus({ version: { code: 127, stdout: "" }, auth: ok })).toEqual({
+      state: "unsupported",
+      version: null,
+    });
+  });
+  it("reads the sign-in", () => {
+    const state = (stdout: string) =>
+      claudeStatus({ version: ok, auth: { code: 0, stdout } }).state;
+    expect(state('{"loggedIn":false}')).toBe("signed_out");
+    expect(state("not json")).toBe("signed_out");
+    expect(state('{"loggedIn":true,"authMethod":"console"}')).toBe("api_key");
+    expect(state('{"loggedIn":true,"authMethod":"claude.ai"}')).toBe("ready");
+  });
+  it("keeps nothing about the account", () => {
+    const status = claudeStatus({
+      version: ok,
+      auth: {
+        code: 0,
+        stdout: '{"loggedIn":true,"authMethod":"claude.ai","email":"someone@example.com"}',
+      },
+    });
+    expect(status).toEqual({ state: "ready", version: "2.5.0" });
   });
 });

@@ -1,3 +1,5 @@
+import type { CliEngineState } from "@corvo/contracts";
+import { agentChildEnv } from "./agent-process.js";
 import type {
   CliEngineEvent,
   CliStreamExpectations,
@@ -148,4 +150,95 @@ export function claudeStreamParser(expect: CliStreamExpectations, model: string)
       return [{ type: "failed", message: tail.length ? `${head}\n${tail.join("\n")}` : head }];
     },
   };
+}
+
+/**
+ * The oldest Claude Code whose start event has the fields the start check reads. This is the
+ * version the fixtures describe; raise it if they are re-recorded with a newer one.
+ */
+export const MIN_CLAUDE_CODE_VERSION = "2.1.0";
+export const CLAUDE_MODELS = ["sonnet", "opus", "haiku"] as const;
+
+export const CLAUDE_STATUS_ARGS = { version: ["--version"], auth: ["auth", "status"] };
+
+/** The arguments of one turn: no built-in tools, no outside settings, only the tool gateway. */
+export function claudeArgs(turn: { model: string; systemPromptFile: string }): string[] {
+  const mcpConfig = JSON.stringify({
+    // The CLI expands this placeholder from its environment; the literal text is intended.
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: kept literal for the CLI to expand
+    mcpServers: { [CLAUDE_GATEWAY_NAME]: { type: "http", url: "${CORVO_MCP_URL}" } },
+  });
+  return [
+    "-p",
+    "--input-format",
+    "text",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--include-partial-messages",
+    "--model",
+    turn.model,
+    "--system-prompt-file",
+    turn.systemPromptFile,
+    "--tools",
+    "",
+    "--strict-mcp-config",
+    "--mcp-config",
+    mcpConfig,
+    "--setting-sources",
+    "",
+    "--disable-slash-commands",
+    "--no-session-persistence",
+    "--allowedTools",
+    `mcp__${CLAUDE_GATEWAY_NAME}`,
+  ];
+}
+
+/** The gateway URL reaches the CLI only here, in its environment, never in its arguments. */
+export function claudeEnv(
+  input: { configDir: string; mcpUrl: string },
+  source?: NodeJS.ProcessEnv,
+): Record<string, string> {
+  return agentChildEnv(
+    {
+      CLAUDE_CONFIG_DIR: input.configDir,
+      CORVO_MCP_URL: input.mcpUrl,
+      CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1",
+      MCP_TOOL_TIMEOUT: "900000",
+    },
+    source,
+  );
+}
+
+function versionParts(version: string): number[] {
+  return version.split(".").map(Number);
+}
+
+function olderThan(version: string, floor: string): boolean {
+  const a = versionParts(version);
+  const b = versionParts(floor);
+  for (let i = 0; i < b.length; i++) {
+    if ((a[i] ?? 0) !== b[i]) return (a[i] ?? 0) < (b[i] ?? 0);
+  }
+  return false;
+}
+
+/** What the version and sign-in answers mean. Nothing about the account is kept. */
+export function claudeStatus(probe: {
+  version: { code: number; stdout: string };
+  auth: { code: number; stdout: string };
+}): { state: CliEngineState; version: string | null } {
+  const version =
+    probe.version.code === 0 ? probe.version.stdout.match(/\d+\.\d+\.\d+/)?.[0] : undefined;
+  if (!version) return { state: "unsupported", version: null };
+  if (olderThan(version, MIN_CLAUDE_CODE_VERSION)) return { state: "unsupported", version };
+  let auth: Json | undefined;
+  try {
+    auth = asObject(JSON.parse(probe.auth.stdout));
+  } catch {
+    auth = undefined;
+  }
+  if (auth?.loggedIn !== true) return { state: "signed_out", version };
+  if (auth.authMethod !== "claude.ai") return { state: "api_key", version };
+  return { state: "ready", version };
 }

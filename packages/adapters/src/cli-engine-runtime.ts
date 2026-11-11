@@ -9,6 +9,7 @@ import type {
   AgentRunRequest,
   AgentRuntime,
   AgentRuntimeEvent,
+  AgentToolCompletion,
   AgentToolResultContent,
   ConnectorTool,
 } from "@corvo/adapter-kit";
@@ -241,6 +242,14 @@ export class CliEngineRuntime implements AgentRuntime {
       );
 
       const text = (value: string) => ({ content: [{ type: "text" as const, text: value }] });
+      // The executor's audit hook; best effort, and never able to change what a tool answers.
+      const report = (completion: AgentToolCompletion) => {
+        try {
+          void Promise.resolve(request.onToolCompleted?.(completion)).catch(() => undefined);
+        } catch {
+          // Audit hooks are best effort.
+        }
+      };
       const execute = async (
         tool: ConnectorTool,
         args: Record<string, unknown>,
@@ -255,9 +264,26 @@ export class CliEngineRuntime implements AgentRuntime {
           ...(viaUseTool ? { viaUseTool } : {}),
         });
         if (!request.executeTool) return text(`${tool.name} is unavailable without an executor.`);
-        const result = await request.executeTool(tool.name, args, executionId, tool.route);
-        if (isToolPauseResult(result)) pause();
-        return { content: toolResultContent(result, request, tool.name, args) };
+        const startedAt = Date.now();
+        let result: unknown;
+        let failure: unknown;
+        try {
+          result = await request.executeTool(tool.name, args, executionId, tool.route);
+          if (isToolPauseResult(result)) pause();
+          return { content: toolResultContent(result, request, tool.name, args) };
+        } catch (error) {
+          failure = error;
+          throw error;
+        } finally {
+          report({
+            name: tool.name,
+            executionId,
+            durationMs: Math.max(0, Date.now() - startedAt),
+            ...(result === undefined ? {} : { result }),
+            ...(failure === undefined ? {} : { error: failure }),
+            ...(paused ? { paused: true } : {}),
+          });
+        }
       };
 
       const call = async (gatewayName: string, args: Record<string, unknown>) => {

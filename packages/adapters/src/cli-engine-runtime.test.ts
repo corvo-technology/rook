@@ -73,6 +73,23 @@ describe("CliEngineRuntime", () => {
     expect(text).toContain("echoed");
   });
 
+  it("reports each finished tool call to the audit hook", async () => {
+    const { runtime } = await runtimeFor();
+    const onToolCompleted = vi.fn();
+    await collect(
+      runtime.run(
+        cliRequest('CALL echo_text {"text":"hi"}', {
+          executeTool: vi.fn().mockResolvedValue({ ok: true }),
+          onToolCompleted,
+        }),
+      ),
+    );
+    expect(onToolCompleted).toHaveBeenCalledTimes(1);
+    expect(onToolCompleted).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "echo_text", result: { ok: true } }),
+    );
+  });
+
   it("never reaches executeTool for a tool the turn does not have", async () => {
     const { runtime } = await runtimeFor();
     const executeTool = vi.fn();

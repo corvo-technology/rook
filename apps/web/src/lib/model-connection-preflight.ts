@@ -1,130 +1,36 @@
 import type { ModelCredential } from "@corvo/contracts";
+import type { ModelProblem } from "@corvo/core";
+import { maskSecrets } from "@corvo/core";
 import { plural, t } from "@lingui/core/macro";
+import { webModelProblem } from "./model-problem";
 
-type ModelPreflightOutcome =
-  | "timeout"
-  | "rate_limit"
-  | "unauthorized"
-  | "unavailable_model"
-  | "unreachable"
-  | "needs_sign_in"
-  | "missing_fields"
-  | "unknown";
-
-export type ModelPreflightFailure = {
-  outcome: ModelPreflightOutcome;
-  message: string;
-  nextAction: string;
-};
+export type ModelPreflightFailure =
+  | {
+      outcome: "unavailable_model" | "needs_sign_in" | "missing_fields" | "unknown";
+      message: string;
+      nextAction: string;
+    }
+  | { outcome: "provider"; problem: ModelProblem };
 
 type StoredModelAuthKind = NonNullable<ModelCredential["authKind"]>;
 
-const SECRET_PATTERNS: RegExp[] = [
-  /\bsk-[a-zA-Z0-9_-]{8,}\b/g,
-  /\bBearer\s+[a-zA-Z0-9._-]+\b/gi,
-  /\bapi[_-]?key[=:]\s*\S+/gi,
-];
-
-/** Strip patterns that look like credentials from user-visible errors. */
-export function sanitizeModelConnectionError(raw: string): string {
-  let text = raw.trim();
-  for (const pattern of SECRET_PATTERNS) {
-    text = text.replace(pattern, "•••");
-  }
-  return text;
-}
-
-function messageFromError(error: unknown): string {
-  if (error instanceof Error) return sanitizeModelConnectionError(error.message);
-  return sanitizeModelConnectionError(String(error));
-}
-
-export function classifyModelConnectionFailure(
-  error: unknown,
-  context: { modelId?: string; discoveredModels?: string[]; manualEntry?: boolean } = {},
-): ModelPreflightFailure {
-  const message = messageFromError(error);
-  const lower = message.toLowerCase();
-
-  if (context.modelId && context.discoveredModels && context.discoveredModels.length > 0) {
-    const modelId = sanitizeModelConnectionError(context.modelId.trim());
-    if (modelId && !context.discoveredModels.includes(context.modelId.trim())) {
-      return {
-        outcome: "unavailable_model",
-        message: t`Model "${modelId}" was not listed.`,
-        nextAction:
-          context.manualEntry === false
-            ? t`Pick a model from the catalog.`
-            : t`Pick a model from the list or enter a model id served by this endpoint.`,
-      };
-    }
-  }
-
-  if (lower.includes("timed out") || lower.includes("timeout")) {
-    return {
-      outcome: "timeout",
-      message: message || t`The connection timed out.`,
-      nextAction: t`Check the server URL and network, then test again.`,
-    };
-  }
-
-  if (lower.includes("429") || lower.includes("rate limit") || lower.includes("rate-limit")) {
-    return {
-      outcome: "rate_limit",
-      message: message || t`The provider is rate-limiting requests.`,
-      nextAction: t`Wait a moment and test again.`,
-    };
-  }
-
-  if (
-    lower.includes("401") ||
-    lower.includes("403") ||
-    lower.includes("unauthorized") ||
-    lower.includes("invalid api key") ||
-    lower.includes("authentication")
-  ) {
-    return {
-      outcome: "unauthorized",
-      message: message || t`Authentication failed.`,
-      nextAction: t`Check the API key or sign-in, then test again.`,
-    };
-  }
-
-  if (
-    lower.includes("econnrefused") ||
-    lower.includes("connection refused") ||
-    lower.includes("failed to fetch") ||
-    lower.includes("network") ||
-    lower.includes("enotfound") ||
-    lower.includes("could not reach")
-  ) {
-    return {
-      outcome: "unreachable",
-      message: message || t`Could not reach the model server.`,
-      nextAction: t`Confirm the URL is reachable from this browser session, then test again.`,
-    };
-  }
-
-  return {
-    outcome: "unknown",
-    message: message || t`Connection test failed.`,
-    nextAction: t`Review provider settings and test again.`,
-  };
-}
-
 /** Failure when a non-empty model list omits the selected id. Empty lists stay reachable. */
 export function unavailableSelectedModel(
-  modelId: string | undefined,
+  selectedId: string | undefined,
   discoveredModels: string[],
   options?: { manualEntry?: boolean },
 ): ModelPreflightFailure | null {
-  const trimmed = modelId?.trim() ?? "";
+  const trimmed = selectedId?.trim() ?? "";
   if (!trimmed || discoveredModels.length === 0 || discoveredModels.includes(trimmed)) return null;
-  return classifyModelConnectionFailure(new Error("model not listed"), {
-    modelId: trimmed,
-    discoveredModels,
-    manualEntry: options?.manualEntry,
-  });
+  const modelId = maskSecrets(trimmed);
+  return {
+    outcome: "unavailable_model",
+    message: t`Model "${modelId}" was not listed.`,
+    nextAction:
+      options?.manualEntry === false
+        ? t`Pick a model from the catalog.`
+        : t`Pick a model from the list or enter a model id served by this endpoint.`,
+  };
 }
 
 type ListedModelCredential = {
@@ -269,10 +175,7 @@ export async function runModelConnectionPreflight(
     if (unavailable) return { ok: false, failure: unavailable };
     return { ok: true, discoveredModels: models };
   } catch (error) {
-    return {
-      ok: false,
-      failure: classifyModelConnectionFailure(error, { modelId: trimmedModel }),
-    };
+    return { ok: false, failure: providerFailure(error) };
   }
 }
 
@@ -285,4 +188,15 @@ export function modelPreflightSuccessMessage(modelCount: number): string {
     one: "# model",
     other: "# models",
   })} available. Chat was not tested.`;
+}
+
+/** A failed probe or connect as the shared one-line problem. */
+export function providerFailure(
+  error: unknown,
+  authKind?: "api_key" | "oauth" | "openai_compatible",
+): ModelPreflightFailure {
+  return {
+    outcome: "provider",
+    problem: webModelProblem(error, t`Could not reach this model server`, authKind),
+  };
 }

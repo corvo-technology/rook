@@ -9,6 +9,20 @@ export class TransientModelError extends Error {
 }
 
 /**
+ * A model probe or key check failed. The message is the human line; `facts` carries what the
+ * network or provider reported, so callers classify from structured signals instead of prose.
+ */
+export class ModelRequestError extends Error {
+  constructor(
+    message: string,
+    readonly facts: { status?: number; code?: string; details?: string } = {},
+  ) {
+    super(message);
+    this.name = "ModelRequestError";
+  }
+}
+
+/**
  * The user's model provider rejected the key, hit a credit or usage limit, or no longer serves
  * the model. The user fixes it in their provider account or connection settings; not a server fault.
  */

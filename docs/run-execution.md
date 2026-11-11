@@ -26,6 +26,18 @@ precedence. Remove that trigger only after those older releases have drained.
 Embedded installations using the memory job driver retain their
 existing dispatch and recovery behavior.
 
+## Prompt layout
+
+The system prompt holds only what the bot's setup decides (identity and instructions, enabled
+tools, workspace and reply guidance), so it does not change between turns. Memory, notes, team,
+connections and skills travel as one live context block in the transcript, right before the user
+message of the turn that first sent it; later turns replay it there and add a new block only when
+its text changed. Everything that belongs to one run alone (current time, reply target, approvals,
+recalled memory, ticket matches, routing hints) follows the user message as a turn note and is
+never replayed. The runtime keeps an in-memory record per thread of what the last turn showed and
+starts fresh when a message was edited, removed or inserted, the setup changed, the last turn did
+not end well, or the connection's cache window has elapsed.
+
 ## Timing
 
 Structured logs emit `run.execution_started`, `run.first_response`, and

@@ -65,6 +65,7 @@ describe("account preferences", () => {
         findUniqueOrThrow: vi.fn().mockResolvedValue(user),
       },
       partnerTenant: { findFirst: vi.fn().mockResolvedValue(null) },
+      missionState: { findUnique: vi.fn(async () => null) },
       userModelPreference: { findFirst: vi.fn().mockResolvedValue(null) },
       deploymentSettings: { findUnique: vi.fn().mockResolvedValue(null) },
     } as unknown as PrismaClient;
@@ -422,6 +423,7 @@ describe("billing", () => {
   ) {
     const prisma = {
       $executeRaw,
+      missionState: { findUnique: vi.fn(async () => null) },
       partnerTenant: {
         findFirst: vi.fn().mockResolvedValue(partner ? { partner } : null),
       },
@@ -618,6 +620,7 @@ describe("model setup gate", () => {
   }) {
     const prisma = {
       partnerTenant: { findFirst: vi.fn().mockResolvedValue(null) },
+      missionState: { findUnique: vi.fn(async () => null) },
       user: {
         findUniqueOrThrow: vi.fn().mockResolvedValue({
           email: "user@corvo.test",
@@ -2133,6 +2136,9 @@ describe("MCP server health", () => {
     (h.deps.prisma as unknown as Record<string, unknown>).partnerTenant = {
       findFirst: vi.fn().mockResolvedValue(null),
     };
+    (h.deps.prisma as unknown as Record<string, unknown>).missionState = {
+      findUnique: vi.fn(async () => null),
+    };
     (h.deps.prisma as unknown as Record<string, unknown>).user = {
       findUniqueOrThrow: vi.fn(async () => ({ email: "owner@corvo.test", name: "Owner" })),
     };
@@ -3157,6 +3163,7 @@ describe("updater owner gate", () => {
   function updaterDeps() {
     const prisma = {
       partnerTenant: { findFirst: vi.fn().mockResolvedValue(null) },
+      missionState: { findUnique: vi.fn(async () => null) },
       user: {
         findUniqueOrThrow: vi.fn().mockResolvedValue({
           email: "user@corvo.test",
@@ -6176,6 +6183,7 @@ describe("bot model auth on save", () => {
       userModelCredential: { findFirst: vi.fn(async () => null) },
       secret: { findFirst: secretFindFirst },
       partnerTenant: { findFirst: vi.fn(async () => null) },
+      missionState: { findUnique: vi.fn(async () => null) },
       $transaction: vi.fn(async (fn: (client: typeof tx) => unknown) => fn(tx)),
     };
     const deps = {
@@ -7094,6 +7102,7 @@ describe("openai-compatible enabled models", () => {
       },
       deploymentSettings: { findUnique: vi.fn(async () => null) },
       partnerTenant: { findFirst: vi.fn().mockResolvedValue(null) },
+      missionState: { findUnique: vi.fn(async () => null) },
       user: {
         findUniqueOrThrow: vi.fn(async () => ({
           email: actor.email,

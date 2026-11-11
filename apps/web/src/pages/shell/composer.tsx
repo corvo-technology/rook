@@ -1,5 +1,11 @@
 import type { AgentSkillCatalogEntry, ThreadMessage } from "@corvo/contracts";
-import type { AgentImportReader, ComposerMention, SlashActionId } from "@corvo/core";
+import type {
+  AgentImportReader,
+  ComposerMention,
+  ModelProblemAction,
+  ModelProblemOptions,
+  SlashActionId,
+} from "@corvo/core";
 import {
   clampMentionHighlightIndex,
   mentionChipKey,
@@ -57,6 +63,9 @@ export const Composer = memo(function Composer({
   onDraftEdited,
   onOpenModels,
   onOpenConnections,
+  runAuthKind,
+  onRetryRun,
+  retryingRun,
   runError,
   runErrorId,
   onRunErrorPresented,
@@ -91,7 +100,10 @@ export const Composer = memo(function Composer({
   imageConfirmation?: boolean;
   onDraftEdited?: () => void;
   onOpenModels: () => void;
-  onOpenConnections: () => void;
+  onOpenConnections: (action: ModelProblemAction) => void;
+  runAuthKind?: ModelProblemOptions["authKind"];
+  onRetryRun?: () => void;
+  retryingRun?: boolean;
   runError: string | null;
   runErrorId: string | null;
   onRunErrorPresented: (runId: string) => void;
@@ -549,6 +561,9 @@ export const Composer = memo(function Composer({
         onRunErrorPresented={onRunErrorPresented}
         onOpenModels={onOpenModels}
         onOpenConnections={onOpenConnections}
+        runAuthKind={runAuthKind}
+        onRetryRun={onRetryRun}
+        retryingRun={retryingRun}
         onDismissError={onDismissError}
         textareaRef={textareaRef}
       />

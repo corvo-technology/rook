@@ -96,6 +96,7 @@ import {
   ModelCredentialSchema,
   ModelCreditAmountSchema,
   ModelOAuthBeginSchema,
+  OnboardingPicksSchema,
   OPENAI_COMPATIBLE_PROVIDER_ID,
   REPLY_QUOTE_MAX_LENGTH,
   ReorderBotsInput,
@@ -142,6 +143,7 @@ import {
   IntegrationProviderConfigSchema,
   IntegrationSetupStateSchema,
 } from "./integration-settings.js";
+import { MissionsViewSchema, NavPart } from "./missions.js";
 import { ModelHeadersSchema } from "./model-headers.js";
 import { ModelRoleSchema, ModelRoleUpdateSchema, ModelRoleViewSchema } from "./model-roles.js";
 import { PartnerAccountSchema, PartnerLimitsInput, PartnerTemplate } from "./partner.js";
@@ -531,6 +533,8 @@ export const appContract = {
       )
       .output(z.object({ ok: z.literal(true), runIds: z.array(Id).optional() })),
     stop: oc.input(threadTarget).output(z.object({ ok: z.literal(true) })),
+    /** Runs a failed chat run's message again. It posts no message of its own. */
+    retry: oc.input(threadTarget.safeExtend({ runId: Id })).output(z.object({ runId: Id })),
     followUp: oc
       .input(
         threadTarget.safeExtend({
@@ -1006,6 +1010,14 @@ export const appContract = {
       disconnect: oc.input(z.object({ serverId: Id })).output(z.object({ ok: z.literal(true) })),
     },
   },
+  missions: {
+    /** Where the member is with the first missions; null when the full navigation shows. */
+    get: oc.output(MissionsViewSchema.nullable()),
+    /** The member opened a part a mission brought. */
+    seen: oc.input(z.object({ part: NavPart })).output(z.object({ ok: z.literal(true) })),
+    /** End the short navigation for good. */
+    showAll: oc.output(z.object({ ok: z.literal(true) })),
+  },
   onboarding: {
     /** Record the optional signup survey; an empty submission marks it skipped. */
     signupSurvey: oc.input(SignupSurveySchema).output(z.object({ ok: z.literal(true) })),
@@ -1018,8 +1030,21 @@ export const appContract = {
      * Safe to call again: it returns the Chief that is already there.
      */
     ensureTeam: oc
-      .input(z.object({ locale: z.enum(AGENT_CATALOG_LOCALES).default("en") }))
-      .output(z.object({ botId: Id, created: z.boolean() })),
+      .input(
+        z.object({
+          locale: z.enum(AGENT_CATALOG_LOCALES).default("en"),
+          /** What onboarding asked; the category tapped first adds one ready-made agent. */
+          picks: OnboardingPicksSchema.optional(),
+        }),
+      )
+      .output(
+        z.object({
+          botId: Id,
+          created: z.boolean(),
+          /** The agent the picks named, with the first task to leave unsent in its composer. */
+          pickedAgent: z.object({ botId: Id, task: z.string().nullable() }).optional(),
+        }),
+      ),
     /** Seed the first-run greeting into the bot's thread (focus card is separate). */
     start: oc.input(z.object({ botId: Id })).output(z.object({ ok: z.literal(true) })),
     /** Post the focus choice card when the thread is still idle. */

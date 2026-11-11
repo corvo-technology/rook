@@ -1,6 +1,9 @@
+import type { OnboardingPicks } from "@corvo/contracts";
+import { OnboardingPicksSchema } from "@corvo/contracts";
 import type { OnboardingStepId } from "./onboarding-steps";
 
 const KEY = "corvo:onboarding-progress";
+const PICKS_KEY = "corvo:onboarding-picks";
 const STEPS: readonly string[] = ["workspace", "survey", "model", "bot", "computer"];
 
 function sessionStorageOrNull(): Storage | null {
@@ -39,5 +42,35 @@ export function saveDoneSteps(
     storage?.setItem(KEY, JSON.stringify({ userId, done: [...done] }));
   } catch {
     // Progress is a convenience; without storage the flow just starts from the top.
+  }
+}
+
+/** What the person picked on the survey step, kept for the step that makes their first agent. */
+export function savePicks(
+  userId: string,
+  picks: OnboardingPicks,
+  storage: Storage | null = sessionStorageOrNull(),
+): void {
+  try {
+    storage?.setItem(PICKS_KEY, JSON.stringify({ userId, picks }));
+  } catch {
+    // Without storage the flow just ends in the Chief's chat.
+  }
+}
+
+export function loadPicks(
+  userId: string,
+  storage: Storage | null = sessionStorageOrNull(),
+): OnboardingPicks | null {
+  try {
+    const saved = JSON.parse(storage?.getItem(PICKS_KEY) ?? "null") as {
+      userId?: unknown;
+      picks?: unknown;
+    } | null;
+    if (saved?.userId !== userId) return null;
+    const parsed = OnboardingPicksSchema.safeParse(saved.picks);
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
   }
 }

@@ -41,6 +41,10 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
       }),
     ),
   ]);
+  const missionState = await deps.prisma.missionState.findUnique({
+    where: { spaceId_userId: { spaceId: actor.spaceId, userId: actor.userId } },
+    select: { shownAllAt: true },
+  });
   const hostOffer = hostComputerOffer({
     provider: deps.env.sandboxProvider,
     hostConnected: deps.env.sandboxHostComputer === true,
@@ -51,6 +55,7 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
     ticketBoardEnabled: deps.env.ticketBoardEnabled === true,
     phoneCallsEnabled: deps.env.phoneCallsEnabled === true,
     navLinks: deps.env.navLinks ?? [],
+    shortNav: missionState !== null && missionState.shownAllAt === null,
     maxUploadSizeBytes: attachmentMaxBytes(deps.env),
     userId: actor.userId,
     email: user.email,

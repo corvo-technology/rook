@@ -1,4 +1,4 @@
-import type { SignupSurvey, StoreCategory } from "@corvo/contracts";
+import type { OnboardingPicks, SignupSurvey, StoreCategory } from "@corvo/contracts";
 import { STORE_CATEGORIES } from "@corvo/contracts";
 import { Button, ToggleGroup, ToggleGroupItem } from "@corvo/ui-web";
 import { Trans } from "@lingui/react/macro";
@@ -8,25 +8,26 @@ import { useStoreCategoryLabels } from "../StoreCategoryChips";
 
 type Use = NonNullable<SignupSurvey["use"]>;
 
-export function UseStep({ onDone }: { onDone: (categories: StoreCategory[]) => void }) {
+export function UseStep({ onDone }: { onDone: (picks: OnboardingPicks) => void }) {
   const fieldId = useId();
   const labels = useStoreCategoryLabels();
   const [use, setUse] = useState<Use | null>(null);
-  const [picked, setPicked] = useState<ReadonlySet<StoreCategory>>(new Set());
+  // In the order tapped: the first one decides which agent is made.
+  const [picked, setPicked] = useState<readonly StoreCategory[]>([]);
 
   function toggle(category: StoreCategory) {
-    setPicked((current) => {
-      const next = new Set(current);
-      if (!next.delete(category)) next.add(category);
-      return next;
-    });
+    setPicked((current) =>
+      current.includes(category)
+        ? current.filter((item) => item !== category)
+        : [...current, category],
+    );
   }
 
   function submit() {
     // Answers are optional, so a slow or failed save never holds up onboarding. Saving writes
     // every survey field, so nothing is sent when nothing was answered.
     if (use) void rpc.onboarding.signupSurvey({ use }).catch(() => undefined);
-    onDone(STORE_CATEGORIES.filter((category) => picked.has(category)));
+    onDone({ ...(use ? { use } : {}), categories: [...picked] });
   }
 
   return (
@@ -68,8 +69,8 @@ export function UseStep({ onDone }: { onDone: (categories: StoreCategory[]) => v
             <Button
               key={category}
               type="button"
-              variant={picked.has(category) ? "secondary" : "outline"}
-              aria-pressed={picked.has(category)}
+              variant={picked.includes(category) ? "secondary" : "outline"}
+              aria-pressed={picked.includes(category)}
               className="h-auto justify-start py-3"
               onClick={() => toggle(category)}
             >

@@ -806,7 +806,7 @@ export function mcpRoutes(ctx: RouterContext) {
         return { ok: true as const };
       }),
       ensureTeam: authed.onboarding.ensureTeam.handler(async ({ context, input }) =>
-        startStarterTeam(deps, context.actor, input.locale),
+        startStarterTeam(deps, context.actor, input.locale, undefined, input.picks),
       ),
       start: authed.onboarding.start.handler(async ({ context, input }) => {
         await startOnboarding(onboardingDeps, context.actor, input.botId);

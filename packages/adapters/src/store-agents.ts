@@ -1,3 +1,4 @@
+import type { AgentCatalogEntry, AgentCatalogLocale } from "@corvo/contracts";
 import { agentCatalogLocale, agentCatalogSpawnKey } from "@corvo/contracts";
 import { AGENT_CATALOG, APP_CATALOG, SKILL_STORE } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
@@ -84,7 +85,33 @@ export async function installStoreAgent(
       error: `${entry.name[locale]} needs an inbox service first. The owner connects MillionSend or Resend under Apps in the Store, then adds it under Agents.`,
     };
   }
-  const owner = { spaceId: run.spaceId, userId: run.userId };
+  const added = await addStoreAgent(
+    deps,
+    { spaceId: run.spaceId, userId: run.userId },
+    { entry, locale, parentBotId: run.botId },
+  );
+  return {
+    ok: true as const,
+    ...(added.duplicate ? { duplicate: true as const } : {}),
+    botId: added.botId,
+    name: added.name,
+    title: added.title,
+    threadId: added.threadId,
+    skillsInstalled: added.skillsInstalled,
+    appsToConnect: added.appsToConnect,
+  };
+}
+
+/**
+ * Create the catalog agent for an owner with no run behind it: no greeting run is queued and no
+ * model is called. Adding twice returns the agent already there, flagged as a duplicate.
+ */
+export async function addStoreAgent(
+  deps: StoreDeps,
+  owner: { spaceId: string; userId: string },
+  input: { entry: AgentCatalogEntry; locale: AgentCatalogLocale; parentBotId?: string },
+) {
+  const { entry, locale } = input;
   const spawnKey = agentCatalogSpawnKey(entry.slug);
   let duplicate = false;
   let created: { id: string; name: string; title: string; threadId: string | null };
@@ -100,14 +127,14 @@ export async function installStoreAgent(
         notifyOnFinish: true,
         color: entry.color,
         // Creation provenance only; the agent stays a peer in the roster.
-        parentBotId: run.botId,
+        ...(input.parentBotId ? { parentBotId: input.parentBotId } : {}),
         spawnKey,
         ...(entry.disabledTools ? { disabledBuiltinTools: [...entry.disabledTools] } : {}),
       },
     );
   } catch (error) {
     const existing = await deps.prisma.bot.findUnique({
-      where: { spaceId_spawnKey: { spaceId: run.spaceId, spawnKey } },
+      where: { spaceId_spawnKey: { spaceId: owner.spaceId, spawnKey } },
       include: { thread: true },
     });
     if (!existing) throw error;
@@ -148,8 +175,7 @@ export async function installStoreAgent(
 
   const connected = new Set(servers.map((server) => server.slug));
   return {
-    ok: true as const,
-    ...(duplicate ? { duplicate: true as const } : {}),
+    duplicate,
     botId: created.id,
     name: created.name,
     title: created.title,

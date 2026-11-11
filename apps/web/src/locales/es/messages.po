@@ -297,6 +297,11 @@ msgstr "No se pudo conectar de forma segura con {provider}. Un programa de segur
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
+msgid "{provider} couldn't be reached through the network proxy. Check the proxy settings."
+msgstr "No se pudo acceder a {provider} a través del proxy de red. Revisa la configuración del proxy."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
 msgid "{provider} couldn't be reached. Check that it's running."
 msgstr "{provider} no está accesible. Comprueba que esté en funcionamiento."
 
@@ -379,6 +384,11 @@ msgstr "{provider} alcanzó el límite semanal de gasto."
 #: src/lib/run-error.ts
 msgid "{provider} rejected the API key. Check your connection settings."
 msgstr "{provider} rechazó la clave de API. Revisa la configuración de conexión."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "{provider} sign-in is no longer valid."
+msgstr "El inicio de sesión de {provider} ya no es válido."
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -571,6 +581,7 @@ msgid "Add a label"
 msgstr "Añadir una etiqueta"
 
 #: src/components/ApprovalRulesSettings.tsx
+#: src/components/AutonomyPicker.tsx
 msgid "Add a model in Settings to use this."
 msgstr "Agrega un modelo en Configuración para usarlo."
 
@@ -581,6 +592,10 @@ msgstr "¿Añadir una llave de acceso para iniciar sesión más rápido?"
 #: src/pages/shell/use-routine-editor.ts
 msgid "Add a run time for this one-shot."
 msgstr "Agrega una hora de ejecución para este one-shot."
+
+#: src/components/MissionList.tsx
+msgid "Add a second agent"
+msgstr "Añade un segundo agente"
 
 #: src/pages/McpServersOverlay.tsx
 msgid "Add a server name."
@@ -883,6 +898,10 @@ msgctxt "incoming call"
 msgid "Answer"
 msgstr "Contestar"
 
+#: src/components/MissionList.tsx
+msgid "Answer a request"
+msgstr "Responde una solicitud"
+
 #: src/pages/shell/message-view.tsx
 msgid "answered"
 msgstr "respondida"
@@ -1013,6 +1032,10 @@ msgstr "Artefactos"
 msgid "Ask"
 msgstr "Preguntar"
 
+#: src/components/AutonomyPicker.tsx
+msgid "Asks before any change"
+msgstr "Pregunta antes de cualquier cambio"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Asks you before it changes anything."
 msgstr "Te pregunta antes de cambiar cualquier cosa."
@@ -1042,10 +1065,6 @@ msgstr "Adjuntando {value}"
 #: src/pages/shell/chat-shared.ts
 msgid "Attachment"
 msgstr "Archivo adjunto"
-
-#: src/lib/model-connection-preflight.ts
-msgid "Authentication failed."
-msgstr "Error de autenticación."
 
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
@@ -1306,6 +1325,7 @@ msgid "Can't read images"
 msgstr "No puede leer imágenes"
 
 #: src/components/AskCard.tsx
+#: src/components/AutonomyPicker.tsx
 #: src/components/ComputerMaintenanceActions.tsx
 #: src/components/markdown-link-prompt.tsx
 #: src/components/PasskeySettings.tsx
@@ -1428,14 +1448,6 @@ msgstr "Buscar actualizaciones"
 msgid "Check in."
 msgstr "Regístrate."
 
-#: src/lib/model-connection-preflight.ts
-msgid "Check the API key or sign-in, then test again."
-msgstr "Revisa la clave de API o el inicio de sesión y vuelve a probar."
-
-#: src/lib/model-connection-preflight.ts
-msgid "Check the server URL and network, then test again."
-msgstr "Revisa la URL del servidor y la red y vuelve a probar."
-
 #: src/pages/shell/import-setup-card.tsx
 msgid "Check this yourself"
 msgstr "Compruébalo tú"
@@ -1470,6 +1482,7 @@ msgstr "Elige un bot"
 msgid "Choose a color or upload an image"
 msgstr "Elige un color o sube una imagen"
 
+#: src/lib/model-problem.ts
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/shell/composer-error.tsx
 msgid "Choose a model"
@@ -1747,10 +1760,6 @@ msgstr "Confirmar eliminación"
 msgid "Confirm password"
 msgstr "Confirmar contraseña"
 
-#: src/lib/model-connection-preflight.ts
-msgid "Confirm the URL is reachable from this browser session, then test again."
-msgstr "Confirma que la URL es accesible desde esta sesión del navegador y vuelve a probar."
-
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/ChatAppsRow.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
@@ -1762,8 +1771,10 @@ msgstr "Confirma que la URL es accesible desde esta sesión del navegador y vuel
 msgid "Connect"
 msgstr "Conectar"
 
+#. placeholder {0}: app.name
 #. placeholder {0}: appName(slug)
 #: src/pages/AgentsStore.tsx
+#: src/pages/shell/chat-empty.tsx
 msgid "Connect {0}"
 msgstr "Conectar {0}"
 
@@ -1771,6 +1782,7 @@ msgstr "Conectar {0}"
 msgid "Connect {selectedProviderName}"
 msgstr "Conectar {selectedProviderName}"
 
+#: src/lib/model-problem.ts
 #: src/pages/Onboarding.tsx
 #: src/pages/shell/composer-error.tsx
 msgid "Connect a model"
@@ -1780,6 +1792,10 @@ msgstr "Conectar un modelo"
 #: src/lib/run-error.ts
 msgid "Connect a model in Settings before running bots."
 msgstr "Conecta un modelo en Configuración antes de ejecutar bots."
+
+#: src/components/MissionList.tsx
+msgid "Connect an app"
+msgstr "Conecta una aplicación"
 
 #: src/pages/model-settings/connection-controls.tsx
 msgid "Connect API key"
@@ -1846,10 +1862,6 @@ msgstr "Conectando…"
 msgid "Connection"
 msgstr "Conexión"
 
-#: src/lib/model-connection-preflight.ts
-msgid "Connection test failed."
-msgstr "La prueba de conexión falló."
-
 #. placeholder {0}: item.name
 #: src/pages/PluginsOverlay.tsx
 msgid "Connection to {0} is still pending. You can close this and check again."
@@ -1886,6 +1898,7 @@ msgstr "Límite de contexto"
 #: src/pages/onboarding-quick-connect.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/onboarding/ComputerStep.tsx
+#: src/pages/onboarding/FirstBotStep.tsx
 #: src/pages/onboarding/UseStep.tsx
 #: src/pages/onboarding/WorkspaceStep.tsx
 #: src/pages/shell/agent-import.tsx
@@ -2233,18 +2246,19 @@ msgstr "No se pudo abrir la facturación"
 msgid "Could not play a test clip"
 msgstr "No se pudo reproducir un clip de prueba"
 
-#: src/lib/model-connection-preflight.ts
-msgid "Could not reach the model server."
-msgstr "No se pudo acceder al servidor del modelo."
-
 #: src/components/PasskeyOffer.tsx
 #: src/components/PasskeySettings.tsx
 #: src/lib/computer-sandbox.ts
+#: src/lib/model-problem.ts
 #: src/lib/user-error.ts
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
 msgid "Could not reach the server"
 msgstr "No se pudo alcanzar el servidor"
+
+#: src/lib/model-connection-preflight.ts
+msgid "Could not reach this model server"
+msgstr "No se pudo acceder a este servidor de modelos"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Could not read these files"
@@ -2745,6 +2759,7 @@ msgstr "Control del escritorio"
 msgid "Desktop update"
 msgstr "Actualización de escritorio"
 
+#: src/components/ModelProblemNotice.tsx
 #: src/pages/RoutineRunDetail.tsx
 #: src/pages/RoutineRunHistory.tsx
 #: src/pages/shell/composer-error.tsx
@@ -2845,9 +2860,17 @@ msgstr "Docker limita el acceso a tu computadora para mayor seguridad. Usar {hos
 msgid "Document changed. Reopen to edit the latest version."
 msgstr "El documento ha cambiado. Vuelve a abrirlo para editar la última versión."
 
+#: src/components/AutonomyPicker.tsx
+msgid "Does everything without asking"
+msgstr "Lo hace todo sin preguntar"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Does everything without asking. Best for bots you trust."
 msgstr "Lo hace todo sin preguntar. Ideal para bots de tu confianza."
+
+#: src/components/AutonomyPicker.tsx
+msgid "Does what fits your request"
+msgstr "Hace lo que encaja con tu petición"
 
 #: src/pages/Auth.tsx
 msgid "Don’t have an account?"
@@ -3408,6 +3431,10 @@ msgstr "hora"
 msgid "hours"
 msgstr "horas"
 
+#: src/components/AutonomyPicker.tsx
+msgid "How much does {name} do on its own?"
+msgstr "¿Cuánto hace {name} por su cuenta?"
+
 #: src/pages/RoutineSchedule.tsx
 msgid "How often"
 msgstr "Con qué frecuencia"
@@ -3624,6 +3651,10 @@ msgstr "Ir al mensaje respondido: {excerpt}"
 msgid "just now"
 msgstr "ahora mismo"
 
+#: src/components/MissionList.tsx
+msgid "Keep a memory"
+msgstr "Guarda un recuerdo"
+
 #: src/pages/shell/message-hover-actions.tsx
 msgid "Keep in the wiki"
 msgstr "Guardar en la wiki"
@@ -3682,6 +3713,14 @@ msgstr "Más tarde"
 #: src/pages/WikiBrowser.tsx
 msgid "Learn from conversations"
 msgstr "Aprender de las conversaciones"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Let {name} act without asking?"
+msgstr "¿Dejar que {name} actúe sin preguntar?"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Let bots act without asking?"
+msgstr "¿Dejar que los bots actúen sin preguntar?"
 
 #: src/components/DesktopControlSettings.tsx
 msgid "Let bots see and use your apps. Actions ask first."
@@ -4062,6 +4101,10 @@ msgstr "minutos"
 msgid "Missed call"
 msgstr "Llamada perdida"
 
+#: src/components/MissionList.tsx
+msgid "Missions"
+msgstr "Misiones"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Mode"
 msgstr "Modo"
@@ -4251,6 +4294,7 @@ msgstr "Necesita: {names}"
 msgid "Never ask"
 msgstr "No preguntar nunca"
 
+#: src/components/NewDot.tsx
 #: src/pages/shell/chat-context.tsx
 msgid "New"
 msgstr "Nuevo"
@@ -5227,6 +5271,7 @@ msgstr "Reemplazar clave de API"
 msgid "Replace its instructions"
 msgstr "Reemplazar sus instrucciones"
 
+#: src/lib/model-problem.ts
 #: src/pages/shell/composer-error.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Replace key"
@@ -5372,10 +5417,6 @@ msgstr "Volver a Rook"
 #: src/components/AskCard.tsx
 msgid "Review before {reviewing}"
 msgstr "Revisa antes: {reviewing}"
-
-#: src/lib/model-connection-preflight.ts
-msgid "Review provider settings and test again."
-msgstr "Revisa la configuración del proveedor y vuelve a probar."
 
 #. placeholder {0}: revision.revision
 #: src/pages/WikiBrowser.tsx
@@ -5561,6 +5602,10 @@ msgstr "Guardando…"
 #: src/lib/call-session.ts
 msgid "Say yes or no, or answer in a sentence."
 msgstr "Di sí o no, o responde en una frase."
+
+#: src/components/MissionList.tsx
+msgid "Schedule a routine"
+msgstr "Programa una rutina"
 
 #: src/components/ModelCredits.tsx
 msgid "Scheduled routines"
@@ -5764,6 +5809,10 @@ msgstr "Mostrar bots"
 msgid "Show computer"
 msgstr "Mostrar computadora"
 
+#: src/components/MissionList.tsx
+msgid "Show everything"
+msgstr "Mostrar todo"
+
 #: src/pages/Artifacts.tsx
 msgid "Show list"
 msgstr "Mostrar lista"
@@ -5811,6 +5860,7 @@ msgid "Sign in"
 msgstr "Iniciar sesión"
 
 #: src/components/AccountAccess.tsx
+#: src/lib/model-problem.ts
 #: src/lib/passkeys.ts
 #: src/lib/user-error.ts
 #: src/pages/model-settings/connection-controls.tsx
@@ -6024,12 +6074,28 @@ msgstr "Paso {number}"
 msgid "Steps"
 msgstr "Pasos"
 
+#: src/components/AutonomyPicker.tsx
+msgid "Still asks before a security change after it read outside content. Blocked actions stay blocked."
+msgstr "Sigue preguntando antes de un cambio de seguridad después de leer contenido externo. Las acciones bloqueadas siguen bloqueadas."
+
+#: src/components/AutonomyPicker.tsx
+msgid "Still asks before anything that changes something, and before opening a site you didn't mention."
+msgstr "Sigue preguntando antes de cualquier cosa que cambie algo y antes de abrir un sitio que no mencionaste."
+
+#: src/components/AutonomyPicker.tsx
+msgid "Still asks when a second model finds it outside your request, and before security changes."
+msgstr "Sigue preguntando cuando un segundo modelo ve algo fuera de tu petición y antes de los cambios de seguridad."
+
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/computer-overlay.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Stop"
 msgstr "Detener"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Stop asking"
+msgstr "Dejar de preguntar"
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Stop computer"
@@ -6148,6 +6214,10 @@ msgstr "Tabla"
 msgid "Take control"
 msgstr "Tomar el control"
 
+#: src/components/MissionList.tsx
+msgid "Talk to your agent"
+msgstr "Habla con tu agente"
+
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Teach a task"
 msgstr "Enseñar una tarea"
@@ -6210,10 +6280,6 @@ msgstr "Se eliminarán el bot y lo que añadió su importación."
 msgid "The bot can use the file but won't see the picture."
 msgstr "El bot puede usar el archivo, pero no verá la imagen."
 
-#: src/lib/model-connection-preflight.ts
-msgid "The connection timed out."
-msgstr "Se agotó el tiempo de conexión."
-
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "The model hit its output limit before finishing its reply."
@@ -6228,10 +6294,6 @@ msgstr "El proveedor de modelos devolvió un error."
 #: src/lib/run-error.ts
 msgid "The model returned an unusable response. Try again."
 msgstr "El modelo devolvió una respuesta inutilizable. Inténtalo de nuevo."
-
-#: src/lib/model-connection-preflight.ts
-msgid "The provider is rate-limiting requests."
-msgstr "El proveedor está limitando la frecuencia de las solicitudes."
 
 #: src/lib/computer-screen.ts
 msgid "The screen connection closed."
@@ -6531,6 +6593,7 @@ msgstr "La prueba termina el {day}"
 msgid "Trigger"
 msgstr "Disparador"
 
+#: src/components/ModelProblemNotice.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 msgid "Try again"
@@ -6811,10 +6874,6 @@ msgstr "frente al mes anterior"
 #: src/pages/Usage.tsx
 msgid "vs. the same days last month"
 msgstr "frente a los mismos días del mes pasado"
-
-#: src/lib/model-connection-preflight.ts
-msgid "Wait a moment and test again."
-msgstr "Espera un momento y vuelve a probar."
 
 #: src/pages/shell/message-view.tsx
 msgid "waiting"

@@ -476,3 +476,19 @@ describe("ScriptedAgentRuntime steering", () => {
     expect(events.at(-1)).toEqual({ type: "done", text: "done." });
   });
 });
+
+describe("inferScript several model changes", () => {
+  it("proposes one model change per bot in a single reply", () => {
+    const [turn] = inferScript("set the models of bots a1 and b2 to openai/gpt-6-luna");
+    expect(turn?.toolCalls).toEqual([
+      {
+        name: "set_child_bot_model",
+        args: { bot_id: "a1", provider: "openai", model: "gpt-6-luna" },
+      },
+      {
+        name: "set_child_bot_model",
+        args: { bot_id: "b2", provider: "openai", model: "gpt-6-luna" },
+      },
+    ]);
+  });
+});

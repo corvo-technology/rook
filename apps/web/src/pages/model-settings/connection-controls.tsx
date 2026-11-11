@@ -240,7 +240,12 @@ export function ConnectionControls({
           </Button>
           {preflightTarget === "sign-in" ? (
             <div className="w-full">
-              <ModelPreflightFeedback success={preflightSuccess} failure={preflightFailure} />
+              <ModelPreflightFeedback
+                success={preflightSuccess}
+                failure={preflightFailure}
+                onRetry={() => void testOAuthConnection()}
+                onAction={{ "sign-in": beginSelectedSubscriptionSignIn }}
+              />
             </div>
           ) : null}
         </div>
@@ -347,7 +352,11 @@ export function ConnectionControls({
             </Button>
           </div>
           {preflightTarget === "api-key" ? (
-            <ModelPreflightFeedback success={preflightSuccess} failure={preflightFailure} />
+            <ModelPreflightFeedback
+              success={preflightSuccess}
+              failure={preflightFailure}
+              onRetry={() => void testApiKeyConnection()}
+            />
           ) : null}
         </div>
       ) : null}

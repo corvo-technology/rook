@@ -126,6 +126,8 @@ describe("mobile i18n", () => {
       "This model's context window is too small. Choose another model.",
       "{provider} couldn't be reached securely. A security program or network filter may be intercepting the connection.",
       "{provider} took too long to respond. Try again.",
+      "{provider} sign-in is no longer valid.",
+      "{provider} couldn't be reached through the network proxy. Check the proxy settings.",
       "{provider} is overloaded right now. Try again in a moment.",
       "{provider} couldn't be reached. Check that it's running.",
       "This conversation is too long for the model. Retrying won't help. Start a new chat or shorten your message.",

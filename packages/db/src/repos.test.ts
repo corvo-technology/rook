@@ -47,6 +47,25 @@ function reposFor(memoryScope: string | null) {
   return createRepos(prisma as unknown as PrismaClient);
 }
 
+describe("createRepos.listBots approval mode", () => {
+  async function modeOf(approvalMode?: string | null) {
+    const prisma = {
+      bot: { findMany: vi.fn(async () => [{ ...baseBot, approvalMode }]) },
+      run: { findMany: vi.fn(async () => []) },
+      $queryRaw: vi.fn(async () => []),
+    };
+    const bots = await createRepos(prisma as unknown as PrismaClient).listBots(actor);
+    return bots[0]?.approvalMode;
+  }
+
+  it("maps a stored mode and treats anything else as following the default", async () => {
+    expect(await modeOf("ask")).toBe("ask");
+    expect(await modeOf("free")).toBeNull();
+    expect(await modeOf(undefined)).toBeNull();
+    expect(await modeOf(null)).toBeNull();
+  });
+});
+
 describe("createRepos.listBots", () => {
   it("surfaces a failed foreground run and clears the signal after recovery", async () => {
     const findMany = vi.fn(async () => [baseBot]);

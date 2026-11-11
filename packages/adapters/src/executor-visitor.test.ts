@@ -271,7 +271,8 @@ async function run(options: {
 }
 
 describe("what a visitor's run is told about the owner", () => {
-  const all = (request: AgentRunRequest) => `${request.instructions}\n${request.prompt}`;
+  const all = (request: AgentRunRequest) =>
+    `${request.instructions}\n${request.liveContext ?? ""}\n${request.prompt}`;
 
   it("is the control: the owner's own run is told about skills, the computer and the other agents", async () => {
     const { request } = await run({ visitor: false, desktop: true });
@@ -305,7 +306,9 @@ describe("what a visitor's run is offered", () => {
     expect(toolNames).toContain("shell");
     expect(toolNames).toContain("remember");
     expect(toolNames).toContain("GMAIL_FETCH_EMAILS");
-    expect(`${request.instructions}\n${request.prompt}`).toContain(SECRET);
+    expect(`${request.instructions}\n${request.liveContext ?? ""}\n${request.prompt}`).toContain(
+      SECRET,
+    );
   });
 
   it("offers a visitor only reply and ticket creation, and no connector tool when none is ticked", async () => {
@@ -339,14 +342,16 @@ describe("what a visitor's run is offered", () => {
 
   it("does not tell a visitor's run which other apps the owner has connected", async () => {
     const { request } = await run({ visitor: true, ticked: ["linear"] });
-    const text = `${request.instructions}\n${request.prompt}`;
+    const text = `${request.instructions}\n${request.liveContext ?? ""}\n${request.prompt}`;
     expect(text).toContain("Linear");
     expect(text).not.toContain("Gmail");
   });
 
   it("never puts the owner's memory in front of a visitor's run", async () => {
     const { request } = await run({ visitor: true, ticked: ["linear"] });
-    expect(`${request.instructions}\n${request.prompt}`).not.toContain(SECRET);
+    expect(
+      `${request.instructions}\n${request.liveContext ?? ""}\n${request.prompt}`,
+    ).not.toContain(SECRET);
     for (const message of request.history) expect(message.content).not.toContain(SECRET);
   });
 });

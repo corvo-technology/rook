@@ -10,6 +10,7 @@ import type { PrismaClient } from "./client.js";
 import { CrossSpaceCommunicationBlockedError } from "./cross-space-communication.js";
 import {
   AnswerTooLongError,
+  addApprovalAskToPausedRun,
   answerRunInput,
   answerWaitingRunWithTextInTransaction,
   appendEvent,
@@ -23,6 +24,7 @@ import {
   followThreadEvents,
   pauseRunForInput,
   pauseRunForTakeover,
+  retryFailedRun,
   sendUserMessage,
   settleReleasedTakeoverCards,
 } from "./events.js";
@@ -4551,4 +4553,302 @@ it("checks cross-space peer permission inside the message transaction before cre
   ).rejects.toBeInstanceOf(CrossSpaceCommunicationBlockedError);
   expect(tx.task.create).not.toHaveBeenCalled();
   expect(tx.run.create).not.toHaveBeenCalled();
+});
+
+describe("several proposal cards on one message", () => {
+  const proposal = (id: string, status: "pending" | "answered" = "pending") => ({
+    kind: "ask" as const,
+    approvalEffectId: id,
+    text: `Change ${id}?`,
+    proposal: true as const,
+    status,
+    actions: [
+      { id: "allow", label: "Apply" },
+      { id: "deny", label: "Dismiss" },
+    ],
+  });
+
+  function db(blocks: unknown[], runStatus = "waiting_input") {
+    const tx = {
+      $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+      message: {
+        findFirst: vi.fn().mockResolvedValue({ id: "message-1", blocks }),
+        findMany: vi.fn().mockResolvedValue([{ id: "message-1", blocks }]),
+        update: vi.fn().mockResolvedValue({ id: "message-1" }),
+      },
+      run: {
+        findFirst: vi
+          .fn()
+          .mockResolvedValue(
+            runStatus === "waiting_input" ? { botId: "bot-1", userId: "user-1" } : null,
+          ),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        findUnique: vi.fn().mockResolvedValue({ status: "waiting_input" }),
+      },
+      task: { updateMany: vi.fn() },
+      externalEffect: {
+        findFirst: vi.fn(async ({ where }: { where: { id: string } }) => ({
+          id: where.id,
+          kind: "set_child_bot_model",
+          status: "intended",
+          request: {},
+        })),
+        update: vi.fn().mockResolvedValue({}),
+      },
+      thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 10 }) },
+      event: {
+        create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({
+          ...event(data.seq),
+          type: data.type,
+        })),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
+    } as unknown as PrismaClient;
+    return { tx, prisma };
+  }
+
+  const answer = {
+    spaceId: "workspace-1",
+    threadId: "thread-1",
+    runId: "run-1",
+    messageId: "message-1",
+    answeredByUserId: "user-1",
+    answer: "allow",
+  };
+
+  it("decides only the card named, and keeps the run waiting while others are pending", async () => {
+    const { tx, prisma } = db([proposal("e1"), proposal("e2"), proposal("e3")]);
+    await expect(
+      answerRunInput(prisma, { ...answer, approvalEffectId: "e2" }, new TestFanout()),
+    ).resolves.toBe(true);
+    expect(tx.externalEffect.update).toHaveBeenCalledTimes(1);
+    expect(tx.externalEffect.update).toHaveBeenCalledWith({
+      where: { id: "e2" },
+      data: { status: "approved" },
+    });
+    expect(tx.run.updateMany).not.toHaveBeenCalled();
+    const written = tx.message.update.mock.calls[0]?.[0].data.blocks as Array<{
+      approvalEffectId: string;
+      status: string;
+      answer?: string;
+    }>;
+    expect(written.map((block) => [block.approvalEffectId, block.status])).toEqual([
+      ["e1", "pending"],
+      ["e2", "answered"],
+      ["e3", "pending"],
+    ]);
+  });
+
+  it("queues the run once the last pending card is decided", async () => {
+    const { tx, prisma } = db([
+      proposal("e1", "answered"),
+      proposal("e2", "answered"),
+      proposal("e3"),
+    ]);
+    await expect(
+      answerRunInput(
+        prisma,
+        { ...answer, answer: "deny", approvalEffectId: "e3" },
+        new TestFanout(),
+      ),
+    ).resolves.toBe(true);
+    expect(tx.externalEffect.update).toHaveBeenCalledWith({
+      where: { id: "e3" },
+      data: { status: "denied" },
+    });
+    expect(tx.run.updateMany).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses an answer that names no card while more than one is pending", async () => {
+    const { tx, prisma } = db([proposal("e1"), proposal("e2")]);
+    await expect(answerRunInput(prisma, answer, new TestFanout())).resolves.toBe(false);
+    expect(tx.externalEffect.update).not.toHaveBeenCalled();
+    expect(tx.message.update).not.toHaveBeenCalled();
+    expect(tx.run.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("accepts an answer without a card name when exactly one is pending", async () => {
+    const { tx, prisma } = db([proposal("e1", "answered"), proposal("e2")]);
+    await expect(answerRunInput(prisma, answer, new TestFanout())).resolves.toBe(true);
+    expect(tx.externalEffect.update).toHaveBeenCalledWith({
+      where: { id: "e2" },
+      data: { status: "approved" },
+    });
+    expect(tx.run.updateMany).toHaveBeenCalledTimes(1);
+  });
+
+  describe("addApprovalAskToPausedRun", () => {
+    const input = (block = proposal("e9")) => ({
+      spaceId: "workspace-1",
+      threadId: "thread-1",
+      runId: "run-1",
+      block,
+    });
+
+    it("appends the card to the paused message", async () => {
+      const { tx, prisma } = db([proposal("e1")]);
+      await expect(addApprovalAskToPausedRun(prisma, input(), new TestFanout())).resolves.toBe(
+        true,
+      );
+      const written = tx.message.update.mock.calls[0]?.[0].data.blocks as unknown[];
+      expect(written).toHaveLength(2);
+      expect(tx.event.create).toHaveBeenCalled();
+    });
+
+    it("changes nothing when the run is no longer waiting", async () => {
+      const { tx, prisma } = db([proposal("e1")], "queued");
+      await expect(addApprovalAskToPausedRun(prisma, input())).resolves.toBe(false);
+      expect(tx.message.update).not.toHaveBeenCalled();
+    });
+
+    it("changes nothing when the pending ask is not a proposal", async () => {
+      const plain = { ...proposal("e1"), proposal: undefined };
+      const { tx, prisma } = db([plain]);
+      await expect(addApprovalAskToPausedRun(prisma, input())).resolves.toBe(false);
+      expect(tx.message.update).not.toHaveBeenCalled();
+    });
+
+    it("changes nothing at five proposal cards", async () => {
+      const { tx, prisma } = db(["e1", "e2", "e3", "e4", "e5"].map((id) => proposal(id)));
+      await expect(addApprovalAskToPausedRun(prisma, input())).resolves.toBe(false);
+      expect(tx.message.update).not.toHaveBeenCalled();
+    });
+  });
+});
+
+describe("retryFailedRun", () => {
+  const input = {
+    spaceId: "space-1",
+    userId: "user-1",
+    threadId: "thread-1",
+    runId: "run-failed",
+  };
+  const failedRun = {
+    spaceId: "space-1",
+    threadId: "thread-1",
+    userId: "user-1",
+    botId: "bot-1",
+    taskId: "task-1",
+    status: "failed",
+    trigger: "user",
+    sourceMessageId: "message-1",
+    modelPinned: false,
+    modelProvider: "openai",
+    modelId: "gpt-test",
+    thinkingLevel: "high",
+  };
+
+  function setup(
+    options: {
+      failed?: Partial<typeof failedRun> | null;
+      newestId?: string;
+      active?: boolean;
+      existing?: { id: string } | null;
+    } = {},
+  ) {
+    const failed = options.failed === null ? null : { ...failedRun, ...options.failed };
+    const tx = {
+      run: {
+        findUnique: vi.fn().mockResolvedValue(failed),
+        findFirst: vi.fn(async ({ where }: { where: { status?: unknown } }) =>
+          where.status
+            ? options.active
+              ? { id: "run-active" }
+              : null
+            : { id: options.newestId ?? "run-failed" },
+        ),
+        create: vi.fn().mockResolvedValue({ id: "run-retry" }),
+      },
+      task: { update: vi.fn() },
+      message: { create: vi.fn() },
+    };
+    const prisma = {
+      run: { findFirst: vi.fn().mockResolvedValue(options.existing ?? null) },
+      $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
+    } as unknown as PrismaClient;
+    return { prisma, tx };
+  }
+
+  it("queues the same message again on the same task without writing a message", async () => {
+    const { prisma, tx } = setup();
+    await expect(retryFailedRun(prisma, input)).resolves.toEqual({
+      runId: "run-retry",
+      created: true,
+    });
+    expect(tx.run.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          taskId: "task-1",
+          sourceMessageId: "message-1",
+          botId: "bot-1",
+          trigger: "user",
+          status: "queued",
+          clientNonce: "retry:run-failed",
+        }),
+      }),
+    );
+    expect(tx.task.update).toHaveBeenCalledWith({
+      where: { id: "task-1" },
+      data: { status: "queued" },
+    });
+    expect(tx.message.create).not.toHaveBeenCalled();
+  });
+
+  it("returns the same run again for a repeated retry", async () => {
+    const { prisma, tx } = setup({ existing: { id: "run-retry" } });
+    await expect(retryFailedRun(prisma, input)).resolves.toEqual({
+      runId: "run-retry",
+      created: false,
+    });
+    expect(tx.run.create).not.toHaveBeenCalled();
+  });
+
+  it("returns the winner when a concurrent retry created the run first", async () => {
+    const { prisma, tx } = setup();
+    tx.run.create.mockRejectedValue(Object.assign(new Error("unique"), { code: "P2002" }));
+    vi.mocked(prisma.run.findFirst)
+      .mockResolvedValueOnce(null as never)
+      .mockResolvedValueOnce({ id: "run-retry" } as never);
+    await expect(retryFailedRun(prisma, input)).resolves.toEqual({
+      runId: "run-retry",
+      created: false,
+    });
+  });
+
+  it.each([
+    ["a newer run follows it", { newestId: "run-newer" }],
+    ["it is a routine run", { failed: { trigger: "routine" } }],
+    ["it succeeded", { failed: { status: "completed" } }],
+    ["it belongs to another user", { failed: { userId: "user-2" } }],
+    ["it belongs to another thread", { failed: { threadId: "thread-2" } }],
+    ["it has no source message", { failed: { sourceMessageId: null } }],
+    ["another run is active", { active: true }],
+    ["it does not exist", { failed: null }],
+  ])("returns null when %s", async (_name, options) => {
+    const { prisma, tx } = setup(options as Parameters<typeof setup>[0]);
+    await expect(retryFailedRun(prisma, input)).resolves.toBeNull();
+    expect(tx.run.create).not.toHaveBeenCalled();
+  });
+
+  it("keeps a pinned model and leaves an unpinned run on the current choice", async () => {
+    const pinned = setup({ failed: { modelPinned: true } });
+    await retryFailedRun(pinned.prisma, input);
+    expect(pinned.tx.run.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          modelProvider: "openai",
+          modelId: "gpt-test",
+          thinkingLevel: "high",
+          modelPinned: true,
+        }),
+      }),
+    );
+    const unpinned = setup();
+    await retryFailedRun(unpinned.prisma, input);
+    const data = unpinned.tx.run.create.mock.calls[0]?.[0].data;
+    expect(data.modelProvider).toBeUndefined();
+    expect(data.modelPinned).toBeUndefined();
+  });
 });

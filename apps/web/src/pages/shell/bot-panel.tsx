@@ -1,5 +1,6 @@
 import type {
   AgentSkillCatalogEntry,
+  ApprovalMode,
   Bot,
   ComputerMode,
   ModelCatalogEntry,
@@ -20,6 +21,7 @@ import {
   modelOptionKey,
   parseModelOptionKey,
   resolveSelectableModelId,
+  storedBotApprovalMode,
 } from "@corvo/core";
 import {
   Button,
@@ -40,6 +42,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Download, Settings, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { Suspense, useEffect, useId, useRef, useState } from "react";
+import { AutonomyPicker } from "../../components/AutonomyPicker";
 import { ErrorBoundary, SectionLoadFailed } from "../../components/ErrorBoundary";
 import { InstructionSettings } from "../../components/InstructionSettings";
 import { WikiCaptureSwitch } from "../../components/WikiCaptureSwitch";
@@ -143,6 +146,7 @@ export function BotSettings({
     squadRouting?: boolean;
     crossSpaceCommunication?: boolean;
     dailyCapUsd?: number | null;
+    approvalMode?: ApprovalMode | null;
     voiceId?: string | null;
     modelProvider?: string | null;
     modelId?: string | null;
@@ -196,6 +200,8 @@ export function BotSettings({
   );
   const [dailyCap, setDailyCap] = useState(dailyCapText(bot.dailyCapUsd));
   useEffect(() => setDailyCap(dailyCapText(bot.dailyCapUsd)), [bot.dailyCapUsd]);
+  const [approvalMode, setApprovalMode] = useState(bot.approvalMode);
+  useEffect(() => setApprovalMode(bot.approvalMode), [bot.approvalMode]);
   const [fleetManagement, setFleetManagement] = useState(bot.fleetManagement);
   useEffect(() => setFleetManagement(bot.fleetManagement), [bot.fleetManagement]);
   const [squadRouting, setSquadRouting] = useState(bot.squadRouting);
@@ -227,6 +233,11 @@ export function BotSettings({
   const credentialsQuery = useQuery({ ...queries.models.credentials.queryOptions(), ...refresh });
   const catalogQuery = useQuery({ ...queries.models.list.queryOptions(), ...refresh });
   const meQuery = useQuery({ ...queries.me.queryOptions(), ...refresh });
+  const autoReviewQuery = useQuery({
+    ...queries.autoReview.get.queryOptions({ input: {} }),
+    ...refresh,
+  });
+  const defaultApprovalMode = autoReviewQuery.data?.mode;
   const credentials = credentialsQuery.data ?? NO_CREDENTIALS;
   const catalog = catalogQuery.data ?? NO_CATALOG;
   const me = meQuery.data ?? null;
@@ -350,6 +361,7 @@ export function BotSettings({
       squadRouting?: boolean;
       crossSpaceCommunication?: boolean;
       dailyCapUsd?: number | null;
+      approvalMode?: ApprovalMode | null;
       disabledBuiltinTools?: string[];
       baseDisabledBuiltinTools?: string[];
     },
@@ -364,6 +376,10 @@ export function BotSettings({
       }
       if (patchOverrides?.dailyCapUsd !== undefined) {
         await onSave({ dailyCapUsd: patchOverrides.dailyCapUsd });
+        return;
+      }
+      if (patchOverrides?.approvalMode !== undefined) {
+        await onSave({ approvalMode: patchOverrides.approvalMode });
         return;
       }
       if (patchOverrides?.fleetManagement !== undefined) {
@@ -467,6 +483,7 @@ export function BotSettings({
       if (patchOverrides?.crossSpaceCommunication !== undefined)
         setCrossSpaceCommunication(!patchOverrides.crossSpaceCommunication);
       if (patchOverrides?.dailyCapUsd !== undefined) setDailyCap(dailyCapText(bot.dailyCapUsd));
+      if (patchOverrides?.approvalMode !== undefined) setApprovalMode(bot.approvalMode);
       if (patchOverrides?.fleetManagement !== undefined)
         setFleetManagement(!patchOverrides.fleetManagement);
       if (patchOverrides?.squadRouting !== undefined) setSquadRouting(!patchOverrides.squadRouting);
@@ -502,6 +519,7 @@ export function BotSettings({
     squadRouting?: boolean;
     crossSpaceCommunication?: boolean;
     dailyCapUsd?: number | null;
+    approvalMode?: ApprovalMode | null;
     disabledBuiltinTools?: string[];
   }) {
     // Serialize full-object auto-saves so an older in-flight request cannot
@@ -709,6 +727,21 @@ export function BotSettings({
                 </div>
               ) : null}
             </SettingsGroup>
+            <section>
+              <AutonomyPicker
+                name={bot.name}
+                value={approvalMode ?? defaultApprovalMode ?? "ask"}
+                checkerAvailable={autoReviewQuery.data?.checkerAvailable ?? false}
+                // The default decides what "same as everyone" means, so it is never guessed.
+                disabled={saving || !defaultApprovalMode}
+                onChange={(choice) => {
+                  if (!defaultApprovalMode) return;
+                  const stored = storedBotApprovalMode(choice, defaultApprovalMode);
+                  setApprovalMode(stored);
+                  void enqueueSave({ approvalMode: stored });
+                }}
+              />
+            </section>
             <SettingsGroup label={t`Voice`}>
               <label
                 htmlFor={`${ids}-auto-speak`}

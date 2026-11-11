@@ -26,6 +26,9 @@ export const DE_MESSAGES: Record<string, string> = {
   "Main model": "Hauptmodell",
   "Add fallback": "Backup-Modell hinzufügen",
   "Manage {provider}": "{provider} verwalten",
+  "Found on this computer": "Auf diesem Computer gefunden",
+  "Local models": "Lokale Modelle",
+  Use: "Verwenden",
   "Add provider": "Anbieter hinzufügen",
   "Choose a model": "Modell auswählen",
   "Use 80 characters or fewer": "Höchstens 80 Zeichen verwenden",
@@ -131,6 +134,9 @@ export const DE_MESSAGES: Record<string, string> = {
     "Das Kontextfenster dieses Modells ist zu klein. Wähle ein anderes Modell.",
   "{provider} couldn't be reached securely. A security program or network filter may be intercepting the connection.":
     "{provider} konnte nicht sicher erreicht werden. Ein Sicherheitsprogramm oder Netzwerkfilter fängt die Verbindung möglicherweise ab.",
+  "{provider} sign-in is no longer valid.": "Die Anmeldung bei {provider} ist nicht mehr gültig.",
+  "{provider} couldn't be reached through the network proxy. Check the proxy settings.":
+    "{provider} war über den Netzwerk-Proxy nicht erreichbar. Prüfe die Proxy-Einstellungen.",
   "{provider} took too long to respond. Try again.":
     "{provider} hat zu lange zum Antworten gebraucht. Versuche es erneut.",
   "{provider} is overloaded right now. Try again in a moment.":
@@ -1151,4 +1157,13 @@ export const DE_MESSAGES: Record<string, string> = {
   Refuse: "Ablehnen",
   "Keep in the wiki": "Im Wiki behalten",
   "Could not load pages": "Seiten konnten nicht geladen werden",
+  "{position} of {total}": "{position} von {total}",
+  "Talk to your agent": "Sprich mit deinem Agenten",
+  "Answer a request": "Eine Anfrage beantworten",
+  "Connect an app": "Eine App verbinden",
+  "Add a second agent": "Einen zweiten Agenten hinzufügen",
+  "Schedule a routine": "Eine Routine planen",
+  "Keep a memory": "Eine Erinnerung speichern",
+  Missions: "Missionen",
+  "Show everything": "Alles anzeigen",
 };

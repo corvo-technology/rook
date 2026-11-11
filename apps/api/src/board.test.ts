@@ -69,6 +69,7 @@ it("rejects an out-of-range ticket reference before querying tickets", async () 
 it.each([false, true])("includes the board capability in me (%s)", async (ticketBoardEnabled) => {
   const prisma = {
     partnerTenant: { findFirst: vi.fn(async () => null) },
+    missionState: { findUnique: vi.fn(async () => null) },
     user: {
       findUniqueOrThrow: vi.fn(async () => ({
         email: "user@corvo.test",

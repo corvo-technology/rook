@@ -1,4 +1,5 @@
 import type { Actor } from "@corvo/contracts";
+import { AGENT_CATALOG } from "@corvo/core";
 import { describe, expect, it, vi } from "vitest";
 import { chiefAsFirstAgent, startStarterTeam } from "./starter-team.js";
 
@@ -50,6 +51,88 @@ describe("startStarterTeam", () => {
       botId: "chief-1",
       created: true,
     });
+  });
+});
+
+describe("startStarterTeam with picks", () => {
+  const prospector = AGENT_CATALOG.find((entry) => entry.slug === "sales-prospector")!;
+  function withPicks(over: { fleetManagement?: boolean; messages?: number } = {}) {
+    const s = steps(true);
+    const addAgent = vi.fn(async () => ({
+      botId: "agent-1",
+      name: "Agent",
+      title: "",
+      threadId: "t-2" as string | null,
+      duplicate: false,
+      skillsInstalled: [],
+      appsToConnect: [],
+    }));
+    const prisma = {
+      bot: {
+        findUnique: vi.fn(async () => ({ fleetManagement: over.fleetManagement ?? true })),
+      },
+      message: { count: vi.fn(async () => over.messages ?? 0) },
+    };
+    const d = { prisma, jobs: {}, env: {} } as never;
+    return { s, addAgent, d, steps: { ...s, addAgent: addAgent as never } };
+  }
+
+  it("adds the agent the picks name, beside the Chief, and hands back its first task", async () => {
+    const w = withPicks();
+    await expect(
+      startStarterTeam(w.d, actor, "pt-BR", w.steps, { use: "work", categories: ["sales"] }),
+    ).resolves.toEqual({
+      botId: "chief-1",
+      created: true,
+      pickedAgent: { botId: "agent-1", task: prospector.firstTask?.["pt-BR"] },
+    });
+    expect(w.addAgent).toHaveBeenCalledTimes(1);
+    expect(w.addAgent).toHaveBeenCalledWith(
+      expect.anything(),
+      { spaceId: "space-1", userId: "user-1" },
+      expect.objectContaining({
+        entry: expect.objectContaining({ slug: "sales-prospector" }),
+        locale: "pt-BR",
+        parentBotId: "chief-1",
+      }),
+    );
+  });
+
+  it("adds nothing without picks or without a category", async () => {
+    for (const p of [undefined, { categories: [] }]) {
+      const w = withPicks();
+      const result = await startStarterTeam(w.d, actor, "en", w.steps, p);
+      expect(w.addAgent).not.toHaveBeenCalled();
+      expect(result).not.toHaveProperty("pickedAgent");
+    }
+  });
+
+  it("returns no task once the agent's chat has a message", async () => {
+    const w = withPicks({ messages: 1 });
+    const result = await startStarterTeam(w.d, actor, "en", w.steps, { categories: ["sales"] });
+    expect(result.pickedAgent).toEqual({ botId: "agent-1", task: null });
+  });
+
+  it("keeps the Chief when the agent cannot be added", async () => {
+    const w = withPicks();
+    w.addAgent.mockRejectedValue(new Error("limit"));
+    await expect(
+      startStarterTeam(w.d, actor, "en", w.steps, { categories: ["sales"] }),
+    ).resolves.toEqual({ botId: "chief-1", created: true });
+  });
+
+  it("adds no Store agent for a Chief without Store access", async () => {
+    const w = withPicks({ fleetManagement: false });
+    const result = await startStarterTeam(w.d, actor, "en", w.steps, { categories: ["sales"] });
+    expect(w.addAgent).not.toHaveBeenCalled();
+    expect(result).not.toHaveProperty("pickedAgent");
+  });
+
+  it("greets through the Chief only", async () => {
+    const w = withPicks();
+    await startStarterTeam(w.d, actor, "en", w.steps, { categories: ["sales"] });
+    expect(w.s.greet).toHaveBeenCalledTimes(1);
+    expect(w.s.greet).toHaveBeenCalledWith(w.d, actor, chief);
   });
 });
 

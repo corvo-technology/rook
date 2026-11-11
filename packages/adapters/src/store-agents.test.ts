@@ -1,7 +1,7 @@
 import { AGENT_CATALOG, SKILL_STORE } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
 import { describe, expect, it, vi } from "vitest";
-import { installStoreAgent, listStoreAgents } from "./store-agents.js";
+import { addStoreAgent, installStoreAgent, listStoreAgents } from "./store-agents.js";
 
 const run = {
   spaceId: "space-1",
@@ -176,5 +176,36 @@ describe("installStoreAgent", () => {
     });
     const result = await install(f, { slug: "translator" });
     expect(result).toMatchObject({ ok: true, duplicate: true, botId: "existing-bot" });
+  });
+});
+
+describe("addStoreAgent", () => {
+  const owner = { spaceId: "space-1", userId: "user-1" };
+  const entry = AGENT_CATALOG.find((agent) => agent.slug === "research-analyst")!;
+
+  it("adds an agent for an owner without a run, with no parent", async () => {
+    const f = fixture();
+    const result = await addStoreAgent(
+      { prisma: f.prisma, createBot: f.createBot as never },
+      owner,
+      { entry, locale: "en" },
+    );
+    expect(result).toMatchObject({ botId: "new-bot", duplicate: false });
+    expect(f.created[0]).toMatchObject({ spawnKey: "agent-catalog:research-analyst" });
+    expect(f.created[0]).not.toHaveProperty("parentBotId");
+  });
+
+  it("reports a repeat add as a duplicate of the same bot", async () => {
+    const f = fixture({
+      createBot: async () => {
+        throw new Error("duplicate spawn key");
+      },
+    });
+    const result = await addStoreAgent(
+      { prisma: f.prisma, createBot: f.createBot as never },
+      owner,
+      { entry, locale: "en" },
+    );
+    expect(result).toMatchObject({ duplicate: true, botId: "existing-bot" });
   });
 });

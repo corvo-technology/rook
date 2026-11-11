@@ -136,6 +136,22 @@ export function historyWindowSize(options: {
     : LEGACY_HISTORY_WINDOW_SIZE;
 }
 
+/**
+ * The newest messages, with a start that moves in steps of a quarter of `size` instead of once
+ * per message, so the transcript's first message (and every cached token after it) holds for
+ * a stretch of turns. Holds between `size` and `size + step - 1` messages.
+ */
+export function stableHistoryWindow<T extends { seq: number }>(
+  messages: readonly T[],
+  size: number,
+): T[] {
+  if (messages.length === 0) return [];
+  const step = Math.max(1, Math.floor(size / 4));
+  const last = Math.max(...messages.map((message) => message.seq));
+  const start = Math.floor(Math.max(0, last + 1 - size) / step) * step;
+  return messages.filter((message) => message.seq >= start);
+}
+
 export function formatRecalledMemory(
   results: Array<{ memory: string; id?: string; provenance?: string; entity?: string }>,
 ): string {

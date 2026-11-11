@@ -27,12 +27,15 @@ function formatAnsweredState(
   outcome?: "created" | "cancelled",
   actions?: AskBlock["actions"],
   dismissed?: boolean,
+  proposal?: boolean,
 ): string {
   if (secret) return dismissed ? t`Dismissed` : t`Saved`;
   if (!answer) return t`Answered`;
   if (!approval) return answer === "approved" ? t`Sent` : selectedAskActionLabel(answer, actions);
   if (outcome === "created") return t`Created`;
   if (outcome === "cancelled") return t`Cancelled`;
+  if (proposal && answer === "allow") return t`Applied`;
+  if (proposal && answer === "deny") return t`Dismissed`;
   if (answer === "allow") return t`Allowed once`;
   if (answer === "always") return t`Always allowed`;
   if (answer === "deny") return t`Denied`;
@@ -44,9 +47,13 @@ function approvalActionLabel(
   fallback: string,
   outcome?: "created" | "cancelled",
   site?: string,
+  proposal?: boolean,
 ): string {
   if (outcome === "created") return t`Create space`;
   if (outcome === "cancelled") return t`Cancel`;
+  // A proposal describes a change, not a permission.
+  if (proposal && id === "allow") return t`Apply`;
+  if (proposal && id === "deny") return t`Dismiss`;
   if (id === "allow") return t`Allow once`;
   if (id === "always") return site ? t`Always allow ${site}` : t`Always allow this tool`;
   if (id === "deny") return t`Deny`;
@@ -69,7 +76,8 @@ export function AskCard({
   block: AskBlock;
   canAnswer: boolean;
   canDismiss: boolean;
-  onAnswer: (text: string, username?: string) => Promise<void>;
+  /** `approvalEffectId` names the card among several pending approvals on one message. */
+  onAnswer: (text: string, username?: string, approvalEffectId?: string) => Promise<void>;
   /** Turns down a secret request without a value. */
   onDismiss: () => Promise<void>;
 }) {
@@ -162,7 +170,9 @@ export function AskCard({
       setPastedLines(false);
     }
     try {
-      await onAnswer(submitValue, submitUsername);
+      await (block.approvalEffectId
+        ? onAnswer(submitValue, submitUsername, block.approvalEffectId)
+        : onAnswer(submitValue, submitUsername));
       setAcceptedAnswer(secretInput ? "" : submitValue);
     } catch (err) {
       // A secret answer's failure may echo the secret, so never show its message.
@@ -330,6 +340,7 @@ export function AskCard({
                 approvalActions?.find((action) => action.id === displayedAnswer)?.outcome,
                 askActions,
                 displayedDismissed,
+                block.proposal,
               )}
         </div>
       ) : !canAnswer ? (
@@ -362,7 +373,13 @@ export function AskCard({
                   t`Dismiss`
                 )
               ) : (
-                approvalActionLabel(action.id, action.label, action.outcome, block.site)
+                approvalActionLabel(
+                  action.id,
+                  action.label,
+                  action.outcome,
+                  block.site,
+                  block.proposal,
+                )
               )}
             </Button>
           ))}

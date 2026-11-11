@@ -26,6 +26,8 @@ const APPROVAL_EXEMPT_TOOLS = new Set([
   "schedule_cancel",
   "workflow_stop",
   "list_fleet",
+  "guide_read",
+  "space_status",
   "organize_bot",
 ]);
 
@@ -59,6 +61,8 @@ const UNATTENDED_SAFE_BUILTIN_TOOLS = new Set([
   "computer_observe",
   "list_files",
   "list_fleet",
+  "guide_read",
+  "space_status",
   "list_secrets",
   "read_file",
   "recall_memory",
@@ -192,6 +196,7 @@ const OWN_STATE_RESULT_TOOLS = new Set([
   "generate_secret",
   "install_agent",
   "list_fleet",
+  "guide_read",
   "list_secrets",
   "message_user",
   "read_history",

@@ -1,5 +1,5 @@
 ---
-import Mascot from "./Mascot.astro";
+import { Rook } from "./Rook";
 
 type Props = {
   href?: string;
@@ -10,6 +10,6 @@ const { href = "/", label = "Rook home" } = Astro.props as Props;
 ---
 
 <a class="brand-lockup" href={href} aria-label={label}>
-  <Mascot hue="menta" size={30} />
+  <Rook hue="menta" size={30} />
   <span class="brand-lockup__word" aria-hidden="true">Rook</span>
 </a>

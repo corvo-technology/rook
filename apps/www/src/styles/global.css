@@ -2,6 +2,8 @@
 
 :root {
   color-scheme: light dark;
+  --rook-eye: #0a0a0a;
+  --font-display: "Inter Tight", Inter, ui-sans-serif, system-ui, sans-serif;
   --page: #fdfdfd;
   --surface: #ffffff;
   --surface-soft: #f7f7f7;
@@ -43,7 +45,7 @@
   --shadow-demo: 0 30px 80px -30px rgba(0, 0, 0, 0.35);
   --hero-glow: rgba(11, 122, 90, 0.1);
   --hero-shadow: rgba(11, 122, 90, 0.22);
-  --radius-card: 20px;
+  --radius-card: 28px;
   --radius-frame: 26px;
 }
 
@@ -59,9 +61,9 @@
     --muted-2: #a0a0a6;
     --line: #1f1f23;
     --line-2: #2a2a2f;
-    --blue: #3fd6a8;
-    --blue-top: #46dcb0;
-    --blue-bottom: #3fd6a8;
+    --blue: #54c398;
+    --blue-top: #54c398;
+    --blue-bottom: #54c398;
     --on-primary: #0a0a0a;
     --blue-soft: #0e1512;
     --blue-soft-2: #14221c;
@@ -69,7 +71,7 @@
     --button-secondary-bg: #151517;
     --button-secondary-bg-hover: #1b1b1e;
     --button-secondary-ink: #d6d6da;
-    --primary-glow: rgba(63, 214, 168, 0.22);
+    --primary-glow: rgba(84, 195, 152, 0.22);
     --panel: #0f0f10;
     --panel-2: #131315;
     --panel-line: #232326;
@@ -79,8 +81,8 @@
     --green-soft: #12322a;
     --shadow-soft: 0 2px 16px rgba(0, 0, 0, 0.4);
     --shadow-demo: 0 30px 80px -30px rgba(0, 0, 0, 0.8);
-  --hero-glow: rgba(63, 214, 168, 0.16);
-  --hero-shadow: rgba(63, 214, 168, 0.3);
+  --hero-glow: rgba(84, 195, 152, 0.16);
+  --hero-shadow: rgba(84, 195, 152, 0.3);
   }
 }
 
@@ -94,9 +96,9 @@
   --muted-2: #a0a0a6;
   --line: #1f1f23;
   --line-2: #2a2a2f;
-  --blue: #3fd6a8;
-  --blue-top: #46dcb0;
-  --blue-bottom: #3fd6a8;
+  --blue: #54c398;
+  --blue-top: #54c398;
+  --blue-bottom: #54c398;
   --on-primary: #0a0a0a;
   --blue-soft: #0e1512;
   --blue-soft-2: #14221c;
@@ -104,7 +106,7 @@
   --button-secondary-bg: #151517;
   --button-secondary-bg-hover: #1b1b1e;
   --button-secondary-ink: #d6d6da;
-  --primary-glow: rgba(63, 214, 168, 0.22);
+  --primary-glow: rgba(84, 195, 152, 0.22);
   --panel: #0f0f10;
   --panel-2: #131315;
   --panel-line: #232326;
@@ -114,8 +116,8 @@
   --green-soft: #12322a;
   --shadow-soft: 0 2px 16px rgba(0, 0, 0, 0.4);
   --shadow-demo: 0 30px 80px -30px rgba(0, 0, 0, 0.8);
-  --hero-glow: rgba(63, 214, 168, 0.16);
-  --hero-shadow: rgba(63, 214, 168, 0.3);
+  --hero-glow: rgba(84, 195, 152, 0.16);
+  --hero-shadow: rgba(84, 195, 152, 0.3);
 }
 
 html {
@@ -127,7 +129,7 @@ body {
   min-width: 320px;
   background: var(--page);
   color: var(--body);
-  font-family: "Instrument Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -198,63 +200,56 @@ button {
 }
 
 .container {
-  width: min(1150px, calc(100% - 48px));
+  width: min(1152px, calc(100% - 48px));
   margin: 0 auto;
 }
 
 .site-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   gap: 24px;
-  padding: 22px 0;
+  min-height: 72px;
 }
 
-.site-header__left,
 .site-header__right,
 .site-nav {
   display: flex;
   align-items: center;
 }
 
-.site-header__left {
-  gap: 28px;
-}
-
 .site-header__right {
+  justify-content: flex-end;
   gap: 12px;
 }
 
 .site-nav {
-  gap: 4px;
+  gap: 34px;
   color: var(--body);
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 14px;
 }
 
 .site-nav a {
-  padding: 8px 12px;
-  border-radius: 10px;
-  transition: color 160ms ease, background 160ms ease;
+  padding: 8px 0;
+  transition: color 160ms ease;
 }
 
 .site-nav a:hover,
 .site-nav a:focus-visible {
-  background: var(--surface-soft);
   color: var(--ink);
 }
 
 .brand-lockup {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
+  justify-self: start;
 }
 
 .brand-lockup__word {
-  font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
   color: var(--ink);
 }
 
@@ -358,8 +353,8 @@ button {
   justify-content: center;
   gap: 10px;
   min-height: 48px;
-  padding: 0 22px;
-  border-radius: 14px;
+  padding: 0 28px;
+  border-radius: 999px;
   border: 1px solid transparent;
   font-size: 16px;
   font-weight: 500;
@@ -383,8 +378,7 @@ button {
 }
 
 .button--primary {
-  background: linear-gradient(to bottom, var(--blue-top), var(--blue-bottom));
-  box-shadow: 0 2px 10px var(--primary-glow);
+  background: var(--blue-bottom);
 }
 
 a.button.button--primary,
@@ -398,13 +392,13 @@ button.button--primary:focus-visible {
 
 .button--primary:hover,
 .button--primary:focus-visible {
-  box-shadow: 0 10px 28px var(--primary-glow);
+  background: var(--blue-top);
+  filter: brightness(1.08);
 }
 
 .button--secondary {
-  background: var(--button-secondary-bg);
-  border-color: var(--line);
-  box-shadow: var(--shadow-soft);
+  background: transparent;
+  border-color: var(--line-2);
 }
 
 a.button.button--secondary,
@@ -424,7 +418,7 @@ button.button--secondary:focus-visible {
 
 .button--small {
   min-height: 42px;
-  padding: 0 18px;
+  padding: 0 20px;
   font-size: 14px;
 }
 
@@ -463,7 +457,7 @@ button.button--secondary:focus-visible {
 .guide h1 {
   margin: 0;
   color: var(--ink);
-  font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   font-weight: 500;
   letter-spacing: -0.02em;
 }
@@ -628,7 +622,7 @@ html[data-platform="web"] [data-show]:not([data-show~="web"]) {
 .feature-card h3 {
   margin: 0;
   color: var(--ink);
-  font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   font-size: 20px;
   font-weight: 500;
   letter-spacing: -0.02em;
@@ -875,7 +869,7 @@ html[data-platform="web"] [data-show]:not([data-show~="web"]) {
 
 .stat-value {
   color: var(--ink);
-  font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   font-size: 30px;
   letter-spacing: -0.02em;
 }
@@ -1789,7 +1783,7 @@ html[data-platform="web"] [data-show]:not([data-show~="web"]) {
   margin-right: 3.4cqw;
   overflow: hidden;
   color: #6c6c70;
-  font-family: "Geist Mono", ui-monospace, monospace;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 1.25cqw;
   text-align: center;
   text-overflow: ellipsis;
@@ -2557,7 +2551,7 @@ button.product-demo__dock-icon {
 .privacy-copy h2 {
   margin: 44px 0 12px;
   color: var(--ink);
-  font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   font-size: 22px;
   font-weight: 500;
   letter-spacing: -0.01em;
@@ -2600,7 +2594,7 @@ button.product-demo__dock-icon {
 .alt-page h1 {
   margin: 0 0 18px;
   color: var(--ink);
-  font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   font-size: clamp(2rem, 4vw, 40px);
   font-weight: 500;
   letter-spacing: -0.02em;
@@ -2610,7 +2604,7 @@ button.product-demo__dock-icon {
 .alt-page h2 {
   margin: 48px 0 12px;
   color: var(--ink);
-  font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   font-size: 28px;
   font-weight: 500;
   letter-spacing: -0.02em;
@@ -2790,7 +2784,7 @@ button.product-demo__dock-icon {
 .guide h2 {
   margin: 2.4rem 0 0.7rem;
   color: var(--ink);
-  font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   font-size: clamp(1.6rem, 3vw, 2rem);
   font-weight: 500;
   letter-spacing: -0.02em;
@@ -2873,7 +2867,7 @@ button.product-demo__dock-icon {
   border-radius: 6px;
   background: var(--surface-soft);
   padding: 0.1em 0.35em;
-  font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.92em;
 }
 
@@ -2884,7 +2878,7 @@ button.product-demo__dock-icon {
   background: var(--panel);
   padding: 16px 18px;
   color: var(--panel-copy);
-  font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 13.5px;
   line-height: 1.55;
 }
@@ -3011,13 +3005,8 @@ button.product-demo__dock-icon {
 }
 
 @media (max-width: 1000px) {
-  .site-header__left {
-    gap: 26px;
-  }
-
   .site-nav {
-    gap: 18px;
-    font-size: 14.5px;
+    gap: 20px;
   }
 }
 
@@ -3035,8 +3024,9 @@ button.product-demo__dock-icon {
 
 @media (max-width: 860px) {
   .site-header {
+    display: flex;
+    justify-content: space-between;
     gap: 12px;
-    padding: 16px 0;
   }
 
   .site-nav,
@@ -3385,7 +3375,7 @@ button.product-demo__dock-icon {
 }
 
 .blog-body code {
-  font-family: "Geist Mono", ui-monospace, monospace;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 0.92em;
 }
 
@@ -3485,145 +3475,38 @@ button.product-demo__dock-icon {
   justify-content: center;
 }
 
-/* The baby crow. Its crest and accessories reach past the tile, so nothing here clips. */
-.mascot {
-  display: inline-block;
-  position: relative;
-  flex: none;
-  width: var(--s);
-  height: var(--s);
-}
-
-.chick {
+/* The rook mascot: one color per agent (--rook), eyes in the page's darkest ink. */
+.rook {
   display: block;
-  width: 100%;
-  height: 100%;
+  flex: none;
   overflow: visible;
 }
 
-.chick__body,
-.chick__crest {
-  transform-box: fill-box;
-  transform-origin: 50% 100%;
+.rook__body {
+  fill: var(--rook);
 }
 
-.chick__eye {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: chick-blink var(--blink, 5s) infinite var(--blink-delay, 0s);
+.rook__eyes,
+.rook__eyes ellipse {
+  fill: var(--rook-eye);
 }
 
-.chick__eyes {
-  transform: translate(var(--gaze-x, 0px), var(--gaze-y, 0px));
-  transition: transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1);
+.rook__line {
+  fill: none;
+  stroke: var(--rook-eye);
+  stroke-width: 3.5;
+  stroke-linecap: round;
 }
 
-.chick__smile {
-  display: none;
-}
-
-.chick[data-happy] .chick__eye {
-  display: none;
-}
-
-.chick[data-happy] .chick__smile {
-  display: inline;
-}
-
-.mascot:hover .chick__body,
-.chick[data-happy] .chick__body {
-  animation: chick-hop 550ms cubic-bezier(0.3, 1.6, 0.5, 1);
-}
-
-.mascot:hover .chick__crest,
-.mascot[data-float] .chick__crest {
-  animation: chick-sway 3s ease-in-out infinite;
-}
-
-.mascot[data-float] .chick__bob {
-  animation: chick-bob 3.6s ease-in-out infinite;
-}
-
-/* Working: the eyes read, left to right, and the chick bobs. */
-.chick[data-working] .chick__eyes {
-  animation: chick-scan 2.4s ease-in-out infinite;
-}
-
-.chick[data-working] .chick__bob {
-  animation: chick-bob 1.4s ease-in-out infinite;
-}
-
-@keyframes chick-scan {
-  0%,
-  100% {
-    transform: translate(0, 0);
-  }
-  25% {
-    transform: translate(-3px, -1.5px);
-  }
-  55% {
-    transform: translate(3px, -2px);
-  }
-  80% {
-    transform: translate(2px, 0);
+@media (prefers-reduced-motion: no-preference) {
+  .rook[data-float] {
+    animation: rook-float 4s ease-in-out infinite;
   }
 }
 
-@keyframes chick-blink {
-  0%,
-  93%,
-  100% {
-    transform: scaleY(1);
-  }
-  96% {
-    transform: scaleY(0.1);
-  }
-}
-
-@keyframes chick-hop {
-  0% {
-    transform: scale(1, 1);
-  }
-  30% {
-    transform: translateY(-10px) scale(0.94, 1.06);
-  }
-  60% {
-    transform: translateY(0) scale(1.06, 0.94);
-  }
-  100% {
-    transform: scale(1, 1);
-  }
-}
-
-@keyframes chick-sway {
-  0%,
-  100% {
-    transform: rotate(0);
-  }
+@keyframes rook-float {
   50% {
-    transform: rotate(-5deg);
-  }
-}
-
-@keyframes chick-bob {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-3px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .chick__eye,
-  .chick__body,
-  .chick__crest,
-  .chick__bob,
-  .chick[data-working] .chick__eyes,
-  .chick__eyes {
-    animation: none !important;
-    transition: none;
+    transform: translateY(-6px);
   }
 }
 
@@ -3671,7 +3554,7 @@ button.product-demo__dock-icon {
 
 .anywhere__chat-label {
   color: var(--muted-2);
-  font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 11px;
   letter-spacing: 0.04em;
 }

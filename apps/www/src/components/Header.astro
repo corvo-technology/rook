@@ -4,7 +4,6 @@ import type { LaunchCopy } from "../i18n/launch";
 import { DEFAULT_LOCALE, localeHashPath, localeHomePath } from "../i18n/locales";
 import type { Locale } from "../i18n/locales";
 import { DOWNLOAD_URL, GITHUB_URL } from "../site";
-import GithubMark from "./GithubMark.astro";
 import Logo from "./Logo.astro";
 
 type Props = {
@@ -26,16 +25,13 @@ const NAV_LINKS = [
 ---
 
 <header class="site-header">
-  <div class="site-header__left">
-    <Logo href={homeHref} label={copy.home} />
-    <nav class="site-nav" aria-label={copy.primary}>
-      {NAV_LINKS.map((link) => <a href={link.href}>{link.label}</a>)}
-    </nav>
-  </div>
+  <Logo href={homeHref} label={copy.home} />
+  <nav class="site-nav" aria-label={copy.primary}>
+    {NAV_LINKS.map((link) => <a href={link.href}>{link.label}</a>)}
+  </nav>
   <div class="site-header__right">
     <div class="site-header__cta">
       <a class="button button--secondary button--small" href={GITHUB_URL} target="_blank" rel="noopener" data-attr="header-github">
-        <GithubMark class="button__icon" />
         {copy.github}
       </a>
       <a class="button button--primary button--small" href={DOWNLOAD_URL} target="_blank" rel="noopener">

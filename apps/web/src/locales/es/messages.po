@@ -2913,6 +2913,10 @@ msgstr "Duplicar"
 msgid "Each name can be used once."
 msgstr "Cada nombre solo se puede usar una vez."
 
+#: src/components/CoachLayer.tsx
+msgid "Each one checks itself off when you do it."
+msgstr "Cada una se marca sola cuando la completas."
+
 #: src/components/AskCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -3301,6 +3305,10 @@ msgstr "Evento de Git"
 #: src/pages/shell/composer.tsx
 msgid "Goes to {recipient}"
 msgstr "Va para {recipient}"
+
+#: src/components/CoachLayer.tsx
+msgid "Got it"
+msgstr "Entendido"
 
 #: src/lib/identity-display.ts
 #: src/pages/shell/chat-header.tsx
@@ -5874,6 +5882,10 @@ msgstr "Omitir"
 msgid "Skip or deploy key"
 msgstr "Omitir o desplegar clave"
 
+#: src/components/CoachLayer.tsx
+msgid "Skip tour"
+msgstr "Omitir el recorrido"
+
 #. placeholder {0}: skipped.join(", ")
 #: src/pages/shell/use-composer-actions.ts
 msgid "Skipped {0}"
@@ -6058,6 +6070,10 @@ msgstr "Almacenado cifrado"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Stream replies"
 msgstr "Transmitir respuestas"
+
+#: src/components/CoachLayer.tsx
+msgid "Stuck? Ask the Chief."
+msgstr "¿Atascado? Pregunta al Chief."
 
 #: src/lib/identity-display.ts
 msgid "subagent"
@@ -6324,6 +6340,10 @@ msgstr "Esta importación cambió. Vuelve a intentarlo."
 #: src/lib/agent-import-errors.ts
 msgid "This import was already used. Choose the files again."
 msgstr "Esta importación ya se usó. Vuelve a elegir los archivos."
+
+#: src/components/CoachLayer.tsx
+msgid "This isn't sent yet. Edit it or send it."
+msgstr "Esto aún no se ha enviado. Edítalo o envíalo."
 
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/Onboarding.tsx
@@ -6909,6 +6929,10 @@ msgstr "Qué observar"
 #: src/pages/RoutineEditor.tsx
 msgid "When a webhook fires"
 msgstr "Cuando se dispara un webhook"
+
+#: src/components/CoachLayer.tsx
+msgid "When an agent needs you, it asks here and waits."
+msgstr "Cuando un agente te necesita, pregunta aquí y espera."
 
 #: src/pages/shell/bot-panel.tsx
 msgid "When it finishes or needs input"

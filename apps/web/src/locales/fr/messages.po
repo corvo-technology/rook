@@ -2913,6 +2913,10 @@ msgstr "Dupliquer"
 msgid "Each name can be used once."
 msgstr "Chaque nom ne peut être utilisé qu’une fois."
 
+#: src/components/CoachLayer.tsx
+msgid "Each one checks itself off when you do it."
+msgstr "Chacune se coche toute seule quand vous la faites."
+
 #: src/components/AskCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -3301,6 +3305,10 @@ msgstr "Événement Git"
 #: src/pages/shell/composer.tsx
 msgid "Goes to {recipient}"
 msgstr "Va à {recipient}"
+
+#: src/components/CoachLayer.tsx
+msgid "Got it"
+msgstr "Compris"
 
 #: src/lib/identity-display.ts
 #: src/pages/shell/chat-header.tsx
@@ -5874,6 +5882,10 @@ msgstr "Passer"
 msgid "Skip or deploy key"
 msgstr "Passer ou clé de déploiement"
 
+#: src/components/CoachLayer.tsx
+msgid "Skip tour"
+msgstr "Passer la visite"
+
 #. placeholder {0}: skipped.join(", ")
 #: src/pages/shell/use-composer-actions.ts
 msgid "Skipped {0}"
@@ -6058,6 +6070,10 @@ msgstr "Stocké chiffré"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Stream replies"
 msgstr "Diffuser les réponses"
+
+#: src/components/CoachLayer.tsx
+msgid "Stuck? Ask the Chief."
+msgstr "Bloqué ? Demandez au Chief."
 
 #: src/lib/identity-display.ts
 msgid "subagent"
@@ -6324,6 +6340,10 @@ msgstr "Cet import a changé. Réessayez."
 #: src/lib/agent-import-errors.ts
 msgid "This import was already used. Choose the files again."
 msgstr "Cet import a déjà été utilisé. Choisissez à nouveau les fichiers."
+
+#: src/components/CoachLayer.tsx
+msgid "This isn't sent yet. Edit it or send it."
+msgstr "Ce message n'est pas encore envoyé. Modifiez-le ou envoyez-le."
 
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/Onboarding.tsx
@@ -6909,6 +6929,10 @@ msgstr "Élément à surveiller"
 #: src/pages/RoutineEditor.tsx
 msgid "When a webhook fires"
 msgstr "Lorsqu'un webhook se déclenche"
+
+#: src/components/CoachLayer.tsx
+msgid "When an agent needs you, it asks here and waits."
+msgstr "Quand un agent a besoin de vous, il le demande ici et attend."
 
 #: src/pages/shell/bot-panel.tsx
 msgid "When it finishes or needs input"

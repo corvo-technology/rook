@@ -2913,6 +2913,10 @@ msgstr "Duplicar"
 msgid "Each name can be used once."
 msgstr "Cada nome só pode ser usado uma vez."
 
+#: src/components/CoachLayer.tsx
+msgid "Each one checks itself off when you do it."
+msgstr "Cada uma se marca sozinha quando você a faz."
+
 #: src/components/AskCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -3301,6 +3305,10 @@ msgstr "Evento do Git"
 #: src/pages/shell/composer.tsx
 msgid "Goes to {recipient}"
 msgstr "Vai para {recipient}"
+
+#: src/components/CoachLayer.tsx
+msgid "Got it"
+msgstr "Entendi"
 
 #: src/lib/identity-display.ts
 #: src/pages/shell/chat-header.tsx
@@ -5874,6 +5882,10 @@ msgstr "Pular"
 msgid "Skip or deploy key"
 msgstr "Ignorar ou implantar chave"
 
+#: src/components/CoachLayer.tsx
+msgid "Skip tour"
+msgstr "Pular o tour"
+
 #. placeholder {0}: skipped.join(", ")
 #: src/pages/shell/use-composer-actions.ts
 msgid "Skipped {0}"
@@ -6058,6 +6070,10 @@ msgstr "Armazenado criptografado"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Stream replies"
 msgstr "Transmitir respostas"
+
+#: src/components/CoachLayer.tsx
+msgid "Stuck? Ask the Chief."
+msgstr "Travou? Pergunte ao Chief."
 
 #: src/lib/identity-display.ts
 msgid "subagent"
@@ -6324,6 +6340,10 @@ msgstr "Esta importação mudou. Tente de novo."
 #: src/lib/agent-import-errors.ts
 msgid "This import was already used. Choose the files again."
 msgstr "Esta importação já foi usada. Escolha os arquivos de novo."
+
+#: src/components/CoachLayer.tsx
+msgid "This isn't sent yet. Edit it or send it."
+msgstr "Isto ainda não foi enviado. Edite ou envie."
 
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/Onboarding.tsx
@@ -6909,6 +6929,10 @@ msgstr "O que monitorar"
 #: src/pages/RoutineEditor.tsx
 msgid "When a webhook fires"
 msgstr "Quando um webhook disparar"
+
+#: src/components/CoachLayer.tsx
+msgid "When an agent needs you, it asks here and waits."
+msgstr "Quando um agente precisa de você, ele pergunta aqui e espera."
 
 #: src/pages/shell/bot-panel.tsx
 msgid "When it finishes or needs input"

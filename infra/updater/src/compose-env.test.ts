@@ -57,6 +57,8 @@ const NOT_PASSED: Record<string, string> = {
   INVOCATION_ID: "restart-supervisor detection for systemd hosts; Compose restarts containers",
   CORVO_ALLOW_DEV_SECRETS: "development-only escape hatch for placeholder secrets",
   CORVO_CENTRAL_AUTH_URL: "set by the desktop shell for its embedded engine only",
+  CLI_ENGINES_ENABLED:
+    "lets bots run on a coding-agent CLI installed on the host; a Compose container does not have the CLI, so it is never passed",
   EMAIL_EMULATOR: "ignored when NODE_ENV=production",
   GIT_SHA: "baked into the image at build time; a pass-through entry would unset it",
   SCREEN_PROXY_IN_API: "set by the desktop app so its engine serves the computer screen itself",

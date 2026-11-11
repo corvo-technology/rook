@@ -8,11 +8,13 @@ const args = process.argv.slice(2);
 const out = (event) => process.stdout.write(`${JSON.stringify(event)}\n`);
 
 if (args[0] === "--version") {
-  console.log(process.env.FAKE_CLAUDE_VERSION ?? "9.9.9");
+  process.stdout.write(`${process.env.FAKE_CLAUDE_VERSION ?? "9.9.9"}\n`);
   process.exit(0);
 }
 if (args[0] === "auth" && args[1] === "status") {
-  console.log(process.env.FAKE_CLAUDE_AUTH ?? '{"loggedIn":true,"authMethod":"claude.ai"}');
+  process.stdout.write(
+    `${process.env.FAKE_CLAUDE_AUTH ?? '{"loggedIn":true,"authMethod":"claude.ai"}'}\n`,
+  );
   process.exit(0);
 }
 

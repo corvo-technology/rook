@@ -8,6 +8,7 @@ import {
   composioBatchActions,
   connectorKindFromToolName,
   connectorReadRequiresApproval,
+  connectorToolNamedAsWrite,
   connectorToolRequiresApproval,
   isApprovalAskBlock,
   isOwnerStartedRun,
@@ -94,6 +95,15 @@ describe("toolRequiresApproval", () => {
     expect(toolRequiresApproval("contacts_get_or_create", true)).toBe(true);
     expect(toolRequiresApproval("notion_search_and_update", true)).toBe(true);
     expect(toolRequiresApproval("crm_get_then_upsert", true)).toBe(true);
+  });
+});
+
+describe("connectorToolNamedAsWrite", () => {
+  it("reads writes and compound actions by name", () => {
+    expect(connectorToolNamedAsWrite("create_issue")).toBe(true);
+    expect(connectorToolNamedAsWrite("get_and_delete")).toBe(true);
+    expect(connectorToolNamedAsWrite("poll_sql_result")).toBe(false);
+    expect(connectorToolNamedAsWrite("get_statement")).toBe(false);
   });
 });
 

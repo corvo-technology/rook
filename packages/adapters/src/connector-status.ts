@@ -1,3 +1,6 @@
+import type { ConnectorTool } from "@corvo/adapter-kit";
+import { connectorToolNamedAsWrite } from "@corvo/core";
+
 /**
  * Reads "this is still being made" out of a structured connector result. Only enum-like field
  * values are compared, by exact equality against this table; prose is never classified.
@@ -129,4 +132,47 @@ export function readConnectorStatus(result: unknown): ConnectorStatus | undefine
     pending: notDone.includes(normalizeState(state)),
     ids,
   };
+}
+
+function hasValue(value: unknown, wanted: ConnectorStatusId): boolean {
+  if (value === wanted) return true;
+  if (Array.isArray(value)) return value.some((item) => hasValue(item, wanted));
+  if (typeof value === "object" && value !== null)
+    return Object.values(value).some((item) => hasValue(item, wanted));
+  return false;
+}
+
+/**
+ * The called tool's own status tool: same connector resource, read-only, not named as a write,
+ * and asking for nothing but ids the pending result carries. Never guessed by name.
+ */
+export function findStatusTool(input: {
+  called: ConnectorTool;
+  calledArgs: Record<string, unknown>;
+  tools: Iterable<ConnectorTool>;
+  status: ConnectorStatus;
+  disabled: ReadonlySet<string>;
+}): { tool: ConnectorTool; args: Record<string, ConnectorStatusId> } | undefined {
+  const { called, calledArgs, status, disabled } = input;
+  const { connectorId, resourceId } = called.route ?? {};
+  if (!connectorId || !resourceId) return undefined;
+  const found: { tool: ConnectorTool; args: Record<string, ConnectorStatusId> }[] = [];
+  for (const tool of input.tools) {
+    if (tool.name === called.name || disabled.has(tool.name)) continue;
+    if (tool.route?.connectorId !== connectorId || tool.route.resourceId !== resourceId) continue;
+    if (tool.readOnly !== true || connectorToolNamedAsWrite(tool.name)) continue;
+    const required = tool.inputSchema.required;
+    if (
+      !Array.isArray(required) ||
+      required.length === 0 ||
+      !required.every((key): key is string => typeof key === "string" && key in status.ids)
+    )
+      continue;
+    const args = Object.fromEntries(required.map((key) => [key, status.ids[key]!]));
+    if (Object.values(args).some((id) => hasValue(calledArgs, id))) continue;
+    found.push({ tool, args });
+  }
+  const most = Math.max(0, ...found.map((item) => Object.keys(item.args).length));
+  const top = found.filter((item) => Object.keys(item.args).length === most);
+  return top.length === 1 ? top[0] : undefined;
 }

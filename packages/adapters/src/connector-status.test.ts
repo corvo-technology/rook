@@ -1,3 +1,4 @@
+import type { ConnectorTool } from "@corvo/adapter-kit";
 import { describe, expect, it } from "vitest";
 import {
   brokenJson,
@@ -14,7 +15,7 @@ import {
   sqlSucceeded,
   ticketInProgress,
 } from "./connector-status.fixtures.js";
-import { CONNECTOR_STATUS_TABLE, readConnectorStatus } from "./connector-status.js";
+import { CONNECTOR_STATUS_TABLE, findStatusTool, readConnectorStatus } from "./connector-status.js";
 
 describe("readConnectorStatus", () => {
   it("reads a pending state out of MCP text JSON", () => {
@@ -89,5 +90,66 @@ describe("readConnectorStatus", () => {
 
   it("is versioned", () => {
     expect(CONNECTOR_STATUS_TABLE.version).toBe(1);
+  });
+});
+
+describe("findStatusTool", () => {
+  const status = readConnectorStatus(sqlPendingText)!;
+  const route = { connectorId: "mcp", resourceId: "db-1", toolName: "x" };
+  const tool = (over: Partial<ConnectorTool> = {}): ConnectorTool => ({
+    name: "get_statement",
+    description: "",
+    readOnly: true,
+    inputSchema: { type: "object", required: ["statement_id"] },
+    route,
+    ...over,
+  });
+  const called = tool({ name: "execute_sql_read_only", inputSchema: {} });
+  const find = (
+    candidates: ConnectorTool[],
+    extra: Partial<Parameters<typeof findStatusTool>[0]> = {},
+  ) =>
+    findStatusTool({
+      called,
+      calledArgs: { query: "select 1" },
+      tools: candidates,
+      status,
+      disabled: new Set(),
+      ...extra,
+    });
+
+  it("finds a read tool on the same resource that needs only ids of the result", () => {
+    expect(find([called, tool()])?.args).toEqual({ statement_id: "stmt-0001" });
+  });
+
+  it("never crosses resources", () => {
+    expect(find([tool({ route: { ...route, resourceId: "db-2" } })])).toBeUndefined();
+  });
+
+  it("needs a declared read with a read name", () => {
+    expect(find([tool({ readOnly: false })])).toBeUndefined();
+    expect(find([tool({ readOnly: undefined })])).toBeUndefined();
+    expect(find([tool({ name: "cancel_statement" })])).toBeUndefined();
+  });
+
+  it("skips disabled, other-id, schemaless and the called tool", () => {
+    expect(find([tool()], { disabled: new Set(["get_statement"]) })).toBeUndefined();
+    expect(
+      find([tool({ inputSchema: { required: ["statement_id", "warehouse_id"] } })]),
+    ).toBeUndefined();
+    expect(find([tool({ inputSchema: { properties: { statement_id: {} } } })])).toBeUndefined();
+    expect(find([called])).toBeUndefined();
+  });
+
+  it("skips an id the call itself passed, at any depth", () => {
+    expect(find([tool()], { calledArgs: { filter: { ref: "stmt-0001" } } })).toBeUndefined();
+  });
+
+  it("returns nothing on a tie and prefers more required keys", () => {
+    expect(find([tool(), tool({ name: "get_statement_two" })])).toBeUndefined();
+    const job = readConnectorStatus(jobRunningPlain)!;
+    const one = tool({ name: "get_status", inputSchema: { required: ["run_id"] } });
+    const two = tool({ name: "get_job_status", inputSchema: { required: ["run_id", "job_id"] } });
+    expect(find([one, two], { status: job })?.tool.name).toBe("get_job_status");
   });
 });

@@ -102,6 +102,13 @@ export function connectorKindFromToolName(toolName: string, connectorKinds: stri
   return (segment ?? toolName).toLowerCase();
 }
 
+/** True when the tool's name reads as a write or as a compound of actions. */
+export function connectorToolNamedAsWrite(toolName: string): boolean {
+  return (
+    MUTATING_CONNECTOR_PATTERN.test(toolName) || COMPOUND_CONNECTOR_ACTION_PATTERN.test(toolName)
+  );
+}
+
 /**
  * `readOnly` is the connector tool's declared effect (for installed APIs, derived from the stored
  * HTTP method and read-only flag). A declared write always needs approval. A declared read never
@@ -109,8 +116,7 @@ export function connectorKindFromToolName(toolName: string, connectorKinds: stri
  */
 export function connectorToolRequiresApproval(toolName: string, readOnly?: boolean): boolean {
   if (readOnly === false) return true;
-  if (MUTATING_CONNECTOR_PATTERN.test(toolName)) return true;
-  if (COMPOUND_CONNECTOR_ACTION_PATTERN.test(toolName)) return true;
+  if (connectorToolNamedAsWrite(toolName)) return true;
   return !READ_ONLY_CONNECTOR_PATTERN.test(toolName);
 }
 

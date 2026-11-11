@@ -101,6 +101,22 @@ export function readComposerDraft(
   }
 }
 
+/** The composer draft key of a bot's direct chat. */
+export function botDraftKey(botId: string): string {
+  return `bot:${botId}`;
+}
+
+/** Leave `text` unsent in an empty composer; a draft the person already typed is never replaced. */
+export function prefillComposerDraft(
+  threadKey: string,
+  text: string,
+  storage: DraftStorage | null = getLocalStorage(),
+): boolean {
+  if (!text || !storage || readComposerDraft(threadKey, storage)) return false;
+  writeComposerDraft(threadKey, text, storage);
+  return true;
+}
+
 export function writeComposerDraft(
   threadKey: string,
   draft: string,

@@ -1,25 +1,33 @@
-import type { AgentCatalogLocale, ApprovalMode } from "@corvo/contracts";
+import type { AgentCatalogLocale, ApprovalMode, OnboardingPicks } from "@corvo/contracts";
 import { storedBotApprovalMode } from "@corvo/core";
 import { Button } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useEffect, useRef, useState } from "react";
 import { AutonomyPicker } from "../../components/AutonomyPicker";
+import type { FirstBot } from "../../lib/first-bot";
 import { ensureFirstBot } from "../../lib/first-bot";
 import { rpc } from "../../lib/rpc";
 
-type Setup = { botId: string; name: string; defaultMode: ApprovalMode; checkerAvailable: boolean };
+type Setup = {
+  first: FirstBot;
+  name: string;
+  defaultMode: ApprovalMode;
+  checkerAvailable: boolean;
+};
 
 /**
- * The Chief is the first agent and adds the others in chat, so this step makes sure it exists and
- * asks how much it does on its own. If the default cannot be read the step moves on: the Chief
- * follows the default and the question stays in its settings.
+ * The Chief is the first agent and adds the others in chat, so this step makes sure it exists (and
+ * the agent the survey picks name) and asks how much it does on its own. If the default cannot be
+ * read the step moves on: the Chief follows the default and the question stays in its settings.
  */
 export function FirstBotStep({
   locale,
+  picks,
   onReady,
 }: {
   locale: AgentCatalogLocale;
-  onReady: (chiefId: string) => void;
+  picks: OnboardingPicks | null;
+  onReady: (result: FirstBot) => void;
 }) {
   const { t } = useLingui();
   const [failed, setFailed] = useState(false);
@@ -35,9 +43,9 @@ export function FirstBotStep({
     setFailed(false);
     let live = true;
     void (async () => {
-      let chiefId: string;
+      let first: FirstBot;
       try {
-        chiefId = (await ensureFirstBot(locale)).id;
+        first = await ensureFirstBot(locale, picks ?? undefined);
       } catch {
         if (live) setFailed(true);
         return;
@@ -45,18 +53,18 @@ export function FirstBotStep({
       try {
         const [defaults, bot] = await Promise.all([
           rpc.autoReview.get({}),
-          rpc.bots.get({ botId: chiefId }),
+          rpc.bots.get({ botId: first.id }),
         ]);
         if (!live) return;
         setChoice(defaults.mode);
         setSetup({
-          botId: chiefId,
+          first,
           name: bot.name,
           defaultMode: defaults.mode,
           checkerAvailable: defaults.checkerAvailable,
         });
       } catch {
-        if (live) onReady(chiefId);
+        if (live) onReady(first);
       }
     })();
     return () => {
@@ -71,8 +79,8 @@ export function FirstBotStep({
     setSaveFailed(false);
     try {
       const approvalMode = storedBotApprovalMode(choice, setup.defaultMode);
-      if (approvalMode !== null) await rpc.bots.update({ botId: setup.botId, approvalMode });
-      onReady(setup.botId);
+      if (approvalMode !== null) await rpc.bots.update({ botId: setup.first.id, approvalMode });
+      onReady(setup.first);
     } catch {
       continuing.current = false;
       setPending(false);

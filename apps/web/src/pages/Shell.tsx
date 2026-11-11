@@ -1,21 +1,26 @@
 import type {
   AgentSkillCatalogEntry,
   Bot,
+  McpServer,
   SpaceMemoryConfig,
   ThreadMessage,
   VoiceStatus,
 } from "@corvo/contracts";
 import type { AgentImportReader, ModelProblemAction } from "@corvo/core";
 import {
+  APP_CATALOG,
   answerableAskMessageIds,
+  appsForSurface,
   channelMessageSender,
   chatUserBubbleColors,
   dismissableAskMessageIds,
   foldPeerReplies,
   isActive,
   isRunWorking,
+  matchAddedServer,
   memberName,
   newClientId,
+  oneClickAppFor,
 } from "@corvo/core";
 import { fetchFresh, writeSaved } from "@corvo/core/query";
 import type { GroupAvatarMember } from "@corvo/ui-web";
@@ -39,6 +44,8 @@ import { ComputerUpdateProgress } from "../components/ComputerUpdateProgress";
 import { CallCard, CallReturnBar } from "../components/call/CallCard";
 import { IncomingCall } from "../components/call/IncomingCall";
 import { PageLoading } from "../components/PageLoading";
+import { catalogAgentOf, connectedServersFor } from "../lib/agent-catalog-install";
+import { connectCatalogApp } from "../lib/app-catalog-connect";
 import type { ArtifactTarget } from "../lib/artifact-open";
 import { authClient } from "../lib/auth";
 import { peekBootstrapSeed } from "../lib/bootstrap";
@@ -49,6 +56,7 @@ import {
 } from "../lib/bots-sidebar-density-pref";
 import { readBotsSidebarCollapsed, writeBotsSidebarCollapsed } from "../lib/bots-sidebar-pref";
 import { setCallMinimized, startCall, useCallSession } from "../lib/call-session";
+import { botDraftKey } from "../lib/composer-draft";
 import {
   getComposerEnterToSend,
   subscribeComposerEnterToSend,
@@ -431,6 +439,45 @@ function SpaceShell() {
     () => foldPeerReplies(activeSnapshot?.messages ?? [], { includePeerReceipts: true }),
     [activeSnapshot?.messages],
   );
+  // A catalog agent's empty chat offers one app it works with that signs in with a click.
+  const catalogAgent = inGroup || !active ? undefined : catalogAgentOf(active);
+  const offersApp = Boolean(catalogAgent?.apps.length) && activeSnapshot?.messages.length === 0;
+  const [appServers, setAppServers] = useState<McpServer[] | null>(null);
+  const [appPending, setAppPending] = useState(false);
+  const loadAppServers = useCallback(
+    () => rpc.mcp.servers.list().then(setAppServers, () => setAppServers(null)),
+    [rpc],
+  );
+  useEffect(() => {
+    if (offersApp) void loadAppServers();
+  }, [offersApp, active?.id, loadAppServers]);
+  const offeredApp =
+    offersApp && catalogAgent && appServers
+      ? oneClickAppFor(
+          catalogAgent,
+          appsForSurface(APP_CATALOG, { systemBrowser: Boolean(desktopBridge()?.oauth?.open) }),
+          new Set(connectedServersFor(catalogAgent, appServers).map((server) => server.slug)),
+        )
+      : null;
+  const emptyChatApp =
+    offeredApp && active && appServers
+      ? {
+          name: offeredApp.name,
+          pending: appPending,
+          onConnect: () => {
+            setAppPending(true);
+            // Signing in gives the agent the app unless the person cancels; either way the offer
+            // is recomputed from the servers, and the composer draft is never touched.
+            void connectCatalogApp(offeredApp, {
+              existing: matchAddedServer(offeredApp, appServers),
+              botId: active.id,
+            })
+              .catch(() => undefined)
+              .then(loadAppServers)
+              .finally(() => setAppPending(false));
+          },
+        }
+      : undefined;
   const transcriptArtifactTarget = useMemo<ArtifactTarget>(
     () => (inGroup ? { groupId: groupId ?? "" } : { botId: active?.id ?? "" }),
     [active?.id, groupId, inGroup],
@@ -902,6 +949,7 @@ function SpaceShell() {
               }
               starters={inGroup ? undefined : active?.starters}
               onStarter={(text) => void composer.sendMessage(text, [], newClientId())}
+              app={emptyChatApp}
               onLoadOlder={loadOlder}
               onOpenBot={openBot}
               onAnswer={composer.answerMessage}
@@ -965,7 +1013,7 @@ function SpaceShell() {
               </div>
             ) : null}
             <Composer
-              key={inGroup ? `group:${groupId}` : `bot:${active?.id}`}
+              key={inGroup ? `group:${groupId}` : botDraftKey(String(active?.id))}
               draftKey={inGroup ? `group:${groupId}` : `bot:${active?.id}`}
               enterToSend={enterToSend}
               onImportAgent={(agent) => openImport(agent, false)}

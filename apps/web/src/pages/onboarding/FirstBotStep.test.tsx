@@ -32,6 +32,7 @@ vi.mock("@corvo/ui-web", async () => ({
 import { FirstBotStep } from "./FirstBotStep";
 
 const onReady = vi.fn();
+let picks: { use?: "work"; categories: ["sales"] } | null = null;
 let container: HTMLDivElement;
 let root: Root;
 
@@ -49,7 +50,7 @@ const button = (text: string) =>
 
 async function mount() {
   await act(async () => {
-    root.render(<FirstBotStep locale="pt-BR" onReady={onReady} />);
+    root.render(<FirstBotStep locale="pt-BR" picks={picks} onReady={onReady} />);
   });
 }
 
@@ -60,6 +61,7 @@ beforeEach(() => {
   rpc.bots.get.mockReset().mockResolvedValue({ id: "chief-1", name: "Ana" });
   rpc.bots.update.mockReset().mockResolvedValue({});
   onReady.mockReset();
+  picks = null;
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
@@ -74,7 +76,7 @@ describe("FirstBotStep", () => {
   it("makes sure the Chief exists, in the app's language, and asks how much it does on its own", async () => {
     await mount();
     expect(ensureFirstBot).toHaveBeenCalledOnce();
-    expect(ensureFirstBot).toHaveBeenCalledWith("pt-BR");
+    expect(ensureFirstBot).toHaveBeenCalledWith("pt-BR", undefined);
     expect(container.textContent).toContain("How much does Ana do on its own?");
     expect(checked()?.dataset.value).toBe("auto");
     expect(onReady).not.toHaveBeenCalled();
@@ -84,7 +86,7 @@ describe("FirstBotStep", () => {
     await mount();
     await act(async () => button("Continue").click());
     expect(rpc.bots.update).not.toHaveBeenCalled();
-    expect(onReady).toHaveBeenCalledExactlyOnceWith("chief-1");
+    expect(onReady).toHaveBeenCalledExactlyOnceWith({ id: "chief-1" });
   });
 
   it("saves the chosen answer once, even on a double click, before moving on", async () => {
@@ -109,7 +111,7 @@ describe("FirstBotStep", () => {
     expect(onReady).not.toHaveBeenCalled();
     expect(next.disabled).toBe(true);
     await act(async () => finish());
-    expect(onReady).toHaveBeenCalledExactlyOnceWith("chief-1");
+    expect(onReady).toHaveBeenCalledExactlyOnceWith({ id: "chief-1" });
   });
 
   it("leaves the default checked when free is cancelled", async () => {
@@ -124,7 +126,7 @@ describe("FirstBotStep", () => {
   it("moves on with no question when the default cannot be read", async () => {
     rpc.autoReview.get.mockRejectedValue(new Error("offline"));
     await mount();
-    expect(onReady).toHaveBeenCalledExactlyOnceWith("chief-1");
+    expect(onReady).toHaveBeenCalledExactlyOnceWith({ id: "chief-1" });
     expect(container.querySelector('[role="radiogroup"]')).toBeNull();
   });
 
@@ -137,7 +139,13 @@ describe("FirstBotStep", () => {
     expect(onReady).not.toHaveBeenCalled();
     await act(async () => button("Try again").click());
     expect(rpc.bots.update).toHaveBeenCalledTimes(2);
-    expect(onReady).toHaveBeenCalledExactlyOnceWith("chief-1");
+    expect(onReady).toHaveBeenCalledExactlyOnceWith({ id: "chief-1" });
+  });
+
+  it("passes the picks on", async () => {
+    picks = { use: "work", categories: ["sales"] };
+    await mount();
+    expect(ensureFirstBot).toHaveBeenCalledWith("pt-BR", picks);
   });
 
   it("does not move on without the Chief, and retries making it", async () => {

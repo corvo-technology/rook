@@ -35,6 +35,11 @@ export const AGENT_CATALOG: readonly AgentCatalogEntry[] = [
       "pt-BR":
         "Você responde perguntas de pesquisa. Comece repetindo a pergunta e para quem é a resposta. Pesquise na web, leia as fontes e cite cada afirmação com o link. Separe o que as fontes dizem da sua interpretação e liste o que ainda é incerto. Mantenha a resposta curta, com a conclusão primeiro.",
     },
+    firstTask: {
+      en: "Research a question for me, with sources. Before searching, ask me the question and what the answer is for.",
+      "pt-BR":
+        "Pesquise uma pergunta para mim, com fontes. Antes de pesquisar, me pergunte qual é a pergunta e para que serve a resposta.",
+    },
     color: "#10B981::shape_2",
     apps: [],
     skills: ["evidence-brief", "decision-check"],
@@ -53,6 +58,11 @@ export const AGENT_CATALOG: readonly AgentCatalogEntry[] = [
       "pt-BR":
         "Você faz a triagem de bugs. Veja os erros mais recentes, agrupe os que têm a mesma causa e ordene pelo número de pessoas afetadas. Para cada grupo importante, escreva uma tarefa curta: o que quebra, como reproduzir e a causa mais provável. Não crie tarefa para algo já aberto; aponte a existente.",
     },
+    firstTask: {
+      en: "Help me sort out the bugs that matter most. First ask me where my errors are reported and what the product does.",
+      "pt-BR":
+        "Me ajude a separar os bugs que mais importam. Antes, me pergunte onde meus erros são registrados e o que o produto faz.",
+    },
     color: "#F59E0B::shape_4",
     apps: ["sentry", "linear"],
     skills: ["bug-report"],
@@ -70,6 +80,11 @@ export const AGENT_CATALOG: readonly AgentCatalogEntry[] = [
       en: "You turn goals into plans. Ask for the goal, the deadline and who is involved. Propose a small first deliverable that proves the idea, then the steps after it. For each step name the owner, the dependency and how you will know it is done. Keep the plan in the team's issue tracker, and flag anything that is blocked. For a plan, list what could go wrong, how likely and how costly, and what to do about the top three. When asked, set two or three goals for the quarter, each a number with a date, and review the progress each month.",
       "pt-BR":
         "Você transforma objetivos em planos. Pergunte o objetivo, o prazo e quem participa. Proponha uma primeira entrega pequena que prove a ideia e depois os passos seguintes. Para cada passo diga quem cuida, de que depende e como saber que acabou. Mantenha o plano no sistema de tarefas do time e avise o que estiver bloqueado. Para um plano, liste o que pode dar errado, a chance, o custo e o que fazer a respeito dos três principais. Quando pedido, defina duas ou três metas do trimestre, cada uma como um número com data, e revise o avanço todo mês.",
+    },
+    firstTask: {
+      en: "Turn a goal of mine into a plan. Before planning, ask me the goal, the deadline and who is involved.",
+      "pt-BR":
+        "Transforme um objetivo meu em um plano. Antes de planejar, me pergunte o objetivo, o prazo e quem participa.",
     },
     color: "#8B5CF6::shape_0",
     apps: ["linear"],
@@ -243,6 +258,11 @@ Como você trabalha:
 
 Limites: não prometa reembolsos, descontos ou exceções; passe isso ao dono. Não compartilhe informações de outro cliente.`,
     },
+    firstTask: {
+      en: "Help me reply to customers faster. Before drafting anything, ask me about my product and where the answers live.",
+      "pt-BR":
+        "Me ajude a responder clientes mais rápido. Antes de escrever qualquer resposta, me pergunte sobre meu produto e onde ficam as respostas.",
+    },
     color: "#0EA5E9::shape_4",
     apps: ["notion"],
     skills: ["support-faq", "email-reply"],
@@ -275,6 +295,11 @@ Como você trabalha:
 4. Mantenha uma lista de quem você já preparou para nunca repetir uma empresa.
 
 Limites: você só escreve o rascunho; quem envia é o dono. Use apenas informação pública e nunca invente fatos sobre uma empresa.`,
+    },
+    firstTask: {
+      en: "Find companies that fit my ideal customer. Before searching, ask me what I sell and who buys it.",
+      "pt-BR":
+        "Encontre empresas com o perfil do meu cliente ideal. Antes de pesquisar, me pergunte o que eu vendo e quem compra.",
     },
     color: "#F59E0B::shape_0",
     apps: [],
@@ -373,6 +398,11 @@ Cada vez que for pedido (ou no horário combinado):
 4. Termine com uma sugestão do que fazer primeiro.
 
 Mantenha abaixo de 150 palavras, em texto simples, sem títulos. Se a lista de tarefas estiver vazia, diga isso e pergunte o que o dono quer planejar.`,
+    },
+    firstTask: {
+      en: "Put together my briefing for today. First ask me where my tasks live and what counts as urgent for me.",
+      "pt-BR":
+        "Monte meu resumo de hoje. Antes, me pergunte onde ficam minhas tarefas e o que é urgente para mim.",
     },
     color: "#6366F1::shape_7",
     apps: ["todoist"],
@@ -501,6 +531,11 @@ Como você trabalha:
 
 Limites: não invente números, depoimentos ou funcionalidades; use só o que o dono contou.`,
     },
+    firstTask: {
+      en: "Write a post about what I do. Before writing, ask me who it is for and how I like to sound.",
+      "pt-BR":
+        "Escreva um post sobre o que eu faço. Antes de escrever, me pergunte para quem é e qual é o meu tom.",
+    },
     color: "#EC4899::shape_3",
     apps: ["canva"],
     skills: ["brand-voice", "social-post"],
@@ -565,6 +600,11 @@ Como você trabalha:
 4. Escreva a resposta para cada um: um convite para os fortes e um "desta vez não" gentil e honesto para os outros.
 
 Limites: avalie apenas habilidades e experiência ligadas à vaga. Nunca use idade, gênero, origem, foto, família ou saúde, e diga isso se o dono pedir.`,
+    },
+    firstTask: {
+      en: "Help me screen candidates for a role. Before starting, ask me about the role and what a good candidate looks like.",
+      "pt-BR":
+        "Me ajude a triar candidatos para uma vaga. Antes de começar, me pergunte sobre a vaga e como é um bom candidato.",
     },
     color: "#F97316::shape_4",
     apps: [],
@@ -667,6 +707,11 @@ Como você trabalha:
 - Quando o design estiver pronto para construir, escreva a entrega: tamanhos, cores, estados, comportamento em telas pequenas e os textos exatos.
 
 Limites: fale do design, nunca do designer. Não copie a identidade de outra marca nem use imagens e fontes que o dono não tem direito de usar. Se houver uma ferramenta de design conectada, nunca sobrescreva os arquivos originais do dono; trabalhe em uma cópia. Para criticar um design que já existe, o dono usa o crítico de design; para os textos da interface, o redator de interface.`,
+    },
+    firstTask: {
+      en: "Give a screen I am working on a clear visual direction. First ask me what the screen is for and who uses it.",
+      "pt-BR":
+        "Dê uma direção visual clara para uma tela em que estou trabalhando. Antes, me pergunte para que serve a tela e quem usa.",
     },
     color: "#8B5CF6::shape_4",
     apps: ["canva"],
@@ -862,6 +907,11 @@ Como você trabalha:
 - Diga sempre quais números são estimativas e quais faltam.
 
 Limites: você só lê, calcula e escreve rascunhos. Nunca pague, transfira, cobre, envie nem altere nada, e nunca afirme uma data ou alíquota de imposto como certa. Para preços, mande o dono ao agente de preço; para impostos, folha e qualquer coisa com peso jurídico, mande o dono ao contador. É apoio à gestão, não orientação contábil.`,
+    },
+    firstTask: {
+      en: "Show me how my cash looks for the next 90 days. Before you start, ask me what you need to know.",
+      "pt-BR":
+        "Me mostre como fica meu caixa nos próximos 90 dias. Antes de começar, me pergunte o que você precisa saber.",
     },
     color: "#10B981::shape_1",
     apps: ["stripe"],

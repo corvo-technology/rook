@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { STORE_CATEGORIES } from "./agent-catalog.js";
 import { AGENT_SECRET_NAME_PATTERN } from "./agent-secret-name.js";
 import { BotAvatarValueSchema } from "./bot-avatar.js";
 import { BotStartersSchema } from "./bot-starters.js";
@@ -1830,6 +1831,13 @@ export const SignupSurveySchema = z.object({
   source: z.string().trim().max(500).optional(),
 });
 export type SignupSurvey = z.infer<typeof SignupSurveySchema>;
+
+/** The structured picks onboarding keeps: what Rook is for and the Store categories tapped, in order. */
+export const OnboardingPicksSchema = z.object({
+  use: z.enum(SIGNUP_SURVEY_USES).optional(),
+  categories: z.array(z.enum(STORE_CATEGORIES)).max(STORE_CATEGORIES.length).default([]),
+});
+export type OnboardingPicks = z.infer<typeof OnboardingPicksSchema>;
 
 export function signupSurveyAsksTeamSize(use: SignupSurvey["use"]): boolean {
   return use === "work" || use === "both";

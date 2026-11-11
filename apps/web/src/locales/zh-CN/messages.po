@@ -1763,8 +1763,10 @@ msgstr "确认密码"
 msgid "Connect"
 msgstr "连接"
 
+#. placeholder {0}: app.name
 #. placeholder {0}: appName(slug)
 #: src/pages/AgentsStore.tsx
+#: src/pages/shell/chat-empty.tsx
 msgid "Connect {0}"
 msgstr "连接 {0}"
 

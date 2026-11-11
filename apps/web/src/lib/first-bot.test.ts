@@ -1,3 +1,4 @@
+import type { OnboardingPicks } from "@corvo/contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createOrReuseFirstBot, ensureFirstBot, findFirstBot } from "./first-bot";
 
@@ -12,6 +13,26 @@ describe("createOrReuseFirstBot", () => {
   it("asks the server for the Chief and its team in the app's language", async () => {
     await expect(createOrReuseFirstBot("pt-BR")).resolves.toEqual({ id: "chief-1" });
     expect(ensureTeam).toHaveBeenCalledWith({ locale: "pt-BR" });
+  });
+
+  it("sends the picks and returns the agent the server added", async () => {
+    const picks: OnboardingPicks = { use: "work", categories: ["sales"] };
+    ensureTeam.mockResolvedValue({
+      botId: "chief-1",
+      created: true,
+      pickedAgent: { botId: "agent-1", task: "T" },
+    });
+    await expect(createOrReuseFirstBot("en", picks)).resolves.toEqual({
+      id: "chief-1",
+      pickedAgent: { botId: "agent-1", task: "T" },
+    });
+    expect(ensureTeam).toHaveBeenCalledWith({ locale: "en", picks });
+  });
+
+  it("returns only the Chief when the server names no picked agent", async () => {
+    await expect(createOrReuseFirstBot("en", { categories: ["sales"] })).resolves.toEqual({
+      id: "chief-1",
+    });
   });
 
   it("gets the same Chief back when it was already made", async () => {

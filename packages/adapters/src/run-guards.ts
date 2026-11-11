@@ -99,8 +99,8 @@ export function createRunGuards(options: {
 /** Adds a note for the model to a tool result without changing what the result says. */
 export function withGuardNote(result: unknown, note: string): unknown {
   if (result && typeof result === "object") {
-    const record = result as { kind?: unknown; content?: unknown };
-    if (record.kind === "agent_tool_result" && Array.isArray(record.content)) {
+    const record = result as { content?: unknown };
+    if (!Array.isArray(result) && Array.isArray(record.content)) {
       return { ...record, content: [...record.content, { type: "text", text: note }] };
     }
     if (!Array.isArray(result)) return { ...record, guard_note: note };

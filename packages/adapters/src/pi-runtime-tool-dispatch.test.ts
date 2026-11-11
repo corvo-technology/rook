@@ -390,7 +390,11 @@ vi.mock("./pi-openai-compatible-provider.js", () => ({
 import { MISSING_TOOL_FINAL_RESPONSE_ERROR, PiAgentRuntime } from "./pi-runtime.js";
 import { providerFailureText } from "./pi-runtime-errors.js";
 import { TOOL_RESULT_TEXT_LIMIT } from "./pi-runtime-limits.js";
-import { maxToolCallsPerTurn } from "./pi-runtime-tools.js";
+import {
+  describeToolActivity,
+  maxToolCallsPerTurn,
+  waitingActivityText,
+} from "./pi-runtime-tools.js";
 import { toolCompletionAuditPayload } from "./tool-completion-audit.js";
 
 const destinationTool: ConnectorTool = {
@@ -454,6 +458,15 @@ const scheduleCancelTool: ConnectorTool = {
 };
 
 const previousMaxToolCalls = process.env.MAX_TOOL_CALLS_PER_TURN;
+
+describe("connector wait activity", () => {
+  it("names an MCP tool as server and tool", () => {
+    expect(waitingActivityText("mcp__db__execute_sql_read_only")).toBe(
+      "Waiting for db: execute_sql_read_only",
+    );
+    expect(describeToolActivity("mcp__db__run", {})).toBe("Using db: run");
+  });
+});
 
 describe("Pi connector tool dispatch", () => {
   beforeEach(() => {

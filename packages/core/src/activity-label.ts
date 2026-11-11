@@ -18,6 +18,7 @@ export type ActivityLabel =
         | "searching"
         | "readingSkill"
         | "delegating"
+        | "waitingFor"
         | "using";
       value: string;
     }
@@ -50,6 +51,7 @@ const WITH_VALUE: Array<[prefix: string, id: Extract<ActivityLabel, { value: str
   ["Reading skill: ", "readingSkill"],
   ["Searching the web: ", "searching"],
   ["Delegating to helper: ", "delegating"],
+  ["Waiting for ", "waitingFor"],
   ["Reading ", "reading"],
   ["Writing ", "writing"],
   ["Listing ", "listing"],

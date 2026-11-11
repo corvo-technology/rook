@@ -29,6 +29,7 @@ const MESSAGES = [
   "Searching the web: {value}",
   "Reading skill: {value}",
   "Delegating to helper: {value}",
+  "Waiting for {value}",
   "Using {value}",
   "Review before {reviewing}",
 ];
@@ -39,6 +40,10 @@ it("keeps the words of a known activity line and fills in its name", () => {
     "Searching the web: node version",
   );
   expect(activityLabelText("Finding a tool")).toBe("Finding a tool");
+});
+
+it("names the tool a bot is waiting on", () => {
+  expect(activityLabelText("Waiting for db: q")).toBe("Waiting for db: q");
 });
 
 it("leaves a line it does not know as it was written", () => {

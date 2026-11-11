@@ -155,3 +155,44 @@ retried automatically (only transient model errors are), its failure
 notification carries the sentence and its schedule keeps its next tick. The stop
 is logged as `run.guard_stopped` with a `guard.kind` field and no tool arguments
 or results.
+
+## Connector waits
+
+When a connector tool answers "still being made" (a queued or running SQL statement, a started
+job), the backend asks that connector's own status tool with backoff and hands the finished result
+back inside the one call the agent made. The agent spends no model step or sleep on checking.
+
+- **Which results count.** Only structured ones: the MCP `structuredContent` object, MCP text that
+  is as a whole a JSON object, or a plain-object result from an installed API or GraphQL
+  connector. The reader walks nested objects (never arrays) to depth 6 and takes the first
+  recognised state field with a string value. It is pending when that value is a recognised
+  not-done state and an id field sits in the same object. Prose, malformed JSON, `isError`
+  results, an `error` member and arrays never count. The fields, states and id rules are one
+  versioned constant, `CONNECTOR_STATUS_TABLE`; natural language is never classified.
+- **Which calls wait.** The called tool is offered to the bot, declares `readOnly`, and has a
+  route with a `resourceId` that is not the lazy catalog route. Every id used for the status call
+  must be new: it must not appear in the called tool's arguments, so reading an existing record
+  whose own status says "pending" never waits. Only the starting call waits. Routes without a
+  `resourceId` (Composio, Pipedream, catalog calls) pass through unchanged.
+- **Which status tool.** Only a tool on the same connector resource that declares `readOnly`, is
+  not named as a write, is not disabled for the bot, and whose required inputs are all ids of the
+  pending result. The most required keys win; a tie means no wait. Tools are never guessed by name.
+- **When the backend may call it.** Only where the agent's own call would run without asking: no
+  rule resolves to ask or deny, an `always_allow` rule matches or the name reads as a read, a
+  webhook run does not need approval for it, and the taint gate passes. Otherwise the first result
+  is returned as it is.
+- **Limits.** `CONNECTOR_WAIT_LIMITS`: the first pause is 2 s, doubling up to 15 s, for at most 5
+  minutes. The loop stops at once on cancel, shutdown or a lost run lease.
+- **Endings.** Done (done, failed, cancelled or an error result) returns the poll result. Time
+  returns the last pending result with a model-facing note that says how long the backend waited
+  and tells the agent not to sleep. A status error returns the last pending result with a note.
+  A poll that is not a status for the same ids returns the first result unchanged. Stopped
+  returns the last result. The stored effect result is the final one, so a replay returns what the
+  agent saw.
+- **Progress.** One live activity line, `Waiting for <tool>`, when the first pause starts. Routine
+  and background runs publish none, as with other activity lines. The log line
+  `connector.wait_finished` records the tool names, `wait.polls`, `wait.ms` and `wait.outcome`,
+  never arguments or results.
+
+When no status tool qualifies, the agent keeps waiting by hand, and the idle-sleep refusal of the
+turn guards applies.

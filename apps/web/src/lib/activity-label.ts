@@ -26,5 +26,6 @@ export function activityLabelText(label: string): string {
   if (parsed.id === "searching") return t`Searching the web: ${value}`;
   if (parsed.id === "readingSkill") return t`Reading skill: ${value}`;
   if (parsed.id === "delegating") return t`Delegating to helper: ${value}`;
+  if (parsed.id === "waitingFor") return t`Waiting for ${value}`;
   return t`Using ${value}`;
 }

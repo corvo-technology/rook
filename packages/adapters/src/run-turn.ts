@@ -48,6 +48,7 @@ import {
   canPublishDurableNarration,
   flushPendingTools,
   flushProgress,
+  publishActivityLine,
   publishMidTurnNarration,
   recordExplicitNoResponse,
   tryFlushPendingTools,
@@ -204,35 +205,8 @@ async function streamText(ctx: RunContext, event: RuntimeEvent<"text">) {
 }
 
 async function streamProgress(ctx: RunContext, event: RuntimeEvent<"progress">) {
-  const { deps, run, runId, bot, thread } = ctx;
-  const { reply } = ctx.state;
   ctx.state.toolCallStreak = { key: undefined, count: 0 };
-  if (run.trigger === "routine" || isBackgroundRunTrigger(run.trigger)) return;
-  // Flush batched text deltas first so an activity line cannot land
-  // ahead of text the model streamed before the tool call.
-  if (reply.pendingProgress) {
-    await deps.events.append({
-      spaceId: run.spaceId,
-      threadId: thread.id,
-      botId: bot.id,
-      type: "thread.progress",
-      runId,
-      payload: { delta: reply.pendingProgress, streaming: true },
-    });
-    reply.pendingProgress = "";
-    reply.lastProgressAt = Date.now();
-  }
-  await deps.events.append({
-    spaceId: run.spaceId,
-    threadId: thread.id,
-    botId: bot.id,
-    type: "thread.progress",
-    runId,
-    payload: {
-      text: redactSecrets(event.text, ctx.secrets),
-      ...(event.activity ? { activity: true } : {}),
-    },
-  });
+  await publishActivityLine(ctx, event.text, event.activity === true);
 }
 
 async function pauseForAnswer(ctx: RunContext, event: RuntimeEvent<"ask">) {

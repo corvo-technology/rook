@@ -6951,6 +6951,10 @@ msgstr "待機中"
 msgid "Waiting"
 msgstr "待機中"
 
+#: src/lib/activity-label.ts
+msgid "Waiting for {value}"
+msgstr "{value} を待機中"
+
 #: src/components/WikiChangeCard.tsx
 msgid "Waiting for approval"
 msgstr "承認待ち"

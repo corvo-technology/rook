@@ -1,12 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CLAUDE_ENGINE } from "./cli-engine-claude.js";
-import {
-  assertCliEnginesAllowed,
-  CliEngineHost,
-  cliEngineConfigDir,
-  cliEnginesEnabledFromEnv,
-  routeAgentRuntime,
-} from "./cli-engine-host.js";
+import { CliEngineHost, cliEngineConfigDir, routeAgentRuntime } from "./cli-engine-host.js";
 import { CliEngineRuntime } from "./cli-engine-runtime.js";
 import { cliRequest, collect, fakeLocator, makeFakeClaude } from "./cli-engine-test-support.js";
 import { CliToolGateway } from "./cli-tool-gateway.js";
@@ -106,22 +100,6 @@ describe("CliEngineHost", () => {
       locate: async () => undefined,
     });
     expect((await h.view()).engines[0]?.state).toBe("missing");
-  });
-});
-
-describe("capability", () => {
-  it("is on only for the exact value", () => {
-    expect(cliEnginesEnabledFromEnv({ CLI_ENGINES_ENABLED: "true" })).toBe(true);
-    expect(cliEnginesEnabledFromEnv({ CLI_ENGINES_ENABLED: "1" })).toBe(false);
-    expect(cliEnginesEnabledFromEnv({})).toBe(false);
-  });
-
-  it("refuses billing with the flag on", () => {
-    expect(() => assertCliEnginesAllowed({ enabled: true, billing: true })).toThrow(
-      "CLI_ENGINES_ENABLED cannot be used with billing",
-    );
-    expect(() => assertCliEnginesAllowed({ enabled: true, billing: false })).not.toThrow();
-    expect(() => assertCliEnginesAllowed({ enabled: false, billing: true })).not.toThrow();
   });
 });
 

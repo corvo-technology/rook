@@ -7,12 +7,6 @@ const base = {
 };
 
 describe("loadEnv", () => {
-  it("keeps CLI engines off unless the operator turns them on", () => {
-    expect(loadEnv(base).cliEnginesEnabled).toBe(false);
-    expect(loadEnv({ ...base, CLI_ENGINES_ENABLED: "1" }).cliEnginesEnabled).toBe(false);
-    expect(loadEnv({ ...base, CLI_ENGINES_ENABLED: "true" }).cliEnginesEnabled).toBe(true);
-  });
-
   it("keeps linked WhatsApp numbers off a server unless the operator turns them on", () => {
     expect(loadEnv(base).whatsappLinkedDevicesEnabled).toBe(false);
     for (const value of ["", "0", "false", "yes", "TRUE"]) {

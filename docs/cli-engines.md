@@ -4,17 +4,15 @@ A CLI engine lets a bot think with a coding-agent CLI that is already installed 
 
 The CLI owns its own model loop. Corvo owns every tool: each turn runs the CLI once, and its only tools come from a loopback MCP endpoint that Corvo opens for that turn. Every call is forwarded to the run executor's gate, so approvals, taint tracking, audit and turn guards apply unchanged.
 
-## Turning it on
+## Availability
 
-`CLI_ENGINES_ENABLED=true` on the API and worker turns the feature on. It is off by default. With it off, no detection runs, no catalog entry appears, and a bot that saved a CLI engine model fails like any model whose connection is gone.
+The feature is always on. Corvo looks for the CLI when the API and worker start; if it is installed, its models appear in the catalog, and if not, nothing shows. A bot that saved a CLI engine model on a machine without the CLI fails like any model whose connection is gone. A container started from the Compose files does not have the CLI, so it offers nothing.
 
-The desktop app's embedded engine does not set the flag yet; turning it on there is a separate change. A self-hosted operator sets it on purpose, on a machine where the CLI is installed (a container started from the Compose files does not have it).
+The API does not start the engine when a billing provider is configured, so a hosted multi-tenant deployment never offers a machine-owned subscription to its customers. A run that carries a hosted-credit observer is refused before the CLI starts.
 
-The API refuses to start when the flag is on and a billing provider is configured, so a hosted multi-tenant deployment can never offer a machine-owned subscription to its customers. A run that carries a hosted-credit observer is refused before the CLI starts.
+Whoever can pick models on the deployment may use the engine, because the person who runs the machine chose to share it.
 
-Whoever can pick models on a deployment where the operator turned the flag on may use the engine, because the operator chose to share the machine.
-
-> Note for operators: whether the CLI vendor's terms of use allow another application to run the CLI non-interactively on your own machine with your own plan has not been confirmed. Read those terms before turning the flag on for anyone but yourself. Releases may keep the flag off until this is settled.
+> Note for operators: whether the CLI vendor's terms of use allow another application to run the CLI non-interactively on your own machine with your own plan is the maintainer's call; read those terms before sharing the machine with anyone but yourself.
 
 ## Where things live
 

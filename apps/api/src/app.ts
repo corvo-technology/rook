@@ -25,7 +25,6 @@ import type {
 } from "@corvo/adapters";
 import {
   applyMessagingOutboundStatus,
-  assertCliEnginesAllowed,
   ChatSdkMessagingSurface,
   CLAUDE_ENGINE,
   CliEngineHost,
@@ -528,8 +527,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   ]);
   integrationSettings.warmDirectories();
   // A hosted deployment with billing never offers a machine-owned subscription to its customers.
-  assertCliEnginesAllowed({ enabled: env.cliEnginesEnabled, billing: Boolean(billingProvider) });
-  const cliGateway = env.cliEnginesEnabled ? new CliToolGateway() : undefined;
+  const cliGateway = billingProvider ? undefined : new CliToolGateway();
   if (cliGateway) {
     const host = new CliEngineHost({ dataDir: env.dataDir, engines: [CLAUDE_ENGINE] });
     installCliEngineHost(host);

@@ -24,17 +24,6 @@ export function cliEngineConfigDir(dataDir: string, id: CliEngineId): string {
   return path.join(dataDir, "engines", id, "config");
 }
 
-export function cliEnginesEnabledFromEnv(env: NodeJS.ProcessEnv): boolean {
-  return env.CLI_ENGINES_ENABLED === "true";
-}
-
-/** A hosted deployment with billing must never offer a machine-owned subscription to customers. */
-export function assertCliEnginesAllowed(input: { enabled: boolean; billing: boolean }): void {
-  if (input.enabled && input.billing) {
-    throw new Error("CLI_ENGINES_ENABLED cannot be used with billing");
-  }
-}
-
 type Probe = (
   binary: string,
   args: string[],

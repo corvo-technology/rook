@@ -1057,7 +1057,7 @@ the Integrations screen are a separate connection from this messaging surface.
 
 ### Coding-agent CLIs
 
-On a machine where Claude Code is installed and signed in, `CLI_ENGINES_ENABLED=true` lets bots use it as a model without an API key. See [CLI engines](cli-engines.md).
+On a machine where Claude Code is installed and signed in, bots can use it as a model without an API key. See [CLI engines](cli-engines.md).
 
 ### Settings with names you choose
 

@@ -16,7 +16,6 @@ import {
   CliToolGateway,
   CodexCatalogCache,
   cliEngineHost,
-  cliEnginesEnabledFromEnv,
   contentKeyProviderFromEnv,
   createAgentHomeStore,
   createArtifactStore,
@@ -140,7 +139,7 @@ async function main() {
   const ticketBoardEnabled = process.env.TICKET_BOARD_ENABLED === "true";
   const boardEvents = createBoardEvents(realtime);
   const dataDir = process.env.DATA_DIR ?? "./data";
-  const cliGateway = cliEnginesEnabledFromEnv(process.env) ? new CliToolGateway() : undefined;
+  const cliGateway = new CliToolGateway();
   if (cliGateway) {
     const host = new CliEngineHost({ dataDir, engines: [CLAUDE_ENGINE] });
     installCliEngineHost(host);

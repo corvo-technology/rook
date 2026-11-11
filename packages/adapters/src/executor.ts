@@ -29,6 +29,7 @@ import {
   redactSecrets,
   renderBotDirectory,
   renderBotGroupDirectory,
+  SPACE_PAUSED_RUN_ERROR,
   usageTokens,
   userRunError,
   userTurnMessageForRun,
@@ -456,7 +457,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
         ] = await Promise.all([
           deps.prisma.bot.findUniqueOrThrow({
             where: { id: run.botId },
-            include: { computer: true },
+            include: { computer: true, space: { select: { pausedAt: true } } },
           }),
           deps.prisma.thread.findUniqueOrThrow({ where: { id: run.threadId } }),
           loadRunHistoryMessages(deps.prisma, run, LEGACY_HISTORY_WINDOW_SIZE, channelId),
@@ -797,6 +798,14 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const partnerState = await deps.spacePartnerState?.(run.spaceId);
         if (partnerState === "suspended") {
           await failRunBeforeModel(ACCOUNT_PAUSED_RUN_ERROR, true);
+          return;
+        }
+        if (bot.space?.pausedAt) {
+          // The owner chose this, so it sends no failure push.
+          await failRunBeforeModel(SPACE_PAUSED_RUN_ERROR, true, {
+            stopReason: "paused",
+            silent: true,
+          });
           return;
         }
         if (await botDailyLimitReached(deps.prisma, bot)) {
@@ -1155,7 +1164,8 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const reply = await createReplyState(deps, run, runSecrets);
         const scripted = deps.runtime.describe().capabilities.scripted;
         const script = scripted ? inferScript(task.prompt, takeoverResume?.checkpoint) : undefined;
-        const spentBeforeAttempt = await runTokens(deps.prisma, runId);
+        // The first attempt has spent nothing yet; a later one resumes what the earlier ones spent.
+        const spentBeforeAttempt = fence > 1 ? await runTokens(deps.prisma, runId) : 0;
         const state: RunState = {
           lease,
           computerUse,

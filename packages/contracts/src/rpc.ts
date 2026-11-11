@@ -292,6 +292,10 @@ export const appContract = {
     rename: oc
       .input(z.object({ spaceId: Id, name: spaceName }))
       .output(z.object({ id: Id, name: z.string() })),
+    /** Pauses or resumes every bot in a space the caller owns; pausing cancels active runs. */
+    setPaused: oc
+      .input(z.object({ spaceId: Id, paused: z.boolean() }))
+      .output(z.object({ id: Id, pausedAt: IsoDate.nullable() })),
     remove: oc
       .input(z.object({ spaceId: Id }))
       .output(z.object({ ok: z.literal(true), activeSpaceId: Id })),

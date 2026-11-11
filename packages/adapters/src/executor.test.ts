@@ -4456,6 +4456,7 @@ function gateHarness(
   const finalizeRun = vi.fn(async () => ({ continuationRunId: null }));
   const append = vi.fn(async () => undefined);
   const routineRow = { accountFailures: 0 };
+  const notifications = { send: vi.fn(async () => undefined) };
   const run = {
     id: "run-1",
     botId: "bot-1",
@@ -4511,6 +4512,7 @@ function gateHarness(
               thinkingLevel: null,
               memoryScope: "isolated",
               computer: { id: "computer-1", scope: "private" },
+              space: { pausedAt: options.spacePausedAt ?? null },
               ...options.bot,
             },
       ),
@@ -4579,9 +4581,10 @@ function gateHarness(
     memory: { read: vi.fn(async () => ({ documents: [] })) },
     events: { append, finalizeRun },
     jobs: { enqueue: vi.fn(async () => undefined) },
+    notifications,
     secrets: [],
   } as unknown as Parameters<typeof createExecutor>[0]);
-  return { executor, runtimeRun, finalizeRun, routineRow };
+  return { executor, runtimeRun, finalizeRun, routineRow, notifications };
 }
 
 describe("monthly token limit gate", () => {
@@ -4621,5 +4624,40 @@ describe("monthly token limit gate", () => {
     });
     await executor.continueRun("run-1", "worker-1");
     expect(routineRow.accountFailures).toBe(1);
+  });
+});
+
+describe("pause gate", () => {
+  it.each(["user", "routine", "webhook", "bot_message"])(
+    "fails a %s run before the model while its space is paused",
+    async (trigger) => {
+      const { executor, runtimeRun, finalizeRun, routineRow } = gateHarness({
+        trigger,
+        routineId: trigger === "routine" ? "routine-1" : null,
+        spacePausedAt: new Date("2026-11-10T00:00:00Z"),
+      });
+      await executor.continueRun("run-1", "worker-1");
+      expect(finalizeRun).toHaveBeenCalledWith(
+        expect.objectContaining({
+          outcome: "failed",
+          error: "Bots are paused in this space.",
+          stopReason: "paused",
+        }),
+      );
+      expect(runtimeRun).not.toHaveBeenCalled();
+      expect(routineRow.accountFailures).toBe(trigger === "routine" ? 1 : 0);
+    },
+  );
+
+  it("sends no notification for a paused run", async () => {
+    const { executor, notifications } = gateHarness({ spacePausedAt: new Date() });
+    await executor.continueRun("run-1", "worker-1");
+    expect(notifications.send).not.toHaveBeenCalled();
+  });
+
+  it("runs again after the space resumes", async () => {
+    const { executor, finalizeRun } = gateHarness({ spacePausedAt: null });
+    await executor.continueRun("run-1", "worker-1");
+    expect(finalizeRun).not.toHaveBeenCalledWith(expect.objectContaining({ stopReason: "paused" }));
   });
 });

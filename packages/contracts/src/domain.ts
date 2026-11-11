@@ -367,6 +367,10 @@ export const SpaceSchema = z.object({
   hasContent: z.boolean(),
   /** True only when the current member owns the space and may rename it. */
   canRename: z.boolean().optional(),
+  /** When the owner paused every bot in the space; null while it runs. */
+  pausedAt: IsoDate.nullable().default(null),
+  /** True only when the current member owns the space and may pause or resume its bots. */
+  canPause: z.boolean().optional(),
   /** True only when the current member may delete this non-default space. */
   canDelete: z.boolean().optional(),
   /** Every bot deleting the space removes, archived and other members' included. */

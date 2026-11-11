@@ -2,7 +2,6 @@ import { once } from "node:events";
 import { createServer } from "node:http";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type * as ComputerLifecycleModule from "./computer-lifecycle.js";
-import { isLoopGuardStopText, MAX_CONSECUTIVE_OVER_LIMIT_ACTION_CALLS } from "./tool-loop.js";
 
 const provisionComputer = vi.hoisted(() => vi.fn());
 
@@ -61,7 +60,10 @@ function toolResultTexts(messages: Array<Record<string, unknown>>): string[] {
  * server whose every answer is a computer_act call. `sizes` gives the batch size per request;
  * the last size repeats.
  */
-async function runScript(script: Step[], options: { spentBefore?: bigint } = {}) {
+async function runScript(
+  script: Step[],
+  options: { spentBefore?: bigint; leaseFence?: number } = {},
+) {
   vi.stubEnv("CORVO_LOCAL_MODELS", "example-model");
   vi.stubEnv("CORVO_LOCAL_VISION_MODELS", "example-model");
   vi.stubEnv("CORVO_LOCAL_CONTEXT_WINDOW", "120000");
@@ -150,7 +152,7 @@ async function runScript(script: Step[], options: { spentBefore?: bigint } = {})
     routineId: null,
     retryOfRunId: null,
     leaseOwner: null as string | null,
-    leaseFence: 0,
+    leaseFence: options.leaseFence ?? 0,
     leaseExpiresAt: null as Date | null,
     wakeAt: null as Date | null,
   };
@@ -407,6 +409,7 @@ describe("the per-reply token cap through the run loop", () => {
   it("counts what earlier attempts of the run spent", async () => {
     const { requests, act } = await runScript([{ tool: true }, { text: "Wrapped up." }], {
       spentBefore: 100_001n,
+      leaseFence: 1,
     });
     expect(act).not.toHaveBeenCalled();
     expect(toolResultTexts(requests[1]!.messages).at(-1)).toContain(REFUSAL_TEXT);

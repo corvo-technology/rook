@@ -27,6 +27,11 @@ msgstr "{0, plural, one {# Bot hat ein eigenes Modell:} other {# Bots haben ein 
 msgid "{0, plural, one {# failed} other {# failed}}"
 msgstr "{0, plural, one {# fehlgeschlagen} other {# fehlgeschlagen}}"
 
+#. placeholder {0}: thread.count
+#: src/pages/shell/message-view.tsx
+msgid "{0, plural, one {# reply} other {# replies}}"
+msgstr "{0, plural, one {# Antwort} other {# Antworten}}"
+
 #. placeholder {0}: pinned.length
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "{0, plural, one {Switch # bot to the space default?} other {Switch # bots to the space default?}}"
@@ -4365,6 +4370,7 @@ msgstr "Eingabe erforderlich"
 msgid "Needs takeover"
 msgstr "Übernahme erforderlich"
 
+#: src/components/AskCard.tsx
 #: src/lib/roster-status.ts
 #: src/pages/shell/computer-overlay.tsx
 msgid "Needs you"
@@ -7223,6 +7229,7 @@ msgstr "Gestern"
 #: src/pages/Shell.tsx
 #: src/pages/shell/message-view.tsx
 #: src/pages/shell/shell-sidebar.tsx
+#: src/pages/shell/transcript.tsx
 msgid "You"
 msgstr "Du"
 

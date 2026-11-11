@@ -90,3 +90,63 @@ export function ActiveBotGlyph({ bots, label }: { bots: GroupAvatarMember[]; lab
     </div>
   );
 }
+
+/**
+ * What a folded peer exchange shows while closed, like a thread footer: who replied, how many
+ * replies and when the last came. Pressing it opens or closes the replies inline.
+ */
+export function PeerThreadFooter({
+  expanded,
+  label,
+  countLabel,
+  faces,
+  lastAt,
+  lastLabel,
+  onToggle,
+}: {
+  expanded: boolean;
+  label: string;
+  /** "3 replies". */
+  countLabel: string;
+  faces: readonly { botId: string; color: string }[];
+  lastAt: string;
+  /** The time of the last reply, as the reader writes it. */
+  lastLabel: string;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="flex justify-start">
+      <button
+        type="button"
+        data-testid="peer-replies-toggle"
+        aria-expanded={expanded}
+        aria-label={label}
+        onClick={onToggle}
+        className="group/thread -ms-1 inline-flex max-w-full items-center gap-2 rounded-lg px-1.5 py-1 text-[13px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground/75 motion-reduce:transition-none"
+      >
+        <span className="flex items-center" aria-hidden="true">
+          {faces.map((face, index) => (
+            <BotAvatar
+              key={face.botId}
+              color={face.color}
+              identity={face.botId}
+              size={18}
+              className={index === 0 ? undefined : "-ms-1"}
+            />
+          ))}
+        </span>
+        <span className="font-medium text-foreground/75">{countLabel}</span>
+        <time dateTime={lastAt} className="tabular-nums">
+          {lastLabel}
+        </time>
+        <ChevronDown
+          strokeWidth={1.8}
+          aria-hidden="true"
+          className={
+            expanded ? "size-3.5 transition-transform" : "size-3.5 -rotate-90 transition-transform"
+          }
+        />
+      </button>
+    </div>
+  );
+}

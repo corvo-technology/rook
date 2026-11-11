@@ -14,6 +14,11 @@ const skills = vi.hoisted(() => ({
 }));
 vi.mock("../../lib/rpc", () => ({ rpc: { skills } }));
 
+vi.mock("@lingui/core/macro", () => ({
+  t: (strings: TemplateStringsArray, ...values: unknown[]) => String.raw(strings, ...values),
+  plural: (count: number, forms: { one: string; other: string }) =>
+    (count === 1 ? forms.one : forms.other).replace("#", String(count)),
+}));
 vi.mock("@lingui/react/macro", () => ({
   Trans: ({ children }: { children: ReactNode }) => children,
   useLingui: () => ({
@@ -302,7 +307,12 @@ it("names a sender that is not a group member from the bot list", () => {
   expect(container.textContent).toContain("Design");
 });
 
-function mountReply(speakerName?: string, continued = false) {
+function mountReply(
+  speakerName?: string,
+  continued = false,
+  extra: Partial<ComponentProps<typeof MessageView>> = {},
+  text = "Fixed the timeout.",
+) {
   const message: ThreadMessage = {
     id: "reply",
     threadId: "thread",
@@ -310,11 +320,12 @@ function mountReply(speakerName?: string, continued = false) {
     role: "bot",
     botId: "leo",
     createdAt: "2026-11-02T12:13:00.000Z",
-    blocks: [{ kind: "text", text: "Fixed the timeout." }],
+    blocks: [{ kind: "text", text }],
   };
   act(() =>
     root.render(
       <MessageView
+        {...extra}
         artifactTarget={{ botId: "leo" }}
         canAnswer={false}
         canDismiss={false}
@@ -485,4 +496,110 @@ it("steps through several proposal cards one at a time with a counter", () => {
   expect(container.textContent).toContain("Change a?");
   expect(container.textContent).toContain("Change b?");
   expect(container.textContent).not.toContain("Change c?");
+});
+
+it("shows an agent's role muted beside its name in a channel", () => {
+  mountReply("Leo", false, { speakerRole: "Backend engineer" });
+  expect(container.textContent).toContain("LeoBackend engineer");
+});
+
+it("shows an @name of a channel agent as a chip, and leaves other words alone", () => {
+  mountReply(
+    "Leo",
+    false,
+    { channelMembers: [{ id: "cora", name: "Cora" }] },
+    "@Cora can you plan it? Cora is great.",
+  );
+  const chips = container.querySelectorAll('[data-testid="bot-mention"]');
+  expect(chips).toHaveLength(1);
+  expect(chips[0]?.textContent).toBe("Cora");
+  expect(container.textContent).toContain("can you plan it? Cora is great.");
+});
+
+it("sets the person's own message in the column of a channel, with no bubble", () => {
+  const message = {
+    id: "me",
+    threadId: "thread",
+    seq: 1,
+    role: "user",
+    createdAt: "2026-11-02T12:13:00.000Z",
+    blocks: [{ kind: "text", text: "Ship it" }],
+  } as unknown as ThreadMessage;
+  act(() =>
+    root.render(
+      <MessageView
+        artifactTarget={{ botId: "leo" }}
+        canAnswer={false}
+        canDismiss={false}
+        message={message}
+        onAnswer={vi.fn()}
+        onOpenBot={vi.fn()}
+        onOpenPeerMessages={vi.fn()}
+        onTogglePeerReplies={vi.fn()}
+        peerBot={() => undefined}
+        speakerName="You"
+        onRefresh={vi.fn()}
+        onBotChanged={vi.fn()}
+        onAddRoutine={vi.fn()}
+        voiceReady={false}
+        speaking={false}
+        onSpeak={vi.fn()}
+        onOpenComputer={vi.fn()}
+        showToolActivity={false}
+        onReply={vi.fn()}
+        onMarkUnread={vi.fn()}
+        onReact={vi.fn()}
+      />,
+    ),
+  );
+  expect(container.textContent).toContain("You");
+  const bubble = container.querySelector('[data-testid="message-user-bubble"]');
+  expect(bubble?.textContent).toBe("Ship it");
+  expect(bubble?.className).not.toContain("bg-chat-user");
+});
+
+it("folds a received peer exchange into a thread footer in a channel", () => {
+  const onToggle = vi.fn();
+  const message = {
+    id: "marker",
+    threadId: "thread",
+    seq: 1,
+    role: "bot",
+    createdAt: "2026-11-02T12:13:00.000Z",
+    blocks: [{ kind: "bot_message_received", fromBotId: "cora", fromBotName: "Cora", text: "hi" }],
+  } as unknown as ThreadMessage;
+  act(() =>
+    root.render(
+      <MessageView
+        artifactTarget={{ botId: "leo" }}
+        canAnswer={false}
+        canDismiss={false}
+        message={message}
+        onAnswer={vi.fn()}
+        onOpenBot={vi.fn()}
+        onOpenPeerMessages={vi.fn()}
+        peerReplies="collapsed"
+        threadSummary={{ count: 3, botIds: ["cora", "leo"], lastAt: "2026-11-02T12:20:00.000Z" }}
+        onTogglePeerReplies={onToggle}
+        peerBot={() => ({ name: "Cora", color: "#8B5CF6" })}
+        onRefresh={vi.fn()}
+        onBotChanged={vi.fn()}
+        onAddRoutine={vi.fn()}
+        voiceReady={false}
+        speaking={false}
+        onSpeak={vi.fn()}
+        onOpenComputer={vi.fn()}
+        showToolActivity={false}
+        onReply={vi.fn()}
+        onMarkUnread={vi.fn()}
+        onReact={vi.fn()}
+      />,
+    ),
+  );
+  const footer = container.querySelector<HTMLElement>('[data-testid="peer-replies-toggle"]');
+  expect(footer?.textContent).toContain("3 replies");
+  expect(footer?.getAttribute("aria-expanded")).toBe("false");
+  expect(footer?.querySelectorAll(".corvo-mascot-avatar")).toHaveLength(2);
+  act(() => footer?.click());
+  expect(onToggle).toHaveBeenCalledWith("marker");
 });

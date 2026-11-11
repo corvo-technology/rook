@@ -16,6 +16,7 @@ import {
   TICKET_STATUSES,
   TICKET_TITLE_MAX_LENGTH,
 } from "@corvo/contracts";
+import { GUIDE_PAGES } from "@corvo/core";
 import { z } from "zod";
 import { allowPrivateHttpSecretOrigins } from "./bot-secrets.js";
 import { BROWSER_ACT_KINDS } from "./browser-tools.js";
@@ -1521,6 +1522,33 @@ export const builtinAgentTools: ConnectorTool[] = [
     name: "list_routines",
     description:
       "List every routine of the agents you manage: which agent, its name, when it runs, whether it is active, the next and last run and how the last one ended. Each routine carries the start of its prompt and its steps. Call it before proposing or creating any routine, to see whether one already does the job. Use it to tell the owner what is scheduled or what failed. To add work after an existing routine, use add_routine_step; do not create a second routine for it.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "guide_read",
+    description:
+      "Read one page of the app's guide before you explain how something in the app works; the list of pages is in your instructions. Explain only what the page says, and if no page covers the question, say you do not know. Pass the language you are speaking so you get the page in it.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        page: {
+          type: "string",
+          enum: GUIDE_PAGES.map((page) => page.slug),
+          description: "The page slug.",
+        },
+        language: {
+          type: "string",
+          description: "The language you are speaking with the person, such as en, pt-BR or es.",
+        },
+      },
+      required: ["page", "language"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "space_status",
+    description:
+      "Settings, statuses and error messages across the space: each bot's model and last run, apps and servers in error, routines that failed and provider limits nearly reached. Use it before saying why something does not work. It never shows conversations, prompts, memory or tickets.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
   },
   {

@@ -196,6 +196,8 @@ export function describeToolActivity(toolName: string, args: unknown): string {
   if (toolName === "run_subagent") return `Delegating to helper: ${detail(record.name)}`;
   if (toolName === "create_space") return `Creating space: ${detail(record.name)}`;
   if (toolName === "list_fleet") return "Checking your bots";
+  if (toolName === "guide_read") return "Checking the guide";
+  if (toolName === "space_status") return "Checking how your space is doing";
   if (toolName === "create_group") return `Creating group: ${detail(record.name)}`;
   if (toolName === "update_group")
     return `Updating group: ${detail(record.group_name ?? record.name)}`;

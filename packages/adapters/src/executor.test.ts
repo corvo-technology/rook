@@ -4,6 +4,7 @@ import {
   CLOUDFLARE_WORKERS_AI_PROVIDER_ID,
   cloudflareModelConfigMessage,
   FLEET_TOOL_NAMES,
+  FLEET_WRITE_TOOL_NAMES,
 } from "@corvo/contracts";
 import { ONCE_ROUTINE_CRON } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
@@ -1480,6 +1481,46 @@ describe("userTurnInstructions", () => {
     expect(clauseFor("user", false)).toBeUndefined();
     expect(clauseFor("bot_message", true)).toBeUndefined();
     expect(clauseFor("follow_up", true, false)).toBeUndefined();
+  });
+
+  it("offers the guide and the space status to a bot with fleet management, with the index in its instructions", () => {
+    const run = (fleetManagement: boolean) => {
+      const tools = selectBuiltinToolsForRun({
+        graphicalToolsAllowed: false,
+        groupId: null,
+        trigger: "user",
+        semanticMemoryEnabled: false,
+        messagingChannelRun: false,
+        fleetManagement,
+      });
+      const text = userTurnInstructions({
+        ...base,
+        groupContext: undefined,
+        messagingContext: undefined,
+        redactedMemoryContext: undefined,
+        redactedScratchpadContext: undefined,
+        hasHistoricalContext: false,
+        agentEnvironmentInstruction: undefined,
+        botDirectory: undefined,
+        pluginLine: undefined,
+        agentSkillsLine: undefined,
+        taughtSkillsLine: undefined,
+        offeredFleetTools: offeredFleetTools(tools),
+      })
+        .filter(Boolean)
+        .join("\n");
+      return { names: tools.map((tool) => tool.name), text };
+    };
+    const on = run(true);
+    expect(on.names).toEqual(expect.arrayContaining(["guide_read", "space_status"]));
+    expect(on.text).toContain("Guide pages:");
+    expect(on.text).toContain("- approvals: ");
+    const off = run(false);
+    expect(off.names).not.toContain("guide_read");
+    expect(off.names).not.toContain("space_status");
+    expect(off.text).not.toContain("Guide pages:");
+    expect(FLEET_WRITE_TOOL_NAMES).not.toContain("guide_read");
+    expect(FLEET_WRITE_TOOL_NAMES).not.toContain("space_status");
   });
 
   it("stops telling the model to use a disabled web tool", () => {

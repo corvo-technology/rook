@@ -510,6 +510,14 @@ export interface AgentRunRequest {
   routineId?: string | null;
   sourceMessageId?: string | null;
   prompt: string;
+  /**
+   * What this run alone needs to know (time, reply target, approvals, recalled memory).
+   * When set and the source message is the newest history entry, the runtime keeps that
+   * message as its stored block and sends this note right after it instead of `prompt`.
+   */
+  turnNote?: string;
+  /** The live context block (memory, notes, team, connections, skills); absent or "" means none. */
+  liveContext?: string;
   instructions: string;
   history: Array<{
     id?: string;

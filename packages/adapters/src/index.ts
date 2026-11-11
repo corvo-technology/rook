@@ -89,6 +89,8 @@ export * from "./keenable-web.js";
 export * from "./key-provider-factory.js";
 export * from "./keyless-http-web.js";
 export * from "./kubernetes-sandbox.js";
+export * from "./local-setup/check.js";
+export * from "./local-setup/loopback-servers.js";
 export * from "./local-speech.js";
 export * from "./local-speech-models.js";
 export * from "./local-voice.js";

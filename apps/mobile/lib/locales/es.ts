@@ -15,6 +15,19 @@ export const ES_MESSAGES: Record<string, string> = {
   Auto: "Auto",
   Ask: "Preguntar",
   Block: "Bloquear",
+  "Asks before any change": "Pregunta antes de cualquier cambio",
+  "Does everything without asking": "Lo hace todo sin preguntar",
+  "Does what fits your request": "Hace lo que encaja con tu petición",
+  "How much does {name} do on its own?": "¿Cuánto hace {name} por su cuenta?",
+  "Let {name} act without asking?": "¿Dejar que {name} actúe sin preguntar?",
+  "Let bots act without asking?": "¿Dejar que los bots actúen sin preguntar?",
+  "Still asks before a security change after it read outside content. Blocked actions stay blocked.":
+    "Sigue preguntando antes de un cambio de seguridad después de leer contenido externo. Las acciones bloqueadas siguen bloqueadas.",
+  "Still asks before anything that changes something, and before opening a site you didn't mention.":
+    "Sigue preguntando antes de cualquier cosa que cambie algo y antes de abrir un sitio que no mencionaste.",
+  "Still asks when a second model finds it outside your request, and before security changes.":
+    "Sigue preguntando cuando un segundo modelo ve algo fuera de tu petición y antes de los cambios de seguridad.",
+  "Stop asking": "Dejar de preguntar",
   "Add a model in Settings to use this.": "Agrega un modelo en Configuración para usarlo.",
   "Approval model": "Modelo de aprobación",
   "Routing model": "Modelo de enrutamiento",

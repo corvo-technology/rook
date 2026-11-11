@@ -5,7 +5,13 @@ import sharp from "sharp";
 import { describe, expect, it, vi } from "vitest";
 import { PiAgentRuntime } from "./pi-runtime.js";
 import { resolveRuntimeModel } from "./pi-runtime-models.js";
-import { liveContextBlock, userTurnInstructions } from "./run-instructions.js";
+import { PromptSessions } from "./prompt-session.js";
+import {
+  LIVE_CONTEXT_HEADER,
+  liveContextBlock,
+  turnNote,
+  userTurnInstructions,
+} from "./run-instructions.js";
 
 describe("Pi outgoing provider prefixes", () => {
   it.each(["png", "gif"] as const)(
@@ -343,6 +349,118 @@ describe("Pi outgoing provider prefixes", () => {
       expect(live(requests[0]!)).toContain("Memory: first");
       expect(live(requests[1]!)).toContain("Memory: second");
       expect(live(requests[1]!)).toContain("Scratchpad: 1");
+    } finally {
+      server.close();
+      server.closeAllConnections();
+      await once(server, "close");
+    }
+  }, 30000);
+
+  it("keeps the prefix bytes identical across turns when a memory is added in between", async () => {
+    const requests: Array<{ tools: unknown; messages: Array<{ role: string; content: string }> }> =
+      [];
+    const server = createServer((request, response) => {
+      void (async () => {
+        const chunks: Buffer[] = [];
+        for await (const chunk of request) chunks.push(Buffer.from(chunk));
+        requests.push(JSON.parse(Buffer.concat(chunks).toString("utf8")));
+        response.writeHead(200, { "content-type": "text/event-stream" });
+        response.end(
+          `data: ${JSON.stringify({ id: "fixture", choices: [{ index: 0, delta: { role: "assistant", content: "ok" }, finish_reason: "stop" }] })}\n\ndata: [DONE]\n\n`,
+        );
+      })().catch(() => response.destroy());
+    });
+    server.listen(0, "127.0.0.1");
+    await once(server, "listening");
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("Fixture endpoint unavailable");
+    const tools: ConnectorTool[] = [
+      { name: "fixture_read", description: "Fixture", inputSchema: { type: "object" } },
+    ];
+    const runtime = new PiAgentRuntime({ promptSessions: new PromptSessions() });
+    const instructions = userTurnInstructions({
+      botInstructions: "Stable guidance.",
+      computerInstruction: "Stable computer tools.",
+      pageBrowserAllowed: true,
+      workspaceInstruction: "Stable workspace guidance.",
+      replyGuidance: "Stable reply guidance.",
+      hasHistoricalContext: false,
+      agentEnvironmentInstruction: undefined,
+    })
+      .filter(Boolean)
+      .join("\n\n");
+    const turn = async (
+      history: Array<{ id: string; role: "user" | "assistant"; content: string }>,
+      memory: string,
+    ) => {
+      const source = history.at(-1)!;
+      for await (const _event of runtime.run(
+        {
+          botId: "bot-prefix",
+          threadId: "thread-prefix",
+          runId: `run-prefix-${requests.length}`,
+          instructions,
+          prompt: `${source.content}\n\nCombined prompt`,
+          turnNote: turnNote({ currentTime: `Clock ${requests.length}` }),
+          liveContext: liveContextBlock({ redactedMemoryContext: memory }),
+          sourceMessageId: source.id,
+          history,
+          tools,
+          model: {
+            provider: "openai-compatible",
+            id: "fixture",
+            baseUrl: `http://127.0.0.1:${address.port}/v1`,
+            allowPrivateEndpoint: true,
+          },
+        },
+        { signal: AbortSignal.timeout(15000) },
+      )) {
+      }
+      const body = requests.at(-1)!;
+      // Chat Completions payloads merge adjacent user turns with a blank line.
+      return {
+        system: body.messages[0]!.content,
+        tools: JSON.stringify(body.tools),
+        conversation: body.messages
+          .slice(1)
+          .map((message) => message.content)
+          .join("\n\n"),
+      };
+    };
+    try {
+      const u1 = { id: "m1", role: "user" as const, content: "First question" };
+      const a1 = { id: "a1", role: "assistant" as const, content: "ok" };
+      const u2 = { id: "m2", role: "user" as const, content: "Second question" };
+      const first = await turn([u1], "Memory: likes tea");
+      const second = await turn([u1, a1, u2], "Memory: likes tea\nMemory: lives in Lisbon");
+      const third = await turn(
+        [
+          u1,
+          a1,
+          u2,
+          { id: "a2", role: "assistant", content: "ok" },
+          { id: "m3", role: "user", content: "Third" },
+        ],
+        "Memory: likes tea\nMemory: lives in Lisbon",
+      );
+      expect(second.tools).toBe(first.tools);
+      expect(second.system).toBe(first.system);
+      expect(third.system).toBe(first.system);
+      // Everything up to the end of the first user message is byte-identical on turn two.
+      const prefix = first.conversation.slice(0, first.conversation.indexOf("\n\nClock 0"));
+      expect(prefix.endsWith("First question")).toBe(true);
+      expect(second.conversation.startsWith(prefix)).toBe(true);
+      expect(third.conversation.startsWith(prefix)).toBe(true);
+      // The new memory shows up after that prefix, in a live block right before the next question.
+      expect(first.conversation).not.toContain("lives in Lisbon");
+      expect(second.conversation.indexOf("lives in Lisbon")).toBeGreaterThan(prefix.length);
+      expect(second.conversation).toContain(
+        `\n\n${LIVE_CONTEXT_HEADER}\nMemory: likes tea\nMemory: lives in Lisbon\n\nSecond question\n\nClock 1`,
+      );
+      // A third turn with the same memory sends no new live block, and replays the second turn's.
+      expect(third.conversation.split(LIVE_CONTEXT_HEADER)).toHaveLength(3);
+      expect(third.conversation).toContain("Second question\n\nAssistant: ok\n\nThird\n\nClock 2");
+      expect(third.conversation).not.toContain("Clock 1");
     } finally {
       server.close();
       server.closeAllConnections();

@@ -267,3 +267,19 @@ test("an unreachable provider is named instead of a generic error", async ({ pag
   await expect(error).not.toContainText("The model provider returned an error.");
   await captureScreenshot(page, testInfo, "unreachable-run-error");
 });
+
+test("a run stopped for repeating itself says why", async ({ page }, testInfo) => {
+  await signup(page, `guard-stop-${Date.now()}@corvo.test`, "password12", "Guard Stop");
+  await completeOnboarding(page);
+  await page.getByPlaceholder(/^Message /).fill("fail this run stuck in a loop");
+  await page.getByRole("button", { name: "Send" }).click();
+
+  const error = page.getByTestId("composer-error");
+  await expect(error).toContainText(
+    "I stopped because I kept repeating the same step and getting the same result.",
+    { timeout: 30_000 },
+  );
+  await expect(error).not.toContainText("The model provider returned an error.");
+  await expect(error.getByTestId("composer-error-action")).toHaveCount(0);
+  await captureScreenshot(page, testInfo, "turn-guard-loop-stop");
+});

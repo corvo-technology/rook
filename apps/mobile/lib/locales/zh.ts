@@ -964,6 +964,14 @@ export const ZH_MESSAGES: Record<string, string> = {
     "提供商拒绝了此机器人用于回复的密钥。",
   "The provider couldn't serve the model selected for this bot.":
     "提供商无法提供为此机器人选择的模型。",
+  "I stopped because I kept repeating the same step and getting the same result.":
+    "我停下来了，因为我一直在重复同一步骤，得到同样的结果。",
+  "I stopped because my tools kept failing.": "我停下来了，因为我的工具一直在出错。",
+  "I stopped because I got stuck and nothing was moving.":
+    "我停下来了，因为我卡住了，没有任何进展。",
+  "I stopped because I kept waiting for something that didn't arrive.":
+    "我停下来了，因为我一直在等一个没有到来的东西。",
+  "Send your message again to try once more.": "再次发送你的消息即可重试。",
   "The bot couldn't finish its reply. Technical details includes the reported error.":
     "机器人未能完成回复。技术详情包含报告的错误。",
   "This bot's reply stopped at its key's daily limit. Your own key has its own limits.":

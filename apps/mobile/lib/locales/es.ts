@@ -953,6 +953,15 @@ export const ES_MESSAGES: Record<string, string> = {
     "El proveedor rechazó la clave que este bot usó para responder.",
   "The provider couldn't serve the model selected for this bot.":
     "El proveedor no pudo atender el modelo seleccionado para este bot.",
+  "I stopped because I kept repeating the same step and getting the same result.":
+    "Me detuve porque seguí repitiendo el mismo paso y obteniendo el mismo resultado.",
+  "I stopped because my tools kept failing.": "Me detuve porque mis herramientas seguían fallando.",
+  "I stopped because I got stuck and nothing was moving.":
+    "Me detuve porque me quedé atascado y nada avanzaba.",
+  "I stopped because I kept waiting for something that didn't arrive.":
+    "Me detuve porque seguía esperando algo que no llegaba.",
+  "Send your message again to try once more.":
+    "Envía tu mensaje de nuevo para intentarlo otra vez.",
   "The bot couldn't finish its reply. Technical details includes the reported error.":
     "El bot no pudo terminar su respuesta. Los detalles técnicos incluyen el error notificado.",
   "This bot's reply stopped at its key's daily limit. Your own key has its own limits.":

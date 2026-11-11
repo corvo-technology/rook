@@ -105,6 +105,11 @@ export function runErrorWhatHappened(
       return t("The provider refused the key this bot used for its reply.");
     case "model":
       return t("The provider couldn't serve the model selected for this bot.");
+    case "loop":
+    case "tool_errors":
+    case "stall":
+    case "waiting":
+      return t("Send your message again to try once more.");
     default:
       return t("The bot couldn't finish its reply. Technical details includes the reported error.");
   }

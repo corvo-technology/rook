@@ -13,6 +13,7 @@ import {
   MODEL_OUTPUT_CUT_ERROR,
   modelFallbackFailure,
   STEERING_CONTINUATION_PROMPT,
+  TURN_GUARD_RUN_ERRORS,
 } from "@corvo/core";
 
 const running = new Map<string, AbortController>();
@@ -685,6 +686,7 @@ function shouldFail(prompt: string): boolean {
 function scriptedFailure(prompt: string): string {
   if (/\bfixed context\b/i.test(prompt)) return MODEL_CONTEXT_TOO_SMALL_ERROR;
   if (/\bunrun approval\b/i.test(prompt)) return APPROVED_ACTION_NOT_RUN_ERROR;
+  if (/\bstuck in a loop\b/i.test(prompt)) return TURN_GUARD_RUN_ERRORS.loop;
   if (/\bcut reply\b/i.test(prompt)) return MODEL_OUTPUT_CUT_ERROR;
   if (/\bunreachable\b/i.test(prompt)) return "Connection error.";
   if (/\bout of credits\b/i.test(prompt)) {

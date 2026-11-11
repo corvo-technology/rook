@@ -950,6 +950,14 @@ export const JA_MESSAGES: Record<string, string> = {
     "このボットが返信に使用したキーはプロバイダーに拒否されました。",
   "The provider couldn't serve the model selected for this bot.":
     "プロバイダーはこのボットに選択されたモデルを提供できませんでした。",
+  "I stopped because I kept repeating the same step and getting the same result.":
+    "同じ手順を繰り返して同じ結果しか得られなかったため、停止しました。",
+  "I stopped because my tools kept failing.": "ツールが失敗し続けたため、停止しました。",
+  "I stopped because I got stuck and nothing was moving.":
+    "行き詰まって何も進まなくなったため、停止しました。",
+  "I stopped because I kept waiting for something that didn't arrive.":
+    "来ないものを待ち続けていたため、停止しました。",
+  "Send your message again to try once more.": "もう一度試すには、メッセージを再送してください。",
   "The bot couldn't finish its reply. Technical details includes the reported error.":
     "ボットは返信を完了できませんでした。報告されたエラーは技術的な詳細で確認できます。",
   "This bot's reply stopped at its key's daily limit. Your own key has its own limits.":

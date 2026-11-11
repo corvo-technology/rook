@@ -3416,6 +3416,26 @@ msgstr "確認方法"
 msgid "How will you use Rook?"
 msgstr "Rookをどのように使いますか？"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "I stopped because I got stuck and nothing was moving."
+msgstr "行き詰まって何も進まなくなったため、停止しました。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "I stopped because I kept repeating the same step and getting the same result."
+msgstr "同じ手順を繰り返して同じ結果しか得られなかったため、停止しました。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "I stopped because I kept waiting for something that didn't arrive."
+msgstr "来ないものを待ち続けていたため、停止しました。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "I stopped because my tools kept failing."
+msgstr "ツールが失敗し続けたため、停止しました。"
+
 #: src/pages/shell/computer-release-actions.tsx
 msgid "I’m done"
 msgstr "完了しました"

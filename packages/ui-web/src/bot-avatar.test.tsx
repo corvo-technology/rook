@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 import {
   BOT_AVATAR_COLORS,
   BotAvatar,
+  botAccent,
   DEFAULT_BOT_AVATAR_COLOR,
   defaultBotAvatarValue,
   parseBotAvatar,
@@ -93,9 +94,23 @@ describe("BotAvatar", () => {
       const html = renderToString(<BotAvatar color="#3B82F6" status={status} />);
       expect(html).toContain('data-working="true"');
       expect(html).toContain("corvo-bot-avatar-ring-working");
-      expect(html).toContain("stroke-status-working");
+      // Eight dots in the rook's own shade.
+      expect(html.match(/<circle/g)).toHaveLength(8);
+      expect(html).toContain(`fill="${MASCOT_LOOKS.blue.color}"`);
     },
   );
+
+  it("shows a brand dot only while it waits for the person", () => {
+    const waiting = renderToString(<BotAvatar color="#3B82F6" status="waiting_input" />);
+    expect(waiting).toContain("data-needs-you");
+    expect(waiting).toContain("bg-brand");
+    expect(renderToString(<BotAvatar color="#3B82F6" status="running" />)).not.toContain(
+      "data-needs-you",
+    );
+    expect(
+      renderToString(<BotAvatar color="data:image/png;base64,abc" status="waiting_takeover" />),
+    ).toContain("data-needs-you");
+  });
 
   it("is ring-free when idle", () => {
     const html = renderToString(<BotAvatar color="#F59E0B" status="idle" />);
@@ -125,7 +140,7 @@ describe("BotAvatar", () => {
     );
     expect(html).toContain('class="corvo-bot-avatar relative shrink-0 select-none"');
     expect(html).toContain("corvo-bot-avatar-ring-working");
-    expect(html).toContain("stroke-status-working");
+    expect(html).toContain("fill-status-working");
     expect(html.indexOf("corvo-bot-avatar-picture")).toBeLessThan(
       html.indexOf("corvo-bot-avatar-ring"),
     );
@@ -217,5 +232,14 @@ describe("the mascot's eyes", () => {
   it("fill the tile with the shade of the chick the bot's color gives it", () => {
     expect(renderToString(<BotAvatar color="#8B5CF6" />)).toContain('fill="#b797ef"');
     expect(renderToString(<BotAvatar color="#10B981" />)).toContain('fill="#54c398"');
+  });
+});
+
+describe("botAccent", () => {
+  it("is the shade the bot's rook is drawn in, and nothing for a picture", () => {
+    expect(botAccent("#3B82F6")).toBe(MASCOT_LOOKS.blue.color);
+    expect(botAccent("#8B5CF6::char_cat")).toBe(MASCOT_LOOKS.violet.color);
+    expect(botAccent("#14B8A6")).toBe(customMascotBody("#14B8A6"));
+    expect(botAccent("data:image/png;base64,abc")).toBeUndefined();
   });
 });

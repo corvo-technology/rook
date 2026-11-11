@@ -4494,6 +4494,7 @@ msgid "No authentication"
 msgstr "認証なし"
 
 #: src/pages/shell/command-palette.tsx
+#: src/pages/TeamBoard.tsx
 msgid "No bots"
 msgstr "ボットなし"
 
@@ -4565,6 +4566,10 @@ msgstr "リモートMCPサーバーが見つかりません"
 #: src/pages/SpaceSearch.tsx
 msgid "No results"
 msgstr "結果なし"
+
+#: src/pages/Routines.tsx
+msgid "No routines yet"
+msgstr "ルーティンはまだありません"
 
 #: src/components/markdown-copy.tsx
 msgid "No rows"

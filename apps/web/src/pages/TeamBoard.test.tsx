@@ -18,6 +18,7 @@ vi.mock("@lingui/react/macro", () => ({
 }));
 vi.mock("@corvo/ui-web", () => ({
   BotAvatar: ({ status }: { status?: string }) => <span data-avatar-status={status} />,
+  RookGlyph: ({ state }: { state: string }) => <i data-rook={state} />,
   Button: (props: ComponentProps<"button">) => <button type="button" {...props} />,
 }));
 
@@ -191,4 +192,13 @@ it("lists what each agent is working on, and opens that ticket on the board", as
   await act(async () => mine.querySelector<HTMLButtonElement>("button")?.click());
   expect(onOpen).toHaveBeenCalledWith("/app/board?ticket=RAK-4");
   await act(async () => root.unmount());
+});
+
+it("says a person needs to look in the brand color, and shows a sleeping rook when nobody is here", async () => {
+  const { host, unmount } = await mount([bot("ask", "waiting_input")], [group("eng", ["ask"])]);
+  expect(q(host, "member-ask").innerHTML).toContain("text-brand");
+  await unmount();
+  const empty = await mount([], []);
+  expect(q(empty.host, "team-empty").querySelector("[data-rook='asleep']")).not.toBeNull();
+  await empty.unmount();
 });

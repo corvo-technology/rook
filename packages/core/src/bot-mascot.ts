@@ -1,5 +1,6 @@
+import { parseBotAvatarValue } from "@corvo/contracts";
 import type { BotColorDef } from "./bot-avatar-colors.js";
-import { BOT_COLOR_LIST } from "./bot-avatar-colors.js";
+import { BOT_COLOR_LIST, resolvePersonaColorDef } from "./bot-avatar-colors.js";
 
 /** The Rook mascot's colors, in the order the avatar picker shows them. `hex` is what a bot saves. */
 export const MASCOT_COLORS = [
@@ -89,6 +90,25 @@ export function mascotForColorDef(def: Pick<BotColorDef, "id" | "hex">): MascotI
 /** The color a mascot stands for, as a hex value. */
 export function mascotHex(id: MascotId): string {
   return MASCOT_COLORS.find((color) => color.id === id)?.hex ?? "#FFFFFF";
+}
+
+/**
+ * The color a new bot gets when nobody chose one: the first rook hue, in picker order, that the
+ * other active bots wear least, so each bot is told apart at a glance and the hues cycle once all
+ * are taken. Gray is left out because a gray rook reads as one that is asleep. Pictures and values
+ * that are not a color take no hue.
+ */
+export function nextBotColor(existing: readonly string[]): string {
+  const hues = MASCOT_COLORS.filter((color) => color.id !== "neutral");
+  const counts = new Map<MascotId, number>();
+  for (const value of existing) {
+    const avatar = parseBotAvatarValue(value);
+    if (avatar.kind === "image" || avatar.kind === "other") continue;
+    const mascot = mascotForColorDef(resolvePersonaColorDef("", avatar.color));
+    counts.set(mascot, (counts.get(mascot) ?? 0) + 1);
+  }
+  const fewest = Math.min(...hues.map((hue) => counts.get(hue.id) ?? 0));
+  return (hues.find((hue) => (counts.get(hue.id) ?? 0) === fewest) ?? hues[0]!).hex;
 }
 
 /** Each color's rook: its own shade, soft enough for dark eyes and a dark page. */

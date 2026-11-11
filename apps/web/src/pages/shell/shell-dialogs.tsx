@@ -348,6 +348,7 @@ export function ShellDialogs({
           onCancel={() => setCreateBotOpen(false)}
           onCreate={createBot}
           onImport={onImportFromCreate}
+          takenColors={bots.map((bot) => bot.color)}
         />
       ) : null}
 

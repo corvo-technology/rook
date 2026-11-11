@@ -1,5 +1,5 @@
 import { BOT_NAME_MAX_LENGTH } from "@corvo/contracts";
-import { MASCOT_COLORS } from "@corvo/core";
+import { nextBotColor } from "@corvo/core";
 import {
   BotAvatar,
   Button,
@@ -15,10 +15,6 @@ import { useRef, useState } from "react";
 import { errorText } from "../../lib/user-error";
 import { BotLookPicker } from "./avatar-studio-popover";
 
-function pick<T>(options: readonly T[]): T {
-  return options[Math.floor(Math.random() * options.length)]!;
-}
-
 export interface CreateBotDialogInput {
   name: string;
   color: string;
@@ -29,15 +25,18 @@ export function CreateBotDialog({
   onCancel,
   onCreate,
   onImport,
+  takenColors = [],
 }: {
   onCancel: () => void;
   onCreate: (input: CreateBotDialogInput) => Promise<void>;
   onImport?: () => void;
+  /** The colors the space's bots wear, so the new one starts in a hue of its own. */
+  takenColors?: readonly string[];
 }) {
   const { t } = useLingui();
   const nameRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState("");
-  const [color, setColor] = useState<string>(() => pick(MASCOT_COLORS).hex);
+  const [color, setColor] = useState<string>(() => nextBotColor(takenColors));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const trimmed = name.trim();

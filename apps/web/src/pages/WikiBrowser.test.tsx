@@ -54,6 +54,7 @@ vi.mock("@corvo/ui-web", () => ({
   Input: (props: ComponentProps<"input">) => <input {...props} />,
   Textarea: (props: ComponentProps<"textarea">) => <textarea {...props} />,
   Spinner: () => <span role="status" />,
+  RookGlyph: ({ state }: { state: string }) => <i data-rook={state} />,
   DropdownMenu: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DropdownMenuTrigger: ({ render, children }: { render: ReactElement; children: ReactNode }) =>
     cloneElement(render, {}, children),
@@ -252,6 +253,7 @@ it("says the wiki is empty with one line and one action", async () => {
   const { api } = fakeApi();
   const unmount = await mount(api);
   expect(q("wiki-empty")?.textContent).toBe("No pages yet");
+  expect(q("wiki-empty")?.querySelector("[data-rook=asleep]")).not.toBeNull();
   expect(button("New page")).toBeTruthy();
   await unmount();
 });

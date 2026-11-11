@@ -1,6 +1,7 @@
 import { randomInt } from "node:crypto";
-import { BOT_COLORS, parseBotAvatarValue } from "@corvo/contracts";
+import { parseBotAvatarValue } from "@corvo/contracts";
 import {
+  nextBotColor,
   ORGANIC_AVATAR_HEART_FAMILY,
   ORGANIC_AVATAR_LOOKS,
   organicAvatarFamily,
@@ -73,11 +74,11 @@ function idForFamily(family: number, random: Random, now: number): string {
  * same way, app builds already installed included, without a new column or avatar value.
  * Existing bots keep their ids, so their look never changes.
  *
- * Shapes are balanced by look, where two near-identical families count as one, and a tie
- * between colours goes to one no bot with the same look wears. Bots with a picture or an
- * Avatar Studio shape do not draw an organic body and are not counted for the look. A colour
- * passed by the caller is kept, and so is an organic family the caller picked (the create
- * dialog previews one before the bot has an id).
+ * Shapes are balanced by look, where two near-identical families count as one. Bots with a
+ * picture or an Avatar Studio shape do not draw an organic body and are not counted for the
+ * look. The colour is the first rook hue the other bots wear least (`nextBotColor`), so every
+ * new bot is told apart from the others. A colour passed by the caller is kept, and so is an
+ * organic family the caller picked (the create dialog previews one before the bot has an id).
  */
 export function chooseBotAvatar(
   existing: readonly { id: string; color: string }[],
@@ -88,39 +89,13 @@ export function chooseBotAvatar(
     family,
   }: { random?: Random; now?: number; family?: number } = {},
 ): { id: string; color: string } {
-  const avatars = existing.map((bot) => {
+  const looks = existing.flatMap((bot) => {
     const avatar = parseBotAvatarValue(bot.color);
-    return {
-      look:
-        avatar.kind === "color" || avatar.kind === "other"
-          ? organicAvatarLook(organicAvatarFamily(bot.id))
-          : null,
-      color:
-        avatar.kind === "color" || avatar.kind === "shape" || avatar.kind === "character"
-          ? avatar.color.toUpperCase()
-          : null,
-    };
+    return avatar.kind === "color" || avatar.kind === "other"
+      ? [organicAvatarLook(organicAvatarFamily(bot.id))]
+      : [];
   });
-  const lookOf = (botId: string) => organicAvatarLook(organicAvatarFamily(botId));
   const id =
-    family === undefined
-      ? balancedId(
-          avatars.flatMap((avatar) => (avatar.look === null ? [] : [avatar.look])),
-          random,
-          now,
-        )
-      : idForFamily(family, random, now);
-  const colors = (bots: typeof avatars) =>
-    bots.flatMap((avatar) => (avatar.color === null ? [] : [avatar.color]));
-  return {
-    id,
-    color:
-      color ??
-      pickLeastUsed(
-        BOT_COLORS,
-        colors(avatars),
-        random,
-        colors(avatars.filter((avatar) => avatar.look === lookOf(id))),
-      ),
-  };
+    family === undefined ? balancedId(looks, random, now) : idForFamily(family, random, now);
+  return { id, color: color ?? nextBotColor(existing.map((bot) => bot.color)) };
 }

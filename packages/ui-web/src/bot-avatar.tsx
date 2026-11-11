@@ -7,9 +7,11 @@ import {
   BOT_COLOR_LIST,
   customMascotBody,
   DEFAULT_BOT_AVATAR_COLOR,
+  MASCOT_LOOKS,
   mascotForColorDef,
   mascotMood,
   resolvePersonaColorDef,
+  rookRingDots,
 } from "@corvo/core";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "./lib/utils.js";
@@ -67,6 +69,21 @@ export function defaultBotAvatarValue(rawColor: string): string {
   return DEFAULT_BOT_AVATAR_COLOR;
 }
 
+/**
+ * The shade a bot's rook is drawn in, for tinting what belongs to it (its calendar events, its
+ * row). Nothing for a bot that shows a picture.
+ */
+export function botAccent(rawColor: string, identity = ""): string | undefined {
+  const parsed = parseBotAvatar(rawColor, identity);
+  if (parsed.isImage) return undefined;
+  return (
+    customMascotBody(parsed.color) ??
+    MASCOT_LOOKS[
+      mascotForColorDef(resolvePersonaColorDef(identity || parsed.color || "agent", parsed.color))
+    ].color
+  );
+}
+
 export interface BotAvatarProps {
   color: string;
   size?: number;
@@ -75,26 +92,49 @@ export interface BotAvatarProps {
   className?: string;
 }
 
-/** The working ring drawn around a bot that is running. */
-function WorkingRing({ size }: { size: number }) {
+const RING_DOTS = rookRingDots();
+
+/**
+ * The ring around a bot that is working: eight dots in its color (the working token for a photo)
+ * that light up one after another, the same ring the small rook glyph thinks in.
+ */
+function WorkingRing({ size, color }: { size: number; color?: string }) {
+  const reach = Math.max(4, Math.round(size * 0.16));
   return (
     <svg
-      className="corvo-bot-avatar-ring corvo-bot-avatar-ring-working absolute z-10 pointer-events-none"
-      style={{ inset: -4, width: size + 8, height: size + 8 }}
-      viewBox="0 0 48 48"
-      fill="none"
+      className={cn(
+        "corvo-bot-avatar-ring corvo-bot-avatar-ring-working absolute z-10 pointer-events-none",
+        color ? undefined : "fill-status-working",
+      )}
+      style={{ inset: -reach, width: size + reach * 2, height: size + reach * 2 }}
+      viewBox="0 0 100 100"
+      fill={color}
       aria-hidden="true"
     >
-      <circle
-        cx="24"
-        cy="24"
-        r="22"
-        className="stroke-status-working"
-        strokeWidth="3.2"
-        strokeLinecap="round"
-        strokeDasharray="45 80"
-      />
+      {RING_DOTS.map((dot, index) => (
+        <circle
+          key={`${dot.x}-${dot.y}`}
+          cx={dot.x}
+          cy={dot.y}
+          r="4"
+          style={{ animationDelay: `${index * 0.125}s` }}
+        />
+      ))}
     </svg>
+  );
+}
+
+/** The small brand dot on a bot that is waiting for the person. */
+function NeedsYouDot({ size }: { size: number }) {
+  return (
+    <span
+      aria-hidden="true"
+      data-needs-you
+      className={cn(
+        "corvo-rook-needs-you absolute -end-0.5 -top-0.5 z-10 rounded-full bg-brand ring-2 ring-background",
+        size >= 28 ? "size-2.5" : "size-2",
+      )}
+    />
   );
 }
 
@@ -148,6 +188,7 @@ export const BotAvatar = memo(function BotAvatar({
           <img src={parsed.imageUrl} alt="" className="h-full w-full object-cover" />
         </div>
         {isWorking ? <WorkingRing size={size} /> : null}
+        {mood === "alert" ? <NeedsYouDot size={size} /> : null}
       </div>
     );
   }
@@ -167,7 +208,8 @@ export const BotAvatar = memo(function BotAvatar({
           mood={mood}
           size={size}
         />
-        {isWorking ? <WorkingRing size={size} /> : null}
+        {isWorking ? <WorkingRing size={size} color={parsed.color} /> : null}
+        {mood === "alert" ? <NeedsYouDot size={size} /> : null}
       </div>
     );
   }
@@ -183,7 +225,8 @@ export const BotAvatar = memo(function BotAvatar({
       <span className="corvo-mascot-avatar-image relative block h-full w-full">
         <MascotFace mascot={mascot} mood={mood} blink={blinkBeat(identity || mascot)} body={body} />
       </span>
-      {isWorking ? <WorkingRing size={size} /> : null}
+      {isWorking ? <WorkingRing size={size} color={body ?? MASCOT_LOOKS[mascot].color} /> : null}
+      {mood === "alert" ? <NeedsYouDot size={size} /> : null}
     </div>
   );
 });

@@ -79,12 +79,15 @@ export function CollaborationMarker({
   );
 }
 
-/** The working bot with what it is doing right now, such as its current tool call. */
+/**
+ * The working bot with what it is doing right now, such as its current tool call. The ring of dots
+ * on its rook is the only motion; the label stays still so it can be read.
+ */
 export function ActiveBotGlyph({ bots, label }: { bots: GroupAvatarMember[]; label: string }) {
   return (
     <div role="status" className="corvo-message-in flex min-h-10 min-w-0 items-center gap-2.5 px-1">
       <GroupAvatar members={bots} size={34} />
-      <span dir="auto" className="min-w-0 truncate text-[15px] text-muted-foreground text-shimmer">
+      <span dir="auto" className="min-w-0 truncate text-[15px] text-muted-foreground">
         {label}
       </span>
     </div>

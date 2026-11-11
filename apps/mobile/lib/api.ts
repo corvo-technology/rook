@@ -1055,7 +1055,8 @@ export type MobileMe = Pick<
   | "isDeploymentOwner"
   | "needsSignupSurvey"
   | "billingEnabled"
->;
+> &
+  Partial<Pick<Me, "shortNav">>;
 
 export type MobileModel = ModelCatalogEntry;
 

@@ -1134,4 +1134,12 @@ export const JA_MESSAGES: Record<string, string> = {
   Refuse: "却下",
   "Keep in the wiki": "Wikiに保存",
   "Could not load pages": "ページを読み込めませんでした",
+  "Talk to your agent": "エージェントに話しかける",
+  "Answer a request": "リクエストに答える",
+  "Connect an app": "アプリを接続する",
+  "Add a second agent": "2人目のエージェントを追加する",
+  "Schedule a routine": "ルーティンをスケジュールする",
+  "Keep a memory": "記憶を残す",
+  Missions: "ミッション",
+  "Show everything": "すべて表示",
 };

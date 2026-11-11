@@ -297,6 +297,11 @@ msgstr "{provider} konnte nicht sicher erreicht werden. Ein Sicherheitsprogramm 
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
+msgid "{provider} couldn't be reached through the network proxy. Check the proxy settings."
+msgstr "{provider} war über den Netzwerk-Proxy nicht erreichbar. Prüfe die Proxy-Einstellungen."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
 msgid "{provider} couldn't be reached. Check that it's running."
 msgstr "{provider} ist nicht erreichbar. Prüfe, ob er läuft."
 
@@ -379,6 +384,11 @@ msgstr "{provider}: wöchentliches Ausgabenlimit erreicht."
 #: src/lib/run-error.ts
 msgid "{provider} rejected the API key. Check your connection settings."
 msgstr "{provider} hat den API-Schlüssel abgelehnt. Prüfe deine Verbindungseinstellungen."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "{provider} sign-in is no longer valid."
+msgstr "Die Anmeldung bei {provider} ist nicht mehr gültig."
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -1043,10 +1053,6 @@ msgstr "Hängt {value} an"
 msgid "Attachment"
 msgstr "Anhang"
 
-#: src/lib/model-connection-preflight.ts
-msgid "Authentication failed."
-msgstr "Authentifizierung fehlgeschlagen."
-
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
 msgid "Authorization code"
@@ -1428,14 +1434,6 @@ msgstr "Nach Updates suchen"
 msgid "Check in."
 msgstr "Melde dich."
 
-#: src/lib/model-connection-preflight.ts
-msgid "Check the API key or sign-in, then test again."
-msgstr "Prüfe den API-Schlüssel oder die Anmeldung und teste erneut."
-
-#: src/lib/model-connection-preflight.ts
-msgid "Check the server URL and network, then test again."
-msgstr "Prüfe die Server-URL und das Netzwerk und teste erneut."
-
 #: src/pages/shell/import-setup-card.tsx
 msgid "Check this yourself"
 msgstr "Bitte selbst prüfen"
@@ -1470,6 +1468,7 @@ msgstr "Bot auswählen"
 msgid "Choose a color or upload an image"
 msgstr "Wählen Sie eine Farbe oder laden Sie ein Bild hoch"
 
+#: src/lib/model-problem.ts
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/shell/composer-error.tsx
 msgid "Choose a model"
@@ -1747,10 +1746,6 @@ msgstr "Löschen bestätigen"
 msgid "Confirm password"
 msgstr "Passwort bestätigen"
 
-#: src/lib/model-connection-preflight.ts
-msgid "Confirm the URL is reachable from this browser session, then test again."
-msgstr "Prüfe, ob die URL aus dieser Browsersitzung erreichbar ist, und teste erneut."
-
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/ChatAppsRow.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
@@ -1771,6 +1766,7 @@ msgstr "{0} verbinden"
 msgid "Connect {selectedProviderName}"
 msgstr "{selectedProviderName} verbinden"
 
+#: src/lib/model-problem.ts
 #: src/pages/Onboarding.tsx
 #: src/pages/shell/composer-error.tsx
 msgid "Connect a model"
@@ -1845,10 +1841,6 @@ msgstr "Verbindung wird hergestellt…"
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Connection"
 msgstr "Verbindung"
-
-#: src/lib/model-connection-preflight.ts
-msgid "Connection test failed."
-msgstr "Verbindungstest fehlgeschlagen."
 
 #. placeholder {0}: item.name
 #: src/pages/PluginsOverlay.tsx
@@ -2233,18 +2225,19 @@ msgstr "Abrechnung konnte nicht geöffnet werden"
 msgid "Could not play a test clip"
 msgstr "Testclip konnte nicht abgespielt werden"
 
-#: src/lib/model-connection-preflight.ts
-msgid "Could not reach the model server."
-msgstr "Der Modellserver war nicht erreichbar."
-
 #: src/components/PasskeyOffer.tsx
 #: src/components/PasskeySettings.tsx
 #: src/lib/computer-sandbox.ts
+#: src/lib/model-problem.ts
 #: src/lib/user-error.ts
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
 msgid "Could not reach the server"
 msgstr "Server konnte nicht erreicht werden"
+
+#: src/lib/model-connection-preflight.ts
+msgid "Could not reach this model server"
+msgstr "Dieser Modellserver war nicht erreichbar"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Could not read these files"
@@ -2745,6 +2738,7 @@ msgstr "Desktop-Steuerung"
 msgid "Desktop update"
 msgstr "Desktop-Update"
 
+#: src/components/ModelProblemNotice.tsx
 #: src/pages/RoutineRunDetail.tsx
 #: src/pages/RoutineRunHistory.tsx
 #: src/pages/shell/composer-error.tsx
@@ -5223,6 +5217,7 @@ msgstr "API-Schlüssel ersetzen"
 msgid "Replace its instructions"
 msgstr "Anweisungen ersetzen"
 
+#: src/lib/model-problem.ts
 #: src/pages/shell/composer-error.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Replace key"
@@ -5368,10 +5363,6 @@ msgstr "Zurück zu Rook"
 #: src/components/AskCard.tsx
 msgid "Review before {reviewing}"
 msgstr "Vor dem Ausführen prüfen: {reviewing}"
-
-#: src/lib/model-connection-preflight.ts
-msgid "Review provider settings and test again."
-msgstr "Prüfe die Anbietereinstellungen und teste erneut."
 
 #. placeholder {0}: revision.revision
 #: src/pages/WikiBrowser.tsx
@@ -5807,6 +5798,7 @@ msgid "Sign in"
 msgstr "Anmelden"
 
 #: src/components/AccountAccess.tsx
+#: src/lib/model-problem.ts
 #: src/lib/passkeys.ts
 #: src/lib/user-error.ts
 #: src/pages/model-settings/connection-controls.tsx
@@ -6198,10 +6190,6 @@ msgstr "Der Bot und alles, was sein Import hinzugefügt hat, werden entfernt."
 msgid "The bot can use the file but won't see the picture."
 msgstr "Der Bot kann die Datei nutzen, sieht das Bild aber nicht."
 
-#: src/lib/model-connection-preflight.ts
-msgid "The connection timed out."
-msgstr "Zeitüberschreitung der Verbindung."
-
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "The model hit its output limit before finishing its reply."
@@ -6216,10 +6204,6 @@ msgstr "Der Modellanbieter hat einen Fehler zurückgegeben."
 #: src/lib/run-error.ts
 msgid "The model returned an unusable response. Try again."
 msgstr "Das Modell hat eine unbrauchbare Antwort geliefert. Versuche es erneut."
-
-#: src/lib/model-connection-preflight.ts
-msgid "The provider is rate-limiting requests."
-msgstr "Der Anbieter drosselt die Anfragen."
 
 #: src/lib/computer-screen.ts
 msgid "The screen connection closed."
@@ -6515,6 +6499,7 @@ msgstr "Testphase endet {day}"
 msgid "Trigger"
 msgstr "Auslöser"
 
+#: src/components/ModelProblemNotice.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 msgid "Try again"
@@ -6795,10 +6780,6 @@ msgstr "gegenüber dem Monat davor"
 #: src/pages/Usage.tsx
 msgid "vs. the same days last month"
 msgstr "gegenüber denselben Tagen im Vormonat"
-
-#: src/lib/model-connection-preflight.ts
-msgid "Wait a moment and test again."
-msgstr "Warte kurz und teste erneut."
 
 #: src/pages/shell/message-view.tsx
 msgid "waiting"

@@ -32,6 +32,7 @@ import {
 } from "@corvo/db";
 import { ORPCError } from "@orpc/server";
 import { mayUsePrivateEndpoint } from "./mcp-servers.js";
+import { modelFailureError } from "./model-failure-error.js";
 import { assertNoDanglingModelPins } from "./model-pins.js";
 import type { RouterDeps } from "./router.js";
 import { withSerializableRetry } from "./serializable-retry.js";
@@ -362,9 +363,7 @@ export function createModelConnector(deps: RouterDeps, codexCatalog: CodexLiveCa
         }
       }
     } catch (error) {
-      throw new ORPCError("BAD_REQUEST", {
-        message: error instanceof Error ? error.message : "Invalid model connection",
-      });
+      throw modelFailureError(error, "Invalid model connection");
     }
     if (input.provider === OPENAI_COMPATIBLE_PROVIDER_ID) {
       // Limits: this runs before persistModelCredential's transaction. A pin saved in

@@ -142,7 +142,7 @@ it.each([
     onOpenConnections,
   });
   const actions = container?.querySelectorAll<HTMLButtonElement>(
-    '[data-testid="composer-error-action"]',
+    '[data-testid="model-problem-action"]',
   );
   expect(actions?.length).toBe(label ? 1 : 0);
   if (!label) return;
@@ -152,7 +152,7 @@ it.each([
   expect(onOpenConnections).toHaveBeenCalledTimes(opens === "connections" ? 1 : 0);
 
   rerenderComposer({ sendError: "Could not send the message." });
-  expect(container?.querySelector('[data-testid="composer-error-action"]')).toBeNull();
+  expect(container?.querySelector('[data-testid="model-problem-action"]')).toBeNull();
 });
 
 it.each([MODEL_REQUIRED_SEND_ERROR, `  ${MODEL_REQUIRED_SEND_ERROR}  `])(

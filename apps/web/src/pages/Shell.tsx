@@ -5,7 +5,7 @@ import type {
   ThreadMessage,
   VoiceStatus,
 } from "@corvo/contracts";
-import type { AgentImportReader } from "@corvo/core";
+import type { AgentImportReader, ModelProblemAction } from "@corvo/core";
 import {
   answerableAskMessageIds,
   channelMessageSender,
@@ -188,6 +188,10 @@ function SpaceShell() {
     peerBotId: string;
     peerBotName: string;
   } | null>("peerConversation", null);
+  const credentialsQuery = useQuery({
+    queryKey: queries.models.credentials.queryKey(),
+    queryFn: () => rpc.models.credentials(),
+  });
   const agentSkillsQuery = useQuery(queries.agentSkills.list.queryOptions());
   const agentSkills = agentSkillsQuery.data ?? NO_AGENT_SKILLS;
   const setAgentSkills = useCallback(
@@ -988,6 +992,13 @@ function SpaceShell() {
                 } else openSettings("models");
               }}
               onOpenConnections={() => openSettings("models")}
+              runAuthKind={
+                credentialsQuery.data?.find(
+                  (credential) => credential.provider === activeSnapshot?.run?.modelProvider,
+                )?.authKind
+              }
+              onRetryRun={() => void composer.retryRun()}
+              retryingRun={composer.retryingRun}
               runError={composer.displayedRunError}
               runErrorId={composer.displayedRunErrorId}
               onRunErrorPresented={composer.handleRunErrorPresented}

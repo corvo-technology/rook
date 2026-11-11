@@ -122,6 +122,9 @@ export const PT_BR_MESSAGES: Record<string, string> = {
     "A janela de contexto deste modelo é pequena demais. Escolha outro modelo.",
   "{provider} couldn't be reached securely. A security program or network filter may be intercepting the connection.":
     "Não foi possível conectar com {provider} de forma segura. Um programa de segurança ou filtro de rede pode estar interceptando a conexão.",
+  "{provider} sign-in is no longer valid.": "O login em {provider} não é mais válido.",
+  "{provider} couldn't be reached through the network proxy. Check the proxy settings.":
+    "Não foi possível acessar {provider} pelo proxy de rede. Confira as configurações do proxy.",
   "{provider} took too long to respond. Try again.":
     "{provider} demorou demais para responder. Tente novamente.",
   "{provider} is overloaded right now. Try again in a moment.":

@@ -74,6 +74,7 @@ function renderComposer(
     sendError: null,
     onOpenModels: () => {},
     onOpenConnections: () => {},
+    onOpenBotSettings: () => {},
     runError: null,
     runErrorId: null,
     onRunErrorPresented: () => {},
@@ -153,6 +154,34 @@ it.each([
 
   rerenderComposer({ sendError: "Could not send the message." });
   expect(container?.querySelector('[data-testid="composer-error-action"]')).toBeNull();
+});
+
+it.each(["This bot reached its monthly token limit.", "This reply reached its token cap."])(
+  "offers to raise the limit after: %s",
+  (runError) => {
+    const onOpenBotSettings = vi.fn();
+    renderComposer(async () => true, { runError, runErrorId: "failed-run", onOpenBotSettings });
+    const action = container?.querySelector<HTMLButtonElement>(
+      '[data-testid="composer-error-action"]',
+    );
+    expect(action?.textContent).toBe("Raise limit");
+    act(() => action?.click());
+    expect(onOpenBotSettings).toHaveBeenCalledOnce();
+  },
+);
+
+it("offers Resume after the pause error only when the member can resume", () => {
+  const runError = "Bots are paused in this space.";
+  const onResumeSpace = vi.fn();
+  renderComposer(async () => true, { runError, runErrorId: "failed-run" });
+  expect(container?.querySelector('[data-testid="composer-error-action"]')).toBeNull();
+  rerenderComposer({ onResumeSpace });
+  const action = container?.querySelector<HTMLButtonElement>(
+    '[data-testid="composer-error-action"]',
+  );
+  expect(action?.textContent).toBe("Resume");
+  act(() => action?.click());
+  expect(onResumeSpace).toHaveBeenCalledOnce();
 });
 
 it.each([MODEL_REQUIRED_SEND_ERROR, `  ${MODEL_REQUIRED_SEND_ERROR}  `])(

@@ -15,13 +15,18 @@ type SidebarSpace<TBot extends SidebarChat, TGroup extends SidebarChat> = {
   name: string;
   canRename?: boolean;
   canDelete?: boolean;
+  canPause?: boolean;
   bots: readonly TBot[];
   groups: readonly TGroup[];
   botSections: readonly { id: string; name: string }[];
 };
 
-function spaceHeaderMenu(space: { canRename?: boolean; canDelete?: boolean }, hostsMenu: boolean) {
+function spaceHeaderMenu(
+  space: { canRename?: boolean; canDelete?: boolean; canPause?: boolean },
+  hostsMenu: boolean,
+) {
   return {
+    canPauseSpace: hostsMenu && space.canPause === true,
     canRenameSpace: hostsMenu && space.canRename === true,
     canDeleteSpace: hostsMenu && space.canDelete === true,
     // Every member can open a space's settings, so the menu does not depend on rename or delete.

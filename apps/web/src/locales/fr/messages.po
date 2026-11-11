@@ -431,6 +431,10 @@ msgstr "{title}, enregistré sous {savedAs}"
 msgid "{toolCount, plural, one {# tool} other {# tools}}"
 msgstr "{toolCount, plural, one {# outil} other {# outils}}"
 
+#: src/pages/Usage.tsx
+msgid "{used} of {limit}"
+msgstr "{used} sur {limit}"
+
 #: src/pages/shell/context-meter.tsx
 msgid "{used} tokens"
 msgstr "{used} jetons"
@@ -1231,6 +1235,11 @@ msgstr "Bots"
 #: src/components/ModelCredits.tsx
 msgid "Bots and browser automation"
 msgstr "Bots et automatisation du navigateur"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "Bots are paused in this space."
+msgstr "Les bots sont en pause dans cet espace."
 
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/onboarding/ComputerStep.tsx
@@ -2308,7 +2317,9 @@ msgstr "Impossible d’exécuter la routine"
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/chat-model-switcher.tsx
+#: src/pages/shell/dialogs.tsx
 #: src/pages/shell/use-space-roster.ts
+#: src/pages/SpaceSettingsPanel.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/Workflows.tsx
 msgid "Could not save"
@@ -4133,6 +4144,11 @@ msgstr "Crédits mensuels"
 msgid "Monthly credits expire at renewal. Top-ups do not expire."
 msgstr "Les crédits mensuels expirent au renouvellement. Les recharges n’expirent pas."
 
+#: src/pages/shell/bot-panel.tsx
+#: src/pages/Usage.tsx
+msgid "Monthly token limit"
+msgstr "Limite mensuelle de jetons"
+
 #: src/components/RailMore.tsx
 #: src/pages/shell/message-hover-actions.tsx
 #: src/pages/WhatsAppNumbers.tsx
@@ -4799,8 +4815,15 @@ msgstr "Collez votre clé API, puis testez à nouveau."
 msgid "Pause"
 msgstr "Mettre en pause"
 
+#: src/pages/shell/dialogs.tsx
+#: src/pages/shell/shell-dialogs.tsx
+#: src/pages/SpaceSettingsPanel.tsx
+msgid "Pause all bots"
+msgstr "Mettre tous les bots en pause"
+
 #: src/lib/routine-trigger.ts
 #: src/pages/shell/import-status.ts
+#: src/pages/shell/sidebar-header.tsx
 #: src/pages/WhatsAppNumbers.tsx
 #: src/pages/Workflows.tsx
 msgid "Paused"
@@ -4954,6 +4977,10 @@ msgstr "Code QR"
 #: src/pages/ActivityList.tsx
 msgid "Queued"
 msgstr "En file d'attente"
+
+#: src/pages/shell/composer-error.tsx
+msgid "Raise limit"
+msgstr "Augmenter la limite"
 
 #: src/pages/shell/message-hover-actions.tsx
 msgid "React"
@@ -5334,9 +5361,16 @@ msgid "Restoring your workspace"
 msgstr "Restauration de votre espace de travail"
 
 #: src/pages/PartnershipSettingsPanel.tsx
+#: src/pages/shell/composer-error.tsx
+#: src/pages/shell/sidebar-header.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Resume"
 msgstr "Reprendre"
+
+#: src/pages/shell/shell-dialogs.tsx
+#: src/pages/SpaceSettingsPanel.tsx
+msgid "Resume bots"
+msgstr "Reprendre les bots"
 
 #: src/components/AccountAccess.tsx
 #: src/components/PasskeySettings.tsx
@@ -5450,6 +5484,10 @@ msgstr "en cours"
 #: src/pages/Workflows.tsx
 msgid "Running"
 msgstr "En cours"
+
+#: src/pages/shell/dialogs.tsx
+msgid "Running work stops and nothing starts until you resume."
+msgstr "Le travail en cours s'arrête et rien ne démarre avant la reprise."
 
 #: src/lib/activity-label.ts
 msgid "Running: {value}"
@@ -6273,6 +6311,11 @@ msgstr "Impossible de lire cette sauvegarde."
 msgid "This bot"
 msgstr "Ce bot"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "This bot reached its monthly token limit."
+msgstr "Ce bot a atteint sa limite mensuelle de jetons."
+
 #: src/pages/shell/computer-view.tsx
 msgid "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
 msgstr "Ce bot s'exécute sur cet ordinateur, pas sur un bureau Linux. Le shell et les fichiers utilisent votre dossier personnel."
@@ -6372,6 +6415,11 @@ msgstr "Ce fournisseur n'est pas encore connecté."
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "This removes the connection from every space."
 msgstr "Cela supprime la connexion de tous les espaces."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "This reply reached its token cap."
+msgstr "Cette réponse a atteint son plafond de jetons."
 
 #: src/pages/Auth.tsx
 msgid "This reset link is invalid or expired"

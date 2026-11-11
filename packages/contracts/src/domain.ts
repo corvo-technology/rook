@@ -359,6 +359,14 @@ export const ExternalConversationSchema = z.object({
 });
 export type ExternalConversation = z.infer<typeof ExternalConversationSchema>;
 
+/** A bot's month of tokens against the limit its owner set. */
+export const BotBudgetSchema = z.object({
+  botId: Id,
+  monthTokens: z.number(),
+  monthlyTokenLimit: z.number(),
+});
+export type BotBudget = z.infer<typeof BotBudgetSchema>;
+
 export const SpaceSchema = z.object({
   id: Id,
   name: z.string(),

@@ -7,7 +7,8 @@ import { createRoot } from "react-dom/client";
 import { beforeEach, expect, it, vi } from "vitest";
 
 const overview = vi.hoisted(() => vi.fn());
-const rpcClient = vi.hoisted(() => ({ usage: { overview } }));
+const budgets = vi.hoisted(() => vi.fn());
+const rpcClient = vi.hoisted(() => ({ usage: { overview, budgets } }));
 vi.mock("../lib/rpc", () => ({
   rpc: rpcClient,
   rpcForSpace: () => rpcClient,
@@ -30,6 +31,11 @@ vi.mock("@corvo/ui-web", () => ({
   Spinner: (props: ComponentProps<"svg">) => <svg role="status" {...props} />,
   Button: (props: ComponentProps<"button">) => <button {...props} />,
   BotAvatar: () => <span data-testid="avatar" />,
+  Progress: ({ value, children, ...props }: ComponentProps<"div"> & { value: number }) => (
+    <div role="progressbar" aria-valuenow={value} {...props}>
+      {children}
+    </div>
+  ),
 }));
 vi.mock("./WindowChrome", () => ({ WindowChrome: () => null }));
 
@@ -77,6 +83,8 @@ let queryClient: QueryClient;
 beforeEach(() => {
   queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   overview.mockReset();
+  budgets.mockReset();
+  budgets.mockResolvedValue([]);
 });
 
 async function render() {
@@ -148,5 +156,32 @@ it("leaves out the share bar when one agent has all the use, since it would only
   overview.mockResolvedValue({ ...data, agents: [data.agents[0]] });
   const { host, root } = await render();
   expect(host.querySelector("span.h-\\[3px\\]")).toBeNull();
+  await act(async () => root.unmount());
+});
+
+it("shows this month's tokens against a bot's limit", async () => {
+  overview.mockResolvedValue(data);
+  budgets.mockResolvedValue([{ botId: "a", monthTokens: 1_200_000, monthlyTokenLimit: 2_000_000 }]);
+  const { host, root } = await render();
+  expect(host.textContent).toContain("1,200,000 of 2,000,000");
+  const bars = host.querySelectorAll('[role="progressbar"]');
+  expect(bars).toHaveLength(1);
+  expect(bars[0]?.getAttribute("aria-valuenow")).toBe("60");
+  await act(async () => root.unmount());
+});
+
+it("shows no budget for a bot without a limit", async () => {
+  overview.mockResolvedValue(data);
+  const { host, root } = await render();
+  expect(host.textContent).not.toContain(" of 2,000,000");
+  expect(host.querySelector('[role="progressbar"]')).toBeNull();
+  await act(async () => root.unmount());
+});
+
+it("stops the bar at 100 when the month is over the limit", async () => {
+  overview.mockResolvedValue(data);
+  budgets.mockResolvedValue([{ botId: "a", monthTokens: 3_000_000, monthlyTokenLimit: 2_000_000 }]);
+  const { host, root } = await render();
+  expect(host.querySelector('[role="progressbar"]')?.getAttribute("aria-valuenow")).toBe("100");
   await act(async () => root.unmount());
 });

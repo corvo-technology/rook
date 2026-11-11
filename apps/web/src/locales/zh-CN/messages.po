@@ -431,6 +431,10 @@ msgstr "{title}，保存为 {savedAs}"
 msgid "{toolCount, plural, one {# tool} other {# tools}}"
 msgstr "{toolCount, plural, other {#个工具}}"
 
+#: src/pages/Usage.tsx
+msgid "{used} of {limit}"
+msgstr "{used} / {limit}"
+
 #: src/pages/shell/context-meter.tsx
 msgid "{used} tokens"
 msgstr "{used} 个令牌"
@@ -1231,6 +1235,11 @@ msgstr "机器人"
 #: src/components/ModelCredits.tsx
 msgid "Bots and browser automation"
 msgstr "机器人和浏览器自动化"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "Bots are paused in this space."
+msgstr "此空间中的机器人已暂停。"
 
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/onboarding/ComputerStep.tsx
@@ -2308,7 +2317,9 @@ msgstr "无法运行例行任务"
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/chat-model-switcher.tsx
+#: src/pages/shell/dialogs.tsx
 #: src/pages/shell/use-space-roster.ts
+#: src/pages/SpaceSettingsPanel.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/Workflows.tsx
 msgid "Could not save"
@@ -4133,6 +4144,11 @@ msgstr "每月额度"
 msgid "Monthly credits expire at renewal. Top-ups do not expire."
 msgstr "每月额度在续订时失效。充值额度不会失效。"
 
+#: src/pages/shell/bot-panel.tsx
+#: src/pages/Usage.tsx
+msgid "Monthly token limit"
+msgstr "每月令牌上限"
+
 #: src/components/RailMore.tsx
 #: src/pages/shell/message-hover-actions.tsx
 #: src/pages/WhatsAppNumbers.tsx
@@ -4799,8 +4815,15 @@ msgstr "请粘贴你的 API 密钥，然后重新测试。"
 msgid "Pause"
 msgstr "暂停"
 
+#: src/pages/shell/dialogs.tsx
+#: src/pages/shell/shell-dialogs.tsx
+#: src/pages/SpaceSettingsPanel.tsx
+msgid "Pause all bots"
+msgstr "暂停所有机器人"
+
 #: src/lib/routine-trigger.ts
 #: src/pages/shell/import-status.ts
+#: src/pages/shell/sidebar-header.tsx
 #: src/pages/WhatsAppNumbers.tsx
 #: src/pages/Workflows.tsx
 msgid "Paused"
@@ -4954,6 +4977,10 @@ msgstr "二维码"
 #: src/pages/ActivityList.tsx
 msgid "Queued"
 msgstr "排队中"
+
+#: src/pages/shell/composer-error.tsx
+msgid "Raise limit"
+msgstr "提高上限"
 
 #: src/pages/shell/message-hover-actions.tsx
 msgid "React"
@@ -5334,9 +5361,16 @@ msgid "Restoring your workspace"
 msgstr "正在恢复你的工作区"
 
 #: src/pages/PartnershipSettingsPanel.tsx
+#: src/pages/shell/composer-error.tsx
+#: src/pages/shell/sidebar-header.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Resume"
 msgstr "继续"
+
+#: src/pages/shell/shell-dialogs.tsx
+#: src/pages/SpaceSettingsPanel.tsx
+msgid "Resume bots"
+msgstr "恢复机器人"
 
 #: src/components/AccountAccess.tsx
 #: src/components/PasskeySettings.tsx
@@ -5450,6 +5484,10 @@ msgstr "运行中"
 #: src/pages/Workflows.tsx
 msgid "Running"
 msgstr "运行中"
+
+#: src/pages/shell/dialogs.tsx
+msgid "Running work stops and nothing starts until you resume."
+msgstr "正在运行的工作将停止，恢复前不会启动任何内容。"
 
 #: src/lib/activity-label.ts
 msgid "Running: {value}"
@@ -6273,6 +6311,11 @@ msgstr "无法读取此备份。"
 msgid "This bot"
 msgstr "此 Bot"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "This bot reached its monthly token limit."
+msgstr "此机器人已达到每月令牌上限。"
+
 #: src/pages/shell/computer-view.tsx
 msgid "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
 msgstr "此 Bot 运行在这台电脑上，而不是 Linux 桌面。Shell 和文件使用你的主目录。"
@@ -6372,6 +6415,11 @@ msgstr "此提供方尚未连接。"
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "This removes the connection from every space."
 msgstr "这将从所有空间中移除该连接。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "This reply reached its token cap."
+msgstr "此回复已达到令牌上限。"
 
 #: src/pages/Auth.tsx
 msgid "This reset link is invalid or expired"

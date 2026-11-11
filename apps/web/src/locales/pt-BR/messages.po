@@ -431,6 +431,10 @@ msgstr "{title}, salvo como {savedAs}"
 msgid "{toolCount, plural, one {# tool} other {# tools}}"
 msgstr "{toolCount, plural, one {# ferramenta} other {# ferramentas}}"
 
+#: src/pages/Usage.tsx
+msgid "{used} of {limit}"
+msgstr "{used} de {limit}"
+
 #: src/pages/shell/context-meter.tsx
 msgid "{used} tokens"
 msgstr "{used} tokens"
@@ -1231,6 +1235,11 @@ msgstr "Bots"
 #: src/components/ModelCredits.tsx
 msgid "Bots and browser automation"
 msgstr "Bots e automação de navegador"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "Bots are paused in this space."
+msgstr "Os bots estão pausados neste espaço."
 
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/onboarding/ComputerStep.tsx
@@ -2308,7 +2317,9 @@ msgstr "Não foi possível executar a rotina"
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/chat-model-switcher.tsx
+#: src/pages/shell/dialogs.tsx
 #: src/pages/shell/use-space-roster.ts
+#: src/pages/SpaceSettingsPanel.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/Workflows.tsx
 msgid "Could not save"
@@ -4133,6 +4144,11 @@ msgstr "Créditos mensais"
 msgid "Monthly credits expire at renewal. Top-ups do not expire."
 msgstr "Os créditos mensais expiram na renovação. As recargas não expiram."
 
+#: src/pages/shell/bot-panel.tsx
+#: src/pages/Usage.tsx
+msgid "Monthly token limit"
+msgstr "Limite mensal de tokens"
+
 #: src/components/RailMore.tsx
 #: src/pages/shell/message-hover-actions.tsx
 #: src/pages/WhatsAppNumbers.tsx
@@ -4799,8 +4815,15 @@ msgstr "Cole sua chave de API e teste novamente."
 msgid "Pause"
 msgstr "Pausar"
 
+#: src/pages/shell/dialogs.tsx
+#: src/pages/shell/shell-dialogs.tsx
+#: src/pages/SpaceSettingsPanel.tsx
+msgid "Pause all bots"
+msgstr "Pausar todos os bots"
+
 #: src/lib/routine-trigger.ts
 #: src/pages/shell/import-status.ts
+#: src/pages/shell/sidebar-header.tsx
 #: src/pages/WhatsAppNumbers.tsx
 #: src/pages/Workflows.tsx
 msgid "Paused"
@@ -4954,6 +4977,10 @@ msgstr "Código QR"
 #: src/pages/ActivityList.tsx
 msgid "Queued"
 msgstr "Na fila"
+
+#: src/pages/shell/composer-error.tsx
+msgid "Raise limit"
+msgstr "Aumentar limite"
 
 #: src/pages/shell/message-hover-actions.tsx
 msgid "React"
@@ -5334,9 +5361,16 @@ msgid "Restoring your workspace"
 msgstr "Restaurando seu espaço"
 
 #: src/pages/PartnershipSettingsPanel.tsx
+#: src/pages/shell/composer-error.tsx
+#: src/pages/shell/sidebar-header.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Resume"
 msgstr "Retomar"
+
+#: src/pages/shell/shell-dialogs.tsx
+#: src/pages/SpaceSettingsPanel.tsx
+msgid "Resume bots"
+msgstr "Retomar bots"
 
 #: src/components/AccountAccess.tsx
 #: src/components/PasskeySettings.tsx
@@ -5450,6 +5484,10 @@ msgstr "em execução"
 #: src/pages/Workflows.tsx
 msgid "Running"
 msgstr "Em execução"
+
+#: src/pages/shell/dialogs.tsx
+msgid "Running work stops and nothing starts until you resume."
+msgstr "O trabalho em andamento para e nada começa até você retomar."
 
 #: src/lib/activity-label.ts
 msgid "Running: {value}"
@@ -6273,6 +6311,11 @@ msgstr "Não foi possível ler este backup."
 msgid "This bot"
 msgstr "Este bot"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "This bot reached its monthly token limit."
+msgstr "Este bot atingiu o limite mensal de tokens."
+
 #: src/pages/shell/computer-view.tsx
 msgid "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
 msgstr "Este bot é executado neste computador, não em um desktop Linux. Shell e arquivos usam sua pasta inicial."
@@ -6372,6 +6415,11 @@ msgstr "Este provedor ainda não está conectado."
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "This removes the connection from every space."
 msgstr "Isto remove a conexão de todos os espaços."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "This reply reached its token cap."
+msgstr "Esta resposta atingiu o limite de tokens."
 
 #: src/pages/Auth.tsx
 msgid "This reset link is invalid or expired"

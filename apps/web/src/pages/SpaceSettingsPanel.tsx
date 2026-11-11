@@ -4,18 +4,20 @@ import { useEffect, useId, useState } from "react";
 import { SettingsGroup, SettingsRow } from "../components/SettingsRows";
 import { SpaceSettingOverrides } from "./SpaceSettingOverrides";
 import type { SettingsSpace } from "./shell/dialogs";
-import { DeleteSpaceDialog } from "./shell/dialogs";
+import { DeleteSpaceDialog, PauseSpaceDialog } from "./shell/dialogs";
 
 /** One space's page: its name, the account settings it customizes, and deletion for its owner. */
 export function SpaceSettingsPanel({
   space,
   onRename,
+  onSetPaused,
   onDelete,
   onClose,
   onBusyChange,
 }: {
   space: SettingsSpace;
   onRename: (name: string) => Promise<void>;
+  onSetPaused?: (paused: boolean) => Promise<void>;
   onDelete: () => Promise<void>;
   onClose: () => void;
   onBusyChange?: (busy: boolean) => void;
@@ -26,6 +28,8 @@ export function SpaceSettingsPanel({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [confirmingPause, setConfirmingPause] = useState(false);
+  const [resuming, setResuming] = useState(false);
   const [overridesBusy, setOverridesBusy] = useState(false);
   // A rename in flight holds the dialog open, so a failure is shown instead of lost on leaving.
   const busy = pending || overridesBusy;
@@ -101,6 +105,36 @@ export function SpaceSettingsPanel({
         </SettingsGroup>
       ) : null}
       <SpaceSettingOverrides onClose={onClose} onBusyChange={setOverridesBusy} />
+      {space.canPause && onSetPaused ? (
+        <Button
+          variant="outline"
+          className="rounded-full"
+          disabled={resuming}
+          onClick={() => {
+            if (!space.pausedAt) return setConfirmingPause(true);
+            setResuming(true);
+            setError(null);
+            onSetPaused(false)
+              .catch((err: unknown) =>
+                setError(
+                  err instanceof Error && err.message.trim() ? err.message : t`Could not save`,
+                ),
+              )
+              .finally(() => setResuming(false));
+          }}
+        >
+          {space.pausedAt ? <Trans>Resume bots</Trans> : <Trans>Pause all bots</Trans>}
+        </Button>
+      ) : null}
+      {confirmingPause && onSetPaused ? (
+        <PauseSpaceDialog
+          onCancel={() => setConfirmingPause(false)}
+          onConfirm={async () => {
+            await onSetPaused(true);
+            setConfirmingPause(false);
+          }}
+        />
+      ) : null}
       {space.canDelete ? (
         <Button
           variant="destructive"

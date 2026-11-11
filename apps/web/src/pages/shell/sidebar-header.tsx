@@ -43,6 +43,8 @@ export function SidebarHeader({
   navigate,
   setNewSpaceOpen,
   setCreateBotOpen,
+  paused = false,
+  onResume,
 }: {
   mini?: boolean;
   createMenuOpen: boolean;
@@ -58,6 +60,10 @@ export function SidebarHeader({
   navigate: (path: string) => void;
   setNewSpaceOpen: (open: boolean) => void;
   setCreateBotOpen: (open: boolean) => void;
+  /** The owner paused every bot in this space. */
+  paused?: boolean;
+  /** Given only to the space owner, who can resume. */
+  onResume?: () => void;
 }) {
   const { t } = useLingui();
   const hasWindowChrome = Boolean(desktopBridge());
@@ -67,6 +73,21 @@ export function SidebarHeader({
       className={`app-drag flex items-center ${mini ? `flex-col gap-2 px-0 pb-2 ${hasWindowChrome ? "pt-4" : "pt-2"}` : "justify-between px-[18px] pb-3 pt-4"}`}
     >
       {!mini || hasWindowChrome ? <WindowChrome /> : null}
+      {paused && !mini ? (
+        <div className="app-no-drag flex items-center gap-1.5 text-[12.5px] font-medium text-warning">
+          <span>{t`Paused`}</span>
+          {onResume ? (
+            <Button
+              variant="link"
+              size="sm"
+              className="h-auto p-0 text-[12.5px]"
+              onClick={onResume}
+            >
+              {t`Resume`}
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
       <div className={`relative flex items-center ${mini ? "flex-col gap-0.5" : "gap-2.5"}`}>
         {onSearch ? (
           <IconTooltip label={t`Search`}>

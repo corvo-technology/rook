@@ -212,6 +212,24 @@ export const translateRunError: RunErrorTranslator = (message, values) => {
         message: "{summary} Backup models failed or were unavailable for this request.",
         values,
       });
+    case "This bot reached its monthly token limit.":
+      return i18n._({
+        id: "This bot reached its monthly token limit.",
+        message: "This bot reached its monthly token limit.",
+        values,
+      });
+    case "This reply reached its token cap.":
+      return i18n._({
+        id: "This reply reached its token cap.",
+        message: "This reply reached its token cap.",
+        values,
+      });
+    case "Bots are paused in this space.":
+      return i18n._({
+        id: "Bots are paused in this space.",
+        message: "Bots are paused in this space.",
+        values,
+      });
     default:
       return message;
   }

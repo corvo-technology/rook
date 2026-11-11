@@ -58,6 +58,8 @@ export function ShellSidebar({
   navLinks,
   openSettings,
   openIntegrations,
+  paused = false,
+  onResume,
 }: {
   isMobile: boolean;
   mobileOpen: boolean;
@@ -85,6 +87,8 @@ export function ShellSidebar({
   navLinks: NavLink[];
   openSettings: (section: SettingsSection) => void;
   openIntegrations: () => void;
+  paused?: boolean;
+  onResume?: () => void;
 }) {
   const { t } = useLingui();
   const {
@@ -168,6 +172,8 @@ export function ShellSidebar({
           navigate={navigate}
           setNewSpaceOpen={setNewSpaceOpen}
           setCreateBotOpen={setCreateBotOpen}
+          paused={paused}
+          onResume={onResume}
         />
         {spaces.length > 0 ? (
           <SpaceSwitcher

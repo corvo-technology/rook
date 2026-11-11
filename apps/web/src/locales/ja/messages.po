@@ -431,6 +431,10 @@ msgstr "{title}（{savedAs} として保存）"
 msgid "{toolCount, plural, one {# tool} other {# tools}}"
 msgstr "{toolCount, plural, one {#個のツール} other {#個のツール}}"
 
+#: src/pages/Usage.tsx
+msgid "{used} of {limit}"
+msgstr "{used} / {limit}"
+
 #: src/pages/shell/context-meter.tsx
 msgid "{used} tokens"
 msgstr "{used} トークン"
@@ -1231,6 +1235,11 @@ msgstr "ボット"
 #: src/components/ModelCredits.tsx
 msgid "Bots and browser automation"
 msgstr "ボットとブラウザ自動化"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "Bots are paused in this space."
+msgstr "このスペースのボットは一時停止中です。"
 
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/onboarding/ComputerStep.tsx
@@ -2308,7 +2317,9 @@ msgstr "ルーティンを実行できませんでした"
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/chat-model-switcher.tsx
+#: src/pages/shell/dialogs.tsx
 #: src/pages/shell/use-space-roster.ts
+#: src/pages/SpaceSettingsPanel.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/Workflows.tsx
 msgid "Could not save"
@@ -4133,6 +4144,11 @@ msgstr "月間クレジット"
 msgid "Monthly credits expire at renewal. Top-ups do not expire."
 msgstr "月間クレジットは更新時に失効します。追加購入分は失効しません。"
 
+#: src/pages/shell/bot-panel.tsx
+#: src/pages/Usage.tsx
+msgid "Monthly token limit"
+msgstr "月間トークン上限"
+
 #: src/components/RailMore.tsx
 #: src/pages/shell/message-hover-actions.tsx
 #: src/pages/WhatsAppNumbers.tsx
@@ -4799,8 +4815,15 @@ msgstr "APIキーを貼り付けてから、もう一度テストしてくださ
 msgid "Pause"
 msgstr "一時停止"
 
+#: src/pages/shell/dialogs.tsx
+#: src/pages/shell/shell-dialogs.tsx
+#: src/pages/SpaceSettingsPanel.tsx
+msgid "Pause all bots"
+msgstr "すべてのボットを一時停止"
+
 #: src/lib/routine-trigger.ts
 #: src/pages/shell/import-status.ts
+#: src/pages/shell/sidebar-header.tsx
 #: src/pages/WhatsAppNumbers.tsx
 #: src/pages/Workflows.tsx
 msgid "Paused"
@@ -4954,6 +4977,10 @@ msgstr "QRコード"
 #: src/pages/ActivityList.tsx
 msgid "Queued"
 msgstr "待機中"
+
+#: src/pages/shell/composer-error.tsx
+msgid "Raise limit"
+msgstr "上限を上げる"
 
 #: src/pages/shell/message-hover-actions.tsx
 msgid "React"
@@ -5334,9 +5361,16 @@ msgid "Restoring your workspace"
 msgstr "ワークスペースを復元中"
 
 #: src/pages/PartnershipSettingsPanel.tsx
+#: src/pages/shell/composer-error.tsx
+#: src/pages/shell/sidebar-header.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Resume"
 msgstr "再開"
+
+#: src/pages/shell/shell-dialogs.tsx
+#: src/pages/SpaceSettingsPanel.tsx
+msgid "Resume bots"
+msgstr "ボットを再開"
 
 #: src/components/AccountAccess.tsx
 #: src/components/PasskeySettings.tsx
@@ -5450,6 +5484,10 @@ msgstr "実行中"
 #: src/pages/Workflows.tsx
 msgid "Running"
 msgstr "実行中"
+
+#: src/pages/shell/dialogs.tsx
+msgid "Running work stops and nothing starts until you resume."
+msgstr "実行中の作業は停止し、再開するまで何も開始されません。"
 
 #: src/lib/activity-label.ts
 msgid "Running: {value}"
@@ -6273,6 +6311,11 @@ msgstr "このバックアップを読み込めませんでした。"
 msgid "This bot"
 msgstr "このボット"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "This bot reached its monthly token limit."
+msgstr "このボットは月間トークン上限に達しました。"
+
 #: src/pages/shell/computer-view.tsx
 msgid "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
 msgstr "このボットはLinuxデスクトップではなく、このコンピューター上で動作します。シェルとファイルはホームフォルダーを使用します。"
@@ -6372,6 +6415,11 @@ msgstr "このプロバイダーはまだ接続されていません。"
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "This removes the connection from every space."
 msgstr "すべてのスペースからこの接続が削除されます。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "This reply reached its token cap."
+msgstr "この返信はトークン上限に達しました。"
 
 #: src/pages/Auth.tsx
 msgid "This reset link is invalid or expired"

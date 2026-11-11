@@ -16,6 +16,8 @@ export function ComposerError({
   onRunErrorPresented,
   onOpenModels,
   onOpenConnections,
+  onOpenBotSettings,
+  onResumeSpace,
   onDismissError,
   textareaRef,
 }: {
@@ -28,6 +30,8 @@ export function ComposerError({
   onRunErrorPresented: (runId: string) => void;
   onOpenModels: () => void;
   onOpenConnections: () => void;
+  onOpenBotSettings: () => void;
+  onResumeSpace?: () => void;
   onDismissError: () => void;
   textareaRef: RefObject<HTMLTextAreaElement | null>;
 }) {
@@ -81,7 +85,11 @@ export function ComposerError({
             label: normalizedRunError?.kind === "auth" ? t`Replace key` : t`Connect a model`,
             onClick: onOpenConnections,
           }
-        : null;
+        : recovery === "budget"
+          ? { label: t`Raise limit`, onClick: onOpenBotSettings }
+          : recovery === "resume" && onResumeSpace
+            ? { label: t`Resume`, onClick: onResumeSpace }
+            : null;
 
   const warning = Boolean(sendError) && imageConfirmation;
   return sendError || runError ? (

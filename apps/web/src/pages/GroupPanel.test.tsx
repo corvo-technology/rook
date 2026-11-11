@@ -109,6 +109,7 @@ function fakeBot(id: string, name: string, title: string): Bot {
     fleetManagement: false,
     squadRouting: false,
     dailyCapUsd: null,
+    monthlyTokenLimit: null,
     spawnKey: null,
   };
 }

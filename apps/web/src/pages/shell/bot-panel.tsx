@@ -8,6 +8,7 @@ import type {
 import {
   BOT_COMPUTER_MODES,
   BOT_DESCRIPTION_MAX_LENGTH,
+  BOT_MONTHLY_TOKEN_LIMIT_MAX,
   BOT_NAME_MAX_LENGTH,
   BOT_TITLE_MAX_LENGTH,
   BUILTIN_TOOL_NAMES,
@@ -72,6 +73,20 @@ function advancedValues(bot: Bot) {
     bot.autoSpeak,
     bot.voiceId ?? "",
   ] as const;
+}
+
+function tokenLimitText(value: number | null | undefined) {
+  return value ? String(value) : "";
+}
+
+/** A whole number of tokens typed in the limit field: null for empty or 0, undefined when unusable. */
+export function parseTokenLimit(text: string): number | null | undefined {
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+  if (!/^\d+$/.test(trimmed)) return undefined;
+  const value = Number(trimmed);
+  if (value === 0) return null;
+  return value <= BOT_MONTHLY_TOKEN_LIMIT_MAX ? value : undefined;
 }
 
 function dailyCapText(value: number | null | undefined) {
@@ -142,6 +157,7 @@ export function BotSettings({
     squadRouting?: boolean;
     crossSpaceCommunication?: boolean;
     dailyCapUsd?: number | null;
+    monthlyTokenLimit?: number | null;
     voiceId?: string | null;
     modelProvider?: string | null;
     modelId?: string | null;
@@ -195,6 +211,8 @@ export function BotSettings({
   );
   const [dailyCap, setDailyCap] = useState(dailyCapText(bot.dailyCapUsd));
   useEffect(() => setDailyCap(dailyCapText(bot.dailyCapUsd)), [bot.dailyCapUsd]);
+  const [tokenLimit, setTokenLimit] = useState(tokenLimitText(bot.monthlyTokenLimit));
+  useEffect(() => setTokenLimit(tokenLimitText(bot.monthlyTokenLimit)), [bot.monthlyTokenLimit]);
   const [fleetManagement, setFleetManagement] = useState(bot.fleetManagement);
   useEffect(() => setFleetManagement(bot.fleetManagement), [bot.fleetManagement]);
   const [squadRouting, setSquadRouting] = useState(bot.squadRouting);
@@ -263,6 +281,7 @@ export function BotSettings({
         squadRouting?: boolean;
         crossSpaceCommunication?: boolean;
         dailyCapUsd?: number | null;
+        monthlyTokenLimit?: number | null;
         disabledBuiltinTools?: string[];
         baseDisabledBuiltinTools?: string[];
       },
@@ -349,6 +368,7 @@ export function BotSettings({
       squadRouting?: boolean;
       crossSpaceCommunication?: boolean;
       dailyCapUsd?: number | null;
+      monthlyTokenLimit?: number | null;
       disabledBuiltinTools?: string[];
       baseDisabledBuiltinTools?: string[];
     },
@@ -363,6 +383,10 @@ export function BotSettings({
       }
       if (patchOverrides?.dailyCapUsd !== undefined) {
         await onSave({ dailyCapUsd: patchOverrides.dailyCapUsd });
+        return;
+      }
+      if (patchOverrides?.monthlyTokenLimit !== undefined) {
+        await onSave({ monthlyTokenLimit: patchOverrides.monthlyTokenLimit });
         return;
       }
       if (patchOverrides?.fleetManagement !== undefined) {
@@ -466,6 +490,8 @@ export function BotSettings({
       if (patchOverrides?.crossSpaceCommunication !== undefined)
         setCrossSpaceCommunication(!patchOverrides.crossSpaceCommunication);
       if (patchOverrides?.dailyCapUsd !== undefined) setDailyCap(dailyCapText(bot.dailyCapUsd));
+      if (patchOverrides?.monthlyTokenLimit !== undefined)
+        setTokenLimit(tokenLimitText(bot.monthlyTokenLimit));
       if (patchOverrides?.fleetManagement !== undefined)
         setFleetManagement(!patchOverrides.fleetManagement);
       if (patchOverrides?.squadRouting !== undefined) setSquadRouting(!patchOverrides.squadRouting);
@@ -501,6 +527,7 @@ export function BotSettings({
     squadRouting?: boolean;
     crossSpaceCommunication?: boolean;
     dailyCapUsd?: number | null;
+    monthlyTokenLimit?: number | null;
     disabledBuiltinTools?: string[];
   }) {
     // Serialize full-object auto-saves so an older in-flight request cannot
@@ -808,6 +835,27 @@ export function BotSettings({
                     }}
                   />
                 </span>
+              </div>
+              <div className="flex min-h-11 items-center justify-between gap-3 text-sm">
+                <label htmlFor={`${ids}-token-limit`} className={rowLabelClass}>
+                  <Trans>Monthly token limit</Trans>
+                </label>
+                <Input
+                  id={`${ids}-token-limit`}
+                  inputMode="numeric"
+                  className="w-32 text-right"
+                  value={tokenLimit}
+                  disabled={saving}
+                  placeholder={t`No limit`}
+                  onChange={(event) => setTokenLimit(event.target.value)}
+                  onBlur={() => {
+                    const next = parseTokenLimit(tokenLimit);
+                    if (next === undefined)
+                      return setTokenLimit(tokenLimitText(bot.monthlyTokenLimit));
+                    if (next !== (bot.monthlyTokenLimit || null))
+                      void enqueueSave({ monthlyTokenLimit: next });
+                  }}
+                />
               </div>
             </SettingsGroup>
             <SettingsGroup label={t`Description`} plain>

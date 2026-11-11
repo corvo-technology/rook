@@ -50,6 +50,7 @@ import {
   ArtifactWithContentSchema,
   AvatarStyleSchema,
   BillingStatusSchema,
+  BotBudgetSchema,
   BotMcpServerSchema,
   BotSchema,
   BotSectionName,
@@ -1260,6 +1261,8 @@ export const appContract = {
     summary: oc.output(UsageSummarySchema),
     overview: oc.input(z.object({ period: UsagePeriodSchema })).output(UsageOverviewSchema),
     subscriptions: oc.output(z.array(SubscriptionQuotaSchema)),
+    /** This UTC month's tokens for each bot of the space that has a monthly limit. */
+    budgets: oc.output(z.array(BotBudgetSchema)),
   },
   export: {
     bot: oc.input(botId).output(ExportManifestSchema),

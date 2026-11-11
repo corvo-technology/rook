@@ -17,12 +17,13 @@ vi.mock("@lingui/react/macro", () => {
 import { FirstBotStep } from "./FirstBotStep";
 
 const onReady = vi.fn();
+let picks: { use?: "work"; categories: ["sales"] } | null = null;
 let container: HTMLDivElement;
 let root: Root;
 
 async function mount() {
   await act(async () => {
-    root.render(<FirstBotStep locale="pt-BR" onReady={onReady} />);
+    root.render(<FirstBotStep locale="pt-BR" picks={picks} onReady={onReady} />);
   });
 }
 
@@ -30,6 +31,7 @@ beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   ensureFirstBot.mockReset().mockResolvedValue({ id: "chief-1" });
   onReady.mockReset();
+  picks = null;
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
@@ -44,9 +46,15 @@ describe("FirstBotStep", () => {
   it("makes sure the Chief exists, in the app's language, and moves on without asking anything", async () => {
     await mount();
     expect(ensureFirstBot).toHaveBeenCalledOnce();
-    expect(ensureFirstBot).toHaveBeenCalledWith("pt-BR");
-    expect(onReady).toHaveBeenCalledWith("chief-1");
+    expect(ensureFirstBot).toHaveBeenCalledWith("pt-BR", undefined);
+    expect(onReady).toHaveBeenCalledWith({ id: "chief-1" });
     expect(container.querySelector("button")).toBeNull();
+  });
+
+  it("passes the picks on", async () => {
+    picks = { use: "work", categories: ["sales"] };
+    await mount();
+    expect(ensureFirstBot).toHaveBeenCalledWith("pt-BR", picks);
   });
 
   it("does not move on without the Chief, and retries making it", async () => {
@@ -60,6 +68,6 @@ describe("FirstBotStep", () => {
     await act(async () => retry?.click());
     expect(ensureFirstBot).toHaveBeenCalledTimes(2);
     expect(container.querySelector('[role="alert"]')).toBeNull();
-    expect(onReady).toHaveBeenCalledWith("chief-1");
+    expect(onReady).toHaveBeenCalledWith({ id: "chief-1" });
   });
 });

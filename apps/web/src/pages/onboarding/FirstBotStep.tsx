@@ -1,19 +1,22 @@
-import type { AgentCatalogLocale } from "@corvo/contracts";
+import type { AgentCatalogLocale, OnboardingPicks } from "@corvo/contracts";
 import { Button } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { useEffect, useState } from "react";
+import type { FirstBot } from "../../lib/first-bot";
 import { ensureFirstBot } from "../../lib/first-bot";
 
 /**
  * The Chief is the first agent and adds the others in chat, so this step makes sure it exists
- * and moves on; the person picks nothing here.
+ * (and the agent the survey picks name) and moves on; the person picks nothing here.
  */
 export function FirstBotStep({
   locale,
+  picks,
   onReady,
 }: {
   locale: AgentCatalogLocale;
-  onReady: (chiefId: string) => void;
+  picks: OnboardingPicks | null;
+  onReady: (result: FirstBot) => void;
 }) {
   const { t } = useLingui();
   const [failed, setFailed] = useState(false);
@@ -23,8 +26,8 @@ export function FirstBotStep({
   useEffect(() => {
     setFailed(false);
     let live = true;
-    void ensureFirstBot(locale)
-      .then((chief) => live && onReady(chief.id))
+    void ensureFirstBot(locale, picks ?? undefined)
+      .then((result) => live && onReady(result))
       .catch(() => live && setFailed(true));
     return () => {
       live = false;

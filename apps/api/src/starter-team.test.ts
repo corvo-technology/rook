@@ -76,12 +76,11 @@ describe("startStarterTeam with picks", () => {
     const d = { prisma, jobs: {}, env: {} } as never;
     return { s, addAgent, d, steps: { ...s, addAgent: addAgent as never } };
   }
-  const picks = { use: "work", categories: ["sales"] } as const;
 
   it("adds the agent the picks name, beside the Chief, and hands back its first task", async () => {
     const w = withPicks();
     await expect(
-      startStarterTeam(w.d, actor, "pt-BR", w.steps, { ...picks, categories: ["sales"] }),
+      startStarterTeam(w.d, actor, "pt-BR", w.steps, { use: "work", categories: ["sales"] }),
     ).resolves.toEqual({
       botId: "chief-1",
       created: true,

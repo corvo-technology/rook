@@ -49,6 +49,7 @@ import {
 } from "../lib/bots-sidebar-density-pref";
 import { readBotsSidebarCollapsed, writeBotsSidebarCollapsed } from "../lib/bots-sidebar-pref";
 import { setCallMinimized, startCall, useCallSession } from "../lib/call-session";
+import { botDraftKey } from "../lib/composer-draft";
 import {
   getComposerEnterToSend,
   subscribeComposerEnterToSend,
@@ -961,7 +962,7 @@ function SpaceShell() {
               </div>
             ) : null}
             <Composer
-              key={inGroup ? `group:${groupId}` : `bot:${active?.id}`}
+              key={inGroup ? `group:${groupId}` : botDraftKey(String(active?.id))}
               draftKey={inGroup ? `group:${groupId}` : `bot:${active?.id}`}
               enterToSend={enterToSend}
               onImportAgent={(agent) => openImport(agent, false)}

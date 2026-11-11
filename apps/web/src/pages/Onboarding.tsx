@@ -1,4 +1,4 @@
-import type { ModelHeaderRow, ThinkingLevel } from "@corvo/contracts";
+import type { ModelHeaderRow, OnboardingPicks, ThinkingLevel } from "@corvo/contracts";
 import {
   agentCatalogLocale,
   CLOUDFLARE_AI_GATEWAY_PROVIDER_ID,
@@ -50,6 +50,7 @@ import {
 } from "../components/ModelConnectionPreflightNotice";
 import { ModelHeadersEditor } from "../components/ModelHeadersEditor";
 import { PageLoading } from "../components/PageLoading";
+import { botDraftKey, prefillComposerDraft } from "../lib/composer-draft";
 import { useCopyText } from "../lib/copy-text";
 import { desktopBridge } from "../lib/desktop";
 import { providerDisplayName } from "../lib/localized-provider-hint";
@@ -61,7 +62,7 @@ import {
   runModelConnectionPreflight,
   unavailableSelectedModel,
 } from "../lib/model-connection-preflight";
-import { loadDoneSteps, saveDoneSteps } from "../lib/onboarding-progress";
+import { loadDoneSteps, loadPicks, saveDoneSteps, savePicks } from "../lib/onboarding-progress";
 import type { OnboardingContext, OnboardingStepId } from "../lib/onboarding-steps";
 import { nextStep, resolveStep, visibleSteps } from "../lib/onboarding-steps";
 import { rpc } from "../lib/rpc";
@@ -107,6 +108,7 @@ export function OnboardingPage() {
   // The desktop app's own engine has no Docker, so its computer step is this computer or nothing.
   const [dockerOffered, setDockerOffered] = useState(true);
   const chosenBotRef = useRef<string | null>(null);
+  const [picks, setPicks] = useState<OnboardingPicks | null>(null);
   const userIdRef = useRef("");
   const step: OnboardingStepId | "loading" = flow ? resolveStep(flow, routeStep, done) : "loading";
   const stepRef = useRef(step);
@@ -187,6 +189,7 @@ export function OnboardingPage() {
         userIdRef.current = me.userId;
         setDockerOffered(me.sandboxProvider === "docker");
         setDone(loadDoneSteps(me.userId));
+        setPicks(loadPicks(me.userId));
         begin({
           canRenameSpace: canRename,
           spaceName: current?.name ?? "",
@@ -581,7 +584,9 @@ export function OnboardingPage() {
       ) : null}
       {step === "survey" ? (
         <UseStep
-          onDone={() => {
+          onDone={(next) => {
+            setPicks(next);
+            savePicks(userIdRef.current, next);
             advance("survey");
           }}
         />
@@ -1072,7 +1077,17 @@ export function OnboardingPage() {
       {step === "bot" ? (
         <FirstBotStep
           locale={agentCatalogLocale(i18n.locale)}
-          onReady={(chiefId) => {
+          picks={picks}
+          onReady={({ id: chiefId, pickedAgent }) => {
+            if (pickedAgent) {
+              // The picked agent's chat, with its first task waiting unsent in the composer.
+              chosenBotRef.current = pickedAgent.botId;
+              if (pickedAgent.task) {
+                prefillComposerDraft(botDraftKey(pickedAgent.botId), pickedAgent.task);
+              }
+              advance("bot");
+              return;
+            }
             chosenBotRef.current = chiefId;
             // Landing in the Chief's chat keeps the focus choice that suggests apps to connect.
             void rpc.onboarding

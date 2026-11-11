@@ -95,6 +95,7 @@ import {
   ModelCredentialSchema,
   ModelCreditAmountSchema,
   ModelOAuthBeginSchema,
+  OnboardingPicksSchema,
   OPENAI_COMPATIBLE_PROVIDER_ID,
   REPLY_QUOTE_MAX_LENGTH,
   ReorderBotsInput,
@@ -1013,8 +1014,21 @@ export const appContract = {
      * Safe to call again: it returns the Chief that is already there.
      */
     ensureTeam: oc
-      .input(z.object({ locale: z.enum(AGENT_CATALOG_LOCALES).default("en") }))
-      .output(z.object({ botId: Id, created: z.boolean() })),
+      .input(
+        z.object({
+          locale: z.enum(AGENT_CATALOG_LOCALES).default("en"),
+          /** What onboarding asked; the category tapped first adds one ready-made agent. */
+          picks: OnboardingPicksSchema.optional(),
+        }),
+      )
+      .output(
+        z.object({
+          botId: Id,
+          created: z.boolean(),
+          /** The agent the picks named, with the first task to leave unsent in its composer. */
+          pickedAgent: z.object({ botId: Id, task: z.string().nullable() }).optional(),
+        }),
+      ),
     /** Seed the first-run greeting into the bot's thread (focus card is separate). */
     start: oc.input(z.object({ botId: Id })).output(z.object({ ok: z.literal(true) })),
     /** Post the focus choice card when the thread is still idle. */

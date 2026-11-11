@@ -1484,7 +1484,6 @@ msgstr "Elige un color o sube una imagen"
 
 #: src/lib/model-problem.ts
 #: src/pages/ModelSettingsOverlay.tsx
-#: src/pages/shell/composer-error.tsx
 msgid "Choose a model"
 msgstr "Elige un modelo"
 
@@ -1784,7 +1783,6 @@ msgstr "Conectar {selectedProviderName}"
 
 #: src/lib/model-problem.ts
 #: src/pages/Onboarding.tsx
-#: src/pages/shell/composer-error.tsx
 msgid "Connect a model"
 msgstr "Conectar un modelo"
 
@@ -2762,7 +2760,6 @@ msgstr "Actualización de escritorio"
 #: src/components/ModelProblemNotice.tsx
 #: src/pages/RoutineRunDetail.tsx
 #: src/pages/RoutineRunHistory.tsx
-#: src/pages/shell/composer-error.tsx
 msgid "Details"
 msgstr "Detalles"
 
@@ -5272,7 +5269,6 @@ msgid "Replace its instructions"
 msgstr "Reemplazar sus instrucciones"
 
 #: src/lib/model-problem.ts
-#: src/pages/shell/composer-error.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Replace key"
 msgstr "Reemplazar clave"

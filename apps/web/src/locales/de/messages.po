@@ -1484,7 +1484,6 @@ msgstr "Wählen Sie eine Farbe oder laden Sie ein Bild hoch"
 
 #: src/lib/model-problem.ts
 #: src/pages/ModelSettingsOverlay.tsx
-#: src/pages/shell/composer-error.tsx
 msgid "Choose a model"
 msgstr "Modell auswählen"
 
@@ -1784,7 +1783,6 @@ msgstr "{selectedProviderName} verbinden"
 
 #: src/lib/model-problem.ts
 #: src/pages/Onboarding.tsx
-#: src/pages/shell/composer-error.tsx
 msgid "Connect a model"
 msgstr "Modell verbinden"
 
@@ -2762,7 +2760,6 @@ msgstr "Desktop-Update"
 #: src/components/ModelProblemNotice.tsx
 #: src/pages/RoutineRunDetail.tsx
 #: src/pages/RoutineRunHistory.tsx
-#: src/pages/shell/composer-error.tsx
 msgid "Details"
 msgstr "Details"
 
@@ -5272,7 +5269,6 @@ msgid "Replace its instructions"
 msgstr "Anweisungen ersetzen"
 
 #: src/lib/model-problem.ts
-#: src/pages/shell/composer-error.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Replace key"
 msgstr "Schlüssel ersetzen"

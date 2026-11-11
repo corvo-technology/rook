@@ -76,7 +76,13 @@ it("hides gated parts while the missions are pending", async () => {
 });
 
 it("shows what a mission brought, marks it new, and clears the mark once opened", async () => {
-  api.get.mockResolvedValue({ short: true, completed: ["talk"], has: [], seen: [] });
+  // The server remembers what was seen, so a refetch while the test runs cannot bring the mark back.
+  const server = { short: true, completed: ["talk"], has: [], seen: [] as string[] };
+  api.get.mockImplementation(async () => ({ ...server }));
+  api.seen.mockImplementation(async ({ part }: { part: string }) => {
+    server.seen.push(part);
+    return { ok: true };
+  });
   const unmount = await mount({ shortNav: true });
   expect(current.shows("usage")).toBe(true);
   expect(current.isNew("usage")).toBe(true);

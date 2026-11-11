@@ -1,4 +1,9 @@
-import type { WikiChangeState, WikiPageInfo } from "@corvo/contracts";
+import type {
+  WikiApplyAllResult,
+  WikiCaptureState,
+  WikiChangeState,
+  WikiPageInfo,
+} from "@corvo/contracts";
 import { linkWikiTitles, parseWikiPage, wikiMentionHref, wikiSlug } from "@corvo/core";
 import { rpc } from "./api";
 
@@ -54,3 +59,23 @@ export function decideWikiChange(changeId: string, decision: "apply" | "refuse" 
 export function keepMessageInWiki(target: { botId?: string; groupId?: string }, messageId: string) {
   return rpc("wiki/keep", { ...target, messageId });
 }
+
+/** Approves every waiting change, oldest first; the result says how many applied or conflicted. */
+export function approveAllWikiChanges(): Promise<WikiApplyAllResult> {
+  return rpc("wiki/changes/applyAll");
+}
+
+type CaptureTarget = { botId?: string; groupId?: string };
+
+/** Whether the curator reads one conversation, and whether this person may change it. */
+export function getWikiCapture(target: CaptureTarget): Promise<WikiCaptureState> {
+  return rpc("wiki/capture/get", target);
+}
+
+/** Turns the curator on or off for one conversation; always an explicit value. */
+export async function setWikiCapture(target: CaptureTarget, capture: boolean): Promise<void> {
+  await rpc("wiki/capture/set", { ...target, capture });
+}
+
+/** "Approve all" is offered only when there is more than one change to approve. */
+export const canApproveAll = (waiting: readonly unknown[]): boolean => waiting.length > 1;

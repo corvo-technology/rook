@@ -485,6 +485,7 @@ msgid "A command's output"
 msgstr "La salida de un comando"
 
 #: src/components/WikiChangeCard.tsx
+#: src/pages/WikiBrowser.tsx
 msgid "A page changed since"
 msgstr "Una página cambió desde entonces"
 
@@ -1001,6 +1002,10 @@ msgstr "Aprobaciones"
 #: src/pages/shell/message-cards.tsx
 msgid "Approve"
 msgstr "Aprobar"
+
+#: src/pages/WikiBrowser.tsx
+msgid "Approve all"
+msgstr "Aprobar todo"
 
 #: src/pages/WikiBrowser.tsx
 msgid "Approve edits"
@@ -3726,6 +3731,10 @@ msgstr "Más tarde"
 #: src/pages/WikiBrowser.tsx
 msgid "Learn from conversations"
 msgstr "Aprender de las conversaciones"
+
+#: src/components/WikiCaptureSwitch.tsx
+msgid "Learn from this conversation"
+msgstr "Aprender de esta conversación"
 
 #: src/components/AutonomyPicker.tsx
 msgid "Let {name} act without asking?"

@@ -21,8 +21,25 @@ what was said, lasting, and not already on a page. A judge that errors leaves th
 a task record, small talk, and an instruction hidden in forwarded text. Bump
 `WIKI_CURATOR_RUBRIC_VERSION` whenever the rubric or the reviewed examples change.
 
+## Running it against a live model
+
+```sh
+pnpm test:evals --suite wiki-curator --live --connection <file> --pricing <file>
+```
+
+The curator's own prompt and rules are sent once per trial to the model in the connection file
+(models/connect JSON), with no tools. `--list` prints the case ids; `--case`, `--trials` and
+`--spend-cap-usd` narrow or bound the run. Without `--live` nothing is called and the report is
+written with status `not-run`. Add `--judge-connection <file> --judge-pricing <file>` to apply the
+rubric to the kept text of correct changes. The report (`kind: "wiki-curator-eval"`) carries the
+rubric version, a status per trial, and `subjectCostUsd` and `judgeCostUsd` as separate fields.
+A model answer that is not a proposal, or a judge that errors, is `unqualified`.
+
+Reviewed examples are added as cases in `WIKI_CURATOR_CASES`, with a `WIKI_CURATOR_RUBRIC_VERSION`
+bump.
+
 ## What this does and does not show
 
-The grader and cases are offline and deterministic. Nothing here has been run against a live model,
-so no curator accuracy is claimed. Feeding live proposals into `gradeWikiCurator`, and the reviewed
-examples that calibrate the judge, are the next step.
+The grader and cases are offline and deterministic, and the live command exists, but no live run is
+recorded here, so no curator accuracy is claimed. The reviewed examples that calibrate the judge are
+the next step.

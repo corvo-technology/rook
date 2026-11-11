@@ -1,4 +1,9 @@
-import type { WikiChangePage, WikiChangeState, WikiSettings } from "@corvo/contracts";
+import type {
+  WikiApplyAllResult,
+  WikiChangePage,
+  WikiChangeState,
+  WikiSettings,
+} from "@corvo/contracts";
 import { applyCuratorOp, type CuratorOp, wikiCanonicalTitle, wikiSlug } from "@corvo/core";
 import type { PrismaClient } from "./client.js";
 import {
@@ -381,6 +386,32 @@ export async function decideWikiChange(
     await release(db, row);
     throw error;
   }
+}
+
+/**
+ * Applies every waiting change, oldest first. A change whose page moved ends `conflict` and the
+ * rest still apply; one another answer has claimed or settled meanwhile is left to that answer.
+ */
+export async function applyAllWikiChanges(
+  db: PrismaClient,
+  scope: WikiScope,
+): Promise<WikiApplyAllResult> {
+  const waiting = await db.wikiChange.findMany({
+    where: { spaceId: scope.spaceId, state: "pending" },
+    orderBy: { createdAt: "asc" },
+    select: { id: true },
+  });
+  const result: WikiApplyAllResult = { applied: 0, conflicts: 0 };
+  for (const { id } of waiting) {
+    try {
+      const change = await decideWikiChange(db, scope, id, "apply");
+      if (change.state === "applied") result.applied += 1;
+      else if (change.state === "conflict") result.conflicts += 1;
+    } catch (error) {
+      if (!(error instanceof WikiChangeStateError)) throw error;
+    }
+  }
+  return result;
 }
 
 export async function listWikiChanges(

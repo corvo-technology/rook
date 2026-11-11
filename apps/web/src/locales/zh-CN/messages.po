@@ -485,6 +485,7 @@ msgid "A command's output"
 msgstr "命令的输出"
 
 #: src/components/WikiChangeCard.tsx
+#: src/pages/WikiBrowser.tsx
 msgid "A page changed since"
 msgstr "此后有页面已更改"
 
@@ -1001,6 +1002,10 @@ msgstr "审批"
 #: src/pages/shell/message-cards.tsx
 msgid "Approve"
 msgstr "批准"
+
+#: src/pages/WikiBrowser.tsx
+msgid "Approve all"
+msgstr "全部批准"
 
 #: src/pages/WikiBrowser.tsx
 msgid "Approve edits"
@@ -3726,6 +3731,10 @@ msgstr "稍后"
 #: src/pages/WikiBrowser.tsx
 msgid "Learn from conversations"
 msgstr "从对话中学习"
+
+#: src/components/WikiCaptureSwitch.tsx
+msgid "Learn from this conversation"
+msgstr "从此对话中学习"
 
 #: src/components/AutonomyPicker.tsx
 msgid "Let {name} act without asking?"

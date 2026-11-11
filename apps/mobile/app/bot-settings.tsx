@@ -48,6 +48,7 @@ import {
   SettingsFooter,
   SettingsRow,
 } from "../components/settings-group";
+import { WikiCaptureRow } from "../components/wiki-capture-row";
 import type { MobileMe, MobileModel, MobileModelCredential } from "../lib/api";
 import { rpc } from "../lib/api";
 import { autonomyLine, autonomyOptions, confirmNeverAsk } from "../lib/autonomy";
@@ -710,6 +711,11 @@ export default function BotSettingsScreen() {
             </View>
           </SettingsGroup>
         </View>
+        {botId ? (
+          <View style={{ marginTop: 24 }}>
+            <WikiCaptureRow target={{ botId }} />
+          </View>
+        ) : null}
         {botId ? <BotContextCards key={botId} botId={botId} /> : null}
         <Pressable
           accessibilityRole="button"

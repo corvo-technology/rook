@@ -165,6 +165,8 @@ import { SearchQueryOutputSchema } from "./search.js";
 import { SecurityEventListInputSchema, SecurityEventSchema } from "./security-events.js";
 import { SettingsScopeSchema, SpaceSettingSchema, settingsScopeInput } from "./settings-scope.js";
 import {
+  WikiApplyAllResultSchema,
+  WikiCaptureStateSchema,
   WikiCaptureValueSchema,
   WikiChangeDecideInputSchema,
   WikiChangeSchema,
@@ -718,6 +720,8 @@ export const appContract = {
         .output(z.array(WikiChangeSchema)),
       get: oc.input(z.object({ changeId: Id })).output(WikiChangeSchema),
       decide: oc.input(WikiChangeDecideInputSchema).output(WikiChangeSchema),
+      /** Applies every waiting change, oldest first. */
+      applyAll: oc.output(WikiApplyAllResultSchema),
     },
     settings: {
       get: oc.output(WikiSettingsSchema),
@@ -729,6 +733,7 @@ export const appContract = {
       .output(z.object({ ok: z.literal(true) })),
     /** One conversation's switch for the curator. */
     capture: {
+      get: oc.input(threadTarget).output(WikiCaptureStateSchema),
       set: oc
         .input(threadTarget.safeExtend({ capture: WikiCaptureValueSchema }))
         .output(z.object({ ok: z.literal(true) })),

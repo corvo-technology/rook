@@ -1,5 +1,6 @@
 import { ChatMarkdown } from "@corvo/chat-ui/web";
 import type {
+  WikiApplyAllResult,
   WikiChange,
   WikiChangeState,
   WikiHit,
@@ -44,6 +45,7 @@ export type WikiApi = {
   changes: {
     list(input: { state?: WikiChangeState[] }): Promise<WikiChange[]>;
     decide(input: { changeId: string; decision: "apply" | "refuse" | "undo" }): Promise<WikiChange>;
+    applyAll(): Promise<WikiApplyAllResult>;
   };
   settings: {
     get(): Promise<WikiSettings>;
@@ -106,6 +108,8 @@ export function WikiBrowser({
   });
   const settings = useQuery({ queryKey: ["wiki", "settings"], queryFn: () => api.settings.get() });
   const [deciding, setDeciding] = useState<string | null>(null);
+  const [approvingAll, setApprovingAll] = useState(false);
+  const [moved, setMoved] = useState(false);
 
   async function decide(changeId: string, decision: "apply" | "refuse" | "undo") {
     if (deciding) return;
@@ -117,6 +121,21 @@ export function WikiBrowser({
       setError(t`Could not save`);
     } finally {
       setDeciding(null);
+    }
+  }
+
+  async function approveAll() {
+    if (approvingAll) return;
+    setApprovingAll(true);
+    setMoved(false);
+    try {
+      const result = await api.changes.applyAll();
+      setMoved(result.conflicts > 0);
+      await queryClient.invalidateQueries({ queryKey: ["wiki"] });
+    } catch {
+      setError(t`Could not save`);
+    } finally {
+      setApprovingAll(false);
     }
   }
 
@@ -297,6 +316,17 @@ export function WikiBrowser({
         </div>
         {waiting.data?.length ? (
           <div className="flex flex-col gap-2" data-testid="wiki-pending">
+            {waiting.data.length > 1 ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="self-start"
+                disabled={approvingAll || deciding !== null}
+                onClick={() => void approveAll()}
+              >
+                <Trans>Approve all</Trans>
+              </Button>
+            ) : null}
             {waiting.data.map((change) => (
               <WikiChangeCard
                 key={change.id}
@@ -307,6 +337,11 @@ export function WikiBrowser({
               />
             ))}
           </div>
+        ) : null}
+        {moved ? (
+          <p className="px-1 text-sm text-muted-foreground" data-testid="wiki-moved">
+            <Trans>A page changed since</Trans>
+          </p>
         ) : null}
         {index.isPending ? (
           <div className="flex justify-center py-6">

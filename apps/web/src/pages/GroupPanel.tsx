@@ -9,6 +9,7 @@ import { BotAvatar, Button, Checkbox, Input } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { X } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { WikiCaptureSwitch } from "../components/WikiCaptureSwitch";
 import { errorText } from "../lib/user-error";
 import { DeleteItemDialog } from "./shell/dialogs";
 
@@ -352,6 +353,7 @@ export function GroupSettings({
         />
       </label>
       <MemberPicker bots={bots} selected={selected} onChange={setSelected} onOpenBot={onOpenBot} />
+      <WikiCaptureSwitch target={{ groupId: group.id }} />
       <Button
         className="mt-5 w-full"
         disabled={saving || !validSelection(name, selected)}

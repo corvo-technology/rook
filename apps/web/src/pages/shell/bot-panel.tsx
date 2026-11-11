@@ -42,6 +42,7 @@ import type { ReactNode } from "react";
 import { Suspense, useEffect, useId, useRef, useState } from "react";
 import { ErrorBoundary, SectionLoadFailed } from "../../components/ErrorBoundary";
 import { InstructionSettings } from "../../components/InstructionSettings";
+import { WikiCaptureSwitch } from "../../components/WikiCaptureSwitch";
 import { botProfilePatch } from "../../lib/bot-profile-patch";
 import { thinkingLevelLabel } from "../../lib/model-catalog";
 import { lazyComponent } from "../../lib/preload-recovery";
@@ -592,6 +593,7 @@ export function BotSettings({
           />
         </div>
       </section>
+      <WikiCaptureSwitch target={{ botId: bot.id }} />
       <ErrorBoundary fallback={<SectionLoadFailed />}>
         <Suspense fallback={null}>
           <ScratchpadSection botId={bot.id} />

@@ -471,6 +471,7 @@ msgid "A command's output"
 msgstr "コマンドの出力"
 
 #: src/components/WikiChangeCard.tsx
+#: src/pages/WikiBrowser.tsx
 msgid "A page changed since"
 msgstr "その後ページが変更されました"
 
@@ -969,6 +970,10 @@ msgstr "承認"
 #: src/pages/shell/message-cards.tsx
 msgid "Approve"
 msgstr "承認"
+
+#: src/pages/WikiBrowser.tsx
+msgid "Approve all"
+msgstr "すべて承認"
 
 #: src/pages/WikiBrowser.tsx
 msgid "Approve edits"
@@ -3678,6 +3683,10 @@ msgstr "後で"
 #: src/pages/WikiBrowser.tsx
 msgid "Learn from conversations"
 msgstr "会話から学ぶ"
+
+#: src/components/WikiCaptureSwitch.tsx
+msgid "Learn from this conversation"
+msgstr "この会話から学ぶ"
 
 #: src/components/DesktopControlSettings.tsx
 msgid "Let bots see and use your apps. Actions ask first."

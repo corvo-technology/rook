@@ -471,6 +471,7 @@ msgid "A command's output"
 msgstr "A command's output"
 
 #: src/components/WikiChangeCard.tsx
+#: src/pages/WikiBrowser.tsx
 msgid "A page changed since"
 msgstr "A page changed since"
 
@@ -969,6 +970,10 @@ msgstr "Approvals"
 #: src/pages/shell/message-cards.tsx
 msgid "Approve"
 msgstr "Approve"
+
+#: src/pages/WikiBrowser.tsx
+msgid "Approve all"
+msgstr "Approve all"
 
 #: src/pages/WikiBrowser.tsx
 msgid "Approve edits"
@@ -3678,6 +3683,10 @@ msgstr "Later"
 #: src/pages/WikiBrowser.tsx
 msgid "Learn from conversations"
 msgstr "Learn from conversations"
+
+#: src/components/WikiCaptureSwitch.tsx
+msgid "Learn from this conversation"
+msgstr "Learn from this conversation"
 
 #: src/components/DesktopControlSettings.tsx
 msgid "Let bots see and use your apps. Actions ask first."

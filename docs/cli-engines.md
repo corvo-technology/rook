@@ -8,7 +8,7 @@ The CLI owns its own model loop. Corvo owns every tool: each turn runs the CLI o
 
 `CLI_ENGINES_ENABLED=true` on the API and worker turns the feature on. It is off by default. With it off, no detection runs, no catalog entry appears, and a bot that saved a CLI engine model fails like any model whose connection is gone.
 
-The desktop app's embedded engine sets the flag. A self-hosted operator sets it on purpose, on a machine where the CLI is installed (a container started from the Compose files does not have it).
+The desktop app's embedded engine does not set the flag yet; turning it on there is a separate change. A self-hosted operator sets it on purpose, on a machine where the CLI is installed (a container started from the Compose files does not have it).
 
 The API refuses to start when the flag is on and a billing provider is configured, so a hosted multi-tenant deployment can never offer a machine-owned subscription to its customers. A run that carries a hosted-credit observer is refused before the CLI starts.
 

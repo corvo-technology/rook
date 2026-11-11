@@ -1533,9 +1533,6 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 redactedScratchpadContext: scratchpadContext
                   ? redactSecrets(scratchpadContext, runSecrets)
                   : undefined,
-                redactedTicketContext: ticketContext
-                  ? redactSecrets(ticketContext, runSecrets)
-                  : undefined,
                 hasHistoricalContext: historicalContext.length > 0,
                 historyRetrievalEnabled: contextStrategy !== "current",
                 computerInstruction,
@@ -1543,7 +1540,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 taskCatalogInstruction,
                 workspaceInstruction,
                 agentEnvironmentInstruction,
-                botDirectory,
+                teamDirectory: botDirectory,
                 pluginLine,
                 agentSkillsLine,
                 taughtSkillsLine,

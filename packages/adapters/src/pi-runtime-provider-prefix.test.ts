@@ -286,7 +286,6 @@ describe("Pi outgoing provider prefixes", () => {
               redactedScratchpadContext: `Scratchpad: ${index}`,
               hasHistoricalContext: true,
               agentEnvironmentInstruction: undefined,
-              botDirectory: undefined,
               pluginLine: undefined,
               agentSkillsLine: undefined,
               taughtSkillsLine: undefined,

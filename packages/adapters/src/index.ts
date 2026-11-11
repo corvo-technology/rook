@@ -9,6 +9,7 @@ export * from "./auto-review.js";
 export * from "./auto-review-factory.js";
 export * from "./aws-kms-key-provider.js";
 export * from "./background-job-handlers.js";
+export * from "./background-model.js";
 export * from "./billing-emulator.js";
 export * from "./boat-sandbox.js";
 export * from "./bot-avatar.js";

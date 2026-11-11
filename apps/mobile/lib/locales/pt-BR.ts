@@ -1102,4 +1102,12 @@ export const PT_BR_MESSAGES: Record<string, string> = {
   Refuse: "Recusar",
   "Keep in the wiki": "Guardar na wiki",
   "Could not load pages": "Não foi possível carregar as páginas",
+  "Talk to your agent": "Converse com seu agente",
+  "Answer a request": "Responda a um pedido",
+  "Connect an app": "Conecte um app",
+  "Add a second agent": "Adicione um segundo agente",
+  "Schedule a routine": "Agende uma rotina",
+  "Keep a memory": "Guarde uma memória",
+  Missions: "Missões",
+  "Show everything": "Mostrar tudo",
 };

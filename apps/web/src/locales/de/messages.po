@@ -593,6 +593,10 @@ msgstr "Passkey für schnellere Anmeldung hinzufügen?"
 msgid "Add a run time for this one-shot."
 msgstr "Legen Sie eine Ausführungszeit für diese einmalige Ausführung fest."
 
+#: src/components/MissionList.tsx
+msgid "Add a second agent"
+msgstr "Einen zweiten Agenten hinzufügen"
+
 #: src/pages/McpServersOverlay.tsx
 msgid "Add a server name."
 msgstr "Gib einen Servernamen ein."
@@ -893,6 +897,10 @@ msgstr "Antwort"
 msgctxt "incoming call"
 msgid "Answer"
 msgstr "Annehmen"
+
+#: src/components/MissionList.tsx
+msgid "Answer a request"
+msgstr "Eine Anfrage beantworten"
 
 #: src/pages/shell/message-view.tsx
 msgid "answered"
@@ -1784,6 +1792,10 @@ msgstr "Modell verbinden"
 #: src/lib/run-error.ts
 msgid "Connect a model in Settings before running bots."
 msgstr "Verbinde ein Modell in den Einstellungen, bevor du Bots ausführst."
+
+#: src/components/MissionList.tsx
+msgid "Connect an app"
+msgstr "Eine App verbinden"
 
 #: src/pages/model-settings/connection-controls.tsx
 msgid "Connect API key"
@@ -3635,6 +3647,10 @@ msgstr "Zur beantworteten Nachricht springen: {excerpt}"
 msgid "just now"
 msgstr "gerade eben"
 
+#: src/components/MissionList.tsx
+msgid "Keep a memory"
+msgstr "Eine Erinnerung speichern"
+
 #: src/pages/shell/message-hover-actions.tsx
 msgid "Keep in the wiki"
 msgstr "Im Wiki behalten"
@@ -4081,6 +4097,10 @@ msgstr "Minuten"
 msgid "Missed call"
 msgstr "Verpasster Anruf"
 
+#: src/components/MissionList.tsx
+msgid "Missions"
+msgstr "Missionen"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Mode"
 msgstr "Modus"
@@ -4270,6 +4290,7 @@ msgstr "Benötigt: {names}"
 msgid "Never ask"
 msgstr "Nie fragen"
 
+#: src/components/NewDot.tsx
 #: src/pages/shell/chat-context.tsx
 msgid "New"
 msgstr "Neu"
@@ -5578,6 +5599,10 @@ msgstr "Wird gespeichert…"
 msgid "Say yes or no, or answer in a sentence."
 msgstr "Antworte mit Ja oder Nein oder in einem Satz."
 
+#: src/components/MissionList.tsx
+msgid "Schedule a routine"
+msgstr "Eine Routine planen"
+
 #: src/components/ModelCredits.tsx
 msgid "Scheduled routines"
 msgstr "Geplante Routinen"
@@ -5779,6 +5804,10 @@ msgstr "Bots anzeigen"
 #: src/pages/shell/side-panel.tsx
 msgid "Show computer"
 msgstr "Computer anzeigen"
+
+#: src/components/MissionList.tsx
+msgid "Show everything"
+msgstr "Alles anzeigen"
 
 #: src/pages/Artifacts.tsx
 msgid "Show list"
@@ -6172,6 +6201,10 @@ msgstr "Tabelle"
 #: src/pages/shell/computer-overlay.tsx
 msgid "Take control"
 msgstr "Kontrolle übernehmen"
+
+#: src/components/MissionList.tsx
+msgid "Talk to your agent"
+msgstr "Sprich mit deinem Agenten"
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Teach a task"

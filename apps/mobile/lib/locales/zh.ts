@@ -1104,4 +1104,12 @@ export const ZH_MESSAGES: Record<string, string> = {
   Refuse: "拒绝",
   "Keep in the wiki": "保留到 Wiki",
   "Could not load pages": "无法加载页面",
+  "Talk to your agent": "与你的智能体对话",
+  "Answer a request": "回答一个请求",
+  "Connect an app": "连接一个应用",
+  "Add a second agent": "添加第二个智能体",
+  "Schedule a routine": "安排一个例行任务",
+  "Keep a memory": "保存一段记忆",
+  Missions: "任务",
+  "Show everything": "显示全部",
 };

@@ -1764,6 +1764,8 @@ export const MeSchema = z.object({
   phoneCallsEnabled: z.boolean().default(false),
   /** Operator-configured menu links. Absent from older servers. */
   navLinks: z.array(NavLinkSchema).default([]),
+  /** True while this member's navigation is still growing in this space. Absent from older servers. */
+  shortNav: z.boolean().optional(),
   userId: Id,
   email: z.string().email(),
   name: z.string(),

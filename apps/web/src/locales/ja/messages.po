@@ -593,6 +593,10 @@ msgstr "パスキーを追加して、より速くログインしますか？"
 msgid "Add a run time for this one-shot."
 msgstr "この1回限りの実行の日時を追加してください。"
 
+#: src/components/MissionList.tsx
+msgid "Add a second agent"
+msgstr "2人目のエージェントを追加する"
+
 #: src/pages/McpServersOverlay.tsx
 msgid "Add a server name."
 msgstr "サーバー名を追加してください。"
@@ -893,6 +897,10 @@ msgstr "回答"
 msgctxt "incoming call"
 msgid "Answer"
 msgstr "応答"
+
+#: src/components/MissionList.tsx
+msgid "Answer a request"
+msgstr "リクエストに答える"
 
 #: src/pages/shell/message-view.tsx
 msgid "answered"
@@ -1784,6 +1792,10 @@ msgstr "モデルを接続"
 #: src/lib/run-error.ts
 msgid "Connect a model in Settings before running bots."
 msgstr "ボットを実行する前に、設定でモデルを接続してください。"
+
+#: src/components/MissionList.tsx
+msgid "Connect an app"
+msgstr "アプリを接続する"
 
 #: src/pages/model-settings/connection-controls.tsx
 msgid "Connect API key"
@@ -3635,6 +3647,10 @@ msgstr "返信元のメッセージへ移動: {excerpt}"
 msgid "just now"
 msgstr "たった今"
 
+#: src/components/MissionList.tsx
+msgid "Keep a memory"
+msgstr "記憶を残す"
+
 #: src/pages/shell/message-hover-actions.tsx
 msgid "Keep in the wiki"
 msgstr "Wikiに保存"
@@ -4081,6 +4097,10 @@ msgstr "分"
 msgid "Missed call"
 msgstr "不在着信"
 
+#: src/components/MissionList.tsx
+msgid "Missions"
+msgstr "ミッション"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Mode"
 msgstr "モード"
@@ -4270,6 +4290,7 @@ msgstr "必要: {names}"
 msgid "Never ask"
 msgstr "確認しない"
 
+#: src/components/NewDot.tsx
 #: src/pages/shell/chat-context.tsx
 msgid "New"
 msgstr "新規"
@@ -5578,6 +5599,10 @@ msgstr "保存中…"
 msgid "Say yes or no, or answer in a sentence."
 msgstr "「はい」か「いいえ」、または文章で答えてください。"
 
+#: src/components/MissionList.tsx
+msgid "Schedule a routine"
+msgstr "ルーティンをスケジュールする"
+
 #: src/components/ModelCredits.tsx
 msgid "Scheduled routines"
 msgstr "スケジュール済みのルーティン"
@@ -5779,6 +5804,10 @@ msgstr "ボットを表示"
 #: src/pages/shell/side-panel.tsx
 msgid "Show computer"
 msgstr "コンピューターを表示"
+
+#: src/components/MissionList.tsx
+msgid "Show everything"
+msgstr "すべて表示"
 
 #: src/pages/Artifacts.tsx
 msgid "Show list"
@@ -6172,6 +6201,10 @@ msgstr "テーブル"
 #: src/pages/shell/computer-overlay.tsx
 msgid "Take control"
 msgstr "操作を引き継ぐ"
+
+#: src/components/MissionList.tsx
+msgid "Talk to your agent"
+msgstr "エージェントに話しかける"
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Teach a task"

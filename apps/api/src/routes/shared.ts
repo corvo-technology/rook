@@ -7,6 +7,7 @@ import {
 } from "@corvo/adapters";
 import type { Actor, Me } from "@corvo/contracts";
 import { attachmentMaxBytes, canonicalPiProviderId, PartnerTemplate } from "@corvo/contracts";
+import { parseTourDone } from "@corvo/core";
 import { runAsSystem } from "@corvo/db";
 import type { RouterDeps } from "../router.js";
 import { isPartnerAdmin } from "./partner.js";
@@ -28,6 +29,7 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
         name: true,
         timezone: true,
         signupSurvey: { select: { userId: true } },
+        coachTour: { select: { done: true, skipped: true } },
       },
     }),
     modelSetup(deps, actor),
@@ -80,6 +82,12 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
     billingEnabled: Boolean(deps.billing) && !partner,
     // Only billing deployments ask; self-hosted installs never see the survey.
     needsSignupSurvey: Boolean(deps.billing) && !partner && !user.signupSurvey,
+    tour: partner
+      ? null
+      : {
+          done: parseTourDone(user.coachTour?.done ?? []),
+          skipped: user.coachTour?.skipped ?? false,
+        },
     partner: partner
       ? {
           name: partner.partner.name,

@@ -36,6 +36,7 @@ import {
   UpdateTicketInput,
 } from "./board.js";
 import { BotSecretMetadata, BotSecretPutInput, StoredBotSecretName } from "./bot-secrets.js";
+import { TourMark } from "./coach-tour.js";
 import {
   ActionApprovalRuleSchema,
   ActionAutoReviewSettingsSchema,
@@ -1008,6 +1009,10 @@ export const appContract = {
   onboarding: {
     /** Record the optional signup survey; an empty submission marks it skipped. */
     signupSurvey: oc.input(SignupSurveySchema).output(z.object({ ok: z.literal(true) })),
+    /** Record that a coach mark is done for this person. Safe to repeat. */
+    tourDone: oc.input(z.object({ mark: TourMark })).output(z.object({ ok: z.literal(true) })),
+    /** End the coach tour for good. */
+    tourSkip: oc.output(z.object({ ok: z.literal(true) })),
     /**
      * Give a new account its Chief and a starting team of agents, in the person's language.
      * Safe to call again: it returns the Chief that is already there.

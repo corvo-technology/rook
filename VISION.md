@@ -68,6 +68,7 @@ Approvals have three modes: Never ask runs every action without waiting, Auto le
 Every mode is shaped by two lists of exact tools or sites, Allow and Block, which grow from approval cards and settings rather than from guessed categories, and a blocked action is refused without a card in every mode.
 Actions that outside text could steer, such as writes in webhook-started runs, another owner's bot connecting, or instruction changes after untrusted content entered a run, still ask in Auto and Ask and are refused in Never ask, which cannot wait for anyone.
 The deployment picks the default approval mode, so a self-hosted server works without any model and a hosted one can default to Auto.
+A bot may carry its own approval mode as a deliberate exception and otherwise follows the member's default.
 
 ## Scope
 

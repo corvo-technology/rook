@@ -13,6 +13,7 @@ import { useId, useState } from "react";
 import { useSpaceQueries } from "../lib/query";
 import { useSpaceRpc } from "../lib/space-rpc";
 import { errorText } from "../lib/user-error";
+import { NeverAskConfirm } from "./AutonomyPicker";
 import { SettingsGroup, SettingsRow } from "./SettingsRows";
 
 const segmented = "rounded-lg bg-muted p-1";
@@ -32,6 +33,7 @@ export function ApprovalRulesSettings({ scope }: { scope: SettingsScope }) {
   const loading = rulesQuery.isPending || autoReviewQuery.isPending;
   const loadFailed = rulesQuery.error ?? autoReviewQuery.error;
   const [saving, setSaving] = useState(false);
+  const [confirmingNever, setConfirmingNever] = useState(false);
   const [actionError, setError] = useState<string | null>(null);
   const error =
     actionError ?? (loadFailed ? errorText(loadFailed, t`Could not load approval rules`) : null);
@@ -106,6 +108,14 @@ export function ApprovalRulesSettings({ scope }: { scope: SettingsScope }) {
 
   return (
     <div data-testid="approval-settings" className="space-y-8">
+      <NeverAskConfirm
+        open={confirmingNever}
+        onCancel={() => setConfirmingNever(false)}
+        onConfirm={() => {
+          setConfirmingNever(false);
+          void setMode("never");
+        }}
+      />
       <div className="space-y-2">
         {/* biome-ignore lint/a11y/useSemanticElements: a grid of option buttons, not form fields */}
         <div
@@ -123,7 +133,9 @@ export function ApprovalRulesSettings({ scope }: { scope: SettingsScope }) {
               aria-describedby={`${modeId}-${mode}`}
               disabled={loading || saving || !autoReview}
               onClick={() => {
-                if (mode !== autoReview?.mode) void setMode(mode);
+                if (mode === autoReview?.mode) return;
+                if (mode === "never") setConfirmingNever(true);
+                else void setMode(mode);
               }}
               className="flex flex-col items-start gap-1.5 rounded-xl border border-border bg-card p-4 text-left transition-colors outline-none hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-60 aria-pressed:border-foreground aria-pressed:bg-accent"
             >

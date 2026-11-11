@@ -91,6 +91,10 @@ export const InstructionVersionSchema = z.object({
   createdAt: z.string(),
 });
 
+/** How much a space asks before acting; see VISION.md. */
+export const ApprovalModeSchema = z.enum(["never", "auto", "ask"]);
+export type ApprovalMode = z.infer<typeof ApprovalModeSchema>;
+
 export const BotSchema = z.object({
   id: Id,
   spaceId: Id,
@@ -127,6 +131,8 @@ export const BotSchema = z.object({
   crossSpaceCommunication: z.boolean().optional(),
   fleetManagement: z.boolean().default(false),
   squadRouting: z.boolean().default(false),
+  /** This bot's own approval mode; null follows the member's default. */
+  approvalMode: ApprovalModeSchema.nullable().default(null),
   /** Most the bot may spend on hosted credits in a UTC day, in US dollars; null means no limit. */
   dailyCapUsd: z.number().nullable().default(null),
   disabledBuiltinTools: z.array(z.string()).default([]),
@@ -452,6 +458,8 @@ export const UpdateBotInput = z
     crossSpaceCommunication: z.boolean().optional(),
     fleetManagement: z.boolean().optional(),
     squadRouting: z.boolean().optional(),
+    /** null clears the bot's own mode so it follows the default again. */
+    approvalMode: ApprovalModeSchema.nullable().optional(),
     disabledBuiltinTools: DisabledBuiltinToolsSchema.optional(),
   })
   .superRefine((value, ctx) => {
@@ -809,10 +817,6 @@ export const ActionApprovalRuleSchema = z.object({
   createdAt: z.string(),
 });
 export type ActionApprovalRule = z.infer<typeof ActionApprovalRuleSchema>;
-
-/** How much a space asks before acting; see VISION.md. */
-export const ApprovalModeSchema = z.enum(["never", "auto", "ask"]);
-export type ApprovalMode = z.infer<typeof ApprovalModeSchema>;
 
 export const ActionAutoReviewSettingsSchema = z.object({
   mode: ApprovalModeSchema,

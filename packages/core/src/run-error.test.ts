@@ -203,6 +203,11 @@ describe("normalizeRunError", () => {
         summary,
         details,
         ...(summary === tooLong ? { kind: "context" } : {}),
+        ...(summary === overloaded ||
+        summary.endsWith("is overloaded right now. Try again in a moment.")
+          ? { transport: "overloaded" }
+          : {}),
+        ...(summary === tookTooLong ? { transport: "timeout" } : {}),
       });
     });
 
@@ -220,6 +225,7 @@ describe("normalizeRunError", () => {
       expect(normalizeRunError(details)).toEqual({
         summary: "Your model provider couldn't be reached. Check that it's running.",
         details,
+        transport: "unreachable",
       });
     });
 
@@ -233,12 +239,17 @@ describe("normalizeRunError", () => {
         summary:
           "Your model provider couldn't be reached securely. A security program or network filter may be intercepting the connection.",
         details,
+        transport: "tls",
       });
     });
 
     it("still calls a real timeout a timeout, with the reason in the details", () => {
       const details = "fetch failed (api.example.com): connect ETIMEDOUT 1.2.3.4:443 (ETIMEDOUT)";
-      expect(normalizeRunError(details)).toEqual({ summary: tookTooLong, details });
+      expect(normalizeRunError(details)).toEqual({
+        summary: tookTooLong,
+        details,
+        transport: "timeout",
+      });
     });
 
     it.each([
@@ -849,4 +860,21 @@ describe("the one action that fixes a failed run", () => {
       });
     },
   );
+});
+
+describe("normalizeRunError transport", () => {
+  it.each([
+    [
+      "fetch failed (api.example.com): self-signed certificate in certificate chain (SELF_SIGNED_CERT_IN_CHAIN)",
+      "tls",
+    ],
+    ["fetch failed: connect ECONNREFUSED 127.0.0.1:11434", "unreachable"],
+    ["Request timed out.", "timeout"],
+    ["503 provider unavailable", "overloaded"],
+  ])("names the transport of %s", (details, transport) => {
+    const result = normalizeRunError(details);
+    expect(result.transport).toBe(transport);
+    expect(result.kind).toBeUndefined();
+    expect(result.recovery).toBeUndefined();
+  });
 });

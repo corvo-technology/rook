@@ -28,6 +28,7 @@ import {
   SUMMARIZE_TIMEOUT_MIN_MS,
   selectCompactedHistory,
   shouldEnqueueCompaction,
+  stableHistoryWindow,
   summarizeTimeoutMs,
 } from "./history-compaction.js";
 import { modelContextWindow } from "./model-window.js";
@@ -1512,5 +1513,46 @@ describe("compactHistory", () => {
     await compactHistory(harness.deps, "thread-1");
 
     expect(harness.jobs.enqueue).not.toHaveBeenCalled();
+  });
+});
+
+describe("stableHistoryWindow", () => {
+  const range = (from: number, to: number) =>
+    Array.from({ length: to - from + 1 }, (_, index) => ({ seq: from + index }));
+  const firstSeq = (last: number) => stableHistoryWindow(range(0, last), 50)[0]!.seq;
+
+  it("keeps everything while the thread is shorter than the window", () => {
+    expect(stableHistoryWindow(range(0, 29), 50)).toHaveLength(30);
+    expect(stableHistoryWindow([], 50)).toEqual([]);
+  });
+
+  it("starts at the first message until the window overflows by a step", () => {
+    expect(firstSeq(60)).toBe(0);
+    expect(firstSeq(61)).toBe(12);
+  });
+
+  it("does not shift the start on every new message", () => {
+    for (let last = 61; last <= 72; last += 1) expect(firstSeq(last)).toBe(12);
+    expect(firstSeq(73)).toBe(24);
+  });
+
+  it("holds between size and size plus a step minus one messages", () => {
+    for (let last = 49; last <= 200; last += 1) {
+      const count = stableHistoryWindow(range(0, last), 50).length;
+      expect(count).toBeLessThanOrEqual(61);
+      if (last >= 61) expect(count).toBeGreaterThanOrEqual(50);
+    }
+  });
+
+  it("starts at the first message at or after the boundary when seqs have gaps", () => {
+    const sparse = [10, 11, 13, 14, 15, 18, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29].map((seq) => ({
+      seq,
+    }));
+    // size 8, step 2: last 29 -> boundary floor(22/2)*2 = 22.
+    expect(stableHistoryWindow(sparse, 8).map((message) => message.seq)).toEqual([
+      22, 23, 24, 25, 26, 27, 28, 29,
+    ]);
+    const gapped = [{ seq: 0 }, { seq: 5 }, { seq: 9 }, { seq: 20 }];
+    expect(stableHistoryWindow(gapped, 8).map((message) => message.seq)).toEqual([20]);
   });
 });

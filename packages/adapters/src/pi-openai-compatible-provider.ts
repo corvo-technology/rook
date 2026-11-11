@@ -1,5 +1,6 @@
 import { lookup } from "node:dns/promises";
 import type { LookupFunction } from "node:net";
+import { ModelRequestError } from "@corvo/adapter-kit";
 import {
   DEFAULT_MODEL_CONTEXT_WINDOW,
   DEFAULT_MODEL_MAX_TOKENS,
@@ -29,6 +30,7 @@ import {
 } from "./openai-compatible-url.js";
 import { MODEL_CONNECT_TIMEOUT_MS } from "./pi-runtime-limits.js";
 import { guardToolCallNames } from "./pi-tool-call-guard.js";
+import { explainFetchFailure, transportFailureCode } from "./transport-failure.js";
 import { dispatcherFetch, fetchPairedWithDispatcher } from "./undici-fetch.js";
 
 export { OPENAI_COMPATIBLE_PROVIDER_ID };
@@ -486,14 +488,21 @@ export async function verifyOpenAiCompatibleApiKey(
         ...(signal ? [signal] : []),
       ]),
     });
-  } catch {
-    throw new Error("Could not verify the API key. Try again.");
+  } catch (error) {
+    // Transport errors may contain the request's credential: only the code is passed on.
+    throw new ModelRequestError("Could not verify the API key. Try again.", {
+      code: transportFailureCode(error),
+    });
   }
   await response.body?.cancel().catch(() => undefined);
   if (response.status === 401 || response.status === 403) {
-    throw new Error(MODEL_KEY_REJECTED_ERROR);
+    throw new ModelRequestError(MODEL_KEY_REJECTED_ERROR, { status: response.status });
   }
-  if (!response.ok) throw new Error("Could not verify the API key. Try again.");
+  if (!response.ok) {
+    throw new ModelRequestError("Could not verify the API key. Try again.", {
+      status: response.status,
+    });
+  }
 }
 
 export async function probeOpenAiCompatibleModels(
@@ -532,8 +541,9 @@ export async function probeOpenAiCompatibleModels(
     }
     if (!response.ok) {
       await response.body?.cancel().catch(() => undefined);
-      throw new Error(
+      throw new ModelRequestError(
         `Model server returned ${response.status}. ${OPENAI_COMPAT_PROBE_HAND_FILL_HINT}`,
+        { status: response.status },
       );
     }
     const body = await readBoundedJson(response, opts);
@@ -547,7 +557,17 @@ export async function probeOpenAiCompatibleModels(
     if (aborted) {
       // Caller-cancelled probes keep the original AbortError; the 5s probe budget gets a hint.
       if (signal?.aborted) throw error;
-      throw new Error(`Model server probe timed out. ${OPENAI_COMPAT_PROBE_HAND_FILL_HINT}`);
+      throw new ModelRequestError(
+        `Model server probe timed out. ${OPENAI_COMPAT_PROBE_HAND_FILL_HINT}`,
+        { code: "ETIMEDOUT" },
+      );
+    }
+    const code = transportFailureCode(error);
+    if (code && error instanceof Error && !(error instanceof ModelRequestError)) {
+      const explained = explainFetchFailure(error, input.baseUrl);
+      throw new ModelRequestError(explained instanceof Error ? explained.message : error.message, {
+        code,
+      });
     }
     throw error;
   } finally {

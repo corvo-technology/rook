@@ -27,6 +27,7 @@ vi.mock("@corvo/ui-web", async () => {
     onValueChange: () => undefined,
   });
   return {
+    ...(await import("../test-support/ui-web-choice-doubles")).choiceDoubles,
     Button: ({
       variant: _variant,
       size: _size,
@@ -101,12 +102,37 @@ it("sets the mode, and lists Auto only when an approval model is there", async (
     );
     expect(button(container, "Auto")).toBeUndefined();
     await act(async () => button(container, "Never ask")?.click());
+    // Never ask waits for a confirmation, so nothing is saved yet.
+    expect(rpcMock.autoReview.set).not.toHaveBeenCalled();
+    expect(container.textContent).toContain("Let bots act without asking?");
+    await act(async () => button(container, "Stop asking")?.click());
     expect(rpcMock.autoReview.set).toHaveBeenLastCalledWith({ scope: "account", mode: "never" });
     await vi.waitFor(() =>
       expect(button(container, "Never ask")?.getAttribute("aria-pressed")).toBe("true"),
     );
     // No rules yet, so the rule list stays out of the way.
     expect(container.querySelector('[data-testid="approval-rules"]')).toBeNull();
+    await act(async () => root.unmount());
+  } finally {
+    container.remove();
+    vi.unstubAllGlobals();
+  }
+});
+
+it("keeps the mode and sends nothing when the Never ask confirmation is cancelled", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  rpcMock.approvalRules.list.mockResolvedValue([]);
+  rpcMock.autoReview.get.mockResolvedValue(settings);
+  const { container, root } = await render();
+  try {
+    await vi.waitFor(() =>
+      expect(button(container, "Ask")?.getAttribute("aria-pressed")).toBe("true"),
+    );
+    await act(async () => button(container, "Never ask")?.click());
+    await act(async () => button(container, "Cancel")?.click());
+    expect(rpcMock.autoReview.set).not.toHaveBeenCalled();
+    expect(container.querySelector('[role="alertdialog"]')).toBeNull();
+    expect(button(container, "Ask")?.getAttribute("aria-pressed")).toBe("true");
     await act(async () => root.unmount());
   } finally {
     container.remove();
@@ -215,6 +241,7 @@ it("keeps a saved mode when the revisit's older background read lands after it",
     // Cached, so the mode can change while the refresh is out.
     expect(rpcMock.autoReview.get).toHaveBeenCalledTimes(2);
     await act(async () => neverAsk()?.click());
+    await act(async () => button(container, "Stop asking")?.click());
     await vi.waitFor(() => expect(neverAsk()?.getAttribute("aria-pressed")).toBe("true"));
     await act(async () => resolveRead(settings));
     // Query updates reach components on a timer; let any late write land.

@@ -68,6 +68,11 @@ export const AUDITED_PROCEDURES: Record<string, AuditedProcedure> = {
   "approvalRules.remove": { type: "approval.policy.changed", fields: ["id"] },
   "models.setRole": { type: "approval.policy.changed", fields: ["role", "scope"] },
   "autoReview.set": { type: "approval.policy.changed", fields: ["enabled", "skipApprovals"] },
+  "bots.update": {
+    type: "approval.policy.changed",
+    kind: "bot",
+    fields: ["botId", "approvalMode"],
+  },
   "spaceSettings.setOverride": {
     type: "approval.policy.changed",
     fields: ["setting", "enabled"],
@@ -101,6 +106,8 @@ export function procedureSecurityEvent(
   const audited = AUDITED_PROCEDURES[procedure];
   if (!audited) return undefined;
   const fields = isRecord(input) ? input : {};
+  // A bot update is a security event only when it changes the bot's approval mode.
+  if (procedure === "bots.update" && fields.approvalMode === undefined) return undefined;
   const metadata: NonNullable<SecurityEventInput["metadata"]> = { procedure };
   if (audited.kind) metadata.kind = audited.kind;
   for (const field of audited.fields ?? []) {

@@ -23,6 +23,7 @@ import {
   followThreadEvents,
   pauseRunForInput,
   pauseRunForTakeover,
+  retryFailedRun,
   sendUserMessage,
   settleReleasedTakeoverCards,
 } from "./events.js";
@@ -4551,4 +4552,139 @@ it("checks cross-space peer permission inside the message transaction before cre
   ).rejects.toBeInstanceOf(CrossSpaceCommunicationBlockedError);
   expect(tx.task.create).not.toHaveBeenCalled();
   expect(tx.run.create).not.toHaveBeenCalled();
+});
+
+describe("retryFailedRun", () => {
+  const input = {
+    spaceId: "space-1",
+    userId: "user-1",
+    threadId: "thread-1",
+    runId: "run-failed",
+  };
+  const failedRun = {
+    spaceId: "space-1",
+    threadId: "thread-1",
+    userId: "user-1",
+    botId: "bot-1",
+    taskId: "task-1",
+    status: "failed",
+    trigger: "user",
+    sourceMessageId: "message-1",
+    modelPinned: false,
+    modelProvider: "openai",
+    modelId: "gpt-test",
+    thinkingLevel: "high",
+  };
+
+  function setup(
+    options: {
+      failed?: Partial<typeof failedRun> | null;
+      newestId?: string;
+      active?: boolean;
+      existing?: { id: string } | null;
+    } = {},
+  ) {
+    const failed = options.failed === null ? null : { ...failedRun, ...options.failed };
+    const tx = {
+      run: {
+        findUnique: vi.fn().mockResolvedValue(failed),
+        findFirst: vi.fn(async ({ where }: { where: { status?: unknown } }) =>
+          where.status
+            ? options.active
+              ? { id: "run-active" }
+              : null
+            : { id: options.newestId ?? "run-failed" },
+        ),
+        create: vi.fn().mockResolvedValue({ id: "run-retry" }),
+      },
+      task: { update: vi.fn() },
+      message: { create: vi.fn() },
+    };
+    const prisma = {
+      run: { findFirst: vi.fn().mockResolvedValue(options.existing ?? null) },
+      $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
+    } as unknown as PrismaClient;
+    return { prisma, tx };
+  }
+
+  it("queues the same message again on the same task without writing a message", async () => {
+    const { prisma, tx } = setup();
+    await expect(retryFailedRun(prisma, input)).resolves.toEqual({
+      runId: "run-retry",
+      created: true,
+    });
+    expect(tx.run.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          taskId: "task-1",
+          sourceMessageId: "message-1",
+          botId: "bot-1",
+          trigger: "user",
+          status: "queued",
+          clientNonce: "retry:run-failed",
+        }),
+      }),
+    );
+    expect(tx.task.update).toHaveBeenCalledWith({
+      where: { id: "task-1" },
+      data: { status: "queued" },
+    });
+    expect(tx.message.create).not.toHaveBeenCalled();
+  });
+
+  it("returns the same run again for a repeated retry", async () => {
+    const { prisma, tx } = setup({ existing: { id: "run-retry" } });
+    await expect(retryFailedRun(prisma, input)).resolves.toEqual({
+      runId: "run-retry",
+      created: false,
+    });
+    expect(tx.run.create).not.toHaveBeenCalled();
+  });
+
+  it("returns the winner when a concurrent retry created the run first", async () => {
+    const { prisma, tx } = setup();
+    tx.run.create.mockRejectedValue(Object.assign(new Error("unique"), { code: "P2002" }));
+    vi.mocked(prisma.run.findFirst)
+      .mockResolvedValueOnce(null as never)
+      .mockResolvedValueOnce({ id: "run-retry" } as never);
+    await expect(retryFailedRun(prisma, input)).resolves.toEqual({
+      runId: "run-retry",
+      created: false,
+    });
+  });
+
+  it.each([
+    ["a newer run follows it", { newestId: "run-newer" }],
+    ["it is a routine run", { failed: { trigger: "routine" } }],
+    ["it succeeded", { failed: { status: "completed" } }],
+    ["it belongs to another user", { failed: { userId: "user-2" } }],
+    ["it belongs to another thread", { failed: { threadId: "thread-2" } }],
+    ["it has no source message", { failed: { sourceMessageId: null } }],
+    ["another run is active", { active: true }],
+    ["it does not exist", { failed: null }],
+  ])("returns null when %s", async (_name, options) => {
+    const { prisma, tx } = setup(options as Parameters<typeof setup>[0]);
+    await expect(retryFailedRun(prisma, input)).resolves.toBeNull();
+    expect(tx.run.create).not.toHaveBeenCalled();
+  });
+
+  it("keeps a pinned model and leaves an unpinned run on the current choice", async () => {
+    const pinned = setup({ failed: { modelPinned: true } });
+    await retryFailedRun(pinned.prisma, input);
+    expect(pinned.tx.run.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          modelProvider: "openai",
+          modelId: "gpt-test",
+          thinkingLevel: "high",
+          modelPinned: true,
+        }),
+      }),
+    );
+    const unpinned = setup();
+    await retryFailedRun(unpinned.prisma, input);
+    const data = unpinned.tx.run.create.mock.calls[0]?.[0].data;
+    expect(data.modelProvider).toBeUndefined();
+    expect(data.modelPinned).toBeUndefined();
+  });
 });

@@ -1,7 +1,14 @@
 import type { Bot } from "@corvo/contracts";
 import { AGENT_CATALOG } from "@corvo/core";
 import { expect, test } from "@playwright/test";
-import { activeBotId, captureScreenshot, rpc, signup, signupToOnboarding } from "./helpers";
+import {
+  activeBotId,
+  captureScreenshot,
+  expandAdvancedSection,
+  rpc,
+  signup,
+  signupToOnboarding,
+} from "./helpers";
 
 const CHIEF_KEY = "onboarding:first";
 
@@ -87,6 +94,29 @@ test("reloading the first-bot step does not make a second Chief or a second agen
       ];
     })
     .toEqual([1, 1]);
+});
+
+test("the first bot's autonomy is asked once and shown in its settings", async ({
+  page,
+}, testInfo) => {
+  await signupToOnboarding(page, `flow-autonomy-${Date.now()}@corvo.test`, "password12", "Flow");
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByText(/^How much does .+ do on its own\?$/)).toBeVisible();
+  await page.getByRole("radio", { name: "Asks before any change" }).click();
+  await captureScreenshot(page, testInfo, "onboarding-autonomy");
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.waitForURL(/\/app\//, { timeout: 20_000 });
+
+  const bots = await rpc<Bot[]>(page, "bots/list", {});
+  const chief = bots.find((bot) => bot.spawnKey === CHIEF_KEY);
+  await page.locator("main").getByRole("button", { name: chief?.name, exact: true }).click();
+  const settings = page.getByTestId("bot-settings");
+  await expandAdvancedSection(settings.getByTestId("bot-settings-advanced"));
+  await expect(
+    settings.getByRole("radio", { name: "Asks before any change", checked: true }),
+  ).toBeVisible();
+  await captureScreenshot(page, testInfo, "bot-settings-autonomy");
 });
 
 test("an account that already has a bot goes straight to its chat from /onboarding", async ({

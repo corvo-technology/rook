@@ -19,11 +19,13 @@ import {
   parseModelMaxImagesPerPrompt,
   parseModelMaxTokens,
 } from "@corvo/contracts";
+import type { ModelProblem } from "@corvo/core";
 import {
   COMPATIBLE_THINKING_LEVELS,
   clampCatalogThinkingLevel,
   createModelProbe,
   initialModelProbeState,
+  modelFailureData,
   pickCatalogModelId,
   popularModelProvidersFirst,
 } from "@corvo/core";
@@ -49,6 +51,7 @@ import {
   modelPreflightTestingLabel,
 } from "../components/ModelConnectionPreflightNotice";
 import { ModelHeadersEditor } from "../components/ModelHeadersEditor";
+import { ModelProblemNotice } from "../components/ModelProblemNotice";
 import { PageLoading } from "../components/PageLoading";
 import { botDraftKey, prefillComposerDraft } from "../lib/composer-draft";
 import { useCopyText } from "../lib/copy-text";
@@ -57,11 +60,12 @@ import { providerDisplayName } from "../lib/localized-provider-hint";
 import type { ModelCatalogEntry } from "../lib/model-auth";
 import type { ModelPreflightFailure } from "../lib/model-connection-preflight";
 import {
-  classifyModelConnectionFailure,
   modelPreflightSuccessMessage,
+  providerFailure,
   runModelConnectionPreflight,
   unavailableSelectedModel,
 } from "../lib/model-connection-preflight";
+import { webModelProblem } from "../lib/model-problem";
 import { loadDoneSteps, loadPicks, saveDoneSteps, savePicks } from "../lib/onboarding-progress";
 import type { OnboardingContext, OnboardingStepId } from "../lib/onboarding-steps";
 import { nextStep, resolveStep, visibleSteps } from "../lib/onboarding-steps";
@@ -138,6 +142,7 @@ export function OnboardingPage() {
   const [modelProbe] = useState(() => createModelProbe(setProbe));
   const resetOpenAiCompatibleProbe = modelProbe.reset;
   const [error, setError] = useState<string | null>(null);
+  const [connectProblem, setConnectProblem] = useState<ModelProblem | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [preflightTesting, setPreflightTesting] = useState(false);
   const [preflightTarget, setPreflightTarget] = useState<"api-key" | "compatible" | null>(null);
@@ -425,7 +430,7 @@ export function OnboardingPage() {
       },
       onError: (err) => {
         if (!preflightStillCurrent(revision)) return;
-        setPreflightFailure(classifyModelConnectionFailure(err, { modelId }));
+        setPreflightFailure(providerFailure(err, "api_key"));
         setNotice(null);
       },
     });
@@ -467,6 +472,7 @@ export function OnboardingPage() {
   async function saveModel() {
     if (!canSaveModel) return;
     setError(null);
+    setConnectProblem(null);
     try {
       if (isOpenAiCompatible) {
         const parsedMaxImagesPerPrompt = parseModelMaxImagesPerPrompt(
@@ -519,8 +525,13 @@ export function OnboardingPage() {
       }
       advance("model");
     } catch (err) {
-      setError(errorText(err, t`Could not save model`));
+      if (modelFailureData(err)) setConnectProblem(webModelProblem(err, t`Could not save model`));
+      else setError(errorText(err, t`Could not save model`));
     }
+  }
+
+  function focusApiKey() {
+    document.getElementById(`${fieldId}-api-key`)?.focus();
   }
 
   async function fundWithCredits() {
@@ -689,7 +700,11 @@ export function OnboardingPage() {
                           {probing ? <Trans>Finding…</Trans> : <Trans>Find models</Trans>}
                         </Button>
                         {preflightTarget === "compatible" ? (
-                          <ModelPreflightFeedback success={null} failure={preflightFailure} />
+                          <ModelPreflightFeedback
+                            success={null}
+                            failure={preflightFailure}
+                            onRetry={() => void probeServerModels()}
+                          />
                         ) : null}
                       </div>
                       <div className="mt-4 block">
@@ -1018,6 +1033,8 @@ export function OnboardingPage() {
                         <ModelPreflightFeedback
                           success={preflightSuccess}
                           failure={preflightFailure}
+                          onRetry={() => void testApiKeyConnection()}
+                          onAction={{ "replace-key": focusApiKey }}
                         />
                       ) : null}
                     </>
@@ -1063,6 +1080,18 @@ export function OnboardingPage() {
                 </p>
               ) : null}
               {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
+              {connectProblem ? (
+                <ModelProblemNotice
+                  className="mt-3"
+                  problem={
+                    connectProblem.action === "replace-key"
+                      ? connectProblem
+                      : { ...connectProblem, action: undefined }
+                  }
+                  onRetry={() => void saveModel()}
+                  onAction={focusApiKey}
+                />
+              ) : null}
               <Button
                 className="mt-6"
                 disabled={!credits && !canSaveModel}

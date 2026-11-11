@@ -1,3 +1,4 @@
+import { ModelRequestError } from "@corvo/adapter-kit";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { verifyModelServesAgents } from "./model-connect-check.js";
 
@@ -53,6 +54,16 @@ describe("connect-time model check", () => {
       max_completion_tokens: 1024,
       tools: [expect.objectContaining({ function: expect.objectContaining({ name: "noop" }) })],
     });
+  });
+
+  it("carries the provider's raw failure beside the summary", async () => {
+    const error = await verifyModelServesAgents(
+      { provider: "groq", id: "openai/gpt-oss-120b", apiKey },
+      { fetch: rejection(401, { error: { type: "authentication_error" } }) },
+    ).catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(ModelRequestError);
+    expect((error as ModelRequestError).message).toMatch(/rejected the API key/);
+    expect((error as ModelRequestError).facts.details).toContain("authentication_error");
   });
 
   it.each([

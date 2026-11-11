@@ -45,5 +45,9 @@ export function modelProblemActionLabel(action: ModelProblemAction): string {
       return t`Connect a model`;
     case "change-model":
       return t`Choose a model`;
+    case "raise-limit":
+      return t`Raise limit`;
+    case "resume":
+      return t`Resume`;
   }
 }

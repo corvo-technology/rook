@@ -81,6 +81,7 @@ export function SettingsOverlays({
   spaces,
   renameSpace,
   removeSpace,
+  setSpacePaused,
   alive,
   user,
   refetchSession,
@@ -101,6 +102,7 @@ export function SettingsOverlays({
   spaces: Space[];
   renameSpace: (spaceId: string, name: string) => Promise<void>;
   removeSpace: (spaceId: string) => Promise<void>;
+  setSpacePaused: (spaceId: string, paused: boolean) => Promise<void>;
   alive: RefObject<boolean>;
   user: { name?: string | null; email?: string } | undefined;
   refetchSession: () => Promise<unknown>;
@@ -125,6 +127,7 @@ export function SettingsOverlays({
           space={settingsSpace}
           spaces={spaces}
           onRenameSpace={renameSpace}
+          onSetSpacePaused={setSpacePaused}
           onDeleteSpace={async (spaceId) => {
             await removeSpace(spaceId);
             if (alive.current) setOverlay(null);

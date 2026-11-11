@@ -1,9 +1,11 @@
 import type { Actor, SpaceNavigation } from "@corvo/contracts";
+import { ACTIVE_RUN_STATUSES } from "@corvo/core";
 import type { createGroupRepos, createRepos, PrismaClient } from "@corvo/db";
 import {
   CannotDeleteDefaultSpaceError,
   CannotDeleteLastSpaceError,
   CannotDeleteSpaceAsNonOwnerError,
+  CannotPauseSpaceAsNonOwnerError,
   CannotRenameSpaceAsNonOwnerError,
   createExternalConversationRepos,
   createSpaceForMember,
@@ -16,6 +18,7 @@ import {
   SpaceDeletionInProgressError,
   SpaceLimitError,
   SpaceNotFoundError,
+  setSpacePausedForMember,
   setSpaceSettingOverride,
   spaceSettingOverrides,
 } from "@corvo/db";
@@ -25,7 +28,7 @@ import type { RouterDeps } from "../router.js";
 import { listRoutinesDto } from "../routines.js";
 import { deleteSpaceWithContent } from "../space-deletion.js";
 import { startStarterTeam } from "../starter-team.js";
-import { resolveThreadTarget, threadSnapshot } from "../thread-target.js";
+import { resolveThreadTarget, stopRunsWhere, threadSnapshot } from "../thread-target.js";
 import type { RouterContext } from "./context.js";
 import { meDto } from "./shared.js";
 
@@ -84,6 +87,8 @@ export function spacesRoutes(ctx: RouterContext) {
             isDefault: false,
             hasContent: false,
             canRename: true,
+            pausedAt: null,
+            canPause: true,
             canDelete: true,
             botCount: 0,
             bots: [],
@@ -123,6 +128,40 @@ export function spacesRoutes(ctx: RouterContext) {
             }
             throw error;
           }
+        }),
+      ),
+      // Pausing cancels the Space's active runs; the gate in the executor refuses new ones.
+      setPaused: authed.spaces.setPaused.handler(({ context, input }) =>
+        asMemberOf(deps.prisma, context.actor, input.spaceId, async () => {
+          let paused: { id: string; pausedAt: Date | null };
+          try {
+            paused = await setSpacePausedForMember(deps.prisma, {
+              currentSpaceId: context.actor.spaceId,
+              userId: context.actor.userId,
+              spaceId: input.spaceId,
+              paused: input.paused,
+            });
+          } catch (error) {
+            if (error instanceof SpaceNotFoundError) {
+              throw new ORPCError("NOT_FOUND", { message: error.message });
+            }
+            if (error instanceof CannotPauseSpaceAsNonOwnerError) {
+              throw new ORPCError("FORBIDDEN", { message: error.message });
+            }
+            if (error instanceof SpaceDeletionInProgressError) {
+              throw new ORPCError("CONFLICT", { message: error.message });
+            }
+            throw error;
+          }
+          // After the timestamp is committed, so nothing created in between escapes the gate.
+          if (paused.pausedAt) {
+            await stopRunsWhere(
+              deps,
+              { ...context.actor, spaceId: input.spaceId },
+              { spaceId: input.spaceId, status: { in: [...ACTIVE_RUN_STATUSES] } },
+            );
+          }
+          return { id: paused.id, pausedAt: paused.pausedAt?.toISOString() ?? null };
         }),
       ),
       // Acts on the Space being deleted, not the current one, so its teardown sees
@@ -220,7 +259,7 @@ async function memberSpaceNavigation(
     select: {
       spaceId: true,
       role: true,
-      space: { select: { name: true, isDefault: true, deletingAt: true } },
+      space: { select: { name: true, isDefault: true, deletingAt: true, pausedAt: true } },
     },
     orderBy: { createdAt: "asc" },
   });
@@ -292,6 +331,8 @@ async function memberSpaceNavigation(
         hasContent: spacesWithContent.has(membership.spaceId),
         botCount: botCounts.get(membership.spaceId) ?? 0,
         canRename: membership.role === "owner" && membership.space.deletingAt === null,
+        pausedAt: membership.space.pausedAt?.toISOString() ?? null,
+        canPause: membership.role === "owner" && membership.space.deletingAt === null,
         canDelete:
           membership.role === "owner" &&
           !membership.space.isDefault &&

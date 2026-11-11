@@ -38,6 +38,15 @@ export const PARTNER_CREDIT_USED_UP_RUN_ERROR = "This month's credit is used up.
 /** The owner capped what this bot may spend in a day, and it has. */
 export const BOT_DAILY_LIMIT_RUN_ERROR = "This bot reached its daily limit.";
 
+/** The owner capped the tokens this bot may use in a month, and it has. */
+export const BOT_MONTHLY_LIMIT_RUN_ERROR = "This bot reached its monthly token limit.";
+
+/** One reply spent its share of the bot's monthly tokens and was cut. */
+export const BOT_REPLY_CAP_RUN_ERROR = "This reply reached its token cap.";
+
+/** The space owner paused every bot in the space. */
+export const SPACE_PAUSED_RUN_ERROR = "Bots are paused in this space.";
+
 /** The API rejects a send with this message until the user can reach a model. */
 export const MODEL_REQUIRED_SEND_ERROR = "Connect a model to start a run.";
 
@@ -143,6 +152,9 @@ const APP_RUN_ERRORS = new Set([
   ACCOUNT_PAUSED_RUN_ERROR,
   PARTNER_CREDIT_USED_UP_RUN_ERROR,
   BOT_DAILY_LIMIT_RUN_ERROR,
+  BOT_MONTHLY_LIMIT_RUN_ERROR,
+  BOT_REPLY_CAP_RUN_ERROR,
+  SPACE_PAUSED_RUN_ERROR,
   COMPUTER_RATE_LIMIT_ERROR,
   ...stuckWorkStatusMessages(),
 ]);
@@ -236,7 +248,7 @@ const MODEL_UNAVAILABLE =
 
 /**
  * Keep provider diagnostics available without exposing them in the visible summary. `recovery`
- * is the one action that fixes the failure: "connection" opens the model connections (a
+ * is the one action that fixes the failure: "budget" opens the bot's settings where its limit is raised, "resume" resumes a paused space, "connection" opens the model connections (a
  * rejected or capped key, or no model at all) and "model" picks another model (a provider out
  * of quota or credits, refusing the model to the account, or unable to serve it). Transient
  * failures carry none: their summary already says to try again.
@@ -249,7 +261,7 @@ export function normalizeRunError(
 ): {
   summary: string;
   details: string;
-  recovery?: "connection" | "model";
+  recovery?: "connection" | "model" | "budget" | "resume";
   resetAt?: number;
   kind?: RunErrorKind;
   /** What kind of network or capacity failure this was, when it is not one of the run error kinds. */
@@ -296,6 +308,12 @@ export function normalizeRunError(
   // Preserve only known recovery advice: provider diagnostics can also be plain text.
   if (CLI_ENGINE_RUN_ERROR_SET.has(trimmed)) return { summary: translate(trimmed), details };
   if (APP_RUN_ERRORS.has(trimmed)) {
+    if (trimmed === BOT_MONTHLY_LIMIT_RUN_ERROR || trimmed === BOT_REPLY_CAP_RUN_ERROR) {
+      return { summary: translate(trimmed), details, recovery: "budget" };
+    }
+    if (trimmed === SPACE_PAUSED_RUN_ERROR) {
+      return { summary: translate(trimmed), details, recovery: "resume" };
+    }
     return MODEL_OUTPUT_RUN_ERRORS.has(trimmed)
       ? { summary: details, details, kind: "output" }
       : MODEL_CONNECTION_RUN_ERRORS.has(trimmed)

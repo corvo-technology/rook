@@ -367,6 +367,8 @@ function SpaceShell() {
         []);
   const recordingSkill = activeTaughtSkills.find((skill) => skill.status === "recording") ?? null;
 
+  const appSpace = spaces.find((space) => space.id === bootstrapMe?.spaceId);
+
   const sidebarSpaces = useMemo(
     () =>
       spaces.length > 0
@@ -381,6 +383,7 @@ function SpaceShell() {
                 isDefault: true,
                 hasContent: true,
                 canRename: false,
+                pausedAt: null,
                 canDelete: false,
                 bots,
                 groups,
@@ -738,6 +741,16 @@ function SpaceShell() {
     });
   }
 
+  async function setSpacePaused(spaceId: string, paused: boolean) {
+    const result = await rpc.spaces.setPaused({ spaceId, paused });
+    setSpaces((current) =>
+      current.map((space) =>
+        space.id === spaceId ? { ...space, pausedAt: result.pausedAt } : space,
+      ),
+    );
+    await refreshBots().catch(() => undefined);
+  }
+
   async function removeSpace(spaceId: string) {
     const result = await rpc.spaces.remove({ spaceId });
     if (!alive.current) return;
@@ -884,6 +897,12 @@ function SpaceShell() {
         navLinks={desktopBridge() ? [] : (bootstrapMe?.navLinks ?? [])}
         openSettings={openSettings}
         openIntegrations={() => setOverlay({ kind: "integrations" })}
+        paused={Boolean(appSpace?.pausedAt)}
+        onResume={
+          appSpace?.canPause
+            ? () => void setSpacePaused(appSpace.id, false).catch(() => undefined)
+            : undefined
+        }
       />
 
       {/* Keep the composer's z-index inside the chat so phone overlays like the side panel cover it. */}
@@ -1071,6 +1090,18 @@ function SpaceShell() {
                 } else openSettings("models");
               }}
               onOpenConnections={() => openSettings("models")}
+              onOpenBotSettings={() => {
+                // A group's failed run belongs to one member; its limit is on that bot.
+                const failedBotId =
+                  inGroup && composer.displayedRunError ? activeSnapshot?.run?.botId : null;
+                if (active && !inGroup) setPanel("settings");
+                else if (failedBotId) openChatSettings("bot", failedBotId);
+              }}
+              onResumeSpace={
+                appSpace?.canPause
+                  ? () => void setSpacePaused(appSpace.id, false).catch(() => undefined)
+                  : undefined
+              }
               runAuthKind={
                 credentialsQuery.data?.find(
                   (credential) => credential.provider === activeSnapshot?.run?.modelProvider,
@@ -1207,6 +1238,7 @@ function SpaceShell() {
           setPanel={setPanel}
           refreshBots={refreshBots}
           removeSpace={removeSpace}
+          setSpacePaused={setSpacePaused}
           openSpaceSettings={openSpaceSettings}
           closeMobileSidebar={() => setMobileSidebarOpen(false)}
           createBot={createBot}
@@ -1242,6 +1274,7 @@ function SpaceShell() {
           spaces={spaces}
           renameSpace={renameSpace}
           removeSpace={removeSpace}
+          setSpacePaused={setSpacePaused}
           alive={alive}
           user={session.data?.user}
           refetchSession={() => session.refetch({ query: { disableCookieCache: true } })}

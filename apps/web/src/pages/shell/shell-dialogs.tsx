@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { Settings, Trash2 } from "lucide-react";
+import { Pause, Play, Settings, Trash2 } from "lucide-react";
 import type { ComponentProps, RefObject } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Panel } from "../../lib/right-panel-state";
@@ -24,6 +24,7 @@ import {
   DeleteSpaceDialog,
   NewBotSectionDialog,
   NewSpaceDialog,
+  PauseSpaceDialog,
   RenameBotSectionDialog,
 } from "./dialogs";
 
@@ -35,6 +36,7 @@ export function useShellDialogs() {
   const [deleteTarget, setDeleteTarget] = useState<Bot | null>(null);
   const [deleteGroupTarget, setDeleteGroupTarget] = useState<Group | null>(null);
   const [deleteSpaceTarget, setDeleteSpaceTarget] = useState<Space | null>(null);
+  const [pauseSpaceTarget, setPauseSpaceTarget] = useState<Space | null>(null);
   const [spaceMenu, setSpaceMenu] = useState<{
     id: string;
     position: { x: number; y: number };
@@ -69,6 +71,8 @@ export function useShellDialogs() {
     setDeleteGroupTarget,
     deleteSpaceTarget,
     setDeleteSpaceTarget,
+    pauseSpaceTarget,
+    setPauseSpaceTarget,
     spaceMenu,
     setSpaceMenu,
     spaceMenuAnchor,
@@ -105,6 +109,7 @@ export function ShellDialogs({
   setPanel,
   refreshBots,
   removeSpace,
+  setSpacePaused,
   openSpaceSettings,
   closeMobileSidebar,
   createBot,
@@ -123,6 +128,7 @@ export function ShellDialogs({
   setPanel: (panel: Panel) => void;
   refreshBots: (includeArchived?: boolean) => Promise<void>;
   removeSpace: (spaceId: string) => Promise<void>;
+  setSpacePaused: (spaceId: string, paused: boolean) => Promise<void>;
   openSpaceSettings: (spaceId: string) => void;
   closeMobileSidebar: () => void;
   createBot: (input: CreateBotDialogInput) => Promise<void>;
@@ -138,6 +144,8 @@ export function ShellDialogs({
     setDeleteGroupTarget,
     deleteSpaceTarget,
     setDeleteSpaceTarget,
+    pauseSpaceTarget,
+    setPauseSpaceTarget,
     spaceMenu,
     setSpaceMenu,
     closeSpaceMenu,
@@ -197,6 +205,19 @@ export function ShellDialogs({
                 {t`Settings`}
               </DropdownMenuItem>
             ) : null}
+            {spaceMenuTarget?.canPause ? (
+              <DropdownMenuItem
+                onClick={() => {
+                  setSpaceMenu(null);
+                  if (spaceMenuTarget.pausedAt) {
+                    void setSpacePaused(spaceMenuTarget.id, false).catch(() => undefined);
+                  } else setPauseSpaceTarget(spaceMenuTarget);
+                }}
+              >
+                {spaceMenuTarget.pausedAt ? <Play /> : <Pause />}
+                {spaceMenuTarget.pausedAt ? t`Resume bots` : t`Pause all bots`}
+              </DropdownMenuItem>
+            ) : null}
             {spaceMenuTarget?.canDelete ? (
               <DropdownMenuItem
                 variant="destructive"
@@ -236,6 +257,16 @@ export function ShellDialogs({
             setDeleteGroupTarget(null);
             setPanel(null);
             await refreshBots(true);
+          }}
+        />
+      ) : null}
+
+      {pauseSpaceTarget ? (
+        <PauseSpaceDialog
+          onCancel={() => setPauseSpaceTarget(null)}
+          onConfirm={async () => {
+            await setSpacePaused(pauseSpaceTarget.id, true);
+            setPauseSpaceTarget(null);
           }}
         />
       ) : null}

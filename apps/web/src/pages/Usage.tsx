@@ -1,6 +1,6 @@
 import type { UsagePeriod } from "@corvo/contracts";
 import { normalizeRunError } from "@corvo/core";
-import { BotAvatar, Button, Spinner } from "@corvo/ui-web";
+import { BotAvatar, Button, Progress, Spinner } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -31,6 +31,13 @@ export function UsagePage() {
     placeholderData: keepPreviousData,
   });
   const overview = usage.data;
+  const budgets = useQuery(queries.usage.budgets.queryOptions());
+  const budgetLine = (budget: { monthTokens: number; monthlyTokenLimit: number }) => {
+    const used = new Intl.NumberFormat(locale).format(budget.monthTokens);
+    const limit = new Intl.NumberFormat(locale).format(budget.monthlyTokenLimit);
+    return t`${used} of ${limit}`;
+  };
+  const budgetOf = (id: string | null) => budgets.data?.find((budget) => budget.botId === id);
   const bars = useMemo(() => usageBars(overview?.days ?? [], agent), [overview, agent]);
   const periods: Array<[UsagePeriod, string]> = [
     ["month", t`This month`],
@@ -177,6 +184,7 @@ export function UsagePage() {
                         const share = usageShare(item.tokens, overview.tokens);
                         const selected = agent === key;
                         const model = item.models[0];
+                        const budget = budgetOf(item.id);
                         return (
                           <li key={key}>
                             <button
@@ -230,6 +238,24 @@ export function UsagePage() {
                                 </span>
                               ) : null}
                             </button>
+                            {budget ? (
+                              <div className="px-2 pb-2.5">
+                                <Progress
+                                  aria-label={t`Monthly token limit`}
+                                  value={Math.min(
+                                    100,
+                                    Math.round(
+                                      (budget.monthTokens / budget.monthlyTokenLimit) * 100,
+                                    ),
+                                  )}
+                                  className="gap-1"
+                                >
+                                  <span className="text-[12.5px] tabular-nums text-muted-foreground">
+                                    {budgetLine(budget)}
+                                  </span>
+                                </Progress>
+                              </div>
+                            ) : null}
                           </li>
                         );
                       })}

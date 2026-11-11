@@ -1,11 +1,12 @@
 import type { AgentRunRequest, SemanticMemoryProvider } from "@corvo/adapter-kit";
 import { DEFAULT_CONTEXT_STRATEGY, runContinueJob } from "@corvo/adapter-kit";
-import type { MessageBlock, ModelRoleChoice, RunStatus } from "@corvo/contracts";
+import type { MessageBlock, ModelRoleChoice, RunStatus, RunStopReason } from "@corvo/contracts";
 import { disabledBuiltinToolSet } from "@corvo/contracts";
 import {
   ACCOUNT_PAUSED_RUN_ERROR,
   assertTransition,
   BOT_DAILY_LIMIT_RUN_ERROR,
+  BOT_MONTHLY_LIMIT_RUN_ERROR,
   botMessageAllowsSilence,
   expandSkillReferencesInPrompt,
   formatSkillRunPrompt,
@@ -21,12 +22,15 @@ import {
   messagingChannelId,
   messagingChannelPrivacyBlock,
   messagingDmSurfaceNote,
+  monthlyLimitReached,
   nextFence,
   PARTNER_CREDIT_USED_UP_RUN_ERROR,
   promptInvokesSkill,
   redactSecrets,
   renderBotDirectory,
   renderBotGroupDirectory,
+  SPACE_PAUSED_RUN_ERROR,
+  usageTokens,
   userRunError,
   userTurnMessageForRun,
   visitorInstallationId,
@@ -40,6 +44,7 @@ import {
   parseComputerMode,
   readRunTimingFields,
   recordUsage,
+  runTokens,
   settleReleasedTakeoverCards,
   spaceHasModelAccess,
 } from "@corvo/db";
@@ -50,12 +55,14 @@ import { createApprovedEffectReplayQueue } from "./approval-effect.js";
 import { PARTIAL_REPLY_NOTE } from "./automated-messages.js";
 import { botDailyLimitReached } from "./bot-daily-limit.js";
 import { loadBotMessageContext } from "./bot-messages.js";
+import { botMonthUsage } from "./bot-monthly-limit.js";
 import {
   commandCredentialRedactions,
   loadBotCommandEnvironment,
   loadLoginPasswordRedactions,
 } from "./bot-secrets.js";
 import { createBrowserProvider } from "./browser-provider-factory.js";
+import { alertIfMonthCrossed } from "./budget-alert.js";
 import { partitionTools } from "./builtin-tool-bridge.js";
 import { agentConnectionTools, builtinAgentTools } from "./builtin-tools.js";
 import { cloudAgentsEnabled } from "./cloud-agent-factory.js";
@@ -110,6 +117,7 @@ import {
 import { modelAcceptsImageInput } from "./model-vision.js";
 import { isRetiredModelCredentialError } from "./pi-oauth.js";
 import { parseQuotaHeaders, recordProviderQuota } from "./provider-quota.js";
+import { addReplyUsage, createReplyBudget } from "./reply-budget.js";
 import { loadReplyContext, messageToAgentHistoryText } from "./reply-context.js";
 import { backOffRoutineAfterAccountError } from "./routine-backoff.js";
 import { lateRoutineRunInstruction } from "./routine-lateness.js";
@@ -455,7 +463,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
         ] = await Promise.all([
           deps.prisma.bot.findUniqueOrThrow({
             where: { id: run.botId },
-            include: { computer: true },
+            include: { computer: true, space: { select: { pausedAt: true } } },
           }),
           deps.prisma.thread.findUniqueOrThrow({ where: { id: run.threadId } }),
           loadRunHistoryMessages(deps.prisma, run, LEGACY_HISTORY_WINDOW_SIZE, channelId),
@@ -782,13 +790,18 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const runModelProvider = selected.provider ?? runtimeFallback?.provider;
         const runModelId = selected.id ?? runtimeFallback?.id;
         // A missing or refused connection of the user's own fails every scheduled run alike.
-        const failRunBeforeModel = async (message: string, accountFailure = false) => {
+        const failRunBeforeModel = async (
+          message: string,
+          accountFailure = false,
+          options?: { stopReason?: RunStopReason; silent?: boolean },
+        ) => {
           const failed = await failRunBeforeTurn(
             deps,
             run,
             bot.name,
             { attemptId: attempt.id, workerId, fence },
             message,
+            options,
           );
           if (failed && accountFailure && run.trigger === "routine" && run.routineId) {
             await backOffRoutineAfterAccountError(deps, run.routineId);
@@ -799,8 +812,23 @@ export function createRunExecutor(deps: ExecutorDeps) {
           await failRunBeforeModel(ACCOUNT_PAUSED_RUN_ERROR, true);
           return;
         }
+        if (bot.space?.pausedAt) {
+          // The owner chose this, so it sends no failure push.
+          await failRunBeforeModel(SPACE_PAUSED_RUN_ERROR, true, {
+            stopReason: "paused",
+            silent: true,
+          });
+          return;
+        }
         if (await botDailyLimitReached(deps.prisma, bot)) {
           await failRunBeforeModel(BOT_DAILY_LIMIT_RUN_ERROR, true);
+          return;
+        }
+        const monthUsage = await botMonthUsage(deps.prisma, bot);
+        if (monthlyLimitReached(monthUsage.used, monthUsage.limit)) {
+          await failRunBeforeModel(BOT_MONTHLY_LIMIT_RUN_ERROR, true, {
+            stopReason: "monthly_limit",
+          });
           return;
         }
         if (pinError) {
@@ -1148,6 +1176,8 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const reply = await createReplyState(deps, run, runSecrets);
         const scripted = deps.runtime.describe().capabilities.scripted;
         const script = scripted ? inferScript(task.prompt, takeoverResume?.checkpoint) : undefined;
+        // The first attempt has spent nothing yet; a later one resumes what the earlier ones spent.
+        const spentBeforeAttempt = fence > 1 ? await runTokens(deps.prisma, runId) : 0;
         const guards = createRunGuards({
           abort: () => runAbortController?.abort(),
           limits: deps.turnGuardLimits,
@@ -1181,6 +1211,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
           tainted: initiallyTainted,
           earlierAttempt: undefined,
           handedOff: false,
+          replyBudget: createReplyBudget(monthUsage.limit, spentBeforeAttempt),
           terminalCheckpointComplete: false,
         };
         const { effects } = state;
@@ -1578,6 +1609,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
                   parentRunId: runId,
                   operationId: runId,
                 });
+                addReplyUsage(state.replyBudget, usageTokens(event));
               },
               onProviderResponse: ({ provider, headers }) => {
                 const windows = parseQuotaHeaders(provider, headers);
@@ -1767,6 +1799,12 @@ export function createRunExecutor(deps: ExecutorDeps) {
           await failRun(ctx, caughtError, {
             ownCredential: resolved.ownCredential,
             active: activeModel,
+          });
+        } finally {
+          await alertIfMonthCrossed(deps, run, bot, {
+            usedBefore: monthUsage.used,
+            spentThisAttempt: state.replyBudget.spent - spentBeforeAttempt,
+            limit: monthUsage.limit,
           });
         }
       } catch (setupError) {

@@ -11,6 +11,10 @@ export function runErrorActionLabel(t: RunErrorTranslator, action: ModelProblemA
       return t("Add Model");
     case "change-model":
       return t("Change model");
+    case "raise-limit":
+      return t("Raise limit");
+    case "resume":
+      return t("Resume");
     default:
       return null;
   }

@@ -4,6 +4,8 @@ import {
   ACCOUNT_PAUSED_RUN_ERROR,
   APPROVED_ACTION_NOT_RUN_ERROR,
   BOT_DAILY_LIMIT_RUN_ERROR,
+  BOT_MONTHLY_LIMIT_RUN_ERROR,
+  BOT_REPLY_CAP_RUN_ERROR,
   CLI_ENGINE_RUN_ERRORS,
   HOSTED_MODEL_CREDITS_REQUIRED_ERROR,
   isImageInputConfirmation,
@@ -18,6 +20,7 @@ import {
   modelFallbackFailure,
   normalizeRunError,
   PARTNER_CREDIT_USED_UP_RUN_ERROR,
+  SPACE_PAUSED_RUN_ERROR,
   TURN_GUARD_RUN_ERRORS,
   userRunError,
 } from "./run-error.js";
@@ -41,6 +44,18 @@ describe("normalizeRunError", () => {
       expect(normalizeRunError(message)).toEqual({ summary: message, details: message });
     },
   );
+
+  it.each([
+    [BOT_MONTHLY_LIMIT_RUN_ERROR, "budget"],
+    [BOT_REPLY_CAP_RUN_ERROR, "budget"],
+    [SPACE_PAUSED_RUN_ERROR, "resume"],
+  ])("sends %s to the %s recovery through the translator", (message, recovery) => {
+    expect(normalizeRunError(message, (text) => `t:${text}`)).toEqual({
+      summary: `t:${message}`,
+      details: message,
+      recovery,
+    });
+  });
 
   it.each([
     [

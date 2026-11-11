@@ -52,6 +52,7 @@ import {
   ArtifactWithContentSchema,
   AvatarStyleSchema,
   BillingStatusSchema,
+  BotBudgetSchema,
   BotMcpServerSchema,
   BotSchema,
   BotSectionName,
@@ -303,6 +304,10 @@ export const appContract = {
     rename: oc
       .input(z.object({ spaceId: Id, name: spaceName }))
       .output(z.object({ id: Id, name: z.string() })),
+    /** Pauses or resumes every bot in a space the caller owns; pausing cancels active runs. */
+    setPaused: oc
+      .input(z.object({ spaceId: Id, paused: z.boolean() }))
+      .output(z.object({ id: Id, pausedAt: IsoDate.nullable() })),
     remove: oc
       .input(z.object({ spaceId: Id }))
       .output(z.object({ ok: z.literal(true), activeSpaceId: Id })),
@@ -1308,6 +1313,8 @@ export const appContract = {
     summary: oc.output(UsageSummarySchema),
     overview: oc.input(z.object({ period: UsagePeriodSchema })).output(UsageOverviewSchema),
     subscriptions: oc.output(z.array(SubscriptionQuotaSchema)),
+    /** This UTC month's tokens for each bot of the space that has a monthly limit. */
+    budgets: oc.output(z.array(BotBudgetSchema)),
   },
   export: {
     bot: oc.input(botId).output(ExportManifestSchema),

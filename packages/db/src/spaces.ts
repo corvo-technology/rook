@@ -57,6 +57,13 @@ export class CannotRenameSpaceAsNonOwnerError extends Error {
   }
 }
 
+export class CannotPauseSpaceAsNonOwnerError extends Error {
+  constructor() {
+    super("Only the space owner can pause its bots");
+    this.name = "CannotPauseSpaceAsNonOwnerError";
+  }
+}
+
 export class SpaceDeletionInProgressError extends Error {
   constructor() {
     super("Space deletion is already in progress");
@@ -576,6 +583,33 @@ export async function renameSpaceForMember(
           data: { name },
         });
         return { id: input.spaceId, name };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    ),
+  );
+}
+
+/** Pause or resume every bot of a space the caller owns. Pausing twice keeps the first time. */
+export async function setSpacePausedForMember(
+  prisma: PrismaClient,
+  input: SpaceMemberTargetInput & { paused: boolean },
+): Promise<{ id: string; pausedAt: Date | null }> {
+  return withTransactionRetry(() =>
+    prisma.$transaction(
+      async (tx) => {
+        await lockSpaceDeletion(tx, input.spaceId);
+        const owned = await loadActorSpace(tx, input);
+        if (owned.role !== "owner") throw new CannotPauseSpaceAsNonOwnerError();
+        if (owned.deletingAt) throw new SpaceDeletionInProgressError();
+        const current = await tx.space.findUniqueOrThrow({
+          where: { id: input.spaceId },
+          select: { pausedAt: true },
+        });
+        const pausedAt = input.paused ? (current.pausedAt ?? new Date()) : null;
+        if (pausedAt?.getTime() !== current.pausedAt?.getTime()) {
+          await tx.space.update({ where: { id: input.spaceId }, data: { pausedAt } });
+        }
+        return { id: input.spaceId, pausedAt };
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     ),

@@ -722,6 +722,7 @@ function Home({ embedded, onSelectSpace }: InboxPaneProps & { embedded: boolean 
   // With nothing to show, the failure takes the screen; over saved chats it stays one line.
   // Headings of empty saved Spaces are not chats, so they do not hide the failure.
   const showLoadFailure = Boolean(loadFailure) && inboxHasNoChats(listData);
+  const spacePaused = Boolean(spaces.find((space) => space.id === me?.spaceId)?.pausedAt);
   const inlineError = error ?? (showLoadFailure ? null : (loadFailure?.message ?? null));
 
   return (
@@ -771,6 +772,11 @@ function Home({ embedded, onSelectSpace }: InboxPaneProps & { embedded: boolean 
                 }
                 ListHeaderComponent={
                   <>
+                    {spacePaused ? (
+                      <Text accessibilityRole="header" style={styles.paused}>
+                        {t("Paused")}
+                      </Text>
+                    ) : null}
                     {inlineError ? <Text style={styles.error}>{inlineError}</Text> : null}
                     {spaceRecoveryId ? (
                       <Pressable

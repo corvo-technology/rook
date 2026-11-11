@@ -151,6 +151,8 @@ function fixture(runId = "run-1") {
     ),
   };
   const prisma = {
+    // A restarted attempt reads what the run already spent.
+    $queryRaw: vi.fn(async () => [{ tokens: 0n }]),
     user: { findUnique: vi.fn(async () => null) },
     run: {
       findUnique: vi.fn(async () => run),

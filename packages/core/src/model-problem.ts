@@ -16,7 +16,15 @@ export type ModelProblemKind =
   | "offline"
   | "other";
 
-export type ModelProblemAction = "sign-in" | "replace-key" | "connect" | "change-model";
+export type ModelProblemAction =
+  | "sign-in"
+  | "replace-key"
+  | "connect"
+  | "change-model"
+  /** Open the bot's settings, where its token limit is raised. */
+  | "raise-limit"
+  /** Resume a paused space; only its owner can. */
+  | "resume";
 
 export type ModelProblem = {
   kind: ModelProblemKind;
@@ -122,7 +130,9 @@ export function describeModelProblem(
   const kind: ModelProblemKind = normalized.kind ?? normalized.transport ?? "other";
   let line = normalized.summary;
   let action: ModelProblemAction | undefined;
-  if (normalized.recovery === "model") action = "change-model";
+  if (normalized.recovery === "budget") action = "raise-limit";
+  else if (normalized.recovery === "resume") action = "resume";
+  else if (normalized.recovery === "model") action = "change-model";
   else if (normalized.recovery === "connection") {
     action =
       normalized.kind === "auth"
@@ -138,6 +148,8 @@ export function describeModelProblem(
     kind,
     line,
     ...(action ? { action } : {}),
+    // A limit or a pause is not fixed by trying again.
+    ...(action === "raise-limit" || action === "resume" ? { retry: false } : {}),
     ...(normalized.resetAt ? { resetAt: normalized.resetAt } : {}),
   });
 }

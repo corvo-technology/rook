@@ -113,3 +113,13 @@ describe("modelProblemFromError", () => {
     );
   });
 });
+
+describe("budget and pause problems", () => {
+  it.each([
+    ["This bot reached its monthly token limit.", "raise-limit"],
+    ["This reply reached its token cap.", "raise-limit"],
+    ["Bots are paused in this space.", "resume"],
+  ] as const)("gives %s the %s action and no retry", (details, action) => {
+    expect(describeModelProblem({ details })).toMatchObject({ action, retry: false });
+  });
+});

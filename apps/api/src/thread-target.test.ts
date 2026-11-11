@@ -4076,8 +4076,20 @@ describe("stopThreadRuns", () => {
           { id: "run-b", userId: "user-1", spaceId: "workspace-1" },
         ]),
         updateManyAndReturn: vi.fn().mockResolvedValue([
-          { id: "run-a", botId: "bot-a", userId: "user-1", spaceId: "workspace-1" },
-          { id: "run-b", botId: "bot-b", userId: "user-1", spaceId: "workspace-1" },
+          {
+            id: "run-a",
+            botId: "bot-a",
+            userId: "user-1",
+            spaceId: "workspace-1",
+            threadId: "thread-1",
+          },
+          {
+            id: "run-b",
+            botId: "bot-b",
+            userId: "user-1",
+            spaceId: "workspace-1",
+            threadId: "thread-1",
+          },
         ]),
         // appendEventInTransaction re-reads the run after the flip.
         findUnique: vi.fn().mockResolvedValue({ status: "cancelled" }),

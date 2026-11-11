@@ -85,6 +85,14 @@ describe("the one recovery action", () => {
   });
 });
 
+describe("budget and pause actions", () => {
+  const t: Parameters<typeof runErrorActionLabel>[0] = (message) => message;
+  it("labels the limit and pause actions", () => {
+    expect(runErrorActionLabel(t, "raise-limit")).toBe("Raise limit");
+    expect(runErrorActionLabel(t, "resume")).toBe("Resume");
+  });
+});
+
 describe("runErrorWhatHappened for a stopped run", () => {
   const t = (message: string) => `t:${message}`;
 

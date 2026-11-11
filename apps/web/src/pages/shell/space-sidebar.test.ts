@@ -16,13 +16,19 @@ function chat(id: string, name: string) {
 function space(
   id: string,
   name: string,
-  options: { canRename?: boolean; canDelete?: boolean; bots?: ReturnType<typeof chat>[] } = {},
+  options: {
+    canRename?: boolean;
+    canDelete?: boolean;
+    canPause?: boolean;
+    bots?: ReturnType<typeof chat>[];
+  } = {},
 ) {
   return {
     id,
     name,
     canRename: options.canRename ?? false,
     canDelete: options.canDelete ?? false,
+    canPause: options.canPause ?? false,
     bots: options.bots ?? [chat(`${id}-bot`, "Chief")],
     groups: [],
     botSections: [],
@@ -140,6 +146,21 @@ describe("sidebarGroupsForSpaces", () => {
       canDeleteSpace: true,
       emptySpaceId: "space-2",
     });
+  });
+
+  it("offers pausing only on the menu-hosting group of a space the member can pause", () => {
+    const groups = sidebarGroupsForSpaces(
+      [
+        space("space-1", "Personal", { canPause: true }),
+        space("space-2", "Support", { canPause: true, bots: [] }),
+        space("space-3", "Shared"),
+      ],
+      "",
+    );
+
+    expect(groups.map((group) => group.canPauseSpace)).toEqual([true, true, false]);
+    const [lone] = sidebarGroupsForSpaces([space("space-1", "Personal", { canPause: true })], "");
+    expect(lone?.canPauseSpace).toBe(false);
   });
 
   it("keeps the space menu for a member who cannot rename or delete, for Settings", () => {

@@ -8840,3 +8840,31 @@ describe("routine workflow steps", () => {
     expect(workflow?.steps[0]?.lastRun).toBeNull();
   });
 });
+
+describe("usage.budgets", () => {
+  it("lists a bot with a limit and its month, leaving out bots without one", async () => {
+    const findMany = vi.fn().mockResolvedValue([{ id: "bot-1", monthlyTokenLimit: 2_000_000n }]);
+    const queryRaw = vi.fn().mockResolvedValue([{ tokens: 1_200_000n }]);
+    const prisma = {
+      bot: { findMany },
+      $queryRaw: queryRaw,
+    } as unknown as PrismaClient;
+    const deps = { prisma, env: {}, dataDir: "/tmp/corvo-router-test" } as unknown as RouterDeps;
+    const actor = {
+      spaceId: "workspace-1",
+      userId: "user-1",
+      email: "user@corvo.test",
+      isDeploymentOwner: true,
+    } satisfies Actor;
+    const client = createRouterClient(createRouter(deps), { context: { actor } as never });
+
+    await expect(client.usage.budgets()).resolves.toEqual([
+      { botId: "bot-1", monthTokens: 1_200_000, monthlyTokenLimit: 2_000_000 },
+    ]);
+    // Archived bots and bots without a ceiling (null, 0 or negative) are not asked for.
+    expect(findMany).toHaveBeenCalledWith({
+      where: { spaceId: "workspace-1", archivedAt: null, monthlyTokenLimit: { gt: 0 } },
+      select: { id: true, monthlyTokenLimit: true },
+    });
+  });
+});

@@ -92,6 +92,8 @@ export const InstructionVersionSchema = z.object({
   createdAt: z.string(),
 });
 
+/** Largest monthly token limit a bot may be given. */
+export const BOT_MONTHLY_TOKEN_LIMIT_MAX = 1_000_000_000_000;
 /** How much a space asks before acting; see VISION.md. */
 export const ApprovalModeSchema = z.enum(["never", "auto", "ask"]);
 export type ApprovalMode = z.infer<typeof ApprovalModeSchema>;
@@ -136,6 +138,8 @@ export const BotSchema = z.object({
   approvalMode: ApprovalModeSchema.nullable().default(null),
   /** Most the bot may spend on hosted credits in a UTC day, in US dollars; null means no limit. */
   dailyCapUsd: z.number().nullable().default(null),
+  /** Most tokens the bot may use in a UTC month; null means no limit. */
+  monthlyTokenLimit: z.number().nullable().default(null),
   disabledBuiltinTools: z.array(z.string()).default([]),
   webhookConfigured: z.boolean(),
   /** Present when created with an idempotency key (e.g. onboarding:first). */
@@ -362,6 +366,14 @@ export const ExternalConversationSchema = z.object({
 });
 export type ExternalConversation = z.infer<typeof ExternalConversationSchema>;
 
+/** A bot's month of tokens against the limit its owner set. */
+export const BotBudgetSchema = z.object({
+  botId: Id,
+  monthTokens: z.number(),
+  monthlyTokenLimit: z.number(),
+});
+export type BotBudget = z.infer<typeof BotBudgetSchema>;
+
 export const SpaceSchema = z.object({
   id: Id,
   name: z.string(),
@@ -370,6 +382,10 @@ export const SpaceSchema = z.object({
   hasContent: z.boolean(),
   /** True only when the current member owns the space and may rename it. */
   canRename: z.boolean().optional(),
+  /** When the owner paused every bot in the space; null while it runs. */
+  pausedAt: IsoDate.nullable().default(null),
+  /** True only when the current member owns the space and may pause or resume its bots. */
+  canPause: z.boolean().optional(),
   /** True only when the current member may delete this non-default space. */
   canDelete: z.boolean().optional(),
   /** Every bot deleting the space removes, archived and other members' included. */
@@ -455,6 +471,13 @@ export const UpdateBotInput = z
     thinkingLevel: ThinkingLevelSchema.nullable().optional(),
     teamChatAmbientEnabled: z.boolean().optional(),
     dailyCapUsd: z.number().positive().max(10_000).nullable().optional(),
+    monthlyTokenLimit: z
+      .number()
+      .int()
+      .min(0)
+      .max(BOT_MONTHLY_TOKEN_LIMIT_MAX)
+      .nullable()
+      .optional(),
     teamChatRules: z.string().max(TEAM_CHAT_RULES_MAX_LENGTH).optional(),
     crossSpaceCommunication: z.boolean().optional(),
     fleetManagement: z.boolean().optional(),

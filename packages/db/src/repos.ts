@@ -98,6 +98,7 @@ function mapBot(
     squadRouting?: boolean;
     approvalMode?: string | null;
     dailyCapMicros?: bigint | null;
+    monthlyTokenLimit?: bigint | null;
     disabledBuiltinTools?: string[];
     webhookSecretId?: string | null;
     spawnKey?: string | null;
@@ -148,6 +149,7 @@ function mapBot(
     squadRouting: bot.squadRouting ?? false,
     approvalMode: ApprovalModeSchema.safeParse(bot.approvalMode).data ?? null,
     dailyCapUsd: bot.dailyCapMicros == null ? null : Number(bot.dailyCapMicros) / 1_000_000,
+    monthlyTokenLimit: bot.monthlyTokenLimit == null ? null : Number(bot.monthlyTokenLimit),
     disabledBuiltinTools: bot.disabledBuiltinTools ?? [],
     webhookConfigured: Boolean(bot.webhookSecretId),
     spawnKey: bot.spawnKey ?? null,

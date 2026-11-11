@@ -21,7 +21,7 @@ import {
 } from "@corvo/ui-web";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { Lock } from "lucide-react";
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { errorText } from "../../lib/user-error";
 
 /** Each dialog is mounted only while open, so `open` is always true and the
@@ -375,9 +375,64 @@ export type SettingsSpace = {
   name: string;
   canRename?: boolean;
   canDelete?: boolean;
+  /** True only for an owner of the space. */
+  canPause?: boolean;
+  /** When the owner paused every bot in the space; null or missing while it runs. */
+  pausedAt?: string | null;
   /** Every bot deleting the space removes, from the server. */
   botCount?: number;
 };
+/** Pausing cancels work in progress, so it asks once; a second tap while it runs does nothing. */
+export function PauseSpaceDialog({
+  onCancel,
+  onConfirm,
+}: {
+  onCancel: () => void;
+  onConfirm: () => Promise<void>;
+}) {
+  const { t } = useLingui();
+  const [pausing, setPausing] = useState(false);
+  const started = useRef(false);
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <AlertDialog open onOpenChange={closeUnlessBusy(pausing, onCancel)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            <Trans>Pause all bots</Trans>
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            <Trans>Running work stops and nothing starts until you resume.</Trans>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        {error ? <p className="text-[13.5px] text-destructive">{error}</p> : null}
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={pausing}>
+            <Trans>Cancel</Trans>
+          </AlertDialogCancel>
+          <AlertDialogAction
+            variant="destructive"
+            disabled={pausing}
+            onClick={() => {
+              if (started.current) return;
+              started.current = true;
+              setPausing(true);
+              setError(null);
+              void onConfirm().catch((err: unknown) => {
+                setError(errorText(err, t`Could not save`));
+                started.current = false;
+                setPausing(false);
+              });
+            }}
+          >
+            <Trans>Pause all bots</Trans>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
 /** Names what goes with the space: its bots, and with them their chats and groups. */
 export function DeleteSpaceDialog({
   space,

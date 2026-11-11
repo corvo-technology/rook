@@ -12,6 +12,8 @@ const state = vi.hoisted(() => ({
   rpc: vi.fn(),
   overrides: [] as string[],
   focusCount: 0,
+  alert: vi.fn(),
+  navigation: { spaces: [{ id: "space-other", canPause: true, pausedAt: null as string | null }] },
 }));
 type SwitchProps = {
   accessibilityLabel?: string;
@@ -61,6 +63,7 @@ vi.mock("react-native", () => ({
   View: element("div"),
   StyleSheet: { create: <T,>(styles: T) => styles },
   Text: element("span"),
+  Alert: { alert: state.alert },
 }));
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: element("div") }));
 vi.mock("../components/native-action-button", () => ({
@@ -101,6 +104,8 @@ const control = (label: string) =>
 beforeEach(async () => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   state.overrides = [];
+  state.navigation = { spaces: [{ id: "space-other", canPause: true, pausedAt: null }] };
+  state.alert.mockReset();
   state.focusCount = 0;
   state.push.mockReset();
   state.rpc
@@ -113,6 +118,12 @@ beforeEach(async () => {
           ? [...state.overrides, setting]
           : state.overrides.filter((entry) => entry !== setting);
         return state.overrides;
+      }
+      if (proc === "spaces/list") return state.navigation;
+      if (proc === "spaces/setPaused") {
+        const pausedAt = input!.paused ? "2026-11-10T00:00:00.000Z" : null;
+        state.navigation.spaces[0]!.pausedAt = pausedAt;
+        return { id: input!.spaceId, pausedAt };
       }
       throw new Error(`Unexpected RPC: ${proc}`);
     });
@@ -216,4 +227,54 @@ it("keeps a failed save's error when a read that was pending then succeeds", asy
 
   await act(async () => finishRead());
   expect(container.textContent).toContain("Could not save that preference");
+});
+
+it("asks before pausing the space, then pauses it", async () => {
+  expect(control("Pause all bots")?.checked).toBe(false);
+  await act(async () => control("Pause all bots")!.click());
+  expect(state.alert).toHaveBeenCalledWith(
+    "Pause all bots",
+    "Running work stops and nothing starts until you resume.",
+    expect.any(Array),
+  );
+  expect(state.rpc).not.toHaveBeenCalledWith(
+    "spaces/setPaused",
+    expect.anything(),
+    expect.anything(),
+  );
+  const confirm = (state.alert.mock.calls[0]![2] as Array<{ onPress?: () => void }>)[1]!;
+  await act(async () => confirm.onPress?.());
+  expect(state.rpc).toHaveBeenCalledWith(
+    "spaces/setPaused",
+    { spaceId: "space-other", paused: true },
+    expect.anything(),
+  );
+  expect(control("Pause all bots")?.checked).toBe(true);
+});
+
+it("resumes a paused space without asking", async () => {
+  state.navigation = {
+    spaces: [{ id: "space-other", canPause: true, pausedAt: "2026-11-10T00:00:00.000Z" }],
+  };
+  state.focusCount += 1;
+  await act(async () => root.render(createElement(SpaceSettings)));
+  await act(async () => root.unmount());
+  root = createRoot(container);
+  await act(async () => root.render(createElement(SpaceSettings)));
+  expect(control("Pause all bots")?.checked).toBe(true);
+  await act(async () => control("Pause all bots")!.click());
+  expect(state.alert).not.toHaveBeenCalled();
+  expect(state.rpc).toHaveBeenCalledWith(
+    "spaces/setPaused",
+    { spaceId: "space-other", paused: false },
+    expect.anything(),
+  );
+});
+
+it("shows no pause control to a member who cannot pause", async () => {
+  state.navigation = { spaces: [{ id: "space-other", canPause: false, pausedAt: null }] };
+  await act(async () => root.unmount());
+  root = createRoot(container);
+  await act(async () => root.render(createElement(SpaceSettings)));
+  expect(control("Pause all bots")).toBeNull();
 });

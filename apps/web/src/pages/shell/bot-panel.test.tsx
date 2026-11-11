@@ -149,6 +149,7 @@ function bot(description = "Billing", overrides: Partial<Bot> = {}): Bot {
     squadRouting: false,
     approvalMode: null,
     dailyCapUsd: null,
+    monthlyTokenLimit: null,
     disabledBuiltinTools: [],
     webhookConfigured: false,
     spawnKey: null,
@@ -521,6 +522,54 @@ describe("BotSettings daily spending limit", () => {
     await expandAdvanced();
     await type("5");
     expect(onSave).not.toHaveBeenCalled();
+  });
+});
+
+describe("BotSettings monthly token limit", () => {
+  const field = () => {
+    const input = container.querySelector<HTMLInputElement>('input[id$="-token-limit"]');
+    if (!input) throw new Error("Missing field");
+    return input;
+  };
+  async function type(value: string) {
+    const input = field();
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(input, value);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => {
+      input.dispatchEvent(new FocusEvent("focusout", { bubbles: true }));
+    });
+  }
+
+  it("saves only the limit when the field loses focus", async () => {
+    await render();
+    await expandAdvanced();
+    await type("2000000");
+    expect(onSave).toHaveBeenCalledExactlyOnceWith({ monthlyTokenLimit: 2000000 });
+  });
+
+  it("clears the limit when the field is emptied", async () => {
+    await render("Billing", { monthlyTokenLimit: 5_000 });
+    await expandAdvanced();
+    expect(field().value).toBe("5000");
+    await type("");
+    expect(onSave).toHaveBeenCalledExactlyOnceWith({ monthlyTokenLimit: null });
+  });
+
+  it("saves 0 as no limit", async () => {
+    await render("Billing", { monthlyTokenLimit: 5_000 });
+    await expandAdvanced();
+    await type("0");
+    expect(onSave).toHaveBeenCalledExactlyOnceWith({ monthlyTokenLimit: null });
+  });
+
+  it("ignores text that cannot be a limit and shows the saved one again", async () => {
+    await render("Billing", { monthlyTokenLimit: 5_000 });
+    await expandAdvanced();
+    for (const bad of ["abc", "1.5", "-3"]) await type(bad);
+    expect(onSave).not.toHaveBeenCalled();
+    expect(field().value).toBe("5000");
   });
 });
 

@@ -1478,24 +1478,49 @@ export async function stopThreadRuns(
   actor: Actor,
   target: ThreadTarget,
 ) {
-  const { runIds, computers, leases, eventSeq } = await deps.prisma.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT id FROM threads WHERE id = ${target.threadId} FOR UPDATE`;
+  await stopRunsWhere(
+    deps,
+    actor,
+    { threadId: target.threadId, status: { in: [...ACTIVE_RUN_STATUSES] } },
+    target.threadId,
+    (tx) =>
+      tx.steeringMessage.deleteMany({
+        where: {
+          botId: { in: target.kind === "bot" ? [target.botId] : target.memberBotIds },
+          message: { threadId: target.threadId },
+        },
+      }),
+  );
+}
+
+/**
+ * Cancels every run matching `where` the way Stop does: status, events, computer teardown and
+ * lease expiry. `lockThreadId` serializes with that thread's writers; `inTransaction` runs in
+ * the same commit as the cancellation. Returns the cancelled run ids.
+ */
+export async function stopRunsWhere(
+  deps: {
+    prisma: PrismaClient;
+    sandbox: SandboxProvider;
+    events: ThreadEvents;
+  },
+  actor: Actor,
+  where: Prisma.RunWhereInput,
+  lockThreadId?: string,
+  inTransaction?: (tx: Prisma.TransactionClient) => Promise<unknown>,
+): Promise<string[]> {
+  const { runIds, computers, leases, eventSeqs } = await deps.prisma.$transaction(async (tx) => {
+    if (lockThreadId) {
+      await tx.$queryRaw`SELECT id FROM threads WHERE id = ${lockThreadId} FOR UPDATE`;
+    }
     const cancelled = await tx.run.updateManyAndReturn({
-      where: {
-        threadId: target.threadId,
-        status: { in: [...ACTIVE_RUN_STATUSES] },
-      },
+      where,
       data: { status: "cancelled", completedAt: new Date() },
-      select: { id: true, botId: true, userId: true, spaceId: true },
+      select: { id: true, botId: true, userId: true, spaceId: true, threadId: true },
     });
     const ids = cancelled.map((run) => run.id);
     await clearEndedRunState(tx, ids);
-    await tx.steeringMessage.deleteMany({
-      where: {
-        botId: { in: target.kind === "bot" ? [target.botId] : target.memberBotIds },
-        message: { threadId: target.threadId },
-      },
-    });
+    await inTransaction?.(tx);
     // Snapshot teardown coordinates before commit. Once cancellation becomes
     // visible, a worker can release its lease / execution columns immediately; a
     // later lookup would then miss the sandbox work this request must stop.
@@ -1530,17 +1555,17 @@ export async function stopThreadRuns(
     // flip and the progress purge below. Other clients learn the run ended, and
     // the fresh seq keeps max(seq) above every deleted progress row so a client
     // whose cursor pointed at one never discards later refreshes as stale.
-    let eventSeq: number | null = null;
+    const eventSeqs = new Map<string, number>();
     for (const run of cancelled) {
       const event = await appendEventInTransaction(tx, {
-        spaceId: actor.spaceId,
-        threadId: target.threadId,
+        spaceId: run.spaceId,
+        threadId: run.threadId,
         botId: run.botId,
         type: "run.cancelled",
         runId: run.id,
         payload: {},
       });
-      eventSeq = event.seq;
+      eventSeqs.set(run.threadId, event.seq);
     }
     if (ids.length) {
       await tx.event.deleteMany({
@@ -1550,11 +1575,11 @@ export async function stopThreadRuns(
         },
       });
     }
-    return { runIds: ids, computers, leases, eventSeq };
+    return { runIds: ids, computers, leases, eventSeqs };
   });
-  if (eventSeq !== null) {
-    // The events are durable; subscribers refetch from their persisted cursor.
-    await deps.events.notify(target.threadId, eventSeq).catch((error) => {
+  // The events are durable; subscribers refetch from their persisted cursor.
+  for (const [threadId, eventSeq] of eventSeqs) {
+    await deps.events.notify(threadId, eventSeq).catch((error) => {
       getLogger().error("thread stop realtime notification", error);
     });
   }
@@ -1627,6 +1652,7 @@ export async function stopThreadRuns(
       executionLeaseExpiresAt: null,
     },
   });
+  return runIds;
 }
 
 /**

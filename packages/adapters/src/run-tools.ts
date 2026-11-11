@@ -1,6 +1,7 @@
 import type { AgentToolExecutionObserver } from "@corvo/adapter-kit";
 import { toolResultTaintsRun } from "@corvo/core";
 import { IMAGE_RETURNING_COMPUTER_TOOLS, MODEL_CANNOT_SEE_MESSAGE } from "./model-vision.js";
+import { refuseToolAtCap } from "./reply-budget.js";
 import type { RunContext } from "./run-context.js";
 import { pauseForApproval } from "./run-context.js";
 import { guardedToolCall } from "./run-guards.js";
@@ -99,6 +100,8 @@ async function dispatchTool(
       error: "This stage was handed off. End the turn without more tool calls.",
     };
   }
+  const capRefusal = refuseToolAtCap(ctx.state.replyBudget);
+  if (capRefusal) return capRefusal;
   if (name === "propose_instructions_update" && ctx.state.approval.pausePending)
     return pauseForApproval(ctx);
   if (ctx.tools.disabled.has(name)) {

@@ -43,8 +43,25 @@ export function useThreadRunError(
       current = false;
     };
   }, [failedRunId, provider]);
+  // Only a space owner can resume, so that action waits for the space's own answer.
+  const [pausedSpace, setPausedSpace] = useState<{ id: string; canPause: boolean } | null>(null);
+  const needsResume = normalizedRunError?.problem.action === "resume";
+  useEffect(() => {
+    if (!needsResume) return;
+    let current = true;
+    void rpc("spaces/list")
+      .then((navigation) => {
+        const space = navigation.spaces.find((item) => item.id === navigation.current.id);
+        if (current && space) setPausedSpace({ id: space.id, canPause: space.canPause === true });
+      })
+      .catch(() => undefined);
+    return () => {
+      current = false;
+    };
+  }, [needsResume]);
+  const action = normalizedRunError?.problem.action;
   const label = normalizedRunError
-    ? runErrorActionLabel(t, normalizedRunError.problem.action)
+    ? runErrorActionLabel(t, action === "resume" && !pausedSpace?.canPause ? undefined : action)
     : null;
   const runBotId = run?.botId ?? botId;
   const runErrorAction = label
@@ -52,18 +69,30 @@ export function useThreadRunError(
         label,
         // Without a bot to change, the model settings pick the default model instead.
         onPress:
-          normalizedRunError?.problem.action === "change-model" && runBotId
+          action === "resume" && pausedSpace
             ? () => {
                 setDetailsOpen(false);
-                router.push({
-                  pathname: "/bot-settings",
-                  params: { botId: runBotId, focus: "model" },
-                });
+                void rpc("spaces/setPaused", { spaceId: pausedSpace.id, paused: false }).catch(
+                  () => undefined,
+                );
               }
-            : () => {
-                setDetailsOpen(false);
-                openModelSettings();
-              },
+            : action === "raise-limit" && runBotId
+              ? () => {
+                  setDetailsOpen(false);
+                  router.push({ pathname: "/bot-settings", params: { botId: runBotId } });
+                }
+              : action === "change-model" && runBotId
+                ? () => {
+                    setDetailsOpen(false);
+                    router.push({
+                      pathname: "/bot-settings",
+                      params: { botId: runBotId, focus: "model" },
+                    });
+                  }
+                : () => {
+                    setDetailsOpen(false);
+                    openModelSettings();
+                  },
       }
     : null;
   /** Runs the failed message again on the server; one run per tap, and no second copy of it. */

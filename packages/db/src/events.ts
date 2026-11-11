@@ -165,7 +165,7 @@ export type FinalizeRunInput = FinalizeRunBase &
     | {
         outcome: "failed";
         error: string;
-        /** Set when a run guard ended the run on purpose. */
+        /** Set when a rule of the app or a run guard, not a fault, ended the run. */
         stopReason?: RunStopReason;
         /** Reply text the user saw streaming before the failure, kept as a bot message. */
         partialReply?: MessageBlock[];

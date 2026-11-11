@@ -111,6 +111,7 @@ function fakeBot(id: string, name: string, title: string): Bot {
     squadRouting: false,
     approvalMode: null,
     dailyCapUsd: null,
+    monthlyTokenLimit: null,
     spawnKey: null,
   };
 }

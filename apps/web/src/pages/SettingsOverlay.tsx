@@ -52,6 +52,7 @@ export function SettingsOverlay({
   spaces = [],
   onOpenSpace,
   onRenameSpace,
+  onSetSpacePaused,
   onDeleteSpace,
   email,
   name,
@@ -76,6 +77,7 @@ export function SettingsOverlay({
   spaces?: { id: string; name: string }[];
   onOpenSpace?: (spaceId: string) => void;
   onRenameSpace?: (spaceId: string, name: string) => Promise<void>;
+  onSetSpacePaused?: (spaceId: string, paused: boolean) => Promise<void>;
   onDeleteSpace?: (spaceId: string) => Promise<void>;
   email?: string | null;
   name: string;
@@ -399,6 +401,9 @@ export function SettingsOverlay({
                       key={space.id}
                       space={space}
                       onRename={(name) => onRenameSpace?.(space.id, name) ?? Promise.resolve()}
+                      onSetPaused={(paused) =>
+                        onSetSpacePaused?.(space.id, paused) ?? Promise.resolve()
+                      }
                       onDelete={() => onDeleteSpace?.(space.id) ?? Promise.resolve()}
                       onClose={requestClose}
                       onBusyChange={setVoiceBusy}

@@ -2,8 +2,8 @@ import type { UsageOperationKind } from "@corvo/adapter-kit";
 import { resolveBotWorkspacePath } from "@corvo/adapters";
 import type { ExportManifest } from "@corvo/contracts";
 import { attachmentMaxBytes, QuotaWindowSchema } from "@corvo/contracts";
-import { AttachmentValidationError } from "@corvo/core";
-import { IsolationError, parseComputerMode } from "@corvo/db";
+import { AttachmentValidationError, utcMonthStart } from "@corvo/core";
+import { botTokensSince, IsolationError, parseComputerMode } from "@corvo/db";
 import { ORPCError } from "@orpc/server";
 import {
   ArtifactListCursorError,
@@ -195,6 +195,24 @@ export function contentRoutes(ctx: RouterContext) {
               (a, b) => (b.totalTokens ?? 0) - (a.totalTokens ?? 0) || b.modelCalls - a.modelCalls,
             ),
         };
+      }),
+      budgets: authed.usage.budgets.handler(async ({ context }) => {
+        const bots = await deps.prisma.bot.findMany({
+          where: {
+            spaceId: context.actor.spaceId,
+            archivedAt: null,
+            monthlyTokenLimit: { gt: 0 },
+          },
+          select: { id: true, monthlyTokenLimit: true },
+        });
+        const since = utcMonthStart(new Date());
+        return Promise.all(
+          bots.map(async (bot) => ({
+            botId: bot.id,
+            monthTokens: await botTokensSince(deps.prisma, bot.id, since),
+            monthlyTokenLimit: Number(bot.monthlyTokenLimit),
+          })),
+        );
       }),
       overview: authed.usage.overview.handler(async ({ context, input }) => {
         const now = new Date();

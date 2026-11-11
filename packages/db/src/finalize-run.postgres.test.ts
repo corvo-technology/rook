@@ -129,4 +129,47 @@ describePostgres("finalizing a run (PostgreSQL)", () => {
     },
     THREAD_LOCK_HOLD_MS * 4,
   );
+
+  it("stores the stop reason of a run a rule ended, and none otherwise", async () => {
+    const finalizeFailed = async (stopReason?: "reply_cap") => {
+      const task = await system.task.create({
+        data: { spaceId, botId, threadId, userId, prompt: "go", status: "running" },
+      });
+      const run = await system.run.create({
+        data: {
+          spaceId,
+          botId,
+          threadId,
+          taskId: task.id,
+          userId,
+          status: "running",
+          trigger: "user",
+          startedAt: new Date(),
+          leaseOwner: "worker-2",
+          leaseFence: 1,
+        },
+      });
+      const attempt = await system.attempt.create({
+        data: { runId: run.id, fence: 1, status: "running" },
+      });
+      await runAsTenant({ spaceId, userId }, () =>
+        finalizeRun(prisma, {
+          spaceId,
+          threadId,
+          botId,
+          runId: run.id,
+          taskId: task.id,
+          attemptId: attempt.id,
+          leaseOwner: "worker-2",
+          leaseFence: 1,
+          outcome: "failed",
+          error: "stopped",
+          ...(stopReason ? { stopReason } : {}),
+        }),
+      );
+      return system.run.findUniqueOrThrow({ where: { id: run.id } });
+    };
+    expect((await finalizeFailed("reply_cap")).stopReason).toBe("reply_cap");
+    expect((await finalizeFailed()).stopReason).toBeNull();
+  });
 });

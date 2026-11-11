@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   BOT_DESCRIPTION_MAX_LENGTH,
   BOT_INSTRUCTIONS_MAX_LENGTH,
+  BOT_MONTHLY_TOKEN_LIMIT_MAX,
   BOT_TITLE_MAX_LENGTH,
   BotSchema,
   CLOUDFLARE_AI_GATEWAY_CONFIG_MESSAGE,
@@ -601,5 +602,22 @@ it("retains legacy unknown-field stripping for model connections", () => {
   ).toEqual({
     provider: "test",
     apiKey: "fake-key",
+  });
+});
+
+describe("UpdateBotInput monthly token limit", () => {
+  const parse = (monthlyTokenLimit: unknown) =>
+    UpdateBotInput.safeParse({ botId: "bot-1", monthlyTokenLimit }).success;
+
+  it("rejects a negative, fractional or oversized limit", () => {
+    expect(parse(-1)).toBe(false);
+    expect(parse(1.5)).toBe(false);
+    expect(parse(BOT_MONTHLY_TOKEN_LIMIT_MAX + 1)).toBe(false);
+  });
+
+  it("accepts zero, none and a whole limit", () => {
+    expect(parse(0)).toBe(true);
+    expect(parse(null)).toBe(true);
+    expect(parse(2_000_000)).toBe(true);
   });
 });

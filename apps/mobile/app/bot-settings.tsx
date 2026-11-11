@@ -68,6 +68,7 @@ import { native, useMobileTokens, useResolvedAppearance } from "../lib/native";
 import { createQueuedSave } from "../lib/queued-save";
 import { useSideInsets } from "../lib/side-insets";
 import { thinkingLevelLabel } from "../lib/thinking-level";
+import { budgetLine, parseTokenLimit } from "../lib/token-limit";
 import { errorText } from "../lib/user-error";
 import { stopVoicePlayback } from "../lib/voice";
 
@@ -75,7 +76,7 @@ export default function BotSettingsScreen() {
   const sideInsets = useSideInsets();
   const tokens = useMobileTokens();
   const colorScheme = useResolvedAppearance();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const router = useRouter();
   const {
     botId,
@@ -119,6 +120,12 @@ export default function BotSettingsScreen() {
   const voiceChoice = useRef(0);
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [tokenLimitText, setTokenLimitText] = useState("");
+  const savedTokenLimit = useRef<number | null>(null);
+  const [budget, setBudget] = useState<{
+    monthTokens: number;
+    monthlyTokenLimit: number;
+  } | null>(null);
 
   const crossSpaceSave = useMemo(
     () =>
@@ -163,6 +170,23 @@ export default function BotSettingsScreen() {
           await rpc("bots/update", { botId, fleetManagement: value });
         },
         onChange: setFleetManagement,
+        onError: (err) => setError(errorText(err, t("Could not save bot"))),
+      }),
+    [botId, t],
+  );
+
+  const tokenLimitSave = useMemo(
+    () =>
+      createQueuedSave<number | null>(null, {
+        save: async (monthlyTokenLimit) => {
+          await rpc("bots/update", { botId, monthlyTokenLimit });
+        },
+        onChange: (value) => setTokenLimitText(value ? String(value) : ""),
+        onSaved: async (value) => {
+          savedTokenLimit.current = value;
+          const budgets = await rpc("usage/budgets");
+          setBudget(budgets.find((item) => item.botId === botId) ?? null);
+        },
         onError: (err) => setError(errorText(err, t("Could not save bot"))),
       }),
     [botId, t],
@@ -224,9 +248,28 @@ export default function BotSettingsScreen() {
         squadSave.reset(next.squadRouting);
         setApprovalMode(next.approvalMode ?? null);
         approvalSave.reset(next.approvalMode ?? null);
+        setTokenLimitText(next.monthlyTokenLimit ? String(next.monthlyTokenLimit) : "");
+        savedTokenLimit.current = next.monthlyTokenLimit || null;
+        tokenLimitSave.reset(next.monthlyTokenLimit || null);
       })
       .catch((err) => setError(errorText(err, t("Could not load bot"))));
-  }, [approvalSave, botId, crossSpaceSave, fleetSave, notifySave, profileSaves, squadSave]);
+  }, [
+    approvalSave,
+    botId,
+    crossSpaceSave,
+    fleetSave,
+    notifySave,
+    profileSaves,
+    squadSave,
+    tokenLimitSave,
+  ]);
+
+  useEffect(() => {
+    if (!botId) return;
+    void rpc("usage/budgets")
+      .then((budgets) => setBudget(budgets.find((item) => item.botId === botId) ?? null))
+      .catch(() => undefined);
+  }, [botId]);
 
   useEffect(() => {
     void rpc("autoReview/get", {})
@@ -871,6 +914,40 @@ export default function BotSettingsScreen() {
                   value={squadRouting}
                 />
               </View>
+            </SettingsGroup>
+            <SettingsGroup label={t("Monthly token limit")}>
+              <View style={styles.row}>
+                <Text style={[styles.rowLabel, { color: tokens.foreground }]}>
+                  {t("Monthly token limit")}
+                </Text>
+                <TextInput
+                  accessibilityLabel={t("Monthly token limit")}
+                  inputMode="numeric"
+                  keyboardType="number-pad"
+                  value={tokenLimitText}
+                  placeholder={t("No limit")}
+                  placeholderTextColor={tokens.mutedForeground}
+                  onChangeText={setTokenLimitText}
+                  onEndEditing={() => {
+                    if (!botId) return;
+                    const next = parseTokenLimit(tokenLimitText);
+                    if (next === undefined) {
+                      setTokenLimitText(
+                        savedTokenLimit.current ? String(savedTokenLimit.current) : "",
+                      );
+                      return;
+                    }
+                    setError(null);
+                    tokenLimitSave.update(next);
+                  }}
+                  style={[styles.rowValue, { color: tokens.foreground, minWidth: 96 }]}
+                />
+              </View>
+              {budget ? (
+                <Text style={{ color: tokens.mutedForeground, fontSize: 13, paddingBottom: 12 }}>
+                  {budgetLine(budget, locale)}
+                </Text>
+              ) : null}
             </SettingsGroup>
             <SettingsGroup label={t("Description")}>
               <GrowingTextInput

@@ -1182,4 +1182,16 @@ export const DE_MESSAGES: Record<string, string> = {
   "Keep a memory": "Eine Erinnerung speichern",
   Missions: "Missionen",
   "Show everything": "Alles anzeigen",
+  Resume: "Fortsetzen",
+  "No limit": "Kein Limit",
+  "Raise limit": "Limit erhöhen",
+  "Monthly token limit": "Monatliches Token-Limit",
+  "Pause all bots": "Alle Bots pausieren",
+  "Running work stops and nothing starts until you resume.":
+    "Laufende Arbeit wird gestoppt, und nichts startet, bis du fortsetzt.",
+  "This bot reached its monthly token limit.":
+    "Dieser Bot hat sein monatliches Token-Limit erreicht.",
+  "This reply reached its token cap.": "Diese Antwort hat ihr Token-Limit erreicht.",
+  "Bots are paused in this space.": "Bots sind in diesem Space pausiert.",
+  "{used} of {limit}": "{used} von {limit}",
 };

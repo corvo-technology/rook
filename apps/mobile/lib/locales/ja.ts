@@ -1165,4 +1165,15 @@ export const JA_MESSAGES: Record<string, string> = {
   "Keep a memory": "記憶を残す",
   Missions: "ミッション",
   "Show everything": "すべて表示",
+  Resume: "再開",
+  "No limit": "上限なし",
+  "Raise limit": "上限を上げる",
+  "Monthly token limit": "月間トークン上限",
+  "Pause all bots": "すべてのボットを一時停止",
+  "Running work stops and nothing starts until you resume.":
+    "実行中の作業は停止し、再開するまで何も開始されません。",
+  "This bot reached its monthly token limit.": "このボットは月間トークン上限に達しました。",
+  "This reply reached its token cap.": "この返信はトークン上限に達しました。",
+  "Bots are paused in this space.": "このスペースのボットは一時停止中です。",
+  "{used} of {limit}": "{used} / {limit}",
 };

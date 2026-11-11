@@ -63,6 +63,8 @@ export const Composer = memo(function Composer({
   onDraftEdited,
   onOpenModels,
   onOpenConnections,
+  onOpenBotSettings,
+  onResumeSpace,
   runAuthKind,
   onRetryRun,
   retryingRun,
@@ -100,6 +102,8 @@ export const Composer = memo(function Composer({
   imageConfirmation?: boolean;
   onDraftEdited?: () => void;
   onOpenModels: () => void;
+  onOpenBotSettings: () => void;
+  onResumeSpace?: () => void;
   onOpenConnections: (action: ModelProblemAction) => void;
   runAuthKind?: ModelProblemOptions["authKind"];
   onRetryRun?: () => void;
@@ -561,6 +565,8 @@ export const Composer = memo(function Composer({
         onRunErrorPresented={onRunErrorPresented}
         onOpenModels={onOpenModels}
         onOpenConnections={onOpenConnections}
+        onOpenBotSettings={onOpenBotSettings}
+        onResumeSpace={onResumeSpace}
         runAuthKind={runAuthKind}
         onRetryRun={onRetryRun}
         retryingRun={retryingRun}

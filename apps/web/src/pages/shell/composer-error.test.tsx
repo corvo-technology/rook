@@ -50,6 +50,7 @@ async function render(props: Partial<Parameters<typeof ComposerError>[0]> = {}) 
     onRunErrorPresented: vi.fn(),
     onOpenModels: vi.fn(),
     onOpenConnections: vi.fn(),
+    onOpenBotSettings: vi.fn(),
     onDismissError: vi.fn(),
     textareaRef: { current: null },
     ...props,

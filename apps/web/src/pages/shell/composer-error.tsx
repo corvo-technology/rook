@@ -17,6 +17,8 @@ export function ComposerError({
   onRunErrorPresented,
   onOpenModels,
   onOpenConnections,
+  onOpenBotSettings,
+  onResumeSpace,
   runAuthKind,
   onRetryRun,
   retryingRun = false,
@@ -31,6 +33,8 @@ export function ComposerError({
   runErrorId: string | null;
   onRunErrorPresented: (runId: string) => void;
   onOpenModels: () => void;
+  onOpenBotSettings: () => void;
+  onResumeSpace?: () => void;
   onOpenConnections: (action: ModelProblemAction) => void;
   runAuthKind?: ModelProblemOptions["authKind"];
   onRetryRun?: () => void;
@@ -75,7 +79,12 @@ export function ComposerError({
       document.removeEventListener("visibilitychange", recordIfPresented);
     };
   }, [onRunErrorPresented, runError, runErrorId]);
-  const runProblem = runError && !sendError ? webRunProblem(runError, runAuthKind) : null;
+  const rawRunProblem = runError && !sendError ? webRunProblem(runError, runAuthKind) : null;
+  // Only a space owner can resume a paused space.
+  const runProblem =
+    rawRunProblem?.action === "resume" && !onResumeSpace
+      ? { ...rawRunProblem, action: undefined }
+      : rawRunProblem;
 
   const warning = Boolean(sendError) && imageConfirmation;
   return sendError || runError ? (
@@ -91,9 +100,12 @@ export function ComposerError({
             problem={runProblem}
             retrying={retryingRun}
             onRetry={onRetryRun}
-            onAction={(action) =>
-              action === "change-model" ? onOpenModels() : onOpenConnections(action)
-            }
+            onAction={(action) => {
+              if (action === "change-model") onOpenModels();
+              else if (action === "raise-limit") onOpenBotSettings();
+              else if (action === "resume") onResumeSpace?.();
+              else onOpenConnections(action);
+            }}
           />
         ) : isModelRequiredSendError(sendError) ? (
           <button

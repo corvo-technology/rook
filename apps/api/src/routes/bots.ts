@@ -376,6 +376,14 @@ export function botsRoutes(ctx: RouterContext) {
               ? { fleetManagement: input.fleetManagement }
               : {}),
             ...(input.squadRouting !== undefined ? { squadRouting: input.squadRouting } : {}),
+            ...(input.monthlyTokenLimit !== undefined
+              ? {
+                  monthlyTokenLimit:
+                    input.monthlyTokenLimit === null || input.monthlyTokenLimit === 0
+                      ? null
+                      : BigInt(input.monthlyTokenLimit),
+                }
+              : {}),
             ...(input.approvalMode !== undefined ? { approvalMode: input.approvalMode } : {}),
             ...(input.dailyCapUsd !== undefined
               ? {

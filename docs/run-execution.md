@@ -196,3 +196,44 @@ back inside the one call the agent made. The agent spends no model step or sleep
 
 When no status tool qualifies, the agent keeps waiting by hand, and the idle-sleep refusal of the
 turn guards applies.
+
+## Budgets and pause
+
+A bot may have a monthly token limit, and a space owner may pause every bot in the
+space. Both are enforced only in the run executor and the API; a client never decides
+whether a run may start, and no agent tool can read or change either setting.
+
+**What counts.** Tokens come from the `usage_records` rows, counted per row as the usage
+page counts them: `totalTokens`, else `inputTokens + outputTokens`, else 0. Cached reads
+are included, no money conversion is made, and a call that reports no token counts (some
+subscription and OAuth connections) counts as 0. A bot on such a connection is never
+blocked by a limit it cannot be measured against; it stays bounded by the tool loop
+guards and the provider's own quota windows. The month is the UTC calendar month. A
+limit that is empty, `0`, negative or not a finite number means no limit.
+
+**Monthly gate.** A run of a bot whose month is at or over its limit fails before the
+model with `stopReason = "monthly_limit"`. A run already going finishes under its reply
+cap. The check happens when a run starts, so runs that start together may overshoot the
+month by at most the sum of their reply caps.
+
+**Reply cap.** One run (all its attempts, its subagents) may spend 10% of the monthly
+limit; with no limit the 10% is taken over a fixed 50,000,000 tokens. Past the cap every
+tool call is refused with a result telling the model to stop and write up what it did,
+found and has left. On the fourth refused call, or once the run passes 1.3 times the
+cap, it ends `failed` with `stopReason = "reply_cap"`; the text already streamed stays in
+the chat. A reply that wraps up on its own after the refusal completes normally. A later
+attempt of a run starts from what the earlier ones spent. History compaction calls are
+recorded without the run and count toward the month, not the reply.
+
+**80% warning.** When an attempt carries a bot's month across 80% of its limit (and not
+past 100%), the owner gets one push and one line in the chat, once per bot per month,
+claimed with a conditional write so two runs crossing together warn once.
+
+**Pause.** `spaces.pausedAt` is one nullable timestamp. Pausing cancels every active run
+in the space through the same path as Stop, and until resumed any run created by any
+trigger fails before the model with `stopReason = "paused"` and no failure push.
+Resuming restarts nothing. A routine refused by a limit or by pause fails in its history
+and backs off like any refused account.
+
+**Stop reasons.** `runs.stopReason` holds `reply_cap`, `monthly_limit` or `paused`, and
+is null for every other run.

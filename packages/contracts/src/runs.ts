@@ -28,7 +28,12 @@ export const TURN_GUARD_KINDS = ["loop", "tool_errors", "stall", "waiting"] as c
 export type TurnGuardKind = (typeof TURN_GUARD_KINDS)[number];
 
 /** Why a run was stopped on purpose, saved beside its error. Null for a run that failed on its own. */
-export const RUN_STOP_REASONS = [...TURN_GUARD_KINDS] as const;
+export const RUN_STOP_REASONS = [
+  ...TURN_GUARD_KINDS,
+  "reply_cap",
+  "monthly_limit",
+  "paused",
+] as const;
 export const RunStopReasonSchema = z.enum(RUN_STOP_REASONS);
 export type RunStopReason = z.infer<typeof RunStopReasonSchema>;
 

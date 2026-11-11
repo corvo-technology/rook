@@ -1,7 +1,8 @@
+import { CLI_ENGINE_PROVIDER_ID } from "@corvo/contracts";
 import type { Model, MutableModels, Provider } from "@earendil-works/pi-ai";
 import { createProvider } from "@earendil-works/pi-ai";
 import { openAICompletionsApi } from "@earendil-works/pi-ai/api/openai-completions.lazy";
-
+import { cliEngineHost } from "./cli-engine-host.js";
 import { declaredVisionModelIds, inputModalities } from "./model-modalities.js";
 /**
  * Local OpenAI-compatible model server (Ollama, LM Studio, llama.cpp, MLX).
@@ -74,6 +75,20 @@ export function isOperatorLocalModel(
   modelId: string | null | undefined,
 ): boolean {
   return provider === LOCAL_PROVIDER_ID && !!modelId && localModelIds().includes(modelId);
+}
+
+/**
+ * A model the operator offers without a connection: one listed for the local server, or one of
+ * a coding-agent CLI the operator turned on and that is ready.
+ */
+export function isOperatorOfferedModel(
+  provider: string | null | undefined,
+  modelId: string | null | undefined,
+): boolean {
+  return (
+    isOperatorLocalModel(provider, modelId) ||
+    (provider === CLI_ENGINE_PROVIDER_ID && !!modelId && cliEngineHost()?.offers(modelId) === true)
+  );
 }
 
 /** Marks the models the operator listed for the local server as offered without a connection. */

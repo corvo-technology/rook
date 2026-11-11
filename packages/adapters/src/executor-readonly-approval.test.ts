@@ -1,5 +1,6 @@
 import type {
   AgentRunRequest,
+  AgentRuntime,
   AutoReviewProvider,
   ConnectorCall,
   ConnectorTool,
@@ -11,9 +12,14 @@ import { inboundRoutineBlock } from "@corvo/core";
 import { approvalEffectKey, toolEffectIdempotencyKey } from "@corvo/core/node/approval-effect-key";
 import type { PrismaClient } from "@corvo/db";
 import { createPendingSteeringRun, sendUserMessage } from "@corvo/db";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { isApprovalPausedResult } from "./approval-effect.js";
 import { MAX_SHARED_MEMORY_CHARS } from "./builtin-tools.js";
+import { CLAUDE_ENGINE } from "./cli-engine-claude.js";
+import { installCliEngineHost, routeAgentRuntime } from "./cli-engine-host.js";
+import { CliEngineRuntime } from "./cli-engine-runtime.js";
+import { fakeLocator, makeFakeClaude, readFakeLog } from "./cli-engine-test-support.js";
+import { CliToolGateway } from "./cli-tool-gateway.js";
 import type * as ComputerLifecycleModule from "./computer-lifecycle.js";
 import { createRunExecutor } from "./executor.js";
 import { FakeWebProvider } from "./fake-web.js";
@@ -115,7 +121,13 @@ function fixture({
   secondResource = false,
   routines = [] as { name: string; prompt: string }[],
   connectedApps = [] as string[],
+  runtime: customRuntime,
+  cliModel = false,
 }: {
+  /** Stands in for the mock runtime, so a real one runs through the executor. */
+  runtime?: AgentRuntime;
+  /** The bot chose a CLI engine model. */
+  cliModel?: boolean;
   /** Apps connected through Composio. */
   connectedApps?: string[];
   /** The bot's routines, as the owner wrote them. */
@@ -272,6 +284,7 @@ function fixture({
         title: bot.title,
         description: bot.description,
         disabledBuiltinTools,
+        ...(cliModel ? { modelProvider: "cli-engine", modelId: "claude/sonnet" } : {}),
         fleetManagement,
         approvalMode: botApprovalMode,
         computerId: "computer-1",
@@ -453,10 +466,14 @@ function fixture({
     yield { type: "done" as const, text: "Done" };
   });
   const enqueue = vi.fn(async (_job: unknown) => undefined);
+  const appendEvent = vi.fn(async (_event: unknown) => undefined);
   const executor = createRunExecutor({
     deploymentModelKey: "fixture-model-key",
     prisma: transactionalPrisma,
-    runtime: { describe: () => ({ capabilities: { scripted: false } }), run: runtimeRun },
+    runtime: customRuntime ?? {
+      describe: () => ({ capabilities: { scripted: false } }),
+      run: runtimeRun,
+    },
     connector: {
       discoverTools: async () =>
         builtin
@@ -515,7 +532,7 @@ function fixture({
     },
     memoryProviders: { resolve: async () => null },
     events: {
-      append: vi.fn(async () => undefined),
+      append: appendEvent,
       notify: vi.fn(async () => undefined),
       pauseRunForInput,
       addApprovalAskToPausedRun,
@@ -530,6 +547,7 @@ function fixture({
   } as unknown as Parameters<typeof createRunExecutor>[0]);
   return {
     prisma: transactionalPrisma,
+    appendEvent,
     effects,
     web,
     fetchedUrls,
@@ -618,7 +636,7 @@ function fixture({
     async run(allowFailure = false) {
       run.status = "queued";
       await executor.continueRun(run.id, "worker-1");
-      expect(runtimeRun).toHaveBeenCalled();
+      if (!customRuntime) expect(runtimeRun).toHaveBeenCalled();
       expect(prisma.attempt.update).not.toHaveBeenCalled();
       if (!allowFailure)
         expect(finalizeRun).not.toHaveBeenCalledWith(
@@ -2434,6 +2452,99 @@ it("uses the OpenRouter environment key for a decision checker on another deploy
     vi.unstubAllGlobals();
     vi.unstubAllEnvs();
   }
+});
+
+describe("CLI engine runs", () => {
+  const gateways: CliToolGateway[] = [];
+  afterEach(async () => {
+    installCliEngineHost(undefined);
+    await Promise.all(gateways.splice(0).map((gateway) => gateway.stop()));
+  });
+
+  async function cliFixture(options: Parameters<typeof fixture>[0] = {}, fakeEnv = {}) {
+    installCliEngineHost({ offers: () => true } as never);
+    const fake = await makeFakeClaude(fakeEnv);
+    const gateway = new CliToolGateway();
+    gateways.push(gateway);
+    const cli = new CliEngineRuntime({
+      engines: [CLAUDE_ENGINE],
+      locator: fakeLocator(fake),
+      gateway,
+    });
+    const base: AgentRuntime = {
+      describe: () => ({
+        id: "base",
+        contractVersion: "1",
+        adapterVersion: "1",
+        capabilities: { streaming: true, compaction: false, tools: true, scripted: false },
+      }),
+      run: () => {
+        throw new Error("the base runtime must not run a CLI engine model");
+      },
+      abort: async () => undefined,
+    };
+    const f = fixture({ ...options, cliModel: true, runtime: routeAgentRuntime(base, cli) });
+    return { f, fake };
+  }
+
+  it("runs a read-only connector tool through the gate and records its audit and usage", async () => {
+    const { f } = await cliFixture({
+      name: "demo_get_item",
+      prompt: 'CALL demo_get_item {"id":"item-1"}',
+    });
+    await f.run();
+    expect(f.execute).toHaveBeenCalledTimes(1);
+    expect(f.appendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "agent.tool.completed",
+        payload: expect.objectContaining({ name: "demo_get_item" }),
+      }),
+    );
+    expect(f.prisma.usageRecord.createMany).toHaveBeenCalledTimes(1);
+  });
+
+  it("pauses for approval, then runs the approved call exactly once on a new turn", async () => {
+    const { f, fake } = await cliFixture({
+      name: "shell",
+      trigger: "webhook",
+      prompt: 'CALL shell {"command":"echo hi"}',
+    });
+    await f.run();
+    expect(f.pauseRunForInput).toHaveBeenCalledOnce();
+    expect(f.execute).not.toHaveBeenCalled();
+    expect((await readFakeLog(fake)).length).toBe(1);
+    // The owner approves; the next turn is a new CLI process that gets the continuation.
+    for (const effect of f.effects) effect.status = "approved";
+    await f.run();
+    const log = await readFakeLog(fake);
+    expect(log.length).toBe(2);
+    expect(log[1]?.stdin).toContain("Call each listed approved request exactly once");
+  });
+
+  it("never lists a tool the bot is blocked from to the CLI", async () => {
+    const { f, fake } = await cliFixture({
+      name: "save_shared_memory",
+      builtin: true,
+      disabledBuiltinTools: ["save_shared_memory"],
+      prompt: "hello",
+    });
+    await f.run();
+    const [entry] = await readFakeLog(fake);
+    expect(entry?.tools.length).toBeGreaterThan(0);
+    expect(entry?.tools).not.toContain("save_shared_memory");
+  });
+
+  it("ends the CLI process when the run is cancelled", async () => {
+    const shutdown = new AbortController();
+    const { f, fake } = await cliFixture({ prompt: "HANG", shutdownSignal: shutdown.signal });
+    const running = f.run(true);
+    await vi.waitFor(async () => expect((await readFakeLog(fake)).length).toBe(1), {
+      timeout: 15_000,
+    });
+    shutdown.abort();
+    // The run ends only once its CLI process has exited.
+    await running;
+  }, 30_000);
 });
 
 describe("a bot's own approval mode", () => {

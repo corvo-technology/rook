@@ -1,5 +1,6 @@
 import { SecretStoreUnavailableError } from "@corvo/adapter-kit";
 import {
+  cliEngineHost,
   listPiCatalog,
   modelCredentialDto,
   oauthCredentialEmail,
@@ -69,6 +70,12 @@ export function modelsRoutes(ctx: RouterContext) {
   return {
     models: {
       list: authed.models.list.handler(async ({ context }) => chatCatalog(context.actor)),
+      cliEngines: authed.models.cliEngines.handler(
+        async () => (await cliEngineHost()?.view()) ?? { enabled: false, engines: [] },
+      ),
+      refreshCliEngines: authed.models.refreshCliEngines.handler(
+        async () => (await cliEngineHost()?.refresh()) ?? { enabled: false, engines: [] },
+      ),
       credentials: authed.models.credentials.handler(async ({ context }) => {
         const [rows, main] = await Promise.all([
           deps.prisma.userModelCredential.findMany({

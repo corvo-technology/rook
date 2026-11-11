@@ -132,6 +132,12 @@ export const DE_MESSAGES: Record<string, string> = {
     "Das Modell hat eine unbrauchbare Antwort geliefert. Versuche es erneut.",
   "This model's context window is too small. Choose another model.":
     "Das Kontextfenster dieses Modells ist zu klein. Wähle ein anderes Modell.",
+  "Claude Code isn't installed where this bot runs.":
+    "Claude Code ist dort, wo dieser Bot läuft, nicht installiert.",
+  "Claude Code isn't signed in to a Claude plan where this bot runs.":
+    "Claude Code ist dort, wo dieser Bot läuft, nicht bei einem Claude-Abo angemeldet.",
+  "Claude Code started with tools it wasn't given, so the reply was stopped.":
+    "Claude Code wurde mit Werkzeugen gestartet, die es nicht erhalten hat, deshalb wurde die Antwort gestoppt.",
   "{provider} couldn't be reached securely. A security program or network filter may be intercepting the connection.":
     "{provider} konnte nicht sicher erreicht werden. Ein Sicherheitsprogramm oder Netzwerkfilter fängt die Verbindung möglicherweise ab.",
   "{provider} sign-in is no longer valid.": "Die Anmeldung bei {provider} ist nicht mehr gültig.",

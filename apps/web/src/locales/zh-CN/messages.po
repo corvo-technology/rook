@@ -1540,6 +1540,21 @@ msgstr "选择机器人的运行位置"
 msgid "Cited by"
 msgstr "被引用于"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "Claude Code isn't installed where this bot runs."
+msgstr "运行此机器人的位置未安装 Claude Code。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "Claude Code isn't signed in to a Claude plan where this bot runs."
+msgstr "运行此机器人的位置上，Claude Code 未登录 Claude 套餐。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "Claude Code started with tools it wasn't given, so the reply was stopped."
+msgstr "Claude Code 启动时带有未授予它的工具，因此已停止回复。"
+
 #: src/lib/localized-provider-hint.ts
 msgid "Claude subscription"
 msgstr "Claude 订阅"

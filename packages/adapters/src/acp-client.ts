@@ -8,6 +8,7 @@ import type {
 } from "@agentclientprotocol/sdk";
 import { ClientSideConnection, ndJsonStream } from "@agentclientprotocol/sdk";
 import type { AgentRuntimeEvent } from "@corvo/adapter-kit";
+import { agentChildEnv } from "./agent-process.js";
 
 /**
  * A client for agents that speak the Agent Client Protocol (ACP) over stdio, such as
@@ -32,7 +33,6 @@ export interface AcpModel {
 
 export type AcpPermissionDecision = "allow" | "reject";
 
-const AGENT_ENV = ["PATH", "HOME", "USER", "TMPDIR", "LANG", "LC_ALL", "SHELL"] as const;
 const SHUTDOWN_GRACE_MS = 2_000;
 const OUTPUT_TAIL_CHARS = 4_000;
 const DEATH_GRACE_MS = 500;
@@ -54,14 +54,9 @@ function startError(command: string, cause?: unknown): Error {
 }
 
 async function openAgent(cmd: AcpCommand, client: Client): Promise<OpenAgent> {
-  const env: Record<string, string> = {};
-  for (const key of AGENT_ENV) {
-    const value = process.env[key];
-    if (value !== undefined) env[key] = value;
-  }
   const child: ChildProcess = spawn(cmd.command, cmd.args, {
     cwd: cmd.cwd,
-    env: { ...env, ...cmd.env },
+    env: agentChildEnv(cmd.env ?? {}),
     stdio: ["pipe", "pipe", "pipe"],
   });
   let output = "";

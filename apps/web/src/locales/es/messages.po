@@ -1540,6 +1540,21 @@ msgstr "Elegir dónde se ejecutan los bots"
 msgid "Cited by"
 msgstr "Citada por"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "Claude Code isn't installed where this bot runs."
+msgstr "Claude Code no está instalado donde se ejecuta este bot."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "Claude Code isn't signed in to a Claude plan where this bot runs."
+msgstr "Claude Code no tiene la sesión iniciada en un plan de Claude donde se ejecuta este bot."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "Claude Code started with tools it wasn't given, so the reply was stopped."
+msgstr "Claude Code se inició con herramientas que no se le habían dado, así que se detuvo la respuesta."
+
 #: src/lib/localized-provider-hint.ts
 msgid "Claude subscription"
 msgstr "Suscripción de Claude"

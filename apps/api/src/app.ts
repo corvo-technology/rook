@@ -27,9 +27,14 @@ import type {
 import {
   applyMessagingOutboundStatus,
   ChatSdkMessagingSurface,
+  CLAUDE_ENGINE,
+  CliEngineHost,
+  CliEngineRuntime,
+  CliToolGateway,
   CodexCatalogCache,
   ComposioConnector,
   CompositeMessagingSurface,
+  cliEngineHost,
   contentKeyProviderFromEnv,
   createAgentHomeStore,
   createArtifactStore,
@@ -61,6 +66,7 @@ import {
   InMemoryRealtimeFanout,
   InstalledConnectorProvider,
   IntegrationProviderSettings,
+  installCliEngineHost,
   installedMessaging,
   isComposioEnabled,
   isMessagingSurfaceEnabled,
@@ -83,6 +89,7 @@ import {
   reconcileComputerUpdates,
   removePiUserSessions,
   resolveDeploymentModel,
+  routeAgentRuntime,
   ScriptedAgentRuntime,
   SpaceMemoryProviderResolver,
   StripeBillingProvider,
@@ -530,13 +537,30 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     ...connectorOverrides,
   ]);
   integrationSettings.warmDirectories();
+  // A hosted deployment with billing never offers a machine-owned subscription to its customers.
+  const cliGateway = billingProvider ? undefined : new CliToolGateway();
+  if (cliGateway) {
+    const host = new CliEngineHost({ dataDir: env.dataDir, engines: [CLAUDE_ENGINE] });
+    installCliEngineHost(host);
+    host.refresh().catch((error) => getLogger().error("cli engine detection failed", error));
+  }
+  const piRuntime = new PiAgentRuntime({
+    sessionRoot: env.piSessionRecording ? piSessionsRoot(env.dataDir) : undefined,
+  });
   const runtime =
     runtimeOverride ??
     (env.agentRuntime === "scripted"
       ? new ScriptedAgentRuntime()
-      : new PiAgentRuntime({
-          sessionRoot: env.piSessionRecording ? piSessionsRoot(env.dataDir) : undefined,
-        }));
+      : cliGateway
+        ? routeAgentRuntime(
+            piRuntime,
+            new CliEngineRuntime({
+              engines: [CLAUDE_ENGINE],
+              locator: cliEngineHost()!,
+              gateway: cliGateway,
+            }),
+          )
+        : piRuntime);
   const pushTokens = new PrismaPushTokenStore(prisma, env.encryptionKey);
   const notifications =
     notificationsOverride ??
@@ -1523,6 +1547,8 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       await secrets.close();
       await realtime.close();
       await mcp.close();
+      await cliGateway?.stop();
+      if (cliGateway) installCliEngineHost(undefined);
       await prisma.$disconnect().catch(() => undefined);
       await created.pool?.end().catch(() => undefined);
       await ownedJobPool?.end().catch(() => undefined);

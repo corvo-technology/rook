@@ -225,6 +225,24 @@ export const translateRunError: RunErrorTranslator = (message, values) => {
         message: "{summary} Backup models failed or were unavailable for this request.",
         values,
       });
+    case "Claude Code isn't installed where this bot runs.":
+      return i18n._({
+        id: "Claude Code isn't installed where this bot runs.",
+        message: "Claude Code isn't installed where this bot runs.",
+        values,
+      });
+    case "Claude Code isn't signed in to a Claude plan where this bot runs.":
+      return i18n._({
+        id: "Claude Code isn't signed in to a Claude plan where this bot runs.",
+        message: "Claude Code isn't signed in to a Claude plan where this bot runs.",
+        values,
+      });
+    case "Claude Code started with tools it wasn't given, so the reply was stopped.":
+      return i18n._({
+        id: "Claude Code started with tools it wasn't given, so the reply was stopped.",
+        message: "Claude Code started with tools it wasn't given, so the reply was stopped.",
+        values,
+      });
     default:
       return message;
   }

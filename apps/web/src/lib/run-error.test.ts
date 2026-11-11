@@ -1,4 +1,4 @@
-import { MODEL_OUTPUT_CUT_ERROR, normalizeRunError } from "@corvo/core";
+import { CLI_ENGINE_RUN_ERRORS, MODEL_OUTPUT_CUT_ERROR, normalizeRunError } from "@corvo/core";
 import { i18n } from "@lingui/core";
 import { afterEach, expect, it } from "vitest";
 import { translateRunError } from "./run-error";
@@ -35,3 +35,14 @@ it("translates the summary of a reply cut off at the output limit", () => {
     recovery: "model",
   });
 });
+
+it.each(Object.values(CLI_ENGINE_RUN_ERRORS.claude))(
+  "translates the CLI engine error %s",
+  (sentence) => {
+    i18n.load("de", { [sentence]: `translated: ${sentence}` });
+    i18n.activate("de");
+    expect(normalizeRunError(sentence, translateRunError, "en").summary).toBe(
+      `translated: ${sentence}`,
+    );
+  },
+);

@@ -32,6 +32,10 @@ export { settleCallRequest } from "./call-request.js";
 export * from "./cartesia-voice.js";
 export * from "./chat-sdk-surface.js";
 export * from "./child-bots.js";
+export * from "./cli-engine-claude.js";
+export * from "./cli-engine-host.js";
+export * from "./cli-engine-runtime.js";
+export * from "./cli-tool-gateway.js";
 export * from "./cloud-agent-emulator.js";
 export * from "./cloud-agent-factory.js";
 export * from "./cloud-agent-poll.js";
@@ -132,6 +136,7 @@ export * from "./pi-live-catalog.js";
 export * from "./pi-live-model.js";
 export {
   isOperatorLocalModel,
+  isOperatorOfferedModel,
   LOCAL_PROVIDER_ID,
   localProvider,
   withLocalModelsOffered,

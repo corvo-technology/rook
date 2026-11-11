@@ -14,7 +14,7 @@ import {
   openAiCompatibleProbeSuccessMessage,
   savedCompatibleEndpointMatches,
 } from "@corvo/contracts";
-import type { ConnectionFormFields } from "@corvo/core";
+import type { ConnectionFormFields, ModelProblem } from "@corvo/core";
 import {
   COMPATIBLE_THINKING_LEVELS,
   clampCatalogThinkingLevel,
@@ -26,6 +26,7 @@ import {
   createModelProbe,
   initialModelProbeState,
   modelConnectRequest,
+  modelFailureData,
   popularModelProvidersFirst,
   savedCompatibleModelIds,
 } from "@corvo/core";
@@ -38,12 +39,13 @@ import { providerDisplayName } from "../../lib/localized-provider-hint";
 import type { ModelCatalogEntry } from "../../lib/model-auth";
 import type { ModelPreflightFailure } from "../../lib/model-connection-preflight";
 import {
-  classifyModelConnectionFailure,
   loadStoredModelAuth,
   modelPreflightSuccessMessage,
+  providerFailure,
   runModelConnectionPreflight,
   unavailableSelectedModel,
 } from "../../lib/model-connection-preflight";
+import { webModelProblem } from "../../lib/model-problem";
 import { useSpaceQueries } from "../../lib/query";
 import { useSpaceRpc } from "../../lib/space-rpc";
 import { useModelOAuthSignIn } from "../../lib/use-model-oauth-signin";
@@ -123,6 +125,7 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
   const [pending, setPending] = useState<"connect" | "settings" | "disconnect" | null>(null);
   const [confirmDisconnect, setConfirmDisconnect] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [connectProblem, setConnectProblem] = useState<ModelProblem | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [preflightTesting, setPreflightTesting] = useState(false);
   const [preflightTarget, setPreflightTarget] = useState<
@@ -343,6 +346,7 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
     setPreflightTarget(null);
     setPreflightSuccess(null);
     setPreflightFailure(null);
+    setConnectProblem(null);
   }
 
   function preflightStillCurrent(revision: number): boolean {
@@ -449,7 +453,7 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
       },
       onError: (err) => {
         if (!preflightStillCurrent(revision)) return;
-        setPreflightFailure(classifyModelConnectionFailure(err, { modelId }));
+        setPreflightFailure(providerFailure(err, "api_key"));
         setNotice(null);
       },
     });
@@ -551,6 +555,7 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
     }
     const { input, savingLimitOnly, activeModelId } = request;
     setError(null);
+    setConnectProblem(null);
     setNotice(null);
     setPending(settingsOnly ? "settings" : "connect");
     // Opening another connection while this saves leaves that form alone; field edits
@@ -577,7 +582,13 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
       // A fresh connection speaks for itself through the Active model row.
       if (isOpenAiCompatible || savingLimitOnly) setNotice(t`Saved.`);
     } catch (err) {
-      if (stillSelected()) setError(errorText(err, t`Could not connect this provider`));
+      if (stillSelected()) {
+        if (modelFailureData(err)) {
+          setConnectProblem(webModelProblem(err, t`Could not connect this provider`, "api_key"));
+        } else {
+          setError(errorText(err, t`Could not connect this provider`));
+        }
+      }
     } finally {
       setPending(null);
     }
@@ -651,6 +662,7 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
     compatibleRows,
     confirmDisconnect,
     connectKey,
+    connectProblem,
     contextWindow,
     copyOAuthCode,
     credential,

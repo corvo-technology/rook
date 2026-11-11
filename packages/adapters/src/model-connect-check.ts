@@ -1,4 +1,5 @@
 import type { AgentRunModel } from "@corvo/adapter-kit";
+import { ModelRequestError } from "@corvo/adapter-kit";
 import { normalizeRunError } from "@corvo/core";
 import type { Context } from "@earendil-works/pi-ai";
 import { Type } from "@earendil-works/pi-ai";
@@ -77,5 +78,6 @@ export async function verifyModelServesAgents(
   const result = await stream.result();
   if (result.stopReason !== "error" || !result.errorMessage) return;
   const failure = normalizeRunError(result.errorMessage);
-  if (failure.kind && BLOCKING_KINDS.has(failure.kind)) throw new Error(failure.summary);
+  if (failure.kind && BLOCKING_KINDS.has(failure.kind))
+    throw new ModelRequestError(failure.summary, { details: result.errorMessage });
 }

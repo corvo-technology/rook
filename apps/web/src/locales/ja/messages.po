@@ -297,6 +297,11 @@ msgstr "{provider}に安全に接続できませんでした。セキュリテ�
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
+msgid "{provider} couldn't be reached through the network proxy. Check the proxy settings."
+msgstr "{provider}にネットワークプロキシ経由で接続できませんでした。プロキシ設定を確認してください。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
 msgid "{provider} couldn't be reached. Check that it's running."
 msgstr "{provider}に接続できませんでした。起動しているか確認してください。"
 
@@ -379,6 +384,11 @@ msgstr "{provider}の週間利用額上限に達しました。"
 #: src/lib/run-error.ts
 msgid "{provider} rejected the API key. Check your connection settings."
 msgstr "{provider}がAPIキーを拒否しました。接続設定を確認してください。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "{provider} sign-in is no longer valid."
+msgstr "{provider}のログインは無効になりました。"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -571,6 +581,7 @@ msgid "Add a label"
 msgstr "ラベルを追加"
 
 #: src/components/ApprovalRulesSettings.tsx
+#: src/components/AutonomyPicker.tsx
 msgid "Add a model in Settings to use this."
 msgstr "これを使用するには、設定でモデルを追加してください。"
 
@@ -1021,6 +1032,10 @@ msgstr "成果物"
 msgid "Ask"
 msgstr "確認"
 
+#: src/components/AutonomyPicker.tsx
+msgid "Asks before any change"
+msgstr "変更の前に必ず確認する"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Asks you before it changes anything."
 msgstr "変更する前に確認します。"
@@ -1050,10 +1065,6 @@ msgstr "{value} を添付しています"
 #: src/pages/shell/chat-shared.ts
 msgid "Attachment"
 msgstr "添付ファイル"
-
-#: src/lib/model-connection-preflight.ts
-msgid "Authentication failed."
-msgstr "認証に失敗しました。"
 
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
@@ -1314,6 +1325,7 @@ msgid "Can't read images"
 msgstr "画像を読み取れません"
 
 #: src/components/AskCard.tsx
+#: src/components/AutonomyPicker.tsx
 #: src/components/ComputerMaintenanceActions.tsx
 #: src/components/markdown-link-prompt.tsx
 #: src/components/PasskeySettings.tsx
@@ -1436,14 +1448,6 @@ msgstr "アップデートを確認"
 msgid "Check in."
 msgstr "状況を確認してください。"
 
-#: src/lib/model-connection-preflight.ts
-msgid "Check the API key or sign-in, then test again."
-msgstr "APIキーまたはログイン情報を確認してから、もう一度テストしてください。"
-
-#: src/lib/model-connection-preflight.ts
-msgid "Check the server URL and network, then test again."
-msgstr "サーバーのURLとネットワークを確認してから、もう一度テストしてください。"
-
 #: src/pages/shell/import-setup-card.tsx
 msgid "Check this yourself"
 msgstr "ご自身で確認してください"
@@ -1478,6 +1482,7 @@ msgstr "ボットを選択"
 msgid "Choose a color or upload an image"
 msgstr "色を選ぶか、画像をアップロード"
 
+#: src/lib/model-problem.ts
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/shell/composer-error.tsx
 msgid "Choose a model"
@@ -1755,10 +1760,6 @@ msgstr "削除を確認"
 msgid "Confirm password"
 msgstr "パスワードの確認"
 
-#: src/lib/model-connection-preflight.ts
-msgid "Confirm the URL is reachable from this browser session, then test again."
-msgstr "このブラウザセッションからURLにアクセスできることを確認してから、もう一度テストしてください。"
-
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/ChatAppsRow.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
@@ -1779,6 +1780,7 @@ msgstr "{0} を接続"
 msgid "Connect {selectedProviderName}"
 msgstr "{selectedProviderName} に接続"
 
+#: src/lib/model-problem.ts
 #: src/pages/Onboarding.tsx
 #: src/pages/shell/composer-error.tsx
 msgid "Connect a model"
@@ -1858,10 +1860,6 @@ msgstr "接続中…"
 msgid "Connection"
 msgstr "接続"
 
-#: src/lib/model-connection-preflight.ts
-msgid "Connection test failed."
-msgstr "接続テストに失敗しました。"
-
 #. placeholder {0}: item.name
 #: src/pages/PluginsOverlay.tsx
 msgid "Connection to {0} is still pending. You can close this and check again."
@@ -1898,6 +1896,7 @@ msgstr "コンテキスト上限"
 #: src/pages/onboarding-quick-connect.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/onboarding/ComputerStep.tsx
+#: src/pages/onboarding/FirstBotStep.tsx
 #: src/pages/onboarding/UseStep.tsx
 #: src/pages/onboarding/WorkspaceStep.tsx
 #: src/pages/shell/agent-import.tsx
@@ -2245,18 +2244,19 @@ msgstr "請求ページを開けませんでした"
 msgid "Could not play a test clip"
 msgstr "テスト音声を再生できませんでした"
 
-#: src/lib/model-connection-preflight.ts
-msgid "Could not reach the model server."
-msgstr "モデルサーバーに接続できませんでした。"
-
 #: src/components/PasskeyOffer.tsx
 #: src/components/PasskeySettings.tsx
 #: src/lib/computer-sandbox.ts
+#: src/lib/model-problem.ts
 #: src/lib/user-error.ts
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
 msgid "Could not reach the server"
 msgstr "サーバーに接続できませんでした"
+
+#: src/lib/model-connection-preflight.ts
+msgid "Could not reach this model server"
+msgstr "このモデルサーバーに接続できませんでした"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Could not read these files"
@@ -2757,6 +2757,7 @@ msgstr "デスクトップ操作"
 msgid "Desktop update"
 msgstr "デスクトップの更新"
 
+#: src/components/ModelProblemNotice.tsx
 #: src/pages/RoutineRunDetail.tsx
 #: src/pages/RoutineRunHistory.tsx
 #: src/pages/shell/composer-error.tsx
@@ -2857,9 +2858,17 @@ msgstr "Dockerはセキュリティ強化のため、コンピューターへの
 msgid "Document changed. Reopen to edit the latest version."
 msgstr "ドキュメントが変更されました。最新版を編集するには開き直してください。"
 
+#: src/components/AutonomyPicker.tsx
+msgid "Does everything without asking"
+msgstr "確認せずにすべて行う"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Does everything without asking. Best for bots you trust."
 msgstr "確認なしですべて実行します。信頼できるボット向けです。"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Does what fits your request"
+msgstr "依頼に合うことを行う"
 
 #: src/pages/Auth.tsx
 msgid "Don’t have an account?"
@@ -3416,6 +3425,10 @@ msgstr "時間"
 msgid "hours"
 msgstr "時間"
 
+#: src/components/AutonomyPicker.tsx
+msgid "How much does {name} do on its own?"
+msgstr "{name}はどこまで自分で行いますか？"
+
 #: src/pages/RoutineSchedule.tsx
 msgid "How often"
 msgstr "頻度"
@@ -3694,6 +3707,14 @@ msgstr "後で"
 #: src/pages/WikiBrowser.tsx
 msgid "Learn from conversations"
 msgstr "会話から学ぶ"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Let {name} act without asking?"
+msgstr "{name}が確認なしで動くことを許可しますか？"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Let bots act without asking?"
+msgstr "ボットが確認なしで動くことを許可しますか？"
 
 #: src/components/DesktopControlSettings.tsx
 msgid "Let bots see and use your apps. Actions ask first."
@@ -5244,6 +5265,7 @@ msgstr "APIキーを置き換え"
 msgid "Replace its instructions"
 msgstr "既存の指示を置き換える"
 
+#: src/lib/model-problem.ts
 #: src/pages/shell/composer-error.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Replace key"
@@ -5389,10 +5411,6 @@ msgstr "Rookに戻る"
 #: src/components/AskCard.tsx
 msgid "Review before {reviewing}"
 msgstr "実行前に確認: {reviewing}"
-
-#: src/lib/model-connection-preflight.ts
-msgid "Review provider settings and test again."
-msgstr "プロバイダー設定を確認して、もう一度テストしてください。"
 
 #. placeholder {0}: revision.revision
 #: src/pages/WikiBrowser.tsx
@@ -5836,6 +5854,7 @@ msgid "Sign in"
 msgstr "ログイン"
 
 #: src/components/AccountAccess.tsx
+#: src/lib/model-problem.ts
 #: src/lib/passkeys.ts
 #: src/lib/user-error.ts
 #: src/pages/model-settings/connection-controls.tsx
@@ -6045,12 +6064,28 @@ msgstr "ステップ {number}"
 msgid "Steps"
 msgstr "手順"
 
+#: src/components/AutonomyPicker.tsx
+msgid "Still asks before a security change after it read outside content. Blocked actions stay blocked."
+msgstr "外部のコンテンツを読んだあとのセキュリティ変更の前には、引き続き確認します。ブロックされた操作はブロックされたままです。"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Still asks before anything that changes something, and before opening a site you didn't mention."
+msgstr "何かを変更する操作の前と、あなたが指定していないサイトを開く前には、引き続き確認します。"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Still asks when a second model finds it outside your request, and before security changes."
+msgstr "2つ目のモデルが依頼の範囲外だと判断したときと、セキュリティ変更の前には、引き続き確認します。"
+
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/computer-overlay.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Stop"
 msgstr "停止"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Stop asking"
+msgstr "確認をやめる"
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Stop computer"
@@ -6231,10 +6266,6 @@ msgstr "ボットと、そのインポートで追加されたものが削除さ
 msgid "The bot can use the file but won't see the picture."
 msgstr "ボットはファイルを利用できますが、画像の内容は見えません。"
 
-#: src/lib/model-connection-preflight.ts
-msgid "The connection timed out."
-msgstr "接続がタイムアウトしました。"
-
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "The model hit its output limit before finishing its reply."
@@ -6249,10 +6280,6 @@ msgstr "モデルプロバイダーがエラーを返しました。"
 #: src/lib/run-error.ts
 msgid "The model returned an unusable response. Try again."
 msgstr "モデルが利用できない応答を返しました。もう一度お試しください。"
-
-#: src/lib/model-connection-preflight.ts
-msgid "The provider is rate-limiting requests."
-msgstr "プロバイダーがリクエストを制限しています。"
 
 #: src/lib/computer-screen.ts
 msgid "The screen connection closed."
@@ -6548,6 +6575,7 @@ msgstr "トライアル終了: {day}"
 msgid "Trigger"
 msgstr "トリガー"
 
+#: src/components/ModelProblemNotice.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 msgid "Try again"
@@ -6828,10 +6856,6 @@ msgstr "その前の月との比較"
 #: src/pages/Usage.tsx
 msgid "vs. the same days last month"
 msgstr "先月の同じ日数との比較"
-
-#: src/lib/model-connection-preflight.ts
-msgid "Wait a moment and test again."
-msgstr "しばらく待ってから再度テストしてください。"
 
 #: src/pages/shell/message-view.tsx
 msgid "waiting"

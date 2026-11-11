@@ -9,6 +9,7 @@ import { LoadFailure } from "../../components/load-failure";
 import { NativeSegmentedControl } from "../../components/native-segmented-control";
 import { SettingsFooter, SettingsGroup, SettingsRow } from "../../components/settings-group";
 import { mobileTokens } from "../../lib/appearance";
+import { confirmNeverAsk } from "../../lib/autonomy";
 import { useI18n } from "../../lib/i18n";
 import { native, useResolvedAppearance, useThemedStyles } from "../../lib/native";
 import { settingsRpc, settingsTarget } from "../../lib/settings-target";
@@ -74,8 +75,11 @@ export default function Approvals() {
     }
   }
 
-  const setMode = (mode: ApprovalMode) =>
-    save(async () => setSettings(await rpc("autoReview/set", { scope, mode })));
+  const setMode = async (mode: ApprovalMode) => {
+    // Never ask is the default every bot follows, so it needs the same confirmation as a bot's own.
+    if (mode === "never" && !(await confirmNeverAsk(t, undefined))) return;
+    await save(async () => setSettings(await rpc("autoReview/set", { scope, mode })));
+  };
 
   const applyRuleAction = (rule: ActionApprovalRule, action: RuleAction) =>
     save(async () => {

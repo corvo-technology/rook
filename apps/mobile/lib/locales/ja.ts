@@ -120,6 +120,9 @@ export const JA_MESSAGES: Record<string, string> = {
   "{provider} can't run this model.": "{provider}ではこのモデルを実行できません。",
   "{provider} couldn't be reached securely. A security program or network filter may be intercepting the connection.":
     "{provider}に安全に接続できませんでした。セキュリティソフトまたはネットワークフィルターが接続を妨げている可能性があります。",
+  "{provider} sign-in is no longer valid.": "{provider}のログインは無効になりました。",
+  "{provider} couldn't be reached through the network proxy. Check the proxy settings.":
+    "{provider}にネットワークプロキシ経由で接続できませんでした。プロキシ設定を確認してください。",
   "{provider} took too long to respond. Try again.":
     "{provider}の応答に時間がかかりすぎました。もう一度お試しください。",
   "{provider} is overloaded right now. Try again in a moment.":

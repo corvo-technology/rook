@@ -24,8 +24,10 @@ import {
   connectionFormModelId,
   connectionMaxTokensField,
   createModelProbe,
+  describeModelProblem,
   initialModelProbeState,
   modelConnectRequest,
+  modelFailureData,
   savedCompatibleModelIds,
   toggleEnabledModelId,
 } from "@corvo/core";
@@ -50,6 +52,7 @@ import { MenuPickerMenu } from "../../components/menu-picker";
 import { NativeActionButton } from "../../components/native-action-button";
 import { NativeSwitch } from "../../components/native-switch";
 import { Checkmark } from "../../components/row-accessories";
+import { RunErrorTextAction } from "../../components/run-error-actions";
 import { SettingsRow } from "../../components/settings-group";
 import type { MobileMe, MobileModel, MobileModelCredential } from "../../lib/api";
 import { mobileTokens } from "../../lib/appearance";
@@ -61,6 +64,7 @@ import {
 } from "../../lib/model-auth";
 import { modelConnectionRequest } from "../../lib/model-connection-request";
 import { native, useThemedStyles } from "../../lib/native";
+import { modelProblemTranslator } from "../../lib/run-error-presentation";
 import { ACCOUNT_SETTINGS, settingsRpc } from "../../lib/settings-target";
 import { thinkingLevelLabel } from "../../lib/thinking-level";
 import { errorText } from "../../lib/user-error";
@@ -86,7 +90,7 @@ export default function ModelConnection() {
   const [credentialId, setCredentialId] = useState(request?.credentialId ?? null);
   const credentialIdRef = useRef(credentialId);
   credentialIdRef.current = credentialId;
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [catalog, setCatalog] = useState<MobileModel[]>([]);
   const [credentials, setCredentials] = useState<MobileModelCredential[]>([]);
   const [me, setMe] = useState<MobileMe | null>(null);
@@ -118,6 +122,9 @@ export default function ModelConnection() {
   const [pending, setPending] = useState<"connect" | "disconnect" | null>(null);
   const [oauthPending, setOauthPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The masked raw text behind a structured model failure, shown on request.
+  const [errorDetails, setErrorDetails] = useState<string | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [savedNotice, setSavedNotice] = useState<string | null>(null);
 
   const meRef = useRef<MobileMe | null>(null);
@@ -129,13 +136,27 @@ export default function ModelConnection() {
   const [codeCopied, setCodeCopied] = useState(false);
   const codeCopiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  /** A structured model failure reads as the shared one-line problem with its masked details. */
+  function modelFailureFeedback(err: unknown, fallback: string) {
+    const failure = modelFailureData(err);
+    if (!failure) return { error: errorText(err, fallback) };
+    const problem = describeModelProblem(failure, {
+      translate: modelProblemTranslator(t),
+      locale,
+      authKind: credential?.authKind,
+    });
+    return { error: problem.line, details: problem.details ?? null };
+  }
+
   function publishFeedback(
     anchor: FeedbackAnchor,
-    next: { error?: string | null; notice?: string | null },
+    next: { error?: string | null; notice?: string | null; details?: string | null },
   ) {
     const nextError = next.error ?? null;
     setFeedbackAnchor(anchor);
     setError(nextError);
+    setErrorDetails(next.details ?? null);
+    setDetailsOpen(false);
     setSavedNotice(next.notice === t("Saved.") ? next.notice : null);
     const message = nextError ?? next.notice ?? null;
     // VoiceOver keeps focus on the tapped button, so speak the result from here.
@@ -146,6 +167,7 @@ export default function ModelConnection() {
   function clearFeedback() {
     setFeedbackAnchor("connection");
     setError(null);
+    setErrorDetails(null);
     setSavedNotice(null);
   }
 
@@ -322,9 +344,7 @@ export default function ModelConnection() {
         });
       },
       onError: (err) =>
-        publishFeedback("probe", {
-          error: errorText(err, t("Could not reach this model server")),
-        }),
+        publishFeedback("probe", modelFailureFeedback(err, t("Could not reach this model server"))),
     });
   }
 
@@ -414,9 +434,7 @@ export default function ModelConnection() {
       await load({ modelId });
       publishFeedback(anchor, { notice: t("Saved.") });
     } catch (err) {
-      publishFeedback(anchor, {
-        error: errorText(err, t("Could not connect this provider")),
-      });
+      publishFeedback(anchor, modelFailureFeedback(err, t("Could not connect this provider")));
     } finally {
       setPending(null);
     }
@@ -543,7 +561,25 @@ export default function ModelConnection() {
   }
 
   const feedback = error ? (
-    <Text style={styles.error}>{error}</Text>
+    <>
+      <Text style={styles.error}>{error}</Text>
+      {errorDetails ? (
+        <>
+          <RunErrorTextAction
+            label={t("Technical details")}
+            expanded={detailsOpen}
+            onPress={() => setDetailsOpen(!detailsOpen)}
+          />
+          {detailsOpen ? (
+            <ScrollView nestedScrollEnabled style={{ maxHeight: 160 }}>
+              <Text selectable style={styles.secondary}>
+                {errorDetails}
+              </Text>
+            </ScrollView>
+          ) : null}
+        </>
+      ) : null}
+    </>
   ) : savedNotice ? (
     <Text style={styles.secondary}>{savedNotice}</Text>
   ) : null;

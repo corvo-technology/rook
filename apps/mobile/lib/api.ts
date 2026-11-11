@@ -1085,7 +1085,10 @@ export type MobileSpace = Space;
 export type MobileSpaceNavigation = SpaceNavigation;
 
 /** A run as live events report it, before a refresh brings the full record. */
-type MobileRun = Pick<Run, "id"> & Partial<Pick<Run, "botId">> & { status: string };
+type MobileRun = Pick<Run, "id"> &
+  Partial<Pick<Run, "botId" | "modelProvider">> & {
+    status: string;
+  };
 
 /**
  * A thread as the screen holds it: live events patch it between refreshes, and a saved chat

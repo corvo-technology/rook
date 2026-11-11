@@ -536,6 +536,8 @@ model Bot {
   crossSpaceCommunication  Boolean           @default(false)
   fleetManagement          Boolean           @default(true)
   squadRouting             Boolean           @default(false)
+  /// This bot's own approval mode (never, auto, ask); null follows the member's default.
+  approvalMode             String?
   /// Most a bot may spend on hosted model credits in a UTC day; null means no limit.
   dailyCapMicros           BigInt?
   routines                 Routine[]

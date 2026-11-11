@@ -115,6 +115,9 @@ export const ZH_MESSAGES: Record<string, string> = {
     "此模型的上下文窗口太小。请选择其他模型。",
   "{provider} couldn't be reached securely. A security program or network filter may be intercepting the connection.":
     "无法安全连接到{provider}。可能是安全软件或网络过滤器拦截了连接。",
+  "{provider} sign-in is no longer valid.": "{provider}的登录已失效。",
+  "{provider} couldn't be reached through the network proxy. Check the proxy settings.":
+    "无法通过网络代理连接到{provider}。请检查代理设置。",
   "{provider} took too long to respond. Try again.": "{provider}响应超时。请重试。",
   "{provider} is overloaded right now. Try again in a moment.":
     "{provider}当前负载过高。请稍后再试。",

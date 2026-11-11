@@ -1,5 +1,10 @@
 import { createServer } from "node:http";
-import { ModelConnectInputSchema, OPENAI_COMPATIBLE_PROVIDER_ID } from "@corvo/contracts";
+import { ModelRequestError } from "@corvo/adapter-kit";
+import {
+  MODEL_KEY_REJECTED_ERROR,
+  ModelConnectInputSchema,
+  OPENAI_COMPATIBLE_PROVIDER_ID,
+} from "@corvo/contracts";
 import {
   createModels,
   fauxAssistantMessage,
@@ -669,6 +674,46 @@ describe("openai-compatible provider", () => {
     expect(model?.api).toBe("openai-completions");
     expect(model?.maxTokens).toBe(8192);
     expect(model?.contextWindow).toBe(65536);
+  });
+
+  it("attaches the HTTP status to a failed probe", async () => {
+    const fetchImpl = async () => new Response("down", { status: 503 });
+    const error = await probeOpenAiCompatibleModels(
+      { baseUrl: "http://127.0.0.1:8000/v1" },
+      fetchImpl,
+      undefined,
+      OWNER,
+    ).catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(ModelRequestError);
+    expect((error as ModelRequestError).facts.status).toBe(503);
+    expect((error as ModelRequestError).message).toMatch(/^Model server returned 503\./);
+  });
+
+  it("attaches the transport code to a failed probe", async () => {
+    const fetchImpl = async () => {
+      throw new TypeError("fetch failed", {
+        cause: Object.assign(new Error("connect ECONNREFUSED"), { code: "ECONNREFUSED" }),
+      });
+    };
+    const error = await probeOpenAiCompatibleModels(
+      { baseUrl: "http://127.0.0.1:8000/v1" },
+      fetchImpl,
+      undefined,
+      OWNER,
+    ).catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(ModelRequestError);
+    expect((error as ModelRequestError).facts.code).toBe("ECONNREFUSED");
+  });
+
+  it("attaches the status to a rejected Ollama key", async () => {
+    const fetchImpl = async () => new Response("no", { status: 401 });
+    const error = await verifyOpenAiCompatibleApiKey(
+      { baseUrl: "https://ollama.com/v1", apiKey: "sk-test-0000000000" },
+      fetchImpl,
+    ).catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(ModelRequestError);
+    expect((error as ModelRequestError).message).toBe(MODEL_KEY_REJECTED_ERROR);
+    expect((error as ModelRequestError).facts.status).toBe(401);
   });
 
   it("probes /v1/models with mocked fetch", async () => {

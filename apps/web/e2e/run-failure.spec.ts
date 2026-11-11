@@ -152,7 +152,7 @@ test("an overloaded provider is named instead of a generic error", async ({ page
     { timeout: 30_000 },
   );
   await expect(error).not.toContainText("The model provider returned an error.");
-  await expect(error.getByTestId("composer-error-action")).toHaveCount(0);
+  await expect(error.getByTestId("model-problem-action")).toHaveCount(0);
   await captureScreenshot(page, testInfo, "overloaded-run-error");
 });
 
@@ -170,7 +170,7 @@ test("a model too small for required instructions offers a model change", async 
     { timeout: 30_000 },
   );
   await expect(error).not.toContainText("Start a new chat");
-  await expect(error.getByTestId("composer-error-action")).toHaveText("Choose a model");
+  await expect(error.getByTestId("model-problem-action")).toHaveText("Choose a model");
   await captureScreenshot(page, testInfo, "required-context-model-recovery");
 });
 
@@ -184,7 +184,7 @@ test("a reply cut off at the output limit offers a model change", async ({ page 
   await expect(error).toContainText("The model hit its output limit before finishing its reply.", {
     timeout: 30_000,
   });
-  await expect(error.getByTestId("composer-error-action")).toHaveText("Choose a model");
+  await expect(error.getByTestId("model-problem-action")).toHaveText("Choose a model");
   await captureScreenshot(page, testInfo, "cut-reply-model-recovery");
 });
 
@@ -198,7 +198,7 @@ test("a provider out of credits offers another model", async ({ page }, testInfo
   await expect(error).toContainText("Your model provider reached its credit limit.", {
     timeout: 30_000,
   });
-  const action = error.getByTestId("composer-error-action");
+  const action = error.getByTestId("model-problem-action");
   await expect(action).toHaveText("Choose a model");
   await captureScreenshot(page, testInfo, "credit-limit-model-recovery");
   await action.click();
@@ -216,7 +216,7 @@ test("a rejected key opens the model connections", async ({ page }, testInfo) =>
     "Your model provider rejected the API key. Check your connection settings.",
     { timeout: 30_000 },
   );
-  const action = error.getByTestId("composer-error-action");
+  const action = error.getByTestId("model-problem-action");
   await expect(action).toHaveText("Replace key");
   await captureScreenshot(page, testInfo, "rejected-key-connection-recovery");
   await action.click();

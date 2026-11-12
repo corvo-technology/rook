@@ -1,13 +1,13 @@
 import type { BotAvatarCharacterId } from "@corvo/contracts";
 import { CHESS_PIECE_IDS } from "@corvo/contracts";
+import { CHESS_PIECES } from "@corvo/core";
 import type { AvatarDefinition } from "open-bot-avatar";
-import { CHESS_PIECES } from "./chess-pieces.js";
 
 /*
  * The characters an agent can wear, from Open Bot Avatar (https://github.com/DominikScholz/open-bot-avatar),
  * (c) Dominik Scholz, MIT: the starter avatars of its package and its gallery, as published in v0.1.2.
  * Each is geometry only, drawn in the agent's color. The chess pieces come first: they are our own
- * drawings beside the rook (see chess-pieces.ts).
+ * drawings beside the rook (see @corvo/core chess-set.ts).
  */
 export interface BotCharacter {
   id: BotAvatarCharacterId;

@@ -500,6 +500,9 @@ importers:
       astro:
         specifier: 7.4.1
         version: 7.4.1(@types/node@26.5.0)(@vercel/functions@3.10.3(@aws-sdk/credential-provider-web-identity@3.972.76)(ws@8.22.0))(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.15)(yaml@2.9.1)
+      open-bot-avatar:
+        specifier: 0.2.1
+        version: 0.2.1
       posthog-js:
         specifier: 1.438.21
         version: 1.438.21(@types/react@19.2.18)(react@19.2.3)
@@ -934,6 +937,9 @@ importers:
       mdast-util-to-hast:
         specifier: 13.2.1
         version: 13.2.1
+      open-bot-avatar:
+        specifier: 0.2.1
+        version: 0.2.1
       remark-gfm:
         specifier: 4.0.1
         version: 4.0.1

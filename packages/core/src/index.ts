@@ -19,6 +19,7 @@ export * from "./avatar-shape.js";
 export * from "./barge-in.js";
 export * from "./bot-avatar-colors.js";
 export * from "./bot-avatar-shapes.js";
+export * from "./chess-set.js";
 export * from "./bot-budget.js";
 export * from "./bot-mascot.js";
 export * from "./bot-mentions.js";

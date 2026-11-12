@@ -1397,13 +1397,11 @@ msgstr "画像を読み取れません"
 
 #: src/components/AskCard.tsx
 #: src/components/AutonomyPicker.tsx
-#: src/components/ComputerMaintenanceActions.tsx
 #: src/components/markdown-link-prompt.tsx
 #: src/components/PasskeySettings.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/AddStepDialog.tsx
-#: src/pages/Artifacts.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/LocalSpeechSection.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -1636,6 +1634,7 @@ msgid "Clearing…"
 msgstr "クリア中…"
 
 #: src/components/ErrorBoundary.tsx
+#: src/pages/HostComputerPrompt.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/NewRoutinePanel.tsx
@@ -1851,6 +1850,14 @@ msgstr "削除しますか？"
 msgid "Confirm password"
 msgstr "パスワードの確認"
 
+#: src/components/ComputerMaintenanceActions.tsx
+msgid "Confirm recover?"
+msgstr "復旧を確認しますか？"
+
+#: src/components/ComputerMaintenanceActions.tsx
+msgid "Confirm reset?"
+msgstr "リセットを確認しますか？"
+
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/ChatAppsRow.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
@@ -1999,10 +2006,6 @@ msgstr "コンテキスト上限"
 #: src/pages/shell/agent-import.tsx
 msgid "Continue"
 msgstr "続行"
-
-#: src/components/ComputerUpdateProgress.tsx
-msgid "Continue in Background"
-msgstr "バックグラウンドで続行"
 
 #: src/components/ModelCredits.tsx
 msgid "Continue to checkout"
@@ -2769,7 +2772,6 @@ msgid "Delegating to helper: {value}"
 msgstr "ヘルパーに任せています: {value}"
 
 #: src/components/PasskeySettings.tsx
-#: src/pages/Artifacts.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -2779,11 +2781,6 @@ msgstr "ヘルパーに任せています: {value}"
 #: src/pages/WikiBrowser.tsx
 msgid "Delete"
 msgstr "削除"
-
-#. placeholder {0}: pendingDelete.name
-#: src/pages/Artifacts.tsx
-msgid "Delete \"{0}\"?"
-msgstr "「{0}」を削除しますか？"
 
 #. placeholder {0}: artifact.name
 #. placeholder {0}: bot.name
@@ -2828,11 +2825,15 @@ msgstr "スペースを削除"
 msgid "deleted"
 msgstr "削除済み"
 
+#. placeholder {0}: artifact.name
+#: src/pages/Artifacts.tsx
+msgid "Deleted {0}"
+msgstr "{0} を削除しました"
+
 #: src/pages/Usage.tsx
 msgid "Deleted agent"
 msgstr "削除されたエージェント"
 
-#: src/pages/Artifacts.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Deleting…"
 msgstr "削除中…"
@@ -5327,10 +5328,6 @@ msgstr "録画中: {0}"
 msgid "Recover computer"
 msgstr "コンピューターを復旧"
 
-#: src/components/ComputerMaintenanceActions.tsx
-msgid "Recover computer?"
-msgstr "コンピューターを復旧しますか？"
-
 #. placeholder {0}: update.name
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Recovering {0}’s Computer"
@@ -5352,7 +5349,6 @@ msgstr "復旧に失敗しました"
 msgid "Recovery is unavailable until the previous operation has stopped."
 msgstr "前の操作が停止するまで復旧できません。"
 
-#: src/components/ComputerMaintenanceActions.tsx
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Recovery restores the last saved workspace. Unsaved work may be lost."
 msgstr "復旧すると最後に保存されたワークスペースが復元されます。保存されていない作業は失われる可能性があります。"
@@ -5564,7 +5560,6 @@ msgstr "リサーチと執筆"
 msgid "Research and writing"
 msgstr "リサーチと執筆"
 
-#: src/components/ComputerMaintenanceActions.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Reset"
 msgstr "リセット"
@@ -5576,10 +5571,6 @@ msgstr "すべてリセット"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Reset computer"
 msgstr "コンピューターをリセット"
-
-#: src/components/ComputerMaintenanceActions.tsx
-msgid "Reset computer?"
-msgstr "コンピューターをリセットしますか？"
 
 #: src/pages/Auth.tsx
 msgid "Reset password"
@@ -5622,10 +5613,6 @@ msgstr "復元"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace."
 msgstr "最後に保存されたワークスペースを復元します。"
-
-#: src/components/ComputerMaintenanceActions.tsx
-msgid "Restore the last saved workspace. Unsaved work on the computer is lost."
-msgstr "最後に保存されたワークスペースを復元します。コンピューター上の保存されていない作業は失われます。"
 
 #: src/components/AskCard.tsx
 msgid "Restored"
@@ -6686,17 +6673,9 @@ msgstr "このボットはインポートされませんでした。"
 msgid "This call is no longer ringing."
 msgstr "この通話の呼び出しは終了しました。"
 
-#: src/pages/Artifacts.tsx
-msgid "This can't be undone."
-msgstr "この操作は元に戻せません。"
-
 #: src/pages/shell/dialogs.tsx
 msgid "This cannot be undone."
 msgstr "この操作は元に戻せません。"
-
-#: src/pages/PeerMessagesOverlay.tsx
-msgid "This chat is view-only"
-msgstr "このチャットは閲覧のみです"
 
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/Onboarding.tsx
@@ -6707,11 +6686,6 @@ msgstr "このコンピューター"
 #: src/lib/run-error.ts
 msgid "This conversation is too long for the model. Retrying won't help. Start a new chat or shorten your message."
 msgstr "この会話はモデルにとって長すぎます。再試行しても解決しません。新しいチャットを開始するか、メッセージを短くしてください。"
-
-#. placeholder {0}: pendingDelete.versionCount
-#: src/pages/Artifacts.tsx
-msgid "This deletes all {0} versions of this artifact. This can't be undone."
-msgstr "このアーティファクトの全{0}バージョンを削除します。この操作は元に戻せません。"
 
 #: src/components/ArtifactFileCard.tsx
 msgid "This file is not valid UTF-8 text."
@@ -6959,6 +6933,7 @@ msgstr "回答を入力"
 #: src/components/AskCard.tsx
 #: src/components/MemoryFactCard.tsx
 #: src/components/WikiChangeCard.tsx
+#: src/pages/Artifacts.tsx
 msgid "Undo"
 msgstr "元に戻す"
 

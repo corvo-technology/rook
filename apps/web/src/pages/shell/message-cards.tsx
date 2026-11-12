@@ -1,13 +1,12 @@
 import type { MessageBlock } from "@corvo/contracts";
 import { appConnectedInput, waitForConnection } from "@corvo/core";
-import { Button, Dialog, DialogClose, DialogContent, DialogTitle, Input } from "@corvo/ui-web";
+import { Button, Input, SidePanel } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { BuiCard, SuccessPop } from "../../components/ai/primitives";
 import { OptionRow } from "../../components/OptionRow";
 import type { ArtifactTarget } from "../../lib/artifact-open";
-import { chartViewport } from "../../lib/chart-viewport";
 import { connectMcpOauth } from "../../lib/mcp-connect";
 import { importChunk } from "../../lib/preload-recovery";
 import { rpc } from "../../lib/rpc";
@@ -513,18 +512,6 @@ export function ChartBlockView({
 }) {
   const { t } = useLingui();
   const [expanded, setExpanded] = useState(false);
-  const [viewport, setViewport] = useState(() => ({
-    width: window.innerWidth,
-    height: window.innerHeight,
-  }));
-  useEffect(() => {
-    if (!expanded) return;
-    setViewport({ width: window.innerWidth, height: window.innerHeight });
-    const onResize = () => setViewport({ width: window.innerWidth, height: window.innerHeight });
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, [expanded]);
-  const expandedViewport = chartViewport(viewport.width, viewport.height);
   return (
     <>
       <div className="group relative w-[552px] max-w-full rounded-[20px] bg-muted p-4">
@@ -538,30 +525,15 @@ export function ChartBlockView({
           <Trans>Expand</Trans>
         </Button>
       </div>
-      <Dialog open={expanded} onOpenChange={setExpanded}>
-        <DialogContent
-          showCloseButton={false}
-          className="max-h-[92vh] w-[min(1320px,94vw)] max-w-none overflow-auto p-8 sm:max-w-none"
-        >
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-[13px] font-normal text-muted-foreground">
-              {name}
-            </DialogTitle>
-            <DialogClose
-              aria-label={t`Close chart`}
-              render={<Button variant="ghost" size="icon-sm" />}
-            >
-              <X />
-            </DialogClose>
-          </div>
-          <ChartCanvas
-            spec={spec}
-            data={data}
-            width={expandedViewport.width}
-            height={expandedViewport.height}
-          />
-        </DialogContent>
-      </Dialog>
+      <SidePanel
+        open={expanded}
+        onClose={() => setExpanded(false)}
+        title={name}
+        closeLabel={t`Close chart`}
+        wide
+      >
+        <ChartCanvas spec={spec} data={data} width={512} />
+      </SidePanel>
     </>
   );
 }
@@ -616,25 +588,15 @@ export function ArtifactImage({
         </div>
       )}
       {src ? (
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent
-            showCloseButton={false}
-            className="w-auto max-w-none bg-transparent p-0 ring-0 sm:max-w-none"
-          >
-            <DialogTitle className="sr-only">{name}</DialogTitle>
-            <DialogClose
-              aria-label={t`Close image preview`}
-              render={<Button variant="ghost" size="icon-sm" className="absolute end-2 top-2" />}
-            >
-              <X />
-            </DialogClose>
-            <img
-              src={src}
-              alt={name}
-              className="max-h-[85vh] max-w-[90vw] rounded-xl object-contain"
-            />
-          </DialogContent>
-        </Dialog>
+        <SidePanel
+          open={open}
+          onClose={() => setOpen(false)}
+          title={name}
+          closeLabel={t`Close image preview`}
+          wide
+        >
+          <img src={src} alt={name} className="w-full rounded-xl object-contain" />
+        </SidePanel>
       ) : null}
     </div>
   );

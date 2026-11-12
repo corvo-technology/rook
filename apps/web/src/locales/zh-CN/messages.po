@@ -1397,13 +1397,11 @@ msgstr "无法读取图像"
 
 #: src/components/AskCard.tsx
 #: src/components/AutonomyPicker.tsx
-#: src/components/ComputerMaintenanceActions.tsx
 #: src/components/markdown-link-prompt.tsx
 #: src/components/PasskeySettings.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/AddStepDialog.tsx
-#: src/pages/Artifacts.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/LocalSpeechSection.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -1636,6 +1634,7 @@ msgid "Clearing…"
 msgstr "正在清空…"
 
 #: src/components/ErrorBoundary.tsx
+#: src/pages/HostComputerPrompt.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/NewRoutinePanel.tsx
@@ -1851,6 +1850,14 @@ msgstr "确认删除？"
 msgid "Confirm password"
 msgstr "确认密码"
 
+#: src/components/ComputerMaintenanceActions.tsx
+msgid "Confirm recover?"
+msgstr "确认恢复？"
+
+#: src/components/ComputerMaintenanceActions.tsx
+msgid "Confirm reset?"
+msgstr "确认重置？"
+
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/ChatAppsRow.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
@@ -1999,10 +2006,6 @@ msgstr "上下文限制"
 #: src/pages/shell/agent-import.tsx
 msgid "Continue"
 msgstr "继续"
-
-#: src/components/ComputerUpdateProgress.tsx
-msgid "Continue in Background"
-msgstr "在后台继续"
 
 #: src/components/ModelCredits.tsx
 msgid "Continue to checkout"
@@ -2769,7 +2772,6 @@ msgid "Delegating to helper: {value}"
 msgstr "正在委派给助手：{value}"
 
 #: src/components/PasskeySettings.tsx
-#: src/pages/Artifacts.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -2779,11 +2781,6 @@ msgstr "正在委派给助手：{value}"
 #: src/pages/WikiBrowser.tsx
 msgid "Delete"
 msgstr "删除"
-
-#. placeholder {0}: pendingDelete.name
-#: src/pages/Artifacts.tsx
-msgid "Delete \"{0}\"?"
-msgstr "删除“{0}”？"
 
 #. placeholder {0}: artifact.name
 #. placeholder {0}: bot.name
@@ -2828,11 +2825,15 @@ msgstr "删除空间"
 msgid "deleted"
 msgstr "已删除"
 
+#. placeholder {0}: artifact.name
+#: src/pages/Artifacts.tsx
+msgid "Deleted {0}"
+msgstr "已删除 {0}"
+
 #: src/pages/Usage.tsx
 msgid "Deleted agent"
 msgstr "已删除的代理"
 
-#: src/pages/Artifacts.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Deleting…"
 msgstr "正在删除…"
@@ -5327,10 +5328,6 @@ msgstr "录制中：{0}"
 msgid "Recover computer"
 msgstr "恢复电脑"
 
-#: src/components/ComputerMaintenanceActions.tsx
-msgid "Recover computer?"
-msgstr "恢复电脑？"
-
 #. placeholder {0}: update.name
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Recovering {0}’s Computer"
@@ -5352,7 +5349,6 @@ msgstr "恢复失败"
 msgid "Recovery is unavailable until the previous operation has stopped."
 msgstr "在上一个操作停止之前无法恢复。"
 
-#: src/components/ComputerMaintenanceActions.tsx
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Recovery restores the last saved workspace. Unsaved work may be lost."
 msgstr "恢复操作会还原上次保存的工作区。未保存的工作可能会丢失。"
@@ -5564,7 +5560,6 @@ msgstr "调研和写作"
 msgid "Research and writing"
 msgstr "研究与写作"
 
-#: src/components/ComputerMaintenanceActions.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Reset"
 msgstr "重置"
@@ -5576,10 +5571,6 @@ msgstr "全部重置"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Reset computer"
 msgstr "重置电脑"
-
-#: src/components/ComputerMaintenanceActions.tsx
-msgid "Reset computer?"
-msgstr "重置电脑？"
 
 #: src/pages/Auth.tsx
 msgid "Reset password"
@@ -5622,10 +5613,6 @@ msgstr "恢复"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace."
 msgstr "恢复上次保存的工作区。"
-
-#: src/components/ComputerMaintenanceActions.tsx
-msgid "Restore the last saved workspace. Unsaved work on the computer is lost."
-msgstr "还原上次保存的工作区。电脑上未保存的工作会丢失。"
 
 #: src/components/AskCard.tsx
 msgid "Restored"
@@ -6686,17 +6673,9 @@ msgstr "此机器人不是导入的。"
 msgid "This call is no longer ringing."
 msgstr "此通话已不再响铃。"
 
-#: src/pages/Artifacts.tsx
-msgid "This can't be undone."
-msgstr "此操作无法撤销。"
-
 #: src/pages/shell/dialogs.tsx
 msgid "This cannot be undone."
 msgstr "此操作无法撤销。"
-
-#: src/pages/PeerMessagesOverlay.tsx
-msgid "This chat is view-only"
-msgstr "此对话为只读"
 
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/Onboarding.tsx
@@ -6707,11 +6686,6 @@ msgstr "这台电脑"
 #: src/lib/run-error.ts
 msgid "This conversation is too long for the model. Retrying won't help. Start a new chat or shorten your message."
 msgstr "此对话对模型来说太长了。重试无济于事。请开始新的聊天或缩短你的消息。"
-
-#. placeholder {0}: pendingDelete.versionCount
-#: src/pages/Artifacts.tsx
-msgid "This deletes all {0} versions of this artifact. This can't be undone."
-msgstr "这将删除此产物的全部 {0} 个版本。此操作无法撤销。"
 
 #: src/components/ArtifactFileCard.tsx
 msgid "This file is not valid UTF-8 text."
@@ -6959,6 +6933,7 @@ msgstr "输入你的回答"
 #: src/components/AskCard.tsx
 #: src/components/MemoryFactCard.tsx
 #: src/components/WikiChangeCard.tsx
+#: src/pages/Artifacts.tsx
 msgid "Undo"
 msgstr "撤销"
 

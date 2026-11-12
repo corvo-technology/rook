@@ -15,7 +15,7 @@ test("a failed overlay chunk keeps the shell and the draft, and Refresh loads it
   await page.route(pluginsChunk, (route) => route.fulfill({ status: 404 }));
   await page.getByRole("button", { name: "Store", exact: true }).click();
 
-  const failed = page.getByRole("alertdialog", { name: "Could not load" });
+  const failed = page.getByRole("complementary", { name: "Could not load" });
   await expect(failed).toBeVisible();
   await captureScreenshot(page, testInfo, "overlay-load-failed");
 

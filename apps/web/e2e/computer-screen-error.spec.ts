@@ -46,9 +46,9 @@ test("screen connection failures stay visible and can be retried", async ({ page
 
   await expect(preview.getByRole("alert")).toContainText("Screen not connected");
   await preview.getByRole("button", { name: "Recover computer", exact: true }).click();
-  await expect(page.getByRole("alertdialog")).toContainText("Recover computer?");
+  await expect(preview.getByRole("button", { name: "Confirm recover?" })).toBeVisible();
   await captureScreenshot(page, testInfo, "computer-screen-recover-confirm");
-  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+  await page.keyboard.press("Escape");
   failScreen = false;
   await preview.getByRole("button", { name: "Retry screen" }).click();
   await expect(preview.locator("iframe")).toHaveAttribute("src", screenUrl);
@@ -66,9 +66,9 @@ test("screen connection failures stay visible and can be retried", async ({ page
     .getByRole("alert")
     .getByRole("button", { name: "Recover computer", exact: true })
     .click();
-  await expect(page.getByRole("alertdialog")).toContainText("Recover computer?");
+  await expect(page.getByRole("button", { name: "Confirm recover?" })).toBeVisible();
   await captureScreenshot(page, testInfo, "computer-full-screen-recover-confirm");
-  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+  await page.keyboard.press("Escape");
   failScreen = false;
   await page.getByRole("button", { name: "Retry screen" }).click();
   await expect(page.locator('iframe[title="Bot screen"]')).toHaveAttribute("src", screenUrl);
@@ -179,14 +179,14 @@ test("a running computer without a screen URL offers recovery", async ({ page },
   await captureScreenshot(page, testInfo, "computer-screen-url-missing");
 
   await preview.getByRole("button", { name: "Recover computer", exact: true }).click();
-  const confirmation = page.getByRole("alertdialog");
-  await expect(confirmation).toContainText("Recover computer?");
+  const confirmation = preview.getByRole("button", { name: "Confirm recover?" });
+  await expect(confirmation).toBeVisible();
   // A control change re-reads the screen in the background; the open confirmation stays.
   const readsBefore = screenReads;
   await rpc(page, "computer/takeover", { botId });
   await expect.poll(() => screenReads).toBeGreaterThan(readsBefore);
   await page.waitForTimeout(500);
-  await expect(confirmation).toContainText("Recover computer?");
+  await expect(confirmation).toBeVisible();
 });
 
 test("a healthy running computer is not diagnosed while its screen URL loads", async ({

@@ -43,7 +43,7 @@ test("agent-attached files appear as cards with previews and downloads", async (
   });
   await previewButton.click();
 
-  const dialog = page.getByRole("dialog", { name: "preview.md" });
+  const dialog = page.getByRole("complementary", { name: "preview.md" });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole("status", { name: "Loading preview…" })).toBeVisible();
   await expect(dialog).not.toContainText("Loading preview…");
@@ -52,11 +52,7 @@ test("agent-attached files appear as cards with previews and downloads", async (
   await expect(dialog.getByRole("heading", { name: "Project preview" })).toBeVisible();
   const closeButton = dialog.getByRole("button", { name: "Close preview" });
   const downloadButton = dialog.getByRole("button", { name: "Download preview.md" });
-  await expect(closeButton).toBeFocused();
-  await page.keyboard.press("Tab");
-  await expect(downloadButton).toBeFocused();
-  await page.keyboard.press("Shift+Tab");
-  await expect(closeButton).toBeFocused();
+  await expect(closeButton).toBeVisible();
   await captureScreenshot(page, testInfo, "markdown-preview-open");
 
   const markdownDownloadPromise = page.waitForEvent("download");
@@ -79,7 +75,7 @@ test("agent-attached files appear as cards with previews and downloads", async (
   await expect(htmlPreviewButton).toBeVisible({ timeout: 30_000 });
   await htmlPreviewButton.click();
 
-  const htmlDialog = page.getByRole("dialog", { name: "page.html" });
+  const htmlDialog = page.getByRole("complementary", { name: "page.html" });
   await expect(htmlDialog).toBeVisible();
   // The viewer loads the network shell, which renders the document in a nested sandboxed frame.
   const shell = htmlDialog.locator('iframe[title="page.html"]');

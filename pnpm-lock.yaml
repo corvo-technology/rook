@@ -1129,8 +1129,8 @@ importers:
         specifier: 1.60.0
         version: 1.60.0(@types/react@19.2.18)(react@19.2.3)
       open-bot-avatar:
-        specifier: 0.1.2
-        version: 0.1.2
+        specifier: 0.2.1
+        version: 0.2.1
       react:
         specifier: 19.2.3
         version: 19.2.3
@@ -8831,8 +8831,8 @@ packages:
   oniguruma-to-es@4.3.6:
     resolution: {integrity: sha512-csuQ9x3Yr0cEIs/Zgx/OEt9iBw9vqIunAPQkx19R/fiMq2oGVTgcMqO/V3Ybqefr1TBvosI6jU539ksaBULJyA==}
 
-  open-bot-avatar@0.1.2:
-    resolution: {integrity: sha512-WszCSxHQ77kzNWwY6ySRw6tenrF1zgXXH7bnWeoPvdNow+Rv9pD2wdLUI2eiUSsRy/5nrJgGShb10EkKtw7iKQ==}
+  open-bot-avatar@0.2.1:
+    resolution: {integrity: sha512-J0SBBtSt0sIIbuUeekkdURJcS1O5k/en7zlYrGzfX8HXPv7zR4mArl3Dqipt3RIez0LXvAXiP9uN7n1tcwrlcw==}
 
   open@7.4.2:
     resolution: {integrity: sha512-MVHddDVweXZF3awtlAS+6pgKLlm/JgxZ90+/NBurBoQctVOOB/zDdVjcyPzQ+0laDGbsWgrRkflI65sQeOgT9Q==}
@@ -20605,7 +20605,7 @@ snapshots:
       regex: 6.1.0
       regex-recursion: 6.0.2
 
-  open-bot-avatar@0.1.2: {}
+  open-bot-avatar@0.2.1: {}
 
   open@7.4.2:
     dependencies:

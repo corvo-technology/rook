@@ -17,6 +17,7 @@ import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "./lib/utils.js";
 import "./styles.css";
 import { botCharacter } from "./bot-characters.js";
+import type { Gaze } from "./character-avatar.js";
 import { CharacterAvatar } from "./character-avatar.js";
 import { MascotFace } from "./mascot-face.js";
 import { useMascotGaze } from "./use-mascot-gaze.js";
@@ -90,6 +91,13 @@ export interface BotAvatarProps {
   status?: string;
   identity?: string;
   className?: string;
+  /**
+   * Whether a character moves. Larger ones always do; a small one is a still picture unless its
+   * place (a message in the conversation) asks for it.
+   */
+  live?: boolean;
+  /** Where the avatar looks while it is live, -1..1 per axis (x right, y down). */
+  lookAt?: Gaze;
 }
 
 const RING_DOTS = rookRingDots();
@@ -144,6 +152,8 @@ export const BotAvatar = memo(function BotAvatar({
   status,
   identity = "",
   className,
+  live,
+  lookAt,
 }: BotAvatarProps) {
   const isWorking = ACTIVE_RUN_STATUSES.some((s) => s === status);
   const avatarRef = useRef<HTMLDivElement>(null);
@@ -207,6 +217,8 @@ export const BotAvatar = memo(function BotAvatar({
           eyeColor={eyeColor}
           mood={mood}
           size={size}
+          live={live}
+          lookAt={lookAt}
         />
         {isWorking ? <WorkingRing size={size} color={parsed.color} /> : null}
         {mood === "alert" ? <NeedsYouDot size={size} /> : null}

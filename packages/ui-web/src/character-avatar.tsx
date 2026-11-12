@@ -5,10 +5,14 @@ import { useEffect, useRef } from "react";
 import type { BotCharacter } from "./bot-characters.js";
 
 /**
- * From this size on a character is alive: it moves, blinks, looks at the pointer and turns to it.
- * Smaller ones, in lists, are a still picture, so a long roster does not run dozens of scenes.
+ * From this size on a character is alive by default: it moves, blinks, looks at the pointer and
+ * turns to it. A smaller one is a still picture unless its place says it is live (a message in
+ * the conversation), so a long roster does not run dozens of scenes.
  */
 export const LIVELY_FROM = 56;
+
+/** Where a character looks, -1..1 per axis, x to the right and y down. */
+export type Gaze = { x: number; y: number };
 
 type CharacterMood = "idle" | "thinking" | "happy";
 
@@ -27,19 +31,22 @@ export function CharacterAvatar({
   eyeColor,
   mood,
   size,
+  live = size >= LIVELY_FROM,
+  lookAt,
 }: {
   character: BotCharacter;
   color: string;
   eyeColor: string;
   mood: MascotMood;
   size: number;
+  live?: boolean;
+  lookAt?: Gaze;
 }) {
   const host = useRef<HTMLSpanElement>(null);
   const mounted = useRef<MountedAvatar | null>(null);
-  const live = size >= LIVELY_FROM;
   const shown = characterMood(mood);
-  const latest = useRef({ color, eyeColor, mood: shown });
-  latest.current = { color, eyeColor, mood: shown };
+  const latest = useRef({ color, eyeColor, mood: shown, lookAt: lookAt ?? null });
+  latest.current = { color, eyeColor, mood: shown, lookAt: lookAt ?? null };
 
   useEffect(() => {
     const element = host.current;
@@ -62,6 +69,14 @@ export function CharacterAvatar({
   useEffect(() => {
     mounted.current?.update({ color, eyeColor, mood: shown });
   }, [color, eyeColor, shown]);
+
+  const lookX = lookAt?.x;
+  const lookY = lookAt?.y;
+  useEffect(() => {
+    mounted.current?.update({
+      lookAt: lookX === undefined || lookY === undefined ? null : { x: lookX, y: lookY },
+    });
+  }, [lookX, lookY]);
 
   return (
     <span

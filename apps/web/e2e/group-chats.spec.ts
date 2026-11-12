@@ -99,10 +99,7 @@ test("create group from + and see two bots in one transcript", async ({ page }, 
   await expect(groupAvatar.locator(".corvo-mascot-avatar")).toHaveCount(2);
   const workingAvatar = groupAvatar.locator('[data-working="true"]');
   await expect(workingAvatar).toHaveCount(1);
-  await expect(workingAvatar.locator(".corvo-mascot-avatar-image")).toHaveCSS(
-    "animation-name",
-    /corvo-mascot-bob/,
-  );
+  await expect(workingAvatar.locator(".corvo-bot-avatar-ring-working")).toBeVisible();
   await captureScreenshot(page, testInfo, "group-avatar-active");
   await page.unroute("**/rpc/groups/list");
   await page.unroute("**/rpc/threads/get");

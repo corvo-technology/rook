@@ -1,8 +1,8 @@
 import type { MascotMood } from "@corvo/core";
+import type { AvatarDefinition } from "open-bot-avatar";
 import type { MountedAvatar } from "open-bot-avatar/dom";
 import { mountAvatar } from "open-bot-avatar/dom";
 import { useEffect, useRef } from "react";
-import type { BotCharacter } from "./bot-characters.js";
 
 /**
  * From this size on a character is alive: it moves, blinks, looks at the pointer and turns to it.
@@ -22,30 +22,34 @@ export function characterMood(mood: MascotMood): CharacterMood {
  * the box it is given. It is mounted once, and a change of color or mood only redraws what changed.
  */
 export function CharacterAvatar({
-  character,
+  definition,
   color,
   eyeColor,
   mood,
   size,
+  lookAt,
 }: {
-  character: BotCharacter;
+  definition: AvatarDefinition;
   color: string;
   eyeColor: string;
   mood: MascotMood;
   size: number;
+  /** Where it looks (each axis -1..1, y down), in place of following the pointer. */
+  lookAt?: { x: number; y: number };
 }) {
   const host = useRef<HTMLSpanElement>(null);
   const mounted = useRef<MountedAvatar | null>(null);
   const live = size >= LIVELY_FROM;
   const shown = characterMood(mood);
-  const latest = useRef({ color, eyeColor, mood: shown });
-  latest.current = { color, eyeColor, mood: shown };
+  const look = lookAt ?? null;
+  const latest = useRef({ color, eyeColor, mood: shown, lookAt: look });
+  latest.current = { color, eyeColor, mood: shown, lookAt: look };
 
   useEffect(() => {
     const element = host.current;
     if (!element) return;
     const avatar = mountAvatar(element, {
-      definition: character.definition,
+      definition,
       ...latest.current,
       still: !live,
       followPointer: live,
@@ -57,11 +61,11 @@ export function CharacterAvatar({
       avatar.destroy();
       mounted.current = null;
     };
-  }, [character, live]);
+  }, [definition, live]);
 
   useEffect(() => {
-    mounted.current?.update({ color, eyeColor, mood: shown });
-  }, [color, eyeColor, shown]);
+    mounted.current?.update({ color, eyeColor, mood: shown, lookAt: look });
+  }, [color, eyeColor, shown, look?.x, look?.y]);
 
   return (
     <span

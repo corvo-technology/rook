@@ -4,6 +4,7 @@ import {
   MASCOT_COLORS,
   MASCOT_LOOKS,
   ROOK_ASLEEP_COLOR,
+  ROOK_EYE_COLOR,
 } from "@corvo/core";
 import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -23,16 +24,15 @@ describe("BotAvatar", () => {
   it("shows a flat tile in the bot's color with two eyes and no picture", () => {
     const html = renderToString(<BotAvatar color="#8B5CF6" size={40} />);
     expect(mascotOf(html)).toBe("violet");
-    expect(html).toContain("corvo-mascot-eyes");
+    expect(html).toContain("<svg");
     expect(html).toMatch(/style="[^"]*width:40px;height:40px/);
     expect(html).not.toContain("<img");
-    expect(html.match(/corvo-mascot-eye-ball/g)).toHaveLength(2);
   });
 
   it("gives every palette color a tile with eyes", () => {
     for (const color of BOT_AVATAR_COLORS) {
       const html = renderToString(<BotAvatar color={color} />);
-      expect(html, color).toContain("corvo-mascot-eyes");
+      expect(html, color).toContain("<svg");
     }
   });
 
@@ -62,10 +62,12 @@ describe("BotAvatar", () => {
     }
   });
 
-  it("draws the rook: three battlements, one block and two eyes, with no chick details", () => {
+  it("draws the rook with the engine: one outline in its shade and two eyes, no chick details", () => {
     const html = renderToString(<BotAvatar color="#3B82F6" size={40} />);
-    expect(html.match(/corvo-mascot-battlement/g)).toHaveLength(3);
-    expect(html.match(/corvo-mascot-eye-ball/g)).toHaveLength(2);
+    expect(html).toContain("<svg");
+    expect(html).toContain(MASCOT_LOOKS.blue.color);
+    expect(html).toContain(ROOK_EYE_COLOR);
+    expect(html).not.toContain("corvo-mascot-battlement");
     for (const gone of [
       "polygon",
       "#f9b64f",
@@ -77,15 +79,19 @@ describe("BotAvatar", () => {
       expect(html).not.toContain(gone);
   });
 
-  it("changes only the eyes and the color with its state", () => {
-    const eyes = (status: string) => renderToString(<BotAvatar color="#3B82F6" status={status} />);
-    expect(eyes("waiting_input")).toContain('cy="52"');
-    expect(eyes("waiting_input")).toContain(`fill="${MASCOT_LOOKS.blue.color}"`);
-    expect(eyes("running")).toContain('cy="56"');
-    const asleep = eyes("asleep");
-    expect(asleep).toContain("M32 57 L44 57");
-    expect(asleep).toContain(`fill="${ROOK_ASLEEP_COLOR}"`);
-    expect(asleep).not.toContain("corvo-mascot-eye-ball");
+  it("is gray and keeps the state it is in when it sleeps, in the shade of its color otherwise", () => {
+    const moodOf = (status: string) =>
+      renderToString(<BotAvatar color="#3B82F6" status={status} />).match(
+        /data-mood="([a-z]+)"/,
+      )?.[1];
+    expect(moodOf("waiting_input")).toBe("alert");
+    expect(moodOf("running")).toBe("thinking");
+    expect(moodOf("failed")).toBe("failed");
+    const asleep = renderToString(<BotAvatar color="#3B82F6" status="asleep" />);
+    expect(asleep).toContain(ROOK_ASLEEP_COLOR);
+    expect(asleep).not.toContain(MASCOT_LOOKS.blue.color);
+    const waiting = renderToString(<BotAvatar color="#3B82F6" status="waiting_input" />);
+    expect(waiting).toContain(MASCOT_LOOKS.blue.color);
   });
 
   it.each([...ACTIVE_RUN_STATUSES])(
@@ -120,7 +126,7 @@ describe("BotAvatar", () => {
 
   it("never draws the old shapes or eyes", () => {
     const html = renderToString(<BotAvatar color="#8B5CF6" identity="maya" status="running" />);
-    expect(html).not.toContain("<path");
+    expect(html).not.toContain("corvo-mascot-eyes");
     expect(html).not.toContain("corvo-organic-avatar");
     expect(html).not.toContain("bot-character-eyes");
   });
@@ -162,7 +168,7 @@ describe("BotAvatar", () => {
       <BotAvatar color="https://evil.example/track.png" identity="maya" size={32} />,
     );
     expect(html).not.toContain("evil.example");
-    expect(html).toContain("corvo-mascot-eyes");
+    expect(html).toContain("data-mascot");
   });
 });
 
@@ -198,40 +204,24 @@ describe("resolvePersonaColorDef", () => {
   });
 });
 
-describe("the mascot's eyes", () => {
+describe("the mascot's mood", () => {
   const moodOf = (html: string) => html.match(/data-mood="([a-z]+)"/)?.[1];
 
-  it("are drawn on the rook as two dark ovals that can move", () => {
-    const html = renderToString(<BotAvatar color="#3B82F6" />);
-    expect(html).toContain("corvo-mascot-eyes");
-    expect(html).toContain("corvo-mascot-eye-ball");
-    expect(moodOf(html)).toBe("idle");
-  });
-
   it.each([
+    [undefined, "idle"],
     ["running", "thinking"],
     ["queued", "thinking"],
     ["waiting_input", "alert"],
     ["waiting_takeover", "alert"],
     ["failed", "failed"],
     ["idle", "idle"],
-  ])("show the mood of status %s as %s", (status, mood) => {
+  ])("shows status %s as %s", (status, mood) => {
     expect(moodOf(renderToString(<BotAvatar color="#3B82F6" status={status} />))).toBe(mood);
   });
 
-  it("blink on a beat of their own, different for each agent", () => {
-    const beat = (identity: string) =>
-      renderToString(<BotAvatar color="#3B82F6" identity={identity} />)
-        .match(/--blink-every:([^;"]+);--blink-delay:([^;"]+)/)
-        ?.slice(1, 3);
-    expect(beat("bot-a")).toBeDefined();
-    expect(beat("bot-a")).toEqual(beat("bot-a"));
-    expect(beat("bot-a")).not.toEqual(beat("bot-b"));
-  });
-
-  it("fill the tile with the shade of the chick the bot's color gives it", () => {
-    expect(renderToString(<BotAvatar color="#8B5CF6" />)).toContain('fill="#b797ef"');
-    expect(renderToString(<BotAvatar color="#10B981" />)).toContain('fill="#54c398"');
+  it("fills the rook with the shade the bot's color gives it", () => {
+    expect(renderToString(<BotAvatar color="#8B5CF6" />)).toContain("#b797ef");
+    expect(renderToString(<BotAvatar color="#10B981" />)).toContain("#54c398");
   });
 });
 

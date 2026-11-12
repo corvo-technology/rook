@@ -24,6 +24,9 @@ for (const theme of ["light", "dark"]) {
 
     // The color is worn at every size, however light or dark it is.
     await expect(page.getByTestId("own-colors").locator("[data-mascot]")).toHaveCount(28);
+    // The engine draws the rook: alive (a canvas) at the largest size, a still picture below it.
+    await expect(page.getByTestId("own-colors").locator("[data-mascot] canvas")).toHaveCount(7);
+    await expect(page.getByTestId("own-colors").locator("[data-mascot] svg")).toHaveCount(21);
     await captureScreenshot(page, testInfo, `avatar-colors-${theme}`);
 
     await picker.getByRole("button", { name: "Color #EAB308" }).click();

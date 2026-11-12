@@ -22,6 +22,7 @@ import { ArtifactFileCard } from "../../components/ArtifactFileCard";
 import { AskCard } from "../../components/AskCard";
 import { CollaborationMarker } from "../../components/ai/CollaborationMarker";
 import { CloudAgentCard } from "../../components/CloudAgentCard";
+import { MemoryFactBlock } from "../../components/MemoryFactBlock";
 import { PlanCard } from "../../components/PlanCard";
 import { SubagentCard } from "../../components/SubagentCard";
 import {
@@ -604,6 +605,13 @@ export const MessageView = memo(function MessageView({
             return (
               <div key={i} className="flex justify-start">
                 <WikiChangeBlock changeId={block.changeId} />
+              </div>
+            );
+          }
+          if (block.kind === "memory_fact") {
+            return (
+              <div key={i} className="flex justify-start">
+                <MemoryFactBlock memoryId={block.memoryId} />
               </div>
             );
           }

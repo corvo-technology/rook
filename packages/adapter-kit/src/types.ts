@@ -610,7 +610,8 @@ export type UsageOperationKind =
   | "retrieval"
   | "subagent"
   | "compaction"
-  | "wiki";
+  | "wiki"
+  | "memory";
 
 export interface ModelCallObserver {
   beforeCall(call: {
@@ -755,6 +756,8 @@ export interface BackgroundJobPayloads {
   "wiki.review": { spaceId: string; userId: string; manual?: boolean };
   /** Writes a change that hit a moved page again against the pages as they are now. */
   "wiki.retry": { spaceId: string; userId: string; changeId: string };
+  /** The memory model reads what the person said for facts to suggest about them. */
+  "memory.learn": { threadId: string };
   /** Design the body of a new agent's avatar from its role, unless a look was chosen meanwhile. */
   "bot.design-avatar": { botId: string };
   "messaging.deliver": { runId?: string };

@@ -104,6 +104,7 @@ import {
 } from "./history-compaction.js";
 import { createMediaGenerationProvider } from "./media-generation-factory.js";
 import { loadAgentMemoryContext } from "./memory-context.js";
+import { botDisabledTools } from "./memory-mode.js";
 import { HostedModelCreditsRequiredError } from "./model-credit-observer.js";
 import {
   effectiveModelRole,
@@ -217,6 +218,7 @@ import {
 import { loadAgentTicketContext } from "./ticket-context.js";
 import { startTicketRun } from "./ticket-run-moves.js";
 import { appendToolCompletionAudit } from "./tool-completion-audit.js";
+import { loadUserMemoryContext } from "./user-memory-run.js";
 import { createWebProvider } from "./web-provider-factory.js";
 import { loadWikiIndexContext } from "./wiki-context.js";
 import { wikiOfferInstruction } from "./wiki-offer.js";
@@ -724,6 +726,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
           discovered,
           currentTurnImages,
           durableMemoryContext,
+          userMemoryContext,
           wikiContext,
           scratchpadContext,
           ticketContext,
@@ -734,6 +737,9 @@ export function createRunExecutor(deps: ExecutorDeps) {
           withholdOwnerContext
             ? Promise.resolve("")
             : loadAgentMemoryContext(deps.memory, bot.id, context),
+          withholdOwnerContext
+            ? Promise.resolve(undefined)
+            : loadUserMemoryContext(deps.prisma, { spaceId: run.spaceId, userId: run.userId }),
           withholdOwnerContext
             ? Promise.resolve(undefined)
             : loadWikiIndexContext(deps.prisma, { spaceId: run.spaceId, userId: run.userId }),
@@ -753,7 +759,9 @@ export function createRunExecutor(deps: ExecutorDeps) {
         ]);
         // What the team wrote down travels with the durable memory, so both are redacted and kept
         // out of a messaging channel's run the same way.
-        const memoryContext = [durableMemoryContext, wikiContext].filter(Boolean).join("\n\n");
+        const memoryContext = [durableMemoryContext, userMemoryContext, wikiContext]
+          .filter(Boolean)
+          .join("\n\n");
         const semanticMemoryEnabled = Boolean(semanticMemory) && !withholdOwnerContext;
         let recalledMemory = "";
         let recallSucceeded = false;
@@ -992,7 +1000,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const attachedFilesPrompt = [
           currentTurnFilesInstruction(currentTurnFiles),
           wikiOfferInstruction(currentTurnFiles, {
-            disabled: disabledBuiltinToolSet(bot.disabledBuiltinTools),
+            disabled: disabledBuiltinToolSet(botDisabledTools(bot)),
             messagingChannelRun,
             background: isBackgroundRunTrigger(run.trigger),
           }),
@@ -1075,7 +1083,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const graphicalToolsAllowed = graphical && acceptsImages && !heldForTakeover;
         const pageBrowserAllowed =
           graphical && browser.describe().capabilities.page && !heldForTakeover;
-        const disabledBuiltinTools = disabledBuiltinToolSet(bot.disabledBuiltinTools);
+        const disabledBuiltinTools = disabledBuiltinToolSet(botDisabledTools(bot));
         const builtins = [
           ...selectBuiltinToolsForRun({
             ticketBoardEnabled: deps.ticketBoardEnabled,
@@ -1093,7 +1101,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
             messagingChannelRun,
             visitorRun,
             voiceCall,
-            disabledBuiltinTools: bot.disabledBuiltinTools,
+            disabledBuiltinTools: botDisabledTools(bot),
             fleetManagement: bot.fleetManagement,
             followUpFromUser: sourceMessage?.role === "user",
             // An optional tool: if the steps cannot be counted, the run goes on without it.

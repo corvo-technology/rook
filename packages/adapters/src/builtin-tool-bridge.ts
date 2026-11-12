@@ -40,6 +40,7 @@ export const CORE_BUILTIN_TOOL_NAMES: ReadonlySet<string> = new Set([
   "skill_read",
   "update_bot",
   "remember",
+  "remember_about_user",
   "save_memory",
   "recall_memory",
   "wiki_search",

@@ -5,6 +5,8 @@ import {
   HISTORY_COMPACT_MAX_ATTEMPTS,
   historyCompactJob,
   historyCompactJobKey,
+  MEMORY_LEARN_QUIET_MS,
+  memoryLearnJob,
   messagingDeliverJob,
   parseBackgroundJob,
   routineRetryJob,
@@ -31,6 +33,7 @@ function handlers(): BackgroundJobHandlers {
     "wiki.curate": vi.fn(async () => undefined),
     "wiki.review": vi.fn(async () => undefined),
     "wiki.retry": vi.fn(async () => undefined),
+    "memory.learn": vi.fn(async () => undefined),
     "bot.design-avatar": vi.fn(async () => undefined),
     "messaging.deliver": vi.fn(async () => undefined),
     "messaging.credential-cleanup": vi.fn(async () => undefined),
@@ -205,5 +208,22 @@ describe("audio.transcribe", () => {
     expect(first).toMatchObject({ name: "audio.transcribe", payload: { runId: "run-1" } });
     expect(first.replaceKey).toBe(audioTranscribeJob("run-1").replaceKey);
     expect(first.replaceKey).not.toBe(audioTranscribeJob("run-2").replaceKey);
+  });
+});
+
+describe("memoryLearnJob", () => {
+  it("waits for the conversation to be quiet and is keyed to it", () => {
+    const now = new Date("2026-11-10T12:00:00Z");
+    const job = memoryLearnJob("thread-1", { now });
+    expect(job).toMatchObject({
+      name: "memory.learn",
+      payload: { threadId: "thread-1" },
+      replaceKey: "memory.learn:thread-1",
+      availableAt: new Date(now.getTime() + MEMORY_LEARN_QUIET_MS),
+    });
+    expect(parseBackgroundJob("memory.learn", { threadId: "t" }).payload).toEqual({
+      threadId: "t",
+    });
+    expect(() => parseBackgroundJob("memory.learn", {})).toThrow();
   });
 });

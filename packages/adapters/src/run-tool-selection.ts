@@ -30,6 +30,7 @@ export const READ_ONLY_AGENT_TOOLS = new Set([
   "run_subagent",
   "task_catalog",
   "recall_memory",
+  "recall_about_user",
   "schedule_list",
   "scratchpad_list",
   "board_tickets",
@@ -179,6 +180,8 @@ export function selectBuiltinToolsForRun(options: {
       (!options.messagingChannelRun ||
         (![
           "remember",
+          "remember_about_user",
+          "recall_about_user",
           "save_shared_memory",
           "save_memory",
           "recall_memory",

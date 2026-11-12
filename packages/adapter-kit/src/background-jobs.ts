@@ -38,6 +38,7 @@ const payloadSchemas = {
     userId: z.string().min(1),
     changeId: z.string().min(1),
   }),
+  "memory.learn": z.object({ threadId: z.string().min(1) }),
   "bot.design-avatar": z.object({ botId: z.string().min(1) }),
   "messaging.deliver": z.object({ runId: z.string().min(1).optional() }),
   "messaging.credential-cleanup": z.object({
@@ -281,6 +282,20 @@ export function wikiRetryJob(
     name: "wiki.retry",
     payload: { ...scope, changeId },
     replaceKey: `wiki.retry:${changeId}`,
+    maxAttempts: WIKI_CURATE_MAX_ATTEMPTS,
+  };
+}
+
+/** How long a conversation stays quiet before the memory model reads what the person said. */
+export const MEMORY_LEARN_QUIET_MS = 30_000;
+
+/** Like the wiki read, keyed to the conversation: each new reply pushes the quiet read back. */
+export function memoryLearnJob(threadId: string, options: { now?: Date } = {}): BackgroundJob {
+  return {
+    name: "memory.learn",
+    payload: { threadId },
+    replaceKey: `memory.learn:${threadId}`,
+    availableAt: new Date((options.now ?? new Date()).getTime() + MEMORY_LEARN_QUIET_MS),
     maxAttempts: WIKI_CURATE_MAX_ATTEMPTS,
   };
 }

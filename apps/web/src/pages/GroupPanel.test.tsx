@@ -110,6 +110,7 @@ function fakeBot(id: string, name: string, title: string): Bot {
     fleetManagement: false,
     squadRouting: false,
     approvalMode: null,
+    memoryMode: null,
     dailyCapUsd: null,
     monthlyTokenLimit: null,
     spawnKey: null,

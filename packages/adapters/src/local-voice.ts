@@ -10,15 +10,18 @@ import type {
   VoiceTranscribeResult,
   VoiceVerifyResult,
 } from "@corvo/adapter-kit";
-import { LOCAL_VOICE_PROVIDER_ID } from "@corvo/contracts";
+import type { LocalListenLanguage } from "@corvo/contracts";
+import { LOCAL_LISTEN_LANGUAGES, LOCAL_VOICE_PROVIDER_ID } from "@corvo/contracts";
 import { decodeAudio } from "./audio-decode.js";
 import type { LocalModelStore } from "./local-speech-models.js";
+import { chooseLocalVoice } from "./local-voices.js";
 import { splitForSpeech } from "./speech-chunks.js";
+import { encodeWav, type SpeechSynthesizer } from "./speech-synthesizer.js";
 import type { SpeechTranscriber } from "./speech-transcriber.js";
 
 export { LOCAL_VOICE_PROVIDER_ID };
 
-export type LocalVoiceLanguage = "auto" | "en" | "pt";
+export type LocalVoiceLanguage = LocalListenLanguage;
 
 /** What the owner chose, stored as the connection's secret: no key exists for this provider. */
 export function parseLocalVoiceSecret(plaintext: string): {
@@ -35,24 +38,19 @@ export function parseLocalVoiceSecret(plaintext: string): {
   const model = typeof record.model === "string" ? record.model.trim() : "";
   if (!model) throw new Error("The local voice connection has no model.");
   const language = record.language ?? "auto";
-  if (language !== "auto" && language !== "en" && language !== "pt") {
+  if (!LOCAL_LISTEN_LANGUAGES.includes(language as LocalVoiceLanguage)) {
     throw new Error("The local voice connection has an unknown language.");
   }
-  return { model, language };
-}
-
-/** "pt-BR" and "PT_br" both mean the model's "pt". */
-function primaryLanguage(tag: string | undefined): string | undefined {
-  const primary = tag?.split(/[-_]/)[0]?.trim().toLowerCase();
-  return primary || undefined;
+  return { model, language: language as LocalVoiceLanguage };
 }
 
 export interface LocalVoiceDeps {
-  store: Pick<LocalModelStore, "ensure">;
+  store: Pick<LocalModelStore, "ensure" | "list" | "spec" | "specs">;
   transcriber: SpeechTranscriber;
+  synthesizer: SpeechSynthesizer;
 }
 
-/** Transcription on the owner's own computer. No key, nothing leaves the machine. */
+/** Listening and speaking on the owner's own computer. No key, nothing leaves the machine. */
 export class LocalVoiceProvider implements VoiceProvider {
   constructor(private readonly deps: LocalVoiceDeps) {}
 
@@ -61,7 +59,7 @@ export class LocalVoiceProvider implements VoiceProvider {
       id: LOCAL_VOICE_PROVIDER_ID,
       contractVersion: "1",
       adapterVersion: "0.1.0",
-      capabilities: { catalog: true, synthesize: false, transcribe: true },
+      capabilities: { catalog: true, synthesize: true, transcribe: true },
     };
   }
 
@@ -69,15 +67,40 @@ export class LocalVoiceProvider implements VoiceProvider {
     return { ok: true };
   }
 
+  /** The voices that are on this computer. */
   async listVoices(_secret: string, _context: AdapterContext): Promise<VoiceInfo[]> {
-    return [];
+    return (await this.deps.store.list())
+      .filter((model) => model.kind === "speak" && model.state === "ready")
+      .map((voice) => ({ id: voice.id, label: voice.label }));
   }
 
-  async synthesize(
-    _request: VoiceSynthesizeRequest,
-    _context: AdapterContext,
-  ): Promise<SpeechClip> {
-    throw new Error("Spoken replies are not available on this computer yet.");
+  /**
+   * Speaks with the voice that fits the reply's language among those on this computer, and
+   * fetches one when none is there yet. `voiceId` is the owner's choice, kept when it fits.
+   */
+  async synthesize(request: VoiceSynthesizeRequest, context: AdapterContext): Promise<SpeechClip> {
+    // The engine fails on text with nothing to pronounce, such as a lone smiley.
+    if (!/[\p{L}\p{N}]/u.test(request.text)) throw new Error("There is nothing to speak.");
+    const signal = request.signal ?? context.signal;
+    const ready = (await this.deps.store.list())
+      .filter((model) => model.kind === "speak" && model.state === "ready")
+      .map((model) => model.id);
+    const id = chooseLocalVoice({
+      language: request.language,
+      selected: request.voiceId,
+      ready,
+      voices: this.deps.store.specs("speak"),
+    });
+    const voice = this.deps.store.spec(id)?.voice;
+    if (!voice) throw new Error("That voice is not available.");
+    const modelDir = await this.deps.store.ensure(id, { signal });
+    const speech = await this.deps.synthesizer.synthesize({
+      text: request.text,
+      modelDir,
+      voice,
+      signal,
+    });
+    return { bytes: encodeWav(speech.samples, speech.sampleRate), mimeType: "audio/wav" };
   }
 
   async transcribe(
@@ -91,7 +114,9 @@ export class LocalVoiceProvider implements VoiceProvider {
     const modelDir = await this.deps.store.ensure(model, { signal });
     // The engine reads only the first 30 seconds, so a long note goes through in windows. The
     // first window settles the language, so one note is never read as two.
-    let spoken = primaryLanguage(request.language) ?? (language === "auto" ? undefined : language);
+    // An explicit language is the owner's word. Otherwise the model listens for every language it
+    // knows: the language of the app is not the language they speak.
+    let spoken: string | undefined = language === "auto" ? undefined : language;
     const texts: string[] = [];
     let heard: string | undefined;
     for (const pcm of splitForSpeech(audio.pcm, audio.sampleRate)) {

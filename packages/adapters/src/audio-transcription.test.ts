@@ -10,6 +10,7 @@ import {
   transcribeAudioArtifact,
   transcriptNote,
 } from "./audio-transcription.js";
+import { ScriptedSynthesizer } from "./speech-synthesizer.js";
 import { ScriptedTranscriber } from "./speech-transcriber.js";
 import { MAX_TRANSCRIBE_BYTES } from "./voice-factory.js";
 
@@ -66,6 +67,7 @@ function setup(options: Setup = {}) {
   const list = vi.fn(async () =>
     ["base", "small"].map((id) => ({
       id,
+      kind: "listen" as const,
       label: id,
       sizeBytes: 5_000_000,
       languages: ["en", "pt"],
@@ -95,8 +97,11 @@ function setup(options: Setup = {}) {
               ensure,
               list,
               automaticDownloadAllowed: vi.fn(async () => options.automatic ?? true),
+              spec: vi.fn(() => undefined),
+              specs: vi.fn(() => []),
             },
             transcriber,
+            synthesizer: new ScriptedSynthesizer(),
           },
         }),
     loadVoiceCredential: vi.fn(async () => options.credential ?? null),

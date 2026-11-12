@@ -12,6 +12,7 @@ import {
   SCRIPTED_VOICE_ID,
   ScriptedVoiceProvider,
 } from "./scripted-voice.js";
+import { ScriptedSynthesizer } from "./speech-synthesizer.js";
 import { ScriptedTranscriber } from "./speech-transcriber.js";
 import {
   createVoiceProvider,
@@ -77,12 +78,22 @@ describe("createVoiceProvider", () => {
     expect(isVoiceProviderId("local")).toBe(true);
   });
 
-  it("builds the local provider from a store and a transcriber, and not without them", () => {
-    const store = { ensure: vi.fn(async () => "/models/base") };
-    const transcriber = new ScriptedTranscriber();
-    const local = createVoiceProvider("local", { local: { store, transcriber } });
+  it("builds the local provider from a store and the two engines, and not without them", () => {
+    const store = {
+      ensure: vi.fn(async () => "/models/base"),
+      list: vi.fn(async () => []),
+      spec: vi.fn(() => undefined),
+      specs: vi.fn(() => []),
+    };
+    const local = createVoiceProvider("local", {
+      local: {
+        store,
+        transcriber: new ScriptedTranscriber(),
+        synthesizer: new ScriptedSynthesizer(),
+      },
+    });
     expect(local).toBeInstanceOf(LocalVoiceProvider);
-    expect(local.describe().capabilities).toMatchObject({ transcribe: true, synthesize: false });
+    expect(local.describe().capabilities).toMatchObject({ transcribe: true, synthesize: true });
     expect(() => createVoiceProvider("local")).toThrow(/not available/i);
   });
 

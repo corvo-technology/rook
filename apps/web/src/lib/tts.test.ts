@@ -2,7 +2,22 @@ import { MAX_VOICE_AUDIO_BYTES, VOICE_RESPONSE_TIMEOUT_MS } from "@corvo/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Speaker } from "./tts.js";
 
+const notices = vi.hoisted(() => ({
+  announceLocalDownload: vi.fn(),
+  announceLocalFallback: vi.fn(),
+}));
+const prepareRpc = vi.hoisted(() => vi.fn());
+
+vi.mock("./voice-notices.js", () => notices);
+vi.mock("./rpc.js", async (original) => ({
+  ...(await original<typeof import("./rpc.js")>()),
+  rpc: { voice: { prepare: prepareRpc } },
+}));
+
 afterEach(() => {
+  notices.announceLocalDownload.mockClear();
+  notices.announceLocalFallback.mockClear();
+  prepareRpc.mockReset();
   vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -192,5 +207,110 @@ describe("Speaker", () => {
     await pending;
 
     expect(speaker.state.error).toBe("Voice request timed out.");
+  });
+
+  describe("with the voices of this computer", () => {
+    function playableAudio() {
+      vi.stubGlobal(
+        "Audio",
+        class {
+          src = "";
+          onended: (() => void) | null = null;
+          onerror: (() => void) | null = null;
+          play() {
+            queueMicrotask(() => this.onended?.());
+            return Promise.resolve();
+          }
+          pause() {}
+        },
+      );
+      vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:voice");
+      vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+    }
+
+    it("waits for the voice to download, says so once, and speaks the reply when it is there", async () => {
+      vi.useFakeTimers();
+      stubSelectedSpace("space-1");
+      playableAudio();
+      const fetchMock = vi.fn(async () => new Response(new Blob(["audio"])));
+      vi.stubGlobal("fetch", fetchMock);
+      prepareRpc
+        .mockResolvedValueOnce({
+          ready: true,
+          utterances: [],
+          preparing: { sizeBytes: 67_000_000 },
+        })
+        .mockResolvedValueOnce({
+          ready: true,
+          utterances: [],
+          preparing: { sizeBytes: 67_000_000 },
+        })
+        .mockResolvedValue({ ready: true, utterances: ["Olá."] });
+      const speaker = new Speaker();
+      const done = speaker.speak("Olá.", { language: "pt" });
+      expect(speaker.state.status).toBe("preparing");
+      await vi.advanceTimersByTimeAsync(2000);
+      await vi.advanceTimersByTimeAsync(2000);
+      await done;
+      expect(prepareRpc).toHaveBeenCalledTimes(3);
+      expect(notices.announceLocalDownload).toHaveBeenCalledWith("speak", 67_000_000);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(speaker.state.status).toBe("idle");
+    });
+
+    it("stops asking when the reply is cancelled while the voice downloads", async () => {
+      vi.useFakeTimers();
+      stubSelectedSpace("space-1");
+      prepareRpc.mockResolvedValue({ ready: true, utterances: [], preparing: { sizeBytes: 1 } });
+      const fetchMock = vi.fn();
+      vi.stubGlobal("fetch", fetchMock);
+      const speaker = new Speaker();
+      const done = speaker.speak("Hello.");
+      await vi.advanceTimersByTimeAsync(0);
+      speaker.stop();
+      await vi.advanceTimersByTimeAsync(10_000);
+      await expect(done).resolves.toBeUndefined();
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(prepareRpc.mock.calls.length).toBeLessThanOrEqual(2);
+    });
+
+    it("sends the language of the reply, and says once that this computer's voice read it", async () => {
+      stubSelectedSpace("space-1");
+      playableAudio();
+      const fetchMock = vi.fn(
+        async (_url: string, _init?: RequestInit) =>
+          new Response(new Blob(["audio"]), { headers: { "x-voice-fallback": "local" } }),
+      );
+      vi.stubGlobal("fetch", fetchMock);
+      prepareRpc.mockResolvedValue({ ready: true, utterances: ["Hola."] });
+      await new Speaker().speak("Hola.", {
+        language: "es",
+        provider: "local",
+        voiceId: "voice-es",
+      });
+      expect(prepareRpc.mock.calls[0]?.[0]).toMatchObject({
+        language: "es",
+        provider: "local",
+        voiceId: "voice-es",
+      });
+      expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toMatchObject({
+        language: "es",
+        provider: "local",
+        voiceId: "voice-es",
+      });
+      expect(notices.announceLocalFallback).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not announce a fallback for a reply the selected voice read", async () => {
+      stubSelectedSpace("space-1");
+      playableAudio();
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => new Response(new Blob(["audio"]))),
+      );
+      prepareRpc.mockResolvedValue({ ready: true, utterances: ["Hi."] });
+      await new Speaker().speak("Hi.");
+      expect(notices.announceLocalFallback).not.toHaveBeenCalled();
+    });
   });
 });

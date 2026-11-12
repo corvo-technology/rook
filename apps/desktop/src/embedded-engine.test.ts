@@ -269,6 +269,16 @@ describe("EmbeddedEngineController", () => {
     }
   });
 
+  it("turns calls on, so talking with an agent works with this computer's own voices", async () => {
+    const engine = new EmbeddedEngineController(deps());
+    await engine.start();
+    for (const program of ["api.mjs", "worker.mjs"]) {
+      expect(children.find((child) => base(child) === program)?.env.PHONE_CALLS_ENABLED).toBe(
+        "true",
+      );
+    }
+  });
+
   it("stops the supervisor with the rest and starts again when Docker appears or goes away", async () => {
     const withDocker = deps({
       docker: {

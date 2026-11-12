@@ -6,16 +6,14 @@ import { findDefaultVoiceCredential } from "@corvo/db";
 import { aiRecipient } from "./ai-consent.js";
 import { AudioDecodeError, UnsupportedAudioFormatError } from "./audio-decode.js";
 import type { LocalModelStore } from "./local-speech-models.js";
-import { parseLocalVoiceSecret } from "./local-voice.js";
+import { type LocalVoiceDeps, parseLocalVoiceSecret } from "./local-voice.js";
+import { DEFAULT_LOCAL_MODEL } from "./local-voices.js";
 import {
   OPENAI_COMPATIBLE_VOICE_PROVIDER_ID,
   openAiCompatibleVoiceServer,
 } from "./openai-compatible-voice.js";
-import type { SpeechTranscriber } from "./speech-transcriber.js";
 import { createVoiceProvider, MAX_TRANSCRIBE_BYTES, voiceCatalogEntry } from "./voice-factory.js";
 
-/** The model downloaded for the first audio when the owner has chosen nothing. */
-export const DEFAULT_LOCAL_MODEL = "base";
 const HOSTED_TRANSCRIBE_TIMEOUT_MS = 120_000;
 
 export type TranscriptionFailure =
@@ -38,10 +36,7 @@ export interface AudioTranscriptionDeps {
   prisma: PrismaClient;
   artifacts: Pick<ArtifactStore, "get">;
   /** Present only on the desktop app's own engine. */
-  localSpeech?: {
-    store: Pick<LocalModelStore, "ensure" | "list" | "automaticDownloadAllowed">;
-    transcriber: SpeechTranscriber;
-  };
+  localSpeech?: LocalVoiceDeps & { store: Pick<LocalModelStore, "automaticDownloadAllowed"> };
   /** The account's default voice connection: its provider and its secret. */
   loadVoiceCredential(actor: Actor): Promise<{ provider: string; secret: string } | null>;
   /** Whether the owner allowed this recipient to receive audio. */

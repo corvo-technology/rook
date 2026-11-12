@@ -65,7 +65,7 @@ left alone, so pushing the tag yourself is still fine.
 ## The first releases
 
 Until there are signing certificates, push a `vX.Y.Z` tag that matches `version` in
-`apps/desktop/package.json` and the `desktop-apps` workflow builds macOS (Apple silicon), Windows and
+`apps/desktop/package.json` and the `desktop-apps` workflow builds macOS (one universal app for Apple silicon and Intel), Windows and
 Linux, then publishes them as the latest release with the install scripts and checksums. The builds
 are unsigned, so macOS and Windows warn the first time the app opens. `release-desktop` is the
 signed, notarized path for when the certificates exist.
@@ -73,7 +73,7 @@ signed, notarized path for when the certificates exist.
 ## Install in one line
 
 Each release also carries `install.sh` (macOS and Linux) and `install.ps1` (Windows),
-and the installers have stable names (`corvo-mac-arm64.zip`,
+and the installers have stable names (`corvo-mac-universal.zip`,
 `corvo-linux-x86_64.AppImage`, `corvo-win-x64.exe`) so the scripts never need a version:
 
 ```sh

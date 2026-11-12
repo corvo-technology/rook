@@ -22,7 +22,7 @@ jobs:
         include:
           - name: macOS
             os: macos-15
-            args: --mac --arm64 -c.mac.identity=- -c.mac.notarize=false
+            args: --mac --universal -c.mac.identity=- -c.mac.notarize=false
           - name: Windows
             os: windows-2022
             args: --win --x64 -c.win.verifyUpdateCodeSignature=false
@@ -56,6 +56,10 @@ jobs:
       - name: Package
         shell: bash
         run: pnpm --filter @corvo/desktop exec electron-builder ${{ matrix.args }} --publish never
+      - name: Verify the universal macOS app
+        if: runner.os == 'macOS'
+        shell: bash
+        run: apps/desktop/scripts/verify-mac-native.sh apps/desktop/out/mac-universal/Corvo.app
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: corvo-${{ matrix.os }}
@@ -64,9 +68,31 @@ jobs:
             apps/desktop/out/corvo-*
             apps/desktop/out/latest*.yml
 
+  intel-smoke:
+    # The universal app is built on Apple silicon; this opens it on an Intel Mac, which nothing else does.
+    name: macOS Intel smoke
+    needs: build
+    runs-on: macos-15-intel
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: corvo-macos-15
+          path: files
+      - name: Run the native code on Intel
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = x86_64
+          ditto -x -k files/corvo-mac-universal.zip app
+          apps/desktop/scripts/verify-mac-native.sh app/Corvo.app
+
   release:
     name: Publish release
-    needs: build
+    needs: [build, intel-smoke]
     if: github.ref_type == 'tag'
     runs-on: ubuntu-24.04
     permissions:

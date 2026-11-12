@@ -13,7 +13,7 @@ export const GITHUB_URL = "https://github.com/corvo-technology/rook";
  * The macOS installer (Apple silicon) of the latest release. Its file name carries no version, so
  * a new release needs no change here and the link never points at a release that is not out yet.
  */
-export const DOWNLOAD_URL = `${GITHUB_URL}/releases/latest/download/corvo-mac-arm64.dmg`;
+export const DOWNLOAD_URL = `${GITHUB_URL}/releases/latest/download/corvo-mac-universal.dmg`;
 
 /** Direct installers with stable names, so the links never need a version. */
 export const DOWNLOAD_URL_WINDOWS = `${GITHUB_URL}/releases/latest/download/corvo-win-x64.exe`;

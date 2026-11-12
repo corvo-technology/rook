@@ -332,6 +332,7 @@ const COPY: LaunchCopy = {
     heading: "Recrutez votre premier agent.",
     copy: "Choisissez-en un dans la Boutique, donnez-lui un métier et votre prochaine tâche. Il demande avant de faire quoi que ce soit d'important.",
     download: "Télécharger pour Mac",
+    bubbles: ["Vous avez tout lu. Impressionnant.", "À vous de jouer."],
   },
 };
 

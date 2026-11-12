@@ -1,5 +1,7 @@
 export const SITE_NAME = "Rook";
 export const SITE_URL = "https://rook.team";
+/** Bump when the social images change: X, LinkedIn, WhatsApp and Slack keep the old one cached by URL. */
+export const SOCIAL_IMAGE_VERSION = "2";
 export const SITE_DESCRIPTION =
   "Rook is an open source team of AI agents that lives in channels on your computer, remembers what matters and asks before it touches anything real.";
 

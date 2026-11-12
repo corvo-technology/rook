@@ -1,0 +1,95 @@
+---
+import type { GetStaticPaths } from "astro";
+import { MASCOT_COLOR } from "../../../mascot";
+import { ROOK_AVATAR } from "@corvo/core";
+import { pieceSvg, teamMarkup } from "../../../og-team";
+
+// Profile pictures and banners for the social accounts, drawn here and captured by
+// scripts/generate-social.mjs. Dev only, like the link-preview route.
+export const getStaticPaths = (() =>
+  import.meta.env.DEV
+    ? ["avatar-mint", "avatar-paper", "banner-x", "banner-linkedin"].map((kind) => ({ params: { kind } }))
+    : []) satisfies GetStaticPaths;
+
+const { kind } = Astro.params;
+// The profile picture is a straight front view, so it is drawn flat from the rook outline instead of
+// the engine's slightly turned still.
+const flatRook = (body: string, eye: string) =>
+  `<svg viewBox="14 12 72 76" xmlns="http://www.w3.org/2000/svg"><path d="${ROOK_AVATAR.body.path}" fill="${body}"/><g fill="${eye}"><rect x="37" y="49" width="7" height="16" rx="3.5"/><rect x="56" y="49" width="7" height="16" rx="3.5"/></g></svg>`;
+const avatar =
+  kind === "avatar-mint" ? flatRook(MASCOT_COLOR.menta, "#0b0b0c")
+  : kind === "avatar-paper" ? flatRook("#0b0b0c", "#fafaf7")
+  : null;
+const x = kind === "banner-x";
+const unit = x ? 122 : 72;
+const team = teamMarkup(unit);
+const mark = pieceSvg("rook", MASCOT_COLOR.menta);
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <title>Rook social assets</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500&family=IBM+Plex+Mono:wght@400&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    {avatar && <main id="art" class={kind} set:html={avatar} />}
+    {!avatar && (
+      <main id="art" class={kind}>
+        <div class="name">
+          <span class="mark" set:html={mark} />
+          <b>Rook</b>
+          <code>rook.team</code>
+        </div>
+        <div class="team" set:html={team} />
+      </main>
+    )}
+  </body>
+</html>
+
+<style is:global>
+  html, body { margin: 0; }
+  #art { position: relative; overflow: hidden; }
+  #art.avatar-mint, #art.avatar-paper {
+    display: grid; place-items: center; width: 1080px; height: 1080px;
+  }
+  #art.avatar-mint { background: #0b0b0c; }
+  #art.avatar-paper { background: #fafaf7; }
+  #art.avatar-mint > svg, #art.avatar-paper > svg { width: 626px; height: auto; margin-top: -40px; }
+
+  #art.banner-x, #art.banner-linkedin {
+    background: #fafaf7; color: #0b0b0c; font-family: "Inter Tight", sans-serif;
+  }
+  #art.banner-x { width: 1500px; height: 500px; }
+  #art.banner-linkedin { width: 1128px; height: 191px; }
+  #art .team {
+    position: absolute; display: flex; align-items: flex-end; justify-content: center;
+    border-bottom: 2px solid #d9d9d2;
+  }
+    #art .piece { display: block; }
+  #art .piece svg { display: block; width: 100%; height: auto; margin-bottom: -11%; }
+  #art .name { position: absolute; display: flex; align-items: center; }
+  #art .name b { font-weight: 500; letter-spacing: -0.03em; }
+  #art .name code { font-family: "IBM Plex Mono", monospace; color: #5b5b61; font-weight: 400; }
+  #art .mark svg { display: block; width: 100%; height: 100%; }
+
+  /* X: the profile picture covers the lower left, so the name sits above it and the team to the right. */
+  #art.banner-x .name { left: 330px; top: 92px; gap: 24px; flex-wrap: wrap; width: 520px; }
+  #art.banner-x .mark { width: 86px; height: 86px; }
+  #art.banner-x .name b { font-size: 92px; line-height: 1; }
+  #art.banner-x .name code { font-size: 34px; width: 100%; padding-left: 110px; margin-top: -10px; }
+  #art.banner-x .team { left: 0; right: 0; bottom: 100px; gap: 26px; padding-right: 64px; justify-content: flex-end; }
+
+  /* LinkedIn: the company logo covers the lower left. */
+  #art.banner-linkedin .name { left: 250px; top: 44px; gap: 16px; }
+  #art.banner-linkedin .mark { width: 44px; height: 44px; }
+  #art.banner-linkedin .name b { font-size: 48px; line-height: 1; }
+  #art.banner-linkedin .name code { font-size: 20px; margin-left: 8px; }
+  #art.banner-linkedin .team { left: 0; right: 0; bottom: 26px; gap: 10px; padding-right: 40px; justify-content: flex-end; }
+</style>

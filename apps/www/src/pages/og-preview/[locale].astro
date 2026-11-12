@@ -2,6 +2,7 @@
 import type { GetStaticPaths } from "astro";
 import Avatar from "../../components/Avatar.astro";
 import { MASCOT_COLOR } from "../../mascot";
+import { teamMarkup } from "../../og-team";
 import { getLaunchCopy } from "../../i18n/launch";
 import { LOCALES, LOCALE_HTML_LANG, isLocale } from "../../i18n/locales";
 
@@ -14,11 +15,13 @@ const { locale } = Astro.params;
 if (!isLocale(locale)) throw new Error(`Unknown locale: ${locale}`);
 
 const copy = getLaunchCopy(locale);
-const { line1, line2, lead } = copy.hero;
-// The headline steps down for the longer languages so it stays on one line.
+const { line1, line2 } = copy.hero;
+// The team stands under the headline; the headline and its rook stay in the middle so a cropped
+// preview still reads. The headline steps down for the longer languages so it stays on one line.
 const length = line1.length + line2.length;
 const cjk = locale === "ja" || locale === "zh";
-const size = cjk ? 84 : length <= 16 ? 110 : length <= 22 ? 96 : 84;
+const size = cjk ? 100 : length <= 16 ? 112 : length <= 22 ? 98 : 86;
+const team = teamMarkup(176);
 ---
 
 <html lang={LOCALE_HTML_LANG[locale]}>
@@ -29,24 +32,35 @@ const size = cjk ? 84 : length <= 16 ? 110 : length <= 22 ? 96 : 84;
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;500&family=Inter:wght@400&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;500&family=Inter:wght@400&family=IBM+Plex+Mono:wght@400&display=swap"
       rel="stylesheet"
     />
   </head>
   <body>
     <main id="og" style={`--size:${size}px`}>
-      <header>
-        <Avatar color={MASCOT_COLOR.menta} class="og-mark" />
-        <span>Rook</span>
-      </header>
       <h1>
         <span>{line1}</span>
         <Avatar color={MASCOT_COLOR.menta} class="og-rook" />
         <span>{line2}</span>
       </h1>
-      <p>{lead[0]} {lead[1]}</p>
-      <small>{copy.meta.ogTagline}</small>
+      <div class="og-team" set:html={team} />
+      <footer>
+        <code>rook.team</code>
+        <small>{copy.meta.ogTagline}</small>
+      </footer>
     </main>
+    <script is:inline>
+      // Steps the headline down until it fits the middle of the card, so a crop keeps it whole.
+      document.fonts.ready.then(() => {
+        const og = document.getElementById("og");
+        const h1 = og.querySelector("h1");
+        let size = Number.parseFloat(og.style.getPropertyValue("--size"));
+        while (h1.scrollWidth > 980 && size > 40) {
+          size -= 2;
+          og.style.setProperty("--size", `${size}px`);
+        }
+      });
+    </script>
   </body>
 </html>
 
@@ -58,11 +72,6 @@ const size = cjk ? 84 : length <= 16 ? 110 : length <= 22 ? 96 : 84;
   }
   #og {
     position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 28px;
     width: 1200px;
     height: 630px;
     overflow: hidden;
@@ -73,47 +82,60 @@ const size = cjk ? 84 : length <= 16 ? 110 : length <= 22 ? 96 : 84;
   #og .avatar {
     flex: none;
   }
-  #og .og-mark {
-    width: 44px;
-    height: 44px;
-  }
   #og .og-rook {
     width: calc(var(--size) * 1.17);
     height: calc(var(--size) * 1.17);
   }
-  #og header {
-    position: absolute;
-    top: 48px;
-    left: 64px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-family: "Inter Tight", sans-serif;
-    font-size: 28px;
-    font-weight: 500;
-  }
   #og h1 {
+    position: absolute;
+    top: 84px;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 20px;
+    width: max-content;
     margin: 0;
     font-family: "Inter Tight", sans-serif;
     font-size: var(--size);
     font-weight: 300;
     letter-spacing: -0.045em;
-    line-height: 1;
+    line-height: 1.25;
     white-space: nowrap;
   }
-  #og p {
-    margin: 0;
-    color: #5b5b61;
+  #og .og-team {
+    position: absolute;
+    left: 110px;
+    right: 110px;
+    bottom: 118px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    border-bottom: 2px solid #d9d9d2;
+  }
+  #og .piece svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin-bottom: -11%;
+  }
+  #og footer {
+    position: absolute;
+    left: 64px;
+    right: 64px;
+    bottom: 38px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+  #og code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
     font-size: 30px;
-    text-align: center;
+    color: #0b0b0c;
   }
   #og small {
-    position: absolute;
-    bottom: 44px;
-    color: #8a8a90;
-    font-size: 22px;
+    color: #5b5b61;
+    font-size: 28px;
   }
 </style>

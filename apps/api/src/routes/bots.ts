@@ -406,6 +406,7 @@ export function botsRoutes(ctx: RouterContext) {
                 }
               : {}),
             ...(input.approvalMode !== undefined ? { approvalMode: input.approvalMode } : {}),
+            ...(input.memoryMode !== undefined ? { memoryMode: input.memoryMode } : {}),
             ...(input.dailyCapUsd !== undefined
               ? {
                   dailyCapMicros:

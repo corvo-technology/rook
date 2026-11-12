@@ -68,8 +68,8 @@ main h3 {
 }
 
 .lp-hero h1 .guide-slot {
-  width: 1.17em;
-  height: 1.17em;
+  width: 72px;
+  height: 72px;
 }
 
 .lp-hero__lead {
@@ -585,90 +585,96 @@ main ~ .site-footer {
   }
 }
 
-/* The guide rook: one rook for the whole page. It rests at the stops (.guide-slot) and travels
-   between them as the page scrolls. Where the script does not run, the stops keep a rook each. */
+/* The guide rook: one rook for the whole page, one size. It rests at the stops (.guide-slot), always in
+   empty space, and goes from one to the next when the page reaches it. Where the script does not run,
+   the stops keep a rook each. */
 .rook-guide {
+  --guide: 72px;
+
   position: absolute;
   top: 0;
   left: 0;
   z-index: 6;
-  width: 100px;
-  height: 100px;
+  width: var(--guide);
+  height: var(--guide);
   opacity: 0;
   pointer-events: none;
-  transform-origin: 50% 100%;
-  will-change: transform;
+  will-change: transform, opacity;
 }
 
-html[data-guided] .rook-guide {
-  opacity: 1;
-}
-
-html[data-guided] .guide-slot .rook {
-  visibility: hidden;
-}
-
-.rook-guide .rook,
-.guide-slot .rook {
+.avatar {
+  display: block;
   width: 100%;
   height: 100%;
 }
 
-.guide-slot {
+.avatar > svg {
   display: block;
-  width: var(--s);
-  height: var(--s);
+  width: 100%;
+  height: 100%;
+  overflow: visible;
 }
 
-.guide-slot--cta,
+html[data-guided] .guide-slot .avatar {
+  visibility: hidden;
+}
+
+.guide-slot {
+  display: block;
+  width: 72px;
+  height: 72px;
+}
+
+/* The rook's places above a section's title sit in the gap the section already leaves. A chess piece
+   stays beside the stop. */
+.lp-agent,
+.lp-store,
+.lp-works,
+.lp-open {
+  position: relative;
+}
+
 .guide-slot--perch,
-.guide-slot--end {
+.guide-piece {
   position: absolute;
 }
 
-.lp-hero__cta {
-  position: relative;
-  display: inline-flex;
-}
-
-.guide-slot--cta {
-  top: 50%;
-  right: calc(100% + 14px);
-  margin-top: calc(var(--s) / -2);
-}
-
 .guide-slot--perch {
-  bottom: 100%;
-  margin-bottom: -6px;
-  list-style: none;
+  top: -88px;
 }
 
-.guide-slot--ask {
-  left: 48px;
+.guide-piece {
+  top: -72px;
+  width: 56px;
+  height: 56px;
 }
 
-.guide-slot--right {
-  right: 24px;
+.lp-agent .guide-slot--perch,
+.lp-agent .guide-piece,
+.lp-works .guide-slot--perch,
+.lp-works .guide-piece {
+  top: calc(var(--section-gap) - 88px);
 }
 
-.guide-slot--left {
-  left: 24px;
+.lp-agent .guide-piece,
+.lp-works .guide-piece {
+  top: calc(var(--section-gap) - 72px);
 }
 
-.lp-states,
-.lp-rows,
-.lp-cards {
-  position: relative;
+.guide-slot--mid {
+  left: calc(50% - 36px);
 }
 
-@media (max-width: 720px) {
-  .guide-slot--wide {
-    display: none;
-  }
+.guide-piece--mid {
+  left: calc(50% + 48px);
+}
 
-  .guide-slot--ask {
-    left: 20px;
-  }
+.guide-slot--start {
+  left: 0;
+}
+
+.guide-piece--start {
+  left: 84px;
 }
 
 /* The end: a big rook looks over the bottom edge of the page and speaks twice. */
@@ -680,10 +686,13 @@ html[data-guided] .guide-slot .rook {
   overflow: hidden;
 }
 
-.guide-slot--end {
+.lp-cta__rook {
+  position: absolute;
   top: 0;
   left: 50%;
-  margin-left: calc(var(--s) / -2);
+  width: 220px;
+  height: 220px;
+  margin-left: -110px;
 }
 
 .lp-cta__bubble {
@@ -734,23 +743,25 @@ html[data-guided] .guide-slot .rook {
     height: 130px;
   }
 
-  .guide-slot--end {
-    --s: 180px !important;
+  .lp-cta__rook {
+    width: 180px;
+    height: 180px;
+    margin-left: -90px;
   }
 
   .lp-cta__bubble {
-    max-width: 130px;
+    max-width: 100px;
     padding: 8px 12px;
     font-size: 13px;
   }
 
   .lp-cta__bubble--left {
     top: 14px;
-    right: calc(50% + 70px);
+    right: calc(50% + 92px);
   }
 
   .lp-cta__bubble--right {
     top: 70px;
-    left: calc(50% + 70px);
+    left: calc(50% + 92px);
   }
 }

@@ -1,0 +1,25 @@
+---
+import { CHESS_PIECES, ROOK_AVATAR, ROOK_EYE_COLOR } from "@corvo/core";
+import type { AvatarMotion } from "open-bot-avatar";
+import { renderAvatarSvg } from "open-bot-avatar";
+
+type Props = {
+  piece?: "rook" | keyof typeof CHESS_PIECES;
+  /** The body color, from the page's bot palette. */
+  color: string;
+  mood?: AvatarMotion;
+  class?: string;
+  /** A piece that sits beside a stop: the guide script brings it to life. */
+  mate?: boolean;
+};
+
+const { piece = "rook", color, mood = "idle", class: className, mate = false } = Astro.props;
+const definition = piece === "rook" ? ROOK_AVATAR : CHESS_PIECES[piece];
+// The same engine as the app draws it. This still is what shows without the script and with reduced
+// motion; the script swaps it for a live one. Decoration: no title, no role.
+const svg = renderAvatarSvg(definition, { color, eyeColor: ROOK_EYE_COLOR, motion: mood, reducedMotion: true })
+  .replace(/ role="img" aria-label="[^"]*"/, ' aria-hidden="true"')
+  .replace(/<title>[^<]*<\/title>/, "");
+---
+
+<span class:list={["avatar", className]} data-avatar={piece} data-mate={mate ? "" : undefined} data-color={color} data-eye={ROOK_EYE_COLOR} aria-hidden="true" set:html={svg} />

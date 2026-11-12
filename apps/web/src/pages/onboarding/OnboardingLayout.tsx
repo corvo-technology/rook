@@ -2,9 +2,9 @@ import { Button } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { Check, ChevronLeft } from "lucide-react";
 import type { ReactNode } from "react";
-import { BrandMascot } from "../../components/BrandMascot";
 import type { OnboardingStepId } from "../../lib/onboarding-steps";
 import { progress } from "../../lib/onboarding-steps";
+import { GuideRook } from "./GuideRook";
 
 export type OnboardingSidebarStep = { id: OnboardingStepId; label: string; detail?: string };
 
@@ -34,7 +34,7 @@ export function OnboardingLayout({
       className="flex min-h-svh flex-col bg-linear-to-b from-primary/10 to-background to-60% text-foreground"
     >
       <header className="mx-auto w-full max-w-xl px-6 pt-8">
-        <BrandMascot size={44} className="mb-6" />
+        <GuideRook current={current} />
         <div
           role="progressbar"
           aria-label={t`Progress`}
@@ -47,6 +47,7 @@ export function OnboardingLayout({
             <span
               key={step.id}
               aria-hidden
+              data-guide-stop={step.id}
               className={`h-1 flex-1 rounded-full motion-safe:transition-colors motion-safe:duration-300 ${
                 done.has(step.id) || step.id === current ? "bg-foreground" : "bg-border"
               }`}
@@ -80,7 +81,13 @@ export function OnboardingLayout({
       <main className="flex flex-1 items-center px-6 py-10">
         <div className="mx-auto w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-lg shadow-black/20">
           {onBack ? (
-            <Button variant="ghost" size="sm" className="-ml-2 mb-6" onClick={onBack}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="-ml-2 mb-6"
+              data-guide-skip
+              onClick={onBack}
+            >
               <ChevronLeft aria-hidden />
               {t`Back`}
             </Button>

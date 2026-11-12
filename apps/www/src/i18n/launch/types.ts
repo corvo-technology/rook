@@ -156,5 +156,6 @@ export type LaunchCopy = {
     copiedLabel: string;
     note: string;
   };
-  cta: { heading: string; copy: string; download: string };
+  /** `bubbles` are the two things the rook says from the bottom edge of the page, in order. */
+  cta: { heading: string; copy: string; download: string; bubbles: [string, string] };
 };

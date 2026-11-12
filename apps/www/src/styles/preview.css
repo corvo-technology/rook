@@ -196,3 +196,67 @@
     flex: 1;
   }
 }
+
+/* The opening act. The finished thread is always laid out, so nothing moves when it arrives. */
+.pv-you {
+  align-self: flex-end;
+  max-width: 82%;
+  padding: 10px 16px;
+  border-radius: 20px 20px 6px;
+  background: var(--surface-soft);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.pv-stage {
+  display: grid;
+}
+
+.pv-stage > * {
+  grid-area: 1 / 1;
+}
+
+.pv-stage__working {
+  align-self: start;
+}
+
+.pv-you,
+.pv-stage > * {
+  transition:
+    opacity 320ms ease,
+    visibility 0s;
+}
+
+.pv [data-off] {
+  opacity: 0;
+  visibility: hidden;
+  transition-delay: 0s, 320ms;
+}
+
+.pv-composer {
+  min-height: 56px;
+}
+
+.pv-composer > span:first-child {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.pv-caret {
+  display: inline-block;
+  width: 1.5px;
+  height: 1.1em;
+  margin-inline-start: 2px;
+  background: var(--ink);
+  vertical-align: text-bottom;
+  animation: pv-caret 1s steps(1) infinite;
+}
+
+@keyframes pv-caret {
+  50% {
+    opacity: 0;
+  }
+}

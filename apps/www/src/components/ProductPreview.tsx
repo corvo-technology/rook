@@ -5,6 +5,8 @@ import "../styles/preview.css";
 
 type Copy = LaunchCopy["preview"];
 type Decision = "pending" | "approved" | "denied";
+/** The opening act: the request is typed, sent, worked on, then answered. The page renders the last one. */
+type Act = "waiting" | "typing" | "sent" | "working" | "answered";
 
 function agentOf(copy: Copy, name: string): LaunchAgent {
   return copy.agents.find((agent) => agent.name === name) ?? copy.agents[0]!;
@@ -19,8 +21,48 @@ export function ProductPreview({ copy }: { copy: Copy }) {
   const [decision, setDecision] = useState<Decision>("pending");
   const [working, setWorking] = useState(false);
   const timer = useRef<number | undefined>(undefined);
+  const root = useRef<HTMLElement>(null);
+  const [act, setAct] = useState<Act>("answered");
+  const [typed, setTyped] = useState("");
+  const request = channel.messages.find((m) => m.kind === "you")?.text ?? "";
 
   useEffect(() => () => window.clearTimeout(timer.current), []);
+
+  // Once, when the window comes into view, the request types itself and the team answers.
+  // Reduced motion, or no script, keeps the finished conversation.
+  useEffect(() => {
+    const node = root.current;
+    if (!node || !request || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    setAct("waiting");
+    const timers: number[] = [];
+    const later = (ms: number, run: () => void) => timers.push(window.setTimeout(run, ms));
+    const type = (count: number) => {
+      setTyped(request.slice(0, count));
+      if (count < request.length) later(34 + ((count * 37) % 45), () => type(count + 1));
+      else {
+        later(450, () => {
+          setTyped("");
+          setAct("sent");
+        });
+        later(1100, () => setAct("working"));
+        later(2700, () => setAct("answered"));
+      }
+    };
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+        observer.disconnect();
+        setAct("typing");
+        later(500, () => type(1));
+      },
+      { threshold: 0.4 },
+    );
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+      timers.forEach((id) => window.clearTimeout(id));
+    };
+  }, [request]);
 
   const decide = (next: Exclude<Decision, "pending">) => {
     if (decision !== "pending") return;
@@ -38,7 +80,7 @@ export function ProductPreview({ copy }: { copy: Copy }) {
   const decided = `${copy.approvalBody.replace(/[.。]$/, "")} · ${decision === "approved" ? copy.approved : copy.denied}`;
 
   return (
-    <section className="pv ink" data-testid="product-preview" aria-label={`#${channel.name}`}>
+    <section ref={root} className="pv ink" data-testid="product-preview" aria-label={`#${channel.name}`}>
       <header className="pv-head">
         <p>
           <strong># {channel.name}</strong>
@@ -49,6 +91,22 @@ export function ProductPreview({ copy }: { copy: Copy }) {
         </span>
       </header>
 
+      {request ? (
+        <p className="pv-you" data-off={act === "waiting" || act === "typing" ? "" : undefined}>
+          {request}
+        </p>
+      ) : null}
+
+      <div className="pv-stage">
+      {asked ? (
+        <article className="pv-msg pv-msg--quiet pv-stage__working" data-off={act === "working" ? undefined : ""} aria-hidden="true">
+          <Rook hue={asked.hue} size={40} mood="working" ring />
+          <p className="pv-msg__who">
+            <strong>{asked.name}</strong> · {copy.working}…
+          </p>
+        </article>
+      ) : null}
+      <div className="pv-stage__thread" data-off={act === "answered" ? undefined : ""}>
       {channel.messages.map((message, index) => {
         if (message.kind === "you") return null;
         const agent = agentOf(copy, message.agent);
@@ -97,6 +155,8 @@ export function ProductPreview({ copy }: { copy: Copy }) {
           </div>
         );
       })}
+      </div>
+      </div>
 
       {asked && working ? (
         <article className="pv-msg pv-msg--quiet">
@@ -123,7 +183,16 @@ export function ProductPreview({ copy }: { copy: Copy }) {
 
       <div className="pv-composer">
         <span>
-          {copy.composer} #{channel.name}
+          {act === "typing" && typed ? (
+            <>
+              {typed}
+              <i className="pv-caret" aria-hidden="true" />
+            </>
+          ) : (
+            <>
+              {copy.composer} #{channel.name}
+            </>
+          )}
         </span>
         <span className="pv-composer__send" aria-hidden="true">
           <svg viewBox="0 0 24 24">

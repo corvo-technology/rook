@@ -97,7 +97,23 @@ const hrefOf = (section: string) => localeHashPath(locale, section);
   }
 
   const header = document.querySelector<HTMLElement>(".site-header");
-  const onScroll = () => header?.toggleAttribute("data-scrolled", scrollY > 24);
+  // Over the black rooms (the closing band and the footer) the bar turns black too.
+  const rooms = [...document.querySelectorAll<HTMLElement>(".ink-band, .site-footer.ink")];
+  let barFrame = 0;
+  const bar = () => {
+    barFrame = 0;
+    if (!header) return;
+    const line = header.offsetHeight / 2;
+    const over = rooms.some((room) => {
+      const rect = room.getBoundingClientRect();
+      return rect.top <= line && rect.bottom > line;
+    });
+    header.classList.toggle("ink", over);
+  };
+  const onScroll = () => {
+    header?.toggleAttribute("data-scrolled", scrollY > 24);
+    if (rooms.length && !barFrame) barFrame = requestAnimationFrame(bar);
+  };
   addEventListener("scroll", onScroll, { passive: true });
   onScroll();
 

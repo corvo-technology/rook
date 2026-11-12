@@ -1,6 +1,7 @@
 ---
 import Footer from "./Footer.astro";
 import Header from "./Header.astro";
+import GuideSlot from "./GuideSlot.astro";
 import { Rook } from "./Rook";
 import { ProductPreview } from "./ProductPreview";
 import { AGENT_CATALOG } from "@corvo/core";
@@ -80,14 +81,17 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
       <section class="lp-hero">
         <h1>
           <span>{copy.hero.line1}</span>
-          <Rook hue="menta" size={108} float react label="Rook" />
+          <GuideSlot size={108} class="guide-slot--inline" />
           <span>{copy.hero.line2}</span>
         </h1>
         <p class="lp-hero__lead">{copy.hero.lead[0]}<br />{copy.hero.lead[1]}</p>
         <div class="lp-hero__actions">
-          <a class="button button--primary" href={DOWNLOAD_URL} target="_blank" rel="noopener" data-attr="hero-download">
-            {copy.cta.download}
-          </a>
+          <span class="lp-hero__cta">
+            <a class="button button--primary" href={DOWNLOAD_URL} target="_blank" rel="noopener" data-attr="hero-download">
+              {copy.cta.download}
+            </a>
+            <GuideSlot size={48} class="guide-slot--cta" />
+          </span>
           <p class="download-note">
             {
               copy.hero.note.split(/(\{windows\}|\{linux\})/).map((part) =>
@@ -103,7 +107,8 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
           </p>
         </div>
         <div class="lp-hero__demo">
-          <ProductPreview copy={copy.preview} client:visible />
+          <GuideSlot size={64} class="guide-slot--perch guide-slot--ask" />
+          <ProductPreview copy={copy.preview} client:visible={{ rootMargin: "300px" }} />
         </div>
       </section>
 
@@ -113,6 +118,7 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
           <p class="lp-lead">{copy.agent.copy}</p>
         </div>
         <ul class="lp-states" data-reveal>
+          <GuideSlot as="li" size={52} class="guide-slot--perch guide-slot--right guide-slot--wide" />
           {
             STATES.map((state, index) => (
               <li>
@@ -142,6 +148,7 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
           <p class="lp-lead">{copy.store.copy}</p>
         </div>
         <div class="lp-rows" data-reveal>
+          <GuideSlot size={52} class="guide-slot--perch guide-slot--left guide-slot--wide" />
           {
             storeGroups.map((group) => (
               <div class="lp-store__row">
@@ -167,6 +174,7 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
           {works.accent}
         </h2>
         <div class="lp-cards" data-reveal>
+          <GuideSlot size={52} class="guide-slot--perch guide-slot--right guide-slot--wide" />
           <article class="lp-card">
             <h3>{featureCards[0]!.title}</h3>
             <p>{featureCards[0]!.body}</p>
@@ -221,6 +229,7 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
           </div>
         </div>
         <ul class="lp-rows lp-points" data-reveal>
+          <GuideSlot as="li" size={52} class="guide-slot--perch guide-slot--left guide-slot--wide" />
           {
             copy.open.points.map((point) => (
               <li>
@@ -283,26 +292,29 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
       </section>
 
       <section class="lp-cta ink ink-band" aria-labelledby="cta-heading">
-        <div class="lp-cta__flock" aria-hidden="true">
-          <Rook hue="azul" size={64} seed={1} react />
-          <Rook hue="laranja" size={76} seed={2} react />
-          <Rook hue="menta" size={104} seed={3} float react />
-          <Rook hue="violeta" size={76} seed={4} react />
-          <Rook hue="rosa" size={64} seed={5} react />
-        </div>
         <h2 id="cta-heading" class="lp-title lp-title--cta">{copy.cta.heading}</h2>
         <p class="lp-lead">{copy.cta.copy}</p>
         <a class="button button--primary" href={DOWNLOAD_URL} target="_blank" rel="noopener" data-attr="cta-download">
           {copy.cta.download}
         </a>
+        <div class="lp-cta__peek">
+          <p class="lp-cta__bubble lp-cta__bubble--left">{copy.cta.bubbles[0]}</p>
+          <GuideSlot size={220} clip={0.28} mood="done" class="guide-slot--end" />
+          <p class="lp-cta__bubble lp-cta__bubble--right">{copy.cta.bubbles[1]}</p>
+        </div>
       </section>
     </main>
 
     <Footer locale={locale} homeHref={homeHref} />
   </div>
+  <div class="rook-guide" data-guide aria-hidden="true">
+    <Rook hue="menta" size={100} gaze={false} />
+  </div>
 </BaseLayout>
 
 <script>
+  import "../guide";
+
   // Blocks below the fold rise once as they arrive. Hidden only after JS runs, so nothing is lost without it.
   const calm = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (calm && "IntersectionObserver" in window) {

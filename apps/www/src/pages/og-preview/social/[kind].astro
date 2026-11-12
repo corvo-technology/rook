@@ -1,6 +1,7 @@
 ---
 import type { GetStaticPaths } from "astro";
 import { MASCOT_COLOR } from "../../../mascot";
+import { ROOK_AVATAR } from "@corvo/core";
 import { pieceSvg, teamMarkup } from "../../../og-team";
 
 // Profile pictures and banners for the social accounts, drawn here and captured by
@@ -11,8 +12,13 @@ export const getStaticPaths = (() =>
     : []) satisfies GetStaticPaths;
 
 const { kind } = Astro.params;
-const avatar = kind === "avatar-mint" ? pieceSvg("rook", MASCOT_COLOR.menta, undefined, "#0b0b0c")
-  : kind === "avatar-paper" ? pieceSvg("rook", "#0b0b0c", undefined, "#fafaf7")
+// The profile picture is a straight front view, so it is drawn flat from the rook outline instead of
+// the engine's slightly turned still.
+const flatRook = (body: string, eye: string) =>
+  `<svg viewBox="14 12 72 76" xmlns="http://www.w3.org/2000/svg"><path d="${ROOK_AVATAR.body.path}" fill="${body}"/><g fill="${eye}"><rect x="37" y="49" width="7" height="16" rx="3.5"/><rect x="56" y="49" width="7" height="16" rx="3.5"/></g></svg>`;
+const avatar =
+  kind === "avatar-mint" ? flatRook(MASCOT_COLOR.menta, "#0b0b0c")
+  : kind === "avatar-paper" ? flatRook("#0b0b0c", "#fafaf7")
   : null;
 const x = kind === "banner-x";
 const unit = x ? 122 : 72;
@@ -55,7 +61,7 @@ const mark = pieceSvg("rook", MASCOT_COLOR.menta);
   }
   #art.avatar-mint { background: #0b0b0c; }
   #art.avatar-paper { background: #fafaf7; }
-  #art.avatar-mint > svg, #art.avatar-paper > svg { width: 620px; height: 620px; }
+  #art.avatar-mint > svg, #art.avatar-paper > svg { width: 626px; height: auto; margin-top: -40px; }
 
   #art.banner-x, #art.banner-linkedin {
     background: #fafaf7; color: #0b0b0c; font-family: "Inter Tight", sans-serif;

@@ -251,7 +251,11 @@ it("keeps an edit made after a save when the saved status arrives late", async (
   expect(button().textContent).toBe("Saved");
 });
 
-function renderHandoff(blocks: ThreadMessage["blocks"], peerBot: PeerBot) {
+function renderHandoff(
+  blocks: ThreadMessage["blocks"],
+  peerBot: PeerBot,
+  channelMembers?: { id: string; name: string }[],
+) {
   const message: ThreadMessage = {
     id: "message",
     threadId: "thread",
@@ -272,6 +276,7 @@ function renderHandoff(blocks: ThreadMessage["blocks"], peerBot: PeerBot) {
         onOpenPeerMessages={vi.fn()}
         onTogglePeerReplies={vi.fn()}
         peerBot={peerBot}
+        channelMembers={channelMembers}
         onRefresh={vi.fn()}
         onBotChanged={vi.fn()}
         onAddRoutine={vi.fn()}
@@ -305,6 +310,20 @@ it("names a sender that is not a group member from the bot list", () => {
   renderHandoff(handoff(), named);
   expect(container.textContent).toContain("Chefe");
   expect(container.textContent).toContain("Design");
+});
+
+it("sets a handoff in a channel as a message from the sender to the agent", () => {
+  renderHandoff(handoff({ reason: "Envolve analisar uma landing" }), named, [
+    { id: "design", name: "Design" },
+  ]);
+  const row = container.querySelector('[data-testid="channel-handoff"]');
+  expect(row?.textContent).toContain("Chefe");
+  expect(row?.textContent).toContain("Design");
+  expect(row?.textContent).toContain("Avaliar o hero");
+  expect(row?.querySelector("time")).not.toBeNull();
+  expect(row?.querySelector('[data-testid="handoff-reason"]')?.textContent).toBe(
+    "Envolve analisar uma landing",
+  );
 });
 
 function mountReply(

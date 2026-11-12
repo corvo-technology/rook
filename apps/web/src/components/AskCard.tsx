@@ -236,6 +236,35 @@ export function AskCard({
       </BuiCard>
     );
 
+  // A decided approval steps back to one quiet line, so a busy channel stays readable.
+  if (answered && approvalActions && !block.instructionUpdate && !secretInput) {
+    const outcome = approvalActions.find((action) => action.id === displayedAnswer)?.outcome;
+    const declined = displayedAnswer === "deny" || displayedDismissed || outcome === "cancelled";
+    return (
+      <div
+        data-testid="ask-decided"
+        className="flex min-w-0 items-center gap-1.5 text-[13.5px] text-muted-foreground"
+      >
+        {declined ? null : <Check aria-hidden className="size-4 shrink-0" />}
+        <span className="min-w-0 truncate">
+          {reviewing ? t`Review before ${reviewing}` : block.text}
+        </span>
+        <span aria-hidden="true">·</span>
+        <span className="shrink-0 font-medium">
+          {formatAnsweredState(
+            displayedAnswer,
+            true,
+            false,
+            outcome,
+            askActions,
+            displayedDismissed,
+            block.proposal,
+          )}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <BuiCard
       data-testid={

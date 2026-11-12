@@ -294,6 +294,25 @@ it("labels a pending approval as waiting for the person, and not once answered",
   expect(container.textContent).not.toContain("Needs you");
 });
 
+it("folds a decided approval into one line with what was asked and the decision", async () => {
+  await render({
+    kind: "ask",
+    approvalEffectId: "effect-1",
+    text: "Send it?",
+    detail: "url: https://example.com",
+    actions: [
+      { id: "allow", label: "Allow once" },
+      { id: "deny", label: "Deny" },
+    ],
+    status: "answered",
+    answer: "allow",
+  });
+  const line = container.querySelector('[data-testid="ask-decided"]');
+  expect(line?.textContent).toContain("Send it?");
+  expect(container.textContent).not.toContain("https://example.com");
+  expect(container.querySelector("button")).toBeNull();
+});
+
 it("gives onboarding choices the same lettered rows as questions", async () => {
   await act(async () =>
     root.render(

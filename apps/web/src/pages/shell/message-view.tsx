@@ -380,6 +380,62 @@ export const MessageView = memo(function MessageView({
             // A routed handoff can come from a bot outside the group, so fall back to the bot list.
             const from = memberName?.(block.fromBotId) ?? peerBot(block.fromBotId)?.name ?? t`bot`;
             const to = memberName?.(block.toBotId) ?? peerBot(block.toBotId)?.name ?? t`bot`;
+            if (channelMembers) {
+              // In a channel a handoff reads as a message from the sender, addressed to the agent.
+              return (
+                <div key={i} data-testid="channel-handoff" className="flex gap-3">
+                  {speakerName ? null : (
+                    <span className="mt-0.5 shrink-0">
+                      <BotAvatar
+                        color={peerBot(block.fromBotId)?.color ?? FALLBACK_BOT_COLOR}
+                        identity={block.fromBotId}
+                        size={36}
+                      />
+                    </span>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex flex-wrap items-baseline gap-x-2" dir="auto">
+                      {speakerName ? null : (
+                        <span className="text-[15px] font-semibold text-foreground">{from}</span>
+                      )}
+                      <span className="flex items-baseline gap-1.5 text-[14px]">
+                        <span aria-hidden="true" className="text-muted-foreground">
+                          →
+                        </span>
+                        <BotMention
+                          block={{ botId: block.toBotId, name: to, status: "created" }}
+                          color={peerBot(block.toBotId)?.color}
+                          onOpenBot={onOpenBot}
+                        />
+                      </span>
+                      {speakerName ? null : (
+                        <time
+                          dateTime={message.createdAt}
+                          className="text-[12px] tabular-nums text-muted-foreground"
+                        >
+                          {new Date(message.createdAt).toLocaleTimeString(i18n.locale || "en", {
+                            hour: "numeric",
+                            minute: "2-digit",
+                          })}
+                        </time>
+                      )}
+                    </div>
+                    <div className="text-body1 text-foreground" dir="auto">
+                      <ChatMarkdown renderMention={renderMention}>{block.text}</ChatMarkdown>
+                    </div>
+                    {block.reason ? (
+                      <p
+                        data-testid="handoff-reason"
+                        dir="auto"
+                        className="mt-1 text-[13px] text-muted-foreground"
+                      >
+                        {block.reason}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              );
+            }
             return (
               <div
                 key={i}

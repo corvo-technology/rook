@@ -70,7 +70,7 @@ test("Ask mode asks before a change, and approvals settings shape what asks", as
 
   // The allowed tool is listed in Approvals, where it can be blocked.
   const settings = await openUserSettings(page);
-  await settings.getByTestId("settings-nav-confirmations").click();
+  await settings.getByTestId("settings-nav-approvals").click();
   const approvals = page.getByTestId("settings-page");
   await expect(approvals.getByRole("heading", { name: "Approvals", exact: true })).toBeVisible();
   const mode = approvals.getByTestId("approval-mode");

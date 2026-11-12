@@ -290,7 +290,7 @@ function testQueryClient() {
 }
 
 async function renderSettings(
-  embedded = true,
+  _embedded = true,
   queryClient = testQueryClient(),
   scope: "account" | "space" = "account",
 ) {
@@ -300,7 +300,7 @@ async function renderSettings(
   await act(async () => {
     root.render(
       <QueryClientProvider client={queryClient}>
-        <ModelSettingsOverlay embedded={embedded} scope={scope} onClose={() => undefined} />
+        <ModelSettingsOverlay scope={scope} />
       </QueryClientProvider>,
     );
   });

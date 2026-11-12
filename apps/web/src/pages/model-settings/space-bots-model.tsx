@@ -1,15 +1,6 @@
 import type { Bot } from "@corvo/contracts";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  Button,
-} from "@corvo/ui-web";
+import { InlineConfirm } from "@corvo/ui-web";
+import { plural } from "@lingui/core/macro";
 import { Plural, Trans } from "@lingui/react/macro";
 import { useCallback, useEffect, useState } from "react";
 import { useSpaceRpc } from "../../lib/space-rpc";
@@ -28,7 +19,6 @@ export function botsWithOwnModel<T extends Pick<Bot, "modelProvider" | "modelId"
 export function SpaceBotsModelNotice({ refreshKey }: { refreshKey?: unknown }) {
   const rpc = useSpaceRpc();
   const [bots, setBots] = useState<Bot[] | null>(null);
-  const [confirming, setConfirming] = useState(false);
   const [pending, setPending] = useState(false);
   const [moved, setMoved] = useState(0);
   const [failed, setFailed] = useState<string[]>([]);
@@ -87,16 +77,20 @@ export function SpaceBotsModelNotice({ refreshKey }: { refreshKey?: unknown }) {
             />{" "}
             <span className="text-foreground">{pinned.map((bot) => bot.name).join(", ")}</span>
           </p>
-          <Button
+          <InlineConfirm
             type="button"
             variant="outline"
             size="sm"
             className="mt-3"
             disabled={pending}
-            onClick={() => setConfirming(true)}
+            confirmLabel={plural(pinned.length, {
+              one: "Switch # bot to the space default?",
+              other: "Switch # bots to the space default?",
+            })}
+            onConfirm={() => void switchAllToSpaceModel()}
           >
             {pending ? <Trans>Switching…</Trans> : <Trans>Use space default</Trans>}
-          </Button>
+          </InlineConfirm>
         </>
       ) : null}
       {moved ? (
@@ -113,35 +107,6 @@ export function SpaceBotsModelNotice({ refreshKey }: { refreshKey?: unknown }) {
           <Trans>Could not switch {failedNames}. Try again.</Trans>
         </p>
       ) : null}
-      <AlertDialog open={confirming} onOpenChange={setConfirming}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              <Plural
-                value={pinned.length}
-                one="Switch # bot to the space default?"
-                other="Switch # bots to the space default?"
-              />
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              <Trans>Their own model is cleared. You can pick one again in each bot.</Trans>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>
-              <Trans>Cancel</Trans>
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setConfirming(false);
-                void switchAllToSpaceModel();
-              }}
-            >
-              <Trans>Switch</Trans>
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </section>
   );
 }

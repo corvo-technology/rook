@@ -6,7 +6,7 @@ import type {
   ThreadMessage,
   VoiceStatus,
 } from "@corvo/contracts";
-import type { AgentImportReader, ModelProblemAction, TourFacts } from "@corvo/core";
+import type { AgentImportReader, TourFacts } from "@corvo/core";
 import {
   APP_CATALOG,
   answerableAskMessageIds,
@@ -73,6 +73,7 @@ import { usePreloadRecoveryState } from "../lib/preload-recovery";
 import { lastChatKey, lastChatOf, queryClient, spaceQueries, spaceSeedKey } from "../lib/query";
 import { rightPanelStorageKey } from "../lib/right-panel-state";
 import { createSpaceRpc, selectedSpaceId, selectSpace } from "../lib/rpc";
+import { storePath, useOpenSettings } from "../lib/settings-route";
 import { markShellReady, useSpaceEpoch } from "../lib/space-switch";
 import { activeThreadRuns } from "../lib/thread-events";
 import { getToolActivityEnabled, subscribeToolActivity } from "../lib/tool-activity-preference";
@@ -88,13 +89,13 @@ import { ComputerOverlay } from "./shell/computer-overlay";
 import { ComputerPanel } from "./shell/computer-panel";
 import type { CreateBotPanelInput } from "./shell/create-bot-panel";
 import { ShellDialogs, useShellDialogs } from "./shell/shell-dialogs";
-import { AppOverlays, SettingsOverlays } from "./shell/shell-overlays";
+import { PeerConversationOverlay } from "./shell/shell-overlays";
 import { ShellSidebar } from "./shell/shell-sidebar";
 import { ShellSidePanel } from "./shell/side-panel";
 import { useCreateMenu } from "./shell/sidebar-header";
 import { BotsSidebarLayout } from "./shell/sidebar-layout";
 import { SidebarRoster } from "./shell/sidebar-roster";
-import { commitSpaceRename, countUnreadChats, sidebarGroupsForSpaces } from "./shell/space-sidebar";
+import { countUnreadChats, sidebarGroupsForSpaces } from "./shell/space-sidebar";
 import type { ThreadTranscriptProps } from "./shell/thread-panel";
 import { ThreadPanel } from "./shell/thread-panel";
 import { Transcript } from "./shell/transcript";
@@ -151,9 +152,8 @@ function SpaceShell() {
     setSearchParams,
     searchParamsRef,
     redirectKeepingOverlay,
-    overlay,
-    setOverlay,
   } = useShellNavigation();
+  const openSettingsRoute = useOpenSettings();
   const queries = spaceQueries(userId ?? null, shellSpaceId);
   const roster = useSpaceRoster({ rpc, seed, botId, groupId, navigate, redirectKeepingOverlay });
   const {
@@ -256,16 +256,7 @@ function SpaceShell() {
   const dialogs = useShellDialogs();
   const [botMenu, setBotMenu] = useState<{ kind: "bot" | "group"; id: string } | null>(null);
   const closeBotMenu = useCallback(() => setBotMenu(null), []);
-  const currentSpaceId = selectedSpaceId() ?? bootstrapMe?.spaceId ?? null;
-  // null: settings follow the space the app is showing.
-  const settingsSpaceId = overlay?.kind === "settings" ? overlay.spaceId : null;
-  const settingsSpace =
-    spaces.find((space) => space.id === (settingsSpaceId ?? currentSpaceId)) ?? null;
-  // Never fall back to another space's settings when the edited space goes away.
-  const settingsSpaceGone = initialBotsLoaded && settingsSpaceId !== null && !settingsSpace;
-  useEffect(() => {
-    if (settingsSpaceGone) setOverlay(null);
-  }, [settingsSpaceGone]);
+  const _currentSpaceId = selectedSpaceId() ?? bootstrapMe?.spaceId ?? null;
 
   const inGroup = Boolean(groupId);
   // Until the route names the chat reopened from cache, that chat stands in for it.
@@ -541,14 +532,13 @@ function SpaceShell() {
     (botId: string | undefined) => memberName(transcriptMembers, botId),
     [transcriptMembers],
   );
-  const { composerMentionTargets, footerLogos, setFooterLogos } = useComposerMentions({
+  const { composerMentionTargets, footerLogos } = useComposerMentions({
     rpc,
     queries,
     bots,
     groups,
     inGroup,
     groupId,
-    integrationsOpen: overlay?.kind === "integrations",
     initialBotsLoaded,
   });
   const threadMentionTargets = useMemo(
@@ -675,10 +665,10 @@ function SpaceShell() {
   // An import's setup checklist re-checks on each thread refresh, so refresh once setup closes.
   const importSetupOpen = useRef(false);
   useEffect(() => {
-    if (!importSetupOpen.current || overlay || searchParams.has("routine")) return;
+    if (!importSetupOpen.current || searchParams.has("routine")) return;
     importSetupOpen.current = false;
     void refreshActiveThread();
-  }, [overlay, searchParams, refreshActiveThread]);
+  }, [searchParams, refreshActiveThread]);
   const stopTeaching = useCallback(async () => {
     const id = activeBotId.current;
     if (!id || teachBusy) return;
@@ -716,43 +706,23 @@ function SpaceShell() {
     writeBotsSidebarCollapsed(userId, collapsed);
   }
 
-  function openSettings(section: SettingsSection = "general", spaceId: string | null = null) {
-    setOverlay({ kind: "settings", section, spaceId });
+  function openSettings(section: SettingsSection = "general") {
+    openSettingsRoute(section);
   }
 
   // The desktop app's native Settings menu item (Cmd-,).
-  useEffect(
-    () =>
-      desktopBridge()?.settings?.onOpen(() =>
-        setOverlay({ kind: "settings", section: "general", spaceId: null }),
-      ),
-    [],
-  );
+  useEffect(() => desktopBridge()?.settings?.onOpen(() => openSettingsRoute("general")), []);
 
-  // Space-scoped sections bind their own rpc client to this space, so another
-  // space's settings open in place without switching the app or reloading.
+  // A space's settings bind their own rpc client to it, so another space's settings open
+  // without switching the app or reloading.
   function openSpaceSettings(spaceId: string) {
-    openSettings("space", spaceId);
+    openSettingsRoute("space", spaceId);
   }
 
   function openImport(agent: AgentImportReader | null, fromDialog: boolean) {
     setDroppedAgent(agent);
     setImportFromDialog(fromDialog);
     setPanel("import-agent");
-  }
-
-  async function renameSpace(spaceId: string, name: string) {
-    await commitSpaceRename({
-      rename: async () => {
-        await rpc.spaces.rename({ spaceId, name });
-      },
-      apply: () => {
-        setSpaces((current) =>
-          current.map((space) => (space.id === spaceId ? { ...space, name } : space)),
-        );
-      },
-      refresh: () => refreshBots(),
-    });
   }
 
   async function setSpacePaused(spaceId: string, paused: boolean) {
@@ -869,7 +839,8 @@ function SpaceShell() {
     onOpenImportSetup: (target) => {
       importSetupOpen.current = true;
       if (target.kind === "models") openSettings("models");
-      else if (target.kind === "mcp") setOverlay({ kind: "mcp", serverId: target.serverId });
+      else if (target.kind === "mcp")
+        openSettingsRoute(`mcp?server=${encodeURIComponent(target.serverId)}`);
       else {
         const next = new URLSearchParams(searchParams);
         next.set("routine", target.routineId);
@@ -972,7 +943,7 @@ function SpaceShell() {
         ticketBoardEnabled={Boolean(bootstrapMe?.ticketBoardEnabled)}
         navLinks={desktopBridge() ? [] : (bootstrapMe?.navLinks ?? [])}
         openSettings={openSettings}
-        openIntegrations={() => setOverlay({ kind: "integrations" })}
+        openIntegrations={() => navigate(storePath(activeBotId.current))}
         paused={Boolean(appSpace?.pausedAt)}
         onResume={
           appSpace?.canPause
@@ -1318,33 +1289,10 @@ function SpaceShell() {
           }}
           deleteRoutineDialogProps={deleteRoutineDialogProps}
         />
-        <AppOverlays
-          overlay={overlay}
-          setOverlay={setOverlay}
-          activeBotId={activeBotId.current}
-          stdioEnabled={bootstrapMe?.mcpStdioEnabled === true}
-          onConnectedAppsChange={setFooterLogos}
-        />
       </Suspense>
 
       <Suspense fallback={null}>
-        <SettingsOverlays
-          rpc={rpc}
-          queries={queries}
-          overlay={overlay}
-          setOverlay={setOverlay}
-          settingsSpace={settingsSpace}
-          showSettings={settingsSpaceId === null || Boolean(settingsSpace)}
-          spaces={spaces}
-          renameSpace={renameSpace}
-          removeSpace={removeSpace}
-          setSpacePaused={setSpacePaused}
-          alive={alive}
-          user={session.data?.user}
-          refetchSession={() => session.refetch({ query: { disableCookieCache: true } })}
-          bootstrapMe={bootstrapMe}
-          setBootstrapMe={setBootstrapMe}
-          memoryConfig={memoryProviderConfig}
+        <PeerConversationOverlay
           peerConversation={peerConversation}
           setPeerConversation={setPeerConversation}
           active={active}

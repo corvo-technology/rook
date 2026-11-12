@@ -18,7 +18,7 @@ test("shows directly registered MCP servers in Integrations without catalog conn
   await expandAdvancedSection(page.getByTestId("integrations-advanced"));
   await page.getByRole("button", { name: "Manage MCP servers", exact: true }).click();
   await expect(page.getByRole("textbox", { name: "Server name", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Close MCP servers", exact: true }).click();
+  await page.getByTestId("settings-back").click();
   for (const name of ["Dropbox", "GitHub"])
     await rpc(page, "mcp/servers/create", {
       slug: name.toLowerCase(),
@@ -64,5 +64,5 @@ test("shows directly registered MCP servers in Integrations without catalog conn
   );
   await servers.getByRole("button", { name: "Manage MCP servers", exact: true }).click();
   await expect(page.getByRole("heading", { name: "MCP servers", exact: true })).toBeVisible();
-  await expect(page.getByRole("dialog").getByText("GitHub", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("mcp-servers").getByText("GitHub", { exact: true })).toBeVisible();
 });

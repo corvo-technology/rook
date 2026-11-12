@@ -14,7 +14,7 @@ test("the only space is named in the sidebar and chat creation requires approval
   await sidebar.getByRole("button", { name: "Actions for Personal" }).click();
   await expect(page.getByRole("menuitem", { name: "Delete space" })).toHaveCount(0);
   await page.getByRole("menuitem", { name: "Settings" }).click();
-  const onlySpaceSettings = page.getByTestId("user-settings");
+  const onlySpaceSettings = page.getByTestId("settings-page");
   await expect(onlySpaceSettings).toHaveAttribute("data-settings-section", "space");
   await expect(onlySpaceSettings.getByLabel("Name")).toHaveValue("Personal");
   // The default space is never deletable, so the action is absent.
@@ -28,11 +28,11 @@ test("the only space is named in the sidebar and chat creation requires approval
   await captureScreenshot(page, testInfo, "single-space-sidebar");
 
   await openNewSpace(page);
-  const dialog = page.getByRole("complementary", { name: "New space" });
+  const dialog = page.getByRole("dialog", { name: "New space" });
   await expect(dialog.getByLabel("Name")).toBeVisible();
   await dialog.getByLabel("Name").fill("Customer support");
-  await captureScreenshot(page, testInfo, "new-space-panel");
-  await dialog.getByRole("button", { name: "Close", exact: true }).click();
+  await captureScreenshot(page, testInfo, "new-space-dialog");
+  await dialog.getByRole("button", { name: "Cancel" }).click();
 
   const composer = page.getByRole("combobox", { name: "Message Chief" });
   await composer.fill("Create a space named Customer support");
@@ -93,7 +93,7 @@ test("a new space auto-completes onboarding, is renamed in its settings, and is 
 
   const sidebar = page.locator("aside").first();
   await openNewSpace(page);
-  const dialog = page.getByRole("complementary", { name: "New space" });
+  const dialog = page.getByRole("dialog", { name: "New space" });
   await dialog.getByLabel("Name").fill("Typo space");
   await dialog.getByRole("button", { name: "Create space", exact: true }).click();
 
@@ -112,8 +112,8 @@ test("a new space auto-completes onboarding, is renamed in its settings, and is 
   await sidebar.getByRole("button", { name: "Actions for Typo space" }).click();
   await expect(page.getByRole("menuitem", { name: "Rename space" })).toHaveCount(0);
   await page.getByRole("menuitem", { name: "Settings" }).click();
-  const settings = page.getByTestId("user-settings");
-  await expect(settings).toHaveAttribute("data-settings-section", "space");
+  const settings = page.getByTestId("settings-page");
+  await expect(page).toHaveURL(/\/settings\/space\//);
   const spaceName = settings.getByTestId("space-settings").getByLabel("Name");
   await expect(spaceName).toHaveValue("Typo space");
   await spaceName.fill("Temporary");
@@ -125,13 +125,12 @@ test("a new space auto-completes onboarding, is renamed in its settings, and is 
 
   // An occupied space is deleted with its bots after one confirmation naming them.
   await settings.getByRole("button", { name: "Delete space" }).click();
-  const deleteSpaceDialog = page.getByRole("complementary", {
+  const confirmDeleteSpace = settings.getByRole("button", {
     name: "Delete Temporary and its 1 bot?",
   });
-  await expect(deleteSpaceDialog).toBeVisible();
-  await captureScreenshot(page, testInfo, "delete-space-dialog");
-  await deleteSpaceDialog.getByRole("button", { name: "Delete", exact: true }).click();
-  await deleteSpaceDialog.getByRole("button", { name: "Confirm", exact: true }).click();
+  await expect(confirmDeleteSpace).toBeVisible();
+  await captureScreenshot(page, testInfo, "delete-space-confirm");
+  await confirmDeleteSpace.click();
   await expect(sidebar.getByText("Temporary", { exact: true })).toHaveCount(0);
   await expect(page).not.toHaveURL(/\/onboarding/);
   await expect(sidebar.getByRole("button", { name: /^Chief/ })).toHaveCount(1);
@@ -157,7 +156,7 @@ test("deleting the last bot in a space stays in the app after first use", async 
 
   const sidebar = page.locator("aside").first();
   await openNewSpace(page);
-  const dialog = page.getByRole("complementary", { name: "New space" });
+  const dialog = page.getByRole("dialog", { name: "New space" });
   await dialog.getByLabel("Name").fill("Side");
   await dialog.getByRole("button", { name: "Create space", exact: true }).click();
   await page.waitForURL(/\/(onboarding|app)/);
@@ -187,10 +186,9 @@ test("deleting the last bot in a space stays in the app after first use", async 
   await sidebar.getByRole("button", { name: "Actions for Side" }).click();
   await page.getByRole("menuitem", { name: "Delete space" }).click();
   await page
-    .getByRole("complementary", { name: "Delete Side?" })
+    .getByRole("alertdialog", { name: "Delete Side?" })
     .getByRole("button", { name: "Delete", exact: true })
     .click();
-  await page.getByRole("button", { name: "Confirm", exact: true }).click();
   await expect(sidebar.getByText("Side", { exact: true })).toHaveCount(0);
   await sidebar.getByRole("button", { name: /^Archived/ }).click();
   await expect(sidebar.getByText("Chief", { exact: true })).toBeVisible();
@@ -205,18 +203,13 @@ test("a space's menu opens its settings in place, and General lists every space"
 
   const sidebar = page.locator("aside").first();
   await openNewSpace(page);
-  const dialog = page.getByRole("complementary", { name: "New space" });
+  const dialog = page.getByRole("dialog", { name: "New space" });
   await dialog.getByLabel("Name").fill("Support");
   await dialog.getByRole("button", { name: "Create space", exact: true }).click();
   await completeOnboarding(page);
   await expect(sidebar.getByText("Support", { exact: true })).toBeVisible();
-  const chatPath = new URL(page.url()).pathname;
-  // Settings stay on the chat's route; only the overlay params change.
-  const onChat = () => {
-    const url = new URL(page.url());
-    expect(url.pathname).toBe(chatPath);
-    expect(url.searchParams.get("settings")).toBe("space");
-  };
+  // A space's settings are a page of their own; the app is not reloaded to reach it.
+  const onSpacePage = () => expect(page).toHaveURL(/\/settings\/space\//);
   const selected = await page.evaluate(() => localStorage.getItem("corvo:space-id"));
   await page.evaluate(() => {
     document.documentElement.dataset.settingsTest = "same-document";
@@ -225,24 +218,22 @@ test("a space's menu opens its settings in place, and General lists every space"
   // Support is selected; Personal's menu opens Personal's settings without leaving Support.
   await sidebar.getByRole("button", { name: "Actions for Personal" }).click();
   await page.getByRole("menuitem", { name: "Settings" }).click();
-  const settings = page.getByTestId("user-settings");
-  await expect(settings).toHaveAttribute("data-settings-section", "space");
+  const settings = page.getByTestId("settings-page");
+  await onSpacePage();
   await expect(settings.getByRole("heading", { name: "Personal" })).toBeVisible();
-  onChat();
   expect(await page.evaluate(() => localStorage.getItem("corvo:space-id"))).toBe(selected);
   await expect(page.locator("html")).toHaveAttribute("data-settings-test", "same-document");
   await captureScreenshot(page, testInfo, "space-settings-from-menu");
 
-  // Back leads to General, whose Spaces list opens any space's page.
-  await settings.getByRole("button", { name: "Back" }).click();
+  // General's Spaces list opens any space's page.
+  await settings.getByTestId("settings-nav-general").click();
   await expect(settings).toHaveAttribute("data-settings-section", "general");
   const spaceList = settings.getByTestId("settings-spaces");
   await expect(spaceList.getByText("Personal", { exact: true })).toBeVisible();
   await captureScreenshot(page, testInfo, "settings-general-spaces");
   await spaceList.getByRole("button", { name: "Manage Support" }).click();
   await expect(settings.getByRole("heading", { name: "Support" })).toBeVisible();
-  await expect(settings).toHaveAttribute("data-settings-section", "space");
-  onChat();
+  await onSpacePage();
   expect(await page.evaluate(() => localStorage.getItem("corvo:space-id"))).toBe(selected);
   await expect(page.locator("html")).toHaveAttribute("data-settings-test", "same-document");
 
@@ -264,12 +255,11 @@ test("a space's menu opens its settings in place, and General lists every space"
   await captureScreenshot(page, testInfo, "space-settings-customized-confirmations");
 
   // The account's own approvals stay as they were.
-  await settings.getByTestId("settings-nav-confirmations").click();
+  await settings.getByTestId("settings-nav-approvals").click();
   const accountApprovals = page.getByTestId("settings-page");
   await expect(
     accountApprovals.getByRole("button", { name: "Never ask", exact: true }),
   ).toHaveAttribute("aria-pressed", "false");
-  await accountApprovals.getByTestId("settings-back").click();
 
   await settings.getByTestId("settings-nav-general").click();
   await spaceList.getByRole("button", { name: "Manage Support" }).click();

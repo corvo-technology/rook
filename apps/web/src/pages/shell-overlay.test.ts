@@ -1,89 +1,42 @@
 import { describe, expect, it } from "vitest";
-import {
-  readShellOverlay,
-  searchString,
-  shellOverlaySearch,
-  withShellOverlay,
-} from "./shell-overlay";
+import { legacyOverlayTarget, searchString, shellOverlaySearch } from "./shell-overlay";
 
-const read = (search: string) => readShellOverlay(new URLSearchParams(search));
+const target = (search: string) => legacyOverlayTarget(new URLSearchParams(search));
 
-describe("readShellOverlay", () => {
-  it("opens nothing without overlay params", () => {
-    expect(read("")).toBeNull();
-    expect(read("?m=msg_1&routine=r_1")).toBeNull();
+describe("legacyOverlayTarget", () => {
+  it("leaves links without overlay params alone", () => {
+    expect(target("")).toBeNull();
+    expect(target("?m=msg_1&routine=r_1")).toBeNull();
+    expect(target("?messaging")).toBeNull();
   });
 
-  it("opens a settings section, falling back to general for bare or unknown values", () => {
-    expect(read("?settings=voice")).toEqual({ kind: "settings", section: "voice", spaceId: null });
-    expect(read("?settings=space&space=sp_1")).toEqual({
-      kind: "settings",
-      section: "space",
-      spaceId: "sp_1",
-    });
-    expect(read("?settings")).toEqual({ kind: "settings", section: "general", spaceId: null });
-    expect(read("?settings=nope")).toEqual({ kind: "settings", section: "general", spaceId: null });
+  it("sends a settings section to its page, general for bare or unknown values", () => {
+    expect(target("?settings=voice")?.to).toBe("/settings/voice");
+    expect(target("?settings")?.to).toBe("/settings/general");
+    expect(target("?settings=nope")?.to).toBe("/settings/general");
+    expect(target("?settings=confirmations")?.to).toBe("/settings/approvals");
   });
 
-  it("binds settings to a space only alongside settings", () => {
-    expect(read("?settings=models&space=sp_1")).toEqual({
-      kind: "settings",
-      section: "models",
-      spaceId: "sp_1",
-    });
-    expect(read("?space=sp_1")).toBeNull();
+  it("sends a space's settings to its own route", () => {
+    expect(target("?settings=space&space=sp_1")?.to).toBe("/settings/space/sp_1");
+    expect(target("?settings=models&space=sp_1")?.to).toBe("/settings/models");
   });
 
-  it("reads flag overlays with or without a value", () => {
-    expect(read("?integrations")).toEqual({ kind: "integrations" });
-    expect(read("?mcp=")).toEqual({ kind: "mcp" });
-    expect(read("?mcp=srv_1")).toEqual({ kind: "mcp", serverId: "srv_1" });
+  it("sends the store and MCP servers to their pages", () => {
+    expect(target("?integrations")?.to).toBe("/app/store");
+    expect(target("?mcp=")?.to).toBe("/settings/mcp");
+    expect(target("?mcp=srv_1")?.to).toBe("/settings/mcp?server=srv_1");
   });
 
-  it("opens nothing for the old messaging link, now that settings have no such page", () => {
-    expect(read("?messaging")).toBeNull();
-  });
-});
-
-describe("withShellOverlay", () => {
-  const write = (search: string, overlay: Parameters<typeof withShellOverlay>[1]) =>
-    searchString(withShellOverlay(new URLSearchParams(search), overlay));
-
-  it("keeps unrelated params and writes flags bare", () => {
-    expect(write("?m=msg_1", { kind: "integrations" })).toBe("?m=msg_1&integrations");
-  });
-
-  it("replaces the open overlay instead of stacking another", () => {
-    expect(write("?integrations&routine=r_1", { kind: "mcp" })).toBe("?routine=r_1&mcp");
-    expect(write("", { kind: "mcp", serverId: "srv_1" })).toBe("?mcp=srv_1");
-    expect(write("?settings=models&space=sp_1", { kind: "integrations" })).toBe("?integrations");
-  });
-
-  it("writes the settings section and space", () => {
-    expect(write("", { kind: "settings", section: "models", spaceId: "sp_1" })).toBe(
-      "?settings=models&space=sp_1",
-    );
-    expect(write("?space=sp_1", { kind: "settings", section: "usage", spaceId: null })).toBe(
-      "?settings=usage",
-    );
-  });
-
-  it("closing removes only overlay params", () => {
-    expect(write("?m=msg_1&settings=voice&space=sp_1", null)).toBe("?m=msg_1");
-    expect(write("?mcp", null)).toBe("");
-  });
-
-  it("round-trips through readShellOverlay", () => {
-    const overlay = { kind: "settings", section: "billing", spaceId: "sp_2" } as const;
-    expect(readShellOverlay(withShellOverlay(new URLSearchParams(), overlay))).toEqual(overlay);
+  it("keeps the other params", () => {
+    const result = target("?m=msg_1&settings=voice&space=sp_1");
+    expect(searchString(result?.rest ?? new URLSearchParams())).toBe("?m=msg_1");
   });
 });
 
 describe("shellOverlaySearch", () => {
-  it("carries only the overlay into a redirect", () => {
-    expect(shellOverlaySearch(new URLSearchParams("?m=msg_1&settings=voice"))).toBe(
-      "?settings=voice",
-    );
+  it("carries only the plan choice into a redirect", () => {
+    expect(shellOverlaySearch(new URLSearchParams("?m=msg_1&plans"))).toBe("?plans");
     expect(shellOverlaySearch(new URLSearchParams("?routine=r_1"))).toBe("");
   });
 });

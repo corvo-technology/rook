@@ -6,6 +6,11 @@ export function settingsPath(section: string): string {
   return `/settings/${section}`;
 }
 
+/** One space's own page, reached from General: `/settings/space/<id>`. */
+export function settingsSpacePath(spaceId: string): string {
+  return `/settings/space/${encodeURIComponent(spaceId)}`;
+}
+
 type SettingsLocationState = { from?: string } | null;
 
 const DEFAULT_BACK = "/app";
@@ -18,8 +23,8 @@ export function useOpenSettings() {
   const navigate = useNavigate();
   const location = useLocation();
   return useCallback(
-    (section: string) =>
-      navigate(settingsPath(section), {
+    (section: string, spaceId?: string) =>
+      navigate(spaceId ? settingsSpacePath(spaceId) : settingsPath(section), {
         state: { from: `${location.pathname}${location.search}` } satisfies SettingsLocationState,
       }),
     [navigate, location.pathname, location.search],
@@ -33,6 +38,12 @@ export function useSettingsNavigation() {
   const from = typeof state?.from === "string" && state.from.startsWith("/") ? state.from : null;
   return {
     select: (section: string) => navigate(settingsPath(section), { replace: true, state }),
+    openSpace: (spaceId: string) => navigate(settingsSpacePath(spaceId), { replace: true, state }),
     back: () => navigate(from ?? DEFAULT_BACK),
   };
+}
+
+/** The Store page; `bot` names the agent it adds apps and prompts for. */
+export function storePath(botId?: string | null): string {
+  return botId ? `/app/store?bot=${encodeURIComponent(botId)}` : "/app/store";
 }

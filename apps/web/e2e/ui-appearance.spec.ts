@@ -54,7 +54,7 @@ test("account settings appearance control switches to light mode", async ({ page
 
   await page.getByTestId("user-menu-trigger").click();
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-  const settings = page.getByTestId("user-settings");
+  const settings = page.getByTestId("settings-page");
   await expect(settings).toBeVisible();
 
   const picker = settings.getByTestId("ui-appearance-select");
@@ -70,7 +70,7 @@ test("account settings appearance control switches to light mode", async ({ page
   await expect(settings.getByTestId("ui-appearance-light")).toHaveAttribute("aria-pressed", "true");
   await captureScreenshot(page, testInfo, "ui-appearance-light-settings");
 
-  await settings.getByRole("button", { name: "Close user settings" }).click();
+  await page.getByTestId("settings-back").click();
   await expect(settings).toBeHidden();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   await captureScreenshot(page, testInfo, "ui-appearance-light-shell");
@@ -95,7 +95,7 @@ test("account settings appearance control switches to light mode", async ({ page
   await expect(settings).toBeVisible();
   await settings.getByTestId("ui-appearance-dark").click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await settings.getByRole("button", { name: "Close user settings" }).click();
+  await page.getByTestId("settings-back").click();
   await expect(settings).toBeHidden();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await captureSidebarSearchSelected(page, testInfo, "sidebar-search-selected-dark");
@@ -120,8 +120,8 @@ test("sidebar footer opens integrations and the account menu", async ({ page }, 
   }
   await expect(footer.getByRole("button", { name: "Install update", exact: true })).toHaveCount(0);
   await footer.getByRole("button", { name: "Store", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Close store", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Close store", exact: true }).click();
+  await expect(page.getByTestId("store-page")).toBeVisible();
+  await page.goBack();
   await page.getByTestId("user-menu-trigger").click();
   await expect(page.getByRole("link", { name: "Get the mobile app", exact: true })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Docs", exact: true })).toHaveCount(0);
@@ -311,10 +311,10 @@ test("sidebar footer keeps the account identity readable and installs a ready de
   expect((await logOut.boundingBox())!.height).toBe(36);
   await captureScreenshot(page, testInfo, "sidebar-footer-short-screen");
   await menu.getByRole("button", { name: "Settings", exact: true }).click();
-  await expect(page.getByTestId("user-settings")).toBeVisible();
+  await expect(page.getByTestId("settings-page")).toBeVisible();
 });
 
-test("footer app marks follow the integrations overlay", async ({ page }) => {
+test("footer app marks follow the Store", async ({ page }) => {
   await signup(page, `footer-apps-${Date.now()}@corvo.test`, "password12", "Footer Demo");
   await completeOnboarding(page);
   let connected = true;
@@ -355,20 +355,21 @@ test("footer app marks follow the integrations overlay", async ({ page }) => {
   });
   const footer = page.getByTestId("sidebar-footer");
   await footer.getByRole("button", { name: "Store", exact: true }).click();
-  await expect(footer.locator("img")).toHaveAttribute("src", logo);
-  await page.getByRole("button", { name: "Close store", exact: true }).click();
+  await expect(page.getByTestId("store-page")).toBeVisible();
+  await page.goBack();
   await expect(footer.locator("img")).toHaveAttribute("src", logo);
   failCatalog = true;
   await footer.getByRole("button", { name: "Store", exact: true }).click();
   await expect(page.getByText("Could not reach the server", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Close store", exact: true }).click();
+  await page.goBack();
   await expect(footer.locator("img")).toHaveAttribute("src", logo);
   failCatalog = false;
   connected = false;
   await footer.getByRole("button", { name: "Store", exact: true }).click();
+  await expect(page.getByTestId("store-page")).toBeVisible();
+  await page.goBack();
   // Disconnected catalog entries remain available as suggestions.
   await expect(footer.locator("img")).toHaveAttribute("src", logo);
-  await page.getByRole("button", { name: "Close store", exact: true }).click();
   await expect(footer.getByRole("button", { name: "Store", exact: true })).toBeVisible();
   failCatalog = true;
   const failedRefresh = page.waitForResponse(

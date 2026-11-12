@@ -21,6 +21,7 @@ import { isEmbedded } from "../lib/embed";
 import { useSpaceQueries } from "../lib/query";
 import type { Section } from "../lib/rail-section";
 import { railSection } from "../lib/rail-section";
+import { settingsPath, storePath, useOpenSettings } from "../lib/settings-route";
 import { useMissions } from "../lib/use-missions";
 import { ShellSidebarFooter } from "../pages/shell/shell-sidebar";
 import { WindowChrome } from "../pages/WindowChrome";
@@ -43,6 +44,7 @@ const RAIL_LABEL = "text-caption line-clamp-2 w-full text-center leading-3 break
 export function AppRail({ ticketBoardEnabled }: { ticketBoardEnabled: boolean }) {
   const { t } = useLingui();
   const navigate = useNavigate();
+  const openSettings = useOpenSettings();
   const { pathname, search } = useLocation();
   const queries = useSpaceQueries();
   const session = authClient.useSession();
@@ -102,13 +104,13 @@ export function AppRail({ ticketBoardEnabled }: { ticketBoardEnabled: boolean })
             key: "approvals",
             label: t`Approvals`,
             Icon: ShieldCheck,
-            onSelect: goMore("approvals", "/app?settings=confirmations"),
+            onSelect: goMore("approvals", settingsPath("approvals")),
           },
           {
             key: "memory",
             label: t`Memory`,
             Icon: Brain,
-            onSelect: goMore("memory", "/app?settings=memory"),
+            onSelect: goMore("memory", settingsPath("memory")),
           },
         ]),
   ]
@@ -158,7 +160,7 @@ export function AppRail({ ticketBoardEnabled }: { ticketBoardEnabled: boolean })
           <button
             type="button"
             aria-label={t`Store`}
-            onClick={() => navigate("/app?integrations")}
+            onClick={() => navigate(storePath())}
             className={RAIL_ITEM}
           >
             <Store className="size-5" />
@@ -178,8 +180,8 @@ export function AppRail({ ticketBoardEnabled }: { ticketBoardEnabled: boolean })
             navLinks={navLinks}
             closeMobileSidebar={() => {}}
             navigate={navigate}
-            openSettings={(section) => navigate(`/app?settings=${section}`)}
-            openIntegrations={() => navigate("/app?integrations")}
+            openSettings={(section) => openSettings(section)}
+            openIntegrations={() => navigate(storePath())}
           />
         )}
       </div>

@@ -19,10 +19,8 @@ import { VoiceSettingsOverlay } from "./VoiceSettingsOverlay";
  * setting shows the same panel as the account's section, editing the Space's own copy.
  */
 export function SpaceSettingOverrides({
-  onClose,
   onBusyChange,
 }: {
-  onClose: () => void;
   onBusyChange?: (busy: boolean) => void;
 }) {
   const { t } = useLingui();
@@ -37,19 +35,12 @@ export function SpaceSettingOverrides({
     {
       id: "models",
       label: t`Models`,
-      panel: () => <ModelSettingsOverlay embedded scope="space" onClose={onClose} />,
+      panel: () => <ModelSettingsOverlay scope="space" />,
     },
     {
       id: "voice",
       label: t`Voice`,
-      panel: () => (
-        <VoiceSettingsOverlay
-          embedded
-          scope="space"
-          onClose={onClose}
-          onBusyChange={onBusyChange}
-        />
-      ),
+      panel: () => <VoiceSettingsOverlay scope="space" onBusyChange={onBusyChange} />,
     },
     {
       id: "confirmations",

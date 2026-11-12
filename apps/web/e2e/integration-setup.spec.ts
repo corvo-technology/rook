@@ -18,7 +18,7 @@ test("signup never grants server authority and settings contain only account con
   }
   await page.getByTestId("user-menu-trigger").click();
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await expect(page.getByTestId("user-settings")).toBeVisible();
+  await expect(page.getByTestId("settings-page")).toBeVisible();
   await expect(page.getByRole("link", { name: "Server integrations", exact: true })).toBeHidden();
   await expect(page.getByTestId("settings-nav-updates")).toBeHidden();
   await captureScreenshot(page, testInfo, "account-settings-without-server-admin");

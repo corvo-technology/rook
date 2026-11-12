@@ -8,10 +8,10 @@ import { useMissions } from "../lib/use-missions";
 /** Where each mission is done; a request comes from an agent, so `decide` has no place to go. */
 const DESTINATION: Partial<Record<MissionId, string>> = {
   talk: "/app",
-  connect: "/app?integrations",
-  second: "/app?integrations",
+  connect: "/app/store",
+  second: "/app/store",
   routine: "/app/routines",
-  memory: "/app?settings=memory",
+  memory: "/settings/memory",
 };
 
 /** The first missions of a new account. They check themselves off; clicking one never completes it. */

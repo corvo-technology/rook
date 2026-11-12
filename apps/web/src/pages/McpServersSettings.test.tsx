@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { beforeEach, expect, it, vi } from "vitest";
-import { McpServersOverlay } from "./McpServersOverlay";
+import { McpServersSettings } from "./McpServersSettings";
 
 const mocks = vi.hoisted(() => ({ list: vi.fn(), test: vi.fn(), update: vi.fn() }));
 const access = vi.hoisted(() => ({ all: vi.fn(), replace: vi.fn(), bots: vi.fn() }));
@@ -86,11 +86,7 @@ beforeEach(() => {
 function overlay(editServerId?: string, stdioEnabled = true) {
   return (
     <QueryClientProvider client={client}>
-      <McpServersOverlay
-        editServerId={editServerId}
-        stdioEnabled={stdioEnabled}
-        onClose={() => {}}
-      />
+      <McpServersSettings editServerId={editServerId} stdioEnabled={stdioEnabled} />
     </QueryClientProvider>
   );
 }

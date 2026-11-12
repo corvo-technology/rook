@@ -71,7 +71,7 @@ import { SpaceSettingOverrides } from "./SpaceSettingOverrides";
 let container: HTMLDivElement;
 let root: Root;
 
-async function render(children: ReactNode = <SpaceSettingOverrides onClose={() => undefined} />) {
+async function render(children: ReactNode = <SpaceSettingOverrides />) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   await act(async () => {
     root.render(

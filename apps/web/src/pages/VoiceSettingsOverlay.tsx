@@ -14,10 +14,6 @@ import {
 import { fetchFresh } from "@corvo/core/query";
 import {
   Button,
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogTitle,
   Field,
   FieldLabel,
   Input,
@@ -27,7 +23,6 @@ import {
 } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
-import { XIcon } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useSpaceQueries } from "../lib/query";
 import { useBoundSpaceId, useSpaceRpc } from "../lib/space-rpc";
@@ -36,14 +31,9 @@ import { errorText } from "../lib/user-error";
 import { LocalSpeechSection } from "./LocalSpeechSection";
 
 export function VoiceSettingsOverlay({
-  onClose,
-  embedded = false,
   onBusyChange,
   scope,
 }: {
-  onClose: () => void;
-  /** Render the content only, inside the shared Settings shell's scroller. */
-  embedded?: boolean;
   onBusyChange?: (busy: boolean) => void;
   /**
    * The account's voice, or the bound Space's own when it overrides it. Connections are
@@ -557,46 +547,7 @@ export function VoiceSettingsOverlay({
     </>
   );
 
-  if (embedded) {
-    return <div data-testid="voice-settings">{content}</div>;
-  }
-
-  return (
-    <Dialog
-      open
-      onOpenChange={(open, details) => {
-        if (open) return;
-        if (busy) {
-          details.cancel();
-          return;
-        }
-        onClose();
-      }}
-    >
-      <DialogContent
-        data-testid="voice-settings"
-        aria-describedby={undefined}
-        showCloseButton={false}
-        className="flex h-[min(680px,calc(100%-2rem))] w-[920px] flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:h-[min(680px,calc(100%-5rem))] sm:max-w-[calc(100%-5rem)]"
-      >
-        <div className="flex items-start justify-between px-6 pt-6 sm:px-8 sm:pt-7">
-          <DialogTitle className="text-heading2 font-medium text-foreground">
-            <Trans>Voice</Trans>
-          </DialogTitle>
-          <DialogClose
-            aria-label={t`Close voice settings`}
-            disabled={busy}
-            render={<Button variant="ghost" size="icon-sm" />}
-          >
-            <XIcon />
-          </DialogClose>
-        </div>
-        <div className="rk-scroll min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-8">
-          <div className="max-w-xl">{content}</div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
+  return <div data-testid="voice-settings">{content}</div>;
 }
 
 function selectedProvider(

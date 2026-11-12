@@ -1,6 +1,7 @@
 import type { BillingStatus, Me } from "@corvo/contracts";
-import { Dialog, DialogContent } from "@corvo/ui-web";
+import { Button } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
+import { ChevronLeft } from "lucide-react";
 import type { ReactNode } from "react";
 import { createContext, Suspense, useContext, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -118,7 +119,22 @@ export function SubscriptionGate({
     };
   }, [billed]);
 
-  // On the required paywall only: the plans dialog blocks pointer input outside itself.
+  const choosingPlan = plansOpen && state.kind === "open" && state.status !== undefined;
+  useEffect(() => {
+    if (!choosingPlan) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !event.defaultPrevented) {
+        setSearchParams((params) => {
+          params.delete("plans");
+          return params;
+        });
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [choosingPlan, setSearchParams]);
+
+  // On the required paywall only: the support chat would sit over the plan choice.
   useSupportChat(state.kind === "paywall" ? supportChat : null);
 
   if (state.kind === "loading") return fallback;
@@ -133,19 +149,23 @@ export function SubscriptionGate({
     <BillingContext.Provider
       value={{ status: state.status ?? null, showPlans: () => setPlansOpen(true) }}
     >
-      {children}
-      {state.status ? (
-        // Over the app rather than replacing it, so closing keeps its state.
-        <Dialog open={plansOpen} onOpenChange={setPlansOpen}>
-          <DialogContent
-            aria-label={t`Choose how to use Rook`}
-            className="inset-0 top-0 left-0 block h-dvh max-w-none translate-x-0 translate-y-0 overflow-y-auto rounded-none bg-background p-0 ring-0 sm:max-w-none"
+      {/* Kept mounted behind the plan choice, so closing it returns to the app as it was. */}
+      <div className={plansOpen && state.status ? "hidden" : "contents"}>{children}</div>
+      {plansOpen && state.status ? (
+        <div data-testid="plans-page" className="h-dvh overflow-y-auto bg-background">
+          <Button
+            variant="text"
+            className="fixed start-4 top-4 z-10 gap-1.5"
+            data-testid="plans-back"
+            onClick={() => setPlansOpen(false)}
           >
-            <Suspense fallback={fallback}>
-              <PaywallPage status={state.status} dismissible />
-            </Suspense>
-          </DialogContent>
-        </Dialog>
+            <ChevronLeft className="rtl:rotate-180" />
+            {t`Back`}
+          </Button>
+          <Suspense fallback={fallback}>
+            <PaywallPage status={state.status} dismissible />
+          </Suspense>
+        </div>
       ) : null}
     </BillingContext.Provider>
   );

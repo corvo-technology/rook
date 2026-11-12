@@ -244,7 +244,7 @@ export async function createBotFromPicker(
   await expect(page.getByTestId("side-panel")).toHaveAttribute("data-panel", "closed");
 }
 
-/** Open the user Settings overlay, optionally switching to a sidebar section. */
+/** Open the Settings page, optionally switching to a section in its nav. */
 export async function openUserSettings(
   page: Page,
   section?:
@@ -257,12 +257,12 @@ export async function openUserSettings(
     | "billing"
     | "updates",
 ) {
-  // A reload keeps settings open because the URL holds them; closing clears the URL at once.
-  if (!new URL(page.url()).searchParams.has("settings")) {
+  // A reload keeps the page because the URL holds the section.
+  if (!new URL(page.url()).pathname.startsWith("/settings")) {
     await page.getByTestId("user-menu-trigger").click();
     await page.getByRole("button", { name: "Settings", exact: true }).click();
   }
-  const settings = page.getByTestId("user-settings");
+  const settings = page.getByTestId("settings-page");
   await expect(settings).toBeVisible();
   if (section && section !== "general") {
     await settings.getByTestId(`settings-nav-${section}`).click();

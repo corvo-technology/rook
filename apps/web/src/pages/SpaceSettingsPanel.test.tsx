@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import type { ComponentProps, ReactNode } from "react";
-import { act } from "react";
+import { act, useState } from "react";
 import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -16,8 +16,11 @@ vi.mock("@lingui/react/macro", () => {
       (value === 1 ? one : other).replace("#", String(value)),
   };
 });
-vi.mock("@corvo/ui-web", async (importOriginal) => {
-  const { InlineConfirm } = await importOriginal<typeof import("@corvo/ui-web")>();
+vi.mock("@lingui/core/macro", () => ({
+  plural: (value: number, forms: { one: string; other: string }) =>
+    (value === 1 ? forms.one : forms.other).replace("#", String(value)),
+}));
+vi.mock("@corvo/ui-web", () => {
   const Box = ({ children }: { children?: ReactNode }) => <div>{children}</div>;
   return {
     Button: (props: ComponentProps<"button">) => <button type="button" {...props} />,
@@ -38,22 +41,27 @@ vi.mock("@corvo/ui-web", async (importOriginal) => {
     AlertDialogFooter: Box,
     AlertDialogHeader: Box,
     AlertDialogTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
-    InlineConfirm,
-    SidePanel: ({
-      title,
-      footer,
+    InlineConfirm: ({
       children,
-    }: {
-      title?: ReactNode;
-      footer?: ReactNode;
-      children?: ReactNode;
-    }) => (
-      <aside>
-        <h2>{title}</h2>
-        {children}
-        <footer>{footer}</footer>
-      </aside>
-    ),
+      confirmLabel,
+      onConfirm,
+      ...props
+    }: ComponentProps<"button"> & { confirmLabel: string; onConfirm: () => void }) => {
+      const [armed, setArmed] = useState(false);
+      return (
+        <button
+          type="button"
+          {...props}
+          onClick={() => {
+            if (!armed) setArmed(true);
+            else onConfirm();
+          }}
+        >
+          {armed ? confirmLabel : children}
+        </button>
+      );
+    },
+    undoable: async ({ run }: { run: () => Promise<unknown> }) => run(),
     RadioGroup: Box,
     RadioGroupItem: Box,
   };
@@ -77,7 +85,6 @@ async function render(props: Partial<Props>) {
         space={{ id: "space-a", name: "Support", canRename: true, canDelete: true, botCount: 0 }}
         onRename={async () => undefined}
         onDelete={async () => undefined}
-        onClose={() => undefined}
         {...props}
       />,
     );
@@ -226,15 +233,14 @@ describe("SpaceSettingsPanel", () => {
       onDelete,
     });
     await click("Delete space");
-    expect(container.querySelector("h2")?.textContent).toBe("Delete Support and its 2 bots?");
-    await click("Delete");
-    await click("Confirm");
+    expect(button("Delete Support and its 2 bots?")).toBeDefined();
+    await click("Delete Support and its 2 bots?");
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
 
   it("asks plainly when the space has no bots", async () => {
     await render({});
     await click("Delete space");
-    expect(container.querySelector("h2")?.textContent).toBe("Delete Support?");
+    expect(button("Delete Support?")).toBeDefined();
   });
 });

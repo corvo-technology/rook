@@ -610,7 +610,8 @@ export type UsageOperationKind =
   | "retrieval"
   | "subagent"
   | "compaction"
-  | "wiki";
+  | "wiki"
+  | "memory";
 
 export interface ModelCallObserver {
   beforeCall(call: {
@@ -751,6 +752,8 @@ export interface BackgroundJobPayloads {
   "history.compact": { threadId: string; keepRecent?: number };
   /** The wiki curator reads a conversation; `messageId` keeps that one message on purpose. */
   "wiki.curate": { threadId: string; messageId?: string };
+  /** The memory model reads what the person said for facts to suggest about them. */
+  "memory.learn": { threadId: string };
   /** Design the body of a new agent's avatar from its role, unless a look was chosen meanwhile. */
   "bot.design-avatar": { botId: string };
   "messaging.deliver": { runId?: string };

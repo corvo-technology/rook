@@ -499,7 +499,7 @@ msgid "{working} working"
 msgstr "{working} 件作業中"
 
 #. placeholder {0}: mention.name
-#: src/pages/shell/composer.tsx
+#: src/pages/shell/composer-mentions.tsx
 msgid "@{0}"
 msgstr "@{0}"
 
@@ -4167,7 +4167,7 @@ msgstr "{title}のメモリ"
 msgid "Memory scope"
 msgstr "メモリの範囲"
 
-#: src/pages/shell/composer.tsx
+#: src/pages/shell/composer-mentions.tsx
 msgid "Mentions"
 msgstr "メンション"
 
@@ -5437,6 +5437,7 @@ msgstr "ヘッダーを削除"
 
 #. placeholder {0}: mention.name
 #: src/pages/shell/composer.tsx
+#: src/pages/shell/thread-panel.tsx
 msgid "Remove mention {0}"
 msgstr "メンション{0}を削除"
 

@@ -499,7 +499,7 @@ msgid "{working} working"
 msgstr "{working} trabalhando"
 
 #. placeholder {0}: mention.name
-#: src/pages/shell/composer.tsx
+#: src/pages/shell/composer-mentions.tsx
 msgid "@{0}"
 msgstr "@{0}"
 
@@ -4167,7 +4167,7 @@ msgstr "Memória para {title}"
 msgid "Memory scope"
 msgstr "Escopo de memória"
 
-#: src/pages/shell/composer.tsx
+#: src/pages/shell/composer-mentions.tsx
 msgid "Mentions"
 msgstr "Menções"
 
@@ -5437,6 +5437,7 @@ msgstr "Remover cabeçalho"
 
 #. placeholder {0}: mention.name
 #: src/pages/shell/composer.tsx
+#: src/pages/shell/thread-panel.tsx
 msgid "Remove mention {0}"
 msgstr "Remover menção {0}"
 

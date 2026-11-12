@@ -335,13 +335,33 @@ export function cssVariableName(token: keyof WebColorTokens): string {
   return `--${token.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`;
 }
 
+const CSS_LINE_WIDTH = 100;
+
+/** A shadow list laid out the way the formatter lays it out: layers filled into 100-column lines. */
+function cssShadow(name: string, layers: string): string {
+  const one = `  ${name}: ${layers};`;
+  if (one.length <= CSS_LINE_WIDTH) return one;
+  const lines: string[] = [];
+  let line = "   ";
+  for (const layer of layers.split(", ")) {
+    const piece = `${layer},`;
+    if (line.length + 1 + piece.length > CSS_LINE_WIDTH && line.trim()) {
+      lines.push(line);
+      line = "   ";
+    }
+    line += ` ${piece}`;
+  }
+  lines.push(line);
+  return `  ${name}:\n${lines.join("\n").replace(/,$/, "")};`;
+}
+
 function renderBlock(selector: string, colorScheme: ResolvedAppearance, palette: WebColorTokens) {
   const lines = (Object.keys(palette) as (keyof WebColorTokens)[]).map(
     (token) => `  ${cssVariableName(token)}: ${palette[token].toLowerCase()};`,
   );
   const extras = [
-    `  --elevation-raised: ${elevation[colorScheme].raised};`,
-    `  --elevation-overlay: ${elevation[colorScheme].overlay};`,
+    cssShadow("--elevation-raised", elevation[colorScheme].raised),
+    cssShadow("--elevation-overlay", elevation[colorScheme].overlay),
     `  --radius: ${RADIUS};`,
     `  --motion-fast: ${motion.fast};`,
     `  --motion-panel: ${motion.panel};`,

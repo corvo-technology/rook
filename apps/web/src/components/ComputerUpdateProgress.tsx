@@ -1,7 +1,7 @@
 import type { ComputerUpdate } from "@corvo/contracts";
 import { COMPUTER_UPDATE_STAGES } from "@corvo/contracts";
 import { computerUpdateNeedsAttention, computerUpdateStages } from "@corvo/core";
-import { Button, cn, Dialog, DialogContent, DialogTitle, Spinner } from "@corvo/ui-web";
+import { Button, cn, Spinner } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { CheckCircle2, Circle, CircleAlert } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
@@ -51,139 +51,130 @@ export function ComputerUpdateProgress({ onCompleted }: { onCompleted: () => voi
         : update.mode === "team"
           ? t`Updating Team Computer`
           : t`Updating ${update.name}’s Computer`;
-  const selected = updates.find((update) => update.id === openId);
   return (
-    <>
-      <div className="fixed top-3 left-1/2 z-50 flex -translate-x-1/2 flex-col gap-2">
-        {updates.map((update) => (
-          <Button
+    <div className="fixed top-3 left-1/2 z-50 flex w-[min(28rem,calc(100vw-1.5rem))] -translate-x-1/2 flex-col items-center gap-2">
+      {updates.map((update) => {
+        const attention = computerUpdateNeedsAttention(update);
+        const expanded = update.id === openId;
+        return (
+          <div
             key={update.id}
-            variant="outline"
-            className="h-auto gap-3 rounded-xl bg-card px-4 py-2 shadow-sm"
-            onClick={() => {
-              setError(false);
-              computerUpdates.open(update.id);
-            }}
+            className="flex max-w-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-raised"
           >
-            {computerUpdateNeedsAttention(update) ? (
-              <CircleAlert className="text-destructive" />
-            ) : (
-              <LoadingState
-                label={title(update)}
-                indicator={<Spinner aria-hidden className="size-5 motion-reduce:animate-none" />}
-              />
-            )}
-            <span className="text-center">
-              <span className="block">{title(update)}</span>
-              <span className="block text-xs text-muted-foreground">
-                {labels[COMPUTER_UPDATE_STAGES.indexOf(update.stage)]}
-              </span>
-            </span>
-          </Button>
-        ))}
-      </div>
-      <Dialog
-        open={Boolean(selected)}
-        onOpenChange={(open) => {
-          if (!open) computerUpdates.open(null);
-        }}
-      >
-        {selected ? (
-          <DialogContent
-            showCloseButton={false}
-            className="gap-0 overflow-hidden rounded-3xl border border-border bg-card p-0 sm:max-w-xl"
-            aria-describedby={undefined}
-            data-testid="computer-update-dialog"
-          >
-            <div className="border-b border-border px-6 py-5">
-              <DialogTitle className="text-lg font-semibold">{title(selected)}</DialogTitle>
-            </div>
-            {!computerUpdateNeedsAttention(selected) ? (
-              <ol className="space-y-4 px-6 py-6" aria-label={t`Update progress`}>
-                {computerUpdateStages(selected.action).map((stage, index) => {
-                  const current = computerUpdateStages(selected.action).indexOf(selected.stage);
-                  const Icon = index < current ? CheckCircle2 : Circle;
-                  return (
-                    <li
-                      key={stage}
-                      aria-current={index === current ? "step" : undefined}
-                      className={cn(
-                        "flex items-center gap-3 text-base",
-                        index === current ? "text-foreground" : "text-muted-foreground",
-                      )}
-                    >
-                      {/* Stages only show while the update runs, so the current one spins. */}
-                      {index === current ? (
-                        <Spinner
-                          aria-hidden
-                          className="size-5 shrink-0 motion-reduce:animate-none"
-                        />
-                      ) : (
-                        <Icon aria-hidden className="size-5 shrink-0" />
-                      )}
-                      {labels[COMPUTER_UPDATE_STAGES.indexOf(stage)]}
-                    </li>
-                  );
-                })}
-              </ol>
-            ) : null}
-            {computerUpdateNeedsAttention(selected) ? (
-              <p
-                role="alert"
-                className="mx-6 my-6 rounded-xl bg-muted px-4 py-4 text-sm text-muted-foreground"
-              >
-                {selected.status === "interrupted" ? (
-                  <Trans>Recovery is unavailable until the previous operation has stopped.</Trans>
-                ) : (
-                  <Trans>
-                    Recovery restores the last saved workspace. Unsaved work may be lost.
-                  </Trans>
-                )}
-              </p>
-            ) : (
-              <span role="status" className="sr-only">
-                {labels[COMPUTER_UPDATE_STAGES.indexOf(selected.stage)]}
-              </span>
-            )}
-            {error ? (
-              <p role="alert" className="px-6 pb-3 text-sm text-destructive">
-                <Trans>Could not complete action</Trans>
-              </p>
-            ) : null}
-            <div className="flex justify-end gap-2 border-t border-border px-6 py-4">
-              {selected.status === "failed" ? (
-                <Button
-                  variant="outline"
-                  onClick={() =>
-                    void computerUpdates.dismiss(selected.id).catch(() => setError(true))
-                  }
-                >
-                  <Trans>Dismiss</Trans>
-                </Button>
+            <Button
+              variant="ghost"
+              aria-expanded={expanded}
+              className="h-auto justify-center gap-3 rounded-none px-4 py-2"
+              onClick={() => {
+                setError(false);
+                computerUpdates.open(expanded ? null : update.id);
+              }}
+            >
+              {attention ? (
+                <CircleAlert className="text-destructive" />
               ) : (
-                <Button variant="outline" onClick={() => computerUpdates.open(null)}>
-                  <Trans>Continue in Background</Trans>
-                </Button>
+                <LoadingState
+                  label={title(update)}
+                  indicator={<Spinner aria-hidden className="size-5 motion-reduce:animate-none" />}
+                />
               )}
-              {selected.status === "failed" ? (
-                <Button
-                  disabled={recovering}
-                  onClick={() => {
-                    setRecovering(true);
-                    setError(false);
-                    void computerUpdates
-                      .start(selected.botId, "recover")
-                      .catch(() => setError(true))
-                      .finally(() => setRecovering(false));
-                  }}
-                >
-                  <Trans>Recover computer</Trans>
-                </Button>
-              ) : null}
-            </div>
-          </DialogContent>
-        ) : null}
-      </Dialog>
-    </>
+              <span className="text-center">
+                <span className="block">{title(update)}</span>
+                <span className="block text-xs text-muted-foreground">
+                  {labels[COMPUTER_UPDATE_STAGES.indexOf(update.stage)]}
+                </span>
+              </span>
+            </Button>
+            {expanded ? (
+              <div
+                className="flex flex-col gap-4 border-t border-border px-4 py-4"
+                data-testid="computer-update-details"
+              >
+                {!attention ? (
+                  <ol className="space-y-3" aria-label={t`Update progress`}>
+                    {computerUpdateStages(update.action).map((stage, index) => {
+                      const current = computerUpdateStages(update.action).indexOf(update.stage);
+                      const Icon = index < current ? CheckCircle2 : Circle;
+                      return (
+                        <li
+                          key={stage}
+                          aria-current={index === current ? "step" : undefined}
+                          className={cn(
+                            "flex items-center gap-3 text-sm",
+                            index === current ? "text-foreground" : "text-muted-foreground",
+                          )}
+                        >
+                          {/* Stages only show while the update runs, so the current one spins. */}
+                          {index === current ? (
+                            <Spinner
+                              aria-hidden
+                              className="size-4 shrink-0 motion-reduce:animate-none"
+                            />
+                          ) : (
+                            <Icon aria-hidden className="size-4 shrink-0" />
+                          )}
+                          {labels[COMPUTER_UPDATE_STAGES.indexOf(stage)]}
+                        </li>
+                      );
+                    })}
+                  </ol>
+                ) : (
+                  <p role="alert" className="text-sm text-muted-foreground">
+                    {update.status === "interrupted" ? (
+                      <Trans>
+                        Recovery is unavailable until the previous operation has stopped.
+                      </Trans>
+                    ) : (
+                      <Trans>
+                        Recovery restores the last saved workspace. Unsaved work may be lost.
+                      </Trans>
+                    )}
+                  </p>
+                )}
+                {!attention ? (
+                  <span role="status" className="sr-only">
+                    {labels[COMPUTER_UPDATE_STAGES.indexOf(update.stage)]}
+                  </span>
+                ) : null}
+                {error ? (
+                  <p role="alert" className="text-sm text-destructive">
+                    <Trans>Could not complete action</Trans>
+                  </p>
+                ) : null}
+                <div className="flex justify-end gap-2">
+                  {update.status === "failed" ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        void computerUpdates.dismiss(update.id).catch(() => setError(true))
+                      }
+                    >
+                      <Trans>Dismiss</Trans>
+                    </Button>
+                  ) : null}
+                  {update.status === "failed" ? (
+                    <Button
+                      size="sm"
+                      disabled={recovering}
+                      onClick={() => {
+                        setRecovering(true);
+                        setError(false);
+                        void computerUpdates
+                          .start(update.botId, "recover")
+                          .catch(() => setError(true))
+                          .finally(() => setRecovering(false));
+                      }}
+                    >
+                      <Trans>Recover computer</Trans>
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
+    </div>
   );
 }

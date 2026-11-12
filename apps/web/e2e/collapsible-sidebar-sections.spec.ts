@@ -14,7 +14,7 @@ test("titled sidebar section expands and collapses", async ({ page }, testInfo) 
   await bot.click({ button: "right" });
   await page.getByRole("menuitem", { name: "Move to", exact: true }).hover();
   await page.getByRole("menu", { name: "Move to", exact: true }).getByText("New section").click();
-  const dialog = page.getByRole("dialog", { name: "New section" });
+  const dialog = page.getByRole("complementary", { name: "New section" });
   await dialog.getByLabel("Name").fill("Projects");
   await dialog.getByRole("button", { name: "Create" }).click();
 

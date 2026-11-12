@@ -3,6 +3,7 @@ import { BotAvatar } from "@corvo/ui-web";
 import { I18nProvider } from "@lingui/react";
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
 import { bootstrapI18n, i18n } from "../../src/lib/i18n";
 import { applyResolvedAppearance } from "../../src/lib/ui-appearance";
 import "../../src/styles.css";
@@ -50,6 +51,8 @@ applyResolvedAppearance(theme);
 await bootstrapI18n("en");
 createRoot(document.getElementById("root")!).render(
   <I18nProvider i18n={i18n}>
-    <Page />
+    <BrowserRouter>
+      <Page />
+    </BrowserRouter>
   </I18nProvider>,
 );

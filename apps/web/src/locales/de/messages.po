@@ -595,7 +595,7 @@ msgstr "Aktiv"
 msgid "Activity"
 msgstr "Aktivität"
 
-#: src/pages/AddStepDialog.tsx
+#: src/pages/AddStepPanel.tsx
 #: src/pages/AgentsStore.tsx
 #: src/pages/AppCatalogGrid.tsx
 #: src/pages/McpServersSettings.tsx
@@ -758,7 +758,7 @@ msgstr "Server hinzufügen"
 msgid "Add server URL"
 msgstr "Server-URL hinzufügen"
 
-#: src/pages/AddStepDialog.tsx
+#: src/pages/AddStepPanel.tsx
 #: src/pages/Workflows.tsx
 msgid "Add step"
 msgstr "Schritt hinzufügen"
@@ -812,7 +812,7 @@ msgid "Advanced..."
 msgstr "Erweitert …"
 
 #: src/components/WorkingLine.tsx
-#: src/pages/AddStepDialog.tsx
+#: src/pages/AddStepPanel.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Agent"
@@ -1326,6 +1326,7 @@ msgstr "Bots sind in diesem Space pausiert."
 msgid "Bots can work on {hostLabel} with your local files and tools."
 msgstr "Bots können auf {hostLabel} mit deinen lokalen Dateien und Tools arbeiten."
 
+#: src/pages/shell/shell-dialogs.tsx
 #: src/pages/SpaceSettingsPanel.tsx
 msgid "Bots paused"
 msgstr "Bots pausiert"
@@ -1400,14 +1401,12 @@ msgstr "Kann keine Bilder lesen"
 
 #: src/components/AskCard.tsx
 #: src/components/AutonomyPicker.tsx
-#: src/components/ComputerMaintenanceActions.tsx
 #: src/components/markdown-link-prompt.tsx
 #: src/components/ModelCredits.tsx
 #: src/components/PasskeySettings.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/AccountSettingsOverlay.tsx
-#: src/pages/AddStepDialog.tsx
-#: src/pages/Artifacts.tsx
+#: src/pages/AddStepPanel.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/LocalSpeechSection.tsx
 #: src/pages/McpServersSettings.tsx
@@ -1415,10 +1414,7 @@ msgstr "Kann keine Bilder lesen"
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/PartnerTemplateEditor.tsx
-#: src/pages/shell/agent-import-undo.tsx
 #: src/pages/shell/bot-credentials.tsx
-#: src/pages/shell/create-bot-dialog.tsx
-#: src/pages/shell/dialogs.tsx
 #: src/pages/Store.tsx
 #: src/pages/WhatsAppNumbers.tsx
 #: src/pages/WikiBrowser.tsx
@@ -1551,10 +1547,6 @@ msgstr "Wird geprüft …"
 msgid "Choose a bot"
 msgstr "Bot auswählen"
 
-#: src/pages/shell/avatar-studio-popover.tsx
-msgid "Choose a color or upload an image"
-msgstr "Wählen Sie eine Farbe oder laden Sie ein Bild hoch"
-
 #: src/lib/model-problem.ts
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Choose a model"
@@ -1637,12 +1629,20 @@ msgid "Clearing…"
 msgstr "Wird geleert…"
 
 #: src/components/ErrorBoundary.tsx
+#: src/pages/AddStepPanel.tsx
+#: src/pages/Board.tsx
+#: src/pages/BoardSettings.tsx
+#: src/pages/HostComputerPrompt.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/PeerMessagesOverlay.tsx
+#: src/pages/RoutineCard.tsx
 #: src/pages/RoutineEditor.tsx
+#: src/pages/shell/agent-import-undo.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
+#: src/pages/shell/create-bot-panel.tsx
+#: src/pages/shell/dialogs.tsx
 #: src/pages/WindowChrome.tsx
 msgid "Close"
 msgstr "Schließen"
@@ -1811,6 +1811,11 @@ msgstr "Computer sind aus. Setze SANDBOX_PROVIDER=docker mit SANDBOX_SUPERVISOR_
 msgid "Configured servers"
 msgstr "Konfigurierte Server"
 
+#: src/pages/shell/agent-import-undo.tsx
+#: src/pages/shell/dialogs.tsx
+msgid "Confirm"
+msgstr "Bestätigen"
+
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersSettings.tsx
 msgid "Confirm delete"
@@ -1824,6 +1829,14 @@ msgstr "Löschen bestätigen?"
 #: src/pages/Auth.tsx
 msgid "Confirm password"
 msgstr "Passwort bestätigen"
+
+#: src/components/ComputerMaintenanceActions.tsx
+msgid "Confirm recover?"
+msgstr "Wiederherstellen bestätigen?"
+
+#: src/components/ComputerMaintenanceActions.tsx
+msgid "Confirm reset?"
+msgstr "Zurücksetzen bestätigen?"
 
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/ChatAppsRow.tsx
@@ -1974,10 +1987,6 @@ msgstr "Kontextlimit"
 msgid "Continue"
 msgstr "Weiter"
 
-#: src/components/ComputerUpdateProgress.tsx
-msgid "Continue in Background"
-msgstr "Im Hintergrund fortfahren"
-
 #: src/components/ModelCredits.tsx
 msgid "Continue to checkout"
 msgstr "Weiter zur Kasse"
@@ -2125,7 +2134,7 @@ msgid "Could not continue"
 msgstr "Fortfahren fehlgeschlagen"
 
 #: src/pages/shell/agent-import.tsx
-#: src/pages/shell/create-bot-dialog.tsx
+#: src/pages/shell/create-bot-panel.tsx
 msgid "Could not create bot"
 msgstr "Bot konnte nicht erstellt werden"
 
@@ -2559,7 +2568,7 @@ msgstr "Ihre Zeitzone konnte nicht aktualisiert werden"
 
 #: src/pages/Board.tsx
 #: src/pages/shell/agent-import.tsx
-#: src/pages/shell/create-bot-dialog.tsx
+#: src/pages/shell/create-bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/sidebar-header.tsx
 msgid "Create"
@@ -2744,7 +2753,6 @@ msgid "Delegating to helper: {value}"
 msgstr "Übergibt an den Helfer: {value}"
 
 #: src/components/PasskeySettings.tsx
-#: src/pages/Artifacts.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersSettings.tsx
@@ -2754,11 +2762,6 @@ msgstr "Übergibt an den Helfer: {value}"
 #: src/pages/WikiBrowser.tsx
 msgid "Delete"
 msgstr "Löschen"
-
-#. placeholder {0}: pendingDelete.name
-#: src/pages/Artifacts.tsx
-msgid "Delete \"{0}\"?"
-msgstr "„{0}“ löschen?"
 
 #. placeholder {0}: artifact.name
 #. placeholder {0}: bot.name
@@ -2811,11 +2814,15 @@ msgstr "Space löschen"
 msgid "deleted"
 msgstr "gelöscht"
 
+#. placeholder {0}: artifact.name
+#: src/pages/Artifacts.tsx
+msgid "Deleted {0}"
+msgstr "{0} gelöscht"
+
 #: src/pages/Usage.tsx
 msgid "Deleted agent"
 msgstr "Gelöschter Agent"
 
-#: src/pages/Artifacts.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Deleting…"
 msgstr "Wird gelöscht…"
@@ -3621,7 +3628,7 @@ msgid "Image upload area"
 msgstr "Bild-Upload-Bereich"
 
 #: src/pages/shell/composer.tsx
-#: src/pages/shell/create-bot-dialog.tsx
+#: src/pages/shell/create-bot-panel.tsx
 msgid "Import"
 msgstr "Importieren"
 
@@ -3711,7 +3718,7 @@ msgstr "Anweisungsverlauf"
 
 #: src/components/AskCard.tsx
 #: src/components/InstructionSettings.tsx
-#: src/pages/AddStepDialog.tsx
+#: src/pages/AddStepPanel.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/shell/agent-import.tsx
@@ -4418,7 +4425,7 @@ msgstr "Mein Assistent"
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/shell/create-bot-dialog.tsx
+#: src/pages/shell/create-bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/SpaceSettingsPanel.tsx
 msgid "Name"
@@ -4437,7 +4444,7 @@ msgstr "Gruppe benennen"
 msgid "Name this routine"
 msgstr "Routine benennen"
 
-#: src/pages/shell/create-bot-dialog.tsx
+#: src/pages/shell/create-bot-panel.tsx
 msgid "Name your Bot"
 msgstr "Geben Sie Ihrem Bot einen Namen"
 
@@ -4484,7 +4491,7 @@ msgstr "Neu"
 #: src/pages/Shell.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-picker.tsx
-#: src/pages/shell/create-bot-dialog.tsx
+#: src/pages/shell/create-bot-panel.tsx
 msgid "New bot"
 msgstr "Neuer Bot"
 
@@ -5313,10 +5320,6 @@ msgstr "Aufnahme: {0}"
 msgid "Recover computer"
 msgstr "Computer wiederherstellen"
 
-#: src/components/ComputerMaintenanceActions.tsx
-msgid "Recover computer?"
-msgstr "Computer wiederherstellen?"
-
 #. placeholder {0}: update.name
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Recovering {0}’s Computer"
@@ -5338,7 +5341,6 @@ msgstr "Wiederherstellung fehlgeschlagen"
 msgid "Recovery is unavailable until the previous operation has stopped."
 msgstr "Die Wiederherstellung ist erst möglich, wenn der vorherige Vorgang beendet ist."
 
-#: src/components/ComputerMaintenanceActions.tsx
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Recovery restores the last saved workspace. Unsaved work may be lost."
 msgstr "Die Wiederherstellung stellt den zuletzt gespeicherten Arbeitsbereich wieder her. Nicht gespeicherte Änderungen können verloren gehen."
@@ -5550,7 +5552,6 @@ msgstr "Recherche & Schreiben"
 msgid "Research and writing"
 msgstr "Recherche und Schreiben"
 
-#: src/components/ComputerMaintenanceActions.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Reset"
 msgstr "Zurücksetzen"
@@ -5562,10 +5563,6 @@ msgstr "Alle zurücksetzen"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Reset computer"
 msgstr "Computer zurücksetzen"
-
-#: src/components/ComputerMaintenanceActions.tsx
-msgid "Reset computer?"
-msgstr "Computer zurücksetzen?"
 
 #: src/pages/Auth.tsx
 msgid "Reset password"
@@ -5608,10 +5605,6 @@ msgstr "Wiederherstellen"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace."
 msgstr "Den zuletzt gespeicherten Arbeitsbereich wiederherstellen."
-
-#: src/components/ComputerMaintenanceActions.tsx
-msgid "Restore the last saved workspace. Unsaved work on the computer is lost."
-msgstr "Stellt den zuletzt gespeicherten Workspace wieder her. Nicht gespeicherte Arbeit auf dem Computer geht verloren."
 
 #: src/components/AskCard.tsx
 msgid "Restored"
@@ -6667,17 +6660,9 @@ msgstr "Dieser Bot wurde nicht importiert."
 msgid "This call is no longer ringing."
 msgstr "Dieser Anruf klingelt nicht mehr."
 
-#: src/pages/Artifacts.tsx
-msgid "This can't be undone."
-msgstr "Das kann nicht rückgängig gemacht werden."
-
 #: src/pages/shell/dialogs.tsx
 msgid "This cannot be undone."
 msgstr "Dies kann nicht rückgängig gemacht werden."
-
-#: src/pages/PeerMessagesOverlay.tsx
-msgid "This chat is view-only"
-msgstr "Dieser Chat ist schreibgeschützt"
 
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/Onboarding.tsx
@@ -6688,11 +6673,6 @@ msgstr "dieser Computer"
 #: src/lib/run-error.ts
 msgid "This conversation is too long for the model. Retrying won't help. Start a new chat or shorten your message."
 msgstr "Diese Unterhaltung ist zu lang für das Modell. Ein erneuter Versuch hilft nicht. Starte einen neuen Chat oder kürze deine Nachricht."
-
-#. placeholder {0}: pendingDelete.versionCount
-#: src/pages/Artifacts.tsx
-msgid "This deletes all {0} versions of this artifact. This can't be undone."
-msgstr "Dadurch werden alle {0} Versionen dieses Artefakts gelöscht. Das kann nicht rückgängig gemacht werden."
 
 #: src/components/ArtifactFileCard.tsx
 msgid "This file is not valid UTF-8 text."
@@ -6936,6 +6916,8 @@ msgstr "Gib deine Antwort ein"
 #: src/components/AskCard.tsx
 #: src/components/MemoryFactCard.tsx
 #: src/components/WikiChangeCard.tsx
+#: src/pages/Artifacts.tsx
+#: src/pages/shell/shell-dialogs.tsx
 #: src/pages/SpaceSettingsPanel.tsx
 msgid "Undo"
 msgstr "Rückgängig"
@@ -7271,7 +7253,7 @@ msgstr "Womit soll ich anfangen?"
 msgid "What result will you demonstrate?"
 msgstr "Welches Ergebnis wirst du vorführen?"
 
-#: src/pages/AddStepDialog.tsx
+#: src/pages/AddStepPanel.tsx
 #: src/pages/NewRoutinePanel.tsx
 msgid "What should the agent do?"
 msgstr "Was soll der Agent tun?"

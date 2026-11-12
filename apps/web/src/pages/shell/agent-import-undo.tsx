@@ -1,14 +1,5 @@
 import type { AgentImportInfo } from "@corvo/contracts";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@corvo/ui-web";
+import { InlineConfirm, SidePanel } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useEffect, useState } from "react";
 import { agentImportErrorText } from "../../lib/agent-import-errors";
@@ -62,121 +53,113 @@ export function AgentImportUndo({ botId, onUndone }: { botId: string; onUndone: 
         <Trans>Undo import</Trans>
       </button>
       {open ? (
-        <AlertDialog
+        <SidePanel
           open
-          onOpenChange={(next) => {
-            if (!next && !busy) setOpen(false);
-          }}
+          onClose={busy ? () => undefined : () => setOpen(false)}
+          title={t`Undo import?`}
+          closeLabel={t`Close`}
+          data-testid="agent-import-undo-panel"
+          footer={
+            <InlineConfirm
+              variant="destructive"
+              disabled={busy}
+              confirmLabel={t`Confirm`}
+              onConfirm={() => {
+                setBusy(true);
+                setError(null);
+                rpc.bots
+                  .importUndo({ botId, importId: info.id })
+                  .then(() => onUndone())
+                  .catch((err: unknown) => {
+                    setError(
+                      agentImportErrorText(err) ?? errorText(err, t`Could not undo the import`),
+                    );
+                    setBusy(false);
+                    // Another tab may have undone this import meanwhile.
+                    rpc.bots
+                      .importInfo({ botId })
+                      .then((found) => {
+                        setInfo(found);
+                        if (!found) setOpen(false);
+                      })
+                      .catch(() => undefined);
+                  });
+              }}
+            >
+              <Trans>Undo import</Trans>
+            </InlineConfirm>
+          }
         >
-          <AlertDialogContent data-testid="agent-import-undo-dialog">
-            <AlertDialogHeader>
-              <AlertDialogTitle>
-                <Trans>Undo import?</Trans>
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                {info.existingBot ? (
-                  <Trans>What the import added will be removed. The bot stays.</Trans>
-                ) : (
-                  <Trans>The bot and what its import added will be removed.</Trans>
-                )}
-              </AlertDialogDescription>
-              {info.instructions ? (
-                <p
-                  className="text-[13.5px] text-muted-foreground"
-                  data-testid="agent-import-undo-instructions"
-                >
-                  {info.instructions === "restore" ? (
-                    <Trans>Its instructions go back to before the import.</Trans>
-                  ) : (
-                    <Trans>Its instructions changed since the import, so they stay.</Trans>
-                  )}
-                </p>
-              ) : null}
-              {info.model ? (
-                <p
-                  className="text-[13.5px] text-muted-foreground"
-                  data-testid="agent-import-undo-model"
-                >
-                  {info.model === "restore" ? (
-                    <Trans>Its model goes back to before the import.</Trans>
-                  ) : (
-                    <Trans>Its model changed since the import, so it stays.</Trans>
-                  )}
-                </p>
-              ) : null}
-            </AlertDialogHeader>
-            {removed.length ? (
-              <section aria-label={t`Removed`}>
-                <p className="text-[13.5px] text-foreground/75">
-                  <Trans>Removed</Trans>
-                </p>
-                <ul className="mt-1 text-[13px] text-muted-foreground">
-                  {removed.map((name, index) => (
-                    <li key={`${index}:${name}`} dir="auto">
-                      {name}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
-            {kept.length ? (
-              <section aria-label={t`Kept`}>
-                <p className="text-[13.5px] text-foreground/75">
-                  <Trans>Kept</Trans>
-                </p>
-                <ul className="mt-1 text-[13px] text-muted-foreground">
-                  {kept.map((name, index) => (
-                    <li key={`${index}:${name}`} dir="auto">
-                      {name}
-                    </li>
-                  ))}
-                </ul>
-                {info.keep.apiKeys.length ? (
-                  <p className="mt-1 text-[13px] text-muted-foreground">
-                    <Trans>API keys stay connected.</Trans>
-                  </p>
-                ) : null}
-              </section>
-            ) : null}
-            {error ? (
-              <p role="alert" className="text-[13.5px] text-destructive">
-                {error}
+          <p className="text-[13.5px] text-muted-foreground">
+            {info.existingBot ? (
+              <Trans>What the import added will be removed. The bot stays.</Trans>
+            ) : (
+              <Trans>The bot and what its import added will be removed.</Trans>
+            )}
+          </p>
+          {info.instructions ? (
+            <p
+              className="text-[13.5px] text-muted-foreground"
+              data-testid="agent-import-undo-instructions"
+            >
+              {info.instructions === "restore" ? (
+                <Trans>Its instructions go back to before the import.</Trans>
+              ) : (
+                <Trans>Its instructions changed since the import, so they stay.</Trans>
+              )}
+            </p>
+          ) : null}
+          {info.model ? (
+            <p
+              className="text-[13.5px] text-muted-foreground"
+              data-testid="agent-import-undo-model"
+            >
+              {info.model === "restore" ? (
+                <Trans>Its model goes back to before the import.</Trans>
+              ) : (
+                <Trans>Its model changed since the import, so it stays.</Trans>
+              )}
+            </p>
+          ) : null}
+          {removed.length ? (
+            <section aria-label={t`Removed`}>
+              <p className="text-[13.5px] text-foreground/75">
+                <Trans>Removed</Trans>
               </p>
-            ) : null}
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={busy}>
-                <Trans>Cancel</Trans>
-              </AlertDialogCancel>
-              <AlertDialogAction
-                variant="destructive"
-                disabled={busy}
-                onClick={() => {
-                  setBusy(true);
-                  setError(null);
-                  rpc.bots
-                    .importUndo({ botId, importId: info.id })
-                    .then(() => onUndone())
-                    .catch((err: unknown) => {
-                      setError(
-                        agentImportErrorText(err) ?? errorText(err, t`Could not undo the import`),
-                      );
-                      setBusy(false);
-                      // Another tab may have undone this import meanwhile.
-                      rpc.bots
-                        .importInfo({ botId })
-                        .then((found) => {
-                          setInfo(found);
-                          if (!found) setOpen(false);
-                        })
-                        .catch(() => undefined);
-                    });
-                }}
-              >
-                <Trans>Undo import</Trans>
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+              <ul className="mt-1 text-[13px] text-muted-foreground">
+                {removed.map((name, index) => (
+                  <li key={`${index}:${name}`} dir="auto">
+                    {name}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+          {kept.length ? (
+            <section aria-label={t`Kept`}>
+              <p className="text-[13.5px] text-foreground/75">
+                <Trans>Kept</Trans>
+              </p>
+              <ul className="mt-1 text-[13px] text-muted-foreground">
+                {kept.map((name, index) => (
+                  <li key={`${index}:${name}`} dir="auto">
+                    {name}
+                  </li>
+                ))}
+              </ul>
+              {info.keep.apiKeys.length ? (
+                <p className="mt-1 text-[13px] text-muted-foreground">
+                  <Trans>API keys stay connected.</Trans>
+                </p>
+              ) : null}
+            </section>
+          ) : null}
+          {error ? (
+            <p role="alert" className="text-[13.5px] text-destructive">
+              {error}
+            </p>
+          ) : null}
+        </SidePanel>
       ) : null}
     </>
   );

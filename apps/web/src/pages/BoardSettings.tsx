@@ -1,7 +1,7 @@
 import type { Board, BoardStatusLabels, TicketStatus } from "@corvo/contracts";
 import { BOARD_LABEL_MAX_LENGTH, TICKET_STATUSES } from "@corvo/contracts";
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input } from "@corvo/ui-web";
-import { Trans, useLingui } from "@lingui/react/macro";
+import { Button, Input, SidePanel } from "@corvo/ui-web";
+import { useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { useBuiltinStatusLabels } from "../lib/ticket-status";
 import { errorText } from "../lib/user-error";
@@ -56,35 +56,37 @@ export function BoardSettings({
   }
 
   return (
-    <Dialog open onOpenChange={(open) => (open ? undefined : onClose())}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            <Trans>Task settings</Trans>
-          </DialogTitle>
-        </DialogHeader>
-        <form id="board-settings" onSubmit={submit} className="space-y-2">
-          {TICKET_STATUSES.map((status) => (
-            <Input
-              key={status}
-              name={`label-${status}`}
-              aria-label={builtin[status]}
-              placeholder={builtin[status]}
-              maxLength={BOARD_LABEL_MAX_LENGTH}
-              value={typed[status]}
-              onChange={(event) => setTyped({ ...typed, [status]: event.target.value })}
-            />
-          ))}
-          {error ? (
-            <p role="alert" className="text-sm text-destructive">
-              {error}
-            </p>
-          ) : null}
-          <Button type="submit" disabled={saving}>
-            {t`Save`}
-          </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <SidePanel
+      open
+      onClose={onClose}
+      title={t`Task settings`}
+      closeLabel={t`Close`}
+      data-testid="board-settings-panel"
+      footer={
+        <Button type="submit" form="board-settings" disabled={saving}>
+          {t`Save`}
+        </Button>
+      }
+    >
+      <form id="board-settings" onSubmit={submit} className="space-y-2">
+        {TICKET_STATUSES.map((status, index) => (
+          <Input
+            key={status}
+            data-autofocus={index === 0 ? "" : undefined}
+            name={`label-${status}`}
+            aria-label={builtin[status]}
+            placeholder={builtin[status]}
+            maxLength={BOARD_LABEL_MAX_LENGTH}
+            value={typed[status]}
+            onChange={(event) => setTyped({ ...typed, [status]: event.target.value })}
+          />
+        ))}
+        {error ? (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        ) : null}
+      </form>
+    </SidePanel>
   );
 }

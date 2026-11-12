@@ -3,16 +3,9 @@ import type { Artifact, Bot } from "@corvo/contracts";
 import { isAttachmentImageMimeType } from "@corvo/contracts";
 import { writeSaved } from "@corvo/core/query";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
   BotAvatar,
   Button,
+  EmptyState,
   NativeSelect,
   NativeSelectOption,
   parseBotAvatar,
@@ -20,6 +13,8 @@ import {
   Spinner,
   ToggleGroup,
   ToggleGroupItem,
+  toast,
+  undoableDeferred,
 } from "@corvo/ui-web";
 import { t } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
@@ -99,9 +94,8 @@ export function ArtifactsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [maximized, setMaximized] = useState(false);
-  const [pendingDelete, setPendingDelete] = useState<ArtifactSummary | null>(null);
-  const [deleteBusy, setDeleteBusy] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  // Deleting hides the artifact at once; the delete runs when the Undo toast expires.
+  const [hiddenIds, setHiddenIds] = useState<ReadonlySet<string>>(new Set());
 
   const queries = useSpaceQueries();
   const queryClient = useQueryClient();
@@ -123,8 +117,10 @@ export function ArtifactsPage() {
   });
   const listing = useInfiniteQuery(listingOptions);
   const items = useMemo(
-    () => listing.data?.pages.flatMap((page) => page.items) ?? null,
-    [listing.data],
+    () =>
+      listing.data?.pages.flatMap((page) => page.items).filter((item) => !hiddenIds.has(item.id)) ??
+      null,
+    [listing.data, hiddenIds],
   );
   const nextCursor = listing.data?.pages.at(-1)?.nextCursor ?? null;
   const loadingMore = listing.isFetchingNextPage;
@@ -182,30 +178,42 @@ export function ArtifactsPage() {
     writeViewMode(mode);
   }
 
-  async function confirmDelete() {
-    if (!pendingDelete) return;
-    setDeleteBusy(true);
-    setDeleteError(null);
+  function setHidden(id: string, hidden: boolean) {
+    setHiddenIds((current) => {
+      const next = new Set(current);
+      if (hidden) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+
+  async function removeArtifact(artifact: ArtifactSummary) {
+    setHidden(artifact.id, true);
+    if (artifactId === artifact.id) navigate("/app/artifacts");
     try {
-      await rpc.artifacts.remove({ artifactId: pendingDelete.id });
-      await writeSaved(queryClient, listingOptions.queryKey, (current) => ({
-        pages: (current?.pages ?? []).map((page) => ({
-          ...page,
-          items: page.items.filter((item) => item.id !== pendingDelete.id),
-        })),
-        pageParams: current?.pageParams ?? [],
-      }));
-      // Listings for other bots may hold it too; they refresh when next shown.
-      void queryClient.invalidateQueries({
-        queryKey: queries.artifacts.listSpace.key(),
-        refetchType: "none",
+      await undoableDeferred({
+        message: t`Deleted ${artifact.name}`,
+        undoLabel: t`Undo`,
+        onUndo: () => setHidden(artifact.id, false),
+        commit: async () => {
+          await rpc.artifacts.remove({ artifactId: artifact.id });
+          await writeSaved(queryClient, listingOptions.queryKey, (current) => ({
+            pages: (current?.pages ?? []).map((page) => ({
+              ...page,
+              items: page.items.filter((item) => item.id !== artifact.id),
+            })),
+            pageParams: current?.pageParams ?? [],
+          }));
+          // Listings for other bots may hold it too; they refresh when next shown.
+          void queryClient.invalidateQueries({
+            queryKey: queries.artifacts.listSpace.key(),
+            refetchType: "none",
+          });
+        },
       });
-      if (artifactId === pendingDelete.id) navigate("/app/artifacts");
-      setPendingDelete(null);
     } catch (error) {
-      setDeleteError(errorText(error, t`Could not delete this artifact.`));
-    } finally {
-      setDeleteBusy(false);
+      setHidden(artifact.id, false);
+      toast.error(errorText(error, t`Could not delete this artifact.`));
     }
   }
 
@@ -327,7 +335,7 @@ export function ArtifactsPage() {
                 loadError={loadError}
                 botsById={botsById}
                 selectedId={artifactId}
-                onRequestDelete={setPendingDelete}
+                onRequestDelete={(artifact) => void removeArtifact(artifact)}
                 nextCursor={nextCursor}
                 loadingMore={loadingMore}
                 onLoadMore={loadMore}
@@ -346,53 +354,13 @@ export function ArtifactsPage() {
             loadError={loadError}
             viewMode={viewMode}
             botsById={botsById}
-            onRequestDelete={setPendingDelete}
+            onRequestDelete={(artifact) => void removeArtifact(artifact)}
             nextCursor={nextCursor}
             loadingMore={loadingMore}
             onLoadMore={loadMore}
           />
         )}
       </div>
-
-      {pendingDelete ? (
-        <AlertDialog
-          open
-          onOpenChange={(open) => {
-            if (!open && !deleteBusy) setPendingDelete(null);
-          }}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>
-                <Trans>Delete "{pendingDelete.name}"?</Trans>
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                {pendingDelete.versionCount > 1 ? (
-                  <Trans>
-                    This deletes all {pendingDelete.versionCount} versions of this artifact. This
-                    can't be undone.
-                  </Trans>
-                ) : (
-                  <Trans>This can't be undone.</Trans>
-                )}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            {deleteError ? <p className="text-[13.5px] text-destructive">{deleteError}</p> : null}
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={deleteBusy}>
-                <Trans>Cancel</Trans>
-              </AlertDialogCancel>
-              <AlertDialogAction
-                variant="destructive"
-                disabled={deleteBusy}
-                onClick={() => void confirmDelete()}
-              >
-                {deleteBusy ? <Trans>Deleting…</Trans> : <Trans>Delete</Trans>}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      ) : null}
     </div>
   );
 }
@@ -494,7 +462,7 @@ function EmptyArtifacts({
   if (!nextCursor) {
     return (
       <div className={className}>
-        <Trans>No artifacts found.</Trans>
+        <EmptyState piece="knight" title={t`No artifacts found.`} />
       </div>
     );
   }

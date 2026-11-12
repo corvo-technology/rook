@@ -32,7 +32,7 @@ test("chart links cannot execute script when clicked or expanded", async ({ page
     if (inspect === "1") await expect(page.locator('[aria-label="tip"]')).toBeVisible();
     await assertInert();
     await page.getByRole("button", { name: "Expand", exact: true }).click();
-    const dialog = page.getByRole("dialog");
+    const dialog = page.getByTestId("side-panel-layer");
     await expect(dialog.locator("svg circle")).toBeVisible();
     await dialog.locator("svg circle").click();
     await assertInert();

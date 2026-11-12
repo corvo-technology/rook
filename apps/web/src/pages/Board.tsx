@@ -11,13 +11,10 @@ import { fetchFresh, writeSaved } from "@corvo/core/query";
 import {
   Button,
   buttonVariants,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
   Input,
   NativeSelect,
   NativeSelectOption,
+  SidePanel,
   Textarea,
 } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
@@ -29,6 +26,7 @@ import { followBoard } from "../lib/board-stream";
 import { useSpaceQueries } from "../lib/query";
 import { formatRelativeTime } from "../lib/relative-time";
 import { rpc } from "../lib/rpc";
+import { sidePanelValue, useSidePanel } from "../lib/side-panel";
 import { fieldChanges } from "../lib/ticket-fields";
 import { useTicketPriorityLabels } from "../lib/ticket-priority";
 import { useTicketStatusLabels } from "../lib/ticket-status";
@@ -49,13 +47,13 @@ export function BoardPage() {
   const boardOptions = queries.boards.get.queryOptions();
   const boardQuery = useQuery(boardOptions);
   const statuses = useTicketStatusLabels(boardQuery.data?.statusLabels);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const sidePanel = useSidePanel();
+  const settingsOpen = sidePanel.isOpen("board-settings");
   const ticketsOptions = queries.tickets.list.queryOptions({ input: {} });
   const ticketsQuery = useQuery(ticketsOptions);
   const botsQuery = useQuery(queries.bots.list.queryOptions());
   const tickets = ticketsQuery.data?.tickets ?? [];
   const bots = botsQuery.data ?? [];
-  const [selected, setSelected] = useState<Ticket | { newIn: TicketStatus } | null>(null);
   const [ownerFilter, setOwnerFilter] = useState("");
   const [searchParams] = useSearchParams();
   const wantedRef = searchParams.get("ticket")?.toLowerCase();
@@ -66,8 +64,26 @@ export function BoardPage() {
     const found = tickets.find((ticket) => ticket.ref.toLowerCase() === wantedRef);
     if (!found) return;
     openedRef.current = wantedRef;
-    setSelected(found);
-  }, [tickets, wantedRef]);
+    sidePanel.open(sidePanelValue("ticket", found.id));
+  }, [tickets, wantedRef, sidePanel.open]);
+  const open = sidePanel.parsed;
+  // The ticket as it was when the panel opened: a refresh behind it must not change what a save sends.
+  const openedTicket = useRef<Ticket | null>(null);
+  if (open?.kind !== "ticket") openedTicket.current = null;
+  else if (openedTicket.current?.id !== open.id)
+    openedTicket.current = tickets.find((ticket) => ticket.id === open.id) ?? null;
+  const selected: Ticket | { newIn: TicketStatus } | null =
+    open?.kind === "ticket"
+      ? openedTicket.current
+      : open?.kind === "new-ticket"
+        ? { newIn: TICKET_STATUSES.find((status) => status === open.id) ?? "todo" }
+        : null;
+  const setSelected = (next: Ticket | { newIn: TicketStatus }) =>
+    sidePanel.open(
+      "newIn" in next
+        ? sidePanelValue("new-ticket", next.newIn)
+        : sidePanelValue("ticket", next.id),
+    );
   const visible = ownerFilter
     ? tickets.filter((ticket) => ticket.assigneeBotId === ownerFilter)
     : tickets;
@@ -152,7 +168,7 @@ export function BoardPage() {
             variant="ghost"
             size="icon"
             aria-label={t`Task settings`}
-            onClick={() => setSettingsOpen(true)}
+            onClick={() => sidePanel.open("board-settings")}
           >
             <Settings2 />
           </Button>
@@ -189,7 +205,7 @@ export function BoardPage() {
       {settingsOpen && boardQuery.data ? (
         <BoardSettings
           board={boardQuery.data}
-          onClose={() => setSettingsOpen(false)}
+          onClose={sidePanel.close}
           onSave={async (changes) => {
             await rpc.boards.rename({ statusLabels: changes });
             await fetchFresh(queryClient, boardOptions);
@@ -197,13 +213,13 @@ export function BoardPage() {
         />
       ) : null}
       {selected ? (
-        <TicketDialog
+        <TicketPanel
           key={"newIn" in selected ? `new-${selected.newIn}` : selected.id}
           ticket={"newIn" in selected ? null : selected}
           createIn={"newIn" in selected ? selected.newIn : "todo"}
           bots={bots}
           statuses={statuses}
-          onClose={() => setSelected(null)}
+          onClose={sidePanel.close}
           onSaved={reload}
         />
       ) : null}
@@ -211,7 +227,7 @@ export function BoardPage() {
   );
 }
 
-function TicketDialog({
+function TicketPanel({
   ticket,
   createIn,
   bots,
@@ -307,146 +323,144 @@ function TicketDialog({
   }
 
   return (
-    <Dialog
+    <SidePanel
       open
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
+      onClose={onClose}
+      title={ticket?.title ?? t`New ticket`}
+      closeLabel={t`Close`}
+      wide
+      data-testid="ticket-panel"
     >
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{ticket?.title ?? t`New ticket`}</DialogTitle>
-        </DialogHeader>
-        <form
-          className="space-y-3"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void save();
-          }}
-        >
-          <label htmlFor={`${formId}-title`} className="block space-y-1 text-sm">
-            <span>
-              <Trans>Title</Trans>
-            </span>
-            <Input
-              id={`${formId}-title`}
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              maxLength={TICKET_TITLE_MAX_LENGTH}
-              required
-            />
-          </label>
-          <label htmlFor={`${formId}-description`} className="block space-y-1 text-sm">
-            <span>
-              <Trans>Description</Trans>
-            </span>
-            <Textarea
-              id={`${formId}-description`}
-              data-testid="ticket-description"
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              maxLength={TICKET_DESCRIPTION_MAX_LENGTH}
-            />
-          </label>
-          <label htmlFor={`${formId}-owner`} className="block space-y-1 text-sm">
-            <span>
-              <Trans>Owner</Trans>
-            </span>
-            <NativeSelect
-              className="w-full"
-              id={`${formId}-owner`}
-              value={owner}
-              onChange={(event) => setOwner(event.target.value)}
-              required
-            >
-              {bots.map((bot) => (
-                <NativeSelectOption key={bot.id} value={bot.id}>
-                  {bot.name}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-          </label>
-          {ticket ? (
-            <label htmlFor={`${formId}-status`} className="block space-y-1 text-sm">
-              <span>
-                <Trans>Status</Trans>
-              </span>
-              <NativeSelect
-                className="w-full"
-                id={`${formId}-status`}
-                value={status}
-                onChange={(event) => setStatus(event.target.value as TicketStatus)}
-              >
-                {TICKET_STATUSES.map((value) => (
-                  <NativeSelectOption key={value} value={value}>
-                    {statuses[value]}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
-            </label>
-          ) : null}
-          <label htmlFor={`${formId}-priority`} className="block space-y-1 text-sm">
-            <span>
-              <Trans>Priority</Trans>
-            </span>
-            <NativeSelect
-              className="w-full"
-              id={`${formId}-priority`}
-              value={priority}
-              onChange={(event) => setPriority(event.target.value as TicketPriority)}
-            >
-              {TICKET_PRIORITIES.map((value) => (
-                <NativeSelectOption key={value} value={value}>
-                  {priorities[value]}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-          </label>
-          {ticket ? <TicketFields rows={fields} onChange={setFields} /> : null}
-          <div className="flex justify-end">
-            <Button type="submit" disabled={busy || !title.trim() || !owner}>
-              {ticket ? t`Save` : t`Create`}
-            </Button>
-          </div>
-        </form>
-        {ticket ? (
-          <div data-testid="ticket-comments" className="space-y-3 border-t pt-3">
-            {comments.map((row) => (
-              <div key={row.id} className="text-sm">
-                <div className="mb-1 flex items-center justify-between gap-3 text-xs text-muted-foreground">
-                  <span>{row.authorName}</span>
-                  <time dateTime={row.createdAt}>{formatRelativeTime(row.createdAt)}</time>
-                </div>
-                <ChatMarkdown>{row.body}</ChatMarkdown>
-              </div>
+      <form
+        className="space-y-3"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void save();
+        }}
+      >
+        <label htmlFor={`${formId}-title`} className="block space-y-1 text-sm">
+          <span>
+            <Trans>Title</Trans>
+          </span>
+          <Input
+            data-autofocus
+            id={`${formId}-title`}
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            maxLength={TICKET_TITLE_MAX_LENGTH}
+            required
+          />
+        </label>
+        <label htmlFor={`${formId}-description`} className="block space-y-1 text-sm">
+          <span>
+            <Trans>Description</Trans>
+          </span>
+          <Textarea
+            id={`${formId}-description`}
+            data-testid="ticket-description"
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            maxLength={TICKET_DESCRIPTION_MAX_LENGTH}
+          />
+        </label>
+        <label htmlFor={`${formId}-owner`} className="block space-y-1 text-sm">
+          <span>
+            <Trans>Owner</Trans>
+          </span>
+          <NativeSelect
+            className="w-full"
+            id={`${formId}-owner`}
+            value={owner}
+            onChange={(event) => setOwner(event.target.value)}
+            required
+          >
+            {bots.map((bot) => (
+              <NativeSelectOption key={bot.id} value={bot.id}>
+                {bot.name}
+              </NativeSelectOption>
             ))}
-            <form
-              className="space-y-2"
-              onSubmit={(event) => {
-                event.preventDefault();
-                void comment();
-              }}
+          </NativeSelect>
+        </label>
+        {ticket ? (
+          <label htmlFor={`${formId}-status`} className="block space-y-1 text-sm">
+            <span>
+              <Trans>Status</Trans>
+            </span>
+            <NativeSelect
+              className="w-full"
+              id={`${formId}-status`}
+              value={status}
+              onChange={(event) => setStatus(event.target.value as TicketStatus)}
             >
-              <Textarea
-                aria-label={t`Comment`}
-                value={body}
-                onChange={(event) => setBody(event.target.value)}
-                maxLength={TICKET_COMMENT_MAX_LENGTH}
-              />
-              <div className="flex justify-end">
-                <Button type="submit" disabled={busy || !body.trim()}>
-                  <Trans>Comment</Trans>
-                </Button>
+              {TICKET_STATUSES.map((value) => (
+                <NativeSelectOption key={value} value={value}>
+                  {statuses[value]}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+          </label>
+        ) : null}
+        <label htmlFor={`${formId}-priority`} className="block space-y-1 text-sm">
+          <span>
+            <Trans>Priority</Trans>
+          </span>
+          <NativeSelect
+            className="w-full"
+            id={`${formId}-priority`}
+            value={priority}
+            onChange={(event) => setPriority(event.target.value as TicketPriority)}
+          >
+            {TICKET_PRIORITIES.map((value) => (
+              <NativeSelectOption key={value} value={value}>
+                {priorities[value]}
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
+        </label>
+        {ticket ? <TicketFields rows={fields} onChange={setFields} /> : null}
+        <div className="flex justify-end">
+          <Button type="submit" disabled={busy || !title.trim() || !owner}>
+            {ticket ? t`Save` : t`Create`}
+          </Button>
+        </div>
+      </form>
+      {ticket ? (
+        <div data-testid="ticket-comments" className="space-y-3 border-t pt-3">
+          {comments.map((row) => (
+            <div key={row.id} className="text-sm">
+              <div className="mb-1 flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                <span>{row.authorName}</span>
+                <time dateTime={row.createdAt}>{formatRelativeTime(row.createdAt)}</time>
               </div>
-            </form>
-          </div>
-        ) : null}
-        {shownError ? (
-          <p role="alert" className="text-sm text-destructive">
-            {shownError}
-          </p>
-        ) : null}
-      </DialogContent>
-    </Dialog>
+              <ChatMarkdown>{row.body}</ChatMarkdown>
+            </div>
+          ))}
+          <form
+            className="space-y-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void comment();
+            }}
+          >
+            <Textarea
+              aria-label={t`Comment`}
+              value={body}
+              onChange={(event) => setBody(event.target.value)}
+              maxLength={TICKET_COMMENT_MAX_LENGTH}
+            />
+            <div className="flex justify-end">
+              <Button type="submit" disabled={busy || !body.trim()}>
+                <Trans>Comment</Trans>
+              </Button>
+            </div>
+          </form>
+        </div>
+      ) : null}
+      {shownError ? (
+        <p role="alert" className="text-sm text-destructive">
+          {shownError}
+        </p>
+      ) : null}
+    </SidePanel>
   );
 }

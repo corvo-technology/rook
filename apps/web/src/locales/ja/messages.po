@@ -595,7 +595,7 @@ msgstr "有効"
 msgid "Activity"
 msgstr "アクティビティ"
 
-#: src/pages/AddStepDialog.tsx
+#: src/pages/AddStepPanel.tsx
 #: src/pages/AgentsStore.tsx
 #: src/pages/AppCatalogGrid.tsx
 #: src/pages/McpServersSettings.tsx
@@ -758,7 +758,7 @@ msgstr "サーバーを追加"
 msgid "Add server URL"
 msgstr "サーバーURLを追加"
 
-#: src/pages/AddStepDialog.tsx
+#: src/pages/AddStepPanel.tsx
 #: src/pages/Workflows.tsx
 msgid "Add step"
 msgstr "ステップを追加"
@@ -812,7 +812,7 @@ msgid "Advanced..."
 msgstr "詳細設定..."
 
 #: src/components/WorkingLine.tsx
-#: src/pages/AddStepDialog.tsx
+#: src/pages/AddStepPanel.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Agent"
@@ -1326,6 +1326,7 @@ msgstr "このスペースのボットは一時停止中です。"
 msgid "Bots can work on {hostLabel} with your local files and tools."
 msgstr "ボットは {hostLabel} 上で、ローカルのファイルやツールを使って作業できます。"
 
+#: src/pages/shell/shell-dialogs.tsx
 #: src/pages/SpaceSettingsPanel.tsx
 msgid "Bots paused"
 msgstr "ボットを一時停止しました"
@@ -1400,14 +1401,12 @@ msgstr "画像を読み取れません"
 
 #: src/components/AskCard.tsx
 #: src/components/AutonomyPicker.tsx
-#: src/components/ComputerMaintenanceActions.tsx
 #: src/components/markdown-link-prompt.tsx
 #: src/components/ModelCredits.tsx
 #: src/components/PasskeySettings.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/AccountSettingsOverlay.tsx
-#: src/pages/AddStepDialog.tsx
-#: src/pages/Artifacts.tsx
+#: src/pages/AddStepPanel.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/LocalSpeechSection.tsx
 #: src/pages/McpServersSettings.tsx
@@ -1415,10 +1414,7 @@ msgstr "画像を読み取れません"
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/PartnerTemplateEditor.tsx
-#: src/pages/shell/agent-import-undo.tsx
 #: src/pages/shell/bot-credentials.tsx
-#: src/pages/shell/create-bot-dialog.tsx
-#: src/pages/shell/dialogs.tsx
 #: src/pages/Store.tsx
 #: src/pages/WhatsAppNumbers.tsx
 #: src/pages/WikiBrowser.tsx
@@ -1551,10 +1547,6 @@ msgstr "確認中…"
 msgid "Choose a bot"
 msgstr "ボットを選択"
 
-#: src/pages/shell/avatar-studio-popover.tsx
-msgid "Choose a color or upload an image"
-msgstr "色を選ぶか、画像をアップロード"
-
 #: src/lib/model-problem.ts
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Choose a model"
@@ -1637,12 +1629,20 @@ msgid "Clearing…"
 msgstr "クリア中…"
 
 #: src/components/ErrorBoundary.tsx
+#: src/pages/AddStepPanel.tsx
+#: src/pages/Board.tsx
+#: src/pages/BoardSettings.tsx
+#: src/pages/HostComputerPrompt.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/PeerMessagesOverlay.tsx
+#: src/pages/RoutineCard.tsx
 #: src/pages/RoutineEditor.tsx
+#: src/pages/shell/agent-import-undo.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
+#: src/pages/shell/create-bot-panel.tsx
+#: src/pages/shell/dialogs.tsx
 #: src/pages/WindowChrome.tsx
 msgid "Close"
 msgstr "閉じる"
@@ -1811,6 +1811,11 @@ msgstr "コンピューターは無効です。SANDBOX_PROVIDER=docker と SANDB
 msgid "Configured servers"
 msgstr "設定済みのサーバー"
 
+#: src/pages/shell/agent-import-undo.tsx
+#: src/pages/shell/dialogs.tsx
+msgid "Confirm"
+msgstr "確認"
+
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersSettings.tsx
 msgid "Confirm delete"
@@ -1824,6 +1829,14 @@ msgstr "削除しますか？"
 #: src/pages/Auth.tsx
 msgid "Confirm password"
 msgstr "パスワードの確認"
+
+#: src/components/ComputerMaintenanceActions.tsx
+msgid "Confirm recover?"
+msgstr "復旧を確認しますか？"
+
+#: src/components/ComputerMaintenanceActions.tsx
+msgid "Confirm reset?"
+msgstr "リセットを確認しますか？"
 
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/ChatAppsRow.tsx
@@ -1974,10 +1987,6 @@ msgstr "コンテキスト上限"
 msgid "Continue"
 msgstr "続行"
 
-#: src/components/ComputerUpdateProgress.tsx
-msgid "Continue in Background"
-msgstr "バックグラウンドで続行"
-
 #: src/components/ModelCredits.tsx
 msgid "Continue to checkout"
 msgstr "購入手続きへ進む"
@@ -2125,7 +2134,7 @@ msgid "Could not continue"
 msgstr "続行できませんでした"
 
 #: src/pages/shell/agent-import.tsx
-#: src/pages/shell/create-bot-dialog.tsx
+#: src/pages/shell/create-bot-panel.tsx
 msgid "Could not create bot"
 msgstr "ボットを作成できませんでした"
 
@@ -2559,7 +2568,7 @@ msgstr "タイムゾーンを更新できませんでした"
 
 #: src/pages/Board.tsx
 #: src/pages/shell/agent-import.tsx
-#: src/pages/shell/create-bot-dialog.tsx
+#: src/pages/shell/create-bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/sidebar-header.tsx
 msgid "Create"
@@ -2744,7 +2753,6 @@ msgid "Delegating to helper: {value}"
 msgstr "ヘルパーに任せています: {value}"
 
 #: src/components/PasskeySettings.tsx
-#: src/pages/Artifacts.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersSettings.tsx
@@ -2754,11 +2762,6 @@ msgstr "ヘルパーに任せています: {value}"
 #: src/pages/WikiBrowser.tsx
 msgid "Delete"
 msgstr "削除"
-
-#. placeholder {0}: pendingDelete.name
-#: src/pages/Artifacts.tsx
-msgid "Delete \"{0}\"?"
-msgstr "「{0}」を削除しますか？"
 
 #. placeholder {0}: artifact.name
 #. placeholder {0}: bot.name
@@ -2811,11 +2814,15 @@ msgstr "スペースを削除"
 msgid "deleted"
 msgstr "削除済み"
 
+#. placeholder {0}: artifact.name
+#: src/pages/Artifacts.tsx
+msgid "Deleted {0}"
+msgstr "{0} を削除しました"
+
 #: src/pages/Usage.tsx
 msgid "Deleted agent"
 msgstr "削除されたエージェント"
 
-#: src/pages/Artifacts.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Deleting…"
 msgstr "削除中…"
@@ -3621,7 +3628,7 @@ msgid "Image upload area"
 msgstr "画像アップロードエリア"
 
 #: src/pages/shell/composer.tsx
-#: src/pages/shell/create-bot-dialog.tsx
+#: src/pages/shell/create-bot-panel.tsx
 msgid "Import"
 msgstr "インポート"
 
@@ -3711,7 +3718,7 @@ msgstr "指示の履歴"
 
 #: src/components/AskCard.tsx
 #: src/components/InstructionSettings.tsx
-#: src/pages/AddStepDialog.tsx
+#: src/pages/AddStepPanel.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/shell/agent-import.tsx
@@ -4418,7 +4425,7 @@ msgstr "自分のアシスタント"
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/shell/create-bot-dialog.tsx
+#: src/pages/shell/create-bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/SpaceSettingsPanel.tsx
 msgid "Name"
@@ -4437,7 +4444,7 @@ msgstr "グループに名前を付ける"
 msgid "Name this routine"
 msgstr "ルーティンに名前を付ける"
 
-#: src/pages/shell/create-bot-dialog.tsx
+#: src/pages/shell/create-bot-panel.tsx
 msgid "Name your Bot"
 msgstr "ボットに名前を付ける"
 
@@ -4484,7 +4491,7 @@ msgstr "新規"
 #: src/pages/Shell.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-picker.tsx
-#: src/pages/shell/create-bot-dialog.tsx
+#: src/pages/shell/create-bot-panel.tsx
 msgid "New bot"
 msgstr "新しいボット"
 
@@ -5313,10 +5320,6 @@ msgstr "録画中: {0}"
 msgid "Recover computer"
 msgstr "コンピューターを復旧"
 
-#: src/components/ComputerMaintenanceActions.tsx
-msgid "Recover computer?"
-msgstr "コンピューターを復旧しますか？"
-
 #. placeholder {0}: update.name
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Recovering {0}’s Computer"
@@ -5338,7 +5341,6 @@ msgstr "復旧に失敗しました"
 msgid "Recovery is unavailable until the previous operation has stopped."
 msgstr "前の操作が停止するまで復旧できません。"
 
-#: src/components/ComputerMaintenanceActions.tsx
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Recovery restores the last saved workspace. Unsaved work may be lost."
 msgstr "復旧すると最後に保存されたワークスペースが復元されます。保存されていない作業は失われる可能性があります。"
@@ -5550,7 +5552,6 @@ msgstr "リサーチと執筆"
 msgid "Research and writing"
 msgstr "リサーチと執筆"
 
-#: src/components/ComputerMaintenanceActions.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Reset"
 msgstr "リセット"
@@ -5562,10 +5563,6 @@ msgstr "すべてリセット"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Reset computer"
 msgstr "コンピューターをリセット"
-
-#: src/components/ComputerMaintenanceActions.tsx
-msgid "Reset computer?"
-msgstr "コンピューターをリセットしますか？"
 
 #: src/pages/Auth.tsx
 msgid "Reset password"
@@ -5608,10 +5605,6 @@ msgstr "復元"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace."
 msgstr "最後に保存されたワークスペースを復元します。"
-
-#: src/components/ComputerMaintenanceActions.tsx
-msgid "Restore the last saved workspace. Unsaved work on the computer is lost."
-msgstr "最後に保存されたワークスペースを復元します。コンピューター上の保存されていない作業は失われます。"
 
 #: src/components/AskCard.tsx
 msgid "Restored"
@@ -6667,17 +6660,9 @@ msgstr "このボットはインポートされませんでした。"
 msgid "This call is no longer ringing."
 msgstr "この通話の呼び出しは終了しました。"
 
-#: src/pages/Artifacts.tsx
-msgid "This can't be undone."
-msgstr "この操作は元に戻せません。"
-
 #: src/pages/shell/dialogs.tsx
 msgid "This cannot be undone."
 msgstr "この操作は元に戻せません。"
-
-#: src/pages/PeerMessagesOverlay.tsx
-msgid "This chat is view-only"
-msgstr "このチャットは閲覧のみです"
 
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/Onboarding.tsx
@@ -6688,11 +6673,6 @@ msgstr "このコンピューター"
 #: src/lib/run-error.ts
 msgid "This conversation is too long for the model. Retrying won't help. Start a new chat or shorten your message."
 msgstr "この会話はモデルにとって長すぎます。再試行しても解決しません。新しいチャットを開始するか、メッセージを短くしてください。"
-
-#. placeholder {0}: pendingDelete.versionCount
-#: src/pages/Artifacts.tsx
-msgid "This deletes all {0} versions of this artifact. This can't be undone."
-msgstr "このアーティファクトの全{0}バージョンを削除します。この操作は元に戻せません。"
 
 #: src/components/ArtifactFileCard.tsx
 msgid "This file is not valid UTF-8 text."
@@ -6936,6 +6916,8 @@ msgstr "回答を入力"
 #: src/components/AskCard.tsx
 #: src/components/MemoryFactCard.tsx
 #: src/components/WikiChangeCard.tsx
+#: src/pages/Artifacts.tsx
+#: src/pages/shell/shell-dialogs.tsx
 #: src/pages/SpaceSettingsPanel.tsx
 msgid "Undo"
 msgstr "元に戻す"
@@ -7271,7 +7253,7 @@ msgstr "まず何から取りかかりましょうか？"
 msgid "What result will you demonstrate?"
 msgstr "どんな結果を実演しますか？"
 
-#: src/pages/AddStepDialog.tsx
+#: src/pages/AddStepPanel.tsx
 #: src/pages/NewRoutinePanel.tsx
 msgid "What should the agent do?"
 msgstr "エージェントに何をさせますか?"

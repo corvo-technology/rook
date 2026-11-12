@@ -1,12 +1,11 @@
 import { ChatMarkdown } from "@corvo/chat-ui/web";
 import { isAttachmentAudioMimeType } from "@corvo/contracts";
 import { fileSizeParts } from "@corvo/core";
-import { Button, Dialog, DialogClose, DialogContent, DialogTitle, Spinner } from "@corvo/ui-web";
+import { Button, SidePanel, Spinner } from "@corvo/ui-web";
 import { i18n } from "@lingui/core";
 import { t as translate } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
-import { Code2, Download, FileText, Play, X } from "lucide-react";
-import type { RefObject } from "react";
+import { Code2, Download, FileText, Play } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { ArtifactTarget } from "../lib/artifact-open";
 import { downloadArtifact, downloadArtifactBytes, fetchArtifactBytes } from "../lib/artifact-open";
@@ -35,8 +34,6 @@ const TEXT_MIME_TYPES = new Set(["text/markdown", "text/html"]);
 export function ArtifactFileCard(props: ArtifactFileCardProps) {
   const { t } = useLingui();
   const previewable = PREVIEWABLE_MIME_TYPES.has(props.mimeType);
-  const previewButton = useRef<HTMLButtonElement>(null);
-  const closeButton = useRef<HTMLButtonElement>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
@@ -86,7 +83,6 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
       <div>
         <BuiCard className="flex min-w-[280px] overflow-hidden text-left text-foreground">
           <button
-            ref={previewButton}
             type="button"
             aria-label={t`Preview ${props.name}`}
             onClick={() => setPreviewOpen(true)}
@@ -119,27 +115,21 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
         </BuiCard>
         {downloadError ? <DownloadError message={downloadError} /> : null}
       </div>
-      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent
-          showCloseButton={false}
-          initialFocus={closeButton}
-          finalFocus={previewButton}
-          className="flex h-[min(88vh,900px)] w-[min(960px,94vw)] flex-col gap-0 overflow-hidden p-0 sm:max-w-none"
-        >
-          <FilePreview {...props} closeButtonRef={closeButton} />
-        </DialogContent>
-      </Dialog>
+      <SidePanel
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        title={props.name}
+        closeLabel={t`Close preview`}
+        wide
+        data-testid="artifact-preview-panel"
+      >
+        <FilePreview {...props} />
+      </SidePanel>
     </>
   );
 }
 
-function FilePreview({
-  target,
-  artifactId,
-  name,
-  mimeType,
-  closeButtonRef,
-}: ArtifactFileCardProps & { closeButtonRef: RefObject<HTMLButtonElement | null> }) {
+function FilePreview({ target, artifactId, name, mimeType }: ArtifactFileCardProps) {
   const { t } = useLingui();
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [state, setState] = useState<
@@ -182,15 +172,12 @@ function FilePreview({
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center gap-1 border-b border-border px-5">
-        <DialogTitle className="min-w-0 flex-1 truncate text-[14px] leading-5 font-medium text-foreground">
-          {name}
-        </DialogTitle>
+      <div className="flex justify-end">
         <IconTooltip label={t`Download ${name}`}>
           <Button
             variant="ghost"
-            size="icon-lg"
-            className="rounded-full text-muted-foreground"
+            size="icon-sm"
+            className="text-muted-foreground"
             aria-label={t`Download ${name}`}
             onClick={() =>
               void (async () => {
@@ -207,28 +194,15 @@ function FilePreview({
             <Download />
           </Button>
         </IconTooltip>
-        <DialogClose
-          ref={closeButtonRef}
-          aria-label={t`Close preview`}
-          render={
-            <Button variant="ghost" size="icon-lg" className="rounded-full text-muted-foreground" />
-          }
-        >
-          <X />
-        </DialogClose>
-      </header>
-      {downloadError ? (
-        <div className="shrink-0 px-5 pt-4">
-          <DownloadError message={downloadError} />
-        </div>
-      ) : null}
-      <div className="relative min-h-0 flex-1 overflow-y-auto">
+      </div>
+      {downloadError ? <DownloadError message={downloadError} /> : null}
+      <div className="relative -mx-5 min-h-[50vh] flex-1 sm:-mx-6">
         {state.status === "loading" ? (
           <div className="absolute inset-0 grid place-items-center text-muted-foreground">
             <Spinner aria-label={t`Loading preview…`} />
           </div>
         ) : state.status === "error" ? (
-          <div className="m-5 rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-destructive">
+          <div className="mx-5 rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-destructive">
             {state.message}
           </div>
         ) : mimeType === "text/html" && state.text !== undefined ? (

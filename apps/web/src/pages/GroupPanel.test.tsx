@@ -17,9 +17,30 @@ vi.mock("../components/WikiCaptureSwitch", () => ({ WikiCaptureSwitch: () => nul
 // The alert dialog's Cancel closes it through onOpenChange, as Base UI does.
 let dismissDialog: (() => void) | undefined;
 vi.mock("@corvo/ui-web", async (importOriginal) => {
-  const { Checkbox } = await importOriginal<typeof UiWeb>();
+  const { Checkbox, InlineConfirm } = await importOriginal<typeof UiWeb>();
   return {
     Checkbox,
+    InlineConfirm,
+    SidePanel: ({
+      title,
+      footer,
+      children,
+      onClose,
+    }: {
+      title?: ReactNode;
+      footer?: ReactNode;
+      children?: ReactNode;
+      onClose: () => void;
+    }) => (
+      <aside data-testid="confirm-panel">
+        <h2>{title}</h2>
+        {children}
+        <footer>{footer}</footer>
+        <button type="button" onClick={onClose}>
+          Close
+        </button>
+      </aside>
+    ),
     BotAvatar: () => <span />,
     Button: (props: ComponentProps<"button">) => <button {...props} />,
     Input: (props: ComponentProps<"input">) => <input {...props} />,
@@ -316,20 +337,21 @@ describe("GroupSettings", () => {
     const { onRemove } = await render();
     await click("Delete group");
     expect(onRemove).not.toHaveBeenCalled();
-    expect(container.querySelector('[role="alertdialog"]')?.textContent).toContain(
+    expect(container.querySelector('[data-testid="confirm-panel"]')?.textContent).toContain(
       "Delete Review team?",
     );
     await click("Delete");
+    expect(onRemove).not.toHaveBeenCalled();
+    await click("Confirm");
     expect(onRemove).toHaveBeenCalledOnce();
   });
 
   it("keeps the group and the panel when the confirmation is dismissed", async () => {
     const { onRemove, onClose } = await render();
     await click("Delete group");
-    await pressEscape();
     expect(onClose).not.toHaveBeenCalled();
-    await click("Cancel");
-    expect(container.querySelector('[role="alertdialog"]')).toBeNull();
+    await click("Close");
+    expect(container.querySelector('[data-testid="confirm-panel"]')).toBeNull();
     expect(onRemove).not.toHaveBeenCalled();
   });
 

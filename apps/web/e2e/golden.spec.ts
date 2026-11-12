@@ -522,9 +522,12 @@ test("bot context menu pins, duplicates, edits, and confirms deletion", async ({
   const copy = page.getByRole("button", { name: /Chief copy/ }).first();
   await copy.click({ button: "right" });
   await page.getByRole("menuitem", { name: "Delete" }).click();
-  await expect(page.getByRole("alertdialog", { name: "Delete Chief copy?" })).toBeVisible();
+  await expect(page.getByRole("complementary", { name: "Delete Chief copy?" })).toBeVisible();
   await captureScreenshot(page, testInfo, "18-delete-confirmation");
-  await page.getByRole("button", { name: "Cancel" }).click();
+  await page
+    .getByRole("complementary", { name: "Delete Chief copy?" })
+    .getByRole("button", { name: "Close", exact: true })
+    .click();
 
   await chief.click({ button: "right" });
   await page.getByRole("menuitem", { name: "Edit Profile" }).click();

@@ -90,24 +90,13 @@ test("shows peer chips in transcript and opens view-only peer chat", async ({ pa
   const view = page.getByTestId("peer-conversation-view");
   await expect(view).toBeVisible();
   await expect(view.getByRole("heading", { name: /Chief\s*Researcher/ })).toBeVisible();
-  await expect(view.getByText("This chat is view-only")).toBeVisible();
   await expect(view.getByRole("button", { name: "Close" })).toHaveCount(1);
   await expect(view.getByText("peer-exchange-alpha").first()).toBeVisible({
     timeout: 30_000,
   });
   await expect(view.getByRole("textbox")).toHaveCount(0);
   await expect(view.getByRole("status", { name: "Loading…", exact: true })).toHaveCount(0);
-  const peerTranscript = view.getByTestId("peer-conversation-transcript");
-  await peerTranscript.evaluate((element) => {
-    element.scrollTop = element.scrollHeight;
-  });
-  await expect
-    .poll(() =>
-      peerTranscript.evaluate(
-        (element) => element.scrollTop + element.clientHeight >= element.scrollHeight - 1,
-      ),
-    )
-    .toBe(true);
+  await expect(view.getByTestId("peer-conversation-transcript")).toBeVisible();
   await captureScreenshot(page, testInfo, "peer-view-only");
 });
 

@@ -96,7 +96,7 @@ const document = [
 
 async function openImport(page: Page) {
   await openNewBot(page);
-  await page.getByTestId("create-bot-dialog").getByTestId("create-bot-import").click();
+  await page.getByTestId("create-bot-panel").getByTestId("create-bot-import").click();
   const panel = page.getByTestId("agent-import");
   await expect(panel.getByTestId("agent-import-choose")).toBeVisible();
   return panel;
@@ -114,7 +114,7 @@ test("imports an OpenClaw folder and another assistant's document as new bots", 
 
   // Import in the New bot dialog swaps the dialog for the import panel; Back swaps it back.
   await openNewBot(page);
-  const dialog = page.getByTestId("create-bot-dialog");
+  const dialog = page.getByTestId("create-bot-panel");
   await dialog.getByTestId("create-bot-import").click();
   const importPanel = page.getByTestId("agent-import");
   await expect(importPanel.getByTestId("agent-import-choose")).toBeVisible();
@@ -122,7 +122,7 @@ test("imports an OpenClaw folder and another assistant's document as new bots", 
   await importPanel.getByRole("button", { name: "Back", exact: true }).click();
   await expect(importPanel).toHaveCount(0);
   await expect(dialog).toBeVisible();
-  await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+  await dialog.getByRole("button", { name: "Close", exact: true }).click();
   await expect(dialog).toHaveCount(0);
 
   const panel = await openImport(page);
@@ -590,7 +590,7 @@ test("an imported bot asks before using MCP servers, and its import can be undon
   await page.getByTestId("bot-settings-trigger").click();
   await expandAdvancedSection(page.getByTestId("bot-settings-advanced"));
   await page.getByTestId("agent-import-undo").click();
-  const dialog = page.getByTestId("agent-import-undo-dialog");
+  const dialog = page.getByTestId("agent-import-undo-panel");
   await expect(dialog.getByRole("region", { name: "Removed" }).getByRole("listitem")).toHaveText([
     "inbox-triage",
   ]);
@@ -599,9 +599,10 @@ test("an imported bot asks before using MCP servers, and its import can be undon
     dialog.getByRole("region", { name: "Kept" }).getByText("docs", { exact: true }),
   ).toBeVisible();
   await captureScreenshot(page, testInfo, "agent-import-undo");
+  await dialog.getByRole("button", { name: "Undo import", exact: true }).click();
   await clickAndWaitForRpc(
     page,
-    dialog.getByRole("button", { name: "Undo import", exact: true }),
+    dialog.getByRole("button", { name: "Confirm", exact: true }),
     "bots/importUndo",
   );
   await expect(dialog).toHaveCount(0);
@@ -638,13 +639,14 @@ test("Undo removes only the import it showed, even after another tab undid it", 
   await page.getByTestId("bot-settings-trigger").click();
   await expandAdvancedSection(page.getByTestId("bot-settings-advanced"));
   await page.getByTestId("agent-import-undo").click();
-  const dialog = page.getByTestId("agent-import-undo-dialog");
+  const dialog = page.getByTestId("agent-import-undo-panel");
   await expect(dialog).toContainText("What the import added will be removed. The bot stays.");
 
   // Another tab undoes that addition before this one confirms.
   const shown = await rpc<AgentImportInfo>(page, "bots/importInfo", { botId: bot.id });
   await rpc(page, "bots/importUndo", { botId: bot.id, importId: shown.id });
   await dialog.getByRole("button", { name: "Undo import", exact: true }).click();
+  await dialog.getByRole("button", { name: "Confirm", exact: true }).click();
   await expect(dialog.getByRole("alert")).toHaveText("This import changed. Try again.");
   // Nothing was removed, and the dialog now says what Undo would do instead.
   await expect(dialog).toContainText("The bot and what its import added will be removed.");
@@ -784,15 +786,16 @@ test("imports into an existing bot only when chosen, keeping its instructions un
   await page.getByTestId("bot-settings-trigger").click();
   await expandAdvancedSection(page.getByTestId("bot-settings-advanced"));
   await page.getByTestId("agent-import-undo").click();
-  const dialog = page.getByTestId("agent-import-undo-dialog");
+  const dialog = page.getByTestId("agent-import-undo-panel");
   await expect(dialog).toContainText("What the import added will be removed. The bot stays.");
   await expect(dialog.getByTestId("agent-import-undo-instructions")).toHaveText(
     "Its instructions go back to before the import.",
   );
   await captureScreenshot(page, testInfo, "agent-import-undo-existing");
+  await dialog.getByRole("button", { name: "Undo import", exact: true }).click();
   await clickAndWaitForRpc(
     page,
-    dialog.getByRole("button", { name: "Undo import", exact: true }),
+    dialog.getByRole("button", { name: "Confirm", exact: true }),
     "bots/importUndo",
   );
   await expect(dialog).toHaveCount(0);
@@ -926,7 +929,7 @@ test("an agent dropped into a chat is offered for import, never uploaded first",
   await importPanel.getByRole("button", { name: "Back", exact: true }).click();
   await importPanel.getByRole("button", { name: "Back", exact: true }).click();
   await expect(importPanel).toHaveCount(0);
-  await expect(page.getByTestId("create-bot-dialog")).toHaveCount(0);
+  await expect(page.getByTestId("create-bot-panel")).toHaveCount(0);
 
   // A backup can still be attached as a file, as before.
   const backup = Buffer.from(

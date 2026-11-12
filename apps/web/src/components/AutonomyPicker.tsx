@@ -1,18 +1,7 @@
 import type { ApprovalMode } from "@corvo/contracts";
 import type { ApprovalSummary } from "@corvo/core";
 import { approvalModeSummary } from "@corvo/core";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  RadioGroup,
-  RadioGroupItem,
-} from "@corvo/ui-web";
+import { Button, RadioGroup, RadioGroupItem } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useId, useState } from "react";
 
@@ -26,7 +15,7 @@ function useSummaryLines(): Record<ApprovalSummary, string> {
   };
 }
 
-/** Confirms choosing Never ask, which stops every question except the ones the gate keeps. */
+/** Confirms choosing Never ask in place, which stops every question except the ones the gate keeps. */
 export function NeverAskConfirm({
   name,
   open,
@@ -40,25 +29,25 @@ export function NeverAskConfirm({
 }) {
   const { t } = useLingui();
   const lines = useSummaryLines();
+  if (!open) return null;
+  const question = name ? t`Let ${name} act without asking?` : t`Let bots act without asking?`;
   return (
-    <AlertDialog open={open} onOpenChange={(next) => (next ? undefined : onCancel())}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>
-            {name ? t`Let ${name} act without asking?` : t`Let bots act without asking?`}
-          </AlertDialogTitle>
-          <AlertDialogDescription>{lines.steered_only}</AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>
-            <Trans>Cancel</Trans>
-          </AlertDialogCancel>
-          <AlertDialogAction variant="destructive" onClick={onConfirm}>
-            <Trans>Stop asking</Trans>
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <div
+      role="alert"
+      aria-label={question}
+      className="space-y-2 rounded-lg border border-border p-3"
+    >
+      <p className="text-sm font-medium break-words text-foreground">{question}</p>
+      <p className="text-[13px] text-muted-foreground">{lines.steered_only}</p>
+      <div className="flex justify-end gap-2">
+        <Button variant="ghost" size="sm" onClick={onCancel}>
+          <Trans>Cancel</Trans>
+        </Button>
+        <Button variant="destructive" size="sm" onClick={onConfirm}>
+          <Trans>Stop asking</Trans>
+        </Button>
+      </div>
+    </div>
   );
 }
 

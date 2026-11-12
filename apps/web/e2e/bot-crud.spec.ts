@@ -30,7 +30,7 @@ test("bot creation, editing, and deletion persist", async ({ page }, testInfo) =
     resolveCreateAborted();
   });
   await openNewBot(page);
-  const dialog = page.getByTestId("create-bot-dialog");
+  const dialog = page.getByTestId("create-bot-panel");
   await dialog.getByPlaceholder("Name your Bot").fill("New Bot");
   await dialog.getByRole("button", { name: "Create", exact: true }).click();
   await createAborted;
@@ -40,7 +40,7 @@ test("bot creation, editing, and deletion persist", async ({ page }, testInfo) =
   await expect(dialog.getByTestId("create-bot-error")).toBeVisible();
   expect(createFailed).toBe(true);
   await page.unroute("**/rpc/bots/create");
-  await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+  await dialog.getByRole("button", { name: "Close", exact: true }).click();
   await expect(dialog).toBeHidden();
   await expect(page.getByTestId("side-panel")).toHaveAttribute("data-panel", "closed");
 
@@ -231,12 +231,13 @@ test("bot creation, editing, and deletion persist", async ({ page }, testInfo) =
 
   await longNameBot.click({ button: "right" });
   await page.getByRole("menuitem", { name: "Delete" }).click();
-  const deleteDialog = page.getByRole("alertdialog", {
+  const deleteDialog = page.getByRole("complementary", {
     name: `Delete ${longUnbrokenName}?`,
   });
   await expect(deleteDialog).toBeVisible();
   await captureScreenshot(page, testInfo, "30-delete-bot-confirmation");
   await deleteDialog.getByRole("button", { name: "Delete", exact: true }).click();
+  await deleteDialog.getByRole("button", { name: "Confirm", exact: true }).click();
 
   await expect(botList.getByText(longUnbrokenName, { exact: true })).toHaveCount(0);
   await expect(botList.getByRole("button", { name: /^Chief/ })).toBeVisible();

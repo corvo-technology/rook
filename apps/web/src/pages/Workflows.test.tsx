@@ -41,7 +41,7 @@ vi.mock("@corvo/ui-web", () => ({
   Button: (props: ComponentProps<"button">) => <button type="button" {...props} />,
 }));
 vi.mock("./WindowChrome", () => ({ WindowChrome: () => null }));
-vi.mock("./NewRoutineDialog", () => ({ NewRoutineDialog: () => null }));
+vi.mock("./NewRoutinePanel", () => ({ NewRoutinePanel: () => null }));
 vi.mock("./AddStepDialog", () => ({
   AddStepDialog: ({ onAdd }: { onAdd: (step: { botId: string; instruction: string }) => void }) => (
     <button

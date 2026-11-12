@@ -3,14 +3,10 @@ import type { CronPreset } from "@corvo/core";
 import { cronFromPreset, defaultCronPreset } from "@corvo/core";
 import {
   Button,
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
   Input,
   NativeSelect,
   NativeSelectOption,
+  SidePanel,
   Textarea,
 } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
@@ -21,10 +17,10 @@ import { errorText } from "../lib/user-error";
 import { RoutineSchedule } from "./RoutineSchedule";
 
 /**
- * The shortest way to a routine: which agent, what to ask it, and when. Anything finer
+ * A side panel (`?panel=new-routine`), the shortest way to a routine: which agent, what to ask it, and when. Anything finer
  * (model, triggers, notifications) stays in the agent's own routine settings.
  */
-export function NewRoutineDialog({
+export function NewRoutinePanel({
   bots,
   defaultBotId,
   onCreated,
@@ -64,41 +60,13 @@ export function NewRoutineDialog({
   }
 
   return (
-    <Dialog open onOpenChange={(open) => (!open && !saving ? onClose() : undefined)}>
-      <DialogContent showCloseButton={false}>
-        <DialogHeader>
-          <DialogTitle>
-            <Trans>New routine</Trans>
-          </DialogTitle>
-        </DialogHeader>
-        <NativeSelect
-          aria-label={t`Agent`}
-          value={botId}
-          onChange={(event) => setBotId(event.target.value)}
-        >
-          {bots.map((bot) => (
-            <NativeSelectOption key={bot.id} value={bot.id}>
-              {bot.name}
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
-        <Input
-          id={nameId}
-          aria-label={t`Name`}
-          maxLength={80}
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          placeholder={t`Morning summary`}
-        />
-        <Textarea
-          aria-label={t`Instructions`}
-          value={prompt}
-          onChange={(event) => setPrompt(event.target.value)}
-          placeholder={t`What should the agent do?`}
-        />
-        <RoutineSchedule value={schedule} onChange={setSchedule} />
-        {error ? <p className="text-[13.5px] text-destructive">{error}</p> : null}
-        <DialogFooter>
+    <SidePanel
+      open
+      onClose={saving ? () => undefined : onClose}
+      title={t`New routine`}
+      closeLabel={t`Close`}
+      footer={
+        <>
           <Button variant="outline" disabled={saving} onClick={onClose}>
             <Trans>Cancel</Trans>
           </Button>
@@ -108,8 +76,37 @@ export function NewRoutineDialog({
           >
             {saving ? <Trans>Creating…</Trans> : <Trans>Create routine</Trans>}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </>
+      }
+    >
+      <NativeSelect
+        aria-label={t`Agent`}
+        value={botId}
+        onChange={(event) => setBotId(event.target.value)}
+      >
+        {bots.map((bot) => (
+          <NativeSelectOption key={bot.id} value={bot.id}>
+            {bot.name}
+          </NativeSelectOption>
+        ))}
+      </NativeSelect>
+      <Input
+        id={nameId}
+        data-autofocus
+        aria-label={t`Name`}
+        maxLength={80}
+        value={name}
+        onChange={(event) => setName(event.target.value)}
+        placeholder={t`Morning summary`}
+      />
+      <Textarea
+        aria-label={t`Instructions`}
+        value={prompt}
+        onChange={(event) => setPrompt(event.target.value)}
+        placeholder={t`What should the agent do?`}
+      />
+      <RoutineSchedule value={schedule} onChange={setSchedule} />
+      {error ? <p className="text-[13.5px] text-destructive">{error}</p> : null}
+    </SidePanel>
   );
 }

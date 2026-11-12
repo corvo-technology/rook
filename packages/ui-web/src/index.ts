@@ -48,8 +48,22 @@ export * from "./components/ui/textarea.js";
 export * from "./components/ui/toggle.js";
 export * from "./components/ui/toggle-group.js";
 export * from "./components/ui/tooltip.js";
+export { EmptyState, type EmptyStateProps } from "./empty-state.js";
 export { GroupAvatar, type GroupAvatarMember, type GroupAvatarProps } from "./group-avatar.js";
+export { InlineConfirm, type InlineConfirmProps } from "./inline-confirm.js";
 export { cn } from "./lib/utils.js";
 export { ModelThinkingOptions } from "./model-thinking-options.js";
 export type { RookGlyphState } from "./rook-glyph.js";
 export { RookGlyph } from "./rook-glyph.js";
+export {
+  SettingsLayout,
+  type SettingsLayoutProps,
+  type SettingsLayoutSection,
+} from "./settings-layout.js";
+export { SidePanel, type SidePanelProps } from "./side-panel.js";
+export {
+  type UndoableDeferredOptions,
+  type UndoableOptions,
+  undoable,
+  undoableDeferred,
+} from "./undo.js";

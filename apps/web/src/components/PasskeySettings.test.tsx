@@ -12,7 +12,6 @@ vi.mock("@lingui/react/macro", () => ({
   Trans: ({ children }: { children: ReactNode }) => children,
 }));
 vi.mock("@corvo/ui-web", () => {
-  const Plain = ({ children }: { children?: ReactNode }) => <>{children}</>;
   return {
     Button: ({
       variant: _variant,
@@ -20,14 +19,19 @@ vi.mock("@corvo/ui-web", () => {
       ...props
     }: ComponentProps<"button"> & { variant?: string; size?: string }) => <button {...props} />,
     Input: (props: ComponentProps<"input">) => <input {...props} />,
-    AlertDialog: Plain,
-    AlertDialogAction: Plain,
-    AlertDialogCancel: Plain,
-    AlertDialogContent: Plain,
-    AlertDialogDescription: Plain,
-    AlertDialogFooter: Plain,
-    AlertDialogHeader: Plain,
-    AlertDialogTitle: Plain,
+    InlineConfirm: ({
+      children,
+      confirmLabel,
+      onConfirm,
+    }: {
+      children: ReactNode;
+      confirmLabel: string;
+      onConfirm: () => void;
+    }) => (
+      <button type="button" data-confirm={confirmLabel} aria-label="Delete" onClick={onConfirm}>
+        {children}
+      </button>
+    ),
   };
 });
 vi.mock("../lib/auth", () => ({
@@ -94,4 +98,17 @@ it("reloads after adding a passkey", async () => {
   expect(host.querySelectorAll("li")).toHaveLength(0);
   await act(async () => buttonNamed("Add passkey")?.click());
   expect(host.querySelectorAll("li")).toHaveLength(1);
+});
+
+it("deletes a passkey through the inline confirmation, without a dialog", async () => {
+  vi.mocked(authClient.passkey.listUserPasskeys).mockResolvedValue({
+    data: [{ id: "passkey-1", name: "Laptop", createdAt: new Date().toISOString() }],
+    error: null,
+  } as never);
+  vi.mocked(authClient.passkey.deletePasskey).mockResolvedValue({ data: {}, error: null } as never);
+  await act(async () => root.render(<PasskeySettings />));
+  const remove = host.querySelector<HTMLButtonElement>('[data-confirm="Confirm delete?"]');
+  await act(async () => remove?.click());
+  expect(authClient.passkey.deletePasskey).toHaveBeenCalledWith({ id: "passkey-1" });
+  expect(document.querySelector('[role="alertdialog"]')).toBeNull();
 });

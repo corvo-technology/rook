@@ -12,10 +12,11 @@ import { cronLabels } from "../lib/cron";
 import { useSpaceQueries } from "../lib/query";
 import { routineTriggerSummary } from "../lib/routine-trigger";
 import { rpc } from "../lib/rpc";
+import { useSidePanel } from "../lib/side-panel";
 import { errorText } from "../lib/user-error";
 import { formatWhen, insertStep, moveStep } from "../lib/workflow-flow";
 import { AddStepDialog } from "./AddStepDialog";
-import { NewRoutineDialog } from "./NewRoutineDialog";
+import { NewRoutinePanel } from "./NewRoutinePanel";
 import { WindowChrome } from "./WindowChrome";
 
 const NO_BOTS: Bot[] = [];
@@ -31,7 +32,8 @@ export function WorkflowsPage() {
   const queries = useSpaceQueries();
   const queryClient = useQueryClient();
   const [adding, setAdding] = useState<{ workflow: Workflow; index: number } | null>(null);
-  const [creating, setCreating] = useState(false);
+  const sidePanel = useSidePanel();
+  const creating = sidePanel.isOpen("new-routine");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -84,7 +86,7 @@ export function WorkflowsPage() {
           className="ms-auto"
           size="sm"
           disabled={bots.length === 0}
-          onClick={() => setCreating(true)}
+          onClick={() => sidePanel.open("new-routine")}
         >
           <Plus />
           <Trans>New routine</Trans>
@@ -145,12 +147,12 @@ export function WorkflowsPage() {
           }
         />
       ) : null}
-      {creating ? (
-        <NewRoutineDialog
+      {creating && bots.length > 0 ? (
+        <NewRoutinePanel
           bots={bots}
-          onClose={() => setCreating(false)}
+          onClose={sidePanel.close}
           onCreated={() => {
-            setCreating(false);
+            sidePanel.close();
             void refresh();
           }}
         />

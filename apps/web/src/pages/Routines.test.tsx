@@ -35,7 +35,20 @@ vi.mock("@corvo/ui-web", () => {
   return {
     BotAvatar: () => <span />,
     botAccent: () => "#3b82f6",
-    RookGlyph: ({ state }: { state: string }) => <i data-rook={state} />,
+    EmptyState: ({
+      piece,
+      title,
+      "data-testid": testId,
+    }: {
+      piece: string;
+      title: string;
+      "data-testid": string;
+    }) => (
+      <div data-testid={testId}>
+        <i data-piece={piece} />
+        {title}
+      </div>
+    ),
     Spinner: (props: ComponentProps<"svg">) => <svg role="status" {...props} />,
     Button: (props: ComponentProps<"button">) => <button {...props} />,
     ToggleGroup: Container,
@@ -50,8 +63,8 @@ vi.mock("./RoutineCard", () => ({
   ),
 }));
 vi.mock("./WindowChrome", () => ({ WindowChrome: () => null }));
-vi.mock("./NewRoutineDialog", () => ({
-  NewRoutineDialog: () => <div data-testid="new-routine" />,
+vi.mock("./NewRoutinePanel", () => ({
+  NewRoutinePanel: () => <div data-testid="new-routine" />,
 }));
 
 import { RoutinesPage } from "./Routines";
@@ -247,7 +260,7 @@ it("shows a sleeping rook when there is nothing in the calendar", async () => {
   calendar.mockResolvedValue({ occurrences: [], truncated: false });
   const { container, cleanup } = await renderPage();
   expect(
-    container.querySelector("[data-testid='routines-empty'] [data-rook='asleep']"),
+    container.querySelector("[data-testid='routines-empty'] [data-piece='pawn']"),
   ).not.toBeNull();
   await cleanup();
 });

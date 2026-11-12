@@ -28,6 +28,7 @@ vi.mock("@corvo/ui-web", async () => {
   });
   return {
     ...(await import("../test-support/ui-web-choice-doubles")).choiceDoubles,
+    undoable: async ({ run }: { run: () => Promise<unknown> }) => run(),
     Button: ({
       variant: _variant,
       size: _size,

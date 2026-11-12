@@ -263,10 +263,11 @@ test("a space's menu opens its settings in place, and General lists every space"
 
   // The account's own approvals stay as they were.
   await settings.getByTestId("settings-nav-confirmations").click();
-  await expect(settings.getByRole("button", { name: "Never ask", exact: true })).toHaveAttribute(
-    "aria-pressed",
-    "false",
-  );
+  const accountApprovals = page.getByTestId("settings-page");
+  await expect(
+    accountApprovals.getByRole("button", { name: "Never ask", exact: true }),
+  ).toHaveAttribute("aria-pressed", "false");
+  await accountApprovals.getByTestId("settings-back").click();
 
   await settings.getByTestId("settings-nav-general").click();
   await spaceList.getByRole("button", { name: "Manage Support" }).click();

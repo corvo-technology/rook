@@ -57,6 +57,9 @@ const loadUsage = () => import("./pages/Usage").then((module) => module.UsagePag
 const loadWorkflows = () => import("./pages/Workflows").then((module) => module.WorkflowsPage);
 const loadRoutines = () => import("./pages/Routines").then((module) => module.RoutinesPage);
 const loadWiki = () => import("./pages/WikiPage").then((module) => module.WikiPage);
+const SettingsPage = lazyComponent(() =>
+  import("./pages/Settings").then((module) => module.SettingsPage),
+);
 const ArtifactsPage = lazyComponent(loadArtifacts);
 const UsagePage = lazyComponent(loadUsage);
 const WorkflowsPage = lazyComponent(loadWorkflows);
@@ -227,6 +230,7 @@ function SessionApp() {
                 <Route path="/app/g/:groupId" element={<ShellPage />} />
                 <Route path="/app/g/:groupId/squad" element={<SquadPage />} />
                 <Route path="/app/team" element={<TeamPage />} />
+                <Route path="/settings/:section?" element={<SettingsPage />} />
                 <Route path="/app/usage" element={<UsagePage />} />
                 <Route path="/app/workflows" element={<WorkflowsPage />} />
                 <Route path="/app/routines" element={<RoutinesPage />} />

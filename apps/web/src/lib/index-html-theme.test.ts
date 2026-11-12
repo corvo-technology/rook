@@ -56,12 +56,15 @@ describe("index.html theme bootstrap", () => {
     const files = [...app.matchAll(/@font-face\s*{[^}]*url\("\/(fonts\/[^"]+\.woff2)"\)/g)].map(
       (match) => match[1],
     );
-    expect(files).toHaveLength(2);
+    // Inter, Inter Tight and IBM Plex Mono. Only the two text faces block first paint, so only they preload.
+    expect(files).toHaveLength(3);
+    expect(sans).toMatch(/--font-mono:\s*"IBM Plex Mono",/);
     for (const file of files) {
       expect(existsSync(fileURLToPath(new URL(`../../public/${file}`, import.meta.url)))).toBe(
         true,
       );
-      expect(html).toContain(`rel="preload" href="/${file}" as="font"`);
+      if (!file?.includes("plex"))
+        expect(html).toContain(`rel="preload" href="/${file}" as="font"`);
     }
     for (const page of [html, app, sans]) expect(page).not.toMatch(/fonts\.(googleapis|gstatic)/);
   });

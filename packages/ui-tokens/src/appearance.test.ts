@@ -6,12 +6,15 @@ import {
   botColors,
   cssVariableName,
   darkTokens,
+  elevation,
   lightTokens,
+  motion,
   normalizeAppearancePreference,
   persistAppearancePreference,
   renderTokensCss,
   resolveAppearance,
   resolveAppearancePreference,
+  titleType,
   tokensForAppearance,
   UI_APPEARANCE_STORAGE_KEY,
   webDarkOverrides,
@@ -270,6 +273,15 @@ describe("web palette", () => {
       }
     },
   );
+
+  it("renders the elevation, motion and title tokens", () => {
+    // Long shadows wrap onto several lines; compare them as one.
+    const css = renderTokensCss().replace(/\s+/g, " ");
+    expect(css).toContain(`--elevation-raised: ${elevation.dark.raised};`);
+    expect(css).toContain(`--elevation-overlay: ${elevation.light.overlay};`);
+    expect(css).toContain(`--motion-panel: ${motion.panel};`);
+    expect(css).toContain(`--title-weight: ${titleType.weight};`);
+  });
 
   it("renders tokens.css from the web palettes", () => {
     const css = renderTokensCss();

@@ -813,7 +813,7 @@ msgstr "詳細設定..."
 
 #: src/components/WorkingLine.tsx
 #: src/pages/AddStepDialog.tsx
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Agent"
 msgstr "エージェント"
@@ -1039,6 +1039,7 @@ msgid "Approval model"
 msgstr "承認モデル"
 
 #: src/components/AppRail.tsx
+#: src/pages/Settings.tsx
 #: src/pages/SettingsOverlay.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Approvals"
@@ -1409,7 +1410,7 @@ msgstr "画像を読み取れません"
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/model-settings/space-bots-model.tsx
 #: src/pages/ModelSettingsOverlay.tsx
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -1637,6 +1638,7 @@ msgstr "クリア中…"
 #: src/components/ErrorBoundary.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/NewRoutinePanel.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
@@ -1839,6 +1841,10 @@ msgstr "設定済みのサーバー"
 #: src/pages/McpServersOverlay.tsx
 msgid "Confirm delete"
 msgstr "削除を確認"
+
+#: src/components/PasskeySettings.tsx
+msgid "Confirm delete?"
+msgstr "削除しますか？"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
@@ -2153,7 +2159,7 @@ msgstr "ボットを作成できませんでした"
 msgid "Could not create group"
 msgstr "グループを作成できませんでした"
 
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 msgid "Could not create routine"
 msgstr "ルーティンを作成できませんでした"
 
@@ -2400,6 +2406,10 @@ msgstr "チャートを表示できませんでした"
 msgid "Could not reset password"
 msgstr "パスワードをリセットできませんでした"
 
+#: src/components/ApprovalRulesSettings.tsx
+msgid "Could not restore rule"
+msgstr "ルールを復元できませんでした"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not revoke connection"
 msgstr "接続を取り消せませんでした"
@@ -2597,7 +2607,7 @@ msgstr "アカウントを作成"
 msgid "Create group"
 msgstr "グループを作成"
 
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 msgid "Create routine"
 msgstr "ルーティンを作成"
 
@@ -2619,7 +2629,7 @@ msgid "Created"
 msgstr "作成済み"
 
 #: src/pages/GroupPanel.tsx
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Creating…"
@@ -2770,9 +2780,7 @@ msgstr "ヘルパーに任せています: {value}"
 msgid "Delete"
 msgstr "削除"
 
-#. placeholder {0}: passkeyLabel(deleting, t`Passkey`)
 #. placeholder {0}: pendingDelete.name
-#: src/components/PasskeySettings.tsx
 #: src/pages/Artifacts.tsx
 msgid "Delete \"{0}\"?"
 msgstr "「{0}」を削除しますか？"
@@ -2824,7 +2832,6 @@ msgstr "削除済み"
 msgid "Deleted agent"
 msgstr "削除されたエージェント"
 
-#: src/components/PasskeySettings.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Deleting…"
@@ -3714,7 +3721,7 @@ msgstr "指示の履歴"
 #: src/components/AskCard.tsx
 #: src/components/InstructionSettings.tsx
 #: src/pages/AddStepDialog.tsx
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Instructions"
@@ -4365,7 +4372,7 @@ msgstr "その他"
 msgid "More computer actions"
 msgstr "コンピューターのその他の操作"
 
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 msgid "Morning summary"
 msgstr "朝のまとめ"
 
@@ -4415,7 +4422,7 @@ msgstr "自分のアシスタント"
 #: src/pages/GroupPanel.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/model-settings/providers-section.tsx
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
@@ -4528,7 +4535,7 @@ msgstr "新しいパスワード"
 msgid "New private space"
 msgstr "新しいプライベートスペース"
 
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 #: src/pages/Routines.tsx
 #: src/pages/Workflows.tsx
 msgid "New routine"
@@ -5723,6 +5730,10 @@ msgstr "ルーティングモデル"
 msgid "Row"
 msgstr "行"
 
+#: src/components/ApprovalRulesSettings.tsx
+msgid "Rule removed"
+msgstr "ルールを削除しました"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Run at"
 msgstr "実行日時"
@@ -6037,6 +6048,7 @@ msgstr "サーバーURL"
 
 #: src/components/call/CallCard.tsx
 #: src/components/SidebarFooter.tsx
+#: src/pages/Settings.tsx
 #: src/pages/SettingsOverlay.tsx
 #: src/pages/shell/shell-dialogs.tsx
 msgid "Settings"
@@ -6674,7 +6686,6 @@ msgstr "このボットはインポートされませんでした。"
 msgid "This call is no longer ringing."
 msgstr "この通話の呼び出しは終了しました。"
 
-#: src/components/PasskeySettings.tsx
 #: src/pages/Artifacts.tsx
 msgid "This can't be undone."
 msgstr "この操作は元に戻せません。"
@@ -6944,6 +6955,7 @@ msgstr "録画せずに入力"
 msgid "Type your answer"
 msgstr "回答を入力"
 
+#: src/components/ApprovalRulesSettings.tsx
 #: src/components/AskCard.tsx
 #: src/components/MemoryFactCard.tsx
 #: src/components/WikiChangeCard.tsx
@@ -7278,7 +7290,7 @@ msgid "What result will you demonstrate?"
 msgstr "どんな結果を実演しますか？"
 
 #: src/pages/AddStepDialog.tsx
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 msgid "What should the agent do?"
 msgstr "エージェントに何をさせますか?"
 

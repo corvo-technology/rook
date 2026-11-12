@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import type { ComponentType } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ApprovalRulesSettings } from "../components/ApprovalRulesSettings";
 import { SETTINGS_CONTENT_WIDTH, SettingsGroup, SettingsRow } from "../components/SettingsRows";
 import { computersAreUnavailable, showsComputerSettings } from "../lib/computer-sandbox";
 import { desktopBridge } from "../lib/desktop";
@@ -409,7 +408,6 @@ export function SettingsOverlay({
                       onBusyChange={setVoiceBusy}
                     />
                   ) : null}
-                  {section === "confirmations" ? <ApprovalRulesSettings scope="account" /> : null}
                   {section === "usage" ? (
                     <UsageSettingsPanel usage={usage} panelRef={usageRef} />
                   ) : null}

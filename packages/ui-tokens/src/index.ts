@@ -189,6 +189,39 @@ export const tokens = darkTokens;
 /** Large radii for the Clean look: cards and dialogs take the larger steps (20 to 28px). */
 export const RADIUS = "1rem";
 
+/**
+ * Raised surfaces (panels, popovers, cards) share two layered, soft shadows per theme. Layers
+ * stack a hairline ring, a close contact shadow and a wide ambient one; dark leans on the ring
+ * because a shadow barely reads on a near-black page. Web only: native surfaces use system chrome.
+ */
+export const elevation = {
+  light: {
+    raised:
+      "0 0 0 1px rgb(10 10 10 / 0.04), 0 1px 2px rgb(10 10 10 / 0.04), 0 4px 12px rgb(10 10 10 / 0.05)",
+    overlay:
+      "0 0 0 1px rgb(10 10 10 / 0.05), 0 2px 4px rgb(10 10 10 / 0.04), 0 12px 32px rgb(10 10 10 / 0.1), 0 32px 64px rgb(10 10 10 / 0.06)",
+  },
+  dark: {
+    raised:
+      "0 0 0 1px rgb(255 255 255 / 0.06), 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 12px rgb(0 0 0 / 0.3)",
+    overlay:
+      "0 0 0 1px rgb(255 255 255 / 0.08), 0 2px 4px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.5), 0 32px 64px rgb(0 0 0 / 0.35)",
+  },
+} as const;
+
+/** Durations and easing for transitions. Panels slide and fade in `panel`; hovers use `fast`. */
+export const motion = {
+  fast: "120ms",
+  panel: "200ms",
+  easeOut: "cubic-bezier(0.22, 1, 0.36, 1)",
+} as const;
+
+/**
+ * Page and section titles, mirroring the landing: Inter Tight, light, tight tracking. Sizes come
+ * from the type scale; these are only what makes a title read as a title.
+ */
+export const titleType = { weight: "300", tracking: "-0.02em", lineHeight: "1.15" } as const;
+
 export const fontWeight = { regular: "400", medium: "500", semibold: "600" } as const;
 
 /**
@@ -302,11 +335,42 @@ export function cssVariableName(token: keyof WebColorTokens): string {
   return `--${token.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`;
 }
 
+const CSS_LINE_WIDTH = 100;
+
+/** A shadow list laid out the way the formatter lays it out: layers filled into 100-column lines. */
+function cssShadow(name: string, layers: string): string {
+  const one = `  ${name}: ${layers};`;
+  if (one.length <= CSS_LINE_WIDTH) return one;
+  const lines: string[] = [];
+  let line = "   ";
+  for (const layer of layers.split(", ")) {
+    const piece = `${layer},`;
+    if (line.length + 1 + piece.length > CSS_LINE_WIDTH && line.trim()) {
+      lines.push(line);
+      line = "   ";
+    }
+    line += ` ${piece}`;
+  }
+  lines.push(line);
+  return `  ${name}:\n${lines.join("\n").replace(/,$/, "")};`;
+}
+
 function renderBlock(selector: string, colorScheme: ResolvedAppearance, palette: WebColorTokens) {
   const lines = (Object.keys(palette) as (keyof WebColorTokens)[]).map(
     (token) => `  ${cssVariableName(token)}: ${palette[token].toLowerCase()};`,
   );
-  return `${selector} {\n  color-scheme: ${colorScheme};\n${lines.join("\n")}\n  --radius: ${RADIUS};\n}`;
+  const extras = [
+    cssShadow("--elevation-raised", elevation[colorScheme].raised),
+    cssShadow("--elevation-overlay", elevation[colorScheme].overlay),
+    `  --radius: ${RADIUS};`,
+    `  --motion-fast: ${motion.fast};`,
+    `  --motion-panel: ${motion.panel};`,
+    `  --motion-ease-out: ${motion.easeOut};`,
+    `  --title-weight: ${titleType.weight};`,
+    `  --title-tracking: ${titleType.tracking};`,
+    `  --title-line-height: ${titleType.lineHeight};`,
+  ];
+  return `${selector} {\n  color-scheme: ${colorScheme};\n${[...lines, ...extras].join("\n")}\n}`;
 }
 
 /** The CSS in `tokens.css` (web and Electron). Generated from the web palettes so both stay in sync. */

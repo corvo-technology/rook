@@ -3,7 +3,7 @@ import {
   BotAvatar,
   Button,
   botAccent,
-  RookGlyph,
+  EmptyState,
   Spinner,
   ToggleGroup,
   ToggleGroupItem,
@@ -24,8 +24,9 @@ import {
   visibleDays,
   visibleRange,
 } from "../lib/routine-calendar";
+import { useSidePanel } from "../lib/side-panel";
 import { errorText } from "../lib/user-error";
-import { NewRoutineDialog } from "./NewRoutineDialog";
+import { NewRoutinePanel } from "./NewRoutinePanel";
 import { RoutineCard } from "./RoutineCard";
 import { blockStyle, RoutineTimeGrid } from "./RoutineTimeGrid";
 import { WindowChrome } from "./WindowChrome";
@@ -45,7 +46,8 @@ export function RoutinesPage() {
   const queryClient = useQueryClient();
   const [view, setView] = useState<CalendarView>("week");
   const [anchor, setAnchor] = useState(() => new Date());
-  const [creating, setCreating] = useState(false);
+  const sidePanel = useSidePanel();
+  const creating = sidePanel.isOpen("new-routine");
   const [selected, setSelected] = useState<RoutineOccurrence | null>(null);
 
   const bots =
@@ -143,7 +145,11 @@ export function RoutinesPage() {
               <Trans>Month</Trans>
             </ToggleGroupItem>
           </ToggleGroup>
-          <Button size="sm" disabled={bots.length === 0} onClick={() => setCreating(true)}>
+          <Button
+            size="sm"
+            disabled={bots.length === 0}
+            onClick={() => sidePanel.open("new-routine")}
+          >
             <Plus />
             <Trans>New routine</Trans>
           </Button>
@@ -205,13 +211,7 @@ export function RoutinesPage() {
               <Spinner />
             </div>
           ) : !calendar.data?.occurrences.length && next.length === 0 ? (
-            <p
-              data-testid="routines-empty"
-              className="flex flex-col items-center gap-3 py-24 text-sm text-muted-foreground"
-            >
-              <RookGlyph state="asleep" size={36} />
-              <Trans>No routines yet</Trans>
-            </p>
+            <EmptyState data-testid="routines-empty" piece="pawn" title={t`No routines yet`} />
           ) : view === "month" ? (
             <div className="grid min-h-0 flex-1 grid-cols-7 grid-rows-6 gap-2 overflow-y-auto">
               {days.map((day) => {
@@ -337,12 +337,12 @@ export function RoutinesPage() {
           onClose={() => setSelected(null)}
         />
       ) : null}
-      {creating ? (
-        <NewRoutineDialog
+      {creating && bots.length > 0 ? (
+        <NewRoutinePanel
           bots={bots}
-          onClose={() => setCreating(false)}
+          onClose={sidePanel.close}
           onCreated={() => {
-            setCreating(false);
+            sidePanel.close();
             void queryClient.invalidateQueries({ queryKey: queries.routines.calendar.key() });
           }}
         />

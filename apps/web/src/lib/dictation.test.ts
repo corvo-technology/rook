@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   combineTranscript,
+  conversationLanguage,
   Dictation,
   MAX_TRANSCRIPTION_RESPONSE_BYTES,
   TRANSCRIPTION_RESPONSE_TIMEOUT_MS,
@@ -9,7 +10,11 @@ import {
   webSpeechNeedsServerFallback,
 } from "./dictation.js";
 
+const announceLocalDownload = vi.hoisted(() => vi.fn());
+vi.mock("./voice-notices.js", () => ({ announceLocalDownload }));
+
 afterEach(() => {
+  announceLocalDownload.mockClear();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   vi.useRealTimers();
@@ -203,6 +208,43 @@ describe("Dictation recorder fallback", () => {
     const headers = new Headers(fetchMock.mock.calls[0]?.[1]?.headers);
     expect(headers.get("x-corvo-space-id")).toBe("space-support");
     expect(headers.get("content-type")).toBe("application/json");
+  });
+
+  it("offers the recording again while the speech model of this computer downloads", async () => {
+    const preparing = () =>
+      Response.json(
+        { error: "still downloading", code: "VOICE_PREPARING", sizeBytes: 208_000_000 },
+        { status: 503 },
+      );
+    const fetchMock = vi
+      .fn()
+      .mockImplementationOnce(async () => preparing())
+      .mockImplementationOnce(async () => preparing())
+      .mockImplementation(async () => Response.json({ text: "hola", language: "es" }));
+    stubRecorderFallback(fetchMock);
+    const onFinal = vi.fn();
+    const dictation = new Dictation();
+    await dictation.listen({ mode: "hold", transcribe: true, onFinal });
+    dictation.submitHold();
+    await vi.waitFor(() => expect(onFinal).toHaveBeenCalledWith("hola"));
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(announceLocalDownload).toHaveBeenCalledWith("listen", 208_000_000);
+    // The conversation goes on in the language that was heard, not the app's.
+    expect(conversationLanguage()).toBe("es");
+  });
+
+  it("fails with the server's words when the download itself failed", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({ error: "Could not download the speech model." }, { status: 400 }),
+    );
+    stubRecorderFallback(fetchMock);
+    const dictation = new Dictation();
+    await dictation.listen({ mode: "hold", transcribe: true, onFinal: vi.fn() });
+    dictation.submitHold();
+    await vi.waitFor(() =>
+      expect(dictation.state.error).toBe("Could not download the speech model."),
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("sends Android to the server before the voice status has loaded", async () => {

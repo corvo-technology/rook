@@ -6,8 +6,10 @@ import {
   VOICE_RESPONSE_TIMEOUT_MS,
   withAbort,
 } from "@corvo/core";
+import { conversationLanguage } from "./dictation.js";
 import { rpc, selectedSpaceId, withSpaceHeaders } from "./rpc.js";
 import { errorText, voiceAccountErrorText } from "./user-error.js";
+import { announceLocalDownload, announceLocalFallback } from "./voice-notices.js";
 
 export type SpeechStatus = "idle" | "preparing" | "speaking";
 
@@ -24,8 +26,30 @@ interface SpeakOptions {
   /** Which copy of the voice settings to use; omitted means whichever applies in the space. */
   scope?: SettingsScope;
   voiceId?: string;
+  /** Names a provider outright; only the sample of a voice on this computer does. */
+  provider?: string;
+  /** The language the reply is in; the conversation's own when omitted. */
+  language?: string;
   botId?: string;
   messageId?: string;
+}
+
+/** How often a reply asks again, and for how long, while the voice of this computer downloads. */
+const PREPARING_POLL_MS = 2000;
+const PREPARING_MAX_POLLS = 450;
+
+function wait(ms: number, signal: AbortSignal) {
+  return new Promise<void>((resolve) => {
+    const timer = setTimeout(resolve, ms);
+    signal.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(timer);
+        resolve();
+      },
+      { once: true },
+    );
+  });
 }
 
 const IDLE: SpeechSnapshot = { status: "idle" };
@@ -153,14 +177,28 @@ export class Speaker {
     signal: AbortSignal,
     spaceId: string | null,
   ): Promise<string[]> {
-    const body = await rpc.voice.prepare(
-      { text, voiceId: opts.voiceId, botId: opts.botId, scope: opts.scope },
-      { signal, context: { spaceId } },
-    );
-    if (!body.ready) {
-      throw new Error("Add a voice provider key and pick a voice in Voice settings.");
+    for (let poll = 0; poll < PREPARING_MAX_POLLS; poll += 1) {
+      const body = await rpc.voice.prepare(
+        {
+          text,
+          voiceId: opts.voiceId,
+          botId: opts.botId,
+          scope: opts.scope,
+          provider: opts.provider,
+          language: opts.language ?? conversationLanguage(),
+        },
+        { signal, context: { spaceId } },
+      );
+      if (!body.ready) {
+        throw new Error("Add a voice provider key and pick a voice in Voice settings.");
+      }
+      // The voice of this computer is being fetched: this reply waits for it, the next ones do not.
+      if (!body.preparing) return body.utterances ?? [];
+      announceLocalDownload("speak", body.preparing.sizeBytes);
+      await wait(PREPARING_POLL_MS, signal);
+      if (signal.aborted) return [];
     }
-    return body.utterances ?? [];
+    throw new Error("The voice is taking too long to download.");
   }
 
   private async render(
@@ -181,6 +219,8 @@ export class Speaker {
             voiceId: opts.voiceId,
             botId: opts.botId,
             scope: opts.scope,
+            provider: opts.provider,
+            language: opts.language ?? conversationLanguage(),
           }),
           signal: deadline.signal,
         }),
@@ -190,6 +230,7 @@ export class Speaker {
         const body = await readVoiceError(res, deadline.signal);
         throw new Error(voiceAccountErrorText(body) ?? body.error ?? "");
       }
+      if (res.headers.get("x-voice-fallback") === "local") announceLocalFallback();
       const bytes = await readVoiceAudio(res, deadline.signal);
       return new Blob([new Uint8Array(bytes)], {
         type: res.headers.get("content-type") ?? "audio/mpeg",

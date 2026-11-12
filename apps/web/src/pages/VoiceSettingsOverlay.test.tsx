@@ -715,9 +715,19 @@ it("offers 'This computer' as a provider with models to download and no key to p
   voice.localModels.mockResolvedValue([
     {
       id: "base",
+      kind: "listen",
       label: "Base",
       sizeBytes: 207_557_382,
       languages: ["en", "pt"],
+      state: "absent",
+      bytesDone: 0,
+    },
+    {
+      id: "voice-pt",
+      kind: "speak",
+      label: "Português (Brasil)",
+      sizeBytes: 67_043_814,
+      languages: ["pt"],
       state: "absent",
       bytesDone: 0,
     },
@@ -733,11 +743,10 @@ it("offers 'This computer' as a provider with models to download and no key to p
     });
     const select = container.querySelector("select") as HTMLSelectElement;
     expect([...select.options].map((option) => option.textContent)).toContain("This computer");
-    await act(async () => {
-      select.value = "local";
-      select.dispatchEvent(new Event("change", { bubbles: true }));
-    });
+    // With nothing connected, the computer already listens and speaks by itself, so it is shown.
+    expect(select.value).toBe("local");
     expect(container.querySelector('[data-testid="local-model-base"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="local-model-voice-pt"]')).not.toBeNull();
     expect(container.querySelector('input[placeholder="Paste your API key"]')).toBeNull();
     expect(container.textContent).not.toContain("Hear a sample");
   } finally {

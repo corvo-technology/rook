@@ -111,6 +111,7 @@ export * from "./tool-activity.js";
 export * from "./ui-locale.js";
 export * from "./unread-divider.js";
 export * from "./user-error.js";
+export * from "./user-memory.js";
 export * from "./voice-chat-groups.js";
 export * from "./voice-response.js";
 export * from "./vt-screen.js";

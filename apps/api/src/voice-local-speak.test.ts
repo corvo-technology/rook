@@ -19,6 +19,7 @@ import {
   toVoiceStatus,
   transcribeVoice,
   type VoiceDeps,
+  warmVoice,
 } from "./voice.js";
 
 const actor = { userId: "user-1", spaceId: "space-1" } as Actor;
@@ -97,6 +98,52 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks();
   vi.useRealTimers();
+});
+
+describe("warming the voices of this computer when a call starts", () => {
+  it("loads the listening model and the voice for the conversation's language", async () => {
+    const { deps, synthesizer, transcriber, store } = setup({
+      base: "ready",
+      "voice-ljs": "ready",
+    });
+    const warmVoiceEngine = vi.fn(async () => undefined);
+    const warmListening = vi.fn(async () => undefined);
+    synthesizer.warm = warmVoiceEngine;
+    transcriber.warm = warmListening;
+    await warmVoice(deps, actor, { language: "en" });
+    await vi.waitFor(() => expect(warmVoiceEngine).toHaveBeenCalledTimes(1));
+    expect(warmVoiceEngine).toHaveBeenCalledWith(
+      expect.objectContaining({ modelDir: "/models/voice-ljs" }),
+    );
+    expect(warmListening).toHaveBeenCalledWith({ modelDir: "/models/base" });
+    expect(store.ensure).toHaveBeenCalledTimes(2);
+  });
+
+  it("downloads nothing and fails nothing when the models are not there yet", async () => {
+    const { deps, synthesizer, store } = setup({});
+    synthesizer.warm = vi.fn(async () => undefined);
+    await warmVoice(deps, actor, { language: "en" });
+    expect(synthesizer.warm).not.toHaveBeenCalled();
+    expect(store.ensure).not.toHaveBeenCalled();
+  });
+
+  it("leaves a hosted voice alone", async () => {
+    const { deps, synthesizer } = setup(
+      { "voice-ljs": "ready" },
+      { credential: { provider: "elevenlabs" } },
+    );
+    synthesizer.warm = vi.fn(async () => undefined);
+    await warmVoice(deps, actor, { language: "en" });
+    expect(synthesizer.warm).not.toHaveBeenCalled();
+  });
+
+  it("does not let a failing engine surface", async () => {
+    const { deps, synthesizer } = setup({ "voice-ljs": "ready" });
+    synthesizer.warm = vi.fn(async () => {
+      throw new Error("engine stopped");
+    });
+    await expect(warmVoice(deps, actor, { language: "en" })).resolves.toBeUndefined();
+  });
 });
 
 describe("toVoiceStatus with the voices of this computer", () => {
@@ -227,7 +274,7 @@ describe("preparing a spoken reply", () => {
   });
 
   it("reports a download that failed instead of trying again on every sentence", async () => {
-    const { deps, store } = setup({ "voice-kokoro": "failed" });
+    const { deps, store } = setup({ "voice-ljs": "failed" });
     await expect(prepareVoice(deps, actor, { text: "Hello", language: "en" })).rejects.toThrow(
       /could not download the voice/i,
     );

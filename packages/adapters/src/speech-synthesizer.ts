@@ -17,6 +17,8 @@ export interface SynthesizedSpeech {
 /** The speech engine behind the local voice provider. Only one adapter file knows the engine. */
 export interface SpeechSynthesizer {
   synthesize(input: SpeechSynthesizeInput): Promise<SynthesizedSpeech>;
+  /** Loads the voice ahead of the first sentence. Optional: an engine with nothing to load skips it. */
+  warm?(input: Pick<SpeechSynthesizeInput, "modelDir" | "voice" | "signal">): Promise<void>;
 }
 
 /** Deterministic stand-in for tests: answers from a function and records what it was asked. */

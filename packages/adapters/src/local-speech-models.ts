@@ -9,7 +9,7 @@ const ORIGIN = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-mode
 
 /** How the engine speaks a voice. Paths are relative to the voice's directory. */
 export type LocalVoiceEngine =
-  | { type: "vits"; model: string; tokens: string }
+  | { type: "vits"; model: string; tokens: string; lexicon?: string }
   | {
       type: "kokoro";
       model: string;

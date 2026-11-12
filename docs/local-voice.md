@@ -32,7 +32,8 @@ voice and a message says so once. Nothing is downloaded to cover for a service.
 | Español | Spanish | about 67 MB | BSD-3-Clause |
 | Français | French | about 67 MB | BSD-3-Clause |
 | Deutsch | German | about 67 MB | BSD-3-Clause |
-| Kokoro (English) | English | about 132 MB | Apache-2.0 |
+| English | English | about 109 MB | MIT (VITS), LJSpeech is public domain |
+| Kokoro (English, more natural) | English | about 132 MB | Apache-2.0 |
 
 Each voice's license is also listed in `THIRD_PARTY_NOTICES.md`. The voices are fetched from the
 sherpa-onnx project's releases over HTTPS, checked against a digest pinned in
@@ -42,14 +43,17 @@ sherpa-onnx project's releases over HTTPS, checked against a digest pinned in
 **Piper voices are not offered.** sherpa-onnx 2.x no longer includes the espeak-ng phonemizer that
 Piper voices need (it is GPL-3.0), and several Piper voices carry non-commercial dataset licenses.
 The Portuguese, Spanish, French and German voices are character-based Coqui VITS models, which
-need no phonemizer; Kokoro speaks English from its own lexicon. Kokoro's other languages (including
+need no phonemizer. The English voice is a VITS model trained on LJSpeech that reads from a
+pronunciation lexicon, and Kokoro speaks English from its own lexicon. Kokoro's other languages (including
 Brazilian Portuguese) would need an external phonemizer and are not offered. A Piper or Kokoro
 voice for another language can be added to the catalog once the engine can pronounce it under a
 license that allows it.
 
-**Speed.** The Coqui voices are fast (a sentence is ready in a fraction of a second on a laptop).
-Kokoro is much slower and is the heavier of the two; a first sentence can take several seconds, and
-on a slow computer a long English reply can pause between sentences.
+**Speed.** The Coqui voices and the English voice are fast: on an M1 laptop a sentence of about
+five seconds of speech takes under two seconds to make. Kokoro sounds more natural and is several
+times slower (four to seven seconds for the same sentence), so it is an owner's choice and not the
+default; on a slow computer a long reply in Kokoro can pause between sentences. When both English
+voices are on this computer the English voice speaks unless the owner picked Kokoro.
 
 ## Which voice speaks
 
@@ -57,7 +61,7 @@ The voice follows the language of the conversation: the language the last record
 (Whisper reports it), else the language of the app. Among the voices on this computer, the one
 for that language speaks; the owner's own pick wins when it speaks the language. When no voice on
 this computer speaks it, the owner's pick or any voice there reads it instead; with none
-downloaded, the language's own voice is fetched, and a language without one gets Kokoro. The
+downloaded, the language's own voice is fetched, and a language without one gets the English voice. The
 language is a hint the client sends with each reply, not something the server guesses from the
 words.
 
@@ -71,14 +75,25 @@ recording sent to `/api/voice/transcribe` while the speech model downloads is he
 about 50 seconds by the server, then answered with `503` and a `VOICE_PREPARING` code, and the
 client sends it again.
 
-Synthesis runs in a worker thread, one sentence at a time, and is ended after three idle minutes
-to give the voice's memory back. Audio is 16-bit mono WAV.
+Audio is 16-bit mono WAV.
+
+**Crash isolation.** The speech engines are native code, and some inputs can crash them. Synthesis
+and transcription each run in a child process of their own (`speech-process.ts`), one request at a
+time, with the model kept loaded between requests and the process ended after idle minutes to give
+the memory back. The API is never inside it: a crash (or a request that takes too long, or one the
+client cancelled) fails only the sentence or recording in flight, is logged, and the next request
+starts a fresh process, after a short wait that grows while crashes repeat. The reply then falls
+back to text, as for any voice that fails. The process is the app's own binary run as plain Node,
+the way the engine that hosts the API runs. When a call starts, the client asks `voice.warm`, which
+loads the voice and the listening model in the background (only what is already on this computer,
+never a download) so the first turn does not wait for them.
 
 | Piece | Where |
 |---|---|
 | The voice catalog and which voice speaks | `packages/adapters/src/local-voices.ts` |
 | Download, storage, opt-out | `packages/adapters/src/local-speech-models.ts` |
-| The engine, in a worker thread | `packages/adapters/src/sherpa-tts-synthesizer.ts` |
+| The child process that runs an engine | `packages/adapters/src/speech-process.ts` |
+| The speech engine, in a child process | `packages/adapters/src/sherpa-tts-synthesizer.ts` |
 | The "This computer" provider | `packages/adapters/src/local-voice.ts` |
 | Defaults, preparing, falling back | `apps/api/src/voice.ts`, `apps/api/src/local-voice.ts` |
 | Playback and the notices | `apps/web/src/lib/tts.ts`, `apps/web/src/lib/voice-notices.ts` |

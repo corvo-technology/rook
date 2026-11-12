@@ -246,11 +246,11 @@ describe("LocalVoiceProvider speaking", () => {
   });
 
   it("falls back to a voice on this computer when none matches the language", async () => {
-    const { provider: local, store, synthesizer } = provider(undefined, ["voice-kokoro"]);
+    const { provider: local, store, synthesizer } = provider(undefined, ["voice-ljs"]);
     await speak(local, { language: "pt" });
-    expect(synthesizer.calls[0]?.modelDir).toBe("/models/voice-kokoro");
+    expect(synthesizer.calls[0]?.modelDir).toBe("/models/voice-ljs");
     // Nothing is fetched for a language that has its own voice when another one can read.
-    expect(store.ensure).toHaveBeenCalledWith("voice-kokoro", expect.anything());
+    expect(store.ensure).toHaveBeenCalledWith("voice-ljs", expect.anything());
     expect(store.ensure).not.toHaveBeenCalledWith("voice-pt", expect.anything());
   });
 
@@ -259,7 +259,7 @@ describe("LocalVoiceProvider speaking", () => {
     await speak(local, { language: "es" });
     expect(store.ensure).toHaveBeenCalledWith("voice-es", expect.anything());
     await speak(local, { language: "ja" });
-    expect(store.ensure).toHaveBeenCalledWith("voice-kokoro", expect.anything());
+    expect(store.ensure).toHaveBeenCalledWith("voice-ljs", expect.anything());
   });
 
   it("refuses text with nothing to pronounce, which would stop the engine", async () => {
@@ -275,7 +275,7 @@ describe("LocalVoiceProvider speaking", () => {
       { text: "Hi", voiceId: "", apiKey: secret(), language: "en", signal: controller.signal },
       ctx,
     );
-    expect(store.ensure).toHaveBeenCalledWith("voice-kokoro", { signal: controller.signal });
+    expect(store.ensure).toHaveBeenCalledWith("voice-ljs", { signal: controller.signal });
   });
 });
 

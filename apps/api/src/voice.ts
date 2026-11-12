@@ -746,6 +746,55 @@ export async function prepareVoice(
   return { ready: true, utterances: await spokenUtterances(deps, actor, input) };
 }
 
+/**
+ * A voice conversation is starting: loads this computer's models in the background so the first
+ * turn does not pay for it. Nothing is downloaded and nothing fails the caller; a model that is
+ * not on this computer yet is left to the request that needs it.
+ */
+export async function warmVoice(
+  deps: VoiceDeps,
+  actor: Actor,
+  input: { botId?: string; scope?: SettingsScope; language?: string },
+): Promise<void> {
+  const local = deps.localSpeech;
+  if (!local) return;
+  const loaded = await loadDefaultVoiceCredential(deps, actor, input.scope);
+  // Only a connection that is this computer, or none at all, listens and speaks here.
+  const here = !loaded || loaded.cred.provider === LOCAL_VOICE_PROVIDER_ID;
+  if (!here) return;
+  const failed = (what: string) => (error: unknown) =>
+    getLogger().warn("could not load the local speech model ahead of use", {
+      what,
+      reason: error instanceof Error ? error.message : String(error),
+    });
+  if (local.transcriber.warm) {
+    const secret = loaded ? loaded.apiKey : DEFAULT_LOCAL_SECRET;
+    const model = safeLocalModel(secret);
+    const ready = model
+      ? (await local.store.list()).some((entry) => entry.id === model && entry.state === "ready")
+      : false;
+    if (model && ready) {
+      void local.store
+        .ensure(model)
+        .then((modelDir) => local.transcriber.warm?.({ modelDir }))
+        .catch(failed("listening"));
+    }
+  }
+  if (local.synthesizer.warm) {
+    const chosen = await chooseVoiceForLanguage(local, {
+      language: input.language,
+      selected: loaded?.cred.voiceId || undefined,
+    });
+    const voice = local.store.spec(chosen.id)?.voice;
+    if (chosen.ready && voice) {
+      void local.store
+        .ensure(chosen.id)
+        .then((modelDir) => local.synthesizer.warm?.({ modelDir, voice }))
+        .catch(failed("speaking"));
+    }
+  }
+}
+
 async function spokenUtterances(
   deps: VoiceDeps,
   actor: Actor,

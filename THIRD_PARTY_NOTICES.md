@@ -56,7 +56,8 @@ sherpa-onnx, is licensed under Apache-2.0.
 | Español | Voice | BSD-3-Clause | Coqui TTS VITS model `es/css10/vits`, by NeonGeckoCom |
 | Français | Voice | BSD-3-Clause | Coqui TTS VITS model `fr/css10/vits`, by NeonGeckoCom |
 | Deutsch | Voice | BSD-3-Clause | Coqui TTS VITS model `de/css10/vits`, by NeonGeckoCom |
-| Kokoro (English) | Voice | Apache-2.0 | Kokoro-82M, by hexgrad, as packaged by sherpa-onnx |
+| English | Voice | MIT | VITS (jaywalnut310/vits) trained on LJSpeech, which is in the public domain; pronunciations from CMUdict (BSD-style), as packaged by sherpa-onnx as `vits-ljs` |
+| Kokoro (English, more natural) | Voice | Apache-2.0 | Kokoro-82M, by hexgrad, as packaged by sherpa-onnx |
 
 Only models whose license allows use and redistribution in a product are offered. Piper voices
 are not: they need the espeak-ng phonemizer, which is licensed under GPL-3.0 and which sherpa-onnx

@@ -16,6 +16,9 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import {
   DOWNLOAD_URL,
   DOWNLOAD_URL_LINUX,
+  DOWNLOAD_URL_LINUX_ARM64,
+  DOWNLOAD_URL_LINUX_ARM64_DEB,
+  DOWNLOAD_URL_LINUX_DEB,
   DOWNLOAD_URL_WINDOWS,
   GITHUB_URL,
   INSTALL_COMMAND,
@@ -259,6 +262,17 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
           >
             {copy.install.download}
           </a>
+          <p class="download-note lp-formats">
+            {copy.install.formats.label}:{" "}
+            <a href={DOWNLOAD_URL} data-attr="install-format-mac">{copy.install.formats.mac}&nbsp;(.dmg)</a>{" · "}
+            <a href={DOWNLOAD_URL} data-attr="install-format-mac-intel">{copy.install.formats.macIntel}&nbsp;(.dmg)</a>{" · "}
+            <a href={DOWNLOAD_URL_LINUX_DEB} data-attr="install-format-deb">{copy.install.formats.linux}&nbsp;.deb</a>{" · "}
+            <a href={DOWNLOAD_URL_LINUX} data-attr="install-format-appimage">{copy.install.formats.linux}&nbsp;AppImage</a>{" · "}
+            {copy.install.formats.arm64}:{" "}
+            <a href={DOWNLOAD_URL_LINUX_ARM64_DEB} data-attr="install-format-arm64-deb">.deb</a>{" · "}
+            <a href={DOWNLOAD_URL_LINUX_ARM64} data-attr="install-format-arm64-appimage">AppImage</a>{" · "}
+            <a href={DOWNLOAD_URL_WINDOWS} data-attr="install-format-windows">{copy.install.formats.windows}&nbsp;(.exe)</a>
+          </p>
         </div>
         <div class="lp-commands" data-reveal>
           <div class="lp-command">

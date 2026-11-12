@@ -324,6 +324,7 @@ const COPY: LaunchCopy = {
     alsoFor: "也支持 Windows 和 Linux",
     macLinux: "macOS 和 Linux",
     windows: "Windows（PowerShell）",
+    formats: { label: "所有格式", mac: "Mac", macIntel: "Mac Intel", linux: "Linux", windows: "Windows", arm64: "ARM64" },
     copyLabel: "复制",
     copiedLabel: "已复制",
     note: "Windows 10 或 11 和 Linux，均为 64 位。以后用同一行命令即可更新应用。",

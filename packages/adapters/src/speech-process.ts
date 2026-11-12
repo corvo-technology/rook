@@ -36,14 +36,14 @@ type Reply = { id: number; result?: unknown; error?: string };
 export const DEFAULT_BACKOFF_MS = (crashes: number) => Math.min(250 * 2 ** (crashes - 1), 5_000);
 
 /** Runs `script` as a Node program that speaks the protocol over its IPC channel. */
-export function spawnNodeChild(script: string, env: Record<string, string>): SpeechChild {
+export function spawnNodeChild(script: string, engine: string, threads: number): SpeechChild {
   // The desktop app's own binary is Electron; ELECTRON_RUN_AS_NODE makes it run as plain Node,
   // exactly as the engine that hosts the API does. Under Node the variable is ignored.
-  return spawn(process.execPath, ["-e", script], {
+  return spawn(process.execPath, ["-e", script, engine, String(threads)], {
     stdio: ["ignore", "inherit", "inherit", "ipc"],
     // Structured clone, so samples travel as typed arrays and not as JSON.
     serialization: "advanced",
-    env: { ...process.env, ELECTRON_RUN_AS_NODE: "1", ...env },
+    env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" },
   });
 }
 
@@ -53,8 +53,8 @@ export function spawnNodeChild(script: string, env: Record<string, string>): Spe
  */
 export function childScript(handler: string): string {
   return `
-const sherpa = require(process.env.CORVO_SPEECH_ENGINE);
-const numThreads = Number(process.env.CORVO_SPEECH_THREADS) || 4;
+const sherpa = require(process.argv[1]);
+const numThreads = Number(process.argv[2]) || 4;
 process.on("disconnect", () => process.exit(0));
 ${handler}
 process.on("message", (job) => {

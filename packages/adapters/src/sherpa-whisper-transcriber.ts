@@ -82,10 +82,11 @@ export class SherpaWhisperTranscriber implements SpeechTranscriber {
       spawn:
         options.spawn ??
         (() =>
-          spawnNodeChild(childScript(HANDLER), {
-            CORVO_SPEECH_ENGINE: createRequire(import.meta.url).resolve("sherpa-onnx-node"),
-            CORVO_SPEECH_THREADS: String(numThreads),
-          })),
+          spawnNodeChild(
+            childScript(HANDLER),
+            createRequire(import.meta.url).resolve("sherpa-onnx-node"),
+            numThreads,
+          )),
       timeoutMs: options.timeoutMs ?? 120_000,
       idleMs: options.idleMs ?? 60_000,
       ...(options.backoffMs ? { backoffMs: options.backoffMs } : {}),

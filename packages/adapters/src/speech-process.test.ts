@@ -209,7 +209,7 @@ function handle(job) {
   const real = () =>
     new SpeechProcess<{ samples: Float32Array; text: string }>({
       name: "Speech",
-      spawn: () => spawnNodeChild(script, { CORVO_SPEECH_ENGINE: "node:path" }),
+      spawn: () => spawnNodeChild(script, "node:path", 2),
       timeoutMs: 20_000,
       idleMs: 60_000,
       backoffMs: () => 0,

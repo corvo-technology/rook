@@ -40,6 +40,7 @@ vi.mock("./tts.js", () => ({
   speaker: {
     speak: vi.fn(async () => undefined),
     stop: vi.fn(),
+    warm: vi.fn(),
     isSpeaking: vi.fn(() => false),
     subscribe: vi.fn(() => () => undefined),
   },
@@ -98,6 +99,12 @@ describe("call session", () => {
       muted: false,
     });
     expect(listen).toHaveBeenCalledWith(expect.objectContaining({ transcribe: true }));
+  });
+
+  it("loads the voice of this computer as soon as a call starts", async () => {
+    await answeredCall({ botId: "call-bot", botName: "Ada", transcribe: true });
+
+    expect(speaker.warm).toHaveBeenCalledWith("call-bot");
   });
 
   it("releases the microphone after an empty give-up without retrying automatically", async () => {

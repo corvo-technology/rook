@@ -1522,6 +1522,16 @@ export const appContract = {
           preparing: z.object({ sizeBytes: z.number().int().nonnegative() }).optional(),
         }),
       ),
+    /** A voice conversation is starting: load this computer's models so the first turn is not slow. */
+    warm: oc
+      .input(
+        z.object({
+          botId: Id.optional(),
+          scope: SettingsScopeSchema.optional(),
+          language: z.string().max(16).optional(),
+        }),
+      )
+      .output(z.object({ ok: z.literal(true) })),
   },
   externalConversations: {
     updatePolicy: oc

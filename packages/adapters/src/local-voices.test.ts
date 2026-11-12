@@ -27,8 +27,8 @@ describe("the shipped voice catalog", () => {
       const files =
         engine?.type === "kokoro"
           ? [engine.model, engine.voices, engine.tokens, engine.lexicon]
-          : [engine?.model, engine?.tokens];
-      for (const file of files) expect(voice.keep).toContain(file);
+          : [engine?.model, engine?.tokens, engine?.lexicon];
+      for (const file of files.filter(Boolean)) expect(voice.keep).toContain(file);
     }
   });
 
@@ -67,6 +67,16 @@ describe("chooseLocalVoice", () => {
     expect(chooseLocalVoice({ language: "pt-BR", ready: all })).toBe("voice-pt");
     expect(chooseLocalVoice({ language: "es", ready: all })).toBe("voice-es");
     expect(chooseLocalVoice({ language: "en", ready: all })).toBe("voice-kokoro");
+  });
+
+  it("offers the faster English voice first and keeps Kokoro as the more natural choice", () => {
+    const both = ["voice-kokoro", "voice-ljs"];
+    expect(DEFAULT_LOCAL_VOICE).toBe("voice-ljs");
+    expect(chooseLocalVoice({ language: "en", ready: both })).toBe("voice-ljs");
+    expect(chooseLocalVoice({ language: "en", selected: "voice-kokoro", ready: both })).toBe(
+      "voice-kokoro",
+    );
+    expect(chooseLocalVoice({ language: "en", ready: [] })).toBe("voice-ljs");
   });
 
   it("keeps the owner's choice when it speaks the language", () => {

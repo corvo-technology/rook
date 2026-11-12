@@ -106,6 +106,16 @@ export class Speaker {
     }
   }
 
+  /** A call is starting: the engine loads its voice now so the first sentence is not slowed by it. */
+  warm(botId?: string): void {
+    void rpc.voice
+      .warm(
+        { botId, language: conversationLanguage() },
+        { context: { spaceId: selectedSpaceId() } },
+      )
+      .catch(() => undefined);
+  }
+
   /** Resolves with this request's failure text; stopping or superseding it resolves with none. */
   async speak(text: string, opts: SpeakOptions = {}): Promise<string | undefined> {
     this.stop();

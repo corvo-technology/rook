@@ -62,6 +62,8 @@ export interface CreateThreadMessageInput {
   runId?: string;
   clientNonce?: string;
   markUnread?: boolean;
+  /** How the channel router handled a message that named nobody. */
+  routing?: Prisma.InputJsonValue;
   /** Terminal echo after the run is already cancelled. Every other write stays rejected. */
   allowCancelledRun?: boolean;
 }
@@ -98,6 +100,7 @@ export async function createThreadMessageInTransaction(
       replyQuote: input.replyQuote,
       runId: input.runId,
       clientNonce: input.clientNonce,
+      routing: input.routing,
     },
   });
 }

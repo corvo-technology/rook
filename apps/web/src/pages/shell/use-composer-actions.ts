@@ -434,7 +434,7 @@ export function useComposerActions({
             replyQuote: activeReplyQuote ?? undefined,
           });
           accepted = true;
-          if (activeBotId.current === botTarget) {
+          if (activeBotId.current === botTarget && sent.runId && sent.taskId) {
             updateSnapshot((current) =>
               applyThreadSendReceipt(
                 current,

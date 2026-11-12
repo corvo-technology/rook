@@ -560,8 +560,9 @@ export const appContract = {
       .output(eventIterator(ProductEventSchema)),
     send: oc.input(threadSendInput).output(
       z.object({
-        taskId: Id,
-        runId: Id,
+        /** Absent when a channel's router picked nobody: the message just stands. */
+        taskId: Id.optional(),
+        runId: Id.optional(),
         seq: z.number().int(),
         runIds: z.array(Id).optional(),
       }),

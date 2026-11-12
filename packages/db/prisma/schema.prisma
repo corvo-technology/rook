@@ -706,6 +706,9 @@ model Message {
   replies               Message[]         @relation("MessageReplies")
   runId                 String?
   clientNonce           String?
+  /// How a group message that named nobody was routed (strategy, scores, picked ids, reason, error).
+  /// Kept for debugging, and to tell a run the router woke from one a mention or a DM started.
+  routing               Json?
   /// Blind-index search tokens for the encrypted blocks; NULL until the row is encrypted.
   searchTokens          Int[]
   sourceRuns            Run[]             @relation("RunSourceMessage")

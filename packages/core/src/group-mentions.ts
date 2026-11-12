@@ -36,13 +36,12 @@ export function parseMentionNames(text: string): string[] {
   return [...names];
 }
 
-export function resolveGroupTargetBotIds(input: {
+/** The members a message names: mention chips, @Name and @everyone. Empty when it names nobody. */
+export function resolveMentionedBotIds(input: {
   text: string;
   members: GroupMemberRef[];
   /** Bot ids from typed mention chips (non-members are ignored for wake). */
   explicitMentions?: string[];
-  /** Who answers a message that addresses nobody: the member the conversation is with. */
-  fallbackBotId?: string;
 }): string[] {
   const membersById = new Map(input.members.map((member) => [member.id, member]));
   const targetIds = new Set<string>();
@@ -72,13 +71,22 @@ export function resolveGroupTargetBotIds(input: {
     }
   }
 
-  if (targetIds.size === 0) {
-    const fallback = input.members.find((member) => member.id === input.fallbackBotId);
-    const target = fallback ?? input.members[0];
-    if (target) targetIds.add(target.id);
-  }
-
   return [...targetIds];
+}
+
+export function resolveGroupTargetBotIds(input: {
+  text: string;
+  members: GroupMemberRef[];
+  /** Bot ids from typed mention chips (non-members are ignored for wake). */
+  explicitMentions?: string[];
+  /** Who answers a message that addresses nobody: the member the conversation is with. */
+  fallbackBotId?: string;
+}): string[] {
+  const mentioned = resolveMentionedBotIds(input);
+  if (mentioned.length > 0) return mentioned;
+  const fallback = input.members.find((member) => member.id === input.fallbackBotId);
+  const target = fallback ?? input.members[0];
+  return target ? [target.id] : [];
 }
 
 export function inferHandoffTargetName(prompt: string): string | undefined {

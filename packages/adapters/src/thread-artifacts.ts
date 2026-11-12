@@ -326,7 +326,7 @@ function fileLine(file: MaterializedThreadFile): string {
 export function currentTurnFilesInstruction(files: readonly MaterializedThreadFile[]): string {
   if (!files.length) return "";
   return [
-    "Attachments will be copied to these paths when a tool needs the computer. If an image is visible directly in your input, answer from that image without starting the computer. Inspect files not visible in your input before answering questions about their contents: a PDF or text file can be read with read_document, which needs no computer; use file tools for other files:",
+    "Attachments will be copied to these paths when a tool needs the computer. If an image is visible directly in your input, answer from that image without starting the computer. Inspect files not visible in your input before answering questions about their contents: a PDF, Word, spreadsheet or text file can be read with read_document, which needs no computer; use file tools for other files:",
     ...files.map(fileLine),
   ].join("\n");
 }

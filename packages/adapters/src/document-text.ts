@@ -1,4 +1,10 @@
 import { getDocumentProxy } from "unpdf";
+import {
+  extractOfficeText,
+  isLegacyOfficeFile,
+  type OfficeKind,
+  officeKind,
+} from "./office-text.js";
 
 /** The most pages read from one PDF; a longer one is read as far as this and says so. */
 export const DOCUMENT_MAX_PAGES = 500;
@@ -13,13 +19,22 @@ export class DocumentTextError extends Error {
   }
 }
 
-export type DocumentKind = "pdf" | "text";
+export type DocumentKind = "pdf" | "text" | OfficeKind;
 
 /** What kind of document a file is, by its type or its name; undefined when it cannot be read. */
 export function documentKind(name: string, mimeType: string): DocumentKind | undefined {
   if (mimeType === "application/pdf" || /\.pdf$/i.test(name)) return "pdf";
+  const office = officeKind(name, mimeType);
+  if (office) return office;
   if (mimeType.startsWith("text/") || mimeType === "application/json") return "text";
   return undefined;
+}
+
+/** Why a file cannot be read, with what to do about it. */
+export function unsupportedDocumentMessage(name: string, mimeType: string): string {
+  return isLegacyOfficeFile(name, mimeType)
+    ? "Older Word and Excel files (.doc, .xls) cannot be read. Save it as .docx or .xlsx, or as a PDF, first."
+    : `It can read PDF, Word (.docx), Excel (.xlsx), OpenDocument and text files, not ${mimeType || "this kind of file"}.`;
 }
 
 export type PdfText = {
@@ -112,7 +127,15 @@ export async function readableDocumentText(
     const text = new TextDecoder("utf-8").decode(bytes);
     return { text, pages: 1, hasText: text.trim().length > 0, truncated: false };
   }
-  throw new DocumentTextError(
-    `It can read PDF and plain text files, but not ${mimeType || "this kind of file"}.`,
-  );
+  if (kind) {
+    const office = extractOfficeText(bytes, kind, options);
+    const text = office.sections.map((part) => `[${part.label}]\n${part.text}`).join("\n\n");
+    return {
+      text: office.notes.length ? `${text}\n\n(${office.notes.join(" ")})` : text,
+      pages: office.sections.length,
+      hasText: office.sections.length > 0,
+      truncated: office.notes.length > 0,
+    };
+  }
+  throw new DocumentTextError(unsupportedDocumentMessage(name, mimeType));
 }

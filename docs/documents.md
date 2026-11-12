@@ -1,6 +1,6 @@
 # Reading attached documents
 
-A person can attach a PDF or a text file to a chat and ask about it. The agent reads it with
+A person can attach a PDF, a Word or spreadsheet file, or a text file to a chat and ask about it. The agent reads it with
 `read_document`, which works with **no computer**: the file is read straight from storage and its
 text is extracted inside the engine. This matters on a computer without Docker, where an agent has
 no computer to run `pdftotext` on.
@@ -10,9 +10,11 @@ no computer to run `pdftotext` on.
 | File | How |
 | --- | --- |
 | PDF | Text of each page, read with pdf.js (`unpdf`). A page with no text, as in a scan, is empty. |
+| Word (`.docx`, `.odt`) | Markdown with headings, lists and tables kept, in `[section N]` pieces. |
+| Excel (`.xlsx`, `.ods`) | Each sheet as Markdown tables with the header row repeated, in `[Sheet, rows A-B]` pieces. Dates are shown as dates; formulas show their last saved value and are never run. |
 | Plain text, Markdown, CSV, JSON, HTML | Decoded as UTF-8, as it is. |
 
-Anything else (Word, spreadsheets, images, audio, video) is not read yet, and the tool says so. A
+Anything else (the older `.doc` and `.xls`, images, audio, video) is not read, and the tool says so. A
 PDF with no text layer at all comes back with a note to say it is a scan, so the agent does not
 guess its contents. A password-protected PDF is refused.
 
@@ -30,11 +32,13 @@ guess its contents. A password-protected PDF is refused.
   read; one attached elsewhere is refused.
 - A file over the attachment size limit is refused before it is read. A PDF is read up to 500
   pages, and for at most 60 seconds.
+- Word and spreadsheet files are zip archives, so they are opened with limits first (2 000 entries,
+  24 MB of text from one part, 48 MB in all, 30 seconds), and a spreadsheet is read up to 20 sheets,
+  20 000 rows each and 50 columns. No macro, formula or link in them is run or followed.
 - A PDF is untrusted input. Its text is returned as data (`untrusted`), never as instructions, and
   a run that reads it is treated like one that read any other outside text.
 - Runs that answer a messaging channel do not get the tool.
 
 ## Not done yet
 
-Word and spreadsheet files, reading a document into the wiki as a source for the curator, and
-reading a scanned PDF by recognising its text.
+Reading a scanned PDF by recognising its text, and the older `.doc` and `.xls` formats.

@@ -89,6 +89,6 @@ describe("readableDocumentText", () => {
   it("refuses a kind of file it cannot read", async () => {
     await expect(
       readableDocumentText(new Uint8Array([1, 2, 3]), "clip.mp4", "video/mp4"),
-    ).rejects.toThrow(/can read PDF and plain text/i);
+    ).rejects.toThrow(/can read PDF, Word/i);
   });
 });

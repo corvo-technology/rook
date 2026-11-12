@@ -9,6 +9,7 @@ import {
   runAsSystem,
   runAsTenant,
 } from "@corvo/db";
+import { strToU8, zipSync } from "fflate";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { importFileToWiki, startAttachedFileImport } from "./wiki-import-run.js";
 
@@ -60,7 +61,7 @@ postgres("reading a file into the wiki (PostgreSQL)", () => {
   const answer = (...changes: unknown[]) =>
     JSON.stringify({ worth: true, reason: "A policy", source_title: "Policy", changes });
 
-  function setup(answers: (string | Error)[], bytes: string = TWO_PARTS) {
+  function setup(answers: (string | Error)[], bytes: string | Uint8Array = TWO_PARTS) {
     const requests: AgentRunRequest[] = [];
     let call = 0;
     const runtime = {
@@ -76,7 +77,7 @@ postgres("reading a file into the wiki (PostgreSQL)", () => {
       },
     } as unknown as AgentRuntime;
     const artifacts = {
-      get: vi.fn(async () => new TextEncoder().encode(bytes)),
+      get: vi.fn(async () => (typeof bytes === "string" ? new TextEncoder().encode(bytes) : bytes)),
       remove: vi.fn(async () => undefined),
     };
     return {
@@ -152,22 +153,42 @@ postgres("reading a file into the wiki (PostgreSQL)", () => {
 
   it("says what it cannot read, and a file with nothing worth keeping", async () => {
     const word = setup([answer()]);
-    const row = await start("report.docx");
-    await run(word, row, {
-      mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    });
+    const row = await start("report.doc");
+    await run(word, row, { mimeType: "application/msword" });
     const empty = setup([
       JSON.stringify({ worth: false, reason: "", source_title: "x", changes: [] }),
     ]);
     const quiet = await start("small-talk.txt");
     await run(empty, quiet);
     const failed = await tenant(() => listWikiImports(prisma, scope));
-    expect(failed.find((item) => item.name === "report.docx")?.error).toMatch(/PDF and text/);
+    expect(failed.find((item) => item.name === "report.doc")?.error).toMatch(/\.docx or \.xlsx/);
     expect(failed.find((item) => item.name === "small-talk.txt")?.error).toMatch(/Nothing/);
     expect(word.requests).toHaveLength(0);
     await tenant(async () => {
       await prisma.wikiImport.deleteMany({ where: { spaceId: ids.spaceId } });
     });
+  });
+
+  it("reads a Word file by its sections, masks secrets first, and cites the section", async () => {
+    const W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+    const docx = zipSync({
+      "word/document.xml": strToU8(
+        `<w:document xmlns:w="${W}"><w:body><w:p><w:r><w:t>Leave is 20 days. Contact ana@example.com</w:t></w:r></w:p></w:body></w:document>`,
+      ),
+    });
+    const s = setup(
+      [answer(create("Leave policy", "Twenty days. (Source: hr.docx, section 1)"))],
+      docx,
+    );
+    const row = await start("hr.docx");
+    await run(s, row, {
+      mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+    expect(s.requests[0]?.prompt).toContain("hr.docx, section 1");
+    expect(s.requests[0]?.prompt).toContain("Leave is 20 days.");
+    expect(s.requests[0]?.prompt).not.toContain("ana@example.com");
+    const page = await tenant(() => readWikiPage(prisma, scope, "Leave policy"));
+    expect(page?.body).toContain("(Source: hr.docx, section 1)");
   });
 
   it("answers an agent's request at once and queues the read of an attached file", async () => {

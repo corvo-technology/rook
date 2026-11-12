@@ -8,7 +8,7 @@ export const WIKI_IMPORT_MAX_PARTS = 30;
 
 export type DocumentPart = { label: string; text: string };
 
-/** A piece of a document with a name a quote can cite: a page of a PDF, or a stretch of a text file. */
+/** A piece of a document with a name a quote can cite: a PDF page, a section, a text part, or a sheet's rows. */
 export type DocumentSection = { label: string; text: string };
 
 /** Cuts text on blank lines, and on line breaks or spaces when one paragraph is too long. */
@@ -42,6 +42,22 @@ export const textSections = (text: string): DocumentSection[] =>
   }));
 
 /**
+ * The name of a run of sections from the first to the last: "p. 3-5", "section 2-4" and, for rows
+ * of one sheet, "Sheet1, rows 2-80". Names that share no shape are joined as they are.
+ */
+export function partLabel(first: string, last: string): string {
+  if (first === last) return first;
+  const rows = /^(.*, rows )(\d+)-(\d+)$/;
+  const a = rows.exec(first);
+  const b = rows.exec(last);
+  if (a && b && a[1] === b[1]) return `${a[1]}${a[2]}-${b[3]}`;
+  const word = /^([a-z.]+ )\d+$/;
+  const prefix = word.exec(first)?.[1];
+  if (prefix && word.exec(last)?.[1] === prefix) return `${first}-${last.slice(prefix.length)}`;
+  return `${first} to ${last}`;
+}
+
+/**
  * Groups sections into parts of at most `size` characters, in order, each part named by the first and
  * last section it holds ("p. 3-5"). A section longer than a part is cut and keeps its label.
  * `truncated` is true when more parts were needed than `maxParts`.
@@ -57,11 +73,8 @@ export function documentParts(
   let length = 0;
   const flush = () => {
     if (!held.length) return;
-    const first = held[0]!.label;
-    const last = held.at(-1)!.label;
-    const range = first === last ? first : `${first}-${last.replace(/^p\. /, "")}`;
     parts.push({
-      label: range,
+      label: partLabel(held[0]!.label, held.at(-1)!.label),
       text: held.map((section) => `[${section.label}]\n${section.text}`).join("\n\n"),
     });
     held = [];
@@ -81,8 +94,8 @@ export function documentParts(
 /** Said to the model after the curator's rules when it reads a file instead of a conversation. */
 export function documentCuratorInstructions(file: string): string {
   return [
-    `The text is a part of the file "${file}", not a conversation: the author lines name the part, and [p. N] or [part N] markers inside it show where each passage came from. Keep the knowledge in it as pages.`,
-    `Cite the source on every fact you keep, at the end of its sentence or bullet, as (Source: ${file}, p. N) or (Source: ${file}, part N), using the marker the passage sits under. A fact with no marker is cited by the part name.`,
+    `The text is a part of the file "${file}", not a conversation: the author lines name the part, and [p. N], [section N], [part N] or [Sheet, rows A-B] markers inside it show where each passage came from. A spreadsheet is given as Markdown tables whose first row is the header. Keep the knowledge in it as pages.`,
+    `Cite the source on every fact you keep, at the end of its sentence or bullet, as (Source: ${file}, p. N), (Source: ${file}, section N), (Source: ${file}, part N) or (Source: ${file}, Sheet1, rows 2-40), using the marker the passage sits under. A fact with no marker is cited by the part name.`,
     'Several parts of one file come one after the other. "Changes waiting" lists pages already planned from earlier parts: append to them instead of creating them again.',
     "Do not copy the file out. Keep what the team will want again, short, in your own words.",
   ].join("\n");

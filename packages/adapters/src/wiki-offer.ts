@@ -1,18 +1,13 @@
+import { documentKind } from "./document-text.js";
 import { builtinOffered } from "./run-instructions.js";
 
 /**
- * A file the agent can read the words of: a PDF, or a plain text file. A file can arrive without a
- * type or a name, and this runs while the prompt is built, so it must never throw.
+ * A file the agent can read the words of: a PDF, a Word or spreadsheet file, or plain text. A file
+ * can arrive without a type or a name, and this runs while the prompt is built, so it must never
+ * throw.
  */
-const isDocument = (file: { name?: string; mimeType?: string }) => {
-  const type = file.mimeType ?? "";
-  return (
-    type === "application/pdf" ||
-    /\.pdf$/i.test(file.name ?? "") ||
-    type.startsWith("text/") ||
-    type === "application/json"
-  );
-};
+const isDocument = (file: { name?: string; mimeType?: string }) =>
+  documentKind(file.name ?? "", file.mimeType ?? "") !== undefined;
 
 /**
  * What an agent is told about keeping an attached document in the wiki: offer it, ask first, and

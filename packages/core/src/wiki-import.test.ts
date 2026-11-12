@@ -3,6 +3,7 @@ import {
   documentCuratorInstructions,
   documentParts,
   mergeImportOps,
+  partLabel,
   pdfSections,
   textSections,
 } from "./wiki-import.js";
@@ -62,5 +63,17 @@ describe("documentCuratorInstructions", () => {
   it("names the file and the form of a citation", () => {
     const text = documentCuratorInstructions("Policy.pdf");
     expect(text).toContain("(Source: Policy.pdf, p. N)");
+  });
+});
+
+describe("partLabel", () => {
+  it("names a run of sections by its first and last", () => {
+    expect(partLabel("p. 3", "p. 3")).toBe("p. 3");
+    expect(partLabel("p. 3", "p. 5")).toBe("p. 3-5");
+    expect(partLabel("section 2", "section 4")).toBe("section 2-4");
+    expect(partLabel("Sales, rows 2-40", "Sales, rows 41-80")).toBe("Sales, rows 2-80");
+    expect(partLabel("Sales, rows 2-40", "Costs, rows 1-9")).toBe(
+      "Sales, rows 2-40 to Costs, rows 1-9",
+    );
   });
 });

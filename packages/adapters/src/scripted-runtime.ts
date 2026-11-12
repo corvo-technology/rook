@@ -175,6 +175,15 @@ export function inferScript(
       },
     ];
   }
+  if (lower.includes("router pass fixture")) {
+    return [
+      {
+        assistant: "That is not mine.",
+        toolCalls: [{ name: "pass", args: { reason: "not for me" } }],
+        complete: true,
+      },
+    ];
+  }
   if (lower.includes("silent routine fixture")) {
     return [
       {

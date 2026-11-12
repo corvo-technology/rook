@@ -22,6 +22,15 @@ describe("workflow_stop", () => {
   });
 });
 
+describe("pass", () => {
+  it("is offered only to a run the channel router woke", () => {
+    expect(names({ trigger: "user", groupId: "group-1", routedRun: true })).toContain("pass");
+    expect(names({ trigger: "user", groupId: "group-1", routedRun: false })).not.toContain("pass");
+    expect(names({ trigger: "user", groupId: "group-1" })).not.toContain("pass");
+    expect(names({ trigger: "user" })).not.toContain("pass");
+  });
+});
+
 describe("the wiki tools", () => {
   const wiki = ["wiki_index", "wiki_search", "wiki_read"];
 

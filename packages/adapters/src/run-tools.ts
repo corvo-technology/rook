@@ -100,6 +100,9 @@ async function dispatchTool(
       error: "This stage was handed off. End the turn without more tool calls.",
     };
   }
+  if (ctx.state.passed) {
+    return { error: "You passed. End the turn without more tool calls." };
+  }
   const capRefusal = refuseToolAtCap(ctx.state.replyBudget);
   if (capRefusal) return capRefusal;
   if (name === "propose_instructions_update" && ctx.state.approval.pausePending)

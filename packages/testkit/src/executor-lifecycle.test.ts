@@ -708,6 +708,65 @@ describeIntegration("run executor lifecycle", () => {
     expect(await db.run.count({ where: { threadId: thread.id } })).toBe(2);
   });
 
+  it("ends a run the router woke without a message when the agent passes", async () => {
+    const cookie = await signup(`executor-pass-${stamp}@corvo.test`, "Executor pass");
+    const me = await rpc<{ userId: string; spaceId: string }>(cookie, "me");
+    const botIds: string[] = [];
+    for (const name of ["Pass lead", "Pass helper"]) {
+      const bot = await rpc<{ id: string }>(cookie, "bots/create", {
+        name,
+        title: "",
+        description: "",
+        instructions: "",
+        notifyOnFinish: false,
+      });
+      botIds.push(bot.id);
+    }
+    const group = await rpc<{ id: string }>(cookie, "groups/create", {
+      name: "Pass group",
+      botIds,
+    });
+    const thread = await db.thread.findUniqueOrThrow({ where: { groupId: group.id } });
+    const botId = botIds[0]!;
+    const message = await createThreadMessage(db, {
+      threadId: thread.id,
+      role: "user",
+      blocks: [{ kind: "text", text: "router pass fixture" }],
+      routing: { strategy: "model", picked: [botId] },
+    });
+    const task = await db.task.create({
+      data: {
+        spaceId: me.spaceId,
+        botId,
+        threadId: thread.id,
+        userId: me.userId,
+        prompt: "router pass fixture",
+        status: "queued",
+      },
+    });
+    const run = await db.run.create({
+      data: {
+        spaceId: me.spaceId,
+        botId,
+        threadId: thread.id,
+        taskId: task.id,
+        userId: me.userId,
+        status: "queued",
+        trigger: "user",
+        sourceMessageId: message.id,
+      },
+    });
+
+    await runAsSystem("background job run.continue", () =>
+      handles.executor.continueRun(run.id, "worker-pass"),
+    );
+
+    await expect(db.run.findUniqueOrThrow({ where: { id: run.id } })).resolves.toMatchObject({
+      status: "completed",
+    });
+    expect(await db.message.count({ where: { threadId: thread.id, role: "bot" } })).toBe(0);
+  });
+
   it("leaves private steering for a private continuation and excludes it from group recovery", async () => {
     const seeded = await seedRun("channel-steering", "Group request", {
       status: "running",

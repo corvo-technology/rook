@@ -477,6 +477,8 @@ export const ThreadMessageSchema = z.object({
   replyToMessageId: Id.optional(),
   replyQuote: z.string().optional(),
   replyPreview: ReplyPreviewSchema.nullable().optional(),
+  /** The channel message this one is a thread reply to; absent in the main column. */
+  threadRootId: Id.optional(),
   runId: Id.optional(),
   /** Set when the message was sent from a live voice call; groups one call's transcript. */
   callId: z.string().optional(),

@@ -702,6 +702,8 @@ model Message {
   botId                 String?
   replyToMessageId      String?
   replyQuote            String?
+  /// The channel message this one is posted under as a thread reply; null for the main column.
+  threadRootId          String?
   replyTo               Message?          @relation("MessageReplies", fields: [replyToMessageId], references: [id], onDelete: SetNull)
   replies               Message[]         @relation("MessageReplies")
   runId                 String?
@@ -717,6 +719,7 @@ model Message {
   @@unique([threadId, clientNonce])
   @@index([threadId, seq])
   @@index([replyToMessageId])
+  @@index([threadRootId])
   @@index([runId, seq])
   @@index([searchTokens], type: Gin)
   @@map("messages")

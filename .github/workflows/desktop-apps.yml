@@ -29,6 +29,9 @@ jobs:
           - name: Linux
             os: ubuntu-24.04
             args: --linux --x64
+          - name: Linux ARM64
+            os: ubuntu-24.04-arm
+            args: --linux --arm64
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
@@ -53,6 +56,14 @@ jobs:
           DATABASE_URL: postgres://corvo:corvo@127.0.0.1:5433/corvo
       - run: pnpm --filter @corvo/web build
       - run: pnpm --filter @corvo/desktop build
+      - name: Install fpm for the arm64 .deb
+        # electron-builder only ships an x64 fpm, so arm64 uses the system one.
+        if: matrix.os == 'ubuntu-24.04-arm'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ruby
+          sudo gem install fpm --no-document
+          echo "USE_SYSTEM_FPM=true" >> "$GITHUB_ENV"
       - name: Package
         shell: bash
         run: pnpm --filter @corvo/desktop exec electron-builder ${{ matrix.args }} --publish never
@@ -60,6 +71,15 @@ jobs:
         if: runner.os == 'macOS'
         shell: bash
         run: apps/desktop/scripts/verify-mac-native.sh apps/desktop/out/mac-universal/Corvo.app
+      - name: Verify the Linux app starts and carries the engine for this CPU
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          app="$(find apps/desktop/out -maxdepth 1 -type d -name 'linux*unpacked' -print -quit)"
+          "$app/resources/postgres/bin/postgres" --version
+          ELECTRON_RUN_AS_NODE=1 "$app/corvo" -e 'console.log(process.arch)'
+          test -n "$(find apps/desktop/out -maxdepth 1 -name 'corvo-linux-*.deb' -print -quit)"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: corvo-${{ matrix.os }}

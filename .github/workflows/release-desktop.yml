@@ -91,7 +91,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          include='[{"os":"macos-26","artifact":"macos"},{"os":"ubuntu-24.04","artifact":"linux"}]'
+          include='[{"os":"macos-26","artifact":"macos"},{"os":"ubuntu-24.04","artifact":"linux"},{"os":"ubuntu-24.04-arm","artifact":"linux-arm64"}]'
           if [[ "$WINDOWS_SIGNING" == "true" ]]; then
             include="$(jq -c '. + [{"os":"windows-2022","artifact":"windows"}]' <<<"$include")"
           fi
@@ -304,11 +304,22 @@ jobs:
             }
           }
 
-      - name: Package x64 Linux AppImage
+      - name: Install fpm for the arm64 .deb
+        # electron-builder only ships an x64 fpm, so arm64 uses the system one.
+        if: matrix.os == 'ubuntu-24.04-arm'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ruby
+          sudo gem install fpm --no-document
+          echo "USE_SYSTEM_FPM=true" >> "$GITHUB_ENV"
+      - name: Package Linux AppImage and .deb for this CPU
         if: runner.os == 'Linux'
-        run: >-
-          pnpm --filter @corvo/desktop exec electron-builder
-          --linux --x64 --publish never
+        shell: bash
+        run: |
+          set -euo pipefail
+          arch=x64
+          if [[ "$(uname -m)" == "aarch64" ]]; then arch=arm64; fi
+          pnpm --filter @corvo/desktop exec electron-builder --linux "--$arch" --publish never
       - name: Verify Linux update feed is pinned to the official GitHub channel
         if: runner.os == 'Linux'
         shell: bash
@@ -316,17 +327,17 @@ jobs:
           RELEASE_VERSION: ${{ needs.validate.outputs.version }}
         run: |
           set -euo pipefail
-          config="apps/desktop/out/linux-unpacked/resources/app-update.yml"
-          if [[ ! -f "$config" ]]; then
-            config="$(find apps/desktop/out -name app-update.yml -print -quit)"
-          fi
+          config="$(find apps/desktop/out -name app-update.yml -print -quit)"
           test -n "$config"
           test -f "$config"
           grep -Fqx "provider: github" "$config"
           grep -Fqx "owner: corvo-technology" "$config"
           grep -Fqx "repo: rook" "$config"
-          test -f apps/desktop/out/latest-linux.yml
-          grep -Fqx "version: $RELEASE_VERSION" apps/desktop/out/latest-linux.yml
+          feed=latest-linux.yml
+          if [[ "$(uname -m)" == "aarch64" ]]; then feed=latest-linux-arm64.yml; fi
+          test -f "apps/desktop/out/$feed"
+          grep -Fqx "version: $RELEASE_VERSION" "apps/desktop/out/$feed"
+          find apps/desktop/out -maxdepth 1 -name 'corvo-linux-*.deb' | grep -q .
 
       - name: Retain installers and updater metadata
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -334,6 +345,7 @@ jobs:
           name: desktop-${{ matrix.artifact }}-${{ needs.validate.outputs.sha }}
           path: |
             apps/desktop/out/*.AppImage
+            apps/desktop/out/*.deb
             apps/desktop/out/*.blockmap
             apps/desktop/out/*.dmg
             apps/desktop/out/*.exe
@@ -381,12 +393,15 @@ jobs:
 
           test -f release-artifacts/latest-mac.yml
           test -f release-artifacts/latest-linux.yml
+          test -f release-artifacts/latest-linux-arm64.yml
+          compgen -G 'release-artifacts/*.deb' >/dev/null
           compgen -G 'release-artifacts/*.dmg' >/dev/null
           compgen -G 'release-artifacts/*.zip' >/dev/null
           compgen -G 'release-artifacts/*.AppImage' >/dev/null
           feeds=(
             release-artifacts/latest-mac.yml
             release-artifacts/latest-linux.yml
+            release-artifacts/latest-linux-arm64.yml
           )
           if [[ "$WINDOWS_BUILT" == "true" ]]; then
             test -f release-artifacts/latest.yml

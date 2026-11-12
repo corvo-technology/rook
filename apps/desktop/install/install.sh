@@ -60,7 +60,8 @@ install_mac() {
 install_linux() {
   case "$(uname -m)" in
     x86_64 | amd64) ARCH=x86_64 ;;
-    *) fail "O Rook roda em Linux x64, não em $(uname -m)." "Rook runs on x64 Linux, not on $(uname -m)." ;;
+    aarch64 | arm64) ARCH=arm64 ;;
+    *) fail "O Rook roda em Linux x64 e ARM64, não em $(uname -m)." "Rook runs on x64 and ARM64 Linux, not on $(uname -m)." ;;
   esac
   DEST="${DEST_OVERRIDE:-$HOME/.local/bin}"
   mkdir -p "$DEST"

@@ -74,7 +74,7 @@ signed, notarized path for when the certificates exist.
 
 Each release also carries `install.sh` (macOS and Linux) and `install.ps1` (Windows),
 and the installers have stable names (`corvo-mac-universal.zip`,
-`corvo-linux-x86_64.AppImage`, `corvo-win-x64.exe`) so the scripts never need a version:
+`corvo-linux-x86_64.AppImage`, `corvo-linux-arm64.AppImage`, `corvo-win-x64.exe`) so the scripts never need a version:
 
 ```sh
 curl -fsSL https://github.com/corvo-technology/rook/releases/latest/download/install.sh | sh

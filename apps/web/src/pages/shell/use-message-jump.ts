@@ -1,5 +1,10 @@
 import type { Bot, ComputerStatus, Routine } from "@corvo/contracts";
-import { foldPeerReplies, jumpTargetId, searchHitThreadTarget } from "@corvo/core";
+import {
+  foldPeerReplies,
+  foldThreadReplies,
+  jumpTargetId,
+  searchHitThreadTarget,
+} from "@corvo/core";
 import { fetchFresh } from "@corvo/core/query";
 import type { Dispatch, RefObject, SetStateAction } from "react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -87,7 +92,9 @@ export function useMessageJump({
     if (target.groupId && activeGroupId.current !== target.groupId) return;
     if (target.botId && activeBotId.current !== target.botId) return;
     // A reply folded under its peer marker counts: the transcript expands the marker to show it.
-    const pageTranscript = foldPeerReplies(page.messages, { includePeerReceipts: true });
+    const peerFolded = foldPeerReplies(page.messages, { includePeerReceipts: true });
+    // In a channel a reply in a thread counts too: its thread opens beside the channel.
+    const pageTranscript = target.groupId ? foldThreadReplies(peerFolded) : peerFolded;
     // A relay's dropped marker (e.g. a search hit) lands on its "Messaged X" receipt.
     const messageId = jumpTargetId(pageTranscript, target.messageId);
     const targetInPage =

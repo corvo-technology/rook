@@ -14,14 +14,13 @@ import {
   proposalSteps,
 } from "@corvo/core";
 import { BotAvatar, Button, cn, resolvePersonaColorDef } from "@corvo/ui-web";
-import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { UserRound } from "lucide-react";
 import type { ReactNode } from "react";
 import { Fragment, memo, useMemo } from "react";
 import { ArtifactFileCard } from "../../components/ArtifactFileCard";
 import { AskCard } from "../../components/AskCard";
-import { CollaborationMarker, PeerThreadFooter } from "../../components/ai/CollaborationMarker";
+import { CollaborationMarker } from "../../components/ai/CollaborationMarker";
 import { CloudAgentCard } from "../../components/CloudAgentCard";
 import { PlanCard } from "../../components/PlanCard";
 import { SubagentCard } from "../../components/SubagentCard";
@@ -39,7 +38,6 @@ import type { ArtifactTarget } from "../../lib/artifact-open";
 import type { DelegationState } from "../../lib/delegation-states";
 import { delegationKey } from "../../lib/delegation-states";
 import { messageProviderLabel } from "../../lib/messaging";
-import type { PeerThreadSummary } from "../../lib/peer-thread";
 import {
   isToolOnlyNarration,
   renderableMessageBlocks,
@@ -69,7 +67,6 @@ export const MessageView = memo(function MessageView({
   onOpenBot,
   onOpenPeerMessages,
   peerReplies,
-  threadSummary,
   onTogglePeerReplies,
   speakerName,
   speakerRole,
@@ -91,6 +88,7 @@ export const MessageView = memo(function MessageView({
   onOpenImport,
   showToolActivity,
   onReply,
+  onReplyInThread,
   onMarkUnread,
   onKeepInWiki,
   markedUnread = false,
@@ -113,8 +111,6 @@ export const MessageView = memo(function MessageView({
   onOpenPeerMessages: (peer: { peerBotId: string; peerBotName: string }) => void;
   /** Set on a received marker whose peer run has folded replies. */
   peerReplies?: "collapsed" | "expanded";
-  /** In a channel, what a closed peer exchange shows as a thread footer instead of a chevron. */
-  threadSummary?: PeerThreadSummary;
   onTogglePeerReplies: (markerId: string) => void;
   speakerName?: string;
   /** The agent's role, muted beside its name. */
@@ -141,7 +137,10 @@ export const MessageView = memo(function MessageView({
   /** Opens the agent importer (from Chief's first-run focus card). */
   onOpenImport?: () => void;
   showToolActivity: boolean;
-  onReply: (message: ThreadMessage) => void;
+  /** Quotes this message in the composer; absent where there is none. */
+  onReply?: (message: ThreadMessage) => void;
+  /** Opens this message's thread; offered only in a channel's main column. */
+  onReplyInThread?: (message: ThreadMessage) => void;
   onMarkUnread: (message: ThreadMessage) => void;
   /** Asks the wiki to keep this message; absent where there is no conversation to keep from. */
   onKeepInWiki?: (message: ThreadMessage) => void;
@@ -273,6 +272,7 @@ export const MessageView = memo(function MessageView({
       message={message}
       side={message.role === "user" && !speakerName ? "start" : "end"}
       onReply={onReply}
+      onReplyInThread={onReplyInThread}
       onMarkUnread={onMarkUnread}
       onKeepInWiki={onKeepInWiki}
       markedUnread={markedUnread}
@@ -476,7 +476,6 @@ export const MessageView = memo(function MessageView({
             const peer = sent ? block.toBotName : block.fromBotName;
             const peerBotId = sent ? block.toBotId : block.fromBotId;
             const label = sent ? t`Messaged ${peer}` : t`Message from ${peer}`;
-            const thread = !sent && peerReplies && threadSummary ? threadSummary : undefined;
             const toggleLabel =
               peerReplies === "expanded" ? t`Collapse ${label}` : t`Expand ${label}`;
             return (
@@ -492,7 +491,7 @@ export const MessageView = memo(function MessageView({
                     peerBot(peerBotId)?.status,
                   )}
                   replies={
-                    !sent && peerReplies && !thread
+                    !sent && peerReplies
                       ? {
                           expanded: peerReplies === "expanded",
                           label: toggleLabel,
@@ -501,23 +500,6 @@ export const MessageView = memo(function MessageView({
                       : undefined
                   }
                 />
-                {thread ? (
-                  <PeerThreadFooter
-                    expanded={peerReplies === "expanded"}
-                    label={toggleLabel}
-                    countLabel={plural(thread.count, { one: "# reply", other: "# replies" })}
-                    faces={thread.botIds.map((botId) => ({
-                      botId,
-                      color: peerBot(botId)?.color ?? FALLBACK_BOT_COLOR,
-                    }))}
-                    lastAt={thread.lastAt}
-                    lastLabel={new Date(thread.lastAt).toLocaleTimeString(i18n.locale || "en", {
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })}
-                    onToggle={() => onTogglePeerReplies(message.id)}
-                  />
-                ) : null}
               </Fragment>
             );
           }

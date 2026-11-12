@@ -2954,14 +2954,14 @@ description: Prepare standup notes
 
       await expect(
         executor.resolveModel({ userId: run.userId, spaceId: run.spaceId }),
-      ).rejects.toThrow("Connect a model in Settings before running bots.");
+      ).rejects.toThrow("Connect a model to run bots.");
       await executor.continueRun("run-1", "worker-1");
 
       expect(status).toBe("failed");
       expect(finalizeRun).toHaveBeenCalledWith(
         expect.objectContaining({
           outcome: "failed",
-          error: "Connect a model in Settings before running bots.",
+          error: "Connect a model to run bots.",
         }),
       );
       expect(runtimeRun).not.toHaveBeenCalled();
@@ -4341,7 +4341,7 @@ description: Prepare standup notes
     } as unknown as Parameters<typeof createRunExecutor>[0]);
 
     await expect(executor.resolveModel({ userId: "user-1", spaceId: "ws-1" })).rejects.toThrow(
-      "Connect a model in Settings before running bots.",
+      "Connect a model to run bots.",
     );
   });
 

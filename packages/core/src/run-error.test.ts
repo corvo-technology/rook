@@ -879,6 +879,17 @@ describe("the one action that fixes a failed run", () => {
   );
 });
 
+describe("a run that failed with the earlier missing-model sentence", () => {
+  it("reads as the shorter one and still opens the connections", () => {
+    const earlier = "Connect a model in Settings before running bots.";
+    expect(normalizeRunError(earlier)).toEqual({
+      summary: MISSING_MODEL_RUN_ERROR,
+      details: earlier,
+      recovery: "connection",
+    });
+  });
+});
+
 describe("turn guard run errors", () => {
   it.each(TURN_GUARD_KINDS)("recognizes the %s sentence by exact equality", (kind) => {
     const sentence = TURN_GUARD_RUN_ERRORS[kind];

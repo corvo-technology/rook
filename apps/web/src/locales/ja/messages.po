@@ -1858,8 +1858,8 @@ msgstr "モデルを接続"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
-msgid "Connect a model in Settings before running bots."
-msgstr "ボットを実行する前に、設定でモデルを接続してください。"
+msgid "Connect a model to run bots."
+msgstr "ボットを実行するには、モデルを接続してください。"
 
 #: src/components/MissionList.tsx
 msgid "Connect an app"

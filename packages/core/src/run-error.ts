@@ -20,7 +20,10 @@ export const MODEL_CONTEXT_TOO_SMALL_ERROR =
   "This model's context window is too small. Choose another model.";
 
 /** A run that starts with no model the user can reach. */
-export const MISSING_MODEL_RUN_ERROR = "Connect a model in Settings before running bots.";
+export const MISSING_MODEL_RUN_ERROR = "Connect a model to run bots.";
+
+/** What runs that failed before the message was shortened still say; it reads as the one above. */
+const LEGACY_MISSING_MODEL_RUN_ERROR = "Connect a model in Settings before running bots.";
 
 /** A deployment model run while the organization has not chosen Rook credits. */
 export const HOSTED_MODEL_CREDITS_REQUIRED_ERROR =
@@ -128,6 +131,7 @@ const MODEL_OUTPUT_RUN_ERRORS = new Set([
 /** App advice whose fix is connecting a model. */
 const MODEL_CONNECTION_RUN_ERRORS = new Set([
   MISSING_MODEL_RUN_ERROR,
+  LEGACY_MISSING_MODEL_RUN_ERROR,
   HOSTED_MODEL_CREDITS_REQUIRED_ERROR,
 ]);
 /** What a run says when the coding-agent CLI it needs is not usable, or started with tools it was not given. */
@@ -317,7 +321,13 @@ export function normalizeRunError(
     return MODEL_OUTPUT_RUN_ERRORS.has(trimmed)
       ? { summary: details, details, kind: "output" }
       : MODEL_CONNECTION_RUN_ERRORS.has(trimmed)
-        ? { summary: translate(trimmed), details, recovery: "connection" }
+        ? {
+            summary: translate(
+              trimmed === LEGACY_MISSING_MODEL_RUN_ERROR ? MISSING_MODEL_RUN_ERROR : trimmed,
+            ),
+            details,
+            recovery: "connection",
+          }
         : { summary: details, details };
   }
   if (trimmed === MODEL_OUTPUT_CUT_ERROR) {

@@ -499,7 +499,7 @@ msgid "{working} working"
 msgstr "{working} arbeiten"
 
 #. placeholder {0}: mention.name
-#: src/pages/shell/composer.tsx
+#: src/pages/shell/composer-mentions.tsx
 msgid "@{0}"
 msgstr "@{0}"
 
@@ -4135,7 +4135,7 @@ msgstr "Erinnerungen für {title}"
 msgid "Memory scope"
 msgstr "Erinnerungsbereich"
 
-#: src/pages/shell/composer.tsx
+#: src/pages/shell/composer-mentions.tsx
 msgid "Mentions"
 msgstr "Erwähnungen"
 
@@ -4410,6 +4410,10 @@ msgstr "Geben Sie Ihrem Workspace einen Namen"
 #: src/lib/roster-status.ts
 msgid "Needs an answer"
 msgstr "Braucht eine Antwort"
+
+#: src/pages/WikiBrowser.tsx
+msgid "Needs care"
+msgstr "Braucht Aufmerksamkeit"
 
 #: src/pages/ActivityList.tsx
 msgid "Needs input"
@@ -5388,6 +5392,7 @@ msgstr "Header entfernen"
 
 #. placeholder {0}: mention.name
 #: src/pages/shell/composer.tsx
+#: src/pages/shell/thread-panel.tsx
 msgid "Remove mention {0}"
 msgstr "Erwähnung von {0} entfernen"
 
@@ -5608,6 +5613,10 @@ msgstr "Zurück zu Rook"
 #: src/lib/activity-label.ts
 msgid "Review before {reviewing}"
 msgstr "Vor dem Ausführen prüfen: {reviewing}"
+
+#: src/pages/WikiBrowser.tsx
+msgid "Review now"
+msgstr "Jetzt prüfen"
 
 #. placeholder {0}: revision.revision
 #: src/pages/WikiBrowser.tsx
@@ -6833,6 +6842,7 @@ msgid "Trigger"
 msgstr "Auslöser"
 
 #: src/components/ModelProblemNotice.tsx
+#: src/components/WikiChangeCard.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 msgid "Try again"

@@ -146,9 +146,30 @@ if (params.get("changes") === "two")
     createdAt: ago(HOUR / 2),
     canSeeSource: false,
   });
+// ?changes=care adds what the weekly review found: a problem and the change that would fix it.
+if (params.get("changes") === "care")
+  changes.push({
+    id: "change-3",
+    state: "pending",
+    review: true,
+    reason: "Alpha Builders says the quote was approved on Oct 28; Office Renovation says Oct 30.",
+    sourceTitle: "Quote date differs between two pages",
+    pages: [{ title: "Office Renovation", op: "replace" }],
+    edits: [
+      {
+        title: "Office Renovation",
+        op: "replace",
+        removed: "approved on Oct 30",
+        added: "approved on Oct 28",
+      },
+    ],
+    createdAt: ago(HOUR / 4),
+    canSeeSource: false,
+  });
 let settings: WikiSettings = { capture: true, edits: "approve" };
 
 const api: WikiApi = {
+  review: async () => ({ ok: true }),
   changes: {
     list: async ({ state } = {}) =>
       changes.filter((change) => !state || state.includes(change.state)),

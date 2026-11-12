@@ -1512,11 +1512,13 @@ model ModelOAuthSession {
 /// The wiki's own settings for a Space: whether the curator reads conversations, and whether edits
 /// to existing pages wait for approval ("approve") or go in at once ("auto").
 model WikiSettings {
-  spaceId   String   @id
-  space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
-  capture   Boolean  @default(true)
-  edits     String   @default("approve")
-  updatedAt DateTime @updatedAt
+  spaceId    String    @id
+  space      Space     @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  capture    Boolean   @default(true)
+  edits      String    @default("approve")
+  /// When the weekly review last started for this Space; null until the first one.
+  reviewedAt DateTime?
+  updatedAt  DateTime  @updatedAt
 
   @@map("wiki_settings")
 }
@@ -1530,7 +1532,8 @@ model WikiSource {
   userId    String
   threadId  String?
   thread    Thread?     @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  /// "conversation" (read by the curator), "message" (kept on purpose) or "note" (saved by an agent).
+  /// "conversation" (read by the curator), "message" (kept on purpose), "note" (saved by an agent)
+  /// or "review" (found by the weekly review of the pages themselves).
   origin    String
   title     String
   text      String

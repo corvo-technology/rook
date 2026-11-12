@@ -499,7 +499,7 @@ msgid "{working} working"
 msgstr "{working} 件作業中"
 
 #. placeholder {0}: mention.name
-#: src/pages/shell/composer.tsx
+#: src/pages/shell/composer-mentions.tsx
 msgid "@{0}"
 msgstr "@{0}"
 
@@ -4135,7 +4135,7 @@ msgstr "{title}のメモリ"
 msgid "Memory scope"
 msgstr "メモリの範囲"
 
-#: src/pages/shell/composer.tsx
+#: src/pages/shell/composer-mentions.tsx
 msgid "Mentions"
 msgstr "メンション"
 
@@ -4410,6 +4410,10 @@ msgstr "ワークスペースに名前を付ける"
 #: src/lib/roster-status.ts
 msgid "Needs an answer"
 msgstr "回答が必要"
+
+#: src/pages/WikiBrowser.tsx
+msgid "Needs care"
+msgstr "要確認"
 
 #: src/pages/ActivityList.tsx
 msgid "Needs input"
@@ -5388,6 +5392,7 @@ msgstr "ヘッダーを削除"
 
 #. placeholder {0}: mention.name
 #: src/pages/shell/composer.tsx
+#: src/pages/shell/thread-panel.tsx
 msgid "Remove mention {0}"
 msgstr "メンション{0}を削除"
 
@@ -5608,6 +5613,10 @@ msgstr "Rookに戻る"
 #: src/lib/activity-label.ts
 msgid "Review before {reviewing}"
 msgstr "実行前に確認: {reviewing}"
+
+#: src/pages/WikiBrowser.tsx
+msgid "Review now"
+msgstr "今すぐレビュー"
 
 #. placeholder {0}: revision.revision
 #: src/pages/WikiBrowser.tsx
@@ -6833,6 +6842,7 @@ msgid "Trigger"
 msgstr "トリガー"
 
 #: src/components/ModelProblemNotice.tsx
+#: src/components/WikiChangeCard.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 msgid "Try again"

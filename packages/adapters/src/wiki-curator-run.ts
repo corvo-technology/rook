@@ -1,5 +1,10 @@
-import type { AgentRunRequest, AgentRuntime, BackgroundJob } from "@corvo/adapter-kit";
-import { wikiCurateJob } from "@corvo/adapter-kit";
+import type {
+  AgentRunRequest,
+  AgentRuntime,
+  BackgroundJob,
+  JobPublisher,
+} from "@corvo/adapter-kit";
+import { wikiCurateJob, wikiReviewJob } from "@corvo/adapter-kit";
 import {
   buildCuratorPrompt,
   CURATOR_RULES,
@@ -21,6 +26,7 @@ import {
   readWikiPage,
   recordUsage,
   searchWiki,
+  wikiReviewDue,
   withTransactionRetry,
 } from "@corvo/db";
 import { getLogger, redactSensitiveText } from "@corvo/logging";
@@ -39,6 +45,8 @@ export type WikiCuratorDeps = {
   prisma: PrismaClient;
   runtime: AgentRuntime;
   events: ThreadEvents;
+  /** Where the weekly review is queued from; without it no review starts from a conversation. */
+  jobs?: JobPublisher;
   resolveFastModel?: (scope: {
     userId: string;
     spaceId: string;
@@ -105,6 +113,67 @@ function wordsOf(text: string): string[] {
   const seen = new Set<string>();
   for (const word of text.toLowerCase().match(/\p{L}{5,}/gu) ?? []) seen.add(word);
   return [...seen].slice(0, RELATED_WORDS);
+}
+
+/**
+ * One call to the wiki's model with no tools, its cost recorded as wiki usage. `failed` is true when
+ * the model's own error text came back in place of an answer.
+ */
+export async function askWikiModel(
+  deps: Pick<WikiCuratorDeps, "prisma" | "runtime">,
+  input: {
+    model: AgentRunRequest["model"];
+    scope: { spaceId: string; userId: string };
+    botId: string;
+    threadId: string;
+    usageBotId?: string | undefined;
+    operationId: string;
+    runId: string;
+    prompt: string;
+    instructions: string;
+  },
+): Promise<{ answer: string; failed: boolean }> {
+  const { prisma } = deps;
+  const usageOf = (event: Parameters<typeof recordUsage>[1]) =>
+    recordUsage(prisma, event, {
+      ...input.scope,
+      botId: input.usageBotId,
+      operationId: input.operationId,
+      operationKind: "wiki",
+    });
+  let answer = "";
+  let failed = false;
+  for await (const event of deps.runtime.run(
+    {
+      botId: input.botId,
+      threadId: input.threadId,
+      runId: input.runId,
+      usageOperationKind: "wiki",
+      onUsage: async (event) => {
+        await usageOf(event);
+      },
+      prompt: input.prompt,
+      instructions: input.instructions,
+      history: [],
+      tools: [],
+      model: input.model,
+      allowSilentEmpty: true,
+    },
+    {
+      operationId: input.operationId,
+      traceId: input.operationId,
+      ...input.scope,
+      signal: AbortSignal.timeout(summarizeTimeoutMs(input.prompt.length)),
+    },
+  )) {
+    if (event.type === "usage" && !event.accounted) await usageOf(event);
+    if (event.type === "text" && FAILED_TEXT.test(event.text.trim())) failed = true;
+    if (event.type === "done" && event.text) {
+      answer = event.text.trim();
+      if (FAILED_TEXT.test(answer)) failed = true;
+    }
+  }
+  return { answer, failed };
 }
 
 /**
@@ -209,50 +278,19 @@ export async function curateWiki(
     messages: lines,
     kept,
   });
-  const usageOf = (event: Parameters<typeof recordUsage>[1]) =>
-    recordUsage(prisma, event, {
-      spaceId: thread.spaceId,
-      userId: thread.userId,
-      botId: thread.botId ?? undefined,
-      operationId: `wiki:${thread.id}`,
-      operationKind: "wiki",
-    });
-
-  let answer = "";
-  let failed = false;
-  for await (const event of deps.runtime.run(
-    {
-      botId: thread.botId ?? "wiki-curator",
-      threadId: thread.id,
-      runId: `wiki:${thread.id}:${fromSeq}:${toSeq}`,
-      usageOperationKind: "wiki",
-      onUsage: async (event) => {
-        await usageOf(event);
-      },
-      prompt,
-      instructions: curatorSystemPrompt(
-        rules ? parseWikiPage(rules.body).body.trim() || CURATOR_RULES : CURATOR_RULES,
-      ),
-      history: [],
-      tools: [],
-      model,
-      allowSilentEmpty: true,
-    },
-    {
-      operationId: `wiki:${thread.id}`,
-      traceId: `wiki:${thread.id}`,
-      spaceId: thread.spaceId,
-      userId: thread.userId,
-      signal: AbortSignal.timeout(summarizeTimeoutMs(prompt.length)),
-    },
-  )) {
-    if (event.type === "usage" && !event.accounted) await usageOf(event);
-    if (event.type === "text" && FAILED_TEXT.test(event.text.trim())) failed = true;
-    if (event.type === "done" && event.text) {
-      answer = event.text.trim();
-      if (FAILED_TEXT.test(answer)) failed = true;
-    }
-  }
+  const { answer, failed } = await askWikiModel(deps, {
+    model,
+    scope,
+    botId: thread.botId ?? "wiki-curator",
+    threadId: thread.id,
+    usageBotId: thread.botId ?? undefined,
+    operationId: `wiki:${thread.id}`,
+    runId: `wiki:${thread.id}:${fromSeq}:${toSeq}`,
+    prompt,
+    instructions: curatorSystemPrompt(
+      rules ? parseWikiPage(rules.body).body.trim() || CURATOR_RULES : CURATOR_RULES,
+    ),
+  });
   const proposal = failed ? null : parseCuratorOutput(answer);
   // Throwing keeps the cursor where it was, so the queue tries this stretch again.
   if (!proposal) throw new Error("The wiki curator's model did not answer with a usable proposal.");
@@ -274,6 +312,7 @@ export async function curateWiki(
         })
       : null;
   if (!kept) await advanceWikiCursor(prisma, thread.id, thread.wikiCuratedUpToSeq, toSeq);
+  await queueWeeklyReview(deps, scope);
   if (change)
     await postWikiChangeCard(
       deps,
@@ -281,6 +320,23 @@ export async function curateWiki(
       change,
       rows.find((row) => row.botId)?.botId ?? undefined,
     );
+}
+
+/**
+ * A Space's wiki is reviewed once a week while it is in use: the review is queued from a read, and
+ * the job itself does nothing until a week has passed. A failure here never loses the read.
+ */
+async function queueWeeklyReview(
+  deps: Pick<WikiCuratorDeps, "prisma" | "jobs">,
+  scope: { spaceId: string; userId: string },
+): Promise<void> {
+  if (!deps.jobs) return;
+  try {
+    if (await wikiReviewDue(deps.prisma, scope.spaceId))
+      await deps.jobs.enqueue(wikiReviewJob(scope));
+  } catch (error) {
+    getLogger().error("wiki review enqueue", error);
+  }
 }
 
 /**

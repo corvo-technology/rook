@@ -14,6 +14,7 @@ const record: WikiChangeRecord = {
   sourceTitle: "Lobby renovation",
   sourceText: "Ana: we are going with Alpha Builders. Her number is private.",
   sourceUserId: "owner",
+  review: false,
 };
 
 describe("what a reader is shown of a change's source", () => {
@@ -21,6 +22,7 @@ describe("what a reader is shown of a change's source", () => {
     expect(wikiChangeView(record, "owner")).toEqual({
       id: "chg1",
       state: "pending",
+      review: false,
       reason: "A contractor was chosen",
       sourceTitle: "Lobby renovation",
       pages: [{ title: "Alpha Builders", op: "create" }],
@@ -43,5 +45,22 @@ describe("what a reader is shown of a change's source", () => {
     expect(view.edits).toEqual([
       { title: "Alpha Builders", op: "create", added: "Chosen for the lobby." },
     ]);
+  });
+
+  it("shows every member what the review found, since it is about the pages and not a conversation", () => {
+    const found = {
+      ...record,
+      review: true,
+      sourceTitle: "Two pages disagree",
+      reason: "Alpha says A.",
+    };
+    const view = wikiChangeView(found, "colleague");
+    expect(view).toMatchObject({
+      review: true,
+      sourceTitle: "Two pages disagree",
+      reason: "Alpha says A.",
+      canSeeSource: false,
+    });
+    expect(view).not.toHaveProperty("sourceText");
   });
 });

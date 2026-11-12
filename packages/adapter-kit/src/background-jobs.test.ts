@@ -11,6 +11,8 @@ import {
   WIKI_CURATE_MAX_ATTEMPTS,
   WIKI_CURATE_QUIET_MS,
   wikiCurateJob,
+  wikiRetryJob,
+  wikiReviewJob,
 } from "./background-jobs.js";
 import type { BackgroundJobHandlers } from "./types.js";
 
@@ -27,6 +29,8 @@ function handlers(): BackgroundJobHandlers {
     "call.expire": vi.fn(async () => undefined),
     "history.compact": vi.fn(async () => undefined),
     "wiki.curate": vi.fn(async () => undefined),
+    "wiki.review": vi.fn(async () => undefined),
+    "wiki.retry": vi.fn(async () => undefined),
     "bot.design-avatar": vi.fn(async () => undefined),
     "messaging.deliver": vi.fn(async () => undefined),
     "messaging.credential-cleanup": vi.fn(async () => undefined),
@@ -155,6 +159,34 @@ describe("wikiCurateJob", () => {
       messageId: "m",
     });
     expect(() => parseBackgroundJob("wiki.curate", {})).toThrow();
+  });
+});
+
+describe("wiki review jobs", () => {
+  const scope = { spaceId: "space-1", userId: "user-1" };
+
+  it("keeps one waiting review per space, weekly unless a person asked", () => {
+    expect(wikiReviewJob(scope)).toMatchObject({
+      name: "wiki.review",
+      payload: scope,
+      replaceKey: "wiki.review:space-1",
+    });
+    expect(wikiReviewJob(scope, { manual: true }).payload).toEqual({ ...scope, manual: true });
+    expect(parseBackgroundJob("wiki.review", { ...scope, manual: true }).payload).toEqual({
+      ...scope,
+      manual: true,
+    });
+    expect(() => parseBackgroundJob("wiki.review", { spaceId: "space-1" })).toThrow();
+  });
+
+  it("keys a retry to its change", () => {
+    const job = wikiRetryJob(scope, "change-1");
+    expect(job.replaceKey).toBe("wiki.retry:change-1");
+    expect(parseBackgroundJob("wiki.retry", job.payload).payload).toEqual({
+      ...scope,
+      changeId: "change-1",
+    });
+    expect(() => parseBackgroundJob("wiki.retry", scope)).toThrow();
   });
 });
 

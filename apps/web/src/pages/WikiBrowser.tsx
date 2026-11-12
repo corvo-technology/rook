@@ -48,6 +48,7 @@ export type WikiApi = {
     decide(input: { changeId: string; decision: "apply" | "refuse" | "undo" }): Promise<WikiChange>;
     applyAll(): Promise<WikiApplyAllResult>;
   };
+  review(): Promise<{ ok: true }>;
   settings: {
     get(): Promise<WikiSettings>;
     set(patch: Partial<WikiSettings>): Promise<WikiSettings>;
@@ -111,6 +112,26 @@ export function WikiBrowser({
   const [deciding, setDeciding] = useState<string | null>(null);
   const [approvingAll, setApprovingAll] = useState(false);
   const [moved, setMoved] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
+  const needsCare = (waiting.data ?? []).filter((change) => change.review);
+  const asked = (waiting.data ?? []).filter((change) => !change.review);
+
+  async function reviewNow() {
+    if (reviewing) return;
+    setReviewing(true);
+    try {
+      await api.review();
+      // The review runs in the background: look again as it is likely to finish.
+      for (const seconds of [8, 25, 60])
+        setTimeout(
+          () => void queryClient.invalidateQueries({ queryKey: ["wiki"] }),
+          seconds * 1000,
+        );
+    } catch {
+      setError(t`Could not save`);
+      setReviewing(false);
+    }
+  }
 
   async function decide(changeId: string, decision: "apply" | "refuse" | "undo") {
     if (deciding) return;
@@ -312,12 +333,21 @@ export function WikiBrowser({
                   }
                 />
               </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="justify-start px-0"
+                disabled={reviewing}
+                onClick={() => void reviewNow()}
+              >
+                <Trans>Review now</Trans>
+              </Button>
             </PopoverContent>
           </Popover>
         </div>
-        {waiting.data?.length ? (
+        {asked.length ? (
           <div className="flex flex-col gap-2" data-testid="wiki-pending">
-            {waiting.data.length > 1 ? (
+            {asked.length > 1 ? (
               <Button
                 variant="outline"
                 size="sm"
@@ -328,7 +358,7 @@ export function WikiBrowser({
                 <Trans>Approve all</Trans>
               </Button>
             ) : null}
-            {waiting.data.map((change) => (
+            {asked.map((change) => (
               <WikiChangeCard
                 key={change.id}
                 change={change}
@@ -338,6 +368,22 @@ export function WikiBrowser({
               />
             ))}
           </div>
+        ) : null}
+        {needsCare.length ? (
+          <section className="flex flex-col gap-2" data-testid="wiki-needs-care">
+            <h2 className="px-2.5 text-xs text-muted-foreground">
+              <Trans>Needs care</Trans>
+            </h2>
+            {needsCare.map((change) => (
+              <WikiChangeCard
+                key={change.id}
+                change={change}
+                busy={deciding === change.id}
+                onDecide={(decision) => void decide(change.id, decision)}
+                onOpenPage={show}
+              />
+            ))}
+          </section>
         ) : null}
         {moved ? (
           <p className="px-1 text-sm text-muted-foreground" data-testid="wiki-moved">

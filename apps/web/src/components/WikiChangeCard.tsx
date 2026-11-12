@@ -6,12 +6,21 @@ import { BuiCard } from "./ai/primitives";
 export type WikiChangeCardProps = {
   change: Pick<
     WikiChange,
-    "state" | "reason" | "sourceTitle" | "pages" | "edits" | "canSeeSource" | "sourceText"
+    | "state"
+    | "reason"
+    | "sourceTitle"
+    | "pages"
+    | "edits"
+    | "canSeeSource"
+    | "sourceText"
+    | "review"
   >;
   /** An answer is on its way, so the buttons wait. */
   busy?: boolean;
   onDecide: (decision: "apply" | "refuse" | "undo") => void;
   onOpenPage: (title: string) => void;
+  /** Asks for a change that hit a page that moved to be written again; absent where it cannot. */
+  onRetry?: () => void;
 };
 
 function State({ state }: { state: WikiChange["state"] }) {
@@ -33,16 +42,26 @@ function State({ state }: { state: WikiChange["state"] }) {
  * What the wiki kept, or is waiting to keep, from a conversation: the pages it touches, why, and the
  * one thing a person can do about it now. The quoted source is only there for whom it was said to.
  */
-export function WikiChangeCard({ change, busy, onDecide, onOpenPage }: WikiChangeCardProps) {
+export function WikiChangeCard({
+  change,
+  busy,
+  onDecide,
+  onOpenPage,
+  onRetry,
+}: WikiChangeCardProps) {
   return (
     <BuiCard
       className="flex w-full max-w-md flex-col gap-2 px-4 py-3"
       data-testid="wiki-change"
       data-state={change.state}
     >
-      <p className="text-sm text-muted-foreground">
-        <State state={change.state} />
-      </p>
+      {change.review && change.sourceTitle ? (
+        <p className="text-sm font-medium">{change.sourceTitle}</p>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          <State state={change.state} />
+        </p>
+      )}
       <ul className="flex flex-wrap gap-x-3 gap-y-1">
         {change.pages.map((page) => (
           <li key={page.title}>
@@ -96,6 +115,13 @@ export function WikiChangeCard({ change, busy, onDecide, onOpenPage }: WikiChang
           </Button>
           <Button size="sm" variant="ghost" disabled={busy} onClick={() => onDecide("refuse")}>
             <Trans>Refuse</Trans>
+          </Button>
+        </div>
+      ) : null}
+      {change.state === "conflict" && onRetry ? (
+        <div className="pt-1">
+          <Button size="sm" variant="ghost" disabled={busy} onClick={onRetry}>
+            <Trans>Try again</Trans>
           </Button>
         </div>
       ) : null}

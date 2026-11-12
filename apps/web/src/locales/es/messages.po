@@ -499,7 +499,7 @@ msgid "{working} working"
 msgstr "{working} trabajando"
 
 #. placeholder {0}: mention.name
-#: src/pages/shell/composer.tsx
+#: src/pages/shell/composer-mentions.tsx
 msgid "@{0}"
 msgstr "@{0}"
 
@@ -4135,7 +4135,7 @@ msgstr "Memoria para {title}"
 msgid "Memory scope"
 msgstr "Alcance de memoria"
 
-#: src/pages/shell/composer.tsx
+#: src/pages/shell/composer-mentions.tsx
 msgid "Mentions"
 msgstr "Menciones"
 
@@ -4410,6 +4410,10 @@ msgstr "Ponle nombre a tu espacio"
 #: src/lib/roster-status.ts
 msgid "Needs an answer"
 msgstr "Necesita respuesta"
+
+#: src/pages/WikiBrowser.tsx
+msgid "Needs care"
+msgstr "Requiere atención"
 
 #: src/pages/ActivityList.tsx
 msgid "Needs input"
@@ -5388,6 +5392,7 @@ msgstr "Eliminar encabezado"
 
 #. placeholder {0}: mention.name
 #: src/pages/shell/composer.tsx
+#: src/pages/shell/thread-panel.tsx
 msgid "Remove mention {0}"
 msgstr "Quitar mención {0}"
 
@@ -5608,6 +5613,10 @@ msgstr "Volver a Rook"
 #: src/lib/activity-label.ts
 msgid "Review before {reviewing}"
 msgstr "Revisa antes: {reviewing}"
+
+#: src/pages/WikiBrowser.tsx
+msgid "Review now"
+msgstr "Revisar ahora"
 
 #. placeholder {0}: revision.revision
 #: src/pages/WikiBrowser.tsx
@@ -6833,6 +6842,7 @@ msgid "Trigger"
 msgstr "Disparador"
 
 #: src/components/ModelProblemNotice.tsx
+#: src/components/WikiChangeCard.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 msgid "Try again"

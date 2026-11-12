@@ -751,6 +751,10 @@ export interface BackgroundJobPayloads {
   "history.compact": { threadId: string; keepRecent?: number };
   /** The wiki curator reads a conversation; `messageId` keeps that one message on purpose. */
   "wiki.curate": { threadId: string; messageId?: string };
+  /** The wiki review reads the pages for contradictions, stale facts and duplicates. */
+  "wiki.review": { spaceId: string; userId: string; manual?: boolean };
+  /** Writes a change that hit a moved page again against the pages as they are now. */
+  "wiki.retry": { spaceId: string; userId: string; changeId: string };
   /** Design the body of a new agent's avatar from its role, unless a look was chosen meanwhile. */
   "bot.design-avatar": { botId: string };
   "messaging.deliver": { runId?: string };

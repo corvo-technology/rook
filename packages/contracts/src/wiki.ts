@@ -98,6 +98,8 @@ export const WikiChangeSchema = z.object({
   createdAt: IsoDate,
   canSeeSource: z.boolean(),
   sourceText: z.string().optional(),
+  /** Found by the review of the pages, not drawn from a conversation: a problem to look at. */
+  review: z.boolean().optional(),
 });
 export type WikiChange = z.infer<typeof WikiChangeSchema>;
 

@@ -107,7 +107,32 @@ call lasting is dropped, and so is a `replace` whose old text is not on the page
   stretch with too little text is not read yet and is read together with what follows. What the
   model costs is recorded as its own kind of usage.
 
-Not done yet: a way to ask the curator to try a conflicting change again.
+- **Try again.** A change that ended in conflict without writing anything has "Try again" on its
+  card. The curator's model is given the change, the pages as they are now and the source, writes the
+  change again against them, and the change goes back to waiting for approval. When nothing of it
+  still applies, or the model has nothing to say, the change stays as it was. A change that already
+  wrote pages is put right by undoing it, not by trying again.
+
+## The weekly review
+
+The curator reads conversations; the review reads the pages themselves. About once a week per space,
+while the wiki is in use (the review is queued after a read, and does nothing until a week has passed
+since the last one), a background job gives the `fast` model (or the main model) the newest 40
+pages, each cut to its first 2 000 characters, and asks for contradictions between pages, facts that
+went stale and duplicates. Anyone in the space can ask for one now with "Review now" in the Wiki
+settings.
+
+- **Findings.** At most 5 per review. Each is a title, a sentence or two naming the pages, and the
+  change that would fix it, shown under "Needs care" on the Wiki screen. A finding with no usable fix
+  is dropped. It only edits pages (`replace` or `append`); it never creates one.
+- **Approval.** A finding is an ordinary change: it waits for approval whatever the "Approve edits"
+  setting says, and is approved or refused like any other (refusing is how it is dismissed).
+  "Approve all" never includes findings. Everyone in the space sees a finding's title and reason,
+  since they are about pages everyone reads. A finding that waits, or that someone refused, is not
+  reported again.
+- **When it cannot run.** With no model ready nothing is read and the week is not used up. A wiki
+  with fewer than two pages has nothing to compare. A model answer that is not usable is tried again
+  up to three times. What the model costs is recorded as wiki usage, like the curator's.
 
 ## Shared memory
 

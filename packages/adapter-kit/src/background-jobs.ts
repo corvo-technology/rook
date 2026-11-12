@@ -28,6 +28,16 @@ const payloadSchemas = {
     keepRecent: z.number().int().min(0).max(100).optional(),
   }),
   "wiki.curate": z.object({ threadId: z.string().min(1), messageId: z.string().min(1).optional() }),
+  "wiki.review": z.object({
+    spaceId: z.string().min(1),
+    userId: z.string().min(1),
+    manual: z.boolean().optional(),
+  }),
+  "wiki.retry": z.object({
+    spaceId: z.string().min(1),
+    userId: z.string().min(1),
+    changeId: z.string().min(1),
+  }),
   "bot.design-avatar": z.object({ botId: z.string().min(1) }),
   "messaging.deliver": z.object({ runId: z.string().min(1).optional() }),
   "messaging.credential-cleanup": z.object({
@@ -242,6 +252,35 @@ export function wikiCurateJob(
     ...(messageId
       ? {}
       : { availableAt: new Date((options.now ?? new Date()).getTime() + WIKI_CURATE_QUIET_MS) }),
+    maxAttempts: WIKI_CURATE_MAX_ATTEMPTS,
+  };
+}
+
+/**
+ * Reviews a Space's wiki. One waiting review per Space: asking again while one waits is one job.
+ * The weekly one (`manual` unset) does nothing until a week has passed since the last.
+ */
+export function wikiReviewJob(
+  scope: { spaceId: string; userId: string },
+  options: { manual?: boolean } = {},
+): BackgroundJob {
+  return {
+    name: "wiki.review",
+    payload: options.manual ? { ...scope, manual: true } : scope,
+    replaceKey: `wiki.review:${scope.spaceId}`,
+    maxAttempts: WIKI_CURATE_MAX_ATTEMPTS,
+  };
+}
+
+/** Keyed to the change, so a repeated ask is one try. */
+export function wikiRetryJob(
+  scope: { spaceId: string; userId: string },
+  changeId: string,
+): BackgroundJob {
+  return {
+    name: "wiki.retry",
+    payload: { ...scope, changeId },
+    replaceKey: `wiki.retry:${changeId}`,
     maxAttempts: WIKI_CURATE_MAX_ATTEMPTS,
   };
 }

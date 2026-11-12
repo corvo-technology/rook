@@ -1143,4 +1143,8 @@ export const ZH_MESSAGES: Record<string, string> = {
   "This reply reached its token cap.": "此回复已达到令牌上限。",
   "Bots are paused in this space.": "此空间中的机器人已暂停。",
   "{used} of {limit}": "{used} / {limit}",
+  "New memory": "新记忆",
+  Remembered: "已记住",
+  "Not remembered": "未记住",
+  Discard: "丢弃",
 };

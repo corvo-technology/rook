@@ -1150,4 +1150,8 @@ export const ES_MESSAGES: Record<string, string> = {
   "This reply reached its token cap.": "Esta respuesta alcanzó su tope de tokens.",
   "Bots are paused in this space.": "Los bots están en pausa en este espacio.",
   "{used} of {limit}": "{used} de {limit}",
+  "New memory": "Nuevo recuerdo",
+  Remembered: "Recordado",
+  "Not remembered": "No recordado",
+  Discard: "Descartar",
 };

@@ -398,6 +398,7 @@ it.each([false, true])(
       const links = [
         "Artifacts",
         "Wiki",
+        "You",
         "Models",
         "Voice",
         "Approvals",

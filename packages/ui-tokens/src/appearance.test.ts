@@ -275,7 +275,8 @@ describe("web palette", () => {
   );
 
   it("renders the elevation, motion and title tokens", () => {
-    const css = renderTokensCss();
+    // Long shadows wrap onto several lines; compare them as one.
+    const css = renderTokensCss().replace(/\s+/g, " ");
     expect(css).toContain(`--elevation-raised: ${elevation.dark.raised};`);
     expect(css).toContain(`--elevation-overlay: ${elevation.light.overlay};`);
     expect(css).toContain(`--motion-panel: ${motion.panel};`);

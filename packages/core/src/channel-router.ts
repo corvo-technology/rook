@@ -99,3 +99,13 @@ export function continuityBotId(input: {
   const text = input.text.trim();
   return text.length > 0 && text.length <= ROUTER_CONTINUITY_MAX_CHARS ? last.botId : undefined;
 }
+
+/**
+ * Whether the router, not a mention, a one-to-one chat or an answer, woke this bot for the
+ * message: only then may it pass. Reads what `RouterDecision` stored on the message.
+ */
+export function isRouterWake(routing: unknown, botId: string): boolean {
+  if (!routing || typeof routing !== "object") return false;
+  const { strategy, picked } = routing as { strategy?: unknown; picked?: unknown };
+  return strategy === "model" && Array.isArray(picked) && picked.includes(botId);
+}

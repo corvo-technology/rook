@@ -121,6 +121,8 @@ export function selectBuiltinToolsForRun(options: {
   followUpFromUser?: boolean;
   /** A routine run with later workflow steps, which may end the chain early. */
   workflowContinues?: boolean;
+  /** The channel router woke this run: nobody named the bot, so it may pass. */
+  routedRun?: boolean;
   /** An outside person's message on a linked number woke this run: only the visitor allowlist. */
   visitorRun?: boolean;
 }) {
@@ -150,6 +152,7 @@ export function selectBuiltinToolsForRun(options: {
       (!FLEET_TOOL_NAMES_SET.has(tool.name) ||
         (Boolean(options.fleetManagement) && fleetToolsAllowed)) &&
       (options.workflowContinues || tool.name !== "workflow_stop") &&
+      (options.routedRun || tool.name !== "pass") &&
       (options.mediaImagesEnabled || tool.name !== "generate_image") &&
       (options.mediaVideoEnabled || tool.name !== "generate_video") &&
       (options.ticketBoardEnabled ||

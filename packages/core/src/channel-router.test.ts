@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   continuityBotId,
+  isRouterWake,
   parseRouterScores,
   pickRoutedBots,
   type RouterScores,
@@ -123,5 +124,20 @@ describe("resolveMentionedBotIds", () => {
       "a",
     ]);
     expect(resolveMentionedBotIds({ text: "@everyone look", members })).toEqual(["a", "b"]);
+  });
+});
+
+describe("isRouterWake", () => {
+  it("is true only for a bot the model-routed decision picked", () => {
+    const routing = { strategy: "model", picked: ["a"] };
+    expect(isRouterWake(routing, "a")).toBe(true);
+    expect(isRouterWake(routing, "b")).toBe(false);
+  });
+
+  it("is false for a mention, a continuation, the older rule and a plain message", () => {
+    expect(isRouterWake({ strategy: "continuity", picked: ["a"] }, "a")).toBe(false);
+    expect(isRouterWake({ strategy: "fallback", picked: [] }, "a")).toBe(false);
+    expect(isRouterWake(null, "a")).toBe(false);
+    expect(isRouterWake("model", "a")).toBe(false);
   });
 });

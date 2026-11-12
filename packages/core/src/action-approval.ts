@@ -25,6 +25,7 @@ const APPROVAL_EXEMPT_TOOLS = new Set([
   "schedule_update",
   "schedule_cancel",
   "workflow_stop",
+  "pass",
   "list_fleet",
   "guide_read",
   "space_status",
@@ -80,6 +81,7 @@ const UNATTENDED_SAFE_BUILTIN_TOOLS = new Set([
   "web_fetch",
   "web_search",
   "workflow_stop",
+  "pass",
 ]);
 
 const READ_ONLY_CONNECTOR_PATTERN = /(^|_)(get|list|search|find|read)(_|$)/i;

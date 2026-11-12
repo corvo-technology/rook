@@ -75,6 +75,7 @@ import { installSessionPermissions } from "./session-permissions.js";
 import {
   CORVO_CLOUD_URL,
   DEFAULT_LOCAL_WEB_URL,
+  displayedSetup,
   isCorvoHealth,
   managedLocalOpenUrl,
   normalizeServerUrl,
@@ -1499,7 +1500,7 @@ app.whenReady().then(async () => {
     return {
       defaultLocalUrl: localStack.webUrl(),
       cloudUrl: CORVO_CLOUD_URL,
-      saved: currentSetup,
+      saved: displayedSetup(currentSetup),
       locale: { saved: savedLocale, suggested: suggestedSetupLocale() },
       error: setupError ?? undefined,
     };

@@ -55,6 +55,20 @@ describe("native app association", () => {
     expect((await app.request("/.well-known/assetlinks.json")).status).toBe(404);
   });
 
+  it("lists related origins so passkeys made before a move to a new domain keep working", async () => {
+    const none = association({});
+    expect((await none.request("/.well-known/webauthn")).status).toBe(404);
+    const app = association({
+      PASSKEY_RELATED_ORIGINS: "https://app.rook.team/ https://app.example.org",
+    });
+    expect(await (await app.request("/.well-known/webauthn")).json()).toEqual({
+      origins: ["https://app.rook.team", "https://app.example.org"],
+    });
+    expect(() => association({ PASSKEY_RELATED_ORIGINS: "http://app.example.org" })).toThrow(
+      "PASSKEY_RELATED_ORIGINS must list HTTPS origins",
+    );
+  });
+
   it("lists the configured apps for passkeys", async () => {
     const app = association({
       PASSKEY_APPLE_APP_IDS: "TEAMID0000.com.example.app",

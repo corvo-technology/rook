@@ -78,6 +78,9 @@ export interface AuthEnv {
   extraOrigins?: string[];
   /** SHA-256 signing certificate fingerprints of Android apps allowed to use this server's passkeys. */
   androidAppCertFingerprints?: string[];
+  /** Keeps passkeys made for another domain working after a move; see `passkeyRelyingParty`. */
+  passkeyRpId?: string;
+  passkeyRelatedOrigins?: string[];
   email?: TransactionalEmailProvider;
   logger?: BetterAuthOptions["logger"];
   onEmailError?: (error: unknown) => void;
@@ -159,7 +162,10 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
   // SSO-only deployments keep the identity provider as the only way in.
   const relyingParty =
     emailSignIn && env.passkeys !== false
-      ? passkeyRelyingParty(env.webOrigin, env.androidAppCertFingerprints)
+      ? passkeyRelyingParty(env.webOrigin, env.androidAppCertFingerprints, {
+          rpId: env.passkeyRpId,
+          relatedOrigins: env.passkeyRelatedOrigins,
+        })
       : null;
   // Better Auth's own token key, so every stored token shares one cipher and key.
   let authContext: Promise<{ secretConfig: TokenKey }> | undefined;
@@ -639,6 +645,7 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
     encryptStoredOAuthTokens: async () => encryptStoredOAuthTokens(prisma, await tokenKey()),
     ssoAvailability: () => discovery?.availability(),
     passkeyRpId: relyingParty?.rpID ?? null,
+    passkeyRelatedOrigins: env.passkeyRelatedOrigins ?? [],
     disposeOidcDiscovery: () => discovery?.dispose(),
   });
 }

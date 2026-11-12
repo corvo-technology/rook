@@ -17,6 +17,8 @@ export const authCapabilitiesSchema = z.object({
   billing: z.boolean().optional(),
   /** WebAuthn relying party ID; null or omitted when this server does not offer passkeys. */
   passkeyRpId: z.string().min(1).nullable().optional(),
+  /** Other origins that may use this relying party's passkeys (`/.well-known/webauthn`); omitted when none. */
+  passkeyRelatedOrigins: z.array(z.string().url()).optional(),
   /** Native apps this domain vouches for; omitted by older servers, which means none. */
   nativePasskeys: z.object({ ios: z.boolean(), android: z.boolean() }).optional(),
   /** Crisp chat on the paywall; null or omitted when the deployment offers none. */

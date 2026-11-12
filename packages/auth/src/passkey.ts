@@ -15,6 +15,12 @@ export interface PasskeyRelyingParty {
 export function passkeyRelyingParty(
   webOrigin: string,
   androidCertFingerprints: readonly string[] = [],
+  /**
+   * A deployment that moves to a new domain keeps the relying party its passkeys were made for
+   * (`rpId`) and lists the new origins that may use it (`relatedOrigins`, served from
+   * `/.well-known/webauthn` on the relying party's host).
+   */
+  moved: { rpId?: string; relatedOrigins?: readonly string[] } = {},
 ): PasskeyRelyingParty | null {
   let url: URL;
   try {
@@ -31,9 +37,16 @@ export function passkeyRelyingParty(
     return { rpID: "localhost", origins: [local.origin] };
   }
   if (isIP(host) || url.protocol !== "https:") return null;
+  const rpID = moved.rpId?.trim().toLowerCase() || host;
   return {
-    rpID: host,
-    origins: [url.origin, ...androidCertFingerprints.flatMap(androidApkKeyHashOrigin)],
+    rpID,
+    origins: [
+      ...new Set([
+        url.origin,
+        ...(moved.relatedOrigins ?? []),
+        ...androidCertFingerprints.flatMap(androidApkKeyHashOrigin),
+      ]),
+    ],
   };
 }
 

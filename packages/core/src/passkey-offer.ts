@@ -21,10 +21,24 @@ export function passkeyOfferDismissedKey(userId: string): string {
   return `corvo.passkey-offer-dismissed.${userId}`;
 }
 
-/** WebAuthn requires the page host to equal the relying party ID or be a subdomain of it. */
-export function hostMatchesPasskeyRpId(host: string, rpId: string | null | undefined): boolean {
+/**
+ * WebAuthn requires the page host to equal the relying party ID or be a subdomain of it, unless
+ * the relying party lists the page's origin as a related origin (`/.well-known/webauthn`).
+ */
+export function hostMatchesPasskeyRpId(
+  host: string,
+  rpId: string | null | undefined,
+  relatedOrigins: readonly string[] = [],
+): boolean {
   if (!rpId) return false;
   const normalized = host.toLowerCase();
   const rp = rpId.toLowerCase();
-  return normalized === rp || normalized.endsWith(`.${rp}`);
+  if (normalized === rp || normalized.endsWith(`.${rp}`)) return true;
+  return relatedOrigins.some((origin) => {
+    try {
+      return new URL(origin).hostname === normalized;
+    } catch {
+      return false;
+    }
+  });
 }

@@ -504,7 +504,7 @@ repairs. Investigate `Model credit hold requires review` logs using the shared c
 missing provider evidence into a zero-cost settlement.
 
 OpenRouter inference requests include the normal Rook user ID in `user`, `HTTP-Referer`
-(`https://rookup.run`), and `X-OpenRouter-Title` (`Rook`). These values are sent only to OpenRouter's
+(`https://rook.team`), and `X-OpenRouter-Title` (`Rook`). These values are sent only to OpenRouter's
 HTTPS inference endpoints, never to compatible custom hosts. Recovery uses the existing configured
 deployment credential; no Redis or external accounting service is required.
 
@@ -2074,7 +2074,27 @@ relying party is that origin's host, so existing passkeys keep working only whil
 stays on the same domain. They are off when password sign-in is disabled for SSO-only
 deployments. On web, a browser offers them where it has a platform authenticator. The macOS
 desktop app uses the system passkey sheet, which only serves the domain the release is
-associated with (`app.rookup.run`), so it hides passkeys for other servers.
+associated with (`app.rook.team` and `app.rookup.run`), so it hides passkeys for other servers.
+
+#### Moving a deployment to a new domain
+
+Passkeys are bound to the relying party they were created for, so changing `WEB_ORIGIN` to a new
+domain would orphan them. To keep them working, leave the relying party on the old host and let
+the new origin use it (WebAuthn related origins):
+
+```bash
+WEB_ORIGIN=https://app.new.example
+PASSKEY_RP_ID=app.old.example
+PASSKEY_RELATED_ORIGINS=https://app.new.example
+```
+
+The server then serves `/.well-known/webauthn` (the origins above) and, on both hosts,
+`/.well-known/apple-app-site-association`. Keep `app.old.example` pointing at the server for as
+long as people have those passkeys. Browsers without related-origin support (older than Chrome 128
+or Safari 18) cannot use them from the new origin; those people sign in another way and add a new
+passkey. Build the mobile app with `EXPO_PUBLIC_PASSKEY_RP_IDS=app.old.example` so it stays
+associated with the old domain, and add `webcredentials:` entries for both domains wherever you
+sign native apps.
 
 Native apps can use a domain's passkeys only when the domain vouches for them and the app was
 built for that domain (the app's associated domain comes from `EXPO_PUBLIC_API_URL` at build

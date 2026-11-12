@@ -17,7 +17,7 @@ export function openRouterInferenceFetch(fetcher: typeof fetch, userId?: string)
           ? input.headers
           : undefined,
     );
-    headers.set("HTTP-Referer", "https://rookup.run");
+    headers.set("HTTP-Referer", "https://rook.team");
     headers.set("X-OpenRouter-Title", "Rook");
     const body = init?.body ?? (input instanceof Request ? await input.clone().text() : undefined);
     if (typeof body !== "string") throw new Error("OpenRouter inference requires a JSON body");

@@ -2,21 +2,21 @@
   "specVersion": "1.0",
   "host": {
     "displayName": "Rook",
-    "documentationUrl": "https://rookup.run/"
+    "documentationUrl": "https://rook.team/"
   },
   "entries": [
     {
-      "identifier": "urn:air:rookup.run:docs:llms",
+      "identifier": "urn:air:rook.team:docs:llms",
       "displayName": "Rook agent guide",
       "type": "text/plain",
-      "url": "https://rookup.run/llms.txt",
+      "url": "https://rook.team/llms.txt",
       "description": "Product overview and canonical resources."
     },
     {
-      "identifier": "urn:air:rookup.run:docs:overview",
+      "identifier": "urn:air:rook.team:docs:overview",
       "displayName": "Rook overview",
       "type": "text/markdown",
-      "url": "https://rookup.run/index.md",
+      "url": "https://rook.team/index.md",
       "description": "What Rook bots do and common questions."
     }
   ]

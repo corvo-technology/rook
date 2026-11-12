@@ -99,5 +99,5 @@ capability config, fixtures, logs, or snapshots; use the encrypted secret store 
 
 | Address | Use for |
 | --- | --- |
-| [security@rookup.run](mailto:security@rookup.run) | Vulnerabilities only — see [SECURITY.md](SECURITY.md) |
-| [support@rookup.run](mailto:support@rookup.run) | User and support questions |
+| [security@rook.team](mailto:security@rook.team) | Vulnerabilities only — see [SECURITY.md](SECURITY.md) |
+| [support@rook.team](mailto:support@rook.team) | User and support questions |

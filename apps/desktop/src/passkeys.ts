@@ -1,8 +1,14 @@
 import path from "node:path";
-import { CORVO_CLOUD_URL } from "./setup-config.js";
+import { CORVO_CLOUD_URL, LEGACY_CLOUD_URL } from "./setup-config.js";
 
-/** The only relying party release builds are associated with (`webcredentials:` entitlement). */
-export const PASSKEY_RP_ID = new URL(CORVO_CLOUD_URL).hostname;
+/**
+ * Relying parties release builds are associated with (`webcredentials:` entitlements). Passkeys
+ * are bound to the relying party they were made for, so the old hosted domain stays listed next to
+ * the new one: an existing passkey keeps working, and so does an app still saved on the old address.
+ */
+export const PASSKEY_RP_IDS = [CORVO_CLOUD_URL, LEGACY_CLOUD_URL].map(
+  (url) => new URL(url).hostname,
+);
 
 /**
  * Relying parties whose passkeys this build can use through the system passkey sheet. The
@@ -17,7 +23,7 @@ export function associatedPasskeyRpIds(input: {
 }): string[] {
   if (input.platform !== "darwin" || !input.packaged) return [];
   const profile = path.join(input.resourcesPath, "..", "embedded.provisionprofile");
-  return input.exists(profile) ? [PASSKEY_RP_ID] : [];
+  return input.exists(profile) ? [...PASSKEY_RP_IDS] : [];
 }
 
 const TEAM_ID = /^[A-Z0-9]{10}$/;
@@ -38,7 +44,7 @@ export function passkeyEntitlements(base: string, teamId: string, bundleId: stri
     `    <string>${teamId}.${bundleId}</string>`,
     "    <key>com.apple.developer.associated-domains</key>",
     "    <array>",
-    `      <string>webcredentials:${PASSKEY_RP_ID}</string>`,
+    ...PASSKEY_RP_IDS.map((rpId) => `      <string>webcredentials:${rpId}</string>`),
     "    </array>",
   ];
   return `${base.slice(0, end).trimEnd()}\n${entries.join("\n")}\n  ${base.slice(end)}`;

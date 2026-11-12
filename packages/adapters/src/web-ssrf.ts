@@ -126,7 +126,7 @@ export async function fetchSafeWebBytes(
       resolve,
       dispatcher,
       maxBytes,
-      userAgent: options.userAgent ?? "Rook/0.1 (+https://rookup.run)",
+      userAgent: options.userAgent ?? "Rook/0.1 (+https://rook.team)",
       headers: options.headers,
       signal,
       redirectsRemaining: options.maxRedirects ?? MAX_REDIRECTS,

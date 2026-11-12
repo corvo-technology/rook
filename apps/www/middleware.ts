@@ -6,11 +6,9 @@ import {
   markdownResponse,
   negotiateRepresentation,
 } from "./src/agent-content.js";
+import { canonicalRedirect, SITE_ORIGIN } from "./canonical-host.js";
 
 const VARY_HEADER = "Accept, Accept-Encoding";
-const APEX_ORIGIN = "https://rookup.run";
-// www, and the address the site had before it moved, both lead to the apex.
-const REDIRECTED_HOSTS = new Set(["www.rookup.run", "bots.corvo.tech", "www.bots.corvo.tech"]);
 
 export const config = {
   matcher: ["/((?!api|_astro|.*\\..*).*)", "/sitemap.xml"],
@@ -26,13 +24,11 @@ function permanentRedirect(location: string): Response {
 export default function middleware(request: Request): Response {
   const url = new URL(request.url);
 
-  if (REDIRECTED_HOSTS.has(url.hostname.toLowerCase())) {
-    const destination = new URL(`${url.pathname}${url.search}`, APEX_ORIGIN);
-    return permanentRedirect(destination.toString());
-  }
+  const retired = canonicalRedirect(request.url);
+  if (retired) return permanentRedirect(retired);
 
   if (url.pathname === "/sitemap.xml") {
-    const destination = new URL(`/sitemap-index.xml${url.search}`, APEX_ORIGIN);
+    const destination = new URL(`/sitemap-index.xml${url.search}`, SITE_ORIGIN);
     return permanentRedirect(destination.toString());
   }
 

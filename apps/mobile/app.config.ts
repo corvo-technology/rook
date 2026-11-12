@@ -23,17 +23,29 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   }
 
   let result = config as ExpoConfig;
-  const rpId = passkeyRpId(process.env.EXPO_PUBLIC_API_URL);
-  if (rpId) {
+  const apiRpId = passkeyRpId(process.env.EXPO_PUBLIC_API_URL);
+  // After a move to a new domain, existing passkeys stay bound to the old one: list it too.
+  const rpIds = [
+    ...new Set(
+      [
+        apiRpId,
+        ...(process.env.EXPO_PUBLIC_PASSKEY_RP_IDS ?? "").split(/[\s,]+/).map(passkeyRpId),
+      ].filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  if (rpIds.length > 0) {
     // Native passkeys only work for domains the binary is associated with, so the app reads the
     // same list at runtime to hide passkeys on other servers.
     result = {
       ...result,
       ios: {
         ...result.ios,
-        associatedDomains: [...(result.ios?.associatedDomains ?? []), `webcredentials:${rpId}`],
+        associatedDomains: [
+          ...(result.ios?.associatedDomains ?? []),
+          ...rpIds.map((id) => `webcredentials:${id}`),
+        ],
       },
-      extra: { ...result.extra, passkeyRpIds: [rpId] },
+      extra: { ...result.extra, passkeyRpIds: rpIds },
     };
   }
 
@@ -62,11 +74,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   return result;
 };
 
-/** The default server's host when native passkeys can use it: HTTPS and a domain name. */
-function passkeyRpId(apiUrl: string | undefined): string | null {
+/** A server's host (from a URL or a bare host name) when native passkeys can use it: HTTPS and a domain name. */
+function passkeyRpId(value: string | undefined): string | null {
+  if (!value) return null;
   let url: URL;
   try {
-    url = new URL(apiUrl ?? "");
+    url = new URL(value.includes("://") ? value : `https://${value}`);
   } catch {
     return null;
   }

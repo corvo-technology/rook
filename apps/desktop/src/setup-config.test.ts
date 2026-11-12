@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import {
   CORVO_CLOUD_URL,
   DEFAULT_LOCAL_WEB_URL,
+  displayedSetup,
   isCorvoHealth,
+  LEGACY_CLOUD_URL,
   managedLocalOpenUrl,
   normalizeServerUrl,
   PROBE_RESPONSE_LIMIT_BYTES,
@@ -133,6 +135,29 @@ describe("saved setup", () => {
     });
     expect(parseSetupInput({ mode: "new", serverUrl: CORVO_CLOUD_URL })).toBeNull();
     expect(servesBundledRenderer(CORVO_CLOUD_URL, false)).toBe(false);
+  });
+});
+
+describe("the previous hosted address", () => {
+  const saved = JSON.stringify({ mode: "existing", serverUrl: LEGACY_CLOUD_URL });
+
+  it("stays a valid saved server, so an installed app keeps opening it", () => {
+    expect(parseStoredSetup(saved)).toEqual({ mode: "existing", serverUrl: LEGACY_CLOUD_URL });
+    expect(resolveStartupTarget({ saved: parseStoredSetup(saved) ?? undefined })).toEqual({
+      kind: "app",
+      url: LEGACY_CLOUD_URL,
+      source: "saved",
+    });
+  });
+
+  it("is shown in setup as Rook Cloud, other servers as they are", () => {
+    expect(displayedSetup(parseStoredSetup(saved))).toEqual({
+      mode: "existing",
+      serverUrl: CORVO_CLOUD_URL,
+    });
+    const other = { mode: "existing", serverUrl: "https://corvo.example.com" } as const;
+    expect(displayedSetup(other)).toEqual(other);
+    expect(displayedSetup(null)).toBeNull();
   });
 });
 

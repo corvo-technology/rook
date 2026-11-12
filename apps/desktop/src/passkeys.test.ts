@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { associatedPasskeyRpIds, PASSKEY_RP_ID, passkeyEntitlements } from "./passkeys.js";
-import { CORVO_CLOUD_URL } from "./setup-config.js";
+import { associatedPasskeyRpIds, PASSKEY_RP_IDS, passkeyEntitlements } from "./passkeys.js";
+import { CORVO_CLOUD_URL, LEGACY_CLOUD_URL } from "./setup-config.js";
 
 const root = path.resolve(import.meta.dirname, "..");
 const pkg = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8")) as {
@@ -14,15 +14,18 @@ describe("associatedPasskeyRpIds", () => {
   const resourcesPath = "/Applications/Corvo.app/Contents/Resources";
   const profile = "/Applications/Corvo.app/Contents/embedded.provisionprofile";
 
-  it("is the hosted server's domain", () => {
-    expect(PASSKEY_RP_ID).toBe(new URL(CORVO_CLOUD_URL).hostname);
+  it("is the hosted server's domain and the one it had before, so old passkeys keep working", () => {
+    expect(PASSKEY_RP_IDS).toEqual([
+      new URL(CORVO_CLOUD_URL).hostname,
+      new URL(LEGACY_CLOUD_URL).hostname,
+    ]);
   });
 
   it("lists the hosted domain only for a packaged macOS app with an embedded profile", () => {
     const exists = (file: string) => file === profile;
     expect(
       associatedPasskeyRpIds({ platform: "darwin", packaged: true, resourcesPath, exists }),
-    ).toEqual([PASSKEY_RP_ID]);
+    ).toEqual(PASSKEY_RP_IDS);
     expect(
       associatedPasskeyRpIds({
         platform: "darwin",
@@ -48,7 +51,7 @@ describe("passkeyEntitlements", () => {
       "<key>com.apple.application-identifier</key>\n    <string>ABCDE12345.tech.corvo.bots.desktop</string>",
     );
     expect(plist).toContain(
-      `<key>com.apple.developer.associated-domains</key>\n    <array>\n      <string>webcredentials:${PASSKEY_RP_ID}</string>\n    </array>\n  </dict>\n</plist>`,
+      `<key>com.apple.developer.associated-domains</key>\n    <array>\n      <string>webcredentials:app.rook.team</string>\n      <string>webcredentials:app.rookup.run</string>\n    </array>\n  </dict>\n</plist>`,
     );
   });
 

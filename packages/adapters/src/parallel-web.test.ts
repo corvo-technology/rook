@@ -186,7 +186,7 @@ describe("optional Parallel web provider", () => {
       expect(peer.requests.length).toBeGreaterThan(1);
       for (const request of peer.requests) {
         expect(request.url).toBe("https://search.parallel.ai/mcp");
-        expect(request.headers.get("user-agent")).toBe("Rook/0.1 (+https://rookup.run; web tools)");
+        expect(request.headers.get("user-agent")).toBe("Rook/0.1 (+https://rook.team; web tools)");
         expect(request.headers.has("authorization")).toBe(false);
       }
       expect(resolveWebProviderKind({})).toBe("keyless-http");

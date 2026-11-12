@@ -1,10 +1,10 @@
 export const SITE_NAME = "Rook";
-export const SITE_URL = "https://rookup.run";
+export const SITE_URL = "https://rook.team";
 export const SITE_DESCRIPTION =
   "Rook is an open source team of AI agents that lives in channels on your computer, remembers what matters and asks before it touches anything real.";
 
-export const CONTACT_EMAIL = "legal@rookup.run";
-export const SECURITY_EMAIL = "security@rookup.run";
+export const CONTACT_EMAIL = "legal@rook.team";
+export const SECURITY_EMAIL = "security@rook.team";
 
 /** The open source repository. */
 export const GITHUB_URL = "https://github.com/corvo-technology/rook";

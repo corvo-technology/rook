@@ -23,8 +23,18 @@ export function nativePasskeys(
  */
 export function mountAppAssociation(
   app: Hono,
-  env: { passkeyAppleAppIds: string[]; passkeyAndroidCertFingerprints: string[] },
+  env: {
+    passkeyAppleAppIds: string[];
+    passkeyAndroidCertFingerprints: string[];
+    passkeyRelatedOrigins?: string[];
+  },
 ) {
+  // WebAuthn related origin requests: browsers read this from the relying party's host to let
+  // another origin use its passkeys, so a moved deployment keeps the passkeys made before the move.
+  app.get("/.well-known/webauthn", (c) => {
+    if (!env.passkeyRelatedOrigins?.length) return c.notFound();
+    return c.json({ origins: env.passkeyRelatedOrigins });
+  });
   app.get("/.well-known/apple-app-site-association", (c) => {
     if (!env.passkeyAppleAppIds.length) return c.notFound();
     return c.json({ webcredentials: { apps: env.passkeyAppleAppIds } });

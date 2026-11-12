@@ -78,6 +78,24 @@ describe("mobile app config", () => {
     });
   });
 
+  it("keeps the domain passkeys were made for associated after a move", () => {
+    vi.stubEnv("EXPO_PUBLIC_API_URL", "https://app.example.net");
+    vi.stubEnv("EXPO_PUBLIC_PASSKEY_RP_IDS", "app.example.com, app.example.net");
+
+    expect(appConfig(context(config))).toEqual({
+      ...config,
+      ios: {
+        ...config.ios,
+        associatedDomains: [
+          ...(config.ios?.associatedDomains ?? []),
+          "webcredentials:app.example.net",
+          "webcredentials:app.example.com",
+        ],
+      },
+      extra: { ...config.extra, passkeyRpIds: ["app.example.net", "app.example.com"] },
+    });
+  });
+
   it.each([
     "http://app.example.com",
     "https://localhost:3100",

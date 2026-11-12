@@ -8,7 +8,7 @@ import { resolveWwwPort } from "./www-port.mjs";
 const wwwPort = resolveWwwPort();
 
 export default defineConfig({
-  site: "https://rookup.run",
+  site: "https://rook.team",
   output: "static",
   i18n: {
     defaultLocale: "en",

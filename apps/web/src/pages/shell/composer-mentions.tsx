@@ -1,4 +1,5 @@
 import type { ComposerMention, SlashActionId } from "@corvo/core";
+import { mentionChipKey } from "@corvo/core";
 import { BotAvatar } from "@corvo/ui-web";
 import { t } from "@lingui/core/macro";
 import { Clock, Puzzle, X } from "lucide-react";
@@ -38,6 +39,64 @@ export function MentionOptionIcon({ mention }: { mention: ComposerMention }) {
     );
   }
   return <BotAvatar color={mention.color ?? FALLBACK_BOT_COLOR} identity={mention.id} size={16} />;
+}
+
+/** The `@` suggestions above a composer; the caller owns the query, highlight and what a pick does. */
+export function MentionPicker({
+  id,
+  options,
+  activeIndex,
+  onHighlight,
+  onPick,
+}: {
+  id: string;
+  options: readonly ComposerMention[];
+  activeIndex: number;
+  onHighlight: (mention: ComposerMention) => void;
+  onPick: (mention: ComposerMention) => void;
+}) {
+  return (
+    <div
+      id={id}
+      role="listbox"
+      aria-label={t`Mentions`}
+      data-testid="mention-picker"
+      className="mb-2 overflow-hidden rounded-[14px] border border-border bg-muted animate-in fade-in-0 slide-in-from-bottom-1 duration-150 motion-reduce:animate-none"
+    >
+      {options.map((mention, index) => {
+        const highlighted = index === activeIndex;
+        return (
+          <button
+            id={`${id}-option-${index}`}
+            key={mentionChipKey(mention)}
+            type="button"
+            role="option"
+            aria-selected={highlighted}
+            aria-label={t`@${mention.name}`}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => onPick(mention)}
+            // Opening the list under a stationary pointer must not steal the keyboard highlight.
+            onMouseMove={() => onHighlight(mention)}
+            className={`flex w-full items-start gap-3 px-4 py-2.5 text-start hover:bg-accent ${
+              highlighted ? "bg-accent" : ""
+            }`}
+          >
+            <MentionOptionIcon mention={mention} />
+            <span className="min-w-0">
+              <span dir="auto" className="block text-[14px] text-foreground">
+                @{mention.name}
+              </span>
+              {mention.subtitle ? (
+                <span dir="auto" className="block truncate text-[12.5px] text-muted-foreground">
+                  {mention.subtitle}
+                </span>
+              ) : null}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 export function MentionChipIcon({ mention }: { mention: ComposerMention }) {

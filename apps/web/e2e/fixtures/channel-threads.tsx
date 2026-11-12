@@ -139,6 +139,12 @@ function Channel() {
             scrollRequest={null}
             onScrollRequestHandled={noop}
             enterToSend
+            mentionTargets={MEMBERS.map((member) => ({
+              kind: "bot" as const,
+              id: member.botId,
+              name: member.name,
+              color: member.color,
+            }))}
             onSend={async (text) => {
               setMessages((current) => [...current, person(text, { threadRootId: root.id })]);
             }}

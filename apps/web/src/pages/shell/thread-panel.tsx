@@ -1,15 +1,23 @@
 import type { ThreadMessage } from "@corvo/contracts";
-import type { FoldedTranscript } from "@corvo/core";
-import { newClientId, resolveMentionPickerKey } from "@corvo/core";
+import type { ComposerMention, FoldedTranscript } from "@corvo/core";
+import {
+  clampMentionHighlightIndex,
+  filterMentionOptions,
+  mentionChipKey,
+  newClientId,
+  resolveMentionPickerKey,
+  serializeComposerPrompt,
+} from "@corvo/core";
 import type { GroupAvatarMember } from "@corvo/ui-web";
 import { Button, Textarea } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { ArrowUp, X } from "lucide-react";
 import type { ComponentProps, RefObject } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { WorkingLine } from "../../components/WorkingLine";
 import { errorText } from "../../lib/user-error";
 import { FALLBACK_BOT_COLOR } from "./chat-shared";
+import { ComposerChip, MentionChipIcon, MentionPicker } from "./composer-mentions";
 import { Transcript } from "./transcript";
 
 type TranscriptProps = ComponentProps<typeof Transcript>;
@@ -57,6 +65,7 @@ export function ThreadPanel({
   scrollRequest,
   onScrollRequestHandled,
   enterToSend,
+  mentionTargets,
   onSend,
   onClose,
 }: {
@@ -66,8 +75,10 @@ export function ThreadPanel({
   scrollRequest: { messageId: string; nonce: number } | null;
   onScrollRequestHandled: () => void;
   enterToSend: boolean;
+  /** What `@` offers; a thread only wakes agents, so channels, routines and the like are left out. */
+  mentionTargets: ComposerMention[];
   /** Posts into the thread; rejects when the message was not accepted. */
-  onSend: (text: string, clientNonce: string) => Promise<void>;
+  onSend: (text: string, mentions: ComposerMention[], clientNonce: string) => Promise<void>;
   onClose: () => void;
 }) {
   const { t } = useLingui();
@@ -138,6 +149,7 @@ export function ThreadPanel({
           textareaRef={textareaRef}
           enterToSend={enterToSend}
           rootId={root.id}
+          mentionTargets={mentionTargets}
           onSend={onSend}
         />
       </div>
@@ -163,17 +175,31 @@ function ThreadComposer({
   textareaRef,
   enterToSend,
   rootId,
+  mentionTargets,
   onSend,
 }: {
   textareaRef: RefObject<HTMLTextAreaElement | null>;
   enterToSend: boolean;
   rootId: string;
-  onSend: (text: string, clientNonce: string) => Promise<void>;
+  mentionTargets: ComposerMention[];
+  onSend: (text: string, mentions: ComposerMention[], clientNonce: string) => Promise<void>;
 }) {
   const { t } = useLingui();
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mentions, setMentions] = useState<ComposerMention[]>([]);
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [highlightKey, setHighlightKey] = useState<string | null>(null);
+  const listboxId = useId();
+  const mentionOptions = useMemo(
+    () => filterMentionOptions(mentionTargets, mentionQuery),
+    [mentionTargets, mentionQuery],
+  );
+  const activeIndex = clampMentionHighlightIndex(
+    mentionOptions.findIndex((mention) => mentionChipKey(mention) === highlightKey),
+    mentionOptions.length,
+  );
   // One nonce per draft, so a retry after a dropped connection never posts it twice.
   const nonce = useRef(newClientId());
   const sendingRef = useRef(false);
@@ -185,16 +211,41 @@ function ThreadComposer({
     };
   }, []);
 
+  function edit(value: string) {
+    nonce.current = newClientId();
+    setDraft(value);
+    const match = /(?:^|\s)@([\w-]*)$/.exec(value);
+    setMentionQuery(match ? (match[1] ?? "") : null);
+    setHighlightKey(null);
+  }
+
+  function pick(mention: ComposerMention) {
+    nonce.current = newClientId();
+    setDraft((current) => current.replace(/@([\w-]*)$/, ""));
+    setMentionQuery(null);
+    setHighlightKey(null);
+    setMentions((current) =>
+      current.some((chip) => mentionChipKey(chip) === mentionChipKey(mention))
+        ? current
+        : [...current, mention],
+    );
+    textareaRef.current?.focus();
+  }
+
   async function send() {
-    const text = draft.trim();
+    const text = serializeComposerPrompt(draft, null, mentions).trim();
     if (!text || sendingRef.current) return;
     sendingRef.current = true;
     setSending(true);
     setError(null);
     try {
-      await onSend(text, nonce.current);
+      await onSend(text, mentions, nonce.current);
       nonce.current = newClientId();
-      if (mounted.current) setDraft("");
+      if (mounted.current) {
+        setDraft("");
+        setMentions([]);
+        setMentionQuery(null);
+      }
     } catch (failure) {
       if (mounted.current) setError(errorText(failure, t`Failed to send message`));
     } finally {
@@ -210,7 +261,35 @@ function ThreadComposer({
           {error}
         </p>
       ) : null}
+      {mentionOptions.length > 0 ? (
+        <MentionPicker
+          id={listboxId}
+          options={mentionOptions}
+          activeIndex={activeIndex}
+          onHighlight={(mention) => setHighlightKey(mentionChipKey(mention))}
+          onPick={pick}
+        />
+      ) : null}
       <div className="flex items-end gap-2 rounded-[20px] border border-border bg-background py-1.5 ps-3.5 pe-2 focus-within:border-input">
+        {mentions.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5 self-center">
+            {mentions.map((mention) => (
+              <ComposerChip
+                key={mentionChipKey(mention)}
+                data-testid="mention-chip"
+                data-mention-kind={mention.kind}
+                icon={<MentionChipIcon mention={mention} />}
+                label={mention.name}
+                removeLabel={t`Remove mention ${mention.name}`}
+                onRemove={() =>
+                  setMentions((current) =>
+                    current.filter((chip) => mentionChipKey(chip) !== mentionChipKey(mention)),
+                  )
+                }
+              />
+            ))}
+          </div>
+        ) : null}
         <Textarea
           ref={textareaRef}
           key={rootId}
@@ -220,11 +299,13 @@ function ThreadComposer({
           dir="auto"
           rows={1}
           value={draft}
-          onChange={(event) => {
-            nonce.current = newClientId();
-            setDraft(event.target.value);
-          }}
+          onChange={(event) => edit(event.target.value)}
           onKeyDown={(event) => {
+            if (event.key === "Backspace" && draft.length === 0 && mentions.length > 0) {
+              event.preventDefault();
+              setMentions((current) => current.slice(0, -1));
+              return;
+            }
             const action = resolveMentionPickerKey({
               key: event.key,
               shiftKey: event.shiftKey,
@@ -232,19 +313,32 @@ function ThreadComposer({
               metaKey: event.metaKey,
               enterToSend,
               isComposing: event.nativeEvent.isComposing || event.keyCode === 229,
-              optionCount: 0,
-              highlightedIndex: 0,
+              optionCount: mentionOptions.length,
+              highlightedIndex: activeIndex,
             });
-            if (action.type !== "send") return;
-            event.preventDefault();
-            void send();
+            if (action.type === "complete") {
+              const mention = mentionOptions[action.index];
+              if (!mention) return;
+              event.preventDefault();
+              pick(mention);
+            } else if (action.type === "move") {
+              event.preventDefault();
+              setHighlightKey(mentionChipKey(mentionOptions[action.index]!));
+            } else if (action.type === "dismiss") {
+              event.preventDefault();
+              setMentionQuery(null);
+              setHighlightKey(null);
+            } else if (action.type === "send") {
+              event.preventDefault();
+              void send();
+            }
           }}
           className="rk-scroll max-h-25 min-h-6 min-w-0 flex-1 resize-none border-0 bg-transparent px-0 py-1 text-body1 shadow-none focus-visible:ring-0"
         />
         <Button
           size="icon"
           aria-label={t`Send`}
-          disabled={sending || draft.trim().length === 0}
+          disabled={sending || (draft.trim().length === 0 && mentions.length === 0)}
           onClick={() => void send()}
           className="size-8 shrink-0 rounded-full disabled:bg-primary-disabled disabled:text-foreground/30 disabled:opacity-100"
         >

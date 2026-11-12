@@ -119,7 +119,7 @@ export const MASCOT_LOOKS: Record<MascotId, { color: string }> = {
   pink: { color: "#e788b6" },
   red: { color: "#f48877" },
   orange: { color: "#e59651" },
-  lime: { color: "#87bd68" },
+  lime: { color: "#a9c845" },
   yellow: { color: "#cda448" },
   cyan: { color: "#4bbdcf" },
   neutral: { color: "#55555c" },

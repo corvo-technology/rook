@@ -1,10 +1,11 @@
 import { randomBytes } from "node:crypto";
-import { runContinueJob, runJobKey } from "@corvo/adapter-kit";
+import { botAvatarDesignJob, runContinueJob, runJobKey } from "@corvo/adapter-kit";
 import type { getBotSecretMetadata } from "@corvo/adapters";
 import {
   archiveBot,
   cancelComputerRunWork,
   checkpointAndStopComputer,
+  chooseBotPiece,
   forgetBotSecret,
   hasActiveComputerControl,
   listBotSecretMetadata,
@@ -235,6 +236,12 @@ export function botsRoutes(ctx: RouterContext) {
         } catch (error) {
           throw mapSpaceLifecycleError(error);
         }
+        // Nobody picked a look, so the bot gets a body that says what it does, once it exists.
+        if (input.color === undefined && (input.title.trim() || input.description.trim())) {
+          await deps.jobs.enqueue(botAvatarDesignJob(bot.id)).catch((error) => {
+            getLogger().error("bot avatar design enqueue", error);
+          });
+        }
         if (input.intro !== false) {
           await enqueueBotIntroRun(deps, context.actor, bot).catch((error) => {
             getLogger().error("bot intro run enqueue", error);
@@ -264,6 +271,20 @@ export function botsRoutes(ctx: RouterContext) {
       importUndo: authed.bots.importUndo.handler(async ({ context, input }) =>
         undoAgentImport(agentImportServices as AgentImportServices, context.actor, input),
       ),
+      designAvatar: authed.bots.designAvatar.handler(async ({ context, input }) => {
+        // Reads the bot under the caller's own scope first, so another account's bot is refused.
+        await repos.getBot(context.actor, input.botId);
+        if (deps.avatarDesign) {
+          await chooseBotPiece(deps.avatarDesign, {
+            botId: input.botId,
+            spaceId: context.actor.spaceId,
+            replace: true,
+          });
+        }
+        const found = (await repos.listBots(context.actor)).find((bot) => bot.id === input.botId);
+        if (!found) throw new IsolationError();
+        return found;
+      }),
       duplicate: authed.bots.duplicate.handler(async ({ context, input }) => {
         const source = await repos.getBot(context.actor, input.botId);
         const duplicate = await repos
@@ -401,6 +422,17 @@ export function botsRoutes(ctx: RouterContext) {
           if (!(error instanceof InstructionConflictError)) throw error;
           throw new ORPCError("CONFLICT", { message: error.message });
         });
+        // The first time the bot is told what it does, it can wear a body that says so.
+        const wasUnnamedRole = !existing.title.trim() && !existing.description.trim();
+        const hasRole = Boolean(
+          (input.title ?? existing.title).trim() ||
+            (input.description ?? existing.description).trim(),
+        );
+        if (input.color === undefined && wasUnnamedRole && hasRole) {
+          await deps.jobs.enqueue(botAvatarDesignJob(input.botId)).catch((error) => {
+            getLogger().error("bot avatar design enqueue", error);
+          });
+        }
         const bots = await repos.listBots(context.actor);
         const bot = bots.find((b) => b.id === input.botId);
         if (!bot) throw new IsolationError();

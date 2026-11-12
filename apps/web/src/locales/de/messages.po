@@ -5026,6 +5026,10 @@ msgstr "Wähle ein Modell aus der Liste oder gib eine Modell-ID ein, die dieser 
 msgid "Pick a tool to check"
 msgstr "Wähle ein Tool zum Prüfen"
 
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "Pick from role"
+msgstr "Passend zur Rolle wählen"
+
 #: src/pages/board/BoardLanes.tsx
 msgid "Picked up {ref}."
 msgstr "{ref} aufgenommen."

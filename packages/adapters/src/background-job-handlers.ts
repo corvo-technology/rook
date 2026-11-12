@@ -19,6 +19,7 @@ import {
   prismaConsent,
   transcribeAudioArtifact,
 } from "./audio-transcription.js";
+import { chooseBotPiece } from "./avatar-design.js";
 import { settleCallRequest } from "./call-request.js";
 import type { CloudAgentConnection } from "./cloud-agent-factory.js";
 import { pollCloudAgent } from "./cloud-agent-poll.js";
@@ -149,6 +150,8 @@ export function createBackgroundJobHandlers(deps: {
     deps.prisma.computer.findUnique({ where: { id: computerId }, select: OWNER });
   const thread = ({ threadId }: { threadId: string }) =>
     deps.prisma.thread.findUnique({ where: { id: threadId }, select: OWNER });
+  const bot = ({ botId }: { botId: string }) =>
+    deps.prisma.bot.findUnique({ where: { id: botId }, select: OWNER });
   const skill = ({ skillId }: { skillId: string }) =>
     deps.prisma.taughtSkill.findUnique({ where: { id: skillId }, select: OWNER });
   const cloudAgent = ({ agentId }: { agentId: string }) =>
@@ -232,6 +235,18 @@ export function createBackgroundJobHandlers(deps: {
     "push.receipt": async (payload) => {
       await runAsSystem("check a push receipt", () => deps.notifications?.checkReceipt(payload));
     },
+    "bot.design-avatar": asOwner(bot, async (payload) => {
+      await chooseBotPiece(
+        {
+          prisma: deps.prisma,
+          runtime: deps.runtime,
+          events: deps.events,
+          resolveModel: deps.executor.resolveModel,
+          resolveFastModel: deps.executor.resolveFastModel,
+        },
+        payload,
+      );
+    }),
     "wiki.curate": asOwner(thread, async (payload) => {
       await curateWiki(
         {

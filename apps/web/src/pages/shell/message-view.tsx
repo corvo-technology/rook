@@ -35,6 +35,7 @@ import { SkillDraftCard } from "../../components/teach/SkillDraftCard";
 import { WikiChangeBlock } from "../../components/WikiChangeBlock";
 import { approvalTextLabel } from "../../lib/activity-label";
 import type { ArtifactTarget } from "../../lib/artifact-open";
+import { useComposerTyping } from "../../lib/composer-typing";
 import type { DelegationState } from "../../lib/delegation-states";
 import { delegationKey } from "../../lib/delegation-states";
 import { messageProviderLabel } from "../../lib/messaging";
@@ -57,6 +58,48 @@ import {
 } from "./message-cards";
 import { MessageHoverActions } from "./message-hover-actions";
 
+/**
+ * How an agent's face in the conversation is drawn: a still picture, moving, or moving and showing
+ * that the agent is at work (its latest message).
+ */
+export type MessageFace = "still" | "live" | "current";
+
+/** Looking at the composer below, while the person types. */
+const TOWARD_COMPOSER = { x: 0, y: 0.9 };
+/** Looking along the line to the agent a handoff names, beside the sender's name. */
+const TOWARD_RECIPIENT = { x: 0.9, y: -0.15 };
+
+/**
+ * An agent's face in the conversation. It is live while it is among the latest messages, looks at
+ * the composer while the person types, and otherwise at `toward`, when it hands work to someone.
+ */
+function ChannelFace({
+  color,
+  identity,
+  face,
+  status,
+  toward,
+}: {
+  color: string;
+  identity?: string;
+  face: MessageFace;
+  status?: string;
+  toward?: { x: number; y: number };
+}) {
+  const typing = useComposerTyping();
+  return (
+    <BotAvatar
+      color={color}
+      identity={identity}
+      size={36}
+      live={face !== "still"}
+      // Only an agent's latest message shows what it is doing; its older ones keep a calm face.
+      status={face === "current" ? status : undefined}
+      lookAt={face !== "still" ? (typing ? TOWARD_COMPOSER : toward) : undefined}
+    />
+  );
+}
+
 export const MessageView = memo(function MessageView({
   artifactTarget,
   canAnswer,
@@ -72,6 +115,7 @@ export const MessageView = memo(function MessageView({
   speakerRole,
   channelMembers,
   continued = false,
+  face = "still",
   memberName,
   peerBot,
   delegation,
@@ -119,6 +163,8 @@ export const MessageView = memo(function MessageView({
   channelMembers?: readonly { id: string; name: string }[];
   /** The same agent as the message above, a moment later: no name or face of its own. */
   continued?: boolean;
+  /** Only the latest messages have a moving face, so a long history stays still. */
+  face?: MessageFace;
   memberName?: (botId: string | undefined) => string | undefined;
   peerBot: (botId: string) => { name?: string; color: string; status?: string } | undefined;
   /** Whether each request this bot sent to another bot has been answered. */
@@ -214,10 +260,16 @@ export const MessageView = memo(function MessageView({
         <UserRound className="size-[18px]" />
       </span>
     ) : (
-      <BotAvatar
+      <ChannelFace
         color={speakerBot?.color ?? FALLBACK_BOT_COLOR}
         identity={message.botId}
-        size={36}
+        face={face}
+        status={speakerBot?.status}
+        toward={
+          channelMembers && message.blocks.some((block) => block.kind === "handoff")
+            ? TOWARD_RECIPIENT
+            : undefined
+        }
       />
     )
   ) : null;
@@ -386,10 +438,12 @@ export const MessageView = memo(function MessageView({
                 <div key={i} data-testid="channel-handoff" className="flex gap-3">
                   {speakerName ? null : (
                     <span className="mt-0.5 shrink-0">
-                      <BotAvatar
+                      <ChannelFace
                         color={peerBot(block.fromBotId)?.color ?? FALLBACK_BOT_COLOR}
                         identity={block.fromBotId}
-                        size={36}
+                        face={face}
+                        status={peerBot(block.fromBotId)?.status}
+                        toward={TOWARD_RECIPIENT}
                       />
                     </span>
                   )}

@@ -25,7 +25,7 @@ import {
 import { Button } from "@corvo/ui-web/components/ui/button";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
-import { Check, Pencil, Plus, Upload, X } from "lucide-react";
+import { Check, Loader2, Pencil, Plus, Upload, X } from "lucide-react";
 import type { ClipboardEvent, DragEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 
@@ -199,6 +199,8 @@ export interface AvatarStudioPopoverProps {
   status?: string;
   size?: number;
   onChange: (value: string) => void;
+  /** Chooses the piece that fits the agent's role; resolves once it wears it, or does not. */
+  onDesign?: () => Promise<void>;
   disabled?: boolean;
 }
 
@@ -208,12 +210,26 @@ export function AvatarStudioPopover({
   status,
   size = 72,
   onChange,
+  onDesign,
   disabled = false,
 }: AvatarStudioPopoverProps) {
   const [open, setOpen] = useState(false);
+  const [designing, setDesigning] = useState(false);
   const [activeTab, setActiveTab] = useState<"bot" | "character" | "upload">("bot");
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function design() {
+    if (!onDesign || designing) return;
+    setDesigning(true);
+    try {
+      await onDesign();
+    } catch {
+      // The agent keeps the look it has.
+    } finally {
+      setDesigning(false);
+    }
+  }
 
   function restoreDefaultAvatar() {
     const next = defaultBotAvatarValue(value);
@@ -356,6 +372,21 @@ export function AvatarStudioPopover({
               data-testid="avatar-studio-character-tab"
             >
               <BotCharacterPicker value={value} onChange={onChange} />
+              {onDesign ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  className="mt-3 w-full"
+                  disabled={designing}
+                  aria-busy={designing}
+                  onClick={() => void design()}
+                  data-testid="avatar-studio-design"
+                >
+                  {designing ? <Loader2 size={14} className="animate-spin" /> : null}
+                  <Trans>Pick from role</Trans>
+                </Button>
+              ) : null}
             </TabsContent>
             <TabsContent value="upload">
               <button

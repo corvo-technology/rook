@@ -6,7 +6,7 @@ import type {
   JobPublisher,
   SandboxProvider,
 } from "@corvo/adapter-kit";
-import { routineJobKey, runContinueJob, runJobKey } from "@corvo/adapter-kit";
+import { botAvatarDesignJob, routineJobKey, runContinueJob, runJobKey } from "@corvo/adapter-kit";
 import type { Actor, Bot, ComputerMode } from "@corvo/contracts";
 import {
   BOT_DESCRIPTION_MAX_LENGTH,
@@ -118,6 +118,15 @@ export async function spawnBot(
       title: existing.title,
       threadId: existing.thread.id,
     };
+  }
+
+  // Nobody picked a look for it, so it gets a body that says what it does.
+  if (!duplicate) {
+    try {
+      await deps.jobs.enqueue(botAvatarDesignJob(created.id));
+    } catch (error) {
+      getLogger().error("spawned bot avatar design enqueue", error);
+    }
   }
 
   const prompt = (input.prompt ?? "").trim();

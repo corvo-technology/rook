@@ -8,6 +8,7 @@ import type {
   SecretStore,
 } from "@corvo/adapter-kit";
 import type {
+  AvatarDesignDeps,
   CliEngineSetupService,
   CloudAgentConnection,
   CodexLiveCatalog,
@@ -140,6 +141,8 @@ export interface RouterDeps {
   /** Present only when the deployment bills; self-hosted installs leave it unset. */
   billing?: BillingService;
   speechSummary?: VoiceDeps["speechSummary"];
+  /** Designs an avatar from a role on the owner's model connection; absent without a model runtime. */
+  avatarDesign?: AvatarDesignDeps;
   /** Picks who answers a channel message that names nobody; absent keeps the older rule. */
   channelRouter?: RouterModel;
   env: {

@@ -37,6 +37,7 @@ import {
   subscribeComposerDraftAccepted,
   writeComposerDraft,
 } from "../../lib/composer-draft";
+import { clearComposerTyping, noteComposerTyping } from "../../lib/composer-typing";
 import { isFileDrag, isFilePaste } from "../../lib/pending-attachments";
 import { ComposerReplyPreview } from "./chat-context";
 import type { PendingAttachment } from "./chat-shared";
@@ -270,6 +271,8 @@ export const Composer = memo(function Composer({
     };
   }, []);
   useEffect(() => setAgentDrop(null), [draftKey]);
+  // A conversation switch or a send ends the typing the avatars were looking at.
+  useEffect(() => clearComposerTyping, [draftKey]);
 
   function pickAttachments(files: FileList | readonly File[] | null) {
     if (!files?.length) return;
@@ -278,6 +281,8 @@ export const Composer = memo(function Composer({
 
   function updateDraft(value: string) {
     markEdited();
+    if (value.trim()) noteComposerTyping();
+    else clearComposerTyping();
     writeComposerDraft(draftKey, value);
     setDraft(value);
     const mentionMatch = /(?:^|\s)@([\w-]*)$/.exec(value);
@@ -388,6 +393,7 @@ export const Composer = memo(function Composer({
     const text = serializeComposerPrompt(draft, selectedSkill, selectedMentions);
     const submission = beginComposerDraftSubmission(draftKey, draft);
     setDraft("");
+    clearComposerTyping();
     setMentionQuery(null);
     setMentionHighlightKey(null);
     setSlashQuery(null);

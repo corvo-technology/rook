@@ -241,6 +241,11 @@ export function ShellSidePanel({
                 // Persistence succeeded; a failed navigation refresh must not undo the tool edit.
                 await refreshBots().catch(() => undefined);
               }}
+              onDesignAvatar={async () => {
+                const updated = await rpc.bots.designAvatar({ botId: active.id });
+                setBots((current) => current.map((bot) => (bot.id === updated.id ? updated : bot)));
+                return updated.color;
+              }}
               onExport={async () => {
                 const manifest = await rpc.export.bot({ botId: active.id });
                 const blob = new Blob([JSON.stringify(manifest, null, 2)], {

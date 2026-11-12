@@ -49,6 +49,7 @@ import { TimeSeparator, UnreadDivider } from "./chat-context";
 import { ChatEmpty } from "./chat-empty";
 import { FALLBACK_BOT_COLOR } from "./chat-shared";
 import type { ImportSetupTarget } from "./import-setup-card";
+import type { MessageFace } from "./message-view";
 import { MessageView } from "./message-view";
 import { QuoteSelectionButton } from "./quote-selection-button";
 
@@ -58,6 +59,9 @@ export function bubbleFrameWidth(role: ThreadMessage["role"]) {
     ? "max-w-[min(84%,calc(100%_-_8rem),39rem)] [@media(hover:none)]:max-w-[min(84%,39rem)]"
     : "max-w-[min(88%,calc(100%_-_8rem),39rem)] [@media(hover:none)]:max-w-[min(88%,39rem)]";
 }
+
+/** How many of the latest messages show a moving face. */
+const LIVE_FACE_MESSAGES = 12;
 
 export const Transcript = memo(function Transcript({
   scrollRef,
@@ -242,6 +246,14 @@ export const Transcript = memo(function Transcript({
     (id) => separatorIds.has(id) || id === unreadDividerId,
     { people: channel },
   );
+  // Only the faces of the latest messages move, so a long history is still pictures.
+  const faces = new Map<string, MessageFace>();
+  const seenBots = new Set<string>();
+  for (const message of shownMessages.slice(-LIVE_FACE_MESSAGES).reverse()) {
+    const first = message.botId !== undefined && !seenBots.has(message.botId);
+    if (message.botId) seenBots.add(message.botId);
+    faces.set(message.id, first ? "current" : "live");
+  }
   const workingLabel = liveActivityLine(messages) ?? t`Working…`;
   const [quoteDraft, setQuoteDraft] = useState<{
     message: ThreadMessage;
@@ -610,6 +622,7 @@ export const Transcript = memo(function Transcript({
                       onTogglePeerReplies={togglePeerReplies}
                       onAnswer={onAnswer}
                       continued={continued.has(message.id)}
+                      face={faces.get(message.id)}
                       speakerName={
                         peerReceipt
                           ? undefined

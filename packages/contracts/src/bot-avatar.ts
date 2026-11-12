@@ -4,6 +4,13 @@ import * as z from "zod";
 export const BOT_AVATAR_SHAPE_COUNT = 8;
 
 /**
+ * The chess pieces an agent can be, besides the rook every bot wears by default. They come first
+ * when choosing a look, and an agent's role picks one of them.
+ */
+export const CHESS_PIECE_IDS = ["king", "queen", "bishop", "knight", "pawn"] as const;
+export type ChessPieceId = (typeof CHESS_PIECE_IDS)[number];
+
+/**
  * The characters a bot can wear in its own color, from Open Bot Avatar (MIT), by the id of their
  * definition. Their geometry lives where they are drawn; this is what a stored value may name.
  */

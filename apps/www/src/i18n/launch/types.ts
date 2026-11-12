@@ -84,6 +84,8 @@ export type LaunchCopy = {
     heading: string;
     accent: string;
     copy: string;
+    /** What a rook's state is called: working, needs you, asleep, done. */
+    states: { working: string; asking: string; sleeping: string; done: string };
     traits: Array<{ title: string; body: string }>;
   };
   /** Agents in a channel, working together. */

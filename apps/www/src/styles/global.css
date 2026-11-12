@@ -1,30 +1,32 @@
 @import "tailwindcss";
 
 :root {
-  color-scheme: light dark;
-  --rook-eye: #0a0a0a;
+  color-scheme: light;
+  --rook-eye: #0b0b0c;
+  --rook-asleep: #a3a3a8;
   --font-display: "Inter Tight", Inter, ui-sans-serif, system-ui, sans-serif;
-  --page: #fdfdfd;
+  /* Paper and ink: a warm off-white page, ink type, hairlines. Mint stays rare. */
+  --page: #fafaf7;
   --surface: #ffffff;
-  --surface-soft: #f7f7f7;
-  --ink: #0a0a0a;
-  --body: #3d3d3d;
-  --muted: #6b6b6b;
-  --muted-2: #6d6e70;
-  --line: #ececec;
-  --line-2: #e0e0e0;
-  /* Brand accent. In light mode it is a deeper green so text and links keep contrast. */
-  --blue: #0b7a5a;
-  --blue-top: #1c1c1c;
-  --blue-bottom: #0a0a0a;
-  --on-primary: #ffffff;
-  --blue-soft: #e8f8f2;
-  --blue-soft-2: #cdf0e3;
-  --blue-line: #bfe8d8;
-  --button-secondary-bg: #ffffff;
-  --button-secondary-bg-hover: #fafafa;
-  --button-secondary-ink: #3d3d3d;
-  --primary-glow: rgba(10, 10, 10, 0.18);
+  --surface-soft: #f3f2ee;
+  --ink: #0b0b0c;
+  --body: #3a3a3f;
+  --muted: #6b6b72;
+  --muted-2: #55555c;
+  --line: #e6e4df;
+  --line-2: #d6d3cc;
+  /* Brand text on paper: the deeper mint, readable on light. */
+  --blue: #197b56;
+  --blue-top: #0b0b0c;
+  --blue-bottom: #0b0b0c;
+  --on-primary: #fafaf7;
+  --blue-soft: #eaf4ee;
+  --blue-soft-2: #d3ecdf;
+  --blue-line: #bfe0ce;
+  --button-secondary-bg: transparent;
+  --button-secondary-bg-hover: #f3f2ee;
+  --button-secondary-ink: #0b0b0c;
+  --primary-glow: rgba(11, 11, 12, 0.18);
   --panel: #0b0b0c;
   --panel-2: #0f0f10;
   --panel-line: #1b1b1d;
@@ -41,53 +43,21 @@
   --indigo-soft: #e2e2fd;
   --green: #1f7f5f;
   --green-soft: #d6f3e9;
-  --shadow-soft: 0 2px 16px rgba(0, 0, 0, 0.03);
-  --shadow-demo: 0 30px 80px -30px rgba(0, 0, 0, 0.35);
-  --hero-glow: rgba(11, 122, 90, 0.1);
-  --hero-shadow: rgba(11, 122, 90, 0.22);
+  --shadow-soft: 0 1px 1px rgb(0 0 0 / 0.04), 0 8px 24px -8px rgb(0 0 0 / 0.08);
+  --shadow-demo:
+    0 1px 1px rgb(0 0 0 / 0.04), 0 8px 24px -8px rgb(0 0 0 / 0.08),
+    0 32px 64px -24px rgb(0 0 0 / 0.1);
+  --hero-glow: transparent;
+  --hero-shadow: transparent;
   --radius-card: 28px;
   --radius-frame: 26px;
 }
 
-/* Dark follows the system unless the page sets data-theme="light". */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --page: #0a0a0a;
-    --surface: #111113;
-    --surface-soft: #151517;
-    --ink: #f4f4f5;
-    --body: #c9c9ce;
-    --muted: #8d8d94;
-    --muted-2: #a0a0a6;
-    --line: #1f1f23;
-    --line-2: #2a2a2f;
-    --blue: #54c398;
-    --blue-top: #54c398;
-    --blue-bottom: #54c398;
-    --on-primary: #0a0a0a;
-    --blue-soft: #0e1512;
-    --blue-soft-2: #14221c;
-    --blue-line: #2f3d38;
-    --button-secondary-bg: #151517;
-    --button-secondary-bg-hover: #1b1b1e;
-    --button-secondary-ink: #d6d6da;
-    --primary-glow: rgba(84, 195, 152, 0.22);
-    --panel: #0f0f10;
-    --panel-2: #131315;
-    --panel-line: #232326;
-    --panel-line-2: #2c2c30;
-    --coral-soft: #3a2218;
-    --indigo-soft: #23234a;
-    --green-soft: #12322a;
-    --shadow-soft: 0 2px 16px rgba(0, 0, 0, 0.4);
-    --shadow-demo: 0 30px 80px -30px rgba(0, 0, 0, 0.8);
-  --hero-glow: rgba(84, 195, 152, 0.16);
-  --hero-shadow: rgba(84, 195, 152, 0.3);
-  }
-}
-
-:root[data-theme="dark"] {
-  --page: #0a0a0a;
+/* The black rooms: the product window, the closing band and the footer. Everything inside reads
+   the same tokens, now dark. */
+.ink {
+  --rook-asleep: #4a4a52;
+  --page: #0b0b0c;
   --surface: #111113;
   --surface-soft: #151517;
   --ink: #f4f4f5;
@@ -97,30 +67,37 @@
   --line: #1f1f23;
   --line-2: #2a2a2f;
   --blue: #54c398;
-  --blue-top: #54c398;
-  --blue-bottom: #54c398;
-  --on-primary: #0a0a0a;
+  --blue-top: #f4f4f5;
+  --blue-bottom: #f4f4f5;
+  --on-primary: #0b0b0c;
   --blue-soft: #0e1512;
   --blue-soft-2: #14221c;
   --blue-line: #2f3d38;
-  --button-secondary-bg: #151517;
   --button-secondary-bg-hover: #1b1b1e;
-  --button-secondary-ink: #d6d6da;
-  --primary-glow: rgba(84, 195, 152, 0.22);
-  --panel: #0f0f10;
-  --panel-2: #131315;
-  --panel-line: #232326;
-  --panel-line-2: #2c2c30;
-  --coral-soft: #3a2218;
-  --indigo-soft: #23234a;
-  --green-soft: #12322a;
-  --shadow-soft: 0 2px 16px rgba(0, 0, 0, 0.4);
-  --shadow-demo: 0 30px 80px -30px rgba(0, 0, 0, 0.8);
-  --hero-glow: rgba(84, 195, 152, 0.16);
-  --hero-shadow: rgba(84, 195, 152, 0.3);
+  --button-secondary-ink: #f4f4f5;
+  --shadow-soft: 0 2px 16px rgb(0 0 0 / 0.4);
+  background: var(--page);
+  color: var(--body);
+}
+
+/* A full-bleed band: the background runs edge to edge while the content keeps its column. */
+.ink-band {
+  box-shadow: 0 0 0 100vmax var(--page);
+  clip-path: inset(0 -100vmax);
+}
+
+::selection {
+  background: var(--blue-soft-2);
+  color: var(--ink);
+}
+
+:where(a, button, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
 }
 
 html {
+  scroll-padding-top: 88px;
   scroll-behavior: smooth;
 }
 
@@ -200,16 +177,57 @@ button {
 }
 
 .container {
+  display: flex;
+  flex-direction: column;
   width: min(1152px, calc(100% - 48px));
+  min-height: 100vh;
   margin: 0 auto;
 }
 
+.site-footer.ink {
+  border-top: 0;
+}
+
+/* On a short page the footer sits at the bottom, so the black room reaches the edge. */
+.container > .site-footer {
+  margin-top: auto;
+}
+
 .site-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 24px;
   min-height: 72px;
+}
+
+/* The bar stays with you so the rook under the nav can follow where you are; its backdrop
+   runs edge to edge, and a hairline shows once the page has moved. */
+.site-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--page);
+  box-shadow: 0 0 0 100vmax var(--page);
+  clip-path: inset(0 -100vmax -1px -100vmax);
+}
+
+.site-header[data-scrolled]::before {
+  box-shadow: 0 0 0 100vmax var(--page), 0 1px 0 var(--line);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .brand-lockup .rook {
+    transition: transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+}
+
+.site-header[data-scrolled] .brand-lockup .rook {
+  transform: scale(0.86);
 }
 
 .site-header__right,
@@ -229,14 +247,40 @@ button {
   font-size: 14px;
 }
 
+.site-nav {
+  position: relative;
+}
+
 .site-nav a {
   padding: 8px 0;
   transition: color 160ms ease;
 }
 
 .site-nav a:hover,
-.site-nav a:focus-visible {
+.site-nav a:focus-visible,
+.site-nav a[aria-current] {
   color: var(--ink);
+}
+
+/* A small rook slides under the link of the section being read, in that section's color. */
+.site-nav__rook {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: -6px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(var(--x, 0px));
+}
+
+.site-nav__rook[data-on] {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .site-nav__rook {
+    transition: transform 320ms cubic-bezier(0.34, 1.3, 0.64, 1), opacity 200ms ease;
+  }
 }
 
 .brand-lockup {
@@ -335,6 +379,10 @@ button {
 }
 
 .site-menu__panel a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   border-radius: 10px;
   padding: 11px 12px;
   color: var(--body);
@@ -342,9 +390,18 @@ button {
 }
 
 .site-menu__panel a:hover,
-.site-menu__panel a:focus-visible {
+.site-menu__panel a:focus-visible,
+.site-menu__panel a[aria-current] {
   background: var(--surface-soft);
   color: var(--ink);
+}
+
+.site-menu__panel .rook {
+  opacity: 0;
+}
+
+.site-menu__panel a[aria-current] .rook {
+  opacity: 1;
 }
 
 .button {
@@ -3486,8 +3543,7 @@ button.product-demo__dock-icon {
   fill: var(--rook);
 }
 
-.rook__eyes,
-.rook__eyes ellipse {
+.rook__eye {
   fill: var(--rook-eye);
 }
 
@@ -3498,9 +3554,95 @@ button.product-demo__dock-icon {
   stroke-linecap: round;
 }
 
+.rook__ring {
+  fill: none;
+  stroke: var(--rook);
+  stroke-width: 1.2;
+  opacity: 0.35;
+}
+
+/* The smile waits behind the eyes: done shows it, and so does a hovered or tapped rook. */
+.rook__smile {
+  opacity: 0;
+}
+
+.rook[data-mood="done"] .rook__pupils,
+.rook[data-happy] .rook__pupils,
+.rook[data-react]:hover .rook__pupils {
+  opacity: 0;
+}
+
+.rook[data-mood="done"] .rook__smile,
+.rook[data-happy] .rook__smile,
+.rook[data-react]:hover .rook__smile {
+  opacity: 1;
+}
+
+/* Asking looks up, even for those who reduce motion. */
+.rook[data-mood="asking"] .rook__look {
+  transform: translate(2px, -4px);
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .rook[data-float] {
     animation: rook-float 4s ease-in-out infinite;
+  }
+
+  .rook__gaze {
+    transform: translate(var(--gaze-x, 0px), var(--gaze-y, 0px));
+    transition: transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .rook__look {
+    transition: transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .rook__pupils,
+  .rook__smile {
+    transition: opacity 120ms ease;
+  }
+
+  /* Each rook blinks on its own beat (--blink-delay), never in step with the others. */
+  .rook:not([data-mood="sleeping"]) .rook__eye {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: rook-blink var(--blink-every, 5s) ease-in-out var(--blink-delay, 0s) infinite;
+  }
+
+  .rook__bat,
+  .rook__smile {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  /* The battlements hop once when asking starts. Still rooks wait for a hover. */
+  :is(.rook:not([data-still]), .state:is(:hover, :focus-visible) .rook)[data-mood="asking"] .rook__bat {
+    animation: rook-hop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  :is(.rook:not([data-still]), .state:is(:hover, :focus-visible) .rook)[data-mood="asking"] .rook__bat:nth-child(2) {
+    animation-delay: 60ms;
+  }
+
+  :is(.rook:not([data-still]), .state:is(:hover, :focus-visible) .rook)[data-mood="asking"] .rook__bat:nth-child(3) {
+    animation-delay: 120ms;
+  }
+
+  /* Working: the eyes scan as if reading, inside a thin pulsing ring. */
+  :is(.rook:not([data-still]), .state:is(:hover, :focus-visible) .rook)[data-mood="working"] .rook__look {
+    animation: rook-scan 2.6s ease-in-out infinite;
+  }
+
+  :is(.rook:not([data-still]), .state:is(:hover, :focus-visible) .rook)[data-mood="working"] .rook__ring {
+    animation: rook-ring 2.2s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  :is(.rook:not([data-still]), .state:is(:hover, :focus-visible) .rook)[data-mood="done"] .rook__smile,
+  .rook[data-happy] .rook__smile,
+  .rook[data-react]:hover .rook__smile {
+    animation: rook-smile 320ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
   }
 }
 
@@ -3510,6 +3652,65 @@ button.product-demo__dock-icon {
   }
 }
 
+@keyframes rook-blink {
+  0%,
+  93%,
+  100% {
+    transform: scaleY(1);
+  }
+  96% {
+    transform: scaleY(0.08);
+  }
+}
+
+@keyframes rook-scan {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  22% {
+    transform: translate(-3.2px, -2px);
+  }
+  48% {
+    transform: translate(3.4px, -2.4px);
+  }
+  74% {
+    transform: translate(2px, -0.4px);
+  }
+}
+
+@keyframes rook-hop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes rook-smile {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes rook-ring {
+  0%,
+  100% {
+    opacity: 0.12;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.03);
+  }
+}
 
 /* Talk to them anywhere */
 .anywhere {

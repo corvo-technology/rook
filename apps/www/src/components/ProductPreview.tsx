@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import type { LaunchAgent, LaunchCopy } from "../i18n/launch";
-import type { RookMood } from "./Rook";
 import { Rook } from "./Rook";
 import "../styles/preview.css";
 
@@ -32,12 +31,14 @@ export function ProductPreview({ copy }: { copy: Copy }) {
 
   const finished = decision !== "pending" && !working;
   const reply = decision === "approved" ? copy.approvedReply : copy.deniedReply;
-
-  // Asking while it waits on you, working while it carries out the answer, smiling when approved.
-  const mood: RookMood = decision === "pending" ? "asking" : working ? "working" : decision === "approved" ? "done" : "working";
+  // The agent that is waiting on your yes.
+  const asking = channel.messages.find((m) => m.kind === "agent" && m.approval);
+  const asked = asking?.kind === "agent" ? agentOf(copy, asking.agent) : undefined;
+  // The call it waited on, as one quiet line once you have answered.
+  const decided = `${copy.approvalBody.replace(/[.。]$/, "")} · ${decision === "approved" ? copy.approved : copy.denied}`;
 
   return (
-    <section className="pv" data-testid="product-preview" aria-label={`#${channel.name}`}>
+    <section className="pv ink" data-testid="product-preview" aria-label={`#${channel.name}`}>
       <header className="pv-head">
         <p>
           <strong># {channel.name}</strong>
@@ -53,23 +54,29 @@ export function ProductPreview({ copy }: { copy: Copy }) {
         const agent = agentOf(copy, message.agent);
         const waiting = Boolean(message.approval);
         return (
-          <article key={index} className="pv-msg">
-            <Rook hue={agent.hue} size={40} mood={waiting ? mood : "working"} />
-            <div className="pv-msg__body">
-              <p className="pv-msg__who">
-                <strong>{agent.name}</strong> · {agent.role}
+          <div key={index} className="pv-thread">
+            {waiting && asked ? (
+              <p className="pv-handoff">
+                <Rook hue={agentOf(copy, "Chief").hue} size={18} seed={index} />
+                <span>
+                  {copy.chief} → @{asked.name}
+                </span>
               </p>
-              <p>{message.text.join(" ")}</p>
-              {waiting ? (
-                <div className="pv-approval" data-decision={decision}>
-                  <div>
-                    <p className="pv-approval__flag">
-                      {decision === "pending" ? copy.waiting : decision === "approved" ? copy.approved : copy.denied}
-                    </p>
-                    <p>{copy.approvalBody}</p>
-                    <code>{copy.approvalCall}</code>
-                  </div>
-                  {decision === "pending" ? (
+            ) : null}
+            <article className="pv-msg">
+              <Rook hue={agent.hue} size={40} seed={index + 1} mood={waiting && decision === "pending" ? "asking" : "idle"} />
+              <div className="pv-msg__body">
+                <p className="pv-msg__who">
+                  <strong>{agent.name}</strong> · {agent.role}
+                </p>
+                <p>{message.text.join(" ")}</p>
+                {waiting && decision === "pending" ? (
+                  <div className="pv-approval" data-decision={decision}>
+                    <div>
+                      <p className="pv-approval__flag">{copy.waiting}</p>
+                      <p>{copy.approvalBody}</p>
+                      <code>{copy.approvalCall}</code>
+                    </div>
                     <div className="pv-approval__actions">
                       <button type="button" className="pv-btn pv-btn--solid" onClick={() => decide("approved")}>
                         {copy.approve}
@@ -78,20 +85,34 @@ export function ProductPreview({ copy }: { copy: Copy }) {
                         {copy.deny}
                       </button>
                     </div>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-          </article>
+                  </div>
+                ) : null}
+                {waiting && decision !== "pending" ? (
+                  <p className="pv-decided" data-decision={decision}>
+                    <span aria-hidden="true">{decision === "approved" ? "✓" : "✕"}</span> {decided}
+                  </p>
+                ) : null}
+              </div>
+            </article>
+          </div>
         );
       })}
 
-      {finished ? (
+      {asked && working ? (
+        <article className="pv-msg pv-msg--quiet">
+          <Rook hue={asked.hue} size={40} mood="working" ring />
+          <p className="pv-msg__who">
+            <strong>{asked.name}</strong> · {copy.working}…
+          </p>
+        </article>
+      ) : null}
+
+      {asked && finished ? (
         <article className="pv-msg">
-          <Rook hue={agentOf(copy, "Bento").hue} size={40} mood={mood} />
+          <Rook hue={asked.hue} size={40} mood={decision === "approved" ? "done" : "idle"} />
           <div className="pv-msg__body">
             <p className="pv-msg__who">
-              <strong>Bento</strong>
+              <strong>{asked.name}</strong>
             </p>
             {reply.map((line) => (
               <p key={line}>{line}</p>

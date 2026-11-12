@@ -1,22 +1,20 @@
 ---
-import { Rook } from "./Rook";
+import { MASCOT_COLOR } from "../mascot";
+import Avatar from "./Avatar.astro";
 
 type Props = {
-  size: number;
-  /** Share of the rook's height the page edge hides, when it peeks from below. */
-  clip?: number;
-  mood?: "idle" | "done";
+  /** Reserved empty space above a section's title: the rook may travel the margin between rows. */
+  row?: boolean;
+  mood?: "idle" | "happy";
   class?: string;
-  /** The chess piece that sits here; only the rook is drawn so far. A slot is the one place to seat another. */
-  piece?: "rook";
   /** Use "li" inside a list. */
   as?: "span" | "li";
 };
 
-const { size, clip = 0, mood = "idle", class: className, piece = "rook", as: Tag = "span" } = Astro.props;
+const { row = false, mood = "idle", class: className, as: Tag = "span" } = Astro.props;
 ---
 
-<!-- A place the guide rook rests. Without the script, or with reduced motion, a still rook sits here. -->
-<Tag class:list={["guide-slot", className]} style={`--s:${size}px`} data-guide-stop data-piece={piece} data-guide-clip={clip || undefined} aria-hidden="true">
-  <Rook hue="menta" size={size} mood={mood} />
+<!-- A place the guide rook rests, always empty space. Without the script, or with reduced motion, a still rook sits here. -->
+<Tag class:list={["guide-slot", className]} data-guide-stop data-guide-row={row ? "" : undefined} aria-hidden="true">
+  <Avatar color={MASCOT_COLOR.menta} mood={mood} />
 </Tag>

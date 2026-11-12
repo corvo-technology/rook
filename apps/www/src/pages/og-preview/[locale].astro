@@ -1,6 +1,7 @@
 ---
 import type { GetStaticPaths } from "astro";
-import { Rook } from "../../components/Rook";
+import Avatar from "../../components/Avatar.astro";
+import { MASCOT_COLOR } from "../../mascot";
 import { getLaunchCopy } from "../../i18n/launch";
 import { LOCALES, LOCALE_HTML_LANG, isLocale } from "../../i18n/locales";
 
@@ -35,12 +36,12 @@ const size = cjk ? 84 : length <= 16 ? 110 : length <= 22 ? 96 : 84;
   <body>
     <main id="og" style={`--size:${size}px`}>
       <header>
-        <Rook hue="menta" size={44} />
+        <Avatar color={MASCOT_COLOR.menta} class="og-mark" />
         <span>Rook</span>
       </header>
       <h1>
         <span>{line1}</span>
-        <Rook hue="menta" size={size * 1.17} />
+        <Avatar color={MASCOT_COLOR.menta} class="og-rook" />
         <span>{line2}</span>
       </h1>
       <p>{lead[0]} {lead[1]}</p>
@@ -53,7 +54,7 @@ const size = cjk ? 84 : length <= 16 ? 110 : length <= 22 ? 96 : 84;
   html,
   body {
     margin: 0;
-    background: #0a0a0a;
+    background: #fafaf7;
   }
   #og {
     position: relative;
@@ -65,21 +66,20 @@ const size = cjk ? 84 : length <= 16 ? 110 : length <= 22 ? 96 : 84;
     width: 1200px;
     height: 630px;
     overflow: hidden;
-    background: #0a0a0a;
-    color: #f4f4f5;
+    background: #fafaf7;
+    color: #0b0b0c;
     font-family: Inter, -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans", sans-serif;
   }
-  #og .rook {
-    display: block;
+  #og .avatar {
     flex: none;
-    overflow: visible;
   }
-  #og .rook__body {
-    fill: var(--rook);
+  #og .og-mark {
+    width: 44px;
+    height: 44px;
   }
-  #og .rook__eyes,
-  #og .rook__eyes ellipse {
-    fill: #0a0a0a;
+  #og .og-rook {
+    width: calc(var(--size) * 1.17);
+    height: calc(var(--size) * 1.17);
   }
   #og header {
     position: absolute;
@@ -106,14 +106,14 @@ const size = cjk ? 84 : length <= 16 ? 110 : length <= 22 ? 96 : 84;
   }
   #og p {
     margin: 0;
-    color: #a3a3aa;
+    color: #5b5b61;
     font-size: 30px;
     text-align: center;
   }
   #og small {
     position: absolute;
     bottom: 44px;
-    color: #8d8d94;
+    color: #8a8a90;
     font-size: 22px;
   }
 </style>

@@ -33,15 +33,10 @@ vi.mock("@corvo/chat-ui/web", () => ({
 vi.mock("@corvo/ui-web", () => {
   const Container = ({ children }: { children?: ReactNode }) => <div>{children}</div>;
   return {
-    AlertDialog: Container,
-    AlertDialogAction: Container,
-    AlertDialogCancel: Container,
-    AlertDialogContent: Container,
-    AlertDialogDescription: Container,
-    AlertDialogFooter: Container,
-    AlertDialogHeader: Container,
-    AlertDialogTitle: Container,
     BotAvatar: () => <span />,
+    EmptyState: ({ title }: { title: ReactNode }) => <p>{title}</p>,
+    toast: { error: vi.fn() },
+    undoableDeferred: vi.fn(),
     Spinner: (props: ComponentProps<"svg">) => <svg role="status" {...props} />,
     Button: (props: ComponentProps<"button">) => <button {...props} />,
     NativeSelect: (props: ComponentProps<"select">) => <select {...props} />,

@@ -1401,13 +1401,11 @@ msgstr "No puede leer imágenes"
 
 #: src/components/AskCard.tsx
 #: src/components/AutonomyPicker.tsx
-#: src/components/ComputerMaintenanceActions.tsx
 #: src/components/markdown-link-prompt.tsx
 #: src/components/PasskeySettings.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/AddStepPanel.tsx
-#: src/pages/Artifacts.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/LocalSpeechSection.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -1636,6 +1634,7 @@ msgstr "Borrando…"
 #: src/pages/AddStepPanel.tsx
 #: src/pages/Board.tsx
 #: src/pages/BoardSettings.tsx
+#: src/pages/HostComputerPrompt.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/NewRoutinePanel.tsx
@@ -1860,6 +1859,14 @@ msgstr "¿Confirmar eliminación?"
 msgid "Confirm password"
 msgstr "Confirmar contraseña"
 
+#: src/components/ComputerMaintenanceActions.tsx
+msgid "Confirm recover?"
+msgstr "¿Confirmar recuperación?"
+
+#: src/components/ComputerMaintenanceActions.tsx
+msgid "Confirm reset?"
+msgstr "¿Confirmar restablecimiento?"
+
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/ChatAppsRow.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
@@ -2008,10 +2015,6 @@ msgstr "Límite de contexto"
 #: src/pages/shell/agent-import.tsx
 msgid "Continue"
 msgstr "Continuar"
-
-#: src/components/ComputerUpdateProgress.tsx
-msgid "Continue in Background"
-msgstr "Continuar en segundo plano"
 
 #: src/components/ModelCredits.tsx
 msgid "Continue to checkout"
@@ -2778,7 +2781,6 @@ msgid "Delegating to helper: {value}"
 msgstr "Delegando al ayudante: {value}"
 
 #: src/components/PasskeySettings.tsx
-#: src/pages/Artifacts.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -2788,11 +2790,6 @@ msgstr "Delegando al ayudante: {value}"
 #: src/pages/WikiBrowser.tsx
 msgid "Delete"
 msgstr "Eliminar"
-
-#. placeholder {0}: pendingDelete.name
-#: src/pages/Artifacts.tsx
-msgid "Delete \"{0}\"?"
-msgstr "¿Eliminar «{0}»?"
 
 #. placeholder {0}: artifact.name
 #. placeholder {0}: bot.name
@@ -2837,11 +2834,15 @@ msgstr "Eliminar espacio"
 msgid "deleted"
 msgstr "eliminado"
 
+#. placeholder {0}: artifact.name
+#: src/pages/Artifacts.tsx
+msgid "Deleted {0}"
+msgstr "{0} eliminado"
+
 #: src/pages/Usage.tsx
 msgid "Deleted agent"
 msgstr "Agente eliminado"
 
-#: src/pages/Artifacts.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Deleting…"
 msgstr "Eliminando…"
@@ -5336,10 +5337,6 @@ msgstr "Grabando: {0}"
 msgid "Recover computer"
 msgstr "Recuperar computadora"
 
-#: src/components/ComputerMaintenanceActions.tsx
-msgid "Recover computer?"
-msgstr "¿Recuperar el ordenador?"
-
 #. placeholder {0}: update.name
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Recovering {0}’s Computer"
@@ -5361,7 +5358,6 @@ msgstr "Falló la recuperación"
 msgid "Recovery is unavailable until the previous operation has stopped."
 msgstr "La recuperación no está disponible hasta que la operación anterior se detenga."
 
-#: src/components/ComputerMaintenanceActions.tsx
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Recovery restores the last saved workspace. Unsaved work may be lost."
 msgstr "La recuperación restaura el último espacio de trabajo guardado. El trabajo no guardado puede perderse."
@@ -5573,7 +5569,6 @@ msgstr "Investigación y redacción"
 msgid "Research and writing"
 msgstr "Investigación y redacción"
 
-#: src/components/ComputerMaintenanceActions.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Reset"
 msgstr "Restablecer"
@@ -5585,10 +5580,6 @@ msgstr "Restablecer todo"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Reset computer"
 msgstr "Restablecer computadora"
-
-#: src/components/ComputerMaintenanceActions.tsx
-msgid "Reset computer?"
-msgstr "¿Restablecer computadora?"
 
 #: src/pages/Auth.tsx
 msgid "Reset password"
@@ -5631,10 +5622,6 @@ msgstr "Restaurar"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace."
 msgstr "Restaurar el último espacio de trabajo guardado."
-
-#: src/components/ComputerMaintenanceActions.tsx
-msgid "Restore the last saved workspace. Unsaved work on the computer is lost."
-msgstr "Restaura el último espacio de trabajo guardado. Se pierde el trabajo sin guardar en la computadora."
 
 #: src/components/AskCard.tsx
 msgid "Restored"
@@ -6695,17 +6682,9 @@ msgstr "Este bot no se importó."
 msgid "This call is no longer ringing."
 msgstr "Esta llamada ya no está sonando."
 
-#: src/pages/Artifacts.tsx
-msgid "This can't be undone."
-msgstr "Esta acción no se puede deshacer."
-
 #: src/pages/shell/dialogs.tsx
 msgid "This cannot be undone."
 msgstr "Esto no se puede deshacer."
-
-#: src/pages/PeerMessagesOverlay.tsx
-msgid "This chat is view-only"
-msgstr "Este chat es de solo lectura"
 
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/Onboarding.tsx
@@ -6716,11 +6695,6 @@ msgstr "esta computadora"
 #: src/lib/run-error.ts
 msgid "This conversation is too long for the model. Retrying won't help. Start a new chat or shorten your message."
 msgstr "Esta conversación es demasiado larga para el modelo. Volver a intentarlo no servirá. Inicia un chat nuevo o acorta tu mensaje."
-
-#. placeholder {0}: pendingDelete.versionCount
-#: src/pages/Artifacts.tsx
-msgid "This deletes all {0} versions of this artifact. This can't be undone."
-msgstr "Esto elimina las {0} versiones de este artefacto. No se puede deshacer."
 
 #: src/components/ArtifactFileCard.tsx
 msgid "This file is not valid UTF-8 text."
@@ -6968,6 +6942,7 @@ msgstr "Escribe tu respuesta"
 #: src/components/AskCard.tsx
 #: src/components/MemoryFactCard.tsx
 #: src/components/WikiChangeCard.tsx
+#: src/pages/Artifacts.tsx
 #: src/pages/shell/shell-dialogs.tsx
 msgid "Undo"
 msgstr "Deshacer"

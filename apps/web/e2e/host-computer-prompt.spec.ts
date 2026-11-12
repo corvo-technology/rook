@@ -47,7 +47,7 @@ for (const platform of ["darwin", "linux"]) {
       await route.fulfill({ response, json: body });
     });
     await page.reload();
-    const dialog = page.getByRole("dialog", { name: "Where should bots run?" });
+    const dialog = page.getByRole("region", { name: "Where should bots run?" });
     await expect(dialog).toBeVisible();
     await expect(dialog).toHaveAccessibleDescription(
       /Local access lets bots run commands without asking\. Avoid it on shared or public servers\./,
@@ -157,7 +157,7 @@ test("a saved host choice closes when refreshing the profile fails", async ({ pa
     await route.fulfill({ response, json: body });
   });
   await page.reload();
-  const dialog = page.getByRole("dialog", { name: "Where should bots run?" });
+  const dialog = page.getByRole("region", { name: "Where should bots run?" });
   await expect(dialog).toBeVisible();
   await dialog.getByRole("button", { name: "Docker", exact: true }).click();
   await expect(dialog).toBeHidden();

@@ -1,14 +1,8 @@
 import type { Me } from "@corvo/contracts";
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@corvo/ui-web";
+import { Button } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { useEffect, useState } from "react";
+import { XIcon } from "lucide-react";
+import { useEffect, useId, useState } from "react";
 import { CHOOSE_COMPUTER_EVENT } from "../components/ComputersUnavailableHint";
 import { sandboxCheckFailureMessage } from "../lib/computer-sandbox";
 import { desktopBridge } from "../lib/desktop";
@@ -34,6 +28,7 @@ export function HostComputerPrompt({
   onMeUpdated?: (me: Me) => void;
 }) {
   const { t } = useLingui();
+  const headingId = useId();
   const desktop = desktopBridge();
   const [configuring, setConfiguring] = useState(false);
   // The desktop app's own engine has no Docker: there the choice is this computer or nothing.
@@ -130,90 +125,90 @@ export function HostComputerPrompt({
 
   const busy = pending || checking;
 
-  // The choice is required, so the dialog stays open until one is saved.
+  // An inline card, not a modal: the app stays usable while the choice is open.
   return (
-    <Dialog
-      open
-      onOpenChange={(next) => {
-        if (configuring) setOpen(next);
-      }}
+    <section
+      aria-labelledby={headingId}
+      data-testid="host-computer-prompt"
+      className="animate-panel-in fixed end-4 bottom-4 z-40 flex w-[min(26rem,calc(100vw-2rem))] flex-col gap-3 rounded-2xl bg-popover p-5 text-popover-foreground shadow-overlay"
     >
-      <DialogContent showCloseButton={configuring} className="rounded-2xl sm:max-w-[440px]">
-        <DialogHeader>
-          <DialogTitle className="text-heading2">
+      <div className="flex flex-col gap-2">
+        <div className="flex items-start gap-2">
+          <h2 id={headingId} className="flex-1 text-heading2 font-normal">
             <Trans>Where should bots run?</Trans>
-          </DialogTitle>
-          <DialogDescription className="space-y-2 leading-relaxed">
-            <span className="block">
-              {dockerOffered ? (
-                <Trans>
-                  Docker limits access to your computer for added security. Using {hostLabel} lets
-                  bots work with your local files and tools.
-                </Trans>
-              ) : (
-                <Trans>Bots can work on {hostLabel} with your local files and tools.</Trans>
-              )}
-            </span>
-            <span className="block text-xs text-muted-foreground/80">
-              <Trans>
-                Local access lets bots run commands without asking. Avoid it on shared or public
-                servers.
-              </Trans>
-            </span>
-          </DialogDescription>
-        </DialogHeader>
-        {error ? (
-          <p role="alert" className="text-sm text-destructive">
-            {error}
-          </p>
-        ) : null}
-        <div className="flex flex-col gap-2">
-          {dockerOffered ? (
-            <Button
-              variant="outline"
-              size="lg"
-              disabled={busy}
-              onClick={() => void choose("docker")}
-            >
-              <Trans>Docker</Trans>
-            </Button>
-          ) : null}
-          <Button
-            variant="outline"
-            size="lg"
-            disabled={busy}
-            onClick={() => void choose("this-mac")}
-          >
-            <Trans>Use {hostLabel}</Trans>
-          </Button>
-          {dockerOffered ? null : (
+          </h2>
+          {configuring ? (
             <Button
               variant="ghost"
-              size="lg"
-              disabled={busy}
-              onClick={() => {
-                declineHostComputer();
-                setOpen(false);
-              }}
+              size="icon-sm"
+              className="-me-2 -mt-1"
+              aria-label={t`Close`}
+              onClick={() => setOpen(false)}
             >
-              <Trans>Not now</Trans>
+              <XIcon />
             </Button>
-          )}
+          ) : null}
         </div>
-        {error ? (
-          <div className="mt-1 flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              disabled={busy}
-              onClick={() => void refreshChoiceState()}
-            >
-              {checking ? <Trans>Checking…</Trans> : <Trans>Check again</Trans>}
-            </Button>
-          </div>
+        <div className="space-y-2 text-sm leading-relaxed text-muted-foreground">
+          <p>
+            {dockerOffered ? (
+              <Trans>
+                Docker limits access to your computer for added security. Using {hostLabel} lets
+                bots work with your local files and tools.
+              </Trans>
+            ) : (
+              <Trans>Bots can work on {hostLabel} with your local files and tools.</Trans>
+            )}
+          </p>
+          <p className="text-xs text-muted-foreground/80">
+            <Trans>
+              Local access lets bots run commands without asking. Avoid it on shared or public
+              servers.
+            </Trans>
+          </p>
+        </div>
+      </div>
+      {error ? (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
+      <div className="flex flex-col gap-2">
+        {dockerOffered ? (
+          <Button variant="outline" size="lg" disabled={busy} onClick={() => void choose("docker")}>
+            <Trans>Docker</Trans>
+          </Button>
         ) : null}
-      </DialogContent>
-    </Dialog>
+        <Button variant="outline" size="lg" disabled={busy} onClick={() => void choose("this-mac")}>
+          <Trans>Use {hostLabel}</Trans>
+        </Button>
+        {dockerOffered ? null : (
+          <Button
+            variant="ghost"
+            size="lg"
+            disabled={busy}
+            onClick={() => {
+              declineHostComputer();
+              setOpen(false);
+            }}
+          >
+            <Trans>Not now</Trans>
+          </Button>
+        )}
+      </div>
+      {error ? (
+        <div className="mt-1 flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            disabled={busy}
+            onClick={() => void refreshChoiceState()}
+          >
+            {checking ? <Trans>Checking…</Trans> : <Trans>Check again</Trans>}
+          </Button>
+        </div>
+      ) : null}
+    </section>
   );
 }

@@ -1,13 +1,5 @@
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  Button,
-} from "@corvo/ui-web";
-import { Trans } from "@lingui/react/macro";
+import { Button, SidePanel } from "@corvo/ui-web";
+import { Trans, useLingui } from "@lingui/react/macro";
 import type { ComponentType, ReactNode } from "react";
 import { Component } from "react";
 import { lazyComponent } from "../lib/preload-recovery";
@@ -39,6 +31,26 @@ export function SectionLoadFailed() {
   );
 }
 
+/** The failure renders in place of the overlay, as a panel with the one way out. */
+function OverlayLoadFailed({ onClose }: { onClose: () => void }) {
+  const { t } = useLingui();
+  return (
+    <SidePanel
+      open
+      onClose={onClose}
+      title={<Trans>Could not load</Trans>}
+      closeLabel={t`Close`}
+      footer={
+        <Button onClick={() => window.location.reload()}>
+          <Trans>Refresh</Trans>
+        </Button>
+      }
+    >
+      {null}
+    </SidePanel>
+  );
+}
+
 /**
  * Lazy-loads an overlay. If its chunk fails to load (network blip, missing
  * chunk) or it throws while rendering, the shell and the composer draft stay
@@ -51,32 +63,7 @@ export function lazyOverlay<Props extends { onClose: () => void }>(
   const Overlay = lazyComponent(load);
   return function LazyOverlay(props: Props) {
     return (
-      <ErrorBoundary
-        fallback={
-          <AlertDialog
-            open
-            onOpenChange={(open) => {
-              if (!open) props.onClose();
-            }}
-          >
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>
-                  <Trans>Could not load</Trans>
-                </AlertDialogTitle>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>
-                  <Trans>Close</Trans>
-                </AlertDialogCancel>
-                <Button onClick={() => window.location.reload()}>
-                  <Trans>Refresh</Trans>
-                </Button>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        }
-      >
+      <ErrorBoundary fallback={<OverlayLoadFailed onClose={props.onClose} />}>
         <Overlay {...props} />
       </ErrorBoundary>
     );

@@ -3086,6 +3086,42 @@ describe("mobile thread event reduction", () => {
     });
   });
 
+  it("keeps a channel thread reply and its live draft in the thread", () => {
+    const initial = snapshot([mobileMessage("root-1", [{ kind: "text", text: "Plan?" }])]);
+    const drafting = applyMobileThreadEvent(initial, {
+      type: "thread.progress",
+      seq: 3,
+      botId: "bot-1",
+      runId: "run-1",
+      payload: { delta: "On it", threadRootId: "root-1" },
+    });
+    expect(drafting?.messages.at(-1)).toMatchObject({ botId: "bot-1", threadRootId: "root-1" });
+
+    const created = applyMobileThreadEvent(drafting, {
+      type: "thread.message.created",
+      seq: 4,
+      botId: "bot-1",
+      payload: {
+        messageId: "reply-1",
+        role: "bot",
+        blocks: [{ kind: "text", text: "On it" }],
+        threadRootId: "root-1",
+      },
+    });
+    const reply = created?.messages.find((message) => message.id === "reply-1");
+    expect(reply?.threadRootId).toBe("root-1");
+
+    const updated = applyMobileThreadEvent(created, {
+      type: "thread.message.updated",
+      seq: 5,
+      botId: "bot-1",
+      payload: { messageId: "reply-1", role: "bot", blocks: [{ kind: "text", text: "Done" }] },
+    });
+    expect(updated?.messages.find((message) => message.id === "reply-1")?.threadRootId).toBe(
+      "root-1",
+    );
+  });
+
   it("keeps a message in its call when an update leaves the call id out", () => {
     const spoken: MobileMessage = {
       ...mobileMessage("message-1", [{ kind: "text", text: "Hi" }]),

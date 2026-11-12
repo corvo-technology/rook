@@ -1144,4 +1144,7 @@ export const PT_BR_MESSAGES: Record<string, string> = {
   "This reply reached its token cap.": "Esta resposta atingiu o limite de tokens.",
   "Bots are paused in this space.": "Os bots estão pausados neste espaço.",
   "{used} of {limit}": "{used} de {limit}",
+  "Reply in thread": "Responder na conversa",
+  "1 reply": "1 resposta",
+  "{count} replies": "{count} respostas",
 };

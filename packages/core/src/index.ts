@@ -108,6 +108,7 @@ export * from "./text-direction.js";
 export * from "./thread-message-updates.js";
 export * from "./thread-scroll.js";
 export * from "./thread-subscription.js";
+export * from "./thread-summary.js";
 export * from "./time-separators.js";
 export * from "./tool-activity.js";
 export * from "./ui-locale.js";

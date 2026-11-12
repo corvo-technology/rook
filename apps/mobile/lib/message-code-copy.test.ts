@@ -39,6 +39,7 @@ vi.mock("../components/message-context-menu", () => ({
 vi.mock("../components/bot-avatar", () => ({ BotAvatar: () => null }));
 vi.mock("../components/reply-line", () => ({ ReplyLine: () => null }));
 vi.mock("../components/time-separator", () => ({ TimeSeparator: () => null }));
+vi.mock("../components/thread-footer", () => ({ ThreadFooter: () => null }));
 vi.mock("../components/unread-divider", () => ({ UnreadDivider: () => null }));
 // Capture the accessibility actions MessageRow hands its bubble.
 vi.mock("../components/thread/message-bubble", () => ({

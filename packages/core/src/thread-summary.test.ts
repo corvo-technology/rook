@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { threadSummary } from "./thread-summary";
+import { threadSummary } from "./thread-summary.js";
 
 let next = 0;
 const reply = (botId: string | undefined, minute: number, role: "bot" | "user" = "bot") => ({
@@ -38,4 +38,12 @@ it("leaves out reactions and live drafts", () => {
 it("is nothing without a reply", () => {
   expect(threadSummary(undefined)).toBeUndefined();
   expect(threadSummary([])).toBeUndefined();
+});
+
+it("leaves out a live draft that has no time yet", () => {
+  const sent = reply("cora", 1);
+  expect(threadSummary([sent, { ...reply("fabio", 2), createdAt: undefined }])).toMatchObject({
+    count: 1,
+    botIds: ["cora"],
+  });
 });

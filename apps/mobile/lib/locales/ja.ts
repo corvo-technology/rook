@@ -1177,4 +1177,7 @@ export const JA_MESSAGES: Record<string, string> = {
   "This reply reached its token cap.": "この返信はトークン上限に達しました。",
   "Bots are paused in this space.": "このスペースのボットは一時停止中です。",
   "{used} of {limit}": "{used} / {limit}",
+  "Reply in thread": "スレッドで返信",
+  "1 reply": "1件の返信",
+  "{count} replies": "{count}件の返信",
 };

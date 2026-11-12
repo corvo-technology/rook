@@ -1,5 +1,5 @@
 import type { ThreadMessage } from "@corvo/contracts";
-import { messageReaction } from "@corvo/core";
+import { messageReaction } from "./message-reactions.js";
 
 /** How many faces a thread footer shows. */
 const THREAD_FACES = 3;
@@ -13,14 +13,17 @@ export type ThreadSummary = {
   lastAt: string;
 };
 
-type Reply = Pick<ThreadMessage, "id" | "role" | "botId" | "createdAt" | "blocks"> & {
+type Reply = Pick<ThreadMessage, "id" | "role" | "botId" | "blocks"> & {
+  /** Live drafts have no time yet and are not replies. */
+  createdAt?: string;
   replyToMessageId?: string | null;
 };
 
 /** What a thread shows under its root: how many replied, which agents and when last. */
 export function threadSummary(replies: readonly Reply[] | undefined): ThreadSummary | undefined {
   const sent = (replies ?? []).filter(
-    (reply) =>
+    (reply): reply is Reply & { createdAt: string } =>
+      reply.createdAt !== undefined &&
       !reply.id.startsWith("progress:") &&
       !reply.id.startsWith("subagent:") &&
       !messageReaction(reply),

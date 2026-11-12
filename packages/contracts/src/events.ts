@@ -244,6 +244,12 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     pages: z.array(z.object({ title: z.string(), op: z.enum(["create", "append", "replace"]) })),
   }),
   z.object({
+    /** A fact about the person an agent kept or proposes to keep; its state is read live. */
+    kind: z.literal("memory_fact"),
+    memoryId: Id,
+    text: z.string(),
+  }),
+  z.object({
     kind: z.literal("child_bot"),
     botId: z.string(),
     name: z.string(),

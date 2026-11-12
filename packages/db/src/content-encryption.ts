@@ -90,6 +90,13 @@ export const ENCRYPTED_MODELS: Record<string, ModelSpec> = {
     space: { column: "spaceId" },
     ownerRelation: "user",
   },
+  /** What a person's agents know about them: one line each. */
+  UserMemory: {
+    table: "user_memories",
+    fields: { text: {} },
+    space: { column: "spaceId" },
+    ownerRelation: "user",
+  },
   /** The compacted summary of older history is derived message content. */
   Thread: {
     table: "threads",

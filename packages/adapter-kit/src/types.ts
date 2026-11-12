@@ -610,7 +610,8 @@ export type UsageOperationKind =
   | "retrieval"
   | "subagent"
   | "compaction"
-  | "wiki";
+  | "wiki"
+  | "memory";
 
 export interface ModelCallObserver {
   beforeCall(call: {
@@ -759,6 +760,8 @@ export interface BackgroundJobPayloads {
     threadId?: string;
     temporary?: boolean;
   };
+  /** The memory model reads what the person said for facts to suggest about them. */
+  "memory.learn": { threadId: string };
   /** Design the body of a new agent's avatar from its role, unless a look was chosen meanwhile. */
   "bot.design-avatar": { botId: string };
   "messaging.deliver": { runId?: string };

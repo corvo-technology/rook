@@ -93,7 +93,7 @@ export async function wikiCurateJobAfterTurn(
   return (await threadIsCurated(prisma, thread)) ? wikiCurateJob(thread.id, { now }) : undefined;
 }
 
-const proseOf = (blocks: unknown): string =>
+export const proseOf = (blocks: unknown): string =>
   (Array.isArray(blocks) ? blocks : [])
     .flatMap((block) =>
       block?.kind === "text" && typeof block.text === "string" ? [block.text as string] : [],

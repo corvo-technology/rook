@@ -197,6 +197,12 @@ export * from "./third-party-connector-emulator.js";
 export * from "./ticket-changes.js";
 export * from "./ticket-tools.js";
 export { dispatcherFetch } from "./undici-fetch.js";
+export {
+  learnUserMemories,
+  loadUserMemoryContext,
+  memoryLearnJobAfterTurn,
+  postMemoryFactCard,
+} from "./user-memory-run.js";
 export * from "./verified-download.js";
 export * from "./voice-factory.js";
 export * from "./wakeup.js";

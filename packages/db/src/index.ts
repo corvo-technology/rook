@@ -56,6 +56,7 @@ export { primaryActiveRun } from "./thread-listing.js";
 export * from "./transaction-retry.js";
 export * from "./unread-inbox-chats.js";
 export * from "./usage.js";
+export * from "./user-memory.js";
 export * from "./voice-credentials.js";
 export * from "./wiki.js";
 export * from "./wiki-changes.js";

@@ -26,6 +26,7 @@ import { PartnerHiddenArea } from "./partner.js";
 import { RoutineWatchSchema, RoutineWatchStateSchema } from "./routine-watch.js";
 import { RunTriggerSchema } from "./runs.js";
 import { SettingsScopeSchema } from "./settings-scope.js";
+import { MemoryModeSchema } from "./user-memory.js";
 
 export const ComputerModeSchema = z.enum(["team", "dedicated"]);
 export type ComputerMode = z.infer<typeof ComputerModeSchema>;
@@ -136,6 +137,8 @@ export const BotSchema = z.object({
   squadRouting: z.boolean().default(false),
   /** This bot's own approval mode; null follows the member's default. */
   approvalMode: ApprovalModeSchema.nullable().default(null),
+  /** What the bot does with facts about the person; null is the default, ask first. */
+  memoryMode: MemoryModeSchema.nullable().default(null),
   /** Most the bot may spend on hosted credits in a UTC day, in US dollars; null means no limit. */
   dailyCapUsd: z.number().nullable().default(null),
   /** Most tokens the bot may use in a UTC month; null means no limit. */
@@ -484,6 +487,8 @@ export const UpdateBotInput = z
     squadRouting: z.boolean().optional(),
     /** null clears the bot's own mode so it follows the default again. */
     approvalMode: ApprovalModeSchema.nullable().optional(),
+    /** null clears the bot's own mode so it asks first again. */
+    memoryMode: MemoryModeSchema.nullable().optional(),
     disabledBuiltinTools: DisabledBuiltinToolsSchema.optional(),
   })
   .superRefine((value, ctx) => {
@@ -1065,7 +1070,7 @@ export const UsageRecordSchema = z.object({
   callId: z.string().nullable().optional(),
   operationId: z.string().nullable().optional(),
   operationKind: z
-    .enum(["answer", "setup", "retrieval", "subagent", "compaction", "wiki"])
+    .enum(["answer", "setup", "retrieval", "subagent", "compaction", "wiki", "memory"])
     .optional(),
   parentRunId: z.string().nullable().optional(),
   agentId: z.string().nullable().optional(),

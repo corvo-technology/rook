@@ -41,6 +41,7 @@ describe("built-in tool bridge", () => {
       "read_file",
       "read_history",
       "remember",
+      "remember_about_user",
       "request_secret",
       "request_takeover",
       "run_subagent",
@@ -57,7 +58,7 @@ describe("built-in tool bridge", () => {
       "wiki_search",
       "write_file",
     ]);
-    expect(definitionBytes(listed)).toBeLessThanOrEqual(31_100);
+    expect(definitionBytes(listed)).toBeLessThanOrEqual(31_450);
     expect(deferred.map((tool) => tool.name)).toEqual(
       expect.arrayContaining([
         "render_plot",

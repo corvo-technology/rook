@@ -38,6 +38,7 @@ function handlers(overrides: Partial<BackgroundJobHandlers> = {}): BackgroundJob
     "history.compact": vi.fn(async () => undefined),
     "wiki.curate": vi.fn(async () => undefined),
     "wiki.import": vi.fn(async () => undefined),
+    "memory.learn": vi.fn(async () => undefined),
     "bot.design-avatar": vi.fn(async () => undefined),
     "messaging.deliver": vi.fn(async () => undefined),
     "messaging.credential-cleanup": vi.fn(async () => undefined),

@@ -57,6 +57,7 @@ import { withSerializableRetry } from "./serializable-retry.js";
 import type { ImageAdmissionRun } from "./thread-image-admission.js";
 import { assertThreadImageInput } from "./thread-image-admission.js";
 import { loadMessagePage } from "./thread-message-pages.js";
+import { resolveThreadRoot, threadConversationBot } from "./thread-root.js";
 
 export type ThreadTarget =
   | {
@@ -782,6 +783,7 @@ export async function sendThreadMessage(
     mentions?: MentionTargetInput[];
     replyToMessageId?: string;
     replyQuote?: string;
+    threadRootId?: string;
     clientNonce?: string;
   },
   releaseTakeover?: (runId: string) => Promise<void>,
@@ -801,9 +803,13 @@ export async function sendThreadMessage(
     throw new ORPCError("BAD_REQUEST", { message: "replyQuote requires replyToMessageId." });
   }
 
+  if (input.threadRootId && target.kind !== "group") {
+    throw new ORPCError("BAD_REQUEST", { message: "Only a channel has threads." });
+  }
   // The model call happens before the transaction so it never holds the thread's locks.
+  // A reply inside a thread stays with that thread's agent, so only the main column is routed.
   const routing =
-    target.kind === "group"
+    target.kind === "group" && !input.threadRootId
       ? await routeGroupMessage(
           { prisma: deps.prisma, model: deps.router },
           {
@@ -818,6 +824,10 @@ export async function sendThreadMessage(
 
   const commit = () =>
     deps.prisma.$transaction(async (tx) => {
+      const threadRoot = input.threadRootId
+        ? await resolveThreadRoot(tx, target.threadId, input.threadRootId)
+        : undefined;
+      const threadRootId = threadRoot?.id;
       let replyToMessageId: string | undefined;
       let replyQuote: string | undefined;
       let replyPreview: ReplyPreview | null | undefined;
@@ -1071,7 +1081,10 @@ export async function sendThreadMessage(
           text: input.text ?? "",
           members: members.map((member) => ({ id: member.botId, name: member.name })),
           explicitMentions: mentionTargets.botMentionIds,
-          fallbackBotId: await groupConversationOwner(tx, target.threadId, memberBotIds),
+          fallbackBotId:
+            (threadRoot &&
+              (await threadConversationBot(tx, target.threadId, threadRoot, memberBotIds))) ||
+            (await groupConversationOwner(tx, target.threadId, memberBotIds)),
         });
       const { blocks: attachmentBlocks, artifacts } = await resolveGroupSendAttachments(
         { prisma: tx },
@@ -1124,6 +1137,7 @@ export async function sendThreadMessage(
         blocks,
         replyToMessageId,
         replyQuote,
+        threadRootId,
         clientNonce: input.clientNonce,
         routing: routing && (routing as unknown as Prisma.InputJsonValue),
       });
@@ -1246,6 +1260,7 @@ export async function sendThreadMessage(
           replyToMessageId,
           replyQuote,
           replyPreview,
+          threadRootId,
         },
       });
       return { message, runs, eventSeq: event.seq };

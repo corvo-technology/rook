@@ -57,6 +57,7 @@ const COPY: LaunchCopy = {
     heading: "O que é um agente?",
     accent: "Um colega com um trabalho só.",
     copy: "Um agente é uma IA com nome, uma descrição de trabalho, a própria conversa e as ferramentas que você der a ele. Você fala com ele como com um colega. Ele trabalha em segundo plano e volta com o resultado.",
+    states: { working: "Trabalhando", asking: "Precisa de você", sleeping: "Dormindo", done: "Pronto" },
     traits: [
       { title: "Um trabalho", body: "Escreva o que ele faz ou escolha um na Loja. Ele tem a própria conversa, então lembra do que você pediu." },
       { title: "Ferramentas próprias", body: "Conecte apps como Stripe, Linear ou Notion, ou qualquer servidor MCP, e escolha qual agente recebe qual." },

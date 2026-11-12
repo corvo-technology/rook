@@ -67,6 +67,7 @@ import { applyTool } from "./run-tools.js";
 import { withRuntimeCleanup } from "./runtime-stream.js";
 import { stripNoResponseReply, stripStrayNoResponse } from "./silent-reply.js";
 import { takeoverCheckpointOf } from "./takeover-resume.js";
+import { announceTicketStep, endTicketRun } from "./ticket-run-moves.js";
 import { appendToolCompletionAudit, toolCompletionFromResult } from "./tool-completion-audit.js";
 import {
   advanceOverLimitActionCalls,
@@ -219,6 +220,11 @@ async function streamText(ctx: RunContext, event: RuntimeEvent<"text">) {
 async function streamProgress(ctx: RunContext, event: RuntimeEvent<"progress">) {
   ctx.state.toolCallStreak = { key: undefined, count: 0 };
   await publishActivityLine(ctx, event.text, event.activity === true);
+  if (event.activity === true) {
+    await announceTicketStep(ctx.deps, ctx.run, redactSecrets(event.text, ctx.secrets)).catch(
+      () => undefined,
+    );
+  }
 }
 
 async function pauseForAnswer(ctx: RunContext, event: RuntimeEvent<"ask">) {
@@ -357,6 +363,7 @@ async function onToolCalled(ctx: RunContext, event: RuntimeEvent<"tool">): Promi
     runId,
     payload: { name: event.name, executionId: event.executionId },
   });
+  await announceTicketStep(deps, run, humanizeToolName(event.name)).catch(() => undefined);
   reply.pendingToolNames.push(event.name);
   tryFlushPendingTools(reply);
   const loopGuard = advanceToolCallLoopGuard(ctx.state.toolCallStreak, event.name, event.args);
@@ -440,6 +447,7 @@ async function stopStuckToolLoop(ctx: RunContext, toolName: string) {
     blocks: isBackgroundRunTrigger(run.trigger) ? [] : [{ kind: "text", text: stuckText }],
   });
   if (!stopped) return;
+  await endTicketRun(deps, run, { kind: "stopped", error: stuckText });
   ctx.stopHeartbeatAfterCompletion();
   if (run.trigger === "routine" && run.routineId) {
     await clearRoutineBackoff(deps, run.routineId);
@@ -650,6 +658,7 @@ export async function completeRun(ctx: RunContext) {
     ),
   });
   if (!completed) return;
+  await endTicketRun(deps, run, { kind: "finished" });
   ctx.stopHeartbeatAfterCompletion();
   if (run.trigger === "routine" && run.routineId) {
     await clearRoutineBackoff(deps, run.routineId);
@@ -784,6 +793,7 @@ export async function failRun(
     ...(partialReply.length > 0 ? { partialReply } : {}),
   });
   if (!failed) return;
+  await endTicketRun(deps, run, { kind: "stopped", error: message });
   if (
     error instanceof TransientModelError ||
     error instanceof ModelAccountError ||

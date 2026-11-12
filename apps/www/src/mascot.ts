@@ -27,6 +27,3 @@ export const MASCOT_COLOR: Record<MascotHue, string> = {
   ciano: "#4bbdcf",
   neutro: "#55555c",
 };
-
-/** A sleeping rook is gray whatever its hue. */
-export const MASCOT_SLEEP_COLOR = "#4a4a52";

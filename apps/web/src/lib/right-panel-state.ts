@@ -5,6 +5,7 @@ export type Panel =
   | "create-group"
   | "group-settings"
   | "import-agent"
+  | "thread"
   | null;
 export type RightPanelState = { panel: Panel; routineId?: string };
 
@@ -45,8 +46,8 @@ export function readRightPanelState(key: string): RightPanelState {
 }
 
 export function writeRightPanelState(key: string, panel: Panel, routineId?: string) {
-  // Keep the last durable preference while create-group or an import is open.
-  if (panel === "create-group" || panel === "import-agent") return;
+  // Keep the last durable preference while create-group, an import or a thread is open.
+  if (panel === "create-group" || panel === "import-agent" || panel === "thread") return;
   try {
     localStorage.setItem(
       key,

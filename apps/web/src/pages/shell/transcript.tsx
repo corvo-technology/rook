@@ -15,6 +15,7 @@ import {
 import type { GroupAvatarMember } from "@corvo/ui-web";
 import { Button, cn, Spinner } from "@corvo/ui-web";
 import { i18n } from "@lingui/core";
+import { plural } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
 import { ArrowDown } from "lucide-react";
 import type { CSSProperties, RefObject } from "react";
@@ -30,12 +31,13 @@ import {
 } from "react";
 import { ActiveBotGlyph } from "../../components/ai/CollaborationMarker";
 import { VoiceChatCard } from "../../components/call/VoiceChatCard";
+import { ThreadFooter } from "../../components/ThreadFooter";
 import type { ArtifactTarget } from "../../lib/artifact-open";
 import { delegationStates } from "../../lib/delegation-states";
 import { isFreshMessage, newestCreatedAt } from "../../lib/fresh-messages";
 import { continuedMessageIds } from "../../lib/message-grouping";
-import { peerThreadSummary } from "../../lib/peer-thread";
 import { quoteDraftForSelection } from "../../lib/quote-selection";
+import { threadSummary } from "../../lib/thread-summary";
 import { messageHasVisibleBlocks } from "../../lib/tool-activity-view";
 import {
   ownMessageJustSent,
@@ -45,6 +47,7 @@ import {
 } from "../../lib/transcript-scroll";
 import { TimeSeparator, UnreadDivider } from "./chat-context";
 import { ChatEmpty } from "./chat-empty";
+import { FALLBACK_BOT_COLOR } from "./chat-shared";
 import type { ImportSetupTarget } from "./import-setup-card";
 import { MessageView } from "./message-view";
 import { QuoteSelectionButton } from "./quote-selection-button";
@@ -76,6 +79,9 @@ export const Transcript = memo(function Transcript({
   onOpenBot,
   onAnswer,
   onReply,
+  onOpenThread,
+  openThreadId,
+  variant = "chat",
   onMarkUnread,
   onKeepInWiki,
   markedUnreadMessageId,
@@ -134,11 +140,18 @@ export const Transcript = memo(function Transcript({
     dismiss?: boolean,
     approvalEffectId?: string,
   ) => Promise<void>;
-  onReply: (message: ThreadMessage) => void;
+  /** Quotes a message in the composer; absent where there is none to arm. */
+  onReply?: (message: ThreadMessage) => void;
+  /** Opens a thread beside the channel; set only in a channel's main column. */
+  onOpenThread?: (rootId: string) => void;
+  /** The thread open beside the channel, if any. */
+  openThreadId?: string | null;
+  /** A thread beside the channel is a short transcript with no floating header above it. */
+  variant?: "chat" | "thread";
   onMarkUnread: (message: ThreadMessage) => void;
   onKeepInWiki?: (message: ThreadMessage) => void;
   markedUnreadMessageId?: string;
-  onQuote: (message: ThreadMessage, quote: string) => void;
+  onQuote?: (message: ThreadMessage, quote: string) => void;
   onReact: (message: ThreadMessage, reaction: MessageReaction) => Promise<void>;
   onJumpToMessage: (messageId: string) => void;
   onOpenPeerMessages: (peer: { peerBotId: string; peerBotName: string }) => void;
@@ -179,14 +192,19 @@ export const Transcript = memo(function Transcript({
       return next;
     });
   }, []);
-  // A jump to a folded reply expands its marker; the scroll effect below then finds the row.
+  // A jump to a folded reply expands its marker, or opens its thread in a channel; the scroll
+  // effect below then finds the row.
   useLayoutEffect(() => {
     const markerId = scrollRequest && transcript.markerOf.get(scrollRequest.messageId);
     if (!markerId) return;
+    if (onOpenThread) {
+      if (openThreadId !== markerId) onOpenThread(markerId);
+      return;
+    }
     setExpandedPeerMarkers((expanded) =>
       expanded.has(markerId) ? expanded : new Set(expanded).add(markerId),
     );
-  }, [scrollRequest, transcript]);
+  }, [scrollRequest, transcript, onOpenThread, openThreadId]);
   const channelMembers = useMemo(
     () => members?.map((member) => ({ id: member.botId, name: member.name })),
     [members],
@@ -471,7 +489,11 @@ export const Transcript = memo(function Transcript({
             following.current = false;
           }
         }}
-        className="rk-scroll flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto scroll-pt-16 scroll-pb-7 px-4 pt-20 pb-12 md:px-[max(1.75rem,calc((100%_-_47.5rem)/2))] md:pt-[84px] md:pb-13"
+        className={
+          variant === "thread"
+            ? "rk-scroll flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-4 py-3"
+            : "rk-scroll flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto scroll-pt-16 scroll-pb-7 px-4 pt-20 pb-12 md:px-[max(1.75rem,calc((100%_-_47.5rem)/2))] md:pt-[84px] md:pb-13"
+        }
         style={
           userBubble
             ? ({
@@ -578,14 +600,11 @@ export const Transcript = memo(function Transcript({
                       onOpenBot={onOpenBot}
                       onOpenPeerMessages={onOpenPeerMessages}
                       peerReplies={
-                        transcript.folded.has(message.id)
+                        !channel && transcript.folded.has(message.id)
                           ? expandedPeerMarkers.has(message.id)
                             ? "expanded"
                             : "collapsed"
                           : undefined
-                      }
-                      threadSummary={
-                        channel ? peerThreadSummary(transcript.folded.get(message.id)) : undefined
                       }
                       channelMembers={channelMembers}
                       onTogglePeerReplies={togglePeerReplies}
@@ -625,12 +644,23 @@ export const Transcript = memo(function Transcript({
                       onOpenImport={onOpenImport}
                       showToolActivity={showToolActivity}
                       onReply={onReply}
+                      onReplyInThread={
+                        onOpenThread && !peerReceipt ? (root) => onOpenThread(root.id) : undefined
+                      }
                       onMarkUnread={onMarkUnread}
                       onKeepInWiki={onKeepInWiki}
                       onReact={onReact}
                     />
                   </div>
                 </div>
+                {channel && onOpenThread ? (
+                  <ChannelThreadFooter
+                    replies={transcript.folded.get(message.id)}
+                    open={openThreadId === message.id}
+                    peerBot={peerBot}
+                    onOpen={() => onOpenThread(message.id)}
+                  />
+                ) : null}
                 {!peerReceipt && messageReactions ? (
                   <div
                     data-testid="message-reactions"
@@ -655,13 +685,14 @@ export const Transcript = memo(function Transcript({
           );
         })}
         {running &&
+        !channel &&
         !messages.some(
           (message) => message.id.startsWith("progress:") && liveMessageComposing(message.blocks),
         ) ? (
           <ActiveBotGlyph bots={workingBots} label={workingLabel} />
         ) : null}
       </div>
-      {quoteDraft ? (
+      {quoteDraft && onQuote ? (
         <QuoteSelectionButton
           range={quoteDraft.range}
           onQuote={() => {
@@ -694,3 +725,37 @@ export const Transcript = memo(function Transcript({
  * itself after mount so it can flip below the selection when there is no room
  * above and stay clamped inside the viewport; re-anchors on scroll/resize.
  */
+
+/** A message's thread beneath it: who replied, how many replies and when the last came. */
+function ChannelThreadFooter({
+  replies,
+  open,
+  peerBot,
+  onOpen,
+}: {
+  replies: readonly ThreadMessage[] | undefined;
+  open: boolean;
+  peerBot: (botId: string) => { color: string } | undefined;
+  onOpen: () => void;
+}) {
+  const summary = threadSummary(replies);
+  if (!summary) return null;
+  return (
+    <div className="ps-12">
+      <ThreadFooter
+        open={open}
+        countLabel={plural(summary.count, { one: "# reply", other: "# replies" })}
+        faces={summary.botIds.map((botId) => ({
+          botId,
+          color: peerBot(botId)?.color ?? FALLBACK_BOT_COLOR,
+        }))}
+        lastAt={summary.lastAt}
+        lastLabel={new Date(summary.lastAt).toLocaleTimeString(i18n.locale || "en", {
+          hour: "numeric",
+          minute: "2-digit",
+        })}
+        onOpen={onOpen}
+      />
+    </div>
+  );
+}

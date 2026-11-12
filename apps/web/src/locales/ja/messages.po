@@ -27,8 +27,8 @@ msgstr "{0, plural, one {#個のボットが独自のモデルを使用してい
 msgid "{0, plural, one {# failed} other {# failed}}"
 msgstr "{0, plural, one {#件失敗} other {#件失敗}}"
 
-#. placeholder {0}: thread.count
-#: src/pages/shell/message-view.tsx
+#. placeholder {0}: summary.count
+#: src/pages/shell/transcript.tsx
 msgid "{0, plural, one {# reply} other {# replies}}"
 msgstr "{0, plural, other {# 件の返信}}"
 
@@ -150,6 +150,10 @@ msgstr "{0}は直接のメンションには引き続き応答します。"
 msgid "{0}'s screen"
 msgstr "{0}の画面"
 
+#: src/components/WorkingLine.tsx
+msgid "{a} and {b} are working…"
+msgstr "{a}と{b}が作業中…"
+
 #: src/lib/billing.ts
 msgid "{amount} / {period}"
 msgstr "{amount} / {period}"
@@ -178,6 +182,10 @@ msgstr "{count, plural, one {# 行} other {# 行}}"
 #: src/pages/TeamBoard.tsx
 msgid "{count} agents"
 msgstr "{count} 件のエージェント"
+
+#: src/components/WorkingLine.tsx
+msgid "{count} agents are working…"
+msgstr "{count}件のエージェントが作業中…"
 
 #: src/lib/billing.ts
 msgid "{count} days"
@@ -272,6 +280,10 @@ msgstr "{name}が完了しました"
 #: src/lib/activity-label.ts
 msgid "{name} is waiting for your approval."
 msgstr "{name} があなたの承認を待っています。"
+
+#: src/components/WorkingLine.tsx
+msgid "{name} is working…"
+msgstr "{name}が作業中…"
 
 #: src/pages/shell/use-board-notifications.ts
 msgid "{name} moved {ref} to {status}"
@@ -791,6 +803,7 @@ msgstr "詳細設定"
 msgid "Advanced..."
 msgstr "詳細設定..."
 
+#: src/components/WorkingLine.tsx
 #: src/pages/AddStepDialog.tsx
 #: src/pages/NewRoutineDialog.tsx
 #: src/pages/WhatsAppNumbers.tsx
@@ -1223,17 +1236,6 @@ msgstr "ブロック"
 msgid "Blocked"
 msgstr "ブロック中"
 
-#: src/components/AppRail.tsx
-#: src/components/SidebarFooter.tsx
-#: src/pages/Board.tsx
-msgid "Board"
-msgstr "ボード"
-
-#: src/pages/Board.tsx
-#: src/pages/BoardSettings.tsx
-msgid "Board settings"
-msgstr "ボードの設定"
-
 #: src/pages/shell/computer-view.tsx
 #: src/pages/shell/use-computer.tsx
 msgid "Booting live desktop…"
@@ -1654,6 +1656,7 @@ msgstr "ナビゲーションを閉じる"
 
 #: src/pages/GroupPanel.tsx
 #: src/pages/shell/side-panel.tsx
+#: src/pages/shell/thread-panel.tsx
 msgid "Close panel"
 msgstr "パネルを閉じる"
 
@@ -3232,6 +3235,7 @@ msgstr "失敗"
 msgid "Failed"
 msgstr "失敗"
 
+#: src/pages/shell/thread-panel.tsx
 #: src/pages/shell/use-composer-actions.ts
 msgid "Failed to send message"
 msgstr "メッセージを送信できませんでした"
@@ -5424,12 +5428,17 @@ msgstr "返信"
 
 #: src/pages/shell/message-hover-actions.tsx
 #: src/pages/shell/quote-selection-button.tsx
+#: src/pages/shell/thread-panel.tsx
 msgid "Reply"
 msgstr "返信"
 
 #: src/pages/shell/composer.tsx
 msgid "Reply cancelled"
 msgstr "返信をキャンセルしました"
+
+#: src/pages/shell/message-hover-actions.tsx
+msgid "Reply in thread"
+msgstr "スレッドで返信"
 
 #. placeholder {0}: replyNameRef.current
 #: src/pages/shell/composer.tsx
@@ -5847,6 +5856,7 @@ msgid "Self-hosted"
 msgstr "セルフホスト"
 
 #: src/pages/shell/composer.tsx
+#: src/pages/shell/thread-panel.tsx
 msgid "Send"
 msgstr "送信"
 
@@ -6369,6 +6379,17 @@ msgstr "操作を引き継ぐ"
 msgid "Talk to your agent"
 msgstr "エージェントに話しかける"
 
+#: src/pages/Board.tsx
+#: src/pages/BoardSettings.tsx
+msgid "Task settings"
+msgstr "タスクの設定"
+
+#: src/components/AppRail.tsx
+#: src/components/SidebarFooter.tsx
+#: src/pages/Board.tsx
+msgid "Tasks"
+msgstr "タスク"
+
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Teach a task"
 msgstr "タスクを教える"
@@ -6654,6 +6675,10 @@ msgstr "これは公式APIを使わずにWhatsAppを利用します。番号が�
 #: src/pages/Artifacts.tsx
 msgid "This week"
 msgstr "今週"
+
+#: src/pages/shell/thread-panel.tsx
+msgid "Thread"
+msgstr "スレッド"
 
 #: src/lib/cron.ts
 msgid "Thursday"

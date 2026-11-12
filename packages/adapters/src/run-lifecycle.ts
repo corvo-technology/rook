@@ -9,6 +9,7 @@ import type { ExecutorDeps } from "./executor-deps.js";
 import { notifyRun } from "./run-notifications.js";
 import type { TakeoverResumeCheckpoint } from "./takeover-resume.js";
 import { TAKEOVER_RESUME_CHECKPOINTS } from "./takeover-resume.js";
+import { endTicketRun } from "./ticket-run-moves.js";
 
 /**
  * Avoid an expensive remote workspace export when a turn never touched the computer. A failed
@@ -64,6 +65,7 @@ export async function failRunBeforeTurn(
     trigger: string;
     routineId?: string | null;
     sourceMessageId?: string | null;
+    ticketId?: string | null;
   },
   botName: string,
   lease: { attemptId: string; workerId: string; fence: number },
@@ -84,6 +86,7 @@ export async function failRunBeforeTurn(
     ...(options.stopReason ? { stopReason: options.stopReason } : {}),
   });
   if (!failed) return false;
+  await endTicketRun(deps, run, { kind: "stopped", error: message });
   if (failed.continuationRunId) {
     await deps.jobs
       .enqueue(runContinueJob(failed.continuationRunId))

@@ -41,6 +41,7 @@ import {
   isPartialReplyClientNonce,
   isTooManyDatabaseConnections,
   loadRunHistoryMessages,
+  loadRunThreadRoot,
   loadRunTurnCheckpoint,
   parseComputerMode,
   readRunTimingFields,
@@ -214,6 +215,7 @@ import {
   recentThreadFilesInstruction,
 } from "./thread-artifacts.js";
 import { loadAgentTicketContext } from "./ticket-context.js";
+import { startTicketRun } from "./ticket-run-moves.js";
 import { appendToolCompletionAudit } from "./tool-completion-audit.js";
 import { createWebProvider } from "./web-provider-factory.js";
 import { loadWikiIndexContext } from "./wiki-context.js";
@@ -516,6 +518,10 @@ export function createRunExecutor(deps: ExecutorDeps) {
             : loadBotCommandEnvironment(deps.prisma, deps.secretStore, run),
           loadLoginPasswordRedactions(deps.prisma, deps.secretStore, run),
         ]);
+        // Where this run's live text belongs: in the thread its source was posted in, if any.
+        const threadRootId = thread.groupId
+          ? await loadRunThreadRoot(deps.prisma, run.sourceMessageId)
+          : undefined;
         const historySearchBeforeSeq =
           contextStrategy !== "current" && run.sourceMessageId
             ? (messages.find((message) => message.id === run.sourceMessageId)?.seq ??
@@ -607,6 +613,9 @@ export function createRunExecutor(deps: ExecutorDeps) {
           runId,
           payload: { trigger: run.trigger, routineId: run.routineId },
         });
+        await startTicketRun(deps, run).catch((error) =>
+          getLogger().warn("ticket run start move failed", error),
+        );
 
         const discoveredPromise = deps.connector
           ? deps.connector.discoverTools(context)
@@ -1270,6 +1279,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
             callEndRun,
             callClientNonce: callClientNonceForRun,
             peerMessage,
+            threadRootId,
           },
           computer: {
             stored: storedComputer,

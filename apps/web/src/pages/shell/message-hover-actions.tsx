@@ -11,7 +11,15 @@ import {
   PopoverTrigger,
 } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { BookOpen, Copy, MessageSquareDot, MoreHorizontal, Reply, Smile } from "lucide-react";
+import {
+  BookOpen,
+  Copy,
+  MessageSquareDot,
+  MessageSquareText,
+  MoreHorizontal,
+  Reply,
+  Smile,
+} from "lucide-react";
 import { useState } from "react";
 import { MessageHoverMetadata } from "../../components/MessageHoverMetadata";
 import { copyableMessageText } from "../../lib/message-text";
@@ -20,6 +28,7 @@ export function MessageHoverActions({
   message,
   side,
   onReply,
+  onReplyInThread,
   onMarkUnread,
   onKeepInWiki,
   markedUnread = false,
@@ -27,7 +36,10 @@ export function MessageHoverActions({
 }: {
   message: ThreadMessage;
   side: "start" | "end";
-  onReply: (message: ThreadMessage) => void;
+  /** Quotes the message; absent where the composer has no quote to arm. */
+  onReply?: (message: ThreadMessage) => void;
+  /** Opens the message's thread; absent outside a channel's main column. */
+  onReplyInThread?: (message: ThreadMessage) => void;
   onMarkUnread: (message: ThreadMessage) => void;
   onKeepInWiki?: (message: ThreadMessage) => void;
   markedUnread?: boolean;
@@ -79,28 +91,42 @@ export function MessageHoverActions({
             </PopoverContent>
           </Popover>
         ) : null}
-        <button
-          type="button"
-          aria-label={t`Reply`}
-          onClick={() => onReply(message)}
-          className={iconButtonClass}
-        >
-          <Reply size={15} strokeWidth={1.7} />
-        </button>
+        {onReplyInThread ? (
+          <button
+            type="button"
+            aria-label={t`Reply in thread`}
+            onClick={() => onReplyInThread(message)}
+            className={iconButtonClass}
+          >
+            <MessageSquareText size={15} strokeWidth={1.7} />
+          </button>
+        ) : null}
+        {onReply ? (
+          <button
+            type="button"
+            aria-label={t`Reply`}
+            onClick={() => onReply(message)}
+            className={iconButtonClass}
+          >
+            <Reply size={15} strokeWidth={1.7} />
+          </button>
+        ) : null}
         <DropdownMenu open={moreOpen} onOpenChange={setMoreOpen}>
           <DropdownMenuTrigger aria-label={t`More`} className={iconButtonClass}>
             <MoreHorizontal size={15} strokeWidth={1.7} />
           </DropdownMenuTrigger>
           <DropdownMenuContent align={side === "end" ? "start" : "end"} className="w-auto">
-            <DropdownMenuItem
-              onClick={() => {
-                setMoreOpen(false);
-                onReply(message);
-              }}
-            >
-              <Reply size={14} strokeWidth={1.7} />
-              <Trans>Reply</Trans>
-            </DropdownMenuItem>
+            {onReply ? (
+              <DropdownMenuItem
+                onClick={() => {
+                  setMoreOpen(false);
+                  onReply(message);
+                }}
+              >
+                <Reply size={14} strokeWidth={1.7} />
+                <Trans>Reply</Trans>
+              </DropdownMenuItem>
+            ) : null}
             {canMarkMessageUnread(message) && !markedUnread ? (
               <DropdownMenuItem
                 onClick={() => {

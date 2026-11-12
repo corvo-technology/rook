@@ -27,8 +27,8 @@ msgstr "{0, plural, one {# 个机器人有自己的模型：} other {# 个机器
 msgid "{0, plural, one {# failed} other {# failed}}"
 msgstr "{0, plural, one {# 个失败} other {# 个失败}}"
 
-#. placeholder {0}: thread.count
-#: src/pages/shell/message-view.tsx
+#. placeholder {0}: summary.count
+#: src/pages/shell/transcript.tsx
 msgid "{0, plural, one {# reply} other {# replies}}"
 msgstr "{0, plural, other {# 条回复}}"
 
@@ -150,6 +150,10 @@ msgstr "{0} 仍会回应直接提及。"
 msgid "{0}'s screen"
 msgstr "{0} 的屏幕"
 
+#: src/components/WorkingLine.tsx
+msgid "{a} and {b} are working…"
+msgstr "{a}和{b}正在工作…"
+
 #: src/lib/billing.ts
 msgid "{amount} / {period}"
 msgstr "{amount} / {period}"
@@ -178,6 +182,10 @@ msgstr "{count, plural, one {# 行} other {# 行}}"
 #: src/pages/TeamBoard.tsx
 msgid "{count} agents"
 msgstr "{count} 个代理"
+
+#: src/components/WorkingLine.tsx
+msgid "{count} agents are working…"
+msgstr "{count}个智能体正在工作…"
 
 #: src/lib/billing.ts
 msgid "{count} days"
@@ -272,6 +280,10 @@ msgstr "{name} 已完成"
 #: src/lib/activity-label.ts
 msgid "{name} is waiting for your approval."
 msgstr "{name} 正在等待你的批准。"
+
+#: src/components/WorkingLine.tsx
+msgid "{name} is working…"
+msgstr "{name}正在工作…"
 
 #: src/pages/shell/use-board-notifications.ts
 msgid "{name} moved {ref} to {status}"
@@ -791,6 +803,7 @@ msgstr "高级"
 msgid "Advanced..."
 msgstr "高级..."
 
+#: src/components/WorkingLine.tsx
 #: src/pages/AddStepDialog.tsx
 #: src/pages/NewRoutineDialog.tsx
 #: src/pages/WhatsAppNumbers.tsx
@@ -1223,17 +1236,6 @@ msgstr "阻止"
 msgid "Blocked"
 msgstr "已屏蔽"
 
-#: src/components/AppRail.tsx
-#: src/components/SidebarFooter.tsx
-#: src/pages/Board.tsx
-msgid "Board"
-msgstr "看板"
-
-#: src/pages/Board.tsx
-#: src/pages/BoardSettings.tsx
-msgid "Board settings"
-msgstr "看板设置"
-
 #: src/pages/shell/computer-view.tsx
 #: src/pages/shell/use-computer.tsx
 msgid "Booting live desktop…"
@@ -1654,6 +1656,7 @@ msgstr "关闭导航"
 
 #: src/pages/GroupPanel.tsx
 #: src/pages/shell/side-panel.tsx
+#: src/pages/shell/thread-panel.tsx
 msgid "Close panel"
 msgstr "关闭面板"
 
@@ -3232,6 +3235,7 @@ msgstr "失败"
 msgid "Failed"
 msgstr "失败"
 
+#: src/pages/shell/thread-panel.tsx
 #: src/pages/shell/use-composer-actions.ts
 msgid "Failed to send message"
 msgstr "发送消息失败"
@@ -5424,12 +5428,17 @@ msgstr "回复"
 
 #: src/pages/shell/message-hover-actions.tsx
 #: src/pages/shell/quote-selection-button.tsx
+#: src/pages/shell/thread-panel.tsx
 msgid "Reply"
 msgstr "回复"
 
 #: src/pages/shell/composer.tsx
 msgid "Reply cancelled"
 msgstr "已取消回复"
+
+#: src/pages/shell/message-hover-actions.tsx
+msgid "Reply in thread"
+msgstr "在主题中回复"
 
 #. placeholder {0}: replyNameRef.current
 #: src/pages/shell/composer.tsx
@@ -5847,6 +5856,7 @@ msgid "Self-hosted"
 msgstr "自托管"
 
 #: src/pages/shell/composer.tsx
+#: src/pages/shell/thread-panel.tsx
 msgid "Send"
 msgstr "发送"
 
@@ -6369,6 +6379,17 @@ msgstr "接管控制权"
 msgid "Talk to your agent"
 msgstr "与你的智能体对话"
 
+#: src/pages/Board.tsx
+#: src/pages/BoardSettings.tsx
+msgid "Task settings"
+msgstr "任务设置"
+
+#: src/components/AppRail.tsx
+#: src/components/SidebarFooter.tsx
+#: src/pages/Board.tsx
+msgid "Tasks"
+msgstr "任务"
+
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Teach a task"
 msgstr "示范任务"
@@ -6654,6 +6675,10 @@ msgstr "这会在不使用官方 API 的情况下使用 WhatsApp。该号码可�
 #: src/pages/Artifacts.tsx
 msgid "This week"
 msgstr "本周"
+
+#: src/pages/shell/thread-panel.tsx
+msgid "Thread"
+msgstr "主题"
 
 #: src/lib/cron.ts
 msgid "Thursday"

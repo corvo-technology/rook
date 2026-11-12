@@ -115,6 +115,7 @@ export async function persistMessageInTransaction(
       role,
       blocks,
       callId: callIdFromClientNonce(clientNonce),
+      threadRootId: message.threadRootId ?? undefined,
     },
   });
   return {

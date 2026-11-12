@@ -88,3 +88,43 @@ describe("keeping a message in the wiki from its menu", () => {
     expect(items(await show(vi.fn(), empty))).not.toContain("Keep in the wiki");
   });
 });
+
+describe("opening a message's thread from its actions", () => {
+  async function showWith(props: {
+    onReply?: (message: ThreadMessage) => void;
+    onReplyInThread?: (message: ThreadMessage) => void;
+  }) {
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    const container = document.createElement("div");
+    document.body.append(container);
+    root = createRoot(container);
+    await act(async () => {
+      root!.render(
+        <MessageHoverActions
+          message={message}
+          side="start"
+          onMarkUnread={vi.fn()}
+          onReact={vi.fn(async () => undefined)}
+          {...props}
+        />,
+      );
+    });
+    return container;
+  }
+
+  it("opens the thread of the message it sits on", async () => {
+    const open = vi.fn();
+    const container = await showWith({ onReply: vi.fn(), onReplyInThread: open });
+    const button = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Reply in thread"]',
+    );
+    await act(async () => button?.click());
+    expect(open).toHaveBeenCalledWith(message);
+  });
+
+  it("offers neither reply where the channel gives it no way to", async () => {
+    const container = await showWith({});
+    expect(container.querySelector('button[aria-label="Reply in thread"]')).toBeNull();
+    expect(container.querySelector('button[aria-label="Reply"]')).toBeNull();
+  });
+});

@@ -42,6 +42,7 @@ export function ShellSidePanel({
   computerOpen,
   booting,
   computerPanel,
+  threadPanel,
   routineEditorProps,
   openBot,
   openCreatedBot,
@@ -73,6 +74,8 @@ export function ShellSidePanel({
   computerOpen: boolean;
   booting: boolean;
   computerPanel: ReactNode;
+  /** The open thread of a channel message; null when none is open. */
+  threadPanel: ReactNode;
   routineEditorProps: ComponentProps<typeof RoutineEditor> | null;
   openBot: (botId: string) => void;
   openCreatedBot: (bot: Bot) => void;
@@ -87,7 +90,11 @@ export function ShellSidePanel({
   onClearBot: (bot: Bot) => void;
 }) {
   const { t } = useLingui();
-  const open = Boolean(panel && (active || activeGroup || panel === "import-agent"));
+  const open = Boolean(
+    panel &&
+      (active || activeGroup || panel === "import-agent") &&
+      (panel !== "thread" || threadPanel),
+  );
 
   async function createGroup(input: { name: string; botIds: string[] }) {
     const group = await rpc.groups.create(input);
@@ -101,7 +108,8 @@ export function ShellSidePanel({
 
   return (
     <ResizableSidePanel open={open} panel={panel ?? "closed"}>
-      {open ? (
+      {open && panel === "thread" ? threadPanel : null}
+      {open && panel !== "thread" ? (
         <div className="rk-scroll h-full w-full overflow-y-auto px-5 py-[17px]">
           {panel !== "routine" &&
           panel !== "create-group" &&

@@ -36,6 +36,8 @@ import { errorText } from "../lib/user-error";
 import { BoardSettings } from "./BoardSettings";
 import { BoardLanes } from "./board/BoardLanes";
 import { placeSaved } from "./board/board-drag";
+import type { BoardSteps } from "./board/board-steps";
+import { applyBoardStep, boardEventChangesList } from "./board/board-steps";
 import { useTicketMoves } from "./board/use-ticket-moves";
 import { TicketFields } from "./TicketFields";
 import { WindowChrome } from "./WindowChrome";
@@ -71,6 +73,7 @@ export function BoardPage() {
     : tickets;
   const [streamError, setError] = useState("");
   const [moveError, setMoveError] = useState("");
+  const [steps, setSteps] = useState<BoardSteps>(new Map());
   const loadFailed = ticketsQuery.error ?? botsQuery.error;
   const error = moveError || streamError || (loadFailed ? errorText(loadFailed) : "");
   /** A read sent after a change, so an older one in flight cannot bring back the old board. */
@@ -99,11 +102,15 @@ export function BoardPage() {
     return followBoard({
       subscribe: (signal) => rpc.boards.subscribe(undefined, { signal }),
       onOpen: async () => {
+        // A step missed while disconnected would never be cleared, so start from none.
+        setSteps(new Map());
         await fetchFresh(queryClient, ticketsOptions);
         refreshComments();
         setError("");
       },
       onEvent: async (event) => {
+        setSteps((current) => applyBoardStep(current, event));
+        if (!boardEventChangesList(event)) return;
         refreshComments(event.ticketId);
         await fetchFresh(queryClient, ticketsOptions);
       },
@@ -123,7 +130,7 @@ export function BoardPage() {
           <ChevronLeft />
         </Link>
         <h1 className="flex-1 font-display text-heading3 font-normal tracking-tight">
-          <Trans>Board</Trans>
+          <Trans>Tasks</Trans>
         </h1>
         {bots.length > 1 ? (
           <NativeSelect
@@ -144,7 +151,7 @@ export function BoardPage() {
           <Button
             variant="ghost"
             size="icon"
-            aria-label={t`Board settings`}
+            aria-label={t`Task settings`}
             onClick={() => setSettingsOpen(true)}
           >
             <Settings2 />
@@ -165,6 +172,7 @@ export function BoardPage() {
           bots={bots}
           labels={statuses}
           placement={placement}
+          steps={steps}
           onOpen={setSelected}
           onMove={(ticket, status) => {
             setMoveError("");

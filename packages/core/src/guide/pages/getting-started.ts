@@ -22,7 +22,7 @@ With no other agents yet, the Chief suggests one to three agents from the **Stor
 
 - **Team**: your agents and groups.
 - **Routines**: work that runs on its own.
-- **Board**: tickets and who works on them, where the deployment turns it on.
+- **Tasks**: tickets and who works on them, where the deployment turns it on.
 - **Wiki**: what the team knows.
 - **Settings**: models, voice, approvals, memory and usage.
 
@@ -49,7 +49,7 @@ Sem outros agentes ainda, o Chefe sugere de um a três agentes da **Loja** e adi
 
 - **Equipe**: seus agentes e grupos.
 - **Rotinas**: trabalho que roda sozinho.
-- **Quadro**: tickets e quem trabalha neles, onde a implantação ativa.
+- **Tarefas**: tickets e quem trabalha neles, onde a implantação ativa.
 - **Wiki**: o que a equipe sabe.
 - **Configurações**: modelos, voz, aprovações, memória e uso.
 

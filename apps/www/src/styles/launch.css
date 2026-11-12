@@ -126,6 +126,44 @@ main h3 {
   margin-inline: auto;
 }
 
+/* The four states of a rook, the language the app speaks. Pointing at one plays it. */
+.lp-states {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.state {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 28px 12px 22px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-size: 14px;
+  cursor: default;
+  transition: border-color 160ms ease, color 160ms ease;
+}
+
+.state:hover,
+.state:focus-visible {
+  border-color: var(--line-2);
+  color: var(--ink);
+}
+
+.state:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
 .lp-traits,
 .lp-items {
   display: grid;
@@ -468,7 +506,8 @@ main h3 {
   flex-direction: column;
   align-items: center;
   gap: 30px;
-  padding-top: var(--section-gap);
+  margin-top: var(--section-gap);
+  padding: clamp(80px, 10vw, 140px) 0 clamp(72px, 9vw, 120px);
   text-align: center;
 }
 
@@ -492,8 +531,9 @@ main h3 {
   max-width: 34rem;
 }
 
-.site-footer {
-  margin-top: var(--section-gap);
+/* The footer continues the closing band. */
+main ~ .site-footer {
+  margin-top: 0;
   padding: 32px 0 40px;
 }
 
@@ -530,6 +570,10 @@ main h3 {
 }
 
 @media (max-width: 620px) {
+  .lp-states {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .lp-store__row {
     flex-direction: column;
     gap: 8px;

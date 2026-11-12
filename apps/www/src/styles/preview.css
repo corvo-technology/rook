@@ -8,6 +8,7 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
   background: var(--surface);
+  box-shadow: var(--shadow-demo);
   color: var(--body);
   text-align: start;
 }
@@ -53,6 +54,39 @@
   color: var(--body);
   font-size: 16px;
   line-height: 1.5;
+}
+
+.pv-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* The Chief passing the request on, and the agent working, read as quiet lines. */
+.pv-handoff {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-inline-start: 11px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.pv-msg--quiet {
+  align-items: center;
+}
+
+.pv-decided {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.pv-decided span {
+  color: var(--blue);
+}
+
+.pv-decided[data-decision="denied"] span {
+  color: var(--muted);
 }
 
 .pv-approval {
@@ -107,8 +141,8 @@
 }
 
 .pv-btn--solid {
-  border-color: var(--blue-bottom);
-  background: var(--blue-bottom);
+  border-color: var(--blue);
+  background: var(--blue);
   color: var(--on-primary);
 }
 

@@ -57,6 +57,7 @@ const COPY: LaunchCopy = {
     heading: "什么是智能体？",
     accent: "只负责一件事的队友。",
     copy: "智能体是一个有名字、有岗位说明、有自己的对话、并拥有你交给它的工具的 AI。你像对同事那样和它说话。它在后台工作，做完后带着结果回来。",
+    states: { working: "工作中", asking: "需要你", sleeping: "休眠", done: "已完成" },
     traits: [
       { title: "一份工作", body: "写下它做什么，或从商店里选一个。它有自己的对话，所以记得你让它做过什么。" },
       { title: "自己的工具", body: "接入 Stripe、Linear、Notion 之类的应用或任何 MCP 服务器，并选择哪个智能体拿到哪个。" },

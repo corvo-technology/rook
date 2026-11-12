@@ -32,6 +32,7 @@ import { useMemo, useRef, useState } from "react";
 import { useTicketPriorityLabels } from "../../lib/ticket-priority";
 import type { Placement } from "./board-drag";
 import { arrangeLanes, laneForKey } from "./board-drag";
+import type { BoardSteps } from "./board-steps";
 
 /** A spring that overshoots a touch, so a dropped card settles instead of stopping dead. */
 const SETTLE = "cubic-bezier(0.34, 1.4, 0.64, 1)";
@@ -67,6 +68,7 @@ export function BoardLanes({
   bots,
   labels,
   placement,
+  steps,
   onOpen,
   onMove,
   onAdd,
@@ -75,6 +77,8 @@ export function BoardLanes({
   bots: readonly Bot[];
   labels: Record<TicketStatus, string>;
   placement: Placement;
+  /** What each agent is doing on a ticket right now. */
+  steps?: BoardSteps;
   onOpen: (ticket: Ticket) => void;
   onMove: (ticket: Ticket, status: TicketStatus) => void;
   onAdd?: (status: TicketStatus) => void;
@@ -215,6 +219,7 @@ export function BoardLanes({
                     key={ticket.id}
                     ticket={ticket}
                     bot={ticket.assigneeBotId ? botsById.get(ticket.assigneeBotId) : undefined}
+                    step={steps?.get(ticket.id)}
                     opening={drag?.id === ticket.id && drag.over !== drag.from}
                     introDelay={intro && index < INTRO_MAX ? index * INTRO_STEP_MS : undefined}
                     onOpen={() => onOpen(ticket)}
@@ -237,6 +242,7 @@ export function BoardLanes({
             <CardFace
               ticket={held}
               bot={held.assigneeBotId ? botsById.get(held.assigneeBotId) : undefined}
+              step={steps?.get(held.id)}
             />
           </div>
         ) : null}
@@ -290,12 +296,14 @@ function Lane({
 function BoardCard({
   ticket,
   bot,
+  step,
   opening,
   introDelay,
   onOpen,
 }: {
   ticket: Ticket;
   bot: Bot | undefined;
+  step: string | undefined;
   opening: boolean;
   introDelay: number | undefined;
   onOpen: () => void;
@@ -326,7 +334,7 @@ function BoardCard({
               "animate-in fade-in-0 slide-in-from-bottom-1 duration-300 motion-reduce:animate-none",
           )}
         >
-          <CardFace ticket={ticket} bot={bot} hollow={isDragging} />
+          <CardFace ticket={ticket} bot={bot} step={step} hollow={isDragging} />
         </button>
       </div>
     </div>
@@ -337,15 +345,18 @@ function BoardCard({
 function CardFace({
   ticket,
   bot,
+  step,
   hollow = false,
 }: {
   ticket: Ticket;
   bot: Bot | undefined;
+  /** The agent's latest step on this ticket while its run lasts. */
+  step?: string;
   hollow?: boolean;
 }) {
   const priorities = useTicketPriorityLabels();
   const flagged = ticket.priority === "high" || ticket.priority === "urgent";
-  const working = ticket.status === "doing" && isRunWorking(bot?.status ?? "");
+  const working = Boolean(step) || (ticket.status === "doing" && isRunWorking(bot?.status ?? ""));
   return (
     <div
       className={cn(
@@ -377,11 +388,22 @@ function CardFace({
                 color={bot.color}
                 identity={bot.id}
                 size={18}
-                status={working ? bot.status : undefined}
+                status={
+                  working ? (isRunWorking(bot.status ?? "") ? bot.status : "running") : undefined
+                }
               />
             </span>
             <span className="truncate">{bot.name}</span>
           </div>
+        ) : null}
+        {step ? (
+          <p
+            data-testid="card-step"
+            dir="auto"
+            className="truncate text-label text-muted-foreground"
+          >
+            {step}
+          </p>
         ) : null}
       </div>
     </div>

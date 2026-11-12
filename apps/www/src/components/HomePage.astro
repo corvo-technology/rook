@@ -53,6 +53,13 @@ const storeGroups = CATEGORY_ORDER.map((category) => ({
 const CATALOG_URL = `${GITHUB_URL}/blob/HEAD/packages/core/src/agent-catalog-data.ts`;
 // Brand names, the same in every language.
 const MODEL_CHIPS = ["Claude", "ChatGPT", "OpenRouter"];
+// The four states an agent is in, the same ones the app shows on its rooks.
+const STATES = [
+  { mood: "working", hue: "azul" },
+  { mood: "asking", hue: "laranja" },
+  { mood: "sleeping", hue: "neutro" },
+  { mood: "done", hue: "menta" },
+] as const;
 const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3)];
 ---
 
@@ -73,7 +80,7 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
       <section class="lp-hero">
         <h1>
           <span>{copy.hero.line1}</span>
-          <Rook hue="menta" size={108} mood="working" float label="Rook" />
+          <Rook hue="menta" size={108} float react label="Rook" />
           <span>{copy.hero.line2}</span>
         </h1>
         <p class="lp-hero__lead">{copy.hero.lead[0]}<br />{copy.hero.lead[1]}</p>
@@ -105,6 +112,18 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
           <h2 id="agent-heading" class="lp-title">{copy.agent.accent}</h2>
           <p class="lp-lead">{copy.agent.copy}</p>
         </div>
+        <ul class="lp-states" data-reveal>
+          {
+            STATES.map((state, index) => (
+              <li>
+                <button type="button" class="state">
+                  <Rook hue={state.hue} size={56} mood={state.mood} seed={index + 6} gaze={false} ring={state.mood === "working"} still />
+                  <span>{copy.agent.states[state.mood]}</span>
+                </button>
+              </li>
+            ))
+          }
+        </ul>
         <ul class="lp-traits" data-reveal>
           {
             copy.agent.traits.map((trait) => (
@@ -263,13 +282,13 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
         </div>
       </section>
 
-      <section class="lp-cta" aria-labelledby="cta-heading" data-reveal>
+      <section class="lp-cta ink ink-band" aria-labelledby="cta-heading">
         <div class="lp-cta__flock" aria-hidden="true">
-          <Rook hue="azul" size={64} />
-          <Rook hue="laranja" size={76} />
-          <Rook hue="menta" size={104} mood="done" float />
-          <Rook hue="violeta" size={76} />
-          <Rook hue="rosa" size={64} />
+          <Rook hue="azul" size={64} seed={1} react />
+          <Rook hue="laranja" size={76} seed={2} react />
+          <Rook hue="menta" size={104} seed={3} float react />
+          <Rook hue="violeta" size={76} seed={4} react />
+          <Rook hue="rosa" size={64} seed={5} react />
         </div>
         <h2 id="cta-heading" class="lp-title lp-title--cta">{copy.cta.heading}</h2>
         <p class="lp-lead">{copy.cta.copy}</p>

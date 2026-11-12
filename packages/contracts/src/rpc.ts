@@ -230,6 +230,8 @@ const threadSendInput = threadTarget
       .optional(),
     replyToMessageId: Id.optional(),
     replyQuote: z.string().trim().min(1).max(REPLY_QUOTE_MAX_LENGTH).optional(),
+    /** Posts into the thread of this channel message instead of the main column. */
+    threadRootId: Id.optional(),
     clientNonce: z.string().min(1).max(200).optional(),
   })
   .superRefine((input, ctx) => {

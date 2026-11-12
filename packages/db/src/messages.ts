@@ -37,6 +37,7 @@ export function loadRunHistoryMessages(
       createdAt: true,
       replyToMessageId: true,
       replyQuote: true,
+      threadRootId: true,
       replyTo: { select: { id: true, threadId: true, role: true, botId: true, blocks: true } },
       clientNonce: true,
     },
@@ -59,6 +60,8 @@ export interface CreateThreadMessageInput {
   botId?: string;
   replyToMessageId?: string;
   replyQuote?: string;
+  /** The channel message this is a thread reply to. A run's messages inherit its source's thread. */
+  threadRootId?: string;
   runId?: string;
   clientNonce?: string;
   markUnread?: boolean;
@@ -89,6 +92,7 @@ export async function createThreadMessageInTransaction(
     select: { nextMessageSeq: true },
   });
   await assertRunCanWriteHistory(tx, input.runId, { allowCancelled: input.allowCancelledRun });
+  const threadRootId = input.threadRootId ?? (await runThreadRootId(tx, input.runId));
   return tx.message.create({
     data: {
       threadId: input.threadId,
@@ -98,11 +102,52 @@ export async function createThreadMessageInTransaction(
       botId: input.botId,
       replyToMessageId: input.replyToMessageId,
       replyQuote: input.replyQuote,
+      threadRootId,
       runId: input.runId,
       clientNonce: input.clientNonce,
       routing: input.routing,
     },
   });
+}
+
+type ThreadSource = { id: string; threadRootId: string | null; blocks: unknown };
+
+/**
+ * The thread a run answers in: the one its source message was posted in, or the hand-off that
+ * started it. A hand-off inside a thread joins that thread, so a chain stays under its first one.
+ */
+export function threadRootOfSource(source: ThreadSource | null | undefined): string | undefined {
+  if (!source) return undefined;
+  if (source.threadRootId) return source.threadRootId;
+  const handoff =
+    Array.isArray(source.blocks) &&
+    source.blocks.some((block) => (block as { kind?: unknown } | null)?.kind === "handoff");
+  return handoff ? source.id : undefined;
+}
+
+export async function loadRunThreadRoot(
+  db: Pick<Prisma.TransactionClient, "message">,
+  sourceMessageId: string | null | undefined,
+): Promise<string | undefined> {
+  if (!sourceMessageId) return undefined;
+  return threadRootOfSource(
+    await db.message.findUnique({
+      where: { id: sourceMessageId },
+      select: { id: true, threadRootId: true, blocks: true },
+    }),
+  );
+}
+
+async function runThreadRootId(
+  tx: Prisma.TransactionClient,
+  runId: string | undefined,
+): Promise<string | undefined> {
+  if (!runId) return undefined;
+  const run = await tx.run.findUnique({
+    where: { id: runId },
+    select: { sourceMessage: { select: { id: true, threadRootId: true, blocks: true } } },
+  });
+  return threadRootOfSource(run?.sourceMessage);
 }
 
 export class RunHistoryWriteError extends Error {

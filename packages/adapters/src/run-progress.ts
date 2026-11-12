@@ -100,6 +100,11 @@ export function tryFlushPendingTools(reply: ReplyState) {
     flushPendingTools(reply);
 }
 
+/** Marks live events of a run that answers in a channel thread. */
+function threadPayload(ctx: RunContext) {
+  return ctx.source.threadRootId ? { threadRootId: ctx.source.threadRootId } : {};
+}
+
 export async function flushProgress(ctx: RunContext) {
   const { deps, run, runId, bot, thread } = ctx;
   const { reply } = ctx.state;
@@ -121,8 +126,8 @@ export async function flushProgress(ctx: RunContext) {
     // The first flush replaces the "working…" placeholder outright — a delta here
     // would otherwise get appended straight onto it with no separator.
     payload: reply.hasStreamedText
-      ? { delta: reply.pendingProgress, streaming: true }
-      : { text: reply.pendingProgress, streaming: true },
+      ? { delta: reply.pendingProgress, streaming: true, ...threadPayload(ctx) }
+      : { text: reply.pendingProgress, streaming: true, ...threadPayload(ctx) },
   });
   reply.hasStreamedText = true;
   reply.pendingProgress = "";
@@ -187,7 +192,7 @@ export async function publishActivityLine(
       botId: bot.id,
       type: "thread.progress",
       runId,
-      payload: { delta: reply.pendingProgress, streaming: true },
+      payload: { delta: reply.pendingProgress, streaming: true, ...threadPayload(ctx) },
     });
     reply.pendingProgress = "";
     reply.lastProgressAt = Date.now();
@@ -198,6 +203,10 @@ export async function publishActivityLine(
     botId: bot.id,
     type: "thread.progress",
     runId,
-    payload: { text: redactSecrets(text, ctx.secrets), ...(activity ? { activity: true } : {}) },
+    payload: {
+      text: redactSecrets(text, ctx.secrets),
+      ...(activity ? { activity: true } : {}),
+      ...threadPayload(ctx),
+    },
   });
 }

@@ -8,7 +8,7 @@ export const team: GuidePage = {
       summary: "The Team screen, groups with a purpose, the squad view and group chat.",
       body: `## Team
 
-**Team** lists your agents and groups. Under each agent it shows the tickets it has in progress, in review or blocked; each opens on the board.
+**Team** lists your agents and groups. Under each agent it shows the tickets it has in progress, in review or blocked; each opens in Tasks.
 
 ## Groups
 
@@ -33,7 +33,7 @@ If the Chief does not send work to a group, check that the group has a **Purpose
       summary: "A tela Equipe, grupos com propósito, a visão de squad e o chat do grupo.",
       body: `## Equipe
 
-**Equipe** lista seus agentes e grupos. Sob cada agente aparecem os tickets que ele tem em andamento, em revisão ou bloqueados; cada um abre no quadro.
+**Equipe** lista seus agentes e grupos. Sob cada agente aparecem os tickets que ele tem em andamento, em revisão ou bloqueados; cada um abre em Tarefas.
 
 ## Grupos
 

@@ -123,15 +123,13 @@ describe("AutonomyPicker", () => {
   it("asks before choosing free, and cancelling changes nothing", async () => {
     const onChange = await render({ value: "ask", checkerAvailable: true });
     await click(radio("never"));
-    expect(container.querySelector('[role="alertdialog"]')?.textContent).toContain(
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain(
       "Let Ada act without asking?",
     );
-    expect(container.querySelector('[role="alertdialog"]')?.textContent).toContain(
-      LINES.steered_only,
-    );
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain(LINES.steered_only);
     expect(onChange).not.toHaveBeenCalled();
     await click(button("Cancel"));
-    expect(container.querySelector('[role="alertdialog"]')).toBeNull();
+    expect(container.querySelector('[role="alert"]')).toBeNull();
     expect(onChange).not.toHaveBeenCalled();
     expect(radio("ask").getAttribute("aria-checked")).toBe("true");
   });
@@ -141,6 +139,6 @@ describe("AutonomyPicker", () => {
     await click(radio("never"));
     await click(button("Stop asking"));
     expect(onChange).toHaveBeenCalledExactlyOnceWith("never");
-    expect(container.querySelector('[role="alertdialog"]')).toBeNull();
+    expect(container.querySelector('[role="alert"]')).toBeNull();
   });
 });

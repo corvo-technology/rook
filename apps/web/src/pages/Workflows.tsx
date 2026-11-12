@@ -15,7 +15,7 @@ import { rpc } from "../lib/rpc";
 import { useSidePanel } from "../lib/side-panel";
 import { errorText } from "../lib/user-error";
 import { formatWhen, insertStep, moveStep } from "../lib/workflow-flow";
-import { AddStepDialog } from "./AddStepDialog";
+import { AddStepPanel } from "./AddStepPanel";
 import { NewRoutinePanel } from "./NewRoutinePanel";
 import { WindowChrome } from "./WindowChrome";
 
@@ -134,7 +134,7 @@ export function WorkflowsPage() {
         )}
       </div>
       {adding ? (
-        <AddStepDialog
+        <AddStepPanel
           bots={bots}
           saving={saving}
           error={error}

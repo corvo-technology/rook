@@ -46,10 +46,21 @@ vi.mock("@corvo/ui-web", async (importOriginal) => {
     cn: original.cn,
     Button: (props: ComponentProps<"button">) => <button {...props} />,
     buttonVariants: original.buttonVariants,
-    Dialog: Container,
-    DialogContent: Container,
-    DialogHeader: Container,
-    DialogTitle: Container,
+    SidePanel: ({
+      title,
+      footer,
+      children,
+    }: {
+      title?: ReactNode;
+      footer?: ReactNode;
+      children?: ReactNode;
+    }) => (
+      <aside>
+        <h2>{title}</h2>
+        {children}
+        <footer>{footer}</footer>
+      </aside>
+    ),
     Input: (props: ComponentProps<"input">) => <input {...props} />,
     NativeSelect: (props: ComponentProps<"select">) => <select {...props} />,
     NativeSelectOption: (props: ComponentProps<"option">) => <option {...props} />,

@@ -32,7 +32,7 @@ test("create opens dialog, then empty chat; picker lists bots; sidebar collapses
   await captureScreenshot(page, testInfo, "plus-picker-highlight");
 
   await picker.getByTestId("create-new-bot").click();
-  const createDialog = page.getByTestId("create-bot-dialog");
+  const createDialog = page.getByTestId("create-bot-panel");
   await expect(createDialog).toBeVisible();
   await expect(page.getByTestId("side-panel")).toHaveAttribute("data-panel", "closed");
   const name = createDialog.getByPlaceholder("Name your Bot");
@@ -46,7 +46,7 @@ test("create opens dialog, then empty chat; picker lists bots; sidebar collapses
   const mint = createDialog.getByRole("button", { name: "Color #10B981", exact: true });
   await mint.click();
   await expect(mint).toHaveAttribute("aria-pressed", "true");
-  await captureScreenshot(page, testInfo, "create-bot-dialog");
+  await captureScreenshot(page, testInfo, "create-bot-panel");
 
   const created = page.waitForResponse(
     (response) => response.url().includes("/rpc/bots/create") && response.ok(),

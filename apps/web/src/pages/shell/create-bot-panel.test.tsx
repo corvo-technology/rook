@@ -5,7 +5,7 @@ import { act } from "react";
 import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { CreateBotDialogInput } from "./create-bot-dialog";
+import type { CreateBotPanelInput } from "./create-bot-panel";
 
 vi.mock("@lingui/react/macro", () => {
   const t = (parts: TemplateStringsArray, ...values: unknown[]) =>
@@ -13,7 +13,7 @@ vi.mock("@lingui/react/macro", () => {
   return { useLingui: () => ({ t }), Trans: ({ children }: { children: ReactNode }) => children };
 });
 
-import { CreateBotDialog } from "./create-bot-dialog";
+import { CreateBotPanel } from "./create-bot-panel";
 
 let container: HTMLDivElement;
 let root: Root;
@@ -36,9 +36,9 @@ afterEach(() => {
   container.remove();
 });
 
-async function render(onCreate: (input: CreateBotDialogInput) => Promise<void>) {
+async function render(onCreate: (input: CreateBotPanelInput) => Promise<void>) {
   await act(async () => {
-    root.render(<CreateBotDialog onCancel={() => undefined} onCreate={onCreate} />);
+    root.render(<CreateBotPanel onCancel={() => undefined} onCreate={onCreate} />);
   });
 }
 
@@ -64,7 +64,7 @@ async function click(element: HTMLElement) {
   });
 }
 
-describe("CreateBotDialog", () => {
+describe("CreateBotPanel", () => {
   it("creates only once the name is not blank", async () => {
     const onCreate = vi.fn(async () => undefined);
     await render(onCreate);
@@ -76,7 +76,7 @@ describe("CreateBotDialog", () => {
   });
 
   it("creates the bot with the mascot color that was picked", async () => {
-    const onCreate = vi.fn(async (_input: CreateBotDialogInput) => undefined);
+    const onCreate = vi.fn(async (_input: CreateBotPanelInput) => undefined);
     await render(onCreate);
     await click(button("Color #10B981"));
     expect(document.querySelector("[data-mascot]")?.getAttribute("data-mascot")).toBe("mint");
@@ -86,10 +86,10 @@ describe("CreateBotDialog", () => {
   });
 
   it("leaves the look to the server until the person picks one", async () => {
-    const onCreate = vi.fn(async (_input: CreateBotDialogInput) => undefined);
+    const onCreate = vi.fn(async (_input: CreateBotPanelInput) => undefined);
     await act(async () => {
       root.render(
-        <CreateBotDialog
+        <CreateBotPanel
           onCancel={() => undefined}
           onCreate={onCreate}
           takenColors={["#10B981", "#3B82F6"]}
@@ -117,7 +117,7 @@ describe("CreateBotDialog", () => {
     expect(document.querySelector('[data-testid="create-bot-error"]')?.textContent).toBe(
       "Bot limit reached",
     );
-    expect(document.querySelector('[data-testid="create-bot-dialog"]')).not.toBeNull();
+    expect(document.querySelector('[data-testid="create-bot-panel"]')).not.toBeNull();
   });
 });
 
@@ -129,7 +129,7 @@ describe("importing instead", () => {
     const onImport = vi.fn();
     await act(async () => {
       root.render(
-        <CreateBotDialog
+        <CreateBotPanel
           onCancel={() => undefined}
           onCreate={async () => undefined}
           onImport={onImport}

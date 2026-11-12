@@ -8,15 +8,10 @@ import {
 import {
   BOT_CHARACTERS,
   BotAvatar,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
   defaultBotAvatarValue,
   parseBotAvatar,
   resolvePersonaColorDef,
+  SidePanel,
   Tabs,
   TabsContent,
   TabsList,
@@ -25,9 +20,10 @@ import {
 import { Button } from "@corvo/ui-web/components/ui/button";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
-import { Check, Loader2, Pencil, Plus, Upload, X } from "lucide-react";
+import { Check, Loader2, Pencil, Plus, Upload } from "lucide-react";
 import type { ClipboardEvent, DragEvent } from "react";
 import { useEffect, useRef, useState } from "react";
+import { sidePanelValue, useSidePanel } from "../../lib/side-panel";
 
 /** How long a color chosen with the picker waits for the next step of the drag before it is kept. */
 const CUSTOM_COLOR_SETTLE_MS = 350;
@@ -231,7 +227,10 @@ export function AvatarStudioPopover({
   onDesign,
   disabled = false,
 }: AvatarStudioPopoverProps) {
-  const [open, setOpen] = useState(false);
+  // The studio is a side panel in the URL (`?panel=agent:<id>/avatar`), beside the agent it edits.
+  const sidePanel = useSidePanel();
+  const panelValue = sidePanelValue("agent", `${identity ?? "new"}/avatar`);
+  const open = sidePanel.isOpen(panelValue);
   const [designing, setDesigning] = useState(false);
   const [activeTab, setActiveTab] = useState<"bot" | "character" | "upload">("bot");
   const [dragOver, setDragOver] = useState(false);
@@ -279,7 +278,7 @@ export function AvatarStudioPopover({
         ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, targetSize, targetSize);
 
         onChange(canvas.toDataURL("image/webp", 0.9));
-        setOpen(false);
+        sidePanel.close();
       };
       img.src = src;
     };
@@ -312,7 +311,7 @@ export function AvatarStudioPopover({
       <button
         type="button"
         disabled={disabled}
-        onClick={() => setOpen(true)}
+        onClick={() => sidePanel.open(panelValue)}
         className="group relative cursor-pointer rounded-2xl outline-none transition-transform hover:scale-[1.03] focus-visible:ring-2 focus-visible:ring-ring"
         aria-label={t`Customize bot avatar`}
         data-testid="avatar-studio-trigger"
@@ -323,138 +322,114 @@ export function AvatarStudioPopover({
         </div>
       </button>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent
-          showCloseButton={false}
-          className="w-[360px] max-w-full gap-4 rounded-3xl p-5 sm:max-w-[360px]"
-          data-testid="avatar-studio"
+      <SidePanel
+        open={open}
+        onClose={sidePanel.close}
+        title={t`Avatar Studio`}
+        closeLabel={t`Close`}
+        data-testid="avatar-studio"
+        footer={
+          <Button variant="secondary" size="sm" type="button" onClick={sidePanel.close}>
+            <Check size={14} />
+            <Trans>Done</Trans>
+          </Button>
+        }
+      >
+        <div className="flex flex-col items-center justify-center py-2">
+          <BotAvatar color={value} identity={identity} size={78} status={status} />
+        </div>
+
+        <Tabs
+          value={activeTab}
+          onValueChange={(next) => setActiveTab(next as "bot" | "character" | "upload")}
+          className="gap-4"
         >
-          <DialogHeader className="flex-row items-center justify-between space-y-0">
-            <DialogTitle className="text-[14px] font-semibold tracking-tight">
-              <Trans>Avatar Studio</Trans>
-            </DialogTitle>
-            <DialogDescription className="sr-only">
-              <Trans>Choose a color or upload an image</Trans>
-            </DialogDescription>
+          <div className="flex items-center justify-between border-b border-border pb-1">
+            <TabsList className="rounded-full">
+              <TabsTrigger value="bot" className="rounded-full px-3 text-xs">
+                <Trans>Bot</Trans>
+              </TabsTrigger>
+              <TabsTrigger value="character" className="rounded-full px-3 text-xs">
+                <Trans>Character</Trans>
+              </TabsTrigger>
+              <TabsTrigger value="upload" className="rounded-full px-3 text-xs">
+                <Trans>Upload</Trans>
+              </TabsTrigger>
+            </TabsList>
+
             <Button
               variant="ghost"
-              size="icon-sm"
+              size="sm"
               type="button"
-              onClick={() => setOpen(false)}
-              className="rounded-full text-muted-foreground"
-              aria-label={t`Close`}
+              onClick={restoreDefaultAvatar}
+              className="text-xs text-muted-foreground"
             >
-              <X size={16} />
+              <Trans>Reset</Trans>
             </Button>
-          </DialogHeader>
-
-          <div className="flex flex-col items-center justify-center py-2">
-            <BotAvatar color={value} identity={identity} size={78} status={status} />
           </div>
 
-          <Tabs
-            value={activeTab}
-            onValueChange={(next) => setActiveTab(next as "bot" | "character" | "upload")}
-            className="gap-4"
-          >
-            <div className="flex items-center justify-between border-b border-border pb-1">
-              <TabsList className="rounded-full">
-                <TabsTrigger value="bot" className="rounded-full px-3 text-xs">
-                  <Trans>Bot</Trans>
-                </TabsTrigger>
-                <TabsTrigger value="character" className="rounded-full px-3 text-xs">
-                  <Trans>Character</Trans>
-                </TabsTrigger>
-                <TabsTrigger value="upload" className="rounded-full px-3 text-xs">
-                  <Trans>Upload</Trans>
-                </TabsTrigger>
-              </TabsList>
-
+          <TabsContent value="bot" className="pt-1" data-testid="avatar-studio-bot-tab">
+            <BotLookPicker value={value} onChange={onChange} />
+          </TabsContent>
+          <TabsContent value="character" className="pt-1" data-testid="avatar-studio-character-tab">
+            <BotCharacterPicker value={value} onChange={onChange} />
+            {onDesign ? (
               <Button
-                variant="ghost"
+                variant="secondary"
                 size="sm"
                 type="button"
-                onClick={restoreDefaultAvatar}
-                className="text-xs text-muted-foreground"
+                className="mt-3 w-full"
+                disabled={designing}
+                aria-busy={designing}
+                onClick={() => void design()}
+                data-testid="avatar-studio-design"
               >
-                <Trans>Reset</Trans>
+                {designing ? <Loader2 size={14} className="animate-spin" /> : null}
+                <Trans>Pick from role</Trans>
               </Button>
-            </div>
-
-            <TabsContent value="bot" className="pt-1" data-testid="avatar-studio-bot-tab">
-              <BotLookPicker value={value} onChange={onChange} />
-            </TabsContent>
-            <TabsContent
-              value="character"
-              className="pt-1"
-              data-testid="avatar-studio-character-tab"
+            ) : null}
+          </TabsContent>
+          <TabsContent value="upload">
+            <button
+              type="button"
+              aria-label={t`Image upload area`}
+              onDragOver={(event) => {
+                event.preventDefault();
+                setDragOver(true);
+              }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={handleDrop}
+              onPaste={handlePaste}
+              onClick={() => fileInputRef.current?.click()}
+              className={`flex w-full flex-col items-center justify-center rounded-xl border border-dashed p-6 text-center transition-colors ${
+                dragOver
+                  ? "border-primary bg-primary/10"
+                  : "border-border bg-muted hover:border-foreground/30"
+              }`}
             >
-              <BotCharacterPicker value={value} onChange={onChange} />
-              {onDesign ? (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  type="button"
-                  className="mt-3 w-full"
-                  disabled={designing}
-                  aria-busy={designing}
-                  onClick={() => void design()}
-                  data-testid="avatar-studio-design"
-                >
-                  {designing ? <Loader2 size={14} className="animate-spin" /> : null}
-                  <Trans>Pick from role</Trans>
-                </Button>
-              ) : null}
-            </TabsContent>
-            <TabsContent value="upload">
-              <button
-                type="button"
-                aria-label={t`Image upload area`}
-                onDragOver={(event) => {
-                  event.preventDefault();
-                  setDragOver(true);
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) processImageFile(file);
                 }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={handleDrop}
-                onPaste={handlePaste}
-                onClick={() => fileInputRef.current?.click()}
-                className={`flex w-full flex-col items-center justify-center rounded-xl border border-dashed p-6 text-center transition-colors ${
-                  dragOver
-                    ? "border-primary bg-primary/10"
-                    : "border-border bg-muted hover:border-foreground/30"
-                }`}
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    if (file) processImageFile(file);
-                  }}
-                />
-                <div className="mb-2 grid size-10 place-items-center rounded-full bg-secondary text-muted-foreground">
-                  <Upload size={18} strokeWidth={1.8} />
-                </div>
-                <p className="text-[12.5px] font-medium text-muted-foreground">
-                  <Trans>Drag, drop, or paste an image</Trans>
-                </p>
-                <span className="mt-3 rounded-lg bg-secondary px-3 py-1.5 text-xs font-medium text-foreground">
-                  <Trans>Choose file</Trans>
-                </span>
-              </button>
-            </TabsContent>
-          </Tabs>
-
-          <DialogFooter className="border-border sm:justify-end">
-            <Button variant="secondary" size="sm" type="button" onClick={() => setOpen(false)}>
-              <Check size={14} />
-              <Trans>Done</Trans>
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              />
+              <div className="mb-2 grid size-10 place-items-center rounded-full bg-secondary text-muted-foreground">
+                <Upload size={18} strokeWidth={1.8} />
+              </div>
+              <p className="text-[12.5px] font-medium text-muted-foreground">
+                <Trans>Drag, drop, or paste an image</Trans>
+              </p>
+              <span className="mt-3 rounded-lg bg-secondary px-3 py-1.5 text-xs font-medium text-foreground">
+                <Trans>Choose file</Trans>
+              </span>
+            </button>
+          </TabsContent>
+        </Tabs>
+      </SidePanel>
     </>
   );
 }

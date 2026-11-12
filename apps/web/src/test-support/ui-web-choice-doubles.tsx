@@ -9,6 +9,7 @@ const Group = createContext<{ value?: string; disabled?: boolean; set?: (v: stri
 const Dialog = createContext<(open: boolean) => void>(() => undefined);
 
 export const choiceDoubles = {
+  Button: (props: ComponentProps<"button">) => <button type="button" {...props} />,
   RadioGroup: ({
     value,
     onValueChange,

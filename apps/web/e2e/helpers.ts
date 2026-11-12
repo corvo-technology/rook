@@ -217,7 +217,7 @@ export async function captureScreenshot(page: Page, testInfo: TestInfo, name: st
 export async function openNewBot(page: Page) {
   await page.getByTestId("create-menu-trigger").click();
   await page.getByTestId("create-new-bot").click();
-  await expect(page.getByTestId("create-bot-dialog")).toBeVisible();
+  await expect(page.getByTestId("create-bot-panel")).toBeVisible();
 }
 
 export async function openNewGroup(page: Page) {
@@ -236,7 +236,7 @@ export async function createBotFromPicker(
   { name = "New Bot" }: { name?: string } = {},
 ) {
   await openNewBot(page);
-  const dialog = page.getByTestId("create-bot-dialog");
+  const dialog = page.getByTestId("create-bot-panel");
   await dialog.getByPlaceholder("Name your Bot").fill(name);
   await dialog.getByRole("button", { name: "Create", exact: true }).click();
   await page.waitForURL(/\/app\/[^/]+$/);

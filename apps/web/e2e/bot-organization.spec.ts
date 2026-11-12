@@ -33,7 +33,7 @@ test("pinned bots and sidebar sections persist", async ({ page }, testInfo) => {
   await expect(moveMenu).toBeVisible();
   await captureScreenshot(page, testInfo, "move-to-section-menu");
   await moveMenu.getByText("New section").click();
-  const dialog = page.getByRole("dialog", { name: "New section" });
+  const dialog = page.getByRole("complementary", { name: "New section" });
   await dialog.getByLabel("Name").fill("Projects");
   await dialog.getByRole("button", { name: "Create" }).click();
 
@@ -52,7 +52,7 @@ test("pinned bots and sidebar sections persist", async ({ page }, testInfo) => {
     .getByRole("menu", { name: "Move to", exact: true })
     .getByRole("menuitem", { name: "Rename section", exact: true })
     .click();
-  const renameDialog = page.getByRole("dialog", { name: "Rename section" });
+  const renameDialog = page.getByRole("complementary", { name: "Rename section" });
   await renameDialog.getByLabel("Name").fill("Delivery");
   await captureScreenshot(page, testInfo, "rename-bot-section");
   await renameDialog.getByRole("button", { name: "Save" }).click();
@@ -97,10 +97,11 @@ test("deleting a section keeps its bots and groups", async ({ page }, testInfo) 
     .getByRole("menu", { name: "Actions for Projects" })
     .getByRole("menuitem", { name: "Delete section", exact: true })
     .click();
-  const dialog = page.getByRole("alertdialog", { name: "Delete Projects?" });
+  const dialog = page.getByRole("complementary", { name: "Delete Projects?" });
   await expect(dialog).toContainText("Its bots and groups are kept and leave the section.");
   await captureScreenshot(page, testInfo, "delete-section-dialog");
   await dialog.getByRole("button", { name: "Delete", exact: true }).click();
+  await dialog.getByRole("button", { name: "Confirm", exact: true }).click();
 
   await expect(sectionRows).toHaveCount(0);
   for (const id of [chiefId, alpha.id]) {
@@ -126,9 +127,10 @@ test("an empty section can be deleted after its last bot leaves", async ({ page 
     .getByRole("button", { name: "Collapse Old ideas", exact: true })
     .click({ button: "right" });
   await page.getByRole("menuitem", { name: "Delete section", exact: true }).click();
-  const dialog = page.getByRole("alertdialog", { name: "Delete Old ideas?" });
+  const dialog = page.getByRole("complementary", { name: "Delete Old ideas?" });
   await captureScreenshot(page, testInfo, "delete-empty-section");
   await dialog.getByRole("button", { name: "Delete", exact: true }).click();
+  await dialog.getByRole("button", { name: "Confirm", exact: true }).click();
   await expect(heading).toHaveCount(0);
   await expect(sidebar.locator(`[data-roster-bot-id="${botId}"]`)).toBeVisible();
 });
@@ -374,7 +376,7 @@ test("group chats share every context-menu action", async ({ page }, testInfo) =
     .getByRole("menu", { name: "Move to", exact: true })
     .getByRole("menuitem", { name: "New section", exact: true })
     .click();
-  const sectionDialog = page.getByRole("dialog", { name: "New section" });
+  const sectionDialog = page.getByRole("complementary", { name: "New section" });
   await sectionDialog.getByLabel("Name").fill("Teams");
   await sectionDialog.getByRole("button", { name: "Create" }).click();
   await expect(sidebar.locator('[data-sidebar-group^="section:"]')).toContainText("Group menu");
@@ -382,12 +384,13 @@ test("group chats share every context-menu action", async ({ page }, testInfo) =
   await group.click({ button: "right" });
   await page.getByRole("menuitem", { name: "Clear conversation", exact: true }).click();
   await expect(
-    page.getByRole("alertdialog", { name: "Clear Group menu’s conversation?" }),
+    page.getByRole("complementary", { name: "Clear Group menu’s conversation?" }),
   ).toBeVisible();
   await captureScreenshot(page, testInfo, "group-clear-conversation-confirmation");
   await page.getByRole("button", { name: "Clear", exact: true }).click();
+  await page.getByRole("button", { name: "Confirm", exact: true }).click();
   await expect(
-    page.getByRole("alertdialog", { name: "Clear Group menu’s conversation?" }),
+    page.getByRole("complementary", { name: "Clear Group menu’s conversation?" }),
   ).toHaveCount(0);
 
   await group.click({ button: "right" });
@@ -397,8 +400,11 @@ test("group chats share every context-menu action", async ({ page }, testInfo) =
 
   await copy.click({ button: "right" });
   await page.getByRole("menuitem", { name: "Delete", exact: true }).click();
-  await expect(page.getByRole("alertdialog", { name: "Delete Group menu copy?" })).toBeVisible();
-  await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(page.getByRole("complementary", { name: "Delete Group menu copy?" })).toBeVisible();
+  await page
+    .getByRole("complementary", { name: "Delete Group menu copy?" })
+    .getByRole("button", { name: "Close", exact: true })
+    .click();
 
   await copy.click({ button: "right" });
   await page.getByRole("menuitem", { name: "Archive", exact: true }).click();
@@ -427,7 +433,7 @@ test("built-in sidebar headings follow the language without renaming custom sect
   await bot.click({ button: "right" });
   await page.getByRole("menuitem", { name: "Move to", exact: true }).hover();
   await page.getByRole("menu", { name: "Move to", exact: true }).getByText("New section").click();
-  const dialog = page.getByRole("dialog", { name: "New section" });
+  const dialog = page.getByRole("complementary", { name: "New section" });
   await dialog.getByLabel("Name").fill("Pinned");
   await dialog.getByRole("button", { name: "Create", exact: true }).click();
   await bot.click({ button: "right" });

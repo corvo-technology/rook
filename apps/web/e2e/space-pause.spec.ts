@@ -8,11 +8,8 @@ test("pausing a space stops new runs until it is resumed", async ({ page }, test
   const sidebar = page.locator("aside").first();
   await sidebar.getByRole("button", { name: "Actions for Personal" }).click();
   await page.getByRole("menuitem", { name: "Pause all bots" }).click();
-  const dialog = page.getByRole("alertdialog");
-  await expect(
-    dialog.getByText("Running work stops and nothing starts until you resume."),
-  ).toBeVisible();
-  await dialog.getByRole("button", { name: "Pause all bots" }).click();
+  // Pausing runs at once; the toast offers Undo.
+  await expect(page.getByText("Bots paused", { exact: true })).toBeVisible();
   await expect(sidebar.getByText("Paused", { exact: true })).toBeVisible();
 
   const composer = page.getByRole("combobox", { name: /Message/ });

@@ -30,7 +30,7 @@ test("board creates a ticket and opens it", async ({ page }, testInfo) => {
   await captureScreenshot(page, testInfo, "board-kanban");
 
   await page.getByRole("button", { name: "New ticket", exact: true }).click();
-  const dialog = page.getByRole("dialog", { name: "New ticket" });
+  const dialog = page.getByRole("complementary", { name: "New ticket" });
   await dialog.getByLabel("Title").fill(title);
   await dialog.getByLabel("Description").fill(description);
   const owner = dialog.getByLabel("Owner");
@@ -45,7 +45,7 @@ test("board creates a ticket and opens it", async ({ page }, testInfo) => {
   await captureScreenshot(page, testInfo, "board-ticket-created");
 
   await card.click();
-  const detail = page.getByRole("dialog", { name: title });
+  const detail = page.getByRole("complementary", { name: title });
   await expect(detail.getByLabel("Title")).toHaveValue(title);
   await expect(detail.getByTestId("ticket-description")).toHaveValue(description);
   await expect(detail.getByTestId("ticket-comments")).toBeVisible();
@@ -55,15 +55,16 @@ test("board creates a ticket and opens it", async ({ page }, testInfo) => {
   await detail.getByRole("button", { name: "Save", exact: true }).first().click();
   await expect(detail).toBeHidden();
   await card.click();
-  await expect(page.getByRole("dialog", { name: title }).getByLabel("Field value")).toHaveValue(
-    "ana@example.com",
-  );
+  await expect(
+    page.getByRole("complementary", { name: title }).getByLabel("Field value"),
+  ).toHaveValue("ana@example.com");
   await captureScreenshot(page, testInfo, "board-ticket-detail");
 
   await page.keyboard.press("Escape");
   await expect(detail).toBeHidden();
   await page.getByRole("button", { name: "Task settings", exact: true }).click();
-  const settings = page.getByRole("dialog", { name: "Task settings" });
+  const settings = page.getByRole("complementary", { name: "Task settings" });
+  await captureScreenshot(page, testInfo, "board-settings-panel");
   await settings.getByLabel("In progress", { exact: true }).fill("In contact");
   await settings.getByRole("button", { name: "Save", exact: true }).click();
   await expect(settings).toBeHidden();
@@ -75,9 +76,9 @@ test("board creates a ticket and opens it", async ({ page }, testInfo) => {
     .getByTestId(/board-card-/)
     .first()
     .click();
-  await page.getByRole("dialog", { name: title }).getByLabel("Status").selectOption("doing");
+  await page.getByRole("complementary", { name: title }).getByLabel("Status").selectOption("doing");
   await page
-    .getByRole("dialog", { name: title })
+    .getByRole("complementary", { name: title })
     .getByRole("button", { name: "Save", exact: true })
     .first()
     .click();
@@ -87,5 +88,5 @@ test("board creates a ticket and opens it", async ({ page }, testInfo) => {
   await captureScreenshot(page, testInfo, "team-agent-tickets");
   await owned.getByRole("button").first().click();
   await expect(page).toHaveURL(/\/app\/board\?ticket=/);
-  await expect(page.getByRole("dialog", { name: title })).toBeVisible();
+  await expect(page.getByRole("complementary", { name: title })).toBeVisible();
 });

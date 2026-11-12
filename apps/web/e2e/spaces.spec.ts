@@ -28,11 +28,11 @@ test("the only space is named in the sidebar and chat creation requires approval
   await captureScreenshot(page, testInfo, "single-space-sidebar");
 
   await openNewSpace(page);
-  const dialog = page.getByRole("dialog", { name: "New space" });
+  const dialog = page.getByRole("complementary", { name: "New space" });
   await expect(dialog.getByLabel("Name")).toBeVisible();
   await dialog.getByLabel("Name").fill("Customer support");
-  await captureScreenshot(page, testInfo, "new-space-dialog");
-  await dialog.getByRole("button", { name: "Cancel" }).click();
+  await captureScreenshot(page, testInfo, "new-space-panel");
+  await dialog.getByRole("button", { name: "Close", exact: true }).click();
 
   const composer = page.getByRole("combobox", { name: "Message Chief" });
   await composer.fill("Create a space named Customer support");
@@ -93,7 +93,7 @@ test("a new space auto-completes onboarding, is renamed in its settings, and is 
 
   const sidebar = page.locator("aside").first();
   await openNewSpace(page);
-  const dialog = page.getByRole("dialog", { name: "New space" });
+  const dialog = page.getByRole("complementary", { name: "New space" });
   await dialog.getByLabel("Name").fill("Typo space");
   await dialog.getByRole("button", { name: "Create space", exact: true }).click();
 
@@ -125,12 +125,13 @@ test("a new space auto-completes onboarding, is renamed in its settings, and is 
 
   // An occupied space is deleted with its bots after one confirmation naming them.
   await settings.getByRole("button", { name: "Delete space" }).click();
-  const deleteSpaceDialog = page.getByRole("alertdialog", {
+  const deleteSpaceDialog = page.getByRole("complementary", {
     name: "Delete Temporary and its 1 bot?",
   });
   await expect(deleteSpaceDialog).toBeVisible();
   await captureScreenshot(page, testInfo, "delete-space-dialog");
   await deleteSpaceDialog.getByRole("button", { name: "Delete", exact: true }).click();
+  await deleteSpaceDialog.getByRole("button", { name: "Confirm", exact: true }).click();
   await expect(sidebar.getByText("Temporary", { exact: true })).toHaveCount(0);
   await expect(page).not.toHaveURL(/\/onboarding/);
   await expect(sidebar.getByRole("button", { name: /^Chief/ })).toHaveCount(1);
@@ -156,7 +157,7 @@ test("deleting the last bot in a space stays in the app after first use", async 
 
   const sidebar = page.locator("aside").first();
   await openNewSpace(page);
-  const dialog = page.getByRole("dialog", { name: "New space" });
+  const dialog = page.getByRole("complementary", { name: "New space" });
   await dialog.getByLabel("Name").fill("Side");
   await dialog.getByRole("button", { name: "Create space", exact: true }).click();
   await page.waitForURL(/\/(onboarding|app)/);
@@ -186,9 +187,10 @@ test("deleting the last bot in a space stays in the app after first use", async 
   await sidebar.getByRole("button", { name: "Actions for Side" }).click();
   await page.getByRole("menuitem", { name: "Delete space" }).click();
   await page
-    .getByRole("alertdialog", { name: "Delete Side?" })
+    .getByRole("complementary", { name: "Delete Side?" })
     .getByRole("button", { name: "Delete", exact: true })
     .click();
+  await page.getByRole("button", { name: "Confirm", exact: true }).click();
   await expect(sidebar.getByText("Side", { exact: true })).toHaveCount(0);
   await sidebar.getByRole("button", { name: /^Archived/ }).click();
   await expect(sidebar.getByText("Chief", { exact: true })).toBeVisible();
@@ -203,7 +205,7 @@ test("a space's menu opens its settings in place, and General lists every space"
 
   const sidebar = page.locator("aside").first();
   await openNewSpace(page);
-  const dialog = page.getByRole("dialog", { name: "New space" });
+  const dialog = page.getByRole("complementary", { name: "New space" });
   await dialog.getByLabel("Name").fill("Support");
   await dialog.getByRole("button", { name: "Create space", exact: true }).click();
   await completeOnboarding(page);

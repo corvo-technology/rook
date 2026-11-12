@@ -86,7 +86,7 @@ import { FALLBACK_BOT_COLOR } from "./shell/chat-shared";
 import { Composer } from "./shell/composer";
 import { ComputerOverlay } from "./shell/computer-overlay";
 import { ComputerPanel } from "./shell/computer-panel";
-import type { CreateBotDialogInput } from "./shell/create-bot-dialog";
+import type { CreateBotPanelInput } from "./shell/create-bot-panel";
 import { ShellDialogs, useShellDialogs } from "./shell/shell-dialogs";
 import { AppOverlays, SettingsOverlays } from "./shell/shell-overlays";
 import { ShellSidebar } from "./shell/shell-sidebar";
@@ -786,7 +786,7 @@ function SpaceShell() {
     setPanel(null);
   }
 
-  async function createBot(input: CreateBotDialogInput) {
+  async function createBot(input: CreateBotPanelInput) {
     const isFirstBot = botsRef.current.length === 0;
     const bot = await rpc.bots.create({ ...input, notifyOnFinish: true });
     openCreatedBot(bot);

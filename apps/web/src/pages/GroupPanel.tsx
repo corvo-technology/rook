@@ -11,7 +11,7 @@ import { X } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { WikiCaptureSwitch } from "../components/WikiCaptureSwitch";
 import { errorText } from "../lib/user-error";
-import { DeleteItemDialog } from "./shell/dialogs";
+import { DeleteItemPanel } from "./shell/dialogs";
 
 function validSelection(name: string, selected: readonly string[]) {
   return (
@@ -370,7 +370,7 @@ export function GroupSettings({
         <Trans>Delete group</Trans>
       </Button>
       {confirmingDelete ? (
-        <DeleteItemDialog
+        <DeleteItemPanel
           item={group}
           noun="group"
           onCancel={() => setConfirmingDelete(false)}

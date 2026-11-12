@@ -1454,6 +1454,10 @@ export const ModelBackupListSchema = modelChoiceListSchema(ModelBackupChoiceSche
 export const OPENAI_COMPATIBLE_PROVIDER_ID = "openai-compatible";
 /** Speech models that run on the owner's own computer; no key, models are downloaded. */
 export const LOCAL_VOICE_PROVIDER_ID = "local";
+/** What "This computer" can be told the recordings are in; Whisper detects the rest on "auto". */
+export const LOCAL_LISTEN_LANGUAGES = ["auto", "en", "pt", "es", "fr", "de", "ja", "zh"] as const;
+export const LocalListenLanguageSchema = z.enum(LOCAL_LISTEN_LANGUAGES);
+export type LocalListenLanguage = z.infer<typeof LocalListenLanguageSchema>;
 
 export const MAX_ENABLED_MODEL_IDS = 500;
 
@@ -1632,9 +1636,13 @@ export type VoiceCatalogEntry = z.infer<typeof VoiceCatalogEntrySchema>;
 /** A speech model the local provider can download, and where its download stands. */
 export const LocalSpeechModelSchema = z.object({
   id: z.string(),
+  /** Models that turn speech into text ("listen") and voices that read replies aloud ("speak"). */
+  kind: z.enum(["listen", "speak"]).default("listen"),
   label: z.string(),
   sizeBytes: z.number().int().nonnegative(),
   languages: z.array(z.string()),
+  /** Voices only: a line to play so the owner can hear the voice before choosing it. */
+  sample: z.string().optional(),
   state: z.enum(["absent", "downloading", "ready", "failed"]),
   bytesDone: z.number().int().nonnegative(),
   error: z.string().optional(),

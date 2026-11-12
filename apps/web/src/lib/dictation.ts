@@ -3,6 +3,7 @@ import { getActiveUiLocale } from "./i18n.js";
 import { selectedSpaceId, withSpaceHeaders } from "./rpc.js";
 import { recordingToWav } from "./speech-wav.js";
 import { errorText, voiceAccountErrorText } from "./user-error.js";
+import { announceLocalDownload } from "./voice-notices.js";
 
 export type DictationMode = "hold" | "endpoint";
 
@@ -37,6 +38,8 @@ const ENDPOINT_TICK_MS = 80;
 const SILENCE_RMS = 0.035;
 export const TRANSCRIPTION_RESPONSE_TIMEOUT_MS = 70_000;
 export const MAX_TRANSCRIPTION_RESPONSE_BYTES = 64 * 1024;
+/** How often a recording is offered again while the speech model of this computer downloads. */
+const PREPARING_RETRIES = 20;
 const ENDPOINT_UNSUPPORTED =
   "This browser can't detect when you stop talking. Use Chrome, the desktop app, or hold-to-talk in the composer.";
 /** Web Speech codes that mean the cloud recognizer cannot be used. */
@@ -117,6 +120,14 @@ export function recognitionLanguage(): string {
 export function transcriptionLanguage(): string | undefined {
   const tag = speechLocaleTag(getActiveUiLocale());
   return tag ? tag.split("-")[0]?.toLowerCase() : undefined;
+}
+
+/** The language the last recording was heard in, when the server could tell. */
+let heardLanguage: string | undefined;
+
+/** The language the conversation is in: what was last heard, else the app's own. */
+export function conversationLanguage(): string | undefined {
+  return heardLanguage ?? transcriptionLanguage();
 }
 
 function normalizedTranscript(text: string): string {
@@ -549,35 +560,46 @@ export class Dictation {
     this.set({ status: "transcribing", transcript: this.snapshot.transcript });
     const abort = new AbortController();
     this.transcribeAbort = abort;
-    const timer = setTimeout(
-      () => abort.abort(new Error("Transcription request timed out.")),
-      TRANSCRIPTION_RESPONSE_TIMEOUT_MS,
-    );
+    const timeout = () => abort.abort(new Error("Transcription request timed out."));
+    let timer = setTimeout(timeout, TRANSCRIPTION_RESPONSE_TIMEOUT_MS);
     try {
       const blob = await recordingToWav(recorded);
       if (this.token !== mine) return;
       const audioBase64 = await blobToBase64(blob);
       if (this.token !== mine) return;
-      const res = await withAbort(
-        fetch("/api/voice/transcribe", {
-          method: "POST",
-          headers: withSpaceHeaders({ "content-type": "application/json" }, spaceId),
-          credentials: "include",
-          body: JSON.stringify({
-            audioBase64,
-            mimeType: blob.type,
-            language: transcriptionLanguage(),
+      let res: Response;
+      let body: Awaited<ReturnType<typeof readTranscriptionBody>>;
+      for (let attempt = 0; ; attempt += 1) {
+        res = await withAbort(
+          fetch("/api/voice/transcribe", {
+            method: "POST",
+            headers: withSpaceHeaders({ "content-type": "application/json" }, spaceId),
+            credentials: "include",
+            body: JSON.stringify({
+              audioBase64,
+              mimeType: blob.type,
+              language: transcriptionLanguage(),
+            }),
+            signal: abort.signal,
           }),
-          signal: abort.signal,
-        }),
-        abort.signal,
-      );
-      if (this.token !== mine) {
-        cancelResponseBody(res);
-        return;
+          abort.signal,
+        );
+        if (this.token !== mine) {
+          cancelResponseBody(res);
+          return;
+        }
+        body = await readTranscriptionBody(res, abort.signal);
+        if (this.token !== mine) return;
+        // The speech model of this computer is still downloading: the server asked us to come
+        // back, and the recording is kept until it is there.
+        if (res.status === 503 && body.code === "VOICE_PREPARING" && attempt < PREPARING_RETRIES) {
+          announceLocalDownload("listen", body.sizeBytes ?? 0);
+          clearTimeout(timer);
+          timer = setTimeout(timeout, TRANSCRIPTION_RESPONSE_TIMEOUT_MS);
+          continue;
+        }
+        break;
       }
-      const body = await readTranscriptionBody(res, abort.signal);
-      if (this.token !== mine) return;
       if (!res.ok) {
         this.failListening(
           mine,
@@ -585,6 +607,7 @@ export class Dictation {
         );
         return;
       }
+      if (body.language) heardLanguage = body.language;
       // The recorder captures fresh audio, so matching words are intentional repetitions.
       const prefix = normalizedTranscript(this.snapshot.transcript);
       const text = body.text ?? "";
@@ -649,7 +672,13 @@ async function blobToBase64(blob: Blob): Promise<string> {
 }
 
 function readTranscriptionBody(response: Response, signal: AbortSignal) {
-  return readJsonObjectWithin<{ text?: string; error?: string; code?: string }>(response, {
+  return readJsonObjectWithin<{
+    text?: string;
+    language?: string;
+    error?: string;
+    code?: string;
+    sizeBytes?: number;
+  }>(response, {
     maxBytes: MAX_TRANSCRIPTION_RESPONSE_BYTES,
     tooLargeMessage: "Transcription response is too large.",
     signal,

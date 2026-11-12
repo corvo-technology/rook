@@ -2,21 +2,48 @@ import { spawn } from "node:child_process";
 import { mkdir, open, readFile, rename, rm, stat, utimes, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { LocalSpeechModel } from "@corvo/contracts";
+import { LOCAL_VOICES } from "./local-voices.js";
 import { downloadVerified } from "./verified-download.js";
 
 const ORIGIN = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/";
 
-/** A speech model the local provider can download. `sizeBytes` is the archive's size. */
+/** How the engine speaks a voice. Paths are relative to the voice's directory. */
+export type LocalVoiceEngine =
+  | { type: "vits"; model: string; tokens: string; lexicon?: string }
+  | {
+      type: "kokoro";
+      model: string;
+      voices: string;
+      tokens: string;
+      lexicon: string;
+      /** Which of the model's many speakers this voice is. */
+      speakerId: number;
+    };
+
+/**
+ * A model the local provider can download: one that listens, or a voice that speaks.
+ * `sizeBytes` is the archive's size.
+ */
 export interface LocalSpeechModelSpec {
   id: string;
+  kind: "listen" | "speak";
   label: string;
+  /** The model's license, as its authors state it; also listed in THIRD_PARTY_NOTICES.md. */
+  license: string;
   sizeBytes: number;
   sha256: string;
   url: string;
   languages: readonly string[];
   /** The files kept from the archive; it also holds fp32 copies the engine does not need. */
   keep: readonly string[];
+  /** Voices only. */
+  voice?: LocalVoiceEngine;
+  /** Voices only: a line the owner can hear before choosing the voice, in the voice's language. */
+  sample?: string;
 }
+
+/** The languages "This computer" is told about; Whisper itself understands many more. */
+const WHISPER_LANGUAGES = ["en", "pt", "es", "fr", "de", "ja", "zh"] as const;
 
 /**
  * Whisper models for the sherpa-onnx engine, multilingual. Digests come from the engine spike
@@ -26,20 +53,24 @@ export interface LocalSpeechModelSpec {
 export const LOCAL_SPEECH_MODELS: readonly LocalSpeechModelSpec[] = [
   {
     id: "base",
+    kind: "listen",
     label: "Base",
+    license: "MIT",
     sizeBytes: 207_557_382,
     sha256: "911b2083efd7c0dca2ac3b358b75222660dc09fb716d64fbfc417ba6c99ff3de",
     url: `${ORIGIN}sherpa-onnx-whisper-base.tar.bz2`,
-    languages: ["en", "pt"],
+    languages: [...WHISPER_LANGUAGES],
     keep: ["base-encoder.int8.onnx", "base-decoder.int8.onnx", "base-tokens.txt"],
   },
   {
     id: "small",
+    kind: "listen",
     label: "Small",
+    license: "MIT",
     sizeBytes: 639_387_718,
     sha256: "486a46afbb7ba798507190ffe02fea2dd726049af212e774537efac6afb210a6",
     url: `${ORIGIN}sherpa-onnx-whisper-small.tar.bz2`,
-    languages: ["en", "pt"],
+    languages: [...WHISPER_LANGUAGES],
     keep: ["small-encoder.int8.onnx", "small-decoder.int8.onnx", "small-tokens.txt"],
   },
 ];
@@ -114,9 +145,19 @@ export class LocalModelStore {
     this.dir = options.dir;
     this.fetchImpl = options.fetch ?? globalThis.fetch;
     this.extract = options.extract ?? extractWithTar;
-    this.models = options.models ?? LOCAL_SPEECH_MODELS;
+    this.models = options.models ?? [...LOCAL_SPEECH_MODELS, ...LOCAL_VOICES];
     this.stallMs = options.stallMs ?? 5 * 60_000;
     this.pollMs = options.pollMs ?? 250;
+  }
+
+  /** The catalog's models of one kind. */
+  specs(kind: "listen" | "speak"): readonly LocalSpeechModelSpec[] {
+    return this.models.filter((model) => model.kind === kind);
+  }
+
+  /** What the catalog says about a model, whether or not it is on this computer. */
+  spec(id: string): LocalSpeechModelSpec | undefined {
+    return this.models.find((model) => model.id === id);
   }
 
   async list(): Promise<LocalSpeechModel[]> {
@@ -141,23 +182,25 @@ export class LocalModelStore {
 
   /**
    * False once the owner removed a model or cancelled a download: the next audio must not fetch a
-   * model on its own again. Asking for a download clears it.
+   * model on its own again. Asking for a download clears it. Listening models and voices are
+   * kept apart, so removing a voice does not stop the listening model from coming by itself.
    */
-  async automaticDownloadAllowed(): Promise<boolean> {
-    return !(await this.exists(this.optOutFile()));
+  async automaticDownloadAllowed(kind: "listen" | "speak" = "listen"): Promise<boolean> {
+    return !(await this.exists(this.optOutFile(kind)));
   }
 
-  async allowAutomaticDownload(): Promise<void> {
-    await rm(this.optOutFile(), { force: true });
+  async allowAutomaticDownload(kind: "listen" | "speak" = "listen"): Promise<void> {
+    await rm(this.optOutFile(kind), { force: true });
   }
 
-  private async stopAutomaticDownload(): Promise<void> {
-    await mkdir(path.dirname(this.optOutFile()), { recursive: true });
-    await writeFile(this.optOutFile(), "");
+  private async stopAutomaticDownload(kind: "listen" | "speak"): Promise<void> {
+    await mkdir(path.dirname(this.optOutFile(kind)), { recursive: true });
+    await writeFile(this.optOutFile(kind), "");
   }
 
   cancel(id: string): void {
-    void this.stopAutomaticDownload().catch(() => undefined);
+    const spec = this.models.find((model) => model.id === id);
+    if (spec) void this.stopAutomaticDownload(spec.kind).catch(() => undefined);
     this.active.get(id)?.controller.abort();
     // Another process may hold the download; it looks for this marker as it makes progress.
     void writeFile(this.cancelFile(id), "").catch(() => undefined);
@@ -173,7 +216,7 @@ export class LocalModelStore {
     }
     await rm(this.modelDir(id), { recursive: true, force: true });
     await this.clearDownload(id);
-    await this.stopAutomaticDownload();
+    await this.stopAutomaticDownload(spec.kind);
   }
 
   private modelDir(id: string) {
@@ -185,8 +228,12 @@ export class LocalModelStore {
   private lockFile(id: string) {
     return path.join(this.dir, ".state", `${id}.lock`);
   }
-  private optOutFile() {
-    return path.join(this.dir, ".state", "no-automatic-download");
+  private optOutFile(kind: "listen" | "speak") {
+    return path.join(
+      this.dir,
+      ".state",
+      kind === "listen" ? "no-automatic-download" : "no-automatic-download-speak",
+    );
   }
   private cancelFile(id: string) {
     return path.join(this.dir, ".state", `${id}.cancel`);
@@ -210,9 +257,11 @@ export class LocalModelStore {
   private async describe(spec: LocalSpeechModelSpec): Promise<LocalSpeechModel> {
     const base = {
       id: spec.id,
+      kind: spec.kind,
       label: spec.label,
       sizeBytes: spec.sizeBytes,
       languages: [...spec.languages],
+      ...(spec.sample ? { sample: spec.sample } : {}),
     };
     if (await this.exists(path.join(this.modelDir(spec.id), ".ready"))) {
       return { ...base, state: "ready", bytesDone: spec.sizeBytes };

@@ -40,6 +40,30 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
+### Speech models on the owner's computer
+
+The desktop app can listen and speak with models that run on the owner's own computer. None of
+them is part of Rook's source or its installers: each one is downloaded when the owner asks for
+it, or the first time a conversation needs it, from the sherpa-onnx project's releases
+(https://github.com/k2-fsa/sherpa-onnx/releases) over HTTPS, and checked against a digest pinned
+in `packages/adapters/src/local-speech-models.ts` and `local-voices.ts`. The engine that runs them,
+sherpa-onnx, is licensed under Apache-2.0.
+
+| Model | What it does | License | Source |
+|---|---|---|---|
+| Whisper base, small | Turns speech into text, in many languages | MIT | OpenAI Whisper |
+| Português (Brasil) | Voice | BSD-3-Clause | Coqui TTS VITS model `pt/cv/vits`, by NeonGeckoCom |
+| Español | Voice | BSD-3-Clause | Coqui TTS VITS model `es/css10/vits`, by NeonGeckoCom |
+| Français | Voice | BSD-3-Clause | Coqui TTS VITS model `fr/css10/vits`, by NeonGeckoCom |
+| Deutsch | Voice | BSD-3-Clause | Coqui TTS VITS model `de/css10/vits`, by NeonGeckoCom |
+| English | Voice | MIT | VITS (jaywalnut310/vits) trained on LJSpeech, which is in the public domain; pronunciations from CMUdict (BSD-style), as packaged by sherpa-onnx as `vits-ljs` |
+| Kokoro (English, more natural) | Voice | Apache-2.0 | Kokoro-82M, by hexgrad, as packaged by sherpa-onnx |
+
+Only models whose license allows use and redistribution in a product are offered. Piper voices
+are not: they need the espeak-ng phonemizer, which is licensed under GPL-3.0 and which sherpa-onnx
+2.x no longer includes, and several Piper voices carry non-commercial dataset licenses. A voice is
+added to the list only after its license is checked and recorded here.
+
 ## Agent and skill catalogs
 
 The Store's agents and skills are written for Rook, in English and Portuguese, and adapted to the

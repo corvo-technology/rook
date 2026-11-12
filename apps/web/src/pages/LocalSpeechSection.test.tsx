@@ -12,8 +12,14 @@ const voice = vi.hoisted(() => ({
   cancelLocalModelDownload: vi.fn(),
   removeLocalModel: vi.fn(),
   connect: vi.fn(),
+  setVoice: vi.fn(),
+}));
+const speak = vi.hoisted(() => ({
+  speak: vi.fn(),
+  state: {} as { error?: string },
 }));
 
+vi.mock("../lib/tts", () => ({ speaker: speak }));
 vi.mock("../lib/space-rpc", () => ({ useSpaceRpc: () => ({ voice }) }));
 vi.mock("@lingui/react/macro", () => {
   const t = (parts: TemplateStringsArray) => parts.join("");
@@ -38,6 +44,7 @@ import { LocalSpeechSection } from "./LocalSpeechSection";
 
 const model = (over: Partial<LocalSpeechModel> = {}): LocalSpeechModel => ({
   id: "base",
+  kind: "listen",
   label: "Base",
   sizeBytes: 207_557_382,
   languages: ["en", "pt"],
@@ -47,6 +54,27 @@ const model = (over: Partial<LocalSpeechModel> = {}): LocalSpeechModel => ({
 });
 const small = (over: Partial<LocalSpeechModel> = {}) =>
   model({ id: "small", label: "Small", sizeBytes: 639_387_718, ...over });
+
+const voiceModel = (over: Partial<LocalSpeechModel> = {}): LocalSpeechModel => ({
+  id: "voice-pt",
+  kind: "speak",
+  label: "Português (Brasil)",
+  sizeBytes: 67_043_814,
+  languages: ["pt"],
+  sample: "Olá, eu sou a sua voz neste computador.",
+  state: "absent",
+  bytesDone: 0,
+  ...over,
+});
+const kokoro = (over: Partial<LocalSpeechModel> = {}) =>
+  voiceModel({
+    id: "voice-kokoro",
+    label: "Kokoro (English)",
+    sizeBytes: 132_353_410,
+    languages: ["en"],
+    sample: "Hello, I am your voice on this computer.",
+    ...over,
+  });
 
 const credential = (over: Partial<VoiceCredential> = {}): VoiceCredential => ({
   id: "cred-1",
@@ -71,6 +99,8 @@ beforeEach(() => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   vi.useFakeTimers();
   for (const fn of Object.values(voice)) fn.mockReset().mockResolvedValue({ ok: true });
+  speak.speak.mockReset().mockResolvedValue(undefined);
+  speak.state = {};
   onChanged.mockClear();
   container = document.createElement("div");
   document.body.append(container);
@@ -202,4 +232,90 @@ it("shows why a request failed, without losing the list", async () => {
   await act(async () => button(row("base"), "Download").click());
   expect(container.textContent).toContain("nope");
   expect(row("small")).toBeTruthy();
+});
+
+it("lists the voices next to the listening models, with their size", async () => {
+  voice.localModels.mockResolvedValue([model(), small(), voiceModel(), kokoro()]);
+  await show();
+  expect(row("voice-pt").textContent).toContain("Português (Brasil)");
+  expect(row("voice-pt").textContent).toContain("67 MB");
+  expect(row("voice-kokoro").textContent).toContain("132 MB");
+  expect(button(row("voice-pt"), "Download")).toBeTruthy();
+  // A voice that is not on this computer cannot be played.
+  expect(button(row("voice-pt"), "Play")).toBeUndefined();
+  expect(button(row("base"), "Play")).toBeUndefined();
+});
+
+it("downloads a voice like a listening model", async () => {
+  voice.localModels.mockResolvedValue([model(), voiceModel()]);
+  await show();
+  await act(async () => button(row("voice-pt"), "Download").click());
+  expect(voice.downloadLocalModel).toHaveBeenCalledWith({ id: "voice-pt" });
+});
+
+it("plays a short sample of a downloaded voice through the speaker, in its own language", async () => {
+  voice.localModels.mockResolvedValue([model(), voiceModel({ state: "ready" })]);
+  await show();
+  await act(async () => button(row("voice-pt"), "Play").click());
+  expect(speak.speak).toHaveBeenCalledWith("Olá, eu sou a sua voz neste computador.", {
+    provider: "local",
+    voiceId: "voice-pt",
+    language: "pt",
+  });
+});
+
+it("shows why a sample could not play", async () => {
+  voice.localModels.mockResolvedValue([model(), voiceModel({ state: "ready" })]);
+  speak.speak.mockImplementation(async () => {
+    speak.state = { error: "The voice could not speak." };
+  });
+  await show();
+  await act(async () => button(row("voice-pt"), "Play").click());
+  expect(container.textContent).toContain("The voice could not speak.");
+});
+
+it("connects this computer when the first thing chosen is a voice", async () => {
+  voice.localModels.mockResolvedValue([model(), voiceModel({ state: "ready" })]);
+  await show();
+  await act(async () => button(row("voice-pt"), "Use").click());
+  expect(voice.connect).toHaveBeenCalledWith({
+    scope: "account",
+    provider: "local",
+    voiceId: "voice-pt",
+    language: "auto",
+  });
+  expect(voice.setVoice).not.toHaveBeenCalled();
+  expect(onChanged).toHaveBeenCalled();
+});
+
+it("picks another voice on the existing connection, and marks the one in use", async () => {
+  voice.localModels.mockResolvedValue([
+    model({ state: "ready" }),
+    voiceModel({ state: "ready" }),
+    kokoro({ state: "ready" }),
+  ]);
+  await show({ credential: credential({ voiceId: "voice-kokoro" }) });
+  expect(row("voice-kokoro").textContent).toContain("In use");
+  expect(button(row("voice-kokoro"), "Use")).toBeUndefined();
+  await act(async () => button(row("voice-pt"), "Use").click());
+  expect(voice.setVoice).toHaveBeenCalledWith({
+    scope: "account",
+    provider: "local",
+    voiceId: "voice-pt",
+  });
+  expect(voice.connect).not.toHaveBeenCalled();
+});
+
+it("removes a voice and refreshes the screen", async () => {
+  voice.localModels.mockResolvedValue([model(), voiceModel({ state: "ready" })]);
+  await show({ credential: credential() });
+  await act(async () => button(row("voice-pt"), "Remove").click());
+  expect(voice.removeLocalModel).toHaveBeenCalledWith({ id: "voice-pt" });
+});
+
+it("offers every language the model listens for", async () => {
+  voice.localModels.mockResolvedValue([model()]);
+  await show();
+  const options = [...container.querySelectorAll("option")].map((option) => option.value);
+  expect(options).toEqual(["auto", "en", "pt", "es", "fr", "de", "ja", "zh"]);
 });

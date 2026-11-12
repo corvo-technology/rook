@@ -3,6 +3,7 @@ import {
   effectiveModelRole,
   hasHostedModelCredits,
   isAutoReviewCheckerConfigured,
+  LOCAL_VOICE_PROVIDER_ID,
   PushSessionEndedError,
 } from "@corvo/adapters";
 import type { ActionApprovalRule, Actor, Me, SettingsScope } from "@corvo/contracts";
@@ -47,6 +48,7 @@ import {
   voiceCredentialLocal,
   voiceCredentialServer,
   voiceProviderFor,
+  warmVoice,
 } from "../voice.js";
 import type { RouterContext } from "./context.js";
 import { meDto } from "./shared.js";
@@ -208,7 +210,7 @@ export function accountRoutes(ctx: RouterContext) {
       catalog: authed.voice.catalog.handler(async () => voiceCatalogFor(deps)),
       status: authed.voice.status.handler(async ({ context, input }) => {
         const cred = await findDefaultVoiceCredential(deps.prisma, context.actor, input?.scope);
-        return toVoiceStatus(cred);
+        return toVoiceStatus(cred, { localDefault: Boolean(deps.localSpeech) });
       }),
       credentials: authed.voice.credentials.handler(async ({ context, input }) => {
         const target = await voicePreferenceTarget(deps.prisma, context.actor, input?.scope);
@@ -288,6 +290,13 @@ export function accountRoutes(ctx: RouterContext) {
         updateVoiceSpeechModel(deps, context.actor, input),
       ),
       voices: authed.voice.voices.handler(async ({ context, input }) => {
+        // The voices on this computer need no connection to be listed.
+        if (input.provider === LOCAL_VOICE_PROVIDER_ID && deps.localSpeech) {
+          return (await voiceProviderFor(deps, context.actor, LOCAL_VOICE_PROVIDER_ID)).listVoices(
+            "",
+            voiceContext(context.actor, context.signal),
+          );
+        }
         // A named provider lists its voices even before the copy has a default voice.
         const row = input.provider
           ? await loadVoiceCredential(deps, context.actor, input.provider, input.scope)
@@ -301,6 +310,10 @@ export function accountRoutes(ctx: RouterContext) {
       prepare: authed.voice.prepare.handler(async ({ context, input }) =>
         prepareVoice(deps, context.actor, { ...input, signal: context.signal }),
       ),
+      warm: authed.voice.warm.handler(async ({ context, input }) => {
+        await warmVoice(deps, context.actor, input);
+        return { ok: true as const };
+      }),
     },
   };
 }

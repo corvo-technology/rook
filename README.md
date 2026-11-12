@@ -88,7 +88,8 @@ provider reports it.
 ### Reach them anywhere
 
 Message an agent from Telegram or Slack, or give it an inbox of its own. The reply comes back where you
-asked. Voice mode lets you speak and listen with your own speech provider key.
+asked. Voice mode lets you talk with an agent: in the desktop app it listens and speaks with models on your
+own computer, free and offline, and a speech provider key is an option for other voices.
 
 ## Models
 

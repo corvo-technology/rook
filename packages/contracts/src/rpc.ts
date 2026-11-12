@@ -86,6 +86,7 @@ import {
   GroupSchema,
   IntegrationCatalogResultSchema,
   LOCAL_VOICE_PROVIDER_ID,
+  LocalListenLanguageSchema,
   LocalSpeechModelSchema,
   McpServerConfigInput,
   McpServerSchema,
@@ -1447,13 +1448,14 @@ export const appContract = {
             ttsModel: z.string().max(200).optional(),
             sttModel: z.string().max(200).optional(),
             /** The local provider only: the language of the recordings. */
-            language: z.enum(["auto", "en", "pt"]).optional(),
+            language: LocalListenLanguageSchema.optional(),
             /** Where the connection becomes the default voice. */
             scope: SettingsScopeSchema.optional(),
           })
           .superRefine((input, ctx) => {
             if (input.provider === LOCAL_VOICE_PROVIDER_ID) {
-              if (!input.sttModel?.trim()) {
+              // Choosing only a voice leaves the listening model to its default.
+              if (!input.sttModel?.trim() && !input.voiceId?.trim()) {
                 ctx.addIssue({ code: "custom", path: ["sttModel"], message: "Pick a model." });
               }
             } else if (input.provider === OPENAI_COMPATIBLE_PROVIDER_ID) {
@@ -1506,9 +1508,30 @@ export const appContract = {
           voiceId: z.string().max(120).optional(),
           botId: Id.optional(),
           scope: SettingsScopeSchema.optional(),
+          /** Names a provider outright, for the sample of a voice on this computer. */
+          provider: z.string().max(40).optional(),
+          /** The language the conversation is in; the voice on this computer follows it. */
+          language: z.string().max(16).optional(),
         }),
       )
-      .output(z.object({ ready: z.boolean(), utterances: z.array(z.string()) })),
+      .output(
+        z.object({
+          ready: z.boolean(),
+          utterances: z.array(z.string()),
+          /** The voice on this computer is being downloaded; ask again until it is gone. */
+          preparing: z.object({ sizeBytes: z.number().int().nonnegative() }).optional(),
+        }),
+      ),
+    /** A voice conversation is starting: load this computer's models so the first turn is not slow. */
+    warm: oc
+      .input(
+        z.object({
+          botId: Id.optional(),
+          scope: SettingsScopeSchema.optional(),
+          language: z.string().max(16).optional(),
+        }),
+      )
+      .output(z.object({ ok: z.literal(true) })),
   },
   externalConversations: {
     updatePolicy: oc

@@ -46,7 +46,7 @@ export const VOICE_CATALOG = [
     id: LOCAL_VOICE_PROVIDER_ID,
     name: "This computer",
     description:
-      "Transcribes on this computer with a downloaded model. No key, nothing is sent out.",
+      "Listens and speaks on this computer with downloaded models. No key, nothing is sent out.",
     transcribe: true,
   },
 ] as const;

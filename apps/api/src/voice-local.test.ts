@@ -1,4 +1,4 @@
-import { ScriptedTranscriber } from "@corvo/adapters";
+import { ScriptedSynthesizer, ScriptedTranscriber } from "@corvo/adapters";
 import type { Actor, LocalSpeechModel } from "@corvo/contracts";
 import type { PrismaClient } from "@corvo/db";
 import * as db from "@corvo/db";
@@ -19,6 +19,7 @@ const actor = { userId: "user-1", spaceId: "space-1" } as Actor;
 
 const model = (id: string, state: LocalSpeechModel["state"] = "ready"): LocalSpeechModel => ({
   id,
+  kind: "listen",
   label: id,
   sizeBytes: 1000,
   languages: ["en", "pt"],
@@ -31,7 +32,7 @@ function fakeStore(models: LocalSpeechModel[]) {
     list: vi.fn(async () => models),
     ensure: vi.fn(async (id: string) => `/models/${id}`),
     cancel: vi.fn(),
-    allowAutomaticDownload: vi.fn(async () => undefined),
+    allowAutomaticDownload: vi.fn(async (_kind?: string) => undefined),
     remove: vi.fn(async (_id: string) => undefined),
   };
 }
@@ -39,7 +40,11 @@ function fakeStore(models: LocalSpeechModel[]) {
 function withEngine(models: LocalSpeechModel[], extra: Record<string, unknown> = {}) {
   const store = fakeStore(models);
   const deps = {
-    localSpeech: { store, transcriber: new ScriptedTranscriber() },
+    localSpeech: {
+      store,
+      transcriber: new ScriptedTranscriber(),
+      synthesizer: new ScriptedSynthesizer(),
+    },
     ...extra,
   } as unknown as VoiceDeps;
   return { store, deps };
@@ -77,18 +82,31 @@ describe("local voice credentials", () => {
     ).toEqual({ model: "small", language: "pt" });
   });
 
-  it("rejects a blank model and an unknown language", () => {
-    expect(() =>
-      voiceCredentialPlaintext({ provider: "local", plaintext: "", sttModel: " " }),
-    ).toThrow(/model/i);
+  it("leaves listening to the default model when only a voice is chosen", () => {
+    expect(
+      JSON.parse(voiceCredentialPlaintext({ provider: "local", plaintext: "", sttModel: " " })),
+    ).toEqual({ model: "base", language: "auto" });
+  });
+
+  it("rejects an unknown language", () => {
     expect(() =>
       voiceCredentialPlaintext({
         provider: "local",
         plaintext: "",
         sttModel: "base",
-        language: "fr",
+        language: "xx",
       }),
     ).toThrow(/language/i);
+    expect(
+      JSON.parse(
+        voiceCredentialPlaintext({
+          provider: "local",
+          plaintext: "",
+          sttModel: "base",
+          language: "es",
+        }),
+      ).language,
+    ).toBe("es");
   });
 
   it("reports the model and language of a local connection and never a key", () => {
@@ -150,6 +168,7 @@ describe("local speech models", () => {
     const { deps, store } = withEngine([model("base", "absent")]);
     await downloadLocalModel(deps, "base");
     expect(store.allowAutomaticDownload).toHaveBeenCalledTimes(1);
+    expect(store.allowAutomaticDownload).toHaveBeenCalledWith("listen");
     const refused = withEngine([model("base", "absent")]);
     await expect(downloadLocalModel(refused.deps, "huge")).rejects.toThrow();
     expect(refused.store.allowAutomaticDownload).not.toHaveBeenCalled();

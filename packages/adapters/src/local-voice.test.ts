@@ -1,7 +1,10 @@
 import { readFile } from "node:fs/promises";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AudioDecodeError, UnsupportedAudioFormatError } from "./audio-decode.js";
+import { LOCAL_SPEECH_MODELS } from "./local-speech-models.js";
 import { LocalVoiceProvider, parseLocalVoiceSecret } from "./local-voice.js";
+import { LOCAL_VOICES } from "./local-voices.js";
+import { ScriptedSynthesizer } from "./speech-synthesizer.js";
 import { ScriptedTranscriber } from "./speech-transcriber.js";
 
 const ctx = {
@@ -51,10 +54,40 @@ function wavOf(seconds: number) {
   return new Uint8Array(Buffer.concat([header, data]));
 }
 
-function provider(respond?: ConstructorParameters<typeof ScriptedTranscriber>[0]) {
-  const store = { ensure: vi.fn(async (_id: string) => "/models/base") };
+/** The shipped catalog as a store would list it, with `ready` models on this computer. */
+function fakeStore(ready: string[] = []) {
+  const models = [...LOCAL_SPEECH_MODELS, ...LOCAL_VOICES];
+  return {
+    ensure: vi.fn(async (id: string, _options?: { signal?: AbortSignal }) => `/models/${id}`),
+    list: vi.fn(async () =>
+      models.map((model) => ({
+        id: model.id,
+        kind: model.kind,
+        label: model.label,
+        sizeBytes: model.sizeBytes,
+        languages: [...model.languages],
+        state: ready.includes(model.id) ? ("ready" as const) : ("absent" as const),
+        bytesDone: 0,
+      })),
+    ),
+    spec: (id: string) => models.find((model) => model.id === id),
+    specs: (kind: "listen" | "speak") => models.filter((model) => model.kind === kind),
+  };
+}
+
+function provider(
+  respond?: ConstructorParameters<typeof ScriptedTranscriber>[0],
+  ready: string[] = [],
+) {
+  const store = fakeStore(ready);
   const transcriber = new ScriptedTranscriber(respond);
-  return { store, transcriber, provider: new LocalVoiceProvider({ store, transcriber }) };
+  const synthesizer = new ScriptedSynthesizer();
+  return {
+    store,
+    transcriber,
+    synthesizer,
+    provider: new LocalVoiceProvider({ store, transcriber, synthesizer }),
+  };
 }
 
 const secret = (language = "auto") => JSON.stringify({ model: "base", language });
@@ -88,19 +121,27 @@ describe("LocalVoiceProvider", () => {
     expect(transcriber.calls[0]?.pcm.length).toBe(8000);
   });
 
-  it("passes the saved language, and lets a caller's hint win over it", async () => {
+  it("listens in the saved language, and detects the language when it is automatic", async () => {
     const saved = provider();
     await saved.provider.transcribe(
-      { audio: wav(), mimeType: "audio/wav", apiKey: secret("pt") },
+      { audio: wav(), mimeType: "audio/wav", apiKey: secret("es") },
       ctx,
     );
-    expect(saved.transcriber.calls[0]?.language).toBe("pt");
+    expect(saved.transcriber.calls[0]?.language).toBe("es");
+    // The app's own language is only a hint from the caller: it must not stop the model from
+    // hearing a language the owner speaks that is not the one the app is in.
     const hinted = provider();
     await hinted.provider.transcribe(
+      { audio: wav(), mimeType: "audio/wav", apiKey: secret("auto"), language: "pt" },
+      ctx,
+    );
+    expect(hinted.transcriber.calls[0]?.language).toBeUndefined();
+    const explicit = provider();
+    await explicit.provider.transcribe(
       { audio: wav(), mimeType: "audio/wav", apiKey: secret("pt"), language: "en" },
       ctx,
     );
-    expect(hinted.transcriber.calls[0]?.language).toBe("en");
+    expect(explicit.transcriber.calls[0]?.language).toBe("pt");
   });
 
   it("does not download a model or run the engine for audio it cannot read", async () => {
@@ -163,17 +204,78 @@ describe("LocalVoiceProvider", () => {
     for (const piece of transcriber.calls.slice(1)) expect(piece.language).toBe("pt");
   });
 
-  it("describes a transcription-only provider with no voices", async () => {
+  it("describes a provider that listens and speaks, with no key to verify", async () => {
     const { provider: local } = provider();
     expect(local.describe()).toMatchObject({
       id: "local",
-      capabilities: { catalog: true, synthesize: false, transcribe: true },
+      capabilities: { catalog: true, synthesize: true, transcribe: true },
     });
     await expect(local.verify(secret(), ctx)).resolves.toEqual({ ok: true });
-    await expect(local.listVoices(secret(), ctx)).resolves.toEqual([]);
-    await expect(
-      local.synthesize({ text: "hi", voiceId: "x", apiKey: secret() }, ctx),
-    ).rejects.toThrow(/not available/i);
+  });
+});
+
+describe("LocalVoiceProvider speaking", () => {
+  const speak = (
+    local: LocalVoiceProvider,
+    over: { text?: string; voiceId?: string; language?: string } = {},
+  ) => local.synthesize({ text: "Olá, tudo bem?", voiceId: "", apiKey: secret(), ...over }, ctx);
+
+  it("lists only the voices that are on this computer", async () => {
+    expect(await provider(undefined, []).provider.listVoices(secret(), ctx)).toEqual([]);
+    expect(
+      await provider(undefined, ["voice-pt", "base"]).provider.listVoices(secret(), ctx),
+    ).toEqual([{ id: "voice-pt", label: "Português (Brasil)" }]);
+  });
+
+  it("speaks with the voice that fits the reply's language and returns a WAV", async () => {
+    const { provider: local, synthesizer } = provider(undefined, ["voice-kokoro", "voice-pt"]);
+    const clip = await speak(local, { language: "pt-BR", voiceId: "voice-kokoro" });
+    expect(clip.mimeType).toBe("audio/wav");
+    expect(new TextDecoder().decode(clip.bytes.slice(0, 4))).toBe("RIFF");
+    expect(new TextDecoder().decode(clip.bytes.slice(8, 12))).toBe("WAVE");
+    expect(synthesizer.calls[0]).toMatchObject({
+      text: "Olá, tudo bem?",
+      modelDir: "/models/voice-pt",
+      voice: { type: "vits" },
+    });
+    await speak(local, { language: "en", text: "Hello there" });
+    expect(synthesizer.calls[1]).toMatchObject({
+      modelDir: "/models/voice-kokoro",
+      voice: { type: "kokoro", speakerId: 3 },
+    });
+  });
+
+  it("falls back to a voice on this computer when none matches the language", async () => {
+    const { provider: local, store, synthesizer } = provider(undefined, ["voice-ljs"]);
+    await speak(local, { language: "pt" });
+    expect(synthesizer.calls[0]?.modelDir).toBe("/models/voice-ljs");
+    // Nothing is fetched for a language that has its own voice when another one can read.
+    expect(store.ensure).toHaveBeenCalledWith("voice-ljs", expect.anything());
+    expect(store.ensure).not.toHaveBeenCalledWith("voice-pt", expect.anything());
+  });
+
+  it("fetches the language's own voice when none is on this computer", async () => {
+    const { provider: local, store } = provider(undefined, []);
+    await speak(local, { language: "es" });
+    expect(store.ensure).toHaveBeenCalledWith("voice-es", expect.anything());
+    await speak(local, { language: "ja" });
+    expect(store.ensure).toHaveBeenCalledWith("voice-ljs", expect.anything());
+  });
+
+  it("refuses text with nothing to pronounce, which would stop the engine", async () => {
+    const { provider: local, synthesizer } = provider(undefined, ["voice-pt"]);
+    await expect(speak(local, { text: "...  :)" })).rejects.toThrow(/nothing to speak/i);
+    expect(synthesizer.calls).toHaveLength(0);
+  });
+
+  it("hands the request's signal on, so a cancelled reply stops downloading", async () => {
+    const { provider: local, store } = provider(undefined, []);
+    const controller = new AbortController();
+    await local.synthesize(
+      { text: "Hi", voiceId: "", apiKey: secret(), language: "en", signal: controller.signal },
+      ctx,
+    );
+    expect(store.ensure).toHaveBeenCalledWith("voice-ljs", { signal: controller.signal });
   });
 });
 
@@ -187,8 +289,14 @@ describe("parseLocalVoiceSecret", () => {
     expect(() => parseLocalVoiceSecret(JSON.stringify({ model: "", language: "auto" }))).toThrow(
       /model/i,
     );
-    expect(() => parseLocalVoiceSecret(JSON.stringify({ model: "base", language: "fr" }))).toThrow(
+    expect(() => parseLocalVoiceSecret(JSON.stringify({ model: "base", language: "xx" }))).toThrow(
       /language/i,
     );
+  });
+
+  it("reads every language the owner can pick", () => {
+    for (const language of ["auto", "en", "pt", "es", "fr", "de", "ja", "zh"]) {
+      expect(parseLocalVoiceSecret(secret(language)).language).toBe(language);
+    }
   });
 });

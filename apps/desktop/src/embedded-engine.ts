@@ -594,6 +594,9 @@ export class EmbeddedEngineController {
       // Docker is not part of the app; computers come from "this Mac" through the host credentials.
       // The board is part of the app: agents and people share it from the first run.
       TICKET_BOARD_ENABLED: "true",
+      // Talking with an agent is part of the app: it listens and speaks with models on this
+      // computer when no voice service is connected.
+      PHONE_CALLS_ENABLED: "true",
       SANDBOX_PROVIDER: supervisorEnv ? "docker" : "none",
       ...(supervisorEnv
         ? {

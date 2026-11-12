@@ -3,6 +3,7 @@ import { VoiceAccountError } from "@corvo/adapter-kit";
 import type { LocalSpeech } from "@corvo/adapters";
 import {
   createVoiceProvider,
+  DEFAULT_LOCAL_MODEL,
   isFishSpeechModelId,
   isVoiceProviderId,
   LOCAL_VOICE_PROVIDER_ID,
@@ -46,6 +47,13 @@ import { getLogger } from "@corvo/logging";
 import { ORPCError } from "@orpc/server";
 import type { Context, Hono } from "hono";
 import { readBoundedBody } from "./http-body.js";
+import {
+  chooseVoiceForLanguage,
+  DEFAULT_LOCAL_SECRET,
+  ensureLocalModel,
+  LocalModelPreparing,
+  readyLocalVoices,
+} from "./local-voice.js";
 import { withSerializableRetry } from "./serializable-retry.js";
 import type { SpeechSummarizer } from "./speech-summary.js";
 
@@ -75,7 +83,7 @@ export async function voiceProviderFor(deps: VoiceDeps, actor: Actor, provider: 
   });
 }
 
-export { listVoiceCatalog };
+export { LocalModelPreparing, listVoiceCatalog };
 
 const SPEAK_TIMEOUT_MS = 60_000;
 export const MAX_SPEAK_REQUEST_BYTES = 16 * 1024;
@@ -103,11 +111,22 @@ export function catalogEntry(provider: string) {
   return voiceCatalogEntry(provider);
 }
 
-export function toVoiceStatus(cred: { provider: string; voiceId: string } | null): VoiceStatus {
+/**
+ * Where no voice is connected, the desktop app still listens and speaks with the models on the
+ * owner's own computer (`localDefault`), so it reports itself ready.
+ */
+export function toVoiceStatus(
+  cred: { provider: string; voiceId: string } | null,
+  options: { localDefault?: boolean } = {},
+): VoiceStatus {
+  if (!cred && options.localDefault) {
+    return { configured: false, ready: true, transcribe: true, provider: null, voiceId: "" };
+  }
   const entry = cred ? catalogEntry(cred.provider) : undefined;
   return {
     configured: Boolean(cred),
-    ready: Boolean(cred?.voiceId),
+    // The voices on this computer choose themselves, so connecting it is enough to speak.
+    ready: Boolean(cred?.voiceId) || cred?.provider === LOCAL_VOICE_PROVIDER_ID,
     transcribe: Boolean(entry?.transcribe && cred),
     provider: cred?.provider ?? null,
     voiceId: cred?.voiceId ?? "",
@@ -207,9 +226,9 @@ export function voiceCredentialPlaintext(input: {
   allowPrivateEndpoint?: boolean;
 }): string {
   if (input.provider === LOCAL_VOICE_PROVIDER_ID) {
-    // There is no key: the secret is the owner's choice of model and language.
-    const model = input.sttModel?.trim() ?? "";
-    if (!model) throw new ORPCError("BAD_REQUEST", { message: "Pick a model." });
+    // There is no key: the secret is the owner's choice of model and language. Choosing only a
+    // voice leaves listening to the default model.
+    const model = input.sttModel?.trim() || DEFAULT_LOCAL_MODEL;
     const serialized = JSON.stringify({ model, language: input.language ?? "auto" });
     try {
       parseLocalVoiceSecret(serialized);
@@ -281,11 +300,18 @@ export async function loadVoiceCredential(
   return { cred, apiKey: await deps.secrets.load(secret.ciphertext, secret.id) };
 }
 
+export type VoiceTarget = {
+  provider: string;
+  apiKey: string;
+  voiceId: string;
+  speechModel?: string | undefined;
+};
+
 export async function resolveVoiceTarget(
   deps: VoiceDeps,
   actor: Actor,
-  input: { botId?: string; voiceId?: string; scope?: SettingsScope },
-) {
+  input: { botId?: string; voiceId?: string; scope?: SettingsScope; provider?: string },
+): Promise<VoiceTarget> {
   let botVoiceId: string | null = null;
   if (input.botId) {
     const bot = await deps.prisma.bot.findFirst({
@@ -295,11 +321,38 @@ export async function resolveVoiceTarget(
     if (!bot) throw new IsolationError();
     botVoiceId = bot.voiceId;
   }
+  // The sample of a voice on this computer names the provider; it needs no connection.
+  if (input.provider === LOCAL_VOICE_PROVIDER_ID) {
+    requireLocalSpeech(deps);
+    return {
+      provider: LOCAL_VOICE_PROVIDER_ID,
+      apiKey: DEFAULT_LOCAL_SECRET,
+      voiceId: input.voiceId ?? "",
+    };
+  }
   const loaded = await loadDefaultVoiceCredential(deps, actor, input.scope);
-  if (!loaded) throw new NoVoiceConfigured("key");
+  if (!loaded) {
+    // No voice connected: the desktop app speaks with this computer's own voices.
+    if (deps.localSpeech) {
+      return {
+        provider: LOCAL_VOICE_PROVIDER_ID,
+        apiKey: DEFAULT_LOCAL_SECRET,
+        voiceId: input.voiceId ?? "",
+      };
+    }
+    throw new NoVoiceConfigured("key");
+  }
   const voiceId = input.voiceId || botVoiceId || loaded.cred.voiceId;
-  if (!voiceId) throw new NoVoiceConfigured("voice");
-  return { ...loaded, voiceId };
+  // This computer's voices choose themselves by language when none is named.
+  if (!voiceId && loaded.cred.provider !== LOCAL_VOICE_PROVIDER_ID) {
+    throw new NoVoiceConfigured("voice");
+  }
+  return {
+    provider: loaded.cred.provider,
+    apiKey: loaded.apiKey,
+    voiceId,
+    speechModel: loaded.cred.speechModel || undefined,
+  };
 }
 
 export async function persistVoiceCredential(
@@ -324,7 +377,10 @@ export async function persistVoiceCredential(
     throw new ORPCError("BAD_REQUEST", { message: "Unknown voice provider." });
   }
   if (input.provider === LOCAL_VOICE_PROVIDER_ID) {
-    await requireReadyLocalModel(deps, input.sttModel);
+    // Choosing only a voice leaves listening to the default model, which comes by itself.
+    if (input.sttModel?.trim()) await requireReadyLocalModel(deps, input.sttModel);
+    else requireLocalSpeech(deps);
+    if (input.voiceId?.trim()) await requireReadyLocalVoice(deps, input.voiceId);
   }
   const previous =
     input.provider === OPENAI_COMPATIBLE_VOICE_PROVIDER_ID
@@ -356,7 +412,8 @@ export async function persistVoiceCredential(
   }
   let voiceId = choicesChanged ? "" : (input.voiceId?.trim() ?? "");
   let validVoiceIds: string[] = [];
-  if (!voiceId) {
+  // This computer's voices choose themselves by language, so none is picked for the owner.
+  if (!voiceId && input.provider !== LOCAL_VOICE_PROVIDER_ID) {
     const voices = await provider.listVoices(plaintext, voiceContext(actor, input.signal));
     voiceId = voices[0]?.id ?? "";
     validVoiceIds = voices.map((voice) => voice.id);
@@ -469,10 +526,24 @@ async function requireReadyLocalModel(
   id: string | undefined,
 ) {
   const local = requireLocalSpeech(deps);
-  const found = (await local.store.list()).find((model) => model.id === (id ?? "").trim());
+  const found = (await local.store.list()).find(
+    (model) => model.id === (id ?? "").trim() && model.kind === "listen",
+  );
   if (!found) throw new ORPCError("BAD_REQUEST", { message: "Pick a model from the list." });
   if (found.state !== "ready") {
     throw new ORPCError("BAD_REQUEST", { message: "Download the model first." });
+  }
+}
+
+/** A voice can be chosen only once it is on this computer. */
+async function requireReadyLocalVoice(deps: Pick<VoiceDeps, "localSpeech">, id: string) {
+  const local = requireLocalSpeech(deps);
+  const found = (await local.store.list()).find(
+    (model) => model.id === id.trim() && model.kind === "speak",
+  );
+  if (!found) throw new ORPCError("BAD_REQUEST", { message: "Pick a voice from the list." });
+  if (found.state !== "ready") {
+    throw new ORPCError("BAD_REQUEST", { message: "Download the voice first." });
   }
 }
 
@@ -486,11 +557,12 @@ export async function localSpeechModels(
 /** Starts a download and returns at once; progress is read from `localSpeechModels`. */
 export async function downloadLocalModel(deps: Pick<VoiceDeps, "localSpeech">, id: string) {
   const local = requireLocalSpeech(deps);
-  if (!(await local.store.list()).some((model) => model.id === id)) {
+  const model = (await local.store.list()).find((entry) => entry.id === id);
+  if (!model) {
     throw new ORPCError("BAD_REQUEST", { message: "Pick a model from the list." });
   }
   // The owner asked for this download, so automatic ones are welcome again.
-  await local.store.allowAutomaticDownload();
+  await local.store.allowAutomaticDownload(model.kind);
   void local.store.ensure(id).catch((error: unknown) => {
     getLogger().warn("local speech model download failed", {
       model: id,
@@ -610,6 +682,37 @@ export async function updateVoiceSpeechModel(
   );
 }
 
+/**
+ * Gets the voice on this computer ready for a reply. Null when it is on this computer; the size
+ * of the download that was started when it is not; and a refusal when the owner removed their
+ * voices, so none is fetched on their behalf again.
+ */
+async function prepareLocalVoice(
+  local: LocalSpeech,
+  input: { language?: string | undefined; voiceId?: string | undefined },
+): Promise<{ sizeBytes: number } | "removed" | null> {
+  const chosen = await chooseVoiceForLanguage(local, {
+    language: input.language,
+    selected: input.voiceId,
+  });
+  if (chosen.ready) return null;
+  const model = (await local.store.list()).find((entry) => entry.id === chosen.id);
+  if (model?.state === "failed") {
+    throw new ORPCError("BAD_REQUEST", {
+      message: "Could not download the voice. Try again in Voice settings.",
+    });
+  }
+  if (model?.state === "downloading") return { sizeBytes: chosen.sizeBytes };
+  if (!(await local.store.automaticDownloadAllowed("speak"))) return "removed";
+  void local.store.ensure(chosen.id).catch((error: unknown) => {
+    getLogger().warn("local voice download failed", {
+      voice: chosen.id,
+      reason: error instanceof Error ? error.message : String(error),
+    });
+  });
+  return { sizeBytes: chosen.sizeBytes };
+}
+
 export async function prepareVoice(
   deps: VoiceDeps,
   actor: Actor,
@@ -618,18 +721,78 @@ export async function prepareVoice(
     voiceId?: string;
     botId?: string;
     scope?: SettingsScope;
+    provider?: string;
+    language?: string;
     signal?: AbortSignal;
   },
 ) {
+  let target: VoiceTarget;
   try {
-    await resolveVoiceTarget(deps, actor, input);
+    target = await resolveVoiceTarget(deps, actor, input);
   } catch (error) {
     if (error instanceof NoVoiceConfigured) {
       return { ready: false, utterances: [] as string[] };
     }
     throw error;
   }
+  if (target.provider === LOCAL_VOICE_PROVIDER_ID && deps.localSpeech) {
+    const preparing = await prepareLocalVoice(deps.localSpeech, {
+      language: input.language,
+      voiceId: target.voiceId,
+    });
+    if (preparing === "removed") return { ready: false, utterances: [] as string[] };
+    if (preparing) return { ready: true, utterances: [] as string[], preparing };
+  }
   return { ready: true, utterances: await spokenUtterances(deps, actor, input) };
+}
+
+/**
+ * A voice conversation is starting: loads this computer's models in the background so the first
+ * turn does not pay for it. Nothing is downloaded and nothing fails the caller; a model that is
+ * not on this computer yet is left to the request that needs it.
+ */
+export async function warmVoice(
+  deps: VoiceDeps,
+  actor: Actor,
+  input: { botId?: string; scope?: SettingsScope; language?: string },
+): Promise<void> {
+  const local = deps.localSpeech;
+  if (!local) return;
+  const loaded = await loadDefaultVoiceCredential(deps, actor, input.scope);
+  // Only a connection that is this computer, or none at all, listens and speaks here.
+  const here = !loaded || loaded.cred.provider === LOCAL_VOICE_PROVIDER_ID;
+  if (!here) return;
+  const failed = (what: string) => (error: unknown) =>
+    getLogger().warn("could not load the local speech model ahead of use", {
+      what,
+      reason: error instanceof Error ? error.message : String(error),
+    });
+  if (local.transcriber.warm) {
+    const secret = loaded ? loaded.apiKey : DEFAULT_LOCAL_SECRET;
+    const model = safeLocalModel(secret);
+    const ready = model
+      ? (await local.store.list()).some((entry) => entry.id === model && entry.state === "ready")
+      : false;
+    if (model && ready) {
+      void local.store
+        .ensure(model)
+        .then((modelDir) => local.transcriber.warm?.({ modelDir }))
+        .catch(failed("listening"));
+    }
+  }
+  if (local.synthesizer.warm) {
+    const chosen = await chooseVoiceForLanguage(local, {
+      language: input.language,
+      selected: loaded?.cred.voiceId || undefined,
+    });
+    const voice = local.store.spec(chosen.id)?.voice;
+    if (chosen.ready && voice) {
+      void local.store
+        .ensure(chosen.id)
+        .then((modelDir) => local.synthesizer.warm?.({ modelDir, voice }))
+        .catch(failed("speaking"));
+    }
+  }
 }
 
 async function spokenUtterances(
@@ -646,6 +809,11 @@ async function spokenUtterances(
   return utterances.length > 0 ? utterances : full;
 }
 
+/** A refused request is the caller's mistake; anything else is the provider failing. */
+function providerFailed(error: unknown) {
+  return !(error instanceof ORPCError) && !(error instanceof IsolationError);
+}
+
 export async function synthesizeVoice(
   deps: VoiceDeps,
   actor: Actor,
@@ -654,6 +822,8 @@ export async function synthesizeVoice(
     voiceId?: string;
     botId?: string;
     scope?: SettingsScope;
+    provider?: string;
+    language?: string;
     signal?: AbortSignal;
   },
 ) {
@@ -663,17 +833,75 @@ export async function synthesizeVoice(
   if (text.length > MAX_SPEAK_CHARS) {
     throw new ORPCError("BAD_REQUEST", { message: "That utterance is too long to speak." });
   }
-  const provider = await voiceProviderFor(deps, actor, target.cred.provider);
-  return provider.synthesize(
-    {
-      text,
-      voiceId: target.voiceId,
-      apiKey: target.apiKey,
-      model: target.cred.speechModel || undefined,
-      signal: input.signal,
-    },
-    voiceContext(actor, input.signal),
-  );
+  const context = voiceContext(actor, input.signal);
+  const provider = await voiceProviderFor(deps, actor, target.provider);
+  try {
+    return await provider.synthesize(
+      {
+        text,
+        voiceId: target.voiceId,
+        apiKey: target.apiKey,
+        model: target.speechModel,
+        language: input.language,
+        signal: input.signal,
+      },
+      context,
+    );
+  } catch (error) {
+    const local = deps.localSpeech;
+    if (
+      target.provider === LOCAL_VOICE_PROVIDER_ID ||
+      !local ||
+      input.signal?.aborted ||
+      !providerFailed(error)
+    ) {
+      throw error;
+    }
+    // A selected provider that fails (an error, no credit left) is never replaced by a download,
+    // but a voice already on this computer can still read this reply.
+    if ((await readyLocalVoices(local)).length === 0) throw error;
+    getLogger().warn("voice provider failed, speaking with the voice on this computer", {
+      provider: target.provider,
+      reason: error instanceof Error ? error.message : String(error),
+    });
+    const clip = await (await voiceProviderFor(deps, actor, LOCAL_VOICE_PROVIDER_ID)).synthesize(
+      {
+        text,
+        voiceId: "",
+        apiKey: DEFAULT_LOCAL_SECRET,
+        language: input.language,
+        signal: input.signal,
+      },
+      context,
+    );
+    return { ...clip, fallback: true as const };
+  }
+}
+
+/**
+ * Makes the listening model of this computer ready for a recording. The model comes by itself
+ * unless the owner removed it, and a request waits a while for the download before it asks the
+ * client to come back.
+ */
+async function prepareLocalListening(local: LocalSpeech, secret: string, implicit: boolean) {
+  const id = parseLocalVoiceSecret(secret).model;
+  const model = (await local.store.list()).find((entry) => entry.id === id);
+  if (!model || model.state === "ready") return;
+  if (model.state === "failed") {
+    throw new ORPCError("BAD_REQUEST", {
+      message: "Could not download the speech model. Try again in Voice settings.",
+    });
+  }
+  if (
+    implicit &&
+    model.state !== "downloading" &&
+    !(await local.store.automaticDownloadAllowed("listen"))
+  ) {
+    throw new ORPCError("BAD_REQUEST", {
+      message: "The speech model was removed. Download it in Voice settings.",
+    });
+  }
+  await ensureLocalModel(local, id);
 }
 
 export async function transcribeVoice(
@@ -682,8 +910,12 @@ export async function transcribeVoice(
   input: { audio: Uint8Array; mimeType: string; language?: string; signal?: AbortSignal },
 ) {
   const loaded = await loadDefaultVoiceCredential(deps, actor);
-  if (!loaded) throw new NoVoiceConfigured("key");
-  const provider = await voiceProviderFor(deps, actor, loaded.cred.provider);
+  // No voice connected: the desktop app listens with the speech model on this computer.
+  if (!loaded && !deps.localSpeech) throw new NoVoiceConfigured("key");
+  const target = loaded
+    ? { provider: loaded.cred.provider, apiKey: loaded.apiKey }
+    : { provider: LOCAL_VOICE_PROVIDER_ID, apiKey: DEFAULT_LOCAL_SECRET };
+  const provider = await voiceProviderFor(deps, actor, target.provider);
   if (!provider.transcribe) {
     throw new ORPCError("BAD_REQUEST", {
       message: "This voice provider does not transcribe audio. Use on-device dictation instead.",
@@ -692,12 +924,15 @@ export async function transcribeVoice(
   if (input.audio.byteLength === 0 || input.audio.byteLength > MAX_TRANSCRIBE_BYTES) {
     throw new ORPCError("BAD_REQUEST", { message: "That recording is empty or too large." });
   }
+  if (target.provider === LOCAL_VOICE_PROVIDER_ID && deps.localSpeech) {
+    await prepareLocalListening(deps.localSpeech, target.apiKey, !loaded);
+  }
   return provider.transcribe(
     {
       audio: input.audio,
       mimeType: input.mimeType || "audio/webm",
       language: input.language,
-      apiKey: loaded.apiKey,
+      apiKey: target.apiKey,
       signal: input.signal,
     },
     voiceContext(actor, input.signal),
@@ -721,6 +956,8 @@ export function mountVoiceHttpRoutes(
           text: String((body as { text?: unknown }).text ?? ""),
           voiceId: optionalString((body as { voiceId?: unknown }).voiceId),
           botId: optionalString((body as { botId?: unknown }).botId),
+          provider: optionalString((body as { provider?: unknown }).provider),
+          language: optionalString((body as { language?: unknown }).language),
           scope: SettingsScopeSchema.safeParse((body as { scope?: unknown }).scope).data,
           signal: AbortSignal.any(
             [c.req.raw.signal, AbortSignal.timeout(SPEAK_TIMEOUT_MS)].filter(
@@ -735,6 +972,8 @@ export function mountVoiceHttpRoutes(
         headers: {
           "content-type": clip.mimeType,
           "cache-control": "no-store",
+          // The selected voice failed and this computer's read the reply; the client says so once.
+          ...("fallback" in clip ? { "x-voice-fallback": "local" } : {}),
         },
       });
     } catch (error) {
@@ -760,7 +999,10 @@ export function mountVoiceHttpRoutes(
           signal: c.req.raw.signal,
         }),
       );
-      return c.json({ text: result.text });
+      return c.json({
+        text: result.text,
+        ...(result.language ? { language: result.language } : {}),
+      });
     } catch (error) {
       return voiceHttpError(c, error);
     }
@@ -802,6 +1044,9 @@ function voiceHttpError(c: Context, error: unknown) {
   }
   if (error instanceof NoVoiceConfigured) {
     return c.json({ error: error.message }, 409);
+  }
+  if (error instanceof LocalModelPreparing) {
+    return c.json({ error: error.message, code: error.code, sizeBytes: error.sizeBytes }, 503);
   }
   if (error instanceof ORPCError) {
     const code = String(error.code ?? "BAD_REQUEST");

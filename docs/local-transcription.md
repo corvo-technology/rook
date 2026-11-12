@@ -11,13 +11,16 @@ is sent to a hosted service unless the owner chose one.
 
 - Audio in the web chat, and voice notes in a 1:1 conversation with the owner's linked chat app.
 - Audio from the owner. Audio from anyone else is attached as a file and is not transcribed, except a visitor who writes to a linked WhatsApp number: that is transcribed too, with the speech provider the owner chose, but never causes a model to be downloaded, and is limited to one at a time per number, the rest attached with a note (see `docs/whatsapp.md`).
-- English or Portuguese, one language per recording. The language is detected for each recording;
-  Settings → Voice can fix it to English or Portuguese, which helps with very short recordings.
+- One language per recording, in any language Whisper knows. The language is detected for each
+  recording; Settings → Voice can fix it to English, Portuguese, Spanish, French, German, Japanese
+  or Chinese, which helps with very short recordings. The language of the app is not used to
+  decide: a recording is heard in the language it is spoken in.
 - WAV and Ogg/Opus (what Telegram voice notes use). Other formats, such as mp3, m4a and webm, are
   attached with a note that they were not transcribed.
 - Recordings up to 8 MiB.
 
-Not covered yet: spoken replies, the mobile app, group channels and the team chat bridge.
+Spoken replies and the voice conversation are in [local-voice.md](local-voice.md). Not covered yet:
+the mobile app, group channels and the team chat bridge.
 
 ## How it works for the owner
 
@@ -41,7 +44,7 @@ the owner did not ask for, and audio is only sent to one the owner allowed.
 | Base (default) | about 208 MB | about 161 MB |
 | Small (more accurate) | about 639 MB | about 375 MB |
 
-Both are multilingual Whisper models for the sherpa-onnx engine. They are fetched from the engine
+Both are multilingual Whisper models (MIT) for the sherpa-onnx engine. They are fetched from the engine
 project's releases over HTTPS and checked against a digest pinned in the code, and only the files
 the engine reads are kept. They live under `speech-models/` in the engine's data directory.
 
@@ -51,7 +54,7 @@ the engine reads are kept. They live under `speech-models/` in the engine's data
 |---|---|
 | Model download and storage | `packages/adapters/src/local-speech-models.ts` |
 | Audio decoding to 16 kHz mono | `packages/adapters/src/audio-decode.ts` |
-| The engine, in a worker thread | `packages/adapters/src/sherpa-whisper-transcriber.ts` |
+| The engine, in a child process | `packages/adapters/src/sherpa-whisper-transcriber.ts` |
 | The "This computer" voice provider | `packages/adapters/src/local-voice.ts` |
 | Choosing a provider and storing transcripts | `packages/adapters/src/audio-transcription.ts` |
 | The `audio.transcribe` job | `packages/adapters/src/audio-transcribe-job.ts` |

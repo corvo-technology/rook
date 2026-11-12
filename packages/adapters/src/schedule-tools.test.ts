@@ -1,5 +1,6 @@
 import { ONCE_ROUTINE_CRON } from "@corvo/core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { builtinAgentTools } from "./builtin-tools.js";
 import {
   cancelScheduleFromTool,
   commandWatchFromTool,
@@ -1355,5 +1356,19 @@ describe("a routine that runs when the agent's webhook is called", () => {
       schedule: { onMessage: "webhook" },
     });
     expect(result).toMatchObject({ ok: true, note: expect.stringContaining("no webhook yet") });
+  });
+});
+
+describe("schedule_create guidance for dated commitments", () => {
+  const tool = builtinAgentTools.find((t) => t.name === "schedule_create")!;
+
+  it("tells the agent to offer a reminder with ask_user for a dated one-off commitment", () => {
+    expect(tool.description).toContain("ask_user");
+    expect(tool.description).toContain("dated one-off commitment");
+  });
+
+  it("keeps every schedule tool offered", () => {
+    const names = new Set(builtinAgentTools.map((t) => t.name));
+    for (const name of SCHEDULE_TOOL_NAMES) expect(names.has(name)).toBe(true);
   });
 });

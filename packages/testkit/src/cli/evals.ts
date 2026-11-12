@@ -31,7 +31,7 @@ import { TOOL_CHOICE_CASES } from "../evals/tool-choice-cases.js";
 import type { DiagnosticWireObservation } from "../evals/wire-observer.js";
 import { diagnosticWireFetch } from "../evals/wire-observer.js";
 import { runApprovalSuite } from "./approval-eval.js";
-import { runAvatarPieceSuite, runChannelRouterSuite } from "./pick-eval.js";
+import { runAvatarPieceSuite, runChannelRouterSuite, runDateReminderSuite } from "./pick-eval.js";
 import { runWikiCuratorSuite } from "./wiki-curator-eval.js";
 
 async function main() {
@@ -90,6 +90,12 @@ async function main() {
       workingDiffHash: workingDiffHash(),
       readConnection,
     });
+  if (values.suite === "date-reminder")
+    return runDateReminderSuite(values, {
+      codeRevision: codeRevision(),
+      workingDiffHash: workingDiffHash(),
+      readConnection,
+    });
   const suites = {
     product: { cases: EVAL_CASES, fixtureVersion: "product-v1" },
     history: { cases: HISTORY_EVAL_CASES, fixtureVersion: HISTORY_FIXTURE_VERSION },
@@ -98,7 +104,7 @@ async function main() {
   };
   if (!Object.hasOwn(suites, values.suite!))
     throw new Error(
-      "Unknown suite; use product, history, silence, tool-choice, approval, wiki-curator, channel-router, or avatar-piece",
+      "Unknown suite; use product, history, silence, tool-choice, approval, wiki-curator, channel-router, avatar-piece, or date-reminder",
     );
   const suite = suites[values.suite as keyof typeof suites];
   const extraCases = values["cases-file"] ? loadToolChoiceCases(values["cases-file"]) : [];

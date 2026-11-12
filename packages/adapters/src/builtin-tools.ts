@@ -1124,7 +1124,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "schedule_create",
     description:
-      'Create a reminder or recurring job for this bot. Use for "remind me in 10 minutes" or "every morning send a joke". Repeats: cron or every/unit (min 1 minute), optionally from startAt. One-shot: runAt, delayMinutes, or delaySeconds. A repeating job carries out the user\'s lasting request each time, not a copy of what was decided today. Be proactive: when the user asks for something that is useful on a rhythm (a report, a check, a digest, a follow-up), offer it with ask_user, naming what you would send and when, with options such as a time in this chat, a different time, or no. On a yes, create it yourself and say when it will first run; do not make the user set it up.',
+      'Create a reminder or recurring job for this bot. Use for "remind me in 10 minutes" or "every morning send a joke". Repeats: cron or every/unit (min 1 minute), optionally from startAt. One-shot: runAt, delayMinutes, or delaySeconds. A repeating job carries out the user\'s lasting request each time, not a copy of what was decided today. Be proactive: when the user wants something useful on a rhythm (a report, a check, a digest) or mentions a dated one-off commitment (interview, deadline, trip), offer once with ask_user, after helping, naming what and when; options: derived times (the evening before and an hour before; a day before a deadline), another time, no. Skip if they asked for a reminder, said no, or the date is unknown. On a yes, create it and say when it will first run; never silently.',
     inputSchema: scheduleCreateInputSchema,
   },
   {

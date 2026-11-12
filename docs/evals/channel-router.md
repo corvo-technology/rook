@@ -36,6 +36,22 @@ role (`AVATAR_PIECE_CASES`, 15 cases, every piece expected at least once, one de
 tries to steer the pick). An answer that names no known piece is `unqualified`. Bump
 `AVATAR_PIECE_FIXTURE_VERSION` when the cases change.
 
+## Date reminder
+
+`schedule_create`'s description tells an agent to offer, once and with `ask_user`, a reminder for a
+dated one-off commitment (interview, appointment, deadline, trip) and to stay quiet when the date is
+unknown, a reminder was already asked for or declined, or the event is past or only mentioned. The
+suite sends that shipped description with a reviewed conversation and asks for a structured decision
+(`offer`, question, options). `DATE_REMINDER_CASES` holds 12 conversations in English and Portuguese:
+six that should get an offer and six that should not. Offer or silence is graded by observable
+effect; with a judge connection, offers are judged against the rubric `date-reminder-v1` (times fit
+the event, nothing created without a yes). An unreadable answer or a judge error is `unqualified`.
+Bump `DATE_REMINDER_RUBRIC_VERSION` when the rubric or the cases change.
+
+```sh
+pnpm test:evals --suite date-reminder --live --connection <file> --pricing <file>
+```
+
 ## Running them against a live model
 
 ```sh

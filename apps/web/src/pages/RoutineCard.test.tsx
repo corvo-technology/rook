@@ -16,11 +16,21 @@ vi.mock("@corvo/ui-web", () => {
   const Container = ({ children }: { children?: ReactNode }) => <div>{children}</div>;
   return {
     Button: (props: ComponentProps<"button">) => <button type="button" {...props} />,
-    Dialog: Container,
-    DialogContent: Container,
-    DialogFooter: Container,
-    DialogHeader: Container,
-    DialogTitle: Container,
+    SidePanel: ({
+      title,
+      footer,
+      children,
+    }: {
+      title?: ReactNode;
+      footer?: ReactNode;
+      children?: ReactNode;
+    }) => (
+      <aside>
+        <h2>{title}</h2>
+        {children}
+        <footer>{footer}</footer>
+      </aside>
+    ),
   };
 });
 

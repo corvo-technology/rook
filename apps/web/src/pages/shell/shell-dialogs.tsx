@@ -5,6 +5,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  undoable,
 } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { Pause, Play, Settings, Trash2 } from "lucide-react";
@@ -13,19 +14,19 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Panel } from "../../lib/right-panel-state";
 import type { createSpaceRpc } from "../../lib/rpc";
 import { selectSpace } from "../../lib/rpc";
+import { useSidePanel } from "../../lib/side-panel";
 import { CommandPalette } from "./command-palette";
 import { isCommandPaletteHotkey } from "./command-palette-hotkey";
-import type { CreateBotDialogInput } from "./create-bot-dialog";
-import { CreateBotDialog } from "./create-bot-dialog";
+import type { CreateBotPanelInput } from "./create-bot-panel";
+import { CreateBotPanel } from "./create-bot-panel";
 import {
-  ClearConversationDialog,
-  DeleteBotDialog,
-  DeleteItemDialog,
-  DeleteSpaceDialog,
-  NewBotSectionDialog,
-  NewSpaceDialog,
-  PauseSpaceDialog,
-  RenameBotSectionDialog,
+  ClearConversationPanel,
+  DeleteBotPanel,
+  DeleteItemPanel,
+  DeleteSpacePanel,
+  NewBotSectionPanel,
+  NewSpacePanel,
+  RenameBotSectionPanel,
 } from "./dialogs";
 
 type ChatTarget = { kind: "bot"; chat: Bot } | { kind: "group"; chat: Group };
@@ -36,7 +37,6 @@ export function useShellDialogs() {
   const [deleteTarget, setDeleteTarget] = useState<Bot | null>(null);
   const [deleteGroupTarget, setDeleteGroupTarget] = useState<Group | null>(null);
   const [deleteSpaceTarget, setDeleteSpaceTarget] = useState<Space | null>(null);
-  const [pauseSpaceTarget, setPauseSpaceTarget] = useState<Space | null>(null);
   const [spaceMenu, setSpaceMenu] = useState<{
     id: string;
     position: { x: number; y: number };
@@ -52,8 +52,18 @@ export function useShellDialogs() {
   const [newSectionTarget, setNewSectionTarget] = useState<ChatTarget | null>(null);
   const [renameSectionTarget, setRenameSectionTarget] = useState<SectionTarget | null>(null);
   const [deleteSectionTarget, setDeleteSectionTarget] = useState<SectionTarget | null>(null);
-  const [newSpaceOpen, setNewSpaceOpen] = useState(false);
-  const [createBotOpen, setCreateBotOpen] = useState(false);
+  const { panel, open: openPanel, close: closePanel } = useSidePanel();
+  // Creating a space or an agent is a side panel in the URL, so a reload or a link reopens it.
+  const newSpaceOpen = panel === "new-space";
+  const createBotOpen = panel === "new-agent";
+  const setNewSpaceOpen = useCallback(
+    (open: boolean) => (open ? openPanel("new-space") : panel === "new-space" && closePanel()),
+    [openPanel, closePanel, panel],
+  );
+  const setCreateBotOpen = useCallback(
+    (open: boolean) => (open ? openPanel("new-agent") : panel === "new-agent" && closePanel()),
+    [openPanel, closePanel, panel],
+  );
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -71,8 +81,6 @@ export function useShellDialogs() {
     setDeleteGroupTarget,
     deleteSpaceTarget,
     setDeleteSpaceTarget,
-    pauseSpaceTarget,
-    setPauseSpaceTarget,
     spaceMenu,
     setSpaceMenu,
     spaceMenuAnchor,
@@ -131,10 +139,10 @@ export function ShellDialogs({
   setSpacePaused: (spaceId: string, paused: boolean) => Promise<void>;
   openSpaceSettings: (spaceId: string) => void;
   closeMobileSidebar: () => void;
-  createBot: (input: CreateBotDialogInput) => Promise<void>;
+  createBot: (input: CreateBotPanelInput) => Promise<void>;
   onImportFromCreate: () => void;
   clearOpenThread: () => void;
-  deleteRoutineDialogProps: ComponentProps<typeof DeleteItemDialog> | null;
+  deleteRoutineDialogProps: ComponentProps<typeof DeleteItemPanel> | null;
 }) {
   const { t, i18n } = useLingui();
   const {
@@ -144,8 +152,6 @@ export function ShellDialogs({
     setDeleteGroupTarget,
     deleteSpaceTarget,
     setDeleteSpaceTarget,
-    pauseSpaceTarget,
-    setPauseSpaceTarget,
     spaceMenu,
     setSpaceMenu,
     closeSpaceMenu,
@@ -211,7 +217,15 @@ export function ShellDialogs({
                   setSpaceMenu(null);
                   if (spaceMenuTarget.pausedAt) {
                     void setSpacePaused(spaceMenuTarget.id, false).catch(() => undefined);
-                  } else setPauseSpaceTarget(spaceMenuTarget);
+                  } else {
+                    // Resuming undoes it, so it runs at once and the toast offers the way back.
+                    void undoable({
+                      message: t`Bots paused`,
+                      undoLabel: t`Undo`,
+                      run: () => setSpacePaused(spaceMenuTarget.id, true),
+                      undo: () => setSpacePaused(spaceMenuTarget.id, false),
+                    }).catch(() => undefined);
+                  }
                 }}
               >
                 {spaceMenuTarget.pausedAt ? <Play /> : <Pause />}
@@ -235,7 +249,7 @@ export function ShellDialogs({
       ) : null}
 
       {deleteTarget ? (
-        <DeleteBotDialog
+        <DeleteBotPanel
           bot={deleteTarget}
           onCancel={() => setDeleteTarget(null)}
           onConfirm={async (deleteMemories) => {
@@ -248,7 +262,7 @@ export function ShellDialogs({
       ) : null}
 
       {deleteGroupTarget ? (
-        <DeleteItemDialog
+        <DeleteItemPanel
           item={deleteGroupTarget}
           noun="group"
           onCancel={() => setDeleteGroupTarget(null)}
@@ -261,18 +275,8 @@ export function ShellDialogs({
         />
       ) : null}
 
-      {pauseSpaceTarget ? (
-        <PauseSpaceDialog
-          onCancel={() => setPauseSpaceTarget(null)}
-          onConfirm={async () => {
-            await setSpacePaused(pauseSpaceTarget.id, true);
-            setPauseSpaceTarget(null);
-          }}
-        />
-      ) : null}
-
       {deleteSpaceTarget ? (
-        <DeleteSpaceDialog
+        <DeleteSpacePanel
           space={deleteSpaceTarget}
           onCancel={() => setDeleteSpaceTarget(null)}
           onConfirm={async () => {
@@ -283,7 +287,7 @@ export function ShellDialogs({
       ) : null}
 
       {newSectionTarget ? (
-        <NewBotSectionDialog
+        <NewBotSectionPanel
           bot={newSectionTarget.chat}
           onCancel={() => setNewSectionTarget(null)}
           onConfirm={async (name) => {
@@ -299,7 +303,7 @@ export function ShellDialogs({
       ) : null}
 
       {renameSectionTarget ? (
-        <RenameBotSectionDialog
+        <RenameBotSectionPanel
           section={renameSectionTarget.section}
           onCancel={() => setRenameSectionTarget(null)}
           onConfirm={async (name) => {
@@ -317,7 +321,7 @@ export function ShellDialogs({
       ) : null}
 
       {deleteSectionTarget ? (
-        <DeleteItemDialog
+        <DeleteItemPanel
           item={deleteSectionTarget.section}
           noun="section"
           description={<Trans>Its bots and groups are kept and leave the section.</Trans>}
@@ -344,7 +348,7 @@ export function ShellDialogs({
       />
 
       {createBotOpen ? (
-        <CreateBotDialog
+        <CreateBotPanel
           onCancel={() => setCreateBotOpen(false)}
           onCreate={createBot}
           onImport={onImportFromCreate}
@@ -353,7 +357,7 @@ export function ShellDialogs({
       ) : null}
 
       {newSpaceOpen ? (
-        <NewSpaceDialog
+        <NewSpacePanel
           onCancel={() => setNewSpaceOpen(false)}
           onConfirm={async (name) => {
             const space = await rpc.spaces.create({
@@ -373,7 +377,7 @@ export function ShellDialogs({
       ) : null}
 
       {clearTarget ? (
-        <ClearConversationDialog
+        <ClearConversationPanel
           bot={clearTarget.chat}
           onCancel={() => setClearTarget(null)}
           onConfirm={async () => {
@@ -394,7 +398,7 @@ export function ShellDialogs({
         />
       ) : null}
 
-      {deleteRoutineDialogProps ? <DeleteItemDialog {...deleteRoutineDialogProps} /> : null}
+      {deleteRoutineDialogProps ? <DeleteItemPanel {...deleteRoutineDialogProps} /> : null}
     </>
   );
 }

@@ -128,7 +128,7 @@ test("preload recovery keeps Settings bound to another space", async ({ page }, 
   await completeOnboarding(page);
   const personalUrl = page.url();
   await openNewSpace(page);
-  const dialog = page.getByRole("dialog", { name: "New space" });
+  const dialog = page.getByRole("complementary", { name: "New space" });
   await dialog.getByLabel("Name").fill("Support");
   await dialog.getByRole("button", { name: "Create space", exact: true }).click();
   await completeOnboarding(page);

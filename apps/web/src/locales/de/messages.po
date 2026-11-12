@@ -595,7 +595,7 @@ msgstr "Aktiv"
 msgid "Activity"
 msgstr "Aktivität"
 
-#: src/pages/AddStepDialog.tsx
+#: src/pages/AddStepPanel.tsx
 #: src/pages/AgentsStore.tsx
 #: src/pages/AppCatalogGrid.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -758,7 +758,7 @@ msgstr "Server hinzufügen"
 msgid "Add server URL"
 msgstr "Server-URL hinzufügen"
 
-#: src/pages/AddStepDialog.tsx
+#: src/pages/AddStepPanel.tsx
 #: src/pages/Workflows.tsx
 msgid "Add step"
 msgstr "Schritt hinzufügen"
@@ -812,7 +812,7 @@ msgid "Advanced..."
 msgstr "Erweitert …"
 
 #: src/components/WorkingLine.tsx
-#: src/pages/AddStepDialog.tsx
+#: src/pages/AddStepPanel.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Agent"
@@ -1327,6 +1327,10 @@ msgstr "Bots sind in diesem Space pausiert."
 msgid "Bots can work on {hostLabel} with your local files and tools."
 msgstr "Bots können auf {hostLabel} mit deinen lokalen Dateien und Tools arbeiten."
 
+#: src/pages/shell/shell-dialogs.tsx
+msgid "Bots paused"
+msgstr "Bots pausiert"
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Bots run on isolated computers in Docker."
 msgstr "Bots laufen auf isolierten Computern in Docker."
@@ -1401,7 +1405,7 @@ msgstr "Kann keine Bilder lesen"
 #: src/components/PasskeySettings.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/AccountSettingsOverlay.tsx
-#: src/pages/AddStepDialog.tsx
+#: src/pages/AddStepPanel.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/LocalSpeechSection.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -1412,10 +1416,7 @@ msgstr "Kann keine Bilder lesen"
 #: src/pages/Onboarding.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/PluginsOverlay.tsx
-#: src/pages/shell/agent-import-undo.tsx
 #: src/pages/shell/bot-credentials.tsx
-#: src/pages/shell/create-bot-dialog.tsx
-#: src/pages/shell/dialogs.tsx
 #: src/pages/WhatsAppNumbers.tsx
 #: src/pages/WikiBrowser.tsx
 msgid "Cancel"
@@ -1547,10 +1548,6 @@ msgstr "Wird geprüft …"
 msgid "Choose a bot"
 msgstr "Bot auswählen"
 
-#: src/pages/shell/avatar-studio-popover.tsx
-msgid "Choose a color or upload an image"
-msgstr "Wählen Sie eine Farbe oder laden Sie ein Bild hoch"
-
 #: src/lib/model-problem.ts
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Choose a model"
@@ -1634,13 +1631,20 @@ msgid "Clearing…"
 msgstr "Wird geleert…"
 
 #: src/components/ErrorBoundary.tsx
+#: src/pages/AddStepPanel.tsx
+#: src/pages/Board.tsx
+#: src/pages/BoardSettings.tsx
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/PeerMessagesOverlay.tsx
+#: src/pages/RoutineCard.tsx
 #: src/pages/RoutineEditor.tsx
+#: src/pages/shell/agent-import-undo.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
+#: src/pages/shell/create-bot-panel.tsx
+#: src/pages/shell/dialogs.tsx
 #: src/pages/WindowChrome.tsx
 msgid "Close"
 msgstr "Schließen"
@@ -1835,6 +1839,11 @@ msgstr "Computer sind aus. Setze SANDBOX_PROVIDER=docker mit SANDBOX_SUPERVISOR_
 #: src/pages/McpServersOverlay.tsx
 msgid "Configured servers"
 msgstr "Konfigurierte Server"
+
+#: src/pages/shell/agent-import-undo.tsx
+#: src/pages/shell/dialogs.tsx
+msgid "Confirm"
+msgstr "Bestätigen"
 
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -2154,7 +2163,7 @@ msgid "Could not continue"
 msgstr "Fortfahren fehlgeschlagen"
 
 #: src/pages/shell/agent-import.tsx
-#: src/pages/shell/create-bot-dialog.tsx
+#: src/pages/shell/create-bot-panel.tsx
 msgid "Could not create bot"
 msgstr "Bot konnte nicht erstellt werden"
 
@@ -2587,7 +2596,7 @@ msgstr "Ihre Zeitzone konnte nicht aktualisiert werden"
 
 #: src/pages/Board.tsx
 #: src/pages/shell/agent-import.tsx
-#: src/pages/shell/create-bot-dialog.tsx
+#: src/pages/shell/create-bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/sidebar-header.tsx
 msgid "Create"
@@ -3639,7 +3648,7 @@ msgid "Image upload area"
 msgstr "Bild-Upload-Bereich"
 
 #: src/pages/shell/composer.tsx
-#: src/pages/shell/create-bot-dialog.tsx
+#: src/pages/shell/create-bot-panel.tsx
 msgid "Import"
 msgstr "Importieren"
 
@@ -3729,7 +3738,7 @@ msgstr "Anweisungsverlauf"
 
 #: src/components/AskCard.tsx
 #: src/components/InstructionSettings.tsx
-#: src/pages/AddStepDialog.tsx
+#: src/pages/AddStepPanel.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/shell/agent-import.tsx
@@ -4438,7 +4447,7 @@ msgstr "Mein Assistent"
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/shell/create-bot-dialog.tsx
+#: src/pages/shell/create-bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/SpaceSettingsPanel.tsx
 msgid "Name"
@@ -4457,7 +4466,7 @@ msgstr "Gruppe benennen"
 msgid "Name this routine"
 msgstr "Routine benennen"
 
-#: src/pages/shell/create-bot-dialog.tsx
+#: src/pages/shell/create-bot-panel.tsx
 msgid "Name your Bot"
 msgstr "Geben Sie Ihrem Bot einen Namen"
 
@@ -4504,7 +4513,7 @@ msgstr "Neu"
 #: src/pages/Shell.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-picker.tsx
-#: src/pages/shell/create-bot-dialog.tsx
+#: src/pages/shell/create-bot-panel.tsx
 msgid "New bot"
 msgstr "Neuer Bot"
 
@@ -6951,6 +6960,7 @@ msgstr "Gib deine Antwort ein"
 #: src/components/MemoryFactCard.tsx
 #: src/components/WikiChangeCard.tsx
 #: src/pages/Artifacts.tsx
+#: src/pages/shell/shell-dialogs.tsx
 msgid "Undo"
 msgstr "Rückgängig"
 
@@ -7285,7 +7295,7 @@ msgstr "Womit soll ich anfangen?"
 msgid "What result will you demonstrate?"
 msgstr "Welches Ergebnis wirst du vorführen?"
 
-#: src/pages/AddStepDialog.tsx
+#: src/pages/AddStepPanel.tsx
 #: src/pages/NewRoutinePanel.tsx
 msgid "What should the agent do?"
 msgstr "Was soll der Agent tun?"

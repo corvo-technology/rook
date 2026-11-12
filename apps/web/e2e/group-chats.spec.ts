@@ -270,10 +270,10 @@ test("create group from + and see two bots in one transcript", async ({ page }, 
   expect((await settings.boundingBox())?.width).toBeLessThanOrEqual(390);
   await captureScreenshot(page, testInfo, "group-settings-mobile");
   await settings.getByRole("button", { name: "Delete group", exact: true }).click();
-  const confirmDelete = page.getByRole("alertdialog", { name: "Delete Draft team?" });
+  const confirmDelete = page.getByRole("complementary", { name: "Delete Draft team?" });
   await expect(confirmDelete).toBeVisible();
   await captureScreenshot(page, testInfo, "group-settings-delete-confirm-mobile");
-  await page.keyboard.press("Escape");
+  await confirmDelete.getByRole("button", { name: "Close", exact: true }).click();
   await expect(confirmDelete).toHaveCount(0);
   await expect(settings).toHaveAttribute("data-panel", "group-settings");
   await page.keyboard.press("Escape");

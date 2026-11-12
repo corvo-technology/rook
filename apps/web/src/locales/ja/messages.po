@@ -595,7 +595,7 @@ msgstr "有効"
 msgid "Activity"
 msgstr "アクティビティ"
 
-#: src/pages/AddStepDialog.tsx
+#: src/pages/AddStepPanel.tsx
 #: src/pages/AgentsStore.tsx
 #: src/pages/AppCatalogGrid.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -758,7 +758,7 @@ msgstr "サーバーを追加"
 msgid "Add server URL"
 msgstr "サーバーURLを追加"
 
-#: src/pages/AddStepDialog.tsx
+#: src/pages/AddStepPanel.tsx
 #: src/pages/Workflows.tsx
 msgid "Add step"
 msgstr "ステップを追加"
@@ -812,7 +812,7 @@ msgid "Advanced..."
 msgstr "詳細設定..."
 
 #: src/components/WorkingLine.tsx
-#: src/pages/AddStepDialog.tsx
+#: src/pages/AddStepPanel.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Agent"
@@ -1327,6 +1327,10 @@ msgstr "このスペースのボットは一時停止中です。"
 msgid "Bots can work on {hostLabel} with your local files and tools."
 msgstr "ボットは {hostLabel} 上で、ローカルのファイルやツールを使って作業できます。"
 
+#: src/pages/shell/shell-dialogs.tsx
+msgid "Bots paused"
+msgstr "ボットを一時停止しました"
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Bots run on isolated computers in Docker."
 msgstr "ボットは Docker の分離されたコンピューターで実行されます。"
@@ -1401,7 +1405,7 @@ msgstr "画像を読み取れません"
 #: src/components/PasskeySettings.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/AccountSettingsOverlay.tsx
-#: src/pages/AddStepDialog.tsx
+#: src/pages/AddStepPanel.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/LocalSpeechSection.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -1412,10 +1416,7 @@ msgstr "画像を読み取れません"
 #: src/pages/Onboarding.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/PluginsOverlay.tsx
-#: src/pages/shell/agent-import-undo.tsx
 #: src/pages/shell/bot-credentials.tsx
-#: src/pages/shell/create-bot-dialog.tsx
-#: src/pages/shell/dialogs.tsx
 #: src/pages/WhatsAppNumbers.tsx
 #: src/pages/WikiBrowser.tsx
 msgid "Cancel"
@@ -1547,10 +1548,6 @@ msgstr "確認中…"
 msgid "Choose a bot"
 msgstr "ボットを選択"
 
-#: src/pages/shell/avatar-studio-popover.tsx
-msgid "Choose a color or upload an image"
-msgstr "色を選ぶか、画像をアップロード"
-
 #: src/lib/model-problem.ts
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Choose a model"
@@ -1634,13 +1631,20 @@ msgid "Clearing…"
 msgstr "クリア中…"
 
 #: src/components/ErrorBoundary.tsx
+#: src/pages/AddStepPanel.tsx
+#: src/pages/Board.tsx
+#: src/pages/BoardSettings.tsx
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/PeerMessagesOverlay.tsx
+#: src/pages/RoutineCard.tsx
 #: src/pages/RoutineEditor.tsx
+#: src/pages/shell/agent-import-undo.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
+#: src/pages/shell/create-bot-panel.tsx
+#: src/pages/shell/dialogs.tsx
 #: src/pages/WindowChrome.tsx
 msgid "Close"
 msgstr "閉じる"
@@ -1835,6 +1839,11 @@ msgstr "コンピューターは無効です。SANDBOX_PROVIDER=docker と SANDB
 #: src/pages/McpServersOverlay.tsx
 msgid "Configured servers"
 msgstr "設定済みのサーバー"
+
+#: src/pages/shell/agent-import-undo.tsx
+#: src/pages/shell/dialogs.tsx
+msgid "Confirm"
+msgstr "確認"
 
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -2154,7 +2163,7 @@ msgid "Could not continue"
 msgstr "続行できませんでした"
 
 #: src/pages/shell/agent-import.tsx
-#: src/pages/shell/create-bot-dialog.tsx
+#: src/pages/shell/create-bot-panel.tsx
 msgid "Could not create bot"
 msgstr "ボットを作成できませんでした"
 
@@ -2587,7 +2596,7 @@ msgstr "タイムゾーンを更新できませんでした"
 
 #: src/pages/Board.tsx
 #: src/pages/shell/agent-import.tsx
-#: src/pages/shell/create-bot-dialog.tsx
+#: src/pages/shell/create-bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/sidebar-header.tsx
 msgid "Create"
@@ -3639,7 +3648,7 @@ msgid "Image upload area"
 msgstr "画像アップロードエリア"
 
 #: src/pages/shell/composer.tsx
-#: src/pages/shell/create-bot-dialog.tsx
+#: src/pages/shell/create-bot-panel.tsx
 msgid "Import"
 msgstr "インポート"
 
@@ -3729,7 +3738,7 @@ msgstr "指示の履歴"
 
 #: src/components/AskCard.tsx
 #: src/components/InstructionSettings.tsx
-#: src/pages/AddStepDialog.tsx
+#: src/pages/AddStepPanel.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/shell/agent-import.tsx
@@ -4438,7 +4447,7 @@ msgstr "自分のアシスタント"
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/shell/create-bot-dialog.tsx
+#: src/pages/shell/create-bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/SpaceSettingsPanel.tsx
 msgid "Name"
@@ -4457,7 +4466,7 @@ msgstr "グループに名前を付ける"
 msgid "Name this routine"
 msgstr "ルーティンに名前を付ける"
 
-#: src/pages/shell/create-bot-dialog.tsx
+#: src/pages/shell/create-bot-panel.tsx
 msgid "Name your Bot"
 msgstr "ボットに名前を付ける"
 
@@ -4504,7 +4513,7 @@ msgstr "新規"
 #: src/pages/Shell.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-picker.tsx
-#: src/pages/shell/create-bot-dialog.tsx
+#: src/pages/shell/create-bot-panel.tsx
 msgid "New bot"
 msgstr "新しいボット"
 
@@ -6951,6 +6960,7 @@ msgstr "回答を入力"
 #: src/components/MemoryFactCard.tsx
 #: src/components/WikiChangeCard.tsx
 #: src/pages/Artifacts.tsx
+#: src/pages/shell/shell-dialogs.tsx
 msgid "Undo"
 msgstr "元に戻す"
 
@@ -7285,7 +7295,7 @@ msgstr "まず何から取りかかりましょうか？"
 msgid "What result will you demonstrate?"
 msgstr "どんな結果を実演しますか？"
 
-#: src/pages/AddStepDialog.tsx
+#: src/pages/AddStepPanel.tsx
 #: src/pages/NewRoutinePanel.tsx
 msgid "What should the agent do?"
 msgstr "エージェントに何をさせますか?"

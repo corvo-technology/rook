@@ -1,12 +1,5 @@
 import type { RoutineOccurrence } from "@corvo/contracts";
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@corvo/ui-web";
+import { Button, SidePanel } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { Play } from "lucide-react";
 import { useState } from "react";
@@ -59,24 +52,14 @@ export function RoutineCard({
   }[item.state];
 
   return (
-    <Dialog open onOpenChange={(open) => (!open && !running ? onClose() : undefined)}>
-      <DialogContent showCloseButton={false}>
-        <DialogHeader>
-          <DialogTitle>{item.name}</DialogTitle>
-        </DialogHeader>
-        <p className={`text-[13.5px] font-medium ${stateTone}`}>{stateLabel}</p>
-        <p className="text-[13.5px] text-muted-foreground">
-          {item.botName} · {time}
-        </p>
-        {item.runId ? (
-          <RoutineRunDetail routineId={item.routineId} runId={item.runId} at={item.at} />
-        ) : null}
-        {error ? (
-          <p role="alert" className="text-[13.5px] text-destructive">
-            {error}
-          </p>
-        ) : null}
-        <DialogFooter>
+    <SidePanel
+      open
+      onClose={running ? () => undefined : onClose}
+      title={item.name}
+      closeLabel={t`Close`}
+      data-testid="routine-card"
+      footer={
+        <>
           <Button variant="outline" disabled={running} onClick={onOpenAgent}>
             <Trans>Open agent</Trans>
           </Button>
@@ -84,8 +67,21 @@ export function RoutineCard({
             <Play />
             {running ? <Trans>Running…</Trans> : <Trans>Run now</Trans>}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </>
+      }
+    >
+      <p className={`text-[13.5px] font-medium ${stateTone}`}>{stateLabel}</p>
+      <p className="text-[13.5px] text-muted-foreground">
+        {item.botName} · {time}
+      </p>
+      {item.runId ? (
+        <RoutineRunDetail routineId={item.routineId} runId={item.runId} at={item.at} />
+      ) : null}
+      {error ? (
+        <p role="alert" className="text-[13.5px] text-destructive">
+          {error}
+        </p>
+      ) : null}
+    </SidePanel>
   );
 }

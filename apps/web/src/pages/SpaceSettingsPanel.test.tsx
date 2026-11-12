@@ -16,7 +16,8 @@ vi.mock("@lingui/react/macro", () => {
       (value === 1 ? one : other).replace("#", String(value)),
   };
 });
-vi.mock("@corvo/ui-web", () => {
+vi.mock("@corvo/ui-web", async (importOriginal) => {
+  const { InlineConfirm } = await importOriginal<typeof import("@corvo/ui-web")>();
   const Box = ({ children }: { children?: ReactNode }) => <div>{children}</div>;
   return {
     Button: (props: ComponentProps<"button">) => <button type="button" {...props} />,
@@ -37,6 +38,22 @@ vi.mock("@corvo/ui-web", () => {
     AlertDialogFooter: Box,
     AlertDialogHeader: Box,
     AlertDialogTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
+    InlineConfirm,
+    SidePanel: ({
+      title,
+      footer,
+      children,
+    }: {
+      title?: ReactNode;
+      footer?: ReactNode;
+      children?: ReactNode;
+    }) => (
+      <aside>
+        <h2>{title}</h2>
+        {children}
+        <footer>{footer}</footer>
+      </aside>
+    ),
     RadioGroup: Box,
     RadioGroupItem: Box,
   };
@@ -211,6 +228,7 @@ describe("SpaceSettingsPanel", () => {
     await click("Delete space");
     expect(container.querySelector("h2")?.textContent).toBe("Delete Support and its 2 bots?");
     await click("Delete");
+    await click("Confirm");
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
 

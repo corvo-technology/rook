@@ -4,7 +4,7 @@ import { useEffect, useId, useState } from "react";
 import { SettingsGroup, SettingsRow } from "../components/SettingsRows";
 import { SpaceSettingOverrides } from "./SpaceSettingOverrides";
 import type { SettingsSpace } from "./shell/dialogs";
-import { DeleteSpaceDialog, PauseSpaceDialog } from "./shell/dialogs";
+import { DeleteSpacePanel, PauseSpacePanel } from "./shell/dialogs";
 
 /** One space's page: its name, the account settings it customizes, and deletion for its owner. */
 export function SpaceSettingsPanel({
@@ -127,7 +127,7 @@ export function SpaceSettingsPanel({
         </Button>
       ) : null}
       {confirmingPause && onSetPaused ? (
-        <PauseSpaceDialog
+        <PauseSpacePanel
           onCancel={() => setConfirmingPause(false)}
           onConfirm={async () => {
             await onSetPaused(true);
@@ -145,7 +145,7 @@ export function SpaceSettingsPanel({
         </Button>
       ) : null}
       {confirmingDelete ? (
-        <DeleteSpaceDialog
+        <DeleteSpacePanel
           space={space}
           onCancel={() => setConfirmingDelete(false)}
           onConfirm={onDelete}

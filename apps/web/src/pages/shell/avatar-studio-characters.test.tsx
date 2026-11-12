@@ -2,6 +2,7 @@
 import type { ReactNode } from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
+import { MemoryRouter } from "react-router-dom";
 import { beforeEach, expect, it, vi } from "vitest";
 
 vi.mock("open-bot-avatar/dom", () => ({
@@ -193,7 +194,9 @@ it("picks from the role on request, and only while it is not already doing so", 
   let finish: () => void = () => undefined;
   const onDesign = vi.fn(() => new Promise<void>((resolve) => (finish = resolve)));
   const { host, unmount } = await mount(
-    <AvatarStudioPopover value="#3B82F6" onChange={onChange} onDesign={onDesign} />,
+    <MemoryRouter>
+      <AvatarStudioPopover value="#3B82F6" onChange={onChange} onDesign={onDesign} />
+    </MemoryRouter>,
   );
   await act(async () => host.querySelector<HTMLButtonElement>("button")?.click());
   const design = () =>

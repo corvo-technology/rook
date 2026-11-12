@@ -1,39 +1,72 @@
 import type { Bot, BotSection } from "@corvo/contracts";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  Input,
-  RadioGroup,
-  RadioGroupItem,
-} from "@corvo/ui-web";
+import { Button, InlineConfirm, Input, RadioGroup, RadioGroupItem, SidePanel } from "@corvo/ui-web";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { Lock } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { errorText } from "../../lib/user-error";
 
-/** Each dialog is mounted only while open, so `open` is always true and the
- * parent unmounts it from `onCancel`. Escape and backdrop presses are ignored
- * while a request is in flight. */
+/** Each panel is mounted only while open and the parent unmounts it from `onCancel`. Closing is
+ * ignored while a request is in flight. */
 function closeUnlessBusy(busy: boolean, onCancel: () => void) {
-  return (open: boolean) => {
-    if (!open && !busy) onCancel();
+  return () => {
+    if (!busy) onCancel();
   };
 }
 
-export function NewSpaceDialog({
+/**
+ * A side panel for an action that cannot be undone: what goes with it, then a two-step button.
+ * Nothing in the shell has a trigger to confirm in place, so the panel is where it is armed.
+ */
+function ConfirmPanel({
+  title,
+  description,
+  busy,
+  error,
+  actionLabel,
+  onCancel,
+  onConfirm,
+  children,
+}: {
+  title: React.ReactNode;
+  description?: React.ReactNode;
+  busy: boolean;
+  error: string | null;
+  actionLabel: React.ReactNode;
+  onCancel: () => void;
+  onConfirm: () => void;
+  children?: React.ReactNode;
+}) {
+  const { t } = useLingui();
+  return (
+    <SidePanel
+      open
+      onClose={closeUnlessBusy(busy, onCancel)}
+      title={<span className="break-words">{title}</span>}
+      closeLabel={t`Close`}
+      data-testid="confirm-panel"
+      footer={
+        <InlineConfirm
+          variant="destructive"
+          disabled={busy}
+          confirmLabel={t`Confirm`}
+          onConfirm={onConfirm}
+        >
+          {actionLabel}
+        </InlineConfirm>
+      }
+    >
+      {description ? <p className="text-[13.5px] text-muted-foreground">{description}</p> : null}
+      {children}
+      {error ? (
+        <p role="alert" className="text-[13.5px] text-destructive">
+          {error}
+        </p>
+      ) : null}
+    </SidePanel>
+  );
+}
+
+export function NewSpacePanel({
   onCancel,
   onConfirm,
 }: {
@@ -58,48 +91,49 @@ export function NewSpaceDialog({
   };
 
   return (
-    <Dialog open onOpenChange={closeUnlessBusy(saving, onCancel)}>
-      <DialogContent showCloseButton={false}>
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2.5">
-            <Lock
-              size={17}
-              strokeWidth={1.8}
-              className="text-muted-foreground"
-              aria-hidden="true"
-            />
-            <Trans>New space</Trans>
-          </DialogTitle>
-        </DialogHeader>
+    <SidePanel
+      open
+      onClose={closeUnlessBusy(saving, onCancel)}
+      title={
+        <span className="flex items-center gap-2.5">
+          <Lock size={17} strokeWidth={1.8} className="text-muted-foreground" aria-hidden="true" />
+          <Trans>New space</Trans>
+        </span>
+      }
+      closeLabel={t`Close`}
+      data-testid="new-space-panel"
+      footer={
+        <Button type="submit" form={`${nameId}-form`} disabled={saving || !name.trim()}>
+          {saving ? <Trans>Creating…</Trans> : <Trans>Create space</Trans>}
+        </Button>
+      }
+    >
+      <form
+        id={`${nameId}-form`}
+        onSubmit={(event) => {
+          event.preventDefault();
+          create();
+        }}
+      >
         <label htmlFor={nameId} className="block text-[13.5px] text-foreground/75">
           <Trans>Name</Trans>
           <Input
             id={nameId}
+            data-autofocus
             maxLength={60}
             value={name}
             onChange={(event) => setName(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") create();
-            }}
             placeholder={t`Customer support`}
             className="mt-2"
           />
         </label>
-        {error ? <p className="text-[13.5px] text-destructive">{error}</p> : null}
-        <DialogFooter>
-          <Button variant="outline" disabled={saving} onClick={onCancel}>
-            <Trans>Cancel</Trans>
-          </Button>
-          <Button disabled={saving || !name.trim()} onClick={create}>
-            {saving ? <Trans>Creating…</Trans> : <Trans>Create space</Trans>}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </form>
+      {error ? <p className="text-[13.5px] text-destructive">{error}</p> : null}
+    </SidePanel>
   );
 }
 
-export function NewBotSectionDialog({
+export function NewBotSectionPanel({
   bot,
   onCancel,
   onConfirm,
@@ -115,56 +149,53 @@ export function NewBotSectionDialog({
   const [error, setError] = useState<string | null>(null);
 
   return (
-    <Dialog open onOpenChange={closeUnlessBusy(saving, onCancel)}>
-      <DialogContent showCloseButton={false}>
-        <form
-          className="contents"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const trimmed = name.trim();
-            if (!trimmed || saving) return;
-            setSaving(true);
-            setError(null);
-            void onConfirm(trimmed).catch((err: unknown) => {
-              setError(errorText(err, t`Could not create section`));
-              setSaving(false);
-            });
-          }}
-        >
-          <DialogHeader>
-            <DialogTitle>
-              <Trans>New section</Trans>
-            </DialogTitle>
-            <DialogDescription>
-              <Trans>Create a section and move {bot.name} into it.</Trans>
-            </DialogDescription>
-          </DialogHeader>
-          <label htmlFor={nameId} className="block text-[13.5px] text-foreground/75">
-            <Trans>Name</Trans>
-            <Input
-              id={nameId}
-              maxLength={60}
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              className="mt-2"
-            />
-          </label>
-          {error ? <p className="text-[13.5px] text-destructive">{error}</p> : null}
-          <DialogFooter>
-            <Button type="button" variant="outline" disabled={saving} onClick={onCancel}>
-              <Trans>Cancel</Trans>
-            </Button>
-            <Button type="submit" disabled={saving || !name.trim()}>
-              {saving ? <Trans>Creating…</Trans> : <Trans>Create</Trans>}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <SidePanel
+      open
+      onClose={closeUnlessBusy(saving, onCancel)}
+      title={t`New section`}
+      closeLabel={t`Close`}
+      data-testid="new-section-panel"
+      footer={
+        <Button type="submit" form={`${nameId}-form`} disabled={saving || !name.trim()}>
+          {saving ? <Trans>Creating…</Trans> : <Trans>Create</Trans>}
+        </Button>
+      }
+    >
+      <p className="text-[13.5px] text-muted-foreground">
+        <Trans>Create a section and move {bot.name} into it.</Trans>
+      </p>
+      <form
+        id={`${nameId}-form`}
+        onSubmit={(event) => {
+          event.preventDefault();
+          const trimmed = name.trim();
+          if (!trimmed || saving) return;
+          setSaving(true);
+          setError(null);
+          void onConfirm(trimmed).catch((err: unknown) => {
+            setError(errorText(err, t`Could not create section`));
+            setSaving(false);
+          });
+        }}
+      >
+        <label htmlFor={nameId} className="block text-[13.5px] text-foreground/75">
+          <Trans>Name</Trans>
+          <Input
+            id={nameId}
+            data-autofocus
+            maxLength={60}
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            className="mt-2"
+          />
+        </label>
+      </form>
+      {error ? <p className="text-[13.5px] text-destructive">{error}</p> : null}
+    </SidePanel>
   );
 }
 
-export function RenameBotSectionDialog({
+export function RenameBotSectionPanel({
   section,
   onCancel,
   onConfirm,
@@ -182,53 +213,49 @@ export function RenameBotSectionDialog({
   const unchanged = trimmed === section.name;
 
   return (
-    <Dialog open onOpenChange={closeUnlessBusy(saving, onCancel)}>
-      <DialogContent showCloseButton={false} aria-describedby={undefined}>
-        <form
-          className="contents"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!trimmed || saving || unchanged) return;
-            setSaving(true);
-            setError(null);
-            void onConfirm(trimmed).catch((err: unknown) => {
-              setError(errorText(err, t`Could not rename section`));
-              setSaving(false);
-            });
-          }}
-        >
-          <DialogHeader>
-            <DialogTitle>
-              <Trans>Rename section</Trans>
-            </DialogTitle>
-          </DialogHeader>
-          <label htmlFor={nameId} className="block text-[13.5px] text-foreground/75">
-            <Trans>Name</Trans>
-            <Input
-              id={nameId}
-              maxLength={60}
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              className="mt-2"
-              autoFocus
-            />
-          </label>
-          {error ? <p className="text-[13.5px] text-destructive">{error}</p> : null}
-          <DialogFooter>
-            <Button type="button" variant="outline" disabled={saving} onClick={onCancel}>
-              <Trans>Cancel</Trans>
-            </Button>
-            <Button type="submit" disabled={saving || !trimmed || unchanged}>
-              {saving ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <SidePanel
+      open
+      onClose={closeUnlessBusy(saving, onCancel)}
+      title={t`Rename section`}
+      closeLabel={t`Close`}
+      data-testid="rename-section-panel"
+      footer={
+        <Button type="submit" form={`${nameId}-form`} disabled={saving || !trimmed || unchanged}>
+          {saving ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
+        </Button>
+      }
+    >
+      <form
+        id={`${nameId}-form`}
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!trimmed || saving || unchanged) return;
+          setSaving(true);
+          setError(null);
+          void onConfirm(trimmed).catch((err: unknown) => {
+            setError(errorText(err, t`Could not rename section`));
+            setSaving(false);
+          });
+        }}
+      >
+        <label htmlFor={nameId} className="block text-[13.5px] text-foreground/75">
+          <Trans>Name</Trans>
+          <Input
+            id={nameId}
+            data-autofocus
+            maxLength={60}
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            className="mt-2"
+          />
+        </label>
+      </form>
+      {error ? <p className="text-[13.5px] text-destructive">{error}</p> : null}
+    </SidePanel>
   );
 }
 
-export function ClearConversationDialog({
+export function ClearConversationPanel({
   bot,
   onCancel,
   onConfirm,
@@ -242,45 +269,30 @@ export function ClearConversationDialog({
   const [error, setError] = useState<string | null>(null);
 
   return (
-    <AlertDialog open onOpenChange={closeUnlessBusy(clearing, onCancel)}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle className="break-words">
-            <Trans>Clear {bot.name}’s conversation?</Trans>
-          </AlertDialogTitle>
-          <AlertDialogDescription>
-            <Trans>
-              This permanently removes every message and stops current work. The chat remains
-              available.
-            </Trans>
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        {error ? <p className="text-[13.5px] text-destructive">{error}</p> : null}
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={clearing}>
-            <Trans>Cancel</Trans>
-          </AlertDialogCancel>
-          <AlertDialogAction
-            variant="destructive"
-            disabled={clearing}
-            onClick={() => {
-              setClearing(true);
-              setError(null);
-              void onConfirm().catch((err: unknown) => {
-                setError(errorText(err, t`Could not clear conversation`));
-                setClearing(false);
-              });
-            }}
-          >
-            {clearing ? <Trans>Clearing…</Trans> : <Trans>Clear</Trans>}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <ConfirmPanel
+      title={<Trans>Clear {bot.name}’s conversation?</Trans>}
+      description={
+        <Trans>
+          This permanently removes every message and stops current work. The chat remains available.
+        </Trans>
+      }
+      busy={clearing}
+      error={error}
+      actionLabel={clearing ? <Trans>Clearing…</Trans> : <Trans>Clear</Trans>}
+      onCancel={onCancel}
+      onConfirm={() => {
+        setClearing(true);
+        setError(null);
+        void onConfirm().catch((err: unknown) => {
+          setError(errorText(err, t`Could not clear conversation`));
+          setClearing(false);
+        });
+      }}
+    />
   );
 }
 
-export function DeleteBotDialog({
+export function DeleteBotPanel({
   bot,
   onCancel,
   onConfirm,
@@ -296,76 +308,63 @@ export function DeleteBotDialog({
   const memoriesLabelId = useId();
 
   return (
-    <AlertDialog open onOpenChange={closeUnlessBusy(deleting, onCancel)}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle className="break-words">
-            <Trans>Delete {bot.name}?</Trans>
-          </AlertDialogTitle>
-          <AlertDialogDescription>
-            <Trans>
-              Its conversation, files, and routines will be permanently deleted. Bots it created
-              stay in your list.
-            </Trans>
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <div className="space-y-2">
-          <p id={memoriesLabelId} className="mb-2 text-[13.5px] text-foreground/75">
-            <Trans>What about its memories?</Trans>
-          </p>
-          <RadioGroup
-            aria-labelledby={memoriesLabelId}
-            value={deleteMemories ? "delete" : "keep"}
-            onValueChange={(value) => setDeleteMemories(value === "delete")}
-          >
-            {/* biome-ignore lint/a11y/noLabelWithoutControl: the wrapped RadioGroupItem is the control. */}
-            <label className="flex cursor-pointer gap-3 rounded-lg border border-border p-3">
-              <RadioGroupItem value="keep" className="mt-0.5" />
-              <span>
-                <span className="block text-[14px] text-foreground">
-                  <Trans>Keep memories</Trans>
-                </span>
-                <span className="mt-0.5 block text-[12.5px] text-muted-foreground">
-                  <Trans>Move them to your shared memory.</Trans>
-                </span>
+    <ConfirmPanel
+      title={<Trans>Delete {bot.name}?</Trans>}
+      description={
+        <Trans>
+          Its conversation, files, and routines will be permanently deleted. Bots it created stay in
+          your list.
+        </Trans>
+      }
+      busy={deleting}
+      error={error}
+      actionLabel={deleting ? <Trans>Deleting…</Trans> : <Trans>Delete</Trans>}
+      onCancel={onCancel}
+      onConfirm={() => {
+        setDeleting(true);
+        setError(null);
+        void onConfirm(deleteMemories).catch((err: unknown) => {
+          setError(errorText(err, t`Could not delete bot`));
+          setDeleting(false);
+        });
+      }}
+    >
+      <div className="space-y-2">
+        <p id={memoriesLabelId} className="mb-2 text-[13.5px] text-foreground/75">
+          <Trans>What about its memories?</Trans>
+        </p>
+        <RadioGroup
+          aria-labelledby={memoriesLabelId}
+          value={deleteMemories ? "delete" : "keep"}
+          onValueChange={(value) => setDeleteMemories(value === "delete")}
+        >
+          {/* biome-ignore lint/a11y/noLabelWithoutControl: the wrapped RadioGroupItem is the control. */}
+          <label className="flex cursor-pointer gap-3 rounded-lg border border-border p-3">
+            <RadioGroupItem value="keep" className="mt-0.5" />
+            <span>
+              <span className="block text-[14px] text-foreground">
+                <Trans>Keep memories</Trans>
               </span>
-            </label>
-            {/* biome-ignore lint/a11y/noLabelWithoutControl: the wrapped RadioGroupItem is the control. */}
-            <label className="flex cursor-pointer gap-3 rounded-lg border border-border p-3">
-              <RadioGroupItem value="delete" className="mt-0.5" />
-              <span>
-                <span className="block text-[14px] text-foreground">
-                  <Trans>Delete memories too</Trans>
-                </span>
-                <span className="mt-0.5 block text-[12.5px] text-muted-foreground">
-                  <Trans>This cannot be undone.</Trans>
-                </span>
+              <span className="mt-0.5 block text-[12.5px] text-muted-foreground">
+                <Trans>Move them to your shared memory.</Trans>
               </span>
-            </label>
-          </RadioGroup>
-        </div>
-        {error ? <p className="text-[13.5px] text-destructive">{error}</p> : null}
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={deleting}>
-            <Trans>Cancel</Trans>
-          </AlertDialogCancel>
-          <AlertDialogAction
-            variant="destructive"
-            disabled={deleting}
-            onClick={() => {
-              setDeleting(true);
-              setError(null);
-              void onConfirm(deleteMemories).catch((err: unknown) => {
-                setError(errorText(err, t`Could not delete bot`));
-                setDeleting(false);
-              });
-            }}
-          >
-            {deleting ? <Trans>Deleting…</Trans> : <Trans>Delete</Trans>}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+            </span>
+          </label>
+          {/* biome-ignore lint/a11y/noLabelWithoutControl: the wrapped RadioGroupItem is the control. */}
+          <label className="flex cursor-pointer gap-3 rounded-lg border border-border p-3">
+            <RadioGroupItem value="delete" className="mt-0.5" />
+            <span>
+              <span className="block text-[14px] text-foreground">
+                <Trans>Delete memories too</Trans>
+              </span>
+              <span className="mt-0.5 block text-[12.5px] text-muted-foreground">
+                <Trans>This cannot be undone.</Trans>
+              </span>
+            </span>
+          </label>
+        </RadioGroup>
+      </div>
+    </ConfirmPanel>
   );
 }
 
@@ -382,8 +381,8 @@ export type SettingsSpace = {
   /** Every bot deleting the space removes, from the server. */
   botCount?: number;
 };
-/** Pausing cancels work in progress, so it asks once; a second tap while it runs does nothing. */
-export function PauseSpaceDialog({
+/** Pausing cancels work in progress, so it arms first; a second tap while it runs does nothing. */
+export function PauseSpacePanel({
   onCancel,
   onConfirm,
 }: {
@@ -395,46 +394,30 @@ export function PauseSpaceDialog({
   const started = useRef(false);
   const [error, setError] = useState<string | null>(null);
   return (
-    <AlertDialog open onOpenChange={closeUnlessBusy(pausing, onCancel)}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>
-            <Trans>Pause all bots</Trans>
-          </AlertDialogTitle>
-          <AlertDialogDescription>
-            <Trans>Running work stops and nothing starts until you resume.</Trans>
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        {error ? <p className="text-[13.5px] text-destructive">{error}</p> : null}
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={pausing}>
-            <Trans>Cancel</Trans>
-          </AlertDialogCancel>
-          <AlertDialogAction
-            variant="destructive"
-            disabled={pausing}
-            onClick={() => {
-              if (started.current) return;
-              started.current = true;
-              setPausing(true);
-              setError(null);
-              void onConfirm().catch((err: unknown) => {
-                setError(errorText(err, t`Could not save`));
-                started.current = false;
-                setPausing(false);
-              });
-            }}
-          >
-            <Trans>Pause all bots</Trans>
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <ConfirmPanel
+      title={<Trans>Pause all bots</Trans>}
+      description={<Trans>Running work stops and nothing starts until you resume.</Trans>}
+      busy={pausing}
+      error={error}
+      actionLabel={<Trans>Pause all bots</Trans>}
+      onCancel={onCancel}
+      onConfirm={() => {
+        if (started.current) return;
+        started.current = true;
+        setPausing(true);
+        setError(null);
+        void onConfirm().catch((err: unknown) => {
+          setError(errorText(err, t`Could not save`));
+          started.current = false;
+          setPausing(false);
+        });
+      }}
+    />
   );
 }
 
 /** Names what goes with the space: its bots, and with them their chats and groups. */
-export function DeleteSpaceDialog({
+export function DeleteSpacePanel({
   space,
   onCancel,
   onConfirm,
@@ -446,7 +429,7 @@ export function DeleteSpaceDialog({
   const botCount = space.botCount ?? 0;
   const name = space.name;
   return (
-    <DeleteItemDialog
+    <DeleteItemPanel
       item={space}
       noun="space"
       title={
@@ -464,7 +447,7 @@ export function DeleteSpaceDialog({
   );
 }
 
-export function DeleteItemDialog({
+export function DeleteItemPanel({
   item,
   noun,
   title,
@@ -484,46 +467,32 @@ export function DeleteItemDialog({
   const [error, setError] = useState<string | null>(null);
 
   return (
-    <AlertDialog open onOpenChange={closeUnlessBusy(deleting, onCancel)}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title ?? <Trans>Delete {item.name}?</Trans>}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {description ?? <Trans>This cannot be undone.</Trans>}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        {error ? <p className="text-[13.5px] text-destructive">{error}</p> : null}
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={deleting}>
-            <Trans>Cancel</Trans>
-          </AlertDialogCancel>
-          <AlertDialogAction
-            variant="destructive"
-            disabled={deleting}
-            onClick={() => {
-              setDeleting(true);
-              setError(null);
-              void onConfirm().catch((err: unknown) => {
-                setError(
-                  errorText(
-                    err,
-                    noun === "group"
-                      ? t`Could not delete group`
-                      : noun === "space"
-                        ? t`Could not delete space`
-                        : noun === "section"
-                          ? t`Could not delete section`
-                          : t`Could not delete routine`,
-                  ),
-                );
-                setDeleting(false);
-              });
-            }}
-          >
-            {deleting ? <Trans>Deleting…</Trans> : <Trans>Delete</Trans>}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <ConfirmPanel
+      title={title ?? <Trans>Delete {item.name}?</Trans>}
+      description={description ?? <Trans>This cannot be undone.</Trans>}
+      busy={deleting}
+      error={error}
+      actionLabel={deleting ? <Trans>Deleting…</Trans> : <Trans>Delete</Trans>}
+      onCancel={onCancel}
+      onConfirm={() => {
+        setDeleting(true);
+        setError(null);
+        void onConfirm().catch((err: unknown) => {
+          setError(
+            errorText(
+              err,
+              noun === "group"
+                ? t`Could not delete group`
+                : noun === "space"
+                  ? t`Could not delete space`
+                  : noun === "section"
+                    ? t`Could not delete section`
+                    : t`Could not delete routine`,
+            ),
+          );
+          setDeleting(false);
+        });
+      }}
+    />
   );
 }

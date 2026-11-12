@@ -11,7 +11,7 @@ import type { RoutineDraftState } from "../../src/pages/RoutineEditor";
 import { RoutineEditor } from "../../src/pages/RoutineEditor";
 import { SettingsOverlay } from "../../src/pages/SettingsOverlay";
 import { BotSettings } from "../../src/pages/shell/bot-panel";
-import { CreateBotDialog } from "../../src/pages/shell/create-bot-dialog";
+import { CreateBotPanel } from "../../src/pages/shell/create-bot-panel";
 import "../../src/styles.css";
 
 const demoRpc: Record<string, unknown> = {
@@ -116,7 +116,7 @@ function CreateShot() {
   }, []);
   return (
     <main data-ready={ready ? "true" : "false"} className="min-h-screen bg-background">
-      <CreateBotDialog onCreate={async () => undefined} onCancel={() => undefined} />
+      <CreateBotPanel onCreate={async () => undefined} onCancel={() => undefined} />
     </main>
   );
 }

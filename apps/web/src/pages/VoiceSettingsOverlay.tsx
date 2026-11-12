@@ -554,7 +554,13 @@ function selectedProvider(
   catalog: VoiceCatalogEntry[],
   preferred: Array<string | null | undefined>,
 ): string {
-  return preferred.find((id) => catalog.some((entry) => entry.id === id)) ?? catalog[0]?.id ?? "";
+  return (
+    preferred.find((id) => catalog.some((entry) => entry.id === id)) ??
+    // Nothing connected: the desktop app already listens and speaks with this computer.
+    catalog.find((entry) => entry.id === LOCAL_VOICE_PROVIDER_ID)?.id ??
+    catalog[0]?.id ??
+    ""
+  );
 }
 
 const NO_VOICES: VoiceInfo[] = [];

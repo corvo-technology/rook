@@ -3436,6 +3436,14 @@ msgstr "Général"
 msgid "Getting ready"
 msgstr "Préparation en cours"
 
+#: src/lib/voice-notices.ts
+msgid "Getting the speech model ready ({size} MB). This happens once."
+msgstr "Préparation du modèle vocal ({size} Mo). Cela n'arrive qu'une fois."
+
+#: src/lib/voice-notices.ts
+msgid "Getting the voice ready ({size} MB). This happens once."
+msgstr "Préparation de la voix ({size} Mo). Cela n'arrive qu'une fois."
+
 #: src/lib/routine-trigger.ts
 #: src/pages/RoutineEditor.tsx
 msgid "Git event"
@@ -3930,6 +3938,7 @@ msgstr "Écouter"
 
 #: src/components/call/CallCard.tsx
 #: src/pages/ExternalConversationSettings.tsx
+#: src/pages/LocalSpeechSection.tsx
 msgid "Listening"
 msgstr "Écoute"
 
@@ -5112,6 +5121,10 @@ msgstr "Épingler"
 #: src/pages/Shell.tsx
 msgid "Pinned"
 msgstr "Épinglés"
+
+#: src/pages/LocalSpeechSection.tsx
+msgid "Play"
+msgstr "Lire"
 
 #: src/components/ArtifactFileCard.tsx
 msgid "Play {name}"
@@ -6601,6 +6614,10 @@ msgstr "Le lien de l’écran a expiré."
 msgid "The selected memory provider is not available in this build."
 msgstr "Le fournisseur de mémoire sélectionné n'est pas disponible dans cette version."
 
+#: src/lib/voice-notices.ts
+msgid "The voice provider failed, so this reply used the voice on this computer."
+msgstr "Le fournisseur de voix a échoué, cette réponse a donc utilisé la voix de cet ordinateur."
+
 #: src/pages/shell/agent-import.tsx
 msgid "These files are too large to import."
 msgstr "Ces fichiers sont trop volumineux pour être importés."
@@ -7160,6 +7177,10 @@ msgstr "Version"
 #: src/pages/SpaceSettingOverrides.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Voice"
+msgstr "Voix"
+
+#: src/pages/LocalSpeechSection.tsx
+msgid "Voices"
 msgstr "Voix"
 
 #: src/pages/Usage.tsx

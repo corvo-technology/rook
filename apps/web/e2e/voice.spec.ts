@@ -216,6 +216,7 @@ test("voice settings list the speech models that can be downloaded to this compu
     body.json = [
       {
         id: "base",
+        kind: "listen",
         label: "Base",
         sizeBytes: 207_557_382,
         languages: ["en", "pt"],
@@ -224,11 +225,32 @@ test("voice settings list the speech models that can be downloaded to this compu
       },
       {
         id: "small",
+        kind: "listen",
         label: "Small",
         sizeBytes: 639_387_718,
         languages: ["en", "pt"],
         state: "downloading",
         bytesDone: 191_816_315,
+      },
+      {
+        id: "voice-pt",
+        kind: "speak",
+        label: "Português (Brasil)",
+        sizeBytes: 67_043_814,
+        languages: ["pt"],
+        sample: "Olá, eu sou a sua voz neste computador.",
+        state: "ready",
+        bytesDone: 67_043_814,
+      },
+      {
+        id: "voice-kokoro",
+        kind: "speak",
+        label: "Kokoro (English)",
+        sizeBytes: 132_353_410,
+        languages: ["en"],
+        sample: "Hello, I am your voice on this computer.",
+        state: "absent",
+        bytesDone: 0,
       },
     ];
     await route.fulfill({ response, json: body });
@@ -241,6 +263,13 @@ test("voice settings list the speech models that can be downloaded to this compu
     settings.getByTestId("local-model-base").getByRole("button", { name: "Use" }),
   ).toBeVisible();
   await expect(settings.getByTestId("local-model-small").getByRole("progressbar")).toBeVisible();
+  await expect(settings.getByTestId("local-model-voice-pt")).toContainText("67 MB");
+  await expect(
+    settings.getByTestId("local-model-voice-pt").getByRole("button", { name: "Play" }),
+  ).toBeVisible();
+  await expect(
+    settings.getByTestId("local-model-voice-kokoro").getByRole("button", { name: "Download" }),
+  ).toBeVisible();
   await expect(settings.getByLabel("API key", { exact: true })).toHaveCount(0);
   await captureScreenshot(page, testInfo, "voice-settings-this-computer");
 });

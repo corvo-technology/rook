@@ -3436,6 +3436,14 @@ msgstr "General"
 msgid "Getting ready"
 msgstr "Getting ready"
 
+#: src/lib/voice-notices.ts
+msgid "Getting the speech model ready ({size} MB). This happens once."
+msgstr "Getting the speech model ready ({size} MB). This happens once."
+
+#: src/lib/voice-notices.ts
+msgid "Getting the voice ready ({size} MB). This happens once."
+msgstr "Getting the voice ready ({size} MB). This happens once."
+
 #: src/lib/routine-trigger.ts
 #: src/pages/RoutineEditor.tsx
 msgid "Git event"
@@ -3930,6 +3938,7 @@ msgstr "Listen"
 
 #: src/components/call/CallCard.tsx
 #: src/pages/ExternalConversationSettings.tsx
+#: src/pages/LocalSpeechSection.tsx
 msgid "Listening"
 msgstr "Listening"
 
@@ -5112,6 +5121,10 @@ msgstr "Pin"
 #: src/pages/Shell.tsx
 msgid "Pinned"
 msgstr "Pinned"
+
+#: src/pages/LocalSpeechSection.tsx
+msgid "Play"
+msgstr "Play"
 
 #: src/components/ArtifactFileCard.tsx
 msgid "Play {name}"
@@ -6601,6 +6614,10 @@ msgstr "The screen link expired."
 msgid "The selected memory provider is not available in this build."
 msgstr "The selected memory provider is not available in this build."
 
+#: src/lib/voice-notices.ts
+msgid "The voice provider failed, so this reply used the voice on this computer."
+msgstr "The voice provider failed, so this reply used the voice on this computer."
+
 #: src/pages/shell/agent-import.tsx
 msgid "These files are too large to import."
 msgstr "These files are too large to import."
@@ -7161,6 +7178,10 @@ msgstr "Version"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Voice"
 msgstr "Voice"
+
+#: src/pages/LocalSpeechSection.tsx
+msgid "Voices"
+msgstr "Voices"
 
 #: src/pages/Usage.tsx
 msgid "vs. the 30 days before"

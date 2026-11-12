@@ -3436,6 +3436,14 @@ msgstr "一般"
 msgid "Getting ready"
 msgstr "準備中"
 
+#: src/lib/voice-notices.ts
+msgid "Getting the speech model ready ({size} MB). This happens once."
+msgstr "音声モデルを準備しています（{size} MB）。初回のみです。"
+
+#: src/lib/voice-notices.ts
+msgid "Getting the voice ready ({size} MB). This happens once."
+msgstr "音声を準備しています（{size} MB）。初回のみです。"
+
 #: src/lib/routine-trigger.ts
 #: src/pages/RoutineEditor.tsx
 msgid "Git event"
@@ -3930,6 +3938,7 @@ msgstr "常に聞く"
 
 #: src/components/call/CallCard.tsx
 #: src/pages/ExternalConversationSettings.tsx
+#: src/pages/LocalSpeechSection.tsx
 msgid "Listening"
 msgstr "聞いています"
 
@@ -5112,6 +5121,10 @@ msgstr "ピン留め"
 #: src/pages/Shell.tsx
 msgid "Pinned"
 msgstr "ピン留め済み"
+
+#: src/pages/LocalSpeechSection.tsx
+msgid "Play"
+msgstr "再生"
 
 #: src/components/ArtifactFileCard.tsx
 msgid "Play {name}"
@@ -6601,6 +6614,10 @@ msgstr "画面リンクの有効期限が切れました。"
 msgid "The selected memory provider is not available in this build."
 msgstr "選択したメモリプロバイダーはこのビルドでは利用できません。"
 
+#: src/lib/voice-notices.ts
+msgid "The voice provider failed, so this reply used the voice on this computer."
+msgstr "音声プロバイダーが失敗したため、この返信にはこのコンピューターの音声を使いました。"
+
 #: src/pages/shell/agent-import.tsx
 msgid "These files are too large to import."
 msgstr "これらのファイルは大きすぎてインポートできません。"
@@ -7160,6 +7177,10 @@ msgstr "バージョン"
 #: src/pages/SpaceSettingOverrides.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Voice"
+msgstr "音声"
+
+#: src/pages/LocalSpeechSection.tsx
+msgid "Voices"
 msgstr "音声"
 
 #: src/pages/Usage.tsx

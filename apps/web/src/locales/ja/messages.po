@@ -1861,6 +1861,10 @@ msgstr "モデルを接続"
 msgid "Connect a model in Settings before running bots."
 msgstr "ボットを実行する前に、設定でモデルを接続してください。"
 
+#: src/pages/shell/composer-error.tsx
+msgid "Connect a model to start a run."
+msgstr "モデルを接続して開始してください。"
+
 #: src/components/MissionList.tsx
 msgid "Connect an app"
 msgstr "アプリを接続する"

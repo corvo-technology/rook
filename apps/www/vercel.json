@@ -1,6 +1,12 @@
 {
   "redirects": [
     {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "(www\\.rook\\.team|rookup\\.run|www\\.rookup\\.run)" }],
+      "destination": "https://rook.team/:path*",
+      "statusCode": 301
+    },
+    {
       "source": "/ko/:path*",
       "destination": "/",
       "statusCode": 301

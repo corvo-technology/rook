@@ -16,7 +16,7 @@ import { clampMaxChars, clampMaxResults } from "./web-limits.js";
 import { assertSafeWebUrl, withAbort } from "./web-ssrf.js";
 
 const ENDPOINT = "https://search.parallel.ai/mcp";
-const USER_AGENT = "Rook/0.1 (+https://rookup.run; web tools)";
+const USER_AGENT = "Rook/0.1 (+https://rook.team; web tools)";
 const MAX_SNIPPET_CHARS = 8_000;
 const pageSchema = z.object({
   url: z.string().max(8_192),

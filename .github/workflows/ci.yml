@@ -398,7 +398,7 @@ jobs:
       queue: max
     environment:
       name: production
-      url: https://app.rookup.run
+      url: https://app.rook.team
     steps:
       - name: Configure production SSH identity
         env:

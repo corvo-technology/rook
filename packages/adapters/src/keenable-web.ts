@@ -14,7 +14,7 @@ import { clampMaxChars, clampMaxResults } from "./web-limits.js";
 import { assertSafeWebUrl, withAbort } from "./web-ssrf.js";
 
 const ENDPOINT = "https://api.keenable.ai/mcp";
-const USER_AGENT = "Rook/0.1 (+https://rookup.run; web tools)";
+const USER_AGENT = "Rook/0.1 (+https://rook.team; web tools)";
 const MAX_SNIPPET_CHARS = 8_000;
 const searchSchema = z.object({
   results: z.array(

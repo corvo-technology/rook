@@ -2,7 +2,7 @@ blank_issues_enabled: true
 contact_links:
   - name: Security vulnerabilities
     url: https://github.com/corvo-technology/rook/blob/main/SECURITY.md
-    about: Report security issues to security@rookup.run — do not open a public issue.
+    about: Report security issues to security@rook.team — do not open a public issue.
   - name: User support
-    url: mailto:support@rookup.run
+    url: mailto:support@rook.team
     about: Questions about using Corvo or self-hosting help.

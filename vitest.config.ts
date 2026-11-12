@@ -50,6 +50,7 @@ export default defineConfig({
       "apps/mobile/plugins/**/*.test.js",
       "apps/api/src/**/*.test.ts",
       "apps/worker/src/**/*.test.ts",
+      "apps/www/*.test.ts",
     ],
     testTimeout: 30_000,
     hookTimeout: 60_000,

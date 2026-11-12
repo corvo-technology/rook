@@ -2,7 +2,7 @@
 
 ## Reporting vulnerabilities
 
-Email **security@rookup.run** only. Do not open public GitHub issues for security bugs.
+Email **security@rook.team** only. Do not open public GitHub issues for security bugs.
 
 Please include:
 
@@ -14,7 +14,7 @@ We will acknowledge your report and work on a fix. Please do not file a public i
 
 ## Other contact
 
-- General support: **support@rookup.run**
+- General support: **support@rook.team**
 
 ## Scope
 

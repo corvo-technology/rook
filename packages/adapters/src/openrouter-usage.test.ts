@@ -16,7 +16,7 @@ describe("OpenRouter attribution and usage recovery", () => {
     );
     const init = fetcher.mock.calls[0]![1]!;
     const headers = new Headers(init.headers);
-    expect(headers.get("HTTP-Referer")).toBe("https://rookup.run");
+    expect(headers.get("HTTP-Referer")).toBe("https://rook.team");
     expect(headers.get("X-OpenRouter-Title")).toBe("Rook");
     expect(headers.get("Authorization")).toBe("Bearer fixture");
     expect(init.signal).toBe(controller.signal);

@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <a href="https://rookup.run">rookup.run</a> · <a href="./CHANGELOG.md">Changelog</a>
+  <a href="https://rook.team">rook.team</a> · <a href="./CHANGELOG.md">Changelog</a>
 </p>
 
 ![Rook: agents in a channel, with an approval waiting](./docs/screenshots/hero.png)

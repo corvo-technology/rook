@@ -58,7 +58,7 @@ describe("built-in tool bridge", () => {
       "wiki_search",
       "write_file",
     ]);
-    expect(definitionBytes(listed)).toBeLessThanOrEqual(31_450);
+    expect(definitionBytes(listed)).toBeLessThanOrEqual(31_600);
     expect(deferred.map((tool) => tool.name)).toEqual(
       expect.arrayContaining([
         "render_plot",

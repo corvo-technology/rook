@@ -17,6 +17,14 @@ import {
   gradeChannelRouter,
   routerPromptInput,
 } from "../evals/channel-router.js";
+import type { DateReminderCase } from "../evals/date-reminder.js";
+import {
+  DATE_REMINDER_CASES,
+  DATE_REMINDER_RUBRIC_VERSION,
+  dateReminderInstructions,
+  dateReminderPrompt,
+  gradeDateReminder,
+} from "../evals/date-reminder.js";
 import type { EvalJudge } from "../evals/judge.js";
 import { createEvalJudge } from "../evals/judge.js";
 import type { EvalPricing, MeasuredCall } from "../evals/measurement.js";
@@ -334,6 +342,25 @@ export async function runAvatarPieceSuite(values: PickEvalValues, meta: PickEval
       instructions: AVATAR_PIECE_INSTRUCTIONS,
       prompt: (c) => avatarPiecePrompt(c.agent),
       grade: async (c, answer) => gradeAvatarPiece(c, parseAvatarPiece(answer)),
+    },
+    values,
+    meta,
+  );
+}
+
+/** The schedule_create description the product ships, against reviewed conversations. */
+export async function runDateReminderSuite(values: PickEvalValues, meta: PickEvalMeta) {
+  const { builtinAgentTools } = await import("../../../adapters/src/builtin-tools.ts");
+  const description = builtinAgentTools.find((t) => t.name === "schedule_create")!.description;
+  return runPickSuite<DateReminderCase>(
+    {
+      kind: "date-reminder-eval",
+      version: DATE_REMINDER_RUBRIC_VERSION,
+      cases: DATE_REMINDER_CASES,
+      expected: (c) => c.expected,
+      instructions: dateReminderInstructions(description),
+      prompt: dateReminderPrompt,
+      grade: gradeDateReminder,
     },
     values,
     meta,

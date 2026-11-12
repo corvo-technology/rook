@@ -125,10 +125,20 @@ describe("RookAvatar", () => {
       expect.objectContaining({ mood: "happy" }),
     );
     await act(async () => root.render(at("alert")));
+    expect(dom.handles[0]?.update).toHaveBeenCalledWith(expect.objectContaining({ mood: "idle" }));
     expect(dom.handles[0]?.update).toHaveBeenLastCalledWith(
-      expect.objectContaining({ mood: "idle", lookAt: { x: 0, y: -1 } }),
+      expect.objectContaining({ lookAt: { x: 0, y: -1 } }),
     );
     expect(dom.mountAvatar).toHaveBeenCalledTimes(1);
+    await act(async () => root.unmount());
+  });
+
+  it("is alive at a small size when its place asks, and looks where it is told", async () => {
+    const { root } = await render(
+      <RookAvatar color="#75aef5" mood="idle" size={36} live lookAt={{ x: 0, y: 0.9 }} />,
+    );
+    expect(dom.mountAvatar).toHaveBeenCalledTimes(1);
+    expect(lastOptions()).toMatchObject({ still: false, lookAt: { x: 0, y: 0.9 } });
     await act(async () => root.unmount());
   });
 

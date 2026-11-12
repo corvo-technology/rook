@@ -2,6 +2,7 @@ import type { MascotMood } from "@corvo/core";
 import { ROOK_ASLEEP_COLOR, ROOK_EYE_COLOR } from "@corvo/core";
 import type { AvatarDefinition, AvatarMotion } from "open-bot-avatar";
 import { renderAvatarSvg } from "open-bot-avatar";
+import type { Gaze } from "./character-avatar.js";
 import { CharacterAvatar, characterMood, LIVELY_FROM } from "./character-avatar.js";
 
 /**
@@ -58,16 +59,22 @@ export function RookAvatar({
   color,
   mood,
   size,
+  live = size >= LIVELY_FROM,
+  lookAt,
 }: {
   /** The shade of its body. */
   color: string;
   mood: MascotMood;
   size: number;
+  /** Alive below `LIVELY_FROM` too, where its place asks for it (a message in the conversation). */
+  live?: boolean;
+  /** Where its place asks it to look; otherwise its mood decides. */
+  lookAt?: Gaze;
 }) {
   const asleep = mood === "asleep";
   const shade = asleep ? ROOK_ASLEEP_COLOR : color;
   const gaze = rookGaze(mood);
-  if (size >= LIVELY_FROM && !asleep) {
+  if (live && !asleep) {
     return (
       <CharacterAvatar
         definition={ROOK_AVATAR}
@@ -75,7 +82,8 @@ export function RookAvatar({
         eyeColor={ROOK_EYE_COLOR}
         mood={mood}
         size={size}
-        lookAt={gaze}
+        live
+        lookAt={lookAt ?? gaze}
       />
     );
   }

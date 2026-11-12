@@ -15,7 +15,7 @@ vi.mock("@lingui/react/macro", () => ({
   Trans: ({ children }: { children: ReactNode }) => children,
 }));
 
-import { BotCharacterPicker, BotLookPicker } from "./avatar-studio-popover";
+import { AvatarStudioPopover, BotCharacterPicker, BotLookPicker } from "./avatar-studio-popover";
 
 const onChange = vi.fn();
 beforeEach(() => {
@@ -186,5 +186,30 @@ it("shows the character in the tile of a color of one's own", async () => {
   );
   expect(host.querySelectorAll('[data-character="rocket"]').length).toBeGreaterThan(10);
   expect(host.querySelector("[data-custom-color]")?.textContent).toContain("#14B8A6");
+  await unmount();
+});
+
+it("picks from the role on request, and only while it is not already doing so", async () => {
+  let finish: () => void = () => undefined;
+  const onDesign = vi.fn(() => new Promise<void>((resolve) => (finish = resolve)));
+  const { host, unmount } = await mount(
+    <AvatarStudioPopover value="#3B82F6" onChange={onChange} onDesign={onDesign} />,
+  );
+  await act(async () => host.querySelector<HTMLButtonElement>("button")?.click());
+  const design = () =>
+    document.querySelector<HTMLButtonElement>('[data-testid="avatar-studio-design"]');
+  // The studio opens on the color tab; the action lives with the characters.
+  expect(design()).toBeNull();
+  await act(async () =>
+    [...document.querySelectorAll<HTMLElement>('[role="tab"]')]
+      .find((item) => item.textContent === "Character")
+      ?.click(),
+  );
+  await act(async () => design()?.click());
+  await act(async () => design()?.click());
+  expect(onDesign).toHaveBeenCalledOnce();
+  expect(design()?.disabled).toBe(true);
+  await act(async () => finish());
+  expect(design()?.disabled).toBe(false);
   await unmount();
 });

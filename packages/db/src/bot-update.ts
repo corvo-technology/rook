@@ -26,6 +26,8 @@ export async function commitBotUpdate(
       modelId: string | null;
       thinkingLevel: string | null;
     };
+    /** Write only while the bot still wears this look; a changed look makes the write throw. */
+    expectedColor?: string;
     instructionRestore?: { versionId: string; undo?: boolean };
     reason?: string;
   },
@@ -37,13 +39,18 @@ export async function commitBotUpdate(
       data: { ...options.data, name: displayName(options.data.name, "") },
     };
   }
+  const where = {
+    id: options.botId,
+    ...options.expectedModel,
+    ...(options.expectedColor === undefined ? {} : { color: options.expectedColor }),
+  };
   if (
     !options.emitBotUpdated &&
     options.data.instructions === undefined &&
     !options.instructionRestore
   ) {
     return options.prisma.bot.update({
-      where: { id: options.botId, ...options.expectedModel },
+      where,
       data: options.data,
       select: { id: true, name: true, title: true, description: true },
     });
@@ -63,7 +70,7 @@ export async function commitBotUpdate(
       });
     }
     const updated = await tx.bot.update({
-      where: { id: options.botId, ...options.expectedModel },
+      where,
       data,
       select: { id: true, name: true, title: true, description: true },
     });

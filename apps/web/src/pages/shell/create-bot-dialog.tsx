@@ -17,7 +17,8 @@ import { BotLookPicker } from "./avatar-studio-popover";
 
 export interface CreateBotDialogInput {
   name: string;
-  color: string;
+  /** Only when the person picked a look; otherwise the bot gets one drawn from its role. */
+  color?: string;
 }
 
 /** Mounted only while open; the parent unmounts it from `onCancel` or after `onCreate`. */
@@ -37,6 +38,7 @@ export function CreateBotDialog({
   const nameRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState("");
   const [color, setColor] = useState<string>(() => nextBotColor(takenColors));
+  const [picked, setPicked] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const trimmed = name.trim();
@@ -46,7 +48,7 @@ export function CreateBotDialog({
     setError(null);
     setSubmitting(true);
     try {
-      await onCreate({ name: trimmed, color });
+      await onCreate(picked ? { name: trimmed, color } : { name: trimmed });
     } catch (err) {
       setError(errorText(err, t`Could not create bot`));
       setSubmitting(false);
@@ -96,7 +98,13 @@ export function CreateBotDialog({
               {error}
             </p>
           ) : null}
-          <BotLookPicker value={color} onChange={setColor} />
+          <BotLookPicker
+            value={color}
+            onChange={(next) => {
+              setPicked(true);
+              setColor(next);
+            }}
+          />
           <DialogFooter>
             {onImport ? (
               <Button

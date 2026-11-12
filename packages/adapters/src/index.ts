@@ -7,6 +7,7 @@ export * from "./artifacts.js";
 export * from "./audio-decode.js";
 export * from "./auto-review.js";
 export * from "./auto-review-factory.js";
+export * from "./avatar-design.js";
 export * from "./aws-kms-key-provider.js";
 export * from "./background-job-handlers.js";
 export * from "./background-model.js";

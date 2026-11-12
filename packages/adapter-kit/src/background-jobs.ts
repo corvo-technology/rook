@@ -28,6 +28,7 @@ const payloadSchemas = {
     keepRecent: z.number().int().min(0).max(100).optional(),
   }),
   "wiki.curate": z.object({ threadId: z.string().min(1), messageId: z.string().min(1).optional() }),
+  "bot.design-avatar": z.object({ botId: z.string().min(1) }),
   "messaging.deliver": z.object({ runId: z.string().min(1).optional() }),
   "messaging.credential-cleanup": z.object({
     installationId: z.string().min(1),
@@ -96,6 +97,16 @@ export function audioTranscribeJob(runId: string): BackgroundJob {
     name: "audio.transcribe",
     payload: { runId },
     replaceKey: audioTranscribeJobKey(runId),
+  };
+}
+
+/** Keyed to the bot, so a repeated enqueue designs once. A model that fails is not asked again. */
+export function botAvatarDesignJob(botId: string): BackgroundJob {
+  return {
+    name: "bot.design-avatar",
+    payload: { botId },
+    replaceKey: `bot.design-avatar:${botId}`,
+    maxAttempts: 1,
   };
 }
 

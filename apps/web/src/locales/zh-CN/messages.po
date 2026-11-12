@@ -1228,6 +1228,10 @@ msgstr "成为合作伙伴"
 msgid "Billing"
 msgstr "账单"
 
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "Bishop"
+msgstr "象"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Block"
 msgstr "阻止"
@@ -3778,6 +3782,14 @@ msgstr "密钥"
 msgid "Key not recognized. Choose a provider."
 msgstr "无法识别该密钥。请选择服务商。"
 
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "King"
+msgstr "王"
+
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "Knight"
+msgstr "马"
+
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/LocalSpeechSection.tsx
 msgid "Language"
@@ -4984,6 +4996,10 @@ msgstr "暂停所有机器人"
 msgid "Paused"
 msgstr "已暂停"
 
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "Pawn"
+msgstr "兵"
+
 #: src/pages/StoreCategoryChips.tsx
 msgid "People"
 msgstr "成员"
@@ -5140,6 +5156,10 @@ msgstr "用途"
 #: src/pages/WhatsAppNumbers.tsx
 msgid "QR code"
 msgstr "二维码"
+
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "Queen"
+msgstr "后"
 
 #: src/pages/ActivityList.tsx
 msgid "Queued"

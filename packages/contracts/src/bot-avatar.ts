@@ -15,6 +15,7 @@ export type ChessPieceId = (typeof CHESS_PIECE_IDS)[number];
  * definition. Their geometry lives where they are drawn; this is what a stored value may name.
  */
 export const BOT_AVATAR_CHARACTER_IDS = [
+  ...CHESS_PIECE_IDS,
   "controller",
   "barbell",
   "mug",

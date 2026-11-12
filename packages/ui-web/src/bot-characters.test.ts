@@ -1,4 +1,4 @@
-import { BOT_AVATAR_CHARACTER_IDS } from "@corvo/contracts";
+import { BOT_AVATAR_CHARACTER_IDS, CHESS_PIECE_IDS } from "@corvo/contracts";
 import { validateAvatar } from "open-bot-avatar";
 import { describe, expect, it } from "vitest";
 import { BOT_CHARACTERS, botCharacter } from "./bot-characters.js";
@@ -6,6 +6,12 @@ import { BOT_CHARACTERS, botCharacter } from "./bot-characters.js";
 describe("the characters an agent can wear", () => {
   it("are exactly the ones a stored value may name, in the same order", () => {
     expect(BOT_CHARACTERS.map((character) => character.id)).toEqual([...BOT_AVATAR_CHARACTER_IDS]);
+  });
+
+  it("start with the chess pieces", () => {
+    expect(
+      BOT_CHARACTERS.slice(0, CHESS_PIECE_IDS.length).map((character) => character.id),
+    ).toEqual([...CHESS_PIECE_IDS]);
   });
 
   it.each(BOT_CHARACTERS)(

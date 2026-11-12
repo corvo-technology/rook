@@ -55,7 +55,7 @@ describe("bot avatar values", () => {
 
 describe("a character in a bot avatar value", () => {
   it("names the characters a bot can wear, each once", () => {
-    expect(BOT_AVATAR_CHARACTER_IDS).toHaveLength(22);
+    expect(BOT_AVATAR_CHARACTER_IDS).toHaveLength(27);
     expect(new Set(BOT_AVATAR_CHARACTER_IDS).size).toBe(BOT_AVATAR_CHARACTER_IDS.length);
     for (const id of BOT_AVATAR_CHARACTER_IDS) expect(id, id).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
   });

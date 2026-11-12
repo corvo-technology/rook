@@ -1,3 +1,4 @@
+import { BOT_AVATAR_CHARACTER_IDS } from "@corvo/contracts";
 import { expect, test } from "@playwright/test";
 import { captureScreenshot } from "./helpers";
 
@@ -6,8 +7,10 @@ test.use({ viewport: { width: 1000, height: 1000 } });
 test("every character is drawn in the agent's color, at every size", async ({ page }) => {
   await page.goto("/e2e/fixtures/avatar-characters.html?theme=dark&color=%238B5CF6");
   const characters = page.getByTestId("characters");
-  await expect(characters.locator("[data-character]")).toHaveCount(22 * 3);
-  for (const id of ["ghost", "witch-hat", "paint-brush", "watering-can"]) {
+  await expect(characters.locator("[data-character]")).toHaveCount(
+    BOT_AVATAR_CHARACTER_IDS.length * 3,
+  );
+  for (const id of ["king", "knight", "ghost", "witch-hat", "paint-brush", "watering-can"]) {
     const card = page.getByTestId(`character-${id}`);
     await expect(card.locator("[data-character]").first()).toBeVisible();
     expect(await card.locator("svg").count(), id).toBeGreaterThan(0);

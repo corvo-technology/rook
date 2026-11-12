@@ -43,11 +43,45 @@ const pressed = (host: HTMLElement) =>
 it("offers the default chick and every character, each by name", async () => {
   const { host, unmount } = await mount(<BotCharacterPicker value="#3B82F6" onChange={onChange} />);
   const buttons = host.querySelectorAll('[data-testid="avatar-studio-characters"] button');
-  expect(buttons).toHaveLength(23);
+  expect(buttons).toHaveLength(28);
   expect(tile(host, "Default")).toBeDefined();
-  for (const name of ["Ghost", "Witch Hat", "Paint Brush", "Watering Can"]) {
+  for (const name of [
+    "King",
+    "Queen",
+    "Bishop",
+    "Knight",
+    "Pawn",
+    "Ghost",
+    "Witch Hat",
+    "Paint Brush",
+    "Watering Can",
+  ]) {
     expect(tile(host, name), name).toBeDefined();
   }
+  await unmount();
+});
+
+it("puts the default first, then the chess pieces, then the other characters", async () => {
+  const { host, unmount } = await mount(<BotCharacterPicker value="#3B82F6" onChange={onChange} />);
+  const names = [...host.querySelectorAll('[data-testid="avatar-studio-characters"] button')].map(
+    (item) => item.getAttribute("aria-label"),
+  );
+  expect(names.slice(0, 7)).toEqual([
+    "Default",
+    "King",
+    "Queen",
+    "Bishop",
+    "Knight",
+    "Pawn",
+    "Controller",
+  ]);
+  await unmount();
+});
+
+it("wears a chess piece in the color the agent already wears", async () => {
+  const { host, unmount } = await mount(<BotCharacterPicker value="#14B8A6" onChange={onChange} />);
+  await act(async () => tile(host, "Knight")?.click());
+  expect(onChange).toHaveBeenCalledExactlyOnceWith("#14B8A6::char_knight");
   await unmount();
 });
 

@@ -1228,6 +1228,10 @@ msgstr "Tornar-se parceiro"
 msgid "Billing"
 msgstr "Cobrança"
 
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "Bishop"
+msgstr "Bispo"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Block"
 msgstr "Bloquear"
@@ -3778,6 +3782,14 @@ msgstr "chave"
 msgid "Key not recognized. Choose a provider."
 msgstr "Chave não reconhecida. Escolha um provedor."
 
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "King"
+msgstr "Rei"
+
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "Knight"
+msgstr "Cavalo"
+
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/LocalSpeechSection.tsx
 msgid "Language"
@@ -4984,6 +4996,10 @@ msgstr "Pausar todos os bots"
 msgid "Paused"
 msgstr "Pausado"
 
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "Pawn"
+msgstr "Peão"
+
 #: src/pages/StoreCategoryChips.tsx
 msgid "People"
 msgstr "Pessoas"
@@ -5136,6 +5152,10 @@ msgstr "Propósito"
 #: src/pages/WhatsAppNumbers.tsx
 msgid "QR code"
 msgstr "Código QR"
+
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "Queen"
+msgstr "Rainha"
 
 #: src/pages/ActivityList.tsx
 msgid "Queued"

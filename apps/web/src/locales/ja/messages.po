@@ -1228,6 +1228,10 @@ msgstr "パートナーになる"
 msgid "Billing"
 msgstr "請求"
 
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "Bishop"
+msgstr "ビショップ"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Block"
 msgstr "ブロック"
@@ -3778,6 +3782,14 @@ msgstr "キー"
 msgid "Key not recognized. Choose a provider."
 msgstr "キーを認識できません。プロバイダーを選択してください。"
 
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "King"
+msgstr "キング"
+
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "Knight"
+msgstr "ナイト"
+
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/LocalSpeechSection.tsx
 msgid "Language"
@@ -4984,6 +4996,10 @@ msgstr "すべてのボットを一時停止"
 msgid "Paused"
 msgstr "一時停止中"
 
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "Pawn"
+msgstr "ポーン"
+
 #: src/pages/StoreCategoryChips.tsx
 msgid "People"
 msgstr "メンバー"
@@ -5136,6 +5152,10 @@ msgstr "目的"
 #: src/pages/WhatsAppNumbers.tsx
 msgid "QR code"
 msgstr "QRコード"
+
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "Queen"
+msgstr "クイーン"
 
 #: src/pages/ActivityList.tsx
 msgid "Queued"

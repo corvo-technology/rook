@@ -13,7 +13,8 @@ draws and animates them come from Open Bot Avatar, version 0.1.2
 (https://github.com/DominikScholz/open-bot-avatar), by Dominik Scholz, under the MIT License.
 The `open-bot-avatar` package is a dependency of `@corvo/ui-web`. The definitions of the 22
 characters (the project's starter avatars and its gallery, geometry only) are copied unchanged
-into `packages/ui-web/src/bot-characters.ts`.
+into `packages/ui-web/src/bot-characters.ts`. The rook and the chess pieces (king, queen,
+bishop, knight, pawn) are Rook's own drawings in the same format, not copied from the project.
 
 ```text
 MIT License

@@ -141,7 +141,25 @@ export function BotLookPicker({
   );
 }
 
-/** The default rook and the characters of Open Bot Avatar, each in the color the agent wears. */
+/** The accessible name of a character: the chess pieces are translated, the rest keep their own name. */
+function characterLabel(id: string, name: string): string {
+  switch (id) {
+    case "king":
+      return t`King`;
+    case "queen":
+      return t`Queen`;
+    case "bishop":
+      return t`Bishop`;
+    case "knight":
+      return t`Knight`;
+    case "pawn":
+      return t`Pawn`;
+    default:
+      return name;
+  }
+}
+
+/** The default rook, the chess pieces and then the characters of Open Bot Avatar, each in the color the agent wears. */
 export function BotCharacterPicker({
   value,
   onChange,
@@ -181,7 +199,7 @@ export function BotCharacterPicker({
             key={id}
             type="button"
             onClick={() => onChange(composeBotAvatarValue(color, id))}
-            aria-label={name}
+            aria-label={characterLabel(id, name)}
             aria-pressed={selected}
             className={tileClass(selected)}
           >

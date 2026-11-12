@@ -118,7 +118,7 @@ describe("push registration on iOS", () => {
       expect(fetch).toHaveBeenCalledWith(
         expect.stringMatching(/notifications\/registerPush$/),
         expect.objectContaining({
-          body: JSON.stringify({ json: { token: "ExponentPushToken[fake]" } }),
+          body: JSON.stringify({ json: { token: "ExponentPushToken[fake]", locale: "en" } }),
         }),
       ),
     );

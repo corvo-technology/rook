@@ -8,6 +8,7 @@ import type {
   NotificationProvider,
 } from "@corvo/adapter-kit";
 import { pushReceiptJob } from "@corvo/adapter-kit";
+import { localizedApprovalPush } from "@corvo/core";
 import { getLogger } from "@corvo/logging";
 import { combineSignals } from "./connector-safety.js";
 import { credentialDigest } from "./credential-digest.js";
@@ -154,7 +155,7 @@ export class ExpoPushProvider implements NotificationProvider {
   }
 
   async hasPushRecipient(userId: string): Promise<boolean> {
-    return Boolean(await this.deliverableToken(userId));
+    return Boolean(await this.deliverableDevice(userId));
   }
 
   async send(message: NotificationMessage, context: AdapterContext): Promise<void> {
@@ -167,12 +168,14 @@ export class ExpoPushProvider implements NotificationProvider {
    * Neither is an Expo acceptance, so callers must not record a reminder.
    */
   async deliver(message: NotificationMessage, context: AdapterContext): Promise<ExpoPushDelivery> {
-    const token = await this.deliverableToken(context.userId);
-    if (!token) return "undeliverable";
+    const device = await this.deliverableDevice(context.userId);
+    if (!device) return "undeliverable";
+    const { token } = device;
+    const wording = localizedApprovalPush(message, device.locale);
     const payload = {
       to: token,
-      title: capped(message.title, MAX_PUSH_TITLE_CHARS),
-      body: capped(message.body, MAX_PUSH_BODY_CHARS),
+      title: capped(wording.title, MAX_PUSH_TITLE_CHARS),
+      body: capped(wording.body, MAX_PUSH_BODY_CHARS),
       collapseId: message.threadId,
       tag: message.threadId,
       ...(message.badge === undefined ? {} : { badge: message.badge }),
@@ -255,10 +258,12 @@ export class ExpoPushProvider implements NotificationProvider {
    * row is removed. The token is read again after the lookup so a handover
    * during that wait is not sent.
    */
-  private async deliverableToken(userId: string): Promise<string | undefined> {
+  private async deliverableDevice(
+    userId: string,
+  ): Promise<{ token: string; locale?: string } | undefined> {
     const saved = await this.tokens.load(userId);
     if (!saved?.token) return undefined;
-    if (!saved.sessionId) return saved.token;
+    if (!saved.sessionId) return { token: saved.token, locale: saved.locale };
     if (!this.sessionExpiresAt) return undefined;
     let expiresAt: Date | null;
     try {
@@ -274,7 +279,7 @@ export class ExpoPushProvider implements NotificationProvider {
     }
     const current = await this.tokens.load(userId);
     if (current?.token !== saved.token || current.sessionId !== saved.sessionId) return undefined;
-    return current.token;
+    return { token: current.token, locale: current.locale };
   }
 }
 

@@ -6,6 +6,8 @@ type PresentableMessage = {
   runId?: string;
   role?: string;
   replyToMessageId?: string | null;
+  /** The channel message this is a thread reply to. */
+  threadRootId?: string | null;
   blocks: readonly MessageBlock[];
 };
 
@@ -50,7 +52,7 @@ export function isBackgroundInputBlock(block: unknown): boolean {
   );
 }
 
-/** Cards a peer run stays inline for: the user has to act on them. */
+/** Cards a thread or peer run stays inline for: the user has to act on them. */
 function isPeerInputBlock(block: MessageBlock): boolean {
   return isBackgroundInputBlock(block) || block.kind === "choice";
 }
@@ -196,4 +198,38 @@ export function expandPeerReplies<T extends PresentableMessage>(
       ? [message, ...(transcript.folded.get(message.id) ?? [])]
       : [message],
   );
+}
+
+/**
+ * A channel's main column: the replies of each thread move under their root, like a peer
+ * exchange's, so they are read in the thread and not among the channel's own messages. A reply
+ * whose root is outside the loaded page stays inline, and so does a card the person has to act on.
+ * Reactions to a reply go with it.
+ */
+export function foldThreadReplies<T extends PresentableMessage>(
+  transcript: FoldedTranscript<T>,
+): FoldedTranscript<T> {
+  const rootIds = new Set(transcript.messages.map((message) => message.id));
+  const folded = new Map(transcript.folded);
+  const markerOf = new Map(transcript.markerOf);
+  const messages = transcript.messages.filter((message) => {
+    const reactionParent = message.replyToMessageId
+      ? markerOf.get(message.replyToMessageId)
+      : undefined;
+    const isReaction =
+      message.role !== undefined &&
+      messageReaction({ ...message, role: message.role, blocks: [...message.blocks] }) !== null;
+    const rootId =
+      message.threadRootId && rootIds.has(message.threadRootId)
+        ? message.threadRootId
+        : isReaction
+          ? reactionParent
+          : undefined;
+    if (!rootId || rootId === message.id) return true;
+    if (!isReaction && message.blocks.some(isPeerInputBlock)) return true;
+    folded.set(rootId, [...(folded.get(rootId) ?? []), message]);
+    markerOf.set(message.id, rootId);
+    return false;
+  });
+  return { ...transcript, messages, folded, markerOf };
 }

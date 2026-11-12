@@ -34,9 +34,12 @@ export function useRightPanel({
     setModelFocusRequest(0);
     setPanelState(next);
     const currentSearch = panelSearch.current;
-    if (currentSearch.searchParams.has("routine")) {
+    // The thread is named in the URL while it is open, so a reload keeps it.
+    const leavesThread = next !== "thread" && currentSearch.searchParams.has("thread");
+    if (currentSearch.searchParams.has("routine") || leavesThread) {
       const params = new URLSearchParams(currentSearch.searchParams);
       params.delete("routine");
+      if (leavesThread) params.delete("thread");
       currentSearch.setSearchParams(params, { replace: true });
     }
   }, []);
@@ -138,6 +141,13 @@ export function useRightPanelRestore({
     }
     const saved = pendingPanelRestore.current;
     if (!saved) return;
+    // A thread named in the URL opens again after a reload.
+    if (searchParams.has("thread") && inGroup) {
+      pendingPanelRestore.current = null;
+      setPanelState("thread");
+      setRestoredPanelKey(panelStorageKey);
+      return;
+    }
     // Explicit routine links take precedence over a local layout preference.
     if (searchParams.has("routine")) {
       pendingPanelRestore.current = null;

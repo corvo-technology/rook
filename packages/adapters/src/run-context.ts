@@ -190,6 +190,8 @@ export interface RunSource {
   callEndRun: boolean;
   callClientNonce: string | null;
   peerMessage: Awaited<ReturnType<typeof loadBotMessageContext>>;
+  /** The channel thread this run answers in; its live text is drawn there, not in the main column. */
+  threadRootId: string | undefined;
 }
 
 export interface RunTools {

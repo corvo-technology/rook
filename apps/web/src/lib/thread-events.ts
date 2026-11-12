@@ -55,6 +55,13 @@ function runFromStartedEvent(event: ProductEvent, previous: Run | undefined): Ru
   };
 }
 
+/** The channel thread an event's message belongs to, when its payload names one. */
+function threadRootOf(payload: Record<string, unknown>): string | undefined {
+  return typeof payload.threadRootId === "string" && payload.threadRootId
+    ? payload.threadRootId
+    : undefined;
+}
+
 const computerStates: ReadonlySet<unknown> = new Set<ComputerStatus["state"]>([
   "stopped",
   "booting",
@@ -464,6 +471,7 @@ export function reduceThreadSnapshot(
       blocks,
       botId: event.botId,
       runId: event.runId,
+      threadRootId: threadRootOf(event.payload) ?? previous?.threadRootId,
       createdAt: event.createdAt,
     };
     return { ...prev, cursor: event.seq, messages: [...remaining, streaming] };
@@ -537,6 +545,7 @@ export function reduceThreadSnapshot(
       runId: event.runId,
       callId: typeof event.payload.callId === "string" ? event.payload.callId : known?.callId,
       ...replyMetadata(event.payload, known),
+      threadRootId: threadRootOf(event.payload) ?? known?.threadRootId,
       createdAt: known?.createdAt ?? event.createdAt,
     };
     const replacedSubagentIds = new Set(

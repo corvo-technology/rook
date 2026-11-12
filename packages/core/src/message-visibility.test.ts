@@ -4,6 +4,7 @@ import { projectMessageReactions } from "./message-reactions.js";
 import {
   expandPeerReplies,
   foldPeerReplies,
+  foldThreadReplies,
   jumpTargetId,
   userVisibleMessages,
 } from "./message-visibility.js";
@@ -421,5 +422,63 @@ describe("user-visible messages", () => {
     expect(
       userVisibleMessages(background, { backgroundRunIds: ["run-ticket"] }).map((m) => m.id),
     ).toEqual(["ask", "computer", "approval", "connect", "user"]);
+  });
+});
+
+describe("a channel's threads", () => {
+  const say = (id: string, role: ThreadMessage["role"], extra: Partial<ThreadMessage> = {}) => ({
+    ...message(id, `run-${id}`, [{ kind: "text", text: id }]),
+    role,
+    ...extra,
+  });
+  const fold = (messages: ThreadMessage[]) =>
+    foldThreadReplies(foldPeerReplies(messages, { includePeerReceipts: true }));
+
+  it("moves the replies under their root and leaves the rest in the main column", () => {
+    const messages = [
+      say("root", "user"),
+      say("other", "user"),
+      say("r1", "bot", { threadRootId: "root", botId: "cora" }),
+      say("r2", "user", { threadRootId: "root" }),
+    ];
+    const folded = fold(messages);
+    expect(folded.messages.map((m) => m.id)).toEqual(["root", "other"]);
+    expect(folded.folded.get("root")?.map((m) => m.id)).toEqual(["r1", "r2"]);
+    expect(folded.markerOf.get("r1")).toBe("root");
+  });
+
+  it("keeps a reply inline when its root is outside the loaded page", () => {
+    const folded = fold([say("orphan", "bot", { threadRootId: "gone" })]);
+    expect(folded.messages.map((m) => m.id)).toEqual(["orphan"]);
+  });
+
+  it("keeps a card the person has to act on in the main column", () => {
+    const ask = say("ask", "bot", {
+      threadRootId: "root",
+      blocks: [{ kind: "ask", question: "Ship it?", options: ["Yes", "No"] } as never],
+    });
+    const folded = fold([say("root", "user"), ask]);
+    expect(folded.messages.map((m) => m.id)).toEqual(["root", "ask"]);
+  });
+
+  it("takes a reaction to a reply into the thread with it", () => {
+    const folded = fold([
+      say("root", "user"),
+      say("r1", "bot", { threadRootId: "root" }),
+      say("like", "user", {
+        replyToMessageId: "r1",
+        blocks: [{ kind: "text", text: "👍" }],
+      }),
+    ]);
+    expect(folded.messages.map((m) => m.id)).toEqual(["root"]);
+    expect(folded.folded.get("root")?.map((m) => m.id)).toEqual(["r1", "like"]);
+  });
+
+  it("leaves a reaction to the root in the main column to be drawn under it", () => {
+    const folded = fold([
+      say("root", "user"),
+      say("like", "user", { replyToMessageId: "root", blocks: [{ kind: "text", text: "👍" }] }),
+    ]);
+    expect(folded.messages.map((m) => m.id)).toEqual(["root", "like"]);
   });
 });

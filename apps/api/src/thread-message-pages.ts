@@ -257,6 +257,7 @@ function toThreadMessage(row: {
   botId: string | null;
   replyToMessageId: string | null;
   replyQuote: string | null;
+  threadRootId?: string | null;
   replyTo?: {
     threadId: string;
     role: string;
@@ -289,6 +290,7 @@ function toThreadMessage(row: {
     replyToMessageId: row.replyToMessageId ?? undefined,
     replyQuote: row.replyQuote ?? undefined,
     replyPreview,
+    threadRootId: row.threadRootId ?? undefined,
     runId: row.runId ?? undefined,
     callId: callIdFromClientNonce(row.clientNonce),
     createdAt: row.createdAt.toISOString(),

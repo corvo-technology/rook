@@ -226,6 +226,47 @@ describe("thread event reduction", () => {
     ]);
   });
 
+  it("keeps a live draft in the thread its run answers in, and the saved message after it", () => {
+    const initial = snapshot([]);
+    const draft = reduceThreadSnapshot(
+      initial,
+      event({
+        type: "thread.progress",
+        seq: 4,
+        runId: "run-1",
+        payload: { text: "Lis", streaming: true, threadRootId: "root-1" },
+      }),
+    );
+    // Later deltas do not repeat it, and the draft keeps it.
+    const longer = reduceThreadSnapshot(
+      draft,
+      event({
+        type: "thread.progress",
+        seq: 5,
+        runId: "run-1",
+        payload: { delta: "bon", streaming: true },
+      }),
+    );
+    expect(longer?.messages[0]).toMatchObject({ id: "progress:run-1", threadRootId: "root-1" });
+    const saved = reduceThreadSnapshot(
+      longer,
+      event({
+        type: "thread.message.created",
+        seq: 6,
+        runId: "run-1",
+        payload: {
+          messageId: "m-1",
+          role: "bot",
+          blocks: [{ kind: "text", text: "Lisbon" }],
+          threadRootId: "root-1",
+        },
+      }),
+    );
+    expect(saved?.messages).toEqual([
+      expect.objectContaining({ id: "m-1", threadRootId: "root-1" }),
+    ]);
+  });
+
   it("keeps hidden token progress so re-enabling streaming stays continuous", () => {
     const initial = snapshot([]);
     const afterTokens = reduceThreadSnapshot(

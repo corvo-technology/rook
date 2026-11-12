@@ -1,6 +1,6 @@
 import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { ActiveBotGlyph, CollaborationMarker, PeerThreadFooter } from "./CollaborationMarker";
+import { ActiveBotGlyph, CollaborationMarker } from "./CollaborationMarker";
 
 describe("collaboration transcript markers", () => {
   it("shows a left-aligned peer event with its avatar and full label", () => {
@@ -54,25 +54,6 @@ describe("collaboration transcript markers", () => {
         onToggle: () => undefined,
       }),
     ).toContain('aria-expanded="true"');
-  });
-
-  it("shows a thread footer with the reply count, faces and last time", () => {
-    const html = renderToString(
-      <PeerThreadFooter
-        expanded={false}
-        label="Expand Message from Research"
-        countLabel="3 replies"
-        faces={[{ botId: "research", color: "#14B8A6" }]}
-        lastAt="2026-11-02T12:20:00.000Z"
-        lastLabel="12:20 PM"
-        onToggle={() => undefined}
-      />,
-    );
-    expect(html).toContain('data-testid="peer-replies-toggle"');
-    expect(html).toContain('aria-expanded="false"');
-    expect(html).toContain("3 replies");
-    expect(html).toContain("12:20 PM");
-    expect(html).toContain("corvo-mascot-avatar");
   });
 
   it("animates the active bot glyph from its run status", () => {

@@ -16,6 +16,7 @@ import {
   chatUserBubbleColors,
   dismissableAskMessageIds,
   foldPeerReplies,
+  foldThreadReplies,
   isActive,
   isRunWorking,
   matchAddedServer,
@@ -46,6 +47,7 @@ import { ComputerUpdateProgress } from "../components/ComputerUpdateProgress";
 import { CallCard, CallReturnBar } from "../components/call/CallCard";
 import { IncomingCall } from "../components/call/IncomingCall";
 import { PageLoading } from "../components/PageLoading";
+import { WorkingLine } from "../components/WorkingLine";
 import { catalogAgentOf, connectedServersFor } from "../lib/agent-catalog-install";
 import { connectCatalogApp } from "../lib/app-catalog-connect";
 import type { ArtifactTarget } from "../lib/artifact-open";
@@ -92,6 +94,8 @@ import { useCreateMenu } from "./shell/sidebar-header";
 import { BotsSidebarLayout } from "./shell/sidebar-layout";
 import { SidebarRoster } from "./shell/sidebar-roster";
 import { commitSpaceRename, countUnreadChats, sidebarGroupsForSpaces } from "./shell/space-sidebar";
+import type { ThreadTranscriptProps } from "./shell/thread-panel";
+import { ThreadPanel } from "./shell/thread-panel";
 import { Transcript } from "./shell/transcript";
 import { useBrowserNotifications } from "./shell/use-browser-notifications";
 import { useChatRead } from "./shell/use-chat-read";
@@ -114,6 +118,7 @@ import type { SettingsSection } from "./shell-overlay";
 
 const NO_AGENT_SKILLS: AgentSkillCatalogEntry[] = [];
 const NO_PROVIDERS: string[] = [];
+const NO_THREAD_REPLIES: ThreadMessage[] = [];
 
 export function ShellPage() {
   // A new key per space switch, so nothing from the previous space survives it.
@@ -441,10 +446,13 @@ function SpaceShell() {
   const workingRuns = currentRuns.filter((run) => isRunWorking(run.status));
   const transcriptRunning = workingRuns.length > 0;
   const composerRunning = currentRuns.some((run) => isActive(run.status));
-  const transcript = useMemo(
-    () => foldPeerReplies(activeSnapshot?.messages ?? [], { includePeerReceipts: true }),
-    [activeSnapshot?.messages],
-  );
+  const transcript = useMemo(() => {
+    const peerFolded = foldPeerReplies(activeSnapshot?.messages ?? [], {
+      includePeerReceipts: true,
+    });
+    // In a channel each message's replies are read in its thread, beside the channel.
+    return inGroup ? foldThreadReplies(peerFolded) : peerFolded;
+  }, [activeSnapshot?.messages, inGroup]);
   const { listed: missionsListed } = useMissions();
   const draftKey = inGroup ? `group:${groupId}` : `bot:${active?.id}`;
   // Whether this bot chat opened with an unsent draft; read once per chat, not as the person types.
@@ -802,6 +810,68 @@ function SpaceShell() {
         navigate={navigate}
       />
     ) : null;
+  const openThreadId = inGroup && panel === "thread" ? searchParams.get("thread") : null;
+  const openThread = useCallback(
+    (rootId: string) => {
+      rightPanel.setPanel("thread");
+      const next = new URLSearchParams(searchParamsRef.current);
+      next.set("thread", rootId);
+      setSearchParams(next, { replace: true });
+    },
+    [rightPanel.setPanel, searchParamsRef, setSearchParams],
+  );
+  const threadRoot = openThreadId
+    ? transcript.messages.find((message) => message.id === openThreadId)
+    : undefined;
+  // What the channel's transcript and a thread share: how a message is drawn and answered.
+  const transcriptProps: ThreadTranscriptProps = {
+    artifactTarget: transcriptArtifactTarget,
+    showToolActivity,
+    answerableAskIds,
+    dismissableAskIds,
+    userBubble,
+    onOpenBot: openBot,
+    onAnswer: composer.answerMessage,
+    onMarkUnread: (message: ThreadMessage) => {
+      // The next open of this chat starts the New divider at this message.
+      if (groupId) read.markGroupUnreadFrom(groupId, message.id);
+      else if (active) void read.markBotUnread(active.id, message.id).catch(() => undefined);
+    },
+    onKeepInWiki: (message) => {
+      const target = groupId
+        ? { groupId, messageId: message.id }
+        : active
+          ? { botId: active.id, messageId: message.id }
+          : null;
+      if (target) void rpc.wiki.keep(target).catch(() => undefined);
+    },
+    onReact: composer.reactToMessage,
+    onJumpToMessage: jumpToReplyMessage,
+    onOpenPeerMessages: (peer) => {
+      setPeerConversation(peer);
+    },
+    memberName: resolveTranscriptMemberName,
+    members: inGroup ? transcriptMembers : undefined,
+    peerBot: resolveTranscriptBot,
+    onRefresh: refreshActiveThread,
+    onBotChanged: refreshBots,
+    onAddRoutine: addSkillRoutine,
+    voiceReady: Boolean(voiceStatus?.ready),
+    speakingMessageId,
+    onSpeak: speakMessage,
+    onOpenComputer: computerControls.onOpenComputer,
+    onOpenImport: () => openImport(null, false),
+    onOpenImportSetup: (target) => {
+      importSetupOpen.current = true;
+      if (target.kind === "models") openSettings("models");
+      else if (target.kind === "mcp") setOverlay({ kind: "mcp", serverId: target.serverId });
+      else {
+        const next = new URLSearchParams(searchParams);
+        next.set("routine", target.routineId);
+        setSearchParams(next);
+      }
+    },
+  };
   const shell = (
     <BotsSidebarLayout
       userId={userId}
@@ -972,22 +1042,18 @@ function SpaceShell() {
             </div>
           ) : (
             <Transcript
+              {...transcriptProps}
               key={activeSnapshot?.threadId}
               scrollRef={thread.messageScroll}
               scrollRequest={scrollRequest}
               onScrollRequestHandled={clearScrollRequest}
-              artifactTarget={transcriptArtifactTarget}
               markedUnreadMessageId={read.markedUnreadMessageId}
               transcript={transcript}
-              showToolActivity={showToolActivity}
               olderCursor={activeSnapshot?.olderCursor ?? null}
               unreadAfterSeq={read.unreadAfterSeq}
               loadingOlder={loadingOlder}
-              answerableAskIds={answerableAskIds}
-              dismissableAskIds={dismissableAskIds}
               running={transcriptRunning}
               workingBots={workingBots}
-              userBubble={userBubble}
               onCallBack={
                 bootstrapMe?.phoneCallsEnabled && !inGroup && active
                   ? () => callBot(active)
@@ -1002,57 +1068,16 @@ function SpaceShell() {
               onStarter={(text) => void composer.sendMessage(text, [], newClientId())}
               app={emptyChatApp}
               onLoadOlder={loadOlder}
-              onOpenBot={openBot}
-              onAnswer={composer.answerMessage}
               onReply={(message) => {
                 composer.setReplyTarget(message);
                 composer.setReplyQuote(null);
-              }}
-              onMarkUnread={(message: ThreadMessage) => {
-                // The next open of this chat starts the New divider at this message.
-                if (groupId) read.markGroupUnreadFrom(groupId, message.id);
-                else if (active)
-                  void read.markBotUnread(active.id, message.id).catch(() => undefined);
-              }}
-              onKeepInWiki={(message) => {
-                const target = groupId
-                  ? { groupId, messageId: message.id }
-                  : active
-                    ? { botId: active.id, messageId: message.id }
-                    : null;
-                if (target) void rpc.wiki.keep(target).catch(() => undefined);
               }}
               onQuote={(message, quote) => {
                 composer.setReplyTarget(message);
                 composer.setReplyQuote(quote);
               }}
-              onReact={composer.reactToMessage}
-              onJumpToMessage={jumpToReplyMessage}
-              onOpenPeerMessages={(peer) => {
-                setPeerConversation(peer);
-              }}
-              memberName={resolveTranscriptMemberName}
-              members={inGroup ? transcriptMembers : undefined}
-              peerBot={resolveTranscriptBot}
-              onRefresh={refreshActiveThread}
-              onBotChanged={refreshBots}
-              onAddRoutine={addSkillRoutine}
-              voiceReady={Boolean(voiceStatus?.ready)}
-              speakingMessageId={speakingMessageId}
-              onSpeak={speakMessage}
-              onOpenComputer={computerControls.onOpenComputer}
-              onOpenImport={() => openImport(null, false)}
-              onOpenImportSetup={(target) => {
-                importSetupOpen.current = true;
-                if (target.kind === "models") openSettings("models");
-                else if (target.kind === "mcp")
-                  setOverlay({ kind: "mcp", serverId: target.serverId });
-                else {
-                  const next = new URLSearchParams(searchParams);
-                  next.set("routine", target.routineId);
-                  setSearchParams(next);
-                }
-              }}
+              onOpenThread={inGroup ? openThread : undefined}
+              openThreadId={openThreadId}
             />
           )}
         </div>
@@ -1062,6 +1087,11 @@ function SpaceShell() {
             {recordingSkill ? (
               <div className="pointer-events-auto bg-background px-6 pb-2 text-center text-[13px] text-destructive">
                 <Trans>Teaching in progress. Stop teaching before sending a new message.</Trans>
+              </div>
+            ) : null}
+            {inGroup ? (
+              <div className="pointer-events-auto bg-background px-3 pb-1.5 md:px-[max(1.5rem,calc((100%_-_47.5rem)/2))]">
+                <WorkingLine bots={workingBots} />
               </div>
             ) : null}
             <Composer
@@ -1210,6 +1240,24 @@ function SpaceShell() {
               onCreateRoutine={() => startRoutine()}
               onEditRoutine={startRoutine}
               onStopRun={() => void stopRun()}
+            />
+          ) : null
+        }
+        threadPanel={
+          groupId && threadRoot ? (
+            <ThreadPanel
+              key={threadRoot.id}
+              root={threadRoot}
+              replies={transcript.folded.get(threadRoot.id) ?? NO_THREAD_REPLIES}
+              transcriptProps={transcriptProps}
+              scrollRequest={scrollRequest}
+              onScrollRequestHandled={clearScrollRequest}
+              enterToSend={enterToSend}
+              onSend={async (text, clientNonce) => {
+                await rpc.threads.send({ groupId, threadRootId: threadRoot.id, text, clientNonce });
+                await refreshGroupThreadRef.current(groupId).catch(() => undefined);
+              }}
+              onClose={() => setPanel(null)}
             />
           ) : null
         }

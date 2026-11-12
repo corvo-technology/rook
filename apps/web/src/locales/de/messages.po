@@ -27,8 +27,8 @@ msgstr "{0, plural, one {# Bot hat ein eigenes Modell:} other {# Bots haben ein 
 msgid "{0, plural, one {# failed} other {# failed}}"
 msgstr "{0, plural, one {# fehlgeschlagen} other {# fehlgeschlagen}}"
 
-#. placeholder {0}: thread.count
-#: src/pages/shell/message-view.tsx
+#. placeholder {0}: summary.count
+#: src/pages/shell/transcript.tsx
 msgid "{0, plural, one {# reply} other {# replies}}"
 msgstr "{0, plural, one {# Antwort} other {# Antworten}}"
 
@@ -150,6 +150,10 @@ msgstr "{0} antwortet weiterhin auf direkte Erwähnungen."
 msgid "{0}'s screen"
 msgstr "{0}s Bildschirm"
 
+#: src/components/WorkingLine.tsx
+msgid "{a} and {b} are working…"
+msgstr "{a} und {b} arbeiten…"
+
 #: src/lib/billing.ts
 msgid "{amount} / {period}"
 msgstr "{amount} / {period}"
@@ -178,6 +182,10 @@ msgstr "{count, plural, one {# Zeile} other {# Zeilen}}"
 #: src/pages/TeamBoard.tsx
 msgid "{count} agents"
 msgstr "{count} Agenten"
+
+#: src/components/WorkingLine.tsx
+msgid "{count} agents are working…"
+msgstr "{count} Agenten arbeiten…"
 
 #: src/lib/billing.ts
 msgid "{count} days"
@@ -272,6 +280,10 @@ msgstr "{name} ist fertig"
 #: src/lib/activity-label.ts
 msgid "{name} is waiting for your approval."
 msgstr "{name} wartet auf deine Genehmigung."
+
+#: src/components/WorkingLine.tsx
+msgid "{name} is working…"
+msgstr "{name} arbeitet…"
 
 #: src/pages/shell/use-board-notifications.ts
 msgid "{name} moved {ref} to {status}"
@@ -791,6 +803,7 @@ msgstr "Erweitert"
 msgid "Advanced..."
 msgstr "Erweitert …"
 
+#: src/components/WorkingLine.tsx
 #: src/pages/AddStepDialog.tsx
 #: src/pages/NewRoutineDialog.tsx
 #: src/pages/WhatsAppNumbers.tsx
@@ -1654,6 +1667,7 @@ msgstr "Navigation schließen"
 
 #: src/pages/GroupPanel.tsx
 #: src/pages/shell/side-panel.tsx
+#: src/pages/shell/thread-panel.tsx
 msgid "Close panel"
 msgstr "Panel schließen"
 
@@ -3232,6 +3246,7 @@ msgstr "fehlgeschlagen"
 msgid "Failed"
 msgstr "Fehlgeschlagen"
 
+#: src/pages/shell/thread-panel.tsx
 #: src/pages/shell/use-composer-actions.ts
 msgid "Failed to send message"
 msgstr "Nachricht konnte nicht gesendet werden"
@@ -5424,12 +5439,17 @@ msgstr "Antworten"
 
 #: src/pages/shell/message-hover-actions.tsx
 #: src/pages/shell/quote-selection-button.tsx
+#: src/pages/shell/thread-panel.tsx
 msgid "Reply"
 msgstr "Antworten"
 
 #: src/pages/shell/composer.tsx
 msgid "Reply cancelled"
 msgstr "Antwort abgebrochen"
+
+#: src/pages/shell/message-hover-actions.tsx
+msgid "Reply in thread"
+msgstr "Im Thread antworten"
 
 #. placeholder {0}: replyNameRef.current
 #: src/pages/shell/composer.tsx
@@ -5847,6 +5867,7 @@ msgid "Self-hosted"
 msgstr "Selbst gehostet"
 
 #: src/pages/shell/composer.tsx
+#: src/pages/shell/thread-panel.tsx
 msgid "Send"
 msgstr "Senden"
 
@@ -6654,6 +6675,10 @@ msgstr "Das nutzt WhatsApp ohne die offizielle API. WhatsApp kann die Nummer spe
 #: src/pages/Artifacts.tsx
 msgid "This week"
 msgstr "Diese Woche"
+
+#: src/pages/shell/thread-panel.tsx
+msgid "Thread"
+msgstr "Thread"
 
 #: src/lib/cron.ts
 msgid "Thursday"

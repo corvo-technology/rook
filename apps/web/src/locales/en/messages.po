@@ -27,8 +27,8 @@ msgstr "{0, plural, one {# bot has its own model:} other {# bots have their own 
 msgid "{0, plural, one {# failed} other {# failed}}"
 msgstr "{0, plural, one {# failed} other {# failed}}"
 
-#. placeholder {0}: thread.count
-#: src/pages/shell/message-view.tsx
+#. placeholder {0}: summary.count
+#: src/pages/shell/transcript.tsx
 msgid "{0, plural, one {# reply} other {# replies}}"
 msgstr "{0, plural, one {# reply} other {# replies}}"
 
@@ -150,6 +150,10 @@ msgstr "{0} will still respond to direct mentions."
 msgid "{0}'s screen"
 msgstr "{0}'s screen"
 
+#: src/components/WorkingLine.tsx
+msgid "{a} and {b} are working…"
+msgstr "{a} and {b} are working…"
+
 #: src/lib/billing.ts
 msgid "{amount} / {period}"
 msgstr "{amount} / {period}"
@@ -178,6 +182,10 @@ msgstr "{count, plural, one {# row} other {# rows}}"
 #: src/pages/TeamBoard.tsx
 msgid "{count} agents"
 msgstr ""
+
+#: src/components/WorkingLine.tsx
+msgid "{count} agents are working…"
+msgstr "{count} agents are working…"
 
 #: src/lib/billing.ts
 msgid "{count} days"
@@ -272,6 +280,10 @@ msgstr "{name} finished"
 #: src/lib/activity-label.ts
 msgid "{name} is waiting for your approval."
 msgstr "{name} is waiting for your approval."
+
+#: src/components/WorkingLine.tsx
+msgid "{name} is working…"
+msgstr "{name} is working…"
 
 #: src/pages/shell/use-board-notifications.ts
 msgid "{name} moved {ref} to {status}"
@@ -791,6 +803,7 @@ msgstr "Advanced"
 msgid "Advanced..."
 msgstr "Advanced..."
 
+#: src/components/WorkingLine.tsx
 #: src/pages/AddStepDialog.tsx
 #: src/pages/NewRoutineDialog.tsx
 #: src/pages/WhatsAppNumbers.tsx
@@ -1654,6 +1667,7 @@ msgstr "Close navigation"
 
 #: src/pages/GroupPanel.tsx
 #: src/pages/shell/side-panel.tsx
+#: src/pages/shell/thread-panel.tsx
 msgid "Close panel"
 msgstr "Close panel"
 
@@ -3232,6 +3246,7 @@ msgstr "failed"
 msgid "Failed"
 msgstr "Failed"
 
+#: src/pages/shell/thread-panel.tsx
 #: src/pages/shell/use-composer-actions.ts
 msgid "Failed to send message"
 msgstr "Failed to send message"
@@ -5424,12 +5439,17 @@ msgstr ""
 
 #: src/pages/shell/message-hover-actions.tsx
 #: src/pages/shell/quote-selection-button.tsx
+#: src/pages/shell/thread-panel.tsx
 msgid "Reply"
 msgstr "Reply"
 
 #: src/pages/shell/composer.tsx
 msgid "Reply cancelled"
 msgstr "Reply cancelled"
+
+#: src/pages/shell/message-hover-actions.tsx
+msgid "Reply in thread"
+msgstr "Reply in thread"
 
 #. placeholder {0}: replyNameRef.current
 #: src/pages/shell/composer.tsx
@@ -5847,6 +5867,7 @@ msgid "Self-hosted"
 msgstr "Self-hosted"
 
 #: src/pages/shell/composer.tsx
+#: src/pages/shell/thread-panel.tsx
 msgid "Send"
 msgstr "Send"
 
@@ -6654,6 +6675,10 @@ msgstr "This uses WhatsApp without the official API. WhatsApp can ban the number
 #: src/pages/Artifacts.tsx
 msgid "This week"
 msgstr "This week"
+
+#: src/pages/shell/thread-panel.tsx
+msgid "Thread"
+msgstr "Thread"
 
 #: src/lib/cron.ts
 msgid "Thursday"

@@ -1088,6 +1088,10 @@ msgstr "成果物"
 msgid "Ask"
 msgstr "確認"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Ask first"
+msgstr "先に確認"
+
 #: src/components/AutonomyPicker.tsx
 msgid "Asks before any change"
 msgstr "変更の前に必ず確認する"
@@ -2400,6 +2404,7 @@ msgstr "ルーティンを実行できませんでした"
 #: src/pages/SpaceSettingsPanel.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/Workflows.tsx
+#: src/pages/YouMemory.tsx
 msgid "Could not save"
 msgstr "保存できませんでした"
 
@@ -2769,6 +2774,10 @@ msgstr "{0}を削除しますか？"
 msgid "Delete account"
 msgstr "アカウントを削除"
 
+#: src/pages/YouMemory.tsx
+msgid "Delete for good"
+msgstr "完全に削除"
+
 #: src/pages/GroupPanel.tsx
 msgid "Delete group"
 msgstr "グループを削除"
@@ -2858,6 +2867,11 @@ msgstr "ツールを無効にする"
 #: src/pages/StoreInstalledApps.tsx
 msgid "Disabled"
 msgstr "無効"
+
+#: src/components/MemoryFactCard.tsx
+#: src/pages/YouMemory.tsx
+msgid "Discard"
+msgstr "破棄"
 
 #: src/components/composer/HoldToTalk.tsx
 msgid "Discard recording"
@@ -3020,6 +3034,7 @@ msgstr "それぞれ、実行すると自動でチェックされます。"
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/WikiBrowser.tsx
+#: src/pages/YouMemory.tsx
 msgid "Edit"
 msgstr "編集"
 
@@ -3226,6 +3241,10 @@ msgstr "非常に高い"
 msgid "Extra high"
 msgstr "非常に高い"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Facts about you"
+msgstr "あなたについての情報"
+
 #: src/components/CloudAgentCard.tsx
 msgid "failed"
 msgstr "失敗"
@@ -3349,9 +3368,17 @@ msgstr "最初のボット"
 msgid "First messages, one per line"
 msgstr "最初のメッセージ（1行に1つ）"
 
+#: src/pages/YouMemory.tsx
+msgid "Forget"
+msgstr "忘れる"
+
 #: src/pages/Auth.tsx
 msgid "Forgot password?"
 msgstr "パスワードをお忘れですか？"
+
+#: src/pages/YouMemory.tsx
+msgid "Forgotten"
+msgstr "忘れたもの"
 
 #: src/pages/onboarding-quick-connect.tsx
 #: src/pages/onboarding/LocalModelChoice.tsx
@@ -3754,6 +3781,10 @@ msgstr "返信元のメッセージへ移動: {excerpt}"
 msgid "just now"
 msgstr "たった今"
 
+#: src/pages/YouMemory.tsx
+msgid "Keep"
+msgstr "残す"
+
 #: src/components/MissionList.tsx
 msgid "Keep a memory"
 msgstr "記憶を残す"
@@ -4107,6 +4138,7 @@ msgstr "メンバー（{0}）"
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/SettingsOverlay.tsx
 #: src/pages/shell/agent-import.tsx
+#: src/pages/shell/bot-panel.tsx
 msgid "Memory"
 msgstr "メモリ"
 
@@ -4422,6 +4454,7 @@ msgstr "確認しない"
 
 #: src/components/NewDot.tsx
 #: src/pages/shell/chat-context.tsx
+#: src/pages/YouMemory.tsx
 msgid "New"
 msgstr "新規"
 
@@ -4443,6 +4476,10 @@ msgstr "新しいグループチャット"
 #: src/pages/PartnershipSettingsPanel.tsx
 msgid "New key"
 msgstr "新しいキー"
+
+#: src/components/MemoryFactCard.tsx
+msgid "New memory"
+msgstr "新しいメモリー"
 
 #: src/pages/shell/chat-context.tsx
 msgid "New messages"
@@ -4662,6 +4699,10 @@ msgstr "プラグインカタログにありません"
 msgid "Not now"
 msgstr "今はしない"
 
+#: src/components/MemoryFactCard.tsx
+msgid "Not remembered"
+msgstr "覚えていません"
+
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/import-status.ts
 msgid "Not supported in Rook"
@@ -4748,6 +4789,10 @@ msgstr "1回限りの購入です。クレジットは失効しません。"
 #: src/pages/Auth.tsx
 msgid "Only identifies you on this computer. Your data stays here."
 msgstr "このコンピューター上であなたを識別するためだけのものです。データはここに保存されます。"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Only read"
+msgstr "読むだけ"
 
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/shell/computer-panel.tsx
@@ -5330,6 +5375,10 @@ msgstr "操作を戻す"
 msgid "Reload"
 msgstr "再読み込み"
 
+#: src/components/MemoryFactCard.tsx
+msgid "Remembered"
+msgstr "覚えました"
+
 #: src/components/ApprovalRulesSettings.tsx
 #: src/pages/ConnectionsSettingsPanel.tsx
 #: src/pages/LocalSpeechSection.tsx
@@ -5704,6 +5753,7 @@ msgid "Saturday"
 msgstr "土曜日"
 
 #: src/components/AskCard.tsx
+#: src/components/MemoryFactCard.tsx
 #: src/components/PasskeySettings.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -5723,6 +5773,7 @@ msgstr "土曜日"
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/WikiBrowser.tsx
+#: src/pages/YouMemory.tsx
 msgid "Save"
 msgstr "保存"
 
@@ -5733,6 +5784,10 @@ msgstr "認証情報を保存"
 #: src/pages/shell/bot-credentials.tsx
 msgid "Save new value"
 msgstr "新しい値を保存"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Save on its own"
+msgstr "自動で保存"
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Save the workspace and install current software."
@@ -6271,6 +6326,10 @@ msgstr "何かを変更する操作の前と、あなたが指定していない
 msgid "Still asks when a second model finds it outside your request, and before security changes."
 msgstr "2つ目のモデルが依頼の範囲外だと判断したときと、セキュリティ変更の前には、引き続き確認します。"
 
+#: src/pages/YouMemory.tsx
+msgid "Still true?"
+msgstr "今も正しい？"
+
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/computer-overlay.tsx
@@ -6353,6 +6412,10 @@ msgstr "自分の AI で申し込む"
 msgid "Subscription required"
 msgstr "サブスクリプションが必要です"
 
+#: src/pages/YouMemory.tsx
+msgid "Suggest from what I say"
+msgstr "私の発言から提案"
+
 #: src/lib/cron.ts
 msgid "Sunday"
 msgstr "日曜日"
@@ -6417,6 +6480,10 @@ msgstr "タスク"
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Teach a task"
 msgstr "タスクを教える"
+
+#: src/pages/YouMemory.tsx
+msgid "Teach something about you"
+msgstr "あなたについて教える"
 
 #: src/pages/Shell.tsx
 msgid "Teaching in progress. Stop teaching before sending a new message."
@@ -6845,6 +6912,7 @@ msgid "Type your answer"
 msgstr "回答を入力"
 
 #: src/components/AskCard.tsx
+#: src/components/MemoryFactCard.tsx
 #: src/components/WikiChangeCard.tsx
 msgid "Undo"
 msgstr "元に戻す"
@@ -7313,6 +7381,7 @@ msgstr "昨日"
 #: src/pages/shell/message-view.tsx
 #: src/pages/shell/shell-sidebar.tsx
 #: src/pages/shell/transcript.tsx
+#: src/pages/YouMemory.tsx
 msgid "You"
 msgstr "あなた"
 

@@ -1088,6 +1088,10 @@ msgstr "产物"
 msgid "Ask"
 msgstr "询问"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Ask first"
+msgstr "先询问"
+
 #: src/components/AutonomyPicker.tsx
 msgid "Asks before any change"
 msgstr "任何更改前都先询问"
@@ -2400,6 +2404,7 @@ msgstr "无法运行例行任务"
 #: src/pages/SpaceSettingsPanel.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/Workflows.tsx
+#: src/pages/YouMemory.tsx
 msgid "Could not save"
 msgstr "无法保存"
 
@@ -2769,6 +2774,10 @@ msgstr "删除 {0}？"
 msgid "Delete account"
 msgstr "删除账户"
 
+#: src/pages/YouMemory.tsx
+msgid "Delete for good"
+msgstr "永久删除"
+
 #: src/pages/GroupPanel.tsx
 msgid "Delete group"
 msgstr "删除群组"
@@ -2858,6 +2867,11 @@ msgstr "禁用工具"
 #: src/pages/StoreInstalledApps.tsx
 msgid "Disabled"
 msgstr "已禁用"
+
+#: src/components/MemoryFactCard.tsx
+#: src/pages/YouMemory.tsx
+msgid "Discard"
+msgstr "丢弃"
 
 #: src/components/composer/HoldToTalk.tsx
 msgid "Discard recording"
@@ -3020,6 +3034,7 @@ msgstr "完成后，每一项都会自动打勾。"
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/WikiBrowser.tsx
+#: src/pages/YouMemory.tsx
 msgid "Edit"
 msgstr "编辑"
 
@@ -3226,6 +3241,10 @@ msgstr "极高"
 msgid "Extra high"
 msgstr "极高"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Facts about you"
+msgstr "关于你的信息"
+
 #: src/components/CloudAgentCard.tsx
 msgid "failed"
 msgstr "失败"
@@ -3349,9 +3368,17 @@ msgstr "第一个机器人"
 msgid "First messages, one per line"
 msgstr "首条消息，每行一条"
 
+#: src/pages/YouMemory.tsx
+msgid "Forget"
+msgstr "忘记"
+
 #: src/pages/Auth.tsx
 msgid "Forgot password?"
 msgstr "忘记密码？"
+
+#: src/pages/YouMemory.tsx
+msgid "Forgotten"
+msgstr "已忘记"
 
 #: src/pages/onboarding-quick-connect.tsx
 #: src/pages/onboarding/LocalModelChoice.tsx
@@ -3754,6 +3781,10 @@ msgstr "跳转到回复的消息：{excerpt}"
 msgid "just now"
 msgstr "刚刚"
 
+#: src/pages/YouMemory.tsx
+msgid "Keep"
+msgstr "保留"
+
 #: src/components/MissionList.tsx
 msgid "Keep a memory"
 msgstr "保存一段记忆"
@@ -4107,6 +4138,7 @@ msgstr "成员（{0}）"
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/SettingsOverlay.tsx
 #: src/pages/shell/agent-import.tsx
+#: src/pages/shell/bot-panel.tsx
 msgid "Memory"
 msgstr "记忆"
 
@@ -4422,6 +4454,7 @@ msgstr "从不询问"
 
 #: src/components/NewDot.tsx
 #: src/pages/shell/chat-context.tsx
+#: src/pages/YouMemory.tsx
 msgid "New"
 msgstr "新消息"
 
@@ -4443,6 +4476,10 @@ msgstr "新建群聊"
 #: src/pages/PartnershipSettingsPanel.tsx
 msgid "New key"
 msgstr "新密钥"
+
+#: src/components/MemoryFactCard.tsx
+msgid "New memory"
+msgstr "新记忆"
 
 #: src/pages/shell/chat-context.tsx
 msgid "New messages"
@@ -4662,6 +4699,10 @@ msgstr "不在插件目录中"
 msgid "Not now"
 msgstr "暂不"
 
+#: src/components/MemoryFactCard.tsx
+msgid "Not remembered"
+msgstr "未记住"
+
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/import-status.ts
 msgid "Not supported in Rook"
@@ -4748,6 +4789,10 @@ msgstr "一次性购买。额度不会失效。"
 #: src/pages/Auth.tsx
 msgid "Only identifies you on this computer. Your data stays here."
 msgstr "仅用于在这台电脑上识别你。你的数据都保存在本机。"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Only read"
+msgstr "仅读取"
 
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/shell/computer-panel.tsx
@@ -5330,6 +5375,10 @@ msgstr "交还控制权"
 msgid "Reload"
 msgstr "重新加载"
 
+#: src/components/MemoryFactCard.tsx
+msgid "Remembered"
+msgstr "已记住"
+
 #: src/components/ApprovalRulesSettings.tsx
 #: src/pages/ConnectionsSettingsPanel.tsx
 #: src/pages/LocalSpeechSection.tsx
@@ -5704,6 +5753,7 @@ msgid "Saturday"
 msgstr "周六"
 
 #: src/components/AskCard.tsx
+#: src/components/MemoryFactCard.tsx
 #: src/components/PasskeySettings.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -5723,6 +5773,7 @@ msgstr "周六"
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/WikiBrowser.tsx
+#: src/pages/YouMemory.tsx
 msgid "Save"
 msgstr "保存"
 
@@ -5733,6 +5784,10 @@ msgstr "保存凭据"
 #: src/pages/shell/bot-credentials.tsx
 msgid "Save new value"
 msgstr "保存新值"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Save on its own"
+msgstr "自动保存"
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Save the workspace and install current software."
@@ -6271,6 +6326,10 @@ msgstr "任何会更改内容的操作前，以及打开你未提及的网站前
 msgid "Still asks when a second model finds it outside your request, and before security changes."
 msgstr "当第二个模型认为超出你的请求时，以及安全更改前，仍会询问。"
 
+#: src/pages/YouMemory.tsx
+msgid "Still true?"
+msgstr "仍然正确吗？"
+
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/computer-overlay.tsx
@@ -6353,6 +6412,10 @@ msgstr "使用自己的 AI 订阅"
 msgid "Subscription required"
 msgstr "需要订阅"
 
+#: src/pages/YouMemory.tsx
+msgid "Suggest from what I say"
+msgstr "根据我说的话提出建议"
+
 #: src/lib/cron.ts
 msgid "Sunday"
 msgstr "周日"
@@ -6417,6 +6480,10 @@ msgstr "任务"
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Teach a task"
 msgstr "示范任务"
+
+#: src/pages/YouMemory.tsx
+msgid "Teach something about you"
+msgstr "告诉我一些关于你的事"
 
 #: src/pages/Shell.tsx
 msgid "Teaching in progress. Stop teaching before sending a new message."
@@ -6845,6 +6912,7 @@ msgid "Type your answer"
 msgstr "输入你的回答"
 
 #: src/components/AskCard.tsx
+#: src/components/MemoryFactCard.tsx
 #: src/components/WikiChangeCard.tsx
 msgid "Undo"
 msgstr "撤销"
@@ -7313,6 +7381,7 @@ msgstr "昨天"
 #: src/pages/shell/message-view.tsx
 #: src/pages/shell/shell-sidebar.tsx
 #: src/pages/shell/transcript.tsx
+#: src/pages/YouMemory.tsx
 msgid "You"
 msgstr "你"
 

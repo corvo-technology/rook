@@ -8,6 +8,7 @@ import type {
 } from "@corvo/core";
 import {
   clampMentionHighlightIndex,
+  filterMentionOptions,
   mentionChipKey,
   newClientId,
   replyAttachment,
@@ -46,7 +47,7 @@ import { ComposerError } from "./composer-error";
 import {
   ComposerChip,
   MentionChipIcon,
-  MentionOptionIcon,
+  MentionPicker,
   slashActionLabel,
 } from "./composer-mentions";
 import { useComposerLayout } from "./use-composer-layout";
@@ -338,13 +339,10 @@ export const Composer = memo(function Composer({
     if (selectedSkill) setSelectedSkill(null);
   }
 
-  const mentionOptions = useMemo(() => {
-    if (mentionQuery === null || !mentionTargets?.length) return [];
-    const query = mentionQuery.trim().toLowerCase();
-    return mentionTargets
-      .filter((target) => !query || target.name.toLowerCase().startsWith(query))
-      .slice(0, 10);
-  }, [mentionQuery, mentionTargets]);
+  const mentionOptions = useMemo(
+    () => filterMentionOptions(mentionTargets, mentionQuery),
+    [mentionQuery, mentionTargets],
+  );
 
   useEffect(() => {
     setMentionHighlightKey(null);
@@ -676,47 +674,13 @@ export const Composer = memo(function Composer({
         </div>
       ) : null}
       {mentionPickerOpen ? (
-        <div
+        <MentionPicker
           id={mentionListboxId}
-          role="listbox"
-          aria-label={t`Mentions`}
-          data-testid="mention-picker"
-          className="mb-2 overflow-hidden rounded-[14px] border border-border bg-muted animate-in fade-in-0 slide-in-from-bottom-1 duration-150 motion-reduce:animate-none"
-        >
-          {mentionOptions.map((mention, index) => {
-            const optionId = `${mentionListboxId}-option-${index}`;
-            const highlighted = index === activeMentionIndex;
-            return (
-              <button
-                id={optionId}
-                key={mentionChipKey(mention)}
-                type="button"
-                role="option"
-                aria-selected={highlighted}
-                aria-label={t`@${mention.name}`}
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => insertMention(mention)}
-                // Opening the list under a stationary pointer must not steal the keyboard highlight.
-                onMouseMove={() => setMentionHighlightKey(mentionChipKey(mention))}
-                className={`flex w-full items-start gap-3 px-4 py-2.5 text-start hover:bg-accent ${
-                  highlighted ? "bg-accent" : ""
-                }`}
-              >
-                <MentionOptionIcon mention={mention} />
-                <span className="min-w-0">
-                  <span dir="auto" className="block text-[14px] text-foreground">
-                    @{mention.name}
-                  </span>
-                  {mention.subtitle ? (
-                    <span dir="auto" className="block truncate text-[12.5px] text-muted-foreground">
-                      {mention.subtitle}
-                    </span>
-                  ) : null}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+          options={mentionOptions}
+          activeIndex={activeMentionIndex}
+          onHighlight={(mention) => setMentionHighlightKey(mentionChipKey(mention))}
+          onPick={insertMention}
+        />
       ) : null}
       {showSlashPicker ? (
         <div

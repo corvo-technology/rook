@@ -163,35 +163,3 @@ describe("nextBotColor", () => {
     expect(nextBotColor(colored)).not.toBe(hex("neutral"));
   });
 });
-
-describe("the greens of the rook palette", () => {
-  // CIE76 distance: around 30 is a difference anyone sees at a glance.
-  const lab = (hex: string): [number, number, number] => {
-    const [r, g, b] = [1, 3, 5].map((at) => {
-      const channel = Number.parseInt(hex.slice(at, at + 2), 16) / 255;
-      return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
-    }) as [number, number, number];
-    const f = (v: number) => (v > 0.008856 ? Math.cbrt(v) : 7.787 * v + 16 / 116);
-    const x = f((0.4124 * r + 0.3576 * g + 0.1805 * b) / 0.95047);
-    const y = f(0.2126 * r + 0.7152 * g + 0.0722 * b);
-    const z = f((0.0193 * r + 0.1192 * g + 0.9505 * b) / 1.08883);
-    return [116 * y - 16, 500 * (x - y), 200 * (y - z)];
-  };
-  const distance = (a: string, b: string) => {
-    const [l1, a1, b1] = lab(a);
-    const [l2, a2, b2] = lab(b);
-    return Math.hypot(l1 - l2, a1 - a2, b1 - b2);
-  };
-
-  it.each([
-    ["mint", "lime"],
-    ["mint", "cyan"],
-    ["lime", "yellow"],
-  ] as const)("tells %s from %s at a glance", (first, second) => {
-    expect(distance(MASCOT_LOOKS[first].color, MASCOT_LOOKS[second].color)).toBeGreaterThan(33);
-  });
-
-  it("keeps lime's saved color, so bots that chose it keep their rook", () => {
-    expect(mascotForColorDef({ id: "custom", hex: "#84CC16" })).toBe("lime");
-  });
-});

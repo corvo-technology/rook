@@ -113,7 +113,8 @@ export const DE_MESSAGES: Record<string, string> = {
   "Your OpenAI": "Dein OpenAI",
   "Your Anthropic": "Dein Anthropic",
   "Your model provider": "Dein Modellanbieter",
-  "Connect a model to run bots.": "Verbinde ein Modell, um Bots auszuführen.",
+  "Connect a model in Settings before running bots.":
+    "Verbinde ein Modell in den Einstellungen, bevor du Bots ausführst.",
   "Connect your own API key in Models or choose Rook credits in Billing.":
     "Verbinde deinen eigenen API-Schlüssel unter Modelle oder wähle Rook-Guthaben unter Abrechnung.",
   "The model provider returned an error.": "Der Modellanbieter hat einen Fehler zurückgegeben.",

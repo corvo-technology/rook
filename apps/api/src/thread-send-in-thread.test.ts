@@ -62,7 +62,11 @@ function setup(latestThreadBotId?: string) {
     members: [],
     memberBotIds: ["bot-a", "bot-b"],
   } satisfies ThreadTarget;
-  const send = (input: { text: string; threadRootId?: string }) =>
+  const send = (input: {
+    text: string;
+    threadRootId?: string;
+    mentions?: Array<{ kind: "bot"; id: string }>;
+  }) =>
     sendThreadMessage(
       {
         prisma,
@@ -101,6 +105,28 @@ describe("a message posted in a channel thread", () => {
     expect(tx.run.create).toHaveBeenCalledWith({
       data: expect.objectContaining({ botId: "bot-a" }),
     });
+  });
+
+  it("wakes the agent a mention chip names, inside the thread", async () => {
+    const { tx, send } = setup("bot-b");
+    await send({
+      text: "check the numbers",
+      threadRootId: "root-1",
+      mentions: [{ kind: "bot", id: "bot-a" }],
+    });
+    expect(tx.run.create).toHaveBeenCalledTimes(1);
+    expect(tx.run.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ botId: "bot-a", sourceMessageId: "msg-new" }),
+    });
+    expect(tx.message.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ threadRootId: "root-1" }),
+    });
+  });
+
+  it("wakes every member for @everyone in a thread", async () => {
+    const { tx, send } = setup("bot-b");
+    await send({ text: "@everyone please look", threadRootId: "root-1" });
+    expect(tx.run.create).toHaveBeenCalledTimes(2);
   });
 
   it("is refused when its root is not in the channel", async () => {

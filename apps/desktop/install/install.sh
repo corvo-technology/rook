@@ -2,7 +2,7 @@
 # Installs or updates Rook:
 #   curl -fsSL https://github.com/corvo-technology/rook/releases/latest/download/install.sh | sh
 #
-# On a Mac (Apple silicon): the app goes into Applications (or ~/Applications when that is
+# On a Mac (Apple silicon or Intel): the app goes into Applications (or ~/Applications when that is
 # not writable) and opens.
 # On Linux: the AppImage goes into ~/.local/bin with an entry in the applications menu.
 # On Windows: use install.ps1 in PowerShell.
@@ -33,11 +33,11 @@ install_mac() {
   APP="$DEST/Corvo.app"
 
   case "$(uname -m)" in
-    arm64) ARCH=arm64 ;;
-    *) fail "O Rook para Mac roda em Apple silicon, não em $(uname -m)." "Rook for Mac runs on Apple silicon, not on $(uname -m)." ;;
+    arm64 | x86_64) ;;
+    *) fail "O Rook para Mac não roda em $(uname -m)." "Rook for Mac doesn't run on $(uname -m)." ;;
   esac
   say "Baixando o Rook…" "Downloading Rook…"
-  fetch "$LATEST/corvo-mac-$ARCH.zip" "$TMP/corvo.zip"
+  fetch "$LATEST/corvo-mac-universal.zip" "$TMP/corvo.zip"
   ditto -x -k "$TMP/corvo.zip" "$TMP/app"
   [ -d "$TMP/app/Corvo.app" ] || fail "O arquivo baixado não tem o Corvo.app." "The download doesn't contain Corvo.app."
 
@@ -60,7 +60,8 @@ install_mac() {
 install_linux() {
   case "$(uname -m)" in
     x86_64 | amd64) ARCH=x86_64 ;;
-    *) fail "O Rook roda em Linux x64, não em $(uname -m)." "Rook runs on x64 Linux, not on $(uname -m)." ;;
+    aarch64 | arm64) ARCH=arm64 ;;
+    *) fail "O Rook roda em Linux x64 e ARM64, não em $(uname -m)." "Rook runs on x64 and ARM64 Linux, not on $(uname -m)." ;;
   esac
   DEST="${DEST_OVERRIDE:-$HOME/.local/bin}"
   mkdir -p "$DEST"

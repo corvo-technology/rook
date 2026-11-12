@@ -297,7 +297,7 @@ function Home({ embedded, onSelectSpace }: InboxPaneProps & { embedded: boolean 
   useEffect(() => {
     if (!hasSession) return;
     void registerPushToken().catch(() => undefined);
-  }, [hasSession, locale]);
+  }, [hasSession]);
 
   // Show the inbox saved on this device until the first live load replaces it.
   useEffect(() => {

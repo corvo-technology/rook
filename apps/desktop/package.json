@@ -140,8 +140,13 @@
       "executableName": "corvo",
       "icon": "assets/icon.png",
       "target": [
-        "AppImage"
+        "AppImage",
+        "deb"
       ],
+      "synopsis": "Rook, your team of AI agents",
+      "description": "Rook runs a team of AI agents on your computer with its own local database.",
+      "maintainer": "Rook <https://github.com/corvo-technology/rook>",
+      "category": "Utility",
       "artifactName": "corvo-linux-${arch}.${ext}",
       "extraResources": [
         {

@@ -18,6 +18,7 @@ import type {
 import type { PrismaClient, ThreadEvents } from "@corvo/db";
 import type { CloudAgentConnection } from "./cloud-agent-factory.js";
 import type { ConnectorWaitLimits } from "./connector-wait.js";
+import type { SummaryModel } from "./handoff-summary.js";
 import type { McpStdioPolicy } from "./mcp-transport.js";
 import type { MemoryProviderResolver } from "./memory-provider-factory.js";
 import type { CodexLiveCatalog } from "./pi-codex-catalog.js";
@@ -88,6 +89,8 @@ export interface ExecutorDeps {
     now?: () => number;
     limits?: Partial<ConnectorWaitLimits>;
   };
+  /** Writes the closing summary once every run an agent handed work to has finished; absent skips it. */
+  handoffSummary?: SummaryModel;
   /** Aborted when createApp stop() begins so in-flight continueRun boot waits exit promptly. */
   shutdownSignal?: AbortSignal;
 }

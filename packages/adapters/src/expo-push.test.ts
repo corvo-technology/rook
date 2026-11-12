@@ -50,29 +50,30 @@ describe("expo push tickets", () => {
 });
 
 describe("expo push", () => {
-  it("writes an approval push in the language its device registered", async () => {
+  it("words an approval push in the language the device registered", async () => {
     const tokens = new MemoryPushTokenStore();
-    await tokens.save("user-1", "ExponentPushToken[pt]", "", "pt-BR");
+    await tokens.save("user-1", "ExponentPushToken[abc]", "", "pt-BR");
     const fetchMock = vi.fn(async () => jsonResponse({ data: { status: "ok" } }));
     vi.stubGlobal("fetch", fetchMock);
-    const push = new ExpoPushProvider(tokens);
-    await push.send(
+    await new ExpoPushProvider(tokens).send(
       {
         kind: "help",
-        title: "Scout needs approval",
-        body: "Review before web_fetch",
+        title: "Ana needs approval",
+        body: "Review before writing a file",
         botId: "b",
         threadId: "t",
       },
       notifyContext,
     );
     const sent = JSON.parse(
-      String((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body),
+      String(
+        (fetchMock.mock.calls[0] as unknown[])[1]
+          ? ((fetchMock.mock.calls[0] as unknown[])[1] as { body: string }).body
+          : "{}",
+      ),
     );
-    expect(sent).toMatchObject({
-      title: "Scout precisa de aprovação",
-      body: "Confirme antes: Web fetch",
-    });
+    expect(sent.title).toBe("Ana precisa de aprovação");
+    expect(sent.body).toBe("Confirme antes: writing a file");
   });
 
   it("does not call Expo when the user has no token", async () => {

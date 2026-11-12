@@ -23,6 +23,7 @@ import {
   memberName,
   newClientId,
   oneClickAppFor,
+  resolveComposerSendPlan,
 } from "@corvo/core";
 import { fetchFresh, writeSaved } from "@corvo/core/query";
 import type { GroupAvatarMember } from "@corvo/ui-web";
@@ -550,6 +551,10 @@ function SpaceShell() {
     integrationsOpen: overlay?.kind === "integrations",
     initialBotsLoaded,
   });
+  const threadMentionTargets = useMemo(
+    () => composerMentionTargets.filter((m) => m.kind !== "group" && m.kind !== "routine"),
+    [composerMentionTargets],
+  );
   const shellReady =
     initialBotsLoaded &&
     (inGroup
@@ -1043,6 +1048,7 @@ function SpaceShell() {
           ) : (
             <Transcript
               {...transcriptProps}
+              onApproveAll={composer.approveAll}
               key={activeSnapshot?.threadId}
               scrollRef={thread.messageScroll}
               scrollRequest={scrollRequest}
@@ -1253,8 +1259,16 @@ function SpaceShell() {
               scrollRequest={scrollRequest}
               onScrollRequestHandled={clearScrollRequest}
               enterToSend={enterToSend}
-              onSend={async (text, clientNonce) => {
-                await rpc.threads.send({ groupId, threadRootId: threadRoot.id, text, clientNonce });
+              mentionTargets={threadMentionTargets}
+              onSend={async (text, mentions, clientNonce) => {
+                const plan = resolveComposerSendPlan({ text, mentions, hasAttachments: false });
+                await rpc.threads.send({
+                  groupId,
+                  threadRootId: threadRoot.id,
+                  text: plan.trimmed,
+                  mentions: plan.mentionPayload.length ? plan.mentionPayload : undefined,
+                  clientNonce,
+                });
                 await refreshGroupThreadRef.current(groupId).catch(() => undefined);
               }}
               onClose={() => setPanel(null)}

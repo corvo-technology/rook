@@ -116,7 +116,8 @@ export const JA_MESSAGES: Record<string, string> = {
   "Your OpenAI": "お使いのOpenAI",
   "Your Anthropic": "お使いのAnthropic",
   "Your model provider": "お使いのモデルプロバイダー",
-  "Connect a model to run bots.": "ボットを実行するには、モデルを接続してください。",
+  "Connect a model in Settings before running bots.":
+    "ボットを実行する前に、設定でモデルを接続してください。",
   "Connect your own API key in Models or choose Rook credits in Billing.":
     "モデルで自分のAPIキーを接続するか、請求でRookクレジットを選択してください。",
   "The model provider returned an error.": "モデルプロバイダーがエラーを返しました。",

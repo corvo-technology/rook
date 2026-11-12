@@ -663,6 +663,27 @@ export const appContract = {
           ),
       )
       .output(z.object({ ok: z.literal(true) })),
+    /**
+     * Allows several pending approvals of one safety class. Each is decided exactly as `answer`
+     * would, and the result names every one, so a failure never reads as an approval.
+     */
+    answerBatch: oc
+      .input(
+        threadTarget.safeExtend({
+          batchClass: z.enum(["tool", "site"]),
+          items: z
+            .array(z.object({ runId: Id, messageId: Id, approvalEffectId: Id }))
+            .min(1)
+            .max(20),
+        }),
+      )
+      .output(
+        z.object({
+          results: z.array(
+            z.object({ approvalEffectId: Id, ok: z.boolean(), error: z.string().optional() }),
+          ),
+        }),
+      ),
     /** `unreadAfterSeq`: the seq read up to before this call, null when nothing was unread. */
     markRead: oc
       .input(threadTarget)
@@ -1351,8 +1372,7 @@ export const appContract = {
       .input(
         z.object({
           token: z.string().min(8).max(512).regex(/^\S+$/),
-          /** The device language as a BCP-47 tag. */
-          locale: z.string().max(35).optional(),
+          locale: z.string().min(2).max(35).optional(),
         }),
       )
       .output(z.object({ ok: z.literal(true) })),

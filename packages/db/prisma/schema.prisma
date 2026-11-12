@@ -117,7 +117,7 @@ model PushToken {
   ciphertext  String
   tokenDigest String   @unique
   sessionId   String
-  /// The language of the registering device, so the server can write approval pushes in it.
+  /// The app language of the device, so a push is worded in it.
   locale      String?
   updatedAt   DateTime @updatedAt
 

@@ -138,7 +138,9 @@ describe("Parallel through the ordinary bot caller", () => {
         expect(model).toBeDefined();
         expect(resolveRuntimeModel(model!).apiKey).toBe(key);
       } else {
-        await expect(fixture.resolveModel()).rejects.toThrow("Connect a model to run bots.");
+        await expect(fixture.resolveModel()).rejects.toThrow(
+          "Connect a model in Settings before running bots.",
+        );
       }
     },
   );

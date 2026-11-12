@@ -120,8 +120,9 @@ irm https://github.com/corvo-technology/rook/releases/latest/download/install.ps
 ```
 
 Or download the app from the [releases page](https://github.com/corvo-technology/rook/releases/latest):
-`corvo-mac-arm64.dmg` (Apple silicon), `corvo-win-x64.exe` or `corvo-linux-x86_64.AppImage`. The same command
-updates the app later. Details and signing notes: [desktop releases](./docs/desktop-release.md).
+`corvo-mac-universal.dmg` (Apple silicon and Intel), `corvo-win-x64.exe`, or for Linux
+`corvo-linux-x86_64.AppImage` / `corvo-linux-amd64.deb` (x64) and `corvo-linux-arm64.AppImage` / `corvo-linux-arm64.deb` (ARM64).
+The same command updates the app later. Details and signing notes: [desktop releases](./docs/desktop-release.md).
 
 On Linux the AppImage needs FUSE 2 (`libfuse2`, or `libfuse2t64` on Ubuntu 24.04). Without it, run
 `./corvo-linux-x86_64.AppImage --appimage-extract-and-run`.

@@ -114,7 +114,7 @@ describe("mobile i18n", () => {
       "Your Anthropic",
       "Your model provider",
       "The model provider returned an error.",
-      "Connect a model to run bots.",
+      "Connect a model in Settings before running bots.",
       "Connect your own API key in Models or choose Rook credits in Billing.",
       "{provider} is rate limiting requests. Try again shortly.",
       "{summary} Resets {date}.",

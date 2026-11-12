@@ -20,7 +20,6 @@ export async function registerPushToken() {
     if (!projectId) return;
     const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
     if (!token) return;
-    // The language rides along so the server can write an approval push in it.
     await rpc("notifications/registerPush", { token, locale: getActiveUiLocale() });
   } catch {
     // Expo Go without an EAS project id and Android builds without a Firebase config

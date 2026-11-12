@@ -88,4 +88,16 @@ describe("OnboardingLayout", () => {
     act(() => back?.click());
     expect(onBack).toHaveBeenCalledOnce();
   });
+
+  it("rests one guide rook above the current step, and the same one for the next", () => {
+    render({ current: "survey" });
+    const rook = container.querySelector("[data-guide-rook]");
+    expect(container.querySelectorAll("[data-guide-rook]")).toHaveLength(1);
+    expect(rook?.getAttribute("data-guide-rook")).toBe("survey");
+    expect(container.querySelectorAll("[data-guide-stop]")).toHaveLength(steps.length);
+
+    render({ current: "bot" });
+    expect(container.querySelector("[data-guide-rook]")).toBe(rook);
+    expect(rook?.getAttribute("data-guide-rook")).toBe("bot");
+  });
 });

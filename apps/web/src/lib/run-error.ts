@@ -24,10 +24,10 @@ export const translateRunError: RunErrorTranslator = (message, values) => {
       return i18n._({ id: "Your Anthropic", message: "Your Anthropic", values });
     case "Your model provider":
       return i18n._({ id: "Your model provider", message: "Your model provider", values });
-    case "Connect a model to run bots.":
+    case "Connect a model in Settings before running bots.":
       return i18n._({
-        id: "Connect a model to run bots.",
-        message: "Connect a model to run bots.",
+        id: "Connect a model in Settings before running bots.",
+        message: "Connect a model in Settings before running bots.",
         values,
       });
     case "Connect your own API key in Models or choose Rook credits in Billing.":

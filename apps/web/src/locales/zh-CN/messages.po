@@ -219,6 +219,10 @@ msgstr "{count} 年"
 msgid "{days}d ago"
 msgstr "{days} 天前"
 
+#: src/components/ApproveAllBar.tsx
+msgid "{failedCount} could not be approved"
+msgstr "有 {failedCount} 项无法批准"
+
 #: src/components/markdown-copy.tsx
 msgid "{from}–{to} of {total} rows"
 msgstr "第 {from}–{to} 行，共 {total} 行"
@@ -1045,6 +1049,10 @@ msgstr "批准"
 msgid "Approve all"
 msgstr "全部批准"
 
+#: src/components/ApproveAllBar.tsx
+msgid "Approve all {count}"
+msgstr "全部批准（{count}）"
+
 #: src/pages/WikiBrowser.tsx
 msgid "Approve edits"
 msgstr "批准编辑"
@@ -1858,8 +1866,12 @@ msgstr "连接模型"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
-msgid "Connect a model to run bots."
-msgstr "请连接模型以运行机器人。"
+msgid "Connect a model in Settings before running bots."
+msgstr "运行机器人前，请先在设置中连接模型。"
+
+#: src/pages/shell/composer-error.tsx
+msgid "Connect a model to start a run."
+msgstr "连接模型后即可开始。"
 
 #: src/components/MissionList.tsx
 msgid "Connect an app"
@@ -2484,6 +2496,7 @@ msgstr "无法开始教学"
 msgid "Could not stop computer"
 msgstr "无法停止电脑"
 
+#: src/components/ApproveAllBar.tsx
 #: src/components/AskCard.tsx
 msgid "Could not submit this answer"
 msgstr "无法提交此回答"
@@ -5920,6 +5933,7 @@ msgstr "发送重置链接"
 msgid "Send with Enter"
 msgstr "按 Enter 发送"
 
+#: src/components/ApproveAllBar.tsx
 #: src/components/AskCard.tsx
 msgid "Sending…"
 msgstr "正在发送…"

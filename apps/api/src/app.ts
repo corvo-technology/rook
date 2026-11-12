@@ -196,6 +196,7 @@ import { mountApiRequestBodyLimits } from "./request-body-limit.js";
 import { createRouter } from "./router.js";
 import { mountScreenTarget } from "./screen-proxy.js";
 import { createAuthResponseAudit } from "./security-audit.js";
+import { runSideModel } from "./side-model.js";
 import { createSpeechSummarizer } from "./speech-summary.js";
 import { chiefAsFirstAgent } from "./starter-team.js";
 import { isDeferredReservationLost, TeamChatBridge } from "./team-chat-bridge.js";
@@ -713,6 +714,29 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     messaging: messaging ? createMessagingContextLoader(prisma) : undefined,
     web: createWebProvider(),
     cloudAgent,
+    // The scripted runtime has no model to ask, so a hand-off group closes without a summary.
+    handoffSummary:
+      env.agentRuntime === "pi"
+        ? (call) =>
+            runSideModel(
+              {
+                prisma,
+                runtime,
+                secrets,
+                deploymentProvider: env.defaultProvider,
+                deploymentModel: env.defaultModel,
+                deploymentModelKey: env.deploymentModelKey,
+                allowPrivateEndpoint: env.mcpAllowPrivateEndpoint,
+              },
+              call.bot,
+              {
+                operation: "handoff-summary",
+                prompt: call.prompt,
+                instructions: call.instructions,
+                timeoutMs: call.timeoutMs,
+              },
+            )
+        : undefined,
     shutdownSignal: shutdown.signal,
   });
 

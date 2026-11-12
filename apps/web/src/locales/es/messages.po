@@ -219,6 +219,10 @@ msgstr "{count} años"
 msgid "{days}d ago"
 msgstr "hace {days} d"
 
+#: src/components/ApproveAllBar.tsx
+msgid "{failedCount} could not be approved"
+msgstr "{failedCount} no se pudieron aprobar"
+
 #: src/components/markdown-copy.tsx
 msgid "{from}–{to} of {total} rows"
 msgstr "{from}–{to} de {total} filas"
@@ -1045,6 +1049,10 @@ msgstr "Aprobar"
 msgid "Approve all"
 msgstr "Aprobar todo"
 
+#: src/components/ApproveAllBar.tsx
+msgid "Approve all {count}"
+msgstr "Aprobar las {count}"
+
 #: src/pages/WikiBrowser.tsx
 msgid "Approve edits"
 msgstr "Aprobar ediciones"
@@ -1858,8 +1866,12 @@ msgstr "Conectar un modelo"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
-msgid "Connect a model to run bots."
-msgstr "Conecta un modelo para ejecutar bots."
+msgid "Connect a model in Settings before running bots."
+msgstr "Conecta un modelo en Configuración antes de ejecutar bots."
+
+#: src/pages/shell/composer-error.tsx
+msgid "Connect a model to start a run."
+msgstr "Conecta un modelo para empezar."
 
 #: src/components/MissionList.tsx
 msgid "Connect an app"
@@ -2484,6 +2496,7 @@ msgstr "No se pudo iniciar la enseñanza"
 msgid "Could not stop computer"
 msgstr "No se pudo detener la computadora"
 
+#: src/components/ApproveAllBar.tsx
 #: src/components/AskCard.tsx
 msgid "Could not submit this answer"
 msgstr "No se pudo enviar esta respuesta"
@@ -5920,6 +5933,7 @@ msgstr "Enviar enlace de restablecimiento"
 msgid "Send with Enter"
 msgstr "Enviar con Enter"
 
+#: src/components/ApproveAllBar.tsx
 #: src/components/AskCard.tsx
 msgid "Sending…"
 msgstr "Enviando…"

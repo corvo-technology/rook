@@ -6,7 +6,7 @@ import { EncryptedSecretStore } from "./secrets.js";
 export interface PushRecord {
   token: string;
   sessionId?: string;
-  /** The registering device's language, when it said. */
+  /** The device's app language, when it said. */
   locale?: string;
 }
 

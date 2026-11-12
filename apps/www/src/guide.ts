@@ -1,145 +1,247 @@
-// One rook travels the page. Every `[data-guide-stop]` is a place it rests; scrolling carries it from
-// one to the next. Positions are read once per resize and the rook only moves by transform, so the
-// layout never shifts. Frames run only while something is moving. Without this script, or with
-// reduced motion, each stop keeps its own still rook.
+// One rook travels the page, drawn by the same engine as the app's rooks. Every `[data-guide-stop]` is
+// a place it rests, always in empty space reserved for it. The stop that is active follows the scroll
+// (with hysteresis, so it never flickers), and when it changes the rook goes there on a time-based
+// spring, never in step with the scroll, so wherever the page stops scrolling it is exactly at a stop.
+// A hop between two rows of the same column leaves through the side margin; any other hop fades out
+// and in instead of crossing the page. A `[data-guide-gone]` mark is a place it is not: it fades out
+// there (the closing band has its own rook). Without this script, or with reduced motion, each stop
+// keeps its own still rook.
+import { ROOK_AVATAR, CHESS_PIECES } from "@corvo/core/chess-set";
+import type { AvatarDefinition } from "open-bot-avatar";
+import type { MountedAvatar } from "open-bot-avatar/dom";
+import { mountAvatar } from "open-bot-avatar/dom";
+
 const root = document.querySelector<HTMLElement>("[data-guide]");
 const calm = !matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-type Stop = { x: number; y: number; w: number; clip: number };
+type Point = { x: number; y: number };
+// `y` is where it rests; `at` is the scroll line that makes the stop active.
+type Stop = Point & { at: number; row: boolean; gone: boolean };
+type Mate = { host: HTMLElement; avatar: MountedAvatar; at: Point; look: Point | null };
 
 if (root && calm) {
   const html = document.documentElement;
-  const rook = root.querySelector<SVGElement>(".rook")!;
-  const BOX = 100;
-  const LEG_MIN = 260;
-  const HOLD = 0.55;
+  const host = root.querySelector<HTMLElement>("[data-avatar]")!;
+  const BOX = root.offsetWidth;
+  const OMEGA = 9; // spring stiffness: settles in about half a second
+  const FADE_OUT = 160;
+  const FADE_IN = 260;
+  const ENTER = 0.62; // the next stop takes over when it rises above this share of the screen
+  const LEAVE = 0.88; // and gives back only when it has sunk below this one
   const REACH = 320;
-  const MAX_X = 3.2;
-  const MAX_Y = 2.6;
+  const LANE = BOX + 12; // a side margin this wide lets it travel there
+
+  const avatarOf = (el: HTMLElement, definition: AvatarDefinition, followPointer: boolean) => {
+    const color = el.dataset.color;
+    const eyeColor = el.dataset.eye;
+    el.textContent = "";
+    return mountAvatar(el, { definition, color, eyeColor, followPointer, label: "" });
+  };
+
+  const guide = avatarOf(host, ROOK_AVATAR, false);
+  const mates: Mate[] = [...document.querySelectorAll<HTMLElement>("[data-mate]")].map((el) => {
+    const piece = el.dataset.avatar as keyof typeof CHESS_PIECES | "rook";
+    return { host: el, avatar: avatarOf(el, piece === "rook" ? ROOK_AVATAR : CHESS_PIECES[piece], true), at: { x: 0, y: 0 }, look: null };
+  });
 
   let stops: Stop[] = [];
-  let keys: number[] = [];
-  let cur: { x: number; y: number; w: number; clip: number } | null = null;
-  let squash = 0;
-  let squashSpeed = 0;
-  let lastSpeed = 0;
+  let lane = 0; // x of the margin's middle, or 0 where the margin is too narrow
+  let active = 0;
+  let cur: Point | null = null;
+  let opacity = 0;
+  let wantVisible = true;
+  let path: { pts: Point[]; len: number[] } | null = null;
+  let p = 1;
+  let v = 0;
+  let fade: { t0: number; to: Point; moved: boolean } | null = null;
   let lastTime = 0;
-  let prevView = { x: 0, y: 0 };
-  let pointer: { x: number; y: number } | null = null;
-  let link: { x: number; y: number } | null = null;
-  let look = { x: 0, y: 0 };
   let frame = 0;
-  const fine = matchMedia("(hover: hover) and (pointer: fine)").matches;
+  let gazeFrame = 0;
+  let pointer: Point | null = null;
+  let link: Point | null = null;
+  let look: Point | null = null;
 
-  const docPoint = (el: HTMLElement) => {
-    let x = 0;
-    let y = 0;
-    for (let node: HTMLElement | null = el; node; node = node.offsetParent as HTMLElement | null) {
-      x += node.offsetLeft;
-      y += node.offsetTop;
-    }
-    return { x, y };
+  const centerOf = (el: HTMLElement): Point => {
+    const r = el.getBoundingClientRect();
+    return { x: r.left + scrollX + r.width / 2, y: r.top + scrollY + r.height / 2 };
   };
 
   const measure = () => {
-    const slots = [...document.querySelectorAll<HTMLElement>("[data-guide-stop]")].filter((el) => el.offsetParent !== null);
+    const slots = [...document.querySelectorAll<HTMLElement>("[data-guide-stop], [data-guide-gone]")].filter((el) => el.offsetParent !== null);
     stops = slots.map((el) => {
-      const at = docPoint(el);
-      return { x: at.x + el.offsetWidth / 2, y: at.y + el.offsetHeight, w: el.offsetWidth, clip: Number(el.dataset.guideClip ?? 0) };
+      const gone = "guideGone" in el.dataset;
+      const c = centerOf(el);
+      return { ...c, at: gone ? el.getBoundingClientRect().top + scrollY : c.y, row: "guideRow" in el.dataset, gone };
     });
-    // The scroll position at which the rook rests at each stop: when the stop is near the middle of the screen.
-    const max = Math.max(0, document.documentElement.scrollHeight - innerHeight);
-    keys = stops.map((stop) => stop.y - stop.w / 2 - innerHeight * HOLD);
-    keys[0] = 0;
-    for (let i = 1; i < keys.length; i++) keys[i] = Math.max(keys[i]!, keys[i - 1]! + LEG_MIN);
-    const last = keys.length - 1;
-    keys[last] = Math.min(keys[last]!, max);
-    for (let i = last - 1; i >= 1; i--) keys[i] = Math.min(keys[i]!, keys[i + 1]! - 60);
+    // A place it is not rests where it was, so it fades out without moving.
+    stops.forEach((stop, i) => {
+      if (stop.gone && i > 0) {
+        stop.x = stops[i - 1]!.x;
+        stop.y = stops[i - 1]!.y;
+      }
+    });
+    const left = document.querySelector<HTMLElement>(".container")?.getBoundingClientRect().left ?? 0;
+    lane = left >= LANE + 4 ? left / 2 : 0;
+    for (const mate of mates) mate.at = centerOf(mate.host);
+    if (!stops.length) return;
+    active = Math.min(active, stops.length - 1);
+    pick(true);
+    if (cur && !path && !fade) {
+      cur = { x: stops[active]!.x, y: stops[active]!.y };
+      draw();
+    }
     schedule();
   };
 
-  const target = () => {
-    const s = scrollY;
-    const last = stops.length - 1;
-    let i = 0;
-    while (i < last && s >= keys[i + 1]!) i++;
-    if (i >= last) return { ...stops[last]!, t: 1, leg: last, from: stops[last]!, to: stops[last]! };
-    const from = stops[i]!;
-    const to = stops[i + 1]!;
-    const raw = Math.min(1, Math.max(0, (s - keys[i]!) / (keys[i + 1]! - keys[i]!)));
-    const t = raw * raw * (3 - 2 * raw);
-    const mix = (a: number, b: number) => a + (b - a) * t;
-    return { x: mix(from.x, to.x), y: mix(from.y, to.y), w: mix(from.w, to.w), clip: mix(from.clip, to.clip), t: raw, leg: i, from, to };
+  // Which stop is active: the last one that has risen to the reading line; it keeps its place until
+  // the next has, and gives it back only well after, so the rook never hops back and forth.
+  const pick = (quiet = false) => {
+    if (!stops.length) return;
+    const edge = innerHeight;
+    const atEnd = scrollY >= document.documentElement.scrollHeight - innerHeight - 2;
+    let next = active;
+    while (next < stops.length - 1 && (stops[next + 1]!.at - scrollY < edge * ENTER || atEnd)) next++;
+    while (next > 0 && stops[next]!.at - scrollY > edge * LEAVE) next--;
+    if (next === active && cur) return;
+    const first = !cur;
+    const from = stops[active]!;
+    active = next;
+    const to = stops[active]!;
+    html.toggleAttribute("data-guide-end", to.gone);
+    wantVisible = !to.gone;
+    if (first) {
+      cur = { x: to.x, y: to.y };
+      opacity = wantVisible ? 1 : 0;
+      draw();
+      return;
+    }
+    if (quiet) return;
+    go(from, to);
+  };
+
+  const go = (from: Stop, to: Stop) => {
+    if (!cur) return;
+    const there = { x: to.x, y: to.y };
+    if (to.gone || from.gone || !(from.row && to.row && lane)) {
+      // Cross the page? No: fade out here and in there.
+      path = null;
+      fade = { t0: 0, to: there, moved: false };
+      schedule();
+      return;
+    }
+    // Along the empty row out to the margin, down the margin, then along the next row in.
+    const pts = [{ ...cur }, { x: lane, y: cur.y }, { x: lane, y: there.y }, there];
+    const len = [0];
+    for (let i = 1; i < pts.length; i++) len.push(len[i - 1]! + Math.hypot(pts[i]!.x - pts[i - 1]!.x, pts[i]!.y - pts[i - 1]!.y));
+    const total = len[len.length - 1]! || 1;
+    const old = path ? path.len[path.len.length - 1]! : total;
+    v = path ? (v * old) / total : 0;
+    path = { pts, len };
+    p = 0;
+    fade = null;
+    schedule();
+  };
+
+  const along = (): Point => {
+    const { pts, len } = path!;
+    const s = Math.min(1, Math.max(0, p)) * len[len.length - 1]!;
+    let i = 1;
+    while (i < len.length - 1 && s > len[i]!) i++;
+    const span = len[i]! - len[i - 1]! || 1;
+    const t = (s - len[i - 1]!) / span;
+    return { x: pts[i - 1]!.x + (pts[i]!.x - pts[i - 1]!.x) * t, y: pts[i - 1]!.y + (pts[i]!.y - pts[i - 1]!.y) * t };
+  };
+
+  const draw = () => {
+    if (!cur) return;
+    root.style.transform = `translate3d(${(cur.x - BOX / 2).toFixed(2)}px, ${(cur.y - BOX / 2).toFixed(2)}px, 0)`;
+    root.style.opacity = opacity.toFixed(3);
+    if (!html.hasAttribute("data-guided")) html.setAttribute("data-guided", "");
   };
 
   const tick = (now: number) => {
     frame = 0;
-    if (!stops.length) return;
-    const dt = Math.min(64, lastTime ? now - lastTime : 16);
+    if (!cur || !stops.length) return;
+    const dt = Math.min(1 / 30, lastTime ? (now - lastTime) / 1000 : 1 / 60);
     lastTime = now;
-    const goal = target();
-    const first = !cur;
-    if (!cur) cur = { x: goal.x, y: goal.y, w: goal.w, clip: goal.clip };
-    const k = first ? 1 : 1 - Math.exp(-dt / 70);
-    const before = { x: cur.x, y: cur.y };
-    cur.x += (goal.x - cur.x) * k;
-    cur.y += (goal.y - cur.y) * k;
-    cur.w += (goal.w - cur.w) * k;
-    cur.clip += (goal.clip - cur.clip) * k;
-    const gap = Math.hypot(goal.x - cur.x, goal.y - cur.y) + Math.abs(goal.w - cur.w);
-    if (gap < 0.2) {
-      cur.x = goal.x;
-      cur.y = goal.y;
-      cur.w = goal.w;
-      cur.clip = goal.clip;
+    let busy = false;
+    const before = { ...cur };
+
+    if (fade) {
+      if (!fade.t0) fade.t0 = now;
+      const u = now - fade.t0;
+      if (u < FADE_OUT) opacity = 1 - u / FADE_OUT;
+      else {
+        if (!fade.moved) {
+          cur = { ...fade.to };
+          fade.moved = true;
+        }
+        opacity = wantVisible ? Math.min(1, (u - FADE_OUT) / FADE_IN) : 0;
+      }
+      if (u >= FADE_OUT + (wantVisible ? FADE_IN : 0)) {
+        opacity = wantVisible ? 1 : 0;
+        fade = null;
+      } else busy = true;
+    } else if (path) {
+      // Critically damped spring on the way along the path.
+      const a = OMEGA * OMEGA * (1 - p) - 2 * OMEGA * v;
+      v += a * dt;
+      p += v * dt;
+      cur = along();
+      if (Math.abs(1 - p) < 0.0008 && Math.abs(v) < 0.01) {
+        cur = { x: stops[active]!.x, y: stops[active]!.y };
+        path = null;
+        p = 1;
+        v = 0;
+      } else busy = true;
     }
+    draw();
+    const moved = { x: cur.x - before.x, y: cur.y - before.y };
+    steer(Math.hypot(moved.x, moved.y) > 0.4 ? moved : null);
+    nudgeMates();
+    if (busy) schedule();
+    else lastTime = 0;
+  };
 
-    // A little squash when it stops: the slowing down is pushed into a spring.
-    const speed = Math.hypot(cur.x - before.x, cur.y - before.y) / dt;
-    squashSpeed += Math.max(0, lastSpeed - speed) * 0.5;
-    lastSpeed = speed;
-    squashSpeed += (-squash * 0.06 - squashSpeed * 0.18) * (dt / 16);
-    squash = Math.min(0.14, Math.max(-0.08, squash + squashSpeed * (dt / 16)));
-
-    const scale = cur.w / BOX;
-    root.style.transform = `translate3d(${(cur.x - BOX / 2).toFixed(2)}px, ${(cur.y - BOX).toFixed(2)}px, 0) scale(${(scale * (1 + squash * 0.6)).toFixed(4)}, ${(scale * (1 - squash)).toFixed(4)})`;
-    root.style.clipPath = cur.clip > 0.002 ? `inset(0 -30% ${(cur.clip * 100).toFixed(2)}% -30%)` : "";
-    if (!html.hasAttribute("data-guided")) html.setAttribute("data-guided", "");
-
-    // Eyes: a hovered link, else the way it is travelling, else a pointer close by.
-    const view = { x: cur.x, y: cur.y - cur.w / 2 - scrollY };
-    const move = { x: view.x - prevView.x, y: view.y - prevView.y };
-    prevView = view;
-    const moving = Math.hypot(move.x, move.y) > 0.6;
-    let want = { x: 0, y: 0 };
-    const aim = (to: { x: number; y: number }, reach: number) => {
-      const dx = to.x - view.x;
-      const dy = to.y - view.y;
+  // Eyes: a hovered link, else the way it is travelling, else a pointer close by; otherwise the engine's own idle gaze.
+  const steer = (travel: Point | null) => {
+    if (!cur) return;
+    const at = { x: cur.x, y: cur.y - scrollY };
+    const aim = (to: Point, reach: number) => {
+      const dx = to.x - at.x;
+      const dy = to.y - at.y;
       const dist = Math.hypot(dx, dy) || 1;
       const pull = Math.min(1, dist / reach);
-      return { x: (dx / dist) * pull * MAX_X, y: (dy / dist) * pull * MAX_Y };
+      return { x: (dx / dist) * pull, y: (dy / dist) * pull };
     };
+    let want: Point | null = null;
     if (link) want = aim(link, 1);
-    else if (moving) {
-      const len = Math.hypot(move.x, move.y);
-      want = { x: (move.x / len) * MAX_X, y: (move.y / len) * MAX_Y };
-    } else if (pointer && Math.hypot(pointer.x - view.x, pointer.y - view.y) < REACH) want = aim(pointer, 200);
-    if (Math.abs(want.x - look.x) > 0.05 || Math.abs(want.y - look.y) > 0.05) {
+    else if (travel) {
+      const n = Math.hypot(travel.x, travel.y);
+      want = { x: travel.x / n, y: travel.y / n };
+    } else if (pointer && Math.hypot(pointer.x - at.x, pointer.y - at.y) < REACH) want = aim(pointer, 200);
+    if ((want === null) !== (look === null) || (want && look && (Math.abs(want.x - look.x) > 0.04 || Math.abs(want.y - look.y) > 0.04))) {
       look = want;
-      rook.style.setProperty("--gaze-x", `${look.x.toFixed(2)}px`);
-      rook.style.setProperty("--gaze-y", `${look.y.toFixed(2)}px`);
+      guide.update({ lookAt: want });
     }
+  };
 
-    // At the last stop it smiles and says its piece.
-    const end = goal.leg >= stops.length - 1 || (goal.leg === stops.length - 2 && goal.t > 0.96);
-    rook.toggleAttribute("data-happy", end);
-    html.toggleAttribute("data-guide-end", end && gap < 4);
-
-    const busy = gap >= 0.2 || Math.abs(squash) > 0.003 || Math.abs(squashSpeed) > 0.003 || moving;
-    if (busy) schedule();
-    else {
-      lastTime = 0;
-      lastSpeed = 0;
+  // The pieces watch the rook once it has settled beside them.
+  const nudgeMates = () => {
+    const settled = !path && !fade && opacity > 0.9 && cur;
+    for (const mate of mates) {
+      let want: Point | null = null;
+      if (settled && cur) {
+        const dx = cur.x - mate.at.x;
+        const dy = cur.y - mate.at.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < 520) want = { x: dx / (dist || 1), y: dy / (dist || 1) };
+      }
+      const same = want && mate.look ? Math.abs(want.x - mate.look.x) < 0.04 && Math.abs(want.y - mate.look.y) < 0.04 : want === mate.look;
+      if (!same) {
+        mate.look = want;
+        mate.avatar.update({ lookAt: want });
+      }
     }
   };
 
@@ -147,8 +249,14 @@ if (root && calm) {
     if (!frame && !document.hidden) frame = requestAnimationFrame(tick);
   }
 
-  addEventListener("scroll", schedule, { passive: true });
-  if (fine) {
+  const onScroll = () => {
+    const was = active;
+    pick();
+    if (active === was) steer(null);
+  };
+
+  addEventListener("scroll", onScroll, { passive: true });
+  if (matchMedia("(hover: hover) and (pointer: fine)").matches) {
     addEventListener(
       "pointermove",
       (event) => {
@@ -156,14 +264,18 @@ if (root && calm) {
         const a = (event.target as Element).closest?.(".site-header a");
         const rect = a?.getBoundingClientRect();
         link = rect ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 } : null;
-        schedule();
+        if (!gazeFrame)
+          gazeFrame = requestAnimationFrame(() => {
+            gazeFrame = 0;
+            steer(null);
+          });
       },
       { passive: true },
     );
     document.documentElement.addEventListener("pointerleave", () => {
       pointer = null;
       link = null;
-      schedule();
+      steer(null);
     });
   }
   new ResizeObserver(measure).observe(document.body);

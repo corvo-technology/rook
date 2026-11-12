@@ -101,7 +101,7 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Your OpenAI": "你的 OpenAI",
   "Your Anthropic": "你的 Anthropic",
   "Your model provider": "你的模型提供商",
-  "Connect a model to run bots.": "请连接模型以运行机器人。",
+  "Connect a model in Settings before running bots.": "运行机器人前，请先在设置中连接模型。",
   "Connect your own API key in Models or choose Rook credits in Billing.":
     "请在“模型”中连接你自己的 API 密钥，或在“账单”中选择 Rook 额度。",
   "The model provider returned an error.": "模型提供商返回了错误。",

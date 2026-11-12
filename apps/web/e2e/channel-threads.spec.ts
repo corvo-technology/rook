@@ -49,6 +49,21 @@ for (const theme of ["light", "dark"]) {
   });
 }
 
+test("a thread reply can @mention an agent", async ({ page }, testInfo) => {
+  await page.goto("/e2e/fixtures/channel-threads.html?theme=light&working=2");
+  await page.getByTestId("thread-footer").press("Enter");
+  const panel = page.getByTestId("thread-panel");
+  const reply = panel.getByRole("textbox", { name: "Reply" });
+  await reply.fill("@Le");
+  await expect(page.getByTestId("mention-picker")).toBeVisible();
+  await captureScreenshot(page, testInfo, "channel-thread-mention-picker");
+  await panel.getByRole("option", { name: "@Leo" }).click();
+  await expect(panel.getByTestId("mention-chip")).toHaveText("Leo");
+  await reply.fill("check the numbers");
+  await panel.getByRole("button", { name: "Send" }).click();
+  await expect(panel.getByText("@Leo check the numbers")).toBeVisible();
+});
+
 test("a message's hover actions open its thread, and many agents are counted", async ({ page }) => {
   await page.goto("/e2e/fixtures/channel-threads.html?theme=light&working=4");
   await expect(page.getByTestId("working-line")).toHaveText("4 agents are working…");

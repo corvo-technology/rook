@@ -14,8 +14,8 @@ import { MAX_RECALLED_MEMORIES } from "./history-compaction.js";
 import { appendMemoryFact } from "./memory-tools.js";
 import type { RunContext } from "./run-context.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
-import { startAttachedFileImport } from "./wiki-import-run.js";
 import { postMemoryFactCard } from "./user-memory-run.js";
+import { startAttachedFileImport } from "./wiki-import-run.js";
 import { keepNoteInWiki } from "./wiki-note.js";
 
 async function readHistoryTool(ctx: RunContext, call: ToolCall) {

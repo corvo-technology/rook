@@ -35,6 +35,7 @@ import type { NavLink } from "@corvo/contracts";
 import type { BoardEvents, PrismaClient, ThreadEvents } from "@corvo/db";
 import type { AudioHold } from "./audio-hold.js";
 import type { BillingService } from "./billing.js";
+import type { RouterModel } from "./channel-router.js";
 import { accountRoutes } from "./routes/account.js";
 import { boardsRoutes } from "./routes/boards.js";
 import { botsRoutes } from "./routes/bots.js";
@@ -139,6 +140,8 @@ export interface RouterDeps {
   /** Present only when the deployment bills; self-hosted installs leave it unset. */
   billing?: BillingService;
   speechSummary?: VoiceDeps["speechSummary"];
+  /** Picks who answers a channel message that names nobody; absent keeps the older rule. */
+  channelRouter?: RouterModel;
   env: {
     ticketBoardEnabled?: boolean;
     partnerAdminEmails?: string[];

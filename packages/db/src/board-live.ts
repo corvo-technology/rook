@@ -1,12 +1,17 @@
 import type { RealtimeFanout } from "@corvo/adapter-kit";
-import type { BoardEvent, BoardMove } from "@corvo/contracts";
-import { BoardMoveSchema } from "@corvo/contracts";
+import type { BoardEvent, BoardMove, BoardStep } from "@corvo/contracts";
+import { BoardMoveSchema, BoardStepSchema } from "@corvo/contracts";
 
 /** A transient "this board changed" signal. Clients refetch the list on any frame. */
 export interface BoardEvents {
   notify(
     spaceId: string,
-    change?: { boardId?: string; ticketId?: string; moved?: BoardMove },
+    change?: {
+      boardId?: string;
+      ticketId?: string;
+      moved?: BoardMove;
+      step?: BoardStep | null;
+    },
   ): Promise<void>;
   follow(spaceId: string, signal?: AbortSignal): AsyncGenerator<BoardEvent>;
 }
@@ -27,6 +32,7 @@ export function createBoardEvents(realtime?: RealtimeFanout): BoardEvents {
         ...(change?.boardId ? { boardId: change.boardId } : {}),
         ...(change?.ticketId ? { ticketId: change.ticketId } : {}),
         ...(change?.moved ? { moved: change.moved } : {}),
+        ...(change?.step !== undefined ? { step: change.step } : {}),
         createdAt: new Date().toISOString(),
       };
       await realtime
@@ -43,18 +49,21 @@ export function createBoardEvents(realtime?: RealtimeFanout): BoardEvents {
       const unsubscribe = realtime
         ? await realtime
             .subscribe(boardEventTopic(spaceId), (payload) => {
-              let change: { boardId?: string; ticketId?: string; moved?: unknown } = {};
+              let change: { boardId?: string; ticketId?: string; moved?: unknown; step?: unknown } =
+                {};
               try {
                 change = JSON.parse(payload) as typeof change;
               } catch {
                 change = {};
               }
               const moved = BoardMoveSchema.safeParse(change.moved);
+              const step = BoardStepSchema.nullable().safeParse(change.step);
               push({
                 spaceId,
                 ...(change.boardId ? { boardId: change.boardId } : {}),
                 ...(change.ticketId ? { ticketId: change.ticketId } : {}),
                 ...(moved.success ? { moved: moved.data } : {}),
+                ...(step.success && step.data !== undefined ? { step: step.data } : {}),
                 createdAt: new Date().toISOString(),
               });
             })

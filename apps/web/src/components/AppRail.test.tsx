@@ -141,14 +141,14 @@ it("puts the board right under Agents when the board is on, and nowhere when it 
   const labels = [...on.container.querySelectorAll("nav button")].map((button) =>
     button.getAttribute("aria-label"),
   );
-  expect(labels.slice(0, 3)).toEqual(["Agents", "Board", "Team"]);
-  const board = on.container.querySelector<HTMLButtonElement>('nav button[aria-label="Board"]');
+  expect(labels.slice(0, 3)).toEqual(["Agents", "Tasks", "Team"]);
+  const board = on.container.querySelector<HTMLButtonElement>('nav button[aria-label="Tasks"]');
   await act(async () => board?.click());
   expect(on.container.querySelector('[data-testid="where"]')?.textContent).toBe("/app/board");
   expect(board?.getAttribute("aria-current")).toBe("page");
   await on.cleanup();
   const off = await renderRail(false);
-  expect(off.container.querySelector('nav button[aria-label="Board"]')).toBeNull();
+  expect(off.container.querySelector('nav button[aria-label="Tasks"]')).toBeNull();
   await off.cleanup();
 });
 

@@ -144,7 +144,7 @@ it("opens integrations and keeps the existing account actions", async () => {
   const menu = document.querySelector('[data-slot="popover-content"]')!;
   expect([...menu.querySelectorAll("button, a")].map((row) => row.textContent)).toEqual([
     "Usage",
-    "Board",
+    "Tasks",
     "Routines",
     "Artifacts",
     "Settings",
@@ -154,10 +154,10 @@ it("opens integrations and keeps the existing account actions", async () => {
     "Account menu for Demo User",
   );
 });
-it("omits Board when unavailable", async () => {
+it("omits Tasks when unavailable", async () => {
   await render();
   expect(document.querySelector('[data-slot="popover-content"]')?.textContent).not.toContain(
-    "Board",
+    "Tasks",
   );
 });
 

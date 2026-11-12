@@ -42,9 +42,11 @@ describe("ticketWakePrompt", () => {
 describe("wakeTicketAssignee with a Chief", () => {
   function setup(chiefRow: { id: string; name: string } | null) {
     const create = vi.fn(async (_args: { data: { prompt: string } }) => ({ id: "task-1" }));
+    const runCreate = vi.fn(async (_args: { data: { ticketId?: string } }) => ({ id: "run-1" }));
     const tx = {
       ticket: {
         findFirst: vi.fn(async () => ({
+          id: "t1",
           status: "todo",
           number: 4,
           board: { ticketPrefix: "RAK" },
@@ -58,7 +60,7 @@ describe("wakeTicketAssignee with a Chief", () => {
         ),
       },
       task: { create },
-      run: { create: vi.fn(async () => ({ id: "run-1" })) },
+      run: { create: runCreate },
     };
     const deps = {
       ticketBoardEnabled: true,
@@ -67,13 +69,19 @@ describe("wakeTicketAssignee with a Chief", () => {
       } as unknown as PrismaClient,
       jobs: { enqueue: vi.fn(async () => {}) } as never,
     };
-    return { deps, create };
+    return { deps, create, runCreate };
   }
 
   it("names the Chief of this space in the work prompt", async () => {
     const s = setup({ id: "chief-1", name: "Chefe" });
     await wakeTicketAssignee(s.deps, { spaceId: "ws", ticketId: "t1", botId: "bot-2" });
     expect(s.create.mock.calls[0]?.[0].data.prompt).toContain("chief-1");
+  });
+
+  it("links the run to its ticket, so the ticket can follow the run", async () => {
+    const s = setup(null);
+    await wakeTicketAssignee(s.deps, { spaceId: "ws", ticketId: "t1", botId: "bot-2" });
+    expect(s.runCreate.mock.calls[0]?.[0].data.ticketId).toBe("t1");
   });
 
   it("works without a Chief", async () => {

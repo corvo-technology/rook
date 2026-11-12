@@ -60,7 +60,7 @@ export function BoardSettings({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            <Trans>Board settings</Trans>
+            <Trans>Task settings</Trans>
           </DialogTitle>
         </DialogHeader>
         <form id="board-settings" onSubmit={submit} className="space-y-2">

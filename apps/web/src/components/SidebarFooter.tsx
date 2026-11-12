@@ -150,7 +150,7 @@ export function SidebarFooter({
                 onClick={onBoard}
               >
                 <SquareKanban className="text-muted-foreground" strokeWidth={1.75} />
-                <Trans>Board</Trans>
+                <Trans>Tasks</Trans>
               </Button>
             ) : null}
             {links.map((link) => (

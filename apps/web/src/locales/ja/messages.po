@@ -1236,17 +1236,6 @@ msgstr "ブロック"
 msgid "Blocked"
 msgstr "ブロック中"
 
-#: src/components/AppRail.tsx
-#: src/components/SidebarFooter.tsx
-#: src/pages/Board.tsx
-msgid "Board"
-msgstr "ボード"
-
-#: src/pages/Board.tsx
-#: src/pages/BoardSettings.tsx
-msgid "Board settings"
-msgstr "ボードの設定"
-
 #: src/pages/shell/computer-view.tsx
 #: src/pages/shell/use-computer.tsx
 msgid "Booting live desktop…"
@@ -6389,6 +6378,17 @@ msgstr "操作を引き継ぐ"
 #: src/components/MissionList.tsx
 msgid "Talk to your agent"
 msgstr "エージェントに話しかける"
+
+#: src/pages/Board.tsx
+#: src/pages/BoardSettings.tsx
+msgid "Task settings"
+msgstr "タスクの設定"
+
+#: src/components/AppRail.tsx
+#: src/components/SidebarFooter.tsx
+#: src/pages/Board.tsx
+msgid "Tasks"
+msgstr "タスク"
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Teach a task"

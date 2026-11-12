@@ -10,7 +10,7 @@ test("board creates a ticket and opens it", async ({ page }, testInfo) => {
   await completeOnboarding(page);
   await createNamedBot(page, "Planner");
 
-  await page.getByTestId("app-rail").getByRole("button", { name: "Board", exact: true }).click();
+  await page.getByTestId("app-rail").getByRole("button", { name: "Tasks", exact: true }).click();
   await expect(page).toHaveURL(/\/app\/board$/);
   await expect(page.getByTestId("board-columns")).toBeVisible();
   await expect(page.getByText("No tickets yet", { exact: true })).toBeVisible();
@@ -62,8 +62,8 @@ test("board creates a ticket and opens it", async ({ page }, testInfo) => {
 
   await page.keyboard.press("Escape");
   await expect(detail).toBeHidden();
-  await page.getByRole("button", { name: "Board settings", exact: true }).click();
-  const settings = page.getByRole("dialog", { name: "Board settings" });
+  await page.getByRole("button", { name: "Task settings", exact: true }).click();
+  const settings = page.getByRole("dialog", { name: "Task settings" });
   await settings.getByLabel("In progress", { exact: true }).fill("In contact");
   await settings.getByRole("button", { name: "Save", exact: true }).click();
   await expect(settings).toBeHidden();

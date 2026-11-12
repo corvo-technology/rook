@@ -213,6 +213,7 @@ import {
   recentThreadFilesInstruction,
 } from "./thread-artifacts.js";
 import { loadAgentTicketContext } from "./ticket-context.js";
+import { startTicketRun } from "./ticket-run-moves.js";
 import { appendToolCompletionAudit } from "./tool-completion-audit.js";
 import { createWebProvider } from "./web-provider-factory.js";
 import { loadWikiIndexContext } from "./wiki-context.js";
@@ -610,6 +611,9 @@ export function createRunExecutor(deps: ExecutorDeps) {
           runId,
           payload: { trigger: run.trigger, routineId: run.routineId },
         });
+        await startTicketRun(deps, run).catch((error) =>
+          getLogger().warn("ticket run start move failed", error),
+        );
 
         const discoveredPromise = deps.connector
           ? deps.connector.discoverTools(context)

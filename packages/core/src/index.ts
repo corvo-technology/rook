@@ -72,6 +72,7 @@ export * from "./model-probe.js";
 export * from "./model-problem.js";
 export * from "./model-providers.js";
 export * from "./model-role-settings.js";
+export * from "./notification-copy.js";
 export * from "./onboarding-agent.js";
 export * from "./passkey-offer.js";
 export * from "./password-policy.js";

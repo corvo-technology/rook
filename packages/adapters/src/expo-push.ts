@@ -8,10 +8,11 @@ import type {
   NotificationProvider,
 } from "@corvo/adapter-kit";
 import { pushReceiptJob } from "@corvo/adapter-kit";
+import { localizeApprovalNotification } from "@corvo/core";
 import { getLogger } from "@corvo/logging";
 import { combineSignals } from "./connector-safety.js";
 import { credentialDigest } from "./credential-digest.js";
-import type { PushTokenStore } from "./push-token-store.js";
+import type { PushRecord, PushTokenStore } from "./push-token-store.js";
 import { readBodyCapped, withAbort } from "./web-ssrf.js";
 
 const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
@@ -154,7 +155,7 @@ export class ExpoPushProvider implements NotificationProvider {
   }
 
   async hasPushRecipient(userId: string): Promise<boolean> {
-    return Boolean(await this.deliverableToken(userId));
+    return Boolean(await this.deliverableRegistration(userId));
   }
 
   async send(message: NotificationMessage, context: AdapterContext): Promise<void> {
@@ -167,12 +168,15 @@ export class ExpoPushProvider implements NotificationProvider {
    * Neither is an Expo acceptance, so callers must not record a reminder.
    */
   async deliver(message: NotificationMessage, context: AdapterContext): Promise<ExpoPushDelivery> {
-    const token = await this.deliverableToken(context.userId);
-    if (!token) return "undeliverable";
+    const registration = await this.deliverableRegistration(context.userId);
+    if (!registration) return "undeliverable";
+    const { token } = registration;
+    // An approval is written in English here; the device's own language comes with its token.
+    const copy = localizeApprovalNotification(message, registration.locale);
     const payload = {
       to: token,
-      title: capped(message.title, MAX_PUSH_TITLE_CHARS),
-      body: capped(message.body, MAX_PUSH_BODY_CHARS),
+      title: capped(copy.title, MAX_PUSH_TITLE_CHARS),
+      body: capped(copy.body, MAX_PUSH_BODY_CHARS),
       collapseId: message.threadId,
       tag: message.threadId,
       ...(message.badge === undefined ? {} : { badge: message.badge }),
@@ -255,10 +259,10 @@ export class ExpoPushProvider implements NotificationProvider {
    * row is removed. The token is read again after the lookup so a handover
    * during that wait is not sent.
    */
-  private async deliverableToken(userId: string): Promise<string | undefined> {
+  private async deliverableRegistration(userId: string): Promise<PushRecord | undefined> {
     const saved = await this.tokens.load(userId);
     if (!saved?.token) return undefined;
-    if (!saved.sessionId) return saved.token;
+    if (!saved.sessionId) return saved;
     if (!this.sessionExpiresAt) return undefined;
     let expiresAt: Date | null;
     try {
@@ -274,7 +278,7 @@ export class ExpoPushProvider implements NotificationProvider {
     }
     const current = await this.tokens.load(userId);
     if (current?.token !== saved.token || current.sessionId !== saved.sessionId) return undefined;
-    return current.token;
+    return current;
   }
 }
 

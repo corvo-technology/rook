@@ -50,6 +50,31 @@ describe("expo push tickets", () => {
 });
 
 describe("expo push", () => {
+  it("writes an approval push in the language its device registered", async () => {
+    const tokens = new MemoryPushTokenStore();
+    await tokens.save("user-1", "ExponentPushToken[pt]", "", "pt-BR");
+    const fetchMock = vi.fn(async () => jsonResponse({ data: { status: "ok" } }));
+    vi.stubGlobal("fetch", fetchMock);
+    const push = new ExpoPushProvider(tokens);
+    await push.send(
+      {
+        kind: "help",
+        title: "Scout needs approval",
+        body: "Review before web_fetch",
+        botId: "b",
+        threadId: "t",
+      },
+      notifyContext,
+    );
+    const sent = JSON.parse(
+      String((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body),
+    );
+    expect(sent).toMatchObject({
+      title: "Scout precisa de aprovação",
+      body: "Confirme antes: Web fetch",
+    });
+  });
+
   it("does not call Expo when the user has no token", async () => {
     const tokens = new MemoryPushTokenStore();
     const fetchMock = vi.fn();

@@ -4,7 +4,10 @@ import type { LaunchCopy } from "../i18n/launch";
 import { DEFAULT_LOCALE, localeHashPath, localeHomePath } from "../i18n/locales";
 import type { Locale } from "../i18n/locales";
 import { DOWNLOAD_URL, GITHUB_URL } from "../site";
+import { MASCOT_COLOR } from "../mascot";
+import type { MascotHue } from "../mascot";
 import Logo from "./Logo.astro";
+import { Rook } from "./Rook";
 
 type Props = {
   locale?: Locale;
@@ -16,18 +19,29 @@ const locale = Astro.props.locale ?? DEFAULT_LOCALE;
 const copy = Astro.props.copy ?? getLaunchCopy(locale).nav;
 const homeHref = Astro.props.homeHref ?? localeHomePath(locale);
 
-const NAV_LINKS = [
-  { href: localeHashPath(locale, "agents"), label: copy.demo },
-  { href: localeHashPath(locale, "features"), label: copy.features },
-  { href: localeHashPath(locale, "open"), label: copy.open },
-  { href: localeHashPath(locale, "faq"), label: copy.faq },
+// Each section a link points to gets its own rook color when the page reaches it.
+const NAV_LINKS: Array<{ section: string; hue: MascotHue; label: string }> = [
+  { section: "agents", hue: "menta", label: copy.demo },
+  { section: "features", hue: "azul", label: copy.features },
+  { section: "open", hue: "violeta", label: copy.open },
+  { section: "faq", hue: "rosa", label: copy.faq },
 ];
+const hrefOf = (section: string) => localeHashPath(locale, section);
 ---
 
 <header class="site-header">
   <Logo href={homeHref} label={copy.home} />
   <nav class="site-nav" aria-label={copy.primary}>
-    {NAV_LINKS.map((link) => <a href={link.href}>{link.label}</a>)}
+    {
+      NAV_LINKS.map((link) => (
+        <a href={hrefOf(link.section)} data-section={link.section} data-color={MASCOT_COLOR[link.hue]}>
+          {link.label}
+        </a>
+      ))
+    }
+    <span class="site-nav__rook" data-nav-rook aria-hidden="true">
+      <Rook hue="menta" size={16} gaze={false} />
+    </span>
   </nav>
   <div class="site-header__right">
     <div class="site-header__cta">
@@ -48,13 +62,22 @@ const NAV_LINKS = [
         </svg>
       </summary>
       <nav class="site-menu__panel" aria-label={copy.primary}>
-        {NAV_LINKS.map((link) => <a href={link.href}>{link.label}</a>)}
+        {
+          NAV_LINKS.map((link) => (
+            <a href={hrefOf(link.section)} data-section={link.section}>
+              {link.label}
+              <Rook hue={link.hue} size={16} gaze={false} />
+            </a>
+          ))
+        }
       </nav>
     </details>
   </div>
 </header>
 
 <script>
+  import "../rook-gaze";
+
   const menu = document.querySelector<HTMLDetailsElement>("[data-site-menu]");
 
   if (menu) {
@@ -71,5 +94,59 @@ const NAV_LINKS = [
         menu.open = false;
       }
     });
+  }
+
+  const header = document.querySelector<HTMLElement>(".site-header");
+  const onScroll = () => header?.toggleAttribute("data-scrolled", scrollY > 24);
+  addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  // Scroll-spy: the link of the section being read gets a rook in that section's color.
+  const links = [...document.querySelectorAll<HTMLAnchorElement>("[data-section]")];
+  const sections = [...document.querySelectorAll<HTMLElement>("main > section[id]")];
+  const mark = document.querySelector<HTMLElement>("[data-nav-rook]");
+  const nav = mark?.parentElement;
+
+  if (links.length && sections.length && mark && nav) {
+    const rook = mark.querySelector<SVGElement>(".rook");
+    let current: string | null = null;
+    let frame = 0;
+
+    const place = () => {
+      const link = links.find((item) => item.dataset.section === current && nav.contains(item));
+      mark.toggleAttribute("data-on", Boolean(link));
+      if (!link) return;
+      mark.style.setProperty("--x", `${link.offsetLeft + link.offsetWidth / 2 - 8}px`);
+      rook?.style.setProperty("--rook", link.dataset.color ?? "");
+    };
+
+    const spy = () => {
+      frame = 0;
+      const line = innerHeight * 0.4;
+      const here = sections.find((item) => {
+        const rect = item.getBoundingClientRect();
+        return rect.top <= line && rect.bottom > line;
+      });
+      const next = here && links.some((item) => item.dataset.section === here.id) ? here.id : null;
+      if (next === current) return;
+      current = next;
+      for (const link of links) {
+        if (link.dataset.section === current) link.setAttribute("aria-current", "location");
+        else link.removeAttribute("aria-current");
+      }
+      place();
+    };
+
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(spy);
+    };
+
+    addEventListener("scroll", schedule, { passive: true });
+    addEventListener("resize", () => {
+      place();
+      schedule();
+    });
+    document.fonts?.ready.then(place);
+    spy();
   }
 </script>

@@ -1861,6 +1861,10 @@ msgstr "连接模型"
 msgid "Connect a model in Settings before running bots."
 msgstr "运行机器人前，请先在设置中连接模型。"
 
+#: src/pages/shell/composer-error.tsx
+msgid "Connect a model to start a run."
+msgstr "连接模型后即可开始。"
+
 #: src/components/MissionList.tsx
 msgid "Connect an app"
 msgstr "连接一个应用"

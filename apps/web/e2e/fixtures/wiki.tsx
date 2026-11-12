@@ -195,6 +195,13 @@ const api: WikiApi = {
       return settings;
     },
   },
+  imports: {
+    list: async () => [
+      { id: "import-1", name: "Employee handbook.pdf", state: "reading", parts: 6, readParts: 2 },
+    ],
+    start: async () => ({ id: "import-2" }),
+    dismiss: async () => ({ ok: true }),
+  },
   index: async () => [...pages.keys()].map(infoOf),
   search: async ({ query }) =>
     [...pages.keys()]

@@ -8,6 +8,7 @@ import { wikiCurateJob, wikiReviewJob } from "@corvo/adapter-kit";
 import {
   buildCuratorPrompt,
   CURATOR_RULES,
+  type CuratorProposal,
   type CuratorThreadKind,
   curatesThread,
   curatorSystemPrompt,
@@ -113,6 +114,53 @@ function wordsOf(text: string): string[] {
   const seen = new Set<string>();
   for (const word of text.toLowerCase().match(/\p{L}{5,}/gu) ?? []) seen.add(word);
   return [...seen].slice(0, RELATED_WORDS);
+}
+
+/** Pages that may be related to a text: a few of those that match its longer words. */
+export async function relatedWikiPages(
+  prisma: PrismaClient,
+  scope: { spaceId: string; userId: string },
+  text: string,
+): Promise<{ title: string; body: string }[]> {
+  const related: { title: string; body: string }[] = [];
+  for (const word of wordsOf(text)) {
+    for (const hit of await searchWiki(prisma, scope, word, 2)) {
+      if (related.length >= RELATED_PAGES) break;
+      if (related.some((page) => page.title === hit.title)) continue;
+      const page = await readWikiPage(prisma, scope, hit.title);
+      if (page)
+        related.push({
+          title: page.title,
+          body: parseWikiPage(page.body).body.slice(0, RELATED_PAGE_CHARS),
+        });
+    }
+  }
+  return related;
+}
+
+/**
+ * One call to the curator's model, its usage recorded as its own kind. Throws when the answer is
+ * not a usable proposal, so a caller that keeps a cursor leaves it where it was.
+ */
+export async function askCurator(
+  deps: Pick<WikiCuratorDeps, "prisma" | "runtime">,
+  input: {
+    scope: { spaceId: string; userId: string };
+    model: NonNullable<AgentRunRequest["model"]>;
+    botId: string;
+    threadId: string;
+    runId: string;
+    operationId: string;
+    /** The agent whose usage this is, when there is one. */
+    usageBotId?: string;
+    prompt: string;
+    instructions: string;
+  },
+): Promise<CuratorProposal> {
+  const { answer, failed } = await askWikiModel(deps, input);
+  const proposal = failed ? null : parseCuratorOutput(answer);
+  if (!proposal) throw new Error("The wiki curator's model did not answer with a usable proposal.");
+  return proposal;
 }
 
 /**
@@ -251,19 +299,7 @@ export async function curateWiki(
   if (!lines.length) return;
 
   const transcript = lines.map((line) => `${line.author}: ${line.text}`).join("\n");
-  const related: { title: string; body: string }[] = [];
-  for (const word of wordsOf(transcript)) {
-    for (const hit of await searchWiki(prisma, scope, word, 2)) {
-      if (related.length >= RELATED_PAGES) break;
-      if (related.some((page) => page.title === hit.title)) continue;
-      const page = await readWikiPage(prisma, scope, hit.title);
-      if (page)
-        related.push({
-          title: page.title,
-          body: parseWikiPage(page.body).body.slice(0, RELATED_PAGE_CHARS),
-        });
-    }
-  }
+  const related = await relatedWikiPages(prisma, scope, transcript);
   const [pages, waiting, rules] = await Promise.all([
     listWikiPages(prisma, scope),
     listWikiChanges(prisma, scope, { state: ["pending"] }),
@@ -278,22 +314,19 @@ export async function curateWiki(
     messages: lines,
     kept,
   });
-  const { answer, failed } = await askWikiModel(deps, {
-    model,
+  const proposal = await askCurator(deps, {
     scope,
+    model,
     botId: thread.botId ?? "wiki-curator",
-    threadId: thread.id,
     usageBotId: thread.botId ?? undefined,
-    operationId: `wiki:${thread.id}`,
+    threadId: thread.id,
     runId: `wiki:${thread.id}:${fromSeq}:${toSeq}`,
+    operationId: `wiki:${thread.id}`,
     prompt,
     instructions: curatorSystemPrompt(
       rules ? parseWikiPage(rules.body).body.trim() || CURATOR_RULES : CURATOR_RULES,
     ),
   });
-  const proposal = failed ? null : parseCuratorOutput(answer);
-  // Throwing keeps the cursor where it was, so the queue tries this stretch again.
-  if (!proposal) throw new Error("The wiki curator's model did not answer with a usable proposal.");
 
   const change =
     proposal.worth && proposal.ops.length

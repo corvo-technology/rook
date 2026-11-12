@@ -790,7 +790,7 @@ describe("connector read-only metadata and approval enforcement", () => {
     f.setCalls([{ args: { path: "  ", content: "ok" }, executionId: "call-1" }]);
     await f.run();
     expect(f.commit).not.toHaveBeenCalled();
-    expect(f.results.at(-1)).toEqual({ error: "path is required" });
+    expect(f.results.at(-1)).toEqual({ error: "path or file is required" });
   });
 
   describe.each([false, true])("catalog = %s", (catalog) => {

@@ -614,6 +614,10 @@ msgstr "{0}をグループに追加"
 msgid "Add a command to run"
 msgstr "実行するコマンドを追加"
 
+#: src/pages/WikiBrowser.tsx
+msgid "Add a file"
+msgstr "ファイルを追加"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Add a file or folder to watch"
 msgstr "監視するファイルまたはフォルダーを追加"
@@ -2060,6 +2064,10 @@ msgstr "MCPサーバーを追加できませんでした"
 msgid "Could not add the agent"
 msgstr "エージェントを追加できませんでした"
 
+#: src/pages/WikiBrowser.tsx
+msgid "Could not add the file"
+msgstr "ファイルを追加できませんでした"
+
 #: src/pages/shell/message-cards.tsx
 msgid "Could not approve this server"
 msgstr "このサーバーを承認できませんでした"
@@ -2925,6 +2933,7 @@ msgstr "切断中…"
 #: src/components/PasskeyOffer.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/shell/message-cards.tsx
+#: src/pages/WikiBrowser.tsx
 msgid "Dismiss"
 msgstr "閉じる"
 

@@ -756,6 +756,14 @@ export interface BackgroundJobPayloads {
   "wiki.review": { spaceId: string; userId: string; manual?: boolean };
   /** Writes a change that hit a moved page again against the pages as they are now. */
   "wiki.retry": { spaceId: string; userId: string; changeId: string };
+  /** The wiki curator reads a file part by part; the import row holds its progress. */
+  "wiki.import": {
+    importId: string;
+    storageKey: string;
+    mimeType: string;
+    threadId?: string;
+    temporary?: boolean;
+  };
   /** The memory model reads what the person said for facts to suggest about them. */
   "memory.learn": { threadId: string };
   /** Design the body of a new agent's avatar from its role, unless a look was chosen meanwhile. */

@@ -51,6 +51,7 @@ function handlers(): BackgroundJobHandlers {
     "wiki.curate": vi.fn(async () => undefined),
     "wiki.review": vi.fn(async () => undefined),
     "wiki.retry": vi.fn(async () => undefined),
+    "wiki.import": vi.fn(async () => undefined),
     "memory.learn": vi.fn(async () => undefined),
     "bot.design-avatar": vi.fn(async () => undefined),
     "messaging.deliver": vi.fn(async () => undefined),

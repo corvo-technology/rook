@@ -1,3 +1,5 @@
+import { MASCOT_LOOKS } from "@corvo/core";
+
 /** The rooks, one per agent color the app has, in the order its picker shows them. */
 export const MASCOT_HUES = [
   "menta",
@@ -23,7 +25,7 @@ export const MASCOT_COLOR: Record<MascotHue, string> = {
   vermelho: "#f48877",
   laranja: "#e59651",
   amarelo: "#cda448",
-  lima: "#87bd68",
+  lima: MASCOT_LOOKS.lime.color,
   ciano: "#4bbdcf",
   neutro: "#55555c",
 };

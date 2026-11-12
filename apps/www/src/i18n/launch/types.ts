@@ -152,6 +152,7 @@ export type LaunchCopy = {
     alsoFor: string;
     macLinux: string;
     windows: string;
+    formats: { label: string; mac: string; macIntel: string; linux: string; windows: string; arm64: string };
     copyLabel: string;
     copiedLabel: string;
     note: string;

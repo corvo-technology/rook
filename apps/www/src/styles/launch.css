@@ -95,12 +95,14 @@ main h3 {
   font-size: 14px;
 }
 
+.lp-install .download-note a,
 .lp-hero__actions .download-note a {
   color: var(--body);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
+.lp-install .download-note a:hover,
 .lp-hero__actions .download-note a:hover {
   color: var(--ink);
 }
@@ -485,6 +487,12 @@ main h3 {
 
 .lp-command button:hover {
   background: var(--surface-soft);
+}
+
+.lp-formats {
+  margin-top: 16px;
+  max-width: 640px;
+  line-height: 1.7;
 }
 
 .lp-commands .download-note {

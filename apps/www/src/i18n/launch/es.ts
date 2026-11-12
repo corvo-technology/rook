@@ -324,6 +324,7 @@ const COPY: LaunchCopy = {
     alsoFor: "También para Windows y Linux",
     macLinux: "macOS y Linux",
     windows: "Windows (PowerShell)",
+    formats: { label: "Todos los formatos", mac: "Mac", macIntel: "Mac Intel", linux: "Linux", windows: "Windows", arm64: "ARM64" },
     copyLabel: "Copiar",
     copiedLabel: "Copiado",
     note: "Windows 10 u 11 y Linux, ambos de 64 bits. La misma línea actualiza la app después.",

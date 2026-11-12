@@ -7,9 +7,9 @@ import { returnBotMessageOutcome, runReturnsOutcome } from "./bot-messages.js";
 import { withComputerScreenAvailability } from "./computer-screens.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { notifyRun } from "./run-notifications.js";
-import { endTicketRun } from "./ticket-run-moves.js";
 import type { TakeoverResumeCheckpoint } from "./takeover-resume.js";
 import { TAKEOVER_RESUME_CHECKPOINTS } from "./takeover-resume.js";
+import { endTicketRun } from "./ticket-run-moves.js";
 
 /**
  * Avoid an expensive remote workspace export when a turn never touched the computer. A failed

@@ -49,7 +49,8 @@ export function createBoardEvents(realtime?: RealtimeFanout): BoardEvents {
       const unsubscribe = realtime
         ? await realtime
             .subscribe(boardEventTopic(spaceId), (payload) => {
-              let change: { boardId?: string; ticketId?: string; moved?: unknown; step?: unknown } = {};
+              let change: { boardId?: string; ticketId?: string; moved?: unknown; step?: unknown } =
+                {};
               try {
                 change = JSON.parse(payload) as typeof change;
               } catch {

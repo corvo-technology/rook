@@ -174,7 +174,7 @@ describe("readThreadDocument", () => {
   it("explains a kind of file it cannot read, and a PDF that is damaged", async () => {
     const video = { ...row("v1", "clip.mp4", "video/mp4"), bytes: new Uint8Array([1]) };
     expect(await read(world([video]), { file: "attachments/v1.mp4" })).toEqual({
-      error: expect.stringMatching(/can read PDF and plain text/i),
+      error: expect.stringMatching(/can read PDF, Word/i),
     });
     const broken = {
       ...row("p1", "broken.pdf", "application/pdf"),

@@ -33,7 +33,13 @@ import {
   readWikiPage,
 } from "@corvo/db";
 import { getLogger, redactSensitiveText } from "@corvo/logging";
-import { DocumentTextError, documentKind, extractPdfText } from "./document-text.js";
+import {
+  DocumentTextError,
+  documentKind,
+  extractPdfText,
+  unsupportedDocumentMessage,
+} from "./document-text.js";
+import { extractOfficeText } from "./office-text.js";
 import { findAttachedDocument } from "./thread-documents.js";
 import { formatWikiIndex } from "./wiki-context.js";
 import { askCurator, postWikiChangeCard, relatedWikiPages } from "./wiki-curator-run.js";
@@ -71,24 +77,33 @@ async function sectionsOf(
   bytes: Uint8Array,
   name: string,
   mimeType: string,
-): Promise<{ sections: DocumentSection[]; pagesRead: number }> {
+): Promise<{ sections: DocumentSection[]; notes: string[] }> {
   const kind = documentKind(name, mimeType);
   if (kind === "pdf") {
     const pdf = await extractPdfText(bytes);
     return {
       sections: pdfSections(pdf.pages.map((page) => redactSensitiveText(page))),
-      pagesRead: pdf.pages.length,
+      notes: [],
     };
   }
   if (kind === "text") {
     return {
       sections: textSections(redactSensitiveText(new TextDecoder("utf-8").decode(bytes))),
-      pagesRead: 1,
+      notes: [],
     };
   }
-  throw new ImportFailure(
-    `It can read PDF and text files, not ${mimeType || "this kind of file"}. Save it as a PDF or a text file first.`,
-  );
+  if (kind) {
+    // Masked before anything else sees it, as a PDF's pages are.
+    const office = extractOfficeText(bytes, kind);
+    return {
+      sections: office.sections.map((part) => ({
+        label: part.label,
+        text: redactSensitiveText(part.text),
+      })),
+      notes: office.notes,
+    };
+  }
+  throw new ImportFailure(unsupportedDocumentMessage(name, mimeType));
 }
 
 /**
@@ -144,7 +159,7 @@ async function readIntoWiki(
     throw new ImportFailure(
       `This file is too large to read (the limit is ${attachmentSizeLabel(limit)}).`,
     );
-  const { sections } = await sectionsOf(bytes, name, payload.mimeType);
+  const { sections, notes } = await sectionsOf(bytes, name, payload.mimeType);
   const { parts, truncated } = documentParts(sections);
   if (!parts.length)
     throw new ImportFailure("This file has no text to read, as a scanned document has.");
@@ -212,9 +227,12 @@ async function readIntoWiki(
           ...(payload.threadId ? { threadId: payload.threadId } : {}),
         },
         ops,
-        reason: truncated
-          ? `Read from ${name}, only as far as its first ${parts.length} parts.`
-          : `Read from ${name}.`,
+        reason: [
+          truncated
+            ? `Read from ${name}, only as far as its first ${parts.length} parts.`
+            : `Read from ${name}.`,
+          ...notes,
+        ].join(" "),
         anchor: payload.threadId ? { threadId: payload.threadId } : {},
         edits: settings.edits,
       })
@@ -250,7 +268,9 @@ export async function startAttachedFileImport(
   if ("error" in found) return found;
   const { artifact } = found;
   if (!documentKind(artifact.name, artifact.mimeType))
-    return { error: `"${artifact.name}" is not a PDF or a text file, so it cannot be read.` };
+    return {
+      error: `"${artifact.name}" cannot be read. ${unsupportedDocumentMessage(artifact.name, artifact.mimeType)}`,
+    };
   const limit = deps.maxUploadSizeBytes ?? ATTACHMENT_MAX_BYTES;
   if (artifact.size > limit)
     return {

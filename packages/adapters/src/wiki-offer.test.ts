@@ -34,6 +34,19 @@ describe("offering to keep a document in the wiki", () => {
     expect(wikiOfferInstruction([notes], interactive)).toContain("ask_user");
   });
 
+  it("applies to Word and spreadsheet files, but not the old formats", () => {
+    const docx = { name: "plan.docx", mimeType: "" };
+    const sheet = {
+      name: "budget",
+      mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    };
+    expect(wikiOfferInstruction([docx], interactive)).toContain("ask_user");
+    expect(wikiOfferInstruction([sheet], interactive)).toContain("ask_user");
+    expect(
+      wikiOfferInstruction([{ name: "old.doc", mimeType: "application/msword" }], interactive),
+    ).toBe("");
+  });
+
   it("says nothing when no attached file is a document that can be read", () => {
     expect(wikiOfferInstruction([], interactive)).toBe("");
     expect(wikiOfferInstruction([photo, video], interactive)).toBe("");

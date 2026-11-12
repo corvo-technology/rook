@@ -5,7 +5,7 @@ import {
   wikiRetryJob,
   wikiReviewJob,
 } from "@corvo/adapter-kit";
-import { documentKind, threadIsCurated } from "@corvo/adapters";
+import { documentKind, threadIsCurated, unsupportedDocumentMessage } from "@corvo/adapters";
 import type { WikiChange } from "@corvo/contracts";
 import { ATTACHMENT_MAX_BYTES } from "@corvo/contracts";
 import { AttachmentValidationError, decodeAttachmentBase64 } from "@corvo/core";
@@ -198,8 +198,7 @@ export function wikiRoutes(ctx: RouterContext) {
             throw new ORPCError("BAD_REQUEST", { message: "Files are not available here." });
           if (!documentKind(input.name, input.mimeType)) {
             throw new ORPCError("BAD_REQUEST", {
-              message:
-                "It can read PDF and text files. Save this one as a PDF or a text file first.",
+              message: unsupportedDocumentMessage(input.name, input.mimeType),
             });
           }
           let bytes: Uint8Array;

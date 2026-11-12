@@ -717,6 +717,9 @@ importers:
       d3-dsv:
         specifier: 3.0.1
         version: 3.0.1
+      fflate:
+        specifier: 0.8.3
+        version: 0.8.3
       graphile-worker:
         specifier: 0.17.3
         version: 0.17.3(typescript@7.0.2)
@@ -738,6 +741,9 @@ importers:
       railway:
         specifier: 3.16.0
         version: 3.16.0
+      saxes:
+        specifier: 6.0.0
+        version: 6.0.0
       sendblue:
         specifier: 3.20.1
         version: 3.20.1

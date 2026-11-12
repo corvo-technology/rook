@@ -398,7 +398,7 @@ export function WikiBrowser({
             type="file"
             multiple
             hidden
-            accept=".pdf,.txt,.md,.csv,.json,text/*,application/pdf"
+            accept=".pdf,.docx,.xlsx,.odt,.ods,.txt,.md,.csv,.json,text/*,application/pdf"
             data-testid="wiki-file-input"
             onChange={(event) => {
               if (event.target.files?.length) void addFiles(event.target.files);

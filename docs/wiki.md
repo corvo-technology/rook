@@ -50,7 +50,7 @@ lets edits in.
 
 ## Documents
 
-When a person attaches a PDF or a text file that holds knowledge the team will want again (a
+When a person attaches a PDF, a Word or spreadsheet file, or a text file that holds knowledge the team will want again (a
 contract, a policy, a manual, a specification), the agent offers to keep it in the wiki after it has
 answered: it asks with a choice card, says that the wiki is where the team keeps what it knows and
 that everyone in the space can read it, and keeps it with `save_shared_memory` (naming the file)
@@ -66,13 +66,16 @@ screen. Both ways go to one background job, so the screen and the agent get the 
 ### How a file is read
 
 The file's text is read inside the server, with no computer and no hosted service: a PDF page by
-page, a text file as it is. Tokens, keys and email addresses are masked first. The text is cut into
-parts of about 12 000 characters (a PDF part is a run of whole pages), at most 30 parts, so a very
+page, a text file as it is, a Word document (`.docx`, `.odt`) as Markdown with its headings, lists
+and tables kept, cut into sections at the headings, and a spreadsheet (`.xlsx`, `.ods`) with each
+sheet as Markdown tables whose header row is repeated in every piece. Tokens, keys and email
+addresses are masked first. The text is cut into parts of about 12 000 characters (a PDF part is a
+run of whole pages, a document part a run of whole sections, a sheet part a run of rows), at most 30 parts, so a very
 long file is read as far as that and the change says so. Each part goes to the curator's model
 (the member's `fast` model, or the main one) with the wiki's index, the pages that may be related,
 and the pages the earlier parts of the same file already planned, so a later part adds to a page
 instead of creating it twice. The model is told to cite the source on every fact it keeps, as
-`(Source: policy.pdf, p. 3)` or `(Source: notes.txt, part 2)`, so the citation lives in the page.
+`(Source: policy.pdf, p. 3)`, `(Source: plan.docx, section 2)`, `(Source: budget.xlsx, Sales, rows 2-40)` or `(Source: notes.txt, part 2)`, so the citation lives in the page.
 A part whose answer is not usable is asked again once.
 
 What comes out is one change, with the file as its source, under the rules of every other change:
@@ -84,10 +87,17 @@ Wiki screen, it appears in the list of what waits.
 - **Progress.** A file being read is listed on the Wiki screen with its name and a spinner. A
   file that could not be read stays listed, with the reason, until it is dismissed or a day
   passes. A read that stops moving for 30 minutes is no longer listed.
-- **Limits.** A file is at most 10 MB. Only PDF and text files are read (plain text, Markdown,
-  CSV, JSON). A Word document or a spreadsheet in its own format is refused with a message that
-  says to save it as a PDF or a text file; a PDF with no text layer, as a scan is, is refused
-  because there is nothing to read.
+- **Limits.** A file is at most 10 MB. PDF, Word (`.docx`, `.odt`), spreadsheet (`.xlsx`, `.ods`)
+  and text files (plain text, Markdown, CSV, JSON) are read. Word and spreadsheet files are zip
+  archives of XML from outside, so they are opened with limits before anything is parsed: at most
+  2 000 entries, 24 MB of text from one part and 48 MB in all once uncompressed (a file that
+  expands past that, as a zip bomb does, is refused), and 30 seconds of reading. A spreadsheet is
+  read up to 20 sheets, 20 000 rows per sheet, 50 columns and 400 000 cells in all; what is left out
+  is said in the change's reason. Nothing in these files is run or followed: macros and formulas
+  are never evaluated (a formula's last saved value is read), links and external data are not
+  opened, and a file that declares XML entities is refused. The older binary formats (`.doc`,
+  `.xls`) are refused with a message that says to save the file as `.docx`, `.xlsx` or PDF; a PDF
+  with no text layer, as a scan is, is refused because there is nothing to read.
 - **Failures.** No model ready, a file that cannot be opened, a model that does not answer with
   something usable, and a file with nothing new in it each end as a failed import with a reason.
   Nothing is half written: pages are written only once every part has been read.

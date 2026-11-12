@@ -8,6 +8,7 @@ import {
   liveMessageComposing,
   projectBotMentions,
   projectMessageReactions,
+  threadSummary,
   timeSeparatorIds,
   unreadDividerMessageId,
   voiceChatHoldsMessage,
@@ -37,7 +38,6 @@ import { delegationStates } from "../../lib/delegation-states";
 import { isFreshMessage, newestCreatedAt } from "../../lib/fresh-messages";
 import { continuedMessageIds } from "../../lib/message-grouping";
 import { quoteDraftForSelection } from "../../lib/quote-selection";
-import { threadSummary } from "../../lib/thread-summary";
 import { messageHasVisibleBlocks } from "../../lib/tool-activity-view";
 import {
   ownMessageJustSent,

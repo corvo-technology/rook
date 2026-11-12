@@ -9,6 +9,7 @@ import type { MessageMenuEntry, MessageMenuSymbol } from "../lib/message-context
 
 const symbols = {
   reply: "arrowshape.turn.up.left",
+  thread: "bubble.left.and.bubble.right",
   copy: "doc.on.doc",
   react: "face.smiling",
   quote: "text.quote",

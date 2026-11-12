@@ -1,0 +1,22 @@
+---
+import { Rook } from "./Rook";
+
+type Props = {
+  size: number;
+  /** Share of the rook's height the page edge hides, when it peeks from below. */
+  clip?: number;
+  mood?: "idle" | "done";
+  class?: string;
+  /** The chess piece that sits here; only the rook is drawn so far. A slot is the one place to seat another. */
+  piece?: "rook";
+  /** Use "li" inside a list. */
+  as?: "span" | "li";
+};
+
+const { size, clip = 0, mood = "idle", class: className, piece = "rook", as: Tag = "span" } = Astro.props;
+---
+
+<!-- A place the guide rook rests. Without the script, or with reduced motion, a still rook sits here. -->
+<Tag class:list={["guide-slot", className]} style={`--s:${size}px`} data-guide-stop data-piece={piece} data-guide-clip={clip || undefined} aria-hidden="true">
+  <Rook hue="menta" size={size} mood={mood} />
+</Tag>

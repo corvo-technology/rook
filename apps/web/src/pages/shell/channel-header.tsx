@@ -85,6 +85,7 @@ export function ChannelHeader({
                   color={member.color}
                   identity={member.botId}
                   size={24}
+                  live
                   status={working.includes(member) ? member.status : undefined}
                 />
               </span>

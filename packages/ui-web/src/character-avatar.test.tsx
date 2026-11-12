@@ -163,4 +163,30 @@ describe("a character in an agent's color", () => {
     expect(html).toContain("corvo-mascot-eyes");
     expect(html).not.toContain("data-character");
   });
+
+  it("is alive at a small size when its place says so, and still when it is not asked", async () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    await act(async () => root.render(<BotAvatar color="#1FBF68::char_sprout" size={36} live />));
+    expect(lastOptions()).toMatchObject({ still: false, followPointer: true });
+    await act(async () => root.render(<BotAvatar color="#1FBF68::char_sprout" size={36} />));
+    expect(lastOptions()).toMatchObject({ still: true, followPointer: false });
+    await act(async () => root.unmount());
+  });
+
+  it("looks where it is told to and goes back to idle when told no more", async () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    const render = (lookAt?: { x: number; y: number }) =>
+      act(async () =>
+        root.render(<BotAvatar color="#1FBF68::char_sprout" size={36} live lookAt={lookAt} />),
+      );
+    await render({ x: 0, y: 0.9 });
+    expect(lastOptions()).toMatchObject({ lookAt: { x: 0, y: 0.9 } });
+    await render(undefined);
+    expect(dom.handles[0]?.update).toHaveBeenLastCalledWith({ lookAt: null });
+    await act(async () => root.unmount());
+  });
 });

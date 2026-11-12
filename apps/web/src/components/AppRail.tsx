@@ -71,7 +71,7 @@ export function AppRail({ ticketBoardEnabled }: { ticketBoardEnabled: boolean })
     { section: "agents", label: t`Agents`, to: "/app", Icon: AgentsGlyph },
     // The board is optional: it has a place only where the deployment turns it on.
     ...(ticketBoardEnabled
-      ? [{ section: "board" as const, label: t`Board`, to: "/app/board", Icon: KanbanSquare }]
+      ? [{ section: "board" as const, label: t`Tasks`, to: "/app/board", Icon: KanbanSquare }]
       : []),
     { section: "team", label: t`Team`, to: "/app/team", Icon: Users },
     { section: "routines", label: t`Routines`, to: "/app/routines", Icon: CalendarClock },

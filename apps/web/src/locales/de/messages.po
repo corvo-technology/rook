@@ -1223,17 +1223,6 @@ msgstr "Blockieren"
 msgid "Blocked"
 msgstr "Blockiert"
 
-#: src/components/AppRail.tsx
-#: src/components/SidebarFooter.tsx
-#: src/pages/Board.tsx
-msgid "Board"
-msgstr "Board"
-
-#: src/pages/Board.tsx
-#: src/pages/BoardSettings.tsx
-msgid "Board settings"
-msgstr "Board-Einstellungen"
-
 #: src/pages/shell/computer-view.tsx
 #: src/pages/shell/use-computer.tsx
 msgid "Booting live desktop…"
@@ -6368,6 +6357,17 @@ msgstr "Kontrolle übernehmen"
 #: src/components/MissionList.tsx
 msgid "Talk to your agent"
 msgstr "Sprich mit deinem Agenten"
+
+#: src/pages/Board.tsx
+#: src/pages/BoardSettings.tsx
+msgid "Task settings"
+msgstr "Aufgaben-Einstellungen"
+
+#: src/components/AppRail.tsx
+#: src/components/SidebarFooter.tsx
+#: src/pages/Board.tsx
+msgid "Tasks"
+msgstr "Aufgaben"
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Teach a task"

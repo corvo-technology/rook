@@ -8,7 +8,7 @@ export const mobile: GuidePage = {
       summary: "The mobile app, reaching agents from WhatsApp and Telegram, and voice notes.",
       body: `## The mobile app
 
-The mobile app talks to the same agents, routines, approvals and wiki as the web and desktop apps. It uses the phone's own menus, sheets and pickers. Approval cards appear in the chat. Some things are web or desktop only: the Store, Team, the **Board**, saved credential management and the squad view.
+The mobile app talks to the same agents, routines, approvals and wiki as the web and desktop apps. It uses the phone's own menus, sheets and pickers. Approval cards appear in the chat. Some things are web or desktop only: the Store, Team, **Tasks**, saved credential management and the squad view.
 
 ## Settings on the phone
 
@@ -32,7 +32,7 @@ If a chat app stops answering, check that the number or bot is **Connected** and
         "O app de celular, como falar com os agentes pelo WhatsApp e Telegram, e notas de voz.",
       body: `## O app de celular
 
-O app de celular conversa com os mesmos agentes, rotinas, aprovações e wiki dos apps web e desktop. Ele usa os menus, planilhas e seletores do próprio telefone. Os cartões de aprovação aparecem no chat. Algumas coisas são só web ou desktop: a Loja, a Equipe, o **Quadro**, o gerenciamento de credenciais salvas e a visão de squad.
+O app de celular conversa com os mesmos agentes, rotinas, aprovações e wiki dos apps web e desktop. Ele usa os menus, planilhas e seletores do próprio telefone. Os cartões de aprovação aparecem no chat. Algumas coisas são só web ou desktop: a Loja, a Equipe, as **Tarefas**, o gerenciamento de credenciais salvas e a visão de squad.
 
 ## Configurações no celular
 

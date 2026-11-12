@@ -1223,17 +1223,6 @@ msgstr "阻止"
 msgid "Blocked"
 msgstr "已屏蔽"
 
-#: src/components/AppRail.tsx
-#: src/components/SidebarFooter.tsx
-#: src/pages/Board.tsx
-msgid "Board"
-msgstr "看板"
-
-#: src/pages/Board.tsx
-#: src/pages/BoardSettings.tsx
-msgid "Board settings"
-msgstr "看板设置"
-
 #: src/pages/shell/computer-view.tsx
 #: src/pages/shell/use-computer.tsx
 msgid "Booting live desktop…"
@@ -6368,6 +6357,17 @@ msgstr "接管控制权"
 #: src/components/MissionList.tsx
 msgid "Talk to your agent"
 msgstr "与你的智能体对话"
+
+#: src/pages/Board.tsx
+#: src/pages/BoardSettings.tsx
+msgid "Task settings"
+msgstr "任务设置"
+
+#: src/components/AppRail.tsx
+#: src/components/SidebarFooter.tsx
+#: src/pages/Board.tsx
+msgid "Tasks"
+msgstr "任务"
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Teach a task"

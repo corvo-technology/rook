@@ -249,7 +249,8 @@ function liveStream() {
           }),
       }),
     },
-    event: (ticketId: string) => deliver?.({ done: false, value: { ticketId } }),
+    event: (ticketId: string, extra: Record<string, unknown> = {}) =>
+      deliver?.({ done: false, value: { ticketId, ...extra } }),
     end: () => deliver?.({ done: true, value: undefined }),
     error: () => fail?.(new Error("Disconnected")),
   };
@@ -523,7 +524,7 @@ it("shows the column names the board chose and saves a new one from the settings
   expect(headings).toContain("In progress");
 
   await act(async () =>
-    view.container.querySelector<HTMLButtonElement>('button[aria-label="Board settings"]')?.click(),
+    view.container.querySelector<HTMLButtonElement>('button[aria-label="Task settings"]')?.click(),
   );
   const input = view.container.querySelector<HTMLInputElement>('input[name="label-doing"]');
   expect(input?.value).toBe("");
@@ -621,6 +622,39 @@ it("marks a card whose owner is working on it right now", async () => {
     expect(marked("ticket-2")).toBe(false);
     // A card that is not started has nothing being worked on, whatever its owner is doing.
     expect(marked("ticket-3")).toBe(false);
+  } finally {
+    await page.cleanup();
+  }
+});
+
+it("shows the step an agent is on under its card while it works, and takes it away when the run ends", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  api.bots.list.mockResolvedValue([{ id: "bot-1", name: "Helper", status: "idle" }]);
+  api.tickets.list.mockReset().mockResolvedValue({
+    tickets: [ticket("Live", "ticket-1", "doing", "RAK-1", "bot-1")],
+  });
+  const live = liveStream();
+  const page = await renderBoard(live.stream);
+  try {
+    const step = () => page.container.querySelector('[data-testid="card-step"]')?.textContent;
+    expect(step()).toBeUndefined();
+    const reads = api.tickets.list.mock.calls.length;
+    await act(async () =>
+      live.event("ticket-1", { step: { botId: "bot-1", text: "Searching the web" } }),
+    );
+    await settle();
+    expect(step()).toBe("Searching the web");
+    expect(page.container.querySelector("[data-working]")).not.toBeNull();
+    // A step changes nothing in the list, so the board does not read it again.
+    expect(api.tickets.list).toHaveBeenCalledTimes(reads);
+    await act(async () =>
+      live.event("ticket-1", { step: { botId: "bot-1", text: "Writing the reply" } }),
+    );
+    await settle();
+    expect(step()).toBe("Writing the reply");
+    await act(async () => live.event("ticket-1", { step: null }));
+    await settle();
+    expect(step()).toBeUndefined();
   } finally {
     await page.cleanup();
   }

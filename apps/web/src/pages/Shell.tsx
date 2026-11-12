@@ -1043,6 +1043,7 @@ function SpaceShell() {
           ) : (
             <Transcript
               {...transcriptProps}
+              onApproveAll={composer.approveAll}
               key={activeSnapshot?.threadId}
               scrollRef={thread.messageScroll}
               scrollRequest={scrollRequest}

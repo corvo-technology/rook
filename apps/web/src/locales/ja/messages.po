@@ -219,6 +219,10 @@ msgstr "{count}年"
 msgid "{days}d ago"
 msgstr "{days}日前"
 
+#: src/components/ApproveAllBar.tsx
+msgid "{failedCount} could not be approved"
+msgstr "{failedCount} 件を承認できませんでした"
+
 #: src/components/markdown-copy.tsx
 msgid "{from}–{to} of {total} rows"
 msgstr "{total} 行中 {from}–{to}"
@@ -1044,6 +1048,10 @@ msgstr "承認"
 #: src/pages/WikiBrowser.tsx
 msgid "Approve all"
 msgstr "すべて承認"
+
+#: src/components/ApproveAllBar.tsx
+msgid "Approve all {count}"
+msgstr "{count} 件をすべて承認"
 
 #: src/pages/WikiBrowser.tsx
 msgid "Approve edits"
@@ -2488,6 +2496,7 @@ msgstr "ティーチングを開始できませんでした"
 msgid "Could not stop computer"
 msgstr "コンピューターを停止できませんでした"
 
+#: src/components/ApproveAllBar.tsx
 #: src/components/AskCard.tsx
 msgid "Could not submit this answer"
 msgstr "この回答を送信できませんでした"
@@ -5924,6 +5933,7 @@ msgstr "リセットリンクを送信"
 msgid "Send with Enter"
 msgstr "Enterで送信"
 
+#: src/components/ApproveAllBar.tsx
 #: src/components/AskCard.tsx
 msgid "Sending…"
 msgstr "送信中…"

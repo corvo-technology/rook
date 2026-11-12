@@ -588,6 +588,47 @@ export function threadsRoutes(ctx: RouterContext) {
         });
         return { ok: true as const };
       }),
+      answerBatch: authed.threads.answerBatch.handler(async ({ context, input }) => {
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        const results: { approvalEffectId: string; ok: boolean; error?: string }[] = [];
+        const resumed = new Set<string>();
+        // One at a time through the same path as a single answer, so each card gets the same
+        // checks and one failing card never decides or blocks another.
+        for (const item of input.items) {
+          const answered = await deps.events
+            .answerRunInput({
+              spaceId: context.actor.spaceId,
+              threadId: target.threadId,
+              runId: item.runId,
+              messageId: item.messageId,
+              answeredByUserId: context.actor.userId,
+              answer: "allow",
+              approvalEffectId: item.approvalEffectId,
+              batchClass: input.batchClass,
+            })
+            .catch((error: unknown) => {
+              getLogger().error("thread answer batch item", error);
+              return false;
+            });
+          if (answered) resumed.add(item.runId);
+          results.push({
+            approvalEffectId: item.approvalEffectId,
+            ok: answered,
+            ...(answered ? {} : { error: "This prompt is no longer awaiting an answer" }),
+          });
+        }
+        if (resumed.size) {
+          await completeMission(deps.prisma, context.actor, "decide").catch((error) => {
+            getLogger().error("thread answer mission", error);
+          });
+        }
+        for (const runId of resumed) {
+          await deps.jobs.enqueue(runContinueJob(runId)).catch((error) => {
+            getLogger().error("thread answer enqueue", error);
+          });
+        }
+        return { results };
+      }),
       markRead: authed.threads.markRead.handler(async ({ context, input }) => {
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);
         const unreadAfterSeq = await markThreadRead(deps.prisma, context.actor, target);

@@ -4852,3 +4852,100 @@ describe("retryFailedRun", () => {
     expect(data.modelPinned).toBeUndefined();
   });
 });
+
+describe("answerRunInput as part of a batch", () => {
+  const plainActions = [
+    { id: "allow", label: "Allow once" },
+    { id: "always", label: "Always allow this tool" },
+    { id: "deny", label: "Deny" },
+  ];
+  const answered = async (
+    block: Record<string, unknown>,
+    options: { kind?: string; answer?: string; batchClass?: "tool" | "site" } = {},
+  ) => {
+    const tx = {
+      $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+      message: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "message-1",
+          blocks: [
+            {
+              kind: "ask",
+              text: "Review",
+              status: "pending",
+              approvalEffectId: "effect-1",
+              ...block,
+            },
+          ],
+        }),
+        update: vi.fn().mockResolvedValue({ id: "message-1" }),
+      },
+      run: {
+        findFirst: vi.fn().mockResolvedValue({ botId: "bot-1", userId: "user-1" }),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        findUnique: vi.fn().mockResolvedValue({ status: "queued" }),
+      },
+      task: { updateMany: vi.fn() },
+      externalEffect: {
+        findFirst: vi
+          .fn()
+          .mockResolvedValue({ id: "effect-1", kind: options.kind ?? "connector_write" }),
+        update: vi.fn().mockResolvedValue({ id: "effect-1" }),
+      },
+      thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 10 }) },
+      event: {
+        create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({
+          ...event(data.seq),
+          type: data.type,
+        })),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
+    } as unknown as PrismaClient;
+    const result = await answerRunInput(
+      prisma,
+      {
+        spaceId: "workspace-1",
+        threadId: "thread-1",
+        runId: "run-1",
+        messageId: "message-1",
+        answeredByUserId: "user-1",
+        answer: options.answer ?? "allow",
+        approvalEffectId: "effect-1",
+        batchClass: options.batchClass ?? "tool",
+      },
+      new TestFanout(),
+    );
+    return { result, tx };
+  };
+
+  it("allows a plain approval", async () => {
+    const { result, tx } = await answered({ actions: plainActions });
+    expect(result).toBe(true);
+    expect(tx.externalEffect.update).toHaveBeenCalledWith({
+      where: { id: "effect-1" },
+      data: { status: "approved" },
+    });
+  });
+
+  it.each([
+    ["a secret request", { input: "secret", actions: undefined }, {}],
+    ["a proposal", { proposal: true, actions: [plainActions[0], plainActions[2]] }, {}],
+    ["an instruction update", { actions: plainActions, instructionUpdate: { botId: "bot-1" } }, {}],
+    [
+      "a card that creates something",
+      { actions: [{ ...plainActions[0], outcome: "created" }] },
+      {},
+    ],
+    ["a security-boundary change", { actions: plainActions }, { kind: "create_group" }],
+    ["a deny", { actions: plainActions }, { answer: "deny" }],
+    ["an always", { actions: plainActions }, { answer: "always" }],
+    ["a card of another class", { actions: plainActions }, { batchClass: "site" as const }],
+  ])("refuses %s and changes nothing", async (_name, block, options) => {
+    const { result, tx } = await answered(block as Record<string, unknown>, options);
+    expect(result).toBe(false);
+    expect(tx.externalEffect.update).not.toHaveBeenCalled();
+    expect(tx.message.update).not.toHaveBeenCalled();
+  });
+});

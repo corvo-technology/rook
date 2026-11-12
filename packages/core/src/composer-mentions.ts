@@ -81,6 +81,18 @@ export function mentionChipKey(mention: Pick<ComposerMention, "kind" | "id">): s
   return `${mention.kind}:${mention.id}`;
 }
 
+/** The picker's suggestions for what follows `@`: names starting with the query, at most ten. */
+export function filterMentionOptions(
+  targets: readonly ComposerMention[] | undefined,
+  query: string | null,
+): ComposerMention[] {
+  if (query === null || !targets?.length) return [];
+  const needle = query.trim().toLowerCase();
+  return targets
+    .filter((target) => !needle || target.name.toLowerCase().startsWith(needle))
+    .slice(0, 10);
+}
+
 export function stripMentionToken(text: string, mentionName: string): string {
   const normalized = mentionName.trim();
   if (!normalized) return text.trim();

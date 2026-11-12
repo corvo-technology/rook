@@ -1,12 +1,15 @@
 import path from "node:path";
 import { LocalModelStore } from "./local-speech-models.js";
+import { SherpaTtsSynthesizer } from "./sherpa-tts-synthesizer.js";
 import { SherpaWhisperTranscriber } from "./sherpa-whisper-transcriber.js";
+import type { SpeechSynthesizer } from "./speech-synthesizer.js";
 import type { SpeechTranscriber } from "./speech-transcriber.js";
 
-/** What speech on the owner's own computer needs: where models live and the engine that reads them. */
+/** What speech on the owner's own computer needs: where models live and the engines that run them. */
 export interface LocalSpeech {
   store: LocalModelStore;
   transcriber: SpeechTranscriber;
+  synthesizer: SpeechSynthesizer;
 }
 
 /**
@@ -21,5 +24,6 @@ export function createLocalSpeech(env: {
   return {
     store: new LocalModelStore({ dir: path.join(env.dataDir, "speech-models") }),
     transcriber: new SherpaWhisperTranscriber(),
+    synthesizer: new SherpaTtsSynthesizer(),
   };
 }

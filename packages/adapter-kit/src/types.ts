@@ -714,6 +714,11 @@ export interface VoiceSynthesizeRequest {
   apiKey: string;
   /** Connection speech model. Fish uses this, then `FISH_TTS_MODEL`, then s2.1-pro. */
   model?: string;
+  /**
+   * The language the reply is in, as a BCP-47 tag or an ISO 639-1 code. Only a voice that
+   * speaks one language per model, such as the ones on the owner's own computer, reads it.
+   */
+  language?: string;
   signal?: AbortSignal;
 }
 

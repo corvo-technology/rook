@@ -12,7 +12,9 @@ import {
 const archive = new TextEncoder().encode("not a real archive, only bytes to hash".repeat(200));
 const spec: LocalSpeechModelSpec = {
   id: "test-model",
+  kind: "listen",
   label: "Test",
+  license: "MIT",
   sizeBytes: archive.byteLength,
   sha256: createHash("sha256").update(archive).digest("hex"),
   url: "https://models.example.test/test-model.tar.bz2",
@@ -199,6 +201,34 @@ describe("LocalModelStore", () => {
     await vi.waitFor(async () => expect(await target.automaticDownloadAllowed()).toBe(false));
   });
 
+  it("keeps the opt-out of listening models and of voices apart", async () => {
+    const voice: LocalSpeechModelSpec = { ...spec, id: "test-voice", kind: "speak" };
+    const target = new LocalModelStore({
+      dir,
+      fetch: servingFetch() as unknown as typeof fetch,
+      extract: fakeExtract,
+      models: [spec, voice],
+    });
+    await target.ensure(voice.id);
+    await target.remove(voice.id);
+    expect(await target.automaticDownloadAllowed("speak")).toBe(false);
+    // Removing a voice must not stop the listening model from coming by itself.
+    expect(await target.automaticDownloadAllowed("listen")).toBe(true);
+    await target.allowAutomaticDownload("speak");
+    expect(await target.automaticDownloadAllowed("speak")).toBe(true);
+  });
+
+  it("lists a model's kind and, for a voice, a sample to play", async () => {
+    const voice: LocalSpeechModelSpec = { ...spec, id: "test-voice", kind: "speak", sample: "Hi" };
+    const target = new LocalModelStore({ dir, models: [spec, voice] });
+    expect(await target.list()).toMatchObject([
+      { id: "test-model", kind: "listen" },
+      { id: "test-voice", kind: "speak", sample: "Hi" },
+    ]);
+    expect(target.specs("speak").map((entry) => entry.id)).toEqual(["test-voice"]);
+    expect(target.spec("test-model")?.license).toBe("MIT");
+  });
+
   it("a model that is not in the catalog is never fetched", async () => {
     const fetchImpl = servingFetch();
     await expect(store(fetchImpl).ensure("https://evil.example.test/x")).rejects.toThrow(
@@ -210,6 +240,7 @@ describe("LocalModelStore", () => {
   it("the shipped catalog uses one fixed https origin and pinned digests", () => {
     expect(LOCAL_SPEECH_MODELS.map((model) => model.id)).toEqual(["base", "small"]);
     for (const model of LOCAL_SPEECH_MODELS) {
+      expect(model.kind).toBe("listen");
       expect(model.url.startsWith("https://github.com/k2-fsa/sherpa-onnx/releases/download/")).toBe(
         true,
       );

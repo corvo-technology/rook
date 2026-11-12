@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { LOCAL_VOICE_PROVIDER_ID, LocalSpeechModelSchema } from "./domain.js";
+import {
+  LOCAL_LISTEN_LANGUAGES,
+  LOCAL_VOICE_PROVIDER_ID,
+  LocalSpeechModelSchema,
+} from "./domain.js";
 import { appContract } from "./rpc.js";
 
 const connectInput = appContract.voice.connect["~orpc"].inputSchema;
@@ -19,6 +23,12 @@ describe("local speech model contract", () => {
       expect(LocalSpeechModelSchema.safeParse({ ...model, state }).success).toBe(true);
     }
     expect(LocalSpeechModelSchema.safeParse({ ...model, state: "paused" }).success).toBe(false);
+  });
+
+  it("tells a listening model from a voice, and reads older ones as listening", () => {
+    expect(LocalSpeechModelSchema.parse(model).kind).toBe("listen");
+    expect(LocalSpeechModelSchema.parse({ ...model, kind: "speak" }).kind).toBe("speak");
+    expect(LocalSpeechModelSchema.safeParse({ ...model, kind: "sing" }).success).toBe(false);
   });
 
   it("keeps an error only as optional text", () => {
@@ -47,17 +57,26 @@ describe("voice.connect for the local provider", () => {
     expect(connectInput?.safeParse({ provider: "openai", apiKey: "" }).success).toBe(false);
   });
 
-  it("rejects a language other than auto, en or pt", () => {
+  it("accepts the languages Whisper is told and rejects any other", () => {
+    for (const language of LOCAL_LISTEN_LANGUAGES) {
+      expect(
+        connectInput?.safeParse({ provider: LOCAL_VOICE_PROVIDER_ID, sttModel: "base", language })
+          .success,
+      ).toBe(true);
+    }
     expect(
       connectInput?.safeParse({
         provider: LOCAL_VOICE_PROVIDER_ID,
         sttModel: "base",
-        language: "fr",
+        language: "xx",
       }).success,
     ).toBe(false);
   });
 
-  it("requires a model for the local provider", () => {
+  it("requires a model for the local provider unless a voice is chosen", () => {
     expect(connectInput?.safeParse({ provider: LOCAL_VOICE_PROVIDER_ID }).success).toBe(false);
+    expect(
+      connectInput?.safeParse({ provider: LOCAL_VOICE_PROVIDER_ID, voiceId: "kokoro" }).success,
+    ).toBe(true);
   });
 });

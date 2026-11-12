@@ -61,7 +61,7 @@ export function bubbleFrameWidth(role: ThreadMessage["role"]) {
 }
 
 /** How many of the latest messages show a moving face. */
-const LIVE_FACE_MESSAGES = 12;
+export const LIVE_FACE_MESSAGES = 12;
 
 export const Transcript = memo(function Transcript({
   scrollRef,

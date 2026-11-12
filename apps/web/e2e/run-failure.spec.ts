@@ -220,7 +220,7 @@ test("a rejected key opens the model connections", async ({ page }, testInfo) =>
   await expect(action).toHaveText("Replace key");
   await captureScreenshot(page, testInfo, "rejected-key-connection-recovery");
   await action.click();
-  await expect(page.getByRole("button", { name: "Close model settings" })).toBeVisible();
+  await expect(page.getByTestId("model-settings")).toBeVisible();
 });
 
 test("an approved action the model did not run says so", async ({ page }, testInfo) => {

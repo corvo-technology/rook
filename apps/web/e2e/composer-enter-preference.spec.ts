@@ -22,7 +22,7 @@ test.describe("touch composer", () => {
     await composer.fill("saved draft");
     await page.getByTestId("user-menu-trigger").click();
     await page.getByRole("button", { name: "Settings", exact: true }).click();
-    const settings = page.getByTestId("user-settings");
+    const settings = page.getByTestId("settings-page");
     await settings.getByTestId("advanced-settings").locator("button[aria-expanded]").click();
     const preference = settings.getByRole("switch", { name: "Send with Enter", exact: true });
     await expect(preference).toBeChecked({ checked: false });
@@ -32,7 +32,7 @@ test.describe("touch composer", () => {
       .getByTestId("advanced-settings")
       .evaluate((element) => element.scrollIntoView({ block: "center" }));
     await captureScreenshot(page, testInfo, "composer-enter-preference-touch");
-    await settings.getByRole("button", { name: "Close user settings" }).click();
+    await page.getByTestId("settings-back").click();
     await expect(composer).toHaveValue("saved draft");
     await page.reload();
     await expect(composer).toHaveValue("saved draft");

@@ -33,3 +33,24 @@ for (const theme of ["light", "dark"] as const) {
     await expect(page).toHaveURL(/\/app\/[^/]+$/);
   });
 }
+
+for (const theme of ["light", "dark"] as const) {
+  test(`every settings section and the store are pages, ${theme}`, async ({ page }, testInfo) => {
+    await page.addInitScript((value) => localStorage.setItem("corvo.uiAppearance", value), theme);
+    await signup(page, `settings-pages-${theme}-${Date.now()}@corvo.test`, "password12", "UX QA");
+    await completeOnboarding(page, testInfo);
+
+    for (const section of ["general", "models", "voice", "memory", "usage", "mcp"]) {
+      await page.goto(`/settings/${section}`);
+      const settings = page.getByTestId("settings-page");
+      await expect(settings).toHaveAttribute("data-settings-section", section);
+      await expect(page.getByRole("dialog")).toHaveCount(0);
+      await captureScreenshot(page, testInfo, `settings-${section}-${theme}`);
+    }
+
+    await page.goto("/app/store");
+    await expect(page.getByTestId("store-page")).toBeVisible();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await captureScreenshot(page, testInfo, `store-${theme}`);
+  });
+}

@@ -106,9 +106,7 @@ it("selects an available provider when the saved self-hosted provider is hidden"
   const root = createRoot(container);
   try {
     await act(async () => {
-      root.render(
-        withQueries(<VoiceSettingsOverlay embedded scope="account" onClose={() => undefined} />),
-      );
+      root.render(withQueries(<VoiceSettingsOverlay scope="account" />));
     });
     expect(container.textContent).toContain("ElevenLabs");
     expect(container.textContent).not.toContain("Server URL");
@@ -163,9 +161,7 @@ it("saves a Fish speech model on the existing provider pane", async () => {
   };
   try {
     await act(async () => {
-      root.render(
-        withQueries(<VoiceSettingsOverlay embedded scope="account" onClose={() => undefined} />),
-      );
+      root.render(withQueries(<VoiceSettingsOverlay scope="account" />));
     });
     await act(async () => {
       await Promise.resolve();
@@ -260,9 +256,7 @@ it("connects a self-hosted speech server by URL without a key", async () => {
     [...container.querySelectorAll("button")].find((entry) => entry.textContent === "Connect");
   try {
     await act(async () => {
-      root.render(
-        withQueries(<VoiceSettingsOverlay embedded scope="account" onClose={() => undefined} />),
-      );
+      root.render(withQueries(<VoiceSettingsOverlay scope="account" />));
     });
     await act(async () => {
       await Promise.resolve();
@@ -330,9 +324,7 @@ it.each([
     const root = createRoot(container);
     try {
       await act(async () => {
-        root.render(
-          withQueries(<VoiceSettingsOverlay embedded scope="account" onClose={() => undefined} />),
-        );
+        root.render(withQueries(<VoiceSettingsOverlay scope="account" />));
       });
       expect(labelledInput(container, "Server URL").value).toBe(saved.endpoint);
       expect(labelledInput(container, "Speech model").value).toBe(saved.ttsModel);
@@ -383,7 +375,7 @@ it.each([null, "space-edited"])("plays a sample for the bound space %s", async (
   const root = createRoot(container);
   try {
     await act(async () => {
-      const panel = <VoiceSettingsOverlay embedded scope="account" onClose={() => undefined} />;
+      const panel = <VoiceSettingsOverlay scope="account" />;
       root.render(
         withQueries(
           spaceId ? <SpaceRpcProvider spaceId={spaceId}>{panel}</SpaceRpcProvider> : panel,
@@ -424,12 +416,7 @@ it("reopens with the cached providers and refreshes them in the background", asy
   const mount = async () => {
     const root = createRoot(container);
     await act(async () => {
-      root.render(
-        withQueries(
-          <VoiceSettingsOverlay embedded scope="account" onClose={() => undefined} />,
-          client,
-        ),
-      );
+      root.render(withQueries(<VoiceSettingsOverlay scope="account" />, client));
     });
     return root;
   };
@@ -481,12 +468,7 @@ it("keeps the provider picked during a background refresh and only its voices", 
   const mount = async () => {
     const root = createRoot(container);
     await act(async () => {
-      root.render(
-        withQueries(
-          <VoiceSettingsOverlay embedded scope="account" onClose={() => undefined} />,
-          client,
-        ),
-      );
+      root.render(withQueries(<VoiceSettingsOverlay scope="account" />, client));
     });
     return root;
   };
@@ -538,12 +520,7 @@ it("shows what a disconnect left, not a read sent before it", async () => {
   const mount = async () => {
     const root = createRoot(container);
     await act(async () => {
-      root.render(
-        withQueries(
-          <VoiceSettingsOverlay embedded scope="account" onClose={() => undefined} />,
-          client,
-        ),
-      );
+      root.render(withQueries(<VoiceSettingsOverlay scope="account" />, client));
     });
     return root;
   };
@@ -608,12 +585,7 @@ it("lets a background refresh update untouched fields but keeps edited ones", as
   const mount = async () => {
     const root = createRoot(container);
     await act(async () => {
-      root.render(
-        withQueries(
-          <VoiceSettingsOverlay embedded scope="account" onClose={() => undefined} />,
-          client,
-        ),
-      );
+      root.render(withQueries(<VoiceSettingsOverlay scope="account" />, client));
     });
     return root;
   };
@@ -672,9 +644,7 @@ it("picks a Space's own voice from the account's connections without managing th
   const root = createRoot(container);
   try {
     await act(async () => {
-      root.render(
-        withQueries(<VoiceSettingsOverlay embedded scope="space" onClose={() => undefined} />),
-      );
+      root.render(withQueries(<VoiceSettingsOverlay scope="space" />));
     });
     await vi.waitFor(() => expect(container.textContent).toContain("Hear a sample"));
     expect(voice.credentials).toHaveBeenCalledWith({ scope: "space" }, expect.anything());
@@ -727,9 +697,7 @@ it("offers 'This computer' as a provider with models to download and no key to p
   const root = createRoot(container);
   try {
     await act(async () => {
-      root.render(
-        withQueries(<VoiceSettingsOverlay embedded scope="account" onClose={() => undefined} />),
-      );
+      root.render(withQueries(<VoiceSettingsOverlay scope="account" />));
     });
     const select = container.querySelector("select") as HTMLSelectElement;
     expect([...select.options].map((option) => option.textContent)).toContain("This computer");
@@ -758,9 +726,7 @@ it("does not offer 'This computer' where the catalog leaves it out", async () =>
   const root = createRoot(container);
   try {
     await act(async () => {
-      root.render(
-        withQueries(<VoiceSettingsOverlay embedded scope="account" onClose={() => undefined} />),
-      );
+      root.render(withQueries(<VoiceSettingsOverlay scope="account" />));
     });
     expect(container.textContent).not.toContain("This computer");
   } finally {

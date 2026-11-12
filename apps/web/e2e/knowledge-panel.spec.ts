@@ -40,7 +40,7 @@ test("memory and skills are readable and editable in the app", async ({ page }, 
   // Space-wide documents live in Settings → Memory. Open that before bot
   // settings so the Knowledge Memory tab cannot steal this click.
   await openUserSettings(page, "memory");
-  await expect(page.getByLabel("Close memory settings")).toBeVisible();
+  await expect(page.getByTestId("memory-settings")).toBeVisible();
   const spaceDocs = page.getByTestId("space-memory-documents");
   const memoryRow = spaceDocs.getByRole("button", { name: /MEMORY\.md/ });
   await expect(memoryRow).toBeVisible();
@@ -135,8 +135,8 @@ test("memory and skills are readable and editable in the app", async ({ page }, 
   expect(
     (await rpc<MemoryDocument[]>(page, "memory/list", { scope: "user" })).map((doc) => doc.path),
   ).not.toContain(retiredPath);
-  await page.getByLabel("Close memory settings").click();
-  await expect(page.getByLabel("Close memory settings")).toHaveCount(0);
+  await page.getByTestId("settings-back").click();
+  await expect(page.getByTestId("memory-settings")).toHaveCount(0);
 
   // Bot memory is directly available in its settings panel.
   const seededDocs = await rpc<MemoryDocument[]>(page, "memory/list", {

@@ -25,7 +25,7 @@ async function seedToolActivityOn(page: Page) {
 
 async function setToggle(page: Page, on: boolean) {
   await page.goto(`${fixture}?view=settings`);
-  const settings = page.getByTestId("user-settings");
+  const settings = page.getByTestId("settings-page");
   await expect(settings).toBeVisible();
   await settings.getByTestId("advanced-settings").locator("button[aria-expanded]").click();
   const toggle = settings.getByTestId("tool-activity-toggle");
@@ -99,7 +99,7 @@ test("the settings toggle hides and restores tool activity", async ({ page }, te
 
   // Nothing saved leaves the switch off and the cards hidden.
   await page.goto(`${fixture}?view=settings`);
-  const settings = page.getByTestId("user-settings");
+  const settings = page.getByTestId("settings-page");
   await expect(settings).toBeVisible();
   await settings.getByTestId("advanced-settings").locator("button[aria-expanded]").click();
   const initialToggle = settings.getByTestId("tool-activity-toggle");

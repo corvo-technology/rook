@@ -1,32 +1,20 @@
 import { expect, test } from "@playwright/test";
 import { captureScreenshot, completeOnboarding, openNewSpace, signup } from "./helpers";
 
-test("a failed overlay chunk keeps the shell and the draft, and Refresh loads it", async ({
-  page,
-}, testInfo) => {
+test("a failed Store chunk shows Refresh, and Refresh loads it", async ({ page }, testInfo) => {
   const stamp = Date.now();
-  await signup(page, `overlay-load-${stamp}@corvo.test`, "password12", "Overlay Load");
+  await signup(page, `store-load-${stamp}@corvo.test`, "password12", "Store Load");
   await completeOnboarding(page);
 
-  const composer = page.getByRole("combobox", { name: "Message Chief" });
-  await composer.fill("Keep this draft");
-
-  const pluginsChunk = /\/pages\/PluginsOverlay\.tsx/;
-  await page.route(pluginsChunk, (route) => route.fulfill({ status: 404 }));
+  const storeChunk = /\/pages\/Store\.tsx/;
+  await page.route(storeChunk, (route) => route.fulfill({ status: 404 }));
   await page.getByRole("button", { name: "Store", exact: true }).click();
 
-  const failed = page.getByRole("alertdialog", { name: "Could not load" });
-  await expect(failed).toBeVisible();
-  await captureScreenshot(page, testInfo, "overlay-load-failed");
+  await expect(page.getByText("Something went wrong. Try again.", { exact: true })).toBeVisible();
+  await captureScreenshot(page, testInfo, "store-load-failed");
 
-  await failed.getByRole("button", { name: "Close", exact: true }).click();
-  await expect(failed).toHaveCount(0);
-  await expect(composer).toHaveValue("Keep this draft");
-
-  await page.unroute(pluginsChunk);
-  await page.getByRole("button", { name: "Store", exact: true }).click();
-  // The reload keeps ?integrations, so the overlay opens on its own once the chunk loads.
-  await failed.getByRole("button", { name: "Refresh", exact: true }).click();
+  await page.unroute(storeChunk);
+  await page.getByRole("button", { name: "Refresh", exact: true }).click();
   await expect(page.getByPlaceholder("Search apps")).toBeVisible();
 });
 
@@ -87,13 +75,11 @@ for (const overlay of ["settings", "integrations"] as const) {
       "Preload Recovery",
     );
     await completeOnboarding(page);
-    const chunk =
-      overlay === "settings" ? /\/pages\/SettingsOverlay\.tsx/ : /\/pages\/PluginsOverlay\.tsx/;
+    const chunk = overlay === "settings" ? /\/pages\/Settings\.tsx/ : /\/pages\/Store\.tsx/;
     const opened =
       overlay === "settings"
-        ? page.getByTestId("user-settings")
+        ? page.getByTestId("settings-page")
         : page.getByPlaceholder("Search apps");
-    const originalUrl = page.url();
     await page.route(
       chunk,
       async (route) => {
@@ -116,8 +102,8 @@ for (const overlay of ["settings", "integrations"] as const) {
       .click();
     await reloaded;
     await expect(opened).toBeVisible();
-    await expect(page).toHaveURL(
-      (url) => url.pathname === new URL(originalUrl).pathname && url.searchParams.has(overlay),
+    await expect(page).toHaveURL((url) =>
+      url.pathname.startsWith(overlay === "settings" ? "/settings/" : "/app/store"),
     );
     await captureScreenshot(page, testInfo, `preload-recovered-${overlay}`);
   });
@@ -133,10 +119,9 @@ test("preload recovery keeps Settings bound to another space", async ({ page }, 
   await dialog.getByRole("button", { name: "Create space", exact: true }).click();
   await completeOnboarding(page);
   await page.waitForURL((url) => url.pathname.startsWith("/app/") && url.href !== personalUrl);
-  const originalUrl = page.url();
   const selected = await page.evaluate(() => localStorage.getItem("corvo:space-id"));
   await page.route(
-    /\/pages\/SettingsOverlay\.tsx/,
+    /\/pages\/Settings\.tsx/,
     async (route) => {
       await route.fulfill({ status: 404 });
       await page
@@ -149,15 +134,10 @@ test("preload recovery keeps Settings bound to another space", async ({ page }, 
   await page.locator("aside").first().getByRole("button", { name: "Actions for Personal" }).click();
   await page.getByRole("menuitem", { name: "Settings", exact: true }).click();
   await reloaded;
-  const settings = page.getByTestId("user-settings");
-  // A space's Settings opens its own Space section.
-  await expect(settings).toHaveAttribute("data-settings-section", "space");
-  await expect(page).toHaveURL(
-    (url) =>
-      url.pathname === new URL(originalUrl).pathname &&
-      url.searchParams.get("settings") === "space" &&
-      url.searchParams.has("space"),
-  );
+  const settings = page.getByTestId("settings-page");
+  // A space's Settings opens its own page.
+  await expect(settings.getByTestId("space-settings")).toBeVisible();
+  await expect(page).toHaveURL((url) => url.pathname.startsWith("/settings/space/"));
   expect(await page.evaluate(() => localStorage.getItem("corvo:space-id"))).toBe(selected);
   await captureScreenshot(page, testInfo, "preload-recovered-space-settings");
 });

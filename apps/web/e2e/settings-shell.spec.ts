@@ -8,93 +8,46 @@ import {
   signup,
 } from "./helpers";
 
-test("changing language updates settings overflow without resizing", async ({ page }, testInfo) => {
+test("changing language relabels the settings page", async ({ page }, testInfo) => {
   const stamp = Date.now();
   await signup(page, `settings-language-${stamp}@corvo.test`, "password12", "Settings");
   await completeOnboarding(page);
   const settings = await openUserSettings(page);
-  // Below the desktop breakpoint, where the section list scrolls sideways.
-  await page.setViewportSize({ width: 640, height: 700 });
-  const nav = settings.getByTestId("settings-nav");
-  const next = settings.getByRole("button", { name: "Next settings sections" });
-  const overflow = () => nav.evaluate((node) => node.scrollWidth - node.clientWidth);
-  const english = await overflow();
 
   const language = settings.getByTestId("ui-locale-select");
   await language.click();
   await page.getByRole("option", { name: "Deutsch", exact: true }).click();
   await expect(settings.getByRole("heading", { name: "Allgemein", exact: true })).toBeVisible();
-  // Longer German labels overflow further, and the scroll control follows without a resize.
-  await expect.poll(overflow).toBeGreaterThan(english);
-  await expect(next).toBeVisible();
-  await expect(next).toBeEnabled();
-  await captureScreenshot(page, testInfo, "settings-tabs-language-overflow");
+  await captureScreenshot(page, testInfo, "settings-language-german");
 
   await language.click();
   await page.getByRole("option", { name: "English", exact: true }).click();
   await expect(settings.getByRole("heading", { name: "General", exact: true })).toBeVisible();
-  await expect.poll(overflow).toBe(english);
 });
 
-test("narrow settings reveals the active section and offers scroll controls", async ({
+test("narrow settings keeps the nav in a row and the page from scrolling sideways", async ({
   page,
 }, testInfo) => {
   const stamp = Date.now();
   await signup(page, `settings-narrow-${stamp}@corvo.test`, "password12", "Settings");
   await completeOnboarding(page);
   const settings = await openUserSettings(page, "usage");
-  const nav = settings.getByTestId("settings-nav");
   const usage = settings.getByTestId("settings-nav-usage");
-  const previous = settings.getByRole("button", { name: "Previous settings sections" });
-  const next = settings.getByRole("button", { name: "Next settings sections" });
 
   for (const width of [640, 390]) {
     await page.setViewportSize({ width, height: 700 });
     await expect(usage).toHaveAttribute("aria-current", "page");
-    // Deep links and resizing must reveal the whole selected section.
-    await expect
-      .poll(async () => {
-        const viewport = await nav.boundingBox();
-        const active = await usage.boundingBox();
-        return Boolean(
-          viewport &&
-            active &&
-            active.x >= viewport.x - 1 &&
-            active.x + active.width <= viewport.x + viewport.width + 1,
-        );
-      })
-      .toBe(true);
-    await expect(previous).toBeEnabled();
-    await expect(next).toBeDisabled();
-    await captureScreenshot(page, testInfo, `settings-tabs-${width}`);
-    const offset = await nav.evaluate((node) => node.scrollLeft);
-    await previous.click();
-    await expect.poll(() => nav.evaluate((node) => node.scrollLeft)).toBeLessThan(offset);
     await settings.getByTestId("settings-nav-general").click();
     await expect(settings).toHaveAttribute("data-settings-section", "general");
-    await expect(next).toBeEnabled();
-    await next.click();
-    await expect.poll(() => nav.evaluate((node) => node.scrollLeft)).toBeGreaterThan(0);
-    const header = settings.getByTestId("settings-header");
-    const before = await header.boundingBox();
     await settings
       .getByRole("button", { name: "Delete account", exact: true })
       .scrollIntoViewIfNeeded();
-    await expect
-      .poll(() => settings.getByTestId("settings-scroll").evaluate((node) => node.scrollTop))
-      .toBeGreaterThan(0);
-    expect(await header.boundingBox()).toEqual(before);
     expect(await settings.evaluate((node) => node.scrollWidth <= node.clientWidth)).toBe(true);
-    await expect(settings.getByRole("button", { name: "Close user settings" })).toBeVisible();
+    await expect(settings.getByTestId("settings-back")).toBeVisible();
     await captureScreenshot(page, testInfo, `settings-narrow-scrolled-${width}`);
     await usage.click();
     await expect(settings).toHaveAttribute("data-settings-section", "usage");
   }
-  await page.setViewportSize({ width: 1280, height: 900 });
-  await expect(previous).toBeHidden();
-  await expect(next).toBeHidden();
-  await expect(usage).toBeVisible();
-  await expect(usage).toHaveAttribute("aria-current", "page");
 });
 
 test("settings shell is two-pane and deep-links Models Memory Voice Usage", async ({
@@ -128,23 +81,11 @@ test("settings shell is two-pane and deep-links Models Memory Voice Usage", asyn
   await expect(streamReplies).not.toBeChecked();
   await streamReplies.scrollIntoViewIfNeeded();
   await captureScreenshot(page, testInfo, "settings-shell-general");
-  const scroller = settings.getByTestId("settings-scroll");
+  const scroller = settings.locator("main");
   await scroller.evaluate((node) => {
     node.scrollTop = Math.max(0, (node.scrollHeight - node.clientHeight) / 2);
   });
   await expect.poll(() => scroller.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
-  // Scrolled content clips at a visible divider with space under the subtitle.
-  const headerEdge = await settings.getByTestId("settings-header").evaluate((node) => {
-    const style = getComputedStyle(node);
-    return {
-      border: Number.parseFloat(style.borderBottomWidth),
-      borderStyle: style.borderBottomStyle,
-      padding: Number.parseFloat(style.paddingBottom),
-    };
-  });
-  expect(headerEdge.border).toBeGreaterThanOrEqual(1);
-  expect(headerEdge.borderStyle).toBe("solid");
-  expect(headerEdge.padding).toBeGreaterThanOrEqual(16);
   await captureScreenshot(page, testInfo, "settings-shell-scrolled");
   await streamReplies.click();
   await expect(streamReplies).toBeChecked();
@@ -180,11 +121,11 @@ test("settings shell is two-pane and deep-links Models Memory Voice Usage", asyn
   await expect(settings.getByTestId("voice-settings")).toBeVisible();
   await captureScreenshot(page, testInfo, "settings-shell-voice");
 
-  await page.getByRole("button", { name: "Close voice settings" }).click();
-  await expect(page.getByTestId("user-settings")).toHaveCount(0);
+  await page.getByTestId("settings-back").click();
+  await expect(page.getByTestId("settings-page")).toHaveCount(0);
 
   await openUserSettings(page, "usage");
-  await expect(page.getByTestId("user-settings")).toHaveAttribute("data-settings-section", "usage");
+  await expect(page.getByTestId("settings-page")).toHaveAttribute("data-settings-section", "usage");
   await expect(page.getByTestId("usage-settings")).toBeVisible();
   await captureScreenshot(page, testInfo, "settings-shell-usage");
 });
@@ -237,7 +178,7 @@ test("Honcho memory settings empty and filled", async ({ page }, testInfo) => {
   await captureScreenshot(page, testInfo, "memory-honcho-local-bottom");
 
   const scrollToTop = () =>
-    memory.locator(".rk-scroll").evaluate((element) => {
+    settings.locator("main").evaluate((element) => {
       element.scrollTop = 0;
     });
   await memory.getByLabel("Provider").selectOption("supermemory");
@@ -264,26 +205,29 @@ test("Honcho memory settings empty and filled", async ({ page }, testInfo) => {
   await captureScreenshot(page, testInfo, "memory-dark-bottom");
 });
 
-test("shell overlays open from the URL and keep it in sync", async ({ page }, testInfo) => {
+test("old overlay links land on their page and the way back returns", async ({
+  page,
+}, testInfo) => {
   await signup(page, `settings-url-${Date.now()}@corvo.test`, "password12", "Settings");
   await completeOnboarding(page);
   const botPath = new URL(page.url()).pathname;
 
   await page.goto("/app?settings=usage");
-  const settings = page.getByTestId("user-settings");
+  const settings = page.getByTestId("settings-page");
   await expect(settings).toHaveAttribute("data-settings-section", "usage");
-  await expect(page).toHaveURL((url) => url.pathname === botPath);
+  await expect(page).toHaveURL((url) => url.pathname === "/settings/usage" && url.search === "");
   await settings.getByTestId("settings-nav-general").click();
-  await expect(page).toHaveURL((url) => url.searchParams.get("settings") === "general");
+  await expect(page).toHaveURL((url) => url.pathname === "/settings/general");
   await captureScreenshot(page, testInfo, "settings-from-url");
   await page.keyboard.press("Escape");
   await expect(settings).toHaveCount(0);
   await expect(page).toHaveURL((url) => url.pathname === botPath && url.search === "");
 
-  const apps = page.getByPlaceholder("Search apps");
   await page.getByRole("button", { name: "Store", exact: true }).click();
-  await expect(apps).toBeVisible();
-  await expect(page).toHaveURL((url) => url.searchParams.has("integrations"));
+  await expect(page.getByPlaceholder("Search apps")).toBeVisible();
+  await expect(page).toHaveURL((url) => url.pathname === "/app/store");
+  await page.goto("/app?integrations");
+  await expect(page).toHaveURL((url) => url.pathname === "/app/store");
 });
 
 test("usage lists spend per model", async ({ page }, testInfo) => {

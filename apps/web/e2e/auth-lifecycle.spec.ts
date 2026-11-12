@@ -269,7 +269,7 @@ test("changes and recovers an email password", async ({ page }, testInfo) => {
 
   await page.getByTestId("user-menu-trigger").click();
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-  const settings = page.getByTestId("user-settings");
+  const settings = page.getByTestId("settings-page");
   await expect(settings).toBeVisible();
   await expect(settings.getByLabel("Current password")).toHaveCount(0);
   await captureScreenshot(page, testInfo, "general-settings");
@@ -297,7 +297,7 @@ test("changes and recovers an email password", async ({ page }, testInfo) => {
   await expect(settings.getByText("Password updated")).toBeVisible();
   await expect(settings.getByLabel("Current password")).toHaveCount(0);
   await captureScreenshot(page, testInfo, "41-password-changed");
-  await settings.getByRole("button", { name: "Close user settings" }).click();
+  await page.getByTestId("settings-back").click();
 
   await page.getByRole("button", { name: new RegExp(userName, "i") }).click();
   await page.getByRole("button", { name: "Log out" }).click();
@@ -381,7 +381,7 @@ test("password-off account settings hide password changes and retain password de
   );
   await page.getByTestId("user-menu-trigger").click();
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-  const settings = page.getByTestId("user-settings");
+  const settings = page.getByTestId("settings-page");
   await expect(settings).toBeVisible();
   await expect(settings.getByRole("button", { name: "Change password", exact: true })).toHaveCount(
     0,

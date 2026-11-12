@@ -72,7 +72,7 @@ test("unavailable computers explain setup and open computer settings", async ({
   await expect(hint.getByRole("button", { name: "Check again" })).toBeEnabled();
 
   await hint.getByRole("button", { name: "Open computer settings" }).click();
-  const settings = page.getByTestId("user-settings");
+  const settings = page.getByTestId("settings-page");
   await expect(settings).toHaveAttribute("data-settings-section", "computer");
   await expect(settings.getByTestId("computers-setup-settings")).toBeVisible();
   await expect(settings.getByTestId("settings-nav-computer")).toHaveAttribute(

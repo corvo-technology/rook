@@ -1,17 +1,10 @@
 import type { Bot, Group } from "@corvo/contracts";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { settingsPath } from "../../lib/settings-route";
 import { guardShellNavigate } from "../../lib/space-switch";
-import type { ShellOverlay } from "../shell-overlay";
-import {
-  readShellOverlay,
-  searchString,
-  shellOverlaySearch,
-  withShellOverlay,
-} from "../shell-overlay";
+import { legacyOverlayTarget, searchString, shellOverlaySearch } from "../shell-overlay";
 
-/** Router access for the shell: navigation stops once it unmounts, and overlays live in the URL. */
+/** Router access for the shell: navigation stops once it unmounts, and old overlay links redirect. */
 export function useShellNavigation() {
   const routerNavigate = useNavigate();
   const navigateRef = useRef(routerNavigate);
@@ -37,7 +30,7 @@ export function useShellNavigation() {
   // effect, which should only restart when the active bot changes).
   const searchParamsRef = useRef(searchParams);
   searchParamsRef.current = searchParams;
-  /** Picking the thread for a bare or stale route keeps an overlay the URL asked for. */
+  /** Picking the thread for a bare or stale route keeps the plan choice the URL asked for. */
   const redirectKeepingOverlay = useCallback(
     (pathname: string) =>
       navigate(
@@ -46,28 +39,14 @@ export function useShellNavigation() {
       ),
     [navigate],
   );
-  const overlay = readShellOverlay(searchParams);
-  // Settings sections that have their own page leave the shell: the page remembers where to return.
-  function openSettingsPage(section: string, replace: boolean) {
-    // Coming from another settings section returns there; a stale link to this one returns to the page.
-    const rest = goesToPage ? withShellOverlay(searchParams, null) : searchParams;
-    const from = `${window.location.pathname}${searchString(rest)}`;
-    navigate(settingsPath(section), { replace, state: { from } });
-  }
-  const goesToPage = overlay?.kind === "settings" && overlay.section === "confirmations";
-  // A link or reload that still carries ?settings=confirmations lands on the page.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: only the overlay decides this
+  // Old `?settings=`, `?integrations` and `?mcp=` links land on their page, which remembers the way back.
+  const legacy = legacyOverlayTarget(searchParams);
+  const legacyTo = legacy?.to;
   useEffect(() => {
-    if (goesToPage) openSettingsPage("approvals", true);
-  }, [goesToPage]);
-  // Overlays replace the URL rather than adding history, so opening and closing never race a navigation.
-  function setOverlay(next: ShellOverlay) {
-    if (next?.kind === "settings" && next.section === "confirmations") {
-      openSettingsPage("approvals", false);
-      return;
-    }
-    navigate({ search: searchString(withShellOverlay(searchParams, next)) }, { replace: true });
-  }
+    if (!legacy) return;
+    const from = `${window.location.pathname}${searchString(legacy.rest)}`;
+    navigate(legacy.to, { replace: true, state: { from } });
+  }, [legacyTo]);
   return {
     navigate,
     alive,
@@ -75,8 +54,6 @@ export function useShellNavigation() {
     setSearchParams,
     searchParamsRef,
     redirectKeepingOverlay,
-    overlay,
-    setOverlay,
   };
 }
 

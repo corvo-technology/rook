@@ -171,9 +171,7 @@ it("lists Usage, Artifacts, Wiki, Approvals and Memory behind the dots, and goes
     (button) => button.textContent === "Approvals",
   ) as HTMLButtonElement;
   await act(async () => approvals.click());
-  expect(container.querySelector('[data-testid="where"]')?.textContent).toBe(
-    "/app?settings=confirmations",
-  );
+  expect(container.querySelector('[data-testid="where"]')?.textContent).toBe("/settings/approvals");
   await cleanup();
 });
 

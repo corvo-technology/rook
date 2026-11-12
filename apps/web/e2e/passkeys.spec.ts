@@ -52,7 +52,7 @@ test("adds a passkey after signup and signs in with it", async ({ page }, testIn
   await expect(passkeys.getByRole("listitem")).toContainText("Work laptop");
   await passkeys.scrollIntoViewIfNeeded();
   await captureScreenshot(page, testInfo, "passkey-settings");
-  await settings.getByRole("button", { name: "Close user settings" }).click();
+  await page.getByTestId("settings-back").click();
 
   const account = page.getByRole("button", { name: new RegExp(userName, "i") });
   // The virtual authenticator answers browser autofill at once, so signing out lands

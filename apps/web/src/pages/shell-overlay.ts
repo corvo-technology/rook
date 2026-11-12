@@ -1,11 +1,11 @@
 const SETTINGS_SECTIONS = [
   "general",
-  "space",
   "models",
-  "memory",
   "voice",
-  "confirmations",
+  "approvals",
+  "memory",
   "usage",
+  "mcp",
   "computer",
   "billing",
   "partnership",
@@ -15,61 +15,44 @@ const SETTINGS_SECTIONS = [
 
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 
-/** The shell overlay a URL opens; the URL is its only source of truth so links and reloads keep it. */
-export type ShellOverlay =
-  | { kind: "settings"; section: SettingsSection; spaceId: string | null }
-  | { kind: "integrations" }
-  | { kind: "mcp"; serverId?: string }
-  | null;
-
-const OVERLAY_KEYS = ["settings", "space", "integrations", "mcp", "messaging"] as const;
+/** Settings, the Store and MCP servers used to open over the shell from these URL params. */
+const LEGACY_KEYS = ["settings", "space", "integrations", "mcp", "messaging"] as const;
 
 function isSettingsSection(value: string): value is SettingsSection {
   return (SETTINGS_SECTIONS as readonly string[]).includes(value);
 }
 
-export function readShellOverlay(params: URLSearchParams): ShellOverlay {
+/**
+ * Where an old `?settings=`, `?integrations` or `?mcp=` link now goes, and the params it leaves
+ * behind. Those surfaces are pages, so a bookmark or a reload lands on the page.
+ */
+export function legacyOverlayTarget(
+  params: URLSearchParams,
+): { to: string; rest: URLSearchParams } | null {
   const section = params.get("settings");
+  const mcp = params.get("mcp");
+  let to: string | null = null;
   if (section !== null) {
-    return {
-      kind: "settings",
-      section: isSettingsSection(section) ? section : "general",
-      spaceId: params.get("space") || null,
-    };
-  }
-  if (params.has("integrations")) return { kind: "integrations" };
-  if (params.has("mcp")) {
-    const serverId = params.get("mcp");
-    return serverId ? { kind: "mcp", serverId } : { kind: "mcp" };
-  }
-  return null;
+    const spaceId = params.get("space");
+    if (section === "space" && spaceId) to = `/settings/space/${encodeURIComponent(spaceId)}`;
+    else if (section === "confirmations") to = "/settings/approvals";
+    else to = `/settings/${isSettingsSection(section) ? section : "general"}`;
+  } else if (params.has("integrations")) to = "/app/store";
+  else if (mcp !== null)
+    to = mcp ? `/settings/mcp?server=${encodeURIComponent(mcp)}` : "/settings/mcp";
+  if (!to) return null;
+  const rest = new URLSearchParams(params);
+  for (const key of LEGACY_KEYS) rest.delete(key);
+  return { to, rest };
 }
 
-/** `params` with only `overlay` open; every other param is kept. */
-export function withShellOverlay(params: URLSearchParams, overlay: ShellOverlay): URLSearchParams {
-  const next = new URLSearchParams(params);
-  for (const key of OVERLAY_KEYS) next.delete(key);
-  if (overlay?.kind === "settings") {
-    next.set("settings", overlay.section);
-    if (overlay.spaceId) next.set("space", overlay.spaceId);
-  } else if (overlay?.kind === "mcp") {
-    next.set("mcp", overlay.serverId ?? "");
-  } else if (overlay) {
-    next.set(overlay.kind, "");
-  }
-  return next;
-}
-
-/** A `?search` string that writes flag params bare (`?integrations`, not `?integrations=`). */
+/** A `?search` string that writes flag params bare (`?plans`, not `?plans=`). */
 export function searchString(params: URLSearchParams): string {
   const query = params.toString().replace(/=(?=&|$)/g, "");
   return query ? `?${query}` : "";
 }
 
-/** Only the overlay params, for redirects that change the route but should keep the overlay open. */
+/** The params a redirect keeps: the plan choice opens above the app, so it survives them. */
 export function shellOverlaySearch(params: URLSearchParams): string {
-  const next = withShellOverlay(new URLSearchParams(), readShellOverlay(params));
-  // The plan choice opens above the shell from its own link, so it survives the redirect too.
-  if (params.has("plans")) next.set("plans", "");
-  return searchString(next);
+  return params.has("plans") ? "?plans" : "";
 }

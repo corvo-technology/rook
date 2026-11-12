@@ -1,10 +1,10 @@
-import { Button, Input } from "@corvo/ui-web";
+import { Button, InlineConfirm, Input, undoable } from "@corvo/ui-web";
+import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useEffect, useId, useState } from "react";
 import { SettingsGroup, SettingsRow } from "../components/SettingsRows";
 import { SpaceSettingOverrides } from "./SpaceSettingOverrides";
 import type { SettingsSpace } from "./shell/dialogs";
-import { DeleteSpaceDialog, PauseSpaceDialog } from "./shell/dialogs";
 
 /** One space's page: its name, the account settings it customizes, and deletion for its owner. */
 export function SpaceSettingsPanel({
@@ -12,14 +12,12 @@ export function SpaceSettingsPanel({
   onRename,
   onSetPaused,
   onDelete,
-  onClose,
   onBusyChange,
 }: {
   space: SettingsSpace;
   onRename: (name: string) => Promise<void>;
   onSetPaused?: (paused: boolean) => Promise<void>;
   onDelete: () => Promise<void>;
-  onClose: () => void;
   onBusyChange?: (busy: boolean) => void;
 }) {
   const { t } = useLingui();
@@ -27,8 +25,6 @@ export function SpaceSettingsPanel({
   const [draft, setDraft] = useState(space.name);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [confirmingPause, setConfirmingPause] = useState(false);
   const [resuming, setResuming] = useState(false);
   const [overridesBusy, setOverridesBusy] = useState(false);
   // A rename in flight holds the dialog open, so a failure is shown instead of lost on leaving.
@@ -104,17 +100,25 @@ export function SpaceSettingsPanel({
           </SettingsRow>
         </SettingsGroup>
       ) : null}
-      <SpaceSettingOverrides onClose={onClose} onBusyChange={setOverridesBusy} />
+      <SpaceSettingOverrides onBusyChange={setOverridesBusy} />
       {space.canPause && onSetPaused ? (
         <Button
           variant="outline"
           className="rounded-full"
           disabled={resuming}
           onClick={() => {
-            if (!space.pausedAt) return setConfirmingPause(true);
             setResuming(true);
             setError(null);
-            onSetPaused(false)
+            // Pausing is reversible, so it runs at once with an Undo.
+            (space.pausedAt
+              ? onSetPaused(false)
+              : undoable({
+                  message: t`Bots paused`,
+                  undoLabel: t`Undo`,
+                  run: () => onSetPaused(true),
+                  undo: () => onSetPaused(false),
+                })
+            )
               .catch((err: unknown) =>
                 setError(
                   err instanceof Error && err.message.trim() ? err.message : t`Could not save`,
@@ -126,30 +130,33 @@ export function SpaceSettingsPanel({
           {space.pausedAt ? <Trans>Resume bots</Trans> : <Trans>Pause all bots</Trans>}
         </Button>
       ) : null}
-      {confirmingPause && onSetPaused ? (
-        <PauseSpaceDialog
-          onCancel={() => setConfirmingPause(false)}
-          onConfirm={async () => {
-            await onSetPaused(true);
-            setConfirmingPause(false);
-          }}
-        />
-      ) : null}
       {space.canDelete ? (
-        <Button
+        <InlineConfirm
           variant="destructive"
           className="rounded-full"
-          onClick={() => setConfirmingDelete(true)}
+          confirmLabel={
+            (space.botCount ?? 0) > 0
+              ? t`Delete ${space.name} and ${plural(space.botCount ?? 0, { one: "its # bot", other: "its # bots" })}?`
+              : t`Delete ${space.name}?`
+          }
+          onConfirm={() => {
+            setError(null);
+            onDelete().catch((err: unknown) =>
+              setError(
+                err instanceof Error && err.message.trim()
+                  ? err.message
+                  : t`Could not delete space`,
+              ),
+            );
+          }}
         >
           <Trans>Delete space</Trans>
-        </Button>
+        </InlineConfirm>
       ) : null}
-      {confirmingDelete ? (
-        <DeleteSpaceDialog
-          space={space}
-          onCancel={() => setConfirmingDelete(false)}
-          onConfirm={onDelete}
-        />
+      {error && !space.canRename ? (
+        <p role="alert" className="text-[12.5px] text-destructive">
+          {error}
+        </p>
       ) : null}
     </div>
   );

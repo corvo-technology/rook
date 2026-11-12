@@ -199,7 +199,7 @@ test("custom connections persist reasoning support and bot thinking", async ({
   expect(cleared).toBeDefined();
   expect(cleared?.maxImagesPerPrompt).toBeUndefined();
   expect(cleared?.thinkingLevel ?? null).toBeNull();
-  await page.getByRole("button", { name: "Close model settings" }).click();
+  await page.getByTestId("settings-back").click();
   await page.locator("main").getByRole("button", { name: "Chief", exact: true }).click();
   const settings = page.getByTestId("bot-settings");
   await expect(settings).toBeVisible();
@@ -468,7 +468,7 @@ test("connects, lists, and uses an OpenAI-compatible endpoint", async ({ page },
       LOCAL_MODEL_ID,
     );
     await captureScreenshot(page, testInfo, "openai-compatible-connected");
-    await page.getByRole("button", { name: "Close model settings" }).click();
+    await page.getByTestId("settings-back").click();
     await openUserSettings(page, "models");
     const saved = await manageModelConnection(page, "OpenAI-compatible");
     await expect(saved.getByRole("checkbox", { name: SECOND_MODEL_ID })).toBeChecked();
@@ -501,7 +501,7 @@ test("connects, lists, and uses an OpenAI-compatible endpoint", async ({ page },
       .getByRole("button", { name: "Close", exact: true })
       .click();
     await expect(saved).toBeHidden();
-    await page.getByRole("button", { name: "Close model settings" }).click();
+    await page.getByTestId("settings-back").click();
     await page.locator("main").getByRole("button", { name: "Chief", exact: true }).click();
     const settings = page.getByTestId("bot-settings");
     await expect(settings).toBeVisible();
@@ -736,11 +736,8 @@ test("model settings connect, replace, and cancel provider authentication", asyn
   // Disconnect removes the credential and empties the main model slot.
   await manageModelConnection(page, "Scripted");
   await manage.getByRole("button", { name: "Disconnect", exact: true }).click();
-  const confirmDisconnect = page.getByRole("alertdialog");
-  await expect(
-    confirmDisconnect.getByRole("heading", { name: "Disconnect Scripted?" }),
-  ).toBeVisible();
-  await confirmDisconnect.getByRole("button", { name: "Disconnect", exact: true }).click();
+  // The button asks again in place; the second press disconnects.
+  await manage.getByRole("button", { name: "Disconnect Scripted?", exact: true }).click();
   await expect(manage).toBeHidden();
   await expect(page.getByText(/Disconnected Scripted/)).toBeVisible();
   const afterDisconnect = await rpc<Array<{ provider: string }>>(page, "models/credentials", {});
@@ -1147,12 +1144,10 @@ test("a Claude subscription folds the key form and bots move to the space defaul
   await expect(dialog).toBeHidden();
 
   await bots.getByRole("button", { name: "Use space default" }).click();
-  const confirm = page.getByRole("alertdialog");
-  await expect(
-    confirm.getByRole("heading", { name: "Switch 2 bots to the space default?" }),
-  ).toBeVisible();
+  const confirm = bots.getByRole("button", { name: "Switch 2 bots to the space default?" });
+  await expect(confirm).toBeVisible();
   await captureScreenshot(page, testInfo, "bot-models-confirm");
-  await confirm.getByRole("button", { name: "Switch", exact: true }).click();
+  await confirm.click();
   await expect(bots).toContainText("2 bots now use the space default.");
   await expect(bots.getByRole("button", { name: "Use space default" })).toHaveCount(0);
 });

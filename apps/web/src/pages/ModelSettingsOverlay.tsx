@@ -7,24 +7,7 @@ import {
   OPENAI_COMPATIBLE_PROVIDER_ID,
   savedCompatibleEndpointMatches,
 } from "@corvo/contracts";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  Button,
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  ModelThinkingOptions,
-  Spinner,
-} from "@corvo/ui-web";
+import { Button, InlineConfirm, ModelThinkingOptions, Spinner } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -40,13 +23,8 @@ import { SpaceBotsModelNotice } from "./model-settings/space-bots-model";
 import { useModelSettings } from "./model-settings/use-model-settings";
 
 export function ModelSettingsOverlay({
-  onClose,
-  embedded = false,
   scope,
 }: {
-  onClose: () => void;
-  /** Render the content only, inside the shared Settings shell's scroller. */
-  embedded?: boolean;
   /**
    * The account's models, or the bound Space's own when it overrides them. Connections are
    * account-wide, so a Space shows only its role lists.
@@ -54,13 +32,12 @@ export function ModelSettingsOverlay({
   scope: SettingsScope;
 }) {
   const { t } = useLingui();
-  const model = useModelSettings(onClose, scope);
+  const model = useModelSettings(scope);
   const {
     baseUrl,
     busy,
     catalog,
     cancelOAuthAttempt,
-    confirmDisconnect,
     connectKey,
     connectProblem,
     credential,
@@ -70,7 +47,6 @@ export function ModelSettingsOverlay({
     disconnectName,
     error,
     groups,
-    handleClose,
     hostCredentialSource,
     intentRef,
     isOpenAiCompatible,
@@ -84,7 +60,6 @@ export function ModelSettingsOverlay({
     selected,
     selectedConnectionName,
     selectedProviderName,
-    setConfirmDisconnect,
     setMaxTokens,
     setNotice,
     settingsDirty,
@@ -167,16 +142,21 @@ export function ModelSettingsOverlay({
   }
 
   const disconnectButton = connected ? (
-    <Button
+    <InlineConfirm
       type="button"
       variant="ghost"
       size="sm"
       className="mt-6 -ml-2.5 text-muted-foreground"
       disabled={busy}
-      onClick={() => setConfirmDisconnect(true)}
+      confirmLabel={t`Disconnect ${disconnectName}?`}
+      onConfirm={() => {
+        setConnectionAt(null);
+        intentRef.current = null;
+        void disconnectCredential();
+      }}
     >
       {pending === "disconnect" ? <Trans>Disconnecting…</Trans> : <Trans>Disconnect</Trans>}
-    </Button>
+    </InlineConfirm>
   ) : null;
 
   const connection = selected ? (
@@ -412,67 +392,8 @@ export function ModelSettingsOverlay({
           <Trans>No model catalog is available.</Trans>
         </p>
       )}
-      <AlertDialog open={confirmDisconnect} onOpenChange={setConfirmDisconnect}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              <Trans>Disconnect {disconnectName}?</Trans>
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              <Trans>This removes the connection from every space.</Trans>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>
-              <Trans>Cancel</Trans>
-            </AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              disabled={pending === "disconnect"}
-              onClick={() => {
-                setConfirmDisconnect(false);
-                setConnectionAt(null);
-                intentRef.current = null;
-                void disconnectCredential();
-              }}
-            >
-              <Trans>Disconnect</Trans>
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 
-  if (embedded) {
-    return <div data-testid="model-settings">{content}</div>;
-  }
-
-  return (
-    <Dialog
-      open
-      onOpenChange={(open) => {
-        if (!open) handleClose();
-      }}
-    >
-      <DialogContent
-        showCloseButton={false}
-        className="flex h-[760px] max-h-[calc(100%-2rem)] w-[1080px] max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-2xl bg-card p-0 sm:max-w-[1080px]"
-      >
-        <DialogHeader className="flex-row items-start justify-between px-6 pt-6 sm:px-8 sm:pt-7">
-          <DialogTitle className="text-heading2 font-medium text-foreground">
-            <Trans>Models</Trans>
-          </DialogTitle>
-          <DialogClose
-            render={<Button variant="ghost" size="icon-sm" aria-label={t`Close model settings`} />}
-          >
-            <X />
-          </DialogClose>
-        </DialogHeader>
-        <div className="rk-scroll min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-8">
-          <div className="max-w-[600px]">{content}</div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
+  return <div data-testid="model-settings">{content}</div>;
 }

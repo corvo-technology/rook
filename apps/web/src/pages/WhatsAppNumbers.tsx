@@ -1,10 +1,6 @@
 import type { WhatsAppNumber } from "@corvo/contracts";
 import {
   Button,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
   Disclosure,
   DropdownMenu,
   DropdownMenuContent,
@@ -128,7 +124,7 @@ function ModeChoice({ value, onChange }: { value: Mode; onChange: (mode: Mode) =
 }
 
 /** Choose the agent and who the number answers, then scan: the whole way to a linked number. */
-function LinkDialog({
+function LinkPanel({
   open,
   botId,
   onClose,
@@ -213,51 +209,59 @@ function LinkDialog({
     }
   }
 
+  if (!open) return null;
   return (
-    <Dialog open={open} onOpenChange={(next) => !next && leave()}>
-      <DialogContent className="max-w-md" data-testid="whatsapp-link">
-        <DialogHeader>
-          <DialogTitle>
-            <Trans>Add number</Trans>
-          </DialogTitle>
-        </DialogHeader>
-        {link ? (
-          <div className="flex flex-col items-center gap-4 py-2">
-            {link.qr ? <Qr text={link.qr} /> : <div className="size-56" aria-hidden="true" />}
-            <Button type="button" variant="ghost" size="sm" onClick={leave}>
-              <Trans>Cancel</Trans>
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {bots.length > 1 ? (
-              <OptionSelect
-                aria-label={t`Agent`}
-                data-testid="whatsapp-agent"
-                value={agent ?? null}
-                options={bots.map((bot) => ({ value: bot.id, label: bot.name }))}
-                onValueChange={setChosen}
-              />
-            ) : null}
-            <ModeChoice value={mode} onChange={setMode} />
-            <p className="text-[13px] text-muted-foreground">
-              <Trans>
-                This uses WhatsApp without the official API. WhatsApp can ban the number.
-              </Trans>
-            </p>
-            <Button
-              type="button"
-              className="w-full"
-              disabled={!agent || starting}
-              onClick={() => void start()}
-            >
-              <Trans>Show QR code</Trans>
-            </Button>
-          </div>
-        )}
-        {error ? <p className="text-[13px] text-destructive">{error}</p> : null}
-      </DialogContent>
-    </Dialog>
+    <section
+      className="space-y-4 rounded-xl border border-border p-4"
+      data-testid="whatsapp-link"
+      aria-labelledby="whatsapp-link-title"
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && !event.defaultPrevented) {
+          event.preventDefault();
+          leave();
+        }
+      }}
+    >
+      <h3 id="whatsapp-link-title" className="text-heading3 text-foreground">
+        <Trans>Add number</Trans>
+      </h3>
+      {link ? (
+        <div className="flex flex-col items-center gap-4 py-2">
+          {link.qr ? <Qr text={link.qr} /> : <div className="size-56" aria-hidden="true" />}
+          <Button type="button" variant="ghost" size="sm" onClick={leave}>
+            <Trans>Cancel</Trans>
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {bots.length > 1 ? (
+            <OptionSelect
+              aria-label={t`Agent`}
+              data-testid="whatsapp-agent"
+              value={agent ?? null}
+              options={bots.map((bot) => ({ value: bot.id, label: bot.name }))}
+              onValueChange={setChosen}
+            />
+          ) : null}
+          <ModeChoice value={mode} onChange={setMode} />
+          <p className="text-[13px] text-muted-foreground">
+            <Trans>This uses WhatsApp without the official API. WhatsApp can ban the number.</Trans>
+          </p>
+          <Button
+            type="button"
+            className="w-full"
+            disabled={!agent || starting}
+            onClick={() => void start()}
+          >
+            <Trans>Show QR code</Trans>
+          </Button>
+          <Button type="button" variant="ghost" size="sm" className="w-full" onClick={leave}>
+            <Trans>Cancel</Trans>
+          </Button>
+        </div>
+      )}
+      {error ? <p className="text-[13px] text-destructive">{error}</p> : null}
+    </section>
   );
 }
 
@@ -416,7 +420,7 @@ export function WhatsAppApp({ botId, onBack }: { botId: string | undefined; onBa
           <NumberCard key={number.id} number={number} />
         ))}
       </div>
-      <LinkDialog
+      <LinkPanel
         open={adding}
         botId={botId}
         onClose={() => setAdding(false)}

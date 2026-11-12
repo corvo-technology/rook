@@ -11,6 +11,10 @@ const { bots, client } = vi.hoisted(() => {
 });
 
 vi.mock("../../lib/space-rpc", () => ({ useSpaceRpc: () => client }));
+vi.mock("@lingui/core/macro", () => ({
+  plural: (value: number, forms: { one: string; other: string }) =>
+    (value === 1 ? forms.one : forms.other).replace("#", String(value)),
+}));
 vi.mock("@lingui/react/macro", () => ({
   Trans: ({ children }: { children?: ReactNode }) => children,
   Plural: ({ one, other, value }: { one: string; other: string; value: number }) =>
@@ -50,10 +54,11 @@ async function confirmSwitch() {
   await act(async () => {
     button("Use space default")!.click();
   });
-  expect(document.body.textContent).toContain("Switch 2 bots to the space default?");
+  const armed = button("Switch 2 bots to the space default?");
+  expect(armed).toBeDefined();
   expect(bots.update).not.toHaveBeenCalled();
   await act(async () => {
-    button("Switch")!.click();
+    armed!.click();
   });
 }
 

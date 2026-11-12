@@ -6,7 +6,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { connectedAppMarks } from "../../lib/connected-apps";
 import { cronLabels } from "../../lib/cron";
 import type { SpaceQueries } from "../../lib/query";
-import { queryClient } from "../../lib/query";
 import type { createSpaceRpc } from "../../lib/rpc";
 
 function routineListData(results: Array<{ data?: Routine[] }>) {
@@ -27,7 +26,6 @@ export function useComposerMentions({
   groups,
   inGroup,
   groupId,
-  integrationsOpen,
   initialBotsLoaded,
 }: {
   rpc: ReturnType<typeof createSpaceRpc>;
@@ -36,7 +34,6 @@ export function useComposerMentions({
   groups: Group[];
   inGroup: boolean;
   groupId: string | undefined;
-  integrationsOpen: boolean;
   initialBotsLoaded: boolean;
 }) {
   const { i18n } = useLingui();
@@ -61,14 +58,6 @@ export function useComposerMentions({
     },
     enabled: initialBotsLoaded,
   });
-  // Apps can change in the integrations overlay; leaving it refreshes what the composer offers.
-  const wasIntegrationsOpen = useRef(integrationsOpen);
-  useEffect(() => {
-    if (wasIntegrationsOpen.current && !integrationsOpen) {
-      void queryClient.invalidateQueries({ queryKey: queries.connections.key() });
-    }
-    wasIntegrationsOpen.current = integrationsOpen;
-  }, [integrationsOpen, queries]);
   // A changed roster refreshes connection data too, as it did before it was cached.
   const mentionBotsKey = useMemo(
     () => bots.map((bot) => `${bot.id}:${bot.name}`).join(","),

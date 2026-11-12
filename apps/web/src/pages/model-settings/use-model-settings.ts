@@ -65,7 +65,7 @@ export type ModelConnectIntent = {
 };
 
 /** `scope` is where a connection made for an empty main model becomes that model. */
-export function useModelSettings(onClose: () => void, scope: SettingsScope) {
+export function useModelSettings(scope: SettingsScope) {
   const rpc = useSpaceRpc();
   const intentRef = useRef<ModelConnectIntent | null>(null);
   // Sign-in finishes later; it keeps the slot it was started for even if the dialog closes.
@@ -123,7 +123,6 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
       queryClient.getQueryData(meQuery.queryKey) === undefined,
   );
   const [pending, setPending] = useState<"connect" | "settings" | "disconnect" | null>(null);
-  const [confirmDisconnect, setConfirmDisconnect] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [connectProblem, setConnectProblem] = useState<ModelProblem | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -614,11 +613,6 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
     }
   }
 
-  function handleClose() {
-    cancelOAuthAttempt(false);
-    onClose();
-  }
-
   function beginSelectedSubscriptionSignIn() {
     if (!selected) return;
     setNotice(null);
@@ -660,7 +654,6 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
     cloudflareRoutingReady,
     codeCopied,
     compatibleRows,
-    confirmDisconnect,
     connectKey,
     connectProblem,
     contextWindow,
@@ -677,7 +670,6 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
     error,
     gatewayId,
     groups,
-    handleClose,
     hostCredentialSource,
     invalidatePreflight,
     isCloudflare,
@@ -710,7 +702,6 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
     selectedProviderName,
     selectionRevisionRef,
     setAccountId,
-    setConfirmDisconnect,
     setContextWindow,
     setEnabledModelIds,
     setError,

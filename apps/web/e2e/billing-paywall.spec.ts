@@ -146,7 +146,7 @@ test("choose your own key or monthly credits, then add a one-time top-up", async
   await expect(settings.getByText("$20.00", { exact: true })).toBeVisible();
   await captureScreenshot(page, testInfo, "billing-credit-balance");
   await settings.getByRole("button", { name: "Add credits", exact: true }).click();
-  const dialog = page.getByRole("dialog", { name: "Add credits" });
+  const dialog = page.getByTestId("credits-purchase");
   await expect(dialog.getByRole("combobox", { name: "Credit amount" })).toHaveCSS("height", "48px");
   await dialog.getByRole("combobox", { name: "Credit amount" }).click();
   await page.getByRole("option", { name: "$50", exact: true }).click();
@@ -193,7 +193,7 @@ test("choose your own key or monthly credits, then add a one-time top-up", async
   await expect(page.getByText("Free plan ends Jan 15, 2030", { exact: true })).toBeVisible();
   await captureScreenshot(page, testInfo, "sidebar-free-plan-ends");
   await page.getByRole("button", { name: "Upgrade", exact: true }).click();
-  const plans = page.getByRole("dialog", { name: "Choose how to use Rook" });
+  const plans = page.getByTestId("plans-page");
   await plans.getByRole("switch", { name: "Use Rook credits", exact: true }).click();
   await expect(plans.getByText("$10 / month", { exact: true })).toBeVisible();
   await expect(
@@ -260,7 +260,7 @@ test("choose your own key or monthly credits, then add a one-time top-up", async
   });
   await expect(creditsSwitch).not.toBeChecked();
   await creditsSwitch.click();
-  const reactivated = page.getByTestId("user-settings");
+  const reactivated = page.getByTestId("settings-page");
   await expect(reactivated).toHaveAttribute("data-settings-section", "billing");
   await expect(reactivated.getByText("$12.00", { exact: true })).toBeVisible();
   await expect(

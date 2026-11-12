@@ -19,11 +19,7 @@ function currentPart(pathname: string, search: string): NavPart | null {
   const section = railSection(pathname, search);
   if (isNavPart(section)) return section;
   if (pathname === "/settings/approvals") return "approvals";
-  if (pathname === "/app") {
-    const settings = new URLSearchParams(search).get("settings");
-    if (settings === "confirmations") return "approvals";
-    if (settings === "memory") return "memory";
-  }
+  if (pathname === "/settings/memory") return "memory";
   return null;
 }
 

@@ -46,7 +46,7 @@ test("legacy opaque names never appear in navigation, account, chats or Activity
     await expectReadableNames(page.locator("body"));
     await captureScreenshot(page, testInfo, "readable-names-sidebar-chat");
     await openUserSettings(page);
-    await expect(page.getByTestId("user-settings")).toContainText(email);
+    await expect(page.getByTestId("settings-page")).toContainText(email);
     await expectReadableNames(page.locator("body"));
     await captureScreenshot(page, testInfo, "readable-names-account");
     const accountCard = page.getByTestId("account-card");
@@ -56,7 +56,7 @@ test("legacy opaque names never appear in navigation, account, chats or Activity
     await expect(accountCard.getByRole("button", { name: "Save", exact: true })).toBeDisabled();
     await nameInput.fill("Discard me");
     await nameInput.press("Escape");
-    await expect(page.getByTestId("user-settings")).toBeVisible();
+    await expect(page.getByTestId("settings-page")).toBeVisible();
     await expect(nameInput).toBeHidden();
     await accountCard.getByRole("button", { name: "Edit", exact: true }).click();
     await nameInput.fill("💬");

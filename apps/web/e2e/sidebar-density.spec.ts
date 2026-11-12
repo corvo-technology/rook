@@ -84,7 +84,7 @@ test("compact bot sidebar hides previews and preserves roster status accessibly"
   await expect
     .poll(() => page.evaluate((key) => window.localStorage.getItem(key), DENSITY_KEY))
     .toBe("compact");
-  await settings.getByRole("button", { name: "Close user settings" }).click();
+  await page.getByTestId("settings-back").click();
 
   await expect(sidebar).toHaveAttribute("data-bots-sidebar-density", "compact");
   await expect(previewRow).not.toContainText(preview);

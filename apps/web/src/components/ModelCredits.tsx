@@ -10,11 +10,6 @@ import {
   CardContent,
   CardFooter,
   CardHeader,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
   Label,
   Select,
   SelectContent,
@@ -394,33 +389,39 @@ export function ModelCreditsSettings({
           <Trans>Could not update billing</Trans>
         </p>
       ) : null}
-      <Dialog open={purchaseOpen} onOpenChange={setPurchaseOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>
-              <Trans>Add credits</Trans>
-            </DialogTitle>
-            <DialogDescription>
-              <Trans>One-time purchase. Credits do not expire.</Trans>
-            </DialogDescription>
-          </DialogHeader>
+      {purchaseOpen ? (
+        <div
+          data-testid="credits-purchase"
+          className="space-y-3 rounded-xl border border-border p-5"
+        >
+          <h3 className="font-medium">
+            <Trans>Add credits</Trans>
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            <Trans>One-time purchase. Credits do not expire.</Trans>
+          </p>
           <CreditAmountSelect value={topupAmount} onChange={setTopupAmount} />
-          <Button
-            disabled={pending}
-            onClick={() =>
-              void action(async () => {
-                const { url } = await rpc.billing.purchaseCredits({
-                  amountCents: topupAmount,
-                  monthly: false,
-                });
-                window.location.assign(url);
-              })
-            }
-          >
-            <Trans>Continue to checkout</Trans>
-          </Button>
-        </DialogContent>
-      </Dialog>
+          <div className="flex flex-wrap gap-3">
+            <Button
+              disabled={pending}
+              onClick={() =>
+                void action(async () => {
+                  const { url } = await rpc.billing.purchaseCredits({
+                    amountCents: topupAmount,
+                    monthly: false,
+                  });
+                  window.location.assign(url);
+                })
+              }
+            >
+              <Trans>Continue to checkout</Trans>
+            </Button>
+            <Button variant="ghost" onClick={() => setPurchaseOpen(false)}>
+              <Trans>Cancel</Trans>
+            </Button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

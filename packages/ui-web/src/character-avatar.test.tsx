@@ -70,7 +70,7 @@ describe("a character in an agent's color", () => {
     expect(html).toContain('data-working="true"');
     expect(html).toContain("corvo-bot-avatar-ring-working");
     expect(html).toMatch(/style="[^"]*width:40px;height:40px/);
-    expect(html).not.toContain("corvo-mascot-eyes");
+    expect(html).not.toContain("data-mascot");
     expect(html).not.toContain("<img");
   });
 
@@ -160,7 +160,7 @@ describe("a character in an agent's color", () => {
 
   it("falls back to the chick for a character that is not known", () => {
     const html = renderToString(<BotAvatar color="#1FBF68::char_nobody" size={40} />);
-    expect(html).toContain("corvo-mascot-eyes");
+    expect(html).toContain("data-mascot");
     expect(html).not.toContain("data-character");
   });
 

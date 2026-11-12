@@ -135,6 +135,9 @@ export const ROOK = {
 /** The rook of an agent that is asleep: gray, whatever its color. */
 export const ROOK_ASLEEP_COLOR = "#4a4a52";
 
+/** The ink of a rook's eyes: dark, because every shade it wears is soft enough for it. */
+export const ROOK_EYE_COLOR = "#0f0f0f";
+
 const FULL_HEX = /^#[0-9a-f]{6}$/i;
 const SHORT_HEX = /^#[0-9a-f]{3}$/i;
 

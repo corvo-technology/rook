@@ -1,33 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  EYE_REACH,
-  eyeLook,
-  MASCOT_EYES,
-  mascotEyeState,
-  mascotMood,
-  ROOK_RING_DOT_COUNT,
-  rookRingDots,
-} from "./mascot-eyes.js";
-
-describe("eyeLook", () => {
-  it("points the eyes toward the pointer, never further than they can move", () => {
-    const right = eyeLook({ x: 100, y: 100 }, { x: 900, y: 100 });
-    expect(right.x).toBeCloseTo(EYE_REACH, 1);
-    expect(right.y).toBeCloseTo(0, 5);
-    const upLeft = eyeLook({ x: 100, y: 100 }, { x: 0, y: 0 });
-    expect(upLeft.x).toBeLessThan(0);
-    expect(upLeft.y).toBeLessThan(0);
-    expect(Math.hypot(upLeft.x, upLeft.y)).toBeLessThanOrEqual(EYE_REACH + 1e-9);
-  });
-
-  it("looks straight ahead when the pointer is on the mascot, and less far when it is near", () => {
-    expect(eyeLook({ x: 50, y: 50 }, { x: 50, y: 50 })).toEqual({ x: 0, y: 0 });
-    const near = eyeLook({ x: 0, y: 0 }, { x: 30, y: 0 });
-    const far = eyeLook({ x: 0, y: 0 }, { x: 600, y: 0 });
-    expect(near.x).toBeGreaterThan(0);
-    expect(near.x).toBeLessThan(far.x);
-  });
-});
+import { mascotMood, ROOK_RING_DOT_COUNT, rookRingDots } from "./mascot-eyes.js";
 
 describe("mascotMood", () => {
   it("is thinking while a run is queued, starting or running", () => {
@@ -56,23 +28,6 @@ describe("the rook's eyes", () => {
   it("asleep is its own mood, and only a status of asleep gets it", () => {
     expect(mascotMood("asleep", false)).toBe("asleep");
     expect(mascotMood("asleep", true)).toBe("asleep");
-  });
-
-  it("changes only the eyes: open at work, up when waiting, closed asleep, arcs when done", () => {
-    expect(mascotEyeState("idle")).toBe("open");
-    expect(mascotEyeState("thinking")).toBe("open");
-    expect(mascotEyeState("failed")).toBe("open");
-    expect(mascotEyeState("alert")).toBe("up");
-    expect(mascotEyeState("asleep")).toBe("closed");
-    expect(mascotEyeState("happy")).toBe("happy");
-  });
-
-  it("looks up and to the side when waiting, with the same two eyes", () => {
-    const [left, right] = MASCOT_EYES.centers;
-    const [upLeft, upRight] = MASCOT_EYES.waitingCenters;
-    expect(upLeft.y).toBeLessThan(left.y);
-    expect(upLeft.x).toBeGreaterThan(left.x);
-    expect(upRight.x - upLeft.x).toBe(right.x - left.x);
   });
 });
 

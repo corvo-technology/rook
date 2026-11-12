@@ -499,7 +499,7 @@ msgid "{working} working"
 msgstr "{working} trabajando"
 
 #. placeholder {0}: mention.name
-#: src/pages/shell/composer.tsx
+#: src/pages/shell/composer-mentions.tsx
 msgid "@{0}"
 msgstr "@{0}"
 
@@ -613,6 +613,10 @@ msgstr "Añadir a {0} al grupo"
 #: src/pages/RoutineEditor.tsx
 msgid "Add a command to run"
 msgstr "Añade un comando para ejecutar"
+
+#: src/pages/WikiBrowser.tsx
+msgid "Add a file"
+msgstr "Añadir un archivo"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Add a file or folder to watch"
@@ -2056,6 +2060,10 @@ msgstr "No se pudo agregar el servidor MCP"
 msgid "Could not add the agent"
 msgstr "No se pudo añadir el agente"
 
+#: src/pages/WikiBrowser.tsx
+msgid "Could not add the file"
+msgstr "No se pudo añadir el archivo"
+
 #: src/pages/shell/message-cards.tsx
 msgid "Could not approve this server"
 msgstr "No se pudo aprobar este servidor"
@@ -2911,6 +2919,7 @@ msgstr "Desconectando…"
 #: src/components/PasskeyOffer.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/shell/message-cards.tsx
+#: src/pages/WikiBrowser.tsx
 msgid "Dismiss"
 msgstr "Descartar"
 
@@ -4135,7 +4144,7 @@ msgstr "Memoria para {title}"
 msgid "Memory scope"
 msgstr "Alcance de memoria"
 
-#: src/pages/shell/composer.tsx
+#: src/pages/shell/composer-mentions.tsx
 msgid "Mentions"
 msgstr "Menciones"
 
@@ -5388,6 +5397,7 @@ msgstr "Eliminar encabezado"
 
 #. placeholder {0}: mention.name
 #: src/pages/shell/composer.tsx
+#: src/pages/shell/thread-panel.tsx
 msgid "Remove mention {0}"
 msgstr "Quitar mención {0}"
 

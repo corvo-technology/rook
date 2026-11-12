@@ -751,6 +751,14 @@ export interface BackgroundJobPayloads {
   "history.compact": { threadId: string; keepRecent?: number };
   /** The wiki curator reads a conversation; `messageId` keeps that one message on purpose. */
   "wiki.curate": { threadId: string; messageId?: string };
+  /** The wiki curator reads a file part by part; the import row holds its progress. */
+  "wiki.import": {
+    importId: string;
+    storageKey: string;
+    mimeType: string;
+    threadId?: string;
+    temporary?: boolean;
+  };
   /** Design the body of a new agent's avatar from its role, unless a look was chosen meanwhile. */
   "bot.design-avatar": { botId: string };
   "messaging.deliver": { runId?: string };

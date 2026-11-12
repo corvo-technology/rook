@@ -53,16 +53,44 @@ lets edits in.
 When a person attaches a PDF or a text file that holds knowledge the team will want again (a
 contract, a policy, a manual, a specification), the agent offers to keep it in the wiki after it has
 answered: it asks with a choice card, says that the wiki is where the team keeps what it knows and
-that everyone in the space can read it, and saves it with `save_shared_memory` only after a yes. It
-does not ask about the same file again, or after a no, and it does not offer a casual file. The
-offer is an instruction to the model, so it can be missed or made too often; what is never missed
-is that nothing is saved before the yes, because saving is a separate call that comes after the
-answer. It is made whether or not the wiki already has pages, and not in a messaging channel or in
-a background run, where nobody can answer.
+that everyone in the space can read it, and keeps it with `save_shared_memory` (naming the file)
+only after a yes. It does not ask about the same file again, or after a no, and it does not offer a
+casual file. The offer is an instruction to the model, so it can be missed or made too often; what
+is never missed is that nothing is kept before the yes, because keeping is a separate call that
+comes after the answer. It is made whether or not the wiki already has pages, and not in a
+messaging channel or in a background run, where nobody can answer.
 
-Saving goes through the same rules as any other save: a new page is written at once and text for an
-existing page waits for approval. A document is not yet read into the wiki part by part with its
-source and page numbers kept; that is the curator reading documents, which comes next.
+The same can be done from the Wiki screen: choose a file with the paperclip, or drop it on the
+screen. Both ways go to one background job, so the screen and the agent get the same result.
+
+### How a file is read
+
+The file's text is read inside the server, with no computer and no hosted service: a PDF page by
+page, a text file as it is. Tokens, keys and email addresses are masked first. The text is cut into
+parts of about 12 000 characters (a PDF part is a run of whole pages), at most 30 parts, so a very
+long file is read as far as that and the change says so. Each part goes to the curator's model
+(the member's `fast` model, or the main one) with the wiki's index, the pages that may be related,
+and the pages the earlier parts of the same file already planned, so a later part adds to a page
+instead of creating it twice. The model is told to cite the source on every fact it keeps, as
+`(Source: policy.pdf, p. 3)` or `(Source: notes.txt, part 2)`, so the citation lives in the page.
+A part whose answer is not usable is asked again once.
+
+What comes out is one change, with the file as its source, under the rules of every other change:
+new pages are written at once and edits to existing pages wait for approval unless the space lets
+them in. The source keeps the file's masked text (encrypted), readable only by the person who added
+the file. Started from a conversation, the change shows there as the usual card; started from the
+Wiki screen, it appears in the list of what waits.
+
+- **Progress.** A file being read is listed on the Wiki screen with its name and a spinner. A
+  file that could not be read stays listed, with the reason, until it is dismissed or a day
+  passes. A read that stops moving for 30 minutes is no longer listed.
+- **Limits.** A file is at most 10 MB. Only PDF and text files are read (plain text, Markdown,
+  CSV, JSON). A Word document or a spreadsheet in its own format is refused with a message that
+  says to save it as a PDF or a text file; a PDF with no text layer, as a scan is, is refused
+  because there is nothing to read.
+- **Failures.** No model ready, a file that cannot be opened, a model that does not answer with
+  something usable, and a file with nothing new in it each end as a failed import with a reason.
+  Nothing is half written: pages are written only once every part has been read.
 
 ## The curator
 

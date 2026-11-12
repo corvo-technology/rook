@@ -499,7 +499,7 @@ msgid "{working} working"
 msgstr "{working} arbeiten"
 
 #. placeholder {0}: mention.name
-#: src/pages/shell/composer.tsx
+#: src/pages/shell/composer-mentions.tsx
 msgid "@{0}"
 msgstr "@{0}"
 
@@ -613,6 +613,10 @@ msgstr "{0} zur Gruppe hinzufügen"
 #: src/pages/RoutineEditor.tsx
 msgid "Add a command to run"
 msgstr "Füge einen auszuführenden Befehl hinzu"
+
+#: src/pages/WikiBrowser.tsx
+msgid "Add a file"
+msgstr "Datei hinzufügen"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Add a file or folder to watch"
@@ -2056,6 +2060,10 @@ msgstr "MCP-Server konnte nicht hinzugefügt werden"
 msgid "Could not add the agent"
 msgstr "Der Agent konnte nicht hinzugefügt werden"
 
+#: src/pages/WikiBrowser.tsx
+msgid "Could not add the file"
+msgstr "Die Datei konnte nicht hinzugefügt werden"
+
 #: src/pages/shell/message-cards.tsx
 msgid "Could not approve this server"
 msgstr "Server konnte nicht genehmigt werden"
@@ -2911,6 +2919,7 @@ msgstr "Verbindung wird getrennt…"
 #: src/components/PasskeyOffer.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/shell/message-cards.tsx
+#: src/pages/WikiBrowser.tsx
 msgid "Dismiss"
 msgstr "Verwerfen"
 
@@ -4135,7 +4144,7 @@ msgstr "Erinnerungen für {title}"
 msgid "Memory scope"
 msgstr "Erinnerungsbereich"
 
-#: src/pages/shell/composer.tsx
+#: src/pages/shell/composer-mentions.tsx
 msgid "Mentions"
 msgstr "Erwähnungen"
 
@@ -5388,6 +5397,7 @@ msgstr "Header entfernen"
 
 #. placeholder {0}: mention.name
 #: src/pages/shell/composer.tsx
+#: src/pages/shell/thread-panel.tsx
 msgid "Remove mention {0}"
 msgstr "Erwähnung von {0} entfernen"
 

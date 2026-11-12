@@ -1,13 +1,19 @@
-import { wikiCurateJob } from "@corvo/adapter-kit";
-import { threadIsCurated } from "@corvo/adapters";
+import { createAdapterContext, wikiCurateJob, wikiImportJob } from "@corvo/adapter-kit";
+import { documentKind, threadIsCurated } from "@corvo/adapters";
 import type { WikiChange } from "@corvo/contracts";
+import { ATTACHMENT_MAX_BYTES } from "@corvo/contracts";
+import { AttachmentValidationError, decodeAttachmentBase64 } from "@corvo/core";
 import {
   applyAllWikiChanges,
+  createWikiImport,
   decideWikiChange,
+  dismissWikiImport,
+  finishWikiImport,
   getWikiChange,
   getWikiSettings,
   importSharedMemoryOnce,
   listWikiChanges,
+  listWikiImports,
   listWikiPages,
   readWikiPage,
   removeWikiPage,
@@ -161,6 +167,56 @@ export function wikiRoutes(ctx: RouterContext) {
           .catch((error) => getLogger().error("wiki keep enqueue", error));
         return { ok: true as const };
       }),
+      imports: {
+        list: authed.wiki.imports.list.handler(({ context }) =>
+          listWikiImports(db, scopeOf(context.actor)),
+        ),
+        start: authed.wiki.imports.start.handler(async ({ context, input }) => {
+          if (!deps.artifacts)
+            throw new ORPCError("BAD_REQUEST", { message: "Files are not available here." });
+          if (!documentKind(input.name, input.mimeType)) {
+            throw new ORPCError("BAD_REQUEST", {
+              message:
+                "It can read PDF and text files. Save this one as a PDF or a text file first.",
+            });
+          }
+          let bytes: Uint8Array;
+          try {
+            bytes = decodeAttachmentBase64(input.contentBase64, ATTACHMENT_MAX_BYTES);
+          } catch (error) {
+            if (error instanceof AttachmentValidationError)
+              throw new ORPCError("BAD_REQUEST", { message: error.message });
+            throw error;
+          }
+          const scope = scopeOf(context.actor);
+          const row = await createWikiImport(db, scope, input.name);
+          try {
+            const stored = await deps.artifacts.put(
+              { name: input.name, mimeType: input.mimeType, bytes },
+              createAdapterContext(scope, "wiki-import", `wiki-import:${row.id}`),
+            );
+            // The queued read is durable; a missed wake is repaired by the job reconciler.
+            await deps.jobs.enqueue(
+              wikiImportJob({
+                importId: row.id,
+                storageKey: stored.id,
+                mimeType: input.mimeType,
+                temporary: true,
+              }),
+            );
+          } catch (error) {
+            await finishWikiImport(db, row.id, {
+              error: "This file could not be stored. Try again.",
+            });
+            throw error;
+          }
+          return { id: row.id };
+        }),
+        dismiss: authed.wiki.imports.dismiss.handler(async ({ context, input }) => {
+          await dismissWikiImport(db, scopeOf(context.actor), input.id);
+          return { ok: true as const };
+        }),
+      },
       capture: {
         get: authed.wiki.capture.get.handler(async ({ context, input }) => {
           const target = await resolveThreadTarget(db, context.actor, input);

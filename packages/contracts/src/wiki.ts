@@ -136,3 +136,21 @@ export const WikiApplyAllResultSchema = z.object({
   conflicts: z.number().int(),
 });
 export type WikiApplyAllResult = z.infer<typeof WikiApplyAllResultSchema>;
+
+/** A file being read into the wiki, or one that could not be read. */
+export const WikiImportSchema = z.object({
+  id: Id,
+  name: z.string(),
+  state: z.enum(["reading", "failed"]),
+  /** How many parts the file was cut into (0 until it has been opened) and how many are read. */
+  parts: z.number().int(),
+  readParts: z.number().int(),
+  error: z.string().optional(),
+});
+export type WikiImport = z.infer<typeof WikiImportSchema>;
+
+export const WikiImportStartInputSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  mimeType: z.string().max(200),
+  contentBase64: z.string().min(1),
+});

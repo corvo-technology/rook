@@ -319,6 +319,7 @@ model Space {
   wikiSources                 WikiSource[]
   artifactTranscripts         ArtifactTranscript[]
   wikiChanges                 WikiChange[]
+  wikiImports                 WikiImport[]
   botMcpServers               BotMcpServer[]
   messagingIdentities         MessagingIdentity[]
   actionApprovalRules         ActionApprovalRule[]
@@ -1530,7 +1531,7 @@ model WikiSource {
   userId    String
   threadId  String?
   thread    Thread?     @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  /// "conversation" (read by the curator), "message" (kept on purpose) or "note" (saved by an agent).
+  /// "conversation" (read by the curator), "message" (kept on purpose), "note" (saved by an agent) or "file" (a document read part by part).
   origin    String
   title     String
   text      String
@@ -1572,6 +1573,26 @@ model WikiChange {
 
   @@index([spaceId, state])
   @@map("wiki_changes")
+}
+
+/// A file being read into the wiki: "reading" while the curator works through it, then "done" or "failed".
+model WikiImport {
+  id         String   @id @default(cuid())
+  spaceId    String
+  space      Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId     String
+  name       String
+  state      String   @default("reading")
+  /// How many parts the file was cut into, and how many the curator has read so far.
+  parts      Int      @default(0)
+  readParts  Int      @default(0)
+  /// What went wrong, in words a person can act on, when the state is "failed".
+  error      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([spaceId, state])
+  @@map("wiki_imports")
 }
 
 model ProviderQuota {

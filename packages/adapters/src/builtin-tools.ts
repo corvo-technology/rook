@@ -673,14 +673,19 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "save_shared_memory",
     description:
-      "Save a wiki page every bot can read. A new page is kept at once; text for an existing page is added to it and waits for the owner's approval.",
+      "Save a wiki page every bot can read, or keep a whole attached file in the wiki. A new page is kept at once; text for an existing page is added to it and waits for the owner's approval.",
     inputSchema: {
       type: "object",
       properties: {
         path: { type: "string", description: "Page title, for example Alpha Builders." },
         content: { type: "string", description: "The page's text, or the text to add to it." },
+        file: {
+          type: "string",
+          description:
+            "The name of a PDF or text file attached in this chat, to read into the wiki part by part with its pages cited. Use it instead of path and content.",
+        },
       },
-      required: ["path", "content"],
+      required: [],
     },
   },
   {
@@ -1815,8 +1820,10 @@ export const agentConnectionTools: ConnectorTool[] = [
 export const MAX_SHARED_MEMORY_CHARS = 4_000;
 
 export function sharedMemorySaveError(args: Record<string, unknown>): string | undefined {
+  // A file is read by the curator, so it needs neither a title nor text.
+  if (typeof args.file === "string" && args.file.trim()) return undefined;
   const path = String(args.path ?? "").trim();
-  if (!path) return "path is required";
+  if (!path) return "path or file is required";
   const content = String(args.content ?? "");
   if (content.length > MAX_SHARED_MEMORY_CHARS) {
     return `content exceeds ${MAX_SHARED_MEMORY_CHARS} characters`;

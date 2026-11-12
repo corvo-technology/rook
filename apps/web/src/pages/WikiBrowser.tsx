@@ -4,6 +4,7 @@ import type {
   WikiChange,
   WikiChangeState,
   WikiHit,
+  WikiImport,
   WikiPage,
   WikiPageInfo,
   WikiRevision,
@@ -28,10 +29,20 @@ import {
 import { Trans, useLingui } from "@lingui/react/macro";
 import { ORPCError } from "@orpc/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Link2, MoreHorizontal, Plus, Search, SlidersHorizontal } from "lucide-react";
+import {
+  ChevronLeft,
+  Link2,
+  MoreHorizontal,
+  Paperclip,
+  Plus,
+  Search,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { WikiChangeCard } from "../components/WikiChangeCard";
+import { isFileDrag, readFileAsBase64 } from "../lib/pending-attachments";
 import { formatRelativeTime } from "../lib/relative-time";
 
 /** What the browser needs of the wiki: the procedures of the `wiki` namespace, nothing else. */
@@ -51,6 +62,15 @@ export type WikiApi = {
   settings: {
     get(): Promise<WikiSettings>;
     set(patch: Partial<WikiSettings>): Promise<WikiSettings>;
+  };
+  imports: {
+    list(): Promise<WikiImport[]>;
+    start(input: {
+      name: string;
+      mimeType: string;
+      contentBase64: string;
+    }): Promise<{ id: string }>;
+    dismiss(input: { id: string }): Promise<{ ok: true }>;
   };
 };
 
@@ -108,6 +128,39 @@ export function WikiBrowser({
     queryFn: () => api.changes.list({ state: ["pending"] }),
   });
   const settings = useQuery({ queryKey: ["wiki", "settings"], queryFn: () => api.settings.get() });
+  const imports = useQuery({
+    queryKey: ["wiki", "imports"],
+    queryFn: () => api.imports.list(),
+    // A file is read in the background: look again until it is done.
+    refetchInterval: (state) =>
+      state.state.data?.some((item) => item.state === "reading") ? 2_000 : false,
+  });
+  // When a file stops being read, what it kept is in the wiki or waiting for approval.
+  const reading = imports.data?.filter((item) => item.state === "reading").length ?? 0;
+  const wasReading = useRef(0);
+  useEffect(() => {
+    if (wasReading.current > reading) void queryClient.invalidateQueries({ queryKey: ["wiki"] });
+    wasReading.current = reading;
+  }, [reading, queryClient]);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [dropping, setDropping] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
+
+  async function addFiles(files: FileList | File[]) {
+    setFileError(null);
+    for (const file of files) {
+      try {
+        await api.imports.start({
+          name: file.name,
+          mimeType: file.type,
+          contentBase64: await readFileAsBase64(file),
+        });
+      } catch (caught) {
+        setFileError(caught instanceof ORPCError ? caught.message : t`Could not add the file`);
+      }
+    }
+    await queryClient.invalidateQueries({ queryKey: ["wiki", "imports"] });
+  }
   const [deciding, setDeciding] = useState<string | null>(null);
   const [approvingAll, setApprovingAll] = useState(false);
   const [moved, setMoved] = useState(false);
@@ -260,7 +313,31 @@ export function WikiBrowser({
   const empty = index.isSuccess && !index.data.length;
 
   return (
-    <div className="flex min-h-0 flex-1" data-testid="wiki">
+    // biome-ignore lint/a11y/noStaticElementInteractions: a drop target; the paperclip is the keyboard path.
+    <div
+      className="relative flex min-h-0 flex-1"
+      data-testid="wiki"
+      onDragOver={(event) => {
+        if (!isFileDrag(event.dataTransfer)) return;
+        event.preventDefault();
+        setDropping(true);
+      }}
+      onDragLeave={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropping(false);
+      }}
+      onDrop={(event) => {
+        if (!isFileDrag(event.dataTransfer)) return;
+        event.preventDefault();
+        setDropping(false);
+        void addFiles(event.dataTransfer.files);
+      }}
+    >
+      {dropping ? (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-2 z-10 rounded-xl border border-dashed border-foreground/40 bg-background/60"
+        />
+      ) : null}
       <aside
         className={`${showingPage ? "hidden md:flex" : "flex"} w-full shrink-0 flex-col gap-3 overflow-y-auto border-border/60 px-4 pb-6 md:w-64 md:border-e`}
       >
@@ -286,6 +363,27 @@ export function WikiBrowser({
           >
             <Plus />
           </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={t`Add a file`}
+            onClick={() => fileInput.current?.click()}
+            className="shrink-0"
+          >
+            <Paperclip />
+          </Button>
+          <input
+            ref={fileInput}
+            type="file"
+            multiple
+            hidden
+            accept=".pdf,.txt,.md,.csv,.json,text/*,application/pdf"
+            data-testid="wiki-file-input"
+            onChange={(event) => {
+              if (event.target.files?.length) void addFiles(event.target.files);
+              event.target.value = "";
+            }}
+          />
           <Popover>
             <PopoverTrigger
               aria-label={t`Wiki settings`}
@@ -315,6 +413,45 @@ export function WikiBrowser({
             </PopoverContent>
           </Popover>
         </div>
+        {fileError ? (
+          <p className="px-1 text-xs text-destructive" role="alert" data-testid="wiki-file-error">
+            {fileError}
+          </p>
+        ) : null}
+        {imports.data?.length ? (
+          <ul className="flex flex-col gap-1" data-testid="wiki-imports">
+            {imports.data.map((item) => (
+              <li
+                key={item.id}
+                className="flex items-start gap-2 rounded-lg bg-muted px-2.5 py-1.5 text-sm"
+              >
+                {item.state === "reading" ? <Spinner className="mt-0.5 shrink-0" /> : null}
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate">{item.name}</span>
+                  {item.error ? (
+                    <span className="block text-xs text-destructive">{item.error}</span>
+                  ) : null}
+                </span>
+                {item.state === "failed" ? (
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={t`Dismiss`}
+                    onClick={() =>
+                      void api.imports
+                        .dismiss({ id: item.id })
+                        .then(() =>
+                          queryClient.invalidateQueries({ queryKey: ["wiki", "imports"] }),
+                        )
+                    }
+                  >
+                    <X />
+                  </Button>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        ) : null}
         {waiting.data?.length ? (
           <div className="flex flex-col gap-2" data-testid="wiki-pending">
             {waiting.data.length > 1 ? (

@@ -7,6 +7,7 @@ import { MAX_RECALLED_MEMORIES } from "./history-compaction.js";
 import { appendMemoryFact } from "./memory-tools.js";
 import type { RunContext } from "./run-context.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
+import { startAttachedFileImport } from "./wiki-import-run.js";
 import { keepNoteInWiki } from "./wiki-note.js";
 
 async function readHistoryTool(ctx: RunContext, call: ToolCall) {
@@ -74,6 +75,17 @@ export const memoryTools: ToolHandlers = {
     const { args } = call;
     const invalid = sharedMemorySaveError(args);
     if (invalid) return call.finish({ error: invalid });
+    const file = typeof args.file === "string" ? args.file.trim() : "";
+    if (file) {
+      if (!deps.jobs)
+        return call.finish({ error: "Reading files into the wiki is not available here." });
+      return call.finish(
+        await startAttachedFileImport(
+          { prisma: deps.prisma, jobs: deps.jobs, maxUploadSizeBytes: deps.maxUploadSizeBytes },
+          { threadId: thread.id, context: ctx.context, file },
+        ),
+      );
+    }
     // The wiki keeps it: a new page at once, a change to a page for the owner to approve.
     return call.finish(
       await keepNoteInWiki(deps, {

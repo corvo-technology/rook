@@ -67,6 +67,7 @@ export async function wakeTicketAssignee(
         userId: bot.userId,
         taskId: task.id,
         trigger: "tickets",
+        ticketId: ticket.id,
         status: "queued",
       },
     });

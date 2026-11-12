@@ -224,11 +224,20 @@ export const BoardMoveSchema = z.object({
 });
 export type BoardMove = z.infer<typeof BoardMoveSchema>;
 
+/** What an agent is doing on a ticket right now. */
+export const BoardStepSchema = z.object({ botId: Id, text: z.string() });
+export type BoardStep = z.infer<typeof BoardStepSchema>;
+
+/**
+ * `step` is the agent's latest step on `ticketId`, or null once its run ended. A signal with a
+ * step and no `moved` changes nothing in the list, so clients need not read it again.
+ */
 export const BoardEventSchema = z.object({
   spaceId: Id,
   boardId: Id.optional(),
   ticketId: Id.optional(),
   moved: BoardMoveSchema.optional(),
+  step: BoardStepSchema.nullable().optional(),
   createdAt: z.string(),
 });
 export type BoardEvent = z.infer<typeof BoardEventSchema>;

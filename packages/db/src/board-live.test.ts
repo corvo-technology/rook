@@ -48,6 +48,24 @@ describe("createBoardEvents", () => {
     await iterator.return?.(undefined);
   });
 
+  it("carries an agent's step and its end, and drops a malformed step", async () => {
+    const fanout = fakeFanout();
+    const events = createBoardEvents(fanout as never);
+    const iterator = events.follow("space-1")[Symbol.asyncIterator]();
+    let next = iterator.next();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const step = { botId: "bot-1", text: "Searching the web" };
+    await events.notify("space-1", { ticketId: "ticket-1", step });
+    expect((await next).value).toMatchObject({ ticketId: "ticket-1", step });
+    next = iterator.next();
+    await events.notify("space-1", { ticketId: "ticket-1", step: null });
+    expect((await next).value).toMatchObject({ ticketId: "ticket-1", step: null });
+    next = iterator.next();
+    await fanout.publish("board:space-1", JSON.stringify({ ticketId: "t", step: { text: 4 } }));
+    expect((await next).value).not.toHaveProperty("step");
+    await iterator.return?.(undefined);
+  });
+
   it("follows only the requested space and yields the change", async () => {
     const fanout = fakeFanout();
     const events = createBoardEvents(fanout as never);

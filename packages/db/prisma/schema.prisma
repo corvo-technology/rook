@@ -807,6 +807,8 @@ model Run {
   startedAt            DateTime?
   completedAt          DateTime?
   botOutcomeReturnedAt DateTime?
+  // The ticket a run was woken to work on; null for every other run. Its moves follow the run.
+  ticketId             String?
   messagingMirroredAt  DateTime?
   teamChatMirroredAt   DateTime?
   createdAt            DateTime          @default(now())

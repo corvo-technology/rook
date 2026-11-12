@@ -11,7 +11,7 @@ import {
   localeHomePath,
   type Locale,
 } from "../i18n/locales";
-import { SITE_NAME, SITE_URL } from "../site";
+import { SITE_NAME, SITE_URL, SOCIAL_IMAGE_VERSION } from "../site";
 
 type Props = {
   title?: string;
@@ -48,7 +48,9 @@ const locale: Locale = isLocale(Astro.currentLocale)
 
 const canonical = index ? new URL(Astro.url.pathname, SITE_URL).toString() : undefined;
 const robots = index ? "index, follow, max-image-preview:large" : "noindex";
-const socialImage = new URL(ogImage, SITE_URL).toString();
+const socialImageUrl = new URL(ogImage, SITE_URL);
+if (socialImageUrl.origin === SITE_URL) socialImageUrl.searchParams.set("v", SOCIAL_IMAGE_VERSION);
+const socialImage = socialImageUrl.toString();
 const structuredDataJson = structuredData
   ? JSON.stringify(structuredData).replaceAll("<", "\\u003c")
   : null;

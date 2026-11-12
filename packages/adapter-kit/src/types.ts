@@ -752,6 +752,10 @@ export interface BackgroundJobPayloads {
   "history.compact": { threadId: string; keepRecent?: number };
   /** The wiki curator reads a conversation; `messageId` keeps that one message on purpose. */
   "wiki.curate": { threadId: string; messageId?: string };
+  /** The wiki review reads the pages for contradictions, stale facts and duplicates. */
+  "wiki.review": { spaceId: string; userId: string; manual?: boolean };
+  /** Writes a change that hit a moved page again against the pages as they are now. */
+  "wiki.retry": { spaceId: string; userId: string; changeId: string };
   /** The wiki curator reads a file part by part; the import row holds its progress. */
   "wiki.import": {
     importId: string;

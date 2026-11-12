@@ -37,6 +37,7 @@ import { learnUserMemories } from "./user-memory-run.js";
 import { WHATSAPP_THREAD_PREFIX } from "./whatsapp/link-surface.js";
 import { curateWiki } from "./wiki-curator-run.js";
 import { importFileToWiki } from "./wiki-import-run.js";
+import { retryWikiChange, reviewWiki } from "./wiki-review-run.js";
 
 type Tenant = { spaceId: string; userId: string };
 
@@ -73,6 +74,12 @@ function asOwner<Key, P extends Key>(
     if (tenant) await runAsTenant(tenant, () => handler(payload, execution));
   };
 }
+
+/** A review or a retry names the member it works for; that member's Space is where it runs. */
+const wikiScope = async (payload: Tenant): Promise<Tenant> => ({
+  spaceId: payload.spaceId,
+  userId: payload.userId,
+});
 
 const OWNER = { spaceId: true, userId: true } as const;
 
@@ -257,6 +264,27 @@ export function createBackgroundJobHandlers(deps: {
           prisma: deps.prisma,
           runtime: deps.runtime,
           events: deps.events,
+          jobs: deps.jobs,
+          resolveFastModel: deps.executor.resolveFastModel,
+        },
+        payload,
+      );
+    }),
+    "wiki.review": asOwner(wikiScope, async (payload) => {
+      await reviewWiki(
+        {
+          prisma: deps.prisma,
+          runtime: deps.runtime,
+          resolveFastModel: deps.executor.resolveFastModel,
+        },
+        payload,
+      );
+    }),
+    "wiki.retry": asOwner(wikiScope, async (payload) => {
+      await retryWikiChange(
+        {
+          prisma: deps.prisma,
+          runtime: deps.runtime,
           resolveFastModel: deps.executor.resolveFastModel,
         },
         payload,

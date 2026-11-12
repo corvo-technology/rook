@@ -13,7 +13,14 @@ export function WikiChangeBlock({ changeId }: { changeId: string }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const key = ["wiki", "change", changeId];
-  const change = useQuery({ queryKey: key, queryFn: () => rpc.wiki.changes.get({ changeId }) });
+  const retry = useMutation({ mutationFn: () => rpc.wiki.changes.retry({ changeId }) });
+  // The rewrite runs in the background: look again until the change is out of conflict.
+  const change = useQuery({
+    queryKey: key,
+    queryFn: () => rpc.wiki.changes.get({ changeId }),
+    refetchInterval: (query) =>
+      retry.isSuccess && query.state.data?.state === "conflict" ? 4_000 : false,
+  });
   const decide = useMutation({
     mutationFn: (decision: "apply" | "refuse" | "undo") =>
       rpc.wiki.changes.decide({ changeId, decision }),
@@ -26,8 +33,11 @@ export function WikiChangeBlock({ changeId }: { changeId: string }) {
   return (
     <WikiChangeCard
       change={change.data}
-      busy={decide.isPending}
+      busy={
+        decide.isPending || retry.isPending || (retry.isSuccess && change.data.state === "conflict")
+      }
       onDecide={(decision) => decide.mutate(decision)}
+      onRetry={() => retry.mutate()}
       onOpenPage={(title) => navigate(`/app/wiki?page=${encodeURIComponent(title)}`)}
     />
   );

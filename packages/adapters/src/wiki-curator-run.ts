@@ -1,5 +1,10 @@
-import type { AgentRunRequest, AgentRuntime, BackgroundJob } from "@corvo/adapter-kit";
-import { wikiCurateJob } from "@corvo/adapter-kit";
+import type {
+  AgentRunRequest,
+  AgentRuntime,
+  BackgroundJob,
+  JobPublisher,
+} from "@corvo/adapter-kit";
+import { wikiCurateJob, wikiReviewJob } from "@corvo/adapter-kit";
 import {
   buildCuratorPrompt,
   CURATOR_RULES,
@@ -22,6 +27,7 @@ import {
   readWikiPage,
   recordUsage,
   searchWiki,
+  wikiReviewDue,
   withTransactionRetry,
 } from "@corvo/db";
 import { getLogger, redactSensitiveText } from "@corvo/logging";
@@ -40,6 +46,8 @@ export type WikiCuratorDeps = {
   prisma: PrismaClient;
   runtime: AgentRuntime;
   events: ThreadEvents;
+  /** Where the weekly review is queued from; without it no review starts from a conversation. */
+  jobs?: JobPublisher;
   resolveFastModel?: (scope: {
     userId: string;
     spaceId: string;
@@ -149,11 +157,34 @@ export async function askCurator(
     instructions: string;
   },
 ): Promise<CuratorProposal> {
+  const { answer, failed } = await askWikiModel(deps, input);
+  const proposal = failed ? null : parseCuratorOutput(answer);
+  if (!proposal) throw new Error("The wiki curator's model did not answer with a usable proposal.");
+  return proposal;
+}
+
+/**
+ * One call to the wiki's model with no tools, its cost recorded as wiki usage. `failed` is true when
+ * the model's own error text came back in place of an answer.
+ */
+export async function askWikiModel(
+  deps: Pick<WikiCuratorDeps, "prisma" | "runtime">,
+  input: {
+    model: AgentRunRequest["model"];
+    scope: { spaceId: string; userId: string };
+    botId: string;
+    threadId: string;
+    usageBotId?: string | undefined;
+    operationId: string;
+    runId: string;
+    prompt: string;
+    instructions: string;
+  },
+): Promise<{ answer: string; failed: boolean }> {
   const { prisma } = deps;
   const usageOf = (event: Parameters<typeof recordUsage>[1]) =>
     recordUsage(prisma, event, {
-      spaceId: input.scope.spaceId,
-      userId: input.scope.userId,
+      ...input.scope,
       botId: input.usageBotId,
       operationId: input.operationId,
       operationKind: "wiki",
@@ -179,8 +210,7 @@ export async function askCurator(
     {
       operationId: input.operationId,
       traceId: input.operationId,
-      spaceId: input.scope.spaceId,
-      userId: input.scope.userId,
+      ...input.scope,
       signal: AbortSignal.timeout(summarizeTimeoutMs(input.prompt.length)),
     },
   )) {
@@ -191,9 +221,7 @@ export async function askCurator(
       if (FAILED_TEXT.test(answer)) failed = true;
     }
   }
-  const proposal = failed ? null : parseCuratorOutput(answer);
-  if (!proposal) throw new Error("The wiki curator's model did not answer with a usable proposal.");
-  return proposal;
+  return { answer, failed };
 }
 
 /**
@@ -317,6 +345,7 @@ export async function curateWiki(
         })
       : null;
   if (!kept) await advanceWikiCursor(prisma, thread.id, thread.wikiCuratedUpToSeq, toSeq);
+  await queueWeeklyReview(deps, scope);
   if (change)
     await postWikiChangeCard(
       deps,
@@ -324,6 +353,23 @@ export async function curateWiki(
       change,
       rows.find((row) => row.botId)?.botId ?? undefined,
     );
+}
+
+/**
+ * A Space's wiki is reviewed once a week while it is in use: the review is queued from a read, and
+ * the job itself does nothing until a week has passed. A failure here never loses the read.
+ */
+async function queueWeeklyReview(
+  deps: Pick<WikiCuratorDeps, "prisma" | "jobs">,
+  scope: { spaceId: string; userId: string },
+): Promise<void> {
+  if (!deps.jobs) return;
+  try {
+    if (await wikiReviewDue(deps.prisma, scope.spaceId))
+      await deps.jobs.enqueue(wikiReviewJob(scope));
+  } catch (error) {
+    getLogger().error("wiki review enqueue", error);
+  }
 }
 
 /**

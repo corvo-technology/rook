@@ -48,6 +48,8 @@ export type WikiChangeRecord = {
   sourceText: string;
   /** The owner of the conversation the source came from: the only person shown its text. */
   sourceUserId: string;
+  /** Found by the review of the pages themselves, so it says nothing private. */
+  review: boolean;
 };
 
 type Revisions = Record<string, number>;
@@ -65,7 +67,13 @@ type Row = {
   createdAt: Date;
   anchorThreadId: string | null;
   anchorMessageId: string | null;
-  source: { title: string; text: string; userId: string; threadId: string | null };
+  source: {
+    title: string;
+    text: string;
+    userId: string;
+    threadId: string | null;
+    origin: string;
+  };
 };
 
 const opsOf = (row: Row) => row.ops as CuratorOp[];
@@ -120,10 +128,13 @@ function recordOf(row: Row): WikiChangeRecord {
     sourceTitle: row.source.title,
     sourceText: row.source.text,
     sourceUserId: row.source.userId,
+    review: row.source.origin === "review",
   };
 }
 
-const INCLUDE = { source: { select: { title: true, text: true, userId: true, threadId: true } } };
+const INCLUDE = {
+  source: { select: { title: true, text: true, userId: true, threadId: true, origin: true } },
+};
 
 /**
  * The operations that can still be applied to the pages as they stand now, and the revision each
@@ -210,7 +221,7 @@ export async function createWikiChange(
   scope: WikiScope,
   input: {
     source: {
-      origin: "conversation" | "message" | "note" | "file";
+      origin: "conversation" | "message" | "note" | "file" | "review";
       title: string;
       text: string;
       threadId?: string;
@@ -397,7 +408,8 @@ export async function applyAllWikiChanges(
   scope: WikiScope,
 ): Promise<WikiApplyAllResult> {
   const waiting = await db.wikiChange.findMany({
-    where: { spaceId: scope.spaceId, state: "pending" },
+    // What the review found is looked at one finding at a time, never approved in bulk.
+    where: { spaceId: scope.spaceId, state: "pending", source: { origin: { not: "review" } } },
     orderBy: { createdAt: "asc" },
     select: { id: true },
   });
@@ -488,4 +500,95 @@ export async function advanceWikiCursor(
     data: { wikiCuratedUpToSeq: to },
   });
   return count === 1;
+}
+
+/**
+ * What trying a conflicting change again starts from; undefined when it cannot be tried again.
+ * Only a change that wrote nothing can be: one that wrote pages is put right by undoing it.
+ */
+export async function wikiChangeToRetry(
+  db: PrismaClient,
+  scope: WikiScope,
+  changeId: string,
+): Promise<{ ops: CuratorOp[]; sourceText: string } | undefined> {
+  const row = (await db.wikiChange.findFirst({
+    where: { id: changeId, spaceId: scope.spaceId, state: "conflict" },
+    include: INCLUDE,
+  })) as Row | null;
+  if (!row || Object.keys(revisionsOf(row.appliedRevisions)).length) return undefined;
+  return { ops: opsOf(row), sourceText: row.source.text };
+}
+
+/**
+ * Puts a change that hit a moved page back to waiting, with operations written again against the
+ * pages as they stand now, only from the conflict it was read in. Null when none of the operations
+ * still apply or another answer got there first.
+ */
+export async function reopenWikiChange(
+  db: PrismaClient,
+  scope: WikiScope,
+  changeId: string,
+  ops: CuratorOp[],
+): Promise<WikiChangeRecord | null> {
+  if (!(await wikiChangeToRetry(db, scope, changeId))) return null;
+  const { kept, base } = await plan(db, scope, ops);
+  if (!kept.length) return null;
+  const { count } = await db.wikiChange.updateMany({
+    where: { id: changeId, spaceId: scope.spaceId, state: "conflict" },
+    data: {
+      ops: kept,
+      baseRevisions: base,
+      appliedRevisions: {},
+      state: "pending",
+      decidedAt: null,
+      decidedByUserId: null,
+    },
+  });
+  return count === 1 ? ((await getWikiChange(db, scope, changeId)) ?? null) : null;
+}
+
+/** The titles of review findings that wait or were refused, so a review does not repeat them. */
+export async function knownWikiFindingTitles(
+  db: PrismaClient,
+  scope: WikiScope,
+): Promise<string[]> {
+  const rows = await db.wikiChange.findMany({
+    where: {
+      spaceId: scope.spaceId,
+      state: { in: ["pending", "refused"] },
+      source: { origin: "review" },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+    select: { source: { select: { title: true } } },
+  });
+  return rows.map((row) => row.source.title);
+}
+
+const REVIEW_EVERY_MS = 7 * 24 * 3_600_000;
+
+/** Notes that the Space's pages have just been reviewed. */
+export async function markWikiReviewed(
+  db: PrismaClient,
+  spaceId: string,
+  now: Date = new Date(),
+): Promise<void> {
+  await db.wikiSettings.upsert({
+    where: { spaceId },
+    create: { spaceId, reviewedAt: now },
+    update: { reviewedAt: now },
+  });
+}
+
+/** Whether a week has passed since the Space's last review. */
+export async function wikiReviewDue(
+  db: PrismaClient,
+  spaceId: string,
+  now: Date = new Date(),
+): Promise<boolean> {
+  const row = await db.wikiSettings.findUnique({
+    where: { spaceId },
+    select: { reviewedAt: true },
+  });
+  return !row?.reviewedAt || row.reviewedAt.getTime() < now.getTime() - REVIEW_EVERY_MS;
 }

@@ -4452,6 +4452,10 @@ msgstr "为你的工作区命名"
 msgid "Needs an answer"
 msgstr "需要回答"
 
+#: src/pages/WikiBrowser.tsx
+msgid "Needs care"
+msgstr "需要关注"
+
 #: src/pages/ActivityList.tsx
 msgid "Needs input"
 msgstr "需要输入"
@@ -5667,6 +5671,10 @@ msgstr "返回 Rook"
 #: src/lib/activity-label.ts
 msgid "Review before {reviewing}"
 msgstr "执行前请确认：{reviewing}"
+
+#: src/pages/WikiBrowser.tsx
+msgid "Review now"
+msgstr "立即审查"
 
 #. placeholder {0}: revision.revision
 #: src/pages/WikiBrowser.tsx
@@ -6910,6 +6918,7 @@ msgid "Trigger"
 msgstr "触发器"
 
 #: src/components/ModelProblemNotice.tsx
+#: src/components/WikiChangeCard.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 msgid "Try again"

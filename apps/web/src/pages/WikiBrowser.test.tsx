@@ -131,6 +131,7 @@ function fakeApi(seed: Record<string, { body: string; kind?: string }> = {}) {
   let settings: WikiSettings = { capture: true, edits: "approve" };
   let importing: WikiImport[] = [];
   const api = {
+    review: vi.fn(async () => ({ ok: true as const })),
     changes: {
       list: vi.fn(async ({ state }: { state?: string[] } = {}) =>
         changes.filter((change) => !state || state.includes(change.state)),
@@ -530,6 +531,29 @@ it("says a page changed when approving all leaves a conflict", async () => {
   const unmount = await mount(api);
   await click(button("Approve all"));
   expect(q("wiki-moved")?.textContent).toContain("A page changed since");
+  await unmount();
+});
+
+it("keeps what the review found apart from the rest, outside Approve all", async () => {
+  const { api, changes } = fakeApi({ Plan: { body: "Status: planning." } });
+  changes.push(waiting("c1", "Plan"), waiting("c2", "Plan"), {
+    ...waiting("r1", "Plan"),
+    review: true,
+    sourceTitle: "Two pages disagree",
+  });
+  const unmount = await mount(api);
+  expect(q("wiki-needs-care")?.textContent).toContain("Needs care");
+  expect(q("wiki-needs-care")?.textContent).toContain("Two pages disagree");
+  expect(q("wiki-pending")?.textContent).not.toContain("Two pages disagree");
+  await unmount();
+});
+
+it("asks for a review on request, once", async () => {
+  const { api } = fakeApi({ Plan: { body: "Status: planning." } });
+  const unmount = await mount(api);
+  await click(button("Review now"));
+  await click(button("Review now"));
+  expect(api.review).toHaveBeenCalledTimes(1);
   await unmount();
 });
 

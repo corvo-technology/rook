@@ -4452,6 +4452,10 @@ msgstr "Name your workspace"
 msgid "Needs an answer"
 msgstr "Needs an answer"
 
+#: src/pages/WikiBrowser.tsx
+msgid "Needs care"
+msgstr "Needs care"
+
 #: src/pages/ActivityList.tsx
 msgid "Needs input"
 msgstr "Needs input"
@@ -5667,6 +5671,10 @@ msgstr "Return to Rook"
 #: src/lib/activity-label.ts
 msgid "Review before {reviewing}"
 msgstr "Review before {reviewing}"
+
+#: src/pages/WikiBrowser.tsx
+msgid "Review now"
+msgstr "Review now"
 
 #. placeholder {0}: revision.revision
 #: src/pages/WikiBrowser.tsx
@@ -6910,6 +6918,7 @@ msgid "Trigger"
 msgstr "Trigger"
 
 #: src/components/ModelProblemNotice.tsx
+#: src/components/WikiChangeCard.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 msgid "Try again"

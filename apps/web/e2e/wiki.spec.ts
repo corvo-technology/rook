@@ -124,3 +124,16 @@ test("the two wiki settings are switches, off to turn a behavior off", async ({ 
   await expect(approve).not.toBeChecked();
   await expect(page.getByRole("switch", { name: "Learn from conversations" })).toBeChecked();
 });
+
+test("what the review found waits under Needs care until it is approved or refused", async ({
+  page,
+}, testInfo) => {
+  await page.goto(url("light", "&changes=care"));
+  const care = page.getByTestId("wiki-needs-care");
+  await expect(care).toContainText("Needs care");
+  await expect(care).toContainText("Quote date differs between two pages");
+  await expect(care).toContainText("approved on Oct 28");
+  await captureScreenshot(page, testInfo, "wiki-needs-care");
+  await care.getByRole("button", { name: "Refuse" }).click();
+  await expect(page.getByTestId("wiki-needs-care")).toHaveCount(0);
+});

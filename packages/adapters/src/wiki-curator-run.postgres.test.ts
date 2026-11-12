@@ -454,4 +454,27 @@ postgres("the wiki curator (PostgreSQL)", () => {
     await curate(q, quiet.id);
     expect(q.requests[0]?.prompt).not.toMatch(/asked to keep/i);
   });
+
+  it("queues the weekly review after a read, only once a week has passed since the last", async () => {
+    const enqueue = vi.fn(async () => undefined);
+    const jobs = { enqueue, cancel: vi.fn(), close: vi.fn() };
+    const thread = await conversation("channel", [LONG, "ok", "ok"]);
+    const d = deps(proposal({ worth: false }));
+    await tenant(() => curateWiki({ ...d.value, jobs }, { threadId: thread.id }));
+    expect(enqueue).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "wiki.review", payload: scope }),
+    );
+
+    await fixture(() =>
+      prisma.wikiSettings.upsert({
+        where: { spaceId: ids.spaceId },
+        create: { spaceId: ids.spaceId, reviewedAt: new Date() },
+        update: { reviewedAt: new Date() },
+      }),
+    );
+    enqueue.mockClear();
+    const next = await conversation("channel", [LONG, "ok", "ok"]);
+    await tenant(() => curateWiki({ ...d.value, jobs }, { threadId: next.id }));
+    expect(enqueue).not.toHaveBeenCalled();
+  });
 });

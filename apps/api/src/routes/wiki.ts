@@ -1,4 +1,10 @@
-import { createAdapterContext, wikiCurateJob, wikiImportJob } from "@corvo/adapter-kit";
+import {
+  createAdapterContext,
+  wikiCurateJob,
+  wikiImportJob,
+  wikiRetryJob,
+  wikiReviewJob,
+} from "@corvo/adapter-kit";
 import { documentKind, threadIsCurated } from "@corvo/adapters";
 import type { WikiChange } from "@corvo/contracts";
 import { ATTACHMENT_MAX_BYTES } from "@corvo/contracts";
@@ -53,15 +59,18 @@ function asRpcError(error: unknown): never {
  * touches; the words quoted from the conversation are shown only to the person whose it was.
  */
 export function wikiChangeView(record: WikiChangeRecord, viewerUserId: string): WikiChange {
-  const canSeeSource = record.sourceUserId === viewerUserId;
+  // What the review found is about the pages, which every member reads, so it hides nothing.
+  const canSeeSource = !record.review && record.sourceUserId === viewerUserId;
+  const canSeeReason = record.review || canSeeSource;
   return {
     id: record.id,
     state: record.state,
+    review: record.review,
     // The title and the reason are the model's summary of the conversation, so only the person
     // whose conversation it was is shown them. What would be written is page text, which every
     // member of the Space can read once it is in the wiki, so everyone sees it before approving.
-    reason: canSeeSource ? record.reason : "",
-    sourceTitle: canSeeSource ? record.sourceTitle : "",
+    reason: canSeeReason ? record.reason : "",
+    sourceTitle: canSeeReason ? record.sourceTitle : "",
     pages: record.pages,
     edits: record.edits,
     createdAt: record.createdAt.toISOString(),
@@ -142,7 +151,20 @@ export function wikiRoutes(ctx: RouterContext) {
         applyAll: authed.wiki.changes.applyAll.handler(({ context }) =>
           applyAllWikiChanges(db, scopeOf(context.actor)),
         ),
+        retry: authed.wiki.changes.retry.handler(({ context, input }) =>
+          guarded(async () => {
+            const record = await getWikiChange(db, scopeOf(context.actor), input.changeId);
+            if (!record) throw new WikiNotFoundError();
+            if (record.state !== "conflict") throw new WikiChangeStateError();
+            await deps.jobs.enqueue(wikiRetryJob(scopeOf(context.actor), record.id));
+            return { ok: true as const };
+          }),
+        ),
       },
+      review: authed.wiki.review.handler(async ({ context }) => {
+        await deps.jobs.enqueue(wikiReviewJob(scopeOf(context.actor), { manual: true }));
+        return { ok: true as const };
+      }),
       settings: {
         get: authed.wiki.settings.get.handler(({ context }) =>
           getWikiSettings(db, context.actor.spaceId),

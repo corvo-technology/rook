@@ -6,9 +6,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const get = vi.hoisted(() => vi.fn());
 const decide = vi.hoisted(() => vi.fn());
+const retry = vi.hoisted(() => vi.fn());
 const navigate = vi.hoisted(() => vi.fn());
 vi.mock("../lib/space-rpc", () => ({
-  useSpaceRpc: () => ({ wiki: { changes: { get, decide } } }),
+  useSpaceRpc: () => ({ wiki: { changes: { get, decide, retry } } }),
 }));
 vi.mock("react-router-dom", () => ({ useNavigate: () => navigate }));
 vi.mock("@lingui/react/macro", () => ({
@@ -36,6 +37,7 @@ let root: ReturnType<typeof createRoot> | undefined;
 beforeEach(() => {
   get.mockReset();
   decide.mockReset();
+  retry.mockReset();
   navigate.mockReset();
 });
 afterEach(async () => {
@@ -94,6 +96,25 @@ describe("the card in a conversation", () => {
     expect(container.querySelector('[data-testid="wiki-change"]')?.getAttribute("data-state")).toBe(
       "applied",
     );
+  });
+
+  it("offers to try a conflicting change again, and asks only once", async () => {
+    get.mockResolvedValue(change("conflict"));
+    retry.mockResolvedValue({ ok: true });
+    const container = await show();
+    await press(container, "Try again");
+    expect(retry).toHaveBeenCalledWith({ changeId: "chg1" });
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 5)));
+    await press(container, "Try again");
+    expect(retry).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not offer a retry for a change that is not in conflict", async () => {
+    get.mockResolvedValue(change("pending"));
+    const container = await show();
+    expect(
+      [...container.querySelectorAll("button")].some((b) => b.textContent === "Try again"),
+    ).toBe(false);
   });
 
   it("opens a page in the Wiki", async () => {

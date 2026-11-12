@@ -788,7 +788,11 @@ export const appContract = {
       decide: oc.input(WikiChangeDecideInputSchema).output(WikiChangeSchema),
       /** Applies every waiting change, oldest first. */
       applyAll: oc.output(WikiApplyAllResultSchema),
+      /** Asks the curator to write a conflicting change again against the pages as they are now. */
+      retry: oc.input(z.object({ changeId: Id })).output(z.object({ ok: z.literal(true) })),
     },
+    /** Asks for a review of the pages now, instead of waiting for the weekly one. */
+    review: oc.output(z.object({ ok: z.literal(true) })),
     settings: {
       get: oc.output(WikiSettingsSchema),
       set: oc.input(WikiSettingsPatchSchema).output(WikiSettingsSchema),

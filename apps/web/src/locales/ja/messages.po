@@ -4452,6 +4452,10 @@ msgstr "ワークスペースに名前を付ける"
 msgid "Needs an answer"
 msgstr "回答が必要"
 
+#: src/pages/WikiBrowser.tsx
+msgid "Needs care"
+msgstr "要確認"
+
 #: src/pages/ActivityList.tsx
 msgid "Needs input"
 msgstr "入力が必要"
@@ -5667,6 +5671,10 @@ msgstr "Rookに戻る"
 #: src/lib/activity-label.ts
 msgid "Review before {reviewing}"
 msgstr "実行前に確認: {reviewing}"
+
+#: src/pages/WikiBrowser.tsx
+msgid "Review now"
+msgstr "今すぐレビュー"
 
 #. placeholder {0}: revision.revision
 #: src/pages/WikiBrowser.tsx
@@ -6910,6 +6918,7 @@ msgid "Trigger"
 msgstr "トリガー"
 
 #: src/components/ModelProblemNotice.tsx
+#: src/components/WikiChangeCard.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 msgid "Try again"

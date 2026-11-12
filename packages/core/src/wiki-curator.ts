@@ -50,8 +50,9 @@ function pageName(value: unknown): string | undefined {
   return /[\p{L}\p{N}]/u.test(title) ? title : undefined;
 }
 
-function operation(change: unknown): CuratorOp | undefined {
-  if (!record(change) || change.lasting !== true) return undefined;
+/** One change as the model wrote it, whether or not it called it lasting. */
+export function parseCuratorOp(change: unknown): CuratorOp | undefined {
+  if (!record(change)) return undefined;
   const page = pageName(change.page);
   if (!page) return undefined;
   if (change.op === "create") {
@@ -74,6 +75,9 @@ function operation(change: unknown): CuratorOp | undefined {
   }
   return undefined;
 }
+
+const operation = (change: unknown): CuratorOp | undefined =>
+  record(change) && change.lasting === true ? parseCuratorOp(change) : undefined;
 
 /**
  * What the model answered, as a proposal; null when it is not JSON at all. Only changes the model

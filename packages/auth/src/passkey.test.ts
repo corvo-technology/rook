@@ -2,6 +2,18 @@ import { describe, expect, it } from "vitest";
 import { androidApkKeyHashOrigin, passkeyRelyingParty } from "./passkey.js";
 
 describe("passkeyRelyingParty", () => {
+  it("keeps the relying party of passkeys made before a move and accepts the new origin", () => {
+    expect(
+      passkeyRelyingParty("https://app.rook.team", [], {
+        rpId: "App.Rookup.Run",
+        relatedOrigins: ["https://app.rookup.run"],
+      }),
+    ).toEqual({
+      rpID: "app.rookup.run",
+      origins: ["https://app.rook.team", "https://app.rookup.run"],
+    });
+  });
+
   it("uses the web origin's host so self-hosted domains need no extra setting", () => {
     expect(passkeyRelyingParty("https://chat.example.org/")).toEqual({
       rpID: "chat.example.org",

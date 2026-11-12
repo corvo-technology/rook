@@ -37,6 +37,13 @@ describe("hostMatchesPasskeyRpId", () => {
     expect(hostMatchesPasskeyRpId("eu.app.example.com", "app.example.com")).toBe(true);
     expect(hostMatchesPasskeyRpId("evilapp.example.com", "app.example.com")).toBe(false);
     expect(hostMatchesPasskeyRpId("127.0.0.1", "localhost")).toBe(false);
+  });
+
+  it("accepts a host the relying party lists as a related origin", () => {
+    const related = ["https://app.rook.team"];
+    expect(hostMatchesPasskeyRpId("app.rook.team", "app.rookup.run", related)).toBe(true);
+    expect(hostMatchesPasskeyRpId("app.rook.team", "app.rookup.run")).toBe(false);
+    expect(hostMatchesPasskeyRpId("evil.example.com", "app.rookup.run", related)).toBe(false);
     expect(hostMatchesPasskeyRpId("localhost", null)).toBe(false);
   });
 });

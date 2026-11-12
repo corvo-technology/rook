@@ -43,6 +43,10 @@ export interface AppEnv {
   webOrigin: string;
   /** `<TEAM_ID>.<bundle id>` of iOS apps that may use this domain's passkeys. */
   passkeyAppleAppIds: string[];
+  /** Relying party of passkeys made on a previous domain; defaults to the host of `WEB_ORIGIN`. */
+  passkeyRpId?: string;
+  /** Origins other than the relying party's own that may use its passkeys (WebAuthn related origins). */
+  passkeyRelatedOrigins: string[];
   /** SHA-256 signing certificate fingerprints of Android apps that may use this domain's passkeys. */
   passkeyAndroidCertFingerprints: string[];
   privacyPolicyUrl?: string;
@@ -231,6 +235,8 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     authUrl: source.BETTER_AUTH_URL ?? source.WEB_ORIGIN ?? "http://127.0.0.1:5173",
     webOrigin: source.WEB_ORIGIN ?? "http://127.0.0.1:5173",
     passkeyAppleAppIds: list(source.PASSKEY_APPLE_APP_IDS),
+    passkeyRpId: optional(source.PASSKEY_RP_ID)?.toLowerCase(),
+    passkeyRelatedOrigins: relatedOrigins(source.PASSKEY_RELATED_ORIGINS),
     passkeyAndroidCertFingerprints: androidCertFingerprints(source.PASSKEY_ANDROID_CERT_SHA256),
     privacyPolicyUrl: optional(source.PRIVACY_POLICY_URL),
     apiUrl: source.API_URL ?? "http://127.0.0.1:3100",
@@ -371,6 +377,17 @@ function optional(value: string | undefined): string | undefined {
 
 function list(value: string | undefined): string[] {
   return (value ?? "").split(/[\s,]+/).filter(Boolean);
+}
+
+/** HTTPS origins, normalized; anything else would never match a browser's origin. */
+function relatedOrigins(value: string | undefined): string[] {
+  return list(value).map((origin) => {
+    try {
+      const url = new URL(origin);
+      if (url.protocol === "https:") return url.origin;
+    } catch {}
+    throw new Error("PASSKEY_RELATED_ORIGINS must list HTTPS origins");
+  });
 }
 
 /** SHA-256 signing certificate fingerprints, normalized to the `AA:BB:…` form Digital Asset Links uses. */

@@ -40,11 +40,20 @@ function associatedRpIds(): string[] {
   return Array.isArray(ids) ? ids.filter((id): id is string => typeof id === "string") : [];
 }
 
+/** Related origins the current server listed when passkeys were offered, per API base. */
+const relatedOriginsByApiBase = new Map<string, readonly string[]>();
+
 /** Native association alone does not bind a server-supplied challenge to the API host. */
-function serverMatchesRp(apiBase: string, rpId: string | undefined | null): boolean {
+function serverMatchesRp(
+  apiBase: string,
+  rpId: string | undefined | null,
+  relatedOrigins: readonly string[] = relatedOriginsByApiBase.get(apiBase) ?? [],
+): boolean {
   if (!rpId || !associatedRpIds().includes(rpId.toLowerCase())) return false;
   const server = new URL(apiBase);
-  return server.protocol === "https:" && hostMatchesPasskeyRpId(server.hostname, rpId);
+  return (
+    server.protocol === "https:" && hostMatchesPasskeyRpId(server.hostname, rpId, relatedOrigins)
+  );
 }
 
 /**
@@ -52,10 +61,16 @@ function serverMatchesRp(apiBase: string, rpId: string | undefined | null): bool
  * with, whose domain also vouches for this platform's app. Older servers omit that, so: hidden.
  */
 export async function passkeysAvailable(
-  capabilities: Pick<AuthCapabilities, "passkeyRpId" | "nativePasskeys"> | null | undefined,
+  capabilities:
+    | Pick<AuthCapabilities, "passkeyRpId" | "passkeyRelatedOrigins" | "nativePasskeys">
+    | null
+    | undefined,
 ): Promise<boolean> {
   const rpId = capabilities?.passkeyRpId;
-  if (!serverMatchesRp(currentApiBase(), rpId)) return false;
+  const apiBase = currentApiBase();
+  const related = capabilities?.passkeyRelatedOrigins ?? [];
+  if (!serverMatchesRp(apiBase, rpId, related)) return false;
+  relatedOriginsByApiBase.set(apiBase, related);
   const platform = Platform.OS === "ios" ? "ios" : Platform.OS === "android" ? "android" : null;
   if (!platform || capabilities?.nativePasskeys?.[platform] !== true) return false;
   return (await loadNative()) !== null;

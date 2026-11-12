@@ -37,7 +37,7 @@ describe("passkeysSupported", () => {
 
   it("on the macOS app, offers passkeys only for relying parties the build is associated with", async () => {
     const mac = (rpIds?: string[] | Error) => ({
-      ...browser("app.rookup.run"),
+      ...browser("app.rook.team"),
       desktop: {
         platform: "darwin",
         passkeys:
@@ -51,12 +51,18 @@ describe("passkeysSupported", () => {
               },
       },
     });
-    await expect(passkeysSupported("app.rookup.run", mac(["app.rookup.run"]))).resolves.toBe(true);
-    await expect(passkeysSupported("App.Rookup.Run", mac(["app.rookup.run"]))).resolves.toBe(true);
-    await expect(passkeysSupported("app.rookup.run", mac([]))).resolves.toBe(false);
-    await expect(passkeysSupported("app.rookup.run", mac())).resolves.toBe(false);
-    await expect(passkeysSupported("app.rookup.run", mac(new Error("ipc")))).resolves.toBe(false);
-    const selfHosted = { ...mac(["app.rookup.run"]), host: "corvo.example.com" };
+    await expect(passkeysSupported("app.rook.team", mac(["app.rook.team"]))).resolves.toBe(true);
+    await expect(passkeysSupported("App.Rook.Team", mac(["app.rook.team"]))).resolves.toBe(true);
+    await expect(passkeysSupported("app.rook.team", mac([]))).resolves.toBe(false);
+    await expect(passkeysSupported("app.rook.team", mac())).resolves.toBe(false);
+    await expect(passkeysSupported("app.rook.team", mac(new Error("ipc")))).resolves.toBe(false);
+    // Passkeys made on the previous domain stay usable from the new one through related origins.
+    const rpId = "app.rookup.run";
+    const related = ["https://app.rook.team"];
+    await expect(passkeysSupported(rpId, mac([rpId]), related)).resolves.toBe(true);
+    await expect(passkeysSupported(rpId, mac([rpId]))).resolves.toBe(false);
+    await expect(passkeysSupported(rpId, mac(["app.rook.team"]), related)).resolves.toBe(false);
+    const selfHosted = { ...mac(["app.rook.team"]), host: "corvo.example.com" };
     await expect(passkeysSupported("corvo.example.com", selfHosted)).resolves.toBe(false);
     expect(
       selfHosted.credential.isUserVerifyingPlatformAuthenticatorAvailable,

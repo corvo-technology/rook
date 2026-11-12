@@ -5,7 +5,13 @@ import { isLoopbackHost, isPrivateNetworkHost } from "@corvo/contracts/network-h
 /** Managed desktop origin; development keeps its usual web/API ports. */
 export const DEFAULT_LOCAL_WEB_URL = "http://127.0.0.1:45173";
 /** Hosted Rook; setup saves it as an `existing` server so it opens like any other. */
-export const CORVO_CLOUD_URL = "https://app.rookup.run";
+export const CORVO_CLOUD_URL = "https://app.rook.team";
+/**
+ * Where hosted Rook lived before the move to rook.team. Installed apps may have it saved. It is
+ * still a valid server, so it is kept working as saved (the session and local data belong to that
+ * origin); setup shows it as Rook Cloud.
+ */
+export const LEGACY_CLOUD_URL = "https://app.rookup.run";
 export const PROBE_RESPONSE_LIMIT_BYTES = 64 * 1024;
 
 export const SETUP_FILE_NAME = "setup.json";
@@ -72,6 +78,14 @@ export function parseSetupInput(value: unknown): DesktopSetup | null {
   if (normalized === null) return null;
   if (mode === "new" && !isLoopbackHost(new URL(normalized).hostname)) return null;
   return { mode, serverUrl: normalized };
+}
+
+/** A saved setup as the setup window shows it: the old hosted address is Rook Cloud. */
+export function displayedSetup(saved: DesktopSetup | null): DesktopSetup | null {
+  if (saved?.mode === "existing" && saved.serverUrl === LEGACY_CLOUD_URL) {
+    return { mode: "existing", serverUrl: CORVO_CLOUD_URL };
+  }
+  return saved;
 }
 
 export function parseStoredSetup(raw: string): DesktopSetup | null {

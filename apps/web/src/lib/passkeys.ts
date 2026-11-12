@@ -45,9 +45,10 @@ async function desktopAssociated(desktop: PasskeyBrowser["desktop"], rpId: strin
 export async function passkeysSupported(
   rpId: string | null | undefined,
   browser: PasskeyBrowser = currentBrowser(),
+  relatedOrigins: readonly string[] = [],
 ): Promise<boolean> {
   if (!browser.credential?.isUserVerifyingPlatformAuthenticatorAvailable) return false;
-  if (!rpId || !hostMatchesPasskeyRpId(browser.host, rpId)) return false;
+  if (!rpId || !hostMatchesPasskeyRpId(browser.host, rpId, relatedOrigins)) return false;
   if (!(await desktopAssociated(browser.desktop, rpId))) return false;
   try {
     return await browser.credential.isUserVerifyingPlatformAuthenticatorAvailable();
@@ -62,7 +63,9 @@ export function usePasskeysSupported(): boolean {
   useEffect(() => {
     let active = true;
     void fetchAuthCapabilities()
-      .then((capabilities) => passkeysSupported(capabilities.passkeyRpId))
+      .then((capabilities) =>
+        passkeysSupported(capabilities.passkeyRpId, undefined, capabilities.passkeyRelatedOrigins),
+      )
       .then((value) => {
         if (active) setSupported(value);
       })

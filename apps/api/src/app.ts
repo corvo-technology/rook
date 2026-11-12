@@ -619,6 +619,8 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     onEmailError: (error) => getLogger().error("transactional email delivery failed", error),
     extraOrigins: MOBILE_AUTH_ORIGINS,
     androidAppCertFingerprints: env.passkeyAndroidCertFingerprints,
+    passkeyRpId: env.passkeyRpId,
+    passkeyRelatedOrigins: env.passkeyRelatedOrigins,
     beforeDeleteUser: async (userId) => {
       // First, so a provider failure aborts deletion before anything is destroyed.
       await billing?.cancelForDeletedUser(userId);
@@ -918,6 +920,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       codeOnly: auth.emailCodeSignIn && !auth.passwordSignIn,
       billing: Boolean(billing),
       passkeyRpId: auth.passkeyRpId,
+      passkeyRelatedOrigins: auth.passkeyRelatedOrigins,
       nativePasskeys: nativePasskeys(env, auth.passkeyRpId),
       crispWebsiteId: billing ? (env.crispWebsiteId ?? null) : null,
       localEdition: Boolean(env.desktopStackToken),

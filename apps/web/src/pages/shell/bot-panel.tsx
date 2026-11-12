@@ -138,6 +138,7 @@ export function BotSettings({
   onExport,
   onClear,
   onUndoImport,
+  onDesignAvatar,
   focusModel = 0,
   onOpenConnections,
 }: {
@@ -171,6 +172,8 @@ export function BotSettings({
   }) => Promise<void>;
   onExport: () => Promise<void>;
   onClear: () => void;
+  /** Designs the avatar from the bot's role and returns the look it now wears. */
+  onDesignAvatar?: () => Promise<string>;
   /** Shown for bots that came from an agent import. */
   onUndoImport?: () => void;
 }) {
@@ -585,6 +588,13 @@ export function BotSettings({
               setColor(newColor);
               void enqueueSave({ color: newColor });
             }}
+            onDesign={
+              onDesignAvatar
+                ? async () => {
+                    setColor(await onDesignAvatar());
+                  }
+                : undefined
+            }
           />
         </div>
         <InlineProfileField

@@ -5026,6 +5026,10 @@ msgstr "Pick a model from the list or enter a model id served by this endpoint."
 msgid "Pick a tool to check"
 msgstr "Pick a tool to check"
 
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "Pick from role"
+msgstr "Pick from role"
+
 #: src/pages/board/BoardLanes.tsx
 msgid "Picked up {ref}."
 msgstr "Picked up {ref}."

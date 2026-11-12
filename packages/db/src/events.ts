@@ -13,8 +13,10 @@ import {
   LoginSecretValue,
   MessageBlock as MessageBlockSchema,
 } from "@corvo/contracts";
+import type { ApprovalBatchClass } from "@corvo/core";
 import {
   ACTIVE_RUN_STATUSES,
+  approvalBatchClass,
   blocksToAgentHistoryText,
   callIdFromClientNonce,
   composioBatchActions,
@@ -30,6 +32,7 @@ import {
   resolveAskChoice,
   STEERING_CONTINUATION_PROMPT,
   sanitizeJsonValue,
+  toolRequiresExplicitApproval,
 } from "@corvo/core";
 import { urlSite } from "@corvo/core/egress";
 import { approvalEffectKey } from "@corvo/core/node/approval-effect-key";
@@ -270,6 +273,8 @@ export interface AnswerRunInput {
   dismiss?: boolean;
   /** Which card of several pending approvals this answers; required while more than one waits. */
   approvalEffectId?: string;
+  /** Set by a batch: only a plain "allow" on an approval card of this class may be applied. */
+  batchClass?: ApprovalBatchClass;
 }
 
 /** What request_secret returns to the bot once the user dismissed its card. */
@@ -886,6 +891,12 @@ async function commitAnswerRunInput(
       : undefined;
   if (!pendingAsk) return null;
   const approvalAsk = isApprovalAskBlock(pendingAsk);
+  // A batch only allows, and only the cards that may be decided with others.
+  if (
+    input.batchClass &&
+    (input.answer !== "allow" || approvalBatchClass(pendingAsk) !== input.batchClass)
+  )
+    return null;
   // The run resumes only once every card of the message is decided.
   const otherCardsWait = approvalAsk && pendingAsks.length > 1;
   const secretAsk = isSecretAskBlock(pendingAsk);
@@ -948,6 +959,7 @@ async function commitAnswerRunInput(
       },
     });
     if (!approvalEffect) return null;
+    if (input.batchClass && toolRequiresExplicitApproval(approvalEffect.kind)) return null;
     if (pendingAsk.instructionUpdate) {
       if (
         approvalEffect.kind !== "propose_instructions_update" ||

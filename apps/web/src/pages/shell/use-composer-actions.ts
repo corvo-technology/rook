@@ -7,7 +7,7 @@ import type {
   ThreadSnapshot,
 } from "@corvo/contracts";
 import { ATTACHMENT_MAX_COUNT, attachmentMaxBytes, attachmentSizeLabel } from "@corvo/contracts";
-import type { ComposerMention } from "@corvo/core";
+import type { ApprovalBatchClass, ApprovalBatchItem, ComposerMention } from "@corvo/core";
 import {
   attachmentsForThread,
   inferAttachmentMimeType,
@@ -229,6 +229,30 @@ export function useComposerActions({
           await refreshThreadRef.current(botId);
         }
       } catch {}
+    },
+    [],
+  );
+  /** Allows pending approvals of one class together; resolves with the approvals that were not allowed. */
+  const approveAll = useCallback(
+    async (batchClass: ApprovalBatchClass, items: ApprovalBatchItem[]) => {
+      const botId = activeBotId.current;
+      const groupId = activeGroupId.current;
+      if (!botId && !groupId) return [];
+      clearReadBoundary();
+      const { results } = await rpc.threads.answerBatch({
+        ...(groupId ? { groupId } : { botId: botId! }),
+        batchClass,
+        items,
+      });
+      // The decisions are saved; live events can reconcile a failed refresh.
+      try {
+        if (groupId && activeGroupId.current === groupId) {
+          await refreshGroupThreadRef.current(groupId);
+        } else if (botId && activeBotId.current === botId) {
+          await refreshThreadRef.current(botId);
+        }
+      } catch {}
+      return results.filter((result) => !result.ok).map((result) => result.approvalEffectId);
     },
     [],
   );
@@ -614,6 +638,7 @@ export function useComposerActions({
     sendMessage,
     stopRun,
     answerMessage,
+    approveAll,
     reactToMessage,
     sendError,
     setSendError,

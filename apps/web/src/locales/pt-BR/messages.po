@@ -219,6 +219,10 @@ msgstr "{count} anos"
 msgid "{days}d ago"
 msgstr "{days}d atrás"
 
+#: src/components/ApproveAllBar.tsx
+msgid "{failedCount} could not be approved"
+msgstr "{failedCount} não puderam ser aprovadas"
+
 #: src/components/markdown-copy.tsx
 msgid "{from}–{to} of {total} rows"
 msgstr "{from}–{to} de {total} linhas"
@@ -1044,6 +1048,10 @@ msgstr "Aprovar"
 #: src/pages/WikiBrowser.tsx
 msgid "Approve all"
 msgstr "Aprovar tudo"
+
+#: src/components/ApproveAllBar.tsx
+msgid "Approve all {count}"
+msgstr "Aprovar todas as {count}"
 
 #: src/pages/WikiBrowser.tsx
 msgid "Approve edits"
@@ -2484,6 +2492,7 @@ msgstr "Não foi possível iniciar o treinamento"
 msgid "Could not stop computer"
 msgstr "Não foi possível parar o computador"
 
+#: src/components/ApproveAllBar.tsx
 #: src/components/AskCard.tsx
 msgid "Could not submit this answer"
 msgstr "Não foi possível enviar esta resposta"
@@ -5920,6 +5929,7 @@ msgstr "Enviar link de redefinição"
 msgid "Send with Enter"
 msgstr "Enviar com Enter"
 
+#: src/components/ApproveAllBar.tsx
 #: src/components/AskCard.tsx
 msgid "Sending…"
 msgstr "Enviando…"

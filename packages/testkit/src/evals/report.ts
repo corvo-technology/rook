@@ -170,6 +170,7 @@ export function emptyTrial(caseId: string, trial: number): TrialResult {
       subagent: null,
       compaction: null,
       wiki: null,
+      memory: null,
     },
     trace: [],
     artifacts: {},

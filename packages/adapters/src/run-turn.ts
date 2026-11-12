@@ -88,6 +88,11 @@ import { wikiCurateJobAfterTurn } from "./wiki-curator-run.js";
 
 type RuntimeEvent<T extends AgentRuntimeEvent["type"]> = Extract<AgentRuntimeEvent, { type: T }>;
 
+/** A turn that handed off or passed leaves nothing of its own in the chat. */
+function endsQuietly(state: { handedOff: boolean; passed: boolean }): boolean {
+  return state.handedOff || state.passed;
+}
+
 /**
  * Stream the runtime's events into the thread. Returns true when the attempt stopped before
  * the turn ended: it paused for an answer, approval or takeover, lost its lease, or was
@@ -579,7 +584,7 @@ export async function completeRun(ctx: RunContext) {
   recordExplicitNoResponse(reply, reply.lastDiscardedMidTurnNarration);
   if (
     !isBackgroundRunTrigger(run.trigger) &&
-    !ctx.state.handedOff &&
+    !endsQuietly(ctx.state) &&
     !reply.explicitNoResponse &&
     !reply.assembled.trim() &&
     reply.lastDiscardedMidTurnNarration &&
@@ -604,17 +609,17 @@ export async function completeRun(ctx: RunContext) {
     completionBlocks = completionMessageSegments(completionBlocks, {
       allowSilentEmpty: ctx.allowSilentEmptyRun || reply.publishedMidTurnUserMessage,
       emptyResponseText: ctx.emptyResponseText,
-      suppressOutput: ctx.state.handedOff || isBackgroundRunTrigger(run.trigger),
+      suppressOutput: endsQuietly(ctx.state) || isBackgroundRunTrigger(run.trigger),
       skipEmptyFallback: reply.publishedTerminalSubagent || reply.publishedMidTurnUserMessage,
     });
   }
-  const blocks = ctx.state.handedOff
+  const blocks = endsQuietly(ctx.state)
     ? []
     : finalBlocksAfterMidTurnProgress(
         redactBlocks(completionBlocks, ctx.secrets),
         reply.publishedMidTurnUserMessage || runAllowsSilentEmpty(run.trigger),
       );
-  const text = ctx.state.handedOff
+  const text = endsQuietly(ctx.state)
     ? ""
     : redactSecrets(completionNotificationBody(silentReply.assembled, blocks), ctx.secrets);
   if (containsSecret(text, ctx.secrets)) {
@@ -624,7 +629,7 @@ export async function completeRun(ctx: RunContext) {
   // empty notice. That is a missed final answer or a swallowed provider
   // failure, not a successful delegated summary.
   if (
-    !ctx.state.handedOff &&
+    !endsQuietly(ctx.state) &&
     !silentReply.assembled.trim() &&
     emptyDelegatedToolTurnShouldFail(completionBlocks)
   ) {
@@ -759,7 +764,7 @@ export async function failRun(
   recordExplicitNoResponse(reply, reply.assistantTurnText);
   const partialText =
     ctx.scripted ||
-    ctx.state.handedOff ||
+    endsQuietly(ctx.state) ||
     reply.explicitNoResponse ||
     !runPromotesMidTurnNarration(run.trigger)
       ? ""

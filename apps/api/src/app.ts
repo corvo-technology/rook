@@ -162,6 +162,7 @@ import { storeInboundAttachment } from "./artifacts.js";
 import { createAudioHold } from "./audio-hold.js";
 import { createBillingService } from "./billing.js";
 import { mountBillingRoutes } from "./billing-webhook.js";
+import { sideModelRouter } from "./channel-router.js";
 import { clientBuildMiddleware, readDeployedWebBuild } from "./client-build.js";
 import {
   clientIpMiddleware,
@@ -771,6 +772,19 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
               resolveModel: executor.resolveModel,
             }),
           },
+    // The scripted runtime has no model to ask, so channel messages keep the older rule.
+    channelRouter:
+      env.agentRuntime === "pi"
+        ? sideModelRouter({
+            prisma,
+            runtime,
+            secrets,
+            deploymentProvider: env.defaultProvider,
+            deploymentModel: env.defaultModel,
+            deploymentModelKey: env.deploymentModelKey,
+            allowPrivateEndpoint: env.mcpAllowPrivateEndpoint,
+          })
+        : undefined,
     analytics,
     cloudAgent,
     codexCatalog,

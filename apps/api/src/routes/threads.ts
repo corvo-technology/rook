@@ -179,6 +179,7 @@ export function threadsRoutes(ctx: RouterContext) {
         return sendThreadMessage(
           {
             ...deps,
+            router: deps.channelRouter,
             imageAdmission: confirmingImages
               ? {
                   secrets: deps.secrets,

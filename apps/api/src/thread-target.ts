@@ -49,6 +49,8 @@ import {
 } from "./artifacts.js";
 import type { AudioHold } from "./audio-hold.js";
 import { startRunOrAwaitAudio } from "./audio-hold.js";
+import type { RouterModel } from "./channel-router.js";
+import { routeGroupMessage } from "./channel-router.js";
 import { resolveBusyBotName, toComputerStatus } from "./computer-status.js";
 import { groupConversationOwner } from "./group-owner.js";
 import { withSerializableRetry } from "./serializable-retry.js";
@@ -236,7 +238,10 @@ async function replayExistingSend(
   const linkedRun =
     message.sourceRuns[0] ??
     (message.runId ? await deps.prisma.run.findUnique({ where: { id: message.runId } }) : null);
-  if (!linkedRun && orderedReceiptRuns.length === 0) return null;
+  if (!linkedRun && orderedReceiptRuns.length === 0) {
+    // The router can pick nobody: the message stands with no run, and a retry gets the same answer.
+    return message.routing ? sendResult(message, [], { allowNone: true }) : null;
+  }
   const runs = orderedReceiptRuns.length
     ? orderedReceiptRuns
     : message.sourceRuns.length
@@ -281,9 +286,16 @@ function sendEventRunIds(payload: Prisma.JsonValue | undefined): string[] {
   return Array.isArray(runIds) ? runIds.filter((id): id is string => typeof id === "string") : [];
 }
 
-function sendResult(message: { seq: number }, runs: Array<{ id: string; taskId: string }>) {
+function sendResult(
+  message: { seq: number },
+  runs: Array<{ id: string; taskId: string }>,
+  options?: { allowNone?: boolean },
+) {
   const first = runs[0];
-  if (!first) throw new IsolationError("Send did not create a run");
+  if (!first) {
+    if (options?.allowNone) return { seq: message.seq, runIds: [] };
+    throw new IsolationError("Send did not create a run");
+  }
   return {
     taskId: first.taskId,
     runId: first.id,
@@ -759,6 +771,8 @@ export async function sendThreadMessage(
     analytics?: ProductAnalytics;
     /** Where voice notes can be transcribed; absent keeps them as files. */
     audio?: AudioHold;
+    /** Decides who answers a channel message that names nobody; absent keeps the older rule. */
+    router?: RouterModel;
   },
   actor: Actor,
   target: ThreadTarget,
@@ -792,6 +806,21 @@ export async function sendThreadMessage(
   if (input.threadRootId && target.kind !== "group") {
     throw new ORPCError("BAD_REQUEST", { message: "Only a channel has threads." });
   }
+  // The model call happens before the transaction so it never holds the thread's locks.
+  // A reply inside a thread stays with that thread's agent, so only the main column is routed.
+  const routing =
+    target.kind === "group" && !input.threadRootId
+      ? await routeGroupMessage(
+          { prisma: deps.prisma, model: deps.router },
+          {
+            groupId: target.groupId,
+            threadId: target.threadId,
+            text: input.text ?? "",
+            members: target.members,
+            explicitMentions: splitMentionTargets(input.mentions).botMentionIds,
+          },
+        )
+      : undefined;
 
   const commit = () =>
     deps.prisma.$transaction(async (tx) => {
@@ -1041,15 +1070,22 @@ export async function sendThreadMessage(
       const members = await lockAndLoadGroupMembers(tx, actor, target);
       const memberBotIds = members.map((member) => member.botId);
       const mentionTargets = splitMentionTargets(input.mentions);
-      const targetBotIds = resolveGroupTargetBotIds({
-        text: input.text ?? "",
-        members: members.map((member) => ({ id: member.botId, name: member.name })),
-        explicitMentions: mentionTargets.botMentionIds,
-        fallbackBotId:
-          (threadRoot &&
-            (await threadConversationBot(tx, target.threadId, threadRoot, memberBotIds))) ||
-          (await groupConversationOwner(tx, target.threadId, memberBotIds)),
-      });
+      // A routed pick is checked against the members now, so a bot removed meanwhile is never woken.
+      const routedBotIds =
+        routing && routing.strategy !== "fallback"
+          ? routing.picked.filter((botId) => memberBotIds.includes(botId))
+          : undefined;
+      const targetBotIds =
+        routedBotIds ??
+        resolveGroupTargetBotIds({
+          text: input.text ?? "",
+          members: members.map((member) => ({ id: member.botId, name: member.name })),
+          explicitMentions: mentionTargets.botMentionIds,
+          fallbackBotId:
+            (threadRoot &&
+              (await threadConversationBot(tx, target.threadId, threadRoot, memberBotIds))) ||
+            (await groupConversationOwner(tx, target.threadId, memberBotIds)),
+        });
       const { blocks: attachmentBlocks, artifacts } = await resolveGroupSendAttachments(
         { prisma: tx },
         actor,
@@ -1103,6 +1139,7 @@ export async function sendThreadMessage(
         replyQuote,
         threadRootId,
         clientNonce: input.clientNonce,
+        routing: routing && (routing as unknown as Prisma.InputJsonValue),
       });
       const activeByBotId = new Map<string, (typeof activeRuns)[number]>();
       const answeredByBotId = new Map<string, Array<(typeof activeRuns)[number]>>();
@@ -1191,7 +1228,7 @@ export async function sendThreadMessage(
         runs.push(run);
       }
       const firstRun = runs[0];
-      const eventBotId = firstRun?.botId ?? targetBotIds[0];
+      const eventBotId = firstRun?.botId ?? targetBotIds[0] ?? memberBotIds[0];
       if (!eventBotId) throw new IsolationError("Group send did not resolve a target");
       if (firstRun) {
         await tx.message.update({ where: { id: message.id }, data: { runId: firstRun.id } });
@@ -1259,7 +1296,9 @@ export async function sendThreadMessage(
     messageId: committed.message.id,
     attachments: fileMimeTypes(committed.message.blocks),
   });
-  return sendResult(committed.message, committed.runs);
+  return sendResult(committed.message, committed.runs, {
+    allowNone: routing?.strategy === "model" || routing?.strategy === "continuity",
+  });
 }
 
 const REACTION_TURN_COOLDOWN_MS = 30_000;

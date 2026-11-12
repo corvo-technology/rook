@@ -15,6 +15,7 @@ import {
   isCallClientNonce,
   isMessagingChannelRun,
   isOwnerStartedRun,
+  isRouterWake,
   isTerminal,
   isVisitorRun,
   MISSING_MODEL_RUN_ERROR,
@@ -120,6 +121,7 @@ import { isRetiredModelCredentialError } from "./pi-oauth.js";
 import { parseQuotaHeaders, recordProviderQuota } from "./provider-quota.js";
 import { addReplyUsage, createReplyBudget } from "./reply-budget.js";
 import { loadReplyContext, messageToAgentHistoryText } from "./reply-context.js";
+import { routerPassInstruction } from "./router-pass.js";
 import { backOffRoutineAfterAccountError } from "./routine-backoff.js";
 import { lateRoutineRunInstruction } from "./routine-lateness.js";
 import { startNextRoutineStep, workflowContinuesAfter } from "./routine-steps.js";
@@ -694,8 +696,6 @@ export function createRunExecutor(deps: ExecutorDeps) {
           peerMessage?.intent,
           peerMessage?.repliesToRequest,
         );
-        const allowSilentEmptyRun =
-          allowSilentPeerMessage || messagingChannelRun || runAllowsSilentEmpty(run.trigger);
         const emptyResponseText = peerMessage
           ? peerMessage.intent === "result" ||
             peerMessage.intent === "status" ||
@@ -1042,9 +1042,27 @@ export function createRunExecutor(deps: ExecutorDeps) {
           (run.trigger === "user" || run.trigger === "follow_up") && run.sourceMessageId
             ? await deps.prisma.message.findUnique({
                 where: { id: run.sourceMessageId },
-                select: { clientNonce: true, role: true, blocks: true },
+                select: { clientNonce: true, role: true, blocks: true, seq: true, routing: true },
               })
             : null;
+        // Only a run the router woke may pass; a mention, a chat or an answer always replies.
+        const routedRun =
+          run.trigger === "user" &&
+          sourceMessage?.role === "user" &&
+          isRouterWake(sourceMessage.routing, bot.id);
+        const allowSilentEmptyRun =
+          allowSilentPeerMessage ||
+          messagingChannelRun ||
+          runAllowsSilentEmpty(run.trigger) ||
+          routedRun;
+        const passInstruction =
+          routedRun && sourceMessage
+            ? await routerPassInstruction(deps.prisma, {
+                threadId: thread.id,
+                sourceMessageSeq: sourceMessage.seq,
+                botId: bot.id,
+              }).catch(() => undefined)
+            : undefined;
         // Calls carry no schema flag: the sending client encodes them in the clientNonce.
         const sourceClientNonce = sourceMessage?.clientNonce ?? null;
         // A follow-up can be queued by a bot (group handoffs); only the user's own counts.
@@ -1082,6 +1100,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
             workflowContinues:
               run.trigger === "routine" &&
               (await workflowContinuesAfter(deps.prisma, run).catch(() => false)),
+            routedRun,
           }),
           // Cross-owner agent connections only exist for chat-linked bots.
           ...(hasMessagingIdentity &&
@@ -1220,6 +1239,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
           tainted: initiallyTainted,
           earlierAttempt: undefined,
           handedOff: false,
+          passed: false,
           replyBudget: createReplyBudget(monthUsage.limit, spentBeforeAttempt),
           terminalCheckpointComplete: false,
         };
@@ -1639,19 +1659,22 @@ export function createRunExecutor(deps: ExecutorDeps) {
               // Keep an explicit executor override, but let the runtime select
               // cache-aware context for connections declaring a cache window.
               contextStrategy: deps.contextStrategy,
-              instructions: userTurnInstructions({
-                botInstructions: runIdentityInstruction(bot, run.trigger),
-                hasHistoricalContext: historicalContext.length > 0,
-                historyRetrievalEnabled: contextStrategy !== "current",
-                computerInstruction,
-                pageBrowserAllowed,
-                taskCatalogInstruction,
-                workspaceInstruction,
-                agentEnvironmentInstruction,
-                replyGuidance: runReplyGuidance(run.trigger),
-                disabledBuiltinTools,
-                offeredFleetTools: offeredFleetTools(builtins),
-              })
+              instructions: [
+                ...userTurnInstructions({
+                  botInstructions: runIdentityInstruction(bot, run.trigger),
+                  hasHistoricalContext: historicalContext.length > 0,
+                  historyRetrievalEnabled: contextStrategy !== "current",
+                  computerInstruction,
+                  pageBrowserAllowed,
+                  taskCatalogInstruction,
+                  workspaceInstruction,
+                  agentEnvironmentInstruction,
+                  replyGuidance: runReplyGuidance(run.trigger),
+                  disabledBuiltinTools,
+                  offeredFleetTools: offeredFleetTools(builtins),
+                }),
+                passInstruction,
+              ]
                 .filter((instruction): instruction is string => Boolean(instruction))
                 .join("\n\n"),
               history: runtimeHistory,

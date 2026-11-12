@@ -2380,6 +2380,149 @@ describe("sendThreadMessage", () => {
     });
     expect(tx.run.create).not.toHaveBeenCalled();
   });
+  describe("channel router", () => {
+    const routedSend = async (
+      text: string,
+      model: ReturnType<typeof vi.fn> | undefined,
+      options?: { mentions?: Array<{ kind: "bot"; botId: string }> },
+    ) => {
+      const tx = {
+        thread: { update: vi.fn(async () => ({ nextMessageSeq: 2 })) },
+        message: {
+          create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
+            id: "msg-1",
+            threadId: "thread-1",
+            seq: 1,
+            blocks: [{ kind: "text", text }],
+            createdAt: new Date(),
+            ...data,
+          })),
+          update: vi.fn(),
+        },
+        run: {
+          findFirst: vi.fn().mockResolvedValue(null),
+          findMany: vi.fn().mockResolvedValue([]),
+          findUnique: vi.fn().mockResolvedValue({ status: "queued", startedAt: null }),
+          create: vi.fn(async ({ data }: { data: { botId: string } }) => ({
+            id: `run-${data.botId}`,
+            taskId: `task-${data.botId}`,
+            botId: data.botId,
+            status: "queued",
+          })),
+        },
+        task: { create: vi.fn().mockResolvedValue({ id: "task-1" }) },
+        event: {
+          create: vi.fn().mockResolvedValue({ id: "event-1", seq: 1, createdAt: new Date() }),
+        },
+        steeringMessage: { create: vi.fn() },
+        chatGroup: {
+          findFirst: vi.fn().mockResolvedValue({
+            id: "group-1",
+            members: [
+              { bot: { id: "bot-a", name: "Alpha", color: null } },
+              { bot: { id: "bot-b", name: "Beta", color: null } },
+            ],
+          }),
+          update: vi.fn().mockResolvedValue({ id: "group-1" }),
+        },
+        $queryRaw: vi.fn().mockResolvedValue([{ id: "group-1" }]),
+      };
+      const prisma = {
+        ...tx,
+        message: {
+          ...tx.message,
+          findUnique: vi.fn().mockResolvedValue(null),
+          findMany: vi.fn().mockResolvedValue([]),
+        },
+        chatGroup: {
+          ...tx.chatGroup,
+          findUnique: vi.fn().mockResolvedValue({ name: "Sales", purpose: null }),
+        },
+        bot: {
+          findMany: vi.fn().mockResolvedValue(
+            ["bot-a", "bot-b"].map((id) => ({
+              id,
+              name: id,
+              title: "",
+              description: "",
+              spaceId: "workspace-1",
+              userId: "user-1",
+              modelProvider: null,
+              modelId: null,
+            })),
+          ),
+        },
+        $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
+      } as unknown as PrismaClient;
+      const members = [
+        { botId: "bot-a", name: "Alpha", color: null },
+        { botId: "bot-b", name: "Beta", color: null },
+      ];
+      const result = await sendThreadMessage(
+        {
+          prisma,
+          events: { notify: vi.fn().mockResolvedValue(undefined) } as never,
+          jobs: { enqueue: vi.fn().mockResolvedValue(undefined) } as never,
+          router: model as never,
+        },
+        { spaceId: "workspace-1", userId: "user-1" } as Actor,
+        {
+          kind: "group",
+          groupId: "group-1",
+          groupName: "Sales",
+          threadId: "thread-1",
+          members,
+          memberBotIds: ["bot-a", "bot-b"],
+        } satisfies ThreadTarget,
+        { text, mentions: options?.mentions, clientNonce: "nonce-router" },
+      );
+      return { tx, result };
+    };
+    const scores = (body: object) => vi.fn().mockResolvedValue(JSON.stringify(body));
+
+    it("wakes the member the router picks and records the decision", async () => {
+      const model = scores({
+        scores: { "bot-a": 0.1, "bot-b": 0.9 },
+        forEveryone: 0,
+        needsAgent: 1,
+        reason: "fits",
+      });
+      const { tx, result } = await routedSend("who handles refunds?", model);
+      expect(result).toMatchObject({ runId: "run-bot-b" });
+      expect(tx.run.create).toHaveBeenCalledOnce();
+      expect(tx.message.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          routing: expect.objectContaining({ strategy: "model", picked: ["bot-b"] }),
+        }),
+      });
+    });
+
+    it("lets the message stand when the router picks nobody", async () => {
+      const model = scores({ scores: {}, forEveryone: 0, needsAgent: 0, reason: "chatter" });
+      const { tx, result } = await routedSend("thanks all", model);
+      expect(result).toEqual({ seq: 1, runIds: [] });
+      expect(tx.run.create).not.toHaveBeenCalled();
+      expect(tx.task.create).not.toHaveBeenCalled();
+    });
+
+    it("keeps the older rule when the router fails", async () => {
+      const model = vi.fn().mockRejectedValue(new Error("down"));
+      const { tx, result } = await routedSend("anyone there?", model);
+      expect(result).toMatchObject({ runId: "run-bot-a" });
+      expect(tx.message.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          routing: expect.objectContaining({ strategy: "fallback", error: "down" }),
+        }),
+      });
+    });
+
+    it("never asks the router when a member is named", async () => {
+      const model = vi.fn();
+      const { result } = await routedSend("@Beta please check", model);
+      expect(result).toMatchObject({ runId: "run-bot-b" });
+      expect(model).not.toHaveBeenCalled();
+    });
+  });
   it("answers a routine run waiting for input from the composer", async () => {
     const waitingAsk = {
       id: "ask-1",

@@ -158,6 +158,8 @@ export interface RunState {
   tainted: boolean;
   earlierAttempt: Promise<boolean> | undefined;
   handedOff: boolean;
+  /** The agent chose to say nothing: the turn ends without a message. */
+  passed: boolean;
   /** Tokens this run has spent against its reply cap, earlier attempts included. */
   replyBudget: ReplyBudget;
   terminalCheckpointComplete: boolean;

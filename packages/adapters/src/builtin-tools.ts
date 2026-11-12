@@ -1106,6 +1106,15 @@ export const builtinAgentTools: ConnectorTool[] = [
     inputSchema: { type: "object", properties: {} },
   },
   {
+    name: "pass",
+    description:
+      "Use only when nobody called you by name and you have nothing to add: the message is not for you, or another agent already answered it. Nothing is posted and your turn ends. Never use it when someone asked you directly.",
+    inputSchema: {
+      type: "object",
+      properties: { reason: { type: "string", description: "Why you have nothing to add." } },
+    },
+  },
+  {
     name: "schedule_list",
     description: "List this bot's active and inactive schedules (routines).",
     inputSchema: { type: "object", properties: {} },

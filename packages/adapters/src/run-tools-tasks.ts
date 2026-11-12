@@ -253,6 +253,10 @@ export const taskTools: ToolHandlers = {
       note: "The workflow ends after this step. Say why in your answer.",
     });
   },
+  async pass(ctx, call) {
+    ctx.state.passed = true;
+    return call.finish({ ok: true, note: "Passed. End your turn now without writing anything." });
+  },
   async schedule_cancel(ctx, call) {
     const { deps, run, bot, thread } = ctx;
     const { args } = call;

@@ -10,7 +10,7 @@ const COLORS = {
   pink: "#e788b6",
   red: "#f48877",
   orange: "#e59651",
-  lime: "#87bd68",
+  lime: "#9bc43a",
 };
 
 const bot = (id, name, title, color, preview, extra = {}) => ({

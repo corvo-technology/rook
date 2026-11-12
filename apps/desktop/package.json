@@ -5,6 +5,7 @@
   "author": {
     "name": "Rook"
   },
+  "homepage": "https://rook.team",
   "license": "Apache-2.0",
   "type": "module",
   "main": "dist/main.js",
@@ -71,7 +72,7 @@
     "mac": {
       "icon": "assets/icon.icns",
       "category": "public.app-category.productivity",
-      "x64ArchFiles": "{**/node_modules/@koromix/koffi-darwin-*/darwin_*/koffi.node,**/node_modules/@oxc-parser/binding-darwin-*/parser.darwin-*.node}",
+      "x64ArchFiles": "{**/node_modules/@koromix/koffi-darwin-*/darwin_*/koffi.node,**/node_modules/@oxc-parser/binding-darwin-*/parser.darwin-*.node,**/node_modules/sherpa-onnx-darwin-*/**,**/node_modules/@img/sharp-darwin-*/**,**/node_modules/@img/sharp-libvips-darwin-*/**}",
       "entitlements": "assets/entitlements.mac.plist",
       "entitlementsInherit": "assets/entitlements.mac.plist",
       "extendInfo": {
@@ -145,7 +146,7 @@
       ],
       "synopsis": "Rook, your team of AI agents",
       "description": "Rook runs a team of AI agents on your computer with its own local database.",
-      "maintainer": "Rook <https://github.com/corvo-technology/rook>",
+      "maintainer": "Rook <support@rook.team>",
       "category": "Utility",
       "artifactName": "corvo-linux-${arch}.${ext}",
       "extraResources": [

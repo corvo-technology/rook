@@ -8,6 +8,8 @@ lipo "$native/@koromix/koffi-darwin-x64/darwin_x64/koffi.node" -verify_arch x86_
 lipo "$native/@koromix/koffi-darwin-arm64/darwin_arm64/koffi.node" -verify_arch arm64
 lipo "$native/@oxc-parser/binding-darwin-x64/parser.darwin-x64.node" -verify_arch x86_64
 lipo "$native/@oxc-parser/binding-darwin-arm64/parser.darwin-arm64.node" -verify_arch arm64
+lipo "$native/sherpa-onnx-darwin-x64/sherpa-onnx.node" -verify_arch x86_64
+lipo "$native/sherpa-onnx-darwin-arm64/sherpa-onnx.node" -verify_arch arm64
 # The embedded Postgres programs are one universal build that serves both Macs.
 lipo "$app/Contents/Resources/postgres/bin/postgres" -verify_arch x86_64 arm64
 "$app/Contents/Resources/postgres/bin/postgres" --version
@@ -22,5 +24,8 @@ ELECTRON_RUN_AS_NODE=1 "$app/Contents/MacOS/Corvo" -e '
   const parser = appRequire(`${native}/@oxc-parser/binding-darwin-${process.arch}/parser.darwin-${process.arch}.node`);
   if (parser.parseSync("smoke.js", "const ready = true;").errors.length !== 0) {
     throw new Error("Packaged monitoring parser dependency failed");
+  }
+  if (typeof appRequire("sherpa-onnx-node").OfflineRecognizer !== "function") {
+    throw new Error("Packaged speech dependency failed");
   }
 ' "$PWD/$app"

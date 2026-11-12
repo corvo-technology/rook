@@ -1,13 +1,15 @@
 import type { GroupMember, MessageReaction, ThreadMessage } from "@corvo/contracts";
-import type { FoldedTranscript } from "@corvo/core";
+import type { ApprovalBatchClass, ApprovalBatchItem, FoldedTranscript } from "@corvo/core";
 import {
   expandPeerReplies,
   groupVoiceChats,
   isPeerReceiptBlocks,
   liveActivityLine,
   liveMessageComposing,
+  pendingApprovalBatches,
   projectBotMentions,
   projectMessageReactions,
+  threadSummary,
   timeSeparatorIds,
   unreadDividerMessageId,
   voiceChatHoldsMessage,
@@ -29,6 +31,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { ApproveAllBar } from "../../components/ApproveAllBar";
 import { ActiveBotGlyph } from "../../components/ai/CollaborationMarker";
 import { VoiceChatCard } from "../../components/call/VoiceChatCard";
 import { ThreadFooter } from "../../components/ThreadFooter";
@@ -37,7 +40,6 @@ import { delegationStates } from "../../lib/delegation-states";
 import { isFreshMessage, newestCreatedAt } from "../../lib/fresh-messages";
 import { continuedMessageIds } from "../../lib/message-grouping";
 import { quoteDraftForSelection } from "../../lib/quote-selection";
-import { threadSummary } from "../../lib/thread-summary";
 import { messageHasVisibleBlocks } from "../../lib/tool-activity-view";
 import {
   ownMessageJustSent,
@@ -61,7 +63,7 @@ export function bubbleFrameWidth(role: ThreadMessage["role"]) {
 }
 
 /** How many of the latest messages show a moving face. */
-const LIVE_FACE_MESSAGES = 12;
+export const LIVE_FACE_MESSAGES = 12;
 
 export const Transcript = memo(function Transcript({
   scrollRef,
@@ -82,6 +84,7 @@ export const Transcript = memo(function Transcript({
   onLoadOlder,
   onOpenBot,
   onAnswer,
+  onApproveAll,
   onReply,
   onOpenThread,
   openThreadId,
@@ -144,6 +147,8 @@ export const Transcript = memo(function Transcript({
     dismiss?: boolean,
     approvalEffectId?: string,
   ) => Promise<void>;
+  /** Allows pending approvals of one class together; absent where there is no batch to send. */
+  onApproveAll?: (batchClass: ApprovalBatchClass, items: ApprovalBatchItem[]) => Promise<string[]>;
   /** Quotes a message in the composer; absent where there is none to arm. */
   onReply?: (message: ThreadMessage) => void;
   /** Opens a thread beside the channel; set only in a channel's main column. */
@@ -224,6 +229,23 @@ export const Transcript = memo(function Transcript({
   }
   const messageById = useMemo(
     () => new Map(messages.map((message) => [message.id, message])),
+    [messages],
+  );
+  const approvalBatches = useMemo(
+    () => pendingApprovalBatches(messages, answerableAskIds),
+    [messages, answerableAskIds],
+  );
+  const pendingEffectIds = useMemo(
+    () =>
+      new Set(
+        messages.flatMap((message) =>
+          message.blocks.flatMap((block) =>
+            block.kind === "ask" && block.status !== "answered" && block.approvalEffectId
+              ? [block.approvalEffectId]
+              : [],
+          ),
+        ),
+      ),
     [messages],
   );
   const delegation = useMemo(() => delegationStates(messages), [messages]);
@@ -697,6 +719,13 @@ export const Transcript = memo(function Transcript({
             </Fragment>
           );
         })}
+        {onApproveAll ? (
+          <ApproveAllBar
+            batches={approvalBatches}
+            pendingEffectIds={pendingEffectIds}
+            onApproveAll={onApproveAll}
+          />
+        ) : null}
         {running &&
         !channel &&
         !messages.some(

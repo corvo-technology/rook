@@ -1154,4 +1154,7 @@ export const ES_MESSAGES: Record<string, string> = {
   Remembered: "Recordado",
   "Not remembered": "No recordado",
   Discard: "Descartar",
+  "Reply in thread": "Responder en el hilo",
+  "1 reply": "1 respuesta",
+  "{count} replies": "{count} respuestas",
 };

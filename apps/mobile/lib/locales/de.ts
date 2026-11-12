@@ -1199,4 +1199,7 @@ export const DE_MESSAGES: Record<string, string> = {
   Remembered: "Gemerkt",
   "Not remembered": "Nicht gemerkt",
   Discard: "Verwerfen",
+  "Reply in thread": "Im Thread antworten",
+  "1 reply": "1 Antwort",
+  "{count} replies": "{count} Antworten",
 };

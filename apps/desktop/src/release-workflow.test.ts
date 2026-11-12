@@ -68,7 +68,7 @@ describe("desktop release workflow", () => {
       `include: ${expression("fromJSON(needs.validate.outputs.platforms)")}`,
     );
     expect(workflow).toContain(
-      `include='[{"os":"macos-26","artifact":"macos"},{"os":"ubuntu-24.04","artifact":"linux"}]'`,
+      `include='[{"os":"macos-26","artifact":"macos"},{"os":"ubuntu-24.04","artifact":"linux"},{"os":"ubuntu-24.04-arm","artifact":"linux-arm64"}]'`,
     );
     expect(workflow).toMatch(
       /if \[\[ "\$WINDOWS_SIGNING" == "true" \]\]; then\n\s+include=.*\{"os":"windows-2022","artifact":"windows"\}/,

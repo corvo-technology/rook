@@ -1,0 +1,18 @@
+---
+import { MASCOT_COLOR } from "../mascot";
+import type { MascotHue } from "../mascot";
+import Avatar from "./Avatar.astro";
+
+type Props = {
+  piece: "king" | "queen" | "bishop" | "knight" | "pawn";
+  hue: MascotHue;
+  class?: string;
+};
+
+const { piece, hue, class: className } = Astro.props;
+---
+
+<!-- A chess piece that keeps the guide rook company at a section's stop: quiet, blinking, it looks at the rook when it arrives. -->
+<span class:list={["guide-piece", className]} aria-hidden="true">
+  <Avatar piece={piece} color={MASCOT_COLOR[hue]} mate />
+</span>

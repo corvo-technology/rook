@@ -219,6 +219,10 @@ msgstr "{count} Jahre"
 msgid "{days}d ago"
 msgstr "vor {days} T."
 
+#: src/components/ApproveAllBar.tsx
+msgid "{failedCount} could not be approved"
+msgstr "{failedCount} konnten nicht genehmigt werden"
+
 #: src/components/markdown-copy.tsx
 msgid "{from}–{to} of {total} rows"
 msgstr "{from}–{to} von {total} Zeilen"
@@ -1045,6 +1049,10 @@ msgstr "Genehmigen"
 msgid "Approve all"
 msgstr "Alle genehmigen"
 
+#: src/components/ApproveAllBar.tsx
+msgid "Approve all {count}"
+msgstr "Alle {count} genehmigen"
+
 #: src/pages/WikiBrowser.tsx
 msgid "Approve edits"
 msgstr "Änderungen genehmigen"
@@ -1865,6 +1873,10 @@ msgstr "Modell verbinden"
 msgid "Connect a model in Settings before running bots."
 msgstr "Verbinde ein Modell in den Einstellungen, bevor du Bots ausführst."
 
+#: src/pages/shell/composer-error.tsx
+msgid "Connect a model to start a run."
+msgstr "Verbinde ein Modell, um zu starten."
+
 #: src/components/MissionList.tsx
 msgid "Connect an app"
 msgstr "Eine App verbinden"
@@ -2489,6 +2501,7 @@ msgstr "Das Lernen konnte nicht gestartet werden"
 msgid "Could not stop computer"
 msgstr "Der Computer konnte nicht gestoppt werden"
 
+#: src/components/ApproveAllBar.tsx
 #: src/components/AskCard.tsx
 msgid "Could not submit this answer"
 msgstr "Antwort konnte nicht gesendet werden"
@@ -5975,6 +5988,7 @@ msgstr "Link zum Zurücksetzen senden"
 msgid "Send with Enter"
 msgstr "Mit Enter senden"
 
+#: src/components/ApproveAllBar.tsx
 #: src/components/AskCard.tsx
 msgid "Sending…"
 msgstr "Wird gesendet…"

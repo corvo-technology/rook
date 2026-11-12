@@ -10,14 +10,17 @@ export const SECURITY_EMAIL = "security@rookup.run";
 export const GITHUB_URL = "https://github.com/corvo-technology/rook";
 
 /**
- * The macOS installer (Apple silicon) of the latest release. Its file name carries no version, so
+ * The macOS installer (one universal app for Apple silicon and Intel) of the latest release. Its file name carries no version, so
  * a new release needs no change here and the link never points at a release that is not out yet.
  */
-export const DOWNLOAD_URL = `${GITHUB_URL}/releases/latest/download/corvo-mac-arm64.dmg`;
+export const DOWNLOAD_URL = `${GITHUB_URL}/releases/latest/download/corvo-mac-universal.dmg`;
 
 /** Direct installers with stable names, so the links never need a version. */
 export const DOWNLOAD_URL_WINDOWS = `${GITHUB_URL}/releases/latest/download/corvo-win-x64.exe`;
 export const DOWNLOAD_URL_LINUX = `${GITHUB_URL}/releases/latest/download/corvo-linux-x86_64.AppImage`;
+export const DOWNLOAD_URL_LINUX_DEB = `${GITHUB_URL}/releases/latest/download/corvo-linux-amd64.deb`;
+export const DOWNLOAD_URL_LINUX_ARM64 = `${GITHUB_URL}/releases/latest/download/corvo-linux-arm64.AppImage`;
+export const DOWNLOAD_URL_LINUX_ARM64_DEB = `${GITHUB_URL}/releases/latest/download/corvo-linux-arm64.deb`;
 
 /**
  * The one-line installs. They download from the latest release, so they only work once a release

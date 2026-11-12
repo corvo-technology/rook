@@ -408,6 +408,11 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
       setReplyTarget(message);
       setReplyQuote(null);
     },
+    openThread: (message) =>
+      router.push({
+        pathname: "/channel-thread",
+        params: { groupId: groupId ?? "", rootId: message.id, name: displayName },
+      }),
     quote: setQuoteTarget,
     select: setSelectableText,
     speak,

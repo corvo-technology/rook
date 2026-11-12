@@ -103,7 +103,8 @@ const hrefOf = (section: string) => localeHashPath(locale, section);
   const bar = () => {
     barFrame = 0;
     if (!header) return;
-    const line = header.offsetHeight / 2;
+    const box = header.getBoundingClientRect();
+    const line = box.top + box.height / 2;
     const over = rooms.some((room) => {
       const rect = room.getBoundingClientRect();
       return rect.top <= line && rect.bottom > line;

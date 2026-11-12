@@ -1,8 +1,23 @@
 import type { ChessPieceId } from "@corvo/contracts";
 import type { AvatarDefinition } from "open-bot-avatar";
 
+/**
+ * The rook as an Open Bot Avatar: one block under three battlements, drawn as a single outline so
+ * the engine turns it as one rounded slab. It is a little wider than the small glyph so the eyes
+ * have the room the engine's strict check asks for (see rook-avatar.test.tsx).
+ */
+export const ROOK_AVATAR: AvatarDefinition = {
+  version: 1,
+  id: "rook",
+  name: "Rook",
+  body: {
+    path: "M19 12H29A5 5 0 0 1 34 17V28H42V17A5 5 0 0 1 47 12H53A5 5 0 0 1 58 17V28H66V17A5 5 0 0 1 71 12H81A5 5 0 0 1 86 17V70A18 18 0 0 1 68 88H32A18 18 0 0 1 14 70V17A5 5 0 0 1 19 12Z",
+  },
+  eyes: { x: 50, y: 57, spacing: 26, scale: 1.2 },
+};
+
 /*
- * The rest of the chess set beside the rook (see rook-avatar.tsx): our own drawings for the Open
+ * The rest of the chess set beside the rook (the rook above): our own drawings for the Open
  * Bot Avatar format. Like the rook each is one soft outline on a solid base 72 wide (x 14..86, ending
  * at y 88), so the set reads as one family, with its eyes on the part that carries the face. They
  * meet the engine's strict targets (face room, no silhouette seams).

@@ -1,5 +1,6 @@
 export const messageMenuSymbols = [
   "reply",
+  "thread",
   "copy",
   "react",
   "quote",
@@ -38,6 +39,8 @@ export function buildMessageContextMenu({
   reactions: readonly string[];
   include: {
     reply?: boolean;
+    /** Channel messages open a thread. */
+    thread?: boolean;
     quote: boolean;
     react: boolean;
     speak: boolean;
@@ -53,6 +56,7 @@ export function buildMessageContextMenu({
   ];
   return [
     ...(include.reply !== false ? [entry("reply", labels.reply)] : []),
+    ...(include.thread ? [entry("thread", labels.thread)] : []),
     ...(include.unread ? [entry("unread", labels.unread)] : []),
     entry("copy", labels.copy),
     ...(include.wiki ? [entry("wiki", labels.wiki)] : []),

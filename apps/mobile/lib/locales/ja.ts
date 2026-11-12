@@ -1181,4 +1181,7 @@ export const JA_MESSAGES: Record<string, string> = {
   Remembered: "覚えました",
   "Not remembered": "覚えていません",
   Discard: "破棄",
+  "Reply in thread": "スレッドで返信",
+  "1 reply": "1件の返信",
+  "{count} replies": "{count}件の返信",
 };

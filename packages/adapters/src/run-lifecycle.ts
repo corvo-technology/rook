@@ -6,6 +6,7 @@ import { getLogger } from "@corvo/logging";
 import { returnBotMessageOutcome, runReturnsOutcome } from "./bot-messages.js";
 import { withComputerScreenAvailability } from "./computer-screens.js";
 import type { ExecutorDeps } from "./executor-deps.js";
+import { closeHandoffGroup } from "./handoff-summary.js";
 import { notifyRun } from "./run-notifications.js";
 import type { TakeoverResumeCheckpoint } from "./takeover-resume.js";
 import { TAKEOVER_RESUME_CHECKPOINTS } from "./takeover-resume.js";
@@ -111,6 +112,7 @@ export async function failRunBeforeTurn(
       threadId: run.threadId,
     });
   }
+  await closeHandoffGroup(deps, run);
   return true;
 }
 

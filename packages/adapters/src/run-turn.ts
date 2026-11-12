@@ -25,6 +25,7 @@ import { returnBotMessageOutcome, runReturnsOutcome } from "./bot-messages.js";
 import { scheduleComputerSleep } from "./computer-idle.js";
 import { holdComputerExecutionLeaseForTakeover } from "./computer-lifecycle.js";
 import { resolveBotWorkspacePath } from "./computer-support.js";
+import { closeHandoffGroup } from "./handoff-summary.js";
 import { compactionJobAfterTurn } from "./history-compaction.js";
 import { addReplyUsage, ReplyCapExceededError } from "./reply-budget.js";
 import {
@@ -468,6 +469,7 @@ async function stopStuckToolLoop(ctx: RunContext, toolName: string) {
       { forceUnread: true, failed: true },
     ).catch((error) => getLogger().error("bot message loop-guard return", error));
   }
+  await closeHandoffGroup(deps, run);
   ctx.abortController.abort();
 }
 
@@ -698,6 +700,7 @@ export async function completeRun(ctx: RunContext) {
       threadId: thread.id,
     });
   }
+  await closeHandoffGroup(deps, run);
   // Last, and never fatal: the run is already finalized, so a failure here must not reach
   // the failure path, where a second finalizeRun would match no rows and silently
   // skip the completion notification.
@@ -863,4 +866,5 @@ export async function failRun(
       threadId: thread.id,
     });
   }
+  await closeHandoffGroup(deps, run);
 }

@@ -192,7 +192,7 @@ export function accountRoutes(ctx: RouterContext) {
         const sessionId = context.sessionId;
         if (!sessionId) throw new ORPCError("UNAUTHORIZED");
         try {
-          await deps.pushTokens.save(context.actor.userId, input.token, sessionId);
+          await deps.pushTokens.save(context.actor.userId, input.token, sessionId, input.locale);
         } catch (error) {
           if (error instanceof PushSessionEndedError) throw new ORPCError("UNAUTHORIZED");
           throw error;

@@ -4,6 +4,7 @@ import {
   dismissableAskMessageIds,
   groupVoiceChats,
   memberName,
+  threadSummary,
   timeSeparatorIds,
   unreadDividerMessageId,
   voiceChatHoldsMessage,
@@ -17,6 +18,7 @@ import { threadHeaderFloats } from "../../lib/thread-edges";
 import { previewMessageText } from "../../lib/thread-message-text";
 import type { useThreadTranscript } from "../../lib/thread-transcript";
 import type { UserBubble } from "../../lib/user-bubble";
+import type { ThreadFooterData } from "../thread-footer";
 import { TimeSeparator } from "../time-separator";
 import { UnreadDivider } from "../unread-divider";
 import { VoiceChatCard } from "../VoiceChatCard";
@@ -38,6 +40,9 @@ export function useLatestRowActions(current: MessageRowActions): MessageRowActio
       helperToggle: (measure, toggle, opening) =>
         rowActionsRef.current.helperToggle(measure, toggle, opening),
       reply: (message) => rowActionsRef.current.reply(message),
+      openThread: current.openThread
+        ? (message) => rowActionsRef.current.openThread?.(message)
+        : undefined,
       quote: (message) => rowActionsRef.current.quote(message),
       select: (text) => rowActionsRef.current.select(text),
       speak: (message) => rowActionsRef.current.speak(message),
@@ -113,6 +118,26 @@ export function useThreadRows({
   );
   // Group calls in reading order, then reverse for the inverted list.
   const liveItems = useMemo(() => groupVoiceChats(visibleMessages).reverse(), [visibleMessages]);
+  // Who replied under each channel message, with the colors their faces wear.
+  const threadFooters = useMemo(() => {
+    const footers = new Map<string, ThreadFooterData>();
+    if (!inGroup) return footers;
+    for (const [rootId, replies] of peerTranscript.folded) {
+      const summary = threadSummary(replies);
+      if (!summary) continue;
+      footers.set(rootId, {
+        summary,
+        faces: summary.botIds.map((id) => ({
+          botId: id,
+          color:
+            snap?.members?.find((member) => member.botId === id)?.color ??
+            mentionBots.find((bot) => bot.id === id)?.color ??
+            "",
+        })),
+      });
+    }
+    return footers;
+  }, [inGroup, peerTranscript, snap?.members, mentionBots]);
   const messagesById = useMemo(
     () => new Map((snap?.messages ?? []).map((message) => [message.id, message])),
     [snap?.messages],
@@ -181,6 +206,7 @@ export function useThreadRows({
                 : "collapsed"
               : undefined
           }
+          thread={threadFooters.get(message.id)}
           activityBotId={activityBotId}
           activityColor={activityBot?.color}
           activityStatus={activityStatus}
@@ -202,6 +228,7 @@ export function useThreadRows({
       displayName,
       reactionView,
       peerTranscript,
+      threadFooters,
       expandedPeerMarkers,
       inGroup,
       botId,

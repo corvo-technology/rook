@@ -27,6 +27,8 @@ import type { MarkdownArtifactPreviewTarget } from "../markdown-artifact-preview
 import { presentMessageMenu } from "../message-action-menu";
 import { MessageContextMenu } from "../message-context-menu";
 import { ReplyLine } from "../reply-line";
+import type { ThreadFooterData } from "../thread-footer";
+import { ThreadFooter } from "../thread-footer";
 import { TimeSeparator } from "../time-separator";
 import { UnreadDivider } from "../unread-divider";
 import type { MessageActionProps } from "./message-bubble";
@@ -39,6 +41,8 @@ export type MessageRowActions = {
     opening: boolean,
   ) => void;
   reply: (message: MobileMessage) => void;
+  /** Opens the thread under a channel message. */
+  openThread?: (message: MobileMessage) => void;
   quote: (message: MobileMessage) => void;
   select: (text: string) => void;
   speak: (message: MobileMessage) => void;
@@ -90,6 +94,8 @@ type MessageRowProps = {
   mentions?: readonly ChildBotBlock[];
   /** Set on a received marker whose peer run has folded replies. */
   peerReplies?: "collapsed" | "expanded";
+  /** Who replied under this channel message, and when. */
+  thread?: ThreadFooterData;
   activityBotId?: string;
   activityColor?: string;
   activityStatus?: MobileBot["status"];
@@ -125,6 +131,7 @@ export const MessageRow = memo(function MessageRow({
   mentions,
   waitingForUser,
   peerReplies,
+  thread,
   activityBotId,
   activityColor,
   activityStatus,
@@ -180,6 +187,14 @@ export const MessageRow = memo(function MessageRow({
     // Any sent message can be marked unread; the next open starts New at the first reply from it.
     const includeUnread = !readOnly && !markedUnread && canMarkMessageUnread(message);
     const reply = () => actions.reply(message);
+    const replyInThread = () => actions.openThread?.(message);
+    // A channel message is a thread root unless it is a live draft or a peer receipt.
+    const includeThread =
+      inGroup &&
+      Boolean(actions.openThread) &&
+      !readOnly &&
+      !message.id.startsWith("progress:") &&
+      !isPeerReceiptBlocks(message.blocks);
     const quote = () => actions.quote(message);
     const speakMessage = () => actions.speak(message);
     const select = () =>
@@ -205,6 +220,9 @@ export const MessageRow = memo(function MessageRow({
     };
     const menuActions = [
       ...(!readOnly ? [{ name: "reply", text: t("Reply"), onPress: reply }] : []),
+      ...(includeThread
+        ? [{ name: "thread", text: t("Reply in thread"), onPress: replyInThread }]
+        : []),
       ...(includeUnread
         ? [{ name: "unread", text: t("Mark as unread"), onPress: markUnread }]
         : []),
@@ -238,6 +256,7 @@ export const MessageRow = memo(function MessageRow({
     const menu = buildMessageContextMenu({
       labels: {
         reply: t("Reply"),
+        thread: t("Reply in thread"),
         copy: t("Copy"),
         react: t("React"),
         quote: t("Quote"),
@@ -249,6 +268,7 @@ export const MessageRow = memo(function MessageRow({
       reactions: MESSAGE_REACTIONS,
       include: {
         reply: !readOnly,
+        thread: includeThread,
         quote: includeQuote,
         react: includeReact,
         speak: includeSpeak,
@@ -272,6 +292,16 @@ export const MessageRow = memo(function MessageRow({
                     text: t("Reply"),
                     icon: "arrow-undo-outline" as const,
                     onPress: reply,
+                  },
+                ]
+              : []),
+            ...(includeThread
+              ? [
+                  {
+                    name: "thread",
+                    text: t("Reply in thread"),
+                    icon: "chatbubbles-outline" as const,
+                    onPress: replyInThread,
                   },
                 ]
               : []),
@@ -344,6 +374,7 @@ export const MessageRow = memo(function MessageRow({
           return;
         }
         if (id === "reply") reply();
+        if (id === "thread") replyInThread();
         if (id === "copy") copy();
         if (id === "quote") quote();
         if (id === "speak") speakMessage();
@@ -367,6 +398,7 @@ export const MessageRow = memo(function MessageRow({
     actions,
     markedUnread,
     readOnly,
+    inGroup,
     onCall,
     colorScheme,
     t,
@@ -462,6 +494,9 @@ export const MessageRow = memo(function MessageRow({
               />
             </ThreadReadOnlyContext.Provider>
           </MessageContextMenu>
+          {thread ? (
+            <ThreadFooter thread={thread} onOpen={() => actions.openThread?.(message)} />
+          ) : null}
           {displayedReactions.size > 0 ? (
             <View
               style={{

@@ -45,7 +45,7 @@ export const BOT_COLOR_LIST: BotColorDef[] = [
   {
     id: "cyan",
     name: "Cyber Cyan",
-    light: "#1CC3B0",
+    light: "#22B8E6",
     dark: "#0284C7",
     eyeColor: "#FFFFFF",
     hex: "#06B6D4",

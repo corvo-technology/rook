@@ -1,8 +1,7 @@
 import { CHESS_PIECE_IDS } from "@corvo/contracts";
 import { avatarFrame, validateAvatar } from "open-bot-avatar";
 import { describe, expect, it } from "vitest";
-import { CHESS_PIECES } from "./chess-pieces.js";
-import { ROOK_AVATAR } from "./rook-avatar.js";
+import { CHESS_PIECES, ROOK_AVATAR } from "./chess-set.js";
 
 // Geometry only: the engine's strict check (face room, no seams) was run on each drawing when it
 // was made; here we keep every piece valid, inside the safe area and a sibling of the rook.

@@ -192,7 +192,7 @@ it.each([MODEL_REQUIRED_SEND_ERROR, `  ${MODEL_REQUIRED_SEND_ERROR}  `])(
     const link = container?.querySelector<HTMLButtonElement>(
       '[data-testid="composer-error-open-models"]',
     );
-    expect(link?.textContent).toBe(sendError);
+    expect(link?.textContent).toBe(sendError.trim());
     act(() => link?.click());
     expect(onOpenModels).toHaveBeenCalledOnce();
 

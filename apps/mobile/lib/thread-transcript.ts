@@ -1,6 +1,7 @@
 import {
   expandPeerReplies,
   foldPeerReplies,
+  foldThreadReplies,
   projectBotMentions,
   projectMessageReactions,
   shouldShowBotSenderName,
@@ -14,7 +15,12 @@ import { applyLocalChoiceDismissals, hasVisibleMessagePresentation } from "./mes
  * mentions and reactions folded into the message they belong to, and choices the user dismissed
  * here hidden.
  */
-export function useThreadTranscript(messages: MobileMessage[] | undefined, inGroup: boolean) {
+export function useThreadTranscript(
+  messages: MobileMessage[] | undefined,
+  inGroup: boolean,
+  /** A channel's replies live in their threads; a thread itself shows them in a row. */
+  foldThreads = inGroup,
+) {
   const [dismissedChoiceQuestions, setDismissedChoiceQuestions] = useState<
     ReadonlyMap<string, ReadonlySet<string>>
   >(() => new Map());
@@ -31,10 +37,11 @@ export function useThreadTranscript(messages: MobileMessage[] | undefined, inGro
       }),
     [inGroup, messages],
   );
-  const peerTranscript = useMemo(
-    () => foldPeerReplies(messages ?? [], { includePeerReceipts: true }),
-    [messages],
-  );
+  const peerTranscript = useMemo(() => {
+    const peerFolded = foldPeerReplies(messages ?? [], { includePeerReceipts: true });
+    // In a channel each message's replies are read in its thread, not in the main column.
+    return foldThreads ? foldThreadReplies(peerFolded) : peerFolded;
+  }, [messages, foldThreads]);
   const reactionView = useMemo(() => {
     const mentionView = projectBotMentions(
       expandPeerReplies(peerTranscript, expandedPeerMarkers)

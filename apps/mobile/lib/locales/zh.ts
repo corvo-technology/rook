@@ -1147,4 +1147,7 @@ export const ZH_MESSAGES: Record<string, string> = {
   Remembered: "已记住",
   "Not remembered": "未记住",
   Discard: "丢弃",
+  "Reply in thread": "在主题中回复",
+  "1 reply": "1 条回复",
+  "{count} replies": "{count} 条回复",
 };

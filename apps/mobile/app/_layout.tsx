@@ -427,6 +427,7 @@ function LayoutContent() {
                         ...chatRouteHeader(route, t, { split, inboxHidden, foldActive }),
                       })}
                     />
+                    <Stack.Screen name="channel-thread" options={{ title: t("Thread") }} />
                     <Stack.Screen
                       name="group-settings"
                       options={glassHeaderOptions(t("Group settings"))}

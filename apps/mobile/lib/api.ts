@@ -1379,6 +1379,16 @@ export async function subscribeThread(
   }
 }
 
+/** The channel thread a live message belongs to, kept when a later event leaves it out. */
+function threadRootMetadata(
+  payload: Record<string, unknown> | undefined,
+  known: Pick<MobileMessage, "threadRootId"> | undefined,
+): Pick<MobileMessage, "threadRootId"> {
+  const root = payload?.threadRootId;
+  const threadRootId = typeof root === "string" && root ? root : known?.threadRootId;
+  return threadRootId ? { threadRootId } : {};
+}
+
 export function applyMobileThreadEvent(
   prev: MobileSnapshot | null,
   event: ThreadEvent,
@@ -1563,6 +1573,7 @@ export function applyMobileThreadEvent(
       }),
       ...(event.botId ? { botId: event.botId } : {}),
       ...(event.runId ? { runId: event.runId } : {}),
+      ...threadRootMetadata(event.payload, previous),
     };
     return {
       ...prev,
@@ -1582,6 +1593,7 @@ export function applyMobileThreadEvent(
       }),
       ...(event.botId ? { botId: event.botId } : {}),
       ...(event.runId ? { runId: event.runId } : {}),
+      ...threadRootMetadata(event.payload, previous),
     };
     return {
       ...prev,
@@ -1645,6 +1657,7 @@ export function applyMobileThreadEvent(
       blocks: (event.payload?.blocks as MobileMessage["blocks"]) ?? [],
       botId: event.botId ?? (event.payload?.botId ? String(event.payload.botId) : undefined),
       ...replyMetadata(event.payload ?? {}, known),
+      ...threadRootMetadata(event.payload, known),
     };
     return {
       ...prev,

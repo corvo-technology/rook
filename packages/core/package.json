@@ -14,6 +14,11 @@
       "development": "./src/user-error.ts",
       "default": "./src/user-error.ts"
     },
+    "./chess-set": {
+      "types": "./src/chess-set.ts",
+      "development": "./src/chess-set.ts",
+      "default": "./src/chess-set.ts"
+    },
     "./message-quote": {
       "types": "./src/message-quote.ts",
       "development": "./src/message-quote.ts",
@@ -100,6 +105,7 @@
     "hast-util-to-text": "4.0.2",
     "json5": "2.2.3",
     "mdast-util-to-hast": "13.2.1",
+    "open-bot-avatar": "0.2.1",
     "remark-gfm": "4.0.1",
     "remark-parse": "11.0.0",
     "tldts": "7.4.19",

@@ -2,6 +2,9 @@
 import Footer from "./Footer.astro";
 import Header from "./Header.astro";
 import GuideSlot from "./GuideSlot.astro";
+import Avatar from "./Avatar.astro";
+import Piece from "./Piece.astro";
+import { MASCOT_COLOR } from "../mascot";
 import { Rook } from "./Rook";
 import { ProductPreview } from "./ProductPreview";
 import { AGENT_CATALOG } from "@corvo/core";
@@ -13,6 +16,9 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import {
   DOWNLOAD_URL,
   DOWNLOAD_URL_LINUX,
+  DOWNLOAD_URL_LINUX_ARM64,
+  DOWNLOAD_URL_LINUX_ARM64_DEB,
+  DOWNLOAD_URL_LINUX_DEB,
   DOWNLOAD_URL_WINDOWS,
   GITHUB_URL,
   INSTALL_COMMAND,
@@ -81,7 +87,7 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
       <section class="lp-hero">
         <h1>
           <span>{copy.hero.line1}</span>
-          <GuideSlot size={108} class="guide-slot--inline" />
+          <GuideSlot class="guide-slot--inline" />
           <span>{copy.hero.line2}</span>
         </h1>
         <p class="lp-hero__lead">{copy.hero.lead[0]}<br />{copy.hero.lead[1]}</p>
@@ -90,7 +96,6 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
             <a class="button button--primary" href={DOWNLOAD_URL} target="_blank" rel="noopener" data-attr="hero-download">
               {copy.cta.download}
             </a>
-            <GuideSlot size={48} class="guide-slot--cta" />
           </span>
           <p class="download-note">
             {
@@ -107,18 +112,18 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
           </p>
         </div>
         <div class="lp-hero__demo">
-          <GuideSlot size={64} class="guide-slot--perch guide-slot--ask" />
           <ProductPreview copy={copy.preview} client:visible={{ rootMargin: "300px" }} />
         </div>
       </section>
 
       <section id="agents" class="lp-agent" aria-labelledby="agent-heading">
+        <GuideSlot row class="guide-slot--perch guide-slot--mid" />
+        <Piece piece="queen" hue="azul" class="guide-piece--mid" />
         <div class="lp-center" data-reveal>
           <h2 id="agent-heading" class="lp-title">{copy.agent.accent}</h2>
           <p class="lp-lead">{copy.agent.copy}</p>
         </div>
         <ul class="lp-states" data-reveal>
-          <GuideSlot as="li" size={52} class="guide-slot--perch guide-slot--right guide-slot--wide" />
           {
             STATES.map((state, index) => (
               <li>
@@ -143,12 +148,13 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
       </section>
 
       <section id="store" class="lp-store" aria-labelledby="store-heading">
+        <GuideSlot row class="guide-slot--perch guide-slot--start" />
+        <Piece piece="pawn" hue="violeta" class="guide-piece--start" />
         <div class="lp-store__intro" data-reveal>
           <h2 id="store-heading" class="lp-title">{copy.store.accent}</h2>
           <p class="lp-lead">{copy.store.copy}</p>
         </div>
         <div class="lp-rows" data-reveal>
-          <GuideSlot size={52} class="guide-slot--perch guide-slot--left guide-slot--wide" />
           {
             storeGroups.map((group) => (
               <div class="lp-store__row">
@@ -168,13 +174,14 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
       </section>
 
       <section id="features" class="lp-works" aria-labelledby="works-heading">
+        <GuideSlot row class="guide-slot--perch guide-slot--mid" />
+        <Piece piece="knight" hue="rosa" class="guide-piece--mid" />
         <h2 id="works-heading" class="lp-title lp-title--center" data-reveal>
           {works.heading}
           <br />
           {works.accent}
         </h2>
         <div class="lp-cards" data-reveal>
-          <GuideSlot size={52} class="guide-slot--perch guide-slot--right guide-slot--wide" />
           <article class="lp-card">
             <h3>{featureCards[0]!.title}</h3>
             <p>{featureCards[0]!.body}</p>
@@ -218,6 +225,8 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
       </section>
 
       <section id="open" class="lp-open" aria-labelledby="open-heading">
+        <GuideSlot row class="guide-slot--perch guide-slot--start" />
+        <Piece piece="bishop" hue="laranja" class="guide-piece--start" />
         <div class="lp-open__intro" data-reveal>
           <h2 id="open-heading" class="lp-title">{copy.open.heading} {copy.open.accent}</h2>
           <p class="lp-lead">{copy.open.copy}</p>
@@ -229,7 +238,6 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
           </div>
         </div>
         <ul class="lp-rows lp-points" data-reveal>
-          <GuideSlot as="li" size={52} class="guide-slot--perch guide-slot--left guide-slot--wide" />
           {
             copy.open.points.map((point) => (
               <li>
@@ -254,6 +262,17 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
           >
             {copy.install.download}
           </a>
+          <p class="download-note lp-formats">
+            {copy.install.formats.label}:{" "}
+            <a href={DOWNLOAD_URL} data-attr="install-format-mac">{copy.install.formats.mac}&nbsp;(.dmg)</a>{" · "}
+            <a href={DOWNLOAD_URL} data-attr="install-format-mac-intel">{copy.install.formats.macIntel}&nbsp;(.dmg)</a>{" · "}
+            <a href={DOWNLOAD_URL_LINUX_DEB} data-attr="install-format-deb">{copy.install.formats.linux}&nbsp;.deb</a>{" · "}
+            <a href={DOWNLOAD_URL_LINUX} data-attr="install-format-appimage">{copy.install.formats.linux}&nbsp;AppImage</a>{" · "}
+            {copy.install.formats.arm64}:{" "}
+            <a href={DOWNLOAD_URL_LINUX_ARM64_DEB} data-attr="install-format-arm64-deb">.deb</a>{" · "}
+            <a href={DOWNLOAD_URL_LINUX_ARM64} data-attr="install-format-arm64-appimage">AppImage</a>{" · "}
+            <a href={DOWNLOAD_URL_WINDOWS} data-attr="install-format-windows">{copy.install.formats.windows}&nbsp;(.exe)</a>
+          </p>
         </div>
         <div class="lp-commands" data-reveal>
           <div class="lp-command">
@@ -291,7 +310,7 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
         </div>
       </section>
 
-      <section class="lp-cta ink ink-band" aria-labelledby="cta-heading">
+      <section class="lp-cta ink ink-band" aria-labelledby="cta-heading" data-guide-gone>
         <h2 id="cta-heading" class="lp-title lp-title--cta">{copy.cta.heading}</h2>
         <p class="lp-lead">{copy.cta.copy}</p>
         <a class="button button--primary" href={DOWNLOAD_URL} target="_blank" rel="noopener" data-attr="cta-download">
@@ -299,7 +318,7 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
         </a>
         <div class="lp-cta__peek">
           <p class="lp-cta__bubble lp-cta__bubble--left">{copy.cta.bubbles[0]}</p>
-          <GuideSlot size={220} clip={0.28} mood="done" class="guide-slot--end" />
+          <Avatar color={MASCOT_COLOR.menta} mood="happy" class="lp-cta__rook" mate />
           <p class="lp-cta__bubble lp-cta__bubble--right">{copy.cta.bubbles[1]}</p>
         </div>
       </section>
@@ -308,7 +327,7 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
     <Footer locale={locale} homeHref={homeHref} />
   </div>
   <div class="rook-guide" data-guide aria-hidden="true">
-    <Rook hue="menta" size={100} gaze={false} />
+    <Avatar color={MASCOT_COLOR.menta} />
   </div>
 </BaseLayout>
 

@@ -1,4 +1,4 @@
-import { isSecretAskBlock } from "./action-approval.js";
+import { isApprovalAskBlock, isSecretAskBlock } from "./action-approval.js";
 
 type AskSnapshot = {
   messages: readonly {
@@ -70,4 +70,65 @@ export function resolveAskChoice(
   if (byId) return byId;
   const lower = trimmed.toLowerCase();
   return actions.find((action) => action.label.trim().toLowerCase() === lower);
+}
+
+/** Most approvals one batch decides, so a single request stays bounded. */
+export const APPROVAL_BATCH_MAX = 20;
+
+export type ApprovalBatchClass = "tool" | "site";
+
+type BatchableBlock = {
+  kind: string;
+  status?: string;
+  approvalEffectId?: string;
+  proposal?: boolean;
+  instructionUpdate?: unknown;
+  input?: string;
+  site?: string;
+  actions?: readonly { id: string; label: string; outcome?: string }[];
+};
+
+/**
+ * The safety class an approval card can be decided in with others, or null when it must be decided
+ * alone: secret inputs, instruction updates, proposals and anything that creates or cancels
+ * something. A card with no "always" choice is a security-boundary change, so it never batches. A
+ * site fetch is its own class, never mixed with tool calls.
+ */
+export function approvalBatchClass(block: BatchableBlock): ApprovalBatchClass | null {
+  if (!isApprovalAskBlock(block) || block.status === "answered") return null;
+  if (block.proposal || block.instructionUpdate || block.input === "secret") return null;
+  if (block.actions?.some((action) => action.outcome)) return null;
+  if (!block.actions?.some((action) => action.id === "always")) return null;
+  return block.site ? "site" : "tool";
+}
+
+export type ApprovalBatchItem = { messageId: string; runId: string; approvalEffectId: string };
+
+/** Pending approvals the viewer can answer, grouped by safety class; only groups of two or more. */
+export function pendingApprovalBatches(
+  messages: readonly {
+    id: string;
+    runId?: string | null;
+    blocks: readonly BatchableBlock[];
+  }[],
+  answerable: ReadonlySet<string>,
+): { batchClass: ApprovalBatchClass; items: ApprovalBatchItem[] }[] {
+  const groups = new Map<ApprovalBatchClass, ApprovalBatchItem[]>();
+  for (const message of messages) {
+    if (!message.runId || !answerable.has(message.id)) continue;
+    for (const block of message.blocks) {
+      const batchClass = approvalBatchClass(block);
+      if (!batchClass || !block.approvalEffectId) continue;
+      const items = groups.get(batchClass) ?? [];
+      items.push({
+        messageId: message.id,
+        runId: message.runId,
+        approvalEffectId: block.approvalEffectId,
+      });
+      groups.set(batchClass, items);
+    }
+  }
+  return [...groups]
+    .filter(([, items]) => items.length >= 2)
+    .map(([batchClass, items]) => ({ batchClass, items: items.slice(0, APPROVAL_BATCH_MAX) }));
 }

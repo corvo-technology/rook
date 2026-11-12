@@ -114,7 +114,7 @@ export function ComposerError({
             onClick={onOpenModels}
             className="text-left underline underline-offset-2 hover:text-foreground"
           >
-            {sendError}
+            {t`Connect a model to start a run.`}
           </button>
         ) : (
           sendError

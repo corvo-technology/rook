@@ -14,6 +14,10 @@ async function openHomepage(page: Page, path = "/") {
   await page
     .locator('astro-island[component-export="ProductPreview"]:not([ssr])')
     .waitFor({ state: "attached" });
+  // The preview types its request and is answered once it scrolls into view; wait for the answer.
+  await page.getByTestId("product-preview").scrollIntoViewIfNeeded();
+  await page.getByRole("button", { name: /^(Approve|Aprovar)$/ }).waitFor({ state: "visible" });
+  await page.evaluate(() => scrollTo(0, 0));
 }
 
 /** Visual record for the CI screenshot gallery. No content assertions. */

@@ -499,7 +499,7 @@ msgid "{working} working"
 msgstr "{working} working"
 
 #. placeholder {0}: mention.name
-#: src/pages/shell/composer.tsx
+#: src/pages/shell/composer-mentions.tsx
 msgid "@{0}"
 msgstr "@{0}"
 
@@ -1095,6 +1095,10 @@ msgstr "Artifacts"
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Ask"
 msgstr "Ask"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Ask first"
+msgstr "Ask first"
 
 #: src/components/AutonomyPicker.tsx
 msgid "Asks before any change"
@@ -2412,6 +2416,7 @@ msgstr "Could not run the routine"
 #: src/pages/SpaceSettingsPanel.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/Workflows.tsx
+#: src/pages/YouMemory.tsx
 msgid "Could not save"
 msgstr "Could not save"
 
@@ -2782,6 +2787,10 @@ msgstr "Delete {0}?"
 msgid "Delete account"
 msgstr "Delete account"
 
+#: src/pages/YouMemory.tsx
+msgid "Delete for good"
+msgstr "Delete for good"
+
 #: src/pages/GroupPanel.tsx
 msgid "Delete group"
 msgstr "Delete group"
@@ -2871,6 +2880,11 @@ msgstr "Disable a tool"
 #: src/pages/StoreInstalledApps.tsx
 msgid "Disabled"
 msgstr "Disabled"
+
+#: src/components/MemoryFactCard.tsx
+#: src/pages/YouMemory.tsx
+msgid "Discard"
+msgstr "Discard"
 
 #: src/components/composer/HoldToTalk.tsx
 msgid "Discard recording"
@@ -3033,6 +3047,7 @@ msgstr "Each one checks itself off when you do it."
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/WikiBrowser.tsx
+#: src/pages/YouMemory.tsx
 msgid "Edit"
 msgstr "Edit"
 
@@ -3239,6 +3254,10 @@ msgstr "Extra high"
 msgid "Extra high"
 msgstr "Extra high"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Facts about you"
+msgstr "Facts about you"
+
 #: src/components/CloudAgentCard.tsx
 msgid "failed"
 msgstr "failed"
@@ -3362,9 +3381,17 @@ msgstr "First bot"
 msgid "First messages, one per line"
 msgstr "First messages, one per line"
 
+#: src/pages/YouMemory.tsx
+msgid "Forget"
+msgstr "Forget"
+
 #: src/pages/Auth.tsx
 msgid "Forgot password?"
 msgstr "Forgot password?"
+
+#: src/pages/YouMemory.tsx
+msgid "Forgotten"
+msgstr "Forgotten"
 
 #: src/pages/onboarding-quick-connect.tsx
 #: src/pages/onboarding/LocalModelChoice.tsx
@@ -3767,6 +3794,10 @@ msgstr "Jump to replied message: {excerpt}"
 msgid "just now"
 msgstr "just now"
 
+#: src/pages/YouMemory.tsx
+msgid "Keep"
+msgstr "Keep"
+
 #: src/components/MissionList.tsx
 msgid "Keep a memory"
 msgstr "Keep a memory"
@@ -4120,6 +4151,7 @@ msgstr "Members ({0})"
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/SettingsOverlay.tsx
 #: src/pages/shell/agent-import.tsx
+#: src/pages/shell/bot-panel.tsx
 msgid "Memory"
 msgstr "Memory"
 
@@ -4135,7 +4167,7 @@ msgstr "Memory for {title}"
 msgid "Memory scope"
 msgstr "Memory scope"
 
-#: src/pages/shell/composer.tsx
+#: src/pages/shell/composer-mentions.tsx
 msgid "Mentions"
 msgstr "Mentions"
 
@@ -4435,6 +4467,7 @@ msgstr "Never ask"
 
 #: src/components/NewDot.tsx
 #: src/pages/shell/chat-context.tsx
+#: src/pages/YouMemory.tsx
 msgid "New"
 msgstr "New"
 
@@ -4456,6 +4489,10 @@ msgstr "New group chat"
 #: src/pages/PartnershipSettingsPanel.tsx
 msgid "New key"
 msgstr "New key"
+
+#: src/components/MemoryFactCard.tsx
+msgid "New memory"
+msgstr "New memory"
 
 #: src/pages/shell/chat-context.tsx
 msgid "New messages"
@@ -4675,6 +4712,10 @@ msgstr "Not in the plugin catalog"
 msgid "Not now"
 msgstr "Not now"
 
+#: src/components/MemoryFactCard.tsx
+msgid "Not remembered"
+msgstr "Not remembered"
+
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/import-status.ts
 msgid "Not supported in Rook"
@@ -4761,6 +4802,10 @@ msgstr "One-time purchase. Credits do not expire."
 #: src/pages/Auth.tsx
 msgid "Only identifies you on this computer. Your data stays here."
 msgstr "Only identifies you on this computer. Your data stays here."
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Only read"
+msgstr "Only read"
 
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/shell/computer-panel.tsx
@@ -5343,6 +5388,10 @@ msgstr "Release control"
 msgid "Reload"
 msgstr "Reload"
 
+#: src/components/MemoryFactCard.tsx
+msgid "Remembered"
+msgstr "Remembered"
+
 #: src/components/ApprovalRulesSettings.tsx
 #: src/pages/ConnectionsSettingsPanel.tsx
 #: src/pages/LocalSpeechSection.tsx
@@ -5388,6 +5437,7 @@ msgstr "Remove header"
 
 #. placeholder {0}: mention.name
 #: src/pages/shell/composer.tsx
+#: src/pages/shell/thread-panel.tsx
 msgid "Remove mention {0}"
 msgstr "Remove mention {0}"
 
@@ -5717,6 +5767,7 @@ msgid "Saturday"
 msgstr "Saturday"
 
 #: src/components/AskCard.tsx
+#: src/components/MemoryFactCard.tsx
 #: src/components/PasskeySettings.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -5736,6 +5787,7 @@ msgstr "Saturday"
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/WikiBrowser.tsx
+#: src/pages/YouMemory.tsx
 msgid "Save"
 msgstr "Save"
 
@@ -5746,6 +5798,10 @@ msgstr "Save credential"
 #: src/pages/shell/bot-credentials.tsx
 msgid "Save new value"
 msgstr "Save new value"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Save on its own"
+msgstr "Save on its own"
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Save the workspace and install current software."
@@ -6285,6 +6341,10 @@ msgstr "Still asks before anything that changes something, and before opening a 
 msgid "Still asks when a second model finds it outside your request, and before security changes."
 msgstr "Still asks when a second model finds it outside your request, and before security changes."
 
+#: src/pages/YouMemory.tsx
+msgid "Still true?"
+msgstr "Still true?"
+
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/computer-overlay.tsx
@@ -6367,6 +6427,10 @@ msgstr "Subscribe with your own AI"
 msgid "Subscription required"
 msgstr "Subscription required"
 
+#: src/pages/YouMemory.tsx
+msgid "Suggest from what I say"
+msgstr "Suggest from what I say"
+
 #: src/lib/cron.ts
 msgid "Sunday"
 msgstr "Sunday"
@@ -6431,6 +6495,10 @@ msgstr "Tasks"
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Teach a task"
 msgstr "Teach a task"
+
+#: src/pages/YouMemory.tsx
+msgid "Teach something about you"
+msgstr "Teach something about you"
 
 #: src/pages/Shell.tsx
 msgid "Teaching in progress. Stop teaching before sending a new message."
@@ -6859,6 +6927,7 @@ msgid "Type your answer"
 msgstr "Type your answer"
 
 #: src/components/AskCard.tsx
+#: src/components/MemoryFactCard.tsx
 #: src/components/WikiChangeCard.tsx
 msgid "Undo"
 msgstr "Undo"
@@ -7327,6 +7396,7 @@ msgstr "Yesterday"
 #: src/pages/shell/message-view.tsx
 #: src/pages/shell/shell-sidebar.tsx
 #: src/pages/shell/transcript.tsx
+#: src/pages/YouMemory.tsx
 msgid "You"
 msgstr "You"
 

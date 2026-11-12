@@ -5,6 +5,7 @@ import {
   canonicalPiProviderId,
   InstructionVersionSchema,
   initialBotMemory,
+  MemoryModeSchema,
 } from "@corvo/contracts";
 import {
   BACKGROUND_RUN_TRIGGERS,
@@ -97,6 +98,7 @@ function mapBot(
     fleetManagement?: boolean;
     squadRouting?: boolean;
     approvalMode?: string | null;
+    memoryMode?: string | null;
     dailyCapMicros?: bigint | null;
     monthlyTokenLimit?: bigint | null;
     disabledBuiltinTools?: string[];
@@ -148,6 +150,7 @@ function mapBot(
     fleetManagement: bot.fleetManagement ?? false,
     squadRouting: bot.squadRouting ?? false,
     approvalMode: ApprovalModeSchema.safeParse(bot.approvalMode).data ?? null,
+    memoryMode: MemoryModeSchema.safeParse(bot.memoryMode).data ?? null,
     dailyCapUsd: bot.dailyCapMicros == null ? null : Number(bot.dailyCapMicros) / 1_000_000,
     monthlyTokenLimit: bot.monthlyTokenLimit == null ? null : Number(bot.monthlyTokenLimit),
     disabledBuiltinTools: bot.disabledBuiltinTools ?? [],

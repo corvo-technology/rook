@@ -160,7 +160,8 @@ export type SpaceSource =
   | "memory_documents"
   | "memory_revisions"
   | "wiki_sources"
-  | "wiki_changes";
+  | "wiki_changes"
+  | "user_memories";
 
 export interface SpaceKeyStore {
   forSpace(spaceId: string): Promise<SpaceKeyRecord[]>;
@@ -191,6 +192,7 @@ export const ROW_OWNER: Record<SpaceSource, string> = {
   memory_revisions: "documentId",
   wiki_sources: "userId",
   wiki_changes: "userId",
+  user_memories: "userId",
 };
 
 export interface Queryable {
@@ -206,6 +208,7 @@ const ROW_CONTEXT: Record<SpaceSource, string> = {
   memory_revisions: `SELECT d."spaceId", r."documentId" AS owner FROM memory_revisions r JOIN memory_documents d ON d.id = r."documentId" WHERE r.id = $1`,
   wiki_sources: `SELECT "spaceId", "userId" AS owner FROM wiki_sources WHERE id = $1`,
   wiki_changes: `SELECT "spaceId", "userId" AS owner FROM wiki_changes WHERE id = $1`,
+  user_memories: `SELECT "spaceId", "userId" AS owner FROM user_memories WHERE id = $1`,
 };
 
 /**

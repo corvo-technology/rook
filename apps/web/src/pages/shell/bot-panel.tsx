@@ -3,6 +3,7 @@ import type {
   ApprovalMode,
   Bot,
   ComputerMode,
+  MemoryMode,
   ModelCatalogEntry,
   ThinkingLevel,
 } from "@corvo/contracts";
@@ -13,6 +14,7 @@ import {
   BOT_NAME_MAX_LENGTH,
   BOT_TITLE_MAX_LENGTH,
   BUILTIN_TOOL_NAMES,
+  DEFAULT_MEMORY_MODE,
   isBuiltinToolName,
 } from "@corvo/contracts";
 import {
@@ -164,6 +166,7 @@ export function BotSettings({
     dailyCapUsd?: number | null;
     monthlyTokenLimit?: number | null;
     approvalMode?: ApprovalMode | null;
+    memoryMode?: MemoryMode | null;
     voiceId?: string | null;
     modelProvider?: string | null;
     modelId?: string | null;
@@ -223,6 +226,8 @@ export function BotSettings({
   useEffect(() => setTokenLimit(tokenLimitText(bot.monthlyTokenLimit)), [bot.monthlyTokenLimit]);
   const [approvalMode, setApprovalMode] = useState(bot.approvalMode);
   useEffect(() => setApprovalMode(bot.approvalMode), [bot.approvalMode]);
+  const [memoryMode, setMemoryMode] = useState(bot.memoryMode);
+  useEffect(() => setMemoryMode(bot.memoryMode), [bot.memoryMode]);
   const [fleetManagement, setFleetManagement] = useState(bot.fleetManagement);
   useEffect(() => setFleetManagement(bot.fleetManagement), [bot.fleetManagement]);
   const [squadRouting, setSquadRouting] = useState(bot.squadRouting);
@@ -385,6 +390,7 @@ export function BotSettings({
       dailyCapUsd?: number | null;
       monthlyTokenLimit?: number | null;
       approvalMode?: ApprovalMode | null;
+      memoryMode?: MemoryMode | null;
       disabledBuiltinTools?: string[];
       baseDisabledBuiltinTools?: string[];
     },
@@ -407,6 +413,10 @@ export function BotSettings({
       }
       if (patchOverrides?.approvalMode !== undefined) {
         await onSave({ approvalMode: patchOverrides.approvalMode });
+        return;
+      }
+      if (patchOverrides?.memoryMode !== undefined) {
+        await onSave({ memoryMode: patchOverrides.memoryMode });
         return;
       }
       if (patchOverrides?.fleetManagement !== undefined) {
@@ -513,6 +523,7 @@ export function BotSettings({
       if (patchOverrides?.monthlyTokenLimit !== undefined)
         setTokenLimit(tokenLimitText(bot.monthlyTokenLimit));
       if (patchOverrides?.approvalMode !== undefined) setApprovalMode(bot.approvalMode);
+      if (patchOverrides?.memoryMode !== undefined) setMemoryMode(bot.memoryMode);
       if (patchOverrides?.fleetManagement !== undefined)
         setFleetManagement(!patchOverrides.fleetManagement);
       if (patchOverrides?.squadRouting !== undefined) setSquadRouting(!patchOverrides.squadRouting);
@@ -550,6 +561,7 @@ export function BotSettings({
     dailyCapUsd?: number | null;
     monthlyTokenLimit?: number | null;
     approvalMode?: ApprovalMode | null;
+    memoryMode?: MemoryMode | null;
     disabledBuiltinTools?: string[];
   }) {
     // Serialize full-object auto-saves so an older in-flight request cannot
@@ -779,6 +791,31 @@ export function BotSettings({
                 }}
               />
             </section>
+            <SettingsGroup label={t`Memory`}>
+              <label
+                htmlFor={`${ids}-memory-mode`}
+                className="flex min-h-11 items-center justify-between gap-3 text-sm text-foreground"
+              >
+                <Trans>Facts about you</Trans>
+                <NativeSelect
+                  id={`${ids}-memory-mode`}
+                  className="max-w-2/3"
+                  value={memoryMode ?? "ask"}
+                  disabled={saving}
+                  onChange={(event) => {
+                    const choice = event.target.value as MemoryMode;
+                    // Asking first is the default, so choosing it clears the bot's own mode.
+                    const stored = choice === DEFAULT_MEMORY_MODE ? null : choice;
+                    setMemoryMode(stored);
+                    void enqueueSave({ memoryMode: stored });
+                  }}
+                >
+                  <NativeSelectOption value="ask">{t`Ask first`}</NativeSelectOption>
+                  <NativeSelectOption value="auto">{t`Save on its own`}</NativeSelectOption>
+                  <NativeSelectOption value="read">{t`Only read`}</NativeSelectOption>
+                </NativeSelect>
+              </label>
+            </SettingsGroup>
             <SettingsGroup label={t`Voice`}>
               <label
                 htmlFor={`${ids}-auto-speak`}

@@ -18,6 +18,7 @@ import type { UserBubble } from "../../lib/user-bubble";
 import { withUserBubble } from "../../lib/user-bubble";
 import { BotMention } from "../bot-mention";
 import { NativeSymbol } from "../native-symbol";
+import { MemoryFactBlock } from "./memory-fact-block";
 import type { MessageActionProps } from "./message-bubble";
 import type { MessageRowActions } from "./message-row";
 import { WikiChangeBlock } from "./wiki-change-block";
@@ -28,7 +29,7 @@ const openHelpers = new Set<string>();
 
 export type SpecialMessageBlock = Extract<
   MessageBlock,
-  { kind: "subagent" | "child_bot" | "cloud_agent" | "plan" | "wiki_change" }
+  { kind: "subagent" | "child_bot" | "cloud_agent" | "plan" | "wiki_change" | "memory_fact" }
 >;
 
 export function isSpecialMessageBlock(block: MessageBlock): block is SpecialMessageBlock {
@@ -37,7 +38,8 @@ export function isSpecialMessageBlock(block: MessageBlock): block is SpecialMess
     block.kind === "child_bot" ||
     block.kind === "cloud_agent" ||
     block.kind === "plan" ||
-    block.kind === "wiki_change"
+    block.kind === "wiki_change" ||
+    block.kind === "memory_fact"
   );
 }
 
@@ -184,6 +186,7 @@ export function SpecialMessageCard(props: SpecialMessageCardProps) {
   const { t } = useI18n();
   if (special.kind === "subagent") return <HelperMessageCard {...props} special={special} />;
   if (special.kind === "wiki_change") return <WikiChangeBlock changeId={special.changeId} />;
+  if (special.kind === "memory_fact") return <MemoryFactBlock memoryId={special.memoryId} />;
   if (special.kind === "plan") {
     const label = {
       pending: t("Waiting"),

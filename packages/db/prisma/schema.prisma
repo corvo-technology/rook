@@ -38,6 +38,7 @@ model User {
   sessions                    Session[]
   accounts                    Account[]
   passkeys                    Passkey[]
+  userMemories                UserMemory[]
   members                     Member[]
   invitations                 Invitation[]
   modelCredentials            UserModelCredential[]
@@ -319,6 +320,7 @@ model Space {
   wikiSources                 WikiSource[]
   artifactTranscripts         ArtifactTranscript[]
   wikiChanges                 WikiChange[]
+  userMemories                UserMemory[]
   botMcpServers               BotMcpServer[]
   messagingIdentities         MessagingIdentity[]
   actionApprovalRules         ActionApprovalRule[]
@@ -365,6 +367,8 @@ model SpaceMember {
   userId           String
   member           Member                 @relation(fields: [organizationId, userId], references: [organizationId, userId], onDelete: Cascade)
   role             String                 @default("member")
+  /// Whether the memory model suggests facts from what this member says.
+  memoryLearning   Boolean                @default(false)
   createdAt        DateTime
   modelPreferences SpaceModelPreference[]
   voicePreferences SpaceVoicePreference[]
@@ -560,6 +564,8 @@ model Bot {
   monthlyTokenLimit        BigInt?
   /// The UTC month ("2026-11") the 80% warning was last sent for.
   budgetAlertMonth         String?
+  /// What this bot does with facts about the person: "auto" saves them (with Undo), "ask" waits for Save, "read" only reads. Null is "ask".
+  memoryMode               String?
   routines                 Routine[]
   routineSteps             RoutineStep[]
   scratchpadItems          ScratchpadItem[]
@@ -678,6 +684,8 @@ model Thread {
   historyCompactionRetryAfterSeq Int?
   /// The last message seq the wiki curator has read in this conversation.
   wikiCuratedUpToSeq             Int?
+  /// The newest message the memory model has read for facts about the person.
+  memoryLearnedUpToSeq           Int?
   /// null follows the conversation's kind (channels on, chats with one agent off); true or false is the person's choice.
   wikiCapture                    Boolean?
   unread                         Boolean               @default(false)
@@ -1142,6 +1150,33 @@ model MemoryDocument {
   @@index([spaceId, userId])
   @@index([searchTokens], type: Gin)
   @@map("memory_documents")
+}
+
+/// A short fact or preference about one person in one space, read by all of that person's agents.
+model UserMemory {
+  id          String   @id @default(cuid())
+  spaceId     String
+  space       Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// One line, encrypted at rest.
+  text        String
+  /// "pending" waits for Save, "saved" is read by agents, "forgotten" is kept only so it is not learned again.
+  state       String   @default("saved")
+  /// "typed", "agent" or "learned".
+  source      String
+  botId       String?
+  threadId    String?
+  /// One-way digest of the normalized text, so a forgotten fact is not proposed again.
+  fingerprint String
+  /// When the person last saw it and let it stand.
+  confirmedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([spaceId, userId, fingerprint])
+  @@index([spaceId, userId, state])
+  @@map("user_memories")
 }
 
 model MemoryRevision {

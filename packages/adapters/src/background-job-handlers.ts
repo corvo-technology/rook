@@ -33,6 +33,7 @@ import type { LocalSpeech } from "./local-speech.js";
 import type { MemoryProviderResolver } from "./memory-provider-factory.js";
 import { deliverMessagingOutbound, mirrorMessagingOutbound } from "./messaging-delivery.js";
 import { expireTaughtSkillTeaching } from "./teaching-session.js";
+import { learnUserMemories } from "./user-memory-run.js";
 import { WHATSAPP_THREAD_PREFIX } from "./whatsapp/link-surface.js";
 import { curateWiki } from "./wiki-curator-run.js";
 
@@ -253,6 +254,16 @@ export function createBackgroundJobHandlers(deps: {
           prisma: deps.prisma,
           runtime: deps.runtime,
           events: deps.events,
+          resolveFastModel: deps.executor.resolveFastModel,
+        },
+        payload,
+      );
+    }),
+    "memory.learn": asOwner(thread, async (payload) => {
+      await learnUserMemories(
+        {
+          prisma: deps.prisma,
+          runtime: deps.runtime,
           resolveFastModel: deps.executor.resolveFastModel,
         },
         payload,

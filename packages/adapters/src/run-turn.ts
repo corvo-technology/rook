@@ -77,6 +77,7 @@ import {
   MAX_CONSECUTIVE_OVER_LIMIT_ACTION_CALLS,
   overLimitStopText,
 } from "./tool-loop.js";
+import { memoryLearnJobAfterTurn } from "./user-memory-run.js";
 import {
   assistantTurnSeparator,
   botMessageOutcomeFromMidTurn,
@@ -732,6 +733,13 @@ export async function completeRun(ctx: RunContext) {
     if (curate) await deps.jobs.enqueue(curate);
   } catch (error) {
     getLogger().error("wiki.curate enqueue failed", error);
+  }
+  // Facts about the person, when they asked their memory to learn; also never fatal.
+  try {
+    const learn = await memoryLearnJobAfterTurn(deps.prisma, thread);
+    if (learn) await deps.jobs.enqueue(learn);
+  } catch (error) {
+    getLogger().error("memory.learn enqueue failed", error);
   }
 }
 

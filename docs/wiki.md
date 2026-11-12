@@ -1,6 +1,6 @@
 # Wiki
 
-A space's wiki is what its team knows, written as short pages that link to each other with
+A space's wiki is what its team knows (what an agent knows about one person is [Memory](./memory.md)), written as short pages that link to each other with
 `[[Title]]`. Agents look in it before asking you something the team already knows, and cite the
 pages they used. A cheap model reads settled conversations and keeps what lasts, and you approve,
 refuse or undo what it keeps. You can also read, write, fix and restore pages yourself, on the web

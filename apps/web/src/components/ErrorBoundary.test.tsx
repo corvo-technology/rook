@@ -1,49 +1,47 @@
 // @vitest-environment jsdom
 
 import type { ComponentProps, ReactNode } from "react";
-import { act, createContext, Suspense, useContext } from "react";
+import { act, Suspense } from "react";
 import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 vi.mock("@lingui/react/macro", () => ({
   Trans: ({ children }: { children?: ReactNode }) => children,
+  useLingui: () => ({ t: (strings: TemplateStringsArray) => strings[0] }),
 }));
-vi.mock("@corvo/ui-web", () => {
-  const OpenChange = createContext<(open: boolean) => void>(() => {});
-  const Pass = ({ children }: { children?: ReactNode }) => <div>{children}</div>;
-  return {
-    AlertDialog: ({
-      open,
-      onOpenChange,
-      children,
-    }: {
-      open?: boolean;
-      onOpenChange?: (open: boolean) => void;
-      children?: ReactNode;
-    }) =>
-      open ? (
-        <OpenChange.Provider value={onOpenChange ?? (() => {})}>{children}</OpenChange.Provider>
-      ) : null,
-    AlertDialogCancel: ({ children }: { children?: ReactNode }) => {
-      const onOpenChange = useContext(OpenChange);
-      return (
-        <button type="button" onClick={() => onOpenChange(false)}>
-          {children}
+vi.mock("@corvo/ui-web", () => ({
+  SidePanel: ({
+    open,
+    onClose,
+    title,
+    closeLabel,
+    footer,
+    children,
+  }: {
+    open: boolean;
+    onClose: () => void;
+    title: ReactNode;
+    closeLabel: string;
+    footer?: ReactNode;
+    children?: ReactNode;
+  }) =>
+    open ? (
+      <aside>
+        <h2>{title}</h2>
+        <button type="button" onClick={onClose}>
+          {closeLabel}
         </button>
-      );
-    },
-    AlertDialogContent: Pass,
-    AlertDialogFooter: Pass,
-    AlertDialogHeader: Pass,
-    AlertDialogTitle: Pass,
-    Button: ({ children, onClick }: ComponentProps<"button">) => (
-      <button type="button" onClick={onClick}>
         {children}
-      </button>
-    ),
-  };
-});
+        {footer}
+      </aside>
+    ) : null,
+  Button: ({ children, onClick }: ComponentProps<"button">) => (
+    <button type="button" onClick={onClick}>
+      {children}
+    </button>
+  ),
+}));
 
 import { lazyOverlay } from "./ErrorBoundary";
 

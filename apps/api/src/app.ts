@@ -785,6 +785,16 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
             allowPrivateEndpoint: env.mcpAllowPrivateEndpoint,
           })
         : undefined,
+    avatarDesign:
+      env.agentRuntime === "pi"
+        ? {
+            prisma,
+            runtime,
+            events,
+            resolveModel: executor.resolveModel,
+            resolveFastModel: executor.resolveFastModel,
+          }
+        : undefined,
     analytics,
     cloudAgent,
     codexCatalog,

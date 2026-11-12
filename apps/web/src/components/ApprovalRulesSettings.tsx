@@ -6,7 +6,7 @@ import type {
 } from "@corvo/contracts";
 import { humanizeToolName } from "@corvo/core";
 import { writeSaved } from "@corvo/core/query";
-import { Button, ToggleGroup, ToggleGroupItem } from "@corvo/ui-web";
+import { Button, ToggleGroup, ToggleGroupItem, undoable } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useId, useState } from "react";
@@ -100,10 +100,25 @@ export function ApprovalRulesSettings({ scope }: { scope: SettingsScope }) {
       await setRules((current) => [...current.filter((other) => other.id !== rule.id), saved]);
     }, t`Could not save rule`);
 
+  // Removing is immediate; Undo saves the same rule again (it comes back with a new id).
   const removeRule = (rule: ActionApprovalRule) =>
     save(async () => {
-      await rpc.approvalRules.remove({ scope, id: rule.id });
-      await setRules((current) => current.filter((other) => other.id !== rule.id));
+      const remove = async () => {
+        await rpc.approvalRules.remove({ scope, id: rule.id });
+        await setRules((current) => current.filter((other) => other.id !== rule.id));
+      };
+      const { effect, matchKind, matchValue } = rule;
+      if (matchKind === "category" || effect === "require_approval") return remove();
+      await undoable({
+        message: t`Rule removed`,
+        undoLabel: t`Undo`,
+        undoFailedMessage: t`Could not restore rule`,
+        run: remove,
+        undo: async () => {
+          const saved = await rpc.approvalRules.set({ scope, effect, matchKind, matchValue });
+          await setRules((current) => [...current, saved]);
+        },
+      });
     }, t`Could not remove rule`);
 
   return (

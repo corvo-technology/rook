@@ -813,7 +813,7 @@ msgstr "高级..."
 
 #: src/components/WorkingLine.tsx
 #: src/pages/AddStepDialog.tsx
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Agent"
 msgstr "智能体"
@@ -1039,6 +1039,7 @@ msgid "Approval model"
 msgstr "审批模型"
 
 #: src/components/AppRail.tsx
+#: src/pages/Settings.tsx
 #: src/pages/SettingsOverlay.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Approvals"
@@ -1409,7 +1410,7 @@ msgstr "无法读取图像"
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/model-settings/space-bots-model.tsx
 #: src/pages/ModelSettingsOverlay.tsx
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -1637,6 +1638,7 @@ msgstr "正在清空…"
 #: src/components/ErrorBoundary.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/NewRoutinePanel.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
@@ -1839,6 +1841,10 @@ msgstr "已配置的服务器"
 #: src/pages/McpServersOverlay.tsx
 msgid "Confirm delete"
 msgstr "确认删除"
+
+#: src/components/PasskeySettings.tsx
+msgid "Confirm delete?"
+msgstr "确认删除？"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
@@ -2153,7 +2159,7 @@ msgstr "无法创建 Bot"
 msgid "Could not create group"
 msgstr "无法创建群组"
 
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 msgid "Could not create routine"
 msgstr "无法创建例行任务"
 
@@ -2400,6 +2406,10 @@ msgstr "无法渲染图表"
 msgid "Could not reset password"
 msgstr "无法重置密码"
 
+#: src/components/ApprovalRulesSettings.tsx
+msgid "Could not restore rule"
+msgstr "无法恢复规则"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not revoke connection"
 msgstr "无法撤销连接"
@@ -2597,7 +2607,7 @@ msgstr "创建账户"
 msgid "Create group"
 msgstr "创建群组"
 
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 msgid "Create routine"
 msgstr "创建例行任务"
 
@@ -2619,7 +2629,7 @@ msgid "Created"
 msgstr "已创建"
 
 #: src/pages/GroupPanel.tsx
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Creating…"
@@ -2770,9 +2780,7 @@ msgstr "正在委派给助手：{value}"
 msgid "Delete"
 msgstr "删除"
 
-#. placeholder {0}: passkeyLabel(deleting, t`Passkey`)
 #. placeholder {0}: pendingDelete.name
-#: src/components/PasskeySettings.tsx
 #: src/pages/Artifacts.tsx
 msgid "Delete \"{0}\"?"
 msgstr "删除“{0}”？"
@@ -2824,7 +2832,6 @@ msgstr "已删除"
 msgid "Deleted agent"
 msgstr "已删除的代理"
 
-#: src/components/PasskeySettings.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Deleting…"
@@ -3714,7 +3721,7 @@ msgstr "指令历史"
 #: src/components/AskCard.tsx
 #: src/components/InstructionSettings.tsx
 #: src/pages/AddStepDialog.tsx
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Instructions"
@@ -4365,7 +4372,7 @@ msgstr "更多"
 msgid "More computer actions"
 msgstr "更多电脑操作"
 
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 msgid "Morning summary"
 msgstr "早间摘要"
 
@@ -4415,7 +4422,7 @@ msgstr "我的助手"
 #: src/pages/GroupPanel.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/model-settings/providers-section.tsx
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
@@ -4528,7 +4535,7 @@ msgstr "新密码"
 msgid "New private space"
 msgstr "新建私人空间"
 
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 #: src/pages/Routines.tsx
 #: src/pages/Workflows.tsx
 msgid "New routine"
@@ -5723,6 +5730,10 @@ msgstr "路由模型"
 msgid "Row"
 msgstr "行"
 
+#: src/components/ApprovalRulesSettings.tsx
+msgid "Rule removed"
+msgstr "规则已移除"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Run at"
 msgstr "运行时间"
@@ -6037,6 +6048,7 @@ msgstr "服务器 URL"
 
 #: src/components/call/CallCard.tsx
 #: src/components/SidebarFooter.tsx
+#: src/pages/Settings.tsx
 #: src/pages/SettingsOverlay.tsx
 #: src/pages/shell/shell-dialogs.tsx
 msgid "Settings"
@@ -6674,7 +6686,6 @@ msgstr "此机器人不是导入的。"
 msgid "This call is no longer ringing."
 msgstr "此通话已不再响铃。"
 
-#: src/components/PasskeySettings.tsx
 #: src/pages/Artifacts.tsx
 msgid "This can't be undone."
 msgstr "此操作无法撤销。"
@@ -6944,6 +6955,7 @@ msgstr "不录制，直接输入"
 msgid "Type your answer"
 msgstr "输入你的回答"
 
+#: src/components/ApprovalRulesSettings.tsx
 #: src/components/AskCard.tsx
 #: src/components/MemoryFactCard.tsx
 #: src/components/WikiChangeCard.tsx
@@ -7278,7 +7290,7 @@ msgid "What result will you demonstrate?"
 msgstr "你要示范什么结果？"
 
 #: src/pages/AddStepDialog.tsx
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 msgid "What should the agent do?"
 msgstr "智能体应该做什么？"
 

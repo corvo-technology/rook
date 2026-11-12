@@ -1,15 +1,4 @@
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  Button,
-  Input,
-} from "@corvo/ui-web";
+import { Button, InlineConfirm, Input } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { Pencil, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -42,7 +31,6 @@ function PasskeyList({ onRetry }: { onRetry: () => void }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
-  const [deleting, setDeleting] = useState<PasskeyRow | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
@@ -91,10 +79,8 @@ function PasskeyList({ onRetry }: { onRetry: () => void }) {
     }
   }
 
-  async function remove() {
-    if (!deleting) return;
-    const { id } = deleting;
-    if (await run(() => authClient.passkey.deletePasskey({ id }))) setDeleting(null);
+  function remove(id: string) {
+    void run(() => authClient.passkey.deletePasskey({ id }));
   }
 
   return (
@@ -120,7 +106,7 @@ function PasskeyList({ onRetry }: { onRetry: () => void }) {
             </Button>
           </div>
         ) : null}
-        {error && !deleting ? (
+        {error ? (
           <p role="alert" className="mt-2 text-[12.5px] text-destructive">
             {error}
           </p>
@@ -173,54 +159,22 @@ function PasskeyList({ onRetry }: { onRetry: () => void }) {
                   >
                     <Pencil />
                   </Button>
-                  <Button
+                  <InlineConfirm
                     variant="ghost"
                     size="icon-sm"
                     aria-label={t`Delete`}
+                    confirmLabel={t`Confirm delete?`}
                     disabled={pending}
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => setDeleting(passkey)}
+                    className="text-destructive hover:text-destructive data-armed:w-auto data-armed:px-2.5"
+                    onConfirm={() => remove(passkey.id)}
                   >
                     <Trash2 />
-                  </Button>
+                  </InlineConfirm>
                 </>
               )}
             </li>
           ))}
         </ul>
-      ) : null}
-      {deleting ? (
-        <AlertDialog
-          open
-          onOpenChange={(open) => {
-            if (!open && !pending) {
-              setDeleting(null);
-              setError(null);
-            }
-          }}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t`Delete "${passkeyLabel(deleting, t`Passkey`)}"?`}</AlertDialogTitle>
-              <AlertDialogDescription>
-                <Trans>This can't be undone.</Trans>
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            {error ? <p className="text-[13.5px] text-destructive">{error}</p> : null}
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={pending}>
-                <Trans>Cancel</Trans>
-              </AlertDialogCancel>
-              <AlertDialogAction
-                variant="destructive"
-                disabled={pending}
-                onClick={() => void remove()}
-              >
-                {pending ? <Trans>Deleting…</Trans> : <Trans>Delete</Trans>}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       ) : null}
     </div>
   );

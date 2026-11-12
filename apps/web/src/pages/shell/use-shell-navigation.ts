@@ -1,6 +1,7 @@
 import type { Bot, Group } from "@corvo/contracts";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { settingsPath } from "../../lib/settings-route";
 import { guardShellNavigate } from "../../lib/space-switch";
 import type { ShellOverlay } from "../shell-overlay";
 import {
@@ -46,8 +47,25 @@ export function useShellNavigation() {
     [navigate],
   );
   const overlay = readShellOverlay(searchParams);
+  // Settings sections that have their own page leave the shell: the page remembers where to return.
+  function openSettingsPage(section: string, replace: boolean) {
+    // Coming from another settings section returns there; a stale link to this one returns to the page.
+    const rest = goesToPage ? withShellOverlay(searchParams, null) : searchParams;
+    const from = `${window.location.pathname}${searchString(rest)}`;
+    navigate(settingsPath(section), { replace, state: { from } });
+  }
+  const goesToPage = overlay?.kind === "settings" && overlay.section === "confirmations";
+  // A link or reload that still carries ?settings=confirmations lands on the page.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only the overlay decides this
+  useEffect(() => {
+    if (goesToPage) openSettingsPage("approvals", true);
+  }, [goesToPage]);
   // Overlays replace the URL rather than adding history, so opening and closing never race a navigation.
   function setOverlay(next: ShellOverlay) {
+    if (next?.kind === "settings" && next.section === "confirmations") {
+      openSettingsPage("approvals", false);
+      return;
+    }
     navigate({ search: searchString(withShellOverlay(searchParams, next)) }, { replace: true });
   }
   return {

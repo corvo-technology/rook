@@ -813,7 +813,7 @@ msgstr "Avancé..."
 
 #: src/components/WorkingLine.tsx
 #: src/pages/AddStepDialog.tsx
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Agent"
 msgstr "Agent"
@@ -1039,6 +1039,7 @@ msgid "Approval model"
 msgstr "Modèle d’approbation"
 
 #: src/components/AppRail.tsx
+#: src/pages/Settings.tsx
 #: src/pages/SettingsOverlay.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Approvals"
@@ -1409,7 +1410,7 @@ msgstr "Ne peut pas lire les images"
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/model-settings/space-bots-model.tsx
 #: src/pages/ModelSettingsOverlay.tsx
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -1637,6 +1638,7 @@ msgstr "Effacement en cours…"
 #: src/components/ErrorBoundary.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/NewRoutinePanel.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
@@ -1839,6 +1841,10 @@ msgstr "Serveurs configurés"
 #: src/pages/McpServersOverlay.tsx
 msgid "Confirm delete"
 msgstr "Confirmer la suppression"
+
+#: src/components/PasskeySettings.tsx
+msgid "Confirm delete?"
+msgstr "Confirmer la suppression ?"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
@@ -2153,7 +2159,7 @@ msgstr "Impossible de créer le bot"
 msgid "Could not create group"
 msgstr "Impossible de créer le groupe"
 
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 msgid "Could not create routine"
 msgstr "Impossible de créer la routine"
 
@@ -2400,6 +2406,10 @@ msgstr "Impossible d'afficher le graphique"
 msgid "Could not reset password"
 msgstr "Impossible de réinitialiser le mot de passe"
 
+#: src/components/ApprovalRulesSettings.tsx
+msgid "Could not restore rule"
+msgstr "Impossible de restaurer la règle"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not revoke connection"
 msgstr "Impossible de révoquer la connexion"
@@ -2597,7 +2607,7 @@ msgstr "Créer un compte"
 msgid "Create group"
 msgstr "Créer un groupe"
 
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 msgid "Create routine"
 msgstr "Créer une routine"
 
@@ -2619,7 +2629,7 @@ msgid "Created"
 msgstr "Créé"
 
 #: src/pages/GroupPanel.tsx
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Creating…"
@@ -2770,9 +2780,7 @@ msgstr "Délègue à l’assistant : {value}"
 msgid "Delete"
 msgstr "Supprimer"
 
-#. placeholder {0}: passkeyLabel(deleting, t`Passkey`)
 #. placeholder {0}: pendingDelete.name
-#: src/components/PasskeySettings.tsx
 #: src/pages/Artifacts.tsx
 msgid "Delete \"{0}\"?"
 msgstr "Supprimer « {0} » ?"
@@ -2824,7 +2832,6 @@ msgstr "supprimé"
 msgid "Deleted agent"
 msgstr "Agent supprimé"
 
-#: src/components/PasskeySettings.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Deleting…"
@@ -3714,7 +3721,7 @@ msgstr "Historique des instructions"
 #: src/components/AskCard.tsx
 #: src/components/InstructionSettings.tsx
 #: src/pages/AddStepDialog.tsx
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Instructions"
@@ -4365,7 +4372,7 @@ msgstr "Plus"
 msgid "More computer actions"
 msgstr "Plus d'actions pour l'ordinateur"
 
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 msgid "Morning summary"
 msgstr "Résumé du matin"
 
@@ -4415,7 +4422,7 @@ msgstr "Mon assistant"
 #: src/pages/GroupPanel.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/model-settings/providers-section.tsx
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
@@ -4528,7 +4535,7 @@ msgstr "Nouveau mot de passe"
 msgid "New private space"
 msgstr "Nouvel espace privé"
 
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 #: src/pages/Routines.tsx
 #: src/pages/Workflows.tsx
 msgid "New routine"
@@ -5723,6 +5730,10 @@ msgstr "Modèle de routage"
 msgid "Row"
 msgstr "Ligne"
 
+#: src/components/ApprovalRulesSettings.tsx
+msgid "Rule removed"
+msgstr "Règle supprimée"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Run at"
 msgstr "Exécuter à"
@@ -6037,6 +6048,7 @@ msgstr "URL du serveur"
 
 #: src/components/call/CallCard.tsx
 #: src/components/SidebarFooter.tsx
+#: src/pages/Settings.tsx
 #: src/pages/SettingsOverlay.tsx
 #: src/pages/shell/shell-dialogs.tsx
 msgid "Settings"
@@ -6674,7 +6686,6 @@ msgstr "Ce bot n’a pas été importé."
 msgid "This call is no longer ringing."
 msgstr "Cet appel ne sonne plus."
 
-#: src/components/PasskeySettings.tsx
 #: src/pages/Artifacts.tsx
 msgid "This can't be undone."
 msgstr "Cette action est irréversible."
@@ -6944,6 +6955,7 @@ msgstr "Saisir sans enregistrer"
 msgid "Type your answer"
 msgstr "Saisissez votre réponse"
 
+#: src/components/ApprovalRulesSettings.tsx
 #: src/components/AskCard.tsx
 #: src/components/MemoryFactCard.tsx
 #: src/components/WikiChangeCard.tsx
@@ -7278,7 +7290,7 @@ msgid "What result will you demonstrate?"
 msgstr "Quel résultat allez-vous démontrer ?"
 
 #: src/pages/AddStepDialog.tsx
-#: src/pages/NewRoutineDialog.tsx
+#: src/pages/NewRoutinePanel.tsx
 msgid "What should the agent do?"
 msgstr "Que doit faire l’agent ?"
 

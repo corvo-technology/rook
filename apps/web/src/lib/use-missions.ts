@@ -18,6 +18,7 @@ function isNavPart(value: string | null): value is NavPart {
 function currentPart(pathname: string, search: string): NavPart | null {
   const section = railSection(pathname, search);
   if (isNavPart(section)) return section;
+  if (pathname === "/settings/approvals") return "approvals";
   if (pathname === "/app") {
     const settings = new URLSearchParams(search).get("settings");
     if (settings === "confirmations") return "approvals";

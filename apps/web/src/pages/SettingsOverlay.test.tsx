@@ -95,9 +95,6 @@ const { scopes, recordScope } = vi.hoisted(() => {
 });
 vi.mock("./ModelSettingsOverlay", () => ({ ModelSettingsOverlay: recordScope("models") }));
 vi.mock("./VoiceSettingsOverlay", () => ({ VoiceSettingsOverlay: recordScope("voice") }));
-vi.mock("../components/ApprovalRulesSettings", () => ({
-  ApprovalRulesSettings: recordScope("confirmations"),
-}));
 vi.mock("../components/ComputersUnavailableHint", () => ({
   computersAreUnavailable: () => false,
 }));
@@ -232,17 +229,15 @@ it("opens a linked billing section once billing turns out to be on", async () =>
   }
 });
 
-it("edits the account's models, voice, and confirmations", async () => {
+it("edits the account's models and voice", async () => {
   scopes.length = 0;
   const props = { space: acme, spaces };
   const { rerender, cleanup } = await render({ ...props, section: "models" });
   try {
-    for (const section of ["models", "voice", "confirmations"] as const) {
+    for (const section of ["models", "voice"] as const) {
       await rerender({ ...props, section });
     }
-    expect(new Set(scopes)).toEqual(
-      new Set(["models:account", "voice:account", "confirmations:account"]),
-    );
+    expect(new Set(scopes)).toEqual(new Set(["models:account", "voice:account"]));
   } finally {
     await cleanup();
   }

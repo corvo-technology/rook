@@ -70,16 +70,15 @@ test("Ask mode asks before a change, and approvals settings shape what asks", as
 
   // The allowed tool is listed in Approvals, where it can be blocked.
   const settings = await openUserSettings(page);
-  await expect(settings).toHaveAttribute("role", "dialog");
-  await expect(settings).toBeFocused();
   await settings.getByTestId("settings-nav-confirmations").click();
-  await expect(settings.getByRole("heading", { name: "Approvals", exact: true })).toBeVisible();
-  const mode = settings.getByTestId("approval-mode");
+  const approvals = page.getByTestId("settings-page");
+  await expect(approvals.getByRole("heading", { name: "Approvals", exact: true })).toBeVisible();
+  const mode = approvals.getByTestId("approval-mode");
   await expect(mode.getByRole("button", { name: "Ask", exact: true })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
-  const rules = settings.getByTestId("approval-rules");
+  const rules = approvals.getByTestId("approval-rules");
   await expect(rules.getByText("Destination.write", { exact: true })).toBeVisible();
   await expect(rules.getByRole("button", { name: "Allow", exact: true })).toHaveAttribute(
     "aria-pressed",
@@ -97,7 +96,7 @@ test("Ask mode asks before a change, and approvals settings shape what asks", as
     "true",
   );
   await captureScreenshot(page, testInfo, "52b-approvals-never-ask-with-block");
-  await settings.getByRole("button", { name: "Close user settings" }).click();
+  await approvals.getByTestId("settings-back").click();
 
   // A blocked tool is refused without a card, even in Never ask.
   await sendDestinationWrite(page, "write this to the destination crm while it is blocked");

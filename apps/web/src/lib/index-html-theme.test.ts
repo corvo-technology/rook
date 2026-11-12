@@ -63,7 +63,8 @@ describe("index.html theme bootstrap", () => {
       expect(existsSync(fileURLToPath(new URL(`../../public/${file}`, import.meta.url)))).toBe(
         true,
       );
-      if (!file.includes("plex")) expect(html).toContain(`rel="preload" href="/${file}" as="font"`);
+      if (!file?.includes("plex"))
+        expect(html).toContain(`rel="preload" href="/${file}" as="font"`);
     }
     for (const page of [html, app, sans]) expect(page).not.toMatch(/fonts\.(googleapis|gstatic)/);
   });

@@ -14,6 +14,8 @@ export interface SpeechTranscribeInput {
 /** The speech engine behind the local voice provider. Only one adapter file knows the engine. */
 export interface SpeechTranscriber {
   transcribe(input: SpeechTranscribeInput): Promise<VoiceTranscribeResult>;
+  /** Loads the model ahead of the first recording. Optional: an engine with nothing to load skips it. */
+  warm?(input: { modelDir: string; language?: string; signal?: AbortSignal }): Promise<void>;
 }
 
 /** Deterministic stand-in for tests: answers from a function and records what it was asked. */

@@ -172,6 +172,7 @@ export function startCall(call: {
   });
   watchThread(call.botId);
   emit();
+  speaker.warm(call.botId);
   const ringing = new AbortController();
   pickup = ringing;
   const ringingCallId = callId;

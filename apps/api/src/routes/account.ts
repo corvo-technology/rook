@@ -48,6 +48,7 @@ import {
   voiceCredentialLocal,
   voiceCredentialServer,
   voiceProviderFor,
+  warmVoice,
 } from "../voice.js";
 import type { RouterContext } from "./context.js";
 import { meDto } from "./shared.js";
@@ -309,6 +310,10 @@ export function accountRoutes(ctx: RouterContext) {
       prepare: authed.voice.prepare.handler(async ({ context, input }) =>
         prepareVoice(deps, context.actor, { ...input, signal: context.signal }),
       ),
+      warm: authed.voice.warm.handler(async ({ context, input }) => {
+        await warmVoice(deps, context.actor, input);
+        return { ok: true as const };
+      }),
     },
   };
 }

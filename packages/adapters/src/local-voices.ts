@@ -8,7 +8,8 @@ const ORIGIN = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-mode
  *
  * Only models the engine can speak without a phonemizer are listed. sherpa-onnx 2.x dropped the
  * GPL-3.0 espeak-ng phonemizer that Piper voices need, so Piper voices are not offered; the
- * character-based Coqui voices (BSD-3-Clause) and Kokoro's English lexicon (Apache-2.0) are.
+ * character-based Coqui voices (BSD-3-Clause), the lexicon-based VITS English voice (MIT, trained on
+ * the public-domain LJSpeech) and Kokoro's English lexicon (Apache-2.0) are.
  *
  * Every voice here allows use and redistribution in a product; the license of each is listed
  * in THIRD_PARTY_NOTICES.md.
@@ -67,9 +68,27 @@ export const LOCAL_VOICES: readonly LocalSpeechModelSpec[] = [
     sample: "Hallo, ich bin Ihre Stimme auf diesem Computer.",
   },
   {
+    id: "voice-ljs",
+    kind: "speak",
+    label: "English",
+    license: "MIT",
+    sizeBytes: 109_037_061,
+    sha256: "78f7df445fcd42d1dd6df2c78c66c2c2fee8b7abecc6ae255a5950097a6558bc",
+    url: `${ORIGIN}vits-ljs.tar.bz2`,
+    languages: ["en"],
+    keep: ["vits-ljs.onnx", "tokens.txt", "lexicon.txt", "README.md"],
+    voice: {
+      type: "vits",
+      model: "vits-ljs.onnx",
+      tokens: "tokens.txt",
+      lexicon: "lexicon.txt",
+    },
+    sample: "Hello, I am your voice on this computer.",
+  },
+  {
     id: "voice-kokoro",
     kind: "speak",
-    label: "Kokoro (English)",
+    label: "Kokoro (English, more natural)",
     license: "Apache-2.0",
     sizeBytes: 132_353_410,
     sha256: "72c347230107ef8a31098ec4d468a605244beef5f1ed00db97efa13518800653",
@@ -93,7 +112,7 @@ export const LOCAL_VOICES: readonly LocalSpeechModelSpec[] = [
 export const DEFAULT_LOCAL_MODEL = "base";
 
 /** The voice downloaded when the owner has chosen none, and the one that reads any other language. */
-export const DEFAULT_LOCAL_VOICE = "voice-kokoro";
+export const DEFAULT_LOCAL_VOICE = "voice-ljs";
 
 /** The primary language subtag: "pt-BR" and "PT_br" are both "pt". */
 export function primaryLanguage(tag: string | undefined): string | undefined {

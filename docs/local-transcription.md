@@ -54,7 +54,7 @@ the engine reads are kept. They live under `speech-models/` in the engine's data
 |---|---|
 | Model download and storage | `packages/adapters/src/local-speech-models.ts` |
 | Audio decoding to 16 kHz mono | `packages/adapters/src/audio-decode.ts` |
-| The engine, in a worker thread | `packages/adapters/src/sherpa-whisper-transcriber.ts` |
+| The engine, in a child process | `packages/adapters/src/sherpa-whisper-transcriber.ts` |
 | The "This computer" voice provider | `packages/adapters/src/local-voice.ts` |
 | Choosing a provider and storing transcripts | `packages/adapters/src/audio-transcription.ts` |
 | The `audio.transcribe` job | `packages/adapters/src/audio-transcribe-job.ts` |

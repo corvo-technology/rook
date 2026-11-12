@@ -210,7 +210,7 @@ export async function createWikiChange(
   scope: WikiScope,
   input: {
     source: {
-      origin: "conversation" | "message" | "note";
+      origin: "conversation" | "message" | "note" | "file";
       title: string;
       text: string;
       threadId?: string;

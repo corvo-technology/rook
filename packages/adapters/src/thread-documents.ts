@@ -47,6 +47,39 @@ async function attachedFiles(
 const pathOf = (file: FileBlock) =>
   `attachments/${file.artifactId}${attachmentExtensionForMimeType(file.mimeType)}`;
 
+/** The file of this name or path that this conversation carries, as the artifact that stores it. */
+export async function findAttachedDocument(
+  prisma: Pick<PrismaClient, "artifact" | "message">,
+  threadId: string,
+  context: AdapterContext,
+  wanted: string,
+  known?: FileBlock[],
+) {
+  const files = known ?? (await attachedFiles(prisma, threadId));
+  const byName = files.find((file) => file.name.toLowerCase() === wanted.toLowerCase());
+  const artifactId = byName?.artifactId ?? ATTACHMENT_PATH.exec(wanted)?.[1];
+  const artifact = artifactId
+    ? await prisma.artifact.findFirst({
+        where: { id: artifactId, spaceId: context.spaceId, userId: context.userId },
+      })
+    : null;
+  if (!artifact) {
+    return {
+      error: `There is no attached file "${wanted}". Call read_document with no file to list them.`,
+    };
+  }
+  // The file has to be one this conversation carries, whoever else's conversations it is in.
+  const attached = await prisma.message.findFirst({
+    where: {
+      threadId,
+      blocks: { path: [], array_contains: [{ artifactId: artifact.id }] },
+    },
+    select: { id: true },
+  });
+  if (!attached) return { error: `"${artifact.name}" is not attached to this conversation.` };
+  return { artifact };
+}
+
 /**
  * Reads the text of a file attached in this conversation, with no computer: the file is read
  * straight from storage. A PDF is read by pdf.js, a text file as it is. It works only on files the
@@ -77,27 +110,9 @@ export async function readThreadDocument(
         : "No file is attached in this conversation.",
     };
   }
-  const byName = files.find((file) => file.name.toLowerCase() === wanted.toLowerCase());
-  const artifactId = byName?.artifactId ?? ATTACHMENT_PATH.exec(wanted)?.[1];
-  const artifact = artifactId
-    ? await prisma.artifact.findFirst({
-        where: { id: artifactId, spaceId: input.context.spaceId, userId: input.context.userId },
-      })
-    : null;
-  if (!artifact) {
-    return {
-      error: `There is no attached file "${wanted}". Call read_document with no file to list them.`,
-    };
-  }
-  // The file has to be one this conversation carries, whoever else's conversations it is in.
-  const attached = await prisma.message.findFirst({
-    where: {
-      threadId: input.threadId,
-      blocks: { path: [], array_contains: [{ artifactId: artifact.id }] },
-    },
-    select: { id: true },
-  });
-  if (!attached) return { error: `"${artifact.name}" is not attached to this conversation.` };
+  const found = await findAttachedDocument(prisma, input.threadId, input.context, wanted, files);
+  if ("error" in found) return found;
+  const { artifact } = found;
   const limit = deps.maxUploadSizeBytes ?? ATTACHMENT_MAX_BYTES;
   if (artifact.size > limit) {
     return {

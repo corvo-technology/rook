@@ -28,6 +28,15 @@ const payloadSchemas = {
     keepRecent: z.number().int().min(0).max(100).optional(),
   }),
   "wiki.curate": z.object({ threadId: z.string().min(1), messageId: z.string().min(1).optional() }),
+  "wiki.import": z.object({
+    importId: z.string().min(1),
+    storageKey: z.string().min(1),
+    mimeType: z.string(),
+    /** The conversation the file was attached in, which shows what was kept. */
+    threadId: z.string().min(1).optional(),
+    /** The stored bytes were uploaded for this read alone, so they go when it ends. */
+    temporary: z.boolean().optional(),
+  }),
   "memory.learn": z.object({ threadId: z.string().min(1) }),
   "bot.design-avatar": z.object({ botId: z.string().min(1) }),
   "messaging.deliver": z.object({ runId: z.string().min(1).optional() }),
@@ -218,6 +227,16 @@ export function historyCompactJob(threadId: string, keepRecent?: number): Backgr
     payload: keepRecent === undefined ? { threadId } : { threadId, keepRecent },
     replaceKey: historyCompactJobKey(threadId),
     maxAttempts: HISTORY_COMPACT_MAX_ATTEMPTS,
+  };
+}
+
+/** Reading a file part by part: a bad answer fails the import, which the person sees and can retry. */
+export function wikiImportJob(payload: BackgroundJobPayloads["wiki.import"]): BackgroundJob {
+  return {
+    name: "wiki.import",
+    payload,
+    replaceKey: `wiki.import:${payload.importId}`,
+    maxAttempts: 1,
   };
 }
 

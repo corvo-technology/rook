@@ -614,6 +614,10 @@ msgstr "Adicionar {0} ao grupo"
 msgid "Add a command to run"
 msgstr "Adicione um comando para executar"
 
+#: src/pages/WikiBrowser.tsx
+msgid "Add a file"
+msgstr "Adicionar um arquivo"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Add a file or folder to watch"
 msgstr "Adicione um arquivo ou pasta para monitorar"
@@ -2060,6 +2064,10 @@ msgstr "Não foi possível adicionar o servidor MCP"
 msgid "Could not add the agent"
 msgstr "Não foi possível adicionar o agente"
 
+#: src/pages/WikiBrowser.tsx
+msgid "Could not add the file"
+msgstr "Não foi possível adicionar o arquivo"
+
 #: src/pages/shell/message-cards.tsx
 msgid "Could not approve this server"
 msgstr "Não foi possível aprovar este servidor"
@@ -2925,6 +2933,7 @@ msgstr "Desconectando…"
 #: src/components/PasskeyOffer.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/shell/message-cards.tsx
+#: src/pages/WikiBrowser.tsx
 msgid "Dismiss"
 msgstr "Dispensar"
 

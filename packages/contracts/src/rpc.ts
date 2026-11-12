@@ -189,6 +189,8 @@ import {
   WikiChangeSchema,
   WikiChangeStateSchema,
   WikiHitSchema,
+  WikiImportSchema,
+  WikiImportStartInputSchema,
   WikiPageInfoSchema,
   WikiPageSchema,
   WikiRevisionSchema,
@@ -795,6 +797,12 @@ export const appContract = {
     keep: oc
       .input(threadTarget.safeExtend({ messageId: Id }))
       .output(z.object({ ok: z.literal(true) })),
+    /** Files read into the wiki part by part: start one, see what is being read, dismiss a failure. */
+    imports: {
+      list: oc.output(z.array(WikiImportSchema)),
+      start: oc.input(WikiImportStartInputSchema).output(z.object({ id: Id })),
+      dismiss: oc.input(z.object({ id: Id })).output(z.object({ ok: z.literal(true) })),
+    },
     /** One conversation's switch for the curator. */
     capture: {
       get: oc.input(threadTarget).output(WikiCaptureStateSchema),

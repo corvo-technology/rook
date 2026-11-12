@@ -36,6 +36,7 @@ import { expireTaughtSkillTeaching } from "./teaching-session.js";
 import { learnUserMemories } from "./user-memory-run.js";
 import { WHATSAPP_THREAD_PREFIX } from "./whatsapp/link-surface.js";
 import { curateWiki } from "./wiki-curator-run.js";
+import { importFileToWiki } from "./wiki-import-run.js";
 
 type Tenant = { spaceId: string; userId: string };
 
@@ -157,6 +158,8 @@ export function createBackgroundJobHandlers(deps: {
     deps.prisma.taughtSkill.findUnique({ where: { id: skillId }, select: OWNER });
   const cloudAgent = ({ agentId }: { agentId: string }) =>
     deps.prisma.cloudAgent.findUnique({ where: { id: agentId }, select: OWNER });
+  const wikiImport = ({ importId }: { importId: string }) =>
+    deps.prisma.wikiImport.findUnique({ where: { id: importId }, select: OWNER });
   const updatedComputer = async ({ updateId }: { updateId: string }) =>
     (
       await deps.prisma.computerUpdate.findUnique({
@@ -254,6 +257,18 @@ export function createBackgroundJobHandlers(deps: {
           prisma: deps.prisma,
           runtime: deps.runtime,
           events: deps.events,
+          resolveFastModel: deps.executor.resolveFastModel,
+        },
+        payload,
+      );
+    }),
+    "wiki.import": asOwner(wikiImport, async (payload) => {
+      await importFileToWiki(
+        {
+          prisma: deps.prisma,
+          runtime: deps.runtime,
+          events: deps.events,
+          artifacts: deps.artifacts,
           resolveFastModel: deps.executor.resolveFastModel,
         },
         payload,

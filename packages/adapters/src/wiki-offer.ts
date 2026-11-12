@@ -35,6 +35,6 @@ export function wikiOfferInstruction(
     return "";
   return [
     "If an attached document holds knowledge the team will want again (a contract, policy, manual or specification, not a casual file), then after you have answered, offer to keep it in the wiki with ask_user: say the wiki is where the team keeps what it knows, and that everyone in this space can read it.",
-    "Save it with save_shared_memory only after a yes. Do not ask again about the same file, or after a no.",
+    "Keep it only after a yes, with save_shared_memory and the file's name as file: the wiki reads the whole file part by part and cites its pages. Do not ask again about the same file, or after a no.",
   ].join(" ");
 }

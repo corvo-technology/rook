@@ -2,6 +2,7 @@
 import type {
   WikiChange,
   WikiHit,
+  WikiImport,
   WikiPage,
   WikiPageInfo,
   WikiRevision,
@@ -128,6 +129,7 @@ function fakeApi(seed: Record<string, { body: string; kind?: string }> = {}) {
   });
   const changes: WikiChange[] = [];
   let settings: WikiSettings = { capture: true, edits: "approve" };
+  let importing: WikiImport[] = [];
   const api = {
     changes: {
       list: vi.fn(async ({ state }: { state?: string[] } = {}) =>
@@ -158,6 +160,17 @@ function fakeApi(seed: Record<string, { body: string; kind?: string }> = {}) {
       set: vi.fn(async (patch: Partial<WikiSettings>) => {
         settings = { ...settings, ...patch };
         return settings;
+      }),
+    },
+    imports: {
+      list: vi.fn(async (): Promise<WikiImport[]> => [...importing]),
+      start: vi.fn(async ({ name }: { name: string }) => {
+        importing.push({ id: `import-${name}`, name, state: "reading", parts: 0, readParts: 0 });
+        return { id: `import-${name}` };
+      }),
+      dismiss: vi.fn(async ({ id }: { id: string }) => {
+        importing = importing.filter((item) => item.id !== id);
+        return { ok: true as const };
       }),
     },
     index: vi.fn(async () => [...pages.keys()].map(info)),
@@ -191,7 +204,14 @@ function fakeApi(seed: Record<string, { body: string; kind?: string }> = {}) {
       return { ok: true as const };
     }),
   };
-  return { api: api as unknown as WikiApi & typeof api, pages, changes };
+  return {
+    api: api as unknown as WikiApi & typeof api,
+    pages,
+    changes,
+    setImports: (next: WikiImport[]) => {
+      importing = next;
+    },
+  };
 }
 
 let host: HTMLDivElement;
@@ -510,5 +530,46 @@ it("says a page changed when approving all leaves a conflict", async () => {
   const unmount = await mount(api);
   await click(button("Approve all"));
   expect(q("wiki-moved")?.textContent).toContain("A page changed since");
+  await unmount();
+});
+
+it("shows a file being read, and a file that failed with a way to dismiss it", async () => {
+  const { api, setImports } = fakeApi();
+  setImports([
+    { id: "a", name: "handbook.pdf", state: "reading", parts: 4, readParts: 1 },
+    {
+      id: "b",
+      name: "scan.pdf",
+      state: "failed",
+      parts: 0,
+      readParts: 0,
+      error: "This file has no text to read, as a scanned document has.",
+    },
+  ]);
+  const unmount = await mount(api);
+  expect(q("wiki-imports")?.textContent).toContain("handbook.pdf");
+  expect(q("wiki-imports")?.textContent).toContain("no text to read");
+  await click(button("Dismiss"));
+  expect(api.imports.dismiss).toHaveBeenCalledWith({ id: "b" });
+  expect(q("wiki-imports")?.textContent).not.toContain("scan.pdf");
+  await unmount();
+});
+
+it("sends a chosen file to be read into the wiki", async () => {
+  const { api } = fakeApi();
+  const unmount = await mount(api);
+  const input = q("wiki-file-input") as HTMLInputElement;
+  const file = new File(["Leave is twenty days."], "policy.txt", { type: "text/plain" });
+  await act(async () => {
+    Object.defineProperty(input, "files", { value: [file], configurable: true });
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  await settle();
+  expect(api.imports.start).toHaveBeenCalledWith({
+    name: "policy.txt",
+    mimeType: "text/plain",
+    contentBase64: btoa("Leave is twenty days."),
+  });
+  expect(q("wiki-imports")?.textContent).toContain("policy.txt");
   await unmount();
 });

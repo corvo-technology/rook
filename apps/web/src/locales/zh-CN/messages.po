@@ -614,6 +614,10 @@ msgstr "将 {0} 添加到群组"
 msgid "Add a command to run"
 msgstr "添加要运行的命令"
 
+#: src/pages/WikiBrowser.tsx
+msgid "Add a file"
+msgstr "添加文件"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Add a file or folder to watch"
 msgstr "添加要监视的文件或文件夹"
@@ -2060,6 +2064,10 @@ msgstr "无法添加 MCP 服务器"
 msgid "Could not add the agent"
 msgstr "无法添加智能体"
 
+#: src/pages/WikiBrowser.tsx
+msgid "Could not add the file"
+msgstr "无法添加文件"
+
 #: src/pages/shell/message-cards.tsx
 msgid "Could not approve this server"
 msgstr "无法批准此服务器"
@@ -2925,6 +2933,7 @@ msgstr "正在断开…"
 #: src/components/PasskeyOffer.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/shell/message-cards.tsx
+#: src/pages/WikiBrowser.tsx
 msgid "Dismiss"
 msgstr "忽略"
 

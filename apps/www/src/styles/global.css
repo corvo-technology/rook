@@ -1,30 +1,32 @@
 @import "tailwindcss";
 
 :root {
-  color-scheme: light dark;
-  --rook-eye: #0a0a0a;
+  color-scheme: light;
+  --rook-eye: #0b0b0c;
+  --rook-asleep: #a3a3a8;
   --font-display: "Inter Tight", Inter, ui-sans-serif, system-ui, sans-serif;
-  --page: #fdfdfd;
+  /* Paper and ink: a warm off-white page, ink type, hairlines. Mint stays rare. */
+  --page: #fafaf7;
   --surface: #ffffff;
-  --surface-soft: #f7f7f7;
-  --ink: #0a0a0a;
-  --body: #3d3d3d;
-  --muted: #6b6b6b;
-  --muted-2: #6d6e70;
-  --line: #ececec;
-  --line-2: #e0e0e0;
-  /* Brand accent. In light mode it is a deeper green so text and links keep contrast. */
-  --blue: #0b7a5a;
-  --blue-top: #1c1c1c;
-  --blue-bottom: #0a0a0a;
-  --on-primary: #ffffff;
-  --blue-soft: #e8f8f2;
-  --blue-soft-2: #cdf0e3;
-  --blue-line: #bfe8d8;
-  --button-secondary-bg: #ffffff;
-  --button-secondary-bg-hover: #fafafa;
-  --button-secondary-ink: #3d3d3d;
-  --primary-glow: rgba(10, 10, 10, 0.18);
+  --surface-soft: #f3f2ee;
+  --ink: #0b0b0c;
+  --body: #3a3a3f;
+  --muted: #6b6b72;
+  --muted-2: #55555c;
+  --line: #e6e4df;
+  --line-2: #d6d3cc;
+  /* Brand text on paper: the deeper mint, readable on light. */
+  --blue: #197b56;
+  --blue-top: #0b0b0c;
+  --blue-bottom: #0b0b0c;
+  --on-primary: #fafaf7;
+  --blue-soft: #eaf4ee;
+  --blue-soft-2: #d3ecdf;
+  --blue-line: #bfe0ce;
+  --button-secondary-bg: transparent;
+  --button-secondary-bg-hover: #f3f2ee;
+  --button-secondary-ink: #0b0b0c;
+  --primary-glow: rgba(11, 11, 12, 0.18);
   --panel: #0b0b0c;
   --panel-2: #0f0f10;
   --panel-line: #1b1b1d;
@@ -41,53 +43,21 @@
   --indigo-soft: #e2e2fd;
   --green: #1f7f5f;
   --green-soft: #d6f3e9;
-  --shadow-soft: 0 2px 16px rgba(0, 0, 0, 0.03);
-  --shadow-demo: 0 30px 80px -30px rgba(0, 0, 0, 0.35);
-  --hero-glow: rgba(11, 122, 90, 0.1);
-  --hero-shadow: rgba(11, 122, 90, 0.22);
+  --shadow-soft: 0 1px 1px rgb(0 0 0 / 0.04), 0 8px 24px -8px rgb(0 0 0 / 0.08);
+  --shadow-demo:
+    0 1px 1px rgb(0 0 0 / 0.04), 0 8px 24px -8px rgb(0 0 0 / 0.08),
+    0 32px 64px -24px rgb(0 0 0 / 0.1);
+  --hero-glow: transparent;
+  --hero-shadow: transparent;
   --radius-card: 28px;
   --radius-frame: 26px;
 }
 
-/* Dark follows the system unless the page sets data-theme="light". */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --page: #0a0a0a;
-    --surface: #111113;
-    --surface-soft: #151517;
-    --ink: #f4f4f5;
-    --body: #c9c9ce;
-    --muted: #8d8d94;
-    --muted-2: #a0a0a6;
-    --line: #1f1f23;
-    --line-2: #2a2a2f;
-    --blue: #54c398;
-    --blue-top: #54c398;
-    --blue-bottom: #54c398;
-    --on-primary: #0a0a0a;
-    --blue-soft: #0e1512;
-    --blue-soft-2: #14221c;
-    --blue-line: #2f3d38;
-    --button-secondary-bg: #151517;
-    --button-secondary-bg-hover: #1b1b1e;
-    --button-secondary-ink: #d6d6da;
-    --primary-glow: rgba(84, 195, 152, 0.22);
-    --panel: #0f0f10;
-    --panel-2: #131315;
-    --panel-line: #232326;
-    --panel-line-2: #2c2c30;
-    --coral-soft: #3a2218;
-    --indigo-soft: #23234a;
-    --green-soft: #12322a;
-    --shadow-soft: 0 2px 16px rgba(0, 0, 0, 0.4);
-    --shadow-demo: 0 30px 80px -30px rgba(0, 0, 0, 0.8);
-  --hero-glow: rgba(84, 195, 152, 0.16);
-  --hero-shadow: rgba(84, 195, 152, 0.3);
-  }
-}
-
-:root[data-theme="dark"] {
-  --page: #0a0a0a;
+/* The black rooms: the product window, the closing band and the footer. Everything inside reads
+   the same tokens, now dark. */
+.ink {
+  --rook-asleep: #4a4a52;
+  --page: #0b0b0c;
   --surface: #111113;
   --surface-soft: #151517;
   --ink: #f4f4f5;
@@ -97,27 +67,33 @@
   --line: #1f1f23;
   --line-2: #2a2a2f;
   --blue: #54c398;
-  --blue-top: #54c398;
-  --blue-bottom: #54c398;
-  --on-primary: #0a0a0a;
+  --blue-top: #f4f4f5;
+  --blue-bottom: #f4f4f5;
+  --on-primary: #0b0b0c;
   --blue-soft: #0e1512;
   --blue-soft-2: #14221c;
   --blue-line: #2f3d38;
-  --button-secondary-bg: #151517;
   --button-secondary-bg-hover: #1b1b1e;
-  --button-secondary-ink: #d6d6da;
-  --primary-glow: rgba(84, 195, 152, 0.22);
-  --panel: #0f0f10;
-  --panel-2: #131315;
-  --panel-line: #232326;
-  --panel-line-2: #2c2c30;
-  --coral-soft: #3a2218;
-  --indigo-soft: #23234a;
-  --green-soft: #12322a;
-  --shadow-soft: 0 2px 16px rgba(0, 0, 0, 0.4);
-  --shadow-demo: 0 30px 80px -30px rgba(0, 0, 0, 0.8);
-  --hero-glow: rgba(84, 195, 152, 0.16);
-  --hero-shadow: rgba(84, 195, 152, 0.3);
+  --button-secondary-ink: #f4f4f5;
+  --shadow-soft: 0 2px 16px rgb(0 0 0 / 0.4);
+  background: var(--page);
+  color: var(--body);
+}
+
+/* A full-bleed band: the background runs edge to edge while the content keeps its column. */
+.ink-band {
+  box-shadow: 0 0 0 100vmax var(--page);
+  clip-path: inset(0 -100vmax);
+}
+
+::selection {
+  background: var(--blue-soft-2);
+  color: var(--ink);
+}
+
+:where(a, button, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
 }
 
 html {
@@ -201,8 +177,20 @@ button {
 }
 
 .container {
+  display: flex;
+  flex-direction: column;
   width: min(1152px, calc(100% - 48px));
+  min-height: 100vh;
   margin: 0 auto;
+}
+
+.site-footer.ink {
+  border-top: 0;
+}
+
+/* On a short page the footer sits at the bottom, so the black room reaches the edge. */
+.container > .site-footer {
+  margin-top: auto;
 }
 
 .site-header {

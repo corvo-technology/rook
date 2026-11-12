@@ -8,6 +8,7 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
   background: var(--surface);
+  box-shadow: var(--shadow-demo);
   color: var(--body);
   text-align: start;
 }
@@ -140,8 +141,8 @@
 }
 
 .pv-btn--solid {
-  border-color: var(--blue-bottom);
-  background: var(--blue-bottom);
+  border-color: var(--blue);
+  background: var(--blue);
   color: var(--on-primary);
 }
 

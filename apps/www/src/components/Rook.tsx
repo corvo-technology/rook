@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import type { MascotHue } from "../mascot";
-import { MASCOT_COLOR, MASCOT_SLEEP_COLOR } from "../mascot";
+import { MASCOT_COLOR } from "../mascot";
 
 /**
  * Idle blinks and follows the pointer; working scans; asking looks up and hops once;
@@ -43,7 +43,7 @@ export function Rook({
   /** Animates only while its parent state is hovered or focused. */
   still?: boolean;
 }) {
-  const color = mood === "sleeping" ? MASCOT_SLEEP_COLOR : MASCOT_COLOR[hue];
+  const color = mood === "sleeping" ? "var(--rook-asleep)" : MASCOT_COLOR[hue];
   const style = {
     "--rook": color,
     "--blink-every": `${(4.6 + ((seed * 0.7) % 1.6)).toFixed(2)}s`,

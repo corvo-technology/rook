@@ -38,7 +38,7 @@ export function ProductPreview({ copy }: { copy: Copy }) {
   const decided = `${copy.approvalBody.replace(/[.。]$/, "")} · ${decision === "approved" ? copy.approved : copy.denied}`;
 
   return (
-    <section className="pv" data-testid="product-preview" aria-label={`#${channel.name}`}>
+    <section className="pv ink" data-testid="product-preview" aria-label={`#${channel.name}`}>
       <header className="pv-head">
         <p>
           <strong># {channel.name}</strong>

@@ -7,14 +7,14 @@ const root = new URL("../../../", import.meta.url);
 const path = (name: string) => fileURLToPath(new URL(name, root));
 const source = await readFile(path("packages/ui-tokens/assets/Corvo.icon/Assets/ana.svg"), "utf8");
 
-// The logo is Ana on a 124-unit square view box; her crest and headset reach past the tile.
-const VIEW = 124;
+// The logo is the mint rook on a 100-unit square view box.
+const VIEW = 100;
 async function ana(size: number, svg = source) {
   const sized = svg.replace("<svg ", `<svg width="${size}" height="${size}" `);
   return sharp(Buffer.from(sized)).png().toBuffer();
 }
 
-/** Ana centered on a plate of the given color, or on nothing. `share` is how much of the canvas her view box takes. */
+/** The rook centered on a plate of the given color, or on nothing. `share` is how much of the canvas its view box takes. */
 async function framed(background: string, share = 0.68, canvas = 1024) {
   const size = Math.round(canvas * share);
   const offset = Math.round((canvas - size) / 2);
@@ -89,10 +89,10 @@ await sharp(plate)
   .toFile(path("apps/desktop/assets/icon-macos.png"));
 
 // The character alone, for Android: an opaque icon, a transparent foreground inside the launcher's
-// safe circle, a flat silhouette with her eyes and beak cut out, and the plain background plate.
+// safe circle, a flat silhouette with the eyes cut out, and the plain background plate.
 await png(square, "apps/mobile/assets/icon.png", 1024);
 await sharp(await framed("transparent", 0.5)).toFile(path("apps/mobile/assets/adaptive-icon.png"));
-const silhouetteSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-14 -20 ${VIEW} ${VIEW}"><defs><mask id="m"><rect x="-14" y="-20" width="${VIEW}" height="${VIEW}" fill="white"/><ellipse cx="32.5" cy="43.5" rx="7.5" ry="9.5" fill="black"/><ellipse cx="67.5" cy="43.5" rx="7.5" ry="9.5" fill="black"/><polygon points="42,56 58,56 50,68" fill="black"/></mask></defs><g mask="url(#m)" fill="#000"><polygon points="37,-12 44,8 30,8" transform="rotate(-22 37 -2)"/><polygon points="48,-17 55,7 41,7" transform="rotate(-6 48 -5)"/><polygon points="58,-11 64,7 52,7" transform="rotate(14 58 -2)"/><rect width="100" height="100" rx="36"/><rect x="-4" y="34" width="14" height="28" rx="4"/><rect x="6" y="62" width="20" height="5" rx="2.5" transform="rotate(28 16 64.5)"/></g></svg>`;
+const silhouetteSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VIEW} ${VIEW}"><defs><mask id="m"><rect width="${VIEW}" height="${VIEW}" fill="white"/><ellipse cx="38" cy="56" rx="5" ry="7.5" fill="black"/><ellipse cx="62" cy="56" rx="5" ry="7.5" fill="black"/></mask></defs><g mask="url(#m)" fill="#000"><rect x="18" y="12" width="16" height="26" rx="5"/><rect x="42" y="12" width="16" height="26" rx="5"/><rect x="66" y="12" width="16" height="26" rx="5"/><rect x="18" y="28" width="64" height="60" rx="18"/></g></svg>`;
 const mono = await ana(Math.round(1024 * 0.5), silhouetteSvg);
 await sharp({ create: { width: 1024, height: 1024, channels: 4, background: "transparent" } })
   .composite([{ input: mono, top: 256, left: 256 }])
@@ -104,7 +104,7 @@ await sharp({
   .png()
   .toFile(path("apps/mobile/assets/icon-background.png"));
 
-// The splash shows the character alone, with no plate, so it sits on either splash colour.
+// The splash shows the rook alone, with no plate, so it sits on either splash colour.
 // Keep the existing transparent padding so its visual size stays stable.
 await sharp(await framed("transparent", 1))
   .resize(620, 620)

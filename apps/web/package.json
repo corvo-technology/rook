@@ -25,6 +25,7 @@
     "@corvo/core": "workspace:*",
     "@corvo/ui-tokens": "workspace:*",
     "@corvo/ui-web": "workspace:*",
+    "@dnd-kit/core": "6.3.1",
     "@sentry/react": "11.8.0",
     "@simplewebauthn/browser": "13.3.0",
     "@tanstack/react-query": "5.104.5",

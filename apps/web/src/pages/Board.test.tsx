@@ -14,6 +14,7 @@ const api = vi.hoisted(() => ({
   tickets: {
     list: vi.fn(),
     update: vi.fn(),
+    move: vi.fn(),
     create: vi.fn(),
     comment: vi.fn(),
     comments: vi.fn(),
@@ -39,9 +40,12 @@ vi.mock("@corvo/chat-ui/web", () => ({
 }));
 vi.mock("@corvo/ui-web", async (importOriginal) => {
   const Container = ({ children }: { children?: ReactNode }) => <div>{children}</div>;
+  const original = await importOriginal<typeof UiWeb>();
   return {
+    BotAvatar: () => <span data-testid="bot-avatar" />,
+    cn: original.cn,
     Button: (props: ComponentProps<"button">) => <button {...props} />,
-    buttonVariants: (await importOriginal<typeof UiWeb>()).buttonVariants,
+    buttonVariants: original.buttonVariants,
     Dialog: Container,
     DialogContent: Container,
     DialogHeader: Container,
@@ -664,6 +668,79 @@ it("opens the ticket named in the address", async () => {
     expect(page.container.querySelector<HTMLInputElement>("input[required]")?.value).toBe(
       "Call Ana",
     );
+  } finally {
+    await page.cleanup();
+  }
+});
+
+/** jsdom has no layout: give each column and card a box so the drag can tell them apart. */
+function layOut(container: HTMLElement, statuses: string[]) {
+  statuses.forEach((status, index) => {
+    const lane = container.querySelector(`[data-testid="board-lane-${status}"]`) as HTMLElement;
+    lane.getBoundingClientRect = () => new DOMRect(index * 200, 0, 190, 600);
+  });
+  // Anything else, the card in hand included, is one card's size.
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+    () => new DOMRect(4, 40, 180, 80),
+  );
+}
+
+/** The card changes column mid-drag, so keys go to where it is now. */
+async function press(container: HTMLElement, code: string) {
+  await act(async () => {
+    container
+      .querySelector('[data-testid="board-card-ticket-1"]')!
+      .dispatchEvent(new KeyboardEvent("keydown", { code, bubbles: true, cancelable: true }));
+  });
+  // Measuring and the next key handler both wait a tick after each step.
+  await act(async () => new Promise((resolve) => setTimeout(resolve, 30)));
+}
+
+const STATUS_ORDER = ["todo", "doing", "review", "blocked", "done", "closed"];
+
+it("moves a card to the next column with the keyboard and keeps it there while saving", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  api.bots.list.mockResolvedValue([bot("bot-1", "Helper")]);
+  api.tickets.list.mockResolvedValue({ tickets: [ticket("Ship", "ticket-1", "todo")] });
+  let finish!: (saved: unknown) => void;
+  api.tickets.move.mockReturnValue(new Promise((resolve) => (finish = resolve)));
+  const page = await renderBoard();
+  try {
+    layOut(page.container, STATUS_ORDER);
+    await press(page.container, "Space");
+    await press(page.container, "ArrowRight");
+    await press(page.container, "Space");
+    expect(api.tickets.move).toHaveBeenCalledWith({ id: "ticket-1", status: "doing" });
+    const inLane = (status: string) =>
+      page.container.querySelector(
+        `[data-testid="board-lane-${status}"] [data-testid="board-card-ticket-1"]`,
+      );
+    expect(inLane("doing")).not.toBeNull();
+    expect(inLane("todo")).toBeNull();
+    await act(async () => finish(ticket("Ship", "ticket-1", "doing")));
+  } finally {
+    await page.cleanup();
+  }
+});
+
+it("puts the card back and says why when a move is refused", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  api.bots.list.mockResolvedValue([bot("bot-1", "Helper")]);
+  api.tickets.list.mockResolvedValue({ tickets: [ticket("Ship", "ticket-1", "todo")] });
+  api.tickets.move.mockRejectedValue(new Error("Not allowed"));
+  const page = await renderBoard();
+  try {
+    layOut(page.container, STATUS_ORDER);
+    await press(page.container, "Space");
+    await press(page.container, "ArrowRight");
+    await press(page.container, "Space");
+    await settle();
+    expect(
+      page.container.querySelector(
+        '[data-testid="board-lane-todo"] [data-testid="board-card-ticket-1"]',
+      ),
+    ).not.toBeNull();
+    expect(page.container.querySelector('[role="alert"]')?.textContent).toContain("Not allowed");
   } finally {
     await page.cleanup();
   }

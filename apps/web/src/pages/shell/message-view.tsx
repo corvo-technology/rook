@@ -1,4 +1,9 @@
-import { ChatMarkdown, LinkifiedText, withBlockMentions } from "@corvo/chat-ui/web";
+import {
+  ChatMarkdown,
+  LinkifiedText,
+  withBlockAtMentions,
+  withBlockMentions,
+} from "@corvo/chat-ui/web";
 import type { MessageReaction, ThreadMessage } from "@corvo/contracts";
 import type { ChildBotBlock } from "@corvo/core";
 import {
@@ -9,13 +14,14 @@ import {
   proposalSteps,
 } from "@corvo/core";
 import { BotAvatar, Button, cn, resolvePersonaColorDef } from "@corvo/ui-web";
+import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { UserRound } from "lucide-react";
 import type { ReactNode } from "react";
-import { memo, useMemo } from "react";
+import { Fragment, memo, useMemo } from "react";
 import { ArtifactFileCard } from "../../components/ArtifactFileCard";
 import { AskCard } from "../../components/AskCard";
-import { CollaborationMarker } from "../../components/ai/CollaborationMarker";
+import { CollaborationMarker, PeerThreadFooter } from "../../components/ai/CollaborationMarker";
 import { CloudAgentCard } from "../../components/CloudAgentCard";
 import { PlanCard } from "../../components/PlanCard";
 import { SubagentCard } from "../../components/SubagentCard";
@@ -28,10 +34,12 @@ import {
 } from "../../components/ToolActivityDisclosure";
 import { SkillDraftCard } from "../../components/teach/SkillDraftCard";
 import { WikiChangeBlock } from "../../components/WikiChangeBlock";
+import { approvalTextLabel } from "../../lib/activity-label";
 import type { ArtifactTarget } from "../../lib/artifact-open";
 import type { DelegationState } from "../../lib/delegation-states";
 import { delegationKey } from "../../lib/delegation-states";
 import { messageProviderLabel } from "../../lib/messaging";
+import type { PeerThreadSummary } from "../../lib/peer-thread";
 import {
   isToolOnlyNarration,
   renderableMessageBlocks,
@@ -61,8 +69,11 @@ export const MessageView = memo(function MessageView({
   onOpenBot,
   onOpenPeerMessages,
   peerReplies,
+  threadSummary,
   onTogglePeerReplies,
   speakerName,
+  speakerRole,
+  channelMembers,
   continued = false,
   memberName,
   peerBot,
@@ -102,8 +113,14 @@ export const MessageView = memo(function MessageView({
   onOpenPeerMessages: (peer: { peerBotId: string; peerBotName: string }) => void;
   /** Set on a received marker whose peer run has folded replies. */
   peerReplies?: "collapsed" | "expanded";
+  /** In a channel, what a closed peer exchange shows as a thread footer instead of a chevron. */
+  threadSummary?: PeerThreadSummary;
   onTogglePeerReplies: (markerId: string) => void;
   speakerName?: string;
+  /** The agent's role, muted beside its name. */
+  speakerRole?: string;
+  /** The agents of a channel: an `@Name` of theirs in a message is shown as a chip. */
+  channelMembers?: readonly { id: string; name: string }[];
   /** The same agent as the message above, a moment later: no name or face of its own. */
   continued?: boolean;
   memberName?: (botId: string | undefined) => string | undefined;
@@ -150,22 +167,27 @@ export const MessageView = memo(function MessageView({
   const quoteMessageId = message.id.includes(":") ? undefined : message.id;
 
   // Only what is drawn names the mentioned bots; copy, quote, and speech keep the original text.
-  const blocks = useMemo(
-    () =>
-      mentions?.length
-        ? withBlockMentions(
-            message.blocks,
-            mentions.map((bot) => ({ id: bot.botId, name: bot.name })),
-          )
-        : message.blocks,
-    [message.blocks, mentions],
-  );
+  const blocks = useMemo(() => {
+    const named = mentions?.length
+      ? withBlockMentions(
+          message.blocks,
+          mentions.map((bot) => ({ id: bot.botId, name: bot.name })),
+        )
+      : message.blocks;
+    return message.role === "bot" && channelMembers?.length
+      ? withBlockAtMentions(named, channelMembers)
+      : named;
+  }, [message.blocks, message.role, mentions, channelMembers]);
   const visibleNarrationBlocks = renderableMessageBlocks(blocks, showToolActivity);
   // Several proposals from one reply are decided one at a time.
   const steps = proposalSteps(blocks);
   const { position, total } = steps;
   const renderMention = (id: string) => {
-    const block = mentions?.find((bot) => bot.botId === id);
+    const block =
+      mentions?.find((bot) => bot.botId === id) ??
+      channelMembers
+        ?.filter((member) => member.id === id)
+        .map((member) => ({ botId: member.id, name: member.name, status: "created" as const }))[0];
     return block ? (
       <BotMention block={block} color={peerBot(id)?.color} onOpenBot={onOpenBot} />
     ) : undefined;
@@ -185,6 +207,13 @@ export const MessageView = memo(function MessageView({
           minute: "2-digit",
         })}
       </time>
+    ) : message.role === "user" ? (
+      <span
+        aria-hidden="true"
+        className="flex size-9 items-center justify-center rounded-full bg-muted text-muted-foreground"
+      >
+        <UserRound className="size-[18px]" />
+      </span>
     ) : (
       <BotAvatar
         color={speakerBot?.color ?? FALLBACK_BOT_COLOR}
@@ -201,6 +230,11 @@ export const MessageView = memo(function MessageView({
       {speakerName && !continued ? (
         <div className="mb-1 flex items-baseline gap-2" dir="auto">
           <span className="text-[15px] font-semibold text-foreground">{speakerName}</span>
+          {speakerRole ? (
+            <span dir="auto" className="min-w-0 truncate text-[12.5px] text-muted-foreground">
+              {speakerRole}
+            </span>
+          ) : null}
           <time
             dateTime={message.createdAt}
             className="text-[12px] tabular-nums text-muted-foreground"
@@ -237,7 +271,7 @@ export const MessageView = memo(function MessageView({
   const hoverActions = isPeerReceiptBlocks(message.blocks) ? null : (
     <MessageHoverActions
       message={message}
-      side={message.role === "user" ? "start" : "end"}
+      side={message.role === "user" && !speakerName ? "start" : "end"}
       onReply={onReply}
       onMarkUnread={onMarkUnread}
       onKeepInWiki={onKeepInWiki}
@@ -323,7 +357,12 @@ export const MessageView = memo(function MessageView({
   return (
     <ChannelRow avatar={speakerAvatar}>
       {messageContext}
-      <div className={cn("relative flex flex-col gap-2", message.role === "user" && "items-end")}>
+      <div
+        className={cn(
+          "relative flex flex-col gap-2",
+          message.role === "user" && !speakerName && "items-end",
+        )}
+      >
         {blocks.map((block, i) => {
           if (block.kind === "steps" && shouldRenderToolCard(block, showToolActivity)) {
             return (
@@ -341,11 +380,85 @@ export const MessageView = memo(function MessageView({
             // A routed handoff can come from a bot outside the group, so fall back to the bot list.
             const from = memberName?.(block.fromBotId) ?? peerBot(block.fromBotId)?.name ?? t`bot`;
             const to = memberName?.(block.toBotId) ?? peerBot(block.toBotId)?.name ?? t`bot`;
+            if (channelMembers) {
+              // In a channel a handoff reads as a message from the sender, addressed to the agent.
+              return (
+                <div key={i} data-testid="channel-handoff" className="flex gap-3">
+                  {speakerName ? null : (
+                    <span className="mt-0.5 shrink-0">
+                      <BotAvatar
+                        color={peerBot(block.fromBotId)?.color ?? FALLBACK_BOT_COLOR}
+                        identity={block.fromBotId}
+                        size={36}
+                      />
+                    </span>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex flex-wrap items-baseline gap-x-2" dir="auto">
+                      {speakerName ? null : (
+                        <span className="text-[15px] font-semibold text-foreground">{from}</span>
+                      )}
+                      <span className="flex items-baseline gap-1.5 text-[14px]">
+                        <span aria-hidden="true" className="text-muted-foreground">
+                          →
+                        </span>
+                        <BotMention
+                          block={{ botId: block.toBotId, name: to, status: "created" }}
+                          color={peerBot(block.toBotId)?.color}
+                          onOpenBot={onOpenBot}
+                        />
+                      </span>
+                      {speakerName ? null : (
+                        <time
+                          dateTime={message.createdAt}
+                          className="text-[12px] tabular-nums text-muted-foreground"
+                        >
+                          {new Date(message.createdAt).toLocaleTimeString(i18n.locale || "en", {
+                            hour: "numeric",
+                            minute: "2-digit",
+                          })}
+                        </time>
+                      )}
+                    </div>
+                    <div className="text-body1 text-foreground" dir="auto">
+                      <ChatMarkdown renderMention={renderMention}>{block.text}</ChatMarkdown>
+                    </div>
+                    {block.reason ? (
+                      <p
+                        data-testid="handoff-reason"
+                        dir="auto"
+                        className="mt-1 text-[13px] text-muted-foreground"
+                      >
+                        {block.reason}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              );
+            }
             return (
               <div
                 key={i}
-                className="flex items-center justify-center gap-2 py-1 text-[13.5px] text-muted-foreground"
+                className={cn(
+                  "flex items-center gap-2 py-1 text-[13.5px] text-muted-foreground",
+                  speakerName ? "flex-wrap justify-start" : "justify-center",
+                )}
               >
+                {channelMembers ? (
+                  <span className="flex shrink-0 items-center" aria-hidden="true">
+                    <BotAvatar
+                      color={peerBot(block.fromBotId)?.color ?? FALLBACK_BOT_COLOR}
+                      identity={block.fromBotId}
+                      size={16}
+                    />
+                    <BotAvatar
+                      color={peerBot(block.toBotId)?.color ?? FALLBACK_BOT_COLOR}
+                      identity={block.toBotId}
+                      size={16}
+                      className="-ms-1"
+                    />
+                  </span>
+                ) : null}
                 <span>
                   ↪ {to} ← {from}
                 </span>
@@ -363,29 +476,49 @@ export const MessageView = memo(function MessageView({
             const peer = sent ? block.toBotName : block.fromBotName;
             const peerBotId = sent ? block.toBotId : block.fromBotId;
             const label = sent ? t`Messaged ${peer}` : t`Message from ${peer}`;
+            const thread = !sent && peerReplies && threadSummary ? threadSummary : undefined;
+            const toggleLabel =
+              peerReplies === "expanded" ? t`Collapse ${label}` : t`Expand ${label}`;
             return (
-              <CollaborationMarker
-                key={i}
-                ariaLabel={label}
-                color={peerBot(peerBotId)?.color ?? FALLBACK_BOT_COLOR}
-                identity={peerBotId}
-                label={label}
-                onClick={() => onOpenPeerMessages({ peerBotId, peerBotName: peer })}
-                state={delegationMarker(
-                  sent ? delegation?.get(delegationKey(message.id, i)) : undefined,
-                  peerBot(peerBotId)?.status,
-                )}
-                replies={
-                  !sent && peerReplies
-                    ? {
-                        expanded: peerReplies === "expanded",
-                        label:
-                          peerReplies === "expanded" ? t`Collapse ${label}` : t`Expand ${label}`,
-                        onToggle: () => onTogglePeerReplies(message.id),
-                      }
-                    : undefined
-                }
-              />
+              <Fragment key={i}>
+                <CollaborationMarker
+                  ariaLabel={label}
+                  color={peerBot(peerBotId)?.color ?? FALLBACK_BOT_COLOR}
+                  identity={peerBotId}
+                  label={label}
+                  onClick={() => onOpenPeerMessages({ peerBotId, peerBotName: peer })}
+                  state={delegationMarker(
+                    sent ? delegation?.get(delegationKey(message.id, i)) : undefined,
+                    peerBot(peerBotId)?.status,
+                  )}
+                  replies={
+                    !sent && peerReplies && !thread
+                      ? {
+                          expanded: peerReplies === "expanded",
+                          label: toggleLabel,
+                          onToggle: () => onTogglePeerReplies(message.id),
+                        }
+                      : undefined
+                  }
+                />
+                {thread ? (
+                  <PeerThreadFooter
+                    expanded={peerReplies === "expanded"}
+                    label={toggleLabel}
+                    countLabel={plural(thread.count, { one: "# reply", other: "# replies" })}
+                    faces={thread.botIds.map((botId) => ({
+                      botId,
+                      color: peerBot(botId)?.color ?? FALLBACK_BOT_COLOR,
+                    }))}
+                    lastAt={thread.lastAt}
+                    lastLabel={new Date(thread.lastAt).toLocaleTimeString(i18n.locale || "en", {
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                    onToggle={() => onTogglePeerReplies(message.id)}
+                  />
+                ) : null}
+              </Fragment>
             );
           }
           if (block.kind === "channel_message") {
@@ -512,7 +645,7 @@ export const MessageView = memo(function MessageView({
             return (
               <div
                 key={i}
-                className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                className={`flex ${message.role === "user" && !speakerName ? "justify-end" : "justify-start"}`}
               >
                 <ArtifactImage
                   target={artifactTarget}
@@ -526,7 +659,7 @@ export const MessageView = memo(function MessageView({
             return (
               <div
                 key={i}
-                className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                className={`flex ${message.role === "user" && !speakerName ? "justify-end" : "justify-start"}`}
               >
                 <ArtifactFileCard
                   target={artifactTarget}
@@ -535,6 +668,22 @@ export const MessageView = memo(function MessageView({
                   mimeType={block.mimeType}
                   size={block.size}
                 />
+              </div>
+            );
+          }
+          if (block.kind === "text" && message.role === "user" && speakerName) {
+            // In a channel a person sits in the same column as the agents, with no bubble.
+            return (
+              <div key={i} className="relative flex w-fit max-w-full justify-start">
+                <div
+                  data-testid="message-user-bubble"
+                  data-quote-message-id={quoteMessageId}
+                  className="max-w-full whitespace-pre-wrap wrap-anywhere text-body1 text-foreground"
+                  dir="auto"
+                >
+                  <LinkifiedText>{block.text}</LinkifiedText>
+                </div>
+                {i === hoverAnchorIndex ? hoverActions : null}
               </div>
             );
           }
@@ -567,7 +716,9 @@ export const MessageView = memo(function MessageView({
               >
                 <div data-testid="message-bot-bubble" className={botBubble} dir="auto">
                   <div data-quote-message-id={quoteMessageId}>
-                    <ChatMarkdown renderMention={renderMention}>{block.text}</ChatMarkdown>
+                    <ChatMarkdown renderMention={renderMention}>
+                      {approvalTextLabel(block.text)}
+                    </ChatMarkdown>
                   </div>
                   {voiceReady ? (
                     <Button
@@ -688,7 +839,7 @@ export const MessageView = memo(function MessageView({
 function ChannelRow({ avatar, children }: { avatar: ReactNode; children: ReactNode }) {
   if (!avatar) return <>{children}</>;
   return (
-    <div className="flex gap-3">
+    <div className="-mx-2 flex gap-3 rounded-lg px-2 py-1 transition-colors hover:bg-muted/50 motion-reduce:transition-none">
       <span className="mt-0.5 shrink-0">{avatar}</span>
       <div className="min-w-0 flex-1">{children}</div>
     </div>
@@ -701,17 +852,14 @@ function BotMention({
   color,
   onOpenBot,
 }: {
-  block: ChildBotBlock;
+  block: Pick<ChildBotBlock, "botId" | "name" | "status">;
   color: string | undefined;
   onOpenBot: (botId: string) => void;
 }) {
   const live = block.status === "created" && color;
+  const accent = live ? resolvePersonaColorDef(block.botId, color).light : undefined;
   const name = (
-    <span
-      dir="auto"
-      className="font-medium"
-      style={live ? { color: resolvePersonaColorDef(block.botId, color).light } : undefined}
-    >
+    <span dir="auto" className="font-medium" style={accent ? { color: accent } : undefined}>
       {block.name}
     </span>
   );
@@ -723,15 +871,17 @@ function BotMention({
       </span>
     );
   }
+  // A chip in the bot's color, so a name in a channel reads as someone to talk to.
   return (
     <button
       type="button"
       data-testid="bot-mention"
       onClick={() => onOpenBot(block.botId)}
-      className="-mx-1 inline-flex items-baseline gap-1.5 rounded-md px-1 transition-colors hover:bg-accent"
+      style={{ backgroundColor: `color-mix(in srgb, ${accent} 16%, transparent)` }}
+      className="mx-0.5 inline-flex items-baseline gap-1.5 rounded-full px-1.5 py-px align-baseline transition-[filter] hover:brightness-125 motion-reduce:transition-none"
     >
       <span className="self-center">
-        <BotAvatar color={color} identity={block.botId} size={18} />
+        <BotAvatar color={color} identity={block.botId} size={16} />
       </span>
       {name}
     </button>

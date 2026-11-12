@@ -64,7 +64,7 @@ import {
   subscribeComposerEnterToSend,
 } from "../lib/composer-enter-to-send-pref";
 import { desktopBridge } from "../lib/desktop";
-import { groupRecipientName } from "../lib/group-recipient";
+import { groupRecipient } from "../lib/group-recipient";
 import { markAfterPaint, markOnce } from "../lib/performance";
 import { usePreloadRecoveryState } from "../lib/preload-recovery";
 import { lastChatKey, lastChatOf, queryClient, spaceQueries, spaceSeedKey } from "../lib/query";
@@ -1032,6 +1032,7 @@ function SpaceShell() {
                 setPeerConversation(peer);
               }}
               memberName={resolveTranscriptMemberName}
+              members={inGroup ? transcriptMembers : undefined}
               peerBot={resolveTranscriptBot}
               onRefresh={refreshActiveThread}
               onBotChanged={refreshBots}
@@ -1130,7 +1131,7 @@ function SpaceShell() {
               mentionTargets={composerMentionTargets}
               groupRecipient={
                 inGroup
-                  ? (text, mentionBotIds) => groupRecipientName(activeSnapshot, text, mentionBotIds)
+                  ? (text, mentionBotIds) => groupRecipient(activeSnapshot, text, mentionBotIds)
                   : undefined
               }
               agentSkills={agentSkills}

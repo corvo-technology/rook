@@ -257,6 +257,7 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Allowed once": "已允许一次",
   "Allow once": "允许一次",
   "Review before {summary}": "执行前请确认：{summary}",
+  "{name} is waiting for your approval.": "{name} 正在等待你的批准。",
   "Already have an account?": "已有账户？",
   "Always allow": "始终允许",
   "Always allow this tool": "始终允许此工具",

@@ -3,7 +3,7 @@ import { BotAvatar } from "@corvo/ui-web";
 import { Trans } from "@lingui/react/macro";
 import type { FormEvent, ReactNode } from "react";
 
-/** The team beside the form: three baby crows sitting on the panel's lower edge, the middle one in front. */
+/** The team beside the form: three rooks sitting on the panel's lower edge, the middle one in front. */
 const TEAM = [
   { color: mascotHex("pink"), id: "davi", size: 150, className: "bottom-[-0.5rem] left-[6%]" },
   { color: mascotHex("mint"), id: "ana", size: 210, className: "bottom-[-1rem] left-[34%] z-10" },

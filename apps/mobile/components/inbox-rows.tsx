@@ -12,6 +12,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import type { MobileBot, MobileBotSection, MobileGroup } from "../lib/api";
+import { approvalNoticeText } from "../lib/ask-title";
 import { AvatarRow } from "../lib/avatar-life";
 import { useI18n } from "../lib/i18n";
 import { botTag, formatThreadTime } from "../lib/inbox";
@@ -287,7 +288,8 @@ export const BotRow = memo(function BotRow({
   onAction?: (action: InboxRowAction, bot: MobileBot | SpaceBot) => void;
 } & RowMenuProps) {
   const { t } = useI18n();
-  const preview = previewSnippet(bot.preview, 40) || bot.title || t("No messages yet");
+  const preview =
+    previewSnippet(approvalNoticeText(bot.preview), 40) || bot.title || t("No messages yet");
   const time = bot.updatedAt ? formatThreadTime(bot.updatedAt, new Date(day)) : "";
   const tag = botTag(bot.title, bot.name);
   const working = isRunWorking(bot.status);

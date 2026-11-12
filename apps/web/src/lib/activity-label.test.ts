@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { i18n } from "@lingui/core";
 import { beforeEach, expect, it } from "vitest";
-import { activityLabelText } from "./activity-label";
+import { activityLabelText, approvalTextLabel } from "./activity-label";
 import { UI_LOCALES } from "./ui-locale";
 
 beforeEach(() => {
@@ -32,6 +32,7 @@ const MESSAGES = [
   "Waiting for {value}",
   "Using {value}",
   "Review before {reviewing}",
+  "{name} is waiting for your approval.",
 ];
 
 it("keeps the words of a known activity line and fills in its name", () => {
@@ -65,4 +66,14 @@ it("is translated in every other language", () => {
       expect(translated, `${locale}: ${message}`).not.toBe('""');
     }
   }
+});
+
+it("says an approval line in the language it is shown in, and leaves other text alone", () => {
+  expect(approvalTextLabel("Ana is waiting for your approval.")).toBe(
+    "Ana is waiting for your approval.",
+  );
+  expect(approvalTextLabel("Review before web_fetch → example.com")).toBe(
+    "Review before web_fetch → example.com",
+  );
+  expect(approvalTextLabel("Hello")).toBe("Hello");
 });

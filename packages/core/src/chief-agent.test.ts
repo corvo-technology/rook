@@ -24,6 +24,15 @@ describe("the Chief", () => {
         expect(text).toMatch(locale === "en" ? /real substance/ : /substância real/);
       });
 
+      it("sends work for a team into the team's group, not into each member's direct chat", () => {
+        expect(text).toContain("handoff_to_bot");
+        expect(text).toMatch(
+          locale === "en"
+            ? /for a team that has a group, hand it off in that group[\s\S]*one call per member/
+            : /para uma equipe que tem um grupo, entregue no grupo[\s\S]*uma chamada por membro/,
+        );
+      });
+
       it("starts alone: greets, asks what the owner needs, suggests Store agents and adds the ones accepted", () => {
         expect(text).toMatch(
           locale === "en"

@@ -236,6 +236,35 @@ export function AskCard({
       </BuiCard>
     );
 
+  // A decided approval steps back to one quiet line, so a busy channel stays readable.
+  if (answered && approvalActions && !block.instructionUpdate && !secretInput) {
+    const outcome = approvalActions.find((action) => action.id === displayedAnswer)?.outcome;
+    const declined = displayedAnswer === "deny" || displayedDismissed || outcome === "cancelled";
+    return (
+      <div
+        data-testid="ask-decided"
+        className="flex min-w-0 items-center gap-1.5 text-[13.5px] text-muted-foreground"
+      >
+        {declined ? null : <Check aria-hidden className="size-4 shrink-0" />}
+        <span className="min-w-0 truncate">
+          {reviewing ? t`Review before ${reviewing}` : block.text}
+        </span>
+        <span aria-hidden="true">·</span>
+        <span className="shrink-0 font-medium">
+          {formatAnsweredState(
+            displayedAnswer,
+            true,
+            false,
+            outcome,
+            askActions,
+            displayedDismissed,
+            block.proposal,
+          )}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <BuiCard
       data-testid={
@@ -245,8 +274,13 @@ export function AskCard({
             ? "instruction-approval-card"
             : undefined
       }
-      className="w-full min-w-0 max-w-xl px-5 py-4"
+      className="w-full min-w-0 max-w-xl rounded-3xl border border-border px-5 py-4"
     >
+      {approvalActions && !answered && canAnswer && !ownerOnly ? (
+        <div className="mb-1 text-[13px] text-brand">
+          <Trans>Needs you</Trans>
+        </div>
+      ) : null}
       <div className="text-[15.5px] leading-[1.5] text-foreground">
         {block.instructionUpdate ? (
           <Trans>Update instructions?</Trans>
@@ -352,9 +386,9 @@ export function AskCard({
           {displayActions.map((action) => (
             <Button
               key={action.id}
-              variant={action.id === "allow" ? "default" : "outline"}
+              variant={action.id === "allow" ? "brand" : "outline"}
               // Wraps long site names like the other cards' buttons.
-              className="h-auto min-h-8 min-w-0 whitespace-normal py-1 text-start"
+              className="h-auto min-h-9 min-w-0 whitespace-normal rounded-full px-5 py-1.5 text-start"
               disabled={submitting}
               onClick={() =>
                 action.id === "edit" && block.instructionUpdate

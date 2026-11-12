@@ -21,7 +21,7 @@ export default function ComposeSwitch({
   const checkedTrack = trackColor?.true ?? tintColor ?? systemGreen(scheme);
   const checkedThumb = thumbColor ?? tokens.faviconPlate;
   const uncheckedTrack = trackColor?.false ?? tokens.secondary;
-  const uncheckedBorder = scheme === "light" ? tokens.ring : "transparent";
+  const uncheckedBorder = scheme === "light" ? tokens.input : "transparent";
   const uncheckedThumb = thumbColor ?? (scheme === "dark" ? tokens.mutedForeground : tokens.muted);
 
   return (

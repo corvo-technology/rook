@@ -20,6 +20,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  RookGlyph,
   Spinner,
   Switch,
   Textarea,
@@ -57,7 +58,7 @@ type Mode = "view" | "edit" | "new" | "history" | "delete";
 
 const MIN_SEARCH = 2;
 const rowClass = (open: boolean) =>
-  `block h-auto w-full min-w-0 justify-start whitespace-normal rounded-md px-2.5 py-2 text-start ${open ? "bg-muted" : ""}`;
+  `block h-auto w-full min-w-0 justify-start whitespace-normal rounded-lg px-2.5 py-1.5 text-start font-normal ${open ? "bg-muted text-foreground" : "text-muted-foreground"}`;
 
 /**
  * The team's wiki: its pages by kind, one page read at a time, and the few things a person does
@@ -261,7 +262,7 @@ export function WikiBrowser({
   return (
     <div className="flex min-h-0 flex-1" data-testid="wiki">
       <aside
-        className={`${showingPage ? "hidden md:flex" : "flex"} w-full shrink-0 flex-col gap-3 overflow-y-auto border-border px-4 pb-6 md:w-72 md:border-e`}
+        className={`${showingPage ? "hidden md:flex" : "flex"} w-full shrink-0 flex-col gap-3 overflow-y-auto border-border/60 px-4 pb-6 md:w-64 md:border-e`}
       >
         <div className="flex items-center gap-2">
           <div className="relative min-w-0 flex-1">
@@ -273,7 +274,7 @@ export function WikiBrowser({
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               aria-label={t`Search`}
-              className="ps-8"
+              className="rounded-full border-transparent bg-muted ps-8"
             />
           </div>
           <Button
@@ -349,7 +350,11 @@ export function WikiBrowser({
           </div>
         ) : null}
         {empty ? (
-          <p className="px-1 py-2 text-sm text-muted-foreground" data-testid="wiki-empty">
+          <p
+            className="flex flex-col items-center gap-3 px-1 py-10 text-sm text-muted-foreground"
+            data-testid="wiki-empty"
+          >
+            <RookGlyph state="asleep" size={32} />
             <Trans>No pages yet</Trans>
           </p>
         ) : null}
@@ -401,10 +406,10 @@ export function WikiBrowser({
       </aside>
 
       <main
-        className={`${showingPage ? "flex" : "hidden md:flex"} min-w-0 flex-1 flex-col overflow-y-auto px-6 pb-10`}
+        className={`${showingPage ? "flex" : "hidden md:flex"} min-w-0 flex-1 flex-col overflow-y-auto px-6 pb-16`}
       >
         {showingPage ? (
-          <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
+          <div className="mx-auto flex w-full max-w-[720px] flex-col gap-6 pt-2">
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
@@ -425,7 +430,7 @@ export function WikiBrowser({
                 />
               ) : (
                 <h2
-                  className="min-w-0 flex-1 truncate text-lg font-medium"
+                  className="min-w-0 flex-1 text-3xl font-light tracking-tight text-balance"
                   data-testid="wiki-title"
                 >
                   {page.data?.title ?? title}
@@ -544,7 +549,10 @@ function PageBody({
   );
   return (
     <>
-      <div data-testid="wiki-body">
+      <div
+        data-testid="wiki-body"
+        className="text-[15.5px] leading-7 [&_h1]:mt-8 [&_h1]:mb-3 [&_h1]:text-2xl [&_h1]:font-normal [&_h1]:tracking-tight [&_h2]:mt-7 [&_h2]:mb-2 [&_h2]:text-xl [&_h2]:font-normal [&_h2]:tracking-tight [&_h3]:mt-6 [&_h3]:mb-2 [&_h3]:text-base [&_h3]:font-medium [&_p]:my-3"
+      >
         <ChatMarkdown renderMention={renderMention}>{body}</ChatMarkdown>
       </div>
       {page.backlinks.length ? (

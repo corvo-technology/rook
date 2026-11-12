@@ -1,4 +1,4 @@
-import { parseActivityLabel } from "@corvo/core";
+import { approvalNoticeBot, parseActivityLabel, reviewBeforeSummary } from "@corvo/core";
 import { t } from "@lingui/core/macro";
 
 /** An activity line the runtime wrote in English, in the person's language. Unknown lines stay as written. */
@@ -28,4 +28,15 @@ export function activityLabelText(label: string): string {
   if (parsed.id === "delegating") return t`Delegating to helper: ${value}`;
   if (parsed.id === "waitingFor") return t`Waiting for ${value}`;
   return t`Using ${value}`;
+}
+
+/**
+ * A line the server wrote in English about an approval, in the person's language: the title of an
+ * approval card and the note a parent's chat gets when a bot it created waits. Other text stays.
+ */
+export function approvalTextLabel(text: string): string {
+  const name = approvalNoticeBot(text);
+  if (name !== undefined) return t`${name} is waiting for your approval.`;
+  const reviewing = reviewBeforeSummary(text);
+  return reviewing === undefined ? text : t`Review before ${reviewing}`;
 }

@@ -40,7 +40,7 @@ describe("pickLeastUsed", () => {
 });
 
 describe("chooseBotAvatar", () => {
-  it("gives a new bot the organic family and colour the user's bots use least", () => {
+  it("gives a new bot the organic family the user's bots use least, and the first free rook hue", () => {
     const existing = idsForFamilies([0, 1, 2, 3, 4, 5, 6, 7, 8]).map((id, index) => ({
       id,
       color: BOT_COLORS[index % 6]!,
@@ -48,7 +48,8 @@ describe("chooseBotAvatar", () => {
     for (let seed = 1; seed <= 20; seed++) {
       const chosen = chooseBotAvatar(existing, undefined, { random: seeded(seed), now: 0 });
       expect(organicAvatarFamily(chosen.id)).toBe(9);
-      expect(chosen.color).toBe(BOT_COLORS[6]);
+      // Mint, orange, violet and blue are worn; pink is the first hue left.
+      expect(chosen.color).toBe("#EC4899");
       expect(chosen.id).toMatch(/^c[a-z0-9]{24}$/);
     }
   });
@@ -67,24 +68,6 @@ describe("chooseBotAvatar", () => {
     expect(looks.some((look) => look !== 2)).toBe(true);
   });
 
-  it("breaks a colour tie away from colours already on the same look", () => {
-    // The round look is least used; orange and blue are the least-used colours, and orange is
-    // already on a round bot.
-    const [round] = idsForFamilies([2]);
-    const others = idsForFamilies([0, 1, 3, 4, 5, 6, 7, 9, 0, 1, 3, 4, 5, 6, 7, 9]);
-    const spread = ["#3EC5A8", "#6A6BF5", "#9B5CF6", "#F2622A", "#D9508A"];
-    const existing = [
-      { id: round!, color: "#F5A03C" },
-      { id: others[0]!, color: "#3B82F6" },
-      ...others.slice(1).map((id, index) => ({ id, color: spread[index % spread.length]! })),
-    ];
-    for (let seed = 1; seed <= 20; seed++) {
-      const chosen = chooseBotAvatar(existing, undefined, { random: seeded(seed), now: 0 });
-      expect(organicAvatarLook(organicAvatarFamily(chosen.id))).toBe(2);
-      expect(chosen.color).toBe("#3B82F6");
-    }
-  });
-
   it("does not count bots that show a picture or an Avatar Studio shape", () => {
     const [shaped, pictured] = idsForFamilies([0, 0]);
     const others = idsForFamilies([1, 2, 3, 4, 5, 6, 7, 8, 9]).map((id) => ({
@@ -101,9 +84,8 @@ describe("chooseBotAvatar", () => {
       { random: seeded(3), now: 0 },
     );
     expect(organicAvatarFamily(chosen.id)).toBe(0);
-    // The shaped bot's colour still counts; the picture has none.
-    expect(chosen.color).not.toBe("#3EC5A8");
-    expect(chosen.color).not.toBe("#F5A03C");
+    // The shaped bot's colour still counts (orange); the picture has none.
+    expect(chosen.color).toBe("#3B82F6");
   });
 
   it("counts the colour of a bot that wears a character, but not its look", () => {
@@ -121,7 +103,7 @@ describe("chooseBotAvatar", () => {
       },
     );
     expect(organicAvatarFamily(chosen.id)).toBe(0);
-    expect(chosen.color).not.toBe("#F5A03C");
+    expect(chosen.color).toBe("#3B82F6");
   });
 
   it("draws the organic family the caller picked, even one the user's bots already use", () => {
@@ -135,6 +117,14 @@ describe("chooseBotAvatar", () => {
       }
     }
     expect(organicAvatarFamily(chooseBotAvatar(existing, undefined, { family: 3 }).id)).toBe(3);
+  });
+
+  it("gives bots made one after another a hue each, in picker order", () => {
+    const made: { id: string; color: string }[] = [];
+    for (let index = 0; index < 4; index++) {
+      made.push(chooseBotAvatar(made, undefined, { random: seeded(index + 1), now: 0 }));
+    }
+    expect(made.map((bot) => bot.color)).toEqual(["#10B981", "#3B82F6", "#8B5CF6", "#EC4899"]);
   });
 
   it("keeps a colour the caller chose", () => {
@@ -200,7 +190,7 @@ describe("chooseBotAvatar", () => {
     expect(organicAvatarFamily(chosen.id)).not.toBe(ORGANIC_AVATAR_HEART_FAMILY);
   });
 
-  it("keeps the last non-heart candidate and breaks colour ties using its actual look", () => {
+  it("keeps the last non-heart candidate", () => {
     const safe = cuidForFamily(1);
     const heart = cuidForFamily(ORGANIC_AVATAR_HEART_FAMILY);
     const existing: { id: string; color: string }[] = [{ id: safe, color: BOT_COLORS[0]! }];
@@ -211,7 +201,6 @@ describe("chooseBotAvatar", () => {
     const random = idStream([safe, ...Array<string>(BOT_ID_ATTEMPTS - 1).fill(heart)]);
     const chosen = chooseBotAvatar(existing, undefined, { random, now: 0 });
     expect(chosen.id).toBe(safe);
-    expect(chosen.color).not.toBe(BOT_COLORS[0]);
   });
 
   it("settles for the last id after the attempt cap", () => {
@@ -229,7 +218,7 @@ describe("chooseBotAvatar", () => {
     const capped = chooseBotAvatar(existing, undefined, { random, now: 0 });
     expect(capped.id).toBe(stuck.id);
     expect(organicAvatarFamily(capped.id)).toBe(family);
-    // One family pick, sixteen digits per try, one colour pick.
-    expect(calls).toBe(1 + 16 * BOT_ID_ATTEMPTS + 1);
+    // One family pick and sixteen digits per try; the colour takes no randomness.
+    expect(calls).toBe(1 + 16 * BOT_ID_ATTEMPTS);
   });
 });

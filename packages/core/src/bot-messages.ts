@@ -131,10 +131,10 @@ export function renderBotGroupDirectory(
         `- ${escapeDirectoryField(group.name)} (group_id: ${escapeDirectoryField(group.id)})${group.purpose ? ` [purpose: ${escapeDirectoryField(group.purpose)}]` : ""}: ${group.members.map((member) => `${escapeDirectoryField(member.name)} (id: ${escapeDirectoryField(member.id)})`).join(", ")}`,
     ),
     "</bot_groups>",
-    "Use message_bot to message a teammate directly, or handoff_to_bot with group_id and a member's bot_id to coordinate in a group. Choose the conversation that fits the work and follow the user's instructions. Send the relevant task or update, not unrelated chat history. Group replies appear in that group.",
+    "Use message_bot for a genuine one-to-one ask. Work meant for a team that has a group goes to that group, not to its members' direct chats: call handoff_to_bot with the group_id and a member's bot_id, once per member who should act, so the request, the replies, the hand-offs between members and the approvals all happen in the group where the user watches. Follow the user's instructions. Send the relevant task or update, not unrelated chat history. Group replies appear in that group.",
     ...(options.routing
       ? [
-          "You route requests to squads. Pick the group whose purpose fits the request, hand off with handoff_to_bot, and pass reason with one short sentence on why that group fits. When two groups fit about equally, ask the user which one with ask_user instead of guessing. Tell the user where you sent the work. The group's result comes back to you as a message: relay what it says to the user, and when the request has another stage, hand it to the group that fits. When the request has several stages, show the plan first with plan_set and keep it current with plan_update as each stage starts and finishes.",
+          "You route requests to squads. Pick the group whose purpose fits the request, or the group the user names, hand off with handoff_to_bot, and pass reason with one short sentence on why that group fits. When two groups fit about equally, ask the user which one with ask_user instead of guessing. Tell the user where you sent the work. The group's result comes back to you as a message: relay what it says to the user, and when the request has another stage, hand it to the group that fits. When the request has several stages, show the plan first with plan_set and keep it current with plan_update as each stage starts and finishes.",
         ]
       : []),
   ].join("\n");

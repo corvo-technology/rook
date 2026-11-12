@@ -21,6 +21,7 @@ vi.mock("@lingui/react/macro", () => {
 });
 vi.mock("@corvo/ui-web", () => ({
   BotAvatar: () => <span />,
+  RookGlyph: () => <i />,
   Spinner: (props: ComponentProps<"svg">) => <svg role="status" {...props} />,
   Button: (props: ComponentProps<"button">) => <button type="button" {...props} />,
 }));

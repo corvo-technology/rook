@@ -27,6 +27,11 @@ msgstr "{0, plural, one {# 个机器人有自己的模型：} other {# 个机器
 msgid "{0, plural, one {# failed} other {# failed}}"
 msgstr "{0, plural, one {# 个失败} other {# 个失败}}"
 
+#. placeholder {0}: thread.count
+#: src/pages/shell/message-view.tsx
+msgid "{0, plural, one {# reply} other {# replies}}"
+msgstr "{0, plural, other {# 条回复}}"
+
 #. placeholder {0}: pinned.length
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "{0, plural, one {Switch # bot to the space default?} other {Switch # bots to the space default?}}"
@@ -264,6 +269,10 @@ msgstr "{name} 失败"
 msgid "{name} finished"
 msgstr "{name} 已完成"
 
+#: src/lib/activity-label.ts
+msgid "{name} is waiting for your approval."
+msgstr "{name} 正在等待你的批准。"
+
 #: src/pages/shell/use-board-notifications.ts
 msgid "{name} moved {ref} to {status}"
 msgstr "{name} 已将 {ref} 移至 {status}"
@@ -398,6 +407,14 @@ msgstr "{provider}的登录已失效。"
 #: src/lib/run-error.ts
 msgid "{provider} took too long to respond. Try again."
 msgstr "{provider}响应超时。请重试。"
+
+#: src/pages/board/BoardLanes.tsx
+msgid "{ref} is over {lane}."
+msgstr "{ref} 位于 {lane} 上方。"
+
+#: src/pages/board/BoardLanes.tsx
+msgid "{ref} stays in {lane}."
+msgstr "{ref} 保留在 {lane}。"
 
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "{remaining} left"
@@ -617,6 +634,10 @@ msgstr "请填写 stdio 命令。"
 #: src/pages/Workflows.tsx
 msgid "Add a step here"
 msgstr "在此添加步骤"
+
+#: src/pages/board/BoardLanes.tsx
+msgid "Add a ticket to {lane}"
+msgstr "向 {lane} 添加工单"
 
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/use-routine-editor.ts
@@ -4302,6 +4323,10 @@ msgstr "移动到"
 msgid "Move up"
 msgstr "上移"
 
+#: src/pages/board/BoardLanes.tsx
+msgid "Moved {ref} to {lane}."
+msgstr "已将 {ref} 移至 {lane}。"
+
 #: src/components/call/CallCard.tsx
 msgid "Mute"
 msgstr "静音"
@@ -4365,6 +4390,7 @@ msgstr "需要输入"
 msgid "Needs takeover"
 msgstr "需要接管"
 
+#: src/components/AskCard.tsx
 #: src/lib/roster-status.ts
 #: src/pages/shell/computer-overlay.tsx
 msgid "Needs you"
@@ -4477,6 +4503,7 @@ msgid "No authentication"
 msgstr "无认证"
 
 #: src/pages/shell/command-palette.tsx
+#: src/pages/TeamBoard.tsx
 msgid "No bots"
 msgstr "没有机器人"
 
@@ -4548,6 +4575,10 @@ msgstr "未找到远程 MCP 服务器"
 #: src/pages/SpaceSearch.tsx
 msgid "No results"
 msgstr "无结果"
+
+#: src/pages/Routines.tsx
+msgid "No routines yet"
+msgstr "还没有例行任务"
 
 #: src/components/markdown-copy.tsx
 msgid "No rows"
@@ -4991,6 +5022,10 @@ msgstr "请从列表中选择模型，或输入此端点提供的模型 ID。"
 msgid "Pick a tool to check"
 msgstr "选择要检查的工具"
 
+#: src/pages/board/BoardLanes.tsx
+msgid "Picked up {ref}."
+msgstr "已拿起 {ref}。"
+
 #: src/pages/BotContextMenu.tsx
 msgid "Pin"
 msgstr "置顶"
@@ -5022,6 +5057,10 @@ msgstr "POST 到"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Preferences"
 msgstr "偏好设置"
+
+#: src/pages/board/BoardLanes.tsx
+msgid "Press space to pick up a ticket, the arrow keys to choose a column, and space again to drop it."
+msgstr "按空格键拿起工单，用方向键选择列，再按空格键放下。"
 
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
@@ -5520,6 +5559,7 @@ msgid "Return to Rook"
 msgstr "返回 Rook"
 
 #: src/components/AskCard.tsx
+#: src/lib/activity-label.ts
 msgid "Review before {reviewing}"
 msgstr "执行前请确认：{reviewing}"
 
@@ -7223,6 +7263,7 @@ msgstr "昨天"
 #: src/pages/Shell.tsx
 #: src/pages/shell/message-view.tsx
 #: src/pages/shell/shell-sidebar.tsx
+#: src/pages/shell/transcript.tsx
 msgid "You"
 msgstr "你"
 

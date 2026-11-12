@@ -48,7 +48,7 @@ export function TeamPage() {
       <div className="app-drag flex items-center gap-2 px-4 pt-3">
         <WindowChrome />
       </div>
-      <h1 className="px-6 py-4 text-base font-medium">
+      <h1 className="mx-auto w-full max-w-3xl px-6 py-4 text-xl font-light tracking-tight">
         <Trans>Team</Trans>
       </h1>
       {bootstrap.isPending ? (
@@ -56,7 +56,7 @@ export function TeamPage() {
           <Spinner />
         </div>
       ) : null}
-      <div className="px-6 pb-8">
+      <div className="w-full px-6 pb-8">
         <TeamBoard roster={roster} tickets={tickets} onOpen={(path) => navigate(path)} />
       </div>
     </div>

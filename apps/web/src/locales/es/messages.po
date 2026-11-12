@@ -27,6 +27,11 @@ msgstr "{0, plural, one {# bot tiene su propio modelo:} other {# bots tienen su 
 msgid "{0, plural, one {# failed} other {# failed}}"
 msgstr "{0, plural, one {# falló} other {# fallaron}}"
 
+#. placeholder {0}: thread.count
+#: src/pages/shell/message-view.tsx
+msgid "{0, plural, one {# reply} other {# replies}}"
+msgstr "{0, plural, one {# respuesta} other {# respuestas}}"
+
 #. placeholder {0}: pinned.length
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "{0, plural, one {Switch # bot to the space default?} other {Switch # bots to the space default?}}"
@@ -264,6 +269,10 @@ msgstr "{name} falló"
 msgid "{name} finished"
 msgstr "{name} terminó"
 
+#: src/lib/activity-label.ts
+msgid "{name} is waiting for your approval."
+msgstr "{name} espera tu aprobación."
+
 #: src/pages/shell/use-board-notifications.ts
 msgid "{name} moved {ref} to {status}"
 msgstr "{name} movió {ref} a {status}"
@@ -398,6 +407,14 @@ msgstr "El inicio de sesión de {provider} ya no es válido."
 #: src/lib/run-error.ts
 msgid "{provider} took too long to respond. Try again."
 msgstr "{provider} tardó demasiado en responder. Vuelve a intentarlo."
+
+#: src/pages/board/BoardLanes.tsx
+msgid "{ref} is over {lane}."
+msgstr "{ref} está sobre {lane}."
+
+#: src/pages/board/BoardLanes.tsx
+msgid "{ref} stays in {lane}."
+msgstr "{ref} se queda en {lane}."
 
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "{remaining} left"
@@ -617,6 +634,10 @@ msgstr "Agrega un comando stdio."
 #: src/pages/Workflows.tsx
 msgid "Add a step here"
 msgstr "Añadir un paso aquí"
+
+#: src/pages/board/BoardLanes.tsx
+msgid "Add a ticket to {lane}"
+msgstr "Añadir un ticket a {lane}"
 
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/use-routine-editor.ts
@@ -4302,6 +4323,10 @@ msgstr "Mover a"
 msgid "Move up"
 msgstr "Subir"
 
+#: src/pages/board/BoardLanes.tsx
+msgid "Moved {ref} to {lane}."
+msgstr "{ref} movido a {lane}."
+
 #: src/components/call/CallCard.tsx
 msgid "Mute"
 msgstr "Silenciar"
@@ -4365,6 +4390,7 @@ msgstr "Necesita entrada"
 msgid "Needs takeover"
 msgstr "Necesita toma de control"
 
+#: src/components/AskCard.tsx
 #: src/lib/roster-status.ts
 #: src/pages/shell/computer-overlay.tsx
 msgid "Needs you"
@@ -4477,6 +4503,7 @@ msgid "No authentication"
 msgstr "Sin autenticación"
 
 #: src/pages/shell/command-palette.tsx
+#: src/pages/TeamBoard.tsx
 msgid "No bots"
 msgstr "Ningún bot"
 
@@ -4548,6 +4575,10 @@ msgstr "No se encontraron servidores MCP remotos"
 #: src/pages/SpaceSearch.tsx
 msgid "No results"
 msgstr "Sin resultados"
+
+#: src/pages/Routines.tsx
+msgid "No routines yet"
+msgstr "Aún no hay rutinas"
 
 #: src/components/markdown-copy.tsx
 msgid "No rows"
@@ -4991,6 +5022,10 @@ msgstr "Elige un modelo de la lista o introduce un id de modelo que sirva este e
 msgid "Pick a tool to check"
 msgstr "Elige una herramienta para comprobar"
 
+#: src/pages/board/BoardLanes.tsx
+msgid "Picked up {ref}."
+msgstr "{ref} recogido."
+
 #: src/pages/BotContextMenu.tsx
 msgid "Pin"
 msgstr "Fijar"
@@ -5022,6 +5057,10 @@ msgstr "POST a"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Preferences"
 msgstr "Preferencias"
+
+#: src/pages/board/BoardLanes.tsx
+msgid "Press space to pick up a ticket, the arrow keys to choose a column, and space again to drop it."
+msgstr "Pulsa espacio para coger un ticket, las flechas para elegir una columna y espacio otra vez para soltarlo."
 
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
@@ -5520,6 +5559,7 @@ msgid "Return to Rook"
 msgstr "Volver a Rook"
 
 #: src/components/AskCard.tsx
+#: src/lib/activity-label.ts
 msgid "Review before {reviewing}"
 msgstr "Revisa antes: {reviewing}"
 
@@ -7223,6 +7263,7 @@ msgstr "Ayer"
 #: src/pages/Shell.tsx
 #: src/pages/shell/message-view.tsx
 #: src/pages/shell/shell-sidebar.tsx
+#: src/pages/shell/transcript.tsx
 msgid "You"
 msgstr "Tú"
 

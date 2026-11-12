@@ -12,6 +12,7 @@ import {
   plainTextLinkParts,
   sanitizeMarkdownImageUrl,
   sanitizeMarkdownUrl,
+  withAtMentions,
   withBlockMentions,
   withMentions,
 } from "./markdown";
@@ -402,5 +403,30 @@ describe("withMentions", () => {
       { kind: "progress", text: "Planner tool", activity: true },
       { kind: "text", text: `${link} is ready.` },
     ]);
+  });
+});
+
+describe("withAtMentions", () => {
+  const members = [
+    { id: "bot-1", name: "Cora" },
+    { id: "bot-2", name: "Ana Paula" },
+    { id: "bot-3", name: "Ana" },
+  ];
+
+  it("links every @name of a member, whatever its case", () => {
+    expect(withAtMentions("@Cora, can you plan it? Thanks @cora.", members)).toBe(
+      "[Cora](corvo-mention:bot-1), can you plan it? Thanks [Cora](corvo-mention:bot-1).",
+    );
+  });
+
+  it("prefers the longest name", () => {
+    expect(withAtMentions("ask @Ana Paula and @Ana", members)).toBe(
+      "ask [Ana Paula](corvo-mention:bot-2) and [Ana](corvo-mention:bot-3)",
+    );
+  });
+
+  it("leaves names without @, emails, longer words, code and links alone", () => {
+    const text = "Cora said hi to x@Cora.dev, @Coral, `@Cora` and [@Cora](https://example.test)";
+    expect(withAtMentions(text, members)).toBe(text);
   });
 });

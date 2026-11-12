@@ -7,7 +7,6 @@ import {
   TICKET_STATUSES,
   TICKET_TITLE_MAX_LENGTH,
 } from "@corvo/contracts";
-import { isRunWorking } from "@corvo/core";
 import { fetchFresh, writeSaved } from "@corvo/core/query";
 import {
   Button,
@@ -35,6 +34,9 @@ import { useTicketPriorityLabels } from "../lib/ticket-priority";
 import { useTicketStatusLabels } from "../lib/ticket-status";
 import { errorText } from "../lib/user-error";
 import { BoardSettings } from "./BoardSettings";
+import { BoardLanes } from "./board/BoardLanes";
+import { placeSaved } from "./board/board-drag";
+import { useTicketMoves } from "./board/use-ticket-moves";
 import { TicketFields } from "./TicketFields";
 import { WindowChrome } from "./WindowChrome";
 
@@ -51,7 +53,7 @@ export function BoardPage() {
   const botsQuery = useQuery(queries.bots.list.queryOptions());
   const tickets = ticketsQuery.data?.tickets ?? [];
   const bots = botsQuery.data ?? [];
-  const [selected, setSelected] = useState<Ticket | "new" | null>(null);
+  const [selected, setSelected] = useState<Ticket | { newIn: TicketStatus } | null>(null);
   const [ownerFilter, setOwnerFilter] = useState("");
   const [searchParams] = useSearchParams();
   const wantedRef = searchParams.get("ticket")?.toLowerCase();
@@ -68,10 +70,23 @@ export function BoardPage() {
     ? tickets.filter((ticket) => ticket.assigneeBotId === ownerFilter)
     : tickets;
   const [streamError, setError] = useState("");
+  const [moveError, setMoveError] = useState("");
   const loadFailed = ticketsQuery.error ?? botsQuery.error;
-  const error = streamError || (loadFailed ? errorText(loadFailed) : "");
+  const error = moveError || streamError || (loadFailed ? errorText(loadFailed) : "");
   /** A read sent after a change, so an older one in flight cannot bring back the old board. */
   const reload = () => fetchFresh(queryClient, ticketsOptions).then(() => undefined);
+  const { placement, move } = useTicketMoves({
+    save: (input) => rpc.tickets.move(input),
+    onSaved: async (saved) => {
+      await writeSaved(queryClient, ticketsOptions.queryKey, (current) => ({
+        ...current,
+        tickets: placeSaved(current?.tickets ?? [], saved),
+      }));
+      // Bots may answer the move; the next read brings what they changed.
+      void fetchFresh(queryClient, ticketsOptions).catch(() => undefined);
+    },
+    onError: (cause) => setMoveError(errorText(cause)),
+  });
 
   useEffect(() => {
     // Live events refresh the board and any open ticket's comments.
@@ -107,7 +122,7 @@ export function BoardPage() {
         >
           <ChevronLeft />
         </Link>
-        <h1 className="flex-1 font-medium">
+        <h1 className="flex-1 font-display text-heading3 font-normal tracking-tight">
           <Trans>Board</Trans>
         </h1>
         {bots.length > 1 ? (
@@ -135,7 +150,7 @@ export function BoardPage() {
             <Settings2 />
           </Button>
         ) : null}
-        <Button onClick={() => setSelected("new")} disabled={bots.length === 0}>
+        <Button onClick={() => setSelected({ newIn: "todo" })} disabled={bots.length === 0}>
           <Trans>New ticket</Trans>
         </Button>
       </header>
@@ -144,41 +159,19 @@ export function BoardPage() {
           {error}
         </p>
       ) : null}
-      <main className="relative min-h-0 min-w-0 flex-1 overflow-auto p-4">
-        <div data-testid="board-columns" className="flex min-h-full gap-3">
-          {TICKET_STATUSES.map((status) => (
-            <section key={status} className="min-w-40 flex-1 space-y-2">
-              <h2 className="px-1 text-sm font-medium">{statuses[status]}</h2>
-              {visible
-                .filter((ticket) => ticket.status === status)
-                .map((ticket) => (
-                  <Button
-                    key={ticket.id}
-                    data-testid={`board-card-${ticket.id}`}
-                    variant="outline"
-                    className="h-auto w-full flex-col items-start gap-1 whitespace-normal p-3 text-left font-normal"
-                    onClick={() => setSelected(ticket)}
-                  >
-                    <span className="text-xs text-muted-foreground">{ticket.ref}</span>
-                    <span>{ticket.title}</span>
-                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      {ticket.status === "doing" &&
-                      isRunWorking(
-                        bots.find((bot) => bot.id === ticket.assigneeBotId)?.status ?? "",
-                      ) ? (
-                        <span
-                          data-working=""
-                          aria-hidden="true"
-                          className="corvo-presence-dot size-1.5 shrink-0 rounded-full bg-status-working"
-                        />
-                      ) : null}
-                      {bots.find((bot) => bot.id === ticket.assigneeBotId)?.name}
-                    </span>
-                  </Button>
-                ))}
-            </section>
-          ))}
-        </div>
+      <main className="rk-scroll relative min-h-0 min-w-0 flex-1 overflow-auto p-4">
+        <BoardLanes
+          tickets={visible}
+          bots={bots}
+          labels={statuses}
+          placement={placement}
+          onOpen={setSelected}
+          onMove={(ticket, status) => {
+            setMoveError("");
+            void move(ticket, status);
+          }}
+          onAdd={bots.length > 0 ? (status) => setSelected({ newIn: status }) : undefined}
+        />
         {tickets.length === 0 && !error ? (
           <p className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">
             <Trans>No tickets yet</Trans>
@@ -197,8 +190,9 @@ export function BoardPage() {
       ) : null}
       {selected ? (
         <TicketDialog
-          key={selected === "new" ? "new" : selected.id}
-          ticket={selected === "new" ? null : selected}
+          key={"newIn" in selected ? `new-${selected.newIn}` : selected.id}
+          ticket={"newIn" in selected ? null : selected}
+          createIn={"newIn" in selected ? selected.newIn : "todo"}
           bots={bots}
           statuses={statuses}
           onClose={() => setSelected(null)}
@@ -211,12 +205,15 @@ export function BoardPage() {
 
 function TicketDialog({
   ticket,
+  createIn,
   bots,
   statuses,
   onClose,
   onSaved,
 }: {
   ticket: Ticket | null;
+  /** The column a new ticket goes to; tickets start in To do and move there once created. */
+  createIn: TicketStatus;
   statuses: Record<TicketStatus, string>;
   bots: Bot[];
   onClose: () => void;
@@ -261,13 +258,15 @@ function TicketDialog({
           ...(priority !== ticket.priority ? { priority } : {}),
           ...(Object.keys(changedFields).length > 0 ? { fields: changedFields } : {}),
         });
-      else
-        await rpc.tickets.create({
+      else {
+        const created = await rpc.tickets.create({
           title,
           description,
           assigneeBotId: owner,
           priority,
         });
+        if (createIn !== "todo") await rpc.tickets.move({ id: created.id, status: createIn });
+      }
       await onSaved();
       onClose();
     } catch (cause) {

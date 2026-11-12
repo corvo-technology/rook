@@ -277,3 +277,11 @@ it("lists the places a mission brought behind the dots and marks them", async ()
   expect(await openMore(container)).toEqual(["UsageNew", "ArtifactsNew"]);
   await cleanup();
 });
+
+it("draws Agents with the rook glyph in ink", async () => {
+  const { container, cleanup } = await renderRail();
+  const agents = container.querySelector('nav button[aria-label="Agents"]');
+  expect(agents?.querySelector(".corvo-rook-glyph")?.getAttribute("data-state")).toBe("idle");
+  expect(container.querySelector('nav button[aria-label="Team"] .corvo-rook-glyph')).toBeNull();
+  await cleanup();
+});

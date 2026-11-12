@@ -84,6 +84,57 @@ export function withMentions(
   return result;
 }
 
+/**
+ * Markdown text where every `@Name` of one of `mentions` is a mention link, the way a channel
+ * shows who a message speaks to. Code and existing links keep their text; a name without `@`
+ * is left alone.
+ */
+export function withAtMentions(
+  text: string,
+  mentions: readonly { id: string; name: string }[],
+): string {
+  const byName = new Map(
+    mentions.flatMap((mention) => {
+      const name = mention.name.trim();
+      return name ? [[name.toLocaleLowerCase(), mention] as const] : [];
+    }),
+  );
+  if (byName.size === 0 || !text.includes("@")) return text;
+  // Longest first, so "@Ana Paula" is not cut at "@Ana".
+  const names = [...byName.values()]
+    .map((mention) => escapeRegExp(mention.name.trim()))
+    .sort((a, b) => b.length - a.length);
+  const pattern = new RegExp(
+    `(^|[^\\p{L}\\p{N}_@])@(${names.join("|")})(?![\\p{L}\\p{N}_])`,
+    "giu",
+  );
+  return text
+    .split(PROTECTED_MARKDOWN)
+    .map((part, index) =>
+      index % 2 === 1
+        ? part
+        : part.replace(pattern, (match, prefix: string, name: string) => {
+            const mention = byName.get(name.toLocaleLowerCase());
+            if (!mention) return match;
+            const label = mention.name.trim().replace(/[\\[\]*_`<>]/g, "\\$&");
+            return `${prefix}[${label}](${MENTION_URL_PREFIX}${encodeURIComponent(mention.id)})`;
+          }),
+    )
+    .join("");
+}
+
+/** Message blocks whose prose turns each `@Name` of `mentions` into a mention link. */
+export function withBlockAtMentions(
+  blocks: readonly MessageBlock[],
+  mentions: readonly { id: string; name: string }[],
+): MessageBlock[] {
+  return blocks.map((block) =>
+    block.kind === "text" || (block.kind === "progress" && !block.activity)
+      ? ({ ...block, text: withAtMentions(block.text, mentions) } as MessageBlock)
+      : block,
+  );
+}
+
 /** Message blocks whose prose names each entry once as a mention link. Tool activity is left alone. */
 export function withBlockMentions(
   blocks: readonly MessageBlock[],

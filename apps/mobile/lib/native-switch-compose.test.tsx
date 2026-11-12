@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import { darkTokens, lightTokens } from "@corvo/ui-tokens";
 import type { ReactNode } from "react";
 import { act } from "react";
 import type { Root } from "react-dom/client";
@@ -107,8 +108,8 @@ describe("guarded Android Compose switch", () => {
   );
 
   it.each([
-    ["light", "#34C759", "#7676801F", "#F2F2F1", "#6C6C70"],
-    ["dark", "#30D158", "#7676803D", "#EBEBF599", "transparent"],
+    ["light", "#34C759", lightTokens.secondary, lightTokens.muted, lightTokens.input],
+    ["dark", "#30D158", darkTokens.secondary, darkTokens.mutedForeground, "transparent"],
   ] as const)(
     "uses green and neutral colors in %s with a compact host",
     async (scheme, green, track, thumb, border) => {

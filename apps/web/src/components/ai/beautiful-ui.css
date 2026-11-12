@@ -11,19 +11,6 @@
     background-position: -50%;
   }
 }
-@keyframes bui-pixel-on {
-  0%,
-  100% {
-    opacity: 0.15;
-  }
-  18%,
-  42% {
-    opacity: 1;
-  }
-  62% {
-    opacity: 0.15;
-  }
-}
 @keyframes bui-pop-in {
   0% {
     opacity: 0;

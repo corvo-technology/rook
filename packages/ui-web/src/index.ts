@@ -2,6 +2,7 @@ export { AppMarkStack } from "./app-mark-stack.js";
 export {
   BOT_AVATAR_COLORS,
   BotAvatar,
+  botAccent,
   DEFAULT_BOT_AVATAR_COLOR,
   defaultBotAvatarValue,
   parseBotAvatar,
@@ -50,3 +51,5 @@ export * from "./components/ui/tooltip.js";
 export { GroupAvatar, type GroupAvatarMember, type GroupAvatarProps } from "./group-avatar.js";
 export { cn } from "./lib/utils.js";
 export { ModelThinkingOptions } from "./model-thinking-options.js";
+export type { RookGlyphState } from "./rook-glyph.js";
+export { RookGlyph } from "./rook-glyph.js";

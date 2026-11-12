@@ -4,14 +4,26 @@
 @source "../../packages/ui-web/src/**/*.{ts,tsx}";
 @source "./src/**/*.{ts,tsx}";
 
-/* Bundled so the app, the desktop shell and self-hosted installs never ask a font service for it.
-   One variable file covers the Latin text of every language the app ships. */
+/* Bundled so the app, the desktop shell and self-hosted installs never ask a font service for them.
+   Inter is the text face and Inter Tight the display face; one variable file each covers the Latin
+   text of every language the app ships. */
 @font-face {
-  font-family: "Instrument Sans";
+  font-family: "Inter";
   font-style: normal;
-  font-weight: 400 700;
+  font-weight: 100 900;
   font-display: swap;
-  src: url("/fonts/instrument-sans-latin.woff2") format("woff2");
+  src: url("/fonts/inter-latin.woff2") format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Inter Tight";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/inter-tight-latin.woff2") format("woff2");
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
     U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
@@ -123,5 +135,51 @@ body,
 @media (prefers-reduced-motion: reduce) {
   .flow-dash {
     animation: none;
+  }
+}
+
+/* Board: a column opens room where a dragged card will land and closes the room it left, so the
+   other cards slide out of the way. The card in hand tilts up when picked up and settles flat. */
+@keyframes rk-board-open {
+  from {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+}
+@keyframes rk-board-close {
+  from {
+    grid-template-rows: 1fr;
+  }
+}
+@keyframes rk-board-lift {
+  from {
+    transform: none;
+    box-shadow: none;
+  }
+}
+.rk-board-open {
+  animation: rk-board-open 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rk-board-close {
+  grid-template-rows: 0fr;
+  animation: rk-board-close 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rk-board-lifted {
+  transform: scale(1.02) rotate(1.5deg);
+  animation: rk-board-lift 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 240ms cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+.rk-board-lifted[data-settling] {
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rk-board-open,
+  .rk-board-close,
+  .rk-board-lifted {
+    animation: none;
+    transition: none;
+  }
+  .rk-board-lifted {
+    transform: none;
   }
 }

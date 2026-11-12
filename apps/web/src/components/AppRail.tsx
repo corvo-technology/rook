@@ -1,9 +1,9 @@
 import type { AppBootstrap, NavLink as AppNavLink, NavPart } from "@corvo/contracts";
+import { RookGlyph } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { skipToken, useQuery } from "@tanstack/react-query";
 import {
   BookOpen,
-  Bot,
   Brain,
   CalendarClock,
   FolderOpen,
@@ -29,9 +29,14 @@ import type { RailMoreItem } from "./RailMore";
 import { RailMore } from "./RailMore";
 import { SubscriptionRailRings } from "./SubscriptionRings";
 
+/** Agents wear the rook itself, in ink, so the bots read as part of the navigation. */
+function AgentsGlyph({ className }: { className?: string }) {
+  return <RookGlyph size={20} className={className} />;
+}
+
 /** An area with its name under the icon: people who are new to the app should not have to hover to learn it. */
 const RAIL_ITEM =
-  "app-no-drag relative flex min-h-14 w-16 flex-col items-center justify-start gap-1 rounded-xl px-1 pt-2.5 pb-2 text-muted-foreground outline-none transition-[background-color,color,transform] duration-150 ease-out hover:bg-sidebar-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100";
+  "app-no-drag relative flex min-h-14 w-16 flex-col items-center justify-start gap-1 rounded-2xl px-1 pt-2.5 pb-2 text-muted-foreground outline-none transition-[background-color,color,transform] duration-150 ease-out hover:bg-sidebar-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100";
 const RAIL_LABEL = "text-caption line-clamp-2 w-full text-center leading-3 break-words";
 
 /** The narrow bar that moves between Rook's areas; only agents bring the wide list with them. */
@@ -63,7 +68,7 @@ export function AppRail({ ticketBoardEnabled }: { ticketBoardEnabled: boolean })
     to: string;
     Icon: ComponentType<{ className?: string }>;
   }> = [
-    { section: "agents", label: t`Agents`, to: "/app", Icon: Bot },
+    { section: "agents", label: t`Agents`, to: "/app", Icon: AgentsGlyph },
     // The board is optional: it has a place only where the deployment turns it on.
     ...(ticketBoardEnabled
       ? [{ section: "board" as const, label: t`Board`, to: "/app/board", Icon: KanbanSquare }]
@@ -132,7 +137,7 @@ export function AppRail({ ticketBoardEnabled }: { ticketBoardEnabled: boolean })
               if (section !== "agents") missions.open(section);
               navigate(to);
             }}
-            className={`${RAIL_ITEM} before:absolute before:-start-[6px] before:top-1/2 before:h-0 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-primary before:transition-[height] before:duration-200 before:ease-out motion-reduce:before:transition-none aria-[current=page]:bg-sidebar-accent aria-[current=page]:text-foreground aria-[current=page]:before:h-5`}
+            className={`${RAIL_ITEM} aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-foreground`}
           >
             <Icon className="size-5 transition-transform duration-150 ease-out motion-reduce:transition-none" />
             <span aria-hidden className={RAIL_LABEL}>
@@ -144,7 +149,7 @@ export function AppRail({ ticketBoardEnabled }: { ticketBoardEnabled: boolean })
       <RailMore
         items={more}
         active={active === "usage" || active === "artifacts" || active === "wiki"}
-        className={`${RAIL_ITEM} before:absolute before:-start-[6px] before:top-1/2 before:h-0 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-primary before:transition-[height] before:duration-200 before:ease-out motion-reduce:before:transition-none aria-[current=page]:bg-sidebar-accent aria-[current=page]:text-foreground aria-[current=page]:before:h-5`}
+        className={`${RAIL_ITEM} aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-foreground`}
         labelClassName={RAIL_LABEL}
       />
       <div className="mt-auto flex flex-col items-center gap-1">

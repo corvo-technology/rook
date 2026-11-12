@@ -85,6 +85,23 @@ describe("CreateBotDialog", () => {
     expect(onCreate).toHaveBeenCalledWith({ name: "Scout", color: "#10B981" });
   });
 
+  it("starts in the first hue the space's bots do not wear yet", async () => {
+    const onCreate = vi.fn(async (_input: CreateBotDialogInput) => undefined);
+    await act(async () => {
+      root.render(
+        <CreateBotDialog
+          onCancel={() => undefined}
+          onCreate={onCreate}
+          takenColors={["#10B981", "#3B82F6"]}
+        />,
+      );
+    });
+    expect(document.querySelector("[data-mascot]")?.getAttribute("data-mascot")).toBe("violet");
+    await typeName("Scout");
+    await click(button("Create"));
+    expect(onCreate).toHaveBeenCalledWith({ name: "Scout", color: "#8B5CF6" });
+  });
+
   it("offers every mascot color", async () => {
     await render(async () => undefined);
     const swatches = document.querySelectorAll('[data-testid="avatar-studio-colors"] button');

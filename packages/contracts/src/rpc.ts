@@ -175,6 +175,13 @@ import { SearchQueryOutputSchema } from "./search.js";
 import { SecurityEventListInputSchema, SecurityEventSchema } from "./security-events.js";
 import { SettingsScopeSchema, SpaceSettingSchema, settingsScopeInput } from "./settings-scope.js";
 import {
+  UserMemoryDecisionSchema,
+  UserMemorySchema,
+  UserMemorySettingsSchema,
+  UserMemoryStateSchema,
+  UserMemoryTextSchema,
+} from "./user-memory.js";
+import {
   WikiApplyAllResultSchema,
   WikiCaptureStateSchema,
   WikiCaptureValueSchema,
@@ -773,6 +780,22 @@ export const appContract = {
       set: oc
         .input(threadTarget.safeExtend({ capture: WikiCaptureValueSchema }))
         .output(z.object({ ok: z.literal(true) })),
+    },
+  },
+  /** What the person's agents know about them: short facts they see and control. */
+  you: {
+    list: oc
+      .input(z.object({ state: z.array(UserMemoryStateSchema).optional() }))
+      .output(z.array(UserMemorySchema)),
+    get: oc.input(z.object({ memoryId: Id })).output(UserMemorySchema),
+    add: oc.input(z.object({ text: UserMemoryTextSchema })).output(UserMemorySchema),
+    edit: oc.input(z.object({ memoryId: Id, text: UserMemoryTextSchema })).output(UserMemorySchema),
+    decide: oc
+      .input(z.object({ memoryId: Id, decision: UserMemoryDecisionSchema }))
+      .output(UserMemorySchema.nullable()),
+    settings: {
+      get: oc.output(UserMemorySettingsSchema),
+      set: oc.input(UserMemorySettingsSchema.partial()).output(UserMemorySettingsSchema),
     },
   },
   memory: {

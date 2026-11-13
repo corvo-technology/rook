@@ -125,6 +125,7 @@ export function createBaileysClient(
       }
       if (update.connection !== "close" || stopped) return;
       const code = update.lastDisconnect?.error?.output?.statusCode;
+      getLogger().warn("whatsapp connection closed", { code });
       if (code !== undefined && lib.terminalCodes.includes(code)) {
         stopped = true;
         emitConnection({ state: "closed", reason: "logged-out" });
@@ -245,10 +246,11 @@ async function loadBaileysDeps(): Promise<BaileysDeps> {
         saveCreds: () => store.set("creds", JSON.stringify(creds, BufferJSON.replacer)),
       };
     },
+    // Not badSession: Baileys gives that code to every stream error it cannot name, which a
+    // reconnect recovers from. Ending the session there unlinks a number mid-conversation.
     terminalCodes: [
       lib.DisconnectReason.loggedOut,
       lib.DisconnectReason.forbidden,
-      lib.DisconnectReason.badSession,
       lib.DisconnectReason.multideviceMismatch,
     ],
     replacedCode: lib.DisconnectReason.connectionReplaced,

@@ -23,6 +23,7 @@ Create the services with a Dockerfile build, root directory `.` and Dockerfile p
 | `SIGNUPS_ENABLED` | `false` | no | no | |
 | `OBJECT_STORAGE_*` | yes | yes | no | Required when API and worker are separate services; create the bucket first. Use `OBJECT_STORAGE_PATH_STYLE=true` for MinIO. |
 | `SANDBOX_PROVIDER`, `E2B_API_KEY`, `E2B_DOMAIN` | yes | yes | no | |
+| `RELAX_RUNTIME_ROLE` | build | build | no | Set to `1` as a build variable (`guara env set -b`) only when the database owner cannot create roles. A few migrations grant to `corvo_app` unconditionally; this makes those statements no-ops while the role is missing. Rook then runs as the owner without row-level security. |
 | `API_PROXY_TARGET`, `CORVO_HOST`, `WEB_PORT` | no | no | yes | Proxy target is the API URL; `CORVO_HOST` is the public host. |
 
 ## Commands

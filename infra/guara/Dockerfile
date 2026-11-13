@@ -33,6 +33,9 @@ COPY infra/updater/package.json infra/updater/
 RUN pnpm install --frozen-lockfile
 COPY . .
 RUN chmod -R a+rX /app
+# Opt in (build variable RELAX_RUNTIME_ROLE=1) when the database owner cannot create roles.
+ARG RELAX_RUNTIME_ROLE
+RUN if [ -n "$RELAX_RUNTIME_ROLE" ]; then bash infra/guara/relax-runtime-role.sh; fi
 RUN pnpm --filter @corvo/db generate
 RUN pnpm --filter @corvo/api --filter @corvo/worker build
 RUN CORVO_ALLOW_DEV_SECRETS=1 pnpm --filter @corvo/web build

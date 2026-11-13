@@ -10,7 +10,14 @@ import {
   signupPolicyFromEnv,
 } from "@corvo/core";
 import type { PrismaClient, SecurityEventType } from "@corvo/db";
-import { bootstrapUserSpace, personalOrganizationIds, recordSecurityEvent } from "@corvo/db";
+import {
+  acceptInvitationsForUser,
+  bootstrapUserSpace,
+  hasPendingInvitation,
+  personalOrganizationIds,
+  recordSecurityEvent,
+  runAsSystem,
+} from "@corvo/db";
 import type { BetterAuthOptions, BetterAuthPlugin } from "better-auth";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
@@ -30,7 +37,12 @@ import {
 } from "./account-security.js";
 import { breachedPasswordCheck } from "./breached-password.js";
 import { CENTRAL_SESSION_SECONDS, centralSignIn } from "./central-sign-in.js";
-import { passwordResetEmail, signInCodeEmail, verificationEmail } from "./email.js";
+import {
+  invitationEmail,
+  passwordResetEmail,
+  signInCodeEmail,
+  verificationEmail,
+} from "./email.js";
 import type { LocalEntryOptions } from "./local-entry.js";
 import { localEntry } from "./local-entry.js";
 import type { OidcConfig } from "./oidc.js";
@@ -41,7 +53,12 @@ import { passkeyRelyingParty } from "./passkey.js";
 import type { TokenKey } from "./token-storage.js";
 import { encryptStoredOAuthTokens, openIdToken, sealIdToken } from "./token-storage.js";
 
-export { passwordResetEmail, signInCodeEmail, verificationEmail } from "./email.js";
+export {
+  invitationEmail,
+  passwordResetEmail,
+  signInCodeEmail,
+  verificationEmail,
+} from "./email.js";
 export type { OidcConfig } from "./oidc.js";
 export { passkeyRelyingParty } from "./passkey.js";
 
@@ -158,6 +175,9 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
   // SSO-only deployments keep every email credential closed, codes included.
   const emailSignIn = env.passwordAuth !== false;
   const emailCodeSignIn = (Boolean(env.email) || Boolean(env.centralAuthUrl)) && emailSignIn;
+  /** An address someone invited may register even where signups are closed or limited. */
+  const invitedAddress = (email: string) =>
+    runAsSystem("check for an invitation before signup", () => hasPendingInvitation(prisma, email));
   const passwordSignIn = emailSignIn && !((env.codeOnly || env.centralAuthUrl) && emailCodeSignIn);
   // SSO-only deployments keep the identity provider as the only way in.
   const relyingParty =
@@ -251,8 +271,14 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
         }
         if (source.action === "create-user") {
           const policy = signupPolicyFromEnv(env);
-          if (!policy.enabled) return { error: "REGISTRATION_CLOSED" };
-          if (!env.oidc?.allowSignupBypass && !emailAllowed(email, policy.allowlist))
+          if (!policy.enabled && !(await invitedAddress(email)))
+            return { error: "REGISTRATION_CLOSED" };
+          if (
+            policy.enabled &&
+            !env.oidc?.allowSignupBypass &&
+            !emailAllowed(email, policy.allowlist) &&
+            !(await invitedAddress(email))
+          )
             return { error: "EMAIL_NOT_ALLOWED" };
           if (!env.oidc?.allowSignupBypass && policy.allowlist.length > 0 && !verified)
             return { error: "EMAIL_VERIFICATION_REQUIRED" };
@@ -398,7 +424,10 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
             .toLowerCase();
           if (!(await ctx.context.internalAdapter.findUserByEmail(email))) {
             const admission = signupPolicyFromEnv(env);
-            if (!admission.enabled || !emailAllowed(email, admission.allowlist)) {
+            if (
+              (!admission.enabled || !emailAllowed(email, admission.allowlist)) &&
+              !(await invitedAddress(email))
+            ) {
               if (ctx.path === SEND_SIGN_IN_CODE_PATH) return ctx.json({ success: true });
               throw new APIError("BAD_REQUEST", { code: "INVALID_OTP", message: "Invalid OTP" });
             }
@@ -409,15 +438,19 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
             ? signupPolicyFromEnv(env)
             : undefined;
         let requireEmailVerification = false;
-        if (ctx.path === "/sign-up/email") {
-          if (!policy?.enabled) {
+        if (ctx.path === "/sign-up/email" && policy) {
+          const email = String(ctx.body?.email ?? "");
+          if (!policy.enabled && !(await invitedAddress(email))) {
             throw new APIError("BAD_REQUEST", {
               code: "REGISTRATION_CLOSED",
               message: "Registration is closed",
             });
           }
-          const email = String(ctx.body?.email ?? "");
-          if (!emailAllowed(email, policy.allowlist)) {
+          if (
+            policy.enabled &&
+            !emailAllowed(email, policy.allowlist) &&
+            !(await invitedAddress(email))
+          ) {
             throw new APIError("BAD_REQUEST", {
               code: "EMAIL_NOT_ALLOWED",
               message: "Email is not allowed to register",
@@ -534,9 +567,15 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
             // Only admitted sessions provision a workspace; never assign administration.
             const membership = await prisma.spaceMember.findFirst({ where: { userId: user.id } });
             if (!membership) {
+              // An invited address joins the space it was invited to instead of getting its own.
+              const joined = await runAsSystem("join invited space at sign-in", () =>
+                acceptInvitationsForUser(prisma, user, { trustUnverified: !env.email }),
+              );
+              if (joined.length > 0) return;
               if (
-                !policy.enabled ||
-                (!bypassAllowlist && !emailAllowed(user.email, policy.allowlist))
+                (!policy.enabled ||
+                  (!bypassAllowlist && !emailAllowed(user.email, policy.allowlist))) &&
+                !(await invitedAddress(user.email))
               ) {
                 throw new APIError("FORBIDDEN", {
                   code: "REGISTRATION_CLOSED",

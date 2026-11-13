@@ -11,6 +11,9 @@ vi.mock("better-auth/adapters/prisma", async () => {
   };
 });
 vi.mock("@corvo/db", () => ({
+  acceptInvitationsForUser: vi.fn(async () => []),
+  hasPendingInvitation: vi.fn(async () => false),
+  runAsSystem: (_reason: string, fn: () => unknown) => fn(),
   bootstrapUserSpace: vi.fn(async () => ({ spaceId: "space-1" })),
   recordSecurityEvent: vi.fn(async () => undefined),
 }));

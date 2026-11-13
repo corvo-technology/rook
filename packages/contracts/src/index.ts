@@ -44,6 +44,7 @@ export * from "./search.js";
 export * from "./security-events.js";
 export * from "./settings-scope.js";
 export * from "./skill-store.js";
+export * from "./team.js";
 export * from "./terminal.js";
 export * from "./user-memory.js";
 export * from "./voice-errors.js";

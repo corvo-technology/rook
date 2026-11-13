@@ -130,7 +130,14 @@ async function mirrorRun(deps: MessagingDeliveryDeps, runId: string): Promise<vo
     }
     // Without a platform of its own this process has nothing else to send through.
     if (deps.linkedOnly) return;
-  } else if (run.trigger !== "bot_message") {
+  } else if (run.trigger === "bot_message") {
+    // Another agent answered a question the owner asked in a linked WhatsApp chat.
+    const linkedThreadId = await originLinkedChat(deps, run.sourceMessage?.replyToMessageId);
+    if (linkedThreadId) {
+      await mirrorLinkedChatRun(deps, run, linkedThreadId);
+      return;
+    }
+  } else {
     // Mirror inbound messaging runs and delegated bot_message replies only.
     // Do not push in-app user/routine runs out to the linked chat.
     return;
@@ -225,6 +232,46 @@ async function mirrorVisitorRun(
   });
   if (!conversation) return;
   await queueRepliesForThread(deps, run, conversation.conversationId);
+}
+
+/** How many agents back an answer is traced to find the chat its question came from. */
+const ORIGIN_CHAT_MAX_HOPS = 8;
+
+/**
+ * The linked WhatsApp chat a delegated answer belongs to. An answer replies to the asking agent's
+ * own message, whose run started from the owner's chat or from yet another agent's answer.
+ */
+async function originLinkedChat(
+  deps: MessagingDeliveryDeps,
+  replyToMessageId: string | null | undefined,
+): Promise<string | null> {
+  let messageId = replyToMessageId;
+  for (let hop = 0; messageId && hop < ORIGIN_CHAT_MAX_HOPS; hop += 1) {
+    const asked = await deps.prisma.message.findUnique({
+      where: { id: messageId },
+      select: { runId: true },
+    });
+    if (!asked?.runId) return null;
+    const origin = await deps.prisma.run.findUnique({
+      where: { id: asked.runId },
+      select: {
+        trigger: true,
+        sourceMessage: { select: { blocks: true, replyToMessageId: true } },
+      },
+    });
+    if (!origin) return null;
+    const blocks = (origin.sourceMessage?.blocks ?? []) as MessageBlock[];
+    if (origin.trigger === "messaging") {
+      const linked = blocks.find(
+        (block): block is Extract<MessageBlock, { kind: "linked_chat" }> =>
+          block.kind === "linked_chat",
+      );
+      return linked?.threadId ?? null;
+    }
+    if (origin.trigger !== "bot_message") return null;
+    messageId = origin.sourceMessage?.replyToMessageId;
+  }
+  return null;
 }
 
 /** The owner wrote in their own chat of a linked number: the answer goes back to that chat. */

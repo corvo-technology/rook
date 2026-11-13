@@ -58,8 +58,8 @@ function setup(options: { failSaveCreds?: boolean; failSocketAfter?: number } = 
           if (options.failSaveCreds) throw new Error("secret store timed out");
         },
       }) as never,
-    // Logged out, forbidden (banned), bad session, multi-device mismatch: nothing to reconnect.
-    terminalCodes: [401, 403, 500, 411],
+    // Logged out, forbidden (banned), multi-device mismatch: nothing to reconnect.
+    terminalCodes: [401, 403, 411],
     replacedCode: 440,
     restartRequiredCode: 515,
   };
@@ -117,6 +117,15 @@ describe("createBaileysClient", () => {
     await vi.advanceTimersByTimeAsync(10);
     expect(sockets).toHaveLength(2);
     expect(events).toEqual([]);
+  });
+
+  it("reconnects after an unexplained stream error, which WhatsApp reports as a bad session", async () => {
+    const { client, sockets, events } = setup();
+    await client.connect();
+    closeWith(sockets[0] as FakeSocket, 500);
+    expect(events).toEqual([{ state: "closed", reason: "network" }]);
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(sockets).toHaveLength(2);
   });
 
   it("reconnects after a network close with a growing wait, and reports it", async () => {
@@ -216,8 +225,8 @@ describe("createBaileysClient: failures that must not take the process down", ()
     expect(sockets).toHaveLength(1);
   });
 
-  it("treats a ban, a bad session and a multi-device mismatch like a logout, with no reconnect", async () => {
-    for (const code of [403, 500, 411]) {
+  it("treats a ban and a multi-device mismatch like a logout, with no reconnect", async () => {
+    for (const code of [403, 411]) {
       const { client, sockets, events } = setup();
       await client.connect();
       closeWith(sockets[0] as FakeSocket, code);

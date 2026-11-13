@@ -201,6 +201,74 @@ describe("mirroring the owner's own WhatsApp chat", () => {
   });
 });
 
+describe("answering the owner's WhatsApp chat after asking another agent", () => {
+  const chat = "whatsapp-web:inst-1:15550100@s.whatsapp.net";
+  // The agent's own message to the other agent, and the run that sent it.
+  const origins: Record<string, { trigger: string; blocks: unknown[]; replyTo: string | null }> = {
+    "echo-1": {
+      trigger: "messaging",
+      blocks: [
+        { kind: "text", text: "how is the market today?" },
+        { kind: "linked_chat", installationId: "inst-1", threadId: chat },
+      ],
+      replyTo: null,
+    },
+    "echo-2": {
+      trigger: "bot_message",
+      blocks: [{ kind: "bot_message_received", text: "dig deeper" }],
+      replyTo: "echo-1",
+    },
+    "echo-app": { trigger: "user", blocks: [{ kind: "text", text: "hi" }], replyTo: null },
+  };
+
+  const delegated = (replyTo: string) => {
+    const ctx = setup({ replies: [{ id: "m-9", text: "Market is up 0.66%." }] });
+    const prisma = ctx.deps.prisma as unknown as Record<string, Record<string, unknown>>;
+    prisma.run!.findUnique = vi.fn(async ({ where }: { where: { id: string } }) => {
+      if (where.id === "run-2") {
+        return {
+          id: "run-2",
+          botId: "bot-1",
+          trigger: "bot_message",
+          sourceMessage: {
+            blocks: [{ kind: "bot_message_received", text: "Market is up" }],
+            replyToMessageId: replyTo,
+          },
+        };
+      }
+      const origin = origins[where.id.replace(/^run-of-/, "")];
+      return origin
+        ? {
+            trigger: origin.trigger,
+            sourceMessage: { blocks: origin.blocks, replyToMessageId: origin.replyTo },
+          }
+        : null;
+    });
+    prisma.message!.findUnique = vi.fn(async ({ where }: { where: { id: string } }) =>
+      origins[where.id] ? { runId: `run-of-${where.id}` } : null,
+    );
+    return ctx;
+  };
+
+  it("sends the answer to the chat the question came from", async () => {
+    const { deps, rows } = delegated("echo-1");
+    await mirrorMessagingOutbound(deps, "run-2");
+    expect(rows.map((row) => [row.threadId, row.body])).toEqual([[chat, "Market is up 0.66%."]]);
+  });
+
+  it("finds that chat through a chain of agents", async () => {
+    const { deps, rows } = delegated("echo-2");
+    await mirrorMessagingOutbound(deps, "run-2");
+    expect(rows.map((row) => row.threadId)).toEqual([chat]);
+  });
+
+  it("sends nothing out when the question was asked in the app", async () => {
+    const { deps, rows } = delegated("echo-app");
+    await mirrorMessagingOutbound(deps, "run-2");
+    expect(rows).toHaveLength(0);
+  });
+});
+
 describe("a worker with no messaging platform of its own", () => {
   it("still queues the replies of WhatsApp conversations, which need no platform to be queued", async () => {
     const { deps, rows } = setup({ linkedOnly: true });

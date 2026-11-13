@@ -30,9 +30,12 @@ COPY packages/ui-tokens/package.json packages/ui-tokens/
 COPY packages/ui-web/package.json packages/ui-web/
 COPY infra/sandboxes/supervisor/package.json infra/sandboxes/supervisor/
 COPY infra/updater/package.json infra/updater/
-RUN pnpm install --frozen-lockfile
+# Only the packages these roles run: the desktop and mobile apps and the marketing site
+# would add gigabytes. The store is removed in the same layer so it is not kept twice.
+RUN pnpm install --frozen-lockfile --store-dir /tmp/pnpm-store \
+    --filter "@corvo/api..." --filter "@corvo/worker..." --filter "@corvo/web..." \
+  && rm -rf /tmp/pnpm-store
 COPY . .
-RUN chmod -R a+rX /app
 # Opt in (build variable RELAX_RUNTIME_ROLE=1) when the database owner cannot create roles.
 ARG RELAX_RUNTIME_ROLE
 RUN if [ -n "$RELAX_RUNTIME_ROLE" ]; then bash infra/guara/relax-runtime-role.sh; fi

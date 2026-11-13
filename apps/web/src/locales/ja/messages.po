@@ -472,6 +472,10 @@ msgstr "{title}、{label}"
 msgid "{title}, saved as {savedAs}"
 msgstr "{title}（{savedAs} として保存）"
 
+#: src/pages/MemberUsageSection.tsx
+msgid "{tokens} tokens"
+msgstr "{tokens} トークン"
+
 #: src/components/McpServerHealthLine.tsx
 #: src/components/ToolActivityDisclosure.tsx
 #: src/pages/Store.tsx
@@ -4156,6 +4160,10 @@ msgstr "中"
 msgid "Member"
 msgstr "メンバー"
 
+#: src/pages/MemberUsageSection.tsx
+msgid "Members"
+msgstr "メンバー"
+
 #. placeholder {0}: selected.length
 #: src/pages/GroupPanel.tsx
 msgid "Members ({0})"
@@ -4358,6 +4366,10 @@ msgstr "月間クレジットは更新時に失効します。追加購入分は
 #: src/pages/Usage.tsx
 msgid "Monthly token limit"
 msgstr "月間トークン上限"
+
+#: src/pages/MemberUsageSection.tsx
+msgid "Monthly token limit for {name}"
+msgstr "{name} の月間トークン上限"
 
 #: src/components/RailMore.tsx
 #: src/pages/shell/message-hover-actions.tsx
@@ -4591,6 +4603,7 @@ msgstr "ボットなし"
 msgid "No bots match"
 msgstr "一致するボットはありません"
 
+#: src/pages/MemberUsageSection.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "No limit"
 msgstr "上限なし"
@@ -6048,6 +6061,10 @@ msgstr "セットアップ完了"
 msgid "Setup help"
 msgstr "設定ヘルプ"
 
+#: src/pages/WorkspaceModelRow.tsx
+msgid "Share my models with members"
+msgstr "自分のモデルをメンバーと共有"
+
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Shared"
@@ -6755,6 +6772,11 @@ msgstr "このサーバーはブラウザでの認可を要求しませんでし
 msgid "This server is already connected. Disconnect it first to authorize again."
 msgstr "このサーバーはすでに接続されています。再度認可するには、先に切断してください。"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "This space's model is a personal sign-in and only its owner can use it."
+msgstr "このスペースのモデルは個人のサインインで、所有者だけが使えます。"
+
 #: src/pages/model-settings/connection-controls.tsx
 msgid "This subscription sign-in is not available in Rook yet. Use a deployment credential or choose another provider."
 msgstr "このサブスクリプションでのログインはRookではまだ利用できません。デプロイメントの認証情報を使用するか、別のプロバイダーを選択してください。"
@@ -7079,6 +7101,10 @@ msgstr "デフォルトを使用"
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Use defaults for {label}"
 msgstr "{label}でデフォルトを使用"
+
+#: src/pages/WorkspaceModelRow.tsx
+msgid "Use my own models"
+msgstr "自分のモデルを使う"
 
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Use Protected input for passwords."
@@ -7410,6 +7436,11 @@ msgstr "辞退しました"
 #: src/pages/shell/computer-overlay.tsx
 msgid "You have control"
 msgstr "あなたが操作中"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "You reached your monthly limit on this space's model."
+msgstr "このスペースのモデルの月間上限に達しました。"
 
 #: src/pages/onboarding/WorkspaceStep.tsx
 msgid "Your agents and chats live here. You can rename it any time."

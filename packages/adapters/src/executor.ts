@@ -18,6 +18,7 @@ import {
   isRouterWake,
   isTerminal,
   isVisitorRun,
+  MEMBER_MONTHLY_LIMIT_RUN_ERROR,
   MISSING_MODEL_RUN_ERROR,
   MODEL_ACCESS_REQUIRED_RUN_ERROR,
   messagingChannelId,
@@ -103,6 +104,7 @@ import {
   stableHistoryWindow,
 } from "./history-compaction.js";
 import { createMediaGenerationProvider } from "./media-generation-factory.js";
+import { memberMonthlyLimitReached } from "./member-monthly-limit.js";
 import { loadAgentMemoryContext } from "./memory-context.js";
 import { botDisabledTools } from "./memory-mode.js";
 import { HostedModelCreditsRequiredError } from "./model-credit-observer.js";
@@ -844,6 +846,12 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const monthUsage = await botMonthUsage(deps.prisma, bot);
         if (monthlyLimitReached(monthUsage.used, monthUsage.limit)) {
           await failRunBeforeModel(BOT_MONTHLY_LIMIT_RUN_ERROR, true, {
+            stopReason: "monthly_limit",
+          });
+          return;
+        }
+        if (await memberMonthlyLimitReached(deps.prisma, run)) {
+          await failRunBeforeModel(MEMBER_MONTHLY_LIMIT_RUN_ERROR, true, {
             stopReason: "monthly_limit",
           });
           return;

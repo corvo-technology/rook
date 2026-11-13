@@ -376,6 +376,8 @@ model SpaceMember {
   aiDataConsents   AiDataConsent[]
   modelRoleChoices SpaceModelRoleChoice[]
   settingOverrides SpaceSettingOverride[]
+  modelConnections SpaceModelConnection[]
+  modelSetting     SpaceMemberModelSetting?
 
   @@unique([spaceId, userId])
   @@index([organizationId, userId])
@@ -2283,4 +2285,30 @@ model PartnerEntryCode {
 
   @@index([expiresAt])
   @@map("partner_entry_codes")
+}
+
+/// The owner lends the models they connected to everyone in a Space: members' runs resolve
+/// models as `ownerUserId` does and never see a key. No row means each member uses their own.
+model SpaceModelConnection {
+  spaceId     String      @id
+  ownerUserId String
+  spaceMember SpaceMember @relation(fields: [spaceId, ownerUserId], references: [spaceId, userId], onDelete: Cascade)
+  createdAt   DateTime    @default(now())
+
+  @@map("space_model_connections")
+}
+
+/// What the owner sets for one member on the lent models, and the member's own choice to leave them.
+model SpaceMemberModelSetting {
+  spaceId           String
+  userId            String
+  spaceMember       SpaceMember @relation(fields: [spaceId, userId], references: [spaceId, userId], onDelete: Cascade)
+  /// The member runs on their own connections instead of the lent ones.
+  useOwnModel       Boolean     @default(false)
+  /// Tokens the member may spend a UTC month on the lent models; null is no limit.
+  monthlyTokenLimit BigInt?
+  updatedAt         DateTime    @updatedAt
+
+  @@id([spaceId, userId])
+  @@map("space_member_model_settings")
 }

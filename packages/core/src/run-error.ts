@@ -41,6 +41,14 @@ export const BOT_DAILY_LIMIT_RUN_ERROR = "This bot reached its daily limit.";
 /** The owner capped the tokens this bot may use in a month, and it has. */
 export const BOT_MONTHLY_LIMIT_RUN_ERROR = "This bot reached its monthly token limit.";
 
+/** A member's monthly tokens on the models the owner lent to the Space are used up. */
+export const MEMBER_MONTHLY_LIMIT_RUN_ERROR =
+  "You reached your monthly limit on this space's model.";
+
+/** The owner's lent model is a personal sign-in, which only its owner may use. */
+export const WORKSPACE_PERSONAL_MODEL_RUN_ERROR =
+  "This space's model is a personal sign-in and only its owner can use it.";
+
 /** One reply spent its share of the bot's monthly tokens and was cut. */
 export const BOT_REPLY_CAP_RUN_ERROR = "This reply reached its token cap.";
 
@@ -153,6 +161,8 @@ const APP_RUN_ERRORS = new Set([
   PARTNER_CREDIT_USED_UP_RUN_ERROR,
   BOT_DAILY_LIMIT_RUN_ERROR,
   BOT_MONTHLY_LIMIT_RUN_ERROR,
+  MEMBER_MONTHLY_LIMIT_RUN_ERROR,
+  WORKSPACE_PERSONAL_MODEL_RUN_ERROR,
   BOT_REPLY_CAP_RUN_ERROR,
   SPACE_PAUSED_RUN_ERROR,
   COMPUTER_RATE_LIMIT_ERROR,
@@ -310,6 +320,12 @@ export function normalizeRunError(
   if (APP_RUN_ERRORS.has(trimmed)) {
     if (trimmed === BOT_MONTHLY_LIMIT_RUN_ERROR || trimmed === BOT_REPLY_CAP_RUN_ERROR) {
       return { summary: translate(trimmed), details, recovery: "budget" };
+    }
+    if (
+      trimmed === MEMBER_MONTHLY_LIMIT_RUN_ERROR ||
+      trimmed === WORKSPACE_PERSONAL_MODEL_RUN_ERROR
+    ) {
+      return { summary: translate(trimmed), details };
     }
     if (trimmed === SPACE_PAUSED_RUN_ERROR) {
       return { summary: translate(trimmed), details, recovery: "resume" };

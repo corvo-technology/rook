@@ -90,6 +90,7 @@ import {
   LocalSpeechModelSchema,
   McpServerConfigInput,
   McpServerSchema,
+  MemberUsageSchema,
   MemoryDocumentSchema,
   MemoryScopeSchema,
   MeSchema,
@@ -147,6 +148,7 @@ import {
   WhatsAppLinkStatusSchema,
   WhatsAppNumberSchema,
   WorkflowSchema,
+  WorkspaceModelSchema,
 } from "./domain.js";
 import { ComputerCommandSchema, ProductEventSchema } from "./events.js";
 import { Id, IsoDate } from "./ids.js";
@@ -395,6 +397,12 @@ export const appContract = {
       )
       .output(ModelRoleViewSchema),
     list: oc.output(z.array(ModelCatalogEntrySchema)),
+    /** Whether the owner's models serve the whole space, and where the asking member stands. */
+    workspaceModel: oc.output(WorkspaceModelSchema),
+    /** The owner lends their models to the space's members, or takes them back. */
+    setWorkspaceModel: oc.input(z.object({ shared: z.boolean() })).output(WorkspaceModelSchema),
+    /** A member runs on their own models instead of the ones the owner lent. */
+    setUseOwnModel: oc.input(z.object({ useOwn: z.boolean() })).output(WorkspaceModelSchema),
     /** The coding-agent CLIs on this engine, from the last detection. */
     cliEngines: oc.output(CliEnginesViewSchema),
     /** Detects the coding-agent CLIs again. */
@@ -1398,6 +1406,12 @@ export const appContract = {
     subscriptions: oc.output(z.array(SubscriptionQuotaSchema)),
     /** This UTC month's tokens for each bot of the space that has a monthly limit. */
     budgets: oc.output(z.array(BotBudgetSchema)),
+    /** The owner's view of each member's month; refused to anyone else. */
+    members: oc.output(z.array(MemberUsageSchema)),
+    /** The owner caps a member's tokens on the lent models for a UTC month; null lifts it. */
+    setMemberLimit: oc
+      .input(z.object({ userId: Id, monthlyTokenLimit: z.number().int().min(1).nullable() }))
+      .output(z.object({ ok: z.literal(true) })),
   },
   export: {
     bot: oc.input(botId).output(ExportManifestSchema),

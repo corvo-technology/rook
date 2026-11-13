@@ -14,6 +14,7 @@ import type { PrismaClient } from "./client.js";
 import { Prisma } from "./client.js";
 import { lockSpaceSettings, settingsTarget } from "./space-settings.js";
 import { withTransactionRetry } from "./transaction-retry.js";
+import { withModelScope } from "./workspace-model.js";
 
 type Scope = { userId: string; spaceId: string };
 /** Which copy of a member's model roles a call acts on: the account's or the Space's override. */
@@ -93,6 +94,23 @@ export async function appliedModelRole(
   requested?: SettingsScope,
 ): Promise<ModelRoleSettings> {
   return getModelRole(prisma, await modelRoleTarget(prisma, scope, requested), role);
+}
+
+/**
+ * The models a member's work runs on for a purpose: `appliedModelRole`, except that a member on
+ * the connections the owner lent to the Space follows the owner's choices. Settings screens use
+ * `appliedModelRole`, which is always the member's own.
+ */
+export async function runModelRole(
+  prisma: RoleClient & Pick<PrismaClient, "spaceSettingOverride">,
+  scope: Scope,
+  role: ModelRole,
+): Promise<ModelRoleSettings> {
+  return withModelScope(
+    prisma as unknown as Parameters<typeof withModelScope>[0],
+    scope,
+    (resolved) => appliedModelRole(prisma, resolved, role),
+  );
 }
 
 /** The member's own ordered models for a purpose; empty when the deployment's defaults apply. */

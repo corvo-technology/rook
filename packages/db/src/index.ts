@@ -62,3 +62,4 @@ export * from "./wiki.js";
 export * from "./wiki-changes.js";
 export * from "./wiki-import.js";
 export * from "./wiki-imports.js";
+export * from "./workspace-model.js";

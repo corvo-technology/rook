@@ -231,6 +231,18 @@ export const translateRunError: RunErrorTranslator = (message, values) => {
         message: "This bot reached its monthly token limit.",
         values,
       });
+    case "You reached your monthly limit on this space's model.":
+      return i18n._({
+        id: "You reached your monthly limit on this space's model.",
+        message: "You reached your monthly limit on this space's model.",
+        values,
+      });
+    case "This space's model is a personal sign-in and only its owner can use it.":
+      return i18n._({
+        id: "This space's model is a personal sign-in and only its owner can use it.",
+        message: "This space's model is a personal sign-in and only its owner can use it.",
+        values,
+      });
     case "This reply reached its token cap.":
       return i18n._({
         id: "This reply reached its token cap.",

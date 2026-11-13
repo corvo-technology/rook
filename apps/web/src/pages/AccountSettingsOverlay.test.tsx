@@ -8,6 +8,7 @@ import { createRoot } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, expect, it, vi } from "vitest";
 
+vi.mock("./MemberUsageSection", () => ({ MemberUsageSection: () => null }));
 vi.mock("@lingui/react/macro", () => ({
   useLingui: () => ({
     t: (strings: TemplateStringsArray) => strings.join(""),

@@ -67,6 +67,7 @@ import { getUiAppearancePreference, setUiAppearance } from "../lib/ui-appearance
 import type { UiLocale } from "../lib/ui-locale";
 import { UI_LOCALE_LABELS, UI_LOCALES } from "../lib/ui-locale";
 import { authErrorText } from "../lib/user-error";
+import { MemberUsageSection } from "./MemberUsageSection";
 
 export type SettingsGeneralProps = {
   email?: string | null;
@@ -542,6 +543,7 @@ export function UsageSettingsPanel({
           </Table>
         </div>
       ) : null}
+      <MemberUsageSection />
     </div>
   );
 }

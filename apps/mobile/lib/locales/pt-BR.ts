@@ -1141,6 +1141,10 @@ export const PT_BR_MESSAGES: Record<string, string> = {
   "Running work stops and nothing starts until you resume.":
     "O trabalho em andamento para e nada começa até você retomar.",
   "This bot reached its monthly token limit.": "Este bot atingiu o limite mensal de tokens.",
+  "You reached your monthly limit on this space's model.":
+    "Você atingiu seu limite mensal no modelo deste espaço.",
+  "This space's model is a personal sign-in and only its owner can use it.":
+    "O modelo deste espaço é um login pessoal e só o proprietário pode usá-lo.",
   "This reply reached its token cap.": "Esta resposta atingiu o limite de tokens.",
   "Bots are paused in this space.": "Os bots estão pausados neste espaço.",
   "{used} of {limit}": "{used} de {limit}",

@@ -472,6 +472,10 @@ msgstr "{title}, {label}"
 msgid "{title}, saved as {savedAs}"
 msgstr "{title}, enregistré sous {savedAs}"
 
+#: src/pages/MemberUsageSection.tsx
+msgid "{tokens} tokens"
+msgstr "{tokens} jetons"
+
 #: src/components/McpServerHealthLine.tsx
 #: src/components/ToolActivityDisclosure.tsx
 #: src/pages/Store.tsx
@@ -4156,6 +4160,10 @@ msgstr "Moyen"
 msgid "Member"
 msgstr "Membre"
 
+#: src/pages/MemberUsageSection.tsx
+msgid "Members"
+msgstr "Membres"
+
 #. placeholder {0}: selected.length
 #: src/pages/GroupPanel.tsx
 msgid "Members ({0})"
@@ -4358,6 +4366,10 @@ msgstr "Les crédits mensuels expirent au renouvellement. Les recharges n’expi
 #: src/pages/Usage.tsx
 msgid "Monthly token limit"
 msgstr "Limite mensuelle de jetons"
+
+#: src/pages/MemberUsageSection.tsx
+msgid "Monthly token limit for {name}"
+msgstr "Limite mensuelle de jetons pour {name}"
 
 #: src/components/RailMore.tsx
 #: src/pages/shell/message-hover-actions.tsx
@@ -4591,6 +4603,7 @@ msgstr "Aucun bot"
 msgid "No bots match"
 msgstr "Aucun bot ne correspond"
 
+#: src/pages/MemberUsageSection.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "No limit"
 msgstr "Aucune limite"
@@ -6048,6 +6061,10 @@ msgstr "Configuration terminée"
 msgid "Setup help"
 msgstr "Aide à la configuration"
 
+#: src/pages/WorkspaceModelRow.tsx
+msgid "Share my models with members"
+msgstr "Partager mes modèles avec les membres"
+
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Shared"
@@ -6755,6 +6772,11 @@ msgstr "Ce serveur n'a pas demandé l'autorisation du navigateur."
 msgid "This server is already connected. Disconnect it first to authorize again."
 msgstr "Ce serveur est déjà connecté. Déconnectez-le d'abord pour l'autoriser à nouveau."
 
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "This space's model is a personal sign-in and only its owner can use it."
+msgstr "Le modèle de cet espace est une connexion personnelle que seul son propriétaire peut utiliser."
+
 #: src/pages/model-settings/connection-controls.tsx
 msgid "This subscription sign-in is not available in Rook yet. Use a deployment credential or choose another provider."
 msgstr "Cette connexion par abonnement n'est pas encore disponible dans Rook. Utilisez un identifiant de déploiement ou choisissez un autre fournisseur."
@@ -7079,6 +7101,10 @@ msgstr "Utiliser vos paramètres par défaut"
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Use defaults for {label}"
 msgstr "Utiliser vos paramètres par défaut pour {label}"
+
+#: src/pages/WorkspaceModelRow.tsx
+msgid "Use my own models"
+msgstr "Utiliser mes propres modèles"
 
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Use Protected input for passwords."
@@ -7410,6 +7436,11 @@ msgstr "Vous avez refusé"
 #: src/pages/shell/computer-overlay.tsx
 msgid "You have control"
 msgstr "Vous avez le contrôle"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "You reached your monthly limit on this space's model."
+msgstr "Vous avez atteint votre limite mensuelle sur le modèle de cet espace."
 
 #: src/pages/onboarding/WorkspaceStep.tsx
 msgid "Your agents and chats live here. You can rename it any time."

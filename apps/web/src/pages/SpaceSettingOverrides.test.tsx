@@ -51,6 +51,7 @@ vi.mock("./ModelSettingsOverlay", () => ({
     return <div data-testid="models-panel" />;
   },
 }));
+vi.mock("./WorkspaceModelRow", () => ({ WorkspaceModelRow: () => null }));
 vi.mock("./VoiceSettingsOverlay", () => ({
   VoiceSettingsOverlay: ({ scope }: { scope: string }) => {
     panels.push(`voice:${scope}`);

@@ -85,6 +85,12 @@ msgstr "{0} GB"
 msgid "{0} handling"
 msgstr "{0} 处理中"
 
+#. placeholder {0}: preview.inviterName
+#. placeholder {1}: preview.spaceName
+#: src/pages/InvitePage.tsx
+msgid "{0} invited you to {1}"
+msgstr "{0} 邀请你加入 {1}"
+
 #. placeholder {0}: bot.name
 #: src/components/call/IncomingCall.tsx
 msgid "{0} is calling you"
@@ -795,6 +801,10 @@ msgstr "已添加到 Wiki"
 msgid "Adding…"
 msgstr "正在添加…"
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Admin"
+msgstr "管理员"
+
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -1045,6 +1055,7 @@ msgid "Approvals"
 msgstr "审批"
 
 #: src/components/WikiChangeCard.tsx
+#: src/pages/MembersSettingsPanel.tsx
 #: src/pages/shell/message-cards.tsx
 msgid "Approve"
 msgstr "批准"
@@ -1103,6 +1114,10 @@ msgstr "询问"
 #: src/pages/shell/bot-panel.tsx
 msgid "Ask first"
 msgstr "先询问"
+
+#: src/pages/InvitePage.tsx
+msgid "Ask to join"
+msgstr "申请加入"
 
 #: src/components/AutonomyPicker.tsx
 msgid "Asks before any change"
@@ -1410,6 +1425,7 @@ msgstr "无法读取图像"
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/LocalSpeechSection.tsx
 #: src/pages/McpServersSettings.tsx
+#: src/pages/MembersSettingsPanel.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/Onboarding.tsx
@@ -2024,6 +2040,10 @@ msgstr "复制代码"
 msgid "Copy diagram source"
 msgstr "复制图表源代码"
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Copy link"
+msgstr "复制链接"
+
 #: src/pages/shell/agent-import.tsx
 msgid "Copy prompt"
 msgstr "复制提示词"
@@ -2057,6 +2077,10 @@ msgstr "无法添加智能体"
 msgid "Could not add the file"
 msgstr "无法添加文件"
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Could not approve"
+msgstr "无法批准"
+
 #: src/pages/shell/message-cards.tsx
 msgid "Could not approve this server"
 msgstr "无法批准此服务器"
@@ -2065,6 +2089,10 @@ msgstr "无法批准此服务器"
 msgid "Could not authorize this app"
 msgstr "无法授权此应用"
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Could not cancel"
+msgstr "无法取消"
+
 #: src/components/DesktopControlSettings.tsx
 msgid "Could not change desktop control"
 msgstr "无法更改桌面控制"
@@ -2072,6 +2100,10 @@ msgstr "无法更改桌面控制"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Could not change password"
 msgstr "无法修改密码"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Could not change the role"
+msgstr "无法更改角色"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Could not check stored credentials."
@@ -2154,6 +2186,10 @@ msgstr "无法创建分组"
 msgid "Could not create space"
 msgstr "无法创建工作区"
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Could not create the link"
+msgstr "无法创建链接"
+
 #: src/pages/shell/dialogs.tsx
 msgid "Could not delete bot"
 msgstr "无法删除 Bot"
@@ -2186,6 +2222,10 @@ msgstr "无法删除空间"
 #: src/pages/Artifacts.tsx
 msgid "Could not delete this artifact."
 msgstr "无法删除此产物。"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Could not deny"
+msgstr "无法拒绝"
 
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Could not disconnect"
@@ -2236,6 +2276,10 @@ msgstr "无法安装连接器"
 msgid "Could not install the skill"
 msgstr "无法安装技能"
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Could not leave"
+msgstr "无法退出"
+
 #: src/components/ErrorBoundary.tsx
 #: src/components/PasskeySettings.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -2276,6 +2320,10 @@ msgstr "无法加载集成"
 #: src/pages/Store.tsx
 msgid "Could not load MCP servers"
 msgstr "无法加载 MCP 服务器"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Could not load members"
+msgstr "无法加载成员"
 
 #: src/pages/model-settings/use-model-settings.ts
 msgid "Could not load model settings"
@@ -2352,6 +2400,7 @@ msgid "Could not read these files"
 msgstr "无法读取这些文件"
 
 #: src/pages/KnowledgeSection.tsx
+#: src/pages/MembersSettingsPanel.tsx
 #: src/pages/ScratchpadSection.tsx
 #: src/pages/WikiBrowser.tsx
 msgid "Could not remove"
@@ -2385,6 +2434,10 @@ msgstr "无法重命名工作区"
 #: src/pages/shell/message-cards.tsx
 msgid "Could not render chart"
 msgstr "无法渲染图表"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Could not resend"
+msgstr "无法重新发送"
 
 #: src/pages/Auth.tsx
 msgid "Could not reset password"
@@ -2478,6 +2531,10 @@ msgstr "无法保存此选择"
 msgid "Could not search catalog"
 msgstr "无法搜索目录"
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Could not send invitations"
+msgstr "无法发送邀请"
+
 #: src/pages/Auth.tsx
 msgid "Could not send reset email"
 msgstr "无法发送重置邮件"
@@ -2519,6 +2576,10 @@ msgstr "无法接管"
 #: src/pages/McpServersSettings.tsx
 msgid "Could not test MCP server"
 msgstr "无法测试 MCP 服务器"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Could not turn off"
+msgstr "无法关闭"
 
 #: src/pages/shell/agent-import-undo.tsx
 msgid "Could not undo the import"
@@ -2567,6 +2628,7 @@ msgid "Couldn't update your timezone"
 msgstr "无法更新你的时区"
 
 #: src/pages/Board.tsx
+#: src/pages/MembersSettingsPanel.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/create-bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
@@ -2836,6 +2898,7 @@ msgid "Denied"
 msgstr "已拒绝"
 
 #: src/components/AskCard.tsx
+#: src/pages/MembersSettingsPanel.tsx
 msgid "Deny"
 msgstr "拒绝"
 
@@ -3076,6 +3139,10 @@ msgstr "编辑资料"
 #: src/pages/Auth.tsx
 msgid "Email"
 msgstr "邮箱"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Email addresses"
+msgstr "邮箱地址"
 
 #: src/lib/user-error.ts
 msgid "Email is not allowed to register"
@@ -3759,6 +3826,18 @@ msgstr "间隔单位"
 msgid "Invalid code"
 msgstr "验证码无效"
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Invitations"
+msgstr "邀请"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Invite"
+msgstr "邀请"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Invite link"
+msgstr "邀请链接"
+
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Isolated"
@@ -3795,6 +3874,14 @@ msgstr "导入后模型已被修改，因此保持不变。"
 #: src/pages/shell/agent-import-undo.tsx
 msgid "Its model goes back to before the import."
 msgstr "模型将恢复到导入之前。"
+
+#: src/pages/InvitePage.tsx
+msgid "Join"
+msgstr "加入"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "joined"
+msgstr "已加入"
 
 #: src/pages/shell/transcript.tsx
 msgid "Jump to latest"
@@ -3886,6 +3973,14 @@ msgstr "从对话中学习"
 #: src/components/WikiCaptureSwitch.tsx
 msgid "Learn from this conversation"
 msgstr "从此对话中学习"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Leave"
+msgstr "退出"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Leave this space?"
+msgstr "退出此空间？"
 
 #: src/components/AutonomyPicker.tsx
 msgid "Let {name} act without asking?"
@@ -4153,7 +4248,12 @@ msgid "Medium"
 msgstr "中"
 
 #: src/lib/identity-display.ts
+#: src/pages/MembersSettingsPanel.tsx
 msgid "Member"
+msgstr "成员"
+
+#: src/pages/Settings.tsx
+msgid "Members"
 msgstr "成员"
 
 #. placeholder {0}: selected.length
@@ -4958,6 +5058,7 @@ msgstr "输出"
 
 #: src/lib/identity-display.ts
 #: src/pages/Board.tsx
+#: src/pages/MembersSettingsPanel.tsx
 msgid "Owner"
 msgstr "所有者"
 
@@ -5404,6 +5505,7 @@ msgstr "已记住"
 #: src/pages/ConnectionsSettingsPanel.tsx
 #: src/pages/LocalSpeechSection.tsx
 #: src/pages/McpServersSettings.tsx
+#: src/pages/MembersSettingsPanel.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/ScratchpadSection.tsx
@@ -5422,6 +5524,11 @@ msgstr "移除 {0}"
 #: src/pages/GroupPanel.tsx
 msgid "Remove {0} from the group"
 msgstr "将 {0} 移出群组"
+
+#. placeholder {0}: member.name
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Remove {0}?"
+msgstr "移除 {0}？"
 
 #: src/pages/shell/bot-credentials.tsx
 msgid "Remove {secretName}? This bot will no longer be able to use it."
@@ -5544,6 +5651,14 @@ msgstr "正在回复 {0}"
 msgid "Request a new code"
 msgstr "请重新获取验证码"
 
+#: src/pages/InvitePage.tsx
+msgid "Request sent"
+msgstr "请求已发送"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Requests"
+msgstr "请求"
+
 #: src/pages/shell/message-cards.tsx
 msgid "Research & writing"
 msgstr "调研和写作"
@@ -5551,6 +5666,10 @@ msgstr "调研和写作"
 #: src/pages/StoreCategoryChips.tsx
 msgid "Research and writing"
 msgstr "研究与写作"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Resend"
+msgstr "重新发送"
 
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Reset"
@@ -5666,6 +5785,15 @@ msgstr "立即审查"
 #: src/pages/WikiBrowser.tsx
 msgid "Revision {0}"
 msgstr "修订 {0}"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Role"
+msgstr "角色"
+
+#. placeholder {0}: member.name
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Role of {0}"
+msgstr "{0} 的角色"
 
 #: src/pages/Onboarding.tsx
 msgid "Rook credits"
@@ -6690,6 +6818,10 @@ msgstr "此导入已使用过。请重新选择文件。"
 msgid "This isn't sent yet. Edit it or send it."
 msgstr "这条还没有发送。可以编辑，也可以发送。"
 
+#: src/pages/InvitePage.tsx
+msgid "This link no longer works"
+msgstr "此链接已失效"
+
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/Onboarding.tsx
 msgid "this Mac"
@@ -6899,6 +7031,10 @@ msgstr "请重试测试。"
 #: src/lib/cron.ts
 msgid "Tuesday"
 msgstr "周二"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Turn off"
+msgstr "关闭"
 
 #: src/pages/shell/bot-credentials.tsx
 msgid "Type"

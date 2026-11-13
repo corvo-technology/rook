@@ -548,6 +548,7 @@ export function botsRoutes(ctx: RouterContext) {
           if (bot.computer) {
             await restoreBotUnderComputerQuota(deps.prisma, {
               userId: context.actor.userId,
+              spaceId: context.actor.spaceId,
               botId: bot.id,
               computerId: bot.computer.id,
             });

@@ -627,6 +627,7 @@ export function createGroupRepos(prisma: PrismaClient) {
             if (bot.computerId) {
               await restoreBotUnderComputerQuota(tx, {
                 userId: actor.userId,
+                spaceId: actor.spaceId,
                 botId: bot.id,
                 computerId: bot.computerId,
               });

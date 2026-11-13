@@ -1,0 +1,95 @@
+# A computer host: only the sandbox supervisor and the computers it starts, for a server that
+# runs computers for an API and worker on another host (docs/remote-computers.md).
+#
+#   SUPERVISOR_BIND_ADDRESS=<this host's private tunnel address> \
+#   SANDBOX_SUPERVISOR_TOKEN=<same value the API host uses> \
+#   docker compose -f infra/compose/docker-compose.supervisor-node.yml up -d --wait
+#
+# The supervisor port is published on the private address only, never on a public interface.
+# Access to the supervisor is equivalent to control of this host's Docker daemon, so keep the
+# firewall closed to everything but the tunnel. Run restrict-computer-egress.sh on this host
+# first: computers here are otherwise one hop from the tunnel network.
+name: corvo-node
+
+services:
+  # One-shot: pulls the image the supervisor launches computers from.
+  computer:
+    image: ${CORVO_COMPUTER_IMAGE:-ghcr.io/corvo-technology/rook/computer}:${CORVO_COMPUTER_IMAGE_TAG:-edge}
+    command: ["true"]
+    network_mode: none
+    restart: "no"
+
+  # Computers run as 1000:1000; the data volume starts owned by root.
+  data-init:
+    image: ${BUSYBOX_IMAGE:-busybox:1}
+    command: ["chown", "-R", "1000:1000", "/data"]
+    network_mode: none
+    restart: "no"
+    volumes:
+      - appdata:/data
+
+  supervisor:
+    image: ${CORVO_IMAGE:-ghcr.io/corvo-technology/rook/app}:${CORVO_IMAGE_TAG:-edge}
+    restart: unless-stopped
+    command: ["pnpm", "--filter", "@corvo/sandbox-supervisor", "start"]
+    init: true
+    user: root
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: 512m
+    ports:
+      - "${SUPERVISOR_BIND_ADDRESS:?Set SUPERVISOR_BIND_ADDRESS to this host's private tunnel address}:7091:7091"
+    environment:
+      MAX_UPLOAD_SIZE_MB: ${MAX_UPLOAD_SIZE_MB:-10}
+      NODE_ENV: production
+      DATA_DIR: /data
+      SUPERVISOR_HOST: "0.0.0.0"
+      SUPERVISOR_PORT: "7091"
+      DOCKER_SOCKET: /var/run/docker.sock
+      CORVO_COMPUTER_IMAGE: ${CORVO_COMPUTER_IMAGE:-ghcr.io/corvo-technology/rook/computer}:${CORVO_COMPUTER_IMAGE_TAG:-edge}
+      CORVO_COMPUTER_MEMORY: ${CORVO_COMPUTER_MEMORY:-2g}
+      CORVO_COMPUTER_CPUS: ${CORVO_COMPUTER_CPUS:-2}
+      CORVO_COMPUTER_PIDS_LIMIT: ${CORVO_COMPUTER_PIDS_LIMIT:-2048}
+      SANDBOX_COMMAND_TIMEOUT_MS: ${SANDBOX_COMMAND_TIMEOUT_MS:-300000}
+      SANDBOX_SUPERVISOR_TOKEN: ${SANDBOX_SUPERVISOR_TOKEN:?Set SANDBOX_SUPERVISOR_TOKEN in .env}
+      # Homes live on this host and travel to the server as archives; screens go through the
+      # supervisor so the server needs this one port and no computer address.
+      SANDBOX_SUPERVISOR_HOMES: remote
+      SANDBOX_SCREEN_GATEWAY: "true"
+      SANDBOX_SCREEN_NETWORK: isolated
+      # Restricted, not auto: a computer that could reach the tunnel could reach the API host.
+      # The supervisor refuses to start computers until the host rules are in place.
+      SANDBOX_COMPUTER_EGRESS: ${SANDBOX_COMPUTER_EGRESS:-restricted}
+      SANDBOX_COMPUTER_DNS: ${SANDBOX_COMPUTER_DNS:-}
+      # A second guard; the server enforces the cap from its database.
+      SANDBOX_MAX_COMPUTERS_PER_SPACE: ${SANDBOX_MAX_COMPUTERS_PER_SPACE:-0}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_FORMAT: ${LOG_FORMAT:-}
+      AXIOM_TOKEN: ${AXIOM_TOKEN:-}
+      AXIOM_DATASET: ${AXIOM_DATASET:-}
+      AXIOM_EDGE: ${AXIOM_EDGE:-}
+      AXIOM_EDGE_URL: ${AXIOM_EDGE_URL:-}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-}
+      SENTRY_RELEASE: ${SENTRY_RELEASE:-}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - appdata:/data
+    depends_on:
+      computer:
+        condition: service_completed_successfully
+      data-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:7091/health').then(r=>r.json()).then(h=>{if(!h.ok||h.homes!=='remote')process.exit(1)}).catch(()=>process.exit(1))
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  appdata:

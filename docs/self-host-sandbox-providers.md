@@ -36,6 +36,9 @@ curl -fsS http://127.0.0.1:3100/internal/health
 # expect sandbox: docker
 ```
 
+To run computers on separate servers from the API and worker, see
+[computers on separate servers](./remote-computers.md).
+
 Missing supervisor token is a **setup failure**: do not treat `sandbox: "none"` as success for this path.
 
 Signup and local Docker computers work **without** an E2B (or other remote) account.

@@ -76,9 +76,35 @@ export function resolveMaxComputersPerUser(
   return limit;
 }
 
+/**
+ * Per-space ceiling on Computer records that still back a live bot, or 0 when unset.
+ *
+ * The Docker supervisor also caps the computers it holds per space, but only from its own
+ * memory. With computers on several hosts no one supervisor sees them all, so the database
+ * decides here, under a lock, and the supervisor's cap stays as a second guard.
+ */
+export function resolveMaxComputersPerSpace(
+  value = process.env.SANDBOX_MAX_COMPUTERS_PER_SPACE,
+): number {
+  const raw = value?.trim().toLowerCase();
+  if (!raw || raw === "0" || raw === "none" || raw === "unlimited") return 0;
+  const limit = Number(raw);
+  if (!Number.isSafeInteger(limit) || limit < 1) {
+    throw new Error(
+      "SANDBOX_MAX_COMPUTERS_PER_SPACE must be a positive integer, or 0 for no configured cap",
+    );
+  }
+  return limit;
+}
+
 export class ComputerLimitError extends Error {
-  constructor(limit: number) {
-    super(`User computer limit (${limit}) reached`);
+  constructor(limit: number, scope: "user" | "space" = "user") {
+    // The space message matches the one the Docker supervisor already returns.
+    super(
+      scope === "space"
+        ? `Computer limit reached for space (max: ${limit})`
+        : `User computer limit (${limit}) reached`,
+    );
     this.name = "ComputerLimitError";
   }
 }
@@ -113,6 +139,43 @@ async function countInUseComputersForUser(
     : runAsSystem(reason, count);
 }
 
+/** Computers a space still backs with a live (non-archived) bot, across all its members. */
+async function countInUseComputersForSpace(
+  prisma: ComputerDb & Partial<Pick<PrismaClient, "$queryRaw">>,
+  spaceId: string,
+  excludeBotId?: string,
+): Promise<number> {
+  const count = () =>
+    prisma.computer.count({
+      where: {
+        spaceId,
+        bots: {
+          some: excludeBotId
+            ? { archivedAt: null, id: { not: excludeBotId } }
+            : { archivedAt: null },
+        },
+      },
+    });
+  const reason = "computer quota across the Space's members";
+  return prisma.$queryRaw
+    ? runAsSystemInTransaction(prisma as Pick<PrismaClient, "$queryRaw">, reason, count)
+    : runAsSystem(reason, count);
+}
+
+/**
+ * Serialize existence check + in-use count + Computer create for one space.
+ * Seed 2 keeps this keyspace apart from the user's (1) and from content creation (0). Always
+ * taken after the user lock, never before, so two quota transactions cannot wait on each other.
+ */
+async function lockSpaceForComputerQuota(
+  tx: Pick<Prisma.TransactionClient, "$queryRaw">,
+  spaceId: string,
+): Promise<void> {
+  await tx.$queryRaw(Prisma.sql`
+    SELECT pg_advisory_xact_lock(hashtextextended(${spaceId}, 2))::text AS "lock"
+  `);
+}
+
 /**
  * Serialize existence check + in-use count + Computer create for one user.
  * Seed 1 keeps this keyspace apart from lockSpaceForContentCreation (seed 0).
@@ -136,10 +199,11 @@ async function lockUserForComputerQuota(
  */
 export async function assertComputerQuotaForRestore(
   prisma: ComputerDb,
-  input: { userId: string; computerId: string },
+  input: { userId: string; computerId: string; spaceId?: string },
 ): Promise<void> {
   const limit = resolveMaxComputersPerUser();
-  if (limit <= 0) return;
+  const spaceLimit = input.spaceId ? resolveMaxComputersPerSpace() : 0;
+  if (limit <= 0 && spaceLimit <= 0) return;
   // If another live bot already references this row (a team computer shared
   // by the user's bots in the space), restoring this bot adds nothing to the count.
   const alreadyLive = await prisma.computer.count({
@@ -149,8 +213,12 @@ export async function assertComputerQuotaForRestore(
     },
   });
   if (alreadyLive > 0) return;
-  const inUse = await countInUseComputersForUser(prisma, input.userId);
-  if (inUse >= limit) throw new ComputerLimitError(limit);
+  if (limit > 0 && (await countInUseComputersForUser(prisma, input.userId)) >= limit) {
+    throw new ComputerLimitError(limit);
+  }
+  if (spaceLimit > 0 && (await countInUseComputersForSpace(prisma, input.spaceId!)) >= spaceLimit) {
+    throw new ComputerLimitError(spaceLimit, "space");
+  }
 }
 
 /**
@@ -162,13 +230,16 @@ export async function assertComputerQuotaForRestore(
  */
 export async function restoreBotUnderComputerQuota(
   prisma: RestoreClient,
-  input: { userId: string; botId: string; computerId: string },
+  input: { userId: string; botId: string; computerId: string; spaceId?: string },
 ): Promise<void> {
   const limit = resolveMaxComputersPerUser();
+  const spaceLimit = input.spaceId ? resolveMaxComputersPerSpace() : 0;
+  const capped = limit > 0 || spaceLimit > 0;
 
   async function restore(tx: RestoreTx) {
-    if (limit > 0) {
-      await lockUserForComputerQuota(tx, input.userId);
+    if (capped) {
+      if (limit > 0) await lockUserForComputerQuota(tx, input.userId);
+      if (spaceLimit > 0) await lockSpaceForComputerQuota(tx, input.spaceId!);
       await assertComputerQuotaForRestore(tx, input);
     }
     await tx.bot.update({ where: { id: input.botId }, data: { archivedAt: null } });
@@ -177,7 +248,7 @@ export async function restoreBotUnderComputerQuota(
   if (isTransactionClient(prisma)) {
     return restore(prisma as RestoreTx);
   }
-  if (limit <= 0) {
+  if (!capped) {
     await prisma.bot.update({ where: { id: input.botId }, data: { archivedAt: null } });
     return;
   }
@@ -233,9 +304,12 @@ async function ensureComputerRecordWithQuota(
     kind: string;
   },
   limit: number,
+  spaceLimit: number,
   scopeKey: string,
 ) {
-  await lockUserForComputerQuota(tx, input.userId);
+  // Same order everywhere: user, then space.
+  if (limit > 0) await lockUserForComputerQuota(tx, input.userId);
+  if (spaceLimit > 0) await lockSpaceForComputerQuota(tx, input.spaceId);
   // Only a new row consumes quota: the upsert below reuses the user's team
   // computer on every bot they create in that space, and reusing it with the count
   // already at the cap would wrongly refuse a second bot on a shared computer.
@@ -252,10 +326,16 @@ async function ensureComputerRecordWithQuota(
     // bot to the new dedicated one; setBotComputer switches the same way).
     // References from other active bots still count: a team computer another
     // live bot keeps using stays in-use after the re-link.
-    const inUse = await countInUseComputersForUser(tx, input.userId, input.botId);
     // The new row itself will be referenced by this bot after the link, so
     // the post-transaction set is one more than the remaining live set.
-    if (inUse + 1 > limit) throw new ComputerLimitError(limit);
+    if (limit > 0) {
+      const inUse = await countInUseComputersForUser(tx, input.userId, input.botId);
+      if (inUse + 1 > limit) throw new ComputerLimitError(limit);
+    }
+    if (spaceLimit > 0) {
+      const inUse = await countInUseComputersForSpace(tx, input.spaceId, input.botId);
+      if (inUse + 1 > spaceLimit) throw new ComputerLimitError(spaceLimit, "space");
+    }
   }
   return upsertComputerRecord(tx, input, scopeKey);
 }
@@ -275,17 +355,20 @@ export async function ensureComputerRecord(
   },
 ) {
   const limit = resolveMaxComputersPerUser();
+  const spaceLimit = resolveMaxComputersPerSpace();
   const scopeKey = computerScopeKey(input);
-  if (limit <= 0) return upsertComputerRecord(prisma, input, scopeKey);
+  if (limit <= 0 && spaceLimit <= 0) return upsertComputerRecord(prisma, input, scopeKey);
 
-  // Cap is set: hold a per-user advisory lock across find + count + create so
-  // concurrent creates for different spaces cannot both pass the check.
+  // A cap is set: hold an advisory lock (per user, per space) across find + count + create so
+  // concurrent creates cannot both pass the check, whichever host or process they run on.
   if (isTransactionClient(prisma)) {
-    return ensureComputerRecordWithQuota(prisma, input, limit, scopeKey);
+    return ensureComputerRecordWithQuota(prisma, input, limit, spaceLimit, scopeKey);
   }
   if (typeof prisma.$transaction === "function") {
     return withTransactionRetry(() =>
-      prisma.$transaction!((tx) => ensureComputerRecordWithQuota(tx, input, limit, scopeKey)),
+      prisma.$transaction!((tx) =>
+        ensureComputerRecordWithQuota(tx, input, limit, spaceLimit, scopeKey),
+      ),
     );
   }
   throw new Error("Computer quota enforcement requires a Prisma transaction");

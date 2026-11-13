@@ -6,6 +6,7 @@ import {
   computerHomeKey,
   computerScopeKey,
   ensureComputerRecord,
+  resolveMaxComputersPerSpace,
   resolveMaxComputersPerUser,
   restoreBotUnderComputerQuota,
 } from "./computers.js";
@@ -246,9 +247,12 @@ const baseInput = {
 };
 
 const savedEnv = process.env.SANDBOX_MAX_COMPUTERS_PER_USER;
+const savedSpaceEnv = process.env.SANDBOX_MAX_COMPUTERS_PER_SPACE;
 afterEach(() => {
   if (savedEnv === undefined) delete process.env.SANDBOX_MAX_COMPUTERS_PER_USER;
   else process.env.SANDBOX_MAX_COMPUTERS_PER_USER = savedEnv;
+  if (savedSpaceEnv === undefined) delete process.env.SANDBOX_MAX_COMPUTERS_PER_SPACE;
+  else process.env.SANDBOX_MAX_COMPUTERS_PER_SPACE = savedSpaceEnv;
   vi.restoreAllMocks();
 });
 
@@ -490,5 +494,103 @@ describe("restoreBotUnderComputerQuota", () => {
       computerId: "computer-a",
     });
     expect(inUse()).toBe(1);
+  });
+});
+
+describe("resolveMaxComputersPerSpace", () => {
+  it("treats unset, empty, 0, none and unlimited as no configured cap", () => {
+    for (const value of [undefined, "", " ", "0", "none", "Unlimited"]) {
+      expect(resolveMaxComputersPerSpace(value)).toBe(0);
+    }
+  });
+
+  it("accepts positive integers and rejects anything else", () => {
+    expect(resolveMaxComputersPerSpace("6")).toBe(6);
+    for (const value of ["-1", "1.5", "many"]) {
+      expect(() => resolveMaxComputersPerSpace(value)).toThrow("SANDBOX_MAX_COMPUTERS_PER_SPACE");
+    }
+  });
+});
+
+describe("the per-space computer cap", () => {
+  const spaceInput = (userId: string, botId: string) => ({
+    ...baseInput,
+    userId,
+    botId,
+    spaceId: "space-shared",
+  });
+
+  it("refuses a new computer when the space is at the cap, whoever asks", async () => {
+    process.env.SANDBOX_MAX_COMPUTERS_PER_SPACE = "2";
+    const prisma = fakePrisma(2, false);
+    const refused = await ensureComputerRecord(prisma, spaceInput("user-2", "bot-new")).catch(
+      (error: unknown) => error,
+    );
+    expect(refused).toBeInstanceOf(ComputerLimitError);
+    // The same words the supervisor's own cap uses, so a user sees one message.
+    expect((refused as Error).message).toBe("Computer limit reached for space (max: 2)");
+    expect(prisma.computer.upsert).not.toHaveBeenCalled();
+    expect(prisma.computer.count).toHaveBeenCalledWith({
+      where: expect.objectContaining({ spaceId: "space-shared" }),
+    });
+  });
+
+  it("allows a new computer below the cap and reuse of an existing one at it", async () => {
+    process.env.SANDBOX_MAX_COMPUTERS_PER_SPACE = "2";
+    await ensureComputerRecord(fakePrisma(1, false), spaceInput("user-2", "bot-new"));
+    await expect(
+      ensureComputerRecord(fakePrisma(2, true), { ...spaceInput("user-1", "bot-1"), mode: "team" }),
+    ).resolves.toBeDefined();
+  });
+
+  it("takes the user lock before the space lock, and neither when no cap is set", async () => {
+    process.env.SANDBOX_MAX_COMPUTERS_PER_USER = "5";
+    process.env.SANDBOX_MAX_COMPUTERS_PER_SPACE = "5";
+    const prisma = fakePrisma(0, false);
+    await ensureComputerRecord(prisma, spaceInput("user-1", "bot-1"));
+    const calls = (prisma.$queryRaw as unknown as { mock: { calls: unknown[][] } }).mock.calls.map(
+      (call) => JSON.stringify(call),
+    );
+    const user = calls.findIndex((call) => call.includes("user-1"));
+    const space = calls.findIndex((call) => call.includes("space-shared"));
+    expect(user).toBeGreaterThanOrEqual(0);
+    expect(space).toBeGreaterThan(user);
+
+    delete process.env.SANDBOX_MAX_COMPUTERS_PER_USER;
+    delete process.env.SANDBOX_MAX_COMPUTERS_PER_SPACE;
+    const uncapped = fakePrisma(99, false);
+    await ensureComputerRecord(uncapped, spaceInput("user-1", "bot-1"));
+    expect(uncapped.$queryRaw).not.toHaveBeenCalled();
+  });
+
+  it("serializes parallel creates by different members so the space cannot exceed the cap", async () => {
+    process.env.SANDBOX_MAX_COMPUTERS_PER_SPACE = "1";
+    const { prisma, state } = fakeSerializingPrisma(0);
+    const results = await Promise.allSettled([
+      ensureComputerRecord(prisma, spaceInput("user-a", "bot-a")),
+      ensureComputerRecord(prisma, spaceInput("user-b", "bot-b")),
+      ensureComputerRecord(prisma, spaceInput("user-c", "bot-c")),
+    ]);
+    expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+    expect(
+      results.filter(
+        (result) => result.status === "rejected" && result.reason instanceof ComputerLimitError,
+      ),
+    ).toHaveLength(2);
+    expect(state.inUse).toBe(1);
+  });
+
+  it("refuses a restore that would put the space over the cap", async () => {
+    process.env.SANDBOX_MAX_COMPUTERS_PER_SPACE = "2";
+    const input = { userId: "user-1", computerId: "computer-1", spaceId: "space-shared" };
+    await expect(
+      assertComputerQuotaForRestore(fakeRestorePrisma({ alreadyLive: 0, inUse: 2 }), input),
+    ).rejects.toThrow("Computer limit reached for space (max: 2)");
+    await expect(
+      assertComputerQuotaForRestore(fakeRestorePrisma({ alreadyLive: 0, inUse: 1 }), input),
+    ).resolves.toBeUndefined();
+    await expect(
+      assertComputerQuotaForRestore(fakeRestorePrisma({ alreadyLive: 1, inUse: 2 }), input),
+    ).resolves.toBeUndefined();
   });
 });

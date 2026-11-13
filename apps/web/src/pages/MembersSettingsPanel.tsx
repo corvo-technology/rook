@@ -1,4 +1,11 @@
-import type { SpaceInvitation, SpaceJoinRequest, SpaceMember, SpaceRole } from "@corvo/contracts";
+import type {
+  Space,
+  SpaceInvitation,
+  SpaceJoinRequest,
+  SpaceMember,
+  SpaceRole,
+} from "@corvo/contracts";
+import { agentCatalogLocale } from "@corvo/contracts";
 import { can } from "@corvo/core";
 import {
   Button,
@@ -14,7 +21,7 @@ import {
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useCallback, useEffect, useState } from "react";
 import { SettingsGroup, SettingsRow } from "../components/SettingsRows";
-import { rpc } from "../lib/rpc";
+import { rpc, rpcForSpace } from "../lib/rpc";
 
 type InviteLink = { link: string | null };
 
@@ -64,9 +71,122 @@ function RolePicker({
   );
 }
 
-/** Who belongs to this space, and the ways to bring someone in. Owners and admins manage it. */
-export function MembersSettingsPanel({ userId }: { userId: string }) {
+const NEW_WORKSPACE = "new-workspace";
+
+/** Picks which workspace the section acts on, or starts a new one inline. */
+function WorkspacePicker({
+  spaces,
+  value,
+  onPick,
+  onCreate,
+}: {
+  spaces: Space[];
+  value: string;
+  onPick: (spaceId: string) => void;
+  onCreate: (name: string) => Promise<void>;
+}) {
   const { t } = useLingui();
+  const [creating, setCreating] = useState(false);
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const items = [
+    ...spaces.map((space) => ({ value: space.id, label: space.name })),
+    { value: NEW_WORKSPACE, label: t`New workspace` },
+  ];
+
+  async function create() {
+    if (busy || !name.trim()) return;
+    setBusy(true);
+    try {
+      await onCreate(name.trim());
+      setName("");
+      setCreating(false);
+    } catch {
+      // The section shows the error.
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <Select
+        value={value}
+        items={items}
+        onValueChange={(next) => {
+          if (next === NEW_WORKSPACE) setCreating(true);
+          else if (next) {
+            setCreating(false);
+            onPick(next);
+          }
+        }}
+      >
+        <SelectTrigger aria-label={t`Workspace`} className="w-full rounded-full">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent alignItemWithTrigger={false}>
+          <SelectGroup>
+            {items.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+      {creating ? (
+        <div className="flex items-center gap-2">
+          <Input
+            autoFocus
+            aria-label={t`Workspace name`}
+            placeholder={t`Workspace name`}
+            value={name}
+            disabled={busy}
+            onChange={(event) => setName(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.nativeEvent.isComposing) void create();
+              if (event.key === "Escape") setCreating(false);
+            }}
+          />
+          <Button
+            className="rounded-full"
+            disabled={busy || !name.trim()}
+            onClick={() => void create()}
+          >
+            <Trans>Create</Trans>
+          </Button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Who belongs to a workspace, and the ways to bring someone in. Owners and admins manage it. The
+ * workspace defaults to the selected one and can be switched here without changing the app's.
+ */
+export function MembersSettingsPanel({
+  userId,
+  spaces,
+  currentSpaceId,
+  onCreated,
+}: {
+  userId: string;
+  spaces: Space[];
+  currentSpaceId: string | null;
+  onCreated: (space: Space) => void;
+}) {
+  const { t, i18n } = useLingui();
+  const invitable = spaces.filter((space) => space.canInvite === true);
+  const [pickedId, setPickedId] = useState<string | null>(null);
+  const picked =
+    invitable.find((space) => space.id === pickedId) ??
+    invitable.find((space) => space.id === currentSpaceId) ??
+    invitable[0] ??
+    null;
+  // Without a pickable workspace the section keeps acting on the selected one.
+  const client = picked ? rpcForSpace(picked.id) : rpc;
+  const pickedKey = picked?.id ?? null;
   const [members, setMembers] = useState<SpaceMember[] | null>(null);
   const [invitations, setInvitations] = useState<SpaceInvitation[]>([]);
   const [requests, setRequests] = useState<SpaceJoinRequest[]>([]);
@@ -85,14 +205,14 @@ export function MembersSettingsPanel({ userId }: { userId: string }) {
 
   const load = useCallback(async () => {
     try {
-      const list = await rpc.spaces.members.list();
+      const list = await client.spaces.members.list();
       setMembers(list);
       const mine = list.find((member) => member.userId === userId)?.role ?? "member";
       if (can({ role: mine }, "invite")) {
         const [pending, asking, link] = await Promise.all([
-          rpc.spaces.invitations.list(),
-          rpc.spaces.joinRequests.list(),
-          rpc.spaces.inviteLink.get(),
+          client.spaces.invitations.list(),
+          client.spaces.joinRequests.list(),
+          client.spaces.inviteLink.get(),
         ]);
         setInvitations(pending);
         setRequests(asking);
@@ -101,9 +221,15 @@ export function MembersSettingsPanel({ userId }: { userId: string }) {
     } catch (err) {
       setError(message(err, t`Could not load members`));
     }
-  }, [t, userId]);
+  }, [client, t, userId]);
 
   useEffect(() => {
+    setMembers(null);
+    setInvitations([]);
+    setRequests([]);
+    setInviteLink({ link: null });
+    setNotEmailed([]);
+    setError(null);
     void load();
   }, [load]);
 
@@ -122,7 +248,7 @@ export function MembersSettingsPanel({ userId }: { userId: string }) {
     setSending(true);
     setError(null);
     try {
-      const result = await rpc.spaces.invitations.create({ addresses, role });
+      const result = await client.spaces.invitations.create({ addresses, role });
       setNotEmailed(result.emailed ? [] : result.invitations);
       setAddresses("");
       setInviting(false);
@@ -134,10 +260,33 @@ export function MembersSettingsPanel({ userId }: { userId: string }) {
     }
   }
 
+  async function createWorkspace(name: string) {
+    try {
+      const space = await rpc.spaces.create({ name, locale: agentCatalogLocale(i18n.locale) });
+      onCreated(space);
+      setPickedId(space.id);
+    } catch (err) {
+      setError(message(err, t`Could not create the workspace`));
+      throw err;
+    }
+  }
+
   const copy = (text: string) => void navigator.clipboard?.writeText(text).catch(() => undefined);
 
   return (
-    <div className="space-y-8" data-testid="members-settings">
+    <div
+      className="space-y-8"
+      data-testid="members-settings"
+      data-space-id={pickedKey ?? undefined}
+    >
+      {invitable.length > 1 && picked ? (
+        <WorkspacePicker
+          spaces={invitable}
+          value={picked.id}
+          onPick={setPickedId}
+          onCreate={createWorkspace}
+        />
+      ) : null}
       <SettingsGroup>
         {(members ?? []).map((member) => {
           const self = member.userId === userId;
@@ -160,7 +309,8 @@ export function MembersSettingsPanel({ userId }: { userId: string }) {
                       grantable={grantable}
                       onChange={(next) =>
                         void run(
-                          () => rpc.spaces.members.setRole({ userId: member.userId, role: next }),
+                          () =>
+                            client.spaces.members.setRole({ userId: member.userId, role: next }),
                           t`Could not change the role`,
                         )
                       }
@@ -184,7 +334,7 @@ export function MembersSettingsPanel({ userId }: { userId: string }) {
                       confirmLabel={t`Remove ${member.name}?`}
                       onConfirm={() =>
                         void run(
-                          () => rpc.spaces.members.remove({ userId: member.userId }),
+                          () => client.spaces.members.remove({ userId: member.userId }),
                           t`Could not remove`,
                         )
                       }
@@ -199,7 +349,7 @@ export function MembersSettingsPanel({ userId }: { userId: string }) {
                       className="rounded-full"
                       confirmLabel={t`Leave this space?`}
                       onConfirm={() =>
-                        void rpc.spaces.members
+                        void client.spaces.members
                           .leave()
                           .then(() => window.location.assign("/app"))
                           .catch((err: unknown) => setError(message(err, t`Could not leave`)))
@@ -299,7 +449,7 @@ export function MembersSettingsPanel({ userId }: { userId: string }) {
                       className="rounded-full"
                       onClick={() =>
                         void run(
-                          () => rpc.spaces.invitations.resend({ id: invitation.id }),
+                          () => client.spaces.invitations.resend({ id: invitation.id }),
                           t`Could not resend`,
                         )
                       }
@@ -312,7 +462,7 @@ export function MembersSettingsPanel({ userId }: { userId: string }) {
                       className="rounded-full"
                       onClick={() =>
                         void run(
-                          () => rpc.spaces.invitations.cancel({ id: invitation.id }),
+                          () => client.spaces.invitations.cancel({ id: invitation.id }),
                           t`Could not cancel`,
                         )
                       }
@@ -345,7 +495,7 @@ export function MembersSettingsPanel({ userId }: { userId: string }) {
                     className="rounded-full"
                     onClick={() =>
                       void run(
-                        () => rpc.spaces.joinRequests.answer({ id: request.id, approve: true }),
+                        () => client.spaces.joinRequests.answer({ id: request.id, approve: true }),
                         t`Could not approve`,
                       )
                     }
@@ -358,7 +508,7 @@ export function MembersSettingsPanel({ userId }: { userId: string }) {
                     className="rounded-full"
                     onClick={() =>
                       void run(
-                        () => rpc.spaces.joinRequests.answer({ id: request.id, approve: false }),
+                        () => client.spaces.joinRequests.answer({ id: request.id, approve: false }),
                         t`Could not deny`,
                       )
                     }
@@ -392,7 +542,7 @@ export function MembersSettingsPanel({ userId }: { userId: string }) {
                     size="sm"
                     className="rounded-full"
                     onClick={() =>
-                      void run(() => rpc.spaces.inviteLink.disable(), t`Could not turn off`)
+                      void run(() => client.spaces.inviteLink.disable(), t`Could not turn off`)
                     }
                   >
                     <Trans>Turn off</Trans>
@@ -404,7 +554,7 @@ export function MembersSettingsPanel({ userId }: { userId: string }) {
                   size="sm"
                   className="rounded-full"
                   onClick={() =>
-                    void run(() => rpc.spaces.inviteLink.create(), t`Could not create the link`)
+                    void run(() => client.spaces.inviteLink.create(), t`Could not create the link`)
                   }
                 >
                   <Trans>Create</Trans>

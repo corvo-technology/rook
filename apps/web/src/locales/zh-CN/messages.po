@@ -2194,6 +2194,10 @@ msgstr "无法创建工作区"
 msgid "Could not create the link"
 msgstr "无法创建链接"
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Could not create the workspace"
+msgstr "无法创建工作区"
+
 #: src/pages/shell/dialogs.tsx
 msgid "Could not delete bot"
 msgstr "无法删除 Bot"
@@ -4664,6 +4668,10 @@ msgstr "新建工作区"
 #: src/pages/Board.tsx
 msgid "New ticket"
 msgstr "新建工单"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "New workspace"
+msgstr "新建工作区"
 
 #: src/pages/Routines.tsx
 #: src/pages/Workflows.tsx
@@ -7526,10 +7534,15 @@ msgstr "处理中…"
 msgid "Works with your ChatGPT or Claude plan."
 msgstr "可使用你的 ChatGPT 或 Claude 套餐。"
 
+#: src/pages/MembersSettingsPanel.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 #: src/pages/Onboarding.tsx
 msgid "Workspace"
 msgstr "工作区"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Workspace name"
+msgstr "工作区名称"
 
 #: src/lib/activity-label.ts
 msgid "Writing {value}"

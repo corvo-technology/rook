@@ -2194,6 +2194,10 @@ msgstr "Não foi possível criar o espaço"
 msgid "Could not create the link"
 msgstr "Não foi possível criar o link"
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Could not create the workspace"
+msgstr "Não foi possível criar o workspace"
+
 #: src/pages/shell/dialogs.tsx
 msgid "Could not delete bot"
 msgstr "Não foi possível apagar"
@@ -4664,6 +4668,10 @@ msgstr "Novo espaço"
 #: src/pages/Board.tsx
 msgid "New ticket"
 msgstr "Novo ticket"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "New workspace"
+msgstr "Novo workspace"
 
 #: src/pages/Routines.tsx
 #: src/pages/Workflows.tsx
@@ -7526,10 +7534,15 @@ msgstr "Trabalhando…"
 msgid "Works with your ChatGPT or Claude plan."
 msgstr "Funciona com seu plano do ChatGPT ou do Claude."
 
+#: src/pages/MembersSettingsPanel.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 #: src/pages/Onboarding.tsx
 msgid "Workspace"
 msgstr "Espaço"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Workspace name"
+msgstr "Nome do workspace"
 
 #: src/lib/activity-label.ts
 msgid "Writing {value}"

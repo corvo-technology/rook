@@ -414,6 +414,8 @@ export const SpaceSchema = z.object({
   canPause: z.boolean().optional(),
   /** True only when the current member may delete this non-default space. */
   canDelete: z.boolean().optional(),
+  /** True when the current member is an owner or admin and may invite people to this space. */
+  canInvite: z.boolean().optional(),
   /** Every bot deleting the space removes, archived and other members' included. */
   botCount: z.number().int().nonnegative().optional(),
   bots: z.array(SpaceBotSchema),

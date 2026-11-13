@@ -54,6 +54,9 @@ model User {
   approvalRules               UserActionApprovalRule[]
   autoReviewPreference        UserActionAutoReviewPreference?
   createdSpaces               Space[]                         @relation("SpaceCreator")
+  invitationsSent             SpaceInvitation[]               @relation("SpaceInvitationInviter")
+  joinRequests                SpaceJoinRequest[]              @relation("SpaceJoinRequester")
+  inviteLinksMade             SpaceInviteLink[]               @relation("SpaceInviteLinkCreator")
   botSecrets                  BotSecret[]
   agentSecrets                AgentSecret[]
   createdTickets              Ticket[]                        @relation("TicketCreatorUser")
@@ -337,6 +340,9 @@ model Space {
   ticketComments              TicketComment[]
   messagingInstallations      MessagingInstallation[]
   messagingInstallSessions    MessagingInstallSession[]
+  invitations                 SpaceInvitation[]
+  inviteLinks                 SpaceInviteLink[]
+  joinRequests                SpaceJoinRequest[]
 
   @@unique([id, organizationId])
   @@index([organizationId, createdAt])
@@ -400,6 +406,64 @@ model Invitation {
   @@index([organizationId])
   @@index([email])
   @@map("invitation")
+}
+
+/// An invitation to one Space for one address. The link token is an HMAC of `id` under a server
+/// secret, so nothing secret is stored and the same link can be sent again.
+model SpaceInvitation {
+  id           String    @id
+  spaceId      String
+  space        Space     @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  /// Lowercased address the invitation is bound to.
+  email        String
+  role         String    @default("member")
+  /// pending, accepted or cancelled; an expired pending invitation is simply past `expiresAt`.
+  status       String    @default("pending")
+  expiresAt    DateTime
+  inviterId    String
+  inviter      User      @relation("SpaceInvitationInviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  acceptedById String?
+  acceptedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([spaceId, status])
+  @@index([email, status])
+  @@map("space_invitations")
+}
+
+/// A workspace link that only lets people ask to join. At most one is active per Space.
+model SpaceInviteLink {
+  id          String    @id
+  spaceId     String
+  space       Space     @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  createdById String
+  createdBy   User      @relation("SpaceInviteLinkCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  revokedAt   DateTime?
+
+  @@index([spaceId, revokedAt])
+  @@map("space_invite_links")
+}
+
+/// Someone who used the invite link and waits for an admin. A denied row stays so asking again
+/// changes nothing and the person is never told.
+model SpaceJoinRequest {
+  id          String    @id
+  spaceId     String
+  space       Space     @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation("SpaceJoinRequester", fields: [userId], references: [id], onDelete: Cascade)
+  /// pending, approved or denied.
+  status      String    @default("pending")
+  reason      String?
+  decidedById String?
+  decidedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@unique([spaceId, userId])
+  @@index([spaceId, status])
+  @@index([userId, status])
+  @@map("space_join_requests")
 }
 
 model DeploymentSettings {

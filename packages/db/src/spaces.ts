@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { displayName } from "@corvo/core";
+import { can, displayName } from "@corvo/core";
 import type { PrismaClient } from "./client.js";
 import { Prisma } from "./client.js";
 import { IsolationError } from "./scope.js";
@@ -160,20 +160,29 @@ export async function createSpaceForMember(
               userId: input.userId,
             },
           },
-          select: { organizationId: true },
+          select: { organizationId: true, role: true },
         });
         if (!currentMembership) throw new IsolationError();
+        // Someone invited into another person's workspace adds spaces to their own organization,
+        // never to the one they were invited to.
+        const owned = can(currentMembership, "delete_space")
+          ? currentMembership
+          : ((await tx.spaceMember.findFirst({
+              where: { userId: input.userId, role: "owner" },
+              orderBy: { createdAt: "asc" },
+              select: { organizationId: true, role: true },
+            })) ?? currentMembership);
         const count = await tx.spaceMember.count({
           where: {
             userId: input.userId,
-            organizationId: currentMembership.organizationId,
+            organizationId: owned.organizationId,
           },
         });
         if (count >= MAX_SPACES_PER_MEMBER) throw new SpaceLimitError();
         await createSpace(tx, {
           spaceId,
           spaceMembershipId,
-          organizationId: currentMembership.organizationId,
+          organizationId: owned.organizationId,
           userId: input.userId,
           name,
           createdAt,
@@ -252,11 +261,9 @@ async function loadActorSpace(
       space: { select: { isDefault: true, deletingAt: true } },
     },
   });
-  if (!targetMembership || targetMembership.organizationId !== currentMembership.organizationId) {
-    throw new SpaceNotFoundError();
-  }
+  if (!targetMembership) throw new SpaceNotFoundError();
   return {
-    organizationId: currentMembership.organizationId,
+    organizationId: targetMembership.organizationId,
     role: targetMembership.role,
     isDefault: targetMembership.space.isDefault,
     deletingAt: targetMembership.space.deletingAt,
@@ -269,7 +276,7 @@ async function assertSpaceDeletable(
   input: SpaceMemberTargetInput,
 ): Promise<Array<{ spaceId: string; space: { isDefault: boolean } }>> {
   const owned = await loadActorSpace(db, input);
-  if (owned.role !== "owner") throw new CannotDeleteSpaceAsNonOwnerError();
+  if (!can(owned, "delete_space")) throw new CannotDeleteSpaceAsNonOwnerError();
   if (owned.isDefault) throw new CannotDeleteDefaultSpaceError();
   const memberships = await db.spaceMember.findMany({
     where: {
@@ -576,7 +583,7 @@ export async function renameSpaceForMember(
       async (tx) => {
         await lockSpaceDeletion(tx, input.spaceId);
         const owned = await loadActorSpace(tx, input);
-        if (owned.role !== "owner") throw new CannotRenameSpaceAsNonOwnerError();
+        if (!can(owned, "manage_settings")) throw new CannotRenameSpaceAsNonOwnerError();
         if (owned.deletingAt) throw new SpaceDeletionInProgressError();
         await tx.space.update({
           where: { id: input.spaceId },
@@ -599,7 +606,7 @@ export async function setSpacePausedForMember(
       async (tx) => {
         await lockSpaceDeletion(tx, input.spaceId);
         const owned = await loadActorSpace(tx, input);
-        if (owned.role !== "owner") throw new CannotPauseSpaceAsNonOwnerError();
+        if (!can(owned, "manage_settings")) throw new CannotPauseSpaceAsNonOwnerError();
         if (owned.deletingAt) throw new SpaceDeletionInProgressError();
         const current = await tx.space.findUniqueOrThrow({
           where: { id: input.spaceId },

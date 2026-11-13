@@ -178,6 +178,15 @@ import { SearchQueryOutputSchema } from "./search.js";
 import { SecurityEventListInputSchema, SecurityEventSchema } from "./security-events.js";
 import { SettingsScopeSchema, SpaceSettingSchema, settingsScopeInput } from "./settings-scope.js";
 import {
+  MAX_INVITE_ADDRESSES,
+  SpaceInvitationSchema,
+  SpaceInviteLinkSchema,
+  SpaceInviteResultSchema,
+  SpaceJoinRequestSchema,
+  SpaceMemberSchema,
+  SpaceRoleSchema,
+} from "./team.js";
+import {
   UserMemoryDecisionSchema,
   UserMemorySchema,
   UserMemorySettingsSchema,
@@ -333,6 +342,50 @@ export const appContract = {
     remove: oc
       .input(z.object({ spaceId: Id }))
       .output(z.object({ ok: z.literal(true), activeSpaceId: Id })),
+    /** The people of the caller's current space. Owners and admins manage them. */
+    members: {
+      list: oc.output(z.array(SpaceMemberSchema)),
+      setRole: oc
+        .input(z.object({ userId: Id, role: SpaceRoleSchema }))
+        .output(z.object({ ok: z.literal(true) })),
+      /** Removing someone ends their access to the space at once. */
+      remove: oc.input(z.object({ userId: Id })).output(z.object({ ok: z.literal(true) })),
+      /** The caller leaves; the last owner cannot. */
+      leave: oc.output(z.object({ ok: z.literal(true) })),
+    },
+    invitations: {
+      list: oc.output(z.array(SpaceInvitationSchema)),
+      /** Addresses may arrive pasted as "Name <address>"; the server reads them. */
+      create: oc
+        .input(
+          z.object({
+            addresses: z.string().max(MAX_INVITE_ADDRESSES * 200),
+            role: SpaceRoleSchema.default("member"),
+          }),
+        )
+        .output(SpaceInviteResultSchema),
+      /** Sends the same link again and starts the seven days over. */
+      resend: oc.input(z.object({ id: Id })).output(SpaceInviteResultSchema),
+      cancel: oc.input(z.object({ id: Id })).output(z.object({ ok: z.literal(true) })),
+    },
+    /** A workspace link that only lets people ask to join. */
+    inviteLink: {
+      get: oc.output(SpaceInviteLinkSchema),
+      create: oc.output(SpaceInviteLinkSchema),
+      disable: oc.output(z.object({ ok: z.literal(true) })),
+    },
+    joinRequests: {
+      list: oc.output(z.array(SpaceJoinRequestSchema)),
+      answer: oc
+        .input(
+          z.object({
+            id: Id,
+            approve: z.boolean(),
+            reason: z.string().trim().max(300).optional(),
+          }),
+        )
+        .output(z.object({ ok: z.literal(true) })),
+    },
   },
   bootstrap: oc.input(z.object({ botId: Id.optional() })).output(AppBootstrapSchema),
   deployment: {

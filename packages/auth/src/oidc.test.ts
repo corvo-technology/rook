@@ -60,6 +60,7 @@ function setup(options: Partial<AuthEnv> = {}, hasMembership = true) {
       findUnique: vi.fn(async () => null),
       updateMany: vi.fn(async () => ({ count: 1 })),
     },
+    spaceInvitation: { count: vi.fn(async () => 0), findMany: vi.fn(async () => []) },
     spaceMember: {
       findFirst: vi.fn(async () => (hasMembership ? { id: "existing-space" } : null)),
     },

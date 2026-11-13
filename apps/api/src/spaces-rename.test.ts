@@ -123,20 +123,20 @@ describe("spaces.rename", () => {
     expect(update).not.toHaveBeenCalled();
   });
 
-  it("rejects a space in another organization", async () => {
-    const { update, handler } = renameHarness({
-      organizationId: "org-other",
-      role: "owner",
-      deletingAt: null,
-    });
-
-    const { response } = await handler.handle(renameRequest("Stolen"), {
+  it("follows the role in a space of another organization the person was invited into", async () => {
+    const member = renameHarness({ organizationId: "org-other", role: "member", deletingAt: null });
+    const refused = await member.handler.handle(renameRequest("Stolen"), {
       prefix: "/rpc",
       context: { actor },
     });
-
-    expect(response.status).toBe(404);
-    expect(update).not.toHaveBeenCalled();
+    expect(refused.response.status).toBe(403);
+    expect(member.update).not.toHaveBeenCalled();
+    const owner = renameHarness({ organizationId: "org-other", role: "owner", deletingAt: null });
+    const allowed = await owner.handler.handle(renameRequest("Mine"), {
+      prefix: "/rpc",
+      context: { actor },
+    });
+    expect(allowed.response.status).toBe(200);
   });
 
   it.each(["   ", "x".repeat(61)])(

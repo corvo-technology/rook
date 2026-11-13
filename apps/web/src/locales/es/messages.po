@@ -85,6 +85,12 @@ msgstr "{0} GB"
 msgid "{0} handling"
 msgstr "Gestión de {0}"
 
+#. placeholder {0}: preview.inviterName
+#. placeholder {1}: preview.spaceName
+#: src/pages/InvitePage.tsx
+msgid "{0} invited you to {1}"
+msgstr "{0} te invitó a {1}"
+
 #. placeholder {0}: bot.name
 #: src/components/call/IncomingCall.tsx
 msgid "{0} is calling you"
@@ -799,6 +805,10 @@ msgstr "Añadido a la wiki"
 msgid "Adding…"
 msgstr "Agregando…"
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Admin"
+msgstr "Admin"
+
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -1049,6 +1059,7 @@ msgid "Approvals"
 msgstr "Aprobaciones"
 
 #: src/components/WikiChangeCard.tsx
+#: src/pages/MembersSettingsPanel.tsx
 #: src/pages/shell/message-cards.tsx
 msgid "Approve"
 msgstr "Aprobar"
@@ -1107,6 +1118,10 @@ msgstr "Preguntar"
 #: src/pages/shell/bot-panel.tsx
 msgid "Ask first"
 msgstr "Preguntar antes"
+
+#: src/pages/InvitePage.tsx
+msgid "Ask to join"
+msgstr "Pedir unirse"
 
 #: src/components/AutonomyPicker.tsx
 msgid "Asks before any change"
@@ -1414,6 +1429,7 @@ msgstr "No puede leer imágenes"
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/LocalSpeechSection.tsx
 #: src/pages/McpServersSettings.tsx
+#: src/pages/MembersSettingsPanel.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/Onboarding.tsx
@@ -2028,6 +2044,10 @@ msgstr "Copiar código"
 msgid "Copy diagram source"
 msgstr "Copiar fuente del diagrama"
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Copy link"
+msgstr "Copiar enlace"
+
 #: src/pages/shell/agent-import.tsx
 msgid "Copy prompt"
 msgstr "Copiar prompt"
@@ -2061,6 +2081,10 @@ msgstr "No se pudo añadir el agente"
 msgid "Could not add the file"
 msgstr "No se pudo añadir el archivo"
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Could not approve"
+msgstr "No se pudo aprobar"
+
 #: src/pages/shell/message-cards.tsx
 msgid "Could not approve this server"
 msgstr "No se pudo aprobar este servidor"
@@ -2069,6 +2093,10 @@ msgstr "No se pudo aprobar este servidor"
 msgid "Could not authorize this app"
 msgstr "No se pudo autorizar esta app"
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Could not cancel"
+msgstr "No se pudo cancelar"
+
 #: src/components/DesktopControlSettings.tsx
 msgid "Could not change desktop control"
 msgstr "No se pudo cambiar el control del escritorio"
@@ -2076,6 +2104,10 @@ msgstr "No se pudo cambiar el control del escritorio"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Could not change password"
 msgstr "No se pudo cambiar la contraseña"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Could not change the role"
+msgstr "No se pudo cambiar el rol"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Could not check stored credentials."
@@ -2158,6 +2190,10 @@ msgstr "No se pudo crear la sección"
 msgid "Could not create space"
 msgstr "No se pudo crear el espacio"
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Could not create the link"
+msgstr "No se pudo crear el enlace"
+
 #: src/pages/shell/dialogs.tsx
 msgid "Could not delete bot"
 msgstr "No se pudo eliminar el bot"
@@ -2190,6 +2226,10 @@ msgstr "No se pudo eliminar el espacio"
 #: src/pages/Artifacts.tsx
 msgid "Could not delete this artifact."
 msgstr "No se pudo eliminar este artefacto."
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Could not deny"
+msgstr "No se pudo rechazar"
 
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Could not disconnect"
@@ -2240,6 +2280,10 @@ msgstr "No se pudo instalar el conector"
 msgid "Could not install the skill"
 msgstr "No se pudo instalar la habilidad"
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Could not leave"
+msgstr "No se pudo salir"
+
 #: src/components/ErrorBoundary.tsx
 #: src/components/PasskeySettings.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -2280,6 +2324,10 @@ msgstr "No se pudieron cargar las integraciones"
 #: src/pages/Store.tsx
 msgid "Could not load MCP servers"
 msgstr "No se pudieron cargar los servidores MCP"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Could not load members"
+msgstr "No se pudieron cargar los miembros"
 
 #: src/pages/model-settings/use-model-settings.ts
 msgid "Could not load model settings"
@@ -2356,6 +2404,7 @@ msgid "Could not read these files"
 msgstr "No se pudieron leer estos archivos"
 
 #: src/pages/KnowledgeSection.tsx
+#: src/pages/MembersSettingsPanel.tsx
 #: src/pages/ScratchpadSection.tsx
 #: src/pages/WikiBrowser.tsx
 msgid "Could not remove"
@@ -2389,6 +2438,10 @@ msgstr "No se pudo renombrar el espacio"
 #: src/pages/shell/message-cards.tsx
 msgid "Could not render chart"
 msgstr "No se pudo renderizar el gráfico"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Could not resend"
+msgstr "No se pudo reenviar"
 
 #: src/pages/Auth.tsx
 msgid "Could not reset password"
@@ -2482,6 +2535,10 @@ msgstr "No se pudo guardar esta opción"
 msgid "Could not search catalog"
 msgstr "No se pudo buscar en el catálogo"
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Could not send invitations"
+msgstr "No se pudieron enviar las invitaciones"
+
 #: src/pages/Auth.tsx
 msgid "Could not send reset email"
 msgstr "No se pudo enviar el correo de restablecimiento"
@@ -2523,6 +2580,10 @@ msgstr "No se pudo tomar el control"
 #: src/pages/McpServersSettings.tsx
 msgid "Could not test MCP server"
 msgstr "No se pudo probar el servidor MCP"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Could not turn off"
+msgstr "No se pudo desactivar"
 
 #: src/pages/shell/agent-import-undo.tsx
 msgid "Could not undo the import"
@@ -2571,6 +2632,7 @@ msgid "Couldn't update your timezone"
 msgstr "No se pudo actualizar tu zona horaria"
 
 #: src/pages/Board.tsx
+#: src/pages/MembersSettingsPanel.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/create-bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
@@ -2840,6 +2902,7 @@ msgid "Denied"
 msgstr "Denegado"
 
 #: src/components/AskCard.tsx
+#: src/pages/MembersSettingsPanel.tsx
 msgid "Deny"
 msgstr "Denegar"
 
@@ -3080,6 +3143,10 @@ msgstr "Editar perfil"
 #: src/pages/Auth.tsx
 msgid "Email"
 msgstr "Correo"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Email addresses"
+msgstr "Direcciones de correo"
 
 #: src/lib/user-error.ts
 msgid "Email is not allowed to register"
@@ -3763,6 +3830,18 @@ msgstr "Unidad del intervalo"
 msgid "Invalid code"
 msgstr "Código no válido"
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Invitations"
+msgstr "Invitaciones"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Invite"
+msgstr "Invitar"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Invite link"
+msgstr "Enlace de invitación"
+
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Isolated"
@@ -3799,6 +3878,14 @@ msgstr "Su modelo cambió desde la importación, así que se mantiene."
 #: src/pages/shell/agent-import-undo.tsx
 msgid "Its model goes back to before the import."
 msgstr "Su modelo vuelve al que tenía antes de la importación."
+
+#: src/pages/InvitePage.tsx
+msgid "Join"
+msgstr "Unirse"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "joined"
+msgstr "se unió"
 
 #: src/pages/shell/transcript.tsx
 msgid "Jump to latest"
@@ -3890,6 +3977,14 @@ msgstr "Aprender de las conversaciones"
 #: src/components/WikiCaptureSwitch.tsx
 msgid "Learn from this conversation"
 msgstr "Aprender de esta conversación"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Leave"
+msgstr "Salir"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Leave this space?"
+msgstr "¿Salir de este espacio?"
 
 #: src/components/AutonomyPicker.tsx
 msgid "Let {name} act without asking?"
@@ -4157,10 +4252,12 @@ msgid "Medium"
 msgstr "Medio"
 
 #: src/lib/identity-display.ts
+#: src/pages/MembersSettingsPanel.tsx
 msgid "Member"
 msgstr "Miembro"
 
 #: src/pages/MemberUsageSection.tsx
+#: src/pages/Settings.tsx
 msgid "Members"
 msgstr "Miembros"
 
@@ -4971,6 +5068,7 @@ msgstr "Salida"
 
 #: src/lib/identity-display.ts
 #: src/pages/Board.tsx
+#: src/pages/MembersSettingsPanel.tsx
 msgid "Owner"
 msgstr "Propietario"
 
@@ -5417,6 +5515,7 @@ msgstr "Recordado"
 #: src/pages/ConnectionsSettingsPanel.tsx
 #: src/pages/LocalSpeechSection.tsx
 #: src/pages/McpServersSettings.tsx
+#: src/pages/MembersSettingsPanel.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/ScratchpadSection.tsx
@@ -5435,6 +5534,11 @@ msgstr "Quitar {0}"
 #: src/pages/GroupPanel.tsx
 msgid "Remove {0} from the group"
 msgstr "Quitar a {0} del grupo"
+
+#. placeholder {0}: member.name
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Remove {0}?"
+msgstr "¿Quitar a {0}?"
 
 #: src/pages/shell/bot-credentials.tsx
 msgid "Remove {secretName}? This bot will no longer be able to use it."
@@ -5557,6 +5661,14 @@ msgstr "Respondiendo a {0}"
 msgid "Request a new code"
 msgstr "Solicita un código nuevo"
 
+#: src/pages/InvitePage.tsx
+msgid "Request sent"
+msgstr "Solicitud enviada"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Requests"
+msgstr "Solicitudes"
+
 #: src/pages/shell/message-cards.tsx
 msgid "Research & writing"
 msgstr "Investigación y redacción"
@@ -5564,6 +5676,10 @@ msgstr "Investigación y redacción"
 #: src/pages/StoreCategoryChips.tsx
 msgid "Research and writing"
 msgstr "Investigación y redacción"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Resend"
+msgstr "Reenviar"
 
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Reset"
@@ -5679,6 +5795,15 @@ msgstr "Revisar ahora"
 #: src/pages/WikiBrowser.tsx
 msgid "Revision {0}"
 msgstr "Revisión {0}"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Role"
+msgstr "Rol"
+
+#. placeholder {0}: member.name
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Role of {0}"
+msgstr "Rol de {0}"
 
 #: src/pages/Onboarding.tsx
 msgid "Rook credits"
@@ -6707,6 +6832,10 @@ msgstr "Esta importación ya se usó. Vuelve a elegir los archivos."
 msgid "This isn't sent yet. Edit it or send it."
 msgstr "Esto aún no se ha enviado. Edítalo o envíalo."
 
+#: src/pages/InvitePage.tsx
+msgid "This link no longer works"
+msgstr "Este enlace ya no funciona"
+
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/Onboarding.tsx
 msgid "this Mac"
@@ -6921,6 +7050,10 @@ msgstr "Vuelve a intentar la prueba."
 #: src/lib/cron.ts
 msgid "Tuesday"
 msgstr "martes"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Turn off"
+msgstr "Desactivar"
 
 #: src/pages/shell/bot-credentials.tsx
 msgid "Type"

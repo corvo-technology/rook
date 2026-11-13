@@ -4,6 +4,7 @@ const SETTINGS_SECTIONS = [
   "voice",
   "approvals",
   "memory",
+  "members",
   "usage",
   "mcp",
   "computer",

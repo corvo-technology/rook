@@ -39,6 +39,8 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
     return authErrorText({ code }, t`Could not continue`);
   });
   const [pending, setPending] = useState(false);
+  const nextParam = searchParams.get("next");
+  const nextQuery = nextParam ? `?next=${encodeURIComponent(nextParam)}` : "";
   const entering = useRef(false);
   const [resetSent, setResetSent] = useState(false);
   // Signup triggers a session refresh that remounts the anonymous auth page.
@@ -422,14 +424,14 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
                   {mode === "in" ? (
                     <>
                       <Trans>Don’t have an account?</Trans>{" "}
-                      <Link to="/sign-up" className="font-medium text-foreground">
+                      <Link to={`/sign-up${nextQuery}`} className="font-medium text-foreground">
                         <Trans>Sign up</Trans>
                       </Link>
                     </>
                   ) : mode === "up" ? (
                     <>
                       <Trans>Already have an account?</Trans>{" "}
-                      <Link to="/sign-in" className="font-medium text-foreground">
+                      <Link to={`/sign-in${nextQuery}`} className="font-medium text-foreground">
                         <Trans>Sign in</Trans>
                       </Link>
                     </>

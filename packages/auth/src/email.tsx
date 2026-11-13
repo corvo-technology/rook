@@ -216,3 +216,25 @@ export function accountDeletionEmail(
     </>,
   );
 }
+
+export function invitationEmail(
+  webOrigin: string,
+  input: { to: string; inviterName: string; spaceName: string; url: string },
+): Promise<TransactionalEmail> {
+  return message(
+    webOrigin,
+    input.to,
+    `${displayName(input.inviterName, "Someone")} invited you to ${displayName(input.spaceName, "a workspace")} on Rook`,
+    <>
+      <Text style={text}>
+        {displayName(input.inviterName, "Someone")} invited you to{" "}
+        {displayName(input.spaceName, "a workspace")}.
+      </Text>
+      <Action href={input.url}>Join</Action>
+      <Text style={note}>
+        This link works for seven days and only for this address. If you were not expecting it,
+        ignore this email.
+      </Text>
+    </>,
+  );
+}

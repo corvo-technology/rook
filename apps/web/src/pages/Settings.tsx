@@ -16,6 +16,7 @@ import {
   Server,
   Settings,
   ShieldCheck,
+  Users,
   Volume2,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -41,6 +42,7 @@ import {
 import { BillingSettingsPanel } from "./BillingSettingsPanel";
 import { ConnectionsSettingsPanel } from "./ConnectionsSettingsPanel";
 import { McpServersSettings } from "./McpServersSettings";
+import { MembersSettingsPanel } from "./MembersSettingsPanel";
 import { MemorySettingsOverlay } from "./MemorySettingsOverlay";
 import { ModelSettingsOverlay } from "./ModelSettingsOverlay";
 import { PartnershipSettingsPanel } from "./PartnershipSettingsPanel";
@@ -62,7 +64,7 @@ function voiceStatusRefreshTimeout(): Promise<never> {
 }
 
 /** Sections that depend on the account's flags wait for it before anyone is sent elsewhere. */
-const ACCOUNT_SECTIONS = ["computer", "billing", "partnership", "mcp"];
+const ACCOUNT_SECTIONS = ["computer", "billing", "partnership", "mcp", "members"];
 
 /**
  * Settings as a page, one route per section (`/settings/:section`, and `/settings/space/:spaceId`
@@ -290,6 +292,16 @@ export function SettingsPage() {
         />
       ),
     },
+    ...(me
+      ? [
+          {
+            id: "members",
+            label: t`Members`,
+            icon: Users,
+            content: <MembersSettingsPanel userId={me.userId} />,
+          },
+        ]
+      : []),
     {
       id: "usage",
       label: t`Usage`,

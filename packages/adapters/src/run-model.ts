@@ -12,8 +12,8 @@ import {
   cloudflareModelConfigMessage,
   OPENAI_COMPATIBLE_PROVIDER_ID,
 } from "@corvo/contracts";
-import { MISSING_MODEL_RUN_ERROR } from "@corvo/core";
-import { retireModelCredential } from "@corvo/db";
+import { MISSING_MODEL_RUN_ERROR, WORKSPACE_PERSONAL_MODEL_RUN_ERROR } from "@corvo/core";
+import { modelScope, retireModelCredential } from "@corvo/db";
 import { cloudflareProviderEnv } from "./cloudflare-ai-gateway.js";
 import { resolveDeploymentModel } from "./deployment-model.js";
 import type { ExecutorDeps } from "./executor-deps.js";
@@ -38,6 +38,7 @@ import {
 } from "./model-selection.js";
 import { modelIdSupportsImages } from "./model-vision.js";
 import { assertAllowedOpenAiCompatibleUrl } from "./openai-compatible-url.js";
+import { modelCredentialAuthKindFromPlaintext } from "./pi-catalog-availability.js";
 import { codexLiveListsModel } from "./pi-codex-catalog.js";
 import { toOAuthCredential } from "./pi-credentials.js";
 import { isOperatorOfferedModel, LOCAL_PROVIDER_ID } from "./pi-local-provider.js";
@@ -158,6 +159,14 @@ export async function resolveModelKey(...args: Parameters<typeof resolveModelKey
   const [deps, userId, spaceId, , provider] = args;
   const billingEnabled = await modelCreditBillingEnabled(deps);
   const scope = { userId, spaceId };
+  // On the connections the owner lent to the Space, the key, its refresh and its retirement are
+  // the owner's. A personal sign-in (an account login or a coding agent on a computer) is not lent.
+  const lent = await modelScope(deps.prisma, scope);
+  if (lent.delegated && provider === CLI_ENGINE_PROVIDER_ID) {
+    throw new UnavailableModelForAuthError(WORKSPACE_PERSONAL_MODEL_RUN_ERROR);
+  }
+  args[1] = lent.userId;
+  args[7] = { ...args[7], delegated: lent.delegated };
   if (billingEnabled && (await hasHostedModelCredits(deps.prisma, scope, provider))) {
     args[3] = null;
     // Funded managed backups use deployment credentials just like the primary.
@@ -202,7 +211,10 @@ async function resolveModelKeyMaterial(
   provider: string,
   modelId: string,
   registerSecrets?: (values: string[]) => void,
-  { requireStoredSecret = false }: { requireStoredSecret?: boolean } = {},
+  {
+    requireStoredSecret = false,
+    delegated = false,
+  }: { requireStoredSecret?: boolean; delegated?: boolean } = {},
 ): Promise<{
   apiKey?: string;
   accountId?: string;
@@ -244,6 +256,9 @@ async function resolveModelKeyMaterial(
         return { apiKey: deploymentKeyFor(deps, provider), redact: [] };
       }
       const plaintext = await deps.secretStore.load(row.ciphertext, row.id);
+      if (delegated && modelCredentialAuthKindFromPlaintext(plaintext) === "oauth") {
+        throw new UnavailableModelForAuthError(WORKSPACE_PERSONAL_MODEL_RUN_ERROR);
+      }
       registerSecrets?.(secretValuesToRedact(parseModelSecret(plaintext)));
       const persist = persistStoredModelSecret(
         deps.prisma,

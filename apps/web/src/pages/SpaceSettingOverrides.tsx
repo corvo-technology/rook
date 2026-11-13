@@ -13,6 +13,7 @@ import { useSpaceRpc } from "../lib/space-rpc";
 import { errorText } from "../lib/user-error";
 import { ModelSettingsOverlay } from "./ModelSettingsOverlay";
 import { VoiceSettingsOverlay } from "./VoiceSettingsOverlay";
+import { WorkspaceModelRow } from "./WorkspaceModelRow";
 
 /**
  * Account settings the bound Space follows until the member customizes them here. A customized
@@ -84,6 +85,7 @@ export function SpaceSettingOverrides({
 
   return (
     <div className="space-y-3">
+      <WorkspaceModelRow />
       <SettingsGroup data-testid="space-setting-overrides">
         {settings.map(({ id, label, panel }) => {
           const custom = customized.includes(id);

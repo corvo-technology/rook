@@ -155,6 +155,8 @@ export const ROW_SECURITY_MODELS: ReadonlySet<string> = new Set([
   "ActionApprovalRule",
   "SpaceModelRoleChoice",
   "SpaceSettingOverride",
+  "SpaceModelConnection",
+  "SpaceMemberModelSetting",
   "WikiSettings",
   "WikiSource",
   "WikiChange",

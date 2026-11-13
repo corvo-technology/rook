@@ -1140,6 +1140,9 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Running work stops and nothing starts until you resume.":
     "正在运行的工作将停止，恢复前不会启动任何内容。",
   "This bot reached its monthly token limit.": "此机器人已达到每月令牌上限。",
+  "You reached your monthly limit on this space's model.": "你已达到此空间模型的每月上限。",
+  "This space's model is a personal sign-in and only its owner can use it.":
+    "此空间的模型是个人登录，只有其所有者可以使用。",
   "This reply reached its token cap.": "此回复已达到令牌上限。",
   "Bots are paused in this space.": "此空间中的机器人已暂停。",
   "{used} of {limit}": "{used} / {limit}",

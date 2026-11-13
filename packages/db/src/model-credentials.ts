@@ -1,5 +1,6 @@
 import { canonicalPiProviderId, storedPiProviderIds, usableModelId } from "@corvo/contracts";
 import type { PrismaClient } from "./client.js";
+import { withModelScope } from "./workspace-model.js";
 
 export const newestCredentialOrder = [
   { updatedAt: "desc" as const },
@@ -15,6 +16,9 @@ export function modelCredentialProviderFilter(provider: string): string | { in: 
 }
 
 type ModelCredentialScope = { userId: string };
+/** Who is asking: with a Space, a connection the owner lent to it answers instead of the member's. */
+type ModelCredentialAsker = { userId: string; spaceId?: string };
+type ModelScopeClient = Parameters<typeof withModelScope>[0];
 
 /** Stores a connection's own model choice, which it keeps in every Space; roles hold the rest. */
 export function saveModelPreference(
@@ -239,6 +243,17 @@ function credentialFromChoice<
 
 export async function findModelCredential(
   prisma: Pick<PrismaClient, "userModelPreference" | "userModelCredential">,
+  asker: ModelCredentialAsker,
+  provider: string,
+  modelId?: string | null,
+) {
+  return withModelScope(prisma as unknown as ModelScopeClient, asker, (scope) =>
+    findOwnModelCredential(prisma, scope, provider, modelId),
+  );
+}
+
+async function findOwnModelCredential(
+  prisma: Pick<PrismaClient, "userModelPreference" | "userModelCredential">,
   scope: ModelCredentialScope,
   provider: string,
   modelId?: string | null,
@@ -309,6 +324,17 @@ export async function findModelCredential(
 
 /** One connection by id, with its own model; null when it is gone. */
 export async function findModelCredentialById(
+  prisma: Pick<PrismaClient, "userModelCredential">,
+  asker: ModelCredentialAsker,
+  credentialId: string,
+  provider?: string,
+) {
+  return withModelScope(prisma as unknown as ModelScopeClient, asker, (scope) =>
+    findOwnModelCredentialById(prisma, scope, credentialId, provider),
+  );
+}
+
+async function findOwnModelCredentialById(
   prisma: Pick<PrismaClient, "userModelCredential">,
   scope: ModelCredentialScope,
   credentialId: string,

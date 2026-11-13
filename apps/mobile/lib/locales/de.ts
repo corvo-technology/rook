@@ -1192,6 +1192,10 @@ export const DE_MESSAGES: Record<string, string> = {
     "Laufende Arbeit wird gestoppt, und nichts startet, bis du fortsetzt.",
   "This bot reached its monthly token limit.":
     "Dieser Bot hat sein monatliches Token-Limit erreicht.",
+  "You reached your monthly limit on this space's model.":
+    "Du hast dein monatliches Limit für das Modell dieses Spaces erreicht.",
+  "This space's model is a personal sign-in and only its owner can use it.":
+    "Das Modell dieses Spaces ist eine persönliche Anmeldung und nur sein Eigentümer kann es nutzen.",
   "This reply reached its token cap.": "Diese Antwort hat ihr Token-Limit erreicht.",
   "Bots are paused in this space.": "Bots sind in diesem Space pausiert.",
   "{used} of {limit}": "{used} von {limit}",

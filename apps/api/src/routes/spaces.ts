@@ -1,5 +1,5 @@
 import type { Actor, SpaceNavigation } from "@corvo/contracts";
-import { ACTIVE_RUN_STATUSES } from "@corvo/core";
+import { ACTIVE_RUN_STATUSES, can } from "@corvo/core";
 import type { createGroupRepos, createRepos, PrismaClient } from "@corvo/db";
 import {
   CannotDeleteDefaultSpaceError,
@@ -255,9 +255,11 @@ async function memberSpaceNavigation(
   });
   if (!currentSpace) throw new IsolationError();
   const memberships = await deps.prisma.spaceMember.findMany({
-    where: { userId: actor.userId, organizationId: currentSpace.organizationId },
+    // Every space the person belongs to, including ones they were invited into.
+    where: { userId: actor.userId },
     select: {
       spaceId: true,
+      organizationId: true,
       role: true,
       space: { select: { name: true, isDefault: true, deletingAt: true, pausedAt: true } },
     },
@@ -330,13 +332,14 @@ async function memberSpaceNavigation(
         isDefault: membership.space.isDefault,
         hasContent: spacesWithContent.has(membership.spaceId),
         botCount: botCounts.get(membership.spaceId) ?? 0,
-        canRename: membership.role === "owner" && membership.space.deletingAt === null,
+        canRename: can(membership, "manage_settings") && membership.space.deletingAt === null,
         pausedAt: membership.space.pausedAt?.toISOString() ?? null,
-        canPause: membership.role === "owner" && membership.space.deletingAt === null,
+        canPause: can(membership, "manage_settings") && membership.space.deletingAt === null,
         canDelete:
-          membership.role === "owner" &&
+          can(membership, "delete_space") &&
           !membership.space.isDefault &&
-          memberships.length > 1 &&
+          memberships.filter((other) => other.organizationId === membership.organizationId).length >
+            1 &&
           (membership.space.deletingAt === null || membership.space.deletingAt < staleClaimBefore),
         bots: spaceBots.map((bot) => ({
           id: bot.id,

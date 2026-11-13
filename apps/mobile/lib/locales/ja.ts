@@ -1174,6 +1174,10 @@ export const JA_MESSAGES: Record<string, string> = {
   "Running work stops and nothing starts until you resume.":
     "実行中の作業は停止し、再開するまで何も開始されません。",
   "This bot reached its monthly token limit.": "このボットは月間トークン上限に達しました。",
+  "You reached your monthly limit on this space's model.":
+    "このスペースのモデルの月間上限に達しました。",
+  "This space's model is a personal sign-in and only its owner can use it.":
+    "このスペースのモデルは個人のサインインで、所有者だけが使えます。",
   "This reply reached its token cap.": "この返信はトークン上限に達しました。",
   "Bots are paused in this space.": "このスペースのボットは一時停止中です。",
   "{used} of {limit}": "{used} / {limit}",

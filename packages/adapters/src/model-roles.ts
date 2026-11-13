@@ -7,7 +7,7 @@ import type {
 } from "@corvo/contracts";
 import { backupChoiceKey, usableModelId } from "@corvo/contracts";
 import type { PrismaClient } from "@corvo/db";
-import { appliedModelRole } from "@corvo/db";
+import { appliedModelRole, runModelRole } from "@corvo/db";
 import { resolveAutoReviewChecker } from "./auto-review.js";
 import type { ModelChoice, ModelCredential } from "./model-selection.js";
 import { findConnectedModelCredential } from "./model-selection.js";
@@ -59,7 +59,9 @@ export async function effectiveModelRole(
   defaults: DeploymentModelDefaults,
   requested?: SettingsScope,
 ): Promise<EffectiveModelRole> {
-  const own = await appliedModelRole(prisma, scope, role, requested);
+  const own = requested
+    ? await appliedModelRole(prisma, scope, role, requested)
+    : await runModelRole(prisma, scope, role);
   if (own.primary) return { ...own, primarySource: "member" };
   const deployment = deploymentModelRole(role, defaults);
   return {
@@ -79,7 +81,7 @@ export async function resolveMemberMainModel(
   deps: { prisma: PrismaClient; secretStore: Pick<SecretStore, "load"> },
   scope: { userId: string; spaceId: string },
 ): Promise<MemberMainModel | null> {
-  const { primary } = await appliedModelRole(deps.prisma, scope, "main");
+  const { primary } = await runModelRole(deps.prisma, scope, "main");
   if (!primary) return null;
   const credential = await findConnectedModelCredential(
     deps.prisma,

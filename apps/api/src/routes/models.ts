@@ -53,6 +53,7 @@ import {
 import { modelFailureError } from "../model-failure-error.js";
 import { assertCompatibleDefaultChange } from "../model-pins.js";
 import { withSerializableRetry } from "../serializable-retry.js";
+import { chooseOwnModel, shareWorkspaceModel, workspaceModelFor } from "../workspace-model.js";
 import type { RouterContext } from "./context.js";
 
 export function modelsRoutes(ctx: RouterContext) {
@@ -70,6 +71,15 @@ export function modelsRoutes(ctx: RouterContext) {
   return {
     models: {
       list: authed.models.list.handler(async ({ context }) => chatCatalog(context.actor)),
+      workspaceModel: authed.models.workspaceModel.handler(async ({ context }) =>
+        workspaceModelFor(deps, context.actor),
+      ),
+      setWorkspaceModel: authed.models.setWorkspaceModel.handler(async ({ context, input }) =>
+        shareWorkspaceModel(deps, context.actor, input.shared),
+      ),
+      setUseOwnModel: authed.models.setUseOwnModel.handler(async ({ context, input }) =>
+        chooseOwnModel(deps, context.actor, input.useOwn),
+      ),
       cliEngines: authed.models.cliEngines.handler(
         async () => (await cliEngineHost()?.view()) ?? { enabled: false, engines: [] },
       ),

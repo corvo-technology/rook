@@ -7,7 +7,12 @@ import {
   usableModelId,
 } from "@corvo/contracts";
 import type { PrismaClient } from "@corvo/db";
-import { chooseModelCredential, findModelCredential, findModelCredentialById } from "@corvo/db";
+import {
+  chooseModelCredential,
+  findModelCredential,
+  findModelCredentialById,
+  withModelScope,
+} from "@corvo/db";
 import { resolveDeploymentModel } from "./deployment-model.js";
 import { modelCredentialDto } from "./model-connect.js";
 import type { ModelCredentialAuthKind } from "./pi-catalog-availability.js";
@@ -140,10 +145,22 @@ export type SpaceCatalogAuth = {
 export async function modelCredentialAuthKindsForSpace(
   prisma: PrismaClient,
   secretStore: Pick<SecretStore, "load">,
-  scope: Pick<Actor, "userId" | "spaceId">,
+  asker: Pick<Actor, "userId" | "spaceId">,
   hostedProvider?: string,
 ): Promise<SpaceCatalogAuth> {
-  const hosted = hostedProvider && (await hasHostedModelCredits(prisma, scope, hostedProvider));
+  return withModelScope(prisma, asker, (scope) =>
+    spaceCatalogAuth(prisma, secretStore, scope, asker, hostedProvider),
+  );
+}
+
+async function spaceCatalogAuth(
+  prisma: PrismaClient,
+  secretStore: Pick<SecretStore, "load">,
+  scope: Pick<Actor, "userId" | "spaceId"> & { delegated: boolean },
+  asker: Pick<Actor, "userId" | "spaceId">,
+  hostedProvider?: string,
+): Promise<SpaceCatalogAuth> {
+  const hosted = hostedProvider && (await hasHostedModelCredits(prisma, asker, hostedProvider));
   const [credentials, preferences] = await Promise.all([
     prisma.userModelCredential.findMany({
       where: { userId: scope.userId },
@@ -259,7 +276,9 @@ export async function modelCredentialAuthKindsForSpace(
 
   const auth = empty;
   for (const selection of selections) {
-    const kind = await readKind(selection.secretId);
+    const stored = await readKind(selection.secretId);
+    // A personal sign-in never serves anyone but its owner.
+    const kind = scope.delegated && stored === "oauth" ? undefined : stored;
     if (selection.modelSpecific) {
       const models = auth.byModel[selection.provider] ?? {};
       models[selection.modelId] = kind ?? "disconnected";
@@ -470,10 +489,24 @@ export type ConnectedModelResolution = {
 export async function findConnectedModelCredential(
   prisma: PrismaClient,
   secretStore: Pick<SecretStore, "load">,
-  actor: Pick<Actor, "userId" | "spaceId">,
+  asker: Pick<Actor, "userId" | "spaceId">,
   provider: string,
   modelId?: string | null,
   resolution: ConnectedModelResolution = {},
+): Promise<ModelCredential> {
+  // A connection the owner lent to the Space answers for a member, so its secret is the owner's.
+  return withModelScope(prisma, asker, (actor) =>
+    findConnectionFor(prisma, secretStore, actor, provider, modelId, resolution),
+  );
+}
+
+async function findConnectionFor(
+  prisma: PrismaClient,
+  secretStore: Pick<SecretStore, "load">,
+  actor: Pick<Actor, "userId" | "spaceId">,
+  provider: string,
+  modelId: string | null | undefined,
+  resolution: ConnectedModelResolution,
 ): Promise<ModelCredential> {
   if (resolution.credentialId)
     return findModelCredentialById(prisma, actor, resolution.credentialId, provider);
@@ -551,6 +584,24 @@ export async function validateBotModelChange(
     current?: { provider: string | null; model: string | null };
   },
 ): Promise<BotModelChangeResult> {
+  // The member's connections are the owner's when the owner lent them to the Space.
+  return withModelScope(deps.prisma, input, (modelOwner) =>
+    validateBotModel(deps, input, modelOwner),
+  );
+}
+
+async function validateBotModel(
+  deps: BotModelChangeDeps,
+  input: {
+    userId: string;
+    spaceId: string;
+    provider: string | null;
+    model: string | null;
+    thinkingLevel?: string | null;
+    current?: { provider: string | null; model: string | null };
+  },
+  modelOwner: { userId: string },
+): Promise<BotModelChangeResult> {
   const scope = { userId: input.userId, spaceId: input.spaceId };
   const { provider, model } = input;
   const changing = provider !== input.current?.provider || model !== input.current?.model;
@@ -586,7 +637,7 @@ export async function validateBotModelChange(
       (await credentialLiveListsModel(
         deps.prisma,
         deps.secretStore,
-        input.userId,
+        modelOwner.userId,
         credential.secretId,
         provider,
         model,
@@ -608,7 +659,7 @@ export async function validateBotModelChange(
       const authError = await validateStoredModelAuth(
         deps.prisma,
         deps.secretStore,
-        input.userId,
+        modelOwner.userId,
         credential.secretId,
         provider,
         model,
@@ -647,10 +698,27 @@ export async function validateBotModelChange(
  */
 export async function prepareAllowedThinkingLevels(
   deps: Pick<BotModelChangeDeps, "prisma" | "secretStore">,
-  actor: Pick<Actor, "userId" | "spaceId">,
+  asker: Pick<Actor, "userId" | "spaceId">,
   provider: string,
   modelId: string,
   resolution: ConnectedModelResolution = {},
+): Promise<{
+  allowed: string[] | undefined;
+  secret?: { id: string; ciphertext: string };
+  enabledModelIds?: string[];
+  storedEnabledModelIds?: string[];
+}> {
+  return withModelScope(deps.prisma, asker, (actor) =>
+    allowedThinkingLevelsFor(deps, actor, provider, modelId, resolution),
+  );
+}
+
+async function allowedThinkingLevelsFor(
+  deps: Pick<BotModelChangeDeps, "prisma" | "secretStore">,
+  actor: Pick<Actor, "userId" | "spaceId">,
+  provider: string,
+  modelId: string,
+  resolution: ConnectedModelResolution,
 ): Promise<{
   allowed: string[] | undefined;
   secret?: { id: string; ciphertext: string };
@@ -727,14 +795,28 @@ export function compatibleThinkingLevels(
 export async function validateConnectedModelChoice(
   prisma: PrismaClient,
   secretStore: Pick<SecretStore, "load">,
-  actor: Pick<Actor, "userId" | "spaceId">,
+  asker: Pick<Actor, "userId" | "spaceId">,
   provider: string,
   modelId: string,
   resolution: ConnectedModelResolution = {},
 ) {
+  return withModelScope(prisma, asker, (actor) =>
+    validateChoiceFor(prisma, secretStore, asker, actor, provider, modelId, resolution),
+  );
+}
+
+async function validateChoiceFor(
+  prisma: PrismaClient,
+  secretStore: Pick<SecretStore, "load">,
+  asker: Pick<Actor, "userId" | "spaceId">,
+  actor: Pick<Actor, "userId" | "spaceId">,
+  provider: string,
+  modelId: string,
+  resolution: ConnectedModelResolution,
+) {
   if (
     resolution.hostedProvider === provider &&
-    (await hasHostedModelCredits(prisma, actor, provider))
+    (await hasHostedModelCredits(prisma, asker, provider))
   ) {
     return isCatalogModelChoice(provider, modelId) ? undefined : "Unknown model for that provider";
   }

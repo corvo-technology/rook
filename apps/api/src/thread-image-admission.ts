@@ -13,7 +13,7 @@ import {
 import type { Actor, MessageBlock } from "@corvo/contracts";
 import { MODEL_IMAGE_INPUT_ERROR, MODEL_IMAGE_INPUT_UNKNOWN } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
-import { appliedModelRole, findModelCredential, findModelCredentialById } from "@corvo/db";
+import { findModelCredential, findModelCredentialById, runModelRole } from "@corvo/db";
 import { ORPCError } from "@orpc/server";
 
 type ModelChoice = {
@@ -113,7 +113,7 @@ export async function assertThreadImageInput(
 
 /** The main model as resolveMemberMainModel picks it, without reading secrets. */
 async function mainModelWithoutSecrets(prisma: PrismaClient, actor: Actor) {
-  const { primary } = await appliedModelRole(prisma, actor, "main");
+  const { primary } = await runModelRole(prisma, actor, "main");
   if (!primary) return null;
   return {
     ...primary,

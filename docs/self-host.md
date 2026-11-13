@@ -63,6 +63,24 @@ connections use their own credentials; hosted calls follow the same Rook credit 
 Backups are tried only when a checker fails. An explicit ask, including an uncertain decision,
 still requires a person.
 
+A space's owner can lend the models they connected to everyone in that space: **Settings → Space →
+Share my models with members**. A member's runs there then use the owner's connections and the
+owner's model choices for that space, and the member never sees a key; the API returns only
+provider and model names. A member can switch on **Use my own models** to run on their own
+connections instead. For a run in a space the model resolves in this order: the bot's own choice,
+then the lent connections, then the member's own connections (only if the member chose them), then
+the missing-model error. A space with nothing lent, and the owner, are unchanged. Personal
+sign-ins are never lent: a stored account login (OAuth) or a coding-agent CLI engine fails a
+member's run on the lent connections with a message that says so, and keeps working for its owner.
+Leaving the space ends the member's access at once.
+
+Usage is recorded per person, so **Settings → Usage** lists each member's tokens for the UTC month
+to the owner. The owner can set a monthly token limit per member on the lent connections; when a
+member reaches it their runs stop with an inline message, and runs on their own connections and the
+owner's runs are not limited. Each run already in flight is counted as able to spend its share of
+the limit, so runs that start together cannot all pass on the same unspent tokens. Voice
+connections stay personal.
+
 The deployment checker remains the default when no approval model is selected. For OpenRouter
 Jev, set `CORVO_AUTO_REVIEW_PROVIDER=openrouter` and
 `CORVO_AUTO_REVIEW_MODEL=typesafe/jev-1.14`; it uses `OPENROUTER_API_KEY` and the Decisions API.

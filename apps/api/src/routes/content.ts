@@ -19,6 +19,7 @@ import { listSpaceRuns } from "../runs.js";
 import { querySpaceSearch } from "../search.js";
 import { loadAllMessages } from "../thread-message-pages.js";
 import { buildRunOutcomes, buildUsageOverview, usageWindow } from "../usage-overview.js";
+import { limitMemberUsage, listMemberUsage } from "../workspace-model.js";
 import type { RouterContext } from "./context.js";
 
 /** More rows than this in a period are left out, so one account cannot make the page heavy. */
@@ -214,6 +215,12 @@ export function contentRoutes(ctx: RouterContext) {
           })),
         );
       }),
+      members: authed.usage.members.handler(async ({ context }) =>
+        listMemberUsage(deps, context.actor),
+      ),
+      setMemberLimit: authed.usage.setMemberLimit.handler(async ({ context, input }) =>
+        limitMemberUsage(deps, context.actor, input),
+      ),
       overview: authed.usage.overview.handler(async ({ context, input }) => {
         const now = new Date();
         const window = usageWindow(input.period, now);

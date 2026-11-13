@@ -109,7 +109,7 @@ import {
   LOCAL_SETTINGS_TOKEN_HEADER,
   SERVER_BUILD_HEADER,
 } from "@corvo/contracts";
-import { signupPolicyFromEnv } from "@corvo/core";
+import { isMessagingEmail, signupPolicyFromEnv } from "@corvo/core";
 import type { Pool, PrismaClient } from "@corvo/db";
 import {
   authenticatePartner,
@@ -208,6 +208,7 @@ import {
   TEAM_CHAT_STARTUP_SHUTDOWN_MS,
   TeamChatStartupRetries,
 } from "./team-chat-startup.js";
+import { mountTeamRoutes } from "./team-routes.js";
 import { mountVoiceHttpRoutes, voiceAccountErrorStatus } from "./voice.js";
 import { mountWebhookHttpRoutes } from "./webhook.js";
 import { createWhatsAppInboundHandler } from "./whatsapp-inbound.js";
@@ -786,6 +787,13 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     : undefined;
   reconciler?.start();
 
+  const team = {
+    prisma,
+    secret: env.authSecret,
+    webOrigin: env.webOrigin,
+    email,
+    billing,
+  };
   const router = createRouter({
     speechSummary:
       env.voiceSummaryMinChars === undefined
@@ -853,6 +861,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     artifacts,
     dataDir: env.dataDir,
     billing,
+    team,
     messagingInstallations,
     whatsapp,
     emailAgentPublicUrl,
@@ -991,6 +1000,17 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     );
     return actor && { actor, sessionId: session.session.id };
   };
+  mountTeamRoutes(app, {
+    ...team,
+    session: async (request) => {
+      const session = await auth.api.getSession({ headers: request.headers });
+      const user = session?.user;
+      if (!user || isMessagingEmail(user.email)) return null;
+      return { id: user.id, email: user.email, emailVerified: user.emailVerified };
+    },
+    // Without a mail provider nobody can confirm an address, so the link itself is the proof.
+    trustUnverified: !email,
+  });
   const sessionActor = async (request: Request) => (await requestSession(request))?.actor ?? null;
   if (messagingInstallations) {
     app.get("/api/v1/messaging/install/slack/callback", async (c) => {

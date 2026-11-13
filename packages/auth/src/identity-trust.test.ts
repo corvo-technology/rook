@@ -1,7 +1,12 @@
 import { createHash, createHmac, generateKeyPairSync, randomBytes, sign } from "node:crypto";
 import type { TransactionalEmail } from "@corvo/adapter-kit";
 import type * as Db from "@corvo/db";
-import { bootstrapUserSpace, recordSecurityEvent } from "@corvo/db";
+import {
+  acceptInvitationsForUser,
+  bootstrapUserSpace,
+  hasPendingInvitation,
+  recordSecurityEvent,
+} from "@corvo/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CLIENT_IP_HEADER, createAuth } from "./index.js";
 
@@ -17,6 +22,8 @@ vi.mock("better-auth/adapters/prisma", async () => {
 vi.mock("@corvo/db", async (original) => ({
   ...(await original<typeof Db>()),
   bootstrapUserSpace: vi.fn(async () => ({ spaceId: "space-1" })),
+  acceptInvitationsForUser: vi.fn(async () => []),
+  hasPendingInvitation: vi.fn(async () => false),
   recordSecurityEvent: vi.fn(async () => undefined),
 }));
 
@@ -120,6 +127,7 @@ function fixture({
       }),
     },
     organization: { deleteMany: vi.fn(async () => ({ count: 0 })) },
+    spaceInvitation: { count: vi.fn(async () => 0), findMany: vi.fn(async () => []) },
     spaceMember: {
       findFirst: vi.fn(async ({ where }: { where: { userId: string } }) =>
         members.has(where.userId) ? { spaceId: "space-1" } : null,
@@ -373,6 +381,33 @@ describe("identity trust through auth endpoints", () => {
       code: "REGISTRATION_CLOSED",
       message: "Registration is closed",
     });
+  });
+
+  it("lets an invited address register while signups are closed, and joins the invited space instead of a personal one", async () => {
+    const f = fixture({ delivery: false });
+    f.policy.signupsEnabled = false;
+    vi.mocked(hasPendingInvitation).mockResolvedValue(true);
+    vi.mocked(acceptInvitationsForUser).mockResolvedValue([
+      { spaceId: "team-space", organizationId: "team-org" },
+    ]);
+    vi.mocked(bootstrapUserSpace).mockClear();
+    const response = await f.signup();
+    expect(response.status).toBe(200);
+    expect(acceptInvitationsForUser).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ email: expect.any(String) }),
+      expect.anything(),
+    );
+    expect(bootstrapUserSpace).not.toHaveBeenCalled();
+    vi.mocked(hasPendingInvitation).mockResolvedValue(false);
+    vi.mocked(acceptInvitationsForUser).mockResolvedValue([]);
+  });
+
+  it("keeps registration closed for an address nobody invited", async () => {
+    const f = fixture();
+    f.policy.signupsEnabled = false;
+    vi.mocked(hasPendingInvitation).mockResolvedValue(false);
+    expect((await f.signup()).status).toBe(400);
   });
 
   it("permits ordinary unverified signup without granting admin or mailbox proof on open deployments", async () => {

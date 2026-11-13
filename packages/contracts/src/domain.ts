@@ -377,6 +377,29 @@ export const BotBudgetSchema = z.object({
 });
 export type BotBudget = z.infer<typeof BotBudgetSchema>;
 
+/** Whether the owner lent their models to the space, and where the asking member stands. */
+export const WorkspaceModelSchema = z.object({
+  /** The asking member owns the space and may lend or take back its models. */
+  isOwner: z.boolean(),
+  /** The owner's models serve everyone in the space. */
+  shared: z.boolean(),
+  /** The asking member runs on their own models instead. */
+  useOwn: z.boolean(),
+});
+export type WorkspaceModel = z.infer<typeof WorkspaceModelSchema>;
+
+/** One member's month on the models the owner lent, with the limit the owner set. */
+export const MemberUsageSchema = z.object({
+  userId: Id,
+  name: z.string(),
+  monthTokens: z.number(),
+  /** Null is no limit. */
+  monthlyTokenLimit: z.number().nullable(),
+  /** The member runs on their own models, which no limit applies to. */
+  useOwn: z.boolean(),
+});
+export type MemberUsage = z.infer<typeof MemberUsageSchema>;
+
 export const SpaceSchema = z.object({
   id: Id,
   name: z.string(),

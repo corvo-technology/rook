@@ -55,9 +55,11 @@ import { modelsRoutes } from "./routes/models.js";
 import { partnerRoutes } from "./routes/partner.js";
 import { routinesRoutes } from "./routes/routines.js";
 import { spacesRoutes } from "./routes/spaces.js";
+import { teamRoutes } from "./routes/team.js";
 import { threadsRoutes } from "./routes/threads.js";
 import { wikiRoutes } from "./routes/wiki.js";
 import { youRoutes } from "./routes/you.js";
+import type { TeamDeps } from "./team.js";
 import type { VoiceDeps } from "./voice.js";
 
 export { nextConnectionLabel } from "./model-credentials.js";
@@ -141,6 +143,8 @@ export interface RouterDeps {
   };
   /** Present only when the deployment bills; self-hosted installs leave it unset. */
   billing?: BillingService;
+  /** Inviting people into a space; absent keeps the invitation procedures closed. */
+  team?: TeamDeps;
   speechSummary?: VoiceDeps["speechSummary"];
   /** Designs an avatar from a role on the owner's model connection; absent without a model runtime. */
   avatarDesign?: AvatarDesignDeps;
@@ -179,11 +183,13 @@ export interface RouterDeps {
 export function createRouter(deps: RouterDeps) {
   const ctx = createRouterContext(deps);
   const { os } = ctx;
+  const spaceRoutes = spacesRoutes(ctx);
 
   return os.router({
     ...accountRoutes(ctx),
     ...enginesRoutes(ctx),
-    ...spacesRoutes(ctx),
+    ...spaceRoutes,
+    spaces: { ...spaceRoutes.spaces, ...teamRoutes(ctx).spaces },
     ...missionsRoutes(ctx),
     models: { ...modelsRoutes(ctx).models, ...localSetupRoutes(ctx).models },
     ...botsRoutes(ctx),

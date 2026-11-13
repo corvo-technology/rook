@@ -11,7 +11,15 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { Navigate, Outlet, Route, Routes, useLocation, useSearchParams } from "react-router-dom";
+import {
+  Navigate,
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { AppRail } from "./components/AppRail";
 import { LoadingState } from "./components/ai/primitives";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -37,6 +45,7 @@ import {
 import { completeSsoCallback, SSO_CALLBACK_PATH } from "./lib/sso-flow";
 import { IntegrationCallbackPage } from "./pages/IntegrationCallback";
 import { IntegrationSetupPage } from "./pages/IntegrationSetup";
+import { InvitePage } from "./pages/InvitePage";
 import { McpOAuthCallbackPage } from "./pages/McpOAuthCallback";
 import { ShellPage } from "./pages/Shell";
 import { useBoardNotifications } from "./pages/shell/use-board-notifications";
@@ -114,8 +123,10 @@ export function App() {
 
 function SessionApp() {
   const [searchParams] = useSearchParams();
+  const next = searchParams.get("next") ?? "";
+  // Only places the app itself sends someone through sign-in for.
   const signInDestination =
-    searchParams.get("next") === "/integrations/setup" ? "/integrations/setup" : "/app";
+    next === "/integrations/setup" || /^\/(invite|join)\/[\w.-]+$/.test(next) ? next : "/app";
   const ticketBoardEnabled = useSyncExternalStore(
     subscribeTicketBoardEnabled,
     getTicketBoardEnabled,
@@ -184,7 +195,14 @@ function SessionApp() {
             <Route
               path="/sign-up"
               element={
-                user ? <Navigate to="/onboarding" replace /> : <AuthPage key="up" mode="up" />
+                user ? (
+                  <Navigate
+                    to={signInDestination === "/app" ? "/onboarding" : signInDestination}
+                    replace
+                  />
+                ) : (
+                  <AuthPage key="up" mode="up" />
+                )
               }
             />
             <Route
@@ -194,6 +212,8 @@ function SessionApp() {
               }
             />
             <Route path="/reset-password" element={<PasswordResetPage />} />
+            <Route path="/invite/:token" element={<LinkedInvite kind="invite" user={user} />} />
+            <Route path="/join/:token" element={<LinkedInvite kind="join" user={user} />} />
             <Route path="/embed" element={<EmbedPage />} />
             <Route
               path="/mcp/oauth/callback"
@@ -250,6 +270,15 @@ function SessionApp() {
       </div>
     </QueryUserProvider>
   );
+}
+
+/** An invitation or join link: signed-out visitors sign in first and come back to it. */
+function LinkedInvite({ kind, user }: { kind: "invite" | "join"; user: unknown }) {
+  const { token = "" } = useParams();
+  if (!user) {
+    return <Navigate to={`/sign-in?next=${encodeURIComponent(`/${kind}/${token}`)}`} replace />;
+  }
+  return <InvitePage kind={kind} token={token} />;
 }
 
 /** The narrow bar beside every signed-in screen; the wide agent list belongs to the agents screen. */

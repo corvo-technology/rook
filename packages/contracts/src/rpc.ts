@@ -342,7 +342,7 @@ export const appContract = {
     remove: oc
       .input(z.object({ spaceId: Id }))
       .output(z.object({ ok: z.literal(true), activeSpaceId: Id })),
-    /** The people of the caller's current space. Owners and admins manage them. */
+    /** The people of the space the request targets (its space header). Owners and admins manage them. */
     members: {
       list: oc.output(z.array(SpaceMemberSchema)),
       setRole: oc

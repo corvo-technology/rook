@@ -298,7 +298,16 @@ export function SettingsPage() {
             id: "members",
             label: t`Members`,
             icon: Users,
-            content: <MembersSettingsPanel userId={me.userId} />,
+            content: (
+              <MembersSettingsPanel
+                userId={me.userId}
+                spaces={spaces}
+                currentSpaceId={selectedSpaceId()}
+                onCreated={(space) =>
+                  updateBootstrap((current) => ({ ...current, spaces: [...current.spaces, space] }))
+                }
+              />
+            ),
           },
         ]
       : []),

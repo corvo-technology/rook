@@ -249,3 +249,25 @@ test("usage lists spend per model", async ({ page }, testInfo) => {
   await expect(usage.locator("tbody tr")).not.toHaveCount(0);
   await captureScreenshot(page, testInfo, "settings-usage-models");
 });
+
+test("Members lets an owner pick which workspace an invitation is for", async ({
+  page,
+}, testInfo) => {
+  const stamp = Date.now();
+  await signup(page, `settings-members-${stamp}@corvo.test`, "password12", "Settings");
+  await completeOnboarding(page);
+  await rpc(page, "spaces/create", { name: "Employees" });
+  await page.reload();
+  const settings = await openUserSettings(page, "members");
+
+  const picker = settings.getByRole("combobox", { name: "Workspace", exact: true });
+  await expect(picker).toBeVisible();
+  await picker.click();
+  await expect(page.getByRole("option", { name: "Employees", exact: true })).toBeVisible();
+  await expect(page.getByRole("option", { name: "New workspace", exact: true })).toBeVisible();
+  await captureScreenshot(page, testInfo, "settings-members-workspace-picker");
+
+  await page.getByRole("option", { name: "Employees", exact: true }).click();
+  await expect(settings.getByTestId("members-settings")).toHaveAttribute("data-space-id", /.+/);
+  await expect(picker).toContainText("Employees");
+});

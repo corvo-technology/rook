@@ -90,6 +90,7 @@ export function spacesRoutes(ctx: RouterContext) {
             pausedAt: null,
             canPause: true,
             canDelete: true,
+            canInvite: true,
             botCount: 0,
             bots: [],
             groups: [],
@@ -335,6 +336,7 @@ async function memberSpaceNavigation(
         canRename: can(membership, "manage_settings") && membership.space.deletingAt === null,
         pausedAt: membership.space.pausedAt?.toISOString() ?? null,
         canPause: can(membership, "manage_settings") && membership.space.deletingAt === null,
+        canInvite: can(membership, "invite") && membership.space.deletingAt === null,
         canDelete:
           can(membership, "delete_space") &&
           !membership.space.isDefault &&

@@ -16,6 +16,12 @@ owner: the last owner can be neither demoted nor removed, and cannot leave.
 
 ## Inviting by email
 
+Settings, Members acts on one workspace at a time. It starts on the selected workspace; an owner or
+admin of several can pick another at the top (only workspaces they can invite to are listed, and the
+picker is hidden when there is one) or add a new workspace inline, which makes them its owner. The
+picker does not change the selected workspace: each request names the workspace it is for, and the
+backend checks the caller's role in that workspace, not in the selected one.
+
 Owners and admins paste addresses (`Ana <ana@example.com>` works) in Settings, Members. Each address
 gets one invitation that:
 
@@ -53,6 +59,7 @@ taking a billing seat; billing seats are synced on join and leave where billing 
   `space_invitations`, `space_invite_links`, `space_join_requests`).
 - `apps/api/src/routes/team.ts`: the `spaces.members`, `spaces.invitations`, `spaces.inviteLink` and
   `spaces.joinRequests` procedures.
+- `apps/api/src/team-space-target.postgres.test.ts`: roles are checked in the targeted space.
 - `apps/api/src/team-routes.ts`: link-driven HTTP steps (preview, accept, ask to join).
 - Web: Settings, Members, and the `/invite/:token` and `/join/:token` pages.
 

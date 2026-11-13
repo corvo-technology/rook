@@ -144,6 +144,11 @@ export interface SandboxProvider {
    * disk kept, so it resumes as it was without anything running now.
    */
   isStopped?(computer: ComputerRef, context: AdapterContext): Promise<boolean>;
+  /**
+   * True when the provider keeps every computer's home on its own host. The server then never
+   * creates or mounts that directory; workspace export and import move the home instead.
+   */
+  keepsHome?(context: AdapterContext): Promise<boolean>;
   /** True only when this computer currently mounts the server's home directory. */
   hasMountedHome?(computer: ComputerRef, context: AdapterContext): Promise<boolean>;
   /** Perform idempotent provider setup after the lifecycle has captured the reference. */

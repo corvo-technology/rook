@@ -1,5 +1,6 @@
 import type { ProcessEvent } from "@corvo/adapter-kit";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { fakeRemoteSupervisor } from "./docker-remote-supervisor.test-support.js";
 import {
   DockerSandboxProvider,
   MAX_SANDBOX_ERROR_RESPONSE_BYTES,
@@ -17,6 +18,13 @@ const context = {
   screenLeaseId: "run-1:1",
   signal: new AbortController().signal,
 };
+
+/** A supervisor stub that answers its health check as a shared-disk one, then runs `respond`. */
+function sharedDiskSupervisor(respond: (url: string, init?: RequestInit) => Promise<Response>) {
+  return vi.fn(async (url: string, init?: RequestInit) =>
+    url.endsWith("/health") ? Response.json({ ok: true }) : respond(url, init),
+  );
+}
 
 describe("Docker sandbox", () => {
   afterEach(() => {
@@ -177,7 +185,7 @@ describe("Docker sandbox", () => {
     const cancel = vi.fn();
     vi.stubGlobal(
       "fetch",
-      vi.fn(
+      sharedDiskSupervisor(
         async () =>
           new Response(new ReadableStream({ cancel }), {
             headers: { "content-length": String(MAX_SANDBOX_SUCCESS_RESPONSE_BYTES + 1) },
@@ -203,7 +211,7 @@ describe("Docker sandbox", () => {
   ])("reports whether provisioning started the computer: %j", async (body, expected) => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => Response.json(body)),
+      sharedDiskSupervisor(async () => Response.json(body)),
     );
     const provider = new DockerSandboxProvider("http://supervisor.test", "test-token");
 
@@ -221,7 +229,7 @@ describe("Docker sandbox", () => {
   it("translates a 429 computer limit reached error from the supervisor", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () =>
+      sharedDiskSupervisor(async () =>
         Response.json({ error: "Computer limit reached for space (max: 5)" }, { status: 429 }),
       ),
     );
@@ -752,5 +760,117 @@ describe("Docker sandbox stopped containers", () => {
     await expect(
       provider.connectScreen(computer, { view: "stream", interactive: false }, context),
     ).resolves.toMatchObject({ url: null });
+  });
+});
+
+describe("Docker sandbox with homes kept by a remote supervisor", () => {
+  const computer = { id: "c-bot", botId: "bot", kind: "docker" as const, providerRef: "c-bot" };
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("asks the supervisor who owns the homes and keeps asking until it answers", async () => {
+    const responses = [new Response("down", { status: 503 }), Response.json({ homes: "remote" })];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => responses.shift() ?? Response.json({ homes: "remote" })),
+    );
+    const provider = new DockerSandboxProvider("http://supervisor.test", "test-token");
+    await expect(provider.keepsHome(context)).rejects.toThrow("health failed: 503");
+    await expect(provider.keepsHome(context)).resolves.toBe(true);
+    await expect(provider.keepsHome(context)).resolves.toBe(true);
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("treats a supervisor that does not say as one sharing its disk", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ ok: true })),
+    );
+    const provider = new DockerSandboxProvider("http://supervisor.test", "test-token");
+    await expect(provider.keepsHome(context)).resolves.toBe(false);
+  });
+
+  it("sends no home path, because the supervisor makes the home on its own host", async () => {
+    const supervisor = fakeRemoteSupervisor();
+    vi.stubGlobal("fetch", supervisor.fetch);
+    const provider = new DockerSandboxProvider("http://supervisor.test", "test-token");
+    await provider.provision({ botId: "bot", homePath: "/server/data/homes/bot" }, context);
+    expect(supervisor.provisions).toHaveLength(1);
+    expect(supervisor.provisions[0]).not.toHaveProperty("homePath");
+  });
+
+  it("still sends the shared home path to a supervisor that shares the disk", async () => {
+    const seen: unknown[] = [];
+    vi.stubGlobal(
+      "fetch",
+      sharedDiskSupervisor(async (_url, init) => {
+        seen.push(JSON.parse(String(init?.body)));
+        return Response.json({ id: "computer" });
+      }),
+    );
+    const provider = new DockerSandboxProvider("http://supervisor.test", "test-token");
+    await provider.provision({ botId: "bot", homePath: "/server/data/homes/bot" }, context);
+    expect(seen[0]).toMatchObject({ homePath: "/server/data/homes/bot" });
+  });
+
+  it("exports the home as one archive, with the executable bit and large paths intact", async () => {
+    const supervisor = fakeRemoteSupervisor();
+    supervisor.write("bot", { "notes/todo.txt": "write the report", "ünï/ça.txt": "accents" });
+    vi.stubGlobal("fetch", supervisor.fetch);
+    const provider = new DockerSandboxProvider("http://supervisor.test", "test-token");
+    const files: Record<string, string> = {};
+    for await (const file of provider.exportWorkspace(computer, context)) {
+      if ("body" in file) throw new Error("expected small files");
+      files[file.path] = Buffer.from(file.content).toString();
+    }
+    expect(files).toEqual({ "notes/todo.txt": "write the report", "ünï/ça.txt": "accents" });
+    expect(supervisor.requests).toEqual(["GET /health", "GET /computers/c-bot/archive"]);
+  });
+
+  it("imports a workspace as one streamed archive and round-trips it", async () => {
+    const supervisor = fakeRemoteSupervisor();
+    supervisor.disk.set("bot", new Map());
+    vi.stubGlobal("fetch", supervisor.fetch);
+    const provider = new DockerSandboxProvider("http://supervisor.test", "test-token");
+    async function* files() {
+      yield { path: "a.txt", content: Buffer.from("one") };
+      yield { path: "deep/dir/run.sh", content: Buffer.from("#!/bin/sh"), executable: true };
+    }
+    await provider.importWorkspace(computer, files(), context);
+    expect(supervisor.read("bot")).toEqual({ "a.txt": "one", "deep/dir/run.sh": "#!/bin/sh" });
+    expect(supervisor.disk.get("bot")?.get("deep/dir/run.sh")?.executable).toBe(true);
+    expect(supervisor.requests.filter((request) => request.startsWith("PUT"))).toEqual([
+      "PUT /computers/c-bot/archive",
+    ]);
+  });
+
+  it("reports a computer the supervisor no longer has as gone, so its row is cleared", async () => {
+    const supervisor = fakeRemoteSupervisor();
+    vi.stubGlobal("fetch", supervisor.fetch);
+    const provider = new DockerSandboxProvider("http://supervisor.test", "test-token");
+    const error = await provider
+      .exportWorkspace(computer, context)
+      [Symbol.asyncIterator]()
+      .next()
+      .catch((caught: unknown) => caught);
+    expect(isSandboxGoneError(error)).toBe(true);
+  });
+
+  it("fails an import the supervisor refused, instead of calling the restore done", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) =>
+        url.endsWith("/health")
+          ? Response.json({ homes: "remote" })
+          : Response.json({ error: "tar: short read" }, { status: 500 }),
+      ),
+    );
+    const provider = new DockerSandboxProvider("http://supervisor.test", "test-token");
+    async function* none() {
+      yield { path: "a.txt", content: Buffer.from("one") };
+    }
+    await expect(provider.importWorkspace(computer, none(), context)).rejects.toThrow(
+      "sandbox workspace import failed: 500",
+    );
   });
 });

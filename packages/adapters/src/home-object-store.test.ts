@@ -6,8 +6,10 @@ import type { PortableFile, SandboxProvider, StreamedPortableFile } from "@corvo
 import { WorkspaceTooLargeError } from "@corvo/adapter-kit";
 import type { PrismaClient, SpaceKeyRecord, SpaceKeyStore } from "@corvo/db";
 import { ContentDecryptionError, ContentKeyRing, LocalKeyProvider } from "@corvo/db";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { checkpointComputerWorkspace, restoreComputerWorkspace } from "./computer-workspace.js";
+import { fakeRemoteSupervisor } from "./docker-remote-supervisor.test-support.js";
+import { DockerSandboxProvider } from "./docker-sandbox.js";
 import { LocalAgentHomeStore } from "./home.js";
 import {
   createAgentHomeStore,
@@ -542,6 +544,42 @@ describe("object-backed Kubernetes workspaces", () => {
     ]);
     await checkpointComputerWorkspace(freshCache, sandbox, "bot-1", computer, context);
     expect(await (await otherHost()).readFile("bot-1", "new.txt", context)).toBe("new bytes");
+  });
+});
+
+describe("Docker computers on a remote supervisor", () => {
+  const computer = {
+    id: "c-bot-1",
+    botId: "bot-1",
+    kind: "docker" as const,
+    providerRef: "c-bot-1",
+  };
+
+  it("saves the home through the supervisor and restores it on a new host after the old one is lost", async () => {
+    const { store, storage, otherHost } = await setup();
+    const hostA = fakeRemoteSupervisor();
+    hostA.write("bot-1", { "notes/todo.txt": "write the report", ".bashrc": "alias l=ls" });
+    vi.stubGlobal("fetch", hostA.fetch);
+    const sandboxA = new DockerSandboxProvider("http://host-a.test", "test-token");
+
+    // Not a shared mount: the checkpoint copies the home out, and it lands in object storage.
+    await checkpointComputerWorkspace(store, sandboxA, "bot-1", computer, context);
+    expect(storage.objects.size).toBe(1);
+    expect(hostA.requests).toContain("GET /computers/c-bot-1/archive");
+
+    // The VPS is gone. Another API host, with an empty cache, brings the computer up elsewhere.
+    const hostB = fakeRemoteSupervisor();
+    vi.stubGlobal("fetch", hostB.fetch);
+    const sandboxB = new DockerSandboxProvider("http://host-b.test", "test-token");
+    const replacement = await sandboxB.provision({ botId: "bot-1", homePath: "/unused" }, context);
+    expect(replacement.fresh).toBe(true);
+    await restoreComputerWorkspace(await otherHost(), sandboxB, "bot-1", replacement, context);
+
+    expect(hostB.read("bot-1")).toEqual({
+      "notes/todo.txt": "write the report",
+      ".bashrc": "alias l=ls",
+    });
+    vi.unstubAllGlobals();
   });
 });
 

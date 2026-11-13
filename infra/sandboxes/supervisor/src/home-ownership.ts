@@ -1,7 +1,7 @@
 import type { Stats } from "node:fs";
 import { constants } from "node:fs";
 import type { FileHandle } from "node:fs/promises";
-import { lstat, open, opendir, readlink } from "node:fs/promises";
+import { lchown, lstat, mkdir, open, opendir, readlink } from "node:fs/promises";
 import path from "node:path";
 
 const DIRECTORY_OPEN_FLAGS = constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW;
@@ -203,4 +203,39 @@ export async function assertOpenedDirectoryBeneathRoot(
   rootPath: string,
 ): Promise<void> {
   await assertFdBeneathRoot(handle, rootPath);
+}
+
+/**
+ * The home folder name a remote supervisor creates for a computer. It becomes one path segment
+ * under the data directory, so anything that could name another place is refused.
+ */
+export function isHomeKey(value: string) {
+  return /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(value);
+}
+
+/**
+ * Creates `<data>/homes/<key>` for a computer when this supervisor owns the homes. Only the
+ * folder this call makes is handed to the computer's user; one that exists is left as it is, and
+ * a link or file in its place is refused, so a root supervisor never follows a path a computer
+ * could have changed.
+ */
+export async function ensureOwnedHome(
+  dataDir: string,
+  homeKey: string,
+  owner: { uid: number; gid: number },
+): Promise<string> {
+  if (!isHomeKey(homeKey)) throw new Error("computer home key is not a valid folder name");
+  const homes = path.join(dataDir, "homes");
+  await mkdir(homes, { recursive: true });
+  const home = path.join(homes, homeKey);
+  try {
+    await mkdir(home, { mode: 0o755 });
+    if (process.getuid?.() === 0) await lchown(home, owner.uid, owner.gid);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+  }
+  const info = await lstat(home);
+  if (info.isSymbolicLink()) throw new Error(`computer home ${home} must not be a symbolic link`);
+  if (!info.isDirectory()) throw new Error(`computer home ${home} must be a directory`);
+  return home;
 }

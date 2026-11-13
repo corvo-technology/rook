@@ -164,6 +164,10 @@ export class HostAwareSandbox implements SandboxProvider {
     return provider.connectTerminal(computer, request, context);
   }
 
+  keepsHome(context: AdapterContext) {
+    return this.isolated.keepsHome?.(context) ?? Promise.resolve(false);
+  }
+
   sendInput(
     computer: ComputerRef,
     input: ComputerInput,

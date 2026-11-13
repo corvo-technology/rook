@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { access, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import type {
@@ -599,6 +599,62 @@ describe("computer provisioning", () => {
       await rm(dataDir, { recursive: true, force: true });
     }
   });
+
+  it.each([
+    { keepsHome: true, created: false },
+    { keepsHome: false, created: true },
+  ])(
+    "creates the home on this host only when the provider does not keep it (provider keeps: $keepsHome)",
+    async ({ keepsHome, created }) => {
+      const dataDir = await mkdtemp(path.join(tmpdir(), "corvo-provider-keeps-home-"));
+      const row = {
+        id: "computer-1",
+        homeKey: "bot-1",
+        providerRef: null as string | null,
+        kind: "docker",
+        scope: "dedicated",
+        state: "stopped",
+        controlLeaseId: null,
+        updatedAt: new Date("2024-01-01T00:00:00.000Z"),
+      };
+      const prisma = {
+        computer: {
+          findUniqueOrThrow: vi.fn(async () => ({ ...row })),
+          updateMany: vi.fn(async ({ data }: { data: Record<string, unknown> }) => {
+            Object.assign(row, data);
+            return { count: 1 };
+          }),
+        },
+        run: { findFirst: vi.fn(async () => null) },
+      } as unknown as PrismaClient;
+      const sandbox: SandboxProvider = new FakeSandboxProvider();
+      sandbox.keepsHome = async () => keepsHome;
+      const provision = vi.spyOn(sandbox, "provision");
+      try {
+        await provisionComputer(
+          {
+            prisma,
+            sandbox,
+            home: new LocalAgentHomeStore(dataDir),
+            jobs: {} as JobPublisher,
+            events: {} as ThreadEvents,
+            dataDir,
+          },
+          "computer-1",
+          context,
+        );
+        expect(provision).toHaveBeenCalledOnce();
+        await expect(
+          access(path.join(dataDir, "homes", "bot-1")).then(
+            () => true,
+            () => false,
+          ),
+        ).resolves.toBe(created);
+      } finally {
+        await rm(dataDir, { recursive: true, force: true });
+      }
+    },
+  );
 
   it("does not reclaim a fresh booting claim without waiting", async () => {
     const dataDir = await mkdtemp(path.join(tmpdir(), "corvo-fresh-boot-claim-"));

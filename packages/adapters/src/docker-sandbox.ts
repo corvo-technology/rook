@@ -1,4 +1,5 @@
 import path from "node:path";
+import { Readable } from "node:stream";
 import type {
   AdapterContext,
   CommandRequest,
@@ -15,7 +16,9 @@ import type {
   SandboxProvider,
   ScreenRequest,
   ScreenSession,
+  StreamedPortableFile,
   TerminalRequest,
+  WorkspaceExportLimits,
 } from "@corvo/adapter-kit";
 import {
   boundedSandboxCommandTimeoutMs,
@@ -30,9 +33,11 @@ import {
   computerObservation,
   normalizeWorkspacePath,
 } from "./computer-support.js";
+import { encodeTarEntry } from "./kubernetes-sandbox.js";
 import { sandboxCommandArgv } from "./sandbox-command-environment.js";
 import { explainFetchFailure } from "./transport-failure.js";
 import { readBodyCapped, withAbort } from "./web-ssrf.js";
+import { readWorkspaceArchive } from "./workspace-archive.js";
 
 /** `fetch failed` alone does not say which service or why; name the host and the network's reason. */
 async function computerFetch(input: URL | string, init?: RequestInit): Promise<Response> {
@@ -107,8 +112,12 @@ function sandboxGoneError(computer: ComputerRef): Error {
   });
 }
 
+/** An archive ends with two empty blocks. */
+const TAR_END = Buffer.alloc(1024);
+
 export class DockerSandboxProvider implements SandboxProvider {
   private readonly supervisorToken: string;
+  private homes: Promise<"local" | "remote"> | undefined;
 
   constructor(
     private readonly supervisorUrl: string,
@@ -133,6 +142,29 @@ export class DockerSandboxProvider implements SandboxProvider {
     };
   }
 
+  /**
+   * Whether the supervisor keeps the homes on its own host, as it advertises. Asking it, rather
+   * than being told, means a server cannot disagree with the supervisor about who owns the disk.
+   * Read once per process; a failed read is tried again.
+   */
+  private remoteHomes(context: AdapterContext): Promise<boolean> {
+    this.homes ??= (async () => {
+      const res = await computerFetch(this.url("/health"), { signal: context.signal });
+      if (!res.ok) throw new Error(`sandbox supervisor health failed: ${res.status}`);
+      const body = await readSandboxJson<{ homes?: string }>(res, context.signal, 4096);
+      // A supervisor from before remote homes says nothing, and its homes are shared.
+      return body.homes === "remote" ? "remote" : "local";
+    })().catch((error: unknown) => {
+      this.homes = undefined;
+      throw error;
+    });
+    return this.homes.then((homes) => homes === "remote");
+  }
+
+  async keepsHome(context: AdapterContext): Promise<boolean> {
+    return this.remoteHomes(context);
+  }
+
   private url(path: string) {
     return `${this.supervisorUrl.replace(/\/$/, "")}${path}`;
   }
@@ -153,12 +185,14 @@ export class DockerSandboxProvider implements SandboxProvider {
     request: { botId: string; homePath: string },
     context: AdapterContext,
   ): Promise<ComputerRef> {
+    // A supervisor that owns the homes makes the folder itself and refuses a path from here.
+    const homePath = (await this.remoteHomes(context)) ? undefined : request.homePath;
     const res = await computerFetch(this.url("/computers"), {
       method: "POST",
       headers: { ...this.headers(context, request.botId), "content-type": "application/json" },
       body: JSON.stringify({
         botId: request.botId,
-        homePath: request.homePath,
+        homePath,
         spaceId: context.spaceId,
       }),
       signal: context.signal,
@@ -513,8 +547,23 @@ export class DockerSandboxProvider implements SandboxProvider {
     if (!res.ok) throw new Error(`sandbox file write failed: ${res.status}`);
   }
 
-  async *exportWorkspace(computer: ComputerRef, context: AdapterContext) {
-    yield* this.walkWorkspace(computer, "", context);
+  async *exportWorkspace(
+    computer: ComputerRef,
+    context: AdapterContext,
+    limits?: WorkspaceExportLimits,
+  ): AsyncIterable<PortableFile | StreamedPortableFile> {
+    if (!(await this.remoteHomes(context))) {
+      yield* this.walkWorkspace(computer, "", context);
+      return;
+    }
+    // One archive streams out of the supervisor's host, not a request per file.
+    const res = await computerFetch(this.url(`/computers/${computer.id}/archive`), {
+      headers: this.headers(context, computer.botId),
+      signal: context.signal,
+    });
+    if (!res.ok) throw await this.archiveError(res, computer, "export", context);
+    if (!res.body) throw new Error("sandbox returned an empty workspace archive");
+    yield* readWorkspaceArchive(res.body, limits);
   }
 
   async importWorkspace(
@@ -522,7 +571,44 @@ export class DockerSandboxProvider implements SandboxProvider {
     files: AsyncIterable<PortableFile>,
     context: AdapterContext,
   ) {
-    for await (const file of files) await this.writeFile(computer, file, context);
+    if (!(await this.remoteHomes(context))) {
+      for await (const file of files) await this.writeFile(computer, file, context);
+      return;
+    }
+    const signal = context.signal;
+    async function* archive(): AsyncIterable<Buffer> {
+      for await (const file of files) {
+        signal.throwIfAborted();
+        yield* encodeTarEntry(normalizeWorkspacePath(file.path), file.content, file.executable);
+      }
+      yield TAR_END;
+    }
+    // Compressed on the way out; an error in the source reaches the request, unlike a pipe.
+    const body = (
+      Readable.toWeb(Readable.from(archive())) as unknown as ReadableStream
+    ).pipeThrough(new CompressionStream("gzip"));
+    const res = await computerFetch(this.url(`/computers/${computer.id}/archive`), {
+      method: "PUT",
+      headers: { ...this.headers(context, computer.botId), "content-type": "application/gzip" },
+      body: body as unknown as BodyInit,
+      // Node's fetch needs this to send a stream; it is not in the DOM typings.
+      ...({ duplex: "half" } as object),
+      signal,
+    });
+    if (!res.ok) throw await this.archiveError(res, computer, "import", context);
+    cancelResponseBody(res);
+  }
+
+  private async archiveError(
+    res: Response,
+    computer: ComputerRef,
+    action: "export" | "import",
+    context: AdapterContext,
+  ) {
+    const detail = await safeBody(res, context.signal);
+    // A computer that is gone has nothing to save; say so the way the other calls do.
+    if (res.status === 404 || res.status === 409) return sandboxGoneError(computer);
+    return new Error(`sandbox workspace ${action} failed: ${res.status} ${detail}`.trim());
   }
 
   async snapshot(computer: ComputerRef, _context: AdapterContext) {

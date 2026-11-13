@@ -26,6 +26,7 @@ const mocks = vi.hoisted(() => ({
     listNetworks: vi.fn(),
   },
   assertHomeWritable: vi.fn(),
+  ensureOwnedHome: vi.fn(),
   verifyRestrictedEgress: vi.fn(),
 }));
 vi.mock("dockerode", () => ({
@@ -40,7 +41,10 @@ vi.mock("dockerode", () => ({
     listNetworks = mocks.docker.listNetworks;
   },
 }));
-vi.mock("./home-ownership.js", () => ({ assertComputerHomeWritable: mocks.assertHomeWritable }));
+vi.mock("./home-ownership.js", () => ({
+  assertComputerHomeWritable: mocks.assertHomeWritable,
+  ensureOwnedHome: mocks.ensureOwnedHome,
+}));
 vi.mock("./egress-probe.js", () => ({
   EgressNotEnforced: class EgressNotEnforced extends Error {},
   verifyRestrictedEgress: mocks.verifyRestrictedEgress,
@@ -316,6 +320,166 @@ describe("computer loopback provision lifecycle", () => {
       expect(options.HostConfig.Binds).toEqual([`${homePath}:/home/corvo`]);
       expect(options.Env).toContainEqual(expect.stringMatching(/^CORVO_COMPUTER_CONTROL_TOKEN=.+/));
     }
+  });
+});
+
+describe("provisioning with homes kept on the supervisor's host", () => {
+  const authorized = () => ({
+    authorization: `Bearer ${resolveSupervisorToken(process.env)}`,
+    "content-type": "application/json",
+    "x-corvo-bot-id": "bot",
+    "x-corvo-space-id": "space",
+  });
+
+  function freshComputer() {
+    const container = {
+      id: "new-computer",
+      start: vi.fn().mockResolvedValue(undefined),
+      remove: vi.fn().mockResolvedValue(undefined),
+    };
+    mocks.docker.getImage.mockReturnValue({ inspect: vi.fn().mockResolvedValue({ Id: "image" }) });
+    mocks.docker.listContainers.mockResolvedValue([]);
+    mocks.docker.createContainer.mockResolvedValue(container);
+    mocks.docker.createNetwork.mockResolvedValue({ remove: vi.fn() });
+    mocks.docker.getNetwork.mockReturnValue({ inspect: vi.fn().mockResolvedValue({ Id: "net" }) });
+    return container;
+  }
+
+  it("advertises who owns the homes, defaulting to a shared disk", async () => {
+    const shared = await (await import("./index.js")).supervisorApp.request("/health");
+    await expect(shared.json()).resolves.toMatchObject({ homes: "local" });
+    vi.resetModules();
+    vi.stubEnv("SANDBOX_SUPERVISOR_HOMES", "remote");
+    const remote = await (await import("./index.js")).supervisorApp.request("/health");
+    await expect(remote.json()).resolves.toMatchObject({ homes: "remote" });
+  });
+
+  it("creates the home itself and mounts it, never a path from the server", async () => {
+    vi.stubEnv("SANDBOX_SUPERVISOR_HOMES", "remote");
+    const { supervisorApp } = await import("./index.js");
+    const container = freshComputer();
+    const response = await supervisorApp.request("/computers", {
+      method: "POST",
+      headers: authorized(),
+      body: JSON.stringify({ botId: "bot", spaceId: "space" }),
+    });
+    expect(response.status).toBe(200);
+    expect(mocks.ensureOwnedHome).toHaveBeenCalledWith(
+      process.env.DATA_DIR,
+      "bot",
+      expect.objectContaining({ uid: expect.any(Number), gid: expect.any(Number) }),
+    );
+    const [options] = mocks.docker.createContainer.mock.calls[0]!;
+    expect(options.HostConfig.Binds).toEqual([
+      `${path.join(process.env.DATA_DIR!, "homes", "bot")}:/home/corvo`,
+    ]);
+    expect(container.start).toHaveBeenCalledOnce();
+  });
+
+  it("refuses a home path from a server that thinks the disk is shared", async () => {
+    vi.stubEnv("SANDBOX_SUPERVISOR_HOMES", "remote");
+    const { supervisorApp } = await import("./index.js");
+    const container = freshComputer();
+    const response = await supervisorApp.request("/computers", {
+      method: "POST",
+      headers: authorized(),
+      body: JSON.stringify({
+        botId: "bot",
+        spaceId: "space",
+        homePath: path.join(process.env.DATA_DIR!, "homes", "bot"),
+      }),
+    });
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({
+      error: expect.stringContaining("keeps computer homes on its own host"),
+    });
+    expect(mocks.ensureOwnedHome).not.toHaveBeenCalled();
+    expect(container.start).not.toHaveBeenCalled();
+  });
+
+  it("refuses to start without a home path when the disk is shared", async () => {
+    const { supervisorApp } = await import("./index.js");
+    const container = freshComputer();
+    const response = await supervisorApp.request("/computers", {
+      method: "POST",
+      headers: authorized(),
+      body: JSON.stringify({ botId: "bot", spaceId: "space" }),
+    });
+    expect(response.status).toBe(500);
+    expect(mocks.ensureOwnedHome).not.toHaveBeenCalled();
+    expect(container.start).not.toHaveBeenCalled();
+  });
+
+  it("serves no archive when the homes are shared with the server", async () => {
+    const { supervisorApp } = await import("./index.js");
+    for (const method of ["GET", "PUT"]) {
+      const response = await supervisorApp.request("/computers/id/archive", {
+        method,
+        headers: authorized(),
+      });
+      expect(response.status, method).toBe(404);
+    }
+  });
+
+  it("archives only a computer it manages, after closing its browsers", async () => {
+    vi.stubEnv("SANDBOX_SUPERVISOR_HOMES", "remote");
+    const { supervisorApp } = await import("./index.js");
+    const frame = (stream: number, data: Buffer) => {
+      const header = Buffer.alloc(8);
+      header[0] = stream;
+      header.writeUInt32BE(data.length, 4);
+      return Buffer.concat([header, data]);
+    };
+    const labels = { "corvo.managed": "true", "corvo.botId": "bot", "corvo.spaceId": "space" };
+    const exec = vi.fn(async (options: { Cmd: string[] }) => ({
+      start: async () =>
+        Readable.from(
+          options.Cmd[0] === "bash" && options.Cmd[2]?.includes("tar --create")
+            ? [frame(1, Buffer.from("gzip bytes"))]
+            : [],
+        ),
+      inspect: async () => ({ ExitCode: 0 }),
+    }));
+    mocks.docker.getContainer.mockReturnValue({
+      inspect: vi.fn(async () => ({ Config: { Labels: labels }, State: { Running: true } })),
+      exec,
+    });
+    const ok = await supervisorApp.request("/computers/mine/archive", { headers: authorized() });
+    expect(ok.status).toBe(200);
+    expect(Buffer.from(await ok.arrayBuffer()).toString()).toBe("gzip bytes");
+    expect(String(exec.mock.calls[0]?.[0].Cmd[2])).toContain("Browser.close");
+
+    const foreign = await supervisorApp.request("/computers/theirs/archive", {
+      headers: { ...authorized(), "x-corvo-bot-id": "someone-else" },
+    });
+    expect(foreign.status).toBe(403);
+    // Only the quiesce and the one archive ran for the first request.
+    expect(exec).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not hand out a half-written archive when the command fails", async () => {
+    vi.stubEnv("SANDBOX_SUPERVISOR_HOMES", "remote");
+    const { supervisorApp } = await import("./index.js");
+    const labels = { "corvo.managed": "true", "corvo.botId": "bot", "corvo.spaceId": "space" };
+    const header = Buffer.alloc(8);
+    header[0] = 1;
+    header.writeUInt32BE(3, 4);
+    let call = 0;
+    mocks.docker.getContainer.mockReturnValue({
+      inspect: vi.fn(async () => ({ Config: { Labels: labels }, State: { Running: true } })),
+      exec: vi.fn(async () => {
+        const archive = call++ === 1;
+        return {
+          start: async () =>
+            Readable.from(archive ? [Buffer.concat([header, Buffer.from("abc")])] : []),
+          inspect: async () => ({ ExitCode: archive ? 2 : 0 }),
+        };
+      }),
+    });
+    const response = await supervisorApp.request("/computers/mine/archive", {
+      headers: authorized(),
+    });
+    await expect(response.arrayBuffer()).rejects.toThrow();
   });
 });
 

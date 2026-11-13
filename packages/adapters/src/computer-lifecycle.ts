@@ -177,8 +177,6 @@ export async function provisionComputer(
       throw new Error("computer control revocation is still in progress");
     }
   }
-  const homePath = resolveAgentHomePath(deps.home, existing.homeKey, deps.dataDir ?? "./data");
-  await mkdir(homePath, { recursive: true });
 
   // Re-provisioning a live computer enters booting and revokes its screen URLs.
   // A provider-confirmed live reference needs setup, not a new lifecycle claim.
@@ -286,6 +284,11 @@ export async function provisionComputer(
     throw new ComputerBusyError();
   }
 
+  const homePath = resolveAgentHomePath(deps.home, existing.homeKey, deps.dataDir ?? "./data");
+  // A provider that keeps the home on its own host makes it there; this host never touches one.
+  const providerKeepsHome = (await deps.sandbox.keepsHome?.(context)) === true;
+  if (!providerKeepsHome) await mkdir(homePath, { recursive: true });
+
   const reconnecting =
     Boolean(existing.providerRef) &&
     (existing.state === "running" || existing.state === "suspending");
@@ -330,7 +333,7 @@ export async function provisionComputer(
   let provisioned: ComputerRef | undefined;
   try {
     // Docker mounts the cached directory, so it must hold the stored revision before boot.
-    if (!reconnecting && deps.home instanceof ObjectAgentHomeStore)
+    if (!providerKeepsHome && !reconnecting && deps.home instanceof ObjectAgentHomeStore)
       await deps.home.hydrate(existing.homeKey);
     await onProgress?.("recreating");
     const provision = () =>

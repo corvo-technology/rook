@@ -69,6 +69,11 @@
       "development": "./src/plot/plot-spec.ts",
       "default": "./src/plot/plot-spec.ts"
     },
+    "./node/workspace-skips": {
+      "types": "./src/node/workspace-skips.ts",
+      "development": "./src/node/workspace-skips.ts",
+      "default": "./src/node/workspace-skips.ts"
+    },
     "./node/desktop-runtime": {
       "types": "./src/node/desktop-runtime.ts",
       "development": "./src/node/desktop-runtime.ts",

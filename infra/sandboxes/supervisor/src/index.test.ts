@@ -7,6 +7,7 @@ import path from "node:path";
 import { resolveSupervisorToken } from "@corvo/core";
 import { describe, expect, it } from "vitest";
 import {
+  MAX_SUPERVISOR_ARCHIVE_BYTES,
   MAX_SUPERVISOR_FILE_REQUEST_BYTES,
   MAX_SUPERVISOR_REQUEST_BYTES,
   resolveDockerSocketPath,
@@ -177,6 +178,8 @@ describe("sandbox supervisor HTTP boundary", () => {
       ["POST", "/computers/id/browser"],
       ["GET", "/computers/id/files"],
       ["POST", "/computers/id/files"],
+      ["GET", "/computers/id/archive"],
+      ["PUT", "/computers/id/archive"],
       ["GET", "/computers/id/screen"],
       ["POST", "/computers/id/screen-mode"],
       ["POST", "/computers/id/terminal"],
@@ -242,6 +245,21 @@ describe("sandbox supervisor HTTP boundary", () => {
       }).success,
     ).toBe(false);
     expect(supervisorRequestBodyLimit("POST", "/computers/id/actions", limit)).toBe(
+      MAX_SUPERVISOR_REQUEST_BYTES,
+    );
+  });
+
+  it("lets only the home archive upload carry a whole home", () => {
+    expect(supervisorRequestBodyLimit("PUT", "/computers/id/archive")).toBe(
+      MAX_SUPERVISOR_ARCHIVE_BYTES,
+    );
+    expect(supervisorRequestBodyLimit("GET", "/computers/id/archive")).toBe(
+      MAX_SUPERVISOR_REQUEST_BYTES,
+    );
+    expect(supervisorRequestBodyLimit("POST", "/computers/id/archive")).toBe(
+      MAX_SUPERVISOR_REQUEST_BYTES,
+    );
+    expect(supervisorRequestBodyLimit("PUT", "/computers/id/archive/extra")).toBe(
       MAX_SUPERVISOR_REQUEST_BYTES,
     );
   });

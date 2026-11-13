@@ -13,7 +13,12 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { assertComputerHomeWritable, assertOpenedDirectoryBeneathRoot } from "./home-ownership.js";
+import {
+  assertComputerHomeWritable,
+  assertOpenedDirectoryBeneathRoot,
+  ensureOwnedHome,
+  isHomeKey,
+} from "./home-ownership.js";
 
 const roots: string[] = [];
 const DIRECTORY_OPEN_FLAGS = constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW;
@@ -186,4 +191,50 @@ describe("computer home ownership", () => {
       }
     },
   );
+});
+
+describe("a home this supervisor's host owns", () => {
+  const owner = { uid: 1000, gid: 1000 };
+  const dataDir = async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "corvo-owned-home-"));
+    roots.push(root);
+    return root;
+  };
+
+  it("names one folder or nothing", () => {
+    for (const key of ["bot-1", "team-0f3a", "A_b-9"]) expect(isHomeKey(key)).toBe(true);
+    for (const key of ["", "..", "../x", "a/b", ".hidden", "a b", "x".repeat(129), "bot\0"]) {
+      expect(isHomeKey(key), key).toBe(false);
+    }
+  });
+
+  it("creates the home under the data directory and returns its path", async () => {
+    const root = await dataDir();
+    const home = await ensureOwnedHome(root, "bot-1", owner);
+    expect(home).toBe(path.join(root, "homes", "bot-1"));
+    expect((await lstat(home)).isDirectory()).toBe(true);
+  });
+
+  it("leaves a home that already holds files as it is", async () => {
+    const root = await dataDir();
+    const home = await ensureOwnedHome(root, "bot-1", owner);
+    await writeFile(path.join(home, "keep.txt"), "kept");
+    await expect(ensureOwnedHome(root, "bot-1", owner)).resolves.toBe(home);
+    expect((await lstat(path.join(home, "keep.txt"))).isFile()).toBe(true);
+  });
+
+  it("refuses a key that could name another place, creating nothing", async () => {
+    const root = await dataDir();
+    await expect(ensureOwnedHome(root, "../escape", owner)).rejects.toThrow("not a valid");
+    await expect(lstat(path.join(root, "escape"))).rejects.toThrow();
+  });
+
+  it("refuses a link or a file where the home should be", async () => {
+    const root = await dataDir();
+    await mkdir(path.join(root, "homes"), { recursive: true });
+    await symlink(tmpdir(), path.join(root, "homes", "linked"));
+    await writeFile(path.join(root, "homes", "file"), "x");
+    await expect(ensureOwnedHome(root, "linked", owner)).rejects.toThrow("symbolic link");
+    await expect(ensureOwnedHome(root, "file", owner)).rejects.toThrow("must be a directory");
+  });
 });

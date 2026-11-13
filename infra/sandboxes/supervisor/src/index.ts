@@ -17,7 +17,7 @@ import { createRootLogger } from "@corvo/logging/axiom";
 import { requestLogging } from "@corvo/logging/hono";
 import { serve } from "@hono/node-server";
 import Docker from "dockerode";
-import type { MiddlewareHandler } from "hono";
+import type { Context, MiddlewareHandler } from "hono";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { z } from "zod";
@@ -60,7 +60,7 @@ import {
   xdotoolCommand,
 } from "./computer-spec.js";
 import { EgressNotEnforced, verifyRestrictedEgress } from "./egress-probe.js";
-import { assertComputerHomeWritable } from "./home-ownership.js";
+import { assertComputerHomeWritable, ensureOwnedHome } from "./home-ownership.js";
 import type { ScreenAssignment } from "./supervisor-logic.js";
 import {
   assertRequestIdentity,
@@ -101,6 +101,11 @@ import {
   withKeyedLock,
   workspaceTarget,
 } from "./supervisor-logic.js";
+import {
+  extractWorkspaceArchive,
+  openWorkspaceArchive,
+  resolveSupervisorHomes,
+} from "./workspace-archive.js";
 
 loadRootEnv();
 
@@ -115,6 +120,12 @@ let imageReady: Promise<void> | undefined;
 let supervisorInfo: Docker.ContainerInspectInfo | undefined;
 let dockerApiVersion: string | undefined;
 const supervisorToken = resolveSupervisorToken(process.env);
+/**
+ * Whether this supervisor's host owns the computers' homes. `local` shares the data volume with
+ * the API and worker, which create each home and read it directly. `remote` keeps every home on
+ * this host: the supervisor creates it, and the home moves to and from the server as an archive.
+ */
+const supervisorHomes = resolveSupervisorHomes();
 const screenNetworkMode = resolveScreenNetworkMode(process.env.SANDBOX_SCREEN_NETWORK);
 const computerEgressSetting = resolveComputerEgressMode();
 // `auto` starts open and becomes restricted once the probe shows the host rules are in place.
@@ -130,6 +141,8 @@ const computerScreens = new Map<string, Map<string, ScreenAssignment>>();
 const computerScreenBoots = new Map<string, string>();
 
 export const MAX_SUPERVISOR_REQUEST_BYTES = 1024 * 1024;
+/** A whole home upload: the server's save limit plus room for tar headers and compression slack. */
+export const MAX_SUPERVISOR_ARCHIVE_BYTES = 24 * 1024 ** 3;
 const maxUploadSizeBytes = uploadSizeFromEnv(process.env);
 
 function supervisorFileContentLimit(maxBytes: number): number {
@@ -146,6 +159,9 @@ export function supervisorRequestBodyLimit(
   pathname: string,
   maxBytes = maxUploadSizeBytes,
 ): number {
+  if (method === "PUT" && /^\/computers\/[^/]+\/archive\/?$/.test(pathname)) {
+    return MAX_SUPERVISOR_ARCHIVE_BYTES;
+  }
   return method === "POST" && /^\/computers\/[^/]+\/files\/?$/.test(pathname)
     ? supervisorFileContentLimit(maxBytes) + 64 * 1024
     : MAX_SUPERVISOR_REQUEST_BYTES;
@@ -185,7 +201,7 @@ export function resolveDockerSocketPath(
   return platform === "win32" ? "//./pipe/docker_engine" : "/var/run/docker.sock";
 }
 
-app.get("/health", (c) => c.json({ ok: true, image: COMPUTER_IMAGE }));
+app.get("/health", (c) => c.json({ ok: true, image: COMPUTER_IMAGE, homes: supervisorHomes }));
 
 app.use("/computers", async (c, next) => {
   if (!hasValidBearerToken(c.req.header("authorization"), supervisorToken)) {
@@ -206,7 +222,7 @@ app.post("/computers", async (c) => {
   const body = z
     .object({
       botId: z.string().min(1),
-      homePath: z.string().min(1),
+      homePath: z.string().min(1).optional(),
       spaceId: z.string().min(1),
     })
     .parse(await c.req.json());
@@ -221,14 +237,39 @@ app.post("/computers", async (c) => {
       const runtimeInfo = await inspectSupervisorContainer();
       const networkMode = computerNetworkName(body.botId, runtimeInfo);
       const networkOwner = computerNetworkOwnerFor(dataDir, runtimeInfo);
-      const serviceHomePath = path.resolve(body.homePath);
-      assertBotHomePath(serviceHomePath, body.botId);
+      // A server and a supervisor that disagree about who owns the homes must fail here, not
+      // later: a server that thinks the home is shared would save an empty folder over the real one.
+      if (supervisorHomes === "remote" && body.homePath !== undefined) {
+        throw new Error(
+          "this supervisor keeps computer homes on its own host; the server must not send one",
+        );
+      }
+      if (supervisorHomes === "local" && body.homePath === undefined) {
+        throw new Error("computer home is required");
+      }
       const hostUid = process.getuid?.();
       const hostGid = process.getgid?.();
-      // The API normally creates the home. A non-root standalone supervisor may
-      // do so as the same user, but a root supervisor must never create or chown
-      // user-controlled paths at runtime; Compose data-init handles legacy data.
-      if (hostUid !== 0) await mkdir(serviceHomePath, { recursive: true });
+      const serviceHomePath =
+        supervisorHomes === "remote"
+          ? path.join(dataDir, "homes", body.botId)
+          : path.resolve(body.homePath!);
+      assertBotHomePath(serviceHomePath, body.botId);
+      if (supervisorHomes === "remote") {
+        // This host owns the home, so it creates it. Only that folder is handed to the
+        // computer's user, and the key was checked to be a single path segment.
+        await ensureOwnedHome(
+          dataDir,
+          body.botId,
+          runtimeInfo || hostUid === undefined || hostGid === undefined || hostUid === 0
+            ? { uid: COMPUTER_UID, gid: COMPUTER_GID }
+            : { uid: hostUid, gid: hostGid },
+        );
+      } else if (hostUid !== 0) {
+        // The API normally creates the home. A non-root standalone supervisor may
+        // do so as the same user, but a root supervisor must never create or chown
+        // user-controlled paths at runtime; Compose data-init handles legacy data.
+        await mkdir(serviceHomePath, { recursive: true });
+      }
       const storage = computerHomeStorage(serviceHomePath, dataDir, runtimeInfo);
       if (storage.homeVolume) {
         assertVolumeSubpathSupport((await docker.version()).ApiVersion);
@@ -775,6 +816,62 @@ app.post("/computers/:id/files", async (c) => {
   }
 });
 
+/** The home as a gzipped tar, for a server that does not share this host's disk. */
+app.get("/computers/:id/archive", async (c) => {
+  if (supervisorHomes !== "remote")
+    return c.json({ error: "homes are not kept on this host" }, 404);
+  try {
+    const { container, info } = await managedContainer(
+      c.req.param("id"),
+      c.req.header("x-corvo-bot-id"),
+      c.req.header("x-corvo-space-id"),
+    );
+    if (!info.State?.Running) return c.json({ error: "computer is not running" }, 409);
+    // Browsers hold their profiles open and rewrite them, so close them as a stop would.
+    const quiesce = await runContainerCommand(container, [
+      "bash",
+      "-c",
+      quiesceBrowserProfilesCommand(),
+    ]);
+    if (quiesce.code !== 0) throw new Error(quiesce.stderr || "bot browsers failed to stop");
+    return new Response(await openWorkspaceArchive(container), {
+      headers: { "content-type": "application/gzip", "cache-control": "no-store" },
+    });
+  } catch (error) {
+    return archiveFailure(c, error);
+  }
+});
+
+/** Unpacks a gzipped tar into the home; files already there are overwritten, others are kept. */
+app.put("/computers/:id/archive", async (c) => {
+  if (supervisorHomes !== "remote")
+    return c.json({ error: "homes are not kept on this host" }, 404);
+  try {
+    const { container, info } = await managedContainer(
+      c.req.param("id"),
+      c.req.header("x-corvo-bot-id"),
+      c.req.header("x-corvo-space-id"),
+    );
+    if (!info.State?.Running) return c.json({ error: "computer is not running" }, 409);
+    const body = c.req.raw.body;
+    if (!body) return c.json({ error: "archive is required" }, 400);
+    await extractWorkspaceArchive(container, body);
+    return c.json({ ok: true });
+  } catch (error) {
+    return archiveFailure(c, error);
+  }
+});
+
+function archiveFailure(c: Context, error: unknown) {
+  if (error instanceof ComputerIdentityError)
+    return c.json({ error: "invalid computer identity" }, 403);
+  if (error && typeof error === "object" && "statusCode" in error && error.statusCode === 404) {
+    return c.json({ error: "computer not found" }, 404);
+  }
+  const message = error instanceof Error ? error.message : String(error);
+  return c.json({ error: message }, 500);
+}
+
 app.get("/computers/:id/screen", async (c) => {
   const id = c.req.param("id");
   try {
@@ -1125,6 +1222,8 @@ function startSupervisor() {
   const server = serve({ fetch: app.fetch, hostname, port }, () => {
     logger.info("supervisor listening", { "http.host": hostname, "http.port": port });
   });
+  // A home upload can run far longer than Node's default five minutes to receive a request.
+  if ("requestTimeout" in server) server.requestTimeout = 0;
   let stopping = false;
   const shutdown = async () => {
     if (stopping) return;

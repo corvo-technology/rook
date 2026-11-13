@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   checkpointAndStopComputer,
   checkpointComputerWorkspace,
+  checkpointRunComputerWorkspace,
   deletedTeamBotFolders,
   ensureComputerWorkspaceLayout,
   removeComputerWorkspaceDirectories,
@@ -581,3 +582,47 @@ function localWorkspaceSandbox(workspace: string) {
     },
   } as unknown as SandboxProvider;
 }
+
+describe("which Docker computers share the server's home", () => {
+  const computer = { id: "c1", botId: "team-1", kind: "docker" as const, providerRef: "c1" };
+  const record = { id: "row-1", homeKey: "team-1", scope: "team", spaceId: "workspace" };
+
+  async function run(keepsHome: boolean) {
+    const root = await mkdtemp(path.join(tmpdir(), "corvo-shared-home-"));
+    roots.push(root);
+    const home = new LocalAgentHomeStore(root);
+    const revise = vi.spyOn(home, "revise");
+    const updateMany = vi.fn(async () => ({ count: 0 }));
+    const sandbox = {
+      keepsHome: async () => keepsHome,
+      exportWorkspace: async function* () {},
+    } as unknown as SandboxProvider;
+    await checkpointRunComputerWorkspace(
+      { home, sandbox, prisma: { computer: { updateMany } } as unknown as PrismaClient },
+      record,
+      computer,
+      context,
+    );
+    return { revise, updateMany };
+  }
+
+  it("saves a shared home in place, without quiescing the computer", async () => {
+    const { revise, updateMany } = await run(false);
+    expect(revise).toHaveBeenCalledOnce();
+    expect(updateMany).toHaveBeenCalledOnce();
+    expect(updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ homeRevision: expect.any(String) }),
+      }),
+    );
+  });
+
+  it("claims a Team Computer before copying out a home kept on the supervisor's host", async () => {
+    const { revise, updateMany } = await run(true);
+    expect(revise).not.toHaveBeenCalled();
+    // The claim lost the race here, so nothing is exported by this run.
+    expect(updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ state: "suspending" }) }),
+    );
+  });
+});

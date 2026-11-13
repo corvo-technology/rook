@@ -137,6 +137,19 @@ export class DockerSandboxProvider implements SandboxProvider {
     return `${this.supervisorUrl.replace(/\/$/, "")}${path}`;
   }
 
+  /**
+   * What the server's screen proxy sends the supervisor's gateway with every request and socket.
+   * They are sealed into the screen capability, so the browser never sees the token, and they name
+   * the bot and space so the gateway reaches only a computer this supervisor manages for them.
+   */
+  private gatewayHeaders(computer: ComputerRef, context: AdapterContext) {
+    return {
+      authorization: `Bearer ${this.supervisorToken}`,
+      "x-corvo-bot-id": computer.botId,
+      "x-corvo-space-id": context.spaceId,
+    };
+  }
+
   private headers(context: AdapterContext, botId?: string) {
     return {
       authorization: `Bearer ${this.supervisorToken}`,
@@ -293,9 +306,20 @@ export class DockerSandboxProvider implements SandboxProvider {
       }
       return { url: null, mimeType: "text/html", close: async () => undefined };
     }
-    const body = await readSandboxJson<{ screenUrl?: string }>(res, context.signal);
-    if (request.interactive && !body.screenUrl) {
+    const body = await readSandboxJson<{ screenUrl?: string; screenPath?: string }>(
+      res,
+      context.signal,
+    );
+    if (request.interactive && !body.screenUrl && !body.screenPath) {
       throw new Error("control screen failed to start");
+    }
+    if (body.screenPath) {
+      return {
+        url: this.url(body.screenPath),
+        headers: this.gatewayHeaders(computer, context),
+        mimeType: "text/html",
+        close: async () => undefined,
+      };
     }
     return {
       url: body.screenUrl ?? this.url(`/computers/${computer.id}/screen`),
@@ -315,7 +339,17 @@ export class DockerSandboxProvider implements SandboxProvider {
       const detail = await safeBody(res, context.signal);
       throw new Error(`sandbox terminal failed: ${res.status} ${detail}`.trim());
     }
-    const body = await readSandboxJson<{ terminalUrl: string }>(res, context.signal);
+    const body = await readSandboxJson<{ terminalUrl?: string; terminalPath?: string }>(
+      res,
+      context.signal,
+    );
+    if (body.terminalPath) {
+      return {
+        url: this.url(body.terminalPath),
+        headers: this.gatewayHeaders(computer, context),
+      };
+    }
+    if (!body.terminalUrl) throw new Error("sandbox terminal failed: no address");
     return { url: body.terminalUrl };
   }
 

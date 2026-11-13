@@ -194,6 +194,56 @@ describe("sealed screen capabilities", () => {
     );
   });
 
+  it.each([
+    [false, "view_only=true"],
+    [true, "view_only=false"],
+  ])(
+    "reaches a computer through its supervisor's gateway with sealed credentials (control: %s)",
+    (interactive, viewOnly) => {
+      const gateway = {
+        authorization: "Bearer fake-supervisor-token",
+        "x-corvo-bot-id": "bot",
+        "x-corvo-space-id": "space",
+      };
+      const provider = new URL("http://10.8.0.2:7091/gateway/0123456789ab/embed.html");
+      provider.searchParams.set("path", "websockify?token=fake-socket-token");
+      if (interactive) provider.searchParams.set("view_only", "false");
+      const url = new URL(
+        sealScreenCapability(
+          provider.toString(),
+          "fake-secret",
+          "https://app.example",
+          scope,
+          100,
+          gateway,
+        ),
+      );
+      expect(url.toString()).not.toContain("fake-supervisor-token");
+      expect(url.toString()).not.toContain("fake-socket-token");
+      // The page, an asset beside it and the socket all land on the gateway, with its credentials.
+      const page = openScreenCapability(url.pathname, "fake-secret", 101)?.target;
+      expect(page).toMatchObject({
+        protocol: "http:",
+        hostname: "10.8.0.2",
+        port: 7091,
+        headers: gateway,
+        interactive,
+      });
+      expect(page?.path.startsWith("/gateway/0123456789ab/embed.html?")).toBe(true);
+      // The policy reaches a page under a folder too, so a viewer cannot be handed control.
+      expect(page?.path).toContain(viewOnly);
+      expect(
+        openScreenCapability(url.pathname.replace("embed.html", "app/ui.js"), "fake-secret", 101)
+          ?.target.path,
+      ).toBe("/gateway/0123456789ab/app/ui.js");
+      const socket = new URL(url.searchParams.get("path")!, url);
+      expect(openScreenCapability(socket.pathname, "fake-secret", 101)?.target).toMatchObject({
+        path: "/gateway/0123456789ab/websockify?token=fake-socket-token",
+        headers: gateway,
+      });
+    },
+  );
+
   it("randomizes issuance even at the same timestamp", () => {
     expect(path("http://127.0.0.1:49152/embed.html")).not.toBe(
       path("http://127.0.0.1:49152/embed.html"),

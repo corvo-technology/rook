@@ -2493,3 +2493,184 @@ describe("computer network reclaim", () => {
     });
   });
 });
+
+describe("screen gateway", () => {
+  const computerId = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+  const headers = {
+    authorization: `Bearer ${resolveSupervisorToken(process.env)}`,
+    "content-type": "application/json",
+    "x-corvo-bot-id": "bot",
+    "x-corvo-space-id": "space",
+  };
+
+  function computer(state: { running?: boolean; labels?: Record<string, string> } = {}) {
+    return {
+      id: computerId,
+      inspect: vi.fn(async () => ({
+        Config: {
+          Labels: state.labels ?? {
+            "corvo.managed": "true",
+            "corvo.botId": "bot",
+            "corvo.spaceId": "space",
+          },
+        },
+        HostConfig: { NetworkMode: computerNetworkNameFor("bot") },
+        State: { Running: state.running ?? true },
+        NetworkSettings: {
+          Ports: { "6080/tcp": [{ HostIp: "127.0.0.1", HostPort: screenPort }] },
+        },
+      })),
+      exec: vi.fn(async () => ({
+        start: async () => Readable.from([]),
+        inspect: async () => ({ ExitCode: 0 }),
+      })),
+    };
+  }
+
+  it("hands the server a path on the supervisor, never a computer's address", async () => {
+    vi.stubEnv("SANDBOX_SCREEN_GATEWAY", "true");
+    const { supervisorApp } = await import("./index.js");
+    mocks.docker.getContainer.mockReturnValue(computer());
+    const open = (body: object) =>
+      supervisorApp.request(`/computers/${computerId}/screen-mode`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+      });
+    const view = (await (await open({ interactive: false })).json()) as Record<string, string>;
+    expect(view.screenUrl).toBeUndefined();
+    expect(view.screenPath).toMatch(new RegExp(`^/gateway/${computerId}/embed\\.html\\?path=`));
+    expect(view.screenPath).not.toContain("127.0.0.1");
+    const control = (await (
+      await open({ interactive: true, controlToken: "human-control" })
+    ).json()) as Record<string, string>;
+    expect(decodeURIComponent(control.screenPath!)).toContain("token=human-control");
+    const terminal = await supervisorApp.request(`/computers/${computerId}/terminal`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ controlToken: "human-control" }),
+    });
+    const terminalBody = (await terminal.json()) as Record<string, string>;
+    expect(terminalBody.terminalUrl).toBeUndefined();
+    expect(terminalBody.terminalPath).toMatch(new RegExp(`^/gateway/${computerId}/embed\\.html`));
+  });
+
+  it("keeps handing out the computer's address when the gateway is off", async () => {
+    const { supervisorApp } = await import("./index.js");
+    mocks.docker.getContainer.mockReturnValue(computer());
+    const response = await supervisorApp.request(`/computers/${computerId}/screen-mode`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ interactive: false }),
+    });
+    const body = (await response.json()) as Record<string, string>;
+    expect(body.screenPath).toBeUndefined();
+    expect(body.screenUrl).toContain(`127.0.0.1:${screenPort}`);
+  });
+
+  it("serves nothing at /gateway when it is off", async () => {
+    const { supervisorApp } = await import("./index.js");
+    mocks.docker.getContainer.mockReturnValue(computer());
+    const response = await supervisorApp.request(`/gateway/${computerId}/embed.html`, { headers });
+    expect(response.status).toBe(404);
+  });
+
+  describe("requests through it", () => {
+    const get = async (extra: Record<string, string | undefined>, path = "embed.html") => {
+      vi.stubEnv("SANDBOX_SCREEN_GATEWAY", "true");
+      const { supervisorApp } = await import("./index.js");
+      return supervisorApp.request(`/gateway/${computerId}/${path}`, {
+        headers: Object.fromEntries(
+          Object.entries({ ...headers, ...extra }).filter(([, value]) => value !== undefined),
+        ) as Record<string, string>,
+      });
+    };
+
+    it("reaches the screen of a computer it manages for the named bot and space", async () => {
+      mocks.docker.getContainer.mockReturnValue(computer());
+      const response = await get({});
+      expect(response.status).toBe(200);
+      await expect(response.text()).resolves.toBe("ok");
+    });
+
+    it.each([
+      ["no token", { authorization: undefined }, 401],
+      ["a wrong token", { authorization: "Bearer not-the-token" }, 401],
+      ["no identity", { "x-corvo-bot-id": undefined }, 403],
+      ["another bot's identity", { "x-corvo-bot-id": "someone-else" }, 403],
+      ["another space's identity", { "x-corvo-space-id": "other-space" }, 403],
+    ])("refuses %s before touching the computer", async (_name, extra, status) => {
+      const container = computer();
+      mocks.docker.getContainer.mockReturnValue(container);
+      const response = await get(extra);
+      expect(response.status).toBe(status);
+      expect(container.exec).not.toHaveBeenCalled();
+    });
+
+    it("refuses a container that is not one of its computers", async () => {
+      mocks.docker.getContainer.mockReturnValue(computer({ labels: { unrelated: "yes" } }));
+      expect((await get({})).status).toBe(403);
+    });
+
+    it("says so when the computer has stopped, and when it is gone", async () => {
+      mocks.docker.getContainer.mockReturnValue(computer({ running: false }));
+      expect((await get({})).status).toBe(409);
+      mocks.docker.getContainer.mockReturnValue({
+        inspect: vi.fn().mockRejectedValue(Object.assign(new Error("gone"), { statusCode: 404 })),
+      });
+      expect((await get({})).status).toBe(404);
+    });
+
+    it("does not let a path climb out of the screen's folder", async () => {
+      mocks.docker.getContainer.mockReturnValue(computer());
+      expect((await get({}, "..%2F..%2Fetc")).status).toBe(404);
+    });
+  });
+
+  it("accepts a websocket only with the token, for a computer it manages", async () => {
+    vi.stubEnv("SANDBOX_SCREEN_GATEWAY", "true");
+    const { handleGatewayUpgrade } = await import("./index.js");
+    mocks.docker.getContainer.mockReturnValue(computer());
+    const front = http.createServer();
+    front.on("upgrade", (req, socket, head) => void handleGatewayUpgrade(req, socket, head));
+    await new Promise<void>((resolve) => front.listen(0, "127.0.0.1", resolve));
+    const port = (front.address() as { port: number }).port;
+    const attempt = (url: string, extra: Record<string, string> = {}) =>
+      new Promise<string>((resolve) => {
+        const request = http.request({
+          port,
+          host: "127.0.0.1",
+          path: url,
+          headers: {
+            connection: "Upgrade",
+            upgrade: "websocket",
+            "sec-websocket-key": "dGhlIHNhbXBsZSBub25jZQ==",
+            "sec-websocket-version": "13",
+            ...headers,
+            ...extra,
+          },
+        });
+        request.once("upgrade", (response, socket) => {
+          socket.destroy();
+          resolve(`upgraded ${response.statusCode}`);
+        });
+        request.once("response", (response) => resolve(`refused ${response.statusCode}`));
+        request.once("error", () => resolve("error"));
+        request.end();
+      });
+    try {
+      expect(await attempt(`/gateway/${computerId}/websockify`)).toBe("refused 404");
+      expect(
+        await attempt(`/gateway/${computerId}/websockify?token=abc`, { authorization: "Bearer x" }),
+      ).toBe("refused 401");
+      expect(
+        await attempt(`/gateway/${computerId}/websockify?token=abc`, { "x-corvo-bot-id": "other" }),
+      ).toBe("refused 403");
+    } finally {
+      await new Promise<void>((resolve) => {
+        front.close(() => resolve());
+        front.closeAllConnections();
+      });
+    }
+  });
+});

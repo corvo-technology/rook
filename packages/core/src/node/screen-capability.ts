@@ -257,7 +257,9 @@ export function openScreenCapability(
 
 export function screenPolicyPath(requestedPath: string, interactive: boolean) {
   const parsed = new URL(requestedPath, "http://screen.invalid");
-  if (parsed.pathname === "/embed.html" || parsed.pathname === "/vnc.html") {
+  // A gateway in front of the computer serves the page under a folder of its own.
+  const page = parsed.pathname.slice(parsed.pathname.lastIndexOf("/") + 1);
+  if (page === "embed.html" || page === "vnc.html") {
     parsed.searchParams.set("view_only", interactive ? "false" : "true");
   }
   return `${parsed.pathname}${parsed.search}`;

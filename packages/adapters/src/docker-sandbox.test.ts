@@ -754,3 +754,60 @@ describe("Docker sandbox stopped containers", () => {
     ).resolves.toMatchObject({ url: null });
   });
 });
+
+describe("Docker sandbox with a screen gateway on the supervisor", () => {
+  const computer = { id: "c1", botId: "bot", kind: "docker" as const, providerRef: "c1" };
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("addresses the screen on the supervisor and seals the credentials the gateway needs", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ screenPath: "/gateway/abc123abc123/embed.html?path=x" })),
+    );
+    const provider = new DockerSandboxProvider("http://10.8.0.2:7091", "supervisor-token");
+    const session = await provider.connectScreen(computer, { view: "stream" }, context);
+    expect(session.url).toBe("http://10.8.0.2:7091/gateway/abc123abc123/embed.html?path=x");
+    expect(session.headers).toEqual({
+      authorization: "Bearer supervisor-token",
+      "x-corvo-bot-id": "bot",
+      "x-corvo-space-id": "workspace",
+    });
+  });
+
+  it("does the same for the terminal", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ terminalPath: "/gateway/abc123abc123/embed.html?t=1" })),
+    );
+    const provider = new DockerSandboxProvider("http://10.8.0.2:7091/", "supervisor-token");
+    await expect(
+      provider.connectTerminal(computer, { controlToken: "human-control" }, context),
+    ).resolves.toEqual({
+      url: "http://10.8.0.2:7091/gateway/abc123abc123/embed.html?t=1",
+      headers: {
+        authorization: "Bearer supervisor-token",
+        "x-corvo-bot-id": "bot",
+        "x-corvo-space-id": "workspace",
+      },
+    });
+  });
+
+  it("sends no credentials with a computer's own address, as before", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({
+          screenUrl: "http://172.20.0.5:6080/embed.html",
+          terminalUrl: "http://172.20.0.5:6080/embed.html",
+        }),
+      ),
+    );
+    const provider = new DockerSandboxProvider("http://supervisor.test", "supervisor-token");
+    const session = await provider.connectScreen(computer, { view: "stream" }, context);
+    expect(session.url).toBe("http://172.20.0.5:6080/embed.html");
+    expect(session.headers).toBeUndefined();
+    await expect(
+      provider.connectTerminal(computer, { controlToken: "human-control" }, context),
+    ).resolves.toEqual({ url: "http://172.20.0.5:6080/embed.html" });
+  });
+});

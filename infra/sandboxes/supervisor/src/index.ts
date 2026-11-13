@@ -1,9 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
+import type { IncomingHttpHeaders, IncomingMessage } from "node:http";
 import http from "node:http";
 import { homedir } from "node:os";
 import path from "node:path";
+import type { Duplex } from "node:stream";
 import { fileURLToPath } from "node:url";
 import {
   boundedSandboxCommandTimeoutMs,
@@ -60,6 +62,18 @@ import {
   xdotoolCommand,
 } from "./computer-spec.js";
 import { EgressNotEnforced, verifyRestrictedEgress } from "./egress-probe.js";
+import type { GatewayResolution } from "./gateway.js";
+import {
+  gatewayEnabled,
+  gatewayScreenPath,
+  gatewayScreenPathWithToken,
+  gatewaySocketHasToken,
+  gatewayUpstreamPort,
+  parseGatewayUrl,
+  proxyGatewayHttp,
+  proxyGatewayUpgrade,
+  refuseGatewayUpgrade,
+} from "./gateway.js";
 import { assertComputerHomeWritable } from "./home-ownership.js";
 import type { ScreenAssignment } from "./supervisor-logic.js";
 import {
@@ -115,6 +129,12 @@ let imageReady: Promise<void> | undefined;
 let supervisorInfo: Docker.ContainerInspectInfo | undefined;
 let dockerApiVersion: string | undefined;
 const supervisorToken = resolveSupervisorToken(process.env);
+/**
+ * With the gateway on, the screen, terminal and page browser of a computer are reached through
+ * this supervisor (`/gateway/<container>/...`) instead of at the computer's own address, so a
+ * server on another host needs to reach this one port and nothing else.
+ */
+const screenGateway = gatewayEnabled();
 const screenNetworkMode = resolveScreenNetworkMode(process.env.SANDBOX_SCREEN_NETWORK);
 const computerEgressSetting = resolveComputerEgressMode();
 // `auto` starts open and becomes restricted once the probe shows the host rules are in place.
@@ -775,6 +795,76 @@ app.post("/computers/:id/files", async (c) => {
   }
 });
 
+/**
+ * A computer's screen server through this supervisor. The server proves it holds the supervisor's
+ * token and names the bot and space the computer belongs to; only a computer this supervisor
+ * manages under that identity is reached, and only on its screen port.
+ */
+async function resolveGateway(
+  headers: IncomingHttpHeaders | Headers,
+  target: NonNullable<ReturnType<typeof parseGatewayUrl>>,
+): Promise<GatewayResolution> {
+  const read = (name: string) =>
+    headers instanceof Headers
+      ? (headers.get(name) ?? undefined)
+      : (headers[name] as string | undefined);
+  if (!hasValidBearerToken(read("authorization"), supervisorToken)) {
+    return { ok: false, status: 401, error: "unauthorized" };
+  }
+  try {
+    const { info } = await managedContainer(
+      target.containerId,
+      read("x-corvo-bot-id"),
+      read("x-corvo-space-id"),
+    );
+    if (!info.State?.Running) return { ok: false, status: 409, error: "computer is not running" };
+    const port = String(gatewayUpstreamPort());
+    const upstream = resolveScreenPublishTarget({
+      screenNetwork: screenNetworkMode,
+      networkMode: info.HostConfig.NetworkMode,
+      networks: info.NetworkSettings?.Networks,
+      hostPort: info.NetworkSettings?.Ports?.[`${port}/tcp`]?.[0]?.HostPort,
+      containerPort: port,
+      screenHost: SCREEN_HOST,
+    });
+    if (!upstream) return { ok: false, status: 502, error: "computer screen is not reachable" };
+    return { ok: true, upstream: { host: upstream.host, port: Number(upstream.port) } };
+  } catch (error) {
+    if (error instanceof ComputerIdentityError) {
+      return { ok: false, status: 403, error: "invalid computer identity" };
+    }
+    if (error && typeof error === "object" && "statusCode" in error && error.statusCode === 404) {
+      return { ok: false, status: 404, error: "computer not found" };
+    }
+    return { ok: false, status: 502, error: "computer screen is not reachable" };
+  }
+}
+
+app.all("/gateway/*", async (c) => {
+  if (!screenGateway) return c.json({ error: "not found" }, 404);
+  const url = new URL(c.req.url);
+  const target = parseGatewayUrl(`${url.pathname}${url.search}`);
+  if (!target) return c.json({ error: "not found" }, 404);
+  const resolved = await resolveGateway(c.req.raw.headers, target);
+  if (!resolved.ok) return c.json({ error: resolved.error }, resolved.status);
+  return proxyGatewayHttp(c.req.raw, target, resolved.upstream);
+});
+
+/** A websocket to a computer's screen, which only the Node server (not Hono) sees. */
+export async function handleGatewayUpgrade(
+  req: IncomingMessage,
+  socket: Duplex,
+  head: Buffer,
+): Promise<void> {
+  const target = screenGateway ? parseGatewayUrl(req.url) : null;
+  if (!target || !gatewaySocketHasToken(target.search, target.pathname)) {
+    return refuseGatewayUpgrade(socket, 404, "Not Found");
+  }
+  const resolved = await resolveGateway(req.headers, target);
+  if (!resolved.ok) return refuseGatewayUpgrade(socket, resolved.status, resolved.error);
+  proxyGatewayUpgrade(req, socket, head, target, resolved.upstream);
+}
+
 app.get("/computers/:id/screen", async (c) => {
   const id = c.req.param("id");
   try {
@@ -787,7 +877,11 @@ app.get("/computers/:id/screen", async (c) => {
       false,
     );
     const screenUrl = await publishedScreenUrl(container, info, layout.viewPort);
-    return c.redirect(screenUrlWithToken(screenUrl, viewToken));
+    return c.redirect(
+      screenGateway
+        ? gatewayScreenPathWithToken(gatewayScreenPath(container.id), viewToken)
+        : screenUrlWithToken(screenUrl, viewToken),
+    );
   } catch {
     return c.json({ error: "computer not found" }, 404);
   }
@@ -848,9 +942,13 @@ app.post("/computers/:id/screen-mode", async (c) => {
       info,
       body.interactive ? layout.controlPort : layout.viewPort,
     );
-    return c.json({
-      screenUrl: screenUrlWithToken(screenUrl, body.interactive ? body.controlToken! : viewToken),
-    });
+    const token = body.interactive ? body.controlToken! : viewToken;
+    // Through the gateway the server is given a path on this supervisor, not a container address.
+    return c.json(
+      screenGateway
+        ? { screenPath: gatewayScreenPathWithToken(gatewayScreenPath(container.id), token) }
+        : { screenUrl: screenUrlWithToken(screenUrl, token) },
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return c.json({ error: message }, 400);
@@ -893,7 +991,16 @@ app.post("/computers/:id/terminal", async (c) => {
       return screen.layout;
     });
     const screenUrl = await publishedScreenUrl(container, info, layout.controlPort);
-    return c.json({ terminalUrl: screenUrlWithToken(screenUrl, terminalToken) });
+    return c.json(
+      screenGateway
+        ? {
+            terminalPath: gatewayScreenPathWithToken(
+              gatewayScreenPath(container.id),
+              terminalToken,
+            ),
+          }
+        : { terminalUrl: screenUrlWithToken(screenUrl, terminalToken) },
+    );
   } catch (error) {
     if (error instanceof TerminalControlReleasedError) {
       return c.json({ error: "screen control is not active" }, 409);
@@ -1124,6 +1231,9 @@ function startSupervisor() {
   const hostname = process.env.SUPERVISOR_HOST ?? "127.0.0.1";
   const server = serve({ fetch: app.fetch, hostname, port }, () => {
     logger.info("supervisor listening", { "http.host": hostname, "http.port": port });
+  });
+  server.on("upgrade", (req, socket, head) => {
+    void handleGatewayUpgrade(req, socket, head).catch(() => socket.destroy());
   });
   let stopping = false;
   const shutdown = async () => {

@@ -277,23 +277,6 @@ main h3 {
   color: var(--ink);
 }
 
-.lp-store__all {
-  margin: 0;
-  padding: 20px 0;
-  border-top: 1px solid var(--line);
-  font-size: 14px;
-}
-
-.lp-store__all a {
-  color: var(--body);
-  text-underline-offset: 3px;
-}
-
-.lp-store__all a:hover {
-  color: var(--ink);
-  text-decoration: underline;
-}
-
 /* Features */
 .lp-works {
   display: flex;
@@ -398,26 +381,7 @@ main h3 {
   line-height: 1.5;
 }
 
-/* Open source */
-.lp-open__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-  align-items: center;
-}
-
-.lp-open__actions .button {
-  min-height: 46px;
-  padding: 0 22px;
-  font-size: 15px;
-}
-
-.lp-license {
-  color: var(--muted);
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 13px;
-}
-
+/* Where it runs */
 .lp-points li {
   display: flex;
   flex-direction: column;

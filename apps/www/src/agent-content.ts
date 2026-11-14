@@ -2,7 +2,6 @@ import { getLaunchCopy } from "./i18n/launch";
 import {
   CONTACT_EMAIL,
   DOWNLOAD_URL,
-  GITHUB_URL,
   INSTALL_COMMAND,
   INSTALL_COMMAND_WINDOWS,
   SECURITY_EMAIL,
@@ -53,13 +52,11 @@ ${home.works.cards.map((card) => `- **${card.title}** ${card.body}`).join("\n")}
 
 ${home.business.points.map((point) => `- **${point.title}:** ${point.body}`).join("\n")}
 
-## ${home.open.heading} ${home.open.accent}
+## ${home.runs.heading} ${home.runs.accent}
 
-${home.open.copy}
+${home.runs.copy}
 
-${home.open.points.map((point) => `- **${point.title}:** ${point.body}`).join("\n")}
-
-- [Source code on GitHub (${home.open.license})](${GITHUB_URL})
+${home.runs.points.map((point) => `- **${point.title}:** ${point.body}`).join("\n")}
 
 ## ${home.install.heading}
 

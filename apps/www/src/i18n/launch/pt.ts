@@ -4,9 +4,9 @@ const COPY: LaunchCopy = {
   meta: {
     title: "Rook | Agentes de IA para equipes e empresas, que perguntam antes de agir",
     description:
-      "O Rook é uma equipe de agentes de IA de código aberto para equipes e empresas. Cada agente tem um trabalho e o próprio acesso aos seus sistemas. Use na nuvem ou no seu computador. Eles perguntam antes de enviar, pagar ou apagar.",
+      "O Rook é uma equipe de agentes de IA para equipes e empresas. Cada agente tem um trabalho e o próprio acesso aos seus sistemas. Use na nuvem ou no seu computador. Eles perguntam antes de enviar, pagar ou apagar.",
     ogImageAlt: "Rook. Agentes de IA que trabalham em equipe e perguntam antes de agir.",
-    ogTagline: "Código aberto. Roda no seu computador.",
+    ogTagline: "Agentes que perguntam antes de agir.",
     availableLanguage: "Português (Brasil)",
     skipToContent: "Ir para o conteúdo",
   },
@@ -16,10 +16,9 @@ const COPY: LaunchCopy = {
     menu: "Menu",
     demo: "Agentes",
     features: "Recursos",
-    open: "Código aberto",
+    runs: "Onde roda",
     faq: "Perguntas",
     waitlist: "Entrar na lista",
-    github: "GitHub",
   },
   faq: {
     heading: "Perguntas",
@@ -32,7 +31,7 @@ const COPY: LaunchCopy = {
       { question: "Quais modelos eu posso usar?", answer: "Sua assinatura do Claude ou do ChatGPT, sua própria chave de um provedor como OpenRouter, Anthropic ou OpenAI, ou um modelo rodando na sua máquina. Cada agente pode usar um diferente." },
       { question: "Funciona com o nosso sistema interno?", answer: "Funciona. Conecte-o como servidor MCP, ou pelo Executor, e escolha quais agentes podem usá-lo." },
       { question: "Como entro no beta da nuvem?", answer: "Entre na lista com o e-mail da empresa. Chamamos aos poucos, e cada empresa que entra monta os primeiros agentes e rotinas junto com a gente." },
-      { question: "Quanto custa?", answer: "O app e o código são gratuitos e de código aberto, sob a licença Apache 2.0. A nuvem usa créditos da empresa, que pagam modelos, voz e navegação. No seu computador, você paga o provedor do modelo, ou nada se rodar um modelo local." },
+      { question: "Quanto custa?", answer: "O app é gratuito. A nuvem usa créditos da empresa, que pagam modelos, voz e navegação. No seu computador, você paga o provedor do modelo, ou nada se rodar um modelo local." },
       { question: "Como levo do app para a nuvem?", answer: "Exporte o seu espaço do app para um arquivo e importe na nuvem." },
     ],
   },
@@ -41,7 +40,7 @@ const COPY: LaunchCopy = {
     languagesLabel: "Idioma",
     product: "Produto",
     features: "Recursos",
-    open: "Código aberto",
+    runs: "Onde roda",
     install: "Instalar",
     faq: "Perguntas",
     company: "Empresa",
@@ -78,7 +77,6 @@ const COPY: LaunchCopy = {
     heading: "Uma Loja de agentes prontos.",
     accent: "Escolha um, ou escreva o seu.",
     copy: "Instale um agente com um clique e dê as suas ferramentas a ele. Cada um vem com uma descrição de trabalho e as skills de que precisa, e você pode editar tudo. Com o Executor, um único login conecta centenas de sistemas da empresa.",
-    all: "Ver todos os agentes da Loja",
     categories: {
       marketing: "Marketing",
       operations: "Operações",
@@ -422,17 +420,15 @@ const COPY: LaunchCopy = {
       { title: "Espaços e membros", body: "Cada equipe vê só o que é dela." },
     ],
   },
-  open: {
-    heading: "Código aberto,",
-    accent: "de ponta a ponta.",
-    copy: "Sua TI pode ler cada linha, rodar onde quiser e mandar uma correção. Nada do comportamento de um agente fica escondido.",
-    github: "Ver no GitHub",
+  runs: {
+    heading: "Rode onde",
+    accent: "a sua empresa preferir.",
+    copy: "Escolha onde o Rook roda. Em qualquer um deles, os agentes perguntam antes de agir.",
     points: [
-      { title: "Na nossa nuvem", body: "Nada para instalar. Rodamos o mesmo código aberto para você." },
+      { title: "Na nossa nuvem", body: "Nada para instalar. Cuidamos dos servidores para você." },
       { title: "No seu servidor", body: "Ou rode para o seu time com Docker Compose. Contas e dados ficam com você." },
       { title: "No seu computador", body: "O banco, o motor e os agentes rodam na sua máquina. Sem conta, sem servidor nosso." },
     ],
-    license: "Apache 2.0",
   },
   waitlist: {
     badge: "Beta fechado",

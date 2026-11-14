@@ -4,9 +4,9 @@ const COPY: LaunchCopy = {
   meta: {
     title: "Rook | Agents IA pour équipes et entreprises, qui demandent avant d'agir",
     description:
-      "Rook est une équipe d'agents IA open source pour les équipes et les entreprises. Chacun a un métier et son propre accès à vos systèmes. Utilisez-le dans le cloud ou sur votre ordinateur. Ils demandent avant d'envoyer, de payer ou de supprimer.",
+      "Rook est une équipe d'agents IA pour les équipes et les entreprises. Chacun a un métier et son propre accès à vos systèmes. Utilisez-le dans le cloud ou sur votre ordinateur. Ils demandent avant d'envoyer, de payer ou de supprimer.",
     ogImageAlt: "Rook. Des agents IA qui travaillent en équipe et demandent avant d'agir.",
-    ogTagline: "Open source. Tourne sur votre ordinateur.",
+    ogTagline: "Des agents qui demandent avant d'agir.",
     availableLanguage: "Français",
     skipToContent: "Aller au contenu",
   },
@@ -16,10 +16,9 @@ const COPY: LaunchCopy = {
     menu: "Menu",
     demo: "Agents",
     features: "Fonctions",
-    open: "Open source",
+    runs: "Où il tourne",
     faq: "Questions",
     waitlist: "Rejoindre la liste",
-    github: "GitHub",
   },
   faq: {
     heading: "Questions",
@@ -32,7 +31,7 @@ const COPY: LaunchCopy = {
       { question: "Quels modèles puis-je utiliser ?", answer: "Votre abonnement Claude ou ChatGPT, votre propre clé chez un fournisseur comme OpenRouter, Anthropic ou OpenAI, ou un modèle qui tourne sur votre machine. Chaque agent peut en utiliser un différent." },
       { question: "Est-ce que ça marche avec notre système interne ?", answer: "Oui. Connectez-le comme serveur MCP, ou via Executor, et choisissez quels agents peuvent l'utiliser." },
       { question: "Comment rejoindre la bêta du cloud ?", answer: "Inscrivez-vous sur la liste avec l'e-mail de votre entreprise. Nous invitons les entreprises progressivement, et chacune monte ses premiers agents et routines avec nous." },
-      { question: "Combien ça coûte ?", answer: "L'app et le code sont gratuits et open source, sous licence Apache 2.0. Le cloud utilise des crédits de l'entreprise, qui paient les modèles, la voix et la navigation. Sur votre ordinateur, vous payez votre fournisseur de modèles, ou rien avec un modèle local." },
+      { question: "Combien ça coûte ?", answer: "L'app est gratuite. Le cloud utilise des crédits de l'entreprise, qui paient les modèles, la voix et la navigation. Sur votre ordinateur, vous payez votre fournisseur de modèles, ou rien avec un modèle local." },
       { question: "Comment passer de l'app au cloud ?", answer: "Exportez votre espace de l'app dans un fichier et importez-le dans le cloud." },
     ],
   },
@@ -41,7 +40,7 @@ const COPY: LaunchCopy = {
     languagesLabel: "Langue",
     product: "Produit",
     features: "Fonctions",
-    open: "Open source",
+    runs: "Où il tourne",
     install: "Installer",
     faq: "Questions",
     company: "Société",
@@ -78,7 +77,6 @@ const COPY: LaunchCopy = {
     heading: "Une Boutique d'agents prêts à l'emploi.",
     accent: "Choisissez-en un, ou écrivez le vôtre.",
     copy: "Installez un agent en un clic et donnez-lui vos outils. Chacun arrive avec une description de poste et les skills dont il a besoin, et vous pouvez tout modifier. Avec Executor, une seule connexion relie des centaines de systèmes de l'entreprise.",
-    all: "Voir tous les agents de la Boutique",
     categories: {
       marketing: "Marketing",
       operations: "Opérations",
@@ -422,17 +420,15 @@ const COPY: LaunchCopy = {
       { title: "Espaces et membres", body: "Chaque équipe ne voit que ce qui est à elle." },
     ],
   },
-  open: {
-    heading: "Open source,",
-    accent: "jusqu'au bout.",
-    copy: "Votre équipe IT peut lire chaque ligne, le lancer où elle veut et envoyer un correctif. Rien du comportement d'un agent n'est caché.",
-    github: "Voir sur GitHub",
+  runs: {
+    heading: "Lancez-le où",
+    accent: "votre entreprise préfère.",
+    copy: "Choisissez où Rook tourne. Partout, les agents demandent avant d'agir.",
     points: [
-      { title: "Dans notre cloud", body: "Rien à installer. Nous faisons tourner pour vous le même code open source." },
+      { title: "Dans notre cloud", body: "Rien à installer. Nous nous occupons des serveurs pour vous." },
       { title: "Sur votre serveur", body: "Ou faites-le tourner pour votre équipe avec Docker Compose. Les comptes et les données restent chez vous." },
       { title: "Sur votre ordinateur", body: "La base de données, le moteur et les agents tournent sur votre machine. Pas de compte, pas de serveur chez nous." },
     ],
-    license: "Apache 2.0",
   },
   waitlist: {
     badge: "Bêta fermée",

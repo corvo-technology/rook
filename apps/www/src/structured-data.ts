@@ -1,4 +1,4 @@
-import { CONTACT_EMAIL, GITHUB_URL, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "./site";
+import { CONTACT_EMAIL, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "./site";
 
 export type HomeFaqItem = {
   question: string;
@@ -24,7 +24,6 @@ export function homeStructuredData(input: HomeStructuredDataInput) {
         url: `${SITE_URL}/`,
         logo: `${SITE_URL}/brand/icone-512.png`,
         email: CONTACT_EMAIL,
-        sameAs: [GITHUB_URL],
         contactPoint: {
           "@type": "ContactPoint",
           contactType: "customer support",
@@ -61,8 +60,6 @@ export function homeStructuredData(input: HomeStructuredDataInput) {
         applicationSubCategory: "AI agent platform",
         operatingSystem: "macOS",
         isAccessibleForFree: true,
-        license: "https://www.apache.org/licenses/LICENSE-2.0",
-        sameAs: [GITHUB_URL],
         provider: { "@id": `${SITE_URL}/#organization` },
         inLanguage: input.inLanguage,
       },

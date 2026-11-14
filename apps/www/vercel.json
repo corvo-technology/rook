@@ -28,6 +28,14 @@
       ]
     },
     {
+      "source": "/install",
+      "headers": [{ "key": "Content-Type", "value": "text/x-shellscript; charset=utf-8" }]
+    },
+    {
+      "source": "/install.ps1",
+      "headers": [{ "key": "Content-Type", "value": "text/plain; charset=utf-8" }]
+    },
+    {
       "source": "/.well-known/ai-catalog.json",
       "headers": [
         {

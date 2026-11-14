@@ -20,7 +20,6 @@ import {
   DOWNLOAD_URL_LINUX_ARM64_DEB,
   DOWNLOAD_URL_LINUX_DEB,
   DOWNLOAD_URL_WINDOWS,
-  GITHUB_URL,
   INSTALL_COMMAND,
   INSTALL_COMMAND_WINDOWS,
   SITE_URL,
@@ -58,7 +57,6 @@ const storeGroups = CATEGORY_ORDER.map((category) => ({
     .slice(0, 3)
     .map((entry) => entry.name[catalogLocale] ?? entry.name.en),
 }));
-const CATALOG_URL = `${GITHUB_URL}/blob/HEAD/packages/core/src/agent-catalog-data.ts`;
 // Brand names, the same in every language.
 const MODEL_CHIPS = ["Claude", "ChatGPT", "OpenRouter"];
 // The four states an agent is in, the same ones the app shows on its rooks.
@@ -172,9 +170,6 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
               </div>
             ))
           }
-          <p class="lp-store__all">
-            <a href={CATALOG_URL} target="_blank" rel="noopener" data-attr="store-catalog">{copy.store.all}</a>
-          </p>
         </div>
       </section>
 
@@ -247,22 +242,16 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
         </ul>
       </section>
 
-      <section id="open" class="lp-open" aria-labelledby="open-heading">
+      <section id="runs" class="lp-open" aria-labelledby="runs-heading">
         <GuideSlot row class="guide-slot--perch guide-slot--start" />
         <Piece piece="bishop" hue="laranja" class="guide-piece--start" />
         <div class="lp-open__intro" data-reveal>
-          <h2 id="open-heading" class="lp-title">{copy.open.heading} {copy.open.accent}</h2>
-          <p class="lp-lead">{copy.open.copy}</p>
-          <div class="lp-open__actions">
-            <a class="button button--secondary" href={GITHUB_URL} target="_blank" rel="noopener" data-attr="open-github">
-              {copy.open.github}
-            </a>
-            <span class="lp-license">{copy.open.license}</span>
-          </div>
+          <h2 id="runs-heading" class="lp-title">{copy.runs.heading} {copy.runs.accent}</h2>
+          <p class="lp-lead">{copy.runs.copy}</p>
         </div>
         <ul class="lp-rows lp-points" data-reveal>
           {
-            copy.open.points.map((point) => (
+            copy.runs.points.map((point) => (
               <li>
                 <h3>{point.title}</h3>
                 <p>{point.body}</p>

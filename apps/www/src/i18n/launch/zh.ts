@@ -4,9 +4,9 @@ const COPY: LaunchCopy = {
   meta: {
     title: "Rook | 面向团队和企业、行动前先询问的 AI 智能体",
     description:
-      "Rook 是一支面向团队和企业的开源 AI 智能体团队。每个智能体都有自己的工作，以及对你公司系统的独立访问权限。可在云端使用，也可在你的电脑上使用。发送、付款或删除之前，它们先问你。",
+      "Rook 是一支面向团队和企业的AI 智能体团队。每个智能体都有自己的工作，以及对你公司系统的独立访问权限。可在云端使用，也可在你的电脑上使用。发送、付款或删除之前，它们先问你。",
     ogImageAlt: "Rook。以团队方式工作、行动前先询问的 AI 智能体。",
-    ogTagline: "开源。在你的电脑上运行。",
+    ogTagline: "行动前先询问的智能体。",
     availableLanguage: "简体中文",
     skipToContent: "跳到正文",
   },
@@ -16,10 +16,9 @@ const COPY: LaunchCopy = {
     menu: "菜单",
     demo: "智能体",
     features: "功能",
-    open: "开源",
+    runs: "运行位置",
     faq: "常见问题",
     waitlist: "加入候补名单",
-    github: "GitHub",
   },
   faq: {
     heading: "常见问题",
@@ -32,7 +31,7 @@ const COPY: LaunchCopy = {
       { question: "可以用哪些模型？", answer: "你的 Claude 或 ChatGPT 订阅、你在 OpenRouter、Anthropic 或 OpenAI 等提供方的密钥，或者运行在你自己机器上的模型。每个智能体可以用不同的模型。" },
       { question: "能用在我们的内部系统上吗？", answer: "可以。把它作为 MCP 服务器接入，或通过 Executor 接入，并选择哪些智能体可以使用。" },
       { question: "怎样加入云端内测？", answer: "用公司邮箱加入候补名单。我们会逐步邀请，加入的企业会和我们一起搭建第一批智能体和例行任务。" },
-      { question: "要花多少钱？", answer: "应用和代码免费且开源，采用 Apache 2.0 许可。云端使用公司额度，用来支付模型、语音和浏览。在你的电脑上，你只需向模型提供方付费；用本地模型则不用付费。" },
+      { question: "要花多少钱？", answer: "应用免费。云端使用公司额度，用来支付模型、语音和浏览。在你的电脑上，你只需向模型提供方付费；用本地模型则不用付费。" },
       { question: "怎样从应用迁到云端？", answer: "在应用里把你的空间导出为文件，再到云端导入。" },
     ],
   },
@@ -41,7 +40,7 @@ const COPY: LaunchCopy = {
     languagesLabel: "语言",
     product: "产品",
     features: "功能",
-    open: "开源",
+    runs: "运行位置",
     install: "安装",
     faq: "常见问题",
     company: "公司",
@@ -78,7 +77,6 @@ const COPY: LaunchCopy = {
     heading: "现成智能体的商店。",
     accent: "选一个，或自己写一个。",
     copy: "一键安装一个智能体，再把你的工具交给它。每个都带有岗位说明和所需的技能，全部可以编辑。借助 Executor，一次登录即可连接公司的数百个系统。",
-    all: "查看商店里的所有智能体",
     categories: {
       marketing: "营销",
       operations: "运营",
@@ -422,17 +420,15 @@ const COPY: LaunchCopy = {
       { title: "空间与成员", body: "每个团队只看得到属于自己的内容。" },
     ],
   },
-  open: {
-    heading: "开源，",
-    accent: "从头到尾。",
-    copy: "你的 IT 团队可以阅读每一行代码，在想要的地方运行，也可以提交修复。智能体怎么做事，没有任何隐藏。",
-    github: "在 GitHub 上查看",
+  runs: {
+    heading: "在你公司",
+    accent: "喜欢的地方运行。",
+    copy: "选择 Rook 的运行位置。无论在哪里，智能体都会在行动前先问你。",
     points: [
-      { title: "在我们的云端", body: "无需安装。我们为你运行同一份开源代码。" },
+      { title: "在我们的云端", body: "无需安装。服务器由我们负责。" },
       { title: "在你的服务器上", body: "也可以用 Docker Compose 为团队运行。账号和数据都留在你手里。" },
       { title: "在你的电脑上", body: "数据库、引擎和智能体都在你的机器上运行。无需账号，也不依赖我们的服务器。" },
     ],
-    license: "Apache 2.0",
   },
   waitlist: {
     badge: "封闭内测",

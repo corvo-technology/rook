@@ -4,9 +4,9 @@ const COPY: LaunchCopy = {
   meta: {
     title: "Rook | AI agents for teams and companies that ask before they act",
     description:
-      "Rook is a team of open source AI agents for teams and companies. Each one has a job and its own access to your systems. Use it in the cloud or on your computer. They ask before they send, pay or delete.",
+      "Rook is a team of AI agents for teams and companies. Each one has a job and its own access to your systems. Use it in the cloud or on your computer. They ask before they send, pay or delete.",
     ogImageAlt: "Rook. AI agents that work as a team and ask before they act.",
-    ogTagline: "Open source. Runs on your computer.",
+    ogTagline: "Agents that ask before they act.",
     availableLanguage: "English",
     skipToContent: "Skip to content",
   },
@@ -16,10 +16,9 @@ const COPY: LaunchCopy = {
     menu: "Menu",
     demo: "Agents",
     features: "Features",
-    open: "Open source",
+    runs: "Where it runs",
     faq: "FAQ",
     waitlist: "Join the waitlist",
-    github: "GitHub",
   },
   faq: {
     heading: "Questions",
@@ -32,7 +31,7 @@ const COPY: LaunchCopy = {
       { question: "Which models can I use?", answer: "Your Claude or ChatGPT subscription, your own key from a provider such as OpenRouter, Anthropic or OpenAI, or a model running on your machine. Each agent can use a different one." },
       { question: "Does it work with our internal system?", answer: "Yes. Connect it as an MCP server, or through Executor, and choose which agents can use it." },
       { question: "How do I join the cloud beta?", answer: "Join the list with your company e-mail. We invite companies a few at a time, and each one that joins builds its first agents and routines together with us." },
-      { question: "How much does it cost?", answer: "The app and the code are free and open source under the Apache 2.0 license. The cloud uses company credits, which pay for models, voice and browsing. On your own computer you pay your model provider, or nothing with a local model." },
+      { question: "How much does it cost?", answer: "The app is free. The cloud uses company credits, which pay for models, voice and browsing. On your own computer you pay your model provider, or nothing with a local model." },
       { question: "How do I move from the app to the cloud?", answer: "Export your space from the app to a file and import it in the cloud." },
     ],
   },
@@ -41,7 +40,7 @@ const COPY: LaunchCopy = {
     languagesLabel: "Language",
     product: "Product",
     features: "Features",
-    open: "Open source",
+    runs: "Where it runs",
     install: "Install",
     faq: "FAQ",
     company: "Company",
@@ -78,7 +77,6 @@ const COPY: LaunchCopy = {
     heading: "A Store of ready-made agents.",
     accent: "Pick one, or write your own.",
     copy: "Install an agent in one click and give it your tools. Each one comes with a job description and the skills it needs, and you can edit all of it. With Executor, one sign-in connects hundreds of the company's systems.",
-    all: "See every agent in the Store",
     categories: {
       marketing: "Marketing",
       operations: "Operations",
@@ -422,17 +420,15 @@ const COPY: LaunchCopy = {
       { title: "Spaces and members", body: "Each team sees only what is theirs." },
     ],
   },
-  open: {
-    heading: "Open source,",
-    accent: "all the way down.",
-    copy: "Your IT team can read every line, run it wherever it likes and send a fix. Nothing about how an agent behaves is hidden.",
-    github: "View on GitHub",
+  runs: {
+    heading: "Run it where",
+    accent: "your company prefers.",
+    copy: "Choose where Rook runs. Wherever it runs, agents ask before they act.",
     points: [
-      { title: "In our cloud", body: "Nothing to install. We run the same open source code for you." },
+      { title: "In our cloud", body: "Nothing to install. We take care of the servers for you." },
       { title: "On your server", body: "Or run it for your team with Docker Compose. Accounts and data stay with you." },
       { title: "On your computer", body: "The database, the engine and the agents run on your machine. No account, no server of ours." },
     ],
-    license: "Apache 2.0",
   },
   waitlist: {
     badge: "Closed beta",

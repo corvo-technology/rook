@@ -28,6 +28,8 @@ COPY packages/core packages/core
 COPY packages/ui-tokens packages/ui-tokens
 COPY packages/ui-web packages/ui-web
 COPY apps/www apps/www
+# The site serves the desktop app's installer scripts, read at build time.
+COPY apps/desktop/install apps/desktop/install
 ARG PUBLIC_POSTHOG_KEY
 ARG PUBLIC_POSTHOG_HOST
 ARG PUBLIC_CRISP_WEBSITE_ID

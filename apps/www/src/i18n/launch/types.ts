@@ -64,10 +64,9 @@ export type LaunchCopy = {
     menu: string;
     demo: string;
     features: string;
-    open: string;
+    runs: string;
     faq: string;
     waitlist: string;
-    github: string;
   };
   faq: { heading: string; items: Array<{ question: string; answer: string }> };
   footer: {
@@ -75,7 +74,7 @@ export type LaunchCopy = {
     languagesLabel: string;
     product: string;
     features: string;
-    open: string;
+    runs: string;
     install: string;
     faq: string;
     company: string;
@@ -109,8 +108,6 @@ export type LaunchCopy = {
     heading: string;
     accent: string;
     copy: string;
-    /** The link to the full catalog. */
-    all: string;
     categories: Record<StoreCategory, string>;
   };
   preview: {
@@ -146,15 +143,14 @@ export type LaunchCopy = {
     usage: { title: string; agents: Array<{ name: string; hue: MascotHue; share: number }> };
     reach: string[];
   };
-  /** What a company controls; the points read like the open source section's. */
+  /** What a company controls; the points read like the section that follows. */
   business: { heading: string; points: Array<{ title: string; body: string }> };
-  open: {
+  /** Where it runs: our cloud, your server, your computer. */
+  runs: {
     heading: string;
     accent: string;
     copy: string;
-    github: string;
     points: Array<{ title: string; body: string }>;
-    license: string;
   };
   /** The closed beta: a card with a form. `{email}` and `{company}` fill the success text. */
   waitlist: {

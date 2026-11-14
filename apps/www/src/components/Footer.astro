@@ -11,7 +11,6 @@ import {
 } from "../i18n/locales";
 import { getLaunchCopy } from "../i18n/launch";
 import type { LaunchCopy } from "../i18n/launch";
-import { GITHUB_URL } from "../site";
 import Logo from "./Logo.astro";
 
 type Props = {
@@ -49,9 +48,8 @@ const columns: Array<{ heading: string; links: FooterLink[] }> = [
     heading: linkLabels.product,
     links: [
       { href: localeHashPath(currentLocale, "features"), label: linkLabels.features },
-      { href: localeHashPath(currentLocale, "open"), label: linkLabels.open },
+      { href: localeHashPath(currentLocale, "runs"), label: linkLabels.runs },
       { href: localeHashPath(currentLocale, "install"), label: linkLabels.install },
-      { href: GITHUB_URL, label: localeCopy.nav.github },
       { href: localeHashPath(currentLocale, "faq"), label: linkLabels.faq },
     ],
   },

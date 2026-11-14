@@ -72,6 +72,10 @@ export type AgentImportServices<PreparedKey = unknown> = {
       modelProvider: string | null;
       modelId: string | null;
       spawnKey?: string;
+      color?: string;
+      avatarFamily?: number;
+      starters?: string[];
+      disabledBuiltinTools?: string[];
       seed: (tx: Prisma.TransactionClient, botId: string) => Promise<void>;
     },
   ) => Promise<Bot>;

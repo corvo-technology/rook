@@ -60,11 +60,20 @@ export function SpaceTransfer({
     }
     const result = await rpc.bots.importSpace(parsed.data);
     const count = result.added.length;
-    setDone(
+    const extras = [
+      result.wikiPages > 0
+        ? plural(result.wikiPages, { one: "# wiki page", other: "# wiki pages" })
+        : null,
+      result.channels > 0
+        ? plural(result.channels, { one: "# channel", other: "# channels" })
+        : null,
+      result.tickets > 0 ? plural(result.tickets, { one: "# ticket", other: "# tickets" }) : null,
+    ].filter((item) => item !== null);
+    const added =
       result.routines > 0
         ? t`${plural(count, { one: "Added # bot", other: "Added # bots" })}. Routines start paused.`
-        : plural(count, { one: "Added # bot.", other: "Added # bots." }),
-    );
+        : plural(count, { one: "Added # bot.", other: "Added # bots." });
+    setDone(extras.length > 0 ? `${added} ${t`Also added ${extras.join(", ")}.`}` : added);
     onImported?.();
   }
 

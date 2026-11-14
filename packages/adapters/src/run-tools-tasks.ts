@@ -3,7 +3,9 @@ import {
   protectedComputerLifecycleRefusal,
 } from "./desktop-command-guard.js";
 import { setPlanCard, updatePlanCard } from "./plan-card.js";
-import type { ToolHandlers } from "./run-tool-gate.js";
+import type { RunContext } from "./run-context.js";
+import { isSubagentToolExecution } from "./run-effects.js";
+import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
 import {
   cancelScheduleFromTool,
   commandWatchFromTool,
@@ -42,6 +44,25 @@ function ticketFieldsArg(value: unknown): Record<string, string> | undefined {
   return Object.fromEntries(
     Object.entries(value).map(([name, text]) => [name, text === null ? "" : String(text)]),
   );
+}
+
+/**
+ * Whether schedule_list and schedule_update reach every agent's routines, not only this bot's
+ * own. It follows the same gate as the bot management tools: the switch is read live, the run
+ * is one the owner started, and a write is refused once outside content entered the run.
+ */
+async function canManageFleetRoutines(
+  ctx: RunContext,
+  call: ToolCall,
+  write: boolean,
+): Promise<boolean> {
+  if (isSubagentToolExecution(call.executionId) || !ctx.source.ownerStartedRun) return false;
+  const live = await ctx.deps.prisma.bot.findUnique({
+    where: { id: ctx.bot.id },
+    select: { fleetManagement: true },
+  });
+  if (!live?.fleetManagement) return false;
+  return !write || !(await ctx.trust.receivedOutsideMessage());
 }
 
 /** The task catalog, scratchpad, ticket board, schedules and skills. */
@@ -214,13 +235,14 @@ export const taskTools: ToolHandlers = {
   async schedule_update(ctx, call) {
     const { deps, run, bot, thread } = ctx;
     const { args } = call;
+    const fleet = await canManageFleetRoutines(ctx, call, true);
     return call.finish(
       await updateScheduleFromTool(deps, {
         spaceId: run.spaceId,
         botId: bot.id,
         userId: run.userId,
         threadId: thread.id,
-        ...(thread.groupId ? { scopeThreadId: thread.id } : {}),
+        ...(fleet ? { fleet } : thread.groupId ? { scopeThreadId: thread.id } : {}),
         routineId: String(args.routineId ?? ""),
         name: isScheduleValueProvided(args.name) ? String(args.name) : undefined,
         prompt: isScheduleValueProvided(args.prompt) ? String(args.prompt) : undefined,
@@ -238,13 +260,14 @@ export const taskTools: ToolHandlers = {
       }),
     );
   },
-  async schedule_list(ctx) {
+  async schedule_list(ctx, call) {
     const { deps, run, bot, thread } = ctx;
+    const fleet = await canManageFleetRoutines(ctx, call, false);
     return listSchedulesFromTool(deps, {
       spaceId: run.spaceId,
       botId: bot.id,
       userId: run.userId,
-      ...(thread.groupId ? { threadId: thread.id } : {}),
+      ...(fleet ? { fleet } : thread.groupId ? { threadId: thread.id } : {}),
     });
   },
   async workflow_stop(_ctx, call) {

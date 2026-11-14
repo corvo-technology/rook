@@ -1372,3 +1372,131 @@ describe("schedule_create guidance for dated commitments", () => {
     for (const name of SCHEDULE_TOOL_NAMES) expect(names.has(name)).toBe(true);
   });
 });
+
+describe("routines imported with a space and managed by the Chief", () => {
+  beforeEach(() => vi.useFakeTimers({ now: new Date("2026-10-20T00:11:59.999Z") }));
+  afterEach(() => vi.useRealTimers());
+
+  // Shaped like importSpace writes them: another bot's, no thread, inactive.
+  const imported = {
+    id: "routine-9",
+    spaceId: "ws-1",
+    botId: "bot-2",
+    userId: "user-1",
+    threadId: null,
+    name: "Weekly digest",
+    prompt: "Summarize the week",
+    crons: ["0 9 * * 1"],
+    timezone: "UTC",
+    active: false,
+    watch: null,
+    webhookEnabled: false,
+    githubEnabled: false,
+    messageProvider: null,
+    lastRunAt: null,
+    nextRunAt: null,
+  };
+  const managed = { userId: "user-1", spaceId: "ws-1", archivedAt: null };
+
+  function setup(row: Record<string, unknown> | null) {
+    const findFirst = vi.fn(async () => row);
+    const findMany = vi.fn(async () =>
+      row ? [{ ...row, bot: { id: "bot-2", name: "Ana" } }] : [],
+    );
+    const updateMany = vi.fn(async () => ({ count: 1 }));
+    const enqueue = vi.fn(async () => undefined);
+    const botFindFirst = vi.fn(async () => ({ id: "bot-2", computer: { scope: "team" } }));
+    const deps = {
+      prisma: { routine: { findFirst, findMany, updateMany }, bot: { findFirst: botFindFirst } },
+      events: { append: vi.fn(async () => undefined) },
+      jobs: { enqueue, cancel: vi.fn(async () => undefined) },
+    } as unknown as Parameters<typeof updateScheduleFromTool>[0];
+    const update = (patch: Partial<Parameters<typeof updateScheduleFromTool>[1]>) =>
+      updateScheduleFromTool(deps, {
+        spaceId: "ws-1",
+        botId: "chief",
+        userId: "user-1",
+        threadId: "thread-1",
+        routineId: "routine-9",
+        schedule: {},
+        ...patch,
+      });
+    return { deps, findFirst, findMany, updateMany, enqueue, update };
+  }
+
+  it("lists every agent's routines, inactive ones included, for a bot with bot management", async () => {
+    const { deps, findMany } = setup(imported);
+    const listed = await listSchedulesFromTool(deps, {
+      spaceId: "ws-1",
+      botId: "chief",
+      userId: "user-1",
+      threadId: "group-thread",
+      fleet: true,
+    });
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { spaceId: "ws-1", userId: "user-1", bot: managed } }),
+    );
+    expect(listed.routines).toEqual([
+      expect.objectContaining({ routineId: "routine-9", agent: "Ana", active: false }),
+    ]);
+  });
+
+  it("a bot without bot management cannot update another agent's routine", async () => {
+    const { findFirst, update, updateMany } = setup(null);
+    await expect(update({ active: true })).resolves.toEqual({ error: "Schedule not found." });
+    expect(findFirst).toHaveBeenCalledWith({
+      where: {
+        spaceId: "ws-1",
+        botId: "chief",
+        userId: "user-1",
+        id: "routine-9",
+        bot: { archivedAt: null },
+      },
+    });
+    expect(updateMany).not.toHaveBeenCalled();
+  });
+
+  it("activates an imported routine of another agent and arms its next run", async () => {
+    const { findFirst, update, updateMany, enqueue } = setup(imported);
+    const result = await update({ fleet: true, active: true });
+    expect(result).toMatchObject({ ok: true, routineId: "routine-9", active: true });
+    expect(findFirst).toHaveBeenCalledWith({
+      where: { spaceId: "ws-1", userId: "user-1", id: "routine-9", bot: managed },
+    });
+    expect(updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ id: "routine-9", bot: managed }),
+        data: expect.objectContaining({
+          active: true,
+          nextRunAt: new Date("2026-10-26T09:00:00.000Z"),
+        }),
+      }),
+    );
+    expect(enqueue).toHaveBeenCalledTimes(1);
+  });
+
+  it("names the routine and the reason when activation is blocked, without writing", async () => {
+    const { update, updateMany, enqueue } = setup({ ...imported, crons: [] });
+    const result = await update({ fleet: true, active: true });
+    expect(result).toEqual({
+      error: expect.stringContaining(
+        'Routine "Weekly digest" was not activated: it has no trigger',
+      ),
+    });
+    expect(updateMany).not.toHaveBeenCalled();
+    expect(enqueue).not.toHaveBeenCalled();
+  });
+
+  it("returns the watch's own error when its change trigger cannot be armed", async () => {
+    const { update, updateMany } = setup({
+      ...imported,
+      crons: [],
+      watch: { kind: "files", paths: ["../outside"], everyMinutes: 15 },
+    });
+    const result = await update({ fleet: true, active: true });
+    expect(result).toEqual({
+      error: expect.stringContaining('Routine "Weekly digest" was not activated:'),
+    });
+    expect(updateMany).not.toHaveBeenCalled();
+  });
+});

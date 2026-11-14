@@ -541,23 +541,44 @@ async function createWatchFromTool(
   };
 }
 
-/** List bot routines, optionally restricted to the current group thread. */
+/**
+ * Routines of the agents a bot with bot management may edit: every agent the owner has in this
+ * space, whatever thread the routine was made in (imported and UI-made routines have none).
+ */
+function fleetRoutineScope(input: { spaceId: string; userId: string }) {
+  return {
+    scope: { spaceId: input.spaceId, userId: input.userId },
+    bot: { userId: input.userId, spaceId: input.spaceId, archivedAt: null },
+  };
+}
+
+/**
+ * List bot routines, optionally restricted to the current group thread. With `fleet`, the
+ * routines of every agent the owner has in the space, inactive ones included.
+ */
 export async function listSchedulesFromTool(
   deps: Pick<ScheduleToolDeps, "prisma">,
-  input: { spaceId: string; botId: string; userId: string; threadId?: string },
+  input: { spaceId: string; botId: string; userId: string; threadId?: string; fleet?: boolean },
 ) {
+  const fleet = input.fleet ? fleetRoutineScope(input) : null;
   const rows = await deps.prisma.routine.findMany({
-    where: {
-      spaceId: input.spaceId,
-      botId: input.botId,
-      userId: input.userId,
-      ...(input.threadId ? { threadId: input.threadId } : {}),
-    },
+    where: fleet
+      ? { ...fleet.scope, bot: fleet.bot }
+      : {
+          spaceId: input.spaceId,
+          botId: input.botId,
+          userId: input.userId,
+          ...(input.threadId ? { threadId: input.threadId } : {}),
+        },
+    ...(fleet ? { include: { bot: { select: { id: true, name: true } } } } : {}),
     orderBy: { createdAt: "desc" },
   });
   return {
     routines: rows.map((row) => ({
       routineId: row.id,
+      ...("bot" in row && row.bot
+        ? { agent: (row.bot as { name: string }).name, agentId: row.botId }
+        : {}),
       name: row.name,
       prompt: row.prompt,
       crons: row.crons,
@@ -586,6 +607,8 @@ export async function updateScheduleFromTool(
     threadId: string;
     /** In a group, only that thread's routines. */
     scopeThreadId?: string;
+    /** The caller has bot management: any agent of the owner in this space, any thread. */
+    fleet?: boolean;
     routineId: string;
     name?: string;
     prompt?: string;
@@ -601,16 +624,26 @@ export async function updateScheduleFromTool(
   if (input.name !== undefined && !name) return { error: "name cannot be empty." };
   if (input.prompt !== undefined && !prompt) return { error: "prompt cannot be empty." };
 
-  const scope = {
-    spaceId: input.spaceId,
-    botId: input.botId,
-    userId: input.userId,
-    ...(input.scopeThreadId ? { threadId: input.scopeThreadId } : {}),
-  };
+  const fleet = input.fleet ? fleetRoutineScope(input) : null;
+  const scope = fleet
+    ? fleet.scope
+    : {
+        spaceId: input.spaceId,
+        botId: input.botId,
+        userId: input.userId,
+        ...(input.scopeThreadId ? { threadId: input.scopeThreadId } : {}),
+      };
+  const botScope = fleet ? fleet.bot : { archivedAt: null };
   const existing = await deps.prisma.routine.findFirst({
-    where: { ...scope, id: routineId, bot: { archivedAt: null } },
+    where: { ...scope, id: routineId, bot: botScope },
   });
-  if (!existing) return { error: "Schedule not found." };
+  if (!existing) {
+    return {
+      error: input.fleet
+        ? "No routine with that id among your agents. Call schedule_list for the ids, and do not retry with a guessed id."
+        : "Schedule not found.",
+    };
+  }
 
   let timezone = existing.timezone;
   if (input.timezone !== undefined) {
@@ -675,6 +708,11 @@ export async function updateScheduleFromTool(
       }
     } else nextRunAt = nextCronDateAcross(crons, new Date(), timezone);
   }
+  if (active && !existing.active) {
+    // Resuming is where a routine that cannot run says so, once, with the reason to relay.
+    const blocked = await activationBlocker(deps, existing, crons, input.userId);
+    if (blocked) return { error: `Routine "${existing.name}" was not activated: ${blocked}` };
+  }
   if (!active) nextRunAt = null;
   const timingChanged =
     retime || active !== existing.active || nextRunAt?.getTime() !== existing.nextRunAt?.getTime();
@@ -686,7 +724,7 @@ export async function updateScheduleFromTool(
     where: {
       ...scope,
       id: existing.id,
-      bot: { archivedAt: null },
+      bot: botScope,
       ...(timingChanged ? { active: existing.active, nextRunAt: existing.nextRunAt } : {}),
     },
     data: {
@@ -731,6 +769,50 @@ export async function updateScheduleFromTool(
     oneShot: isOneShotRoutineCrons(crons),
     ...describeRoutineTiming({ crons, timezone, nextRunAt }),
   };
+}
+
+/** Why a routine cannot start running, in words the agent can pass on, or null when it can. */
+async function activationBlocker(
+  deps: ScheduleToolDeps,
+  routine: {
+    spaceId: string;
+    botId: string;
+    watch: unknown;
+    webhookEnabled: boolean;
+    githubEnabled: boolean;
+    messageProvider: string | null;
+  },
+  crons: string[],
+  userId: string,
+): Promise<string | null> {
+  if (
+    crons.length === 0 &&
+    !routine.watch &&
+    !routine.webhookEnabled &&
+    !routine.githubEnabled &&
+    !routine.messageProvider
+  ) {
+    return "it has no trigger. Give it a schedule (cron or every/unit) or ask the owner what should start it.";
+  }
+  if (!routine.watch) return null;
+  const parsed = RoutineWatchSchema.safeParse(routine.watch);
+  if (!parsed.success) return "its change trigger is not valid. Ask the owner to edit it.";
+  try {
+    const bot = await deps.prisma.bot.findFirst({
+      where: { id: routine.botId, spaceId: routine.spaceId, userId, archivedAt: null },
+      include: { computer: true },
+    });
+    if (!bot) return "its agent was not found.";
+    await validateRoutineWatch(
+      deps,
+      parsed.data,
+      { spaceId: routine.spaceId, botId: routine.botId, userId },
+      bot.computer,
+    );
+  } catch (error) {
+    return error instanceof Error ? error.message : "its change trigger cannot be checked.";
+  }
+  return null;
 }
 
 /** Cancel a bot routine, optionally restricted to the current group thread. */

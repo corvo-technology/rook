@@ -47,8 +47,8 @@ describe("prepareOpenCodeModels", () => {
         () => new Promise((resolve) => setTimeout(() => resolve({ ...started(45004), close }), 60)),
       );
     expect(await prepareOpenCodeModels(dir, slow, 10)).toBeUndefined();
-    await new Promise((resolve) => setTimeout(resolve, 120));
-    expect(close).toHaveBeenCalledOnce();
+    // The late server starts on a real timer; a busy machine may take longer than any fixed wait.
+    await vi.waitFor(() => expect(close).toHaveBeenCalledOnce(), { timeout: 5_000 });
   });
 
   it("offers nothing when OpenCode is missing or anything goes wrong", async () => {

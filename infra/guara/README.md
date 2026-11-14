@@ -22,6 +22,7 @@ Create the services with a Dockerfile build, root directory `.` and Dockerfile p
 | `API_URL` | yes | yes | |
 | `BROWSER_EGRESS_PROXY_URL`, `BROWSER_EGRESS_USD_PER_GB`, `BROWSER_EGRESS_GATEWAY_URL` | optional | optional | Residential egress for cloud agent browsers; see `docs/self-host.md`. The URL holds the provider password. Set the first on both; the price on the API. |
 | `OWNER_EMAIL`, `OWNER_PASSWORD` | yes | no | Bootstrap the first account. Unset the password afterwards. |
+| `WORKER_DRAIN_TIMEOUT_MS` | no | optional | How long the worker lets running agent turns finish after SIGTERM. Default `120000`. See [Deploys and restarts](#deploys-and-restarts). |
 | `SIGNUPS_ENABLED` | `false` | no | |
 | `OBJECT_STORAGE_*` | yes | yes | Required when API and worker are separate services; create the bucket first. Use `OBJECT_STORAGE_PATH_STYLE=true` for MinIO. |
 | `SANDBOX_PROVIDER`, `E2B_API_KEY`, `E2B_DOMAIN` | yes | yes | |
@@ -39,6 +40,32 @@ guara services create --name my-worker --build-method dockerfile --repo <repo-ur
 guara env set -s <slug> --from-file <file> -y
 guara deploy -s <slug> -y
 ```
+
+## Deploys and restarts
+
+A deploy, a resize and `guara env set` each replace the worker pod with SIGTERM. On SIGTERM the
+worker stops taking work and lets running agent turns finish, for up to
+`WORKER_DRAIN_TIMEOUT_MS` (default 120 s). A turn still running at that point stops, saves its
+progress and returns to the queue; the new worker continues it, and the thread keeps showing
+"Working…" until it does. A worker that is killed instead (out of memory, SIGKILL, or a pod
+that is not given the time below) leaves its runs leased. The lease expires after two minutes
+and the next worker's recovery scan continues them. A run never executes twice at once: each
+claim bumps a fence, and a worker that lost the run can no longer write to it.
+
+**Ops step: termination grace period.** The pod must be allowed to live longer than the drain:
+set the worker's termination grace period to at least `WORKER_DRAIN_TIMEOUT_MS` + 30 s
+(**150 s** for the default; 180 s leaves headroom). Kubernetes sends SIGKILL when it runs
+out. As of this writing the `guara` CLI has no flag for it (`guara services create` and
+`guara services --help` list none), so the owner sets it in the Guará Cloud dashboard for the
+worker service, or asks Guará support. Until it is set, the platform default applies (30 s on
+Kubernetes) and a deploy cuts any turn running longer than that; the two-minute lease recovery
+still continues it afterwards.
+
+Auto-deploy builds and rolls out the worker on every merge to `main`, so each merge restarts
+it, even when only the web app or the landing page changed. Merge in batches when turns are
+running. If the platform supports build watch paths, point the worker at `apps/worker`,
+`packages` and `infra/guara` so a web-only change does not restart it; the CLI offers only
+`guara services auto-deploy on|off`.
 
 ## Dockerfiles
 

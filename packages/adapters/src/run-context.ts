@@ -163,6 +163,8 @@ export interface RunState {
   /** Tokens this run has spent against its reply cap, earlier attempts included. */
   replyBudget: ReplyBudget;
   terminalCheckpointComplete: boolean;
+  /** The runtime reported the end of the turn. */
+  turnEnded: boolean;
 }
 
 /** The computer this run may use and how. */

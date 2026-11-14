@@ -156,7 +156,10 @@ import {
   createRunWorkspaceCheckpoint,
   failRunBeforeTurn,
   mayOpenModelStream,
+  RUN_LEASE_HEARTBEAT_MS,
+  RUN_LEASE_TTL_MS,
   RUN_SETUP_FAILURE_LIMIT,
+  releaseRunForShutdown,
   renewRunLease,
   requeueComputerRun,
   setupFailureStreak,
@@ -190,7 +193,7 @@ import {
 import { applyTool } from "./run-tools.js";
 import { mayRouteWithoutOwner } from "./run-tools-messaging.js";
 import { createRunTrustLoaders } from "./run-trust.js";
-import { completeRun, consumeRunEvents, failRun } from "./run-turn.js";
+import { completeRun, consumeRunEvents, failRun, interruptRunForShutdown } from "./run-turn.js";
 import {
   claimRunSteering,
   loadCurrentTurnImages,
@@ -276,7 +279,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
           status: "leased",
           leaseOwner: workerId,
           leaseFence: fence,
-          leaseExpiresAt: new Date(Date.now() + 5 * 60_000),
+          leaseExpiresAt: new Date(Date.now() + RUN_LEASE_TTL_MS),
           error: null,
           checkpoint: null,
           wakeAt: null,
@@ -413,7 +416,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
             lease.valid = false;
             runAbortController?.abort();
           });
-      }, 60_000);
+      }, RUN_LEASE_HEARTBEAT_MS);
       heartbeat.unref?.();
       const stopHeartbeatAfterCompletion = () => {
         lease.completed = true;
@@ -1258,6 +1261,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
           passed: false,
           replyBudget: createReplyBudget(monthUsage.limit, spentBeforeAttempt),
           terminalCheckpointComplete: false,
+          turnEnded: false,
         };
         const { effects } = state;
         /** Fleet tools take every scope from the run, never from arguments. */
@@ -1601,6 +1605,10 @@ export function createRunExecutor(deps: ExecutorDeps) {
             !lease.valid || Boolean(runAbortController?.signal.aborted),
           )
         ) {
+          // Shutdown during setup: return the run to the queue rather than leave it leased.
+          if (deps.shutdownSignal?.aborted && lease.valid) {
+            await releaseRunForShutdown(deps, runId, workerId, fence);
+          }
           return;
         }
 
@@ -1843,8 +1851,17 @@ export function createRunExecutor(deps: ExecutorDeps) {
             if (guards.stopped) throw new TurnGuardStopError(guards.stopped);
             return;
           }
+          // The stream ended because shutdown aborted it, not because the turn finished.
+          if (deps.shutdownSignal?.aborted && !state.turnEnded) {
+            await interruptRunForShutdown(ctx);
+            return;
+          }
           await completeRun(ctx);
         } catch (caughtError) {
+          if (deps.shutdownSignal?.aborted && lease.valid && !state.guards.stopped) {
+            await interruptRunForShutdown(ctx);
+            return;
+          }
           await failRun(ctx, caughtError, {
             ownCredential: resolved.ownCredential,
             active: activeModel,

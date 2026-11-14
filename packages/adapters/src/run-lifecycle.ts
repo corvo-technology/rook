@@ -116,6 +116,31 @@ export async function failRunBeforeTurn(
   return true;
 }
 
+/**
+ * A run's lease lasts this long without a heartbeat. After a kill nothing releases it, so
+ * this is also how long the run waits before the recovery scan hands it to another worker.
+ */
+export const RUN_LEASE_TTL_MS = 2 * 60_000;
+export const RUN_LEASE_HEARTBEAT_MS = 30_000;
+
+/**
+ * The worker is shutting down and this run did not finish in time. Hand it back as queued,
+ * keeping its checkpoint, so the next worker continues it instead of waiting for the lease
+ * to expire. The lease fence keeps this a no-op once another worker has claimed the run.
+ */
+export async function releaseRunForShutdown(
+  deps: ExecutorDeps,
+  runId: string,
+  workerId: string,
+  fence: number,
+): Promise<boolean> {
+  const released = await deps.prisma.run.updateMany({
+    where: { id: runId, status: "running", leaseOwner: workerId, leaseFence: fence },
+    data: { status: "queued", error: null, leaseOwner: null, leaseExpiresAt: null, wakeAt: null },
+  });
+  return released.count === 1;
+}
+
 export async function renewRunLease(
   deps: ExecutorDeps,
   runId: string,
@@ -129,7 +154,7 @@ export async function renewRunLease(
       leaseOwner: workerId,
       leaseFence: fence,
     },
-    data: { leaseExpiresAt: new Date(Date.now() + 5 * 60_000) },
+    data: { leaseExpiresAt: new Date(Date.now() + RUN_LEASE_TTL_MS) },
   });
   return renewed.count === 1;
 }

@@ -73,6 +73,9 @@ docs
 **/screenshots
 apps/desktop/**
 !apps/desktop/package.json
+# The website serves the desktop installer scripts at /install and /install.ps1.
+!apps/desktop/install
+!apps/desktop/install/**
 apps/mobile/**
 !apps/mobile/package.json
 packages/testkit/**

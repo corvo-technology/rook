@@ -49,20 +49,25 @@ it, or the first time a conversation needs it, from the sherpa-onnx project's re
 in `packages/adapters/src/local-speech-models.ts` and `local-voices.ts`. The engine that runs them,
 sherpa-onnx, is licensed under Apache-2.0.
 
+The Brazilian Portuguese voice is a Piper voice. Piper voices turn text into sounds with espeak-ng
+(https://github.com/espeak-ng/espeak-ng), which is licensed under GPL-3.0. The app ships it inside
+sherpa-onnx 1.13.8 (installed as `sherpa-onnx-espeak`), whose native library includes espeak-ng,
+and only ever runs it as a separate program: the app starts it in a process of its own and sends
+it text over IPC, and never loads it into its own process. espeak-ng's source is at the address
+above; its language data comes with the voice.
+
 | Model | What it does | License | Source |
 |---|---|---|---|
 | Whisper base, small | Turns speech into text, in many languages | MIT | OpenAI Whisper |
-| Português (Brasil) | Voice | BSD-3-Clause | Coqui TTS VITS model `pt/cv/vits`, by NeonGeckoCom |
+| Português (Brasil) | Voice | MIT (model); CC0 (dataset) | Piper voice `pt_BR-faber-medium`, by the Open Home Foundation, as packaged by sherpa-onnx as `vits-piper-pt_BR-faber-medium`. It was fine-tuned from Piper's English `lessac` voice, whose source dataset is distributed under a research license |
 | Español | Voice | BSD-3-Clause | Coqui TTS VITS model `es/css10/vits`, by NeonGeckoCom |
 | Français | Voice | BSD-3-Clause | Coqui TTS VITS model `fr/css10/vits`, by NeonGeckoCom |
 | Deutsch | Voice | BSD-3-Clause | Coqui TTS VITS model `de/css10/vits`, by NeonGeckoCom |
 | English | Voice | MIT | VITS (jaywalnut310/vits) trained on LJSpeech, which is in the public domain; pronunciations from CMUdict (BSD-style), as packaged by sherpa-onnx as `vits-ljs` |
 | Kokoro (English, more natural) | Voice | Apache-2.0 | Kokoro-82M, by hexgrad, as packaged by sherpa-onnx |
 
-Only models whose license allows use and redistribution in a product are offered. Piper voices
-are not: they need the espeak-ng phonemizer, which is licensed under GPL-3.0 and which sherpa-onnx
-2.x no longer includes, and several Piper voices carry non-commercial dataset licenses. A voice is
-added to the list only after its license is checked and recorded here.
+A voice is added to the list only after its license is checked and recorded here. Many Piper
+voices carry non-commercial dataset licenses and are not offered.
 
 ## Agent and skill catalogs
 

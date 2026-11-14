@@ -236,7 +236,7 @@ describe("LocalVoiceProvider speaking", () => {
     expect(synthesizer.calls[0]).toMatchObject({
       text: "Olá, tudo bem?",
       modelDir: "/models/voice-pt",
-      voice: { type: "vits" },
+      voice: { type: "piper" },
     });
     await speak(local, { language: "en", text: "Hello there" });
     expect(synthesizer.calls[1]).toMatchObject({

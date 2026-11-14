@@ -25,6 +25,7 @@ import {
   OPENROUTER_VOICE_PROVIDER_ID,
   openRouterSpeechCostUsd,
 } from "./openrouter-voice.js";
+import { retryInSpokenLanguage } from "./spoken-language.js";
 
 /** The deployment's OpenRouter key for voice, and whether its use is charged to credits. */
 export interface HostedVoice {
@@ -161,41 +162,55 @@ export async function synthesizeOnCredits(
   return clip;
 }
 
-/** Listens on credit and settles at the cost the transcription reply reports. */
+/**
+ * Listens on credit and settles at the cost the transcription replies report. With the languages
+ * the person speaks, the hold covers a second pass in the first of them, which runs only when the
+ * first pass heard another language. Both passes are settled together.
+ */
 export async function transcribeOnCredits(
   charge: VoiceCharge,
   provider: VoiceProvider,
   request: VoiceTranscribeRequest,
   context: AdapterContext,
+  spoken: readonly string[] = [],
 ): Promise<VoiceTranscribeResult> {
-  const held = listenHoldUsd(request.audio.byteLength);
-  const entryId = await hold(charge, held, OPENROUTER_STT_MODEL);
+  const perPass = listenHoldUsd(request.audio.byteLength);
+  const entryId = await hold(charge, perPass * (spoken.length > 0 ? 2 : 1), OPENROUTER_STT_MODEL);
+  let spent = 0;
+  let reported = true;
+  const listen = async (language?: string) => {
+    if (!provider.transcribe) throw new Error("Voice cannot transcribe.");
+    const result = await provider.transcribe(
+      language ? { ...request, language } : request,
+      context,
+    );
+    // No reported cost: the hold stands in for it rather than letting the call go free.
+    if (result.costUsd === undefined) reported = false;
+    spent += result.costUsd ?? perPass;
+    return result;
+  };
   let result: VoiceTranscribeResult;
   try {
-    if (!provider.transcribe) throw new Error("Voice cannot transcribe.");
-    result = await provider.transcribe(request, context);
+    result = await retryInSpokenLanguage(await listen(), spoken, listen);
   } catch (error) {
-    await settleQuietly(charge, entryId, 0);
+    await settleQuietly(charge, entryId, spent);
     throw error;
   }
-  if (result.costUsd === undefined) {
-    // No reported cost: the hold stands in for it rather than letting the call go free.
-    await settleQuietly(charge, entryId, held);
-    return result;
+  if (reported) {
+    try {
+      await recordModelCreditReceipt(charge.prisma, entryId, {
+        inputTokens: null,
+        outputTokens: null,
+        costUsd: spent,
+        costSource: "provider-reported",
+        usageSource: "provider-reported",
+      });
+    } catch (error) {
+      getLogger().warn("voice credit receipt failed", {
+        reason: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
-  try {
-    await recordModelCreditReceipt(charge.prisma, entryId, {
-      inputTokens: null,
-      outputTokens: null,
-      costUsd: result.costUsd,
-      costSource: "provider-reported",
-      usageSource: "provider-reported",
-    });
-  } catch (error) {
-    getLogger().warn("voice credit receipt failed", {
-      reason: error instanceof Error ? error.message : String(error),
-    });
-  }
-  await settleQuietly(charge, entryId, result.costUsd);
+  await settleQuietly(charge, entryId, spent);
   return result;
 }

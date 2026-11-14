@@ -17,6 +17,7 @@ import {
   openAiCompatibleVoiceServer,
   openRouterVoiceId,
   parseLocalVoiceSecret,
+  retryInSpokenLanguage,
   serializeOpenAiCompatibleVoiceSecret,
   synthesizeOnCredits,
   transcribeOnCredits,
@@ -31,7 +32,7 @@ import type {
   VoiceStatus,
 } from "@corvo/contracts";
 import { SettingsScopeSchema } from "@corvo/contracts";
-import { speakable, toUtterances } from "@corvo/core";
+import { speakable, spokenLanguageCodes, toUtterances } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
 import {
   deleteUnreferencedCredentialSecret,
@@ -949,8 +950,17 @@ async function prepareLocalListening(local: LocalSpeech, secret: string, implici
 export async function transcribeVoice(
   deps: VoiceDeps,
   actor: Actor,
-  input: { audio: Uint8Array; mimeType: string; language?: string; signal?: AbortSignal },
+  input: {
+    audio: Uint8Array;
+    mimeType: string;
+    /** What an older client sends: the language of its app, which is not what people speak. */
+    language?: string;
+    /** The languages the person speaks, from their browser or system, most preferred first. */
+    languages?: readonly string[];
+    signal?: AbortSignal;
+  },
 ) {
+  const spoken = spokenLanguageCodes(input.languages);
   const loaded = await loadDefaultVoiceCredential(deps, actor);
   // No voice connected: the desktop app listens with the speech model on this computer, and
   // anyone else on credits listens with the deployment's.
@@ -977,10 +987,14 @@ export async function transcribeVoice(
   if (target.provider === LOCAL_VOICE_PROVIDER_ID && deps.localSpeech) {
     await prepareLocalListening(deps.localSpeech, target.apiKey, !loaded);
   }
+  const hosted = target.provider === OPENROUTER_VOICE_PROVIDER_ID;
   const request = {
     audio: input.audio,
     mimeType: input.mimeType || "audio/webm",
-    language: input.language,
+    // The deployment's model hears the language itself and is only told one when that disagrees
+    // with the person's own; the app's language is never the hint. A voice of their own, which
+    // does not say what it heard, takes the first language they speak, else what an old client sent.
+    language: hosted ? undefined : (spoken[0] ?? input.language),
     apiKey: target.apiKey,
     signal: input.signal,
   };
@@ -996,9 +1010,16 @@ export async function transcribeVoice(
       provider,
       request,
       context,
+      spoken,
     );
   }
-  return provider.transcribe(request, context);
+  const transcribe = provider.transcribe.bind(provider);
+  const first = await transcribe(request, context);
+  return hosted
+    ? retryInSpokenLanguage(first, spoken, (language) =>
+        transcribe({ ...request, language }, context),
+      )
+    : first;
 }
 
 export function mountVoiceHttpRoutes(
@@ -1051,6 +1072,7 @@ export function mountVoiceHttpRoutes(
     const body = parseVoiceRequestBody(raw);
     const audioBase64 = String((body as { audioBase64?: unknown }).audioBase64 ?? "");
     const language = optionalString((body as { language?: unknown }).language);
+    const languages = (body as { languages?: unknown }).languages;
     try {
       const audio = decodeAudioBase64(audioBase64);
       const result = await runAsTenant(actor, () =>
@@ -1058,6 +1080,7 @@ export function mountVoiceHttpRoutes(
           audio,
           mimeType: String((body as { mimeType?: unknown }).mimeType ?? "audio/webm"),
           language,
+          languages: spokenLanguageCodes(languages),
           signal: c.req.raw.signal,
         }),
       );

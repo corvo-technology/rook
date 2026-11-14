@@ -113,4 +113,69 @@ describe("voice on credits", () => {
     expect(charged).toHaveBeenCalledOnce();
     expect(provider.transcribe).not.toHaveBeenCalled();
   });
+
+  describe("transcribing in the language the person speaks", () => {
+    const hosted = (transcribe: ReturnType<typeof vi.fn>) => {
+      const provider = { transcribe } as unknown as VoiceProvider;
+      vi.spyOn(adapters, "createVoiceProvider").mockReturnValue(provider);
+      return provider;
+    };
+    const audio = { audio: new Uint8Array([1, 2]), mimeType: "audio/webm" };
+
+    it("hands the credit path the candidates and never the app's language", async () => {
+      noOwnVoice();
+      hosted(vi.fn());
+      const charged = vi.spyOn(adapters, "transcribeOnCredits").mockResolvedValue({ text: "oi" });
+      await transcribeVoice(deps(), actor, { ...audio, language: "en", languages: ["pt", "en"] });
+      const [, , request, , spoken] = charged.mock.calls[0] ?? [];
+      expect(request?.language).toBeUndefined();
+      expect(spoken).toEqual(["pt", "en"]);
+    });
+
+    it("listens again on the deployment key without credits when detection disagrees", async () => {
+      vi.spyOn(db, "findDefaultVoiceCredential").mockResolvedValue(null);
+      const transcribe = vi
+        .fn()
+        .mockResolvedValueOnce({ text: "michelle wish", language: "en" })
+        .mockResolvedValueOnce({ text: "mas eu só queria", language: "pt" });
+      hosted(transcribe);
+      const unmetered = deps({ voiceCredits: { apiKey: "deploy-key", metered: false } });
+      await expect(
+        transcribeVoice(unmetered, actor, { ...audio, languages: ["pt-BR"] }),
+      ).resolves.toMatchObject({ text: "mas eu só queria" });
+      expect(transcribe.mock.calls[1]?.[0].language).toBe("pt");
+    });
+
+    it("does not listen again when it agrees, or with no languages like an old client", async () => {
+      vi.spyOn(db, "findDefaultVoiceCredential").mockResolvedValue(null);
+      const transcribe = vi.fn().mockResolvedValue({ text: "hi", language: "en" });
+      hosted(transcribe);
+      const unmetered = deps({ voiceCredits: { apiKey: "deploy-key", metered: false } });
+      await transcribeVoice(unmetered, actor, { ...audio, languages: ["en", "pt"] });
+      await transcribeVoice(unmetered, actor, { ...audio, language: "en" });
+      expect(transcribe).toHaveBeenCalledTimes(2);
+      expect(transcribe.mock.calls[1]?.[0].language).toBeUndefined();
+    });
+
+    it("gives a voice of their own the first language as a hint, else the old client's", async () => {
+      vi.spyOn(db, "findDefaultVoiceCredential").mockResolvedValue({
+        id: "c",
+        userId: "user",
+        provider: "elevenlabs",
+        secretId: "s",
+        voiceId: "v",
+        speechModel: "",
+      } as never);
+      const transcribe = vi.fn().mockResolvedValue({ text: "oi", language: "en" });
+      hosted(transcribe);
+      const own = deps({
+        prisma: {
+          secret: { findFirst: vi.fn().mockResolvedValue({ id: "s", ciphertext: "x" }) },
+        } as unknown as PrismaClient,
+      });
+      await transcribeVoice(own, actor, { ...audio, language: "en", languages: ["pt", "en"] });
+      await transcribeVoice(own, actor, { ...audio, language: "es" });
+      expect(transcribe.mock.calls.map(([request]) => request.language)).toEqual(["pt", "es"]);
+    });
+  });
 });

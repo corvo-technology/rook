@@ -18,7 +18,12 @@ import { readVoiceAudio, readVoiceJson, speechUploadName, voiceDeadline } from "
  * The `apiKey` of every request is the deployment key and goes nowhere but openrouter.ai.
  */
 export const OPENROUTER_VOICE_PROVIDER_ID = "openrouter";
-/** The two models voice on credits runs, the one place to change them. */
+/**
+ * The two models voice on credits runs, the one place to change them. Any model OpenRouter lists
+ * for `/audio/transcriptions` fits `OPENROUTER_STT_MODEL`, but the hold below is sized from the
+ * per-second price of Whisper: change `OPENROUTER_STT_USD_PER_SECOND` with it, and a model that
+ * does not return `verbose_json` reports no language, so the second pass never runs.
+ */
 export const OPENROUTER_TTS_MODEL = "google/gemini-3.8-flash-lite-tts";
 export const OPENROUTER_STT_MODEL = "openai/whisper-large-v3-turbo";
 /**
@@ -200,6 +205,7 @@ export class OpenRouterVoiceProvider implements VoiceProvider {
     request: VoiceTranscribeRequest,
     context: AdapterContext,
   ): Promise<VoiceTranscribeResult> {
+    const language = heardLanguage(request.language);
     const res = await this.fetcher(TRANSCRIPTION_URL, {
       method: "POST",
       headers: {
@@ -212,8 +218,10 @@ export class OpenRouterVoiceProvider implements VoiceProvider {
           data: Buffer.from(request.audio).toString("base64"),
           format: speechUploadName(request.mimeType).split(".")[1],
         },
-        // No language hint: the app's language is not the one people speak, and Whisper forced
-        // into English turns Portuguese into English-sounding nonsense. It hears the language.
+        // Without a language Whisper hears it, which misfires on short clips. A language is only
+        // forced when the caller knows what the person speaks, never from the app's own language:
+        // Whisper forced into English turns Portuguese into English-sounding nonsense.
+        ...(language ? { language } : {}),
         response_format: "verbose_json",
       }),
       redirect: "error",
@@ -230,10 +238,10 @@ export class OpenRouterVoiceProvider implements VoiceProvider {
     } | null;
     if (typeof body?.text !== "string") throw new Error("Voice did not return a transcript.");
     const cost = body.usage?.cost;
-    const language = heardLanguage(body.language);
+    const heard = heardLanguage(body.language);
     return {
       text: body.text.trim(),
-      ...(language ? { language } : {}),
+      ...(heard ? { language: heard } : {}),
       ...(typeof cost === "number" && Number.isFinite(cost) && cost >= 0 ? { costUsd: cost } : {}),
     };
   }

@@ -43,7 +43,7 @@ describe("OpenRouterVoiceProvider", () => {
     expect(openRouterVoiceId(undefined)).toBe(OPENROUTER_DEFAULT_VOICE);
   });
 
-  it("lets Whisper hear the language instead of forcing the app's, and reports it", async () => {
+  it("lets Whisper hear the language when none is given, and reports it", async () => {
     const fetcher = vi.fn().mockResolvedValue(
       Response.json({
         text: " oi, tudo bem? ",
@@ -55,8 +55,6 @@ describe("OpenRouterVoiceProvider", () => {
       {
         audio: new Uint8Array([1, 2]),
         mimeType: "audio/webm;codecs=opus",
-        // An app shown in English must not make Portuguese speech come back as English.
-        language: "en",
         apiKey: "deploy-key",
       },
       context,
@@ -69,6 +67,16 @@ describe("OpenRouterVoiceProvider", () => {
       input_audio: { data: "AQI=", format: "webm" },
       response_format: "verbose_json",
     });
+  });
+
+  it("forces the language it is told the person speaks", async () => {
+    const fetcher = vi.fn().mockResolvedValue(Response.json({ text: "oi", language: "pt" }));
+    await new OpenRouterVoiceProvider(fetcher).transcribe(
+      { audio: new Uint8Array([1]), mimeType: "audio/wav", language: "pt-BR", apiKey: "k" },
+      context,
+    );
+    const [, init] = fetcher.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse(String(init.body)).language).toBe("pt");
   });
 
   it("keeps a language code a provider already gives", async () => {

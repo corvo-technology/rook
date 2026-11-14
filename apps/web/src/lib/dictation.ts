@@ -1,4 +1,10 @@
-import { cancelResponseBody, readJsonObjectWithin, speechLocaleTag, withAbort } from "@corvo/core";
+import {
+  cancelResponseBody,
+  readJsonObjectWithin,
+  speechLocaleTag,
+  spokenLanguageCodes,
+  withAbort,
+} from "@corvo/core";
 import { getActiveUiLocale } from "./i18n.js";
 import { selectedSpaceId, withSpaceHeaders } from "./rpc.js";
 import { recordingToWav } from "./speech-wav.js";
@@ -114,9 +120,18 @@ export function recognitionLanguage(): string {
 }
 
 /**
- * Language hint for server transcription: the primary subtag of the app's own locale
- * (`es`, `pt`, `zh`). Undefined leaves detection to the provider.
+ * The languages this person speaks, for server transcription: base codes from the browser's
+ * own language list (`pt`, `en`), most preferred first. The app's language says what they read,
+ * not what they say, so an English app on a Portuguese browser must still listen for Portuguese.
  */
+export function spokenLanguages(): string[] {
+  if (typeof navigator === "undefined") return [];
+  return spokenLanguageCodes(
+    navigator.languages?.length ? navigator.languages : [navigator.language],
+  );
+}
+
+/** The primary subtag of the app's own locale (`es`, `pt`, `zh`), for the reply's voice. */
 export function transcriptionLanguage(): string | undefined {
   const tag = speechLocaleTag(getActiveUiLocale());
   return tag ? tag.split("-")[0]?.toLowerCase() : undefined;
@@ -578,7 +593,7 @@ export class Dictation {
             body: JSON.stringify({
               audioBase64,
               mimeType: blob.type,
-              language: transcriptionLanguage(),
+              languages: spokenLanguages(),
             }),
             signal: abort.signal,
           }),

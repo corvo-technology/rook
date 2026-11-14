@@ -201,6 +201,94 @@ describe("listening on credits", () => {
     expect(db.settleModelCredits).toHaveBeenCalledWith(prisma, "entry", 0);
   });
 
+  describe("with the languages the person speaks", () => {
+    const heard = (language: string, costUsd: number) => ({ text: language, language, costUsd });
+
+    it("listens again in their language when the first pass heard another, and charges both", async () => {
+      const transcribe = vi
+        .fn()
+        .mockResolvedValueOnce(heard("en", 0.001))
+        .mockResolvedValueOnce(heard("pt", 0.002));
+      const result = await transcribeOnCredits(
+        charge,
+        { transcribe } as unknown as VoiceProvider,
+        request,
+        context,
+        ["pt"],
+      );
+      expect(result.text).toBe("pt");
+      expect(transcribe).toHaveBeenCalledTimes(2);
+      expect(transcribe.mock.calls[0]?.[0].language).toBeUndefined();
+      expect(transcribe.mock.calls[1]?.[0].language).toBe("pt");
+      expect(db.reserveModelCredits).toHaveBeenCalledWith(
+        prisma,
+        "org",
+        listenHoldUsd(50_000) * 2,
+        expect.anything(),
+      );
+      expect(db.settleModelCredits).toHaveBeenCalledOnce();
+      expect(db.settleModelCredits).toHaveBeenCalledWith(prisma, "entry", 0.001 + 0.002);
+    });
+
+    it("does not listen again when the first pass heard one of their languages", async () => {
+      const transcribe = vi.fn().mockResolvedValue(heard("pt", 0.001));
+      await transcribeOnCredits(
+        charge,
+        { transcribe } as unknown as VoiceProvider,
+        request,
+        context,
+        ["en", "pt"],
+      );
+      expect(transcribe).toHaveBeenCalledOnce();
+      expect(db.settleModelCredits).toHaveBeenCalledWith(prisma, "entry", 0.001);
+    });
+
+    it("does not listen again without languages, and holds for one pass", async () => {
+      const transcribe = vi.fn().mockResolvedValue(heard("en", 0.001));
+      await transcribeOnCredits(
+        charge,
+        { transcribe } as unknown as VoiceProvider,
+        request,
+        context,
+      );
+      expect(transcribe).toHaveBeenCalledOnce();
+      expect(db.reserveModelCredits).toHaveBeenCalledWith(
+        prisma,
+        "org",
+        listenHoldUsd(50_000),
+        expect.anything(),
+      );
+    });
+
+    it("never listens again for a provider that does not say what it heard", async () => {
+      const transcribe = vi.fn().mockResolvedValue({ text: "oi", costUsd: 0.001 });
+      await transcribeOnCredits(
+        charge,
+        { transcribe } as unknown as VoiceProvider,
+        request,
+        context,
+        ["pt"],
+      );
+      expect(transcribe).toHaveBeenCalledOnce();
+    });
+
+    it("keeps the first transcript, and charges only it, when the second pass fails", async () => {
+      const transcribe = vi
+        .fn()
+        .mockResolvedValueOnce(heard("en", 0.001))
+        .mockRejectedValueOnce(new Error("down"));
+      const result = await transcribeOnCredits(
+        charge,
+        { transcribe } as unknown as VoiceProvider,
+        request,
+        context,
+        ["pt"],
+      );
+      expect(result.text).toBe("en");
+      expect(db.settleModelCredits).toHaveBeenCalledWith(prisma, "entry", 0.001);
+    });
+  });
+
   it("refuses before listening when credit is short", async () => {
     db.reserveModelCredits.mockRejectedValue(new Error("Not enough model credits. Add credits"));
     const transcribe = vi.fn();

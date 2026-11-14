@@ -342,7 +342,7 @@ describe("Dictation recorder fallback", () => {
     expect(track.stop).toHaveBeenCalled();
   });
 
-  it("tells the provider which language the caller speaks", async () => {
+  it("sends the languages the person speaks, not the language of the app", async () => {
     const track = { stop: vi.fn() };
     vi.stubGlobal("navigator", {
       userAgent:
@@ -350,8 +350,10 @@ describe("Dictation recorder fallback", () => {
       mediaDevices: {
         getUserMedia: vi.fn(async () => ({ getTracks: () => [track] })),
       },
-      language: "es-ES",
+      language: "pt-BR",
+      languages: ["pt-BR", "en-US", "pt"],
     });
+    // The app is shown in English on a Portuguese browser.
     const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) =>
       Response.json({ text: "hola" }),
     );
@@ -379,7 +381,9 @@ describe("Dictation recorder fallback", () => {
     await vi.waitFor(() => expect(onFinal).toHaveBeenCalledWith("hola"));
 
     const sent = fetchMock.mock.calls[0]?.[1] as { body?: string } | undefined;
-    expect(JSON.parse(String(sent?.body)).language).toBe("es");
+    const posted = JSON.parse(String(sent?.body));
+    expect(posted.languages).toEqual(["pt", "en"]);
+    expect(posted.language).toBeUndefined();
   });
 
   it("sends a browser recording as wav so the local engine can read it", async () => {

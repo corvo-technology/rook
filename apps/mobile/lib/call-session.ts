@@ -39,6 +39,7 @@ import type { DictationGiveUp } from "./dictation";
 import * as dictation from "./dictation";
 import { getActiveUiLocale, t } from "./i18n";
 import { reportMobileError } from "./monitoring";
+import { spokenLanguages } from "./spoken-languages";
 import { errorText, voiceAccountErrorText } from "./user-error";
 import { speakText, stopSpeaking } from "./voice";
 
@@ -705,7 +706,11 @@ async function transcribeClip(clip: CallClip, signal: AbortSignal): Promise<stri
   const res = await fetch(`${apiBase}/api/voice/transcribe`, {
     method: "POST",
     headers: { "content-type": "application/json", origin: "corvo://", ...headers },
-    body: JSON.stringify({ audioBase64: clip.base64, mimeType: clip.mimeType }),
+    body: JSON.stringify({
+      audioBase64: clip.base64,
+      mimeType: clip.mimeType,
+      languages: await spokenLanguages(),
+    }),
     signal,
   });
   const body = (await res.json().catch(() => ({}))) as {

@@ -48,6 +48,9 @@ RUN cd node_modules/.pnpm \
   && find . -maxdepth 1 \( -name '*linuxmusl*' -o -name '*-musl*' -o -name "*linux-$other*" \
     -o -name '*[-+]darwin-*' -o -name '*[-+]win32-*' -o -name '*[-+]android-*' -o -name '*[-+]freebsd-*' \) \
     -exec rm -rf {} +
+# Source maps and type declarations are about a quarter of what is left (the servers run
+# compiled JavaScript and load no declaration file), so they go too.
+RUN find node_modules -xdev -type f \( -name '*.map' -o -name '*.d.ts' -o -name '*.d.mts' -o -name '*.d.cts' \) -delete
 
 FROM base AS build
 # The desktop and mobile apps, the web app and the marketing site are left out: they would add

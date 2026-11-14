@@ -43,27 +43,41 @@ describe("OpenRouterVoiceProvider", () => {
     expect(openRouterVoiceId(undefined)).toBe(OPENROUTER_DEFAULT_VOICE);
   });
 
-  it("transcribes with the recording's format and language and reads the reported cost", async () => {
-    const fetcher = vi
-      .fn()
-      .mockResolvedValue(Response.json({ text: " oi ", usage: { seconds: 3, cost: 0.0002 } }));
+  it("lets Whisper hear the language instead of forcing the app's, and reports it", async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      Response.json({
+        text: " oi, tudo bem? ",
+        language: "portuguese",
+        usage: { seconds: 3, cost: 0.0002 },
+      }),
+    );
     const result = await new OpenRouterVoiceProvider(fetcher).transcribe(
       {
         audio: new Uint8Array([1, 2]),
         mimeType: "audio/webm;codecs=opus",
-        language: "pt-BR",
+        // An app shown in English must not make Portuguese speech come back as English.
+        language: "en",
         apiKey: "deploy-key",
       },
       context,
     );
-    expect(result).toEqual({ text: "oi", costUsd: 0.0002 });
+    expect(result).toEqual({ text: "oi, tudo bem?", language: "pt", costUsd: 0.0002 });
     const [url, init] = fetcher.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("https://openrouter.ai/api/v1/audio/transcriptions");
     expect(JSON.parse(String(init.body))).toEqual({
       model: OPENROUTER_STT_MODEL,
       input_audio: { data: "AQI=", format: "webm" },
-      language: "pt",
+      response_format: "verbose_json",
     });
+  });
+
+  it("keeps a language code a provider already gives", async () => {
+    const fetcher = vi.fn().mockResolvedValue(Response.json({ text: "hola", language: "es" }));
+    const result = await new OpenRouterVoiceProvider(fetcher).transcribe(
+      { audio: new Uint8Array([1]), mimeType: "audio/wav", apiKey: "k" },
+      context,
+    );
+    expect(result).toEqual({ text: "hola", language: "es" });
   });
 
   it("leaves the cost out when the reply has none", async () => {

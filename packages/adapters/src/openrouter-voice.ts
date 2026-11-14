@@ -106,6 +106,25 @@ export function openRouterSpeechCostUsd(text: string, clip: SpeechClip): number 
   );
 }
 
+/** Whisper names the language it heard ("portuguese"); other providers give the code ("pt"). */
+const LANGUAGE_CODES: Record<string, string> = {
+  english: "en",
+  portuguese: "pt",
+  spanish: "es",
+  french: "fr",
+  german: "de",
+  italian: "it",
+  japanese: "ja",
+  chinese: "zh",
+};
+
+function heardLanguage(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const lower = value.trim().toLowerCase();
+  const code = LANGUAGE_CODES[lower] ?? lower.split("-")[0];
+  return code && /^[a-z]{2,3}$/.test(code) ? code : undefined;
+}
+
 const SPEECH_URL = "https://openrouter.ai/api/v1/audio/speech";
 const TRANSCRIPTION_URL = "https://openrouter.ai/api/v1/audio/transcriptions";
 const SPEAK_DEADLINE_MS = 60_000;
@@ -181,7 +200,6 @@ export class OpenRouterVoiceProvider implements VoiceProvider {
     request: VoiceTranscribeRequest,
     context: AdapterContext,
   ): Promise<VoiceTranscribeResult> {
-    const language = request.language?.split("-")[0]?.toLowerCase();
     const res = await this.fetcher(TRANSCRIPTION_URL, {
       method: "POST",
       headers: {
@@ -194,7 +212,9 @@ export class OpenRouterVoiceProvider implements VoiceProvider {
           data: Buffer.from(request.audio).toString("base64"),
           format: speechUploadName(request.mimeType).split(".")[1],
         },
-        ...(language && /^[a-z]{2,3}$/.test(language) ? { language } : {}),
+        // No language hint: the app's language is not the one people speak, and Whisper forced
+        // into English turns Portuguese into English-sounding nonsense. It hears the language.
+        response_format: "verbose_json",
       }),
       redirect: "error",
       signal: voiceDeadline(request.signal ?? context.signal, TRANSCRIBE_DEADLINE_MS),
@@ -205,12 +225,15 @@ export class OpenRouterVoiceProvider implements VoiceProvider {
     }
     const body = (await readVoiceJson(res, { requireValid: true })) as {
       text?: unknown;
+      language?: unknown;
       usage?: { cost?: unknown };
     } | null;
     if (typeof body?.text !== "string") throw new Error("Voice did not return a transcript.");
     const cost = body.usage?.cost;
+    const language = heardLanguage(body.language);
     return {
       text: body.text.trim(),
+      ...(language ? { language } : {}),
       ...(typeof cost === "number" && Number.isFinite(cost) && cost >= 0 ? { costUsd: cost } : {}),
     };
   }

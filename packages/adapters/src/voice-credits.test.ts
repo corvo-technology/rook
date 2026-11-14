@@ -15,7 +15,7 @@ vi.mock("@corvo/db", () => db);
 import {
   OPENROUTER_STT_MODEL,
   OPENROUTER_TTS_MODEL,
-  OPENROUTER_TTS_USD_PER_CHAR,
+  openRouterSpeechCostUsd,
 } from "./openrouter-voice.js";
 import {
   creditOrganization,
@@ -29,7 +29,6 @@ import {
 const prisma = {} as PrismaClient;
 const charge = { prisma, organizationId: "org", userId: "user", spaceId: "space" };
 const context = { signal: new AbortController().signal } as AdapterContext;
-const clip = { bytes: new Uint8Array([1]), mimeType: "audio/mpeg" as const };
 
 beforeEach(() => {
   for (const fn of Object.values(db)) fn.mockReset();
@@ -71,9 +70,13 @@ describe("creditOrganization", () => {
 describe("speaking on credits", () => {
   const request = { text: "Olá, tudo bem?", voiceId: "sarah", apiKey: "deploy-key" };
 
-  it("holds the priced text, leaves the entry for the reconciler with the generation id", async () => {
+  // Two seconds of 24 kHz 16-bit mono after the 44-byte WAV header.
+  const spoken = { bytes: new Uint8Array(44 + 96_000), mimeType: "audio/wav" as const };
+  const twoSecondsUsd = Math.ceil(request.text.length / 4) * 0.0000005 + 2 * 25 * 0.000006;
+
+  it("holds the priced text and settles at the length of the audio that came back", async () => {
     const provider = {
-      synthesize: vi.fn().mockResolvedValue({ ...clip, providerRequestId: "gen-1" }),
+      synthesize: vi.fn().mockResolvedValue({ ...spoken, providerRequestId: "gen-1" }),
     } as unknown as VoiceProvider;
     await synthesizeOnCredits(charge, provider, request, context);
     expect(db.reserveModelCredits).toHaveBeenCalledWith(
@@ -91,19 +94,18 @@ describe("speaking on credits", () => {
     expect(db.recordModelCreditReceipt).toHaveBeenCalledWith(
       prisma,
       "entry",
-      expect.objectContaining({ providerRequestId: "gen-1" }),
+      expect.objectContaining({ providerRequestId: "gen-1", costSource: "estimated" }),
     );
-    expect(db.settleModelCredits).not.toHaveBeenCalled();
+    const [, , settled] = db.settleModelCredits.mock.calls[0] ?? [];
+    expect(settled).toBeCloseTo(twoSecondsUsd, 10);
+    expect(openRouterSpeechCostUsd(request.text, spoken)).toBeCloseTo(twoSecondsUsd, 10);
   });
 
-  it("settles at the catalog price when the provider gave no generation id", async () => {
-    const provider = { synthesize: vi.fn().mockResolvedValue(clip) } as unknown as VoiceProvider;
+  it("still settles when the provider gave no generation id", async () => {
+    const provider = { synthesize: vi.fn().mockResolvedValue(spoken) } as unknown as VoiceProvider;
     await synthesizeOnCredits(charge, provider, request, context);
-    expect(db.settleModelCredits).toHaveBeenCalledWith(
-      prisma,
-      "entry",
-      request.text.length * OPENROUTER_TTS_USD_PER_CHAR,
-    );
+    const [, , settled] = db.settleModelCredits.mock.calls[0] ?? [];
+    expect(settled).toBeCloseTo(twoSecondsUsd, 10);
   });
 
   it("refuses with an actionable error and synthesizes nothing when credit is short", async () => {
@@ -119,8 +121,8 @@ describe("speaking on credits", () => {
     ).catch((caught: unknown) => caught);
     expect(error).toBeInstanceOf(VoiceAccountError);
     expect(error).toMatchObject({
-      code: "VOICE_OUT_OF_CREDIT",
-      message: "Not enough credit for voice. Add credits in Billing.",
+      code: "VOICE_CREDITS_USED_UP",
+      message: "Add credits in Billing to keep using voice.",
     });
     expect(synthesize).not.toHaveBeenCalled();
   });

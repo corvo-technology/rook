@@ -28,6 +28,10 @@ export const OPENROUTER_STT_MODEL = "openai/whisper-large-v3-turbo";
  */
 export const OPENROUTER_TTS_USD_PER_CHAR = 0.0000105;
 export const OPENROUTER_STT_USD_PER_SECOND = 0.0000034;
+/** Gemini speech prices: text in per token, audio out at about 25 tokens a second. */
+const TTS_USD_PER_INPUT_TOKEN = 0.0000005;
+const TTS_USD_PER_AUDIO_TOKEN = 0.000006;
+const TTS_AUDIO_TOKENS_PER_SECOND = 25;
 /** Gemini voices are multilingual, so one voice reads every language, Brazilian Portuguese included. */
 export const OPENROUTER_DEFAULT_VOICE = "Kore";
 const OPENROUTER_VOICE_IDS = [
@@ -69,8 +73,10 @@ const PCM_SAMPLE_RATE = 24_000;
 function pcmToWav(pcm: Uint8Array): Uint8Array {
   const wav = new Uint8Array(44 + pcm.byteLength);
   const view = new DataView(wav.buffer);
-  const text = (offset: number, value: string) =>
-    [...value].forEach((char, index) => view.setUint8(offset + index, char.charCodeAt(0)));
+  const text = (offset: number, value: string) => {
+    for (let index = 0; index < value.length; index++)
+      view.setUint8(offset + index, value.charCodeAt(index));
+  };
   text(0, "RIFF");
   view.setUint32(4, 36 + pcm.byteLength, true);
   text(8, "WAVE");
@@ -86,6 +92,18 @@ function pcmToWav(pcm: Uint8Array): Uint8Array {
   view.setUint32(40, pcm.byteLength, true);
   wav.set(pcm, 44);
   return wav;
+}
+
+/**
+ * What a spoken clip cost, from the length of the audio it returned. The reply carries no price,
+ * and the clip's length is what the audio tokens bill, so this tracks the real charge closely.
+ */
+export function openRouterSpeechCostUsd(text: string, clip: SpeechClip): number {
+  const seconds = Math.max(0, clip.bytes.byteLength - 44) / (PCM_SAMPLE_RATE * 2);
+  return (
+    Math.ceil(text.length / 4) * TTS_USD_PER_INPUT_TOKEN +
+    seconds * TTS_AUDIO_TOKENS_PER_SECOND * TTS_USD_PER_AUDIO_TOKEN
+  );
 }
 
 const SPEECH_URL = "https://openrouter.ai/api/v1/audio/speech";

@@ -1004,6 +1004,8 @@ export const PT_BR_MESSAGES: Record<string, string> = {
   "Couldn't start the computer": "Não foi possível iniciar o computador",
   "Something went wrong while it was starting. Try again in a moment.":
     "Algo deu errado na inicialização. Tente de novo em instantes.",
+  "Add credits in Billing to keep using voice.":
+    "Adicione créditos em Cobrança para continuar usando a voz.",
   "Your voice provider is out of credit.": "Seu provedor de voz está sem crédito.",
   "Your voice provider key was rejected.": "Seu provedor de voz recusou a chave.",
   Billing: "Cobrança",

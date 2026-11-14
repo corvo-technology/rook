@@ -36,6 +36,7 @@ export function errorText(
 export function voiceAccountErrorText(error: unknown): string | undefined {
   const code = error && typeof error === "object" && "code" in error ? error.code : undefined;
   if (!isVoiceAccountErrorCode(code)) return undefined;
+  if (code === "VOICE_CREDITS_USED_UP") return t("Add credits in Billing to keep using voice.");
   return code === "VOICE_OUT_OF_CREDIT"
     ? t("Your voice provider is out of credit.")
     : t("Your voice provider key was rejected.");

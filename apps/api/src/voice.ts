@@ -1097,7 +1097,7 @@ function decodeAudioBase64(value: string): Uint8Array {
 
 /** Spent credit is 402; a rejected key is 403, never 401, which clients read as a lost session. */
 export function voiceAccountErrorStatus(code: VoiceAccountErrorCode) {
-  return code === "VOICE_OUT_OF_CREDIT" ? 402 : 403;
+  return code === "VOICE_KEY_REJECTED" ? 403 : 402;
 }
 
 function voiceHttpError(c: Context, error: unknown) {

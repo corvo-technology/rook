@@ -23,6 +23,7 @@ import {
   OPENROUTER_TTS_MODEL,
   OPENROUTER_TTS_USD_PER_CHAR,
   OPENROUTER_VOICE_PROVIDER_ID,
+  openRouterSpeechCostUsd,
 } from "./openrouter-voice.js";
 
 /**
@@ -84,8 +85,8 @@ async function hold(charge: VoiceCharge, usd: number, model: string) {
   } catch (error) {
     if (error instanceof Error && error.message.startsWith("Not enough model credits"))
       throw new VoiceAccountError(
-        "VOICE_OUT_OF_CREDIT",
-        "Not enough credit for voice. Add credits in Billing.",
+        "VOICE_CREDITS_USED_UP",
+        "Add credits in Billing to keep using voice.",
       );
     throw error;
   }
@@ -103,9 +104,8 @@ async function settleQuietly(charge: VoiceCharge, entryId: string, costUsd: numb
 }
 
 /**
- * Speaks on credit. TTS replies carry no cost, only a generation id, so the hold stays pending
- * with that id and the credit reconciler settles it at OpenRouter's real cost. Without an id the
- * catalog price settles it at once.
+ * Speaks on credit and settles at once at the price of the audio that came back. The generation id
+ * stays on the entry, so the credit reconciler can still correct it to OpenRouter's own figure.
  */
 export async function synthesizeOnCredits(
   charge: VoiceCharge,
@@ -121,23 +121,21 @@ export async function synthesizeOnCredits(
     await settleQuietly(charge, entryId, 0);
     throw error;
   }
-  const estimate = request.text.length * OPENROUTER_TTS_USD_PER_CHAR;
-  if (!clip.providerRequestId) {
-    await settleQuietly(charge, entryId, estimate);
-    return clip;
-  }
+  const costUsd = openRouterSpeechCostUsd(request.text, clip);
   try {
     await recordModelCreditReceipt(charge.prisma, entryId, {
-      providerRequestId: clip.providerRequestId,
       inputTokens: null,
       outputTokens: null,
+      costUsd,
+      costSource: "estimated",
+      ...(clip.providerRequestId ? { providerRequestId: clip.providerRequestId } : {}),
     });
   } catch (error) {
     getLogger().warn("voice credit receipt failed", {
       reason: error instanceof Error ? error.message : String(error),
     });
-    await settleQuietly(charge, entryId, estimate);
   }
+  await settleQuietly(charge, entryId, costUsd);
   return clip;
 }
 

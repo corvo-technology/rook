@@ -1,5 +1,9 @@
 /** Voice failures the user fixes in their own provider account. Clients show their own copy. */
-export const VOICE_ACCOUNT_ERROR_CODES = ["VOICE_OUT_OF_CREDIT", "VOICE_KEY_REJECTED"] as const;
+export const VOICE_ACCOUNT_ERROR_CODES = [
+  "VOICE_OUT_OF_CREDIT",
+  "VOICE_KEY_REJECTED",
+  "VOICE_CREDITS_USED_UP",
+] as const;
 
 export type VoiceAccountErrorCode = (typeof VOICE_ACCOUNT_ERROR_CODES)[number];
 

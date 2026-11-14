@@ -14,6 +14,7 @@ import { getLaunchCopy } from "../i18n/launch";
 import { DEFAULT_LOCALE, LOCALE_HTML_LANG, isLocale, localeHomePath } from "../i18n/locales";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import {
+  APP_URL,
   DOWNLOAD_URL,
   DOWNLOAD_URL_LINUX,
   DOWNLOAD_URL_LINUX_ARM64,
@@ -85,6 +86,7 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
 
     <main id="main">
       <section class="lp-hero">
+        <p class="lp-hero__pill">{copy.hero.pill}</p>
         <h1>
           <span>{copy.hero.line1}</span>
           <GuideSlot class="guide-slot--inline" />
@@ -93,10 +95,13 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
         <p class="lp-hero__lead">{copy.hero.lead[0]}<br />{copy.hero.lead[1]}</p>
         <div class="lp-hero__actions">
           <span class="lp-hero__cta">
-            <a class="button button--primary" href={DOWNLOAD_URL} target="_blank" rel="noopener" data-attr="hero-download">
-              {copy.cta.download}
+            <a class="button button--primary" href={APP_URL} target="_blank" rel="noopener" data-attr="hero-cloud">
+              {copy.cta.cloud}
             </a>
           </span>
+          <a class="button button--secondary" href={DOWNLOAD_URL} target="_blank" rel="noopener" data-attr="hero-download">
+            {copy.cta.download}
+          </a>
           <p class="download-note">
             {
               copy.hero.note.split(/(\{windows\}|\{linux\})/).map((part) =>
@@ -224,6 +229,24 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
         </ul>
       </section>
 
+      <section id="business" class="lp-open" aria-labelledby="business-heading">
+        <GuideSlot row class="guide-slot--perch guide-slot--start" />
+        <Piece piece="king" hue="vermelho" class="guide-piece--start" />
+        <div class="lp-open__intro" data-reveal>
+          <h2 id="business-heading" class="lp-title">{copy.business.heading}</h2>
+        </div>
+        <ul class="lp-rows lp-points" data-reveal>
+          {
+            copy.business.points.map((point) => (
+              <li>
+                <h3>{point.title}</h3>
+                <p>{point.body}</p>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
       <section id="open" class="lp-open" aria-labelledby="open-heading">
         <GuideSlot row class="guide-slot--perch guide-slot--start" />
         <Piece piece="bishop" hue="laranja" class="guide-piece--start" />
@@ -250,29 +273,33 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
       </section>
 
       <section id="install" class="lp-install" aria-labelledby="install-heading">
-        <div class="lp-center" data-reveal>
-          <h2 id="install-heading" class="lp-title">{copy.install.heading}</h2>
-          <p class="lp-lead">{copy.install.copy}</p>
-          <a
-            class="button button--primary"
-            href={DOWNLOAD_URL}
-            target="_blank"
-            rel="noopener"
-            data-attr="install-download"
-          >
-            {copy.install.download}
-          </a>
-          <p class="download-note lp-formats">
-            {copy.install.formats.label}:{" "}
-            <a href={DOWNLOAD_URL} data-attr="install-format-mac">{copy.install.formats.mac}&nbsp;(.dmg)</a>{" · "}
-            <a href={DOWNLOAD_URL} data-attr="install-format-mac-intel">{copy.install.formats.macIntel}&nbsp;(.dmg)</a>{" · "}
-            <a href={DOWNLOAD_URL_LINUX_DEB} data-attr="install-format-deb">{copy.install.formats.linux}&nbsp;.deb</a>{" · "}
-            <a href={DOWNLOAD_URL_LINUX} data-attr="install-format-appimage">{copy.install.formats.linux}&nbsp;AppImage</a>{" · "}
-            {copy.install.formats.arm64}:{" "}
-            <a href={DOWNLOAD_URL_LINUX_ARM64_DEB} data-attr="install-format-arm64-deb">.deb</a>{" · "}
-            <a href={DOWNLOAD_URL_LINUX_ARM64} data-attr="install-format-arm64-appimage">AppImage</a>{" · "}
-            <a href={DOWNLOAD_URL_WINDOWS} data-attr="install-format-windows">{copy.install.formats.windows}&nbsp;(.exe)</a>
-          </p>
+        <h2 id="install-heading" class="lp-title lp-title--center" data-reveal>{copy.install.heading}</h2>
+        <div class="lp-paths" data-reveal>
+          <article class="lp-card">
+            <h3>{copy.install.cloud.title}</h3>
+            <p>{copy.install.cloud.copy}</p>
+            <a class="button button--primary" href={APP_URL} target="_blank" rel="noopener" data-attr="install-cloud">
+              {copy.cta.cloud}
+            </a>
+          </article>
+          <article class="lp-card">
+            <h3>{copy.install.local.title}</h3>
+            <p>{copy.install.local.copy}</p>
+            <a class="button button--secondary" href={DOWNLOAD_URL} target="_blank" rel="noopener" data-attr="install-download">
+              {copy.install.download}
+            </a>
+            <p class="download-note lp-formats">
+              {copy.install.formats.label}:{" "}
+              <a href={DOWNLOAD_URL} data-attr="install-format-mac">{copy.install.formats.mac}&nbsp;(.dmg)</a>{" · "}
+              <a href={DOWNLOAD_URL} data-attr="install-format-mac-intel">{copy.install.formats.macIntel}&nbsp;(.dmg)</a>{" · "}
+              <a href={DOWNLOAD_URL_LINUX_DEB} data-attr="install-format-deb">{copy.install.formats.linux}&nbsp;.deb</a>{" · "}
+              <a href={DOWNLOAD_URL_LINUX} data-attr="install-format-appimage">{copy.install.formats.linux}&nbsp;AppImage</a>{" · "}
+              {copy.install.formats.arm64}:{" "}
+              <a href={DOWNLOAD_URL_LINUX_ARM64_DEB} data-attr="install-format-arm64-deb">.deb</a>{" · "}
+              <a href={DOWNLOAD_URL_LINUX_ARM64} data-attr="install-format-arm64-appimage">AppImage</a>{" · "}
+              <a href={DOWNLOAD_URL_WINDOWS} data-attr="install-format-windows">{copy.install.formats.windows}&nbsp;(.exe)</a>
+            </p>
+          </article>
         </div>
         <div class="lp-commands" data-reveal>
           <div class="lp-command">
@@ -291,6 +318,7 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
           </div>
           <p class="download-note">{copy.install.note}</p>
         </div>
+        <p class="lp-migrate" data-reveal>{copy.install.migrate}</p>
       </section>
 
       <section id="faq" class="lp-faq" aria-labelledby="faq-heading">
@@ -313,9 +341,14 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
       <section class="lp-cta ink ink-band" aria-labelledby="cta-heading" data-guide-gone>
         <h2 id="cta-heading" class="lp-title lp-title--cta">{copy.cta.heading}</h2>
         <p class="lp-lead">{copy.cta.copy}</p>
-        <a class="button button--primary" href={DOWNLOAD_URL} target="_blank" rel="noopener" data-attr="cta-download">
-          {copy.cta.download}
-        </a>
+        <div class="lp-cta__actions">
+          <a class="button button--primary" href={APP_URL} target="_blank" rel="noopener" data-attr="cta-cloud">
+            {copy.cta.cloud}
+          </a>
+          <a class="button button--secondary" href={DOWNLOAD_URL} target="_blank" rel="noopener" data-attr="cta-download">
+            {copy.cta.download}
+          </a>
+        </div>
         <div class="lp-cta__peek">
           <p class="lp-cta__bubble lp-cta__bubble--left">{copy.cta.bubbles[0]}</p>
           <Avatar color={MASCOT_COLOR.menta} mood="happy" class="lp-cta__rook" mate />
@@ -334,21 +367,34 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
 <script>
   import "../guide";
 
-  // Blocks below the fold rise once as they arrive. Hidden only after JS runs, so nothing is lost without it.
+  // Blocks below the fold rise once as they arrive. Everything is visible until the first scroll: only then
+  // are the blocks still below the fold hidden, so a page that is never scrolled (a crawler, a preview, a
+  // full-page screenshot) shows it all.
   const calm = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (calm && "IntersectionObserver" in window) {
-    document.documentElement.classList.add("js-reveal");
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (!entry.isIntersecting) continue;
-          entry.target.classList.add("is-in");
-          observer.unobserve(entry.target);
-        }
-      },
-      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
-    );
-    document.querySelectorAll("[data-reveal]").forEach((el) => observer.observe(el));
+    const first = new AbortController();
+    const arm = () => {
+      first.abort();
+      document.documentElement.classList.add("js-reveal");
+      const observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+            entry.target.classList.add("is-in");
+            observer.unobserve(entry.target);
+          }
+        },
+        { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
+      );
+      document.querySelectorAll("[data-reveal]").forEach((el) => {
+        if (el.getBoundingClientRect().top < window.innerHeight) return;
+        el.setAttribute("data-armed", "");
+        observer.observe(el);
+      });
+    };
+    for (const type of ["scroll", "wheel", "touchmove", "keydown"]) {
+      window.addEventListener(type, arm, { passive: true, signal: first.signal });
+    }
   }
 
   document.querySelectorAll<HTMLButtonElement>("[data-copy]").forEach((button) => {

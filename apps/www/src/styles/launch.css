@@ -72,6 +72,15 @@ main h3 {
   height: 72px;
 }
 
+.lp-hero__pill {
+  margin: 0 0 28px;
+  padding: 8px 16px;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  color: var(--muted-2);
+  font-size: 14px;
+}
+
 .lp-hero__lead {
   margin: 26px 0 0;
   color: var(--muted-2);
@@ -109,6 +118,7 @@ main h3 {
 
 .lp-hero__demo {
   position: relative;
+  isolation: isolate;
   width: min(100%, 860px);
   margin-top: clamp(56px, 8vw, 100px);
 }
@@ -441,6 +451,28 @@ main h3 {
   gap: 28px;
 }
 
+.lp-paths {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  width: 100%;
+}
+
+.lp-paths .button {
+  align-self: flex-start;
+}
+
+.lp-paths .lp-formats {
+  margin-top: 0;
+}
+
+.lp-migrate {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+}
+
 .lp-commands {
   display: flex;
   flex-direction: column;
@@ -553,6 +585,7 @@ main ~ .site-footer {
   }
 
   .lp-cards,
+  .lp-paths,
   .lp-traits,
   .lp-items {
     grid-template-columns: minmax(0, 1fr);
@@ -772,4 +805,20 @@ html[data-guided] .guide-slot .avatar {
     top: 70px;
     left: calc(50% + 92px);
   }
+}
+
+/* A soft band behind the tabs and the chat, as wide as the page. */
+.lp-hero__demo::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -40px calc(50% - 50vw);
+  background: linear-gradient(100deg, var(--green-soft) 0%, var(--indigo-soft) 52%, var(--coral-soft) 100%);
+}
+
+.lp-cta__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
 }

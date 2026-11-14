@@ -1,5 +1,6 @@
 import { getLaunchCopy } from "./i18n/launch";
 import {
+  APP_URL,
   CONTACT_EMAIL,
   DOWNLOAD_URL,
   GITHUB_URL,
@@ -18,7 +19,18 @@ export const HOME_MARKDOWN = `# Rook
 
 ${home.hero.line1} ${home.hero.line2}
 
-${home.hero.lead.join(" ")}
+${home.hero.pill}. ${home.hero.lead.join(" ")}
+
+- [${home.cta.cloud}](${APP_URL})
+- [${home.cta.download}](${DOWNLOAD_URL})
+
+${home.preview.conversations
+  .filter((conversation) => conversation.kind === "channel")
+  .map(
+    (conversation) =>
+      `- **${conversation.tab}** (#${conversation.name}): ${conversation.closing} ${conversation.saved ?? ""} ${(conversation.systems ?? []).join(", ")}`.replace(/ +/g, " "),
+  )
+  .join("\n")}
 
 ## ${home.agent.heading} ${home.agent.accent}
 
@@ -38,6 +50,10 @@ ${home.store.copy}
 
 ${home.works.cards.map((card) => `- **${card.title}** ${card.body}`).join("\n")}
 
+## ${home.business.heading}
+
+${home.business.points.map((point) => `- **${point.title}:** ${point.body}`).join("\n")}
+
 ## ${home.open.heading} ${home.open.accent}
 
 ${home.open.copy}
@@ -48,11 +64,14 @@ ${home.open.points.map((point) => `- **${point.title}:** ${point.body}`).join("\
 
 ## ${home.install.heading}
 
-${home.install.copy}
+- **${home.install.cloud.title}:** ${home.install.cloud.copy} [${home.cta.cloud}](${APP_URL})
+- **${home.install.local.title}:** ${home.install.local.copy}
 
 - [${home.install.download}](${DOWNLOAD_URL})
 - ${home.install.macLinux}: \`${INSTALL_COMMAND}\`
 - ${home.install.windows}: \`${INSTALL_COMMAND_WINDOWS}\`
+
+${home.install.migrate}
 
 ## FAQ
 
@@ -61,6 +80,9 @@ ${home.faq.items.map((item) => `### ${item.question}\n\n${item.answer}`).join("\
 ## ${home.cta.heading}
 
 ${home.cta.copy}
+
+- [${home.cta.cloud}](${APP_URL})
+- [${home.cta.download}](${DOWNLOAD_URL})
 
 ## Site index
 

@@ -11,6 +11,9 @@ export const SECURITY_EMAIL = "security@rook.team";
 /** The open source repository. */
 export const GITHUB_URL = "https://github.com/corvo-technology/rook";
 
+/** The cloud app, where a company signs in without installing anything. */
+export const APP_URL = "https://app.rook.team";
+
 /**
  * The macOS installer (one universal app for Apple silicon and Intel) of the latest release. Its file name carries no version, so
  * a new release needs no change here and the link never points at a release that is not out yet.

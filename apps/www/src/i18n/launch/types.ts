@@ -16,10 +16,22 @@ export type PreviewMessage =
       approval?: boolean;
     };
 
+/** The action a conversation waits on, and how the agent answers each way. */
+export type PreviewApproval = { body: string; call: string; approved: string[]; denied: string[] };
+
 export type PreviewConversation = {
   id: string;
   /** A channel (with a hash and members) or a direct message. */
   kind: "channel" | "dm";
+  /** The area this channel shows under on the page's tab row. */
+  tab?: string;
+  /** The bold line under the chat: who did what, and how long it took. */
+  closing?: string;
+  /** The muted line after it: how long it took before. */
+  saved?: string;
+  /** The systems the conversation used. */
+  systems?: string[];
+  approval?: PreviewApproval;
   name: string;
   purpose?: string;
   members: string[];
@@ -74,6 +86,7 @@ export type LaunchCopy = {
   };
   /** The headline reads `line1`, the rook mascot, then `line2`; `lead` is the two lines under it. */
   hero: {
+    pill: string;
     line1: string;
     line2: string;
     lead: [string, string];
@@ -114,17 +127,12 @@ export type LaunchCopy = {
     stepsLabel: string;
     working: string;
     waiting: string;
-    approvalTitle: string;
-    approvalBody: string;
-    approvalCall: string;
     approve: string;
     deny: string;
     approved: string;
     denied: string;
     agents: LaunchAgent[];
     conversations: PreviewConversation[];
-    approvedReply: string[];
-    deniedReply: string[];
   };
   works: {
     heading: string;
@@ -137,6 +145,8 @@ export type LaunchCopy = {
     usage: { title: string; agents: Array<{ name: string; hue: MascotHue; share: number }> };
     reach: string[];
   };
+  /** What a company controls; the points read like the open source section's. */
+  business: { heading: string; points: Array<{ title: string; body: string }> };
   open: {
     heading: string;
     accent: string;
@@ -147,7 +157,8 @@ export type LaunchCopy = {
   };
   install: {
     heading: string;
-    copy: string;
+    cloud: { title: string; copy: string };
+    local: { title: string; copy: string };
     download: string;
     alsoFor: string;
     macLinux: string;
@@ -156,7 +167,8 @@ export type LaunchCopy = {
     copyLabel: string;
     copiedLabel: string;
     note: string;
+    migrate: string;
   };
   /** `bubbles` are the two things the rook says from the bottom edge of the page, in order. */
-  cta: { heading: string; copy: string; download: string; bubbles: [string, string] };
+  cta: { heading: string; copy: string; download: string; cloud: string; bubbles: [string, string] };
 };

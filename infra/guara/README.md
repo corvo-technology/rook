@@ -20,6 +20,7 @@ Create the services with a Dockerfile build, root directory `.` and Dockerfile p
 | `SCREEN_PROXY_SECRET` | yes | no | 32+ characters, identical on API and the web host. |
 | `API_HOST`, `API_PORT` | `0.0.0.0`, `3100` | no | `PORT` and `NODE_ENV` are reserved on Guará. |
 | `API_URL` | yes | yes | |
+| `BROWSER_EGRESS_PROXY_URL`, `BROWSER_EGRESS_USD_PER_GB`, `BROWSER_EGRESS_GATEWAY_URL` | optional | optional | Residential egress for cloud agent browsers; see `docs/self-host.md`. The URL holds the provider password. Set the first on both; the price on the API. |
 | `OWNER_EMAIL`, `OWNER_PASSWORD` | yes | no | Bootstrap the first account. Unset the password afterwards. |
 | `SIGNUPS_ENABLED` | `false` | no | |
 | `OBJECT_STORAGE_*` | yes | yes | Required when API and worker are separate services; create the bucket first. Use `OBJECT_STORAGE_PATH_STYLE=true` for MinIO. |

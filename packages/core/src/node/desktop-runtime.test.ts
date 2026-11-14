@@ -20,6 +20,7 @@ import {
   desktopControlCommand,
   desktopTerminalCommand,
   desktopUrl,
+  EGRESS_FORWARDER_PROGRAM,
   ensureScreenCommand,
   interactiveScreenCommand,
   MAX_DESKTOP_DISPLAY,
@@ -740,5 +741,74 @@ describe("shared Linux desktop lifecycle", () => {
     );
     expect(url.searchParams.get("_token")).toBe("provider-key");
     expect(url.searchParams.get("path")).toBe("websockify?_token=provider-key&token=view-key");
+  });
+});
+
+const readLog = (root: string) => {
+  try {
+    return readFileSync(path.join(root, "egress-20.log"), "utf8");
+  } catch {
+    return "no log";
+  }
+};
+describe("browser launcher with egress", () => {
+  const browserArgs = (egress: boolean) => {
+    const root = mkdtempSync(path.join(tmpdir(), "egress-launcher-"));
+    roots.push(root);
+    const command = ensureScreenCommand(0, "bot", "view", {
+      ...env,
+      // The launcher exports HOME; a real one keeps the macOS python shim working.
+      homeDir: root,
+      browserEgress: egress ? { gateway: "ws://127.0.0.1:9/x", capability: "cap" } : undefined,
+    } as typeof env);
+    const launcher = /printf %s '(#!\/bin\/bash[\s\S]*?)' >\/tmp\/corvo\/browser-launch-\d+/
+      .exec(command)?.[1]
+      ?.replaceAll(`'"'"'`, "'")
+      .replaceAll("/tmp/corvo", root);
+    mkdirSync(path.join(root, "bin"));
+    const fake = path.join(root, "bin", "corvo-browser");
+    writeFileSync(fake, `#!/bin/sh\nprintf '%s\\n' "$@" > ${root}/args\n`);
+    chmodSync(fake, 0o755);
+    writeFileSync(path.join(root, "egress-forwarder.py"), EGRESS_FORWARDER_PROGRAM);
+    writeFileSync(path.join(root, "egress-20.json"), "{}");
+    const result = spawnSync("bash", ["-c", launcher ?? "exit 99"], {
+      encoding: "utf8",
+      env: { ...process.env, PATH: `${root}/bin:${process.env.PATH}` },
+      timeout: 8000,
+    });
+    if (result.status !== 0) throw new Error(`${result.stderr}${readLog(root)}`);
+    const pid = (() => {
+      try {
+        return Number(readFileSync(path.join(root, "egress-20.pid"), "utf8"));
+      } catch {
+        return 0;
+      }
+    })();
+    if (pid) process.kill(pid);
+    return {
+      status: result.status,
+      args: readFileSync(path.join(root, "args"), "utf8").split("\n"),
+      port: (() => {
+        try {
+          return readFileSync(path.join(root, "egress-20.port"), "utf8");
+        } catch {
+          return "";
+        }
+      })(),
+    };
+  };
+
+  it("starts the forwarder and points Chromium at it", () => {
+    const { status, args, port } = browserArgs(true);
+    expect(status).toBe(0);
+    expect(port).toMatch(/^\d+$/);
+    expect(args).toContain(`--proxy-server=http://127.0.0.1:${port}`);
+    expect(args).toContain("--proxy-bypass-list=localhost;127.0.0.1;[::1]");
+  });
+
+  it("leaves Chromium direct when egress is not configured", () => {
+    const { status, args } = browserArgs(false);
+    expect(status).toBe(0);
+    expect(args.some((arg) => arg.startsWith("--proxy"))).toBe(false);
   });
 });

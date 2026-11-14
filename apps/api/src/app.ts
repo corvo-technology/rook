@@ -22,6 +22,7 @@ import {
 import type {
   ComposioProvider,
   ConnectorRegistry,
+  EgressGateway,
   RemoteConnectorDependencies,
 } from "@corvo/adapters";
 import {
@@ -42,6 +43,7 @@ import {
   createBackgroundJobHandlers,
   createCloudAgentConnection,
   createConnectorStack,
+  createEgressGateway,
   createIdleComputerSweeper,
   createJobReconciler,
   createLocalSpeech,
@@ -63,6 +65,7 @@ import {
   deploymentModelUsageLookup,
   EmailEmulator,
   ExpoPushProvider,
+  egressCapabilityKey,
   GraphileJobPublisher,
   InMemoryJobQueue,
   InMemoryRealtimeFanout,
@@ -229,6 +232,8 @@ export const MOBILE_AUTH_ORIGINS = [
 
 export interface AppHandles {
   app: Hono;
+  /** Set when the operator configured residential browser egress; index.ts mounts its upgrade. */
+  egress?: EgressGateway | undefined;
   prisma: PrismaClient;
   jobs: JobPublisher;
   sandbox: SandboxProvider;
@@ -508,6 +513,18 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     key: env.deploymentModelKey,
   });
   const audio = createAudioHold({ prisma, localSpeech, voiceCredits });
+  // Agent browsers reach the residential provider only through this gateway, so its credential
+  // never enters a computer. Billed like voice: from credits when they are on, free when off.
+  if (env.browserEgress && modelCreditsEnabled && !env.browserEgress.usdPerGb)
+    throw new Error("Set BROWSER_EGRESS_USD_PER_GB: browser egress is charged to credits.");
+  const egress = env.browserEgress
+    ? createEgressGateway({
+        prisma,
+        config: env.browserEgress,
+        key: egressCapabilityKey(env.encryptionKey),
+        metered: modelCreditsEnabled,
+      })
+    : undefined;
   await prisma.deploymentSettings.upsert({
     where: { id: "default" },
     create: {
@@ -1600,6 +1617,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
 
   return {
     app,
+    egress,
     prisma,
     jobs,
     sandbox,
@@ -1613,6 +1631,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     awaitIdle: inMemoryJobs ? () => inMemoryJobs.awaitIdle() : undefined,
     backgroundFailures: inMemoryJobs ? () => inMemoryJobs.failureCounts() : undefined,
     stop: async () => {
+      await egress?.stop();
       // Abort in-flight continueRun boot waits before draining jobs so stop() cannot sit
       // on waitForComputerReady for the full boot-wait window during shared Postgres journeys.
       auth.disposeOidcDiscovery();

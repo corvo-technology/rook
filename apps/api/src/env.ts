@@ -1,8 +1,9 @@
-import type { TelegramBotCredentials } from "@corvo/adapters";
+import type { BrowserEgressConfig, TelegramBotCredentials } from "@corvo/adapters";
 import {
   boatApiKeyFromEnv,
   boatApiUrlFromEnv,
   mcpStdioOptionsFromEnv,
+  parseBrowserEgress,
   resolveCloudAgentProvider,
   resolveDeploymentModel,
   resolveSandboxProvider,
@@ -78,6 +79,8 @@ export interface AppEnv {
   sandboxSupervisorUrl: string;
   sandboxSupervisorToken: string | undefined;
   screenProxySecret: string;
+  /** Residential egress for cloud agent browsers; undefined when the operator has not set a provider. */
+  browserEgress?: BrowserEgressConfig | undefined;
   sandboxProvider: string;
   /** The desktop app gave this engine a connection to its own computer. */
   sandboxHostComputer: boolean;
@@ -265,6 +268,7 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     sandboxSupervisorToken:
       sandboxProvider === "docker" ? resolveSupervisorToken(source) : undefined,
     screenProxySecret: resolveScreenProxySecret(source),
+    browserEgress: parseBrowserEgress(source),
     sandboxProvider,
     sandboxHostComputer: Boolean(source.SANDBOX_HOST_URL?.trim()),
     cloudAgentProvider,

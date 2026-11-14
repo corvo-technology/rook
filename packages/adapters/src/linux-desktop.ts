@@ -9,6 +9,7 @@ import type {
   ScreenSession,
   TerminalRequest,
 } from "@corvo/adapter-kit";
+import { resolveEncryptionKey } from "@corvo/core";
 import type { DesktopEnvironment } from "@corvo/core/node/desktop-runtime";
 import {
   BROWSER_APPLICATIONS,
@@ -23,6 +24,8 @@ import {
   shellQuote,
   stopAllDesktopBrowsersCommand,
 } from "@corvo/core/node/desktop-runtime";
+import type { BrowserEgressMinter } from "./browser-egress.js";
+import { browserEgressMinter } from "./browser-egress.js";
 import {
   BrowserStoppedReleaseError,
   ComputerScreenUnavailableError,
@@ -53,7 +56,17 @@ export interface LinuxDesktopHost {
 
 /** Provider SDKs supply only command execution, workspace paths, and protected port URLs. */
 export class LinuxDesktop {
-  constructor(private readonly host: LinuxDesktopHost) {}
+  /**
+   * Cloud browsers go out through the egress gateway when the deployment configures one; local
+   * engines and deployments without it are unchanged. Tests pass their own minter, or none.
+   */
+  constructor(
+    private readonly host: LinuxDesktopHost,
+    private readonly egress: BrowserEgressMinter | undefined = browserEgressMinter(
+      process.env,
+      () => resolveEncryptionKey(process.env),
+    ),
+  ) {}
 
   private async run(computer: ComputerRef, command: string, context: AdapterContext) {
     context.signal.throwIfAborted();
@@ -64,8 +77,15 @@ export class LinuxDesktop {
   }
 
   private async ensure(computer: ComputerRef, context: AdapterContext) {
-    const env = await this.host.environment(computer, context);
+    const hostEnv = await this.host.environment(computer, context);
     const key = screenSessionKey(context);
+    const env =
+      this.egress && context.botId
+        ? {
+            ...hostEnv,
+            browserEgress: this.egress.grant({ spaceId: context.spaceId, botId: context.botId }),
+          }
+        : hostEnv;
     const output = await this.run(
       computer,
       managedDesktopCommand(key, context.screenLeaseId, env, randomUUID()),

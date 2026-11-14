@@ -1144,6 +1144,29 @@ Native file reads and workspace exports are limited to 8 MiB per file. A larger 
 
 For provider configuration and health checks, see the [provider setup guide](./self-host-sandbox-providers.md).
 
+### Residential egress for cloud browsers
+
+Some sites block or captcha datacenter addresses. Set one residential proxy provider and every
+agent browser on a remote computer (`e2b`, `daytona`, `boat`, `railway`, `kubernetes`) goes out
+through it automatically, with one sticky address per bot. Shell commands, git, npm and downloads
+stay direct, and the desktop app's own engine is unaffected.
+
+| Variable | Where | Notes |
+| --- | --- | --- |
+| `BROWSER_EGRESS_PROXY_URL` | API and worker | `http://user-{session}:password@host:port` (or `https://`). `{session}` is replaced by a stable id per bot; leave it out for providers that do not rotate. Unset turns egress off. |
+| `BROWSER_EGRESS_USD_PER_GB` | API | Price charged per GB in both directions. Required when billing credits are on; ignored otherwise. |
+| `BROWSER_EGRESS_GATEWAY_URL` | API and worker | Optional. Where computers reach the gateway; defaults to `API_URL`. |
+
+The provider URL never enters a computer. Computers reach a gateway inside the API
+(`/api/internal/browser-egress`, a WebSocket per tunnel) with a per-bot, expiring capability; the
+gateway adds the provider credential, refuses private, loopback, link-local and abuse-port
+destinations, and meters bytes. With billing credits on, the bytes are charged to the organization's
+credits in blocks, and a bot whose organization is out of credits is refused rather than sent
+direct. With credits off nothing is charged. The gateway address must accept WebSocket upgrades
+from the computers, so `API_URL` (or `BROWSER_EGRESS_GATEWAY_URL`) has to be a public API origin
+whose proxy passes `Upgrade` headers on `/api/internal/browser-egress`. A browser that is already
+running keeps its old route until it restarts.
+
 ## Content encryption
 
 Rook encrypts chat messages, thread events, compacted history summaries, memory documents and

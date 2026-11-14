@@ -24,6 +24,8 @@ export {
   storeBotSecret,
 } from "./bot-secrets.js";
 export * from "./bounded-process.js";
+export * from "./browser-egress.js";
+export * from "./browser-egress-gateway.js";
 export * from "./browser-emulator.js";
 export * from "./browser-provider-factory.js";
 export * from "./browser-tools.js";

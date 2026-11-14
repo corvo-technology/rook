@@ -1962,15 +1962,70 @@ export const AppBootstrapSchema = z.object({
 });
 export type AppBootstrap = z.infer<typeof AppBootstrapSchema>;
 
+const ExportedMemorySchema = z.object({
+  path: z.string().trim().min(1).max(500),
+  content: z.string(),
+});
+const ExportedRoutineSchema = RoutineSchema.pick({
+  name: true,
+  prompt: true,
+  crons: true,
+  timezone: true,
+});
+const ExportedFileSchema = z.object({
+  path: z.string().min(1).max(1000),
+  content: z.string(),
+  encoding: z.literal("base64").optional(),
+});
+
 export const ExportManifestSchema = z.object({
   version: z.literal(1),
   exportedAt: z.string(),
   bot: BotSchema.pick({ name: true, title: true, description: true, instructions: true }),
-  memory: z.array(z.object({ path: z.string(), content: z.string() })),
-  routines: z.array(RoutineSchema.pick({ name: true, prompt: true, crons: true, timezone: true })),
-  files: z.array(
-    z.object({ path: z.string(), content: z.string(), encoding: z.literal("base64").optional() }),
-  ),
+  memory: z.array(ExportedMemorySchema),
+  routines: z.array(ExportedRoutineSchema),
+  files: z.array(ExportedFileSchema),
   history: z.array(ThreadMessageSchema),
 });
 export type ExportManifest = z.infer<typeof ExportManifestSchema>;
+
+/**
+ * Every bot of a space in one file, to move a space to another server. Credentials,
+ * connections and chat history stay behind.
+ */
+export const SpaceExportSchema = z.object({
+  version: z.literal(1),
+  kind: z.literal("space"),
+  exportedAt: z.string(),
+  bots: z
+    .array(
+      z.object({
+        bot: z.object({
+          name: z.string().trim().min(1).max(BOT_NAME_MAX_LENGTH),
+          title: z.string().max(BOT_TITLE_MAX_LENGTH),
+          description: z.string().max(BOT_DESCRIPTION_MAX_LENGTH),
+          instructions: z.string().max(BOT_INSTRUCTIONS_MAX_LENGTH),
+          computerMode: ComputerModeSchema.default("team"),
+        }),
+        memory: z.array(ExportedMemorySchema).max(1000),
+        routines: z.array(ExportedRoutineSchema).max(200),
+        files: z.array(ExportedFileSchema).max(5000),
+      }),
+    )
+    .max(200),
+  /** The space's own memory, shared by its bots. */
+  memory: z.array(ExportedMemorySchema).max(1000),
+  /** Skills as their SKILL.md. */
+  skills: z.array(z.object({ content: z.string().min(1).max(100_000) })).max(500),
+});
+export type SpaceExport = z.infer<typeof SpaceExportSchema>;
+
+/** What an import added; anything already in the space by name is left alone. */
+export const SpaceImportResultSchema = z.object({
+  added: z.array(z.string()),
+  existing: z.array(z.string()),
+  skills: z.number().int(),
+  routines: z.number().int(),
+  skippedFiles: z.number().int(),
+});
+export type SpaceImportResult = z.infer<typeof SpaceImportResultSchema>;

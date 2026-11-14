@@ -184,6 +184,14 @@ msgstr "{count, plural, one {# Nummer} other {# Nummern}}"
 msgid "{count, plural, one {# row} other {# rows}}"
 msgstr "{count, plural, one {# Zeile} other {# Zeilen}}"
 
+#: src/pages/SpaceTransfer.tsx
+msgid "{count, plural, one {Added # bot.} other {Added # bots.}}"
+msgstr "{count, plural, one {# Bot hinzugefügt.} other {# Bots hinzugefügt.}}"
+
+#: src/pages/SpaceTransfer.tsx
+msgid "{count, plural, one {Added # bot} other {Added # bots}}. Routines start paused."
+msgstr "{count, plural, one {# Bot hinzugefügt} other {# Bots hinzugefügt}}. Routinen starten pausiert."
+
 #: src/pages/shell/channel-header.tsx
 #: src/pages/TeamBoard.tsx
 msgid "{count} agents"
@@ -3321,6 +3329,10 @@ msgstr "abgelaufen"
 msgid "Export"
 msgstr "Exportieren"
 
+#: src/pages/SpaceTransfer.tsx
+msgid "Export space"
+msgstr "Workspace exportieren"
+
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Export this week's list from the CRM and drop it in the shared folder"
 msgstr "Exportiere die Liste dieser Woche aus dem CRM und lege sie im freigegebenen Ordner ab"
@@ -3719,6 +3731,10 @@ msgstr "Agent importieren"
 #: src/pages/Store.tsx
 msgid "Import OpenAPI JSON"
 msgstr "OpenAPI-JSON importieren"
+
+#: src/pages/SpaceTransfer.tsx
+msgid "Import space"
+msgstr "Workspace importieren"
 
 #: src/pages/shell/composer.tsx
 msgid "Import this agent as a bot?"
@@ -6839,6 +6855,10 @@ msgstr "Dieser Import hat sich geändert. Versuche es erneut."
 #: src/lib/agent-import-errors.ts
 msgid "This import was already used. Choose the files again."
 msgstr "Dieser Import wurde bereits verwendet. Wähle die Dateien erneut aus."
+
+#: src/pages/SpaceTransfer.tsx
+msgid "This isn't a Rook space file."
+msgstr "Das ist keine Rook-Workspace-Datei."
 
 #: src/components/CoachLayer.tsx
 msgid "This isn't sent yet. Edit it or send it."

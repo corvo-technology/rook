@@ -214,6 +214,7 @@ import {
 } from "./team-chat-startup.js";
 import { mountTeamRoutes } from "./team-routes.js";
 import { mountVoiceHttpRoutes, voiceAccountErrorStatus } from "./voice.js";
+import { prismaWaitlistStore, waitlistRoutes } from "./waitlist.js";
 import { mountWebhookHttpRoutes } from "./webhook.js";
 import { createWhatsAppInboundHandler } from "./whatsapp-inbound.js";
 
@@ -923,6 +924,16 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   const app = new Hono();
   app.use("*", requestLogging(logger));
   app.use("*", clientIpMiddleware(clientIp, env.clientIpHeader));
+  // The marketing site posts here from its own origin, so the route answers its own CORS before
+  // the app-wide policy, which only trusts the app's origins.
+  const waitlist = waitlistRoutes({
+    store: prismaWaitlistStore(prisma),
+    email,
+    allowedOrigins: env.waitlistAllowedOrigins,
+    notifyEmail: env.waitlistNotifyEmail,
+    clientIp: requestClientIp,
+  });
+  app.route("/", waitlist);
   app.use(
     "*",
     cors({
@@ -1654,6 +1665,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       await messaging?.shutdown?.();
       await teamChatBridge?.stop();
       await stopInstalledBridges?.();
+      await waitlist.idle();
       await email?.drain?.();
       await reconciler?.stop();
       await oauthTokenUpgrade;

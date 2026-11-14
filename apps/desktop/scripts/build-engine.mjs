@@ -15,9 +15,16 @@ const out = path.resolve(here, "..", "dist", "engine");
 
 /**
  * koffi and sherpa-onnx-node (the speech engine) load native modules and jsdom reads data files next to
- * itself; none survives bundling.
+ * itself; none survives bundling. sherpa-onnx-espeak is the 1.x speech engine, which still has the
+ * espeak-ng phonemizer (GPL-3.0) for Piper voices; it only ever runs in a process of its own.
  */
-const EXTERNAL_PACKAGES = ["koffi", "jsdom", "sherpa-onnx-node", "@whiskeysockets/baileys"];
+const EXTERNAL_PACKAGES = [
+  "koffi",
+  "jsdom",
+  "sherpa-onnx-node",
+  "sherpa-onnx-espeak",
+  "@whiskeysockets/baileys",
+];
 
 // `punycode/` (with the slash) is the npm package, not the deprecated builtin.
 const builtins = builtinModules.filter((name) => name !== "punycode");

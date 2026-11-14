@@ -27,7 +27,9 @@ describe("the shipped voice catalog", () => {
       const files =
         engine?.type === "kokoro"
           ? [engine.model, engine.voices, engine.tokens, engine.lexicon]
-          : [engine?.model, engine?.tokens, engine?.lexicon];
+          : engine?.type === "piper"
+            ? [engine.model, engine.tokens, engine.dataDir]
+            : [engine?.model, engine?.tokens, engine?.lexicon];
       for (const file of files.filter(Boolean)) expect(voice.keep).toContain(file);
     }
   });

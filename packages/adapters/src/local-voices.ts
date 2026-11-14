@@ -6,26 +6,30 @@ const ORIGIN = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-mode
  * The voices "This computer" can speak with, from the sherpa-onnx engine project's releases.
  * Digests were computed from the archives and are checked on every download.
  *
- * Only models the engine can speak without a phonemizer are listed. sherpa-onnx 2.x dropped the
- * GPL-3.0 espeak-ng phonemizer that Piper voices need, so Piper voices are not offered; the
- * character-based Coqui voices (BSD-3-Clause), the lexicon-based VITS English voice (MIT, trained on
- * the public-domain LJSpeech) and Kokoro's English lexicon (Apache-2.0) are.
+ * Most voices need no phonemizer: the character-based Coqui voices (BSD-3-Clause), the
+ * lexicon-based VITS English voice (MIT, trained on the public-domain LJSpeech) and Kokoro's
+ * English lexicon (Apache-2.0). The Brazilian Portuguese voice is a Piper voice, which needs the
+ * espeak-ng phonemizer (GPL-3.0); it runs in an engine process of its own, apart from the app.
  *
- * Every voice here allows use and redistribution in a product; the license of each is listed
- * in THIRD_PARTY_NOTICES.md.
+ * The license of each is listed in THIRD_PARTY_NOTICES.md.
  */
 export const LOCAL_VOICES: readonly LocalSpeechModelSpec[] = [
   {
     id: "voice-pt",
     kind: "speak",
     label: "Português (Brasil)",
-    license: "BSD-3-Clause",
-    sizeBytes: 67_043_814,
-    sha256: "f057e8d94e4f84813da498b27b955dbe094fd68c5cbda1b1a2d058231a6f1b48",
-    url: `${ORIGIN}vits-coqui-pt-cv.tar.bz2`,
+    license: "MIT",
+    sizeBytes: 67_183_065,
+    sha256: "7add3f923ad6bc25ca8a192805fd1a64d1b3893e4611c4a9719545a825039a83",
+    url: `${ORIGIN}vits-piper-pt_BR-faber-medium.tar.bz2`,
     languages: ["pt"],
-    keep: ["model.onnx", "tokens.txt"],
-    voice: { type: "vits", model: "model.onnx", tokens: "tokens.txt" },
+    keep: ["pt_BR-faber-medium.onnx", "tokens.txt", "espeak-ng-data"],
+    voice: {
+      type: "piper",
+      model: "pt_BR-faber-medium.onnx",
+      tokens: "tokens.txt",
+      dataDir: "espeak-ng-data",
+    },
     sample: "Olá, eu sou a sua voz neste computador.",
   },
   {

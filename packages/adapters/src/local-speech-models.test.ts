@@ -76,6 +76,27 @@ describe("LocalModelStore", () => {
     expect(info).toMatchObject({ id: spec.id, state: "ready", bytesDone: spec.sizeBytes });
   });
 
+  it("fetches a model again once a later release replaces its archive", async () => {
+    await store(servingFetch()).ensure(spec.id);
+    const replaced = new TextEncoder().encode("a newer archive for the same model".repeat(200));
+    const newer: LocalSpeechModelSpec = {
+      ...spec,
+      sizeBytes: replaced.byteLength,
+      sha256: createHash("sha256").update(replaced).digest("hex"),
+    };
+    const fetchImpl = servingFetch(replaced);
+    const later = new LocalModelStore({
+      dir,
+      fetch: fetchImpl as unknown as typeof fetch,
+      extract: fakeExtract,
+      models: [newer],
+    });
+    expect((await later.list())[0]).toMatchObject({ state: "absent" });
+    await later.ensure(spec.id);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect((await later.list())[0]).toMatchObject({ state: "ready" });
+  });
+
   it("a digest mismatch fails and leaves nothing behind", async () => {
     const wrong = new Uint8Array(archive.byteLength).fill(7);
     await expect(store(servingFetch(wrong)).ensure(spec.id)).rejects.toThrow(/digest/i);

@@ -1,6 +1,55 @@
+import { EventEmitter } from "node:events";
 import { describe, expect, it } from "vitest";
+import type { LocalVoiceEngine } from "./local-speech-models.js";
 import { LOCAL_VOICES } from "./local-voices.js";
 import { SherpaTtsSynthesizer } from "./sherpa-tts-synthesizer.js";
+import type { SpeechChild } from "./speech-process.js";
+
+/** An engine process that answers every job with a short sound, and remembers the jobs. */
+function fakeEngine() {
+  const jobs: Array<{ type: string; voice?: LocalVoiceEngine }> = [];
+  const spawn = (): SpeechChild => {
+    const child = new EventEmitter() as EventEmitter & SpeechChild;
+    child.send = (message: unknown) => {
+      const job = message as { id: number; type: string; voice?: LocalVoiceEngine };
+      jobs.push(job);
+      queueMicrotask(() =>
+        child.emit("message", {
+          id: job.id,
+          result: { samples: new Float32Array(8), sampleRate: 22_050 },
+        }),
+      );
+      return true;
+    };
+    child.kill = () => true;
+    return child;
+  };
+  return { jobs, spawn };
+}
+
+describe("SherpaTtsSynthesizer", () => {
+  const piper = LOCAL_VOICES.find((entry) => entry.id === "voice-pt")?.voice;
+  const kokoro = LOCAL_VOICES.find((entry) => entry.id === "voice-kokoro")?.voice;
+
+  it("speaks a Piper voice in the engine process that has espeak-ng, and no other voice there", async () => {
+    if (!piper || !kokoro) throw new Error("voices missing");
+    const main = fakeEngine();
+    const espeak = fakeEngine();
+    const engine = new SherpaTtsSynthesizer({ spawn: main.spawn, spawnEspeak: espeak.spawn });
+    try {
+      await engine.synthesize({ text: "Olá.", modelDir: "/models/voice-pt", voice: piper });
+      await engine.warm({ modelDir: "/models/voice-pt", voice: piper });
+      await engine.synthesize({ text: "Hi.", modelDir: "/models/voice-kokoro", voice: kokoro });
+      expect(espeak.jobs.map((job) => [job.type, job.voice?.type])).toEqual([
+        ["speak", "piper"],
+        ["warm", "piper"],
+      ]);
+      expect(main.jobs.map((job) => [job.type, job.voice?.type])).toEqual([["speak", "kokoro"]]);
+    } finally {
+      await engine.close();
+    }
+  });
+});
 
 // Runs the real engine, so it is off by default: CI is offline and downloads no voice.
 //   RUN_LOCAL_SPEECH_ENGINE=1

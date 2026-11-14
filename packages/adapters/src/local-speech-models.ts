@@ -10,6 +10,12 @@ const ORIGIN = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-mode
 /** How the engine speaks a voice. Paths are relative to the voice's directory. */
 export type LocalVoiceEngine =
   | { type: "vits"; model: string; tokens: string; lexicon?: string }
+  /**
+   * A Piper voice: its text is turned into sounds by espeak-ng (GPL-3.0), whose data is
+   * `dataDir`. It runs in an engine process of its own, apart from the app (see
+   * `sherpa-tts-synthesizer.ts`).
+   */
+  | { type: "piper"; model: string; tokens: string; dataDir: string }
   | {
       type: "kokoro";
       model: string;
@@ -249,6 +255,17 @@ export class LocalModelStore {
     );
   }
 
+  /**
+   * Whether this exact archive is installed. The marker holds the digest it was installed from, so
+   * a model whose archive was replaced in a later release reads as absent and is fetched again.
+   */
+  private async installed(spec: LocalSpeechModelSpec) {
+    const marker = await readFile(path.join(this.modelDir(spec.id), ".ready"), "utf8").catch(
+      () => undefined,
+    );
+    return marker === spec.sha256;
+  }
+
   private async lockIsLive(id: string) {
     const info = await stat(this.lockFile(id)).catch(() => undefined);
     return info !== undefined && Date.now() - info.mtimeMs < this.stallMs;
@@ -263,7 +280,7 @@ export class LocalModelStore {
       languages: [...spec.languages],
       ...(spec.sample ? { sample: spec.sample } : {}),
     };
-    if (await this.exists(path.join(this.modelDir(spec.id), ".ready"))) {
+    if (await this.installed(spec)) {
       return { ...base, state: "ready", bytesDone: spec.sizeBytes };
     }
     if (this.active.has(spec.id)) {
@@ -298,7 +315,7 @@ export class LocalModelStore {
     const lock = this.lockFile(spec.id);
     for (;;) {
       if (signal.aborted) throw new Error("Download cancelled.");
-      if (await this.exists(path.join(this.modelDir(spec.id), ".ready"))) return false;
+      if (await this.installed(spec)) return false;
       try {
         const handle = await open(lock, "wx");
         await handle.writeFile(String(process.pid));

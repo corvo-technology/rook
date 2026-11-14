@@ -123,6 +123,8 @@ import {
   ServerUpdateStatusSchema,
   SignupSurveySchema,
   SkillPlaybookSchema,
+  SpaceExportSchema,
+  SpaceImportResultSchema,
   SpaceMemoryConfigSchema,
   SpaceNavigationSchema,
   SpaceSchema,
@@ -543,6 +545,7 @@ export const appContract = {
     create: oc.input(CreateBotInput).output(BotSchema),
     importPreview: oc.input(AgentImportPreviewInput).output(AgentImportPlanSchema),
     importCreate: oc.input(AgentImportCreateInput).output(BotSchema),
+    importSpace: oc.input(SpaceExportSchema).output(SpaceImportResultSchema),
     importInfo: oc.input(botId).output(AgentImportInfoSchema.nullable()),
     importSetupState: oc.input(AgentImportSetupStateInput).output(AgentImportSetupStateSchema),
     importUndo: oc.input(AgentImportUndoInput).output(AgentImportInfoSchema),
@@ -1468,6 +1471,7 @@ export const appContract = {
   },
   export: {
     bot: oc.input(botId).output(ExportManifestSchema),
+    space: oc.output(SpaceExportSchema),
   },
   notifications: {
     registerPush: oc

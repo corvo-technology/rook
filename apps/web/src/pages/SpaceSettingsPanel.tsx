@@ -4,6 +4,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { useEffect, useId, useState } from "react";
 import { SettingsGroup, SettingsRow } from "../components/SettingsRows";
 import { SpaceSettingOverrides } from "./SpaceSettingOverrides";
+import { SpaceTransfer } from "./SpaceTransfer";
 import type { SettingsSpace } from "./shell/dialogs";
 
 /** One space's page: its name, the account settings it customizes, and deletion for its owner. */
@@ -12,12 +13,14 @@ export function SpaceSettingsPanel({
   onRename,
   onSetPaused,
   onDelete,
+  onImported,
   onBusyChange,
 }: {
   space: SettingsSpace;
   onRename: (name: string) => Promise<void>;
   onSetPaused?: (paused: boolean) => Promise<void>;
   onDelete: () => Promise<void>;
+  onImported?: () => void;
   onBusyChange?: (busy: boolean) => void;
 }) {
   const { t } = useLingui();
@@ -101,6 +104,7 @@ export function SpaceSettingsPanel({
         </SettingsGroup>
       ) : null}
       <SpaceSettingOverrides onBusyChange={setOverridesBusy} />
+      <SpaceTransfer spaceName={space.name} onImported={onImported} />
       {space.canPause && onSetPaused ? (
         <Button
           variant="outline"

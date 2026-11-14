@@ -71,6 +71,10 @@ vi.mock("./SpaceSettingOverrides", () => ({
   SpaceSettingOverrides: () => <div data-testid="space-setting-overrides" />,
 }));
 
+vi.mock("./SpaceTransfer", () => ({
+  SpaceTransfer: () => <div data-testid="space-transfer" />,
+}));
+
 import { SpaceSettingsPanel } from "./SpaceSettingsPanel";
 
 let container: HTMLDivElement;

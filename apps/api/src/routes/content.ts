@@ -1,9 +1,7 @@
 import type { UsageOperationKind } from "@corvo/adapter-kit";
-import { resolveBotWorkspacePath } from "@corvo/adapters";
-import type { ExportManifest } from "@corvo/contracts";
 import { attachmentMaxBytes, QuotaWindowSchema } from "@corvo/contracts";
 import { AttachmentValidationError, utcMonthStart } from "@corvo/core";
-import { botTokensSince, IsolationError, parseComputerMode } from "@corvo/db";
+import { botTokensSince, IsolationError } from "@corvo/db";
 import { ORPCError } from "@orpc/server";
 import {
   ArtifactListCursorError,
@@ -17,6 +15,7 @@ import {
 } from "../artifacts.js";
 import { listSpaceRuns } from "../runs.js";
 import { querySpaceSearch } from "../search.js";
+import { exportSpace, gatherBotContent } from "../space-transfer.js";
 import { loadAllMessages } from "../thread-message-pages.js";
 import { buildRunOutcomes, buildUsageOverview, usageWindow } from "../usage-overview.js";
 import { limitMemberUsage, listMemberUsage } from "../workspace-model.js";
@@ -307,34 +306,8 @@ export function contentRoutes(ctx: RouterContext) {
       bot: authed.export.bot.handler(async ({ context, input }) => {
         const bot = await repos.getBot(context.actor, input.botId);
         if (!bot.thread || !bot.computer) throw new IsolationError();
-        const homeKey = bot.computer.homeKey;
-        const computerMode = parseComputerMode(bot.computer.scope);
-        const exportContext = {
-          operationId: "export",
-          traceId: "export",
-          spaceId: context.actor.spaceId,
-          userId: context.actor.userId,
-          signal: new AbortController().signal,
-        };
-        const [memory, routines, files, history] = await Promise.all([
-          deps.prisma.memoryDocument.findMany({
-            where: { botId: input.botId, spaceId: context.actor.spaceId },
-          }),
-          deps.prisma.routine.findMany({
-            where: { botId: input.botId, spaceId: context.actor.spaceId },
-          }),
-          (async () => {
-            const exported: ExportManifest["files"] = [];
-            const directory = resolveBotWorkspacePath(computerMode, bot.id, "");
-            // Root dotfiles contain computer state rather than portable bot files.
-            for await (const file of deps.home.exportHome(homeKey, exportContext, {
-              directory,
-              skipHidden: true,
-            })) {
-              exported.push(exportFile(file.path, file.content));
-            }
-            return exported;
-          })(),
+        const [content, history] = await Promise.all([
+          gatherBotContent(deps, context.actor, bot),
           loadAllMessages(deps.prisma, bot.thread.id, EXPORT_MESSAGE_PAGE_SIZE),
         ]);
         return {
@@ -346,17 +319,13 @@ export function contentRoutes(ctx: RouterContext) {
             description: bot.description,
             instructions: bot.instructions,
           },
-          memory: memory.map((m) => ({ path: m.path, content: m.content })),
-          routines: routines.map((r) => ({
-            name: r.name,
-            prompt: r.prompt,
-            crons: r.crons,
-            timezone: r.timezone,
-          })),
-          files,
+          ...content,
           history,
         };
       }),
+      space: authed.export.space.handler(async ({ context }) =>
+        exportSpace(deps, repos, context.actor),
+      ),
     },
     search: {
       query: authed.search.query.handler(async ({ context, input }) => ({
@@ -372,16 +341,4 @@ export function contentRoutes(ctx: RouterContext) {
       })),
     },
   };
-}
-
-/** Valid UTF-8 stays readable text; anything else is base64 so the bytes survive the JSON. */
-function exportFile(path: string, content: Uint8Array): ExportManifest["files"][number] {
-  try {
-    return {
-      path,
-      content: new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(content),
-    };
-  } catch {
-    return { path, content: Buffer.from(content).toString("base64"), encoding: "base64" };
-  }
 }

@@ -413,6 +413,7 @@ export function SettingsPage() {
                 onRename={(name) => renameSpace(space.id, name)}
                 onSetPaused={(paused) => setSpacePaused(space.id, paused)}
                 onDelete={() => removeSpace(space.id)}
+                onImported={() => void client.invalidateQueries({ queryKey: bootstrapKey })}
               />
             </div>
           </SpaceRpcProvider>

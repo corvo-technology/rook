@@ -46,6 +46,7 @@ import {
 import { deleteAgentSecret, listAgentSecrets, putAgentSecret } from "../agent-secrets.js";
 import { partnerModelChangeRefused } from "../partner-models.js";
 import type { RouterDeps } from "../router.js";
+import { importSpace } from "../space-transfer.js";
 import { loadMessagePage } from "../thread-message-pages.js";
 import type { RouterContext } from "./context.js";
 import { computerContext, modelSetup, THREAD_MESSAGE_PAGE_SIZE } from "./shared.js";
@@ -216,8 +217,16 @@ export async function enqueueBotIntroRun(deps: RouterDeps, actor: Actor, bot: Bo
 }
 
 export function botsRoutes(ctx: RouterContext) {
-  const { deps, repos, botModelValidation, removeBot, agentImportServices, groupRepos, authed } =
-    ctx;
+  const {
+    deps,
+    repos,
+    botModelValidation,
+    removeBot,
+    agentImportServices,
+    agentSkills,
+    groupRepos,
+    authed,
+  } = ctx;
   return {
     bots: {
       list: authed.bots.list.handler(async ({ context }) => repos.listBots(context.actor)),
@@ -261,6 +270,13 @@ export function botsRoutes(ctx: RouterContext) {
         }
         // An imported bot starts inert: no intro run, paused routines, unapproved servers.
         return bot;
+      }),
+      importSpace: authed.bots.importSpace.handler(async ({ context, input }) => {
+        try {
+          return await importSpace(agentImportServices, deps, agentSkills, context.actor, input);
+        } catch (error) {
+          throw mapSpaceLifecycleError(error);
+        }
       }),
       importInfo: authed.bots.importInfo.handler(async ({ context, input }) =>
         agentImportInfo(agentImportServices as AgentImportServices, context.actor, input.botId),

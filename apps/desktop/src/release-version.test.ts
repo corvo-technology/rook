@@ -7,7 +7,8 @@ const read = (file: string) => readFileSync(path.join(root, file), "utf8");
 
 it("links the landing page to the latest release, so a version bump needs no change to the site", () => {
   const site = read("apps/www/src/site.ts");
-  expect(site).toContain("/releases/latest/download/corvo-mac-universal.dmg");
+  expect(site).toContain('RELEASES_URL = "https://github.com/corvo-technology/rook-releases/releases/latest/download"');
+  expect(site).toContain("${RELEASES_URL}/corvo-mac-universal.dmg");
   expect(site).not.toContain("DESKTOP_VERSION");
 });
 

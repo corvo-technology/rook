@@ -3320,6 +3320,10 @@ msgstr "Every month"
 msgid "Every week"
 msgstr "Every week"
 
+#: src/pages/SpaceTransfer.tsx
+msgid "Everything in this file is already here."
+msgstr "Everything in this file is already here."
+
 #: src/pages/Store.tsx
 msgid "Executor token"
 msgstr "Executor token"
@@ -3356,6 +3360,10 @@ msgstr "Export space"
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Export this week's list from the CRM and drop it in the shared folder"
 msgstr "Export this week's list from the CRM and drop it in the shared folder"
+
+#: src/pages/SpaceTransfer.tsx
+msgid "Exporting…"
+msgstr "Exporting…"
 
 #: src/pages/ExternalConversationSettings.tsx
 msgid "External conversation"
@@ -3759,6 +3767,14 @@ msgstr "Import space"
 #: src/pages/shell/composer.tsx
 msgid "Import this agent as a bot?"
 msgstr "Import this agent as a bot?"
+
+#: src/pages/SpaceTransfer.tsx
+msgid "Importing {name}…"
+msgstr "Importing {name}…"
+
+#: src/pages/SpaceTransfer.tsx
+msgid "Importing…"
+msgstr "Importing…"
 
 #: src/components/PlanCard.tsx
 #: src/lib/ticket-status.ts
@@ -6456,6 +6472,10 @@ msgstr "Space"
 #: src/pages/shell/chat-model-switcher.tsx
 msgid "Space default"
 msgstr "Space default"
+
+#: src/pages/SpaceTransfer.tsx
+msgid "Space exported."
+msgstr "Space exported."
 
 #: src/pages/Settings.tsx
 msgid "Spaces"

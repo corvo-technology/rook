@@ -280,17 +280,17 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
             >
               <label>
                 <span>{copy.waitlist.email}</span>
-                <input type="email" name="email" required autocomplete="email" />
+                <input type="email" name="email" required maxlength="254" autocomplete="email" />
                 <small data-error-for="email" role="alert"></small>
               </label>
               <label>
                 <span>{copy.waitlist.company}</span>
-                <input type="text" name="company" required autocomplete="organization" />
+                <input type="text" name="company" required maxlength="120" autocomplete="organization" />
                 <small data-error-for="company" role="alert"></small>
               </label>
               <label>
                 <span>{copy.waitlist.task}</span>
-                <textarea name="task" rows="3"></textarea>
+                <textarea name="task" rows="3" maxlength="500"></textarea>
               </label>
               <div class="lp-wait__trap" aria-hidden="true">
                 <label>Website <input type="text" name="website" tabindex="-1" autocomplete="off" /></label>
@@ -448,10 +448,11 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
             company,
             task: field("task").value.trim(),
             locale: waitlist.dataset.locale,
+            source: "www",
             website: field("website").value,
           }),
         });
-        if (!response.ok) throw new Error(String(response.status));
+        if (response.status !== 200) throw new Error(String(response.status));
         const done = waitlist.parentElement!.querySelector<HTMLElement>("[data-waitlist-done]")!;
         done.querySelector("[data-done-body]")!.textContent = (waitlist.dataset.success ?? "")
           .replace("{email}", email)

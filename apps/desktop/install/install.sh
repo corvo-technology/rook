@@ -1,6 +1,6 @@
 #!/bin/sh
 # Installs or updates Rook:
-#   curl -fsSL https://github.com/corvo-technology/rook/releases/latest/download/install.sh | sh
+#   curl -fsSL https://rook.team/install | sh
 #
 # On a Mac (Apple silicon or Intel): the app goes into Applications (or ~/Applications when that is
 # not writable) and opens.
@@ -10,7 +10,7 @@
 # For testing a build before it is released: CORVO_BASE_URL (a folder with the release files, a URL
 # or a local path) and CORVO_DEST (another folder; then nothing is opened or added to the menu).
 set -e
-LATEST="${CORVO_BASE_URL:-https://github.com/corvo-technology/rook/releases/latest/download}"
+LATEST="${CORVO_BASE_URL:-https://github.com/corvo-technology/rook-releases/releases/latest/download}"
 DEST_OVERRIDE="${CORVO_DEST:-}"
 
 case "${LANG:-}" in pt*) PT=1 ;; *) PT= ;; esac

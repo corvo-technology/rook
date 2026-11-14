@@ -6,6 +6,13 @@ on:
 permissions:
   contents: read
 
+env:
+  # Where releases and updates are served from: a public repository that holds no code.
+  RELEASES_REPO: corvo-technology/rook-releases
+  # Also publish every release to this repository, for installed apps that still update from it.
+  # Set to "false" (or delete the step) once this repository is private.
+  PUBLISH_TO_SOURCE_REPO: "true"
+
 concurrency:
   # Stable releases must validate and publish serially. Per-tag concurrency would let an older
   # release validate before a newer one publishes, then overwrite GitHub's "latest" pointer.
@@ -252,7 +259,7 @@ jobs:
           spctl --assess --type execute --verbose=2 "$app"
           grep -Fqx "provider: github" "$app/Contents/Resources/app-update.yml"
           grep -Fqx "owner: corvo-technology" "$app/Contents/Resources/app-update.yml"
-          grep -Fqx "repo: rook" "$app/Contents/Resources/app-update.yml"
+          grep -Fqx "repo: rook-releases" "$app/Contents/Resources/app-update.yml"
 
       - name: Verify packaged native dependencies
         if: runner.os == 'macOS'
@@ -298,7 +305,7 @@ jobs:
             throw "Windows update config is not bound to the signing publisher."
           }
           $feed = Get-Content -Raw $config
-          foreach ($expected in @("provider: github", "owner: corvo-technology", "repo: rook")) {
+          foreach ($expected in @("provider: github", "owner: corvo-technology", "repo: rook-releases")) {
             if ($feed -notmatch "(?m)^$([regex]::Escape($expected))\r?$") {
               throw "Windows update config missing '$expected'."
             }
@@ -332,7 +339,7 @@ jobs:
           test -f "$config"
           grep -Fqx "provider: github" "$config"
           grep -Fqx "owner: corvo-technology" "$config"
-          grep -Fqx "repo: rook" "$config"
+          grep -Fqx "repo: rook-releases" "$config"
           feed=latest-linux.yml
           if [[ "$(uname -m)" == "aarch64" ]]; then feed=latest-linux-arm64.yml; fi
           test -f "apps/desktop/out/$feed"
@@ -422,27 +429,21 @@ jobs:
         uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
         with:
           subject-path: release-artifacts/*
-      - name: Create draft and upload every platform
-        id: create_release
+      - name: Publish to the releases repository
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASES_REPO_TOKEN }}
           RELEASE_TAG: ${{ needs.validate.outputs.tag }}
         run: >-
-          gh release create "$RELEASE_TAG" release-artifacts/*
-          apps/desktop/install/install.sh apps/desktop/install/install.ps1
-          --draft --generate-notes --title "Rook $RELEASE_TAG" --verify-tag
-      - name: Publish the completed release
+          apps/desktop/scripts/publish-release.sh "$RELEASES_REPO" "$RELEASE_TAG" "Rook $RELEASE_TAG"
+          release-artifacts/* apps/desktop/install/install.sh apps/desktop/install/install.ps1
+      - name: Publish to the source repository
+        # Transition only: installed apps older than the releases repository still read their updates here.
+        if: env.PUBLISH_TO_SOURCE_REPO == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ needs.validate.outputs.tag }}
-        run: gh release edit "$RELEASE_TAG" --draft=false --latest
-      - name: Remove an incomplete draft
-        if: failure() && steps.create_release.outcome != 'skipped'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TAG: ${{ needs.validate.outputs.tag }}
-        shell: bash
-        run: |
-          if [[ "$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" --jq .draft 2>/dev/null)" == "true" ]]; then
-            gh release delete "$RELEASE_TAG" --yes
-          fi
+          VERIFY_TAG: "1"
+          GENERATE_NOTES: "1"
+        run: >-
+          apps/desktop/scripts/publish-release.sh "$GITHUB_REPOSITORY" "$RELEASE_TAG" "Rook $RELEASE_TAG"
+          release-artifacts/* apps/desktop/install/install.sh apps/desktop/install/install.ps1

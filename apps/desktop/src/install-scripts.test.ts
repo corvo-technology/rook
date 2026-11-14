@@ -16,6 +16,16 @@ describe.each(["install.sh", "install.ps1"])("the %s a release ships", (name) =>
   it("says what it installs and where it downloads from", () => {
     const text = readFileSync(file, "utf8");
     expect(text).toMatch(/Installs or updates Rook/);
-    expect(text).toContain("github.com/corvo-technology/rook/releases/latest/download/");
+    expect(text).toContain("github.com/corvo-technology/rook-releases/releases/latest/download");
+    expect(text).not.toContain("github.com/corvo-technology/rook/");
+  });
+
+  it("is installed from the website's address", () => {
+    const text = readFileSync(file, "utf8");
+    expect(text).toContain(
+      name === "install.sh"
+        ? "curl -fsSL https://rook.team/install | sh"
+        : "irm https://rook.team/install.ps1 | iex",
+    );
   });
 });

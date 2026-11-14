@@ -186,11 +186,14 @@ export function routinesRoutes(ctx: RouterContext) {
           await assertRoutineModel(deps, context.actor, { modelProvider, modelId }, codexCatalog);
         }
         const watch = input.watch === undefined ? parseRoutineWatch(existing.watch) : input.watch;
-        if (input.watch) {
+        // Turning a routine on checks the trigger it already holds too: an imported one was never checked.
+        const turnsOn = input.active === true && !existing.active;
+        const watchToCheck = input.watch ?? (turnsOn ? watch : null);
+        if (watchToCheck) {
           try {
             await validateRoutineWatch(
               {},
-              input.watch,
+              watchToCheck,
               { ...context.actor, botId: bot.id },
               bot.computer,
             );

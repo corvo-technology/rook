@@ -20,6 +20,7 @@ import {
 import {
   creditOrganization,
   creditVoiceKey,
+  hostedVoiceFunding,
   listenHoldUsd,
   speakHoldUsd,
   synthesizeOnCredits,
@@ -41,15 +42,38 @@ beforeEach(() => {
 
 describe("creditVoiceKey", () => {
   const key = "deploy-key";
-  it("offers the deployment key only with credits on and an OpenRouter deployment key", () => {
+  it("offers the deployment's OpenRouter key, metered only when billing credits are on", () => {
     expect(creditVoiceKey({ creditsEnabled: true, provider: "openrouter", key })).toEqual({
       apiKey: key,
+      metered: true,
     });
-    expect(creditVoiceKey({ creditsEnabled: false, provider: "openrouter", key })).toBeUndefined();
+    expect(creditVoiceKey({ creditsEnabled: false, provider: "openrouter", key })).toEqual({
+      apiKey: key,
+      metered: false,
+    });
     expect(creditVoiceKey({ creditsEnabled: true, provider: "anthropic", key })).toBeUndefined();
     expect(
       creditVoiceKey({ creditsEnabled: true, provider: "openrouter", key: undefined }),
     ).toBeUndefined();
+  });
+});
+
+describe("hostedVoiceFunding", () => {
+  const scope = { userId: "u", spaceId: "s" };
+  it("is free without billing credits and asks nothing of the account", async () => {
+    await expect(
+      hostedVoiceFunding(prisma, { apiKey: "k", metered: false }, scope),
+    ).resolves.toEqual({});
+    expect(db.creditAccount).not.toHaveBeenCalled();
+  });
+
+  it("is paid by the organization on credits, and refused otherwise", async () => {
+    const metered = { apiKey: "k", metered: true };
+    await expect(hostedVoiceFunding(prisma, metered, scope)).resolves.toEqual({
+      organizationId: "org",
+    });
+    db.creditAccount.mockResolvedValue({ mode: "own_key" });
+    await expect(hostedVoiceFunding(prisma, metered, scope)).resolves.toBeUndefined();
   });
 });
 

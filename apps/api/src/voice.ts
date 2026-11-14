@@ -1,10 +1,10 @@
 import type { AdapterContext, SecretStore } from "@corvo/adapter-kit";
 import { VoiceAccountError } from "@corvo/adapter-kit";
-import type { LocalSpeech } from "@corvo/adapters";
+import type { HostedVoice, LocalSpeech } from "@corvo/adapters";
 import {
   createVoiceProvider,
-  creditOrganization,
   DEFAULT_LOCAL_MODEL,
+  hostedVoiceFunding,
   isFishSpeechModelId,
   isVoiceProviderId,
   LOCAL_VOICE_PROVIDER_ID,
@@ -75,7 +75,7 @@ export interface VoiceDeps {
    * Present only where credits are on and the deployment runs on OpenRouter: customers on credits
    * with no voice of their own listen and speak with this key, paid from their balance.
    */
-  voiceCredits?: { apiKey: string };
+  voiceCredits?: HostedVoice;
 }
 
 /** The deployment key and the paying organization, when this person's voice runs on credits. */
@@ -84,8 +84,8 @@ export async function creditVoiceFor(
   actor: Actor,
 ) {
   if (!deps.voiceCredits) return undefined;
-  const organizationId = await creditOrganization(deps.prisma, actor);
-  return organizationId ? { apiKey: deps.voiceCredits.apiKey, organizationId } : undefined;
+  const funding = await hostedVoiceFunding(deps.prisma, deps.voiceCredits, actor);
+  return funding ? { apiKey: deps.voiceCredits.apiKey, ...funding } : undefined;
 }
 
 /** A self-hosted speech server on a private address is limited like model endpoints. */

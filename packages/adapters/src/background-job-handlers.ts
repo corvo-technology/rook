@@ -34,6 +34,7 @@ import type { MemoryProviderResolver } from "./memory-provider-factory.js";
 import { deliverMessagingOutbound, mirrorMessagingOutbound } from "./messaging-delivery.js";
 import { expireTaughtSkillTeaching } from "./teaching-session.js";
 import { learnUserMemories } from "./user-memory-run.js";
+import type { HostedVoice } from "./voice-credits.js";
 import { WHATSAPP_THREAD_PREFIX } from "./whatsapp/link-surface.js";
 import { curateWiki } from "./wiki-curator-run.js";
 import { importFileToWiki } from "./wiki-import-run.js";
@@ -105,7 +106,7 @@ export function createBackgroundJobHandlers(deps: {
   /** The operator's allowance for self-hosted speech servers on private addresses. */
   allowPrivateEndpoint?: boolean;
   /** The deployment's speech key where customers on credits may use it. */
-  voiceCredits?: { apiKey: string };
+  voiceCredits?: HostedVoice;
 }): BackgroundJobHandlers {
   const audioTranscription = {
     prisma: deps.prisma,

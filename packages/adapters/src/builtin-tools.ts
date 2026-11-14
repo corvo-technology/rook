@@ -1144,8 +1144,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   },
   {
     name: "schedule_list",
-    description:
-      "List this bot's schedules (routines), active or not.",
+    description: "List this bot's schedules (routines), active or not.",
     inputSchema: { type: "object", properties: {} },
   },
   {

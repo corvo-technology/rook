@@ -822,3 +822,101 @@ html[data-guided] .guide-slot .avatar {
   justify-content: center;
   gap: 12px;
 }
+
+/* The closed-beta card: dark, with the waitlist form. */
+.lp-card.lp-wait {
+  gap: 14px;
+  border-color: var(--line-2);
+  background: var(--page);
+  color: var(--body);
+}
+
+.lp-wait [hidden] {
+  display: none;
+}
+
+.lp-wait__badge {
+  align-self: flex-start;
+  padding: 4px 12px;
+  border: 1px solid var(--blue-line);
+  border-radius: 999px;
+  background: var(--blue-soft);
+  color: var(--blue);
+  font-size: 13px;
+}
+
+.lp-wait__form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.lp-wait__form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--muted-2);
+  font-size: 13px;
+}
+
+.lp-wait__form input,
+.lp-wait__form textarea {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  resize: vertical;
+}
+
+.lp-wait__form input[aria-invalid="true"] {
+  border-color: var(--destructive, #f48877);
+}
+
+.lp-wait__form small,
+.lp-wait__error {
+  margin: 0;
+  color: #f48877;
+  font-size: 13px;
+}
+
+.lp-wait__form small:empty {
+  display: none;
+}
+
+/* The honeypot: real people never see or reach it. */
+.lp-wait__trap {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.lp-wait__done {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 18px;
+  border: 1px solid var(--blue-line);
+  border-radius: 16px;
+  background: var(--blue-soft);
+}
+
+.lp-wait__done strong {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.lp-wait__done p {
+  margin: 0;
+}
+
+.lp-wait__form .button {
+  align-self: stretch;
+}

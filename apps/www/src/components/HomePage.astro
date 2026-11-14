@@ -14,7 +14,6 @@ import { getLaunchCopy } from "../i18n/launch";
 import { DEFAULT_LOCALE, LOCALE_HTML_LANG, isLocale, localeHomePath } from "../i18n/locales";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import {
-  APP_URL,
   DOWNLOAD_URL,
   DOWNLOAD_URL_LINUX,
   DOWNLOAD_URL_LINUX_ARM64,
@@ -25,6 +24,7 @@ import {
   INSTALL_COMMAND,
   INSTALL_COMMAND_WINDOWS,
   SITE_URL,
+  WAITLIST_ENDPOINT,
 } from "../site";
 import { homeStructuredData } from "../structured-data";
 import "../styles/launch.css";
@@ -95,8 +95,8 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
         <p class="lp-hero__lead">{copy.hero.lead[0]}<br />{copy.hero.lead[1]}</p>
         <div class="lp-hero__actions">
           <span class="lp-hero__cta">
-            <a class="button button--primary" href={APP_URL} target="_blank" rel="noopener" data-attr="hero-cloud">
-              {copy.cta.cloud}
+            <a class="button button--primary" href="#waitlist" data-attr="hero-waitlist">
+              {copy.hero.join}
             </a>
           </span>
           <a class="button button--secondary" href={DOWNLOAD_URL} target="_blank" rel="noopener" data-attr="hero-download">
@@ -275,12 +275,44 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
       <section id="install" class="lp-install" aria-labelledby="install-heading">
         <h2 id="install-heading" class="lp-title lp-title--center" data-reveal>{copy.install.heading}</h2>
         <div class="lp-paths" data-reveal>
-          <article class="lp-card">
-            <h3>{copy.install.cloud.title}</h3>
-            <p>{copy.install.cloud.copy}</p>
-            <a class="button button--primary" href={APP_URL} target="_blank" rel="noopener" data-attr="install-cloud">
-              {copy.cta.cloud}
-            </a>
+          <article id="waitlist" class="lp-card lp-wait ink">
+            <span class="lp-wait__badge">{copy.waitlist.badge}</span>
+            <h3>{copy.waitlist.title}</h3>
+            <p>{copy.waitlist.copy}</p>
+            <form
+              class="lp-wait__form"
+              novalidate
+              data-waitlist={WAITLIST_ENDPOINT}
+              data-locale={locale}
+              data-success={copy.waitlist.success}
+              data-email-error={copy.waitlist.emailError}
+              data-company-error={copy.waitlist.companyError}
+              data-error={copy.waitlist.error}
+            >
+              <label>
+                <span>{copy.waitlist.email}</span>
+                <input type="email" name="email" required autocomplete="email" />
+                <small data-error-for="email" role="alert"></small>
+              </label>
+              <label>
+                <span>{copy.waitlist.company}</span>
+                <input type="text" name="company" required autocomplete="organization" />
+                <small data-error-for="company" role="alert"></small>
+              </label>
+              <label>
+                <span>{copy.waitlist.task}</span>
+                <textarea name="task" rows="3"></textarea>
+              </label>
+              <div class="lp-wait__trap" aria-hidden="true">
+                <label>Website <input type="text" name="website" tabindex="-1" autocomplete="off" /></label>
+              </div>
+              <button type="submit" class="button button--primary" data-attr="waitlist-submit">{copy.cta.waitlist}</button>
+              <p class="lp-wait__error" data-form-error role="alert" hidden></p>
+            </form>
+            <div class="lp-wait__done" data-waitlist-done aria-live="polite" hidden>
+              <strong>{copy.waitlist.successTitle}</strong>
+              <p data-done-body></p>
+            </div>
           </article>
           <article class="lp-card">
             <h3>{copy.install.local.title}</h3>
@@ -342,8 +374,8 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
         <h2 id="cta-heading" class="lp-title lp-title--cta">{copy.cta.heading}</h2>
         <p class="lp-lead">{copy.cta.copy}</p>
         <div class="lp-cta__actions">
-          <a class="button button--primary" href={APP_URL} target="_blank" rel="noopener" data-attr="cta-cloud">
-            {copy.cta.cloud}
+          <a class="button button--primary" href="#waitlist" data-attr="cta-waitlist">
+            {copy.cta.waitlist}
           </a>
           <a class="button button--secondary" href={DOWNLOAD_URL} target="_blank" rel="noopener" data-attr="cta-download">
             {copy.cta.download}
@@ -395,6 +427,54 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
     for (const type of ["scroll", "wheel", "touchmove", "keydown"]) {
       window.addEventListener(type, arm, { passive: true, signal: first.signal });
     }
+  }
+
+  const waitlist = document.querySelector<HTMLFormElement>("form[data-waitlist]");
+  if (waitlist) {
+    const field = (name: string) => waitlist.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement;
+    const fail = (name: string, message: string) => {
+      const input = field(name);
+      waitlist.querySelector<HTMLElement>(`[data-error-for="${name}"]`)!.textContent = message;
+      input.setAttribute("aria-invalid", message ? "true" : "false");
+    };
+    waitlist.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const email = field("email").value.trim();
+      const company = field("company").value.trim();
+      const badEmail = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      fail("email", badEmail ? (waitlist.dataset.emailError ?? "") : "");
+      fail("company", company ? "" : (waitlist.dataset.companyError ?? ""));
+      const problem = waitlist.querySelector<HTMLElement>('[aria-invalid="true"]');
+      if (problem) return problem.focus();
+      const button = waitlist.querySelector<HTMLButtonElement>("button[type=submit]")!;
+      const failure = waitlist.querySelector<HTMLElement>("[data-form-error]")!;
+      failure.hidden = true;
+      button.disabled = true;
+      try {
+        const response = await fetch(waitlist.dataset.waitlist ?? "", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            email,
+            company,
+            task: field("task").value.trim(),
+            locale: waitlist.dataset.locale,
+            website: field("website").value,
+          }),
+        });
+        if (!response.ok) throw new Error(String(response.status));
+        const done = waitlist.parentElement!.querySelector<HTMLElement>("[data-waitlist-done]")!;
+        done.querySelector("[data-done-body]")!.textContent = (waitlist.dataset.success ?? "")
+          .replace("{email}", email)
+          .replace("{company}", company);
+        waitlist.hidden = true;
+        done.hidden = false;
+      } catch {
+        failure.textContent = waitlist.dataset.error ?? "";
+        failure.hidden = false;
+        button.disabled = false;
+      }
+    });
   }
 
   document.querySelectorAll<HTMLButtonElement>("[data-copy]").forEach((button) => {

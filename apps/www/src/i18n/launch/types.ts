@@ -66,7 +66,7 @@ export type LaunchCopy = {
     features: string;
     open: string;
     faq: string;
-    download: string;
+    waitlist: string;
     github: string;
   };
   faq: { heading: string; items: Array<{ question: string; answer: string }> };
@@ -87,6 +87,7 @@ export type LaunchCopy = {
   /** The headline reads `line1`, the rook mascot, then `line2`; `lead` is the two lines under it. */
   hero: {
     pill: string;
+    join: string;
     line1: string;
     line2: string;
     lead: [string, string];
@@ -155,9 +156,22 @@ export type LaunchCopy = {
     points: Array<{ title: string; body: string }>;
     license: string;
   };
+  /** The closed beta: a card with a form. `{email}` and `{company}` fill the success text. */
+  waitlist: {
+    badge: string;
+    title: string;
+    copy: string;
+    email: string;
+    company: string;
+    task: string;
+    emailError: string;
+    companyError: string;
+    successTitle: string;
+    success: string;
+    error: string;
+  };
   install: {
     heading: string;
-    cloud: { title: string; copy: string };
     local: { title: string; copy: string };
     download: string;
     alsoFor: string;
@@ -170,5 +184,5 @@ export type LaunchCopy = {
     migrate: string;
   };
   /** `bubbles` are the two things the rook says from the bottom edge of the page, in order. */
-  cta: { heading: string; copy: string; download: string; cloud: string; bubbles: [string, string] };
+  cta: { heading: string; copy: string; download: string; waitlist: string; bubbles: [string, string] };
 };

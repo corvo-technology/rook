@@ -1,6 +1,5 @@
 import { getLaunchCopy } from "./i18n/launch";
 import {
-  APP_URL,
   CONTACT_EMAIL,
   DOWNLOAD_URL,
   GITHUB_URL,
@@ -21,7 +20,7 @@ ${home.hero.line1} ${home.hero.line2}
 
 ${home.hero.pill}. ${home.hero.lead.join(" ")}
 
-- [${home.cta.cloud}](${APP_URL})
+- [${home.hero.join}](${SITE_URL}/#waitlist)
 - [${home.cta.download}](${DOWNLOAD_URL})
 
 ${home.preview.conversations
@@ -64,7 +63,7 @@ ${home.open.points.map((point) => `- **${point.title}:** ${point.body}`).join("\
 
 ## ${home.install.heading}
 
-- **${home.install.cloud.title}:** ${home.install.cloud.copy} [${home.cta.cloud}](${APP_URL})
+- **${home.waitlist.badge}: ${home.waitlist.title}.** ${home.waitlist.copy} [${home.cta.waitlist}](${SITE_URL}/#waitlist)
 - **${home.install.local.title}:** ${home.install.local.copy}
 
 - [${home.install.download}](${DOWNLOAD_URL})
@@ -81,7 +80,7 @@ ${home.faq.items.map((item) => `### ${item.question}\n\n${item.answer}`).join("\
 
 ${home.cta.copy}
 
-- [${home.cta.cloud}](${APP_URL})
+- [${home.cta.waitlist}](${SITE_URL}/#waitlist)
 - [${home.cta.download}](${DOWNLOAD_URL})
 
 ## Site index

@@ -11,8 +11,10 @@ export const SECURITY_EMAIL = "security@rook.team";
 /** The open source repository. */
 export const GITHUB_URL = "https://github.com/corvo-technology/rook";
 
-/** The cloud app, where a company signs in without installing anything. */
-export const APP_URL = "https://app.rook.team";
+/** Where the cloud API lives. The waitlist form posts here; set PUBLIC_API_ORIGIN to point a build elsewhere. */
+export const API_ORIGIN =
+  (import.meta.env?.PUBLIC_API_ORIGIN as string | undefined)?.trim().replace(/\/$/, "") || "https://app.rook.team";
+export const WAITLIST_ENDPOINT = `${API_ORIGIN}/api/public/waitlist`;
 
 /**
  * The macOS installer (one universal app for Apple silicon and Intel) of the latest release. Its file name carries no version, so

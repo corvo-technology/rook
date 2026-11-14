@@ -1,7 +1,14 @@
 # One image for every Rook process on Guará Cloud, chosen at start by CORVO_ROLE
-# (api, worker or web). It avoids BuildKit-only syntax (cache mounts, COPY --chmod)
-# so any Docker builder can build it.
-FROM node:22-bookworm@sha256:0557ac14e0d45d02ed563067b82856ca5e7aa3437fa28d98d4350ea9c3d9494a
+# (api or worker). It avoids BuildKit-only syntax (cache mounts, COPY --chmod) so any
+# Docker builder can build it.
+#
+# Three stages keep the final image small: `build` has every dependency and compiles the
+# servers, `prod-deps` installs only the production dependencies the two servers run, and
+# the last stage copies the compiled output over them onto a slim base. The servers are
+# bundled by scripts/build-server.mjs, which rewrites each package import to a relative
+# path into node_modules/.pnpm, so node_modules must keep the layout pnpm made; the
+# production install reads the same lockfile and so produces the same directory names.
+FROM node:22-bookworm@sha256:0557ac14e0d45d02ed563067b82856ca5e7aa3437fa28d98d4350ea9c3d9494a AS base
 ENV COREPACK_HOME=/usr/local/share/corepack
 RUN corepack enable
 WORKDIR /app
@@ -30,17 +37,53 @@ COPY packages/ui-tokens/package.json packages/ui-tokens/
 COPY packages/ui-web/package.json packages/ui-web/
 COPY infra/sandboxes/supervisor/package.json infra/sandboxes/supervisor/
 COPY infra/updater/package.json infra/updater/
-RUN pnpm install --frozen-lockfile
+
+FROM base AS prod-deps
+RUN pnpm install --frozen-lockfile --prod --store-dir /tmp/pnpm-store \
+    --filter "@corvo/api..." --filter "@corvo/worker..." \
+  && rm -rf /tmp/pnpm-store
+# Peer and optional dependencies of production packages still bring in tooling the servers
+# never load (the Expo and React Native client toolchain, Vite, TypeScript, the Prisma CLI
+# and its studio) and native binaries for other platforms. Removing them leaves dangling
+# links inside node_modules/.pnpm, which nothing follows.
+RUN cd node_modules/.pnpm \
+  && rm -rf react-native@* react-native-* @react-native+* expo@* expo-* @expo+* \
+    hermes-compiler@* react-devtools-core@* fb-dotslash@* typescript@* @typescript+* \
+    prettier@* vite@* vitest@* rolldown@* @rolldown+* lightningcss* \
+    prisma@* @prisma+studio-core@* @prisma+engines@* \
+  && other=$([ "$(uname -m)" = x86_64 ] && echo arm64 || echo x64) \
+  && find . -maxdepth 1 \( -name '*linuxmusl*' -o -name '*-musl*' -o -name "*linux-$other*" \
+    -o -name '*[-+]darwin-*' -o -name '*[-+]win32-*' -o -name '*[-+]android-*' -o -name '*[-+]freebsd-*' \) \
+    -exec rm -rf {} +
+
+FROM base AS build
+# The desktop and mobile apps and the marketing site are left out: they would add gigabytes.
+# The web app is built only for its build id, which the API reports to clients.
+RUN pnpm install --frozen-lockfile --store-dir /tmp/pnpm-store \
+    --filter "@corvo/api..." --filter "@corvo/worker..." --filter "@corvo/web..." \
+  && rm -rf /tmp/pnpm-store
 COPY . .
-RUN chmod -R a+rX /app
 # Opt in (build variable RELAX_RUNTIME_ROLE=1) when the database owner cannot create roles.
 ARG RELAX_RUNTIME_ROLE
 RUN if [ -n "$RELAX_RUNTIME_ROLE" ]; then bash infra/guara/relax-runtime-role.sh; fi
 RUN pnpm --filter @corvo/db generate
 RUN pnpm --filter @corvo/api --filter @corvo/worker build
 RUN CORVO_ALLOW_DEV_SECRETS=1 pnpm --filter @corvo/web build
-RUN install -d -m 750 -o node -g node /data /app/apps/web/node_modules/.vite-temp /app/apps/web/asset-archive
-ENV NODE_ENV=production
-EXPOSE 3100 5173
+
+FROM node:22-bookworm-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY --from=prod-deps /app/ ./
+COPY --from=build /app/apps/api/dist apps/api/dist
+COPY --from=build /app/apps/worker/dist apps/worker/dist
+COPY --from=build /app/apps/web/dist/build-id apps/web/dist/build-id
+COPY --from=build /app/packages/db/prisma/migrations packages/db/prisma/migrations
+COPY infra/guara/start.sh infra/guara/start.sh
+# The migration step applies these files itself instead of starting pnpm and the Prisma CLI.
+ENV NODE_ENV=production MIGRATIONS_DIR=/app/packages/db/prisma/migrations
+RUN install -d -o node -g node /data
+EXPOSE 3100
 USER node
 CMD ["bash", "/app/infra/guara/start.sh"]

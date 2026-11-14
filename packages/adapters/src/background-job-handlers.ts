@@ -104,6 +104,8 @@ export function createBackgroundJobHandlers(deps: {
   localSpeech?: LocalSpeech;
   /** The operator's allowance for self-hosted speech servers on private addresses. */
   allowPrivateEndpoint?: boolean;
+  /** The deployment's speech key where customers on credits may use it. */
+  voiceCredits?: { apiKey: string };
 }): BackgroundJobHandlers {
   const audioTranscription = {
     prisma: deps.prisma,
@@ -111,6 +113,7 @@ export function createBackgroundJobHandlers(deps: {
     ...(deps.localSpeech ? { localSpeech: deps.localSpeech } : {}),
     loadVoiceCredential: dbVoiceCredential(deps.prisma, deps.secretStore),
     hasConsent: prismaConsent(deps.prisma),
+    ...(deps.voiceCredits ? { voiceCredits: deps.voiceCredits } : {}),
     ...(deps.allowPrivateEndpoint === undefined
       ? {}
       : { allowPrivateEndpoint: deps.allowPrivateEndpoint }),

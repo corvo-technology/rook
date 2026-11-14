@@ -136,6 +136,7 @@ export * from "./openai-compatible-url.js";
 export * from "./openai-compatible-voice.js";
 export * from "./openai-voice.js";
 export * from "./openrouter-usage.js";
+export * from "./openrouter-voice.js";
 export * from "./page-browser-session.js";
 export * from "./parallel-web.js";
 export * from "./pi-catalog-availability.js";
@@ -207,6 +208,7 @@ export {
   postMemoryFactCard,
 } from "./user-memory-run.js";
 export * from "./verified-download.js";
+export * from "./voice-credits.js";
 export * from "./voice-factory.js";
 export * from "./wakeup.js";
 export * from "./web-limits.js";

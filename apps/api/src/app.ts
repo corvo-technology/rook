@@ -58,6 +58,7 @@ import {
   createWebProvider,
   createWhatsAppLinkSurface,
   createWhatsAppOutboxDrain,
+  creditVoiceKey,
   deliverMessagingOutbound,
   deploymentModelUsageLookup,
   EmailEmulator,
@@ -320,7 +321,6 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   const secrets = createSecretStore(env.encryptionKey, process.env, realtime);
   // Speech models live on the owner's own computer, so only the desktop engine gets them.
   const localSpeech = createLocalSpeech(env);
-  const audio = createAudioHold({ prisma, localSpeech });
   await secrets.start();
   if (secrets.describe().capabilities.degraded)
     logger.warn("Secret storage degraded; encrypted credentials remain available");
@@ -502,6 +502,12 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       })
     : undefined;
   const modelCreditsEnabled = billing?.modelCreditsEnabled ?? false;
+  const voiceCredits = creditVoiceKey({
+    creditsEnabled: modelCreditsEnabled,
+    provider: env.defaultProvider,
+    key: env.deploymentModelKey,
+  });
+  const audio = createAudioHold({ prisma, localSpeech, voiceCredits });
   await prisma.deploymentSettings.upsert({
     where: { id: "default" },
     create: {
@@ -761,6 +767,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     messaging,
     cloudAgent,
     localSpeech,
+    voiceCredits,
     allowPrivateEndpoint: env.mcpAllowPrivateEndpoint,
   });
   if (inMemoryJobs) {
@@ -845,6 +852,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     home,
     secrets,
     localSpeech,
+    voiceCredits,
     localSetup,
     cliEngineSetup,
     audio,
@@ -1057,7 +1065,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     if (matched) return c.newResponse(response.body, response);
     await next();
   });
-  mountVoiceHttpRoutes(app, { prisma, secrets, env, localSpeech }, async (c) => {
+  mountVoiceHttpRoutes(app, { prisma, secrets, env, localSpeech, voiceCredits }, async (c) => {
     const actor = await sessionActor(c.req.raw);
     if (actor) enrichLogContext({ "user.id": actor.userId, "space.id": actor.spaceId });
     return actor;

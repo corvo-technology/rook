@@ -1,7 +1,7 @@
 import type { JobPublisher } from "@corvo/adapter-kit";
 import { audioTranscribeJob, runContinueJob } from "@corvo/adapter-kit";
 import type { LocalSpeech } from "@corvo/adapters";
-import { voiceCatalogEntry } from "@corvo/adapters";
+import { creditOrganization, voiceCatalogEntry } from "@corvo/adapters";
 import { isAttachmentAudioMimeType } from "@corvo/contracts";
 import type { PrismaClient } from "@corvo/db";
 import { findDefaultVoiceCredential } from "@corvo/db";
@@ -15,19 +15,22 @@ export interface AudioHold {
 }
 
 /**
- * Transcription is possible where the engine is the owner's own computer, or where the selected
- * voice provider transcribes. Anywhere else a voice note is left as a file, exactly as before,
+ * Transcription is possible where the engine is the owner's own computer, where the selected
+ * voice provider transcribes, or where the owner has no voice and pays with credits. Anywhere else a voice note is left as a file, exactly as before,
  * and no new job runs.
  */
 export function createAudioHold(deps: {
   prisma: PrismaClient;
   localSpeech?: LocalSpeech | undefined;
+  /** Set where customers on credits transcribe with the deployment's key. */
+  voiceCredits?: { apiKey: string } | undefined;
 }): AudioHold {
   return {
     async canTranscribe(actor) {
       if (deps.localSpeech) return true;
       const credential = await findDefaultVoiceCredential(deps.prisma, actor);
-      return Boolean(credential && voiceCatalogEntry(credential.provider)?.transcribe);
+      if (credential) return Boolean(voiceCatalogEntry(credential.provider)?.transcribe);
+      return Boolean(deps.voiceCredits && (await creditOrganization(deps.prisma, actor)));
     },
   };
 }

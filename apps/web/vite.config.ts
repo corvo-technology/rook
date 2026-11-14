@@ -11,18 +11,13 @@ import {
   parseCrispWebsiteId,
 } from "@corvo/contracts/content-security-policy";
 import { createNovncProxy } from "@corvo/core/node/novnc-proxy";
-import { lingui } from "@lingui/vite-plugin";
-import babel from "@rolldown/plugin-babel";
-import tailwindcss from "@tailwindcss/vite";
-import react from "@vitejs/plugin-react";
-import type { PreviewServer, ProxyOptions, ViteDevServer } from "vite";
+import type { PluginOption, PreviewServer, ProxyOptions, ViteDevServer } from "vite";
 import { defineConfig, loadEnv } from "vite";
 import { resolveScreenProxySecret } from "../../packages/core/src/secrets-guard.ts";
 import { createServiceLogger } from "../../packages/logging/src/env.ts";
 import { ASSET_ARCHIVE_DIR, archiveAssets } from "./src/asset-archive.js";
 import { appendForwardedFor } from "./src/forwarded-for.js";
 import { missingAssetMiddleware } from "./src/missing-asset.js";
-import { corvoPwa } from "./src/pwa/plugin.js";
 
 const webPort = Number(process.env.WEB_PORT ?? 5173);
 const DESKTOP_STACK_PROBE_PATH = "/.well-known/corvo-desktop-stack";
@@ -72,7 +67,30 @@ function attachNovncProxy(server: ViteDevServer | PreviewServer, secret: string,
   server.httpServer?.on("upgrade", (req, socket, head) => void proxy.upgrade(req, socket, head));
 }
 
-export default defineConfig(({ command, mode }) => {
+/**
+ * The compile-time plugins. `vite preview` only serves a finished build, so it skips them and the
+ * production image (infra/guara/Dockerfile.web) carries Vite alone, without React, Babel, Lingui
+ * or Tailwind. They load on demand for `vite build` and the dev server.
+ */
+async function buildPlugins(buildId: string): Promise<PluginOption[]> {
+  const [{ lingui }, { default: babel }, { default: tailwindcss }, { default: react }, pwa] =
+    await Promise.all([
+      import("@lingui/vite-plugin"),
+      import("@rolldown/plugin-babel"),
+      import("@tailwindcss/vite"),
+      import("@vitejs/plugin-react"),
+      import("./src/pwa/plugin.js"),
+    ]);
+  return [
+    react(),
+    babel({ plugins: ["@lingui/babel-plugin-lingui-macro"] }),
+    lingui(),
+    tailwindcss(),
+    pwa.corvoPwa(buildId),
+  ];
+}
+
+export default defineConfig(async ({ command, mode, isPreview }) => {
   // Names this build in every API request; the dev server has none, so the handshake stays off.
   const buildId = command === "build" ? buildIdAt(new Date()) : "";
   const rootEnv = loadEnv(mode, path.resolve(import.meta.dirname, "../.."), "");
@@ -144,11 +162,7 @@ export default defineConfig(({ command, mode }) => {
           this.emitFile({ type: "asset", fileName: "build-id", source: `${buildId}\n` });
         },
       },
-      react(),
-      babel({ plugins: ["@lingui/babel-plugin-lingui-macro"] }),
-      lingui(),
-      tailwindcss(),
-      corvoPwa(buildId),
+      ...(isPreview ? [] : await buildPlugins(buildId)),
       {
         // Production only: the dev server injects inline scripts for React Refresh.
         name: "corvo-content-security-policy",

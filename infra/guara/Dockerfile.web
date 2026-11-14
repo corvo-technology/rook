@@ -1,0 +1,74 @@
+# The Rook web app on its own: the built UI plus the small Node server that fronts it.
+# Build from the repository root: docker build -f infra/guara/Dockerfile.web .
+#
+# `vite preview` is the server. It serves apps/web/dist, proxies /api and /rpc to
+# API_PROXY_TARGET, runs the noVNC screen proxy and sets the security headers (see
+# apps/web/vite.config.ts). At run time that needs Vite, its few dependencies, the config
+# and the workspace sources the config imports. React, Sentry, Better Auth and the rest are
+# already inside dist, so the last stage carries none of them (about 90 MB of app files
+# instead of the 3.7 GB image infra/compose/Dockerfile builds for every service).
+#
+# Like infra/guara/Dockerfile it avoids BuildKit-only syntax (cache mounts, COPY --chmod), so
+# any Docker builder can build it.
+FROM node:22-bookworm-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee AS build
+ENV COREPACK_HOME=/usr/local/share/corepack
+RUN corepack enable
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+RUN corepack install
+# Manifests of the web app and the workspace packages it depends on, and nothing else: a change
+# to another app's manifest (a desktop version bump, say) does not re-run the install. When the
+# web app gains a workspace dependency, add its manifest here; the install then fails by name.
+COPY patches patches
+COPY apps/web/package.json apps/web/
+COPY packages/chat-ui/package.json packages/chat-ui/
+COPY packages/contracts/package.json packages/contracts/
+COPY packages/core/package.json packages/core/
+COPY packages/logging/package.json packages/logging/
+COPY packages/ui-tokens/package.json packages/ui-tokens/
+COPY packages/ui-web/package.json packages/ui-web/
+# No install scripts: nothing the web build needs is compiled or downloaded by one (the Vite
+# bundler ships as a prebuilt binary package).
+RUN pnpm install --frozen-lockfile --ignore-scripts --store-dir /tmp/pnpm-store \
+    --filter "@corvo/web..." \
+  && rm -rf /tmp/pnpm-store
+
+COPY tsconfig.base.json ./
+COPY packages/chat-ui packages/chat-ui
+COPY packages/contracts packages/contracts
+COPY packages/core packages/core
+COPY packages/logging packages/logging
+COPY packages/ui-tokens packages/ui-tokens
+COPY packages/ui-web packages/ui-web
+COPY apps/web apps/web
+# The cap keeps the build inside a small host's memory; the build needs about 0.8 GB in all.
+# CORVO_ALLOW_DEV_SECRETS lets the build load the config without production secrets.
+RUN NODE_OPTIONS=--max-old-space-size=1536 CORVO_ALLOW_DEV_SECRETS=1 pnpm --filter @corvo/web build
+# Stage the run-time files, then start the server once with throwaway settings so a missing
+# file fails this build instead of the deploy.
+COPY infra/guara/web-runtime.mjs infra/guara/web-check.mjs infra/guara/
+RUN node infra/guara/web-runtime.mjs /runtime && node infra/guara/web-check.mjs /runtime
+
+FROM node:22-bookworm-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee
+WORKDIR /app
+COPY --from=build /runtime/ ./
+# Recent builds' hashed assets, so a tab still running the previous deploy keeps loading its
+# chunks. The server uses the archive only when this directory exists, and prunes it itself.
+# Mount a volume here to keep it across deploys; the volume must be writable by uid 1000
+# (user `node`). Without one the archive lives and dies with the container.
+RUN install -d -o node -g node /app/apps/web/asset-archive
+# Names the revision the image was built from; the server does not read it.
+ARG GIT_SHA
+ENV NODE_ENV=production WEB_PORT=5173 GIT_SHA=$GIT_SHA
+LABEL org.opencontainers.image.source="https://github.com/corvo-technology/rook" \
+      org.opencontainers.image.revision=$GIT_SHA
+WORKDIR /app/apps/web
+EXPOSE 5173
+USER node
+# Node itself, not pnpm, so a stop signal reaches the server. The runner config loader reads
+# vite.config.ts in memory, so nothing is written next to the code. Settings come from the
+# environment: API_PROXY_TARGET, SCREEN_PROXY_SECRET, CORVO_HOST, CORVO_ALLOWED_HOSTS,
+# CORVO_CSP_SCRIPT_SRC, CORVO_CSP_CONNECT_SRC, CRISP_WEBSITE_ID, WEB_PORT.
+CMD ["node", "node_modules/vite/bin/vite.js", "preview", "--configLoader", "runner", "--host", "0.0.0.0", "--strictPort"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD ["node", "-e", "fetch('http://127.0.0.1:'+(process.env.WEB_PORT||5173)+'/build-id').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]

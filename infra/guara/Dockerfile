@@ -1,6 +1,6 @@
 # One image for every Rook process on Guará Cloud, chosen at start by CORVO_ROLE
-# (api or worker). It avoids BuildKit-only syntax (cache mounts, COPY --chmod) so any
-# Docker builder can build it.
+# (api or worker). It avoids BuildKit-only syntax (cache mounts, COPY --chmod) so any Docker
+# builder can build it. The web app is not in it: infra/guara/Dockerfile.web builds that.
 #
 # Three stages keep the final image small: `build` has every dependency and compiles the
 # servers, `prod-deps` installs only the production dependencies the two servers run, and
@@ -12,31 +12,24 @@ FROM node:22-bookworm@sha256:0557ac14e0d45d02ed563067b82856ca5e7aa3437fa28d98d43
 ENV COREPACK_HOME=/usr/local/share/corepack
 RUN corepack enable
 WORKDIR /app
-# Manifests first so a source edit does not re-run the install. Every package in
-# pnpm-workspace.yaml needs its manifest here or --frozen-lockfile fails.
+# Manifests first so a source edit does not re-run the install. Only the manifests of the
+# packages the two servers depend on are copied (pnpm still checks the lockfile against them),
+# so a change to the web, desktop or mobile manifests does not re-run it either. When the API
+# or worker gains a workspace dependency, add its manifest here; the install then fails by name.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 RUN corepack install && chmod -R a+rX "${COREPACK_HOME}"
 COPY patches patches
 COPY apps/api/package.json apps/api/
-COPY apps/desktop/package.json apps/desktop/
-COPY apps/mobile/package.json apps/mobile/
-COPY apps/web/package.json apps/web/
 COPY apps/worker/package.json apps/worker/
-COPY apps/www/package.json apps/www/
 COPY packages/adapter-kit/package.json packages/adapter-kit/
 COPY packages/adapters/package.json packages/adapters/
 COPY packages/auth/package.json packages/auth/
-COPY packages/chat-ui/package.json packages/chat-ui/
 COPY packages/contracts/package.json packages/contracts/
 COPY packages/core/package.json packages/core/
 COPY packages/db/package.json packages/db/
 COPY packages/logging/package.json packages/logging/
 COPY packages/memory/package.json packages/memory/
-COPY packages/testkit/package.json packages/testkit/
 COPY packages/ui-tokens/package.json packages/ui-tokens/
-COPY packages/ui-web/package.json packages/ui-web/
-COPY infra/sandboxes/supervisor/package.json infra/sandboxes/supervisor/
-COPY infra/updater/package.json infra/updater/
 
 FROM base AS prod-deps
 RUN pnpm install --frozen-lockfile --prod --store-dir /tmp/pnpm-store \
@@ -57,18 +50,36 @@ RUN cd node_modules/.pnpm \
     -exec rm -rf {} +
 
 FROM base AS build
-# The desktop and mobile apps and the marketing site are left out: they would add gigabytes.
-# The web app is built only for its build id, which the API reports to clients.
+# The desktop and mobile apps, the web app and the marketing site are left out: they would add
+# gigabytes. The web app has its own image (Dockerfile.web).
 RUN pnpm install --frozen-lockfile --store-dir /tmp/pnpm-store \
-    --filter "@corvo/api..." --filter "@corvo/worker..." --filter "@corvo/web..." \
+    --filter "@corvo/api..." --filter "@corvo/worker..." \
   && rm -rf /tmp/pnpm-store
-COPY . .
+# Only what the two builds read, so an edit to the web app or the docs does not rebuild them.
+COPY tsconfig.base.json ./
+COPY scripts/build-server.mjs scripts/
+COPY packages/adapter-kit packages/adapter-kit
+COPY packages/adapters packages/adapters
+COPY packages/auth packages/auth
+COPY packages/contracts packages/contracts
+COPY packages/core packages/core
+COPY packages/db packages/db
+COPY packages/logging packages/logging
+COPY packages/memory packages/memory
+COPY packages/ui-tokens packages/ui-tokens
+COPY infra/guara/relax-runtime-role.sh infra/guara/
 # Opt in (build variable RELAX_RUNTIME_ROLE=1) when the database owner cannot create roles.
 ARG RELAX_RUNTIME_ROLE
 RUN if [ -n "$RELAX_RUNTIME_ROLE" ]; then bash infra/guara/relax-runtime-role.sh; fi
+# The cap keeps the builds inside a small host's memory.
+ENV NODE_OPTIONS=--max-old-space-size=1536
 RUN pnpm --filter @corvo/db generate
+COPY apps/api apps/api
+COPY apps/worker apps/worker
 RUN pnpm --filter @corvo/api --filter @corvo/worker build
-RUN CORVO_ALLOW_DEV_SECRETS=1 pnpm --filter @corvo/web build
+# The API reports the web build deployed beside it (apps/api/src/client-build.ts reads this file).
+# The id is the UTC build time, the format the web build writes, so it needs no web build here.
+RUN mkdir -p apps/web/dist && date -u +%Y%m%d%H%M%S > apps/web/dist/build-id
 
 FROM node:22-bookworm-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee
 RUN apt-get update \

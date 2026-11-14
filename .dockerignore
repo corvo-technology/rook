@@ -48,3 +48,32 @@ verify-report
 .playwright-cli
 .deploy.lock
 .last-deployed-revision
+
+# Never read by an image build. Keeping them out shrinks the context sent to the builder and keeps
+# an edit to a test, a document or an app an image does not ship from invalidating a `COPY` and
+# the install or build after it. Every Dockerfile that copies a whole package or app still gets
+# the sources it builds from; the manifests of apps/desktop, apps/mobile and packages/testkit
+# stay because infra/compose/Dockerfile copies them for the lockfile check.
+graphify-out
+docs
+.agents
+.github
+.vscode
+.idea
+.vite
+.astro
+/*.md
+**/*.tsbuildinfo
+**/*.test.ts
+**/*.test.tsx
+**/*.test.mjs
+**/*.spec.ts
+**/e2e
+**/playwright*.config.ts
+**/screenshots
+apps/desktop/**
+!apps/desktop/package.json
+apps/mobile/**
+!apps/mobile/package.json
+packages/testkit/**
+!packages/testkit/package.json

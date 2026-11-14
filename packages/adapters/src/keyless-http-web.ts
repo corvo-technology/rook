@@ -7,7 +7,7 @@ import type {
   WebSearchRequest,
 } from "@corvo/adapter-kit";
 import { Readability } from "@mozilla/readability";
-import { JSDOM } from "jsdom";
+import { loadJsdom } from "./jsdom.js";
 import { clampMaxChars, clampMaxResults } from "./web-limits.js";
 import type { ResolveHostname } from "./web-ssrf.js";
 import { fetchSafeWebText } from "./web-ssrf.js";
@@ -27,7 +27,7 @@ const DEFAULT_SEARCH_ENDPOINT = "https://html.duckduckgo.com/html/";
 export type KeylessHtmlSearchBackend = {
   id: string;
   endpoint: string;
-  parse(html: string, maxResults: number): WebSearchHit[];
+  parse(html: string, maxResults: number): Promise<WebSearchHit[]>;
 };
 
 export type KeylessHttpWebOptions = {
@@ -114,7 +114,7 @@ export class KeylessHttpWebProvider implements WebProvider {
       signal: request.signal ?? context.signal,
     });
     if (!body.trim()) throw new Error(`Failed to fetch content from ${url}`);
-    const extracted = extractReadableText(body, url);
+    const extracted = await extractReadableText(body, url);
     const truncated = extracted.text.length > maxChars;
     return {
       url,
@@ -127,7 +127,11 @@ export class KeylessHttpWebProvider implements WebProvider {
   }
 }
 
-export function parseDuckDuckGoResults(html: string, maxResults: number): WebSearchHit[] {
+export async function parseDuckDuckGoResults(
+  html: string,
+  maxResults: number,
+): Promise<WebSearchHit[]> {
+  const { JSDOM } = await loadJsdom();
   const dom = new JSDOM(html, { url: DEFAULT_SEARCH_ENDPOINT });
   const document = dom.window.document;
   const results: WebSearchHit[] = [];
@@ -163,14 +167,21 @@ function unwrapDuckDuckGoUrl(rawUrl: string): string {
   }
 }
 
-export function extractReadableText(html: string, url: string): { title: string; text: string } {
-  const readable = extractWithReadability(html, url);
+export async function extractReadableText(
+  html: string,
+  url: string,
+): Promise<{ title: string; text: string }> {
+  const readable = await extractWithReadability(html, url);
   if (readable) return readable;
   return stripHtmlFallback(html);
 }
 
-function extractWithReadability(html: string, url: string): { title: string; text: string } | null {
+async function extractWithReadability(
+  html: string,
+  url: string,
+): Promise<{ title: string; text: string } | null> {
   try {
+    const { JSDOM } = await loadJsdom();
     const dom = new JSDOM(html, { url });
     const article = new Readability(dom.window.document).parse();
     if (article?.textContent && article.textContent.length > 0) {

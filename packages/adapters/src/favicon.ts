@@ -1,5 +1,5 @@
 import { registrableDomain } from "@corvo/core/egress";
-import { JSDOM } from "jsdom";
+import { loadJsdom } from "./jsdom.js";
 import type { ResolveHostname } from "./network-address.js";
 import { fetchSafeWebBytes } from "./web-ssrf.js";
 
@@ -151,7 +151,9 @@ async function resolveFavicon(
     maxBytes: PAGE_MAX_BYTES,
     truncate: true,
   }).catch(() => undefined);
-  const candidates = page ? iconCandidates(new TextDecoder().decode(page.body), page.url) : [];
+  const candidates = page
+    ? await iconCandidates(new TextDecoder().decode(page.body), page.url)
+    : [];
   // After a redirect to another host (x.com to www.x.com, say), the icon lives where the page
   // ended up. That origin already passed the SSRF checks, and the fallback fetch is checked again.
   const fallback = `${page ? new URL(page.url).origin : origin}/favicon.ico`;
@@ -175,9 +177,10 @@ async function resolveFavicon(
 }
 
 /** Icon URLs a page declares, in document order, apple-touch icons after plain ones. SVG is skipped. */
-export function iconCandidates(html: string, pageUrl: string): string[] {
+export async function iconCandidates(html: string, pageUrl: string): Promise<string[]> {
   const icons: string[] = [];
   const touchIcons: string[] = [];
+  const { JSDOM } = await loadJsdom();
   const document = JSDOM.fragment(html);
   const base = documentBase(document, pageUrl);
   for (const link of document.querySelectorAll("link")) {

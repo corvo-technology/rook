@@ -37,6 +37,18 @@ const workspaceSources = ["contracts", "core", "logging"];
 const skipped =
   /^(?:esbuild|jiti|terser|tsx|yaml|sass|sass-embedded|less|stylus|sugarss|lightningcss|@types)(?:[@+/]|$)/;
 
+// pnpm installs the native binding of every architecture the lockfile lists (see
+// supportedArchitectures in package.json), each about 18 MB. Only this machine's is loaded.
+const libc =
+  process.platform === "linux"
+    ? process.report.getReport().header.glibcVersionRuntime
+      ? "gnu"
+      : "musl"
+    : "";
+const nativeKey = [process.platform, process.arch, libc].filter(Boolean).join("-");
+const otherPlatform = (name) =>
+  /[-/](?:linux|darwin|win32|android|freebsd|openharmony)-/.test(name) && !name.includes(nativeKey);
+
 function storeEntry(file) {
   const relative = path.relative(store, realpathSync(file));
   if (relative.startsWith("..")) throw new Error(`${file} is outside ${store}`);
@@ -57,7 +69,8 @@ while (pending.length > 0) {
       : [name];
     for (const linked of names) {
       const file = path.join(modules, linked);
-      if (!lstatSync(file).isSymbolicLink() || skipped.test(linked)) continue;
+      if (!lstatSync(file).isSymbolicLink() || skipped.test(linked) || otherPlatform(linked))
+        continue;
       pending.push(storeEntry(file));
     }
   }

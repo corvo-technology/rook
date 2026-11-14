@@ -1,15 +1,37 @@
 import type { AgentHomeStore } from "@corvo/adapter-kit";
-import { resolveBotWorkspacePath } from "@corvo/adapters";
+import { parseRoutineWatch, resolveBotWorkspacePath } from "@corvo/adapters";
 import type { Actor, ExportManifest, SpaceExport, SpaceImportResult } from "@corvo/contracts";
-import { CreateRoutineInput, MEMORY_INDEX_PATH } from "@corvo/contracts";
+import {
+  BoardStatusLabelsSchema,
+  BotStartersSchema,
+  CreateRoutineInput,
+  GROUP_MEMBER_MIN,
+  isTicketCompletedStatus,
+  MEMORY_INDEX_PATH,
+  TicketFieldsSchema,
+  TicketPrioritySchema,
+  TicketStatusSchema,
+  UserMemorySourceSchema,
+  WikiSettingsSchema,
+} from "@corvo/contracts";
+import { organicAvatarFamily, wikiCanonicalTitle, wikiSlug } from "@corvo/core";
 import type { Prisma, PrismaClient } from "@corvo/db";
-import { IsolationError, parseComputerMode } from "@corvo/db";
+import {
+  createGroupRepos,
+  IsolationError,
+  parseComputerMode,
+  proposeUserMemory,
+  setWikiSettings,
+  userMemoryFingerprint,
+  writeWikiPage,
+} from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import type { AgentImportServices } from "./agent-import.js";
 import type { AgentSkillsService } from "./agent-skills.js";
 
 type TransferDeps = { prisma: PrismaClient; home: AgentHomeStore };
 type ExportedBot = SpaceExport["bots"][number];
+type ExportedRoutine = ExportedBot["routines"][number];
 type ExportableBot = {
   id: string;
   computer: { homeKey: string; scope: string } | null;
@@ -44,7 +66,12 @@ export async function gatherBotContent(
   };
   const [memory, routines, files] = await Promise.all([
     deps.prisma.memoryDocument.findMany({ where: { botId: bot.id, spaceId: actor.spaceId } }),
-    deps.prisma.routine.findMany({ where: { botId: bot.id, spaceId: actor.spaceId } }),
+    deps.prisma.routine.findMany({
+      where: { botId: bot.id, spaceId: actor.spaceId },
+      include: {
+        steps: { orderBy: { position: "asc" }, include: { bot: { select: { name: true } } } },
+      },
+    }),
     (async () => {
       const exported: ExportManifest["files"] = [];
       const directory = resolveBotWorkspacePath(parseComputerMode(bot.computer!.scope), bot.id, "");
@@ -65,6 +92,15 @@ export async function gatherBotContent(
       prompt: r.prompt,
       crons: r.crons,
       timezone: r.timezone,
+      notify: r.notify,
+      webhookEnabled: r.webhookEnabled,
+      githubEnabled: r.githubEnabled,
+      messageProvider: r.messageProvider,
+      modelProvider: r.modelProvider,
+      modelId: r.modelId,
+      thinkingLevel: r.thinkingLevel as ExportedRoutine["thinkingLevel"],
+      watch: parseRoutineWatch(r.watch),
+      steps: r.steps.map((step) => ({ bot: step.bot.name, instruction: step.instruction })),
     })),
     files,
   };
@@ -78,7 +114,14 @@ export async function exportSpace(
       actor: Actor,
       id: string,
     ) => Promise<
-      ExportableBot & Pick<ExportedBot["bot"], "name" | "title" | "description" | "instructions">
+      ExportableBot &
+        Pick<ExportedBot["bot"], "name" | "title" | "description" | "instructions"> & {
+          color: string;
+          notifyOnFinish: boolean;
+          starters?: unknown;
+          disabledBuiltinTools?: string[];
+          sectionId: string | null;
+        }
     >;
   },
   actor: Actor,
@@ -86,6 +129,8 @@ export async function exportSpace(
   const owner = { spaceId: actor.spaceId, userId: actor.userId };
   const listed = await repos.listBots(actor);
   const bots: ExportedBot[] = [];
+  const botNames = new Map<string, string>();
+  const botSections = new Map<string, string[]>();
   for (const { id } of listed) {
     const bot = await repos.getBot(actor, id);
     bots.push({
@@ -95,11 +140,19 @@ export async function exportSpace(
         description: bot.description,
         instructions: bot.instructions,
         computerMode: parseComputerMode(bot.computer!.scope),
+        color: bot.color,
+        avatarFamily: organicAvatarFamily(id),
+        notifyOnFinish: bot.notifyOnFinish,
+        starters: BotStartersSchema.catch([]).parse(bot.starters ?? []),
+        disabledBuiltinTools: bot.disabledBuiltinTools ?? [],
       },
       ...(await gatherBotContent(deps, actor, bot)),
     });
+    botNames.set(id, bot.name);
+    if (bot.sectionId)
+      botSections.set(bot.sectionId, [...(botSections.get(bot.sectionId) ?? []), bot.name]);
   }
-  const [memory, skills] = await Promise.all([
+  const [memory, skills, wiki, wikiSettings, facts, groups, board, sections] = await Promise.all([
     deps.prisma.memoryDocument.findMany({
       where: { ...owner, scope: "user", botId: null },
       orderBy: { path: "asc" },
@@ -108,7 +161,38 @@ export async function exportSpace(
       where: { ...owner, source: "user" },
       orderBy: { name: "asc" },
     }),
+    deps.prisma.memoryDocument.findMany({
+      where: { spaceId: actor.spaceId, scope: "wiki", NOT: { path: { startsWith: "." } } },
+      orderBy: { path: "asc" },
+    }),
+    deps.prisma.wikiSettings.findUnique({ where: { spaceId: actor.spaceId } }),
+    // Read through the client that decrypts, so the file holds the text itself.
+    deps.prisma.userMemory.findMany({
+      where: { ...owner, state: { in: ["saved", "pending"] } },
+      orderBy: { createdAt: "asc" },
+    }),
+    deps.prisma.chatGroup.findMany({
+      where: { ...owner, archivedAt: null },
+      orderBy: { createdAt: "asc" },
+      include: { members: { orderBy: { createdAt: "asc" } } },
+    }),
+    deps.prisma.board.findUnique({
+      where: { spaceId: actor.spaceId },
+      include: {
+        tickets: {
+          orderBy: { number: "asc" },
+          include: { comments: { orderBy: { createdAt: "asc" } } },
+        },
+      },
+    }),
+    deps.prisma.botSection.findMany({ where: owner, orderBy: { position: "asc" } }),
   ]);
+  const channels = groups.flatMap((group) => {
+    const members = group.members.flatMap((m) => botNames.get(m.botId) ?? []);
+    return members.length >= GROUP_MEMBER_MIN
+      ? [{ name: group.name, purpose: group.purpose, members, sectionId: group.sectionId }]
+      : [];
+  });
   return {
     version: 1,
     kind: "space",
@@ -116,6 +200,43 @@ export async function exportSpace(
     bots,
     memory: memory.map((m) => ({ path: m.path, content: m.content })),
     skills: skills.map((s) => ({ content: s.content })),
+    wiki: wiki.map((page) => ({ title: page.path.replace(/\.md$/, ""), body: page.content })),
+    wikiSettings: wikiSettings
+      ? WikiSettingsSchema.catch({ capture: true, edits: "approve" }).parse(wikiSettings)
+      : null,
+    facts: facts.map((fact) => ({
+      text: fact.text,
+      state: fact.state === "pending" ? ("pending" as const) : ("saved" as const),
+      source: UserMemorySourceSchema.catch("typed").parse(fact.source),
+      bot: fact.botId ? (botNames.get(fact.botId) ?? null) : null,
+    })),
+    channels: channels.map(({ sectionId: _section, ...channel }) => channel),
+    board:
+      board && board.tickets.length > 0
+        ? {
+            name: board.name,
+            ticketPrefix: board.ticketPrefix,
+            statusLabels: BoardStatusLabelsSchema.nullable().catch(null).parse(board.statusLabels),
+            tickets: board.tickets.map((ticket) => ({
+              number: ticket.number,
+              title: ticket.title,
+              description: ticket.description,
+              status: TicketStatusSchema.catch("todo").parse(ticket.status),
+              priority: TicketPrioritySchema.nullable().catch(null).parse(ticket.priority),
+              assignee: ticket.assigneeBotId ? (botNames.get(ticket.assigneeBotId) ?? null) : null,
+              fields: TicketFieldsSchema.catch([]).parse(ticket.fields ?? []),
+              comments: ticket.comments.map((comment) => ({
+                author: comment.authorBotId ? (botNames.get(comment.authorBotId) ?? null) : null,
+                body: comment.body,
+              })),
+            })),
+          }
+        : null,
+    sections: sections.map((section) => ({
+      name: section.name,
+      bots: botSections.get(section.id) ?? [],
+      channels: channels.filter((c) => c.sectionId === section.id).map((c) => c.name),
+    })),
   };
 }
 
@@ -157,17 +278,26 @@ export async function importSpace<PreparedKey>(
   input: SpaceExport,
 ): Promise<SpaceImportResult> {
   const owner = { spaceId: actor.spaceId, userId: actor.userId };
-  const taken = new Set(
-    (await deps.prisma.bot.findMany({ where: owner, select: { name: true } })).map((row) =>
-      row.name.toLowerCase(),
+  // Every bot of the space by lowercase name; the ones this file adds join it as they are made.
+  const botIds = new Map(
+    (await deps.prisma.bot.findMany({ where: owner, select: { id: true, name: true } })).map(
+      (row) => [row.name.toLowerCase(), row.id] as const,
     ),
   );
+  const taken = new Set(botIds.keys());
+  const addedIds = new Map<string, string>();
+  const stepsToAdd: { routineId: string; steps: ExportedRoutine["steps"] }[] = [];
   const result: SpaceImportResult = {
     added: [],
     existing: [],
     skills: 0,
     routines: 0,
+    skippedRoutines: 0,
     skippedFiles: 0,
+    wikiPages: 0,
+    facts: 0,
+    channels: 0,
+    tickets: 0,
   };
   const announce: { botId: string; rows: Prisma.RoutineGetPayload<object>[] }[] = [];
 
@@ -179,20 +309,17 @@ export async function importSpace<PreparedKey>(
     }
     taken.add(key);
     // A bad schedule skips that routine; a throw inside the seed would drop the whole bot.
+    // Whatever a routine waits on (a connection, a model key) may not exist here: it arrives
+    // paused either way, and the person reconnects before turning it on.
     const routines = entry.routines.flatMap((routine) => {
       try {
-        const parsed = CreateRoutineInput.parse({
-          botId: "pending",
-          name: routine.name,
-          prompt: routine.prompt,
-          crons: routine.crons,
-          timezone: routine.timezone,
-          active: false,
-        });
+        const { steps, ...fields } = routine;
+        const parsed = CreateRoutineInput.parse({ ...fields, botId: "pending", active: false });
         services.assertRoutineSchedule(parsed);
         services.routineNextRunAt(parsed);
-        return [parsed];
+        return [{ input: parsed, steps }];
       } catch {
+        result.skippedRoutines += 1;
         return [];
       }
     });
@@ -201,7 +328,11 @@ export async function importSpace<PreparedKey>(
       title: entry.bot.title,
       description: entry.bot.description,
       instructions: entry.bot.instructions,
-      notifyOnFinish: true,
+      notifyOnFinish: entry.bot.notifyOnFinish,
+      color: entry.bot.color,
+      avatarFamily: entry.bot.avatarFamily,
+      starters: entry.bot.starters,
+      disabledBuiltinTools: entry.bot.disabledBuiltinTools,
       computerMode: entry.bot.computerMode,
       modelProvider: null,
       modelId: null,
@@ -218,7 +349,7 @@ export async function importSpace<PreparedKey>(
           await writeMemory(tx, owner, { botId }, item, seeded?.id ?? null);
         }
         const rows: Prisma.RoutineGetPayload<object>[] = [];
-        for (const routine of routines) {
+        for (const { input: routine } of routines) {
           const withBot = { ...routine, botId };
           const row = await tx.routine.create({
             data: services.routineRowData(actor, withBot, services.routineNextRunAt(withBot)),
@@ -229,8 +360,14 @@ export async function importSpace<PreparedKey>(
       },
     });
     result.added.push(entry.bot.name);
+    botIds.set(key, bot.id);
+    addedIds.set(key, bot.id);
     const rows = announce.filter((a) => a.botId === bot.id).at(-1)?.rows ?? [];
     result.routines += rows.length;
+    rows.forEach((row, index) => {
+      const steps = routines[index]?.steps ?? [];
+      if (steps.length > 0) stepsToAdd.push({ routineId: row.id, steps });
+    });
 
     const homeKey =
       (
@@ -271,6 +408,20 @@ export async function importSpace<PreparedKey>(
     }
   }
 
+  // Steps name their agents, so they wait until every agent of the file exists.
+  for (const { routineId, steps } of stepsToAdd) {
+    const known = steps.flatMap((step) => {
+      const botId = botIds.get(step.bot.toLowerCase());
+      return botId ? [{ botId, instruction: step.instruction }] : [];
+    });
+    if (known.length === 0) continue;
+    await services.inTransaction((tx) =>
+      tx.routineStep.createMany({
+        data: known.map((step, index) => ({ routineId, ...step, position: index + 2 })),
+      }),
+    );
+  }
+
   const spacePaths = new Set(
     (
       await deps.prisma.memoryDocument.findMany({
@@ -293,5 +444,213 @@ export async function importSpace<PreparedKey>(
       // A name already in use, or a SKILL.md this server can't read: leave it out.
     }
   }
+
+  await importWiki(deps, owner, input, result);
+  await importFacts(deps, owner, input, botIds, result);
+  const channelIds = await importChannels(deps, actor, input, botIds, result);
+  await importBoard(services, deps, actor, input, botIds, result);
+  await importSections(services, owner, input, addedIds, channelIds);
   return result;
+}
+
+/** Pages whose title is already in the wiki stay as they are; their history is not carried. */
+async function importWiki(
+  deps: TransferDeps,
+  owner: { spaceId: string; userId: string },
+  input: SpaceExport,
+  result: SpaceImportResult,
+) {
+  for (const page of input.wiki) {
+    const title = wikiCanonicalTitle(page.title);
+    const slug = wikiSlug(title);
+    if (!slug) continue;
+    const exists = await deps.prisma.memoryDocument.findFirst({
+      where: { spaceId: owner.spaceId, scope: "wiki", slug },
+      select: { id: true },
+    });
+    if (exists) continue;
+    try {
+      await writeWikiPage(deps.prisma, owner, { title, body: page.body, expectedRevision: 0 });
+      result.wikiPages += 1;
+    } catch {
+      // A title without a letter or digit, or one written meanwhile: leave it out.
+    }
+  }
+  if (input.wikiSettings) {
+    const current = await deps.prisma.wikiSettings.findUnique({
+      where: { spaceId: owner.spaceId },
+      select: { spaceId: true },
+    });
+    if (!current) await setWikiSettings(deps.prisma, owner.spaceId, input.wikiSettings);
+  }
+}
+
+/** Facts about the person, written the way the app writes them; one it has or forgot stays as is. */
+async function importFacts(
+  deps: TransferDeps,
+  owner: { spaceId: string; userId: string },
+  input: SpaceExport,
+  botIds: Map<string, string>,
+  result: SpaceImportResult,
+) {
+  for (const fact of input.facts) {
+    try {
+      const known = await deps.prisma.userMemory.findUnique({
+        where: {
+          spaceId_userId_fingerprint: {
+            ...owner,
+            fingerprint: userMemoryFingerprint(owner, fact.text),
+          },
+        },
+        select: { id: true },
+      });
+      if (known) continue;
+      const botId = fact.bot ? botIds.get(fact.bot.toLowerCase()) : undefined;
+      const proposed = await proposeUserMemory(deps.prisma, owner, {
+        text: fact.text,
+        source: fact.source,
+        state: fact.state,
+        ...(botId ? { botId } : {}),
+      });
+      if (proposed.outcome === "created") result.facts += 1;
+    } catch {
+      // A line the app would refuse as a memory: leave it out.
+    }
+  }
+}
+
+/** Channels the space doesn't have by name, with the members this space has; no messages. */
+async function importChannels(
+  deps: TransferDeps,
+  actor: Actor,
+  input: SpaceExport,
+  botIds: Map<string, string>,
+  result: SpaceImportResult,
+): Promise<Map<string, string>> {
+  const made = new Map<string, string>();
+  if (input.channels.length === 0) return made;
+  const names = new Set(
+    (
+      await deps.prisma.chatGroup.findMany({
+        where: { spaceId: actor.spaceId, userId: actor.userId, archivedAt: null },
+        select: { name: true },
+      })
+    ).map((row) => row.name.toLowerCase()),
+  );
+  const groups = createGroupRepos(deps.prisma);
+  for (const channel of input.channels) {
+    const key = channel.name.toLowerCase();
+    if (names.has(key)) continue;
+    const members = [
+      ...new Set(channel.members.flatMap((name) => botIds.get(name.toLowerCase()) ?? [])),
+    ];
+    if (members.length < GROUP_MEMBER_MIN) continue;
+    try {
+      const group = await groups.createGroup(actor, {
+        name: channel.name,
+        purpose: channel.purpose,
+        botIds: members,
+      });
+      names.add(key);
+      made.set(key, group.id);
+      result.channels += 1;
+    } catch (error) {
+      getLogger().error("imported channel", error);
+    }
+  }
+  return made;
+}
+
+/**
+ * A space has one board. Its tickets arrive only on a board that has none, keeping their numbers
+ * so references in the pages and comments still point at them.
+ */
+async function importBoard<PreparedKey>(
+  services: AgentImportServices<PreparedKey>,
+  deps: TransferDeps,
+  actor: Actor,
+  input: SpaceExport,
+  botIds: Map<string, string>,
+  result: SpaceImportResult,
+) {
+  const { board } = input;
+  if (!board || board.tickets.length === 0) return;
+  const existing = await deps.prisma.board.findUnique({
+    where: { spaceId: actor.spaceId },
+    select: { id: true, _count: { select: { tickets: true } } },
+  });
+  if (existing && existing._count.tickets > 0) return;
+  const settings = {
+    ticketPrefix: board.ticketPrefix,
+    nextNumber: Math.max(...board.tickets.map((ticket) => ticket.number)) + 1,
+    ...(board.statusLabels ? { statusLabels: board.statusLabels } : {}),
+  };
+  const assignee = (name: string | null) =>
+    name ? (botIds.get(name.toLowerCase()) ?? null) : null;
+  await services.inTransaction(async (tx) => {
+    const id = existing
+      ? (await tx.board.update({ where: { id: existing.id }, data: settings })).id
+      : (await tx.board.create({ data: { spaceId: actor.spaceId, name: board.name, ...settings } }))
+          .id;
+    for (const ticket of board.tickets) {
+      await tx.ticket.create({
+        data: {
+          boardId: id,
+          spaceId: actor.spaceId,
+          number: ticket.number,
+          title: ticket.title,
+          description: ticket.description,
+          status: ticket.status,
+          priority: ticket.priority,
+          assigneeBotId: assignee(ticket.assignee),
+          createdByUserId: actor.userId,
+          completedAt: isTicketCompletedStatus(ticket.status) ? new Date() : null,
+          ...(ticket.fields.length > 0 ? { fields: ticket.fields } : {}),
+          comments: {
+            create: ticket.comments.map((comment) => ({
+              spaceId: actor.spaceId,
+              authorBotId: assignee(comment.author),
+              body: comment.body,
+            })),
+          },
+        },
+      });
+    }
+  });
+  result.tickets = board.tickets.length;
+}
+
+/** Sections are made if missing; only the bots and channels this import added go into them. */
+async function importSections<PreparedKey>(
+  services: AgentImportServices<PreparedKey>,
+  owner: { spaceId: string; userId: string },
+  input: SpaceExport,
+  addedBots: Map<string, string>,
+  addedChannels: Map<string, string>,
+) {
+  for (const section of input.sections) {
+    const bots = section.bots.flatMap((name) => addedBots.get(name.toLowerCase()) ?? []);
+    const channels = section.channels.flatMap(
+      (name) => addedChannels.get(name.toLowerCase()) ?? [],
+    );
+    if (bots.length === 0 && channels.length === 0) continue;
+    await services.inTransaction(async (tx) => {
+      const last = await tx.botSection.aggregate({ where: owner, _max: { position: true } });
+      await tx.botSection.createMany({
+        data: { ...owner, name: section.name, position: (last._max.position ?? -1) + 1 },
+        skipDuplicates: true,
+      });
+      const row = await tx.botSection.findUniqueOrThrow({
+        where: { spaceId_userId_name: { ...owner, name: section.name } },
+      });
+      await tx.bot.updateMany({
+        where: { id: { in: bots }, ...owner },
+        data: { sectionId: row.id },
+      });
+      await tx.chatGroup.updateMany({
+        where: { id: { in: channels }, ...owner },
+        data: { sectionId: row.id },
+      });
+    });
+  }
 }

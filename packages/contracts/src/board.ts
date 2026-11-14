@@ -22,7 +22,7 @@ const TICKET_PREFIX_MAX_LENGTH = 12;
 const TICKET_NUMBER_MAX = 2_147_483_647;
 export const TICKET_COMMENT_MAX_LENGTH = 10_000;
 
-const TicketPrefixSchema = z
+export const TicketPrefixSchema = z
   .string()
   .trim()
   .min(1)

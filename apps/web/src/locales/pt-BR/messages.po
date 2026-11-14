@@ -22,6 +22,11 @@ msgstr " (não lido)"
 msgid "{0, plural, one {# bot has its own model:} other {# bots have their own model:}}"
 msgstr "{0, plural, one {# bot tem o próprio modelo:} other {# bots têm o próprio modelo:}}"
 
+#. placeholder {0}: result.channels
+#: src/pages/SpaceTransfer.tsx
+msgid "{0, plural, one {# channel} other {# channels}}"
+msgstr "{0, plural, one {# canal} other {# canais}}"
+
 #. placeholder {0}: summary.failed.length
 #: src/pages/Routines.tsx
 msgid "{0, plural, one {# failed} other {# failed}}"
@@ -31,6 +36,16 @@ msgstr "{0, plural, one {# falhou} other {# falharam}}"
 #: src/pages/shell/transcript.tsx
 msgid "{0, plural, one {# reply} other {# replies}}"
 msgstr "{0, plural, one {# resposta} other {# respostas}}"
+
+#. placeholder {0}: result.tickets
+#: src/pages/SpaceTransfer.tsx
+msgid "{0, plural, one {# ticket} other {# tickets}}"
+msgstr "{0, plural, one {# ticket} other {# tickets}}"
+
+#. placeholder {0}: result.wikiPages
+#: src/pages/SpaceTransfer.tsx
+msgid "{0, plural, one {# wiki page} other {# wiki pages}}"
+msgstr "{0, plural, one {# página do wiki} other {# páginas do wiki}}"
 
 #. placeholder {0}: pinned.length
 #: src/pages/model-settings/space-bots-model.tsx
@@ -921,6 +936,11 @@ msgstr "Já conectado"
 #: src/pages/Auth.tsx
 msgid "Already have an account?"
 msgstr "Você já tem cadastro?"
+
+#. placeholder {0}: extras.join(", ")
+#: src/pages/SpaceTransfer.tsx
+msgid "Also added {0}."
+msgstr "Também adicionado: {0}."
 
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Always act"

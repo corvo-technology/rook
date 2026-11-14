@@ -1,6 +1,16 @@
 import * as z from "zod";
 import { STORE_CATEGORIES } from "./agent-catalog.js";
 import { AGENT_SECRET_NAME_PATTERN } from "./agent-secret-name.js";
+import {
+  BoardStatusLabelsSchema,
+  TICKET_COMMENT_MAX_LENGTH,
+  TICKET_DESCRIPTION_MAX_LENGTH,
+  TICKET_TITLE_MAX_LENGTH,
+  TicketFieldsSchema,
+  TicketPrefixSchema,
+  TicketPrioritySchema,
+  TicketStatusSchema,
+} from "./board.js";
 import { BotAvatarValueSchema } from "./bot-avatar.js";
 import { BotStartersSchema } from "./bot-starters.js";
 import { DisabledBuiltinToolsSchema } from "./builtin-tools.js";
@@ -26,7 +36,8 @@ import { PartnerHiddenArea } from "./partner.js";
 import { RoutineWatchSchema, RoutineWatchStateSchema } from "./routine-watch.js";
 import { RunTriggerSchema } from "./runs.js";
 import { SettingsScopeSchema } from "./settings-scope.js";
-import { MemoryModeSchema } from "./user-memory.js";
+import { MemoryModeSchema, UserMemorySourceSchema, UserMemoryTextSchema } from "./user-memory.js";
+import { WikiSettingsSchema } from "./wiki.js";
 
 export const ComputerModeSchema = z.enum(["team", "dedicated"]);
 export type ComputerMode = z.infer<typeof ComputerModeSchema>;
@@ -1966,11 +1977,31 @@ const ExportedMemorySchema = z.object({
   path: z.string().trim().min(1).max(500),
   content: z.string(),
 });
+/** A routine as a file carries it. Fields added later default, so older files still parse. */
 const ExportedRoutineSchema = RoutineSchema.pick({
   name: true,
   prompt: true,
   crons: true,
   timezone: true,
+}).extend({
+  notify: RoutineSchema.shape.notify.default(true),
+  webhookEnabled: RoutineSchema.shape.webhookEnabled.default(false),
+  githubEnabled: RoutineSchema.shape.githubEnabled.default(false),
+  messageProvider: RoutineSchema.shape.messageProvider.default(null),
+  modelProvider: RoutineSchema.shape.modelProvider.default(null),
+  modelId: RoutineSchema.shape.modelId.default(null),
+  thinkingLevel: RoutineSchema.shape.thinkingLevel.default(null),
+  watch: RoutineSchema.shape.watch.default(null),
+  /** Later steps of a workflow; each agent is named, because ids differ between servers. */
+  steps: z
+    .array(
+      z.object({
+        bot: z.string(),
+        instruction: z.string().trim().min(1).max(ROUTINE_STEP_INSTRUCTION_MAX),
+      }),
+    )
+    .max(ROUTINE_MAX_STEPS)
+    .default([]),
 });
 const ExportedFileSchema = z.object({
   path: z.string().min(1).max(1000),
@@ -2006,6 +2037,12 @@ export const SpaceExportSchema = z.object({
           description: z.string().max(BOT_DESCRIPTION_MAX_LENGTH),
           instructions: z.string().max(BOT_INSTRUCTIONS_MAX_LENGTH),
           computerMode: ComputerModeSchema.default("team"),
+          /** Its colour or picture, and the organic body family the server draws it with. */
+          color: BotAvatarValueSchema.optional(),
+          avatarFamily: z.number().int().min(0).max(9).optional(),
+          notifyOnFinish: z.boolean().default(true),
+          starters: BotStartersSchema.default([]),
+          disabledBuiltinTools: DisabledBuiltinToolsSchema.default([]),
         }),
         memory: z.array(ExportedMemorySchema).max(1000),
         routines: z.array(ExportedRoutineSchema).max(200),
@@ -2017,6 +2054,77 @@ export const SpaceExportSchema = z.object({
   memory: z.array(ExportedMemorySchema).max(1000),
   /** Skills as their SKILL.md. */
   skills: z.array(z.object({ content: z.string().min(1).max(100_000) })).max(500),
+  /** Wiki pages by title; their history stays behind. */
+  wiki: z
+    .array(z.object({ title: z.string().min(1).max(500), body: z.string() }))
+    .max(2000)
+    .default([]),
+  wikiSettings: WikiSettingsSchema.nullable().default(null),
+  /** What the person's agents know about them; forgotten facts and their threads stay behind. */
+  facts: z
+    .array(
+      z.object({
+        text: UserMemoryTextSchema,
+        state: z.enum(["pending", "saved"]),
+        source: UserMemorySourceSchema,
+        bot: z.string().nullable().default(null),
+      }),
+    )
+    .max(1000)
+    .default([]),
+  /** Channels with their agents named, because ids differ between servers. */
+  channels: z
+    .array(
+      z.object({
+        name: z.string().min(1).max(200),
+        purpose: z.string().nullable().default(null),
+        members: z.array(z.string()).max(GROUP_MEMBER_MAX),
+      }),
+    )
+    .max(200)
+    .default([]),
+  /** The space's board; its tickets name the agent they are assigned to. */
+  board: z
+    .object({
+      name: z.string().min(1).max(200),
+      ticketPrefix: TicketPrefixSchema,
+      statusLabels: BoardStatusLabelsSchema.nullable().default(null),
+      tickets: z
+        .array(
+          z.object({
+            number: z.number().int().min(1).max(2_147_483_647),
+            title: z.string().min(1).max(TICKET_TITLE_MAX_LENGTH),
+            description: z.string().max(TICKET_DESCRIPTION_MAX_LENGTH).nullable().default(null),
+            status: TicketStatusSchema,
+            priority: TicketPrioritySchema.nullable().default(null),
+            assignee: z.string().nullable().default(null),
+            fields: TicketFieldsSchema.default([]),
+            comments: z
+              .array(
+                z.object({
+                  author: z.string().nullable().default(null),
+                  body: z.string().min(1).max(TICKET_COMMENT_MAX_LENGTH),
+                }),
+              )
+              .max(500)
+              .default([]),
+          }),
+        )
+        .max(10_000),
+    })
+    .nullable()
+    .default(null),
+  /** Sidebar sections with the bots and channels in them, by name. */
+  sections: z
+    .array(
+      z.object({
+        name: z.string().min(1).max(200),
+        bots: z.array(z.string()).default([]),
+        channels: z.array(z.string()).default([]),
+      }),
+    )
+    .max(200)
+    .default([]),
 });
 export type SpaceExport = z.infer<typeof SpaceExportSchema>;
 
@@ -2026,6 +2134,12 @@ export const SpaceImportResultSchema = z.object({
   existing: z.array(z.string()),
   skills: z.number().int(),
   routines: z.number().int(),
+  /** Routines the file carried that this server could not take. */
+  skippedRoutines: z.number().int(),
   skippedFiles: z.number().int(),
+  wikiPages: z.number().int(),
+  facts: z.number().int(),
+  channels: z.number().int(),
+  tickets: z.number().int(),
 });
 export type SpaceImportResult = z.infer<typeof SpaceImportResultSchema>;

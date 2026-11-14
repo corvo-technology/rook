@@ -8561,6 +8561,25 @@ describe("routine watch creation boundaries", () => {
     expect(update).not.toHaveBeenCalled();
   });
 
+  it("checks the trigger an imported routine already holds when it is turned on", async () => {
+    const { client, update, findRoutine } = fixture();
+    const watch = { kind: "files", paths: ["/etc"], everyMinutes: 5, loud: false };
+    findRoutine.mockResolvedValueOnce({
+      id: "routine-1",
+      botId: "bot-1",
+      crons: [],
+      active: false,
+      watch,
+    } as never);
+    await expect(
+      client.routines.update({ routineId: "routine-1", active: true }),
+    ).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+      message: expect.stringContaining("inside the bot's folder"),
+    });
+    expect(update).not.toHaveBeenCalled();
+  });
+
   it("uses the owner boundary before creating or changing a command watch", async () => {
     const { client, create, update, findBot, findRoutine } = fixture();
     findBot.mockResolvedValueOnce(null as never);

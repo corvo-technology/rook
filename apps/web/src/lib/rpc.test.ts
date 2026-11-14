@@ -3,6 +3,7 @@ import {
   clearSpaceSelection,
   createSpaceRpc,
   leaveUnavailableSpace,
+  onRpcTargetGone,
   rpc,
   rpcForSpace,
   selectedSpaceId,
@@ -252,5 +253,59 @@ describe("space-bound clients", () => {
   it("reuses one client per space", () => {
     expect(rpcForSpace("space-a")).toBe(rpcForSpace("space-a"));
     expect(rpcForSpace("space-a")).not.toBe(rpcForSpace("space-b"));
+  });
+});
+
+describe("a send during an API swap", () => {
+  const sent = { botId: "bot-1", text: "hi", clientNonce: "nonce-1" };
+  const ok = () => Response.json({ json: { seq: 1 } });
+
+  it("retries a 503 with the same client id and then succeeds", async () => {
+    const bodies: string[] = [];
+    const fetch = vi
+      .fn<(request: Request) => Promise<Response>>()
+      .mockResolvedValueOnce(new Response("", { status: 503 }))
+      .mockResolvedValueOnce(ok());
+    vi.stubGlobal("fetch", async (request: Request) => {
+      bodies.push(await request.clone().text());
+      return fetch(request);
+    });
+    await expect(rpc.threads.send(sent)).resolves.toMatchObject({ seq: 1 });
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(bodies[0]).toContain("nonce-1");
+    expect(bodies[1]).toBe(bodies[0]);
+  });
+
+  it("retries a dropped connection", async () => {
+    const fetch = vi
+      .fn<() => Promise<Response>>()
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockResolvedValueOnce(ok());
+    vi.stubGlobal("fetch", fetch);
+    await expect(rpc.threads.send(sent)).resolves.toMatchObject({ seq: 1 });
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not retry a send from an old client that has no client id", async () => {
+    const fetch = vi.fn(async () => new Response("", { status: 503 }));
+    vi.stubGlobal("fetch", fetch);
+    await expect(rpc.threads.send({ botId: "bot-1", text: "hi" })).rejects.toBeDefined();
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not retry a deleted conversation, and tells the shell to leave it", async () => {
+    const fetch = vi.fn(async () =>
+      Response.json(
+        { json: { code: "NOT_FOUND", status: 404, message: "This conversation no longer exists" } },
+        { status: 404 },
+      ),
+    );
+    vi.stubGlobal("fetch", fetch);
+    const gone = vi.fn();
+    const off = onRpcTargetGone(gone);
+    await expect(rpc.threads.send(sent)).rejects.toMatchObject({ code: "NOT_FOUND" });
+    off();
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(gone).toHaveBeenCalledWith({ botId: "bot-1" });
   });
 });

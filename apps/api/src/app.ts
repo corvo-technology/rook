@@ -180,6 +180,7 @@ import { mountDiagramScript } from "./diagram-script.js";
 import { configuredEmailProvider } from "./email.js";
 import type { AppEnv } from "./env.js";
 import { loadEnv } from "./env.js";
+import type { DrainState } from "./health.js";
 import { healthRoutes } from "./health.js";
 import { mountLocalEntryRoute } from "./local-entry.js";
 import { mountLocalComputerHost } from "./local-settings.js";
@@ -272,6 +273,8 @@ type CreateAppOverrides = Partial<AppEnv> & {
   remoteConnectors?: RemoteConnectorDependencies;
   modelConnectionFetch?: typeof fetch;
   logger?: Logger;
+  /** Set by the process on SIGTERM so `/ready` and `/health` start failing before the port closes. */
+  drain?: DrainState;
   runtime?: AgentRuntime;
   contextStrategy?: AgentContextStrategy;
 };
@@ -291,6 +294,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     remoteConnectors,
     modelConnectionFetch,
     logger: loggerOverride,
+    drain,
     runtime: runtimeOverride,
     contextStrategy,
     ...envOverrides
@@ -1623,6 +1627,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
           prisma.$executeRaw`SET LOCAL statement_timeout = 1500`,
           prisma.$queryRaw`SELECT 1`,
         ]),
+      drain,
     ),
   );
 

@@ -18,6 +18,7 @@ import { markOnce } from "../../lib/performance";
 import type { ChatTarget } from "../../lib/query";
 import { lastChatKey, queryClient, seedOnLeave, spaceSeedKey } from "../../lib/query";
 import type { createSpaceRpc } from "../../lib/rpc";
+import { onRpcTargetGone } from "../../lib/rpc";
 import { errorText } from "../../lib/user-error";
 import type { RosterDropTarget } from "./roster-drop";
 import { resolveRosterDrop } from "./roster-drop";
@@ -139,6 +140,20 @@ export function useSpaceRoster({
     },
     [navigate],
   );
+
+  // A view that polls a deleted bot or chat gets "not found" for every call. Reload the roster
+  // once, which redirects off the dead route, instead of letting each poll fail on its own.
+  useEffect(() => {
+    let last = 0;
+    return onRpcTargetGone((gone) => {
+      const onRoute = gone.groupId
+        ? gone.groupId === routeGroupId.current
+        : gone.botId === routeBotId.current;
+      if (!onRoute || Date.now() - last < 5_000) return;
+      last = Date.now();
+      void refreshBots().catch(() => undefined);
+    });
+  }, [refreshBots]);
 
   const flushBotOrder = useCallback(async () => {
     if (savingBotOrderRef.current) return;

@@ -28,6 +28,34 @@ Create the services with a Dockerfile build, root directory `.` and Dockerfile p
 | `SANDBOX_PROVIDER`, `E2B_API_KEY`, `E2B_DOMAIN` | yes | yes | |
 | `RELAX_RUNTIME_ROLE` | build | build | Set to `1` as a build variable (`guara env set -b`) only when the database owner cannot create roles. A few migrations grant to `corvo_app` unconditionally; this makes those statements no-ops while the role is missing. Rook then runs as the owner without row-level security. |
 
+## Zero-downtime API deploys
+
+The API drains on SIGTERM: `/ready` and `/health` answer 503 at once, it keeps serving for 5 s
+while the platform reroutes, stops accepting, lets in-flight requests finish, ends event streams
+so clients reconnect, and exits within 25 s. A new API answers `/ready` only after migrations ran,
+the routes are mounted and the database answers, because the port opens last (about 25 s after the
+container starts on 1 CPU).
+
+The web app's proxy answers 502 while no API accepts connections, and clients retry sends (and a
+few idempotent calls) through 502, 503, 504 and network errors for up to 30 s. That covers a short
+gap, not a rollout that stops the old pod before the new one is ready.
+
+Settings the owner must apply in the Guará dashboard (the CLI, 0.3.0, exposes none of them):
+
+| Setting | Value |
+| --- | --- |
+| Readiness probe | HTTP GET `/ready` on port 3100, initial delay 20 s, period 2 s, failure threshold 3 |
+| Liveness probe | HTTP GET `/health` on port 3100, period 10 s, failure threshold 6 (tolerates a slow boot) |
+| Rollout | Rolling update, max surge 1, max unavailable 0: the new pod is ready before the old one stops |
+| Termination grace period | at least 30 s (the API's drain deadline is 25 s) |
+| Replicas | 2 if the platform cannot surge past 1 replica |
+
+With one replica and no surge the old pod stops first and users see the gap until the new API is
+listening; set 2 replicas (autoscaling min 2, max 2 is the CLI's `guara scale` way to get there).
+Two API replicas need `OBJECT_STORAGE_*` set (artifacts must not live on one pod's volume) and
+the default Postgres realtime (`REALTIME_DATABASE_URL` or `DATABASE_URL`), so events reach every
+replica; see the shared-storage migration in `docs/self-host.md` first. Leave the worker at one.
+
 ## Commands
 
 ```bash

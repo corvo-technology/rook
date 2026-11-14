@@ -5,7 +5,8 @@ import type {
   BrowserSnapshotNode,
   BrowserSnapshotResult,
 } from "@corvo/adapter-kit";
-import { JSDOM } from "jsdom";
+import type { JSDOM } from "jsdom";
+import { loadJsdom } from "./jsdom.js";
 
 const INTERACTIVE_SELECTOR = [
   "a[href]",
@@ -43,11 +44,20 @@ export class PageBrowserSession {
   private loginFilled = new WeakSet<DomElement>();
   private nextRef = 1;
 
-  constructor(
+  private constructor(
+    private readonly newDom: typeof JSDOM,
+    url: string,
+    html: string,
+  ) {
+    this.dom = new newDom(html, { url, contentType: "text/html", pretendToBeVisual: true });
+  }
+
+  static async open(
     url = "about:blank",
     html = "<!doctype html><html><head><title></title></head><body></body></html>",
-  ) {
-    this.dom = new JSDOM(html, { url, contentType: "text/html", pretendToBeVisual: true });
+  ): Promise<PageBrowserSession> {
+    const { JSDOM } = await loadJsdom();
+    return new PageBrowserSession(JSDOM, url, html);
   }
 
   close(): void {
@@ -65,7 +75,7 @@ export class PageBrowserSession {
 
   load(url: string, html: string): BrowserNavigateResult {
     this.dom.window.close();
-    this.dom = new JSDOM(html, { url, contentType: "text/html", pretendToBeVisual: true });
+    this.dom = new this.newDom(html, { url, contentType: "text/html", pretendToBeVisual: true });
     this.refs.clear();
     return { url: this.url, title: this.title };
   }
@@ -304,10 +314,16 @@ function valueFor(win: DomWindow, el: DomElement): string | undefined {
 export class PageBrowserSessionStore {
   private readonly sessions = new Map<string, PageBrowserSession>();
 
-  get(sessionKey: string): PageBrowserSession {
+  async get(sessionKey: string): Promise<PageBrowserSession> {
     let session = this.sessions.get(sessionKey);
     if (!session) {
-      session = new PageBrowserSession();
+      session = await PageBrowserSession.open();
+      // Two first calls can race while jsdom loads; keep one session per key.
+      const raced = this.sessions.get(sessionKey);
+      if (raced) {
+        session.close();
+        return raced;
+      }
       this.sessions.set(sessionKey, session);
     }
     return session;

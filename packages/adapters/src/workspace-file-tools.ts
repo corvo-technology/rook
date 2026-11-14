@@ -3,9 +3,9 @@ import type { ComputerMode } from "@corvo/contracts";
 import { ATTACHMENT_MAX_BYTES } from "@corvo/contracts";
 import { redactSecrets } from "@corvo/core";
 import { getLogger } from "@corvo/logging";
-import { JSDOM } from "jsdom";
 import { displayBotWorkspacePath, resolveBotWorkspacePath } from "./computer-support.js";
 import type { ExecutorDeps } from "./executor-deps.js";
+import { loadJsdom } from "./jsdom.js";
 import type { PlotSpec } from "./plot-tool.js";
 import {
   assertPlotDataWithinLimits,
@@ -142,6 +142,7 @@ export async function renderPlotFromTool(
     }
     checkingSpec = true;
     assertPlotDataWithinLimits(args.spec as PlotSpec, rows);
+    const { JSDOM } = await loadJsdom();
     const svg = renderPlotSpecToSvg(args.spec as PlotSpec, rows, new JSDOM("").window.document);
     checkingSpec = false;
     const png = await plotSvgToPng(svg);

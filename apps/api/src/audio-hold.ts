@@ -1,7 +1,7 @@
 import type { JobPublisher } from "@corvo/adapter-kit";
 import { audioTranscribeJob, runContinueJob } from "@corvo/adapter-kit";
-import type { LocalSpeech } from "@corvo/adapters";
-import { creditOrganization, voiceCatalogEntry } from "@corvo/adapters";
+import type { HostedVoice, LocalSpeech } from "@corvo/adapters";
+import { hostedVoiceFunding, voiceCatalogEntry } from "@corvo/adapters";
 import { isAttachmentAudioMimeType } from "@corvo/contracts";
 import type { PrismaClient } from "@corvo/db";
 import { findDefaultVoiceCredential } from "@corvo/db";
@@ -22,15 +22,17 @@ export interface AudioHold {
 export function createAudioHold(deps: {
   prisma: PrismaClient;
   localSpeech?: LocalSpeech | undefined;
-  /** Set where customers on credits transcribe with the deployment's key. */
-  voiceCredits?: { apiKey: string } | undefined;
+  /** Set where people with no voice of their own transcribe with the deployment's key. */
+  voiceCredits?: HostedVoice | undefined;
 }): AudioHold {
   return {
     async canTranscribe(actor) {
       if (deps.localSpeech) return true;
       const credential = await findDefaultVoiceCredential(deps.prisma, actor);
       if (credential) return Boolean(voiceCatalogEntry(credential.provider)?.transcribe);
-      return Boolean(deps.voiceCredits && (await creditOrganization(deps.prisma, actor)));
+      return Boolean(
+        deps.voiceCredits && (await hostedVoiceFunding(deps.prisma, deps.voiceCredits, actor)),
+      );
     },
   };
 }

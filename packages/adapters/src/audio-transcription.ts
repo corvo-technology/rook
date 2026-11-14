@@ -13,7 +13,8 @@ import {
   openAiCompatibleVoiceServer,
 } from "./openai-compatible-voice.js";
 import { OPENROUTER_VOICE_PROVIDER_ID } from "./openrouter-voice.js";
-import { creditOrganization, transcribeOnCredits } from "./voice-credits.js";
+import type { HostedVoice } from "./voice-credits.js";
+import { hostedVoiceFunding, transcribeOnCredits } from "./voice-credits.js";
 import { createVoiceProvider, MAX_TRANSCRIBE_BYTES, voiceCatalogEntry } from "./voice-factory.js";
 
 const HOSTED_TRANSCRIBE_TIMEOUT_MS = 120_000;
@@ -46,7 +47,7 @@ export interface AudioTranscriptionDeps {
   createProvider?: typeof createVoiceProvider;
   allowPrivateEndpoint?: boolean;
   /** The deployment's speech key where customers on credits may use it. */
-  voiceCredits?: { apiKey: string };
+  voiceCredits?: HostedVoice;
 }
 
 export function dbVoiceCredential(prisma: PrismaClient, secrets: Pick<SecretStore, "load">) {
@@ -83,7 +84,7 @@ type Chosen =
   | { failure: TranscriptionFailure }
   | { kind: "local"; provider: VoiceProvider; secret: string; modelId: string }
   | { kind: "hosted"; provider: VoiceProvider; secret: string }
-  | { kind: "credits"; provider: VoiceProvider; secret: string; organizationId: string };
+  | { kind: "credits"; provider: VoiceProvider; secret: string; organizationId?: string };
 
 /**
  * A selected provider that transcribes is used, and nothing else: a hosted one that fails is not
@@ -123,18 +124,19 @@ async function chooseProvider(deps: AudioTranscriptionDeps, actor: Actor): Promi
       };
     }
     if (!deps.localSpeech) {
-      // No voice of their own: a customer on credits listens with the deployment's.
-      const organizationId =
-        !credential && deps.voiceCredits ? await creditOrganization(deps.prisma, actor) : undefined;
+      // No voice of their own: listen with the deployment's key, on credits where billing is on.
+      const funding =
+        !credential && deps.voiceCredits
+          ? await hostedVoiceFunding(deps.prisma, deps.voiceCredits, actor)
+          : undefined;
       const recipient = aiRecipient({ provider: OPENROUTER_VOICE_PROVIDER_ID, use: "voice" });
-      if (!organizationId || !deps.voiceCredits || !recipient)
-        return { failure: "provider-failed" };
+      if (!funding || !deps.voiceCredits || !recipient) return { failure: "provider-failed" };
       if (!(await deps.hasConsent(actor, recipient.key))) return { failure: "provider-failed" };
       return {
         kind: "credits",
         provider: create(OPENROUTER_VOICE_PROVIDER_ID),
         secret: deps.voiceCredits.apiKey,
-        organizationId,
+        ...funding,
       };
     }
     // The owner removed a model or cancelled a download: do not fetch one on their behalf again.
@@ -244,7 +246,7 @@ export async function transcribeAudioArtifact(
   try {
     const request = { audio, mimeType: artifact.mimeType, apiKey: chosen.secret, signal };
     const result =
-      chosen.kind === "credits"
+      chosen.kind === "credits" && chosen.organizationId
         ? await transcribeOnCredits(
             {
               prisma: deps.prisma,

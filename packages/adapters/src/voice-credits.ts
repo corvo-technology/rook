@@ -26,18 +26,40 @@ import {
   openRouterSpeechCostUsd,
 } from "./openrouter-voice.js";
 
+/** The deployment's OpenRouter key for voice, and whether its use is charged to credits. */
+export interface HostedVoice {
+  apiKey: string;
+  /** Billing credits are on, so every call is paid from the organization's balance. */
+  metered: boolean;
+}
+
 /**
- * Voice on credits needs the deployment's OpenRouter key and billing credits switched on. The key
- * is what the API hands to the provider; nothing else may carry it.
+ * Voice runs on the deployment's OpenRouter key exactly where chat runs on it: metered from credits
+ * when billing credits are on, and free like chat when they are off. The key is what the API hands
+ * to the provider; nothing else may carry it.
  */
 export function creditVoiceKey(input: {
   creditsEnabled: boolean;
   provider: string;
   key: string | undefined;
-}): { apiKey: string } | undefined {
-  return input.creditsEnabled && input.provider === OPENROUTER_VOICE_PROVIDER_ID && input.key
-    ? { apiKey: input.key }
+}): HostedVoice | undefined {
+  return input.provider === OPENROUTER_VOICE_PROVIDER_ID && input.key
+    ? { apiKey: input.key, metered: input.creditsEnabled }
     : undefined;
+}
+
+/**
+ * Whether this person may speak on the deployment's key, and which organization pays. Undefined
+ * when they may not: metered voice needs an organization on credits, the same rule chat follows.
+ */
+export async function hostedVoiceFunding(
+  prisma: PrismaClient,
+  hosted: HostedVoice,
+  scope: { userId: string; spaceId: string },
+): Promise<{ organizationId?: string } | undefined> {
+  if (!hosted.metered) return {};
+  const organizationId = await creditOrganization(prisma, scope);
+  return organizationId ? { organizationId } : undefined;
 }
 
 /** The organization whose credit pays for this person's voice, only while it is on credits. */

@@ -8,7 +8,7 @@ import { resolveVoiceTarget, synthesizeVoice, transcribeVoice, type VoiceDeps } 
 
 const actor = { userId: "user", spaceId: "space" } as Actor;
 const prisma = {} as PrismaClient;
-const voiceCredits = { apiKey: "deploy-key" };
+const voiceCredits = { apiKey: "deploy-key", metered: true };
 const deps = (extra: Partial<VoiceDeps> = {}) =>
   ({
     prisma,
@@ -21,7 +21,7 @@ afterEach(() => vi.restoreAllMocks());
 
 function noOwnVoice(organizationId = "org") {
   vi.spyOn(db, "findDefaultVoiceCredential").mockResolvedValue(null);
-  vi.spyOn(adapters, "creditOrganization").mockResolvedValue(organizationId);
+  vi.spyOn(adapters, "hostedVoiceFunding").mockResolvedValue({ organizationId });
 }
 
 describe("voice on credits", () => {
@@ -37,7 +37,7 @@ describe("voice on credits", () => {
 
   it("is not offered when the organization is not on credits", async () => {
     vi.spyOn(db, "findDefaultVoiceCredential").mockResolvedValue(null);
-    vi.spyOn(adapters, "creditOrganization").mockResolvedValue(undefined);
+    vi.spyOn(adapters, "hostedVoiceFunding").mockResolvedValue(undefined);
     await expect(resolveVoiceTarget(deps(), actor, {})).rejects.toBeInstanceOf(
       adapters.NoVoiceConfigured,
     );
@@ -59,7 +59,7 @@ describe("voice on credits", () => {
       voiceId: "v",
       speechModel: "",
     } as never);
-    const credits = vi.spyOn(adapters, "creditOrganization");
+    const credits = vi.spyOn(adapters, "hostedVoiceFunding");
     const prismaWithSecret = {
       secret: { findFirst: vi.fn().mockResolvedValue({ id: "s", ciphertext: "x" }) },
     } as unknown as PrismaClient;
@@ -83,6 +83,23 @@ describe("voice on credits", () => {
       expect.anything(),
     );
     expect(provider.synthesize).not.toHaveBeenCalled();
+  });
+
+  it("speaks free on the deployment key when billing credits are off, like chat", async () => {
+    vi.spyOn(db, "findDefaultVoiceCredential").mockResolvedValue(null);
+    const unmetered = deps({ voiceCredits: { apiKey: "deploy-key", metered: false } });
+    await expect(resolveVoiceTarget(unmetered, actor, {})).resolves.toEqual({
+      provider: "openrouter",
+      apiKey: "deploy-key",
+      voiceId: adapters.OPENROUTER_DEFAULT_VOICE,
+    });
+    const clip = { bytes: new Uint8Array([1]), mimeType: "audio/mpeg" as const };
+    const provider = { synthesize: vi.fn().mockResolvedValue(clip) } as unknown as VoiceProvider;
+    vi.spyOn(adapters, "createVoiceProvider").mockReturnValue(provider);
+    const charged = vi.spyOn(adapters, "synthesizeOnCredits");
+    await synthesizeVoice(unmetered, actor, { text: "Olá" });
+    expect(provider.synthesize).toHaveBeenCalledOnce();
+    expect(charged).not.toHaveBeenCalled();
   });
 
   it("charges listening to the organization", async () => {

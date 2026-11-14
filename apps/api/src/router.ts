@@ -15,6 +15,7 @@ import type {
   ComposioProvider,
   ConnectorRegistry,
   FaviconResolver,
+  HostedVoice,
   IntegrationProviderSettings,
   LocalSetupCheck,
   LocalSpeech,
@@ -80,7 +81,7 @@ export interface RouterDeps {
   /** Present only on the desktop app's own engine, where speech models can live. */
   localSpeech?: LocalSpeech;
   /** The deployment's speech key where customers on credits may use it; see `VoiceDeps`. */
-  voiceCredits?: { apiKey: string };
+  voiceCredits?: HostedVoice;
   /** Where voice notes can be transcribed; absent keeps them as files. */
   audio?: AudioHold;
   pushTokens: PushTokenStore;

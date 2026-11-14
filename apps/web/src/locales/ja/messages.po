@@ -3320,6 +3320,10 @@ msgstr "毎月"
 msgid "Every week"
 msgstr "毎週"
 
+#: src/pages/SpaceTransfer.tsx
+msgid "Everything in this file is already here."
+msgstr "このファイルの内容はすべて追加済みです。"
+
 #: src/pages/Store.tsx
 msgid "Executor token"
 msgstr "実行トークン"
@@ -3356,6 +3360,10 @@ msgstr "スペースをエクスポート"
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Export this week's list from the CRM and drop it in the shared folder"
 msgstr "今週のリストをCRMからエクスポートして共有フォルダに入れる"
+
+#: src/pages/SpaceTransfer.tsx
+msgid "Exporting…"
+msgstr "書き出し中…"
 
 #: src/pages/ExternalConversationSettings.tsx
 msgid "External conversation"
@@ -3759,6 +3767,14 @@ msgstr "スペースをインポート"
 #: src/pages/shell/composer.tsx
 msgid "Import this agent as a bot?"
 msgstr "このエージェントをボットとしてインポートしますか？"
+
+#: src/pages/SpaceTransfer.tsx
+msgid "Importing {name}…"
+msgstr "{name} を読み込み中…"
+
+#: src/pages/SpaceTransfer.tsx
+msgid "Importing…"
+msgstr "読み込み中…"
 
 #: src/components/PlanCard.tsx
 #: src/lib/ticket-status.ts
@@ -6456,6 +6472,10 @@ msgstr "スペース"
 #: src/pages/shell/chat-model-switcher.tsx
 msgid "Space default"
 msgstr "スペースのデフォルト"
+
+#: src/pages/SpaceTransfer.tsx
+msgid "Space exported."
+msgstr "スペースを書き出しました。"
 
 #: src/pages/Settings.tsx
 msgid "Spaces"

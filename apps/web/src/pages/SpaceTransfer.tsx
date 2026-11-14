@@ -1,8 +1,9 @@
 import { SpaceExportSchema } from "@corvo/contracts";
-import { Button } from "@corvo/ui-web";
+import { Button, Spinner } from "@corvo/ui-web";
 import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useRef, useState } from "react";
+import { SuccessPop } from "../components/ai/primitives";
 import { useSpaceRpc } from "../lib/space-rpc";
 import { errorText } from "../lib/user-error";
 
@@ -17,12 +18,13 @@ export function SpaceTransfer({
   const { t } = useLingui();
   const rpc = useSpaceRpc();
   const fileInput = useRef<HTMLInputElement>(null);
-  const [busy, setBusy] = useState(false);
+  const [running, setRunning] = useState<"export" | "import" | null>(null);
+  const [name, setName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
 
-  async function run(work: () => Promise<void>) {
-    setBusy(true);
+  async function run(action: "export" | "import", work: () => Promise<void>) {
+    setRunning(action);
     setError(null);
     setDone(null);
     try {
@@ -30,7 +32,7 @@ export function SpaceTransfer({
     } catch (err) {
       setError(errorText(err));
     } finally {
-      setBusy(false);
+      setRunning(null);
     }
   }
 
@@ -44,6 +46,7 @@ export function SpaceTransfer({
     a.download = `${spaceName.toLowerCase().replace(/\s+/g, "-")}-space.json`;
     a.click();
     URL.revokeObjectURL(url);
+    setDone(t`Space exported.`);
   }
 
   async function importSpace(file: File) {
@@ -69,11 +72,16 @@ export function SpaceTransfer({
         : null,
       result.tickets > 0 ? plural(result.tickets, { one: "# ticket", other: "# tickets" }) : null,
     ].filter((item) => item !== null);
-    const added =
-      result.routines > 0
-        ? t`${plural(count, { one: "Added # bot", other: "Added # bots" })}. Routines start paused.`
-        : plural(count, { one: "Added # bot.", other: "Added # bots." });
-    setDone(extras.length > 0 ? `${added} ${t`Also added ${extras.join(", ")}.`}` : added);
+    if (count === 0 && extras.length === 0) {
+      setDone(t`Everything in this file is already here.`);
+    } else {
+      const added =
+        result.routines > 0
+          ? t`${plural(count, { one: "Added # bot", other: "Added # bots" })}. Routines start paused.`
+          : plural(count, { one: "Added # bot.", other: "Added # bots." });
+      const alsoAdded = t`Also added ${extras.join(", ")}.`;
+      setDone(extras.length === 0 ? added : count === 0 ? alsoAdded : `${added} ${alsoAdded}`);
+    }
     onImported?.();
   }
 
@@ -83,18 +91,22 @@ export function SpaceTransfer({
         <Button
           variant="outline"
           className="rounded-full"
-          disabled={busy}
-          onClick={() => void run(exportSpace)}
+          disabled={running !== null}
+          aria-busy={running === "export"}
+          onClick={() => void run("export", exportSpace)}
         >
-          <Trans>Export space</Trans>
+          {running === "export" ? <Spinner className="size-3 shrink-0" /> : null}
+          {running === "export" ? <Trans>Exporting…</Trans> : <Trans>Export space</Trans>}
         </Button>
         <Button
           variant="outline"
           className="rounded-full"
-          disabled={busy}
+          disabled={running !== null}
+          aria-busy={running === "import"}
           onClick={() => fileInput.current?.click()}
         >
-          <Trans>Import space</Trans>
+          {running === "import" ? <Spinner className="size-3 shrink-0" /> : null}
+          {running === "import" ? <Trans>Importing…</Trans> : <Trans>Import space</Trans>}
         </Button>
         <input
           ref={fileInput}
@@ -104,16 +116,25 @@ export function SpaceTransfer({
           onChange={(event) => {
             const file = event.target.files?.[0];
             event.target.value = "";
-            if (file) void run(() => importSpace(file));
+            if (!file) return;
+            setName(file.name);
+            void run("import", () => importSpace(file));
           }}
         />
+      </div>
+      <div aria-live="polite">
+        {running === "import" && name ? (
+          <p className="text-[12.5px] text-muted-foreground">
+            <Trans>Importing {name}…</Trans>
+          </p>
+        ) : null}
+        {done ? <SuccessPop label={done} /> : null}
       </div>
       {error ? (
         <p role="alert" className="text-[12.5px] text-destructive">
           {error}
         </p>
       ) : null}
-      {done ? <p className="text-[12.5px] text-muted-foreground">{done}</p> : null}
     </div>
   );
 }

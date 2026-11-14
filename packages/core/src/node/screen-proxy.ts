@@ -12,6 +12,7 @@ import { SCREEN_PROBE_PARAM } from "@corvo/core/screen-reconnect";
 const SENSITIVE_FORWARD_HEADERS = new Set([
   "authorization",
   "cookie",
+  "e2b-traffic-access-token",
   "host",
   "proxy-authenticate",
   "proxy-authorization",

@@ -88,6 +88,48 @@ describe("E2B computer backend", () => {
     );
   });
 
+  it.each([
+    ["sends", "fake-traffic-token", { "e2b-traffic-access-token": "fake-traffic-token" }],
+    ["omits", undefined, undefined],
+  ])(
+    "%s the sandbox traffic token with the screen, never in its URL",
+    async (_name, token, headers) => {
+      const command = vi.fn(async (_value: string) => ({
+        stdout: "CORVO_DESKTOP=0:savedkey\n",
+        stderr: "",
+        exitCode: 0,
+      }));
+      const sdk = {
+        connect: vi.fn(async () => ({
+          sandboxId: "existing",
+          display: ":0",
+          getHost: (port: number) => `${port}-desktop.test`,
+          trafficAccessToken: token,
+          commands: { run: command },
+        })),
+      } as unknown as E2BSandboxSdk;
+      const computer = {
+        id: "existing",
+        providerRef: "existing",
+        kind: "e2b" as const,
+        botId: "bot",
+      };
+      const provider = new E2BSandboxProvider("test-key", sdk);
+      const screen = await provider.connectScreen(computer, { view: "stream" }, context);
+      const terminal = await provider.connectTerminal(
+        computer,
+        { controlToken: "fake-control", cwd: "" } as never,
+        context,
+      );
+      expect(screen.headers).toEqual(headers);
+      expect(terminal.headers).toEqual(headers);
+      for (const url of [screen.url, terminal.url]) {
+        expect(url).toBeTruthy();
+        if (token) expect(url).not.toContain(token);
+      }
+    },
+  );
+
   it("reconnects concurrent primary viewers without using the SDK's global VNC lifecycle", async () => {
     const command = vi.fn(async (_value: string) => ({
       stdout: "CORVO_DESKTOP=0:savedkey\n",

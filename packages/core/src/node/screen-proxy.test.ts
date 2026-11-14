@@ -1,6 +1,7 @@
 import type { AddressInfo } from "node:net";
 import { createServer } from "node:net";
 import {
+  openScreenCapability,
   SCREEN_UNCONFIRMED_MAX_MS,
   sealScreenCapability,
 } from "@corvo/core/node/screen-capability";
@@ -42,6 +43,37 @@ describe("screen proxy", () => {
         },
       ),
     ).toEqual({ upgrade: "websocket", cookie: "provider_auth=fake-token" });
+  });
+
+  it("sends the sandbox traffic token only from the sealed target, never from the browser", () => {
+    const token = "fake-traffic-token";
+    const target = { protocol: "https:" as const, hostname: "6080-box.example", port: 443 };
+    const browser = { "e2b-traffic-access-token": "forged", upgrade: "websocket" };
+    expect(
+      safeProxyHeaders(browser, { ...target, headers: { "e2b-traffic-access-token": token } }),
+    ).toEqual({ upgrade: "websocket", "e2b-traffic-access-token": token });
+    expect(safeProxyHeaders(browser, target)).toEqual({ upgrade: "websocket" });
+
+    const sealed = sealScreenCapability(
+      "https://6080-box.example/vnc.html",
+      "fake-secret",
+      "https://app.example",
+      {
+        botId: "bot",
+        computerId: "computer",
+        botGeneration: 1,
+        computerGeneration: 1,
+        controlLeaseId: null,
+      },
+      Date.now(),
+      { "e2b-traffic-access-token": token },
+    );
+    expect(sealed).not.toContain(token);
+    const opened = openScreenCapability(
+      new URL(sealed).pathname + new URL(sealed).search,
+      "fake-secret",
+    );
+    expect(opened?.target.headers).toEqual({ "e2b-traffic-access-token": token });
   });
 
   it("presents the provider's own origin so it accepts the proxied socket", () => {

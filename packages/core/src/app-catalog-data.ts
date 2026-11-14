@@ -368,6 +368,23 @@ export const APP_CATALOG: readonly AppCatalogEntry[] = [
     prompts: ["List the invoices issued this month.", "Calculate the taxes for a service invoice."],
   },
   {
+    slug: "executor",
+    name: "Executor",
+    tagline: "Reach many tools through one connection",
+    category: "automation",
+    iconUrl: "https://executor.sh/favicon-192.png",
+    featured: false,
+    endpoint: "https://mcp.executor.sh/mcp",
+    transport: "streamable_http",
+    auth: {
+      kind: "oauth",
+    },
+    prompts: [
+      "Which tools can you reach through Executor?",
+      "Find the tool that creates a calendar event and use it for tomorrow at 10.",
+    ],
+  },
+  {
     slug: "millionsend",
     name: "MillionSend",
     tagline: "Send and track email campaigns",

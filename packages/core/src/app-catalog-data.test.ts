@@ -44,8 +44,9 @@ describe("APP_CATALOG", () => {
     });
   });
 
-  it("adds Grafana, Rook NFS-e and MillionSend as hosted servers that sign in with OAuth", () => {
+  it("adds Grafana, Rook NFS-e, MillionSend and Executor as hosted servers that sign in with OAuth", () => {
     const endpoints = {
+      executor: "https://mcp.executor.sh/mcp",
       grafana: "https://mcp.grafana.com/mcp",
       "corvo-nfse": "https://api.corvo.tech/mcp",
       millionsend: "https://api.millionsend.com/mcp",

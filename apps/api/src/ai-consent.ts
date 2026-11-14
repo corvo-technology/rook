@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import {
   aiRecipient,
   cloudAgentsEnabled,
+  OPENROUTER_VOICE_PROVIDER_ID,
   parseModelSecret,
   resolveMemberMainModel,
   selectConfiguredModel,
@@ -219,6 +220,10 @@ export async function aiConsentStatus(
         }),
       );
     }
+  }
+  // With no voice of their own, a customer on credits sends speech through the deployment's.
+  if (uses.includes("voice") && voices.length === 0 && deps.voiceCredits && !deps.localSpeech) {
+    add(aiRecipient({ provider: OPENROUTER_VOICE_PROVIDER_ID, use: "voice" }));
   }
   for (const voice of voices) {
     // A self-hosted server is disclosed by its own origin, like a custom model endpoint.

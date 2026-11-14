@@ -695,6 +695,8 @@ export interface VoiceInfo {
 export interface SpeechClip {
   bytes: Uint8Array;
   mimeType: "audio/mpeg" | "audio/wav" | "audio/ogg";
+  /** The provider's id for this generation, when it gives one, so its cost can be looked up later. */
+  providerRequestId?: string;
 }
 
 export interface VoiceCapabilities {
@@ -739,6 +741,8 @@ export interface VoiceTranscribeResult {
   text: string;
   /** The language the provider heard, as an ISO 639-1 code, when it says. */
   language?: string;
+  /** What the provider charged in US dollars, when its reply says. */
+  costUsd?: number;
 }
 
 export interface BackgroundJobPayloads {

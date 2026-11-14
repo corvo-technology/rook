@@ -51,7 +51,7 @@ export function aiRecipient(input: {
 }
 
 function recipientName(provider: string, use: AiDataUse) {
-  if (use === "voice") return voiceCatalogEntry(provider)?.name ?? provider;
+  if (use === "voice") return voiceCatalogEntry(provider)?.name ?? "OpenRouter";
   if (use === "memory") {
     if (provider === "supermemory") return "Supermemory";
     if (provider === "honcho") return "Honcho";

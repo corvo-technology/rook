@@ -702,6 +702,10 @@ msgstr "Ajouter du crédit"
 msgid "Add credits"
 msgstr "Ajouter des crédits"
 
+#: src/lib/user-error.ts
+msgid "Add credits in Billing to keep using voice."
+msgstr "Ajoutez des crédits dans Facturation pour continuer à utiliser la voix."
+
 #: src/pages/Store.tsx
 msgid "Add Executor"
 msgstr "Ajouter un exécuteur"

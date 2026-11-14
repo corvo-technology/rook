@@ -79,6 +79,8 @@ export interface RouterDeps {
   testLocalModel?: typeof testModelOnce;
   /** Present only on the desktop app's own engine, where speech models can live. */
   localSpeech?: LocalSpeech;
+  /** The deployment's speech key where customers on credits may use it; see `VoiceDeps`. */
+  voiceCredits?: { apiKey: string };
   /** Where voice notes can be transcribed; absent keeps them as files. */
   audio?: AudioHold;
   pushTokens: PushTokenStore;

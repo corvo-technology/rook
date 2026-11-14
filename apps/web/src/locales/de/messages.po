@@ -702,6 +702,10 @@ msgstr "Guthaben aufladen"
 msgid "Add credits"
 msgstr "Guthaben aufladen"
 
+#: src/lib/user-error.ts
+msgid "Add credits in Billing to keep using voice."
+msgstr "Lade unter Abrechnung Guthaben auf, um die Stimme weiter zu nutzen."
+
 #: src/pages/Store.tsx
 msgid "Add Executor"
 msgstr "Executor hinzufügen"

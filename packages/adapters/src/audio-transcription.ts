@@ -12,6 +12,8 @@ import {
   OPENAI_COMPATIBLE_VOICE_PROVIDER_ID,
   openAiCompatibleVoiceServer,
 } from "./openai-compatible-voice.js";
+import { OPENROUTER_VOICE_PROVIDER_ID } from "./openrouter-voice.js";
+import { creditOrganization, transcribeOnCredits } from "./voice-credits.js";
 import { createVoiceProvider, MAX_TRANSCRIBE_BYTES, voiceCatalogEntry } from "./voice-factory.js";
 
 const HOSTED_TRANSCRIBE_TIMEOUT_MS = 120_000;
@@ -43,6 +45,8 @@ export interface AudioTranscriptionDeps {
   hasConsent(actor: Actor, recipientKey: string): Promise<boolean>;
   createProvider?: typeof createVoiceProvider;
   allowPrivateEndpoint?: boolean;
+  /** The deployment's speech key where customers on credits may use it. */
+  voiceCredits?: { apiKey: string };
 }
 
 export function dbVoiceCredential(prisma: PrismaClient, secrets: Pick<SecretStore, "load">) {
@@ -78,7 +82,8 @@ export function prismaConsent(prisma: PrismaClient) {
 type Chosen =
   | { failure: TranscriptionFailure }
   | { kind: "local"; provider: VoiceProvider; secret: string; modelId: string }
-  | { kind: "hosted"; provider: VoiceProvider; secret: string };
+  | { kind: "hosted"; provider: VoiceProvider; secret: string }
+  | { kind: "credits"; provider: VoiceProvider; secret: string; organizationId: string };
 
 /**
  * A selected provider that transcribes is used, and nothing else: a hosted one that fails is not
@@ -117,7 +122,21 @@ async function chooseProvider(deps: AudioTranscriptionDeps, actor: Actor): Promi
         secret: credential.secret,
       };
     }
-    if (!deps.localSpeech) return { failure: "provider-failed" };
+    if (!deps.localSpeech) {
+      // No voice of their own: a customer on credits listens with the deployment's.
+      const organizationId =
+        !credential && deps.voiceCredits ? await creditOrganization(deps.prisma, actor) : undefined;
+      const recipient = aiRecipient({ provider: OPENROUTER_VOICE_PROVIDER_ID, use: "voice" });
+      if (!organizationId || !deps.voiceCredits || !recipient)
+        return { failure: "provider-failed" };
+      if (!(await deps.hasConsent(actor, recipient.key))) return { failure: "provider-failed" };
+      return {
+        kind: "credits",
+        provider: create(OPENROUTER_VOICE_PROVIDER_ID),
+        secret: deps.voiceCredits.apiKey,
+        organizationId,
+      };
+    }
     // The owner removed a model or cancelled a download: do not fetch one on their behalf again.
     const { store } = deps.localSpeech;
     if (!(await store.automaticDownloadAllowed())) {
@@ -137,7 +156,7 @@ async function chooseProvider(deps: AudioTranscriptionDeps, actor: Actor): Promi
   }
 }
 
-function failureFor(error: unknown, kind: "local" | "hosted"): TranscriptionFailure {
+function failureFor(error: unknown, kind: "local" | "hosted" | "credits"): TranscriptionFailure {
   if (error instanceof UnsupportedAudioFormatError) return "unsupported-format";
   if (error instanceof AudioDecodeError) return "unreadable";
   const message = error instanceof Error ? error.message : "";
@@ -185,7 +204,7 @@ export async function transcribeAudioArtifact(
   const chosen = await chooseProvider(deps, actor);
   if ("failure" in chosen) return failed(chosen.failure);
   const hostedSignal =
-    chosen.kind === "hosted" ? AbortSignal.timeout(HOSTED_TRANSCRIBE_TIMEOUT_MS) : undefined;
+    chosen.kind !== "local" ? AbortSignal.timeout(HOSTED_TRANSCRIBE_TIMEOUT_MS) : undefined;
   const signal =
     input.signal && hostedSignal
       ? AbortSignal.any([input.signal, hostedSignal])
@@ -223,10 +242,21 @@ export async function transcribeAudioArtifact(
     }
   }
   try {
-    const result = await chosen.provider.transcribe?.(
-      { audio, mimeType: artifact.mimeType, apiKey: chosen.secret, signal },
-      context,
-    );
+    const request = { audio, mimeType: artifact.mimeType, apiKey: chosen.secret, signal };
+    const result =
+      chosen.kind === "credits"
+        ? await transcribeOnCredits(
+            {
+              prisma: deps.prisma,
+              organizationId: chosen.organizationId,
+              userId: actor.userId,
+              spaceId: actor.spaceId,
+            },
+            chosen.provider,
+            request,
+            context,
+          )
+        : await chosen.provider.transcribe?.(request, context);
     const text = result?.text.trim() ?? "";
     if (!result || !text) return failed("no-speech");
     const language = result.language ?? null;

@@ -990,6 +990,8 @@ export const JA_MESSAGES: Record<string, string> = {
   "Couldn't start the computer": "コンピューターを起動できませんでした",
   "Something went wrong while it was starting. Try again in a moment.":
     "起動中に問題が発生しました。しばらくしてからもう一度お試しください。",
+  "Add credits in Billing to keep using voice.":
+    "音声を使い続けるには、請求でクレジットを追加してください。",
   "Your voice provider is out of credit.": "音声プロバイダーのクレジットが不足しています。",
   "Your voice provider key was rejected.": "音声プロバイダーのキーが拒否されました。",
   Billing: "請求",

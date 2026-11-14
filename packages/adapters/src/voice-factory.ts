@@ -9,6 +9,7 @@ import {
   OpenAiCompatibleVoiceProvider,
 } from "./openai-compatible-voice.js";
 import { OpenAIVoiceProvider } from "./openai-voice.js";
+import { OPENROUTER_VOICE_PROVIDER_ID, OpenRouterVoiceProvider } from "./openrouter-voice.js";
 import { SCRIPTED_VOICE_CATALOG_ENTRY, ScriptedVoiceProvider } from "./scripted-voice.js";
 
 export const VOICE_CATALOG = [
@@ -106,6 +107,9 @@ export function createVoiceProvider(
     case LOCAL_VOICE_PROVIDER_ID:
       if (!options.local) throw new Error("Local voice is not available here.");
       return new LocalVoiceProvider(options.local);
+    // Not in the catalog: the API picks it for customers on credits, nobody connects it.
+    case OPENROUTER_VOICE_PROVIDER_ID:
+      return new OpenRouterVoiceProvider();
     case "scripted":
       if (!scriptedVoiceEnabled()) break;
       return new ScriptedVoiceProvider();

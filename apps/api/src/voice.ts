@@ -3,6 +3,7 @@ import { VoiceAccountError } from "@corvo/adapter-kit";
 import type { LocalSpeech } from "@corvo/adapters";
 import {
   createVoiceProvider,
+  creditOrganization,
   DEFAULT_LOCAL_MODEL,
   isFishSpeechModelId,
   isVoiceProviderId,
@@ -12,9 +13,13 @@ import {
   MAX_TRANSCRIBE_BYTES,
   NoVoiceConfigured,
   OPENAI_COMPATIBLE_VOICE_PROVIDER_ID,
+  OPENROUTER_VOICE_PROVIDER_ID,
   openAiCompatibleVoiceServer,
+  openRouterVoiceId,
   parseLocalVoiceSecret,
   serializeOpenAiCompatibleVoiceSecret,
+  synthesizeOnCredits,
+  transcribeOnCredits,
   voiceCatalogEntry,
 } from "@corvo/adapters";
 import type {
@@ -66,6 +71,21 @@ export interface VoiceDeps {
   speechSummary?: { summarize: SpeechSummarizer; minChars: number };
   /** Present only when the engine is the owner's own computer; see `createLocalSpeech`. */
   localSpeech?: LocalSpeech;
+  /**
+   * Present only where credits are on and the deployment runs on OpenRouter: customers on credits
+   * with no voice of their own listen and speak with this key, paid from their balance.
+   */
+  voiceCredits?: { apiKey: string };
+}
+
+/** The deployment key and the paying organization, when this person's voice runs on credits. */
+export async function creditVoiceFor(
+  deps: Pick<VoiceDeps, "prisma" | "voiceCredits">,
+  actor: Actor,
+) {
+  if (!deps.voiceCredits) return undefined;
+  const organizationId = await creditOrganization(deps.prisma, actor);
+  return organizationId ? { apiKey: deps.voiceCredits.apiKey, organizationId } : undefined;
 }
 
 /** A self-hosted speech server on a private address is limited like model endpoints. */
@@ -305,6 +325,8 @@ export type VoiceTarget = {
   apiKey: string;
   voiceId: string;
   speechModel?: string | undefined;
+  /** Set when the voice runs on credits: whose balance pays for it. */
+  organizationId?: string | undefined;
 };
 
 export async function resolveVoiceTarget(
@@ -338,6 +360,15 @@ export async function resolveVoiceTarget(
         provider: LOCAL_VOICE_PROVIDER_ID,
         apiKey: DEFAULT_LOCAL_SECRET,
         voiceId: input.voiceId ?? "",
+      };
+    }
+    const credits = await creditVoiceFor(deps, actor);
+    if (credits) {
+      return {
+        provider: OPENROUTER_VOICE_PROVIDER_ID,
+        apiKey: credits.apiKey,
+        voiceId: openRouterVoiceId(input.voiceId || botVoiceId || undefined),
+        organizationId: credits.organizationId,
       };
     }
     throw new NoVoiceConfigured("key");
@@ -835,18 +866,29 @@ export async function synthesizeVoice(
   }
   const context = voiceContext(actor, input.signal);
   const provider = await voiceProviderFor(deps, actor, target.provider);
+  const request = {
+    text,
+    voiceId: target.voiceId,
+    apiKey: target.apiKey,
+    model: target.speechModel,
+    language: input.language,
+    signal: input.signal,
+  };
   try {
-    return await provider.synthesize(
-      {
-        text,
-        voiceId: target.voiceId,
-        apiKey: target.apiKey,
-        model: target.speechModel,
-        language: input.language,
-        signal: input.signal,
-      },
-      context,
-    );
+    if (target.organizationId) {
+      return await synthesizeOnCredits(
+        {
+          prisma: deps.prisma,
+          organizationId: target.organizationId,
+          userId: actor.userId,
+          spaceId: actor.spaceId,
+        },
+        provider,
+        request,
+        context,
+      );
+    }
+    return await provider.synthesize(request, context);
   } catch (error) {
     const local = deps.localSpeech;
     if (
@@ -910,11 +952,19 @@ export async function transcribeVoice(
   input: { audio: Uint8Array; mimeType: string; language?: string; signal?: AbortSignal },
 ) {
   const loaded = await loadDefaultVoiceCredential(deps, actor);
-  // No voice connected: the desktop app listens with the speech model on this computer.
-  if (!loaded && !deps.localSpeech) throw new NoVoiceConfigured("key");
-  const target = loaded
+  // No voice connected: the desktop app listens with the speech model on this computer, and
+  // anyone else on credits listens with the deployment's.
+  const credits = !loaded && !deps.localSpeech ? await creditVoiceFor(deps, actor) : undefined;
+  if (!loaded && !deps.localSpeech && !credits) throw new NoVoiceConfigured("key");
+  const target: { provider: string; apiKey: string; organizationId?: string } = loaded
     ? { provider: loaded.cred.provider, apiKey: loaded.apiKey }
-    : { provider: LOCAL_VOICE_PROVIDER_ID, apiKey: DEFAULT_LOCAL_SECRET };
+    : credits
+      ? {
+          provider: OPENROUTER_VOICE_PROVIDER_ID,
+          apiKey: credits.apiKey,
+          organizationId: credits.organizationId,
+        }
+      : { provider: LOCAL_VOICE_PROVIDER_ID, apiKey: DEFAULT_LOCAL_SECRET };
   const provider = await voiceProviderFor(deps, actor, target.provider);
   if (!provider.transcribe) {
     throw new ORPCError("BAD_REQUEST", {
@@ -927,16 +977,28 @@ export async function transcribeVoice(
   if (target.provider === LOCAL_VOICE_PROVIDER_ID && deps.localSpeech) {
     await prepareLocalListening(deps.localSpeech, target.apiKey, !loaded);
   }
-  return provider.transcribe(
-    {
-      audio: input.audio,
-      mimeType: input.mimeType || "audio/webm",
-      language: input.language,
-      apiKey: target.apiKey,
-      signal: input.signal,
-    },
-    voiceContext(actor, input.signal),
-  );
+  const request = {
+    audio: input.audio,
+    mimeType: input.mimeType || "audio/webm",
+    language: input.language,
+    apiKey: target.apiKey,
+    signal: input.signal,
+  };
+  const context = voiceContext(actor, input.signal);
+  if (target.organizationId) {
+    return transcribeOnCredits(
+      {
+        prisma: deps.prisma,
+        organizationId: target.organizationId,
+        userId: actor.userId,
+        spaceId: actor.spaceId,
+      },
+      provider,
+      request,
+      context,
+    );
+  }
+  return provider.transcribe(request, context);
 }
 
 export function mountVoiceHttpRoutes(
@@ -1035,7 +1097,7 @@ function decodeAudioBase64(value: string): Uint8Array {
 
 /** Spent credit is 402; a rejected key is 403, never 401, which clients read as a lost session. */
 export function voiceAccountErrorStatus(code: VoiceAccountErrorCode) {
-  return code === "VOICE_OUT_OF_CREDIT" ? 402 : 403;
+  return code === "VOICE_KEY_REJECTED" ? 403 : 402;
 }
 
 function voiceHttpError(c: Context, error: unknown) {

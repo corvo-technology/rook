@@ -702,6 +702,10 @@ msgstr "充值"
 msgid "Add credits"
 msgstr "添加额度"
 
+#: src/lib/user-error.ts
+msgid "Add credits in Billing to keep using voice."
+msgstr "在账单中添加额度即可继续使用语音。"
+
 #: src/pages/Store.tsx
 msgid "Add Executor"
 msgstr "添加 Executor"

@@ -32,6 +32,7 @@ import type { RouterDeps } from "../router.js";
 import { withSerializableRetry } from "../serializable-retry.js";
 import {
   cancelLocalModelDownload,
+  creditVoiceFor,
   disconnectVoiceCredential,
   downloadLocalModel,
   loadDefaultVoiceCredential,
@@ -210,7 +211,12 @@ export function accountRoutes(ctx: RouterContext) {
       catalog: authed.voice.catalog.handler(async () => voiceCatalogFor(deps)),
       status: authed.voice.status.handler(async ({ context, input }) => {
         const cred = await findDefaultVoiceCredential(deps.prisma, context.actor, input?.scope);
-        return toVoiceStatus(cred, { localDefault: Boolean(deps.localSpeech) });
+        // With no voice of their own, customers on credits listen and speak with no setup either.
+        return toVoiceStatus(cred, {
+          localDefault:
+            Boolean(deps.localSpeech) ||
+            (!cred && Boolean(await creditVoiceFor(deps, context.actor))),
+        });
       }),
       credentials: authed.voice.credentials.handler(async ({ context, input }) => {
         const target = await voicePreferenceTarget(deps.prisma, context.actor, input?.scope);

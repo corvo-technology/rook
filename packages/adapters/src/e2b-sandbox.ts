@@ -32,11 +32,16 @@ import { isSandboxGoneError } from "./sandbox-errors.js";
 const E2B_WORKSPACE = "/home/user/corvo-home";
 const E2B_BROWSER_PROFILES = `${E2B_WORKSPACE}/.browser-profiles`;
 
+/** Request header E2B-compatible services check on traffic to a sandbox port. */
+export const E2B_TRAFFIC_TOKEN_HEADER = "e2b-traffic-access-token";
+
 /** The part of an E2B desktop sandbox handle this adapter uses. */
 export interface E2BDesktop {
   readonly sandboxId: string;
   setTimeout(timeoutMs: number): Promise<void>;
   getHost(port: number): string;
+  /** Set when the service requires it on every request to a sandbox port. Keep it server-side. */
+  readonly trafficAccessToken?: string;
   commands: {
     run(
       command: string,
@@ -297,10 +302,30 @@ export class E2BSandboxProvider implements SandboxProvider {
     request: ScreenRequest,
     context: AdapterContext,
   ): Promise<ScreenSession> {
-    return this.desktops.connectScreen(computer, request, context);
+    return this.withTrafficToken(
+      computer,
+      await this.desktops.connectScreen(computer, request, context),
+    );
   }
   async connectTerminal(computer: ComputerRef, request: TerminalRequest, context: AdapterContext) {
-    return this.desktops.connectTerminal(computer, request, context);
+    return this.withTrafficToken(
+      computer,
+      await this.desktops.connectTerminal(computer, request, context),
+    );
+  }
+
+  /**
+   * Sandbox ports can require the sandbox's traffic token. It goes in the proxy-only headers,
+   * which the screen capability seals, never in the URL. The handle is read after the desktop
+   * is ensured, so a reconnect has already refreshed it.
+   */
+  private async withTrafficToken<T extends { url: string | null }>(
+    computer: ComputerRef,
+    session: T,
+  ): Promise<T & { headers?: Record<string, string> }> {
+    const token = (await this.box(computer)).trafficAccessToken;
+    if (!session.url || !token) return session;
+    return { ...session, headers: { [E2B_TRAFFIC_TOKEN_HEADER]: token } };
   }
   async setScreenControl(
     computer: ComputerRef,

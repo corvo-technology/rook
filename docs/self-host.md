@@ -404,6 +404,24 @@ EXPO_ACCESS_TOKEN=replace-with-your-expo-access-token
 Leave it unset when enhanced security is off. A missing or revoked token fails the push with an
 error that names `EXPO_ACCESS_TOKEN`; the token itself is never logged.
 
+### Cloud-beta waitlist
+
+A marketing site can collect a waitlist through the API. It is off until you list the site's origins:
+
+```env
+WAITLIST_ALLOWED_ORIGINS=https://www.example.com
+WAITLIST_NOTIFY_EMAIL=team@example.com
+```
+
+`WAITLIST_ALLOWED_ORIGINS` is a comma-separated list of origins allowed to `POST /api/public/waitlist`
+with `{ "email", "company", "task"?, "locale"? }`; any other origin is refused and unset turns the
+endpoint off. The endpoint always answers `{ "ok": true }` for a valid entry, whether or not the
+address was already listed, and limits requests per address and per email. With an email provider
+configured, a new entry gets a short confirmation in its locale (`pt-BR` or English) and
+`WAITLIST_NOTIFY_EMAIL`, when set, gets one email with the company, address and task. Without a
+provider the entry is still stored and a warning is logged. Entries live in the `waitlist_entries`
+table; no IP address or user agent is kept.
+
 ### Verification and password recovery email
 
 Password changes for signed-in users require no email configuration. Forgotten-password recovery

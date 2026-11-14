@@ -42,6 +42,10 @@ export interface AppEnv {
   authSecret: string;
   authUrl: string;
   webOrigin: string;
+  /** Marketing-site origins that may post to the waitlist (WAITLIST_ALLOWED_ORIGINS); none turns it off. */
+  waitlistAllowedOrigins: string[];
+  /** Inbox told about each new waitlist entry (WAITLIST_NOTIFY_EMAIL). */
+  waitlistNotifyEmail?: string;
   /** `<TEAM_ID>.<bundle id>` of iOS apps that may use this domain's passkeys. */
   passkeyAppleAppIds: string[];
   /** Relying party of passkeys made on a previous domain; defaults to the host of `WEB_ORIGIN`. */
@@ -237,6 +241,8 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     authSecret,
     authUrl: source.BETTER_AUTH_URL ?? source.WEB_ORIGIN ?? "http://127.0.0.1:5173",
     webOrigin: source.WEB_ORIGIN ?? "http://127.0.0.1:5173",
+    waitlistAllowedOrigins: waitlistOrigins(source.WAITLIST_ALLOWED_ORIGINS),
+    waitlistNotifyEmail: optional(source.WAITLIST_NOTIFY_EMAIL),
     passkeyAppleAppIds: list(source.PASSKEY_APPLE_APP_IDS),
     passkeyRpId: optional(source.PASSKEY_RP_ID)?.toLowerCase(),
     passkeyRelatedOrigins: relatedOrigins(source.PASSKEY_RELATED_ORIGINS),
@@ -381,6 +387,19 @@ function optional(value: string | undefined): string | undefined {
 
 function list(value: string | undefined): string[] {
   return (value ?? "").split(/[\s,]+/).filter(Boolean);
+}
+
+/** Origins, normalized the way a browser sends them. */
+function waitlistOrigins(value: string | undefined): string[] {
+  return list(value).map((origin) => {
+    try {
+      const url = new URL(origin);
+      if (url.protocol !== "https:" && url.protocol !== "http:") throw new Error();
+      return url.origin;
+    } catch {
+      throw new Error("WAITLIST_ALLOWED_ORIGINS must be comma-separated http(s) origins");
+    }
+  });
 }
 
 /** HTTPS origins, normalized; anything else would never match a browser's origin. */

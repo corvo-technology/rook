@@ -2376,3 +2376,18 @@ model SpaceMemberModelSetting {
   @@id([spaceId, userId])
   @@map("space_member_model_settings")
 }
+
+/// A company on the closed-beta cloud waitlist, filled from the marketing site. Internal:
+/// only server code running as the system reads or writes it. No address or agent is stored.
+model WaitlistEntry {
+  id         String    @id @default(cuid())
+  email      String    @unique
+  company    String
+  task       String?
+  locale     String?
+  source     String?
+  createdAt  DateTime  @default(now())
+  notifiedAt DateTime?
+
+  @@map("waitlist_entries")
+}

@@ -98,3 +98,14 @@ describe("health routes", () => {
     }
   });
 });
+
+describe("draining", () => {
+  it("fails readiness and health once draining starts", async () => {
+    const drain = { draining: false };
+    const health = healthRoutes(() => ({}), undefined, drain);
+    expect((await health.request("/ready")).status).toBe(200);
+    drain.draining = true;
+    expect((await health.request("/ready")).status).toBe(503);
+    expect((await health.request("/health")).status).toBe(503);
+  });
+});

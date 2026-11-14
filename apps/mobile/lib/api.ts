@@ -37,6 +37,7 @@ import {
   ensureAiDataConsent,
   isActive,
   isBackgroundRunTrigger,
+  isRetrySafeCall,
   isRunTerminalEvent,
   isServerUnreachable,
   isUnreachableStatus,
@@ -48,10 +49,12 @@ import {
   readBoundedJsonResponse,
   reduceLiveMessageBlocks,
   replyMetadata,
+  retryTransient,
   runFailureError,
   settleRunSubagents,
   signupRequiresEmailVerification,
   stopsRunHelpers,
+  TRANSIENT_RETRY_WINDOW_MS,
   takeLiveMessage,
   updateCloudAgentMessages,
   upsertMessageById,
@@ -837,7 +840,10 @@ async function request(
                 value: "TimeoutError",
               }),
             ),
-          options.timeoutMs ?? RPC_TIMEOUT_MS,
+          options.timeoutMs ??
+            (isRetrySafeCall(proc, body)
+              ? TRANSIENT_RETRY_WINDOW_MS + RPC_TIMEOUT_MS
+              : RPC_TIMEOUT_MS),
         );
   // Bind recovery to the Space + selection epoch this request was sent with:
   // a 401 arriving after the user switched Spaces — including A → B → A —
@@ -853,17 +859,22 @@ async function request(
     let res: Response;
     const correlation = clientCorrelationHeaders();
     try {
-      res = await fetch(`${consentContext?.apiBase ?? currentApiBase()}/rpc/${proc}`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          origin: "corvo://",
-          ...requestHeaders,
-          ...correlation,
-        },
-        body: JSON.stringify({ json: body }),
-        signal: controller.signal,
-      });
+      const attempt = () =>
+        fetch(`${consentContext?.apiBase ?? currentApiBase()}/rpc/${proc}`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            origin: "corvo://",
+            ...requestHeaders,
+            ...correlation,
+          },
+          body: JSON.stringify({ json: body }),
+          signal: controller.signal,
+        });
+      // A deploy swap answers 502/503/504 for a few seconds; calls the server de-duplicates ride it out.
+      res = isRetrySafeCall(proc, body)
+        ? await retryTransient(attempt, { signal: controller.signal })
+        : await attempt();
     } catch (error) {
       // The native fetch reports an aborted request with an implementation detail
       // ("FetchRequestCanceledException") and an unreachable server with a native stack

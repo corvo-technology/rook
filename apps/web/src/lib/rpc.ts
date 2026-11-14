@@ -1,6 +1,11 @@
 import type { AppContract, ProductEvent } from "@corvo/contracts";
 import { CLIENT_BUILD_HEADER, formatClientBuild } from "@corvo/contracts";
-import { displayIdentityEvent, displayIdentityResult } from "@corvo/core";
+import {
+  displayIdentityEvent,
+  displayIdentityResult,
+  isRetrySafeCall,
+  retryTransient,
+} from "@corvo/core";
 import { clientCorrelationHeaders, responseCorrelation } from "@corvo/logging/monitoring";
 import { createORPCClient } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
@@ -13,7 +18,11 @@ import { reportClientError } from "./monitoring";
 
 const SPACE_STORAGE_KEY = "corvo:space-id";
 
-type RpcClientContext = { spaceId?: string | null };
+type RpcClientContext = {
+  spaceId?: string | null;
+  /** Set for calls the server de-duplicates or that are idempotent: they ride out a deploy swap. */
+  retryTransient?: boolean;
+};
 
 export function selectedSpaceId(): string | null {
   if (typeof window === "undefined") return null;
@@ -80,12 +89,16 @@ const link = new RPCLink<RpcClientContext>({
     for (const [key, value] of Object.entries(correlation)) headers.set(key, value);
     let response: Response;
     try {
-      response = await fetch(request, {
-        headers,
-        credentials: "include",
-        // Keep cancellation attached directly to fetch rather than only a cloned Request.
-        signal: options.signal,
-      });
+      const attempt = () =>
+        fetch(options.context.retryTransient ? request.clone() : request, {
+          headers,
+          credentials: "include",
+          // Keep cancellation attached directly to fetch rather than only a cloned Request.
+          signal: options.signal,
+        });
+      response = options.context.retryTransient
+        ? await retryTransient(attempt, { signal: options.signal })
+        : await attempt();
     } catch (error) {
       if (!options.signal?.aborted)
         reportClientError(error, "rpc.transport", responseCorrelation(new Headers(correlation)));
@@ -134,10 +147,37 @@ export function leaveUnavailableSpace(spaceId: string): Promise<void> {
 
 export type RpcClient = ContractRouterClient<AppContract, RpcClientContext>;
 
+type TargetGone = { botId?: string; groupId?: string };
+const targetGoneListeners = new Set<(target: TargetGone) => void>();
+
+/** A view's bot or chat answered not found: it was deleted, so the shell should leave it. */
+export function onRpcTargetGone(listener: (target: TargetGone) => void): () => void {
+  targetGoneListeners.add(listener);
+  return () => {
+    targetGoneListeners.delete(listener);
+  };
+}
+
+/** The bot or chat a failed call named, when the server said it no longer exists. */
+export function goneTarget(input: unknown, error: unknown): TargetGone | undefined {
+  if ((error as { code?: unknown } | null)?.code !== "NOT_FOUND") return undefined;
+  const { botId, groupId } = (input ?? {}) as { botId?: unknown; groupId?: unknown };
+  if (typeof groupId === "string") return { groupId };
+  if (typeof botId === "string") return { botId };
+  return undefined;
+}
+
 const displayLink = {
   call: async (...args: Parameters<typeof link.call>) => {
-    const [path, input, options] = args;
-    const result = await link.call(path, input, options);
+    const [path, input, callOptions] = args;
+    const options = isRetrySafeCall(path.join("/"), input)
+      ? { ...callOptions, context: { ...callOptions.context, retryTransient: true } }
+      : callOptions;
+    const result = await link.call(path, input, options).catch((error: unknown) => {
+      const gone = goneTarget(input, error);
+      if (gone) for (const listener of targetGoneListeners) listener(gone);
+      throw error;
+    });
     if (path.join("/") === "threads/subscribe") {
       return (async function* () {
         for await (const event of result as AsyncIterable<ProductEvent>) {

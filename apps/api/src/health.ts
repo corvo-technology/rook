@@ -1,6 +1,9 @@
 import { logSinkHealth } from "@corvo/logging";
 import { Hono } from "hono";
 
+/** Flipped once on SIGTERM, before the listener closes, so the platform stops routing here. */
+export type DrainState = { draining: boolean };
+
 /**
  * `/health` is public liveness, so it stays a constant body. Deployment details are for
  * operators on the API port; a reverse proxy adds forwarding headers, so a request that
@@ -9,6 +12,7 @@ import { Hono } from "hono";
 export function healthRoutes(
   details: () => Record<string, unknown>,
   database?: () => Promise<unknown>,
+  drain?: DrainState,
 ) {
   const app = new Hono();
   // One probe at a time: polls during a hung check wait on it instead of taking more connections.
@@ -26,6 +30,7 @@ export function healthRoutes(
     return inFlight;
   };
   app.get("/ready", async (c) => {
+    if (drain?.draining) return c.json({ ok: false, draining: true }, 503);
     const degraded = details().degraded === true;
     const databaseUp = database ? await withinDeadline(probe(database)) : true;
     const ok = !degraded && databaseUp;
@@ -34,7 +39,9 @@ export function healthRoutes(
       ok ? 200 : 503,
     );
   });
-  app.get("/health", (c) => c.json({ ok: true }));
+  app.get("/health", (c) =>
+    drain?.draining ? c.json({ ok: false, draining: true }, 503) : c.json({ ok: true }),
+  );
   app.get("/internal/health", (c) => {
     if (c.req.header("x-forwarded-for") || c.req.header("forwarded")) return c.notFound();
     return c.json({ ok: true, ...details(), telemetry: logSinkHealth() });

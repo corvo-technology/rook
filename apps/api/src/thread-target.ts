@@ -53,6 +53,7 @@ import type { RouterModel } from "./channel-router.js";
 import { routeGroupMessage } from "./channel-router.js";
 import { resolveBusyBotName, toComputerStatus } from "./computer-status.js";
 import { groupConversationOwner } from "./group-owner.js";
+import { isRecordNotFound } from "./routes/shared.js";
 import { withSerializableRetry } from "./serializable-retry.js";
 import type { ImageAdmissionRun } from "./thread-image-admission.js";
 import { assertThreadImageInput } from "./thread-image-admission.js";
@@ -1274,6 +1275,10 @@ export async function sendThreadMessage(
       releaseTakeover,
     );
     if (winner) return { replay: winner } as const;
+    // The thread or bot was deleted while the page was open: the row this write updates is gone.
+    if (isRecordNotFound(error)) {
+      throw new ORPCError("NOT_FOUND", { message: "This conversation no longer exists" });
+    }
     throw error;
   });
   if ("replay" in committed) return committed.replay;

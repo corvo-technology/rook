@@ -192,6 +192,7 @@ export * from "./slack-install-provider.js";
 export * from "./smtp-email.js";
 export * from "./speech-synthesizer.js";
 export * from "./speech-transcriber.js";
+export * from "./spoken-language.js";
 export * from "./storage-migration.js";
 export * from "./store-agents.js";
 export * from "./stripe-billing.js";

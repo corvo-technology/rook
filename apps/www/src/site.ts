@@ -13,7 +13,7 @@ export const RELEASES_URL = "https://github.com/corvo-technology/rook-releases/r
 
 /** Where the cloud API lives. The waitlist form posts here; set PUBLIC_API_ORIGIN to point a build elsewhere. */
 export const API_ORIGIN =
-  (import.meta.env?.PUBLIC_API_ORIGIN as string | undefined)?.trim().replace(/\/$/, "") || "https://app.rook.team";
+  (import.meta.env?.PUBLIC_API_ORIGIN as string | undefined)?.trim().replace(/\/$/, "") || "https://api.rook.team";
 export const WAITLIST_ENDPOINT = `${API_ORIGIN}/api/public/waitlist`;
 
 /**

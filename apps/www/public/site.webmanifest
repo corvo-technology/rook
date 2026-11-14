@@ -1,7 +1,7 @@
 {
   "name": "Rook",
   "short_name": "Rook",
-  "description": "Open source AI agents that do the work, and ask before they act.",
+  "description": "AI agents that do the work, and ask before they act.",
   "start_url": "/",
   "display": "browser",
   "background_color": "#0a0a0a",

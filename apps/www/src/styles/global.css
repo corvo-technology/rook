@@ -4251,7 +4251,8 @@ button.product-demo__dock-icon {
       transform 400ms cubic-bezier(0.22, 1, 0.36, 1) var(--d, 0ms);
   }
 
-  .js-reveal [data-reveal]:not(.is-in) {
+  /* Only blocks the script found below the fold are armed, on the first scroll, so a page that is never scrolled shows everything. */
+  .js-reveal [data-reveal][data-armed]:not(.is-in) {
     opacity: 0;
     transform: translateY(16px);
   }

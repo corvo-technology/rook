@@ -3,7 +3,6 @@ import { getLaunchCopy } from "../i18n/launch";
 import type { LaunchCopy } from "../i18n/launch";
 import { DEFAULT_LOCALE, localeHashPath, localeHomePath } from "../i18n/locales";
 import type { Locale } from "../i18n/locales";
-import { DOWNLOAD_URL, GITHUB_URL } from "../site";
 import { MASCOT_COLOR } from "../mascot";
 import type { MascotHue } from "../mascot";
 import Logo from "./Logo.astro";
@@ -23,7 +22,7 @@ const homeHref = Astro.props.homeHref ?? localeHomePath(locale);
 const NAV_LINKS: Array<{ section: string; hue: MascotHue; label: string }> = [
   { section: "agents", hue: "menta", label: copy.demo },
   { section: "features", hue: "azul", label: copy.features },
-  { section: "open", hue: "violeta", label: copy.open },
+  { section: "runs", hue: "violeta", label: copy.runs },
   { section: "faq", hue: "rosa", label: copy.faq },
 ];
 const hrefOf = (section: string) => localeHashPath(locale, section);
@@ -45,11 +44,8 @@ const hrefOf = (section: string) => localeHashPath(locale, section);
   </nav>
   <div class="site-header__right">
     <div class="site-header__cta">
-      <a class="button button--secondary button--small" href={GITHUB_URL} target="_blank" rel="noopener" data-attr="header-github">
-        {copy.github}
-      </a>
-      <a class="button button--primary button--small" href={DOWNLOAD_URL} target="_blank" rel="noopener">
-        {copy.download}
+      <a class="button button--primary button--small" href={hrefOf("waitlist")} data-attr="header-waitlist">
+        {copy.waitlist}
       </a>
     </div>
     <details class="site-menu" data-site-menu>

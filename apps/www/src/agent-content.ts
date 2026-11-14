@@ -2,7 +2,6 @@ import { getLaunchCopy } from "./i18n/launch";
 import {
   CONTACT_EMAIL,
   DOWNLOAD_URL,
-  GITHUB_URL,
   INSTALL_COMMAND,
   INSTALL_COMMAND_WINDOWS,
   SECURITY_EMAIL,
@@ -18,7 +17,18 @@ export const HOME_MARKDOWN = `# Rook
 
 ${home.hero.line1} ${home.hero.line2}
 
-${home.hero.lead.join(" ")}
+${home.hero.pill}. ${home.hero.lead.join(" ")}
+
+- [${home.hero.join}](${SITE_URL}/#waitlist)
+- [${home.cta.download}](${DOWNLOAD_URL})
+
+${home.preview.conversations
+  .filter((conversation) => conversation.kind === "channel")
+  .map(
+    (conversation) =>
+      `- **${conversation.tab}** (#${conversation.name}): ${conversation.closing} ${conversation.saved ?? ""} ${(conversation.systems ?? []).join(", ")}`.replace(/ +/g, " "),
+  )
+  .join("\n")}
 
 ## ${home.agent.heading} ${home.agent.accent}
 
@@ -38,21 +48,26 @@ ${home.store.copy}
 
 ${home.works.cards.map((card) => `- **${card.title}** ${card.body}`).join("\n")}
 
-## ${home.open.heading} ${home.open.accent}
+## ${home.business.heading}
 
-${home.open.copy}
+${home.business.points.map((point) => `- **${point.title}:** ${point.body}`).join("\n")}
 
-${home.open.points.map((point) => `- **${point.title}:** ${point.body}`).join("\n")}
+## ${home.runs.heading} ${home.runs.accent}
 
-- [Source code on GitHub (${home.open.license})](${GITHUB_URL})
+${home.runs.copy}
+
+${home.runs.points.map((point) => `- **${point.title}:** ${point.body}`).join("\n")}
 
 ## ${home.install.heading}
 
-${home.install.copy}
+- **${home.waitlist.badge}: ${home.waitlist.title}.** ${home.waitlist.copy} [${home.cta.waitlist}](${SITE_URL}/#waitlist)
+- **${home.install.local.title}:** ${home.install.local.copy}
 
 - [${home.install.download}](${DOWNLOAD_URL})
 - ${home.install.macLinux}: \`${INSTALL_COMMAND}\`
 - ${home.install.windows}: \`${INSTALL_COMMAND_WINDOWS}\`
+
+${home.install.migrate}
 
 ## FAQ
 
@@ -61,6 +76,9 @@ ${home.faq.items.map((item) => `### ${item.question}\n\n${item.answer}`).join("\
 ## ${home.cta.heading}
 
 ${home.cta.copy}
+
+- [${home.cta.waitlist}](${SITE_URL}/#waitlist)
+- [${home.cta.download}](${DOWNLOAD_URL})
 
 ## Site index
 

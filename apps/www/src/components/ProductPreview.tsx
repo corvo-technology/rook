@@ -13,32 +13,36 @@ function agentOf(copy: Copy, name: string): LaunchAgent {
 }
 
 /**
- * One channel of the product with an agent waiting on your yes. Approving or denying plays the
- * rest: the agent works, then answers.
+ * The product's channels, one per area of a company, each with an agent waiting on your yes. Approving or
+ * denying plays the rest: the agent works, then answers.
  */
 export function ProductPreview({ copy }: { copy: Copy }) {
-  const channel = copy.conversations[0]!;
-  const [decision, setDecision] = useState<Decision>("pending");
+  const channels = copy.conversations.filter((conversation) => conversation.kind === "channel");
+  const [activeId, setActiveId] = useState(channels[0]!.id);
+  const channel = channels.find((conversation) => conversation.id === activeId) ?? channels[0]!;
+  const [decisions, setDecisions] = useState<Record<string, Decision>>({});
+  const decision = decisions[channel.id] ?? "pending";
   const [working, setWorking] = useState(false);
   const timer = useRef<number | undefined>(undefined);
   const root = useRef<HTMLElement>(null);
+  const stopOpening = useRef<() => void>(() => {});
   const [act, setAct] = useState<Act>("answered");
   const [typed, setTyped] = useState("");
   const request = channel.messages.find((m) => m.kind === "you")?.text ?? "";
+  const openingRequest = channels[0]!.messages.find((m) => m.kind === "you")?.text ?? "";
 
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
-  // Once, when the window comes into view, the request types itself and the team answers.
-  // Reduced motion, or no script, keeps the finished conversation.
+  // Once, when the window comes into view, the first request types itself and the team answers.
+  // Until then, and with reduced motion or no script, the finished conversation shows.
   useEffect(() => {
     const node = root.current;
-    if (!node || !request || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    setAct("waiting");
+    if (!node || !openingRequest || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timers: number[] = [];
     const later = (ms: number, run: () => void) => timers.push(window.setTimeout(run, ms));
     const type = (count: number) => {
-      setTyped(request.slice(0, count));
-      if (count < request.length) later(34 + ((count * 37) % 45), () => type(count + 1));
+      setTyped(openingRequest.slice(0, count));
+      if (count < openingRequest.length) later(34 + ((count * 37) % 45), () => type(count + 1));
       else {
         later(450, () => {
           setTyped("");
@@ -58,28 +62,50 @@ export function ProductPreview({ copy }: { copy: Copy }) {
       { threshold: 0.4 },
     );
     observer.observe(node);
-    return () => {
+    const stop = () => {
       observer.disconnect();
       timers.forEach((id) => window.clearTimeout(id));
     };
-  }, [request]);
+    stopOpening.current = stop;
+    return stop;
+  }, [openingRequest]);
+
+  // Picking an area ends the opening act and shows that channel as it stands.
+  const pick = (id: string) => {
+    if (id === channel.id) return;
+    stopOpening.current();
+    window.clearTimeout(timer.current);
+    setWorking(false);
+    setTyped("");
+    setAct("answered");
+    setActiveId(id);
+  };
 
   const decide = (next: Exclude<Decision, "pending">) => {
     if (decision !== "pending") return;
-    setDecision(next);
+    setDecisions((all) => ({ ...all, [channel.id]: next }));
     setWorking(true);
     timer.current = window.setTimeout(() => setWorking(false), 1500);
   };
 
   const finished = decision !== "pending" && !working;
-  const reply = decision === "approved" ? copy.approvedReply : copy.deniedReply;
+  const approval = channel.approval;
+  const reply = (decision === "approved" ? approval?.approved : approval?.denied) ?? [];
   // The agent that is waiting on your yes.
   const asking = channel.messages.find((m) => m.kind === "agent" && m.approval);
   const asked = asking?.kind === "agent" ? agentOf(copy, asking.agent) : undefined;
   // The call it waited on, as one quiet line once you have answered.
-  const decided = `${copy.approvalBody.replace(/[.。]$/, "")} · ${decision === "approved" ? copy.approved : copy.denied}`;
+  const decided = `${(approval?.body ?? "").replace(/[.。]$/, "")} · ${decision === "approved" ? copy.approved : copy.denied}`;
 
   return (
+    <div className="pv-wrap">
+    <div className="pv-tabs" role="group" aria-label={copy.channels}>
+      {channels.map((item) => (
+        <button key={item.id} type="button" className="pv-tab" aria-pressed={item.id === channel.id} onClick={() => pick(item.id)}>
+          {item.tab ?? item.name}
+        </button>
+      ))}
+    </div>
     <section ref={root} className="pv ink" data-testid="product-preview" aria-label={`#${channel.name}`}>
       <header className="pv-head">
         <p>
@@ -132,8 +158,8 @@ export function ProductPreview({ copy }: { copy: Copy }) {
                   <div className="pv-approval" data-decision={decision}>
                     <div>
                       <p className="pv-approval__flag">{copy.waiting}</p>
-                      <p>{copy.approvalBody}</p>
-                      <code>{copy.approvalCall}</code>
+                      <p>{approval?.body}</p>
+                      <code>{approval?.call}</code>
                     </div>
                     <div className="pv-approval__actions">
                       <button type="button" className="pv-btn pv-btn--solid" onClick={() => decide("approved")}>
@@ -201,5 +227,20 @@ export function ProductPreview({ copy }: { copy: Copy }) {
         </span>
       </div>
     </section>
+    {channel.closing ? (
+      <div className="pv-foot">
+        <p>
+          <strong>{channel.closing}</strong> {channel.saved ? <span>{channel.saved}</span> : null}
+        </p>
+        {channel.systems ? (
+          <ul>
+            {channel.systems.map((system) => (
+              <li key={system}>{system}</li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+    ) : null}
+    </div>
   );
 }

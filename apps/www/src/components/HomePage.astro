@@ -20,10 +20,10 @@ import {
   DOWNLOAD_URL_LINUX_ARM64_DEB,
   DOWNLOAD_URL_LINUX_DEB,
   DOWNLOAD_URL_WINDOWS,
-  GITHUB_URL,
   INSTALL_COMMAND,
   INSTALL_COMMAND_WINDOWS,
   SITE_URL,
+  WAITLIST_ENDPOINT,
 } from "../site";
 import { homeStructuredData } from "../structured-data";
 import "../styles/launch.css";
@@ -57,7 +57,6 @@ const storeGroups = CATEGORY_ORDER.map((category) => ({
     .slice(0, 3)
     .map((entry) => entry.name[catalogLocale] ?? entry.name.en),
 }));
-const CATALOG_URL = `${GITHUB_URL}/blob/HEAD/packages/core/src/agent-catalog-data.ts`;
 // Brand names, the same in every language.
 const MODEL_CHIPS = ["Claude", "ChatGPT", "OpenRouter"];
 // The four states an agent is in, the same ones the app shows on its rooks.
@@ -85,6 +84,7 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
 
     <main id="main">
       <section class="lp-hero">
+        <p class="lp-hero__pill">{copy.hero.pill}</p>
         <h1>
           <span>{copy.hero.line1}</span>
           <GuideSlot class="guide-slot--inline" />
@@ -93,10 +93,13 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
         <p class="lp-hero__lead">{copy.hero.lead[0]}<br />{copy.hero.lead[1]}</p>
         <div class="lp-hero__actions">
           <span class="lp-hero__cta">
-            <a class="button button--primary" href={DOWNLOAD_URL} target="_blank" rel="noopener" data-attr="hero-download">
-              {copy.cta.download}
+            <a class="button button--primary" href="#waitlist" data-attr="hero-waitlist">
+              {copy.hero.join}
             </a>
           </span>
+          <a class="button button--secondary" href={DOWNLOAD_URL} target="_blank" rel="noopener" data-attr="hero-download">
+            {copy.cta.download}
+          </a>
           <p class="download-note">
             {
               copy.hero.note.split(/(\{windows\}|\{linux\})/).map((part) =>
@@ -167,9 +170,6 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
               </div>
             ))
           }
-          <p class="lp-store__all">
-            <a href={CATALOG_URL} target="_blank" rel="noopener" data-attr="store-catalog">{copy.store.all}</a>
-          </p>
         </div>
       </section>
 
@@ -224,22 +224,34 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
         </ul>
       </section>
 
-      <section id="open" class="lp-open" aria-labelledby="open-heading">
+      <section id="business" class="lp-open" aria-labelledby="business-heading">
         <GuideSlot row class="guide-slot--perch guide-slot--start" />
-        <Piece piece="bishop" hue="laranja" class="guide-piece--start" />
+        <Piece piece="king" hue="vermelho" class="guide-piece--start" />
         <div class="lp-open__intro" data-reveal>
-          <h2 id="open-heading" class="lp-title">{copy.open.heading} {copy.open.accent}</h2>
-          <p class="lp-lead">{copy.open.copy}</p>
-          <div class="lp-open__actions">
-            <a class="button button--secondary" href={GITHUB_URL} target="_blank" rel="noopener" data-attr="open-github">
-              {copy.open.github}
-            </a>
-            <span class="lp-license">{copy.open.license}</span>
-          </div>
+          <h2 id="business-heading" class="lp-title">{copy.business.heading}</h2>
         </div>
         <ul class="lp-rows lp-points" data-reveal>
           {
-            copy.open.points.map((point) => (
+            copy.business.points.map((point) => (
+              <li>
+                <h3>{point.title}</h3>
+                <p>{point.body}</p>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
+      <section id="runs" class="lp-open" aria-labelledby="runs-heading">
+        <GuideSlot row class="guide-slot--perch guide-slot--start" />
+        <Piece piece="bishop" hue="laranja" class="guide-piece--start" />
+        <div class="lp-open__intro" data-reveal>
+          <h2 id="runs-heading" class="lp-title">{copy.runs.heading} {copy.runs.accent}</h2>
+          <p class="lp-lead">{copy.runs.copy}</p>
+        </div>
+        <ul class="lp-rows lp-points" data-reveal>
+          {
+            copy.runs.points.map((point) => (
               <li>
                 <h3>{point.title}</h3>
                 <p>{point.body}</p>
@@ -250,29 +262,65 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
       </section>
 
       <section id="install" class="lp-install" aria-labelledby="install-heading">
-        <div class="lp-center" data-reveal>
-          <h2 id="install-heading" class="lp-title">{copy.install.heading}</h2>
-          <p class="lp-lead">{copy.install.copy}</p>
-          <a
-            class="button button--primary"
-            href={DOWNLOAD_URL}
-            target="_blank"
-            rel="noopener"
-            data-attr="install-download"
-          >
-            {copy.install.download}
-          </a>
-          <p class="download-note lp-formats">
-            {copy.install.formats.label}:{" "}
-            <a href={DOWNLOAD_URL} data-attr="install-format-mac">{copy.install.formats.mac}&nbsp;(.dmg)</a>{" · "}
-            <a href={DOWNLOAD_URL} data-attr="install-format-mac-intel">{copy.install.formats.macIntel}&nbsp;(.dmg)</a>{" · "}
-            <a href={DOWNLOAD_URL_LINUX_DEB} data-attr="install-format-deb">{copy.install.formats.linux}&nbsp;.deb</a>{" · "}
-            <a href={DOWNLOAD_URL_LINUX} data-attr="install-format-appimage">{copy.install.formats.linux}&nbsp;AppImage</a>{" · "}
-            {copy.install.formats.arm64}:{" "}
-            <a href={DOWNLOAD_URL_LINUX_ARM64_DEB} data-attr="install-format-arm64-deb">.deb</a>{" · "}
-            <a href={DOWNLOAD_URL_LINUX_ARM64} data-attr="install-format-arm64-appimage">AppImage</a>{" · "}
-            <a href={DOWNLOAD_URL_WINDOWS} data-attr="install-format-windows">{copy.install.formats.windows}&nbsp;(.exe)</a>
-          </p>
+        <h2 id="install-heading" class="lp-title lp-title--center" data-reveal>{copy.install.heading}</h2>
+        <div class="lp-paths" data-reveal>
+          <article id="waitlist" class="lp-card lp-wait ink">
+            <span class="lp-wait__badge">{copy.waitlist.badge}</span>
+            <h3>{copy.waitlist.title}</h3>
+            <p>{copy.waitlist.copy}</p>
+            <form
+              class="lp-wait__form"
+              novalidate
+              data-waitlist={WAITLIST_ENDPOINT}
+              data-locale={locale}
+              data-success={copy.waitlist.success}
+              data-email-error={copy.waitlist.emailError}
+              data-company-error={copy.waitlist.companyError}
+              data-error={copy.waitlist.error}
+            >
+              <label>
+                <span>{copy.waitlist.email}</span>
+                <input type="email" name="email" required maxlength="254" autocomplete="email" />
+                <small data-error-for="email" role="alert"></small>
+              </label>
+              <label>
+                <span>{copy.waitlist.company}</span>
+                <input type="text" name="company" required maxlength="120" autocomplete="organization" />
+                <small data-error-for="company" role="alert"></small>
+              </label>
+              <label>
+                <span>{copy.waitlist.task}</span>
+                <textarea name="task" rows="3" maxlength="500"></textarea>
+              </label>
+              <div class="lp-wait__trap" aria-hidden="true">
+                <label>Website <input type="text" name="website" tabindex="-1" autocomplete="off" /></label>
+              </div>
+              <button type="submit" class="button button--primary" data-attr="waitlist-submit">{copy.cta.waitlist}</button>
+              <p class="lp-wait__error" data-form-error role="alert" hidden></p>
+            </form>
+            <div class="lp-wait__done" data-waitlist-done aria-live="polite" hidden>
+              <strong>{copy.waitlist.successTitle}</strong>
+              <p data-done-body></p>
+            </div>
+          </article>
+          <article class="lp-card">
+            <h3>{copy.install.local.title}</h3>
+            <p>{copy.install.local.copy}</p>
+            <a class="button button--secondary" href={DOWNLOAD_URL} target="_blank" rel="noopener" data-attr="install-download">
+              {copy.install.download}
+            </a>
+            <p class="download-note lp-formats">
+              {copy.install.formats.label}:{" "}
+              <a href={DOWNLOAD_URL} data-attr="install-format-mac">{copy.install.formats.mac}&nbsp;(.dmg)</a>{" · "}
+              <a href={DOWNLOAD_URL} data-attr="install-format-mac-intel">{copy.install.formats.macIntel}&nbsp;(.dmg)</a>{" · "}
+              <a href={DOWNLOAD_URL_LINUX_DEB} data-attr="install-format-deb">{copy.install.formats.linux}&nbsp;.deb</a>{" · "}
+              <a href={DOWNLOAD_URL_LINUX} data-attr="install-format-appimage">{copy.install.formats.linux}&nbsp;AppImage</a>{" · "}
+              {copy.install.formats.arm64}:{" "}
+              <a href={DOWNLOAD_URL_LINUX_ARM64_DEB} data-attr="install-format-arm64-deb">.deb</a>{" · "}
+              <a href={DOWNLOAD_URL_LINUX_ARM64} data-attr="install-format-arm64-appimage">AppImage</a>{" · "}
+              <a href={DOWNLOAD_URL_WINDOWS} data-attr="install-format-windows">{copy.install.formats.windows}&nbsp;(.exe)</a>
+            </p>
+          </article>
         </div>
         <div class="lp-commands" data-reveal>
           <div class="lp-command">
@@ -291,6 +339,7 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
           </div>
           <p class="download-note">{copy.install.note}</p>
         </div>
+        <p class="lp-migrate" data-reveal>{copy.install.migrate}</p>
       </section>
 
       <section id="faq" class="lp-faq" aria-labelledby="faq-heading">
@@ -313,9 +362,14 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
       <section class="lp-cta ink ink-band" aria-labelledby="cta-heading" data-guide-gone>
         <h2 id="cta-heading" class="lp-title lp-title--cta">{copy.cta.heading}</h2>
         <p class="lp-lead">{copy.cta.copy}</p>
-        <a class="button button--primary" href={DOWNLOAD_URL} target="_blank" rel="noopener" data-attr="cta-download">
-          {copy.cta.download}
-        </a>
+        <div class="lp-cta__actions">
+          <a class="button button--primary" href="#waitlist" data-attr="cta-waitlist">
+            {copy.cta.waitlist}
+          </a>
+          <a class="button button--secondary" href={DOWNLOAD_URL} target="_blank" rel="noopener" data-attr="cta-download">
+            {copy.cta.download}
+          </a>
+        </div>
         <div class="lp-cta__peek">
           <p class="lp-cta__bubble lp-cta__bubble--left">{copy.cta.bubbles[0]}</p>
           <Avatar color={MASCOT_COLOR.menta} mood="happy" class="lp-cta__rook" mate />
@@ -334,21 +388,83 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
 <script>
   import "../guide";
 
-  // Blocks below the fold rise once as they arrive. Hidden only after JS runs, so nothing is lost without it.
+  // Blocks below the fold rise once as they arrive. Everything is visible until the first scroll: only then
+  // are the blocks still below the fold hidden, so a page that is never scrolled (a crawler, a preview, a
+  // full-page screenshot) shows it all.
   const calm = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (calm && "IntersectionObserver" in window) {
-    document.documentElement.classList.add("js-reveal");
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (!entry.isIntersecting) continue;
-          entry.target.classList.add("is-in");
-          observer.unobserve(entry.target);
-        }
-      },
-      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
-    );
-    document.querySelectorAll("[data-reveal]").forEach((el) => observer.observe(el));
+    const first = new AbortController();
+    const arm = () => {
+      first.abort();
+      document.documentElement.classList.add("js-reveal");
+      const observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+            entry.target.classList.add("is-in");
+            observer.unobserve(entry.target);
+          }
+        },
+        { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
+      );
+      document.querySelectorAll("[data-reveal]").forEach((el) => {
+        if (el.getBoundingClientRect().top < window.innerHeight) return;
+        el.setAttribute("data-armed", "");
+        observer.observe(el);
+      });
+    };
+    for (const type of ["scroll", "wheel", "touchmove", "keydown"]) {
+      window.addEventListener(type, arm, { passive: true, signal: first.signal });
+    }
+  }
+
+  const waitlist = document.querySelector<HTMLFormElement>("form[data-waitlist]");
+  if (waitlist) {
+    const field = (name: string) => waitlist.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement;
+    const fail = (name: string, message: string) => {
+      const input = field(name);
+      waitlist.querySelector<HTMLElement>(`[data-error-for="${name}"]`)!.textContent = message;
+      input.setAttribute("aria-invalid", message ? "true" : "false");
+    };
+    waitlist.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const email = field("email").value.trim();
+      const company = field("company").value.trim();
+      const badEmail = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      fail("email", badEmail ? (waitlist.dataset.emailError ?? "") : "");
+      fail("company", company ? "" : (waitlist.dataset.companyError ?? ""));
+      const problem = waitlist.querySelector<HTMLElement>('[aria-invalid="true"]');
+      if (problem) return problem.focus();
+      const button = waitlist.querySelector<HTMLButtonElement>("button[type=submit]")!;
+      const failure = waitlist.querySelector<HTMLElement>("[data-form-error]")!;
+      failure.hidden = true;
+      button.disabled = true;
+      try {
+        const response = await fetch(waitlist.dataset.waitlist ?? "", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            email,
+            company,
+            task: field("task").value.trim(),
+            locale: waitlist.dataset.locale,
+            source: "www",
+            website: field("website").value,
+          }),
+        });
+        if (response.status !== 200) throw new Error(String(response.status));
+        const done = waitlist.parentElement!.querySelector<HTMLElement>("[data-waitlist-done]")!;
+        done.querySelector("[data-done-body]")!.textContent = (waitlist.dataset.success ?? "")
+          .replace("{email}", email)
+          .replace("{company}", company);
+        waitlist.hidden = true;
+        done.hidden = false;
+      } catch {
+        failure.textContent = waitlist.dataset.error ?? "";
+        failure.hidden = false;
+        button.disabled = false;
+      }
+    });
   }
 
   document.querySelectorAll<HTMLButtonElement>("[data-copy]").forEach((button) => {

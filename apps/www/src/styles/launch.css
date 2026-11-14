@@ -72,6 +72,15 @@ main h3 {
   height: 72px;
 }
 
+.lp-hero__pill {
+  margin: 0 0 28px;
+  padding: 8px 16px;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  color: var(--muted-2);
+  font-size: 14px;
+}
+
 .lp-hero__lead {
   margin: 26px 0 0;
   color: var(--muted-2);
@@ -109,6 +118,7 @@ main h3 {
 
 .lp-hero__demo {
   position: relative;
+  isolation: isolate;
   width: min(100%, 860px);
   margin-top: clamp(56px, 8vw, 100px);
 }
@@ -267,23 +277,6 @@ main h3 {
   color: var(--ink);
 }
 
-.lp-store__all {
-  margin: 0;
-  padding: 20px 0;
-  border-top: 1px solid var(--line);
-  font-size: 14px;
-}
-
-.lp-store__all a {
-  color: var(--body);
-  text-underline-offset: 3px;
-}
-
-.lp-store__all a:hover {
-  color: var(--ink);
-  text-decoration: underline;
-}
-
 /* Features */
 .lp-works {
   display: flex;
@@ -388,26 +381,7 @@ main h3 {
   line-height: 1.5;
 }
 
-/* Open source */
-.lp-open__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-  align-items: center;
-}
-
-.lp-open__actions .button {
-  min-height: 46px;
-  padding: 0 22px;
-  font-size: 15px;
-}
-
-.lp-license {
-  color: var(--muted);
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 13px;
-}
-
+/* Where it runs */
 .lp-points li {
   display: flex;
   flex-direction: column;
@@ -439,6 +413,28 @@ main h3 {
 
 .lp-install .lp-center {
   gap: 28px;
+}
+
+.lp-paths {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  width: 100%;
+}
+
+.lp-paths .button {
+  align-self: flex-start;
+}
+
+.lp-paths .lp-formats {
+  margin-top: 0;
+}
+
+.lp-migrate {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
 }
 
 .lp-commands {
@@ -553,6 +549,7 @@ main ~ .site-footer {
   }
 
   .lp-cards,
+  .lp-paths,
   .lp-traits,
   .lp-items {
     grid-template-columns: minmax(0, 1fr);
@@ -772,4 +769,118 @@ html[data-guided] .guide-slot .avatar {
     top: 70px;
     left: calc(50% + 92px);
   }
+}
+
+/* A soft band behind the tabs and the chat, as wide as the page. */
+.lp-hero__demo::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -40px calc(50% - 50vw);
+  background: linear-gradient(100deg, var(--green-soft) 0%, var(--indigo-soft) 52%, var(--coral-soft) 100%);
+}
+
+.lp-cta__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* The closed-beta card: dark, with the waitlist form. */
+.lp-card.lp-wait {
+  gap: 14px;
+  border-color: var(--line-2);
+  background: var(--page);
+  color: var(--body);
+}
+
+.lp-wait [hidden] {
+  display: none;
+}
+
+.lp-wait__badge {
+  align-self: flex-start;
+  padding: 4px 12px;
+  border: 1px solid var(--blue-line);
+  border-radius: 999px;
+  background: var(--blue-soft);
+  color: var(--blue);
+  font-size: 13px;
+}
+
+.lp-wait__form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.lp-wait__form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--muted-2);
+  font-size: 13px;
+}
+
+.lp-wait__form input,
+.lp-wait__form textarea {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  resize: vertical;
+}
+
+.lp-wait__form input[aria-invalid="true"] {
+  border-color: var(--destructive, #f48877);
+}
+
+.lp-wait__form small,
+.lp-wait__error {
+  margin: 0;
+  color: #f48877;
+  font-size: 13px;
+}
+
+.lp-wait__form small:empty {
+  display: none;
+}
+
+/* The honeypot: real people never see or reach it. */
+.lp-wait__trap {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.lp-wait__done {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 18px;
+  border: 1px solid var(--blue-line);
+  border-radius: 16px;
+  background: var(--blue-soft);
+}
+
+.lp-wait__done strong {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.lp-wait__done p {
+  margin: 0;
+}
+
+.lp-wait__form .button {
+  align-self: stretch;
 }

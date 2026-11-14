@@ -7,6 +7,15 @@ const workflow = readFileSync(
   "utf8",
 );
 
+const apps = readFileSync(
+  path.resolve(import.meta.dirname, "../../../.github/workflows/desktop-apps.yml"),
+  "utf8",
+);
+const publishScript = readFileSync(
+  path.resolve(import.meta.dirname, "../scripts/publish-release.sh"),
+  "utf8",
+);
+
 const expression = (inner: string) => `\${{ ${inner} }}`;
 
 describe("desktop release workflow", () => {
@@ -82,7 +91,7 @@ describe("desktop release workflow", () => {
   it("pins every platform update feed to the official GitHub owner and repo", () => {
     expect(workflow).toContain('grep -Fqx "provider: github"');
     expect(workflow).toContain('grep -Fqx "owner: corvo-technology"');
-    expect(workflow).toContain('grep -Fqx "repo: rook"');
+    expect(workflow).toContain('grep -Fqx "repo: rook-releases"');
     expect(workflow).toContain("Verify Linux update feed is pinned to the official GitHub channel");
     expect(workflow).toContain("Windows update config missing");
     expect(workflow).toContain("RELEASE_VERSION:");
@@ -112,7 +121,22 @@ describe("desktop release workflow", () => {
     expect(workflow).toContain("latest.yml");
     expect(workflow).toContain("latest-mac.yml");
     expect(workflow).toContain("latest-linux.yml");
-    expect(workflow).toContain("--draft --generate-notes");
-    expect(workflow).toContain("--draft=false --latest");
+    expect(publishScript).toContain("--draft");
+    expect(publishScript).toContain("--draft=false --latest");
   });
+
+  it.each([
+    ["release-desktop", workflow],
+    ["desktop-apps", apps],
+  ])(
+    "%s publishes to the releases repository, and to the source repository only while it is public",
+    (_name, text) => {
+      expect(text).toContain("RELEASES_REPO: corvo-technology/rook-releases");
+      expect(text).toContain("GH_TOKEN: ${{ secrets.RELEASES_REPO_TOKEN }}");
+      expect(text).toContain('PUBLISH_TO_SOURCE_REPO: "true"');
+      expect(text).toContain("if: env.PUBLISH_TO_SOURCE_REPO == 'true'");
+      expect(text).toContain("scripts/publish-release.sh");
+      expect(text).not.toMatch(/gh release create/);
+    },
+  );
 });

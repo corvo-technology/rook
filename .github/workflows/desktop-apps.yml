@@ -11,6 +11,13 @@ on:
 permissions:
   contents: read
 
+env:
+  # Where releases and updates are served from: a public repository that holds no code.
+  RELEASES_REPO: corvo-technology/rook-releases
+  # Also publish every release to this repository, for installed apps that still update from it.
+  # Set to "false" (or delete the step) once this repository is private.
+  PUBLISH_TO_SOURCE_REPO: "true"
+
 jobs:
   build:
     name: ${{ matrix.name }}
@@ -125,9 +132,7 @@ jobs:
         with:
           path: files
           merge-multiple: true
-      - name: Publish
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Prepare the files
         shell: bash
         run: |
           set -euo pipefail
@@ -135,9 +140,17 @@ jobs:
           rm -f files/*.blockmap
           ( cd files && shasum -a 256 * > SHA256SUMS )
           ls -la files
-          gh release create "$GITHUB_REF_NAME" files/* \
-            --repo "$GITHUB_REPOSITORY" \
-            --title "Rook ${GITHUB_REF_NAME#v}" \
-            --generate-notes \
-            --latest \
-            --notes "These builds are not signed yet, so macOS and Windows warn the first time you open the app. The install commands in the README skip the macOS warning."
+      - name: Publish to the releases repository
+        env:
+          GH_TOKEN: ${{ secrets.RELEASES_REPO_TOKEN }}
+          NOTES: These builds are not signed yet, so macOS and Windows warn the first time you open the app. The install commands in the README skip the macOS warning.
+        run: apps/desktop/scripts/publish-release.sh "$RELEASES_REPO" "$GITHUB_REF_NAME" "Rook ${GITHUB_REF_NAME#v}" files/*
+      - name: Publish to the source repository
+        # Transition only: installed apps older than the releases repository still read their updates here.
+        if: env.PUBLISH_TO_SOURCE_REPO == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERIFY_TAG: "1"
+          GENERATE_NOTES: "1"
+          NOTES: These builds are not signed yet, so macOS and Windows warn the first time you open the app. The install commands in the README skip the macOS warning.
+        run: apps/desktop/scripts/publish-release.sh "$GITHUB_REPOSITORY" "$GITHUB_REF_NAME" "Rook ${GITHUB_REF_NAME#v}" files/*

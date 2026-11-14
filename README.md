@@ -111,16 +111,16 @@ Runs on your computer with its own database. No account, no server to set up.
 **macOS and Linux**
 
 ```bash
-curl -fsSL https://github.com/corvo-technology/rook/releases/latest/download/install.sh | sh
+curl -fsSL https://rook.team/install | sh
 ```
 
 **Windows (PowerShell)**
 
 ```powershell
-irm https://github.com/corvo-technology/rook/releases/latest/download/install.ps1 | iex
+irm https://rook.team/install.ps1 | iex
 ```
 
-Or download the app from the [releases page](https://github.com/corvo-technology/rook/releases/latest):
+Or download the app from the [releases page](https://github.com/corvo-technology/rook-releases/releases/latest):
 `corvo-mac-universal.dmg` (Apple silicon and Intel), `corvo-win-x64.exe`, or for Linux
 `corvo-linux-x86_64.AppImage` / `corvo-linux-amd64.deb` (x64) and `corvo-linux-arm64.AppImage` / `corvo-linux-arm64.deb` (ARM64).
 The same command updates the app later. Details and signing notes: [desktop releases](./docs/desktop-release.md).

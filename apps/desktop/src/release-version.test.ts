@@ -25,3 +25,10 @@ it("builds one universal Mac app and opens it on an Intel runner before publishi
   expect(workflow).toContain("runs-on: macos-15-intel");
   expect(workflow).toContain("needs: [build, intel-smoke]");
 });
+
+it("updates installed apps from the public releases repository, not the source repository", () => {
+  const publish = JSON.parse(read("apps/desktop/package.json")).build.publish;
+  expect(publish).toEqual([
+    { provider: "github", owner: "corvo-technology", repo: "rook-releases" },
+  ]);
+});

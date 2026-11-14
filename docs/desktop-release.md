@@ -4,6 +4,16 @@ The `release-desktop` workflow builds, signs, notarizes, attests, and publishes
 the Electron app from a `vMAJOR.MINOR.PATCH` tag on `main`. Publishing the
 Docker images triggers from the same tag.
 
+Releases are served from a public, releases-only repository,
+`corvo-technology/rook-releases`, so this repository can be private. The tag stays here, where the
+code lives. Installed apps update from `rook-releases` (`publish` in `apps/desktop/package.json`),
+and the install scripts download from it. `scripts/publish-release.sh` creates the release in each
+repository, and a release that already exists there is skipped, so a failed run can be rerun.
+
+| Secret | Value |
+| --- | --- |
+| `RELEASES_REPO_TOKEN` | Fine-grained token (or GitHub App token) with `contents: write` on `rook-releases` only |
+
 ## Repository secrets
 
 macOS (required):
@@ -74,18 +84,33 @@ signed, notarized path for when the certificates exist.
 
 Each release also carries `install.sh` (macOS and Linux) and `install.ps1` (Windows),
 and the installers have stable names (`corvo-mac-universal.zip`,
-`corvo-linux-x86_64.AppImage`, `corvo-linux-arm64.AppImage`, `corvo-win-x64.exe`) so the scripts never need a version:
+`corvo-linux-x86_64.AppImage`, `corvo-linux-arm64.AppImage`, `corvo-win-x64.exe`) so the scripts never need a version.
+The website serves the scripts from `apps/desktop/install/`:
 
 ```sh
-curl -fsSL https://github.com/corvo-technology/rook/releases/latest/download/install.sh | sh
+curl -fsSL https://rook.team/install | sh
 ```
 
 ```powershell
-irm https://github.com/corvo-technology/rook/releases/latest/download/install.ps1 | iex
+irm https://rook.team/install.ps1 | iex
 ```
 
-These links only work while the release assets are publicly downloadable, and so does the
-app's auto-update. For a private repository, publish releases to a public one instead and
-change `publish` in `apps/desktop/package.json` and the base URL in both scripts.
+The scripts download from `https://github.com/corvo-technology/rook-releases/releases/latest/download`.
 To try a script before a release, set `CORVO_BASE_URL` (a folder or URL with the files) and
 `CORVO_DEST` (a throwaway folder).
+
+## Closing the source repository
+
+Apps installed before this change still update from this repository, so it stays public until
+they have moved. `PUBLISH_TO_SOURCE_REPO` in `desktop-apps.yml` and `release-desktop.yml` makes
+every release also appear here.
+
+1. Create `corvo-technology/rook-releases`: public, with a README and no code.
+2. Add the `RELEASES_REPO_TOKEN` secret to this repository.
+3. Ship one release with dual publishing on (the default). Installed apps receive it from here and
+   from then on look at `rook-releases`.
+4. Wait at least one more release cycle for users to update.
+5. Make this repository private and set `PUBLISH_TO_SOURCE_REPO` to `"false"` (or delete that
+   step) in both workflows.
+
+Apps that skip the transition release stop updating and must reinstall with the command above.

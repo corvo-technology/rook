@@ -14,7 +14,7 @@ const logger = createRootLogger(SERVICE_NAMES.api);
 
 try {
   const env = loadEnv();
-  const { app, stop } = await createApp({ ...env, logger });
+  const { app, egress, stop } = await createApp({ ...env, logger });
   const server = serve({ fetch: app.fetch, port: env.port, hostname: env.apiHost }, () => {
     logger.info("api listening", { "http.host": env.apiHost, "http.port": env.port });
   });
@@ -37,6 +37,10 @@ try {
     });
     server.on("upgrade", (req, socket, head) => void screen.upgrade(req, socket, head));
   }
+
+  // Computers tunnel their browsers through the egress gateway over WebSocket on the API host,
+  // so no extra port is needed. It ignores every other upgrade path.
+  if (egress) server.on("upgrade", (req, socket, head) => void egress.upgrade(req, socket, head));
 
   // Long-lived connections (threads.subscribe SSE streams) never end on their
   // own, so server.close() alone waits forever for them. Track sockets and

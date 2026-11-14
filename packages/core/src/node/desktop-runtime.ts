@@ -1,7 +1,10 @@
 import { createHash } from "node:crypto";
 import { isIPv4 } from "node:net";
 import path from "node:path";
+import { EGRESS_FORWARDER_PROGRAM } from "./egress-forwarder.js";
 import { TERMINAL_SERVER_PROGRAM } from "./terminal-server.js";
+
+export { EGRESS_FORWARDER_PROGRAM };
 // Each live Chrome needs a private debugger port. This is the TCP address-space
 // boundary, not a product limit on bots or saved browser profiles.
 export const MAX_DESKTOP_DISPLAY = 65535 - 9221;
@@ -25,6 +28,11 @@ export interface DesktopEnvironment {
   preservePrimaryDisplay?: boolean;
   portStart?: number;
   bindHost?: string;
+  /**
+   * Sends this computer's browser through the Rook egress gateway. The capability names one bot;
+   * the provider's own credential never reaches the computer.
+   */
+  browserEgress?: { gateway: string; capability: string };
 }
 export const DEFAULT_DESKTOP_ENV: DesktopEnvironment = {
   homeDir: "/home/corvo",
@@ -216,8 +224,52 @@ function browserLauncherCommand(
     '  if [ -n "$_kept" ]; then export LD_PRELOAD="$_kept"; else unset LD_PRELOAD; fi',
     "  unset _kept _rest _entry",
     "fi",
-    `exec "$browser" --test-type --no-sandbox --disable-dev-shm-usage --disable-gpu --enable-unsafe-swiftshader --no-first-run --no-default-browser-check --disable-session-crashed-bubble --hide-crash-restore-bubble --password-store=basic --restore-last-session --start-maximized --remote-debugging-address=127.0.0.1 --remote-debugging-port=${layout.debugPort} --user-data-dir=${shellQuote(browserProfilePathForScreen(screenId, env))} "$@"`,
+    ...egressLauncherLines(layout.displayNumber, env),
+    `exec "$browser" --test-type --no-sandbox --disable-dev-shm-usage --disable-gpu --enable-unsafe-swiftshader --no-first-run --no-default-browser-check --disable-session-crashed-bubble --hide-crash-restore-bubble --password-store=basic --restore-last-session --start-maximized --remote-debugging-address=127.0.0.1 --remote-debugging-port=${layout.debugPort} --user-data-dir=${shellQuote(browserProfilePathForScreen(screenId, env))}${env.browserEgress ? EGRESS_BROWSER_FLAGS : ""} "$@"`,
   ].join("\n");
+}
+
+const EGRESS_PROGRAM_PATH = "/tmp/corvo/egress-forwarder.py";
+/** Loopback never goes through the proxy; Chromium would also bypass it by default. */
+const EGRESS_BROWSER_FLAGS = ` --proxy-server="http://127.0.0.1:$egress_port" --proxy-bypass-list='localhost;127.0.0.1;[::1]'`;
+
+function egressFiles(displayNumber: number | string) {
+  const base = `/tmp/corvo/egress-${displayNumber}`;
+  return { conf: `${base}.json`, port: `${base}.port`, pid: `${base}.pid`, log: `${base}.log` };
+}
+
+/**
+ * Starts this display's forwarder if it is not running and exports its port. Without it the
+ * browser does not start: a customer who expects a residential address must not get a datacenter one.
+ */
+function egressLauncherLines(displayNumber: number | string, env: DesktopEnvironment) {
+  if (!env.browserEgress) return [];
+  const files = egressFiles(displayNumber);
+  return [
+    `if ! { [ -s "${files.port}" ] && [ -s "${files.pid}" ] && kill -0 "$(cat "${files.pid}")" 2>/dev/null; }; then`,
+    `  rm -f "${files.port}"`,
+    `  nohup python3 ${EGRESS_PROGRAM_PATH} "${files.conf}" "${files.port}" 8>&- 9>&- </dev/null >"${files.log}" 2>&1 &`,
+    `  printf %s "$!" >"${files.pid}"`,
+    `  for _ in $(seq 1 50); do [ -s "${files.port}" ] && break; sleep 0.1; done`,
+    "fi",
+    `[ -s "${files.port}" ] || { echo "browser egress is not available" >&2; exit 1; }`,
+    `egress_port=$(cat "${files.port}")`,
+  ];
+}
+
+/** Writes the forwarder and this bot's capability; run on every ensure so the capability stays fresh. */
+function egressSetupCommand(displayNumber: number | string, env: DesktopEnvironment) {
+  if (!env.browserEgress) return [];
+  const files = egressFiles(displayNumber);
+  return [
+    `printf %s ${shellQuote(EGRESS_FORWARDER_PROGRAM)} >${EGRESS_PROGRAM_PATH}`,
+    `(umask 077; printf %s ${shellQuote(JSON.stringify(env.browserEgress))} >"${files.conf}.tmp" && mv "${files.conf}.tmp" "${files.conf}")`,
+  ];
+}
+
+function egressStopCommand(displayNumber: number | string) {
+  const files = egressFiles(displayNumber);
+  return `if [ -s "${files.pid}" ]; then kill "$(cat "${files.pid}")" 2>/dev/null || true; fi; rm -f "${files.conf}" "${files.port}" "${files.pid}"`;
 }
 
 // Browser.close flushes cookies and profile databases; SIGTERM alone can discard recent cookies.
@@ -494,6 +546,7 @@ function renderStopExtraScreenCommand(
     renderStopScreenTransportsCommand(index, env),
     stopBrowserCommand(screenId, env),
     `rm -f /tmp/corvo/browser-profile-${layout.displayNumber} ${browserLauncherPath(layout.displayNumber)}`,
+    egressStopCommand(layout.displayNumber),
     ...(index === 0 && env.preservePrimaryDisplay
       ? []
       : [
@@ -584,6 +637,7 @@ function renderEnsureScreenCommand(
     `mkdir -p /tmp/corvo`,
     `printf %s ${shellQuote(browserLauncherCommand(index, screenId, env))} >${browserLauncherPath(layout.displayNumber)}`,
     `chmod 700 ${browserLauncherPath(layout.displayNumber)}`,
+    ...egressSetupCommand(layout.displayNumber, env),
     ...setupDisplay,
     `xdpyinfo -display ${layout.display} >/dev/null 2>&1 || exit 1`,
     `mkdir -p /tmp/corvo ${shellQuote(path.posix.dirname(profile))}`,

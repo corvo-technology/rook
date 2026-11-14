@@ -120,3 +120,100 @@ it.each([false, true])(
     expect(subscription.signal.aborted).toBe(true);
   },
 );
+
+async function mountGroupSync(get: ReturnType<typeof vi.fn>, commitSnapshot = vi.fn()) {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  const input = {
+    rpc: { threads: { get } },
+    queries: { threads: { get: { queryKey: vi.fn(() => ["thread"]) } } },
+    thread: {
+      snapshot: null,
+      snapshotRef: ref(null),
+      commitSnapshot,
+      updateSnapshot: vi.fn(),
+      setRoutines: vi.fn(),
+      setRoutinesBotId: vi.fn(),
+      bootstrappedThread: ref(null),
+      expandedHistoryThread: ref(null),
+      historyEpoch: ref(0),
+      messageScroll: ref(null),
+      pinnedAroundRef: ref(null),
+      resetHistory: vi.fn(),
+    },
+    computerState: {
+      computerRef: ref(null),
+      commitComputer: vi.fn(),
+      computerOpenRef: ref(false),
+      computerBotIdRef: ref(null),
+    },
+    active: undefined,
+    activeGroup: { id: "group-1", name: "Group" },
+    inGroup: true,
+    groupId: "group-1",
+    activeBotId: ref(undefined),
+    activeGroupId: ref("group-1"),
+    botsRef: ref([]),
+    searchParamsRef: ref(new URLSearchParams()),
+    refreshBots: vi.fn(async () => {}),
+    notifyBrowserForEvent: vi.fn(),
+    markBotReadIfVisible: vi.fn(),
+    markGroupReadOnReply: vi.fn(),
+  } as unknown as Parameters<typeof useThreadSync>[0];
+  function Probe() {
+    useThreadSync(input);
+    return null;
+  }
+  const root = createRoot(document.createElement("div"));
+  await act(async () => root.render(createElement(Probe)));
+  return { subscription: vi.mocked(runThreadSubscription).mock.calls[0]![0], root };
+}
+
+const groupSnapshot = (cursor: number) =>
+  ({ threadId: "thread-1", groupId: "group-1", cursor, messages: [], run: null }) as never;
+
+it("gives the reads that recover a stream longer than the first read", async () => {
+  const timeout = vi.spyOn(AbortSignal, "timeout");
+  const get = vi.fn(async () => groupSnapshot(1));
+  const { subscription, root } = await mountGroupSync(get);
+  await subscription.loadInitial();
+  await subscription.refresh();
+  const [initial, recovery] = timeout.mock.calls.map(([ms]) => ms);
+  expect(initial).toBeLessThanOrEqual(5_000);
+  expect(recovery).toBeGreaterThanOrEqual(15_000);
+  act(() => root.unmount());
+  timeout.mockRestore();
+});
+
+it("still shows the read that follows a send when a newer read is in flight", async () => {
+  const reads = [deferred<ThreadSnapshot>(), deferred<ThreadSnapshot>()];
+  const get = vi.fn(() => reads[get.mock.calls.length - 1]!.promise);
+  const commitSnapshot = vi.fn();
+  const { subscription, root } = await mountGroupSync(get, commitSnapshot);
+  // The send's read starts first; the stream's recovery read starts after it and never answers.
+  const afterSend = subscription.refresh();
+  void subscription.refresh();
+  const sent = groupSnapshot(2);
+  reads[0]!.resolve(sent);
+  await afterSend;
+  await flush();
+  expect(commitSnapshot).toHaveBeenCalledWith(sent);
+  act(() => root.unmount());
+});
+
+it("does not let an older read replace a newer one that already landed", async () => {
+  const reads = [deferred<ThreadSnapshot>(), deferred<ThreadSnapshot>()];
+  const get = vi.fn(() => reads[get.mock.calls.length - 1]!.promise);
+  const commitSnapshot = vi.fn();
+  const { subscription, root } = await mountGroupSync(get, commitSnapshot);
+  const older = subscription.refresh();
+  const newer = subscription.refresh();
+  const newest = groupSnapshot(3);
+  reads[1]!.resolve(newest);
+  await newer;
+  reads[0]!.resolve(groupSnapshot(2));
+  await older;
+  await flush();
+  expect(commitSnapshot).toHaveBeenCalledTimes(1);
+  expect(commitSnapshot).toHaveBeenCalledWith(newest);
+  act(() => root.unmount());
+});

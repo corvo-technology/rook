@@ -32,10 +32,20 @@ import type { useBrowserNotifications } from "./use-browser-notifications";
 import type { ComputerState } from "./use-computer";
 import type { ThreadState } from "./use-thread-state";
 
+/** The first read is short so a slow one falls back to the cheap head lookup and the stream. */
 const THREAD_SNAPSHOT_TIMEOUT_MS = 2_000;
+/**
+ * The reads that recover a stream while it waits for a snapshot. Events are only applied once one
+ * of them commits, so a limit shorter than the API's real response time (a long channel over a
+ * remote link) would cancel every attempt and leave the open thread frozen until a reload.
+ */
+const THREAD_RECOVERY_TIMEOUT_MS = 20_000;
 
-function threadSnapshotSignal(parent: AbortSignal): AbortSignal {
-  return anySignal([parent, AbortSignal.timeout(THREAD_SNAPSHOT_TIMEOUT_MS)]);
+function threadSnapshotSignal(
+  parent: AbortSignal,
+  timeoutMs = THREAD_SNAPSHOT_TIMEOUT_MS,
+): AbortSignal {
+  return anySignal([parent, AbortSignal.timeout(timeoutMs)]);
 }
 
 function applyThreadEvent(
@@ -118,8 +128,13 @@ export function useThreadSync({
     computerBotIdRef,
     refreshComputerScreen,
   } = computerState;
+  // A refresh is applied unless a later one already was. Dropping every response that a newer
+  // request overtook let a stream's retries cancel the read that follows a send, so the sent
+  // message never showed; the cursor check in mergeThreadSnapshot already keeps stale data out.
   const threadRefreshEpoch = useRef(0);
+  const threadAppliedEpoch = useRef(0);
   const groupRefreshEpoch = useRef(0);
+  const groupAppliedEpoch = useRef(0);
   const [loadingOlder, setLoadingOlder] = useState(false);
   // A very fast run can finish over SSE while its threads.send response is still
   // returning. Do not let that late receipt resurrect terminal work as queued.
@@ -152,7 +167,8 @@ export function useThreadSync({
     const request = ++groupRefreshEpoch.current;
     const snap = await rpc.threads.get({ groupId: id }, signal ? { signal } : undefined);
     markOnce("rk:renderer:thread-response");
-    if (activeGroupId.current !== id || request !== groupRefreshEpoch.current) return snap;
+    if (activeGroupId.current !== id || request < groupAppliedEpoch.current) return snap;
+    groupAppliedEpoch.current = request;
     const reconciled = reconcileRefreshedThread(
       snapshotRef.current,
       snap,
@@ -187,10 +203,11 @@ export function useThreadSync({
     if (
       activeBotId.current !== id ||
       epoch !== historyEpoch.current ||
-      request !== threadRefreshEpoch.current
+      request < threadAppliedEpoch.current
     ) {
       return snap;
     }
+    threadAppliedEpoch.current = request;
     const reconciled = reconcileRefreshedThread(
       snapshotRef.current,
       snap,
@@ -220,7 +237,7 @@ export function useThreadSync({
       if (
         activeBotId.current !== id ||
         epoch !== historyEpoch.current ||
-        request !== threadRefreshEpoch.current
+        request < threadAppliedEpoch.current
       ) {
         return;
       }
@@ -309,7 +326,8 @@ export function useThreadSync({
       },
       loadHead: () =>
         rpc.threads.head({ botId: active.id }, { signal: threadSnapshotSignal(abort.signal) }),
-      refresh: () => refreshThread(active.id, threadSnapshotSignal(abort.signal)),
+      refresh: () =>
+        refreshThread(active.id, threadSnapshotSignal(abort.signal, THREAD_RECOVERY_TIMEOUT_MS)),
       currentSnapshot: () => snapshotRef.current,
       subscribe: (cursor, signal) =>
         rpc.threads.subscribe({ botId: active.id, cursor }, { signal }),
@@ -398,7 +416,8 @@ export function useThreadSync({
           ? rpc.threads.get({ groupId }, { signal: threadSnapshotSignal(abort.signal) })
           : refreshGroupThread(groupId, threadSnapshotSignal(abort.signal)),
       loadHead: () => rpc.threads.head({ groupId }, { signal: threadSnapshotSignal(abort.signal) }),
-      refresh: () => refreshGroupThread(groupId, threadSnapshotSignal(abort.signal)),
+      refresh: () =>
+        refreshGroupThread(groupId, threadSnapshotSignal(abort.signal, THREAD_RECOVERY_TIMEOUT_MS)),
       currentSnapshot: () => snapshotRef.current,
       subscribe: (cursor, signal) => rpc.threads.subscribe({ groupId, cursor }, { signal }),
       applyEvent: (event) =>

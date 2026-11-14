@@ -213,7 +213,11 @@ export class GraphileJobWorkerHost implements JobWorkerHost {
     this.wakeSleep?.();
     const draining = this.executions.stop();
     try {
-      await this.runner?.stop();
+      await this.runner?.stop().catch((error) => {
+        // Graphile stops itself on SIGTERM unless noHandleSignals is set, and a second
+        // stop throws. Either way the runner is stopped, which is what was asked.
+        if (!(error instanceof Error && error.message === "Runner is already stopped")) throw error;
+      });
     } finally {
       // The queue has stopped accepting deliveries. Handed-off runs still own
       // leases and must finish before their database and providers are closed.

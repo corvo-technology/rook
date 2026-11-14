@@ -446,6 +446,8 @@ services:
     # Directly, not through pnpm, so a stop reaches it (see the api command).
     working_dir: /app/apps/worker
     command: ["node", "--enable-source-maps", "dist/index.js"]
+    # WORKER_DRAIN_TIMEOUT_MS (120s) plus time to hand unfinished runs back.
+    stop_grace_period: 150s
     healthcheck:
       test: ["CMD", "node", "dist/health-check.js"]
       interval: 30s
@@ -465,6 +467,7 @@ services:
       <<: *app-environment
       CORVO_DESKTOP_STACK_TOKEN: ${CORVO_DESKTOP_STACK_TOKEN:-}
       GRAPHILE_WORKER_CONCURRENCY:
+      WORKER_DRAIN_TIMEOUT_MS:
     volumes:
       - appdata:/data
     networks:

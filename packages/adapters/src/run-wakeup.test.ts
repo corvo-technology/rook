@@ -347,6 +347,41 @@ describe("durable direct run wakeups", () => {
     }
   });
 
+  it("recovers a run orphaned by a killed worker on the first scan after boot, once", async () => {
+    const f = fixture();
+    // A run still marked running whose owner was killed: only its lease has expired.
+    f.findMany.mockResolvedValueOnce([
+      { id: "orphan", botId: "orphan", bot: { computerId: "computer" } },
+    ]);
+    let release!: () => void;
+    const done = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const handler = vi.fn(async (_payload, execution) => {
+      execution.onRunStarted();
+      await done;
+    });
+    try {
+      await f.host.start({ "run.continue": handler } as unknown as BackgroundJobHandlers);
+      await vi.waitFor(() => expect(handler).toHaveBeenCalledTimes(1));
+      const where = f.findMany.mock.calls[0]![0].where as unknown as {
+        OR: Array<{ status: unknown; leaseExpiresAt?: unknown }>;
+      };
+      expect(where.OR).toContainEqual({
+        status: { in: ["leased", "running"] },
+        leaseExpiresAt: { lte: expect.any(Date) },
+      });
+      // Later wakes while the continuation is still executing do not start it again.
+      await f.realtime.publish("runs:ready", "");
+      await f.realtime.publish("runs:ready", "");
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      expect(handler).toHaveBeenCalledTimes(1);
+    } finally {
+      release();
+      await f.host.stop();
+    }
+  });
+
   it("repairs a missed notification and preserves a future retry through reconciliation", async () => {
     vi.useFakeTimers();
     const f = fixture();

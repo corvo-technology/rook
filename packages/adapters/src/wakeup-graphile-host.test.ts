@@ -837,6 +837,35 @@ describe("GraphileJobWorkerHost runner lifecycle", () => {
     ]);
   });
 
+  it("lets Graphile's own signal handling stay off and tolerates a runner that already stopped", async () => {
+    const unhandled = vi.fn();
+    process.on("unhandledRejection", unhandled);
+    try {
+      const first = mockRunner();
+      vi.mocked(first.runner.stop).mockRejectedValueOnce(new Error("Runner is already stopped"));
+      run.mockResolvedValueOnce(first.runner);
+      const host = new GraphileJobWorkerHost({} as Pool, { noHandleSignals: true });
+      await host.start(handlers());
+      expect(run).toHaveBeenCalledWith(expect.objectContaining({ noHandleSignals: true }));
+      first.rejectLife(new Error("Runner is already stopped"));
+      await expect(host.stop()).resolves.toBeUndefined();
+      await new Promise((resolve) => setImmediate(resolve));
+      expect(unhandled).not.toHaveBeenCalled();
+    } finally {
+      process.off("unhandledRejection", unhandled);
+    }
+  });
+
+  it("still surfaces any other failure to stop the runner", async () => {
+    const first = mockRunner();
+    vi.mocked(first.runner.stop).mockRejectedValueOnce(new Error("connection lost"));
+    run.mockResolvedValueOnce(first.runner);
+    const host = new GraphileJobWorkerHost({} as Pool);
+    await host.start(handlers());
+    first.rejectLife(new Error("connection lost"));
+    await expect(host.stop()).rejects.toThrow("connection lost");
+  });
+
   it("wakes a pending restart delay when stop is called", async () => {
     const first = mockRunner();
     run.mockResolvedValueOnce(first.runner);

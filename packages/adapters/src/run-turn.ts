@@ -37,7 +37,7 @@ import { startWorkflowStepAfter } from "./routine-steps.js";
 import type { RunContext } from "./run-context.js";
 import { persistTurnCheckpoint } from "./run-context.js";
 import { TurnGuardStopError } from "./run-guards.js";
-import { renewRunLease, requeueComputerRun } from "./run-lifecycle.js";
+import { releaseRunForShutdown, renewRunLease, requeueComputerRun } from "./run-lifecycle.js";
 import { publishMessage, redactBlocks } from "./run-messages.js";
 import {
   completionMarksUnread,
@@ -150,6 +150,7 @@ export async function consumeRunEvents(
       });
       addReplyUsage(ctx.state.replyBudget, usageTokens(event));
     } else if (event.type === "done") {
+      ctx.state.turnEnded = true;
       recordExplicitNoResponse(reply, event.text ?? "");
       if (!reply.assembled && event.text) {
         if (reply.publishedMidTurnUserMessage || reply.discardedMidTurnNarration) {
@@ -741,6 +742,18 @@ export async function completeRun(ctx: RunContext) {
   } catch (error) {
     getLogger().error("memory.learn enqueue failed", error);
   }
+}
+
+/**
+ * The worker is stopping with this turn unfinished. Save the computer's files and give the
+ * run back to the queue; the next worker continues it. Nothing is shown as failed.
+ */
+export async function interruptRunForShutdown(ctx: RunContext) {
+  const { deps, runId, workerId, fence } = ctx;
+  await ctx.computer.checkpoint.flush().catch(() => undefined);
+  await ctx.settleRunningHelpers();
+  const released = await releaseRunForShutdown(deps, runId, workerId, fence);
+  getLogger().info("run.interrupted_for_shutdown", { "run.id": runId, released });
 }
 
 /** The turn failed: keep the reply streamed so far, record the error, and retry or notify. */

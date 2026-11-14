@@ -1,8 +1,11 @@
+import { randomUUID } from "node:crypto";
+import { hostname } from "node:os";
 import { setTimeout as sleep } from "node:timers/promises";
 import type { JobPublisher, JobWorkerHost } from "@corvo/adapter-kit";
 import { ComposioConnector, IntegrationProviderSettings } from "@corvo/adapters";
 import { phoneCallSettings } from "@corvo/core";
 import { loadRootEnv } from "@corvo/core/node/load-root-env";
+import { drain, drainTimeoutFromEnv } from "./drain.js";
 import { startWorkerHealth } from "./health.js";
 import { createWorkerSecretStore } from "./secret-store.js";
 
@@ -264,7 +267,10 @@ async function main() {
     jobs,
     accessToken: process.env.EXPO_ACCESS_TOKEN,
   });
+  // Aborted only when the drain deadline passes: running turns then return to the queue.
+  const interruptRuns = new AbortController();
   const executor = createRunExecutor({
+    shutdownSignal: interruptRuns.signal,
     spacePartnerState: (spaceId) => partnerSpaceState(prisma, spaceId),
     maxUploadSizeBytes: uploadSizeFromEnv(process.env),
     prisma,
@@ -318,6 +324,9 @@ async function main() {
       new RunWorkerHost(prisma, realtime),
       createReservedGraphileJobWorkerHost(pool, {
         concurrency: parsePositiveInteger(process.env.GRAPHILE_WORKER_CONCURRENCY, 4),
+        // Graphile's own SIGTERM handler gives in-flight jobs 5 seconds and then kills
+        // the process. The drain below owns shutdown.
+        noHandleSignals: true,
       }),
     );
 
@@ -329,7 +338,8 @@ async function main() {
     artifacts,
     jobs,
     events,
-    workerId: process.pid.toString(),
+    // Unique per boot: pods of two releases can share a process id.
+    workerId: `${hostname()}:${process.pid}:${randomUUID().slice(0, 8)}`,
     runtime,
     secretStore: secrets,
     memoryProviders,
@@ -380,7 +390,13 @@ async function main() {
     try {
       await stopHealth?.();
       await reconciler.stop();
-      await jobHost.stop();
+      const outcome = await drain({
+        stop: () => jobHost.stop(),
+        interrupt: () => interruptRuns.abort(new Error("Worker is shutting down")),
+        timeoutMs: drainTimeoutFromEnv(process.env),
+        log: (message, fields) => logger.warn(message, fields),
+      });
+      logger.info("worker drained", { outcome });
       await jobs.close();
       await secrets.close();
       await realtime.close();
@@ -394,8 +410,9 @@ async function main() {
       await logger.flush({ timeoutMs: 2_000 });
     }
   };
-  process.once("SIGTERM", () => void stop());
-  process.once("SIGINT", () => void stop());
+  const exitAfterStop = () => void stop().finally(() => process.exit(0));
+  process.once("SIGTERM", exitAfterStop);
+  process.once("SIGINT", exitAfterStop);
   // graphile-worker fires completeJob() without awaiting it. When pool.connect()
   // then hits Postgres 53300, that rejection is unhandled. Exiting here is the
   // crash loop: Docker restarts the process before Postgres has reaped the old
@@ -409,6 +426,8 @@ async function main() {
   process.on("unhandledRejection", (reason) => {
     logger.error("unhandledRejection", reason);
     if (isTooManyDatabaseConnections(reason)) return;
+    // A rejection while draining must not cut the runs the drain is waiting for.
+    if (stopping) return;
     void stop().finally(() => process.exit(1));
   });
 

@@ -55,7 +55,7 @@ test("create opens dialog, then empty chat; picker lists bots; sidebar collapses
   await created;
   await page.waitForURL(/\/app\/[^/]+$/);
   await expect(createDialog).toBeHidden();
-  await expect(page.getByPlaceholder("Message New Bot")).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message New Bot", exact: true })).toBeVisible();
   const newBotId = page.url().split("/").pop()!;
   const afterCreate = await rpc<Array<{ id: string; color: string; computerMode: string }>>(
     page,
@@ -126,7 +126,7 @@ test("create opens dialog, then empty chat; picker lists bots; sidebar collapses
   await createDialog.getByPlaceholder("Name your Bot").fill("Blue Bot");
   await createDialog.getByRole("button", { name: "Create", exact: true }).click();
   await expect(createDialog).toBeHidden();
-  await expect(page.getByPlaceholder("Message Blue Bot")).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message Blue Bot", exact: true })).toBeVisible();
 });
 
 test("a stale roster refresh started before creation keeps the new bot selected", async ({
@@ -134,7 +134,7 @@ test("a stale roster refresh started before creation keeps the new bot selected"
 }, testInfo) => {
   await signup(page, `stale-create-${Date.now()}@corvo.test`, "password12", "Stale Create");
   await completeOnboarding(page);
-  await expect(page.getByPlaceholder("Message Chief")).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message Chief", exact: true })).toBeVisible();
 
   let markReady!: () => void;
   let releaseList!: () => void;
@@ -203,7 +203,7 @@ test("later bot waits before showing the focus card; sending cancels it", async 
 
   await page.clock.install();
   await createBotFromPicker(page);
-  await expect(page.getByPlaceholder("Message New Bot")).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message New Bot", exact: true })).toBeVisible();
   await expect(page.getByText("What do you want me on first?", { exact: true })).toHaveCount(0);
 
   await page.clock.fastForward(9_000);

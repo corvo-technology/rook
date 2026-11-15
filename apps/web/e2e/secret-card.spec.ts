@@ -10,7 +10,7 @@ test("renders masked secret card and saves without putting the value in chat", a
   await completeOnboarding(page);
 
   const botId = activeBotId(page);
-  const composer = page.getByPlaceholder(/Message/);
+  const composer = page.getByRole("combobox", { name: /^Message/ });
   await composer.fill("show a secret card for a masked api key");
   await page.keyboard.press("Enter");
 
@@ -30,7 +30,7 @@ test("renders masked secret card and saves without putting the value in chat", a
   const card = page.getByTestId("secret-ask-card");
   if ((await card.count()) === 0) {
     await page.reload({ waitUntil: "domcontentloaded" });
-    await expect(page.getByPlaceholder(/Message/)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("combobox", { name: /^Message/ })).toBeVisible({ timeout: 15_000 });
   }
   await expect(card).toBeVisible({ timeout: 15_000 });
   await expect(card.getByText("API key", { exact: true }).first()).toBeVisible();
@@ -139,7 +139,7 @@ test("dismisses a secret card, resumes the bot and frees the composer", async ({
   await completeOnboarding(page);
 
   const botId = activeBotId(page);
-  const composer = page.getByPlaceholder(/Message/);
+  const composer = page.getByRole("combobox", { name: /^Message/ });
   await composer.fill("show a secret card for a masked api key");
   await page.keyboard.press("Enter");
 
@@ -158,7 +158,7 @@ test("dismisses a secret card, resumes the bot and frees the composer", async ({
   const card = page.getByTestId("secret-ask-card");
   if ((await card.count()) === 0) {
     await page.reload({ waitUntil: "domcontentloaded" });
-    await expect(page.getByPlaceholder(/Message/)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("combobox", { name: /^Message/ })).toBeVisible({ timeout: 15_000 });
   }
   await expect(card).toBeVisible({ timeout: 15_000 });
   const typedValue = `sk-test-dismissed-${stamp}`;
@@ -197,7 +197,7 @@ async function openSecretCard(page: Page, name: string, prompt: string) {
   await signup(page, `secret-${name}-${stamp}@corvo.test`, "password12", "Secret Lines");
   await completeOnboarding(page);
   const botId = activeBotId(page);
-  await page.getByPlaceholder(/Message/).fill(prompt);
+  await page.getByRole("combobox", { name: /^Message/ }).fill(prompt);
   await page.keyboard.press("Enter");
   await expect
     .poll(
@@ -213,7 +213,7 @@ async function openSecretCard(page: Page, name: string, prompt: string) {
   const card = page.getByTestId("secret-ask-card");
   if ((await card.count()) === 0) {
     await page.reload({ waitUntil: "domcontentloaded" });
-    await expect(page.getByPlaceholder(/Message/)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("combobox", { name: /^Message/ })).toBeVisible({ timeout: 15_000 });
   }
   await expect(card).toBeVisible({ timeout: 15_000 });
   // Every save is rejected, so one card takes many answers; each is recorded as sent.

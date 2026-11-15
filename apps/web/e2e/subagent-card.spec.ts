@@ -7,7 +7,7 @@ test("a completed subagent card folds, opens from its header, and fills its widt
   await signup(page, `subagent-card-${Date.now()}@corvo.test`, "password12", "Subagent Card");
   await completeOnboarding(page);
 
-  const composer = page.getByPlaceholder(/Message/);
+  const composer = page.getByRole("combobox", { name: /^Message/ });
   await composer.fill("delegate to a helper: list three venue ideas");
   await page.keyboard.press("Enter");
 

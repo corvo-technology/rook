@@ -82,7 +82,7 @@ test("voice settings connect a key, speak a reply, and open a call", async ({ pa
 
   await page.getByRole("button", { name: "Close voice settings" }).click();
 
-  const composer = page.getByPlaceholder(/Message/);
+  const composer = page.getByRole("combobox", { name: /^Message/ });
   await composer.fill("say hello");
   await page.keyboard.press("Enter");
   // A reply can render more than one text bubble; speak the latest one.

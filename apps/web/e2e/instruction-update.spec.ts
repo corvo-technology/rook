@@ -8,7 +8,7 @@ test("instruction proposals support edit, approval, undo and mandatory human app
   await completeOnboarding(page);
   const botId = await activeBotId(page);
   const original = (await rpc<{ instructions: string }>(page, "bots/get", { botId })).instructions;
-  const composer = page.getByPlaceholder(/Message/);
+  const composer = page.getByRole("combobox", { name: /^Message/ });
   await composer.fill("propose an instruction update");
   await page.keyboard.press("Enter");
   const proposal = page.getByTestId("instruction-approval-card");

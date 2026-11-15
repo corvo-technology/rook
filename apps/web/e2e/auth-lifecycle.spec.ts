@@ -140,7 +140,7 @@ test("logout protects bot deep links and sign-in restores the session", async ({
 
   await page.waitForURL(/\/app\/[^/]+$/);
   const protectedBotPath = new URL(page.url()).pathname;
-  await expect(page.getByPlaceholder("Message Chief")).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message Chief", exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: new RegExp(userName, "i") }).click();
   await expect(page.getByRole("button", { name: "Settings", exact: true })).toBeVisible();
@@ -156,7 +156,7 @@ test("logout protects bot deep links and sign-in restores the session", async ({
   await expect(
     page.getByRole("alert").filter({ hasText: "Could not log out. Try again." }),
   ).toBeVisible();
-  await expect(page.getByPlaceholder("Message Chief")).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message Chief", exact: true })).toBeVisible();
   await captureScreenshot(page, testInfo, "36-account-menu-logout-error");
   await page.unroute("**/api/auth/sign-out");
 

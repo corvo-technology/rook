@@ -43,7 +43,7 @@ test("opening a bot in another space switches in place, without a page reload", 
   });
   await page.getByRole("button", { name: /Scout/ }).first().click();
   await page.waitForURL(`**/app/${scout.id}`);
-  await expect(page.getByPlaceholder("Message Scout")).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message Scout", exact: true })).toBeVisible();
   expect(
     await page.evaluate(
       () => (window as unknown as { spaceSwitchMarker?: boolean }).spaceSwitchMarker,

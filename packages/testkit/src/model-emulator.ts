@@ -85,7 +85,6 @@ export async function startModelEmulator(options: {
         chunks.push(Buffer.from(chunk));
       }
       const body = JSON.parse(Buffer.concat(chunks).toString("utf8")) as ModelEmulatorRequest;
-      requests.push(body);
       assert.equal(body.model, modelId, "Model routing changed");
       assert.equal(body.stream, true, "Expected streaming model request");
       assert.ok(Array.isArray(body.messages), "Expected model messages");
@@ -95,6 +94,8 @@ export async function startModelEmulator(options: {
         body.messages.some((message) =>
           String(message.content).includes('"rubricVersion":"repeat-'),
         );
+      // A check the fixture answers on its own is not part of the scripted conversation.
+      if (!isRepeatCheck) requests.push(body);
       const step: ModelEmulatorStep | undefined = isRepeatCheck
         ? {
             expect: () => {},

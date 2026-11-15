@@ -8,7 +8,7 @@ test("agent-attached files appear as cards with previews and downloads", async (
   await signup(page, `artifact-card-${stamp}@corvo.test`, "password12", "Artifact Card");
   await completeOnboarding(page);
 
-  const composer = page.getByPlaceholder(/Message/);
+  const composer = page.getByRole("combobox", { name: /^Message/ });
   await composer.fill("write notes/result.txt and attach it to the thread");
   await page.keyboard.press("Enter");
 

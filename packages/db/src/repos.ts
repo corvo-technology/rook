@@ -15,6 +15,7 @@ import {
   ringingCall,
   userVisibleMessages,
 } from "@corvo/core";
+import { getLogger } from "@corvo/logging";
 import { chooseBotAvatar } from "./bot-avatar-choice.js";
 import type { Prisma, PrismaClient } from "./client.js";
 import type { ComputerMode } from "./computers.js";
@@ -65,6 +66,24 @@ function rosterRunErrorId(
 // section and reorder writes, so the newest message's time wins when the chat has one.
 function rosterUpdatedAt(newestMessage: { createdAt: Date } | undefined, botUpdatedAt: Date) {
   return newestMessage?.createdAt ?? botUpdatedAt;
+}
+
+/**
+ * One agent that cannot be shown, because its conversation is not there, must not take the whole
+ * list with it: the list leaves it out and says so.
+ */
+function withConversation<T extends { id: string; spaceId: string; thread: unknown }>(
+  bots: T[],
+): Array<T & { thread: NonNullable<T["thread"]> }> {
+  const shown = bots.filter(
+    (bot): bot is T & { thread: NonNullable<T["thread"]> } => bot.thread != null,
+  );
+  if (shown.length < bots.length)
+    getLogger().warn("agents without a conversation left out of a list", {
+      "agents.left_out": bots.length - shown.length,
+      "space.id": bots.find((bot) => bot.thread == null)?.spaceId,
+    });
+  return shown;
 }
 
 function mapBot(
@@ -219,7 +238,11 @@ export function createRepos(
       },
       orderBy: [{ pinned: "desc" }, { position: "asc" }, { createdAt: "asc" }],
     });
-    const bots = await withNewestThreadMessages(prisma, await withLatestBotRuns(prisma, rows), 1);
+    const bots = await withNewestThreadMessages(
+      prisma,
+      await withLatestBotRuns(prisma, withConversation(rows)),
+      1,
+    );
     const unreadByThread = await memberUnreadByThread(
       prisma,
       actor.userId,
@@ -376,18 +399,20 @@ export function createRepos(
         prisma,
         await withLatestBotRuns(
           prisma,
-          await prisma.bot.findMany({
-            where: {
-              spaceId: actor.spaceId,
-              archivedAt: options.archived ? { not: null } : null,
-            },
-            include: {
-              thread: true,
-              runs: activeRunSelection,
-              computer: { select: { scope: true } },
-            },
-            orderBy: [{ pinned: "desc" }, { position: "asc" }, { createdAt: "asc" }],
-          }),
+          withConversation(
+            await prisma.bot.findMany({
+              where: {
+                spaceId: actor.spaceId,
+                archivedAt: options.archived ? { not: null } : null,
+              },
+              include: {
+                thread: true,
+                runs: activeRunSelection,
+                computer: { select: { scope: true } },
+              },
+              orderBy: [{ pinned: "desc" }, { position: "asc" }, { createdAt: "asc" }],
+            }),
+          ),
         ),
         SIDEBAR_PREVIEW_MESSAGE_WINDOW,
       );

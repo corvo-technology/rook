@@ -115,4 +115,32 @@ describe("who may talk to which agent (one rule for every entry point)", () => {
       code: "FORBIDDEN",
     });
   });
+
+  it("lets the space's owner and admins into every agent, including ones another person made", async () => {
+    for (const role of ["owner", "admin"]) {
+      const asRole = db({ role });
+      expect([...(await talkableBotIds(asRole, actor, ids))].sort()).toEqual([
+        "mine",
+        "open",
+        "sales",
+        "solo",
+      ]);
+      for (const id of ids) {
+        await expect(requireInAudience(asRole, actor, id)).resolves.toBeUndefined();
+        await expect(requireCanTalkTo(asRole, actor, id)).resolves.toBeUndefined();
+      }
+    }
+  });
+
+  it("answers from the agent row a caller already loaded, without asking the database again", async () => {
+    const prisma = db();
+    await expect(requireInAudience(prisma, actor, "open", open)).resolves.toBeUndefined();
+    await expect(requireInAudience(prisma, actor, "sales", sales)).rejects.toThrow();
+    await expect(
+      requireInAudience(db({ roleIds: ["role-sales"] }), actor, "sales", sales),
+    ).resolves.toBeUndefined();
+    expect(
+      (prisma as never as { bot: { findMany: ReturnType<typeof vi.fn> } }).bot.findMany,
+    ).not.toHaveBeenCalled();
+  });
 });

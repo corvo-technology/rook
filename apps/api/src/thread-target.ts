@@ -403,7 +403,7 @@ export async function resolveThreadTarget(
     const bot = await repos.getBot(actor, input.botId, options);
     if (!bot.thread) throw new IsolationError();
     // An agent's conversation is for its audience: a person outside it neither reads nor writes.
-    await requireInAudience(prisma, actor, bot.id);
+    await requireInAudience(prisma, actor, bot.id, bot);
     return {
       kind: "bot",
       botId: bot.id,

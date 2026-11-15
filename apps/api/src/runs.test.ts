@@ -1,5 +1,7 @@
+import type { Actor } from "@corvo/contracts";
+import type { PrismaClient } from "@corvo/db";
 import { describe, expect, it } from "vitest";
-import { activityNotificationsEnabled, activityPreview } from "./runs.js";
+import { activityNotificationsEnabled, activityPreview, listSpaceRuns } from "./runs.js";
 
 describe("run activity copy", () => {
   it.each([
@@ -110,5 +112,43 @@ it("hides opaque sender names in Activity previews", () => {
   ).toEqual({
     promptSnippet: "Update from Another agent: Ready",
     agentMessage: { fromBotName: "", kind: "update", text: "Ready" },
+  });
+});
+
+describe("listSpaceRuns", () => {
+  const actor: Actor = {
+    userId: "u",
+    spaceId: "s",
+    email: "u@example.test",
+    isDeploymentOwner: false,
+  };
+  const run = (id: string, patch: Record<string, unknown> = {}) => ({
+    id,
+    botId: "b",
+    threadId: "t",
+    status: "running",
+    trigger: "user",
+    updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+    completedAt: null,
+    bot: { name: "Maya", archivedAt: null, notifyOnFinish: true },
+    task: { prompt: "Do it" },
+    sourceMessage: null,
+    thread: { groupId: null, group: null },
+    ...patch,
+  });
+
+  it("leaves out a run whose agent, task or conversation cannot be read, and lists the rest", async () => {
+    const prisma = {
+      run: {
+        findMany: async () => [
+          run("no-agent", { bot: null }),
+          run("no-task", { task: null }),
+          run("no-thread", { thread: null }),
+          run("whole"),
+        ],
+      },
+    } as unknown as PrismaClient;
+    const rows = await listSpaceRuns(prisma, actor, "active");
+    expect(rows.map((row) => row.runId)).toEqual(["whole"]);
   });
 });

@@ -161,7 +161,7 @@ async function spaceCatalogAuth(
   hostedProvider?: string,
 ): Promise<SpaceCatalogAuth> {
   const hosted = hostedProvider && (await hasHostedModelCredits(prisma, asker, hostedProvider));
-  const [credentials, preferences] = await Promise.all([
+  const [credentials, allPreferences] = await Promise.all([
     prisma.userModelCredential.findMany({
       where: { userId: scope.userId },
       select: {
@@ -190,6 +190,8 @@ async function spaceCatalogAuth(
       },
     }),
   ]);
+  // A choice whose connection the reader cannot see (removed, or not lent to them) is no choice.
+  const preferences = allPreferences.filter((preference) => preference.credential != null);
   const connectedProviders = new Set([
     ...credentials.map((credential) => canonicalPiProviderId(credential.provider)),
     ...preferences.map((preference) => canonicalPiProviderId(preference.credential.provider)),

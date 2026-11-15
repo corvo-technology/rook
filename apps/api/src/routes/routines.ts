@@ -48,8 +48,8 @@ export function routinesRoutes(ctx: RouterContext) {
         listRoutineRuns(deps.prisma, context.actor, input.routineId, input.before, input.limit),
       ),
       list: authed.routines.list.handler(async ({ context, input }) => {
-        await repos.getBot(context.actor, input.botId);
-        await requireInAudience(deps.prisma, context.actor, input.botId);
+        const bot = await repos.getBot(context.actor, input.botId);
+        await requireInAudience(deps.prisma, context.actor, bot.id, bot);
         return listRoutinesDto(deps, context.actor, input.botId);
       }),
       workflows: authed.routines.workflows.handler(async ({ context }) => {

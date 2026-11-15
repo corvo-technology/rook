@@ -14,6 +14,7 @@ import {
   can,
   decodeAttachmentBase64,
   inferAttachmentMimeType,
+  managesAgents,
   messageBlockForArtifact,
   promptTextForAttachments,
   validateAttachmentMimeType,
@@ -737,7 +738,18 @@ export async function artifactVisibleWhere(
       // Someone who sees every channel needs no channel clause; an empty relation filter is
       // not a filter Prisma answers the way a missing one is.
       ...(viewer.seesAll ? [] : [{ OR: [{ groupId: null }, { group: channelVisibleTo(viewer) }] }]),
-      { OR: [{ groupId: { not: null } }, { botId: null }, { bot: agentAudienceWhere(speaker) }] },
+      // Whoever manages the space's agents needs no agent clause, for the same reason.
+      ...(managesAgents(speaker)
+        ? []
+        : [
+            {
+              OR: [
+                { groupId: { not: null } },
+                { botId: null },
+                { bot: agentAudienceWhere(speaker) },
+              ],
+            },
+          ]),
     ],
   };
 }

@@ -670,4 +670,37 @@ describe("listSpaceGroupsForSpaces with bots of another space", () => {
     );
     expect(listed[0]!.members.map((member) => member.botId)).toEqual(["bot-1", "bot-2"]);
   });
+
+  it("leaves out a channel whose conversation is not there instead of failing the list", async () => {
+    const group = (id: string, thread: unknown) => ({
+      id,
+      spaceId: "space-2",
+      name: id,
+      purpose: null,
+      pinned: false,
+      sectionId: null,
+      updatedAt: new Date("2026-11-01T00:00:00.000Z"),
+      thread,
+      members: [
+        { bot: { id: "bot-1", name: "A", color: "#111", runs: [] } },
+        { bot: { id: "bot-2", name: "B", color: "#222", runs: [] } },
+      ],
+    });
+    const repos = createGroupRepos({
+      spaceMember: { findMany: vi.fn(async () => [{ spaceId: "space-2" }]) },
+      threadMemberRead: { findMany: vi.fn(async () => []) },
+      chatGroup: {
+        findMany: vi.fn(async () => [
+          group("headless", null),
+          group("whole", { id: "thread-1", userId: "user-1", unread: false }),
+        ]),
+      },
+      $queryRaw: vi.fn(async () => []),
+    } as unknown as PrismaClient);
+    const listed = await repos.listSpaceGroupsForSpaces(
+      { spaceId: "space-1", userId: "user-1", email: "u@example.test", isDeploymentOwner: false },
+      ["space-2"],
+    );
+    expect(listed.map((entry) => entry.id)).toEqual(["whole"]);
+  });
 });

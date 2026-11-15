@@ -1,8 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { PrismaClient } from "./client.js";
 import { createDb } from "./client.js";
-import { asSystem } from "./row-security.js";
-import { pruneSecurityEvents } from "./security-events.js";
+import { asSystem, runAsSystem, runAsTenant } from "./row-security.js";
+import {
+  installSecurityEventStore,
+  pruneSecurityEvents,
+  recordSecurityEvent,
+} from "./security-events.js";
 
 const databaseUrl = process.env.DATABASE_URL;
 const describePostgres =
@@ -59,5 +63,28 @@ describePostgres("security events (PostgreSQL)", () => {
       select: { userId: true },
     });
     expect(remaining).toEqual([{ userId: `${suffix}-new` }]);
+  });
+
+  it("records an event whatever its connection last carried", async () => {
+    const own = createDb(databaseUrl!, { poolMax: 1 });
+    const userId = `${suffix}-stale`;
+    try {
+      installSecurityEventStore(own.prisma);
+      // The pool's one connection is known to carry the bypass, then loses it behind the pool's back.
+      await runAsSystem("leave a connection without the bypass", async () => {
+        const client = await own.pool.connect();
+        await client.query("SELECT set_config('app.rls_bypass', 'off', false)");
+        client.release();
+      });
+      await runAsTenant({ spaceId: `${suffix}-space`, userId }, () =>
+        recordSecurityEvent({ type: "auth.sign_in", userId, ip: "203.0.113.9" }),
+      );
+      const stored = await prisma.securityEvent.count({ where: { userId } });
+      expect(stored).toBe(1);
+    } finally {
+      installSecurityEventStore(undefined);
+      await own.prisma.$disconnect();
+      await own.pool.end();
+    }
   });
 });

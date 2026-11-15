@@ -2191,7 +2191,11 @@ describe("answerRunInput", () => {
     const prisma = {
       $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
     } as unknown as PrismaClient;
-    const audit = { securityEvent: { create: vi.fn(async () => ({})) } };
+    const audit = {
+      securityEvent: { create: vi.fn(async () => ({})) },
+      $queryRaw: vi.fn(async () => [{ bypass: null }]),
+      $transaction: vi.fn(async (run: (tx: unknown) => unknown) => run(audit)),
+    };
     installSecurityEventStore(audit as never);
 
     await expect(

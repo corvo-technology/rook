@@ -240,4 +240,52 @@ describePostgres("private channels and agent audiences hide what they should (Po
     );
     expect((await f.call(f.caio, "search/query", { q: f.secretWord })).text).toContain(f.closed.id);
   });
+
+  it("lets the space's owner and admins into every agent, whoever made it", async () => {
+    const f = await fixture();
+    // Caio made this agent and closed it to everyone but himself: it is not the owner's own.
+    const caioActor = await requireMembership(system, f.caio, undefined);
+    const closedByCaio = await runAsTenant(caioActor, () =>
+      createRepos(prisma).createBot(caioActor, {
+        name: "Caio's closed agent",
+        title: "",
+        description: "",
+        instructions: "",
+        notifyOnFinish: true,
+      }),
+    );
+    expect(
+      (
+        await f.call(f.caio, "bots/audience/set", {
+          botId: closedByCaio.id,
+          restricted: true,
+          roleIds: [],
+          userIds: [],
+          consultable: false,
+        })
+      ).status,
+    ).toBe(200);
+
+    for (const path of ["routines/list", "threads/get", "threads/markRead"]) {
+      for (const who of [f.ana, f.dani, f.caio]) {
+        expect((await f.call(who, path, { botId: closedByCaio.id })).status, path).toBe(200);
+      }
+      expect((await f.call(f.bia, path, { botId: closedByCaio.id })).status, path).not.toBe(200);
+    }
+    expect((await f.call(f.ana, "bots/list")).text).toContain(closedByCaio.id);
+  });
+
+  it("keeps the navigation and the activity list working around an agent with no conversation", async () => {
+    const f = await fixture();
+    await system.thread.delete({ where: { id: f.closed.threadId! } });
+
+    const spaces = await f.call(f.ana, "spaces/list");
+    expect(spaces.status).toBe(200);
+    const listed = (spaces.body!.json as { current: { bots: Array<{ id: string }> } }).current.bots;
+    expect(listed.map((bot) => bot.id)).toEqual([f.open.id]);
+    const bots = await f.call(f.ana, "bots/list");
+    expect(bots.status).toBe(200);
+    expect((bots.body!.json as Array<{ id: string }>).map((bot) => bot.id)).toEqual([f.open.id]);
+    expect((await f.call(f.ana, "runs/list", { filter: "recent" })).status).toBe(200);
+  });
 });

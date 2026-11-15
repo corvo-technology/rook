@@ -516,6 +516,37 @@ describe("createRepos.listSpaceBotsForSpaces", () => {
     expect(query.select).not.toHaveProperty("instructions");
     expect(query.select).not.toHaveProperty("computer");
   });
+
+  it("leaves out an agent whose conversation is not there instead of failing the whole list", async () => {
+    const row = (id: string, thread: unknown) => ({
+      id,
+      spaceId: "ws-2",
+      name: id,
+      title: "",
+      color: "#123456",
+      notifyOnFinish: false,
+      pinned: false,
+      sectionId: null,
+      updatedAt: new Date("2026-08-20T00:00:00.000Z"),
+      parentBotId: null,
+      thread,
+      runs: [],
+    });
+    const repos = createRepos({
+      spaceMember: { findMany: vi.fn(async () => [{ spaceId: "ws-2" }]) },
+      threadMemberRead: { findMany: vi.fn(async () => []) },
+      bot: {
+        findMany: vi.fn(async () => [
+          row("headless", null),
+          row("whole", { id: "thread-ok", userId: "user-1", unread: false, runs: [] }),
+        ]),
+      },
+      $queryRaw: vi.fn().mockResolvedValue([]),
+    } as unknown as PrismaClient);
+
+    const listed = await repos.listSpaceBotsForSpaces(actor, ["ws-2"]);
+    expect(listed.map((bot) => bot.id)).toEqual(["whole"]);
+  });
 });
 
 describe("createRepos.reorderBots", () => {

@@ -88,24 +88,31 @@ export async function listSpaceRuns(
     take: filter === "recent" ? RECENT_LIMIT : undefined,
   });
 
-  return rows.map((row) => ({
-    runId: row.id,
-    botId: row.botId,
-    botName: row.bot.name,
-    groupId: row.thread.groupId,
-    groupName: row.thread.group ? row.thread.group.name : null,
-    threadId: row.threadId,
-    status: row.status as RunActivityRow["status"],
-    trigger: row.trigger as RunActivityRow["trigger"],
-    notificationsEnabled: activityNotificationsEnabled(row.thread.groupId, row.bot.notifyOnFinish),
-    ...activityPreview({
-      trigger: row.trigger,
-      prompt: row.task.prompt,
-      sourceBlocks: row.sourceMessage?.blocks,
-    }),
-    updatedAt: (filter === "recent" && row.completedAt
-      ? row.completedAt
-      : row.updatedAt
-    ).toISOString(),
-  }));
+  // A run whose agent, task or conversation is gone is not an activity worth showing, and must not
+  // take the whole list with it.
+  return rows
+    .filter((row) => row.bot != null && row.task != null && row.thread != null)
+    .map((row) => ({
+      runId: row.id,
+      botId: row.botId,
+      botName: row.bot.name,
+      groupId: row.thread.groupId,
+      groupName: row.thread.group ? row.thread.group.name : null,
+      threadId: row.threadId,
+      status: row.status as RunActivityRow["status"],
+      trigger: row.trigger as RunActivityRow["trigger"],
+      notificationsEnabled: activityNotificationsEnabled(
+        row.thread.groupId,
+        row.bot.notifyOnFinish,
+      ),
+      ...activityPreview({
+        trigger: row.trigger,
+        prompt: row.task.prompt,
+        sourceBlocks: row.sourceMessage?.blocks,
+      }),
+      updatedAt: (filter === "recent" && row.completedAt
+        ? row.completedAt
+        : row.updatedAt
+      ).toISOString(),
+    }));
 }

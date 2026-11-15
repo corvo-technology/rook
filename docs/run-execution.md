@@ -199,7 +199,7 @@ turn guards applies.
 
 ## Budgets and pause
 
-A bot may have a monthly token limit, and a space owner may pause every bot in the
+A bot may have a monthly token limit, and a member allowed to configure the space may pause every bot in the
 space. Both are enforced only in the run executor and the API; a client never decides
 whether a run may start, and no agent tool can read or change either setting.
 
@@ -213,7 +213,9 @@ limit that is empty, `0`, negative or not a finite number means no limit.
 
 **Monthly gate.** A run of a bot whose month is at or over its limit fails before the
 model with `stopReason = "monthly_limit"`. A run already going finishes under its reply
-cap. The check happens when a run starts, so runs that start together may overshoot the
+cap, including a run that escalated to a stronger model tier after its first attempt filled
+the month: the gate skips escalated attempts, and their tokens count toward the same reply
+cap and month. The check happens when a run starts, so runs that start together may overshoot the
 month by at most the sum of their reply caps.
 
 **Reply cap.** One run (all its attempts, its subagents) may spend 10% of the monthly
@@ -228,6 +230,10 @@ recorded without the run and count toward the month, not the reply.
 **80% warning.** When an attempt carries a bot's month across 80% of its limit (and not
 past 100%), the owner gets one push and one line in the chat, once per bot per month,
 claimed with a conditional write so two runs crossing together warn once.
+
+**Who may.** Setting a bot's limit needs the same permission as editing the bot
+(`manage_agents`); pausing needs `configure`, which owners always hold. The usage page's
+per-bot month is listed only to members with `view_usage` or `manage_agents`.
 
 **Pause.** `spaces.pausedAt` is one nullable timestamp. Pausing cancels every active run
 in the space through the same path as Stop, and until resumed any run created by any

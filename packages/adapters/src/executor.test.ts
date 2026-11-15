@@ -4481,6 +4481,7 @@ function gateHarness(
     routineId?: string | null;
     spacePausedAt?: Date | null;
     monthTokens?: bigint;
+    tierEscalations?: number;
   } = {},
 ) {
   const runtimeRun = vi.fn();
@@ -4505,6 +4506,7 @@ function gateHarness(
     sourceMessageId: null,
     checkpoint: null,
     leaseFence: 0,
+    tierEscalations: options.tierEscalations ?? 0,
   };
   const routine = {
     count: vi.fn(async () => 0),
@@ -4639,6 +4641,18 @@ describe("monthly token limit gate", () => {
     const { executor, finalizeRun } = gateHarness({
       bot: { monthlyTokenLimit: limit },
       monthTokens: 10n ** 12n,
+    });
+    await executor.continueRun("run-1", "worker-1");
+    expect(finalizeRun).not.toHaveBeenCalledWith(
+      expect.objectContaining({ stopReason: "monthly_limit" }),
+    );
+  });
+
+  it("lets a run that escalated to a stronger tier finish after its first attempt filled the month", async () => {
+    const { executor, finalizeRun } = gateHarness({
+      bot: { monthlyTokenLimit: 1_000n },
+      monthTokens: 1_500n,
+      tierEscalations: 1,
     });
     await executor.continueRun("run-1", "worker-1");
     expect(finalizeRun).not.toHaveBeenCalledWith(

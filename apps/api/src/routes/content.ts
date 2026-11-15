@@ -1,6 +1,6 @@
 import type { UsageOperationKind } from "@corvo/adapter-kit";
 import { attachmentMaxBytes, QuotaWindowSchema } from "@corvo/contracts";
-import { AttachmentValidationError, utcMonthStart } from "@corvo/core";
+import { AttachmentValidationError, can, utcMonthStart } from "@corvo/core";
 import { botTokensSince, IsolationError } from "@corvo/db";
 import { ORPCError } from "@orpc/server";
 import {
@@ -16,7 +16,7 @@ import {
 } from "../artifacts.js";
 import { listSpaceRuns } from "../runs.js";
 import { querySpaceSearch } from "../search.js";
-import { requireSpacePermission } from "../space-owner.js";
+import { getSpaceMembership, requireSpacePermission } from "../space-owner.js";
 import { exportSpace, gatherBotContent } from "../space-transfer.js";
 import { loadAllMessages } from "../thread-message-pages.js";
 import { buildRunOutcomes, buildUsageOverview, usageWindow } from "../usage-overview.js";
@@ -200,6 +200,9 @@ export function contentRoutes(ctx: RouterContext) {
         };
       }),
       budgets: authed.usage.budgets.handler(async ({ context }) => {
+        // What an agent spends in a month is read by those who watch usage or manage agents.
+        const membership = await getSpaceMembership(deps.prisma, context.actor);
+        if (!can(membership, "view_usage") && !can(membership, "manage_agents")) return [];
         const bots = await deps.prisma.bot.findMany({
           where: {
             spaceId: context.actor.spaceId,

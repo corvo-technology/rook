@@ -5,7 +5,7 @@ import {
   CannotDeleteDefaultSpaceError,
   CannotDeleteLastSpaceError,
   CannotDeleteSpaceAsNonOwnerError,
-  CannotPauseSpaceAsNonOwnerError,
+  CannotPauseSpaceError,
   CannotRenameSpaceAsNonOwnerError,
   createExternalConversationRepos,
   createSpaceForMember,
@@ -228,7 +228,7 @@ export function spacesRoutes(ctx: RouterContext) {
             if (error instanceof SpaceNotFoundError) {
               throw new ORPCError("NOT_FOUND", { message: error.message });
             }
-            if (error instanceof CannotPauseSpaceAsNonOwnerError) {
+            if (error instanceof CannotPauseSpaceError) {
               throw new ORPCError("FORBIDDEN", { message: error.message });
             }
             if (error instanceof SpaceDeletionInProgressError) {

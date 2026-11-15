@@ -246,7 +246,7 @@ test.describe("a chat with one agent uses the channel's rows", () => {
     await expect(rail).toHaveCSS("opacity", "1");
     for (const name of ["React", "Reply", "More"]) {
       await page.keyboard.press("Tab");
-      await expect(row.getByRole("button", { name })).toBeFocused();
+      await expect(row.getByRole("button", { name, exact: true })).toBeFocused();
     }
     await page.keyboard.press("Enter");
     await expect(page.getByRole("menu")).toBeVisible();

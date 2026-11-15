@@ -31,6 +31,14 @@ describe("pass", () => {
   });
 });
 
+describe("request_stronger_model", () => {
+  it("is offered only to a run that may still move up a tier", () => {
+    expect(names({ strongerModelAvailable: true })).toContain("request_stronger_model");
+    expect(names({ strongerModelAvailable: false })).not.toContain("request_stronger_model");
+    expect(names({})).not.toContain("request_stronger_model");
+  });
+});
+
 describe("the wiki tools", () => {
   const wiki = ["wiki_index", "wiki_search", "wiki_read"];
 

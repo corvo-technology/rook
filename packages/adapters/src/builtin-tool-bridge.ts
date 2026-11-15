@@ -50,6 +50,7 @@ export const CORE_BUILTIN_TOOL_NAMES: ReadonlySet<string> = new Set([
   "schedule_list",
   "workflow_stop",
   "pass",
+  "request_stronger_model",
   "search_history",
   "read_history",
   "end_call",

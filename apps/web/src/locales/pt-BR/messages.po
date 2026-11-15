@@ -147,6 +147,11 @@ msgstr "{0} MB"
 msgid "{0} passed on this month"
 msgstr "{0} repassados neste mês"
 
+#. placeholder {0}: new Intl.NumberFormat(locale).format(overview.requestedEscalations)
+#: src/pages/Usage.tsx
+msgid "{0} requested"
+msgstr "{0} solicitados"
+
 #. placeholder {0}: sender.name
 #: src/pages/ExternalConversationSettings.tsx
 msgid "{0} rollup hours"
@@ -7029,6 +7034,10 @@ msgstr "Suporta raciocínio"
 #: src/pages/shell/space-switcher.tsx
 msgid "Switch space"
 msgstr "Trocar de espaço"
+
+#: src/pages/shell/message-view.tsx
+msgid "Switched to a stronger model"
+msgstr "Mudou para um modelo mais forte"
 
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Switching…"

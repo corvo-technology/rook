@@ -1,5 +1,5 @@
 import { ModelOutputError } from "@corvo/adapter-kit";
-import type { ModelTier, RunTrigger } from "@corvo/contracts";
+import type { EscalationTrigger, ModelTier, RunTrigger } from "@corvo/contracts";
 import { MODEL_TIERS } from "@corvo/contracts";
 import { TurnGuardStopError } from "./run-guards.js";
 
@@ -110,6 +110,35 @@ export function escalatesOnFailure(error: unknown): boolean {
   return (
     error instanceof TurnGuardStopError && (error.kind === "loop" || error.kind === "tool_errors")
   );
+}
+
+/** The agent asked for a stronger model, which ends its turn; the run then moves up a tier. */
+export class StrongerModelRequested extends Error {
+  override readonly name = "StrongerModelRequested";
+  constructor() {
+    super("The agent asked for a stronger model.");
+  }
+}
+
+/** Added to the prompt of a run that may ask; the tool's own description says when. */
+export const STRONGER_MODEL_INSTRUCTION =
+  "You may call request_stronger_model once if the task is genuinely beyond you; most tasks are not.";
+
+/** What made a run move up: the failure kind, or the agent asking. */
+export function escalationTriggerOf(error: unknown, requested: boolean): EscalationTrigger {
+  if (requested) return "agent_request";
+  if (error instanceof TurnGuardStopError) return error.kind === "loop" ? "loop" : "tool_errors";
+  return "model_output";
+}
+
+/** The most an agent's reason for asking is kept, so a stored line stays a line. */
+export const ESCALATION_REASON_CHARS = 200;
+
+export function clampEscalationReason(value: unknown): string {
+  return String(value ?? "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, ESCALATION_REASON_CHARS);
 }
 
 /**

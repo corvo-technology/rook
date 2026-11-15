@@ -36,6 +36,18 @@ A run that fails on a cheaper tier because of a loop, repeated failing tool call
 output is retried once on the next tier. The escalation is recorded on the run and counted on the
 Usage page; it never repeats.
 
+An automatic agent below the strongest tier can also ask for a stronger model itself, once, with
+the `request_stronger_model` tool. The tool is offered only when the run is automatic, has a higher
+tier with a model of its own, and has not moved up yet; it is never offered to an agent pinned to a
+model, or from the strongest tier. Its description tells the agent to use it only for genuinely
+hard reasoning, code or planning, never as a reflex. Calling it ends the turn: what the agent
+already said stays in the chat, the run is requeued on the next tier through the same one-time
+fence as a failure, and the stronger model continues from the conversation. The short reason is
+kept on the run, shown as a quiet "Switched to a stronger model" line in the chat (the reason is
+its tooltip), and the Usage page counts how many escalations were asked for. The run still meets
+the pause state, the daily and member limits and the price ceiling when it starts again; only the
+monthly agent budget gate, which it already passed, is skipped.
+
 An agent pinned to a model keeps that model exactly. Choosing a model in the agent's settings
 turns Automatic off; choosing Automatic clears the model.
 
@@ -72,7 +84,9 @@ usage record keeps the model the router actually used.
 ## Judging quality
 
 `pnpm test:evals --suite model-routing --live` compares Automatic with a fixed strong model on a
-small fixed task set. Automatic picks each task's tier with the router above and answers on that
+small fixed task set, and includes cases where asking for a stronger model is, or is not, the right
+call (the model may start its reply with a marker instead of answering; the judge decides whether
+that choice was right, by the rubric's reviewed reference). Automatic picks each task's tier with the router above and answers on that
 tier's model (`--fast-connection`, `--main-connection`; the strong tier is `--connection`, which
 is also the fixed model it is compared with). A judge connection (`--judge-connection`) decides by
 a versioned rubric whether Automatic's answer is at least as good. Automatic's, the fixed

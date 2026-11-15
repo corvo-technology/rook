@@ -1,6 +1,6 @@
 import { decideTier } from "@corvo/adapters";
 import { describe, expect, it, vi } from "vitest";
-import { gradeRouting, MODEL_ROUTING_CASES } from "./model-routing.js";
+import { gradeEscalation, gradeRouting, MODEL_ROUTING_CASES } from "./model-routing.js";
 
 const signal = new AbortController().signal;
 const task = MODEL_ROUTING_CASES[0]!;
@@ -47,5 +47,59 @@ describe("model routing eval", () => {
       (await gradeRouting(task, { auto: "a", strong: "b" }, true, { judge: broken, signal }))
         .status,
     ).toBe("unqualified");
+  });
+});
+
+describe("escalation cases", () => {
+  const hard = MODEL_ROUTING_CASES.find((c) => c.escalation === "appropriate")!;
+  const easy = MODEL_ROUTING_CASES.find((c) => c.escalation === "unneeded")!;
+
+  it("covers both an appropriate and an unneeded request for a stronger model", () => {
+    expect(hard).toBeDefined();
+    expect(easy).toBeDefined();
+  });
+
+  it("gives the judge the decision and the reviewed reference, never a keyword check", async () => {
+    const judge = vi.fn(async () => ({ pass: true, reason: "agrees" }));
+    const grade = await gradeEscalation(
+      hard,
+      { tier: "main", escalated: true, text: "needs a convergence proof" },
+      { judge, signal },
+    );
+    expect(grade.status).toBe("pass");
+    expect(judge.mock.calls[0]![0].evidence).toMatchObject({
+      decision: "escalated",
+      reference: "escalating is appropriate",
+    });
+    await gradeEscalation(
+      easy,
+      { tier: "fast", escalated: false, text: "Normal." },
+      { judge, signal },
+    );
+    expect(judge.mock.calls[1]![0].evidence).toMatchObject({
+      decision: "answered",
+      reference: "escalating is not appropriate",
+    });
+  });
+
+  it("leaves a case unqualified without a judge, or when it errors, and fails an empty reply", async () => {
+    expect((await gradeEscalation(hard, { tier: "main", escalated: true, text: "x" })).status).toBe(
+      "unqualified",
+    );
+    const broken = vi.fn(async () => {
+      throw new Error("down");
+    });
+    expect(
+      (
+        await gradeEscalation(
+          hard,
+          { tier: "main", escalated: true, text: "x" },
+          { judge: broken, signal },
+        )
+      ).status,
+    ).toBe("unqualified");
+    expect(
+      (await gradeEscalation(hard, { tier: "main", escalated: false, text: " " })).status,
+    ).toBe("fail");
   });
 });

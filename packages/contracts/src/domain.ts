@@ -1222,6 +1222,8 @@ export const UsageOverviewSchema = z.object({
   tiers: z.array(UsageTierSchema).optional(),
   /** Runs that moved up a tier after a cheaper one failed. */
   escalations: z.number().optional(),
+  /** The escalations an agent asked for itself; the rest were failures a stronger model could fix. */
+  requestedEscalations: z.number().optional(),
   /** UTC days, oldest first; `agents` maps an agent id (or "none") to its tokens that day. */
   days: z.array(
     z.object({ date: z.string(), tokens: z.number(), agents: z.record(z.string(), z.number()) }),

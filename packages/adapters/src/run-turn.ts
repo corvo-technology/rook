@@ -758,6 +758,44 @@ export async function interruptRunForShutdown(ctx: RunContext) {
   getLogger().info("run.interrupted_for_shutdown", { "run.id": runId, released });
 }
 
+/** The reply text the user watched stream in since the last saved message, as blocks to keep. */
+export function partialReplyBlocks(ctx: RunContext): Array<{ kind: "text"; text: string }> {
+  const { run } = ctx;
+  const { reply } = ctx.state;
+  recordExplicitNoResponse(reply, reply.assistantTurnText);
+  const partialText =
+    ctx.scripted ||
+    endsQuietly(ctx.state) ||
+    reply.explicitNoResponse ||
+    !runPromotesMidTurnNarration(run.trigger)
+      ? ""
+      : redactSecrets(
+          extractNarrationText(reply.messageSegments, reply.currentTextSegment).text,
+          ctx.secrets,
+        ).trim();
+  return partialText && !containsSecret(partialText, ctx.secrets)
+    ? [{ kind: "text" as const, text: partialText }]
+    : [];
+}
+
+/**
+ * An agent asked for a stronger model: keep what it already said in the chat, so the stronger
+ * model continues from it, and leave a quiet notice with the agent's reason.
+ */
+export async function publishEscalation(ctx: RunContext, reason: string) {
+  const { deps, run } = ctx;
+  const partial = partialReplyBlocks(ctx);
+  if (partial.length > 0) await publishMessage(deps, run, "bot", partial).catch(() => undefined);
+  await publishMessage(deps, run, "system", [
+    {
+      kind: "meta",
+      text: "Switched to a stronger model",
+      code: "stronger_model",
+      ...(reason ? { detail: reason } : {}),
+    },
+  ]).catch(() => undefined);
+}
+
 /** The turn failed: keep the reply streamed so far, record the error, and retry or notify. */
 export async function failRun(
   ctx: RunContext,
@@ -769,7 +807,6 @@ export async function failRun(
   },
 ) {
   const { deps, run, runId, bot, thread } = ctx;
-  const { reply } = ctx.state;
   let error: unknown = ctx.state.guards.stopped
     ? new TurnGuardStopError(ctx.state.guards.stopped)
     : caughtError;
@@ -787,21 +824,7 @@ export async function failRun(
   const message = redactSecrets(userRunError(error), ctx.secrets);
   // Reply text the user watched stream in since the last saved message stays in the
   // thread, above the error, instead of vanishing with the live row.
-  recordExplicitNoResponse(reply, reply.assistantTurnText);
-  const partialText =
-    ctx.scripted ||
-    endsQuietly(ctx.state) ||
-    reply.explicitNoResponse ||
-    !runPromotesMidTurnNarration(run.trigger)
-      ? ""
-      : redactSecrets(
-          extractNarrationText(reply.messageSegments, reply.currentTextSegment).text,
-          ctx.secrets,
-        ).trim();
-  const partialReply =
-    partialText && !containsSecret(partialText, ctx.secrets)
-      ? [{ kind: "text" as const, text: partialText }]
-      : [];
+  const partialReply = partialReplyBlocks(ctx);
   await ctx.settleRunningHelpers();
   const failed = await deps.events.finalizeRun({
     spaceId: run.spaceId,

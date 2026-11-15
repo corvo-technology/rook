@@ -1,8 +1,10 @@
 import { ModelOutputError } from "@corvo/adapter-kit";
 import { describe, expect, it } from "vitest";
 import {
+  clampEscalationReason,
   decideTier,
   escalationTarget,
+  escalationTriggerOf,
   nextTier,
   parseTierAnswer,
   routesAutomatically,
@@ -146,6 +148,23 @@ describe("escalation", () => {
         requested: true,
       }),
     ).toBe("main");
+  });
+});
+
+describe("escalationTriggerOf", () => {
+  it("names what made the run move up", () => {
+    expect(escalationTriggerOf(new TurnGuardStopError("loop"), false)).toBe("loop");
+    expect(escalationTriggerOf(new TurnGuardStopError("tool_errors"), false)).toBe("tool_errors");
+    expect(escalationTriggerOf(new ModelOutputError("empty"), false)).toBe("model_output");
+    expect(escalationTriggerOf(new Error("aborted"), true)).toBe("agent_request");
+  });
+});
+
+describe("clampEscalationReason", () => {
+  it("keeps one short line, whatever the agent sends", () => {
+    expect(clampEscalationReason("  needs\n a   proof ")).toBe("needs a proof");
+    expect(clampEscalationReason("x".repeat(500))).toHaveLength(200);
+    expect(clampEscalationReason(undefined)).toBe("");
   });
 });
 

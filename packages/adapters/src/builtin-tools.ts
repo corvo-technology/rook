@@ -1107,6 +1107,15 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "request_stronger_model",
+    description:
+      "Use only when the task needs reasoning, code or planning clearly beyond you and a stronger model would do it better. Never as a reflex, for routine or simple work, or because it is long. Your turn ends and a stronger model continues from here. Possible once.",
+    inputSchema: {
+      type: "object",
+      properties: { reason: { type: "string", description: "One short sentence on why." } },
+    },
+  },
+  {
     name: "schedule_list",
     description: "List this bot's schedules (routines), active or not.",
     inputSchema: { type: "object", properties: {} },

@@ -2,6 +2,7 @@ import {
   desktopProtectionGuardMessage,
   protectedComputerLifecycleRefusal,
 } from "./desktop-command-guard.js";
+import { clampEscalationReason } from "./model-routing.js";
 import { setPlanCard, updatePlanCard } from "./plan-card.js";
 import type { RunContext } from "./run-context.js";
 import { isSubagentToolExecution } from "./run-effects.js";
@@ -285,6 +286,16 @@ export const taskTools: ToolHandlers = {
   async pass(ctx, call) {
     ctx.state.passed = true;
     return call.finish({ ok: true, note: "Passed. End your turn now without writing anything." });
+  },
+  async request_stronger_model(ctx, call) {
+    const { state } = ctx;
+    if (!state.strongerTier || state.escalation || ctx.run.tierEscalations > 0) {
+      return call.finish({ error: "A stronger model is not available for this run." });
+    }
+    state.escalation = { reason: clampEscalationReason(call.args.reason) };
+    // The turn ends here: a stronger model picks the run up from what is already in the chat.
+    ctx.abortController.abort();
+    return call.finish({ ok: true, note: "A stronger model will continue. Stop now." });
   },
   async schedule_cancel(ctx, call) {
     const { deps, run, bot, thread } = ctx;

@@ -32,6 +32,11 @@ msgstr "{0, plural, one {# channel} other {# channels}}"
 msgid "{0, plural, one {# failed} other {# failed}}"
 msgstr "{0, plural, one {# failed} other {# failed}}"
 
+#. placeholder {0}: role.keys.length
+#: src/pages/SpaceRolesSettings.tsx
+msgid "{0, plural, one {# permission} other {# permissions}}"
+msgstr "{0, plural, one {# permission} other {# permissions}}"
+
 #. placeholder {0}: summary.count
 #: src/pages/shell/transcript.tsx
 msgid "{0, plural, one {# reply} other {# replies}}"
@@ -779,6 +784,10 @@ msgstr "Add OpenAPI"
 msgid "Add passkey"
 msgstr "Add passkey"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Add person"
+msgstr "Add person"
+
 #: src/pages/model-settings/providers-section.tsx
 msgid "Add provider"
 msgstr "Add provider"
@@ -836,6 +845,10 @@ msgstr "Adding…"
 msgid "Admin"
 msgstr "Admin"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Administrator"
+msgstr "Administrator"
+
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -865,6 +878,7 @@ msgstr "Agent computer"
 
 #: src/components/AppRail.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
+#: src/pages/SpaceRolesSettings.tsx
 #: src/pages/Store.tsx
 msgid "Agents"
 msgstr "Agents"
@@ -1096,6 +1110,10 @@ msgstr "Approvals"
 msgid "Approve"
 msgstr "Approve"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Approve actions"
+msgstr "Approve actions"
+
 #: src/pages/WikiBrowser.tsx
 msgid "Approve all"
 msgstr "Approve all"
@@ -1162,6 +1180,10 @@ msgstr "Asks before any change"
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Asks you before it changes anything."
 msgstr "Asks you before it changes anything."
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Assign work"
+msgstr "Assign work"
 
 #. placeholder {0}: preset.time
 #: src/lib/cron.ts
@@ -1534,6 +1556,10 @@ msgstr "Character"
 msgid "Chart failed to render: {error}"
 msgstr "Chart failed to render: {error}"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Chat"
+msgstr "Chat"
+
 #: src/pages/shell/composer-mentions.tsx
 msgid "Chat Settings"
 msgstr "Chat Settings"
@@ -1859,6 +1885,10 @@ msgstr "Computers are off."
 msgid "Computers are off. Set SANDBOX_PROVIDER=docker with SANDBOX_SUPERVISOR_TOKEN, or set SANDBOX_PROVIDER to e2b, daytona, or boat with its API key. Recreate the stack after changing .env."
 msgstr "Computers are off. Set SANDBOX_PROVIDER=docker with SANDBOX_SUPERVISOR_TOKEN, or set SANDBOX_PROVIDER to e2b, daytona, or boat with its API key. Recreate the stack after changing .env."
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Configure the space"
+msgstr "Configure the space"
+
 #: src/pages/McpServersSettings.tsx
 msgid "Configured servers"
 msgstr "Configured servers"
@@ -2047,6 +2077,10 @@ msgstr "Continue to checkout"
 #: src/pages/Auth.tsx
 msgid "Continue with {0}"
 msgstr "Continue with {0}"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Control computers"
+msgstr "Control computers"
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/markdown-copy.tsx
@@ -2673,6 +2707,7 @@ msgstr "Couldn't update your timezone"
 #: src/pages/shell/create-bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/sidebar-header.tsx
+#: src/pages/SpaceRolesSettings.tsx
 msgid "Create"
 msgstr "Create"
 
@@ -2688,6 +2723,14 @@ msgstr "Create a section and move {0} into it."
 #: src/pages/Auth.tsx
 msgid "Create account"
 msgstr "Create account"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Create agents"
+msgstr "Create agents"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Create channels"
+msgstr "Create channels"
 
 #: src/pages/GroupPanel.tsx
 msgid "Create group"
@@ -2705,6 +2748,10 @@ msgstr "Create Routine"
 #: src/pages/shell/dialogs.tsx
 msgid "Create space"
 msgstr "Create space"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Create spaces"
+msgstr "Create spaces"
 
 #: src/pages/Auth.tsx
 msgid "Create your Rook"
@@ -2861,6 +2908,7 @@ msgstr "Delegating to helper: {value}"
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/archived-chats.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/SpaceRolesSettings.tsx
 #: src/pages/WikiBrowser.tsx
 msgid "Delete"
 msgstr "Delete"
@@ -2881,8 +2929,9 @@ msgstr "Delete {0} and {1, plural, one {its # bot} other {its # bots}}?"
 
 #. placeholder {0}: bot.name
 #. placeholder {0}: item.name
-#. placeholder {0}: space.name
+#. placeholder {0}: role.name
 #: src/pages/shell/dialogs.tsx
+#: src/pages/SpaceRolesSettings.tsx
 #: src/pages/SpaceSettingsPanel.tsx
 msgid "Delete {0}?"
 msgstr "Delete {0}?"
@@ -3176,6 +3225,10 @@ msgstr "Edit name"
 msgid "Edit Profile"
 msgstr "Edit Profile"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Edit the wiki"
+msgstr "Edit the wiki"
+
 #: src/pages/Auth.tsx
 msgid "Email"
 msgstr "Email"
@@ -3319,6 +3372,10 @@ msgstr "Every month"
 #: src/pages/RoutineSchedule.tsx
 msgid "Every week"
 msgstr "Every week"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Everyone"
+msgstr "Everyone"
 
 #: src/pages/SpaceTransfer.tsx
 msgid "Everything in this file is already here."
@@ -3902,6 +3959,10 @@ msgstr "Invite"
 msgid "Invite link"
 msgstr "Invite link"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Invite people"
+msgstr "Invite people"
+
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Isolated"
@@ -3998,6 +4059,10 @@ msgstr "King"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Knight"
 msgstr "Knight"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Knowledge"
+msgstr "Knowledge"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/LocalSpeechSection.tsx
@@ -4224,15 +4289,44 @@ msgstr "Manage"
 msgid "Manage {0}"
 msgstr "Manage {0}"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Manage agents"
+msgstr "Manage agents"
+
 #: src/components/ModelCredits.tsx
 #: src/pages/Paywall.tsx
+#: src/pages/SpaceRolesSettings.tsx
 msgid "Manage billing"
 msgstr "Manage billing"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Manage channels"
+msgstr "Manage channels"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Manage connections"
+msgstr "Manage connections"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Manage credentials"
+msgstr "Manage credentials"
 
 #: src/pages/Store.tsx
 #: src/pages/StoreInstalledApps.tsx
 msgid "Manage MCP servers"
 msgstr "Manage MCP servers"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Manage members"
+msgstr "Manage members"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Manage roles"
+msgstr "Manage roles"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Manage routines"
+msgstr "Manage routines"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Manage the bots it creates"
@@ -4542,6 +4636,16 @@ msgstr "More computer actions"
 msgid "Morning summary"
 msgstr "Morning summary"
 
+#. placeholder {0}: role.name
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Move {0} down"
+msgstr "Move {0} down"
+
+#. placeholder {0}: role.name
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Move {0} up"
+msgstr "Move {0} up"
+
 #: src/pages/ModelRoleSettings.tsx
 msgid "Move down"
 msgstr "Move down"
@@ -4700,6 +4804,10 @@ msgstr "New password"
 #: src/pages/shell/bot-picker.tsx
 msgid "New private space"
 msgstr "New private space"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "New role"
+msgstr "New role"
 
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/Routines.tsx
@@ -5246,6 +5354,7 @@ msgstr "Paused"
 msgid "Pawn"
 msgstr "Pawn"
 
+#: src/pages/SpaceRolesSettings.tsx
 #: src/pages/StoreCategoryChips.tsx
 msgid "People"
 msgstr "People"
@@ -5323,6 +5432,10 @@ msgstr "Plugin"
 #: src/pages/RoutineEditor.tsx
 msgid "Post \"No changes\" in chat"
 msgstr "Post \"No changes\" in chat"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Post messages"
+msgstr "Post messages"
 
 #: src/pages/RoutineEditor.tsx
 msgid "POST to"
@@ -5590,7 +5703,9 @@ msgid "Remove"
 msgstr "Remove"
 
 #. placeholder {0}: attachment.file.name
+#. placeholder {0}: member.name
 #: src/pages/shell/composer.tsx
+#: src/pages/SpaceRolesSettings.tsx
 msgid "Remove {0}"
 msgstr "Remove {0}"
 
@@ -5851,6 +5966,10 @@ msgstr "Return to Rook"
 msgid "Review before {reviewing}"
 msgstr "Review before {reviewing}"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Review memory"
+msgstr "Review memory"
+
 #: src/pages/WikiBrowser.tsx
 msgid "Review now"
 msgstr "Review now"
@@ -5864,10 +5983,18 @@ msgstr "Revision {0}"
 msgid "Role"
 msgstr "Role"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Role name"
+msgstr "Role name"
+
 #. placeholder {0}: member.name
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Role of {0}"
 msgstr "Role of {0}"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Roles"
+msgstr "Roles"
 
 #: src/pages/Onboarding.tsx
 msgid "Rook credits"
@@ -6465,6 +6592,7 @@ msgstr "Source"
 
 #: src/lib/identity-display.ts
 #: src/pages/Settings.tsx
+#: src/pages/SpaceRolesSettings.tsx
 msgid "Space"
 msgstr "Space"
 
@@ -6689,6 +6817,10 @@ msgstr "Table"
 #: src/pages/shell/computer-overlay.tsx
 msgid "Take control"
 msgstr "Take control"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Talk to agents"
+msgstr "Talk to agents"
 
 #: src/components/MissionList.tsx
 msgid "Talk to your agent"
@@ -7072,6 +7204,7 @@ msgid "Tool sources"
 msgstr "Tool sources"
 
 #: src/pages/shell/bot-panel.tsx
+#: src/pages/SpaceRolesSettings.tsx
 #: src/pages/Store.tsx
 msgid "Tools"
 msgstr "Tools"
@@ -7254,6 +7387,10 @@ msgstr "Upgrade now"
 msgid "Upload"
 msgstr "Upload"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Upload files"
+msgstr "Upload files"
+
 #: src/lib/ticket-priority.ts
 msgid "Urgent"
 msgstr "Urgent"
@@ -7290,6 +7427,10 @@ msgstr "Use {oauthEnvReference} for the access token."
 #: src/pages/Onboarding.tsx
 msgid "Use a found model"
 msgstr "Use a found model"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Use computers"
+msgstr "Use computers"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Use Connect to verify the key."
@@ -7384,6 +7525,10 @@ msgstr "Verifying…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "Version"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "View usage"
+msgstr "View usage"
 
 #: src/pages/Settings.tsx
 #: src/pages/shell/bot-panel.tsx

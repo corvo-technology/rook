@@ -10,6 +10,7 @@ import type { PrismaClient } from "./client.js";
 import { CrossSpaceCommunicationBlockedError } from "./cross-space-communication.js";
 import {
   AnswerTooLongError,
+  ApprovalNotAllowedError,
   addApprovalAskToPausedRun,
   answerRunInput,
   answerWaitingRunWithTextInTransaction,
@@ -1391,6 +1392,7 @@ describe("answerRunInput", () => {
     publish.mockRejectedValueOnce(new Error("realtime unavailable"));
     const tx = {
       $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+      bot: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
       message: {
         findFirst: vi.fn().mockResolvedValue({
           id: "message-1",
@@ -1486,6 +1488,7 @@ describe("answerRunInput", () => {
     const answerChoice = async (prompt: string, question: string, answer: string) => {
       const tx = {
         $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+        bot: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
         message: {
           findFirst: vi.fn().mockResolvedValue({
             id: "message-1",
@@ -1560,6 +1563,7 @@ describe("answerRunInput", () => {
     const answerIntro = async (answer: string) => {
       const tx = {
         $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+        bot: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
         message: {
           findFirst: vi.fn().mockResolvedValue({
             id: "message-1",
@@ -1643,6 +1647,7 @@ describe("answerRunInput", () => {
     const fanout = new TestFanout();
     const tx = {
       $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+      bot: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
       message: {
         findFirst: vi.fn().mockResolvedValue({
           id: "message-1",
@@ -1727,6 +1732,7 @@ describe("answerRunInput", () => {
       const secret = "sk-live-choice-secret";
       const tx = {
         $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+        bot: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
         message: {
           findFirst: vi.fn().mockResolvedValue({
             id: "message-1",
@@ -1827,6 +1833,7 @@ describe("answerRunInput", () => {
     const fanout = new TestFanout();
     const tx = {
       $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+      bot: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
       message: {
         findFirst: vi.fn().mockResolvedValue({
           id: "message-1",
@@ -1914,6 +1921,7 @@ describe("answerRunInput", () => {
     const fanout = new TestFanout();
     const tx = {
       $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+      bot: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
       message: {
         findFirst: vi.fn().mockResolvedValue({
           id: "message-1",
@@ -2116,6 +2124,7 @@ describe("answerRunInput", () => {
     const fanout = new TestFanout();
     const tx = {
       $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+      bot: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
       message: {
         findFirst: vi.fn().mockResolvedValue({
           id: "message-1",
@@ -2216,6 +2225,7 @@ describe("answerRunInput", () => {
       const fanout = new TestFanout();
       const tx = {
         $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+        bot: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
         message: {
           findFirst: vi.fn().mockResolvedValue({
             id: "message-1",
@@ -2340,6 +2350,7 @@ describe("answerRunInput", () => {
   it("does not let another workspace member create an always-allow rule for the run owner", async () => {
     const tx = {
       $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+      bot: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
       message: {
         findFirst: vi.fn().mockResolvedValue({
           id: "message-1",
@@ -2370,6 +2381,26 @@ describe("answerRunInput", () => {
       },
       actionApprovalRule: { upsert: vi.fn() },
       userActionApprovalRule: { upsert: vi.fn() },
+      // Another member who may approve actions: deciding is theirs, a standing rule is not.
+      spaceMember: {
+        findUnique: vi.fn().mockResolvedValue({ role: "member" }),
+        findMany: vi
+          .fn()
+          .mockResolvedValue([{ spaceId: "workspace-1", userId: "other-member", roles: [] }]),
+      },
+      spaceRole: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: "everyone",
+            spaceId: "workspace-1",
+            name: "Everyone",
+            color: null,
+            position: 9,
+            keys: ["approve_actions"],
+            systemKey: "everyone",
+          },
+        ]),
+      },
     };
     const prisma = {
       $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
@@ -2394,6 +2425,7 @@ describe("answerRunInput", () => {
   it("does not queue a run when an approval card has no matching effect", async () => {
     const tx = {
       $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+      bot: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
       message: {
         findFirst: vi.fn().mockResolvedValue({
           id: "message-1",
@@ -2437,6 +2469,7 @@ describe("answerRunInput", () => {
   it("does not queue a run for an action that the approval card did not offer", async () => {
     const tx = {
       $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+      bot: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
       message: {
         findFirst: vi.fn().mockResolvedValue({
           id: "message-1",
@@ -2482,6 +2515,7 @@ describe("answerRunInput", () => {
     const store = vi.fn();
     const tx = {
       $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+      bot: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
       run: {
         findFirst: vi.fn().mockResolvedValue({ botId: "bot-1", userId: "user-1" }),
         updateMany: vi.fn(),
@@ -2518,6 +2552,7 @@ describe("answerRunInput", () => {
   it("rejects an already answered prompt without queuing the run", async () => {
     const tx = {
       $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+      bot: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
       message: {
         findFirst: vi.fn().mockResolvedValue({
           id: "message-1",
@@ -2554,6 +2589,7 @@ describe("answerRunInput", () => {
     const store = vi.fn().mockResolvedValue(undefined);
     const tx = {
       $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+      bot: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
       message: {
         findFirst: vi.fn().mockResolvedValue({
           id: "message-1",
@@ -2651,6 +2687,7 @@ describe("answerRunInput", () => {
     const store = vi.fn();
     const tx = {
       $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+      bot: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
       run: {
         findFirst: vi.fn().mockResolvedValue({ botId: "bot-1", userId: "owner" }),
         updateMany: vi.fn(),
@@ -2719,6 +2756,7 @@ describe("answerRunInput", () => {
       };
       const tx = {
         $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+        bot: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
         message: {
           findFirst: vi.fn().mockResolvedValue({ id: "message-1", blocks: [block] }),
           update: vi.fn().mockResolvedValue({ id: "message-1" }),
@@ -2895,6 +2933,7 @@ describe("answerRunInput", () => {
       const store = vi.fn().mockResolvedValue(undefined);
       const tx = {
         $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+        bot: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
         message: {
           findFirst: vi.fn().mockResolvedValue({
             id: "message-1",
@@ -2989,6 +3028,7 @@ describe("answerRunInput", () => {
   it("rejects secret asks when no run secret writer is configured", async () => {
     const tx = {
       $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+      bot: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
       message: {
         findFirst: vi.fn().mockResolvedValue({
           id: "message-1",
@@ -4391,7 +4431,8 @@ describe("instruction proposal answers", () => {
         findUniqueOrThrow: vi.fn(async () => ({ request })),
         update: vi.fn(),
       },
-      bot: { updateMany: vi.fn() },
+      bot: { updateMany: vi.fn(), findUnique: vi.fn(async () => ({ userId: "owner" })) },
+      spaceMember: { findUnique: vi.fn(async () => null) },
       task: { updateMany: vi.fn() },
       thread: { update: vi.fn(async () => ({ nextEventSeq: 10 })) },
       event: {
@@ -4459,7 +4500,10 @@ describe("instruction proposal answers", () => {
       "always",
     ])
       expect(await f.answer(value)).toBe(false);
-    expect(await f.answer('{"instructions":"new"}', "other-user")).toBe(false);
+    // Someone who neither owns the agent nor may approve actions cannot decide at all.
+    await expect(f.answer('{"instructions":"new"}', "other-user")).rejects.toBeInstanceOf(
+      ApprovalNotAllowedError,
+    );
     expect(f.tx.externalEffect.update).not.toHaveBeenCalled();
     expect(f.tx.run.updateMany).not.toHaveBeenCalled();
   });
@@ -4571,6 +4615,7 @@ describe("several proposal cards on one message", () => {
   function db(blocks: unknown[], runStatus = "waiting_input") {
     const tx = {
       $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+      bot: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
       message: {
         findFirst: vi.fn().mockResolvedValue({ id: "message-1", blocks }),
         findMany: vi.fn().mockResolvedValue([{ id: "message-1", blocks }]),
@@ -4865,6 +4910,7 @@ describe("answerRunInput as part of a batch", () => {
   ) => {
     const tx = {
       $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+      bot: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
       message: {
         findFirst: vi.fn().mockResolvedValue({
           id: "message-1",
@@ -4947,5 +4993,106 @@ describe("answerRunInput as part of a batch", () => {
     expect(result).toBe(false);
     expect(tx.externalEffect.update).not.toHaveBeenCalled();
     expect(tx.message.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("who decides an agent's approval", () => {
+  function fixture(everyoneKeys: string[]) {
+    let blocks: unknown[] = [
+      {
+        kind: "ask",
+        approvalEffectId: "effect-1",
+        text: "Review before writing",
+        status: "pending",
+        actions: [
+          { id: "allow", label: "Allow once" },
+          { id: "deny", label: "Deny" },
+        ],
+      },
+    ];
+    const tx = {
+      $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+      bot: { findUnique: vi.fn().mockResolvedValue({ userId: "owner" }) },
+      message: {
+        findFirst: vi.fn(async () => ({ id: "message-1", blocks })),
+        update: vi.fn(async ({ data }: { data: { blocks: unknown[] } }) => {
+          blocks = data.blocks;
+          return { id: "message-1" };
+        }),
+      },
+      run: {
+        findFirst: vi.fn().mockResolvedValue({ botId: "bot-1", userId: "owner" }),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        findUnique: vi.fn().mockResolvedValue({ status: "queued" }),
+      },
+      task: { updateMany: vi.fn() },
+      externalEffect: {
+        findFirst: vi
+          .fn()
+          .mockResolvedValue({ id: "effect-1", kind: "connector_write", status: "intended" }),
+        update: vi.fn().mockResolvedValue({ id: "effect-1" }),
+      },
+      thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 10 }) },
+      event: {
+        create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({
+          ...event(data.seq),
+          type: data.type,
+        })),
+      },
+      spaceMember: {
+        findUnique: vi.fn().mockResolvedValue({ role: "member" }),
+        findMany: vi.fn().mockResolvedValue([
+          { spaceId: "workspace-1", userId: "teammate", roles: [] },
+          { spaceId: "workspace-1", userId: "owner", roles: [] },
+        ]),
+      },
+      spaceRole: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: "everyone",
+            spaceId: "workspace-1",
+            name: "Everyone",
+            color: null,
+            position: 9,
+            keys: everyoneKeys,
+            systemKey: "everyone",
+          },
+        ]),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
+    } as unknown as PrismaClient;
+    const answer = (userId: string) =>
+      answerRunInput(prisma, {
+        spaceId: "workspace-1",
+        threadId: "thread-1",
+        runId: "run-1",
+        messageId: "message-1",
+        answeredByUserId: userId,
+        answer: "allow",
+      });
+    return { tx, answer };
+  }
+
+  it("lets the agent's owner decide", async () => {
+    const f = fixture([]);
+    await expect(f.answer("owner")).resolves.toBe(true);
+  });
+
+  it("lets anyone holding approve_actions decide, and the first answer wins", async () => {
+    const f = fixture(["approve_actions"]);
+    await expect(f.answer("teammate")).resolves.toBe(true);
+    // The owner arrives second: the card is already decided, so nothing runs twice.
+    await expect(f.answer("owner")).resolves.toBe(false);
+    expect(f.tx.externalEffect.update).toHaveBeenCalledTimes(1);
+    expect(f.tx.run.updateMany).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses a member who neither owns the agent nor may approve actions", async () => {
+    const f = fixture(["post"]);
+    await expect(f.answer("teammate")).rejects.toBeInstanceOf(ApprovalNotAllowedError);
+    expect(f.tx.externalEffect.update).not.toHaveBeenCalled();
+    expect(f.tx.run.updateMany).not.toHaveBeenCalled();
   });
 });

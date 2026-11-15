@@ -8,11 +8,42 @@ export type SpaceRole = z.infer<typeof SpaceRoleSchema>;
 
 export const MAX_INVITE_ADDRESSES = 50;
 
+/**
+ * A role a space defines. Keys are the permission keys the server knows; Everyone is the base
+ * role every member holds, Admin the one every space starts with, and the rest are custom.
+ */
+export const CustomSpaceRoleSchema = z.object({
+  id: Id,
+  name: z.string().trim().min(1).max(40),
+  color: z.string().nullable(),
+  position: z.number().int(),
+  keys: z.array(z.string()),
+  systemKey: z.enum(["everyone", "admin"]).nullable(),
+  memberCount: z.number().int(),
+});
+export type CustomSpaceRole = z.infer<typeof CustomSpaceRoleSchema>;
+
+/** What the caller may do in the space the request targets, with every key resolved. */
+export const SpaceMembershipSchema = z.object({
+  isOwner: z.boolean(),
+  roleIds: z.array(Id),
+  permissions: z.array(z.string()),
+});
+export type SpaceMembershipDto = z.infer<typeof SpaceMembershipSchema>;
+
+export const SpaceRolesSchema = z.object({
+  roles: z.array(CustomSpaceRoleSchema),
+  me: SpaceMembershipSchema,
+});
+export type SpaceRoles = z.infer<typeof SpaceRolesSchema>;
+
 export const SpaceMemberSchema = z.object({
   userId: Id,
   name: z.string(),
   email: z.string(),
   role: SpaceRoleSchema,
+  /** The custom roles the person holds; Everyone is implied. */
+  roleIds: z.array(Id).default([]),
   joinedAt: IsoDate,
 });
 export type SpaceMember = z.infer<typeof SpaceMemberSchema>;
@@ -21,6 +52,8 @@ export const SpaceInvitationSchema = z.object({
   id: Id,
   email: z.string(),
   role: SpaceRoleSchema,
+  /** The custom roles the person gets on accepting. */
+  roleIds: z.array(Id).default([]),
   status: z.enum(["pending", "accepted"]),
   expiresAt: IsoDate,
   createdAt: IsoDate,

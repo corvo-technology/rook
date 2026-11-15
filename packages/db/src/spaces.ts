@@ -1,8 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { can, displayName } from "@corvo/core";
+import { can, displayName, isSpaceOwner } from "@corvo/core";
 import type { PrismaClient } from "./client.js";
 import { Prisma } from "./client.js";
 import { IsolationError } from "./scope.js";
+import { getSpaceMembershipFor } from "./space-membership.js";
 import { withTransactionRetry } from "./transaction-retry.js";
 
 /** Per member, per organization: one person cannot fan out unbounded boundaries. */
@@ -165,7 +166,7 @@ export async function createSpaceForMember(
         if (!currentMembership) throw new IsolationError();
         // Someone invited into another person's workspace adds spaces to their own organization,
         // never to the one they were invited to.
-        const owned = can(currentMembership, "delete_space")
+        const owned = isSpaceOwner(currentMembership.role)
           ? currentMembership
           : ((await tx.spaceMember.findFirst({
               where: { userId: input.userId, role: "owner" },
@@ -276,7 +277,7 @@ async function assertSpaceDeletable(
   input: SpaceMemberTargetInput,
 ): Promise<Array<{ spaceId: string; space: { isDefault: boolean } }>> {
   const owned = await loadActorSpace(db, input);
-  if (!can(owned, "delete_space")) throw new CannotDeleteSpaceAsNonOwnerError();
+  if (!isSpaceOwner(owned.role)) throw new CannotDeleteSpaceAsNonOwnerError();
   if (owned.isDefault) throw new CannotDeleteDefaultSpaceError();
   const memberships = await db.spaceMember.findMany({
     where: {
@@ -583,7 +584,8 @@ export async function renameSpaceForMember(
       async (tx) => {
         await lockSpaceDeletion(tx, input.spaceId);
         const owned = await loadActorSpace(tx, input);
-        if (!can(owned, "manage_settings")) throw new CannotRenameSpaceAsNonOwnerError();
+        if (!can(await getSpaceMembershipFor(tx, input), "configure"))
+          throw new CannotRenameSpaceAsNonOwnerError();
         if (owned.deletingAt) throw new SpaceDeletionInProgressError();
         await tx.space.update({
           where: { id: input.spaceId },
@@ -606,7 +608,8 @@ export async function setSpacePausedForMember(
       async (tx) => {
         await lockSpaceDeletion(tx, input.spaceId);
         const owned = await loadActorSpace(tx, input);
-        if (!can(owned, "manage_settings")) throw new CannotPauseSpaceAsNonOwnerError();
+        if (!can(await getSpaceMembershipFor(tx, input), "configure"))
+          throw new CannotPauseSpaceAsNonOwnerError();
         if (owned.deletingAt) throw new SpaceDeletionInProgressError();
         const current = await tx.space.findUniqueOrThrow({
           where: { id: input.spaceId },

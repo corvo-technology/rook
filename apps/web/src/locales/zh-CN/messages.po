@@ -32,6 +32,11 @@ msgstr "{0, plural, other {# 个频道}}"
 msgid "{0, plural, one {# failed} other {# failed}}"
 msgstr "{0, plural, one {# 个失败} other {# 个失败}}"
 
+#. placeholder {0}: role.keys.length
+#: src/pages/SpaceRolesSettings.tsx
+msgid "{0, plural, one {# permission} other {# permissions}}"
+msgstr "{0, plural, other {# 项权限}}"
+
 #. placeholder {0}: summary.count
 #: src/pages/shell/transcript.tsx
 msgid "{0, plural, one {# reply} other {# replies}}"
@@ -779,6 +784,10 @@ msgstr "添加 OpenAPI"
 msgid "Add passkey"
 msgstr "添加通行密钥"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Add person"
+msgstr "添加成员"
+
 #: src/pages/model-settings/providers-section.tsx
 msgid "Add provider"
 msgstr "添加提供方"
@@ -836,6 +845,10 @@ msgstr "正在添加…"
 msgid "Admin"
 msgstr "管理员"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Administrator"
+msgstr "管理员"
+
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -865,6 +878,7 @@ msgstr "Agent 电脑"
 
 #: src/components/AppRail.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
+#: src/pages/SpaceRolesSettings.tsx
 #: src/pages/Store.tsx
 msgid "Agents"
 msgstr "智能体"
@@ -1096,6 +1110,10 @@ msgstr "审批"
 msgid "Approve"
 msgstr "批准"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Approve actions"
+msgstr "批准操作"
+
 #: src/pages/WikiBrowser.tsx
 msgid "Approve all"
 msgstr "全部批准"
@@ -1162,6 +1180,10 @@ msgstr "任何更改前都先询问"
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Asks you before it changes anything."
 msgstr "更改任何内容前都会先询问你。"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Assign work"
+msgstr "分配工作"
 
 #. placeholder {0}: preset.time
 #: src/lib/cron.ts
@@ -1534,6 +1556,10 @@ msgstr "角色"
 msgid "Chart failed to render: {error}"
 msgstr "图表渲染失败：{error}"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Chat"
+msgstr "聊天"
+
 #: src/pages/shell/composer-mentions.tsx
 msgid "Chat Settings"
 msgstr "聊天设置"
@@ -1859,6 +1885,10 @@ msgstr "电脑已关闭。"
 msgid "Computers are off. Set SANDBOX_PROVIDER=docker with SANDBOX_SUPERVISOR_TOKEN, or set SANDBOX_PROVIDER to e2b, daytona, or boat with its API key. Recreate the stack after changing .env."
 msgstr "电脑未开启。请设置 SANDBOX_PROVIDER=docker 并提供 SANDBOX_SUPERVISOR_TOKEN，或将 SANDBOX_PROVIDER 设为 e2b、daytona 或 boat 并提供对应 API 密钥。更改 .env 后请重建环境。"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Configure the space"
+msgstr "配置空间"
+
 #: src/pages/McpServersSettings.tsx
 msgid "Configured servers"
 msgstr "已配置的服务器"
@@ -2047,6 +2077,10 @@ msgstr "继续结账"
 #: src/pages/Auth.tsx
 msgid "Continue with {0}"
 msgstr "通过 {0} 继续"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Control computers"
+msgstr "控制电脑"
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/markdown-copy.tsx
@@ -2673,6 +2707,7 @@ msgstr "无法更新你的时区"
 #: src/pages/shell/create-bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/sidebar-header.tsx
+#: src/pages/SpaceRolesSettings.tsx
 msgid "Create"
 msgstr "创建"
 
@@ -2688,6 +2723,14 @@ msgstr "创建分组并把 {0} 移入。"
 #: src/pages/Auth.tsx
 msgid "Create account"
 msgstr "创建账户"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Create agents"
+msgstr "创建智能体"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Create channels"
+msgstr "创建频道"
 
 #: src/pages/GroupPanel.tsx
 msgid "Create group"
@@ -2705,6 +2748,10 @@ msgstr "创建例行任务"
 #: src/pages/shell/dialogs.tsx
 msgid "Create space"
 msgstr "创建工作区"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Create spaces"
+msgstr "创建空间"
 
 #: src/pages/Auth.tsx
 msgid "Create your Rook"
@@ -2861,6 +2908,7 @@ msgstr "正在委派给助手：{value}"
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/archived-chats.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/SpaceRolesSettings.tsx
 #: src/pages/WikiBrowser.tsx
 msgid "Delete"
 msgstr "删除"
@@ -2881,8 +2929,9 @@ msgstr "删除 {0} 及其 {1, plural, other {# 个机器人}}?"
 
 #. placeholder {0}: bot.name
 #. placeholder {0}: item.name
-#. placeholder {0}: space.name
+#. placeholder {0}: role.name
 #: src/pages/shell/dialogs.tsx
+#: src/pages/SpaceRolesSettings.tsx
 #: src/pages/SpaceSettingsPanel.tsx
 msgid "Delete {0}?"
 msgstr "删除 {0}？"
@@ -3176,6 +3225,10 @@ msgstr "编辑名称"
 msgid "Edit Profile"
 msgstr "编辑资料"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Edit the wiki"
+msgstr "编辑知识库"
+
 #: src/pages/Auth.tsx
 msgid "Email"
 msgstr "邮箱"
@@ -3319,6 +3372,10 @@ msgstr "每月"
 #: src/pages/RoutineSchedule.tsx
 msgid "Every week"
 msgstr "每周"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Everyone"
+msgstr "所有人"
 
 #: src/pages/SpaceTransfer.tsx
 msgid "Everything in this file is already here."
@@ -3902,6 +3959,10 @@ msgstr "邀请"
 msgid "Invite link"
 msgstr "邀请链接"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Invite people"
+msgstr "邀请成员"
+
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Isolated"
@@ -3998,6 +4059,10 @@ msgstr "王"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Knight"
 msgstr "马"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Knowledge"
+msgstr "知识"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/LocalSpeechSection.tsx
@@ -4224,15 +4289,44 @@ msgstr "管理"
 msgid "Manage {0}"
 msgstr "管理 {0}"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Manage agents"
+msgstr "管理智能体"
+
 #: src/components/ModelCredits.tsx
 #: src/pages/Paywall.tsx
+#: src/pages/SpaceRolesSettings.tsx
 msgid "Manage billing"
 msgstr "管理账单"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Manage channels"
+msgstr "管理频道"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Manage connections"
+msgstr "管理连接"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Manage credentials"
+msgstr "管理凭据"
 
 #: src/pages/Store.tsx
 #: src/pages/StoreInstalledApps.tsx
 msgid "Manage MCP servers"
 msgstr "管理 MCP 服务器"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Manage members"
+msgstr "管理成员"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Manage roles"
+msgstr "管理角色"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Manage routines"
+msgstr "管理例程"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Manage the bots it creates"
@@ -4542,6 +4636,16 @@ msgstr "更多电脑操作"
 msgid "Morning summary"
 msgstr "早间摘要"
 
+#. placeholder {0}: role.name
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Move {0} down"
+msgstr "下移 {0}"
+
+#. placeholder {0}: role.name
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Move {0} up"
+msgstr "上移 {0}"
+
 #: src/pages/ModelRoleSettings.tsx
 msgid "Move down"
 msgstr "下移"
@@ -4700,6 +4804,10 @@ msgstr "新密码"
 #: src/pages/shell/bot-picker.tsx
 msgid "New private space"
 msgstr "新建私人空间"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "New role"
+msgstr "新角色"
 
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/Routines.tsx
@@ -5246,6 +5354,7 @@ msgstr "已暂停"
 msgid "Pawn"
 msgstr "兵"
 
+#: src/pages/SpaceRolesSettings.tsx
 #: src/pages/StoreCategoryChips.tsx
 msgid "People"
 msgstr "成员"
@@ -5323,6 +5432,10 @@ msgstr "插件"
 #: src/pages/RoutineEditor.tsx
 msgid "Post \"No changes\" in chat"
 msgstr "在聊天中发布“无变化”"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Post messages"
+msgstr "发送消息"
 
 #: src/pages/RoutineEditor.tsx
 msgid "POST to"
@@ -5590,7 +5703,9 @@ msgid "Remove"
 msgstr "移除"
 
 #. placeholder {0}: attachment.file.name
+#. placeholder {0}: member.name
 #: src/pages/shell/composer.tsx
+#: src/pages/SpaceRolesSettings.tsx
 msgid "Remove {0}"
 msgstr "移除 {0}"
 
@@ -5851,6 +5966,10 @@ msgstr "返回 Rook"
 msgid "Review before {reviewing}"
 msgstr "执行前请确认：{reviewing}"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Review memory"
+msgstr "审核记忆"
+
 #: src/pages/WikiBrowser.tsx
 msgid "Review now"
 msgstr "立即审查"
@@ -5864,10 +5983,18 @@ msgstr "修订 {0}"
 msgid "Role"
 msgstr "角色"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Role name"
+msgstr "角色名称"
+
 #. placeholder {0}: member.name
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Role of {0}"
 msgstr "{0} 的角色"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Roles"
+msgstr "角色"
 
 #: src/pages/Onboarding.tsx
 msgid "Rook credits"
@@ -6465,6 +6592,7 @@ msgstr "来源"
 
 #: src/lib/identity-display.ts
 #: src/pages/Settings.tsx
+#: src/pages/SpaceRolesSettings.tsx
 msgid "Space"
 msgstr "工作区"
 
@@ -6689,6 +6817,10 @@ msgstr "表格"
 #: src/pages/shell/computer-overlay.tsx
 msgid "Take control"
 msgstr "接管控制权"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Talk to agents"
+msgstr "与智能体对话"
 
 #: src/components/MissionList.tsx
 msgid "Talk to your agent"
@@ -7072,6 +7204,7 @@ msgid "Tool sources"
 msgstr "工具源"
 
 #: src/pages/shell/bot-panel.tsx
+#: src/pages/SpaceRolesSettings.tsx
 #: src/pages/Store.tsx
 msgid "Tools"
 msgstr "工具"
@@ -7254,6 +7387,10 @@ msgstr "立即升级"
 msgid "Upload"
 msgstr "上传"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Upload files"
+msgstr "上传文件"
+
 #: src/lib/ticket-priority.ts
 msgid "Urgent"
 msgstr "紧急"
@@ -7290,6 +7427,10 @@ msgstr "访问令牌请使用 {oauthEnvReference}。"
 #: src/pages/Onboarding.tsx
 msgid "Use a found model"
 msgstr "使用找到的模型"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Use computers"
+msgstr "使用电脑"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Use Connect to verify the key."
@@ -7384,6 +7525,10 @@ msgstr "正在校验…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "版本"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "View usage"
+msgstr "查看用量"
 
 #: src/pages/Settings.tsx
 #: src/pages/shell/bot-panel.tsx

@@ -12,6 +12,7 @@ import {
   InvalidSpaceNameError,
   IsolationError,
   renameSpaceForMember,
+  resolveSpaceMemberships,
   runAsSystem,
   runAsTenant,
   SPACE_DELETION_CLAIM_TIMEOUT_MS,
@@ -266,6 +267,10 @@ async function memberSpaceNavigation(
     },
     orderBy: { createdAt: "asc" },
   });
+  const resolved = await resolveSpaceMemberships(
+    deps.prisma,
+    memberships.map((membership) => ({ ...membership, userId: actor.userId })),
+  );
   const spaceIds = memberships.map((membership) => membership.spaceId);
   const inactiveSpaceIds = spaceIds.filter((spaceId) => spaceId !== actor.spaceId);
   const [
@@ -333,12 +338,18 @@ async function memberSpaceNavigation(
         isDefault: membership.space.isDefault,
         hasContent: spacesWithContent.has(membership.spaceId),
         botCount: botCounts.get(membership.spaceId) ?? 0,
-        canRename: can(membership, "manage_settings") && membership.space.deletingAt === null,
+        canRename:
+          can(resolved.get(`${membership.spaceId}:${actor.userId}`), "configure") &&
+          membership.space.deletingAt === null,
         pausedAt: membership.space.pausedAt?.toISOString() ?? null,
-        canPause: can(membership, "manage_settings") && membership.space.deletingAt === null,
-        canInvite: can(membership, "invite") && membership.space.deletingAt === null,
+        canPause:
+          can(resolved.get(`${membership.spaceId}:${actor.userId}`), "configure") &&
+          membership.space.deletingAt === null,
+        canInvite:
+          can(resolved.get(`${membership.spaceId}:${actor.userId}`), "invite_people") &&
+          membership.space.deletingAt === null,
         canDelete:
-          can(membership, "delete_space") &&
+          resolved.get(`${membership.spaceId}:${actor.userId}`)?.isOwner &&
           !membership.space.isDefault &&
           memberships.filter((other) => other.organizationId === membership.organizationId).length >
             1 &&

@@ -180,6 +180,7 @@ import { SearchQueryOutputSchema } from "./search.js";
 import { SecurityEventListInputSchema, SecurityEventSchema } from "./security-events.js";
 import { SettingsScopeSchema, SpaceSettingSchema, settingsScopeInput } from "./settings-scope.js";
 import {
+  CustomSpaceRoleSchema,
   MAX_INVITE_ADDRESSES,
   SpaceInvitationSchema,
   SpaceInviteLinkSchema,
@@ -187,6 +188,7 @@ import {
   SpaceJoinRequestSchema,
   SpaceMemberSchema,
   SpaceRoleSchema,
+  SpaceRolesSchema,
 } from "./team.js";
 import {
   UserMemoryDecisionSchema,
@@ -350,10 +352,43 @@ export const appContract = {
       setRole: oc
         .input(z.object({ userId: Id, role: SpaceRoleSchema }))
         .output(z.object({ ok: z.literal(true) })),
+      /** Sets the custom roles a person holds; Everyone is implied. */
+      setRoles: oc
+        .input(z.object({ userId: Id, roleIds: z.array(Id).max(50) }))
+        .output(z.object({ ok: z.literal(true) })),
       /** Removing someone ends their access to the space at once. */
       remove: oc.input(z.object({ userId: Id })).output(z.object({ ok: z.literal(true) })),
       /** The caller leaves; the last owner cannot. */
       leave: oc.output(z.object({ ok: z.literal(true) })),
+    },
+    /** Roles that add up: the keys each holds, the order they rank in, and who holds them. */
+    roles: {
+      /** Every role of the space and what the caller may do in it. Any member may read it. */
+      list: oc.output(SpaceRolesSchema),
+      create: oc
+        .input(
+          z.object({
+            name: CustomSpaceRoleSchema.shape.name,
+            keys: z.array(z.string()).max(64).default([]),
+            color: z.string().max(32).nullable().optional(),
+          }),
+        )
+        .output(z.object({ id: Id })),
+      update: oc
+        .input(
+          z.object({
+            id: Id,
+            name: CustomSpaceRoleSchema.shape.name.optional(),
+            keys: z.array(z.string()).max(64).optional(),
+            color: z.string().max(32).nullable().optional(),
+          }),
+        )
+        .output(z.object({ ok: z.literal(true) })),
+      remove: oc.input(z.object({ id: Id })).output(z.object({ ok: z.literal(true) })),
+      /** Every role but Everyone, highest first. */
+      reorder: oc
+        .input(z.object({ ids: z.array(Id).max(50) }))
+        .output(z.object({ ok: z.literal(true) })),
     },
     invitations: {
       list: oc.output(z.array(SpaceInvitationSchema)),
@@ -363,6 +398,7 @@ export const appContract = {
           z.object({
             addresses: z.string().max(MAX_INVITE_ADDRESSES * 200),
             role: SpaceRoleSchema.default("member"),
+            roleIds: z.array(Id).max(50).default([]),
           }),
         )
         .output(SpaceInviteResultSchema),

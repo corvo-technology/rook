@@ -7,3 +7,8 @@ export function spaceRoleOf(stored: string | null | undefined): SpaceRole {
   if (roles.includes("admin")) return "admin";
   return "member";
 }
+
+/** Ownership is not a role: owners may do everything, and a space keeps at least one. */
+export function isSpaceOwner(stored: string | null | undefined): boolean {
+  return spaceRoleOf(stored) === "owner";
+}

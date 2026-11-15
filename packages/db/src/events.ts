@@ -56,6 +56,7 @@ import { deleteRunSecretsInTransaction } from "./run-secrets.js";
 import { isRunResponse, readRunTimingFields } from "./run-timing.js";
 import { RUN_TURN_CHECKPOINT_KIND } from "./run-turn-checkpoint.js";
 import { recordSecurityEvent } from "./security-events.js";
+import { mayDecideApprovals } from "./space-roles.js";
 import { withTransactionRetry } from "./transaction-retry.js";
 
 /** A one-time answer longer than a saved value may be. Nothing is stored or echoed. */
@@ -256,6 +257,14 @@ export interface AddApprovalAskInput {
   threadId: string;
   runId: string;
   block: MessageBlock;
+}
+
+/** Someone who neither owns the agent nor holds approve_actions tried to decide its action. */
+export class ApprovalNotAllowedError extends Error {
+  constructor() {
+    super("Only the agent's owner or someone who may approve actions can decide this");
+    this.name = "ApprovalNotAllowedError";
+  }
 }
 
 export interface AnswerRunInput {
@@ -959,6 +968,17 @@ async function commitAnswerRunInput(
       },
     });
     if (!approvalEffect) return null;
+    // The agent's owner or anyone holding approve_actions decides; the first answer wins, because
+    // the card and the run are claimed together under the thread lock above.
+    const bot = await tx.bot.findUnique({ where: { id: run.botId }, select: { userId: true } });
+    if (
+      !(await mayDecideApprovals(tx, {
+        spaceId: input.spaceId,
+        userId: input.answeredByUserId,
+        ownerIds: [bot?.userId],
+      }))
+    )
+      throw new ApprovalNotAllowedError();
     if (input.batchClass && toolRequiresExplicitApproval(approvalEffect.kind)) return null;
     if (pendingAsk.instructionUpdate) {
       if (

@@ -6,6 +6,7 @@ import type { ExecutorDeps } from "./executor-deps.js";
 import { type DeploymentModelDefaults, effectiveModelRole } from "./model-roles.js";
 import {
   decideTier,
+  nextTier,
   parseTierAnswer,
   TIER_CLASSIFIER_INSTRUCTIONS,
   TIER_CLASSIFIER_MAX_TOKENS,
@@ -47,6 +48,22 @@ export async function resolveTierModel(
     },
     fromDeployment: role.primarySource === "deployment",
   };
+}
+
+/**
+ * The tier an automatic run may ask for: the next one up when it has a model of its own, and the
+ * run has not moved up already. A tier that would fall back to the main model is no stronger.
+ */
+export async function strongerTierFor(
+  deps: ExecutorDeps,
+  run: { spaceId: string; userId: string; tierEscalations: number },
+  tier: ModelTier | undefined,
+  defaults: DeploymentModelDefaults,
+): Promise<ModelTier | null> {
+  if (!tier || run.tierEscalations > 0) return null;
+  const next = nextTier(tier);
+  if (!next) return null;
+  return (await resolveTierModel(deps, run, next, defaults)).tier === next ? next : null;
 }
 
 /** Whether a member or the deployment set a model for a tier other than the main one. */

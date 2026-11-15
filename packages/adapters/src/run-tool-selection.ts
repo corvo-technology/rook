@@ -124,6 +124,8 @@ export function selectBuiltinToolsForRun(options: {
   workflowContinues?: boolean;
   /** The channel router woke this run: nobody named the bot, so it may pass. */
   routedRun?: boolean;
+  /** An automatic run below the strongest tier that has not moved up yet. */
+  strongerModelAvailable?: boolean;
   /** An outside person's message on a linked number woke this run: only the visitor allowlist. */
   visitorRun?: boolean;
 }) {
@@ -151,6 +153,7 @@ export function selectBuiltinToolsForRun(options: {
         (Boolean(options.fleetManagement) && fleetToolsAllowed)) &&
       (options.workflowContinues || tool.name !== "workflow_stop") &&
       (options.routedRun || tool.name !== "pass") &&
+      (options.strongerModelAvailable || tool.name !== "request_stronger_model") &&
       (options.mediaImagesEnabled || tool.name !== "generate_image") &&
       (options.mediaVideoEnabled || tool.name !== "generate_video") &&
       (options.ticketBoardEnabled ||

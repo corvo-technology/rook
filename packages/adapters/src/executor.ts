@@ -122,7 +122,13 @@ import {
   resolveMemberMainModel,
   selectConfiguredModel,
 } from "./model-roles.js";
-import { escalationTarget, routesAutomatically } from "./model-routing.js";
+import {
+  escalationTarget,
+  escalationTriggerOf,
+  routesAutomatically,
+  STRONGER_MODEL_INSTRUCTION,
+  StrongerModelRequested,
+} from "./model-routing.js";
 import {
   findConnectedModelCredential,
   type ModelChoice,
@@ -189,7 +195,7 @@ import {
   resolveRunModel,
   runtimeFallbackModel,
 } from "./run-model.js";
-import { routeTurn } from "./run-model-routing.js";
+import { routeTurn, strongerTierFor } from "./run-model-routing.js";
 import { createReplyState } from "./run-progress.js";
 import { repeatHintForRun } from "./run-repeat.js";
 import { DELEGATED_EMPTY_NOTICE, runAllowsSilentEmpty, runReplyGuidance } from "./run-replies.js";
@@ -208,7 +214,13 @@ import {
 import { applyTool } from "./run-tools.js";
 import { mayRouteWithoutOwner } from "./run-tools-messaging.js";
 import { createRunTrustLoaders } from "./run-trust.js";
-import { completeRun, consumeRunEvents, failRun, interruptRunForShutdown } from "./run-turn.js";
+import {
+  completeRun,
+  consumeRunEvents,
+  failRun,
+  interruptRunForShutdown,
+  publishEscalation,
+} from "./run-turn.js";
 import {
   claimRunSteering,
   loadCurrentTurnImages,
@@ -870,6 +882,10 @@ export function createRunExecutor(deps: ExecutorDeps) {
             ? "main"
             : routed.tier
           : undefined;
+        const strongerTier = await strongerTierFor(deps, run, runTier, {
+          settings,
+          deployment: runDeployment,
+        });
         // A missing or refused connection of the user's own fails every scheduled run alike.
         const failRunBeforeModel = async (
           message: string,
@@ -1191,6 +1207,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
               run.trigger === "routine" &&
               (await workflowContinuesAfter(deps.prisma, run).catch(() => false)),
             routedRun,
+            strongerModelAvailable: strongerTier !== null,
           }),
           // Cross-owner agent connections only exist for chat-linked bots.
           ...(hasMessagingIdentity &&
@@ -1332,6 +1349,8 @@ export function createRunExecutor(deps: ExecutorDeps) {
           earlierAttempt: undefined,
           handedOff: false,
           passed: false,
+          strongerTier,
+          escalation: undefined,
           replyBudget: createReplyBudget(monthUsage.limit, spentBeforeAttempt),
           terminalCheckpointComplete: false,
           turnEnded: false,
@@ -1791,6 +1810,10 @@ export function createRunExecutor(deps: ExecutorDeps) {
                   offeredFleetTools: offeredFleetTools(builtins),
                 }),
                 passInstruction,
+                strongerTier ? STRONGER_MODEL_INSTRUCTION : undefined,
+                run.tierEscalations > 0 && run.escalationReason
+                  ? `A faster model asked for you on this task: ${run.escalationReason} Continue from the conversation; do not start over.`
+                  : undefined,
               ]
                 .filter((instruction): instruction is string => Boolean(instruction))
                 .join("\n\n"),
@@ -1940,7 +1963,10 @@ export function createRunExecutor(deps: ExecutorDeps) {
           // The stop wins over a stream that never ends, so a stopped run is always failed.
           const consuming = consumeRunEvents(ctx, runtimeEvents);
           consuming.catch(() => undefined);
-          if (await Promise.race([consuming, guards.stop])) {
+          const stoppedEarly = await Promise.race([consuming, guards.stop]);
+          // The agent's request ends the turn, however the stopped stream reported it.
+          if (state.escalation) throw new StrongerModelRequested();
+          if (stoppedEarly) {
             if (guards.stopped) throw new TurnGuardStopError(guards.stopped);
             return;
           }
@@ -1961,6 +1987,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
               ? escalationTarget({
                   tier: runTier ?? null,
                   escalations: run.tierEscalations,
+                  requested: Boolean(state.escalation),
                   error: state.guards.stopped
                     ? new TurnGuardStopError(state.guards.stopped)
                     : caughtError,
@@ -1969,9 +1996,20 @@ export function createRunExecutor(deps: ExecutorDeps) {
           if (target) {
             await ctx.computer.checkpoint.flush().catch(() => undefined);
             await ctx.settleRunningHelpers();
-            if (await escalateRunTier(deps, runId, workerId, fence, target)) {
+            const trigger = escalationTriggerOf(
+              state.guards.stopped ? new TurnGuardStopError(state.guards.stopped) : caughtError,
+              Boolean(state.escalation),
+            );
+            if (state.escalation) await publishEscalation(ctx, state.escalation.reason);
+            if (
+              await escalateRunTier(deps, runId, workerId, fence, target, {
+                trigger,
+                reason: state.escalation?.reason,
+              })
+            ) {
               getLogger().info("run.escalated", {
                 "run.id": runId,
+                trigger,
                 "model.tier.from": runTier,
                 "model.tier.to": target,
                 ...activeModel,

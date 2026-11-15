@@ -153,6 +153,11 @@ export function UsagePage() {
                       <dd className="mt-0.5 text-[18px] font-medium tabular-nums">
                         {new Intl.NumberFormat(locale).format(overview.escalations)}
                       </dd>
+                      {overview.requestedEscalations ? (
+                        <dd className="text-muted-foreground">
+                          {t`${new Intl.NumberFormat(locale).format(overview.requestedEscalations)} requested`}
+                        </dd>
+                      ) : null}
                     </div>
                   ) : null}
                   {overview.costUsd ? (

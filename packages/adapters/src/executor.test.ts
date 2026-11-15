@@ -4702,6 +4702,18 @@ describe("pause gate", () => {
     },
   );
 
+  it("still refuses a run that escalated when its space is paused", async () => {
+    const { executor, runtimeRun, finalizeRun } = gateHarness({
+      tierEscalations: 1,
+      spacePausedAt: new Date("2026-11-10T00:00:00Z"),
+    });
+    await executor.continueRun("run-1", "worker-1");
+    expect(finalizeRun).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: "failed", stopReason: "paused" }),
+    );
+    expect(runtimeRun).not.toHaveBeenCalled();
+  });
+
   it("sends no notification for a paused run", async () => {
     const { executor, notifications } = gateHarness({ spacePausedAt: new Date() });
     await executor.continueRun("run-1", "worker-1");

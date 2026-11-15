@@ -10,6 +10,15 @@ export type ModelRole = z.infer<typeof ModelRoleSchema>;
  * The three tiers an automatic agent picks between, cheapest first. Each tier runs on the model
  * role of the same name, so members and spaces override a tier the way they override any role.
  */
+/** Why a run moved up a tier: a turn guard or unusable output, or the agent asking for it. */
+export const ESCALATION_TRIGGERS = [
+  "loop",
+  "tool_errors",
+  "model_output",
+  "agent_request",
+] as const;
+export type EscalationTrigger = (typeof ESCALATION_TRIGGERS)[number];
+
 export const MODEL_TIERS = ["fast", "main", "strong"] as const satisfies readonly ModelRole[];
 export const ModelTierSchema = z.enum(MODEL_TIERS);
 export type ModelTier = z.infer<typeof ModelTierSchema>;

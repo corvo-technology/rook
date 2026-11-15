@@ -626,7 +626,11 @@ export const MessageView = memo(function MessageView({
                 className="flex items-center justify-center gap-2 py-1 text-body2 text-muted-foreground"
               >
                 <span className="text-warning">◷</span>
-                <span>{block.text}</span>
+                {block.code === "stronger_model" ? (
+                  <span title={block.detail}>{t`Switched to a stronger model`}</span>
+                ) : (
+                  <span>{block.text}</span>
+                )}
               </div>
             );
           }

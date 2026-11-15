@@ -977,6 +977,10 @@ model Run {
   modelTier            String?
   /// Times the run moved up a tier after the cheaper one failed. Bounded to one.
   tierEscalations      Int               @default(0)
+  /// Why the run moved up its tier ("loop", "tool_errors", "model_output" or "agent_request").
+  escalationTrigger    String?
+  /// The short reason an agent gave when it asked for a stronger model.
+  escalationReason     String?
   error                String?
   // Set when a rule of the app or a run guard ended the run on purpose (RUN_STOP_REASONS); null otherwise.
   stopReason           String?

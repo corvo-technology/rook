@@ -124,6 +124,8 @@ export function buildUsageOverview(input: {
   outcomes?: ReadonlyMap<string, RunOutcome>;
   /** Runs in the period that moved up a tier after a cheaper one failed. */
   escalations?: number;
+  /** Of those, the runs where the agent asked for the stronger model itself. */
+  requestedEscalations?: number;
 }): UsageOverview {
   const { period, now, rows, agents, unknownName, outcomes } = input;
   const window = usageWindow(period, now);
@@ -240,6 +242,7 @@ export function buildUsageOverview(input: {
         : [];
     }),
     escalations: input.escalations ?? 0,
+    requestedEscalations: input.requestedEscalations ?? 0,
     days: [...days.entries()].map(([date, value]) => ({ date, ...value })),
   };
 }

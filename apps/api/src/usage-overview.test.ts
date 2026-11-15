@@ -196,6 +196,7 @@ describe("spend by model tier", () => {
       agents,
       unknownName: "",
       escalations: 2,
+      requestedEscalations: 1,
       rows: [
         row({ modelTier: "strong", costUsd: 0.4 }),
         row({ modelTier: "fast", costUsd: 0.01, runId: "r2" }),
@@ -208,6 +209,7 @@ describe("spend by model tier", () => {
       { tier: "strong", tokens: 100, costUsd: 0.4 },
     ]);
     expect(result.escalations).toBe(2);
+    expect(result.requestedEscalations).toBe(1);
   });
 
   it("has no tiers when no agent picked its model, and does not invent a cost", () => {

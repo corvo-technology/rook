@@ -11,6 +11,8 @@ import type { EvalPricing, MeasuredCall } from "../evals/measurement.js";
 import { measureCalls, SpendBudget, validatePricing } from "../evals/measurement.js";
 import type { RoutingGrade } from "../evals/model-routing.js";
 import {
+  ESCALATION_MARKER,
+  gradeEscalation,
   gradeRouting,
   MODEL_ROUTING_CASES,
   MODEL_ROUTING_RUBRIC_VERSION,
@@ -169,7 +171,7 @@ export async function runModelRoutingSuite(
   if (judgeConnection)
     report.judge = { provider: judgeConnection.provider, model: judgeConnection.modelId! };
 
-  const { decideTier } = await import("@corvo/adapters");
+  const { decideTier, STRONGER_MODEL_INSTRUCTION } = await import("@corvo/adapters");
   const budget = new SpendBudget(report.spendCapUsd, strong.rates);
   const autoCalls = new Map<string, MeasuredCall>();
   const strongCalls = new Map<string, MeasuredCall>();
@@ -203,7 +205,12 @@ export async function runModelRoutingSuite(
     (usage) => {
       if (usage.callId) into.set(usage.callId, { id: usage.callId, ...usage });
     };
-  const answer = async (arm: Arm, prompt: string, into: Map<string, MeasuredCall>) => {
+  const answer = async (
+    arm: Arm,
+    prompt: string,
+    into: Map<string, MeasuredCall>,
+    instructions = "Answer the request directly and concisely.",
+  ) => {
     const runtime = runtimeFor(arm.connection, arm.rates);
     const id = randomUUID();
     let text = "";
@@ -213,7 +220,7 @@ export async function runModelRoutingSuite(
           botId: id,
           threadId: id,
           runId: id,
-          instructions: "Answer the request directly and concisely.",
+          instructions,
           prompt,
           history: [],
           tools: [],
@@ -274,6 +281,31 @@ export async function runModelRoutingSuite(
     result.tier = tier;
     let grade: RoutingGrade;
     try {
+      if (testCase.escalation) {
+        // Offers the tool's wording, as a marker the structured contract can read; the judge,
+        // not the marker, decides whether asking or answering was right.
+        const text = await answer(
+          arms[tier],
+          testCase.prompt,
+          autoCalls,
+          `Answer the request directly and concisely. ${STRONGER_MODEL_INSTRUCTION} Instead of answering, you may start your reply with ${ESCALATION_MARKER} and one short sentence of why.`,
+        );
+        const escalated = text.startsWith(ESCALATION_MARKER);
+        grade = await gradeEscalation(
+          testCase,
+          { tier, escalated, text: escalated ? text.slice(ESCALATION_MARKER.length).trim() : text },
+          judge ? { judge, signal: AbortSignal.timeout(timeoutMs) } : undefined,
+        );
+        result.status = grade.status;
+        result.reason = grade.reason;
+        report.autoCostUsd = measureCalls([...autoCalls.values()], strong.rates).costUsd;
+        report.judgeCostUsd = judgePricing
+          ? measureCalls([...judgeCalls.values()], judgePricing).costUsd
+          : null;
+        save();
+        console.log(`${result.caseId} trial ${result.trial}: tier ${tier}, ${grade.status}`);
+        continue;
+      }
       const [auto, fixed] = await Promise.all([
         answer(arms[tier], testCase.prompt, autoCalls),
         answer(strong, testCase.prompt, strongCalls),

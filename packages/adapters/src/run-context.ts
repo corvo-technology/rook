@@ -8,7 +8,7 @@ import type {
   SemanticMemoryProvider,
   WebProvider,
 } from "@corvo/adapter-kit";
-import type { ComputerMode, MessageBlock } from "@corvo/contracts";
+import type { ComputerMode, MessageBlock, ModelTier } from "@corvo/contracts";
 import type { ToolCallStreak } from "@corvo/core";
 import { createStreamingRedactor } from "@corvo/core";
 import { toolEffectIdempotencyKey } from "@corvo/core/node/approval-effect-key";
@@ -160,6 +160,10 @@ export interface RunState {
   handedOff: boolean;
   /** The agent chose to say nothing: the turn ends without a message. */
   passed: boolean;
+  /** The tier an agent may ask for, or null when it may not; the tool is offered only with one. */
+  strongerTier: ModelTier | null;
+  /** The agent asked for a stronger model; the turn ends and the run moves up. */
+  escalation: { reason: string } | undefined;
   /** Tokens this run has spent against its reply cap, earlier attempts included. */
   replyBudget: ReplyBudget;
   terminalCheckpointComplete: boolean;

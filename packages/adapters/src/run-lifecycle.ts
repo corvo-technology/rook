@@ -1,5 +1,5 @@
 import { runContinueJob } from "@corvo/adapter-kit";
-import type { ModelTier, RunStopReason } from "@corvo/contracts";
+import type { EscalationTrigger, ModelTier, RunStopReason } from "@corvo/contracts";
 import { displayName } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
@@ -151,6 +151,7 @@ export async function escalateRunTier(
   workerId: string,
   fence: number,
   to: ModelTier,
+  why?: { trigger: EscalationTrigger; reason?: string },
 ): Promise<boolean> {
   const moved = await deps.prisma.run.updateMany({
     where: {
@@ -168,6 +169,7 @@ export async function escalateRunTier(
       wakeAt: null,
       modelTier: to,
       tierEscalations: { increment: 1 },
+      ...(why ? { escalationTrigger: why.trigger, escalationReason: why.reason ?? null } : {}),
     },
   });
   if (moved.count !== 1) return false;

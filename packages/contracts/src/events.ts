@@ -201,7 +201,14 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     /** Connected time the user's client measured after answering. */
     durationSeconds: z.number().int().nonnegative().optional(),
   }),
-  z.object({ kind: z.literal("meta"), text: z.string() }),
+  z.object({
+    kind: z.literal("meta"),
+    text: z.string(),
+    /** A notice a client words itself in the member's language; `text` is the fallback. */
+    code: z.literal("stronger_model").optional(),
+    /** Detail behind the notice, such as the reason an agent gave. */
+    detail: z.string().optional(),
+  }),
   z.object({
     kind: z.literal("progress"),
     text: z.string(),

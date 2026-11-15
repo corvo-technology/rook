@@ -2,7 +2,13 @@ import type { AgentRuntimeEvent } from "@corvo/adapter-kit";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { escalateRunTier } from "./run-lifecycle.js";
-import { classifyTier, resolveTierModel, routeRunTier, routeTurn } from "./run-model-routing.js";
+import {
+  classifyTier,
+  resolveTierModel,
+  routeRunTier,
+  routeTurn,
+  strongerTierFor,
+} from "./run-model-routing.js";
 
 const fast = vi.hoisted(() => ({ model: undefined as unknown }));
 vi.mock("./run-model.js", () => ({
@@ -183,6 +189,34 @@ describe("routeTurn", () => {
   });
 });
 
+describe("strongerTierFor", () => {
+  const strongRole = [{ role: "strong" }];
+  const run = { ...scope, tierEscalations: 0 };
+
+  it("offers the next tier up when it has a model of its own", async () => {
+    expect(await strongerTierFor(deps().deps, run, "fast", defaults)).toBe("main");
+    expect(await strongerTierFor(deps().deps, run, "main", defaults)).toBe("strong");
+  });
+
+  it("offers nothing from the strongest tier", async () => {
+    expect(await strongerTierFor(deps().deps, run, "strong", defaults)).toBeNull();
+  });
+
+  it("offers nothing when the next tier would only be the main model again", async () => {
+    expect(
+      await strongerTierFor(deps({ roles: strongRole }).deps, run, "main", { deployment: null }),
+    ).toBe("strong");
+    expect(await strongerTierFor(deps().deps, run, "main", { deployment: null })).toBeNull();
+  });
+
+  it("offers nothing to a run that already moved up, or one without a tier (a pinned agent)", async () => {
+    expect(
+      await strongerTierFor(deps().deps, { ...run, tierEscalations: 1 }, "fast", defaults),
+    ).toBeNull();
+    expect(await strongerTierFor(deps().deps, run, undefined, defaults)).toBeNull();
+  });
+});
+
 describe("escalateRunTier", () => {
   function lifecycle(count: number) {
     const updateMany = vi.fn(async () => ({ count }));
@@ -212,6 +246,30 @@ describe("escalateRunTier", () => {
       }),
     });
     expect(enqueue).toHaveBeenCalledOnce();
+  });
+
+  it("records why an agent's request moved the run, with its reason", async () => {
+    const { deps: d, updateMany } = lifecycle(1);
+    await escalateRunTier(d, "run-1", "worker", 3, "strong", {
+      trigger: "agent_request",
+      reason: "needs a proof",
+    });
+    expect(updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          escalationTrigger: "agent_request",
+          escalationReason: "needs a proof",
+        }),
+      }),
+    );
+  });
+
+  it("refuses a second request from the same run", async () => {
+    const { deps: d, enqueue } = lifecycle(0);
+    expect(
+      await escalateRunTier(d, "run-1", "worker", 3, "strong", { trigger: "agent_request" }),
+    ).toBe(false);
+    expect(enqueue).not.toHaveBeenCalled();
   });
 
   it("does nothing for a run that already escalated or whose lease moved on", async () => {

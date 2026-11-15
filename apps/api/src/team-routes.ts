@@ -2,7 +2,7 @@ import { acceptInvitation, previewInvitation, requestToJoin, runAsSystem } from 
 import type { Hono } from "hono";
 import { requestClientIp } from "./client-ip.js";
 import type { TeamDeps } from "./team.js";
-import { HitLimiter, readTeamToken, syncSeats } from "./team.js";
+import { HitLimiter, isInvitationMailProof, readTeamToken, syncSeats } from "./team.js";
 
 export interface TeamSession {
   id: string;
@@ -27,6 +27,9 @@ export function mountTeamRoutes(
 ): void {
   const byAddress = new HitLimiter(60, 60_000);
   const byPerson = new HitLimiter(20, 60 * 60_000);
+  const byIp = new HitLimiter(30, 60 * 60_000);
+  // A copied link cannot be used to flood its space's approvals, whoever uses it.
+  const byLink = new HitLimiter(60, 60 * 60_000);
 
   app.get("/api/v1/invitations/:token", async (c) => {
     if (!byAddress.allow(`preview:${requestClientIp(c) ?? "unknown"}`))
@@ -41,7 +44,10 @@ export function mountTeamRoutes(
   app.post("/api/v1/invitations/:token/accept", async (c) => {
     const session = await deps.session(c.req.raw);
     if (!session) return c.json({ error: "Unauthorized" }, 401, NO_STORE);
-    if (!byPerson.allow(`accept:${session.id}`))
+    if (
+      !byPerson.allow(`accept:${session.id}`) ||
+      !byIp.allow(`accept:${requestClientIp(c) ?? "unknown"}`)
+    )
       return c.json({ error: "Too many requests" }, 429, NO_STORE);
     const id = readTeamToken(deps.secret, "invite", c.req.param("token"));
     const joined = id
@@ -50,9 +56,11 @@ export function mountTeamRoutes(
             id,
             user: session,
             trustUnverified: deps.trustUnverified,
+            mailProof: isInvitationMailProof(deps.secret, id, c.req.query("mail")),
           }),
         )
       : null;
+    if (joined === "unverified") return c.json({ error: "Unverified" }, 403, NO_STORE);
     if (!joined) return c.json({ error: "Not found" }, 404, NO_STORE);
     syncSeats(deps, joined.organizationId);
     return c.json({ spaceId: joined.spaceId }, 200, NO_STORE);
@@ -61,9 +69,14 @@ export function mountTeamRoutes(
   app.post("/api/v1/join/:token", async (c) => {
     const session = await deps.session(c.req.raw);
     if (!session) return c.json({ error: "Unauthorized" }, 401, NO_STORE);
-    if (!byPerson.allow(`join:${session.id}`))
+    if (
+      !byPerson.allow(`join:${session.id}`) ||
+      !byIp.allow(`join:${requestClientIp(c) ?? "unknown"}`)
+    )
       return c.json({ error: "Too many requests" }, 429, NO_STORE);
     const linkId = readTeamToken(deps.secret, "join", c.req.param("token"));
+    if (linkId && !byLink.allow(`link:${linkId}`))
+      return c.json({ error: "Too many requests" }, 429, NO_STORE);
     const outcome = linkId
       ? await runAsSystem("ask to join a space", () =>
           requestToJoin(deps.prisma, { linkId, userId: session.id }),

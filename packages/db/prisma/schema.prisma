@@ -446,6 +446,8 @@ model SpaceInviteLink {
   createdBy   User      @relation("SpaceInviteLinkCreator", fields: [createdById], references: [id], onDelete: Cascade)
   createdAt   DateTime  @default(now())
   revokedAt   DateTime?
+  /// Null on links made before links expired: they work for 30 days from `createdAt`.
+  expiresAt   DateTime?
 
   @@index([spaceId, revokedAt])
   @@map("space_invite_links")

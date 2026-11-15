@@ -16,6 +16,7 @@ import {
   toTicketDto,
 } from "@corvo/db";
 import { ORPCError } from "@orpc/server";
+import { accessRevocations } from "../access-revocations.js";
 import type { RouterContext } from "./context.js";
 import { HEARTBEAT_MS, SESSION_RECHECK_MS } from "./shared.js";
 
@@ -77,6 +78,9 @@ export function boardsRoutes(ctx: RouterContext) {
         const follow = deps.boardEvents.follow(spaceId, context.signal);
         // Board signals are transient, so a heartbeat stands in for liveness and
         // gives the client a periodic catch-up reload if a push was missed.
+        const revoked = accessRevocations
+          .watch(context.actor.spaceId, context.actor.userId, context.signal)
+          .then(() => "revoked" as const);
         let pending: Promise<IteratorResult<BoardEvent>> | undefined;
         let authorizedAt = Date.now();
         const assertStillAuthorized = async () => {
@@ -90,10 +94,13 @@ export function boardsRoutes(ctx: RouterContext) {
             let timer: ReturnType<typeof setTimeout> | undefined;
             const next = await Promise.race([
               pending,
+              revoked,
               new Promise<"silent">((resolve) => {
                 timer = setTimeout(() => resolve("silent"), HEARTBEAT_MS);
               }),
             ]).finally(() => clearTimeout(timer));
+            // Removed from the space: end the stream now, not at the next periodic re-check.
+            if (next === "revoked") throw new ORPCError("UNAUTHORIZED");
             await assertStillAuthorized();
             if (next === "silent") {
               yield { spaceId, createdAt: new Date().toISOString() };

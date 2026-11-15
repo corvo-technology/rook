@@ -4,6 +4,8 @@ import { bootstrapUserSpace } from "./bootstrap-user.js";
 import type { PrismaClient } from "./client.js";
 import { createDb } from "./client.js";
 import { asSystem } from "./row-security.js";
+import { requireMembership } from "./scope.js";
+import { getSpaceMembershipFor } from "./space-membership.js";
 import {
   acceptInvitation,
   acceptInvitationsForUser,
@@ -102,25 +104,40 @@ describePostgres("teams: invitations and members (PostgreSQL)", () => {
   it("invites an address, lets only that confirmed address accept, and joins with the role", async () => {
     const row = await invite(email("ana"), "admin");
     await expect(previewInvitation(prisma, row.id)).resolves.toMatchObject({
+      state: "pending",
       spaceName: "Team",
       email: email("ana"),
+      role: "admin",
+      hasAccount: false,
     });
     const ana = await user("ana");
     const wrong = await user("wrong");
     await expect(acceptInvitation(prisma, { id: row.id, user: wrong })).resolves.toBeNull();
     const unconfirmed = { ...ana, emailVerified: false };
-    await expect(acceptInvitation(prisma, { id: row.id, user: unconfirmed })).resolves.toBeNull();
+    // Someone who signed up with this address without proving the mailbox cannot take the seat.
+    await expect(acceptInvitation(prisma, { id: row.id, user: unconfirmed })).resolves.toBe(
+      "unverified",
+    );
+    expect(await prisma.spaceMember.count({ where: { spaceId, userId: ana.id } })).toBe(0);
     await expect(
       acceptInvitation(prisma, { id: row.id, user: unconfirmed, trustUnverified: true }),
     ).resolves.toMatchObject({ spaceId });
     const members = await listSpaceMembers(prisma, spaceId);
     expect(members.find((member) => member.userId === ana.id)?.role).toBe("admin");
-    await expect(previewInvitation(prisma, row.id)).resolves.toBeNull();
-    const accepted = await listInvitations(prisma, { spaceId, actorId: users.owner! });
-    expect(accepted.find((item) => item.id === row.id)).toMatchObject({
-      status: "accepted",
-      acceptedByName: "ana",
-    });
+    await expect(previewInvitation(prisma, row.id)).resolves.toEqual({ state: "accepted" });
+    // A member now: the waiting list no longer carries the invitation.
+    const waiting = await listInvitations(prisma, { spaceId, actorId: users.owner! });
+    expect(waiting.find((item) => item.id === row.id)).toBeUndefined();
+    // Accepting twice, even by the same account, does nothing more.
+    await expect(acceptInvitation(prisma, { id: row.id, user: ana })).resolves.toBeNull();
+  });
+
+  it("accepts an unconfirmed account only with the emailed link's proof", async () => {
+    const row = await invite(email("proof"));
+    const proof = await user("proof", false);
+    await expect(
+      acceptInvitation(prisma, { id: row.id, user: proof, mailProof: true }),
+    ).resolves.toMatchObject({ spaceId });
   });
 
   it("opens only the invited space, not the organization's default space", async () => {
@@ -139,7 +156,54 @@ describePostgres("teams: invitations and members (PostgreSQL)", () => {
     const resent = await resendInvitation(prisma, { spaceId, actorId: users.owner!, id: first.id });
     expect(resent.id).toBe(first.id);
     await cancelInvitation(prisma, { spaceId, actorId: users.owner!, id: first.id });
+    // Cancelled reads like an invitation that never existed.
     await expect(previewInvitation(prisma, first.id)).resolves.toBeNull();
+    const dupCancelled = await user("dupcancelled");
+    await expect(
+      acceptInvitation(prisma, { id: first.id, user: dupCancelled }),
+    ).resolves.toBeNull();
+  });
+
+  it("merges a second invitation into the first, keeping the higher role and every role", async () => {
+    const roleA = randomUUID();
+    const roleB = randomUUID();
+    for (const [id, position] of [
+      [roleA, 5],
+      [roleB, 6],
+    ] as const)
+      await prisma.spaceRole.create({
+        data: { id, spaceId, name: `R-${id.slice(0, 4)}`, position, keys: [] },
+      });
+    const send = async (role: "admin" | "member", roleIds: string[]) =>
+      (
+        await createInvitations(prisma, {
+          spaceId,
+          actorId: users.owner!,
+          role,
+          roleIds,
+          addresses: [email("merge")],
+        })
+      ).invitations[0]!;
+    const first = await send("admin", [roleA]);
+    const second = await send("member", [roleB]);
+    expect(second.id).toBe(first.id);
+    expect(second.role).toBe("admin");
+    expect([...second.roleIds].sort()).toEqual([roleA, roleB].sort());
+    expect(await prisma.spaceInvitation.count({ where: { spaceId, email: email("merge") } })).toBe(
+      1,
+    );
+  });
+
+  it("says what became of an invitation that no longer works", async () => {
+    const row = await invite(email("gone"));
+    const later = new Date(Date.now() + 8 * 24 * 60 * 60 * 1000);
+    await expect(previewInvitation(prisma, row.id, later)).resolves.toEqual({
+      state: "expired",
+      inviterName: "owner",
+    });
+    await cancelInvitation(prisma, { spaceId, actorId: users.owner!, id: row.id });
+    await expect(previewInvitation(prisma, row.id, later)).resolves.toBeNull();
+    await expect(previewInvitation(prisma, "no-such-invitation")).resolves.toBeNull();
   });
 
   it("refuses an expired invitation", async () => {
@@ -151,6 +215,13 @@ describePostgres("teams: invitations and members (PostgreSQL)", () => {
     ).resolves.toBeNull();
     await expect(hasPendingInvitation(prisma, email("late"), later)).resolves.toBe(false);
     await expect(hasPendingInvitation(prisma, email("late"))).resolves.toBe(true);
+  });
+
+  it("does not join an unconfirmed address at sign-in, however it got the account", async () => {
+    await invite(email("squat"));
+    const squatter = await user("squat", false);
+    await expect(acceptInvitationsForUser(prisma, squatter)).resolves.toEqual([]);
+    expect(await prisma.spaceMember.count({ where: { userId: squatter.id } })).toBe(0);
   });
 
   it("joins the invited space at sign-in instead of provisioning a personal one", async () => {
@@ -207,6 +278,19 @@ describePostgres("teams: invitations and members (PostgreSQL)", () => {
       "requested",
     );
     expect(await prisma.spaceJoinRequest.count({ where: { userId: eve.id } })).toBe(0);
+  });
+
+  it("stops a link that expired, and gives a new link in its place", async () => {
+    const link = await createInviteLink(prisma, { spaceId, actorId: users.owner! });
+    const later = new Date(Date.now() + 31 * 24 * 60 * 60 * 1000);
+    const late = await user("latelink");
+    await expect(
+      requestToJoin(prisma, { linkId: link.id, userId: late.id, now: later }),
+    ).resolves.toBe("requested");
+    expect(await prisma.spaceJoinRequest.count({ where: { userId: late.id } })).toBe(0);
+    const renewed = await createInviteLink(prisma, { spaceId, actorId: users.owner!, now: later });
+    expect(renewed.id).not.toBe(link.id);
+    await disableInviteLink(prisma, { spaceId, actorId: users.owner! });
   });
 
   it("protects owners: admins cannot touch them, and the last owner stays", async () => {
@@ -305,8 +389,16 @@ describePostgres("teams: invitations and members (PostgreSQL)", () => {
 
   it("ends access when a member is removed and frees their seat", async () => {
     const before = await prisma.member.count({ where: { organizationId } });
+    await expect(
+      getSpaceMembershipFor(prisma, { spaceId, userId: users.bruno! }),
+    ).resolves.not.toBeNull();
     await removeMember(prisma, { spaceId, actorId: users.owner!, userId: users.bruno! });
     expect(await prisma.spaceMember.count({ where: { spaceId, userId: users.bruno! } })).toBe(0);
+    // Every read and stream resolves the membership live, so nothing is left to use.
+    await expect(
+      getSpaceMembershipFor(prisma, { spaceId, userId: users.bruno! }),
+    ).resolves.toBeNull();
+    await expect(requireMembership(prisma, users.bruno!, spaceId)).rejects.toThrow();
     expect(await prisma.member.count({ where: { organizationId } })).toBe(before - 1);
     await removeMember(prisma, { spaceId, actorId: users.carla!, userId: users.carla! });
     expect(await prisma.spaceMember.count({ where: { spaceId, userId: users.carla! } })).toBe(0);

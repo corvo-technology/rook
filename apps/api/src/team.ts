@@ -15,7 +15,7 @@ export interface TeamDeps {
   billing?: Pick<BillingService, "syncSeats">;
 }
 
-type TokenKind = "invite" | "join";
+type TokenKind = "invite" | "join" | "invite-mail";
 
 function signature(secret: string, kind: TokenKind, id: string): string {
   return createHmac("sha256", secret).update(`${kind}:${id}`).digest("base64url").slice(0, 32);
@@ -39,6 +39,27 @@ export function readTeamToken(secret: string, kind: TokenKind, token: string): s
 export const invitationUrl = (deps: TeamDeps, id: string): string =>
   new URL(`/invite/${teamToken(deps.secret, "invite", id)}`, deps.webOrigin).href;
 
+/**
+ * What only the invitation's own email carries. The link alone can be copied and handed to anyone
+ * (the inviter sees it in the members list), so it proves no mailbox; this proof does.
+ */
+export const invitationMailProof = (secret: string, id: string): string =>
+  signature(secret, "invite-mail", id);
+
+export function isInvitationMailProof(secret: string, id: string, given: unknown): boolean {
+  if (typeof given !== "string") return false;
+  const a = Buffer.from(given);
+  const b = Buffer.from(invitationMailProof(secret, id));
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
+/** The link in the invitation email: the shareable one plus the mailbox proof. */
+export const invitationEmailUrl = (deps: TeamDeps, id: string): string => {
+  const url = new URL(invitationUrl(deps, id));
+  url.searchParams.set("mail", invitationMailProof(deps.secret, id));
+  return url.href;
+};
+
 export const joinUrl = (deps: TeamDeps, id: string): string =>
   new URL(`/join/${teamToken(deps.secret, "join", id)}`, deps.webOrigin).href;
 
@@ -53,7 +74,7 @@ export async function sendInvitationEmail(
     to: input.email,
     inviterName: input.inviterName,
     spaceName: input.spaceName,
-    url: invitationUrl(deps, input.id),
+    url: invitationEmailUrl(deps, input.id),
   });
   void email.send(message).catch((error) => getLogger().error("invitation email failed", error));
   return true;

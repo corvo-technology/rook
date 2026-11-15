@@ -25,9 +25,10 @@ import {
   updateSpaceRole,
 } from "@corvo/db";
 import { ORPCError } from "@orpc/server";
+import { accessRevocations } from "../access-revocations.js";
 import { getSpaceMembership } from "../space-owner.js";
 import type { TeamDeps } from "../team.js";
-import { invitationUrl, joinUrl, sendInvitationEmail, syncSeats } from "../team.js";
+import { HitLimiter, invitationUrl, joinUrl, sendInvitationEmail, syncSeats } from "../team.js";
 import type { RouterContext } from "./context.js";
 
 function refuse(error: unknown): never {
@@ -67,15 +68,21 @@ function invitationDto(team: TeamDeps, row: InvitationRow): SpaceInvitation {
   };
 }
 
+/** An invitation email goes to the same address at most this often, so sending again is no way to spam it. */
+const EMAILS_PER_INVITATION_PER_HOUR = 3;
+
 export function teamRoutes(ctx: RouterContext) {
   const { deps, authed } = ctx;
   const spaces = authed.spaces;
+  const emailSends = new HitLimiter(EMAILS_PER_INVITATION_PER_HOUR, 60 * 60_000);
 
   async function mailAndAnswer(
     team: TeamDeps,
     actor: { userId: string; spaceId: string },
     rows: InvitationRow[],
     alreadyMembers: string[],
+    /** False when the caller already took its turn from the limiter. */
+    limited = true,
   ) {
     const [inviter, space] = await Promise.all([
       deps.prisma.user.findUniqueOrThrow({
@@ -88,6 +95,8 @@ export function teamRoutes(ctx: RouterContext) {
       }),
     ]);
     for (const row of rows) {
+      // An address invited again keeps its invitation; its mailbox is not written to every time.
+      if (limited && !emailSends.allow(`${actor.spaceId}:${row.id}`)) continue;
       await sendInvitationEmail(team, {
         id: row.id,
         email: row.email,
@@ -150,6 +159,7 @@ export function teamRoutes(ctx: RouterContext) {
               userId: input.userId,
             }),
           );
+          accessRevocations.revoke(context.actor.spaceId, input.userId);
           await changed(deps.team, context.actor.spaceId);
           return { ok: true as const };
         }),
@@ -161,6 +171,7 @@ export function teamRoutes(ctx: RouterContext) {
               userId: context.actor.userId,
             }),
           );
+          accessRevocations.revoke(context.actor.spaceId, context.actor.userId);
           await changed(deps.team, context.actor.spaceId);
           return { ok: true as const };
         }),
@@ -253,6 +264,9 @@ export function teamRoutes(ctx: RouterContext) {
         }),
         resend: spaces.invitations.resend.handler(async ({ context, input }) => {
           const team = requireTeam(deps.team);
+          if (!emailSends.allow(`${context.actor.spaceId}:${input.id}`)) {
+            throw new ORPCError("TOO_MANY_REQUESTS", { message: "Sent too often" });
+          }
           const row = await asSystem(() =>
             resendInvitation(deps.prisma, {
               spaceId: context.actor.spaceId,
@@ -260,7 +274,7 @@ export function teamRoutes(ctx: RouterContext) {
               id: input.id,
             }),
           );
-          return mailAndAnswer(team, context.actor, [row], []);
+          return mailAndAnswer(team, context.actor, [row], [], false);
         }),
         cancel: spaces.invitations.cancel.handler(async ({ context, input }) => {
           await asSystem(() =>

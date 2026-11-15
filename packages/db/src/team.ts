@@ -17,9 +17,10 @@ export { TeamError } from "./team-errors.js";
 export const INVITATION_DAYS = 7;
 /** New invitations one space may send in a day, so a stolen admin session cannot spam. */
 export const INVITATIONS_PER_SPACE_PER_DAY = 100;
+/** How long a workspace link keeps working before someone has to make a new one. */
+export const INVITE_LINK_DAYS = 30;
 export const PENDING_JOIN_REQUESTS_PER_SPACE = 100;
 export const PENDING_JOIN_REQUESTS_PER_USER = 10;
-const RECENT_JOIN_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 type Client = Pick<
@@ -56,6 +57,18 @@ async function requireKey(
   return membership;
 }
 
+/** Anyone who may bring people in may also answer the people who ask to join. */
+async function requireInviter(
+  db: Client,
+  spaceId: string,
+  userId: string,
+): Promise<SpaceMembership> {
+  const membership = await getSpaceMembershipFor(db, { spaceId, userId });
+  if (!membership || !(can(membership, "invite_people") || can(membership, "manage_members")))
+    throw new TeamError("forbidden", "Not allowed");
+  return membership;
+}
+
 /** Where a person stands in the space's order of roles. */
 async function rankIn(db: Client, spaceId: string, membership: SpaceMembership): Promise<number> {
   const roles = (await loadSpaceRoles(db, [spaceId])).get(spaceId) ?? [];
@@ -86,6 +99,8 @@ export async function listSpaceMembers(prisma: PrismaClient, spaceId: string) {
     joinedAt: row.createdAt,
   }));
 }
+
+const ROLE_ORDER: Record<SpaceRole, number> = { member: 0, admin: 1, owner: 2 };
 
 function isOwnerRole(stored: string): boolean {
   return spaceRoleOf(stored) === "owner";
@@ -312,35 +327,18 @@ function invitationRow(row: {
   };
 }
 
-/** Pending invitations that still work, and recent joins so the inviter sees who arrived. */
+/** Pending invitations that still work. Someone who accepted is a member now and is listed there. */
 export async function listInvitations(
   prisma: PrismaClient,
   input: { spaceId: string; actorId: string; now?: Date },
 ): Promise<InvitationRow[]> {
   await requireKey(prisma, input.spaceId, input.actorId, "invite_people");
   const now = input.now ?? new Date();
-  const since = new Date(now.getTime() - RECENT_JOIN_DAYS * DAY_MS);
   const rows = await prisma.spaceInvitation.findMany({
-    where: {
-      spaceId: input.spaceId,
-      OR: [
-        { status: "pending", expiresAt: { gt: now } },
-        { status: "accepted", acceptedAt: { gt: since } },
-      ],
-    },
+    where: { spaceId: input.spaceId, status: "pending", expiresAt: { gt: now } },
     orderBy: { createdAt: "desc" },
   });
-  const accepters = await prisma.user.findMany({
-    where: { id: { in: rows.flatMap((row) => (row.acceptedById ? [row.acceptedById] : [])) } },
-    select: { id: true, name: true },
-  });
-  const names = new Map(accepters.map((user) => [user.id, user.name]));
-  return rows.map((row) =>
-    invitationRow({
-      ...row,
-      acceptedBy: row.acceptedById ? { name: names.get(row.acceptedById) ?? "" } : null,
-    }),
-  );
+  return rows.map((row) => invitationRow(row));
 }
 
 export async function createInvitations(
@@ -377,17 +375,16 @@ export async function createInvitations(
   const invitations: InvitationRow[] = [];
   for (const email of addresses) {
     if (alreadyMembers.includes(email)) continue;
-    const pending = await prisma.spaceInvitation.findFirst({
-      where: { spaceId: input.spaceId, email, status: "pending" },
-    });
     const expiresAt = new Date(now.getTime() + INVITATION_DAYS * DAY_MS);
-    // An address invited twice keeps one invitation, so the link already sent still works.
-    const row = pending
-      ? await prisma.spaceInvitation.update({
-          where: { id: pending.id },
-          data: { role: input.role, roleIds, expiresAt, inviterId: input.actorId },
-        })
-      : await prisma.spaceInvitation.create({
+    // An address invited twice keeps one invitation, so the link already sent still works. The
+    // second invitation never takes anything away: the higher role stays, and the roles add up.
+    const row = await serializable(prisma, async (tx) => {
+      const pending = await tx.spaceInvitation.findFirst({
+        where: { spaceId: input.spaceId, email, status: "pending" },
+        orderBy: { createdAt: "asc" },
+      });
+      if (!pending)
+        return tx.spaceInvitation.create({
           data: {
             id: randomUUID(),
             spaceId: input.spaceId,
@@ -398,6 +395,16 @@ export async function createInvitations(
             inviterId: input.actorId,
           },
         });
+      const kept = ROLE_ORDER[spaceRoleOf(pending.role)] >= ROLE_ORDER[input.role];
+      return tx.spaceInvitation.update({
+        where: { id: pending.id },
+        data: {
+          role: kept ? pending.role : input.role,
+          roleIds: [...new Set([...pending.roleIds, ...roleIds])],
+          expiresAt,
+        },
+      });
+    });
     invitations.push(invitationRow(row));
   }
   return { invitations, alreadyMembers };
@@ -447,18 +454,54 @@ export async function cancelInvitation(
   await prisma.spaceInvitation.update({ where: { id: row.id }, data: { status: "cancelled" } });
 }
 
-/** What an invited person may see with the link: the workspace name, the inviter, the address. */
+export type InvitationPreview =
+  | {
+      state: "pending";
+      spaceName: string;
+      inviterName: string;
+      email: string;
+      role: SpaceRole;
+      /** Names of the custom roles it gives, besides the base role. */
+      roleNames: string[];
+      /** Whether the address already has an account, so the page says sign in or make one. */
+      hasAccount: boolean;
+    }
+  | { state: "accepted" }
+  | { state: "expired"; inviterName: string };
+
+/**
+ * What the holder of an invitation link may see: what they get, and what became of a dead one. A
+ * cancelled invitation reads like one that never existed.
+ */
 export async function previewInvitation(
   prisma: PrismaClient,
   id: string,
   now = new Date(),
-): Promise<{ spaceName: string; inviterName: string; email: string } | null> {
+): Promise<InvitationPreview | null> {
   const row = await prisma.spaceInvitation.findUnique({
     where: { id },
     include: { space: { select: { name: true } }, inviter: { select: { name: true } } },
   });
-  if (!row || row.status !== "pending" || row.expiresAt <= now) return null;
-  return { spaceName: row.space.name, inviterName: row.inviter.name, email: row.email };
+  if (!row || row.status === "cancelled") return null;
+  if (row.status === "accepted") return { state: "accepted" };
+  if (row.expiresAt <= now) return { state: "expired", inviterName: row.inviter.name };
+  const [roles, account] = await Promise.all([
+    prisma.spaceRole.findMany({
+      where: { spaceId: row.spaceId, id: { in: row.roleIds } },
+      orderBy: { position: "asc" },
+      select: { name: true },
+    }),
+    prisma.user.count({ where: { email: { equals: row.email, mode: "insensitive" } } }),
+  ]);
+  return {
+    state: "pending",
+    spaceName: row.space.name,
+    inviterName: row.inviter.name,
+    email: row.email,
+    role: spaceRoleOf(row.role),
+    roleNames: roles.map((role) => role.name),
+    hasAccount: account > 0,
+  };
 }
 
 export interface InvitedUser {
@@ -472,19 +515,30 @@ function sameAddress(left: string, right: string): boolean {
 }
 
 /**
- * Accepts one invitation for the signed-in person. The address must be theirs and confirmed;
- * `trustUnverified` is for deployments that cannot send mail and so cannot confirm anyone.
+ * Accepts one invitation for the signed-in person. The address must be theirs, and proven: a
+ * confirmed account, or `mailProof` (the emailed link's own proof, checked by the caller).
+ * `trustUnverified` is for deployments that cannot send mail and so cannot confirm anyone; there
+ * the link itself, handed over by the inviter, is the proof. Otherwise an account made with
+ * someone else's address could join their space. `"unverified"` says only that the address still
+ * needs confirming; it is returned just to the account that holds the invited address.
  */
 export async function acceptInvitation(
   prisma: PrismaClient,
-  input: { id: string; user: InvitedUser; trustUnverified?: boolean; now?: Date },
-): Promise<{ spaceId: string; organizationId: string } | null> {
+  input: {
+    id: string;
+    user: InvitedUser;
+    trustUnverified?: boolean;
+    mailProof?: boolean;
+    now?: Date;
+  },
+): Promise<{ spaceId: string; organizationId: string } | "unverified" | null> {
   const now = input.now ?? new Date();
   return serializable(prisma, async (tx) => {
     const row = await tx.spaceInvitation.findUnique({ where: { id: input.id } });
     if (!row || row.status !== "pending" || row.expiresAt <= now) return null;
     if (!sameAddress(row.email, input.user.email)) return null;
-    if (!input.user.emailVerified && !input.trustUnverified) return null;
+    if (!input.user.emailVerified && !input.trustUnverified && !input.mailProof)
+      return "unverified";
     const { organizationId } = await addMember(tx, {
       spaceId: row.spaceId,
       userId: input.user.id,
@@ -512,8 +566,9 @@ export async function hasPendingInvitation(
 }
 
 /**
- * Signing in with an invited address joins the invited space(s). Returns what was joined; none
- * means the caller should provision a personal space as before.
+ * Signing in with an invited address joins the invited space(s), but only for a confirmed address:
+ * anyone can sign up with an address that is not theirs. Returns what was joined; none means the
+ * caller should provision a personal space as before.
  */
 export async function acceptInvitationsForUser(
   prisma: PrismaClient,
@@ -529,33 +584,48 @@ export async function acceptInvitationsForUser(
   const joined: Array<{ spaceId: string; organizationId: string }> = [];
   for (const { id } of rows) {
     const result = await acceptInvitation(prisma, { id, user, ...options });
-    if (result) joined.push(result);
+    if (result && result !== "unverified") joined.push(result);
   }
   return joined;
 }
 
-/** The link people use to ask to join. Turning it off ends it; a new one is a different link. */
+const linkExpiry = (link: { createdAt: Date; expiresAt: Date | null }): Date =>
+  link.expiresAt ?? new Date(link.createdAt.getTime() + INVITE_LINK_DAYS * DAY_MS);
+
+/** The link people use to ask to join, while it works. Turning it off or letting it expire ends it. */
 export async function activeInviteLink(
   prisma: PrismaClient,
-  input: { spaceId: string; actorId: string },
+  input: { spaceId: string; actorId: string; now?: Date },
 ): Promise<{ id: string } | null> {
   await requireKey(prisma, input.spaceId, input.actorId, "invite_people");
-  return prisma.spaceInviteLink.findFirst({
+  const now = input.now ?? new Date();
+  const link = await prisma.spaceInviteLink.findFirst({
     where: { spaceId: input.spaceId, revokedAt: null },
     orderBy: { createdAt: "desc" },
-    select: { id: true },
+    select: { id: true, createdAt: true, expiresAt: true },
   });
+  return link && linkExpiry(link) > now ? { id: link.id } : null;
 }
 
 export async function createInviteLink(
   prisma: PrismaClient,
-  input: { spaceId: string; actorId: string },
+  input: { spaceId: string; actorId: string; now?: Date },
 ): Promise<{ id: string }> {
   await requireKey(prisma, input.spaceId, input.actorId, "invite_people");
   const existing = await activeInviteLink(prisma, input);
   if (existing) return existing;
+  const now = input.now ?? new Date();
+  await prisma.spaceInviteLink.updateMany({
+    where: { spaceId: input.spaceId, revokedAt: null },
+    data: { revokedAt: now },
+  });
   return prisma.spaceInviteLink.create({
-    data: { id: randomUUID(), spaceId: input.spaceId, createdById: input.actorId },
+    data: {
+      id: randomUUID(),
+      spaceId: input.spaceId,
+      createdById: input.actorId,
+      expiresAt: new Date(now.getTime() + INVITE_LINK_DAYS * DAY_MS),
+    },
     select: { id: true },
   });
 }
@@ -580,10 +650,10 @@ export type JoinOutcome = "requested" | "member";
  */
 export async function requestToJoin(
   prisma: PrismaClient,
-  input: { linkId: string; userId: string },
+  input: { linkId: string; userId: string; now?: Date },
 ): Promise<JoinOutcome> {
   const link = await prisma.spaceInviteLink.findUnique({ where: { id: input.linkId } });
-  if (!link || link.revokedAt) return "requested";
+  if (!link || link.revokedAt || linkExpiry(link) <= (input.now ?? new Date())) return "requested";
   const spaceId = link.spaceId;
   if (await roleIn(prisma, spaceId, input.userId)) return "member";
   const existing = await prisma.spaceJoinRequest.findUnique({
@@ -609,7 +679,7 @@ export async function listJoinRequests(
   prisma: PrismaClient,
   input: { spaceId: string; actorId: string },
 ) {
-  await requireKey(prisma, input.spaceId, input.actorId, "manage_members");
+  await requireInviter(prisma, input.spaceId, input.actorId);
   const rows = await prisma.spaceJoinRequest.findMany({
     where: { spaceId: input.spaceId, status: "pending" },
     orderBy: { createdAt: "asc" },
@@ -629,7 +699,7 @@ export async function answerJoinRequest(
   input: { spaceId: string; actorId: string; id: string; approve: boolean; reason?: string },
 ): Promise<{ organizationId: string; added: boolean } | null> {
   return serializable(prisma, async (tx) => {
-    await requireKey(tx, input.spaceId, input.actorId, "manage_members");
+    await requireInviter(tx, input.spaceId, input.actorId);
     const request = await tx.spaceJoinRequest.findFirst({
       where: { id: input.id, spaceId: input.spaceId, status: "pending" },
     });

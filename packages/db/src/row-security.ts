@@ -164,6 +164,8 @@ export const ROW_SECURITY_MODELS: ReadonlySet<string> = new Set([
   "SpaceInvitation",
   "SpaceInviteLink",
   "SpaceJoinRequest",
+  "ChatGroupPerson",
+  "DirectThread",
   "WikiSettings",
   "WikiSource",
   "WikiChange",

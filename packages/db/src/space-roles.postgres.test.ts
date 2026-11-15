@@ -328,7 +328,12 @@ describePostgres("roles that add up (PostgreSQL)", () => {
         addresses: [`x3-${suffix}@example.test`],
       }),
     ];
-    for (const attempt of attempts) expect(await code(attempt)).toBe("forbidden");
+    // Awaited together: a rejection nobody has caught yet is reported as unhandled and fails the run.
+    expect(await Promise.all(attempts.map((attempt) => code(attempt)))).toEqual([
+      "forbidden",
+      "forbidden",
+      "forbidden",
+    ]);
     const user = `new-${suffix}`;
     await prisma.user.create({
       data: { id: user, name: "new", email: `new-${suffix}@example.test`, emailVerified: true },

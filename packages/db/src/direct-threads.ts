@@ -1,3 +1,4 @@
+import { personName } from "@corvo/core";
 import type { PrismaClient } from "./client.js";
 import { IsolationError } from "./scope.js";
 
@@ -97,7 +98,7 @@ export async function listDirectPeople(
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       select: {
         userId: true,
-        member: { select: { user: { select: { name: true, image: true } } } },
+        member: { select: { user: { select: { name: true, email: true, image: true } } } },
       },
     }),
     prisma.directThread.findMany({
@@ -125,7 +126,7 @@ export async function listDirectPeople(
     const threadId = byPartner.get(row.userId) ?? null;
     return {
       userId: row.userId,
-      name: row.member.user.name,
+      name: personName(row.member.user.name, row.member.user.email),
       image: row.member.user.image,
       threadId,
       unread: threadId !== null && unread.has(threadId),

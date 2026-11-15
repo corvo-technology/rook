@@ -97,7 +97,7 @@ describe("the people list", () => {
   it("lists the other members with their own conversation and unread", async () => {
     const member = (userId: string, name: string) => ({
       userId,
-      member: { user: { name, image: null } },
+      member: { user: { name, email: `${userId}@example.test`, image: null } },
     });
     const readRows = vi.fn(async () => [{ threadId: "t-ab", unread: true }]);
     const db = {

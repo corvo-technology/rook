@@ -17,6 +17,7 @@ import {
 } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import { ORPCError } from "@orpc/server";
+import { accessRevocations } from "../access-revocations.js";
 import { getSpaceMembership, requireSpacePermission } from "../space-owner.js";
 import { listPendingApprovals } from "../team-chat.js";
 import { loadMessagePage, withAuthor } from "../thread-message-pages.js";
@@ -194,6 +195,9 @@ export function teamChatRoutes(ctx: RouterContext) {
           Promise<{ name: string; image: string | null } | null>
         >();
         const follow = deps.events.follow(input.threadId, input.cursor, context.signal);
+        const revoked = accessRevocations
+          .watch(actor.spaceId, actor.userId, context.signal)
+          .then(() => "revoked" as const);
         let pending: Promise<IteratorResult<ProductEvent>> | undefined;
         // Auth ran when the stream opened. Check it, and that the person is still one of the two,
         // before more is delivered, so a removed or signed-out person stops within the interval.
@@ -212,10 +216,13 @@ export function teamChatRoutes(ctx: RouterContext) {
             let timer: ReturnType<typeof setTimeout> | undefined;
             const next = await Promise.race([
               pending,
+              revoked,
               new Promise<"silent">((resolve) => {
                 timer = setTimeout(() => resolve("silent"), HEARTBEAT_MS);
               }),
             ]).finally(() => clearTimeout(timer));
+            // Removed from the space: end the stream now, not at the next periodic re-check.
+            if (next === "revoked") throw new ORPCError("UNAUTHORIZED");
             if (next === "silent") {
               await assertStillAuthorized();
               yield {

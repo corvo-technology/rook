@@ -1,4 +1,5 @@
 import type { Bot, ChannelPeople, CustomSpaceRole, Group, SpaceMember } from "@corvo/contracts";
+import { personName } from "@corvo/core";
 import {
   BotAvatar,
   Button,
@@ -255,7 +256,10 @@ export function ChannelMembers({
   }
   return (
     <ChannelMembersPanel
-      members={membersQuery.data}
+      members={membersQuery.data.map((member) => ({
+        ...member,
+        name: personName(member.name, member.email),
+      }))}
       roles={rolesQuery.data.roles}
       people={peopleQuery.data}
       agents={agents}

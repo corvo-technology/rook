@@ -13,6 +13,7 @@ const missions = vi.hoisted(() => ({
 vi.mock("@corvo/db", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@corvo/db")>()),
   ...missions,
+  spaceCreationPolicy: async () => ({ canCreateSpace: true, membersCanCreateSpaces: null }),
 }));
 
 import { withModelRoles } from "../../../packages/adapters/src/testing/model-roles.js";

@@ -705,6 +705,7 @@ export const ES_MESSAGES: Record<string, string> = {
   "New password": "Nueva contraseña",
   "Passwords do not match": "Las contraseñas no coinciden",
   "Allow once": "Permitir una vez",
+  "Hold to approve": "Mantén pulsado para aprobar",
   "Review before {summary}": "Revisa antes: {summary}",
   "{name} is waiting for your approval.": "{name} espera tu aprobación.",
   "Always allow": "Permitir siempre",

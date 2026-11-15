@@ -152,7 +152,7 @@ import {
   WorkflowSchema,
   WorkspaceModelSchema,
 } from "./domain.js";
-import { ComputerCommandSchema, ProductEventSchema } from "./events.js";
+import { ComputerCommandSchema, ProductEventSchema, ThreadMessageSchema } from "./events.js";
 import { Id, IsoDate } from "./ids.js";
 import {
   IntegrationProviderConfigSchema,
@@ -336,6 +336,10 @@ export const appContract = {
     create: oc
       .input(z.object({ name: spaceName, locale: z.enum(AGENT_CATALOG_LOCALES).default("en") }))
       .output(SpaceSchema),
+    /** The organization's owner decides whether its other members may create spaces. */
+    setMembersCanCreate: oc
+      .input(z.object({ allowed: z.boolean() }))
+      .output(z.object({ allowed: z.boolean() })),
     rename: oc
       .input(z.object({ spaceId: Id, name: spaceName }))
       .output(z.object({ id: Id, name: z.string() })),
@@ -690,6 +694,12 @@ export const appContract = {
         }),
       )
       .output(z.object({ ok: z.literal(true), runIds: z.array(Id).optional() })),
+    /** Pins a message to the channel, or takes it off again. */
+    pin: oc
+      .input(threadTarget.safeExtend({ messageId: Id, pinned: z.boolean() }))
+      .output(z.object({ ok: z.literal(true), pinnedAt: z.string().nullable() })),
+    /** The messages pinned in this thread, the newest pin first. */
+    pinned: oc.input(threadTarget).output(z.object({ messages: z.array(ThreadMessageSchema) })),
     stop: oc.input(threadTarget).output(z.object({ ok: z.literal(true) })),
     /** Runs a failed chat run's message again. It posts no message of its own. */
     retry: oc.input(threadTarget.safeExtend({ runId: Id })).output(z.object({ runId: Id })),
@@ -1522,7 +1532,15 @@ export const appContract = {
     unregisterPush: oc.output(z.object({ ok: z.literal(true) })),
   },
   search: {
-    query: oc.input(z.object({ q: z.string().max(200) })).output(SearchQueryOutputSchema),
+    query: oc
+      .input(
+        z.object({
+          q: z.string().max(200),
+          /** Only the messages of this one chat or channel. */
+          within: threadTarget.optional(),
+        }),
+      )
+      .output(SearchQueryOutputSchema),
   },
   links: {
     /**

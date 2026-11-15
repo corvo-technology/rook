@@ -516,6 +516,10 @@ msgstr "{tokens} tokens"
 msgid "{toolCount, plural, one {# tool} other {# tools}}"
 msgstr "{toolCount, plural, one {# ferramenta} other {# ferramentas}}"
 
+#: src/components/ToolActivityDisclosure.tsx
+msgid "{toolCount, plural, one {Used # tool} other {Used # tools}}"
+msgstr "{toolCount, plural, one {Usou # ferramenta} other {Usou # ferramentas}}"
+
 #: src/pages/Usage.tsx
 msgid "{used} of {limit}"
 msgstr "{used} de {limit}"
@@ -1344,6 +1348,7 @@ msgstr "bot"
 #: src/pages/Shell.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
+#: src/pages/shell/channel-find.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Bot"
 msgstr "Bot"
@@ -2451,6 +2456,10 @@ msgstr "Não foi possível sair. Tente novamente."
 msgid "Could not open billing"
 msgstr "Não foi possível abrir a cobrança"
 
+#: src/pages/shell/use-composer-actions.ts
+msgid "Could not pin message"
+msgstr "Não foi possível fixar a mensagem"
+
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Could not play a test clip"
 msgstr "Não foi possível reproduzir um clipe de teste"
@@ -2538,6 +2547,7 @@ msgstr "Não foi possível executar a rotina"
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersSettings.tsx
+#: src/pages/MembersSettingsPanel.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/chat-model-switcher.tsx
 #: src/pages/shell/dialogs.tsx
@@ -2601,6 +2611,10 @@ msgstr "Não foi possível salvar o nome"
 msgid "Could not save this choice"
 msgstr "Não foi possível salvar esta opção"
 
+#: src/pages/shell/channel-find.tsx
+msgid "Could not search"
+msgstr "Não foi possível pesquisar"
+
 #: src/pages/Store.tsx
 msgid "Could not search catalog"
 msgstr "Não foi possível pesquisar o catálogo"
@@ -2658,6 +2672,10 @@ msgstr "Não foi possível desativar"
 #: src/pages/shell/agent-import-undo.tsx
 msgid "Could not undo the import"
 msgstr "Não foi possível desfazer a importação"
+
+#: src/pages/shell/use-composer-actions.ts
+msgid "Could not unpin message"
+msgstr "Não foi possível desafixar a mensagem"
 
 #: src/pages/ScratchpadSection.tsx
 #: src/pages/WhatsAppNumbers.tsx
@@ -2982,11 +3000,6 @@ msgstr "Excluindo…"
 msgid "Deletion code"
 msgstr "Código de exclusão"
 
-#: src/components/AskCard.tsx
-msgid "Denied"
-msgstr "Negado"
-
-#: src/components/AskCard.tsx
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Deny"
 msgstr "Negar"
@@ -3137,7 +3150,6 @@ msgid "Don’t have an account?"
 msgstr "Não tem uma conta?"
 
 #: src/components/PlanCard.tsx
-#: src/components/ToolActivityDisclosure.tsx
 #: src/lib/ticket-status.ts
 #: src/pages/ActivityList.tsx
 #: src/pages/RoutineCard.tsx
@@ -3724,6 +3736,10 @@ msgstr "Alto"
 #: src/pages/WikiBrowser.tsx
 msgid "History"
 msgstr "Histórico"
+
+#: src/components/AskCard.tsx
+msgid "Hold to approve"
+msgstr "Segure para aprovar"
 
 #: src/components/composer/HoldToTalk.tsx
 msgid "Hold to talk"
@@ -4420,6 +4436,10 @@ msgstr "Membros"
 msgid "Members ({0})"
 msgstr "Membros ({0})"
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Members can create spaces"
+msgstr "Membros podem criar espaços"
+
 #: src/components/AppRail.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/Settings.tsx
@@ -4469,6 +4489,10 @@ msgstr "Mensagem"
 #: src/pages/shell/composer.tsx
 msgid "Message {activeName}"
 msgstr "Mensagem {activeName}"
+
+#: src/pages/shell/composer.tsx
+msgid "Message {activeName} · use @ to call an agent"
+msgstr "Mensagem {activeName} · use @ para chamar um agente"
 
 #: src/pages/shell/composer.tsx
 msgid "Message composer"
@@ -4881,6 +4905,10 @@ msgstr "Sem limite"
 msgid "No longer active"
 msgstr "Não está mais ativo"
 
+#: src/pages/shell/channel-find.tsx
+msgid "No matches"
+msgstr "Nada encontrado"
+
 #: src/pages/Artifacts.tsx
 msgid "No matching artifacts on this page."
 msgstr "Nenhum artefato correspondente nesta página."
@@ -5001,6 +5029,7 @@ msgstr "Fora do catálogo do Rook"
 msgid "Not in the plugin catalog"
 msgstr "Fora do catálogo de plugins"
 
+#: src/components/AskCard.tsx
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/onboarding/ComputerStep.tsx
 #: src/pages/shell/message-cards.tsx
@@ -5406,12 +5435,18 @@ msgid "Picked up {ref}."
 msgstr "{ref} pego."
 
 #: src/pages/BotContextMenu.tsx
+#: src/pages/shell/message-hover-actions.tsx
 msgid "Pin"
 msgstr "Fixar"
 
 #: src/pages/Shell.tsx
+#: src/pages/shell/message-view.tsx
 msgid "Pinned"
 msgstr "Fixados"
+
+#: src/pages/shell/channel-find.tsx
+msgid "Pinned messages"
+msgstr "Mensagens fixadas"
 
 #: src/pages/LocalSpeechSection.tsx
 msgid "Play"
@@ -6018,6 +6053,11 @@ msgstr "Encaminhar trabalho para squads"
 msgid "Routine"
 msgstr "Rotina"
 
+#. placeholder {0}: message.routineName
+#: src/pages/shell/message-view.tsx
+msgid "Routine “{0}”"
+msgstr "Rotina «{0}»"
+
 #: src/components/AppRail.tsx
 #: src/components/SidebarFooter.tsx
 #: src/pages/PartnerTemplateEditor.tsx
@@ -6210,6 +6250,7 @@ msgstr "Tela não conectada"
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/model-settings/role-model-picker.tsx
 #: src/pages/shell/bot-picker.tsx
+#: src/pages/shell/channel-find.tsx
 #: src/pages/shell/chat-model-picker.tsx
 #: src/pages/shell/command-palette.tsx
 #: src/pages/shell/shell-sidebar.tsx
@@ -7307,6 +7348,8 @@ msgid "Unmute"
 msgstr "Reativar som"
 
 #: src/pages/BotContextMenu.tsx
+#: src/pages/shell/channel-find.tsx
+#: src/pages/shell/message-hover-actions.tsx
 msgid "Unpin"
 msgstr "Desafixar"
 
@@ -7768,6 +7811,7 @@ msgstr "Ontem"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Shell.tsx
+#: src/pages/shell/channel-find.tsx
 #: src/pages/shell/message-view.tsx
 #: src/pages/shell/shell-sidebar.tsx
 #: src/pages/shell/transcript.tsx

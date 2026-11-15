@@ -17,6 +17,11 @@ import type { RouterDeps } from "./router.js";
 import { createRouter } from "./router.js";
 import { buildLocalSetupReport } from "./routes/local-setup.js";
 
+vi.mock("@corvo/db", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@corvo/db")>()),
+  spaceCreationPolicy: async () => ({ canCreateSpace: true, membersCanCreateSpaces: null }),
+}));
+
 // The model catalog is built once per process, so the operator's local model is set before it.
 vi.hoisted(() => {
   process.env.CORVO_LOCAL_MODELS = "fake-local";

@@ -32,7 +32,8 @@ export function SpaceSwitcher({
   spaces: readonly SwitcherSpace[];
   currentSpaceId: string | null;
   onSelect: (spaceId: string, path: string) => void;
-  onCreate: () => void;
+  /** Absent when this person may not create spaces. */
+  onCreate?: () => void;
 }) {
   const { t } = useLingui();
   const current = spaces.find((space) => space.id === currentSpaceId) ?? spaces[0];
@@ -92,11 +93,19 @@ export function SpaceSwitcher({
               ) : null}
             </DropdownMenuItem>
           ))}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem data-testid="space-switcher-new" onClick={onCreate} className="gap-2">
-            <Plus size={14} strokeWidth={1.8} aria-hidden="true" />
-            <Trans>New space</Trans>
-          </DropdownMenuItem>
+          {onCreate ? (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                data-testid="space-switcher-new"
+                onClick={onCreate}
+                className="gap-2"
+              >
+                <Plus size={14} strokeWidth={1.8} aria-hidden="true" />
+                <Trans>New space</Trans>
+              </DropdownMenuItem>
+            </>
+          ) : null}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

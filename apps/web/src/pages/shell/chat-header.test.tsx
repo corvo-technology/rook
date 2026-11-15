@@ -16,6 +16,7 @@ vi.mock("@corvo/ui-web", () => ({
 vi.mock("../../components/IconTooltip", () => ({
   IconTooltip: ({ children }: { children: ReactNode }) => children,
 }));
+vi.mock("./channel-find", () => ({ ChannelFind: () => null, pinSignature: () => "" }));
 vi.mock("./chat-model-switcher", () => ({ ChatModelSwitcher: () => null }));
 vi.mock("./context-meter", () => ({ ContextMeter: () => null }));
 
@@ -52,6 +53,8 @@ async function render(over: Partial<ComponentProps<typeof ChatHeader>> = {}) {
         onToggleComputer={vi.fn()}
         onChangeModel={vi.fn()}
         onOpenSquad={onOpenSquad}
+        onJumpToMessage={vi.fn()}
+        memberName={() => undefined}
         {...over}
       />,
     ),

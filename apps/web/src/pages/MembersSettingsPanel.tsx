@@ -13,15 +13,17 @@ import {
   Button,
   InlineConfirm,
   Input,
+  Label,
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Switch,
 } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { SettingsGroup, SettingsRow } from "../components/SettingsRows";
 import { rpc, rpcForSpace } from "../lib/rpc";
 
@@ -98,7 +100,8 @@ function WorkspacePicker({
   spaces: Space[];
   value: string;
   onPick: (spaceId: string) => void;
-  onCreate: (name: string) => Promise<void>;
+  /** Absent when this person may not create workspaces. */
+  onCreate?: (name: string) => Promise<void>;
 }) {
   const { t } = useLingui();
   const [creating, setCreating] = useState(false);
@@ -106,14 +109,14 @@ function WorkspacePicker({
   const [busy, setBusy] = useState(false);
   const items = [
     ...spaces.map((space) => ({ value: space.id, label: space.name })),
-    { value: NEW_WORKSPACE, label: t`New workspace` },
+    ...(onCreate ? [{ value: NEW_WORKSPACE, label: t`New workspace` }] : []),
   ];
 
   async function create() {
     if (busy || !name.trim()) return;
     setBusy(true);
     try {
-      await onCreate(name.trim());
+      await onCreate?.(name.trim());
       setName("");
       setCreating(false);
     } catch {
@@ -185,13 +188,21 @@ export function MembersSettingsPanel({
   spaces,
   currentSpaceId,
   onCreated,
+  canCreateSpace = true,
+  membersCanCreateSpaces = null,
+  onMembersCanCreateSpaces,
 }: {
   userId: string;
   spaces: Space[];
   currentSpaceId: string | null;
   onCreated: (space: Space) => void;
+  canCreateSpace?: boolean;
+  /** The owner's switch; null for anyone who is not the owner. */
+  membersCanCreateSpaces?: boolean | null;
+  onMembersCanCreateSpaces?: (allowed: boolean) => void;
 }) {
   const { t, i18n } = useLingui();
+  const membersCanCreateId = useId();
   const invitable = spaces.filter((space) => space.canInvite === true);
   const [pickedId, setPickedId] = useState<string | null>(null);
   const picked =
@@ -311,6 +322,16 @@ export function MembersSettingsPanel({
     }
   }
 
+  async function allowMembersToCreate(allowed: boolean) {
+    setError(null);
+    try {
+      await rpc.spaces.setMembersCanCreate({ allowed });
+      onMembersCanCreateSpaces?.(allowed);
+    } catch (err) {
+      setError(message(err, t`Could not save`));
+    }
+  }
+
   const copy = (text: string) => void navigator.clipboard?.writeText(text).catch(() => undefined);
 
   return (
@@ -324,7 +345,7 @@ export function MembersSettingsPanel({
           spaces={invitable}
           value={picked.id}
           onPick={setPickedId}
-          onCreate={createWorkspace}
+          onCreate={canCreateSpace ? createWorkspace : undefined}
         />
       ) : null}
       <SettingsGroup>
@@ -627,6 +648,28 @@ export function MembersSettingsPanel({
                   <Trans>Create</Trans>
                 </Button>
               )
+            }
+          />
+        </SettingsGroup>
+      ) : null}
+
+      {membersCanCreateSpaces !== null &&
+      picked?.id === currentSpaceId &&
+      (members?.length ?? 0) > 1 ? (
+        <SettingsGroup>
+          <SettingsRow
+            label={
+              <Label htmlFor={membersCanCreateId} className="text-[14px] font-normal">
+                <Trans>Members can create spaces</Trans>
+              </Label>
+            }
+            control={
+              <Switch
+                id={membersCanCreateId}
+                data-testid="members-can-create-spaces"
+                checked={membersCanCreateSpaces}
+                onCheckedChange={(checked) => void allowMembersToCreate(checked)}
+              />
             }
           />
         </SettingsGroup>

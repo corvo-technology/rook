@@ -17,8 +17,9 @@ const group = () => ({
 });
 const clients = vi.hoisted(() => new Map<string, ReturnType<typeof group>>());
 const create = vi.hoisted(() => vi.fn());
+const setMembersCanCreate = vi.hoisted(() => vi.fn());
 vi.mock("../lib/rpc", () => ({
-  rpc: { spaces: { create } },
+  rpc: { spaces: { create, setMembersCanCreate } },
   rpcForSpace: (id: string) => {
     const client = clientFor(id);
     if (!rpcClients.has(client)) rpcClients.set(client, { spaces: client });
@@ -112,6 +113,24 @@ vi.mock("@corvo/ui-web", () => ({
     </button>
   ),
   SelectValue: () => null,
+  // biome-ignore lint/a11y/noLabelWithoutControl: test double; the real Label gets its htmlFor
+  Label: (props: ComponentProps<"label">) => <label {...props} />,
+  Switch: ({
+    checked,
+    onCheckedChange,
+    ...props
+  }: Omit<ComponentProps<"button">, "onChange"> & {
+    checked: boolean;
+    onCheckedChange: (checked: boolean) => void;
+  }) => (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onCheckedChange(!checked)}
+      {...props}
+    />
+  ),
 }));
 
 let host: HTMLDivElement;
@@ -142,8 +161,17 @@ afterEach(() => {
 const space = (id: string, name: string, canInvite: boolean) =>
   ({ id, name, canInvite }) as unknown as Space;
 const onCreated = vi.fn();
+const onPolicy = vi.fn();
 
-async function render(userId: string, options: { spaces?: Space[]; current?: string } = {}) {
+async function render(
+  userId: string,
+  options: {
+    spaces?: Space[];
+    current?: string;
+    canCreateSpace?: boolean;
+    membersCanCreateSpaces?: boolean | null;
+  } = {},
+) {
   currentUser = userId;
   await act(async () => {
     root.render(
@@ -152,6 +180,9 @@ async function render(userId: string, options: { spaces?: Space[]; current?: str
         spaces={options.spaces ?? [space("s1", "Home", true)]}
         currentSpaceId={options.current ?? "s1"}
         onCreated={onCreated}
+        canCreateSpace={options.canCreateSpace}
+        membersCanCreateSpaces={options.membersCanCreateSpaces}
+        onMembersCanCreateSpaces={onPolicy}
       />,
     );
   });
@@ -289,6 +320,32 @@ it("shows each person's custom roles and lets an invitation carry one", async ()
     role: "member",
     roleIds: ["r-ops"],
   });
+});
+
+it("lets only the owner switch whether members create spaces", async () => {
+  spaces.members.list.mockResolvedValue([person("ana", "owner"), person("bia", "member")]);
+  setMembersCanCreate.mockResolvedValue({ allowed: true });
+  await render("ana", { membersCanCreateSpaces: false });
+  await vi.waitFor(() =>
+    expect(host.querySelector('[data-testid="members-can-create-spaces"]')).not.toBeNull(),
+  );
+  const toggle = host.querySelector('[data-testid="members-can-create-spaces"]');
+  expect(toggle?.getAttribute("aria-checked")).toBe("false");
+  await click(toggle);
+  expect(setMembersCanCreate).toHaveBeenCalledWith({ allowed: true });
+  expect(onPolicy).toHaveBeenCalledWith(true);
+
+  await render("bia", { membersCanCreateSpaces: null });
+  expect(host.querySelector('[data-testid="members-can-create-spaces"]')).toBeNull();
+});
+
+it("offers a new workspace only to someone who may create one", async () => {
+  spaces.members.list.mockResolvedValue([person("ana", "owner")]);
+  await render("ana", { spaces: two, canCreateSpace: false });
+  const options = [...host.querySelectorAll("[data-pick]")].map((node) =>
+    node.getAttribute("data-pick"),
+  );
+  expect(options).not.toContain("new-workspace");
 });
 
 it("creates a workspace inline and picks it", async () => {

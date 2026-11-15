@@ -2,6 +2,7 @@ import { ChatMarkdown } from "@corvo/chat-ui/web";
 import type { ThreadMessage } from "@corvo/contracts";
 import { BOT_INSTRUCTIONS_MAX_LENGTH, commandVariableName } from "@corvo/contracts";
 import {
+  asksHoldToApprove,
   isApprovalAskBlock,
   isSecretAskBlock,
   resolveAskChoice,
@@ -16,6 +17,7 @@ import { useEffect, useState } from "react";
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
 import { BuiCard } from "./ai/primitives";
+import { HoldToApprove } from "./HoldToApprove";
 import { OptionRow, optionLetter } from "./OptionRow";
 
 export type AskBlock = Extract<ThreadMessage["blocks"][number], { kind: "ask" }>;
@@ -38,7 +40,7 @@ function formatAnsweredState(
   if (proposal && answer === "deny") return t`Dismissed`;
   if (answer === "allow") return t`Allowed once`;
   if (answer === "always") return t`Always allowed`;
-  if (answer === "deny") return t`Denied`;
+  if (answer === "deny") return t`Not now`;
   return t`Answered: ${answer}`;
 }
 
@@ -56,7 +58,7 @@ function approvalActionLabel(
   if (proposal && id === "deny") return t`Dismiss`;
   if (id === "allow") return t`Allow once`;
   if (id === "always") return site ? t`Always allow ${site}` : t`Always allow this tool`;
-  if (id === "deny") return t`Deny`;
+  if (id === "deny") return t`Not now`;
   return fallback;
 }
 
@@ -383,40 +385,52 @@ export function AskCard({
         </div>
       ) : ownerOnly ? null : displayActions?.length ? (
         <div className="mt-3.5 flex flex-wrap gap-2">
-          {displayActions.map((action) => (
-            <Button
-              key={action.id}
-              variant={action.id === "allow" ? "brand" : "outline"}
-              // Wraps long site names like the other cards' buttons.
-              className="h-auto min-h-9 min-w-0 whitespace-normal rounded-full px-5 py-1.5 text-start"
-              disabled={submitting}
-              onClick={() =>
-                action.id === "edit" && block.instructionUpdate
-                  ? setEditing(true)
-                  : void submitAnswer(action.id)
-              }
-            >
-              {pendingAction === action.id ? (
-                <Trans>Sending…</Trans>
-              ) : action.id === "edit" ? (
-                action.label
-              ) : block.instructionUpdate ? (
-                action.id === "allow" ? (
-                  t`Apply`
+          {displayActions.map((action) =>
+            asksHoldToApprove(block, action) ? (
+              <HoldToApprove
+                key={action.id}
+                label={t`Hold to approve`}
+                confirmLabel={t`Allow once`}
+                busy={pendingAction === action.id ? t`Sending…` : undefined}
+                disabled={submitting}
+                className="h-auto min-h-9 min-w-0 whitespace-normal rounded-full px-5 py-1.5 text-start"
+                onApprove={() => void submitAnswer(action.id)}
+              />
+            ) : (
+              <Button
+                key={action.id}
+                variant={action.id === "allow" ? "brand" : "outline"}
+                // Wraps long site names like the other cards' buttons.
+                className="h-auto min-h-9 min-w-0 whitespace-normal rounded-full px-5 py-1.5 text-start"
+                disabled={submitting}
+                onClick={() =>
+                  action.id === "edit" && block.instructionUpdate
+                    ? setEditing(true)
+                    : void submitAnswer(action.id)
+                }
+              >
+                {pendingAction === action.id ? (
+                  <Trans>Sending…</Trans>
+                ) : action.id === "edit" ? (
+                  action.label
+                ) : block.instructionUpdate ? (
+                  action.id === "allow" ? (
+                    t`Apply`
+                  ) : (
+                    t`Dismiss`
+                  )
                 ) : (
-                  t`Dismiss`
-                )
-              ) : (
-                approvalActionLabel(
-                  action.id,
-                  action.label,
-                  action.outcome,
-                  block.site,
-                  block.proposal,
-                )
-              )}
-            </Button>
-          ))}
+                  approvalActionLabel(
+                    action.id,
+                    action.label,
+                    action.outcome,
+                    block.site,
+                    block.proposal,
+                  )
+                )}
+              </Button>
+            ),
+          )}
         </div>
       ) : secretInput ? (
         <form

@@ -59,7 +59,7 @@ export async function loadMessagePage(
       const messages = includePeerRuns ? rows : await withoutPeerRunMessages(prisma, rows);
       return {
         threadId,
-        messages: messages.map(toThreadMessage),
+        messages: await withRoutineNames(prisma, messages),
         olderCursor: hasOlder ? (first?.seq ?? null) : null,
         coveredThroughSeq,
       };
@@ -88,7 +88,7 @@ export async function loadMessagePage(
     if (hasSubstantive || includePeerReceipts || !hasOlder || includePeerRuns) {
       return {
         threadId,
-        messages: visibleRows.map(toThreadMessage),
+        messages: await withRoutineNames(prisma, visibleRows),
         olderCursor: hasOlder ? (pageRows[0]?.seq ?? null) : null,
       };
     }
@@ -96,6 +96,24 @@ export async function loadMessagePage(
     // long peer-only histories make this path hot.
     cursor = pageRows[0]?.seq;
   }
+}
+
+/** The messages as the thread shows them, each written by a routine's run naming that routine. */
+export async function withRoutineNames(
+  prisma: MessageDb,
+  rows: Parameters<typeof toThreadMessage>[0][],
+): Promise<ThreadMessage[]> {
+  const runIds = [...new Set(rows.flatMap((row) => (row.runId ? [row.runId] : [])))];
+  const runs = runIds.length
+    ? await prisma.run.findMany({
+        where: { id: { in: runIds }, routineId: { not: null } },
+        select: { id: true, routine: { select: { name: true } } },
+      })
+    : [];
+  const names = new Map(runs.flatMap((run) => (run.routine ? [[run.id, run.routine.name]] : [])));
+  return rows.map((row) =>
+    toThreadMessage({ ...row, routineName: row.runId ? names.get(row.runId) : undefined }),
+  );
 }
 
 export async function loadAllMessages(
@@ -169,6 +187,22 @@ export async function isPeerRun(
     cache.set(runId, peerRun);
   }
   return peerRun;
+}
+
+/** A live message event with the routine behind its run named, so the badge shows without a reload. */
+export async function withEventRoutineName<
+  E extends { type: string; runId?: string; payload: Record<string, unknown> },
+>(prisma: MessageDb, event: E, cache: Map<string, Promise<string | undefined>>): Promise<E> {
+  if (!event.runId || event.type !== "thread.message.created") return event;
+  let name = cache.get(event.runId);
+  if (!name) {
+    name = prisma.run
+      .findUnique({ where: { id: event.runId }, select: { routine: { select: { name: true } } } })
+      .then((run) => run?.routine?.name);
+    cache.set(event.runId, name);
+  }
+  const routineName = await name;
+  return routineName ? { ...event, payload: { ...event.payload, routineName } } : event;
 }
 
 export async function isBackgroundRun(
@@ -248,7 +282,7 @@ export function shouldForwardBackgroundThreadEvent(event: {
   return Array.isArray(blocks) && blocks.some(isBackgroundInputBlock);
 }
 
-function toThreadMessage(row: {
+export function toThreadMessage(row: {
   id: string;
   threadId: string;
   seq: number;
@@ -266,6 +300,8 @@ function toThreadMessage(row: {
   } | null;
   runId: string | null;
   clientNonce?: string | null;
+  pinnedAt?: Date | null;
+  routineName?: string;
   createdAt: Date;
 }): ThreadMessage {
   const parent = row.replyTo?.threadId === row.threadId ? row.replyTo : null;
@@ -293,6 +329,8 @@ function toThreadMessage(row: {
     threadRootId: row.threadRootId ?? undefined,
     runId: row.runId ?? undefined,
     callId: callIdFromClientNonce(row.clientNonce),
+    routineName: row.routineName,
+    pinnedAt: row.pinnedAt?.toISOString(),
     createdAt: row.createdAt.toISOString(),
   };
 }

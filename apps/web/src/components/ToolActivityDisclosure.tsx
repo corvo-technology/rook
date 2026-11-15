@@ -99,11 +99,26 @@ export function ToolActivityDisclosure({
           className="transition-transform duration-150 group-data-panel-open:rotate-90 motion-reduce:transition-none"
         />
         <span className="flex items-center gap-2">
-          <span>{live ? <Trans>Working…</Trans> : <Trans>Done</Trans>}</span>
-          <span>
-            <Plural value={toolCount} one="# tool" other="# tools" />
-          </span>
-          {!live && duration ? <span>{duration}</span> : null}
+          {live ? (
+            <>
+              <span>
+                <Trans>Working…</Trans>
+              </span>
+              <span>
+                <Plural value={toolCount} one="# tool" other="# tools" />
+              </span>
+            </>
+          ) : (
+            <span>
+              <Plural value={toolCount} one="Used # tool" other="Used # tools" />
+            </span>
+          )}
+          {!live && duration ? (
+            <>
+              <span aria-hidden="true">·</span>
+              <span>{duration}</span>
+            </>
+          ) : null}
         </span>
       </CollapsibleTrigger>
       <CollapsibleContent hiddenUntilFound>

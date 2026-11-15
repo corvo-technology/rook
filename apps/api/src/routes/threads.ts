@@ -21,6 +21,7 @@ import {
 import { getLogger } from "@corvo/logging";
 import { ORPCError } from "@orpc/server";
 import { approvalRefusal, approvalThreadId } from "../approval-access.js";
+import { listPinnedMessages, pinThreadMessage } from "../message-pins.js";
 import { assertTeachingSendAllowed } from "../taught-skills.js";
 import { compressThread } from "../thread-context.js";
 import {
@@ -29,6 +30,7 @@ import {
   loadMessagePage,
   shouldForwardBackgroundThreadEvent,
   shouldForwardPeerThreadEvent,
+  withEventRoutineName,
 } from "../thread-message-pages.js";
 import {
   markThreadRead,
@@ -107,6 +109,7 @@ export function threadsRoutes(ctx: RouterContext) {
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);
         const peerRunCache = new Map<string, Promise<boolean>>();
         const backgroundRunCache = new Map<string, Promise<boolean>>();
+        const routineNameCache = new Map<string, Promise<string | undefined>>();
         const follow = deps.events.follow(target.threadId, input.cursor, context.signal);
         // A half-open stream looks identical to an idle one, so punctuate silence:
         // the client treats any frame as liveness and reconnects once they stop.
@@ -155,7 +158,7 @@ export function threadsRoutes(ctx: RouterContext) {
             } else if (await isBackgroundRun(deps.prisma, event.runId, backgroundRunCache)) {
               if (!shouldForwardBackgroundThreadEvent(event)) continue;
             }
-            yield event;
+            yield await withEventRoutineName(deps.prisma, event, routineNameCache);
           }
         } finally {
           // Not awaited: closing can queue behind a read that the abort has not landed on yet.
@@ -223,6 +226,20 @@ export function threadsRoutes(ctx: RouterContext) {
           });
         }
         return { ok: true as const, runIds: result.runIds };
+      }),
+      pin: authed.threads.pin.handler(async ({ context, input }) => {
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        const result = await pinThreadMessage(deps.prisma, context.actor, target, input);
+        if (result.eventSeq != null) {
+          await deps.events.notify(target.threadId, result.eventSeq).catch((error) => {
+            getLogger().error("thread pin realtime notification", error);
+          });
+        }
+        return { ok: true as const, pinnedAt: result.pinnedAt?.toISOString() ?? null };
+      }),
+      pinned: authed.threads.pinned.handler(async ({ context, input }) => {
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        return { messages: await listPinnedMessages(deps.prisma, target) };
       }),
       stop: authed.threads.stop.handler(async ({ context, input }) => {
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);

@@ -20,6 +20,79 @@ import {
   userHoldsComputerControl,
 } from "./thread-events.js";
 
+describe("pins and routine names in the thread", () => {
+  const base = () =>
+    snapshot([
+      message("m1", [{ kind: "text", text: "DRE pronto" }], 1),
+      message("m2", [{ kind: "text", text: "Outra" }], 2),
+    ]);
+
+  it("marks a message pinned, and clears it again, from the event", () => {
+    const pinned = reduceThreadSnapshot(
+      base(),
+      event({
+        type: "thread.message.pinned",
+        seq: 5,
+        payload: { messageId: "m1", pinnedAt: "2026-11-10T09:00:00.000Z" },
+      }),
+    );
+    expect(pinned?.cursor).toBe(5);
+    expect(pinned?.messages.map((item) => item.pinnedAt)).toEqual([
+      "2026-11-10T09:00:00.000Z",
+      undefined,
+    ]);
+    const cleared = reduceThreadSnapshot(
+      pinned,
+      event({
+        type: "thread.message.pinned",
+        seq: 6,
+        payload: { messageId: "m1", pinnedAt: null },
+      }),
+    );
+    expect(cleared?.messages[0]?.pinnedAt).toBeUndefined();
+    expect(isThreadSnapshotEvent(event({ type: "thread.message.pinned" }))).toBe(true);
+  });
+
+  it("keeps the pin when a message is rewritten by a later event", () => {
+    const pinned = reduceThreadSnapshot(
+      base(),
+      event({
+        type: "thread.message.pinned",
+        payload: { messageId: "m1", pinnedAt: "2026-11-10T09:00:00.000Z" },
+      }),
+    );
+    const updated = reduceThreadSnapshot(
+      pinned,
+      event({
+        type: "thread.message.updated",
+        seq: 9,
+        payload: { messageId: "m1", role: "bot", blocks: [{ kind: "text", text: "Revisado" }] },
+      }),
+    );
+    expect(updated?.messages.find((item) => item.id === "m1")?.pinnedAt).toBe(
+      "2026-11-10T09:00:00.000Z",
+    );
+  });
+
+  it("carries the routine name from a live message event", () => {
+    const next = reduceThreadSnapshot(
+      base(),
+      event({
+        type: "thread.message.created",
+        seq: 7,
+        runId: "run-1",
+        payload: {
+          messageId: "m3",
+          role: "bot",
+          blocks: [{ kind: "text", text: "Bom dia" }],
+          routineName: "Conciliação diária",
+        },
+      }),
+    );
+    expect(next?.messages.find((item) => item.id === "m3")?.routineName).toBe("Conciliação diária");
+  });
+});
+
 describe("thread event reduction", () => {
   it("shows a committed direct send as queued before its snapshot refresh returns", () => {
     const initial = snapshot([message("user-1", [{ kind: "text", text: "Continue" }], 4)]);

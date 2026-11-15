@@ -98,6 +98,7 @@ vi.mock("@corvo/ui-web", () => ({
     </button>
   ),
   SelectValue: () => null,
+  // biome-ignore lint/a11y/noLabelWithoutControl: test double; the real Label gets its htmlFor
   Label: (props: ComponentProps<"label">) => <label {...props} />,
   Switch: ({
     checked,

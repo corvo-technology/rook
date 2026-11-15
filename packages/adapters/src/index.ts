@@ -14,7 +14,9 @@ export * from "./background-model.js";
 export * from "./billing-emulator.js";
 export * from "./boat-sandbox.js";
 export * from "./bot-avatar.js";
+export * from "./bot-daily-limit.js";
 export * from "./bot-messages.js";
+export * from "./bot-monthly-limit.js";
 export {
   forgetBotSecret,
   getBotSecretMetadata,

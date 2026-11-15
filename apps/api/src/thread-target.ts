@@ -13,6 +13,7 @@ import { GROUP_MEMBER_MIN, MessageBlock as MessageBlockSchema } from "@corvo/con
 import {
   ACTIVE_RUN_STATUSES,
   BACKGROUND_RUN_TRIGGERS,
+  buildRoutingReport,
   callIdFromClientNonce,
   isConversationalRun,
   messageReaction,
@@ -57,6 +58,7 @@ import { routeGroupMessage } from "./channel-router.js";
 import { resolveBusyBotName, toComputerStatus } from "./computer-status.js";
 import { groupConversationOwner } from "./group-owner.js";
 import { isRecordNotFound } from "./routes/shared.js";
+import { unavailableAgents } from "./routing-availability.js";
 import { withSerializableRetry } from "./serializable-retry.js";
 import type { ImageAdmissionRun } from "./thread-image-admission.js";
 import { assertThreadImageInput } from "./thread-image-admission.js";
@@ -868,6 +870,19 @@ export async function sendThreadMessage(
         )
       : undefined;
 
+  // Which agents cannot take a run right now, for the line that says who answered and why. The
+  // line is a courtesy: reading it must never stop a message from being sent.
+  const unavailable =
+    target.kind === "group"
+      ? await unavailableAgents(deps.prisma, actor.spaceId, [
+          ...target.memberBotIds,
+          ...outsideMentioned,
+        ]).catch((error) => {
+          getLogger().error("channel routing availability", error);
+          return new Map<string, "paused" | "over_budget">();
+        })
+      : new Map<string, "paused" | "over_budget">();
+
   const commit = () =>
     deps.prisma.$transaction(async (tx) => {
       const threadRoot = input.threadRootId
@@ -1158,6 +1173,21 @@ export async function sendThreadMessage(
       if (wantedBotIds.length > 0 && targetBotIds.length === 0) {
         throw new ORPCError("FORBIDDEN", { message: "You can't talk to this agent." });
       }
+      const routingReport = buildRoutingReport({
+        candidates: [...memberBotIds, ...outsideBotIds],
+        talkable,
+        unavailable,
+        woken: targetBotIds,
+        mentioned: [
+          ...resolveMentionedBotIds({
+            text: input.text ?? "",
+            members: memberRefs,
+            explicitMentions: mentionTargets.botMentionIds,
+          }),
+          ...outsideBotIds,
+        ],
+        routing,
+      }) as unknown as Prisma.InputJsonValue;
       const { blocks: attachmentBlocks, artifacts } = await resolveGroupSendAttachments(
         { prisma: tx },
         actor,
@@ -1213,6 +1243,7 @@ export async function sendThreadMessage(
         threadRootId,
         clientNonce: input.clientNonce,
         routing: routing && (routing as unknown as Prisma.InputJsonValue),
+        routingReport,
       });
       const activeByBotId = new Map<string, (typeof activeRuns)[number]>();
       const answeredByBotId = new Map<string, Array<(typeof activeRuns)[number]>>();
@@ -1335,6 +1366,7 @@ export async function sendThreadMessage(
           replyQuote,
           replyPreview,
           threadRootId,
+          routingReport,
         },
       });
       return { message, runs, eventSeq: event.seq };

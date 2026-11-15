@@ -1,3 +1,5 @@
+import type { RoutingReason, RoutingReport } from "@corvo/contracts";
+
 /**
  * Who answers a message that names nobody in a channel. The model only scores the members the
  * code offers; this module turns the scores into a pick and owns every threshold.
@@ -108,4 +110,73 @@ export function isRouterWake(routing: unknown, botId: string): boolean {
   if (!routing || typeof routing !== "object") return false;
   const { strategy, picked } = routing as { strategy?: unknown; picked?: unknown };
   return strategy === "model" && Array.isArray(picked) && picked.includes(botId);
+}
+
+const NOTE_CHARS = 160;
+
+/** The reasons that mean the agent was woken for the message. */
+const ANSWERING: readonly RoutingReason[] = [
+  "router_picked",
+  "mentioned",
+  "thread_owner",
+  "follow_up",
+  "router_failed",
+];
+
+/** Whether the agent was woken for the message (a run exists, or an earlier one took it). */
+export function isAnswering(reason: RoutingReason): boolean {
+  return ANSWERING.includes(reason);
+}
+
+/**
+ * The record of how a channel message reached its agents: one reason per agent considered, and
+ * who decided. It holds ids and codes only, plus the router's own one-line note.
+ */
+export function buildRoutingReport(input: {
+  /** Everyone offered: the channel's members and any agent the message named from outside. */
+  candidates: readonly string[];
+  /** The ones the sender may talk to. */
+  talkable: ReadonlySet<string>;
+  /** Talkable agents that cannot take a run right now. */
+  unavailable: ReadonlyMap<string, "paused" | "over_budget">;
+  /** The agents the message woke. */
+  woken: readonly string[];
+  /** The agents the message named. */
+  mentioned: readonly string[];
+  /** What the router did; absent when it did not apply. */
+  routing?: RouterDecision;
+}): RoutingReport {
+  const { routing } = input;
+  const byRouter = routing?.strategy === "model";
+  const agents: RoutingReport["agents"] = [];
+  for (const botId of new Set(input.candidates)) {
+    const mentioned = input.mentioned.includes(botId);
+    const woken = input.woken.includes(botId);
+    // A rule-routed message only reports the agents it concerns; the router reports everyone it offered.
+    if (!byRouter && !mentioned && !woken) continue;
+    let reason: RoutingReason;
+    const unavailable = input.unavailable.get(botId);
+    if (!input.talkable.has(botId)) reason = "not_in_audience";
+    else if (unavailable) reason = unavailable;
+    else if (woken) {
+      reason = mentioned
+        ? "mentioned"
+        : routing?.strategy === "model"
+          ? "router_picked"
+          : routing?.strategy === "continuity"
+            ? "follow_up"
+            : routing?.strategy === "fallback"
+              ? "router_failed"
+              : "thread_owner";
+    } else
+      reason =
+        routing?.strategy === "model" && routing.picked.length === 0 ? "none_needed" : "not_picked";
+    agents.push({ botId, reason });
+  }
+  const note = byRouter ? routing?.scores?.reason.replace(/\s+/g, " ").trim() : undefined;
+  return {
+    by: byRouter ? "router" : "rules",
+    ...(note ? { note: note.slice(0, NOTE_CHARS) } : {}),
+    agents,
+  };
 }

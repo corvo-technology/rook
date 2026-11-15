@@ -7,6 +7,7 @@ import {
   loadMessagePage,
   shouldForwardBackgroundThreadEvent,
   shouldForwardPeerThreadEvent,
+  toThreadMessage,
   withAuthor,
   withEventRoutineName,
   withRoutineNames,
@@ -1025,4 +1026,34 @@ it("derives attachment metadata from a validated parent outside the loaded page"
   } as unknown as PrismaClient;
   const page = await loadMessagePage(prisma, "thread", undefined, 1);
   expect(page.messages[0]?.replyPreview).toEqual({ role: "user", text: "", attachment: image });
+});
+
+describe("routing report", () => {
+  const row = (routingReport: unknown) => ({
+    id: "m1",
+    threadId: "thread-1",
+    seq: 1,
+    role: "user",
+    blocks: [{ kind: "text" as const, text: "hi" }],
+    botId: null,
+    replyToMessageId: null,
+    replyQuote: null,
+    runId: null,
+    routingReport: routingReport as never,
+    createdAt: new Date("2026-01-01T00:00:00Z"),
+  });
+
+  it("travels with the message", () => {
+    const report = {
+      by: "router",
+      note: "fits",
+      agents: [{ botId: "bot-1", reason: "router_picked" }],
+    };
+    expect(toThreadMessage(row(report)).routingReport).toEqual(report);
+  });
+
+  it("is absent on older messages and ignores anything it does not recognise", () => {
+    expect(toThreadMessage(row(null)).routingReport).toBeUndefined();
+    expect(toThreadMessage(row({ by: "mystery", agents: [] })).routingReport).toBeUndefined();
+  });
 });

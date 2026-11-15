@@ -894,6 +894,8 @@ model Message {
   /// How a group message that named nobody was routed (strategy, scores, picked ids, reason, error).
   /// Kept for debugging, and to tell a run the router woke from one a mention or a DM started.
   routing               Json?
+  /// Who a channel message was routed to and why each agent did or did not answer (reason codes only).
+  routingReport         Json?
   /// Blind-index search tokens for the encrypted blocks; NULL until the row is encrypted.
   searchTokens          Int[]
   /// When someone pinned the message to the channel header; null when it is not pinned.

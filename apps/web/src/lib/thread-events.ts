@@ -8,7 +8,7 @@ import type {
   ThreadMessagePage,
   ThreadSnapshot,
 } from "@corvo/contracts";
-import { RUN_TRIGGERS } from "@corvo/contracts";
+import { RoutingReportSchema, RUN_TRIGGERS } from "@corvo/contracts";
 import {
   isActive,
   isBackgroundRunTrigger,
@@ -563,6 +563,8 @@ export function reduceThreadSnapshot(
           ? event.payload.routineName
           : known?.routineName,
       pinnedAt: known?.pinnedAt,
+      routingReport:
+        RoutingReportSchema.safeParse(event.payload.routingReport).data ?? known?.routingReport,
       ...replyMetadata(event.payload, known),
       threadRootId: threadRootOf(event.payload) ?? known?.threadRootId,
       createdAt: known?.createdAt ?? event.createdAt,

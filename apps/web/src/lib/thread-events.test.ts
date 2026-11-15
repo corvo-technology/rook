@@ -173,6 +173,42 @@ describe("thread event reduction", () => {
     expect(next?.cursor).toBe(4);
   });
 
+  it("keeps who a channel message was routed to from the live event", () => {
+    const report = {
+      by: "router",
+      note: "fits",
+      agents: [{ botId: "bot-1", reason: "router_picked" }],
+    };
+    const next = reduceThreadSnapshot(
+      snapshot([]),
+      event({
+        type: "thread.message.created",
+        seq: 4,
+        payload: {
+          messageId: "m-routed",
+          role: "user",
+          blocks: [{ kind: "text", text: "who handles refunds?" }],
+          routingReport: report,
+        },
+      }),
+    );
+    expect(next?.messages[0]?.routingReport).toEqual(report);
+    const junk = reduceThreadSnapshot(
+      snapshot([]),
+      event({
+        type: "thread.message.created",
+        seq: 5,
+        payload: {
+          messageId: "m-junk",
+          role: "user",
+          blocks: [{ kind: "text", text: "hi" }],
+          routingReport: { by: "mystery" },
+        },
+      }),
+    );
+    expect(junk?.messages[0]?.routingReport).toBeUndefined();
+  });
+
   it("appends a quoted reply carrying its excerpt", () => {
     const initial = snapshot([message("message-1", [{ kind: "text", text: "Done" }], 1)]);
 

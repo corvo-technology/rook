@@ -67,11 +67,11 @@ export function SpaceSwitcher({
                 {current.name.trim().charAt(0).toUpperCase()}
               </span>
               <span className="flex min-w-0 flex-1 flex-col leading-tight">
-                <span className="truncate text-[15px] font-semibold">{current.name}</span>
+                <span className="truncate text-name font-semibold">{current.name}</span>
                 {summary ? (
                   <span
                     data-testid="space-summary"
-                    className="truncate text-[12px] text-muted-foreground"
+                    className="truncate text-meta text-muted-foreground"
                   >
                     {summary}
                   </span>

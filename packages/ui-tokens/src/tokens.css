@@ -31,10 +31,10 @@
   --border: #1f1f23;
   --input: #2a2a30;
   --ring: #54c398;
-  --sidebar: #0d0d0e;
+  --sidebar: #161619;
   --sidebar-foreground: #f4f4f5;
-  --sidebar-border: #1f1f23;
-  --sidebar-accent: #17171a;
+  --sidebar-border: #28282e;
+  --sidebar-accent: #222227;
   --sidebar-accent-foreground: #f4f4f5;
   --link: #54c398;
   --favicon-plate: #ffffff;
@@ -60,6 +60,26 @@
   --title-weight: 300;
   --title-tracking: -0.02em;
   --title-line-height: 1.15;
+  --type-caption-size: 11px;
+  --type-caption-line: 16px;
+  --type-meta-size: 12px;
+  --type-meta-line: 16px;
+  --type-nav-size: 13px;
+  --type-nav-line: 18px;
+  --type-body2-size: 13px;
+  --type-body2-line: 18px;
+  --type-message-size: 14px;
+  --type-message-line: 22px;
+  --type-name-size: 14px;
+  --type-name-line: 20px;
+  --type-body1-size: 14px;
+  --type-body1-line: 20px;
+  --type-heading3-size: 17px;
+  --type-heading3-line: 24px;
+  --type-heading2-size: 22px;
+  --type-heading2-line: 28px;
+  --type-heading1-size: 26px;
+  --type-heading1-line: 32px;
 }
 
 [data-theme="light"] {
@@ -94,8 +114,8 @@
   --ring: #2fa77a;
   --sidebar: #f8f8f6;
   --sidebar-foreground: #0a0a0a;
-  --sidebar-border: #e7e7e2;
-  --sidebar-accent: #f1f1ee;
+  --sidebar-border: #deded8;
+  --sidebar-accent: #edede9;
   --sidebar-accent-foreground: #0a0a0a;
   --link: #197b56;
   --favicon-plate: #ffffff;
@@ -121,4 +141,24 @@
   --title-weight: 300;
   --title-tracking: -0.02em;
   --title-line-height: 1.15;
+  --type-caption-size: 11px;
+  --type-caption-line: 16px;
+  --type-meta-size: 12px;
+  --type-meta-line: 16px;
+  --type-nav-size: 13px;
+  --type-nav-line: 18px;
+  --type-body2-size: 13px;
+  --type-body2-line: 18px;
+  --type-message-size: 14px;
+  --type-message-line: 22px;
+  --type-name-size: 14px;
+  --type-name-line: 20px;
+  --type-body1-size: 14px;
+  --type-body1-line: 20px;
+  --type-heading3-size: 17px;
+  --type-heading3-line: 24px;
+  --type-heading2-size: 22px;
+  --type-heading2-line: 28px;
+  --type-heading1-size: 26px;
+  --type-heading1-line: 32px;
 }

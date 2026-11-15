@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
+
 import type { PendingApproval } from "@corvo/contracts";
+import { Activity, Home, ListChecks, ShieldCheck, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
@@ -82,11 +84,11 @@ it("says nothing is waiting when nothing is", async () => {
 });
 
 const NAV = [
-  { key: "home", label: "Home", to: "/app/bot-1" },
-  { key: "approvals", label: "Approvals", to: "/app/approvals", badge: 0 },
-  { key: "tasks", label: "Tasks", to: "/app/board" },
-  { key: "activity", label: "Activity", to: "/app/activity" },
-  { key: "team", label: "Team", to: "/app/team" },
+  { key: "home", icon: Home, label: "Home", to: "/app/bot-1" },
+  { key: "approvals", icon: ShieldCheck, label: "Approvals", to: "/app/approvals", badge: 0 },
+  { key: "tasks", icon: ListChecks, label: "Tasks", to: "/app/board" },
+  { key: "activity", icon: Activity, label: "Activity", to: "/app/activity" },
+  { key: "team", icon: Users, label: "Team", to: "/app/team" },
 ];
 
 const nav = (approvals: number, onOpen = vi.fn()) => (

@@ -94,6 +94,7 @@ test("voice settings connect a key, speak a reply, and open a call", async ({ pa
   const replySpoken = page.waitForResponse(
     (response) => response.url().includes("/api/voice/speak") && response.ok(),
   );
+  await speakReply.locator("xpath=ancestor::div[@data-message-id][1]").hover();
   await speakReply.click();
   await replySpoken;
 
@@ -104,6 +105,7 @@ test("voice settings connect a key, speak a reply, and open a call", async ({ pa
       body: JSON.stringify({ error: "Insufficient credit", code: "VOICE_OUT_OF_CREDIT" }),
     }),
   );
+  await speakReply.locator("xpath=ancestor::div[@data-message-id][1]").hover();
   await speakReply.click();
   await expect(page.getByText("Your voice provider is out of credit.")).toBeVisible();
   await captureScreenshot(page, testInfo, "read-aloud-out-of-credit");

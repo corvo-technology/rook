@@ -380,18 +380,32 @@ it("sets an agent's message in a channel beside its face, under its name and tim
     "2026-11-02T12:13:00.000Z",
   );
   const face = container.querySelector<HTMLElement>(".corvo-mascot-avatar");
-  expect(face?.style.width).toBe("36px");
+  expect(face?.style.width).toBe("32px");
   const bubble = container.querySelector('[data-testid="message-bot-bubble"]');
   expect(bubble?.textContent).toBe("Fixed the timeout.");
   expect(bubble?.className).not.toContain("rounded-[20px]");
 });
 
-it("keeps the bubble in a chat with one agent, which has no speaker line", () => {
-  mountReply();
-  expect(container.querySelector("time")).toBeNull();
-  expect(container.querySelector(".corvo-mascot-avatar")).toBeNull();
-  const bubble = container.querySelector('[data-testid="message-bot-bubble"]');
-  expect(bubble?.className).toContain("rounded-[20px]");
+it("sets a message from another agent as that agent's row, with the chat's agent behind it", () => {
+  mountReply(undefined, false, {
+    message: {
+      botId: "cora",
+      blocks: [
+        {
+          kind: "bot_message_received",
+          fromBotId: "cto",
+          fromBotName: "CTO",
+          text: "Deploy is green",
+          intent: "result",
+        },
+      ],
+    } as ThreadMessage,
+    relayedVia: "Cora",
+  });
+  expect(container.textContent).toContain("CTO");
+  expect(container.textContent).toContain("via Cora");
+  expect(container.querySelector(".corvo-mascot-avatar")).not.toBeNull();
+  expect(container.querySelector('[data-testid="peer-receipt-chip"]')).not.toBeNull();
 });
 
 it("shows a follow-up from the same agent without its name or face, keeping its column and time", () => {
@@ -594,7 +608,7 @@ function renderUserMessage(authorName?: string) {
         canAnswer={false}
         canDismiss={false}
         message={message}
-        authorName={authorName}
+        speakerName={authorName ?? "You"}
         onAnswer={vi.fn()}
         onOpenBot={vi.fn()}
         onOpenPeerMessages={vi.fn()}
@@ -624,9 +638,12 @@ it("names the teammate who wrote a message in a shared conversation", () => {
   );
 });
 
-it("shows your own message, and older ones that name nobody, as before", () => {
+it("shows your own message as a row under your name, with no bubble", () => {
   renderUserMessage(undefined);
-  expect(container.textContent).toBe("Can you check the invoice?");
+  expect(container.textContent).toContain("You");
+  expect(container.querySelector('[data-testid="message-user-bubble"]')?.textContent).toBe(
+    "Can you check the invoice?",
+  );
 });
 
 it("names the routine behind a message beside the agent and the time", () => {

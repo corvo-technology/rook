@@ -60,14 +60,14 @@ export function ChannelHeader({
         <span aria-hidden="true" className="text-[17px] text-muted-foreground">
           #
         </span>
-        <span className="truncate text-[15px] font-semibold text-foreground" dir="auto">
+        <span className="truncate text-name font-semibold text-foreground" dir="auto">
           {name}
         </span>
       </button>
       {purpose ? (
         <span
           dir="auto"
-          className="hidden min-w-0 flex-1 truncate border-s border-border ps-3 text-[13px] text-muted-foreground md:block"
+          className="hidden min-w-0 flex-1 truncate border-s border-border ps-3 text-body2 text-muted-foreground md:block"
         >
           {purpose}
         </span>
@@ -79,7 +79,7 @@ export function ChannelHeader({
           <span
             role="status"
             data-testid="channel-working"
-            className="sr-only text-[13px] text-muted-foreground text-shimmer sm:not-sr-only"
+            className="sr-only text-body2 text-muted-foreground text-shimmer sm:not-sr-only"
           >
             {`${working[0]?.name}${working.length > 1 ? ` +${working.length - 1}` : ""} · ${t`Working…`}`}
           </span>
@@ -92,7 +92,7 @@ export function ChannelHeader({
             aria-pressed={membersOpen}
             data-testid="channel-members-toggle"
             onClick={onOpenMembers}
-            className={`h-9 rounded-[10px] px-3 text-[13px] font-medium ${membersOpen ? "bg-accent" : ""}`}
+            className={`h-9 rounded-[10px] px-3 text-body2 font-medium ${membersOpen ? "bg-accent" : ""}`}
           >
             {t`${total} members`}
           </Button>

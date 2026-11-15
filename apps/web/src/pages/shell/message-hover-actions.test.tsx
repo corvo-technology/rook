@@ -51,7 +51,6 @@ async function show(onKeepInWiki?: (message: ThreadMessage) => void, shown = mes
     root!.render(
       <MessageHoverActions
         message={shown}
-        side="start"
         onReply={vi.fn()}
         onMarkUnread={vi.fn()}
         onReact={vi.fn(async () => undefined)}
@@ -102,7 +101,6 @@ describe("opening a message's thread from its actions", () => {
       root!.render(
         <MessageHoverActions
           message={message}
-          side="start"
           onMarkUnread={vi.fn()}
           onReact={vi.fn(async () => undefined)}
           {...props}
@@ -142,7 +140,6 @@ describe("pinning a message from its menu", () => {
       root!.render(
         <MessageHoverActions
           message={shown}
-          side="start"
           onReply={vi.fn()}
           onMarkUnread={vi.fn()}
           onReact={vi.fn(async () => undefined)}

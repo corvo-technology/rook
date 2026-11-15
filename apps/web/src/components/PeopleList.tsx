@@ -20,7 +20,7 @@ export function PeopleList({
             type="button"
             aria-current={activeUserId === person.userId ? "page" : undefined}
             onClick={() => onOpen(person.userId)}
-            className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-start text-sm outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:bg-sidebar-accent"
+            className="flex w-full items-center gap-2.5 rounded-md px-2 py-1 text-start text-nav outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:bg-sidebar-accent"
           >
             <PersonAvatar name={person.name} image={person.image} size={24} />
             <span className={`min-w-0 flex-1 truncate ${person.unread ? "font-semibold" : ""}`}>

@@ -13,7 +13,6 @@ import {
   appsForSurface,
   CHIEF_BOT_SPAWN_KEY,
   channelMessageSender,
-  chatUserBubbleColors,
   dismissableAskMessageIds,
   foldPeerReplies,
   foldThreadReplies,
@@ -274,10 +273,6 @@ function SpaceShell({ page }: { page?: ReactNode }) {
     inGroup || routeChat?.groupId
       ? undefined
       : (bots.find((b) => b.id === (botId ?? routeChat?.botId)) ?? bots[0]);
-  const userBubble = useMemo(
-    () => (active ? chatUserBubbleColors(active.color, active.id) : undefined),
-    [active?.color, active?.id],
-  );
   const activeGroup = groups.find((group) => group.id === groupId);
   const activeBotId = useRef<string | undefined>(inGroup ? undefined : active?.id);
   activeBotId.current = inGroup ? undefined : active?.id;
@@ -819,7 +814,6 @@ function SpaceShell({ page }: { page?: ReactNode }) {
     showToolActivity,
     answerableAskIds,
     dismissableAskIds,
-    userBubble,
     onOpenBot: openBot,
     onAnswer: composer.answerMessage,
     onMarkUnread: (message: ThreadMessage) => {
@@ -959,6 +953,7 @@ function SpaceShell({ page }: { page?: ReactNode }) {
         footerLogos={footerLogos}
         user={session.data?.user}
         ticketBoardEnabled={Boolean(bootstrapMe?.ticketBoardEnabled)}
+        onQuickSwitch={() => dialogs.setCommandPaletteOpen(true)}
         navLinks={desktopBridge() ? [] : (bootstrapMe?.navLinks ?? [])}
         openSettings={openSettings}
         openIntegrations={() => navigate(storePath(activeBotId.current))}
@@ -1328,6 +1323,7 @@ function SpaceShell({ page }: { page?: ReactNode }) {
           rpc={rpc}
           spaces={spaces}
           bots={bots}
+          groups={groups.filter((group) => !group.archivedAt)}
           activeId={active?.id}
           activeGroupId={activeGroup?.id}
           alive={alive}

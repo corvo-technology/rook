@@ -77,15 +77,10 @@ export function SidebarHeader({
     >
       {!mini || hasWindowChrome ? <WindowChrome /> : null}
       {paused && !mini ? (
-        <div className="app-no-drag flex items-center gap-1.5 text-[12.5px] font-medium text-warning">
+        <div className="app-no-drag flex items-center gap-1.5 text-meta font-medium text-warning">
           <span>{t`Paused`}</span>
           {onResume ? (
-            <Button
-              variant="link"
-              size="sm"
-              className="h-auto p-0 text-[12.5px]"
-              onClick={onResume}
-            >
+            <Button variant="link" size="sm" className="h-auto p-0 text-meta" onClick={onResume}>
               {t`Resume`}
             </Button>
           ) : null}

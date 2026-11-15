@@ -94,7 +94,7 @@ function ChannelFace({
     <BotAvatar
       color={color}
       identity={identity}
-      size={36}
+      size={32}
       live={face !== "still"}
       // Only an agent's latest message shows what it is doing; its older ones keep a calm face.
       status={face === "current" ? status : undefined}
@@ -115,8 +115,8 @@ export const MessageView = memo(function MessageView({
   peerReplies,
   onTogglePeerReplies,
   speakerName,
-  authorName,
   speakerRole,
+  relayedVia,
   speakerImage,
   ownerUserId,
   viewerUserId,
@@ -165,10 +165,10 @@ export const MessageView = memo(function MessageView({
   peerReplies?: "collapsed" | "expanded";
   onTogglePeerReplies: (markerId: string) => void;
   speakerName?: string;
-  /** Who wrote this user message, when it is someone other than the reader. */
-  authorName?: string;
   /** The agent's role, muted beside its name. */
   speakerRole?: string;
+  /** The agent this chat belongs to, named on a message another agent sent through it. */
+  relayedVia?: string;
   /** The picture of the person who wrote a user message in a channel. */
   speakerImage?: string | null;
   /** Who owns the agent that wrote this message, and who is reading: an approval names which. */
@@ -181,7 +181,9 @@ export const MessageView = memo(function MessageView({
   /** Only the latest messages have a moving face, so a long history stays still. */
   face?: MessageFace;
   memberName?: (botId: string | undefined) => string | undefined;
-  peerBot: (botId: string) => { name?: string; color: string; status?: string } | undefined;
+  peerBot: (
+    botId: string,
+  ) => { name?: string; title?: string; color: string; status?: string } | undefined;
   /** Whether each request this bot sent to another bot has been answered. */
   delegation?: ReadonlyMap<string, DelegationState>;
   replyParent?: ThreadMessage;
@@ -257,12 +259,20 @@ export const MessageView = memo(function MessageView({
   const replyBotId = message.replyPreview?.botId ?? replyParent?.botId;
   const speakerBot = message.botId ? peerBot?.(message.botId) : undefined;
   // In a channel an agent's message has its face to the left, with the name and time above it.
-  const speakerAvatar = speakerName ? (
+  const received = message.blocks.find((block) => block.kind === "bot_message_received");
+  const sender = received ? peerBot(received.fromBotId) : undefined;
+  const speakerAvatar = received ? (
+    <ChannelFace
+      color={sender?.color ?? FALLBACK_BOT_COLOR}
+      identity={received.fromBotId}
+      face="still"
+    />
+  ) : speakerName ? (
     continued ? (
       // A follow-up keeps the column, and shows its time in it when pointed at.
       <time
         dateTime={message.createdAt}
-        className="flex h-6 w-9 items-center justify-center text-[11px] tabular-nums text-muted-foreground opacity-0 transition-opacity group-hover/message:opacity-100 motion-reduce:transition-none"
+        className="flex h-5 w-9 items-center justify-center text-caption tabular-nums text-muted-foreground opacity-0 transition-opacity group-hover/message:opacity-100 group-focus-within/message:opacity-100 motion-reduce:transition-none"
       >
         {new Date(message.createdAt).toLocaleTimeString(i18n.locale || "en", {
           hour: "numeric",
@@ -270,7 +280,7 @@ export const MessageView = memo(function MessageView({
         })}
       </time>
     ) : message.role === "user" ? (
-      <PersonAvatar name={speakerName} image={speakerImage} size={36} />
+      <PersonAvatar name={speakerName} image={speakerImage} size={32} />
     ) : (
       <ChannelFace
         color={speakerBot?.color ?? FALLBACK_BOT_COLOR}
@@ -285,41 +295,49 @@ export const MessageView = memo(function MessageView({
       />
     )
   ) : null;
-  const botBubble = speakerName
-    ? "max-w-full text-body1 text-foreground"
-    : "max-w-full rounded-[20px] bg-muted px-[18px] py-3 text-body1 text-foreground";
+  const botBubble = "max-w-full text-message text-foreground";
+  const time = () => (
+    <time dateTime={message.createdAt} className="text-meta tabular-nums text-muted-foreground">
+      {new Date(message.createdAt).toLocaleTimeString(i18n.locale || "en", {
+        hour: "numeric",
+        minute: "2-digit",
+      })}
+    </time>
+  );
   const messageContext = (
     <>
-      {authorName ? (
-        <div className="mb-1 text-[12.5px] text-muted-foreground" dir="auto">
-          {authorName}
+      {received ? (
+        // A message from another agent reads as that agent's own row, with this chat's agent behind it.
+        <div className="flex items-baseline gap-2" dir="auto">
+          <span className="text-name font-semibold text-foreground">{received.fromBotName}</span>
+          {sender?.title ? (
+            <span dir="auto" className="min-w-0 truncate text-meta text-muted-foreground">
+              {sender.title}
+            </span>
+          ) : null}
+          {time()}
+          {relayedVia && relayedVia !== received.fromBotName ? (
+            <span className="text-meta text-muted-foreground">{t`via ${relayedVia}`}</span>
+          ) : null}
         </div>
       ) : null}
       {speakerName && !continued ? (
-        <div className="mb-1 flex items-baseline gap-2" dir="auto">
-          <span className="text-[15px] font-semibold text-foreground">{speakerName}</span>
+        <div className="flex items-baseline gap-2" dir="auto">
+          <span className="text-name font-semibold text-foreground">{speakerName}</span>
           {speakerRole ? (
-            <span dir="auto" className="min-w-0 truncate text-[12.5px] text-muted-foreground">
+            <span dir="auto" className="min-w-0 truncate text-meta text-muted-foreground">
               {speakerRole}
             </span>
           ) : null}
           {message.routineName ? (
             <span
               data-testid="routine-badge"
-              className="rounded-full border border-border px-2 py-px text-[12px] text-muted-foreground"
+              className="rounded-full border border-border px-2 py-px text-meta text-muted-foreground"
             >
               {t`Routine “${message.routineName}”`}
             </span>
           ) : null}
-          <time
-            dateTime={message.createdAt}
-            className="text-[12px] tabular-nums text-muted-foreground"
-          >
-            {new Date(message.createdAt).toLocaleTimeString(i18n.locale || "en", {
-              hour: "numeric",
-              minute: "2-digit",
-            })}
-          </time>
+          {time()}
           {message.pinnedAt ? (
             <Pin
               role="img"
@@ -356,7 +374,6 @@ export const MessageView = memo(function MessageView({
   const hoverActions = isPeerReceiptBlocks(message.blocks) ? null : (
     <MessageHoverActions
       message={message}
-      side={message.role === "user" && !speakerName ? "start" : "end"}
       onReply={onReply}
       onReplyInThread={onReplyInThread}
       onMarkUnread={onMarkUnread}
@@ -364,6 +381,11 @@ export const MessageView = memo(function MessageView({
       markedUnread={markedUnread}
       onReact={onReact}
       onPin={onPin}
+      speech={
+        voiceReady && !isLive && message.blocks.some((block) => block.kind === "text")
+          ? { speaking, onSpeak }
+          : undefined
+      }
     />
   );
   if (isNarration) {
@@ -372,7 +394,7 @@ export const MessageView = memo(function MessageView({
       return (
         <ChannelRow avatar={speakerAvatar}>
           {messageContext}
-          <div className="relative">
+          <div>
             <ToolOnlyNarration
               blocks={visibleNarrationBlocks}
               live={isLive}
@@ -386,7 +408,7 @@ export const MessageView = memo(function MessageView({
     return (
       <ChannelRow avatar={speakerAvatar}>
         {messageContext}
-        <div className="relative w-fit max-w-full [@media(hover:none)]:w-full">
+        <div className="w-fit max-w-full [@media(hover:none)]:w-full">
           <div className="flex w-fit max-w-full justify-start [@media(hover:none)]:w-full">
             <div
               data-testid="message-bot-bubble"
@@ -428,17 +450,6 @@ export const MessageView = memo(function MessageView({
                 }
                 return null;
               })}
-              {!isLive && voiceReady && message.blocks.some((block) => block.kind === "text") ? (
-                <Button
-                  variant="text"
-                  size="xs"
-                  aria-label={speaking ? t`Stop speaking` : t`Speak this reply`}
-                  onClick={onSpeak}
-                  className="font-normal"
-                >
-                  {speaking ? <Trans>Stop</Trans> : <Trans>Speak</Trans>}
-                </Button>
-              ) : null}
             </div>
           </div>
           {hoverActions}
@@ -449,12 +460,7 @@ export const MessageView = memo(function MessageView({
   return (
     <ChannelRow avatar={speakerAvatar}>
       {messageContext}
-      <div
-        className={cn(
-          "relative flex flex-col gap-2",
-          message.role === "user" && !speakerName && "items-end",
-        )}
-      >
+      <div className="flex flex-col gap-2">
         {blocks.map((block, i) => {
           if (block.kind === "steps" && shouldRenderToolCard(block, showToolActivity)) {
             return (
@@ -491,9 +497,9 @@ export const MessageView = memo(function MessageView({
                   <div className="min-w-0 flex-1">
                     <div className="mb-1 flex flex-wrap items-baseline gap-x-2" dir="auto">
                       {speakerName ? null : (
-                        <span className="text-[15px] font-semibold text-foreground">{from}</span>
+                        <span className="text-name font-semibold text-foreground">{from}</span>
                       )}
-                      <span className="flex items-baseline gap-1.5 text-[14px]">
+                      <span className="flex items-baseline gap-1.5 text-message">
                         <span aria-hidden="true" className="text-muted-foreground">
                           →
                         </span>
@@ -506,7 +512,7 @@ export const MessageView = memo(function MessageView({
                       {speakerName ? null : (
                         <time
                           dateTime={message.createdAt}
-                          className="text-[12px] tabular-nums text-muted-foreground"
+                          className="text-meta tabular-nums text-muted-foreground"
                         >
                           {new Date(message.createdAt).toLocaleTimeString(i18n.locale || "en", {
                             hour: "numeric",
@@ -522,7 +528,7 @@ export const MessageView = memo(function MessageView({
                       <p
                         data-testid="handoff-reason"
                         dir="auto"
-                        className="mt-1 text-[13px] text-muted-foreground"
+                        className="mt-1 text-body2 text-muted-foreground"
                       >
                         {block.reason}
                       </p>
@@ -535,7 +541,7 @@ export const MessageView = memo(function MessageView({
               <div
                 key={i}
                 className={cn(
-                  "flex items-center gap-2 py-1 text-[13.5px] text-muted-foreground",
+                  "flex items-center gap-2 py-1 text-body2 text-muted-foreground",
                   speakerName ? "flex-wrap justify-start" : "justify-center",
                 )}
               >
@@ -602,7 +608,7 @@ export const MessageView = memo(function MessageView({
             return (
               <div
                 key={i}
-                className="flex items-center justify-center gap-2 py-1 text-[13.5px] text-muted-foreground"
+                className="flex items-center justify-center gap-2 py-1 text-body2 text-muted-foreground"
               >
                 <span className="shrink-0">
                   {messageProviderLabel(block.provider, block.transport)}
@@ -617,7 +623,7 @@ export const MessageView = memo(function MessageView({
             return (
               <div
                 key={i}
-                className="flex items-center justify-center gap-2 py-1 text-[13.5px] text-muted-foreground"
+                className="flex items-center justify-center gap-2 py-1 text-body2 text-muted-foreground"
               >
                 <span className="text-warning">◷</span>
                 <span>{block.text}</span>
@@ -660,7 +666,7 @@ export const MessageView = memo(function MessageView({
           }
           if (block.kind === "child_bot") {
             return (
-              <div key={i} className="flex items-center gap-1.5 text-[15.5px]">
+              <div key={i} className="flex items-center gap-1.5 text-name">
                 <BotMention
                   block={block}
                   color={peerBot(block.botId)?.color}
@@ -730,10 +736,7 @@ export const MessageView = memo(function MessageView({
           }
           if (block.kind === "image") {
             return (
-              <div
-                key={i}
-                className={`flex ${message.role === "user" && !speakerName ? "justify-end" : "justify-start"}`}
-              >
+              <div key={i} className="flex justify-start">
                 <ArtifactImage
                   target={artifactTarget}
                   artifactId={block.artifactId}
@@ -744,10 +747,7 @@ export const MessageView = memo(function MessageView({
           }
           if (block.kind === "file") {
             return (
-              <div
-                key={i}
-                className={`flex ${message.role === "user" && !speakerName ? "justify-end" : "justify-start"}`}
-              >
+              <div key={i} className="flex justify-start">
                 <ArtifactFileCard
                   target={artifactTarget}
                   artifactId={block.artifactId}
@@ -758,35 +758,15 @@ export const MessageView = memo(function MessageView({
               </div>
             );
           }
-          if (block.kind === "text" && message.role === "user" && speakerName) {
-            // In a channel a person sits in the same column as the agents, with no bubble.
-            return (
-              <div key={i} className="relative flex w-fit max-w-full justify-start">
-                <div
-                  data-testid="message-user-bubble"
-                  data-quote-message-id={quoteMessageId}
-                  className="max-w-full whitespace-pre-wrap wrap-anywhere text-body1 text-foreground"
-                  dir="auto"
-                >
-                  <LinkifiedText>{block.text}</LinkifiedText>
-                </div>
-                {i === hoverAnchorIndex ? hoverActions : null}
-              </div>
-            );
-          }
           if (block.kind === "text" && message.role === "user") {
-            // User bubbles stay literal text on web and mobile. Only explicit URLs
-            // and email addresses are links, so a sent address is tappable without
-            // formatting bold or headings.
+            // A person sits in the same column as the agents, with no bubble. Their text stays literal:
+            // only explicit URLs and email addresses are links.
             return (
-              <div
-                key={i}
-                className="relative flex w-fit max-w-full justify-end [@media(hover:none)]:w-full [@media(hover:none)]:flex-wrap"
-              >
+              <div key={i} className="flex w-fit max-w-full justify-start">
                 <div
                   data-testid="message-user-bubble"
                   data-quote-message-id={quoteMessageId}
-                  className="max-w-full whitespace-pre-wrap wrap-anywhere rounded-[20px] bg-chat-user px-[18px] py-3 text-body1 text-chat-user-foreground"
+                  className="max-w-full whitespace-pre-wrap wrap-anywhere text-message text-foreground"
                   dir="auto"
                 >
                   <LinkifiedText>{block.text}</LinkifiedText>
@@ -799,7 +779,7 @@ export const MessageView = memo(function MessageView({
             return (
               <div
                 key={i}
-                className="relative flex w-fit max-w-full justify-start [@media(hover:none)]:w-full [@media(hover:none)]:flex-wrap"
+                className="flex w-fit max-w-full justify-start [@media(hover:none)]:w-full [@media(hover:none)]:flex-wrap"
               >
                 <div data-testid="message-bot-bubble" className={botBubble} dir="auto">
                   <div data-quote-message-id={quoteMessageId}>
@@ -807,17 +787,6 @@ export const MessageView = memo(function MessageView({
                       {approvalTextLabel(block.text)}
                     </ChatMarkdown>
                   </div>
-                  {voiceReady ? (
-                    <Button
-                      variant="text"
-                      size="xs"
-                      aria-label={speaking ? t`Stop speaking` : t`Speak this reply`}
-                      onClick={onSpeak}
-                      className="mt-2 font-normal"
-                    >
-                      {speaking ? <Trans>Stop</Trans> : <Trans>Speak</Trans>}
-                    </Button>
-                  ) : null}
                 </div>
                 {i === hoverAnchorIndex ? hoverActions : null}
               </div>
@@ -828,7 +797,7 @@ export const MessageView = memo(function MessageView({
               <div key={i} className="flex justify-start">
                 <div className="flex flex-col gap-2 rounded-[20px] bg-muted px-5 py-4">
                   {block.lines.map((line) => (
-                    <div key={line.k} className="flex items-baseline gap-2.5 text-[15px]">
+                    <div key={line.k} className="flex items-baseline gap-2.5 text-name">
                       <span className="text-success">✓</span>
                       <span className="font-semibold text-foreground">{line.k}</span>
                       <span className="text-muted-foreground">→</span>
@@ -849,7 +818,7 @@ export const MessageView = memo(function MessageView({
                 className={`relative w-full min-w-0 ${isSecretAskBlock(block) ? "" : "max-w-xl"}`}
               >
                 {stepped && i === steps.current ? (
-                  <p className="mb-1.5 text-[13px] text-muted-foreground">
+                  <p className="mb-1.5 text-body2 text-muted-foreground">
                     <Trans>
                       {position} of {total}
                     </Trans>
@@ -893,22 +862,22 @@ export const MessageView = memo(function MessageView({
                 className="w-[340px] max-w-full rounded-[18px] border border-border bg-muted px-[18px] py-4"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-[15px] font-medium text-foreground">
+                  <span className="text-name font-medium text-foreground">
                     <Trans>Computer</Trans>
                   </span>
                   <span
                     className={
                       block.state === "Needs you"
-                        ? "rounded-full bg-warning/15 px-[11px] py-1 text-[13px] text-warning"
+                        ? "rounded-full bg-warning/15 px-[11px] py-1 text-body2 text-warning"
                         : block.state === "Skipped"
-                          ? "rounded-full bg-foreground/10 px-[11px] py-1 text-[13px] text-muted-foreground"
-                          : "rounded-full bg-success/15 px-[11px] py-1 text-[13px] text-success"
+                          ? "rounded-full bg-foreground/10 px-[11px] py-1 text-body2 text-muted-foreground"
+                          : "rounded-full bg-success/15 px-[11px] py-1 text-body2 text-success"
                     }
                   >
                     {block.state}
                   </span>
                 </div>
-                <div className="my-2.5 text-[14.5px] leading-[1.5] text-foreground/75">
+                <div className="my-2.5 text-message text-foreground/75">
                   <ChatMarkdown>{block.text}</ChatMarkdown>
                 </div>
                 <Button
@@ -934,7 +903,7 @@ export const MessageView = memo(function MessageView({
 function ChannelRow({ avatar, children }: { avatar: ReactNode; children: ReactNode }) {
   if (!avatar) return <>{children}</>;
   return (
-    <div className="-mx-2 flex gap-3 rounded-lg px-2 py-1 transition-colors hover:bg-muted/50 motion-reduce:transition-none">
+    <div className="relative -mx-2 flex gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted/50 focus-within:bg-muted/50 motion-reduce:transition-none">
       <span className="mt-0.5 shrink-0">{avatar}</span>
       <div className="min-w-0 flex-1">{children}</div>
     </div>

@@ -161,7 +161,7 @@ export function SidebarRoster({
                       render={
                         group.emptySpaceId ? <button type="button" /> : <CollapsibleTrigger />
                       }
-                      className={`flex min-w-0 items-center justify-between gap-2 rounded-lg px-2.5 py-1 text-[11px] font-semibold tracking-[0.08em] uppercase text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring ${hasSpaceActions ? "col-start-1 row-start-1 w-full" : "flex-1"}`}
+                      className={`flex min-w-0 items-center justify-between gap-2 rounded-md px-2 py-1 text-caption font-semibold tracking-[0.08em] uppercase text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring ${hasSpaceActions ? "col-start-1 row-start-1 w-full" : "flex-1"}`}
                       onClick={() => {
                         if (group.emptySpaceId) {
                           openSpaceChat(group.emptySpaceId, "/onboarding");
@@ -263,7 +263,7 @@ export function SidebarRoster({
                 ) : null}
               </div>
             ) : null}
-            <CollapsibleContent className="flex flex-col gap-0.5">
+            <CollapsibleContent className="flex flex-col gap-px">
               {group.bots.map((item) => {
                 const selected =
                   (item.kind === "bot" && !inGroup && active?.id === item.chat.id) ||
@@ -325,7 +325,7 @@ export function SidebarRoster({
                     // A channel is its name behind a hash, like a chat app's: no face, no preview.
                     <span
                       aria-hidden="true"
-                      className="w-4 shrink-0 text-center text-[15px] font-normal text-muted-foreground"
+                      className="w-4 shrink-0 text-center text-name font-normal text-muted-foreground"
                     >
                       #
                     </span>
@@ -419,10 +419,10 @@ export function SidebarRoster({
                       mini
                         ? "mx-auto size-12 justify-center rounded-xl"
                         : channel
-                          ? "w-full min-h-8 gap-1.5 rounded-lg px-2.5 py-1"
+                          ? "w-full min-h-8 gap-1.5 rounded-md px-2 py-1"
                           : compact
                             ? "w-full min-h-11 gap-2 rounded-xl px-2.5 py-1.5"
-                            : "w-full gap-2.5 rounded-lg px-2.5 py-1.5"
+                            : "w-full gap-2.5 rounded-md px-2 py-1"
                     } text-start ${
                       item.kind === "bot" ? "cursor-grab active:cursor-grabbing" : ""
                     } ${
@@ -486,8 +486,10 @@ export function SidebarRoster({
                       <div className="flex min-w-0 flex-1 items-center justify-between gap-1.5">
                         <span
                           dir="auto"
-                          className={`min-w-0 truncate text-body2 text-foreground ${
-                            item.chat.unread ? "font-semibold" : "font-normal"
+                          className={`min-w-0 truncate text-nav ${
+                            item.chat.unread
+                              ? "font-semibold text-foreground"
+                              : "font-normal text-foreground/75"
                           }`}
                         >
                           {item.chat.name}
@@ -513,7 +515,7 @@ export function SidebarRoster({
                             <span
                               dir="auto"
                               data-roster-bot-name={item.kind === "bot" ? "" : undefined}
-                              className={`min-w-0 truncate text-body2 text-foreground ${
+                              className={`min-w-0 truncate text-nav text-foreground ${
                                 item.chat.unread ? "font-semibold" : "font-medium"
                               }`}
                             >
@@ -546,7 +548,7 @@ export function SidebarRoster({
                                     ? item.chat.status
                                     : undefined
                               }
-                              className={`mt-0.5 flex items-center gap-1 text-[11.5px] ${
+                              className={`mt-0.5 flex items-center gap-1 text-meta ${
                                 rowError
                                   ? "font-medium text-destructive"
                                   : workStatusLabel

@@ -59,7 +59,7 @@ async function renderNav(
         <MemoryRouter initialEntries={[props.path ?? "/app"]}>
           <SidebarNavLive
             bots={[bot("bot-2", "Scout"), bot("bot-1", "Chief", "onboarding:first")]}
-            ticketBoardEnabled={props.ticketBoardEnabled ?? false}
+            ticketBoardEnabled={props.ticketBoardEnabled ?? true}
             embedded={props.embedded ?? false}
             onOpen={onOpen}
           />
@@ -71,7 +71,9 @@ async function renderNav(
     await new Promise((resolve) => setTimeout(resolve, 0));
   });
   const labels = () =>
-    [...container.querySelectorAll("nav button")].map((button) => button.textContent);
+    [...container.querySelectorAll("nav button:not([data-testid=sidebar-quick-switch])")].map(
+      (button) => button.textContent,
+    );
   const more = async () => {
     await act(async () =>
       container.querySelector<HTMLButtonElement>('[data-testid="sidebar-more"]')!.click(),
@@ -92,16 +94,68 @@ async function renderNav(
 }
 
 it("lists every place once, with the rest behind More", async () => {
-  const { labels, more, cleanup } = await renderNav({ ticketBoardEnabled: true });
+  const { labels, more, cleanup } = await renderNav();
   expect(labels()).toEqual(["Home", "Approvals", "Tasks", "Routines", "Activity", "Team", "More"]);
   expect(await more()).toEqual(["Workflows", "Usage", "Artifacts", "Wiki", "Memory"]);
   await cleanup();
 });
 
-it("leaves the board out where it is off", async () => {
-  const { labels, cleanup } = await renderNav();
+it("leaves Tasks out only where the board is off", async () => {
+  const { labels, cleanup } = await renderNav({ ticketBoardEnabled: false });
   expect(labels()).not.toContain("Tasks");
   await cleanup();
+});
+
+it("lists Tasks even before a mission brings it, unless a partner hides it", async () => {
+  queryClient.setQueryData(["bootstrap"], { me: { shortNav: true } });
+  missionsApi.get.mockResolvedValue({ short: true, completed: [], has: [], seen: [] });
+  const short = await renderNav();
+  expect(short.labels()).toContain("Tasks");
+  await short.cleanup();
+  queryClient.setQueryData(["bootstrap"], { me: { partner: { name: "Acme", hide: ["board"] } } });
+  const hidden = await renderNav();
+  expect(hidden.labels()).not.toContain("Tasks");
+  await hidden.cleanup();
+});
+
+it("gives each place an icon and opens More as a menu", async () => {
+  const { container, cleanup } = await renderNav();
+  for (const button of container.querySelectorAll("nav button:not([data-testid=sidebar-more])")) {
+    if (button.getAttribute("data-testid") === "sidebar-quick-switch") continue;
+    expect(button.querySelector("svg")).not.toBeNull();
+  }
+  expect(
+    container.querySelector('[data-testid="sidebar-more"]')?.getAttribute("aria-haspopup"),
+  ).toBe("menu");
+  await cleanup();
+});
+
+it("opens the quick switcher from the field above the places", async () => {
+  const onQuickSwitch = vi.fn();
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  await act(async () =>
+    root.render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <SidebarNavLive
+            bots={[]}
+            ticketBoardEnabled
+            embedded={false}
+            onOpen={vi.fn()}
+            onQuickSwitch={onQuickSwitch}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    ),
+  );
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('[data-testid="sidebar-quick-switch"]')!.click(),
+  );
+  expect(onQuickSwitch).toHaveBeenCalledOnce();
+  await act(async () => root.unmount());
+  container.remove();
 });
 
 it("opens Home on the Chief, not on whichever agent comes first", async () => {
@@ -155,8 +209,8 @@ it("leaves out what a partner hides from its customers", async () => {
 it("starts short: only the places that are always there until a mission brings more", async () => {
   queryClient.setQueryData(["bootstrap"], { me: { shortNav: true } });
   missionsApi.get.mockResolvedValue({ short: true, completed: [], has: [], seen: [] });
-  const { labels, cleanup } = await renderNav({ ticketBoardEnabled: true });
-  expect(labels()).toEqual(["Home", "Approvals", "Activity"]);
+  const { labels, cleanup } = await renderNav();
+  expect(labels()).toEqual(["Home", "Approvals", "Tasks", "Activity"]);
   await cleanup();
 });
 

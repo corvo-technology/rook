@@ -650,6 +650,7 @@ msgid "Active"
 msgstr "Aktiv"
 
 #: src/pages/ActivityPage.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-header.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Activity"
@@ -908,6 +909,7 @@ msgstr "Agent-Computer"
 #: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/channel-members.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/Store.tsx
 msgid "Agents"
@@ -1142,6 +1144,7 @@ msgstr "Freigabemodell"
 
 #: src/pages/ApprovalsPage.tsx
 #: src/pages/Settings.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Approvals"
@@ -1200,6 +1203,7 @@ msgstr "Argumente"
 
 #: src/pages/Artifacts.tsx
 #: src/pages/PartnerTemplateEditor.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Artifacts"
 msgstr "Artefakte"
@@ -1599,6 +1603,7 @@ msgid "Changing…"
 msgstr "Wird geändert…"
 
 #: src/pages/Shell.tsx
+#: src/pages/shell/command-palette.tsx
 msgid "Channels"
 msgstr "Kanäle"
 
@@ -3728,6 +3733,11 @@ msgstr "Die Stimme wird vorbereitet ({size} MB). Das passiert nur einmal."
 msgid "Git event"
 msgstr "Git-Ereignis"
 
+#: src/pages/shell/command-palette.tsx
+#: src/pages/shell/sidebar-team.tsx
+msgid "Go to…"
+msgstr "Gehe zu…"
+
 #: src/pages/shell/composer.tsx
 msgid "Goes to {recipient}"
 msgstr "Geht an {recipient}"
@@ -4986,7 +4996,6 @@ msgstr "Keine Authentifizierung"
 msgid "No authentication"
 msgstr "Keine Authentifizierung"
 
-#: src/pages/shell/command-palette.tsx
 #: src/pages/TeamBoard.tsx
 msgid "No bots"
 msgstr "Keine Bots"
@@ -5061,6 +5070,7 @@ msgid "No remote MCP servers found"
 msgstr "Keine Remote-MCP-Server gefunden"
 
 #: src/pages/model-settings/providers-section.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/SpaceSearch.tsx
 #: src/pages/Store.tsx
 msgid "No results"
@@ -5166,6 +5176,7 @@ msgstr "Noch nichts gemerkt"
 msgid "Nothing to approve"
 msgstr "Nichts zu genehmigen"
 
+#: src/components/SidebarFooter.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Notifications"
 msgstr "Benachrichtigungen"
@@ -5423,6 +5434,10 @@ msgstr "Seitentext"
 msgid "PagerDuty incident"
 msgstr "PagerDuty-Vorfall"
 
+#: src/pages/shell/command-palette.tsx
+msgid "Pages"
+msgstr "Seiten"
+
 #: src/pages/Settings.tsx
 msgid "Partnership"
 msgstr "Partnerschaft"
@@ -5518,6 +5533,7 @@ msgid "Pawn"
 msgstr "Bauer"
 
 #: src/pages/shell/channel-members.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/StoreCategoryChips.tsx
@@ -6192,6 +6208,7 @@ msgstr "Routine „{0}“"
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Routines"
 msgstr "Routinen"
@@ -6404,13 +6421,13 @@ msgstr "Apps suchen"
 msgid "Search artifacts…"
 msgstr "Artefakte durchsuchen …"
 
-#: src/pages/shell/command-palette.tsx
-msgid "Search bots and switch conversations"
-msgstr "Bots durchsuchen und Unterhaltungen wechseln"
-
 #: src/pages/Store.tsx
 msgid "Search by domain"
 msgstr "Nach Domain suchen"
+
+#: src/pages/shell/command-palette.tsx
+msgid "Search channels, agents, people and pages"
+msgstr "Kanäle, Agenten, Personen und Seiten suchen"
 
 #: src/pages/shell/channel-find.tsx
 msgid "Search in #{channelName}"
@@ -6787,15 +6804,11 @@ msgstr "Space exportiert."
 msgid "Spaces"
 msgstr "Spaces"
 
-#: src/pages/shell/message-view.tsx
-msgid "Speak"
-msgstr "Vorlesen"
-
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Speak only"
 msgstr "Nur sprechen"
 
-#: src/pages/shell/message-view.tsx
+#: src/pages/shell/message-hover-actions.tsx
 msgid "Speak this reply"
 msgstr "Diese Antwort vorlesen"
 
@@ -6874,7 +6887,6 @@ msgstr "Stimmt das noch?"
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/computer-overlay.tsx
-#: src/pages/shell/message-view.tsx
 msgid "Stop"
 msgstr "Stoppen"
 
@@ -6886,7 +6898,7 @@ msgstr "Nicht mehr fragen"
 msgid "Stop computer"
 msgstr "Computer stoppen"
 
-#: src/pages/shell/message-view.tsx
+#: src/pages/shell/message-hover-actions.tsx
 msgid "Stop speaking"
 msgstr "Vorlesen stoppen"
 
@@ -6978,10 +6990,6 @@ msgstr "Unterstützt Bilder"
 msgid "Supports thinking"
 msgstr "Unterstützt Denkmodus"
 
-#: src/pages/shell/command-palette.tsx
-msgid "Switch bot"
-msgstr "Bot wechseln"
-
 #: src/pages/shell/space-switcher.tsx
 msgid "Switch space"
 msgstr "Space wechseln"
@@ -7016,6 +7024,7 @@ msgid "Task settings"
 msgstr "Aufgaben-Einstellungen"
 
 #: src/pages/Board.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Tasks"
 msgstr "Aufgaben"
@@ -7033,6 +7042,7 @@ msgid "Teaching in progress. Stop teaching before sending a new message."
 msgstr "Aufgabe wird angelernt. Beende das Anlernen, bevor du eine neue Nachricht sendest."
 
 #: src/pages/shell/bot-panel.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/TeamPage.tsx
 msgid "Team"
@@ -7591,6 +7601,7 @@ msgstr "Dringend"
 
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/Settings.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/Usage.tsx
 msgid "Usage"
@@ -7718,6 +7729,10 @@ msgstr "Wird geprüft…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "Version"
+
+#: src/pages/shell/message-view.tsx
+msgid "via {relayedVia}"
+msgstr "über {relayedVia}"
 
 #: src/pages/SpaceRolesSettings.tsx
 msgid "View usage"
@@ -7898,6 +7913,7 @@ msgstr "Wer mit {name} sprechen darf"
 msgid "Who sees this channel"
 msgstr "Wer diesen Kanal sieht"
 
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/WikiPage.tsx
 msgid "Wiki"
@@ -7916,6 +7932,7 @@ msgid "Work"
 msgstr "Arbeit"
 
 #: src/pages/PartnerTemplateEditor.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/Workflows.tsx
 msgid "Workflows"

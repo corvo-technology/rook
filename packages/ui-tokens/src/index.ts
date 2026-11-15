@@ -96,10 +96,10 @@ export const darkTokens = {
   border: "#1F1F23",
   input: "#2A2A30",
   ring: "#54C398",
-  sidebar: "#0D0D0E",
+  sidebar: "#161619",
   sidebarForeground: "#F4F4F5",
-  sidebarBorder: "#1F1F23",
-  sidebarAccent: "#17171A",
+  sidebarBorder: "#28282E",
+  sidebarAccent: "#222227",
   sidebarAccentForeground: "#F4F4F5",
   link: "#54C398",
   faviconPlate: "#FFFFFF",
@@ -144,8 +144,8 @@ export const lightTokens = {
   ring: "#2FA77A",
   sidebar: "#F8F8F6",
   sidebarForeground: "#0A0A0A",
-  sidebarBorder: "#E7E7E2",
-  sidebarAccent: "#F1F1EE",
+  sidebarBorder: "#DEDED8",
+  sidebarAccent: "#EDEDE9",
   sidebarAccentForeground: "#0A0A0A",
   link: "#197B56",
   faviconPlate: "#FFFFFF",
@@ -243,6 +243,28 @@ export const typeScale = {
  * accessibility sizes keep that size, so message bubbles, rows and cards keep their layout.
  */
 export const MAX_FONT_SCALE = 23 / typeScale.body.fontSize;
+
+/**
+ * The web and Electron type scale, in px, for a dense work app: 14px text, 13px navigation, 12px
+ * meta. Names are semibold and meta is muted at the point of use; sizes live only here.
+ * `tokens.css` carries them as `--type-<name>-size` and `--type-<name>-line`.
+ */
+export const webTypeScale = {
+  caption: { fontSize: 11, lineHeight: 16 },
+  /** Role, time and other meta beside a name. */
+  meta: { fontSize: 12, lineHeight: 16 },
+  /** Navigation rows and the sidebar's lists. */
+  nav: { fontSize: 13, lineHeight: 18 },
+  body2: { fontSize: 13, lineHeight: 18 },
+  /** Text in a conversation and the composer: 14px on a comfortable 22px line. */
+  message: { fontSize: 14, lineHeight: 22 },
+  /** A name above a message or in a header. */
+  name: { fontSize: 14, lineHeight: 20 },
+  body1: { fontSize: 14, lineHeight: 20 },
+  heading3: { fontSize: 17, lineHeight: 24 },
+  heading2: { fontSize: 22, lineHeight: 28 },
+  heading1: { fontSize: 26, lineHeight: 32 },
+} as const;
 
 /** The ink of a drawn bot's eyes, the same on every body colour and in both themes. */
 export const botEyeColor = "#101014";
@@ -369,6 +391,10 @@ function renderBlock(selector: string, colorScheme: ResolvedAppearance, palette:
     `  --title-weight: ${titleType.weight};`,
     `  --title-tracking: ${titleType.tracking};`,
     `  --title-line-height: ${titleType.lineHeight};`,
+    ...Object.entries(webTypeScale).flatMap(([name, { fontSize, lineHeight }]) => [
+      `  --type-${name}-size: ${fontSize}px;`,
+      `  --type-${name}-line: ${lineHeight}px;`,
+    ]),
   ];
   return `${selector} {\n  color-scheme: ${colorScheme};\n${[...lines, ...extras].join("\n")}\n}`;
 }

@@ -146,6 +146,7 @@ test.describe("the channel as the approved canvas draws it", () => {
       // The space, its places, then channels, agents and people.
       await expect(sidebar.getByText("2 people · 4 agents")).toBeVisible();
       await expect(sidebar.getByTestId("sidebar-nav").getByRole("button")).toHaveText([
+        "Go to…⌘K",
         "Home",
         "Approvals1",
         "Tasks",
@@ -190,4 +191,64 @@ test.describe("the channel as the approved canvas draws it", () => {
       await captureScreenshot(page, testInfo, `team-canvas-${theme}`);
     });
   }
+});
+
+test.describe("a chat with one agent uses the channel's rows", () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  for (const theme of ["light", "dark"]) {
+    test(`rows, relayed message, unread and footer (${theme})`, async ({ page }, testInfo) => {
+      await page.goto(`/e2e/fixtures/team-canvas.html?theme=${theme}&view=agent`);
+      const sidebar = page.getByTestId("canvas-sidebar");
+      const main = page.locator("main").getByTestId("transcript");
+      // Nobody gets a bubble: the person and the agent both sit in rows under their names.
+      await expect(main.getByText("Pedro Henrique", { exact: true })).toBeVisible();
+      await expect(main.getByTestId("message-user-bubble").first()).toHaveCSS(
+        "background-color",
+        "rgba(0, 0, 0, 0)",
+      );
+      await expect(main.getByTestId("message-bot-bubble").first()).toHaveCSS(
+        "background-color",
+        "rgba(0, 0, 0, 0)",
+      );
+      // A message another agent sent shows that agent, its role, and who it came through.
+      const relayed = main.locator("[data-message-id]").filter({ hasText: "via Chief" });
+      await expect(relayed).toContainText("CTO");
+      await expect(relayed).toContainText("Engineering");
+      // Unread channels are bold; read ones are not.
+      await expect(sidebar.getByText("sales", { exact: true })).toHaveCSS("font-weight", "600");
+      await expect(sidebar.getByText("finance", { exact: true })).not.toHaveCSS(
+        "font-weight",
+        "600",
+      );
+      // The signed-in person and the bell sit in the footer.
+      const footer = sidebar.getByTestId("sidebar-footer");
+      await expect(footer).toContainText("Pedro Henrique");
+      await expect(footer.getByRole("button", { name: "Notifications" })).toBeVisible();
+      // The sidebar is its own surface, separated from the page by a hairline.
+      const surfaces = await page.evaluate(() => {
+        const pick = (selector: string) =>
+          getComputedStyle(document.querySelector(selector) as Element).backgroundColor;
+        return { sidebar: pick('[data-testid="canvas-sidebar"]'), page: pick("body") };
+      });
+      expect(surfaces.sidebar).not.toBe(surfaces.page);
+      await captureScreenshot(page, testInfo, `agent-chat-${theme}`);
+    });
+  }
+
+  test("the message actions are reached with the keyboard", async ({ page }) => {
+    await page.goto("/e2e/fixtures/team-canvas.html?theme=light&view=agent");
+    const row = page.locator("main").locator("[data-message-id]").nth(1);
+    const rail = row.getByTestId("message-hover-rail");
+    // At rest the actions are hidden from view but not from the keyboard.
+    await expect(rail).toHaveCSS("opacity", "0");
+    await row.getByRole("button", { name: "Speak this reply" }).focus();
+    await expect(rail).toHaveCSS("opacity", "1");
+    for (const name of ["React", "Reply", "More"]) {
+      await page.keyboard.press("Tab");
+      await expect(row.getByRole("button", { name, exact: true })).toBeFocused();
+    }
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("menu")).toBeVisible();
+  });
 });

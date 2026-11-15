@@ -21,6 +21,8 @@ import {
   PinOff,
   Reply,
   Smile,
+  Square,
+  Volume2,
 } from "lucide-react";
 import { useState } from "react";
 import { MessageHoverMetadata } from "../../components/MessageHoverMetadata";
@@ -28,7 +30,7 @@ import { copyableMessageText } from "../../lib/message-text";
 
 export function MessageHoverActions({
   message,
-  side,
+  speech,
   onReply,
   onReplyInThread,
   onMarkUnread,
@@ -38,7 +40,8 @@ export function MessageHoverActions({
   onPin,
 }: {
   message: ThreadMessage;
-  side: "start" | "end";
+  /** Reads the reply aloud; absent where there is no voice or nothing to read. */
+  speech?: { speaking: boolean; onSpeak: () => void };
   /** Quotes the message; absent where the composer has no quote to arm. */
   onReply?: (message: ThreadMessage) => void;
   /** Opens the message's thread; absent outside a channel's main column. */
@@ -64,18 +67,33 @@ export function MessageHoverActions({
   }
 
   const iconButtonClass =
-    "grid h-11 w-11 place-items-center text-muted-foreground transition-colors hover:text-foreground [@media(hover:hover)_and_(pointer:fine)]:h-7 [@media(hover:hover)_and_(pointer:fine)]:w-7";
+    "grid h-11 w-11 place-items-center rounded-sm text-muted-foreground transition-colors outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring [@media(hover:hover)_and_(pointer:fine)]:h-6 [@media(hover:hover)_and_(pointer:fine)]:w-6";
 
   return (
-    <MessageHoverMetadata pinned={moreOpen || reactionsOpen} side={side}>
+    <MessageHoverMetadata pinned={moreOpen || reactionsOpen}>
       <div data-testid="message-hover-actions" className="flex items-center gap-0.5">
+        {speech ? (
+          <button
+            type="button"
+            aria-label={speech.speaking ? t`Stop speaking` : t`Speak this reply`}
+            aria-pressed={speech.speaking}
+            onClick={speech.onSpeak}
+            className={iconButtonClass}
+          >
+            {speech.speaking ? (
+              <Square size={14} strokeWidth={1.7} />
+            ) : (
+              <Volume2 size={15} strokeWidth={1.7} />
+            )}
+          </button>
+        ) : null}
         {canReactToThreadMessage(message) ? (
           <Popover open={reactionsOpen} onOpenChange={setReactionsOpen}>
             <PopoverTrigger aria-label={t`React`} className={iconButtonClass}>
               <Smile size={15} strokeWidth={1.7} />
             </PopoverTrigger>
             <PopoverContent
-              align={side === "end" ? "start" : "end"}
+              align="end"
               className="w-auto flex-row gap-0 rounded-2xl p-1.5"
               aria-label={t`Reactions`}
             >
@@ -120,7 +138,7 @@ export function MessageHoverActions({
           <DropdownMenuTrigger aria-label={t`More`} className={iconButtonClass}>
             <MoreHorizontal size={15} strokeWidth={1.7} />
           </DropdownMenuTrigger>
-          <DropdownMenuContent align={side === "end" ? "start" : "end"} className="w-auto">
+          <DropdownMenuContent align="end" className="w-auto">
             {onReply ? (
               <DropdownMenuItem
                 onClick={() => {

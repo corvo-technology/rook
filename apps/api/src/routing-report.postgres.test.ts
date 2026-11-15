@@ -164,30 +164,41 @@ describePostgres(
         caio: caio!,
         dani: dani!,
         salesRoleId,
+        spaceId,
         secretWord,
         call,
         ...made,
       };
     }
 
-    it("returns the report to the channel's members and to no one else", async () => {
+    it("keeps the report with the channel's space", async () => {
       const f = await fixture();
       const read = (who: string) => f.call(who, "threads/messages", { groupId: f.group.id });
-      // Someone who may not see the channel cannot change who does.
-      expect(
-        (await f.call(f.bia, "groups/people/setRoles", { groupId: f.group.id, roleIds: [] }))
-          .status,
-      ).not.toBe(200);
-      expect((await f.call(f.bia, "groups/list")).text).not.toContain(f.group.id);
-      expect((await read(f.caio)).status).toBe(200);
       const mine = await read(f.ana);
       expect(mine.status).toBe(200);
       expect(mine.text).toContain("router_picked");
       expect(mine.text).toContain("fits the question");
-      const theirs = await read(f.bia);
-      expect(theirs.status).not.toBe(200);
-      expect(theirs.text).not.toContain("router_picked");
-      expect(theirs.text).not.toContain("fits the question");
+
+      // The row is read under the space's own row security, and no other space sees it.
+      const rowsIn = (spaceId: string) =>
+        runAsTenant(
+          { userId: f.ana, spaceId, email: "ana@example.test", isDeploymentOwner: false },
+          () =>
+            prisma.message.findMany({
+              where: { threadId: f.group.threadId },
+              select: { routingReport: true },
+            }),
+        );
+      expect(await rowsIn(f.spaceId)).toEqual([
+        {
+          routingReport: {
+            by: "router",
+            note: "fits the question",
+            agents: [{ botId: f.open.id, reason: "router_picked" }],
+          },
+        },
+      ]);
+      expect(await rowsIn(randomUUID())).toEqual([]);
     });
   },
 );

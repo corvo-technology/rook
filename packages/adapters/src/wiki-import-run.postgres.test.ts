@@ -177,7 +177,7 @@ postgres("reading a file into the wiki (PostgreSQL)", () => {
       ),
     });
     const s = setup(
-      [answer(create("Leave policy", "Twenty days. (Source: hr.docx, section 1)"))],
+      [answer(create("Word leave policy", "Twenty days. (Source: hr.docx, section 1)"))],
       docx,
     );
     const row = await start("hr.docx");
@@ -187,7 +187,7 @@ postgres("reading a file into the wiki (PostgreSQL)", () => {
     expect(s.requests[0]?.prompt).toContain("hr.docx, section 1");
     expect(s.requests[0]?.prompt).toContain("Leave is 20 days.");
     expect(s.requests[0]?.prompt).not.toContain("ana@example.com");
-    const page = await tenant(() => readWikiPage(prisma, scope, "Leave policy"));
+    const page = await tenant(() => readWikiPage(prisma, scope, "Word leave policy"));
     expect(page?.body).toContain("(Source: hr.docx, section 1)");
   });
 

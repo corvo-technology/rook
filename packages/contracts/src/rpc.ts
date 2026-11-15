@@ -61,6 +61,7 @@ import {
   ArtifactWithContentSchema,
   AvatarStyleSchema,
   BillingStatusSchema,
+  BotAudienceSchema,
   BotBudgetSchema,
   BotMcpServerSchema,
   BotSchema,
@@ -598,6 +599,11 @@ export const appContract = {
     importSetupState: oc.input(AgentImportSetupStateInput).output(AgentImportSetupStateSchema),
     importUndo: oc.input(AgentImportUndoInput).output(AgentImportInfoSchema),
     duplicate: oc.input(botId).output(BotSchema),
+    /** Who may talk to the agent. Read and changed by its owner or `manage_agents`. */
+    audience: {
+      get: oc.input(botId).output(BotAudienceSchema),
+      set: oc.input(botId.extend(BotAudienceSchema.shape)).output(BotAudienceSchema),
+    },
     /** Designs the bot's avatar again from its role; the bot comes back as it now looks. */
     designAvatar: oc.input(botId).output(BotSchema),
     reorder: oc.input(ReorderBotsInput).output(z.object({ ok: z.literal(true) })),
@@ -645,8 +651,12 @@ export const appContract = {
       remove: oc
         .input(z.object({ groupId: Id, userId: Id }))
         .output(z.object({ ok: z.literal(true) })),
-      /** Opens a private channel to the whole space again. */
+      /** Opens a private channel to the whole space again: no people and no roles. */
       open: oc.input(groupId).output(z.object({ ok: z.literal(true) })),
+      /** Opens the channel to the holders of these roles; an empty list takes the grants back. */
+      setRoles: oc
+        .input(z.object({ groupId: Id, roleIds: z.array(Id).max(50) }))
+        .output(z.object({ ok: z.literal(true) })),
     },
   },
   /** What waits on the caller across every chat: the approvals they may decide. */

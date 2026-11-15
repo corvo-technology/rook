@@ -8,7 +8,7 @@ test("approval input resumes durable work", async ({ page }, testInfo) => {
   await signup(page, `approval-${stamp}@corvo.test`, "password12", "Approval");
   await completeOnboarding(page);
 
-  const composer = page.getByPlaceholder(/Message/);
+  const composer = page.getByRole("combobox", { name: /^Message/ });
   await composer.fill("ask me which city to use");
   await page.keyboard.press("Enter");
 

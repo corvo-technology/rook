@@ -7,7 +7,7 @@ test("keeps the approved MCP card state after the thread remounts", async ({ pag
   await completeOnboarding(page);
 
   const botId = activeBotId(page);
-  const composer = page.getByPlaceholder(/Message/);
+  const composer = page.getByRole("combobox", { name: /^Message/ });
   await composer.fill("show an mcp approval card");
   await page.keyboard.press("Enter");
 

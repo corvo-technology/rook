@@ -19,6 +19,7 @@ describe.skipIf(!enabled)("short original product history", () => {
       ];
       const fixtureKey = "synthetic-short-history-key";
       const model = await startModelEmulator({
+        answerRepeatChecks: true,
         apiKey: fixtureKey,
         steps: questions.map((question) => ({
           expect(request) {
@@ -79,7 +80,8 @@ describe.skipIf(!enabled)("short original product history", () => {
         expect(result).toMatchObject({
           status: "passed",
           toolCalls: 0,
-          modelCalls: 3,
+          // Three answers and the check for a repeated request that the fixture answers on its own.
+          modelCalls: 4,
           cleanupFailed: false,
         });
         expect(model.requests).toHaveLength(3);

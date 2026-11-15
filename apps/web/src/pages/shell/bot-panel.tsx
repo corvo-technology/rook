@@ -54,6 +54,7 @@ import { thinkingLevelLabel } from "../../lib/model-catalog";
 import { lazyComponent } from "../../lib/preload-recovery";
 import { useSpaceQueries } from "../../lib/query";
 import { errorText } from "../../lib/user-error";
+import { AgentAudienceSection } from "./agent-audience";
 import { AgentConnectionsList } from "./agent-connections";
 import { AgentImportUndo } from "./agent-import-undo";
 import { AvatarStudioPopover } from "./avatar-studio-popover";
@@ -1001,6 +1002,7 @@ export function BotSettings({
               </section>
             </SettingsGroup>
             <AgentConnectionsList botId={bot.id} />
+            <AgentAudienceSection bot={bot} />
             <BotCredentialsSection botId={bot.id} />
             <ErrorBoundary fallback={<SectionLoadFailed />}>
               <Suspense fallback={null}>

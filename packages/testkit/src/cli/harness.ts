@@ -191,7 +191,7 @@ async function main() {
         ThirdPartyConnectorEmulator,
       },
       { createApp },
-      { drainUnscopedDatabaseAccess },
+      { asSystem, drainUnscopedDatabaseAccess },
     ] = await Promise.all([
       import("@corvo/adapters"),
       import("@corvo/api/app"),
@@ -270,7 +270,8 @@ async function main() {
           },
         );
       } catch (error) {
-        const failedRuns = await handles.prisma.run.findMany({
+        // Runs belong to tenants; this diagnostic reads them across all of them.
+        const failedRuns = await asSystem(handles.prisma).run.findMany({
           where: { status: "failed" },
           select: { id: true, error: true },
         });

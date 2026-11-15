@@ -2610,6 +2610,7 @@ msgstr "Não foi possível executar a rotina"
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/MembersSettingsPanel.tsx
+#: src/pages/shell/agent-audience.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/chat-model-switcher.tsx
 #: src/pages/shell/dialogs.tsx
@@ -3454,6 +3455,7 @@ msgid "Every week"
 msgstr "A cada semana"
 
 #: src/pages/MembersSettingsPanel.tsx
+#: src/pages/shell/agent-audience.tsx
 #: src/pages/shell/channel-members.tsx
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Everyone"
@@ -5222,6 +5224,10 @@ msgstr "Serve só para identificar você neste computador. Seus dados ficam aqui
 msgid "Only read"
 msgstr "Só ler"
 
+#: src/pages/shell/agent-audience.tsx
+msgid "Only some roles or people"
+msgstr "Só alguns cargos ou pessoas"
+
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/shell/computer-panel.tsx
 #: src/pages/shell/import-setup-card.tsx
@@ -5353,6 +5359,10 @@ msgstr "Chave da API da organização"
 #: src/pages/shell/chat-context.tsx
 msgid "Original message unavailable"
 msgstr "Mensagem original indisponível"
+
+#: src/pages/shell/agent-audience.tsx
+msgid "Other agents can consult {name}"
+msgstr "Outros agentes podem consultar {name}"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
@@ -7861,6 +7871,10 @@ msgstr "Onde os bots devem ser executados?"
 #: src/pages/shell/agent-import.tsx
 msgid "Where to import"
 msgstr "Onde importar"
+
+#: src/pages/shell/agent-audience.tsx
+msgid "Who can talk to {name}"
+msgstr "Quem pode falar com {name}"
 
 #: src/pages/shell/channel-members.tsx
 msgid "Who sees this channel"

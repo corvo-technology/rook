@@ -1,6 +1,11 @@
 import { ComputerStatusSchema } from "@corvo/contracts";
-import { describe, expect, it } from "vitest";
-import { executionBlocksUserTakeover, toComputerStatus } from "./computer-status.js";
+import type { PrismaClient } from "@corvo/db";
+import { describe, expect, it, vi } from "vitest";
+import {
+  executionBlocksUserTakeover,
+  resolveBusyBotName,
+  toComputerStatus,
+} from "./computer-status.js";
 
 describe("toComputerStatus", () => {
   // A deployment without computers (the desktop app, or a sign-up only server) stores kind "none".
@@ -141,5 +146,23 @@ describe("executionBlocksUserTakeover", () => {
         now,
       }),
     ).toBe(false);
+  });
+});
+
+describe("resolveBusyBotName", () => {
+  it("does not fail for a lease whose computer the Space cannot read", async () => {
+    const prisma = {
+      computerExecutionLease: {
+        findUnique: vi.fn(async () => ({
+          expiresAt: new Date(Date.now() + 60_000),
+          runId: "run-1",
+          computer: null,
+        })),
+      },
+      run: { findUnique: vi.fn(async () => ({ status: "running" })) },
+    } as unknown as PrismaClient;
+    await expect(
+      resolveBusyBotName(prisma, { computerId: "computer-1", botId: "bot-1", botName: "Writer" }),
+    ).resolves.toBe("Writer");
   });
 });

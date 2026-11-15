@@ -29,6 +29,10 @@ function deps(
     senderRunning?: boolean;
     alreadyDelivered?: unknown;
     targetArchived?: boolean;
+    /** The agent sending, as the audience rule reads it. */
+    senderRow?: Record<string, unknown>;
+    /** The roles the person behind the run holds. */
+    personRoleIds?: string[];
     /** Simulate a unique (threadId, clientNonce) race after both retries miss. */
     uniqueConflictOnCommit?: boolean;
     transactionConflictOnce?: boolean;
@@ -67,7 +71,25 @@ function deps(
   };
   let transactionAttempts = 0;
   const prisma = {
+    spaceMember: {
+      findUnique: vi.fn(async () => ({
+        role: "member",
+        roles: (options.personRoleIds ?? []).map((roleId) => ({ roleId })),
+      })),
+    },
+    spaceRole: {
+      findMany: vi.fn(async () =>
+        (options.personRoleIds ?? []).map((id) => ({
+          id,
+          spaceId: run.spaceId,
+          position: 1,
+          keys: [],
+          systemKey: null,
+        })),
+      ),
+    },
     bot: {
+      findUnique: vi.fn(async () => options.senderRow ?? { userId: "user-1" }),
       findMany: vi
         .fn()
         .mockResolvedValue(
@@ -944,5 +966,108 @@ describe("the plan step a stage carries", () => {
         ),
       ),
     ).toBe(true);
+  });
+});
+
+describe("an agent asking for a person", () => {
+  const closed = (patch: Record<string, unknown> = {}) => ({
+    id: "bot-target",
+    name: "Analyst",
+    title: "",
+    thread: { id: "thread-target" },
+    userId: "owner-1",
+    audienceRestricted: true,
+    audienceRoleIds: ["sales"],
+    audienceUserIds: [],
+    consultable: true,
+    ...patch,
+  });
+
+  it("reaches a consultable agent for someone outside its audience", async () => {
+    const harness = deps({ bots: [closed()] });
+    const sent = await messageBot(harness.deps, run, sender, {
+      bot_id: "bot-target",
+      message: "what is the quota?",
+    });
+    expect(sent).toMatchObject({ ok: true });
+    expect(harness.tx.run.create).toHaveBeenCalled();
+  });
+
+  it("is refused when the agent takes no consultations", async () => {
+    const harness = deps({ bots: [closed({ consultable: false })] });
+    const sent = await messageBot(harness.deps, run, sender, {
+      bot_id: "bot-target",
+      message: "what is the quota?",
+    });
+    expect(sent).toMatchObject({
+      ok: false,
+      error: expect.stringContaining("works only with some people"),
+    });
+    expect(harness.tx.run.create).not.toHaveBeenCalled();
+  });
+
+  it("reaches it either way for someone in its audience", async () => {
+    const harness = deps({
+      bots: [closed({ consultable: false })],
+      personRoleIds: ["sales"],
+    });
+    const sent = await messageBot(harness.deps, run, sender, {
+      bot_id: "bot-target",
+      message: "what is the quota?",
+    });
+    expect(sent).toMatchObject({ ok: true });
+  });
+
+  it("gives the answer only to the asking agent when the person is outside the answerer's audience", async () => {
+    // The answerer (the sender here) is closed to this person; the asking agent is open.
+    const harness = deps({
+      senderRow: {
+        userId: "owner-2",
+        audienceRestricted: true,
+        audienceRoleIds: ["finance"],
+        audienceUserIds: [],
+        consultable: true,
+      },
+    });
+    await messageBot(harness.deps, run, sender, {
+      bot_id: "bot-target",
+      message: "the quota is 40 units",
+      intent: "result",
+    });
+    const created = harness.tx.message.create.mock.calls.map(
+      (call) => (call[0] as { data: { blocks: Array<Record<string, unknown>> } }).data.blocks[0],
+    );
+    const received = created.find((block) => block?.kind === "bot_message_received");
+    expect(received).toMatchObject({ text: "", consultation: true });
+    // The agent itself still gets the answer in the prompt that wakes it.
+    expect(harness.tx.task.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ prompt: expect.stringContaining("the quota is 40 units") }),
+      }),
+    );
+  });
+
+  it("keeps the answer in the transcript when the person is in the answerer's audience", async () => {
+    const harness = deps({
+      senderRow: {
+        userId: "owner-2",
+        audienceRestricted: true,
+        audienceRoleIds: ["finance"],
+        audienceUserIds: [],
+        consultable: true,
+      },
+      personRoleIds: ["finance"],
+    });
+    await messageBot(harness.deps, run, sender, {
+      bot_id: "bot-target",
+      message: "the quota is 40 units",
+      intent: "result",
+    });
+    const created = harness.tx.message.create.mock.calls.map(
+      (call) => (call[0] as { data: { blocks: Array<Record<string, unknown>> } }).data.blocks[0],
+    );
+    expect(created.find((block) => block?.kind === "bot_message_received")).toMatchObject({
+      text: "the quota is 40 units",
+    });
   });
 });

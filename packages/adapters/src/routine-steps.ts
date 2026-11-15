@@ -1,5 +1,6 @@
 import { routineNextStepJob, runContinueJob } from "@corvo/adapter-kit";
 import { getLogger } from "@corvo/logging";
+import { personMayTalkTo } from "./agent-audience.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { botRunOutcomeText } from "./job-reconciler.js";
 import { routineRunModelPin } from "./model-selection.js";
@@ -131,6 +132,11 @@ export async function startNextRoutineStep(deps: ExecutorDeps, runId: string) {
     select: { modelProvider: true, modelId: true, thinkingLevel: true },
   });
   if (!bot?.thread || !routine) {
+    getLogger().warn("routine.step_skipped", { "run.id": done.id, "step.id": next.id });
+    return;
+  }
+  // The routine's creator started this run: a step's agent that leaves them out is not woken.
+  if (!(await personMayTalkTo(deps.prisma, { spaceId: done.spaceId, userId: done.userId }, bot))) {
     getLogger().warn("routine.step_skipped", { "run.id": done.id, "step.id": next.id });
     return;
   }

@@ -405,6 +405,11 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     continuesRouting: z.literal(true).optional(),
     /** The step of the sender's plan this request carries; its status follows the work. */
     planStep: z.string().max(20).optional(),
+    /**
+     * A consultation for someone outside the sender's audience: the answer reaches the asking
+     * agent, and `text` is left empty here so the person never reads it.
+     */
+    consultation: z.literal(true).optional(),
   }),
 ]);
 export type MessageBlock = z.infer<typeof MessageBlock>;

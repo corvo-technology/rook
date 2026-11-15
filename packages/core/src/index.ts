@@ -1,5 +1,6 @@
 export * from "./action-approval.js";
 export * from "./activity-label.js";
+export * from "./agent-audience.js";
 export * from "./agent-catalog-data.js";
 export * from "./agent-import/index.js";
 export * from "./agent-skill.js";

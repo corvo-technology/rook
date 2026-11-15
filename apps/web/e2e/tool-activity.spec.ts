@@ -145,7 +145,7 @@ test("the chat transcript shows tool activity when turned on and hides it when t
 
   // The scripted runtime answers this with one write_file call, then a short reply.
   await page
-    .getByPlaceholder(/^Message /)
+    .getByRole("combobox", { name: /^Message / })
     .fill("write a note called notes/tool-activity.txt that says fake e2e note");
   await page.getByRole("button", { name: "Send" }).click();
 

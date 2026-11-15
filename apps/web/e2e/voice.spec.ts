@@ -46,7 +46,7 @@ test("voice settings connect a key, speak a reply, and open a call", async ({ pa
   await expect(page.getByTestId("voice-settings")).toBeVisible();
   await expect(page.getByLabel("API key", { exact: true })).toBeVisible();
   await captureScreenshot(page, testInfo, "voice-settings");
-  await page.getByRole("button", { name: "Close voice settings" }).click();
+  await page.getByTestId("settings-back").click();
   await expect(page.getByTestId("voice-settings")).toHaveCount(0);
 
   const preparedOff = await rpc<{ ready: boolean }>(page, "voice/prepare", {
@@ -80,9 +80,9 @@ test("voice settings connect a key, speak a reply, and open a call", async ({ pa
   expect(credentials).toEqual([expect.objectContaining({ hasKey: true, provider: "scripted" })]);
   expect(JSON.stringify(credentials)).not.toContain("fake-scripted-voice-key");
 
-  await page.getByRole("button", { name: "Close voice settings" }).click();
+  await page.getByTestId("settings-back").click();
 
-  const composer = page.getByPlaceholder(/Message/);
+  const composer = page.getByRole("combobox", { name: /^Message/ });
   await composer.fill("say hello");
   await page.keyboard.press("Enter");
   // A reply can render more than one text bubble; speak the latest one.
@@ -112,7 +112,7 @@ test("voice settings connect a key, speak a reply, and open a call", async ({ pa
   await openUserSettings(page, "voice");
   await expect(page.getByRole("button", { name: "Replace key" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Disconnect", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Close voice settings" }).click();
+  await page.getByTestId("settings-back").click();
 
   await page.getByTestId("call-button").click();
   await expect(page.getByTestId("call-view")).toBeVisible();

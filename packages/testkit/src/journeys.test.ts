@@ -3495,7 +3495,7 @@ describeJourneys("required product journeys", () => {
       );
     });
 
-    it("organize_bot sets, clears and pins sections for bots and groups of the user only", async () => {
+    it("organize_bot sets, clears and pins sections for bots and groups, reusing a section the space already has", async () => {
       const { cookie, me, chief } = await fleetOwner("organize");
       const outsider = await signup(
         app,
@@ -3503,6 +3503,7 @@ describeJourneys("required product journeys", () => {
         "Other",
       );
       const outsiderMe = await rpc<Me>(app, outsider, "me");
+      // Sections belong to the Space, so naming one that a member already made reuses it.
       const foreignSection = await prisma.botSection.create({
         data: { spaceId: me.spaceId, userId: outsiderMe.userId, name: "Research", position: 0 },
       });
@@ -3530,14 +3531,14 @@ describeJourneys("required product journeys", () => {
       await sendAndWait(app, cookie, chief.id, "move the bot named Alpha to section Research");
       expect(await botState()).toEqual({
         pinned: false,
-        section: { name: "Research", userId: me.userId },
+        section: { name: "Research", userId: outsiderMe.userId },
       });
       expect(await eventCount(alphaThread.id, "bot.updated")).toBe(botUpdates + 1);
 
       await sendAndWait(app, cookie, chief.id, "move the group named Crew to section Research");
       expect(await groupState()).toEqual({
         pinned: false,
-        section: { name: "Research", userId: me.userId },
+        section: { name: "Research", userId: outsiderMe.userId },
       });
       expect(await eventCount(crew.threadId, "group.updated")).toBe(1);
 
@@ -3566,7 +3567,7 @@ describeJourneys("required product journeys", () => {
       ).toEqual({ ok: true });
       expect(await botState()).toEqual({
         pinned: true,
-        section: { name: "Research", userId: me.userId },
+        section: { name: "Research", userId: outsiderMe.userId },
       });
 
       await sendAndWait(app, cookie, chief.id, "pin the bot named Alpha");
@@ -3917,12 +3918,9 @@ describeJourneys("required product journeys", () => {
         expect.objectContaining({ ok: true, routineId: routines[0]!.id, botName: "Scout" }),
       ]);
 
-      const again = await sendForApproval(cookie, chief.id, prompt);
-      await answerAndSettle(cookie, chief.id, again, "allow");
+      // The routine already exists, so asking again repeats nothing and needs no second approval.
+      await sendAndWait(app, cookie, chief.id, prompt);
       expect(await prisma.routine.count({ where: { botId: scout.id } })).toBe(1);
-      expect(await effectResults(again.runId, "create_child_routine")).toEqual([
-        expect.objectContaining({ ok: true, routineId: routines[0]!.id }),
-      ]);
     });
 
     it("update_bot on itself ignores blank bot management fields, with the switch off or on", async () => {

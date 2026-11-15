@@ -10,7 +10,7 @@ import {
   reserveModelCredits,
   utcDayStart,
 } from "./model-credits.js";
-import { asSystem, runAsSystem } from "./row-security.js";
+import { asSystem, runAsSystem, runAsTenant } from "./row-security.js";
 
 const databaseUrl = process.env.DATABASE_URL;
 const describePostgres =
@@ -95,7 +95,12 @@ describePostgres("what a bot has spent from hosted credits (PostgreSQL)", () => 
   it("counts only this bot's calls today, whether settled or still held", async () => {
     const run = await runFor(botId);
     const otherRun = await runFor(otherBotId);
-    const before = await botCreditSpendMicros(prisma, botId, utcDayStart(new Date()));
+    // The executor reads the spend inside the run's Space, where row-level security shows its runs.
+    const spent = () =>
+      runAsTenant({ spaceId, userId }, () =>
+        botCreditSpendMicros(prisma, botId, utcDayStart(new Date())),
+      );
+    const before = await spent();
     await reserveModelCredits(prisma, spaceId, 0.5, {
       callId: randomUUID(),
       spaceId,
@@ -111,7 +116,7 @@ describePostgres("what a bot has spent from hosted credits (PostgreSQL)", () => 
       spaceId,
       runId: otherRun.id,
     });
-    const after = await botCreditSpendMicros(prisma, botId, utcDayStart(new Date()));
+    const after = await spent();
     expect(after - before).toBe(750_000n);
   });
 

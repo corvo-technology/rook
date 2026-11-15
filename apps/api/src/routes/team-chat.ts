@@ -8,12 +8,14 @@ import {
   IsolationError,
   listChannelPeople,
   listDirectPeople,
+  loadGroupViewer,
   markDirectRead,
   markDirectUnreadFor,
   openChannelToSpace,
   openDirectThread,
   removeChannelPerson,
   requireDirectThread,
+  setChannelRoles,
 } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import { ORPCError } from "@orpc/server";
@@ -31,7 +33,11 @@ export function teamChatRoutes(ctx: RouterContext) {
   /** Whoever created the channel, or anyone who manages channels, changes who is in it. */
   async function manageable(actor: { spaceId: string; userId: string }, groupId: string) {
     const group = await prisma.chatGroup.findFirst({
-      where: { id: groupId, spaceId: actor.spaceId, ...channelVisibleTo(actor.userId) },
+      where: {
+        id: groupId,
+        spaceId: actor.spaceId,
+        ...channelVisibleTo(await loadGroupViewer(prisma, actor)),
+      },
       select: { userId: true },
     });
     if (!group) throw new IsolationError();
@@ -79,6 +85,15 @@ export function teamChatRoutes(ctx: RouterContext) {
             spaceId: context.actor.spaceId,
             groupId: input.groupId,
             userId: input.userId,
+          });
+          return { ok: true as const };
+        }),
+        setRoles: authed.groups.people.setRoles.handler(async ({ context, input }) => {
+          await requireManage(context.actor, input.groupId);
+          await setChannelRoles(prisma, {
+            spaceId: context.actor.spaceId,
+            groupId: input.groupId,
+            roleIds: input.roleIds,
           });
           return { ok: true as const };
         }),

@@ -861,6 +861,15 @@ export const ConnectionOwnerSchema = z.object({
   mine: z.boolean(),
 });
 export type ConnectionOwner = z.infer<typeof ConnectionOwnerSchema>;
+/** Who may talk to an agent. Unrestricted is everyone in the space; its owner always may. */
+export const BotAudienceSchema = z.object({
+  restricted: z.boolean(),
+  roleIds: z.array(Id).max(50),
+  userIds: z.array(Id).max(500),
+  /** Another agent may consult it for someone outside the audience. */
+  consultable: z.boolean(),
+});
+export type BotAudience = z.infer<typeof BotAudienceSchema>;
 
 export const ConnectionSchema = z.object({
   id: Id,

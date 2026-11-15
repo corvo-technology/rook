@@ -20,6 +20,13 @@ import { withModelRoles } from "../../../packages/adapters/src/testing/model-rol
 import type { RouterDeps } from "./router.js";
 import { createRouter } from "./router.js";
 
+// These tests are about the thread mechanics; who may talk to an agent has its own tests.
+vi.mock("./agent-audience.js", () => ({
+  requireInAudience: async () => undefined,
+  requireCanTalkTo: async () => undefined,
+  talkableBotIds: async (_prisma: unknown, _actor: unknown, ids: string[]) => new Set(ids),
+}));
+
 const actor = {
   spaceId: "space-1",
   userId: "user-1",

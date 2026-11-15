@@ -10,7 +10,6 @@ export function useHomeHeader({
   initials,
   activityMode,
   toggleActivityMode,
-  inboxUnread = false,
   runCreateAction,
   canCreateSpace = true,
 }: {
@@ -20,7 +19,6 @@ export function useHomeHeader({
   initials: string;
   activityMode: boolean;
   toggleActivityMode: () => void;
-  inboxUnread?: boolean;
   runCreateAction: (action: "bot" | "group" | "space") => void;
   canCreateSpace?: boolean;
 }) {
@@ -52,13 +50,6 @@ export function useHomeHeader({
           icon: { type: "sfSymbol" as const, name: activityMode ? "bell.fill" : "bell" },
           selected: activityMode,
           onPress: toggleActivityMode,
-        },
-        {
-          type: "button" as const,
-          label: t("Inbox"),
-          accessibilityLabel: t("Inbox"),
-          icon: { type: "sfSymbol" as const, name: inboxUnread ? "tray.full.fill" : "tray" },
-          onPress: () => router.push("/inbox"),
         },
         {
           type: "button" as const,
@@ -110,7 +101,6 @@ export function useHomeHeader({
     initials,
     activityMode,
     toggleActivityMode,
-    inboxUnread,
     runCreateAction,
     canCreateSpace,
     router,

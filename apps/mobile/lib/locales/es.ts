@@ -1167,11 +1167,4 @@ export const ES_MESSAGES: Record<string, string> = {
   "Reply in thread": "Responder en el hilo",
   "1 reply": "1 respuesta",
   "{count} replies": "{count} respuestas",
-  Inbox: "Bandeja de entrada",
-  "Mark all read": "Marcar todo como leído",
-  "Nothing here": "Nada por aquí",
-  Mention: "Mención",
-  Approval: "Aprobación",
-  Question: "Pregunta",
-  Alert: "Alerta",
 };

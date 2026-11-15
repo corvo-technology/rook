@@ -865,7 +865,7 @@ export interface ArtifactPut {
 }
 
 export interface NotificationMessage {
-  kind: "completion" | "failure" | "help" | "takeover" | "message";
+  kind: "completion" | "failure" | "help" | "takeover";
   title: string;
   body: string;
   botId: string;

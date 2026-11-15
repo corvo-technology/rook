@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Prisma } from "./client.js";
-import { notifyForMessage, raiseNotification, setNotificationPushSink } from "./notifications.js";
+import { notifyForMessage, raiseNotification } from "./notifications.js";
 
 function fakeTx(options: { replyAuthors?: string[]; rootAuthor?: string | null } = {}) {
   const raised: Array<{ userId: string; kind: string; dedupeKey: string }> = [];
@@ -149,25 +149,5 @@ describe("raiseNotification", () => {
         update: expect.objectContaining({ readAt: null }),
       }),
     );
-  });
-
-  it("hands the entry to the push path a moment later", async () => {
-    vi.useFakeTimers();
-    const sink = vi.fn();
-    setNotificationPushSink(sink);
-    try {
-      await raiseNotification({ notification: { upsert: async () => ({ id: "n1" }) } } as never, {
-        spaceId: "s",
-        userId: "u",
-        kind: "dm",
-        dedupeKey: "dm:t",
-      });
-      expect(sink).not.toHaveBeenCalled();
-      await vi.advanceTimersByTimeAsync(2_000);
-      expect(sink).toHaveBeenCalledWith("n1");
-    } finally {
-      setNotificationPushSink(undefined);
-      vi.useRealTimers();
-    }
   });
 });

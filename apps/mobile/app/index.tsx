@@ -337,17 +337,6 @@ function Home({ embedded, onSelectSpace }: InboxPaneProps & { embedded: boolean 
     deleteSection,
   } = useInboxChatActions({ loadBots, setBots, setGroups, setSpaces, botSections });
 
-  const [inboxUnread, setInboxUnread] = useState(false);
-  const loadInboxUnread = useCallback(async () => {
-    if (!hasSession) return;
-    try {
-      setInboxUnread((await rpc("inbox/list")).unreadCount > 0);
-    } catch {
-      // The bell keeps its last state; the chat list reports connection problems.
-    }
-  }, [hasSession]);
-  useForegroundPoll(loadInboxUnread, INBOX_POLL_INTERVAL_MS, hasSession && (embedded || isFocused));
-
   const loadActivity = useCallback(async () => {
     if (spaceActionRef.current.busy || spaceActionRef.current.recoveryId) return;
     if (!hasSession || !activityMode) {
@@ -639,7 +628,6 @@ function Home({ embedded, onSelectSpace }: InboxPaneProps & { embedded: boolean 
     initials,
     activityMode,
     toggleActivityMode,
-    inboxUnread,
     runCreateAction,
     canCreateSpace,
   });
@@ -748,7 +736,6 @@ function Home({ embedded, onSelectSpace }: InboxPaneProps & { embedded: boolean 
           initials={initials}
           activityMode={activityMode}
           toggleActivityMode={toggleActivityMode}
-          inboxUnread={inboxUnread}
           runCreateAction={runCreateAction}
           canCreateSpace={canCreateSpace}
           columnInsets={columnInsets}

@@ -94,7 +94,6 @@ export * from "./home-object-store.js";
 export { HonchoMemoryProvider } from "./honcho-memory-provider.js";
 export * from "./host-aware-sandbox.js";
 export * from "./http-decisions.js";
-export * from "./inbox-push.js";
 export * from "./infisical-secret-store.js";
 export * from "./installed-connectors.js";
 export * from "./installed-messaging-surface.js";

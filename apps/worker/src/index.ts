@@ -27,7 +27,6 @@ import {
   createConnectorStack,
   createDeadJobPruner,
   createIdleComputerSweeper,
-  createInboxPushSink,
   createJobReconciler,
   createLocalSpeech,
   createMessagingContextLoader,
@@ -95,7 +94,6 @@ import {
   rowSecurityWarning,
   runAsSystem,
   securityEventRetentionDays,
-  setNotificationPushSink,
   verifyContentKeys,
 } from "@corvo/db";
 import { SERVICE_NAMES } from "@corvo/logging";
@@ -280,7 +278,6 @@ async function main() {
     jobs,
     accessToken: process.env.EXPO_ACCESS_TOKEN,
   });
-  setNotificationPushSink(createInboxPushSink(prisma, notifications));
   // Aborted only when the drain deadline passes: running turns then return to the queue.
   const interruptRuns = new AbortController();
   const executor = createRunExecutor({

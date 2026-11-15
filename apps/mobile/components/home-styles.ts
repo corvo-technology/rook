@@ -196,18 +196,6 @@ export function createHomeStyles() {
       borderRadius: 4,
       backgroundColor: tokens.unread,
     },
-    countBadge: {
-      minWidth: 20,
-      height: 20,
-      borderRadius: 10,
-      paddingHorizontal: 6,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: tokens.unread,
-    },
-    mentionBadge: { backgroundColor: tokens.primary },
-    countText: { color: "#FFFFFF", fontSize: 12, fontWeight: "600" },
-    mentionText: { color: tokens.primaryForeground },
     spaceHeading: {
       flexDirection: "row",
       alignItems: "center",

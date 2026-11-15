@@ -1158,11 +1158,4 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Reply in thread": "在主题中回复",
   "1 reply": "1 条回复",
   "{count} replies": "{count} 条回复",
-  Inbox: "收件箱",
-  "Mark all read": "全部标为已读",
-  "Nothing here": "这里没有内容",
-  Mention: "提及",
-  Approval: "审批",
-  Question: "问题",
-  Alert: "提醒",
 };

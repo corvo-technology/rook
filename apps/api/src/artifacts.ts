@@ -734,7 +734,9 @@ export async function artifactVisibleWhere(
   const { speaker, viewer } = await fileViewer(db, actor);
   return {
     AND: [
-      { OR: [{ groupId: null }, { group: channelVisibleTo(viewer) }] },
+      // Someone who sees every channel needs no channel clause; an empty relation filter is
+      // not a filter Prisma answers the way a missing one is.
+      ...(viewer.seesAll ? [] : [{ OR: [{ groupId: null }, { group: channelVisibleTo(viewer) }] }]),
       { OR: [{ groupId: { not: null } }, { botId: null }, { bot: agentAudienceWhere(speaker) }] },
     ],
   };

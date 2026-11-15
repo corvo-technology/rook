@@ -59,6 +59,7 @@ function setup(latestThreadBotId?: string) {
   };
   const prisma = {
     message: { findUnique: vi.fn().mockResolvedValue(null) },
+    bot: { findMany: vi.fn().mockResolvedValue([]) },
     $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
   } as unknown as PrismaClient;
   const target = {

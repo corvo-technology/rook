@@ -54,6 +54,13 @@ describe("groupRecipient", () => {
     expect(groupRecipient(snapshot({ members: [members![0]!] }), "hi", [])).toBeUndefined();
   });
 
+  it("names an agent outside the channel instead of the member it would have gone to", () => {
+    const chief = { id: "chief", name: "Chefe", color: "#111111" };
+    expect(groupRecipient(snapshot(), "@Chefe ajude", [], [chief])?.name).toBe("Chefe");
+    expect(groupRecipient(snapshot(), "ajude", ["chief"], [chief])?.name).toBe("Chefe");
+    expect(groupRecipient(snapshot(), "@Chefe e @Manager", [], [chief])).toBeUndefined();
+  });
+
   it("ignores messages from bots that are not members", () => {
     const state = snapshot({ messages: [message("designer"), message("someone-else")] });
     expect(groupRecipient(state, "hi", [])?.name).toBe("Designer");

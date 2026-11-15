@@ -19,6 +19,8 @@ import {
   projectMessages,
   QUEUE_HOLDING_RUN_STATUSES,
   resolveGroupTargetBotIds,
+  resolveMentionedBotIds,
+  resolveMentionedOutsideBotIds,
   runFailureError,
   runReadsThreadHistory,
 } from "@corvo/core";
@@ -333,6 +335,28 @@ export async function cancelSupersededQueuedRuns(
   await tx.task.updateMany({
     where: { id: { in: superseded.map((run) => run.taskId) } },
     data: { status: "cancelled" },
+  });
+}
+
+/** The agents of the space, outside this channel, that the message names. */
+async function mentionedOutsideBotIds(
+  prisma: PrismaClient,
+  actor: Actor,
+  target: Extract<ThreadTarget, { kind: "group" }>,
+  text: string,
+  mentions: MentionTargetInput[] | undefined,
+): Promise<string[]> {
+  const explicitMentions = splitMentionTargets(mentions).botMentionIds;
+  if (!text.includes("@") && explicitMentions.length === 0) return [];
+  const others = await prisma.bot.findMany({
+    where: { spaceId: actor.spaceId, archivedAt: null, id: { notIn: target.memberBotIds } },
+    select: { id: true, name: true },
+  });
+  return resolveMentionedOutsideBotIds({
+    text,
+    members: target.members.map((member) => ({ id: member.botId, name: member.name })),
+    others,
+    explicitMentions,
   });
 }
 
@@ -814,14 +838,24 @@ export async function sendThreadMessage(
   // Who may be woken by this message: an agent whose audience leaves the sender out is never
   // routed to, mentioned into a run or answered from, in a channel or in its own conversation.
   if (target.kind === "bot") await requireCanTalkTo(deps.prisma, actor, target.botId);
+  // An agent of the space that is not in the channel can still be named: it answers this message.
+  const outsideMentioned =
+    target.kind === "group"
+      ? await mentionedOutsideBotIds(deps.prisma, actor, target, input.text ?? "", input.mentions)
+      : [];
   const talkable =
     target.kind === "bot"
       ? new Set([target.botId])
-      : await talkableBotIds(deps.prisma, actor, target.memberBotIds);
+      : await talkableBotIds(deps.prisma, actor, [...target.memberBotIds, ...outsideMentioned]);
+  // Naming an agent the sender may not talk to is a refusal, never a message that goes elsewhere.
+  if (outsideMentioned.some((botId) => !talkable.has(botId))) {
+    throw new ORPCError("FORBIDDEN", { message: "You can't talk to this agent." });
+  }
   // The model call happens before the transaction so it never holds the thread's locks.
   // A reply inside a thread stays with that thread's agent, so only the main column is routed.
+  // A message that names an agent has no one left to route.
   const routing =
-    target.kind === "group" && !input.threadRootId
+    target.kind === "group" && !input.threadRootId && outsideMentioned.length === 0
       ? await routeGroupMessage(
           { prisma: deps.prisma, model: deps.router },
           {
@@ -1091,17 +1125,34 @@ export async function sendThreadMessage(
         routing && routing.strategy !== "fallback"
           ? routing.picked.filter((botId) => memberBotIds.includes(botId))
           : undefined;
-      const wantedBotIds =
-        routedBotIds ??
-        resolveGroupTargetBotIds({
-          text: input.text ?? "",
-          members: members.map((member) => ({ id: member.botId, name: member.name })),
-          explicitMentions: mentionTargets.botMentionIds,
-          fallbackBotId:
-            (threadRoot &&
-              (await threadConversationBot(tx, target.threadId, threadRoot, memberBotIds))) ||
-            (await groupConversationOwner(tx, target.threadId, memberBotIds)),
-        });
+      const memberRefs = members.map((member) => ({ id: member.botId, name: member.name }));
+      const outsideBotIds = outsideMentioned.length
+        ? (
+            await tx.bot.findMany({
+              where: { id: { in: outsideMentioned }, spaceId: actor.spaceId, archivedAt: null },
+              select: { id: true },
+            })
+          ).map((bot) => bot.id)
+        : [];
+      const wantedBotIds = outsideBotIds.length
+        ? [
+            ...resolveMentionedBotIds({
+              text: input.text ?? "",
+              members: memberRefs,
+              explicitMentions: mentionTargets.botMentionIds,
+            }),
+            ...outsideBotIds,
+          ]
+        : (routedBotIds ??
+          resolveGroupTargetBotIds({
+            text: input.text ?? "",
+            members: memberRefs,
+            explicitMentions: mentionTargets.botMentionIds,
+            fallbackBotId:
+              (threadRoot &&
+                (await threadConversationBot(tx, target.threadId, threadRoot, memberBotIds))) ||
+              (await groupConversationOwner(tx, target.threadId, memberBotIds)),
+          }));
       const targetBotIds = wantedBotIds.filter((botId) => talkable.has(botId));
       // Naming only agents the sender may not talk to is a refusal, not a message nobody hears.
       if (wantedBotIds.length > 0 && targetBotIds.length === 0) {

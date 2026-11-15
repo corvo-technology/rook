@@ -9,7 +9,7 @@ import { builtinAgentTools } from "./builtin-tools.js";
 import { selectCloudAgentTools } from "./cloud-agent-tools-select.js";
 import { selectMemoryTools } from "./memory-tools.js";
 import { filterImageReturningComputerTools } from "./model-vision.js";
-import { filterBuiltinToolsForRun, filterBuiltinToolsForThread } from "./schedule-tools.js";
+import { filterBuiltinToolsForRun } from "./schedule-tools.js";
 
 export const READ_ONLY_AGENT_TOOLS = new Set([
   "computer_observe",
@@ -132,12 +132,9 @@ export function selectBuiltinToolsForRun(options: {
   return selectCloudAgentTools(
     selectMemoryTools(
       filterBuiltinToolsForRun(
-        filterBuiltinToolsForThread(
-          filterPageBrowserTools(
-            filterImageReturningComputerTools(builtinAgentTools, options.graphicalToolsAllowed),
-            options.pageBrowserAllowed ?? options.graphicalToolsAllowed,
-          ),
-          options.groupId,
+        filterPageBrowserTools(
+          filterImageReturningComputerTools(builtinAgentTools, options.graphicalToolsAllowed),
+          options.pageBrowserAllowed ?? options.graphicalToolsAllowed,
         ),
         options.trigger,
       ),

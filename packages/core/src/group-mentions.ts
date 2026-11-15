@@ -47,7 +47,7 @@ export function resolveMentionedBotIds(input: {
   const targetIds = new Set<string>();
 
   for (const mentionId of input.explicitMentions ?? []) {
-    // Out-of-chat bots stay as @Name in the prompt; only members are woken here.
+    // Agents outside the channel are woken by `resolveMentionedOutsideBotIds`.
     if (membersById.has(mentionId)) targetIds.add(mentionId);
   }
 
@@ -74,10 +74,49 @@ export function resolveMentionedBotIds(input: {
   return [...targetIds];
 }
 
+/**
+ * The agents of the space outside the channel that a message names, by mention chip or @Name. A
+ * name a member also carries stays with the member, so naming never swaps who answers.
+ */
+export function resolveMentionedOutsideBotIds(input: {
+  text: string;
+  members: GroupMemberRef[];
+  others: GroupMemberRef[];
+  explicitMentions?: string[];
+}): string[] {
+  const memberIds = new Set(input.members.map((member) => member.id));
+  const memberNames = new Set(input.members.map((member) => member.name.trim().toLowerCase()));
+  const outside = input.others.filter(
+    (bot) => !memberIds.has(bot.id) && !memberNames.has(bot.name.trim().toLowerCase()),
+  );
+  const outsideIds = new Set(outside.map((bot) => bot.id));
+  const targetIds = new Set<string>();
+  for (const mentionId of input.explicitMentions ?? []) {
+    if (outsideIds.has(mentionId)) targetIds.add(mentionId);
+  }
+  // Longest first over everyone, so "@Chief of Staff" is not read as "@Chief".
+  const names = [...input.members, ...outside]
+    .map((bot) => bot.name.trim())
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length);
+  if (names.length === 0) return [...targetIds];
+  const pattern = new RegExp(
+    `(?<![\\p{L}\\p{N}_-])@(${names.map(escapeRegExp).join("|")})(?![\\p{L}\\p{N}_-])`,
+    "giu",
+  );
+  const mentioned = new Set(
+    [...input.text.matchAll(pattern)].map((match) => match[1]!.toLowerCase()),
+  );
+  for (const bot of outside) {
+    if (mentioned.has(bot.name.trim().toLowerCase())) targetIds.add(bot.id);
+  }
+  return [...targetIds];
+}
+
 export function resolveGroupTargetBotIds(input: {
   text: string;
   members: GroupMemberRef[];
-  /** Bot ids from typed mention chips (non-members are ignored for wake). */
+  /** Bot ids from typed mention chips; agents outside the channel are woken separately. */
   explicitMentions?: string[];
   /** Who answers a message that addresses nobody: the member the conversation is with. */
   fallbackBotId?: string;

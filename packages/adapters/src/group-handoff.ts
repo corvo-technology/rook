@@ -18,6 +18,7 @@ import {
   touchGroupUpdatedAt,
 } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
+import { audienceSelect, personMayTalkTo } from "./agent-audience.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 
 export async function handoffToGroupBot(
@@ -98,7 +99,9 @@ export async function handoffToGroupBot(
       return { error: "group handoffs must stay in the current group" } as const;
     }
     const mayRoute = authority.squadRouting && authority.ownerStarted;
-    if (!mayRoute && !group.members.some((member) => member.bot.id === run.botId)) {
+    // A run already in this channel's thread was woken here (a member, or an agent a person named),
+    // so only a run reaching in from elsewhere has to be a member.
+    if (!mayRoute && !inGroup && !group.members.some((member) => member.bot.id === run.botId)) {
       return { error: "source bot is no longer a group member" } as const;
     }
 
@@ -138,16 +141,39 @@ export async function handoffToGroupBot(
       } as const;
     }
 
-    const target = resolveBotAddress(
-      group.members.map((member) => member.bot),
-      {
-        botId: input.bot_id,
-        name: input.confirm_name,
-      },
-    );
-    if (!target) return { error: "handoff target is not a group member" } as const;
+    // Members first; then any other agent of the space, who answers this stage as a guest.
+    const members = group.members.map((member) => member.bot);
+    const address = { botId: input.bot_id, name: input.confirm_name };
+    const target =
+      resolveBotAddress(members, address) ??
+      resolveBotAddress(
+        await tx.bot.findMany({
+          where: {
+            spaceId: run.spaceId,
+            archivedAt: null,
+            id: { notIn: members.map((member) => member.id) },
+          },
+          select: { id: true, name: true },
+        }),
+        address,
+      );
+    if (!target) return { error: "handoff target is not an agent of this space" } as const;
     const targetId = target.id;
     if (targetId === run.botId) return { error: "cannot hand off to yourself" } as const;
+    // The channel shows the stage to everyone in it, so the agent must take the person behind the
+    // run as its own audience; consulting it for them goes through message_bot, privately.
+    const targetRow = await tx.bot.findFirst({
+      where: { id: targetId, spaceId: run.spaceId, archivedAt: null },
+      select: audienceSelect,
+    });
+    if (
+      !targetRow ||
+      !(await personMayTalkTo(tx, { spaceId: run.spaceId, userId: run.userId }, targetRow))
+    ) {
+      return {
+        error: `${target.name} works only with some people. Ask it with message_bot instead, or tell the person.`,
+      } as const;
+    }
 
     let sourceBlocks: MessageBlock[] = [];
     if (activeSource.sourceMessage) {

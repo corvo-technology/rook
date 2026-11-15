@@ -7,6 +7,7 @@ import {
   loadMessagePage,
   shouldForwardBackgroundThreadEvent,
   shouldForwardPeerThreadEvent,
+  withAuthor,
   withEventRoutineName,
   withRoutineNames,
 } from "./thread-message-pages.js";
@@ -52,6 +53,53 @@ describe("routine names", () => {
     const prisma = { run: { findMany } } as unknown as PrismaClient;
     await withRoutineNames(prisma, [row("m1", null)]);
     expect(findMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("who wrote a message", () => {
+  const row = {
+    id: "m1",
+    threadId: "thread-1",
+    seq: 1,
+    role: "user",
+    blocks: [{ kind: "text", text: "Oi" }],
+    botId: null,
+    replyToMessageId: null,
+    replyQuote: null,
+    runId: null,
+    authorUserId: "user-1",
+    createdAt: new Date("2026-11-10T08:00:00Z"),
+  };
+
+  it("falls back to the start of the address when the account kept a placeholder name", async () => {
+    const prisma = {
+      run: { findMany: vi.fn(async () => []) },
+      user: {
+        findMany: vi.fn(async () => [
+          { id: "user-1", name: "Account", email: "ana.souza@example.test", image: null },
+        ]),
+      },
+    } as unknown as PrismaClient;
+    const [message] = await withRoutineNames(prisma, [row]);
+    expect(message?.authorName).toBe("ana.souza");
+  });
+
+  it("does the same for a live event", async () => {
+    const prisma = {
+      user: {
+        findUnique: vi.fn(async () => ({
+          name: "",
+          email: "ana.souza@example.test",
+          image: null,
+        })),
+      },
+    } as unknown as PrismaClient;
+    const event = await withAuthor(
+      prisma,
+      { type: "thread.message.created", payload: { authorUserId: "user-1" } } as never,
+      new Map(),
+    );
+    expect(event.payload).toMatchObject({ authorName: "ana.souza" });
   });
 });
 

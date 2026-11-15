@@ -207,7 +207,7 @@ export function teamChatRoutes(ctx: RouterContext) {
         await conversation(actor, input.threadId);
         const authorCache = new Map<
           string,
-          Promise<{ name: string; image: string | null } | null>
+          Promise<{ name: string; email: string; image: string | null } | null>
         >();
         const follow = deps.events.follow(input.threadId, input.cursor, context.signal);
         const revoked = accessRevocations

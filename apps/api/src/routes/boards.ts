@@ -17,6 +17,7 @@ import {
 } from "@corvo/db";
 import { ORPCError } from "@orpc/server";
 import { accessRevocations } from "../access-revocations.js";
+import { requireCanTalkTo } from "../agent-audience.js";
 import type { RouterContext } from "./context.js";
 import { HEARTBEAT_MS, SESSION_RECHECK_MS } from "./shared.js";
 
@@ -161,6 +162,8 @@ export function boardsRoutes(ctx: RouterContext) {
       create: boardEnabled.tickets.create.handler(async ({ context, input }) => {
         await resolveSpaceBoard(deps.prisma, context.actor.spaceId, input.boardId);
         await repos.getBot(context.actor, input.assigneeBotId);
+        // Handing work to an agent is talking to it.
+        await requireCanTalkTo(deps.prisma, context.actor, input.assigneeBotId);
         const result = await createTicket(ticketDeps, {
           ...input,
           spaceId: context.actor.spaceId,
@@ -171,7 +174,10 @@ export function boardsRoutes(ctx: RouterContext) {
         return result.ticket;
       }),
       update: boardEnabled.tickets.update.handler(async ({ context, input }) => {
-        if (input.assigneeBotId) await repos.getBot(context.actor, input.assigneeBotId);
+        if (input.assigneeBotId) {
+          await repos.getBot(context.actor, input.assigneeBotId);
+          await requireCanTalkTo(deps.prisma, context.actor, input.assigneeBotId);
+        }
         const result = await updateTicket(ticketDeps, {
           ...input,
           spaceId: context.actor.spaceId,

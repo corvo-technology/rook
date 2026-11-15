@@ -1,9 +1,24 @@
 import type { Actor } from "@corvo/contracts";
 import { GROUP_MEMBER_MIN } from "@corvo/contracts";
 import type { PrismaClient } from "@corvo/db";
-import { Prisma } from "@corvo/db";
+import { channelVisibleTo, Prisma } from "@corvo/db";
 import { describe, expect, it, vi } from "vitest";
 import { querySpaceSearch } from "./search.js";
+
+// Who the viewer is has its own tests; these are about what the queries return.
+vi.mock("@corvo/db", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@corvo/db")>()),
+  loadSpeaker: async (_prisma: unknown, actor: { userId: string }) => ({
+    userId: actor.userId,
+    roleIds: [],
+    membership: { isOwner: true, permissions: [] },
+  }),
+  loadGroupViewer: async (_prisma: unknown, actor: { userId: string }) => ({
+    userId: actor.userId,
+    roleIds: [],
+    seesAll: false,
+  }),
+}));
 
 const actor: Actor = { spaceId: "space-test", userId: "user-test" };
 
@@ -159,8 +174,14 @@ it("resolves active group eligibility once for names, artifacts, and messages", 
   expect(eligibility.text).toContain("SELECT COUNT(*) FROM chat_group_members gm");
   expect(eligibility.text).toContain('INNER JOIN bots gb ON gb.id = gm."botId"');
   expect(eligibility.text).toContain('gm."groupId" = g.id AND gb."archivedAt" IS NULL');
-  expect(eligibility.text).toContain(") >= $4");
-  expect(eligibility.values).toEqual([actor.spaceId, actor.userId, actor.userId, GROUP_MEMBER_MIN]);
+  expect(eligibility.text).toContain(") >= $5");
+  expect(eligibility.values).toEqual([
+    actor.spaceId,
+    actor.userId,
+    actor.userId,
+    [],
+    GROUP_MEMBER_MIN,
+  ]);
 
   expect(prisma.chatGroup.findMany.mock.calls[0]?.[0]).toMatchObject({
     where: { spaceId: actor.spaceId, id: { in: ["group-test"] } },
@@ -301,11 +322,14 @@ describe("search within one thread", () => {
     expect(prisma.routine.findMany).not.toHaveBeenCalled();
     expect(prisma.bot.findMany).not.toHaveBeenCalled();
     expect(prisma.chatGroup.findFirst).toHaveBeenCalledWith({
-      where: { id: "group-1", spaceId: actor.spaceId, userId: actor.userId },
+      where: {
+        id: "group-1",
+        spaceId: actor.spaceId,
+        AND: [channelVisibleTo({ userId: actor.userId, roleIds: [], seesAll: false })],
+      },
       select: { id: true, name: true },
     });
     const [, ...values] = prisma.$queryRaw.mock.calls[0] ?? [];
-    expect(values).toContain(actor.userId);
     const thread = values.find((value) => value?.text?.includes('t."groupId" ='));
     expect(thread?.values).toEqual(["group-1"]);
   });

@@ -123,8 +123,12 @@ describe("the people list", () => {
 
 describe("who sees a channel", () => {
   it("is open to all unless people were added, and always to its creator and those people", () => {
-    expect(channelVisibleTo("u-a")).toEqual({
-      OR: [{ userId: "u-a" }, { people: { none: {} } }, { people: { some: { userId: "u-a" } } }],
+    expect(channelVisibleTo({ userId: "u-a", roleIds: [], seesAll: false })).toEqual({
+      OR: [
+        { userId: "u-a" },
+        { people: { none: {} }, accessRoleIds: { isEmpty: true } },
+        { people: { some: { userId: "u-a" } } },
+      ],
     });
   });
 });

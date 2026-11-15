@@ -10,6 +10,21 @@ import {
   storeInboundAttachment,
 } from "./artifacts.js";
 
+// Who the viewer is has its own tests; these are about what the queries return.
+vi.mock("@corvo/db", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@corvo/db")>()),
+  loadSpeaker: async (_prisma: unknown, actor: { userId: string }) => ({
+    userId: actor.userId,
+    roleIds: [],
+    membership: { isOwner: true, permissions: [] },
+  }),
+  loadGroupViewer: async (_prisma: unknown, actor: { userId: string }) => ({
+    userId: actor.userId,
+    roleIds: [],
+    seesAll: true,
+  }),
+}));
+
 const actor: Actor = {
   userId: "user-1",
   spaceId: "space-1",

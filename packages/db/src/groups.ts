@@ -2,11 +2,11 @@ import type { Actor, Group, GroupMember, SpaceGroup } from "@corvo/contracts";
 import { GROUP_MEMBER_MAX, GROUP_MEMBER_MIN } from "@corvo/contracts";
 import { displayName } from "@corvo/core";
 import { cancelRunsInTransaction } from "./cancel-runs.js";
-import { channelVisibleTo } from "./channel-people.js";
+import { channelVisibleTo, groupVisibleTo } from "./channel-people.js";
 import type { Prisma, PrismaClient } from "./client.js";
 import { expireComputerExecutionLeases, restoreBotUnderComputerQuota } from "./computers.js";
 import { withNewestThreadMessages } from "./preview-messages.js";
-import { IsolationError, memberSpaceIds } from "./scope.js";
+import { IsolationError, loadGroupViewer, memberSpaceIds } from "./scope.js";
 import { lockSpaceForContentCreation } from "./spaces.js";
 import {
   activeRunSelection,
@@ -303,6 +303,11 @@ async function attachNewestGroupMessage<T extends { thread: { id: string } | nul
 }
 
 export function createGroupRepos(prisma: PrismaClient) {
+  /** The channels the actor may see in their space: the private-channel filter. */
+  async function visibleTo(actor: Actor): Promise<Prisma.ChatGroupWhereInput> {
+    return channelVisibleTo(await loadGroupViewer(prisma, actor));
+  }
+
   /** Shows each group's unread dot as this member sees it, not as its creator left it. */
   async function withMemberUnread<
     T extends { thread: { id: string; userId: string; unread: boolean } | null },
@@ -324,13 +329,19 @@ export function createGroupRepos(prisma: PrismaClient) {
   async function listSpaceGroupsForSpaces(actor: Actor, spaceIds: string[]): Promise<SpaceGroup[]> {
     const memberSpaces = await memberSpaceIds(prisma, actor.userId, spaceIds);
     if (memberSpaces.length === 0) return [];
+    // The viewer differs per space: a role in one says nothing in another.
+    const perSpace = await Promise.all(
+      memberSpaces.map(async (spaceId) => ({
+        spaceId,
+        ...channelVisibleTo(await loadGroupViewer(prisma, { spaceId, userId: actor.userId })),
+      })),
+    );
     const groups = await withNewestThreadMessages(
       prisma,
       await prisma.chatGroup.findMany({
         where: {
-          spaceId: { in: memberSpaces },
           archivedAt: null,
-          ...channelVisibleTo(actor.userId),
+          OR: perSpace.map(({ spaceId, ...visible }) => ({ spaceId, AND: [visible] })),
         },
         select: {
           id: true,
@@ -383,7 +394,7 @@ export function createGroupRepos(prisma: PrismaClient) {
         where: {
           AND: [
             { spaceId: actor.spaceId },
-            channelVisibleTo(actor.userId),
+            await visibleTo(actor),
             {
               OR: [
                 { archivedAt: { not: null } },
@@ -416,7 +427,7 @@ export function createGroupRepos(prisma: PrismaClient) {
           where: {
             spaceId: actor.spaceId,
             archivedAt: null,
-            ...channelVisibleTo(actor.userId),
+            ...(await visibleTo(actor)),
           },
           include: groupInclude,
           orderBy: [{ pinned: "desc" }, { updatedAt: "desc" }],
@@ -438,7 +449,7 @@ export function createGroupRepos(prisma: PrismaClient) {
             id: groupId,
             spaceId: actor.spaceId,
             ...(options.includeArchived ? {} : { archivedAt: null }),
-            ...channelVisibleTo(actor.userId),
+            ...(await visibleTo(actor)),
           },
           include: groupInclude,
         }),
@@ -455,7 +466,7 @@ export function createGroupRepos(prisma: PrismaClient) {
             id: groupId,
             spaceId: actor.spaceId,
             archivedAt: null,
-            ...channelVisibleTo(actor.userId),
+            ...(await visibleTo(actor)),
           },
           include: groupTargetInclude,
         }),
@@ -721,18 +732,27 @@ export function createGroupRepos(prisma: PrismaClient) {
 }
 
 export async function lockOwnedGroup(
-  prisma: Pick<Prisma.TransactionClient, "$queryRaw">,
+  prisma: Pick<Prisma.TransactionClient, "$queryRaw" | "spaceMember" | "spaceRole">,
   actor: Pick<Actor, "spaceId" | "userId">,
   groupId: string,
 ) {
-  const locked = await prisma.$queryRaw<Array<{ id: string }>>`
-    SELECT id
+  const locked = await prisma.$queryRaw<
+    Array<{ id: string; userId: string; peopleIds: string[]; accessRoleIds: string[] }>
+  >`
+    SELECT id, "userId", "accessRoleIds",
+      ARRAY(SELECT p."userId" FROM chat_group_people p WHERE p."groupId" = chat_groups.id) AS "peopleIds"
     FROM chat_groups
     WHERE id = ${groupId}
       AND "spaceId" = ${actor.spaceId}
     FOR UPDATE
   `;
-  if (locked.length !== 1) throw new IsolationError();
+  const group = locked[0];
+  if (locked.length !== 1 || !group) throw new IsolationError();
+  // Every write to a channel starts here, so a private one is closed to whoever cannot see it.
+  if ((group.peopleIds?.length ?? 0) > 0 || (group.accessRoleIds?.length ?? 0) > 0) {
+    const viewer = await loadGroupViewer(prisma, actor, { inTransaction: true });
+    if (!groupVisibleTo(viewer, group)) throw new IsolationError();
+  }
 }
 
 export async function touchGroupUpdatedAt(

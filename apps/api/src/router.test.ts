@@ -40,6 +40,13 @@ import {
   SESSION_RECHECK_MS,
 } from "./router.js";
 
+// Who may talk to an agent has its own tests; these are about the routes.
+vi.mock("./agent-audience.js", () => ({
+  requireInAudience: async () => undefined,
+  requireCanTalkTo: async () => undefined,
+  talkableBotIds: async (_prisma: unknown, _actor: unknown, ids: string[]) => new Set(ids),
+}));
+
 vi.mock("@corvo/db", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@corvo/db")>()),
   spaceCreationPolicy: async () => ({ canCreateSpace: true, membersCanCreateSpaces: null }),

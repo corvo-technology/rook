@@ -16,6 +16,7 @@ import {
   withTransactionRetry,
 } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
+import { audienceSelect, personMayTalkTo } from "./agent-audience.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { updatePlanCard } from "./plan-card.js";
 
@@ -143,7 +144,13 @@ export async function messageBot(
 
   const candidates = await deps.prisma.bot.findMany({
     where: { spaceId: run.spaceId, archivedAt: null },
-    select: { id: true, name: true, title: true, thread: { select: { id: true } } },
+    select: {
+      id: true,
+      name: true,
+      title: true,
+      thread: { select: { id: true } },
+      ...audienceSelect,
+    },
   });
   const target = resolveBotAddress(candidates, {
     botId: input.bot_id,
@@ -153,6 +160,23 @@ export async function messageBot(
   if (target.id === sender.id) return { ok: false as const, error: "a bot cannot message itself" };
   if (!target.thread)
     return { ok: false as const, error: `${target.name} has no chat to deliver to` };
+  // An agent asking for someone reaches what that person may reach, and agents that take
+  // consultations even outside their audience; the answer then goes only to the asking agent.
+  const person = { spaceId: run.spaceId, userId: run.userId };
+  if (!(await personMayTalkTo(deps.prisma, person, target, "agent"))) {
+    return {
+      ok: false as const,
+      error: `${target.name} works only with some people and takes no questions from other agents for anyone else. Its owner can let them in or turn consultations on.`,
+    };
+  }
+  const senderRow = await deps.prisma.bot.findUnique({
+    where: { id: sender.id },
+    select: audienceSelect,
+  });
+  // The person is outside the sender's audience: they asked an agent that consulted this one.
+  const consultation = Boolean(
+    senderRow && !(await personMayTalkTo(deps.prisma, person, senderRow)),
+  );
   const returnsToSender =
     options?.allowTerminalSource === true &&
     (intent === "result" || intent === "status") &&
@@ -245,7 +269,6 @@ export async function messageBot(
           where: {
             id: target.id,
             spaceId: run.spaceId,
-            userId: run.userId,
             archivedAt: null,
           },
           select: { id: true },
@@ -268,7 +291,10 @@ export async function messageBot(
           kind: "bot_message_received",
           fromBotId: sender.id,
           fromBotName: sender.name,
-          text: message,
+          // What a consulted agent answered goes to the asking agent in its prompt; the person
+          // reads only that a consultation happened.
+          text: consultation ? "" : message,
+          ...(consultation ? { consultation: true as const } : {}),
           hop,
           intent,
           returnToMessageId: outbound.id,

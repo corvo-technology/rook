@@ -5,6 +5,7 @@ import { botTokensSince, IsolationError } from "@corvo/db";
 import { ORPCError } from "@orpc/server";
 import {
   ArtifactListCursorError,
+  artifactVisibleWhere,
   createOwnedArtifact,
   deleteArtifactFamily,
   getOwnedArtifact,
@@ -38,6 +39,7 @@ export function contentRoutes(ctx: RouterContext) {
             botId: input.botId,
             groupId: null,
             spaceId: context.actor.spaceId,
+            ...(await artifactVisibleWhere(deps.prisma, context.actor)),
           },
         });
         return rows.map((row) => ({

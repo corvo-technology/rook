@@ -11,6 +11,7 @@ import {
 } from "@corvo/contracts";
 import {
   AttachmentValidationError,
+  can,
   decodeAttachmentBase64,
   inferAttachmentMimeType,
   messageBlockForArtifact,
@@ -18,7 +19,16 @@ import {
   validateAttachmentMimeType,
 } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
-import { IsolationError, Prisma, withResolvedArtifactVersion } from "@corvo/db";
+import {
+  agentAudienceSql,
+  agentAudienceWhere,
+  channelVisibleTo,
+  channelVisibleToSql,
+  IsolationError,
+  loadSpeaker,
+  Prisma,
+  withResolvedArtifactVersion,
+} from "@corvo/db";
 
 export async function createOwnedArtifact(
   deps: {
@@ -205,6 +215,7 @@ export async function getOwnedArtifact(
       botId: input.botId,
       groupId: null,
       spaceId: actor.spaceId,
+      ...(await artifactVisibleWhere(deps.prisma, actor)),
     },
   });
   if (!row) throw new IsolationError();
@@ -224,6 +235,7 @@ export async function getSpaceArtifact(
       id: input.artifactId,
       groupId: input.groupId,
       spaceId: actor.spaceId,
+      ...(await artifactVisibleWhere(deps.prisma, actor)),
     },
   });
   if (!row) throw new IsolationError();
@@ -243,6 +255,7 @@ export async function getSpaceArtifactById(
     where: {
       id: input.artifactId,
       spaceId: actor.spaceId,
+      ...(await artifactVisibleWhere(deps.prisma, actor)),
     },
   });
   if (!row) throw new IsolationError();
@@ -359,7 +372,7 @@ function cursorBotId(value: unknown): string | null {
 }
 
 export async function listSpaceArtifacts(
-  deps: { prisma: Pick<PrismaClient, "artifact" | "$queryRaw"> },
+  deps: { prisma: Pick<PrismaClient, "artifact" | "$queryRaw" | "spaceMember" | "spaceRole"> },
   actor: Actor,
   input: { botId?: string; cursor?: string; limit?: number },
 ) {
@@ -381,6 +394,7 @@ export async function listSpaceArtifacts(
     WITH scoped AS (
       SELECT * FROM "artifacts"
       WHERE "spaceId" = ${actor.spaceId} ${botFilter}
+        ${await artifactVisibleSql(deps.prisma, actor)}
         AND "createdAt" <= ${asOf}
     ),
     latest AS (
@@ -437,12 +451,16 @@ export async function listSpaceArtifacts(
 }
 
 export async function listArtifactVersions(
-  deps: { prisma: Pick<PrismaClient, "artifact"> },
+  deps: { prisma: Pick<PrismaClient, "artifact" | "spaceMember" | "spaceRole"> },
   actor: Actor,
   input: { familyId: string },
 ) {
   const anchor = await deps.prisma.artifact.findFirst({
-    where: { id: input.familyId, spaceId: actor.spaceId },
+    where: {
+      id: input.familyId,
+      spaceId: actor.spaceId,
+      ...(await artifactVisibleWhere(deps.prisma, actor)),
+    },
     select: { id: true, rootArtifactId: true },
   });
   if (!anchor) throw new IsolationError();
@@ -471,7 +489,11 @@ export async function deleteArtifactFamily(
   input: { familyId: string },
 ) {
   const anchor = await deps.prisma.artifact.findFirst({
-    where: { id: input.familyId, spaceId: actor.spaceId },
+    where: {
+      id: input.familyId,
+      spaceId: actor.spaceId,
+      ...(await artifactVisibleWhere(deps.prisma, actor)),
+    },
     select: { id: true, rootArtifactId: true, botId: true },
   });
   if (!anchor) throw new IsolationError();
@@ -685,4 +707,43 @@ export function buildSendPrompt(
   const line = `${marker} ${names.join(", ")}.`;
   if (existing) return prompt.replace(existing[0], () => line);
   return prompt ? `${prompt}\n\n${line}` : line;
+}
+
+type FileAccessDb = Pick<PrismaClient, "spaceMember" | "spaceRole">;
+
+async function fileViewer(db: FileAccessDb, actor: Actor) {
+  const speaker = await loadSpeaker(db, actor);
+  return {
+    speaker,
+    viewer: {
+      userId: actor.userId,
+      roleIds: speaker.roleIds,
+      seesAll: can(speaker.membership, "manage_channels"),
+    },
+  };
+}
+
+/**
+ * Files follow the conversation they belong to: one in a private channel is seen only by who sees
+ * the channel, and one in an agent's own chat only by that agent's audience.
+ */
+export async function artifactVisibleWhere(
+  db: FileAccessDb,
+  actor: Actor,
+): Promise<Prisma.ArtifactWhereInput> {
+  const { speaker, viewer } = await fileViewer(db, actor);
+  return {
+    AND: [
+      { OR: [{ groupId: null }, { group: channelVisibleTo(viewer) }] },
+      { OR: [{ groupId: { not: null } }, { botId: null }, { bot: agentAudienceWhere(speaker) }] },
+    ],
+  };
+}
+
+async function artifactVisibleSql(db: FileAccessDb, actor: Actor) {
+  const { speaker, viewer } = await fileViewer(db, actor);
+  return Prisma.sql`AND ("groupId" IS NULL OR EXISTS (
+      SELECT 1 FROM chat_groups g WHERE g.id = "groupId" AND ${channelVisibleToSql("g", viewer)}))
+    AND ("groupId" IS NOT NULL OR NOT EXISTS (
+      SELECT 1 FROM bots b WHERE b.id = "botId" AND NOT ${agentAudienceSql(speaker, "b")}))`;
 }

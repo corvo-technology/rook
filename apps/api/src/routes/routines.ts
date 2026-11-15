@@ -15,6 +15,7 @@ import {
 import { IsolationError, Prisma } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import { ORPCError } from "@orpc/server";
+import { requireCanTalkTo, requireInAudience } from "../agent-audience.js";
 import { assertRoutineModel } from "../model-pins.js";
 import { routineCalendar, runState } from "../routine-calendar.js";
 import { listRoutineRuns } from "../routine-runs.js";
@@ -48,6 +49,7 @@ export function routinesRoutes(ctx: RouterContext) {
       ),
       list: authed.routines.list.handler(async ({ context, input }) => {
         await repos.getBot(context.actor, input.botId);
+        await requireInAudience(deps.prisma, context.actor, input.botId);
         return listRoutinesDto(deps, context.actor, input.botId);
       }),
       workflows: authed.routines.workflows.handler(async ({ context }) => {
@@ -101,6 +103,7 @@ export function routinesRoutes(ctx: RouterContext) {
         // Each step's agent must be one of this space's own, so a workflow cannot reach another's.
         for (const botId of new Set(input.steps.map((step) => step.botId))) {
           await repos.getBot(context.actor, botId);
+          await requireCanTalkTo(deps.prisma, context.actor, botId);
         }
         // Interactive, because row security does not allow a batch to carry a request's context.
         await deps.prisma.$transaction(async (tx) => {
@@ -120,6 +123,8 @@ export function routinesRoutes(ctx: RouterContext) {
         assertRoutineSchedule(input);
         await requireSpacePermission(deps.prisma, context.actor, "manage_routines");
         const bot = await repos.getBot(context.actor, input.botId);
+        // A routine talks to its agent as its creator.
+        await requireCanTalkTo(deps.prisma, context.actor, bot.id);
         if (input.watch) {
           try {
             await validateRoutineWatch(
@@ -381,6 +386,7 @@ export function routinesRoutes(ctx: RouterContext) {
         await requireSpacePermission(deps.prisma, context.actor, "talk_to_agents");
         const bot = await repos.getBot(context.actor, routine.botId);
         if (!bot.thread) throw new IsolationError();
+        await requireCanTalkTo(deps.prisma, context.actor, bot.id);
         const threadId = bot.thread.id;
         const nonce = input.clientNonce ? `routine-test:${input.clientNonce}` : undefined;
         if (nonce) {

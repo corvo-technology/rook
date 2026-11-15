@@ -630,6 +630,14 @@ model Bot {
   teamChatRules            String            @default("")
   crossSpaceCommunication  Boolean           @default(false)
   fleetManagement          Boolean           @default(true)
+  /// Who may talk to the agent. False: everyone in the space. True: its owner, the people in
+  /// `audienceUserIds` and whoever holds one of `audienceRoleIds`.
+  audienceRestricted       Boolean           @default(false)
+  audienceRoleIds          String[]          @default([])
+  audienceUserIds          String[]          @default([])
+  /// Another agent may consult it for someone outside its audience; the answer goes only to the
+  /// asking agent.
+  consultable              Boolean           @default(true)
   squadRouting             Boolean           @default(false)
   /// This bot's own approval mode (never, auto, ask); null follows the member's default.
   approvalMode             String?
@@ -704,23 +712,25 @@ model BotDeletion {
 }
 
 model ChatGroup {
-  id         String            @id @default(cuid())
-  spaceId    String
-  space      Space             @relation(fields: [spaceId], references: [id], onDelete: Cascade)
-  userId     String
-  name       String
-  purpose    String?
-  pinned     Boolean           @default(false)
-  sectionId  String?
-  section    BotSection?       @relation(fields: [sectionId], references: [id], onDelete: SetNull)
-  archivedAt DateTime?
-  createdAt  DateTime          @default(now())
-  updatedAt  DateTime          @updatedAt
-  members    ChatGroupMember[]
+  id            String            @id @default(cuid())
+  spaceId       String
+  space         Space             @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId        String
+  name          String
+  purpose       String?
+  pinned        Boolean           @default(false)
+  sectionId     String?
+  section       BotSection?       @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  archivedAt    DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  members       ChatGroupMember[]
   /// The people a private channel is limited to; none means every member of the space sees it.
-  people     ChatGroupPerson[]
-  thread     Thread?
-  artifacts  Artifact[]
+  people        ChatGroupPerson[]
+  /// Roles whose holders see the channel; with `people`, what makes it private.
+  accessRoleIds String[]          @default([])
+  thread        Thread?
+  artifacts     Artifact[]
 
   @@index([spaceId, userId, archivedAt, pinned, updatedAt])
   @@index([sectionId])

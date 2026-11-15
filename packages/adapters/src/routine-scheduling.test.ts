@@ -24,7 +24,7 @@ describe("routine scheduling", () => {
   });
 });
 
-function pendingTimerFixture(reuse = true) {
+function pendingTimerFixture(reuse = true, botPatch: Record<string, unknown> = {}) {
   const scheduledAt = new Date(Date.now() - 1_000);
   const routine = {
     id: "routine-1",
@@ -63,8 +63,24 @@ function pendingTimerFixture(reuse = true) {
     },
   };
   const prisma = {
-    routine: { findUnique: vi.fn(async () => routine) },
-    bot: { findUnique: vi.fn(async () => ({ id: "bot-1", thread: { id: "thread-1" } })) },
+    routine: {
+      findUnique: vi.fn(async () => routine),
+      updateMany: vi.fn(async () => ({ count: 1 })),
+    },
+    spaceMember: { findUnique: vi.fn(async () => ({ role: "member", roles: [] })) },
+    spaceRole: { findMany: vi.fn(async () => []) },
+    bot: {
+      findUnique: vi.fn(async () => ({
+        id: "bot-1",
+        thread: { id: "thread-1" },
+        userId: "owner-1",
+        audienceRestricted: false,
+        audienceRoleIds: [],
+        audienceUserIds: [],
+        consultable: true,
+        ...botPatch,
+      })),
+    },
     agentSkill: { findMany: vi.fn(async () => []) },
     $transaction: vi.fn(async (callback: (client: unknown) => Promise<unknown>) => callback(tx)),
   };
@@ -75,7 +91,7 @@ function pendingTimerFixture(reuse = true) {
     jobs: { enqueue, cancel: vi.fn(), close: vi.fn() },
     events: { append },
   } as unknown as Parameters<typeof createRunExecutor>[0]);
-  return { executor, tx, enqueue, append, scheduledAt };
+  return { executor, tx, enqueue, append, scheduledAt, prisma };
 }
 
 describe("recurring routine catch-up", () => {
@@ -114,5 +130,29 @@ describe("recurring routine catch-up", () => {
       expect.objectContaining({ type: "routine.fired", runId: "new-1" }),
     );
     expect(enqueue).toHaveBeenLastCalledWith(expect.objectContaining({ name: "routine.wakeup" }));
+  });
+});
+
+describe("a routine whose creator may not talk to its agent", () => {
+  it("pauses instead of running when the agent's audience leaves the creator out", async () => {
+    const { executor, tx, prisma, scheduledAt } = pendingTimerFixture(false, {
+      audienceRestricted: true,
+    });
+    await executor.wakeRoutine("routine-1", scheduledAt.toISOString());
+    expect(prisma.routine.updateMany).toHaveBeenCalledWith({
+      where: { id: "routine-1", active: true },
+      data: { active: false, nextRunAt: null },
+    });
+    expect(tx.run.create).not.toHaveBeenCalled();
+    expect(tx.task.create).not.toHaveBeenCalled();
+  });
+
+  it("runs when the creator is the agent's owner", async () => {
+    const { executor, tx, scheduledAt } = pendingTimerFixture(false, {
+      audienceRestricted: true,
+      userId: "user-1",
+    });
+    await executor.wakeRoutine("routine-1", scheduledAt.toISOString());
+    expect(tx.run.create).toHaveBeenCalled();
   });
 });

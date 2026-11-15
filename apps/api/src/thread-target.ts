@@ -41,6 +41,7 @@ import {
 } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import { ORPCError } from "@orpc/server";
+import { requireCanTalkTo, requireInAudience, talkableBotIds } from "./agent-audience.js";
 import {
   buildSendPrompt,
   buildUserMessageBlocks,
@@ -377,6 +378,8 @@ export async function resolveThreadTarget(
   if (input.botId) {
     const bot = await repos.getBot(actor, input.botId, options);
     if (!bot.thread) throw new IsolationError();
+    // An agent's conversation is for its audience: a person outside it neither reads nor writes.
+    await requireInAudience(prisma, actor, bot.id);
     return {
       kind: "bot",
       botId: bot.id,
@@ -808,6 +811,13 @@ export async function sendThreadMessage(
   if (input.threadRootId && target.kind !== "group") {
     throw new ORPCError("BAD_REQUEST", { message: "Only a channel has threads." });
   }
+  // Who may be woken by this message: an agent whose audience leaves the sender out is never
+  // routed to, mentioned into a run or answered from, in a channel or in its own conversation.
+  if (target.kind === "bot") await requireCanTalkTo(deps.prisma, actor, target.botId);
+  const talkable =
+    target.kind === "bot"
+      ? new Set([target.botId])
+      : await talkableBotIds(deps.prisma, actor, target.memberBotIds);
   // The model call happens before the transaction so it never holds the thread's locks.
   // A reply inside a thread stays with that thread's agent, so only the main column is routed.
   const routing =
@@ -818,7 +828,7 @@ export async function sendThreadMessage(
             groupId: target.groupId,
             threadId: target.threadId,
             text: input.text ?? "",
-            members: target.members,
+            members: target.members.filter((member) => talkable.has(member.botId)),
             explicitMentions: splitMentionTargets(input.mentions).botMentionIds,
           },
         )
@@ -1081,7 +1091,7 @@ export async function sendThreadMessage(
         routing && routing.strategy !== "fallback"
           ? routing.picked.filter((botId) => memberBotIds.includes(botId))
           : undefined;
-      const targetBotIds =
+      const wantedBotIds =
         routedBotIds ??
         resolveGroupTargetBotIds({
           text: input.text ?? "",
@@ -1092,6 +1102,11 @@ export async function sendThreadMessage(
               (await threadConversationBot(tx, target.threadId, threadRoot, memberBotIds))) ||
             (await groupConversationOwner(tx, target.threadId, memberBotIds)),
         });
+      const targetBotIds = wantedBotIds.filter((botId) => talkable.has(botId));
+      // Naming only agents the sender may not talk to is a refusal, not a message nobody hears.
+      if (wantedBotIds.length > 0 && targetBotIds.length === 0) {
+        throw new ORPCError("FORBIDDEN", { message: "You can't talk to this agent." });
+      }
       const { blocks: attachmentBlocks, artifacts } = await resolveGroupSendAttachments(
         { prisma: tx },
         actor,
@@ -1364,9 +1379,14 @@ export async function reactToThreadMessage(
     const currentTarget = members
       ? { ...target, memberBotIds: members.map((member) => member.botId) }
       : target;
-    const replyBotId = input.mayStartTurn
+    const candidateBotId = input.mayStartTurn
       ? await reactionReplyBotId(tx, currentTarget, parent)
       : undefined;
+    // A reaction wakes an agent only for someone its audience lets talk to it.
+    const replyBotId =
+      candidateBotId && (await talkableBotIds(tx, actor, [candidateBotId])).has(candidateBotId)
+        ? candidateBotId
+        : undefined;
     const botId =
       replyBotId ??
       (currentTarget.kind === "bot" ? currentTarget.botId : currentTarget.memberBotIds[0]);

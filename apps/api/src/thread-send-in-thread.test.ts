@@ -4,6 +4,13 @@ import { describe, expect, it, vi } from "vitest";
 import type { ThreadTarget } from "./thread-target.js";
 import { sendThreadMessage } from "./thread-target.js";
 
+// These tests are about the thread mechanics; who may talk to an agent has its own tests.
+vi.mock("./agent-audience.js", () => ({
+  requireInAudience: async () => undefined,
+  requireCanTalkTo: async () => undefined,
+  talkableBotIds: async (_prisma: unknown, _actor: unknown, ids: string[]) => new Set(ids),
+}));
+
 function setup(latestThreadBotId?: string) {
   const root = { id: "root-1", botId: null, blocks: [], threadRootId: null };
   const tx = {

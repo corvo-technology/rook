@@ -14,6 +14,7 @@ import {
 } from "@corvo/core";
 import { getLogger } from "@corvo/logging";
 import { sanitizedError } from "@corvo/logging/monitoring";
+import { personMayTalkTo } from "./agent-audience.js";
 import { protectedComputerLifecycleRefusal } from "./desktop-command-guard.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { routineRunModelPin } from "./model-selection.js";
@@ -166,6 +167,17 @@ export async function wakeRoutine(deps: ExecutorDeps, routineId: string, schedul
     return;
   }
   if (!bot?.thread) return;
+  // A routine runs as its creator: when the agent's audience no longer includes them, it pauses
+  // instead of talking to an agent they may not.
+  if (
+    !(await personMayTalkTo(deps.prisma, { spaceId: routine.spaceId, userId: routine.userId }, bot))
+  ) {
+    await deps.prisma.routine.updateMany({
+      where: { id: routine.id, active: true },
+      data: { active: false, nextRunAt: null },
+    });
+    return;
+  }
   const targetThread = routine.threadId
     ? await deps.prisma.thread.findFirst({
         where: {

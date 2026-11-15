@@ -39,19 +39,17 @@ describe("OpenRouterVoiceProvider", () => {
   });
 
   it("reports the status and a clean reason when OpenRouter refuses, never the key", async () => {
-    const fetcher = vi
-      .fn()
-      .mockResolvedValue(
-        Response.json(
-          {
-            error: {
-              message: "Provider timed out for deploy-key sk-or-v1-abcdef123456",
-              code: 502,
-            },
+    const fetcher = vi.fn().mockResolvedValue(
+      Response.json(
+        {
+          error: {
+            message: "Provider timed out for deploy-key sk-or-v1-abcdef123456",
+            code: 502,
           },
-          { status: 502 },
-        ),
-      );
+        },
+        { status: 502 },
+      ),
+    );
     const error = await new OpenRouterVoiceProvider(fetcher)
       .synthesize({ text: "Olá", voiceId: "Kore", apiKey: "deploy-key" }, context)
       .catch((caught: unknown) => caught);

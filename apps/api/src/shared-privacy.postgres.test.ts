@@ -196,7 +196,8 @@ describePostgres("private channels and agent audiences hide what they should (Po
     expect(await searchHits(f.caio)).toContain(f.group.id);
     expect(await searchHits(f.bia)).not.toContain(f.group.id);
     expect(
-      (await f.call(f.bia, "search/query", { q: f.secretWord, groupId: f.group.id })).text,
+      (await f.call(f.bia, "search/query", { q: f.secretWord, within: { groupId: f.group.id } }))
+        .text,
     ).not.toContain(f.secretWord);
 
     // A channel that is opened again is the space's again.

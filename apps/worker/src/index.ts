@@ -81,6 +81,7 @@ import { resolveEncryptionKey, resolveSupervisorToken, uploadSizeFromEnv } from 
 import {
   createBoardEvents,
   createDb,
+  createPool,
   createSecurityEventPruner,
   createThreadEvents,
   describeRowSecurity,
@@ -120,9 +121,17 @@ async function main() {
   let { prisma } = created;
   const rowSecurity = rowSecurityWarning(await describeRowSecurity(prisma));
   if (rowSecurity) logger.warn(rowSecurity);
+  // Listening and the leadership lock live as long as their connection, so they cannot sit behind
+  // a pooler that hands each transaction to another server connection. REALTIME_DATABASE_URL
+  // names a session-capable connection for them; it defaults to DATABASE_URL.
+  const sessionUrl = process.env.REALTIME_DATABASE_URL ?? databaseUrl;
   const realtime = new PostgresRealtimeFanout({
-    connectionString: process.env.REALTIME_DATABASE_URL ?? databaseUrl,
+    connectionString: sessionUrl,
     publisher: pool,
+  });
+  const leadershipPool = createPool(sessionUrl, {
+    poolMax: 1,
+    applicationName: "corvo-worker-leadership",
   });
   const secrets = await createWorkerSecretStore(process.env, realtime);
   if (secrets.describe().capabilities.degraded)
@@ -360,7 +369,7 @@ async function main() {
     jobs,
     events,
     notifications,
-    leadership: createPostgresReconciliationLeadership(pool),
+    leadership: createPostgresReconciliationLeadership(leadershipPool),
     reconcileModelCredits: createModelCreditReconciler({
       prisma,
       lookup: deploymentModelUsageLookup(),
@@ -403,6 +412,7 @@ async function main() {
       await mcp.close();
       await cliGateway?.stop();
       await prisma.$disconnect().catch(() => undefined);
+      await leadershipPool.end().catch(() => undefined);
       await pool.end().catch(() => undefined);
     } finally {
       await analytics?.flush();

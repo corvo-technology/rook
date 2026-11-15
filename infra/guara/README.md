@@ -56,6 +56,16 @@ Two API replicas need `OBJECT_STORAGE_*` set (artifacts must not live on one pod
 the default Postgres realtime (`REALTIME_DATABASE_URL` or `DATABASE_URL`), so events reach every
 replica; see the shared-storage migration in `docs/self-host.md` first. Leave the worker at one.
 
+## Connection pooler
+
+The Guará Postgres pooler may run in transaction or session mode; the API sets row-level security
+inside every transaction, so either is safe. Transaction mode needs a second, session-capable
+connection for what holds state on one server connection: set `REALTIME_DATABASE_URL` to Postgres
+directly or to the session-mode endpoint, and `DATABASE_MIGRATION_URL` likewise. `REALTIME_DATABASE_URL`
+carries `LISTEN` (live updates), the worker's leader lock and the WhatsApp number locks. Without
+it on a transaction pooler, live updates stop arriving and two workers may both lead; the API logs
+`realtime.listen_not_kept` when it notices.
+
 ## Commands
 
 ```bash

@@ -13,7 +13,7 @@ import {
   PgSpaceKeyStore,
 } from "./content-keys.js";
 import { PrismaClient } from "./generated/prisma/client.js";
-import { installDbContext, withRowLevelSecurity } from "./row-security.js";
+import { scopeToDbContext, withRowLevelSecurity } from "./row-security.js";
 import { withTextSanitization } from "./text-sanitization.js";
 
 export type Db = PrismaClient;
@@ -53,7 +53,6 @@ export function createPool(connectionString: string, options: DbClientOptions = 
     client.on("error", () => undefined);
   });
   installConnectRetry(pool);
-  installDbContext(pool);
   installSaturationReport(pool, options.applicationName);
   return pool;
 }
@@ -85,7 +84,6 @@ export function createDb(
     keepAlive: true,
   });
   keyPool.on("error", () => undefined);
-  installDbContext(keyPool);
   installSaturationReport(keyPool, keyPool.options.application_name);
   const end = pool.end.bind(pool) as () => Promise<void>;
   pool.end = (async () => {
@@ -94,10 +92,10 @@ export function createDb(
   }) as Pool["end"];
   const contentKeys = new ContentKeyRing(
     options.keyProvider ?? lazyKeyProvider(() => new LocalKeyProvider(masterKeysFromEnv())),
-    new PgSpaceKeyStore(keyPool),
+    new PgSpaceKeyStore(scopeToDbContext(keyPool)),
     { encryptWrites },
   );
-  const adapter = new PrismaPg(pool);
+  const adapter = new PrismaPg(scopeToDbContext(pool));
   // Row-level security wraps everything else, so its findUnique rewrite still runs
   // through content encryption. Text is cleaned for Postgres before any of them see it.
   const prisma = withTextSanitization(

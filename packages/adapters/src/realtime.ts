@@ -1,4 +1,5 @@
 import type { RealtimeFanout } from "@corvo/adapter-kit";
+import { getLogger } from "@corvo/logging";
 import type { Notification } from "pg";
 import { Client } from "pg";
 
@@ -123,6 +124,7 @@ export class PostgresRealtimeFanout implements RealtimeFanout {
     try {
       await candidate.connect();
       await candidate.query(`LISTEN ${POSTGRES_CHANNEL}`);
+      await this.warnIfListenIsNotKept(candidate);
       if (this.closed || this.subscribers.size === 0 || this.connectingClient !== candidate) {
         await this.disposeClient(candidate);
         return;
@@ -135,6 +137,26 @@ export class PostgresRealtimeFanout implements RealtimeFanout {
       if (this.connectingClient === candidate) this.connectingClient = undefined;
       await this.disposeClient(candidate);
       throw error;
+    }
+  }
+
+  /**
+   * A pooler in transaction mode serves the next statement from another server connection, which
+   * is not listening, so events would stop arriving without any error. The same connection
+   * should still list the channel it just joined; when it does not, say what to change. A
+   * pooler that happens to reuse one server connection is not caught, so this can only confirm.
+   */
+  private async warnIfListenIsNotKept(client: RealtimeListenerClient): Promise<void> {
+    try {
+      const result = (await client.query(
+        `SELECT count(*)::int AS listening FROM pg_listening_channels() AS channel WHERE channel = '${POSTGRES_CHANNEL}'`,
+      )) as { rows?: Array<{ listening?: number }> } | undefined;
+      if (result?.rows?.[0]?.listening === 0)
+        getLogger().warn(
+          "realtime.listen_not_kept: the realtime connection does not keep LISTEN, which a transaction-mode pooler causes; point REALTIME_DATABASE_URL at Postgres directly or at a session-mode pooler",
+        );
+    } catch {
+      // The check is advisory; a failure here must not stop the listener.
     }
   }
 

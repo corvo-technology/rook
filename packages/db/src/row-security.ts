@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { getLogger } from "@corvo/logging";
 import type { Pool, PoolClient } from "pg";
+import { escapeLiteral } from "pg";
 import type { PrismaClient } from "./generated/prisma/client.js";
 import { Prisma } from "./generated/prisma/client.js";
 
@@ -194,66 +195,146 @@ function settingsFor(context: DbContext | undefined): Settings {
   return ["", "", context?.kind === "system" ? "on" : "off", RLS_VERSION];
 }
 
-const SET_SESSION =
-  "SELECT set_config('app.space_id', $1, false), set_config('app.user_id', $2, false), set_config('app.rls_bypass', $3, false), set_config('app.rls_version', $4, false)";
-const applied = new WeakMap<PoolClient, string>();
+/**
+ * The settings as one simple-protocol statement list, so they travel in the same round trip as
+ * the BEGIN they belong to. SET LOCAL lasts until that transaction ends and takes no snapshot, so
+ * a SET TRANSACTION ISOLATION LEVEL may still follow.
+ */
+function setLocalStatements(settings: Settings): string {
+  const [space, user, bypass, version] = settings;
+  return [
+    ["app.space_id", space],
+    ["app.user_id", user],
+    ["app.rls_bypass", bypass],
+    ["app.rls_version", version],
+  ]
+    .map(([name, value]) => `SET LOCAL ${name} = ${escapeLiteral(value!)}`)
+    .join("; ");
+}
 
-async function applySettings(client: PoolClient, settings: Settings): Promise<void> {
-  const key = settings.join("\u0000");
-  // A new connection has none of the settings yet, the version included.
-  if (applied.get(client) === key) return;
-  // Forget the old value first: if this fails, the next checkout sets it again.
-  applied.delete(client);
-  await client.query(SET_SESSION, settings);
-  applied.set(client, key);
+const BEGINS = /^\s*(begin|start\s+transaction)\b/i;
+const ENDS = /^\s*(commit|end|rollback)\b(?!\s+to\b)/i;
+
+type QueryArgs = unknown[];
+type Queryable = { query: (...args: QueryArgs) => Promise<unknown> };
+
+function textOf(args: QueryArgs): string {
+  const first = args[0];
+  const text = typeof first === "string" ? first : (first as { text?: unknown } | undefined)?.text;
+  // A cursor or another submittable would run outside the transaction that carries the context.
+  if (typeof text !== "string") throw new Error("Unsupported query for a scoped database client");
+  return text;
+}
+
+/** `pg` takes a callback as the last argument as well as returning a promise; honour both. */
+function query(run: (args: QueryArgs) => Promise<unknown>) {
+  return (...args: QueryArgs): Promise<unknown> | undefined => {
+    const callback =
+      typeof args.at(-1) === "function"
+        ? (args.pop() as (...values: unknown[]) => void)
+        : undefined;
+    const result = run(args);
+    if (!callback) return result;
+    result.then(
+      (value) => callback(null, value),
+      (error: Error) => callback(error),
+    );
+    return undefined;
+  };
 }
 
 /**
- * Give every connection checked out of `pool` the settings of the context that
- * asked for it, captured when `connect` is called (the callback of a queued
- * checkout can run in whichever request released the connection). A
- * connection only gets a round trip when its settings change, and a checkout
- * with no context clears what an earlier one left behind.
+ * Runs one statement as its own transaction that sets the context first: BEGIN and the settings
+ * in one round trip, the statement with its own parameters, COMMIT.
  */
-export function installDbContext(pool: Pool): void {
-  type ConnectCallback = (
-    err: Error | undefined,
-    client: PoolClient | undefined,
-    done: (release?: unknown) => void,
-  ) => void;
-  const originalConnect = pool.connect.bind(pool) as {
-    (): Promise<PoolClient>;
-    (callback: ConnectCallback): void;
-  };
-
-  function connect(): Promise<PoolClient>;
-  function connect(callback: ConnectCallback): void;
-  function connect(callback?: ConnectCallback): Promise<PoolClient> | undefined {
-    const settings = settingsFor(storage.getStore());
-    if (!callback) {
-      return originalConnect().then(async (client) => {
-        try {
-          await applySettings(client, settings);
-          return client;
-        } catch (error) {
-          client.release(error as Error);
-          throw error;
-        }
-      });
-    }
-    originalConnect((err, client, done) => {
-      if (err || !client) return callback(err, client, done);
-      applySettings(client, settings).then(
-        () => callback(undefined, client, done),
-        (error: Error) => {
-          done(error);
-          callback(error, undefined, () => undefined);
-        },
-      );
-    });
+async function queryInOwnTransaction(
+  client: Queryable,
+  settings: Settings,
+  args: QueryArgs,
+): Promise<unknown> {
+  await client.query(`BEGIN; ${setLocalStatements(settings)}`);
+  let result: unknown;
+  try {
+    result = await client.query(...args);
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    throw error;
   }
+  await client.query("COMMIT");
+  return result;
+}
 
-  pool.connect = connect as Pool["connect"];
+function proxyOf<T extends object>(target: T, overrides: Record<string, unknown>): T {
+  return new Proxy(target, {
+    get(object, key) {
+      if (typeof key === "string" && key in overrides) return overrides[key];
+      const value = Reflect.get(object, key, object);
+      return typeof value === "function" ? value.bind(object) : value;
+    },
+  });
+}
+
+/**
+ * The client with the context applied to every transaction it runs. The settings are transaction
+ * local and sent with each BEGIN, because a pooler (PgBouncer in transaction mode, most hosted
+ * ones by default) may serve each transaction on a different server connection: session state set
+ * on checkout would stay on the server connection that ran it, and the next transaction could
+ * run on one holding another tenant's settings. A statement outside a transaction gets one of
+ * its own.
+ */
+function scopedClient(client: PoolClient): PoolClient {
+  let inTransaction = false;
+  const run = async (args: QueryArgs): Promise<unknown> => {
+    const text = textOf(args);
+    const raw = client as unknown as Queryable;
+    if (BEGINS.test(text)) {
+      inTransaction = true;
+      try {
+        const results = await raw.query(
+          `${text}; ${setLocalStatements(settingsFor(storage.getStore()))}`,
+        );
+        return Array.isArray(results) ? results[0] : results;
+      } catch (error) {
+        inTransaction = false;
+        throw error;
+      }
+    }
+    if (!inTransaction) return queryInOwnTransaction(raw, settingsFor(storage.getStore()), args);
+    try {
+      return await raw.query(...args);
+    } finally {
+      if (ENDS.test(text)) inTransaction = false;
+    }
+  };
+  return proxyOf(client, { query: query(run) });
+}
+
+/**
+ * The pool as the application's database client must use it. Everything run through it carries
+ * the context of the code that asked, set inside the transaction that runs the statements (see
+ * scopedClient); a statement with no context sees no rows of a protected table. The pool itself
+ * stays unscoped for queues, locks and listeners, which touch no protected table.
+ */
+export function scopeToDbContext(pool: Pool): Pool {
+  const connect = (callback?: (...args: unknown[]) => void): Promise<PoolClient> | undefined => {
+    if (!callback) return pool.connect().then(scopedClient);
+    (pool.connect as (callback: unknown) => void)(
+      (error: Error | undefined, client: PoolClient | undefined, done: unknown) =>
+        callback(error, client && scopedClient(client), done),
+    );
+    return undefined;
+  };
+  const run = async (args: QueryArgs): Promise<unknown> => {
+    textOf(args);
+    const settings = settingsFor(storage.getStore());
+    const client = await pool.connect();
+    try {
+      return await queryInOwnTransaction(client as unknown as Queryable, settings, args);
+    } finally {
+      client.release();
+    }
+  };
+  return proxyOf(pool, { connect, query: query(run) });
 }
 
 const LOCAL_SETTINGS = (settings: Settings) =>

@@ -1,3 +1,4 @@
+import { createLogger, createTestSink, installLogger } from "@corvo/logging";
 import type { Notification } from "pg";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { RealtimeListenerClient } from "./realtime.js";
@@ -8,6 +9,9 @@ class FakeClient implements RealtimeListenerClient {
   ended = false;
   private readonly listeners = new Map<string, Set<(...args: never[]) => void>>();
 
+  /** What the check for the joined channel finds; 1 is a connection that kept its LISTEN. */
+  listening = 1;
+
   constructor(private readonly connectPromise: Promise<unknown> = Promise.resolve()) {}
 
   async connect() {
@@ -16,6 +20,7 @@ class FakeClient implements RealtimeListenerClient {
 
   async query(sql: string) {
     this.queries.push(sql);
+    if (sql.includes("pg_listening_channels")) return { rows: [{ listening: this.listening }] };
   }
 
   async end() {
@@ -49,7 +54,7 @@ class FakeClient implements RealtimeListenerClient {
   }
 }
 
-function setup(options: { reconnectBaseMs?: number } = {}) {
+function setup(options: { reconnectBaseMs?: number; listening?: number } = {}) {
   const clients: FakeClient[] = [];
   const published: Array<{ sql: string; values: unknown[] }> = [];
   const realtime = new PostgresRealtimeFanout({
@@ -61,6 +66,7 @@ function setup(options: { reconnectBaseMs?: number } = {}) {
     },
     clientFactory: () => {
       const client = new FakeClient();
+      client.listening = options.listening ?? 1;
       clients.push(client);
       return client;
     },
@@ -74,6 +80,21 @@ function setup(options: { reconnectBaseMs?: number } = {}) {
 describe("PostgresRealtimeFanout", () => {
   afterEach(() => vi.useRealTimers());
 
+  it("warns once the connection no longer lists the channel it joined, as behind a transaction pooler", async () => {
+    const sink = createTestSink();
+    installLogger(createLogger({ service: "corvo-api", sinks: [sink] }));
+    const { realtime, clients } = setup({ listening: 0 });
+    await realtime.subscribe("thread:a", vi.fn());
+    await vi.waitFor(() => expect(clients[0]?.queries).toHaveLength(2));
+    await vi.waitFor(() =>
+      expect(
+        sink.events.some((event) => event.message.startsWith("realtime.listen_not_kept")),
+      ).toBe(true),
+    );
+    installLogger(createLogger({ service: "corvo-api", level: "off", sinks: [] }));
+    await realtime.close();
+  });
+
   it("shares one fixed-channel listener across many logical subscribers", async () => {
     const { realtime, clients } = setup();
     const received = Array.from({ length: 200 }, () => vi.fn());
@@ -84,7 +105,7 @@ describe("PostgresRealtimeFanout", () => {
     );
 
     expect(clients).toHaveLength(1);
-    await vi.waitFor(() => expect(clients[0]?.queries).toEqual(["LISTEN corvo_events"]));
+    await vi.waitFor(() => expect(clients[0]?.queries[0]).toBe("LISTEN corvo_events"));
     received.forEach((subscriber) => {
       subscriber.mockClear();
     });

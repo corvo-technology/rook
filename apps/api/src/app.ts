@@ -468,11 +468,15 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       operatorSwitch: env.whatsappLinkedDevicesEnabled,
     });
   // Every number's lock is held on this one connection, kept apart from the pool the API's own
-  // queries use, so linking numbers never takes a connection those queries need. With a
+  // queries use, so linking numbers never takes a connection those queries need. Session locks
+  // need a session-capable connection, so it uses REALTIME_DATABASE_URL like the listener. With a
   // prisma override (tests) there is no database to lock through.
   const whatsappLockPool =
     whatsappOn && !prismaOverride
-      ? createPool(env.databaseUrl, { poolMax: 1, applicationName: "corvo-api-whatsapp-locks" })
+      ? createPool(env.realtimeDatabaseUrl, {
+          poolMax: 1,
+          applicationName: "corvo-api-whatsapp-locks",
+        })
       : undefined;
   const whatsapp = whatsappOn
     ? createWhatsAppLinkSurface({ prisma, secrets, pool: whatsappLockPool })

@@ -173,6 +173,13 @@ describePostgres(
     it("returns the report to the channel's members and to no one else", async () => {
       const f = await fixture();
       const read = (who: string) => f.call(who, "threads/messages", { groupId: f.group.id });
+      // Someone who may not see the channel cannot change who does.
+      expect(
+        (await f.call(f.bia, "groups/people/setRoles", { groupId: f.group.id, roleIds: [] }))
+          .status,
+      ).not.toBe(200);
+      expect((await f.call(f.bia, "groups/list")).text).not.toContain(f.group.id);
+      expect((await read(f.caio)).status).toBe(200);
       const mine = await read(f.ana);
       expect(mine.status).toBe(200);
       expect(mine.text).toContain("router_picked");

@@ -34,7 +34,7 @@ import type {
 } from "@corvo/adapters";
 import type { Auth } from "@corvo/auth";
 import type { NavLink } from "@corvo/contracts";
-import type { BoardEvents, PrismaClient, ThreadEvents } from "@corvo/db";
+import type { BoardEvents, PrismaClient, SpaceHints, ThreadEvents } from "@corvo/db";
 import type { AudioHold } from "./audio-hold.js";
 import type { BillingService } from "./billing.js";
 import type { RouterModel } from "./channel-router.js";
@@ -91,6 +91,8 @@ export interface RouterDeps {
   prisma: PrismaClient;
   events: ThreadEvents;
   boardEvents: BoardEvents;
+  /** Content-free hints for the member streams; absent in tests that publish none. */
+  spaceHints?: SpaceHints;
   ticketChanges: TicketChangeNotifier;
   auth: Auth;
   jobs: JobPublisher;

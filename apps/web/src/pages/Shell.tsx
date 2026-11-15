@@ -82,6 +82,7 @@ import { useChannelPeopleCount } from "../lib/use-channel-people-count";
 import { useDesktopBadge } from "../lib/use-desktop-badge";
 import { useMissions } from "../lib/use-missions";
 import { usePersonRoles } from "../lib/use-person-roles";
+import { useSpaceStream } from "../lib/use-space-stream";
 import { DirectChat } from "./DirectChat";
 import { HostComputerPrompt } from "./HostComputerPrompt";
 import { ArchivedChats } from "./shell/archived-chats";
@@ -161,6 +162,7 @@ function SpaceShell({ page }: { page?: ReactNode }) {
   const openSettingsRoute = useOpenSettings();
   const queries = spaceQueries(userId ?? null, shellSpaceId);
   const roster = useSpaceRoster({ rpc, seed, botId, groupId, navigate, redirectKeepingOverlay });
+  useSpaceStream(rpc);
   const {
     groups,
     setGroups,
@@ -539,6 +541,9 @@ function SpaceShell({ page }: { page?: ReactNode }) {
     (botId: string | undefined) => memberName(transcriptMembers, botId),
     [transcriptMembers],
   );
+  // Routines are listed per agent, so they load once the @-mention list first opens.
+  const [mentionsOpened, setMentionsOpened] = useState(false);
+  const openMentions = useCallback(() => setMentionsOpened(true), []);
   const { composerMentionTargets, footerLogos } = useComposerMentions({
     rpc,
     queries,
@@ -547,6 +552,7 @@ function SpaceShell({ page }: { page?: ReactNode }) {
     inGroup,
     groupId,
     initialBotsLoaded,
+    routinesWanted: mentionsOpened,
   });
   const threadMentionTargets = useMemo(
     () => composerMentionTargets.filter((m) => m.kind !== "group" && m.kind !== "routine"),
@@ -1195,6 +1201,7 @@ function SpaceShell({ page }: { page?: ReactNode }) {
                   }
                   agentSkills={agentSkills}
                   onSlashOpen={refreshAgentSkills}
+                  onMentionsOpen={openMentions}
                   onSlashAction={(action) => {
                     if (action === "chat-settings") {
                       setPanel(inGroup ? "group-settings" : "settings");

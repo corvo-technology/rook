@@ -6,7 +6,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { connectedAppMarks } from "../../lib/connected-apps";
 import { cronLabels } from "../../lib/cron";
 import type { SpaceQueries } from "../../lib/query";
+import { queryClient } from "../../lib/query";
 import type { createSpaceRpc } from "../../lib/rpc";
+import { useSpaceHint } from "../../lib/space-hints";
 
 function routineListData(results: Array<{ data?: Routine[] }>) {
   return results.map((result) => result.data);
@@ -27,6 +29,7 @@ export function useComposerMentions({
   inGroup,
   groupId,
   initialBotsLoaded,
+  routinesWanted,
 }: {
   rpc: ReturnType<typeof createSpaceRpc>;
   queries: SpaceQueries;
@@ -35,11 +38,20 @@ export function useComposerMentions({
   inGroup: boolean;
   groupId: string | undefined;
   initialBotsLoaded: boolean;
+  /** Routines are one call per agent: read them only once the mention list has been opened. */
+  routinesWanted: boolean;
 }) {
   const { i18n } = useLingui();
   const routineLists = useQueries({
-    queries: bots.map((bot) => queries.routines.list.queryOptions({ input: { botId: bot.id } })),
+    queries: bots.map((bot) => ({
+      ...queries.routines.list.queryOptions({ input: { botId: bot.id } }),
+      enabled: routinesWanted,
+    })),
     combine: routineListData,
+  });
+  const routinesKey = queries.routines.list.key();
+  useSpaceHint("routines", () => {
+    if (routinesWanted) void queryClient.invalidateQueries({ queryKey: routinesKey });
   });
   const mentionRoutines = useMemo(
     () =>

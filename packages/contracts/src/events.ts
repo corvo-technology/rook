@@ -516,3 +516,18 @@ export function canReactToThreadMessage(message: Pick<ThreadMessage, "id" | "blo
     !message.blocks.some((block) => block.kind === "channel_message")
   );
 }
+
+/** What a space hint says changed. A hint carries no content: the client reads it through the RPC. */
+export const SPACE_HINT_KINDS = ["roster", "approvals", "dm", "computer", "routines"] as const;
+export const SpaceHintKind = z.enum(SPACE_HINT_KINDS);
+export type SpaceHintKind = z.infer<typeof SpaceHintKind>;
+
+/**
+ * One frame of a member's space stream: an invalidation hint, or a `heartbeat` that only proves
+ * the stream is alive. Neither carries ids or content.
+ */
+export const SpaceHintSchema = z.object({
+  kind: z.union([SpaceHintKind, z.literal("heartbeat")]),
+  createdAt: z.string(),
+});
+export type SpaceHint = z.infer<typeof SpaceHintSchema>;

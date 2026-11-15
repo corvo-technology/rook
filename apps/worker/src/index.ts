@@ -83,6 +83,7 @@ import {
   createDb,
   createPool,
   createSecurityEventPruner,
+  createSpaceHints,
   createThreadEvents,
   describeRowSecurity,
   installSecurityEventStore,
@@ -150,6 +151,7 @@ async function main() {
   });
   const ticketBoardEnabled = process.env.TICKET_BOARD_ENABLED === "true";
   const boardEvents = createBoardEvents(realtime);
+  const spaceHints = createSpaceHints(realtime);
   const dataDir = process.env.DATA_DIR ?? "./data";
   const cliGateway = new CliToolGateway();
   if (cliGateway) {
@@ -347,6 +349,7 @@ async function main() {
     artifacts,
     jobs,
     events,
+    spaceHints,
     // Unique per boot: pods of two releases can share a process id.
     workerId: `${hostname()}:${process.pid}:${randomUUID().slice(0, 8)}`,
     runtime,

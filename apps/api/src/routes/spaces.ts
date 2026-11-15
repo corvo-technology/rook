@@ -1,4 +1,4 @@
-import type { Actor, SpaceNavigation } from "@corvo/contracts";
+import type { Actor, SpaceHint, SpaceNavigation } from "@corvo/contracts";
 import { ACTIVE_RUN_STATUSES, can } from "@corvo/core";
 import type { createGroupRepos, createRepos, PrismaClient } from "@corvo/db";
 import {
@@ -9,8 +9,11 @@ import {
   CannotRenameSpaceAsNonOwnerError,
   createExternalConversationRepos,
   createSpaceForMember,
+  createSpaceHints,
+  type HintViewer,
   InvalidSpaceNameError,
   IsolationError,
+  loadGroupViewer,
   renameSpaceForMember,
   resolveSpaceMemberships,
   runAsSystem,
@@ -28,13 +31,14 @@ import {
 } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import { ORPCError } from "@orpc/server";
+import { accessRevocations } from "../access-revocations.js";
 import type { RouterDeps } from "../router.js";
 import { listRoutinesDto } from "../routines.js";
 import { deleteSpaceWithContent } from "../space-deletion.js";
 import { startStarterTeam } from "../starter-team.js";
 import { resolveThreadTarget, stopRunsWhere, threadSnapshot } from "../thread-target.js";
 import type { RouterContext } from "./context.js";
-import { meDto } from "./shared.js";
+import { HEARTBEAT_MS, meDto, SESSION_RECHECK_MS } from "./shared.js";
 
 /**
  * Runs `fn` scoped to another of the actor's Spaces. Membership is checked first,
@@ -69,6 +73,61 @@ export function spacesRoutes(ctx: RouterContext) {
       list: authed.spaces.list.handler(async ({ context }) =>
         spaceNavigationDto(deps, context.actor, repos, groupRepos),
       ),
+      subscribe: authed.spaces.subscribe.handler(async function* ({ context }) {
+        const { spaceId, userId } = context.actor;
+        const loadViewer = async (): Promise<HintViewer> => {
+          const viewer = await loadGroupViewer(deps.prisma, context.actor);
+          return { userId, roleIds: viewer.roleIds, manageChannels: viewer.seesAll };
+        };
+        const viewer = await loadViewer();
+        // One in-memory subscriber on the process's single LISTEN; the stream holds no connection.
+        const follow = (deps.spaceHints ?? createSpaceHints()).follow(
+          spaceId,
+          viewer,
+          context.signal,
+        );
+        const revoked = accessRevocations
+          .watch(spaceId, userId, context.signal)
+          .then(() => "revoked" as const);
+        let pending: Promise<IteratorResult<SpaceHint>> | undefined;
+        let authorizedAt = Date.now();
+        // Re-checks the session and re-reads the member's roles, so a removed member's stream
+        // ends and a role change moves which hints arrive.
+        const recheck = async () => {
+          if (Date.now() - authorizedAt < SESSION_RECHECK_MS) return;
+          if (context.stillAuthorized && !(await context.stillAuthorized())) {
+            throw new ORPCError("UNAUTHORIZED");
+          }
+          const current = await loadViewer();
+          viewer.roleIds = current.roleIds;
+          viewer.manageChannels = current.manageChannels;
+          authorizedAt = Date.now();
+        };
+        try {
+          while (!context.signal?.aborted) {
+            pending ??= follow.next();
+            let timer: ReturnType<typeof setTimeout> | undefined;
+            const next = await Promise.race([
+              pending,
+              revoked,
+              new Promise<"silent">((resolve) => {
+                timer = setTimeout(() => resolve("silent"), HEARTBEAT_MS);
+              }),
+            ]).finally(() => clearTimeout(timer));
+            if (next === "revoked") throw new ORPCError("UNAUTHORIZED");
+            await recheck();
+            if (next === "silent") {
+              yield { kind: "heartbeat", createdAt: new Date().toISOString() };
+              continue;
+            }
+            pending = undefined;
+            if (next.done) return;
+            yield next.value;
+          }
+        } finally {
+          void follow.return(undefined).catch(() => {});
+        }
+      }),
       // Seeds a Space whose id does not exist yet; the member limit is checked inside.
       create: authed.spaces.create.handler(async ({ context, input }) => {
         const created = await runAsSystem("create a Space for its member", async () => {

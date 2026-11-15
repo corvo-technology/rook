@@ -31,7 +31,7 @@ describe("mobile computer updates", () => {
     });
     api.rpc.mockResolvedValue([]);
     const stop = computerUpdates.watch();
-    await vi.advanceTimersByTimeAsync(15_000);
+    await vi.advanceTimersByTimeAsync(60_000);
     expect(api.rpc).toHaveBeenCalledTimes(2);
     stop();
   });

@@ -154,7 +154,12 @@ import {
   WorkflowSchema,
   WorkspaceModelSchema,
 } from "./domain.js";
-import { ComputerCommandSchema, ProductEventSchema, ThreadMessageSchema } from "./events.js";
+import {
+  ComputerCommandSchema,
+  ProductEventSchema,
+  SpaceHintSchema,
+  ThreadMessageSchema,
+} from "./events.js";
 import { Id, IsoDate } from "./ids.js";
 import {
   IntegrationProviderConfigSchema,
@@ -342,6 +347,8 @@ export const appContract = {
   },
   spaces: {
     list: oc.output(SpaceNavigationSchema),
+    /** Content-free hints that something the member can see changed, so the client reads it again. */
+    subscribe: oc.output(eventIterator(SpaceHintSchema)),
     create: oc
       .input(z.object({ name: spaceName, locale: z.enum(AGENT_CATALOG_LOCALES).default("en") }))
       .output(SpaceSchema),

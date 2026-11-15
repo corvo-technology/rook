@@ -8,7 +8,7 @@ import type {
   Space,
   ThreadSnapshot,
 } from "@corvo/contracts";
-import { isRetryableError, reorderBotTo } from "@corvo/core";
+import { isRetryableError, reorderBotTo, SPACE_FALLBACK_REFETCH_MS } from "@corvo/core";
 import { useLingui } from "@lingui/react/macro";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -19,6 +19,7 @@ import type { ChatTarget } from "../../lib/query";
 import { lastChatKey, queryClient, seedOnLeave, spaceSeedKey } from "../../lib/query";
 import type { createSpaceRpc } from "../../lib/rpc";
 import { onRpcTargetGone } from "../../lib/rpc";
+import { onSpaceHint } from "../../lib/space-hints";
 import { errorText } from "../../lib/user-error";
 import type { RosterDropTarget } from "./roster-drop";
 import { resolveRosterDrop } from "./roster-drop";
@@ -438,18 +439,22 @@ export function useSpaceBootstrap({
       );
     };
     window.addEventListener("focus", refreshVisibleBots);
+    window.addEventListener("online", refreshVisibleBots);
     document.addEventListener("visibilitychange", refreshVisibleBots);
-    // Poll skips while a refresh is in flight; focus/visibility and event-driven
-    // callers still bump botsRefreshEpoch so only the latest response applies.
+    // The space stream says when the roster changed. This slow poll only catches a missed hint;
+    // it skips while a refresh is in flight, and the latest response is the one that applies.
+    const stopHints = onSpaceHint("roster", refreshVisibleBots);
     const poll = window.setInterval(() => {
       if (botsRefreshInFlight.current > 0) return;
       refreshVisibleBots();
-    }, 3_000);
+    }, SPACE_FALLBACK_REFETCH_MS);
     return () => {
       cancelled = true;
       window.clearTimeout(refreshTimer);
       window.clearInterval(poll);
+      stopHints();
       window.removeEventListener("focus", refreshVisibleBots);
+      window.removeEventListener("online", refreshVisibleBots);
       document.removeEventListener("visibilitychange", refreshVisibleBots);
     };
   }, []);

@@ -74,7 +74,7 @@ describe("computer update presentation", () => {
     stop();
     list.mockResolvedValue([]);
     stop = store.watch();
-    await vi.advanceTimersByTimeAsync(15_000);
+    await vi.advanceTimersByTimeAsync(60_000);
     expect(list).toHaveBeenCalledTimes(3);
     stop();
   });
@@ -102,8 +102,50 @@ describe("computer update presentation", () => {
       start: async () => update,
       dismiss: async () => {},
     }).watch();
-    await vi.advanceTimersByTimeAsync(30_000);
+    await vi.advanceTimersByTimeAsync(120_000);
     expect(list).toHaveBeenCalledTimes(3);
+    stop();
+  });
+  it("polls every second and a half only while an update is queued or running", async () => {
+    vi.useFakeTimers();
+    const list = vi.fn(async (): Promise<ComputerUpdate[]> => [update]);
+    const stop = createComputerUpdates({
+      list,
+      start: async () => update,
+      dismiss: async () => {},
+    }).watch();
+    await vi.advanceTimersByTimeAsync(6_000);
+    expect(list).toHaveBeenCalledTimes(5);
+    stop();
+  });
+  it("does not poll fast for a failed or interrupted update nobody dismissed", async () => {
+    vi.useFakeTimers();
+    const list = vi.fn(async (): Promise<ComputerUpdate[]> => [{ ...update, status: "failed" }]);
+    const stop = createComputerUpdates({
+      list,
+      start: async () => update,
+      dismiss: async () => {},
+    }).watch();
+    // Once a minute, where it used to be every second and a half: 40 reads a minute became 1.
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(list).toHaveBeenCalledTimes(2);
+    stop();
+  });
+  it("reads again at once when the space stream says an update changed", async () => {
+    vi.useFakeTimers();
+    const list = vi.fn(async (): Promise<ComputerUpdate[]> => []);
+    const store = createComputerUpdates({
+      list,
+      start: async () => update,
+      dismiss: async () => {},
+    });
+    store.refresh();
+    expect(list).not.toHaveBeenCalled();
+    const stop = store.watch();
+    await vi.advanceTimersByTimeAsync(0);
+    store.refresh();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(list).toHaveBeenCalledTimes(2);
     stop();
   });
 });

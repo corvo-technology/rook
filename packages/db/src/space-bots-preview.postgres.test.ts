@@ -252,6 +252,19 @@ describePostgres("cross-space bot sidebar previews (PostgreSQL)", () => {
     expect(rowCount).toBe(MESSAGE_BOTS.length);
   });
 
+  it("lists the active space's bots with their previews from one message row per thread", async () => {
+    const { result: listed, rowCount } = await messageRowsDuring("listBots", () =>
+      runAsTenant({ ...actor, spaceId: spaceB }, () =>
+        createRepos(prisma).listBots({ ...actor, spaceId: spaceB }),
+      ),
+    );
+    expect(
+      listed.map((bot) => ({ name: bot.name, preview: bot.preview, unread: bot.unread })),
+    ).toEqual(expected.map(({ name, preview, unread }) => ({ name, preview, unread })));
+    // Before: the newest 16 messages of every thread were read and decrypted on each call.
+    expect(rowCount).toBe(MESSAGE_BOTS.length);
+  });
+
   it("reads no messages when the member has no other spaces", async () => {
     const { result, rowCount, statements } = await messageRowsDuring(
       "listSpaceBotsForSpaces empty",

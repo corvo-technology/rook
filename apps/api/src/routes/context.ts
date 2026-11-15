@@ -47,6 +47,7 @@ import { createModelConnector, prepareAllowedThinkingLevels } from "../model-cre
 import type { RouterDeps } from "../router.js";
 import { createRoutineAnnouncer } from "../routines.js";
 import { procedureSecurityEvent } from "../security-audit.js";
+import { publishMutationHints } from "../space-hint-publisher.js";
 import { createTaughtSkillsService } from "../taught-skills.js";
 import { meDto } from "./shared.js";
 
@@ -357,6 +358,13 @@ export function createRouterContext(deps: RouterDeps) {
       const result = await next();
       const event = procedureSecurityEvent(path, input, context.actor);
       if (event) await recordSecurityEvent(event);
+      return result;
+    })
+    .use(async ({ context, next, path }, input) => {
+      const result = await next();
+      if (context.actor) {
+        void publishMutationHints(deps, context.actor, path, input, result.output);
+      }
       return result;
     });
 

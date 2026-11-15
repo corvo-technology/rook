@@ -34,7 +34,13 @@ import { memberUnreadByThread } from "./thread-reads.js";
 import { withTransactionRetry } from "./transaction-retry.js";
 
 /** Newest messages loaded for sidebar preview; enough to skip a short peer-run tail. */
-const SIDEBAR_PREVIEW_MESSAGE_WINDOW = 16;
+/**
+ * The sidebar shows the newest message a person can see. The newest one nearly always is, so one
+ * row per agent is read (and decrypted); only an agent whose newest messages are all hidden
+ * (peer chatter, background runs) reads further back, 16 at a time.
+ */
+const SIDEBAR_PREVIEW_FIRST_WINDOW = 1;
+const SIDEBAR_PREVIEW_OLDER_PAGE = 16;
 
 function isUniqueViolation(error: unknown): boolean {
   return Boolean(error && typeof error === "object" && "code" in error && error.code === "P2002");
@@ -414,7 +420,7 @@ export function createRepos(
             }),
           ),
         ),
-        SIDEBAR_PREVIEW_MESSAGE_WINDOW,
+        SIDEBAR_PREVIEW_FIRST_WINDOW,
       );
       const unreadByThread = await memberUnreadByThread(
         prisma,
@@ -505,7 +511,7 @@ export function createRepos(
             messages = await prisma.message.findMany({
               where: { threadId: bot.thread.id, seq: { lt: oldest.seq } },
               orderBy: { seq: "desc" },
-              take: SIDEBAR_PREVIEW_MESSAGE_WINDOW,
+              take: SIDEBAR_PREVIEW_OLDER_PAGE,
             });
             if (messages.length === 0) break;
           }

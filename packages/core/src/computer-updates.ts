@@ -2,6 +2,14 @@ import type { ComputerUpdate } from "@corvo/contracts";
 import { COMPUTER_UPDATE_STAGES } from "@corvo/contracts";
 import { isRetryableError, retryDelayMs } from "./retry-policy.js";
 
+/** While an update is queued or running its stage changes by the second. */
+const ACTIVE_POLL_MS = 1_500;
+/** Otherwise a pushed hint says when to read again; this only catches a missed one. */
+const FALLBACK_POLL_MS = 60_000;
+
+const isActive = (update: ComputerUpdate) =>
+  update.status === "queued" || update.status === "running";
+
 /** Shared polling and local presentation state; the server owns operation lifetime. */
 export function createComputerUpdates(client: {
   list: () => Promise<ComputerUpdate[]>;
@@ -13,6 +21,7 @@ export function createComputerUpdates(client: {
   let timer: ReturnType<typeof setTimeout> | undefined;
   let generation = 0;
   let revision = 0;
+  let watchers = 0;
   const emit = () => {
     for (const listener of listeners) listener();
   };
@@ -36,7 +45,10 @@ export function createComputerUpdates(client: {
       if (epoch === generation) {
         clearTimeout(timer);
         if (failure === undefined || isRetryableError(failure)) {
-          const delay = retryDelayMs(failure, state.updates.length ? 1500 : 15000);
+          const delay = retryDelayMs(
+            failure,
+            state.updates.some(isActive) ? ACTIVE_POLL_MS : FALLBACK_POLL_MS,
+          );
           timer = setTimeout(() => void poll(epoch), delay);
         }
       }
@@ -52,12 +64,20 @@ export function createComputerUpdates(client: {
     },
     watch() {
       const epoch = ++generation;
+      watchers++;
       void poll(epoch);
       return () => {
+        watchers--;
         generation++;
         clearTimeout(timer);
         state = { updates: [], openId: null };
       };
+    },
+    /** Reads the list now, as when the space stream says an update changed. */
+    refresh() {
+      if (watchers === 0) return;
+      clearTimeout(timer);
+      void poll(generation);
     },
     open(id: string | null) {
       state = { ...state, openId: id };
@@ -74,7 +94,7 @@ export function createComputerUpdates(client: {
       };
       emit();
       clearTimeout(timer);
-      timer = setTimeout(() => void poll(epoch), 1500);
+      timer = setTimeout(() => void poll(epoch), ACTIVE_POLL_MS);
     },
     async dismiss(id: string) {
       const epoch = generation;

@@ -95,7 +95,7 @@ async function message(
       </Body>
     </Html>,
   );
-  return { to, subject, html, text: toPlainText(html) };
+  return { to, subject, html, text: toPlainText(html), locale: lang };
 }
 
 function Action({ href, children }: { href: string; children: ReactNode }) {

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { setTimeout as sleep } from "node:timers/promises";
 import type { TransactionalEmail, TransactionalEmailProvider } from "@corvo/adapter-kit";
+import { senderFor } from "@corvo/adapter-kit";
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 
@@ -68,7 +69,8 @@ export class ResendEmailProvider implements TransactionalEmailProvider {
     const signal = AbortSignal.timeout(this.timeoutMs);
     // Reuse only within this delivery: a later sign-in request must get a new email.
     const idempotencyKey = randomUUID();
-    const body = JSON.stringify({ from: this.config.from, ...message });
+    const { locale, ...content } = message;
+    const body = JSON.stringify({ from: senderFor(this.config.from, locale), ...content });
     for (let attempt = 0; ; attempt++) {
       let retry = true;
       let failure = "Resend email request failed";

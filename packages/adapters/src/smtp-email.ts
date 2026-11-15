@@ -1,4 +1,5 @@
 import type { TransactionalEmail, TransactionalEmailProvider } from "@corvo/adapter-kit";
+import { senderFor } from "@corvo/adapter-kit";
 import type { NodemailerError, Transporter } from "nodemailer";
 import nodemailer from "nodemailer";
 
@@ -105,7 +106,7 @@ export class SmtpEmailProvider implements TransactionalEmailProvider {
       }
       try {
         await this.transport.sendMail({
-          from: this.config.from,
+          from: senderFor(this.config.from, message.locale),
           to: message.to,
           subject: message.subject,
           text: message.text,

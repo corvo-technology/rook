@@ -53,6 +53,19 @@ function harness(
       ),
     },
     task: { create: vi.fn(async (_args: unknown) => ({ id: "task-b" })) },
+    spaceMember: { findUnique: vi.fn(async () => ({ role: "member", roles: [] })) },
+    spaceRole: { findMany: vi.fn(async () => []) },
+    bot: {
+      // Agents of the space outside the group, and the audience columns of any target.
+      findMany: vi.fn(async (_args: unknown) => [] as { id: string; name: string }[]),
+      findFirst: vi.fn(async (_args: unknown) => ({
+        userId: "owner",
+        audienceRestricted: false,
+        audienceRoleIds: [] as string[],
+        audienceUserIds: [] as string[],
+        consultable: true,
+      })),
+    },
     event: {
       findFirst: vi.fn(async () => ({ seq: 1 })),
       create: vi.fn(async () => ({ seq: 1 })),
@@ -795,7 +808,7 @@ describe("squad routing authority", () => {
         { bot_id: "bot-z", message: "Go" },
         routing,
       ),
-    ).resolves.toMatchObject({ error: "handoff target is not a group member" });
+    ).resolves.toMatchObject({ error: "handoff target is not an agent of this space" });
     expect(h.runCreate).not.toHaveBeenCalled();
   });
 
@@ -864,5 +877,64 @@ describe("squad routing authority", () => {
     expect(result).toMatchObject({ ok: true, botId: "bot-b" });
     expect(h.messageCreate).not.toHaveBeenCalled();
     expect(h.tx.task.create).not.toHaveBeenCalled();
+  });
+});
+
+describe("handing a stage to an agent outside the channel", () => {
+  const closed = {
+    userId: "owner",
+    audienceRestricted: true,
+    audienceRoleIds: [] as string[],
+    audienceUserIds: [] as string[],
+    consultable: true,
+  };
+
+  it("starts that agent in the channel as a guest", async () => {
+    const h = harness([{ kind: "text", text: "preciso do CTO" }]);
+    h.tx.bot.findMany.mockResolvedValue([{ id: "cto", name: "CTO" }]);
+    await expect(
+      handoffToGroupBot(
+        h.deps as never,
+        run,
+        "group-1",
+        { confirm_name: "CTO", message: "Audite o preço" },
+        MEMBER_ONLY,
+      ),
+    ).resolves.toMatchObject({ ok: true, botId: "cto" });
+    expect(h.runCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ botId: "cto", threadId: run.threadId }),
+      }),
+    );
+  });
+
+  it("refuses an agent that works only with some people, pointing to a private ask", async () => {
+    const h = harness([{ kind: "text", text: "preciso do CTO" }]);
+    h.tx.bot.findMany.mockResolvedValue([{ id: "cto", name: "CTO" }]);
+    h.tx.bot.findFirst.mockResolvedValue(closed);
+    const result = await handoffToGroupBot(
+      h.deps as never,
+      run,
+      "group-1",
+      { confirm_name: "CTO", message: "Audite o preço" },
+      MEMBER_ONLY,
+    );
+    expect(result).toMatchObject({ error: expect.stringContaining("message_bot") });
+    expect(h.runCreate).not.toHaveBeenCalled();
+  });
+
+  it("keeps a restricted member behind the same rule", async () => {
+    const h = harness([{ kind: "text", text: "go" }]);
+    h.tx.bot.findFirst.mockResolvedValue(closed);
+    await expect(
+      handoffToGroupBot(
+        h.deps as never,
+        run,
+        "group-1",
+        { bot_id: "bot-b", message: "Go" },
+        MEMBER_ONLY,
+      ),
+    ).resolves.toHaveProperty("error");
+    expect(h.runCreate).not.toHaveBeenCalled();
   });
 });

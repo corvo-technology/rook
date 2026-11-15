@@ -34,9 +34,12 @@ export function splitInvitees(
   };
 }
 
+/** The name some accounts were created with when none was given; it names nobody. */
+const PLACEHOLDER_NAME = "account";
+
 /** What to call someone in a list: their name, or the start of their address when it is only a placeholder. */
 export function personName(name: string | null | undefined, email: string): string {
   const trimmed = name?.trim() ?? "";
-  if (trimmed && trimmed !== "Account") return trimmed;
+  if (trimmed && trimmed.toLowerCase() !== PLACEHOLDER_NAME) return trimmed;
   return email.split("@")[0] || email;
 }

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { SpaceRole } from "@corvo/contracts";
 import type { SpaceMembership, SpacePermission } from "@corvo/core";
-import { can, spaceRank, spaceRoleOf } from "@corvo/core";
+import { can, personName, spaceRank, spaceRoleOf } from "@corvo/core";
 import type { PrismaClient } from "./client.js";
 import {
   getSpaceMembershipFor,
@@ -92,7 +92,7 @@ export async function listSpaceMembers(prisma: PrismaClient, spaceId: string) {
   );
   return rows.map((row) => ({
     userId: row.userId,
-    name: row.member.user.name,
+    name: personName(row.member.user.name, row.member.user.email),
     email: row.member.user.email,
     role: spaceRoleOf(row.role),
     roleIds: [...(memberships.get(`${spaceId}:${row.userId}`)?.roleIds ?? [])],

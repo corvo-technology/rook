@@ -7,7 +7,6 @@ import {
   compactScheduleInput,
   createScheduleFromTool,
   filterBuiltinToolsForRun,
-  filterBuiltinToolsForThread,
   isOneShotRoutineCron,
   listSchedulesFromTool,
   MAX_ACTIVE_ROUTINES_PER_BOT,
@@ -216,7 +215,7 @@ describe("resolveScheduleTiming", () => {
   });
 });
 
-describe("filterBuiltinToolsForThread", () => {
+describe("filterBuiltinToolsForRun", () => {
   const tools = [
     { name: "handoff_to_bot" },
     { name: "message_bot" },
@@ -225,24 +224,6 @@ describe("filterBuiltinToolsForThread", () => {
     { name: "schedule_cancel" },
     { name: "remember" },
   ];
-
-  it("keeps handoff and schedule tools in groups", () => {
-    expect(filterBuiltinToolsForThread(tools, "group-1").map((tool) => tool.name)).toEqual([
-      "handoff_to_bot",
-      "schedule_create",
-      "schedule_list",
-      "schedule_cancel",
-      "remember",
-    ]);
-    expect(filterBuiltinToolsForThread(tools, null).map((tool) => tool.name)).toEqual([
-      "handoff_to_bot",
-      "message_bot",
-      "schedule_create",
-      "schedule_list",
-      "schedule_cancel",
-      "remember",
-    ]);
-  });
 
   it("hides schedule creation from routine runs without removing schedule management", () => {
     expect(filterBuiltinToolsForRun(tools, "routine").map((tool) => tool.name)).toEqual([
@@ -262,28 +243,6 @@ describe("filterBuiltinToolsForThread", () => {
     expect(filterBuiltinToolsForRun(withUpdate, "user").map((tool) => tool.name)).toContain(
       "schedule_update",
     );
-  });
-
-  it("composes thread then run filters without dropping group schedule tools", () => {
-    const groupTools = filterBuiltinToolsForRun(
-      filterBuiltinToolsForThread(tools, "group-1"),
-      "routine",
-    ).map((tool) => tool.name);
-    expect(groupTools).toEqual(["handoff_to_bot", "schedule_list", "schedule_cancel", "remember"]);
-    expect(
-      filterBuiltinToolsForRun(filterBuiltinToolsForThread(tools, "group-1"), "user").map(
-        (tool) => tool.name,
-      ),
-    ).toContain("schedule_create");
-  });
-
-  it("covers every schedule tool name", () => {
-    for (const name of SCHEDULE_TOOL_NAMES) {
-      expect(filterBuiltinToolsForThread([{ name }, { name: "remember" }], "group-1")).toEqual([
-        { name },
-        { name: "remember" },
-      ]);
-    }
   });
 });
 

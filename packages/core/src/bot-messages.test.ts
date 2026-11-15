@@ -248,7 +248,8 @@ describe("group members roster", () => {
     expect(context).toContain("Do not do a teammate's work yourself");
     expect(context).toContain("what to deliver");
     expect(context).toContain("what not to do");
-    expect(context).not.toContain("message_bot");
+    // Agents outside the channel are reached with message_bot, and answer back here.
+    expect(context).toContain("message_bot");
     expect(context).not.toContain("Chief of Staff");
     expect(context).not.toContain("orchestrator");
   });

@@ -115,7 +115,7 @@ export function threadsRoutes(ctx: RouterContext) {
         const backgroundRunCache = new Map<string, Promise<boolean>>();
         const authorCache = new Map<
           string,
-          Promise<{ name: string; image: string | null } | null>
+          Promise<{ name: string; email: string; image: string | null } | null>
         >();
         const routineNameCache = new Map<string, Promise<string | undefined>>();
         const follow = deps.events.follow(target.threadId, input.cursor, context.signal);

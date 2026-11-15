@@ -52,7 +52,7 @@ async function bootstrap() {
       await prisma.user.create({
         data: {
           id: userId,
-          name: "Account",
+          name: email.split("@")[0] || email,
           email,
           emailVerified: true,
           accounts: {

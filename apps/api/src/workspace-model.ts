@@ -1,5 +1,5 @@
 import type { Actor, MemberUsage, WorkspaceModel } from "@corvo/contracts";
-import { utcMonthStart } from "@corvo/core";
+import { personName, utcMonthStart } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
 import { setMemberModelSetting, setSpaceModelConnection, spaceMemberTokensSince } from "@corvo/db";
 import { ORPCError } from "@orpc/server";
@@ -53,7 +53,7 @@ export async function listMemberUsage(deps: Deps, actor: Actor): Promise<MemberU
       where: { spaceId: actor.spaceId },
       select: {
         userId: true,
-        member: { select: { user: { select: { name: true } } } },
+        member: { select: { user: { select: { name: true, email: true } } } },
         modelSetting: { select: { useOwnModel: true, monthlyTokenLimit: true } },
       },
       orderBy: { createdAt: "asc" },
@@ -62,7 +62,7 @@ export async function listMemberUsage(deps: Deps, actor: Actor): Promise<MemberU
   ]);
   return members.map((row) => ({
     userId: row.userId,
-    name: row.member.user.name,
+    name: personName(row.member.user.name, row.member.user.email),
     monthTokens: tokens.get(row.userId) ?? 0,
     monthlyTokenLimit:
       row.modelSetting?.monthlyTokenLimit == null

@@ -43,6 +43,8 @@ describe("personName", () => {
   it("never shows the Account placeholder", () => {
     expect(personName("Account", "joao@x.test")).toBe("joao");
     expect(personName("  ", "joao@x.test")).toBe("joao");
+    expect(personName("account", "joao@x.test")).toBe("joao");
+    expect(personName(null, "joao@x.test")).toBe("joao");
     expect(personName("Ana Souza", "ana@x.test")).toBe("Ana Souza");
   });
 });

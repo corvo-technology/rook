@@ -11,6 +11,7 @@ import {
   isBackgroundInputBlock,
   isBackgroundRunTrigger,
   isPeerReceiptBlocks,
+  personName,
 } from "@corvo/core";
 import { messageReplyPreview } from "@corvo/core/message-quote";
 import type { Prisma, PrismaClient } from "@corvo/db";
@@ -123,10 +124,12 @@ export async function withRoutineNames(
   const users = authorIds.length
     ? await prisma.user.findMany({
         where: { id: { in: authorIds } },
-        select: { id: true, name: true, image: true },
+        select: { id: true, name: true, email: true, image: true },
       })
     : [];
-  const authors = new Map(users.map((user) => [user.id, user]));
+  const authors = new Map(
+    users.map((user) => [user.id, { ...user, name: personName(user.name, user.email) }]),
+  );
   return rows.map((row) =>
     toThreadMessage({
       ...row,
@@ -372,7 +375,7 @@ export function toThreadMessage(row: {
 export async function withAuthor<E extends ProductEvent>(
   prisma: MessageDb,
   event: E,
-  cache: Map<string, Promise<{ name: string; image: string | null } | null>>,
+  cache: Map<string, Promise<{ name: string; email: string; image: string | null } | null>>,
 ): Promise<E> {
   const authorUserId = event.payload.authorUserId;
   if (event.type !== "thread.message.created" || typeof authorUserId !== "string") return event;
@@ -380,12 +383,19 @@ export async function withAuthor<E extends ProductEvent>(
   if (!author) {
     author = prisma.user.findUnique({
       where: { id: authorUserId },
-      select: { name: true, image: true },
+      select: { name: true, email: true, image: true },
     });
     cache.set(authorUserId, author);
   }
   const found = await author;
   return found
-    ? { ...event, payload: { ...event.payload, authorName: found.name, authorImage: found.image } }
+    ? {
+        ...event,
+        payload: {
+          ...event.payload,
+          authorName: personName(found.name, found.email),
+          authorImage: found.image,
+        },
+      }
     : event;
 }

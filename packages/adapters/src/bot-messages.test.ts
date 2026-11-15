@@ -33,6 +33,8 @@ function deps(
     senderRow?: Record<string, unknown>;
     /** The roles the person behind the run holds. */
     personRoleIds?: string[];
+    /** The thread the question being answered was asked in. */
+    questionAskedIn?: unknown;
     /** Simulate a unique (threadId, clientNonce) race after both retries miss. */
     uniqueConflictOnCommit?: boolean;
     transactionConflictOnce?: boolean;
@@ -42,10 +44,16 @@ function deps(
   const notify = vi.fn().mockResolvedValue(undefined);
   const messageFindUnique = vi
     .fn()
-    .mockImplementation(async (args: { where?: { threadId_clientNonce?: unknown } }) =>
-      args?.where?.threadId_clientNonce
-        ? (options.alreadyDelivered ?? null)
-        : { blocks: options.hopBlocks ?? [] },
+    .mockImplementation(
+      async (args: {
+        where?: { threadId_clientNonce?: unknown };
+        select?: { thread?: unknown };
+      }) => {
+        if (args?.where?.threadId_clientNonce) return options.alreadyDelivered ?? null;
+        // Where the question was asked, for an answer that returns there.
+        if (args?.select?.thread) return options.questionAskedIn ?? null;
+        return { blocks: options.hopBlocks ?? [] };
+      },
     );
   const tx = {
     $queryRaw: vi.fn().mockResolvedValue([{ id: "thread" }]),
@@ -191,6 +199,71 @@ describe("messaging another bot", () => {
       ([call]) => (call as { data?: { unread?: boolean } }).data?.unread === true,
     );
     expect(unreadWrites).toHaveLength(2);
+  });
+
+  it("returns an answer to the channel the question was asked in, not only the asker's chat", async () => {
+    const harness = deps({
+      hopBlocks: [
+        {
+          kind: "bot_message_received",
+          fromBotId: "bot-target",
+          fromBotName: "Analyst",
+          text: "what is the margin?",
+          hop: 1,
+          intent: "request",
+          returnToMessageId: "message-asked-in-channel",
+        },
+      ],
+      questionAskedIn: {
+        threadId: "thread-channel",
+        thread: { spaceId: "workspace-1", group: { archivedAt: null } },
+      },
+    });
+    await messageBot(
+      harness.deps,
+      { ...run, sourceMessageId: "message-source" },
+      sender,
+      { bot_id: "bot-target", message: "The margin is 32%.", intent: "result" },
+      { allowTerminalSource: true },
+    );
+    expect(harness.tx.run.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ botId: "bot-target", threadId: "thread-channel" }),
+      }),
+    );
+    expect(harness.notify).toHaveBeenCalledWith("thread-channel", 7);
+  });
+
+  it("falls back to the asker's chat when the channel it asked in is archived", async () => {
+    const harness = deps({
+      hopBlocks: [
+        {
+          kind: "bot_message_received",
+          fromBotId: "bot-target",
+          fromBotName: "Analyst",
+          text: "what is the margin?",
+          hop: 1,
+          intent: "request",
+          returnToMessageId: "message-asked-in-channel",
+        },
+      ],
+      questionAskedIn: {
+        threadId: "thread-channel",
+        thread: { spaceId: "workspace-1", group: { archivedAt: new Date() } },
+      },
+    });
+    await messageBot(
+      harness.deps,
+      { ...run, sourceMessageId: "message-source" },
+      sender,
+      { bot_id: "bot-target", message: "The margin is 32%.", intent: "result" },
+      { allowTerminalSource: true },
+    );
+    expect(harness.tx.run.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ threadId: "thread-target" }),
+      }),
+    );
   });
 
   it("tells the sender to continue independent work", async () => {

@@ -38,7 +38,10 @@ function fixture(group = false) {
           { id: "image-1", name: "picture.png", mimeType: "image/png", size: 4 },
         ]),
     },
-    bot: { findFirst: vi.fn().mockResolvedValue({ id: "bot-1", ...model }) },
+    bot: {
+      findFirst: vi.fn().mockResolvedValue({ id: "bot-1", ...model }),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
     userModelPreference: { findFirst: vi.fn().mockResolvedValue(null) },
     userModelRoleChoice: { findMany: vi.fn().mockResolvedValue([]) },
     spaceSettingOverride: { findUnique: vi.fn().mockResolvedValue(null) },

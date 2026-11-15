@@ -192,7 +192,23 @@ export async function messageBot(
     };
   }
 
-  const targetThreadId = target.thread.id;
+  // An answer returns to where the question was asked: the channel a member asked from, not only
+  // the asker's private chat. A thread that is gone or archived falls back to the chat.
+  const answersQuestion = sourceContext?.fromBotId === target.id && intent !== "fyi";
+  const origin =
+    answersQuestion && sourceContext?.returnToMessageId
+      ? await deps.prisma.message.findUnique({
+          where: { id: sourceContext.returnToMessageId },
+          select: {
+            threadId: true,
+            thread: { select: { spaceId: true, group: { select: { archivedAt: true } } } },
+          },
+        })
+      : null;
+  const targetThreadId =
+    origin && origin.thread.spaceId === run.spaceId && !origin.thread.group?.archivedAt
+      ? origin.threadId
+      : target.thread.id;
 
   // A tool call can be re-executed after a lease expiry, so a delivery has to be
   // replayable: without this the recipient is messaged twice and woken twice.
@@ -305,10 +321,7 @@ export async function messageBot(
           threadId: targetThreadId,
           role: "user",
           blocks: [inboundBlock],
-          replyToMessageId:
-            sourceContext?.fromBotId === target.id && intent !== "fyi"
-              ? sourceContext.returnToMessageId
-              : undefined,
+          replyToMessageId: answersQuestion ? sourceContext?.returnToMessageId : undefined,
           clientNonce: deliveryKey,
           markUnread: options?.forceUnread === true,
         });

@@ -515,7 +515,8 @@ describe("run tool selection", () => {
         messagingChannelRun: false,
       }).map((tool) => tool.name),
     ).toContain("handoff_to_bot");
-    expect(toolNames("user", "group-1")).not.toContain("message_bot");
+    // A group run reaches agents outside the channel with message_bot too.
+    expect(toolNames("user", "group-1")).toContain("message_bot");
     expect(toolNames("user")).toContain("message_bot");
   });
 

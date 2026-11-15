@@ -1447,7 +1447,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const runtimeHistory = [...historicalContext, ...historyWithImages];
         // Without a roster a bot only knows the bots it spawned itself.
         const [teammates, groups] = await Promise.all([
-          thread.groupId || visitorRun
+          visitorRun
             ? []
             : deps.prisma.bot.findMany({
                 where: {
@@ -1455,6 +1455,10 @@ export function createRunExecutor(deps: ExecutorDeps) {
                   archivedAt: null,
                   id: { not: bot.id },
                   thread: { isNot: null },
+                  // In a channel the roster above already lists its members; this is everyone else.
+                  ...(thread.groupId
+                    ? { groupMembers: { none: { groupId: thread.groupId } } }
+                    : {}),
                 },
                 select: { id: true, name: true, title: true, description: true },
                 orderBy: { createdAt: "asc" },

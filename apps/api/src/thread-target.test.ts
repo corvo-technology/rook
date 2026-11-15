@@ -15,10 +15,12 @@ import {
 } from "./thread-target.js";
 
 // These tests are about the thread mechanics; who may talk to an agent has its own tests.
+const deniedBotIds = vi.hoisted(() => new Set<string>());
 vi.mock("./agent-audience.js", () => ({
   requireInAudience: async () => undefined,
   requireCanTalkTo: async () => undefined,
-  talkableBotIds: async (_prisma: unknown, _actor: unknown, ids: string[]) => new Set(ids),
+  talkableBotIds: async (_prisma: unknown, _actor: unknown, ids: string[]) =>
+    new Set(ids.filter((id) => !deniedBotIds.has(id))),
 }));
 
 // Passthrough mock: every hint derives for real except the sentinel that
@@ -1557,6 +1559,7 @@ describe("sendThreadMessage", () => {
     };
     const prisma = {
       message: { findUnique: vi.fn().mockResolvedValue(null) },
+      bot: { findMany: vi.fn().mockResolvedValue([]) },
       $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
     } as unknown as PrismaClient;
     const actor = { spaceId: "workspace-1", userId: "user-1" } as Actor;
@@ -1670,6 +1673,7 @@ describe("sendThreadMessage", () => {
     };
     const prisma = {
       message: { findUnique: vi.fn().mockResolvedValue(null) },
+      bot: { findMany: vi.fn().mockResolvedValue([]) },
       $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
     } as unknown as PrismaClient;
     const actor = { spaceId: "workspace-1", userId: "user-1" } as Actor;
@@ -1873,6 +1877,7 @@ describe("sendThreadMessage", () => {
     };
     const prisma = {
       message: { findUnique: vi.fn().mockResolvedValue(null) },
+      bot: { findMany: vi.fn().mockResolvedValue([]) },
       $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
     } as unknown as PrismaClient;
     const actor = { spaceId: "workspace-1", userId: "user-1" } as Actor;
@@ -1999,6 +2004,7 @@ describe("sendThreadMessage", () => {
         };
         const prisma = {
           message: { findUnique: vi.fn().mockResolvedValue(null) },
+          bot: { findMany: vi.fn().mockResolvedValue([]) },
           $transaction: vi.fn(async (work: (client: typeof tx) => unknown) => work(tx)),
         } as unknown as PrismaClient;
         const target = (
@@ -2090,6 +2096,7 @@ describe("sendThreadMessage", () => {
     };
     const prisma = {
       message: { findUnique: vi.fn().mockResolvedValue(null) },
+      bot: { findMany: vi.fn().mockResolvedValue([]) },
       $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
     } as unknown as PrismaClient;
     const actor = { spaceId: "workspace-1", userId: "user-1" } as Actor;
@@ -2169,6 +2176,7 @@ describe("sendThreadMessage", () => {
     };
     const prisma = {
       message: { findUnique: vi.fn().mockResolvedValue(null) },
+      bot: { findMany: vi.fn().mockResolvedValue([]) },
       $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
     } as unknown as PrismaClient;
     const actor = { spaceId: "workspace-1", userId: "user-1" } as Actor;
@@ -2257,6 +2265,7 @@ describe("sendThreadMessage", () => {
       };
       const prisma = {
         message: { findUnique: vi.fn().mockResolvedValue(null) },
+        bot: { findMany: vi.fn().mockResolvedValue([]) },
         $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
       } as unknown as PrismaClient;
       const actor = { spaceId: "workspace-1", userId: "user-1" } as Actor;
@@ -2359,6 +2368,7 @@ describe("sendThreadMessage", () => {
     };
     const prisma = {
       message: { findUnique: vi.fn().mockResolvedValue(null) },
+      bot: { findMany: vi.fn().mockResolvedValue([]) },
       $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
     } as unknown as PrismaClient;
     const actor = { spaceId: "workspace-1", userId: "user-1" } as Actor;
@@ -2579,6 +2589,7 @@ describe("sendThreadMessage", () => {
     };
     const prisma = {
       message: { findUnique: vi.fn().mockResolvedValue(null) },
+      bot: { findMany: vi.fn().mockResolvedValue([]) },
       $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
     } as unknown as PrismaClient;
     const actor = { spaceId: "workspace-1", userId: "user-1" } as Actor;
@@ -2682,6 +2693,7 @@ describe("sendThreadMessage", () => {
     };
     const prisma = {
       message: { findUnique: vi.fn().mockResolvedValue(null) },
+      bot: { findMany: vi.fn().mockResolvedValue([]) },
       $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
     } as unknown as PrismaClient;
     const actor = { spaceId: "workspace-1", userId: "user-1" } as Actor;
@@ -2779,6 +2791,7 @@ describe("sendThreadMessage", () => {
     };
     const prisma = {
       message: { findUnique: vi.fn().mockResolvedValue(null) },
+      bot: { findMany: vi.fn().mockResolvedValue([]) },
       $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
     } as unknown as PrismaClient;
     const actor = { spaceId: "workspace-1", userId: "user-1" } as Actor;
@@ -2887,6 +2900,7 @@ describe("sendThreadMessage", () => {
     };
     const prisma = {
       message: { findUnique: vi.fn().mockResolvedValue(null) },
+      bot: { findMany: vi.fn().mockResolvedValue([]) },
       $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
     } as unknown as PrismaClient;
     const actor = { spaceId: "workspace-1", userId: "user-1" } as Actor;
@@ -2928,6 +2942,7 @@ describe("sendThreadMessage", () => {
   it("rejects a quote excerpt without a reply target", async () => {
     const prisma = {
       message: { findUnique: vi.fn().mockResolvedValue(null) },
+      bot: { findMany: vi.fn().mockResolvedValue([]) },
       $transaction: vi.fn(),
     } as unknown as PrismaClient;
     const actor = { spaceId: "workspace-1", userId: "user-1" } as Actor;
@@ -2991,6 +3006,7 @@ describe("sendThreadMessage", () => {
     };
     const prisma = {
       message: { findUnique: vi.fn().mockResolvedValue(null) },
+      bot: { findMany: vi.fn().mockResolvedValue([]) },
       $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
     } as unknown as PrismaClient;
     const actor = { spaceId: "workspace-1", userId: "user-1" } as Actor;
@@ -3069,6 +3085,7 @@ describe("sendThreadMessage", () => {
     };
     const prisma = {
       message: { findUnique: vi.fn().mockResolvedValue(null) },
+      bot: { findMany: vi.fn().mockResolvedValue([]) },
       $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
     } as unknown as PrismaClient;
 
@@ -3129,6 +3146,7 @@ describe("sendThreadMessage", () => {
     };
     const prisma = {
       message: { findUnique: vi.fn().mockResolvedValue(null) },
+      bot: { findMany: vi.fn().mockResolvedValue([]) },
       $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
     } as unknown as PrismaClient;
 
@@ -3197,6 +3215,7 @@ describe("sendThreadMessage", () => {
       };
       const prisma = {
         message: { findUnique: vi.fn().mockResolvedValue(null) },
+        bot: { findMany: vi.fn().mockResolvedValue([]) },
         $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
       } as unknown as PrismaClient;
       const actor = { spaceId: "workspace-1", userId: "user-1" } as Actor;
@@ -3274,6 +3293,7 @@ describe("sendThreadMessage", () => {
     };
     const prisma = {
       message: { findUnique: vi.fn().mockResolvedValue(null) },
+      bot: { findMany: vi.fn().mockResolvedValue([]) },
       $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
     } as unknown as PrismaClient;
     const actor = { spaceId: "workspace-1", userId: "user-1" } as Actor;
@@ -3354,6 +3374,7 @@ describe("sendThreadMessage", () => {
     };
     const prisma = {
       message: { findUnique: vi.fn().mockResolvedValue(null) },
+      bot: { findMany: vi.fn().mockResolvedValue([]) },
       $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
     } as unknown as PrismaClient;
     const actor = { spaceId: "workspace-1", userId: "user-1" } as Actor;
@@ -3461,6 +3482,7 @@ describe("sendThreadMessage", () => {
       };
       const prisma = {
         message: { findUnique: vi.fn().mockResolvedValue(null) },
+        bot: { findMany: vi.fn().mockResolvedValue([]) },
         $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
       } as unknown as PrismaClient;
       const actor = { spaceId: "workspace-1", userId: "user-1" } as Actor;
@@ -3567,6 +3589,7 @@ describe("sendThreadMessage", () => {
       };
       const prisma = {
         message: { findUnique: vi.fn().mockResolvedValue(null) },
+        bot: { findMany: vi.fn().mockResolvedValue([]) },
         $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
       } as unknown as PrismaClient;
       const actor = { spaceId: "workspace-1", userId: "user-1" } as Actor;
@@ -3658,6 +3681,7 @@ describe("sendThreadMessage", () => {
     };
     const prisma = {
       message: { findUnique: vi.fn().mockResolvedValue(null) },
+      bot: { findMany: vi.fn().mockResolvedValue([]) },
       $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
     } as unknown as PrismaClient;
     const actor = { spaceId: "workspace-1", userId: "user-1" } as Actor;
@@ -3742,6 +3766,7 @@ describe("sendThreadMessage", () => {
     };
     const prisma = {
       message: { findUnique: vi.fn().mockResolvedValue(null) },
+      bot: { findMany: vi.fn().mockResolvedValue([]) },
       $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
     } as unknown as PrismaClient;
     const actor = { spaceId: "workspace-1", userId: "user-1" } as Actor;
@@ -3826,6 +3851,7 @@ describe("sendThreadMessage", () => {
     };
     const prisma = {
       message: { findUnique: vi.fn().mockResolvedValue(null) },
+      bot: { findMany: vi.fn().mockResolvedValue([]) },
       $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
     } as unknown as PrismaClient;
     const actor = { spaceId: "workspace-1", userId: "user-1" } as Actor;
@@ -3917,6 +3943,7 @@ describe("sendThreadMessage", () => {
       };
       const prisma = {
         message: { findUnique: vi.fn().mockResolvedValue(null) },
+        bot: { findMany: vi.fn().mockResolvedValue([]) },
         $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
       } as unknown as PrismaClient;
       await sendThreadMessage(
@@ -3950,6 +3977,101 @@ describe("sendThreadMessage", () => {
     it("still goes to whoever is mentioned", async () => {
       expect(await send("bot-b", "@Manager and the caption?")).toEqual(["bot-a"]);
     });
+  });
+});
+
+describe("a channel message that names an agent outside the channel", () => {
+  async function send(text: string, options: { denied?: string[]; mentions?: never[] } = {}) {
+    deniedBotIds.clear();
+    for (const id of options.denied ?? []) deniedBotIds.add(id);
+    const message = {
+      id: "msg-1",
+      threadId: "thread-1",
+      seq: 1,
+      role: "user",
+      blocks: [{ kind: "text", text }],
+      botId: null,
+      runId: null,
+      createdAt: new Date(),
+    };
+    const outsiders = [
+      { id: "chief", name: "Chefe" },
+      { id: "cto", name: "CTO" },
+    ];
+    const tx = {
+      thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 1 }) },
+      message: { update: vi.fn(), create: vi.fn().mockResolvedValue(message) },
+      bot: { findMany: vi.fn().mockResolvedValue(outsiders) },
+      run: {
+        findFirst: vi.fn().mockResolvedValue({ botId: "bot-a" }),
+        findMany: vi.fn().mockResolvedValue([]),
+        findUnique: vi.fn().mockResolvedValue({ status: "queued", startedAt: null }),
+        create: vi
+          .fn()
+          .mockResolvedValue({ id: "run-1", taskId: "task-1", botId: "x", status: "queued" }),
+      },
+      task: { create: vi.fn().mockResolvedValue({ id: "task-1" }) },
+      event: {
+        create: vi.fn().mockResolvedValue({ id: "event-1", seq: 1, createdAt: new Date() }),
+      },
+      steeringMessage: { create: vi.fn() },
+      chatGroup: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "group-1",
+          members: [
+            { bot: { id: "bot-a", name: "Precificação", color: null } },
+            { bot: { id: "bot-b", name: "Vendas", color: null } },
+          ],
+        }),
+        update: vi.fn().mockResolvedValue({ id: "group-1" }),
+      },
+      $queryRaw: vi.fn().mockResolvedValue([{ id: "group-1" }]),
+    };
+    const prisma = {
+      message: { findUnique: vi.fn().mockResolvedValue(null) },
+      bot: { findMany: vi.fn().mockResolvedValue(outsiders) },
+      $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
+    } as unknown as PrismaClient;
+    const router = vi.fn();
+    await sendThreadMessage(
+      {
+        prisma,
+        events: { notify: vi.fn().mockResolvedValue(undefined) } as never,
+        jobs: { enqueue: vi.fn().mockResolvedValue(undefined) } as never,
+        router,
+      },
+      { spaceId: "workspace-1", userId: "user-1" } as Actor,
+      {
+        kind: "group",
+        groupId: "group-1",
+        groupName: "Financeiro",
+        threadId: "thread-1",
+        members: [
+          { botId: "bot-a", name: "Precificação", color: null, status: "idle" },
+          { botId: "bot-b", name: "Vendas", color: null, status: "idle" },
+        ],
+        memberBotIds: ["bot-a", "bot-b"],
+      } as unknown as ThreadTarget,
+      { text, clientNonce: "nonce-1" },
+    );
+    return { woken: tx.task.create.mock.calls.map(([args]) => args.data.botId), router };
+  }
+
+  it("wakes that agent and nobody else, without asking the router", async () => {
+    const { woken, router } = await send("@Chefe ajude a precificacao");
+    expect(woken).toEqual(["chief"]);
+    expect(router).not.toHaveBeenCalled();
+  });
+
+  it("wakes the member and the outside agent when both are named", async () => {
+    expect((await send("@Vendas e @CTO olhem isto")).woken).toEqual(["bot-b", "cto"]);
+  });
+
+  it("refuses instead of rerouting when the sender may not talk to it", async () => {
+    await expect(send("@Chefe ajude", { denied: ["chief"] })).rejects.toThrow(
+      "You can't talk to this agent.",
+    );
+    deniedBotIds.clear();
   });
 });
 

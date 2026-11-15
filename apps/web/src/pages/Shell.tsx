@@ -1189,7 +1189,8 @@ function SpaceShell({ page }: { page?: ReactNode }) {
                   mentionTargets={composerMentionTargets}
                   groupRecipient={
                     inGroup
-                      ? (text, mentionBotIds) => groupRecipient(activeSnapshot, text, mentionBotIds)
+                      ? (text, mentionBotIds) =>
+                          groupRecipient(activeSnapshot, text, mentionBotIds, bots)
                       : undefined
                   }
                   agentSkills={agentSkills}

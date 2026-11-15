@@ -5,6 +5,7 @@ import {
   inferHandoffTargetName,
   memberName,
   resolveGroupTargetBotIds,
+  resolveMentionedOutsideBotIds,
 } from "./group-mentions.js";
 
 const members = [
@@ -291,5 +292,40 @@ describe("memberName", () => {
     expect(memberName(members, "b2")).toBeUndefined();
     expect(memberName(members, undefined)).toBeUndefined();
     expect(memberName(undefined, "b1")).toBeUndefined();
+  });
+});
+
+describe("resolveMentionedOutsideBotIds", () => {
+  const others = [
+    { id: "chief", name: "Chefe" },
+    { id: "chief2", name: "Chefe de Vendas" },
+    { id: "a", name: "BotA" },
+  ];
+
+  it("finds an agent outside the channel by @Name or by chip", () => {
+    expect(resolveMentionedOutsideBotIds({ text: "@Chefe ajude", members, others })).toEqual([
+      "chief",
+    ]);
+    expect(
+      resolveMentionedOutsideBotIds({
+        text: "ajude",
+        members,
+        others,
+        explicitMentions: ["chief"],
+      }),
+    ).toEqual(["chief"]);
+  });
+
+  it("reads the longest name, never its prefix", () => {
+    expect(
+      resolveMentionedOutsideBotIds({ text: "@Chefe de Vendas ajude", members, others }),
+    ).toEqual(["chief2"]);
+  });
+
+  it("leaves members to the member rule and ignores names nobody carries", () => {
+    expect(resolveMentionedOutsideBotIds({ text: "@BotA @Ghost", members, others })).toEqual([]);
+    expect(
+      resolveMentionedOutsideBotIds({ text: "hi", members, others, explicitMentions: ["a"] }),
+    ).toEqual([]);
   });
 });

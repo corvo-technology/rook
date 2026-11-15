@@ -9021,4 +9021,25 @@ describe("usage.budgets", () => {
       select: { id: true, monthlyTokenLimit: true },
     });
   });
+
+  it("keeps what an agent spends from members who neither watch usage nor manage agents", async () => {
+    const findMany = vi.fn().mockResolvedValue([{ id: "bot-1", monthlyTokenLimit: 2_000_000n }]);
+    const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "member", roles: [] })) },
+      spaceRole: { findMany: vi.fn(async () => []) },
+      bot: { findMany },
+      $queryRaw: vi.fn().mockResolvedValue([{ tokens: 1_200_000n }]),
+    } as unknown as PrismaClient;
+    const deps = { prisma, env: {}, dataDir: "/tmp/corvo-router-test" } as unknown as RouterDeps;
+    const actor = {
+      spaceId: "workspace-1",
+      userId: "user-2",
+      email: "member@corvo.test",
+      isDeploymentOwner: false,
+    } satisfies Actor;
+    const client = createRouterClient(createRouter(deps), { context: { actor } as never });
+
+    await expect(client.usage.budgets()).resolves.toEqual([]);
+    expect(findMany).not.toHaveBeenCalled();
+  });
 });

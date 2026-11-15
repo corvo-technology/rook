@@ -909,7 +909,9 @@ export function createRunExecutor(deps: ExecutorDeps) {
           return;
         }
         const monthUsage = await botMonthUsage(deps.prisma, bot);
-        if (monthlyLimitReached(monthUsage.used, monthUsage.limit)) {
+        // A run that escalated to a stronger tier already passed this gate; its own first
+        // attempt may have filled the month, and it still finishes under its reply cap.
+        if (run.tierEscalations === 0 && monthlyLimitReached(monthUsage.used, monthUsage.limit)) {
           await failRunBeforeModel(BOT_MONTHLY_LIMIT_RUN_ERROR, true, {
             stopReason: "monthly_limit",
           });

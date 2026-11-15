@@ -604,4 +604,61 @@ describe("listGroups archived", () => {
       ...channelVisibleTo("user-1"),
     });
   });
+
+  it("leaves out a member whose bot the database no longer returns", async () => {
+    const hidden = { bot: null } as unknown as ReturnType<typeof member>;
+    const { repos: groupRepos } = repos([
+      group("archived", true, [member("a", true), hidden, member("b", true)]),
+      group("left-with-one-bot", false, [member("c"), hidden]),
+    ]);
+    const listed = await groupRepos.listGroups(actor, { archived: true });
+    expect(listed.map((item) => item.id)).toEqual(["archived", "left-with-one-bot"]);
+    expect(listed[0]!.members.map((item) => item.botId)).toEqual(["a", "b"]);
+  });
+
+  it("does not count a hidden bot toward the minimum, nor list it", async () => {
+    const hidden = { bot: null } as unknown as ReturnType<typeof member>;
+    const { repos: groupRepos } = repos([
+      group("openable", false, [member("a"), hidden, member("b")]),
+      group("people-only-left", false, [member("c"), hidden]),
+    ]);
+    const listed = await groupRepos.listGroups(actor);
+    expect(listed.map((item) => [item.id, item.members.map((m) => m.botId)])).toEqual([
+      ["openable", ["a", "b"]],
+    ]);
+  });
+});
+
+describe("listSpaceGroupsForSpaces with bots of another space", () => {
+  it("skips members whose bot row security hides instead of failing the list", async () => {
+    const repos = createGroupRepos({
+      spaceMember: { findMany: vi.fn(async () => [{ spaceId: "space-2" }]) },
+      threadMemberRead: { findMany: vi.fn(async () => []) },
+      chatGroup: {
+        findMany: vi.fn(async () => [
+          {
+            id: "group-1",
+            spaceId: "space-2",
+            name: "Crew",
+            purpose: null,
+            pinned: false,
+            sectionId: null,
+            updatedAt: new Date("2026-11-01T00:00:00.000Z"),
+            thread: { id: "thread-1", userId: "user-1", unread: false },
+            members: [
+              { bot: { id: "bot-1", name: "A", color: "#111", runs: [] } },
+              { bot: null },
+              { bot: { id: "bot-2", name: "B", color: "#222", runs: [] } },
+            ],
+          },
+        ]),
+      },
+      $queryRaw: vi.fn(async () => []),
+    } as unknown as PrismaClient);
+    const listed = await repos.listSpaceGroupsForSpaces(
+      { spaceId: "space-1", userId: "user-1", email: "u@example.test", isDeploymentOwner: false },
+      ["space-2"],
+    );
+    expect(listed[0]!.members.map((member) => member.botId)).toEqual(["bot-1", "bot-2"]);
+  });
 });

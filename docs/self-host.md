@@ -2196,6 +2196,10 @@ must pass `/.well-known/` through to it.
 
 Off by default. Set `VOICE_SUMMARY_MIN_CHARS` (for example `600`) to have a voice read a bot reply longer than that many characters as a short summary written by that bot's own model. Each summary is an extra model call billed to the bot. The chat keeps the full reply, and if the summary call fails the full reply is read.
 
+## Voice fallback
+
+Optional. Set `VOICE_FALLBACK_MODEL` to a second OpenRouter speech model. When the deployment voice fails twice for a passing reason (a timeout, rate limit or server error), the reply is spoken once with that model instead. Speech is tried at most three times and for at most 15 seconds, and a failed try is never charged.
+
 ## Upload size
 
 `MAX_UPLOAD_SIZE_MB` sets the per-file chat attachment and computer file transfer limit

@@ -10,7 +10,14 @@ import type {
   VoiceTranscribeResult,
   VoiceVerifyResult,
 } from "@corvo/adapter-kit";
-import { readVoiceAudio, readVoiceJson, speechUploadName, voiceDeadline } from "./voice-http.js";
+import { VoiceProviderError } from "@corvo/adapter-kit";
+import {
+  readVoiceAudio,
+  readVoiceJson,
+  readVoiceText,
+  speechUploadName,
+  voiceDeadline,
+} from "./voice-http.js";
 
 /**
  * Speech through the deployment's own OpenRouter key, paid from the customer's credit. It is not
@@ -140,9 +147,33 @@ export function openRouterVoiceId(voiceId: string | undefined): string {
   return voiceId && OPENROUTER_VOICE_IDS.includes(voiceId) ? voiceId : OPENROUTER_DEFAULT_VOICE;
 }
 
-function failure(status: number, what: string): Error {
+/** What OpenRouter said was wrong, one short line: never the key, never more than a sentence or two. */
+function upstreamDetail(raw: string | null, apiKey: string): string | undefined {
+  if (!raw) return undefined;
+  let text = raw;
+  try {
+    const parsed = JSON.parse(raw) as { error?: { message?: unknown; code?: unknown } };
+    const message = parsed.error?.message;
+    if (typeof message === "string") text = message;
+  } catch {
+    // Not JSON: the raw text is the reason.
+  }
+  const clean = (apiKey ? text.split(apiKey).join("[key]") : text)
+    .replace(/\bsk-[\w-]{8,}/g, "[key]")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 300);
+  return clean || undefined;
+}
+
+async function failure(res: Response, what: string, apiKey: string): Promise<VoiceProviderError> {
+  const detail = upstreamDetail(await readVoiceText(res).catch(() => null), apiKey);
   // The deployment's account is the operator's concern; the customer only learns it failed.
-  return new Error(`Voice is unavailable right now (${what} failed, status ${status}).`);
+  return new VoiceProviderError(
+    `Voice is unavailable right now (${what} failed, status ${res.status}).`,
+    res.status,
+    detail,
+  );
 }
 
 export class OpenRouterVoiceProvider implements VoiceProvider {
@@ -177,7 +208,7 @@ export class OpenRouterVoiceProvider implements VoiceProvider {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: OPENROUTER_TTS_MODEL,
+        model: request.model || OPENROUTER_TTS_MODEL,
         input: request.text,
         voice: openRouterVoiceId(request.voiceId),
         response_format: "pcm",
@@ -185,10 +216,7 @@ export class OpenRouterVoiceProvider implements VoiceProvider {
       redirect: "error",
       signal,
     });
-    if (!res.ok) {
-      await res.body?.cancel().catch(() => undefined);
-      throw failure(res.status, "speaking");
-    }
+    if (!res.ok) throw await failure(res, "speaking", request.apiKey);
     if ((res.headers.get("content-type") ?? "").includes("json")) {
       await res.body?.cancel().catch(() => undefined);
       throw new Error("Voice did not return audio.");
@@ -227,10 +255,7 @@ export class OpenRouterVoiceProvider implements VoiceProvider {
       redirect: "error",
       signal: voiceDeadline(request.signal ?? context.signal, TRANSCRIBE_DEADLINE_MS),
     });
-    if (!res.ok) {
-      await res.body?.cancel().catch(() => undefined);
-      throw failure(res.status, "transcribing");
-    }
+    if (!res.ok) throw await failure(res, "transcribing", request.apiKey);
     const body = (await readVoiceJson(res, { requireValid: true })) as {
       text?: unknown;
       language?: unknown;

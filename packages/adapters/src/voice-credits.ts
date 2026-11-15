@@ -32,6 +32,8 @@ export interface HostedVoice {
   apiKey: string;
   /** Billing credits are on, so every call is paid from the organization's balance. */
   metered: boolean;
+  /** A second speech model, tried when the first fails twice; unset means no fallback. */
+  fallbackModel?: string;
 }
 
 /**
@@ -43,9 +45,14 @@ export function creditVoiceKey(input: {
   creditsEnabled: boolean;
   provider: string;
   key: string | undefined;
+  fallbackModel?: string | undefined;
 }): HostedVoice | undefined {
   return input.provider === OPENROUTER_VOICE_PROVIDER_ID && input.key
-    ? { apiKey: input.key, metered: input.creditsEnabled }
+    ? {
+        apiKey: input.key,
+        metered: input.creditsEnabled,
+        ...(input.fallbackModel ? { fallbackModel: input.fallbackModel } : {}),
+      }
     : undefined;
 }
 

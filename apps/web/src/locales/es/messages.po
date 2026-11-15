@@ -5098,6 +5098,10 @@ msgstr "Sin disparador"
 msgid "No use in this period."
 msgstr "Sin uso en este período."
 
+#: src/components/call/CallCard.tsx
+msgid "No voice right now"
+msgstr "Sin voz por ahora"
+
 #: src/pages/Workflows.tsx
 msgid "No workflows yet"
 msgstr "Aún no hay flujos de trabajo"

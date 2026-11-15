@@ -5098,6 +5098,10 @@ msgstr "No trigger"
 msgid "No use in this period."
 msgstr ""
 
+#: src/components/call/CallCard.tsx
+msgid "No voice right now"
+msgstr "No voice right now"
+
 #: src/pages/Workflows.tsx
 msgid "No workflows yet"
 msgstr "No workflows yet"

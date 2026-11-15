@@ -187,6 +187,16 @@ export function CallCard() {
           onPress={endCall}
         />
       </View>
+      {call.voiceFailed && !call.transcriptOpen ? (
+        <View style={[styles.transcript, { borderTopColor: tokens.border }]}>
+          <Text numberOfLines={3} style={[styles.line, { color: tokens.foreground }]}>
+            {call.caption}
+          </Text>
+          <Text style={[styles.line, { color: tokens.mutedForeground }]}>
+            {t("No voice right now")}
+          </Text>
+        </View>
+      ) : null}
       {call.transcriptOpen ? (
         <View style={[styles.transcript, { borderTopColor: tokens.border }]}>
           {call.exchanges.slice(-TRANSCRIPT_LINES).map((exchange, index) => (

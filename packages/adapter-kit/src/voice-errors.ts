@@ -10,3 +10,18 @@ export class VoiceAccountError extends Error {
     this.name = "VoiceAccountError";
   }
 }
+
+/**
+ * A voice provider answered with a failure. `status` lets callers tell a passing fault (timeout,
+ * 429, 5xx) from a refusal; `detail` is the provider's own reason, already stripped of secrets.
+ */
+export class VoiceProviderError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly detail?: string,
+  ) {
+    super(message);
+    this.name = "VoiceProviderError";
+  }
+}

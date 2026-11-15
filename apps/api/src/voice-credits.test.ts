@@ -1,4 +1,5 @@
 import type { VoiceProvider } from "@corvo/adapter-kit";
+import { VoiceProviderError } from "@corvo/adapter-kit";
 import * as adapters from "@corvo/adapters";
 import type { Actor } from "@corvo/contracts";
 import type { PrismaClient } from "@corvo/db";
@@ -78,7 +79,7 @@ describe("voice on credits", () => {
     await synthesizeVoice(deps(), actor, { text: "Olá" });
     expect(charged).toHaveBeenCalledWith(
       { prisma, organizationId: "org", userId: "user", spaceId: "space" },
-      provider,
+      expect.objectContaining({ synthesize: expect.any(Function) }),
       expect.objectContaining({ text: "Olá", apiKey: "deploy-key" }),
       expect.anything(),
     );
@@ -100,6 +101,45 @@ describe("voice on credits", () => {
     await synthesizeVoice(unmetered, actor, { text: "Olá" });
     expect(provider.synthesize).toHaveBeenCalledOnce();
     expect(charged).not.toHaveBeenCalled();
+  });
+
+  it("asks the deployment voice again after a passing fault, free of charge when billing is off", async () => {
+    vi.spyOn(db, "findDefaultVoiceCredential").mockResolvedValue(null);
+    const clip = { bytes: new Uint8Array([1]), mimeType: "audio/wav" as const };
+    const synthesize = vi
+      .fn()
+      .mockRejectedValueOnce(new VoiceProviderError("timed out", 502))
+      .mockResolvedValueOnce(clip);
+    vi.spyOn(adapters, "createVoiceProvider").mockReturnValue({ synthesize } as never);
+    const unmetered = deps({ voiceCredits: { apiKey: "deploy-key", metered: false } });
+    await expect(synthesizeVoice(unmetered, actor, { text: "Olá" })).resolves.toBe(clip);
+    expect(synthesize).toHaveBeenCalledTimes(2);
+  });
+
+  it("speaks with the fallback model only when the deployment set one", async () => {
+    vi.spyOn(db, "findDefaultVoiceCredential").mockResolvedValue(null);
+    const clip = { bytes: new Uint8Array([1]), mimeType: "audio/wav" as const };
+    const down = () => new VoiceProviderError("down", 503);
+    const synthesize = vi
+      .fn()
+      .mockRejectedValueOnce(down())
+      .mockRejectedValueOnce(down())
+      .mockResolvedValueOnce(clip);
+    vi.spyOn(adapters, "createVoiceProvider").mockReturnValue({ synthesize } as never);
+    const withFallback = deps({
+      voiceCredits: { apiKey: "deploy-key", metered: false, fallbackModel: "vendor/backup" },
+    });
+    await synthesizeVoice(withFallback, actor, { text: "Olá" });
+    expect(synthesize.mock.calls.map((call) => call[0].model)).toEqual([
+      undefined,
+      undefined,
+      "vendor/backup",
+    ]);
+
+    synthesize.mockReset().mockRejectedValue(down());
+    const without = deps({ voiceCredits: { apiKey: "deploy-key", metered: false } });
+    await expect(synthesizeVoice(without, actor, { text: "Olá" })).rejects.toThrow("down");
+    expect(synthesize).toHaveBeenCalledTimes(2);
   });
 
   it("charges listening to the organization", async () => {

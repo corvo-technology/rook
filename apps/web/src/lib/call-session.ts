@@ -40,6 +40,8 @@ export interface CallState {
   transcriptOpen: boolean;
   caption: string;
   heard: string;
+  /** The last reply could not be spoken; it is shown as text and the call keeps listening. */
+  voiceFailed: boolean;
   exchanges: CallExchange[];
 }
 
@@ -143,6 +145,7 @@ export function startCall(call: {
     transcriptOpen: false,
     caption: "",
     heard: "",
+    voiceFailed: false,
     exchanges: [],
   };
   unsubSpeech = speaker.subscribe((speech) => {
@@ -150,14 +153,18 @@ export function startCall(call: {
     if (openingPending && speech.status === "idle") openingPending = false;
     if (speech.status === "speaking") {
       bargedIn = false;
-      set({ phase: "speaking", caption: speech.caption ?? "" });
+      set({ phase: "speaking", caption: speech.caption ?? "", voiceFailed: false });
       // The mic stays open through playback so the caller can talk over the reply.
       void openMic();
     } else if (speech.status === "idle" && state.phase !== "listening" && !bargedIn) {
       set({ caption: "" });
       guardThenListen();
     }
-    if (speech.error) set({ caption: speech.error });
+    // Speech failed: the reply stays readable as text and the mic opens again as usual.
+    if (speech.error) {
+      const reply = [...state.exchanges].reverse().find((exchange) => exchange.role === "bot");
+      set({ caption: reply?.text ?? speech.error, voiceFailed: true });
+    }
   });
   unsubDictation = dictation.subscribe((heard) => {
     if (!state) return;

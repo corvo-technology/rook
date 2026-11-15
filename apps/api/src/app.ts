@@ -522,6 +522,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     creditsEnabled: modelCreditsEnabled,
     provider: env.defaultProvider,
     key: env.deploymentModelKey,
+    fallbackModel: env.voiceFallbackModel,
   });
   const audio = createAudioHold({ prisma, localSpeech, voiceCredits });
   // Agent browsers reach the residential provider only through this gateway, so its credential

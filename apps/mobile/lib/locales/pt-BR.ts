@@ -869,6 +869,7 @@ export const PT_BR_MESSAGES: Record<string, string> = {
   Call: "Ligar",
   "Calls need transcription": "As ligações precisam de transcrição",
   "Could not hear that.": "Não foi possível ouvir isso.",
+  "No voice right now": "Sem voz agora",
   "Could not speak that.": "Não foi possível falar isso.",
   "Could not transcribe that.": "Não foi possível transcrever isso.",
   "Hang up": "Desligar",

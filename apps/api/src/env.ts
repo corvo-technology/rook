@@ -80,6 +80,8 @@ export interface AppEnv {
   maxUploadSizeBytes: number;
   /** Bot replies longer than this are read aloud as a summary; unset reads every reply in full. */
   voiceSummaryMinChars: number | undefined;
+  /** A second speech model for the deployment's own voice, tried when the first fails twice. */
+  voiceFallbackModel: string | undefined;
   sandboxSupervisorUrl: string;
   sandboxSupervisorToken: string | undefined;
   screenProxySecret: string;
@@ -273,6 +275,7 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     ...phoneCallSettings(source),
     maxUploadSizeBytes: uploadSizeFromEnv(source),
     voiceSummaryMinChars: voiceSummaryMinCharsFromEnv(source.VOICE_SUMMARY_MIN_CHARS),
+    voiceFallbackModel: source.VOICE_FALLBACK_MODEL?.trim() || undefined,
     sandboxSupervisorUrl: source.SANDBOX_SUPERVISOR_URL ?? "http://127.0.0.1:7091",
     sandboxSupervisorToken:
       sandboxProvider === "docker" ? resolveSupervisorToken(source) : undefined,

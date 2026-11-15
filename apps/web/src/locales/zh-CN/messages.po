@@ -5098,6 +5098,10 @@ msgstr "无触发器"
 msgid "No use in this period."
 msgstr "此期间没有使用。"
 
+#: src/components/call/CallCard.tsx
+msgid "No voice right now"
+msgstr "暂时没有语音"
+
 #: src/pages/Workflows.tsx
 msgid "No workflows yet"
 msgstr "还没有工作流"

@@ -215,6 +215,7 @@ export {
 export * from "./verified-download.js";
 export * from "./voice-credits.js";
 export * from "./voice-factory.js";
+export * from "./voice-resilience.js";
 export * from "./wakeup.js";
 export * from "./web-limits.js";
 export * from "./web-provider-factory.js";

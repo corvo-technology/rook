@@ -13,7 +13,7 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/components/PeopleList.tsx
+#: src/components/UnreadBadge.tsx
 #: src/pages/shell/sidebar-roster.tsx
 msgid " (unread)"
 msgstr "（未読）"
@@ -649,6 +649,7 @@ msgstr "スペースの操作"
 msgid "Active"
 msgstr "有効"
 
+#: src/components/InboxPanel.tsx
 #: src/pages/ActivityPage.tsx
 #: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-header.tsx
@@ -923,6 +924,10 @@ msgstr "使用できるエージェント"
 msgid "Agents:"
 msgstr "エージェント:"
 
+#: src/components/InboxPanel.tsx
+msgid "Alert"
+msgstr "お知らせ"
+
 #: src/pages/AppCatalogGrid.tsx
 #: src/pages/Board.tsx
 #: src/pages/StoreCategoryChips.tsx
@@ -938,6 +943,10 @@ msgstr "${0} はすべてモデルの利用に充てられます。"
 #: src/pages/shell/agent-import.tsx
 msgid "All bots"
 msgstr "すべてのボット"
+
+#: src/components/InboxPanel.tsx
+msgid "All caught up"
+msgstr "すべて確認済み"
 
 #: src/pages/Routines.tsx
 msgid "All good"
@@ -1133,6 +1142,10 @@ msgstr "適用済み"
 #: src/components/AskCard.tsx
 msgid "Apply"
 msgstr "適用"
+
+#: src/components/InboxPanel.tsx
+msgid "Approval"
+msgstr "承認"
 
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Approval boundaries"
@@ -3118,6 +3131,10 @@ msgstr "詳細"
 msgid "Development"
 msgstr "開発"
 
+#: src/components/InboxPanel.tsx
+msgid "Direct message"
+msgstr "ダイレクトメッセージ"
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Disable a tool"
 msgstr "ツールを無効にする"
@@ -3541,6 +3558,7 @@ msgstr "あなたについての情報"
 msgid "failed"
 msgstr "失敗"
 
+#: src/components/InboxPanel.tsx
 #: src/components/PlanCard.tsx
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
@@ -3963,6 +3981,10 @@ msgstr "使用中"
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Inactive"
 msgstr "無効"
+
+#: src/components/InboxPanel.tsx
+msgid "Inbox"
+msgstr "受信トレイ"
 
 #: src/pages/shell/message-cards.tsx
 msgid "Inbox & email"
@@ -4451,6 +4473,10 @@ msgstr "手動"
 msgid "Manual setup required"
 msgstr "手動設定が必要"
 
+#: src/components/InboxPanel.tsx
+msgid "Mark all read"
+msgstr "すべて既読にする"
+
 #: src/pages/BotContextMenu.tsx
 msgid "Mark as Read"
 msgstr "既読にする"
@@ -4556,6 +4582,10 @@ msgstr "{title}のメモリ"
 #: src/pages/shell/bot-panel.tsx
 msgid "Memory scope"
 msgstr "メモリの範囲"
+
+#: src/components/InboxPanel.tsx
+msgid "Mention"
+msgstr "メンション"
 
 #: src/pages/shell/composer-mentions.tsx
 msgid "Mentions"
@@ -5176,7 +5206,7 @@ msgstr "記憶はまだありません"
 msgid "Nothing to approve"
 msgstr "承認待ちはありません"
 
-#: src/components/SidebarFooter.tsx
+#: src/components/InboxBell.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Notifications"
 msgstr "通知"
@@ -5708,6 +5738,10 @@ msgstr "QRコード"
 msgid "Queen"
 msgstr "クイーン"
 
+#: src/components/InboxPanel.tsx
+msgid "Question"
+msgstr "質問"
+
 #: src/pages/ActivityList.tsx
 msgid "Queued"
 msgstr "待機中"
@@ -6005,6 +6039,7 @@ msgstr "値を置き換え"
 msgid "Replies"
 msgstr "返信"
 
+#: src/components/InboxPanel.tsx
 #: src/pages/shell/message-hover-actions.tsx
 #: src/pages/shell/quote-selection-button.tsx
 #: src/pages/shell/thread-panel.tsx

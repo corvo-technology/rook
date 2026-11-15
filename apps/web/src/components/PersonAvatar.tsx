@@ -1,3 +1,4 @@
+import type { PresenceStatus } from "@corvo/contracts";
 import { useState } from "react";
 
 /** Up to two letters: the first of the first and last word, or the first two of a single name. */
@@ -12,33 +13,54 @@ export function personInitials(name: string): string {
   return letters.toUpperCase();
 }
 
+/** The token a presence dot wears: online is success, away is warning, offline has no dot. */
+export function presenceDotClass(status: PresenceStatus | undefined): string | null {
+  if (status === "online") return "bg-success";
+  if (status === "away") return "bg-warning";
+  return null;
+}
+
 /** A person's picture, or their initials: the one place a person, unlike an agent, wears no colour. */
 export function PersonAvatar({
   name,
   image,
   size = 24,
+  presence,
+  ringClassName = "ring-background",
 }: {
   name: string;
   image?: string | null;
   size?: number;
+  /** Shown as a dot at the corner; offline and unknown show none. */
+  presence?: PresenceStatus;
+  /** The ring that separates the dot from what is behind it. */
+  ringClassName?: string;
 }) {
   const [failed, setFailed] = useState<string | null>(null);
+  const dot = presenceDotClass(presence);
   return (
-    <span
-      aria-hidden="true"
-      style={{ width: size, height: size, fontSize: Math.round(size * 0.4) }}
-      className="grid shrink-0 place-items-center overflow-hidden rounded-full border border-border bg-muted font-semibold text-foreground"
-    >
-      {image && failed !== image ? (
-        <img
-          src={image}
-          alt=""
-          className="size-full object-cover"
-          onError={() => setFailed(image)}
+    <span aria-hidden="true" className="relative shrink-0" style={{ width: size, height: size }}>
+      <span
+        style={{ fontSize: Math.round(size * 0.4) }}
+        className="grid size-full place-items-center overflow-hidden rounded-full border border-border bg-muted font-semibold text-foreground"
+      >
+        {image && failed !== image ? (
+          <img
+            src={image}
+            alt=""
+            className="size-full object-cover"
+            onError={() => setFailed(image)}
+          />
+        ) : (
+          personInitials(name)
+        )}
+      </span>
+      {dot ? (
+        <span
+          data-presence={presence}
+          className={`absolute -end-0.5 -bottom-0.5 size-2.5 rounded-full ring-2 ${ringClassName} ${dot}`}
         />
-      ) : (
-        personInitials(name)
-      )}
+      ) : null}
     </span>
   );
 }

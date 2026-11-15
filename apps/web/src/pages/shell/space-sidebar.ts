@@ -1,4 +1,5 @@
 import { CHIEF_BOT_SPAWN_KEY, groupBotsForSidebar } from "@corvo/core";
+import { unreadTotal } from "../../lib/unread";
 
 type SidebarChat = {
   id: string;
@@ -164,4 +165,27 @@ export function countUnreadChats(
     (count, section) => count + section.bots.filter((item) => item.chat.unread).length,
     0,
   );
+}
+
+/** The unread messages the roster shows: each chat's count, or one for an unread chat without one. */
+export function countUnreadMessages(
+  sections: readonly {
+    bots: readonly { chat: { unread?: boolean; unreadCount?: number } }[];
+  }[],
+): number {
+  return unreadTotal(sections.flatMap((section) => section.bots.map((item) => item.chat)));
+}
+
+type Counts = { id: string; unreadCount?: number; mentionCount?: number };
+
+/** Adds the unread counts the space list carries to the chats the shell holds in full. */
+export function withUnreadCounts<T extends { id: string }>(
+  chats: readonly T[],
+  counted: readonly Counts[],
+): (T & Omit<Counts, "id">)[] {
+  const byId = new Map(counted.map((chat) => [chat.id, chat]));
+  return chats.map((chat) => {
+    const counts = byId.get(chat.id);
+    return { ...chat, unreadCount: counts?.unreadCount, mentionCount: counts?.mentionCount };
+  });
 }

@@ -668,13 +668,18 @@ async function showApprovalCard(
       .enqueue(runContinueJob(paused.continuationRunId))
       .catch((error) => getLogger().error("steering continuation enqueue", error));
   }
-  await notifyRun(deps, run, {
-    kind: "help",
-    title: `${displayName(bot.name, "Bot")} needs approval`,
-    body: `Review before ${name}`,
-    botId: bot.id,
-    threadId: thread.id,
-  });
+  await notifyRun(
+    deps,
+    run,
+    {
+      kind: "help",
+      title: `${displayName(bot.name, "Bot")} needs approval`,
+      body: `Review before ${name}`,
+      botId: bot.id,
+      threadId: thread.id,
+    },
+    { inbox: "approval" },
+  );
   await noteApprovalInParentChat(deps, { bot, effectId: applied!.effect.id });
   return pauseForApproval(ctx);
 }

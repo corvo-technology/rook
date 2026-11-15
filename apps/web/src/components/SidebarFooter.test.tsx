@@ -128,8 +128,7 @@ it("shows the account image and falls back to the initial after a load error", a
   expect(trigger.textContent).toBe("ALAda Lovelace");
 });
 
-it("shows who is signed in beside the bell, which opens the activity page", async () => {
-  const onActivity = vi.fn();
+it("shows who is signed in beside the inbox bell", async () => {
   await act(async () =>
     root.render(
       <DesktopUpdatesProvider>
@@ -143,7 +142,7 @@ it("shows who is signed in beside the bell, which opens the activity page", asyn
           onLogOut={() => {}}
           signingOut={false}
           logOutError={null}
-          onActivity={onActivity}
+          inbox={<button type="button" data-testid="sidebar-bell" />}
         />
       </DesktopUpdatesProvider>,
     ),
@@ -151,10 +150,7 @@ it("shows who is signed in beside the bell, which opens the activity page", asyn
   expect(host.querySelector('[data-testid="user-menu-trigger"]')?.textContent).toContain(
     "Ada Lovelace",
   );
-  await act(async () =>
-    host.querySelector<HTMLButtonElement>('[data-testid="sidebar-bell"]')!.click(),
-  );
-  expect(onActivity).toHaveBeenCalledOnce();
+  expect(host.querySelector('[data-testid="sidebar-bell"]')).not.toBeNull();
 });
 
 it("opens integrations and keeps the existing account actions", async () => {

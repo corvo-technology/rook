@@ -8,7 +8,7 @@ import {
   truncatePlainText,
 } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
-import { countUnreadInboxChats } from "@corvo/db";
+import { countUnreadInboxChats, raiseNotification } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import type { ExecutorDeps } from "./executor-deps.js";
 
@@ -58,8 +58,9 @@ export async function notifyRun(
     routineId?: string | null;
   },
   message: NotificationMessage,
-  options: { retryOnFailure?: boolean } = {},
+  options: { retryOnFailure?: boolean; inbox?: "approval" | "question" | "alert" } = {},
 ) {
+  await recordInboxEntry(deps, run, message, options.inbox);
   if (
     !deps.notifications ||
     (isBackgroundRunTrigger(run.trigger) && message.kind !== "help" && message.kind !== "takeover")
@@ -101,6 +102,41 @@ export async function notifyRun(
       if (options.retryOnFailure) throw error;
       getLogger().error("run notification", error);
     });
+}
+
+/**
+ * What the run raised for its person, kept in their inbox whatever their push settings say: a
+ * question or an approval waiting on them, or a failure of something they own. Raising the same
+ * source again refreshes one entry. It never throws, so a missed entry cannot fail a run.
+ */
+async function recordInboxEntry(
+  deps: ExecutorDeps,
+  run: { spaceId: string; userId: string; botId: string; threadId: string },
+  message: NotificationMessage,
+  inbox: "approval" | "question" | "alert" | undefined,
+): Promise<void> {
+  const kind =
+    inbox ??
+    (message.kind === "failure"
+      ? "failure"
+      : message.kind === "help" || message.kind === "takeover"
+        ? "question"
+        : undefined);
+  if (!kind) return;
+  try {
+    await raiseNotification(deps.prisma, {
+      spaceId: run.spaceId,
+      userId: run.userId,
+      kind,
+      dedupeKey: `${kind}:${run.threadId}`,
+      threadId: run.threadId,
+      botId: run.botId,
+      // An alert has no message to read, so it carries its own product-authored line.
+      ...(kind === "alert" ? { detail: message.title.slice(0, 200) } : {}),
+    });
+  } catch (error) {
+    getLogger().error("inbox entry", error);
+  }
 }
 
 export function runSendsFinishNotification(trigger: string): boolean {

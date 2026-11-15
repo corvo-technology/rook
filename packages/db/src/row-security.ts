@@ -160,6 +160,7 @@ export const ROW_SECURITY_MODELS: ReadonlySet<string> = new Set([
   "SpaceModelConnection",
   "SpaceMemberModelSetting",
   "ThreadMemberRead",
+  "Notification",
   "SpaceRole",
   "SpaceMemberRole",
   "SpaceInvitation",

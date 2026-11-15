@@ -22,9 +22,13 @@ function kindsFor(path: readonly string[]): readonly SpaceHintKind[] {
     case "computer":
       return ["computer"];
     case "threads":
-      return name === "markRead" || name === "markUnread" || name === "clear" ? ["roster"] : [];
+      return name === "markRead" || name === "markUnread" || name === "clear"
+        ? ["roster", "notifications"]
+        : [];
     case "directMessages":
-      return name === "markRead" ? ["dm"] : [];
+      return name === "markRead" ? ["dm", "notifications"] : [];
+    case "inbox":
+      return ["notifications"];
     default:
       return [];
   }
@@ -54,7 +58,7 @@ export async function publishMutationHints(
       return undefined;
     };
     let reach: HintReach | undefined;
-    if (area === "threads" || area === "directMessages") {
+    if (area === "threads" || area === "directMessages" || area === "inbox") {
       // Read state belongs to the person who changed it; their other tabs are the audience.
       reach = { users: [actor.userId] };
     } else if (area === "groups") {

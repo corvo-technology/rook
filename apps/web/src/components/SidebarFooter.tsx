@@ -1,7 +1,7 @@
 import type { NavLink } from "@corvo/contracts";
 import { AppMarkStack, Button, Popover, PopoverContent, PopoverTrigger } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { Bell, Download, Link2, LogOut, Settings, UserRound } from "lucide-react";
+import { Download, Link2, LogOut, Settings, UserRound } from "lucide-react";
 import type { ReactNode } from "react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { useSidebarUpdate } from "./DesktopUpdates";
@@ -27,9 +27,8 @@ type Props = {
   localEdition?: boolean;
   /** A partner leaves the Store out for its customers. */
   hideStore?: boolean;
-  /** Opens the activity page, which the bell stands for. */
-  onActivity?: () => void;
-  activityOpen?: boolean;
+  /** The bell that opens the inbox. */
+  inbox?: ReactNode;
   /** Subscription usage, beside the bell; nothing when no subscription has reported. */
   usage?: ReactNode;
 };
@@ -57,8 +56,7 @@ export function SidebarFooter({
   logOutError,
   localEdition = false,
   hideStore = false,
-  onActivity,
-  activityOpen = false,
+  inbox,
   usage,
 }: Props) {
   const { t } = useLingui();
@@ -193,26 +191,7 @@ export function SidebarFooter({
           ) : null}
         </Popover>
         {mini ? null : usage}
-        {onActivity && !mini ? (
-          <IconTooltip label={t`Notifications`}>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              data-testid="sidebar-bell"
-              aria-label={t`Notifications`}
-              aria-pressed={activityOpen}
-              onClick={onActivity}
-              className="shrink-0 rounded-md text-muted-foreground hover:text-foreground"
-            >
-              <Bell
-                size={16}
-                strokeWidth={1.75}
-                fill={activityOpen ? "currentColor" : "none"}
-                aria-hidden="true"
-              />
-            </Button>
-          </IconTooltip>
-        ) : null}
+        {mini ? null : inbox}
         {update.available ? (
           <IconTooltip label={t`Install update`}>
             <Button

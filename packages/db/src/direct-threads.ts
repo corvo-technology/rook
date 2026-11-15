@@ -1,6 +1,8 @@
 import { personName } from "@corvo/core";
 import type { PrismaClient } from "./client.js";
+import { markNotificationsRead } from "./notifications.js";
 import { IsolationError } from "./scope.js";
+import { unreadCountFields } from "./thread-reads.js";
 
 /** A pair of people has one conversation; the lower id is always `userAId`. */
 export function directPair(a: string, b: string): { userAId: string; userBId: string } {
@@ -85,6 +87,8 @@ export interface DirectPerson {
   image: string | null;
   threadId: string | null;
   unread: boolean;
+  unreadCount?: number;
+  mentionCount?: number;
 }
 
 /** The space's other members, each with the conversation the actor has with them, if any. */
@@ -122,9 +126,15 @@ export async function listDirectPeople(
       })
     : [];
   const unread = new Set(reads.filter((row) => row.unread).map((row) => row.threadId));
+  const countsFor = await unreadCountFields(
+    prisma,
+    input.userId,
+    new Map([...byPartner.values()].map((id) => [id, unread.has(id)])),
+  );
   return members.map((row) => {
     const threadId = byPartner.get(row.userId) ?? null;
     return {
+      ...(threadId !== null && unread.has(threadId) ? countsFor(threadId) : {}),
       userId: row.userId,
       name: personName(row.member.user.name, row.member.user.email),
       image: row.member.user.image,
@@ -173,6 +183,11 @@ export async function markDirectRead(
         lastReadSeq: thread.nextMessageSeq - 1,
       },
       update: { unread: false, lastReadSeq: thread.nextMessageSeq - 1 },
+    });
+    await markNotificationsRead(tx, {
+      spaceId: input.spaceId,
+      userId: input.userId,
+      threadId: input.threadId,
     });
   });
 }

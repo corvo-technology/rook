@@ -1212,4 +1212,11 @@ export const DE_MESSAGES: Record<string, string> = {
   "Reply in thread": "Im Thread antworten",
   "1 reply": "1 Antwort",
   "{count} replies": "{count} Antworten",
+  Inbox: "Posteingang",
+  "Mark all read": "Alle als gelesen markieren",
+  "Nothing here": "Nichts hier",
+  Mention: "Erwähnung",
+  Approval: "Genehmigung",
+  Question: "Frage",
+  Alert: "Hinweis",
 };

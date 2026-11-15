@@ -108,10 +108,20 @@ describe("the people list", () => {
         findMany: vi.fn(async () => [{ threadId: "t-ab", userAId: "u-a", userBId: "u-b" }]),
       },
       threadMemberRead: { findMany: readRows },
+      notification: { groupBy: vi.fn(async () => []) },
+      $queryRaw: vi.fn(async () => []),
     } as unknown as PrismaClient;
     const people = await listDirectPeople(db, { spaceId: "s", userId: "u-a" });
     expect(people).toEqual([
-      { userId: "u-b", name: "Joao", image: null, threadId: "t-ab", unread: true },
+      {
+        userId: "u-b",
+        name: "Joao",
+        image: null,
+        threadId: "t-ab",
+        unread: true,
+        unreadCount: 0,
+        mentionCount: 0,
+      },
       { userId: "u-c", name: "Marta", image: null, threadId: null, unread: false },
     ]);
     // Only this person's own read state is read.

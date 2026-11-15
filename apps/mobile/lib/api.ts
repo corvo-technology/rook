@@ -15,6 +15,8 @@ import type {
   Run,
   RunStatus,
   Space,
+  SpaceBot,
+  SpaceGroup,
   SpaceNavigation,
   ThreadMessage,
   ThreadSnapshot,
@@ -1049,7 +1051,8 @@ export type MobileBot = Pick<
   | "squadRouting"
   | "crossSpaceCommunication"
 > &
-  Partial<Pick<Bot, "parentBotId" | "spaceId" | "instructions">>;
+  Partial<Pick<Bot, "parentBotId" | "spaceId" | "instructions">> &
+  Partial<Pick<SpaceBot, "unreadCount" | "mentionCount">>;
 
 export type MobileBotSection = BotSection;
 
@@ -1091,7 +1094,8 @@ export type MobileGroup = Pick<
   | "updatedAt"
   | "members"
 > &
-  Partial<Pick<Group, "spaceId" | "purpose">>;
+  Partial<Pick<Group, "spaceId" | "purpose">> &
+  Partial<Pick<SpaceGroup, "unreadCount" | "mentionCount">>;
 
 export type MobileSpace = Space;
 export type MobileSpaceNavigation = SpaceNavigation;

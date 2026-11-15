@@ -1,4 +1,4 @@
-import type { AppBootstrap, Bot, DirectPerson, NavPart } from "@corvo/contracts";
+import type { AppBootstrap, Bot, DirectPerson, NavPart, PresenceStatus } from "@corvo/contracts";
 import { NAV_PARTS } from "@corvo/contracts";
 import { Button, Kbd, Popover, PopoverContent, PopoverTrigger } from "@corvo/ui-web";
 import { plural } from "@lingui/core/macro";
@@ -25,6 +25,7 @@ import { useLocation } from "react-router-dom";
 import { NewDot } from "../../components/NewDot";
 import { PeopleList } from "../../components/PeopleList";
 import { findFirstBot } from "../../lib/first-bot";
+import { usePresence } from "../../lib/presence";
 import { useSpaceQueries } from "../../lib/query";
 import { useDirectPeople } from "../../lib/use-direct-people";
 import { useMissions } from "../../lib/use-missions";
@@ -243,10 +244,12 @@ export function SidebarPeople({
   people,
   activeUserId,
   onOpen,
+  presence,
 }: {
   people: readonly DirectPerson[];
   activeUserId?: string;
   onOpen: (userId: string) => void;
+  presence?: ReadonlyMap<string, PresenceStatus>;
 }) {
   if (people.length === 0) return null;
   return (
@@ -254,7 +257,7 @@ export function SidebarPeople({
       <h2 className="px-2 pt-3 pb-0.5 text-caption font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         <Trans>People</Trans>
       </h2>
-      <PeopleList people={people} activeUserId={activeUserId} onOpen={onOpen} />
+      <PeopleList people={people} activeUserId={activeUserId} onOpen={onOpen} presence={presence} />
     </div>
   );
 }
@@ -267,7 +270,15 @@ export function SidebarPeopleList({
   onOpen: (userId: string) => void;
 }) {
   const people = useDirectPeople();
-  return <SidebarPeople people={people.data ?? []} activeUserId={activeUserId} onOpen={onOpen} />;
+  const presence = usePresence();
+  return (
+    <SidebarPeople
+      people={people.data ?? []}
+      activeUserId={activeUserId}
+      onOpen={onOpen}
+      presence={presence}
+    />
+  );
 }
 
 /** "3 people · 6 agents" under the space's name; a space of one person needs no count. */

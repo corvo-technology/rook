@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import { commitSpaceRename, countUnreadChats, sidebarGroupsForSpaces } from "./space-sidebar";
+import {
+  commitSpaceRename,
+  countUnreadChats,
+  countUnreadMessages,
+  sidebarGroupsForSpaces,
+  withUnreadCounts,
+} from "./space-sidebar";
 
 function chat(id: string, name: string) {
   return {
@@ -246,4 +252,17 @@ it("counts unread bots and groups from the sidebar across spaces", () => {
   input[0]!.bots[0]!.unread = true;
   expect(countUnreadChats(sidebarGroupsForSpaces(input, ""))).toBe(3);
   expect(countUnreadChats([])).toBe(0);
+});
+
+it("counts unread messages and adds the space list's counts to the chats held in full", () => {
+  const held = withUnreadCounts(
+    [
+      { id: "a", unread: true },
+      { id: "b", unread: true },
+      { id: "c", unread: false },
+    ],
+    [{ id: "a", unreadCount: 5, mentionCount: 1 }],
+  );
+  expect(held[0]).toMatchObject({ unreadCount: 5, mentionCount: 1 });
+  expect(countUnreadMessages([{ bots: held.map((chat) => ({ chat })) }])).toBe(6);
 });

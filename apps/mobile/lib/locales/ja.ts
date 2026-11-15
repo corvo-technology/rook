@@ -1194,4 +1194,11 @@ export const JA_MESSAGES: Record<string, string> = {
   "Reply in thread": "スレッドで返信",
   "1 reply": "1件の返信",
   "{count} replies": "{count}件の返信",
+  Inbox: "受信トレイ",
+  "Mark all read": "すべて既読にする",
+  "Nothing here": "何もありません",
+  Mention: "メンション",
+  Approval: "承認",
+  Question: "質問",
+  Alert: "アラート",
 };

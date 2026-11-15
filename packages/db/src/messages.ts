@@ -1,5 +1,6 @@
 import type { MessageBlock } from "@corvo/contracts";
 import type { Prisma, PrismaClient } from "./client.js";
+import { notifyForMessage } from "./notifications.js";
 import { markUnreadForOtherMembers } from "./thread-reads.js";
 import { withTransactionRetry } from "./transaction-retry.js";
 
@@ -93,7 +94,12 @@ export async function createThreadMessageInTransaction(
       nextMessageSeq: { increment: 1 },
       unread: markUnread ? true : undefined,
     },
-    select: { nextMessageSeq: true },
+    select: {
+      nextMessageSeq: true,
+      spaceId: true,
+      groupId: true,
+      direct: { select: { userAId: true, userBId: true } },
+    },
   });
   if (markUnread) {
     await markUnreadForOtherMembers(tx, {
@@ -104,7 +110,7 @@ export async function createThreadMessageInTransaction(
   }
   await assertRunCanWriteHistory(tx, input.runId, { allowCancelled: input.allowCancelledRun });
   const threadRootId = input.threadRootId ?? (await runThreadRootId(tx, input.runId));
-  return tx.message.create({
+  const created = await tx.message.create({
     data: {
       threadId: input.threadId,
       seq: thread.nextMessageSeq - 1,
@@ -120,6 +126,18 @@ export async function createThreadMessageInTransaction(
       routing: input.routing,
     },
   });
+  await notifyForMessage(tx, {
+    spaceId: thread.spaceId,
+    thread: { id: input.threadId, groupId: thread.groupId, direct: thread.direct },
+    message: {
+      id: created.id,
+      role: input.role,
+      authorUserId: input.authorUserId ?? null,
+      threadRootId: created.threadRootId,
+      blocks: input.blocks,
+    },
+  });
+  return created;
 }
 
 type ThreadSource = { id: string; threadRootId: string | null; blocks: unknown };

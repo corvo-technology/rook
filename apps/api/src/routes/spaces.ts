@@ -80,6 +80,7 @@ export function spacesRoutes(ctx: RouterContext) {
           return { userId, roleIds: viewer.roleIds, manageChannels: viewer.seesAll };
         };
         const viewer = await loadViewer();
+        const leavePresence = deps.presence?.connect(spaceId, userId);
         // One in-memory subscriber on the process's single LISTEN; the stream holds no connection.
         const follow = (deps.spaceHints ?? createSpaceHints()).follow(
           spaceId,
@@ -125,6 +126,7 @@ export function spacesRoutes(ctx: RouterContext) {
             yield next.value;
           }
         } finally {
+          leavePresence?.();
           void follow.return(undefined).catch(() => {});
         }
       }),

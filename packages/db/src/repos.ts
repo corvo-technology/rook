@@ -31,7 +31,7 @@ import {
   primaryActiveRun,
   withLatestBotRuns,
 } from "./thread-listing.js";
-import { memberUnreadByThread } from "./thread-reads.js";
+import { memberUnreadByThread, unreadCountFields } from "./thread-reads.js";
 import { withTransactionRetry } from "./transaction-retry.js";
 
 /** Newest messages loaded for sidebar preview; enough to skip a short peer-run tail. */
@@ -257,10 +257,12 @@ export function createRepos(
       actor.userId,
       bots.flatMap((bot) => (bot.thread ? [bot.thread] : [])),
     );
+    const countsFor = await unreadCountFields(prisma, actor.userId, unreadByThread);
     return bots.map((bot) => {
       if (!bot.thread) throw new IsolationError("Bot is missing its thread");
       const activeRun = primaryActiveRun(bot.runs);
       return {
+        ...countsFor(bot.thread.id),
         id: bot.id,
         spaceId: bot.spaceId,
         name: bot.name,

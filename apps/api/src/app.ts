@@ -45,6 +45,7 @@ import {
   createConnectorStack,
   createEgressGateway,
   createIdleComputerSweeper,
+  createInboxPushSink,
   createJobReconciler,
   createLocalSpeech,
   createMessagingContextLoader,
@@ -143,6 +144,7 @@ import {
   rowSecurityWarning,
   runAsSystem,
   securityEventRetentionDays,
+  setNotificationPushSink,
   setPartnerTenantState,
   takePartnerRequest,
   verifyContentKeys,
@@ -198,6 +200,7 @@ import { monitoringRoutes } from "./monitoring.js";
 import { installPartnerTenantContent } from "./partner-content.js";
 import { hashEntryCode, mountPartnerEmbedRoute, mountPartnerEntryRoute } from "./partner-entry.js";
 import { mountPartnerRoutes } from "./partner-routes.js";
+import { PresenceTracker } from "./presence.js";
 import { mountApiRequestBodyLimits } from "./request-body-limit.js";
 import { createRouter } from "./router.js";
 import { mountScreenTarget } from "./screen-proxy.js";
@@ -622,6 +625,20 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       jobs,
       accessToken: env.expoAccessToken,
     });
+  if (notifications instanceof ExpoPushProvider) {
+    setNotificationPushSink(createInboxPushSink(prisma, notifications));
+  }
+  const presence = new PresenceTracker({
+    onChange: (spaceId) => void spaceHints.publish(spaceId, ["presence"]),
+    persistSeen: (spaceId, userId, at) =>
+      runAsSystem("record when a member was last seen", async () => {
+        await prisma.spaceMember.updateMany({
+          where: { spaceId, userId },
+          data: { lastSeenAt: at },
+        });
+      }),
+  });
+  presence.start();
   const auth = createAuth(prisma, {
     analytics,
     passwordAuth: env.passwordAuth,
@@ -876,6 +893,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     ticketChanges,
     boardEvents,
     spaceHints,
+    presence,
     auth,
     jobs,
     sandbox,

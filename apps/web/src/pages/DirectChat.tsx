@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowUp, Menu } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { PersonAvatar } from "../components/PersonAvatar";
+import { usePresence } from "../lib/presence";
 import { useSpaceQueries } from "../lib/query";
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
@@ -34,6 +35,7 @@ export function DirectChat({
   const { t } = useLingui();
   const queries = useSpaceQueries();
   const queryClient = useQueryClient();
+  const presence = usePresence();
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -147,7 +149,12 @@ export function DirectChat({
             <Menu strokeWidth={1.7} className="size-[19px]" />
           </Button>
         ) : null}
-        <PersonAvatar name={partner.name} image={partner.image} size={28} />
+        <PersonAvatar
+          name={partner.name}
+          image={partner.image}
+          size={28}
+          presence={presence.get(userId)}
+        />
         <h1 className="text-name font-semibold">{partner.name}</h1>
       </div>
       <div className="rk-scroll flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-6 py-5">

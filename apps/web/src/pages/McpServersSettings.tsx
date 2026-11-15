@@ -102,7 +102,7 @@ export function McpServersSettings({
   const [testingIds, setTestingIds] = useState<Set<string>>(() => new Set());
   const queries = useSpaceQueries();
   const queryClient = useQueryClient();
-  const serversOptions = queries.mcp.servers.list.queryOptions();
+  const serversOptions = queries.mcp.servers.list.queryOptions({ input: { scope: "space" } });
   const serversQuery = useQuery({
     ...serversOptions,
     // A freshly saved stdio server installs its package in the background, so its health
@@ -801,6 +801,9 @@ export function McpServersSettings({
             ) : (
               servers.map((server) => {
                 const statusText = oauthStatusText(server);
+                // A server someone else added is changed by its owner's sign-in and assignments,
+                // so a manager only tests, edits and removes it.
+                const otherOwner = server.owner && !server.owner.mine ? server.owner.name : null;
                 return (
                   <Card key={server.id} size="sm">
                     <CardContent>
@@ -813,6 +816,11 @@ export function McpServersSettings({
                       <p className="mt-1 text-xs text-muted-foreground">
                         {server.endpoint ?? server.command ?? server.slug}
                       </p>
+                      {otherOwner ? (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          <Trans>Added by {otherOwner}</Trans>
+                        </p>
+                      ) : null}
                       <McpServerHealthLine
                         health={server.health}
                         checking={testingIds.has(server.id)}
@@ -824,32 +832,34 @@ export function McpServersSettings({
                           {statusText}
                         </p>
                       ) : null}
-                      <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                        <span className="text-[11px] text-muted-foreground">
-                          <Trans>Agents:</Trans>
-                        </span>
-                        {bots.map((bot) => {
-                          const assigned = (botAssignments[bot.id] ?? []).some(
-                            (entry) => entry.serverId === server.id,
-                          );
-                          return (
-                            <Button
-                              key={bot.id}
-                              type="button"
-                              variant={assigned ? "default" : "outline"}
-                              size="xs"
-                              aria-pressed={assigned}
-                              disabled={!assignmentsReady}
-                              onClick={() => void toggleAssignment(server, bot.id)}
-                            >
-                              {assigned ? <Check aria-hidden="true" /> : null}
-                              {bot.name}
-                            </Button>
-                          );
-                        })}
-                      </div>
+                      {otherOwner ? null : (
+                        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                          <span className="text-[11px] text-muted-foreground">
+                            <Trans>Agents:</Trans>
+                          </span>
+                          {bots.map((bot) => {
+                            const assigned = (botAssignments[bot.id] ?? []).some(
+                              (entry) => entry.serverId === server.id,
+                            );
+                            return (
+                              <Button
+                                key={bot.id}
+                                type="button"
+                                variant={assigned ? "default" : "outline"}
+                                size="xs"
+                                aria-pressed={assigned}
+                                disabled={!assignmentsReady}
+                                onClick={() => void toggleAssignment(server, bot.id)}
+                              >
+                                {assigned ? <Check aria-hidden="true" /> : null}
+                                {bot.name}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      )}
                       <div className="mt-3 flex flex-wrap gap-2">
-                        {server.transport !== "stdio" || server.oauthClientId ? (
+                        {!otherOwner && (server.transport !== "stdio" || server.oauthClientId) ? (
                           <>
                             <Button
                               type="button"

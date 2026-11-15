@@ -237,21 +237,57 @@ type LifecycleBot = {
   webhookSecretId?: string | null;
 };
 
-/** Management stays within the current user's space, regardless of who created the bot. */
-export function managedBotsWhere(caller: {
+/** What the human who started a run may do in the space: the fleet tools never exceed it. */
+export type FleetGrants = {
+  manageAgents: boolean;
+  manageRoutines: boolean;
+  manageChannels: boolean;
+  manageConnections: boolean;
+  createAgents: boolean;
+};
+
+type FleetCaller = {
   userId: string;
   spaceId: string;
-}): Prisma.BotWhereInput {
-  return { userId: caller.userId, spaceId: caller.spaceId };
+  /** The member who started the run; absent for callers that act only as `userId`. */
+  requestedByUserId?: string;
+  grants?: FleetGrants;
+};
+
+/** The human whose authority a fleet tool acts with. */
+export function fleetStarterId(caller: Pick<FleetCaller, "userId" | "requestedByUserId">): string {
+  return caller.requestedByUserId ?? caller.userId;
+}
+
+/**
+ * The agents a run may manage: the whole space's for a starter holding `manage_agents`, otherwise
+ * only the ones the starter created. The agent owner's own authority never widens it.
+ */
+export function managedBotsWhere(caller: FleetCaller): Prisma.BotWhereInput {
+  if (caller.grants?.manageAgents) return { spaceId: caller.spaceId };
+  return { userId: fleetStarterId(caller), spaceId: caller.spaceId };
+}
+
+/** The routines a run may see or change: the space's for `manage_routines`, else the starter's. */
+export function managedRoutinesWhere(caller: FleetCaller): Prisma.RoutineWhereInput {
+  return {
+    spaceId: caller.spaceId,
+    bot: { ...managedBotsWhere(caller), archivedAt: null },
+    ...(caller.grants?.manageRoutines ? {} : { userId: fleetStarterId(caller) }),
+  };
+}
+
+/** The channels a run may see or change: the space's for `manage_channels`, else the starter's. */
+export function managedGroupsWhere(caller: FleetCaller): Prisma.ChatGroupWhereInput {
+  return {
+    spaceId: caller.spaceId,
+    ...(caller.grants?.manageChannels ? {} : { userId: fleetStarterId(caller) }),
+  };
 }
 
 /** Creation provenance for the roster metadata; this does not grant management permissions. */
-export function createdByWhere(caller: {
-  botId: string;
-  userId: string;
-  spaceId: string;
-}): Prisma.BotWhereInput {
-  return { parentBotId: caller.botId, userId: caller.userId, spaceId: caller.spaceId };
+export function createdByWhere(caller: { botId: string; spaceId: string }): Prisma.BotWhereInput {
+  return { parentBotId: caller.botId, spaceId: caller.spaceId };
 }
 
 export async function archiveSpawnedBot(
@@ -260,6 +296,8 @@ export async function archiveSpawnedBot(
     spawnedByBotId: string;
     userId: string;
     spaceId: string;
+    requestedByUserId?: string;
+    grants?: FleetGrants;
     confirmName: string;
     botId?: string;
   },

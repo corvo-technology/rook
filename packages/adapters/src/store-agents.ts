@@ -4,6 +4,7 @@ import { AGENT_CATALOG, APP_CATALOG, SKILL_STORE } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
 import { createRepos } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
+import { fleetStarterId } from "./child-bots.js";
 import type { FleetRun } from "./fleet-tools.js";
 import { installStoreSkill } from "./store-skills.js";
 
@@ -28,14 +29,14 @@ export async function listStoreAgents(
     deps.prisma.bot.findMany({
       where: {
         spaceId: run.spaceId,
-        userId: run.userId,
+        userId: fleetStarterId(run),
         archivedAt: null,
         spawnKey: { not: null },
       },
       select: { spawnKey: true },
     }),
     deps.prisma.mcpServer.findMany({
-      where: { spaceId: run.spaceId, userId: run.userId, enabled: true },
+      where: { spaceId: run.spaceId, userId: fleetStarterId(run), enabled: true },
       select: { slug: true },
     }),
   ]);
@@ -87,7 +88,7 @@ export async function installStoreAgent(
   }
   const added = await addStoreAgent(
     deps,
-    { spaceId: run.spaceId, userId: run.userId },
+    { spaceId: run.spaceId, userId: fleetStarterId(run) },
     { entry, locale, parentBotId: run.botId },
   );
   return {

@@ -74,6 +74,8 @@ const lingui = vi.hoisted(() => ({
 vi.mock("@lingui/react/macro", () => ({
   useLingui: () => lingui,
   Trans: ({ children }: { children: ReactNode }) => children,
+  Plural: ({ value, one, other }: { value: number; one: string; other: string }) =>
+    (value === 1 ? one : other).replace("#", String(value)),
 }));
 vi.mock("@corvo/ui-web", () => ({
   Button: ({
@@ -82,6 +84,37 @@ vi.mock("@corvo/ui-web", () => ({
     ...props
   }: ComponentProps<"button"> & { variant?: string; size?: string }) => <button {...props} />,
   Input: (props: ComponentProps<"input">) => <input {...props} />,
+  Textarea: (props: ComponentProps<"textarea">) => <textarea {...props} />,
+  DropdownMenu: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DropdownMenuTrigger: ({ children, ...props }: ComponentProps<"button">) => (
+    <button type="button" {...props}>
+      {children}
+    </button>
+  ),
+  DropdownMenuContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DropdownMenuItem: ({ children, onClick }: ComponentProps<"button">) => (
+    <button type="button" onClick={onClick}>
+      {children}
+    </button>
+  ),
+  DropdownMenuCheckboxItem: ({
+    children,
+    checked,
+    onCheckedChange,
+  }: {
+    children: ReactNode;
+    checked: boolean;
+    onCheckedChange: (checked: boolean) => void;
+  }) => (
+    <button
+      type="button"
+      role="menuitemcheckbox"
+      aria-checked={checked}
+      onClick={() => onCheckedChange(!checked)}
+    >
+      {children}
+    </button>
+  ),
   InlineConfirm: ({
     children,
     confirmLabel,
@@ -193,9 +226,10 @@ const click = async (node: Element | null) => {
     (node as HTMLElement).click();
   });
 };
-const type = async (input: HTMLInputElement, value: string) => {
+const type = async (input: HTMLInputElement | HTMLTextAreaElement, value: string) => {
   await act(async () => {
-    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(input, value);
+    const proto = input instanceof HTMLTextAreaElement ? HTMLTextAreaElement : HTMLInputElement;
+    Object.getOwnPropertyDescriptor(proto.prototype, "value")?.set?.call(input, value);
     input.dispatchEvent(new Event("input", { bubbles: true }));
   });
 };
@@ -226,6 +260,133 @@ it("keeps an admin away from owners", async () => {
   spaces.members.list.mockResolvedValue([person("ana", "owner"), person("bia", "admin")]);
   await render("bia");
   expect(host.querySelector('button[aria-label="Remove ana?"]')).toBeNull();
+});
+
+const ops = {
+  id: "r-ops",
+  name: "Ops",
+  color: null,
+  position: 1,
+  keys: ["view_usage"],
+  systemKey: null,
+  memberCount: 1,
+};
+
+it("pastes many addresses at once, skips people already in, and says how many were sent", async () => {
+  spaces.members.list.mockResolvedValue([person("ana", "owner"), person("bia", "member")]);
+  spaces.invitations.create.mockResolvedValue({
+    emailed: true,
+    invitations: [{ id: "i1" }, { id: "i2" }],
+    alreadyMembers: [],
+  });
+  await render("ana");
+  await vi.waitFor(() =>
+    expect(host.querySelector('textarea[aria-label="Email addresses"]')).not.toBeNull(),
+  );
+  await type(
+    host.querySelector('textarea[aria-label="Email addresses"]') as HTMLTextAreaElement,
+    "c@example.test\td@example.test, BIA@example.test; c@example.test",
+  );
+  expect(host.textContent).toContain("bia@example.test already in the space");
+  await click([...host.querySelectorAll("button")].find((b) => b.textContent === "Invite") ?? null);
+  expect(spaces.invitations.create).toHaveBeenCalledWith({
+    addresses: "c@example.test\nd@example.test",
+    role: "member",
+    roleIds: [],
+  });
+  expect(host.querySelector('[role="status"]')?.textContent).toBe("2 invitations sent");
+});
+
+it("holds the invitation back while an entry is not an address", async () => {
+  spaces.members.list.mockResolvedValue([person("ana", "owner")]);
+  await render("ana");
+  await vi.waitFor(() =>
+    expect(host.querySelector('textarea[aria-label="Email addresses"]')).not.toBeNull(),
+  );
+  await type(
+    host.querySelector('textarea[aria-label="Email addresses"]') as HTMLTextAreaElement,
+    "ok@example.test, nobody",
+  );
+  expect(host.textContent).toContain("nobody");
+  const send = [...host.querySelectorAll("button")].find((b) => b.textContent === "Invite");
+  expect((send as HTMLButtonElement).disabled).toBe(true);
+});
+
+it("lists only waiting invitations, first, beside the people; an accepted one is just a member", async () => {
+  spaces.members.list.mockResolvedValue([person("ana", "owner"), person("joao", "member")]);
+  spaces.invitations.list.mockResolvedValue([
+    {
+      id: "i1",
+      email: "novo@example.test",
+      role: "member",
+      roleIds: [],
+      status: "pending",
+      expiresAt: joined,
+      createdAt: joined,
+      acceptedByName: null,
+      link: "https://x.test/invite/i1",
+    },
+    {
+      id: "i2",
+      email: "joao@example.test",
+      role: "member",
+      roleIds: [],
+      status: "accepted",
+      expiresAt: joined,
+      createdAt: joined,
+      acceptedByName: "joao",
+      link: null,
+    },
+  ]);
+  await render("ana");
+  const list = host.querySelector('[data-testid="members-list"]')?.textContent ?? "";
+  expect(list).not.toContain("joined");
+  expect(list.indexOf("novo@example.test")).toBeLessThan(list.indexOf("ana@example.test"));
+  expect(list).toContain("Invitation sent");
+  expect(list.match(/joao@example.test/g)).toHaveLength(1);
+  await click([...host.querySelectorAll("button")].find((b) => b.textContent === "Resend") ?? null);
+  expect(spaces.invitations.resend).toHaveBeenCalledWith({ id: "i1" });
+});
+
+it("names a person by the start of their address when the name is only a placeholder", async () => {
+  spaces.members.list.mockResolvedValue([
+    { ...person("ana", "owner"), name: "Account", email: "ana.souza@example.test" },
+  ]);
+  await render("ana");
+  expect(host.textContent).toContain("ana.souza");
+  expect(host.textContent).not.toContain("Account");
+});
+
+it("lets only someone who manages members change roles, and never their own", async () => {
+  spaces.members.list.mockResolvedValue([
+    person("ana", "owner"),
+    { ...person("bia", "member"), roleIds: ["r-ops"] },
+  ]);
+  spaces.roles.list.mockResolvedValue({
+    roles: [ops],
+    me: { isOwner: true, roleIds: [], permissions: [] },
+  });
+  await render("ana");
+  expect(host.querySelector('button[aria-label="Roles of bia"]')).not.toBeNull();
+  expect(host.querySelector('button[aria-label="Roles of ana"]')).toBeNull();
+  await click(
+    [...host.querySelectorAll('[role="menuitemcheckbox"]')].find((b) => b.textContent === "Ops") ??
+      null,
+  );
+  expect(spaces.members.setRoles).toHaveBeenCalledWith({ userId: "bia", roleIds: [] });
+  await click(
+    [...host.querySelectorAll('[role="menuitemcheckbox"]')].find(
+      (b) => b.textContent === "Admin",
+    ) ?? null,
+  );
+  expect(spaces.members.setRole).toHaveBeenCalledWith({ userId: "bia", role: "admin" });
+
+  spaces.roles.list.mockResolvedValue({
+    roles: [ops],
+    me: { isOwner: false, roleIds: [], permissions: [] },
+  });
+  await render("bia");
+  expect(host.querySelector('button[aria-label^="Roles of"]')).toBeNull();
 });
 
 const two = [space("s1", "Home", true), space("s2", "Staff", true), space("s3", "Guest", false)];
@@ -260,13 +421,11 @@ it("follows the picked workspace for members and invitations", async () => {
   expect(staff.members.list).toHaveBeenCalled();
   expect(host.textContent).toContain("caio@example.test");
 
-  await click([...host.querySelectorAll("button")].find((b) => b.textContent === "Invite") ?? null);
   await type(
-    host.querySelector('input[aria-label="Email addresses"]') as HTMLInputElement,
+    host.querySelector('textarea[aria-label="Email addresses"]') as HTMLTextAreaElement,
     "d@example.test",
   );
-  const buttons = [...host.querySelectorAll("button")].filter((b) => b.textContent === "Invite");
-  await click(buttons[buttons.length - 1] ?? null);
+  await click([...host.querySelectorAll("button")].find((b) => b.textContent === "Invite") ?? null);
   expect(staff.invitations.create).toHaveBeenCalledWith({
     addresses: "d@example.test",
     role: "member",
@@ -301,20 +460,12 @@ it("shows each person's custom roles and lets an invitation carry one", async ()
   });
   await render("ana");
   expect(host.textContent).toContain("Ops");
-  await click(
-    [...host.querySelectorAll("button")].find((button) => button.textContent === "Invite") ?? null,
-  );
   await type(
-    host.querySelector('input[aria-label="Email addresses"]') as HTMLInputElement,
+    host.querySelector('textarea[aria-label="Email addresses"]') as HTMLTextAreaElement,
     "e@example.test",
   );
-  await click(
-    [...host.querySelectorAll("button[aria-pressed]")].find(
-      (button) => button.textContent === "Ops",
-    ) ?? null,
-  );
-  const buttons = [...host.querySelectorAll("button")].filter((b) => b.textContent === "Invite");
-  await click(buttons[buttons.length - 1] ?? null);
+  await click(host.querySelector('[data-pick="r-ops"]'));
+  await click([...host.querySelectorAll("button")].find((b) => b.textContent === "Invite") ?? null);
   expect(spaces.invitations.create).toHaveBeenCalledWith({
     addresses: "e@example.test",
     role: "member",

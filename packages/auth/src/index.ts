@@ -570,19 +570,30 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
             const membership = await prisma.spaceMember.findFirst({ where: { userId: user.id } });
             if (!membership) {
               // An invited address joins the space it was invited to instead of getting its own.
+              // Only a confirmed address joins by being signed in: anyone can sign up with an
+              // address that is not theirs. Without a mail provider nobody can confirm, so the
+              // invitation's own link, handed over by the inviter, is what accepts it.
               const joined = await runAsSystem("join invited space at sign-in", () =>
-                acceptInvitationsForUser(prisma, user, { trustUnverified: !env.email }),
+                acceptInvitationsForUser(prisma, user),
               );
               if (joined.length > 0) return;
-              if (
-                (!policy.enabled ||
-                  (!bypassAllowlist && !emailAllowed(user.email, policy.allowlist))) &&
-                !(await invitedAddress(user.email))
-              ) {
-                throw new APIError("FORBIDDEN", {
-                  code: "REGISTRATION_CLOSED",
-                  message: "Registration is closed",
-                });
+              const admittedByPolicy =
+                policy.enabled && (bypassAllowlist || emailAllowed(user.email, policy.allowlist));
+              if (!admittedByPolicy) {
+                if (!(await invitedAddress(user.email))) {
+                  throw new APIError("FORBIDDEN", {
+                    code: "REGISTRATION_CLOSED",
+                    message: "Registration is closed",
+                  });
+                }
+                // An invitation opens sign-up for its address, so the account must prove the
+                // mailbox first or a stranger could register an invited address.
+                if (!user.emailVerified && env.email) {
+                  throw new APIError("FORBIDDEN", {
+                    code: "EMAIL_VERIFICATION_REQUIRED",
+                    message: "Email verification required",
+                  });
+                }
               }
               await bootstrapUserSpace(prisma, user, env);
             }

@@ -1,6 +1,6 @@
 import { formatCron } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
-import { managedBotsWhere } from "./child-bots.js";
+import { managedRoutinesWhere } from "./child-bots.js";
 import type { FleetRun } from "./fleet-tools.js";
 
 const ROUTINE_LIMIT = 50;
@@ -32,7 +32,7 @@ export interface RoutineListing {
 }
 
 /**
- * Every routine of the agents this one manages, so the owner can be told what is scheduled and
+ * Every routine the person asking may see (the space's with `manage_routines`, else their own), so they can be told what is scheduled and
  * how the last run went without opening each agent. Read-only.
  */
 export async function listRoutines(
@@ -40,10 +40,7 @@ export async function listRoutines(
   run: FleetRun,
 ): Promise<RoutineListing> {
   const rows = await deps.prisma.routine.findMany({
-    where: {
-      spaceId: run.spaceId,
-      bot: { ...managedBotsWhere(run), archivedAt: null },
-    },
+    where: managedRoutinesWhere(run),
     select: {
       id: true,
       name: true,

@@ -4,13 +4,24 @@ import type {
   SpaceInvitation,
   SpaceJoinRequest,
   SpaceMember,
-  SpaceRole,
 } from "@corvo/contracts";
 import { agentCatalogLocale } from "@corvo/contracts";
 import type { SpaceMembership } from "@corvo/core";
-import { can, holdsAll, knownSpacePermissions } from "@corvo/core";
+import {
+  can,
+  holdsAll,
+  knownSpacePermissions,
+  parseInviteAddresses,
+  personName,
+  splitInvitees,
+} from "@corvo/core";
 import {
   Button,
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
   InlineConfirm,
   Input,
   Label,
@@ -21,8 +32,10 @@ import {
   SelectTrigger,
   SelectValue,
   Switch,
+  Textarea,
 } from "@corvo/ui-web";
-import { Trans, useLingui } from "@lingui/react/macro";
+import { Plural, Trans, useLingui } from "@lingui/react/macro";
+import type { ReactNode } from "react";
 import { useCallback, useEffect, useId, useState } from "react";
 import { SettingsGroup, SettingsRow } from "../components/SettingsRows";
 import { rpc, rpcForSpace } from "../lib/rpc";
@@ -33,33 +46,30 @@ function message(error: unknown, fallback: string): string {
   return error instanceof Error && error.message.trim() ? error.message : fallback;
 }
 
-function RolePicker({
+const EVERYONE = "everyone";
+const ADMIN = "admin";
+
+/** What an invitation gives: everyone's role by default, Admin, or one of the space's own roles. */
+function InviteRolePicker({
   value,
-  label,
-  grantable,
+  roles,
+  canGiveAdmin,
   onChange,
 }: {
-  value: SpaceRole;
-  label: string;
-  grantable: SpaceRole[];
-  onChange: (role: SpaceRole) => void;
+  value: string;
+  roles: CustomSpaceRole[];
+  canGiveAdmin: boolean;
+  onChange: (value: string) => void;
 }) {
   const { t } = useLingui();
-  const names: Record<SpaceRole, string> = {
-    owner: t`Owner`,
-    admin: t`Admin`,
-    member: t`Member`,
-  };
-  const items = grantable.map((role) => ({ value: role, label: names[role] }));
+  const items = [
+    { value: EVERYONE, label: t`Everyone` },
+    ...(canGiveAdmin ? [{ value: ADMIN, label: t`Admin` }] : []),
+    ...roles.map((role) => ({ value: role.id, label: role.name })),
+  ];
   return (
-    <Select
-      value={value}
-      items={items}
-      onValueChange={(next) => {
-        if (next === "owner" || next === "admin" || next === "member") onChange(next);
-      }}
-    >
-      <SelectTrigger aria-label={label} className="w-32 rounded-full">
+    <Select value={value} items={items} onValueChange={(next) => next && onChange(next)}>
+      <SelectTrigger aria-label={t`Role`} className="w-40 rounded-full">
         <SelectValue />
       </SelectTrigger>
       <SelectContent alignItemWithTrigger={false} align="end">
@@ -75,17 +85,47 @@ function RolePicker({
   );
 }
 
-/** The custom roles a person holds; Admin and Everyone are already told by the role beside it. */
-function RoleChips({ roles, ids }: { roles: CustomSpaceRole[]; ids: string[] }) {
-  const shown = roles.filter((role) => !role.systemKey && ids.includes(role.id));
-  return shown.map((role) => (
-    <span
-      key={role.id}
-      className="rounded-full border border-border px-2 py-0.5 text-[12px] text-muted-foreground"
-    >
-      {role.name}
+function Chip({ children }: { children: ReactNode }) {
+  return (
+    <span className="rounded-full border border-border px-2 py-0.5 text-[12px] text-muted-foreground">
+      {children}
     </span>
-  ));
+  );
+}
+
+/** What a member holds besides everyone's role: ownership, Admin and the space's own roles. */
+function RoleChips({ member, roles }: { member: SpaceMember; roles: CustomSpaceRole[] }) {
+  const custom = roles.filter((role) => !role.systemKey && member.roleIds.includes(role.id));
+  return (
+    <>
+      {member.role === "owner" ? (
+        <Chip>
+          <Trans>Owner</Trans>
+        </Chip>
+      ) : member.role === "admin" ? (
+        <Chip>
+          <Trans>Admin</Trans>
+        </Chip>
+      ) : null}
+      {custom.map((role) => (
+        <Chip key={role.id}>{role.name}</Chip>
+      ))}
+    </>
+  );
+}
+
+function RowMenu({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-label={label}
+        className="rounded-full px-2 py-1 text-[14px] text-muted-foreground hover:bg-accent"
+      >
+        ⋯
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">{children}</DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
 
 const NEW_WORKSPACE = "new-workspace";
@@ -218,14 +258,13 @@ export function MembersSettingsPanel({
   const [requests, setRequests] = useState<SpaceJoinRequest[]>([]);
   const [inviteLink, setInviteLink] = useState<InviteLink>({ link: null });
   const [error, setError] = useState<string | null>(null);
-  const [inviting, setInviting] = useState(false);
   const [addresses, setAddresses] = useState("");
-  const [role, setRole] = useState<SpaceRole>("member");
+  const [inviteRole, setInviteRole] = useState(EVERYONE);
   const [sending, setSending] = useState(false);
   const [notEmailed, setNotEmailed] = useState<SpaceInvitation[]>([]);
+  const [sent, setSent] = useState<number | null>(null);
   const [roles, setRoles] = useState<CustomSpaceRole[]>([]);
   const [mine, setMine] = useState<SpaceMembership | null>(null);
-  const [inviteRoleIds, setInviteRoleIds] = useState<string[]>([]);
 
   const myRole = members?.find((member) => member.userId === userId)?.role ?? "member";
   const manages = can(mine, "manage_members");
@@ -234,8 +273,12 @@ export function MembersSettingsPanel({
   const givable = roles.filter(
     (candidate) => !candidate.systemKey && mine && (mine.isOwner || holdsAll(mine, candidate.keys)),
   );
-  const grantable: SpaceRole[] =
-    myRole === "owner" ? ["owner", "admin", "member"] : ["admin", "member"];
+  const canGiveAdmin = manages || myRole === "owner" || myRole === "admin";
+  const parsed = parseInviteAddresses(addresses);
+  const { toInvite, alreadyIn } = splitInvitees(
+    parsed.addresses,
+    (members ?? []).map((member) => member.email),
+  );
 
   const load = useCallback(async () => {
     try {
@@ -274,7 +317,8 @@ export function MembersSettingsPanel({
     setNotEmailed([]);
     setRoles([]);
     setMine(null);
-    setInviteRoleIds([]);
+    setInviteRole(EVERYONE);
+    setSent(null);
     setError(null);
     void load();
   }, [load]);
@@ -290,19 +334,20 @@ export function MembersSettingsPanel({
   }
 
   async function send() {
-    if (sending || !addresses.trim()) return;
+    if (sending || toInvite.length === 0 || parsed.rejected.length > 0) return;
     setSending(true);
     setError(null);
     try {
+      const admin = inviteRole === ADMIN;
       const result = await client.spaces.invitations.create({
-        addresses,
-        role,
-        roleIds: inviteRoleIds,
+        addresses: toInvite.join("\n"),
+        role: admin ? "admin" : "member",
+        roleIds: admin || inviteRole === EVERYONE ? [] : [inviteRole],
       });
       setNotEmailed(result.emailed ? [] : result.invitations);
+      setSent(result.invitations.length);
       setAddresses("");
-      setInviteRoleIds([]);
-      setInviting(false);
+      setInviteRole(EVERYONE);
       await load();
     } catch (err) {
       setError(message(err, t`Could not send invitations`));
@@ -348,52 +393,221 @@ export function MembersSettingsPanel({
           onCreate={canCreateSpace ? createWorkspace : undefined}
         />
       ) : null}
-      <SettingsGroup>
+      {invites ? (
+        <div className="space-y-2">
+          <Textarea
+            aria-label={t`Email addresses`}
+            placeholder={t`Email addresses`}
+            rows={3}
+            value={addresses}
+            disabled={sending}
+            onChange={(event) => {
+              setAddresses(event.target.value);
+              setSent(null);
+            }}
+          />
+          {parsed.rejected.length > 0 ? (
+            <p className="text-[12.5px] text-destructive">{parsed.rejected.join(", ")}</p>
+          ) : null}
+          {alreadyIn.length > 0 ? (
+            <p className="text-[12.5px] text-muted-foreground">
+              {alreadyIn.join(", ")} <Trans>already in the space</Trans>
+            </p>
+          ) : null}
+          <div className="flex items-center justify-between gap-2">
+            <InviteRolePicker
+              value={inviteRole}
+              roles={givable}
+              canGiveAdmin={canGiveAdmin}
+              onChange={setInviteRole}
+            />
+            <div className="flex items-center gap-3">
+              {sent !== null && sent > 0 ? (
+                <span role="status" className="text-[12.5px] text-muted-foreground">
+                  <Plural value={sent} one="# invitation sent" other="# invitations sent" />
+                </span>
+              ) : null}
+              <Button
+                className="rounded-full"
+                disabled={sending || toInvite.length === 0 || parsed.rejected.length > 0}
+                onClick={() => void send()}
+              >
+                <Trans>Invite</Trans>
+              </Button>
+            </div>
+          </div>
+          {notEmailed.map((invitation) => (
+            <SettingsRow
+              key={invitation.id}
+              label={<span className="truncate">{invitation.email}</span>}
+              control={
+                invitation.link ? (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="rounded-full"
+                    onClick={() => copy(invitation.link ?? "")}
+                  >
+                    <Trans>Copy link</Trans>
+                  </Button>
+                ) : null
+              }
+            />
+          ))}
+        </div>
+      ) : null}
+
+      <SettingsGroup data-testid="members-list">
+        {requests.map((request) => (
+          <SettingsRow
+            key={request.id}
+            label={
+              <div className="min-w-0">
+                <p className="truncate">{personName(request.name, request.email)}</p>
+                <p className="truncate text-[12.5px] text-muted-foreground">{request.email}</p>
+              </div>
+            }
+            control={
+              <>
+                <Button
+                  size="sm"
+                  className="rounded-full"
+                  onClick={() =>
+                    void run(
+                      () => client.spaces.joinRequests.answer({ id: request.id, approve: true }),
+                      t`Could not approve`,
+                    )
+                  }
+                >
+                  <Trans>Approve</Trans>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-full"
+                  onClick={() =>
+                    void run(
+                      () => client.spaces.joinRequests.answer({ id: request.id, approve: false }),
+                      t`Could not deny`,
+                    )
+                  }
+                >
+                  <Trans>Deny</Trans>
+                </Button>
+              </>
+            }
+          />
+        ))}
+        {invitations
+          .filter((invitation) => invitation.status === "pending")
+          .map((invitation) => (
+            <SettingsRow
+              key={invitation.id}
+              label={
+                <div className="min-w-0">
+                  <p className="truncate">{invitation.email}</p>
+                  <p className="truncate text-[12.5px] text-muted-foreground">
+                    <Trans>Invitation sent</Trans>
+                  </p>
+                </div>
+              }
+              control={
+                <RowMenu label={t`Invitation to ${invitation.email}`}>
+                  <DropdownMenuItem
+                    onClick={() =>
+                      void run(
+                        () => client.spaces.invitations.resend({ id: invitation.id }),
+                        t`Could not resend`,
+                      )
+                    }
+                  >
+                    <Trans>Resend</Trans>
+                  </DropdownMenuItem>
+                  {invitation.link ? (
+                    <DropdownMenuItem onClick={() => copy(invitation.link ?? "")}>
+                      <Trans>Copy link</Trans>
+                    </DropdownMenuItem>
+                  ) : null}
+                  <DropdownMenuItem
+                    onClick={() =>
+                      void run(
+                        () => client.spaces.invitations.cancel({ id: invitation.id }),
+                        t`Could not cancel`,
+                      )
+                    }
+                  >
+                    <Trans>Cancel</Trans>
+                  </DropdownMenuItem>
+                </RowMenu>
+              }
+            />
+          ))}
         {(members ?? []).map((member) => {
           const self = member.userId === userId;
           const managed = manages && !self && (myRole === "owner" || member.role !== "owner");
+          const name = personName(member.name, member.email);
+          const held = member.roleIds.filter((id) =>
+            roles.some((role) => role.id === id && role.systemKey !== "everyone"),
+          );
           return (
             <SettingsRow
               key={member.userId}
               label={
                 <div className="min-w-0">
-                  <p className="truncate">{member.name}</p>
+                  <p className="truncate">{name}</p>
                   <p className="truncate text-[12.5px] text-muted-foreground">{member.email}</p>
                 </div>
               }
               control={
                 <>
-                  <RoleChips roles={roles} ids={member.roleIds} />
-                  {managed ? (
-                    <RolePicker
-                      value={member.role}
-                      label={t`Role of ${member.name}`}
-                      grantable={grantable}
-                      onChange={(next) =>
-                        void run(
-                          () =>
-                            client.spaces.members.setRole({ userId: member.userId, role: next }),
-                          t`Could not change the role`,
-                        )
-                      }
-                    />
-                  ) : (
-                    <span className="text-[13px] text-muted-foreground">
-                      {member.role === "owner" ? (
-                        <Trans>Owner</Trans>
-                      ) : member.role === "admin" ? (
-                        <Trans>Admin</Trans>
-                      ) : (
-                        <Trans>Member</Trans>
-                      )}
-                    </span>
-                  )}
+                  <RoleChips member={member} roles={roles} />
+                  {managed && (canGiveAdmin || givable.length > 0) ? (
+                    <RowMenu label={t`Roles of ${name}`}>
+                      {canGiveAdmin ? (
+                        <DropdownMenuCheckboxItem
+                          checked={member.role === "admin"}
+                          onCheckedChange={(on) =>
+                            void run(
+                              () =>
+                                client.spaces.members.setRole({
+                                  userId: member.userId,
+                                  role: on ? "admin" : "member",
+                                }),
+                              t`Could not change the role`,
+                            )
+                          }
+                        >
+                          <Trans>Admin</Trans>
+                        </DropdownMenuCheckboxItem>
+                      ) : null}
+                      {givable.map((role) => (
+                        <DropdownMenuCheckboxItem
+                          key={role.id}
+                          checked={member.roleIds.includes(role.id)}
+                          onCheckedChange={(on) =>
+                            void run(
+                              () =>
+                                client.spaces.members.setRoles({
+                                  userId: member.userId,
+                                  roleIds: on
+                                    ? [...held, role.id]
+                                    : held.filter((id) => id !== role.id),
+                                }),
+                              t`Could not change the role`,
+                            )
+                          }
+                        >
+                          {role.name}
+                        </DropdownMenuCheckboxItem>
+                      ))}
+                    </RowMenu>
+                  ) : null}
                   {managed ? (
                     <InlineConfirm
                       variant="ghost"
                       size="sm"
                       className="rounded-full"
-                      confirmLabel={t`Remove ${member.name}?`}
+                      confirmLabel={t`Remove ${name}?`}
                       onConfirm={() =>
                         void run(
                           () => client.spaces.members.remove({ userId: member.userId }),
@@ -428,192 +642,13 @@ export function MembersSettingsPanel({
       </SettingsGroup>
 
       {invites ? (
-        <div className="space-y-3">
-          {inviting ? (
-            <div className="space-y-3 rounded-xl border border-border p-4">
-              <Input
-                aria-label={t`Email addresses`}
-                placeholder={t`Email addresses`}
-                value={addresses}
-                disabled={sending}
-                onChange={(event) => setAddresses(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && !event.nativeEvent.isComposing) void send();
-                }}
-              />
-              {givable.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {givable.map((candidate) => {
-                    const on = inviteRoleIds.includes(candidate.id);
-                    return (
-                      <Button
-                        key={candidate.id}
-                        type="button"
-                        variant={on ? "secondary" : "ghost"}
-                        size="sm"
-                        className="rounded-full"
-                        aria-pressed={on}
-                        onClick={() =>
-                          setInviteRoleIds(
-                            on
-                              ? inviteRoleIds.filter((id) => id !== candidate.id)
-                              : [...inviteRoleIds, candidate.id],
-                          )
-                        }
-                      >
-                        {candidate.name}
-                      </Button>
-                    );
-                  })}
-                </div>
-              ) : null}
-              <div className="flex items-center justify-between gap-2">
-                <RolePicker value={role} label={t`Role`} grantable={grantable} onChange={setRole} />
-                <Button
-                  className="rounded-full"
-                  disabled={sending || !addresses.trim()}
-                  onClick={() => void send()}
-                >
-                  <Trans>Invite</Trans>
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <Button className="rounded-full" onClick={() => setInviting(true)}>
-              <Trans>Invite</Trans>
-            </Button>
-          )}
-          {notEmailed.map((invitation) => (
-            <SettingsRow
-              key={invitation.id}
-              label={<span className="truncate">{invitation.email}</span>}
-              control={
-                invitation.link ? (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="rounded-full"
-                    onClick={() => copy(invitation.link ?? "")}
-                  >
-                    <Trans>Copy link</Trans>
-                  </Button>
-                ) : null
-              }
-            />
-          ))}
-        </div>
-      ) : null}
-
-      {invitations.length > 0 ? (
-        <SettingsGroup title={t`Invitations`}>
-          {invitations.map((invitation) => (
-            <SettingsRow
-              key={invitation.id}
-              label={
-                invitation.status === "accepted" ? (
-                  <span className="truncate">
-                    {invitation.acceptedByName || invitation.email} <Trans>joined</Trans>
-                  </span>
-                ) : (
-                  <span className="truncate">{invitation.email}</span>
-                )
-              }
-              control={
-                invitation.status === "pending" ? (
-                  <>
-                    {invitation.link ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="rounded-full"
-                        onClick={() => copy(invitation.link ?? "")}
-                      >
-                        <Trans>Copy link</Trans>
-                      </Button>
-                    ) : null}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="rounded-full"
-                      onClick={() =>
-                        void run(
-                          () => client.spaces.invitations.resend({ id: invitation.id }),
-                          t`Could not resend`,
-                        )
-                      }
-                    >
-                      <Trans>Resend</Trans>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="rounded-full"
-                      onClick={() =>
-                        void run(
-                          () => client.spaces.invitations.cancel({ id: invitation.id }),
-                          t`Could not cancel`,
-                        )
-                      }
-                    >
-                      <Trans>Cancel</Trans>
-                    </Button>
-                  </>
-                ) : null
-              }
-            />
-          ))}
-        </SettingsGroup>
-      ) : null}
-
-      {requests.length > 0 ? (
-        <SettingsGroup title={t`Requests`}>
-          {requests.map((request) => (
-            <SettingsRow
-              key={request.id}
-              label={
-                <div className="min-w-0">
-                  <p className="truncate">{request.name}</p>
-                  <p className="truncate text-[12.5px] text-muted-foreground">{request.email}</p>
-                </div>
-              }
-              control={
-                <>
-                  <Button
-                    size="sm"
-                    className="rounded-full"
-                    onClick={() =>
-                      void run(
-                        () => client.spaces.joinRequests.answer({ id: request.id, approve: true }),
-                        t`Could not approve`,
-                      )
-                    }
-                  >
-                    <Trans>Approve</Trans>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="rounded-full"
-                    onClick={() =>
-                      void run(
-                        () => client.spaces.joinRequests.answer({ id: request.id, approve: false }),
-                        t`Could not deny`,
-                      )
-                    }
-                  >
-                    <Trans>Deny</Trans>
-                  </Button>
-                </>
-              }
-            />
-          ))}
-        </SettingsGroup>
-      ) : null}
-
-      {manages || invites ? (
         <SettingsGroup>
           <SettingsRow
-            label={<Trans>Invite link</Trans>}
+            label={
+              <span className="text-[13px] text-muted-foreground">
+                <Trans>Anyone with the link asks to join</Trans>
+              </span>
+            }
             control={
               inviteLink.link ? (
                 <>

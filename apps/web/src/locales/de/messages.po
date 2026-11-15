@@ -106,8 +106,8 @@ msgstr "{0} GB"
 msgid "{0} handling"
 msgstr "{0} übernimmt"
 
-#. placeholder {0}: preview.inviterName
-#. placeholder {1}: preview.spaceName
+#. placeholder {0}: pendingPreview.inviterName
+#. placeholder {1}: pendingPreview.spaceName
 #: src/pages/InvitePage.tsx
 msgid "{0} invited you to {1}"
 msgstr "{0} hat dich zu {1} eingeladen"
@@ -483,6 +483,10 @@ msgstr "Noch {remaining}"
 msgid "{seats, plural, one {# seat} other {# seats}}"
 msgstr "{seats, plural, one {# Platz} other {# Plätze}}"
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "{sent, plural, one {# invitation sent} other {# invitations sent}}"
+msgstr "{sent, plural, one {# Einladung gesendet} other {# Einladungen gesendet}}"
+
 #: src/components/ArtifactFileCard.tsx
 msgid "{size} B"
 msgstr "{size} B"
@@ -848,6 +852,11 @@ msgstr "Auslöser hinzufügen"
 msgid "Added"
 msgstr "Hinzugefügt"
 
+#: src/pages/McpServersSettings.tsx
+#: src/pages/Store.tsx
+msgid "Added by {otherOwner}"
+msgstr "Hinzugefügt von {otherOwner}"
+
 #: src/components/WikiChangeCard.tsx
 msgid "Added to the wiki"
 msgstr "Zum Wiki hinzugefügt"
@@ -858,6 +867,7 @@ msgstr "Zum Wiki hinzugefügt"
 msgid "Adding…"
 msgstr "Wird hinzugefügt…"
 
+#: src/pages/InvitePage.tsx
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Admin"
 msgstr "Admin"
@@ -969,6 +979,10 @@ msgstr "Bereits verbunden"
 msgid "Already have an account?"
 msgstr "Du hast bereits ein Konto?"
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "already in the space"
+msgstr "ist schon im Bereich"
+
 #. placeholder {0}: extras.join(", ")
 #: src/pages/SpaceTransfer.tsx
 msgid "Also added {0}."
@@ -1068,6 +1082,10 @@ msgstr "Anthropic-API"
 msgid "Any model, with your own key"
 msgstr "Jedes Modell, mit Ihrem eigenen Schlüssel"
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Anyone with the link asks to join"
+msgstr "Alle mit dem Link fragen an, beizutreten"
+
 #: src/components/AskCard.tsx
 #: src/lib/localized-provider-hint.ts
 #: src/pages/ConnectionsSettingsPanel.tsx
@@ -1150,6 +1168,7 @@ msgstr "Änderungen genehmigen"
 msgid "Approve this server to let your agent use its tools."
 msgstr "Genehmige diesen Server, damit dein Agent seine Tools verwenden kann."
 
+#: src/pages/shell/agent-connections.tsx
 #: src/pages/Store.tsx
 msgid "Apps"
 msgstr "Apps"
@@ -1184,6 +1203,11 @@ msgstr "Artefakte"
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Ask"
 msgstr "Fragen"
+
+#. placeholder {0}: dead.inviterName
+#: src/pages/InvitePage.tsx
+msgid "Ask {0} for a new one"
+msgstr "Bitte {0} um eine neue"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Ask first"
@@ -1942,6 +1966,10 @@ msgstr "Wiederherstellen bestätigen?"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Confirm reset?"
 msgstr "Zurücksetzen bestätigen?"
+
+#: src/pages/InvitePage.tsx
+msgid "Confirm your email first, then open this link again"
+msgstr "Bestätige zuerst deine E-Mail und öffne diesen Link erneut"
 
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/ChatAppsRow.tsx
@@ -3089,6 +3117,7 @@ msgstr "Aufnahme verwerfen"
 #: src/pages/McpServersSettings.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/Store.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Disconnect"
@@ -3348,6 +3377,7 @@ msgid "Environment variables: {names}"
 msgstr "Umgebungsvariablen: {names}"
 
 #: src/lib/roster-status.ts
+#: src/pages/shell/agent-connections.tsx
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Error"
 msgstr "Fehler"
@@ -3411,6 +3441,7 @@ msgstr "Jeden Monat"
 msgid "Every week"
 msgstr "Jede Woche"
 
+#: src/pages/MembersSettingsPanel.tsx
 #: src/pages/shell/channel-members.tsx
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Everyone"
@@ -3991,16 +4022,17 @@ msgid "Invalid code"
 msgstr "Ungültiger Code"
 
 #: src/pages/MembersSettingsPanel.tsx
-msgid "Invitations"
-msgstr "Einladungen"
+msgid "Invitation sent"
+msgstr "Einladung gesendet"
+
+#. placeholder {0}: invitation.email
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Invitation to {0}"
+msgstr "Einladung für {0}"
 
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Invite"
 msgstr "Einladen"
-
-#: src/pages/MembersSettingsPanel.tsx
-msgid "Invite link"
-msgstr "Einladungslink"
 
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Invite people"
@@ -4046,10 +4078,6 @@ msgstr "Das Modell wird auf den Stand vor dem Import zurückgesetzt."
 #: src/pages/InvitePage.tsx
 msgid "Join"
 msgstr "Beitreten"
-
-#: src/pages/MembersSettingsPanel.tsx
-msgid "joined"
-msgstr "ist beigetreten"
 
 #: src/pages/shell/transcript.tsx
 msgid "Jump to latest"
@@ -4453,7 +4481,7 @@ msgid "Medium"
 msgstr "Mittel"
 
 #: src/lib/identity-display.ts
-#: src/pages/MembersSettingsPanel.tsx
+#: src/pages/InvitePage.tsx
 msgid "Member"
 msgstr "Mitglied"
 
@@ -5233,6 +5261,10 @@ msgstr "Navigation öffnen"
 msgid "Open privacy settings"
 msgstr "Datenschutzeinstellungen öffnen"
 
+#: src/pages/InvitePage.tsx
+msgid "Open Rook"
+msgstr "Rook öffnen"
+
 #: src/lib/mcp-connect.ts
 msgid "Open Rook directly to connect this app."
 msgstr "Öffne Rook direkt, um diese App zu verbinden."
@@ -5316,6 +5348,7 @@ msgstr "Ausgabe"
 
 #: src/lib/identity-display.ts
 #: src/pages/Board.tsx
+#: src/pages/InvitePage.tsx
 #: src/pages/MembersSettingsPanel.tsx
 #: src/pages/shell/channel-members.tsx
 msgid "Owner"
@@ -5805,10 +5838,9 @@ msgstr "{0} entfernen"
 msgid "Remove {0} from the group"
 msgstr "{0} aus der Gruppe entfernen"
 
-#. placeholder {0}: member.name
 #: src/pages/MembersSettingsPanel.tsx
-msgid "Remove {0}?"
-msgstr "{0} entfernen?"
+msgid "Remove {name}?"
+msgstr "{name} entfernen?"
 
 #: src/pages/shell/bot-credentials.tsx
 msgid "Remove {secretName}? This bot will no longer be able to use it."
@@ -5934,10 +5966,6 @@ msgstr "Fordere einen neuen Code an"
 #: src/pages/InvitePage.tsx
 msgid "Request sent"
 msgstr "Anfrage gesendet"
-
-#: src/pages/MembersSettingsPanel.tsx
-msgid "Requests"
-msgstr "Anfragen"
 
 #: src/pages/shell/message-cards.tsx
 msgid "Research & writing"
@@ -6078,14 +6106,13 @@ msgstr "Rolle"
 msgid "Role name"
 msgstr "Rollenname"
 
-#. placeholder {0}: member.name
-#: src/pages/MembersSettingsPanel.tsx
-msgid "Role of {0}"
-msgstr "Rolle von {0}"
-
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Roles"
 msgstr "Rollen"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Roles of {name}"
+msgstr "Rollen von {name}"
 
 #: src/pages/Onboarding.tsx
 msgid "Rook credits"
@@ -7126,6 +7153,14 @@ msgstr "Dieser Import hat sich geändert. Versuche es erneut."
 #: src/lib/agent-import-errors.ts
 msgid "This import was already used. Choose the files again."
 msgstr "Dieser Import wurde bereits verwendet. Wähle die Dateien erneut aus."
+
+#: src/pages/InvitePage.tsx
+msgid "This invitation expired"
+msgstr "Diese Einladung ist abgelaufen"
+
+#: src/pages/InvitePage.tsx
+msgid "This invitation was already accepted"
+msgstr "Diese Einladung wurde bereits angenommen"
 
 #: src/pages/SpaceTransfer.tsx
 msgid "This isn't a Rook space file."

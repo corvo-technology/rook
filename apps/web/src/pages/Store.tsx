@@ -176,6 +176,14 @@ export function StorePage() {
   const loading = !catalogLoaded && integrations.isFetching;
   const catalog = integrations.data?.catalog ?? NO_CATALOG;
   const connections = integrations.data?.connections ?? NO_CONNECTIONS;
+  // Whoever manages connections also sees the ones teammates made for the space's agents.
+  const teamConnectionsQuery = useQuery({
+    queryKey: [...queries.connections.key(), "team"],
+    queryFn: () => rpc.connections.list({ scope: "space" }),
+  });
+  const teamConnections = (teamConnectionsQuery.data ?? []).filter(
+    (row) => row.owner && !row.owner.mine && row.status === "connected",
+  );
   const sources = integrations.data?.sources ?? NO_SOURCES;
   const catalogFeedEnabled = integrations.data?.catalogFeedEnabled ?? false;
   // A failed refresh is shown even over what was cached, so stale apps never pass as current.
@@ -839,6 +847,46 @@ export function StorePage() {
                 </Button>
               ) : null}
             </div>
+          ) : null}
+
+          {!detailItem && teamConnections.length > 0 ? (
+            <section data-testid="team-connections" className="mb-6">
+              {teamConnections.map((row) => {
+                const otherOwner = row.owner?.name;
+                return (
+                  <div
+                    key={row.id}
+                    className="flex min-w-0 items-center gap-3 rounded-xl px-2.5 py-2"
+                  >
+                    <ConnectorIcon name={row.displayName} />
+                    <span className="min-w-0 flex-1 truncate text-[15px] font-medium">
+                      {row.displayName}
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      <Trans>Added by {otherOwner}</Trans>
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="xs"
+                      disabled={pending === row.id}
+                      onClick={async () => {
+                        setPending(row.id);
+                        try {
+                          await rpc.connections.revoke({ connectionId: row.id });
+                          await teamConnectionsQuery.refetch();
+                        } catch (err) {
+                          setCatalogError(errorText(err, t`Could not revoke connection`));
+                        } finally {
+                          setPending(null);
+                        }
+                      }}
+                    >
+                      <Trans>Disconnect</Trans>
+                    </Button>
+                  </div>
+                );
+              })}
+            </section>
           ) : null}
 
           {!detailItem && (mcpServers.length > 0 || mcpError) ? (

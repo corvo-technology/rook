@@ -30,6 +30,7 @@ import { createRouterClient } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { mainRole, withModelRoles } from "../../../packages/adapters/src/testing/model-roles.js";
+import { accessRevocations } from "./access-revocations.js";
 import type { RouterDeps } from "./router.js";
 import {
   botIntroPrompt,
@@ -1146,6 +1147,17 @@ describe("thread stream authorization", () => {
     expect(follow.return).toHaveBeenCalled();
   });
 
+  it("closes a removed member's stream at once, without waiting for a re-check or heartbeat", async () => {
+    const { client, follow, stillAuthorized } = threadStream();
+    const stream = await client.threads.subscribe({ botId: "bot-1", cursor: -1 });
+    const ended = expect(stream.next()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    for (let step = 0; step < 30; step++) await Promise.resolve();
+    accessRevocations.revoke("workspace-1", "user-1");
+    await ended;
+    expect(stillAuthorized).not.toHaveBeenCalled();
+    expect(follow.return).toHaveBeenCalled();
+  });
+
   it("ends an idle stream at its next heartbeat once the session is revoked", async () => {
     const { client, follow, stillAuthorized } = threadStream();
     const stream = await client.threads.subscribe({ botId: "bot-1", cursor: -1 });
@@ -1197,7 +1209,9 @@ describe("MCP server deletion", () => {
       spaceMember: { findUnique: vi.fn(async () => ({ role: "owner", roles: [] })) },
       spaceRole: { findMany: vi.fn(async () => []) },
       mcpServer: {
-        findFirst: vi.fn().mockResolvedValue({ id: "server-1", secretId: "old-secret" }),
+        findFirst: vi
+          .fn()
+          .mockResolvedValue({ id: "server-1", userId: "user-1", secretId: "old-secret" }),
         delete: deleteServer,
       },
       secret: { deleteMany: deleteSecrets },
@@ -2708,6 +2722,7 @@ describe("connections.complete", () => {
       });
       const row = {
         id: "conn-1",
+        userId: "user-1",
         connectorId: "composio",
         provider: "gmail",
         providerRef: "gmail",
@@ -2716,6 +2731,7 @@ describe("connections.complete", () => {
         createdAt: new Date(0),
       };
       const client = {
+        bot: { findMany: vi.fn(async () => [{ userId: "user-1" }]) },
         integrationProviderConfig: {
           findUnique: vi.fn(async () => ({ id: "composio", ciphertext: ref })),
         },

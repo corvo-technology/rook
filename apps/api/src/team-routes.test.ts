@@ -11,7 +11,7 @@ vi.mock("@corvo/db", () => ({
   runAsSystem: (_reason: string, fn: () => unknown) => fn(),
 }));
 
-import { teamToken } from "./team.js";
+import { invitationMailProof, teamToken } from "./team.js";
 import { mountTeamRoutes } from "./team-routes.js";
 
 const secret = "test-secret";
@@ -34,6 +34,7 @@ beforeEach(() => vi.resetAllMocks());
 describe("invitation routes", () => {
   it("previews with a signed link and answers the same 404 to a forged one", async () => {
     db.previewInvitation.mockResolvedValue({
+      state: "pending",
       spaceName: "Team",
       inviterName: "Bia",
       email: person.email,
@@ -61,6 +62,52 @@ describe("invitation routes", () => {
       method: "POST",
     });
     expect(anonymous.status).toBe(401);
+  });
+
+  it("tells a confirmed-address account apart only when the address still needs confirming", async () => {
+    db.acceptInvitation.mockResolvedValue("unverified");
+    const token = teamToken(secret, "invite", "inv-1");
+    const response = await app().request(`/api/v1/invitations/${token}/accept`, { method: "POST" });
+    expect(response.status).toBe(403);
+    expect(db.acceptInvitation).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ mailProof: false, trustUnverified: false }),
+    );
+  });
+
+  it("counts only the emailed link's proof as the mailbox, never a copied or forged one", async () => {
+    db.acceptInvitation.mockResolvedValue({ spaceId: "space-1", organizationId: "org-1" });
+    const token = teamToken(secret, "invite", "inv-1");
+    await app().request(
+      `/api/v1/invitations/${token}/accept?mail=${invitationMailProof(secret, "inv-1")}`,
+      {
+        method: "POST",
+      },
+    );
+    await app().request(
+      `/api/v1/invitations/${token}/accept?mail=${invitationMailProof(secret, "inv-2")}`,
+      {
+        method: "POST",
+      },
+    );
+    await app().request(`/api/v1/invitations/${token}/accept`, { method: "POST" });
+    expect(db.acceptInvitation.mock.calls.map((call) => call[1].mailProof)).toEqual([
+      true,
+      false,
+      false,
+    ]);
+  });
+
+  it("answers 429 once an address has tried too often", async () => {
+    db.acceptInvitation.mockResolvedValue(null);
+    const token = teamToken(secret, "invite", "inv-1");
+    const hono = app();
+    const statuses: number[] = [];
+    for (let i = 0; i < 21; i++)
+      statuses.push(
+        (await hono.request(`/api/v1/invitations/${token}/accept`, { method: "POST" })).status,
+      );
+    expect(statuses.at(-1)).toBe(429);
   });
 
   it("does not say why an acceptance failed", async () => {

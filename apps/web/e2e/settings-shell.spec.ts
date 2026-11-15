@@ -272,6 +272,27 @@ test("Members lets an owner pick which workspace an invitation is for", async ({
   await expect(picker).toContainText("Employees");
 });
 
+test("Members lists the people and a waiting invitation together, with one box to invite", async ({
+  page,
+}, testInfo) => {
+  const stamp = Date.now();
+  await signup(page, `settings-invite-${stamp}@corvo.test`, "password12", "Settings");
+  await completeOnboarding(page);
+  const settings = await openUserSettings(page, "members");
+
+  const box = settings.getByRole("textbox", { name: "Email addresses", exact: true });
+  await box.fill(`ana-${stamp}@example.test, bia-${stamp}@example.test`);
+  await settings.getByRole("button", { name: "Invite", exact: true }).click();
+  await expect(settings.getByText("2 invitations sent", { exact: true })).toBeVisible();
+
+  const list = settings.getByTestId("members-list");
+  await expect(list.getByText(`ana-${stamp}@example.test`, { exact: true })).toBeVisible();
+  await expect(list.getByText("Invitation sent", { exact: true })).toHaveCount(2);
+  // The owner is named by what they typed at sign-up, never by a placeholder.
+  await expect(list.getByText("Account", { exact: true })).toHaveCount(0);
+  await captureScreenshot(page, testInfo, "settings-members-invite");
+});
+
 test("a space's owner makes a role and switches a permission on", async ({ page }, testInfo) => {
   const stamp = Date.now();
   await signup(page, `settings-roles-${stamp}@corvo.test`, "password12", "Settings");

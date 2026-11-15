@@ -20,6 +20,7 @@ import {
 } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import { ORPCError } from "@orpc/server";
+import { accessRevocations } from "../access-revocations.js";
 import { approvalRefusal, approvalThreadId } from "../approval-access.js";
 import { listPinnedMessages, pinThreadMessage } from "../message-pins.js";
 import { requireSpacePermission } from "../space-owner.js";
@@ -120,6 +121,9 @@ export function threadsRoutes(ctx: RouterContext) {
         const follow = deps.events.follow(target.threadId, input.cursor, context.signal);
         // A half-open stream looks identical to an idle one, so punctuate silence:
         // the client treats any frame as liveness and reconnects once they stop.
+        const revoked = accessRevocations
+          .watch(context.actor.spaceId, context.actor.userId, context.signal)
+          .then(() => "revoked" as const);
         let pending: Promise<IteratorResult<ProductEvent>> | undefined;
         // Auth ran once when the stream opened. Re-check before delivering more, so a signed-out
         // or revoked session stops within SESSION_RECHECK_MS, or at the next heartbeat when idle.
@@ -135,10 +139,13 @@ export function threadsRoutes(ctx: RouterContext) {
             let timer: ReturnType<typeof setTimeout> | undefined;
             const next = await Promise.race([
               pending,
+              revoked,
               new Promise<"silent">((resolve) => {
                 timer = setTimeout(() => resolve("silent"), HEARTBEAT_MS);
               }),
             ]).finally(() => clearTimeout(timer));
+            // Removed from the space: end the stream now, not at the next periodic re-check.
+            if (next === "revoked") throw new ORPCError("UNAUTHORIZED");
             if (next === "silent") {
               await assertStillAuthorized();
               // Keep `pending` so the in-flight read stays the next event in order.

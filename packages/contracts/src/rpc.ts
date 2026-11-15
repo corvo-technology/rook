@@ -49,6 +49,7 @@ import { TourMark } from "./coach-tour.js";
 import {
   ActionApprovalRuleSchema,
   ActionAutoReviewSettingsSchema,
+  AgentConnectionSummarySchema,
   AgentSecretInputSchema,
   AgentSecretSchema,
   AgentSkillCatalogEntrySchema,
@@ -217,6 +218,7 @@ import {
 } from "./wiki.js";
 
 const botId = z.object({ botId: Id });
+const ConnectionScopeInput = z.object({ scope: z.enum(["mine", "space"]).default("mine") });
 const groupId = z.object({ groupId: Id });
 
 const threadTarget = z
@@ -1173,7 +1175,7 @@ export const appContract = {
   },
   mcp: {
     servers: {
-      list: oc.output(z.array(McpServerSchema)),
+      list: oc.input(ConnectionScopeInput.optional()).output(z.array(McpServerSchema)),
       create: oc.input(McpServerConfigInput).output(McpServerSchema),
       update: oc
         .input(
@@ -1297,7 +1299,10 @@ export const appContract = {
     catalog: oc
       .input(z.object({ query: z.string().optional(), connectorId: z.string().optional() }))
       .output(z.array(ConnectionCatalogItemSchema)),
-    list: oc.output(z.array(ConnectionSchema)),
+    /** `scope: "space"` adds the space's connections for someone who manages them. */
+    list: oc.input(ConnectionScopeInput.optional()).output(z.array(ConnectionSchema)),
+    /** What an agent has connected: names and state, readable by any member of the space. */
+    forAgent: oc.input(botId).output(z.array(AgentConnectionSummarySchema)),
     begin: oc
       .input(
         z.object({

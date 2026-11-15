@@ -1209,7 +1209,9 @@ describe("MCP server deletion", () => {
       spaceMember: { findUnique: vi.fn(async () => ({ role: "owner", roles: [] })) },
       spaceRole: { findMany: vi.fn(async () => []) },
       mcpServer: {
-        findFirst: vi.fn().mockResolvedValue({ id: "server-1", secretId: "old-secret" }),
+        findFirst: vi
+          .fn()
+          .mockResolvedValue({ id: "server-1", userId: "user-1", secretId: "old-secret" }),
         delete: deleteServer,
       },
       secret: { deleteMany: deleteSecrets },
@@ -2720,6 +2722,7 @@ describe("connections.complete", () => {
       });
       const row = {
         id: "conn-1",
+        userId: "user-1",
         connectorId: "composio",
         provider: "gmail",
         providerRef: "gmail",
@@ -2728,6 +2731,7 @@ describe("connections.complete", () => {
         createdAt: new Date(0),
       };
       const client = {
+        bot: { findMany: vi.fn(async () => [{ userId: "user-1" }]) },
         integrationProviderConfig: {
           findUnique: vi.fn(async () => ({ id: "composio", ciphertext: ref })),
         },

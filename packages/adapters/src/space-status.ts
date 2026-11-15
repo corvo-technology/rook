@@ -1,7 +1,7 @@
 import { QuotaWindowSchema } from "@corvo/contracts";
 import { redactSecrets } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
-import { managedBotsWhere } from "./child-bots.js";
+import { fleetStarterId, managedBotsWhere, managedRoutinesWhere } from "./child-bots.js";
 import type { FleetRun } from "./fleet-tools.js";
 
 const BOT_LIMIT = 40;
@@ -55,7 +55,10 @@ export async function spaceStatus(
   secrets: readonly string[],
 ): Promise<SpaceStatus> {
   const { prisma } = deps;
-  const { spaceId, userId } = run;
+  const { spaceId } = run;
+  const userId = fleetStarterId(run);
+  // An app another member connected for the agents is theirs to see only with `manage_connections`.
+  const appOwners = run.grants?.manageConnections ? [userId, run.userId] : [userId];
   const managed = { ...managedBotsWhere(run), archivedAt: null };
 
   const [botRows, connections, servers, routines, quotas] = await Promise.all([
@@ -66,17 +69,17 @@ export async function spaceStatus(
       take: BOT_LIMIT + 1,
     }),
     prisma.connection.findMany({
-      where: { spaceId, userId, status: "error" },
+      where: { spaceId, userId: { in: appOwners }, status: "error" },
       select: { displayName: true, provider: true },
       orderBy: { id: "asc" },
     }),
     prisma.mcpServer.findMany({
-      where: { spaceId, userId, enabled: true, healthStatus: "error" },
+      where: { spaceId, userId: { in: appOwners }, enabled: true, healthStatus: "error" },
       select: { name: true, healthMessage: true, healthCheckedAt: true },
       orderBy: { id: "asc" },
     }),
     prisma.routine.findMany({
-      where: { spaceId, active: true, bot: managed },
+      where: { ...managedRoutinesWhere(run), active: true },
       select: { id: true, name: true, bot: { select: { name: true } } },
       orderBy: { id: "asc" },
       take: ROUTINE_LIMIT,

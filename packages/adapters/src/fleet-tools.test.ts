@@ -52,6 +52,13 @@ const run: FleetRun = {
   groupId: null,
   threadId: "thread-bot-self",
   runId: "run-1",
+  grants: {
+    manageAgents: false,
+    manageRoutines: true,
+    manageChannels: false,
+    manageConnections: false,
+    createAgents: true,
+  },
 };
 
 function matches(value: unknown, condition: unknown): boolean {

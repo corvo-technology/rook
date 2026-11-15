@@ -42,6 +42,7 @@ async function archiveBot(ctx: RunContext, call: ToolCall) {
       spawnedByBotId: bot.id,
       userId: run.userId,
       spaceId: run.spaceId,
+      grants: ctx.fleetRun.grants,
       confirmName: String(args.confirm_name ?? args.confirmName ?? ""),
       botId: args.bot_id ? String(args.bot_id) : args.botId ? String(args.botId) : undefined,
     },
@@ -154,6 +155,9 @@ export const fleetTools: ToolHandlers = {
   async spawn_bot(ctx, call) {
     const { deps, run, runId, bot, thread } = ctx;
     const { name, args, effectKey } = call;
+    if (!ctx.fleetRun.grants?.createAgents) {
+      return call.finish({ error: "The person asking cannot create agents in this space." });
+    }
     const computerModeArg = args.computer_mode;
     let computerMode: "team" | "dedicated" | undefined;
     if (computerModeArg != null && computerModeArg !== "") {
@@ -221,6 +225,9 @@ export const fleetTools: ToolHandlers = {
   },
   async install_agent(ctx, call) {
     const { deps, run, bot, thread } = ctx;
+    if (!ctx.fleetRun.grants?.createAgents) {
+      return call.finish({ error: "The person asking cannot create agents in this space." });
+    }
     const installed = await installStoreAgent(deps, ctx.fleetRun, call.args);
     if ("error" in installed) return call.finish(installed);
     try {

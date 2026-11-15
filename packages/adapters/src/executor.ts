@@ -92,6 +92,7 @@ import {
 import { formatCurrentTimeInstruction } from "./current-time.js";
 import { resolveDeploymentModel } from "./deployment-model.js";
 import type { ExecutorDeps } from "./executor-deps.js";
+import { fleetGrantsFor } from "./fleet-grants.js";
 import type { FleetRun } from "./fleet-tools.js";
 import { loadBotGroups, loadGroupContext } from "./group-handoff.js";
 import {
@@ -1282,6 +1283,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
           spaceId: run.spaceId,
           userId: agentUserId,
           requestedByUserId: run.userId,
+          grants: await fleetGrantsFor(deps.prisma, { spaceId: run.spaceId, userId: run.userId }),
           botId: bot.id,
           groupId: thread.groupId ?? null,
           threadId: thread.id,

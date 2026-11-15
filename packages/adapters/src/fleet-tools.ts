@@ -36,7 +36,14 @@ import { getLogger } from "@corvo/logging";
 import type { FleetCardSummary } from "./approval-ask.js";
 import { approvalDetailLength, MAX_APPROVAL_SUMMARY_LENGTH } from "./approval-ask.js";
 import { attachedImageArtifactIds, resolveUpdateBotAvatar } from "./bot-avatar.js";
-import { createdByWhere, managedBotsWhere } from "./child-bots.js";
+import type { FleetGrants } from "./child-bots.js";
+import {
+  createdByWhere,
+  fleetStarterId,
+  managedBotsWhere,
+  managedGroupsWhere,
+  managedRoutinesWhere,
+} from "./child-bots.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import type { BotModelChangeDeps } from "./model-selection.js";
 import { validateBotModelChange } from "./model-selection.js";
@@ -73,6 +80,8 @@ export type FleetRun = {
   userId: string;
   /** The member who started the run. */
   requestedByUserId?: string;
+  /** What that member may do; the fleet tools never exceed it. Absent: only their own agents. */
+  grants?: FleetGrants;
   botId: string;
   /** The group whose thread the run is in, if any. */
   groupId: string | null;
@@ -305,7 +314,7 @@ async function prepareChildModel(
   const validated = await validateBotModelChange(
     { prisma: deps.prisma, ...deps.modelChange },
     {
-      userId: run.userId,
+      userId: fleetStarterId(run),
       spaceId: run.spaceId,
       provider: provider ?? null,
       model: model ?? null,
@@ -353,6 +362,7 @@ async function prepareChildRoutine(
   const name = typedName === undefined ? undefined : singleLine(typedName);
   // Collapse blank-line padding so the stored prompt and the card read the same.
   const prompt = text(args.prompt)?.replace(/\n\s*\n(\s*\n)+/g, "\n\n");
+  if (!run.grants?.manageRoutines) return refuse(ROUTINE_NOT_ALLOWED);
   if (!name) return refuse("name is required.");
   if (!prompt) return refuse("prompt is required.");
   const credential = credentialField({ name, prompt }, secrets);
@@ -361,7 +371,7 @@ async function prepareChildRoutine(
   if (hidden) return refuse(hidden);
   const namedRoutine = CreateRoutineInput.shape.name.safeParse(name);
   if (!namedRoutine.success) return refuse(`name: ${issueMessage(namedRoutine.error)}`);
-  const timezone = text(args.timezone) ?? (await userTimeZone(deps.prisma, run.userId));
+  const timezone = text(args.timezone) ?? (await userTimeZone(deps.prisma, fleetStarterId(run)));
   if (!TimeZoneSchema.safeParse(timezone).success) {
     return refuse(`Unknown timezone "${timezone}". Use an IANA name like Europe/Paris.`);
   }
@@ -387,7 +397,6 @@ async function prepareChildRoutine(
   const sameName = await deps.prisma.routine.findFirst({
     where: {
       spaceId: run.spaceId,
-      userId: run.userId,
       botId: child.id,
       active: true,
       name: { equals: name, mode: "insensitive" },
@@ -474,7 +483,7 @@ async function prepareRoutineStep(
 
 async function findStepRoutine(prisma: PrismaClient, run: FleetRun, routineId: string) {
   return prisma.routine.findFirst({
-    where: { id: routineId, spaceId: run.spaceId, userId: run.userId, bot: { archivedAt: null } },
+    where: { id: routineId, ...managedRoutinesWhere(run) },
     select: {
       id: true,
       name: true,
@@ -667,7 +676,7 @@ export async function listFleet(
     }),
     visibleGroups(prisma, run),
     prisma.botSection.findMany({
-      where: { spaceId: run.spaceId, userId: run.userId },
+      where: { spaceId: run.spaceId, userId: fleetStarterId(run) },
       select: { name: true },
       orderBy: { position: "asc" },
       take: FLEET_SECTION_LIMIT + 1,
@@ -677,7 +686,7 @@ export async function listFleet(
   // Only the listed bots need the creator flag, so this read is bounded by the bot cap.
   const children = await prisma.bot.findMany({
     where: {
-      ...createdByWhere({ botId: run.botId, userId: run.userId, spaceId: run.spaceId }),
+      ...createdByWhere({ botId: run.botId, spaceId: run.spaceId }),
       archivedAt: null,
       id: { in: listedBots.map((bot) => bot.id) },
     },
@@ -729,7 +738,7 @@ async function visibleGroups(prisma: PrismaClient, run: FleetRun): Promise<Fleet
   let cursor: string | undefined;
   for (;;) {
     const page = await prisma.chatGroup.findMany({
-      where: { spaceId: run.spaceId, userId: run.userId, archivedAt: null },
+      where: { ...managedGroupsWhere(run), archivedAt: null },
       select: {
         id: true,
         name: true,
@@ -863,7 +872,7 @@ export async function createFleetGroup(
   const { name, purpose, botIds } = parsed.data;
   const wanted = new Set(botIds);
   const sameName = await deps.prisma.chatGroup.findMany({
-    where: { spaceId: run.spaceId, userId: run.userId, archivedAt: null, name },
+    where: { ...managedGroupsWhere(run), archivedAt: null, name },
     select: {
       id: true,
       name: true,
@@ -1106,7 +1115,7 @@ export async function setChildBotModel(
   const validated = await validateBotModelChange(
     { prisma: deps.prisma, ...deps.modelChange },
     {
-      userId: run.userId,
+      userId: fleetStarterId(run),
       spaceId: run.spaceId,
       provider: text(canonical.provider) ?? null,
       model: text(canonical.model) ?? null,
@@ -1155,6 +1164,7 @@ export async function createChildRoutine(
   run: FleetRun,
   canonical: Record<string, unknown>,
 ) {
+  if (!run.grants?.manageRoutines) return { error: ROUTINE_NOT_ALLOWED };
   const typedName = text(canonical.name);
   const name = typedName === undefined ? undefined : singleLine(typedName);
   const prompt = text(canonical.prompt);
@@ -1171,7 +1181,6 @@ export async function createChildRoutine(
   const existing = await deps.prisma.routine.findFirst({
     where: {
       spaceId: run.spaceId,
-      userId: run.userId,
       botId: child.id,
       threadId: child.thread.id,
       name,
@@ -1198,7 +1207,7 @@ export async function createChildRoutine(
   const created = await createScheduleFromTool(deps, {
     spaceId: run.spaceId,
     botId: run.botId,
-    userId: run.userId,
+    userId: fleetStarterId(run),
     threadId: run.threadId,
     target: { botId: child.id, threadId: child.thread.id },
     name,
@@ -1209,8 +1218,10 @@ export async function createChildRoutine(
   return "error" in created ? created : { ...created, ...target };
 }
 
+const ROUTINE_NOT_ALLOWED = "The person asking cannot create routines in this space.";
+
 function actorOf(run: FleetRun): Actor {
-  return { spaceId: run.spaceId, userId: run.userId, email: "", isDeploymentOwner: false };
+  return { spaceId: run.spaceId, userId: fleetStarterId(run), email: "", isDeploymentOwner: false };
 }
 
 const DEFAULT_ISOLATION_MESSAGE = new IsolationError().message;
@@ -1324,8 +1335,7 @@ async function resolveGroup(prisma: PrismaClient, run: FleetRun, args: Record<st
   if (!id && !name) return refuse("Pass group_id or group_name.");
   const groups = await prisma.chatGroup.findMany({
     where: {
-      spaceId: run.spaceId,
-      userId: run.userId,
+      ...managedGroupsWhere(run),
       archivedAt: null,
       ...(id ? { id } : { name }),
     },
@@ -1476,7 +1486,7 @@ export async function updateOwnBotFromTool(
     loadArtifact: async (id) => {
       if (!deps.artifacts) return null;
       const row = await deps.prisma.artifact.findFirst({
-        where: { id, spaceId: run.spaceId, userId: run.userId },
+        where: { id, spaceId: run.spaceId },
         select: { mimeType: true, storageKey: true },
       });
       if (!row || !isAttachmentImageMimeType(row.mimeType)) return null;

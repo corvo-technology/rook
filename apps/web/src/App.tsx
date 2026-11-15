@@ -74,6 +74,12 @@ const ArtifactsPage = lazyComponent(loadArtifacts);
 const UsagePage = lazyComponent(loadUsage);
 const WorkflowsPage = lazyComponent(loadWorkflows);
 const RoutinesPage = lazyComponent(loadRoutines);
+const ApprovalsPage = lazyComponent(() =>
+  import("./pages/ApprovalsPage").then((module) => module.ApprovalsPage),
+);
+const DirectPage = lazyComponent(() =>
+  import("./pages/DirectPage").then((module) => module.DirectPage),
+);
 const WikiPage = lazyComponent(loadWiki);
 /** The areas the bar moves between; fetched once the app is idle so moving to one never waits. */
 const AREA_LOADERS = [loadUsage, loadWorkflows, loadRoutines, loadArtifacts, loadWiki];
@@ -251,6 +257,8 @@ function SessionApp() {
                 <Route path="/app/g/:groupId" element={<ShellPage />} />
                 <Route path="/app/g/:groupId/squad" element={<SquadPage />} />
                 <Route path="/app/team" element={<TeamPage />} />
+                <Route path="/app/approvals" element={<ApprovalsPage />} />
+                <Route path="/app/dm/:userId?" element={<DirectPage />} />
                 <Route path="/settings/space/:spaceId" element={<SettingsPage />} />
                 <Route path="/settings/:section?" element={<SettingsPage />} />
                 <Route path="/app/store" element={<StorePage />} />

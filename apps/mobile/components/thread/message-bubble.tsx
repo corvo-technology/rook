@@ -11,7 +11,7 @@ import {
 } from "@corvo/core";
 import { fontWeight, typeScale } from "@corvo/ui-tokens";
 import type { ComponentProps } from "react";
-import { memo, useState } from "react";
+import { memo, useContext, useState } from "react";
 import type { TextProps } from "react-native";
 import { Alert, Pressable, Text, View } from "react-native";
 import type { MobileBot, MobileMessage, MobileSnapshot } from "../../lib/api";
@@ -23,6 +23,7 @@ import { approvalNoticeText, plainAskTitle } from "../../lib/ask-title";
 import { t, useI18n } from "../../lib/i18n";
 import { isInlineImageMimeType } from "../../lib/inline-image";
 import { messagePresentationSegments } from "../../lib/message-presentation";
+import { MessageReaderContext, messageAuthorLabel } from "../../lib/message-reader";
 import { useResolvedAppearance } from "../../lib/native";
 import { peerChipPress } from "../../lib/peer-chip";
 import { speakerColorFor } from "../../lib/thread-message-text";
@@ -198,6 +199,7 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
   const colorScheme = useResolvedAppearance();
   const tokens = withUserBubble(mobileTokens(), userBubble);
   const { t } = useI18n();
+  const readerId = useContext(MessageReaderContext);
   const [peerExpanded, setPeerExpanded] = useState(false);
   const artifactTarget: MobileArtifactTarget = groupId ? { groupId } : { botId };
   const cardBotId = message.botId ?? botId;
@@ -536,6 +538,7 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
     })
     .join("\n");
   if (attachments.length > 0) {
+    const attachmentAuthor = messageAuthorLabel(message, readerId);
     const speaker =
       message.role === "bot" ? (memberName(members, message.botId) ?? botName) : undefined;
     const speakerColor =
@@ -554,6 +557,14 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
         {showBotSenderName && speaker ? (
           <Text style={{ color: speakerColor ?? tokens.mutedForeground, ...typeScale.footnote }}>
             {speaker}
+          </Text>
+        ) : null}
+        {attachmentAuthor ? (
+          <Text
+            testID="message-author"
+            style={{ color: tokens.chatUserForeground, opacity: 0.7, ...typeScale.footnote }}
+          >
+            {attachmentAuthor}
           </Text>
         ) : null}
         {caption ? (
@@ -769,6 +780,7 @@ function MessageTextCard({
 }) {
   const colorScheme = useResolvedAppearance();
   const tokens = withUserBubble(mobileTokens(), userBubble);
+  const author = messageAuthorLabel(message, useContext(MessageReaderContext));
   const contentText =
     message.role === "user" ? blockText(message) : approvalNoticeText(blockText(message));
   if (!contentText) return null;
@@ -798,6 +810,19 @@ function MessageTextCard({
           }}
         >
           {speaker}
+        </Text>
+      ) : null}
+      {author ? (
+        <Text
+          testID="message-author"
+          style={{
+            color: tokens.chatUserForeground,
+            opacity: 0.7,
+            ...typeScale.footnote,
+            marginBottom: 4,
+          }}
+        >
+          {author}
         </Text>
       ) : null}
       <MessageCaption

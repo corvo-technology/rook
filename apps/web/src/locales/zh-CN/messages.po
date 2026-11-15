@@ -13,6 +13,7 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: src/components/PeopleList.tsx
 #: src/pages/shell/sidebar-roster.tsx
 msgid " (unread)"
 msgstr "（未读）"
@@ -180,6 +181,10 @@ msgstr "{0} 的屏幕"
 msgid "{a} and {b} are working…"
 msgstr "{a}和{b}正在工作…"
 
+#: src/pages/shell/sidebar-team.tsx
+msgid "{agents, plural, one {# agent} other {# agents}}"
+msgstr "{agents, plural, other {# 个智能体}}"
+
 #: src/lib/billing.ts
 msgid "{amount} / {period}"
 msgstr "{amount} / {period}"
@@ -335,6 +340,10 @@ msgstr "{name} 选项"
 #: src/lib/browser-notifications.ts
 msgid "{name} stopped"
 msgstr "{name} 已停止"
+
+#: src/pages/shell/sidebar-team.tsx
+msgid "{people, plural, one {# person} other {# people}}"
+msgstr "{people, plural, other {# 人}}"
 
 #: src/components/SubscriptionRings.tsx
 msgid "{percent}% used"
@@ -788,6 +797,10 @@ msgstr "添加 OpenAPI"
 msgid "Add passkey"
 msgstr "添加通行密钥"
 
+#: src/pages/shell/channel-members.tsx
+msgid "Add people or agents"
+msgstr "添加成员或智能体"
+
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Add person"
 msgstr "添加成员"
@@ -882,6 +895,7 @@ msgstr "Agent 电脑"
 
 #: src/components/AppRail.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
+#: src/pages/shell/channel-members.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/Store.tsx
 msgid "Agents"
@@ -1103,7 +1117,9 @@ msgid "Approval model"
 msgstr "审批模型"
 
 #: src/components/AppRail.tsx
+#: src/pages/ApprovalsPage.tsx
 #: src/pages/Settings.tsx
+#: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Approvals"
 msgstr "审批"
@@ -1280,6 +1296,7 @@ msgstr "头像工作室"
 #: src/pages/AppCatalogGrid.tsx
 #: src/pages/Auth.tsx
 #: src/pages/Board.tsx
+#: src/pages/DirectPage.tsx
 #: src/pages/NavLinkPage.tsx
 #: src/pages/onboarding/OnboardingLayout.tsx
 #: src/pages/RoutineEditor.tsx
@@ -1747,6 +1764,7 @@ msgid "Close navigation"
 msgstr "关闭导航"
 
 #: src/pages/GroupPanel.tsx
+#: src/pages/shell/channel-members.tsx
 #: src/pages/shell/side-panel.tsx
 #: src/pages/shell/thread-panel.tsx
 msgid "Close panel"
@@ -2179,6 +2197,10 @@ msgstr "无法修改密码"
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Could not change the role"
 msgstr "无法更改角色"
+
+#: src/pages/shell/channel-members.tsx
+msgid "Could not change who sees this channel"
+msgstr "无法更改谁可以查看此频道"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Could not check stored credentials."
@@ -2618,6 +2640,10 @@ msgstr "无法搜索"
 #: src/pages/Store.tsx
 msgid "Could not search catalog"
 msgstr "无法搜索目录"
+
+#: src/pages/DirectChat.tsx
+msgid "Could not send"
+msgstr "无法发送"
 
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Could not send invitations"
@@ -3385,6 +3411,7 @@ msgstr "每月"
 msgid "Every week"
 msgstr "每周"
 
+#: src/pages/shell/channel-members.tsx
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Everyone"
 msgstr "所有人"
@@ -4293,6 +4320,10 @@ msgstr "主要"
 msgid "Main model"
 msgstr "主模型"
 
+#: src/pages/shell/channel-members.tsx
+msgid "Make private"
+msgstr "设为私密"
+
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/Settings.tsx
 msgid "Manage"
@@ -4428,6 +4459,8 @@ msgstr "成员"
 
 #: src/pages/MemberUsageSection.tsx
 #: src/pages/Settings.tsx
+#: src/pages/shell/channel-header.tsx
+#: src/pages/shell/channel-members.tsx
 msgid "Members"
 msgstr "成员"
 
@@ -4486,6 +4519,7 @@ msgstr "消息"
 msgid "Message"
 msgstr "消息"
 
+#: src/pages/DirectChat.tsx
 #: src/pages/shell/composer.tsx
 msgid "Message {activeName}"
 msgstr "给 {activeName} 发消息"
@@ -4906,6 +4940,7 @@ msgid "No longer active"
 msgstr "已停用"
 
 #: src/pages/shell/channel-find.tsx
+#: src/pages/shell/channel-members.tsx
 msgid "No matches"
 msgstr "没有匹配项"
 
@@ -5057,6 +5092,10 @@ msgstr "无法正常工作"
 msgid "Nothing remembered yet"
 msgstr "暂无记忆"
 
+#: src/pages/ApprovalsInbox.tsx
+msgid "Nothing to approve"
+msgstr "没有待批准的内容"
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Notifications"
 msgstr "通知"
@@ -5164,6 +5203,10 @@ msgstr "打开智能体"
 msgid "Open call"
 msgstr "打开通话"
 
+#: src/pages/ApprovalsInbox.tsx
+msgid "Open chat"
+msgstr "打开聊天"
+
 #. placeholder {0}: call.botName
 #: src/components/call/CallCard.tsx
 msgid "Open chat with {0}"
@@ -5193,6 +5236,10 @@ msgstr "打开隐私设置"
 #: src/lib/mcp-connect.ts
 msgid "Open Rook directly to connect this app."
 msgstr "请直接打开 Rook 来连接此应用。"
+
+#: src/pages/shell/channel-members.tsx
+msgid "Open to everyone"
+msgstr "对所有人开放"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Open work"
@@ -5270,6 +5317,7 @@ msgstr "输出"
 #: src/lib/identity-display.ts
 #: src/pages/Board.tsx
 #: src/pages/MembersSettingsPanel.tsx
+#: src/pages/shell/channel-members.tsx
 msgid "Owner"
 msgstr "所有者"
 
@@ -5383,6 +5431,9 @@ msgstr "已暂停"
 msgid "Pawn"
 msgstr "兵"
 
+#: src/pages/DirectPage.tsx
+#: src/pages/shell/channel-members.tsx
+#: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/StoreCategoryChips.tsx
 msgid "People"
@@ -5429,6 +5480,10 @@ msgstr "选择要检查的工具"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Pick from role"
 msgstr "根据角色选择"
+
+#: src/pages/DirectPage.tsx
+msgid "Pick someone to write to"
+msgstr "选择要联系的人"
 
 #: src/pages/board/BoardLanes.tsx
 msgid "Picked up {ref}."
@@ -5739,6 +5794,7 @@ msgstr "移除"
 
 #. placeholder {0}: attachment.file.name
 #. placeholder {0}: member.name
+#: src/pages/shell/channel-members.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Remove {0}"
@@ -6251,6 +6307,7 @@ msgstr "屏幕未连接"
 #: src/pages/model-settings/role-model-picker.tsx
 #: src/pages/shell/bot-picker.tsx
 #: src/pages/shell/channel-find.tsx
+#: src/pages/shell/channel-members.tsx
 #: src/pages/shell/chat-model-picker.tsx
 #: src/pages/shell/command-palette.tsx
 #: src/pages/shell/shell-sidebar.tsx
@@ -6325,6 +6382,7 @@ msgstr "选择 Bot"
 msgid "Self-hosted"
 msgstr "自托管"
 
+#: src/pages/DirectChat.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/thread-panel.tsx
 msgid "Send"
@@ -7739,6 +7797,10 @@ msgstr "Bot 应在哪里运行？"
 #: src/pages/shell/agent-import.tsx
 msgid "Where to import"
 msgstr "导入到哪里"
+
+#: src/pages/shell/channel-members.tsx
+msgid "Who sees this channel"
+msgstr "谁可以查看此频道"
 
 #: src/components/AppRail.tsx
 #: src/pages/WikiPage.tsx

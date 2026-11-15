@@ -2,6 +2,7 @@ import type { Actor, Group, GroupMember, SpaceGroup } from "@corvo/contracts";
 import { GROUP_MEMBER_MAX, GROUP_MEMBER_MIN } from "@corvo/contracts";
 import { displayName } from "@corvo/core";
 import { cancelRunsInTransaction } from "./cancel-runs.js";
+import { channelVisibleTo } from "./channel-people.js";
 import type { Prisma, PrismaClient } from "./client.js";
 import { expireComputerExecutionLeases, restoreBotUnderComputerQuota } from "./computers.js";
 import { withNewestThreadMessages } from "./preview-messages.js";
@@ -316,6 +317,7 @@ export function createGroupRepos(prisma: PrismaClient) {
         where: {
           spaceId: { in: memberSpaces },
           archivedAt: null,
+          ...channelVisibleTo(actor.userId),
         },
         select: {
           id: true,
@@ -365,10 +367,15 @@ export function createGroupRepos(prisma: PrismaClient) {
       prisma,
       await prisma.chatGroup.findMany({
         where: {
-          spaceId: actor.spaceId,
-          OR: [
-            { archivedAt: { not: null } },
-            { members: { some: { bot: { archivedAt: { not: null } } } } },
+          AND: [
+            { spaceId: actor.spaceId },
+            channelVisibleTo(actor.userId),
+            {
+              OR: [
+                { archivedAt: { not: null } },
+                { members: { some: { bot: { archivedAt: { not: null } } } } },
+              ],
+            },
           ],
         },
         include: archivedGroupInclude,
@@ -394,6 +401,7 @@ export function createGroupRepos(prisma: PrismaClient) {
           where: {
             spaceId: actor.spaceId,
             archivedAt: null,
+            ...channelVisibleTo(actor.userId),
           },
           include: groupInclude,
           orderBy: [{ pinned: "desc" }, { updatedAt: "desc" }],
@@ -413,6 +421,7 @@ export function createGroupRepos(prisma: PrismaClient) {
           id: groupId,
           spaceId: actor.spaceId,
           ...(options.includeArchived ? {} : { archivedAt: null }),
+          ...channelVisibleTo(actor.userId),
         },
         include: groupInclude,
       });
@@ -427,6 +436,7 @@ export function createGroupRepos(prisma: PrismaClient) {
           id: groupId,
           spaceId: actor.spaceId,
           archivedAt: null,
+          ...channelVisibleTo(actor.userId),
         },
         include: groupTargetInclude,
       });

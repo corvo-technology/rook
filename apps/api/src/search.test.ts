@@ -153,13 +153,14 @@ it("resolves active group eligibility once for names, artifacts, and messages", 
 
   const eligibility = prisma.$queryRaw.mock.calls[0]?.[0];
   expect(eligibility.text).toContain('g."spaceId" = $1');
-  expect(eligibility.text).not.toContain('"userId"');
+  // A private channel is opened only for its creator and the people added to it.
+  expect(eligibility.text).toContain("chat_group_people");
   expect(eligibility.text).toContain('g."archivedAt" IS NULL');
   expect(eligibility.text).toContain("SELECT COUNT(*) FROM chat_group_members gm");
   expect(eligibility.text).toContain('INNER JOIN bots gb ON gb.id = gm."botId"');
   expect(eligibility.text).toContain('gm."groupId" = g.id AND gb."archivedAt" IS NULL');
-  expect(eligibility.text).toContain(") >= $2");
-  expect(eligibility.values).toEqual([actor.spaceId, GROUP_MEMBER_MIN]);
+  expect(eligibility.text).toContain(") >= $4");
+  expect(eligibility.values).toEqual([actor.spaceId, actor.userId, actor.userId, GROUP_MEMBER_MIN]);
 
   expect(prisma.chatGroup.findMany.mock.calls[0]?.[0]).toMatchObject({
     where: { spaceId: actor.spaceId, id: { in: ["group-test"] } },
@@ -328,5 +329,56 @@ describe("search within one thread", () => {
       }),
     ).toEqual([]);
     expect(prisma.$queryRaw).not.toHaveBeenCalled();
+  });
+});
+
+describe("search never reaches a direct conversation or a private channel", () => {
+  async function queries() {
+    const prisma = {
+      bot: { findMany: vi.fn().mockResolvedValue([]) },
+      chatGroup: { findMany: vi.fn().mockResolvedValue([]) },
+      artifact: { findMany: vi.fn().mockResolvedValue([]) },
+      routine: { findMany: vi.fn().mockResolvedValue([]) },
+      $queryRaw: vi
+        .fn()
+        .mockResolvedValueOnce([{ id: "group-open" }])
+        .mockResolvedValue([]),
+    };
+    await querySpaceSearch(prisma as unknown as PrismaClient, actor, "report");
+    return {
+      prisma,
+      // Some queries are tagged templates (strings, then values); others are built Sql objects.
+      sql: prisma.$queryRaw.mock.calls.map(([query, ...values]) =>
+        Array.isArray(query)
+          ? { text: query.join("?"), values }
+          : (query as { text: string; values: unknown[] }),
+      ),
+    };
+  }
+
+  it("only opens channels the searcher sees, by the same rule that lists them", async () => {
+    const { sql } = await queries();
+    const openable = sql[0]!;
+    expect(openable.text).toContain("FROM chat_groups g");
+    expect(openable.text).toContain("chat_group_people");
+    expect(openable.values).toContain(actor.userId);
+  });
+
+  it("reads messages only through an agent's chat or an openable channel", async () => {
+    const { sql } = await queries();
+    const messageQueries = sql.filter((query) => query.text.includes("FROM messages m"));
+    expect(messageQueries.length).toBeGreaterThan(0);
+    for (const query of messageQueries) {
+      // A direct conversation has no agent and no channel, so neither join can reach it.
+      expect(
+        query.text.includes('INNER JOIN bots b ON b.id = t."botId"') ||
+          query.text.includes('INNER JOIN chat_groups g ON g.id = t."groupId"'),
+      ).toBe(true);
+    }
+    const channelMessages = messageQueries.find((query) =>
+      query.text.includes("INNER JOIN chat_groups g"),
+    );
+    // The channel ids it may read are the openable list, nothing else.
+    expect(JSON.stringify(channelMessages?.values)).toContain("group-open");
   });
 });

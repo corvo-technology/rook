@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { channelVisibleTo } from "./channel-people.js";
 import type { PrismaClient } from "./client.js";
 import { createGroupRepos } from "./groups.js";
 import { IsolationError } from "./scope.js";
@@ -575,10 +576,15 @@ describe("listGroups archived", () => {
       include: { members: { where?: unknown } };
     };
     expect(query.where).toEqual({
-      spaceId: "space-1",
-      OR: [
-        { archivedAt: { not: null } },
-        { members: { some: { bot: { archivedAt: { not: null } } } } },
+      AND: [
+        { spaceId: "space-1" },
+        channelVisibleTo("user-1"),
+        {
+          OR: [
+            { archivedAt: { not: null } },
+            { members: { some: { bot: { archivedAt: { not: null } } } } },
+          ],
+        },
       ],
     });
     expect(query.include.members.where).toBeUndefined();
@@ -591,9 +597,11 @@ describe("listGroups archived", () => {
     ]);
     const listed = await groupRepos.listGroups(actor);
     expect(listed.map((item) => item.id)).toEqual(["openable"]);
+    // A private channel is listed only to its creator and the people added to it.
     expect(findMany.mock.calls[0]![0].where).toEqual({
       spaceId: "space-1",
       archivedAt: null,
+      ...channelVisibleTo("user-1"),
     });
   });
 });

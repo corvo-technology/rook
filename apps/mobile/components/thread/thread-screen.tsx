@@ -26,6 +26,7 @@ import { useCallSession } from "../../lib/call-session";
 import { cronLabels } from "../../lib/cron";
 import { useI18n } from "../../lib/i18n";
 import { useKeyboardLayout } from "../../lib/keyboard-layout";
+import { MessageReaderContext } from "../../lib/message-reader";
 import { useThemedStyles } from "../../lib/native";
 import { useInboxBot } from "../../lib/search-inbox";
 import { useSplitView } from "../../lib/split-view";
@@ -531,122 +532,130 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
   );
 
   return (
-    <View ref={keyboardLayout.container} onLayout={keyboardLayout.onLayout} style={{ flex: 1 }}>
-      <KeyboardAvoidingView
-        // Padding always settles to zero. "height" stays shrunk when the keyboard hides without
-        // move frames, such as when a pushed screen closes with its own keyboard up.
-        behavior="padding"
-        keyboardVerticalOffset={threadKeyboardOffset({
-          os: Platform.OS,
-          floatingHeader: threadHeaderFloats(),
-          nativeHeaderHeight,
-          measuredOffset: keyboardLayout.offset,
-        })}
-        style={{
-          flex: 1,
-          backgroundColor: tokens.background,
-          paddingLeft: 20 + columnInsets.left,
-          paddingRight: 20 + columnInsets.right,
-        }}
-      >
-        <ThreadMessageList
-          scroll={scroll}
-          pinnedListHandlers={paging.pinnedListHandlers}
-          threadKey={threadKey}
-          headerClearance={headerClearance}
-          bottomInset={bottomInset}
-          visibleMessages={visibleMessages}
-          liveItems={liveItems}
-          renderItem={renderItem}
-          renderMessageRow={renderMessageRow}
-          loadEarlierControl={loadEarlierControl}
-          failedSendBubbles={failedSendBubbles}
-          errorNotice={errorNotice}
-          workingFooter={workingFooter}
-          loadingNewer={paging.loadingNewer}
-          showLatest={showLatest}
-        />
-        <ThreadFetchErrorNotice error={error} showingSaved={showingSaved} />
-        {/* Shrinks (the suggestion lists scroll) so the input and Send stay above the keyboard. */}
-        <ThreadComposerDock
-          hidden={readOnly}
-          fadeStyle={styles.composerFade}
-          replyTarget={replyTarget}
-          replyAuthor={
-            replyTarget?.role === "user"
-              ? (channelMessageSender(replyTarget.blocks) ?? t("You"))
-              : (memberName(snap?.members, replyTarget?.botId) ?? displayName ?? t("Bot"))
-          }
-          replyQuote={replyQuote}
-          threadTarget={artifactTarget}
-          onDismissReply={() => {
-            setReplyTarget(null);
-            setReplyQuote(null);
+    <MessageReaderContext.Provider value={userId}>
+      <View ref={keyboardLayout.container} onLayout={keyboardLayout.onLayout} style={{ flex: 1 }}>
+        <KeyboardAvoidingView
+          // Padding always settles to zero. "height" stays shrunk when the keyboard hides without
+          // move frames, such as when a pushed screen closes with its own keyboard up.
+          behavior="padding"
+          keyboardVerticalOffset={threadKeyboardOffset({
+            os: Platform.OS,
+            floatingHeader: threadHeaderFloats(),
+            nativeHeaderHeight,
+            measuredOffset: keyboardLayout.offset,
+          })}
+          style={{
+            flex: 1,
+            backgroundColor: tokens.background,
+            paddingLeft: 20 + columnInsets.left,
+            paddingRight: 20 + columnInsets.right,
           }}
-          attachmentNotice={attachments.attachmentNotice}
-          attachments={attachments.activePendingAttachments}
-          onRemoveAttachment={(id) =>
-            attachments.setPendingAttachments((current) => current.filter((item) => item.id !== id))
-          }
         >
-          <ThreadComposer
-            onFocus={keyboardLayout.onFocus}
-            key={threadKey}
-            ref={composer.composerRef}
-            agentSkills={agentSkills}
-            composerMentionTargets={composerMentionTargets}
-            onMentionRequested={onMentionRequested}
-            composerPrompt={composerPrompt}
-            replyTargetId={replyTarget?.id}
+          <ThreadMessageList
+            scroll={scroll}
+            pinnedListHandlers={paging.pinnedListHandlers}
+            threadKey={threadKey}
+            headerClearance={headerClearance}
+            bottomInset={bottomInset}
+            visibleMessages={visibleMessages}
+            liveItems={liveItems}
+            renderItem={renderItem}
+            renderMessageRow={renderMessageRow}
+            loadEarlierControl={loadEarlierControl}
+            failedSendBubbles={failedSendBubbles}
+            errorNotice={errorNotice}
+            workingFooter={workingFooter}
+            loadingNewer={paging.loadingNewer}
+            showLatest={showLatest}
+          />
+          <ThreadFetchErrorNotice error={error} showingSaved={showingSaved} />
+          {/* Shrinks (the suggestion lists scroll) so the input and Send stay above the keyboard. */}
+          <ThreadComposerDock
+            hidden={readOnly}
+            fadeStyle={styles.composerFade}
+            replyTarget={replyTarget}
+            replyAuthor={
+              replyTarget?.role === "user"
+                ? (channelMessageSender(replyTarget.blocks) ?? t("You"))
+                : (memberName(snap?.members, replyTarget?.botId) ?? displayName ?? t("Bot"))
+            }
             replyQuote={replyQuote}
-            attachmentIds={attachments.activePendingAttachments.map((attachment) => attachment.id)}
-            botId={botId}
-            onCall={onCall}
-            working={working}
-            sending={composer.sending}
-            styles={styles}
-            attachActions={attachments.attachActions}
-            attachFrom={attachments.attachFrom}
-            send={composer.send}
-            stop={composer.stop}
-            startVoiceCall={startVoiceCall}
-            onSlashAction={composer.runSlashAction}
-          />
-        </ThreadComposerDock>
-        {botActionsOpen ? <BotActionsModal actions={botActions} onClose={closeBotActions} /> : null}
-        {selectableText !== null ? (
-          <SelectTextSheet text={selectableText} onClose={() => setSelectableText(null)} />
-        ) : null}
-        <RunErrorSheet
-          details={detailsOpen ? runError : null}
-          onClose={() => setDetailsOpen(false)}
-          action={runErrorAction}
-          authKind={authKind}
-          onRetry={() => void retryRun()}
-        />
-        {markdownPreview && artifactTarget ? (
-          <MarkdownArtifactPreview
             threadTarget={artifactTarget}
-            target={markdownPreview}
-            onClose={() => setMarkdownPreview(null)}
-          />
-        ) : null}
-        {quoteTarget ? (
-          <QuoteSheet
-            message={quoteTarget}
-            onCancel={() => setQuoteTarget(null)}
-            onQuote={(excerpt) => {
-              setReplyTarget(quoteTarget);
-              setReplyQuote(excerpt);
-              setQuoteTarget(null);
+            onDismissReply={() => {
+              setReplyTarget(null);
+              setReplyQuote(null);
             }}
+            attachmentNotice={attachments.attachmentNotice}
+            attachments={attachments.activePendingAttachments}
+            onRemoveAttachment={(id) =>
+              attachments.setPendingAttachments((current) =>
+                current.filter((item) => item.id !== id),
+              )
+            }
+          >
+            <ThreadComposer
+              onFocus={keyboardLayout.onFocus}
+              key={threadKey}
+              ref={composer.composerRef}
+              agentSkills={agentSkills}
+              composerMentionTargets={composerMentionTargets}
+              onMentionRequested={onMentionRequested}
+              composerPrompt={composerPrompt}
+              replyTargetId={replyTarget?.id}
+              replyQuote={replyQuote}
+              attachmentIds={attachments.activePendingAttachments.map(
+                (attachment) => attachment.id,
+              )}
+              botId={botId}
+              onCall={onCall}
+              working={working}
+              sending={composer.sending}
+              styles={styles}
+              attachActions={attachments.attachActions}
+              attachFrom={attachments.attachFrom}
+              send={composer.send}
+              stop={composer.stop}
+              startVoiceCall={startVoiceCall}
+              onSlashAction={composer.runSlashAction}
+            />
+          </ThreadComposerDock>
+          {botActionsOpen ? (
+            <BotActionsModal actions={botActions} onClose={closeBotActions} />
+          ) : null}
+          {selectableText !== null ? (
+            <SelectTextSheet text={selectableText} onClose={() => setSelectableText(null)} />
+          ) : null}
+          <RunErrorSheet
+            details={detailsOpen ? runError : null}
+            onClose={() => setDetailsOpen(false)}
+            action={runErrorAction}
+            authKind={authKind}
+            onRetry={() => void retryRun()}
           />
-        ) : null}
-        {/* The header buttons float over the chat; only the clock gets a soft backdrop. */}
-        {headerHeight > 0 ? (
-          <View pointerEvents="none" style={[styles.statusBarFade, { height: insets.top }]} />
-        ) : null}
-      </KeyboardAvoidingView>
-    </View>
+          {markdownPreview && artifactTarget ? (
+            <MarkdownArtifactPreview
+              threadTarget={artifactTarget}
+              target={markdownPreview}
+              onClose={() => setMarkdownPreview(null)}
+            />
+          ) : null}
+          {quoteTarget ? (
+            <QuoteSheet
+              message={quoteTarget}
+              onCancel={() => setQuoteTarget(null)}
+              onQuote={(excerpt) => {
+                setReplyTarget(quoteTarget);
+                setReplyQuote(excerpt);
+                setQuoteTarget(null);
+              }}
+            />
+          ) : null}
+          {/* The header buttons float over the chat; only the clock gets a soft backdrop. */}
+          {headerHeight > 0 ? (
+            <View pointerEvents="none" style={[styles.statusBarFade, { height: insets.top }]} />
+          ) : null}
+        </KeyboardAvoidingView>
+      </View>
+    </MessageReaderContext.Provider>
   );
 }

@@ -57,6 +57,7 @@ import { partnerRoutes } from "./routes/partner.js";
 import { routinesRoutes } from "./routes/routines.js";
 import { spacesRoutes } from "./routes/spaces.js";
 import { teamRoutes } from "./routes/team.js";
+import { teamChatRoutes } from "./routes/team-chat.js";
 import { threadsRoutes } from "./routes/threads.js";
 import { wikiRoutes } from "./routes/wiki.js";
 import { youRoutes } from "./routes/you.js";
@@ -187,6 +188,8 @@ export function createRouter(deps: RouterDeps) {
   const ctx = createRouterContext(deps);
   const { os } = ctx;
   const spaceRoutes = spacesRoutes(ctx);
+  const bots = botsRoutes(ctx);
+  const teamChat = teamChatRoutes(ctx);
 
   return os.router({
     ...accountRoutes(ctx),
@@ -195,7 +198,10 @@ export function createRouter(deps: RouterDeps) {
     spaces: { ...spaceRoutes.spaces, ...teamRoutes(ctx).spaces },
     ...missionsRoutes(ctx),
     models: { ...modelsRoutes(ctx).models, ...localSetupRoutes(ctx).models },
-    ...botsRoutes(ctx),
+    ...bots,
+    groups: { ...bots.groups, ...teamChat.groups },
+    approvals: teamChat.approvals,
+    directMessages: teamChat.directMessages,
     ...threadsRoutes(ctx),
     ...computerRoutes(ctx),
     ...memoryRoutes(ctx),

@@ -1,4 +1,5 @@
 import { GROUP_MEMBER_MIN } from "@corvo/contracts";
+import { channelVisibleToSql } from "./channel-people.js";
 import type { PrismaClient } from "./client.js";
 import { runAsSystem } from "./row-security.js";
 
@@ -28,6 +29,7 @@ export function countUnreadInboxChats(
             AND b."spaceId" = t."spaceId" AND b."archivedAt" IS NULL)
           OR EXISTS (SELECT 1 FROM chat_groups g WHERE g.id = t."groupId"
             AND g."spaceId" = t."spaceId" AND g."archivedAt" IS NULL
+            AND ${channelVisibleToSql("g", userId)}
             AND (SELECT count(*) FROM chat_group_members gm JOIN bots b ON b.id = gm."botId"
               WHERE gm."groupId" = g.id AND b."archivedAt" IS NULL) >= ${GROUP_MEMBER_MIN})
         )`;

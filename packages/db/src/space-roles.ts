@@ -382,14 +382,15 @@ export async function applyInvitedRoles(
   const admin = spaceRoleOf(input.role) === "admin";
   if (!admin && input.roleIds.length === 0) return;
   await ensureDefaultSpaceRoles(tx, input.spaceId);
-  const roles = await tx.spaceRole.findMany({
+  const found = await tx.spaceRole.findMany({
     where: {
       spaceId: input.spaceId,
       OR: [{ id: { in: [...input.roleIds] } }, ...(admin ? [{ systemKey: "admin" }] : [])],
-      NOT: { systemKey: "everyone" },
     },
-    select: { id: true },
+    select: { id: true, systemKey: true },
   });
+  // Everyone is held by every member without a row; a null systemKey would fail a SQL NOT.
+  const roles = found.filter((role) => role.systemKey !== "everyone");
   if (roles.length)
     await tx.spaceMemberRole.createMany({
       data: roles.map((role) => ({

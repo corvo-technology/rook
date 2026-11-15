@@ -64,4 +64,14 @@ describe("account email templates", () => {
       expect(message.text.length).toBeGreaterThan(0);
     }
   });
+
+  it("speaks of the nuvem in Portuguese, never the cloud", async () => {
+    const message = await waitlistConfirmationEmail(
+      "https://app.example.test",
+      "a@b.example",
+      "pt-BR",
+    );
+    expect(message.text).toContain("nuvem");
+    expect(`${message.subject} ${message.text}`).not.toMatch(/cloud/i);
+  });
 });

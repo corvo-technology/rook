@@ -4,7 +4,7 @@ const COPY: LaunchCopy = {
   meta: {
     title: "Rook | Agents IA pour équipes et entreprises, qui demandent avant d'agir",
     description:
-      "Rook est une équipe d'agents IA pour les équipes et les entreprises. Chacun a un métier et son propre accès à vos systèmes. Utilisez-le dans le cloud ou sur votre ordinateur. Ils demandent avant d'envoyer, de payer ou de supprimer.",
+      "Rook est une équipe d'agents IA pour les équipes et les entreprises. Chacun a un métier et son propre accès à vos systèmes. Utilisez-le dans le nuage ou sur votre ordinateur. Ils demandent avant d'envoyer, de payer ou de supprimer.",
     ogImageAlt: "Rook. Des agents IA qui travaillent en équipe et demandent avant d'agir.",
     ogTagline: "Des agents qui demandent avant d'agir.",
     availableLanguage: "Français",
@@ -26,13 +26,13 @@ const COPY: LaunchCopy = {
       { question: "Qu'est-ce qu'un agent ?", answer: "Une IA avec un nom, une description de poste, sa propre conversation et les outils que vous lui donnez. Vous lui parlez comme à un collègue. Il travaille en arrière-plan et revient avec le résultat." },
       { question: "Les agents peuvent-ils travailler ensemble ?", answer: "Oui. Mettez-en plusieurs dans un canal et mentionnez-en un avec @, ou laissez le Chef envoyer la demande à la squad dont l'objectif convient. Les agents peuvent aussi se passer du travail." },
       { question: "Un agent agit-il sans me demander ?", answer: "Vous choisissez les actions qui demandent votre accord, comme envoyer, payer ou supprimer. L'agent s'arrête, montre exactement ce qu'il veut faire et attend." },
-      { question: "Un agent peut-il utiliser un ordinateur ?", answer: "Oui. Un agent peut avoir un ordinateur Linux avec un navigateur, un terminal et des fichiers, dans Docker ou dans le cloud, et vous voyez son écran et pouvez en prendre le contrôle. Sur votre propre ordinateur, il travaille dans un dossier à lui quand vous l'autorisez, et ses commandes n'y sont pas isolées." },
-      { question: "Où vivent mes données ?", answer: "Dans le cloud, les conversations, la mémoire et les fichiers sont stockés sur nos serveurs, dans l'espace de votre entreprise. Sur votre ordinateur, ou sur un serveur à vous, ils y restent. Seul ce qui est envoyé au fournisseur de modèles en sort." },
+      { question: "Un agent peut-il utiliser un ordinateur ?", answer: "Oui. Un agent peut avoir un ordinateur Linux avec un navigateur, un terminal et des fichiers, dans Docker ou dans le nuage, et vous voyez son écran et pouvez en prendre le contrôle. Sur votre propre ordinateur, il travaille dans un dossier à lui quand vous l'autorisez, et ses commandes n'y sont pas isolées." },
+      { question: "Où vivent mes données ?", answer: "Dans le nuage, les conversations, la mémoire et les fichiers sont stockés sur nos serveurs, dans l'espace de votre entreprise. Sur votre ordinateur, ou sur un serveur à vous, ils y restent. Seul ce qui est envoyé au fournisseur de modèles en sort." },
       { question: "Quels modèles puis-je utiliser ?", answer: "Votre abonnement Claude ou ChatGPT, votre propre clé chez un fournisseur comme OpenRouter, Anthropic ou OpenAI, ou un modèle qui tourne sur votre machine. Chaque agent peut en utiliser un différent." },
       { question: "Est-ce que ça marche avec notre système interne ?", answer: "Oui. Connectez-le comme serveur MCP, ou via Executor, et choisissez quels agents peuvent l'utiliser." },
-      { question: "Comment rejoindre la bêta du cloud ?", answer: "Inscrivez-vous sur la liste avec l'e-mail de votre entreprise. Nous invitons les entreprises progressivement, et chacune monte ses premiers agents et routines avec nous." },
-      { question: "Combien ça coûte ?", answer: "L'app est gratuite. Le cloud utilise des crédits de l'entreprise, qui paient les modèles, la voix et la navigation. Sur votre ordinateur, vous payez votre fournisseur de modèles, ou rien avec un modèle local." },
-      { question: "Comment passer de l'app au cloud ?", answer: "Exportez votre espace de l'app dans un fichier et importez-le dans le cloud." },
+      { question: "Comment rejoindre la bêta du nuage ?", answer: "Inscrivez-vous sur la liste avec l'e-mail de votre entreprise. Nous invitons les entreprises progressivement, et chacune monte ses premiers agents et routines avec nous." },
+      { question: "Combien ça coûte ?", answer: "L'app est gratuite. Le nuage utilise des crédits de l'entreprise, qui paient les modèles, la voix et la navigation. Sur votre ordinateur, vous payez votre fournisseur de modèles, ou rien avec un modèle local." },
+      { question: "Comment passer de l'app au nuage ?", answer: "Exportez votre espace de l'app dans un fichier et importez-le dans le nuage." },
     ],
   },
   footer: {
@@ -386,8 +386,8 @@ const COPY: LaunchCopy = {
     accent: "et passez au vôtre.",
     cards: [
       { title: "À heure fixe, ou quand quelque chose arrive.", body: "Les routines tournent à l'heure choisie ou quand quelque chose de nouveau apparaît dans une app connectée. Chaque exécution laisse une trace que vous pouvez ouvrir." },
-      { title: "Un ordinateur à eux.", body: "Donnez à un agent un ordinateur Linux avec un navigateur, un terminal et des fichiers. Vous voyez son écran en direct et pouvez en prendre le contrôle. Il tourne dans Docker ou dans le cloud, ou sur votre machine quand vous l'autorisez. Il navigue avec une IP résidentielle, donc les sites ne le bloquent pas." },
-      { title: "Apportez vos modèles.", body: "Déjà inclus dans les crédits du cloud, ou apportez les vôtres : connectez-vous avec Claude ou ChatGPT, ajoutez une clé OpenRouter, Anthropic ou OpenAI, ou lancez un modèle local. Choisissez-en un par agent." },
+      { title: "Un ordinateur à eux.", body: "Donnez à un agent un ordinateur Linux avec un navigateur, un terminal et des fichiers. Vous voyez son écran en direct et pouvez en prendre le contrôle. Il tourne dans Docker ou dans le nuage, ou sur votre machine quand vous l'autorisez. Il navigue avec une IP résidentielle, donc les sites ne le bloquent pas." },
+      { title: "Apportez vos modèles.", body: "Déjà inclus dans les crédits du nuage, ou apportez les vôtres : connectez-vous avec Claude ou ChatGPT, ajoutez une clé OpenRouter, Anthropic ou OpenAI, ou lancez un modèle local. Choisissez-en un par agent." },
       { title: "Voyez ce que coûte chacun.", body: "Une limite par agent et le solde de l'entreprise. Les tokens par jour et par agent, et le remplissage de votre fenêtre Claude ou ChatGPT quand le fournisseur l'indique." },
       { title: "Connectez vos outils.", body: "Un catalogue d'apps prêtes, plus n'importe quel serveur MCP. Chaque agent ne reçoit que les connexions que vous lui donnez." },
       { title: "Demandez de là où vous êtes.", body: "Écrivez à un agent sur Telegram, Slack ou WhatsApp, parlez-lui à la voix, ou donnez-lui une boîte e-mail à lui. La réponse revient là où vous avez demandé." },
@@ -425,7 +425,7 @@ const COPY: LaunchCopy = {
     accent: "votre entreprise préfère.",
     copy: "Choisissez où Rook tourne. Partout, les agents demandent avant d'agir.",
     points: [
-      { title: "Dans notre cloud", body: "Rien à installer. Nous nous occupons des serveurs pour vous." },
+      { title: "Dans notre nuage", body: "Rien à installer. Nous nous occupons des serveurs pour vous." },
       { title: "Sur votre serveur", body: "Ou faites-le tourner pour votre équipe avec Docker Compose. Les comptes et les données restent chez vous." },
       { title: "Sur votre ordinateur", body: "La base de données, le moteur et les agents tournent sur votre machine. Pas de compte, pas de serveur chez nous." },
     ],
@@ -433,7 +433,7 @@ const COPY: LaunchCopy = {
   waitlist: {
     badge: "Bêta fermée",
     title: "Nous le déployons avec votre équipe",
-    copy: "Nous ouvrons le cloud progressivement. Pour chaque entreprise qui entre, nous montons avec vous les premiers agents et routines, reliés à vos systèmes.",
+    copy: "Nous ouvrons le nuage progressivement. Pour chaque entreprise qui entre, nous montons avec vous les premiers agents et routines, reliés à vos systèmes.",
     email: "E-mail professionnel",
     company: "Entreprise",
     task: "Que veut automatiser votre équipe ? (facultatif)",
@@ -454,7 +454,7 @@ const COPY: LaunchCopy = {
     copyLabel: "Copier",
     copiedLabel: "Copié",
     note: "Windows 10 ou 11 et Linux, tous deux en 64 bits. La même ligne met l'app à jour ensuite.",
-    migrate: "Vous utilisez déjà l'app ? Passez tout dans le cloud en un fichier.",
+    migrate: "Vous utilisez déjà l'app ? Passez tout dans le nuage en un fichier.",
   },
   cta: {
     heading: "Recrutez votre premier agent.",

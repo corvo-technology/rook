@@ -32,4 +32,14 @@ describe("setup window text", () => {
       expect(messages.answered, locale).toContain("{url}");
     }
   });
+
+  it("names the hosted product in each language's own word for the cloud", () => {
+    expect(SETUP_STRINGS["pt-BR"]?.cloud).toBe("Rook Nuvem");
+    expect(SETUP_STRINGS.es?.cloud).toBe("Rook Nube");
+    expect(SETUP_STRINGS.fr?.cloud).toBe("Rook Nuage");
+    expect(SETUP_STRINGS.ja?.cloud).toBe("Rook クラウド");
+    expect(SETUP_STRINGS["zh-CN"]?.cloud).toBe("Rook 云");
+    expect(SETUP_STRINGS.de?.cloud).toBe("Rook Cloud");
+    expect(SETUP_STRINGS.en?.cloud).toBe("Rook Cloud");
+  });
 });

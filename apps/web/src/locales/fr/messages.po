@@ -1939,7 +1939,7 @@ msgstr "Fermer le tableau"
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Cloud"
-msgstr "Cloud"
+msgstr "Nuage"
 
 #: src/components/AskCard.tsx
 msgid "Code"

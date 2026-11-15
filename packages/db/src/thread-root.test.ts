@@ -29,6 +29,7 @@ describe("threadRootOfSource", () => {
 describe("a run's messages", () => {
   function tx(source: unknown) {
     return {
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextMessageSeq: 5 }) },
       run: {
         findUnique: vi.fn().mockResolvedValue({

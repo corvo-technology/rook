@@ -45,7 +45,10 @@ function fakeDb(): never {
           },
       },
     );
-  return new Proxy({}, { get: (_, name: string) => model(name) }) as never;
+  return new Proxy(
+    {},
+    { get: (_, name: string) => (name === "$executeRaw" ? async () => 0 : model(name)) },
+  ) as never;
 }
 
 const bot = { id: "bot-1", threadId: "thread-1", name: "Imported" } as Bot;

@@ -69,7 +69,10 @@ export function isFleetApprovalTool(name: string): name is FleetApprovalToolName
 /** All scope comes from the run; no tool argument may name a space or user. */
 export type FleetRun = {
   spaceId: string;
+  /** The agent's owner: fleet tools act with their authority, whichever member is talking. */
   userId: string;
+  /** The member who started the run. */
+  requestedByUserId?: string;
   botId: string;
   /** The group whose thread the run is in, if any. */
   groupId: string | null;

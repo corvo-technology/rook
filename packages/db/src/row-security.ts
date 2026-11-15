@@ -158,6 +158,7 @@ export const ROW_SECURITY_MODELS: ReadonlySet<string> = new Set([
   "SpaceSettingOverride",
   "SpaceModelConnection",
   "SpaceMemberModelSetting",
+  "ThreadMemberRead",
   "WikiSettings",
   "WikiSource",
   "WikiChange",

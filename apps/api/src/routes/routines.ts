@@ -5,6 +5,7 @@ import {
   stableStringify,
   validateRoutineWatch,
 } from "@corvo/adapters";
+import type { Actor } from "@corvo/contracts";
 import { canonicalPiProviderId } from "@corvo/contracts";
 import {
   expandSkillReferencesInPrompt,
@@ -26,11 +27,14 @@ import {
   routineNextRunAt,
   routineRowData,
 } from "../routines.js";
+import { requireCreatorOrPermission, requireSpacePermission } from "../space-permissions.js";
 import type { RouterContext } from "./context.js";
 import { isRecordNotFound } from "./shared.js";
 
 export function routinesRoutes(ctx: RouterContext) {
   const { deps, repos, announceRoutine, codexCatalog, agentSkills, authed } = ctx;
+  const manageRoutine = (actor: Actor, routine: { userId: string }) =>
+    requireCreatorOrPermission(deps.prisma, actor, routine.userId, "manage_routines");
   return {
     routines: {
       calendar: authed.routines.calendar.handler(async ({ context, input }) =>
@@ -88,12 +92,12 @@ export function routinesRoutes(ctx: RouterContext) {
           where: {
             id: input.routineId,
             spaceId: context.actor.spaceId,
-            userId: context.actor.userId,
             bot: { archivedAt: null },
           },
-          select: { id: true },
+          select: { id: true, userId: true },
         });
         if (!routine) throw new IsolationError();
+        await manageRoutine(context.actor, routine);
         // Each step's agent must be one of this space's own, so a workflow cannot reach another's.
         for (const botId of new Set(input.steps.map((step) => step.botId))) {
           await repos.getBot(context.actor, botId);
@@ -114,6 +118,7 @@ export function routinesRoutes(ctx: RouterContext) {
       }),
       create: authed.routines.create.handler(async ({ context, input }) => {
         assertRoutineSchedule(input);
+        await requireSpacePermission(deps.prisma, context.actor, "manage_routines");
         const bot = await repos.getBot(context.actor, input.botId);
         if (input.watch) {
           try {
@@ -142,11 +147,11 @@ export function routinesRoutes(ctx: RouterContext) {
           where: {
             id: input.routineId,
             spaceId: context.actor.spaceId,
-            userId: context.actor.userId,
             bot: { archivedAt: null },
           },
         });
         if (!existing) throw new ORPCError("NOT_FOUND");
+        await manageRoutine(context.actor, existing);
         const bot = await repos.getBot(context.actor, existing.botId);
         const active = input.active ?? existing.active;
         const crons = input.crons ?? existing.crons;
@@ -319,7 +324,6 @@ export function routinesRoutes(ctx: RouterContext) {
                   where: {
                     id: existing.id,
                     spaceId: context.actor.spaceId,
-                    userId: context.actor.userId,
                     bot: { archivedAt: null },
                   },
                   select: { id: true },
@@ -360,6 +364,7 @@ export function routinesRoutes(ctx: RouterContext) {
           where: { id: input.routineId, spaceId: context.actor.spaceId },
         });
         if (!existing) throw new IsolationError();
+        await manageRoutine(context.actor, existing);
         await deps.prisma.routine.delete({ where: { id: existing.id } });
         await deps.jobs.cancel(routineJobKey(existing.id));
         return { ok: true as const };
@@ -369,10 +374,11 @@ export function routinesRoutes(ctx: RouterContext) {
           where: {
             id: input.routineId,
             spaceId: context.actor.spaceId,
-            userId: context.actor.userId,
           },
         });
         if (!routine) throw new IsolationError();
+        // Running an existing routine once is working with the agent, not editing the routine.
+        await requireSpacePermission(deps.prisma, context.actor, "talk_to_agents");
         const bot = await repos.getBot(context.actor, routine.botId);
         if (!bot.thread) throw new IsolationError();
         const threadId = bot.thread.id;

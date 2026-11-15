@@ -62,6 +62,7 @@ function deps(
       update: vi.fn().mockResolvedValue({}),
     },
     event: { create: vi.fn().mockResolvedValue({ seq: 7 }) },
+    $executeRaw: vi.fn(),
     thread: { update: vi.fn().mockResolvedValue({}) },
   };
   let transactionAttempts = 0;

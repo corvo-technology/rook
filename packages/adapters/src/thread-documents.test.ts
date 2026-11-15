@@ -26,11 +26,8 @@ function world(files: Array<Row & { bytes: Uint8Array; attached?: boolean }>) {
   const byId = new Map(files.map((file) => [file.id, file]));
   const prisma = {
     artifact: {
-      findFirst: vi.fn(
-        async ({ where }: { where: { id: string; spaceId: string; userId: string } }) =>
-          where.spaceId === "space-1" && where.userId === "user-1"
-            ? (byId.get(where.id) ?? null)
-            : null,
+      findFirst: vi.fn(async ({ where }: { where: { id: string; spaceId: string } }) =>
+        where.spaceId === "space-1" ? (byId.get(where.id) ?? null) : null,
       ),
     },
     message: {
@@ -144,12 +141,12 @@ describe("readThreadDocument", () => {
     });
   });
 
-  it("refuses a file of another person or Space, and one that does not exist", async () => {
+  it("refuses a file of another Space, and one that does not exist", async () => {
     const w = world([alpha]);
     expect(await read(w, { file: "attachments/nope.pdf" })).toEqual({
       error: expect.stringMatching(/no attached file/i),
     });
-    const other = { ...context, userId: "someone-else" };
+    const other = { ...context, spaceId: "space-2" };
     expect(
       await readThreadDocument(w as never, {
         threadId: "thread-1",

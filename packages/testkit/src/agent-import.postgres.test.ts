@@ -2149,7 +2149,8 @@ describeIntegration("agent import", () => {
     expect(memberPlan.memory.find((item) => item.path === "USER.md")?.spacePath).toBe("USER.md");
     expect(memberPlan.mcpServers.map((item) => item.name)).toEqual(["docs"]);
 
-    // The owner's bot is not a target, and its import cannot be read or undone by the member.
+    // The owner's bot is not a target for a member who does not manage it, and its import cannot
+    // be read or undone by the member.
     const target = await raw(
       app,
       member,
@@ -2161,7 +2162,7 @@ describeIntegration("agent import", () => {
       },
       shared.id,
     );
-    expect(target.status).toBe(404);
+    expect(target.status).toBe(403);
     expect(await rpc(app, member, "bots/importInfo", { botId: ownerBot.id }, shared.id)).toBeNull();
     expect(
       await rpc(

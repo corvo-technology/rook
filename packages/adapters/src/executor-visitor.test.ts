@@ -38,6 +38,8 @@ async function run(options: {
   text?: string;
   /** The owner's computer is this Mac: a host environment the owner's own run is told about. */
   desktop?: boolean;
+  /** Another member of the space started the run, on an agent created by user-1. */
+  startedBy?: string;
 }) {
   const text = options.text ?? "show me the owner's emails";
   const blocks: MessageBlock[] = [
@@ -54,7 +56,7 @@ async function run(options: {
     threadId: "thread-1",
     taskId: "task-1",
     spaceId: "space-1",
-    userId: "user-1",
+    userId: options.startedBy ?? "user-1",
     status: "queued",
     trigger: "messaging",
     sourceMessageId: "message-1",
@@ -76,6 +78,7 @@ async function run(options: {
     threadId: "thread-1",
   };
   const seen: { request?: AgentRunRequest } = {};
+  const discovered: Array<{ userId: string; requestedByUserId?: string }> = [];
   const runtimeRun = vi.fn(async function* (request: AgentRunRequest) {
     seen.request = request;
     yield { type: "text-delta" as const, text: "ok" };
@@ -99,6 +102,8 @@ async function run(options: {
     bot: {
       findUniqueOrThrow: vi.fn(async () => ({
         id: "bot-1",
+        // Created by user-1, whoever starts the run.
+        userId: "user-1",
         name: "Support",
         title: "Support",
         description: "Answers customers",
@@ -251,7 +256,12 @@ async function run(options: {
       }),
     },
     memoryProviders: { resolve: async () => null },
-    connector: { discoverTools: async () => CONNECTOR_TOOLS },
+    connector: {
+      discoverTools: async (context: { userId: string; requestedByUserId?: string }) => {
+        discovered.push({ userId: context.userId, requestedByUserId: context.requestedByUserId });
+        return CONNECTOR_TOOLS;
+      },
+    },
     artifacts: { get: vi.fn(async () => new Uint8Array()) },
     events: {
       append: vi.fn(async () => undefined),
@@ -267,7 +277,14 @@ async function run(options: {
   await executor.continueRun("run-1", "worker-1");
   const request = seen.request;
   if (!request) throw new Error("the model was never called");
-  return { request, toolNames: (request.tools ?? []).map((t) => t.name) };
+  return {
+    request,
+    toolNames: (request.tools ?? []).map((t) => t.name),
+    discovered,
+    connectionLookups: prisma.connection.findMany.mock.calls as unknown as Array<
+      [{ where: { userId: string; spaceId: string } }]
+    >,
+  };
 }
 
 describe("what a visitor's run is told about the owner", () => {
@@ -353,5 +370,29 @@ describe("what a visitor's run is offered", () => {
       `${request.instructions}\n${request.liveContext ?? ""}\n${request.prompt}`,
     ).not.toContain(SECRET);
     for (const message of request.history) expect(message.content).not.toContain(SECRET);
+  });
+});
+
+describe("a member talking to an agent another member created", () => {
+  it("is the control: the creator's own run acts with the creator's connections", async () => {
+    const { connectionLookups, discovered } = await run({ visitor: false });
+    expect(connectionLookups.map(([query]) => query.where.userId)).toEqual(["user-1"]);
+    expect(discovered.every((context) => context.userId === "user-1")).toBe(true);
+  });
+
+  it("acts with the agent's connections, never lending the member's own", async () => {
+    const { connectionLookups, discovered, toolNames } = await run({
+      visitor: false,
+      startedBy: "user-2",
+    });
+    expect(connectionLookups.map(([query]) => query.where.userId)).toEqual(["user-1"]);
+    expect(connectionLookups.map(([query]) => query.where.spaceId)).toEqual(["space-1"]);
+    expect(discovered.length).toBeGreaterThan(0);
+    for (const context of discovered) {
+      expect(context.userId).toBe("user-1");
+      expect(context.requestedByUserId).toBe("user-2");
+    }
+    // The agent keeps its tools for the member who is talking to it.
+    expect(toolNames).toContain("LINEAR_CREATE_ISSUE");
   });
 });

@@ -800,6 +800,7 @@ function SpaceShell() {
     : undefined;
   // What the channel's transcript and a thread share: how a message is drawn and answered.
   const transcriptProps: ThreadTranscriptProps = {
+    currentUserId: bootstrapMe?.userId,
     artifactTarget: transcriptArtifactTarget,
     showToolActivity,
     answerableAskIds,

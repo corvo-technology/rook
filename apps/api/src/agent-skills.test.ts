@@ -26,7 +26,7 @@ function savedSkill(name: string, source = "user") {
 }
 
 function setup(rows: ReturnType<typeof savedSkill>[] = []) {
-  type Where = { id?: string; spaceId: string; userId: string; source?: string };
+  type Where = { id?: string; spaceId: string; source?: string };
   const matches = (row: ReturnType<typeof savedSkill>, where: Where) =>
     Object.entries(where).every(([key, value]) => row[key as keyof typeof row] === value);
   const agentSkill = {
@@ -97,8 +97,8 @@ describe("built-in skill precedence in the API", () => {
     expect(agentSkill.deleteMany).not.toHaveBeenCalled();
   });
 
-  it.each([{ spaceId: "other-space" }, { userId: "other-user" }])(
-    "does not let foreign skills shadow the builtin: %j",
+  it.each([{ spaceId: "other-space" }])(
+    "does not let another space's skills shadow the builtin: %j",
     async (foreignOwner) => {
       const { service } = setup([{ ...savedSkill(" Interrogate "), ...foreignOwner }]);
       await expect(service.get(actor, { name: "interrogate" })).resolves.toMatchObject({
@@ -111,6 +111,18 @@ describe("built-in skill precedence in the API", () => {
       await expect(service.get(actor, { skillId: "saved-1" })).rejects.toThrow();
     },
   );
+});
+
+describe("skills are the space's", () => {
+  it("lets any member read a skill another member saved", async () => {
+    const { service } = setup([{ ...savedSkill("Release notes"), userId: "other-user" }]);
+    await expect(service.get(actor, { skillId: "saved-1" })).resolves.toMatchObject({
+      id: "saved-1",
+    });
+    await expect(service.list(actor)).resolves.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: "saved-1" })]),
+    );
+  });
 });
 
 describe("imported skill content in the API", () => {

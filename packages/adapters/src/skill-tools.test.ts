@@ -18,7 +18,6 @@ function makePrisma(rows: Array<Record<string, unknown>> = []) {
           .filter((row) => {
             if (!where) return true;
             if (where.spaceId && row.spaceId !== where.spaceId) return false;
-            if (where.userId && row.userId !== where.userId) return false;
             return true;
           })
           .map((row) => ({ ...row })),
@@ -52,10 +51,7 @@ function makePrisma(rows: Array<Record<string, unknown>> = []) {
         }) => {
           const index = store.findIndex(
             (row) =>
-              row.id === where.id &&
-              row.spaceId === where.spaceId &&
-              row.userId === where.userId &&
-              row.source === where.source,
+              row.id === where.id && row.spaceId === where.spaceId && row.source === where.source,
           );
           if (index < 0) return { count: 0 };
           store[index] = { ...store[index], ...data, updatedAt: new Date() };
@@ -71,10 +67,7 @@ function makePrisma(rows: Array<Record<string, unknown>> = []) {
       deleteMany: vi.fn(async ({ where }: { where: Record<string, string> }) => {
         const index = store.findIndex(
           (row) =>
-            row.id === where.id &&
-            row.spaceId === where.spaceId &&
-            row.userId === where.userId &&
-            row.source === where.source,
+            row.id === where.id && row.spaceId === where.spaceId && row.source === where.source,
         );
         if (index < 0) return { count: 0 };
         store.splice(index, 1);

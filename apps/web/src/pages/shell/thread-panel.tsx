@@ -26,6 +26,7 @@ type TranscriptProps = ComponentProps<typeof Transcript>;
 export type ThreadTranscriptProps = Pick<
   TranscriptProps,
   | "artifactTarget"
+  | "currentUserId"
   | "showToolActivity"
   | "answerableAskIds"
   | "dismissableAskIds"

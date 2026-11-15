@@ -113,6 +113,7 @@ export const MessageView = memo(function MessageView({
   peerReplies,
   onTogglePeerReplies,
   speakerName,
+  authorName,
   speakerRole,
   channelMembers,
   continued = false,
@@ -158,6 +159,8 @@ export const MessageView = memo(function MessageView({
   peerReplies?: "collapsed" | "expanded";
   onTogglePeerReplies: (markerId: string) => void;
   speakerName?: string;
+  /** Who wrote this user message, when it is someone other than the reader. */
+  authorName?: string;
   /** The agent's role, muted beside its name. */
   speakerRole?: string;
   /** The agents of a channel: an `@Name` of theirs in a message is shown as a chip. */
@@ -279,6 +282,11 @@ export const MessageView = memo(function MessageView({
     : "max-w-full rounded-[20px] bg-muted px-[18px] py-3 text-body1 text-foreground";
   const messageContext = (
     <>
+      {authorName ? (
+        <div className="mb-1 text-[12.5px] text-muted-foreground" dir="auto">
+          {authorName}
+        </div>
+      ) : null}
       {speakerName && !continued ? (
         <div className="mb-1 flex items-baseline gap-2" dir="auto">
           <span className="text-[15px] font-semibold text-foreground">{speakerName}</span>

@@ -15,6 +15,7 @@ import {
 } from "../artifacts.js";
 import { listSpaceRuns } from "../runs.js";
 import { querySpaceSearch } from "../search.js";
+import { requireSpacePermission } from "../space-permissions.js";
 import { exportSpace, gatherBotContent } from "../space-transfer.js";
 import { loadAllMessages } from "../thread-message-pages.js";
 import { buildRunOutcomes, buildUsageOverview, usageWindow } from "../usage-overview.js";
@@ -37,7 +38,6 @@ export function contentRoutes(ctx: RouterContext) {
             botId: input.botId,
             groupId: null,
             spaceId: context.actor.spaceId,
-            userId: context.actor.userId,
           },
         });
         return rows.map((row) => ({
@@ -68,6 +68,7 @@ export function contentRoutes(ctx: RouterContext) {
         return listArtifactVersions(deps, context.actor, input);
       }),
       create: authed.artifacts.create.handler(async ({ context, input }) => {
+        await requireSpacePermission(deps.prisma, context.actor, "upload_files");
         const botId = input.botId
           ? (await repos.getBot(context.actor, input.botId)).id
           : (await groupRepos.getGroupTarget(context.actor, input.groupId!)).members[0]?.bot.id;

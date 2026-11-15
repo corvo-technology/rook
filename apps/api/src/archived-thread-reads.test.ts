@@ -21,15 +21,9 @@ function fixture() {
     computer: null,
   };
   const findBot = vi.fn(
-    async ({
-      where,
-    }: {
-      where: { id: string; userId: string; spaceId: string; archivedAt?: null };
-    }) => {
-      return where.id === bot.id &&
-        where.userId === bot.userId &&
-        where.spaceId === bot.spaceId &&
-        where.archivedAt === undefined
+    async ({ where }: { where: { id: string; spaceId: string; archivedAt?: null } }) => {
+      // The bot is the space's, whoever created it.
+      return where.id === bot.id && where.spaceId === bot.spaceId && where.archivedAt === undefined
         ? bot
         : null;
     },
@@ -48,6 +42,7 @@ function fixture() {
   ]);
   const prisma = {
     bot: { findFirst: findBot },
+    spaceMember: { findUnique: vi.fn(async () => ({ role: "member" })) },
     userModelPreference: { findFirst: vi.fn(async () => null) },
     spaceSettingOverride: { findUnique: vi.fn(async () => null) },
     userModelRoleChoice: { findMany: vi.fn(async () => []) },
@@ -87,17 +82,18 @@ describe("archived thread read authorization", () => {
       expect(result.status).toBe(200);
       expect(result.body.json.messages).toEqual([expect.objectContaining({ id: "message-1" })]);
       expect(findBot).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: "bot-1", userId: "user-1", spaceId: "space-1" } }),
+        expect.objectContaining({ where: { id: "bot-1", spaceId: "space-1" } }),
       );
     },
   );
   it.each(["threads/get", "threads/messages"])(
-    "%s keeps user and space isolation",
+    "%s lets another member read it, and keeps space isolation",
     async (proc) => {
       const { actor, call, findMessages } = fixture();
       expect(
         (await call(proc, { botId: "bot-1" }, { ...actor, userId: "other-user" })).status,
-      ).toBe(500);
+      ).toBe(200);
+      findMessages.mockClear();
       expect(
         (await call(proc, { botId: "bot-1" }, { ...actor, spaceId: "other-space" })).status,
       ).toBe(500);

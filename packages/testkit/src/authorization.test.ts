@@ -8,9 +8,10 @@ import {
   PrismaPushTokenStore,
 } from "@corvo/adapters";
 import type { createApp } from "@corvo/api/app";
-import type { appContract, Space, SpaceNavigation } from "@corvo/contracts";
+import type { appContract, Space, SpaceNavigation, ThreadMessage } from "@corvo/contracts";
 import {
   claimSpaceDeletionForMember,
+  createThreadMessage,
   deleteClaimedSpaceForMember,
   listClaimedSpaceComputers,
   pushSessionExpiresAt,
@@ -763,6 +764,187 @@ describeWithDatabase("API authorization and resource isolation", () => {
     } finally {
       vi.unstubAllGlobals();
     }
+  });
+
+  it("shares a space's agents, channels, conversations and read state with its members only", async () => {
+    const ownerCookie = await signup(app, `team-owner-${stamp}@corvo.test`, "Team Owner");
+    const memberCookie = await signup(app, `team-member-${stamp}@corvo.test`, "Team Member");
+    const outsiderCookie = await signup(app, `team-outsider-${stamp}@corvo.test`, "Outsider");
+    const owner = await rpc<Actor>(app, ownerCookie, "me");
+    const member = await rpc<Actor>(app, memberCookie, "me");
+    const outsiderSpaceId = (await rpc<Actor>(app, outsiderCookie, "me")).spaceId;
+    const team = await rpc<Space>(app, ownerCookie, "spaces/create", { name: "Team" });
+    const ana = await rpc<Bot>(app, ownerCookie, "bots/create", botInput("Ana"), team.id);
+    const bia = await rpc<Bot>(app, ownerCookie, "bots/create", botInput("Bia"), team.id);
+    const crew = await rpc<{ id: string }>(
+      app,
+      ownerCookie,
+      "groups/create",
+      { name: "Crew", botIds: [ana.id, bia.id] },
+      team.id,
+    );
+    const teamRow = await handles.prisma.space.findUniqueOrThrow({
+      where: { id: team.id },
+      select: { organizationId: true },
+    });
+    await handles.prisma.member.deleteMany({ where: { userId: member.userId } });
+    await handles.prisma.member.create({
+      data: {
+        id: `team-org-member-${stamp}`,
+        organizationId: teamRow.organizationId,
+        userId: member.userId,
+        role: "member",
+        createdAt: new Date(),
+      },
+    });
+    await handles.prisma.spaceMember.create({
+      data: {
+        id: `team-space-member-${stamp}`,
+        spaceId: team.id,
+        organizationId: teamRow.organizationId,
+        userId: member.userId,
+        role: "member",
+        createdAt: new Date(),
+      },
+    });
+
+    // Something the owner keeps in another space of the organization, and something of a stranger's.
+    const privateSpace = await rpc<Space>(app, ownerCookie, "spaces/create", { name: "Private" });
+    const elsewhereBot = await rpc<Bot>(
+      app,
+      ownerCookie,
+      "bots/create",
+      botInput("Elsewhere"),
+      privateSpace.id,
+    );
+    const strangerBot = await rpc<Bot>(app, outsiderCookie, "bots/create", botInput("Stranger"));
+
+    // The invited member sees what the owner made in the space, and nothing from elsewhere.
+    const memberBots = await rpc<Bot[]>(app, memberCookie, "bots/list", {}, team.id);
+    expect(memberBots.map((bot) => bot.id)).toEqual(expect.arrayContaining([ana.id, bia.id]));
+    expect(memberBots.map((bot) => bot.id)).not.toContain(elsewhereBot.id);
+    const memberGroups = await rpc<Array<{ id: string }>>(
+      app,
+      memberCookie,
+      "groups/list",
+      {},
+      team.id,
+    );
+    expect(memberGroups.map((group) => group.id)).toContain(crew.id);
+    const sidebar = await rpc<SpaceNavigation>(app, memberCookie, "spaces/list", {}, team.id);
+    const teamEntry = sidebar.spaces.find((space) => space.id === team.id);
+    expect(teamEntry?.bots.map((bot) => bot.id)).toEqual(expect.arrayContaining([ana.id, bia.id]));
+    expect(teamEntry?.groups.map((group) => group.id)).toContain(crew.id);
+    await expect(
+      raw(app, memberCookie, "threads/get", { botId: elsewhereBot.id }, team.id),
+    ).resolves.toMatchObject({ ok: false });
+    // A space id the caller does not belong to opens nothing of that space.
+    for (const [cookie, spaceId, hidden] of [
+      [memberCookie, privateSpace.id, [elsewhereBot.id]],
+      [memberCookie, outsiderSpaceId, [strangerBot.id]],
+      [outsiderCookie, team.id, [ana.id, bia.id]],
+    ] as const) {
+      const listed = await (await raw(app, cookie, "bots/list", {}, spaceId)).text();
+      for (const id of hidden) expect(listed).not.toContain(id);
+    }
+    await expect(
+      raw(app, memberCookie, "threads/get", { botId: strangerBot.id }, team.id),
+    ).resolves.toMatchObject({ ok: false });
+    await expect(
+      raw(app, outsiderCookie, "threads/get", { botId: ana.id }, team.id),
+    ).resolves.toMatchObject({ ok: false });
+
+    // Posting: the member's message is theirs, whoever created the agent's conversation.
+    await rpc(
+      app,
+      memberCookie,
+      "threads/send",
+      { botId: ana.id, text: "from the member needle" },
+      team.id,
+    );
+    await rpc(app, ownerCookie, "threads/send", { botId: ana.id, text: "from the owner" }, team.id);
+    const page = await rpc<{ messages: ThreadMessage[] }>(
+      app,
+      ownerCookie,
+      "threads/messages",
+      { botId: ana.id },
+      team.id,
+    );
+    const userMessages = page.messages.filter((message) => message.role === "user");
+    expect(
+      userMessages.map((message) => [message.authorUserId, message.authorName, message.blocks[0]]),
+    ).toEqual([
+      [member.userId, "Team Member", { kind: "text", text: "from the member needle" }],
+      [owner.userId, "Team Owner", { kind: "text", text: "from the owner" }],
+    ]);
+    // The member's message started the run, on an agent the owner created.
+    const run = await db.run.findFirstOrThrow({
+      where: { botId: ana.id, userId: member.userId },
+    });
+    expect(run.spaceId).toBe(team.id);
+    const found = await rpc<{ hits: Array<{ botId?: string }> }>(
+      app,
+      memberCookie,
+      "search/query",
+      { q: "needle" },
+      team.id,
+    );
+    expect(found.hits.some((hit) => hit.botId === ana.id)).toBe(true);
+    const outsiderFound = await rpc<{ hits: unknown[] }>(app, outsiderCookie, "search/query", {
+      q: "needle",
+    });
+    expect(outsiderFound.hits).toEqual([]);
+
+    // Unread is each member's own: reading it clears it for the reader only.
+    const unreadOf = async (cookie: string, botId: string) =>
+      (await rpc<SpaceNavigation>(app, cookie, "spaces/list", {}, team.id)).spaces
+        .find((space) => space.id === team.id)
+        ?.bots.find((bot) => bot.id === botId)?.unread;
+    const biaThread = await rpc<{ threadId: string }>(
+      app,
+      ownerCookie,
+      "threads/get",
+      { botId: bia.id },
+      team.id,
+    );
+    await runAsSystem("shared space test reply", () =>
+      createThreadMessage(handles.prisma, {
+        threadId: biaThread.threadId,
+        role: "bot",
+        botId: bia.id,
+        blocks: [{ kind: "text", text: "Done." }],
+      }),
+    );
+    expect(await unreadOf(ownerCookie, bia.id)).toBe(true);
+    expect(await unreadOf(memberCookie, bia.id)).toBe(true);
+    await rpc(app, memberCookie, "threads/markRead", { botId: bia.id }, team.id);
+    expect(await unreadOf(memberCookie, bia.id)).toBe(false);
+    expect(await unreadOf(ownerCookie, bia.id)).toBe(true);
+    await rpc(app, ownerCookie, "threads/markRead", { botId: bia.id }, team.id);
+    expect(await unreadOf(ownerCookie, bia.id)).toBe(false);
+
+    // What stays personal stays personal.
+    await rpc(app, ownerCookie, "approvalRules/set", {
+      effect: "always_allow",
+      matchKind: "tool",
+      matchValue: "destination.write",
+    });
+    expect(await rpc<unknown[]>(app, memberCookie, "approvalRules/list", {}, team.id)).toEqual([]);
+
+    // Changing the team's agents and channels is for their creator or someone who manages them.
+    await expect(
+      raw(app, memberCookie, "bots/archive", { botId: ana.id }, team.id),
+    ).resolves.toMatchObject({ status: 403 });
+    await expect(
+      raw(app, memberCookie, "groups/archive", { groupId: crew.id }, team.id),
+    ).resolves.toMatchObject({ status: 403 });
+    const memberBot = await rpc<Bot>(app, memberCookie, "bots/create", botInput("Cai"), team.id);
+    expect(
+      (await rpc<Bot[]>(app, ownerCookie, "bots/list", {}, team.id)).map((bot) => bot.id),
+    ).toContain(memberBot.id);
+    await expect(
+      raw(app, memberCookie, "bots/archive", { botId: memberBot.id }, team.id),
+    ).resolves.toMatchObject({ ok: true });
   });
 
   it("keeps approval rules private to each user in a shared Space", async () => {

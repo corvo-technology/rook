@@ -48,6 +48,7 @@ function tx(options?: {
       updateMany: vi.fn(async () => ({ count: 1 })),
       create: vi.fn(async () => ({ id: "task-next" })),
     },
+    $executeRaw: vi.fn(),
     thread: { update: vi.fn(async () => ({ nextMessageSeq: 2, nextEventSeq: 9 })) },
     message: {
       findFirst: vi.fn(async () => null),

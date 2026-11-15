@@ -1,4 +1,9 @@
-import type { MessageBlock, ThreadMessage, ThreadMessagePage } from "@corvo/contracts";
+import type {
+  MessageBlock,
+  ProductEvent,
+  ThreadMessage,
+  ThreadMessagePage,
+} from "@corvo/contracts";
 import { MessageBlock as MessageBlockSchema } from "@corvo/contracts";
 import {
   BACKGROUND_RUN_TRIGGERS,
@@ -59,7 +64,7 @@ export async function loadMessagePage(
       const messages = includePeerRuns ? rows : await withoutPeerRunMessages(prisma, rows);
       return {
         threadId,
-        messages: messages.map(toThreadMessage),
+        messages: await withAuthors(prisma, messages),
         olderCursor: hasOlder ? (first?.seq ?? null) : null,
         coveredThroughSeq,
       };
@@ -88,7 +93,7 @@ export async function loadMessagePage(
     if (hasSubstantive || includePeerReceipts || !hasOlder || includePeerRuns) {
       return {
         threadId,
-        messages: visibleRows.map(toThreadMessage),
+        messages: await withAuthors(prisma, visibleRows),
         olderCursor: hasOlder ? (pageRows[0]?.seq ?? null) : null,
       };
     }
@@ -248,26 +253,50 @@ export function shouldForwardBackgroundThreadEvent(event: {
   return Array.isArray(blocks) && blocks.some(isBackgroundInputBlock);
 }
 
-function toThreadMessage(row: {
-  id: string;
-  threadId: string;
-  seq: number;
-  role: string;
-  blocks: Prisma.JsonValue;
-  botId: string | null;
-  replyToMessageId: string | null;
-  replyQuote: string | null;
-  threadRootId?: string | null;
-  replyTo?: {
+/** Who wrote each user message that names an author; older rows name nobody and show as before. */
+async function withAuthors(
+  prisma: MessageDb,
+  rows: Array<Parameters<typeof toThreadMessage>[0]>,
+): Promise<ThreadMessage[]> {
+  const authorIds = [
+    ...new Set(rows.flatMap((row) => (row.authorUserId ? [row.authorUserId] : []))),
+  ];
+  const users = authorIds.length
+    ? await prisma.user.findMany({
+        where: { id: { in: authorIds } },
+        select: { id: true, name: true, image: true },
+      })
+    : [];
+  const byId = new Map(users.map((user) => [user.id, user]));
+  return rows.map((row) =>
+    toThreadMessage(row, row.authorUserId ? byId.get(row.authorUserId) : undefined),
+  );
+}
+
+function toThreadMessage(
+  row: {
+    id: string;
     threadId: string;
+    seq: number;
     role: string;
-    botId: string | null;
     blocks: Prisma.JsonValue;
-  } | null;
-  runId: string | null;
-  clientNonce?: string | null;
-  createdAt: Date;
-}): ThreadMessage {
+    botId: string | null;
+    replyToMessageId: string | null;
+    replyQuote: string | null;
+    threadRootId?: string | null;
+    replyTo?: {
+      threadId: string;
+      role: string;
+      botId: string | null;
+      blocks: Prisma.JsonValue;
+    } | null;
+    runId: string | null;
+    clientNonce?: string | null;
+    authorUserId?: string | null;
+    createdAt: Date;
+  },
+  author?: { id: string; name: string; image: string | null },
+): ThreadMessage {
   const parent = row.replyTo?.threadId === row.threadId ? row.replyTo : null;
   const parsed = parent ? MessageBlockSchema.array().safeParse(parent.blocks) : undefined;
   const replyPreview =
@@ -293,6 +322,34 @@ function toThreadMessage(row: {
     threadRootId: row.threadRootId ?? undefined,
     runId: row.runId ?? undefined,
     callId: callIdFromClientNonce(row.clientNonce),
+    ...(author
+      ? { authorUserId: author.id, authorName: author.name, authorImage: author.image }
+      : {}),
     createdAt: row.createdAt.toISOString(),
   };
+}
+
+/**
+ * A live user message names its author by id only; the stream adds their name and picture, so a
+ * teammate's message arrives with the same label a page load would give it.
+ */
+export async function withAuthor(
+  prisma: MessageDb,
+  event: ProductEvent,
+  cache: Map<string, Promise<{ name: string; image: string | null } | null>>,
+): Promise<ProductEvent> {
+  const authorUserId = event.payload.authorUserId;
+  if (event.type !== "thread.message.created" || typeof authorUserId !== "string") return event;
+  let author = cache.get(authorUserId);
+  if (!author) {
+    author = prisma.user.findUnique({
+      where: { id: authorUserId },
+      select: { name: true, image: true },
+    });
+    cache.set(authorUserId, author);
+  }
+  const found = await author;
+  return found
+    ? { ...event, payload: { ...event.payload, authorName: found.name, authorImage: found.image } }
+    : event;
 }

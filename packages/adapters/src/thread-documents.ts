@@ -60,7 +60,7 @@ export async function findAttachedDocument(
   const artifactId = byName?.artifactId ?? ATTACHMENT_PATH.exec(wanted)?.[1];
   const artifact = artifactId
     ? await prisma.artifact.findFirst({
-        where: { id: artifactId, spaceId: context.spaceId, userId: context.userId },
+        where: { id: artifactId, spaceId: context.spaceId },
       })
     : null;
   if (!artifact) {

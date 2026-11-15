@@ -21,6 +21,7 @@ function harness(
   const messageCreate = vi.fn(async (_args: unknown) => ({ id: "message-1" }));
   const tx = {
     $queryRaw: vi.fn(async (..._args: unknown[]) => [{ id: "group-1" }]),
+    $executeRaw: vi.fn(),
     chatGroup: {
       findFirst: vi.fn(async () => ({
         id: "group-1",
@@ -477,7 +478,7 @@ describe("explicit group destinations", () => {
       ),
     ).resolves.toMatchObject({ error: "group is no longer available" });
     expect(h.messageCreate).not.toHaveBeenCalled();
-    expect(h.tx.$queryRaw.mock.calls[0]?.slice(1)).toEqual(["group-1", run.spaceId, run.userId]);
+    expect(h.tx.$queryRaw.mock.calls[0]?.slice(1)).toEqual(["group-1", run.spaceId]);
   });
 
   it("requires both bots to be active members of the destination", async () => {
@@ -537,7 +538,6 @@ describe("directory for a squad-routing bot", () => {
       expect.objectContaining({
         where: {
           spaceId: run.spaceId,
-          userId: run.userId,
           archivedAt: null,
           members: { some: { bot: { archivedAt: null } } },
           thread: { isNot: null },
@@ -566,7 +566,7 @@ describe("directory for a squad-routing bot", () => {
   });
 });
 
-it("discovers only active groups the bot belongs to under the same owner and space", async () => {
+it("discovers only active groups the bot belongs to in the same space", async () => {
   const findMany = vi.fn(async () => []);
   await expect(
     loadBotGroupDirectory({ chatGroup: { findMany } } as unknown as PrismaClient, run),
@@ -575,7 +575,6 @@ it("discovers only active groups the bot belongs to under the same owner and spa
     expect.objectContaining({
       where: {
         spaceId: run.spaceId,
-        userId: run.userId,
         archivedAt: null,
         members: { some: { botId: run.botId, bot: { archivedAt: null } } },
         thread: { isNot: null },
@@ -731,7 +730,7 @@ describe("squad routing authority", () => {
     expect(h.runCreate).not.toHaveBeenCalled();
   });
 
-  it("looks the group up under the run's own owner and space and ignores archived ones", async () => {
+  it("looks the group up in the run's own space, whoever created it, and ignores archived ones", async () => {
     const gone = outsideTurn({ archived: true });
     await expect(
       handoffToGroupBot(
@@ -751,13 +750,12 @@ describe("squad routing authority", () => {
       { bot_id: "bot-b", message: "Go" },
       routing,
     );
-    expect(h.tx.$queryRaw.mock.calls[0]?.slice(1)).toEqual(["group-1", run.spaceId, run.userId]);
+    expect(h.tx.$queryRaw.mock.calls[0]?.slice(1)).toEqual(["group-1", run.spaceId]);
     expect(h.tx.chatGroup.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
           id: "group-1",
           spaceId: run.spaceId,
-          userId: run.userId,
           archivedAt: null,
         }),
         include: expect.objectContaining({

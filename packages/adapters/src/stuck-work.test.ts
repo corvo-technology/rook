@@ -565,6 +565,7 @@ function noticePrisma(run: ReturnType<typeof candidate>, stamps: NoticeStamp[]) 
         return { count: before - stamps.length };
       }),
     },
+    $executeRaw: vi.fn(),
     thread: { update: vi.fn(async () => ({ nextEventSeq: stamps.length + 1 })) },
     $queryRaw: vi.fn(async () => []),
     $transaction: vi.fn(async (fn: (tx: unknown) => Promise<unknown>) => fn(prisma)),
@@ -596,6 +597,7 @@ function expireClient(run: ReturnType<typeof candidate>, options?: { cancelled?:
       updateMany: vi.fn(async () => ({ count: 1 })),
       create: vi.fn(async () => ({ id: "task-next" })),
     },
+    $executeRaw: vi.fn(),
     thread: { update: vi.fn(async () => ({ nextMessageSeq: 2, nextEventSeq: 9 })) },
     message: {
       create: vi.fn(async () => ({ id: "message-expired", seq: 1 })),

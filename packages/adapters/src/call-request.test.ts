@@ -27,6 +27,7 @@ function prismaWith(options: {
   ];
   const tx = {
     $queryRaw: vi.fn(async () => []),
+    $executeRaw: vi.fn(),
     thread: { update: vi.fn(async () => ({ nextEventSeq: 1 })) },
     event: { create: vi.fn(async () => ({ seq: 0 })) },
     userVoiceCredential: {
@@ -217,6 +218,7 @@ describe("requestUserCall security", () => {
       null;
     const tx = {
       $queryRaw: vi.fn(async () => []),
+      $executeRaw: vi.fn(),
       thread: {
         findFirst: vi.fn(async (): Promise<{ id: string } | null> => ({ id: run.threadId })),
 

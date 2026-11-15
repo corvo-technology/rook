@@ -1,5 +1,6 @@
 import type { MessageBlock } from "@corvo/contracts";
 import type { Prisma, PrismaClient } from "./client.js";
+import { markUnreadForOtherMembers } from "./thread-reads.js";
 import { withTransactionRetry } from "./transaction-retry.js";
 
 /** Group turns use channel inputs and their own outputs, never private thread history. */
@@ -64,6 +65,8 @@ export interface CreateThreadMessageInput {
   threadRootId?: string;
   runId?: string;
   clientNonce?: string;
+  /** The member who wrote a user message; null or absent for agent, system and older messages. */
+  authorUserId?: string;
   markUnread?: boolean;
   /** How the channel router handled a message that named nobody. */
   routing?: Prisma.InputJsonValue;
@@ -83,14 +86,22 @@ export async function createThreadMessageInTransaction(
   tx: Prisma.TransactionClient,
   input: CreateThreadMessageInput,
 ) {
+  const markUnread = input.markUnread ?? input.role === "bot";
   const thread = await tx.thread.update({
     where: { id: input.threadId },
     data: {
       nextMessageSeq: { increment: 1 },
-      unread: (input.markUnread ?? input.role === "bot") ? true : undefined,
+      unread: markUnread ? true : undefined,
     },
     select: { nextMessageSeq: true },
   });
+  if (markUnread) {
+    await markUnreadForOtherMembers(tx, {
+      threadId: input.threadId,
+      seq: thread.nextMessageSeq - 1,
+      exceptUserId: input.authorUserId,
+    });
+  }
   await assertRunCanWriteHistory(tx, input.runId, { allowCancelled: input.allowCancelledRun });
   const threadRootId = input.threadRootId ?? (await runThreadRootId(tx, input.runId));
   return tx.message.create({
@@ -105,6 +116,7 @@ export async function createThreadMessageInTransaction(
       threadRootId,
       runId: input.runId,
       clientNonce: input.clientNonce,
+      authorUserId: input.authorUserId,
       routing: input.routing,
     },
   });

@@ -270,10 +270,10 @@ describePostgres("wiki changes (PostgreSQL)", () => {
       });
     }));
 
-  it("keeps a conversation's own switch, only for its owner in its Space", () =>
+  it("keeps a conversation's own switch for any member of its Space, and for no other Space", () =>
     system(async () => {
       const t = await thread();
-      const owner = { threadId: t.id, spaceId: fx.spaceId, userId: fx.userId };
+      const owner = { threadId: t.id, spaceId: fx.spaceId };
       expect(await setThreadWikiCapture(fx.prisma, owner, true)).toBe(true);
       expect((await fx.prisma.thread.findUniqueOrThrow({ where: { id: t.id } })).wikiCapture).toBe(
         true,
@@ -282,9 +282,6 @@ describePostgres("wiki changes (PostgreSQL)", () => {
       expect(
         (await fx.prisma.thread.findUniqueOrThrow({ where: { id: t.id } })).wikiCapture,
       ).toBeNull();
-      expect(
-        await setThreadWikiCapture(fx.prisma, { ...owner, userId: fx.otherUserId }, false),
-      ).toBe(false);
       expect(
         await setThreadWikiCapture(fx.prisma, { ...owner, spaceId: fx.otherSpaceId }, false),
       ).toBe(false);

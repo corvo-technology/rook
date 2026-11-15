@@ -261,7 +261,7 @@ export function wikiRoutes(ctx: RouterContext) {
             available,
             capture: thread.wikiCapture,
             on: available && (await threadIsCurated(db, thread)),
-            canChange: thread.userId === context.actor.userId,
+            canChange: true,
           };
         }),
         set: authed.wiki.capture.set.handler(async ({ context, input }) => {
@@ -271,7 +271,6 @@ export function wikiRoutes(ctx: RouterContext) {
             {
               threadId: target.threadId,
               spaceId: context.actor.spaceId,
-              userId: context.actor.userId,
             },
             input.capture,
           );

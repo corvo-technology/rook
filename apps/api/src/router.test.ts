@@ -59,6 +59,7 @@ describe("account preferences", () => {
       },
     );
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       user: {
         update,
         updateMany,
@@ -422,6 +423,7 @@ describe("billing", () => {
     coachTour: { done: string[]; skipped: boolean } | null = null,
   ) {
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       $executeRaw,
       missionState: { findUnique: vi.fn(async () => null) },
       partnerTenant: {
@@ -619,6 +621,7 @@ describe("model setup gate", () => {
     deploymentModelCredentialCipher?: string;
   }) {
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       partnerTenant: { findFirst: vi.fn().mockResolvedValue(null) },
       missionState: { findUnique: vi.fn(async () => null) },
       user: {
@@ -812,6 +815,7 @@ describe("thread answer delivery", () => {
     const sink = createTestSink();
     installLogger(createLogger({ service: "corvo-api", sinks: [sink] }));
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       bot: {
         findFirst: vi.fn().mockResolvedValue({
           id: "bot-1",
@@ -882,6 +886,7 @@ describe("oversized one-time answer", () => {
     const answerRunInput = vi.fn().mockRejectedValue(new AnswerTooLongError());
     const enqueue = vi.fn();
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       bot: {
         findFirst: vi.fn().mockResolvedValue({
           id: "bot-1",
@@ -934,6 +939,7 @@ describe("secret request dismissal", () => {
     const answerRunInput = vi.fn().mockResolvedValue(answered);
     const enqueue = vi.fn().mockResolvedValue(undefined);
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       bot: {
         findFirst: vi.fn().mockResolvedValue({
           id: "bot-1",
@@ -1077,6 +1083,7 @@ describe("thread stream authorization", () => {
       }
     };
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       bot: {
         findFirst: vi.fn().mockResolvedValue({
           id: "bot-1",
@@ -1175,6 +1182,7 @@ describe("MCP server deletion", () => {
     const deleteServer = vi.fn().mockResolvedValue({ id: "server-1" });
     const deleteSecrets = vi.fn().mockResolvedValue({ count: 0 });
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       mcpServer: {
         findFirst: vi.fn().mockResolvedValue({ id: "server-1", secretId: "old-secret" }),
         delete: deleteServer,
@@ -1257,6 +1265,7 @@ describe("MCP prepared credential updates", () => {
       ],
     ]);
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       mcpServer: {
         findFirst: async () => ({ ...server }),
         update: async ({
@@ -1385,6 +1394,7 @@ describe("MCP pre-registered OAuth client", () => {
       };
     }
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       mcpServer: {
         findFirst: vi.fn(async () => (server ? { ...server } : null)),
         update: vi.fn(async ({ data }: { data: Record<string, unknown> }) => {
@@ -1865,6 +1875,7 @@ describe("MCP loopback endpoints", () => {
       updatedAt: new Date(0),
     }));
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       mcpServer: {
         create,
         findFirst: vi
@@ -2028,6 +2039,7 @@ describe("MCP server health", () => {
       Boolean(server) &&
       Object.entries(where).every(([key, value]) => (server as Row)[key] === value);
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       mcpServer: {
         findFirst: vi.fn(async ({ where }: { where: Row }) =>
           matches(where) ? { ...server } : null,
@@ -2397,6 +2409,7 @@ describe("private API connectors", () => {
       createdAt: new Date(0),
     }));
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       capabilityInstall: { create },
       $transaction: vi.fn(async (run: (tx: unknown) => Promise<unknown>) => run(prisma)),
     } as unknown as PrismaClient;
@@ -2482,6 +2495,8 @@ describe("connections.begin", () => {
     const updateMany = vi.fn().mockResolvedValue({ count: 1 });
     const create = vi.fn();
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
+      chatGroup: { findFirst: vi.fn(async () => ({ userId: "user-1" })) },
       $transaction: vi.fn(async (fn: (tx: unknown) => Promise<unknown>) => {
         const tx = {
           $executeRaw: vi.fn().mockResolvedValue(undefined),
@@ -2584,6 +2599,7 @@ describe("connections.begin", () => {
       },
     };
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       connection: { updateMany: rootUpdateMany },
       $transaction: vi.fn(async (fn: (tx: unknown) => Promise<unknown>) => fn(tx)),
     } as unknown as PrismaClient;
@@ -2693,6 +2709,7 @@ describe("connections.complete", () => {
         $queryRaw: vi.fn(async () => [{ locked: true }]),
       };
       const prisma = {
+        spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
         ...client,
         $transaction: vi.fn(async (fn: (tx: typeof client) => Promise<unknown>) => {
           const started = elapsed;
@@ -2779,6 +2796,7 @@ describe("connections.complete", () => {
       createdAt: new Date("2026-08-26T00:00:00.000Z"),
     });
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       connection: {
         findFirst: vi.fn().mockResolvedValue({
           id: "conn-1",
@@ -2882,6 +2900,7 @@ describe("connections.complete", () => {
         connection: { findFirst: vi.fn().mockResolvedValue(row) },
       };
       const prisma = {
+        spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
         connection: { findFirst: vi.fn().mockResolvedValue(row) },
         $transaction: vi.fn(async (fn: (tx: unknown) => Promise<unknown>) => fn(tx)),
       } as unknown as PrismaClient;
@@ -2979,6 +2998,7 @@ describe("connections.complete", () => {
       $queryRaw: vi.fn(async () => [{ locked: true }]),
     };
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       ...client,
       $transaction: vi.fn(async (fn: (tx: typeof client) => Promise<unknown>) => fn(client)),
     } as unknown as PrismaClient;
@@ -3099,6 +3119,7 @@ describe("connections.complete", () => {
       }),
     };
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       connection,
       $transaction: vi.fn(async (fn: (tx: unknown) => Promise<unknown>) => fn({ connection })),
     } as unknown as PrismaClient;
@@ -3164,6 +3185,7 @@ describe("connections.complete", () => {
 describe("updater owner gate", () => {
   function updaterDeps() {
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       partnerTenant: { findFirst: vi.fn().mockResolvedValue(null) },
       missionState: { findUnique: vi.fn(async () => null) },
       user: {
@@ -3283,6 +3305,7 @@ describe("computer screen url", () => {
   ) => {
     const endRun = vi.fn().mockResolvedValue({ count: 1 });
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       bot: {
         findFirst: vi.fn().mockResolvedValue({
           id: "bot-1",
@@ -3423,6 +3446,7 @@ describe("computer terminal and file transfer", () => {
       writeFile: vi.fn().mockResolvedValue(undefined),
     };
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       bot: {
         findFirst: vi.fn().mockResolvedValue({
           id: "bot-1",
@@ -3838,6 +3862,7 @@ describe("OpenAI-compatible model probes", () => {
     );
     const deps = {
       prisma: {
+        spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
         userModelPreference: { findFirst: vi.fn().mockResolvedValue(null) },
         userModelCredential: { findFirst: findCredential, findMany: findCredentials },
         secret: { findMany: findSecret },
@@ -4137,6 +4162,7 @@ describe("model credential persistence", () => {
     };
     const deps = {
       prisma: {
+        spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
         userModelCredential,
         userModelPreference,
         deploymentSettings: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -4968,6 +4994,7 @@ describe("bot intro run", () => {
     const userModelPreference = { findFirst: vi.fn().mockResolvedValue(preference) };
     const deps = {
       prisma: {
+        spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
         $transaction: vi.fn(async (fn: (client: typeof tx) => unknown) => fn(tx)),
         userModelPreference,
         deploymentSettings: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -5109,6 +5136,7 @@ describe("codex catalog auth", () => {
   function catalogDeps() {
     const load = vi.fn((ciphertext: string) => (ciphertext === "cipher-oauth" ? oauth : apiKey));
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       userModelCredential: {
         findMany: vi.fn().mockResolvedValue([
           { provider: "openai-codex", secretId: "secret-api" },
@@ -5363,6 +5391,7 @@ describe("codex live catalog", () => {
     };
     const credentialB = { ...credentialA, id: "cred-b", secretId: "secret-b" };
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       userModelCredential: { findMany: vi.fn().mockResolvedValue([credentialA, credentialB]) },
       userModelPreference: {
         findMany: vi.fn().mockResolvedValue([
@@ -5430,6 +5459,7 @@ describe("codex live catalog", () => {
       accountId: "acct-live-test",
     });
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       userModelCredential: {
         findMany: vi
           .fn()
@@ -5627,6 +5657,7 @@ describe("codex live catalog", () => {
         }
       });
       const prisma = {
+        spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
         $transaction: transaction,
         userModelCredential: tx.userModelCredential,
         userModelPreference: { findMany: tx.userModelPreference.findMany },
@@ -5769,6 +5800,7 @@ describe("model set default auth", () => {
     const handler = new RPCHandler(
       createRouter({
         prisma: {
+          spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
           ...tx,
           $transaction: vi.fn(async (fn: (client: typeof tx) => unknown) => fn(tx)),
         },
@@ -5840,6 +5872,7 @@ describe("model set default auth", () => {
       },
     };
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       ...tx,
       $transaction: vi.fn(async (fn: (client: typeof tx) => unknown) => fn(tx)),
     };
@@ -5941,6 +5974,7 @@ describe("model set default auth", () => {
     const handler = new RPCHandler(
       createRouter({
         prisma: {
+          spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
           ...tx,
           $transaction: vi.fn(async (fn: (client: typeof tx) => unknown) => fn(tx)),
         },
@@ -6034,6 +6068,7 @@ describe("model set default auth", () => {
     const handler = new RPCHandler(
       createRouter({
         prisma: {
+          spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
           ...tx,
           $transaction: vi.fn(async (fn: (client: typeof tx) => unknown) => fn(tx)),
         },
@@ -6126,7 +6161,7 @@ describe("bot model auth on save", () => {
       teamChatRules: "",
       webhookSecretId: null,
       spawnKey: null,
-      thread: { id: "thread-1", unread: false, messages: [], runs: [] },
+      thread: { id: "thread-1", userId: "user-1", unread: false, messages: [], runs: [] },
       computer: null,
       runs: [],
     };
@@ -6171,10 +6206,12 @@ describe("bot model auth on save", () => {
     const tx = {
       $queryRaw: vi.fn(async () => []),
       bot: { update: botUpdate },
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn(async () => ({ nextEventSeq: 2 })) },
       event: { create: vi.fn(async () => ({ seq: 1 })) },
     };
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       $queryRaw: vi.fn(async () => []),
       bot: {
         findFirst: vi.fn(async () => bot),
@@ -6323,6 +6360,7 @@ describe("bot restore computer quota", () => {
     };
     const $queryRaw = vi.fn(async () => [{ lock: "1" }]);
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       bot: botApi,
       computer,
       $queryRaw,
@@ -6396,6 +6434,8 @@ describe("group restore with archived bots", () => {
       $queryRaw: vi.fn(async () => [{ id: "group-1", lock: "1" }]),
     };
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
+      chatGroup: { findFirst: vi.fn(async () => ({ userId: "user-1" })) },
       $transaction: vi.fn(async (callback: (client: unknown) => Promise<unknown>) => callback(tx)),
     };
     const handler = new RPCHandler(
@@ -6498,6 +6538,7 @@ describe("routine live Codex model validation", () => {
       const client = createRouterClient(
         createRouter({
           prisma: {
+            spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
             bot: { findFirst: vi.fn(async () => ({ id: "bot-1", computer: null })) },
             routine: { findFirst: vi.fn(async () => row), create: save, update: save },
             userModelPreference: { findMany: vi.fn(async () => []) },
@@ -6599,6 +6640,7 @@ describe("routines.list", () => {
     const client = createRouterClient(
       createRouter({
         prisma: {
+          spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
           bot: { findFirst: vi.fn(async () => ({ id: "bot-1", thread: null, computer: null })) },
           routine: {
             findMany: vi.fn(async () => [row("mine", "user-1"), row("theirs", "user-2")]),
@@ -6666,6 +6708,7 @@ describe("routines.update", () => {
     );
     const enqueue = vi.fn(async () => undefined);
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       secret: { findFirst: vi.fn(async () => null) },
       userModelPreference: {
         findMany: vi.fn(async () => []),
@@ -6973,7 +7016,7 @@ describe("openai-compatible enabled models", () => {
       teamChatRules: "",
       webhookSecretId: null,
       spawnKey: null,
-      thread: { id: "thread-1", unread: false, messages: [], runs: [] },
+      thread: { id: "thread-1", userId: "user-1", unread: false, messages: [], runs: [] },
       computer: null,
       runs: [],
     };
@@ -7054,6 +7097,7 @@ describe("openai-compatible enabled models", () => {
     const pins = pinStores(options);
     const bot = botRow(options.botModelId ?? options.defaultModel);
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       ...pins,
       $queryRaw: vi.fn(async () => []),
       bot: {
@@ -7733,6 +7777,7 @@ describe("threads.answerCall and threads.declineCall", () => {
         }),
         updateMany: vi.fn().mockResolvedValue({ count: updated }),
       },
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn(async () => ({ nextEventSeq: 2 })) },
       event: {
         create: vi.fn(
@@ -7750,6 +7795,7 @@ describe("threads.answerCall and threads.declineCall", () => {
       },
     };
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       ...tx,
       $transaction: vi.fn(async (fn: (client: typeof tx) => unknown) => fn(tx)),
     } as unknown as PrismaClient;
@@ -7828,7 +7874,7 @@ describe("threads.answerCall and threads.declineCall", () => {
     expect((await call("answerCall", {})).response.status).not.toBe(200);
     expect(prisma.bot.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ id: "bot-1", userId: "user-1", spaceId: "space-1" }),
+        where: expect.objectContaining({ id: "bot-1", spaceId: "space-1" }),
       }),
     );
     expect(prisma.message.updateMany).not.toHaveBeenCalled();
@@ -7841,6 +7887,7 @@ describe("threads.endCall", () => {
     const events: { type: string; payload: Record<string, unknown> }[] = [];
     const tx = {
       $queryRaw: vi.fn(async () => []),
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextMessageSeq: 3, nextEventSeq: 5 }) },
       message: {
         findUnique: vi.fn().mockResolvedValue(null),
@@ -7865,6 +7912,7 @@ describe("threads.endCall", () => {
       }),
     } as never;
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       bot: {
         findFirst: vi
           .fn()
@@ -8035,6 +8083,8 @@ describe("groups.archive", () => {
       event: { deleteMany: vi.fn() },
     };
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
+      chatGroup: { findFirst: vi.fn(async () => ({ userId: "user-1" })) },
       $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
       computerExecutionLease: {
         updateMany: vi.fn(async () => {
@@ -8145,6 +8195,7 @@ describe("boards.rename", () => {
       updatedAt: new Date("2026-06-02T00:00:00.000Z"),
     }));
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       board: {
         findUnique: vi.fn(async () => boardRow(ticketPrefix)),
         update,
@@ -8209,6 +8260,7 @@ describe("boards.tickets.list", () => {
   function listDeps() {
     const findMany = vi.fn(async () => []);
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       board: {
         findUnique: vi.fn(async () => ({
           id: "board-1",
@@ -8270,6 +8322,7 @@ describe("export.bot", () => {
 
   async function exportFiles(scope: "team" | "dedicated", home: LocalAgentHomeStore) {
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       bot: {
         findFirst: vi.fn().mockResolvedValue({
           id: "bot-1",
@@ -8467,7 +8520,6 @@ describe("memory documents", () => {
       where: {
         id: "doc-1",
         spaceId: "space-1",
-        userId: "user-1",
         // The space's wiki is memory documents too; this procedure never reaches them.
         scope: { in: ["bot", "user"] },
       },
@@ -8534,6 +8586,7 @@ describe("routine watch creation boundaries", () => {
     const client = createRouterClient(
       createRouter({
         prisma: {
+          spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
           bot: { findFirst: findBot },
           routine: { findFirst: findRoutine, create, update },
         },
@@ -8594,7 +8647,7 @@ describe("routine watch creation boundaries", () => {
     ).rejects.toBeDefined();
     expect(findBot).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ spaceId: actor.spaceId, userId: actor.userId }),
+        where: expect.objectContaining({ spaceId: actor.spaceId }),
       }),
     );
     findRoutine.mockResolvedValueOnce(null as never);
@@ -8603,7 +8656,7 @@ describe("routine watch creation boundaries", () => {
     });
     expect(findRoutine).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ spaceId: actor.spaceId, userId: actor.userId }),
+        where: expect.objectContaining({ spaceId: actor.spaceId }),
       }),
     );
     expect(create).not.toHaveBeenCalled();
@@ -8631,6 +8684,7 @@ describe("API-key live model catalog", () => {
         updatedAt: new Date(0),
       };
       const prisma = {
+        spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
         userModelCredential: { findMany: vi.fn(async () => [credential]) },
         userModelPreference: { findMany: vi.fn(async () => []) },
         secret: {
@@ -8733,6 +8787,7 @@ describe("routine workflow steps", () => {
     const client = createRouterClient(
       createRouter({
         prisma: {
+          spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
           bot: { findFirst: findBot },
           routine: {
             findFirst: vi.fn(async () => (owned ? { id: "routine-1" } : null)),
@@ -8865,6 +8920,7 @@ describe("usage.budgets", () => {
     const findMany = vi.fn().mockResolvedValue([{ id: "bot-1", monthlyTokenLimit: 2_000_000n }]);
     const queryRaw = vi.fn().mockResolvedValue([{ tokens: 1_200_000n }]);
     const prisma = {
+      spaceMember: { findUnique: vi.fn(async () => ({ role: "owner" })) },
       bot: { findMany },
       $queryRaw: queryRaw,
     } as unknown as PrismaClient;

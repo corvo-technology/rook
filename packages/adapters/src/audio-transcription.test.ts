@@ -231,11 +231,11 @@ describe("transcribeAudioArtifact", () => {
     expect(mp3.ensure).not.toHaveBeenCalled();
   });
 
-  it("looks the artifact up only within the actor's own space and user", async () => {
+  it("looks the artifact up only within the actor's own space", async () => {
     const { deps } = setup();
     await run(deps);
     expect(deps.prisma.artifact.findFirst).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: "art-1", spaceId: "space-1", userId: "user-1" } }),
+      expect.objectContaining({ where: { id: "art-1", spaceId: "space-1" } }),
     );
   });
 

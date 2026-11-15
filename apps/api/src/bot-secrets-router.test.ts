@@ -28,7 +28,7 @@ function pick(row: Row, select?: Record<string, boolean>) {
   return Object.fromEntries(Object.keys(select).map((key) => [key, row[key]]));
 }
 
-function botSecretDeps(seed: Row[] = []) {
+function botSecretDeps(seed: Row[] = [], role = "owner") {
   const now = new Date("2026-09-01T00:00:00.000Z");
   const bots: Row[] = [
     { id: "bot-1", userId: "user-1", spaceId: "space-1", archivedAt: null },
@@ -67,6 +67,7 @@ function botSecretDeps(seed: Row[] = []) {
     }),
   };
   const prisma = {
+    spaceMember: { findUnique: vi.fn(async () => ({ role })) },
     bot: {
       findFirst: vi.fn(async (args: { where: Row }) => {
         const bot = bots.find((entry) => matches(entry, args.where));
@@ -154,12 +155,11 @@ describe("botSecrets router", () => {
     expect(prisma.botSecret.create).toHaveBeenCalledOnce();
   });
 
-  it("rejects another user's bot and a missing bot before any secret access", async () => {
+  it("rejects a missing bot, and a member changing another member's agent, before any secret access", async () => {
     vi.stubEnv("CORVO_SECRETS_ALLOW_PRIVATE_HTTP", "1");
-    const { prisma, secrets, call } = botSecretDeps();
+    const { prisma, secrets, call } = botSecretDeps([], "member");
     for (const botId of ["bot-other", "missing-bot"]) {
       const results = [
-        await call("list", { botId }),
         await call("put", putInput("https://api.example.com", botId)),
         await call("remove", { botId, name: "router" }),
       ];
@@ -168,9 +168,13 @@ describe("botSecrets router", () => {
         expect(result.text).not.toContain(FAKE_VALUE);
       }
     }
+    // The list shows names and sites only, so a missing bot is the only refusal.
+    expect((await call("list", { botId: "missing-bot" })).status).toBeGreaterThanOrEqual(400);
+    expect((await call("list", { botId: "bot-other" })).status).toBe(200);
+    prisma.botSecret.findMany.mockClear();
     expect(prisma.bot.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ userId: "user-1", spaceId: "space-1", archivedAt: null }),
+        where: expect.objectContaining({ spaceId: "space-1", archivedAt: null }),
       }),
     );
     expect(secrets.put).not.toHaveBeenCalled();
@@ -400,16 +404,16 @@ describe("botSecrets router", () => {
     ]);
   });
 
-  it("removes a non-regex stored name for the owned bot and rejects another user's bot", async () => {
+  it("removes a non-regex stored name for the owned bot and refuses a member for another member's bot", async () => {
     const owned = botSecretDeps();
     const removed = await owned.call("remove", { botId: "bot-1", name: "Legacy Name" });
     expect(removed.status).toBe(200);
     expect(removed.body.json).toEqual({ ok: true });
     expect(owned.prisma.botSecret.deleteMany).toHaveBeenCalledWith({
-      where: { userId: "user-1", spaceId: "space-1", botId: "bot-1", name: "Legacy Name" },
+      where: { spaceId: "space-1", botId: "bot-1", name: "Legacy Name" },
     });
 
-    const foreign = botSecretDeps();
+    const foreign = botSecretDeps([], "member");
     const denied = await foreign.call("remove", { botId: "bot-other", name: "Legacy Name" });
     expect(denied.status).toBeGreaterThanOrEqual(400);
     expect(foreign.prisma.botSecret.deleteMany).not.toHaveBeenCalled();
@@ -421,7 +425,7 @@ describe("botSecrets router", () => {
     expect(result.status).toBe(200);
     expect(result.body.json).toEqual({ ok: true });
     expect(prisma.botSecret.deleteMany).toHaveBeenCalledWith({
-      where: { userId: "user-1", spaceId: "space-1", botId: "bot-1", name: "router" },
+      where: { spaceId: "space-1", botId: "bot-1", name: "router" },
     });
   });
   it("stores a command variable with no origin and lists it with its type", async () => {

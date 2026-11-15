@@ -52,7 +52,7 @@ export interface TaughtSkillsDeps {
 }
 
 function ownedSkillWhere(actor: Actor, skillId: string) {
-  return { id: skillId, spaceId: actor.spaceId, userId: actor.userId };
+  return { id: skillId, spaceId: actor.spaceId };
 }
 
 async function getOwnedSkill(
@@ -301,7 +301,7 @@ export function createTaughtSkillsService(deps: TaughtSkillsDeps) {
   return {
     async list(actor: Actor, botId: string): Promise<TaughtSkill[]> {
       const rows = await deps.prisma.taughtSkill.findMany({
-        where: { spaceId: actor.spaceId, botId, userId: actor.userId },
+        where: { spaceId: actor.spaceId, botId },
         orderBy: { updatedAt: "desc" },
       });
       return rows.map(mapTaughtSkill);
@@ -316,7 +316,7 @@ export function createTaughtSkillsService(deps: TaughtSkillsDeps) {
 
     async start(actor: Actor, botId: string, goal: string): Promise<TaughtSkill> {
       let bot = await deps.prisma.bot.findFirst({
-        where: { id: botId, spaceId: actor.spaceId, userId: actor.userId },
+        where: { id: botId, spaceId: actor.spaceId },
         include: { thread: true, computer: true },
       });
       if (!bot) throw new IsolationError();

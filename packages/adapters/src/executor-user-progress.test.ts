@@ -142,6 +142,7 @@ async function runTurn(
       update: vi.fn(),
       updateMany: vi.fn(async () => ({ count: 1 })),
     },
+    $executeRaw: vi.fn(),
     thread: {
       update: vi.fn(async () => ({
         nextMessageSeq: messages.length + 1,

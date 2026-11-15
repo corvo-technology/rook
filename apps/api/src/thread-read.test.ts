@@ -28,8 +28,11 @@ function threadStore(initial: Row, beforeWrite?: (row: Row) => void) {
     row = { ...row, ...data };
     return { count: 1 };
   });
+  // The creator is the actor, so the thread keeps its read state.
   const findFirst = vi.fn(async ({ where }: { where: Record<string, string> }) =>
-    where.userId === actor.userId && where.spaceId === actor.spaceId ? { ...row } : null,
+    where.spaceId === actor.spaceId && (where.userId === undefined || where.userId === actor.userId)
+      ? { ...row, userId: actor.userId }
+      : null,
   );
   // Message 4 of this thread; any other id or thread is unknown.
   const message = {
@@ -76,7 +79,7 @@ describe("markThreadRead", () => {
 
   it("moves the cursor under the thread's row lock when replies keep landing mid-write", async () => {
     let row: Row = { unread: true, lastReadSeq: 3, nextMessageSeq: 7 };
-    const findFirst = vi.fn(async () => ({ ...row }));
+    const findFirst = vi.fn(async () => ({ ...row, userId: actor.userId }));
     // Every conditional write loses to a new reply.
     const updateMany = vi.fn(
       async ({ where, data }: { where: Partial<Row>; data: Partial<Row> }) => {
@@ -139,5 +142,85 @@ describe("markThreadUnreadFrom", () => {
       markThreadUnreadFrom(store.prisma, actor, target, "message-elsewhere"),
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
     expect(store.row()).toEqual({ unread: false, lastReadSeq: 6, nextMessageSeq: 7 });
+  });
+});
+
+describe("a member who did not create the thread", () => {
+  const member = { ...actor, userId: "user-2" } satisfies Actor;
+
+  /** A thread made by user-1, with read rows by user. */
+  function sharedThread(reads: Record<string, { unread: boolean; lastReadSeq: number }>) {
+    const thread = { userId: "user-1", unread: true, lastReadSeq: 1, nextMessageSeq: 7 };
+    const rows = new Map(Object.entries(reads));
+    const memberRead = {
+      findUnique: vi.fn(
+        async ({ where }: { where: { threadId_userId: { userId: string } } }) =>
+          rows.get(where.threadId_userId.userId) ?? null,
+      ),
+      update: vi.fn(
+        async ({
+          where,
+          data,
+        }: {
+          where: { threadId_userId: { userId: string } };
+          data: { unread: boolean; lastReadSeq: number };
+        }) => {
+          rows.set(where.threadId_userId.userId, data);
+        },
+      ),
+      upsert: vi.fn(
+        async ({
+          where,
+          create,
+        }: {
+          where: { threadId_userId: { userId: string } };
+          create: { unread: boolean; lastReadSeq: number };
+        }) => {
+          rows.set(where.threadId_userId.userId, {
+            unread: create.unread,
+            lastReadSeq: create.lastReadSeq,
+          });
+        },
+      ),
+    };
+    const threadModel = {
+      findFirst: vi.fn(async () => ({ ...thread })),
+      updateMany: vi.fn(),
+    };
+    const tx = {
+      $queryRaw: vi.fn(async () => [{ id: "thread-1" }]),
+      thread: threadModel,
+      threadMemberRead: memberRead,
+    };
+    const prisma = {
+      thread: threadModel,
+      threadMemberRead: memberRead,
+      message: { findFirst: vi.fn(async () => ({ seq: 4 })) },
+      $transaction: vi.fn(async (run: (client: typeof tx) => Promise<unknown>) => run(tx)),
+    } as unknown as PrismaClient;
+    return { prisma, rows, thread, threadModel };
+  }
+
+  it("reads on their own row and leaves the creator's state on the thread alone", async () => {
+    const store = sharedThread({ "user-2": { unread: true, lastReadSeq: 3 } });
+    await expect(markThreadRead(store.prisma, member, target)).resolves.toBe(3);
+    expect(store.rows.get("user-2")).toEqual({ unread: false, lastReadSeq: 6 });
+    expect(store.threadModel.updateMany).not.toHaveBeenCalled();
+    expect(store.thread.unread).toBe(true);
+    await expect(markThreadRead(store.prisma, member, target)).resolves.toBeNull();
+  });
+
+  it("has nothing to read until something arrives for them", async () => {
+    const store = sharedThread({});
+    await expect(markThreadRead(store.prisma, member, target)).resolves.toBeNull();
+    expect(store.rows.size).toBe(0);
+  });
+
+  it("marks unread from a message on their own row", async () => {
+    const store = sharedThread({});
+    await markThreadUnreadFrom(store.prisma, member, target, "message-4");
+    expect(store.rows.get("user-2")).toEqual({ unread: true, lastReadSeq: 3 });
+    expect(store.threadModel.updateMany).not.toHaveBeenCalled();
+    await expect(markThreadRead(store.prisma, member, target)).resolves.toBe(3);
   });
 });

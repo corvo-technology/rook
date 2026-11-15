@@ -187,7 +187,7 @@ export async function transcribeAudioArtifact(
 ): Promise<TranscriptionOutcome> {
   const { artifactId, actor } = input;
   const artifact = await deps.prisma.artifact.findFirst({
-    where: { id: artifactId, spaceId: actor.spaceId, userId: actor.userId },
+    where: { id: artifactId, spaceId: actor.spaceId },
     select: { id: true, name: true, mimeType: true, size: true, storageKey: true },
   });
   if (!artifact) return failed("unavailable");

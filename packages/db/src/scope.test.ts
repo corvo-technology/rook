@@ -1,58 +1,72 @@
-import { describe, expect, it, vi } from "vitest";
-import type { PrismaClient } from "./client.js";
-import { IsolationError, requireMembership } from "./scope.js";
+import { describe, expect, it } from "vitest";
+import {
+  IsolationError,
+  memberSpaceIds,
+  requireSpaceMember,
+  scoped,
+  sharedWhere,
+} from "./scope.js";
 
-function prismaForMembership(found: boolean) {
-  return {
+const actor = {
+  userId: "user-b",
+  spaceId: "space-1",
+  email: "b@example.test",
+  isDeploymentOwner: false,
+};
+
+describe("scoped", () => {
+  it("keeps personal rows to their owner", () => {
+    expect(scoped(actor, { spaceId: "space-1", userId: "user-b" })).toBeTruthy();
+    expect(() => scoped(actor, { spaceId: "space-1", userId: "user-a" })).toThrow(IsolationError);
+  });
+
+  it("lets every member of the space reach shared rows, and no other space's", () => {
+    const row = { spaceId: "space-1", userId: "user-a" };
+    expect(scoped(actor, row, { shared: true })).toBe(row);
+    expect(() => scoped(actor, { spaceId: "space-2", userId: "user-a" }, { shared: true })).toThrow(
+      IsolationError,
+    );
+    expect(() => scoped(actor, null, { shared: true })).toThrow(IsolationError);
+  });
+});
+
+describe("sharedWhere", () => {
+  it("names the space and never the person", () => {
+    expect(sharedWhere(actor)).toEqual({ spaceId: "space-1" });
+  });
+});
+
+describe("membership", () => {
+  const members = new Set(["space-1:user-b", "space-3:user-b"]);
+  const prisma = {
     spaceMember: {
-      findFirst: vi.fn(async ({ where }: { where: { userId: string; spaceId?: string } }) =>
-        found
-          ? {
-              userId: where.userId,
-              spaceId: where.spaceId ?? "space-default",
-              member: { user: { email: "owner@example.test" } },
-            }
-          : null,
-      ),
+      findUnique: async ({
+        where: {
+          spaceId_userId: { spaceId, userId },
+        },
+      }: {
+        where: { spaceId_userId: { spaceId: string; userId: string } };
+      }) => (members.has(`${spaceId}:${userId}`) ? { role: "member" } : null),
+      findMany: async ({
+        where: { userId, spaceId },
+      }: {
+        where: { userId: string; spaceId: { in: string[] } };
+      }) =>
+        spaceId.in.filter((id) => members.has(`${id}:${userId}`)).map((id) => ({ spaceId: id })),
     },
-    deploymentSettings: {
-      findUnique: vi.fn(async () => ({ ownerUserId: "user-1" })),
-    },
-  } as unknown as PrismaClient;
-}
+  } as never;
 
-describe("requireMembership", () => {
-  it("scopes the actor without granting privileges to a stored deployment owner", async () => {
-    const prisma = prismaForMembership(true);
-
-    await expect(requireMembership(prisma, "user-1", "space-support")).resolves.toEqual({
-      userId: "user-1",
-      spaceId: "space-support",
-      email: "owner@example.test",
-      isDeploymentOwner: false,
-    });
-    expect(prisma.spaceMember.findFirst).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { userId: "user-1", spaceId: "space-support" },
-      }),
+  it("requires the actor to belong to the space it acts in", async () => {
+    await expect(requireSpaceMember(prisma, actor)).resolves.toEqual({ role: "member" });
+    await expect(requireSpaceMember(prisma, { ...actor, spaceId: "space-2" })).rejects.toThrow(
+      IsolationError,
     );
   });
 
-  it("rejects a requested space the user does not belong to", async () => {
+  it("narrows a list of spaces to the member's own", async () => {
     await expect(
-      requireMembership(prismaForMembership(false), "user-1", "space-foreign"),
-    ).rejects.toBeInstanceOf(IsolationError);
-  });
-
-  it("selects the explicit default Space before older non-default memberships", async () => {
-    const prisma = prismaForMembership(true);
-
-    await requireMembership(prisma, "user-1");
-
-    expect(prisma.spaceMember.findFirst).toHaveBeenCalledWith(
-      expect.objectContaining({
-        orderBy: [{ space: { isDefault: "desc" } }, { createdAt: "asc" }, { id: "asc" }],
-      }),
-    );
+      memberSpaceIds(prisma, "user-b", ["space-1", "space-2", "space-3"]),
+    ).resolves.toEqual(["space-1", "space-3"]);
+    await expect(memberSpaceIds(prisma, "user-b", [])).resolves.toEqual([]);
   });
 });

@@ -107,6 +107,7 @@ describe("finalizeRun", () => {
         },
         attempt: { updateMany: vi.fn(async () => ({ count: 1 })) },
         task: { updateMany: vi.fn(async () => ({ count: 1 })) },
+        $executeRaw: vi.fn(),
         thread: { update: vi.fn(async () => ({ nextEventSeq: 1 })) },
         event: { create: createEvent, deleteMany: vi.fn(async () => ({ count: 0 })) },
         secret: { deleteMany: vi.fn(async () => ({ count: 0 })) },
@@ -166,6 +167,7 @@ describe("finalizeRun", () => {
       },
       attempt: { updateMany: vi.fn(async () => ({ count: 1 })) },
       task: { updateMany: vi.fn(async () => ({ count: 1 })) },
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn(async () => ({ nextEventSeq: 1, nextMessageSeq: 5 })) },
       secret: { deleteMany: vi.fn(async () => ({ count: 0 })) },
       event: {
@@ -241,6 +243,7 @@ describe("finalizeRun", () => {
       },
       attempt: { updateMany: vi.fn(async () => ({ count: 1 })) },
       task: { updateMany: vi.fn(async () => ({ count: 1 })) },
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn(async () => ({ nextEventSeq: 1 })) },
       secret: { deleteMany: vi.fn(async () => ({ count: 0 })) },
       event: {
@@ -289,6 +292,7 @@ describe("finalizeRun", () => {
         updateMany: vi.fn(async () => ({ count: 1 })),
         create: vi.fn(async () => ({ id: "task-reply" })),
       },
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn(async () => ({ nextEventSeq: 1 })) },
       event: {
         create: vi.fn(async () => ({ threadId: "thread-1", seq: 0 })),
@@ -357,6 +361,7 @@ describe("finalizeRun", () => {
         updateMany: vi.fn(async () => ({ count: 1 })),
         create: vi.fn(async () => ({ id: "task-reply" })),
       },
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn(async () => ({ nextEventSeq: 1 })) },
       event: {
         create: vi.fn(async () => ({ threadId: "thread-1", seq: 0 })),
@@ -437,6 +442,7 @@ describe("finalizeRun", () => {
         updateMany: vi.fn(async () => ({ count: 1 })),
         create: vi.fn(async () => ({ id: "task-reply" })),
       },
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn(async () => ({ nextEventSeq: 1 })) },
       event: {
         create: vi.fn(async () => ({ threadId: "thread-1", seq: 0 })),
@@ -564,6 +570,7 @@ describe("finalizeComputerControlRelease", () => {
         findUnique: vi.fn().mockResolvedValue({ status: "waiting_takeover" }),
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 8 }) },
       event: {
         create: vi.fn().mockResolvedValue({
@@ -644,6 +651,7 @@ describe("finalizeComputerControlRelease", () => {
         findUnique: vi.fn().mockResolvedValue({ status: "running" }),
         updateMany: vi.fn().mockResolvedValueOnce({ count: 0 }).mockResolvedValueOnce({ count: 1 }),
       },
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 8 }) },
       event: {
         create: vi.fn().mockResolvedValue({
@@ -764,6 +772,7 @@ describe("finalizeComputerControlRelease", () => {
         ]),
         update: vi.fn().mockResolvedValue({ id: "message-1" }),
       },
+      $executeRaw: vi.fn(),
       thread: {
         update: vi
           .fn()
@@ -861,6 +870,7 @@ describe("finalizeComputerControlRelease", () => {
         updateMany: vi.fn().mockResolvedValue({ count: 0 }),
       },
       message: { findMany: vi.fn(), update: vi.fn() },
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 4 }) },
       event: {
         create: vi.fn(
@@ -912,6 +922,7 @@ describe("settleReleasedTakeoverCards", () => {
           return { id: "message-1" };
         }),
       },
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 4 }) },
       run: { findUnique: vi.fn().mockResolvedValue({ status: "queued", startedAt: null }) },
       event: {
@@ -1011,6 +1022,7 @@ describe("pauseRunForInput", () => {
           updateMany: vi.fn().mockResolvedValue({ count: 1 }),
         },
         attempt: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+        $executeRaw: vi.fn(),
         thread: {
           update: vi
             .fn()
@@ -1105,6 +1117,7 @@ describe("pauseRunForInput", () => {
       computerExecutionLease: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
       steeringMessage: { findMany: vi.fn().mockResolvedValue([]) },
       attempt: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+      $executeRaw: vi.fn(),
       thread: {
         update: vi
           .fn()
@@ -1196,6 +1209,7 @@ describe("pauseRunForTakeover", () => {
         }),
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 8 }) },
       event: {
         create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({
@@ -1285,6 +1299,7 @@ describe("pauseRunForTakeover", () => {
         }),
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 8 }) },
       event: {
         create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({
@@ -1343,6 +1358,7 @@ describe("pauseRunForTakeover", () => {
         }),
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 8 }) },
       event: {
         create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({
@@ -1418,6 +1434,7 @@ describe("answerRunInput", () => {
         }),
       },
       task: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 10 }) },
       event: {
         create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({
@@ -1517,6 +1534,7 @@ describe("answerRunInput", () => {
           }),
         },
         task: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+        $executeRaw: vi.fn(),
         thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 10 }) },
         event: {
           create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({
@@ -1591,6 +1609,7 @@ describe("answerRunInput", () => {
           }),
         },
         task: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+        $executeRaw: vi.fn(),
         thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 10 }) },
         event: {
           create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({
@@ -1661,6 +1680,7 @@ describe("answerRunInput", () => {
         }),
       },
       task: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextMessageSeq: 3, nextEventSeq: 5 }) },
       event: {
         create: vi.fn(
@@ -1765,6 +1785,7 @@ describe("answerRunInput", () => {
           }),
         },
         task: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+        $executeRaw: vi.fn(),
         thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 11 }) },
         event: {
           create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({
@@ -1854,6 +1875,7 @@ describe("answerRunInput", () => {
         }),
       },
       task: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 12 }) },
       event: {
         create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({
@@ -1941,6 +1963,7 @@ describe("answerRunInput", () => {
         }),
       },
       task: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 13 }) },
       event: {
         create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({
@@ -2029,6 +2052,7 @@ describe("answerWaitingRunWithTextInTransaction", () => {
           findUnique: vi.fn().mockResolvedValue({ status: "queued" }),
         },
         task: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+        $executeRaw: vi.fn(),
         thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 4 }) },
         event: {
           create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({
@@ -2146,6 +2170,7 @@ describe("answerRunInput", () => {
           .mockResolvedValue({ id: "effect-1", kind: "connector_write", status: "intended" }),
         update: vi.fn().mockResolvedValue({ id: "effect-1" }),
       },
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 10 }) },
       event: {
         create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({
@@ -2267,6 +2292,7 @@ describe("answerRunInput", () => {
           deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
           upsert: vi.fn().mockResolvedValue({ id: "rule-1" }),
         },
+        $executeRaw: vi.fn(),
         thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 10 }) },
         event: {
           create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({
@@ -2577,6 +2603,7 @@ describe("answerRunInput", () => {
       },
       task: { updateMany: vi.fn() },
       externalEffect: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 10 }) },
       event: {
         create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({
@@ -2740,6 +2767,7 @@ describe("answerRunInput", () => {
             .mockResolvedValue(options.effect === undefined ? { id: "effect-1" } : options.effect),
           updateMany: vi.fn().mockResolvedValue({ count: 1 }),
         },
+        $executeRaw: vi.fn(),
         thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 10 }) },
         event: {
           create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({
@@ -2918,6 +2946,7 @@ describe("answerRunInput", () => {
         },
         task: { updateMany: vi.fn() },
         externalEffect: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+        $executeRaw: vi.fn(),
         thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 10 }) },
         event: {
           create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({
@@ -3031,6 +3060,7 @@ describe("queue admission beside pending cards", () => {
     "admits a %s wake beside waiting_input",
     async (trigger) => {
       const tx = {
+        $executeRaw: vi.fn(),
         thread: { update: vi.fn().mockResolvedValue({ nextMessageSeq: 3, nextEventSeq: 4 }) },
         message: {
           create: vi.fn().mockResolvedValue({ id: "message-new", seq: 2 }),
@@ -3114,6 +3144,7 @@ describe("sendUserMessage", () => {
     const fanout = new TestFanout();
     const publish = vi.spyOn(fanout, "publish");
     const tx = {
+      $executeRaw: vi.fn(),
       thread: {
         update: vi
           .fn()
@@ -3248,6 +3279,7 @@ describe("sendUserMessage", () => {
 
   it("pins an agreed inbound model onto the run it creates", async () => {
     const tx = {
+      $executeRaw: vi.fn(),
       thread: {
         update: vi
           .fn()
@@ -3307,6 +3339,7 @@ describe("sendUserMessage", () => {
 
   it("persists steering instead of starting a parallel run when the bot is busy", async () => {
     const tx = {
+      $executeRaw: vi.fn(),
       thread: {
         update: vi
           .fn()
@@ -3360,6 +3393,7 @@ describe("sendUserMessage", () => {
 
   it("keeps an agreed inbound model on steering while a routine run is busy", async () => {
     const tx = {
+      $executeRaw: vi.fn(),
       thread: {
         update: vi
           .fn()
@@ -3422,6 +3456,7 @@ describe("sendUserMessage", () => {
 
   it("keeps an inbound message pending while the creation intro is active", async () => {
     const tx = {
+      $executeRaw: vi.fn(),
       thread: {
         update: vi
           .fn()
@@ -3474,6 +3509,7 @@ describe("sendUserMessage", () => {
 
   it("keeps a messaging inbound's origin on the hold behind the creation intro", async () => {
     const tx = {
+      $executeRaw: vi.fn(),
       thread: {
         update: vi
           .fn()
@@ -3534,6 +3570,7 @@ describe("sendUserMessage", () => {
     "keeps the message pending when the busy run is a %s turn",
     async (trigger) => {
       const tx = {
+        $executeRaw: vi.fn(),
         thread: {
           update: vi
             .fn()
@@ -3593,6 +3630,7 @@ describe("sendUserMessage", () => {
 
   it("steers the conversational run when a parallel webhook turn is also active", async () => {
     const tx = {
+      $executeRaw: vi.fn(),
       thread: {
         update: vi
           .fn()
@@ -3888,6 +3926,7 @@ describe("clearThread", () => {
     const publish = vi.spyOn(fanout, "publish");
     const tx = {
       externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
+      $executeRaw: vi.fn(),
       thread: {
         update: vi
           .fn()
@@ -3959,6 +3998,7 @@ describe("clearThread", () => {
     const fanout = new TestFanout();
     const tx = {
       externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
+      $executeRaw: vi.fn(),
       thread: {
         update: vi
           .fn()
@@ -4034,6 +4074,7 @@ describe("appendEvent", () => {
   it("exports only committed run metadata and a coarse error kind, never error text", async () => {
     const created = { ...event(4), type: "run.failed", runId: "run-1" };
     const tx = {
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 5 }) },
       run: { findUnique: vi.fn().mockResolvedValue({ status: "failed" }) },
       event: { create: vi.fn().mockResolvedValue(created) },
@@ -4105,6 +4146,7 @@ describe("appendEvent", () => {
     const fanout = new TestFanout();
     const publish = vi.spyOn(fanout, "publish");
     const tx = {
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 8 }) },
       run: { findUnique: vi.fn().mockResolvedValue({ status: "cancelled" }) },
       event: { create: vi.fn() },
@@ -4137,6 +4179,7 @@ describe("appendEvent", () => {
     const deadlock = Object.assign(new Error("write conflict or a deadlock"), { code: "P2034" });
     const created = { ...event(4), type: "thread.progress", runId: "run-1" };
     const tx = {
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 5 }) },
       run: { findUnique: vi.fn().mockResolvedValue({ status: "running" }) },
       // The sequence already advanced when the insert deadlocks; Postgres rolls both back.
@@ -4166,6 +4209,7 @@ describe("appendEvent", () => {
 
   it("does not retry a run that can no longer write history", async () => {
     const tx = {
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 5 }) },
       run: { findUnique: vi.fn().mockResolvedValue({ status: "cancelled" }) },
       event: { create: vi.fn() },
@@ -4194,6 +4238,7 @@ describe("appendEvent", () => {
       runId: "run-2",
     };
     const tx = {
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 9 }) },
       run: { findUnique: vi.fn().mockResolvedValue({ status: "running" }) },
       event: { create: vi.fn().mockResolvedValue(created) },
@@ -4229,6 +4274,7 @@ describe("appendEvent", () => {
       payload: { delta: "hello \uFFFD", streaming: true },
     };
     const tx = {
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 4 }) },
       run: {
         findUnique: vi.fn().mockResolvedValue({ status: "running" }),
@@ -4273,6 +4319,7 @@ describe("appendEvent", () => {
     const publish = vi.spyOn(fanout, "publish");
     const created = { ...event(7), type: "run.cancelled", runId: "run-1" };
     const tx = {
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 8 }) },
       run: { findUnique: vi.fn().mockResolvedValue({ status: "cancelled" }) },
       event: { create: vi.fn().mockResolvedValue(created) },
@@ -4303,6 +4350,7 @@ describe("appendEvent", () => {
 
   it("rejects run.cancelled while the run is not cancelled", async () => {
     const tx = {
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 8 }) },
       run: { findUnique: vi.fn().mockResolvedValue({ status: "running" }) },
       event: { create: vi.fn() },
@@ -4326,6 +4374,7 @@ describe("appendEvent", () => {
 
   it("rejects run.cancelled without a run", async () => {
     const tx = {
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 8 }) },
       run: { findUnique: vi.fn() },
       event: { create: vi.fn() },
@@ -4393,6 +4442,7 @@ describe("instruction proposal answers", () => {
       },
       bot: { updateMany: vi.fn() },
       task: { updateMany: vi.fn() },
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn(async () => ({ nextEventSeq: 10 })) },
       event: {
         create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({
@@ -4526,6 +4576,7 @@ describe("discardAnsweredSteering", () => {
 
 it("checks cross-space peer permission inside the message transaction before creating a run", async () => {
   const tx = {
+    $executeRaw: vi.fn(),
     thread: { update: vi.fn(async () => ({ nextMessageSeq: 1 })) },
     message: { create: vi.fn(async () => ({ id: "message-1", seq: 0 })) },
     task: { create: vi.fn() },
@@ -4595,6 +4646,7 @@ describe("several proposal cards on one message", () => {
         })),
         update: vi.fn().mockResolvedValue({}),
       },
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 10 }) },
       event: {
         create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({
@@ -4821,7 +4873,6 @@ describe("retryFailedRun", () => {
     ["a newer run follows it", { newestId: "run-newer" }],
     ["it is a routine run", { failed: { trigger: "routine" } }],
     ["it succeeded", { failed: { status: "completed" } }],
-    ["it belongs to another user", { failed: { userId: "user-2" } }],
     ["it belongs to another thread", { failed: { threadId: "thread-2" } }],
     ["it has no source message", { failed: { sourceMessageId: null } }],
     ["another run is active", { active: true }],
@@ -4830,6 +4881,17 @@ describe("retryFailedRun", () => {
     const { prisma, tx } = setup(options as Parameters<typeof setup>[0]);
     await expect(retryFailedRun(prisma, input)).resolves.toBeNull();
     expect(tx.run.create).not.toHaveBeenCalled();
+  });
+
+  it("lets another member of the space retry it, as the new run's starter", async () => {
+    const { prisma, tx } = setup({ failed: { userId: "user-2" } });
+    await expect(retryFailedRun(prisma, input)).resolves.toEqual({
+      runId: "run-retry",
+      created: true,
+    });
+    expect(tx.run.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ userId: input.userId }) }),
+    );
   });
 
   it("keeps a pinned model and leaves an unpinned run on the current choice", async () => {
@@ -4892,6 +4954,7 @@ describe("answerRunInput as part of a batch", () => {
           .mockResolvedValue({ id: "effect-1", kind: options.kind ?? "connector_write" }),
         update: vi.fn().mockResolvedValue({ id: "effect-1" }),
       },
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 10 }) },
       event: {
         create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({

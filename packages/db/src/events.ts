@@ -56,6 +56,8 @@ import { deleteRunSecretsInTransaction } from "./run-secrets.js";
 import { isRunResponse, readRunTimingFields } from "./run-timing.js";
 import { RUN_TURN_CHECKPOINT_KIND } from "./run-turn-checkpoint.js";
 import { recordSecurityEvent } from "./security-events.js";
+import type { SpaceHints } from "./space-hints.js";
+import { createSpaceHints, hintThreadChange } from "./space-hints.js";
 import { mayDecideApprovals } from "./space-roles.js";
 import { withTransactionRetry } from "./transaction-retry.js";
 
@@ -459,7 +461,7 @@ export async function clearThread(
       historyCompactionGeneration: thread.historyCompactionGeneration,
     };
   });
-  await notifyRealtime(realtime, committed.event.threadId, committed.event.seq);
+  await notifyRealtime(prisma, realtime, committed.event.threadId, committed.event.seq);
   return {
     event: mapProductEvent(committed.event),
     cancelledRunIds: committed.cancelledRunIds,
@@ -630,7 +632,7 @@ export async function sendUserMessage(
     { name: "message_sent", trigger: input.trigger },
     { id: committed.message.id, at: committed.message.createdAt },
   );
-  await notifyRealtime(realtime, input.threadId, committed.event.seq).catch((error) => {
+  await notifyRealtime(prisma, realtime, input.threadId, committed.event.seq).catch((error) => {
     // The event is durable; subscribers recover it from their persisted cursor.
     getLogger().error("user message realtime notification", error);
   });
@@ -1206,7 +1208,7 @@ export async function answerRunInput(
       },
     });
   }
-  await notifyRealtime(realtime, committed.threadId, committed.seq);
+  await notifyRealtime(prisma, realtime, committed.threadId, committed.seq);
   return true;
 }
 
@@ -1398,7 +1400,7 @@ export async function addApprovalAskToPausedRun(
     });
   });
   if (!committed) return false;
-  await notifyRealtime(realtime, committed.threadId, committed.seq);
+  await notifyRealtime(prisma, realtime, committed.threadId, committed.seq);
   return true;
 }
 
@@ -1587,7 +1589,7 @@ export async function pauseRunForTakeover(
   });
 
   if (!committed) return false;
-  await notifyRealtime(realtime, committed.threadId, committed.seq);
+  await notifyRealtime(prisma, realtime, committed.threadId, committed.seq);
   return true;
 }
 
@@ -1708,7 +1710,7 @@ export async function finalizeComputerControlRelease(
 
   if (!committed) return false;
   if (committed.threadId && committed.seq !== null) {
-    await notifyRealtime(realtime, committed.threadId, committed.seq);
+    await notifyRealtime(prisma, realtime, committed.threadId, committed.seq);
   }
   return { runId: committed.runId };
 }
@@ -1784,6 +1786,7 @@ export async function appendEvent(
     event.threadId,
     event.seq,
     event.firstResponse ? input.runId : undefined,
+    input.type,
   );
   return productEvent;
 }
@@ -1796,7 +1799,7 @@ export async function finalizeRun(
 ): Promise<FinalizeRunResult | false> {
   const committed = await withTransactionRetry(() => finalizeRunOnce(prisma, input));
   if (!committed) return false;
-  await notifyRealtime(realtime, committed.threadId, committed.seq);
+  await notifyRealtime(prisma, realtime, committed.threadId, committed.seq);
   const timing = await readRunTimingFields(prisma, input.runId);
   if (committed.firstResponse) {
     getLogger().info("run.first_response", { "run.id": input.runId, ...timing });
@@ -2187,8 +2190,9 @@ async function notifyCommittedEvent(
   threadId: string,
   seq: number,
   firstResponseRunId?: string,
+  type?: string,
 ): Promise<void> {
-  await notifyRealtime(realtime, threadId, seq);
+  await notifyRealtime(prisma, realtime, threadId, seq, type);
   if (!firstResponseRunId) return;
   getLogger().info("run.first_response", {
     "run.id": firstResponseRunId,
@@ -2196,12 +2200,47 @@ async function notifyCommittedEvent(
   });
 }
 
+/** Events that only move what an open chat shows: the lists beside it have nothing to read again. */
+const EVENTS_WITHOUT_LIST_HINT: ReadonlySet<string> = new Set([
+  "thread.progress",
+  "thread.artifact",
+  "thread.computer",
+  "thread.subagent",
+  "thread.cloud_agent",
+  "thread.message.reaction",
+  "thread.message.pinned",
+  "run.checkpointed",
+  "run.steering.claimed",
+  "computer.status",
+  "computer.takeover.requested",
+  "computer.takeover.granted",
+  "computer.takeover.released",
+  "computer.command",
+  "memory.revised",
+  "agent.tool.called",
+  "agent.tool.completed",
+  "effect.recorded",
+  "effect.reconciled",
+  "usage.recorded",
+]);
+
+const hintsByRealtime = new WeakMap<RealtimeFanout, SpaceHints>();
+
 async function notifyRealtime(
+  prisma: PrismaClient,
   realtime: RealtimeFanout | undefined,
   threadId: string,
   cursor: number,
+  type?: string,
 ): Promise<void> {
   await realtime?.publish(threadTopic(threadId), JSON.stringify({ cursor })).catch(() => undefined);
+  if (!realtime || (type && EVENTS_WITHOUT_LIST_HINT.has(type))) return;
+  let hints = hintsByRealtime.get(realtime);
+  if (!hints) {
+    hints = createSpaceHints(realtime);
+    hintsByRealtime.set(realtime, hints);
+  }
+  hintThreadChange(prisma, hints, threadId);
 }
 
 export async function eventsAfter(

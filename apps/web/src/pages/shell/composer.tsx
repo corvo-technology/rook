@@ -90,6 +90,7 @@ export const Composer = memo(function Composer({
   groupRecipient,
   agentSkills,
   onSlashOpen,
+  onMentionsOpen,
   onSlashAction,
   draftKey,
   enterToSend,
@@ -138,6 +139,8 @@ export const Composer = memo(function Composer({
   groupRecipient?: (text: string, mentionBotIds: string[]) => GroupMember | undefined;
   agentSkills?: AgentSkillCatalogEntry[];
   onSlashOpen?: () => void;
+  /** The @-mention list opened: what it lists beyond the roster can load now. */
+  onMentionsOpen?: () => void;
   onSlashAction?: (action: SlashActionId) => void;
   draftKey: string;
   enterToSend: boolean;
@@ -347,6 +350,11 @@ export const Composer = memo(function Composer({
   useEffect(() => {
     setMentionHighlightKey(null);
   }, [mentionQuery]);
+
+  const mentionsOpen = mentionQuery !== null;
+  useEffect(() => {
+    if (mentionsOpen) onMentionsOpen?.();
+  }, [mentionsOpen]);
 
   const activeMentionIndex = clampMentionHighlightIndex(
     mentionOptions.findIndex((mention) => mentionChipKey(mention) === mentionHighlightKey),

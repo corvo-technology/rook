@@ -10,7 +10,7 @@ import type {
   SecretStore,
 } from "@corvo/adapter-kit";
 import { messagingDeliverJob } from "@corvo/adapter-kit";
-import type { PrismaClient, ThreadEvents } from "@corvo/db";
+import type { PrismaClient, SpaceHints, ThreadEvents } from "@corvo/db";
 import { runAsSystem, runAsTenant } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import { createAnnouncer, runAudioTranscribeJob } from "./audio-transcribe-job.js";
@@ -92,6 +92,8 @@ export function createBackgroundJobHandlers(deps: {
   artifacts: ArtifactStore;
   jobs: JobPublisher;
   events: ThreadEvents;
+  /** Tells open space streams that an update finished, so they stop polling for it. */
+  spaceHints?: SpaceHints;
   workerId: string;
   runtime: AgentRuntime;
   secretStore: SecretStore;
@@ -225,6 +227,13 @@ export function createBackgroundJobHandlers(deps: {
     }),
     "computer.update": asOwner(updatedComputer, async ({ updateId }) => {
       await performComputerUpdate(deps, updateId);
+      const spaceId = (
+        await deps.prisma.computerUpdate.findUnique({
+          where: { id: updateId },
+          select: { computer: { select: { spaceId: true } } },
+        })
+      )?.computer.spaceId;
+      if (spaceId) await deps.spaceHints?.publish(spaceId, ["computer"]);
     }),
     "computer.sleep": asOwner(computer, async (payload) => {
       await sleepComputerIfIdle(deps, payload.computerId);

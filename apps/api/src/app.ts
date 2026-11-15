@@ -123,6 +123,7 @@ import {
   createPool,
   createRepos,
   createSecurityEventPruner,
+  createSpaceHints,
   createThreadEvents,
   describeRowSecurity,
   ensureStarterTeam,
@@ -348,6 +349,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   });
   const ticketBoardEnabled = env.ticketBoardEnabled;
   const boardEvents = createBoardEvents(realtime);
+  const spaceHints = createSpaceHints(realtime);
   const environmentSignupPolicy = signupPolicyFromEnv(env);
   // Mirror the env policy for the previous release during a rolling deploy.
   await prisma.deploymentSettings.upsert({
@@ -866,6 +868,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     events,
     ticketChanges,
     boardEvents,
+    spaceHints,
     auth,
     jobs,
     sandbox,

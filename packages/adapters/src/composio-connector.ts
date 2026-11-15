@@ -782,7 +782,14 @@ export class ComposioConnector implements ComposioProvider {
   }
 
   private sdk(): ComposioClient {
-    this.client ??= new Composio(this.apiKey ? { apiKey: this.apiKey } : undefined);
+    // Telemetry and the npm version check are vendor calls we do not want from the cloud.
+    // Telemetry also registers a SIGTERM handler that re-kills the process after the
+    // flush, which fails with EACCES in the container and becomes an unhandledRejection.
+    this.client ??= new Composio({
+      ...(this.apiKey ? { apiKey: this.apiKey } : {}),
+      allowTracking: false,
+      disableVersionCheck: true,
+    });
     return this.client;
   }
 }

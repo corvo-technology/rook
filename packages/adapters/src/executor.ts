@@ -671,9 +671,6 @@ export function createRunExecutor(deps: ExecutorDeps) {
           runId,
           payload: { trigger: run.trigger, routineId: run.routineId },
         });
-        await startTicketRun(deps, run).catch((error) =>
-          getLogger().warn("ticket run start move failed", error),
-        );
 
         const discoveredPromise = deps.connector
           ? deps.connector.discoverTools(context)
@@ -948,6 +945,11 @@ export function createRunExecutor(deps: ExecutorDeps) {
           );
           return;
         }
+        // Only now is the agent really working: a paused space or a spent limit stopped the run above.
+        await startTicketRun(deps, run).catch((error) =>
+          getLogger().warn("ticket run start move failed", error),
+        );
+
         // An incompatible saved model is a configuration error. Record it on the run.
         // Leaving it for the setup catch would retry and replace the message.
         let resolved: Awaited<ReturnType<typeof resolveModelKey>>;

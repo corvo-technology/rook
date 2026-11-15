@@ -11,29 +11,40 @@ type TicketRunDeps = {
 };
 
 /** The part of a run these rules read: the ticket it was woken for and the agent that runs it. */
-export type TicketRun = { spaceId: string; botId: string; ticketId?: string | null };
+export type TicketRun = { id: string; spaceId: string; botId: string; ticketId?: string | null };
 
 const STEP_MAX_LENGTH = 120;
 
 /**
  * Move the run's ticket from one column to the next, but only from the column the rule names. A
  * ticket somewhere else was moved by a person or by the agent itself, so it stays; the same rule
- * run twice finds the ticket already moved and does nothing. A block also leaves the run's error
- * as a comment by the agent, in the same write as the move.
+ * run twice finds the ticket already moved and does nothing. A column the rule reaches back to
+ * (`placed`) counts only while the run itself put the ticket there, so a person's own move to
+ * Review is never undone by the run resuming. A block also leaves the run's error as a comment
+ * by the agent, in the same write as the move.
  */
 async function moveRunTicket(
   deps: TicketRunDeps,
   run: TicketRun,
-  move: { from: TicketStatus; to: TicketStatus; comment?: string },
+  move: { from: TicketStatus; placed?: TicketStatus; to: TicketStatus; comment?: string },
 ): Promise<void> {
   if (!deps.ticketBoardEnabled || !run.ticketId) return;
   const ticketId = run.ticketId;
+  let from = move.from;
   const row = await deps.prisma.$transaction(async (tx) => {
+    if (move.placed) {
+      const own = await tx.run.findFirst({
+        where: { id: run.id, ticketStatus: move.placed },
+        select: { id: true },
+      });
+      if (own) from = move.placed;
+    }
     const moved = await tx.ticket.updateMany({
-      where: { id: ticketId, spaceId: run.spaceId, assigneeBotId: run.botId, status: move.from },
+      where: { id: ticketId, spaceId: run.spaceId, assigneeBotId: run.botId, status: from },
       data: { status: move.to },
     });
     if (moved.count !== 1) return null;
+    await tx.run.update({ where: { id: run.id }, data: { ticketStatus: move.to } });
     if (move.comment) {
       await tx.ticketComment.create({
         data: {
@@ -58,7 +69,7 @@ async function moveRunTicket(
     ref: ticketRef(board.ticketPrefix, row.number),
     title: row.title,
     status,
-    previousStatus: move.from,
+    previousStatus: from,
     ...(statusLabel ? { statusLabel } : {}),
     byBotId: run.botId,
     byName: bot?.name ?? null,
@@ -73,9 +84,23 @@ async function moveRunTicket(
   });
 }
 
-/** The run began: a ticket still waiting in To do is now being worked on. */
+/**
+ * The run is working: a ticket still waiting in To do is now being worked on, and so is one this
+ * run itself sent to Review while it waited for a person.
+ */
 export async function startTicketRun(deps: TicketRunDeps, run: TicketRun): Promise<void> {
-  await moveRunTicket(deps, run, { from: "todo", to: "doing" });
+  await moveRunTicket(deps, run, { from: "todo", placed: "review", to: "doing" });
+}
+
+/** The run now waits on an approval or a person: the ticket is in Review and the step goes. */
+export async function waitTicketRun(deps: TicketRunDeps, run: TicketRun): Promise<void> {
+  if (!deps.ticketBoardEnabled || !run.ticketId) return;
+  try {
+    await moveRunTicket(deps, run, { from: "doing", to: "review" });
+    await announceTicketStep(deps, run, null);
+  } catch {
+    // The run is already paused; the board catches up on the next change.
+  }
 }
 
 /** The run ended: its step leaves the card, and the ticket moves on from In progress. */
@@ -91,7 +116,7 @@ export async function endTicketRun(
       run,
       outcome.kind === "finished"
         ? { from: "doing", to: "review" }
-        : { from: "doing", to: "blocked", comment: outcome.error },
+        : { from: "doing", placed: "review", to: "blocked", comment: outcome.error },
     );
     await announceTicketStep(deps, run, null);
   } catch {

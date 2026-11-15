@@ -202,6 +202,11 @@ it("renders status columns and opens a ticket with comments", async () => {
       "flex justify-end",
     ]);
     expect(api.tickets.comments).toHaveBeenCalledWith({ ticketId: "ticket-1" }, expect.anything());
+    const conversation = page.container.querySelector(
+      '[data-testid="ticket-conversation"]',
+    ) as HTMLAnchorElement;
+    expect(conversation.getAttribute("href")).toBe("/app/bot-1");
+    expect(conversation.textContent).toBe("Open Helper");
   } finally {
     await page.cleanup();
   }

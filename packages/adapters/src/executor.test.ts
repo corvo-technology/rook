@@ -4482,9 +4482,11 @@ function gateHarness(
     spacePausedAt?: Date | null;
     monthTokens?: bigint;
     tierEscalations?: number;
+    ticketId?: string;
   } = {},
 ) {
   const runtimeRun = vi.fn();
+  const ticketMoves = vi.fn(async () => ({ count: 0 }));
   const finalizeRun = vi.fn(async () => ({ continuationRunId: null }));
   const append = vi.fn(async () => undefined);
   const routineRow = { accountFailures: 0 };
@@ -4507,6 +4509,7 @@ function gateHarness(
     checkpoint: null,
     leaseFence: 0,
     tierEscalations: options.tierEscalations ?? 0,
+    ticketId: options.ticketId ?? null,
   };
   const routine = {
     count: vi.fn(async () => 0),
@@ -4525,7 +4528,11 @@ function gateHarness(
   const prisma = {
     $queryRaw: vi.fn(async () => [{ tokens: options.monthTokens ?? 0n }]),
     $transaction: vi.fn(async (work: (tx: unknown) => Promise<unknown>) =>
-      work({ routine, $queryRaw: vi.fn(async () => []) }),
+      work({
+        routine,
+        ticket: { updateMany: ticketMoves },
+        $queryRaw: vi.fn(async () => []),
+      }),
     ),
     routine,
     run: {
@@ -4609,6 +4616,7 @@ function gateHarness(
   const executor = createExecutor({
     prisma,
     spacePartnerState: vi.fn(async () => "enabled" as const),
+    ticketBoardEnabled: true,
     runtime: { describe: () => ({ capabilities: { scripted: false } }), run: runtimeRun },
     memoryProviders: { resolve: vi.fn(async () => null) },
     memory: { read: vi.fn(async () => ({ documents: [] })) },
@@ -4617,7 +4625,7 @@ function gateHarness(
     notifications,
     secrets: [],
   } as unknown as Parameters<typeof createExecutor>[0]);
-  return { executor, runtimeRun, finalizeRun, routineRow, notifications };
+  return { executor, runtimeRun, finalizeRun, routineRow, notifications, ticketMoves };
 }
 
 describe("monthly token limit gate", () => {
@@ -4704,5 +4712,28 @@ describe("pause gate", () => {
     const { executor, finalizeRun } = gateHarness({ spacePausedAt: null });
     await executor.continueRun("run-1", "worker-1");
     expect(finalizeRun).not.toHaveBeenCalledWith(expect.objectContaining({ stopReason: "paused" }));
+  });
+});
+
+describe("a ticket run that never starts", () => {
+  it("leaves the card where it is while its space is paused", async () => {
+    const { executor, ticketMoves } = gateHarness({
+      ticketId: "ticket-1",
+      trigger: "tickets",
+      spacePausedAt: new Date("2026-11-10T00:00:00Z"),
+    });
+    await executor.continueRun("run-1", "worker-1");
+    expect(ticketMoves).not.toHaveBeenCalled();
+  });
+
+  it("leaves the card where it is once the bot used its monthly limit", async () => {
+    const { executor, ticketMoves } = gateHarness({
+      ticketId: "ticket-1",
+      trigger: "tickets",
+      bot: { monthlyTokenLimit: 1_000n },
+      monthTokens: 1_000n,
+    });
+    await executor.continueRun("run-1", "worker-1");
+    expect(ticketMoves).not.toHaveBeenCalled();
   });
 });

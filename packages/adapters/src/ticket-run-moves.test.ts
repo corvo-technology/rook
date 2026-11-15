@@ -1,9 +1,14 @@
 import type { PrismaClient } from "@corvo/db";
 import { describe, expect, it, vi } from "vitest";
 import type { TicketChange } from "./ticket-changes.js";
-import { announceTicketStep, endTicketRun, startTicketRun } from "./ticket-run-moves.js";
+import {
+  announceTicketStep,
+  endTicketRun,
+  startTicketRun,
+  waitTicketRun,
+} from "./ticket-run-moves.js";
 
-const run = { spaceId: "space-1", botId: "bot-1", ticketId: "ticket-1" };
+const run = { id: "run-1", spaceId: "space-1", botId: "bot-1", ticketId: "ticket-1" };
 
 function setup(
   ticket: { status: string; assigneeBotId?: string | null } = { status: "todo" },
@@ -18,6 +23,7 @@ function setup(
     assigneeBotId: ticket.assigneeBotId === undefined ? "bot-1" : ticket.assigneeBotId,
     boardId: "board-1",
   };
+  const runRow: { ticketStatus: string | null } = { ticketStatus: null };
   const comments: Array<{ authorBotId: string; body: string }> = [];
   const tx = {
     ticket: {
@@ -35,6 +41,15 @@ function setup(
       ),
       findUnique: vi.fn(async () => ({ ...row })),
       findFirst: vi.fn(async () => ({ ...row })),
+    },
+    run: {
+      findFirst: vi.fn(async (args: { where: { ticketStatus: string } }) =>
+        runRow.ticketStatus === args.where.ticketStatus ? { id: "run-1" } : null,
+      ),
+      update: vi.fn(async (args: { data: { ticketStatus: string } }) => {
+        runRow.ticketStatus = args.data.ticketStatus;
+        return runRow;
+      }),
     },
     ticketComment: {
       create: vi.fn(async (args: { data: { authorBotId: string; body: string } }) => {
@@ -67,7 +82,7 @@ function setup(
       changes.push(change);
     },
   };
-  return { deps, row, comments, changes };
+  return { deps, row, runRow, comments, changes };
 }
 
 describe("a run's own ticket moves", () => {
@@ -192,5 +207,46 @@ describe("the step shown on the ticket", () => {
     await announceTicketStep(deps, run, "   ");
     await announceTicketStep(deps, { ...run, ticketId: undefined }, "Working");
     expect(changes).toEqual([]);
+  });
+
+  it("moves a ticket to Review while the run waits on a person, and back when it resumes", async () => {
+    const { deps, row, runRow, changes } = setup({ status: "todo" });
+    await startTicketRun(deps, run);
+    await waitTicketRun(deps, run);
+    expect(row.status).toBe("review");
+    expect(runRow.ticketStatus).toBe("review");
+    expect(changes.at(-1)?.step).toBeNull();
+    await startTicketRun(deps, run);
+    expect(row.status).toBe("doing");
+    expect(changes.at(-1)?.moved).toMatchObject({ status: "doing", previousStatus: "review" });
+  });
+
+  it("waits and resumes only once", async () => {
+    const { deps, changes } = setup({ status: "doing" });
+    await waitTicketRun(deps, run);
+    await waitTicketRun(deps, run);
+    expect(changes.filter((change) => change.moved)).toHaveLength(1);
+  });
+
+  it("keeps a person's own move to Review when the run resumes or fails", async () => {
+    const { deps, row } = setup({ status: "review" });
+    await startTicketRun(deps, run);
+    expect(row.status).toBe("review");
+    await endTicketRun(deps, run, { kind: "stopped", error: "Failed." });
+    expect(row.status).toBe("review");
+  });
+
+  it("blocks a ticket the run left in Review when it stops while waiting", async () => {
+    const { deps, row } = setup({ status: "doing" });
+    await waitTicketRun(deps, run);
+    await endTicketRun(deps, run, { kind: "stopped", error: "Cancelled." });
+    expect(row.status).toBe("blocked");
+  });
+
+  it("does not wait for a ticket that is not in progress", async () => {
+    const { deps, row, changes } = setup({ status: "todo" });
+    await waitTicketRun(deps, run);
+    expect(row.status).toBe("todo");
+    expect(changes.filter((change) => change.moved)).toHaveLength(0);
   });
 });

@@ -785,6 +785,8 @@ async function inviteMember(
         {
           kind: "meta",
           text: `You were added to the group chat "${name}". Reply YES in this conversation to join it with your agent.`,
+          code: "group_invite",
+          params: { name: String(name) },
         },
       ],
     });

@@ -31,7 +31,14 @@ export async function alertIfMonthCrossed(
     if (!crossedMonthAlert(input.usedBefore, usedAfter, input.limit)) return;
     if (!(await claimBudgetAlert(deps.prisma, bot.id, utcMonthKey(now)))) return;
     const text = `${numbers.format(usedAfter)} of ${numbers.format(input.limit ?? 0)} tokens`;
-    await publishMessage(deps, run, "system", [{ kind: "meta", text }]);
+    await publishMessage(deps, run, "system", [
+      {
+        kind: "meta",
+        text,
+        code: "budget_alert",
+        params: { used: String(usedAfter), limit: String(input.limit ?? 0) },
+      },
+    ]);
     await notifyRun(deps, run, {
       kind: "help",
       title: `${bot.name} used 80% of its monthly token limit`,

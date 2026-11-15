@@ -8,7 +8,7 @@ import type {
   SandboxProvider,
 } from "@corvo/adapter-kit";
 import { routineJobKey, routineWakeupJob } from "@corvo/adapter-kit";
-import type { RoutineWatch, RoutineWatchState } from "@corvo/contracts";
+import type { MetaCode, RoutineWatch, RoutineWatchState } from "@corvo/contracts";
 import { RoutineWatchSchema, RoutineWatchStateSchema } from "@corvo/contracts";
 import type { ActionApprovalRule } from "@corvo/core";
 import { connectorKindFromToolName, watchToolRefusal } from "@corvo/core";
@@ -649,8 +649,10 @@ export async function tickRoutineWatch(
       await postRoutineWatchMessage(deps, {
         spaceId: routine.spaceId,
         ...target,
-        role: "bot",
-        text: `I paused the **${routine.name}** routine because its change check failed: ${reason}\n\nTell me how to fix it, or turn the routine back on once it's sorted.`,
+        role: "system",
+        text: `The ${routine.name} routine is paused because its change check failed: ${reason}`,
+        code: "routine_check_paused",
+        params: { name: routine.name, reason },
       });
     }
     return { run: false };
@@ -681,6 +683,8 @@ export async function tickRoutineWatch(
         outcome.state.outcome === "baseline"
           ? `${routine.name} routine: watching for changes`
           : `${routine.name} routine: no changes`,
+      code: outcome.state.outcome === "baseline" ? "routine_watching" : "routine_no_changes",
+      params: { name: routine.name },
     });
   }
   await deps.jobs.enqueue(routineWakeupJob(routine.id, nextRunAt));
@@ -696,12 +700,21 @@ export async function postRoutineWatchMessage(
     botId: string;
     role: "bot" | "system";
     text: string;
+    code?: MetaCode;
+    params?: Record<string, string>;
   },
 ): Promise<void> {
   const blocks =
     input.role === "bot"
       ? [{ kind: "text" as const, text: input.text }]
-      : [{ kind: "meta" as const, text: input.text }];
+      : [
+          {
+            kind: "meta" as const,
+            text: input.text,
+            ...(input.code ? { code: input.code } : {}),
+            ...(input.params ? { params: input.params } : {}),
+          },
+        ];
   try {
     const seq = await deps.prisma.$transaction(async (tx) => {
       const message = await createThreadMessageInTransaction(tx, {

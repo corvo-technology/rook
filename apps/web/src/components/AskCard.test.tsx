@@ -582,3 +582,31 @@ it("says a proposal was applied or dismissed once answered", async () => {
   await render({ ...proposal, status: "answered", answer: "deny" });
   expect(container.textContent).toContain("Dismissed");
 });
+
+it("words a card from its code, not from the server's stored English", async () => {
+  await render({
+    ...proposal,
+    text: "STORED ENGLISH TITLE",
+    detail: "STORED ENGLISH DETAIL",
+    detailFormat: "text",
+    card: {
+      code: "add_routine_step",
+      params: {
+        routine: "Visão financeira diária",
+        lastAgent: "Fluxo de caixa",
+        agent: "Precificação",
+        instruction: "Avalie o relatório",
+      },
+    },
+  });
+  expect(container.textContent).toContain("Add a step to “Visão financeira diária”?");
+  expect(container.textContent).toContain("After Fluxo de caixa finishes, Precificação runs it");
+  expect(container.textContent).toContain("Instruction: Avalie o relatório");
+  expect(container.textContent).not.toContain("STORED ENGLISH");
+});
+
+it("falls back to the stored text for a card from an older server", async () => {
+  await render({ ...proposal, text: "Add a step?", detail: "Old detail" });
+  expect(container.textContent).toContain("Add a step?");
+  expect(container.textContent).toContain("Old detail");
+});

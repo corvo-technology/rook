@@ -99,6 +99,42 @@ export type SecretAskPurpose = z.infer<typeof SecretAskPurpose>;
 /** The longest reason a handoff can carry. */
 export const HANDOFF_REASON_MAX_LENGTH = 300;
 
+/**
+ * Text the server composes for a person is sent as a code plus params, and the client words it in
+ * the member's language. The English `text` / `detail` stay beside it for clients that do not know
+ * a code. Add a code here, its English fallback where it is built, and its Lingui wording in
+ * `apps/web/src/lib/server-copy.ts`.
+ */
+export const ApprovalCardCode = z.enum([
+  "create_group",
+  "update_group",
+  "change_model",
+  "schedule_routine",
+  "add_routine_step",
+  "replace_instructions",
+  "update_instructions",
+  "agent_connection",
+  "create_space",
+]);
+export type ApprovalCardCode = z.infer<typeof ApprovalCardCode>;
+
+export const MetaCode = z.enum([
+  "stronger_model",
+  "budget_alert",
+  "created_by",
+  "group_invite",
+  "stuck_queued",
+  "stuck_waiting_input",
+  "stuck_waiting_takeover",
+  "routine_watching",
+  "routine_no_changes",
+  "routine_check_paused",
+]);
+export type MetaCode = z.infer<typeof MetaCode>;
+
+/** Flat string params a code's wording is filled from. */
+export const ServerCopyParams = z.record(z.string(), z.string());
+
 export const MessageBlock = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("text"), text: z.string() }),
   z.object({
@@ -123,6 +159,8 @@ export const MessageBlock = z.discriminatedUnion("kind", [
       })
       .optional(),
     detail: z.string().optional(),
+    /** What `text` and `detail` say, as a code the client words in the member's language. */
+    card: z.object({ code: ApprovalCardCode, params: ServerCopyParams }).optional(),
     detailFormat: z.enum(["text", "code"]).optional(),
     input: z.enum(["text", "secret"]).optional(),
     /** Why the secret is needed; drives field label on the masked card. */
@@ -205,7 +243,8 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     kind: z.literal("meta"),
     text: z.string(),
     /** A notice a client words itself in the member's language; `text` is the fallback. */
-    code: z.literal("stronger_model").optional(),
+    code: MetaCode.optional(),
+    params: ServerCopyParams.optional(),
     /** Detail behind the notice, such as the reason an agent gave. */
     detail: z.string().optional(),
   }),

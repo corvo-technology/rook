@@ -223,7 +223,14 @@ describe("tickRoutineWatch", () => {
     await tickRoutineWatch(deps, routine, target, scheduledAt);
     expect(messages.at(-1)).toMatchObject({
       role: "system",
-      blocks: [{ kind: "meta", text: "Brain check routine: no changes" }],
+      blocks: [
+        {
+          kind: "meta",
+          text: "Brain check routine: no changes",
+          code: "routine_no_changes",
+          params: { name: "Brain check" },
+        },
+      ],
     });
   });
 
@@ -380,7 +387,7 @@ describe("tickRoutineWatch", () => {
     expect(deps.jobs.cancel).toHaveBeenCalled();
     expect(deps.jobs.enqueue).not.toHaveBeenCalled();
     expect(messages).toHaveLength(1);
-    expect(messages[0]).toMatchObject({ role: "bot" });
+    expect(messages[0]).toMatchObject({ role: "system" });
     expect(JSON.stringify(messages[0]?.blocks)).toContain("401 unauthorized");
   });
 });

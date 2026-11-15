@@ -95,7 +95,14 @@ export async function spawnBot(
       computerMode: input.computerMode,
       initialMessage: {
         role: "system",
-        blocks: [{ kind: "meta", text: `Created by ${input.spawnedBy.name}` }],
+        blocks: [
+          {
+            kind: "meta",
+            text: `Created by ${input.spawnedBy.name}`,
+            code: "created_by",
+            params: { name: input.spawnedBy.name },
+          },
+        ],
         runId: input.runId,
       },
     });

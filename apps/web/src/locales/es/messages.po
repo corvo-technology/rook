@@ -365,6 +365,14 @@ msgstr "{name} movió {ref} a {status}"
 msgid "{name} options"
 msgstr "Opciones de {name}"
 
+#: src/lib/server-copy.ts
+msgid "{name} routine: no changes"
+msgstr "Rutina {name}: sin cambios"
+
+#: src/lib/server-copy.ts
+msgid "{name} routine: watching for changes"
+msgstr "Rutina {name}: vigilando cambios"
+
 #. js-lingui-explicit-id
 #: src/lib/browser-notifications.ts
 msgid "{name} stopped"
@@ -570,6 +578,10 @@ msgstr "{total} miembros"
 msgid "{used} of {limit}"
 msgstr "{used} de {limit}"
 
+#: src/lib/server-copy.ts
+msgid "{used} of {limit} tokens"
+msgstr "{used} de {limit} tokens"
+
 #: src/pages/shell/context-meter.tsx
 msgid "{used} tokens"
 msgstr "{used} tokens"
@@ -747,6 +759,10 @@ msgstr "Agrega un comando stdio."
 msgid "Add a step here"
 msgstr "Añadir un paso aquí"
 
+#: src/lib/server-copy.ts
+msgid "Add a step to “{routine}”?"
+msgstr "¿Añadir un paso a “{routine}”?"
+
 #: src/pages/board/BoardLanes.tsx
 msgid "Add a ticket to {lane}"
 msgstr "Añadir un ticket a {lane}"
@@ -887,6 +903,10 @@ msgstr "Agregar Treg"
 msgid "Add trigger"
 msgstr "Agregar disparador"
 
+#: src/lib/server-copy.ts
+msgid "Add: {add}"
+msgstr "Añadir: {add}"
+
 #: src/pages/AgentsStore.tsx
 #: src/pages/AppCatalogGrid.tsx
 #: src/pages/Store.tsx
@@ -937,6 +957,10 @@ msgstr "Avanzado"
 #: src/pages/RoutineEditor.tsx
 msgid "Advanced..."
 msgstr "Avanzado..."
+
+#: src/lib/server-copy.ts
+msgid "After {lastAgent} finishes, {agent} runs it"
+msgstr "Cuando {lastAgent} termine, {agent} lo ejecuta"
 
 #: src/components/WorkingLine.tsx
 #: src/pages/AddStepPanel.tsx
@@ -1242,6 +1266,10 @@ msgstr "Aprobar todo"
 #: src/components/ApproveAllBar.tsx
 msgid "Approve all {count}"
 msgstr "Aprobar las {count}"
+
+#: src/lib/server-copy.ts
+msgid "Approve connection with “{name}”?"
+msgstr "¿Aprobar la conexión con “{name}”?"
 
 #: src/pages/WikiBrowser.tsx
 msgid "Approve edits"
@@ -1550,6 +1578,10 @@ msgstr "Bots que se ocupan de tu correo y tus facturas, y preguntan antes de act
 msgid "Bots with their own computer and browser"
 msgstr "Bots con su propia computadora y navegador"
 
+#: src/lib/server-copy.ts
+msgid "Bots, groups, chats, files, memory, and integrations in this space stay separate from other spaces."
+msgstr "Los bots, grupos, chats, archivos, memoria e integraciones de este espacio quedan separados de los demás espacios."
+
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Brain label"
 msgstr "Nombre del cerebro"
@@ -1674,6 +1706,10 @@ msgstr "Cambiar modelo"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Change password"
 msgstr "Cambiar contraseña"
+
+#: src/lib/server-copy.ts
+msgid "Change the model of {bot}?"
+msgstr "¿Cambiar el modelo de {bot}?"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Changing…"
@@ -1842,6 +1878,10 @@ msgstr "Borrar conversación"
 #: src/pages/ActivityList.tsx
 msgid "Clear filter {label}"
 msgstr "Quitar filtro {label}"
+
+#: src/lib/server-copy.ts
+msgid "Clear the purpose"
+msgstr "Borrar el propósito"
 
 #: src/pages/shell/dialogs.tsx
 msgid "Clearing…"
@@ -2927,6 +2967,10 @@ msgstr "Crear canales"
 msgid "Create group"
 msgstr "Crear grupo"
 
+#: src/lib/server-copy.ts
+msgid "Create group “{name}”?"
+msgstr "¿Crear el grupo “{name}”?"
+
 #: src/pages/NewRoutinePanel.tsx
 msgid "Create routine"
 msgstr "Crear rutina"
@@ -2940,6 +2984,10 @@ msgstr "Crear rutina"
 msgid "Create space"
 msgstr "Crear espacio"
 
+#: src/lib/server-copy.ts
+msgid "Create space “{space}”?"
+msgstr "¿Crear el espacio “{space}”?"
+
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Create spaces"
 msgstr "Crear espacios"
@@ -2951,6 +2999,10 @@ msgstr "Crea tu Rook"
 #: src/components/AskCard.tsx
 msgid "Created"
 msgstr "Creado"
+
+#: src/lib/server-copy.ts
+msgid "Created by {name}"
+msgstr "Creado por {name}"
 
 #: src/components/TaskCard.tsx
 msgid "Created task <0>{taskRef}</0> · {title}"
@@ -3073,6 +3125,10 @@ msgstr "días"
 #: src/components/call/IncomingCall.tsx
 msgid "Decline"
 msgstr "Rechazar"
+
+#: src/lib/server-copy.ts
+msgid "Decline connection with “{name}”?"
+msgstr "¿Rechazar la conexión con “{name}”?"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/model-settings/role-model-picker.tsx
@@ -3827,6 +3883,10 @@ msgstr "De"
 msgid "From {0}"
 msgstr "De {0}"
 
+#: src/lib/server-copy.ts
+msgid "From: {from}"
+msgstr "De: {from}"
+
 #: src/pages/WindowChrome.tsx
 msgid "Fullscreen"
 msgstr "Pantalla completa"
@@ -4158,6 +4218,10 @@ msgstr "Instrucción"
 #: src/components/InstructionSettings.tsx
 msgid "Instruction history"
 msgstr "Historial de instrucciones"
+
+#: src/lib/server-copy.ts
+msgid "Instruction: {instruction}"
+msgstr "Instrucción: {instruction}"
 
 #: src/components/AskCard.tsx
 #: src/components/InstructionSettings.tsx
@@ -4687,6 +4751,10 @@ msgstr "Miembros ({0})"
 msgid "Members can create spaces"
 msgstr "Los miembros pueden crear espacios"
 
+#: src/lib/server-copy.ts
+msgid "Members: {members}"
+msgstr "Miembros: {members}"
+
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/Settings.tsx
 #: src/pages/shell/agent-import.tsx
@@ -5069,6 +5137,10 @@ msgstr "Nuevo chat grupal"
 msgid "New key"
 msgstr "Nueva clave"
 
+#: src/lib/server-copy.ts
+msgid "New length: {newLength} characters"
+msgstr "Nueva longitud: {newLength} caracteres"
+
 #: src/components/MemoryFactCard.tsx
 msgid "New memory"
 msgstr "Nuevo recuerdo"
@@ -5398,6 +5470,10 @@ msgstr "Falló la conexión OAuth"
 #: src/pages/StoreInstalledApps.tsx
 msgid "OAuth expired"
 msgstr "OAuth expirado"
+
+#: src/lib/server-copy.ts
+msgid "Old length: {oldLength} characters"
+msgstr "Longitud anterior: {oldLength} caracteres"
 
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
@@ -5892,6 +5968,10 @@ msgstr "Programa: {name}"
 msgid "Progress"
 msgstr "Progreso"
 
+#: src/lib/server-copy.ts
+msgid "Prompt: {prompt}"
+msgstr "Prompt: {prompt}"
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Protected input"
 msgstr "Campo protegido"
@@ -5913,6 +5993,10 @@ msgstr "Solicitud de incorporación"
 #: src/pages/GroupPanel.tsx
 msgid "Purpose"
 msgstr "Propósito"
+
+#: src/lib/server-copy.ts
+msgid "Purpose: {purpose}"
+msgstr "Propósito: {purpose}"
 
 #: src/pages/WhatsAppNumbers.tsx
 msgid "QR code"
@@ -6175,6 +6259,10 @@ msgstr "Quitar habilidad {0}"
 msgid "Remove webhook"
 msgstr "Quitar webhook"
 
+#: src/lib/server-copy.ts
+msgid "Remove: {remove}"
+msgstr "Quitar: {remove}"
+
 #: src/pages/shell/agent-import-undo.tsx
 msgid "Removed"
 msgstr "Se elimina"
@@ -6197,6 +6285,10 @@ msgstr "Cambiar nombre"
 msgid "Rename section"
 msgstr "Renombrar sección"
 
+#: src/lib/server-copy.ts
+msgid "Rename to “{rename}”"
+msgstr "Renombrar a “{rename}”"
+
 #: src/lib/activity-label.ts
 msgid "Rendering a chart"
 msgstr "Creando un gráfico"
@@ -6208,6 +6300,10 @@ msgstr "Se renueva el {day}"
 #: src/pages/ScratchpadSection.tsx
 msgid "Reopen"
 msgstr "Reabrir"
+
+#: src/lib/server-copy.ts
+msgid "Repeats {cron}, next at {when}"
+msgstr "Se repite {cron}, próxima ejecución: {when}"
 
 #: src/pages/model-settings/connection-controls.tsx
 msgid "Replace API key"
@@ -6221,6 +6317,10 @@ msgstr "Reemplazar sus instrucciones"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Replace key"
 msgstr "Reemplazar clave"
+
+#: src/lib/server-copy.ts
+msgid "Replace the instructions of {bot}?"
+msgstr "¿Reemplazar las instrucciones de {bot}?"
 
 #: src/pages/shell/bot-credentials.tsx
 msgid "Replace value"
@@ -6509,6 +6609,10 @@ msgstr "Ejecutando…"
 msgid "Runs"
 msgstr "Ejecuciones"
 
+#: src/lib/server-copy.ts
+msgid "Runs at {when}"
+msgstr "Se ejecuta el {when}"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Runs when this bot receives a verified message from this provider."
 msgstr "Se ejecuta cuando este bot recibe un mensaje verificado de este proveedor."
@@ -6608,6 +6712,10 @@ msgstr "Guardando…"
 #: src/lib/call-session.ts
 msgid "Say yes or no, or answer in a sentence."
 msgstr "Di sí o no, o responde en una frase."
+
+#: src/lib/server-copy.ts
+msgid "Schedule “{name}” for {bot}?"
+msgstr "¿Programar “{name}” para {bot}?"
 
 #: src/components/MissionList.tsx
 msgid "Schedule a routine"
@@ -7160,6 +7268,18 @@ msgstr "Detener enseñanza"
 msgid "Stopped."
 msgstr "Detenido."
 
+#: src/lib/server-copy.ts
+msgid "Stopped. This stayed queued without starting."
+msgstr "Detenido. Se quedó en cola sin empezar."
+
+#: src/lib/server-copy.ts
+msgid "Stopped. This was still waiting for an answer."
+msgstr "Detenido. Seguía esperando una respuesta."
+
+#: src/lib/server-copy.ts
+msgid "Stopped. This was still waiting for you on the screen."
+msgstr "Detenido. Seguía esperándote en la pantalla."
+
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Stopping…"
 msgstr "Deteniendo…"
@@ -7243,7 +7363,7 @@ msgstr "Admite razonamiento"
 msgid "Switch space"
 msgstr "Cambiar de espacio"
 
-#: src/pages/shell/message-view.tsx
+#: src/lib/server-copy.ts
 msgid "Switched to a stronger model"
 msgstr "Cambió a un modelo más potente"
 
@@ -7353,6 +7473,10 @@ msgstr "Ejecución de prueba"
 msgid "Testing…"
 msgstr "Probando…"
 
+#: src/lib/server-copy.ts
+msgid "The {name} routine is paused because its change check failed: {reason}"
+msgstr "La rutina {name} se pausó porque falló su comprobación de cambios: {reason}"
+
 #: src/pages/shell/agent-import-undo.tsx
 msgid "The bot and what its import added will be removed."
 msgstr "Se eliminarán el bot y lo que añadió su importación."
@@ -7423,6 +7547,14 @@ msgstr "Pensando"
 #: src/pages/ModelRoleSettings.tsx
 msgid "Thinking: {0}"
 msgstr "Razonamiento: {0}"
+
+#: src/lib/server-copy.ts
+msgid "Thinking: {thinking}"
+msgstr "Razonamiento: {thinking}"
+
+#: src/lib/server-copy.ts
+msgid "Thinking: Default"
+msgstr "Razonamiento: Predeterminado"
 
 #: src/pages/shell/agent-import.tsx
 msgid "This backup could not be read."
@@ -7624,6 +7756,10 @@ msgstr "Por hacer"
 msgid "To:"
 msgstr "Para:"
 
+#: src/lib/server-copy.ts
+msgid "To: {to}"
+msgstr "A: {to}"
+
 #: src/pages/Artifacts.tsx
 #: src/pages/Routines.tsx
 #: src/pages/shell/chat-context.tsx
@@ -7777,6 +7913,10 @@ msgstr "Desfijar"
 msgid "Unsupported file type: {0}"
 msgstr "Tipo de archivo no compatible: {0}"
 
+#: src/lib/server-copy.ts
+msgid "Untitled"
+msgstr "Sin título"
+
 #: src/components/DesktopUpdates.tsx
 msgid "Up to date"
 msgstr "Actualizado"
@@ -7807,7 +7947,12 @@ msgstr "Actualización de {name}"
 msgid "Update from {name}: {text}"
 msgstr "Actualización de {name}: {text}"
 
+#: src/lib/server-copy.ts
+msgid "Update group “{group}”?"
+msgstr "¿Actualizar el grupo “{group}”?"
+
 #: src/components/AskCard.tsx
+#: src/lib/server-copy.ts
 msgid "Update instructions?"
 msgstr "¿Actualizar instrucciones?"
 
@@ -8286,6 +8431,10 @@ msgstr "Tienes el control"
 #: src/lib/run-error.ts
 msgid "You reached your monthly limit on this space's model."
 msgstr "Alcanzaste tu límite mensual en el modelo de este espacio."
+
+#: src/lib/server-copy.ts
+msgid "You were added to the group chat “{name}”. Reply YES in this conversation to join it with your agent."
+msgstr "Te añadieron al chat de grupo “{name}”. Responde SÍ en esta conversación para unirte con tu agente."
 
 #: src/pages/onboarding/WorkspaceStep.tsx
 msgid "Your agents and chats live here. You can rename it any time."

@@ -379,7 +379,7 @@ describe("reconcileStuckWork", () => {
     expect(client.message.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         role: "system",
-        blocks: [{ kind: "meta", text: stuckWorkStatusMessage("queued") }],
+        blocks: [{ kind: "meta", text: stuckWorkStatusMessage("queued"), code: "stuck_queued" }],
       }),
     });
     expect(notify).toHaveBeenCalledWith("thread-1", 8);

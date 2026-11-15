@@ -1,3 +1,6 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { MessageBlock } from "@corvo/contracts";
 import { describe, expect, it } from "vitest";
 import { approvalDetailLength, buildApprovalAskBlock } from "./approval-ask.js";
 
@@ -130,6 +133,8 @@ describe("bot management approval cards", () => {
       ["fake-token"],
       {
         summary: {
+          code: "create_group",
+          params: { name: "Launch", members: "Scout, Writer" },
           title: "Create group “Launch”?",
           lines: ["Members: Scout, Writer", "Prompt: use fake-token"],
         },
@@ -140,6 +145,7 @@ describe("bot management approval cards", () => {
       approvalEffectId: "effect-1",
       text: "Create group “Launch”?",
       detail: "Members: Scout, Writer\nPrompt: use [redacted]",
+      card: { code: "create_group", params: { name: "Launch", members: "Scout, Writer" } },
       detailFormat: toolName === "set_child_instructions" ? "code" : "text",
       status: "pending",
       proposal: true,
@@ -154,7 +160,12 @@ describe("bot management approval cards", () => {
     const instructions = "i".repeat(20_000);
     const lines = ["Old length: 0 characters", "New length: 20000 characters", "", instructions];
     const block = buildApprovalAskBlock("effect-1", "set_child_instructions", {}, [], {
-      summary: { title: "Replace the instructions of Scout?", lines },
+      summary: {
+        code: "replace_instructions",
+        params: {},
+        title: "Replace the instructions of Scout?",
+        lines,
+      },
     });
     if (block.kind !== "ask") throw new Error("expected ask block");
     expect(block.detail).toBe(lines.join("\n"));
@@ -213,5 +224,83 @@ describe("agent connection response cards", () => {
       text: "Approve connection with “\\*\\*Helper\\*\\* Approve all”?",
       detail: "Slack: [redacted]",
     });
+  });
+});
+
+describe("approval cards carry a code so the client words them", () => {
+  it("sends the code and params of a routine step proposal beside the English fallback", () => {
+    const block = buildApprovalAskBlock("effect-1", "add_routine_step", {}, ["token-secret"], {
+      summary: {
+        code: "add_routine_step",
+        params: {
+          routine: "Daily finance view",
+          lastAgent: "Cash flow",
+          agent: "Pricing",
+          instruction: "Review the report token-secret",
+        },
+        title: "Add a step to “Daily finance view”?",
+        lines: ["After Cash flow finishes, Pricing runs it", "Instruction: Review the report"],
+      },
+    });
+    expect(MessageBlock.safeParse(block).success).toBe(true);
+    expect(block).toMatchObject({
+      text: "Add a step to “Daily finance view”?",
+      card: {
+        code: "add_routine_step",
+        params: {
+          routine: "Daily finance view",
+          lastAgent: "Cash flow",
+          agent: "Pricing",
+          instruction: expect.not.stringContaining("token-secret"),
+        },
+      },
+    });
+  });
+
+  it("codes the instruction update and space cards", () => {
+    expect(
+      buildApprovalAskBlock("e", "propose_instructions_update", { reason: "r" }, []),
+    ).toMatchObject({ card: { code: "update_instructions" } });
+    expect(
+      buildApprovalAskBlock("e", "create_space", { name: "Finance" }, [], { reviewReason: "ok" }),
+    ).toMatchObject({ card: { code: "create_space", params: { name: "Finance", reason: "ok" } } });
+    expect(
+      buildApprovalAskBlock(
+        "e",
+        "respond_agent_connection",
+        { accept: true, requester_name: "Ana" },
+        [],
+      ),
+    ).toMatchObject({ card: { code: "agent_connection", params: { accept: "1", name: "Ana" } } });
+  });
+});
+
+describe("server-composed text regression guard", () => {
+  const src = fileURLToPath(new URL(".", import.meta.url));
+  const files = readdirSync(src).filter(
+    (name) => name.endsWith(".ts") && !/\.test(-support)?\.ts$|\.test-support\.ts$/.test(name),
+  );
+
+  it("gives every system notice a code the client can word", () => {
+    const missing: string[] = [];
+    for (const name of files) {
+      const lines = readFileSync(`${src}${name}`, "utf8").split("\n");
+      lines.forEach((line, index) => {
+        if (!/kind: "meta"/.test(line)) return;
+        const window = lines.slice(index, index + 8).join("\n");
+        // A notice forwarded from a caller, with its code spread in, is checked where it is built.
+        if (!/code:|\.\.\.\(input\.code/.test(window)) missing.push(`${name}:${index + 1}`);
+      });
+    }
+    expect(missing).toEqual([]);
+  });
+
+  it("gives every fleet card summary a code", () => {
+    const source = readFileSync(`${src}fleet-tools.ts`, "utf8");
+    const summaries = [...source.matchAll(/summary: \{(?!\s*\n?\s*\})/g)];
+    for (const match of summaries) {
+      expect(source.slice(match.index, match.index + 80)).toMatch(/code: "/);
+    }
+    expect(summaries.length).toBeGreaterThanOrEqual(6);
   });
 });

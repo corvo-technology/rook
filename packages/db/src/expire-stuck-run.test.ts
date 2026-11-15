@@ -138,14 +138,14 @@ describe("expireStuckRun", () => {
       data: expect.objectContaining({
         role: "system",
         clientNonce: "stuck-expired:run-1",
-        blocks: [{ kind: "meta", text: stuckWorkStatusMessage("queued") }],
+        blocks: [{ kind: "meta", text: stuckWorkStatusMessage("queued"), code: "stuck_queued" }],
       }),
     });
     expect(client.snapshot().messages).toEqual([
       expect.objectContaining({
         role: "system",
         clientNonce: "stuck-expired:run-1",
-        blocks: [{ kind: "meta", text: stuckWorkStatusMessage("queued") }],
+        blocks: [{ kind: "meta", text: stuckWorkStatusMessage("queued"), code: "stuck_queued" }],
       }),
     ]);
     expect(client.snapshot().events).toEqual(
@@ -218,7 +218,13 @@ describe("expireStuckRun", () => {
     expect(client.task.updateMany).not.toHaveBeenCalled();
     expect(client.message.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
-        blocks: [{ kind: "meta", text: stuckWorkStatusMessage("waiting_input") }],
+        blocks: [
+          {
+            kind: "meta",
+            text: stuckWorkStatusMessage("waiting_input"),
+            code: "stuck_waiting_input",
+          },
+        ],
       }),
     });
   });

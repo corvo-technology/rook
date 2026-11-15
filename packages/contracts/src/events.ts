@@ -9,6 +9,8 @@ export const ProductEventType = z.enum([
   "thread.cleared",
   "thread.message.updated",
   "thread.message.reaction",
+  /** A message was pinned or unpinned; the payload carries its id and `pinnedAt` (null when unpinned). */
+  "thread.message.pinned",
   "thread.progress",
   "thread.artifact",
   "thread.ask",
@@ -488,6 +490,10 @@ export const ThreadMessageSchema = z.object({
   runId: Id.optional(),
   /** Set when the message was sent from a live voice call; groups one call's transcript. */
   callId: z.string().optional(),
+  /** The routine whose run wrote this message; absent for anything a person or a chat started. */
+  routineName: z.string().optional(),
+  /** When the message was pinned to the channel; absent when it is not pinned. */
+  pinnedAt: z.string().optional(),
   createdAt: z.string(),
 });
 export type ThreadMessage = z.infer<typeof ThreadMessageSchema>;

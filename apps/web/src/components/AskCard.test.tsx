@@ -271,11 +271,85 @@ it("sizes approval buttons like the other card buttons", async () => {
       { id: "deny", label: "Deny" },
     ],
   });
-  for (const label of ["Allow once", "Deny"]) {
+  for (const label of ["Hold to approveHold to approve", "Not now"]) {
     expect(button(label)?.classList.contains("min-h-9")).toBe(true);
     expect(button(label)?.classList.contains("rounded-full")).toBe(true);
     expect(button(label)?.classList.contains("py-3")).toBe(false);
   }
+});
+
+it("answers an action approval only after a hold, and Not now at a tap", async () => {
+  vi.useFakeTimers();
+  vi.stubGlobal("matchMedia", () => ({
+    matches: false,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  }));
+  const answers: string[] = [];
+  await render(
+    {
+      kind: "ask",
+      approvalEffectId: "effect-1",
+      text: "Send it?",
+      detail: "Gmail send_email to a@example.test",
+      status: "pending",
+      actions: [
+        { id: "allow", label: "Allow once" },
+        { id: "always", label: "Always allow this tool" },
+        { id: "deny", label: "Deny" },
+      ],
+    },
+    undefined,
+    async (text) => {
+      answers.push(text);
+    },
+  );
+  expect(container.textContent).toContain("Gmail send_email to a@example.test");
+  const hold = button("Hold to approveHold to approve")!;
+  await act(async () => hold.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true })));
+  await act(async () => vi.advanceTimersByTime(500));
+  expect(answers).toEqual([]);
+  await act(async () => vi.advanceTimersByTime(300));
+  expect(answers).toEqual(["allow"]);
+  vi.useRealTimers();
+});
+
+it("answers Not now with a tap", async () => {
+  const answers: string[] = [];
+  await render(
+    {
+      kind: "ask",
+      approvalEffectId: "effect-1",
+      text: "Send it?",
+      status: "pending",
+      actions: [
+        { id: "allow", label: "Allow once" },
+        { id: "deny", label: "Deny" },
+      ],
+    },
+    undefined,
+    async (text) => {
+      answers.push(text);
+    },
+  );
+  await act(async () => button("Not now")!.click());
+  expect(answers).toEqual(["deny"]);
+});
+
+it("keeps a proposal a tap to apply", async () => {
+  await render({
+    kind: "ask",
+    approvalEffectId: "effect-1",
+    proposal: true,
+    text: "Rename the agent?",
+    status: "pending",
+    actions: [
+      { id: "allow", label: "Allow once" },
+      { id: "deny", label: "Deny" },
+    ],
+  });
+  expect(button("Apply")).toBeTruthy();
+  expect(container.textContent).not.toContain("Hold to approve");
 });
 
 it("labels a pending approval as waiting for the person, and not once answered", async () => {

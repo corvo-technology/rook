@@ -2,6 +2,7 @@ import type { GroupMember } from "@corvo/contracts";
 import { BotAvatar, Button } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { Columns3, Menu, Plus } from "lucide-react";
+import type { ReactNode } from "react";
 import { IconTooltip } from "../../components/IconTooltip";
 import { workingMembers } from "../../lib/roster-status";
 
@@ -19,6 +20,7 @@ export function ChannelHeader({
   onOpenNavigation,
   onOpenSettings,
   onOpenSquad,
+  find,
 }: {
   name: string;
   purpose: string | null | undefined;
@@ -26,6 +28,8 @@ export function ChannelHeader({
   onOpenNavigation: () => void;
   onOpenSettings: () => void;
   onOpenSquad: () => void;
+  /** The channel's search and pinned messages. */
+  find?: ReactNode;
 }) {
   const { t } = useLingui();
   const count = members.length;
@@ -67,6 +71,7 @@ export function ChannelHeader({
         <span className="flex-1" />
       )}
       <div className="app-no-drag ms-auto flex shrink-0 items-center gap-1.5">
+        {find}
         <button
           type="button"
           onClick={onOpenSettings}

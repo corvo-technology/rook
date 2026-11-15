@@ -843,9 +843,11 @@ export const Composer = memo(function Composer({
             disabled={disabled}
             placeholder={
               showComposerPlaceholder
-                ? activeName
-                  ? t`Message ${activeName}`
-                  : t`Message…`
+                ? groupRecipient && activeName
+                  ? t`Message ${activeName} · use @ to call an agent`
+                  : activeName
+                    ? t`Message ${activeName}`
+                    : t`Message…`
                 : undefined
             }
             aria-label={activeName ? t`Message ${activeName}` : t`Message`}

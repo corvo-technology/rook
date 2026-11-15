@@ -15,7 +15,7 @@ import {
 } from "@corvo/core";
 import { BotAvatar, Button, cn, resolvePersonaColorDef } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { UserRound } from "lucide-react";
+import { Pin, UserRound } from "lucide-react";
 import type { ReactNode } from "react";
 import { Fragment, memo, useMemo } from "react";
 import { ArtifactFileCard } from "../../components/ArtifactFileCard";
@@ -138,6 +138,7 @@ export const MessageView = memo(function MessageView({
   onKeepInWiki,
   markedUnread = false,
   onReact,
+  onPin,
 }: {
   artifactTarget: ArtifactTarget;
   canAnswer: boolean;
@@ -193,6 +194,8 @@ export const MessageView = memo(function MessageView({
   onKeepInWiki?: (message: ThreadMessage) => void;
   markedUnread?: boolean;
   onReact: (message: ThreadMessage, reaction: MessageReaction) => Promise<void>;
+  /** Pins the message to its channel, or unpins it; absent where there is no pin list. */
+  onPin?: (message: ThreadMessage, pinned: boolean) => Promise<void>;
 }) {
   const { t, i18n } = useLingui();
   // Where work handed to another bot stands: answered, being worked on right now, or waiting.
@@ -287,6 +290,14 @@ export const MessageView = memo(function MessageView({
               {speakerRole}
             </span>
           ) : null}
+          {message.routineName ? (
+            <span
+              data-testid="routine-badge"
+              className="rounded-full border border-border px-2 py-px text-[12px] text-muted-foreground"
+            >
+              {t`Routine “${message.routineName}”`}
+            </span>
+          ) : null}
           <time
             dateTime={message.createdAt}
             className="text-[12px] tabular-nums text-muted-foreground"
@@ -296,6 +307,15 @@ export const MessageView = memo(function MessageView({
               minute: "2-digit",
             })}
           </time>
+          {message.pinnedAt ? (
+            <Pin
+              role="img"
+              aria-label={t`Pinned`}
+              data-testid="pinned-mark"
+              className="size-3 self-center text-muted-foreground"
+              strokeWidth={1.8}
+            />
+          ) : null}
         </div>
       ) : null}
       <ReplyLine
@@ -330,6 +350,7 @@ export const MessageView = memo(function MessageView({
       onKeepInWiki={onKeepInWiki}
       markedUnread={markedUnread}
       onReact={onReact}
+      onPin={onPin}
     />
   );
   if (isNarration) {

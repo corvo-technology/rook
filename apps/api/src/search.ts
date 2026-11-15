@@ -82,13 +82,18 @@ async function findArtifactMessages(
   return new Map(rows.map(({ artifactId, id, seq }) => [artifactId, { id, seq }]));
 }
 
+/** One chat or channel: a search from its header looks only at its own messages. */
+export type SearchWithin = { botId?: string; groupId?: string };
+
 export async function querySpaceSearch(
   prisma: PrismaClient,
   actor: Actor,
   q: string,
+  within?: SearchWithin,
 ): Promise<SearchHit[]> {
   const query = q.trim();
   if (!query) return [];
+  if (within) return searchWithinThread(prisma, actor, query, within);
   // The database side has to match the text the user typed, the way
   // `matchesSearchQuery` does in memory: a `%` or `_` would otherwise widen
   // the match, and a `\` would swallow the character after it.
@@ -374,6 +379,66 @@ export async function querySpaceSearch(
   }
 
   return [...conversationHits, ...contentHits].slice(0, SEARCH_LIMIT);
+}
+
+async function searchWithinThread(
+  prisma: PrismaClient,
+  actor: Actor,
+  query: string,
+  within: SearchWithin,
+): Promise<SearchHit[]> {
+  const group = within.groupId
+    ? await prisma.chatGroup.findFirst({
+        where: { id: within.groupId, spaceId: actor.spaceId, userId: actor.userId },
+        select: { id: true, name: true },
+      })
+    : null;
+  const bot = within.botId
+    ? await prisma.bot.findFirst({
+        where: { id: within.botId, spaceId: actor.spaceId, userId: actor.userId },
+        select: { id: true, name: true },
+      })
+    : null;
+  if (!group && !bot) return [];
+  const match = await messageMatch(prisma, actor.spaceId, query);
+  const hits: SearchHit[] = [];
+  const seen = new Set<string>();
+  const push = (hit: SearchHit) => {
+    const key = `${hit.kind}:${hit.messageId}:${hit.url ?? ""}`;
+    if (seen.has(key) || hits.length >= SEARCH_LIMIT) return;
+    seen.add(key);
+    hits.push(hit);
+  };
+  const thread = group ? Prisma.sql`t."groupId" = ${group.id}` : Prisma.sql`t."botId" = ${bot?.id}`;
+  for (let page = 0; page < match.pages && hits.length < SEARCH_LIMIT; page += 1) {
+    const rows = await openMessages(
+      prisma,
+      await prisma.$queryRaw<Array<{ id: string; seq: number; blocks: Prisma.JsonValue }>>`
+      SELECT m.id, m.seq, m.blocks
+      FROM messages m
+      INNER JOIN threads t ON t.id = m."threadId"
+      WHERE t."spaceId" = ${actor.spaceId}
+        AND t."userId" = ${actor.userId}
+        AND ${thread}
+        AND ${match.sql}
+      ORDER BY m."createdAt" DESC, m.id DESC
+      LIMIT ${match.limit} OFFSET ${page * match.limit}
+    `,
+    );
+    for (const row of rows) {
+      pushMessageHits(row.blocks as MessageBlock[], {
+        ...(group
+          ? { groupId: group.id, groupName: group.name }
+          : { botId: bot?.id, botName: bot?.name }),
+        messageId: row.id,
+        seq: row.seq,
+        query,
+        push,
+      });
+    }
+    if (rows.length < match.limit) break;
+  }
+  return hits;
 }
 
 function pushMessageHits(

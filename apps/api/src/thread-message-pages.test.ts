@@ -7,7 +7,77 @@ import {
   loadMessagePage,
   shouldForwardBackgroundThreadEvent,
   shouldForwardPeerThreadEvent,
+  withEventRoutineName,
+  withRoutineNames,
 } from "./thread-message-pages.js";
+
+describe("routine names", () => {
+  const row = (id: string, runId: string | null) => ({
+    id,
+    threadId: "thread-1",
+    seq: 1,
+    role: "bot",
+    blocks: [{ kind: "text", text: "Bom dia" }],
+    botId: "bot-1",
+    replyToMessageId: null,
+    replyQuote: null,
+    runId,
+    createdAt: new Date("2026-11-10T08:00:00Z"),
+  });
+
+  it("names the routine behind a message's run and leaves other messages alone", async () => {
+    const findMany = vi.fn(async () => [
+      { id: "run-routine", routine: { name: "Conciliação diária" } },
+    ]);
+    const prisma = { run: { findMany } } as unknown as PrismaClient;
+    const messages = await withRoutineNames(prisma, [
+      row("m1", "run-routine"),
+      row("m2", "run-chat"),
+      row("m3", null),
+    ]);
+    expect(messages.map((message) => message.routineName)).toEqual([
+      "Conciliação diária",
+      undefined,
+      undefined,
+    ]);
+    expect(findMany).toHaveBeenCalledTimes(1);
+    expect(findMany).toHaveBeenCalledWith({
+      where: { id: { in: ["run-routine", "run-chat"] }, routineId: { not: null } },
+      select: { id: true, routine: { select: { name: true } } },
+    });
+  });
+
+  it("does not look up runs when no message has one", async () => {
+    const findMany = vi.fn();
+    const prisma = { run: { findMany } } as unknown as PrismaClient;
+    await withRoutineNames(prisma, [row("m1", null)]);
+    expect(findMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("live routine names", () => {
+  it("names the routine on a created message once per run", async () => {
+    const findUnique = vi.fn(async () => ({ routine: { name: "Conciliação diária" } }));
+    const prisma = { run: { findUnique } } as unknown as PrismaClient;
+    const cache = new Map<string, Promise<string | undefined>>();
+    const event = { type: "thread.message.created", runId: "run-1", payload: { messageId: "m1" } };
+    const first = await withEventRoutineName(prisma, event, cache);
+    await withEventRoutineName(prisma, event, cache);
+    expect(first.payload).toEqual({ messageId: "m1", routineName: "Conciliação diária" });
+    expect(findUnique).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves a run of no routine, and every other event, as it was", async () => {
+    const findUnique = vi.fn(async () => ({ routine: null }));
+    const prisma = { run: { findUnique } } as unknown as PrismaClient;
+    const cache = new Map<string, Promise<string | undefined>>();
+    const chat = { type: "thread.message.created", runId: "run-2", payload: {} };
+    expect(await withEventRoutineName(prisma, chat, cache)).toBe(chat);
+    const progress = { type: "thread.progress", runId: "run-3", payload: {} };
+    expect(await withEventRoutineName(prisma, progress, cache)).toBe(progress);
+    expect(findUnique).toHaveBeenCalledTimes(1);
+  });
+});
 
 describe("thread message pages", () => {
   it("caches peer-run classification for live events", async () => {
@@ -419,6 +489,7 @@ describe("thread message pages", () => {
     ]);
     const prisma = {
       message: { findMany, count: vi.fn(async () => 0) },
+      run: { findMany: vi.fn(async () => []) },
     } as unknown as PrismaClient;
 
     const page = await loadMessagePage(
@@ -462,7 +533,7 @@ describe("thread message pages", () => {
         findMany: vi
           .fn()
           .mockResolvedValueOnce([{ id: "run-peer" }])
-          .mockResolvedValueOnce([]),
+          .mockResolvedValue([]),
       },
     } as unknown as PrismaClient;
 
@@ -542,7 +613,7 @@ describe("thread message pages", () => {
         findMany: vi
           .fn()
           .mockResolvedValueOnce([{ id: "run-peer" }])
-          .mockResolvedValueOnce([]),
+          .mockResolvedValue([]),
       },
     } as unknown as PrismaClient;
 

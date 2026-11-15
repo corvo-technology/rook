@@ -69,3 +69,14 @@ it("groups the person's own messages when asked, as a channel does", () => {
   );
   expect([...continued]).toEqual(["me2"]);
 });
+
+it("gives a routine's message its own name line, and a pinned message too", () => {
+  const messages = [
+    say("a", "bot-1", 0),
+    { ...say("b", "bot-1", 1), routineName: "Conciliação diária" },
+    { ...say("c", "bot-1", 2), routineName: "Conciliação diária" },
+    { ...say("d", "bot-1", 3), pinnedAt: "2026-11-10T09:00:00.000Z" },
+    say("e", "bot-1", 4),
+  ];
+  expect([...continuedMessageIds(messages, () => false)]).toEqual(["c", "e"]);
+});

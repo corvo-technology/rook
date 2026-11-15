@@ -34,8 +34,8 @@ test("memory and skills are readable and editable in the app", async ({ page }, 
       { timeout: 30_000 },
     )
     .toBe(retiredContent);
-  await expect(page.getByRole("button", { name: "Allow once", exact: true })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Deny", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Hold to approve", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Not now", exact: true })).toHaveCount(0);
 
   // Space-wide documents live in Settings → Memory. Open that before bot
   // settings so the Knowledge Memory tab cannot steal this click.

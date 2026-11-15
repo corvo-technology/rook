@@ -792,6 +792,10 @@ model Message {
   routing               Json?
   /// Blind-index search tokens for the encrypted blocks; NULL until the row is encrypted.
   searchTokens          Int[]
+  /// When someone pinned the message to the channel header; null when it is not pinned.
+  pinnedAt              DateTime?
+  /// The user who pinned it.
+  pinnedBy              String?
   sourceRuns            Run[]             @relation("RunSourceMessage")
   externalTranscriptFor ExternalMessage?
   steeringMessages      SteeringMessage[]

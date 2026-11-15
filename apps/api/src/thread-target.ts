@@ -356,8 +356,10 @@ async function lockAndLoadGroupMembers(
       },
     },
   });
-  if (!group || group.members.length < GROUP_MEMBER_MIN) throw new IsolationError();
-  return group.members.map((member) => ({
+  // A member whose bot comes back null is hidden from this Space; it is not a member here.
+  const visible = group?.members.filter((member) => member.bot != null) ?? [];
+  if (!group || visible.length < GROUP_MEMBER_MIN) throw new IsolationError();
+  return visible.map((member) => ({
     botId: member.bot.id,
     name: member.bot.name,
     color: member.bot.color,

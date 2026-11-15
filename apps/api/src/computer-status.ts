@@ -43,7 +43,8 @@ export async function resolveBusyBotName(
     hasLease: true,
     leaseExpiresAt: lease.expiresAt,
     runStatus: run?.status,
-    takeoverRequested: lease.computer.controlRunId === lease.runId,
+    // The computer is null when it is out of this Space's reach: no takeover can be pending.
+    takeoverRequested: lease.computer?.controlRunId === lease.runId,
   })
     ? input.botName
     : null;

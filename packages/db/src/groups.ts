@@ -53,6 +53,19 @@ type SpaceGroupRecord = Pick<
   } | null;
 };
 
+/**
+ * A member whose bot the database returns as null: a bot row-level security hides from this
+ * Space (a group listed across Spaces, or a bot that moved), or one deleted under it. It is
+ * not a member anyone can see or talk to, so it never counts toward the minimum either.
+ */
+function visibleMembers<M extends { bot: unknown }, T extends { members: M[] }>(group: T): T;
+function visibleMembers<M extends { bot: unknown }, T extends { members: M[] }>(
+  group: T | null,
+): T | null;
+function visibleMembers<M extends { bot: unknown }, T extends { members: M[] }>(group: T | null) {
+  return group && { ...group, members: group.members.filter((member) => member.bot != null) };
+}
+
 function mapGroupMembers(members: GroupRecord["members"]): GroupMember[] {
   return members.map((member) => ({
     botId: member.bot.id,
@@ -346,6 +359,7 @@ export function createGroupRepos(prisma: PrismaClient) {
       groups.flatMap((group) => (group.thread ? [group.thread] : [])),
     );
     return groups
+      .map((group) => visibleMembers(group))
       .filter((group) => hasMinimumActiveMembers(group.members))
       .map((group) =>
         mapSpaceGroup({
@@ -384,6 +398,7 @@ export function createGroupRepos(prisma: PrismaClient) {
       1,
     );
     return (await withMemberUnread(actor, groups))
+      .map((group) => visibleMembers(group))
       .filter(
         (group) =>
           group.archivedAt !== null ||
@@ -409,6 +424,7 @@ export function createGroupRepos(prisma: PrismaClient) {
         1,
       );
       return (await withMemberUnread(actor, groups))
+        .map((group) => visibleMembers(group))
         .filter((group) => hasMinimumActiveMembers(group.members))
         .map((group) => mapGroup(group as GroupRecord));
     },
@@ -416,30 +432,34 @@ export function createGroupRepos(prisma: PrismaClient) {
     listSpaceGroupsForSpaces,
 
     async getGroup(actor: Actor, groupId: string, options: { includeArchived?: boolean } = {}) {
-      const group = await prisma.chatGroup.findFirst({
-        where: {
-          id: groupId,
-          spaceId: actor.spaceId,
-          ...(options.includeArchived ? {} : { archivedAt: null }),
-          ...channelVisibleTo(actor.userId),
-        },
-        include: groupInclude,
-      });
+      const group = visibleMembers(
+        await prisma.chatGroup.findFirst({
+          where: {
+            id: groupId,
+            spaceId: actor.spaceId,
+            ...(options.includeArchived ? {} : { archivedAt: null }),
+            ...channelVisibleTo(actor.userId),
+          },
+          include: groupInclude,
+        }),
+      );
       if (!group || !hasMinimumActiveMembers(group.members)) throw new IsolationError();
       const [withUnread] = await withMemberUnread(actor, [group]);
       return (await attachNewestGroupMessage(prisma, withUnread!)) as GroupRecord;
     },
 
     async getGroupTarget(actor: Actor, groupId: string) {
-      const group = await prisma.chatGroup.findFirst({
-        where: {
-          id: groupId,
-          spaceId: actor.spaceId,
-          archivedAt: null,
-          ...channelVisibleTo(actor.userId),
-        },
-        include: groupTargetInclude,
-      });
+      const group = visibleMembers(
+        await prisma.chatGroup.findFirst({
+          where: {
+            id: groupId,
+            spaceId: actor.spaceId,
+            archivedAt: null,
+            ...channelVisibleTo(actor.userId),
+          },
+          include: groupTargetInclude,
+        }),
+      );
       if (!group || !hasMinimumActiveMembers(group.members)) throw new IsolationError();
       return group;
     },

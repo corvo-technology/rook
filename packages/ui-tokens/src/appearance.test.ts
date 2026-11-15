@@ -202,6 +202,10 @@ describe.each([
     ["primaryForeground", "primary"],
     ["sidebarForeground", "sidebar"],
     ["sidebarAccentForeground", "sidebarAccent"],
+    // Role and time text in a conversation, and the muted rows of the sidebar.
+    ["mutedForeground", "background"],
+    ["mutedForeground", "sidebar"],
+    ["mutedForeground", "sidebarAccent"],
     ["link", "background"],
     ["link", "card"],
     ["destructive", "background"],

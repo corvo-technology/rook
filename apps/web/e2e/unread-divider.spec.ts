@@ -50,10 +50,9 @@ test("a chat opens with a New divider above replies that arrived while away", as
   await expect(divider).toContainText("New messages");
   // The user's own question stays above the line; Chief's reply starts the new part.
   const lastSeen = divider.locator("xpath=preceding-sibling::div[@data-message-id][1]");
-  await expect(lastSeen).toHaveText(question);
-  await expect(lastSeen.locator(".justify-end").first()).toBeVisible();
+  await expect(lastSeen).toContainText(question);
   const firstNew = divider.locator("xpath=following-sibling::div[@data-message-id][1]");
-  await expect(firstNew.locator(".justify-start").first()).toBeVisible();
+  await expect(firstNew.getByTestId("message-bot-bubble").first()).toBeVisible();
   // It opens at the latest message, not at the divider.
   await expect(page.getByRole("button", { name: "Jump to latest" })).toHaveCount(0);
   await captureScreenshot(page, testInfo, "chat-unread-divider");

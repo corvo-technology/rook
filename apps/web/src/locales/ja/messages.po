@@ -650,6 +650,7 @@ msgid "Active"
 msgstr "有効"
 
 #: src/pages/ActivityPage.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-header.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Activity"
@@ -908,6 +909,7 @@ msgstr "エージェントのコンピューター"
 #: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/channel-members.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/Store.tsx
 msgid "Agents"
@@ -1142,6 +1144,7 @@ msgstr "承認モデル"
 
 #: src/pages/ApprovalsPage.tsx
 #: src/pages/Settings.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Approvals"
@@ -1200,6 +1203,7 @@ msgstr "引数"
 
 #: src/pages/Artifacts.tsx
 #: src/pages/PartnerTemplateEditor.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Artifacts"
 msgstr "成果物"
@@ -1594,6 +1598,7 @@ msgid "Changing…"
 msgstr "変更中…"
 
 #: src/pages/Shell.tsx
+#: src/pages/shell/command-palette.tsx
 msgid "Channels"
 msgstr "チャンネル"
 
@@ -3711,6 +3716,11 @@ msgstr "音声を準備しています（{size} MB）。初回のみです。"
 msgid "Git event"
 msgstr "Gitイベント"
 
+#: src/pages/shell/command-palette.tsx
+#: src/pages/shell/sidebar-team.tsx
+msgid "Go to…"
+msgstr "移動…"
+
 #: src/pages/shell/composer.tsx
 msgid "Goes to {recipient}"
 msgstr "{recipient} に届きます"
@@ -4969,7 +4979,6 @@ msgstr "認証なし"
 msgid "No authentication"
 msgstr "認証なし"
 
-#: src/pages/shell/command-palette.tsx
 #: src/pages/TeamBoard.tsx
 msgid "No bots"
 msgstr "ボットなし"
@@ -5044,6 +5053,7 @@ msgid "No remote MCP servers found"
 msgstr "リモートMCPサーバーが見つかりません"
 
 #: src/pages/model-settings/providers-section.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/SpaceSearch.tsx
 #: src/pages/Store.tsx
 msgid "No results"
@@ -5145,6 +5155,7 @@ msgstr "記憶はまだありません"
 msgid "Nothing to approve"
 msgstr "承認待ちはありません"
 
+#: src/components/SidebarFooter.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Notifications"
 msgstr "通知"
@@ -5402,6 +5413,10 @@ msgstr "ページの本文"
 msgid "PagerDuty incident"
 msgstr "PagerDutyインシデント"
 
+#: src/pages/shell/command-palette.tsx
+msgid "Pages"
+msgstr "ページ"
+
 #: src/pages/Settings.tsx
 msgid "Partnership"
 msgstr "パートナーシップ"
@@ -5497,6 +5512,7 @@ msgid "Pawn"
 msgstr "ポーン"
 
 #: src/pages/shell/channel-members.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/StoreCategoryChips.tsx
@@ -6171,6 +6187,7 @@ msgstr "ルーティン「{0}」"
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Routines"
 msgstr "ルーティン"
@@ -6383,13 +6400,13 @@ msgstr "アプリを検索"
 msgid "Search artifacts…"
 msgstr "アーティファクトを検索…"
 
-#: src/pages/shell/command-palette.tsx
-msgid "Search bots and switch conversations"
-msgstr "ボットを検索して会話を切り替え"
-
 #: src/pages/Store.tsx
 msgid "Search by domain"
 msgstr "ドメインで検索"
+
+#: src/pages/shell/command-palette.tsx
+msgid "Search channels, agents, people and pages"
+msgstr "チャンネル、エージェント、メンバー、ページを検索"
 
 #: src/pages/shell/channel-find.tsx
 msgid "Search in #{channelName}"
@@ -6766,15 +6783,11 @@ msgstr "スペースを書き出しました。"
 msgid "Spaces"
 msgstr "スペース"
 
-#: src/pages/shell/message-view.tsx
-msgid "Speak"
-msgstr "読み上げ"
-
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Speak only"
 msgstr "読み上げのみ"
 
-#: src/pages/shell/message-view.tsx
+#: src/pages/shell/message-hover-actions.tsx
 msgid "Speak this reply"
 msgstr "この返信を読み上げ"
 
@@ -6849,7 +6862,6 @@ msgstr "今も正しい？"
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/computer-overlay.tsx
-#: src/pages/shell/message-view.tsx
 msgid "Stop"
 msgstr "停止"
 
@@ -6861,7 +6873,7 @@ msgstr "確認をやめる"
 msgid "Stop computer"
 msgstr "コンピューターを停止"
 
-#: src/pages/shell/message-view.tsx
+#: src/pages/shell/message-hover-actions.tsx
 msgid "Stop speaking"
 msgstr "読み上げを停止"
 
@@ -6949,10 +6961,6 @@ msgstr "画像に対応"
 msgid "Supports thinking"
 msgstr "思考に対応"
 
-#: src/pages/shell/command-palette.tsx
-msgid "Switch bot"
-msgstr "ボットを切り替え"
-
 #: src/pages/shell/space-switcher.tsx
 msgid "Switch space"
 msgstr "スペースを切り替え"
@@ -6987,6 +6995,7 @@ msgid "Task settings"
 msgstr "タスクの設定"
 
 #: src/pages/Board.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Tasks"
 msgstr "タスク"
@@ -7004,6 +7013,7 @@ msgid "Teaching in progress. Stop teaching before sending a new message."
 msgstr "ティーチング中です。新しいメッセージを送信する前にティーチングを停止してください。"
 
 #: src/pages/shell/bot-panel.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/TeamPage.tsx
 msgid "Team"
@@ -7562,6 +7572,7 @@ msgstr "緊急"
 
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/Settings.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/Usage.tsx
 msgid "Usage"
@@ -7689,6 +7700,10 @@ msgstr "確認中…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "バージョン"
+
+#: src/pages/shell/message-view.tsx
+msgid "via {relayedVia}"
+msgstr "{relayedVia} 経由"
 
 #: src/pages/SpaceRolesSettings.tsx
 msgid "View usage"
@@ -7869,6 +7884,7 @@ msgstr "{name} と話せる人"
 msgid "Who sees this channel"
 msgstr "このチャンネルを見られる人"
 
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/WikiPage.tsx
 msgid "Wiki"
@@ -7887,6 +7903,7 @@ msgid "Work"
 msgstr "仕事"
 
 #: src/pages/PartnerTemplateEditor.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/Workflows.tsx
 msgid "Workflows"

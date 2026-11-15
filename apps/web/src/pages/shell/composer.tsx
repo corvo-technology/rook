@@ -605,7 +605,7 @@ export const Composer = memo(function Composer({
       {recipientMember ? (
         <div
           data-testid="group-recipient"
-          className="mb-1 flex items-center gap-1.5 px-1 text-[12.5px] text-muted-foreground"
+          className="mb-1 flex items-center gap-1.5 px-1 text-meta text-muted-foreground"
         >
           <BotAvatar color={recipientMember.color} identity={recipientMember.botId} size={16} />
           <span dir="auto">{t`Goes to ${recipient}`}</span>
@@ -616,7 +616,7 @@ export const Composer = memo(function Composer({
           data-testid="agent-drop-choice"
           className="mb-3 flex items-center gap-3 rounded-[14px] border border-border bg-card px-4 py-2"
         >
-          <span className="min-w-0 flex-1 text-[13.5px] text-foreground">
+          <span className="min-w-0 flex-1 text-body2 text-foreground">
             {t`Import this agent as a bot?`}
           </span>
           <Button
@@ -643,7 +643,7 @@ export const Composer = memo(function Composer({
         </div>
       ) : null}
       {attachmentNotice ? (
-        <div className="mb-3 rounded-[14px] border border-warning/40 bg-warning/10 px-4 py-2 text-[13px] text-warning">
+        <div className="mb-3 rounded-[14px] border border-warning/40 bg-warning/10 px-4 py-2 text-body2 text-warning">
           {attachmentNotice}
         </div>
       ) : null}
@@ -652,7 +652,7 @@ export const Composer = memo(function Composer({
           {pendingAttachments.map((attachment) => (
             <div
               key={attachment.id}
-              className="flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1.5 text-[13px] text-foreground/75"
+              className="flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1.5 text-body2 text-foreground/75"
             >
               {attachment.previewUrl ? (
                 <img
@@ -705,10 +705,10 @@ export const Composer = memo(function Composer({
             >
               <Box size={16} strokeWidth={1.7} className="mt-0.5 shrink-0 text-muted-foreground" />
               <span className="min-w-0">
-                <span dir="auto" className="block text-[14px] text-foreground">
+                <span dir="auto" className="block text-message text-foreground">
                   {skill.name}
                 </span>
-                <span dir="auto" className="block truncate text-[12.5px] text-muted-foreground">
+                <span dir="auto" className="block truncate text-meta text-muted-foreground">
                   {truncateSlashDescription(skill.description)}
                 </span>
               </span>
@@ -725,7 +725,7 @@ export const Composer = memo(function Composer({
                 className="flex w-full items-center gap-3 px-4 py-2.5 text-start hover:bg-accent"
               >
                 <Settings size={16} strokeWidth={1.7} className="shrink-0 text-muted-foreground" />
-                <span className="text-[14px] text-foreground">{label}</span>
+                <span className="text-message text-foreground">{label}</span>
               </button>
             );
           })}
@@ -869,7 +869,7 @@ export const Composer = memo(function Composer({
             autoComplete="off"
             dir="auto"
             rows={1}
-            className="rk-scroll max-h-25 min-h-[24px] min-w-[8rem] flex-1 resize-none overflow-y-auto bg-transparent py-0.5 text-body1 text-foreground outline-none placeholder:text-muted-foreground disabled:opacity-40"
+            className="rk-scroll max-h-25 min-h-[24px] min-w-[8rem] flex-1 resize-none overflow-y-auto bg-transparent py-0.5 text-message text-foreground outline-none placeholder:text-muted-foreground disabled:opacity-40"
           />
         </div>
         <div

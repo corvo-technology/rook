@@ -148,9 +148,9 @@ export function DirectChat({
           </Button>
         ) : null}
         <PersonAvatar name={partner.name} image={partner.image} size={28} />
-        <h1 className="text-[15px] font-semibold">{partner.name}</h1>
+        <h1 className="text-name font-semibold">{partner.name}</h1>
       </div>
-      <div className="rk-scroll flex min-h-0 flex-1 flex-col gap-[18px] overflow-y-auto px-6 py-5">
+      <div className="rk-scroll flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-6 py-5">
         {thread.data.messages.map((message) => {
           const mine = message.authorUserId === currentUserId;
           const name = mine ? (message.authorName ?? t`You`) : partner.name;
@@ -158,19 +158,19 @@ export function DirectChat({
             <div
               key={message.id}
               data-testid="direct-message"
-              className="grid max-w-[860px] grid-cols-[36px_minmax(0,1fr)] gap-3"
+              className="-mx-2 grid max-w-[860px] grid-cols-[32px_minmax(0,1fr)] gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted/50 motion-reduce:transition-none"
             >
               <PersonAvatar
                 name={name}
                 image={mine ? message.authorImage : partner.image}
-                size={36}
+                size={32}
               />
-              <div className="flex min-w-0 flex-col gap-1.5">
+              <div className="flex min-w-0 flex-col">
                 <span className="flex items-baseline gap-2">
-                  <span className="text-[15px] font-semibold">{name}</span>
+                  <span className="text-name font-semibold">{name}</span>
                   <time
                     dateTime={message.createdAt}
-                    className="text-[12px] tabular-nums text-muted-foreground"
+                    className="text-meta tabular-nums text-muted-foreground"
                   >
                     {new Date(message.createdAt).toLocaleTimeString(undefined, {
                       hour: "numeric",
@@ -178,7 +178,7 @@ export function DirectChat({
                     })}
                   </time>
                 </span>
-                <div className="text-body1 text-foreground">
+                <div className="text-message text-foreground">
                   <ChatMarkdown>{textOf(message)}</ChatMarkdown>
                 </div>
               </div>

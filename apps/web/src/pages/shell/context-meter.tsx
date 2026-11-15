@@ -51,10 +51,10 @@ export function ContextMeter({ botId, running }: { botId: string; running: boole
           render={
             <Button
               variant="ghost"
-              size="icon"
+              size="icon-sm"
               data-testid="context-meter"
               aria-label={t`Context`}
-              className="app-no-drag"
+              className="app-no-drag size-8"
             />
           }
         >

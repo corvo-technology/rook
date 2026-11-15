@@ -650,6 +650,7 @@ msgid "Active"
 msgstr "启用"
 
 #: src/pages/ActivityPage.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-header.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Activity"
@@ -908,6 +909,7 @@ msgstr "Agent 电脑"
 #: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/channel-members.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/Store.tsx
 msgid "Agents"
@@ -1142,6 +1144,7 @@ msgstr "审批模型"
 
 #: src/pages/ApprovalsPage.tsx
 #: src/pages/Settings.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Approvals"
@@ -1200,6 +1203,7 @@ msgstr "参数"
 
 #: src/pages/Artifacts.tsx
 #: src/pages/PartnerTemplateEditor.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Artifacts"
 msgstr "产物"
@@ -1594,6 +1598,7 @@ msgid "Changing…"
 msgstr "正在修改…"
 
 #: src/pages/Shell.tsx
+#: src/pages/shell/command-palette.tsx
 msgid "Channels"
 msgstr "频道"
 
@@ -3711,6 +3716,11 @@ msgstr "正在准备语音（{size} MB）。只需一次。"
 msgid "Git event"
 msgstr "Git 事件"
 
+#: src/pages/shell/command-palette.tsx
+#: src/pages/shell/sidebar-team.tsx
+msgid "Go to…"
+msgstr "前往…"
+
 #: src/pages/shell/composer.tsx
 msgid "Goes to {recipient}"
 msgstr "将发送给 {recipient}"
@@ -4969,7 +4979,6 @@ msgstr "无认证"
 msgid "No authentication"
 msgstr "无认证"
 
-#: src/pages/shell/command-palette.tsx
 #: src/pages/TeamBoard.tsx
 msgid "No bots"
 msgstr "没有机器人"
@@ -5044,6 +5053,7 @@ msgid "No remote MCP servers found"
 msgstr "未找到远程 MCP 服务器"
 
 #: src/pages/model-settings/providers-section.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/SpaceSearch.tsx
 #: src/pages/Store.tsx
 msgid "No results"
@@ -5145,6 +5155,7 @@ msgstr "暂无记忆"
 msgid "Nothing to approve"
 msgstr "没有待批准的内容"
 
+#: src/components/SidebarFooter.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Notifications"
 msgstr "通知"
@@ -5402,6 +5413,10 @@ msgstr "页面正文"
 msgid "PagerDuty incident"
 msgstr "PagerDuty 事件"
 
+#: src/pages/shell/command-palette.tsx
+msgid "Pages"
+msgstr "页面"
+
 #: src/pages/Settings.tsx
 msgid "Partnership"
 msgstr "合作关系"
@@ -5497,6 +5512,7 @@ msgid "Pawn"
 msgstr "兵"
 
 #: src/pages/shell/channel-members.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/StoreCategoryChips.tsx
@@ -6171,6 +6187,7 @@ msgstr "例行任务“{0}”"
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Routines"
 msgstr "例行任务"
@@ -6383,13 +6400,13 @@ msgstr "搜索应用"
 msgid "Search artifacts…"
 msgstr "搜索产物…"
 
-#: src/pages/shell/command-palette.tsx
-msgid "Search bots and switch conversations"
-msgstr "搜索机器人并切换对话"
-
 #: src/pages/Store.tsx
 msgid "Search by domain"
 msgstr "按域名搜索"
+
+#: src/pages/shell/command-palette.tsx
+msgid "Search channels, agents, people and pages"
+msgstr "搜索频道、智能体、成员和页面"
 
 #: src/pages/shell/channel-find.tsx
 msgid "Search in #{channelName}"
@@ -6766,15 +6783,11 @@ msgstr "空间已导出。"
 msgid "Spaces"
 msgstr "工作区"
 
-#: src/pages/shell/message-view.tsx
-msgid "Speak"
-msgstr "朗读"
-
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Speak only"
 msgstr "仅朗读"
 
-#: src/pages/shell/message-view.tsx
+#: src/pages/shell/message-hover-actions.tsx
 msgid "Speak this reply"
 msgstr "朗读这条回复"
 
@@ -6849,7 +6862,6 @@ msgstr "仍然正确吗？"
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/computer-overlay.tsx
-#: src/pages/shell/message-view.tsx
 msgid "Stop"
 msgstr "停止"
 
@@ -6861,7 +6873,7 @@ msgstr "不再询问"
 msgid "Stop computer"
 msgstr "停止电脑"
 
-#: src/pages/shell/message-view.tsx
+#: src/pages/shell/message-hover-actions.tsx
 msgid "Stop speaking"
 msgstr "停止朗读"
 
@@ -6949,10 +6961,6 @@ msgstr "支持图片"
 msgid "Supports thinking"
 msgstr "支持思考"
 
-#: src/pages/shell/command-palette.tsx
-msgid "Switch bot"
-msgstr "切换机器人"
-
 #: src/pages/shell/space-switcher.tsx
 msgid "Switch space"
 msgstr "切换空间"
@@ -6987,6 +6995,7 @@ msgid "Task settings"
 msgstr "任务设置"
 
 #: src/pages/Board.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Tasks"
 msgstr "任务"
@@ -7004,6 +7013,7 @@ msgid "Teaching in progress. Stop teaching before sending a new message."
 msgstr "正在示范，发送新消息前请先停止示范。"
 
 #: src/pages/shell/bot-panel.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/TeamPage.tsx
 msgid "Team"
@@ -7562,6 +7572,7 @@ msgstr "紧急"
 
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/Settings.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/Usage.tsx
 msgid "Usage"
@@ -7689,6 +7700,10 @@ msgstr "正在校验…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "版本"
+
+#: src/pages/shell/message-view.tsx
+msgid "via {relayedVia}"
+msgstr "经由 {relayedVia}"
 
 #: src/pages/SpaceRolesSettings.tsx
 msgid "View usage"
@@ -7869,6 +7884,7 @@ msgstr "谁可以与 {name} 对话"
 msgid "Who sees this channel"
 msgstr "谁可以查看此频道"
 
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/WikiPage.tsx
 msgid "Wiki"
@@ -7887,6 +7903,7 @@ msgid "Work"
 msgstr "工作"
 
 #: src/pages/PartnerTemplateEditor.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/Workflows.tsx
 msgid "Workflows"

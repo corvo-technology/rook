@@ -9,11 +9,24 @@ import type {
   ThreadMessage,
 } from "@corvo/contracts";
 import { BOT_COLOR_LIST, foldPeerReplies, foldThreadReplies } from "@corvo/core";
+import { BotAvatar, Button } from "@corvo/ui-web";
 import { I18nProvider } from "@lingui/react";
+import {
+  Activity,
+  CalendarClock,
+  Home,
+  ListChecks,
+  Monitor,
+  ShieldCheck,
+  Users,
+  Workflow,
+} from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { SidebarFooter } from "../../src/components/SidebarFooter";
 import { bootstrapI18n, i18n } from "../../src/lib/i18n";
 import { applyResolvedAppearance } from "../../src/lib/ui-appearance";
+import { ChatModelPicker } from "../../src/pages/shell/chat-model-picker";
 import "../../src/styles.css";
 import { ChannelFind, pinSignature } from "../../src/pages/shell/channel-find";
 import { ChannelHeader } from "../../src/pages/shell/channel-header";
@@ -29,6 +42,8 @@ import { Transcript } from "../../src/pages/shell/transcript";
 // state lives in the URL (?theme).
 
 const params = new URLSearchParams(location.search);
+// `?view=agent` is a chat with one agent, the same rows as the channel.
+const agentView = params.get("view") === "agent";
 applyResolvedAppearance(params.get("theme") === "dark" ? "dark" : "light");
 
 const color = (id: string) => BOT_COLOR_LIST.find((item) => item.id === id)?.hex ?? "#3B82F6";
@@ -52,6 +67,7 @@ const BOTS = [
   agent("bento", "Bento", "Finance", color("blue")),
   agent("cora", "Cora", "Reports", color("green")),
   agent("davi", "Davi", "Sales", color("pink")),
+  agent("cto", "CTO", "Engineering", color("orange")),
 ];
 const MEMBERS: GroupMember[] = BOTS.slice(0, 3).map((bot) => ({
   botId: bot.id,
@@ -184,6 +200,36 @@ const report = message(
 );
 const MESSAGES = [morning, question, found, thanks, close, report];
 
+// A chat with the Chief: the person asks, the Chief answers, and CTO's reply is relayed through it.
+const askChief = message("user", [said("Is the deploy finished? Ask the CTO if you need to.")], {
+  authorUserId: ME,
+  authorName: "Pedro Henrique",
+});
+const chiefAnswer = message(
+  "bot",
+  [said("Checking with the CTO now. I will come back with the result.")],
+  { botId: "chief" },
+);
+const relayed = message(
+  "bot",
+  [
+    {
+      kind: "bot_message_received",
+      fromBotId: "cto",
+      fromBotName: "CTO",
+      text: "Deploy is green",
+      intent: "result",
+    },
+  ],
+  { botId: "chief" },
+);
+const chiefDone = message(
+  "bot",
+  [said("Done: the deploy is green and the three mismatches are in the report.")],
+  { botId: "chief" },
+);
+const AGENT_MESSAGES = [askChief, chiefAnswer, relayed, chiefDone];
+
 const noop = () => {};
 const resolved = async () => {};
 const groups = sidebarGroupsForSpaces(
@@ -201,7 +247,7 @@ const groups = sidebarGroupsForSpaces(
 );
 
 function Canvas() {
-  const [messages] = useState(MESSAGES);
+  const [messages] = useState(agentView ? AGENT_MESSAGES : MESSAGES);
   const scrollRef = useRef<HTMLDivElement>(null);
   const anchor = useRef<HTMLElement | null>(null);
   const transcript = useMemo(
@@ -223,16 +269,23 @@ function Canvas() {
         />
         <SidebarNav
           items={[
-            { key: "home", label: "Home", to: "/app/chief" },
-            { key: "approvals", label: "Approvals", to: "/app/approvals", badge: 1 },
-            { key: "tasks", label: "Tasks", to: "/app/board" },
-            { key: "routines", label: "Routines", to: "/app/routines" },
-            { key: "activity", label: "Activity", to: "/app/activity" },
-            { key: "team", label: "Team", to: "/app/team" },
+            { key: "home", label: "Home", to: "/app/chief", icon: Home },
+            {
+              key: "approvals",
+              label: "Approvals",
+              to: "/app/approvals",
+              icon: ShieldCheck,
+              badge: 1,
+            },
+            { key: "tasks", label: "Tasks", to: "/app/board", icon: ListChecks },
+            { key: "routines", label: "Routines", to: "/app/routines", icon: CalendarClock },
+            { key: "activity", label: "Activity", to: "/app/activity", icon: Activity },
+            { key: "team", label: "Team", to: "/app/team", icon: Users },
           ]}
-          more={[{ key: "workflows", label: "Workflows", to: "/app/workflows" }]}
-          pathname="/app/chief"
+          more={[{ key: "workflows", label: "Workflows", to: "/app/workflows", icon: Workflow }]}
+          pathname={agentView ? "/app/chief" : "/app/team"}
           onOpen={noop}
+          onQuickSwitch={noop}
         />
         <div className="flex flex-col gap-0.5 px-2.5">
           <SidebarRoster
@@ -251,9 +304,9 @@ function Canvas() {
             setRenameSectionTarget={noop}
             setDeleteSectionTarget={noop}
             toggleSidebarSection={noop}
-            inGroup
-            active={undefined}
-            activeGroup={GROUPS[0]}
+            inGroup={!agentView}
+            active={agentView ? BOTS[0] : undefined}
+            activeGroup={agentView ? undefined : GROUPS[0]}
             botsSidebarDensity="comfortable"
             dismissedRunErrorIds={new Set()}
             displayedRunError={null}
@@ -267,35 +320,78 @@ function Canvas() {
           />
           <SidebarPeople people={DIRECT} onOpen={noop} />
         </div>
+        <div className="mt-auto" />
+        <SidebarFooter
+          name="Pedro Henrique"
+          initials="PH"
+          open={false}
+          onOpenChange={noop}
+          onIntegrations={noop}
+          onSettings={noop}
+          onLogOut={noop}
+          signingOut={false}
+          logOutError={null}
+          onActivity={noop}
+        />
       </aside>
       <div className="relative flex min-w-0 flex-1 flex-col">
-        <ChannelHeader
-          name="finance"
-          purpose="Close, accounts and reconciliation"
-          members={MEMBERS}
-          peopleCount={PEOPLE.length}
-          membersOpen
-          onOpenMembers={noop}
-          onOpenNavigation={noop}
-          onOpenSettings={noop}
-          onOpenSquad={noop}
-          find={
-            <ChannelFind
-              groupId="group-1"
-              channelName="finance"
-              pins={pinSignature(messages)}
-              memberName={(botId) => bot(botId)?.name}
-              onJump={noop}
-            />
-          }
-        />
-        <main className="flex min-h-0 flex-1 flex-col pt-12">
+        {agentView ? (
+          <div className="flex shrink-0 items-center gap-3 border-b border-border bg-background px-[22px] py-1.5">
+            <BotAvatar color={BOTS[0]!.color} identity="chief" size={26} />
+            <span className="flex items-baseline gap-2">
+              <span className="text-name font-semibold">Chief</span>
+              <span className="text-meta text-muted-foreground">Team chief</span>
+            </span>
+            <div className="ms-auto flex items-center gap-1">
+              <ChatModelPicker
+                chip
+                id="canvas-model"
+                choices={[
+                  { key: "gpt", label: "GPT-5.6 Terra (OpenAI)" },
+                  { key: "x", label: "Other" },
+                ]}
+                value="gpt"
+                onChange={noop}
+              />
+              <Button variant="ghost" size="icon-sm" className="size-8" aria-label="Agent computer">
+                <Monitor className="size-4" strokeWidth={1.6} />
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <ChannelHeader
+            name="finance"
+            purpose="Close, accounts and reconciliation"
+            members={MEMBERS}
+            peopleCount={PEOPLE.length}
+            membersOpen
+            onOpenMembers={noop}
+            onOpenNavigation={noop}
+            onOpenSettings={noop}
+            onOpenSquad={noop}
+            find={
+              <ChannelFind
+                groupId="group-1"
+                channelName="finance"
+                pins={pinSignature(messages)}
+                memberName={(botId) => bot(botId)?.name}
+                onJump={noop}
+              />
+            }
+          />
+        )}
+        <main className={`flex min-h-0 flex-1 flex-col ${agentView ? "" : "pt-12"}`}>
           <Transcript
-            artifactTarget={{ groupId: "group-1" }}
+            artifactTarget={agentView ? { botId: "chief" } : { groupId: "group-1" }}
+            intro={
+              agentView
+                ? { id: "chief", name: "Chief", title: "Team chief", color: BOTS[0]!.color }
+                : undefined
+            }
             showToolActivity
             currentUserId={ME}
             personRole={(userId) => (userId ? ROLE_NAME[userId] : undefined)}
-            answerableAskIds={new Set([report.id])}
+            answerableAskIds={new Set(agentView ? [] : [report.id])}
             dismissableAskIds={new Set()}
             onOpenBot={noop}
             onAnswer={resolved}
@@ -304,12 +400,12 @@ function Canvas() {
             onJumpToMessage={noop}
             onOpenPeerMessages={noop}
             memberName={(botId) => bot(botId)?.name}
-            members={MEMBERS}
+            members={agentView ? undefined : MEMBERS}
             peerBot={(botId) => bot(botId) ?? BOTS[0]!}
             onRefresh={resolved}
             onBotChanged={resolved}
             onAddRoutine={noop}
-            voiceReady={false}
+            voiceReady={agentView}
             speakingMessageId={null}
             onSpeak={noop}
             onOpenComputer={noop}
@@ -328,27 +424,29 @@ function Canvas() {
           />
         </main>
       </div>
-      <aside className="w-[300px] shrink-0 border-s border-border bg-sidebar px-4 py-5">
-        <ChannelMembersPanel
-          members={PEOPLE}
-          roles={ROLES}
-          people={{ restricted: false, userIds: [], canManage: true }}
-          agents={MEMBERS.map((member) => ({
-            id: member.botId,
-            name: member.name,
-            color: member.color,
-            title: bot(member.botId)?.title ?? "",
-          }))}
-          allAgents={BOTS}
-          currentUserId={ME}
-          onClose={noop}
-          onAddPeople={noop}
-          onAddAgent={noop}
-          onRemovePerson={noop}
-          onMakePrivate={noop}
-          onOpenToEveryone={noop}
-        />
-      </aside>
+      {agentView ? null : (
+        <aside className="w-[300px] shrink-0 border-s border-border bg-sidebar px-4 py-5">
+          <ChannelMembersPanel
+            members={PEOPLE}
+            roles={ROLES}
+            people={{ restricted: false, userIds: [], canManage: true }}
+            agents={MEMBERS.map((member) => ({
+              id: member.botId,
+              name: member.name,
+              color: member.color,
+              title: bot(member.botId)?.title ?? "",
+            }))}
+            allAgents={BOTS}
+            currentUserId={ME}
+            onClose={noop}
+            onAddPeople={noop}
+            onAddAgent={noop}
+            onRemovePerson={noop}
+            onMakePrivate={noop}
+            onOpenToEveryone={noop}
+          />
+        </aside>
+      )}
     </div>
   );
 }

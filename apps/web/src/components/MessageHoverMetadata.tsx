@@ -1,29 +1,26 @@
 import type { ReactNode } from "react";
 
+/**
+ * The actions of a message: a small toolbar over the row's top corner on pointers that hover, shown
+ * while the row is pointed at or holds focus (so the keyboard reaches it), and in flow below the
+ * message on touch.
+ */
 export function MessageHoverMetadata({
-  side,
   pinned = false,
   children,
 }: {
-  side: "start" | "end";
   pinned?: boolean;
   children: ReactNode;
 }) {
-  // Touch shows the rail in-flow below the bubble; hover-capable pointers reveal it beside the bubble on demand.
+  const fine = "[@media(hover:hover)_and_(pointer:fine)]";
   const reveal = pinned
     ? "pointer-events-auto opacity-100"
-    : "pointer-events-auto opacity-100 [@media(hover:hover)_and_(pointer:fine)]:pointer-events-none [@media(hover:hover)_and_(pointer:fine)]:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover/message:pointer-events-auto [@media(hover:hover)_and_(pointer:fine)]:group-hover/message:opacity-100 [@media(hover:hover)_and_(pointer:fine)]:focus-within:pointer-events-auto [@media(hover:hover)_and_(pointer:fine)]:focus-within:opacity-100";
+    : `pointer-events-auto opacity-100 ${fine}:pointer-events-none ${fine}:opacity-0 ${fine}:group-hover/message:pointer-events-auto ${fine}:group-hover/message:opacity-100 ${fine}:focus-within:pointer-events-auto ${fine}:focus-within:opacity-100`;
 
   return (
     <div
       data-testid="message-hover-rail"
-      className={`absolute top-1/2 z-10 flex -translate-y-1/2 items-center transition-opacity ${reveal} ${
-        side === "end" ? "start-full ms-1" : "end-full me-1"
-      } [@media(hover:none)]:static [@media(hover:none)]:mt-1 [@media(hover:none)]:w-full [@media(hover:none)]:translate-y-0 ${
-        side === "end"
-          ? "[@media(hover:none)]:ms-0 [@media(hover:none)]:justify-start"
-          : "[@media(hover:none)]:me-0 [@media(hover:none)]:justify-end"
-      }`}
+      className={`z-10 flex items-center transition-opacity ${reveal} ${fine}:absolute ${fine}:end-2 ${fine}:-top-3 ${fine}:rounded-md ${fine}:border ${fine}:border-border ${fine}:bg-popover ${fine}:p-0.5 ${fine}:shadow-raised [@media(hover:none)]:mt-1 [@media(hover:none)]:w-full [@media(hover:none)]:justify-start`}
     >
       {children}
     </div>

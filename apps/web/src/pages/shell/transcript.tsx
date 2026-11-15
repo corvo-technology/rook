@@ -20,7 +20,7 @@ import { i18n } from "@lingui/core";
 import { plural } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
 import { ArrowDown } from "lucide-react";
-import type { CSSProperties, RefObject } from "react";
+import type { RefObject } from "react";
 import {
   Fragment,
   memo,
@@ -55,13 +55,6 @@ import type { MessageFace } from "./message-view";
 import { MessageView } from "./message-view";
 import { QuoteSelectionButton } from "./quote-selection-button";
 
-/** Bubbles stop at a readable line length instead of stretching with wide windows. */
-export function bubbleFrameWidth(role: ThreadMessage["role"]) {
-  return role === "user"
-    ? "max-w-[min(84%,calc(100%_-_8rem),39rem)] [@media(hover:none)]:max-w-[min(84%,39rem)]"
-    : "max-w-[min(88%,calc(100%_-_8rem),39rem)] [@media(hover:none)]:max-w-[min(88%,39rem)]";
-}
-
 /** How many of the latest messages show a moving face. */
 export const LIVE_FACE_MESSAGES = 12;
 
@@ -79,7 +72,6 @@ export const Transcript = memo(function Transcript({
   dismissableAskIds,
   running,
   workingBots,
-  userBubble,
   onCallBack,
   onLoadOlder,
   onOpenBot,
@@ -141,8 +133,6 @@ export const Transcript = memo(function Transcript({
   dismissableAskIds: Set<string>;
   running: boolean;
   workingBots: GroupAvatarMember[];
-  /** Your bubbles take the bot's color in its own chat. */
-  userBubble?: { background: string; foreground: string };
   /** Calls the bot back from a missed call in the transcript. */
   onCallBack?: () => void;
   onLoadOlder: () => void | Promise<void>;
@@ -277,7 +267,7 @@ export const Transcript = memo(function Transcript({
   const continued = continuedMessageIds(
     shownMessages,
     (id) => separatorIds.has(id) || id === unreadDividerId,
-    { people: channel },
+    { people: true },
   );
   // Only the faces of the latest messages move, so a long history is still pictures.
   const faces = new Map<string, MessageFace>();
@@ -539,14 +529,6 @@ export const Transcript = memo(function Transcript({
             ? "rk-scroll flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-4 py-3"
             : "rk-scroll flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto scroll-pt-4 scroll-pb-7 px-4 pt-6 pb-12 md:px-[max(1.75rem,calc((100%_-_47.5rem)/2))] md:pt-8 md:pb-13"
         }
-        style={
-          userBubble
-            ? ({
-                "--chat-user": userBubble.background,
-                "--chat-user-foreground": userBubble.foreground,
-              } as CSSProperties)
-            : undefined
-        }
       >
         {olderCursor != null ? (
           <Button
@@ -615,25 +597,10 @@ export const Transcript = memo(function Transcript({
                       }`
                 }
               >
-                <div
-                  className={
-                    peerReceipt
-                      ? undefined
-                      : `relative flex ${message.role === "user" && !channel ? "justify-end" : "justify-start"}`
-                  }
-                >
+                <div className={peerReceipt ? undefined : "relative flex justify-start"}>
                   <div
                     data-testid={peerReceipt ? undefined : "message-bubble-frame"}
-                    className={
-                      peerReceipt
-                        ? undefined
-                        : channel ||
-                            message.blocks.some(
-                              (block) => block.kind === "ask" || block.kind === "mcp_approval",
-                            )
-                          ? "relative w-full min-w-0 max-w-full"
-                          : `relative ${message.blocks.some((block) => block.kind === "app_connect") ? "w-full" : "w-fit"} min-w-0 ${bubbleFrameWidth(message.role)}`
-                    }
+                    className={peerReceipt ? undefined : "relative w-full min-w-0 max-w-full"}
                   >
                     <MessageView
                       artifactTarget={artifactTarget}
@@ -656,31 +623,23 @@ export const Transcript = memo(function Transcript({
                       onAnswer={onAnswer}
                       continued={continued.has(message.id)}
                       face={faces.get(message.id)}
-                      authorName={
-                        !channel &&
-                        message.role === "user" &&
-                        message.authorName &&
-                        message.authorUserId &&
-                        message.authorUserId !== currentUserId
-                          ? message.authorName
-                          : undefined
-                      }
                       speakerName={
                         peerReceipt
                           ? undefined
                           : message.role === "bot"
-                            ? memberName?.(message.botId)
-                            : channel && message.role === "user"
-                              ? (message.authorName ?? t`You`)
-                              : undefined
+                            ? (memberName?.(message.botId) ??
+                              (message.botId ? peerBot(message.botId)?.name : undefined) ??
+                              intro?.name)
+                            : (message.authorName ?? t`You`)
                       }
                       speakerRole={
-                        channel && message.role === "bot" && message.botId
-                          ? peerBot(message.botId)?.title
-                          : channel && message.role === "user"
-                            ? personRole?.(message.authorUserId ?? currentUserId)
-                            : undefined
+                        message.role === "bot"
+                          ? message.botId
+                            ? peerBot(message.botId)?.title
+                            : intro?.title
+                          : personRole?.(message.authorUserId ?? currentUserId)
                       }
+                      relayedVia={peerReceipt ? (intro?.name ?? undefined) : undefined}
                       speakerImage={message.authorImage}
                       ownerUserId={message.botId ? peerBot(message.botId)?.ownerUserId : undefined}
                       viewerUserId={currentUserId}
@@ -727,9 +686,8 @@ export const Transcript = memo(function Transcript({
                     data-testid="message-reactions"
                     className={cn(
                       "mt-1 flex flex-wrap gap-1",
-                      message.role === "user" && !channel && "justify-end",
-                      // In a channel the chips line up with the text, past the face.
-                      channel && "ps-12",
+                      // The chips line up with the text, past the face.
+                      "ps-11",
                     )}
                   >
                     {[...messageReactions].map(([emoji, count]) => (

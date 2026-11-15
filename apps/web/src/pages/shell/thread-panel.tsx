@@ -31,7 +31,6 @@ export type ThreadTranscriptProps = Pick<
   | "showToolActivity"
   | "answerableAskIds"
   | "dismissableAskIds"
-  | "userBubble"
   | "onOpenBot"
   | "onAnswer"
   | "onMarkUnread"

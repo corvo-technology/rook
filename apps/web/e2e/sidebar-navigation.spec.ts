@@ -92,3 +92,59 @@ test("the agent header is a solid row above the messages", async ({ page }, test
   expect(transcript?.y).toBeGreaterThanOrEqual(header.bottom - 1);
   await captureScreenshot(page, testInfo, "agent-header-solid");
 });
+
+test("Tasks is always listed, and the sidebar, chats and palette look right in both themes", async ({
+  page,
+}, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await signup(page, `sidebar-look-${Date.now()}@corvo.test`, "password12", "Sidebar Look");
+  await completeOnboarding(page);
+  await page.goto("/app");
+  await page.waitForURL(/\/app\/(?!activity|team|approvals)[^/]+$/);
+  const chiefId = activeBotId(page);
+  const group = await rpc<{ id: string }>(page, "groups/create", {
+    name: "Product",
+    botIds: [chiefId],
+  });
+  await page.reload();
+
+  const sidebar = page.getByTestId("bots-sidebar");
+  const nav = sidebar.getByTestId("sidebar-nav");
+  // A new account starts with a short nav, and Tasks is still in it.
+  await expect(nav.getByTestId("sidebar-tasks")).toBeVisible();
+  // Every place carries an icon, and More reads as a menu.
+  await expect(nav.getByTestId("sidebar-home").locator("svg")).toBeVisible();
+  await expect(nav.getByTestId("sidebar-more")).toHaveAttribute("aria-haspopup", "menu");
+  // The person signed in and the bell are in the footer.
+  const footer = sidebar.getByTestId("sidebar-footer");
+  await expect(footer.getByTestId("user-menu-trigger")).toContainText("Sidebar Look");
+  await expect(footer.getByRole("button", { name: "Notifications" })).toBeVisible();
+
+  for (const theme of ["light", "dark"]) {
+    await page.evaluate((theme) => localStorage.setItem("corvo.uiAppearance", theme), theme);
+    await page.goto(`/app/${chiefId}`);
+    await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+    await expect(page.getByTestId("transcript")).toBeVisible();
+    // The sidebar is its own surface, with a hairline between it and the chat.
+    const surfaces = await page.evaluate(() => ({
+      sidebar: getComputedStyle(document.querySelector('[data-testid="bots-sidebar"]') as Element)
+        .backgroundColor,
+      main: getComputedStyle(document.body).backgroundColor,
+      border: getComputedStyle(document.querySelector('[data-testid="bots-sidebar"]') as Element)
+        .borderInlineEndWidth,
+    }));
+    expect(surfaces.sidebar).not.toBe(surfaces.main);
+    expect(surfaces.border).not.toBe("0px");
+    await captureScreenshot(page, testInfo, `sidebar-agent-chat-${theme}`);
+
+    await page.goto(`/app/g/${group.id}`);
+    await expect(page.getByTestId("transcript")).toBeVisible();
+    await captureScreenshot(page, testInfo, `sidebar-channel-${theme}`);
+
+    await page.keyboard.press("ControlOrMeta+K");
+    await expect(page.getByTestId("command-palette")).toBeVisible();
+    await expect(page.getByRole("option", { name: "Tasks" })).toBeVisible();
+    await captureScreenshot(page, testInfo, `command-palette-${theme}`);
+    await page.keyboard.press("Escape");
+  }
+});

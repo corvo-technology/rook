@@ -71,9 +71,12 @@ export function ShellSidebar({
   paused = false,
   onResume,
   activeDmUserId,
+  onQuickSwitch,
 }: {
   /** The person whose conversation is open, when one is. */
   activeDmUserId?: string;
+  /** Opens the quick switcher. */
+  onQuickSwitch?: () => void;
   isMobile: boolean;
   mobileOpen: boolean;
   setMobileOpen: (open: boolean) => void;
@@ -142,7 +145,7 @@ export function ShellSidebar({
         className={
           isMobile
             ? `absolute inset-y-0 start-0 z-40 flex w-[calc(100%-48px)] max-w-[316px] shrink-0 flex-col border-e border-sidebar-border bg-sidebar transition-transform duration-200 ease-out motion-reduce:transition-none ${mobileOpen ? "translate-x-0" : "-translate-x-full rtl:translate-x-full"}`
-            : "h-full overflow-hidden border-sidebar-border"
+            : "h-full overflow-hidden border-e border-sidebar-border"
         }
       >
         <SidebarHeader
@@ -197,6 +200,7 @@ export function ShellSidebar({
             bots={bots}
             ticketBoardEnabled={ticketBoardEnabled}
             embedded={isEmbedded()}
+            onQuickSwitch={onQuickSwitch}
             onOpen={(to) => {
               setMobileOpen(false);
               navigate(to);
@@ -226,7 +230,7 @@ export function ShellSidebar({
             />
           </InputGroup>
         )}
-        <div className="rk-scroll scroll-fade-y scroll-fade-12 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2.5 pb-2.5">
+        <div className="rk-scroll flex min-h-0 flex-1 flex-col gap-px overflow-y-auto px-2.5 pb-2.5">
           {showSpaceSearch && !mini ? (
             <SpaceSearchResults
               hits={searchHits}
@@ -253,11 +257,6 @@ export function ShellSidebar({
           <PasskeyOffer />
           <MissionList navigate={navigate} onNavigate={() => setMobileOpen(false)} />
         </div>
-        {mini || isEmbedded() ? null : (
-          <div className="flex justify-center pb-1">
-            <SubscriptionRailRings />
-          </div>
-        )}
         <ShellSidebarFooter
           mini={mini}
           account={!isEmbedded()}
@@ -268,6 +267,7 @@ export function ShellSidebar({
           navigate={navigate}
           openSettings={openSettings}
           openIntegrations={openIntegrations}
+          activityOpen={onActivity}
         />
       </Sidebar>
     </>
@@ -284,7 +284,10 @@ export function ShellSidebarFooter({
   navigate,
   openSettings,
   openIntegrations,
+  activityOpen,
 }: {
+  /** The activity page is the one open. */
+  activityOpen: boolean;
   mini: boolean;
   /** Whether this footer carries the account menu and the Store; a partner's frame has neither. */
   account: boolean;
@@ -363,6 +366,12 @@ export function ShellSidebarFooter({
           logOutError={logOutError}
           localEdition={localEdition}
           hideStore={hideStore}
+          onActivity={() => {
+            closeMobileSidebar();
+            navigate("/app/activity");
+          }}
+          activityOpen={activityOpen}
+          usage={<SubscriptionRailRings />}
         />
       ) : null}
     </>

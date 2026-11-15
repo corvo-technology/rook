@@ -110,6 +110,7 @@ export function ShellDialogs({
   rpc,
   spaces,
   bots,
+  groups,
   activeId,
   activeGroupId,
   alive,
@@ -129,6 +130,7 @@ export function ShellDialogs({
   rpc: ReturnType<typeof createSpaceRpc>;
   spaces: Space[];
   bots: Bot[];
+  groups: Group[];
   activeId: string | undefined;
   activeGroupId: string | undefined;
   alive: RefObject<boolean>;
@@ -341,9 +343,14 @@ export function ShellDialogs({
         open={commandPaletteOpen}
         onOpenChange={setCommandPaletteOpen}
         bots={bots}
+        groups={groups}
         onSelectBot={(id) => {
           closeMobileSidebar();
           navigate(`/app/${id}`);
+        }}
+        onNavigate={(path) => {
+          closeMobileSidebar();
+          navigate(path);
         }}
       />
 

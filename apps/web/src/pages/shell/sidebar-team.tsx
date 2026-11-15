@@ -1,9 +1,25 @@
 import type { AppBootstrap, Bot, DirectPerson, NavPart } from "@corvo/contracts";
 import { NAV_PARTS } from "@corvo/contracts";
-import { Button, Popover, PopoverContent, PopoverTrigger } from "@corvo/ui-web";
+import { Button, Kbd, Popover, PopoverContent, PopoverTrigger } from "@corvo/ui-web";
 import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { skipToken, useQuery } from "@tanstack/react-query";
+import type { LucideIcon } from "lucide-react";
+import {
+  Activity,
+  BookOpen,
+  Brain,
+  CalendarClock,
+  ChevronDown,
+  FileText,
+  Gauge,
+  Home,
+  ListChecks,
+  Search,
+  ShieldCheck,
+  Users,
+  Workflow,
+} from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { NewDot } from "../../components/NewDot";
@@ -15,24 +31,36 @@ import { useMissions } from "../../lib/use-missions";
 import { usePendingApprovals } from "../../lib/use-pending-approvals";
 
 const NAV_ITEM =
-  "flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-start text-sm outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium";
+  "flex h-8 w-full items-center gap-2.5 rounded-md px-2 text-start text-nav text-sidebar-foreground/80 outline-none hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-foreground";
 
-type NavTarget = { key: string; label: string; to: string; badge?: number; isNew?: boolean };
+type NavTarget = {
+  key: string;
+  label: string;
+  to: string;
+  icon: LucideIcon;
+  badge?: number;
+  isNew?: boolean;
+};
+
+const ICON = { size: 16, strokeWidth: 1.75, "aria-hidden": true, className: "shrink-0" } as const;
 
 /**
  * The places of a space, one line each. Choosing one opens it in the main pane; the channels,
- * agents and people below stay where they are. Everything else sits behind "More".
+ * agents and people below stay where they are. Everything else sits in the "More" menu.
  */
 export function SidebarNav({
   items,
   more,
   pathname,
   onOpen,
+  onQuickSwitch,
 }: {
   items: readonly NavTarget[];
   more: readonly NavTarget[];
   pathname: string;
   onOpen: (to: string) => void;
+  /** Opens the quick switcher (Cmd/Ctrl-K). */
+  onQuickSwitch?: () => void;
 }) {
   const { t } = useLingui();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -41,9 +69,21 @@ export function SidebarNav({
     <nav
       aria-label={t`Space`}
       data-testid="sidebar-nav"
-      className="flex flex-col gap-0.5 px-2.5 pb-3"
+      className="flex flex-col gap-px px-2.5 pb-2"
     >
-      {items.map(({ key, label, to, badge, isNew }) => (
+      {onQuickSwitch ? (
+        <button
+          type="button"
+          data-testid="sidebar-quick-switch"
+          onClick={onQuickSwitch}
+          className="mb-1.5 flex h-8 w-full items-center gap-2 rounded-md border border-sidebar-border bg-background/40 px-2 text-start text-nav text-muted-foreground outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Search {...ICON} />
+          <span className="min-w-0 flex-1 truncate">{t`Go to…`}</span>
+          <Kbd>⌘K</Kbd>
+        </button>
+      ) : null}
+      {items.map(({ key, label, to, icon: Icon, badge, isNew }) => (
         <button
           key={key}
           type="button"
@@ -52,16 +92,17 @@ export function SidebarNav({
           onClick={() => onOpen(to)}
           className={NAV_ITEM}
         >
-          {label}
+          <Icon {...ICON} />
+          <span className="min-w-0 flex-1 truncate">{label}</span>
           {badge ? (
             <span
               data-testid={`sidebar-${key}-count`}
-              className="min-w-5 rounded-full bg-primary px-1.5 text-center text-xs font-semibold tabular-nums text-primary-foreground"
+              className="min-w-5 rounded-full bg-primary px-1.5 text-center text-meta font-semibold tabular-nums text-primary-foreground"
             >
               {badge}
             </span>
           ) : isNew ? (
-            <NewDot />
+            <NewDot className="size-2 shrink-0" />
           ) : null}
         </button>
       ))}
@@ -69,25 +110,33 @@ export function SidebarNav({
         <Popover open={moreOpen} onOpenChange={setMoreOpen}>
           <PopoverTrigger
             data-testid="sidebar-more"
+            aria-haspopup="menu"
             aria-current={more.some((item) => item.to === pathname) ? "page" : undefined}
             className={NAV_ITEM}
           >
-            {t`More`}
-            {more.some((item) => item.isNew) ? <NewDot /> : null}
+            <span className="min-w-0 flex-1 truncate">{t`More`}</span>
+            {more.some((item) => item.isNew) ? <NewDot className="size-2 shrink-0" /> : null}
+            <ChevronDown
+              size={14}
+              strokeWidth={1.75}
+              aria-hidden="true"
+              className="shrink-0 text-muted-foreground"
+            />
           </PopoverTrigger>
           <PopoverContent side="right" align="start" sideOffset={8} className="w-52 gap-0 p-1">
-            {more.map(({ key, label, to, isNew }) => (
+            {more.map(({ key, label, to, icon: Icon, isNew }) => (
               <Button
                 key={key}
                 variant="ghost"
-                className="h-9 w-full justify-start gap-2.5 font-normal"
+                className="h-8 w-full justify-start gap-2.5 text-nav font-normal"
                 onClick={() => {
                   setMoreOpen(false);
                   onOpen(to);
                 }}
               >
+                <Icon {...ICON} className="shrink-0 text-muted-foreground" />
                 {label}
-                {isNew ? <NewDot className="ms-auto" /> : null}
+                {isNew ? <NewDot className="ms-auto size-2" /> : null}
               </Button>
             ))}
           </PopoverContent>
@@ -116,11 +165,13 @@ export function SidebarNavLive({
   ticketBoardEnabled,
   embedded,
   onOpen,
+  onQuickSwitch,
 }: {
   bots: readonly Bot[];
   ticketBoardEnabled: boolean;
   embedded: boolean;
   onOpen: (to: string) => void;
+  onQuickSwitch?: () => void;
 }) {
   const { t } = useLingui();
   const { pathname } = useLocation();
@@ -132,33 +183,52 @@ export function SidebarNavLive({
   const chief =
     findFirstBot(staff.map((bot) => ({ ...bot, spawnKey: bot.spawnKey ?? null }))) ?? staff[0];
   const visible = (part: NavPart) => !hidden.includes(part) && missions.shows(part);
-  const target = (part: NavPart, label: string, to: string): NavTarget => ({
+  const target = (part: NavPart, label: string, to: string, icon: LucideIcon): NavTarget => ({
     key: part,
     label,
     to,
+    icon,
     isNew: missions.isNew(part),
   });
   const items: NavTarget[] = [
-    { key: "home", label: t`Home`, to: chief ? `/app/${chief.id}` : "/app" },
-    { key: "approvals", label: t`Approvals`, to: "/app/approvals", badge: approvals },
-    ...(ticketBoardEnabled && visible("board") ? [target("board", t`Tasks`, "/app/board")] : []),
-    ...(visible("routines") ? [target("routines", t`Routines`, "/app/routines")] : []),
-    { key: "activity", label: t`Activity`, to: "/app/activity" },
-    ...(visible("team") ? [target("team", t`Team`, "/app/team")] : []),
+    { key: "home", label: t`Home`, to: chief ? `/app/${chief.id}` : "/app", icon: Home },
+    {
+      key: "approvals",
+      label: t`Approvals`,
+      to: "/app/approvals",
+      icon: ShieldCheck,
+      badge: approvals,
+    },
+    // Tasks is there whenever the board is on: a mission never hides it, only a partner can.
+    ...(ticketBoardEnabled && !hidden.includes("board")
+      ? [target("board", t`Tasks`, "/app/board", ListChecks)]
+      : []),
+    ...(visible("routines")
+      ? [target("routines", t`Routines`, "/app/routines", CalendarClock)]
+      : []),
+    { key: "activity", label: t`Activity`, to: "/app/activity", icon: Activity },
+    ...(visible("team") ? [target("team", t`Team`, "/app/team", Users)] : []),
   ];
   const more: NavTarget[] = [
-    ...(visible("workflows") ? [target("workflows", t`Workflows`, "/app/workflows")] : []),
-    ...(visible("usage") ? [target("usage", t`Usage`, "/app/usage")] : []),
-    ...(visible("artifacts") ? [target("artifacts", t`Artifacts`, "/app/artifacts")] : []),
-    ...(visible("wiki") ? [target("wiki", t`Wiki`, "/app/wiki")] : []),
+    ...(visible("workflows")
+      ? [target("workflows", t`Workflows`, "/app/workflows", Workflow)]
+      : []),
+    ...(visible("usage") ? [target("usage", t`Usage`, "/app/usage", Gauge)] : []),
+    ...(visible("artifacts")
+      ? [target("artifacts", t`Artifacts`, "/app/artifacts", FileText)]
+      : []),
+    ...(visible("wiki") ? [target("wiki", t`Wiki`, "/app/wiki", BookOpen)] : []),
     // Memory is an account setting, which a partner's frame does not offer.
-    ...(embedded || !visible("memory") ? [] : [target("memory", t`Memory`, "/settings/memory")]),
+    ...(embedded || !visible("memory")
+      ? []
+      : [target("memory", t`Memory`, "/settings/memory", Brain)]),
   ];
   return (
     <SidebarNav
       items={items}
       more={more}
       pathname={pathname}
+      onQuickSwitch={onQuickSwitch}
       onOpen={(to) => {
         const part = [...items, ...more].find((item) => item.to === to)?.key;
         if (part && NAV_PARTS.includes(part as NavPart)) missions.open(part as NavPart);
@@ -181,7 +251,7 @@ export function SidebarPeople({
   if (people.length === 0) return null;
   return (
     <div className="flex flex-col gap-0.5">
-      <h2 className="px-2.5 pt-3 pb-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <h2 className="px-2 pt-3 pb-0.5 text-caption font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         <Trans>People</Trans>
       </h2>
       <PeopleList people={people} activeUserId={activeUserId} onOpen={onOpen} />

@@ -125,7 +125,36 @@ it("shows the account image and falls back to the initial after a load error", a
   expect(image.src).toBe("https://example.test/avatar.png");
   await act(async () => image.dispatchEvent(new Event("error")));
   expect(trigger.querySelector("img")).toBeNull();
-  expect(trigger.textContent).toBe("AL");
+  expect(trigger.textContent).toBe("ALAda Lovelace");
+});
+
+it("shows who is signed in beside the bell, which opens the activity page", async () => {
+  const onActivity = vi.fn();
+  await act(async () =>
+    root.render(
+      <DesktopUpdatesProvider>
+        <SidebarFooter
+          name="Ada Lovelace"
+          initials="AL"
+          open={false}
+          onOpenChange={() => {}}
+          onIntegrations={() => {}}
+          onSettings={() => {}}
+          onLogOut={() => {}}
+          signingOut={false}
+          logOutError={null}
+          onActivity={onActivity}
+        />
+      </DesktopUpdatesProvider>,
+    ),
+  );
+  expect(host.querySelector('[data-testid="user-menu-trigger"]')?.textContent).toContain(
+    "Ada Lovelace",
+  );
+  await act(async () =>
+    host.querySelector<HTMLButtonElement>('[data-testid="sidebar-bell"]')!.click(),
+  );
+  expect(onActivity).toHaveBeenCalledOnce();
 });
 
 it("opens integrations and keeps the existing account actions", async () => {

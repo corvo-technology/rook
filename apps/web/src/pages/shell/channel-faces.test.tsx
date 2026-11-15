@@ -62,7 +62,7 @@ afterEach(() => {
 });
 
 // The speaker's face is the only one at message size; mentions carry small ones.
-const last = () => faces.props.filter((props) => props.size === 36).at(-1);
+const last = () => faces.props.filter((props) => props.size === 32).at(-1);
 const peerBot: ComponentProps<typeof MessageView>["peerBot"] = (id) => ({
   name: id,
   color: "#1FBF68::char_sprout",

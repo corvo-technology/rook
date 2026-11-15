@@ -27,6 +27,22 @@ async function revealHoverRail(row: Locator): Promise<Locator> {
   return rail;
 }
 
+/** The actions float over the row's top-right corner, inside its width, not beside a bubble. */
+async function expectRailOverRowCorner(rail: Locator, row: Locator) {
+  await expect
+    .poll(async () => {
+      const railBox = await rail.boundingBox();
+      const rowBox = await row.boundingBox();
+      if (!railBox || !rowBox) return null;
+      return {
+        inside: railBox.x + railBox.width <= rowBox.x + rowBox.width + 2,
+        atTop: railBox.y <= rowBox.y + 4 && railBox.y + railBox.height > rowBox.y,
+        atRight: rowBox.x + rowBox.width - (railBox.x + railBox.width) < 24,
+      };
+    })
+    .toEqual({ inside: true, atTop: true, atRight: true });
+}
+
 /** Touch drops the side gutter, so the bubble cap stays wider than the row minus 8rem. */
 async function expectNoTouchSideGutter(frame: Locator) {
   const widths = await frame.evaluate((element) => {
@@ -129,7 +145,7 @@ async function expectHeaderAboveHoveredRow(page: Page, testInfo: TestInfo, row: 
   }
 }
 
-test("message hover shows beside-bubble actions; reply links to parent", async ({
+test("message hover shows actions over the row corner; reply links to parent", async ({
   page,
 }, testInfo) => {
   const stamp = Date.now();
@@ -154,27 +170,11 @@ test("message hover shows beside-bubble actions; reply links to parent", async (
 
   const botRail = await revealHoverRail(botRow);
   const botToolbar = botRow.getByTestId("message-hover-actions");
-  await expect(botRow.locator("time")).toHaveCount(0);
+  await expect(botRow.locator("time")).toHaveCount(1);
 
   await expect(botToolbar.getByRole("button", { name: "Reply" })).toBeVisible();
   await expect(botToolbar.getByRole("button", { name: "More" })).toBeVisible();
-  // Measure a unique visible bubble, so an oversized wrapper cannot hide a gap.
-  const botBubble = botRow.getByTestId("message-bot-bubble").first();
-  await expect
-    .poll(async () => {
-      const railBox = await botRail.boundingBox();
-      const bubbleBox = await botBubble.boundingBox();
-      if (!railBox || !bubbleBox) return null;
-      const railMid = railBox.y + railBox.height / 2;
-      const bubbleMid = bubbleBox.y + bubbleBox.height / 2;
-      return {
-        beside: railBox.x >= bubbleBox.x + bubbleBox.width - 2,
-        flush: railBox.x - (bubbleBox.x + bubbleBox.width) < 8,
-        centered: Math.abs(railMid - bubbleMid) <= 12,
-        notBelow: railBox.y + railBox.height <= bubbleBox.y + bubbleBox.height + 12,
-      };
-    })
-    .toEqual({ beside: true, flush: true, centered: true, notBelow: true });
+  await expectRailOverRowCorner(botRail, botRow);
   await captureScreenshot(page, testInfo, "message-bot-actions-desktop");
   await expectRailAtRest(page, botRow);
 
@@ -203,32 +203,13 @@ test("message hover shows beside-bubble actions; reply links to parent", async (
     })
     .toBe(true);
 
-  // User bubble (right): icons sit to the left, vertically centered — not under the bubble.
-  const frame = parentRow.getByTestId("message-bubble-frame");
-  await expect
-    .poll(async () => {
-      const railBox = await rail.boundingBox();
-      const frameBox = await frame.boundingBox();
-      if (!railBox || !frameBox) return null;
-      const railMid = railBox.y + railBox.height / 2;
-      const frameMid = frameBox.y + frameBox.height / 2;
-      return {
-        beside: railBox.x + railBox.width <= frameBox.x + 2,
-        flush: frameBox.x - (railBox.x + railBox.width) < 8,
-        centered: Math.abs(railMid - frameMid) <= 12,
-        notBelow: railBox.y >= frameBox.y - 12,
-      };
-    })
-    .toEqual({ beside: true, flush: true, centered: true, notBelow: true });
+  // Every message is a row under its author's name: no bubble surface, actions over its corner.
+  await expectRailOverRowCorner(rail, parentRow);
+  const userText = parentRow.getByTestId("message-user-bubble");
+  await expect(userText).toBeVisible();
+  await expect(userText).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
 
-  // User bubble is a muted elevated surface (not cream invert / bright pill).
-  const userSurface = parentRow.getByTestId("message-user-bubble");
-  await expect(userSurface).toBeVisible();
-  await expect
-    .poll(async () => userSurface.evaluate((el) => getComputedStyle(el).backgroundColor))
-    .not.toMatch(/^rgb\(241,\s*241,\s*239\)$/); // not cream primary foreground
-
-  // Long user bubble: rail stays ~6px beside the bubble edge, not the full row width.
+  // A long message wraps inside the row; the actions stay on its corner.
   const longText = `hover-long-${stamp}-${"x".repeat(220)}`;
   await sendComposerMessage(page, composer, longText);
   const longRow = transcript
@@ -237,15 +218,7 @@ test("message hover shows beside-bubble actions; reply links to parent", async (
     .first();
   await expect(longRow).toBeVisible({ timeout: 20_000 });
   const longRail = await revealHoverRail(longRow);
-  const longFrame = longRow.getByTestId("message-bubble-frame");
-  await expect
-    .poll(async () => {
-      const railBox = await longRail.boundingBox();
-      const frameBox = await longFrame.boundingBox();
-      if (!railBox || !frameBox) return null;
-      return Math.abs(frameBox.x - (railBox.x + railBox.width));
-    })
-    .toBeLessThan(8);
+  await expectRailOverRowCorner(longRail, longRow);
   await captureScreenshot(page, testInfo, "message-bubble-wide-desktop");
 
   await revealHoverRail(parentRow);
@@ -356,7 +329,7 @@ test("message hover shows beside-bubble actions; reply links to parent", async (
   await expectHeaderAboveHoveredRow(page, testInfo, parentRow);
 });
 
-test("a message with an attachment centers hover actions on its text bubble", async ({
+test("a message with an attachment keeps its hover actions on the row corner", async ({
   page,
 }, testInfo) => {
   const stamp = Date.now();
@@ -390,15 +363,7 @@ test("a message with an attachment centers hover actions on its text bubble", as
     })
     .toBeGreaterThanOrEqual(6);
   const rail = await revealHoverRail(row);
-  const bubble = row.getByTestId("message-user-bubble");
-  await expect
-    .poll(async () => {
-      const railBox = await rail.boundingBox();
-      const bubbleBox = await bubble.boundingBox();
-      if (!railBox || !bubbleBox) return null;
-      return Math.abs(railBox.y + railBox.height / 2 - (bubbleBox.y + bubbleBox.height / 2));
-    })
-    .toBeLessThan(2);
+  await expectRailOverRowCorner(rail, row);
   await captureScreenshot(page, testInfo, "message-attachment-actions-desktop");
 });
 
@@ -514,7 +479,6 @@ test.describe("touch message actions", () => {
     expect(bubbleBox).not.toBeNull();
     expect(railBox).not.toBeNull();
     expect(railBox!.y).toBeGreaterThanOrEqual(bubbleBox!.y + bubbleBox!.height - 1);
-    expect(railBox!.x - bubbleBox!.x).toBeLessThan(8);
     await expectNoTouchSideGutter(row.getByTestId("message-bubble-frame"));
     await captureScreenshot(page, testInfo, "message-actions-touch-row");
     await rail.getByRole("button", { name: "React", exact: true }).tap();

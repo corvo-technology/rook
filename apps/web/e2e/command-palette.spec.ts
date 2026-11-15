@@ -30,7 +30,7 @@ test("command palette opens with keyboard, filters, and switches bots", async ({
 
   await page.keyboard.press("ControlOrMeta+K");
   const palette = page.getByTestId("command-palette");
-  const dialog = page.getByRole("dialog", { name: "Switch bot" });
+  const dialog = page.getByRole("dialog", { name: "Go to…" });
   await expect(dialog).toBeVisible();
   await expect(palette).toBeVisible();
   await expect(page.getByRole("option", { name: /Chief/ })).toBeVisible();
@@ -54,4 +54,11 @@ test("command palette opens with keyboard, filters, and switches bots", async ({
   await page.getByTestId(`command-palette-bot-${chiefId}`).click();
   await page.waitForURL(new RegExp(`/app/${chiefId}$`));
   expect(activeBotId(page)).toBe(chiefId);
+
+  // The field above the places opens the same palette, which also reaches pages.
+  await page.getByTestId("sidebar-quick-switch").click();
+  await expect(dialog).toBeVisible();
+  await page.getByTestId("command-palette-search").fill("Tasks");
+  await page.getByRole("option", { name: "Tasks" }).click();
+  await page.waitForURL(/\/app\/board$/);
 });

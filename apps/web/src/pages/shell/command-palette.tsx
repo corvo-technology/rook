@@ -1,4 +1,4 @@
-import type { Bot } from "@corvo/contracts";
+import type { Bot, Group } from "@corvo/contracts";
 import {
   Badge,
   BotAvatar,
@@ -14,7 +14,22 @@ import {
 } from "@corvo/ui-web";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
+import type { LucideIcon } from "lucide-react";
+import {
+  Activity,
+  BookOpen,
+  CalendarClock,
+  FileText,
+  Gauge,
+  Hash,
+  ListChecks,
+  ShieldCheck,
+  Users,
+  Workflow,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { PersonAvatar } from "../../components/PersonAvatar";
+import { useDirectPeople } from "../../lib/use-direct-people";
 
 function isApplePlatform() {
   if (typeof navigator === "undefined") return false;
@@ -38,17 +53,35 @@ function botTitleTag(bot: Bot) {
   return title;
 }
 
+const PAGES: Array<{ to: string; label: () => string; icon: LucideIcon }> = [
+  { to: "/app/approvals", label: () => t`Approvals`, icon: ShieldCheck },
+  { to: "/app/board", label: () => t`Tasks`, icon: ListChecks },
+  { to: "/app/routines", label: () => t`Routines`, icon: CalendarClock },
+  { to: "/app/activity", label: () => t`Activity`, icon: Activity },
+  { to: "/app/team", label: () => t`Team`, icon: Users },
+  { to: "/app/workflows", label: () => t`Workflows`, icon: Workflow },
+  { to: "/app/usage", label: () => t`Usage`, icon: Gauge },
+  { to: "/app/artifacts", label: () => t`Artifacts`, icon: FileText },
+  { to: "/app/wiki", label: () => t`Wiki`, icon: BookOpen },
+];
+
 export function CommandPalette({
   open,
   onOpenChange,
   bots,
+  groups,
   onSelectBot,
+  onNavigate,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   bots: Bot[];
+  groups: Pick<Group, "id" | "name">[];
   onSelectBot: (botId: string) => void;
+  /** Opens a path: a channel, a person's conversation or a page. */
+  onNavigate: (path: string) => void;
 }) {
+  const people = useDirectPeople().data ?? [];
   const [search, setSearch] = useState("");
   const [modKey, setModKey] = useState("⌘");
 
@@ -65,6 +98,20 @@ export function CommandPalette({
     if (!needle) return bots;
     return bots.filter((bot) => botSearchText(bot).includes(needle));
   }, [bots, search]);
+
+  const needle = search.trim().toLowerCase();
+  const filteredGroups = needle
+    ? groups.filter((group) => group.name.toLowerCase().includes(needle))
+    : groups;
+  const filteredPeople = needle
+    ? people.filter((person) => person.name.toLowerCase().includes(needle))
+    : people;
+  const filteredPages = needle
+    ? PAGES.filter((page) => page.label().toLowerCase().includes(needle))
+    : PAGES;
+  const empty =
+    filteredBots.length + filteredGroups.length + filteredPeople.length + filteredPages.length ===
+    0;
 
   useEffect(() => {
     if (!open) return;
@@ -87,8 +134,8 @@ export function CommandPalette({
     <CommandDialog
       open={open}
       onOpenChange={onOpenChange}
-      title={t`Switch bot`}
-      description={t`Search bots and switch conversations`}
+      title={t`Go to…`}
+      description={t`Search channels, agents, people and pages`}
       className="sm:max-w-xl"
     >
       <Command
@@ -103,10 +150,12 @@ export function CommandPalette({
           data-testid="command-palette-search"
         />
         <CommandList className="max-h-80" data-testid="command-palette-list">
-          <CommandEmpty>
-            <Trans>No bots</Trans>
-          </CommandEmpty>
-          <CommandGroup>
+          {empty ? (
+            <CommandEmpty>
+              <Trans>No results</Trans>
+            </CommandEmpty>
+          ) : null}
+          <CommandGroup heading={t`Agents`}>
             {filteredBots.map((bot, index) => {
               const subtitle = botSubtitle(bot);
               const titleTag = botTitleTag(bot);
@@ -152,6 +201,67 @@ export function CommandPalette({
               );
             })}
           </CommandGroup>
+          {filteredGroups.length > 0 ? (
+            <CommandGroup heading={t`Channels`}>
+              {filteredGroups.map((group) => (
+                <CommandItem
+                  key={group.id}
+                  value={`channel-${group.id}`}
+                  data-testid={`command-palette-channel-${group.id}`}
+                  onSelect={() => {
+                    onNavigate(`/app/g/${group.id}`);
+                    onOpenChange(false);
+                  }}
+                  className="gap-3 rounded-xl! px-2.5 py-2"
+                >
+                  <Hash className="size-4 text-muted-foreground" aria-hidden="true" />
+                  <span className="truncate" dir="auto">
+                    {group.name}
+                  </span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          ) : null}
+          {filteredPeople.length > 0 ? (
+            <CommandGroup heading={t`People`}>
+              {filteredPeople.map((person) => (
+                <CommandItem
+                  key={person.userId}
+                  value={`person-${person.userId}`}
+                  data-testid={`command-palette-person-${person.userId}`}
+                  onSelect={() => {
+                    onNavigate(`/app/dm/${person.userId}`);
+                    onOpenChange(false);
+                  }}
+                  className="gap-3 rounded-xl! px-2.5 py-2"
+                >
+                  <PersonAvatar name={person.name} image={person.image} size={20} />
+                  <span className="truncate" dir="auto">
+                    {person.name}
+                  </span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          ) : null}
+          {filteredPages.length > 0 ? (
+            <CommandGroup heading={t`Pages`}>
+              {filteredPages.map(({ to, label, icon: Icon }) => (
+                <CommandItem
+                  key={to}
+                  value={`page-${to}`}
+                  data-testid={`command-palette-page-${to.split("/").pop()}`}
+                  onSelect={() => {
+                    onNavigate(to);
+                    onOpenChange(false);
+                  }}
+                  className="gap-3 rounded-xl! px-2.5 py-2"
+                >
+                  <Icon className="size-4 text-muted-foreground" aria-hidden="true" />
+                  <span className="truncate">{label()}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          ) : null}
         </CommandList>
       </Command>
     </CommandDialog>

@@ -80,7 +80,7 @@ export function ChatHeader({
     );
   }
   return (
-    <div className="app-drag flex shrink-0 items-center gap-3 border-b border-border bg-background px-3 py-2 md:px-[22px]">
+    <div className="app-drag flex shrink-0 items-center gap-3 border-b border-border bg-background px-3 py-1.5 md:px-[22px]">
       <Button
         variant="ghost"
         size="icon"
@@ -100,26 +100,26 @@ export function ChatHeader({
           <BotAvatar
             color={active.color}
             identity={active.id}
-            size={28}
+            size={26}
             status={active.status}
             live
           />
         ) : null}
         <span className="flex min-w-0 items-baseline gap-2">
-          <span className="truncate text-[15px] font-semibold text-foreground" dir="auto">
+          <span className="truncate text-name font-semibold text-foreground" dir="auto">
             {active?.name ?? t`Select a bot`}
           </span>
           {active?.title ? (
             <span
               dir="auto"
-              className="hidden min-w-0 truncate text-[13px] text-muted-foreground md:block"
+              className="hidden min-w-0 truncate text-meta text-muted-foreground md:block"
             >
               {active.title}
             </span>
           ) : null}
         </span>
       </button>
-      <div className="app-no-drag ms-auto flex shrink-0 items-center gap-2">
+      <div className="app-no-drag ms-auto flex min-w-0 shrink-0 items-center gap-1 [&_button]:shrink-0">
         {active ? <ContextMeter botId={active.id} running={running} /> : null}
         {active ? (
           <ChatModelSwitcher bot={active} onChange={(patch) => onChangeModel(active, patch)} />
@@ -128,14 +128,14 @@ export function ChatHeader({
           <IconTooltip label={inCall ? t`Open call` : t`Call`}>
             <Button
               variant="ghost"
-              size="icon"
+              size="icon-sm"
               data-testid="call-button"
               aria-label={inCall ? t`Open call` : t`Call`}
               onClick={() => onCall(active)}
               data-active={inCall ? "" : undefined}
-              className="data-active:bg-accent"
+              className="size-8 data-active:bg-accent"
             >
-              <Phone strokeWidth={1.6} className="size-[17px]" />
+              <Phone strokeWidth={1.6} className="size-4" />
             </Button>
           </IconTooltip>
         ) : null}
@@ -143,13 +143,13 @@ export function ChatHeader({
           <IconTooltip label={t`Agent computer`}>
             <Button
               variant="ghost"
-              size="icon"
+              size="icon-sm"
               aria-label={t`Agent computer`}
               aria-pressed={computerPanelOpen}
               onClick={() => onToggleComputer(active)}
-              className="aria-pressed:bg-accent"
+              className="size-8 aria-pressed:bg-accent"
             >
-              <Monitor strokeWidth={1.6} className="size-[18px]" />
+              <Monitor strokeWidth={1.6} className="size-4" />
             </Button>
           </IconTooltip>
         ) : null}

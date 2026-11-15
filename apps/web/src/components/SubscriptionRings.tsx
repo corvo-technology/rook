@@ -31,7 +31,7 @@ const RINGS = [
 function QuotaRing({ quota, now }: { quota: SubscriptionQuota; now: Date }) {
   const Glyph = GLYPHS[quota.provider] ?? Asterisk;
   return (
-    <span className="relative grid size-10 place-items-center">
+    <span className="relative grid size-7 place-items-center">
       <svg
         viewBox={`0 0 ${SIZE} ${SIZE}`}
         className="absolute inset-0 -rotate-90"
@@ -49,7 +49,7 @@ function QuotaRing({ quota, now }: { quota: SubscriptionQuota; now: Date }) {
                 cy={CENTER}
                 r={radius}
                 fill="none"
-                strokeWidth="2.5"
+                strokeWidth="3.5"
                 className="stroke-foreground/12"
               />
               {window ? (
@@ -58,7 +58,7 @@ function QuotaRing({ quota, now }: { quota: SubscriptionQuota; now: Date }) {
                   cy={CENTER}
                   r={radius}
                   fill="none"
-                  strokeWidth="2.5"
+                  strokeWidth="3.5"
                   strokeLinecap="round"
                   strokeDasharray={`${(length * percent) / 100} ${length}`}
                   className={`transition-[stroke-dasharray] duration-300 motion-reduce:transition-none ${
@@ -70,7 +70,7 @@ function QuotaRing({ quota, now }: { quota: SubscriptionQuota; now: Date }) {
           );
         })}
       </svg>
-      <Glyph className="size-4 text-foreground" strokeWidth={1.75} />
+      <Glyph className="size-3 text-foreground" strokeWidth={1.75} />
     </span>
   );
 }
@@ -121,7 +121,7 @@ export function SubscriptionRings({ quotas, now }: { quotas: SubscriptionQuota[]
   const shown = quotas.filter((quota) => quotaProviderLabel(quota.provider) !== null);
   if (shown.length === 0) return null;
   return (
-    <div data-testid="subscription-rings" className="flex flex-col items-center gap-1">
+    <div data-testid="subscription-rings" className="flex items-center">
       {shown.map((quota) => {
         const label = quotaProviderLabel(quota.provider) ?? quota.provider;
         const percent = Math.round(quotaPeak(quota, now));
@@ -129,7 +129,7 @@ export function SubscriptionRings({ quotas, now }: { quotas: SubscriptionQuota[]
           <Popover key={quota.provider}>
             <PopoverTrigger
               aria-label={t`${label}: ${percent}% used`}
-              className="grid size-12 place-items-center rounded-xl outline-none transition-colors hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring"
+              className="grid size-8 place-items-center rounded-md outline-none transition-colors hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring"
             >
               <QuotaRing quota={quota} now={now} />
             </PopoverTrigger>

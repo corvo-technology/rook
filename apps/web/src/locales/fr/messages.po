@@ -650,6 +650,7 @@ msgid "Active"
 msgstr "Actif"
 
 #: src/pages/ActivityPage.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-header.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Activity"
@@ -908,6 +909,7 @@ msgstr "Ordinateur de l'agent"
 #: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/channel-members.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/Store.tsx
 msgid "Agents"
@@ -1142,6 +1144,7 @@ msgstr "Modèle d’approbation"
 
 #: src/pages/ApprovalsPage.tsx
 #: src/pages/Settings.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Approvals"
@@ -1200,6 +1203,7 @@ msgstr "Arguments"
 
 #: src/pages/Artifacts.tsx
 #: src/pages/PartnerTemplateEditor.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Artifacts"
 msgstr "Artefacts"
@@ -1594,6 +1598,7 @@ msgid "Changing…"
 msgstr "Modification en cours…"
 
 #: src/pages/Shell.tsx
+#: src/pages/shell/command-palette.tsx
 msgid "Channels"
 msgstr "Canaux"
 
@@ -3711,6 +3716,11 @@ msgstr "Préparation de la voix ({size} Mo). Cela n'arrive qu'une fois."
 msgid "Git event"
 msgstr "Événement Git"
 
+#: src/pages/shell/command-palette.tsx
+#: src/pages/shell/sidebar-team.tsx
+msgid "Go to…"
+msgstr "Aller à…"
+
 #: src/pages/shell/composer.tsx
 msgid "Goes to {recipient}"
 msgstr "Va à {recipient}"
@@ -4969,7 +4979,6 @@ msgstr "Pas d'authentification"
 msgid "No authentication"
 msgstr "Aucune authentification"
 
-#: src/pages/shell/command-palette.tsx
 #: src/pages/TeamBoard.tsx
 msgid "No bots"
 msgstr "Aucun bot"
@@ -5044,6 +5053,7 @@ msgid "No remote MCP servers found"
 msgstr "Aucun serveur MCP distant trouvé"
 
 #: src/pages/model-settings/providers-section.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/SpaceSearch.tsx
 #: src/pages/Store.tsx
 msgid "No results"
@@ -5145,6 +5155,7 @@ msgstr "Rien n'est mémorisé pour le moment"
 msgid "Nothing to approve"
 msgstr "Rien à approuver"
 
+#: src/components/SidebarFooter.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Notifications"
 msgstr "Notifications"
@@ -5402,6 +5413,10 @@ msgstr "Texte de la page"
 msgid "PagerDuty incident"
 msgstr "Incident PagerDuty"
 
+#: src/pages/shell/command-palette.tsx
+msgid "Pages"
+msgstr "Pages"
+
 #: src/pages/Settings.tsx
 msgid "Partnership"
 msgstr "Partenariat"
@@ -5497,6 +5512,7 @@ msgid "Pawn"
 msgstr "Pion"
 
 #: src/pages/shell/channel-members.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/StoreCategoryChips.tsx
@@ -6171,6 +6187,7 @@ msgstr "Routine « {0} »"
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Routines"
 msgstr "Routines"
@@ -6383,13 +6400,13 @@ msgstr "Rechercher des applications"
 msgid "Search artifacts…"
 msgstr "Rechercher des artefacts…"
 
-#: src/pages/shell/command-palette.tsx
-msgid "Search bots and switch conversations"
-msgstr "Rechercher des bots et changer de conversation"
-
 #: src/pages/Store.tsx
 msgid "Search by domain"
 msgstr "Rechercher par domaine"
+
+#: src/pages/shell/command-palette.tsx
+msgid "Search channels, agents, people and pages"
+msgstr "Rechercher canaux, agents, personnes et pages"
 
 #: src/pages/shell/channel-find.tsx
 msgid "Search in #{channelName}"
@@ -6766,15 +6783,11 @@ msgstr "Espace exporté."
 msgid "Spaces"
 msgstr "Espaces"
 
-#: src/pages/shell/message-view.tsx
-msgid "Speak"
-msgstr "Parler"
-
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Speak only"
 msgstr "Parler uniquement"
 
-#: src/pages/shell/message-view.tsx
+#: src/pages/shell/message-hover-actions.tsx
 msgid "Speak this reply"
 msgstr "Lire cette réponse à voix haute"
 
@@ -6849,7 +6862,6 @@ msgstr "Toujours vrai ?"
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/computer-overlay.tsx
-#: src/pages/shell/message-view.tsx
 msgid "Stop"
 msgstr "Arrêter"
 
@@ -6861,7 +6873,7 @@ msgstr "Arrêter de demander"
 msgid "Stop computer"
 msgstr "Arrêter l’ordinateur"
 
-#: src/pages/shell/message-view.tsx
+#: src/pages/shell/message-hover-actions.tsx
 msgid "Stop speaking"
 msgstr "Arrêter la lecture"
 
@@ -6949,10 +6961,6 @@ msgstr "Prend en charge les images"
 msgid "Supports thinking"
 msgstr "Prend en charge la réflexion"
 
-#: src/pages/shell/command-palette.tsx
-msgid "Switch bot"
-msgstr "Changer de bot"
-
 #: src/pages/shell/space-switcher.tsx
 msgid "Switch space"
 msgstr "Changer d’espace"
@@ -6987,6 +6995,7 @@ msgid "Task settings"
 msgstr "Réglages des tâches"
 
 #: src/pages/Board.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Tasks"
 msgstr "Tâches"
@@ -7004,6 +7013,7 @@ msgid "Teaching in progress. Stop teaching before sending a new message."
 msgstr "Enseignement en cours. Arrêtez l'enseignement avant d'envoyer un nouveau message."
 
 #: src/pages/shell/bot-panel.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/TeamPage.tsx
 msgid "Team"
@@ -7562,6 +7572,7 @@ msgstr "Urgente"
 
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/Settings.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/Usage.tsx
 msgid "Usage"
@@ -7689,6 +7700,10 @@ msgstr "Vérification en cours…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "Version"
+
+#: src/pages/shell/message-view.tsx
+msgid "via {relayedVia}"
+msgstr "via {relayedVia}"
 
 #: src/pages/SpaceRolesSettings.tsx
 msgid "View usage"
@@ -7869,6 +7884,7 @@ msgstr "Qui peut parler à {name}"
 msgid "Who sees this channel"
 msgstr "Qui voit ce canal"
 
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/WikiPage.tsx
 msgid "Wiki"
@@ -7887,6 +7903,7 @@ msgid "Work"
 msgstr "Travail"
 
 #: src/pages/PartnerTemplateEditor.tsx
+#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/Workflows.tsx
 msgid "Workflows"

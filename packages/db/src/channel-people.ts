@@ -181,13 +181,14 @@ export async function openChannelToSpace(
   prisma: PrismaClient,
   input: { spaceId: string; groupId: string },
 ): Promise<void> {
-  await prisma.$transaction([
-    prisma.chatGroupPerson.deleteMany({
+  // Interactive, because row security does not allow a batch to carry a request's context.
+  await prisma.$transaction(async (tx) => {
+    await tx.chatGroupPerson.deleteMany({
       where: { groupId: input.groupId, spaceId: input.spaceId },
-    }),
-    prisma.chatGroup.updateMany({
+    });
+    await tx.chatGroup.updateMany({
       where: { id: input.groupId, spaceId: input.spaceId },
       data: { accessRoleIds: [] },
-    }),
-  ]);
+    });
+  });
 }

@@ -201,7 +201,7 @@ describePostgres("private channels and agent audiences hide what they should (Po
     ).not.toContain(f.secretWord);
 
     // A channel that is opened again is the space's again.
-    await f.call(f.ana, "groups/people/open", { groupId: f.group.id });
+    expect((await f.call(f.ana, "groups/people/open", { groupId: f.group.id })).status).toBe(200);
     expect(await listed(f.bia)).toBe(true);
   });
 

@@ -10,6 +10,7 @@ import {
   RUNTIME_ROLE,
 } from "./database-access.js";
 import {
+  asSystem,
   drainUnscopedDatabaseAccess,
   ORGANIZATION_SCOPED_TABLES,
   ROW_SECURITY_MODELS,
@@ -590,7 +591,7 @@ describePostgres("row-level security (PostgreSQL)", () => {
     });
     expect(Object.values(counts).filter((count) => count > 0)).toEqual([]);
     // The rows exist, so the empty answer is the policy and not an empty table.
-    const present = await owner.prisma.bot.count({
+    const present = await asSystem(owner.prisma).bot.count({
       where: { id: { in: tenants.map((t) => t.botId) } },
     });
     expect(present).toBe(2);

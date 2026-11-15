@@ -12,15 +12,15 @@ export function MessageHoverMetadata({
   pinned?: boolean;
   children: ReactNode;
 }) {
-  const fine = "[@media(hover:hover)_and_(pointer:fine)]";
+  // Written out in full: Tailwind finds classes by scanning for them, not by running this code.
   const reveal = pinned
     ? "pointer-events-auto opacity-100"
-    : `pointer-events-auto opacity-100 ${fine}:pointer-events-none ${fine}:opacity-0 ${fine}:group-hover/message:pointer-events-auto ${fine}:group-hover/message:opacity-100 ${fine}:focus-within:pointer-events-auto ${fine}:focus-within:opacity-100`;
+    : "pointer-events-auto opacity-100 [@media(hover:hover)_and_(pointer:fine)]:pointer-events-none [@media(hover:hover)_and_(pointer:fine)]:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover/message:pointer-events-auto [@media(hover:hover)_and_(pointer:fine)]:group-hover/message:opacity-100 [@media(hover:hover)_and_(pointer:fine)]:focus-within:pointer-events-auto [@media(hover:hover)_and_(pointer:fine)]:focus-within:opacity-100";
 
   return (
     <div
       data-testid="message-hover-rail"
-      className={`z-10 flex items-center transition-opacity ${reveal} ${fine}:absolute ${fine}:end-2 ${fine}:-top-3 ${fine}:rounded-md ${fine}:border ${fine}:border-border ${fine}:bg-popover ${fine}:p-0.5 ${fine}:shadow-raised [@media(hover:none)]:mt-1 [@media(hover:none)]:w-full [@media(hover:none)]:justify-start`}
+      className={`z-10 flex items-center transition-opacity ${reveal} [@media(hover:hover)_and_(pointer:fine)]:absolute [@media(hover:hover)_and_(pointer:fine)]:-top-3 [@media(hover:hover)_and_(pointer:fine)]:end-2 [@media(hover:hover)_and_(pointer:fine)]:rounded-md [@media(hover:hover)_and_(pointer:fine)]:border [@media(hover:hover)_and_(pointer:fine)]:border-border [@media(hover:hover)_and_(pointer:fine)]:bg-popover [@media(hover:hover)_and_(pointer:fine)]:p-0.5 [@media(hover:hover)_and_(pointer:fine)]:shadow-raised [@media(hover:none)]:mt-1 [@media(hover:none)]:w-full [@media(hover:none)]:justify-start`}
     >
       {children}
     </div>

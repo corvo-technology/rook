@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-const raiseNotification = vi.hoisted(() => vi.fn(async () => "n"));
+const raiseNotification = vi.hoisted(() =>
+  vi.fn(async (_client: unknown, _input: { kind: string }) => "n"),
+);
 vi.mock("@corvo/db", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@corvo/db")>()),
   raiseNotification,

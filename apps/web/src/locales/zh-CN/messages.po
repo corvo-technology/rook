@@ -1297,6 +1297,7 @@ msgid "Automated senders will appear after they post here."
 msgstr "自动发送者在此发帖后会显示在这里。"
 
 #: src/pages/LocalSpeechSection.tsx
+#: src/pages/shell/bot-panel.tsx
 msgid "Automatic"
 msgstr "自动"
 
@@ -1485,6 +1486,10 @@ msgstr "内置"
 #: src/pages/Usage.tsx
 msgid "By agent"
 msgstr "按代理"
+
+#: src/pages/Usage.tsx
+msgid "By model tier"
+msgstr "按模型等级"
 
 #: src/pages/shell/chat-header.tsx
 msgid "Call"
@@ -1881,6 +1886,10 @@ msgstr "完成"
 #: src/pages/onboarding/OnboardingLayout.tsx
 msgid "Completed"
 msgstr "已完成"
+
+#: src/pages/ModelSettingsOverlay.tsx
+msgid "Complex tasks model"
+msgstr "复杂任务模型"
 
 #: src/pages/ConnectionsSettingsPanel.tsx
 msgid "Composio"
@@ -3394,6 +3403,10 @@ msgstr "错误"
 msgid "Error details"
 msgstr "错误详情"
 
+#: src/pages/Usage.tsx
+msgid "Escalated"
+msgstr "已升级"
+
 #: src/lib/cron.ts
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Every"
@@ -3549,6 +3562,10 @@ msgstr "失败。"
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Failure handling"
 msgstr "失败处理"
+
+#: src/pages/Usage.tsx
+msgid "Fast"
+msgstr "快速"
 
 #: src/pages/TicketFields.tsx
 msgid "Field name"
@@ -6794,6 +6811,10 @@ msgstr "小队"
 msgid "SSO is temporarily unavailable. Try again."
 msgstr "SSO 暂时不可用，请重试。"
 
+#: src/pages/Usage.tsx
+msgid "Standard"
+msgstr "标准"
+
 #: src/pages/shell/computer-overlay.tsx
 msgid "Start"
 msgstr "开始"
@@ -6891,6 +6912,10 @@ msgstr "已加密存储"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Stream replies"
 msgstr "流式回复"
+
+#: src/pages/Usage.tsx
+msgid "Strong"
+msgstr "强力"
 
 #: src/components/CoachLayer.tsx
 msgid "Stuck? Ask the Chief."

@@ -21,6 +21,7 @@ import type { Prisma, PrismaClient } from "./client.js";
 import type { ComputerMode } from "./computers.js";
 import { ensureComputerRecord, parseComputerMode } from "./computers.js";
 import { createThreadMessageInTransaction } from "./messages.js";
+import { newAgentModelAuto } from "./model-auto.js";
 import { withNewestThreadMessages } from "./preview-messages.js";
 import { BotSectionNameConflictError, IsolationError, memberSpaceIds } from "./scope.js";
 import { lockSpaceForContentCreation } from "./spaces.js";
@@ -118,6 +119,7 @@ function mapBot(
     autoSpeak?: boolean;
     modelProvider?: string | null;
     modelId?: string | null;
+    modelAuto?: boolean;
     thinkingLevel?: string | null;
     teamChatAmbientEnabled?: boolean;
     teamChatRules?: string;
@@ -171,6 +173,7 @@ function mapBot(
     autoSpeak: bot.autoSpeak ?? false,
     modelProvider: bot.modelProvider ? canonicalPiProviderId(bot.modelProvider) : null,
     modelId: bot.modelId ?? null,
+    modelAuto: bot.modelAuto ?? false,
     thinkingLevel: (bot.thinkingLevel as Bot["thinkingLevel"]) ?? null,
     teamChatAmbientEnabled: bot.teamChatAmbientEnabled ?? false,
     teamChatRules: bot.teamChatRules ?? "",
@@ -570,6 +573,8 @@ export function createRepos(
         starters?: string[];
         modelProvider?: string | null;
         modelId?: string | null;
+        /** Picks a model tier per turn. Omitted: automatic when the deployment has tiers and no model is given. */
+        modelAuto?: boolean;
         thinkingLevel?: string | null;
         disabledBuiltinTools?: string[];
         initialMessage?: {
@@ -586,6 +591,7 @@ export function createRepos(
       let modelId = input.modelId ?? null;
       let thinkingLevel = input.thinkingLevel ?? null;
       let disabledBuiltinTools = input.disabledBuiltinTools ?? [];
+      let inheritedAuto = false;
       if (input.parentBotId) {
         const parent = await prisma.bot.findFirst({
           where: {
@@ -597,6 +603,7 @@ export function createRepos(
         if (!modelId) {
           modelProvider = parent.modelProvider ?? null;
           modelId = parent.modelId ?? null;
+          inheritedAuto = parent.modelAuto;
         }
         if (thinkingLevel == null) thinkingLevel = parent.thinkingLevel ?? null;
         if (input.disabledBuiltinTools === undefined) {
@@ -604,6 +611,12 @@ export function createRepos(
         }
       }
       const settings = await prisma.deploymentSettings.findUnique({ where: { id: "default" } });
+      const modelAuto = newAgentModelAuto({
+        modelId,
+        requested: input.modelAuto,
+        parentAuto: inheritedAuto,
+        settings,
+      });
       const envKind = process.env.SANDBOX_PROVIDER ?? "docker";
       const kind =
         envKind === "docker" && settings?.computerHost === "this-mac" ? "desktop" : envKind;
@@ -656,6 +669,7 @@ export function createRepos(
               ...(input.starters?.length ? { starters: input.starters } : {}),
               modelProvider,
               modelId,
+              modelAuto,
               thinkingLevel,
               disabledBuiltinTools,
             },

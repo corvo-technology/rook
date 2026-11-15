@@ -12,7 +12,9 @@ function deps(rows: Array<{ role: string; position: number; provider: string; mo
   );
   return {
     deps: {
+      deploymentModelConfigured: false,
       prisma: {
+        deploymentSettings: { findUnique: vi.fn(async () => null) },
         spaceSettingOverride: { findUnique: vi.fn(async () => null) },
         userModelRoleChoice: { findMany },
       },

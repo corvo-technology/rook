@@ -246,8 +246,20 @@ export function contentRoutes(ctx: RouterContext) {
             model: true,
             runId: true,
             parentRunId: true,
+            modelTier: true,
           },
           take: USAGE_OVERVIEW_ROW_LIMIT,
+        });
+        const escalations = await deps.prisma.run.count({
+          where: {
+            spaceId: context.actor.spaceId,
+            userId: context.actor.userId,
+            tierEscalations: { gt: 0 },
+            createdAt: {
+              gte: new Date(window.from),
+              lt: new Date(Math.max(window.to, now.getTime())),
+            },
+          },
         });
         const ids = [...new Set(rows.flatMap((row) => (row.botId ? [row.botId] : [])))];
         const [bots, deleted] = await Promise.all([
@@ -284,6 +296,7 @@ export function contentRoutes(ctx: RouterContext) {
           agents,
           unknownName: "",
           outcomes: buildRunOutcomes(ended),
+          escalations,
         });
       }),
       subscriptions: authed.usage.subscriptions.handler(async ({ context }) => {

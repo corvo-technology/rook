@@ -18,6 +18,7 @@ import {
   isBuiltinToolName,
 } from "@corvo/contracts";
 import {
+  AUTO_MODEL_KEY,
   chatModelChoices,
   connectedModelChoices,
   credentialForModel,
@@ -74,7 +75,11 @@ const rowLabelClass = "text-sm text-foreground";
 /** The advanced fields one Save sends, in the order their saved snapshot keeps them. */
 function advancedValues(bot: Bot) {
   return [
-    bot.modelProvider && bot.modelId ? modelOptionKey(bot.modelProvider, bot.modelId) : "",
+    bot.modelAuto
+      ? AUTO_MODEL_KEY
+      : bot.modelProvider && bot.modelId
+        ? modelOptionKey(bot.modelProvider, bot.modelId)
+        : "",
     bot.thinkingLevel ?? "",
     bot.computerMode,
     bot.memoryScope,
@@ -172,6 +177,7 @@ export function BotSettings({
     voiceId?: string | null;
     modelProvider?: string | null;
     modelId?: string | null;
+    modelAuto?: boolean;
     thinkingLevel?: ThinkingLevel | null;
     disabledBuiltinTools?: string[];
   }) => Promise<void>;
@@ -235,9 +241,7 @@ export function BotSettings({
   const [squadRouting, setSquadRouting] = useState(bot.squadRouting);
   useEffect(() => setSquadRouting(bot.squadRouting), [bot.squadRouting]);
   const [voiceId, setVoiceId] = useState(bot.voiceId ?? "");
-  const [modelKey, setModelKey] = useState(
-    bot.modelProvider && bot.modelId ? modelOptionKey(bot.modelProvider, bot.modelId) : "",
-  );
+  const [modelKey, setModelKey] = useState<string>(advancedValues(bot)[0]);
   const [thinkingLevel, setThinkingLevel] = useState(bot.thinkingLevel ?? "");
   const [disabledBuiltinTools, setDisabledBuiltinTools] = useState<string[]>(
     bot.disabledBuiltinTools ?? [],
@@ -347,9 +351,12 @@ export function BotSettings({
         modelId: resolveSelectableModelId(catalog, storedModel.provider, storedModel.modelId),
       }
     : null;
+  const automatic = modelKey === AUTO_MODEL_KEY;
   const selectedModelKey = selectedModel
     ? modelOptionKey(selectedModel.provider, selectedModel.modelId)
-    : "";
+    : automatic
+      ? AUTO_MODEL_KEY
+      : "";
 
   const defaultEntry = me?.defaultModel
     ? catalogEntry(catalog, me.defaultProvider, me.defaultModel)
@@ -359,6 +366,7 @@ export function BotSettings({
     selectedModelKey,
     t`Space default`,
     defaultEntry?.images,
+    me?.autoModelAvailable || automatic ? t`Automatic` : undefined,
   );
 
   const effectiveProvider = selectedModel?.provider ?? me?.defaultProvider ?? null;
@@ -372,11 +380,11 @@ export function BotSettings({
         )
       : undefined;
   const effectiveCredential = credentialForModel(credentials, effectiveProvider, effectiveModelId);
-  const thinkingOptions = (
-    effectiveCredential?.thinkingLevels ??
-    effectiveEntry?.thinkingLevels ??
-    []
-  ).filter((level) => level !== "off");
+  const thinkingOptions = automatic
+    ? []
+    : (effectiveCredential?.thinkingLevels ?? effectiveEntry?.thinkingLevels ?? []).filter(
+        (level) => level !== "off",
+      );
   const defaultThinkingLevel = effectiveCredential?.thinkingLevel ?? "medium";
 
   async function executeSave(
@@ -458,6 +466,7 @@ export function BotSettings({
         voiceId: voiceId || null,
         modelProvider: selected?.provider ?? null,
         modelId: selected?.modelId ?? null,
+        modelAuto: modelKey === AUTO_MODEL_KEY,
         ...(modelMetaReady &&
         (thinkingOptions.length > 0 ||
           (selected?.provider ?? null) !== bot.modelProvider ||

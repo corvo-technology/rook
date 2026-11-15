@@ -1,6 +1,12 @@
 import type { AgentRunRequest, SemanticMemoryProvider } from "@corvo/adapter-kit";
 import { DEFAULT_CONTEXT_STRATEGY, runContinueJob } from "@corvo/adapter-kit";
-import type { MessageBlock, ModelRoleChoice, RunStatus, RunStopReason } from "@corvo/contracts";
+import type {
+  MessageBlock,
+  ModelRoleChoice,
+  ModelTier,
+  RunStatus,
+  RunStopReason,
+} from "@corvo/contracts";
 import { disabledBuiltinToolSet } from "@corvo/contracts";
 import {
   ACCOUNT_PAUSED_RUN_ERROR,
@@ -116,8 +122,10 @@ import {
   resolveMemberMainModel,
   selectConfiguredModel,
 } from "./model-roles.js";
+import { escalationTarget, routesAutomatically } from "./model-routing.js";
 import {
   findConnectedModelCredential,
+  type ModelChoice,
   PINNED_PROVIDER_NOT_CONNECTED,
   pinnedModelCredentialError,
   runModelChoice,
@@ -159,6 +167,7 @@ import {
 import {
   computerRetryDelay,
   createRunWorkspaceCheckpoint,
+  escalateRunTier,
   failRunBeforeTurn,
   mayOpenModelStream,
   RUN_LEASE_HEARTBEAT_MS,
@@ -180,6 +189,7 @@ import {
   resolveRunModel,
   runtimeFallbackModel,
 } from "./run-model.js";
+import { routeTurn } from "./run-model-routing.js";
 import { createReplyState } from "./run-progress.js";
 import { repeatHintForRun } from "./run-repeat.js";
 import { DELEGATED_EMPTY_NOTICE, runAllowsSilentEmpty, runReplyGuidance } from "./run-replies.js";
@@ -566,7 +576,29 @@ export function createRunExecutor(deps: ExecutorDeps) {
           ...initialBotCommandEnvironment,
         });
         // modelPinned distinguishes the captured choice from an attempt's recorded model.
-        const modelChoice = runModelChoice(run, bot);
+        const ownChoice = runModelChoice(run, bot);
+        // An automatic agent picks a tier for the turn; a pinned model, or a run that carries
+        // one, is never routed.
+        const automatic =
+          routesAutomatically({
+            modelAuto: bot.modelAuto,
+            pinned: run.modelPinned,
+            hasModel: Boolean(ownChoice.modelProvider && ownChoice.modelId),
+          }) && !deps.runtime.describe().capabilities.scripted;
+        const routed = automatic
+          ? await routeTurn({
+              deps,
+              run,
+              bot,
+              task,
+              messages,
+              defaults: {
+                settings,
+                deployment: deps.deploymentModelConfigured ? resolveDeploymentModel() : null,
+              },
+            })
+          : undefined;
+        const modelChoice: ModelChoice = routed?.choice ?? ownChoice;
         const hasModelOverride = Boolean(modelChoice.modelProvider && modelChoice.modelId);
         const overrideCredential =
           hasModelOverride && modelChoice.modelProvider
@@ -576,6 +608,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 run,
                 modelChoice.modelProvider,
                 modelChoice.modelId,
+                routed?.choice?.credentialId ? { credentialId: routed.choice.credentialId } : {},
               )
             : null;
         runAbortController = new AbortController();
@@ -823,14 +856,23 @@ export function createRunExecutor(deps: ExecutorDeps) {
           override: modelChoice,
           overrideCredential,
           main,
-          hostedProvider: (await modelCreditBillingEnabled(deps))
-            ? resolveDeploymentModel().provider
-            : undefined,
+          hostedProvider:
+            (await modelCreditBillingEnabled(deps)) || routed?.fromDeployment
+              ? resolveDeploymentModel().provider
+              : undefined,
           defaults: { settings, deployment: runDeployment },
         });
         const { credential, thinkingLevel } = selected;
         const runModelProvider = selected.provider ?? runtimeFallback?.provider;
         const runModelId = selected.id ?? runtimeFallback?.id;
+        // The tier the run actually runs on: its model, or the main one when that cannot serve.
+        const runTier: ModelTier | undefined = routed
+          ? routed.choice &&
+            (selected.provider !== routed.choice.modelProvider ||
+              selected.id !== routed.choice.modelId)
+            ? "main"
+            : routed.tier
+          : undefined;
         // A missing or refused connection of the user's own fails every scheduled run alike.
         const failRunBeforeModel = async (
           message: string,
@@ -934,7 +976,11 @@ export function createRunExecutor(deps: ExecutorDeps) {
         if (!run.modelPinned) {
           await deps.prisma.run.updateMany({
             where: { id: runId, status: "running", leaseOwner: workerId, leaseFence: fence },
-            data: { modelProvider: runModelProvider, modelId: runModelId },
+            data: {
+              modelProvider: runModelProvider,
+              modelId: runModelId,
+              ...(runTier ? { modelTier: runTier } : {}),
+            },
           });
         }
 
@@ -1704,6 +1750,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
                   runId,
                   parentRunId: runId,
                   operationId: runId,
+                  ...(runTier ? { modelTier: runTier } : {}),
                 });
                 addReplyUsage(state.replyBudget, usageTokens(event));
               },
@@ -1903,6 +1950,30 @@ export function createRunExecutor(deps: ExecutorDeps) {
           if (deps.shutdownSignal?.aborted && lease.valid && !state.guards.stopped) {
             await interruptRunForShutdown(ctx);
             return;
+          }
+          // A cheaper tier that could not finish moves up once; every other failure ends the run.
+          const target =
+            lease.valid && !deps.shutdownSignal?.aborted
+              ? escalationTarget({
+                  tier: runTier ?? null,
+                  escalations: run.tierEscalations,
+                  error: state.guards.stopped
+                    ? new TurnGuardStopError(state.guards.stopped)
+                    : caughtError,
+                })
+              : null;
+          if (target) {
+            await ctx.computer.checkpoint.flush().catch(() => undefined);
+            await ctx.settleRunningHelpers();
+            if (await escalateRunTier(deps, runId, workerId, fence, target)) {
+              getLogger().info("run.escalated", {
+                "run.id": runId,
+                "model.tier.from": runTier,
+                "model.tier.to": target,
+                ...activeModel,
+              });
+              return;
+            }
           }
           await failRun(ctx, caughtError, {
             ownCredential: resolved.ownCredential,

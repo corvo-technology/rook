@@ -1297,6 +1297,7 @@ msgid "Automated senders will appear after they post here."
 msgstr "Les expéditeurs automatisés apparaîtront après avoir publié ici."
 
 #: src/pages/LocalSpeechSection.tsx
+#: src/pages/shell/bot-panel.tsx
 msgid "Automatic"
 msgstr "Automatique"
 
@@ -1485,6 +1486,10 @@ msgstr "Intégré"
 #: src/pages/Usage.tsx
 msgid "By agent"
 msgstr "Par agent"
+
+#: src/pages/Usage.tsx
+msgid "By model tier"
+msgstr "Par niveau de modèle"
 
 #: src/pages/shell/chat-header.tsx
 msgid "Call"
@@ -1881,6 +1886,10 @@ msgstr "Terminé"
 #: src/pages/onboarding/OnboardingLayout.tsx
 msgid "Completed"
 msgstr "Terminé"
+
+#: src/pages/ModelSettingsOverlay.tsx
+msgid "Complex tasks model"
+msgstr "Modèle pour les tâches complexes"
 
 #: src/pages/ConnectionsSettingsPanel.tsx
 msgid "Composio"
@@ -3394,6 +3403,10 @@ msgstr "Erreur"
 msgid "Error details"
 msgstr "Détails de l’erreur"
 
+#: src/pages/Usage.tsx
+msgid "Escalated"
+msgstr "Escaladées"
+
 #: src/lib/cron.ts
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Every"
@@ -3549,6 +3562,10 @@ msgstr "Échoué."
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Failure handling"
 msgstr "Gestion des échecs"
+
+#: src/pages/Usage.tsx
+msgid "Fast"
+msgstr "Rapide"
 
 #: src/pages/TicketFields.tsx
 msgid "Field name"
@@ -6794,6 +6811,10 @@ msgstr "Équipe"
 msgid "SSO is temporarily unavailable. Try again."
 msgstr "SSO est temporairement indisponible. Réessayez."
 
+#: src/pages/Usage.tsx
+msgid "Standard"
+msgstr "Standard"
+
 #: src/pages/shell/computer-overlay.tsx
 msgid "Start"
 msgstr "Démarrer"
@@ -6891,6 +6912,10 @@ msgstr "Stocké chiffré"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Stream replies"
 msgstr "Diffuser les réponses"
+
+#: src/pages/Usage.tsx
+msgid "Strong"
+msgstr "Puissant"
 
 #: src/components/CoachLayer.tsx
 msgid "Stuck? Ask the Chief."

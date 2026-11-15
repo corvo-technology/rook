@@ -16,9 +16,19 @@ import { isOperatorOfferedModel } from "./pi-local-provider.js";
 /** The deployment's configuration that stands in for a member who chose nothing. */
 export type DeploymentModelDefaults = {
   /** The owner's saved default, ahead of the environment's. */
-  settings?: { defaultModelProvider: string | null; defaultModelId: string | null } | null;
+  settings?: {
+    defaultModelProvider: string | null;
+    defaultModelId: string | null;
+    fastModelId?: string | null;
+    strongModelId?: string | null;
+  } | null;
   /** The environment's model, when the deployment can run it. */
-  deployment?: { provider: string; model: string } | null;
+  deployment?: {
+    provider: string;
+    model: string;
+    fastModel?: string | null;
+    strongModel?: string | null;
+  } | null;
   env?: NodeJS.ProcessEnv;
 };
 
@@ -27,9 +37,19 @@ export function deploymentModelRole(
   role: ModelRole,
   defaults: DeploymentModelDefaults,
 ): ModelRoleSettings {
-  // Routing has no deployment default: without a member's choice, the router bot decides. Nor does
-  // the fast role: without one, the main model does the chores.
-  if (role === "routing" || role === "fast") return { primary: null, backups: [] };
+  // Routing has no deployment default: without a member's choice, the router bot decides.
+  if (role === "routing") return { primary: null, backups: [] };
+  // The tiers run on the deployment's provider; without a model for one, the main model serves it.
+  if (role === "fast" || role === "strong") {
+    const provider = defaults.settings?.defaultModelProvider ?? defaults.deployment?.provider;
+    const modelId =
+      role === "fast"
+        ? (usableModelId(defaults.settings?.fastModelId) ??
+          usableModelId(defaults.deployment?.fastModel))
+        : (usableModelId(defaults.settings?.strongModelId) ??
+          usableModelId(defaults.deployment?.strongModel));
+    return { primary: provider && modelId ? { provider, modelId } : null, backups: [] };
+  }
   if (role === "approval") {
     const checker = resolveAutoReviewChecker(defaults.env);
     return {

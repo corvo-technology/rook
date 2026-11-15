@@ -312,6 +312,12 @@ export default function Models() {
               title={t("Light tasks model")}
               defaultLabel={t("Choose a model")}
             />
+            <ModelRoleSettings
+              {...shared}
+              modelRole="strong"
+              title={t("Complex tasks model")}
+              defaultLabel={t("Choose a model")}
+            />
             {target.scope === "account" && found.length > 0 ? (
               <SettingsGroup
                 accessibilityLabel={t("Found on this computer")}

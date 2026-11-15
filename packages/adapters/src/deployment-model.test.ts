@@ -24,6 +24,8 @@ describe("resolveDeploymentModel", () => {
   it("pairs the deployment model key with the provider it belongs to", () => {
     const both = { OPENROUTER_API_KEY: "or-key", ANTHROPIC_API_KEY: "sk-ant-key" };
     expect(resolveDeploymentModel(both)).toEqual({
+      fastModel: null,
+      strongModel: null,
       provider: "openrouter",
       model: "openai/gpt-6-luna",
       key: "or-key",
@@ -32,6 +34,8 @@ describe("resolveDeploymentModel", () => {
     });
     // The whole point: switching the provider switches the key with it.
     expect(resolveDeploymentModel({ ...both, PI_DEFAULT_PROVIDER: "anthropic" })).toEqual({
+      fastModel: null,
+      strongModel: null,
       provider: "anthropic",
       model: "claude-sonnet-5",
       key: "sk-ant-key",
@@ -42,6 +46,8 @@ describe("resolveDeploymentModel", () => {
     expect(
       resolveDeploymentModel({ OPENROUTER_API_KEY: "or-key", PI_DEFAULT_PROVIDER: "anthropic" }),
     ).toEqual({
+      fastModel: null,
+      strongModel: null,
       provider: "anthropic",
       model: "claude-sonnet-5",
       key: undefined,
@@ -58,6 +64,8 @@ describe("resolveDeploymentModel", () => {
       PI_DEFAULT_CREDENTIALS: "host",
     };
     expect(resolveDeploymentModel(taskRole)).toEqual({
+      fastModel: null,
+      strongModel: null,
       provider: "amazon-bedrock",
       model: "eu.anthropic.claude-sonnet-5",
       key: undefined,

@@ -1042,6 +1042,7 @@ export type MobileBot = Pick<
   | "computerMode"
   | "modelProvider"
   | "modelId"
+  | "modelAuto"
   | "thinkingLevel"
   | "autoSpeak"
   | "fleetManagement"
@@ -1067,7 +1068,7 @@ export type MobileMe = Pick<
   | "needsSignupSurvey"
   | "billingEnabled"
 > &
-  Partial<Pick<Me, "shortNav" | "canCreateSpace">>;
+  Partial<Pick<Me, "shortNav" | "canCreateSpace" | "autoModelAvailable">>;
 
 export type MobileModel = ModelCatalogEntry;
 

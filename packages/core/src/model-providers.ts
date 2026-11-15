@@ -416,17 +416,27 @@ export function modelChangePatch(key: string): {
  * A chat's model picker: the space default (key ""), then a saved model no
  * connection offers any more, then every connected model.
  */
+/** The picker's value for an agent that chooses its model each turn: no model id has this shape. */
+export const AUTO_MODEL_KEY = "auto";
+
 export function chatModelChoices(
   connected: readonly ConnectedModelChoice[],
   selectedKey: string,
   spaceDefaultLabel: string,
   /** Whether the space's default model reads images, when the catalog knows. */
   spaceDefaultImages?: boolean,
+  /** Offers the agent choosing its own model each turn; omitted where tiers are not set up. */
+  automaticLabel?: string,
 ): ChatModelChoice[] {
   const choices: ChatModelChoice[] = [
     { key: "", label: spaceDefaultLabel, images: spaceDefaultImages },
+    ...(automaticLabel ? [{ key: AUTO_MODEL_KEY, label: automaticLabel }] : []),
   ];
-  if (selectedKey && !connected.some((option) => option.key === selectedKey)) {
+  if (
+    selectedKey &&
+    selectedKey !== AUTO_MODEL_KEY &&
+    !connected.some((option) => option.key === selectedKey)
+  ) {
     const saved = parseModelOptionKey(selectedKey);
     choices.push({
       key: selectedKey,

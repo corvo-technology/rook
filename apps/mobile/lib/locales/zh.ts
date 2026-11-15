@@ -1,4 +1,6 @@
 export const ZH_MESSAGES: Record<string, string> = {
+  Automatic: "自动",
+  "Complex tasks model": "复杂任务模型",
   "Not sent. Tap for options": "未发送。轻点查看选项",
   "Image input is not configured for this model.": "此模型尚未配置图片输入。",
   "Send as file": "作为文件发送",

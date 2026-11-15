@@ -64,6 +64,40 @@ function configuredOpenRouterModel(
   };
 }
 
+/** A price a hold can rest on: every rate is a real, non-negative number and something costs money. */
+export function hasReliablePrice(cost: Model<Api>["cost"]): boolean {
+  const tiers = [cost, ...(cost.tiers ?? [])];
+  return (
+    tiers.every((tier) =>
+      [tier.input, tier.output, tier.cacheRead, tier.cacheWrite].every(
+        (rate) => Number.isFinite(rate) && rate >= 0,
+      ),
+    ) && cost.input + cost.output > 0
+  );
+}
+
+/** The catalog's own price for a model, or undefined when it has none, an unknown one, or a variable one. */
+export function catalogModelCost(
+  provider: string,
+  modelId: string,
+): Model<Api>["cost"] | undefined {
+  const cost = catalogModels().getModel(canonicalPiProviderId(provider), modelId)?.cost;
+  return cost && hasReliablePrice(cost) ? cost : undefined;
+}
+
+/**
+ * The price a hold is sized by for a model whose own price is unknown or variable: the rates of
+ * its candidates, or a flat cap spread over a full context window so no call can exceed it.
+ */
+function ceilingCost(
+  ceiling: NonNullable<AgentRunRequest["model"]["priceCeiling"]>,
+  model: Pick<Model<Api>, "contextWindow" | "maxTokens">,
+): Model<Api>["cost"] {
+  if ("perMillionUsd" in ceiling) return { ...ceiling.perMillionUsd };
+  const rate = (ceiling.callUsd * 1_000_000) / Math.max(1, model.contextWindow + model.maxTokens);
+  return { input: rate, output: rate, cacheRead: rate, cacheWrite: rate };
+}
+
 export function resolveRuntimeModel(modelConfig: AgentRunRequest["model"]): {
   provider: string;
   modelId: string;
@@ -103,6 +137,12 @@ export function resolveRuntimeModel(modelConfig: AgentRunRequest["model"]): {
         : {}),
       ...(modelConfig.maxTokens !== undefined ? { maxTokens: modelConfig.maxTokens } : {}),
     };
+  }
+  // A router's price varies per call, and an unknown model's is a guess; neither sizes a hold.
+  // The settled cost is always the provider's own.
+  const exact = models.getModel(provider, modelId);
+  if (model && modelConfig.priceCeiling && !(exact && hasReliablePrice(exact.cost))) {
+    model = { ...model, cost: ceilingCost(modelConfig.priceCeiling, model) };
   }
   const apiKey = modelConfig.oauth
     ? undefined

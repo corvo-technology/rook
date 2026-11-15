@@ -21,7 +21,7 @@ Open **Settings** › **Models**. Under **Providers**, use **Add provider** and 
 
 ## Other roles
 
-Smaller jobs can use their own model: **Light tasks model** for quick work, **Routing model** for deciding who handles a request, and **Approval model** for **Auto** approvals. Each falls back to a default when unset.
+Smaller jobs can use their own model: **Light tasks model** for quick work, **Complex tasks model** for what the main model cannot do, **Routing model** for deciding who handles a request, and **Approval model** for **Auto** approvals. Each falls back to a default when unset.
 
 ## Fallbacks
 
@@ -49,7 +49,7 @@ Abra **Configurações** › **Modelos**. Em **Provedores**, use **Adicionar pro
 
 ## Outras funções
 
-Tarefas menores podem usar um modelo próprio: **Modelo para tarefas leves** para trabalho rápido, **Modelo de roteamento** para decidir quem cuida de um pedido e **Modelo de aprovação** para aprovações **Auto**. Cada um volta a um padrão quando não definido.
+Tarefas menores podem usar um modelo próprio: **Modelo para tarefas leves** para trabalho rápido, **Modelo para tarefas complexas** para o que o modelo principal não resolve, **Modelo de roteamento** para decidir quem cuida de um pedido e **Modelo de aprovação** para aprovações **Auto**. Cada um volta a um padrão quando não definido.
 
 ## Alternativos
 

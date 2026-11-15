@@ -1297,6 +1297,7 @@ msgid "Automated senders will appear after they post here."
 msgstr "自動送信者は、ここに投稿すると表示されます。"
 
 #: src/pages/LocalSpeechSection.tsx
+#: src/pages/shell/bot-panel.tsx
 msgid "Automatic"
 msgstr "自動"
 
@@ -1485,6 +1486,10 @@ msgstr "組み込み"
 #: src/pages/Usage.tsx
 msgid "By agent"
 msgstr "エージェント別"
+
+#: src/pages/Usage.tsx
+msgid "By model tier"
+msgstr "モデル階層別"
 
 #: src/pages/shell/chat-header.tsx
 msgid "Call"
@@ -1881,6 +1886,10 @@ msgstr "完了"
 #: src/pages/onboarding/OnboardingLayout.tsx
 msgid "Completed"
 msgstr "完了"
+
+#: src/pages/ModelSettingsOverlay.tsx
+msgid "Complex tasks model"
+msgstr "複雑なタスク用モデル"
 
 #: src/pages/ConnectionsSettingsPanel.tsx
 msgid "Composio"
@@ -3394,6 +3403,10 @@ msgstr "エラー"
 msgid "Error details"
 msgstr "エラーの詳細"
 
+#: src/pages/Usage.tsx
+msgid "Escalated"
+msgstr "引き上げ"
+
 #: src/lib/cron.ts
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Every"
@@ -3549,6 +3562,10 @@ msgstr "失敗しました。"
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Failure handling"
 msgstr "失敗時の対応"
+
+#: src/pages/Usage.tsx
+msgid "Fast"
+msgstr "高速"
 
 #: src/pages/TicketFields.tsx
 msgid "Field name"
@@ -6794,6 +6811,10 @@ msgstr "スクワッド"
 msgid "SSO is temporarily unavailable. Try again."
 msgstr "SSOは一時的に利用できません。もう一度お試しください。"
 
+#: src/pages/Usage.tsx
+msgid "Standard"
+msgstr "標準"
+
 #: src/pages/shell/computer-overlay.tsx
 msgid "Start"
 msgstr "開始"
@@ -6891,6 +6912,10 @@ msgstr "暗号化して保存済み"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Stream replies"
 msgstr "返信をストリーミング"
+
+#: src/pages/Usage.tsx
+msgid "Strong"
+msgstr "高性能"
 
 #: src/components/CoachLayer.tsx
 msgid "Stuck? Ask the Chief."

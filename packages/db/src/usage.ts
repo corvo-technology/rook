@@ -11,6 +11,8 @@ export interface UsageAttribution {
   parentRunId?: string;
   operationId?: string;
   operationKind?: UsageOperationKind;
+  /** The tier an automatic agent's call ran on. */
+  modelTier?: string;
 }
 
 /** Usage is financial history, independent from message clearing or bot deletion. */
@@ -50,6 +52,8 @@ export async function recordUsage(
     callId: event.callId ?? null,
     operationKind: attribution.operationKind ?? event.operationKind ?? "answer",
     agentId: event.agentId ?? null,
+    modelTier: attribution.modelTier ?? null,
+    routedModel: event.routedModel ?? null,
   };
   return prisma.$transaction(async (tx) => {
     await tx.usageRecord.createMany({ data: [data], skipDuplicates: true });

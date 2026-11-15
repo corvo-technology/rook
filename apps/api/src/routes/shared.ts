@@ -5,6 +5,7 @@ import {
   isOperatorOfferedModel,
   mcpStdioAvailable,
   resolveMemberMainModel,
+  tiersAvailable,
 } from "@corvo/adapters";
 import type { Actor, Me } from "@corvo/contracts";
 import { attachmentMaxBytes, canonicalPiProviderId, PartnerTemplate } from "@corvo/contracts";
@@ -69,6 +70,17 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
     needsModel: partner
       ? deps.env.agentRuntime !== "scripted" && !setup.main && !deps.env.deploymentModelConfigured
       : setup.needsModel,
+    autoModelAvailable: await tiersAvailable({ prisma: deps.prisma }, actor, {
+      settings: setup.settings,
+      deployment: deps.env.deploymentModelConfigured
+        ? {
+            provider: deps.env.defaultProvider,
+            model: deps.env.defaultModel,
+            fastModel: deps.env.fastModel,
+            strongModel: deps.env.strongModel,
+          }
+        : null,
+    }),
     defaultProvider: canonicalPiProviderId(setup.model?.provider ?? deps.env.defaultProvider),
     defaultModel: setup.model?.modelId ?? deps.env.defaultModel,
     // Set only while the active default is the deployment's own, running on host credentials.

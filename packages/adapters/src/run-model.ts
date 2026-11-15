@@ -22,7 +22,9 @@ import {
   HostedModelCreditsRequiredError,
   hostedModelCreditObserver,
 } from "./model-credit-observer.js";
+import { priceCeilingFor } from "./model-price-ceiling.js";
 import {
+  type DeploymentModelDefaults,
   effectiveModelRole,
   resolveMemberMainModel,
   selectConfiguredModel,
@@ -54,6 +56,45 @@ import {
   serializeModelSecret,
   withModelCredentialLock,
 } from "./pi-oauth.js";
+import { catalogModelCost } from "./pi-runtime-models.js";
+
+/** The deployment's own models, as every role resolution reads them. */
+export async function deploymentModelDefaults(
+  deps: Pick<ExecutorDeps, "prisma" | "deploymentModelConfigured">,
+): Promise<DeploymentModelDefaults> {
+  return {
+    settings: await deps.prisma.deploymentSettings.findUnique({ where: { id: "default" } }),
+    deployment: deps.deploymentModelConfigured ? resolveDeploymentModel() : null,
+  };
+}
+
+/**
+ * What one call to a model with no reliable price may cost at most, sized by the models it can
+ * route to. Only a funded call needs it, and only a model the catalog cannot price: a router
+ * (its price varies per call) or an unlisted model. Undefined for any other call.
+ */
+async function variablePriceCeiling(
+  deps: ExecutorDeps,
+  scope: { userId: string; spaceId: string },
+  provider: string,
+  modelId: string,
+  funded: boolean,
+): Promise<AgentRunRequest["model"]["priceCeiling"]> {
+  if (!funded || catalogModelCost(provider, modelId)) return undefined;
+  const defaults = await deploymentModelDefaults(deps);
+  const roles = await Promise.all(
+    ["fast", "main", "strong"].map((role) =>
+      effectiveModelRole(deps.prisma, scope, role as "main", defaults).catch(() => null),
+    ),
+  );
+  return priceCeilingFor(
+    roles
+      .flatMap((role) => (role ? [role.primary, ...role.backups] : []))
+      .flatMap((choice) =>
+        choice ? [{ provider: choice.provider, modelId: choice.modelId }] : [],
+      ),
+  );
+}
 
 export function runtimeFallbackModel(runtime: AgentRuntime) {
   return runtime.describe().capabilities.scripted ? { provider: "scripted", id: "scripted" } : null;
@@ -460,12 +501,20 @@ export async function resolveConnectedRunModel(
     registerSecrets,
     { requireStoredSecret },
   );
+  const priceCeiling = await variablePriceCeiling(
+    deps,
+    scope,
+    provider,
+    modelId,
+    Boolean(resolved.callObserver),
+  );
   return {
     provider,
     id: modelId,
     ...(credentialId ? { connectionId: credentialId } : {}),
     apiKey: resolved.oauth ? undefined : resolved.apiKey,
     callObserver: resolved.callObserver,
+    ...(priceCeiling ? { priceCeiling } : {}),
     ...cloudflareRunFields(resolved),
     baseUrl: resolved.baseUrl,
     headers: resolved.headers,
@@ -558,11 +607,19 @@ export async function resolveRunModel(
     provider,
     id,
   );
+  const priceCeiling = await variablePriceCeiling(
+    deps,
+    scope,
+    provider,
+    id,
+    Boolean(resolved.callObserver),
+  );
   return {
     provider,
     id,
     apiKey: resolved.oauth ? undefined : resolved.apiKey,
     callObserver: resolved.callObserver,
+    ...(priceCeiling ? { priceCeiling } : {}),
     ...cloudflareRunFields(resolved),
     baseUrl: resolved.baseUrl,
     headers: resolved.headers,
@@ -594,7 +651,12 @@ export async function resolveFastRunModel(
   scope: { userId: string; spaceId: string },
 ): Promise<AgentRunRequest["model"] | undefined> {
   try {
-    const { primary } = await effectiveModelRole(deps.prisma, scope, "fast", {});
+    const { primary } = await effectiveModelRole(
+      deps.prisma,
+      scope,
+      "fast",
+      await deploymentModelDefaults(deps),
+    );
     if (!primary) return undefined;
     return await resolveConnectedRunModel(
       deps,

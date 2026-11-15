@@ -454,9 +454,22 @@ export interface AgentSteeringMessage {
 /** Adapter-supplied cache policy metadata; absent fields mean unknown. */
 export type CacheCapabilities = ConnectionCacheCapabilities;
 
+/**
+ * What a call to a model whose price varies per call (a router) may cost at most, so its credit
+ * hold is sized by a bound instead of a price: rates (USD per million tokens) no candidate model
+ * exceeds, or a flat USD cap for one call. Only used when the model's own price is unknown.
+ */
+export type ModelPriceCeiling =
+  | {
+      perMillionUsd: { input: number; output: number; cacheRead: number; cacheWrite: number };
+    }
+  | { callUsd: number };
+
 export interface AgentRunModel {
   /** Server-side spending authorization, carried with the resolved credential. */
   callObserver?: ModelCallObserver;
+  /** Sizes the hold for a model with no reliable price; settlement still uses the provider's cost. */
+  priceCeiling?: ModelPriceCeiling;
   cacheCapabilities?: CacheCapabilities;
   provider: string;
   id: string;
@@ -595,6 +608,8 @@ export interface ScriptedTurn {
  */
 export interface AgentUsage {
   providerRequestId?: string | null;
+  /** The model a router served the call with, when it is not the one asked for. */
+  routedModel?: string | null;
   operationKind?: UsageOperationKind;
   inputTokens: number | null;
   outputTokens: number | null;

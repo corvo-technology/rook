@@ -54,6 +54,9 @@ export function resolveDeploymentModel(env: NodeJS.ProcessEnv = process.env) {
     (provider === "amazon-bedrock" || getEnvApiKey(provider) === HOST_CREDENTIALS);
   return {
     provider,
+    /** The models of the fast and strong tiers on this provider; empty leaves the tier on the main model. */
+    fastModel: env.PI_FAST_MODEL?.trim() || null,
+    strongModel: env.PI_STRONG_MODEL?.trim() || null,
     model: explicitModel || models[provider] || models.openrouter!,
     key,
     configured: Boolean(key) || hostCredentials,

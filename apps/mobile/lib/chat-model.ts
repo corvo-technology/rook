@@ -9,6 +9,8 @@ export function chatModelPickerChoices(
   credentials: MobileModelCredential[],
   selectedKey: string,
   t: (message: string) => string,
+  /** An agent's own picker also offers choosing the model each turn. */
+  automatic = false,
 ): ChatModelChoice[] {
   const defaultEntry = me?.defaultModel
     ? catalogEntry(catalog, me.defaultProvider, me.defaultModel)
@@ -21,6 +23,7 @@ export function chatModelPickerChoices(
     selectedKey,
     spaceDefaultLabel,
     defaultEntry?.images,
+    automatic ? t("Automatic") : undefined,
   );
   choices[0] = {
     ...choices[0]!,

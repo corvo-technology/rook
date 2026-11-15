@@ -157,6 +157,9 @@ export interface AppEnv {
   teamChatJudgeModel: string | undefined;
   defaultProvider: string;
   defaultModel: string;
+  /** The deployment's fast and strong tier models on that provider; null leaves a tier on the default. */
+  fastModel: string | null;
+  strongModel: string | null;
   wakeupDriver: string;
   /** The operator allows coding-agent CLIs on this machine to serve models. */
   mcpStdioEnabled: boolean;
@@ -337,6 +340,8 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     teamChatJudgeModel: optional(source.TEAM_CHAT_JUDGE_MODEL),
     defaultProvider: deploymentModel.provider,
     defaultModel: deploymentModel.model,
+    fastModel: deploymentModel.fastModel,
+    strongModel: deploymentModel.strongModel,
     wakeupDriver: source.WAKEUP_DRIVER ?? "graphile",
     mcpStdioEnabled: source.MCP_STDIO_ENABLED === "true",
     mcpStdioAllowedCommands: (source.MCP_STDIO_ALLOWED_COMMANDS ?? "")

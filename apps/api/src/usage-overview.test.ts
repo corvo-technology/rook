@@ -187,3 +187,39 @@ describe("buildRunOutcomes top error", () => {
     expect(buildRunOutcomes([run(limit("x"), "completed")]).get("a")?.topError).toBeNull();
   });
 });
+
+describe("spend by model tier", () => {
+  it("sums each tier's tokens and cost, cheapest first, and carries the escalation count", () => {
+    const result = buildUsageOverview({
+      period: "month",
+      now: NOW,
+      agents,
+      unknownName: "",
+      escalations: 2,
+      rows: [
+        row({ modelTier: "strong", costUsd: 0.4 }),
+        row({ modelTier: "fast", costUsd: 0.01, runId: "r2" }),
+        row({ modelTier: "fast", costUsd: 0.02, runId: "r3" }),
+        row({ modelTier: null, runId: "r4" }),
+      ],
+    });
+    expect(result.tiers).toEqual([
+      { tier: "fast", tokens: 200, costUsd: expect.closeTo(0.03) },
+      { tier: "strong", tokens: 100, costUsd: 0.4 },
+    ]);
+    expect(result.escalations).toBe(2);
+  });
+
+  it("has no tiers when no agent picked its model, and does not invent a cost", () => {
+    expect(overview([row({})]).tiers).toEqual([]);
+    expect(overview([row({})]).escalations).toBe(0);
+    const unknownCost = buildUsageOverview({
+      period: "month",
+      now: NOW,
+      agents,
+      unknownName: "",
+      rows: [row({ modelTier: "main", costUsd: null })],
+    });
+    expect(unknownCost.tiers).toEqual([{ tier: "main", tokens: 100, costUsd: null }]);
+  });
+});

@@ -1297,6 +1297,7 @@ msgid "Automated senders will appear after they post here."
 msgstr "Automated senders will appear after they post here."
 
 #: src/pages/LocalSpeechSection.tsx
+#: src/pages/shell/bot-panel.tsx
 msgid "Automatic"
 msgstr "Automatic"
 
@@ -1485,6 +1486,10 @@ msgstr "Built-in"
 #: src/pages/Usage.tsx
 msgid "By agent"
 msgstr ""
+
+#: src/pages/Usage.tsx
+msgid "By model tier"
+msgstr "By model tier"
 
 #: src/pages/shell/chat-header.tsx
 msgid "Call"
@@ -1881,6 +1886,10 @@ msgstr "Complete"
 #: src/pages/onboarding/OnboardingLayout.tsx
 msgid "Completed"
 msgstr "Completed"
+
+#: src/pages/ModelSettingsOverlay.tsx
+msgid "Complex tasks model"
+msgstr "Complex tasks model"
 
 #: src/pages/ConnectionsSettingsPanel.tsx
 msgid "Composio"
@@ -3394,6 +3403,10 @@ msgstr "Error"
 msgid "Error details"
 msgstr "Error details"
 
+#: src/pages/Usage.tsx
+msgid "Escalated"
+msgstr "Escalated"
+
 #: src/lib/cron.ts
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Every"
@@ -3549,6 +3562,10 @@ msgstr "Failed."
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Failure handling"
 msgstr "Failure handling"
+
+#: src/pages/Usage.tsx
+msgid "Fast"
+msgstr "Fast"
 
 #: src/pages/TicketFields.tsx
 msgid "Field name"
@@ -6794,6 +6811,10 @@ msgstr "Squad"
 msgid "SSO is temporarily unavailable. Try again."
 msgstr "SSO is temporarily unavailable. Try again."
 
+#: src/pages/Usage.tsx
+msgid "Standard"
+msgstr "Standard"
+
 #: src/pages/shell/computer-overlay.tsx
 msgid "Start"
 msgstr "Start"
@@ -6891,6 +6912,10 @@ msgstr "Stored encrypted"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Stream replies"
 msgstr "Stream replies"
+
+#: src/pages/Usage.tsx
+msgid "Strong"
+msgstr "Strong"
 
 #: src/components/CoachLayer.tsx
 msgid "Stuck? Ask the Chief."

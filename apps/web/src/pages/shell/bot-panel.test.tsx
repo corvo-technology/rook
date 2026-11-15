@@ -97,6 +97,7 @@ vi.mock("./avatar-studio-popover", () => ({
 }));
 vi.mock("./bot-credentials", () => ({ BotCredentialsSection: () => null }));
 vi.mock("./agent-connections", () => ({ AgentConnectionsList: () => null }));
+vi.mock("../connections/AgentAccessSection", () => ({ AgentAccessSection: () => null }));
 vi.mock("./agent-audience", () => ({ AgentAudienceSection: () => null }));
 vi.mock("../ScratchpadSection", () => ({ ScratchpadSection: () => <h3>Open work</h3> }));
 vi.mock("../KnowledgeSection", () => ({

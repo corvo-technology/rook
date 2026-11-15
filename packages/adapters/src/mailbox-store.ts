@@ -1,6 +1,7 @@
 import type { AdapterContext, SecretStore } from "@corvo/adapter-kit";
 import type { MailboxConfig } from "@corvo/contracts";
 import { MailboxConfigSchema } from "@corvo/contracts";
+import { storedAccessLevel } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
 
 export interface StoredMailbox {
@@ -10,6 +11,8 @@ export interface StoredMailbox {
   address: string;
   config: MailboxConfig;
   secretId: string | null;
+  /** What the asking agent may do with it: read, or write (draft and send). */
+  level: "read" | "write";
 }
 
 export type SendClaim = "claimed" | "already_sent" | "in_doubt" | "throttled";
@@ -56,6 +59,7 @@ export class PrismaMailboxStore implements MailboxStore {
         grants: { some: { botId: scope.botId, spaceId: scope.spaceId } },
       },
       orderBy: { createdAt: "asc" },
+      include: { grants: { where: { botId: scope.botId }, select: { level: true } } },
     });
     return rows.flatMap((row) => {
       const config = MailboxConfigSchema.safeParse(row.config);
@@ -68,6 +72,7 @@ export class PrismaMailboxStore implements MailboxStore {
               address: row.address,
               config: config.data,
               secretId: row.secretId,
+              level: storedAccessLevel(row.grants[0]?.level),
             },
           ]
         : [];

@@ -1,6 +1,13 @@
 import type { McpServer } from "@corvo/contracts";
 import { expect, test } from "@playwright/test";
-import { captureScreenshot, completeOnboarding, expandAdvancedSection, signup } from "./helpers";
+import {
+  captureScreenshot,
+  chooseConnectionAction,
+  completeOnboarding,
+  connectionRow,
+  expandAdvancedSection,
+  signup,
+} from "./helpers";
 
 const credentialsTemplate = `{
   "installed": {
@@ -101,6 +108,8 @@ test("adds a stdio MCP server with encrypted environment variables", async ({ pa
   await expandAdvancedSection(page.getByTestId("integrations-advanced"));
   await page.getByRole("button", { name: "Manage MCP servers", exact: true }).click();
 
+  await page.getByRole("button", { name: "Connect", exact: true }).click();
+  await page.getByRole("button", { name: "MCP server by URL" }).click();
   await page.getByLabel("Server name").fill("Invoices");
   await page.getByRole("tab", { name: "STDIO", exact: true }).click();
   await page.getByLabel("Command").fill("npx");
@@ -175,15 +184,12 @@ test("adds a stdio MCP server with encrypted environment variables", async ({ pa
   await captureScreenshot(page, testInfo, "mcp-stdio-env-form");
 
   await page.getByRole("button", { name: "Add server", exact: true }).click();
-  await expect(page.getByText("Invoices", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Connect OAuth", exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Disconnect", exact: true })).toHaveCount(0);
-  await expect(names).toHaveCount(1);
-  await expect(names.nth(0)).toHaveValue("");
-  await expect(values.nth(0)).toHaveValue("");
-  await expect(values.nth(0)).toHaveJSProperty("tagName", "INPUT");
-  await expect(page.getByLabel("OAuth client ID (optional)")).toHaveValue("");
-  await expect(page.getByLabel("Authorization server")).toHaveCount(0);
+  await expect(page.getByTestId("connect-sheet")).toBeHidden();
+  const invoices = connectionRow(page, "Invoices");
+  await expect(invoices).toBeVisible();
+  await invoices.getByRole("button", { name: "More", exact: true }).click();
+  await expect(page.getByRole("menuitem", { name: "Connect OAuth", exact: true })).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: "Disconnect", exact: true })).toHaveCount(0);
 });
 
 test("shows MCP server health, error details, and tests the connection on demand", async ({
@@ -235,10 +241,8 @@ test("shows MCP server health, error details, and tests the connection on demand
   await page.getByRole("button", { name: "Manage MCP servers", exact: true }).click();
 
   // OAuth being connected must not read as "working": health is the primary status.
-  const health = page.getByTestId("mcp-health");
-  await expect(health).toHaveAttribute("data-status", "error");
-  await expect(health).toContainText("Not working");
-  await expect(page.getByText("OAuth connected", { exact: true })).toBeVisible();
+  const row = connectionRow(page, "Gmail");
+  await expect(row).toContainText("Not working");
 
   // The raw log hides behind a disclosure, rendered left-to-right and scrollable.
   const details = page.getByTestId("mcp-health-details");
@@ -253,14 +257,11 @@ test("shows MCP server health, error details, and tests the connection on demand
   await captureScreenshot(page, testInfo, "mcp-health-error");
 
   // Test connection calls the RPC, shows a busy state, and swaps in the fresh health.
-  const testButton = page.getByRole("button", { name: "Test connection", exact: true });
-  await testButton.click();
-  await expect(page.getByRole("button", { name: "Testing…", exact: true })).toBeDisabled();
-  await expect(health).toHaveAttribute("data-status", "ok");
-  await expect(health).toContainText(/Running\s*3 tools/);
+  await chooseConnectionAction(page, "Gmail", "Test connection");
+  await expect(row.getByText("Testing…", { exact: true })).toBeVisible();
+  await expect(row).toContainText("Connected · 3 tools");
   await expect(page.getByTestId("mcp-health-details")).toHaveCount(0);
   await expect(page.getByText("Gmail is running")).toBeVisible();
-  await expect(testButton).toBeEnabled();
   expect(testCalls).toBe(1);
   await captureScreenshot(page, testInfo, "mcp-health-ok");
 });
@@ -297,14 +298,15 @@ test("polls the server list while a stdio package is installing", async ({ page 
   await expandAdvancedSection(page.getByTestId("integrations-advanced"));
   await page.getByRole("button", { name: "Manage MCP servers", exact: true }).click();
 
-  const health = page.getByTestId("mcp-health");
-  await expect(health).toHaveAttribute("data-status", "installing");
-  await expect(page.getByRole("button", { name: "Test connection", exact: true })).toBeDisabled();
+  const row = connectionRow(page, "Gmail");
+  await expect(row).toContainText("Installing…");
+  await row.getByRole("button", { name: "More", exact: true }).click();
+  await expect(page.getByRole("menuitem", { name: "Test connection", exact: true })).toBeDisabled();
+  await page.keyboard.press("Escape");
   const beforePoll = listCalls;
   installing = false;
-  await expect(health).toHaveAttribute("data-status", "ok", { timeout: 15_000 });
+  await expect(row).toContainText("Connected · 1 tool", { timeout: 15_000 });
   expect(listCalls).toBeGreaterThan(beforePoll);
-  await expect(health).toContainText(/Running\s*1 tool/);
 
   // Polling stops once nothing is installing.
   const settled = listCalls;

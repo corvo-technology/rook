@@ -5,6 +5,7 @@ import type {
   ConnectorProvider,
   ConnectorTool,
 } from "@corvo/adapter-kit";
+import { mailboxToolOffered } from "@corvo/core";
 import { recordSecurityEvent } from "@corvo/db";
 import { z } from "zod";
 import { sanitizeConnectorError } from "./connector-safety.js";
@@ -235,7 +236,13 @@ export class MailboxConnector implements ConnectorProvider {
   }
 
   async discoverTools(context: AdapterContext): Promise<ConnectorTool[]> {
-    return (await this.grants(context)).length > 0 ? TOOLS : [];
+    const granted = await this.grants(context);
+    // Reading mail is enough for search and read; drafting and sending need write on a mailbox.
+    return TOOLS.filter((entry) =>
+      granted.some((mailbox) =>
+        mailboxToolOffered(mailbox.level, entry.route?.toolName ?? entry.name),
+      ),
+    );
   }
 
   private pick(granted: StoredMailbox[], selector: string | undefined): StoredMailbox {
@@ -302,7 +309,11 @@ export class MailboxConnector implements ConnectorProvider {
       }
       if (name === "draft" || name === "send") {
         const args = WriteArgs.parse(call.args);
-        const mailbox = this.pick(granted, args.mailbox);
+        // Only a mailbox the agent may write to; a read-only one looks like one it does not have.
+        const mailbox = this.pick(
+          granted.filter((entry) => mailboxToolOffered(entry.level, name)),
+          args.mailbox,
+        );
         yield* this.write(name, args, mailbox, call, context);
         return;
       }

@@ -102,7 +102,7 @@ export function StorePage() {
   const openSettings = useOpenSettings();
   const [searchParams] = useSearchParams();
   const activeBotId = searchParams.get("bot") || undefined;
-  const onOpenMcp = () => openSettings("mcp");
+  const onOpenMcp = () => openSettings("connections");
   const [setupOpen, setSetupOpen] = useState(false);
   const [section, setSection] = useState<"apps" | "agents" | "skills">("apps");
   const [query, setQuery] = useState("");

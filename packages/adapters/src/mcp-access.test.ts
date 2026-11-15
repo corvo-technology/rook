@@ -47,7 +47,7 @@ const posthog = {
   transport: "streamable_http",
   endpoint: "https://mcp.posthog.com/mcp",
   secretId: "secret-1",
-  assignments: [] as { id: string }[],
+  assignments: [] as { id: string; allowAllTools?: boolean; level?: string }[],
 };
 
 beforeEach(() => {
@@ -70,6 +70,32 @@ describe("requestSpaceAppAccess", () => {
       }),
     ]);
     expect(notify).toHaveBeenCalledWith("t-1", 7, undefined);
+  });
+
+  it("asks for read access when read is enough, and the card says so", async () => {
+    const { deps } = setup([posthog]);
+    await requestSpaceAppAccess(deps, run, "posthog", "Infraestrutura e SRE", "read");
+    expect(persist.mock.calls[0]?.[3]).toEqual([
+      expect.objectContaining({ kind: "mcp_approval", forBotId: "bot-2", level: "read" }),
+    ]);
+  });
+
+  it("does not ask again for read when the agent already has write", async () => {
+    const { deps } = setup([
+      { ...posthog, assignments: [{ id: "a", allowAllTools: true, level: "write" }] },
+    ]);
+    expect(await requestSpaceAppAccess(deps, run, "posthog", undefined, "read")).toMatchObject({
+      status: "connected",
+    });
+    expect(persist).not.toHaveBeenCalled();
+  });
+
+  it("asks again for write when the agent only has read", async () => {
+    const { deps } = setup([
+      { ...posthog, assignments: [{ id: "a", allowAllTools: true, level: "read" }] },
+    ]);
+    expect(await requestSpaceAppAccess(deps, run, "posthog")).toMatchObject({ status: "pending" });
+    expect(persist).toHaveBeenCalled();
   });
 
   it("looks only at the owner's enabled servers", async () => {
@@ -209,7 +235,10 @@ describe("requestSpaceAppAccess for a teammate", () => {
     const { deps } = setup([posthog]);
     await requestSpaceAppAccess(deps, run, "posthog", "Infraestrutura e SRE");
     const query = (deps.prisma.mcpServer.findMany as ReturnType<typeof vi.fn>).mock.calls[0]?.[0];
-    expect(query.select.assignments).toEqual({ where: { botId: "bot-2" }, select: { id: true } });
+    expect(query.select.assignments).toEqual({
+      where: { botId: "bot-2" },
+      select: { id: true, allowAllTools: true, level: true },
+    });
   });
 
   it("says the teammate already has it instead of asking again", async () => {

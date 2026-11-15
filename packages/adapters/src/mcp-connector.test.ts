@@ -1264,6 +1264,92 @@ describe("MCP connector session cache", () => {
     await connector.close();
   });
 
+  describe("access levels", () => {
+    const TOOLS = [
+      { name: "lookup", inputSchema: { type: "object" }, annotations: { readOnlyHint: true } },
+      { name: "list_issues", inputSchema: { type: "object" } },
+      { name: "create_issue", inputSchema: { type: "object" } },
+      {
+        name: "get_and_delete",
+        inputSchema: { type: "object" },
+        annotations: { readOnlyHint: true },
+      },
+      { name: "whoami", inputSchema: { type: "object" } },
+    ];
+    const context = {
+      spaceId: "w1",
+      userId: "u1",
+      botId: "bot-1",
+      signal: new AbortController().signal,
+    } as never;
+
+    function setup(assignment: Record<string, unknown>) {
+      const state = { failNext: false, initializations: 0, tools: TOOLS, calls: [] as string[] };
+      vi.stubGlobal("fetch", mcpFetch(state));
+      const row = { ...ASSIGNMENT, ...assignment };
+      const connector = new McpConnector(
+        {
+          botMcpServer: {
+            findMany: vi.fn().mockResolvedValue([row]),
+            findFirst: vi.fn().mockResolvedValue(row),
+          },
+        } as never,
+        {} as never,
+        { network: TEST_NETWORK },
+      );
+      return { state, connector };
+    }
+    const callOf = (toolName: string) =>
+      ({
+        tool: `mcp__demo__${toolName}`,
+        args: {},
+        route: { connectorId: "mcp", resourceId: "server-1", toolName },
+      }) as never;
+
+    it("lists only the read tools at read, and every tool at write", async () => {
+      const read = setup({ level: "read" });
+      expect((await read.connector.discoverTools(context)).map((tool) => tool.name)).toEqual([
+        "mcp__demo__lookup",
+        "mcp__demo__list_issues",
+      ]);
+      await read.connector.close();
+      const write = setup({ level: "write" });
+      expect(await write.connector.discoverTools(context)).toHaveLength(TOOLS.length);
+      await write.connector.close();
+    });
+
+    it("refuses a write tool at call time at read, even when asked for by name", async () => {
+      const { state, connector } = setup({ level: "read" });
+      await connector.discoverTools(context);
+      const events: unknown[] = [];
+      for await (const event of connector.execute(callOf("create_issue"), context)) {
+        events.push(event);
+      }
+      expect(events).toMatchObject([
+        { type: "error", message: "MCP tool is not assigned to this bot" },
+      ]);
+      const allowed: unknown[] = [];
+      for await (const event of connector.execute(callOf("list_issues"), context)) {
+        allowed.push(event);
+      }
+      expect(allowed).toMatchObject([{ type: "result" }]);
+      expect(state.calls).toEqual(["list_issues"]);
+      await connector.close();
+    });
+
+    it("lets a per-tool list from an older version decide, whatever the level", async () => {
+      const { connector } = setup({
+        level: "read",
+        allowAllTools: false,
+        allowedTools: ["create_issue"],
+      });
+      expect((await connector.discoverTools(context)).map((tool) => tool.name)).toEqual([
+        "mcp__demo__create_issue",
+      ]);
+      await connector.close();
+    });
+  });
+
   it("evicts a session after a failed call so the next call reconnects instead of reusing a dead session", async () => {
     const state = { failNext: false, initializations: 0 };
     vi.stubGlobal("fetch", mcpFetch(state));

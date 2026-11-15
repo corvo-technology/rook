@@ -11,6 +11,18 @@ export function settingsSpacePath(spaceId: string): string {
   return `/settings/space/${encodeURIComponent(spaceId)}`;
 }
 
+/** Sections that became part of another: servers, databases and mailboxes are Connections. */
+const MOVED_SETTINGS_SECTIONS: Record<string, string> = {
+  mcp: "connections",
+  databases: "connections",
+  mailboxes: "connections",
+};
+
+/** Where a section that moved now lives, or null for one that did not move. */
+export function movedSettingsSection(section: string): string | null {
+  return MOVED_SETTINGS_SECTIONS[section] ?? null;
+}
+
 type SettingsLocationState = { from?: string } | null;
 
 const DEFAULT_BACK = "/app";

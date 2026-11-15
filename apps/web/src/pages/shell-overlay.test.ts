@@ -24,8 +24,8 @@ describe("legacyOverlayTarget", () => {
 
   it("sends the store and MCP servers to their pages", () => {
     expect(target("?integrations")?.to).toBe("/app/store");
-    expect(target("?mcp=")?.to).toBe("/settings/mcp");
-    expect(target("?mcp=srv_1")?.to).toBe("/settings/mcp?server=srv_1");
+    expect(target("?mcp=")?.to).toBe("/settings/connections");
+    expect(target("?mcp=srv_1")?.to).toBe("/settings/connections?server=srv_1");
   });
 
   it("keeps the other params", () => {

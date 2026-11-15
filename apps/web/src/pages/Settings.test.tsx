@@ -66,8 +66,9 @@ vi.mock("./AccountSettingsOverlay", () => ({
 }));
 vi.mock("./BillingSettingsPanel", () => ({ BillingSettingsPanel: () => null }));
 vi.mock("./ConnectionsSettingsPanel", () => ({ ConnectionsSettingsPanel: () => null }));
-vi.mock("./DatabasesSettings", () => ({ DatabasesSettings: () => null }));
-vi.mock("./McpServersSettings", () => ({ McpServersSettings: () => null }));
+vi.mock("./ConnectionsPage", () => ({
+  ConnectionsPage: () => <div data-testid="connections-page" />,
+}));
 vi.mock("./MemorySettingsOverlay", () => ({ MemorySettingsOverlay: () => null }));
 vi.mock("./PartnershipSettingsPanel", () => ({ PartnershipSettingsPanel: () => null }));
 const { scopes } = vi.hoisted(() => ({ scopes: [] as string[] }));
@@ -202,12 +203,14 @@ it("hides Updates outside the desktop app and shows it inside", async () => {
   expect(navItem(desktop, "updates")).not.toBeNull();
 });
 
-it("shows Databases only to a member who manages connections", async () => {
+it("shows Connections to every member, and sends the old pages there", async () => {
   seed({});
-  const without = await render("/settings/general");
-  expect(navItem(without, "databases")).toBeNull();
-  await cleanup?.();
-  roles.current = { me: { isOwner: false, roleIds: [], permissions: ["manage_connections"] } };
-  const manager = await render("/settings/general");
-  expect(navItem(manager, "databases")).not.toBeNull();
+  const container = await render("/settings/general");
+  expect(navItem(container, "connections")).not.toBeNull();
+  for (const old of ["mcp", "databases", "mailboxes"]) {
+    expect(navItem(container, old)).toBeNull();
+    await cleanup?.();
+    const moved = await render(`/settings/${old}`);
+    expect(shown(moved)).toBe("connections");
+  }
 });

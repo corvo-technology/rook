@@ -2,7 +2,7 @@ import type { MailboxDto } from "@corvo/contracts";
 import { expect, test } from "@playwright/test";
 import { captureScreenshot, completeOnboarding, openUserSettings, signup } from "./helpers";
 
-test("connects a mailbox and gives it to an agent", async ({ page }, testInfo) => {
+test("connects a mailbox from the Connect sheet", async ({ page }, testInfo) => {
   const stamp = Date.now();
   await signup(page, `mailboxes-${stamp}@corvo.test`, "password12", "Mailboxes");
   await completeOnboarding(page);
@@ -40,14 +40,17 @@ test("connects a mailbox and gives it to an agent", async ({ page }, testInfo) =
     });
   });
 
-  await openUserSettings(page, "mailboxes");
-  await page.getByLabel("Email", { exact: true }).fill("owner@example.test");
-  await page.getByLabel("Password", { exact: true }).fill("app-password");
-  await page.getByLabel("IMAP server").fill("imap.example.test");
-  await page.getByLabel("SMTP server").fill("smtp.example.test:587");
+  await openUserSettings(page, "connections");
   await page.getByRole("button", { name: "Connect", exact: true }).click();
+  const sheet = page.getByTestId("connect-sheet");
+  await sheet.getByRole("button", { name: "Mailbox", exact: true }).click();
+  await sheet.getByLabel("Email", { exact: true }).fill("owner@example.test");
+  await sheet.getByLabel("Password", { exact: true }).fill("app-password");
+  await sheet.getByLabel("IMAP server").fill("imap.example.test");
+  await sheet.getByLabel("SMTP server").fill("smtp.example.test:587");
+  await sheet.getByRole("button", { name: "Connect", exact: true }).click();
 
-  await expect(page.getByText("owner@example.test").first()).toBeVisible();
-  await expect(page.getByLabel("Password", { exact: true })).toHaveValue("");
+  await expect(sheet).toBeHidden();
+  await expect(page.getByTestId("connection-row").getByText("owner@example.test")).toBeVisible();
   await captureScreenshot(page, testInfo, "mailboxes-connected");
 });

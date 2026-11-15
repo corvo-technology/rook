@@ -351,6 +351,7 @@ export function McpApprovalCard({
     status: savedStatus,
     forBotId,
     forBotName,
+    level,
   } = block;
   // An agent can ask in its own chat for a teammate; the access is for the teammate.
   const targetBotId = forBotId ?? botId;
@@ -388,7 +389,12 @@ export function McpApprovalCard({
       }
       // The key goes from here to the vault; the agent and its model never receive it.
       if (needsKey) await rpc.mcp.servers.update({ id: serverId, secret: key.trim() });
-      await rpc.mcp.assignments.approve({ botId: targetBotId, serverId, threadId });
+      await rpc.mcp.assignments.approve({
+        botId: targetBotId,
+        serverId,
+        threadId,
+        level: level ?? "write",
+      });
       setKey("");
       setLocalStatus("connected");
     } catch (err) {
@@ -424,11 +430,21 @@ export function McpApprovalCard({
           M
         </span>
         <span className="text-[14.5px] font-medium text-foreground">
-          <Trans>Connect MCP server “{name}”</Trans>
+          {level === "read" ? (
+            forBotName ? (
+              <Trans>
+                Give {forBotName} read access to {name}?
+              </Trans>
+            ) : (
+              <Trans>Give read access to {name}?</Trans>
+            )
+          ) : (
+            <Trans>Connect MCP server “{name}”</Trans>
+          )}
         </span>
       </div>
       <p className="mt-1.5 truncate text-[12px] text-muted-foreground">{summary}</p>
-      {forBotName ? (
+      {forBotName && level !== "read" ? (
         <p className="mt-1 text-[13px] font-medium text-foreground">{t`Access for ${forBotName}`}</p>
       ) : null}
       {state === "pending" || state === "connecting" ? (
@@ -494,7 +510,7 @@ export function McpApprovalCard({
       ) : null}
       {state === "dismissed" ? (
         <p className="mt-2 text-[13px] text-muted-foreground">
-          <Trans>Dismissed. Reconnect anytime from MCP settings.</Trans>
+          <Trans>Dismissed. Reconnect anytime from Connections.</Trans>
         </p>
       ) : null}
     </BuiCard>

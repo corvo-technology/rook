@@ -35,6 +35,7 @@ describe("connect_app for a teammate", () => {
       ctx.run,
       "Sentry",
       "Infraestrutura e SRE",
+      "write",
     );
     expect(finish).toHaveBeenCalledWith({ status: "pending", message: "ok" });
   });
@@ -48,10 +49,29 @@ describe("connect_app for a teammate", () => {
     });
   });
 
+  it("asks for read access when the agent says reading is enough", async () => {
+    vi.mocked(requestSpaceAppAccess).mockResolvedValue({ status: "pending", message: "ok" });
+    const { call: toolCall } = call({ app: "Sentry", agent: "Marketing", level: "read" });
+    await integrationTools.connect_app?.(ctx, toolCall);
+    expect(requestSpaceAppAccess).toHaveBeenCalledWith(
+      ctx.deps,
+      ctx.run,
+      "Sentry",
+      "Marketing",
+      "read",
+    );
+  });
+
   it("passes no teammate when none is named", async () => {
     vi.mocked(requestSpaceAppAccess).mockResolvedValue({ status: "pending", message: "ok" });
     const { call: toolCall } = call({ app: "Sentry" });
     await integrationTools.connect_app?.(ctx, toolCall);
-    expect(requestSpaceAppAccess).toHaveBeenCalledWith(ctx.deps, ctx.run, "Sentry", undefined);
+    expect(requestSpaceAppAccess).toHaveBeenCalledWith(
+      ctx.deps,
+      ctx.run,
+      "Sentry",
+      undefined,
+      "write",
+    );
   });
 });

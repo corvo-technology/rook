@@ -267,7 +267,7 @@ export async function openUserSettings(
     | "computer"
     | "billing"
     | "members"
-    | "mailboxes"
+    | "connections"
     | "updates",
 ) {
   // A reload keeps the page because the URL holds the section.
@@ -418,4 +418,15 @@ export async function presentMainDeploymentDefault(page: Page, provider: string,
     body.json.deploymentPrimary = { provider, modelId };
     await route.fulfill({ response, json: body });
   });
+}
+
+/** A connection's row on the Connections page, by its name. */
+export function connectionRow(page: Page, name: string) {
+  return page.getByTestId("connection-row").filter({ hasText: name });
+}
+
+/** Picks an action from a connection's "⋯" menu. */
+export async function chooseConnectionAction(page: Page, name: string, action: string) {
+  await connectionRow(page, name).getByRole("button", { name: "More", exact: true }).click();
+  await page.getByRole("menuitem", { name: action, exact: true }).click();
 }

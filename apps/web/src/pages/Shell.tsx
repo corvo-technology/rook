@@ -868,7 +868,7 @@ function SpaceShell({ page }: { page?: ReactNode }) {
       importSetupOpen.current = true;
       if (target.kind === "models") openSettings("models");
       else if (target.kind === "mcp")
-        openSettingsRoute(`mcp?server=${encodeURIComponent(target.serverId)}`);
+        openSettingsRoute(`connections?server=${encodeURIComponent(target.serverId)}`);
       else {
         const next = new URLSearchParams(searchParams);
         next.set("routine", target.routineId);

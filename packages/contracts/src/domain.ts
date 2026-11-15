@@ -1104,6 +1104,8 @@ export const BotMcpServerSchema = z.object({
   serverId: Id,
   allowAllTools: z.boolean(),
   allowedTools: z.array(z.string().min(1).max(200)),
+  /** Applies while allowAllTools is true: `read` offers only the server's read tools. */
+  level: z.enum(["read", "write"]).default("write"),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

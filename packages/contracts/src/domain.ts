@@ -2212,5 +2212,7 @@ export const SpaceImportResultSchema = z.object({
   facts: z.number().int(),
   channels: z.number().int(),
   tickets: z.number().int(),
+  /** Routines that named a model this server cannot run and now follow the space's model. */
+  modelsReset: z.number().int().default(0),
 });
 export type SpaceImportResult = z.infer<typeof SpaceImportResultSchema>;

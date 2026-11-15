@@ -287,6 +287,70 @@ describe("importSpace", () => {
   });
 });
 
+describe("importSpace, models of another machine", () => {
+  const routine = (name: string, modelProvider: string, modelId: string) => ({
+    name,
+    prompt: "Go",
+    crons: ["0 9 * * *"],
+    timezone: "UTC",
+    modelProvider,
+    modelId,
+  });
+  const exported = file({
+    bots: [
+      aBot("Ana", {
+        routines: [
+          routine("local", "cli-engine", "claude/sonnet"),
+          routine("hosted", "anthropic", "claude-sonnet"),
+        ],
+      }),
+    ],
+  });
+
+  it("puts a routine on the space's model when this server cannot run its own", async () => {
+    const t = setup();
+    const result = await importSpace(
+      t.services,
+      t.deps,
+      { create: t.create },
+      actor,
+      exported,
+      async (provider) => provider !== "cli-engine",
+    );
+    expect(result.modelsReset).toBe(1);
+    expect(result.routines).toBe(2);
+    const byName = Object.fromEntries(t.routineRows.map((row) => [row.name, row]));
+    expect(byName.local).toMatchObject({ modelProvider: null, modelId: null, active: false });
+    expect(byName.hosted).toMatchObject({ modelProvider: "anthropic", modelId: "claude-sonnet" });
+  });
+
+  it("treats a model it cannot check as unusable, and keeps usable ones as they were", async () => {
+    const failing = setup();
+    const result = await importSpace(
+      failing.services,
+      failing.deps,
+      { create: failing.create },
+      actor,
+      exported,
+      async () => {
+        throw new Error("lookup failed");
+      },
+    );
+    expect(result.modelsReset).toBe(2);
+
+    const same = setup();
+    const kept = await importSpace(
+      same.services,
+      same.deps,
+      { create: same.create },
+      actor,
+      exported,
+    );
+    expect(kept.modelsReset).toBe(0);
+    expect(same.routineRows.every((row) => row.modelProvider !== null)).toBe(true);
+  });
+});
+
 const run = (t: ReturnType<typeof setup>, input: SpaceExport) =>
   importSpace(t.services, t.deps, { create: t.create }, actor, input);
 

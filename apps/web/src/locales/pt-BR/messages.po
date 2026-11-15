@@ -19,7 +19,7 @@ msgid " (unread)"
 msgstr " (não lido)"
 
 #. placeholder {0}: result.added.length
-#: src/pages/ImportFromApp.tsx
+#: src/pages/ImportFlow.tsx
 msgid "{0, plural, one {# agent} other {# agents}}"
 msgstr "{0, plural, one {# agente} other {# agentes}}"
 
@@ -29,12 +29,12 @@ msgid "{0, plural, one {# bot has its own model:} other {# bots have their own m
 msgstr "{0, plural, one {# bot tem o próprio modelo:} other {# bots têm o próprio modelo:}}"
 
 #. placeholder {0}: result.channels
-#: src/pages/SpaceTransfer.tsx
+#: src/pages/ImportFlow.tsx
 msgid "{0, plural, one {# channel} other {# channels}}"
 msgstr "{0, plural, one {# canal} other {# canais}}"
 
 #. placeholder {0}: preview.facts
-#: src/pages/ImportFromApp.tsx
+#: src/pages/ImportFlow.tsx
 msgid "{0, plural, one {# fact to review} other {# facts to review}}"
 msgstr "{0, plural, one {# fato para revisar} other {# fatos para revisar}}"
 
@@ -44,7 +44,7 @@ msgid "{0, plural, one {# failed} other {# failed}}"
 msgstr "{0, plural, one {# falhou} other {# falharam}}"
 
 #. placeholder {0}: preview.leftOut
-#: src/pages/ImportFromApp.tsx
+#: src/pages/ImportFlow.tsx
 msgid "{0, plural, one {# item left out} other {# items left out}}"
 msgstr "{0, plural, one {# item deixado de fora} other {# itens deixados de fora}}"
 
@@ -59,22 +59,27 @@ msgid "{0, plural, one {# reply} other {# replies}}"
 msgstr "{0, plural, one {# resposta} other {# respostas}}"
 
 #. placeholder {0}: result.routines
-#: src/pages/ImportFromApp.tsx
+#: src/pages/ImportFlow.tsx
 msgid "{0, plural, one {# routine (paused)} other {# routines (paused)}}"
 msgstr "{0, plural, one {# rotina (pausada)} other {# rotinas (pausadas)}}"
 
+#. placeholder {0}: result.modelsReset
+#: src/pages/ImportFlow.tsx
+msgid "{0, plural, one {# routine now uses this space's model.} other {# routines now use this space's model.}}"
+msgstr "{0, plural, one {# rotina agora usa o modelo deste espaço.} other {# rotinas agora usam o modelo deste espaço.}}"
+
 #. placeholder {0}: result.skills
-#: src/pages/ImportFromApp.tsx
+#: src/pages/ImportFlow.tsx
 msgid "{0, plural, one {# skill} other {# skills}}"
 msgstr "{0, plural, one {# habilidade} other {# habilidades}}"
 
 #. placeholder {0}: result.tickets
-#: src/pages/SpaceTransfer.tsx
+#: src/pages/ImportFlow.tsx
 msgid "{0, plural, one {# ticket} other {# tickets}}"
 msgstr "{0, plural, one {# ticket} other {# tickets}}"
 
 #. placeholder {0}: result.wikiPages
-#: src/pages/SpaceTransfer.tsx
+#: src/pages/ImportFlow.tsx
 msgid "{0, plural, one {# wiki page} other {# wiki pages}}"
 msgstr "{0, plural, one {# página do wiki} other {# páginas do wiki}}"
 
@@ -238,14 +243,6 @@ msgstr "{count, plural, one {# número} other {# números}}"
 #: src/components/markdown-copy.tsx
 msgid "{count, plural, one {# row} other {# rows}}"
 msgstr "{count, plural, one {# linha} other {# linhas}}"
-
-#: src/pages/SpaceTransfer.tsx
-msgid "{count, plural, one {Added # bot.} other {Added # bots.}}"
-msgstr "{count, plural, one {# bot adicionado.} other {# bots adicionados.}}"
-
-#: src/pages/SpaceTransfer.tsx
-msgid "{count, plural, one {Added # bot} other {Added # bots}}. Routines start paused."
-msgstr "{count, plural, one {# bot adicionado} other {# bots adicionados}}. As rotinas começam pausadas."
 
 #: src/pages/TeamBoard.tsx
 msgid "{count} agents"
@@ -887,7 +884,7 @@ msgstr "Adicionar URL do servidor"
 msgid "Add step"
 msgstr "Adicionar etapa"
 
-#: src/pages/ImportFromApp.tsx
+#: src/pages/ImportFlow.tsx
 msgid "Add these files again"
 msgstr "Adicione estes arquivos de novo"
 
@@ -918,7 +915,7 @@ msgid "Added"
 msgstr "Adicionado"
 
 #. placeholder {0}: parts.join(", ")
-#: src/pages/ImportFromApp.tsx
+#: src/pages/ImportFlow.tsx
 msgid "Added {0}."
 msgstr "Adicionado: {0}."
 
@@ -1065,7 +1062,7 @@ msgstr "Já conectado"
 msgid "Already have an account?"
 msgstr "Você já tem cadastro?"
 
-#: src/pages/ImportFromApp.tsx
+#: src/pages/ImportFlow.tsx
 msgid "Already here"
 msgstr "Já está aqui"
 
@@ -1076,11 +1073,6 @@ msgstr "já está no espaço"
 #: src/pages/shell/routing-line.tsx
 msgid "Already in this conversation"
 msgstr "Já está nesta conversa"
-
-#. placeholder {0}: extras.join(", ")
-#: src/pages/SpaceTransfer.tsx
-msgid "Also added {0}."
-msgstr "Também adicionado: {0}."
 
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Always act"
@@ -1127,7 +1119,7 @@ msgid "Another assistant"
 msgstr "Outro assistente"
 
 #: src/components/AskCard.tsx
-#: src/pages/ImportFromApp.tsx
+#: src/pages/ImportFlow.tsx
 msgid "Answer"
 msgstr "Resposta"
 
@@ -1436,7 +1428,7 @@ msgstr "Estúdio de avatar"
 #: src/pages/AppCatalogGrid.tsx
 #: src/pages/Auth.tsx
 #: src/pages/Board.tsx
-#: src/pages/ImportFromApp.tsx
+#: src/pages/ImportFlow.tsx
 #: src/pages/NavLinkPage.tsx
 #: src/pages/onboarding/OnboardingLayout.tsx
 #: src/pages/RoutineEditor.tsx
@@ -1819,11 +1811,6 @@ msgstr "Escolher backup"
 msgid "Choose file"
 msgstr "Escolher arquivo"
 
-#: src/pages/ImportFromApp.tsx
-msgid "Choose files"
-msgstr "Escolher arquivos"
-
-#: src/pages/ImportFromApp.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Choose folder"
 msgstr "Escolher pasta"
@@ -2256,6 +2243,7 @@ msgstr "Limite de contexto"
 
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/Auth.tsx
+#: src/pages/ImportFlow.tsx
 #: src/pages/onboarding-quick-connect.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/onboarding/ComputerStep.tsx
@@ -2282,7 +2270,7 @@ msgstr "Controlar computadores"
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/markdown-copy.tsx
-#: src/pages/ImportFromApp.tsx
+#: src/pages/ImportFlow.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
@@ -2313,7 +2301,7 @@ msgstr "Copiar fonte do diagrama"
 msgid "Copy link"
 msgstr "Copiar link"
 
-#: src/pages/ImportFromApp.tsx
+#: src/pages/ImportFlow.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Copy prompt"
 msgstr "Copiar prompt"
@@ -3153,6 +3141,10 @@ msgstr "Padrão do Hermes"
 msgid "Default from OpenClaw"
 msgstr "Padrão do OpenClaw"
 
+#: src/lib/server-copy.ts
+msgid "Default model"
+msgstr "Modelo padrão"
+
 #: src/pages/MemorySettingsOverlay.tsx
 msgid "Default scope"
 msgstr "Escopo padrão"
@@ -3651,11 +3643,7 @@ msgstr "A cada semana"
 msgid "Everyone"
 msgstr "Todos"
 
-#: src/pages/SpaceTransfer.tsx
-msgid "Everything in this file is already here."
-msgstr "Tudo deste arquivo já está aqui."
-
-#: src/pages/ImportFromApp.tsx
+#: src/pages/ImportFlow.tsx
 msgid "Everything is already here."
 msgstr "Tudo já está aqui."
 
@@ -3886,8 +3874,8 @@ msgid "From {0}"
 msgstr "De {0}"
 
 #: src/lib/server-copy.ts
-msgid "From: {from}"
-msgstr "De: {from}"
+msgid "From: {fromModel}"
+msgstr "De: {fromModel}"
 
 #: src/pages/WindowChrome.tsx
 msgid "Fullscreen"
@@ -4111,7 +4099,9 @@ msgstr "Área de envio de imagem"
 msgid "IMAP server"
 msgstr "Servidor IMAP"
 
+#: src/pages/ImportFlow.tsx
 #: src/pages/ImportFromApp.tsx
+#: src/pages/onboarding/StartStep.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/create-bot-panel.tsx
 msgid "Import"
@@ -4122,28 +4112,15 @@ msgstr "Importar"
 msgid "Import an agent"
 msgstr "Importar um agente"
 
-#: src/pages/ImportFromApp.tsx
-#: src/pages/onboarding/StartStep.tsx
-msgid "Import from another app"
-msgstr "Importar de outro app"
-
 #: src/pages/Store.tsx
 msgid "Import OpenAPI JSON"
 msgstr "Importar OpenAPI JSON"
-
-#: src/pages/SpaceTransfer.tsx
-msgid "Import space"
-msgstr "Importar espaço"
 
 #: src/pages/shell/composer.tsx
 msgid "Import this agent as a bot?"
 msgstr "Importar este agente como bot?"
 
-#: src/pages/SpaceTransfer.tsx
-msgid "Importing {name}…"
-msgstr "Importando {name}…"
-
-#: src/pages/SpaceTransfer.tsx
+#: src/pages/ImportFlow.tsx
 msgid "Importing…"
 msgstr "Importando…"
 
@@ -4229,7 +4206,7 @@ msgstr "Instrução: {instruction}"
 #: src/components/AskCard.tsx
 #: src/components/InstructionSettings.tsx
 #: src/pages/AddStepPanel.tsx
-#: src/pages/ImportFromApp.tsx
+#: src/pages/ImportFlow.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/shell/agent-import.tsx
@@ -5447,7 +5424,7 @@ msgstr "Nada memorizado ainda"
 msgid "Nothing to approve"
 msgstr "Nada para aprovar"
 
-#: src/pages/ImportFromApp.tsx
+#: src/pages/ImportFlow.tsx
 msgid "Nothing to import in these files."
 msgstr "Nada para importar nesses arquivos."
 
@@ -5774,7 +5751,7 @@ msgstr "Em atraso"
 msgid "Paste a replacement key"
 msgstr "Cole uma chave de substituição"
 
-#: src/pages/ImportFromApp.tsx
+#: src/pages/ImportFlow.tsx
 msgid "Paste the answer"
 msgstr "Cole a resposta"
 
@@ -5785,10 +5762,6 @@ msgstr "Cole a chave para que seu agente use as ferramentas deste servidor."
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Paste the OpenAI-compatible address from your server. Rook adds /v1 if needed."
 msgstr "Cole o endereço compatível com OpenAI do seu servidor. Rook adiciona /v1 se necessário."
-
-#: src/pages/ImportFromApp.tsx
-msgid "Paste the prompt into ChatGPT, Claude, Gemini or Grok, then paste its answer here."
-msgstr "Cole o prompt no ChatGPT, Claude, Gemini ou Grok e cole a resposta aqui."
 
 #: src/pages/shell/agent-import.tsx
 msgid "Paste the reply"
@@ -5938,7 +5911,7 @@ msgstr "Preferências"
 msgid "Press space to pick up a ticket, the arrow keys to choose a column, and space again to drop it."
 msgstr "Pressione espaço para pegar um ticket, as setas para escolher uma coluna e espaço de novo para soltá-lo."
 
-#: src/pages/ImportFromApp.tsx
+#: src/pages/ImportFlow.tsx
 msgid "Preview"
 msgstr "Pré-visualizar"
 
@@ -6551,7 +6524,7 @@ msgstr "Rotina"
 msgid "Routine “{0}”"
 msgstr "Rotina «{0}»"
 
-#: src/pages/ImportFromApp.tsx
+#: src/pages/ImportFlow.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
@@ -7057,7 +7030,7 @@ msgstr "Habilidade {0}"
 msgid "Skill {position}"
 msgstr "Habilidade {position}"
 
-#: src/pages/ImportFromApp.tsx
+#: src/pages/ImportFlow.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/Store.tsx
@@ -7206,7 +7179,7 @@ msgstr "Padrão"
 msgid "Start"
 msgstr "Iniciar"
 
-#: src/pages/ImportFromApp.tsx
+#: src/pages/ImportFlow.tsx
 msgid "Start paused"
 msgstr "Começam pausadas"
 
@@ -7633,7 +7606,7 @@ msgstr "Este convite expirou"
 msgid "This invitation was already accepted"
 msgstr "Este convite já foi aceito"
 
-#: src/pages/SpaceTransfer.tsx
+#: src/pages/ImportFlow.tsx
 msgid "This isn't a Rook space file."
 msgstr "Este não é um arquivo de espaço do Rook."
 
@@ -7762,7 +7735,7 @@ msgstr "Para"
 msgid "To {0}"
 msgstr "Para {0}"
 
-#: src/pages/ImportFromApp.tsx
+#: src/pages/ImportFlow.tsx
 msgid "To connect"
 msgstr "Para conectar"
 
@@ -7775,8 +7748,8 @@ msgid "To:"
 msgstr "Para:"
 
 #: src/lib/server-copy.ts
-msgid "To: {to}"
-msgstr "Para: {to}"
+msgid "To: {toModel}"
+msgstr "Para: {toModel}"
 
 #: src/pages/Artifacts.tsx
 #: src/pages/Routines.tsx

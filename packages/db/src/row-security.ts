@@ -140,6 +140,8 @@ export const ROW_SECURITY_MODELS: ReadonlySet<string> = new Set([
   "ProviderQuota",
   "MissionState",
   "BotMcpServer",
+  "DatabaseConnection",
+  "BotDatabaseGrant",
   "Computer",
   "ComputerRun",
   "Board",

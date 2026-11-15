@@ -759,6 +759,10 @@ msgstr "クレジットを追加"
 msgid "Add credits in Billing to keep using voice."
 msgstr "音声を使い続けるには、請求でクレジットを追加してください。"
 
+#: src/pages/DatabasesSettings.tsx
+msgid "Add database"
+msgstr "データベースを追加"
+
 #: src/pages/Store.tsx
 msgid "Add Executor"
 msgstr "Executorを追加"
@@ -925,6 +929,7 @@ msgstr "エージェント"
 msgid "Agents that can use it"
 msgstr "使用できるエージェント"
 
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/McpServersSettings.tsx
 msgid "Agents:"
 msgstr "エージェント:"
@@ -1568,6 +1573,7 @@ msgstr "画像を読み取れません"
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/AddStepPanel.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/LocalSpeechSection.tsx
 #: src/pages/McpServersSettings.tsx
@@ -2020,6 +2026,7 @@ msgstr "先にメールを確認してから、このリンクをもう一度開
 
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/ChatAppsRow.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 #: src/pages/memory-providers/SupermemorySettingsForm.tsx
@@ -2110,6 +2117,7 @@ msgstr "接続済み"
 msgid "Connected {0}."
 msgstr "{0}を接続しました。"
 
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
@@ -2122,6 +2130,10 @@ msgstr "接続中…"
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Connection"
 msgstr "接続"
+
+#: src/pages/DatabasesSettings.tsx
+msgid "Connection string"
+msgstr "接続文字列"
 
 #. placeholder {0}: item.name
 #: src/pages/Store.tsx
@@ -2645,6 +2657,7 @@ msgid "Could not run the routine"
 msgstr "ルーティンを実行できませんでした"
 
 #: src/pages/ConnectionsSettingsPanel.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersSettings.tsx
@@ -2978,6 +2991,14 @@ msgstr "ダーク"
 msgid "Data"
 msgstr "データ"
 
+#: src/pages/DatabasesSettings.tsx
+msgid "Database"
+msgstr "データベース"
+
+#: src/pages/Settings.tsx
+msgid "Databases"
+msgstr "データベース"
+
 #: src/lib/billing.ts
 #: src/lib/cron.ts
 msgid "day"
@@ -3139,6 +3160,7 @@ msgstr "デスクトップの更新"
 
 #: src/components/AskCard.tsx
 #: src/components/ModelProblemNotice.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/RoutineRunDetail.tsx
 #: src/pages/RoutineRunHistory.tsx
 msgid "Details"
@@ -3373,9 +3395,17 @@ msgstr "メールアドレスの確認が必要です"
 msgid "Enable {0}"
 msgstr "{0}を有効にする"
 
+#: src/pages/DatabasesSettings.tsx
+msgid "Encrypted"
+msgstr "暗号化"
+
 #: src/pages/shell/bot-credentials.tsx
 msgid "Encrypted and never shown again"
 msgstr "暗号化され、再表示されません"
+
+#: src/pages/DatabasesSettings.tsx
+msgid "Encrypted, verified"
+msgstr "暗号化（検証あり）"
 
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Ends {day}"
@@ -3881,6 +3911,10 @@ msgstr "長押しで話し、離すと送信"
 #: src/pages/shell/sidebar-team.tsx
 msgid "Home"
 msgstr "ホーム"
+
+#: src/pages/DatabasesSettings.tsx
+msgid "Host"
+msgstr "ホスト"
 
 #: src/lib/cron.ts
 msgid "hour"
@@ -4862,6 +4896,7 @@ msgstr "自分のアシスタント"
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/model-settings/providers-section.tsx
@@ -5191,6 +5226,10 @@ msgstr "あなたは利用できません"
 msgid "Not checked yet"
 msgstr "未確認"
 
+#: src/pages/DatabasesSettings.tsx
+msgid "Not encrypted"
+msgstr "暗号化なし"
+
 #: src/pages/shell/agent-import.tsx
 msgid "Not imported"
 msgstr "インポートされていません"
@@ -5217,6 +5256,10 @@ msgstr "今はしない"
 #: src/pages/shell/routing-line.tsx
 msgid "Not picked"
 msgstr "選ばれませんでした"
+
+#: src/pages/DatabasesSettings.tsx
+msgid "Not reachable"
+msgstr "接続できません"
 
 #: src/components/MemoryFactCard.tsx
 msgid "Not remembered"
@@ -5525,6 +5568,7 @@ msgstr "パスキー"
 #: src/components/AskCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/shell/bot-credentials.tsx
 msgid "Password"
 msgstr "パスワード"
@@ -5692,6 +5736,10 @@ msgstr "再生中…"
 #: src/pages/KnowledgeSection.tsx
 msgid "Plugin"
 msgstr "プラグイン"
+
+#: src/pages/DatabasesSettings.tsx
+msgid "Port"
+msgstr "ポート"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Post \"No changes\" in chat"
@@ -5958,6 +6006,7 @@ msgstr "覚えました"
 
 #: src/components/ApprovalRulesSettings.tsx
 #: src/pages/ConnectionsSettingsPanel.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/LocalSpeechSection.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/MembersSettingsPanel.tsx
@@ -5982,6 +6031,11 @@ msgstr "{0}を削除"
 #: src/pages/GroupPanel.tsx
 msgid "Remove {0} from the group"
 msgstr "{0}をグループから外す"
+
+#. placeholder {0}: row.name
+#: src/pages/DatabasesSettings.tsx
+msgid "Remove {0}?"
+msgstr "{0}を削除しますか？"
 
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Remove {name}?"
@@ -6914,6 +6968,10 @@ msgstr "音声モデル"
 msgid "Squad"
 msgstr "スクワッド"
 
+#: src/pages/DatabasesSettings.tsx
+msgid "SSL"
+msgstr "SSL"
+
 #: src/lib/user-error.ts
 msgid "SSO is temporarily unavailable. Try again."
 msgstr "SSOは一時的に利用できません。もう一度お試しください。"
@@ -7164,6 +7222,7 @@ msgid "Terminal input"
 msgstr "ターミナル入力"
 
 #: src/components/teach/SkillDraftCard.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Test"
 msgstr "テスト"
@@ -7726,6 +7785,10 @@ msgstr "アクセストークンには{oauthEnvReference}を使用してくだ�
 msgid "Use a found model"
 msgstr "見つかったモデルを使用"
 
+#: src/pages/DatabasesSettings.tsx
+msgid "Use a read-only database role."
+msgstr "読み取り専用のデータベースロールを使用してください。"
+
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Use computers"
 msgstr "コンピューターを使う"
@@ -7765,6 +7828,10 @@ msgstr "スペースのデフォルトを使用"
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "英数字、_、-のみで512文字以内で入力してください。"
+
+#: src/pages/DatabasesSettings.tsx
+msgid "User"
+msgstr "ユーザー"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"

@@ -42,6 +42,8 @@ export const READ_ONLY_AGENT_TOOLS = new Set([
   "browser_snapshot",
   "list_secrets",
   "cloud_agent_status",
+  "query_database",
+  "describe_database",
 ]);
 
 /**
@@ -109,6 +111,8 @@ export function selectBuiltinToolsForRun(options: {
   /** The configured provider can forget individual facts. */
   semanticMemoryForgets?: boolean;
   cloudAgentEnabled?: boolean;
+  /** At least one database connection is granted to this bot. */
+  databasesGranted?: boolean;
   mediaImagesEnabled?: boolean;
   mediaVideoEnabled?: boolean;
   messagingChannelRun: boolean;
@@ -154,6 +158,8 @@ export function selectBuiltinToolsForRun(options: {
       (options.workflowContinues || tool.name !== "workflow_stop") &&
       (options.routedRun || tool.name !== "pass") &&
       (options.strongerModelAvailable || tool.name !== "request_stronger_model") &&
+      (options.databasesGranted ||
+        (tool.name !== "query_database" && tool.name !== "describe_database")) &&
       (options.mediaImagesEnabled || tool.name !== "generate_image") &&
       (options.mediaVideoEnabled || tool.name !== "generate_video") &&
       (options.ticketBoardEnabled ||

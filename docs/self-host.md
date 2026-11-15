@@ -871,6 +871,7 @@ The API and worker append a row to `security_events` and write a `security.event
 - model, MCP, connector, voice, memory, and secret credentials created, changed, or removed
 - deployment settings changes, approval decisions, and approval policy changes
 - refused private or internal destinations (`egress.refused`) and auth rate-limit hits
+- each query an agent runs on a connected database (`database.query`): connection, agent, run, duration, row count and outcome, never the statement or the rows
 
 Each event has the user, space, client address, user agent, time, and a few identifiers. Events
 never include message content, secrets, or tokens. Rows older than `SECURITY_EVENT_RETENTION_DAYS`
@@ -1008,6 +1009,12 @@ Remote MCP servers and installed API / GraphQL connectors default to public HTTP
 owner can attach one on localhost, the same LAN, or a Docker network. Set
 `MCP_ALLOW_PRIVATE_ENDPOINT=true` on the API and worker to allow these for every user. Cloud
 metadata addresses stay blocked. Leave the flag unset on public installs.
+
+Read-only database connections (Settings, Databases) follow the same flag: by default agents can
+only query databases on public addresses, and a deployment that sets
+`MCP_ALLOW_PRIVATE_ENDPOINT=true` may also reach private and loopback ones. Whoever adds a
+connection should give Rook a read-only database role; the read-only transaction and the
+statement checks are a second line, not a replacement.
 
 Remote MCP servers that use OAuth normally register Rook with their provider on the first
 **Connect OAuth**. Some providers only accept a client you create in their console. For those,

@@ -18,6 +18,7 @@ import type {
 import type { PrismaClient, ThreadEvents } from "@corvo/db";
 import type { CloudAgentConnection } from "./cloud-agent-factory.js";
 import type { ConnectorWaitLimits } from "./connector-wait.js";
+import type { DatabaseDriver } from "./database-query.js";
 import type { SummaryModel } from "./handoff-summary.js";
 import type { McpStdioPolicy } from "./mcp-transport.js";
 import type { MemoryProviderResolver } from "./memory-provider-factory.js";
@@ -70,6 +71,8 @@ export interface ExecutorDeps {
   /** Page browser (DOM refs) on the bot computer. Defaults to the sandbox live browser when supported. */
   browser?: BrowserProvider;
   secretHttp?: RemoteTransportDependencies;
+  /** Database driver for the read-only database tools; defaults to the PostgreSQL pool. */
+  databaseDriver?: DatabaseDriver;
   /** Allow RFC1918 / Docker-network MCP URLs when the operator enabled the escape. */
   mcpAllowPrivateEndpoint?: boolean;
   /** Which stdio MCP servers this deployment runs; absent runs none. */

@@ -1,4 +1,5 @@
 import type { AppBootstrap, Me, SpaceMemoryConfig } from "@corvo/contracts";
+import { can, knownSpacePermissions } from "@corvo/core";
 import { writeSaved } from "@corvo/core/query";
 import type { SettingsLayoutSection } from "@corvo/ui-web";
 import { Button, SettingsLayout } from "@corvo/ui-web";
@@ -9,6 +10,7 @@ import {
   CloudDownload,
   Cpu,
   CreditCard,
+  Database,
   Gauge,
   Handshake,
   Monitor,
@@ -41,6 +43,7 @@ import {
 } from "./AccountSettingsOverlay";
 import { BillingSettingsPanel } from "./BillingSettingsPanel";
 import { ConnectionsSettingsPanel } from "./ConnectionsSettingsPanel";
+import { DatabasesSettings } from "./DatabasesSettings";
 import { McpServersSettings } from "./McpServersSettings";
 import { MembersSettingsPanel } from "./MembersSettingsPanel";
 import { MemorySettingsOverlay } from "./MemorySettingsOverlay";
@@ -130,6 +133,16 @@ export function SettingsPage() {
   });
   const billingEnabled = me?.billingEnabled === true;
   const partnerAdmin = me?.partnerAdmin === true;
+  const roles = useQuery(queries.spaces.roles.list.queryOptions());
+  const canManageConnections = roles.data
+    ? can(
+        {
+          isOwner: roles.data.me.isOwner,
+          permissions: knownSpacePermissions(roles.data.me.permissions),
+        },
+        "manage_connections",
+      )
+    : false;
   const showConnections = managedLocal && Boolean(desktopBridge()?.connections);
   const showUpdates = Boolean(desktopBridge()?.update);
 
@@ -333,6 +346,16 @@ export function SettingsPage() {
         />
       ),
     },
+    ...(canManageConnections
+      ? [
+          {
+            id: "databases",
+            label: t`Databases`,
+            icon: Database,
+            content: <DatabasesSettings />,
+          },
+        ]
+      : []),
     ...(showComputer
       ? [
           {

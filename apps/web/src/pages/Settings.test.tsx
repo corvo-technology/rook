@@ -14,8 +14,9 @@ vi.mock("@lingui/react/macro", () => ({
   }),
 }));
 
-const { bootstrap } = vi.hoisted(() => ({
+const { bootstrap, roles } = vi.hoisted(() => ({
   bootstrap: { current: {} as unknown },
+  roles: { current: null as unknown },
 }));
 vi.mock("../lib/bootstrap", () => ({ takeInitialBootstrap: async () => bootstrap.current }));
 vi.mock("../lib/auth", () => ({
@@ -33,6 +34,16 @@ vi.mock("../lib/query", () => {
   });
   const queries = {
     bootstrap: { queryKey: () => ["bootstrap"] },
+    spaces: {
+      roles: {
+        list: {
+          queryOptions: () => ({
+            queryKey: ["roles"],
+            queryFn: async () => roles.current,
+          }),
+        },
+      },
+    },
     usage: { summary: procedure("usage") },
     memory: { providerConfig: procedure("memory") },
     voice: { status: procedure("voice") },
@@ -55,6 +66,7 @@ vi.mock("./AccountSettingsOverlay", () => ({
 }));
 vi.mock("./BillingSettingsPanel", () => ({ BillingSettingsPanel: () => null }));
 vi.mock("./ConnectionsSettingsPanel", () => ({ ConnectionsSettingsPanel: () => null }));
+vi.mock("./DatabasesSettings", () => ({ DatabasesSettings: () => null }));
 vi.mock("./McpServersSettings", () => ({ McpServersSettings: () => null }));
 vi.mock("./MemorySettingsOverlay", () => ({ MemorySettingsOverlay: () => null }));
 vi.mock("./PartnershipSettingsPanel", () => ({ PartnershipSettingsPanel: () => null }));
@@ -88,6 +100,7 @@ function seed(me: Record<string, unknown>, spaces = [acme, beta]) {
 
 let cleanup: (() => Promise<void>) | undefined;
 afterEach(async () => {
+  roles.current = null;
   await cleanup?.();
   cleanup = undefined;
   scopes.length = 0;
@@ -187,4 +200,14 @@ it("hides Updates outside the desktop app and shows it inside", async () => {
   vi.stubGlobal("corvoDesktop", { update: {} });
   const desktop = await render("/settings/general");
   expect(navItem(desktop, "updates")).not.toBeNull();
+});
+
+it("shows Databases only to a member who manages connections", async () => {
+  seed({});
+  const without = await render("/settings/general");
+  expect(navItem(without, "databases")).toBeNull();
+  await cleanup?.();
+  roles.current = { me: { isOwner: false, roleIds: [], permissions: ["manage_connections"] } };
+  const manager = await render("/settings/general");
+  expect(navItem(manager, "databases")).not.toBeNull();
 });

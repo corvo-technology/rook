@@ -759,6 +759,10 @@ msgstr "Ajouter des crédits"
 msgid "Add credits in Billing to keep using voice."
 msgstr "Ajoutez des crédits dans Facturation pour continuer à utiliser la voix."
 
+#: src/pages/DatabasesSettings.tsx
+msgid "Add database"
+msgstr "Ajouter une base de données"
+
 #: src/pages/Store.tsx
 msgid "Add Executor"
 msgstr "Ajouter un exécuteur"
@@ -925,6 +929,7 @@ msgstr "Agents"
 msgid "Agents that can use it"
 msgstr "Agents pouvant l'utiliser"
 
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/McpServersSettings.tsx
 msgid "Agents:"
 msgstr "Agents :"
@@ -1568,6 +1573,7 @@ msgstr "Ne peut pas lire les images"
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/AddStepPanel.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/LocalSpeechSection.tsx
 #: src/pages/McpServersSettings.tsx
@@ -2020,6 +2026,7 @@ msgstr "Confirmez d'abord votre e-mail, puis rouvrez ce lien"
 
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/ChatAppsRow.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 #: src/pages/memory-providers/SupermemorySettingsForm.tsx
@@ -2110,6 +2117,7 @@ msgstr "Connecté"
 msgid "Connected {0}."
 msgstr "Connecté à {0}."
 
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
@@ -2122,6 +2130,10 @@ msgstr "Connexion en cours…"
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Connection"
 msgstr "Connexion"
+
+#: src/pages/DatabasesSettings.tsx
+msgid "Connection string"
+msgstr "Chaîne de connexion"
 
 #. placeholder {0}: item.name
 #: src/pages/Store.tsx
@@ -2645,6 +2657,7 @@ msgid "Could not run the routine"
 msgstr "Impossible d’exécuter la routine"
 
 #: src/pages/ConnectionsSettingsPanel.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersSettings.tsx
@@ -2978,6 +2991,14 @@ msgstr "Sombre"
 msgid "Data"
 msgstr "Données"
 
+#: src/pages/DatabasesSettings.tsx
+msgid "Database"
+msgstr "Base de données"
+
+#: src/pages/Settings.tsx
+msgid "Databases"
+msgstr "Bases de données"
+
 #: src/lib/billing.ts
 #: src/lib/cron.ts
 msgid "day"
@@ -3139,6 +3160,7 @@ msgstr "Mise à jour du bureau"
 
 #: src/components/AskCard.tsx
 #: src/components/ModelProblemNotice.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/RoutineRunDetail.tsx
 #: src/pages/RoutineRunHistory.tsx
 msgid "Details"
@@ -3373,9 +3395,17 @@ msgstr "Vérification de l’e-mail requise"
 msgid "Enable {0}"
 msgstr "Activer {0}"
 
+#: src/pages/DatabasesSettings.tsx
+msgid "Encrypted"
+msgstr "Chiffrée"
+
 #: src/pages/shell/bot-credentials.tsx
 msgid "Encrypted and never shown again"
 msgstr "Chiffré et jamais affiché à nouveau"
+
+#: src/pages/DatabasesSettings.tsx
+msgid "Encrypted, verified"
+msgstr "Chiffrée, vérifiée"
 
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Ends {day}"
@@ -3881,6 +3911,10 @@ msgstr "Maintenir pour parler, relâcher pour envoyer"
 #: src/pages/shell/sidebar-team.tsx
 msgid "Home"
 msgstr "Accueil"
+
+#: src/pages/DatabasesSettings.tsx
+msgid "Host"
+msgstr "Hôte"
 
 #: src/lib/cron.ts
 msgid "hour"
@@ -4862,6 +4896,7 @@ msgstr "Mon assistant"
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/model-settings/providers-section.tsx
@@ -5191,6 +5226,10 @@ msgstr "Non disponible pour vous"
 msgid "Not checked yet"
 msgstr "Pas encore vérifié"
 
+#: src/pages/DatabasesSettings.tsx
+msgid "Not encrypted"
+msgstr "Non chiffrée"
+
 #: src/pages/shell/agent-import.tsx
 msgid "Not imported"
 msgstr "Non importé"
@@ -5217,6 +5256,10 @@ msgstr "Pas maintenant"
 #: src/pages/shell/routing-line.tsx
 msgid "Not picked"
 msgstr "Non choisi"
+
+#: src/pages/DatabasesSettings.tsx
+msgid "Not reachable"
+msgstr "Injoignable"
 
 #: src/components/MemoryFactCard.tsx
 msgid "Not remembered"
@@ -5525,6 +5568,7 @@ msgstr "Clés d’accès"
 #: src/components/AskCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/shell/bot-credentials.tsx
 msgid "Password"
 msgstr "Mot de passe"
@@ -5692,6 +5736,10 @@ msgstr "Lecture en cours…"
 #: src/pages/KnowledgeSection.tsx
 msgid "Plugin"
 msgstr "Plugin"
+
+#: src/pages/DatabasesSettings.tsx
+msgid "Port"
+msgstr "Port"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Post \"No changes\" in chat"
@@ -5958,6 +6006,7 @@ msgstr "Retenu"
 
 #: src/components/ApprovalRulesSettings.tsx
 #: src/pages/ConnectionsSettingsPanel.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/LocalSpeechSection.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/MembersSettingsPanel.tsx
@@ -5982,6 +6031,11 @@ msgstr "Retirer {0}"
 #: src/pages/GroupPanel.tsx
 msgid "Remove {0} from the group"
 msgstr "Retirer {0} du groupe"
+
+#. placeholder {0}: row.name
+#: src/pages/DatabasesSettings.tsx
+msgid "Remove {0}?"
+msgstr "Retirer {0} ?"
 
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Remove {name}?"
@@ -6914,6 +6968,10 @@ msgstr "Modèle de parole"
 msgid "Squad"
 msgstr "Équipe"
 
+#: src/pages/DatabasesSettings.tsx
+msgid "SSL"
+msgstr "SSL"
+
 #: src/lib/user-error.ts
 msgid "SSO is temporarily unavailable. Try again."
 msgstr "SSO est temporairement indisponible. Réessayez."
@@ -7164,6 +7222,7 @@ msgid "Terminal input"
 msgstr "Saisie du terminal"
 
 #: src/components/teach/SkillDraftCard.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Test"
 msgstr "Tester"
@@ -7726,6 +7785,10 @@ msgstr "Utilisez {oauthEnvReference} pour le jeton d'accès."
 msgid "Use a found model"
 msgstr "Utiliser un modèle trouvé"
 
+#: src/pages/DatabasesSettings.tsx
+msgid "Use a read-only database role."
+msgstr "Utilisez un rôle de base de données en lecture seule."
+
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Use computers"
 msgstr "Utiliser les ordinateurs"
@@ -7765,6 +7828,10 @@ msgstr "Utiliser le réglage par défaut de l’espace"
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "Utilisez jusqu’à 512 lettres, chiffres, _ ou -."
+
+#: src/pages/DatabasesSettings.tsx
+msgid "User"
+msgstr "Utilisateur"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"

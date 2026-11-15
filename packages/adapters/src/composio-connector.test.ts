@@ -24,6 +24,7 @@ import {
 import { DestinationEmulator } from "./destination-emulator.js";
 
 const composioSdkState = vi.hoisted(() => ({
+  constructed: [] as Array<Record<string, unknown> | undefined>,
   created: [] as Array<{ userId: string; config: Record<string, unknown> }>,
   directoryFails: false,
   executions: [] as Array<{ tool: string; args: Record<string, unknown> }>,
@@ -59,6 +60,10 @@ const composioSdkState = vi.hoisted(() => ({
 
 vi.mock("@composio/core", () => ({
   Composio: class {
+    constructor(options?: Record<string, unknown>) {
+      composioSdkState.constructed.push(options);
+    }
+
     readonly sessions = {
       use: async (sessionId: string) => {
         const session = composioSdkState.sessions.get(sessionId);
@@ -343,6 +348,23 @@ describe("composio tool mapping", () => {
       composioSdkState.connectedAccounts.list = previous;
     };
   }
+
+  it("builds the SDK client with vendor telemetry and version check off", async () => {
+    composioSdkState.constructed.length = 0;
+    const restore = stubActiveAccounts(["ca-personal"]);
+
+    try {
+      const connector = new ComposioConnector();
+      await connector.listConnectedAccountIds("user-1", "gmail");
+      expect(composioSdkState.constructed).toHaveLength(1);
+      expect(composioSdkState.constructed[0]).toMatchObject({
+        allowTracking: false,
+        disableVersionCheck: true,
+      });
+    } finally {
+      restore();
+    }
+  });
 
   it("pins every connected account into multi-account execute sessions", async () => {
     composioSdkState.created.length = 0;

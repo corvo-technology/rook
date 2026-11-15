@@ -44,6 +44,7 @@ function fakeDb() {
         state.connection = null;
       },
     },
+    spaceRole: { findMany: async () => [] },
     spaceMemberModelSetting: {
       findUnique: async ({
         where,

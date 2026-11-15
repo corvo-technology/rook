@@ -71,19 +71,28 @@ export async function loadSpaceRoles(
  */
 export async function resolveSpaceMemberships(
   db: Client,
-  members: ReadonlyArray<{ spaceId: string; userId: string; role: string }>,
+  members: ReadonlyArray<{
+    spaceId: string;
+    userId: string;
+    role: string;
+    /** The custom roles the person holds, when the caller already read them. */
+    roleIds?: readonly string[];
+  }>,
 ): Promise<Map<string, SpaceMembership>> {
   const spaceIds = [...new Set(members.map((member) => member.spaceId))];
   if (spaceIds.length === 0) return new Map();
+  const unread = members.filter((member) => !member.roleIds);
   const [roles, joins] = await Promise.all([
     loadSpaceRoles(db, spaceIds),
-    db.spaceMember.findMany({
-      where: {
-        spaceId: { in: spaceIds },
-        userId: { in: [...new Set(members.map((member) => member.userId))] },
-      },
-      select: { spaceId: true, userId: true, roles: { select: { roleId: true } } },
-    }),
+    unread.length
+      ? db.spaceMember.findMany({
+          where: {
+            spaceId: { in: [...new Set(unread.map((member) => member.spaceId))] },
+            userId: { in: [...new Set(unread.map((member) => member.userId))] },
+          },
+          select: { spaceId: true, userId: true, roles: { select: { roleId: true } } },
+        })
+      : [],
   ]);
   const held = new Map(
     joins.map((join) => [
@@ -95,7 +104,9 @@ export async function resolveSpaceMemberships(
   for (const member of members) {
     const stored = roles.get(member.spaceId) ?? [];
     const role = spaceRoleOf(member.role);
-    const ids = held.get(`${member.spaceId}:${member.userId}`) ?? new Set<string>();
+    const ids = member.roleIds
+      ? new Set(member.roleIds)
+      : (held.get(`${member.spaceId}:${member.userId}`) ?? new Set<string>());
     const mine = stored.filter(
       (candidate) =>
         candidate.systemKey !== "everyone" &&
@@ -120,9 +131,11 @@ export async function getSpaceMembershipFor(
 ): Promise<SpaceMembership | null> {
   const member = await db.spaceMember.findUnique({
     where: { spaceId_userId: { spaceId: input.spaceId, userId: input.userId } },
-    select: { role: true },
+    select: { role: true, roles: { select: { roleId: true } } },
   });
   if (!member) return null;
-  const resolved = await resolveSpaceMemberships(db, [{ ...input, role: member.role }]);
+  const resolved = await resolveSpaceMemberships(db, [
+    { ...input, role: member.role, roleIds: (member.roles ?? []).map((row) => row.roleId) },
+  ]);
   return resolved.get(`${input.spaceId}:${input.userId}`) ?? null;
 }

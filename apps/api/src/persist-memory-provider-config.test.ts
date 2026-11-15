@@ -62,6 +62,7 @@ function makeDeps(
           overrides.spaceOwner === false ? null : { role: overrides.memberRole ?? "owner" },
         ),
     },
+    spaceRole: { findMany: vi.fn().mockResolvedValue([]) },
     spaceMemoryConfig: { findUnique, update, upsert, delete: deleteConfig },
     secret: { create: secretCreate, deleteMany: secretDeleteMany },
     $transaction: vi.fn(),

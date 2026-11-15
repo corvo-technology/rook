@@ -15,6 +15,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { Check, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { rpc } from "../lib/rpc";
+import { approvalCardCopy } from "../lib/server-copy";
 import { errorText } from "../lib/user-error";
 import { BuiCard } from "./ai/primitives";
 import { HoldToApprove } from "./HoldToApprove";
@@ -111,6 +112,12 @@ export function AskCard({
     : askActions;
   const secretInput = isSecretAskBlock(block);
   const reviewing = approvalActions ? reviewBeforeSummary(block.text) : undefined;
+  // The server sends a code the viewer's language words; its English text is the fallback.
+  const cardCopy = block.card
+    ? approvalCardCopy(block.card.code, block.card.params, block.detail)
+    : undefined;
+  const cardTitle = cardCopy?.title ?? block.text;
+  const cardDetail = cardCopy?.lines.length ? cardCopy.lines.join("\n") : block.detail;
   const optionQuestion =
     !approvalActions && !block.instructionUpdate && !secretInput && Boolean(askActions?.length);
   const chosenOption =
@@ -253,7 +260,7 @@ export function AskCard({
       >
         {declined ? null : <Check aria-hidden className="size-4 shrink-0" />}
         <span className="min-w-0 truncate">
-          {reviewing ? t`Review before ${reviewing}` : block.text}
+          {reviewing ? t`Review before ${reviewing}` : cardTitle}
         </span>
         <span aria-hidden="true">·</span>
         <span className="shrink-0 font-medium">
@@ -281,11 +288,11 @@ export function AskCard({
     !ownerOnly &&
     !secretInput &&
     !block.instructionUpdate &&
-    block.detail &&
+    cardDetail &&
     block.detailFormat === "code"
   ) {
     const { agentName, owns } = approver;
-    const summary = block.detail
+    const summary = cardDetail
       .split("\n")
       .filter((line) => line.trim())
       .join(" · ");
@@ -301,7 +308,7 @@ export function AskCard({
               : t`Needs your approval · you can approve actions`}
           </span>
           <span className="text-[15px]">
-            {reviewing ? t`Review before ${reviewing}` : <ChatMarkdown>{block.text}</ChatMarkdown>}
+            {reviewing ? t`Review before ${reviewing}` : <ChatMarkdown>{cardTitle}</ChatMarkdown>}
           </span>
         </div>
         <div className="flex items-start justify-between gap-3 border-b border-border px-[18px] py-3">
@@ -324,7 +331,7 @@ export function AskCard({
         </div>
         {detailsOpen ? (
           <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-words border-b border-border bg-muted px-[18px] py-3 font-mono text-[12.5px] leading-[1.7] text-muted-foreground">
-            {block.detail}
+            {cardDetail}
           </pre>
         ) : null}
         <div className="flex flex-wrap items-center gap-2.5 px-[18px] py-3.5">
@@ -392,7 +399,7 @@ export function AskCard({
         ) : reviewing ? (
           t`Review before ${reviewing}`
         ) : (
-          <ChatMarkdown>{block.text}</ChatMarkdown>
+          <ChatMarkdown>{cardTitle}</ChatMarkdown>
         )}
       </div>
       {secretInput && block.credential ? (
@@ -410,7 +417,7 @@ export function AskCard({
           )}
         </div>
       ) : null}
-      {block.detail && !secretInput ? (
+      {cardDetail && !secretInput ? (
         <pre
           className={
             block.detailFormat === "text"
@@ -418,7 +425,7 @@ export function AskCard({
               : "mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-muted px-3.5 py-3 font-mono text-[12.5px] leading-[1.7] text-muted-foreground"
           }
         >
-          {block.detail}
+          {cardDetail}
         </pre>
       ) : null}
       {block.instructionUpdate && editing && canAnswer && !answered ? (

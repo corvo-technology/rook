@@ -88,7 +88,7 @@ export async function expireStuckRun(
   }
 
   const text = stuckWorkStatusMessage(input.status);
-  const blocks: MessageBlock[] = [{ kind: "meta", text }];
+  const blocks: MessageBlock[] = [{ kind: "meta", text, code: `stuck_${input.status}` as const }];
   const message = await createThreadMessageInTransaction(tx, {
     threadId: run.threadId,
     role: "system",

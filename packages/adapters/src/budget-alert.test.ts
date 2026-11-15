@@ -43,7 +43,12 @@ describe("alertIfMonthCrossed", () => {
     );
     expect(claim).toHaveBeenCalledWith(deps.prisma, "bot-1", "2026-11");
     expect(publishMessage).toHaveBeenCalledWith(deps, run, "system", [
-      { kind: "meta", text: "810,000 of 1,000,000 tokens" },
+      {
+        kind: "meta",
+        text: "810,000 of 1,000,000 tokens",
+        code: "budget_alert",
+        params: { used: "810000", limit: "1000000" },
+      },
     ]);
     expect(notifyRun).toHaveBeenCalledWith(
       deps,

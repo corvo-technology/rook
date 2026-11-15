@@ -365,6 +365,14 @@ msgstr "{name}が{ref}を{status}に移動しました"
 msgid "{name} options"
 msgstr "{name} のオプション"
 
+#: src/lib/server-copy.ts
+msgid "{name} routine: no changes"
+msgstr "{name} ルーティン：変更なし"
+
+#: src/lib/server-copy.ts
+msgid "{name} routine: watching for changes"
+msgstr "{name} ルーティン：変更を監視中"
+
 #. js-lingui-explicit-id
 #: src/lib/browser-notifications.ts
 msgid "{name} stopped"
@@ -570,6 +578,10 @@ msgstr "{total} メンバー"
 msgid "{used} of {limit}"
 msgstr "{used} / {limit}"
 
+#: src/lib/server-copy.ts
+msgid "{used} of {limit} tokens"
+msgstr "{used} / {limit} トークン"
+
 #: src/pages/shell/context-meter.tsx
 msgid "{used} tokens"
 msgstr "{used} トークン"
@@ -747,6 +759,10 @@ msgstr "stdioコマンドを追加してください。"
 msgid "Add a step here"
 msgstr "ここにステップを追加"
 
+#: src/lib/server-copy.ts
+msgid "Add a step to “{routine}”?"
+msgstr "「{routine}」にステップを追加しますか？"
+
 #: src/pages/board/BoardLanes.tsx
 msgid "Add a ticket to {lane}"
 msgstr "{lane} にチケットを追加"
@@ -887,6 +903,10 @@ msgstr "Tregを追加"
 msgid "Add trigger"
 msgstr "トリガーを追加"
 
+#: src/lib/server-copy.ts
+msgid "Add: {add}"
+msgstr "追加：{add}"
+
 #: src/pages/AgentsStore.tsx
 #: src/pages/AppCatalogGrid.tsx
 #: src/pages/Store.tsx
@@ -937,6 +957,10 @@ msgstr "詳細設定"
 #: src/pages/RoutineEditor.tsx
 msgid "Advanced..."
 msgstr "詳細設定..."
+
+#: src/lib/server-copy.ts
+msgid "After {lastAgent} finishes, {agent} runs it"
+msgstr "{lastAgent} が終わったら {agent} が実行します"
 
 #: src/components/WorkingLine.tsx
 #: src/pages/AddStepPanel.tsx
@@ -1242,6 +1266,10 @@ msgstr "すべて承認"
 #: src/components/ApproveAllBar.tsx
 msgid "Approve all {count}"
 msgstr "{count} 件をすべて承認"
+
+#: src/lib/server-copy.ts
+msgid "Approve connection with “{name}”?"
+msgstr "「{name}」との接続を承認しますか？"
 
 #: src/pages/WikiBrowser.tsx
 msgid "Approve edits"
@@ -1550,6 +1578,10 @@ msgstr "受信トレイと請求書を処理し、実行前に確認するボッ
 msgid "Bots with their own computer and browser"
 msgstr "専用のコンピューターとブラウザを持つボット"
 
+#: src/lib/server-copy.ts
+msgid "Bots, groups, chats, files, memory, and integrations in this space stay separate from other spaces."
+msgstr "このスペースのボット、グループ、チャット、ファイル、メモリ、連携は他のスペースとは分離されます。"
+
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Brain label"
 msgstr "Brainラベル"
@@ -1674,6 +1706,10 @@ msgstr "モデルを変更"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Change password"
 msgstr "パスワードを変更"
+
+#: src/lib/server-copy.ts
+msgid "Change the model of {bot}?"
+msgstr "{bot} のモデルを変更しますか？"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Changing…"
@@ -1842,6 +1878,10 @@ msgstr "会話をクリア"
 #: src/pages/ActivityList.tsx
 msgid "Clear filter {label}"
 msgstr "フィルター{label}を解除"
+
+#: src/lib/server-copy.ts
+msgid "Clear the purpose"
+msgstr "目的をクリア"
 
 #: src/pages/shell/dialogs.tsx
 msgid "Clearing…"
@@ -2927,6 +2967,10 @@ msgstr "チャンネルを作成"
 msgid "Create group"
 msgstr "グループを作成"
 
+#: src/lib/server-copy.ts
+msgid "Create group “{name}”?"
+msgstr "グループ「{name}」を作成しますか？"
+
 #: src/pages/NewRoutinePanel.tsx
 msgid "Create routine"
 msgstr "ルーティンを作成"
@@ -2940,6 +2984,10 @@ msgstr "ルーティンを作成"
 msgid "Create space"
 msgstr "スペースを作成"
 
+#: src/lib/server-copy.ts
+msgid "Create space “{space}”?"
+msgstr "スペース「{space}」を作成しますか？"
+
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Create spaces"
 msgstr "スペースを作成"
@@ -2951,6 +2999,10 @@ msgstr "Rookを作成"
 #: src/components/AskCard.tsx
 msgid "Created"
 msgstr "作成済み"
+
+#: src/lib/server-copy.ts
+msgid "Created by {name}"
+msgstr "作成者：{name}"
 
 #: src/components/TaskCard.tsx
 msgid "Created task <0>{taskRef}</0> · {title}"
@@ -3073,6 +3125,10 @@ msgstr "日"
 #: src/components/call/IncomingCall.tsx
 msgid "Decline"
 msgstr "拒否"
+
+#: src/lib/server-copy.ts
+msgid "Decline connection with “{name}”?"
+msgstr "「{name}」との接続を拒否しますか？"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/model-settings/role-model-picker.tsx
@@ -3827,6 +3883,10 @@ msgstr "開始日"
 msgid "From {0}"
 msgstr "{0}から"
 
+#: src/lib/server-copy.ts
+msgid "From: {from}"
+msgstr "変更前：{from}"
+
 #: src/pages/WindowChrome.tsx
 msgid "Fullscreen"
 msgstr "フルスクリーン"
@@ -4158,6 +4218,10 @@ msgstr "指示"
 #: src/components/InstructionSettings.tsx
 msgid "Instruction history"
 msgstr "指示の履歴"
+
+#: src/lib/server-copy.ts
+msgid "Instruction: {instruction}"
+msgstr "指示：{instruction}"
 
 #: src/components/AskCard.tsx
 #: src/components/InstructionSettings.tsx
@@ -4687,6 +4751,10 @@ msgstr "メンバー（{0}）"
 msgid "Members can create spaces"
 msgstr "メンバーがスペースを作成できる"
 
+#: src/lib/server-copy.ts
+msgid "Members: {members}"
+msgstr "メンバー：{members}"
+
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/Settings.tsx
 #: src/pages/shell/agent-import.tsx
@@ -5069,6 +5137,10 @@ msgstr "新しいグループチャット"
 msgid "New key"
 msgstr "新しいキー"
 
+#: src/lib/server-copy.ts
+msgid "New length: {newLength} characters"
+msgstr "新しい文字数：{newLength} 文字"
+
 #: src/components/MemoryFactCard.tsx
 msgid "New memory"
 msgstr "新しいメモリー"
@@ -5398,6 +5470,10 @@ msgstr "OAuth接続に失敗しました"
 #: src/pages/StoreInstalledApps.tsx
 msgid "OAuth expired"
 msgstr "OAuthの有効期限切れ"
+
+#: src/lib/server-copy.ts
+msgid "Old length: {oldLength} characters"
+msgstr "元の文字数：{oldLength} 文字"
 
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
@@ -5892,6 +5968,10 @@ msgstr "プログラム: {name}"
 msgid "Progress"
 msgstr "進捗"
 
+#: src/lib/server-copy.ts
+msgid "Prompt: {prompt}"
+msgstr "プロンプト：{prompt}"
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Protected input"
 msgstr "保護された入力"
@@ -5913,6 +5993,10 @@ msgstr "プルリクエスト"
 #: src/pages/GroupPanel.tsx
 msgid "Purpose"
 msgstr "目的"
+
+#: src/lib/server-copy.ts
+msgid "Purpose: {purpose}"
+msgstr "目的：{purpose}"
 
 #: src/pages/WhatsAppNumbers.tsx
 msgid "QR code"
@@ -6175,6 +6259,10 @@ msgstr "スキル{0}を削除"
 msgid "Remove webhook"
 msgstr "Webhookを削除"
 
+#: src/lib/server-copy.ts
+msgid "Remove: {remove}"
+msgstr "削除：{remove}"
+
 #: src/pages/shell/agent-import-undo.tsx
 msgid "Removed"
 msgstr "削除済み"
@@ -6197,6 +6285,10 @@ msgstr "名前を変更"
 msgid "Rename section"
 msgstr "セクション名を変更"
 
+#: src/lib/server-copy.ts
+msgid "Rename to “{rename}”"
+msgstr "「{rename}」に名前を変更"
+
 #: src/lib/activity-label.ts
 msgid "Rendering a chart"
 msgstr "グラフを作成しています"
@@ -6208,6 +6300,10 @@ msgstr "{day}に更新"
 #: src/pages/ScratchpadSection.tsx
 msgid "Reopen"
 msgstr "再度開く"
+
+#: src/lib/server-copy.ts
+msgid "Repeats {cron}, next at {when}"
+msgstr "{cron} に繰り返し、次回は {when}"
 
 #: src/pages/model-settings/connection-controls.tsx
 msgid "Replace API key"
@@ -6221,6 +6317,10 @@ msgstr "既存の指示を置き換える"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Replace key"
 msgstr "キーを置き換え"
+
+#: src/lib/server-copy.ts
+msgid "Replace the instructions of {bot}?"
+msgstr "{bot} の指示を置き換えますか？"
 
 #: src/pages/shell/bot-credentials.tsx
 msgid "Replace value"
@@ -6509,6 +6609,10 @@ msgstr "実行中…"
 msgid "Runs"
 msgstr "実行"
 
+#: src/lib/server-copy.ts
+msgid "Runs at {when}"
+msgstr "{when} に実行"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Runs when this bot receives a verified message from this provider."
 msgstr "このボットがこのプロバイダーから検証済みのメッセージを受信したときに実行されます。"
@@ -6608,6 +6712,10 @@ msgstr "保存中…"
 #: src/lib/call-session.ts
 msgid "Say yes or no, or answer in a sentence."
 msgstr "「はい」か「いいえ」、または文章で答えてください。"
+
+#: src/lib/server-copy.ts
+msgid "Schedule “{name}” for {bot}?"
+msgstr "「{name}」を {bot} 用にスケジュールしますか？"
 
 #: src/components/MissionList.tsx
 msgid "Schedule a routine"
@@ -7160,6 +7268,18 @@ msgstr "ティーチングを停止"
 msgid "Stopped."
 msgstr "停止しました。"
 
+#: src/lib/server-copy.ts
+msgid "Stopped. This stayed queued without starting."
+msgstr "停止しました。開始されないままキューに入っていました。"
+
+#: src/lib/server-copy.ts
+msgid "Stopped. This was still waiting for an answer."
+msgstr "停止しました。まだ回答を待っていました。"
+
+#: src/lib/server-copy.ts
+msgid "Stopped. This was still waiting for you on the screen."
+msgstr "停止しました。まだ画面での操作を待っていました。"
+
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Stopping…"
 msgstr "停止中…"
@@ -7243,7 +7363,7 @@ msgstr "思考に対応"
 msgid "Switch space"
 msgstr "スペースを切り替え"
 
-#: src/pages/shell/message-view.tsx
+#: src/lib/server-copy.ts
 msgid "Switched to a stronger model"
 msgstr "より強力なモデルに切り替えました"
 
@@ -7353,6 +7473,10 @@ msgstr "テスト実行"
 msgid "Testing…"
 msgstr "テスト中…"
 
+#: src/lib/server-copy.ts
+msgid "The {name} routine is paused because its change check failed: {reason}"
+msgstr "変更チェックに失敗したため、ルーティン {name} を一時停止しました：{reason}"
+
 #: src/pages/shell/agent-import-undo.tsx
 msgid "The bot and what its import added will be removed."
 msgstr "ボットと、そのインポートで追加されたものが削除されます。"
@@ -7423,6 +7547,14 @@ msgstr "思考"
 #: src/pages/ModelRoleSettings.tsx
 msgid "Thinking: {0}"
 msgstr "思考: {0}"
+
+#: src/lib/server-copy.ts
+msgid "Thinking: {thinking}"
+msgstr "思考：{thinking}"
+
+#: src/lib/server-copy.ts
+msgid "Thinking: Default"
+msgstr "思考：デフォルト"
 
 #: src/pages/shell/agent-import.tsx
 msgid "This backup could not be read."
@@ -7624,6 +7756,10 @@ msgstr "未着手"
 msgid "To:"
 msgstr "宛先:"
 
+#: src/lib/server-copy.ts
+msgid "To: {to}"
+msgstr "変更後：{to}"
+
 #: src/pages/Artifacts.tsx
 #: src/pages/Routines.tsx
 #: src/pages/shell/chat-context.tsx
@@ -7777,6 +7913,10 @@ msgstr "ピン留めを解除"
 msgid "Unsupported file type: {0}"
 msgstr "サポートされていないファイル形式です: {0}"
 
+#: src/lib/server-copy.ts
+msgid "Untitled"
+msgstr "無題"
+
 #: src/components/DesktopUpdates.tsx
 msgid "Up to date"
 msgstr "最新です"
@@ -7807,7 +7947,12 @@ msgstr "{name}からの更新"
 msgid "Update from {name}: {text}"
 msgstr "{name}からの更新: {text}"
 
+#: src/lib/server-copy.ts
+msgid "Update group “{group}”?"
+msgstr "グループ「{group}」を更新しますか？"
+
 #: src/components/AskCard.tsx
+#: src/lib/server-copy.ts
 msgid "Update instructions?"
 msgstr "指示を更新しますか？"
 
@@ -8286,6 +8431,10 @@ msgstr "あなたが操作中"
 #: src/lib/run-error.ts
 msgid "You reached your monthly limit on this space's model."
 msgstr "このスペースのモデルの月間上限に達しました。"
+
+#: src/lib/server-copy.ts
+msgid "You were added to the group chat “{name}”. Reply YES in this conversation to join it with your agent."
+msgstr "グループチャット「{name}」に追加されました。エージェントで参加するには、この会話で「はい」と返信してください。"
 
 #: src/pages/onboarding/WorkspaceStep.tsx
 msgid "Your agents and chats live here. You can rename it any time."

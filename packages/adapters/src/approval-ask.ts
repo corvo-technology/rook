@@ -1,4 +1,4 @@
-import type { MessageBlock } from "@corvo/contracts";
+import type { ApprovalCardCode, MessageBlock } from "@corvo/contracts";
 import { BOT_INSTRUCTIONS_MAX_LENGTH } from "@corvo/contracts";
 import {
   CARD_TITLE_ESCAPED_CHARACTERS,
@@ -17,7 +17,20 @@ export const MAX_APPROVAL_DETAIL_LENGTH = 4_000;
 export const MAX_FETCH_URL_LENGTH = 2_048;
 
 /** A fleet card built from the resolved request: a title and the lines under it. */
-export type FleetCardSummary = { title: string; lines: string[] };
+export type FleetCardSummary = {
+  /** What the card says as a code and params, so the client words it in the member's language. */
+  code: ApprovalCardCode;
+  params: Record<string, string>;
+  /** The English fallback for clients that do not know the code. */
+  title: string;
+  lines: string[];
+};
+
+function redactParams(params: Record<string, string>, secrets: string[]): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(params).map(([key, value]) => [key, redactSecrets(value, secrets)]),
+  );
+}
 
 /**
  * The instruction card shows the whole new text, like `propose_instructions_update`, so its detail
@@ -46,6 +59,7 @@ export function buildApprovalAskBlock(
         redactSecrets(options.summary.lines.join("\n"), secrets),
         approvalDetailLength(toolName),
       ),
+      card: { code: options.summary.code, params: redactParams(options.summary.params, secrets) },
       detailFormat: toolName === "set_child_instructions" ? "code" : "text",
       status: "pending",
       proposal: true,
@@ -71,6 +85,18 @@ export function buildApprovalAskBlock(
         `${messagingProviderName(String(args.requester_provider ?? ""))}: ${String(args.requester_address ?? "").replace(/[\r\n]/g, " ")}`,
         secrets,
       ),
+      card: {
+        code: "agent_connection",
+        params: redactParams(
+          {
+            accept: args.accept === true ? "1" : "0",
+            name,
+            provider: messagingProviderName(String(args.requester_provider ?? "")),
+            address: String(args.requester_address ?? "").replace(/[\r\n]/g, " "),
+          },
+          secrets,
+        ),
+      },
       detailFormat: "text",
       status: "pending",
       actions: [
@@ -87,6 +113,7 @@ export function buildApprovalAskBlock(
       kind: "ask",
       approvalEffectId: effectId,
       text: "Update instructions?",
+      card: { code: "update_instructions", params: {} },
       detail: instructionUpdateDiff(before, after, reason),
       instructionUpdate: {
         botId: String(args.botId ?? ""),
@@ -117,6 +144,22 @@ export function buildApprovalAskBlock(
       MAX_APPROVAL_SUMMARY_LENGTH,
     ),
     detail: safeDetail ? truncate(safeDetail, MAX_APPROVAL_DETAIL_LENGTH) : undefined,
+    ...(toolName === "create_space"
+      ? {
+          card: {
+            code: "create_space" as const,
+            params: redactParams(
+              {
+                name: args.name ? String(args.name) : "",
+                ...(options?.reviewReason?.trim()
+                  ? { reason: options.reviewReason.trim().replace(/\u2014|\u2013/g, "-") }
+                  : {}),
+              },
+              secrets,
+            ),
+          },
+        }
+      : {}),
     ...(fetchSite ? { site: fetchSite } : {}),
     status: "pending",
     actions:

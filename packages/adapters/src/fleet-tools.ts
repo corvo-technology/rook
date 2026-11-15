@@ -198,6 +198,12 @@ async function prepareCreateGroup(
       members,
     },
     summary: {
+      code: "create_group",
+      params: {
+        name: cardName(parsed.data.name),
+        members: memberNames(members),
+        ...(parsed.data.purpose ? { purpose: singleLine(parsed.data.purpose) } : {}),
+      },
       title: `Create group “${cardName(parsed.data.name)}”?`,
       lines: [
         `Members: ${memberNames(members)}`,
@@ -282,7 +288,22 @@ async function prepareUpdateGroup(
       added,
       removed,
     },
-    summary: { title: `Update group “${cardName(group.name)}”?`, lines },
+    summary: {
+      code: "update_group",
+      params: {
+        group: cardName(group.name),
+        ...(parsed.data.name !== undefined ? { rename: singleLine(parsed.data.name) } : {}),
+        ...(parsed.data.purpose !== undefined
+          ? parsed.data.purpose
+            ? { purpose: singleLine(parsed.data.purpose) }
+            : { clearPurpose: "1" }
+          : {}),
+        ...(added.length ? { add: memberNames(added) } : {}),
+        ...(removed.length ? { remove: memberNames(removed) } : {}),
+      },
+      title: `Update group “${cardName(group.name)}”?`,
+      lines,
+    },
   };
 }
 
@@ -348,7 +369,26 @@ async function prepareChildModel(
       model: validated.model,
       ...(thinkingLevel ? { thinkingLevel } : {}),
     },
-    summary: { title: `Change the model of ${cardName(child.name)}?`, lines },
+    summary: {
+      code: "change_model",
+      params: {
+        bot: cardName(child.name),
+        // An empty side is the default model, which the client words itself.
+        from:
+          previous.provider && previous.model ? modelLabel(previous.provider, previous.model) : "",
+        to:
+          validated.provider && validated.model
+            ? modelLabel(validated.provider, validated.model)
+            : "",
+        ...(thinkingLevel
+          ? { thinking: thinkingLevel }
+          : child.thinkingLevel
+            ? { thinkingDefault: "1" }
+            : {}),
+      },
+      title: `Change the model of ${cardName(child.name)}?`,
+      lines,
+    },
   };
 }
 
@@ -431,6 +471,15 @@ async function prepareChildRoutine(
           },
     },
     summary: {
+      code: "schedule_routine",
+      params: {
+        name: cardName(name),
+        bot: cardName(child.name),
+        prompt,
+        at: resolved.nextRunAt.toISOString(),
+        timezone,
+        ...(resolved.oneShot ? {} : { cron: singleLine(resolved.cron) }),
+      },
       title: `Schedule “${cardName(name)}” for ${cardName(child.name)}?`,
       lines: [
         resolved.oneShot
@@ -472,6 +521,13 @@ async function prepareRoutineStep(
     ok: true,
     canonical: { routineId: routine.id, botId: agent.id, botName: agent.name, instruction },
     summary: {
+      code: "add_routine_step",
+      params: {
+        routine: cardName(routine.name),
+        lastAgent: singleLine(lastAgent),
+        agent: singleLine(agent.name),
+        instruction,
+      },
       title: `Add a step to “${cardName(routine.name)}”?`,
       lines: [
         `After ${singleLine(lastAgent)} finishes, ${singleLine(agent.name)} runs it`,
@@ -587,6 +643,12 @@ async function prepareChildInstructions(
       length: instructions.length,
     },
     summary: {
+      code: "replace_instructions",
+      params: {
+        bot: cardName(child.name),
+        oldLength: String(current.instructions.length),
+        newLength: String(instructions.length),
+      },
       title: `Replace the instructions of ${cardName(child.name)}?`,
       lines: [
         `Old length: ${current.instructions.length} characters`,

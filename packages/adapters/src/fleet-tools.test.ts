@@ -229,7 +229,12 @@ describe("prepareFleetRequest create_group", () => {
           { id: "bot-writer", name: "Writer" },
         ],
       },
-      summary: { title: "Create group “Crew”?", lines: ["Members: Scout, Ops, Writer"] },
+      summary: {
+        code: "create_group",
+        params: { name: "Crew", members: "Scout, Ops, Writer" },
+        title: "Create group “Crew”?",
+        lines: ["Members: Scout, Ops, Writer"],
+      },
     });
   });
 
@@ -291,6 +296,12 @@ describe("group purpose in create_group", () => {
       ok: true,
       canonical: { name: "Crew", purpose: "Analisa concorrentes e escreve textos" },
       summary: {
+        code: "create_group",
+        params: {
+          name: "Crew",
+          members: "Scout, Ops",
+          purpose: "Analisa concorrentes e escreve textos",
+        },
         title: "Create group “Crew”?",
         lines: ["Members: Scout, Ops", "Purpose: Analisa concorrentes e escreve textos"],
       },
@@ -404,6 +415,8 @@ describe("prepareFleetRequest update_group", () => {
         removed: [{ id: "bot-ops", name: "Ops" }],
       },
       summary: {
+        code: "update_group",
+        params: { group: "Launch", rename: "Launch v2", add: "Writer", remove: "Ops" },
         title: "Update group “Launch”?",
         lines: ["Rename to “Launch v2”", "Add: Writer", "Remove: Ops"],
       },
@@ -502,6 +515,8 @@ describe("prepareFleetRequest set_child_bot_model", () => {
         model: "my-model",
       },
       summary: {
+        code: "change_model",
+        params: { bot: "Scout", from: "claude-old (Anthropic)", to: "my-model (custom)" },
         title: "Change the model of Scout?",
         lines: ["From: claude-old (Anthropic)", "To: my-model (custom)"],
       },
@@ -674,6 +689,14 @@ describe("prepareFleetRequest create_child_routine", () => {
         schedule: { runAt: "2026-10-18T09:30:00.000Z" },
       },
       summary: {
+        code: "schedule_routine",
+        params: {
+          name: "Morning brief",
+          bot: "Writer",
+          at: "2026-10-18T09:30:00.000Z",
+          timezone: "UTC",
+          prompt: "Summarize the news",
+        },
         title: "Schedule “Morning brief” for Writer?",
         lines: ["Runs at 18 Oct 2026, 09:30 UTC", "Prompt: Summarize the news"],
       },
@@ -1411,6 +1434,8 @@ describe("prepareFleetRequest set_child_instructions", () => {
         length: 17,
       },
       summary: {
+        code: "replace_instructions",
+        params: { bot: "Child", oldLength: "16", newLength: "17" },
         title: "Replace the instructions of Child?",
         lines: ["Old length: 16 characters", "New length: 17 characters", "", "Plan the offsite."],
       },
@@ -1826,6 +1851,13 @@ describe("routines that already exist", () => {
         instruction: "Check the facts",
       },
       summary: {
+        code: "add_routine_step",
+        params: {
+          routine: "Daily brief",
+          lastAgent: "Writer",
+          agent: "Scout",
+          instruction: "Check the facts",
+        },
         title: "Add a step to “Daily brief”?",
         lines: ["After Writer finishes, Scout runs it", "Instruction: Check the facts"],
       },

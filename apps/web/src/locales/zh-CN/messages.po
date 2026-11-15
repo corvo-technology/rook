@@ -365,6 +365,14 @@ msgstr "{name} 已将 {ref} 移至 {status}"
 msgid "{name} options"
 msgstr "{name} 选项"
 
+#: src/lib/server-copy.ts
+msgid "{name} routine: no changes"
+msgstr "{name} 例程：无变化"
+
+#: src/lib/server-copy.ts
+msgid "{name} routine: watching for changes"
+msgstr "{name} 例程：正在监视变化"
+
 #. js-lingui-explicit-id
 #: src/lib/browser-notifications.ts
 msgid "{name} stopped"
@@ -570,6 +578,10 @@ msgstr "{total} 位成员"
 msgid "{used} of {limit}"
 msgstr "{used} / {limit}"
 
+#: src/lib/server-copy.ts
+msgid "{used} of {limit} tokens"
+msgstr "{used} / {limit} 个 token"
+
 #: src/pages/shell/context-meter.tsx
 msgid "{used} tokens"
 msgstr "{used} 个令牌"
@@ -747,6 +759,10 @@ msgstr "请填写 stdio 命令。"
 msgid "Add a step here"
 msgstr "在此添加步骤"
 
+#: src/lib/server-copy.ts
+msgid "Add a step to “{routine}”?"
+msgstr "要为“{routine}”添加步骤吗？"
+
 #: src/pages/board/BoardLanes.tsx
 msgid "Add a ticket to {lane}"
 msgstr "向 {lane} 添加工单"
@@ -887,6 +903,10 @@ msgstr "添加 Treg"
 msgid "Add trigger"
 msgstr "添加触发器"
 
+#: src/lib/server-copy.ts
+msgid "Add: {add}"
+msgstr "添加：{add}"
+
 #: src/pages/AgentsStore.tsx
 #: src/pages/AppCatalogGrid.tsx
 #: src/pages/Store.tsx
@@ -937,6 +957,10 @@ msgstr "高级"
 #: src/pages/RoutineEditor.tsx
 msgid "Advanced..."
 msgstr "高级..."
+
+#: src/lib/server-copy.ts
+msgid "After {lastAgent} finishes, {agent} runs it"
+msgstr "{lastAgent} 完成后，由 {agent} 执行"
 
 #: src/components/WorkingLine.tsx
 #: src/pages/AddStepPanel.tsx
@@ -1242,6 +1266,10 @@ msgstr "全部批准"
 #: src/components/ApproveAllBar.tsx
 msgid "Approve all {count}"
 msgstr "全部批准（{count}）"
+
+#: src/lib/server-copy.ts
+msgid "Approve connection with “{name}”?"
+msgstr "批准与“{name}”的连接吗？"
 
 #: src/pages/WikiBrowser.tsx
 msgid "Approve edits"
@@ -1550,6 +1578,10 @@ msgstr "处理你的收件箱和发票、行动前先询问你的机器人"
 msgid "Bots with their own computer and browser"
 msgstr "拥有独立电脑和浏览器的机器人"
 
+#: src/lib/server-copy.ts
+msgid "Bots, groups, chats, files, memory, and integrations in this space stay separate from other spaces."
+msgstr "此空间的机器人、群组、聊天、文件、记忆和集成与其他空间相互独立。"
+
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Brain label"
 msgstr "大脑标签"
@@ -1674,6 +1706,10 @@ msgstr "更换模型"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Change password"
 msgstr "修改密码"
+
+#: src/lib/server-copy.ts
+msgid "Change the model of {bot}?"
+msgstr "要更改 {bot} 的模型吗？"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Changing…"
@@ -1842,6 +1878,10 @@ msgstr "清空对话"
 #: src/pages/ActivityList.tsx
 msgid "Clear filter {label}"
 msgstr "清除筛选 {label}"
+
+#: src/lib/server-copy.ts
+msgid "Clear the purpose"
+msgstr "清除用途"
 
 #: src/pages/shell/dialogs.tsx
 msgid "Clearing…"
@@ -2927,6 +2967,10 @@ msgstr "创建频道"
 msgid "Create group"
 msgstr "创建群组"
 
+#: src/lib/server-copy.ts
+msgid "Create group “{name}”?"
+msgstr "要创建群组“{name}”吗？"
+
 #: src/pages/NewRoutinePanel.tsx
 msgid "Create routine"
 msgstr "创建例行任务"
@@ -2940,6 +2984,10 @@ msgstr "创建例行任务"
 msgid "Create space"
 msgstr "创建工作区"
 
+#: src/lib/server-copy.ts
+msgid "Create space “{space}”?"
+msgstr "要创建空间“{space}”吗？"
+
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Create spaces"
 msgstr "创建空间"
@@ -2951,6 +2999,10 @@ msgstr "创建你的 Rook"
 #: src/components/AskCard.tsx
 msgid "Created"
 msgstr "已创建"
+
+#: src/lib/server-copy.ts
+msgid "Created by {name}"
+msgstr "创建者：{name}"
 
 #: src/components/TaskCard.tsx
 msgid "Created task <0>{taskRef}</0> · {title}"
@@ -3073,6 +3125,10 @@ msgstr "天"
 #: src/components/call/IncomingCall.tsx
 msgid "Decline"
 msgstr "拒绝"
+
+#: src/lib/server-copy.ts
+msgid "Decline connection with “{name}”?"
+msgstr "拒绝与“{name}”的连接吗？"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/model-settings/role-model-picker.tsx
@@ -3827,6 +3883,10 @@ msgstr "发件人"
 msgid "From {0}"
 msgstr "来自 {0}"
 
+#: src/lib/server-copy.ts
+msgid "From: {from}"
+msgstr "从：{from}"
+
 #: src/pages/WindowChrome.tsx
 msgid "Fullscreen"
 msgstr "全屏"
@@ -4158,6 +4218,10 @@ msgstr "指令"
 #: src/components/InstructionSettings.tsx
 msgid "Instruction history"
 msgstr "指令历史"
+
+#: src/lib/server-copy.ts
+msgid "Instruction: {instruction}"
+msgstr "指令：{instruction}"
 
 #: src/components/AskCard.tsx
 #: src/components/InstructionSettings.tsx
@@ -4687,6 +4751,10 @@ msgstr "成员（{0}）"
 msgid "Members can create spaces"
 msgstr "成员可以创建空间"
 
+#: src/lib/server-copy.ts
+msgid "Members: {members}"
+msgstr "成员：{members}"
+
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/Settings.tsx
 #: src/pages/shell/agent-import.tsx
@@ -5069,6 +5137,10 @@ msgstr "新建群聊"
 msgid "New key"
 msgstr "新密钥"
 
+#: src/lib/server-copy.ts
+msgid "New length: {newLength} characters"
+msgstr "新长度：{newLength} 个字符"
+
 #: src/components/MemoryFactCard.tsx
 msgid "New memory"
 msgstr "新记忆"
@@ -5398,6 +5470,10 @@ msgstr "OAuth 连接失败"
 #: src/pages/StoreInstalledApps.tsx
 msgid "OAuth expired"
 msgstr "OAuth 已过期"
+
+#: src/lib/server-copy.ts
+msgid "Old length: {oldLength} characters"
+msgstr "原长度：{oldLength} 个字符"
 
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
@@ -5892,6 +5968,10 @@ msgstr "程序：{name}"
 msgid "Progress"
 msgstr "进度"
 
+#: src/lib/server-copy.ts
+msgid "Prompt: {prompt}"
+msgstr "提示词：{prompt}"
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Protected input"
 msgstr "受保护输入"
@@ -5913,6 +5993,10 @@ msgstr "拉取请求"
 #: src/pages/GroupPanel.tsx
 msgid "Purpose"
 msgstr "用途"
+
+#: src/lib/server-copy.ts
+msgid "Purpose: {purpose}"
+msgstr "用途：{purpose}"
 
 #: src/pages/WhatsAppNumbers.tsx
 msgid "QR code"
@@ -6175,6 +6259,10 @@ msgstr "移除技能 {0}"
 msgid "Remove webhook"
 msgstr "移除 Webhook"
 
+#: src/lib/server-copy.ts
+msgid "Remove: {remove}"
+msgstr "移除：{remove}"
+
 #: src/pages/shell/agent-import-undo.tsx
 msgid "Removed"
 msgstr "移除"
@@ -6197,6 +6285,10 @@ msgstr "重命名"
 msgid "Rename section"
 msgstr "重命名分组"
 
+#: src/lib/server-copy.ts
+msgid "Rename to “{rename}”"
+msgstr "重命名为“{rename}”"
+
 #: src/lib/activity-label.ts
 msgid "Rendering a chart"
 msgstr "正在生成图表"
@@ -6208,6 +6300,10 @@ msgstr "{day} 续订"
 #: src/pages/ScratchpadSection.tsx
 msgid "Reopen"
 msgstr "重新打开"
+
+#: src/lib/server-copy.ts
+msgid "Repeats {cron}, next at {when}"
+msgstr "重复 {cron}，下次运行时间 {when}"
 
 #: src/pages/model-settings/connection-controls.tsx
 msgid "Replace API key"
@@ -6221,6 +6317,10 @@ msgstr "替换其指令"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Replace key"
 msgstr "替换密钥"
+
+#: src/lib/server-copy.ts
+msgid "Replace the instructions of {bot}?"
+msgstr "要替换 {bot} 的指令吗？"
 
 #: src/pages/shell/bot-credentials.tsx
 msgid "Replace value"
@@ -6509,6 +6609,10 @@ msgstr "正在运行…"
 msgid "Runs"
 msgstr "运行"
 
+#: src/lib/server-copy.ts
+msgid "Runs at {when}"
+msgstr "运行时间：{when}"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Runs when this bot receives a verified message from this provider."
 msgstr "当此机器人收到来自该服务商的已验证消息时运行。"
@@ -6608,6 +6712,10 @@ msgstr "正在保存…"
 #: src/lib/call-session.ts
 msgid "Say yes or no, or answer in a sentence."
 msgstr "回答是或否，或一句话说明。"
+
+#: src/lib/server-copy.ts
+msgid "Schedule “{name}” for {bot}?"
+msgstr "要为 {bot} 安排“{name}”吗？"
 
 #: src/components/MissionList.tsx
 msgid "Schedule a routine"
@@ -7160,6 +7268,18 @@ msgstr "停止示范"
 msgid "Stopped."
 msgstr "已停止。"
 
+#: src/lib/server-copy.ts
+msgid "Stopped. This stayed queued without starting."
+msgstr "已停止。一直在队列中未开始。"
+
+#: src/lib/server-copy.ts
+msgid "Stopped. This was still waiting for an answer."
+msgstr "已停止。仍在等待回答。"
+
+#: src/lib/server-copy.ts
+msgid "Stopped. This was still waiting for you on the screen."
+msgstr "已停止。仍在屏幕上等你操作。"
+
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Stopping…"
 msgstr "正在停止…"
@@ -7243,7 +7363,7 @@ msgstr "支持思考"
 msgid "Switch space"
 msgstr "切换空间"
 
-#: src/pages/shell/message-view.tsx
+#: src/lib/server-copy.ts
 msgid "Switched to a stronger model"
 msgstr "已切换到更强的模型"
 
@@ -7353,6 +7473,10 @@ msgstr "测试运行"
 msgid "Testing…"
 msgstr "正在测试…"
 
+#: src/lib/server-copy.ts
+msgid "The {name} routine is paused because its change check failed: {reason}"
+msgstr "例程 {name} 已暂停，因为其变化检查失败：{reason}"
+
 #: src/pages/shell/agent-import-undo.tsx
 msgid "The bot and what its import added will be removed."
 msgstr "此 Bot 及其导入添加的内容将被移除。"
@@ -7423,6 +7547,14 @@ msgstr "思考"
 #: src/pages/ModelRoleSettings.tsx
 msgid "Thinking: {0}"
 msgstr "思考：{0}"
+
+#: src/lib/server-copy.ts
+msgid "Thinking: {thinking}"
+msgstr "思考：{thinking}"
+
+#: src/lib/server-copy.ts
+msgid "Thinking: Default"
+msgstr "思考：默认"
 
 #: src/pages/shell/agent-import.tsx
 msgid "This backup could not be read."
@@ -7624,6 +7756,10 @@ msgstr "待办"
 msgid "To:"
 msgstr "至:"
 
+#: src/lib/server-copy.ts
+msgid "To: {to}"
+msgstr "到：{to}"
+
 #: src/pages/Artifacts.tsx
 #: src/pages/Routines.tsx
 #: src/pages/shell/chat-context.tsx
@@ -7777,6 +7913,10 @@ msgstr "取消置顶"
 msgid "Unsupported file type: {0}"
 msgstr "不支持的文件类型：{0}"
 
+#: src/lib/server-copy.ts
+msgid "Untitled"
+msgstr "无标题"
+
 #: src/components/DesktopUpdates.tsx
 msgid "Up to date"
 msgstr "已是最新"
@@ -7807,7 +7947,12 @@ msgstr "来自 {name} 的更新"
 msgid "Update from {name}: {text}"
 msgstr "来自 {name} 的更新：{text}"
 
+#: src/lib/server-copy.ts
+msgid "Update group “{group}”?"
+msgstr "要更新群组“{group}”吗？"
+
 #: src/components/AskCard.tsx
+#: src/lib/server-copy.ts
 msgid "Update instructions?"
 msgstr "更新指令？"
 
@@ -8286,6 +8431,10 @@ msgstr "你已接管"
 #: src/lib/run-error.ts
 msgid "You reached your monthly limit on this space's model."
 msgstr "你已达到此空间模型的每月上限。"
+
+#: src/lib/server-copy.ts
+msgid "You were added to the group chat “{name}”. Reply YES in this conversation to join it with your agent."
+msgstr "你已被添加到群聊“{name}”。在此对话中回复“是”即可与你的智能体一起加入。"
 
 #: src/pages/onboarding/WorkspaceStep.tsx
 msgid "Your agents and chats live here. You can rename it any time."

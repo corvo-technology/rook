@@ -25,7 +25,7 @@ test("focus choice suggests apps and preserves a completed connection", async ({
   // The focus step suggests apps but must not rename the bot: the name the
   // user chose during creation ("Chief") is preserved.
   await expect(page.locator("main").getByText("Chief", { exact: true })).toBeVisible();
-  await expect(page.getByPlaceholder("Message Chief")).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message Chief", exact: true })).toBeVisible();
   await expect(page.getByText("Slack", { exact: true })).toBeVisible();
   await expect(page.getByText("Gmail", { exact: true })).toBeVisible();
   const connectionCards = page.getByRole("group", { name: / connection$/ });
@@ -91,7 +91,7 @@ test("focus choice follows Simplified Chinese UI locale", async ({ page }, testI
   await picker.click();
   await page.getByRole("option", { name: "简体中文", exact: true }).click();
   await expect(settings.getByText("语言", { exact: true })).toBeVisible();
-  await settings.getByRole("button", { name: "关闭用户设置" }).click();
+  await page.getByTestId("settings-back").click();
   await expect(settings).toHaveCount(0);
 
   await expect(page.getByText("What do you want me on first?", { exact: true })).toHaveCount(0);

@@ -99,7 +99,13 @@ export function DirectChat({ userId, currentUserId }: { userId: string; currentU
   if (!thread.data) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        {thread.isError || opened.isError ? null : <Spinner />}
+        {thread.isError || opened.isError ? (
+          <p role="alert" className="text-sm text-muted-foreground">
+            {errorText(thread.error ?? opened.error)}
+          </p>
+        ) : (
+          <Spinner />
+        )}
       </div>
     );
   }

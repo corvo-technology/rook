@@ -34,7 +34,7 @@ test("renders tappable choice buttons and submits the offered action id", async 
   await completeOnboarding(page);
 
   const botId = activeBotId(page);
-  const composer = page.getByPlaceholder(/Message/);
+  const composer = page.getByRole("combobox", { name: /^Message/ });
   await composer.fill("pick from these cities with tappable choices");
   await page.keyboard.press("Enter");
 
@@ -54,7 +54,7 @@ test("renders tappable choice buttons and submits the offered action id", async 
   const prompt = page.locator("p").filter({ hasText: /^Which city should I use\?$/ });
   if ((await prompt.count()) === 0) {
     await page.reload({ waitUntil: "domcontentloaded" });
-    await expect(page.getByPlaceholder(/Message/)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("combobox", { name: /^Message/ })).toBeVisible({ timeout: 15_000 });
   }
   await expect(prompt).toBeVisible({ timeout: 15_000 });
 
@@ -138,7 +138,7 @@ test("a typed reply answers the latest question and resumes its run", async ({
   await signup(page, `typed-choice-${Date.now()}@corvo.test`, "password12", "Typed Choice");
   await completeOnboarding(page);
   const botId = activeBotId(page);
-  const composer = page.getByPlaceholder(/Message/);
+  const composer = page.getByRole("combobox", { name: /^Message/ });
   await composer.fill("pick from these cities with tappable choices");
   await page.keyboard.press("Enter");
 

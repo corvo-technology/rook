@@ -35,7 +35,7 @@ test("bot creation, editing, and deletion persist", async ({ page }, testInfo) =
   await dialog.getByRole("button", { name: "Create", exact: true }).click();
   await createAborted;
   // Failed create keeps the dialog open over the current bot chat.
-  await expect(page.getByPlaceholder("Message Chief")).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message Chief", exact: true })).toBeVisible();
   await expect(dialog).toBeVisible();
   await expect(dialog.getByTestId("create-bot-error")).toBeVisible();
   expect(createFailed).toBe(true);
@@ -54,7 +54,7 @@ test("bot creation, editing, and deletion persist", async ({ page }, testInfo) =
     await route.abort("failed");
   });
   await createBotFromPicker(page);
-  await expect(page.getByPlaceholder("Message New Bot")).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message New Bot", exact: true })).toBeVisible();
   await expect.poll(() => failedPostCreateRefresh).toBe(true);
   await page.unroute("**/rpc/spaces/list");
   await expect(botList.getByRole("button", { name: /^New Bot/ })).toBeVisible();
@@ -91,7 +91,9 @@ test("bot creation, editing, and deletion persist", async ({ page }, testInfo) =
   await studio.getByRole("button", { name: "Done", exact: true }).click();
   await expect(studio).toBeHidden();
   await expect(botList.getByRole("button", { name: /^Researcher/ })).toBeVisible();
-  await expect(page.getByPlaceholder("Message Researcher")).toBeVisible();
+  await expect(
+    page.getByRole("combobox", { name: "Message Researcher", exact: true }),
+  ).toBeVisible();
 
   await page.locator("main").getByRole("button", { name: "Researcher", exact: true }).click();
   await expect(page.getByRole("button", { name: "Edit name", exact: true })).toHaveText(
@@ -204,12 +206,12 @@ test("bot creation, editing, and deletion persist", async ({ page }, testInfo) =
   await descriptionInput.fill("Builds durable, source-backed research briefs.");
   await descriptionInput.blur();
   await expect(botList.getByRole("button", { name: /^Atlas/ })).toBeVisible();
-  await expect(page.getByPlaceholder("Message Atlas")).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message Atlas", exact: true })).toBeVisible();
   await captureScreenshot(page, testInfo, "28-edited-bot-profile");
 
   await page.reload();
   await expect(botList.getByRole("button", { name: /^Atlas/ })).toBeVisible();
-  await expect(page.getByPlaceholder("Message Atlas")).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message Atlas", exact: true })).toBeVisible();
   await page.locator("main").getByRole("button", { name: "Atlas", exact: true }).click();
   await expect(page.getByRole("button", { name: "Edit name", exact: true })).toHaveText("Atlas");
   await expect(page.getByRole("button", { name: "Edit label", exact: true })).toHaveText(
@@ -227,7 +229,9 @@ test("bot creation, editing, and deletion persist", async ({ page }, testInfo) =
     name: new RegExp(`^${longUnbrokenName}`),
   });
   await expect(longNameBot).toBeVisible();
-  await expect(page.getByPlaceholder(`Message ${longUnbrokenName}`)).toBeVisible();
+  await expect(
+    page.getByRole("combobox", { name: `Message ${longUnbrokenName}`, exact: true }),
+  ).toBeVisible();
 
   await longNameBot.click({ button: "right" });
   await page.getByRole("menuitem", { name: "Delete" }).click();
@@ -247,7 +251,7 @@ test("bot creation, editing, and deletion persist", async ({ page }, testInfo) =
   await page.waitForURL((url) => url.pathname !== deletedBotPath);
   await expect(botList.getByText(longUnbrokenName, { exact: true })).toHaveCount(0);
   await expect(botList.getByRole("button", { name: /^Chief/ })).toBeVisible();
-  await expect(page.getByPlaceholder("Message Chief")).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message Chief", exact: true })).toBeVisible();
   await captureScreenshot(page, testInfo, "31-deleted-bot-fallback");
 });
 
@@ -285,10 +289,10 @@ test("bot management switch persists with its subtitle", async ({ page }, testIn
   await expect(crossSpaceSwitch).toBeEnabled();
   await fleetSwitch.click();
   await expect(fleetSwitch).not.toBeChecked();
-  await expect(page.getByPlaceholder("Message Chief")).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message Chief", exact: true })).toBeVisible();
 
   await page.reload();
-  await expect(page.getByPlaceholder("Message Chief")).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message Chief", exact: true })).toBeVisible();
   const reloadedSwitch = await openAdvanced();
   await expect(reloadedSwitch).not.toBeChecked();
   const reloadedCrossSpace = page.getByRole("switch", {

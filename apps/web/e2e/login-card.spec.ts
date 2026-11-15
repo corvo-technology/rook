@@ -9,7 +9,7 @@ test("saves a website login from a username and password card without echoing ei
   await completeOnboarding(page);
 
   const botId = activeBotId(page);
-  await page.getByPlaceholder(/Message/).fill("show a login card");
+  await page.getByRole("combobox", { name: /^Message/ }).fill("show a login card");
   await page.keyboard.press("Enter");
 
   await expect
@@ -28,7 +28,7 @@ test("saves a website login from a username and password card without echoing ei
   const card = page.getByTestId("secret-ask-card");
   if ((await card.count()) === 0) {
     await page.reload({ waitUntil: "domcontentloaded" });
-    await expect(page.getByPlaceholder(/Message/)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("combobox", { name: /^Message/ })).toBeVisible({ timeout: 15_000 });
   }
   await expect(card).toBeVisible({ timeout: 15_000 });
   await expect(card.getByText("https://login.example.test", { exact: true })).toBeVisible();

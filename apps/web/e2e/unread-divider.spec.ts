@@ -64,7 +64,7 @@ test("a chat opens with a New divider above replies that arrived while away", as
 
   // Writing in the chat means the user has caught up.
   const followUp = `Thanks ${stamp}`;
-  await page.getByPlaceholder("Message Chief").fill(followUp);
+  await page.getByRole("combobox", { name: "Message Chief", exact: true }).fill(followUp);
   await page.keyboard.press("Enter");
   await expect(page.getByTestId("message-user-bubble").filter({ hasText: followUp })).toBeVisible();
   await expect(divider).toHaveCount(0);
@@ -86,9 +86,11 @@ test("a chat opens with a New divider above replies that arrived while away", as
 
   // Once read, the next visit has no divider.
   await page.goto(`/app/${otherId}`);
-  await expect(page.getByPlaceholder("Message Elsewhere")).toBeVisible();
+  await expect(
+    page.getByRole("combobox", { name: "Message Elsewhere", exact: true }),
+  ).toBeVisible();
   await page.goto(`/app/${chiefId}`);
-  await expect(page.getByPlaceholder("Message Chief")).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message Chief", exact: true })).toBeVisible();
   await expect(
     page.locator("[data-message-id]").filter({ hasText: question }).first(),
   ).toBeVisible();
@@ -134,9 +136,11 @@ test("a late read answer from a chat you left doesn't remove the divider in the 
   });
 
   await page.goto(`/app/${otherId}`);
-  await expect(page.getByPlaceholder("Message Elsewhere")).toBeVisible();
+  await expect(
+    page.getByRole("combobox", { name: "Message Elsewhere", exact: true }),
+  ).toBeVisible();
   await page.locator(`[data-roster-bot-id="${chiefId}"]`).click();
-  await expect(page.getByPlaceholder("Message Chief")).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message Chief", exact: true })).toBeVisible();
   const divider = page.getByTestId("unread-divider");
   await expect(divider).toBeVisible();
 
@@ -245,7 +249,9 @@ test("marking a message unread brings the chat back with New above the reply fro
   await closeMenu();
 
   await page.goto(`/app/${otherId}`);
-  await expect(page.getByPlaceholder("Message Elsewhere")).toBeVisible();
+  await expect(
+    page.getByRole("combobox", { name: "Message Elsewhere", exact: true }),
+  ).toBeVisible();
   await page.goto(`/app/${chiefId}`);
   const divider = page.getByTestId("unread-divider");
   await expect(divider).toBeVisible();
@@ -269,7 +275,9 @@ test("marking a message unread brings the chat back with New above the reply fro
     "true",
   );
   await page.goto(`/app/${otherId}`);
-  await expect(page.getByPlaceholder("Message Elsewhere")).toBeVisible();
+  await expect(
+    page.getByRole("combobox", { name: "Message Elsewhere", exact: true }),
+  ).toBeVisible();
   await page.goto(`/app/${chiefId}`);
   await expect(divider.locator("xpath=following-sibling::div[@data-message-id][1]")).toContainText(
     `handled: ${second}`,

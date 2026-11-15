@@ -41,6 +41,7 @@ describe.skipIf(!enabled)("persisted source-verified history followups", () => {
       };
       const key = "synthetic-history-followup-key";
       const model = await startModelEmulator({
+        answerRepeatChecks: true,
         apiKey: key,
         steps: [
           {
@@ -141,7 +142,8 @@ describe.skipIf(!enabled)("persisted source-verified history followups", () => {
         expect(result).toMatchObject({
           status: "passed",
           toolCalls: 2,
-          modelCalls: 5,
+          // Five answers and the check for a repeated request that the fixture answers on its own.
+          modelCalls: 6,
           cleanupFailed: false,
         });
         expect(result.historyPreparationState).toMatchObject({

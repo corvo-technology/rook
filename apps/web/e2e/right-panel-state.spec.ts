@@ -81,7 +81,7 @@ test("switching chats opens each chat's own panel, closed by default", async ({
   await page.getByRole("button", { name: "Agent computer", exact: true }).click();
   await expect(panel).toHaveAttribute("data-panel", "computer");
   await sidebar.getByRole("button", { name: /^Chief/ }).click();
-  await expect(page.getByPlaceholder("Message Chief")).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message Chief", exact: true })).toBeVisible();
   await expect(panel).toHaveAttribute("data-panel", "closed");
   await captureScreenshot(page, testInfo, "rail-closed-in-other-chat");
   await sidebar.getByRole("button", { name: /^Other chat/ }).click();

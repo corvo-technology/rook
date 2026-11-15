@@ -46,5 +46,5 @@ test("created bots appear as regular bots and reorder across their creator", asy
 
   await scout.click();
   await expect(page).toHaveURL(/\/app\/[^/]+$/);
-  await expect(page.getByPlaceholder("Message Scout")).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message Scout", exact: true })).toBeVisible();
 });

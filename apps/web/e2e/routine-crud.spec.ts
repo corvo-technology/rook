@@ -137,7 +137,7 @@ test("routine editing updates in place, preserves timezone, deletion persists, a
 
   // The deleted routine stays gone after a reload.
   await page.reload();
-  await expect(page.getByPlaceholder("Message Chief")).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message Chief", exact: true })).toBeVisible();
   expect((await rpc<Routine[]>(page, "routines/list", { botId })).map((r) => r.name)).toEqual([
     "Renamed model check",
   ]);

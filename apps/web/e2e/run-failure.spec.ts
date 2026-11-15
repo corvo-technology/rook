@@ -30,7 +30,7 @@ test("a failed run is visible once without returning after reload", async ({ pag
 
   // "fail this run" makes the scripted runtime throw, so the run fails the same way a
   // real provider error would, without depending on how models are configured.
-  await page.getByPlaceholder(/^Message /).fill("fail this run");
+  await page.getByRole("combobox", { name: /^Message / }).fill("fail this run");
   await page.getByRole("button", { name: "Send" }).click();
 
   const error = page.getByTestId("composer-error");
@@ -55,7 +55,7 @@ test("a failed run is visible once without returning after reload", async ({ pag
   await expect(error).toBeHidden();
   await captureScreenshot(page, testInfo, "seen-run-error-hidden-after-reload");
 
-  await page.getByPlaceholder(/^Message /).fill("fail this run");
+  await page.getByRole("combobox", { name: /^Message / }).fill("fail this run");
   await page.getByRole("button", { name: "Send" }).click();
   await expect(error).toBeVisible({ timeout: 30_000 });
   await expect(error).toContainText("The model provider returned an error.");
@@ -65,7 +65,7 @@ test("a failed run is visible once without returning after reload", async ({ pag
   await expect(dismissError).toBeFocused();
   await dismissError.press("Enter");
   await expect(error).toBeHidden();
-  await expect(page.getByPlaceholder(/^Message /)).toBeFocused();
+  await expect(page.getByRole("combobox", { name: /^Message / })).toBeFocused();
 });
 
 test("a covered run error is not remembered until it is presented", async ({ page }, testInfo) => {
@@ -74,7 +74,7 @@ test("a covered run error is not remembered until it is presented", async ({ pag
   await completeOnboarding(page);
   await page.setViewportSize({ width: 390, height: 844 });
 
-  await page.getByPlaceholder(/^Message /).fill("fail this run");
+  await page.getByRole("combobox", { name: /^Message / }).fill("fail this run");
   const sendButton = await page.getByRole("button", { name: "Send" }).elementHandle();
   if (!sendButton) throw new Error("Send button not found");
   await page.getByRole("button", { name: "Open navigation" }).click();
@@ -98,7 +98,7 @@ test("a covered run error is not remembered until it is presented", async ({ pag
   await expect(error).toBeHidden();
 
   const recordedErrorCount = await seenRunErrorCount(page);
-  await page.getByPlaceholder(/^Message /).fill("fail this run");
+  await page.getByRole("combobox", { name: /^Message / }).fill("fail this run");
   const nextSendButton = await page.getByRole("button", { name: "Send" }).elementHandle();
   if (!nextSendButton) throw new Error("Send button not found");
   await page.getByRole("button", { name: "Open navigation" }).click();
@@ -119,7 +119,7 @@ test("a covered run error is not remembered until it is presented", async ({ pag
   await page.setViewportSize({ width: 1280, height: 720 });
   await expect(page.locator("main")).not.toHaveAttribute("aria-hidden", "true");
   await expect(page.locator("main")).toHaveJSProperty("inert", false);
-  await page.getByPlaceholder(/^Message /).fill("fail this run");
+  await page.getByRole("combobox", { name: /^Message / }).fill("fail this run");
   const modalSendButton = await page.getByRole("button", { name: "Send" }).elementHandle();
   if (!modalSendButton) throw new Error("Send button not found");
   await openNewSpace(page);
@@ -143,7 +143,7 @@ test("an overloaded provider is named instead of a generic error", async ({ page
   await signup(page, `overloaded-run-${Date.now()}@corvo.test`, "password12", "Overloaded Run");
   await completeOnboarding(page);
 
-  await page.getByPlaceholder(/^Message /).fill("fail this run as overloaded");
+  await page.getByRole("combobox", { name: /^Message / }).fill("fail this run as overloaded");
   await page.getByRole("button", { name: "Send" }).click();
 
   const error = page.getByTestId("composer-error");
@@ -161,7 +161,7 @@ test("a model too small for required instructions offers a model change", async 
 }, testInfo) => {
   await signup(page, `context-run-${Date.now()}@corvo.test`, "password12", "Context Run");
   await completeOnboarding(page);
-  await page.getByPlaceholder(/^Message /).fill("fail this run with fixed context");
+  await page.getByRole("combobox", { name: /^Message / }).fill("fail this run with fixed context");
   await page.getByRole("button", { name: "Send" }).click();
 
   const error = page.getByTestId("composer-error");
@@ -177,7 +177,7 @@ test("a model too small for required instructions offers a model change", async 
 test("a reply cut off at the output limit offers a model change", async ({ page }, testInfo) => {
   await signup(page, `cut-reply-run-${Date.now()}@corvo.test`, "password12", "Cut Reply Run");
   await completeOnboarding(page);
-  await page.getByPlaceholder(/^Message /).fill("fail this run with a cut reply");
+  await page.getByRole("combobox", { name: /^Message / }).fill("fail this run with a cut reply");
   await page.getByRole("button", { name: "Send" }).click();
 
   const error = page.getByTestId("composer-error");
@@ -191,7 +191,7 @@ test("a reply cut off at the output limit offers a model change", async ({ page 
 test("a provider out of credits offers another model", async ({ page }, testInfo) => {
   await signup(page, `credits-run-${Date.now()}@corvo.test`, "password12", "Credits Run");
   await completeOnboarding(page);
-  await page.getByPlaceholder(/^Message /).fill("fail this run out of credits");
+  await page.getByRole("combobox", { name: /^Message / }).fill("fail this run out of credits");
   await page.getByRole("button", { name: "Send" }).click();
 
   const error = page.getByTestId("composer-error");
@@ -208,7 +208,7 @@ test("a provider out of credits offers another model", async ({ page }, testInfo
 test("a rejected key opens the model connections", async ({ page }, testInfo) => {
   await signup(page, `rejected-key-${Date.now()}@corvo.test`, "password12", "Rejected Key");
   await completeOnboarding(page);
-  await page.getByPlaceholder(/^Message /).fill("fail this run with a rejected key");
+  await page.getByRole("combobox", { name: /^Message / }).fill("fail this run with a rejected key");
   await page.getByRole("button", { name: "Send" }).click();
 
   const error = page.getByTestId("composer-error");
@@ -226,7 +226,9 @@ test("a rejected key opens the model connections", async ({ page }, testInfo) =>
 test("an approved action the model did not run says so", async ({ page }, testInfo) => {
   await signup(page, `unrun-approval-${Date.now()}@corvo.test`, "password12", "Unrun Approval");
   await completeOnboarding(page);
-  await page.getByPlaceholder(/^Message /).fill("fail this run with an unrun approval");
+  await page
+    .getByRole("combobox", { name: /^Message / })
+    .fill("fail this run with an unrun approval");
   await page.getByRole("button", { name: "Send" }).click();
 
   const error = page.getByTestId("composer-error");
@@ -240,7 +242,9 @@ test("an approved action the model did not run says so", async ({ page }, testIn
 test("a failed run explains that backup models also failed", async ({ page }, testInfo) => {
   await signup(page, `backup-failure-${Date.now()}@corvo.test`, "password12", "Backup Failure");
   await completeOnboarding(page);
-  await page.getByPlaceholder(/^Message /).fill("fail this run with exhausted backups");
+  await page
+    .getByRole("combobox", { name: /^Message / })
+    .fill("fail this run with exhausted backups");
   await page.getByRole("button", { name: "Send" }).click();
 
   const error = page.getByTestId("composer-error");
@@ -256,7 +260,9 @@ test("a failed run explains that backup models also failed", async ({ page }, te
 test("an unreachable provider is named instead of a generic error", async ({ page }, testInfo) => {
   await signup(page, `unreachable-${Date.now()}@corvo.test`, "password12", "Unreachable");
   await completeOnboarding(page);
-  await page.getByPlaceholder(/^Message /).fill("fail this run with an unreachable provider");
+  await page
+    .getByRole("combobox", { name: /^Message / })
+    .fill("fail this run with an unreachable provider");
   await page.getByRole("button", { name: "Send" }).click();
 
   const error = page.getByTestId("composer-error");
@@ -271,7 +277,7 @@ test("an unreachable provider is named instead of a generic error", async ({ pag
 test("a run stopped for repeating itself says why", async ({ page }, testInfo) => {
   await signup(page, `guard-stop-${Date.now()}@corvo.test`, "password12", "Guard Stop");
   await completeOnboarding(page);
-  await page.getByPlaceholder(/^Message /).fill("fail this run stuck in a loop");
+  await page.getByRole("combobox", { name: /^Message / }).fill("fail this run stuck in a loop");
   await page.getByRole("button", { name: "Send" }).click();
 
   const error = page.getByTestId("composer-error");

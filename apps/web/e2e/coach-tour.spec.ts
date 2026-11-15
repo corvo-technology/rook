@@ -30,7 +30,7 @@ test("the chief mark shows after the first reply and ends when the Chief's chat 
   page,
 }, testInfo) => {
   const botId = await startTour(page, "Tour chief");
-  const composer = page.getByPlaceholder(/Message/);
+  const composer = page.getByRole("combobox", { name: /^Message/ });
   await composer.fill("hello");
   await page.keyboard.press("Enter");
 
@@ -43,7 +43,7 @@ test("the chief mark shows after the first reply and ends when the Chief's chat 
 
   await page.reload();
   await page.locator(`[data-roster-bot-id="${botId}"]`).click();
-  await expect(page.getByPlaceholder(/Message/)).toBeVisible();
+  await expect(page.getByRole("combobox", { name: /^Message/ })).toBeVisible();
   await expect(mark).toHaveCount(0);
 });
 
@@ -51,7 +51,7 @@ test("the ask mark shows over a real question and ends when it is answered", asy
   page,
 }, testInfo) => {
   await startTour(page, "Tour ask");
-  await page.getByPlaceholder(/Message/).fill("ask me which city to use");
+  await page.getByRole("combobox", { name: /^Message/ }).fill("ask me which city to use");
   await page.keyboard.press("Enter");
 
   const mark = page.getByText(ASK_MARK, { exact: true });
@@ -69,7 +69,7 @@ test("the ask mark shows over a real question and ends when it is answered", asy
 
 test("skip ends the tour", async ({ page }) => {
   await startTour(page, "Tour skip");
-  await page.getByPlaceholder(/Message/).fill("ask me which city to use");
+  await page.getByRole("combobox", { name: /^Message/ }).fill("ask me which city to use");
   await page.keyboard.press("Enter");
 
   await expect(page.getByText(ASK_MARK, { exact: true })).toBeVisible({ timeout: 30_000 });
@@ -77,7 +77,7 @@ test("skip ends the tour", async ({ page }) => {
   await expect(page.getByText(ASK_MARK, { exact: true })).toHaveCount(0);
 
   await page.reload();
-  await page.getByPlaceholder(/Message/).fill("ask me which city to use");
+  await page.getByRole("combobox", { name: /^Message/ }).fill("ask me which city to use");
   await page.keyboard.press("Enter");
   await expect(page.getByRole("button", { name: "Edit first" }).first()).toBeVisible({
     timeout: 30_000,

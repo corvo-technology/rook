@@ -42,7 +42,7 @@ for (const theme of ["light", "dark"]) {
     await studio.getByRole("tab", { name: "Character", exact: true }).click();
 
     const picker = studio.getByTestId("avatar-studio-characters");
-    await expect(picker.getByRole("button")).toHaveCount(23);
+    await expect(picker.getByRole("button")).toHaveCount(28);
     await expect(picker.getByRole("button", { name: "Default" })).toHaveAttribute(
       "aria-pressed",
       "true",

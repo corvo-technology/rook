@@ -61,6 +61,12 @@ export async function startModelEmulator(options: {
   steps: ModelEmulatorStep[];
   modelId?: string;
   apiKey?: string;
+  /**
+   * Answer the owner's repeated-request check (the rubric's version is in its state) with "not the
+   * same task" without using a step. Fixtures with long histories would otherwise have to script a
+   * judge call before every turn.
+   */
+  answerRepeatChecks?: boolean;
 }) {
   const modelId = options.modelId ?? "offline-fixture";
   const requests: ModelEmulatorRequest[] = [];
@@ -79,11 +85,23 @@ export async function startModelEmulator(options: {
         chunks.push(Buffer.from(chunk));
       }
       const body = JSON.parse(Buffer.concat(chunks).toString("utf8")) as ModelEmulatorRequest;
-      requests.push(body);
       assert.equal(body.model, modelId, "Model routing changed");
       assert.equal(body.stream, true, "Expected streaming model request");
       assert.ok(Array.isArray(body.messages), "Expected model messages");
-      const step = options.steps[stepIndex++];
+      const isRepeatCheck =
+        options.answerRepeatChecks === true &&
+        !body.tools?.length &&
+        body.messages.some((message) =>
+          String(message.content).includes('"rubricVersion":"repeat-'),
+        );
+      // A check the fixture answers on its own is not part of the scripted conversation.
+      if (!isRepeatCheck) requests.push(body);
+      const step: ModelEmulatorStep | undefined = isRepeatCheck
+        ? {
+            expect: () => {},
+            response: { type: "text", text: '{"answers":{}}' },
+          }
+        : options.steps[stepIndex++];
       assert.ok(step, `Unexpected model request ${stepIndex}`);
       await step.expect(body);
       const reply = typeof step.response === "function" ? step.response(body) : step.response;

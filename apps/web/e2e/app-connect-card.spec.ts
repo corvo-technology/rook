@@ -14,7 +14,7 @@ test("a bot connects an app inline in a normal chat", async ({ page }, testInfo)
   await completeOnboarding(page);
   const botId = activeBotId(page);
   await rpc(page, "onboarding/dismissFocus", { botId });
-  await page.getByPlaceholder(/Message/).fill("Can you check my Gmail inbox?");
+  await page.getByRole("combobox", { name: /^Message/ }).fill("Can you check my Gmail inbox?");
   await page.keyboard.press("Enter");
   const card = page.getByRole("group", { name: "Gmail connection", exact: true });
   await expect(card).toBeVisible();
@@ -55,7 +55,7 @@ test("a group card authorizes in its own thread without duplicate pending cards"
     botIds: [firstBotId, peerId],
   });
   await page.goto(`/app/g/${group.id}`);
-  await page.getByRole("combobox", { name: "Message Team" }).fill("Can you check my Gmail inbox?");
+  await page.getByRole("combobox", { name: "Message #Team" }).fill("Can you check my Gmail inbox?");
   await page.keyboard.press("Enter");
   const card = page.getByRole("group", { name: "Gmail connection", exact: true });
   await expect(card).toHaveCount(1);

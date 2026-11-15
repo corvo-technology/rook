@@ -8,9 +8,6 @@ type Writer = Pick<PrismaClient, "notification">;
 /** Most entries the inbox lists; unread ones come first, so a long read tail never hides them. */
 const INBOX_PAGE = 60;
 const PREVIEW_MAX = 160;
-/** How long a push waits, so one the person reads at once is never sent. */
-const PUSH_DELAY_MS = 1_500;
-
 export interface RaiseNotificationInput {
   spaceId: string;
   userId: string;
@@ -23,16 +20,6 @@ export interface RaiseNotificationInput {
   actorId?: string;
   /** A short line the product wrote, for an entry that has no message. Never user content. */
   detail?: string;
-}
-
-let pushSink: ((notificationId: string) => void | Promise<void>) | undefined;
-
-/**
- * The delivery path for pushes, set once by the process that owns a push provider. Raising does
- * not wait for it: a push is sent a moment later, only when the entry is still unread.
- */
-export function setNotificationPushSink(sink: typeof pushSink): void {
-  pushSink = sink;
 }
 
 /**
@@ -57,13 +44,6 @@ export async function raiseNotification(
     update: { ...fields, readAt: null, createdAt: new Date() },
     select: { id: true },
   });
-  if (pushSink) {
-    const sink = pushSink;
-    const timer = setTimeout(() => {
-      void Promise.resolve(sink(row.id)).catch(() => undefined);
-    }, PUSH_DELAY_MS);
-    timer.unref?.();
-  }
   return row.id;
 }
 

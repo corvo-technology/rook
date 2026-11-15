@@ -23,7 +23,6 @@ import { native, useThemedStyles } from "../lib/native";
 import { previewSnippet } from "../lib/preview";
 import { androidRipple } from "../lib/ripple";
 import { stacksAtTextScale } from "../lib/text-scale";
-import { unreadIndicator } from "../lib/unread-indicator";
 import { BotAvatar } from "./bot-avatar";
 import type { BotOrganizationUpdate } from "./bot-organize-modal";
 import { GroupAvatar } from "./group-avatar";
@@ -44,8 +43,6 @@ export function ConversationRow({
   avatar,
   tag,
   unread,
-  unreadCount,
-  mentionCount,
   onPress,
   onLongPress,
   actions = [],
@@ -60,8 +57,6 @@ export function ConversationRow({
   avatar: ReactNode;
   tag?: string | null;
   unread?: boolean;
-  unreadCount?: number;
-  mentionCount?: number;
   onPress: () => void;
   onLongPress?: () => void;
   actions?: InboxRowAction[];
@@ -74,7 +69,6 @@ export function ConversationRow({
   const compact = useContext(CompactRowsContext);
   const tagBelow = stacksAtTextScale(useWindowDimensions().fontScale);
   const openChatId = useContext(SelectedChatContext);
-  const indicator = unreadIndicator({ unread, unreadCount, mentionCount });
   const selected = chatId !== undefined && openChatId === chatId;
   const rowActions = actions.map((action) => ({
     name: action,
@@ -120,18 +114,7 @@ export function ConversationRow({
           </View>
           <View style={styles.rowMeta}>
             {time ? <Text style={styles.time}>{time}</Text> : null}
-            {indicator?.kind === "count" ? (
-              <View
-                accessibilityElementsHidden
-                style={[styles.countBadge, indicator.mention && styles.mentionBadge]}
-              >
-                <Text style={[styles.countText, indicator.mention && styles.mentionText]}>
-                  {indicator.text}
-                </Text>
-              </View>
-            ) : indicator ? (
-              <View accessibilityElementsHidden style={styles.unreadDot} />
-            ) : null}
+            {unread ? <View accessibilityElementsHidden style={styles.unreadDot} /> : null}
           </View>
         </View>
         <Text style={[styles.preview, unread && styles.unreadPreview]} numberOfLines={1}>
@@ -331,8 +314,6 @@ export const BotRow = memo(function BotRow({
       time={time}
       tag={tag}
       unread={bot.unread}
-      unreadCount={bot.unreadCount}
-      mentionCount={bot.mentionCount}
       accessibilityLabel={label}
       accessibilityHint={
         onLongPress || onAction ? t("Long press to pin, move, or silence notifications") : undefined
@@ -405,8 +386,6 @@ export const GroupRow = memo(function GroupRow({
       preview={preview}
       time={time}
       unread={group.unread}
-      unreadCount={group.unreadCount}
-      mentionCount={group.mentionCount}
       accessibilityLabel={[group.name, group.unread ? t("unread") : null, time, preview]
         .filter(Boolean)
         .join(", ")}

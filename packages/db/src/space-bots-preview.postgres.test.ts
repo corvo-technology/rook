@@ -43,7 +43,8 @@ function trackMessageReads(pool: Pool): MessageRead[] {
   const reads: MessageRead[] = [];
   observeQueries(pool, (args, queryResult) => {
     const text = sqlText(args[0]);
-    if (/^\s*select\b/i.test(text) && MESSAGE_FROM.test(text)) {
+    // The unread counts read no message bodies: they only count, capped, behind each unread row.
+    if (/^\s*select\b/i.test(text) && MESSAGE_FROM.test(text) && !/count\(\*\)/i.test(text)) {
       reads.push({ text, values: sqlValues(args), rowCount: queryResult.rowCount ?? 0 });
     }
   });

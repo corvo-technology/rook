@@ -15,7 +15,6 @@ export function InboxHeader({
   initials,
   activityMode,
   toggleActivityMode,
-  inboxUnread = false,
   runCreateAction,
   canCreateSpace = true,
   columnInsets,
@@ -23,7 +22,6 @@ export function InboxHeader({
   initials: string;
   activityMode: boolean;
   toggleActivityMode: () => void;
-  inboxUnread?: boolean;
   runCreateAction: (action: "bot" | "group" | "space") => void;
   canCreateSpace?: boolean;
   columnInsets: { left: number; right: number };
@@ -76,13 +74,6 @@ export function InboxHeader({
             android={activityMode ? "notifications" : "notifications-outline"}
             size={17}
             color={activityMode ? tokens.primaryForeground : tokens.foreground}
-          />
-        </HeaderButton>
-        <HeaderButton accessibilityLabel={t("Inbox")} onPress={() => router.push("/inbox")}>
-          <NativeSymbol
-            ios={inboxUnread ? "tray.full.fill" : "tray"}
-            android={inboxUnread ? "mail-unread" : "mail-outline"}
-            size={17}
           />
         </HeaderButton>
         <HeaderButton

@@ -45,7 +45,6 @@ import {
   createConnectorStack,
   createEgressGateway,
   createIdleComputerSweeper,
-  createInboxPushSink,
   createJobReconciler,
   createLocalSpeech,
   createMessagingContextLoader,
@@ -144,7 +143,6 @@ import {
   rowSecurityWarning,
   runAsSystem,
   securityEventRetentionDays,
-  setNotificationPushSink,
   setPartnerTenantState,
   takePartnerRequest,
   verifyContentKeys,
@@ -625,9 +623,6 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       jobs,
       accessToken: env.expoAccessToken,
     });
-  if (notifications instanceof ExpoPushProvider) {
-    setNotificationPushSink(createInboxPushSink(prisma, notifications));
-  }
   const presence = new PresenceTracker({
     onChange: (spaceId) => void spaceHints.publish(spaceId, ["presence"]),
     persistSeen: (spaceId, userId, at) =>

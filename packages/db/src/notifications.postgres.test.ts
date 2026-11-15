@@ -34,9 +34,11 @@ describePostgres("the notifications inbox and unread counts (PostgreSQL)", () =>
   async function person(key: string, name: string, space: string) {
     const id = `${key}-${suffix}`;
     users[key] = id;
-    await prisma.user.create({
-      data: { id, name, email: `${key}-${suffix}@example.test`, emailVerified: true },
-    });
+    if (key !== "olivia") {
+      await prisma.user.create({
+        data: { id, name, email: `${key}-${suffix}@example.test`, emailVerified: true },
+      });
+    }
     if (key !== "olivia") {
       await prisma.member.create({
         data: {

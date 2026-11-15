@@ -1,6 +1,7 @@
 import type { Actor, Group, GroupMember, SpaceGroup } from "@corvo/contracts";
 import { GROUP_MEMBER_MAX, GROUP_MEMBER_MIN } from "@corvo/contracts";
 import { displayName } from "@corvo/core";
+import { getLogger } from "@corvo/logging";
 import { cancelRunsInTransaction } from "./cancel-runs.js";
 import { channelVisibleTo, groupVisibleTo } from "./channel-people.js";
 import type { Prisma, PrismaClient } from "./client.js";
@@ -64,6 +65,15 @@ function visibleMembers<M extends { bot: unknown }, T extends { members: M[] }>(
 ): T | null;
 function visibleMembers<M extends { bot: unknown }, T extends { members: M[] }>(group: T | null) {
   return group && { ...group, members: group.members.filter((member) => member.bot != null) };
+}
+
+/** A channel whose conversation is not there cannot be shown; one such channel must not fail a list. */
+function hasConversation<T extends { id: string; thread: unknown }>(group: T): boolean {
+  if (group.thread != null) return true;
+  getLogger().warn("channel without a conversation left out of a list", {
+    "group.id": group.id,
+  });
+  return false;
 }
 
 function mapGroupMembers(members: GroupRecord["members"]): GroupMember[] {
@@ -370,6 +380,7 @@ export function createGroupRepos(prisma: PrismaClient) {
       groups.flatMap((group) => (group.thread ? [group.thread] : [])),
     );
     return groups
+      .filter(hasConversation)
       .map((group) => visibleMembers(group))
       .filter((group) => hasMinimumActiveMembers(group.members))
       .map((group) =>
@@ -409,6 +420,7 @@ export function createGroupRepos(prisma: PrismaClient) {
       1,
     );
     return (await withMemberUnread(actor, groups))
+      .filter(hasConversation)
       .map((group) => visibleMembers(group))
       .filter(
         (group) =>
@@ -435,6 +447,7 @@ export function createGroupRepos(prisma: PrismaClient) {
         1,
       );
       return (await withMemberUnread(actor, groups))
+        .filter(hasConversation)
         .map((group) => visibleMembers(group))
         .filter((group) => hasMinimumActiveMembers(group.members))
         .map((group) => mapGroup(group as GroupRecord));

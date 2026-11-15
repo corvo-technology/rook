@@ -13,8 +13,10 @@ import {
 
 function fakeStore() {
   const rows: Array<Record<string, unknown>> = [];
-  return {
+  const store = {
     rows,
+    $queryRaw: vi.fn(async () => [{ bypass: null }]),
+    $transaction: vi.fn(async (run: (tx: unknown) => unknown) => run(store)),
     securityEvent: {
       create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => {
         rows.push(data);
@@ -49,6 +51,7 @@ function fakeStore() {
       ]),
     },
   };
+  return store;
 }
 
 let sink: ReturnType<typeof createTestSink>;

@@ -79,6 +79,43 @@ describe("inAudience", () => {
   });
 });
 
+describe("whoever runs the space's agents", () => {
+  // Agents made by a routine, an import, a spawn or another agent carry whoever started that as
+  // their owner, which is not necessarily the human who owns the space.
+  const madeByAnother = audience({ ownerUserId: "importer", restricted: true });
+  const owner = speakerOf("space-owner", { isOwner: true, permissions: [], roleIds: [] });
+  const administrator = person("dani", { permissions: ["administrator"] });
+  const manager = person("gus", { permissions: ["talk_to_agents", "manage_agents"] });
+
+  it("is in the audience of every agent, restricted or not, whoever made it", () => {
+    for (const who of [owner, administrator, manager]) {
+      expect(inAudience(who, madeByAnother)).toBe(true);
+      expect(inAudience(who, audience({ ownerUserId: "someone-else" }))).toBe(true);
+    }
+  });
+
+  it("talks to a restricted agent only with talk_to_agents, which owners and administrators hold", () => {
+    expect(canTalkTo(owner, madeByAnother)).toBe(true);
+    expect(canTalkTo(administrator, madeByAnother)).toBe(true);
+    expect(canTalkTo(manager, madeByAnother)).toBe(true);
+    const managerWithoutKey = person("hal", { permissions: ["manage_agents"] });
+    expect(inAudience(managerWithoutKey, madeByAnother)).toBe(true);
+    expect(canTalkTo(managerWithoutKey, madeByAnother)).toBe(false);
+  });
+
+  it("leaves an ordinary member out of a restricted agent, with or without the key", () => {
+    expect(inAudience(person("ana"), madeByAnother)).toBe(false);
+    expect(inAudience(person("ana", { permissions: [] }), madeByAnother)).toBe(false);
+    expect(canTalkTo(person("ana"), madeByAnother)).toBe(false);
+  });
+
+  it("lets a member with talk_to_agents talk to an unrestricted agent made by another, and not one without", () => {
+    const open = audience({ ownerUserId: "routine-creator" });
+    expect(canTalkTo(person("ana"), open)).toBe(true);
+    expect(canTalkTo(person("ana", { permissions: [] }), open)).toBe(false);
+  });
+});
+
 describe("audienceOf", () => {
   it("reads the columns of a bot row", () => {
     expect(

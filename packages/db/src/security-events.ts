@@ -3,11 +3,11 @@ import { SECURITY_EVENT_TYPES, SecurityEventTypeSchema } from "@corvo/contracts"
 import { getLogContext, getLogger, redactBindings } from "@corvo/logging";
 import type { PrismaClient } from "./client.js";
 import { parsePositiveInteger } from "./client.js";
-import { runAsSystem } from "./row-security.js";
+import { runAsSystem, runAsSystemInTransaction } from "./row-security.js";
 
 export type { SecurityEventType } from "@corvo/contracts";
 
-type SecurityEventDb = Pick<PrismaClient, "securityEvent">;
+type SecurityEventDb = Pick<PrismaClient, "securityEvent" | "$transaction">;
 
 export interface SecurityEventInput {
   type: SecurityEventType;
@@ -72,10 +72,18 @@ export async function recordSecurityEvent(input: SecurityEventInput): Promise<vo
   });
   if (!store) return;
   try {
-    // An event may name another user or no Space at all, and must never be lost to
-    // the caller's tenant; the table is only ever read as system.
+    // An event may name another user or no Space at all, and must never be lost to the caller's
+    // tenant; the table is only ever read as system. The bypass is turned on inside the statement's
+    // own transaction, so it holds on the connection that runs the insert whatever that
+    // connection last carried.
     const db = store;
-    await runAsSystem("append a security event", () => db.securityEvent.create({ data: event }));
+    await runAsSystem("append a security event", () =>
+      db.$transaction((tx) =>
+        runAsSystemInTransaction(tx, "append a security event", () =>
+          tx.securityEvent.create({ data: event }),
+        ),
+      ),
+    );
   } catch (error) {
     getLogger().error("security.event.write_failed", error);
   }

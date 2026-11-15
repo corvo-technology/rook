@@ -308,7 +308,9 @@ export async function savedCatalogSelections(
     }),
   ]);
   return new Set([
-    ...preferences.map((p) => `${canonicalPiProviderId(p.credential.provider)}:${p.modelId}`),
+    ...preferences.flatMap((p) =>
+      p.credential ? [`${canonicalPiProviderId(p.credential.provider)}:${p.modelId}`] : [],
+    ),
     ...bots.map(
       (p) => `${p.modelProvider ? canonicalPiProviderId(p.modelProvider) : ""}:${p.modelId}`,
     ),

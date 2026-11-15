@@ -30,12 +30,23 @@ export function speakerOf(
 }
 
 /**
- * Whether the person is in the agent's audience: its owner, or anyone while it is unrestricted, or
- * the people and role holders it names. Reading its conversation asks only this.
+ * Whoever runs the space's agents is in every agent's audience, whoever made it: the space's
+ * owners and administrators, and anyone with `manage_agents`. An agent a routine, an import or
+ * another agent made is still the space's, and its owner column only says who created it.
+ */
+export function managesAgents(speaker: Pick<Speaker, "membership">): boolean {
+  return can(speaker.membership, "manage_agents");
+}
+
+/**
+ * Whether the person is in the agent's audience: its owner, whoever manages the space's agents, or
+ * anyone while it is unrestricted, or the people and role holders it names. Reading its
+ * conversation asks only this.
  */
 export function inAudience(speaker: Speaker, audience: AgentAudience): boolean {
   if (!speaker.membership) return false;
-  if (!audience.restricted || speaker.userId === audience.ownerUserId) return true;
+  if (!audience.restricted || speaker.userId === audience.ownerUserId || managesAgents(speaker))
+    return true;
   return (
     audience.userIds.includes(speaker.userId) ||
     speaker.roleIds.some((roleId) => audience.roleIds.includes(roleId))
@@ -48,9 +59,9 @@ export type Via = "person" | "agent";
 /**
  * The one rule for "may this person talk to this agent": DMs, mentions, the channel router,
  * routines and runs a member starts all ask it. Its owner always may; anyone else needs
- * `talk_to_agents` first, then everyone
- * qualifies unless the agent is restricted, in which case its owner, the people named and the
- * holders of a named role do. An agent acting for someone (`via: "agent"`) may also reach an agent
+ * `talk_to_agents` first, then everyone qualifies unless the agent is restricted, in which case
+ * its owner, whoever manages the space's agents, the people named and the holders of a named role
+ * do. An agent acting for someone (`via: "agent"`) may also reach an agent
  * that takes consultations, outside its audience, though never past `talk_to_agents`.
  */
 export function canTalkTo(speaker: Speaker, audience: AgentAudience, via: Via = "person"): boolean {

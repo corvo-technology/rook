@@ -65,13 +65,21 @@ export async function requireCanTalkTo(
   }
 }
 
-/** The conversation of an agent whose audience leaves the person out is not theirs to read. */
+/**
+ * The conversation of an agent whose audience leaves the person out is not theirs to read. The
+ * agent's owner, whoever manages the space's agents and anyone in the audience pass. Pass the agent
+ * row a caller already loaded for this space and its audience is read from it, so the answer cannot
+ * disagree with the lookup that found the agent.
+ */
 export async function requireInAudience(
   prisma: Client,
   actor: Pick<Actor, "spaceId" | "userId">,
   botId: string,
+  loaded?: Parameters<typeof audienceOf>[0],
 ): Promise<void> {
-  const audience = (await audiencesOf(prisma, actor.spaceId, [botId])).get(botId);
+  const audience = loaded
+    ? audienceOf(loaded)
+    : (await audiencesOf(prisma, actor.spaceId, [botId])).get(botId);
   if (!audience) throw new IsolationError();
   if (!audience.restricted || audience.ownerUserId === actor.userId) return;
   if (!inAudience(await loadSpeaker(prisma, actor), audience)) throw new IsolationError();

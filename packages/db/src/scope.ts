@@ -1,6 +1,6 @@
 import type { Actor } from "@corvo/contracts";
 import type { Speaker } from "@corvo/core";
-import { can, speakerOf } from "@corvo/core";
+import { can, managesAgents, speakerOf } from "@corvo/core";
 import type { GroupViewer } from "./channel-people.js";
 import type { PrismaClient } from "./client.js";
 import { Prisma } from "./client.js";
@@ -141,7 +141,11 @@ export async function loadGroupViewer(
  * `inAudience` over raw SQL for `bots <alias>`: the agents whose conversations the person may
  * read. An unrestricted agent is everyone's.
  */
-export function agentAudienceSql(speaker: Pick<Speaker, "userId" | "roleIds">, alias = "b") {
+export function agentAudienceSql(
+  speaker: Pick<Speaker, "userId" | "roleIds"> & Partial<Pick<Speaker, "membership">>,
+  alias = "b",
+) {
+  if (managesAgents({ membership: speaker.membership ?? null })) return Prisma.sql`TRUE`;
   const b = Prisma.raw(alias);
   return Prisma.sql`(NOT ${b}."audienceRestricted" OR ${b}."userId" = ${speaker.userId}
     OR ${speaker.userId} = ANY(${b}."audienceUserIds")
@@ -150,8 +154,9 @@ export function agentAudienceSql(speaker: Pick<Speaker, "userId" | "roleIds">, a
 
 /** `inAudience` as a Prisma filter on bots. */
 export function agentAudienceWhere(
-  speaker: Pick<Speaker, "userId" | "roleIds">,
+  speaker: Pick<Speaker, "userId" | "roleIds"> & Partial<Pick<Speaker, "membership">>,
 ): Prisma.BotWhereInput {
+  if (managesAgents({ membership: speaker.membership ?? null })) return {};
   return {
     OR: [
       { audienceRestricted: false },

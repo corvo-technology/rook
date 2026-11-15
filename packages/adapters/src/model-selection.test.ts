@@ -301,6 +301,31 @@ describe("space catalog auth", () => {
     }
   });
 
+  it("ignores a saved model choice whose connection the reader cannot see", async () => {
+    const { prisma } = authPrisma({
+      credentials: [storedCredential("cred-oauth", "secret-oauth", "2026-01-01T00:00:00.000Z")],
+      preferences: [
+        {
+          ...storedPreference({
+            id: "pref-hidden",
+            modelId: spark,
+            credentialId: "cred-gone",
+            secretId: "secret-gone",
+            iso: "2026-01-02T00:00:00.000Z",
+          }),
+          credential: null,
+        } as never,
+      ],
+      secrets: [{ id: "secret-oauth", ciphertext: "cipher-oauth" }],
+    });
+    const auth = await modelCredentialAuthKindsForSpace(
+      prisma,
+      { load: vi.fn().mockResolvedValue(oauth) },
+      scope,
+    );
+    expect(auth.byProvider["openai-codex"]).toBe("oauth");
+  });
+
   it("retains hosted catalog access alongside a saved personal connection", async () => {
     vi.stubEnv("PI_DEFAULT_PROVIDER", "openrouter");
     vi.stubEnv("OPENROUTER_API_KEY", "fixture-deployment-key");

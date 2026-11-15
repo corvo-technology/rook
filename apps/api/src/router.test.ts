@@ -39,6 +39,11 @@ import {
   SESSION_RECHECK_MS,
 } from "./router.js";
 
+vi.mock("@corvo/db", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@corvo/db")>()),
+  spaceCreationPolicy: async () => ({ canCreateSpace: true, membersCanCreateSpaces: null }),
+}));
+
 const withRoleDeps = (deps: RouterDeps) => {
   withModelRoles(deps.prisma);
   return deps;

@@ -16,12 +16,14 @@ export function InboxHeader({
   activityMode,
   toggleActivityMode,
   runCreateAction,
+  canCreateSpace = true,
   columnInsets,
 }: {
   initials: string;
   activityMode: boolean;
   toggleActivityMode: () => void;
   runCreateAction: (action: "bot" | "group" | "space") => void;
+  canCreateSpace?: boolean;
   columnInsets: { left: number; right: number };
 }) {
   const tokens = mobileTokens();
@@ -37,11 +39,13 @@ export function InboxHeader({
       [
         { text: t("New bot"), onPress: () => runCreateAction("bot") },
         { text: t("New group chat"), onPress: () => runCreateAction("group") },
-        { text: t("New private space"), onPress: () => runCreateAction("space") },
+        ...(canCreateSpace
+          ? [{ text: t("New private space"), onPress: () => runCreateAction("space") }]
+          : []),
       ],
       { cancelable: true },
     );
-  }, [runCreateAction, t]);
+  }, [canCreateSpace, runCreateAction, t]);
   return (
     <View
       style={[
@@ -90,7 +94,15 @@ export function InboxHeader({
             actions={[
               { id: "bot", title: t("New bot"), image: "person.crop.circle.badge.plus" },
               { id: "group", title: t("New group chat"), image: "person.2" },
-              { id: "space", title: t("New private space"), image: "square.grid.2x2" },
+              ...(canCreateSpace
+                ? [
+                    {
+                      id: "space",
+                      title: t("New private space"),
+                      image: "square.grid.2x2" as const,
+                    },
+                  ]
+                : []),
             ]}
             colorScheme={appearance}
             onPressAction={({ nativeEvent }) => {

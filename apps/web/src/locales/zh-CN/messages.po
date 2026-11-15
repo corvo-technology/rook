@@ -2504,6 +2504,7 @@ msgstr "无法运行例行任务"
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersSettings.tsx
+#: src/pages/MembersSettingsPanel.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/chat-model-switcher.tsx
 #: src/pages/shell/dialogs.tsx
@@ -4325,6 +4326,10 @@ msgstr "成员"
 #: src/pages/GroupPanel.tsx
 msgid "Members ({0})"
 msgstr "成员（{0}）"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Members can create spaces"
+msgstr "成员可以创建空间"
 
 #: src/components/AppRail.tsx
 #: src/pages/KnowledgeSection.tsx

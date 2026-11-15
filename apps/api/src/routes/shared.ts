@@ -9,7 +9,7 @@ import {
 import type { Actor, Me } from "@corvo/contracts";
 import { attachmentMaxBytes, canonicalPiProviderId, PartnerTemplate } from "@corvo/contracts";
 import { parseTourDone } from "@corvo/core";
-import { runAsSystem } from "@corvo/db";
+import { runAsSystem, spaceCreationPolicy } from "@corvo/db";
 import type { RouterDeps } from "../router.js";
 import { isPartnerAdmin } from "./partner.js";
 
@@ -22,7 +22,7 @@ function hostCredentials(active: boolean, provider: string) {
 }
 
 export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
-  const [user, setup, partner] = await Promise.all([
+  const [user, setup, partner, creation] = await Promise.all([
     deps.prisma.user.findUniqueOrThrow({
       where: { id: actor.userId },
       select: {
@@ -41,6 +41,7 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
         select: { partner: { select: { name: true, template: true } } },
       }),
     ),
+    spaceCreationPolicy(deps.prisma, { spaceId: actor.spaceId, userId: actor.userId }),
   ]);
   const missionState = await deps.prisma.missionState.findUnique({
     where: { spaceId_userId: { spaceId: actor.spaceId, userId: actor.userId } },
@@ -56,6 +57,7 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
     ticketBoardEnabled: deps.env.ticketBoardEnabled === true,
     phoneCallsEnabled: deps.env.phoneCallsEnabled === true,
     navLinks: deps.env.navLinks ?? [],
+    ...creation,
     shortNav: missionState !== null && missionState.shownAllAt === null,
     maxUploadSizeBytes: attachmentMaxBytes(deps.env),
     userId: actor.userId,

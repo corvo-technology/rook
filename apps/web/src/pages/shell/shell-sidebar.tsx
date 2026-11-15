@@ -47,6 +47,7 @@ export function ShellSidebar({
   setPanel,
   navigate,
   setNewSpaceOpen,
+  canCreateSpace = true,
   setCreateBotOpen,
   spaces,
   currentSpaceId,
@@ -76,6 +77,7 @@ export function ShellSidebar({
   setPanel: (panel: Panel) => void;
   navigate: (path: string) => void;
   setNewSpaceOpen: (open: boolean) => void;
+  canCreateSpace?: boolean;
   setCreateBotOpen: (open: boolean) => void;
   spaces: ComponentProps<typeof SpaceSwitcher>["spaces"];
   currentSpaceId: string | null;
@@ -172,6 +174,7 @@ export function ShellSidebar({
           setPanel={setPanel}
           navigate={navigate}
           setNewSpaceOpen={setNewSpaceOpen}
+          canCreateSpace={canCreateSpace}
           setCreateBotOpen={setCreateBotOpen}
           paused={paused}
           onResume={onResume}
@@ -182,10 +185,14 @@ export function ShellSidebar({
             spaces={spaces}
             currentSpaceId={currentSpaceId}
             onSelect={openSpaceChat}
-            onCreate={() => {
-              setMobileOpen(false);
-              setNewSpaceOpen(true);
-            }}
+            onCreate={
+              canCreateSpace
+                ? () => {
+                    setMobileOpen(false);
+                    setNewSpaceOpen(true);
+                  }
+                : undefined
+            }
           />
         ) : null}
         {mini || !(activityMode || searchOpen || query) ? null : (

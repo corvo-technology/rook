@@ -11,6 +11,7 @@ export function useHomeHeader({
   activityMode,
   toggleActivityMode,
   runCreateAction,
+  canCreateSpace = true,
 }: {
   nativeHeader: boolean;
   ready: boolean;
@@ -19,6 +20,7 @@ export function useHomeHeader({
   activityMode: boolean;
   toggleActivityMode: () => void;
   runCreateAction: (action: "bot" | "group" | "space") => void;
+  canCreateSpace?: boolean;
 }) {
   const navigation = useNavigation();
   const router = useRouter();
@@ -76,12 +78,16 @@ export function useHomeHeader({
                 icon: { type: "sfSymbol" as const, name: "person.2" },
                 onPress: () => runCreateAction("group"),
               },
-              {
-                type: "action" as const,
-                label: t("New private space"),
-                icon: { type: "sfSymbol" as const, name: "square.grid.2x2" },
-                onPress: () => runCreateAction("space"),
-              },
+              ...(canCreateSpace
+                ? [
+                    {
+                      type: "action" as const,
+                      label: t("New private space"),
+                      icon: { type: "sfSymbol" as const, name: "square.grid.2x2" },
+                      onPress: () => runCreateAction("space"),
+                    },
+                  ]
+                : []),
             ],
           },
         },
@@ -96,6 +102,7 @@ export function useHomeHeader({
     activityMode,
     toggleActivityMode,
     runCreateAction,
+    canCreateSpace,
     router,
     t,
     locale,

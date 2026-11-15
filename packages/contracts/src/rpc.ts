@@ -334,6 +334,10 @@ export const appContract = {
     create: oc
       .input(z.object({ name: spaceName, locale: z.enum(AGENT_CATALOG_LOCALES).default("en") }))
       .output(SpaceSchema),
+    /** The organization's owner decides whether its other members may create spaces. */
+    setMembersCanCreate: oc
+      .input(z.object({ allowed: z.boolean() }))
+      .output(z.object({ allowed: z.boolean() })),
     rename: oc
       .input(z.object({ spaceId: Id, name: spaceName }))
       .output(z.object({ id: Id, name: z.string() })),

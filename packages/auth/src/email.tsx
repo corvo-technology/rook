@@ -43,9 +43,10 @@ async function message(
   to: string,
   subject: string,
   content: ReactNode,
+  lang = "en",
 ): Promise<TransactionalEmail> {
   const html = await render(
-    <Html lang="en">
+    <Html lang={lang}>
       <Head />
       <Body
         style={{
@@ -235,6 +236,64 @@ export function invitationEmail(
         This link works for seven days and only for this address. If you were not expecting it,
         ignore this email.
       </Text>
+    </>,
+  );
+}
+
+export type WaitlistEmailLocale = "pt-BR" | "en";
+
+const waitlistCopy = {
+  "pt-BR": {
+    subject: "Você está na lista do Rook",
+    heading: "Você está na lista.",
+    body: "Abrimos o beta da nuvem aos poucos e configuramos os primeiros agentes e rotinas junto com cada empresa.",
+    next: "Vamos escrever de volta para marcar uma conversa.",
+    signoff: "Equipe Rook",
+  },
+  en: {
+    subject: "You're on the Rook waitlist",
+    heading: "You're on the list.",
+    body: "We open the cloud beta gradually and set up the first agents and routines together with each company.",
+    next: "We'll write back to schedule a conversation.",
+    signoff: "The Rook team",
+  },
+} as const;
+
+export function waitlistConfirmationEmail(
+  webOrigin: string,
+  to: string,
+  locale: WaitlistEmailLocale,
+): Promise<TransactionalEmail> {
+  const copy = waitlistCopy[locale];
+  return message(
+    webOrigin,
+    to,
+    copy.subject,
+    <>
+      <Text style={{ ...text, fontSize: "20px", fontWeight: 700, color: lightTokens.foreground }}>
+        {copy.heading}
+      </Text>
+      <Text style={text}>{copy.body}</Text>
+      <Text style={text}>{copy.next}</Text>
+      <Text style={note}>{copy.signoff}</Text>
+    </>,
+    locale,
+  );
+}
+
+export function waitlistNotificationEmail(
+  webOrigin: string,
+  to: string,
+  entry: { company: string; email: string; task?: string | undefined },
+): Promise<TransactionalEmail> {
+  return message(
+    webOrigin,
+    to,
+    "New Rook waitlist entry",
+    <>
+      <Text style={text}>Company: {entry.company}</Text>
+      <Text style={text}>Email: {entry.email}</Text>
+      <Text style={note}>Wants to automate: {entry.task ?? "-"}</Text>
     </>,
   );
 }

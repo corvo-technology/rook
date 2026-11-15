@@ -4,12 +4,14 @@ import {
   applyJudgeDecision,
   approvalModeFromPreference,
   approvalPreferenceFromMode,
+  asksHoldToApprove,
   COMPOSIO_MULTI_EXECUTE_TOOL,
   composioBatchActions,
   connectorKindFromToolName,
   connectorReadRequiresApproval,
   connectorToolNamedAsWrite,
   connectorToolRequiresApproval,
+  HOLD_TO_APPROVE_MS,
   isApprovalAskBlock,
   isOwnerStartedRun,
   isSecretAskBlock,
@@ -200,6 +202,32 @@ describe("unattendedTriggerToolRequiresApproval", () => {
     expect(unattendedTriggerToolRequiresApproval("user", "read_profile_card", true, false)).toBe(
       false,
     );
+  });
+});
+
+describe("asksHoldToApprove", () => {
+  const approval = {
+    kind: "ask",
+    approvalEffectId: "effect-1",
+    actions: [
+      { id: "allow", label: "Allow once" },
+      { id: "always", label: "Always allow" },
+      { id: "deny", label: "Deny" },
+    ],
+  };
+
+  it("holds only the allow of an action a tool is about to run", () => {
+    expect(HOLD_TO_APPROVE_MS).toBe(800);
+    expect(asksHoldToApprove(approval, { id: "allow" })).toBe(true);
+    expect(asksHoldToApprove(approval, { id: "always" })).toBe(false);
+    expect(asksHoldToApprove(approval, { id: "deny" })).toBe(false);
+  });
+
+  it("keeps proposals, instruction updates, space creation and plain questions a tap", () => {
+    expect(asksHoldToApprove({ ...approval, proposal: true }, { id: "allow" })).toBe(false);
+    expect(asksHoldToApprove({ ...approval, instructionUpdate: {} }, { id: "allow" })).toBe(false);
+    expect(asksHoldToApprove(approval, { id: "allow", outcome: "created" })).toBe(false);
+    expect(asksHoldToApprove({ kind: "ask" }, { id: "allow" })).toBe(false);
   });
 });
 

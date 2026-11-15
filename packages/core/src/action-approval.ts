@@ -557,6 +557,47 @@ export function isSecretAskBlock(block: {
   return block.kind === "ask" && block.input === "secret" && !block.approvalEffectId;
 }
 
+/** How long the allow button of an action approval is held before the approval counts. */
+export const HOLD_TO_APPROVE_MS = 800;
+
+/**
+ * Whether this action of an approval card is approved by holding it: the plain "allow" of an
+ * action a tool is about to run. A proposed change, an instruction update and a space creation
+ * stay a tap, since holding adds nothing where nothing leaves the product.
+ */
+export function holdsToApprove(
+  card: { approval: boolean; proposal?: boolean; instructionUpdate?: boolean },
+  action: { id: string; outcome?: string },
+): boolean {
+  return (
+    card.approval &&
+    !card.proposal &&
+    !card.instructionUpdate &&
+    action.id === "allow" &&
+    !action.outcome
+  );
+}
+
+export function asksHoldToApprove(
+  block: {
+    kind: string;
+    approvalEffectId?: string;
+    actions?: readonly { id: string; label: string }[];
+    proposal?: true;
+    instructionUpdate?: unknown;
+  },
+  action: { id: string; outcome?: string },
+): boolean {
+  return holdsToApprove(
+    {
+      approval: isApprovalAskBlock(block),
+      proposal: block.proposal,
+      instructionUpdate: Boolean(block.instructionUpdate),
+    },
+    action,
+  );
+}
+
 export function isApprovalAskBlock(block: {
   kind: string;
   approvalEffectId?: string;

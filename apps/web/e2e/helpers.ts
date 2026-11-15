@@ -203,6 +203,17 @@ export async function expectCardWidth(card: Locator, width: number) {
   expect(Math.abs(measured.card - Math.min(width, measured.frame))).toBeLessThan(1);
 }
 
+/** Approves an action card the way a person does: the button held until it has filled. */
+export async function holdToApprove(button: Locator) {
+  const page = button.page();
+  const box = await button.boundingBox();
+  if (!box) throw new Error("The approve button has no box to press");
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(1_000);
+  await page.mouse.up();
+}
+
 export async function captureScreenshot(page: Page, testInfo: TestInfo, name: string) {
   const screenshotPath = testInfo.outputPath(`${name}.png`);
   await page.screenshot({

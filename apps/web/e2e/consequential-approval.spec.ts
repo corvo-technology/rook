@@ -4,6 +4,7 @@ import {
   activeBotId,
   captureScreenshot,
   completeOnboarding,
+  holdToApprove,
   openUserSettings,
   rpc,
   signup,
@@ -17,9 +18,9 @@ test("Ask mode asks before a change, and approvals settings shape what asks", as
   await completeOnboarding(page, testInfo);
 
   await requestDestinationWrite(page, "write this to the destination crm as a note");
-  const allowOnce = page.getByRole("button", { name: "Allow once", exact: true });
+  const allowOnce = page.getByRole("button", { name: "Hold to approve", exact: true });
   const alwaysAllow = page.getByRole("button", { name: "Always allow this tool", exact: true });
-  const deny = page.getByRole("button", { name: "Deny", exact: true });
+  const deny = page.getByRole("button", { name: "Not now", exact: true });
   await expect(alwaysAllow).toBeVisible();
   await expect(deny).toBeVisible();
   const allowBox = await allowOnce.boundingBox();
@@ -42,7 +43,7 @@ test("Ask mode asks before a change, and approvals settings shape what asks", as
   if (viewport) await page.setViewportSize(viewport);
 
   await deny.click();
-  await expect(page.getByTestId("transcript").getByText("Denied", { exact: true })).toHaveClass(
+  await expect(page.getByTestId("transcript").getByText("Not now", { exact: true })).toHaveClass(
     /text-muted-foreground/,
   );
   await waitForRunIdle(page);
@@ -50,7 +51,7 @@ test("Ask mode asks before a change, and approvals settings shape what asks", as
   await captureScreenshot(page, testInfo, "54-action-confirmation-denied");
 
   await requestDestinationWrite(page, "write this to the destination crm once more");
-  await page.getByRole("button", { name: "Allow once", exact: true }).click();
+  await holdToApprove(page.getByRole("button", { name: "Hold to approve", exact: true }));
   await expect(page.getByText("Allowed once", { exact: true })).toBeVisible();
   await waitForRunIdle(page);
   await expectComposerReady(page);
@@ -66,7 +67,7 @@ test("Ask mode asks before a change, and approvals settings shape what asks", as
   await sendDestinationWrite(page, "write this to the destination crm after always allow");
   await waitForRunIdle(page);
   await expectComposerReady(page);
-  await expect(page.getByRole("button", { name: "Allow once", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Hold to approve", exact: true })).toHaveCount(0);
 
   // The allowed tool is listed in Approvals, where it can be blocked.
   const settings = await openUserSettings(page);
@@ -102,7 +103,7 @@ test("Ask mode asks before a change, and approvals settings shape what asks", as
   await sendDestinationWrite(page, "write this to the destination crm while it is blocked");
   await waitForRunIdle(page);
   await expectComposerReady(page);
-  await expect(page.getByRole("button", { name: "Allow once", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Hold to approve", exact: true })).toHaveCount(0);
 });
 
 async function sendDestinationWrite(page: Page, prompt: string) {
@@ -138,11 +139,11 @@ async function requestDestinationWrite(page: Page, prompt: string) {
     )
     .toBe("waiting_input");
   // threads/get can observe waiting_input before the shell realtime feed paints the ask card.
-  if ((await page.getByRole("button", { name: "Allow once" }).count()) === 0) {
+  if ((await page.getByRole("button", { name: "Hold to approve" }).count()) === 0) {
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.getByPlaceholder(/Message/)).toBeVisible({ timeout: 15_000 });
   }
-  await expect(page.getByRole("button", { name: "Allow once" })).toBeVisible({
+  await expect(page.getByRole("button", { name: "Hold to approve" })).toBeVisible({
     timeout: 15_000,
   });
 }

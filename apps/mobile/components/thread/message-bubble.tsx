@@ -64,7 +64,7 @@ function formatApprovalAnswer(
   if (proposal && answer === "deny") return t("Dismissed");
   if (approval && answer === "allow") return t("Allowed once");
   if (approval && answer === "always") return t("Always allowed");
-  if (approval && answer === "deny") return t("Denied");
+  if (approval && answer === "deny") return t("Not now");
   return t("Answered: {answer}", { answer: selectedAskActionLabel(answer, actions) });
 }
 

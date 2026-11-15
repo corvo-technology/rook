@@ -70,20 +70,20 @@ function mountCard() {
 describe("ToolActivityDisclosure", () => {
   it("labels a finished card with the tool count and duration", () => {
     const html = markup({ live: false, stepCount: 2, durationMs: 12000 });
-    expect(visibleText(html)).toContain("Done 2 tools 12s");
+    expect(visibleText(html)).toContain("Used 2 tools · 12s");
   });
 
   it("uses the singular for one tool", () => {
     expect(visibleText(markup({ live: false, stepCount: 1, durationMs: 850 }))).toContain(
-      "Done 1 tool 850ms",
+      "Used 1 tool · 850ms",
     );
     expect(visibleText(markup({ live: true, stepCount: 1 }))).toContain("Working… 1 tool");
   });
 
   it("omits the duration when it is not usable", () => {
     const html = markup({ live: false, stepCount: 3 });
-    expect(visibleText(html)).toContain("Done 3 tools");
-    expect(visibleText(html)).not.toMatch(/Done 3 tools \d/);
+    expect(visibleText(html)).toContain("Used 3 tools");
+    expect(visibleText(html)).not.toMatch(/Used 3 tools ·/);
   });
 
   it("shows the live label while working", () => {
@@ -110,7 +110,7 @@ describe("ToolActivityDisclosure", () => {
 
     card.render(false);
     expect(card.details()?.getAttribute("aria-expanded")).toBe("false");
-    expect(card.summary()?.textContent).toContain("Done2 tools");
+    expect(card.summary()?.textContent).toContain("Used 2 tools");
     card.unmount();
   });
 
@@ -185,7 +185,7 @@ describe("StandaloneToolActivity", () => {
       <StandaloneToolActivity live={false} steps={stepsOf(2)} stepCount={2} durationMs={4000} />,
     );
     expect(html).toContain('data-testid="tool-activity-line"');
-    expect(visibleText(html)).toContain("Done 2 tools 4s");
+    expect(visibleText(html)).toContain("Used 2 tools · 4s");
     expect(html).not.toContain("bg-muted");
     expect(html).not.toContain("rounded-[20px]");
   });
@@ -227,7 +227,7 @@ describe("ToolOnlyNarration", () => {
       />,
     );
     expect(html.match(/data-testid="tool-activity-line"/g)).toHaveLength(2);
-    expect(visibleText(html)).toContain("Done 3 tools 12s");
+    expect(visibleText(html)).toContain("Used 3 tools · 12s");
     expect(html).not.toMatch(OPEN_TRIGGER);
   });
 });

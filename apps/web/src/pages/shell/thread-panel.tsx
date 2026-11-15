@@ -35,6 +35,7 @@ export type ThreadTranscriptProps = Pick<
   | "onMarkUnread"
   | "onKeepInWiki"
   | "onReact"
+  | "onPin"
   | "onJumpToMessage"
   | "onOpenPeerMessages"
   | "memberName"

@@ -4,6 +4,7 @@ import { BotAvatar, Button, GroupAvatar } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { Columns3, Menu, Monitor, Phone } from "lucide-react";
 import { IconTooltip } from "../../components/IconTooltip";
+import { ChannelFind, pinSignature } from "./channel-find";
 import { ChannelHeader } from "./channel-header";
 import { ChatModelSwitcher } from "./chat-model-switcher";
 import { ContextMeter } from "./context-meter";
@@ -24,6 +25,8 @@ export function ChatHeader({
   onToggleComputer,
   onChangeModel,
   onOpenSquad,
+  onJumpToMessage,
+  memberName,
 }: {
   inGroup: boolean;
   active: Bot | undefined;
@@ -39,6 +42,9 @@ export function ChatHeader({
   onToggleComputer: (bot: Bot) => void;
   onChangeModel: (bot: Bot, patch: ReturnType<typeof modelChangePatch>) => Promise<void>;
   onOpenSquad: () => void;
+  /** Scrolls the channel to a message found by its search or pinned. */
+  onJumpToMessage: (messageId: string) => void;
+  memberName: (botId: string | undefined) => string | undefined;
 }) {
   const { t } = useLingui();
   if (inGroup) {
@@ -50,6 +56,16 @@ export function ChatHeader({
         onOpenNavigation={onOpenNavigation}
         onOpenSettings={onOpenChatSettings}
         onOpenSquad={onOpenSquad}
+        find={
+          activeGroup ? (
+            <ChannelFind
+              groupId={activeGroup.id}
+              pins={pinSignature(activeSnapshot?.messages ?? [])}
+              memberName={memberName}
+              onJump={onJumpToMessage}
+            />
+          ) : undefined
+        }
       />
     );
   }

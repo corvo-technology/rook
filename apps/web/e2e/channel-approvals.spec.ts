@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { captureScreenshot } from "./helpers";
+import { captureScreenshot, holdToApprove } from "./helpers";
 
 test.use({ viewport: { width: 1000, height: 760 } });
 
@@ -9,7 +9,7 @@ test("pending approvals in a channel are allowed together", async ({ page }, tes
   const allowAll = main.getByRole("button", { name: "Approve all 3" });
   await expect(allowAll).toBeVisible();
   // Each card keeps its own choices.
-  await expect(main.getByRole("button", { name: "Allow once" })).toHaveCount(3);
+  await expect(main.getByRole("button", { name: "Hold to approve" })).toHaveCount(3);
   await captureScreenshot(page, testInfo, "channel-approvals-pending");
 
   await allowAll.click();
@@ -26,14 +26,14 @@ test("a card that could not be allowed stays pending and is counted", async ({
   await main.getByRole("button", { name: "Approve all 3" }).click();
   await expect(main.getByTestId("ask-decided")).toHaveCount(2);
   await expect(main.getByText("1 could not be approved")).toBeVisible();
-  await expect(main.getByRole("button", { name: "Allow once" })).toHaveCount(1);
+  await expect(main.getByRole("button", { name: "Hold to approve" })).toHaveCount(1);
   await captureScreenshot(page, testInfo, "channel-approvals-partial");
 });
 
 test("a single pending approval has no batch action", async ({ page }) => {
   await page.goto("/e2e/fixtures/channel-approvals.html");
   const main = page.locator("main").getByTestId("transcript");
-  await main.getByRole("button", { name: "Allow once" }).first().click();
-  await main.getByRole("button", { name: "Allow once" }).first().click();
+  await holdToApprove(main.getByRole("button", { name: "Hold to approve" }).first());
+  await holdToApprove(main.getByRole("button", { name: "Hold to approve" }).first());
   await expect(main.getByRole("button", { name: /Approve all/ })).toHaveCount(0);
 });

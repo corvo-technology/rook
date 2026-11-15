@@ -821,6 +821,7 @@ function SpaceShell() {
       if (target) void rpc.wiki.keep(target).catch(() => undefined);
     },
     onReact: composer.reactToMessage,
+    onPin: inGroup ? composer.pinMessage : undefined,
     onJumpToMessage: jumpToReplyMessage,
     onOpenPeerMessages: (peer) => {
       setPeerConversation(peer);
@@ -986,6 +987,10 @@ function SpaceShell() {
             onOpenSquad={() => {
               if (groupId) navigate(`/app/g/${groupId}/squad`);
             }}
+            onJumpToMessage={(messageId) => {
+              if (groupId) navigate(`/app/g/${groupId}?m=${encodeURIComponent(messageId)}`);
+            }}
+            memberName={resolveTranscriptMemberName}
             onCall={(bot) => {
               if (call?.botId === bot.id) {
                 setCallMinimized(false);

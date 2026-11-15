@@ -20,6 +20,7 @@ import { RoutineEditor } from "../RoutineEditor";
 import type { SettingsSection } from "../shell-overlay";
 import { AgentImportForm } from "./agent-import";
 import { BotSettings } from "./bot-panel";
+import { ChannelMembers } from "./channel-members";
 import { firstThreadRoute } from "./use-shell-navigation";
 
 /** The panel beside the chat: its computer, settings, routines, a new group, or an import. */
@@ -55,6 +56,7 @@ export function ShellSidePanel({
   memoryProviderConfigured,
   setAgentSkills,
   onClearBot,
+  currentUserId,
 }: {
   rpc: ReturnType<typeof createSpaceRpc>;
   panel: Panel;
@@ -88,6 +90,7 @@ export function ShellSidePanel({
   memoryProviderConfigured: boolean;
   setAgentSkills: (skills: AgentSkillCatalogEntry[]) => void;
   onClearBot: (bot: Bot) => void;
+  currentUserId: string;
 }) {
   const { t } = useLingui();
   const open = Boolean(
@@ -114,6 +117,7 @@ export function ShellSidePanel({
           {panel !== "routine" &&
           panel !== "create-group" &&
           panel !== "group-settings" &&
+          panel !== "members" &&
           panel !== "import-agent" ? (
             <div className="mb-4 flex items-center justify-between">
               {!active && panel !== "settings" ? (
@@ -197,6 +201,28 @@ export function ShellSidePanel({
               onClose={() => setPanel(null)}
               onOpenBot={openBot}
               covered={computerOpen}
+            />
+          ) : null}
+          {panel === "members" && activeGroup ? (
+            <ChannelMembers
+              key={activeGroup.id}
+              rpc={rpc}
+              group={activeGroup}
+              bots={bots}
+              currentUserId={currentUserId}
+              onClose={() => setPanel(null)}
+              onAddAgent={async (botId) => {
+                const current = activeGroup.members.map((member) => member.botId);
+                const updated = await rpc.groups.update({
+                  groupId: activeGroup.id,
+                  botIds: [...current, botId],
+                  expectedBotIds: current,
+                });
+                setGroups((list) => list.map((item) => (item.id === updated.id ? updated : item)));
+                void Promise.all([refreshBots(), refreshGroupThread(activeGroup.id)]).catch(
+                  () => undefined,
+                );
+              }}
             />
           ) : null}
           {panel === "import-agent" ? (

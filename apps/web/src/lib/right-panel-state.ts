@@ -4,13 +4,21 @@ export type Panel =
   | "routine"
   | "create-group"
   | "group-settings"
+  | "members"
   | "import-agent"
   | "thread"
   | null;
 export type RightPanelState = { panel: Panel; routineId?: string };
 
 /** Panels that are safe to remember across reloads. */
-const durablePanels: readonly Panel[] = ["computer", "settings", "routine", "group-settings", null];
+const durablePanels: readonly Panel[] = [
+  "computer",
+  "settings",
+  "routine",
+  "group-settings",
+  "members",
+  null,
+];
 
 export function rightPanelStorageKey(
   userId: string,

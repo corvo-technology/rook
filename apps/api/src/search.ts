@@ -9,7 +9,13 @@ import {
   snippetAroundMatch,
 } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
-import { contentEncryptionOf, INDEXED_MESSAGE, Prisma, UNINDEXED_MESSAGE } from "@corvo/db";
+import {
+  channelVisibleToSql,
+  contentEncryptionOf,
+  INDEXED_MESSAGE,
+  Prisma,
+  UNINDEXED_MESSAGE,
+} from "@corvo/db";
 
 const SEARCH_LIMIT = 25;
 /** Cap name matches so content hits (messages/files/links/routines) keep most of the budget. */
@@ -151,6 +157,7 @@ export async function querySpaceSearch(
       SELECT g.id FROM chat_groups g
       WHERE g."spaceId" = ${actor.spaceId}
         AND g."archivedAt" IS NULL
+        AND ${channelVisibleToSql("g", actor.userId)}
         AND (
           SELECT COUNT(*) FROM chat_group_members gm
           INNER JOIN bots gb ON gb.id = gm."botId"

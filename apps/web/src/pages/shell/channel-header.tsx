@@ -1,7 +1,7 @@
 import type { GroupMember } from "@corvo/contracts";
 import { BotAvatar, Button } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
-import { Columns3, Menu, Plus } from "lucide-react";
+import { Columns3, Menu, Plus, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { IconTooltip } from "../../components/IconTooltip";
 import { workingMembers } from "../../lib/roster-status";
@@ -20,6 +20,8 @@ export function ChannelHeader({
   onOpenNavigation,
   onOpenSettings,
   onOpenSquad,
+  onOpenMembers,
+  membersOpen = false,
   find,
 }: {
   name: string;
@@ -28,6 +30,9 @@ export function ChannelHeader({
   onOpenNavigation: () => void;
   onOpenSettings: () => void;
   onOpenSquad: () => void;
+  /** Opens or closes the panel of who sees the channel. */
+  onOpenMembers?: () => void;
+  membersOpen?: boolean;
   /** The channel's search and pinned messages. */
   find?: ReactNode;
 }) {
@@ -120,6 +125,21 @@ export function ChannelHeader({
             <Plus strokeWidth={1.7} className="size-4" />
           </Button>
         </IconTooltip>
+        {onOpenMembers ? (
+          <IconTooltip label={t`Members`}>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={t`Members`}
+              aria-pressed={membersOpen}
+              data-testid="channel-members-toggle"
+              onClick={onOpenMembers}
+              className={membersOpen ? "text-foreground" : "text-muted-foreground"}
+            >
+              <Users strokeWidth={1.6} className="size-[17px]" />
+            </Button>
+          </IconTooltip>
+        ) : null}
         <IconTooltip label={t`Squad`}>
           <Button variant="ghost" size="icon-sm" aria-label={t`Squad`} onClick={onOpenSquad}>
             <Columns3 strokeWidth={1.6} className="size-[17px]" />

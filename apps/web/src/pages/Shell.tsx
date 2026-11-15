@@ -989,6 +989,8 @@ function SpaceShell() {
             onOpenSquad={() => {
               if (groupId) navigate(`/app/g/${groupId}/squad`);
             }}
+            onOpenMembers={() => setPanel(panel === "members" ? null : "members")}
+            membersOpen={panel === "members"}
             onJumpToMessage={(messageId) => {
               if (groupId) navigate(`/app/g/${groupId}?m=${encodeURIComponent(messageId)}`);
             }}
@@ -1177,6 +1179,7 @@ function SpaceShell() {
 
       <ShellSidePanel
         rpc={rpc}
+        currentUserId={userId ?? ""}
         panel={panel}
         setPanel={setPanel}
         active={active}

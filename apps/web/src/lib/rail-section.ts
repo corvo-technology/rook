@@ -10,7 +10,7 @@ export type Section =
 
 /** The section a path belongs to; custom links are reached from the account menu. */
 export function railSection(pathname: string, _search: string): Section | null {
-  if (pathname.startsWith("/app/team")) return "team";
+  if (pathname.startsWith("/app/team") || pathname.startsWith("/app/dm")) return "team";
   if (pathname.startsWith("/app/routines")) return "routines";
   if (pathname.startsWith("/app/workflows")) return "workflows";
   if (pathname.startsWith("/app/artifacts")) return "artifacts";

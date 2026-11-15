@@ -13,6 +13,7 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: src/components/PeopleList.tsx
 #: src/pages/shell/sidebar-roster.tsx
 msgid " (unread)"
 msgstr " (sin leer)"
@@ -180,6 +181,10 @@ msgstr "Pantalla de {0}"
 msgid "{a} and {b} are working…"
 msgstr "{a} y {b} están trabajando…"
 
+#: src/pages/shell/sidebar-team.tsx
+msgid "{agents, plural, one {# agent} other {# agents}}"
+msgstr "{agents, plural, one {# agente} other {# agentes}}"
+
 #: src/lib/billing.ts
 msgid "{amount} / {period}"
 msgstr "{amount} / {period}"
@@ -335,6 +340,10 @@ msgstr "Opciones de {name}"
 #: src/lib/browser-notifications.ts
 msgid "{name} stopped"
 msgstr "{name} se detuvo"
+
+#: src/pages/shell/sidebar-team.tsx
+msgid "{people, plural, one {# person} other {# people}}"
+msgstr "{people, plural, one {# persona} other {# personas}}"
 
 #: src/components/SubscriptionRings.tsx
 msgid "{percent}% used"
@@ -792,6 +801,10 @@ msgstr "Agregar OpenAPI"
 msgid "Add passkey"
 msgstr "Añadir llave de acceso"
 
+#: src/pages/shell/channel-members.tsx
+msgid "Add people or agents"
+msgstr "Añadir personas o agentes"
+
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Add person"
 msgstr "Añadir persona"
@@ -892,6 +905,7 @@ msgstr "Computadora del agente"
 
 #: src/components/AppRail.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
+#: src/pages/shell/channel-members.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/Store.tsx
 msgid "Agents"
@@ -1121,7 +1135,9 @@ msgid "Approval model"
 msgstr "Modelo de aprobación"
 
 #: src/components/AppRail.tsx
+#: src/pages/ApprovalsPage.tsx
 #: src/pages/Settings.tsx
+#: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Approvals"
 msgstr "Aprobaciones"
@@ -1304,6 +1320,7 @@ msgstr "Estudio de avatares"
 #: src/pages/AppCatalogGrid.tsx
 #: src/pages/Auth.tsx
 #: src/pages/Board.tsx
+#: src/pages/DirectPage.tsx
 #: src/pages/NavLinkPage.tsx
 #: src/pages/onboarding/OnboardingLayout.tsx
 #: src/pages/RoutineEditor.tsx
@@ -1771,6 +1788,7 @@ msgid "Close navigation"
 msgstr "Cerrar navegación"
 
 #: src/pages/GroupPanel.tsx
+#: src/pages/shell/channel-members.tsx
 #: src/pages/shell/side-panel.tsx
 #: src/pages/shell/thread-panel.tsx
 msgid "Close panel"
@@ -2207,6 +2225,10 @@ msgstr "No se pudo cambiar la contraseña"
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Could not change the role"
 msgstr "No se pudo cambiar el rol"
+
+#: src/pages/shell/channel-members.tsx
+msgid "Could not change who sees this channel"
+msgstr "No se pudo cambiar quién ve este canal"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Could not check stored credentials."
@@ -2646,6 +2668,10 @@ msgstr "No se pudo buscar"
 #: src/pages/Store.tsx
 msgid "Could not search catalog"
 msgstr "No se pudo buscar en el catálogo"
+
+#: src/pages/DirectChat.tsx
+msgid "Could not send"
+msgstr "No se pudo enviar"
 
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Could not send invitations"
@@ -3416,6 +3442,7 @@ msgid "Every week"
 msgstr "Cada semana"
 
 #: src/pages/MembersSettingsPanel.tsx
+#: src/pages/shell/channel-members.tsx
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Everyone"
 msgstr "Todos"
@@ -4321,6 +4348,10 @@ msgstr "Principal"
 msgid "Main model"
 msgstr "Modelo principal"
 
+#: src/pages/shell/channel-members.tsx
+msgid "Make private"
+msgstr "Hacer privado"
+
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/Settings.tsx
 msgid "Manage"
@@ -4456,6 +4487,8 @@ msgstr "Miembro"
 
 #: src/pages/MemberUsageSection.tsx
 #: src/pages/Settings.tsx
+#: src/pages/shell/channel-header.tsx
+#: src/pages/shell/channel-members.tsx
 msgid "Members"
 msgstr "Miembros"
 
@@ -4514,6 +4547,7 @@ msgstr "Mensaje"
 msgid "Message"
 msgstr "Mensaje"
 
+#: src/pages/DirectChat.tsx
 #: src/pages/shell/composer.tsx
 msgid "Message {activeName}"
 msgstr "Mensaje a {activeName}"
@@ -4934,6 +4968,7 @@ msgid "No longer active"
 msgstr "Ya no está activo"
 
 #: src/pages/shell/channel-find.tsx
+#: src/pages/shell/channel-members.tsx
 msgid "No matches"
 msgstr "Sin resultados"
 
@@ -5085,6 +5120,10 @@ msgstr "No funciona"
 msgid "Nothing remembered yet"
 msgstr "Aún no hay recuerdos"
 
+#: src/pages/ApprovalsInbox.tsx
+msgid "Nothing to approve"
+msgstr "Nada que aprobar"
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Notifications"
 msgstr "Notificaciones"
@@ -5192,6 +5231,10 @@ msgstr "Abrir agente"
 msgid "Open call"
 msgstr "Abrir llamada"
 
+#: src/pages/ApprovalsInbox.tsx
+msgid "Open chat"
+msgstr "Abrir chat"
+
 #. placeholder {0}: call.botName
 #: src/components/call/CallCard.tsx
 msgid "Open chat with {0}"
@@ -5225,6 +5268,10 @@ msgstr "Abrir Rook"
 #: src/lib/mcp-connect.ts
 msgid "Open Rook directly to connect this app."
 msgstr "Abre Rook directamente para conectar esta aplicación."
+
+#: src/pages/shell/channel-members.tsx
+msgid "Open to everyone"
+msgstr "Abrir a todos"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Open work"
@@ -5303,6 +5350,7 @@ msgstr "Salida"
 #: src/pages/Board.tsx
 #: src/pages/InvitePage.tsx
 #: src/pages/MembersSettingsPanel.tsx
+#: src/pages/shell/channel-members.tsx
 msgid "Owner"
 msgstr "Propietario"
 
@@ -5416,6 +5464,9 @@ msgstr "En pausa"
 msgid "Pawn"
 msgstr "Peón"
 
+#: src/pages/DirectPage.tsx
+#: src/pages/shell/channel-members.tsx
+#: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/StoreCategoryChips.tsx
 msgid "People"
@@ -5462,6 +5513,10 @@ msgstr "Elige una herramienta para comprobar"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Pick from role"
 msgstr "Elegir según el rol"
+
+#: src/pages/DirectPage.tsx
+msgid "Pick someone to write to"
+msgstr "Elige a quién escribir"
 
 #: src/pages/board/BoardLanes.tsx
 msgid "Picked up {ref}."
@@ -5772,6 +5827,7 @@ msgstr "Quitar"
 
 #. placeholder {0}: attachment.file.name
 #. placeholder {0}: member.name
+#: src/pages/shell/channel-members.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Remove {0}"
@@ -6278,6 +6334,7 @@ msgstr "Pantalla no conectada"
 #: src/pages/model-settings/role-model-picker.tsx
 #: src/pages/shell/bot-picker.tsx
 #: src/pages/shell/channel-find.tsx
+#: src/pages/shell/channel-members.tsx
 #: src/pages/shell/chat-model-picker.tsx
 #: src/pages/shell/command-palette.tsx
 #: src/pages/shell/shell-sidebar.tsx
@@ -6352,6 +6409,7 @@ msgstr "Selecciona un bot"
 msgid "Self-hosted"
 msgstr "Autoalojado"
 
+#: src/pages/DirectChat.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/thread-panel.tsx
 msgid "Send"
@@ -7774,6 +7832,10 @@ msgstr "¿Dónde deben ejecutarse los bots?"
 #: src/pages/shell/agent-import.tsx
 msgid "Where to import"
 msgstr "Dónde importar"
+
+#: src/pages/shell/channel-members.tsx
+msgid "Who sees this channel"
+msgstr "Quién ve este canal"
 
 #: src/components/AppRail.tsx
 #: src/pages/WikiPage.tsx

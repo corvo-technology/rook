@@ -192,6 +192,12 @@ import {
   SpaceRolesSchema,
 } from "./team.js";
 import {
+  ChannelPeopleSchema,
+  DIRECT_MESSAGE_MAX_LENGTH,
+  DirectPersonSchema,
+  PendingApprovalSchema,
+} from "./team-chat.js";
+import {
   UserMemoryDecisionSchema,
   UserMemorySchema,
   UserMemorySettingsSchema,
@@ -630,6 +636,51 @@ export const appContract = {
     archive: oc.input(groupId).output(z.object({ ok: z.literal(true) })),
     restore: oc.input(groupId).output(z.object({ ok: z.literal(true) })),
     remove: oc.input(groupId).output(z.object({ ok: z.literal(true) })),
+    /** Who sees the channel. Adding people makes it private to them and its creator. */
+    people: {
+      list: oc.input(groupId).output(ChannelPeopleSchema),
+      add: oc
+        .input(z.object({ groupId: Id, userIds: z.array(Id).min(1).max(50) }))
+        .output(z.object({ ok: z.literal(true) })),
+      remove: oc
+        .input(z.object({ groupId: Id, userId: Id }))
+        .output(z.object({ ok: z.literal(true) })),
+      /** Opens a private channel to the whole space again. */
+      open: oc.input(groupId).output(z.object({ ok: z.literal(true) })),
+    },
+  },
+  /** What waits on the caller across every chat: the approvals they may decide. */
+  approvals: {
+    list: oc.output(z.array(PendingApprovalSchema)),
+  },
+  /** One conversation between two people of a space. No agent takes part in it. */
+  directMessages: {
+    people: oc.output(z.array(DirectPersonSchema)),
+    open: oc.input(z.object({ userId: Id })).output(z.object({ threadId: Id })),
+    get: oc
+      .input(z.object({ threadId: Id, before: z.number().int().nonnegative().optional() }))
+      .output(
+        z.object({
+          threadId: Id,
+          partner: z.object({ userId: Id, name: z.string(), image: z.string().nullable() }),
+          cursor: z.number().int().min(-1),
+          messages: z.array(ThreadMessageSchema),
+          olderCursor: z.number().int().nonnegative().nullable(),
+        }),
+      ),
+    send: oc
+      .input(
+        z.object({
+          threadId: Id,
+          text: z.string().trim().min(1).max(DIRECT_MESSAGE_MAX_LENGTH),
+          clientNonce: z.string().min(1).max(200).optional(),
+        }),
+      )
+      .output(z.object({ seq: z.number().int().nonnegative() })),
+    subscribe: oc
+      .input(z.object({ threadId: Id, cursor: z.number().int().min(-1) }))
+      .output(eventIterator(ProductEventSchema)),
+    markRead: oc.input(z.object({ threadId: Id })).output(z.object({ ok: z.literal(true) })),
   },
   botSections: {
     list: oc.output(z.array(BotSectionSchema)),

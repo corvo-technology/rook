@@ -25,6 +25,8 @@ export function ChatHeader({
   onToggleComputer,
   onChangeModel,
   onOpenSquad,
+  onOpenMembers,
+  membersOpen,
   onJumpToMessage,
   memberName,
 }: {
@@ -42,6 +44,8 @@ export function ChatHeader({
   onToggleComputer: (bot: Bot) => void;
   onChangeModel: (bot: Bot, patch: ReturnType<typeof modelChangePatch>) => Promise<void>;
   onOpenSquad: () => void;
+  onOpenMembers?: () => void;
+  membersOpen?: boolean;
   /** Scrolls the channel to a message found by its search or pinned. */
   onJumpToMessage: (messageId: string) => void;
   memberName: (botId: string | undefined) => string | undefined;
@@ -56,6 +60,8 @@ export function ChatHeader({
         onOpenNavigation={onOpenNavigation}
         onOpenSettings={onOpenChatSettings}
         onOpenSquad={onOpenSquad}
+        onOpenMembers={onOpenMembers}
+        membersOpen={membersOpen}
         find={
           activeGroup ? (
             <ChannelFind

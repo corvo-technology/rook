@@ -717,6 +717,8 @@ model ChatGroup {
   createdAt  DateTime          @default(now())
   updatedAt  DateTime          @updatedAt
   members    ChatGroupMember[]
+  /// The people a private channel is limited to; none means every member of the space sees it.
+  people     ChatGroupPerson[]
   thread     Thread?
   artifacts  Artifact[]
 
@@ -736,6 +738,35 @@ model ChatGroupMember {
   @@unique([groupId, botId])
   @@index([botId])
   @@map("chat_group_members")
+}
+
+/// A person added to a private channel. The channel's creator always sees it too.
+model ChatGroupPerson {
+  groupId       String
+  group         ChatGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  spaceId       String
+  userId        String
+  addedByUserId String
+  createdAt     DateTime  @default(now())
+
+  @@id([groupId, userId])
+  @@index([spaceId, userId])
+  @@map("chat_group_people")
+}
+
+/// A conversation between exactly two people of a space. `userAId` sorts before `userBId`, so a
+/// pair has one row. The thread has no agent and no channel, and only these two ever read it.
+model DirectThread {
+  threadId  String   @id
+  thread    Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  spaceId   String
+  userAId   String
+  userBId   String
+  createdAt DateTime @default(now())
+
+  @@unique([spaceId, userAId, userBId])
+  @@index([spaceId, userBId])
+  @@map("direct_threads")
 }
 
 model Thread {
@@ -768,6 +799,7 @@ model Thread {
   lastReadSeq                    Int                   @default(-1)
   messages                       Message[]
   memberReads                    ThreadMemberRead[]
+  direct                         DirectThread?
   events                         Event[]
   tasks                          Task[]
   runs                           Run[]

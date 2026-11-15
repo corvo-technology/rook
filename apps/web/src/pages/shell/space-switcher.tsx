@@ -23,12 +23,15 @@ function spaceLanding(space: SwitcherSpace) {
 /** Switches between the account's spaces, or starts a new one, from the top of the sidebar. */
 export function SpaceSwitcher({
   mini = false,
+  summary,
   spaces,
   currentSpaceId,
   onSelect,
   onCreate,
 }: {
   mini?: boolean;
+  /** What the space holds, under its name; absent for a space of one. */
+  summary?: string;
   spaces: readonly SwitcherSpace[];
   currentSpaceId: string | null;
   onSelect: (spaceId: string, path: string) => void;
@@ -50,14 +53,24 @@ export function SpaceSwitcher({
           className={`app-no-drag relative flex items-center text-start outline-none focus-visible:ring-2 focus-visible:ring-ring ${
             mini
               ? "size-9 justify-center rounded-xl bg-card text-sm font-medium"
-              : "h-9 w-full gap-2 rounded-xl px-2.5 hover:bg-accent"
+              : `${summary ? "min-h-11 py-1" : "h-9"} w-full gap-2 rounded-xl px-2.5 hover:bg-accent`
           }`}
         >
           {mini ? (
             <span aria-hidden="true">{current.name.trim().charAt(0).toUpperCase()}</span>
           ) : (
             <>
-              <span className="min-w-0 flex-1 truncate text-sm font-medium">{current.name}</span>
+              <span className="flex min-w-0 flex-1 flex-col leading-tight">
+                <span className="truncate text-sm font-medium">{current.name}</span>
+                {summary ? (
+                  <span
+                    data-testid="space-summary"
+                    className="truncate text-xs text-muted-foreground"
+                  >
+                    {summary}
+                  </span>
+                ) : null}
+              </span>
               <ChevronsUpDown
                 size={14}
                 strokeWidth={1.8}

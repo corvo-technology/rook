@@ -1,5 +1,5 @@
 import type * as db from "@corvo/db";
-import { appendEventInTransaction } from "@corvo/db";
+import { appendEventInTransaction, channelVisibleTo } from "@corvo/db";
 import { describe, expect, it, vi } from "vitest";
 import { chooseFocus, markAppConnected, promptFocus } from "./onboarding.js";
 
@@ -177,7 +177,12 @@ it("updates an accessible group thread and emits its normal update event", async
   await markAppConnected(deps, actor, "bot", "slack", "pipedream", "group-thread");
   expect(deps.prisma.chatGroup.findFirst).toHaveBeenCalledWith(
     expect.objectContaining({
-      where: { id: "group", spaceId: actor.spaceId, archivedAt: null },
+      where: {
+        id: "group",
+        spaceId: actor.spaceId,
+        archivedAt: null,
+        ...channelVisibleTo(actor.userId),
+      },
     }),
   );
   expect(tx.message.findMany).toHaveBeenCalledWith(

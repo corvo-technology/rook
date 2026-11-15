@@ -26,6 +26,7 @@ import { ActivityList } from "../ActivityList";
 import { SpaceSearchResults } from "../SpaceSearch";
 import type { SettingsSection } from "../shell-overlay";
 import { SidebarHeader } from "./sidebar-header";
+import { SidebarApprovalsLink, SidebarPeopleList, useSpaceSummary } from "./sidebar-team";
 import { SpaceSwitcher } from "./space-switcher";
 import type { SidebarSearch } from "./use-sidebar-search";
 
@@ -94,6 +95,7 @@ export function ShellSidebar({
   onResume?: () => void;
 }) {
   const { t } = useLingui();
+  const spaceSummary = useSpaceSummary(bots);
   const {
     query,
     setQuery,
@@ -182,6 +184,7 @@ export function ShellSidebar({
         {spaces.length > 0 ? (
           <SpaceSwitcher
             mini={mini}
+            summary={spaceSummary}
             spaces={spaces}
             currentSpaceId={currentSpaceId}
             onSelect={openSpaceChat}
@@ -268,7 +271,23 @@ export function ShellSidebar({
                   }}
                 />
               ) : null}
+              {mini ? null : (
+                <SidebarApprovalsLink
+                  onOpen={() => {
+                    setMobileOpen(false);
+                    navigate("/app/approvals");
+                  }}
+                />
+              )}
               {roster}
+              {mini || activityMode ? null : (
+                <SidebarPeopleList
+                  onOpen={(userId) => {
+                    setMobileOpen(false);
+                    navigate(`/app/dm/${userId}`);
+                  }}
+                />
+              )}
             </>
           )}
           <div className={mini ? "hidden" : "contents"}>{archived}</div>

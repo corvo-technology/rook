@@ -20,6 +20,7 @@ import { mobileTokens } from "../../lib/appearance";
 import { cronLabels } from "../../lib/cron";
 import { useI18n } from "../../lib/i18n";
 import { useKeyboardLayout } from "../../lib/keyboard-layout";
+import { MessageReaderContext } from "../../lib/message-reader";
 import { useThemedStyles } from "../../lib/native";
 import { currentSessionGeneration } from "../../lib/session";
 import { useThreadSnapshot } from "../../lib/thread-history";
@@ -253,75 +254,77 @@ export function ChannelThread({ sessionEpoch, userId }: { sessionEpoch: number; 
   }
 
   return (
-    <View ref={keyboardLayout.container} onLayout={keyboardLayout.onLayout} style={{ flex: 1 }}>
-      <KeyboardAvoidingView
-        behavior="padding"
-        keyboardVerticalOffset={threadKeyboardOffset({
-          os: Platform.OS,
-          floatingHeader: false,
-          nativeHeaderHeight: headerHeight,
-          measuredOffset: keyboardLayout.offset,
-        })}
-        style={{
-          flex: 1,
-          backgroundColor: tokens.background,
-          paddingLeft: 20 + insets.left,
-          paddingRight: 20 + insets.right,
-        }}
-      >
-        <ScrollView
-          ref={scrollRef}
-          style={{ flex: 1 }}
-          contentContainerStyle={{ paddingBottom: 12 }}
-          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+    <MessageReaderContext.Provider value={userId}>
+      <View ref={keyboardLayout.container} onLayout={keyboardLayout.onLayout} style={{ flex: 1 }}>
+        <KeyboardAvoidingView
+          behavior="padding"
+          keyboardVerticalOffset={threadKeyboardOffset({
+            os: Platform.OS,
+            floatingHeader: false,
+            nativeHeaderHeight: headerHeight,
+            measuredOffset: keyboardLayout.offset,
+          })}
+          style={{
+            flex: 1,
+            backgroundColor: tokens.background,
+            paddingLeft: 20 + insets.left,
+            paddingRight: 20 + insets.right,
+          }}
         >
-          {root ? null : (
-            <ActivityIndicator color={tokens.mutedForeground} style={{ margin: 24 }} />
-          )}
-          {threadMessages.map((message, index) => renderMessageRow(message, { index }))}
-          <ThreadWorkingFooter
-            bots={workingBots}
-            atBottom
-            label={liveActivityLine(replies) ?? t("Working…")}
-          />
-        </ScrollView>
-        <ThreadFetchErrorNotice error={error} showingSaved={false} />
-        <ThreadComposerDock
-          hidden={!root}
-          fadeStyle={styles.composerFade}
-          replyTarget={null}
-          replyAuthor=""
-          replyQuote={null}
-          onDismissReply={noop}
-          attachmentNotice={null}
-          attachments={[]}
-          onRemoveAttachment={noop}
-        >
-          <ThreadComposer
-            onFocus={keyboardLayout.onFocus}
-            key={rootId}
-            ref={composerRef}
-            agentSkills={[]}
-            composerMentionTargets={mentionTargets}
-            composerPrompt={t("Reply in thread")}
+          <ScrollView
+            ref={scrollRef}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 12 }}
+            keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+          >
+            {root ? null : (
+              <ActivityIndicator color={tokens.mutedForeground} style={{ margin: 24 }} />
+            )}
+            {threadMessages.map((message, index) => renderMessageRow(message, { index }))}
+            <ThreadWorkingFooter
+              bots={workingBots}
+              atBottom
+              label={liveActivityLine(replies) ?? t("Working…")}
+            />
+          </ScrollView>
+          <ThreadFetchErrorNotice error={error} showingSaved={false} />
+          <ThreadComposerDock
+            hidden={!root}
+            fadeStyle={styles.composerFade}
+            replyTarget={null}
+            replyAuthor=""
             replyQuote={null}
-            attachmentIds={[]}
-            onCall={false}
-            working={false}
-            sending={sending}
-            styles={styles}
-            attachActions={[]}
-            attachFrom={noop}
-            send={send}
-            stop={async () => undefined}
-            startVoiceCall={async () => undefined}
-            onSlashAction={noop}
-          />
-        </ThreadComposerDock>
-        {selectableText !== null ? (
-          <SelectTextSheet text={selectableText} onClose={() => setSelectableText(null)} />
-        ) : null}
-      </KeyboardAvoidingView>
-    </View>
+            onDismissReply={noop}
+            attachmentNotice={null}
+            attachments={[]}
+            onRemoveAttachment={noop}
+          >
+            <ThreadComposer
+              onFocus={keyboardLayout.onFocus}
+              key={rootId}
+              ref={composerRef}
+              agentSkills={[]}
+              composerMentionTargets={mentionTargets}
+              composerPrompt={t("Reply in thread")}
+              replyQuote={null}
+              attachmentIds={[]}
+              onCall={false}
+              working={false}
+              sending={sending}
+              styles={styles}
+              attachActions={[]}
+              attachFrom={noop}
+              send={send}
+              stop={async () => undefined}
+              startVoiceCall={async () => undefined}
+              onSlashAction={noop}
+            />
+          </ThreadComposerDock>
+          {selectableText !== null ? (
+            <SelectTextSheet text={selectableText} onClose={() => setSelectableText(null)} />
+          ) : null}
+        </KeyboardAvoidingView>
+      </View>
+    </MessageReaderContext.Provider>
   );
 }

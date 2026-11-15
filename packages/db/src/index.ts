@@ -49,6 +49,8 @@ export * from "./run-turn-checkpoint.js";
 export * from "./scope.js";
 export * from "./security-events.js";
 export * from "./sessions.js";
+export * from "./space-membership.js";
+export * from "./space-roles.js";
 export * from "./space-settings.js";
 export * from "./spaces.js";
 export * from "./starter-team.js";

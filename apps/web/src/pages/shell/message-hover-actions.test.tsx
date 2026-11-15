@@ -128,3 +128,55 @@ describe("opening a message's thread from its actions", () => {
     expect(container.querySelector('button[aria-label="Reply"]')).toBeNull();
   });
 });
+
+describe("pinning a message from its menu", () => {
+  async function showPin(
+    onPin: (message: ThreadMessage, pinned: boolean) => Promise<void>,
+    shown = message,
+  ) {
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    const container = document.createElement("div");
+    document.body.append(container);
+    root = createRoot(container);
+    await act(async () => {
+      root!.render(
+        <MessageHoverActions
+          message={shown}
+          side="start"
+          onReply={vi.fn()}
+          onMarkUnread={vi.fn()}
+          onReact={vi.fn(async () => undefined)}
+          onPin={onPin}
+        />,
+      );
+    });
+    return container;
+  }
+  const choose = (container: HTMLElement, name: string) =>
+    [...container.querySelectorAll('[role="menuitem"]')]
+      .find((item) => item.textContent === name)
+      ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+  it("offers Pin on a message that is not pinned, and asks to pin it", async () => {
+    const onPin = vi.fn(async () => undefined);
+    const container = await showPin(onPin);
+    expect(items(container)).toContain("Pin");
+    expect(items(container)).not.toContain("Unpin");
+    await act(async () => choose(container, "Pin"));
+    expect(onPin).toHaveBeenCalledWith(message, true);
+  });
+
+  it("offers Unpin on a pinned message, and asks to unpin it", async () => {
+    const onPin = vi.fn(async () => undefined);
+    const pinned = { ...message, pinnedAt: "2026-11-10T09:00:00.000Z" } as ThreadMessage;
+    const container = await showPin(onPin, pinned);
+    expect(items(container)).toContain("Unpin");
+    await act(async () => choose(container, "Unpin"));
+    expect(onPin).toHaveBeenCalledWith(pinned, false);
+  });
+
+  it("offers no pin where there is no pin list", async () => {
+    const container = await show();
+    expect(items(container)).not.toContain("Pin");
+  });
+});

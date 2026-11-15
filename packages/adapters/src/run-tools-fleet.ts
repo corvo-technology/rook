@@ -4,6 +4,7 @@ import {
   InstructionConflictError,
   InvalidSpaceNameError,
   runAsSystem,
+  SpaceCreationNotAllowedError,
   SpaceLimitError,
   writeBotInstructions,
 } from "@corvo/db";
@@ -140,7 +141,11 @@ export const fleetTools: ToolHandlers = {
       );
       return call.finish({ ok: true, spaceId: space.id, name: space.name });
     } catch (error) {
-      if (error instanceof SpaceLimitError || error instanceof InvalidSpaceNameError) {
+      if (
+        error instanceof SpaceCreationNotAllowedError ||
+        error instanceof SpaceLimitError ||
+        error instanceof InvalidSpaceNameError
+      ) {
         return call.finish({ error: error.message });
       }
       throw error;

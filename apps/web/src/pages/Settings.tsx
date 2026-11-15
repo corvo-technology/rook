@@ -303,6 +303,9 @@ export function SettingsPage() {
                 userId={me.userId}
                 spaces={spaces}
                 currentSpaceId={selectedSpaceId()}
+                canCreateSpace={me.canCreateSpace !== false}
+                membersCanCreateSpaces={me.membersCanCreateSpaces ?? null}
+                onMembersCanCreateSpaces={(allowed) => patchMe({ membersCanCreateSpaces: allowed })}
                 onCreated={(space) =>
                   updateBootstrap((current) => ({ ...current, spaces: [...current.spaces, space] }))
                 }

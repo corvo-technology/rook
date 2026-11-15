@@ -46,7 +46,7 @@ import {
 import { deleteAgentSecret, listAgentSecrets, putAgentSecret } from "../agent-secrets.js";
 import { partnerModelChangeRefused } from "../partner-models.js";
 import type { RouterDeps } from "../router.js";
-import { requireCreatorOrPermission, requireSpacePermission } from "../space-permissions.js";
+import { requireCreatorOrPermission, requireSpacePermission } from "../space-owner.js";
 import { importSpace } from "../space-transfer.js";
 import { loadMessagePage } from "../thread-message-pages.js";
 import type { RouterContext } from "./context.js";

@@ -1,4 +1,5 @@
 import { BOT_INSTRUCTIONS_MAX_LENGTH } from "@corvo/contracts";
+import { HOLD_TO_APPROVE_MS, holdsToApprove } from "@corvo/core";
 import { useState } from "react";
 import type { ViewProps } from "react-native";
 import { Alert, Pressable, Text, TextInput, View } from "react-native";
@@ -100,13 +101,36 @@ export function AskActions({
                 }
               />
             );
+          // An action a tool is about to run is approved by holding; assistive technology gets the
+          // same approval as a named action, since a held press is hard to make there.
+          const hold = holdsToApprove(
+            { approval, proposal, instructionUpdate: instructions !== undefined },
+            action,
+          );
           return (
             <Pressable
               key={action.id}
-              accessibilityActions={accessibilityActions}
-              onAccessibilityAction={onAccessibilityAction}
+              accessibilityRole="button"
+              accessibilityActions={
+                hold
+                  ? [
+                      ...(accessibilityActions ?? []),
+                      { name: "approve", label: t("Hold to approve") },
+                    ]
+                  : accessibilityActions
+              }
+              onAccessibilityAction={
+                hold
+                  ? (event) => {
+                      if (event.nativeEvent.actionName === "approve") void submit(action.id);
+                      else onAccessibilityAction?.(event);
+                    }
+                  : onAccessibilityAction
+              }
               disabled={disabled || submitting}
-              onPress={() => void submit(action.id)}
+              onPress={hold ? undefined : () => void submit(action.id)}
+              onLongPress={hold ? () => void submit(action.id) : undefined}
+              delayLongPress={HOLD_TO_APPROVE_MS}
               style={{
                 flexShrink: 1,
                 alignSelf: approval ? undefined : "stretch",
@@ -126,7 +150,9 @@ export function AskActions({
               >
                 {pendingAction === action.id
                   ? t("Sending…")
-                  : askActionLabel(action, { approval, site, proposal }, t)}
+                  : hold
+                    ? t("Hold to approve")
+                    : askActionLabel(action, { approval, site, proposal }, t)}
               </Text>
             </Pressable>
           );

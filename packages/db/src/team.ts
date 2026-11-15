@@ -1,9 +1,18 @@
 import { randomUUID } from "node:crypto";
 import type { SpaceRole } from "@corvo/contracts";
-import { can, canGrantRole, canManageRole, spaceRoleOf } from "@corvo/core";
+import type { SpaceMembership, SpacePermission } from "@corvo/core";
+import { can, spaceRank, spaceRoleOf } from "@corvo/core";
 import type { PrismaClient } from "./client.js";
-import { Prisma } from "./client.js";
-import { withTransactionRetry } from "./transaction-retry.js";
+import {
+  getSpaceMembershipFor,
+  loadSpaceRoles,
+  resolveSpaceMemberships,
+} from "./space-membership.js";
+import { applyInvitedRoles, assertMayInvite, ensureDefaultSpaceRoles } from "./space-roles.js";
+import { serializable, TeamError } from "./team-errors.js";
+
+export type { TeamErrorCode } from "./team-errors.js";
+export { TeamError } from "./team-errors.js";
 
 export const INVITATION_DAYS = 7;
 /** New invitations one space may send in a day, so a stolen admin session cannot spam. */
@@ -12,25 +21,6 @@ export const PENDING_JOIN_REQUESTS_PER_SPACE = 100;
 export const PENDING_JOIN_REQUESTS_PER_USER = 10;
 const RECENT_JOIN_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
-
-export type TeamErrorCode =
-  | "forbidden"
-  | "not_found"
-  | "invalid"
-  | "limit"
-  | "last_owner"
-  | "closed";
-
-/** A refusal the API shows as-is; nothing in it names a person who has no right to be named. */
-export class TeamError extends Error {
-  constructor(
-    readonly code: TeamErrorCode,
-    message: string,
-  ) {
-    super(message);
-    this.name = "TeamError";
-  }
-}
 
 type Client = Pick<
   PrismaClient,
@@ -43,6 +33,8 @@ type Client = Pick<
   | "user"
   | "memoryDocument"
   | "notificationPreference"
+  | "spaceRole"
+  | "spaceMemberRole"
 >;
 
 async function roleIn(db: Client, spaceId: string, userId: string): Promise<string | null> {
@@ -53,21 +45,21 @@ async function roleIn(db: Client, spaceId: string, userId: string): Promise<stri
   return row?.role ?? null;
 }
 
-async function requireRole(
+async function requireKey(
   db: Client,
   spaceId: string,
   userId: string,
-  permission: Parameters<typeof can>[1],
-): Promise<string> {
-  const role = await roleIn(db, spaceId, userId);
-  if (!role || !can({ role }, permission)) throw new TeamError("forbidden", "Not allowed");
-  return role;
+  key: SpacePermission,
+): Promise<SpaceMembership> {
+  const membership = await getSpaceMembershipFor(db, { spaceId, userId });
+  if (!membership || !can(membership, key)) throw new TeamError("forbidden", "Not allowed");
+  return membership;
 }
 
-function serializable<T>(prisma: PrismaClient, run: (tx: Prisma.TransactionClient) => Promise<T>) {
-  return withTransactionRetry(() =>
-    prisma.$transaction(run, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }),
-  );
+/** Where a person stands in the space's order of roles. */
+async function rankIn(db: Client, spaceId: string, membership: SpaceMembership): Promise<number> {
+  const roles = (await loadSpaceRoles(db, [spaceId])).get(spaceId) ?? [];
+  return spaceRank(membership, new Map(roles.map((role) => [role.id, role.position])));
 }
 
 export async function listSpaceMembers(prisma: PrismaClient, spaceId: string) {
@@ -81,18 +73,27 @@ export async function listSpaceMembers(prisma: PrismaClient, spaceId: string) {
       member: { select: { user: { select: { name: true, email: true } } } },
     },
   });
+  const memberships = await resolveSpaceMemberships(
+    prisma,
+    rows.map((row) => ({ spaceId, userId: row.userId, role: row.role })),
+  );
   return rows.map((row) => ({
     userId: row.userId,
     name: row.member.user.name,
     email: row.member.user.email,
     role: spaceRoleOf(row.role),
+    roleIds: [...(memberships.get(`${spaceId}:${row.userId}`)?.roleIds ?? [])],
     joinedAt: row.createdAt,
   }));
 }
 
+function isOwnerRole(stored: string): boolean {
+  return spaceRoleOf(stored) === "owner";
+}
+
 async function ownerCount(db: Client, spaceId: string): Promise<number> {
   const rows = await db.spaceMember.findMany({ where: { spaceId }, select: { role: true } });
-  return rows.filter((row) => spaceRoleOf(row.role) === "owner").length;
+  return rows.filter((row) => isOwnerRole(row.role)).length;
 }
 
 export async function setMemberRole(
@@ -100,22 +101,52 @@ export async function setMemberRole(
   input: { spaceId: string; actorId: string; userId: string; role: SpaceRole },
 ): Promise<void> {
   await serializable(prisma, async (tx) => {
-    const actorRole = await requireRole(tx, input.spaceId, input.actorId, "manage_members");
+    await ensureDefaultSpaceRoles(tx, input.spaceId);
+    const actor = await requireKey(tx, input.spaceId, input.actorId, "manage_members");
     const targetRole = await roleIn(tx, input.spaceId, input.userId);
     if (!targetRole) throw new TeamError("not_found", "Not a member");
-    if (!canManageRole(actorRole, targetRole) || !canGrantRole(actorRole, input.role))
+    const target = await getSpaceMembershipFor(tx, input);
+    const rank = await rankIn(tx, input.spaceId, actor);
+    const targetRank = target ? await rankIn(tx, input.spaceId, target) : Infinity;
+    const next = input.role;
+    // Ownership is not a role: only an owner gives it or takes it away.
+    if (!actor.isOwner && (isOwnerRole(targetRole) || next === "owner"))
       throw new TeamError("forbidden", "Not allowed");
-    if (
-      spaceRoleOf(targetRole) === "owner" &&
-      input.role !== "owner" &&
-      (await ownerCount(tx, input.spaceId)) <= 1
-    ) {
+    // Anyone else changes only people at or below their own highest role.
+    if (!actor.isOwner && targetRank < rank) throw new TeamError("forbidden", "Not allowed");
+    if (!actor.isOwner && (next === "admin" || spaceRoleOf(targetRole) === "admin")) {
+      // Giving or taking Admin takes holding it, with every key it carries.
+      const admin = (await loadSpaceRoles(tx, [input.spaceId]))
+        .get(input.spaceId)
+        ?.find((role) => role.systemKey === "admin");
+      if (
+        !admin ||
+        admin.position < rank ||
+        !admin.keys.every((key) => can(actor, key as SpacePermission))
+      )
+        throw new TeamError("forbidden", "Not allowed");
+    }
+    if (isOwnerRole(targetRole) && next !== "owner" && (await ownerCount(tx, input.spaceId)) <= 1) {
       throw new TeamError("last_owner", "A workspace keeps at least one owner");
     }
     await tx.spaceMember.update({
       where: { spaceId_userId: { spaceId: input.spaceId, userId: input.userId } },
-      data: { role: input.role },
+      data: { role: next },
     });
+    const admin = await tx.spaceRole.findUnique({
+      where: { spaceId_systemKey: { spaceId: input.spaceId, systemKey: "admin" } },
+      select: { id: true },
+    });
+    if (admin && next === "admin") {
+      await tx.spaceMemberRole.createMany({
+        data: [{ spaceId: input.spaceId, userId: input.userId, roleId: admin.id }],
+        skipDuplicates: true,
+      });
+    } else if (admin && next === "member") {
+      await tx.spaceMemberRole.deleteMany({
+        where: { spaceId: input.spaceId, userId: input.userId, roleId: admin.id },
+      });
+    }
   });
 }
 
@@ -129,16 +160,28 @@ export async function removeMember(
   input: { spaceId: string; actorId: string; userId: string },
 ): Promise<{ organizationId: string }> {
   return serializable(prisma, async (tx) => {
-    const actorRole = await roleIn(tx, input.spaceId, input.actorId);
-    if (!actorRole) throw new TeamError("forbidden", "Not allowed");
+    const actor = await getSpaceMembershipFor(tx, {
+      spaceId: input.spaceId,
+      userId: input.actorId,
+    });
+    if (!actor) throw new TeamError("forbidden", "Not allowed");
     const target = await tx.spaceMember.findUnique({
       where: { spaceId_userId: { spaceId: input.spaceId, userId: input.userId } },
       select: { role: true, organizationId: true, member: { select: { id: true } } },
     });
     if (!target) throw new TeamError("not_found", "Not a member");
-    if (input.userId !== input.actorId && !canManageRole(actorRole, target.role))
-      throw new TeamError("forbidden", "Not allowed");
-    if (spaceRoleOf(target.role) === "owner" && (await ownerCount(tx, input.spaceId)) <= 1)
+    if (input.userId !== input.actorId) {
+      if (!can(actor, "manage_members")) throw new TeamError("forbidden", "Not allowed");
+      const targetMembership = await getSpaceMembershipFor(tx, input);
+      const rank = await rankIn(tx, input.spaceId, actor);
+      const targetRank = targetMembership
+        ? await rankIn(tx, input.spaceId, targetMembership)
+        : Infinity;
+      // Only an owner removes an owner; anyone else, people at or below their own highest role.
+      if (!actor.isOwner && (isOwnerRole(target.role) || targetRank < rank))
+        throw new TeamError("forbidden", "Not allowed");
+    }
+    if (isOwnerRole(target.role) && (await ownerCount(tx, input.spaceId)) <= 1)
       throw new TeamError("last_owner", "A workspace keeps at least one owner");
     await tx.spaceMember.delete({
       where: { spaceId_userId: { spaceId: input.spaceId, userId: input.userId } },
@@ -159,7 +202,7 @@ export async function removeMember(
 /** Adds a person to a space with a role; no-op when they already belong. */
 async function addMember(
   tx: Client,
-  input: { spaceId: string; userId: string; role: SpaceRole },
+  input: { spaceId: string; userId: string; role: SpaceRole; roleIds?: readonly string[] },
 ): Promise<{ organizationId: string; added: boolean }> {
   const space = await tx.space.findUnique({
     where: { id: input.spaceId },
@@ -207,6 +250,12 @@ async function addMember(
     },
     update: { role: input.role },
   });
+  await applyInvitedRoles(tx, {
+    spaceId: input.spaceId,
+    userId: input.userId,
+    role: input.role,
+    roleIds: input.roleIds ?? [],
+  });
   const hasMemory = await tx.memoryDocument.findFirst({
     where: { spaceId: input.spaceId, userId: input.userId, scope: "user", path: "MEMORY.md" },
     select: { id: true },
@@ -234,6 +283,7 @@ export interface InvitationRow {
   id: string;
   email: string;
   role: SpaceRole;
+  roleIds: string[];
   status: "pending" | "accepted";
   expiresAt: Date;
   createdAt: Date;
@@ -244,6 +294,7 @@ function invitationRow(row: {
   id: string;
   email: string;
   role: string;
+  roleIds: string[];
   status: string;
   expiresAt: Date;
   createdAt: Date;
@@ -253,6 +304,7 @@ function invitationRow(row: {
     id: row.id,
     email: row.email,
     role: spaceRoleOf(row.role),
+    roleIds: row.roleIds,
     status: row.status === "accepted" ? "accepted" : "pending",
     expiresAt: row.expiresAt,
     createdAt: row.createdAt,
@@ -265,7 +317,7 @@ export async function listInvitations(
   prisma: PrismaClient,
   input: { spaceId: string; actorId: string; now?: Date },
 ): Promise<InvitationRow[]> {
-  await requireRole(prisma, input.spaceId, input.actorId, "invite");
+  await requireKey(prisma, input.spaceId, input.actorId, "invite_people");
   const now = input.now ?? new Date();
   const since = new Date(now.getTime() - RECENT_JOIN_DAYS * DAY_MS);
   const rows = await prisma.spaceInvitation.findMany({
@@ -297,13 +349,16 @@ export async function createInvitations(
     spaceId: string;
     actorId: string;
     role: SpaceRole;
+    /** Custom roles the person gets on joining; the sender must be able to give each. */
+    roleIds?: readonly string[];
     addresses: string[];
     now?: Date;
   },
 ): Promise<{ invitations: InvitationRow[]; alreadyMembers: string[] }> {
   const now = input.now ?? new Date();
-  const actorRole = await requireRole(prisma, input.spaceId, input.actorId, "invite");
-  if (!canGrantRole(actorRole, input.role)) throw new TeamError("forbidden", "Not allowed");
+  const roleIds = await serializable(prisma, (tx) =>
+    assertMayInvite(tx, { ...input, roleIds: input.roleIds ?? [] }),
+  );
   const addresses = [...new Set(input.addresses.map((address) => address.trim().toLowerCase()))];
   if (addresses.length === 0) throw new TeamError("invalid", "No address to invite");
   const recent = await prisma.spaceInvitation.count({
@@ -330,7 +385,7 @@ export async function createInvitations(
     const row = pending
       ? await prisma.spaceInvitation.update({
           where: { id: pending.id },
-          data: { role: input.role, expiresAt, inviterId: input.actorId },
+          data: { role: input.role, roleIds, expiresAt, inviterId: input.actorId },
         })
       : await prisma.spaceInvitation.create({
           data: {
@@ -338,6 +393,7 @@ export async function createInvitations(
             spaceId: input.spaceId,
             email,
             role: input.role,
+            roleIds,
             expiresAt,
             inviterId: input.actorId,
           },
@@ -351,13 +407,18 @@ export async function resendInvitation(
   prisma: PrismaClient,
   input: { spaceId: string; actorId: string; id: string; now?: Date },
 ): Promise<InvitationRow> {
-  const actorRole = await requireRole(prisma, input.spaceId, input.actorId, "invite");
   const row = await prisma.spaceInvitation.findFirst({
     where: { id: input.id, spaceId: input.spaceId, status: "pending" },
   });
   if (!row) throw new TeamError("not_found", "No such invitation");
-  if (!canGrantRole(actorRole, spaceRoleOf(row.role)))
-    throw new TeamError("forbidden", "Not allowed");
+  await serializable(prisma, (tx) =>
+    assertMayInvite(tx, {
+      spaceId: input.spaceId,
+      actorId: input.actorId,
+      role: spaceRoleOf(row.role),
+      roleIds: row.roleIds,
+    }),
+  );
   const now = input.now ?? new Date();
   return invitationRow(
     await prisma.spaceInvitation.update({
@@ -371,13 +432,18 @@ export async function cancelInvitation(
   prisma: PrismaClient,
   input: { spaceId: string; actorId: string; id: string },
 ): Promise<void> {
-  const actorRole = await requireRole(prisma, input.spaceId, input.actorId, "invite");
   const row = await prisma.spaceInvitation.findFirst({
     where: { id: input.id, spaceId: input.spaceId, status: "pending" },
   });
   if (!row) throw new TeamError("not_found", "No such invitation");
-  if (!canGrantRole(actorRole, spaceRoleOf(row.role)))
-    throw new TeamError("forbidden", "Not allowed");
+  await serializable(prisma, (tx) =>
+    assertMayInvite(tx, {
+      spaceId: input.spaceId,
+      actorId: input.actorId,
+      role: spaceRoleOf(row.role),
+      roleIds: row.roleIds,
+    }),
+  );
   await prisma.spaceInvitation.update({ where: { id: row.id }, data: { status: "cancelled" } });
 }
 
@@ -423,6 +489,7 @@ export async function acceptInvitation(
       spaceId: row.spaceId,
       userId: input.user.id,
       role: spaceRoleOf(row.role),
+      roleIds: row.roleIds,
     });
     await tx.spaceInvitation.update({
       where: { id: row.id },
@@ -472,7 +539,7 @@ export async function activeInviteLink(
   prisma: PrismaClient,
   input: { spaceId: string; actorId: string },
 ): Promise<{ id: string } | null> {
-  await requireRole(prisma, input.spaceId, input.actorId, "invite");
+  await requireKey(prisma, input.spaceId, input.actorId, "invite_people");
   return prisma.spaceInviteLink.findFirst({
     where: { spaceId: input.spaceId, revokedAt: null },
     orderBy: { createdAt: "desc" },
@@ -484,7 +551,7 @@ export async function createInviteLink(
   prisma: PrismaClient,
   input: { spaceId: string; actorId: string },
 ): Promise<{ id: string }> {
-  await requireRole(prisma, input.spaceId, input.actorId, "invite");
+  await requireKey(prisma, input.spaceId, input.actorId, "invite_people");
   const existing = await activeInviteLink(prisma, input);
   if (existing) return existing;
   return prisma.spaceInviteLink.create({
@@ -497,7 +564,7 @@ export async function disableInviteLink(
   prisma: PrismaClient,
   input: { spaceId: string; actorId: string; now?: Date },
 ): Promise<void> {
-  await requireRole(prisma, input.spaceId, input.actorId, "invite");
+  await requireKey(prisma, input.spaceId, input.actorId, "invite_people");
   await prisma.spaceInviteLink.updateMany({
     where: { spaceId: input.spaceId, revokedAt: null },
     data: { revokedAt: input.now ?? new Date() },
@@ -542,7 +609,7 @@ export async function listJoinRequests(
   prisma: PrismaClient,
   input: { spaceId: string; actorId: string },
 ) {
-  await requireRole(prisma, input.spaceId, input.actorId, "manage_members");
+  await requireKey(prisma, input.spaceId, input.actorId, "manage_members");
   const rows = await prisma.spaceJoinRequest.findMany({
     where: { spaceId: input.spaceId, status: "pending" },
     orderBy: { createdAt: "asc" },
@@ -562,7 +629,7 @@ export async function answerJoinRequest(
   input: { spaceId: string; actorId: string; id: string; approve: boolean; reason?: string },
 ): Promise<{ organizationId: string; added: boolean } | null> {
   return serializable(prisma, async (tx) => {
-    await requireRole(tx, input.spaceId, input.actorId, "manage_members");
+    await requireKey(tx, input.spaceId, input.actorId, "manage_members");
     const request = await tx.spaceJoinRequest.findFirst({
       where: { id: input.id, spaceId: input.spaceId, status: "pending" },
     });

@@ -1,4 +1,5 @@
 import type {
+  CustomSpaceRole,
   Space,
   SpaceInvitation,
   SpaceJoinRequest,
@@ -6,20 +7,23 @@ import type {
   SpaceRole,
 } from "@corvo/contracts";
 import { agentCatalogLocale } from "@corvo/contracts";
-import { can } from "@corvo/core";
+import type { SpaceMembership } from "@corvo/core";
+import { can, holdsAll, knownSpacePermissions } from "@corvo/core";
 import {
   Button,
   InlineConfirm,
   Input,
+  Label,
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Switch,
 } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { SettingsGroup, SettingsRow } from "../components/SettingsRows";
 import { rpc, rpcForSpace } from "../lib/rpc";
 
@@ -71,6 +75,19 @@ function RolePicker({
   );
 }
 
+/** The custom roles a person holds; Admin and Everyone are already told by the role beside it. */
+function RoleChips({ roles, ids }: { roles: CustomSpaceRole[]; ids: string[] }) {
+  const shown = roles.filter((role) => !role.systemKey && ids.includes(role.id));
+  return shown.map((role) => (
+    <span
+      key={role.id}
+      className="rounded-full border border-border px-2 py-0.5 text-[12px] text-muted-foreground"
+    >
+      {role.name}
+    </span>
+  ));
+}
+
 const NEW_WORKSPACE = "new-workspace";
 
 /** Picks which workspace the section acts on, or starts a new one inline. */
@@ -83,7 +100,8 @@ function WorkspacePicker({
   spaces: Space[];
   value: string;
   onPick: (spaceId: string) => void;
-  onCreate: (name: string) => Promise<void>;
+  /** Absent when this person may not create workspaces. */
+  onCreate?: (name: string) => Promise<void>;
 }) {
   const { t } = useLingui();
   const [creating, setCreating] = useState(false);
@@ -91,14 +109,14 @@ function WorkspacePicker({
   const [busy, setBusy] = useState(false);
   const items = [
     ...spaces.map((space) => ({ value: space.id, label: space.name })),
-    { value: NEW_WORKSPACE, label: t`New workspace` },
+    ...(onCreate ? [{ value: NEW_WORKSPACE, label: t`New workspace` }] : []),
   ];
 
   async function create() {
     if (busy || !name.trim()) return;
     setBusy(true);
     try {
-      await onCreate(name.trim());
+      await onCreate?.(name.trim());
       setName("");
       setCreating(false);
     } catch {
@@ -170,13 +188,21 @@ export function MembersSettingsPanel({
   spaces,
   currentSpaceId,
   onCreated,
+  canCreateSpace = true,
+  membersCanCreateSpaces = null,
+  onMembersCanCreateSpaces,
 }: {
   userId: string;
   spaces: Space[];
   currentSpaceId: string | null;
   onCreated: (space: Space) => void;
+  canCreateSpace?: boolean;
+  /** The owner's switch; null for anyone who is not the owner. */
+  membersCanCreateSpaces?: boolean | null;
+  onMembersCanCreateSpaces?: (allowed: boolean) => void;
 }) {
   const { t, i18n } = useLingui();
+  const membersCanCreateId = useId();
   const invitable = spaces.filter((space) => space.canInvite === true);
   const [pickedId, setPickedId] = useState<string | null>(null);
   const picked =
@@ -197,18 +223,35 @@ export function MembersSettingsPanel({
   const [role, setRole] = useState<SpaceRole>("member");
   const [sending, setSending] = useState(false);
   const [notEmailed, setNotEmailed] = useState<SpaceInvitation[]>([]);
+  const [roles, setRoles] = useState<CustomSpaceRole[]>([]);
+  const [mine, setMine] = useState<SpaceMembership | null>(null);
+  const [inviteRoleIds, setInviteRoleIds] = useState<string[]>([]);
 
   const myRole = members?.find((member) => member.userId === userId)?.role ?? "member";
-  const manages = can({ role: myRole }, "manage_members");
+  const manages = can(mine, "manage_members");
+  const invites = can(mine, "invite_people");
+  // Roles the person invited could carry: the ones the sender holds every key of.
+  const givable = roles.filter(
+    (candidate) => !candidate.systemKey && mine && (mine.isOwner || holdsAll(mine, candidate.keys)),
+  );
   const grantable: SpaceRole[] =
     myRole === "owner" ? ["owner", "admin", "member"] : ["admin", "member"];
 
   const load = useCallback(async () => {
     try {
-      const list = await client.spaces.members.list();
+      const [list, rolesNow] = await Promise.all([
+        client.spaces.members.list(),
+        client.spaces.roles.list(),
+      ]);
       setMembers(list);
-      const mine = list.find((member) => member.userId === userId)?.role ?? "member";
-      if (can({ role: mine }, "invite")) {
+      setRoles(rolesNow.roles);
+      const standing: SpaceMembership = {
+        isOwner: rolesNow.me.isOwner,
+        roleIds: rolesNow.me.roleIds,
+        permissions: knownSpacePermissions(rolesNow.me.permissions),
+      };
+      setMine(standing);
+      if (can(standing, "invite_people")) {
         const [pending, asking, link] = await Promise.all([
           client.spaces.invitations.list(),
           client.spaces.joinRequests.list(),
@@ -229,6 +272,9 @@ export function MembersSettingsPanel({
     setRequests([]);
     setInviteLink({ link: null });
     setNotEmailed([]);
+    setRoles([]);
+    setMine(null);
+    setInviteRoleIds([]);
     setError(null);
     void load();
   }, [load]);
@@ -248,9 +294,14 @@ export function MembersSettingsPanel({
     setSending(true);
     setError(null);
     try {
-      const result = await client.spaces.invitations.create({ addresses, role });
+      const result = await client.spaces.invitations.create({
+        addresses,
+        role,
+        roleIds: inviteRoleIds,
+      });
       setNotEmailed(result.emailed ? [] : result.invitations);
       setAddresses("");
+      setInviteRoleIds([]);
       setInviting(false);
       await load();
     } catch (err) {
@@ -271,6 +322,16 @@ export function MembersSettingsPanel({
     }
   }
 
+  async function allowMembersToCreate(allowed: boolean) {
+    setError(null);
+    try {
+      await rpc.spaces.setMembersCanCreate({ allowed });
+      onMembersCanCreateSpaces?.(allowed);
+    } catch (err) {
+      setError(message(err, t`Could not save`));
+    }
+  }
+
   const copy = (text: string) => void navigator.clipboard?.writeText(text).catch(() => undefined);
 
   return (
@@ -284,7 +345,7 @@ export function MembersSettingsPanel({
           spaces={invitable}
           value={picked.id}
           onPick={setPickedId}
-          onCreate={createWorkspace}
+          onCreate={canCreateSpace ? createWorkspace : undefined}
         />
       ) : null}
       <SettingsGroup>
@@ -302,6 +363,7 @@ export function MembersSettingsPanel({
               }
               control={
                 <>
+                  <RoleChips roles={roles} ids={member.roleIds} />
                   {managed ? (
                     <RolePicker
                       value={member.role}
@@ -365,7 +427,7 @@ export function MembersSettingsPanel({
         })}
       </SettingsGroup>
 
-      {can({ role: myRole }, "invite") ? (
+      {invites ? (
         <div className="space-y-3">
           {inviting ? (
             <div className="space-y-3 rounded-xl border border-border p-4">
@@ -379,6 +441,32 @@ export function MembersSettingsPanel({
                   if (event.key === "Enter" && !event.nativeEvent.isComposing) void send();
                 }}
               />
+              {givable.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {givable.map((candidate) => {
+                    const on = inviteRoleIds.includes(candidate.id);
+                    return (
+                      <Button
+                        key={candidate.id}
+                        type="button"
+                        variant={on ? "secondary" : "ghost"}
+                        size="sm"
+                        className="rounded-full"
+                        aria-pressed={on}
+                        onClick={() =>
+                          setInviteRoleIds(
+                            on
+                              ? inviteRoleIds.filter((id) => id !== candidate.id)
+                              : [...inviteRoleIds, candidate.id],
+                          )
+                        }
+                      >
+                        {candidate.name}
+                      </Button>
+                    );
+                  })}
+                </div>
+              ) : null}
               <div className="flex items-center justify-between gap-2">
                 <RolePicker value={role} label={t`Role`} grantable={grantable} onChange={setRole} />
                 <Button
@@ -522,7 +610,7 @@ export function MembersSettingsPanel({
         </SettingsGroup>
       ) : null}
 
-      {manages || can({ role: myRole }, "invite") ? (
+      {manages || invites ? (
         <SettingsGroup>
           <SettingsRow
             label={<Trans>Invite link</Trans>}
@@ -560,6 +648,28 @@ export function MembersSettingsPanel({
                   <Trans>Create</Trans>
                 </Button>
               )
+            }
+          />
+        </SettingsGroup>
+      ) : null}
+
+      {membersCanCreateSpaces !== null &&
+      picked?.id === currentSpaceId &&
+      (members?.length ?? 0) > 1 ? (
+        <SettingsGroup>
+          <SettingsRow
+            label={
+              <Label htmlFor={membersCanCreateId} className="text-[14px] font-normal">
+                <Trans>Members can create spaces</Trans>
+              </Label>
+            }
+            control={
+              <Switch
+                id={membersCanCreateId}
+                data-testid="members-can-create-spaces"
+                checked={membersCanCreateSpaces}
+                onCheckedChange={(checked) => void allowMembersToCreate(checked)}
+              />
             }
           />
         </SettingsGroup>

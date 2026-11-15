@@ -12,15 +12,19 @@ import {
   InvalidSpaceNameError,
   IsolationError,
   renameSpaceForMember,
+  resolveSpaceMemberships,
   runAsSystem,
   runAsTenant,
   SPACE_DELETION_CLAIM_TIMEOUT_MS,
+  SpaceCreationNotAllowedError,
   SpaceDeletionInProgressError,
   SpaceLimitError,
   SpaceNotFoundError,
+  setMembersCanCreateSpaces,
   setSpacePausedForMember,
   setSpaceSettingOverride,
   spaceSettingOverrides,
+  TeamError,
 } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import { ORPCError } from "@orpc/server";
@@ -76,6 +80,9 @@ export function spacesRoutes(ctx: RouterContext) {
               name: input.name,
             });
           } catch (error) {
+            if (error instanceof SpaceCreationNotAllowedError) {
+              throw new ORPCError("FORBIDDEN", { message: error.message });
+            }
             if (error instanceof SpaceLimitError || error instanceof InvalidSpaceNameError) {
               throw new ORPCError("BAD_REQUEST", { message: error.message });
             }
@@ -103,6 +110,22 @@ export function spacesRoutes(ctx: RouterContext) {
           startStarterTeam(deps, { ...context.actor, spaceId: created.id }, input.locale),
         ).catch((error) => getLogger().error("starter team for a new space", error));
         return created;
+      }),
+      setMembersCanCreate: authed.spaces.setMembersCanCreate.handler(async ({ context, input }) => {
+        try {
+          await runAsSystem("change who may create spaces", () =>
+            setMembersCanCreateSpaces(deps.prisma, {
+              spaceId: context.actor.spaceId,
+              userId: context.actor.userId,
+              allowed: input.allowed,
+            }),
+          );
+        } catch (error) {
+          if (error instanceof TeamError)
+            throw new ORPCError("FORBIDDEN", { message: error.message });
+          throw error;
+        }
+        return { allowed: input.allowed };
       }),
       // Renames another of the member's Spaces; membership is checked inside.
       rename: authed.spaces.rename.handler(({ context, input }) =>
@@ -266,6 +289,10 @@ async function memberSpaceNavigation(
     },
     orderBy: { createdAt: "asc" },
   });
+  const resolved = await resolveSpaceMemberships(
+    deps.prisma,
+    memberships.map((membership) => ({ ...membership, userId: actor.userId })),
+  );
   const spaceIds = memberships.map((membership) => membership.spaceId);
   const inactiveSpaceIds = spaceIds.filter((spaceId) => spaceId !== actor.spaceId);
   const [
@@ -333,12 +360,18 @@ async function memberSpaceNavigation(
         isDefault: membership.space.isDefault,
         hasContent: spacesWithContent.has(membership.spaceId),
         botCount: botCounts.get(membership.spaceId) ?? 0,
-        canRename: can(membership, "manage_settings") && membership.space.deletingAt === null,
+        canRename:
+          can(resolved.get(`${membership.spaceId}:${actor.userId}`), "configure") &&
+          membership.space.deletingAt === null,
         pausedAt: membership.space.pausedAt?.toISOString() ?? null,
-        canPause: can(membership, "manage_settings") && membership.space.deletingAt === null,
-        canInvite: can(membership, "invite") && membership.space.deletingAt === null,
+        canPause:
+          can(resolved.get(`${membership.spaceId}:${actor.userId}`), "configure") &&
+          membership.space.deletingAt === null,
+        canInvite:
+          can(resolved.get(`${membership.spaceId}:${actor.userId}`), "invite_people") &&
+          membership.space.deletingAt === null,
         canDelete:
-          can(membership, "delete_space") &&
+          resolved.get(`${membership.spaceId}:${actor.userId}`)?.isOwner &&
           !membership.space.isDefault &&
           memberships.filter((other) => other.organizationId === membership.organizationId).length >
             1 &&

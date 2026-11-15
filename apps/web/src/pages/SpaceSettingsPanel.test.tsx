@@ -67,6 +67,7 @@ vi.mock("@corvo/ui-web", () => {
   };
 });
 
+vi.mock("./SpaceRolesSettings", () => ({ SpaceRolesSettings: () => null }));
 vi.mock("./SpaceSettingOverrides", () => ({
   SpaceSettingOverrides: () => <div data-testid="space-setting-overrides" />,
 }));

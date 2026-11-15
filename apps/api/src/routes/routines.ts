@@ -27,7 +27,7 @@ import {
   routineNextRunAt,
   routineRowData,
 } from "../routines.js";
-import { requireCreatorOrPermission, requireSpacePermission } from "../space-permissions.js";
+import { requireCreatorOrPermission, requireSpacePermission } from "../space-owner.js";
 import type { RouterContext } from "./context.js";
 import { isRecordNotFound } from "./shared.js";
 

@@ -23,7 +23,10 @@ function handlers(retryFailedRun: ReturnType<typeof vi.fn>) {
   const authed = new Proxy({}, { get: () => passthrough });
   const routes = threadsRoutes({
     deps: {
-      prisma: { spaceMember: { findUnique: vi.fn(async () => ({ role: "member" })) } },
+      prisma: {
+        spaceMember: { findUnique: vi.fn(async () => ({ role: "member", roles: [] })) },
+        spaceRole: { findMany: vi.fn(async () => []) },
+      },
       events: { retryFailedRun },
       jobs: { enqueue },
     },

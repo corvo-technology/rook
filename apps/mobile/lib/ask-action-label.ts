@@ -14,6 +14,6 @@ export function askActionLabel(
   if (action.id === "allow") return t("Allow once");
   if (action.id === "always")
     return site ? t("Always allow {site}", { site }) : t("Always allow this tool");
-  if (action.id === "deny") return t("Deny");
+  if (action.id === "deny") return t("Not now");
   return action.label;
 }

@@ -67,7 +67,8 @@ function botSecretDeps(seed: Row[] = [], role = "owner") {
     }),
   };
   const prisma = {
-    spaceMember: { findUnique: vi.fn(async () => ({ role })) },
+    spaceMember: { findUnique: vi.fn(async () => ({ role, roles: [] })) },
+    spaceRole: { findMany: vi.fn(async () => []) },
     bot: {
       findFirst: vi.fn(async (args: { where: Row }) => {
         const bot = bots.find((entry) => matches(entry, args.where));

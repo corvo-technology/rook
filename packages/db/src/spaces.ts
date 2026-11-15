@@ -1,8 +1,10 @@
 import { randomUUID } from "node:crypto";
-import { can, displayName } from "@corvo/core";
+import { can, displayName, isSpaceOwner, spaceRoleOf } from "@corvo/core";
 import type { PrismaClient } from "./client.js";
 import { Prisma } from "./client.js";
 import { IsolationError } from "./scope.js";
+import { getSpaceMembershipFor } from "./space-membership.js";
+import { TeamError } from "./team-errors.js";
 import { withTransactionRetry } from "./transaction-retry.js";
 
 /** Per member, per organization: one person cannot fan out unbounded boundaries. */
@@ -12,6 +14,13 @@ export class SpaceLimitError extends Error {
   constructor() {
     super("Space limit reached");
     this.name = "SpaceLimitError";
+  }
+}
+
+export class SpaceCreationNotAllowedError extends Error {
+  constructor() {
+    super("Members cannot create spaces here. Ask the owner to allow it.");
+    this.name = "SpaceCreationNotAllowedError";
   }
 }
 
@@ -136,6 +145,112 @@ function normalizeSpaceName(name: string): string {
   return trimmed;
 }
 
+type OrganizationClient = Pick<PrismaClient, "spaceMember" | "member" | "organization">;
+
+/**
+ * Whether a person may create a space in an organization: its owner always may; anyone else only
+ * when the owner allowed members to. The one place this rule lives.
+ */
+export async function mayCreateSpace(
+  db: Pick<PrismaClient, "member" | "organization">,
+  userId: string,
+  organizationId: string,
+): Promise<boolean> {
+  const [member, organization] = await Promise.all([
+    db.member.findUnique({
+      where: { organizationId_userId: { organizationId, userId } },
+      select: { role: true },
+    }),
+    db.organization.findUnique({
+      where: { id: organizationId },
+      select: { membersCanCreateSpaces: true },
+    }),
+  ]);
+  if (member && spaceRoleOf(member.role) === "owner") return true;
+  return organization?.membersCanCreateSpaces === true;
+}
+
+/**
+ * Where a new space from `currentSpaceId` would go, or null when the person may not create one.
+ * Someone who owns another organization adds to their own, never to the one they were invited to.
+ */
+async function spaceCreationOrganization(
+  db: OrganizationClient,
+  input: { currentSpaceId: string; userId: string },
+): Promise<string | null> {
+  const current = await db.spaceMember.findUnique({
+    where: { spaceId_userId: { spaceId: input.currentSpaceId, userId: input.userId } },
+    select: { organizationId: true },
+  });
+  if (!current) throw new IsolationError();
+  const memberships = await db.member.findMany({
+    where: { userId: input.userId },
+    orderBy: { createdAt: "asc" },
+    select: { organizationId: true, role: true },
+  });
+  const owned = memberships.filter((member) => spaceRoleOf(member.role) === "owner");
+  const target = owned.some((member) => member.organizationId === current.organizationId)
+    ? current.organizationId
+    : (owned[0]?.organizationId ?? current.organizationId);
+  return (await mayCreateSpace(db, input.userId, target)) ? target : null;
+}
+
+/** What the person sees of the rule: whether they may create, and the switch when it is theirs. */
+export async function spaceCreationPolicy(
+  prisma: PrismaClient,
+  input: { spaceId: string; userId: string },
+): Promise<{ canCreateSpace: boolean; membersCanCreateSpaces: boolean | null }> {
+  const space = await prisma.space.findUnique({
+    where: { id: input.spaceId },
+    select: { organizationId: true, organization: { select: { membersCanCreateSpaces: true } } },
+  });
+  if (!space) throw new IsolationError();
+  const [target, member] = await Promise.all([
+    spaceCreationOrganization(prisma, {
+      currentSpaceId: input.spaceId,
+      userId: input.userId,
+    }),
+    prisma.member.findUnique({
+      where: {
+        organizationId_userId: { organizationId: space.organizationId, userId: input.userId },
+      },
+      select: { role: true },
+    }),
+  ]);
+  return {
+    canCreateSpace: target !== null,
+    membersCanCreateSpaces:
+      member && spaceRoleOf(member.role) === "owner"
+        ? space.organization.membersCanCreateSpaces
+        : null,
+  };
+}
+
+/** Only the owner of the organization decides whether its members may create spaces. */
+export async function setMembersCanCreateSpaces(
+  prisma: PrismaClient,
+  input: { spaceId: string; userId: string; allowed: boolean },
+): Promise<void> {
+  const space = await prisma.space.findUnique({
+    where: { id: input.spaceId },
+    select: { organizationId: true },
+  });
+  const member = space
+    ? await prisma.member.findUnique({
+        where: {
+          organizationId_userId: { organizationId: space.organizationId, userId: input.userId },
+        },
+        select: { role: true },
+      })
+    : null;
+  if (!space || !member || spaceRoleOf(member.role) !== "owner")
+    throw new TeamError("forbidden", "Not allowed");
+  await prisma.organization.update({
+    where: { id: space.organizationId },
+    data: { membersCanCreateSpaces: input.allowed },
+  });
+}
+
 /** Create a sibling privacy boundary for a member of the active organization. */
 export async function createSpaceForMember(
   prisma: PrismaClient,
@@ -153,36 +268,19 @@ export async function createSpaceForMember(
   await withTransactionRetry(() =>
     prisma.$transaction(
       async (tx) => {
-        const currentMembership = await tx.spaceMember.findUnique({
-          where: {
-            spaceId_userId: {
-              spaceId: input.currentSpaceId,
-              userId: input.userId,
-            },
-          },
-          select: { organizationId: true, role: true },
-        });
-        if (!currentMembership) throw new IsolationError();
-        // Someone invited into another person's workspace adds spaces to their own organization,
-        // never to the one they were invited to.
-        const owned = can(currentMembership, "delete_space")
-          ? currentMembership
-          : ((await tx.spaceMember.findFirst({
-              where: { userId: input.userId, role: "owner" },
-              orderBy: { createdAt: "asc" },
-              select: { organizationId: true, role: true },
-            })) ?? currentMembership);
+        const organizationId = await spaceCreationOrganization(tx, input);
+        if (!organizationId) throw new SpaceCreationNotAllowedError();
         const count = await tx.spaceMember.count({
           where: {
             userId: input.userId,
-            organizationId: owned.organizationId,
+            organizationId,
           },
         });
         if (count >= MAX_SPACES_PER_MEMBER) throw new SpaceLimitError();
         await createSpace(tx, {
           spaceId,
           spaceMembershipId,
-          organizationId: owned.organizationId,
+          organizationId,
           userId: input.userId,
           name,
           createdAt,
@@ -276,7 +374,7 @@ async function assertSpaceDeletable(
   input: SpaceMemberTargetInput,
 ): Promise<Array<{ spaceId: string; space: { isDefault: boolean } }>> {
   const owned = await loadActorSpace(db, input);
-  if (!can(owned, "delete_space")) throw new CannotDeleteSpaceAsNonOwnerError();
+  if (!isSpaceOwner(owned.role)) throw new CannotDeleteSpaceAsNonOwnerError();
   if (owned.isDefault) throw new CannotDeleteDefaultSpaceError();
   const memberships = await db.spaceMember.findMany({
     where: {
@@ -583,7 +681,8 @@ export async function renameSpaceForMember(
       async (tx) => {
         await lockSpaceDeletion(tx, input.spaceId);
         const owned = await loadActorSpace(tx, input);
-        if (!can(owned, "manage_settings")) throw new CannotRenameSpaceAsNonOwnerError();
+        if (!can(await getSpaceMembershipFor(tx, input), "configure"))
+          throw new CannotRenameSpaceAsNonOwnerError();
         if (owned.deletingAt) throw new SpaceDeletionInProgressError();
         await tx.space.update({
           where: { id: input.spaceId },
@@ -606,7 +705,8 @@ export async function setSpacePausedForMember(
       async (tx) => {
         await lockSpaceDeletion(tx, input.spaceId);
         const owned = await loadActorSpace(tx, input);
-        if (!can(owned, "manage_settings")) throw new CannotPauseSpaceAsNonOwnerError();
+        if (!can(await getSpaceMembershipFor(tx, input), "configure"))
+          throw new CannotPauseSpaceAsNonOwnerError();
         if (owned.deletingAt) throw new SpaceDeletionInProgressError();
         const current = await tx.space.findUniqueOrThrow({
           where: { id: input.spaceId },

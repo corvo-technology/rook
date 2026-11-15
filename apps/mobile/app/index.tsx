@@ -137,6 +137,8 @@ function Home({ embedded, onSelectSpace }: InboxPaneProps & { embedded: boolean 
   const [groups, setGroups] = useState<MobileGroup[]>([]);
   const [botSections, setBotSections] = useState<MobileBotSection[]>([]);
   const [spaces, setSpaces] = useState<MobileSpace[]>([]);
+  // Whether this person may create spaces; the server refuses them anyway.
+  const [canCreateSpace, setCanCreateSpace] = useState(true);
   const [me, setMe] = useState<Pick<MobileMe, "userId" | "spaceId" | "name"> | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Kept apart from action errors so a failed action never borrows the load's title.
@@ -245,6 +247,7 @@ function Home({ embedded, onSelectSpace }: InboxPaneProps & { embedded: boolean 
       setGroups((current) => retainInboxValue(current, navigation.current.groups));
       setSpaces((current) => retainInboxValue(current, navigation.spaces));
       setMe((current) => retainInboxValue(current, nextMe));
+      setCanCreateSpace(nextMe.canCreateSpace !== false);
       inboxLoaded.current = true;
       setBadgeLoad({ generation: badgeGeneration });
       setLoadFailure(null);
@@ -613,9 +616,9 @@ function Home({ embedded, onSelectSpace }: InboxPaneProps & { embedded: boolean 
       if (spaceActionRef.current.busy || spaceActionRef.current.recoveryId) return;
       if (action === "bot") void createQuickBot();
       else if (action === "group") router.push("/new-group");
-      else router.push("/new-space");
+      else if (canCreateSpace) router.push("/new-space");
     },
-    [createQuickBot, router],
+    [canCreateSpace, createQuickBot, router],
   );
 
   useHomeHeader({
@@ -626,6 +629,7 @@ function Home({ embedded, onSelectSpace }: InboxPaneProps & { embedded: boolean 
     activityMode,
     toggleActivityMode,
     runCreateAction,
+    canCreateSpace,
   });
 
   const openBot = useCallback(
@@ -733,6 +737,7 @@ function Home({ embedded, onSelectSpace }: InboxPaneProps & { embedded: boolean 
           activityMode={activityMode}
           toggleActivityMode={toggleActivityMode}
           runCreateAction={runCreateAction}
+          canCreateSpace={canCreateSpace}
           columnInsets={columnInsets}
         />
       )}

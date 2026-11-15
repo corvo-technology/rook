@@ -13,7 +13,7 @@ test("asks before fetching a site the message did not name", async ({ page }, te
   const always = page.getByRole("button", { name: "Always allow example.test", exact: true });
   await expect(always).toBeVisible({ timeout: 60_000 });
   await expect(page.getByText("url: https://docs.example.test/page?q=fixture")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Allow once", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Hold to approve", exact: true })).toBeVisible();
   const row = page.locator("[data-message-id]").filter({ has: always });
   const card = always.locator("xpath=../..");
   const rail = row.getByTestId("message-hover-rail");
@@ -37,6 +37,6 @@ test("asks before fetching a site the message did not name", async ({ page }, te
   await captureScreenshot(page, testInfo, "fetch-approval-reaction-picker");
   await page.keyboard.press("Escape");
 
-  await page.getByRole("button", { name: "Deny", exact: true }).click();
-  await expect(page.getByTestId("transcript").getByText("Denied", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Not now", exact: true }).click();
+  await expect(page.getByTestId("transcript").getByText("Not now", { exact: true })).toBeVisible();
 });

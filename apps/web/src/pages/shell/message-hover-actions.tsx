@@ -17,6 +17,8 @@ import {
   MessageSquareDot,
   MessageSquareText,
   MoreHorizontal,
+  Pin,
+  PinOff,
   Reply,
   Smile,
 } from "lucide-react";
@@ -33,6 +35,7 @@ export function MessageHoverActions({
   onKeepInWiki,
   markedUnread = false,
   onReact,
+  onPin,
 }: {
   message: ThreadMessage;
   side: "start" | "end";
@@ -44,6 +47,8 @@ export function MessageHoverActions({
   onKeepInWiki?: (message: ThreadMessage) => void;
   markedUnread?: boolean;
   onReact: (message: ThreadMessage, reaction: MessageReaction) => Promise<void>;
+  /** Pins or unpins the message; absent where there is no pin list. */
+  onPin?: (message: ThreadMessage, pinned: boolean) => Promise<void>;
 }) {
   const { t } = useLingui();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -125,6 +130,21 @@ export function MessageHoverActions({
               >
                 <Reply size={14} strokeWidth={1.7} />
                 <Trans>Reply</Trans>
+              </DropdownMenuItem>
+            ) : null}
+            {onPin && canReactToThreadMessage(message) ? (
+              <DropdownMenuItem
+                onClick={() => {
+                  setMoreOpen(false);
+                  void onPin(message, !message.pinnedAt);
+                }}
+              >
+                {message.pinnedAt ? (
+                  <PinOff size={14} strokeWidth={1.7} />
+                ) : (
+                  <Pin size={14} strokeWidth={1.7} />
+                )}
+                {message.pinnedAt ? <Trans>Unpin</Trans> : <Trans>Pin</Trans>}
               </DropdownMenuItem>
             ) : null}
             {canMarkMessageUnread(message) && !markedUnread ? (

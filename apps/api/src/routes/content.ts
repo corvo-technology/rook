@@ -15,7 +15,7 @@ import {
 } from "../artifacts.js";
 import { listSpaceRuns } from "../runs.js";
 import { querySpaceSearch } from "../search.js";
-import { requireSpacePermission } from "../space-permissions.js";
+import { requireSpacePermission } from "../space-owner.js";
 import { exportSpace, gatherBotContent } from "../space-transfer.js";
 import { loadAllMessages } from "../thread-message-pages.js";
 import { buildRunOutcomes, buildUsageOverview, usageWindow } from "../usage-overview.js";
@@ -330,7 +330,7 @@ export function contentRoutes(ctx: RouterContext) {
     },
     search: {
       query: authed.search.query.handler(async ({ context, input }) => ({
-        hits: await querySpaceSearch(deps.prisma, context.actor, input.q),
+        hits: await querySpaceSearch(deps.prisma, context.actor, input.q, input.within),
       })),
     },
     links: {

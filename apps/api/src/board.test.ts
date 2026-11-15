@@ -4,6 +4,11 @@ import { describe, expect, it, vi } from "vitest";
 import type { RouterDeps } from "./router.js";
 import { createRouter } from "./router.js";
 
+vi.mock("@corvo/db", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@corvo/db")>()),
+  spaceCreationPolicy: async () => ({ canCreateSpace: true, membersCanCreateSpaces: null }),
+}));
+
 const actor: Actor = {
   spaceId: "space-1",
   userId: "user-1",

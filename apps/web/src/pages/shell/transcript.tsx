@@ -94,6 +94,7 @@ export const Transcript = memo(function Transcript({
   markedUnreadMessageId,
   onQuote,
   onReact,
+  onPin,
   onJumpToMessage,
   onOpenPeerMessages,
   memberName,
@@ -165,6 +166,8 @@ export const Transcript = memo(function Transcript({
   markedUnreadMessageId?: string;
   onQuote?: (message: ThreadMessage, quote: string) => void;
   onReact: (message: ThreadMessage, reaction: MessageReaction) => Promise<void>;
+  /** Pins a message to the channel, or unpins it; absent where there is no pin list. */
+  onPin?: (message: ThreadMessage, pinned: boolean) => Promise<void>;
   onJumpToMessage: (messageId: string) => void;
   onOpenPeerMessages: (peer: { peerBotId: string; peerBotName: string }) => void;
   memberName?: (botId: string | undefined) => string | undefined;
@@ -696,6 +699,7 @@ export const Transcript = memo(function Transcript({
                       onMarkUnread={onMarkUnread}
                       onKeepInWiki={onKeepInWiki}
                       onReact={onReact}
+                      onPin={onPin}
                     />
                   </div>
                 </div>
@@ -713,6 +717,8 @@ export const Transcript = memo(function Transcript({
                     className={cn(
                       "mt-1 flex flex-wrap gap-1",
                       message.role === "user" && !channel && "justify-end",
+                      // In a channel the chips line up with the text, past the face.
+                      channel && "ps-12",
                     )}
                   >
                     {[...messageReactions].map(([emoji, count]) => (

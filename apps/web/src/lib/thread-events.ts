@@ -263,6 +263,7 @@ export function isThreadSnapshotEvent(event: ProductEvent): boolean {
     event.type === "thread.message.created" ||
     event.type === "thread.message.updated" ||
     event.type === "thread.message.reaction" ||
+    event.type === "thread.message.pinned" ||
     event.type === "run.started" ||
     event.type === "run.waiting_input" ||
     event.type === "computer.takeover.requested" ||
@@ -530,6 +531,18 @@ export function reduceThreadSnapshot(
       messages: updateCloudAgentMessages(prev.messages, event.payload ?? {}),
     };
   }
+  if (event.type === "thread.message.pinned") {
+    const id = String(event.payload.messageId ?? "");
+    const pinnedAt =
+      typeof event.payload.pinnedAt === "string" ? event.payload.pinnedAt : undefined;
+    return {
+      ...prev,
+      cursor: event.seq,
+      messages: prev.messages.map((message) =>
+        message.id === id ? { ...message, pinnedAt } : message,
+      ),
+    };
+  }
   if (event.type === "thread.message.created" || event.type === "thread.message.updated") {
     const role = (event.payload.role as ThreadMessage["role"]) ?? "bot";
     const blocks = (event.payload.blocks as ThreadMessage["blocks"]) ?? [];
@@ -545,6 +558,11 @@ export function reduceThreadSnapshot(
       runId: event.runId,
       callId: typeof event.payload.callId === "string" ? event.payload.callId : known?.callId,
       ...authorMetadata(event.payload, known),
+      routineName:
+        typeof event.payload.routineName === "string"
+          ? event.payload.routineName
+          : known?.routineName,
+      pinnedAt: known?.pinnedAt,
       ...replyMetadata(event.payload, known),
       threadRootId: threadRootOf(event.payload) ?? known?.threadRootId,
       createdAt: known?.createdAt ?? event.createdAt,

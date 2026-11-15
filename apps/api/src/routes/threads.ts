@@ -9,6 +9,7 @@ import {
 } from "@corvo/core";
 import {
   AnswerTooLongError,
+  ApprovalNotAllowedError,
   appendEventInTransaction,
   completeMission,
   createExternalConversationRepos,
@@ -19,7 +20,9 @@ import {
 } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import { ORPCError } from "@orpc/server";
-import { requireSpacePermission } from "../space-permissions.js";
+import { approvalRefusal, approvalThreadId } from "../approval-access.js";
+import { listPinnedMessages, pinThreadMessage } from "../message-pins.js";
+import { requireSpacePermission } from "../space-owner.js";
 import { assertTeachingSendAllowed } from "../taught-skills.js";
 import { compressThread } from "../thread-context.js";
 import {
@@ -29,6 +32,7 @@ import {
   shouldForwardBackgroundThreadEvent,
   shouldForwardPeerThreadEvent,
   withAuthor,
+  withEventRoutineName,
 } from "../thread-message-pages.js";
 import {
   markThreadRead,
@@ -112,6 +116,7 @@ export function threadsRoutes(ctx: RouterContext) {
           string,
           Promise<{ name: string; image: string | null } | null>
         >();
+        const routineNameCache = new Map<string, Promise<string | undefined>>();
         const follow = deps.events.follow(target.threadId, input.cursor, context.signal);
         // A half-open stream looks identical to an idle one, so punctuate silence:
         // the client treats any frame as liveness and reconnects once they stop.
@@ -160,7 +165,11 @@ export function threadsRoutes(ctx: RouterContext) {
             } else if (await isBackgroundRun(deps.prisma, event.runId, backgroundRunCache)) {
               if (!shouldForwardBackgroundThreadEvent(event)) continue;
             }
-            yield await withAuthor(deps.prisma, event, authorCache);
+            yield await withAuthor(
+              deps.prisma,
+              await withEventRoutineName(deps.prisma, event, routineNameCache),
+              authorCache,
+            );
           }
         } finally {
           // Not awaited: closing can queue behind a read that the abort has not landed on yet.
@@ -230,6 +239,20 @@ export function threadsRoutes(ctx: RouterContext) {
           });
         }
         return { ok: true as const, runIds: result.runIds };
+      }),
+      pin: authed.threads.pin.handler(async ({ context, input }) => {
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        const result = await pinThreadMessage(deps.prisma, context.actor, target, input);
+        if (result.eventSeq != null) {
+          await deps.events.notify(target.threadId, result.eventSeq).catch((error) => {
+            getLogger().error("thread pin realtime notification", error);
+          });
+        }
+        return { ok: true as const, pinnedAt: result.pinnedAt?.toISOString() ?? null };
+      }),
+      pinned: authed.threads.pinned.handler(async ({ context, input }) => {
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        return { messages: await listPinnedMessages(deps.prisma, target) };
       }),
       stop: authed.threads.stop.handler(async ({ context, input }) => {
         await talk(context.actor);
@@ -570,11 +593,11 @@ export function threadsRoutes(ctx: RouterContext) {
         return { ok: true as const };
       }),
       answer: authed.threads.answer.handler(async ({ context, input }) => {
-        const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        const threadId = await approvalThreadId(deps.prisma, context.actor, input);
         const answered = await deps.events
           .answerRunInput({
             spaceId: context.actor.spaceId,
-            threadId: target.threadId,
+            threadId,
             runId: input.runId,
             messageId: input.messageId,
             answeredByUserId: context.actor.userId,
@@ -585,6 +608,7 @@ export function threadsRoutes(ctx: RouterContext) {
             approvalEffectId: input.approvalEffectId,
           })
           .catch((error: unknown) => {
+            if (error instanceof ApprovalNotAllowedError) throw approvalRefusal(error);
             if (error instanceof AnswerTooLongError)
               throw new ORPCError("BAD_REQUEST", { message: error.message });
             // A typed credential its destination cannot carry (e.g. a header with a line break).
@@ -607,7 +631,7 @@ export function threadsRoutes(ctx: RouterContext) {
         return { ok: true as const };
       }),
       answerBatch: authed.threads.answerBatch.handler(async ({ context, input }) => {
-        const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        const threadId = await approvalThreadId(deps.prisma, context.actor, input);
         const results: { approvalEffectId: string; ok: boolean; error?: string }[] = [];
         const resumed = new Set<string>();
         // One at a time through the same path as a single answer, so each card gets the same
@@ -616,7 +640,7 @@ export function threadsRoutes(ctx: RouterContext) {
           const answered = await deps.events
             .answerRunInput({
               spaceId: context.actor.spaceId,
-              threadId: target.threadId,
+              threadId,
               runId: item.runId,
               messageId: item.messageId,
               answeredByUserId: context.actor.userId,
@@ -625,6 +649,7 @@ export function threadsRoutes(ctx: RouterContext) {
               batchClass: input.batchClass,
             })
             .catch((error: unknown) => {
+              if (error instanceof ApprovalNotAllowedError) throw approvalRefusal(error);
               getLogger().error("thread answer batch item", error);
               return false;
             });

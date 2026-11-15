@@ -256,6 +256,21 @@ export function useComposerActions({
     },
     [],
   );
+  const pinMessage = useCallback(
+    async (message: ThreadMessage, pinned: boolean) => {
+      const groupId = activeGroupId.current;
+      if (!groupId) return;
+      try {
+        await rpc.threads.pin({ groupId, messageId: message.id, pinned });
+      } catch (error) {
+        if (activeGroupId.current !== groupId) return;
+        setSendError(
+          errorText(error, pinned ? t`Could not pin message` : t`Could not unpin message`),
+        );
+      }
+    },
+    [t],
+  );
   const reactToMessage = useCallback(
     async (message: ThreadMessage, reaction: MessageReaction) => {
       const botId = activeBotId.current;
@@ -640,6 +655,7 @@ export function useComposerActions({
     answerMessage,
     approveAll,
     reactToMessage,
+    pinMessage,
     sendError,
     setSendError,
     imageConfirmation,

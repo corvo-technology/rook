@@ -8,17 +8,24 @@ import {
   cancelInvitation,
   createInvitations,
   createInviteLink,
+  createSpaceRole,
+  deleteSpaceRole,
   disableInviteLink,
   listInvitations,
   listJoinRequests,
   listSpaceMembers,
+  listSpaceRoles,
   removeMember,
+  reorderSpaceRoles,
   resendInvitation,
   runAsSystem,
   setMemberRole,
+  setMemberRoles,
   TeamError,
+  updateSpaceRole,
 } from "@corvo/db";
 import { ORPCError } from "@orpc/server";
+import { getSpaceMembership } from "../space-owner.js";
 import type { TeamDeps } from "../team.js";
 import { invitationUrl, joinUrl, sendInvitationEmail, syncSeats } from "../team.js";
 import type { RouterContext } from "./context.js";
@@ -51,6 +58,7 @@ function invitationDto(team: TeamDeps, row: InvitationRow): SpaceInvitation {
     id: row.id,
     email: row.email,
     role: row.role,
+    roleIds: row.roleIds,
     status: row.status,
     expiresAt: row.expiresAt.toISOString(),
     createdAt: row.createdAt.toISOString(),
@@ -123,6 +131,17 @@ export function teamRoutes(ctx: RouterContext) {
           );
           return { ok: true as const };
         }),
+        setRoles: spaces.members.setRoles.handler(async ({ context, input }) => {
+          await asSystem(() =>
+            setMemberRoles(deps.prisma, {
+              spaceId: context.actor.spaceId,
+              actorId: context.actor.userId,
+              userId: input.userId,
+              roleIds: input.roleIds,
+            }),
+          );
+          return { ok: true as const };
+        }),
         remove: spaces.members.remove.handler(async ({ context, input }) => {
           await asSystem(() =>
             removeMember(deps.prisma, {
@@ -143,6 +162,61 @@ export function teamRoutes(ctx: RouterContext) {
             }),
           );
           await changed(deps.team, context.actor.spaceId);
+          return { ok: true as const };
+        }),
+      },
+      roles: {
+        list: spaces.roles.list.handler(async ({ context }) => {
+          const me = await getSpaceMembership(deps.prisma, context.actor);
+          if (!me) throw new ORPCError("FORBIDDEN");
+          const roles = await asSystem(() => listSpaceRoles(deps.prisma, context.actor.spaceId));
+          return {
+            roles,
+            me: { isOwner: me.isOwner, roleIds: [...me.roleIds], permissions: [...me.permissions] },
+          };
+        }),
+        create: spaces.roles.create.handler(async ({ context, input }) => ({
+          id: await asSystem(() =>
+            createSpaceRole(deps.prisma, {
+              spaceId: context.actor.spaceId,
+              actorId: context.actor.userId,
+              name: input.name,
+              keys: input.keys,
+              color: input.color,
+            }),
+          ),
+        })),
+        update: spaces.roles.update.handler(async ({ context, input }) => {
+          await asSystem(() =>
+            updateSpaceRole(deps.prisma, {
+              spaceId: context.actor.spaceId,
+              actorId: context.actor.userId,
+              id: input.id,
+              name: input.name,
+              keys: input.keys,
+              color: input.color,
+            }),
+          );
+          return { ok: true as const };
+        }),
+        remove: spaces.roles.remove.handler(async ({ context, input }) => {
+          await asSystem(() =>
+            deleteSpaceRole(deps.prisma, {
+              spaceId: context.actor.spaceId,
+              actorId: context.actor.userId,
+              id: input.id,
+            }),
+          );
+          return { ok: true as const };
+        }),
+        reorder: spaces.roles.reorder.handler(async ({ context, input }) => {
+          await asSystem(() =>
+            reorderSpaceRoles(deps.prisma, {
+              spaceId: context.actor.spaceId,
+              actorId: context.actor.userId,
+              ids: input.ids,
+            }),
+          );
           return { ok: true as const };
         }),
       },
@@ -171,6 +245,7 @@ export function teamRoutes(ctx: RouterContext) {
               spaceId: context.actor.spaceId,
               actorId: context.actor.userId,
               role: input.role,
+              roleIds: input.roleIds,
               addresses: parsed.addresses,
             }),
           );

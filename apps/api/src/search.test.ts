@@ -262,3 +262,71 @@ it("guards name-derived snippets while preserving descriptions", async () => {
   ).toEqual(["", ""]);
   expect(hits.find((hit) => hit.botId === "bot-2")?.snippet).toBe("Keep __TestTok2__ literal");
 });
+
+describe("search within one thread", () => {
+  function scoped(rows: Array<{ id: string; seq: number; blocks: unknown }>) {
+    return {
+      bot: {
+        findMany: vi.fn(),
+        findFirst: vi.fn().mockResolvedValue({ id: "bot-1", name: "Cora" }),
+      },
+      chatGroup: {
+        findMany: vi.fn(),
+        findFirst: vi.fn().mockResolvedValue({ id: "group-1", name: "financeiro" }),
+      },
+      artifact: { findMany: vi.fn() },
+      routine: { findMany: vi.fn() },
+      $queryRaw: vi.fn().mockResolvedValue(rows),
+    };
+  }
+  const rows = [
+    { id: "m1", seq: 3, blocks: [{ kind: "text", text: "A tarifa entrou duas vezes" }] },
+  ];
+
+  it("reads only that channel's messages and skips every other kind of hit", async () => {
+    const prisma = scoped(rows);
+    const hits = await querySpaceSearch(prisma as unknown as PrismaClient, actor, "tarifa", {
+      groupId: "group-1",
+    });
+    expect(hits).toEqual([
+      expect.objectContaining({
+        kind: "message",
+        groupId: "group-1",
+        messageId: "m1",
+        seq: 3,
+      }),
+    ]);
+    expect(prisma.artifact.findMany).not.toHaveBeenCalled();
+    expect(prisma.routine.findMany).not.toHaveBeenCalled();
+    expect(prisma.bot.findMany).not.toHaveBeenCalled();
+    expect(prisma.chatGroup.findFirst).toHaveBeenCalledWith({
+      where: { id: "group-1", spaceId: actor.spaceId, userId: actor.userId },
+      select: { id: true, name: true },
+    });
+    const [, ...values] = prisma.$queryRaw.mock.calls[0] ?? [];
+    expect(values).toContain(actor.userId);
+    const thread = values.find((value) => value?.text?.includes('t."groupId" ='));
+    expect(thread?.values).toEqual(["group-1"]);
+  });
+
+  it("scopes a direct chat by its bot", async () => {
+    const prisma = scoped(rows);
+    const hits = await querySpaceSearch(prisma as unknown as PrismaClient, actor, "tarifa", {
+      botId: "bot-1",
+    });
+    expect(hits[0]).toMatchObject({ botId: "bot-1", botName: "Cora" });
+    const [, ...values] = prisma.$queryRaw.mock.calls[0] ?? [];
+    expect(values.some((value) => value?.text?.includes('t."botId" ='))).toBe(true);
+  });
+
+  it("finds nothing in a chat the person does not own", async () => {
+    const prisma = scoped(rows);
+    prisma.chatGroup.findFirst.mockResolvedValue(null);
+    expect(
+      await querySpaceSearch(prisma as unknown as PrismaClient, actor, "tarifa", {
+        groupId: "someone-elses",
+      }),
+    ).toEqual([]);
+    expect(prisma.$queryRaw).not.toHaveBeenCalled();
+  });
+});

@@ -42,7 +42,8 @@ function fixture() {
   ]);
   const prisma = {
     bot: { findFirst: findBot },
-    spaceMember: { findUnique: vi.fn(async () => ({ role: "member" })) },
+    spaceMember: { findUnique: vi.fn(async () => ({ role: "member", roles: [] })) },
+    spaceRole: { findMany: vi.fn(async () => []) },
     userModelPreference: { findFirst: vi.fn(async () => null) },
     spaceSettingOverride: { findUnique: vi.fn(async () => null) },
     userModelRoleChoice: { findMany: vi.fn(async () => []) },

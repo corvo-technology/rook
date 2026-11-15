@@ -340,6 +340,7 @@ function mountReply(
     botId: "leo",
     createdAt: "2026-11-02T12:13:00.000Z",
     blocks: [{ kind: "text", text }],
+    ...extra.message,
   };
   act(() =>
     root.render(
@@ -626,4 +627,28 @@ it("names the teammate who wrote a message in a shared conversation", () => {
 it("shows your own message, and older ones that name nobody, as before", () => {
   renderUserMessage(undefined);
   expect(container.textContent).toBe("Can you check the invoice?");
+});
+
+it("names the routine behind a message beside the agent and the time", () => {
+  mountReply("Cora", false, { message: { routineName: "Conciliação diária" } as ThreadMessage });
+  const badge = container.querySelector('[data-testid="routine-badge"]');
+  expect(badge?.textContent).toBe("Routine “Conciliação diária”");
+  const header = badge?.parentElement;
+  expect(header?.textContent).toContain("Cora");
+  expect(header?.querySelector("time")).not.toBeNull();
+});
+
+it("shows no routine badge on an ordinary message", () => {
+  mountReply("Cora");
+  expect(container.querySelector('[data-testid="routine-badge"]')).toBeNull();
+  expect(container.querySelector('[data-testid="pinned-mark"]')).toBeNull();
+});
+
+it("marks a pinned message in its name line", () => {
+  mountReply("Cora", false, {
+    message: { pinnedAt: "2026-11-02T13:00:00.000Z" } as ThreadMessage,
+  });
+  expect(container.querySelector('[data-testid="pinned-mark"]')?.getAttribute("aria-label")).toBe(
+    "Pinned",
+  );
 });

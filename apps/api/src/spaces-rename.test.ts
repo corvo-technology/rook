@@ -36,6 +36,7 @@ function renameHarness(target: TargetSpace, currentOrganizationId: string | null
         };
       }),
     },
+    spaceRole: { findMany: vi.fn(async () => []) },
     space: { update },
   };
   const transaction = vi.fn(async (callback: (client: typeof tx) => Promise<unknown>) =>

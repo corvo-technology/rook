@@ -64,7 +64,7 @@ export async function loadMessagePage(
       const messages = includePeerRuns ? rows : await withoutPeerRunMessages(prisma, rows);
       return {
         threadId,
-        messages: await withAuthors(prisma, messages),
+        messages: await withRoutineNames(prisma, messages),
         olderCursor: hasOlder ? (first?.seq ?? null) : null,
         coveredThroughSeq,
       };
@@ -93,7 +93,7 @@ export async function loadMessagePage(
     if (hasSubstantive || includePeerReceipts || !hasOlder || includePeerRuns) {
       return {
         threadId,
-        messages: await withAuthors(prisma, visibleRows),
+        messages: await withRoutineNames(prisma, visibleRows),
         olderCursor: hasOlder ? (pageRows[0]?.seq ?? null) : null,
       };
     }
@@ -101,6 +101,39 @@ export async function loadMessagePage(
     // long peer-only histories make this path hot.
     cursor = pageRows[0]?.seq;
   }
+}
+
+/** The messages as the thread shows them, each written by a routine's run naming that routine. */
+export async function withRoutineNames(
+  prisma: MessageDb,
+  rows: Parameters<typeof toThreadMessage>[0][],
+): Promise<ThreadMessage[]> {
+  const runIds = [...new Set(rows.flatMap((row) => (row.runId ? [row.runId] : [])))];
+  const runs = runIds.length
+    ? await prisma.run.findMany({
+        where: { id: { in: runIds }, routineId: { not: null } },
+        select: { id: true, routine: { select: { name: true } } },
+      })
+    : [];
+  const names = new Map(runs.flatMap((run) => (run.routine ? [[run.id, run.routine.name]] : [])));
+  // Older rows name no author and show as before.
+  const authorIds = [
+    ...new Set(rows.flatMap((row) => (row.authorUserId ? [row.authorUserId] : []))),
+  ];
+  const users = authorIds.length
+    ? await prisma.user.findMany({
+        where: { id: { in: authorIds } },
+        select: { id: true, name: true, image: true },
+      })
+    : [];
+  const authors = new Map(users.map((user) => [user.id, user]));
+  return rows.map((row) =>
+    toThreadMessage({
+      ...row,
+      routineName: row.runId ? names.get(row.runId) : undefined,
+      author: row.authorUserId ? authors.get(row.authorUserId) : undefined,
+    }),
+  );
 }
 
 export async function loadAllMessages(
@@ -174,6 +207,22 @@ export async function isPeerRun(
     cache.set(runId, peerRun);
   }
   return peerRun;
+}
+
+/** A live message event with the routine behind its run named, so the badge shows without a reload. */
+export async function withEventRoutineName<
+  E extends { type: string; runId?: string; payload: Record<string, unknown> },
+>(prisma: MessageDb, event: E, cache: Map<string, Promise<string | undefined>>): Promise<E> {
+  if (!event.runId || event.type !== "thread.message.created") return event;
+  let name = cache.get(event.runId);
+  if (!name) {
+    name = prisma.run
+      .findUnique({ where: { id: event.runId }, select: { routine: { select: { name: true } } } })
+      .then((run) => run?.routine?.name);
+    cache.set(event.runId, name);
+  }
+  const routineName = await name;
+  return routineName ? { ...event, payload: { ...event.payload, routineName } } : event;
 }
 
 export async function isBackgroundRun(
@@ -253,50 +302,31 @@ export function shouldForwardBackgroundThreadEvent(event: {
   return Array.isArray(blocks) && blocks.some(isBackgroundInputBlock);
 }
 
-/** Who wrote each user message that names an author; older rows name nobody and show as before. */
-async function withAuthors(
-  prisma: MessageDb,
-  rows: Array<Parameters<typeof toThreadMessage>[0]>,
-): Promise<ThreadMessage[]> {
-  const authorIds = [
-    ...new Set(rows.flatMap((row) => (row.authorUserId ? [row.authorUserId] : []))),
-  ];
-  const users = authorIds.length
-    ? await prisma.user.findMany({
-        where: { id: { in: authorIds } },
-        select: { id: true, name: true, image: true },
-      })
-    : [];
-  const byId = new Map(users.map((user) => [user.id, user]));
-  return rows.map((row) =>
-    toThreadMessage(row, row.authorUserId ? byId.get(row.authorUserId) : undefined),
-  );
-}
-
-function toThreadMessage(
-  row: {
-    id: string;
+export function toThreadMessage(row: {
+  id: string;
+  threadId: string;
+  seq: number;
+  role: string;
+  blocks: Prisma.JsonValue;
+  botId: string | null;
+  replyToMessageId: string | null;
+  replyQuote: string | null;
+  threadRootId?: string | null;
+  replyTo?: {
     threadId: string;
-    seq: number;
     role: string;
-    blocks: Prisma.JsonValue;
     botId: string | null;
-    replyToMessageId: string | null;
-    replyQuote: string | null;
-    threadRootId?: string | null;
-    replyTo?: {
-      threadId: string;
-      role: string;
-      botId: string | null;
-      blocks: Prisma.JsonValue;
-    } | null;
-    runId: string | null;
-    clientNonce?: string | null;
-    authorUserId?: string | null;
-    createdAt: Date;
-  },
-  author?: { id: string; name: string; image: string | null },
-): ThreadMessage {
+    blocks: Prisma.JsonValue;
+  } | null;
+  runId: string | null;
+  clientNonce?: string | null;
+  pinnedAt?: Date | null;
+  routineName?: string;
+  /** Who wrote a user message, when it names an author; resolved by `withRoutineNames`. */
+  authorUserId?: string | null;
+  author?: { id: string; name: string; image: string | null };
+  createdAt: Date;
+}): ThreadMessage {
   const parent = row.replyTo?.threadId === row.threadId ? row.replyTo : null;
   const parsed = parent ? MessageBlockSchema.array().safeParse(parent.blocks) : undefined;
   const replyPreview =
@@ -322,9 +352,15 @@ function toThreadMessage(
     threadRootId: row.threadRootId ?? undefined,
     runId: row.runId ?? undefined,
     callId: callIdFromClientNonce(row.clientNonce),
-    ...(author
-      ? { authorUserId: author.id, authorName: author.name, authorImage: author.image }
+    routineName: row.routineName,
+    ...(row.author
+      ? {
+          authorUserId: row.author.id,
+          authorName: row.author.name,
+          authorImage: row.author.image,
+        }
       : {}),
+    pinnedAt: row.pinnedAt?.toISOString(),
     createdAt: row.createdAt.toISOString(),
   };
 }
@@ -333,11 +369,11 @@ function toThreadMessage(
  * A live user message names its author by id only; the stream adds their name and picture, so a
  * teammate's message arrives with the same label a page load would give it.
  */
-export async function withAuthor(
+export async function withAuthor<E extends ProductEvent>(
   prisma: MessageDb,
-  event: ProductEvent,
+  event: E,
   cache: Map<string, Promise<{ name: string; image: string | null } | null>>,
-): Promise<ProductEvent> {
+): Promise<E> {
   const authorUserId = event.payload.authorUserId;
   if (event.type !== "thread.message.created" || typeof authorUserId !== "string") return event;
   let author = cache.get(authorUserId);

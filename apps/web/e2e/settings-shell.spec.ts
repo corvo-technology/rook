@@ -271,3 +271,28 @@ test("Members lets an owner pick which workspace an invitation is for", async ({
   await expect(settings.getByTestId("members-settings")).toHaveAttribute("data-space-id", /.+/);
   await expect(picker).toContainText("Employees");
 });
+
+test("a space's owner makes a role and switches a permission on", async ({ page }, testInfo) => {
+  const stamp = Date.now();
+  await signup(page, `settings-roles-${stamp}@corvo.test`, "password12", "Settings");
+  await completeOnboarding(page);
+  await rpc(page, "spaces/create", { name: "Employees" });
+  await page.reload();
+  const settings = await openUserSettings(page);
+  await settings.getByRole("button", { name: "Manage Employees", exact: true }).click();
+
+  const roles = page.getByTestId("space-roles");
+  await expect(roles).toBeVisible();
+  await expect(roles.getByText("Everyone", { exact: true })).toBeVisible();
+  await roles.getByRole("button", { name: "New role", exact: true }).click();
+  await roles.getByRole("textbox", { name: "Role name" }).fill("Support");
+  await roles.getByRole("button", { name: "Create", exact: true }).click();
+  await expect(roles.getByText("Support", { exact: true }).first()).toBeVisible();
+
+  const approve = roles.getByRole("switch", { name: "Approve actions" });
+  await expect(approve).not.toBeChecked();
+  await approve.click();
+  await expect(approve).toBeChecked();
+  await expect(roles.getByText("1 permission")).toBeVisible();
+  await captureScreenshot(page, testInfo, "settings-space-roles");
+});

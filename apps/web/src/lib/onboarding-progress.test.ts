@@ -1,6 +1,12 @@
 import type { OnboardingPicks } from "@corvo/contracts";
 import { describe, expect, it } from "vitest";
-import { loadDoneSteps, loadPicks, saveDoneSteps, savePicks } from "./onboarding-progress";
+import {
+  loadDoneSteps,
+  loadPicks,
+  mergeDoneSteps,
+  saveDoneSteps,
+  savePicks,
+} from "./onboarding-progress";
 
 function memoryStorage(): Storage {
   const items = new Map<string, string>();
@@ -19,8 +25,8 @@ function memoryStorage(): Storage {
 describe("onboarding progress", () => {
   it("brings back the steps a person finished before a reload", () => {
     const storage = memoryStorage();
-    saveDoneSteps("user-1", new Set(["workspace", "survey"]), storage);
-    expect(loadDoneSteps("user-1", storage)).toEqual(new Set(["workspace", "survey"]));
+    saveDoneSteps("user-1", new Set(["workspace", "start"]), storage);
+    expect(loadDoneSteps("user-1", storage)).toEqual(new Set(["workspace", "start"]));
   });
 
   it("does not give one account's progress to another in the same tab", () => {
@@ -68,5 +74,13 @@ describe("onboarding progress", () => {
     expect(loadPicks("user-1", storage)).toBeNull();
     storage.setItem("corvo:onboarding-picks", "not json");
     expect(loadPicks("user-1", storage)).toBeNull();
+  });
+});
+
+describe("resuming on another device", () => {
+  it("counts the steps the server has beside the ones this tab kept", () => {
+    expect(mergeDoneSteps(new Set(["workspace"]), ["start", "workspace"])).toEqual(
+      new Set(["workspace", "start"]),
+    );
   });
 });

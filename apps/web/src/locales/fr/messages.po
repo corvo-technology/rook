@@ -614,6 +614,10 @@ msgstr "La sortie d’une commande"
 msgid "A page changed since"
 msgstr "Une page a changé depuis"
 
+#: src/pages/onboarding/StartStep.tsx
+msgid "A ready team"
+msgstr "Une équipe prête"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "A second model approves what fits your request. You decide the rest."
 msgstr "Un second modèle approuve ce qui correspond à votre demande. Vous décidez du reste."
@@ -1507,10 +1511,6 @@ msgstr "Jeton du bot"
 msgid "Bot's model"
 msgstr "Modèle du bot"
 
-#: src/pages/onboarding/UseStep.tsx
-msgid "Both"
-msgstr "Les deux"
-
 #: src/pages/Artifacts.tsx
 msgid "Bots"
 msgstr "Bots"
@@ -2221,7 +2221,7 @@ msgstr "Limite de contexte"
 #: src/pages/onboarding/ComputerStep.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 #: src/pages/onboarding/LocalModelChoice.tsx
-#: src/pages/onboarding/UseStep.tsx
+#: src/pages/onboarding/StartStep.tsx
 #: src/pages/onboarding/WorkspaceStep.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Continue"
@@ -2793,6 +2793,7 @@ msgid "Could not send"
 msgstr "Envoi impossible"
 
 #: src/pages/MembersSettingsPanel.tsx
+#: src/pages/onboarding/InviteStep.tsx
 msgid "Could not send invitations"
 msgstr "Impossible d’envoyer les invitations"
 
@@ -3434,6 +3435,7 @@ msgid "Email"
 msgstr "E-mail"
 
 #: src/pages/MembersSettingsPanel.tsx
+#: src/pages/onboarding/InviteStep.tsx
 msgid "Email addresses"
 msgstr "Adresses e-mail"
 
@@ -3984,6 +3986,10 @@ msgstr "heure"
 msgid "hours"
 msgstr "heures"
 
+#: src/pages/onboarding/StartStep.tsx
+msgid "How do you want to start?"
+msgstr "Comment voulez-vous commencer ?"
+
 #: src/components/AutonomyPicker.tsx
 msgid "How much does {name} do on its own?"
 msgstr "Que fait {name} de lui-même ?"
@@ -3995,10 +4001,6 @@ msgstr "Fréquence"
 #: src/components/teach/SkillDraftCard.tsx
 msgid "How to check"
 msgstr "Comment vérifier"
-
-#: src/pages/onboarding/UseStep.tsx
-msgid "How will you use Rook?"
-msgstr "Comment utiliserez-vous Rook ?"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -4061,6 +4063,7 @@ msgid "Import an agent"
 msgstr "Importer un agent"
 
 #: src/pages/ImportFromApp.tsx
+#: src/pages/onboarding/StartStep.tsx
 msgid "Import from another app"
 msgstr "Importer depuis une autre app"
 
@@ -4199,6 +4202,10 @@ msgstr "Quantité de l'intervalle"
 msgid "Interval unit"
 msgstr "Unité de l'intervalle"
 
+#: src/pages/Onboarding.tsx
+msgid "Introduce yourself and suggest what we should do first."
+msgstr "Présentez-vous et suggérez ce que nous devrions faire en premier."
+
 #: src/lib/user-error.ts
 msgid "Invalid code"
 msgstr "Code non valide"
@@ -4213,12 +4220,17 @@ msgid "Invitation to {0}"
 msgstr "Invitation pour {0}"
 
 #: src/pages/MembersSettingsPanel.tsx
+#: src/pages/onboarding/InviteStep.tsx
 msgid "Invite"
 msgstr "Inviter"
 
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Invite people"
 msgstr "Inviter des personnes"
+
+#: src/pages/onboarding/InviteStep.tsx
+msgid "Invite your team"
+msgstr "Invitez votre équipe"
 
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
@@ -4272,6 +4284,10 @@ msgstr "Aller au message cité : {excerpt}"
 #: src/lib/relative-time.ts
 msgid "just now"
 msgstr "à l'instant"
+
+#: src/pages/onboarding/StartStep.tsx
+msgid "Just the Chief"
+msgstr "Seulement le Chief"
 
 #: src/pages/YouMemory.tsx
 msgid "Keep"
@@ -5751,7 +5767,6 @@ msgstr "Autorisations"
 msgid "Persona"
 msgstr "Personnalité"
 
-#: src/pages/onboarding/UseStep.tsx
 #: src/pages/onboarding/WorkspaceStep.tsx
 msgid "Personal"
 msgstr "Personnel"
@@ -6945,6 +6960,7 @@ msgstr "Compétences"
 msgid "Skills join the library all your bots share."
 msgstr "Les compétences rejoignent la bibliothèque partagée par tous vos bots."
 
+#: src/pages/onboarding/InviteStep.tsx
 #: src/pages/shell/computer-release-actions.tsx
 msgid "Skip"
 msgstr "Passer"
@@ -7077,6 +7093,7 @@ msgstr "SSO est temporairement indisponible. Réessayez."
 msgid "Standard"
 msgstr "Standard"
 
+#: src/pages/Onboarding.tsx
 #: src/pages/shell/computer-overlay.tsx
 msgid "Start"
 msgstr "Démarrer"
@@ -7294,6 +7311,7 @@ msgstr "Apprenez-lui quelque chose sur vous"
 msgid "Teaching in progress. Stop teaching before sending a new message."
 msgstr "Enseignement en cours. Arrêtez l'enseignement avant d'envoyer un nouveau message."
 
+#: src/pages/Onboarding.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
@@ -7866,7 +7884,6 @@ msgid "Usage"
 msgstr "Utilisation"
 
 #: src/pages/LocalSpeechSection.tsx
-#: src/pages/Onboarding.tsx
 msgid "Use"
 msgstr "Utiliser"
 
@@ -8117,10 +8134,6 @@ msgstr "Que devrait faire cette routine à chaque exécution ?"
 msgid "What should we call you?"
 msgstr "Comment devons-nous vous appeler ?"
 
-#: src/pages/onboarding/UseStep.tsx
-msgid "What should your bots help with?"
-msgstr "Sur quoi vos bots doivent-ils vous aider ?"
-
 #: src/pages/shell/agent-import-undo.tsx
 msgid "What the import added will be removed. The bot stays."
 msgstr "Ce que l’import a ajouté sera supprimé. Le bot reste."
@@ -8193,10 +8206,6 @@ msgstr "Réglages du wiki"
 #: src/lib/ticket-status.ts
 msgid "Won't do"
 msgstr "Ne sera pas fait"
-
-#: src/pages/onboarding/UseStep.tsx
-msgid "Work"
-msgstr "Travail"
 
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/shell/command-palette.tsx

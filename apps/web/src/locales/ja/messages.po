@@ -614,6 +614,10 @@ msgstr "コマンドの出力"
 msgid "A page changed since"
 msgstr "その後ページが変更されました"
 
+#: src/pages/onboarding/StartStep.tsx
+msgid "A ready team"
+msgstr "用意されたチーム"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "A second model approves what fits your request. You decide the rest."
 msgstr "2つ目のモデルが、リクエストに合うものを承認します。残りはあなたが決めます。"
@@ -1507,10 +1511,6 @@ msgstr "ボットのトークン"
 msgid "Bot's model"
 msgstr "ボットのモデル"
 
-#: src/pages/onboarding/UseStep.tsx
-msgid "Both"
-msgstr "両方"
-
 #: src/pages/Artifacts.tsx
 msgid "Bots"
 msgstr "ボット"
@@ -2221,7 +2221,7 @@ msgstr "コンテキスト上限"
 #: src/pages/onboarding/ComputerStep.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 #: src/pages/onboarding/LocalModelChoice.tsx
-#: src/pages/onboarding/UseStep.tsx
+#: src/pages/onboarding/StartStep.tsx
 #: src/pages/onboarding/WorkspaceStep.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Continue"
@@ -2793,6 +2793,7 @@ msgid "Could not send"
 msgstr "送信できませんでした"
 
 #: src/pages/MembersSettingsPanel.tsx
+#: src/pages/onboarding/InviteStep.tsx
 msgid "Could not send invitations"
 msgstr "招待を送信できませんでした"
 
@@ -3434,6 +3435,7 @@ msgid "Email"
 msgstr "メールアドレス"
 
 #: src/pages/MembersSettingsPanel.tsx
+#: src/pages/onboarding/InviteStep.tsx
 msgid "Email addresses"
 msgstr "メールアドレス"
 
@@ -3984,6 +3986,10 @@ msgstr "時間"
 msgid "hours"
 msgstr "時間"
 
+#: src/pages/onboarding/StartStep.tsx
+msgid "How do you want to start?"
+msgstr "どのように始めますか？"
+
 #: src/components/AutonomyPicker.tsx
 msgid "How much does {name} do on its own?"
 msgstr "{name}はどこまで自分で行いますか？"
@@ -3995,10 +4001,6 @@ msgstr "頻度"
 #: src/components/teach/SkillDraftCard.tsx
 msgid "How to check"
 msgstr "確認方法"
-
-#: src/pages/onboarding/UseStep.tsx
-msgid "How will you use Rook?"
-msgstr "Rookをどのように使いますか？"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -4061,6 +4063,7 @@ msgid "Import an agent"
 msgstr "エージェントをインポート"
 
 #: src/pages/ImportFromApp.tsx
+#: src/pages/onboarding/StartStep.tsx
 msgid "Import from another app"
 msgstr "別のアプリからインポート"
 
@@ -4199,6 +4202,10 @@ msgstr "間隔の値"
 msgid "Interval unit"
 msgstr "間隔の単位"
 
+#: src/pages/Onboarding.tsx
+msgid "Introduce yourself and suggest what we should do first."
+msgstr "自己紹介をして、最初に何をすべきか提案してください。"
+
 #: src/lib/user-error.ts
 msgid "Invalid code"
 msgstr "無効なコード"
@@ -4213,12 +4220,17 @@ msgid "Invitation to {0}"
 msgstr "{0} への招待"
 
 #: src/pages/MembersSettingsPanel.tsx
+#: src/pages/onboarding/InviteStep.tsx
 msgid "Invite"
 msgstr "招待する"
 
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Invite people"
 msgstr "メンバーを招待"
+
+#: src/pages/onboarding/InviteStep.tsx
+msgid "Invite your team"
+msgstr "チームを招待"
 
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
@@ -4272,6 +4284,10 @@ msgstr "返信元のメッセージへ移動: {excerpt}"
 #: src/lib/relative-time.ts
 msgid "just now"
 msgstr "たった今"
+
+#: src/pages/onboarding/StartStep.tsx
+msgid "Just the Chief"
+msgstr "Chief だけ"
 
 #: src/pages/YouMemory.tsx
 msgid "Keep"
@@ -5751,7 +5767,6 @@ msgstr "権限"
 msgid "Persona"
 msgstr "ペルソナ"
 
-#: src/pages/onboarding/UseStep.tsx
 #: src/pages/onboarding/WorkspaceStep.tsx
 msgid "Personal"
 msgstr "個人"
@@ -6945,6 +6960,7 @@ msgstr "スキル"
 msgid "Skills join the library all your bots share."
 msgstr "スキルはすべてのボットで共有するライブラリに追加されます。"
 
+#: src/pages/onboarding/InviteStep.tsx
 #: src/pages/shell/computer-release-actions.tsx
 msgid "Skip"
 msgstr "スキップ"
@@ -7077,6 +7093,7 @@ msgstr "SSOは一時的に利用できません。もう一度お試しくださ
 msgid "Standard"
 msgstr "標準"
 
+#: src/pages/Onboarding.tsx
 #: src/pages/shell/computer-overlay.tsx
 msgid "Start"
 msgstr "開始"
@@ -7294,6 +7311,7 @@ msgstr "あなたについて教える"
 msgid "Teaching in progress. Stop teaching before sending a new message."
 msgstr "ティーチング中です。新しいメッセージを送信する前にティーチングを停止してください。"
 
+#: src/pages/Onboarding.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
@@ -7866,7 +7884,6 @@ msgid "Usage"
 msgstr "使用量"
 
 #: src/pages/LocalSpeechSection.tsx
-#: src/pages/Onboarding.tsx
 msgid "Use"
 msgstr "使用"
 
@@ -8117,10 +8134,6 @@ msgstr "このルーティンは実行のたびに何をしますか？"
 msgid "What should we call you?"
 msgstr "お名前をどうお呼びしましょうか?"
 
-#: src/pages/onboarding/UseStep.tsx
-msgid "What should your bots help with?"
-msgstr "ボットに何を手伝ってほしいですか?"
-
 #: src/pages/shell/agent-import-undo.tsx
 msgid "What the import added will be removed. The bot stays."
 msgstr "インポートで追加されたものが削除されます。ボットは残ります。"
@@ -8193,10 +8206,6 @@ msgstr "Wikiの設定"
 #: src/lib/ticket-status.ts
 msgid "Won't do"
 msgstr "対応しない"
-
-#: src/pages/onboarding/UseStep.tsx
-msgid "Work"
-msgstr "仕事"
 
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/shell/command-palette.tsx

@@ -46,7 +46,7 @@ import {
   CliLoginSessionSchema,
   CliLoginStartSchema,
 } from "./cli-engines.js";
-import { TourMark } from "./coach-tour.js";
+import { OnboardingStep, TourMark } from "./coach-tour.js";
 import { DatabaseConnectionInput, DatabaseConnectionSchema } from "./database-connection.js";
 import {
   ActionApprovalRuleSchema,
@@ -1338,6 +1338,12 @@ export const appContract = {
   onboarding: {
     /** Record the optional signup survey; an empty submission marks it skipped. */
     signupSurvey: oc.input(SignupSurveySchema).output(z.object({ ok: z.literal(true) })),
+    /** The first-run steps this person finished, on any device. */
+    progress: oc.output(z.object({ done: z.array(OnboardingStep) })),
+    /** Record a finished first-run step. Safe to repeat. */
+    stepDone: oc
+      .input(z.object({ step: OnboardingStep }))
+      .output(z.object({ ok: z.literal(true) })),
     /** Record that a coach mark is done for this person. Safe to repeat. */
     tourDone: oc.input(z.object({ mark: TourMark })).output(z.object({ ok: z.literal(true) })),
     /** End the coach tour for good. */

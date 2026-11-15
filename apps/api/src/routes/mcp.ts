@@ -8,8 +8,8 @@ import {
   sanitizeComposioError,
   verifyMcpInstall,
 } from "@corvo/adapters";
-import type { Actor } from "@corvo/contracts";
-import { signupSurveyAsksTeamSize } from "@corvo/contracts";
+import type { Actor, OnboardingStep } from "@corvo/contracts";
+import { ONBOARDING_STEPS, signupSurveyAsksTeamSize } from "@corvo/contracts";
 import { containsSecret } from "@corvo/core";
 import type { Prisma } from "@corvo/db";
 import { IsolationError, markTourDone, skipTour } from "@corvo/db";
@@ -825,6 +825,24 @@ export function mcpRoutes(ctx: RouterContext) {
           // The first save's time keeps a resubmission a duplicate of the same event.
           { id: context.actor.userId, at: saved.createdAt },
         );
+        return { ok: true as const };
+      }),
+      progress: authed.onboarding.progress.handler(async ({ context }) => {
+        const row = await deps.prisma.onboardingProgress.findUnique({
+          where: { userId: context.actor.userId },
+        });
+        const known = new Set<string>(ONBOARDING_STEPS);
+        return { done: (row?.done ?? []).filter((step) => known.has(step)) as OnboardingStep[] };
+      }),
+      stepDone: authed.onboarding.stepDone.handler(async ({ context, input }) => {
+        const userId = context.actor.userId;
+        const row = await deps.prisma.onboardingProgress.findUnique({ where: { userId } });
+        const done = [...new Set([...(row?.done ?? []), input.step])];
+        await deps.prisma.onboardingProgress.upsert({
+          where: { userId },
+          create: { userId, done },
+          update: { done },
+        });
         return { ok: true as const };
       }),
       tourDone: authed.onboarding.tourDone.handler(async ({ context, input }) => {

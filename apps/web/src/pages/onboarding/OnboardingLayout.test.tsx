@@ -17,7 +17,7 @@ import { OnboardingLayout } from "./OnboardingLayout";
 
 const steps: { id: OnboardingStepId; label: string; detail?: string }[] = [
   { id: "workspace", label: "Workspace", detail: "Alves Studio" },
-  { id: "survey", label: "Use" },
+  { id: "start", label: "Use" },
   { id: "bot", label: "First bot" },
   { id: "computer", label: "Computer" },
 ];
@@ -34,7 +34,7 @@ function render(props: {
     root.render(
       <OnboardingLayout
         steps={steps}
-        current={props.current ?? "survey"}
+        current={props.current ?? "start"}
         done={new Set(props.done ?? ["workspace"])}
         onBack={props.onBack}
       >
@@ -74,7 +74,7 @@ describe("OnboardingLayout", () => {
   });
 
   it("derives the progress bar from the completed steps", () => {
-    render({ done: ["workspace", "survey"] });
+    render({ done: ["workspace", "start"] });
     const bar = container.querySelector('[role="progressbar"]');
     expect(bar?.getAttribute("aria-valuenow")).toBe("50");
   });
@@ -90,10 +90,10 @@ describe("OnboardingLayout", () => {
   });
 
   it("rests one guide rook above the current step, and the same one for the next", () => {
-    render({ current: "survey" });
+    render({ current: "start" });
     const rook = container.querySelector("[data-guide-rook]");
     expect(container.querySelectorAll("[data-guide-rook]")).toHaveLength(1);
-    expect(rook?.getAttribute("data-guide-rook")).toBe("survey");
+    expect(rook?.getAttribute("data-guide-rook")).toBe("start");
     expect(container.querySelectorAll("[data-guide-stop]")).toHaveLength(steps.length);
 
     render({ current: "bot" });

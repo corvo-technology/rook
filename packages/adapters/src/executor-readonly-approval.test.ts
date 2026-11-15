@@ -1021,6 +1021,44 @@ describe("connector read-only metadata and approval enforcement", () => {
       expect(f.pauseRunForInput).toHaveBeenCalledOnce();
     });
 
+    it("holds a mailbox send for approval, shows what goes out, and sends only the approved text once", async () => {
+      const f = fixture({ catalog, name: "mailbox_send", readOnly: false });
+      const approved = {
+        id: "mail-1",
+        to: ["ana@example.test"],
+        cc: ["boss@example.test"],
+        subject: "Lunch",
+        body: "Noon works.",
+      };
+      f.setCalls([{ args: approved, executionId: "call-1" }]);
+      await f.run();
+      expect(f.execute).not.toHaveBeenCalled();
+      expect(f.pauseRunForInput).toHaveBeenCalledOnce();
+      const [paused] = f.pauseRunForInput.mock.calls as unknown as Array<
+        [{ blocks: Array<{ detail?: string }> }]
+      >;
+      const card = paused![0].blocks[0]!;
+      for (const line of [
+        "to: ana@example.test",
+        "cc: boss@example.test",
+        "subject: Lunch",
+        "body: Noon works.",
+      ])
+        expect(card.detail).toContain(line);
+      f.effects[0]!.status = "approved";
+      f.setCalls([{ args: { ...approved, to: ["attacker@example.test"] }, executionId: "call-2" }]);
+      await f.run();
+      expect(f.execute).toHaveBeenCalledOnce();
+      expect(f.execute).toHaveBeenCalledWith(
+        expect.objectContaining({
+          args: approved,
+          executionId: approvalEffectKey("run-1", "mailbox_send", approved),
+        }),
+        expect.anything(),
+      );
+      expect(f.effects).toHaveLength(1);
+    });
+
     it("forces owner approval for webhook-triggered writes despite an allow rule", async () => {
       const f = fixture({
         catalog,

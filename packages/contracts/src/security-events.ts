@@ -21,6 +21,8 @@ export const SECURITY_EVENT_TYPES = [
   "approval.policy.changed",
   "egress.refused",
   "database.query",
+  "mailbox.sent",
+  "mailbox.send_refused",
   "rate_limit.hit",
 ] as const;
 

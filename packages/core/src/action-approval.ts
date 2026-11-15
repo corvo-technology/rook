@@ -92,7 +92,7 @@ const MUTATING_CONNECTOR_PATTERN =
   /(^|_)(accept|add|approve|archive|assign|buy|cancel|charge|checkout|close|commit|copy|create|delete|deploy|disable|enable|execute|forward|grant|invite|link|mark|merge|modify|move|patch|pay|post|publish|purchase|put|register|reject|remove|rename|replace|reply|reset|revoke|run|schedule|send|set|share|start|stop|submit|subscribe|trigger|unassign|unlink|unsubscribe|update|upload|upsert|write)(_|$)/i;
 const COMPOUND_CONNECTOR_ACTION_PATTERN = /_(and|or|then)_/i;
 
-const EMAIL_CONNECTOR_SLUGS = new Set(["gmail", "outlook", "microsoft_outlook"]);
+const EMAIL_CONNECTOR_SLUGS = new Set(["gmail", "outlook", "microsoft_outlook", "mailbox"]);
 const PURCHASE_CONNECTOR_SLUGS = new Set(["stripe", "shopify", "paypal", "square"]);
 
 export type ActionApprovalRule = Pick<

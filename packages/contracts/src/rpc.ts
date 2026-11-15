@@ -172,6 +172,7 @@ import {
   LocalOptionChoiceSchema,
   LocalSetupReportSchema,
 } from "./local-setup.js";
+import { MailboxInput, MailboxSchema } from "./mailbox.js";
 import { MissionsViewSchema, NavPart } from "./missions.js";
 import { ModelHeadersSchema } from "./model-headers.js";
 import { ModelRoleSchema, ModelRoleUpdateSchema, ModelRoleViewSchema } from "./model-roles.js";
@@ -1777,6 +1778,15 @@ export const appContract = {
     setGrants: oc
       .input(z.object({ id: Id, botIds: z.array(Id).max(500) }))
       .output(DatabaseConnectionSchema),
+  },
+  /** Email accounts agents read and send from. Sending always asks the owner first. */
+  mailboxes: {
+    list: oc.output(z.array(MailboxSchema)),
+    /** Checks the login on both servers before saving. */
+    create: oc.input(MailboxInput).output(MailboxSchema),
+    remove: oc.input(z.object({ id: Id })).output(z.object({ ok: z.literal(true) })),
+    /** Replaces which agents may use the mailbox. */
+    setAgents: oc.input(z.object({ id: Id, botIds: z.array(Id).max(200) })).output(MailboxSchema),
   },
   botSecrets: {
     list: oc.input(z.object({ botId: Id })).output(z.array(BotSecretMetadata)),

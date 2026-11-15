@@ -78,6 +78,7 @@ import {
   isPipedreamEnabled,
   LocalSetupCheck,
   linkedWhatsAppEnabled,
+  MailboxConnector,
   McpConnector,
   McpOAuthBroker,
   messagingPlatformsFromEnv,
@@ -85,6 +86,7 @@ import {
   PiOAuthLogins,
   PipedreamConnector,
   PostgresRealtimeFanout,
+  PrismaMailboxStore,
   PrismaPushTokenStore,
   pipedreamConfigFromEnv,
   piSessionsRoot,
@@ -560,8 +562,16 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
         : undefined),
     pipedream,
   });
+  const mailboxes = new MailboxConnector({
+    store: new PrismaMailboxStore(prisma, secrets),
+    hostPolicy: {
+      allowPrivateEndpoint: env.mcpAllowPrivateEndpoint,
+      resolveHostname: remoteConnectors?.resolveHostname,
+    },
+  });
   const stack = createConnectorStack(composioOverride, [
     installed,
+    mailboxes,
     ...integrationSettings
       .providers()
       .filter((provider) => !composioOverride || provider.describe().id !== "composio"),

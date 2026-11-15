@@ -52,6 +52,7 @@ import {
   isComposioEnabled,
   isMessagingSurfaceEnabled,
   isPipedreamEnabled,
+  MailboxConnector,
   McpConnector,
   McpOAuthBroker,
   mcpStdioOptionsFromEnv,
@@ -60,6 +61,7 @@ import {
   PiAgentRuntime,
   PipedreamConnector,
   PostgresRealtimeFanout,
+  PrismaMailboxStore,
   PrismaPushTokenStore,
   pipedreamConfigFromEnv,
   RunJobPublisher,
@@ -240,6 +242,10 @@ async function main() {
   );
   const stack = createConnectorStack(undefined, [
     new InstalledConnectorProvider(prisma, secrets, {}, allowPrivateEndpoint),
+    new MailboxConnector({
+      store: new PrismaMailboxStore(prisma, secrets),
+      hostPolicy: { allowPrivateEndpoint },
+    }),
     ...integrationSettings.providers(),
     mcp,
   ]);

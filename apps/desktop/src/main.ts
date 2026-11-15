@@ -54,6 +54,7 @@ import {
   startMacUpdate,
   updateScript,
 } from "./mac-update.js";
+import { menuStrings, withName } from "./menu-strings.js";
 import {
   configureDesktopMonitoring,
   disableDesktopMonitoring,
@@ -196,6 +197,8 @@ let desktopControlScript = "";
  * data folder and the update path all derive from it; menus and dialogs say this instead.
  */
 const PRODUCT_NAME = "Rook";
+/** Hosted Rook. The variable lets a test point first run at a stub instead of the real service. */
+const cloudUrl = normalizeServerUrl(process.env.CORVO_CLOUD_URL ?? "") ?? CORVO_CLOUD_URL;
 
 const toolsDir = () => path.join(app.getPath("userData"), "tools");
 let hostComputer: Awaited<ReturnType<typeof prepareHostComputer>> | undefined;
@@ -756,13 +759,14 @@ function suggestedSetupLocale(): SetupLocale {
 }
 
 function installApplicationMenu() {
+  const text = menuStrings(savedLocale ?? suggestedSetupLocale());
   const computerAccess: Electron.MenuItemConstructorOptions = {
-    label: "Computer Access…",
+    label: text.computerAccess,
     visible: currentSetup?.mode === "new",
     click: () => mainWindow?.webContents.send("desktop.computer.configure"),
   };
   const revokeComputerAccess: Electron.MenuItemConstructorOptions = {
-    label: "Revoke Local Computer Access",
+    label: text.revokeComputerAccess,
     visible: hostComputer?.isEnabled() === true,
     click: () => {
       void hostComputer
@@ -772,19 +776,19 @@ function installApplicationMenu() {
     },
   };
   const checkForUpdates: Electron.MenuItemConstructorOptions = {
-    label: "Check for Updates…",
+    label: text.checkForUpdates,
     visible: updaterSupport(updaterEnvironment).supported,
     click: () => void checkForUpdatesFromMenu(),
   };
   const changeServer: Electron.MenuItemConstructorOptions = {
     id: "change-corvo-server",
-    label: "Change Rook Server…",
+    label: text.changeServer,
     accelerator: "CmdOrCtrl+Shift+K",
     click: () => showSetupWindow(),
   };
   const stopStack: Electron.MenuItemConstructorOptions = {
     id: "stop-local-stack",
-    label: "Stop Local Server",
+    label: text.stopLocalServer,
     // The engine runs only while the app is open; this stops it without quitting.
     click: () => {
       if (currentSetup?.mode === "new") {
@@ -795,7 +799,7 @@ function installApplicationMenu() {
     },
   };
   const viewMenu: Electron.MenuItemConstructorOptions = {
-    label: "View",
+    label: text.view,
     submenu: [
       { role: "resetZoom" },
       { role: "zoomIn" },
@@ -814,11 +818,11 @@ function installApplicationMenu() {
           {
             label: PRODUCT_NAME,
             submenu: [
-              { role: "about", label: `About ${PRODUCT_NAME}` },
+              { role: "about", label: withName(text.about, PRODUCT_NAME) },
               checkForUpdates,
               { type: "separator" },
               {
-                label: "Settings…",
+                label: text.settings,
                 accelerator: "Command+,",
                 click: () => mainWindow?.webContents.send("desktop.settings.open"),
               },
@@ -828,17 +832,17 @@ function installApplicationMenu() {
               changeServer,
               stopStack,
               { type: "separator" },
-              { role: "hide", label: `Hide ${PRODUCT_NAME}` },
+              { role: "hide", label: withName(text.hide, PRODUCT_NAME) },
               { role: "hideOthers" },
               { role: "unhide" },
               { type: "separator" },
-              { role: "quit", label: `Quit ${PRODUCT_NAME}` },
+              { role: "quit", label: withName(text.quit, PRODUCT_NAME) },
             ],
           },
           { role: "editMenu" },
           viewMenu,
           {
-            label: "Window",
+            label: text.window,
             role: "window",
             submenu: [
               { role: "minimize" },
@@ -851,7 +855,7 @@ function installApplicationMenu() {
         ]
       : [
           {
-            label: "File",
+            label: text.file,
             submenu: [
               computerAccess,
               revokeComputerAccess,
@@ -1250,10 +1254,17 @@ app.whenReady().then(async () => {
   });
   currentSetup = await readSetup(userDataDir);
   savedLocale = await readSavedLocale(userDataDir);
+  // A new install follows the system language from its first launch, and the app inherits it, so
+  // desktop and web agree. An existing install is left exactly as it was.
+  if (savedLocale === null && currentSetup === null) {
+    savedLocale = suggestedSetupLocale();
+    await writeSavedLocale(userDataDir, savedLocale).catch(() => undefined);
+  }
   const target = resolveStartupTarget({
     envUrl: process.env.CORVO_WEB_URL,
     saved: currentSetup,
     forceSetup: process.env.CORVO_FORCE_SETUP === "1",
+    cloudUrl,
   });
   if (process.env.CORVO_PERFORMANCE_CLEAR_CACHE === "1") {
     const cacheSessions = new Set<Session>([session.defaultSession]);
@@ -1499,7 +1510,7 @@ app.whenReady().then(async () => {
     if (!fromSetupWindow(event)) return null;
     return {
       defaultLocalUrl: localStack.webUrl(),
-      cloudUrl: CORVO_CLOUD_URL,
+      cloudUrl,
       saved: displayedSetup(currentSetup),
       locale: { saved: savedLocale, suggested: suggestedSetupLocale() },
       error: setupError ?? undefined,
@@ -1513,6 +1524,7 @@ app.whenReady().then(async () => {
     if (locale === null || locale !== value) return;
     savedLocale = locale;
     await writeSavedLocale(app.getPath("userData"), locale);
+    installApplicationMenu();
   });
   ipcMain.on("desktop.locale.get", (event) => {
     event.returnValue = savedLocale;
@@ -1673,6 +1685,20 @@ app.whenReady().then(async () => {
       } else {
         showSetupWindow(`Could not reconnect to the saved server. ${reachability.error}`);
       }
+    }
+  } else if (target.source === "first-run") {
+    // A new install opens Rook Cloud without asking. It is saved like any server once it opens,
+    // so the next launch is an ordinary saved one.
+    const reachability = await probeServer(target.url);
+    const cloud: DesktopSetup = { mode: "existing", serverUrl: target.url };
+    if (reachability.ok && (await appOpener.open(target.url))) {
+      currentSetup = cloud;
+      commitPendingAppSwitch();
+      destroySetupWindow();
+      installApplicationMenu();
+      await writeSetup(userDataDir, cloud).catch(() => undefined);
+    } else {
+      showSetupWindow(menuStrings(savedLocale ?? suggestedSetupLocale()).cloudUnreachable);
     }
   } else {
     if (await appOpener.open(target.url)) {

@@ -71,7 +71,7 @@
 
   function selectedMode() {
     const checked = form.querySelector('input[name="mode"]:checked');
-    return checked === null ? "new" : checked.value;
+    return checked === null ? "cloud" : checked.value;
   }
 
   function setStatus(message, tone) {
@@ -381,20 +381,14 @@
     try {
       const state = await bridge.state();
       if (state === null) throw new Error("Setup is not active");
-      // The first question is the language, so everything after it is in a language the person reads.
+      // The window follows the system language; the Language button changes it.
       applyLocale(state.locale.saved ?? state.locale.suggested);
-      if (state.locale.saved === null) {
-        buildLanguageList(locale);
-        showStep("language");
-      } else {
-        showStep("setup");
-      }
+      showStep("setup");
       defaultLocalUrl = state.defaultLocalUrl;
       cloudUrl = state.cloudUrl;
       if (state.saved !== null) {
         const savedCloud = state.saved.mode === "existing" && state.saved.serverUrl === cloudUrl;
-        // Cloud is not open yet, so a saved Cloud choice falls back to this computer.
-        const mode = savedCloud ? "new" : state.saved.mode;
+        const mode = savedCloud ? "cloud" : state.saved.mode;
         const modeInput = document.querySelector(`input[name="mode"][value="${mode}"]`);
         if (modeInput !== null) modeInput.checked = true;
         if (mode === "existing") serverUrl.value = state.saved.serverUrl;

@@ -39,27 +39,25 @@
     <main id="step-setup" class="shell" hidden>
       <img class="mascot" src="mascot.svg" width="56" height="56" alt="" />
       <h1 class="heading" data-i18n="welcome">Welcome to Rook</h1>
-      <p class="subheading" data-i18n="where">Where should Rook run?</p>
 
       <form id="setup" novalidate>
         <fieldset class="choices">
           <legend class="sr-only" data-i18n="instance">Where Rook runs</legend>
 
-          <label class="choice" for="mode-new">
-            <input id="mode-new" type="radio" name="mode" value="new" checked />
-            <span class="choice-copy">
-              <span class="choice-title" data-i18n="thisComputer">This computer</span>
-              <span class="choice-desc" data-i18n="thisComputerDesc">Your data stays on this computer.</span>
-            </span>
-          </label>
-
           <label class="choice" for="mode-cloud">
-            <input id="mode-cloud" type="radio" name="mode" value="cloud" disabled />
+            <input id="mode-cloud" type="radio" name="mode" value="cloud" checked />
             <span class="choice-copy">
               <span class="choice-title" data-i18n="cloud">Rook Cloud</span>
               <span class="choice-desc" data-i18n="cloudDesc">We host it for you.</span>
             </span>
-            <span class="choice-soon" data-i18n="soon">Soon</span>
+          </label>
+
+          <label class="choice" for="mode-new">
+            <input id="mode-new" type="radio" name="mode" value="new" />
+            <span class="choice-copy">
+              <span class="choice-title" data-i18n="thisComputer">This computer</span>
+              <span class="choice-desc" data-i18n="thisComputerDesc">Your data stays on this computer.</span>
+            </span>
           </label>
 
           <label class="choice" for="mode-existing">

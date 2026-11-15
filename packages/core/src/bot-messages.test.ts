@@ -1,6 +1,7 @@
 import { BOT_DESCRIPTION_MAX_LENGTH } from "@corvo/contracts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  BOT_DIRECTORY_DESCRIPTION_CHARS,
   BOT_DIRECTORY_DESCRIPTIONS_MAX_LENGTH,
   BOT_MESSAGE_MAX_LENGTH,
   botMessageAllowsSilence,
@@ -125,15 +126,26 @@ describe("addressing", () => {
 });
 
 describe("directory", () => {
-  it("lists teammates with ids and says delivery is asynchronous", () => {
+  it("lists teammates by name, with an id only to tell equal names apart", () => {
+    const directory =
+      renderBotDirectory([bots[0]!, bots[1]!, { id: "b_3", name: "analyst" }], { omitted: 4 }) ??
+      "";
+    expect(directory).toContain("- Researcher — Finds things");
+    expect(directory).not.toContain("b_1");
+    expect(directory).toContain("Analyst (id: b_2)");
+    expect(directory).toContain("analyst (id: b_3)");
+    expect(directory).toContain("4 more teammates not listed");
+  });
+
+  it("lists teammates and says delivery is asynchronous", () => {
     const directory =
       renderBotDirectory([
         { ...bots[0]!, description: "Investigates source-backed questions" },
         bots[1]!,
       ]) ?? "";
-    expect(directory).toContain("Researcher (id: b_1) — Finds things");
+    expect(directory).toContain("Researcher — Finds things");
     expect(directory).toContain("Investigates source-backed questions");
-    expect(directory).toContain("Analyst (id: b_2)");
+    expect(directory).toContain("- Analyst");
     expect(directory).toContain("async");
     expect(directory).toContain("does not end your turn");
     expect(directory).toContain("Later updates only if they add something new");
@@ -176,41 +188,11 @@ describe("directory", () => {
     expect(body.trim().split("\n")).toHaveLength(1);
   });
 
-  it("caps each description and the aggregate description budget", () => {
-    const oversized = "D".repeat(BOT_DESCRIPTION_MAX_LENGTH + 200);
-    const many = Array.from({ length: 40 }, (_, index) => ({
-      id: `b_${index}`,
-      name: `Bot${index}`,
-      description: "x".repeat(BOT_DESCRIPTION_MAX_LENGTH),
-    }));
+  it("cuts each teammate description short", () => {
+    const oversized = "D".repeat(BOT_DIRECTORY_DESCRIPTION_CHARS + 200);
     const single = renderBotDirectory([{ id: "b_1", name: "Solo", description: oversized }]) ?? "";
-    expect(single).toContain(`: ${"D".repeat(BOT_DESCRIPTION_MAX_LENGTH)}`);
-    expect(single).not.toContain("D".repeat(BOT_DESCRIPTION_MAX_LENGTH + 1));
-
-    const directory = renderBotDirectory(many) ?? "";
-    const descriptionChars = [...directory.matchAll(/: (x+)/g)].reduce(
-      (total, match) => total + (match[1]?.length ?? 0),
-      0,
-    );
-    expect(descriptionChars).toBe(BOT_DIRECTORY_DESCRIPTIONS_MAX_LENGTH);
-    expect(directory).toContain("Bot0 (id: b_0)");
-    expect(directory).toContain("Bot39 (id: b_39)");
-  });
-
-  it("charges the aggregate budget against escaped description size", () => {
-    const expanding = "&".repeat(3_000);
-    const directory =
-      renderBotDirectory([
-        { id: "b_1", name: "A", description: expanding },
-        { id: "b_2", name: "B", description: expanding },
-      ]) ?? "";
-    const escapedChars = [...directory.matchAll(/: ((&amp;)+)/g)].reduce(
-      (total, match) => total + (match[1]?.length ?? 0),
-      0,
-    );
-    expect(escapedChars).toBeLessThanOrEqual(BOT_DIRECTORY_DESCRIPTIONS_MAX_LENGTH);
-    expect(escapedChars).toBe(BOT_DIRECTORY_DESCRIPTIONS_MAX_LENGTH);
-    expect(escapedChars).toBeLessThan(expanding.length * 5 * 2);
+    expect(single).toContain(`: ${"D".repeat(BOT_DIRECTORY_DESCRIPTION_CHARS)}`);
+    expect(single).not.toContain("D".repeat(BOT_DIRECTORY_DESCRIPTION_CHARS + 1));
   });
 
   it("says nothing when a bot has no teammates", () => {
@@ -265,10 +247,10 @@ describe("group members roster", () => {
       { id: "b_2", name: "Analyst", title: "Numbers" },
     ];
     const lines = formatBotRosterLines(members);
-    const directory = renderBotDirectory(members) ?? "";
+    const directory = formatBotRosterLines(members, { ids: false }).join("\n");
+    expect(directory).not.toContain("b_1");
     const group = renderGroupMembersContext("Ops", members, members[0]!);
     for (const line of lines) {
-      expect(directory).toContain(line);
       expect(group).toContain(line);
     }
   });

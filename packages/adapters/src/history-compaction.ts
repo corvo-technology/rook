@@ -10,6 +10,7 @@ import { blocksToAgentHistoryText, contextNeedsCompression, escapePromptData } f
 import type { PrismaClient } from "@corvo/db";
 import { recordUsage } from "@corvo/db";
 import { getLogger, unwrapJobPayload } from "@corvo/logging";
+import { estimateTextTokens } from "./context-selection.js";
 import { botContextUsage, COMPRESS_KEEP_RECENT } from "./context-usage.js";
 import { formatCurrentTimeInstruction } from "./current-time.js";
 import { resolveDeploymentModel } from "./deployment-model.js";
@@ -78,6 +79,13 @@ export async function compactionJobAfterTurn(input: {
 export const COMPACTION_BATCH_SIZE = 50;
 export const HISTORY_WINDOW_SIZE = 50;
 export const LEGACY_HISTORY_WINDOW_SIZE = 200;
+/** Most earlier messages a run's prompt carries when no local summary stands in for the rest. */
+export const PROMPT_HISTORY_WINDOW_SIZE = 120;
+/**
+ * Most tokens the earlier conversation may take in a run's first model call. Older messages stay
+ * reachable through search_history and read_history. The current request is never cut.
+ */
+export const MAX_HISTORY_TOKENS = 16_000;
 export const MAX_COMPACTED_SUMMARY_CHARS = 20_000;
 /** How many semantic memories can be injected into one run. */
 export const MAX_RECALLED_MEMORIES = 5;
@@ -133,7 +141,7 @@ export function historyWindowSize(options: {
 }): number {
   return options.semanticMemoryEnabled && options.compacted && options.recallSucceeded
     ? HISTORY_WINDOW_SIZE
-    : LEGACY_HISTORY_WINDOW_SIZE;
+    : PROMPT_HISTORY_WINDOW_SIZE;
 }
 
 /**
@@ -150,6 +158,27 @@ export function stableHistoryWindow<T extends { seq: number }>(
   const last = Math.max(...messages.map((message) => message.seq));
   const start = Math.floor(Math.max(0, last + 1 - size) / step) * step;
   return messages.filter((message) => message.seq >= start);
+}
+
+/**
+ * The newest messages that fit `maxTokens` (the last one always stays). Like stableHistoryWindow
+ * the start moves in steps of message sequence numbers, so the transcript's first message, and
+ * every cached token after it, holds for a stretch of turns.
+ */
+export function capHistoryTokens<T extends { seq: number; content: string }>(
+  messages: readonly T[],
+  maxTokens: number,
+  step = Math.max(1, Math.floor(PROMPT_HISTORY_WINDOW_SIZE / 4)),
+): T[] {
+  const suffix: number[] = new Array(messages.length + 1).fill(0);
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    suffix[index] = suffix[index + 1]! + estimateTextTokens(messages[index]!.content) + 8;
+  }
+  for (let index = 0; index < messages.length; index += 1) {
+    const startsStep = index === 0 || messages[index]!.seq % step === 0;
+    if (startsStep && suffix[index]! <= maxTokens) return messages.slice(index);
+  }
+  return messages.slice(-1);
 }
 
 export function formatRecalledMemory(

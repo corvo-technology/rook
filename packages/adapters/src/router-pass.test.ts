@@ -1,6 +1,6 @@
 import type { PrismaClient } from "@corvo/db";
 import { describe, expect, it, vi } from "vitest";
-import { routerPassInstruction } from "./router-pass.js";
+import { ROUTER_PASS_INSTRUCTION, routerAnsweredNote } from "./router-pass.js";
 import { taskTools } from "./run-tools-tasks.js";
 
 function prismaWith(replies: Array<{ botId: string; text: string }>) {
@@ -19,20 +19,23 @@ function prismaWith(replies: Array<{ botId: string; text: string }>) {
   } as unknown as PrismaClient;
 }
 
-describe("routerPassInstruction", () => {
-  it("tells the agent it may pass", async () => {
-    const text = await routerPassInstruction(prismaWith([]), {
+describe("the router pass text", () => {
+  it("tells the agent it may pass, in fixed text", () => {
+    expect(ROUTER_PASS_INSTRUCTION).toContain("call pass");
+  });
+
+  it("has no note when nobody answered", async () => {
+    const note = await routerAnsweredNote(prismaWith([]), {
       threadId: "thread-1",
       sourceMessageSeq: 3,
       botId: "bot-a",
     });
-    expect(text).toContain("call pass");
-    expect(text).not.toContain("already gave");
+    expect(note).toBeUndefined();
   });
 
   it("shows what another agent already answered, as data", async () => {
     const prisma = prismaWith([{ botId: "bot-b", text: "Refunds take 5 days." }]);
-    const text = await routerPassInstruction(prisma, {
+    const text = await routerAnsweredNote(prisma, {
       threadId: "thread-1",
       sourceMessageSeq: 3,
       botId: "bot-a",

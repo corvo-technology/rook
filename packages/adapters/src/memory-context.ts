@@ -1,7 +1,8 @@
 import type { AdapterContext, MemorySnapshot, MemoryStore } from "@corvo/adapter-kit";
 import { byteLength, truncateUtf8 } from "./utf8.js";
 
-const MAX_AGENT_MEMORY_BYTES = 32 * 1024;
+/** Durable memory in a run's prompt: the newest documents that fit; recall_memory reads the rest. */
+export const MAX_AGENT_MEMORY_BYTES = 8 * 1024;
 
 type ScopedMemoryDocument = MemorySnapshot["documents"][number] & {
   scope: "bot" | "user";

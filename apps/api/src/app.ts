@@ -850,6 +850,8 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
             deploymentModel: env.defaultModel,
             deploymentModelKey: env.deploymentModelKey,
             allowPrivateEndpoint: env.mcpAllowPrivateEndpoint,
+            // A 0-to-1 scoring task: the member's fast model, as memory learning uses.
+            resolveFastModel: executor.resolveFastModel,
           })
         : undefined,
     avatarDesign:

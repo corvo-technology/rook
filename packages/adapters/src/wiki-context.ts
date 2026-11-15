@@ -67,6 +67,9 @@ async function pagesOf(
   return pages;
 }
 
+/** The wiki index in a run's prompt; the wiki tools reach every page. */
+export const MAX_WIKI_INDEX_BYTES = 2 * 1024;
+
 /**
  * What a run is told about the wiki: how to use it and the index of its pages. Nothing when the
  * wiki has no pages. A wiki that cannot be read never fails a run; it is left out.
@@ -74,7 +77,7 @@ async function pagesOf(
 export async function loadWikiIndexContext(
   db: PrismaClient,
   scope: { spaceId: string; userId: string },
-  maxBytes = 8 * 1024,
+  maxBytes = MAX_WIKI_INDEX_BYTES,
 ): Promise<string | undefined> {
   let pages: WikiPageInfo[];
   try {

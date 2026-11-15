@@ -52,6 +52,7 @@ import { emailAgentRoutes } from "./routes/email-agent.js";
 import { enginesRoutes } from "./routes/engines.js";
 import { inboxRoutes } from "./routes/inbox.js";
 import { localSetupRoutes } from "./routes/local-setup.js";
+import { mailboxRoutes } from "./routes/mailboxes.js";
 import { mcpRoutes } from "./routes/mcp.js";
 import { memoryRoutes } from "./routes/memory.js";
 import { messagingRoutes } from "./routes/messaging.js";
@@ -227,6 +228,7 @@ export function createRouter(deps: RouterDeps) {
     ...connectionsRoutes(ctx),
     ...messagingRoutes(ctx),
     ...emailAgentRoutes(ctx),
+    ...mailboxRoutes(ctx),
     ...partnerRoutes(ctx),
     ...contentRoutes(ctx),
   });

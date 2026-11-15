@@ -27,6 +27,7 @@ export * from "./ids.js";
 export * from "./integration-settings.js";
 export * from "./local-settings.js";
 export * from "./local-setup.js";
+export * from "./mailbox.js";
 export * from "./markdown-text.js";
 export * from "./mcp.js";
 export * from "./missions.js";

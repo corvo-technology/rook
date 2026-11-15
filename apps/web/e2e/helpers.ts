@@ -267,6 +267,7 @@ export async function openUserSettings(
     | "computer"
     | "billing"
     | "members"
+    | "mailboxes"
     | "updates",
 ) {
   // A reload keeps the page because the URL holds the section.

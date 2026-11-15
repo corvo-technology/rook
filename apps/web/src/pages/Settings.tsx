@@ -13,6 +13,7 @@ import {
   Database,
   Gauge,
   Handshake,
+  Mail,
   Monitor,
   Plug,
   Server,
@@ -44,6 +45,7 @@ import {
 import { BillingSettingsPanel } from "./BillingSettingsPanel";
 import { ConnectionsSettingsPanel } from "./ConnectionsSettingsPanel";
 import { DatabasesSettings } from "./DatabasesSettings";
+import { MailboxesSettings } from "./MailboxesSettings";
 import { McpServersSettings } from "./McpServersSettings";
 import { MembersSettingsPanel } from "./MembersSettingsPanel";
 import { MemorySettingsOverlay } from "./MemorySettingsOverlay";
@@ -356,6 +358,13 @@ export function SettingsPage() {
           },
         ]
       : []),
+    {
+      id: "mailboxes",
+      label: t`Mailboxes`,
+      icon: Mail,
+      width: "full",
+      content: <MailboxesSettings />,
+    },
     ...(showComputer
       ? [
           {

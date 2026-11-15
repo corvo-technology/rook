@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { SuccessPop } from "../components/ai/primitives";
 import { useSpaceRpc } from "../lib/space-rpc";
 import { errorText } from "../lib/user-error";
+import { ImportFromApp } from "./ImportFromApp";
 
 /** Moves every bot of the space to another server as one file. */
 export function SpaceTransfer({
@@ -108,6 +109,7 @@ export function SpaceTransfer({
           {running === "import" ? <Spinner className="size-3 shrink-0" /> : null}
           {running === "import" ? <Trans>Importing…</Trans> : <Trans>Import space</Trans>}
         </Button>
+        <ImportFromApp onImported={onImported} />
         <input
           ref={fileInput}
           type="file"

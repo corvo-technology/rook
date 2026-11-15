@@ -18,6 +18,11 @@ msgstr ""
 msgid " (unread)"
 msgstr "（未読）"
 
+#. placeholder {0}: result.added.length
+#: src/pages/ImportFromApp.tsx
+msgid "{0, plural, one {# agent} other {# agents}}"
+msgstr "{0, plural, other {# 件のエージェント}}"
+
 #. placeholder {0}: pinned.length
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "{0, plural, one {# bot has its own model:} other {# bots have their own model:}}"
@@ -28,10 +33,20 @@ msgstr "{0, plural, one {#個のボットが独自のモデルを使用してい
 msgid "{0, plural, one {# channel} other {# channels}}"
 msgstr "{0, plural, other {# 件のチャンネル}}"
 
+#. placeholder {0}: preview.facts
+#: src/pages/ImportFromApp.tsx
+msgid "{0, plural, one {# fact to review} other {# facts to review}}"
+msgstr "{0, plural, other {# 件の確認する事実}}"
+
 #. placeholder {0}: summary.failed.length
 #: src/pages/Routines.tsx
 msgid "{0, plural, one {# failed} other {# failed}}"
 msgstr "{0, plural, one {#件失敗} other {#件失敗}}"
+
+#. placeholder {0}: preview.leftOut
+#: src/pages/ImportFromApp.tsx
+msgid "{0, plural, one {# item left out} other {# items left out}}"
+msgstr "{0, plural, other {# 件を除外}}"
 
 #. placeholder {0}: role.keys.length
 #: src/pages/SpaceRolesSettings.tsx
@@ -42,6 +57,16 @@ msgstr "{0, plural, other {# 件の権限}}"
 #: src/pages/shell/transcript.tsx
 msgid "{0, plural, one {# reply} other {# replies}}"
 msgstr "{0, plural, other {# 件の返信}}"
+
+#. placeholder {0}: result.routines
+#: src/pages/ImportFromApp.tsx
+msgid "{0, plural, one {# routine (paused)} other {# routines (paused)}}"
+msgstr "{0, plural, other {# 件のルーティン(一時停止)}}"
+
+#. placeholder {0}: result.skills
+#: src/pages/ImportFromApp.tsx
+msgid "{0, plural, one {# skill} other {# skills}}"
+msgstr "{0, plural, other {# 件のスキル}}"
 
 #. placeholder {0}: result.tickets
 #: src/pages/SpaceTransfer.tsx
@@ -838,6 +863,10 @@ msgstr "サーバーURLを追加"
 msgid "Add step"
 msgstr "ステップを追加"
 
+#: src/pages/ImportFromApp.tsx
+msgid "Add these files again"
+msgstr "これらのファイルをもう一度追加"
+
 #: src/pages/shell/agent-import.tsx
 msgid "Add to an existing bot"
 msgstr "既存のボットに追加"
@@ -859,6 +888,11 @@ msgstr "トリガーを追加"
 #: src/pages/Store.tsx
 msgid "Added"
 msgstr "追加済み"
+
+#. placeholder {0}: parts.join(", ")
+#: src/pages/ImportFromApp.tsx
+msgid "Added {0}."
+msgstr "追加しました: {0}。"
 
 #: src/pages/McpServersSettings.tsx
 #: src/pages/Store.tsx
@@ -997,6 +1031,10 @@ msgstr "接続済み"
 msgid "Already have an account?"
 msgstr "すでにアカウントをお持ちですか？"
 
+#: src/pages/ImportFromApp.tsx
+msgid "Already here"
+msgstr "すでにあります"
+
 #: src/pages/MembersSettingsPanel.tsx
 msgid "already in the space"
 msgstr "はすでにスペースにいます"
@@ -1055,6 +1093,7 @@ msgid "Another assistant"
 msgstr "他のアシスタント"
 
 #: src/components/AskCard.tsx
+#: src/pages/ImportFromApp.tsx
 msgid "Answer"
 msgstr "回答"
 
@@ -1359,6 +1398,7 @@ msgstr "Avatar Studio"
 #: src/pages/AppCatalogGrid.tsx
 #: src/pages/Auth.tsx
 #: src/pages/Board.tsx
+#: src/pages/ImportFromApp.tsx
 #: src/pages/NavLinkPage.tsx
 #: src/pages/onboarding/OnboardingLayout.tsx
 #: src/pages/RoutineEditor.tsx
@@ -1736,6 +1776,11 @@ msgstr "バックアップを選択"
 msgid "Choose file"
 msgstr "ファイルを選択"
 
+#: src/pages/ImportFromApp.tsx
+msgid "Choose files"
+msgstr "ファイルを選択"
+
+#: src/pages/ImportFromApp.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Choose folder"
 msgstr "フォルダを選択"
@@ -2182,6 +2227,7 @@ msgstr "コンピューターを操作"
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/markdown-copy.tsx
+#: src/pages/ImportFromApp.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
@@ -2212,6 +2258,7 @@ msgstr "ダイアグラムのソースをコピー"
 msgid "Copy link"
 msgstr "リンクをコピー"
 
+#: src/pages/ImportFromApp.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Copy prompt"
 msgstr "プロンプトをコピー"
@@ -3512,6 +3559,10 @@ msgstr "全員"
 msgid "Everything in this file is already here."
 msgstr "このファイルの内容はすべて追加済みです。"
 
+#: src/pages/ImportFromApp.tsx
+msgid "Everything is already here."
+msgstr "すべてすでにあります。"
+
 #: src/pages/Store.tsx
 msgid "Executor token"
 msgstr "実行トークン"
@@ -3952,6 +4003,7 @@ msgstr "このモデルでは画像入力が設定されていません。"
 msgid "Image upload area"
 msgstr "画像アップロードエリア"
 
+#: src/pages/ImportFromApp.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/create-bot-panel.tsx
 msgid "Import"
@@ -3961,6 +4013,10 @@ msgstr "インポート"
 #: src/pages/shell/message-cards.tsx
 msgid "Import an agent"
 msgstr "エージェントをインポート"
+
+#: src/pages/ImportFromApp.tsx
+msgid "Import from another app"
+msgstr "別のアプリからインポート"
 
 #: src/pages/Store.tsx
 msgid "Import OpenAPI JSON"
@@ -4060,6 +4116,7 @@ msgstr "指示の履歴"
 #: src/components/AskCard.tsx
 #: src/components/InstructionSettings.tsx
 #: src/pages/AddStepPanel.tsx
+#: src/pages/ImportFromApp.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/shell/agent-import.tsx
@@ -5243,6 +5300,10 @@ msgstr "記憶はまだありません"
 msgid "Nothing to approve"
 msgstr "承認待ちはありません"
 
+#: src/pages/ImportFromApp.tsx
+msgid "Nothing to import in these files."
+msgstr "これらのファイルにインポートできるものはありません。"
+
 #: src/components/InboxBell.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Notifications"
@@ -5560,6 +5621,10 @@ msgstr "支払い期限超過"
 msgid "Paste a replacement key"
 msgstr "新しいキーを貼り付け"
 
+#: src/pages/ImportFromApp.tsx
+msgid "Paste the answer"
+msgstr "回答を貼り付け"
+
 #: src/pages/shell/message-cards.tsx
 msgid "Paste the key to let your agent use this server's tools."
 msgstr "キーを貼り付けると、エージェントがこのサーバーのツールを使えるようになります。"
@@ -5567,6 +5632,10 @@ msgstr "キーを貼り付けると、エージェントがこのサーバーの
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Paste the OpenAI-compatible address from your server. Rook adds /v1 if needed."
 msgstr "サーバーのOpenAI互換アドレスを貼り付けてください。必要に応じてRookが/v1を追加します。"
+
+#: src/pages/ImportFromApp.tsx
+msgid "Paste the prompt into ChatGPT, Claude, Gemini or Grok, then paste its answer here."
+msgstr "プロンプトを ChatGPT、Claude、Gemini、Grok に貼り付け、その回答をここに貼り付けてください。"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Paste the reply"
@@ -5712,6 +5781,10 @@ msgstr "環境設定"
 #: src/pages/board/BoardLanes.tsx
 msgid "Press space to pick up a ticket, the arrow keys to choose a column, and space again to drop it."
 msgstr "スペースキーでチケットを持ち上げ、矢印キーで列を選び、もう一度スペースキーで置きます。"
+
+#: src/pages/ImportFromApp.tsx
+msgid "Preview"
+msgstr "プレビュー"
 
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
@@ -6291,6 +6364,7 @@ msgstr "ルーティン"
 msgid "Routine “{0}”"
 msgstr "ルーティン「{0}」"
 
+#: src/pages/ImportFromApp.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
@@ -6788,6 +6862,7 @@ msgstr "スキル{0}"
 msgid "Skill {position}"
 msgstr "スキル {position}"
 
+#: src/pages/ImportFromApp.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/Store.tsx
@@ -6925,6 +7000,10 @@ msgstr "標準"
 #: src/pages/shell/computer-overlay.tsx
 msgid "Start"
 msgstr "開始"
+
+#: src/pages/ImportFromApp.tsx
+msgid "Start paused"
+msgstr "一時停止で開始"
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Start recording"
@@ -7451,6 +7530,10 @@ msgstr "終了日"
 #: src/pages/ActivityList.tsx
 msgid "To {0}"
 msgstr "{0}まで"
+
+#: src/pages/ImportFromApp.tsx
+msgid "To connect"
+msgstr "接続するもの"
 
 #: src/lib/ticket-status.ts
 msgid "To do"

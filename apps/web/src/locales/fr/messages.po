@@ -18,6 +18,11 @@ msgstr ""
 msgid " (unread)"
 msgstr " (non lu)"
 
+#. placeholder {0}: result.added.length
+#: src/pages/ImportFromApp.tsx
+msgid "{0, plural, one {# agent} other {# agents}}"
+msgstr "{0, plural, one {# agent} other {# agents}}"
+
 #. placeholder {0}: pinned.length
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "{0, plural, one {# bot has its own model:} other {# bots have their own model:}}"
@@ -28,10 +33,20 @@ msgstr "{0, plural, one {# bot a son propre modèle :} other {# bots ont leur pr
 msgid "{0, plural, one {# channel} other {# channels}}"
 msgstr "{0, plural, one {# canal} other {# canaux}}"
 
+#. placeholder {0}: preview.facts
+#: src/pages/ImportFromApp.tsx
+msgid "{0, plural, one {# fact to review} other {# facts to review}}"
+msgstr "{0, plural, one {# fait à vérifier} other {# faits à vérifier}}"
+
 #. placeholder {0}: summary.failed.length
 #: src/pages/Routines.tsx
 msgid "{0, plural, one {# failed} other {# failed}}"
 msgstr "{0, plural, one {# échec} other {# échecs}}"
+
+#. placeholder {0}: preview.leftOut
+#: src/pages/ImportFromApp.tsx
+msgid "{0, plural, one {# item left out} other {# items left out}}"
+msgstr "{0, plural, one {# élément écarté} other {# éléments écartés}}"
 
 #. placeholder {0}: role.keys.length
 #: src/pages/SpaceRolesSettings.tsx
@@ -42,6 +57,16 @@ msgstr "{0, plural, one {# autorisation} other {# autorisations}}"
 #: src/pages/shell/transcript.tsx
 msgid "{0, plural, one {# reply} other {# replies}}"
 msgstr "{0, plural, one {# réponse} other {# réponses}}"
+
+#. placeholder {0}: result.routines
+#: src/pages/ImportFromApp.tsx
+msgid "{0, plural, one {# routine (paused)} other {# routines (paused)}}"
+msgstr "{0, plural, one {# routine (en pause)} other {# routines (en pause)}}"
+
+#. placeholder {0}: result.skills
+#: src/pages/ImportFromApp.tsx
+msgid "{0, plural, one {# skill} other {# skills}}"
+msgstr "{0, plural, one {# compétence} other {# compétences}}"
 
 #. placeholder {0}: result.tickets
 #: src/pages/SpaceTransfer.tsx
@@ -838,6 +863,10 @@ msgstr "Ajouter une URL de serveur"
 msgid "Add step"
 msgstr "Ajouter une étape"
 
+#: src/pages/ImportFromApp.tsx
+msgid "Add these files again"
+msgstr "Ajoutez à nouveau ces fichiers"
+
 #: src/pages/shell/agent-import.tsx
 msgid "Add to an existing bot"
 msgstr "Ajouter à un bot existant"
@@ -859,6 +888,11 @@ msgstr "Ajouter un déclencheur"
 #: src/pages/Store.tsx
 msgid "Added"
 msgstr "Ajouté"
+
+#. placeholder {0}: parts.join(", ")
+#: src/pages/ImportFromApp.tsx
+msgid "Added {0}."
+msgstr "Ajouté : {0}."
 
 #: src/pages/McpServersSettings.tsx
 #: src/pages/Store.tsx
@@ -997,6 +1031,10 @@ msgstr "Déjà connecté"
 msgid "Already have an account?"
 msgstr "Vous avez déjà un compte ?"
 
+#: src/pages/ImportFromApp.tsx
+msgid "Already here"
+msgstr "Déjà présent"
+
 #: src/pages/MembersSettingsPanel.tsx
 msgid "already in the space"
 msgstr "est déjà dans l'espace"
@@ -1055,6 +1093,7 @@ msgid "Another assistant"
 msgstr "Autre assistant"
 
 #: src/components/AskCard.tsx
+#: src/pages/ImportFromApp.tsx
 msgid "Answer"
 msgstr "Répondre"
 
@@ -1359,6 +1398,7 @@ msgstr "Studio d'avatars"
 #: src/pages/AppCatalogGrid.tsx
 #: src/pages/Auth.tsx
 #: src/pages/Board.tsx
+#: src/pages/ImportFromApp.tsx
 #: src/pages/NavLinkPage.tsx
 #: src/pages/onboarding/OnboardingLayout.tsx
 #: src/pages/RoutineEditor.tsx
@@ -1736,6 +1776,11 @@ msgstr "Choisir une sauvegarde"
 msgid "Choose file"
 msgstr "Choisir un fichier"
 
+#: src/pages/ImportFromApp.tsx
+msgid "Choose files"
+msgstr "Choisir des fichiers"
+
+#: src/pages/ImportFromApp.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Choose folder"
 msgstr "Choisir un dossier"
@@ -2182,6 +2227,7 @@ msgstr "Contrôler les ordinateurs"
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/markdown-copy.tsx
+#: src/pages/ImportFromApp.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
@@ -2212,6 +2258,7 @@ msgstr "Copier la source du diagramme"
 msgid "Copy link"
 msgstr "Copier le lien"
 
+#: src/pages/ImportFromApp.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Copy prompt"
 msgstr "Copier le prompt"
@@ -3512,6 +3559,10 @@ msgstr "Tout le monde"
 msgid "Everything in this file is already here."
 msgstr "Tout ce fichier est déjà là."
 
+#: src/pages/ImportFromApp.tsx
+msgid "Everything is already here."
+msgstr "Tout est déjà là."
+
 #: src/pages/Store.tsx
 msgid "Executor token"
 msgstr "Jeton de l'exécuteur"
@@ -3952,6 +4003,7 @@ msgstr "La saisie d’images n’est pas configurée pour ce modèle."
 msgid "Image upload area"
 msgstr "Zone de téléchargement d'image"
 
+#: src/pages/ImportFromApp.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/create-bot-panel.tsx
 msgid "Import"
@@ -3961,6 +4013,10 @@ msgstr "Importer"
 #: src/pages/shell/message-cards.tsx
 msgid "Import an agent"
 msgstr "Importer un agent"
+
+#: src/pages/ImportFromApp.tsx
+msgid "Import from another app"
+msgstr "Importer depuis une autre app"
 
 #: src/pages/Store.tsx
 msgid "Import OpenAPI JSON"
@@ -4060,6 +4116,7 @@ msgstr "Historique des instructions"
 #: src/components/AskCard.tsx
 #: src/components/InstructionSettings.tsx
 #: src/pages/AddStepPanel.tsx
+#: src/pages/ImportFromApp.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/shell/agent-import.tsx
@@ -5243,6 +5300,10 @@ msgstr "Rien n'est mémorisé pour le moment"
 msgid "Nothing to approve"
 msgstr "Rien à approuver"
 
+#: src/pages/ImportFromApp.tsx
+msgid "Nothing to import in these files."
+msgstr "Rien à importer dans ces fichiers."
+
 #: src/components/InboxBell.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Notifications"
@@ -5560,6 +5621,10 @@ msgstr "En retard"
 msgid "Paste a replacement key"
 msgstr "Collez une clé de remplacement"
 
+#: src/pages/ImportFromApp.tsx
+msgid "Paste the answer"
+msgstr "Collez la réponse"
+
 #: src/pages/shell/message-cards.tsx
 msgid "Paste the key to let your agent use this server's tools."
 msgstr "Collez la clé pour que votre agent puisse utiliser les outils de ce serveur."
@@ -5567,6 +5632,10 @@ msgstr "Collez la clé pour que votre agent puisse utiliser les outils de ce ser
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Paste the OpenAI-compatible address from your server. Rook adds /v1 if needed."
 msgstr "Collez l'adresse compatible OpenAI de votre serveur. Rook ajoute /v1 si nécessaire."
+
+#: src/pages/ImportFromApp.tsx
+msgid "Paste the prompt into ChatGPT, Claude, Gemini or Grok, then paste its answer here."
+msgstr "Collez le prompt dans ChatGPT, Claude, Gemini ou Grok, puis collez sa réponse ici."
 
 #: src/pages/shell/agent-import.tsx
 msgid "Paste the reply"
@@ -5712,6 +5781,10 @@ msgstr "Préférences"
 #: src/pages/board/BoardLanes.tsx
 msgid "Press space to pick up a ticket, the arrow keys to choose a column, and space again to drop it."
 msgstr "Appuyez sur espace pour prendre un ticket, sur les flèches pour choisir une colonne, puis sur espace pour le déposer."
+
+#: src/pages/ImportFromApp.tsx
+msgid "Preview"
+msgstr "Aperçu"
 
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
@@ -6291,6 +6364,7 @@ msgstr "Routine"
 msgid "Routine “{0}”"
 msgstr "Routine « {0} »"
 
+#: src/pages/ImportFromApp.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
@@ -6788,6 +6862,7 @@ msgstr "Compétence {0}"
 msgid "Skill {position}"
 msgstr "Compétence {position}"
 
+#: src/pages/ImportFromApp.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/Store.tsx
@@ -6925,6 +7000,10 @@ msgstr "Standard"
 #: src/pages/shell/computer-overlay.tsx
 msgid "Start"
 msgstr "Démarrer"
+
+#: src/pages/ImportFromApp.tsx
+msgid "Start paused"
+msgstr "Démarrent en pause"
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Start recording"
@@ -7451,6 +7530,10 @@ msgstr "À"
 #: src/pages/ActivityList.tsx
 msgid "To {0}"
 msgstr "À {0}"
+
+#: src/pages/ImportFromApp.tsx
+msgid "To connect"
+msgstr "À connecter"
 
 #: src/lib/ticket-status.ts
 msgid "To do"

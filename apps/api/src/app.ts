@@ -933,6 +933,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   const waitlist = waitlistRoutes({
     store: prismaWaitlistStore(prisma),
     email,
+    webOrigin: env.webOrigin,
     allowedOrigins: env.waitlistAllowedOrigins,
     notifyEmail: env.waitlistNotifyEmail,
     clientIp: requestClientIp,

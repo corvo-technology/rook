@@ -58,6 +58,8 @@ export {
   passwordResetEmail,
   signInCodeEmail,
   verificationEmail,
+  waitlistConfirmationEmail,
+  waitlistNotificationEmail,
 } from "./email.js";
 export type { OidcConfig } from "./oidc.js";
 export { passkeyRelyingParty } from "./passkey.js";

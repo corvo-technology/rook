@@ -3,12 +3,7 @@ import type { TestSink } from "@corvo/logging";
 import { createLogger, createTestSink, installLogger } from "@corvo/logging";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { WaitlistEntryInput, WaitlistStore } from "./waitlist.js";
-import {
-  WAITLIST_PATH,
-  waitlistConfirmationEmail,
-  waitlistLocale,
-  waitlistRoutes,
-} from "./waitlist.js";
+import { WAITLIST_PATH, waitlistLocale, waitlistRoutes } from "./waitlist.js";
 
 const SITE = "https://www.example.test";
 const valid = { email: "Ana@Acme.example", company: "Acme", task: "Weekly reports" };
@@ -65,6 +60,7 @@ function setup(
   const mail = fakeEmail();
   const app = waitlistRoutes({
     store,
+    webOrigin: "https://app.example.test",
     email: options.email === null ? undefined : (options.email ?? mail.provider),
     allowedOrigins: options.origins ?? [SITE],
     notifyEmail: options.notifyEmail,
@@ -193,10 +189,6 @@ describe("waitlist email", () => {
       "pt-BR",
     ]);
     expect([undefined, "en", "fr-CA", "ptx"].map(waitlistLocale)).toEqual(["en", "en", "en", "en"]);
-    const pt = waitlistConfirmationEmail("a@b.example", "pt-BR");
-    expect(pt.subject).toBe("Você está na lista do Rook");
-    expect(pt.text).toContain("Equipe Rook");
-    expect(waitlistConfirmationEmail("a@b.example", "en").subject).not.toBe(pt.subject);
   });
 
   it("is sent in the person's locale", async () => {
@@ -271,4 +263,24 @@ describe("waitlist rate limit", () => {
     }
     expect(statuses).toEqual([200, 200, 200, 429, 429]);
   });
+});
+
+describe("waitlist email layout", () => {
+  it.each([
+    ["pt-BR", "Você está na lista.", "Equipe Rook", 'lang="pt-BR"'],
+    ["en", "You're on the list.", "The Rook team", 'lang="en"'],
+  ] as const)(
+    "renders the branded layout in %s with a text part",
+    async (locale, heading, signoff, lang) => {
+      const { app, sent } = setup();
+      await post(app, { ...valid, locale });
+      await app.idle();
+      const message = sent[0];
+      expect(message?.html).toContain('src="https://app.example.test/icon-192.png"');
+      expect(message?.html).toContain(lang);
+      expect(message?.html).toContain(heading.replace("'", "&#x27;"));
+      expect(message?.text).toContain(heading);
+      expect(message?.text).toContain(signoff);
+    },
+  );
 });

@@ -1,4 +1,5 @@
 import type { TransactionalEmail, TransactionalEmailProvider } from "@corvo/adapter-kit";
+import { waitlistConfirmationEmail, waitlistNotificationEmail } from "@corvo/auth";
 import type { PrismaClient } from "@corvo/db";
 import { runAsSystem } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
@@ -85,37 +86,6 @@ export function waitlistLocale(value: string | undefined): WaitlistLocale {
   return /^pt([-_]|$)/i.test(value?.trim() ?? "") ? "pt-BR" : "en";
 }
 
-export function waitlistConfirmationEmail(to: string, locale: WaitlistLocale): TransactionalEmail {
-  if (locale === "pt-BR") {
-    return {
-      to,
-      subject: "Você está na lista do Rook",
-      text: [
-        "Olá,",
-        "",
-        "Você está na lista de espera do beta da nuvem do Rook. Abrimos as vagas aos poucos e configuramos os primeiros agentes e rotinas junto com cada empresa.",
-        "",
-        "Vamos escrever de volta para marcar uma conversa.",
-        "",
-        "Equipe Rook",
-      ].join("\n"),
-    };
-  }
-  return {
-    to,
-    subject: "You're on the Rook waitlist",
-    text: [
-      "Hi,",
-      "",
-      "You're on the waitlist for the Rook cloud beta. We open spots gradually and set up the first agents and routines together with each company.",
-      "",
-      "We'll write back to schedule a conversation.",
-      "",
-      "The Rook team",
-    ].join("\n"),
-  };
-}
-
 /** Fixed-window counters per key. The table is bounded: when full it starts over. */
 function windowCounter(windowMs: number, now: () => number) {
   const windows = new Map<string, { start: number; count: number }>();
@@ -132,6 +102,8 @@ function windowCounter(windowMs: number, now: () => number) {
 export interface WaitlistOptions {
   store: WaitlistStore;
   email?: TransactionalEmailProvider;
+  /** Origin that serves the logo in the emails. */
+  webOrigin: string;
   /** Origins of the marketing site. Empty turns the endpoint off. */
   allowedOrigins: readonly string[];
   notifyEmail?: string;
@@ -140,7 +112,7 @@ export interface WaitlistOptions {
 }
 
 export function waitlistRoutes(options: WaitlistOptions) {
-  const { store, email, allowedOrigins, notifyEmail, clientIp } = options;
+  const { store, email, webOrigin, allowedOrigins, notifyEmail, clientIp } = options;
   const now = options.now ?? Date.now;
   const byIp = windowCounter(IP_WINDOW_MS, now);
   const byEmail = windowCounter(EMAIL_WINDOW_MS, now);
@@ -170,21 +142,13 @@ export function waitlistRoutes(options: WaitlistOptions) {
       getLogger().warn("waitlist.email_unconfigured");
       return;
     }
-    if (await send(waitlistConfirmationEmail(entry.email, entry.locale))) {
+    if (await send(await waitlistConfirmationEmail(webOrigin, entry.email, entry.locale))) {
       await store.markNotified(id).catch(() => {
         getLogger().warn("waitlist.mark_notified_failed");
       });
     }
     if (notifyEmail) {
-      await send({
-        to: notifyEmail,
-        subject: "New Rook waitlist entry",
-        text: [
-          `Company: ${entry.company}`,
-          `Email: ${entry.email}`,
-          `Wants to automate: ${entry.task ?? "-"}`,
-        ].join("\n"),
-      });
+      await send(await waitlistNotificationEmail(webOrigin, notifyEmail, entry));
     }
   }
 

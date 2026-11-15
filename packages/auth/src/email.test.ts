@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   accountDeletionEmail,
+  invitationEmail,
   passwordResetEmail,
   signInCodeEmail,
   verificationEmail,
+  waitlistConfirmationEmail,
+  waitlistNotificationEmail,
 } from "./email.js";
 
 describe("account email templates", () => {
@@ -40,5 +43,25 @@ describe("account email templates", () => {
     expect(message.html).toContain('src="https://app.example.test/icon-192.png"');
     expect(message.html).toContain("Rook");
     expect(message.text).toContain("Verify email");
+  });
+
+  it("renders every transactional email through the shared layout", async () => {
+    const to = "user@example.test";
+    const user = { id: "user-1", email: to, name: "Test" };
+    const messages = await Promise.all([
+      verificationEmail(origin, to, url),
+      signInCodeEmail(origin, to, "123456"),
+      passwordResetEmail(origin, user, url),
+      accountDeletionEmail(origin, to, "123456"),
+      invitationEmail(origin, { to, inviterName: "Ana", spaceName: "Acme", url }),
+      waitlistConfirmationEmail(origin, to, "pt-BR"),
+      waitlistConfirmationEmail(origin, to, "en"),
+      waitlistNotificationEmail(origin, to, { company: "Acme", email: "a@b.example" }),
+    ]);
+    for (const message of messages) {
+      expect(message.html).toContain('src="https://app.example.test/icon-192.png"');
+      expect(message.html).toContain("border-radius:20px");
+      expect(message.text.length).toBeGreaterThan(0);
+    }
   });
 });

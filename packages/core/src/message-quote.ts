@@ -172,6 +172,8 @@ function replyBlockText(block: MessageBlock): string {
       return block.pages.map((page) => page.title).join(", ");
     case "memory_fact":
       return block.text;
+    case "ticket":
+      return `${block.ref} ${block.title}`;
     case "child_bot":
     case "skill_draft":
     case "connect":

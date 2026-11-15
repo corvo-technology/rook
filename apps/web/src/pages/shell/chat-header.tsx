@@ -27,6 +27,7 @@ export function ChatHeader({
   onOpenSquad,
   onOpenMembers,
   membersOpen,
+  peopleCount,
   onJumpToMessage,
   memberName,
 }: {
@@ -46,6 +47,7 @@ export function ChatHeader({
   onOpenSquad: () => void;
   onOpenMembers?: () => void;
   membersOpen?: boolean;
+  peopleCount?: number;
   /** Scrolls the channel to a message found by its search or pinned. */
   onJumpToMessage: (messageId: string) => void;
   memberName: (botId: string | undefined) => string | undefined;
@@ -62,10 +64,12 @@ export function ChatHeader({
         onOpenSquad={onOpenSquad}
         onOpenMembers={onOpenMembers}
         membersOpen={membersOpen}
+        peopleCount={peopleCount}
         find={
           activeGroup ? (
             <ChannelFind
               groupId={activeGroup.id}
+              channelName={activeGroup.name}
               pins={pinSignature(activeSnapshot?.messages ?? [])}
               memberName={memberName}
               onJump={onJumpToMessage}

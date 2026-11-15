@@ -106,28 +106,30 @@ export function SidebarHeader({
             </Button>
           </IconTooltip>
         ) : null}
-        <IconTooltip label={t`Activity`}>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label={t`Activity`}
-            aria-pressed={activityMode}
-            data-activity-mode={activityMode ? "on" : "off"}
-            onClick={toggleActivityMode}
-            className={`app-no-drag flex h-7 w-7 items-center justify-center rounded-full ${
-              activityMode
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground/70 hover:text-foreground/75"
-            }`}
-          >
-            <Bell
-              size={15}
-              strokeWidth={1.8}
-              fill={activityMode ? "currentColor" : "none"}
-              aria-hidden="true"
-            />
-          </Button>
-        </IconTooltip>
+        {mini ? (
+          <IconTooltip label={t`Activity`}>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={t`Activity`}
+              aria-pressed={activityMode}
+              data-activity-mode={activityMode ? "on" : "off"}
+              onClick={toggleActivityMode}
+              className={`app-no-drag flex h-7 w-7 items-center justify-center rounded-full ${
+                activityMode
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground/70 hover:text-foreground/75"
+              }`}
+            >
+              <Bell
+                size={15}
+                strokeWidth={1.8}
+                fill={activityMode ? "currentColor" : "none"}
+                aria-hidden="true"
+              />
+            </Button>
+          </IconTooltip>
+        ) : null}
         <IconTooltip label={toggleLabel}>
           <Button
             variant="ghost"

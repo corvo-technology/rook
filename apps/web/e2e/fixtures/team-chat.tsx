@@ -133,6 +133,7 @@ function TeamChat() {
         find={
           <ChannelFind
             groupId="group-1"
+            channelName="finance"
             pins={pinSignature(messages)}
             memberName={(botId) => bot(botId)?.name}
             onJump={(messageId) => {

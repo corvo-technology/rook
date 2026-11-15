@@ -8,7 +8,7 @@ import { applyResolvedAppearance } from "../../src/lib/ui-appearance";
 import "../../src/styles.css";
 import { ApprovalsInbox } from "../../src/pages/ApprovalsInbox";
 import { ChannelMembersPanel } from "../../src/pages/shell/channel-members";
-import { SidebarApprovals } from "../../src/pages/shell/sidebar-team";
+import { SidebarNav } from "../../src/pages/shell/sidebar-team";
 
 // The members panel of the #finance channel and the approvals inbox, over fake data. `?view=panel`
 // shows the channel with its panel open; `?view=approvals` the inbox, whose count and list follow
@@ -125,7 +125,16 @@ function Inbox() {
   return (
     <div className="flex min-h-screen bg-background text-foreground">
       <nav className="w-[240px] shrink-0 border-e border-sidebar-border bg-sidebar px-2.5 py-4">
-        <SidebarApprovals count={items.length} onOpen={() => undefined} />
+        <SidebarNav
+          approvals={items.length}
+          conversationsOn={false}
+          showTasks={false}
+          onHome={() => undefined}
+          onApprovals={() => undefined}
+          onConversations={() => undefined}
+          onTasks={() => undefined}
+          onTeam={() => undefined}
+        />
       </nav>
       <main className="flex-1 px-6 py-5">
         <h1 className="mb-4 text-xl font-light tracking-tight">Approvals</h1>

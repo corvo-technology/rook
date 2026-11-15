@@ -70,11 +70,14 @@ export function ToolActivityDisclosure({
   live,
   stepCount,
   durationMs,
+  pill = false,
   children,
 }: {
   live: boolean;
   stepCount: number;
   durationMs?: number;
+  /** A channel draws the line as a bordered pill, its chevron at the end. */
+  pill?: boolean;
   children: ReactNode;
 }) {
   const duration = formatCompactDuration(durationMs);
@@ -88,16 +91,20 @@ export function ToolActivityDisclosure({
       className="group"
     >
       <CollapsibleTrigger
-        className={`flex min-h-6 w-fit cursor-pointer list-none items-center gap-1 rounded-md py-0.5 pe-1.5 text-[13px] font-medium outline-none hover:text-foreground/75 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
-          live ? "text-foreground/75" : "text-muted-foreground"
-        }`}
+        className={`flex min-h-6 w-fit cursor-pointer list-none items-center gap-1 text-[13px] outline-none hover:text-foreground/75 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+          pill
+            ? "gap-2.5 rounded-xl border border-border bg-card px-3.5 py-2 font-normal"
+            : "rounded-md py-0.5 pe-1.5 font-medium"
+        } ${live ? "text-foreground/75" : "text-muted-foreground"}`}
       >
-        <ChevronRight
-          aria-hidden
-          size={14}
-          strokeWidth={1.8}
-          className="transition-transform duration-150 group-data-panel-open:rotate-90 motion-reduce:transition-none"
-        />
+        {pill ? null : (
+          <ChevronRight
+            aria-hidden
+            size={14}
+            strokeWidth={1.8}
+            className="transition-transform duration-150 group-data-panel-open:rotate-90 motion-reduce:transition-none"
+          />
+        )}
         <span className="flex items-center gap-2">
           {live ? (
             <>
@@ -120,6 +127,14 @@ export function ToolActivityDisclosure({
             </>
           ) : null}
         </span>
+        {pill ? (
+          <ChevronRight
+            aria-hidden
+            size={14}
+            strokeWidth={1.8}
+            className="transition-transform duration-150 group-data-panel-open:rotate-90 motion-reduce:transition-none"
+          />
+        ) : null}
       </CollapsibleTrigger>
       <CollapsibleContent hiddenUntilFound>
         <div className="ms-[7px] mt-0.5 border-s border-border ps-3">{children}</div>
@@ -136,16 +151,23 @@ export function StandaloneToolActivity({
   steps,
   stepCount,
   durationMs,
+  pill,
 }: {
   live: boolean;
   steps: readonly ToolStep[];
   stepCount: number;
   durationMs?: number;
+  pill?: boolean;
 }) {
   return (
     <div className="flex justify-start" dir="ltr" data-testid="tool-activity-line">
       <div className="max-w-full min-w-0 ps-1">
-        <ToolActivityDisclosure live={live} stepCount={stepCount} durationMs={durationMs}>
+        <ToolActivityDisclosure
+          live={live}
+          stepCount={stepCount}
+          durationMs={durationMs}
+          pill={pill}
+        >
           <ToolSteps
             steps={steps}
             currentIndex={live ? steps.length - 1 : undefined}
@@ -161,9 +183,11 @@ export function StandaloneToolActivity({
 export function ToolOnlyNarration({
   blocks,
   live,
+  pill,
 }: {
   blocks: readonly ThreadMessage["blocks"][number][];
   live: boolean;
+  pill?: boolean;
 }) {
   return (
     <>
@@ -175,6 +199,7 @@ export function ToolOnlyNarration({
             steps={block.steps}
             stepCount={toolStepCount(block.steps)}
             durationMs={block.durationMs}
+            pill={pill}
           />
         ) : null,
       )}

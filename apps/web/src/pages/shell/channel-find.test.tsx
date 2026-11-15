@@ -53,6 +53,7 @@ async function render(pins = "") {
     root.render(
       <ChannelFind
         groupId="group-1"
+        channelName="finance"
         pins={pins}
         memberName={(botId) => (botId === "bento" ? "Bento" : undefined)}
         onJump={onJump}
@@ -65,7 +66,7 @@ const byLabel = (label: string) =>
   document.body.querySelector<HTMLElement>(`[aria-label="${label}"]`);
 
 async function openSearch() {
-  await act(async () => byLabel("Search")!.click());
+  await act(async () => byLabel("Search")!.focus());
 }
 
 async function type(value: string) {
@@ -134,7 +135,7 @@ it("jumps to the message of a match and closes the search", async () => {
       .click(),
   );
   expect(onJump).toHaveBeenCalledWith("m9");
-  expect(document.body.querySelector("input[type=search]")).toBeNull();
+  expect(document.body.querySelector("[data-testid=channel-search-results]")).toBeNull();
 });
 
 it("says so when nothing matches, and when the search fails", async () => {
@@ -158,9 +159,9 @@ it("does not search an empty box", async () => {
   expect(rpcMock.search.query).not.toHaveBeenCalled();
 });
 
-it("shows no pin button until something is pinned", async () => {
+it("keeps the pin button, with nothing to open, until something is pinned", async () => {
   await render();
-  expect(byLabel("Pinned messages")).toBeNull();
+  expect((byLabel("Pinned messages") as HTMLButtonElement).disabled).toBe(true);
 });
 
 it("lists the pinned messages with who wrote them, and jumps to one", async () => {

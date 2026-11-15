@@ -77,8 +77,11 @@ import { storePath, useOpenSettings } from "../lib/settings-route";
 import { markShellReady, useSpaceEpoch } from "../lib/space-switch";
 import { activeThreadRuns } from "../lib/thread-events";
 import { getToolActivityEnabled, subscribeToolActivity } from "../lib/tool-activity-preference";
+import { useChannelPeopleCount } from "../lib/use-channel-people-count";
 import { useDesktopBadge } from "../lib/use-desktop-badge";
 import { useMissions } from "../lib/use-missions";
+import { usePersonRoles } from "../lib/use-person-roles";
+import { DirectChat } from "./DirectChat";
 import { HostComputerPrompt } from "./HostComputerPrompt";
 import { ArchivedChats } from "./shell/archived-chats";
 import { ChatContextMenu } from "./shell/chat-context-menu";
@@ -130,7 +133,7 @@ export function ShellPage() {
 
 function SpaceShell() {
   const { t } = useLingui();
-  const { botId, groupId } = useParams();
+  const { botId, groupId, userId: dmUserId } = useParams();
   const [shellSpaceId] = useState(selectedSpaceId);
   const [rpc] = useState(() => createSpaceRpc(shellSpaceId));
   const session = authClient.useSession();
@@ -259,6 +262,8 @@ function SpaceShell() {
   const _currentSpaceId = selectedSpaceId() ?? bootstrapMe?.spaceId ?? null;
 
   const inGroup = Boolean(groupId);
+  const channelPeopleCount = useChannelPeopleCount(groupId);
+  const personRole = usePersonRoles();
   // Until the route names the chat reopened from cache, that chat stands in for it.
   const routeChat = botId || groupId ? undefined : startChat;
   const active =
@@ -403,7 +408,7 @@ function SpaceShell() {
         miniSidebar ? "" : search.query,
         {
           pinned: t`Pinned`,
-          unassigned: t`Direct messages`,
+          unassigned: t`Agents`,
           groups: t`Channels`,
         },
       ),
@@ -801,6 +806,7 @@ function SpaceShell() {
   // What the channel's transcript and a thread share: how a message is drawn and answered.
   const transcriptProps: ThreadTranscriptProps = {
     currentUserId: bootstrapMe?.userId,
+    personRole,
     artifactTarget: transcriptArtifactTarget,
     showToolActivity,
     answerableAskIds,
@@ -878,6 +884,7 @@ function SpaceShell() {
         <HostComputerPrompt initialMe={bootstrapMe ?? undefined} onMeUpdated={setBootstrapMe} />
       ) : null}
       <ShellSidebar
+        activeDmUserId={dmUserId}
         isMobile={isMobileSidebar}
         mobileOpen={mobileSidebarOpen}
         setMobileOpen={setMobileSidebarOpen}
@@ -916,8 +923,8 @@ function SpaceShell() {
             setDeleteSectionTarget={dialogs.setDeleteSectionTarget}
             toggleSidebarSection={toggleSidebarSection}
             inGroup={inGroup}
-            active={active}
-            activeGroup={activeGroup}
+            active={dmUserId ? undefined : active}
+            activeGroup={dmUserId ? undefined : activeGroup}
             botsSidebarDensity={botsSidebarDensity}
             dismissedRunErrorIds={composer.dismissedRunErrorIds}
             displayedRunError={composer.displayedRunError}
@@ -971,203 +978,222 @@ function SpaceShell() {
           />
         ) : null}
         <CallReturnBar />
-        {/* The header floats so the transcript scrolls under its buttons. */}
-        <div className="relative flex min-h-0 flex-1 flex-col">
-          {/* Only the pills take input; the gaps pass clicks and scrolling to the transcript. */}
-          <div aria-hidden="true" className="app-drag absolute inset-x-0 top-0 z-10 h-3" />
-          <ChatHeader
-            inGroup={inGroup}
-            active={active}
-            activeGroup={activeGroup}
-            activeSnapshot={activeSnapshot}
-            phoneCallsEnabled={Boolean(bootstrapMe?.phoneCallsEnabled)}
-            inCall={Boolean(active) && call?.botId === active?.id}
-            running={composerRunning}
-            computerPanelOpen={panel === "computer"}
+        {dmUserId ? (
+          <DirectChat
+            key={dmUserId}
+            userId={dmUserId}
+            currentUserId={userId ?? ""}
             onOpenNavigation={() => setMobileSidebarOpen(true)}
-            onOpenChatSettings={() => setPanel(inGroup ? "group-settings" : "settings")}
-            onOpenSquad={() => {
-              if (groupId) navigate(`/app/g/${groupId}/squad`);
-            }}
-            onOpenMembers={() => setPanel(panel === "members" ? null : "members")}
-            membersOpen={panel === "members"}
-            onJumpToMessage={(messageId) => {
-              if (groupId) navigate(`/app/g/${groupId}?m=${encodeURIComponent(messageId)}`);
-            }}
-            memberName={resolveTranscriptMemberName}
-            onCall={(bot) => {
-              if (call?.botId === bot.id) {
-                setCallMinimized(false);
-                return;
-              }
-              callBot(bot);
-            }}
-            onChangeModel={async (bot, patch) => {
-              const updated = await rpc.bots.update({ botId: bot.id, ...patch });
-              setBots((current) =>
-                current.map((item) => (item.id === updated.id ? updated : item)),
-              );
-              await refreshBots().catch(() => undefined);
-            }}
-            onToggleComputer={(bot) => {
-              const next = panel === "computer" ? null : "computer";
-              setPanel(next);
-              if (next === "computer") {
-                // Refresh run/computer so Take control isn't stuck on a stale busyBotName.
-                void refreshThread(bot.id).catch(() => undefined);
-              }
-            }}
           />
-          {!active && !activeGroup && initialBotsLoaded ? (
-            <div className="grid flex-1 place-items-center">
-              <Button onClick={() => dialogs.setCreateBotOpen(true)}>
-                <Plus size={16} aria-hidden="true" />
-                <Trans>New bot</Trans>
-              </Button>
+        ) : (
+          <>
+            {/* The header floats so the transcript scrolls under its buttons. */}
+            <div className="relative flex min-h-0 flex-1 flex-col">
+              {/* Only the pills take input; the gaps pass clicks and scrolling to the transcript. */}
+              <div aria-hidden="true" className="app-drag absolute inset-x-0 top-0 z-10 h-3" />
+              <ChatHeader
+                inGroup={inGroup}
+                active={active}
+                activeGroup={activeGroup}
+                activeSnapshot={activeSnapshot}
+                phoneCallsEnabled={Boolean(bootstrapMe?.phoneCallsEnabled)}
+                inCall={Boolean(active) && call?.botId === active?.id}
+                running={composerRunning}
+                computerPanelOpen={panel === "computer"}
+                onOpenNavigation={() => setMobileSidebarOpen(true)}
+                onOpenChatSettings={() => setPanel(inGroup ? "group-settings" : "settings")}
+                onOpenSquad={() => {
+                  if (groupId) navigate(`/app/g/${groupId}/squad`);
+                }}
+                onOpenMembers={() => setPanel(panel === "members" ? null : "members")}
+                membersOpen={panel === "members"}
+                peopleCount={channelPeopleCount}
+                onJumpToMessage={(messageId) => {
+                  if (groupId) navigate(`/app/g/${groupId}?m=${encodeURIComponent(messageId)}`);
+                }}
+                memberName={resolveTranscriptMemberName}
+                onCall={(bot) => {
+                  if (call?.botId === bot.id) {
+                    setCallMinimized(false);
+                    return;
+                  }
+                  callBot(bot);
+                }}
+                onChangeModel={async (bot, patch) => {
+                  const updated = await rpc.bots.update({ botId: bot.id, ...patch });
+                  setBots((current) =>
+                    current.map((item) => (item.id === updated.id ? updated : item)),
+                  );
+                  await refreshBots().catch(() => undefined);
+                }}
+                onToggleComputer={(bot) => {
+                  const next = panel === "computer" ? null : "computer";
+                  setPanel(next);
+                  if (next === "computer") {
+                    // Refresh run/computer so Take control isn't stuck on a stale busyBotName.
+                    void refreshThread(bot.id).catch(() => undefined);
+                  }
+                }}
+              />
+              {!active && !activeGroup && initialBotsLoaded ? (
+                <div className="grid flex-1 place-items-center">
+                  <Button onClick={() => dialogs.setCreateBotOpen(true)}>
+                    <Plus size={16} aria-hidden="true" />
+                    <Trans>New bot</Trans>
+                  </Button>
+                </div>
+              ) : (
+                <Transcript
+                  {...transcriptProps}
+                  onApproveAll={composer.approveAll}
+                  key={activeSnapshot?.threadId}
+                  scrollRef={thread.messageScroll}
+                  scrollRequest={scrollRequest}
+                  onScrollRequestHandled={clearScrollRequest}
+                  markedUnreadMessageId={read.markedUnreadMessageId}
+                  transcript={transcript}
+                  olderCursor={activeSnapshot?.olderCursor ?? null}
+                  unreadAfterSeq={read.unreadAfterSeq}
+                  loadingOlder={loadingOlder}
+                  running={transcriptRunning}
+                  workingBots={workingBots}
+                  onCallBack={
+                    bootstrapMe?.phoneCallsEnabled && !inGroup && active
+                      ? () => callBot(active)
+                      : undefined
+                  }
+                  intro={
+                    inGroup || !active
+                      ? undefined
+                      : {
+                          id: active.id,
+                          name: active.name,
+                          title: active.title,
+                          color: active.color,
+                        }
+                  }
+                  starters={inGroup ? undefined : active?.starters}
+                  onStarter={(text) => void composer.sendMessage(text, [], newClientId())}
+                  app={emptyChatApp}
+                  onLoadOlder={loadOlder}
+                  onReply={(message) => {
+                    composer.setReplyTarget(message);
+                    composer.setReplyQuote(null);
+                  }}
+                  onQuote={(message, quote) => {
+                    composer.setReplyTarget(message);
+                    composer.setReplyQuote(quote);
+                  }}
+                  onOpenThread={inGroup ? openThread : undefined}
+                  openThreadId={openThreadId}
+                />
+              )}
             </div>
-          ) : (
-            <Transcript
-              {...transcriptProps}
-              onApproveAll={composer.approveAll}
-              key={activeSnapshot?.threadId}
-              scrollRef={thread.messageScroll}
-              scrollRequest={scrollRequest}
-              onScrollRequestHandled={clearScrollRequest}
-              markedUnreadMessageId={read.markedUnreadMessageId}
-              transcript={transcript}
-              olderCursor={activeSnapshot?.olderCursor ?? null}
-              unreadAfterSeq={read.unreadAfterSeq}
-              loadingOlder={loadingOlder}
-              running={transcriptRunning}
-              workingBots={workingBots}
-              onCallBack={
-                bootstrapMe?.phoneCallsEnabled && !inGroup && active
-                  ? () => callBot(active)
-                  : undefined
-              }
-              intro={
-                inGroup || !active
-                  ? undefined
-                  : { id: active.id, name: active.name, title: active.title, color: active.color }
-              }
-              starters={inGroup ? undefined : active?.starters}
-              onStarter={(text) => void composer.sendMessage(text, [], newClientId())}
-              app={emptyChatApp}
-              onLoadOlder={loadOlder}
-              onReply={(message) => {
-                composer.setReplyTarget(message);
-                composer.setReplyQuote(null);
-              }}
-              onQuote={(message, quote) => {
-                composer.setReplyTarget(message);
-                composer.setReplyQuote(quote);
-              }}
-              onOpenThread={inGroup ? openThread : undefined}
-              openThreadId={openThreadId}
-            />
-          )}
-        </div>
-        {active || activeGroup ? (
-          // Let messages continue behind the composer's rounded top corners.
-          <div className="pointer-events-none relative z-30 -mt-7">
-            {recordingSkill ? (
-              <div className="pointer-events-auto bg-background px-6 pb-2 text-center text-[13px] text-destructive">
-                <Trans>Teaching in progress. Stop teaching before sending a new message.</Trans>
+            {active || activeGroup ? (
+              // Let messages continue behind the composer's rounded top corners.
+              <div className="pointer-events-none relative z-30 -mt-7">
+                {recordingSkill ? (
+                  <div className="pointer-events-auto bg-background px-6 pb-2 text-center text-[13px] text-destructive">
+                    <Trans>Teaching in progress. Stop teaching before sending a new message.</Trans>
+                  </div>
+                ) : null}
+                {inGroup ? (
+                  <div className="pointer-events-auto bg-background px-3 pb-1.5 md:px-[max(1.5rem,calc((100%_-_47.5rem)/2))]">
+                    <WorkingLine bots={workingBots} />
+                  </div>
+                ) : null}
+                <Composer
+                  key={inGroup ? `group:${groupId}` : botDraftKey(String(active?.id))}
+                  draftKey={draftKey}
+                  enterToSend={enterToSend}
+                  onImportAgent={(agent) => openImport(agent, false)}
+                  activeName={
+                    inGroup
+                      ? `#${activeGroup?.name ?? activeSnapshot?.groupName ?? ""}`
+                      : active?.name
+                  }
+                  running={composerRunning}
+                  disabled={Boolean(recordingSkill)}
+                  pendingAttachments={composer.activePendingAttachments}
+                  attachmentNotice={composer.attachmentNotice}
+                  sendError={sendError}
+                  imageConfirmation={composer.imageConfirmation}
+                  onDraftEdited={composer.clearImageConfirmation}
+                  onOpenModels={() => {
+                    // A group's failed run belongs to one member; change that bot's model.
+                    const failedBotId =
+                      inGroup && composer.displayedRunError ? activeSnapshot?.run?.botId : null;
+                    if (active && !inGroup) {
+                      setPanel("settings");
+                      setModelFocusRequest(Date.now());
+                    } else if (failedBotId) {
+                      openChatSettings("bot", failedBotId);
+                      setModelFocusRequest(Date.now());
+                    } else openSettings("models");
+                  }}
+                  onOpenConnections={() => openSettings("models")}
+                  onOpenBotSettings={() => {
+                    // A group's failed run belongs to one member; its limit is on that bot.
+                    const failedBotId =
+                      inGroup && composer.displayedRunError ? activeSnapshot?.run?.botId : null;
+                    if (active && !inGroup) setPanel("settings");
+                    else if (failedBotId) openChatSettings("bot", failedBotId);
+                  }}
+                  onResumeSpace={
+                    appSpace?.canPause
+                      ? () => void setSpacePaused(appSpace.id, false).catch(() => undefined)
+                      : undefined
+                  }
+                  runAuthKind={
+                    credentialsQuery.data?.find(
+                      (credential) => credential.provider === activeSnapshot?.run?.modelProvider,
+                    )?.authKind
+                  }
+                  onRetryRun={() => void composer.retryRun()}
+                  retryingRun={composer.retryingRun}
+                  runError={composer.displayedRunError}
+                  runErrorId={composer.displayedRunErrorId}
+                  onRunErrorPresented={composer.handleRunErrorPresented}
+                  onDismissError={composer.dismissComposerError}
+                  sending={sending}
+                  fileInputRef={composer.fileInputRef}
+                  onAttachmentPick={composer.onAttachmentPick}
+                  onRemoveAttachment={composer.removeAttachment}
+                  onSend={composer.sendMessage}
+                  onStop={stopRun}
+                  phoneCallsEnabled={bootstrapMe?.phoneCallsEnabled === true}
+                  dictationTranscribe={voiceStatus ? Boolean(voiceStatus.transcribe) : undefined}
+                  artifactTarget={transcriptArtifactTarget}
+                  replyTarget={composer.replyTarget}
+                  replyQuote={composer.replyQuote}
+                  replyTargetName={replyTargetName}
+                  onClearReply={composer.clearReply}
+                  mentionTargets={composerMentionTargets}
+                  groupRecipient={
+                    inGroup
+                      ? (text, mentionBotIds) => groupRecipient(activeSnapshot, text, mentionBotIds)
+                      : undefined
+                  }
+                  agentSkills={agentSkills}
+                  onSlashOpen={refreshAgentSkills}
+                  onSlashAction={(action) => {
+                    if (action === "chat-settings") {
+                      setPanel(inGroup ? "group-settings" : "settings");
+                      return;
+                    }
+                    if (action === "settings-general") {
+                      openSettings("general");
+                      return;
+                    }
+                    if (action === "settings-usage") {
+                      openSettings("usage");
+                    }
+                  }}
+                />
               </div>
             ) : null}
-            {inGroup ? (
-              <div className="pointer-events-auto bg-background px-3 pb-1.5 md:px-[max(1.5rem,calc((100%_-_47.5rem)/2))]">
-                <WorkingLine bots={workingBots} />
-              </div>
-            ) : null}
-            <Composer
-              key={inGroup ? `group:${groupId}` : botDraftKey(String(active?.id))}
-              draftKey={draftKey}
-              enterToSend={enterToSend}
-              onImportAgent={(agent) => openImport(agent, false)}
-              activeName={
-                inGroup ? `#${activeGroup?.name ?? activeSnapshot?.groupName ?? ""}` : active?.name
-              }
-              running={composerRunning}
-              disabled={Boolean(recordingSkill)}
-              pendingAttachments={composer.activePendingAttachments}
-              attachmentNotice={composer.attachmentNotice}
-              sendError={sendError}
-              imageConfirmation={composer.imageConfirmation}
-              onDraftEdited={composer.clearImageConfirmation}
-              onOpenModels={() => {
-                // A group's failed run belongs to one member; change that bot's model.
-                const failedBotId =
-                  inGroup && composer.displayedRunError ? activeSnapshot?.run?.botId : null;
-                if (active && !inGroup) {
-                  setPanel("settings");
-                  setModelFocusRequest(Date.now());
-                } else if (failedBotId) {
-                  openChatSettings("bot", failedBotId);
-                  setModelFocusRequest(Date.now());
-                } else openSettings("models");
-              }}
-              onOpenConnections={() => openSettings("models")}
-              onOpenBotSettings={() => {
-                // A group's failed run belongs to one member; its limit is on that bot.
-                const failedBotId =
-                  inGroup && composer.displayedRunError ? activeSnapshot?.run?.botId : null;
-                if (active && !inGroup) setPanel("settings");
-                else if (failedBotId) openChatSettings("bot", failedBotId);
-              }}
-              onResumeSpace={
-                appSpace?.canPause
-                  ? () => void setSpacePaused(appSpace.id, false).catch(() => undefined)
-                  : undefined
-              }
-              runAuthKind={
-                credentialsQuery.data?.find(
-                  (credential) => credential.provider === activeSnapshot?.run?.modelProvider,
-                )?.authKind
-              }
-              onRetryRun={() => void composer.retryRun()}
-              retryingRun={composer.retryingRun}
-              runError={composer.displayedRunError}
-              runErrorId={composer.displayedRunErrorId}
-              onRunErrorPresented={composer.handleRunErrorPresented}
-              onDismissError={composer.dismissComposerError}
-              sending={sending}
-              fileInputRef={composer.fileInputRef}
-              onAttachmentPick={composer.onAttachmentPick}
-              onRemoveAttachment={composer.removeAttachment}
-              onSend={composer.sendMessage}
-              onStop={stopRun}
-              phoneCallsEnabled={bootstrapMe?.phoneCallsEnabled === true}
-              dictationTranscribe={voiceStatus ? Boolean(voiceStatus.transcribe) : undefined}
-              artifactTarget={transcriptArtifactTarget}
-              replyTarget={composer.replyTarget}
-              replyQuote={composer.replyQuote}
-              replyTargetName={replyTargetName}
-              onClearReply={composer.clearReply}
-              mentionTargets={composerMentionTargets}
-              groupRecipient={
-                inGroup
-                  ? (text, mentionBotIds) => groupRecipient(activeSnapshot, text, mentionBotIds)
-                  : undefined
-              }
-              agentSkills={agentSkills}
-              onSlashOpen={refreshAgentSkills}
-              onSlashAction={(action) => {
-                if (action === "chat-settings") {
-                  setPanel(inGroup ? "group-settings" : "settings");
-                  return;
-                }
-                if (action === "settings-general") {
-                  openSettings("general");
-                  return;
-                }
-                if (action === "settings-usage") {
-                  openSettings("usage");
-                }
-              }}
-            />
-          </div>
-        ) : null}
+          </>
+        )}
       </main>
 
       <CallCard onSettings={() => openSettings("voice")} />

@@ -19,7 +19,7 @@ vi.mock("@lingui/core/macro", () => ({
 vi.mock("../lib/rpc", () => ({ rpc: {} }));
 
 import { ApprovalsInbox } from "./ApprovalsInbox";
-import { SidebarApprovals } from "./shell/sidebar-team";
+import { SidebarNav } from "./shell/sidebar-team";
 
 const item = (messageId: string, botName: string, groupName?: string): PendingApproval => ({
   runId: `run-${messageId}`,
@@ -81,9 +81,30 @@ it("says nothing is waiting when nothing is", async () => {
   );
 });
 
-it("shows the sidebar entry with its count only while something waits", async () => {
-  await mount(<SidebarApprovals count={3} onOpen={vi.fn()} />);
+const nav = (approvals: number) => (
+  <SidebarNav
+    approvals={approvals}
+    conversationsOn={false}
+    showTasks
+    onHome={vi.fn()}
+    onApprovals={vi.fn()}
+    onConversations={vi.fn()}
+    onTasks={vi.fn()}
+    onTeam={vi.fn()}
+  />
+);
+
+it("keeps Approvals in the sidebar nav, its count shown only while something waits", async () => {
+  await mount(nav(3));
   expect(host!.querySelector('[data-testid="sidebar-approvals-count"]')?.textContent).toBe("3");
-  await act(async () => createRoot(host!).render(<SidebarApprovals count={0} onOpen={vi.fn()} />));
-  expect(host!.querySelector('[data-testid="sidebar-approvals"]')).toBeNull();
+  await act(async () => createRoot(host!).render(nav(0)));
+  expect(host!.querySelector('[data-testid="sidebar-approvals"]')).not.toBeNull();
+  expect(host!.querySelector('[data-testid="sidebar-approvals-count"]')).toBeNull();
+  expect([...host!.querySelectorAll("button")].map((button) => button.textContent)).toEqual([
+    "Home",
+    "Approvals",
+    "Conversations",
+    "Tasks",
+    "Team",
+  ]);
 });

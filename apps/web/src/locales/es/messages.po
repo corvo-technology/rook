@@ -217,7 +217,6 @@ msgstr "{count, plural, one {Se añadió # bot.} other {Se añadieron # bots.}}"
 msgid "{count, plural, one {Added # bot} other {Added # bots}}. Routines start paused."
 msgstr "{count, plural, one {Se añadió # bot} other {Se añadieron # bots}}. Las rutinas empiezan en pausa."
 
-#: src/pages/shell/channel-header.tsx
 #: src/pages/TeamBoard.tsx
 msgid "{count} agents"
 msgstr "{count} agentes"
@@ -533,6 +532,10 @@ msgstr "{toolCount, plural, one {# herramienta} other {# herramientas}}"
 msgid "{toolCount, plural, one {Used # tool} other {Used # tools}}"
 msgstr "{toolCount, plural, one {Usó # herramienta} other {Usó # herramientas}}"
 
+#: src/pages/shell/channel-header.tsx
+msgid "{total} members"
+msgstr "{total} miembros"
+
 #: src/pages/Usage.tsx
 msgid "{used} of {limit}"
 msgstr "{used} de {limit}"
@@ -723,10 +726,6 @@ msgstr "Añade un activador para ejecutar esta rutina."
 msgid "Add agent"
 msgstr "Añadir agente"
 
-#: src/pages/shell/channel-header.tsx
-msgid "Add agents"
-msgstr "Añadir agentes"
-
 #: src/pages/McpServersSettings.tsx
 msgid "Add an HTTPS server URL."
 msgstr "Agrega una URL de servidor HTTPS."
@@ -904,7 +903,9 @@ msgid "Agent computer"
 msgstr "Computadora del agente"
 
 #: src/components/AppRail.tsx
+#: src/pages/BotContextMenu.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
+#: src/pages/Shell.tsx
 #: src/pages/shell/channel-members.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/Store.tsx
@@ -1081,6 +1082,10 @@ msgstr "API de Anthropic"
 #: src/pages/Paywall.tsx
 msgid "Any model, with your own key"
 msgstr "Cualquier modelo, con tu propia clave"
+
+#: src/components/AskCard.tsx
+msgid "Anyone with “Approve actions” can also approve"
+msgstr "Quien tenga «Aprobar acciones» también puede aprobar"
 
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Anyone with the link asks to join"
@@ -1320,7 +1325,6 @@ msgstr "Estudio de avatares"
 #: src/pages/AppCatalogGrid.tsx
 #: src/pages/Auth.tsx
 #: src/pages/Board.tsx
-#: src/pages/DirectPage.tsx
 #: src/pages/NavLinkPage.tsx
 #: src/pages/onboarding/OnboardingLayout.tsx
 #: src/pages/RoutineEditor.tsx
@@ -2133,6 +2137,10 @@ msgstr "Continuar con {0}"
 msgid "Control computers"
 msgstr "Controlar ordenadores"
 
+#: src/pages/shell/sidebar-team.tsx
+msgid "Conversations"
+msgstr "Conversaciones"
+
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/markdown-copy.tsx
 #: src/pages/model-settings/connection-controls.tsx
@@ -2506,6 +2514,10 @@ msgstr "No se pudo cerrar sesión. Inténtalo de nuevo."
 msgid "Could not open billing"
 msgstr "No se pudo abrir la facturación"
 
+#: src/pages/DirectChat.tsx
+msgid "Could not open this conversation"
+msgstr "No se pudo abrir esta conversación"
+
 #: src/pages/shell/use-composer-actions.ts
 msgid "Could not pin message"
 msgstr "No se pudo fijar el mensaje"
@@ -2834,6 +2846,10 @@ msgstr "Crea tu Rook"
 msgid "Created"
 msgstr "Creado"
 
+#: src/components/TaskCard.tsx
+msgid "Created task <0>{taskRef}</0> · {title}"
+msgstr "Creó la tarea <0>{taskRef}</0> · {title}"
+
 #: src/pages/GroupPanel.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/shell/agent-import.tsx
@@ -3082,6 +3098,7 @@ msgstr "Control del escritorio"
 msgid "Desktop update"
 msgstr "Actualización de escritorio"
 
+#: src/components/AskCard.tsx
 #: src/components/ModelProblemNotice.tsx
 #: src/pages/RoutineRunDetail.tsx
 #: src/pages/RoutineRunHistory.tsx
@@ -3091,11 +3108,6 @@ msgstr "Detalles"
 #: src/pages/StoreCategoryChips.tsx
 msgid "Development"
 msgstr "Desarrollo"
-
-#: src/pages/BotContextMenu.tsx
-#: src/pages/Shell.tsx
-msgid "Direct messages"
-msgstr "Mensajes directos"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Disable a tool"
@@ -3808,6 +3820,10 @@ msgstr "Mantén pulsado para hablar"
 #: src/components/composer/HoldToTalk.tsx
 msgid "Hold to talk, release to send"
 msgstr "Mantén para hablar, suelta para enviar"
+
+#: src/pages/shell/sidebar-team.tsx
+msgid "Home"
+msgstr "Inicio"
 
 #: src/lib/cron.ts
 msgid "hour"
@@ -4835,6 +4851,14 @@ msgstr "Necesita toma de control"
 msgid "Needs you"
 msgstr "Te necesita"
 
+#: src/components/AskCard.tsx
+msgid "Needs your approval · you can approve actions"
+msgstr "Pide tu aprobación · puedes aprobar acciones"
+
+#: src/components/AskCard.tsx
+msgid "Needs your approval · you own {agentName}"
+msgstr "Pide tu aprobación · eres dueño de {agentName}"
+
 #: src/pages/shell/import-status.ts
 msgid "Needs: {names}"
 msgstr "Necesita: {names}"
@@ -5258,6 +5282,7 @@ msgstr "¿Abrir enlace externo?"
 msgid "Open in full window"
 msgstr "Abrir en ventana completa"
 
+#: src/pages/DirectChat.tsx
 #: src/pages/shell/channel-header.tsx
 #: src/pages/shell/chat-header.tsx
 msgid "Open navigation"
@@ -5357,6 +5382,7 @@ msgid "Output"
 msgstr "Salida"
 
 #: src/lib/identity-display.ts
+#: src/lib/use-person-roles.ts
 #: src/pages/Board.tsx
 #: src/pages/InvitePage.tsx
 #: src/pages/MembersSettingsPanel.tsx
@@ -5474,7 +5500,6 @@ msgstr "En pausa"
 msgid "Pawn"
 msgstr "Peón"
 
-#: src/pages/DirectPage.tsx
 #: src/pages/shell/channel-members.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceRolesSettings.tsx
@@ -5523,10 +5548,6 @@ msgstr "Elige una herramienta para comprobar"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Pick from role"
 msgstr "Elegir según el rol"
-
-#: src/pages/DirectPage.tsx
-msgid "Pick someone to write to"
-msgstr "Elige a quién escribir"
 
 #: src/pages/board/BoardLanes.tsx
 msgid "Picked up {ref}."
@@ -6375,6 +6396,10 @@ msgstr "Buscar bots y cambiar de conversación"
 msgid "Search by domain"
 msgstr "Buscar por dominio"
 
+#: src/pages/shell/channel-find.tsx
+msgid "Search in #{channelName}"
+msgstr "Buscar en #{channelName}"
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Search integrations.sh"
 msgstr "Buscar en integrations.sh"
@@ -6728,6 +6753,7 @@ msgstr "Fuente"
 
 #: src/lib/identity-display.ts
 #: src/pages/Settings.tsx
+#: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Space"
 msgstr "Espacio"
@@ -6970,6 +6996,7 @@ msgstr "Ajustes de tareas"
 #: src/components/AppRail.tsx
 #: src/components/SidebarFooter.tsx
 #: src/pages/Board.tsx
+#: src/pages/shell/sidebar-team.tsx
 msgid "Tasks"
 msgstr "Tareas"
 
@@ -6987,6 +7014,7 @@ msgstr "Enseñanza en curso: detén la enseñanza antes de enviar un nuevo mensa
 
 #: src/components/AppRail.tsx
 #: src/pages/shell/bot-panel.tsx
+#: src/pages/shell/sidebar-team.tsx
 #: src/pages/TeamPage.tsx
 msgid "Team"
 msgstr "Equipo"
@@ -7388,6 +7416,7 @@ msgstr "Disparador"
 #: src/components/ModelProblemNotice.tsx
 #: src/components/WikiChangeCard.tsx
 #: src/pages/ActivityList.tsx
+#: src/pages/DirectChat.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 msgid "Try again"
 msgstr "Intentarlo de nuevo"
@@ -7916,11 +7945,15 @@ msgid "year"
 msgstr "año"
 
 #: src/pages/shell/chat-context.tsx
-#: src/pages/shell/sidebar-roster.tsx
 msgid "Yesterday"
 msgstr "Ayer"
 
+#: src/pages/shell/channel-members.tsx
+msgid "you"
+msgstr "tú"
+
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/DirectChat.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/channel-find.tsx
 #: src/pages/shell/message-view.tsx

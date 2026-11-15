@@ -70,6 +70,15 @@ it("groups the person's own messages when asked, as a channel does", () => {
   expect([...continued]).toEqual(["me2"]);
 });
 
+it("never groups two different people's messages in a channel", () => {
+  const messages = [
+    { ...say("p1", undefined, 0, "user"), authorUserId: "u-1" },
+    { ...say("p2", undefined, 1, "user"), authorUserId: "u-2" },
+    { ...say("p3", undefined, 2, "user"), authorUserId: "u-2" },
+  ];
+  expect([...continuedMessageIds(messages, none, { people: true })]).toEqual(["p3"]);
+});
+
 it("gives a routine's message its own name line, and a pinned message too", () => {
   const messages = [
     say("a", "bot-1", 0),

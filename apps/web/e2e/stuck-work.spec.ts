@@ -110,7 +110,7 @@ test("aged queued work is marked and an expired wait leaves a status line", asyn
     });
   });
 
-  const activityToggle = page.getByRole("button", { name: "Activity", exact: true });
+  const activityToggle = page.getByRole("button", { name: "Conversations", exact: true });
   await activityToggle.click();
   await page.reload();
   await expect(activityToggle).toHaveAttribute("aria-pressed", "true");

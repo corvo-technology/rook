@@ -12,7 +12,7 @@ import {
 import { Button, Input, Textarea } from "@corvo/ui-web";
 import { t } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { Check } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
@@ -74,7 +74,10 @@ export function AskCard({
   canDismiss,
   onAnswer,
   onDismiss,
+  approver,
 }: {
+  /** Set in a channel: the agent that asks, and whether the reader owns it. */
+  approver?: { agentName: string; owns: boolean };
   block: AskBlock;
   canAnswer: boolean;
   canDismiss: boolean;
@@ -94,6 +97,7 @@ export function AskCard({
   const [pastedLines, setPastedLines] = useState(false);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const submitting = pendingAction !== null;
   const answered = block.status === "answered" || acceptedAnswer !== undefined || dismissed;
   const displayedAnswer = block.status === "answered" ? block.answer : acceptedAnswer;
@@ -263,6 +267,105 @@ export function AskCard({
             block.proposal,
           )}
         </span>
+      </div>
+    );
+  }
+
+  const holdAction = displayActions?.find((action) => asksHoldToApprove(block, action));
+  if (
+    approver &&
+    approvalActions &&
+    holdAction &&
+    !answered &&
+    canAnswer &&
+    !ownerOnly &&
+    !secretInput &&
+    !block.instructionUpdate &&
+    block.detail &&
+    block.detailFormat === "code"
+  ) {
+    const { agentName, owns } = approver;
+    const summary = block.detail
+      .split("\n")
+      .filter((line) => line.trim())
+      .join(" · ");
+    return (
+      <div
+        data-testid="approval-card"
+        className="w-full min-w-0 max-w-[640px] overflow-hidden rounded-2xl border border-border bg-card"
+      >
+        <div className="flex flex-col gap-1 border-b border-border px-[18px] py-3.5">
+          <span className="text-[12px] text-brand">
+            {owns
+              ? t`Needs your approval · you own ${agentName}`
+              : t`Needs your approval · you can approve actions`}
+          </span>
+          <span className="text-[15px]">
+            {reviewing ? t`Review before ${reviewing}` : <ChatMarkdown>{block.text}</ChatMarkdown>}
+          </span>
+        </div>
+        <div className="flex items-start justify-between gap-3 border-b border-border px-[18px] py-3">
+          <span className="min-w-0 flex-1 break-all font-mono text-[12px] text-muted-foreground">
+            {summary}
+          </span>
+          <button
+            type="button"
+            aria-expanded={detailsOpen}
+            onClick={() => setDetailsOpen((open) => !open)}
+            className="flex shrink-0 items-center gap-0.5 text-[13px] text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <Trans>Details</Trans>
+            <ChevronRight
+              aria-hidden
+              size={14}
+              className={detailsOpen ? "rotate-90 transition-transform" : "transition-transform"}
+            />
+          </button>
+        </div>
+        {detailsOpen ? (
+          <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-words border-b border-border bg-muted px-[18px] py-3 font-mono text-[12.5px] leading-[1.7] text-muted-foreground">
+            {block.detail}
+          </pre>
+        ) : null}
+        <div className="flex flex-wrap items-center gap-2.5 px-[18px] py-3.5">
+          {displayActions?.map((action) =>
+            action.id === holdAction.id ? (
+              <HoldToApprove
+                key={action.id}
+                label={t`Hold to approve`}
+                confirmLabel={t`Allow once`}
+                busy={pendingAction === action.id ? t`Sending…` : undefined}
+                disabled={submitting}
+                className="h-auto min-h-10 min-w-[170px] whitespace-normal rounded-full px-[18px] py-2.5"
+                onApprove={() => void submitAnswer(action.id)}
+              />
+            ) : (
+              <Button
+                key={action.id}
+                variant="outline"
+                className="h-auto min-h-10 min-w-0 whitespace-normal rounded-full px-[18px] py-2.5 text-start"
+                disabled={submitting}
+                onClick={() => void submitAnswer(action.id)}
+              >
+                {pendingAction === action.id ? (
+                  <Trans>Sending…</Trans>
+                ) : (
+                  approvalActionLabel(
+                    action.id,
+                    action.label,
+                    action.outcome,
+                    block.site,
+                    block.proposal,
+                  )
+                )}
+              </Button>
+            ),
+          )}
+          <span className="ms-auto text-[12px] text-muted-foreground">
+            <Trans>Anyone with “Approve actions” can also approve</Trans>
+          </span>
+        </div>
+        {error ? <p className="px-[18px] pb-3 text-[13px] text-destructive">{error}</p> : null}
       </div>
     );
   }

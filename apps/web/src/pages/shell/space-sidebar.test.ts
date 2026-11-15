@@ -36,7 +36,7 @@ function space(
 }
 
 describe("sidebarGroupsForSpaces", () => {
-  it("leads with the Chief, then pinned, groups, saved sections and the rest, and keeps that order with an empty section", () => {
+  it("leads with channels, then pinned and saved sections, and ends with the agents, the Chief first", () => {
     const chief = { ...chat("chief", "Chefe"), spawnKey: "onboarding:first" };
     const pinned = { ...chat("pinned", "Pinned bot"), pinned: true };
     const loose = chat("loose", "Loose bot");
@@ -54,19 +54,12 @@ describe("sidebarGroupsForSpaces", () => {
       { pinned: "Pinned", unassigned: "Unassigned", groups: "Groups" },
     );
     expect(groups.map((group) => [group.key, group.bots.map((item) => item.chat.id)])).toEqual([
-      ["chief", ["chief"]],
-      ["pinned", ["pinned"]],
       ["groups", ["team"]],
+      ["pinned", ["pinned"]],
       ["section:work", []],
-      ["unassigned", ["loose"]],
+      ["unassigned", ["chief", "loose"]],
     ]);
-    expect(groups.map((group) => group.title)).toEqual([
-      null,
-      "Pinned",
-      "Groups",
-      "Work",
-      "Unassigned",
-    ]);
+    expect(groups.map((group) => group.title)).toEqual(["Groups", "Pinned", "Work", "Unassigned"]);
   });
 
   it("keeps an empty space with saved sections openable", () => {

@@ -5,6 +5,17 @@ export type PeopleGroup =
   | { key: string; kind: "role"; title: string; members: SpaceMember[] }
   | { key: "everyone"; kind: "everyone"; title: string | null; members: SpaceMember[] };
 
+/** A person's highest role in the space: "owner", the name of the top custom role they hold, or nothing. */
+export function highestRole(
+  member: Pick<SpaceMember, "role" | "roleIds">,
+  roles: readonly CustomSpaceRole[],
+): "owner" | CustomSpaceRole | undefined {
+  if (member.role === "owner") return "owner";
+  return roles
+    .filter((role) => role.systemKey !== "everyone" && member.roleIds.includes(role.id))
+    .sort((a, b) => a.position - b.position)[0];
+}
+
 /**
  * People of a channel grouped by their highest role: the owner first, then the roles in the order
  * the space ranks them, then everyone else. Without `visible`, the channel is open and shows the

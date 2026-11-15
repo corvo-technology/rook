@@ -5,7 +5,7 @@ import { isPeerReceiptBlocks } from "@corvo/core";
 export const SAME_SPEAKER_WINDOW_MS = 5 * 60_000;
 
 type Spoken = Pick<ThreadMessage, "id" | "role" | "botId" | "createdAt" | "blocks"> &
-  Partial<Pick<ThreadMessage, "routineName" | "pinnedAt">>;
+  Partial<Pick<ThreadMessage, "routineName" | "pinnedAt" | "authorUserId">>;
 
 /** Who said a message, or null when it never groups (a hand-off receipt, a system line). */
 function speakerOf(message: Spoken, people: boolean): string | null {
@@ -13,7 +13,7 @@ function speakerOf(message: Spoken, people: boolean): string | null {
   // A routine's message names the routine beside the agent, so it never reads as the agent's own.
   if (message.role === "bot")
     return message.botId ? `bot:${message.botId}:${message.routineName ?? ""}` : null;
-  return people && message.role === "user" ? "person" : null;
+  return people && message.role === "user" ? `person:${message.authorUserId ?? ""}` : null;
 }
 
 /**

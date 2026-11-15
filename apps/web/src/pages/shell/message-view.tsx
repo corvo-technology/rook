@@ -23,8 +23,10 @@ import { AskCard } from "../../components/AskCard";
 import { CollaborationMarker } from "../../components/ai/CollaborationMarker";
 import { CloudAgentCard } from "../../components/CloudAgentCard";
 import { MemoryFactBlock } from "../../components/MemoryFactBlock";
+import { PersonAvatar } from "../../components/PersonAvatar";
 import { PlanCard } from "../../components/PlanCard";
 import { SubagentCard } from "../../components/SubagentCard";
+import { TaskCard } from "../../components/TaskCard";
 import {
   LIVE_TOOL_STEP_WINDOW,
   StandaloneToolActivity,
@@ -115,6 +117,9 @@ export const MessageView = memo(function MessageView({
   speakerName,
   authorName,
   speakerRole,
+  speakerImage,
+  ownerUserId,
+  viewerUserId,
   channelMembers,
   continued = false,
   face = "still",
@@ -164,6 +169,11 @@ export const MessageView = memo(function MessageView({
   authorName?: string;
   /** The agent's role, muted beside its name. */
   speakerRole?: string;
+  /** The picture of the person who wrote a user message in a channel. */
+  speakerImage?: string | null;
+  /** Who owns the agent that wrote this message, and who is reading: an approval names which. */
+  ownerUserId?: string;
+  viewerUserId?: string;
   /** The agents of a channel: an `@Name` of theirs in a message is shown as a chip. */
   channelMembers?: readonly { id: string; name: string }[];
   /** The same agent as the message above, a moment later: no name or face of its own. */
@@ -260,12 +270,7 @@ export const MessageView = memo(function MessageView({
         })}
       </time>
     ) : message.role === "user" ? (
-      <span
-        aria-hidden="true"
-        className="flex size-9 items-center justify-center rounded-full bg-muted text-muted-foreground"
-      >
-        <UserRound className="size-[18px]" />
-      </span>
+      <PersonAvatar name={speakerName} image={speakerImage} size={36} />
     ) : (
       <ChannelFace
         color={speakerBot?.color ?? FALLBACK_BOT_COLOR}
@@ -368,7 +373,11 @@ export const MessageView = memo(function MessageView({
         <ChannelRow avatar={speakerAvatar}>
           {messageContext}
           <div className="relative">
-            <ToolOnlyNarration blocks={visibleNarrationBlocks} live={isLive} />
+            <ToolOnlyNarration
+              blocks={visibleNarrationBlocks}
+              live={isLive}
+              pill={Boolean(speakerName)}
+            />
             {hoverActions}
           </div>
         </ChannelRow>
@@ -389,6 +398,7 @@ export const MessageView = memo(function MessageView({
                   return (
                     <ToolActivityDisclosure
                       key={i}
+                      pill={Boolean(speakerName)}
                       live={isLive}
                       stepCount={toolStepCount(block.steps)}
                       durationMs={block.durationMs}
@@ -450,6 +460,7 @@ export const MessageView = memo(function MessageView({
             return (
               <StandaloneToolActivity
                 key={i}
+                pill={Boolean(speakerName)}
                 live={isLive}
                 steps={block.steps}
                 stepCount={toolStepCount(block.steps)}
@@ -636,6 +647,9 @@ export const MessageView = memo(function MessageView({
                 <WikiChangeBlock changeId={block.changeId} />
               </div>
             );
+          }
+          if (block.kind === "ticket") {
+            return <TaskCard key={i} taskRef={block.ref} title={block.title} />;
           }
           if (block.kind === "memory_fact") {
             return (
@@ -849,6 +863,14 @@ export const MessageView = memo(function MessageView({
                     onAnswer(message, text, username, undefined, approvalEffectId)
                   }
                   onDismiss={() => onAnswer(message, "", undefined, true)}
+                  approver={
+                    speakerName
+                      ? {
+                          agentName: speakerName,
+                          owns: Boolean(ownerUserId) && ownerUserId === viewerUserId,
+                        }
+                      : undefined
+                  }
                 />
                 {i === hoverAnchorIndex ? hoverActions : null}
               </div>

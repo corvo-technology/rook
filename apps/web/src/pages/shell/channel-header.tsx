@@ -1,17 +1,14 @@
 import type { GroupMember } from "@corvo/contracts";
-import { BotAvatar, Button } from "@corvo/ui-web";
+import { Button } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
-import { Columns3, Menu, Plus, Users } from "lucide-react";
+import { Columns3, Menu } from "lucide-react";
 import type { ReactNode } from "react";
 import { IconTooltip } from "../../components/IconTooltip";
 import { workingMembers } from "../../lib/roster-status";
 
-/** How many faces the strip shows before the count says the rest. */
-const MEMBER_FACES = 5;
-
 /**
- * A channel's bar: its name behind a hash, the one line it is for, and the agents in it up top,
- * the way a chat app shows a room.
+ * A channel's bar: its name behind a hash, the one line it is for, and on the right its search,
+ * its pins and who is in it.
  */
 export function ChannelHeader({
   name,
@@ -22,6 +19,7 @@ export function ChannelHeader({
   onOpenSquad,
   onOpenMembers,
   membersOpen = false,
+  peopleCount,
   find,
 }: {
   name: string;
@@ -33,14 +31,15 @@ export function ChannelHeader({
   /** Opens or closes the panel of who sees the channel. */
   onOpenMembers?: () => void;
   membersOpen?: boolean;
+  /** How many people see the channel, beside its agents. */
+  peopleCount?: number;
   /** The channel's search and pinned messages. */
   find?: ReactNode;
 }) {
   const { t } = useLingui();
-  const count = members.length;
   const working = workingMembers(members);
-  // Whoever is working comes first, so a busy member is never hidden behind the count.
-  const faces = [...working, ...members.filter((member) => !working.includes(member))];
+  // Every agent counts, and so does every person who sees the channel.
+  const total = members.length + (peopleCount ?? 0);
   return (
     <div className="absolute inset-x-0 top-0 z-10 flex items-center gap-3 border-b border-border bg-background px-3 py-2 md:px-[22px]">
       <Button
@@ -75,70 +74,28 @@ export function ChannelHeader({
       ) : (
         <span className="flex-1" />
       )}
-      <div className="app-no-drag ms-auto flex shrink-0 items-center gap-1.5">
-        {find}
-        <button
-          type="button"
-          onClick={onOpenSettings}
-          aria-label={t`${count} agents`}
-          className="flex items-center gap-2 rounded-lg px-1.5 py-1 outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <span className="flex items-center" aria-hidden="true">
-            {faces.slice(0, MEMBER_FACES).map((member, index, shown) => (
-              <span
-                key={member.botId}
-                // The first face is on top, so whoever is working is never covered by a neighbour.
-                style={{ zIndex: shown.length - index }}
-                className={`relative rounded-lg ring-2 ring-background ${index === 0 ? "" : "-ms-2"}`}
-              >
-                <BotAvatar
-                  color={member.color}
-                  identity={member.botId}
-                  size={24}
-                  live
-                  status={working.includes(member) ? member.status : undefined}
-                />
-              </span>
-            ))}
-          </span>
-          {working.length > 0 ? (
-            <span
-              role="status"
-              data-testid="channel-working"
-              className="sr-only text-[13px] text-muted-foreground text-shimmer sm:not-sr-only"
-            >
-              {`${working[0]?.name}${working.length > 1 ? ` +${working.length - 1}` : ""} · ${t`Working…`}`}
-            </span>
-          ) : (
-            <span className="hidden text-[13px] text-muted-foreground sm:inline">
-              {t`${count} agents`}
-            </span>
-          )}
-        </button>
-        <IconTooltip label={t`Add agents`}>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label={t`Add agents`}
-            onClick={onOpenSettings}
+      <div className="app-no-drag ms-auto flex shrink-0 items-center gap-2">
+        {working.length > 0 ? (
+          <span
+            role="status"
+            data-testid="channel-working"
+            className="sr-only text-[13px] text-muted-foreground text-shimmer sm:not-sr-only"
           >
-            <Plus strokeWidth={1.7} className="size-4" />
-          </Button>
-        </IconTooltip>
+            {`${working[0]?.name}${working.length > 1 ? ` +${working.length - 1}` : ""} · ${t`Working…`}`}
+          </span>
+        ) : null}
+        {find}
         {onOpenMembers ? (
-          <IconTooltip label={t`Members`}>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label={t`Members`}
-              aria-pressed={membersOpen}
-              data-testid="channel-members-toggle"
-              onClick={onOpenMembers}
-              className={membersOpen ? "text-foreground" : "text-muted-foreground"}
-            >
-              <Users strokeWidth={1.6} className="size-[17px]" />
-            </Button>
-          </IconTooltip>
+          <Button
+            variant="outline"
+            aria-label={t`Members`}
+            aria-pressed={membersOpen}
+            data-testid="channel-members-toggle"
+            onClick={onOpenMembers}
+            className={`h-9 rounded-[10px] px-3 text-[13px] font-medium ${membersOpen ? "bg-accent" : ""}`}
+          >
+            {t`${total} members`}
+          </Button>
         ) : null}
         <IconTooltip label={t`Squad`}>
           <Button variant="ghost" size="icon-sm" aria-label={t`Squad`} onClick={onOpenSquad}>

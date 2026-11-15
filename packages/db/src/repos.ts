@@ -77,6 +77,7 @@ function mapBot(
     instructions: string;
     selfUpdateInstructions?: boolean;
     instructionHistory?: unknown;
+    userId?: string;
     color: string;
     notifyOnFinish: boolean;
     pinned: boolean;
@@ -119,6 +120,7 @@ function mapBot(
   return {
     id: bot.id,
     spaceId: bot.spaceId,
+    ownerUserId: bot.userId,
     name: bot.name,
     title: displayName(bot.title, ""),
     description: bot.description,

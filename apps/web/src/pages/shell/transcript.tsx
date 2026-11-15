@@ -114,9 +114,12 @@ export const Transcript = memo(function Transcript({
   onStarter,
   app,
   currentUserId,
+  personRole,
 }: {
   /** Who is reading; a user message from someone else in a shared conversation shows its author. */
   currentUserId?: string;
+  /** What a person is called in the space beside their name in a channel, such as "Owner". */
+  personRole?: (userId: string | undefined) => string | undefined;
   /** Who the chat is with, shown with the starters while the chat has no message. */
   intro?: { id: string; name: string; title: string; color: string };
   /** Tappable first messages, shown only while the chat has no message. */
@@ -175,7 +178,9 @@ export const Transcript = memo(function Transcript({
   members?: readonly GroupMember[];
   peerBot: (
     botId: string,
-  ) => { name?: string; title?: string; color: string; status?: string } | undefined;
+  ) =>
+    | { name?: string; title?: string; color: string; status?: string; ownerUserId?: string }
+    | undefined;
   onRefresh: () => Promise<void>;
   onBotChanged: () => Promise<void>;
   onAddRoutine: (name: string, prompt: string) => void;
@@ -652,6 +657,7 @@ export const Transcript = memo(function Transcript({
                       continued={continued.has(message.id)}
                       face={faces.get(message.id)}
                       authorName={
+                        !channel &&
                         message.role === "user" &&
                         message.authorName &&
                         message.authorUserId &&
@@ -665,14 +671,19 @@ export const Transcript = memo(function Transcript({
                           : message.role === "bot"
                             ? memberName?.(message.botId)
                             : channel && message.role === "user"
-                              ? t`You`
+                              ? (message.authorName ?? t`You`)
                               : undefined
                       }
                       speakerRole={
                         channel && message.role === "bot" && message.botId
                           ? peerBot(message.botId)?.title
-                          : undefined
+                          : channel && message.role === "user"
+                            ? personRole?.(message.authorUserId ?? currentUserId)
+                            : undefined
                       }
+                      speakerImage={message.authorImage}
+                      ownerUserId={message.botId ? peerBot(message.botId)?.ownerUserId : undefined}
+                      viewerUserId={currentUserId}
                       memberName={memberName}
                       peerBot={peerBot}
                       delegation={delegation}
@@ -724,7 +735,7 @@ export const Transcript = memo(function Transcript({
                     {[...messageReactions].map(([emoji, count]) => (
                       <span
                         key={emoji}
-                        className="rounded-full border border-border bg-muted px-2 py-0.5 text-xs"
+                        className="rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium"
                       >
                         {emoji}
                         {count > 1 ? ` ${count}` : ""}

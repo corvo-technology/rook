@@ -15,7 +15,7 @@ import {
 } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useState } from "react";
 import { PersonAvatar } from "../../components/PersonAvatar";
 import { groupPeopleByRole } from "../../lib/channel-people-groups";
@@ -83,14 +83,19 @@ export function ChannelMembersPanel({
       </div>
       {groups.map((group) => (
         <div key={group.key} className="flex flex-col gap-2">
-          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            {group.kind === "owner" ? t`Owner` : (group.title ?? t`Everyone`)}
+          <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            {`${group.kind === "owner" ? t`Owner` : (group.title ?? t`Everyone`)} — ${group.members.length}`}
           </h3>
           <ul className="flex flex-col gap-1.5">
             {group.members.map((member) => (
               <li key={member.userId} className="group/person flex items-center gap-2.5">
                 <PersonAvatar name={member.name} size={28} />
-                <span className="min-w-0 flex-1 truncate text-sm">{member.name}</span>
+                <span className="flex min-w-0 flex-1 flex-col leading-tight">
+                  <span className="truncate text-sm">{member.name}</span>
+                  {member.userId === currentUserId ? (
+                    <span className="truncate text-xs text-muted-foreground">{t`you`}</span>
+                  ) : null}
+                </span>
                 {people.canManage &&
                 people.restricted &&
                 member.userId !== currentUserId &&
@@ -111,8 +116,8 @@ export function ChannelMembersPanel({
         </div>
       ))}
       <div className="flex flex-col gap-2">
-        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          <Trans>Agents</Trans>
+        <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          {`${t`Agents`} — ${agents.length}`}
         </h3>
         <ul className="flex flex-col gap-1.5">
           {agents.map((agent) => (
@@ -135,8 +140,15 @@ export function ChannelMembersPanel({
       ) : null}
       {canPick ? (
         <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
-          <PopoverTrigger render={<Button variant="outline" size="sm" className="self-start" />}>
-            <Plus size={14} strokeWidth={1.8} aria-hidden="true" />
+          <PopoverTrigger
+            render={
+              <Button
+                variant="outline"
+                className="h-auto self-start rounded-[10px] border-dashed px-3.5 py-2 text-[13px] font-medium"
+              />
+            }
+          >
+            <span aria-hidden="true">+</span>
             <Trans>Add people or agents</Trans>
           </PopoverTrigger>
           {pickerOpen ? (

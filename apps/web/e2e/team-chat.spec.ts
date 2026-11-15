@@ -123,11 +123,69 @@ test("a message is pinned and unpinned from its menu", async ({ page }) => {
 
 test("the channel search finds a message and jumps to it", async ({ page }, testInfo) => {
   await openChannel(page, "light");
-  await page.getByRole("button", { name: "Search" }).click();
   await page.getByRole("searchbox", { name: "Search" }).fill("fee");
   const results = page.getByTestId("channel-search-results");
   await expect(results).toContainText("the 12.90 fee went into the ERP twice");
   await captureScreenshot(page, testInfo, "team-chat-search");
   await results.getByRole("button").click();
   await expect(page.locator("body")).toHaveAttribute("data-jumped", "m3");
+});
+
+test.describe("the channel as the approved canvas draws it", () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  for (const theme of ["light", "dark"]) {
+    test(`sidebar, header, people and agents, cards and the members panel (${theme})`, async ({
+      page,
+    }, testInfo) => {
+      await page.route("**/rpc/threads/pinned", (route) =>
+        route.fulfill({ json: { json: { messages: [] } } }),
+      );
+      await page.goto(`/e2e/fixtures/team-canvas.html?theme=${theme}`);
+      const sidebar = page.getByTestId("canvas-sidebar");
+      // The space, its places, then channels, agents and people.
+      await expect(sidebar.getByText("2 people · 4 agents")).toBeVisible();
+      await expect(sidebar.getByTestId("sidebar-nav").getByRole("button")).toHaveText([
+        "Home",
+        "Approvals1",
+        "Conversations",
+        "Tasks",
+        "Team",
+      ]);
+      await expect(sidebar.getByText("Channels")).toBeVisible();
+      await expect(sidebar.getByText("Agents", { exact: true })).toBeVisible();
+      await expect(sidebar.getByText("Reports")).toBeVisible();
+      await expect(sidebar.getByText("People", { exact: true })).toBeVisible();
+      // The header: the channel, its search, its pins, who is in it.
+      await expect(page.getByRole("searchbox", { name: "Search" })).toHaveAttribute(
+        "placeholder",
+        "Search in #finance",
+      );
+      await expect(page.getByRole("button", { name: "Pinned messages" })).toBeVisible();
+      await expect(page.getByTestId("channel-members-toggle")).toHaveText("5 members");
+      // Every message names its author, with a role: people and agents alike.
+      const main = page.locator("main").getByTestId("transcript");
+      await expect(main.getByText("Pedro Henrique", { exact: true })).toBeVisible();
+      await expect(main.getByText("Owner", { exact: true })).toBeVisible();
+      await expect(main.getByText("João Victor").first()).toBeVisible();
+      await expect(main.getByTestId("routine-badge")).toBeVisible();
+      await expect(main.getByTestId("tool-activity")).toContainText("Used 3 tools");
+      await expect(main.getByTestId("task-card")).toContainText("Created task FIN-42");
+      // The approval: who it is asked of, the line it runs, and the hold.
+      const card = main.getByTestId("approval-card");
+      await expect(card).toContainText("Needs your approval · you own Cora");
+      await expect(card).toContainText("Gmail · send_email · to: accountant@office.example");
+      await expect(card.getByRole("button", { name: "Hold to approve" })).toBeVisible();
+      await expect(card.getByRole("button", { name: "Not now" })).toBeVisible();
+      // The panel of who sees the channel.
+      const panel = page.getByTestId("channel-members");
+      await expect(panel.getByRole("heading")).toHaveText([
+        "Owner — 1",
+        "Finance — 1",
+        "Agents — 3",
+      ]);
+      await expect(panel.getByRole("button", { name: "Add people or agents" })).toBeVisible();
+      await captureScreenshot(page, testInfo, `team-canvas-${theme}`);
+    });
+  }
 });

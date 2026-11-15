@@ -1,7 +1,7 @@
 import type { SearchHit, ThreadMessage } from "@corvo/contracts";
 import { Input, Popover, PopoverContent, PopoverTrigger } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
-import { Pin, PinOff, Search } from "lucide-react";
+import { Pin, PinOff } from "lucide-react";
 import { useEffect, useState } from "react";
 import { rpc } from "../../lib/rpc";
 import { previewMessageText } from "./chat-shared";
@@ -23,11 +23,13 @@ const iconButton =
 /** The channel's own search and its pinned messages, side by side in the channel header. */
 export function ChannelFind({
   groupId,
+  channelName,
   pins,
   memberName,
   onJump,
 }: {
   groupId: string;
+  channelName: string;
   /** Changes when a pin does; see `pinSignature`. */
   pins: string;
   memberName: (botId: string | undefined) => string | undefined;
@@ -36,7 +38,7 @@ export function ChannelFind({
 }) {
   return (
     <>
-      <ChannelSearch groupId={groupId} onJump={onJump} />
+      <ChannelSearch groupId={groupId} channelName={channelName} onJump={onJump} />
       <ChannelPins groupId={groupId} pins={pins} memberName={memberName} onJump={onJump} />
     </>
   );
@@ -44,9 +46,11 @@ export function ChannelFind({
 
 function ChannelSearch({
   groupId,
+  channelName,
   onJump,
 }: {
   groupId: string;
+  channelName: string;
   onJump: (messageId: string) => void;
 }) {
   const { t } = useLingui();
@@ -83,57 +87,66 @@ function ChannelSearch({
     };
   }, [query, groupId]);
 
+  const showResults = open && (hits !== null || failed);
   return (
-    <Popover
-      open={open}
-      onOpenChange={(next) => {
-        setOpen(next);
-        if (!next) setQuery("");
+    // biome-ignore lint/a11y/noStaticElementInteractions: closes the results when focus leaves the search.
+    <div
+      className="relative"
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
       }}
     >
-      <PopoverTrigger aria-label={t`Search`} className={iconButton}>
-        <Search className="size-4" strokeWidth={1.7} />
-      </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 max-w-[calc(100vw-1.5rem)]">
-        <Input
-          type="search"
-          autoFocus
-          value={query}
-          aria-label={t`Search`}
-          placeholder={t`Search`}
-          autoComplete="off"
-          onChange={(event) => setQuery(event.target.value)}
-        />
-        {hits?.length ? (
-          <ul data-testid="channel-search-results" className="max-h-72 overflow-y-auto">
-            {hits.map((hit) => (
-              <li key={`${hit.kind}:${hit.messageId}:${hit.url ?? ""}`}>
-                <button
-                  type="button"
-                  dir="auto"
-                  onClick={() => {
-                    if (hit.messageId) onJump(hit.messageId);
-                    setOpen(false);
-                    setQuery("");
-                  }}
-                  className="block w-full rounded-md px-2 py-1.5 text-start text-[13px] leading-snug text-foreground outline-none hover:bg-accent focus-visible:bg-accent"
-                >
-                  <span className="line-clamp-2">{hit.snippet}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : failed ? (
-          <p role="status" className="px-2 py-1 text-[13px] text-muted-foreground">
-            {t`Could not search`}
-          </p>
-        ) : hits ? (
-          <p role="status" className="px-2 py-1 text-[13px] text-muted-foreground">
-            {t`No matches`}
-          </p>
-        ) : null}
-      </PopoverContent>
-    </Popover>
+      <Input
+        type="search"
+        value={query}
+        aria-label={t`Search`}
+        placeholder={t`Search in #${channelName}`}
+        autoComplete="off"
+        onFocus={() => setOpen(true)}
+        onKeyDown={(event) => {
+          if (event.key !== "Escape") return;
+          setQuery("");
+          setOpen(false);
+        }}
+        onChange={(event) => {
+          setQuery(event.target.value);
+          setOpen(true);
+        }}
+        className="h-9 w-[200px] rounded-[10px] bg-card text-[13px]"
+      />
+      {showResults ? (
+        <div className="absolute end-0 top-full z-20 mt-1 w-80 max-w-[calc(100vw-1.5rem)] rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-md">
+          {hits?.length ? (
+            <ul data-testid="channel-search-results" className="max-h-72 overflow-y-auto">
+              {hits.map((hit) => (
+                <li key={`${hit.kind}:${hit.messageId}:${hit.url ?? ""}`}>
+                  <button
+                    type="button"
+                    dir="auto"
+                    onClick={() => {
+                      if (hit.messageId) onJump(hit.messageId);
+                      setOpen(false);
+                      setQuery("");
+                    }}
+                    className="block w-full rounded-md px-2 py-1.5 text-start text-[13px] leading-snug text-foreground outline-none hover:bg-accent focus-visible:bg-accent"
+                  >
+                    <span className="line-clamp-2">{hit.snippet}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : failed ? (
+            <p role="status" className="px-2 py-1 text-[13px] text-muted-foreground">
+              {t`Could not search`}
+            </p>
+          ) : (
+            <p role="status" className="px-2 py-1 text-[13px] text-muted-foreground">
+              {t`No matches`}
+            </p>
+          )}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -166,11 +179,14 @@ function ChannelPins({
     };
   }, [groupId, pins]);
 
-  // The button is only there once something is pinned.
-  if (messages.length === 0) return null;
+  // Nothing pinned yet: the button is there, and has nothing to open.
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger aria-label={t`Pinned messages`} className={iconButton}>
+    <Popover open={open && messages.length > 0} onOpenChange={setOpen}>
+      <PopoverTrigger
+        aria-label={t`Pinned messages`}
+        disabled={messages.length === 0}
+        className={`${iconButton} size-9 rounded-[10px] border border-border disabled:opacity-60`}
+      >
         <Pin className="size-4" strokeWidth={1.7} />
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 max-w-[calc(100vw-1.5rem)]">

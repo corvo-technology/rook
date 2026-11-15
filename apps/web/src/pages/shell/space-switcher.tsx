@@ -53,19 +53,25 @@ export function SpaceSwitcher({
           className={`app-no-drag relative flex items-center text-start outline-none focus-visible:ring-2 focus-visible:ring-ring ${
             mini
               ? "size-9 justify-center rounded-xl bg-card text-sm font-medium"
-              : `${summary ? "min-h-11 py-1" : "h-9"} w-full gap-2 rounded-xl px-2.5 hover:bg-accent`
+              : `min-h-11 py-1 w-full gap-2.5 rounded-xl px-2.5 hover:bg-accent`
           }`}
         >
           {mini ? (
             <span aria-hidden="true">{current.name.trim().charAt(0).toUpperCase()}</span>
           ) : (
             <>
+              <span
+                aria-hidden="true"
+                className="grid size-[34px] shrink-0 place-items-center rounded-[10px] bg-primary font-semibold text-primary-foreground"
+              >
+                {current.name.trim().charAt(0).toUpperCase()}
+              </span>
               <span className="flex min-w-0 flex-1 flex-col leading-tight">
-                <span className="truncate text-sm font-medium">{current.name}</span>
+                <span className="truncate text-[15px] font-semibold">{current.name}</span>
                 {summary ? (
                   <span
                     data-testid="space-summary"
-                    className="truncate text-xs text-muted-foreground"
+                    className="truncate text-[12px] text-muted-foreground"
                   >
                     {summary}
                   </span>

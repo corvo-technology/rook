@@ -25,6 +25,12 @@ import { messageUserMaxLength } from "./user-progress.js";
 // The owner flag can land in process.env after static imports run (loadRootEnv
 // parses .env once the entry module is already executing), so the model-facing
 // surface is built lazily on first tool access instead of at module scope.
+/** Zod's JSON Schema without the `$schema` URL the model does not need. */
+function toolJsonSchema(schema: z.ZodType) {
+  const { $schema: _dialect, ...rest } = z.toJSONSchema(schema, { io: "input" });
+  return rest;
+}
+
 let secretAskSurface:
   | {
       description: string;
@@ -36,9 +42,9 @@ function secretAskToolSurface() {
   secretAskSurface ??= {
     description: `Collect a credential in a masked field. Supply credential to save a named API credential for this bot and user at one ${
       allowPrivateHttpOrigins
-        ? "HTTPS origin, or an HTTP origin on a private LAN host"
+        ? "HTTPS origin (or an HTTP origin on a private LAN host)"
         : "HTTPS origin"
-    }, or connectionId for a one-use connector code. Credential names must start with a lowercase letter and use only lowercase letters, digits, hyphens, or underscores (max 64 characters). For a website login the user wants saved, use auth {type:"login"} with the sign-in page's HTTPS origin; the card asks for a username and password, and browser_act fill_secret types them. For a value this bot's shell commands need, use auth {type:"command"} with no origin; it is exported to them as an environment variable named after the credential in upper case with hyphens as underscores (netbird-setup-key becomes $NETBIRD_SETUP_KEY). Existing named credentials are reused unless replace is true. For 2FA, CAPTCHA, passkeys, or anything else that needs the live desktop, call request_takeover instead.`,
+    }, or connectionId for a one-use connector code. Names start with a lowercase letter, then lowercase letters, digits, hyphens or underscores (max 64). For a website login to save, use auth {type:"login"} with the sign-in page's HTTPS origin; the card asks for username and password, and browser_act fill_secret types them. For a value this bot's shell commands need, use auth {type:"command"} with no origin; it is exported as an environment variable named after the credential in upper case with hyphens as underscores (netbird-setup-key becomes $NETBIRD_SETUP_KEY). Existing credentials are reused unless replace is true. For 2FA, CAPTCHA, passkeys or anything needing the live desktop, call request_takeover instead.`,
     inputSchema: {
       oneOf: [
         {
@@ -47,9 +53,8 @@ function secretAskToolSurface() {
             label: { type: "string" },
             purpose: { type: "string", enum: SecretAskPurpose.options },
             // Input shape, so origin stays optional for a command variable.
-            credential: z.toJSONSchema(
+            credential: toolJsonSchema(
               botSecretDestinationSchema({ allowPrivateHttpOrigin: allowPrivateHttpOrigins }),
-              { io: "input" },
             ),
             replace: {
               type: "boolean",
@@ -90,12 +95,75 @@ const scheduleCreateProperties = {
   prompt: {
     type: "string",
     description:
-      'Concrete steps for when the schedule fires: what to use, what to extract, and how to report. Name the connected plugin tools to call when one covers the data (e.g. GITHUB_LIST_RELEASES for owner/repo), preferring them over the computer browser or web search; for a website without one, describe the pages and actions to take in the computer\'s browser. This prompt is all a future run knows, and it runs in new circumstances: write the user\'s lasting request in full, keeping every standing item and preference, including their swap and skip rules. A decision that only fit this time, such as an item swapped or skipped because it was out of stock or anything the user said "this week" or "this time" about, becomes a condition, never a permanent change ("skip sourdough if it is out of stock", not "skip sourdough").',
+      'What a future run should do when the schedule fires: what to use, what to extract, how to report. Name connected plugin tools to call (e.g. GITHUB_LIST_RELEASES for owner/repo), preferring them over the browser or web search; otherwise describe the pages and actions. This prompt is all a future run knows: write the user\'s lasting request in full, with every standing item, preference, swap and skip rule. A choice that only fit this time ("this week", an item out of stock) becomes a condition ("skip sourdough if out of stock"), never a permanent change.',
   },
   timezone: { type: "string", description: "IANA timezone (default: the user's timezone)." },
 };
 
-const scheduleTimingNames = [
+/**
+ * Model serializers often emit unused optional fields as null. A timing field accepts null (and a blank
+ * string for numbers, which validation would otherwise turn into 0) so a leftover is not an error; the server ignores blanks and checks the combination.
+ */
+const orNull = (type: "string" | "number") =>
+  type === "number" ? ["number", "string", "null"] : ["string", "null"];
+
+const onMessageSpec = {
+  type: ["string", "null"],
+  description:
+    'Run each time a message arrives from outside, instead of at a time: on a connected channel such as "telegram", or "webhook" when a service calls this agent\'s webhook. The webhook URL is secret and on the agent\'s page; never ask for or repeat it.',
+};
+
+const scheduleTimingSpecs = {
+  cron: { type: orNull("string"), description: "5-field cron for repeating schedules." },
+  every: { type: orNull("number"), description: "Repeat interval amount." },
+  unit: {
+    type: orNull("string"),
+    enum: ["minutes", "hours", "days", "", null],
+    description: "Unit for every (minimum 1 minute).",
+  },
+  runAt: {
+    type: orNull("string"),
+    description: "ISO datetime for a one-shot; without an offset, read in timezone.",
+  },
+  delayMinutes: { type: orNull("number"), description: "Minutes from now, one-shot." },
+  delaySeconds: { type: orNull("number"), description: "Seconds from now, one-shot." },
+  onMessage: onMessageSpec,
+  watch: {
+    type: ["object", "null"],
+    description:
+      'Run only when something changes, checked without a model every everyMinutes (min 5, default 15). kind files: paths on your computer. kind command: a shell command run in your folder each interval without per-run approval; its output is compared. kind tool: a read-only connected tool and its args. Watch one named thing, never a whole account. For a list result set track: the field naming each item, then the fields whose change counts (mail search -> track ["id"]; Drive folder -> ["id", "modifiedTime"]).',
+    properties: {
+      kind: { type: "string", enum: ["files", "command", "tool"] },
+      paths: { type: "array", items: { type: "string" } },
+      command: { type: "string" },
+      tool: { type: "string" },
+      args: { type: "object" },
+      track: { type: "array", items: { type: "string" } },
+      everyMinutes: { type: "number" },
+      loud: { type: "boolean", description: "Also post 'No changes' on quiet checks." },
+    },
+    required: ["kind"],
+  },
+};
+
+const startAtSpec = {
+  type: orNull("string"),
+  description:
+    "ISO date or datetime a repeating schedule starts, read in timezone without an offset. If you already did this period's work, set it so the first run does not repeat it.",
+};
+
+/** One flat object: exactly one timing method is checked by the server, which answers with the fix. */
+function scheduleCreateSchema(
+  timing: readonly (keyof typeof scheduleTimingSpecs)[],
+  extraProperties: Record<string, unknown> = {},
+) {
+  const properties: Record<string, unknown> = { ...extraProperties, ...scheduleCreateProperties };
+  for (const name of timing) properties[name] = scheduleTimingSpecs[name];
+  properties.startAt = startAtSpec;
+  return { type: "object", properties, required: ["name", "prompt"] };
+}
+
+const scheduleCreateInputSchema = scheduleCreateSchema([
   "cron",
   "every",
   "unit",
@@ -104,122 +172,18 @@ const scheduleTimingNames = [
   "delaySeconds",
   "watch",
   "onMessage",
-] as const;
-
-/**
- * Model serializers often emit unused optional fields as null or "". Those are
- * not a second timing method; a real value in another method still fails the branch.
- */
-const blankScheduleTiming = {
-  anyOf: [{ type: "null" }, { type: "string", pattern: "^\\s*$" }],
-};
-
-const onMessageSpec = {
-  type: "string",
-  description:
-    'Run each time a message arrives from outside, instead of at a time: on a connected channel such as "telegram" ("when a customer writes, answer"), or "webhook" when a service calls this agent\'s webhook (a payment failing). The webhook URL is secret and on the agent\'s page; never ask for or repeat it.',
-};
-
-const scheduleTimingSpecs = {
-  cron: { type: "string", description: "5-field cron for repeating schedules." },
-  every: { type: "number", description: "Repeat interval amount for repeating schedules." },
-  unit: {
-    type: "string",
-    enum: ["minutes", "hours", "days"],
-    description: "Unit for every (minimum 1 minute).",
-  },
-  runAt: {
-    type: "string",
-    description: "ISO datetime for a one-shot schedule; without an offset, read in timezone.",
-  },
-  delayMinutes: {
-    type: "number",
-    description: "Minutes from now for a one-shot schedule.",
-  },
-  delaySeconds: {
-    type: "number",
-    description: "Seconds from now for a one-shot schedule (may be under one minute).",
-  },
-  onMessage: onMessageSpec,
-  watch: {
-    type: "object",
-    description:
-      'Run only when something changes, checked without a model every everyMinutes (minimum 5, default 15). kind files: paths on your computer. kind command: a shell command run in your folder every interval without a model or per-run approval, equivalent to running the command yourself; its output is compared. kind tool: a read-only connected tool and its args. If nothing changed, the routine does not run. Watch one named thing (a folder, a list, a search), never a whole account. For a list result, set track: e.g. new email matching a search -> the mail search tool with its query, track ["id"]; a Drive folder -> the tool listing that folder\'s files, track ["id", "modifiedTime"]; a ClickUp list -> the tool listing its tasks, track ["id", "date_updated"].',
-    properties: {
-      kind: { type: "string", enum: ["files", "command", "tool"] },
-      paths: { type: "array", items: { type: "string" } },
-      command: { type: "string" },
-      tool: { type: "string" },
-      args: { type: "object" },
-      track: {
-        type: "array",
-        items: { type: "string" },
-        description:
-          "For a JSON result: the field naming each item, then the fields whose change counts. Everything else is ignored, and the run is told which items are new, updated or gone.",
-      },
-      everyMinutes: { type: "number" },
-      loud: {
-        type: "boolean",
-        description: "Also post 'No changes' in chat on quiet checks.",
-      },
-    },
-    required: ["kind"],
-  },
-};
-
-const startAtSpec = {
-  type: "string",
-  description:
-    "ISO date or datetime a repeating schedule starts; the first run is the first match at or after it. Without an offset, read in timezone. If you already did this period's work yourself, set startAt so the first run does not repeat it.",
-};
-
-function scheduleCreateBranch(
-  active: readonly (keyof typeof scheduleTimingSpecs)[],
-  extraProperties: Record<string, unknown> = {},
-) {
-  const activeNames = new Set<string>(active);
-  const properties: Record<string, unknown> = { ...extraProperties, ...scheduleCreateProperties };
-  for (const name of scheduleTimingNames) {
-    properties[name] = activeNames.has(name) ? scheduleTimingSpecs[name] : blankScheduleTiming;
-  }
-  properties.startAt =
-    activeNames.has("cron") || activeNames.has("every") ? startAtSpec : blankScheduleTiming;
-  return {
-    type: "object",
-    properties,
-    required: ["name", "prompt", ...active],
-    additionalProperties: false,
-  };
-}
-
-/** Exactly one timing method. Null or blank leftovers stay valid so callers can ignore them. */
-const scheduleCreateInputSchema = {
-  oneOf: [
-    scheduleCreateBranch(["cron"]),
-    scheduleCreateBranch(["every", "unit"]),
-    scheduleCreateBranch(["runAt"]),
-    scheduleCreateBranch(["delayMinutes"]),
-    scheduleCreateBranch(["delaySeconds"]),
-    scheduleCreateBranch(["watch"]),
-    scheduleCreateBranch(["onMessage"]),
-  ],
-};
+]);
 
 const childRoutineTargetProperties = {
   bot_id: { type: "string", description: "Id of a bot in this space." },
   bot_name: { type: "string", description: "Exact name of a bot in this space." },
 };
 
-/** Same exactly-one-timing-method rule as schedule_create, plus the target bot. */
-const createChildRoutineInputSchema = {
-  oneOf: [
-    scheduleCreateBranch(["cron"], childRoutineTargetProperties),
-    scheduleCreateBranch(["every", "unit"], childRoutineTargetProperties),
-    scheduleCreateBranch(["runAt"], childRoutineTargetProperties),
-    scheduleCreateBranch(["delayMinutes"], childRoutineTargetProperties),
-    scheduleCreateBranch(["delaySeconds"], childRoutineTargetProperties),
-  ],
-};
+/** Same one-timing-method rule as schedule_create, plus the target bot. */
+const createChildRoutineInputSchema = scheduleCreateSchema(
+  ["cron", "every", "unit", "runAt", "delayMinutes", "delaySeconds"],
+  childRoutineTargetProperties,
+);
 
 const fleetBotTargetProperties = {
   bot_id: { type: "string", description: "Id of the bot." },
@@ -268,7 +232,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "computer_act",
     description:
-      "Perform up to 24 ordered desktop actions on this bot's computer and return the resulting screen. Batch only predictable actions; stop before an outcome you need to inspect. Action kinds: click, move, down, up, type, key, scroll, wait, focus (raises the application's window, launching it if absent). Scroll turns the wheel at x,y; put them on the area to scroll, as for a click. Without them it scrolls wherever the pointer is. Direction up, down, left or right; amount 1-20 wheel notches, default 3.",
+      "Perform up to 24 ordered desktop actions on this bot's computer and return the resulting screen. Batch only predictable actions; stop before an outcome you need to inspect. Kinds: click, move, down, up, type, key, scroll, wait, focus (raises the application's window, launching it if absent). Scroll turns the wheel at x,y (the area to scroll; else wherever the pointer is); direction up/down/left/right, amount 1-20 notches, default 3.",
     inputSchema: {
       type: "object",
       properties: {
@@ -338,7 +302,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   },
   {
     name: "browser_act",
-    description: `Click or fill page elements by ref from browser_snapshot (kinds: ${BROWSER_ACT_KINDS.join(", ")}). upload attaches your files to a "file upload" element; use it instead of clicking upload buttons. fill_secret types the username or password of a login saved with request_secret, only on the site it was saved for; you never see the value. type presses keys like a keyboard and replaces the field's text; use it for code boxes and fields that ignore fill. For a code split into one box per digit, type the whole code once into the first box, and to correct it type it again. Prefer this over computer_act for web pages. If the result includes fallback:"computer_act", use computer_act instead.`,
+    description: `Click or fill page elements by ref from browser_snapshot (kinds: ${BROWSER_ACT_KINDS.join(", ")}). upload attaches your files to a "file upload" element instead of clicking its button. fill_secret types the username or password of a login saved with request_secret, only on its own site; you never see the value. type presses keys and replaces the field's text; use it for code boxes and fields that ignore fill (for one box per digit, type the whole code into the first box; retype to correct). Prefer this over computer_act for web pages; if the result includes fallback:"computer_act", use computer_act.`,
     inputSchema: {
       type: "object",
       properties: {
@@ -541,8 +505,8 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "generate_secret",
     description:
-      'Create a random password or key and save it for this bot and user; you never see the value. For a new website account, use type "login" with the sign-up site and the username, then type both into the form with browser_act fill_secret; add command: true only when a CLI also needs the password and the site offers no token or browser sign-in for it; that saves it as the command variable <name>-password too. For a value shell commands need, such as a database password you are setting up, use type "command"; it is exported like a request_secret command variable, so pass it from the environment instead of writing it out. Set rules only when the site or tool restricts characters, for example symbols: false for a value inside a URL. An existing credential is never replaced.',
-    inputSchema: z.toJSONSchema(GenerateSecretInput, { io: "input" }),
+      'Create a random password or key and save it for this bot and user; you never see the value. For a new website account, use type "login" with the sign-up site and the username, then type both into the form with browser_act fill_secret; add command: true only when a CLI also needs the password and the site has no token or browser sign-in (saved as command variable <name>-password too). For a value shell commands need, such as a database password, use type "command"; it is exported like a request_secret command variable, so pass it from the environment. Set rules only when the site or tool restricts characters (symbols: false inside a URL). An existing credential is never replaced.',
+    inputSchema: toolJsonSchema(GenerateSecretInput),
   },
   {
     name: "list_secrets",
@@ -554,18 +518,18 @@ export const builtinAgentTools: ConnectorTool[] = [
     name: "secret_request",
     description:
       "Make an authenticated HTTPS request using a saved credential name. The backend injects authentication only at its saved origin. Redirects are rejected; response echoes of the credential are redacted. Use normal request URLs and bodies without secret placeholders.",
-    inputSchema: z.toJSONSchema(SecretHttpRequest, { io: "input" }),
+    inputSchema: toolJsonSchema(SecretHttpRequest),
   },
   {
     name: "forget_secret",
     description:
       "Remove a saved credential for this bot and user, preventing future requests from using it.",
-    inputSchema: z.toJSONSchema(z.object({ name: BotSecretName })),
+    inputSchema: toolJsonSchema(z.object({ name: BotSecretName })),
   },
   {
     name: "render_plot",
     description:
-      'Render a chart from tabular data as a PNG and attach it to the chat. Backed by Observable Plot: bar, line, area, scatter, histogram, heatmap, box plot, facets, and more via a declarative JSON spec. Call with {"charts": true} FIRST to list every chart type with a complete runnable example spec ({"charts": "<keyword>"} searches), then copy the closest example and substitute your rows and columns. {"help": true} returns the full guide. Pass rows inline as data, or data_path for a .csv/.tsv/.json file in your home.',
+      'Render a chart from tabular data as a PNG and attach it to the chat (Observable Plot: bar, line, area, scatter, histogram, heatmap, box plot, facets, more, via a JSON spec). Call {"charts": true} FIRST to list chart types with runnable example specs ({"charts": "<keyword>"} searches), then copy the closest and substitute your rows and columns. {"help": true} returns the full guide. Pass rows inline as data, or data_path for a .csv/.tsv/.json file in your home.',
     inputSchema: {
       type: "object",
       properties: {
@@ -605,7 +569,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "add_mcp_server",
     description:
-      "Connect an MCP tool server to this Space when the user asks you to add one and provides the details (URL or command, optional token/headers/env). The server is created immediately and an approval card appears in the chat; its tools reach you once the user approves it there. Do not invent endpoints; only use details the user provided.",
+      "Connect an MCP tool server to this Space when the user asks and provides the details (URL or command, optional token/headers/env). An approval card appears in the chat; its tools reach you once the user approves. Never invent endpoints.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1124,7 +1088,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "schedule_create",
     description:
-      'Create a reminder or recurring job for this bot. Use for "remind me in 10 minutes" or "every morning send a joke". Repeats: cron or every/unit (min 1 minute), optionally from startAt. One-shot: runAt, delayMinutes, or delaySeconds. A repeating job carries out the user\'s lasting request each time, not a copy of what was decided today. Be proactive: when the user wants something useful on a rhythm (a report, a check, a digest) or mentions a dated one-off commitment (interview, deadline, trip), offer once with ask_user, after helping, naming what and when; options: derived times (the evening before and an hour before; a day before a deadline), another time, no. Skip if they asked for a reminder, said no, or the date is unknown. On a yes, create it and say when it will first run; never silently.',
+      'Create a reminder, recurring job, watch or message trigger for this bot ("remind me in 10 minutes", "every morning send a joke"). Give exactly one timing method: cron, every+unit, runAt, delayMinutes, delaySeconds, watch or onMessage; startAt only with a repeat. A repeating job carries out the user\'s lasting request each time, not a copy of today\'s decision. Be proactive: when the user wants something useful on a rhythm (report, check, digest) or mentions a dated one-off commitment (interview, deadline, trip), offer once with ask_user after helping, naming what and when, with options (derived times, another time, no). Skip if they asked for a reminder, said no, or the date is unknown. On a yes, create it and say when it first runs; never silently.',
     inputSchema: scheduleCreateInputSchema,
   },
   {
@@ -1480,7 +1444,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "update_bot",
     description:
-      "Update this bot's own name (header and list label), title, description, avatar (profile picture or color/shape), or notifyOnFinish. Call this when the user asks you to rename yourself, change your title/description, change your profile picture, or turn finish notifications on or off. Do not claim you updated the profile without calling this tool.",
+      "Update this bot's own name, title, description, avatar (picture or color/shape) or notifyOnFinish when the user asks. Never claim a profile change without calling this.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1495,7 +1459,7 @@ export const builtinAgentTools: ConnectorTool[] = [
         description: {
           type: "string",
           description:
-            "Short public summary of what this bot does. Teammates see it in their bot directory. It does not change your instructions.",
+            "Short public summary shown to teammates. Does not change your instructions.",
         },
         color: {
           type: "string",
@@ -1504,13 +1468,11 @@ export const builtinAgentTools: ConnectorTool[] = [
         },
         artifact_id: {
           type: "string",
-          description:
-            "Image artifact in this space to use as the profile picture. Prefer an image the user attached in this chat.",
+          description: "Image artifact in this space to use as the profile picture.",
         },
         use_attached_image: {
           type: "boolean",
-          description:
-            "If true, use the latest image attached on this user message as the profile picture.",
+          description: "Use the image attached on this message as the profile picture.",
         },
         notifyOnFinish: {
           type: "boolean",

@@ -94,13 +94,15 @@ import { resolveDeploymentModel } from "./deployment-model.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { fleetGrantsFor } from "./fleet-grants.js";
 import type { FleetRun } from "./fleet-tools.js";
-import { loadBotGroups, loadGroupContext } from "./group-handoff.js";
+import { lastRunAtByBot, loadBotGroups, loadGroupContext } from "./group-handoff.js";
 import {
+  capHistoryTokens,
   formatCompactedSummary,
   formatRecalledMemory,
   historyWindowSize,
-  LEGACY_HISTORY_WINDOW_SIZE,
+  MAX_HISTORY_TOKENS,
   MAX_RECALLED_MEMORIES,
+  PROMPT_HISTORY_WINDOW_SIZE,
   selectCompactedHistory,
   stableHistoryWindow,
 } from "./history-compaction.js";
@@ -125,7 +127,7 @@ import { isRetiredModelCredentialError } from "./pi-oauth.js";
 import { parseQuotaHeaders, recordProviderQuota } from "./provider-quota.js";
 import { addReplyUsage, createReplyBudget } from "./reply-budget.js";
 import { loadReplyContext, messageToAgentHistoryText } from "./reply-context.js";
-import { routerPassInstruction } from "./router-pass.js";
+import { ROUTER_PASS_INSTRUCTION, routerAnsweredNote } from "./router-pass.js";
 import { backOffRoutineAfterAccountError } from "./routine-backoff.js";
 import { lateRoutineRunInstruction } from "./routine-lateness.js";
 import { startNextRoutineStep, workflowContinuesAfter } from "./routine-steps.js";
@@ -142,9 +144,11 @@ import { APPROVED_EFFECT_REPLAY_ORDER, buildApprovalContinuation } from "./run-e
 import { createRunGuards, type RunGuards, TurnGuardStopError } from "./run-guards.js";
 import {
   BOT_DIRECTORY_LIMIT,
+  BOT_DIRECTORY_POOL,
   dockerComputerToolInstruction,
   liveContextBlock,
   persistentComputerInstruction,
+  pickRosterTeammates,
   runIdentityInstruction,
   threadContextForRun,
   turnNote,
@@ -485,7 +489,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
             include: { computer: true, space: { select: { pausedAt: true } } },
           }),
           deps.prisma.thread.findUniqueOrThrow({ where: { id: run.threadId } }),
-          loadRunHistoryMessages(deps.prisma, run, LEGACY_HISTORY_WINDOW_SIZE, channelId),
+          loadRunHistoryMessages(deps.prisma, run, PROMPT_HISTORY_WINDOW_SIZE, channelId),
           run.trigger === "bot_message"
             ? loadBotMessageContext(deps.prisma, run.sourceMessageId)
             : Promise.resolve(undefined),
@@ -802,7 +806,9 @@ export function createRunExecutor(deps: ExecutorDeps) {
             }),
           );
         }
-        const history = sequencedHistory.map(({ seq: _seq, ...message }) => message);
+        const history = capHistoryTokens(sequencedHistory, MAX_HISTORY_TOKENS).map(
+          ({ seq: _seq, ...message }) => message,
+        );
         const runDeployment = deps.deploymentModelConfigured ? resolveDeploymentModel() : null;
         const runtimeFallback = runtimeFallbackModel(deps.runtime);
         const pinError =
@@ -1088,9 +1094,10 @@ export function createRunExecutor(deps: ExecutorDeps) {
           messagingChannelRun ||
           runAllowsSilentEmpty(run.trigger) ||
           routedRun;
-        const passInstruction =
+        const passInstruction = routedRun && sourceMessage ? ROUTER_PASS_INSTRUCTION : undefined;
+        const routerAnswers =
           routedRun && sourceMessage
-            ? await routerPassInstruction(deps.prisma, {
+            ? await routerAnsweredNote(deps.prisma, {
                 threadId: thread.id,
                 sourceMessageSeq: sourceMessage.seq,
                 botId: bot.id,
@@ -1147,9 +1154,11 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const notBuiltin = discovered.filter(
           (tool) => !builtinAgentTools.some((builtin) => builtin.name === tool.name),
         );
-        const exposedConnectorTools = visitorRun
-          ? visitorConnectorTools(notBuiltin, visitorTicked)
-          : notBuiltin;
+        // Sorted by name so the tool block, which leads the cached prefix, keeps one order
+        // however the connectors answered discovery.
+        const exposedConnectorTools = [
+          ...(visitorRun ? visitorConnectorTools(notBuiltin, visitorTicked) : notBuiltin),
+        ].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
         const connectorTools = new Map(
           exposedConnectorTools.map((tool) => [tool.name, tool] as const),
         );
@@ -1446,7 +1455,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
           : history;
         const runtimeHistory = [...historicalContext, ...historyWithImages];
         // Without a roster a bot only knows the bots it spawned itself.
-        const [teammates, groups] = await Promise.all([
+        const [allTeammates, groups] = await Promise.all([
           visitorRun
             ? []
             : deps.prisma.bot.findMany({
@@ -1462,7 +1471,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 },
                 select: { id: true, name: true, title: true, description: true },
                 orderBy: { createdAt: "asc" },
-                take: BOT_DIRECTORY_LIMIT,
+                take: BOT_DIRECTORY_POOL,
               }),
           !thread.groupId && !visitorRun
             ? loadBotGroups(deps.prisma, run, {
@@ -1472,6 +1481,17 @@ export function createRunExecutor(deps: ExecutorDeps) {
               })
             : [],
         ]);
+        const { listed: teammates, omitted: omittedTeammates } = pickRosterTeammates(allTeammates, {
+          channelMemberIds: new Set(groups.flatMap((group) => group.members.map((m) => m.id))),
+          lastActiveAt:
+            allTeammates.length > BOT_DIRECTORY_LIMIT
+              ? await lastRunAtByBot(
+                  deps.prisma,
+                  run.spaceId,
+                  allTeammates.map((teammate) => teammate.id),
+                )
+              : new Map(),
+        });
         const routesSquads =
           bot.squadRouting && mayRouteWithoutOwner(run.trigger, ownerStartedRun, peerMessage);
         const groupDirectory = renderBotGroupDirectory(groups, { routing: routesSquads });
@@ -1541,8 +1561,9 @@ export function createRunExecutor(deps: ExecutorDeps) {
             ? redactSecrets(scratchpadContext, runSecrets)
             : undefined,
           teamDirectory:
-            [renderBotDirectory(teammates), groupDirectory].filter(Boolean).join("\n\n") ||
-            undefined,
+            [renderBotDirectory(teammates, { omitted: omittedTeammates }), groupDirectory]
+              .filter(Boolean)
+              .join("\n\n") || undefined,
           pluginLine,
           agentSkillsLine,
           taughtSkillsLine,
@@ -1562,6 +1583,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
           currentTime,
           lateRoutineNote,
           routingHint,
+          routerAnswers,
           repeatHint,
           redactedTicketContext,
           redactedRecalledMemory,
@@ -1588,6 +1610,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
               currentTime,
               lateRoutineNote,
               routingHint,
+              routerAnswers,
               repeatHint,
               redactedTicketContext,
               redactedRecalledMemory,

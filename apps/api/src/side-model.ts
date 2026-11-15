@@ -37,6 +37,14 @@ export interface SideModelDeps {
   /** The instance flag (`MCP_ALLOW_PRIVATE_ENDPOINT`). */
   allowPrivateEndpoint?: boolean;
   timeoutMs?: number;
+  /**
+   * The member's fast model (the one memory learning uses). A call that sets this runs on it and
+   * falls back to the bot's own model only when the member chose none or it cannot run.
+   */
+  resolveFastModel?: (scope: {
+    userId: string;
+    spaceId: string;
+  }) => Promise<AgentRunModel | undefined>;
 }
 
 /** The bot whose owner, space and model preference the call runs under. */
@@ -56,6 +64,8 @@ async function resolveSideModel(
     where: { id: "default" },
   });
   const scope = { userId: bot.userId, spaceId: bot.spaceId };
+  const fast = await deps.resolveFastModel?.(scope);
+  if (fast) return { model: fast };
   const member = await resolveMemberMainModel(
     { prisma: deps.prisma, secretStore: deps.secrets },
     scope,

@@ -4,25 +4,24 @@ import { parseConnectorToolArgs } from "./lazy-tool-catalog.js";
 import { normalizeOpenAiToolParameters } from "./openai-tool-parameters.js";
 
 describe("release-watch guidance", () => {
-  it("exposes an exclusive timing schema for schedule_create", () => {
+  it("exposes one flat schema for schedule_create, with the timing check left to the server", () => {
     const tool = builtinAgentTools.find((entry) => entry.name === "schedule_create");
     const schema = tool?.inputSchema as {
-      oneOf?: Array<{ required?: string[]; additionalProperties?: boolean }>;
+      oneOf?: unknown;
+      required?: string[];
+      properties?: Record<string, unknown>;
     };
-    expect(schema.oneOf).toHaveLength(7);
-    expect(schema.oneOf?.map((branch) => branch.required)).toEqual([
-      ["name", "prompt", "cron"],
-      ["name", "prompt", "every", "unit"],
-      ["name", "prompt", "runAt"],
-      ["name", "prompt", "delayMinutes"],
-      ["name", "prompt", "delaySeconds"],
-      ["name", "prompt", "watch"],
-      ["name", "prompt", "onMessage"],
-    ]);
-    expect(schema.oneOf?.every((branch) => branch.additionalProperties === false)).toBe(true);
+    expect(schema.oneOf).toBeUndefined();
+    expect(schema.required).toEqual(["name", "prompt"]);
+    expect(Object.keys(schema.properties ?? {})).toEqual(
+      expect.arrayContaining(["cron", "every", "unit", "runAt", "delayMinutes", "delaySeconds"]),
+    );
+    expect(Object.keys(schema.properties ?? {})).toEqual(
+      expect.arrayContaining(["watch", "onMessage", "startAt"]),
+    );
   });
 
-  it("accepts null or blank leftover timing fields and rejects a second real method", () => {
+  it("accepts null or blank leftover timing fields", () => {
     const tool = builtinAgentTools.find((entry) => entry.name === "schedule_create");
     const schema = tool?.inputSchema ?? {};
     expect(
@@ -37,15 +36,6 @@ describe("release-watch guidance", () => {
         delaySeconds: "",
       }),
     ).toMatchObject({ name: "Morning", cron: "0 9 * * *" });
-    expect(() =>
-      parseConnectorToolArgs(schema, {
-        name: "Morning",
-        prompt: "Send the report",
-        cron: "0 9 * * *",
-        delayMinutes: 5,
-      }),
-    ).toThrow(/invalid/i);
-
     const wire = normalizeOpenAiToolParameters(schema);
     const properties = wire.properties as Record<string, unknown>;
     for (const name of ["cron", "every", "unit", "runAt", "delayMinutes", "delaySeconds"]) {

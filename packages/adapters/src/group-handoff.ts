@@ -358,6 +358,22 @@ export async function loadBotGroups(
   }));
 }
 
+/** When each bot last had a run in the space; bots that never ran are absent. */
+export async function lastRunAtByBot(
+  prisma: PrismaClient,
+  spaceId: string,
+  botIds: readonly string[],
+): Promise<Map<string, Date>> {
+  const rows = await prisma.run.groupBy({
+    by: ["botId"],
+    where: { spaceId, botId: { in: [...botIds] } },
+    _max: { createdAt: true },
+  });
+  return new Map(
+    rows.flatMap((row) => (row._max.createdAt ? [[row.botId, row._max.createdAt] as const] : [])),
+  );
+}
+
 export async function loadBotGroupDirectory(
   prisma: PrismaClient,
   actor: { botId: string; userId: string; spaceId: string },

@@ -12,6 +12,7 @@ import { describe, expect, it, vi } from "vitest";
 import { COMPRESS_KEEP_RECENT } from "./context-usage.js";
 import {
   COMPACTION_BATCH_SIZE,
+  capHistoryTokens,
   compactHistory,
   compactionJobAfterTurn,
   formatCompactedSummary,
@@ -22,6 +23,7 @@ import {
   MAX_SUMMARIZE_PROMPT_CHARS,
   MAX_TRANSCRIPT_CHARS,
   nextCompactionBatchRange,
+  PROMPT_HISTORY_WINDOW_SIZE,
   recordHistoryCompactAttemptsExhausted,
   SUMMARIZE_TIMEOUT_BASE_CHARS,
   SUMMARIZE_TIMEOUT_MAX_MS,
@@ -67,22 +69,22 @@ describe("historyWindowSize", () => {
     ).toBe(50);
   });
 
-  it("keeps the legacy window until a thread has actually been compacted", () => {
+  it("keeps the full window until a thread has actually been compacted", () => {
     expect(
       historyWindowSize({ semanticMemoryEnabled: true, compacted: false, recallSucceeded: false }),
-    ).toBe(200);
+    ).toBe(PROMPT_HISTORY_WINDOW_SIZE);
   });
 
-  it("keeps the legacy window when recall fails so compacted facts are not dropped", () => {
+  it("keeps the full window when recall fails so compacted facts are not dropped", () => {
     expect(
       historyWindowSize({ semanticMemoryEnabled: true, compacted: true, recallSucceeded: false }),
-    ).toBe(200);
+    ).toBe(PROMPT_HISTORY_WINDOW_SIZE);
   });
 
-  it("uses the legacy 200-message window when semantic memory is not configured", () => {
+  it("uses the 60-message window when semantic memory is not configured", () => {
     expect(
       historyWindowSize({ semanticMemoryEnabled: false, compacted: true, recallSucceeded: true }),
-    ).toBe(200);
+    ).toBe(PROMPT_HISTORY_WINDOW_SIZE);
   });
 });
 
@@ -1554,5 +1556,30 @@ describe("stableHistoryWindow", () => {
     ]);
     const gapped = [{ seq: 0 }, { seq: 5 }, { seq: 9 }, { seq: 20 }];
     expect(stableHistoryWindow(gapped, 8).map((message) => message.seq)).toEqual([20]);
+  });
+});
+
+describe("capHistoryTokens", () => {
+  const messages = (count: number, size: number) =>
+    Array.from({ length: count }, (_, seq) => ({ seq, content: "word ".repeat(size) }));
+
+  it("keeps everything that fits", () => {
+    expect(capHistoryTokens(messages(10, 10), 100_000)).toHaveLength(10);
+  });
+
+  it("drops the oldest messages first and moves the start in steps so a cached prefix holds", () => {
+    const history = messages(40, 400);
+    const starts = new Set<number>();
+    for (let last = 20; last < 40; last += 1) {
+      const kept = capHistoryTokens(history.slice(0, last + 1), 4_000, 5);
+      expect(kept.at(-1)?.seq).toBe(last);
+      starts.add(kept[0]!.seq);
+    }
+    expect([...starts].every((start) => start % 5 === 0)).toBe(true);
+    expect(starts.size).toBeLessThan(10);
+  });
+
+  it("always keeps the newest message, even when it alone is over the cap", () => {
+    expect(capHistoryTokens(messages(3, 5_000), 100)).toEqual([messages(3, 5_000)[2]]);
   });
 });

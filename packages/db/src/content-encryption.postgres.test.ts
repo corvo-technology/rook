@@ -17,7 +17,7 @@ import {
 import { appendEventInTransaction } from "./events.js";
 import { readHistory, searchHistory } from "./history-retrieval.js";
 import { createThreadMessage, createThreadMessageInTransaction } from "./messages.js";
-import { runAsSystem } from "./row-security.js";
+import { runAsSystem, scopeToDbContext } from "./row-security.js";
 
 const databaseUrl = process.env.DATABASE_URL;
 const describePostgres =
@@ -80,6 +80,7 @@ describePostgres("content encryption (PostgreSQL)", () => {
   beforeAll(() =>
     runAsSystem("test fixture", async () => {
       ({ prisma, pool: raw } = client());
+      raw = scopeToDbContext(raw);
       await prisma.user.create({
         data: {
           id: userId,

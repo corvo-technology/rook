@@ -4,6 +4,7 @@ import type { PrismaClient } from "./client.js";
 import { createDb } from "./client.js";
 import { sendUserMessage } from "./events.js";
 import { provisionMessagingIdentity } from "./messaging.js";
+import { observeQueries } from "./query-observer.test-support.js";
 import { asSystem, runAsSystem, runAsTenant } from "./row-security.js";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -39,18 +40,12 @@ function sqlValues(args: unknown[]): unknown[] {
 /** Source-run reads only: other run statements during the send are not the replay lookup. */
 function trackSourceRunReads(pool: Pool): SqlRead[] {
   const reads: SqlRead[] = [];
-  const original = pool.query.bind(pool);
-  pool.query = ((...args: unknown[]) => {
-    const result = (original as (...inner: unknown[]) => unknown)(...args);
-    if (!result || typeof (result as Promise<unknown>).then !== "function") return result;
-    return (result as Promise<QueryResult>).then((queryResult) => {
-      const text = sqlText(args[0]);
-      if (/^\s*select\b/i.test(text) && RUN_FROM.test(text) && text.includes('"sourceMessageId"')) {
-        reads.push({ text, values: sqlValues(args), rowCount: queryResult.rowCount ?? 0 });
-      }
-      return queryResult;
-    });
-  }) as Pool["query"];
+  observeQueries(pool, (args, queryResult) => {
+    const text = sqlText(args[0]);
+    if (/^\s*select\b/i.test(text) && RUN_FROM.test(text) && text.includes('"sourceMessageId"')) {
+      reads.push({ text, values: sqlValues(args), rowCount: queryResult.rowCount ?? 0 });
+    }
+  });
   return reads;
 }
 

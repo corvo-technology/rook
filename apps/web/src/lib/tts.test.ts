@@ -314,3 +314,256 @@ describe("Speaker", () => {
     });
   });
 });
+
+describe("Speaker.speakStream", () => {
+  /** Each speak request waits for the test to answer it; each clip plays until the test ends it. */
+  function harness() {
+    stubSelectedSpace("space-1");
+    prepareRpc.mockResolvedValue({ ready: true, utterances: [] });
+    const requests: Array<{
+      text: string;
+      signal: AbortSignal;
+      answer: (response: Response) => void;
+    }> = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        (_url: string, init?: RequestInit) =>
+          new Promise<Response>((resolve, reject) => {
+            const signal = init?.signal as AbortSignal;
+            signal.addEventListener("abort", () =>
+              reject(new DOMException("aborted", "AbortError")),
+            );
+            requests.push({
+              text: (JSON.parse(String(init?.body)) as { text: string }).text,
+              signal,
+              answer: resolve,
+            });
+          }),
+      ),
+    );
+    const playing: Array<{ blob: string; end: () => void }> = [];
+    const blobs = new Map<string, string>();
+    let count = 0;
+    vi.spyOn(URL, "createObjectURL").mockImplementation((blob) => {
+      const url = `blob:${count++}`;
+      blobs.set(url, (blob as Blob & { label?: string }).label ?? "");
+      return url;
+    });
+    vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+    vi.stubGlobal(
+      "Audio",
+      class {
+        onended: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        paused = false;
+        constructor(public src: string) {}
+        play() {
+          playing.push({ blob: this.src, end: () => this.onended?.() });
+          return Promise.resolve();
+        }
+        pause() {
+          this.paused = true;
+        }
+      },
+    );
+    const answer = (index: number) =>
+      requests[index]?.answer(new Response(new Blob([requests[index]?.text ?? ""])));
+    // Reading a response body takes several turns of the event loop.
+    const settle = async () => {
+      for (let turn = 0; turn < 30; turn += 1) await vi.advanceTimersByTimeAsync(0);
+    };
+    return { requests, playing, answer, settle };
+  }
+
+  it("plays what is queued in order and renders one clip ahead of the one playing", async () => {
+    vi.useFakeTimers();
+    const { requests, playing, answer, settle } = harness();
+    const speaker = new Speaker();
+    const stream = speaker.speakStream({ botId: "bot" });
+    for (const text of ["One.", "Two.", "Three.", "Four."]) stream.push(text);
+    await settle();
+    expect(requests.map((request) => request.text)).toEqual(["One.", "Two."]);
+
+    answer(1);
+    await settle();
+    // The second clip is ready, but the first has not been heard yet.
+    expect(playing).toHaveLength(0);
+    answer(0);
+    await settle();
+    expect(playing).toHaveLength(1);
+    expect(speaker.state).toMatchObject({ status: "speaking", caption: "One." });
+
+    playing[0]?.end();
+    await settle();
+    expect(requests.map((request) => request.text)).toEqual(["One.", "Two.", "Three."]);
+    expect(speaker.state).toMatchObject({ status: "speaking", caption: "Two." });
+    expect(playing).toHaveLength(2);
+
+    answer(2);
+    playing[1]?.end();
+    await settle();
+    expect(speaker.state.caption).toBe("Three.");
+    answer(3);
+    playing[2]?.end();
+    await settle();
+    expect(speaker.state.caption).toBe("Four.");
+    expect(requests.map((request) => request.text)).toEqual(["One.", "Two.", "Three.", "Four."]);
+  });
+
+  it("speaks the first sentence while the reply is still being written, and stays quiet between sentences", async () => {
+    vi.useFakeTimers();
+    const { playing, answer, settle } = harness();
+    const speaker = new Speaker();
+    const stream = speaker.speakStream();
+    stream.push("First sentence.");
+    await settle();
+    answer(0);
+    await settle();
+    expect(speaker.state.status).toBe("speaking");
+    playing[0]?.end();
+    await settle();
+    // Nothing is queued and the reply is not over: the speaker must not report idle.
+    expect(speaker.state.status).toBe("speaking");
+    expect(stream.closed).toBe(false);
+
+    stream.push("Second sentence.");
+    await settle();
+    answer(1);
+    await settle();
+    expect(speaker.state.caption).toBe("Second sentence.");
+    playing[1]?.end();
+    stream.end();
+    await expect(stream.done).resolves.toBeUndefined();
+    expect(speaker.state.status).toBe("idle");
+  });
+
+  it("goes idle after the last sentence once the reply is over", async () => {
+    vi.useFakeTimers();
+    const { playing, answer, settle } = harness();
+    const speaker = new Speaker();
+    const stream = speaker.speakStream();
+    stream.push("Only one.");
+    stream.end();
+    await settle();
+    answer(0);
+    await settle();
+    playing[0]?.end();
+    await expect(stream.done).resolves.toBeUndefined();
+    expect(speaker.state.status).toBe("idle");
+    expect(stream.closed).toBe(true);
+  });
+
+  it("aborts queued and in-flight requests, and stops the audio, when cancelled", async () => {
+    vi.useFakeTimers();
+    const { requests, playing, answer, settle } = harness();
+    const speaker = new Speaker();
+    const stream = speaker.speakStream();
+    stream.push("One.");
+    stream.push("Two.");
+    stream.push("Three.");
+    await settle();
+    answer(0);
+    await settle();
+    expect(playing).toHaveLength(1);
+
+    stream.cancel();
+    await settle();
+    expect(requests[1]?.signal.aborted).toBe(true);
+    expect(requests).toHaveLength(2);
+    expect(stream.closed).toBe(true);
+    expect(speaker.state.status).toBe("idle");
+    stream.push("Four.");
+    await settle();
+    expect(requests).toHaveLength(2);
+    await expect(stream.done).resolves.toBeUndefined();
+  });
+
+  it("is cancelled by stop, which is what hanging up and cutting in call", async () => {
+    vi.useFakeTimers();
+    const { requests, settle } = harness();
+    const speaker = new Speaker();
+    const stream = speaker.speakStream();
+    stream.push("One.");
+    stream.push("Two.");
+    await settle();
+    speaker.stop();
+    await settle();
+    expect(requests.every((request) => request.signal.aborted)).toBe(true);
+    expect(stream.closed).toBe(true);
+  });
+
+  it("is replaced by the next thing to speak without failing", async () => {
+    vi.useFakeTimers();
+    const { requests, settle } = harness();
+    const speaker = new Speaker();
+    const stream = speaker.speakStream();
+    stream.push("One.");
+    await settle();
+    const next = speaker.speakStream();
+    await settle();
+    expect(requests[0]?.signal.aborted).toBe(true);
+    expect(stream.closed).toBe(true);
+    expect(next.closed).toBe(false);
+    await expect(stream.done).resolves.toBeUndefined();
+    expect(speaker.state.error).toBeUndefined();
+  });
+
+  it("fails cleanly mid-stream: the failure is reported once and the rest is dropped", async () => {
+    vi.useFakeTimers();
+    const { requests, playing, answer, settle } = harness();
+    const speaker = new Speaker();
+    const stream = speaker.speakStream();
+    stream.push("One.");
+    stream.push("Two.");
+    stream.push("Three.");
+    await settle();
+    answer(0);
+    await settle();
+    playing[0]?.end();
+    requests[1]?.answer(
+      new Response(JSON.stringify({ error: "No credit", code: "VOICE_OUT_OF_CREDIT" }), {
+        status: 402,
+      }),
+    );
+    await expect(stream.done).resolves.toBe("Your voice provider is out of credit.");
+    expect(speaker.state.error).toBe("Your voice provider is out of credit.");
+    expect(speaker.state.status).toBe("idle");
+    expect(stream.closed).toBe(true);
+    stream.push("Four.");
+    await settle();
+    expect(requests).toHaveLength(3);
+    expect(requests[2]?.signal.aborted).toBe(true);
+  });
+
+  it("fails before any audio when there is no voice to speak with", async () => {
+    vi.useFakeTimers();
+    const { playing, answer, settle } = harness();
+    prepareRpc.mockResolvedValue({ ready: false, utterances: [] });
+    const speaker = new Speaker();
+    const stream = speaker.speakStream();
+    stream.push("One.");
+    await settle();
+    answer(0);
+    await expect(stream.done).resolves.toMatch(/voice provider key/);
+    expect(playing).toHaveLength(0);
+    expect(speaker.state.status).toBe("idle");
+  });
+
+  it("logs how long the first audio took", async () => {
+    vi.useFakeTimers();
+    const debug = vi.spyOn(console, "debug").mockImplementation(() => undefined);
+    const { answer, settle } = harness();
+    const speaker = new Speaker();
+    const stream = speaker.speakStream({ turnStartedAt: performance.now() });
+    stream.push("One.");
+    await vi.advanceTimersByTimeAsync(250);
+    answer(0);
+    await settle();
+    expect(debug).toHaveBeenCalledWith(
+      "[voice] time to first audio",
+      expect.objectContaining({ sinceTurnMs: 250, sinceFirstTextMs: 250 }),
+    );
+    stream.cancel();
+  });
+});

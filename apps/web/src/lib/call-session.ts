@@ -1,10 +1,11 @@
-import type { ThreadMessage, ThreadSnapshot } from "@corvo/contracts";
+import type { MessageBlock, ThreadMessage, ThreadSnapshot } from "@corvo/contracts";
 import type { CallExchange } from "@corvo/core";
 import {
   CALL_FAREWELL_TIMEOUT_MS,
   callClientNonce,
   createCallSendTracker,
   createInterimBargeIn,
+  createSpeechChunker,
   isCallBargeIn,
   isFarewell,
   isSecretAskBlock,
@@ -13,6 +14,7 @@ import {
   speechFromBlocks,
   spokenDecision,
   spokenMemory,
+  toUtterances,
 } from "@corvo/core";
 import { t } from "@lingui/core/macro";
 import { useSyncExternalStore } from "react";
@@ -21,6 +23,7 @@ import { dictation } from "./dictation.js";
 import { reportClientError } from "./monitoring";
 import { rpc } from "./rpc.js";
 import { isThreadSnapshotEvent, reduceThreadSnapshot } from "./thread-events.js";
+import type { SpeechStream } from "./tts.js";
 import { speaker } from "./tts.js";
 import { errorText } from "./user-error";
 
@@ -83,12 +86,34 @@ let micOpen = false;
 let bargedIn = false;
 /** A turn is in flight: its reply must be spoken even if the mic reopened meanwhile. */
 let awaitingReply = false;
+/**
+ * The reply of a run that is spoken while it is still being written. It belongs to the run,
+ * not to a message: the live message and the durable one that replaces it are one reply.
+ */
+interface LiveReply {
+  runId: string;
+  messageId: string;
+  chunker: ReturnType<typeof createSpeechChunker>;
+  stream: SpeechStream | null;
+  /** The visible reply as of the last update. */
+  written: string;
+  /** Something of this reply was spoken, so the whole of it is never spoken again. */
+  spoke: boolean;
+  /** The caller cut this reply off; only what is written after that point may be spoken. */
+  abandoned: boolean;
+  /** Where this reply sits in the transcript. */
+  exchangeAt: number | null;
+}
+let liveReply: LiveReply | null = null;
+/** When the caller's turn was sent, for the time to the first audio. */
+let turnSentAt: number | undefined;
 /** Counting down an interim phrase heard over the reply, before it counts as cutting in. */
 const interim = createInterimBargeIn(() => {
   if (state?.phase !== "speaking") return;
   // Never resume the cut-off message, and keep the idle it emits from reopening the mic.
   bargedIn = true;
   speaker.stop();
+  abandonLiveReply();
   set({ phase: "listening", caption: "" });
 });
 const watchers = new Set<() => void>();
@@ -134,6 +159,7 @@ export function startCall(call: {
   micOpen = false;
   bargedIn = false;
   awaitingReply = false;
+  liveReply = null;
   state = {
     botId: call.botId,
     botName: call.botName,
@@ -239,6 +265,7 @@ export function endCall(): void {
   micOpen = false;
   bargedIn = false;
   awaitingReply = false;
+  liveReply = null;
   unsubSpeech?.();
   unsubDictation?.();
   unsubSpeech = null;
@@ -416,6 +443,7 @@ async function handleTranscript(text: string) {
     // The caller talked over the reply: cut the audio, and never resume that message.
     bargedIn = true;
     speaker.stop();
+    abandonLiveReply();
     set({ phase: "thinking", caption: "" });
   }
   dictation.stop("submit");
@@ -437,7 +465,10 @@ async function handleTranscript(text: string) {
   const callFeed = feed;
   const turnCallId = callId;
   const closing = isFarewell(text);
+  // Whatever the bot was still writing for the last turn was not for this one.
+  abandonLiveReply();
   awaitingReply = true;
+  turnSentAt = performance.now();
   set({ heard: text, phase: "thinking", exchanges: [...exchanges, { role: "user", text }] });
   if (closing) {
     hangUpAfterReply = true;
@@ -507,11 +538,17 @@ function reactToThread() {
     micOpen = false;
     set({ heard: "" });
   }
-  // A turn sent back to listening mid-flight must not drop the reply it is waiting for.
-  if (state.phase === "listening" && !awaitingReply) return;
   const { botId } = state;
   const messages = thread?.messages ?? [];
   const lastBot = [...messages].reverse().find((message) => message.role === "bot");
+  // A reply that was spoken while it was written settles even if the mic reopened meanwhile.
+  if (lastBot && liveReply && replyFinished(lastBot) && finishLiveReply(lastBot)) return;
+  // A turn sent back to listening mid-flight must not drop the reply it is waiting for.
+  if (state.phase === "listening" && !awaitingReply) return;
+  if (lastBot && !spokenMessageIds.has(lastBot.id) && writingReply(lastBot)) {
+    speakWhileWriting(lastBot);
+    return;
+  }
   if (lastBot && !spokenMessageIds.has(lastBot.id) && replyFinished(lastBot)) {
     const text = speechFromBlocks(lastBot.blocks);
     const ask = lastBot.blocks.find((block) => block.kind === "ask" && block.status !== "answered");
@@ -538,6 +575,143 @@ function reactToThread() {
       void listen();
     }
   }
+}
+
+/** A reply its run is still writing: the bot's own message of the run that is active now. */
+function writingReply(message: ThreadMessage) {
+  const run = thread?.run;
+  return Boolean(
+    run && message.runId === run.id && RUN_ACTIVE.includes(run.status) && message.role === "bot",
+  );
+}
+
+/** What the person reads of a reply: its text, never the status line of a tool at work. */
+function visibleReply(blocks: readonly MessageBlock[]): string {
+  return blocks
+    .filter((block) => block.kind === "text" || (block.kind === "progress" && !block.activity))
+    .map((block) => (block.kind === "text" || block.kind === "progress" ? block.text : ""))
+    .join(" ");
+}
+
+/** The parts of a finished reply that are read after its text: a question, a card, a result. */
+function afterTheText(blocks: readonly MessageBlock[]): string[] {
+  const rest = speechFromBlocks(
+    blocks.filter(
+      (block) => block.kind !== "text" && block.kind !== "progress" && block.kind !== "steps",
+    ),
+  );
+  const ask = blocks.find((block) => block.kind === "ask" && block.status !== "answered");
+  const prompt = ask
+    ? isSecretAskBlock(ask)
+      ? t`Hang up first, then enter the code on screen.`
+      : t`Say yes or no, or answer in a sentence.`
+    : "";
+  return [...toUtterances(rest), ...(prompt ? [prompt] : [])];
+}
+
+function setReplyExchange(live: LiveReply, text: string) {
+  if (!state || !text) return;
+  const exchanges = [...state.exchanges];
+  if (live.exchangeAt === null) {
+    live.exchangeAt = exchanges.length;
+    exchanges.push({ role: "bot", text });
+  } else if (exchanges[live.exchangeAt]) {
+    exchanges[live.exchangeAt] = { role: "bot", text };
+  }
+  set({ exchanges, heard: "" });
+}
+
+function sayChunks(live: LiveReply, chunks: string[], botId: string, messageId: string) {
+  if (chunks.length === 0) return;
+  if (!live.stream || live.stream.closed) {
+    live.stream = speaker.speakStream({ botId, messageId, turnStartedAt: turnSentAt });
+    live.abandoned = false;
+  }
+  awaitingReply = false;
+  live.spoke = true;
+  for (const chunk of chunks) {
+    spokenMemory.remember(chunk);
+    live.stream.push(chunk);
+  }
+}
+
+/**
+ * Speaks the reply from its first sentence, while the model is still writing the rest.
+ * Only sentences certain to be complete are sent; the stream keeps them in order.
+ */
+function speakWhileWriting(message: ThreadMessage) {
+  if (!state || !message.runId) return;
+  const { botId } = state;
+  let live = liveReply;
+  if (live && live.runId !== message.runId) {
+    // Another run took over: what was queued plays out, nothing more is added.
+    live.stream?.end();
+    live = null;
+  }
+  if (!live) {
+    live = {
+      runId: message.runId,
+      messageId: message.id,
+      chunker: createSpeechChunker(),
+      stream: null,
+      written: "",
+      spoke: false,
+      abandoned: false,
+      exchangeAt: null,
+    };
+  } else if (live.messageId !== message.id) {
+    // A durable message of the run in the middle of it starts its own text.
+    if (!live.messageId.startsWith("progress:")) live.chunker = createSpeechChunker();
+    live.messageId = message.id;
+  }
+  liveReply = live;
+  live.written = visibleReply(message.blocks);
+  const open = Boolean(live.stream && !live.stream.closed);
+  if (!open && !awaitingReply) return;
+  const chunks = live.chunker.push(live.written);
+  sayChunks(live, chunks, botId, message.id);
+  if (chunks.length > 0) setReplyExchange(live, live.written);
+}
+
+/** The caller cut in: cancel what is queued and speak nothing of what was already written. */
+function abandonLiveReply() {
+  const live = liveReply;
+  if (!live) return;
+  live.stream?.cancel();
+  live.stream = null;
+  live.chunker.skipTo(live.written);
+  live.abandoned = true;
+}
+
+/**
+ * The run ended. Speaks what is left of its reply after what was already spoken and lets
+ * the speaker go idle. Returns false when nothing of it was spoken early, so the whole reply
+ * is spoken the usual way.
+ */
+function finishLiveReply(message: ThreadMessage): boolean {
+  const live = liveReply;
+  if (!state || !live || live.runId !== message.runId) return false;
+  if (!live.spoke && !live.abandoned) {
+    liveReply = null;
+    return false;
+  }
+  liveReply = null;
+  spokenMessageIds.add(message.id);
+  const run = thread?.run;
+  // A run that failed or was replaced leaves a reply that is not whole: it is not finished aloud.
+  const completed = run?.id === live.runId && run.status === "completed";
+  const written = visibleReply(message.blocks);
+  const tail = completed ? [...live.chunker.flush(written), ...afterTheText(message.blocks)] : [];
+  const open = Boolean(live.stream && !live.stream.closed);
+  if (open || (awaitingReply && tail.length > 0)) {
+    sayChunks(live, tail, state.botId, message.id);
+    live.stream?.end();
+    if (tail.length > 0) setReplyExchange(live, speechFromBlocks(message.blocks));
+  } else if (awaitingReply && !runActive(thread)) {
+    awaitingReply = false;
+    void listen();
+  }
+  return true;
 }
 
 /**

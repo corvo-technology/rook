@@ -39,6 +39,24 @@ vi.mock("./dictation.js", () => ({
 vi.mock("./tts.js", () => ({
   speaker: {
     speak: vi.fn(async () => undefined),
+    speakStream: vi.fn(() => {
+      const stream = {
+        pushed: [] as string[],
+        ended: false,
+        closed: false,
+        push: (text: string) => {
+          if (!stream.closed) stream.pushed.push(text);
+        },
+        end: () => {
+          stream.ended = true;
+        },
+        cancel: () => {
+          stream.closed = true;
+        },
+        done: Promise.resolve(undefined),
+      };
+      return stream;
+    }),
     stop: vi.fn(),
     warm: vi.fn(),
     isSpeaking: vi.fn(() => false),
@@ -62,6 +80,7 @@ vi.mock("./rpc.js", () => ({
 
 const listen = vi.mocked(dictation.listen);
 const speak = vi.mocked(speaker.speak);
+const speakStream = vi.mocked(speaker.speakStream);
 const isSpeaking = vi.mocked(speaker.isSpeaking);
 const send = vi.mocked(rpc.threads.send);
 const answer = vi.mocked(rpc.threads.answer);
@@ -1310,5 +1329,237 @@ describe("answered incoming call", () => {
     expect(endCallRpc).toHaveBeenCalledWith(
       expect.objectContaining({ botId: "call-bot", callId: "bot-call-2" }),
     );
+  });
+});
+
+describe("call speaking while the reply is written", () => {
+  const completedRun = { ...runningRun, status: "completed" } as ThreadSnapshot["run"];
+  const failedRun = { ...runningRun, status: "failed" } as ThreadSnapshot["run"];
+
+  beforeEach(() => {
+    endCall();
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    isSpeaking.mockReturnValue(false);
+    listen.mockResolvedValue(undefined);
+    answer.mockResolvedValue({ ok: true } as never);
+    followUp.mockResolvedValue({ runId: "run-1", taskId: "task-1" } as never);
+    getThread.mockResolvedValue(snapshot([]) as never);
+    send.mockResolvedValue({ runId: "run-1", taskId: "task-1" } as never);
+    endCallRpc.mockResolvedValue({ ok: true } as never);
+  });
+
+  afterEach(() => {
+    endCall();
+    vi.useRealTimers();
+  });
+
+  type FakeStream = { pushed: string[]; ended: boolean; closed: boolean };
+  const stream = () => speakStream.mock.results.at(-1)?.value as FakeStream;
+
+  async function writing(text: string, extra: ThreadMessage["blocks"] = []) {
+    const message = streamingMessage(text);
+    message.blocks = [...extra, ...message.blocks];
+    getThread.mockResolvedValue(snapshot([message], runningRun) as never);
+    await getFeed()?.refresh();
+  }
+  const getFeed = () => vi.mocked(runThreadSubscription).mock.calls.at(-1)?.[0];
+
+  async function turn(text = "what is the weather") {
+    await answeredCall({ botId: "call-bot", botName: "Ada", transcribe: false });
+    getThread.mockResolvedValue(snapshot([], runningRun) as never);
+    await heard(text);
+  }
+
+  it("starts speaking at the first sentence, before the run has finished", async () => {
+    await turn();
+    await writing("It is sunny today. Highs near twen");
+    expect(speakStream).toHaveBeenCalledTimes(1);
+    expect(speakStream).toHaveBeenCalledWith(
+      expect.objectContaining({ botId: "call-bot", turnStartedAt: expect.any(Number) }),
+    );
+    expect(stream().pushed).toEqual(["It is sunny today."]);
+    expect(stream().ended).toBe(false);
+    expect(speak).not.toHaveBeenCalled();
+
+    await writing("It is sunny today. Highs near twenty. Bring a ha");
+    expect(speakStream).toHaveBeenCalledTimes(1);
+    expect(stream().pushed).toEqual(["It is sunny today.", "Highs near twenty."]);
+  });
+
+  it("finishes the reply from the durable message and never speaks it a second time", async () => {
+    await turn();
+    await writing("It is sunny today. Highs near twenty. Bring a ha");
+    getThread.mockResolvedValue(
+      snapshot(
+        [botMessage("message-1", "It is sunny today. Highs near twenty. Bring a hat")],
+        completedRun,
+      ) as never,
+    );
+    await getFeed()?.refresh();
+    expect(stream().pushed).toEqual(["It is sunny today.", "Highs near twenty.", "Bring a hat"]);
+    expect(stream().ended).toBe(true);
+    expect(speak).not.toHaveBeenCalled();
+    expect(getSnapshot()?.exchanges.at(-1)).toEqual({
+      role: "bot",
+      text: "It is sunny today. Highs near twenty. Bring a hat",
+    });
+
+    await getFeed()?.refresh();
+    expect(speakStream).toHaveBeenCalledTimes(1);
+    expect(stream().pushed).toHaveLength(3);
+  });
+
+  it("speaks a reply with no sentence end the usual way once the run finishes", async () => {
+    await turn();
+    await writing("Booked for Friday");
+    expect(speakStream).not.toHaveBeenCalled();
+    getThread.mockResolvedValue(
+      snapshot([botMessage("message-1", "Booked for Friday")], completedRun) as never,
+    );
+    await getFeed()?.refresh();
+    expect(speak).toHaveBeenCalledWith(
+      "Booked for Friday",
+      expect.objectContaining({ messageId: "message-1" }),
+    );
+  });
+
+  it("never speaks what a tool is doing", async () => {
+    await turn();
+    await writing("Let me look. ", [
+      { kind: "progress", text: "Searching the web: weather today. Done. ", activity: true },
+      { kind: "steps", steps: [{ label: "Search", count: 1 }] },
+    ]);
+    await writing("Let me look. Checking now. ", [
+      { kind: "progress", text: "Searching the web: weather today. Done. ", activity: true },
+    ]);
+    expect(stream().pushed).toEqual(["Let me look.", "Checking now."]);
+  });
+
+  it("stops speaking and drops the rest when the caller cuts in", async () => {
+    await turn();
+    await writing("It is sunny today. Highs near twenty. Bring a ha");
+    const speech = vi.mocked(speaker.subscribe).mock.calls.at(-1)?.[0];
+    speech?.({ status: "speaking", caption: "It is sunny today." });
+    await Promise.resolve();
+
+    interim("wait stop right there");
+    await vi.advanceTimersByTimeAsync(INTERIM_BARGE_IN_MS * 2);
+    expect(speaker.stop).toHaveBeenCalled();
+    expect(stream().closed).toBe(true);
+    expect(getSnapshot()?.phase).toBe("listening");
+
+    await writing("It is sunny today. Highs near twenty. Bring a hat. And more. Mo");
+    getThread.mockResolvedValue(
+      snapshot(
+        [botMessage("message-1", "It is sunny today. Highs near twenty. Bring a hat. And more.")],
+        completedRun,
+      ) as never,
+    );
+    await getFeed()?.refresh();
+    expect(speakStream).toHaveBeenCalledTimes(1);
+    expect(stream().pushed).toEqual(["It is sunny today.", "Highs near twenty."]);
+    expect(speak).not.toHaveBeenCalled();
+  });
+
+  it("speaks the answer to the interruption but not the rest of the old reply", async () => {
+    await turn();
+    await writing("It is sunny today. Highs near twenty. Bring a ha");
+    const speech = vi.mocked(speaker.subscribe).mock.calls.at(-1)?.[0];
+    speech?.({ status: "speaking", caption: "It is sunny today." });
+    await Promise.resolve();
+    followUp.mockResolvedValue({ runId: "run-1", taskId: "task-1" } as never);
+    await heard("actually what about tomorrow please");
+    expect(stream().closed).toBe(true);
+
+    await writing("It is sunny today. Highs near twenty. Bring a hat. Tomorrow will rain. Pack");
+    expect(speakStream).toHaveBeenCalledTimes(2);
+    expect(stream().pushed).toEqual(["Tomorrow will rain."]);
+  });
+
+  it("stops the speaker when the call is hung up, and speaks nothing more", async () => {
+    await turn();
+    await writing("It is sunny today. Highs near twenty. Bring a ha");
+    vi.mocked(speaker.stop).mockClear();
+    endCall();
+    expect(speaker.stop).toHaveBeenCalled();
+
+    await writing("It is sunny today. Highs near twenty. Bring a hat. And more. Mo");
+    expect(speakStream).toHaveBeenCalledTimes(1);
+    expect(stream().pushed).toEqual(["It is sunny today.", "Highs near twenty."]);
+  });
+
+  it("stops cleanly, without a half sentence, when the run fails", async () => {
+    await turn();
+    await writing("It is sunny today. Highs near twen");
+    getThread.mockResolvedValue(
+      snapshot([botMessage("message-1", "It is sunny today. Highs near twen")], failedRun) as never,
+    );
+    await getFeed()?.refresh();
+    expect(stream().pushed).toEqual(["It is sunny today."]);
+    expect(stream().ended).toBe(true);
+    expect(speak).not.toHaveBeenCalled();
+  });
+
+  it("stops queueing when a newer run replaces it", async () => {
+    await turn();
+    await writing("It is sunny today. Highs near twen");
+    const newer = {
+      ...streamingMessage("Fresh start. More"),
+      id: "progress:run-2",
+      runId: "run-2",
+    };
+    getThread.mockResolvedValue(
+      snapshot([newer], { ...runningRun, id: "run-2" } as ThreadSnapshot["run"]) as never,
+    );
+    await getFeed()?.refresh();
+    const first = speakStream.mock.results[0]?.value as FakeStream;
+    expect(first.ended).toBe(true);
+    expect(first.pushed).toEqual(["It is sunny today."]);
+  });
+
+  it("keeps showing the reply as text and listens again when speaking fails mid-reply", async () => {
+    await turn();
+    await writing("It is sunny today. Highs near twenty. Bring a ha");
+    const speech = vi.mocked(speaker.subscribe).mock.calls.at(-1)?.[0];
+    stream().closed = true;
+    speech?.({ status: "idle", error: "Your voice provider is out of credit." });
+    await Promise.resolve();
+    expect(getSnapshot()).toMatchObject({
+      voiceFailed: true,
+      caption: "It is sunny today. Highs near twenty. Bring a ha",
+    });
+
+    await writing("It is sunny today. Highs near twenty. Bring a hat. And more. Mo");
+    expect(speakStream).toHaveBeenCalledTimes(1);
+    expect(stream().pushed).toEqual(["It is sunny today.", "Highs near twenty."]);
+    await vi.advanceTimersByTimeAsync(ECHO_GUARD_MS);
+    expect(listen).toHaveBeenCalledTimes(2);
+  });
+
+  it("asks the question of a finished reply after its text", async () => {
+    await turn();
+    await writing("Shall I go ahead. Ready");
+    getThread.mockResolvedValue(
+      snapshot(
+        [
+          {
+            ...botMessage("message-1", "Shall I go ahead. Ready"),
+            blocks: [
+              { kind: "text", text: "Shall I go ahead. Ready" },
+              { kind: "ask", text: "Send the email?", status: "open" } as never,
+            ],
+          },
+        ],
+        completedRun,
+      ) as never,
+    );
+    await getFeed()?.refresh();
+    expect(stream().pushed).toEqual([
+      "Shall I go ahead.",
+      "Ready",
+      "Send the email?",
+      "Say yes or no, or answer in a sentence.",
+    ]);
   });
 });

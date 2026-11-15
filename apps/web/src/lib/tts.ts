@@ -34,6 +34,25 @@ interface SpeakOptions {
   messageId?: string;
 }
 
+/** A reply spoken while it is still being written: utterances are queued as they are completed. */
+export interface SpeechStream {
+  /** Queues the next utterance; it is spoken once the ones before it are. */
+  push(text: string): void;
+  /** Nothing more is coming; the speaker goes idle after the last utterance. */
+  end(): void;
+  /** Drops what is queued and in flight, and stops playback. */
+  cancel(): void;
+  /** Stopped, cancelled, replaced or failed: nothing more will be spoken. */
+  readonly closed: boolean;
+  /** Resolves with the failure text, if speaking failed. */
+  readonly done: Promise<string | undefined>;
+}
+
+interface StreamOptions extends SpeakOptions {
+  /** When the caller's turn was sent, to log how long the first audio took. */
+  turnStartedAt?: number;
+}
+
 /** How often a reply asks again, and for how long, while the voice of this computer downloads. */
 const PREPARING_POLL_MS = 2000;
 const PREPARING_MAX_POLLS = 450;
@@ -179,6 +198,130 @@ export class Speaker {
     }
     if (live()) this.set(IDLE);
     if (this.request === controller) this.request = null;
+  }
+
+  /**
+   * Speaks utterances as the caller supplies them. Each one is rendered as soon as it is
+   * queued, the next one while the current plays, and no more than that, so cancelling
+   * leaves at most one request to abandon. A hung-up or interrupted stream aborts them all.
+   */
+  speakStream(opts: StreamOptions = {}): SpeechStream {
+    this.stop();
+    const mine = this.token;
+    const controller = new AbortController();
+    this.request = controller;
+    const live = () => this.token === mine && !controller.signal.aborted;
+    const spaceId = opts.spaceId ?? selectedSpaceId();
+    type Rendered = { blob: Blob; error?: never } | { blob?: never; error: unknown };
+    const queue: Array<{ text: string; rendered?: Promise<Rendered> }> = [];
+    let ended = false;
+    let wake: (() => void) | null = null;
+    let gate: Promise<{ error?: unknown }> | null = null;
+    let firstPushAt: number | null = null;
+    const poke = () => {
+      const resume = wake;
+      wake = null;
+      resume?.();
+    };
+    controller.signal.addEventListener("abort", poke, { once: true });
+    const render = (text: string): Promise<Rendered> =>
+      this.render(text, opts, controller.signal, spaceId).then(
+        (blob) => ({ blob }),
+        (error: unknown) => ({ error }),
+      );
+    const kick = () => {
+      for (const item of queue.slice(0, 2)) item.rendered ??= render(item.text);
+    };
+    let over = false;
+    const release = (): undefined => {
+      over = true;
+      if (this.request === controller) this.request = null;
+    };
+    const fail = (error: unknown) => {
+      const failure = live() ? errorText(error) : undefined;
+      if (failure) this.set({ ...IDLE, error: failure });
+      controller.abort();
+      release();
+      return failure;
+    };
+
+    const run = async (): Promise<string | undefined> => {
+      this.set({ status: "preparing", botId: opts.botId, messageId: opts.messageId });
+      let first = true;
+      for (;;) {
+        if (!live()) return release();
+        kick();
+        const item = queue[0];
+        if (!item?.rendered) {
+          if (ended) break;
+          await new Promise<void>((resolve) => {
+            wake = resolve;
+          });
+          continue;
+        }
+        const rendered = await item.rendered;
+        if (!live()) return release();
+        if ("error" in rendered) return fail(rendered.error);
+        if (gate) {
+          // Readiness (a voice to speak with, a local voice still downloading) is checked
+          // next to the first render rather than before it.
+          const ready = await gate;
+          gate = null;
+          if (!live()) return release();
+          if (ready.error) return fail(ready.error);
+        }
+        this.set({
+          status: "speaking",
+          botId: opts.botId,
+          messageId: opts.messageId,
+          caption: item.text,
+        });
+        if (first) {
+          first = false;
+          const now = performance.now();
+          console.debug("[voice] time to first audio", {
+            sinceTurnMs:
+              opts.turnStartedAt === undefined ? undefined : Math.round(now - opts.turnStartedAt),
+            sinceFirstTextMs: firstPushAt === null ? undefined : Math.round(now - firstPushAt),
+          });
+        }
+        const finished = await this.play(rendered.blob, live);
+        queue.shift();
+        if (!finished || !live()) {
+          if (live()) this.set(IDLE);
+          return release();
+        }
+      }
+      if (live()) this.set(IDLE);
+      release();
+    };
+    const done = run();
+
+    return {
+      push: (text) => {
+        const utterance = text.trim();
+        if (!utterance || over || ended || !live()) return;
+        firstPushAt ??= performance.now();
+        queue.push({ text: utterance });
+        gate ??= this.prepare(utterance, opts, controller.signal, spaceId).then(
+          () => ({}),
+          (error: unknown) => ({ error }),
+        );
+        kick();
+        poke();
+      },
+      end: () => {
+        ended = true;
+        poke();
+      },
+      cancel: () => {
+        if (live()) this.stop();
+      },
+      get closed() {
+        return over || !live();
+      },
+      done,
+    };
   }
 
   private async prepare(

@@ -61,6 +61,7 @@ export function SidebarNav({
         type="button"
         data-testid="sidebar-conversations"
         aria-pressed={conversationsOn}
+        data-activity-mode={conversationsOn ? "on" : "off"}
         onClick={onConversations}
         className={NAV_ITEM}
       >

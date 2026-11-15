@@ -202,10 +202,12 @@ describePostgres("listBots sidebar previews (PostgreSQL)", () => {
     expect(byName.get("Long")?.status).toBe("idle");
     expect(byName.get("Peer")?.runErrorId).toBeNull();
 
+    // One row per thread, plus one older window for the thread whose newest rows are all hidden.
+    // Before, the first read took 16 rows per thread, 37 in all, on every call.
     const threads = 3;
     const fallbackWindows = 1;
-    expect(rowCount).toBeGreaterThanOrEqual(window * 2 + 5);
-    expect(rowCount).toBeLessThanOrEqual(window * threads + window * fallbackWindows);
+    expect(rowCount).toBeGreaterThanOrEqual(threads + window);
+    expect(rowCount).toBeLessThanOrEqual(threads + window * fallbackWindows);
   });
 
   it("keeps an archived bot on the archived roster with the same preview", async () => {

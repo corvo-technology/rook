@@ -317,7 +317,7 @@ async function openBot(page: Page, name: string) {
     .getByRole("complementary")
     .getByRole("button", { name: new RegExp(`^${name}`) })
     .click();
-  await expect(page.getByPlaceholder(`Message ${name}`)).toBeVisible();
+  await expect(page.getByRole("combobox", { name: `Message ${name}`, exact: true })).toBeVisible();
 }
 
 async function openComputerPanel(page: Page) {
@@ -332,7 +332,7 @@ async function sendAndWait(page: Page, botId: string, text: string) {
 }
 
 async function sendMessage(page: Page, text: string) {
-  const composer = page.getByPlaceholder(/Message/);
+  const composer = page.getByRole("combobox", { name: /^Message/ });
   await composer.fill(text);
   const sent = page.waitForResponse(
     (response) =>

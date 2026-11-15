@@ -304,7 +304,7 @@ test("imports an OpenClaw folder and another assistant's document as new bots", 
     "bots/importCreate",
   );
   await page.waitForURL(/\/app\/[^/]+$/);
-  await expect(page.getByPlaceholder("Message Pebble")).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message Pebble", exact: true })).toBeVisible();
   const pebbleId = activeBotId(page);
   const pebble = await rpc<Bot>(page, "bots/get", { botId: pebbleId });
   expect(pebble.instructions).toBe(
@@ -342,7 +342,7 @@ test("imports an OpenClaw folder and another assistant's document as new bots", 
     "bots/importCreate",
   );
   await page.waitForURL((url) => !url.pathname.endsWith(pebbleId));
-  await expect(page.getByPlaceholder("Message Atlas")).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message Atlas", exact: true })).toBeVisible();
   const atlasId = activeBotId(page);
   expect((await rpc<Bot>(page, "bots/get", { botId: atlasId })).instructions).toBe("Be concise.");
   const atlasMemory = await rpc<MemoryDocument[]>(page, "memory/list", { botId: atlasId });
@@ -553,7 +553,7 @@ test("an imported bot asks before using MCP servers, and its import can be undon
     "bots/importCreate",
   );
   await page.waitForURL(/\/app\/[^/]+$/);
-  await expect(page.getByPlaceholder("Message Undoable")).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message Undoable", exact: true })).toBeVisible();
   const botId = activeBotId(page);
 
   // The server is not given to the bot until the user approves it here.

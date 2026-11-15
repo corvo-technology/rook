@@ -441,7 +441,7 @@ test("built-in sidebar headings follow the language without renaming custom sect
   const settings = await openUserSettings(page);
   await settings.getByTestId("ui-locale-select").click();
   await page.getByRole("option", { name: "Deutsch", exact: true }).click();
-  await page.getByRole("button", { name: "Benutzereinstellungen schließen", exact: true }).click();
+  await page.getByTestId("settings-back").click();
   await expect(settings).not.toBeVisible();
   await expect(sidebar.locator('[data-sidebar-group="pinned"]')).toContainText("Angeheftet");
   await expect(sidebar.locator('[data-sidebar-group="unassigned"]')).toContainText(

@@ -25,7 +25,7 @@ test("several proposals from one reply are stepped through one card at a time", 
     return bot.id;
   });
 
-  const composer = page.getByPlaceholder("Message Chief");
+  const composer = page.getByRole("combobox", { name: "Message Chief", exact: true });
   await expect(composer).toBeEnabled();
   await composer.fill(`set the models of bots ${ids[0]} and ${ids[1]} to openai/gpt-6-luna`);
   await page.keyboard.press("Enter");

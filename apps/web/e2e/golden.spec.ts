@@ -36,7 +36,7 @@ test("two users are isolated and a bot completes durable work", async ({ browser
   await expect(pageB.getByText("Chief").first()).toBeVisible();
   await expect(pageB.getByText("Ada", { exact: true })).toHaveCount(0);
 
-  const composer = pageA.getByPlaceholder(/Message/);
+  const composer = pageA.getByRole("combobox", { name: /^Message/ });
   await composer.fill("write a file in your home called notes/result.txt that says isolation-ok");
   await pageA.keyboard.press("Enter");
   await expect(
@@ -58,7 +58,7 @@ test("takeover, routine, plugins, and export are reachable", async ({ page }, te
   await signup(page, `flow-${stamp}@corvo.test`, "password12", "Flow");
   await completeOnboarding(page);
 
-  const composer = page.getByPlaceholder(/Message/);
+  const composer = page.getByRole("combobox", { name: /^Message/ });
   await composer.fill("install the gsc cli and sign in");
   await page.keyboard.press("Enter");
   await expect(

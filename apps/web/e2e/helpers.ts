@@ -371,7 +371,7 @@ export async function createNamedBot(
     computerMode: options.computerMode ?? "team",
   });
   await page.goto(`/app/${bot.id}`);
-  await expect(page.getByPlaceholder(`Message ${name}`)).toBeVisible();
+  await expect(page.getByRole("combobox", { name: `Message ${name}`, exact: true })).toBeVisible();
   return bot.id;
 }
 

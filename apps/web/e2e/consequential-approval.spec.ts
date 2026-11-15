@@ -108,7 +108,7 @@ test("Ask mode asks before a change, and approvals settings shape what asks", as
 
 async function sendDestinationWrite(page: Page, prompt: string) {
   await expectComposerReady(page);
-  const composer = page.getByPlaceholder(/Message/);
+  const composer = page.getByRole("combobox", { name: /^Message/ });
   await composer.fill(prompt);
   const sent = page.waitForResponse(
     (response) => response.url().includes("/rpc/threads/send") && response.ok(),
@@ -118,7 +118,7 @@ async function sendDestinationWrite(page: Page, prompt: string) {
 }
 
 async function expectComposerReady(page: Page) {
-  const composer = page.getByPlaceholder(/Message/);
+  const composer = page.getByRole("combobox", { name: /^Message/ });
   await expect(composer).toBeVisible();
   await expect(composer).toBeEnabled();
   await expect(page.getByRole("button", { name: "Stop", exact: true })).toHaveCount(0);
@@ -141,7 +141,7 @@ async function requestDestinationWrite(page: Page, prompt: string) {
   // threads/get can observe waiting_input before the shell realtime feed paints the ask card.
   if ((await page.getByRole("button", { name: "Hold to approve" }).count()) === 0) {
     await page.reload({ waitUntil: "domcontentloaded" });
-    await expect(page.getByPlaceholder(/Message/)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("combobox", { name: /^Message/ })).toBeVisible({ timeout: 15_000 });
   }
   await expect(page.getByRole("button", { name: "Hold to approve" })).toBeVisible({
     timeout: 15_000,

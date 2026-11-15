@@ -6,7 +6,7 @@ test("asks before fetching a site the message did not name", async ({ page }, te
   await signup(page, `fetch-approval-${stamp}@corvo.test`, "password12", "Fetch Approval");
   await completeOnboarding(page);
 
-  const composer = page.getByPlaceholder(/Message/);
+  const composer = page.getByRole("combobox", { name: /^Message/ });
   await composer.fill("show a fetch approval card");
   await page.keyboard.press("Enter");
 

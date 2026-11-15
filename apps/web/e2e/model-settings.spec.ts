@@ -533,7 +533,7 @@ test("connects, lists, and uses an OpenAI-compatible endpoint", async ({ page },
     await botSaved;
 
     if (process.env.AGENT_RUNTIME === "pi") {
-      const composer = page.getByPlaceholder(/Message/);
+      const composer = page.getByRole("combobox", { name: /^Message/ });
       await composer.fill("Reply with the endpoint verification message.");
       await page.keyboard.press("Enter");
       await expect(page.getByTestId("transcript").getByText(LOCAL_MODEL_REPLY)).toBeVisible({

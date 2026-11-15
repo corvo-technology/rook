@@ -16,7 +16,7 @@ test("renders a compact cloud agent card from an emulator launch", async ({ page
   await completeOnboarding(page);
 
   const botId = activeBotId(page);
-  const composer = page.getByPlaceholder(/Message/);
+  const composer = page.getByRole("combobox", { name: /^Message/ });
   await composer.fill("launch a cloud agent to add a README");
   await page.keyboard.press("Enter");
   const allowOnce = page.getByRole("button", { name: "Hold to approve", exact: true });

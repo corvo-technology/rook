@@ -19,6 +19,8 @@ test("a new user who picks Sales lands in the prospector's chat with the first t
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByRole("button", { name: "Sales", exact: true }).click();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
+  // The last step asks how much the first bot does on its own; the default is kept.
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.waitForURL(/\/app\//, { timeout: 20_000 });
 
   const bots = await rpc<Bot[]>(page, "bots/list", {});
@@ -27,7 +29,7 @@ test("a new user who picks Sales lands in the prospector's chat with the first t
   expect(bots.filter((bot) => bot.spawnKey === CHIEF_KEY)).toHaveLength(1);
 
   const task = AGENT_CATALOG.find((entry) => entry.slug === "sales-prospector")?.firstTask?.en;
-  await expect(page.getByPlaceholder(/Message/)).toHaveValue(task ?? "missing");
+  await expect(page.getByRole("combobox", { name: /^Message/ })).toHaveValue(task ?? "missing");
   const thread = await rpc<{ messages: unknown[] }>(page, "threads/get", {
     botId: activeBotId(page),
   });
@@ -43,6 +45,8 @@ test("the picked agent's chat offers its one-click app", async ({ page }, testIn
   await page.getByRole("button", { name: "Personal", exact: true }).click();
   await page.getByRole("button", { name: "Operations", exact: true }).click();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
+  // The last step asks how much the first bot does on its own; the default is kept.
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.waitForURL(/\/app\//, { timeout: 20_000 });
   await expect(page.getByRole("button", { name: "Connect Todoist", exact: true })).toBeVisible();
   await captureScreenshot(page, testInfo, "flow-agent-app-offer");
@@ -54,11 +58,13 @@ test("a new user who picks nothing lands in the Chief's chat with an empty compo
   await signupToOnboarding(page, `flow-none-${Date.now()}@corvo.test`, "password12", "Flow");
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
+  // The last step asks how much the first bot does on its own; the default is kept.
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.waitForURL(/\/app\//, { timeout: 20_000 });
 
   const bots = await rpc<Bot[]>(page, "bots/list", {});
   expect(bots.find((bot) => bot.id === activeBotId(page))?.spawnKey).toBe(CHIEF_KEY);
-  await expect(page.getByPlaceholder(/Message/)).toHaveValue("");
+  await expect(page.getByRole("combobox", { name: /^Message/ })).toHaveValue("");
 });
 
 test("renaming the workspace shows the new name in the sidebar", async ({ page }) => {
@@ -81,6 +87,8 @@ test("reloading the first-bot step does not make a second Chief or a second agen
   await signupToOnboarding(page, `flow-reload-${Date.now()}@corvo.test`, "password12", "Flow");
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByRole("button", { name: "Sales", exact: true }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  // The last step asks how much the first bot does on its own; the default is kept.
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.waitForURL(/\/app\//, { timeout: 20_000 });
   await page.goto("/onboarding/bot");

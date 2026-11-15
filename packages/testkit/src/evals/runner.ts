@@ -366,13 +366,9 @@ export async function runTrial(
       const { userId, ...botSettings } = bot;
       const user = await prisma.user.findUniqueOrThrow({
         where: { id: userId },
-        select: { email: true, name: true, timezone: true, marketingEmailOptOutAt: true },
+        select: { email: true, name: true, timezone: true },
       });
-      const { marketingEmailOptOutAt, ...userSettings } = user;
-      return {
-        bot: botSettings,
-        user: { ...userSettings, marketingEmailOptOut: marketingEmailOptOutAt !== null },
-      };
+      return { bot: botSettings, user };
     };
     let settingsBefore = EMPTY_SETTINGS;
     for (const [stepIndex, step] of scenario.steps.entries()) {

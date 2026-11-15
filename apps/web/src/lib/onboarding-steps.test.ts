@@ -6,6 +6,7 @@ const all: OnboardingContext = {
   canRenameSpace: true,
   spaceName: "Personal",
   needsModel: true,
+  canInvite: true,
   canChooseHostComputer: true,
   computerHost: null,
   hasDesktopHostChoice: true,
@@ -14,7 +15,7 @@ const all: OnboardingContext = {
 
 describe("visibleSteps", () => {
   it("lists every step in order when none is omitted", () => {
-    expect(visibleSteps(all)).toEqual(["workspace", "survey", "model", "bot", "computer"]);
+    expect(visibleSteps(all)).toEqual(["workspace", "start", "model", "bot", "invite", "computer"]);
   });
 
   it("omits the workspace step when the space cannot be renamed", () => {
@@ -38,10 +39,27 @@ describe("a returning account", () => {
   });
 });
 
+describe("the invite step", () => {
+  it("is offered only to someone who can invite", () => {
+    expect(visibleSteps({ ...all, canInvite: false })).not.toContain("invite");
+  });
+
+  it("comes after the first bot and before the computer", () => {
+    expect(nextStep(all, "bot")).toBe("invite");
+    expect(nextStep(all, "invite")).toBe("computer");
+  });
+});
+
+describe("a renamed step", () => {
+  it("opens the start step from the old survey address", () => {
+    expect(resolveStep(all, "survey")).toBe("start");
+  });
+});
+
 describe("nextStep", () => {
   it("skips omitted steps and ends with null", () => {
-    const ctx = { ...all, needsModel: false, canChooseHostComputer: false };
-    expect(nextStep(ctx, "survey")).toBe("bot");
+    const ctx = { ...all, needsModel: false, canInvite: false, canChooseHostComputer: false };
+    expect(nextStep(ctx, "start")).toBe("bot");
     expect(nextStep(ctx, "bot")).toBeNull();
   });
 });
@@ -49,9 +67,9 @@ describe("nextStep", () => {
 describe("resolveStep", () => {
   it("opens the first visible step when the requested one is hidden or missing", () => {
     const ctx = { ...all, canRenameSpace: false, canChooseHostComputer: false };
-    expect(resolveStep(ctx, "computer")).toBe("survey");
-    expect(resolveStep(ctx, undefined)).toBe("survey");
-    expect(resolveStep(ctx, "nonsense")).toBe("survey");
+    expect(resolveStep(ctx, "computer")).toBe("start");
+    expect(resolveStep(ctx, undefined)).toBe("start");
+    expect(resolveStep(ctx, "nonsense")).toBe("start");
   });
 
   it("opens a visible requested step", () => {
@@ -59,13 +77,13 @@ describe("resolveStep", () => {
   });
 
   it("does not open a hidden step from its URL", () => {
-    expect(resolveStep({ ...all, canRenameSpace: false }, "workspace")).toBe("survey");
+    expect(resolveStep({ ...all, canRenameSpace: false }, "workspace")).toBe("start");
   });
 });
 
 describe("resolveStep with progress", () => {
   it("opens the first step that is not done yet", () => {
-    expect(resolveStep(all, undefined, new Set(["workspace", "survey"]))).toBe("model");
+    expect(resolveStep(all, undefined, new Set(["workspace", "start"]))).toBe("model");
   });
 
   it("opens the last step when everything is done", () => {
@@ -74,17 +92,17 @@ describe("resolveStep with progress", () => {
   });
 
   it("still opens a requested visible step that is done", () => {
-    expect(resolveStep(all, "survey", new Set(["survey"]))).toBe("survey");
+    expect(resolveStep(all, "start", new Set(["start"]))).toBe("start");
   });
 });
 
 describe("progress", () => {
   it("counts only completed visible steps", () => {
     const visible = visibleSteps(all);
-    expect(progress(visible, new Set(["workspace", "survey"]))).toEqual({
+    expect(progress(visible, new Set(["workspace", "start"]))).toEqual({
       done: 2,
-      total: 5,
-      percent: 40,
+      total: 6,
+      percent: 33,
     });
   });
 

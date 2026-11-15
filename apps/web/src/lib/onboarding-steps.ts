@@ -1,10 +1,16 @@
-/** `survey` is the "use" step and keeps its URL from the earlier onboarding. */
-export type OnboardingStepId = "workspace" | "survey" | "model" | "bot" | "computer";
+import type { OnboardingStep } from "@corvo/contracts";
+
+export type OnboardingStepId = OnboardingStep;
+
+/** The step the old "use" question lived on; its URL opens the start step. */
+const RENAMED_STEPS: Record<string, OnboardingStepId> = { survey: "start" };
 
 export type OnboardingContext = {
   canRenameSpace: boolean;
   spaceName: string;
   needsModel: boolean;
+  /** The person can invite others to this space. */
+  canInvite: boolean;
   canChooseHostComputer: boolean;
   computerHost: "docker" | "this-mac" | null;
   hasDesktopHostChoice: boolean;
@@ -12,14 +18,23 @@ export type OnboardingContext = {
   returning: boolean;
 };
 
-const STEP_ORDER: readonly OnboardingStepId[] = ["workspace", "survey", "model", "bot", "computer"];
+const STEP_ORDER: readonly OnboardingStepId[] = [
+  "workspace",
+  "start",
+  "model",
+  "bot",
+  "invite",
+  "computer",
+];
 
 function isVisible(ctx: OnboardingContext, step: OnboardingStepId): boolean {
   switch (step) {
     case "workspace":
       return ctx.canRenameSpace && !ctx.returning;
-    case "survey":
+    case "start":
       return !ctx.returning;
+    case "invite":
+      return ctx.canInvite && !ctx.returning;
     case "model":
       return ctx.needsModel;
     case "computer":
@@ -53,7 +68,7 @@ export function resolveStep(
   done: ReadonlySet<OnboardingStepId> = new Set(),
 ): OnboardingStepId {
   const steps = visibleSteps(ctx);
-  const asked = steps.find((step) => step === requested);
+  const asked = steps.find((step) => step === (RENAMED_STEPS[requested ?? ""] ?? requested));
   if (asked) return asked;
   return steps.find((step) => !done.has(step)) ?? steps.at(-1) ?? "bot";
 }

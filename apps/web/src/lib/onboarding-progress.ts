@@ -1,10 +1,10 @@
 import type { OnboardingPicks } from "@corvo/contracts";
-import { OnboardingPicksSchema } from "@corvo/contracts";
+import { ONBOARDING_STEPS, OnboardingPicksSchema } from "@corvo/contracts";
 import type { OnboardingStepId } from "./onboarding-steps";
 
 const KEY = "corvo:onboarding-progress";
 const PICKS_KEY = "corvo:onboarding-picks";
-const STEPS: readonly string[] = ["workspace", "survey", "model", "bot", "computer"];
+const STEPS: readonly string[] = ONBOARDING_STEPS;
 
 function sessionStorageOrNull(): Storage | null {
   try {
@@ -73,4 +73,12 @@ export function loadPicks(
   } catch {
     return null;
   }
+}
+
+/** The steps finished on this device or any other: what this tab kept plus what the server has. */
+export function mergeDoneSteps(
+  local: ReadonlySet<OnboardingStepId>,
+  server: readonly OnboardingStepId[],
+): Set<OnboardingStepId> {
+  return new Set([...local, ...server]);
 }

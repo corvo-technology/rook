@@ -66,7 +66,13 @@ import {
   unavailableSelectedModel,
 } from "../lib/model-connection-preflight";
 import { webModelProblem } from "../lib/model-problem";
-import { loadDoneSteps, loadPicks, saveDoneSteps, savePicks } from "../lib/onboarding-progress";
+import {
+  loadDoneSteps,
+  loadPicks,
+  mergeDoneSteps,
+  saveDoneSteps,
+  savePicks,
+} from "../lib/onboarding-progress";
 import type { OnboardingContext, OnboardingStepId } from "../lib/onboarding-steps";
 import { nextStep, resolveStep, visibleSteps } from "../lib/onboarding-steps";
 import { rpc } from "../lib/rpc";
@@ -75,9 +81,10 @@ import { errorText } from "../lib/user-error";
 import { CompatibleKeyField } from "./model-settings/compatible-key-field";
 import { ComputerStep } from "./onboarding/ComputerStep";
 import { FirstBotStep } from "./onboarding/FirstBotStep";
+import { InviteStep } from "./onboarding/InviteStep";
 import { LocalModelStep } from "./onboarding/LocalModelStep";
 import { OnboardingLayout } from "./onboarding/OnboardingLayout";
-import { UseStep } from "./onboarding/UseStep";
+import { StartStep } from "./onboarding/StartStep";
 import { WorkspaceStep } from "./onboarding/WorkspaceStep";
 
 const CUSTOM_MODEL_OPTION = "__corvo_custom_model__";
@@ -193,12 +200,19 @@ export function OnboardingPage() {
         if (current) setSpace({ id: current.id, name: current.name });
         userIdRef.current = me.userId;
         setDockerOffered(me.sandboxProvider === "docker");
-        setDone(loadDoneSteps(me.userId));
+        const local = loadDoneSteps(me.userId);
+        setDone(local);
+        // Steps finished on another device count too; they arrive after the first paint.
+        void rpc.onboarding
+          .progress()
+          .then(({ done: server }) => setDone((current) => mergeDoneSteps(current, server)))
+          .catch(() => undefined);
         setPicks(loadPicks(me.userId));
         begin({
           canRenameSpace: canRename,
           spaceName: current?.name ?? "",
           needsModel: me.needsModel,
+          canInvite: spaces?.spaces.find((row) => row.id === current?.id)?.canInvite === true,
           canChooseHostComputer: me.canChooseHostComputer,
           computerHost: me.computerHost,
           hasDesktopHostChoice: Boolean(desktopBridge()?.computer?.managesHostChoice),
@@ -213,6 +227,7 @@ export function OnboardingPage() {
           canRenameSpace: false,
           spaceName: "",
           needsModel: false,
+          canInvite: false,
           canChooseHostComputer: false,
           computerHost: null,
           hasDesktopHostChoice: false,
@@ -239,6 +254,7 @@ export function OnboardingPage() {
       saveDoneSteps(userIdRef.current, updated);
       return updated;
     });
+    void rpc.onboarding.stepDone({ step: from }).catch(() => undefined);
     const next = nextStep(context, from);
     // Once a model is connected, going back must not offer to connect one again.
     if (from === "model") begin({ ...context, needsModel: false });
@@ -557,9 +573,10 @@ export function OnboardingPage() {
 
   const sidebarLabels: Record<OnboardingStepId, string> = {
     workspace: t`Workspace`,
-    survey: t`Use`,
+    start: t`Start`,
     model: t`Model`,
     bot: t`First bot`,
+    invite: t`Team`,
     computer: t`Computer`,
   };
   const steps = visibleSteps(flow).map((id) => ({
@@ -578,7 +595,7 @@ export function OnboardingPage() {
       done={done}
       // The bot already exists once the computer is asked, so there is nothing to go back to.
       onBack={
-        previous && step !== "computer"
+        previous && step !== "invite" && step !== "computer"
           ? () => navigate(`/onboarding/${previous.id}`, { replace: true })
           : undefined
       }
@@ -593,12 +610,12 @@ export function OnboardingPage() {
           }}
         />
       ) : null}
-      {step === "survey" ? (
-        <UseStep
+      {step === "start" ? (
+        <StartStep
           onDone={(next) => {
             setPicks(next);
             savePicks(userIdRef.current, next);
-            advance("survey");
+            advance("start");
           }}
         />
       ) : null}
@@ -1118,6 +1135,11 @@ export function OnboardingPage() {
               return;
             }
             chosenBotRef.current = chiefId;
+            // The chat opens with a first task ready to send, so it is never a blank page.
+            prefillComposerDraft(
+              botDraftKey(chiefId),
+              t`Introduce yourself and suggest what we should do first.`,
+            );
             // Landing in the Chief's chat keeps the focus choice that suggests apps to connect.
             void rpc.onboarding
               .start({ botId: chiefId })
@@ -1127,6 +1149,7 @@ export function OnboardingPage() {
           }}
         />
       ) : null}
+      {step === "invite" ? <InviteStep onDone={() => advance("invite")} /> : null}
       {step === "computer" ? (
         <ComputerStep
           hostLabel={mac ? t`this Mac` : t`this computer`}

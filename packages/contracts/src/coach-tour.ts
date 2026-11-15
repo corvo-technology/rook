@@ -10,3 +10,15 @@ export const TourStateSchema = z.object({
   skipped: z.boolean(),
 });
 export type TourState = z.infer<typeof TourStateSchema>;
+
+/** The steps of first-run onboarding, in the order they come. */
+export const ONBOARDING_STEPS = [
+  "workspace",
+  "start",
+  "model",
+  "bot",
+  "invite",
+  "computer",
+] as const;
+export const OnboardingStep = z.enum(ONBOARDING_STEPS);
+export type OnboardingStep = z.infer<typeof OnboardingStep>;

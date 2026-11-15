@@ -65,6 +65,7 @@ model User {
   notifications               Notification[]
   signupSurvey                SignupSurvey?
   coachTour                   CoachTour?
+  onboardingProgress          OnboardingProgress?
   computerRuns                ComputerRun[]
   messagingInstallations      MessagingInstallation[]
   messagingInstallSessions    MessagingInstallSession[]
@@ -95,6 +96,16 @@ model CoachTour {
   createdAt DateTime @default(now())
 
   @@map("coach_tours")
+}
+
+/// The first-run steps a person finished, so a reload or another device resumes where they stopped.
+model OnboardingProgress {
+  userId    String   @id
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  done      String[] @default([])
+  updatedAt DateTime @updatedAt
+
+  @@map("onboarding_progress")
 }
 
 model Session {

@@ -1,0 +1,189 @@
+import { randomUUID } from "node:crypto";
+import type { ModelTier, RunTrigger } from "@corvo/contracts";
+import { MODEL_TIERS } from "@corvo/contracts";
+import { recordUsage } from "@corvo/db";
+import type { ExecutorDeps } from "./executor-deps.js";
+import { type DeploymentModelDefaults, effectiveModelRole } from "./model-roles.js";
+import {
+  decideTier,
+  parseTierAnswer,
+  TIER_CLASSIFIER_INSTRUCTIONS,
+  TIER_CLASSIFIER_MAX_TOKENS,
+  TIER_CLASSIFIER_PROMPT_CHARS,
+  TIER_CLASSIFIER_TIMEOUT_MS,
+  type TurnSignals,
+} from "./model-routing.js";
+import type { ModelChoice } from "./model-selection.js";
+import { deploymentModelDefaults, resolveFastRunModel } from "./run-model.js";
+
+export interface RoutedModel {
+  tier: ModelTier;
+  /** What the run uses in place of an agent's pinned model; empty on the main tier. */
+  choice: (ModelChoice & { credentialId?: string }) | null;
+  /** The tier's model is the deployment's, so the deployment's key serves it. */
+  fromDeployment: boolean;
+}
+
+/**
+ * The model of a tier: the member's or space's choice for its role, else the deployment's. A tier
+ * with no model of its own is served by the main one, which is what an agent without tiers runs.
+ */
+export async function resolveTierModel(
+  deps: ExecutorDeps,
+  scope: { userId: string; spaceId: string },
+  tier: ModelTier,
+  defaults: DeploymentModelDefaults,
+): Promise<RoutedModel> {
+  if (tier === "main") return { tier, choice: null, fromDeployment: false };
+  const role = await effectiveModelRole(deps.prisma, scope, tier, defaults);
+  if (!role.primary) return { tier: "main", choice: null, fromDeployment: false };
+  return {
+    tier,
+    choice: {
+      modelProvider: role.primary.provider,
+      modelId: role.primary.modelId,
+      thinkingLevel: role.primary.thinkingLevel ?? null,
+      ...(role.primary.credentialId ? { credentialId: role.primary.credentialId } : {}),
+    },
+    fromDeployment: role.primarySource === "deployment",
+  };
+}
+
+/** Whether a member or the deployment set a model for a tier other than the main one. */
+export async function tiersAvailable(
+  deps: Pick<ExecutorDeps, "prisma">,
+  scope: { userId: string; spaceId: string },
+  defaults: DeploymentModelDefaults,
+): Promise<boolean> {
+  for (const tier of MODEL_TIERS) {
+    if (tier === "main") continue;
+    const role = await effectiveModelRole(deps.prisma, scope, tier, defaults);
+    if (role.primary) return true;
+  }
+  return false;
+}
+
+/**
+ * One tiny, tool-less call on the fast model that names the tier a request needs. It reads at most
+ * a short excerpt and answers one word, so it costs a fraction of the turn it routes. Any failure
+ * or unclear answer is "no answer" and the turn runs on the main tier.
+ */
+export async function classifyTier(
+  deps: ExecutorDeps,
+  run: { id: string; spaceId: string; userId: string; botId: string },
+  prompt: string,
+): Promise<ModelTier | null> {
+  try {
+    const fast = await resolveFastRunModel(deps, run);
+    if (!fast) return null;
+    const operationId = `tier-classifier:${randomUUID()}`;
+    const attribution = {
+      spaceId: run.spaceId,
+      botId: run.botId,
+      userId: run.userId,
+      runId: run.id,
+      operationId,
+      operationKind: "setup",
+      modelTier: "fast",
+    } as const;
+    let text = "";
+    for await (const event of deps.runtime.run(
+      {
+        botId: run.botId,
+        threadId: operationId,
+        runId: operationId,
+        usageOperationKind: "setup",
+        onUsage: async (usage) => {
+          await recordUsage(deps.prisma, usage, attribution);
+        },
+        prompt: prompt.slice(0, TIER_CLASSIFIER_PROMPT_CHARS),
+        instructions: TIER_CLASSIFIER_INSTRUCTIONS,
+        history: [],
+        tools: [],
+        model: { ...fast, maxTokens: TIER_CLASSIFIER_MAX_TOKENS },
+      },
+      {
+        operationId,
+        traceId: operationId,
+        spaceId: run.spaceId,
+        userId: run.userId,
+        botId: run.botId,
+        signal: AbortSignal.timeout(TIER_CLASSIFIER_TIMEOUT_MS),
+      },
+    )) {
+      if (event.type === "done" && event.text) text = event.text;
+      if (event.type === "usage" && !event.accounted) {
+        await recordUsage(deps.prisma, event, attribution);
+      }
+    }
+    return parseTierAnswer(text);
+  } catch {
+    return null;
+  }
+}
+
+/** The tier a turn runs on, and the model that serves it. */
+export async function routeRunTier(
+  deps: ExecutorDeps,
+  run: { id: string; spaceId: string; userId: string; botId: string },
+  signals: TurnSignals,
+  defaults: DeploymentModelDefaults,
+): Promise<RoutedModel> {
+  const decision = decideTier(signals);
+  let tier = decision.tier;
+  // Only an unsettled turn pays for the classifier, and only once: a retried attempt keeps the
+  // tier saved with the run.
+  if (!decision.clear && !signals.floor) {
+    tier = (await classifyTier(deps, run, signals.prompt)) ?? tier;
+  }
+  return resolveTierModel(deps, run, tier, defaults);
+}
+
+const CHARS_PER_TOKEN = 4;
+
+/** The tier an automatic agent's run starts on, from what is known before any model has read it. */
+export async function routeTurn(input: {
+  deps: ExecutorDeps;
+  run: {
+    id: string;
+    spaceId: string;
+    userId: string;
+    botId: string;
+    trigger: string;
+    checkpoint: string | null;
+    modelTier: string | null;
+    tierEscalations: number;
+  };
+  bot: { title: string; description: string };
+  task: { prompt: string };
+  messages: ReadonlyArray<{ blocks: unknown }>;
+  defaults: DeploymentModelDefaults;
+}): Promise<RoutedModel> {
+  const { deps, run, defaults } = input;
+  // A retried attempt keeps the tier its run settled on, and an escalated one starts on the tier
+  // it moved to, so the decision is made once.
+  const saved = MODEL_TIERS.find((tier) => tier === run.modelTier);
+  if (saved) return resolveTierModel(deps, run, saved, defaults);
+  const last = input.messages.at(-1)?.blocks;
+  const attachments = Array.isArray(last)
+    ? last.filter((block) => block?.kind === "image" || block?.kind === "file").length
+    : 0;
+  const contextChars = input.messages.reduce(
+    (sum, message) => sum + JSON.stringify(message.blocks ?? "").length,
+    0,
+  );
+  return routeRunTier(
+    deps,
+    run,
+    {
+      title: input.bot.title,
+      description: input.bot.description,
+      trigger: run.trigger as RunTrigger,
+      prompt: input.task.prompt,
+      contextTokens: Math.ceil(contextChars / CHARS_PER_TOKEN),
+      attachments,
+      approvalGated: run.trigger === "resume" || Boolean(run.checkpoint),
+    },
+    defaults,
+  );
+}

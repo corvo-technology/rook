@@ -359,6 +359,22 @@ export function ModelSettingsOverlay({
             }
             panel={connectionAt === "fast" ? panelFor(true) : null}
           />
+          <ModelRoleSettings
+            userId={me.userId}
+            spaceId={me.spaceId}
+            scope={scope}
+            credentials={credentials}
+            modelRole="strong"
+            title={t`Complex tasks model`}
+            defaultLabel={t`Choose a model`}
+            providers={providers}
+            providerLabel={providerLabel}
+            onConnect={(next, intent) => openConnection(next, intent, null, "strong")}
+            onManage={(id, credentialId) =>
+              openConnection({ id, name: id }, null, credentialId, "strong")
+            }
+            panel={connectionAt === "strong" ? panelFor(true) : null}
+          />
           {scope === "space" ? null : (
             <ProvidersSection
               credentials={credentials}

@@ -330,6 +330,47 @@ describe("model roles", () => {
     });
   });
 
+  it("runs the fast and strong tiers on the deployment's models, from settings or the environment", async () => {
+    const tiers = {
+      settings: {
+        defaultModelProvider: "cloud",
+        defaultModelId: "standard",
+        fastModelId: "cheap",
+        strongModelId: null,
+      },
+      deployment: { provider: "env-provider", model: "env-main", strongModel: "big" },
+    };
+    // The owner's saved model wins, on the provider the owner chose.
+    expect(deploymentModelRole("fast", tiers).primary).toEqual({
+      provider: "cloud",
+      modelId: "cheap",
+    });
+    // A tier the owner left empty falls to the environment's.
+    expect(deploymentModelRole("strong", tiers).primary).toEqual({
+      provider: "cloud",
+      modelId: "big",
+    });
+    // A tier set nowhere has no model of its own, so the main one serves it.
+    expect(deploymentModelRole("strong", deploymentDefaults).primary).toBeNull();
+  });
+
+  it("lets a member or space override a tier, and keeps the deployment's for the rest", async () => {
+    const tiers = {
+      deployment: { provider: "cloud", model: "standard", fastModel: "cheap", strongModel: "big" },
+    };
+    const prisma = roleClient([
+      { role: "strong", position: 0, provider: "mine", modelId: "mine-big", thinkingLevel: null },
+    ]);
+    await expect(effectiveModelRole(prisma, scope, "strong", tiers)).resolves.toMatchObject({
+      primary: { provider: "mine", modelId: "mine-big" },
+      primarySource: "member",
+    });
+    await expect(effectiveModelRole(prisma, scope, "fast", tiers)).resolves.toMatchObject({
+      primary: { provider: "cloud", modelId: "cheap" },
+      primarySource: "deployment",
+    });
+  });
+
   it("uses the deployment's defaults for a member who chose nothing", async () => {
     await expect(
       effectiveModelRole(roleClient([]), scope, "main", deploymentDefaults),

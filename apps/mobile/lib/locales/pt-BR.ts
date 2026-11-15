@@ -1,4 +1,6 @@
 export const PT_BR_MESSAGES: Record<string, string> = {
+  Automatic: "Automático",
+  "Complex tasks model": "Modelo para tarefas complexas",
   "Not sent. Tap for options": "Não enviada. Toque para ver as opções",
   "Image input is not configured for this model.":
     "A entrada de imagens não está configurada para este modelo.",

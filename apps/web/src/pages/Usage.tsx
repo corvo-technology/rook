@@ -53,6 +53,7 @@ export function UsagePage() {
         : t`vs. the 30 days before`;
   const chosen = overview?.agents.find((item) => usageAgentKey(item.id) === agent);
   const agentName = (name: string) => name || t`Deleted agent`;
+  const tierLabels = { fast: t`Fast`, main: t`Standard`, strong: t`Strong` } as const;
   const tokensText = (tokens: number) => {
     const count = formatTokens(tokens, locale);
     return t`${count} tokens`;
@@ -146,6 +147,14 @@ export function UsagePage() {
                       {new Intl.NumberFormat(locale).format(overview.replies)}
                     </dd>
                   </div>
+                  {overview.escalations ? (
+                    <div>
+                      <dt className="text-muted-foreground">{t`Escalated`}</dt>
+                      <dd className="mt-0.5 text-[18px] font-medium tabular-nums">
+                        {new Intl.NumberFormat(locale).format(overview.escalations)}
+                      </dd>
+                    </div>
+                  ) : null}
                   {overview.costUsd ? (
                     <div>
                       <dt className="text-muted-foreground">{t`Cost`}</dt>
@@ -257,6 +266,28 @@ export function UsagePage() {
                       })}
                     </ul>
                   </section>
+
+                  {overview.tiers?.length ? (
+                    <section className="mt-10" aria-label={t`By model tier`}>
+                      <h2 className="mb-1 text-[13px] font-medium text-muted-foreground">{t`By model tier`}</h2>
+                      <ul className="m-0 list-none p-0">
+                        {overview.tiers.map((item) => (
+                          <li
+                            key={item.tier}
+                            className="flex items-baseline justify-between gap-4 py-2 text-sm"
+                          >
+                            <span>{tierLabels[item.tier]}</span>
+                            <span className="tabular-nums text-muted-foreground">
+                              {tokensText(item.tokens)}
+                              {item.costUsd
+                                ? ` · ${currency.format(Math.max(item.costUsd, 0.01))}`
+                                : ""}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  ) : null}
                 </>
               )}
             </>

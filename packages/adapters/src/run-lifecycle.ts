@@ -1,5 +1,5 @@
 import { runContinueJob } from "@corvo/adapter-kit";
-import type { RunStopReason } from "@corvo/contracts";
+import type { ModelTier, RunStopReason } from "@corvo/contracts";
 import { displayName } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
@@ -139,6 +139,40 @@ export async function releaseRunForShutdown(
     data: { status: "queued", error: null, leaseOwner: null, leaseExpiresAt: null, wakeAt: null },
   });
   return released.count === 1;
+}
+
+/**
+ * Puts a run back in the queue on the next tier up, once. The lease fence and the escalation count
+ * in the filter make a second escalation, or one from a worker that lost the run, a no-op.
+ */
+export async function escalateRunTier(
+  deps: ExecutorDeps,
+  runId: string,
+  workerId: string,
+  fence: number,
+  to: ModelTier,
+): Promise<boolean> {
+  const moved = await deps.prisma.run.updateMany({
+    where: {
+      id: runId,
+      status: "running",
+      leaseOwner: workerId,
+      leaseFence: fence,
+      tierEscalations: 0,
+    },
+    data: {
+      status: "queued",
+      error: null,
+      leaseOwner: null,
+      leaseExpiresAt: null,
+      wakeAt: null,
+      modelTier: to,
+      tierEscalations: { increment: 1 },
+    },
+  });
+  if (moved.count !== 1) return false;
+  await deps.jobs.enqueue(runContinueJob(runId));
+  return true;
 }
 
 export async function renewRunLease(

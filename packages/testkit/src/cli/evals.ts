@@ -31,6 +31,7 @@ import { TOOL_CHOICE_CASES } from "../evals/tool-choice-cases.js";
 import type { DiagnosticWireObservation } from "../evals/wire-observer.js";
 import { diagnosticWireFetch } from "../evals/wire-observer.js";
 import { runApprovalSuite } from "./approval-eval.js";
+import { runModelRoutingSuite } from "./model-routing-eval.js";
 import { runAvatarPieceSuite, runChannelRouterSuite, runDateReminderSuite } from "./pick-eval.js";
 import { runWikiCuratorSuite } from "./wiki-curator-eval.js";
 
@@ -48,6 +49,10 @@ async function main() {
       "wire-diagnostics": { type: "boolean", default: false },
       list: { type: "boolean", default: false },
       connection: { type: "string" },
+      "fast-connection": { type: "string" },
+      "fast-pricing": { type: "string" },
+      "main-connection": { type: "string" },
+      "main-pricing": { type: "string" },
       "judge-connection": { type: "string" },
       "judge-pricing": { type: "string" },
       provider: { type: "string" },
@@ -68,6 +73,12 @@ async function main() {
     throw new Error("--cases-file adds tool-choice cases; use --suite tool-choice");
   if (values.suite === "approval")
     return runApprovalSuite(values, {
+      codeRevision: codeRevision(),
+      workingDiffHash: workingDiffHash(),
+      readConnection,
+    });
+  if (values.suite === "model-routing")
+    return runModelRoutingSuite(values, {
       codeRevision: codeRevision(),
       workingDiffHash: workingDiffHash(),
       readConnection,
@@ -104,7 +115,7 @@ async function main() {
   };
   if (!Object.hasOwn(suites, values.suite!))
     throw new Error(
-      "Unknown suite; use product, history, silence, tool-choice, approval, wiki-curator, channel-router, avatar-piece, or date-reminder",
+      "Unknown suite; use product, history, silence, tool-choice, approval, wiki-curator, model-routing, channel-router, avatar-piece, or date-reminder",
     );
   const suite = suites[values.suite as keyof typeof suites];
   const extraCases = values["cases-file"] ? loadToolChoiceCases(values["cases-file"]) : [];

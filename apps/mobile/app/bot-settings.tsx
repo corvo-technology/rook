@@ -8,6 +8,7 @@ import {
   BOT_TITLE_MAX_LENGTH,
 } from "@corvo/contracts";
 import {
+  AUTO_MODEL_KEY,
   credentialForModel,
   MODEL_SEARCH_THRESHOLD,
   modelOptionKey,
@@ -233,9 +234,11 @@ export default function BotSettingsScreen() {
         setColor(next.color);
         setComputerMode(next.computerMode);
         setModelKey(
-          next.modelProvider && next.modelId
-            ? modelOptionKey(next.modelProvider, next.modelId)
-            : "",
+          next.modelAuto
+            ? AUTO_MODEL_KEY
+            : next.modelProvider && next.modelId
+              ? modelOptionKey(next.modelProvider, next.modelId)
+              : "",
         );
         setThinkingLevel(next.thinkingLevel ?? "");
         setAutoSpeak(next.autoSpeak);
@@ -329,9 +332,12 @@ export default function BotSettingsScreen() {
         modelId: resolveSelectableModelId(catalog, storedModel.provider, storedModel.modelId),
       }
     : null;
+  const automatic = modelKey === AUTO_MODEL_KEY;
   const selectedModelKey = selectedModel
     ? modelOptionKey(selectedModel.provider, selectedModel.modelId)
-    : "";
+    : automatic
+      ? AUTO_MODEL_KEY
+      : "";
 
   const effectiveProvider = selectedModel?.provider ?? me?.defaultProvider ?? null;
   const effectiveModelId = selectedModel?.modelId ?? me?.defaultModel ?? null;
@@ -351,8 +357,16 @@ export default function BotSettingsScreen() {
   ).filter((level) => level !== "off");
 
   const modelChoices = useMemo(
-    () => chatModelPickerChoices(me, catalog, credentials, selectedModelKey, t),
-    [catalog, credentials, me, selectedModelKey, t],
+    () =>
+      chatModelPickerChoices(
+        me,
+        catalog,
+        credentials,
+        selectedModelKey,
+        t,
+        me?.autoModelAvailable === true || automatic,
+      ),
+    [automatic, catalog, credentials, me, selectedModelKey, t],
   );
 
   const thinkingChoices: MenuPickerChoice[] = useMemo(
@@ -490,6 +504,7 @@ export default function BotSettingsScreen() {
         color?: string;
         modelProvider?: string | null;
         modelId?: string | null;
+        modelAuto?: boolean;
         thinkingLevel?: ThinkingLevel | null;
         autoSpeak?: boolean;
       } = { botId };
@@ -503,11 +518,13 @@ export default function BotSettingsScreen() {
       if (color !== bot.color) input.color = color;
       const modelChanged =
         (selected?.provider ?? null) !== (bot.modelProvider ?? null) ||
-        (selected?.modelId ?? null) !== (bot.modelId ?? null);
+        (selected?.modelId ?? null) !== (bot.modelId ?? null) ||
+        automatic !== (bot.modelAuto === true);
       const thinkingChanged = (thinkingLevel || null) !== (bot.thinkingLevel ?? null);
       if (modelChanged) {
         input.modelProvider = selected?.provider ?? null;
         input.modelId = selected?.modelId ?? null;
+        input.modelAuto = automatic;
       }
       if (modelMetaReady && (modelChanged || thinkingChanged)) {
         input.thinkingLevel = thinkingOptions.length
@@ -555,6 +572,7 @@ export default function BotSettingsScreen() {
       autoSpeak !== bot.autoSpeak ||
       (selectedModel?.provider ?? null) !== (bot.modelProvider ?? null) ||
       (selectedModel?.modelId ?? null) !== (bot.modelId ?? null) ||
+      automatic !== (bot.modelAuto === true) ||
       (thinkingLevel || null) !== (bot.thinkingLevel ?? null));
 
   const voiceValue = (

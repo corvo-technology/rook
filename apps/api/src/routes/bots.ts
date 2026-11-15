@@ -404,6 +404,7 @@ export function botsRoutes(ctx: RouterContext) {
             computerMode: source.computer?.scope === "dedicated" ? "dedicated" : "team",
             modelProvider: source.modelProvider,
             modelId: source.modelId,
+            modelAuto: source.modelAuto === true,
             thinkingLevel: source.thinkingLevel,
             disabledBuiltinTools: source.disabledBuiltinTools,
           })
@@ -489,9 +490,19 @@ export function botsRoutes(ctx: RouterContext) {
             sectionId: input.sectionId,
             voiceId: input.voiceId,
             autoSpeak: input.autoSpeak,
+            // Choosing a model ends automatic routing; choosing Automatic clears the model.
             ...(input.modelProvider !== undefined
-              ? { modelProvider: input.modelProvider, modelId: input.modelId ?? null }
+              ? {
+                  modelProvider: input.modelProvider,
+                  modelId: input.modelId ?? null,
+                  ...(input.modelProvider ? { modelAuto: false } : {}),
+                }
               : {}),
+            ...(input.modelAuto === true
+              ? { modelProvider: null, modelId: null, thinkingLevel: null, modelAuto: true }
+              : input.modelAuto === false
+                ? { modelAuto: false }
+                : {}),
             ...(input.thinkingLevel !== undefined ? { thinkingLevel } : {}),
             ...(input.teamChatAmbientEnabled !== undefined
               ? { teamChatAmbientEnabled: input.teamChatAmbientEnabled }

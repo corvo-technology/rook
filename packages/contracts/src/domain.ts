@@ -142,6 +142,8 @@ export const BotSchema = z.object({
   autoSpeak: z.boolean(),
   modelProvider: z.string().nullable(),
   modelId: z.string().nullable(),
+  /** The agent picks a model tier for each turn instead of keeping one model. */
+  modelAuto: z.boolean().optional(),
   thinkingLevel: ThinkingLevelSchema.nullable(),
   teamChatAmbientEnabled: z.boolean(),
   teamChatRules: z.string(),
@@ -509,6 +511,8 @@ export const UpdateBotInput = z
     autoSpeak: z.boolean().optional(),
     modelProvider: z.string().trim().min(1).max(80).nullable().optional(),
     modelId: z.string().trim().min(1).max(200).nullable().optional(),
+    /** True picks a tier per turn and needs the model cleared; choosing a model turns it off. */
+    modelAuto: z.boolean().optional(),
     thinkingLevel: ThinkingLevelSchema.nullable().optional(),
     teamChatAmbientEnabled: z.boolean().optional(),
     dailyCapUsd: z.number().positive().max(10_000).nullable().optional(),
@@ -530,6 +534,13 @@ export const UpdateBotInput = z
     disabledBuiltinTools: DisabledBuiltinToolsSchema.optional(),
   })
   .superRefine((value, ctx) => {
+    if (value.modelAuto && (value.modelProvider || value.modelId)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "An automatic agent has no fixed model",
+        path: ["modelAuto"],
+      });
+    }
     const providerProvided = value.modelProvider !== undefined;
     const modelProvided = value.modelId !== undefined;
     if (!providerProvided && !modelProvided) return;
@@ -1163,6 +1174,13 @@ export const UsagePeriodSchema = z.enum(["month", "last-month", "30d"]);
 export type UsagePeriod = z.infer<typeof UsagePeriodSchema>;
 
 /** One agent's share of a period. `id` is null for spend that has no agent behind it. */
+/** One model tier's share of a period, for agents that pick their model per turn. */
+export const UsageTierSchema = z.object({
+  tier: z.enum(["fast", "main", "strong"]),
+  tokens: z.number(),
+  costUsd: z.number().nullable(),
+});
+
 export const UsageAgentSchema = z.object({
   id: z.string().nullable(),
   name: z.string(),
@@ -1189,6 +1207,10 @@ export const UsageOverviewSchema = z.object({
   replies: z.number(),
   costUsd: z.number().nullable(),
   agents: z.array(UsageAgentSchema),
+  /** Spend by tier; empty when no agent picked its model in the period. */
+  tiers: z.array(UsageTierSchema).optional(),
+  /** Runs that moved up a tier after a cheaper one failed. */
+  escalations: z.number().optional(),
   /** UTC days, oldest first; `agents` maps an agent id (or "none") to its tokens that day. */
   days: z.array(
     z.object({ date: z.string(), tokens: z.number(), agents: z.record(z.string(), z.number()) }),
@@ -1876,6 +1898,8 @@ export const MeSchema = z.object({
   /** Deprecated: app accounts never have server administrator privileges. Always false. */
   isDeploymentOwner: z.boolean(),
   needsModel: z.boolean(),
+  /** An agent can pick its model per turn: a fast or strong model is set for this member or the deployment. */
+  autoModelAvailable: z.boolean().optional(),
   defaultProvider: z.string().nullable(),
   defaultModel: z.string().nullable(),
   /** Provider the active default runs on with the server's own credentials, without a key. */

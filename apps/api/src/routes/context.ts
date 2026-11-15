@@ -206,12 +206,17 @@ export function createRouterContext(deps: RouterDeps) {
     settings: ModelRoleSettings,
   ): Promise<ModelRoleView> => {
     const defaults =
-      role === "main"
+      role === "main" || role === "fast" || role === "strong"
         ? {
             settings: await deps.prisma.deploymentSettings.findUnique({ where: { id: "default" } }),
             // Only a model the deployment can run stands in for the member's choice.
             deployment: deps.env.deploymentModelConfigured
-              ? { provider: deps.env.defaultProvider, model: deps.env.defaultModel }
+              ? {
+                  provider: deps.env.defaultProvider,
+                  model: deps.env.defaultModel,
+                  fastModel: deps.env.fastModel,
+                  strongModel: deps.env.strongModel,
+                }
               : null,
           }
         : { env: process.env };
@@ -219,7 +224,8 @@ export function createRouterContext(deps: RouterDeps) {
   };
   const modelRoleCatalog = async (actor: Actor, role: ModelRole): Promise<ModelCatalogEntry[]> => {
     const catalog = await chatCatalog(actor);
-    const decisions = role === "main" || role === "fast" ? [] : decisionModelCatalog();
+    const decisions =
+      role === "main" || role === "fast" || role === "strong" ? [] : decisionModelCatalog();
     const managedProviders = new Set(
       catalog.filter((entry) => "managed" in entry && entry.managed).map((entry) => entry.provider),
     );

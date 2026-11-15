@@ -307,6 +307,8 @@ export function observedPiStream(
   const stream = createAssistantMessageEventStream();
   const reported: ReportedUsageFields = new Set();
   const callId = randomUUID();
+  // What a router served the call with, when the provider names a model other than the one asked for.
+  let routedModel: string | undefined;
   const emitUsage = async (usage: AgentUsage, operationKind = attribution.operationKind) => {
     const event = {
       type: "usage" as const,
@@ -316,6 +318,7 @@ export function observedPiStream(
       callId,
       agentId: attribution.agentId,
       operationKind,
+      ...(routedModel ? { routedModel } : {}),
     };
     try {
       await hooks?.recordUsage?.(event);
@@ -443,6 +446,9 @@ export function observedPiStream(
           }
           if (event.type === "done" || event.type === "error") {
             const message = event.type === "done" ? event.message : event.error;
+            if (message.responseModel && message.responseModel !== model.id) {
+              routedModel = message.responseModel;
+            }
             normalized = normalizePiUsage(message.usage, model, reported);
             span?.setAttributes({
               "pi.ai.response.stop_reason": message.stopReason,

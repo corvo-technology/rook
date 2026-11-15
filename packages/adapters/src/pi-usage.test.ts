@@ -5,11 +5,13 @@ import type { Api, Context, Model } from "@earendil-works/pi-ai";
 import { builtinModels } from "@earendil-works/pi-ai/providers/all";
 import { Agent } from "undici";
 import { describe, expect, it, vi } from "vitest";
+import { priceCeilingFor } from "./model-price-ceiling.js";
 import {
   createOpenAiCompatibleFetch,
   registerOpenAiCompatibleRuntime,
 } from "./pi-openai-compatible-provider.js";
 import { PiAgentRuntime } from "./pi-runtime.js";
+import { resolveRuntimeModel } from "./pi-runtime-models.js";
 import { normalizePiUsage, observedPiStream, usageReportingFetch } from "./pi-usage.js";
 
 const model: Model<Api> = {
@@ -844,5 +846,64 @@ describe("Pi usage accounting", () => {
         usageSource: "provider-reported-via-pi",
       }),
     );
+  });
+});
+
+describe("a router whose price varies per call", () => {
+  const routerFrames = (cost: number) =>
+    `${[
+      {
+        id: "test",
+        model: "anthropic/claude-sonnet-4.6",
+        choices: [{ index: 0, delta: { role: "assistant", content: "Done" }, finish_reason: null }],
+      },
+      { id: "test", choices: [{ index: 0, delta: {}, finish_reason: "stop" }] },
+      {
+        id: "test",
+        choices: [],
+        usage: { prompt_tokens: 1_000, completion_tokens: 100, total_tokens: 1_100, cost },
+      },
+    ]
+      .map((frame) => `data: ${JSON.stringify(frame)}\n\n`)
+      .join("")}data: [DONE]\n\n`;
+
+  it("holds the ceiling of its candidates, settles the provider's cost and names the model that ran", async () => {
+    const { model: router } = resolveRuntimeModel({
+      provider: "openrouter",
+      id: "typesafe/jev-router",
+      apiKey: "fake-fixture-key",
+      contextWindow: 200_000,
+      priceCeiling: priceCeilingFor([
+        { provider: "openrouter", modelId: "deepseek/deepseek-v3.2" },
+        { provider: "openrouter", modelId: "anthropic/claude-sonnet-4.6" },
+      ]),
+    });
+    const events: AgentRuntimeEvent[] = [];
+    const beforeCall = vi.fn((_call: { maxCostUsd?: number; maxOutputTokens: number }) => "hold");
+    const afterCall = vi.fn();
+    const stream = await observedPiStream(
+      builtinModels(),
+      router!,
+      { systemPrompt: "Fixture", messages: [{ role: "user", content: "test", timestamp: 1 }] },
+      {
+        apiKey: "fake-fixture-key",
+        fetch: async () =>
+          new Response(routerFrames(0.0042), { headers: { "content-type": "text/event-stream" } }),
+      },
+      (event) => events.push(event),
+      { beforeCall, afterCall },
+    );
+    for await (const _event of stream) {
+    }
+    const call = beforeCall.mock.calls[0]![0];
+    // Sonnet-class rates (3 in, 15 out per million) bound the hold: never the router's own -1.
+    expect(call.maxCostUsd).toBeGreaterThanOrEqual((call.maxOutputTokens * 15) / 1_000_000);
+    const usage = afterCall.mock.calls[0]![1];
+    expect(usage).toMatchObject({ costUsd: 0.0042, costSource: "provider-reported" });
+    expect(events[0]).toMatchObject({
+      type: "usage",
+      model: "typesafe/jev-router",
+      routedModel: "anthropic/claude-sonnet-4.6",
+    });
   });
 });

@@ -1,4 +1,5 @@
-import type { UsageOverview, UsagePeriod } from "@corvo/contracts";
+import type { ModelTier, UsageOverview, UsagePeriod } from "@corvo/contracts";
+import { MODEL_TIERS } from "@corvo/contracts";
 import { normalizeRunError, usageTokens } from "@corvo/core";
 
 export interface UsageRow {
@@ -12,6 +13,8 @@ export interface UsageRow {
   model: string;
   runId: string | null;
   parentRunId: string | null;
+  /** The tier an automatic agent's call ran on; null for any other call. */
+  modelTier?: string | null;
 }
 
 const DAY_MS = 86_400_000;
@@ -119,6 +122,8 @@ export function buildUsageOverview(input: {
   /** What to call spend whose agent no longer exists. */
   unknownName: string;
   outcomes?: ReadonlyMap<string, RunOutcome>;
+  /** Runs in the period that moved up a tier after a cheaper one failed. */
+  escalations?: number;
 }): UsageOverview {
   const { period, now, rows, agents, unknownName, outcomes } = input;
   const window = usageWindow(period, now);
@@ -147,6 +152,7 @@ export function buildUsageOverview(input: {
   let cost = 0;
   let costKnown = true;
   let tokens = 0;
+  const tierTotals = new Map<ModelTier, { tokens: number; cost: number; costKnown: boolean }>();
   const days = new Map<string, { tokens: number; agents: Record<string, number> }>();
   // The running month shows all its days, so a few days of use sit at the start of the axis
   // and not stretched across the whole chart.
@@ -178,6 +184,14 @@ export function buildUsageOverview(input: {
     } else {
       bucket.cost += row.costUsd;
       cost += row.costUsd;
+    }
+    const tier = MODEL_TIERS.find((candidate) => candidate === row.modelTier);
+    if (tier) {
+      const total = tierTotals.get(tier) ?? { tokens: 0, cost: 0, costKnown: true };
+      total.tokens += used;
+      if (row.costUsd == null) total.costKnown = false;
+      else total.cost += row.costUsd;
+      tierTotals.set(tier, total);
     }
     const modelKey = `${row.provider}:${row.model}`;
     const model = bucket.models.get(modelKey) ?? {
@@ -219,6 +233,13 @@ export function buildUsageOverview(input: {
         };
       })
       .sort((a, b) => b.tokens - a.tokens),
+    tiers: MODEL_TIERS.flatMap((tier) => {
+      const total = tierTotals.get(tier);
+      return total
+        ? [{ tier, tokens: total.tokens, costUsd: total.costKnown ? total.cost : null }]
+        : [];
+    }),
+    escalations: input.escalations ?? 0,
     days: [...days.entries()].map(([date, value]) => ({ date, ...value })),
   };
 }

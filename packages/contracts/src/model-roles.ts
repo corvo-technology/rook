@@ -4,8 +4,15 @@ import { ModelBackupChoiceSchema, modelChoiceListSchema, ThinkingLevelSchema } f
 import { Id } from "./ids.js";
 
 /** Add purposes here; connections, persistence, pickers and backups stay shared. */
-export const ModelRoleSchema = z.enum(["main", "approval", "routing", "fast"]);
+export const ModelRoleSchema = z.enum(["main", "approval", "routing", "fast", "strong"]);
 export type ModelRole = z.infer<typeof ModelRoleSchema>;
+/**
+ * The three tiers an automatic agent picks between, cheapest first. Each tier runs on the model
+ * role of the same name, so members and spaces override a tier the way they override any role.
+ */
+export const MODEL_TIERS = ["fast", "main", "strong"] as const satisfies readonly ModelRole[];
+export const ModelTierSchema = z.enum(MODEL_TIERS);
+export type ModelTier = z.infer<typeof ModelTierSchema>;
 export const ModelRoleChoiceSchema = ModelBackupChoiceSchema.extend({
   thinkingLevel: ThinkingLevelSchema.nullable().optional(),
   /** The connection this row runs on; omitted rows use the provider's connection or the deployment's. */
@@ -25,8 +32,10 @@ export const ModelRoleViewSchema = ModelRoleSettingsSchema.extend({
 export type ModelRoleView = z.infer<typeof ModelRoleViewSchema>;
 
 export function modelSupportsRole(entry: ModelCatalogEntry, role: ModelRole): boolean {
-  // Both write text: the main one for the work, the fast one for chores such as summaries.
-  if (role === "main" || role === "fast") return entry.protocol !== "decisions";
+  // These write text: the main one for the work, the fast one for chores such as summaries and
+  // the strong one for what the others cannot do.
+  if (role === "main" || role === "fast" || role === "strong")
+    return entry.protocol !== "decisions";
   // Routing only ever picks among a few named options, which is what decision models do.
   return role === "approval" || entry.protocol === "decisions";
 }

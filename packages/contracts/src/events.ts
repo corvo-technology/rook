@@ -489,6 +489,35 @@ export const ReplyPreviewSchema = z.object({
 });
 export type ReplyPreview = z.infer<typeof ReplyPreviewSchema>;
 
+/**
+ * Why an agent did or did not answer a channel message. The first five answer; the rest do not.
+ * `router_failed` answered by default because the router could not decide.
+ */
+export const ROUTING_REASONS = [
+  "router_picked",
+  "mentioned",
+  "thread_owner",
+  "follow_up",
+  "router_failed",
+  "not_picked",
+  "none_needed",
+  "not_in_audience",
+  "paused",
+  "over_budget",
+] as const;
+export const RoutingReason = z.enum(ROUTING_REASONS);
+export type RoutingReason = z.infer<typeof RoutingReason>;
+
+/** Who was considered for a channel message and why each did or did not answer. No message text. */
+export const RoutingReportSchema = z.object({
+  /** The router model judged it, or fixed rules (a mention, the thread owner, a follow-up). */
+  by: z.enum(["router", "rules"]),
+  /** The router model's own short rationale, kept as it said it. */
+  note: z.string().max(200).optional(),
+  agents: z.array(z.object({ botId: Id, reason: RoutingReason })).max(100),
+});
+export type RoutingReport = z.infer<typeof RoutingReportSchema>;
+
 export const ThreadMessageSchema = z.object({
   id: Id,
   threadId: Id,
@@ -512,6 +541,8 @@ export const ThreadMessageSchema = z.object({
   routineName: z.string().optional(),
   /** When the message was pinned to the channel; absent when it is not pinned. */
   pinnedAt: z.string().optional(),
+  /** Who a channel message was routed to and why; absent outside channels and on older messages. */
+  routingReport: RoutingReportSchema.optional(),
   createdAt: z.string(),
 });
 export type ThreadMessage = z.infer<typeof ThreadMessageSchema>;

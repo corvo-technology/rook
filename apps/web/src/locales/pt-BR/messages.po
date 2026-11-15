@@ -1001,6 +1001,10 @@ msgstr "Você já tem cadastro?"
 msgid "already in the space"
 msgstr "já está no espaço"
 
+#: src/pages/shell/routing-line.tsx
+msgid "Already in this conversation"
+msgstr "Já está nesta conversa"
+
 #. placeholder {0}: extras.join(", ")
 #: src/pages/SpaceTransfer.tsx
 msgid "Also added {0}."
@@ -1071,10 +1075,18 @@ msgstr "respondeu"
 msgid "Answered"
 msgstr "Respondido"
 
+#: src/pages/shell/routing-line.tsx
+msgid "Answered by default, the router was unavailable"
+msgstr "Respondeu por padrão, o roteador estava indisponível"
+
 #. placeholder {0}: (result.ms / 1000).toFixed(1)
 #: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Answered in {0} s"
 msgstr "Respondeu em {0} s"
+
+#: src/pages/shell/routing-line.tsx
+msgid "Answered just before"
+msgstr "Respondeu logo antes"
 
 #: src/components/AskCard.tsx
 msgid "Answered: {answer}"
@@ -4592,6 +4604,10 @@ msgstr "Escopo de memória"
 msgid "Mention"
 msgstr "Menção"
 
+#: src/pages/shell/routing-line.tsx
+msgid "Mentioned"
+msgstr "Mencionado"
+
 #: src/pages/shell/composer-mentions.tsx
 msgid "Mentions"
 msgstr "Menções"
@@ -5015,6 +5031,10 @@ msgstr "Próxima página"
 msgid "No activity yet."
 msgstr "Nenhuma atividade ainda."
 
+#: src/pages/shell/routing-line.tsx
+msgid "No answer needed"
+msgstr "Não precisa responder"
+
 #: src/pages/Store.tsx
 msgid "No apps match your search."
 msgstr "Nenhum aplicativo corresponde à sua pesquisa."
@@ -5088,6 +5108,10 @@ msgstr "Nenhum catálogo de modelos está disponível."
 msgid "No models listed."
 msgstr "Nenhum modelo listado."
 
+#: src/pages/shell/routing-line.tsx
+msgid "No one answered"
+msgstr "Ninguém respondeu"
+
 #: src/pages/shell/agent-import.tsx
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "Nenhum arquivo do OpenClaw, Hermes ou documento de agente encontrado."
@@ -5159,6 +5183,10 @@ msgstr "Normal"
 msgid "Not a valid skill"
 msgstr "Não é uma habilidade válida"
 
+#: src/pages/shell/routing-line.tsx
+msgid "Not available to you"
+msgstr "Indisponível para você"
+
 #: src/components/McpServerHealthLine.tsx
 msgid "Not checked yet"
 msgstr "Ainda não verificado"
@@ -5185,6 +5213,10 @@ msgstr "Fora do catálogo de plugins"
 #: src/pages/shell/message-cards.tsx
 msgid "Not now"
 msgstr "Agora não"
+
+#: src/pages/shell/routing-line.tsx
+msgid "Not picked"
+msgstr "Não escolhido"
 
 #: src/components/MemoryFactCard.tsx
 msgid "Not remembered"
@@ -5445,6 +5477,10 @@ msgstr "Outras formas de conectar"
 msgid "Output"
 msgstr "Saída"
 
+#: src/pages/shell/routing-line.tsx
+msgid "Over its budget"
+msgstr "Acima do orçamento"
+
 #: src/lib/identity-display.ts
 #: src/lib/use-person-roles.ts
 #: src/pages/Board.tsx
@@ -5558,6 +5594,7 @@ msgstr "Pausar todos os bots"
 
 #: src/lib/routine-trigger.ts
 #: src/pages/shell/import-status.ts
+#: src/pages/shell/routing-line.tsx
 #: src/pages/shell/sidebar-header.tsx
 #: src/pages/WhatsAppNumbers.tsx
 #: src/pages/Workflows.tsx
@@ -5617,6 +5654,10 @@ msgstr "Escolha uma ferramenta para verificar"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Pick from role"
 msgstr "Escolher pela função"
+
+#: src/pages/shell/routing-line.tsx
+msgid "Picked for this"
+msgstr "Escolhido para isso"
 
 #: src/pages/board/BoardLanes.tsx
 msgid "Picked up {ref}."
@@ -6235,6 +6276,10 @@ msgstr "Girar chave"
 msgid "Route work to squads"
 msgstr "Encaminhar trabalho para squads"
 
+#: src/pages/shell/routing-line.tsx
+msgid "Router's note"
+msgstr "Nota do roteador"
+
 #: src/lib/identity-display.ts
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/use-routine-editor.ts
@@ -6568,6 +6613,10 @@ msgstr "Enviando…"
 #: src/components/AskCard.tsx
 msgid "Sent"
 msgstr "Enviado"
+
+#: src/pages/shell/routing-line.tsx
+msgid "Sent to {label}"
+msgstr "Enviado para {label}"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Sentry alert"

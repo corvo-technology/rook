@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildRoutingReport,
   continuityBotId,
+  isAnswering,
   isRouterWake,
   parseRouterScores,
   pickRoutedBots,
@@ -139,5 +141,106 @@ describe("isRouterWake", () => {
     expect(isRouterWake({ strategy: "fallback", picked: [] }, "a")).toBe(false);
     expect(isRouterWake(null, "a")).toBe(false);
     expect(isRouterWake("model", "a")).toBe(false);
+  });
+});
+
+describe("buildRoutingReport", () => {
+  const base = {
+    candidates: ["a", "b", "c", "d"],
+    talkable: new Set(["a", "b", "c"]),
+    unavailable: new Map<string, "paused" | "over_budget">(),
+    mentioned: [] as string[],
+  };
+  const reasons = (report: ReturnType<typeof buildRoutingReport>) =>
+    Object.fromEntries(report.agents.map((agent) => [agent.botId, agent.reason]));
+  const scores = (reason: string) => ({ scores: {}, forEveryone: 0, needsAgent: 1, reason });
+
+  it("says who the router picked, who it left out and who is not in the audience", () => {
+    const report = buildRoutingReport({
+      ...base,
+      woken: ["b"],
+      routing: { strategy: "model", picked: ["b"], scores: scores("  pricing\nquestion ") },
+    });
+    expect(report).toEqual({
+      by: "router",
+      note: "pricing question",
+      agents: [
+        { botId: "a", reason: "not_picked" },
+        { botId: "b", reason: "router_picked" },
+        { botId: "c", reason: "not_picked" },
+        { botId: "d", reason: "not_in_audience" },
+      ],
+    });
+  });
+
+  it("says no answer was needed when the router picked nobody", () => {
+    const report = buildRoutingReport({
+      ...base,
+      woken: [],
+      routing: { strategy: "model", picked: [], scores: scores("chatter") },
+    });
+    expect(reasons(report)).toEqual({
+      a: "none_needed",
+      b: "none_needed",
+      c: "none_needed",
+      d: "not_in_audience",
+    });
+  });
+
+  it("keeps the router's note short", () => {
+    const report = buildRoutingReport({
+      ...base,
+      woken: ["a"],
+      routing: { strategy: "model", picked: ["a"], scores: scores("x".repeat(500)) },
+    });
+    expect(report.note).toHaveLength(160);
+  });
+
+  it("marks a follow-up as the rules' call, with no note", () => {
+    const report = buildRoutingReport({
+      ...base,
+      woken: ["a"],
+      routing: { strategy: "continuity", picked: ["a"] },
+    });
+    expect(report.by).toBe("rules");
+    expect(report.note).toBeUndefined();
+    expect(reasons(report)).toEqual({ a: "follow_up" });
+  });
+
+  it("says the router failed when the default agent answers", () => {
+    const report = buildRoutingReport({
+      ...base,
+      woken: ["a"],
+      routing: { strategy: "fallback", picked: [], error: "down" },
+    });
+    expect(report.by).toBe("rules");
+    expect(reasons(report).a).toBe("router_failed");
+  });
+
+  it("reports only the agents a mention or the thread owner concerns", () => {
+    const owner = buildRoutingReport({ ...base, woken: ["a"] });
+    expect(owner).toEqual({ by: "rules", agents: [{ botId: "a", reason: "thread_owner" }] });
+    const mention = buildRoutingReport({ ...base, woken: ["b"], mentioned: ["b"] });
+    expect(reasons(mention).b).toBe("mentioned");
+  });
+
+  it("explains a mentioned agent that cannot answer", () => {
+    const report = buildRoutingReport({
+      ...base,
+      woken: ["b", "c"],
+      mentioned: ["b", "c", "d"],
+      unavailable: new Map([
+        ["b", "paused"],
+        ["c", "over_budget"],
+      ]),
+    });
+    expect(reasons(report)).toEqual({ b: "paused", c: "over_budget", d: "not_in_audience" });
+  });
+
+  it("tells answering reasons from the rest", () => {
+    expect(isAnswering("router_picked")).toBe(true);
+    expect(isAnswering("router_failed")).toBe(true);
+    expect(isAnswering("none_needed")).toBe(false);
+    expect(isAnswering("paused")).toBe(false);
   });
 });

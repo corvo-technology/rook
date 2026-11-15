@@ -4,7 +4,7 @@ import type {
   ThreadMessage,
   ThreadMessagePage,
 } from "@corvo/contracts";
-import { MessageBlock as MessageBlockSchema } from "@corvo/contracts";
+import { MessageBlock as MessageBlockSchema, RoutingReportSchema } from "@corvo/contracts";
 import {
   BACKGROUND_RUN_TRIGGERS,
   callIdFromClientNonce,
@@ -324,6 +324,7 @@ export function toThreadMessage(row: {
   runId: string | null;
   clientNonce?: string | null;
   pinnedAt?: Date | null;
+  routingReport?: Prisma.JsonValue | null;
   routineName?: string;
   /** Who wrote a user message, when it names an author; resolved by `withRoutineNames`. */
   authorUserId?: string | null;
@@ -364,6 +365,7 @@ export function toThreadMessage(row: {
         }
       : {}),
     pinnedAt: row.pinnedAt?.toISOString(),
+    routingReport: RoutingReportSchema.safeParse(row.routingReport).data,
     createdAt: row.createdAt.toISOString(),
   };
 }

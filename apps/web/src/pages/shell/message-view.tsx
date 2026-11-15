@@ -60,6 +60,7 @@ import {
   McpApprovalCard,
 } from "./message-cards";
 import { MessageHoverActions } from "./message-hover-actions";
+import { RoutingLine, showsRouting } from "./routing-line";
 
 /**
  * How an agent's face in the conversation is drawn: a still picture, moving, or moving and showing
@@ -898,6 +899,18 @@ export const MessageView = memo(function MessageView({
           return null;
         })}
         {hoverAnchorIndex === -1 ? hoverActions : null}
+        {message.role === "user" && channelMembers && message.routingReport ? (
+          showsRouting(message.routingReport) ? (
+            <RoutingLine
+              report={message.routingReport}
+              agent={(botId) => {
+                const bot = peerBot(botId);
+                const name = bot?.name ?? memberName?.(botId);
+                return name ? { name, color: bot?.color ?? FALLBACK_BOT_COLOR } : undefined;
+              }}
+            />
+          ) : null
+        ) : null}
       </div>
     </ChannelRow>
   );

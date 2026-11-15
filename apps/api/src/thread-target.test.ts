@@ -2402,7 +2402,10 @@ describe("sendThreadMessage", () => {
     const routedSend = async (
       text: string,
       model: ReturnType<typeof vi.fn> | undefined,
-      options?: { mentions?: Array<{ kind: "bot"; botId: string }> },
+      options?: {
+        mentions?: Array<{ kind: "bot"; botId: string }>;
+        paused?: boolean | "error";
+      },
     ) => {
       const tx = {
         thread: { update: vi.fn(async () => ({ nextMessageSeq: 2 })) },
@@ -2447,6 +2450,12 @@ describe("sendThreadMessage", () => {
       };
       const prisma = {
         ...tx,
+        space: {
+          findUnique:
+            options?.paused === "error"
+              ? vi.fn().mockRejectedValue(new Error("db down"))
+              : vi.fn().mockResolvedValue({ pausedAt: options?.paused ? new Date() : null }),
+        },
         message: {
           ...tx.message,
           findUnique: vi.fn().mockResolvedValue(null),
@@ -2539,6 +2548,74 @@ describe("sendThreadMessage", () => {
       const { result } = await routedSend("@Beta please check", model);
       expect(result).toMatchObject({ runId: "run-bot-b" });
       expect(model).not.toHaveBeenCalled();
+    });
+
+    const reportOf = (tx: { message: { create: ReturnType<typeof vi.fn> } }) =>
+      (tx.message.create.mock.calls[0]![0] as { data: { routingReport: unknown } }).data
+        .routingReport;
+
+    it("records who the router picked, who it left out, and its note", async () => {
+      const model = scores({
+        scores: { "bot-a": 0.1, "bot-b": 0.9 },
+        forEveryone: 0,
+        needsAgent: 1,
+        reason: "refund policy",
+      });
+      const { tx } = await routedSend("who handles refunds?", model);
+      expect(reportOf(tx)).toEqual({
+        by: "router",
+        note: "refund policy",
+        agents: [
+          { botId: "bot-a", reason: "not_picked" },
+          { botId: "bot-b", reason: "router_picked" },
+        ],
+      });
+    });
+
+    it("records that no answer was needed", async () => {
+      const model = scores({ scores: {}, forEveryone: 0, needsAgent: 0, reason: "chatter" });
+      const { tx } = await routedSend("thanks all", model);
+      expect(reportOf(tx)).toMatchObject({
+        by: "router",
+        agents: [
+          { botId: "bot-a", reason: "none_needed" },
+          { botId: "bot-b", reason: "none_needed" },
+        ],
+      });
+    });
+
+    it("records that the router failed and the default agent answered", async () => {
+      const model = vi.fn().mockRejectedValue(new Error("down"));
+      const { tx } = await routedSend("anyone there?", model);
+      expect(reportOf(tx)).toEqual({
+        by: "rules",
+        agents: [{ botId: "bot-a", reason: "router_failed" }],
+      });
+    });
+
+    it("records a mention without asking the router", async () => {
+      const { tx } = await routedSend("@Beta please check", vi.fn());
+      expect(reportOf(tx)).toEqual({
+        by: "rules",
+        agents: [{ botId: "bot-b", reason: "mentioned" }],
+      });
+    });
+
+    it("records a mentioned agent that cannot answer because the space is paused", async () => {
+      const { tx } = await routedSend("@Beta please check", vi.fn(), { paused: true });
+      expect(reportOf(tx)).toEqual({
+        by: "rules",
+        agents: [{ botId: "bot-b", reason: "paused" }],
+      });
+    });
+
+    it("still sends when the availability check fails", async () => {
+      const { tx, result } = await routedSend("@Beta please check", vi.fn(), { paused: "error" });
+      expect(result).toMatchObject({ runId: "run-bot-b" });
+      expect(reportOf(tx)).toEqual({
+        by: "rules",
+        agents: [{ botId: "bot-b", reason: "mentioned" }],
+      });
     });
   });
   it("answers a routine run waiting for input from the composer", async () => {

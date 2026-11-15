@@ -1001,6 +1001,10 @@ msgstr "已有账户？"
 msgid "already in the space"
 msgstr "已在该空间中"
 
+#: src/pages/shell/routing-line.tsx
+msgid "Already in this conversation"
+msgstr "已在此对话中"
+
 #. placeholder {0}: extras.join(", ")
 #: src/pages/SpaceTransfer.tsx
 msgid "Also added {0}."
@@ -1071,10 +1075,18 @@ msgstr "已回答"
 msgid "Answered"
 msgstr "已回答"
 
+#: src/pages/shell/routing-line.tsx
+msgid "Answered by default, the router was unavailable"
+msgstr "路由不可用，已默认回复"
+
 #. placeholder {0}: (result.ms / 1000).toFixed(1)
 #: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Answered in {0} s"
 msgstr "{0} 秒内已响应"
+
+#: src/pages/shell/routing-line.tsx
+msgid "Answered just before"
+msgstr "刚刚回复过"
 
 #: src/components/AskCard.tsx
 msgid "Answered: {answer}"
@@ -4592,6 +4604,10 @@ msgstr "记忆范围"
 msgid "Mention"
 msgstr "提及"
 
+#: src/pages/shell/routing-line.tsx
+msgid "Mentioned"
+msgstr "已被提及"
+
 #: src/pages/shell/composer-mentions.tsx
 msgid "Mentions"
 msgstr "提及"
@@ -5015,6 +5031,10 @@ msgstr "下一页"
 msgid "No activity yet."
 msgstr "还没有活动。"
 
+#: src/pages/shell/routing-line.tsx
+msgid "No answer needed"
+msgstr "无需回复"
+
 #: src/pages/Store.tsx
 msgid "No apps match your search."
 msgstr "没有匹配的应用。"
@@ -5088,6 +5108,10 @@ msgstr "没有可用的模型目录。"
 msgid "No models listed."
 msgstr "未列出模型。"
 
+#: src/pages/shell/routing-line.tsx
+msgid "No one answered"
+msgstr "无人回复"
+
 #: src/pages/shell/agent-import.tsx
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "未找到 OpenClaw、Hermes 或 Agent 文档。"
@@ -5159,6 +5183,10 @@ msgstr "普通"
 msgid "Not a valid skill"
 msgstr "不是有效的技能"
 
+#: src/pages/shell/routing-line.tsx
+msgid "Not available to you"
+msgstr "你无法使用"
+
 #: src/components/McpServerHealthLine.tsx
 msgid "Not checked yet"
 msgstr "尚未检查"
@@ -5185,6 +5213,10 @@ msgstr "不在插件目录中"
 #: src/pages/shell/message-cards.tsx
 msgid "Not now"
 msgstr "暂不"
+
+#: src/pages/shell/routing-line.tsx
+msgid "Not picked"
+msgstr "未被选中"
 
 #: src/components/MemoryFactCard.tsx
 msgid "Not remembered"
@@ -5445,6 +5477,10 @@ msgstr "其他连接方式"
 msgid "Output"
 msgstr "输出"
 
+#: src/pages/shell/routing-line.tsx
+msgid "Over its budget"
+msgstr "已超出预算"
+
 #: src/lib/identity-display.ts
 #: src/lib/use-person-roles.ts
 #: src/pages/Board.tsx
@@ -5558,6 +5594,7 @@ msgstr "暂停所有机器人"
 
 #: src/lib/routine-trigger.ts
 #: src/pages/shell/import-status.ts
+#: src/pages/shell/routing-line.tsx
 #: src/pages/shell/sidebar-header.tsx
 #: src/pages/WhatsAppNumbers.tsx
 #: src/pages/Workflows.tsx
@@ -5617,6 +5654,10 @@ msgstr "选择要检查的工具"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Pick from role"
 msgstr "根据角色选择"
+
+#: src/pages/shell/routing-line.tsx
+msgid "Picked for this"
+msgstr "被选中处理"
 
 #: src/pages/board/BoardLanes.tsx
 msgid "Picked up {ref}."
@@ -6235,6 +6276,10 @@ msgstr "轮换密钥"
 msgid "Route work to squads"
 msgstr "将工作分派给小队"
 
+#: src/pages/shell/routing-line.tsx
+msgid "Router's note"
+msgstr "路由备注"
+
 #: src/lib/identity-display.ts
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/use-routine-editor.ts
@@ -6568,6 +6613,10 @@ msgstr "正在发送…"
 #: src/components/AskCard.tsx
 msgid "Sent"
 msgstr "已发送"
+
+#: src/pages/shell/routing-line.tsx
+msgid "Sent to {label}"
+msgstr "已发送给 {label}"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Sentry alert"

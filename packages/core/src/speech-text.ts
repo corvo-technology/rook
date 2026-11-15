@@ -107,8 +107,14 @@ export function speakable(input: string): string {
   return /[\p{L}\p{N}]/u.test(text) ? text : "";
 }
 
-const BOUNDARY =
-  /(?<!\b(?:e\.g|i\.e|etc|vs|Dr|Mr|Mrs|Ms|No|approx))(?<![.\d])([.!?])(["')\]]*)\s+/g;
+/** Abbreviations whose full stop does not end a sentence, in English and Portuguese. */
+const ABBREVIATIONS =
+  "e\\.g|i\\.e|etc|vs|Dr|Mr|Mrs|Ms|No|approx|Sr|Sra|Srta|Dra|Prof|Profa|Jr|ex|pág|Av|Ltda|aprox|cf|St|Inc|Ltd";
+const NOT_AFTER = `(?<!\\b(?:${ABBREVIATIONS}))(?<![.\\d])`;
+const BOUNDARY = new RegExp(`${NOT_AFTER}([.!?])(["')\\]]*)\\s+`, "g");
+
+/** A sentence end that is certainly complete: whitespace already follows it. */
+export const SENTENCE_END = new RegExp(`${NOT_AFTER}[.!?]["')\\]]*(?=\\s)`, "g");
 
 /**
  * Split speakable text into utterances a synthesizer can start on.

@@ -184,6 +184,67 @@ describe("speaking on credits", () => {
     expect(db.recordModelCreditReceipt).not.toHaveBeenCalled();
   });
 
+  describe("when the caller cancels the sentence", () => {
+    /** A provider that is still working when the signal fires, and then gives up the way fetch does. */
+    function slowProvider() {
+      return {
+        synthesize: vi.fn(
+          (_request: unknown, ctx: AdapterContext) =>
+            new Promise((_resolve, reject) => {
+              ctx.signal.addEventListener("abort", () =>
+                reject(new DOMException("The operation was aborted.", "AbortError")),
+              );
+            }),
+        ),
+      };
+    }
+
+    it("gives the hold back and charges nothing, without asking again", async () => {
+      const base = slowProvider();
+      const resilient = {
+        synthesize: (req: typeof request, ctx: AdapterContext) =>
+          synthesizeResilient(base as unknown as VoiceProvider, req, ctx, {
+            backoffMs: 1,
+            fallbackModel: "vendor/backup",
+          }),
+      } as unknown as VoiceProvider;
+      const hangUp = new AbortController();
+      const ctx = { signal: hangUp.signal } as AdapterContext;
+      const speaking = synthesizeOnCredits(
+        charge,
+        resilient,
+        { ...request, signal: hangUp.signal },
+        ctx,
+      );
+      await vi.waitFor(() => expect(base.synthesize).toHaveBeenCalledOnce());
+      hangUp.abort();
+      await expect(speaking).rejects.toThrow();
+      expect(base.synthesize).toHaveBeenCalledOnce();
+      expect(db.reserveModelCredits).toHaveBeenCalledOnce();
+      expect(db.settleModelCredits).toHaveBeenCalledExactlyOnceWith(prisma, "entry", 0);
+      expect(db.recordModelCreditReceipt).not.toHaveBeenCalled();
+    });
+
+    it("gives the hold back when the cancel lands before the provider starts", async () => {
+      const base = slowProvider();
+      const hangUp = new AbortController();
+      db.reserveModelCredits.mockImplementation(async () => {
+        hangUp.abort();
+        return "entry";
+      });
+      const provider = {
+        synthesize: (req: typeof request, ctx: AdapterContext) => base.synthesize(req, ctx),
+      } as unknown as VoiceProvider;
+      const ctx = { signal: hangUp.signal } as AdapterContext;
+      // An already-cancelled signal never reaches the abort listener: the provider fails on it.
+      base.synthesize.mockRejectedValueOnce(new DOMException("aborted", "AbortError"));
+      await expect(
+        synthesizeOnCredits(charge, provider, { ...request, signal: hangUp.signal }, ctx),
+      ).rejects.toThrow();
+      expect(db.settleModelCredits).toHaveBeenCalledExactlyOnceWith(prisma, "entry", 0);
+    });
+  });
+
   it("gives the hold back when the provider fails", async () => {
     const provider = {
       synthesize: vi.fn().mockRejectedValue(new Error("down")),

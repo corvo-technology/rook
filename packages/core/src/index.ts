@@ -105,6 +105,7 @@ export * from "./space-permissions.js";
 export * from "./space-roles.js";
 export * from "./space-stream.js";
 export * from "./speech-locale.js";
+export * from "./speech-stream.js";
 export * from "./speech-text.js";
 export * from "./stuck-work.js";
 export * from "./teach-playbook.js";

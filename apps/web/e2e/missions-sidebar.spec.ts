@@ -16,11 +16,11 @@ test("a new account starts with a short bar, and a mission brings its part, mark
 }, testInfo) => {
   await signup(page, `missions-${Date.now()}@corvo.test`, "password12", "Missions");
   await completeOnboarding(page);
-  const rail = page.getByTestId("app-rail");
+  const rail = page.getByTestId("sidebar-nav");
   await expect(rail.getByRole("button", { name: "Routines", exact: true })).toHaveCount(0);
   const list = page.getByRole("list", { name: "Missions" });
   await expect(list.getByRole("listitem")).toHaveText(TITLES);
-  await captureScreenshot(page, testInfo, "missions-short-rail");
+  await captureScreenshot(page, testInfo, "missions-short-nav");
 
   await rpc<Routine>(page, "routines/create", {
     botId: activeBotId(page),
@@ -46,7 +46,7 @@ test("a new account starts with a short bar, and a mission brings its part, mark
 test("Show everything brings the whole bar and removes the list for good", async ({ page }) => {
   await signup(page, `missions-all-${Date.now()}@corvo.test`, "password12", "Missions all");
   await completeOnboarding(page);
-  const rail = page.getByTestId("app-rail");
+  const rail = page.getByTestId("sidebar-nav");
   await page.getByRole("button", { name: "Show everything", exact: true }).click();
   await expect(rail.getByRole("button", { name: "Routines", exact: true })).toBeVisible();
   await expect(page.getByRole("list", { name: "Missions" })).toHaveCount(0);

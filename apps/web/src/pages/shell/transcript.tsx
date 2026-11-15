@@ -162,7 +162,7 @@ export const Transcript = memo(function Transcript({
   onOpenThread?: (rootId: string) => void;
   /** The thread open beside the channel, if any. */
   openThreadId?: string | null;
-  /** A thread beside the channel is a short transcript with no floating header above it. */
+  /** A thread beside the channel is a short transcript with no header above it. */
   variant?: "chat" | "thread";
   onMarkUnread: (message: ThreadMessage) => void;
   onKeepInWiki?: (message: ThreadMessage) => void;
@@ -537,7 +537,7 @@ export const Transcript = memo(function Transcript({
         className={
           variant === "thread"
             ? "rk-scroll flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-4 py-3"
-            : "rk-scroll flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto scroll-pt-16 scroll-pb-7 px-4 pt-20 pb-12 md:px-[max(1.75rem,calc((100%_-_47.5rem)/2))] md:pt-[84px] md:pb-13"
+            : "rk-scroll flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto scroll-pt-4 scroll-pb-7 px-4 pt-6 pb-12 md:px-[max(1.75rem,calc((100%_-_47.5rem)/2))] md:pt-8 md:pb-13"
         }
         style={
           userBubble

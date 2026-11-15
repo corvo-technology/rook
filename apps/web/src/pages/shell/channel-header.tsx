@@ -41,7 +41,7 @@ export function ChannelHeader({
   // Every agent counts, and so does every person who sees the channel.
   const total = members.length + (peopleCount ?? 0);
   return (
-    <div className="absolute inset-x-0 top-0 z-10 flex items-center gap-3 border-b border-border bg-background px-3 py-2 md:px-[22px]">
+    <div className="app-drag flex shrink-0 items-center gap-3 border-b border-border bg-background px-3 py-2 md:px-[22px]">
       <Button
         variant="ghost"
         size="icon"

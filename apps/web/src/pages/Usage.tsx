@@ -16,7 +16,6 @@ import {
 } from "../lib/usage-view";
 import { errorText } from "../lib/user-error";
 import { UsageChart } from "./usage/usage-chart";
-import { WindowChrome } from "./WindowChrome";
 
 /** What the account has run, by day and by agent, for the month or the last thirty days. */
 export function UsagePage() {
@@ -88,9 +87,6 @@ export function UsagePage() {
 
   return (
     <div className="flex h-full flex-col bg-background text-foreground">
-      <div className="app-drag flex items-center gap-2 px-4 pt-3">
-        <WindowChrome />
-      </div>
       <div className="min-h-0 flex-1 overflow-auto px-6 pb-10">
         <div className="mx-auto w-full max-w-3xl">
           <header className="flex flex-wrap items-center justify-between gap-3 py-4">

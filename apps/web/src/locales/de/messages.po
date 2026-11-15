@@ -649,7 +649,9 @@ msgstr "Aktionen für den Space"
 msgid "Active"
 msgstr "Aktiv"
 
+#: src/pages/ActivityPage.tsx
 #: src/pages/shell/sidebar-header.tsx
+#: src/pages/shell/sidebar-team.tsx
 msgid "Activity"
 msgstr "Aktivität"
 
@@ -902,7 +904,6 @@ msgstr "Agent"
 msgid "Agent computer"
 msgstr "Agent-Computer"
 
-#: src/components/AppRail.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/Shell.tsx
@@ -1139,7 +1140,6 @@ msgstr "Bestätigungsgrenzen"
 msgid "Approval model"
 msgstr "Freigabemodell"
 
-#: src/components/AppRail.tsx
 #: src/pages/ApprovalsPage.tsx
 #: src/pages/Settings.tsx
 #: src/pages/shell/sidebar-team.tsx
@@ -1198,10 +1198,9 @@ msgstr "Archiviert"
 msgid "Arguments"
 msgstr "Argumente"
 
-#: src/components/AppRail.tsx
-#: src/components/SidebarFooter.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/PartnerTemplateEditor.tsx
+#: src/pages/shell/sidebar-team.tsx
 msgid "Artifacts"
 msgstr "Artefakte"
 
@@ -2136,10 +2135,6 @@ msgstr "Mit {0} fortfahren"
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Control computers"
 msgstr "Computer steuern"
-
-#: src/pages/shell/sidebar-team.tsx
-msgid "Conversations"
-msgstr "Unterhaltungen"
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/markdown-copy.tsx
@@ -3591,8 +3586,8 @@ msgstr "Bots filtern"
 msgid "Filter by date"
 msgstr "Nach Datum filtern"
 
+#: src/pages/ActivityPage.tsx
 #: src/pages/Artifacts.tsx
-#: src/pages/shell/shell-sidebar.tsx
 msgid "Filters"
 msgstr "Filter"
 
@@ -4358,10 +4353,6 @@ msgstr "Niedrig"
 msgid "Lowercase letters, numbers, hyphens and underscores, starting with a letter."
 msgstr "Kleinbuchstaben, Zahlen, Bindestriche und Unterstriche, beginnend mit einem Buchstaben."
 
-#: src/components/AppRail.tsx
-msgid "Main"
-msgstr "Haupt"
-
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Main model"
 msgstr "Hauptmodell"
@@ -4519,11 +4510,11 @@ msgstr "Mitglieder ({0})"
 msgid "Members can create spaces"
 msgstr "Mitglieder können Spaces erstellen"
 
-#: src/components/AppRail.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/Settings.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-panel.tsx
+#: src/pages/shell/sidebar-team.tsx
 msgid "Memory"
 msgstr "Erinnerungen"
 
@@ -4726,8 +4717,8 @@ msgstr "Monatliches Token-Limit"
 msgid "Monthly token limit for {name}"
 msgstr "Monatliches Token-Limit für {name}"
 
-#: src/components/RailMore.tsx
 #: src/pages/shell/message-hover-actions.tsx
+#: src/pages/shell/sidebar-team.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "More"
 msgstr "Mehr"
@@ -4957,6 +4948,10 @@ msgstr "Weiter"
 #: src/components/markdown-copy.tsx
 msgid "Next page"
 msgstr "Nächste Seite"
+
+#: src/pages/ActivityList.tsx
+msgid "No activity yet."
+msgstr "Noch keine Aktivität."
 
 #: src/pages/Store.tsx
 msgid "No apps match your search."
@@ -5283,6 +5278,7 @@ msgid "Open in full window"
 msgstr "In vollständigem Fenster öffnen"
 
 #: src/pages/DirectChat.tsx
+#: src/pages/Shell.tsx
 #: src/pages/shell/channel-header.tsx
 #: src/pages/shell/chat-header.tsx
 msgid "Open navigation"
@@ -6172,11 +6168,10 @@ msgstr "Routine"
 msgid "Routine “{0}”"
 msgstr "Routine „{0}“"
 
-#: src/components/AppRail.tsx
-#: src/components/SidebarFooter.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
+#: src/pages/shell/sidebar-team.tsx
 msgid "Routines"
 msgstr "Routinen"
 
@@ -6410,7 +6405,7 @@ msgstr "integrations.sh durchsuchen"
 msgid "Search models"
 msgstr "Modelle suchen"
 
-#: src/pages/shell/shell-sidebar.tsx
+#: src/pages/ActivityPage.tsx
 msgid "Search runs"
 msgstr "Durchläufe suchen"
 
@@ -6792,7 +6787,6 @@ msgid "Speech model"
 msgstr "Sprachmodell"
 
 #: src/pages/shell/channel-header.tsx
-#: src/pages/shell/chat-header.tsx
 msgid "Squad"
 msgstr "Squad"
 
@@ -6884,7 +6878,6 @@ msgstr "Gestoppt."
 msgid "Stopping…"
 msgstr "Wird gestoppt …"
 
-#: src/components/AppRail.tsx
 #: src/components/SidebarFooter.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/Store.tsx
@@ -6993,8 +6986,6 @@ msgstr "Sprich mit deinem Agenten"
 msgid "Task settings"
 msgstr "Aufgaben-Einstellungen"
 
-#: src/components/AppRail.tsx
-#: src/components/SidebarFooter.tsx
 #: src/pages/Board.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Tasks"
@@ -7012,7 +7003,6 @@ msgstr "Erzähl etwas über dich"
 msgid "Teaching in progress. Stop teaching before sending a new message."
 msgstr "Aufgabe wird angelernt. Beende das Anlernen, bevor du eine neue Nachricht sendest."
 
-#: src/components/AppRail.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/TeamPage.tsx
@@ -7570,10 +7560,9 @@ msgstr "Dateien hochladen"
 msgid "Urgent"
 msgstr "Dringend"
 
-#: src/components/AppRail.tsx
-#: src/components/SidebarFooter.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/Settings.tsx
+#: src/pages/shell/sidebar-team.tsx
 #: src/pages/Usage.tsx
 msgid "Usage"
 msgstr "Nutzung"
@@ -7880,7 +7869,7 @@ msgstr "Wer mit {name} sprechen darf"
 msgid "Who sees this channel"
 msgstr "Wer diesen Kanal sieht"
 
-#: src/components/AppRail.tsx
+#: src/pages/shell/sidebar-team.tsx
 #: src/pages/WikiPage.tsx
 msgid "Wiki"
 msgstr "Wiki"
@@ -7897,8 +7886,8 @@ msgstr "Wird nicht gemacht"
 msgid "Work"
 msgstr "Arbeit"
 
-#: src/components/AppRail.tsx
 #: src/pages/PartnerTemplateEditor.tsx
+#: src/pages/shell/sidebar-team.tsx
 #: src/pages/Workflows.tsx
 msgid "Workflows"
 msgstr "Workflows"

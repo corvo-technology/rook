@@ -7,7 +7,6 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import { PageLoading } from "../components/PageLoading";
 import { desktopBridge } from "../lib/desktop";
 import { rpc } from "../lib/rpc";
-import { WindowChrome } from "./WindowChrome";
 
 export function NavLinkPage() {
   const { t } = useLingui();
@@ -26,7 +25,6 @@ export function NavLinkPage() {
   if (!link) return <Navigate to="/app" replace />;
   return (
     <div className="flex h-full min-w-0 flex-col overflow-hidden bg-background text-foreground">
-      <WindowChrome />
       <header className="flex items-center gap-3 border-b px-4 py-3">
         <Link
           to="/app"

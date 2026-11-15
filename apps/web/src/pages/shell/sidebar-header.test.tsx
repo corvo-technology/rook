@@ -55,8 +55,9 @@ describe("the paused label", () => {
         <SidebarHeader
           createMenuOpen={false}
           setCreateMenuOpen={() => {}}
-          activityMode={false}
-          toggleActivityMode={() => {}}
+          activityOpen={false}
+          onActivity={() => {}}
+          onSearch={() => {}}
           setBotsSidebarCollapsedPref={() => {}}
           bots={[]}
           setMobileSidebarOpen={() => {}}

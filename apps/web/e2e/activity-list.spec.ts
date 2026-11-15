@@ -2,56 +2,32 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 import { captureScreenshot, completeOnboarding, signup } from "./helpers";
 
-/** Activity rows sit above `[data-sidebar-group]` bots; match their aria-label. */
+/** Activity rows are in the activity page; match their aria-label. */
 function activityRow(page: Page, botName: string) {
-  return page.locator("aside").getByRole("button", {
+  return page.getByTestId("activity-page").getByRole("button", {
     name: new RegExp(`^${botName}, `),
   });
 }
 
-async function captureActivitySidebar(
-  page: Page,
-  testInfo: Parameters<typeof captureScreenshot>[1],
-  name: string,
-) {
-  const aside = page.locator("aside").first();
-  const toggle = page.getByRole("button", { name: "Conversations", exact: true });
-  await toggle.scrollIntoViewIfNeeded();
-  // Keep the header (bell + Create) in frame with the Now/Recent list.
-  const box = await aside.boundingBox();
-  if (box) {
-    const screenshotPath = testInfo.outputPath(`${name}.png`);
-    await page.screenshot({
-      animations: "disabled",
-      caret: "hide",
-      path: screenshotPath,
-      clip: {
-        x: Math.max(0, box.x),
-        y: Math.max(0, box.y),
-        width: Math.min(box.width + 24, 360),
-        height: Math.min(Math.max(box.height, 420), 720),
-      },
-    });
-    await testInfo.attach(name, { contentType: "image/png", path: screenshotPath });
-    return;
-  }
-  await captureScreenshot(page, testInfo, name);
+async function openActivity(page: Page) {
+  await page.getByTestId("sidebar-activity").click();
+  await expect(page).toHaveURL(/\/app\/activity$/);
+  await expect(page.getByTestId("activity-page")).toBeVisible();
 }
 
-test("sidebar Now and Recent surface active and terminal runs", async ({ page }, testInfo) => {
+test("the Activity page shows active and terminal runs while the sidebar lists stay", async ({
+  page,
+}, testInfo) => {
   const stamp = Date.now();
   await signup(page, `activity-${stamp}@corvo.test`, "password12", "Activity");
   await completeOnboarding(page);
 
-  const aside = page.locator("aside").first();
-  const activityToggle = page.getByRole("button", { name: "Conversations", exact: true });
-  await expect(activityToggle).toHaveAttribute("aria-pressed", "false");
-  await expect(activityToggle).toHaveAttribute("data-activity-mode", "off");
-  await expect(aside.getByText("Now", { exact: true })).toHaveCount(0);
-  await expect(aside.getByText("Recent", { exact: true })).toHaveCount(0);
-  await expect(aside.getByRole("status", { name: "Loading activity…" })).toHaveCount(0);
-  await expect(aside.locator("[data-sidebar-group]").getByText("Chief").first()).toBeVisible();
-  await captureActivitySidebar(page, testInfo, "57-activity-mode-off");
+  const aside = page.getByTestId("activity-page");
+  const sidebar = page.getByTestId("bots-sidebar");
+  // Activity is a page, not a mode of the sidebar: the agents stay listed beside it.
+  await expect(sidebar.locator("[data-sidebar-group]").getByText("Chief").first()).toBeVisible();
+  await expect(aside).toHaveCount(0);
+  await captureScreenshot(page, testInfo, "57-activity-closed");
 
   const composer = page.getByRole("combobox", { name: /^Message/ });
   await composer.fill("keep working until I stop you");
@@ -60,17 +36,9 @@ test("sidebar Now and Recent surface active and terminal runs", async ({ page },
     timeout: 30_000,
   });
 
-  await activityToggle.click();
-  await expect(activityToggle).toHaveAttribute("aria-pressed", "true");
-  await expect(activityToggle).toHaveAttribute("data-activity-mode", "on");
-
-  // Remount ActivityList so the first poll sees the in-flight run (15s interval otherwise).
-  await page.reload();
-  await expect(activityToggle).toHaveAttribute("aria-pressed", "true");
-  await expect(activityToggle).toHaveAttribute("data-activity-mode", "on");
-  await expect(page.getByRole("button", { name: "Stop", exact: true })).toBeVisible({
-    timeout: 30_000,
-  });
+  // Opening the page mounts the list, so its first poll sees the in-flight run.
+  await openActivity(page);
+  await expect(sidebar.locator("[data-sidebar-group]").getByText("Chief").first()).toBeVisible();
   await expect(page.getByRole("status", { name: "Loading activity…" })).toBeHidden({
     timeout: 20_000,
   });
@@ -84,17 +52,13 @@ test("sidebar Now and Recent surface active and terminal runs", async ({ page },
   await expect(page.getByTestId("activity-status-filter")).toBeHidden();
   await expect(page.getByTestId("activity-date-from")).toBeHidden();
   await expect(page.getByTestId("activity-date-to")).toBeHidden();
-  await captureActivitySidebar(page, testInfo, "58-activity-now");
+  await captureScreenshot(page, testInfo, "58-activity-now");
   const runSearch = aside.getByRole("textbox", { name: "Search runs", exact: true });
   await expect(aside.getByRole("textbox")).toHaveCount(1);
-  const searchBox = (await page.getByTestId("sidebar-search").boundingBox())!;
-  const rowBox = (await activityRow(page, "Chief").boundingBox())!;
-  expect(Math.abs(searchBox.x - rowBox.x)).toBeLessThanOrEqual(1);
-  expect(Math.abs(searchBox.width - rowBox.width)).toBeLessThanOrEqual(1);
   await runSearch.fill("keep working");
   await expect(activityRow(page, "Chief")).toBeVisible();
   await expect(aside.getByTestId("activity-filter-indicator")).toHaveCount(0);
-  await captureActivitySidebar(page, testInfo, "58a-activity-now-search");
+  await captureScreenshot(page, testInfo, "58a-activity-now-search");
   await runSearch.fill("no-such-run");
   await expect(activityRow(page, "Chief")).toHaveCount(0);
   // Run searches must never invoke the space-wide search surface.
@@ -107,7 +71,7 @@ test("sidebar Now and Recent surface active and terminal runs", async ({ page },
   await expect(filtersButton).toHaveAttribute("aria-expanded", "true");
   await page.getByTestId("activity-status-filter").selectOption("running");
   await expect(aside.getByTestId("activity-filter-indicator")).toBeVisible();
-  await captureActivitySidebar(page, testInfo, "58b-activity-now-filters");
+  await captureScreenshot(page, testInfo, "58b-activity-now-filters");
   await filtersButton.click();
   await expect(page.getByTestId("activity-status-filter")).toBeHidden();
   await expect(aside.getByTestId("activity-filter-indicator")).toBeVisible();
@@ -115,26 +79,21 @@ test("sidebar Now and Recent surface active and terminal runs", async ({ page },
   await expect(aside.getByTestId("activity-filter-indicator")).toHaveCount(0);
   await page.emulateMedia({ colorScheme: "dark" });
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await captureActivitySidebar(page, testInfo, "58c-activity-now-dark");
+  await captureScreenshot(page, testInfo, "58c-activity-now-dark");
   await page.emulateMedia({ colorScheme: "light" });
-  await runSearch.fill("Chief");
-  await activityToggle.click();
-  await aside.getByTestId("sidebar-search-trigger").click();
-  const normalSearch = aside.getByRole("textbox", { name: "Search", exact: true });
-  await expect(normalSearch).toHaveValue("");
-  await normalSearch.fill("Chief");
-  await expect(aside.getByTestId("activity-list")).toHaveCount(0);
-  await activityToggle.click();
-  await expect(runSearch).toHaveValue("");
-  await expect(filtersButton).toHaveAttribute("aria-expanded", "false");
-  await expect(activityRow(page, "Chief")).toBeVisible();
+  // The sidebar's own search stays the space search while Activity is open.
+  await sidebar.getByTestId("sidebar-search-trigger").click();
+  await expect(sidebar.getByRole("textbox", { name: "Search", exact: true })).toHaveValue("");
+  await expect(aside.getByRole("textbox", { name: "Search runs", exact: true })).toHaveValue("");
 
+  // A row opens its chat, where the run can be stopped.
+  await activityRow(page, "Chief").click();
   await page.getByRole("button", { name: "Stop", exact: true }).click();
   await expect(page.getByRole("button", { name: "Send" })).toBeVisible({ timeout: 30_000 });
 
+  await openActivity(page);
   await page.reload();
-  await expect(activityToggle).toHaveAttribute("aria-pressed", "true");
-  await expect(activityToggle).toHaveAttribute("data-activity-mode", "on");
+  await expect(aside).toBeVisible();
   await expect(page.getByRole("status", { name: "Loading activity…" })).toBeHidden({
     timeout: 20_000,
   });
@@ -142,20 +101,20 @@ test("sidebar Now and Recent surface active and terminal runs", async ({ page },
   await expect(activityRow(page, "Chief")).toBeVisible();
   await expect(activityRow(page, "Chief")).toContainText(/Cancelled|keep working/i);
   await expect(aside.getByText("Now", { exact: true })).toHaveCount(0);
-  await captureActivitySidebar(page, testInfo, "59-activity-recent");
+  await captureScreenshot(page, testInfo, "59-activity-recent");
 
   const activitySearch = aside.getByRole("textbox", { name: "Search runs", exact: true });
   await expect(aside.getByRole("textbox")).toHaveCount(1);
   await activitySearch.fill("Chief");
   await expect(activityRow(page, "Chief")).toBeVisible();
   await expect(aside.getByText("Recent", { exact: true })).toBeVisible();
-  await captureActivitySidebar(page, testInfo, "60-activity-search-match");
+  await captureScreenshot(page, testInfo, "60-activity-search-match");
 
   await activitySearch.fill("no-such-run");
   await expect(aside.getByText("No runs match these filters.")).toBeVisible();
   await expect(activityRow(page, "Chief")).toHaveCount(0);
   await expect(aside.getByText("Recent", { exact: true })).toHaveCount(0);
-  await captureActivitySidebar(page, testInfo, "61-activity-filters-empty");
+  await captureScreenshot(page, testInfo, "61-activity-filters-empty");
 
   await page.getByTestId("activity-reset-filters").click();
   await expect(activityRow(page, "Chief")).toBeVisible();
@@ -237,20 +196,18 @@ test("activity filters keep retry when a refresh fails", async ({ page }, testIn
     });
   });
 
-  const aside = page.locator("aside").first();
-  const activityToggle = page.getByRole("button", { name: "Conversations", exact: true });
-  await activityToggle.click();
+  const aside = page.getByTestId("activity-page");
+  await openActivity(page);
   // The list refreshes every 15s; drive that poll with a controlled clock.
   await page.clock.install();
   await page.clock.setFixedTime(now);
   await page.reload();
-  await expect(activityToggle).toHaveAttribute("aria-pressed", "true");
   await expect(activityRow(page, "Chief")).toBeVisible({ timeout: 20_000 });
 
   await expect(activityRow(page, "Chief")).toContainText("filter me");
   await expect(activityRow(page, "Chief").getByText("just now", { exact: true })).toBeVisible();
   await expect(activityRow(page, "Helper")).toContainText("Update from Scout: filter me");
-  await captureActivitySidebar(page, testInfo, "61a-activity-first-minute");
+  await captureScreenshot(page, testInfo, "61a-activity-first-minute");
   const activitySearch = aside.getByRole("textbox", { name: "Search runs", exact: true });
   await activitySearch.fill("Update from Scout");
   await expect(activityRow(page, "Helper")).toBeVisible();

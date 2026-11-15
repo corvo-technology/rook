@@ -31,7 +31,7 @@ export function useMissions() {
   const queries = useSpaceQueries();
   const queryClient = useQueryClient();
   const { pathname, search } = useLocation();
-  // Reads what the screen beside the rail already loaded; the rail never takes the first bootstrap.
+  // Reads what the screen already loaded; the sidebar never takes the first bootstrap.
   const shortNav =
     useQuery({
       ...queries.bootstrap.queryOptions({ input: {} }),

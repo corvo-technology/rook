@@ -222,14 +222,17 @@ function Canvas() {
           onSelect={noop}
         />
         <SidebarNav
-          approvals={1}
-          conversationsOn={false}
-          showTasks
-          onHome={noop}
-          onApprovals={noop}
-          onConversations={noop}
-          onTasks={noop}
-          onTeam={noop}
+          items={[
+            { key: "home", label: "Home", to: "/app/chief" },
+            { key: "approvals", label: "Approvals", to: "/app/approvals", badge: 1 },
+            { key: "tasks", label: "Tasks", to: "/app/board" },
+            { key: "routines", label: "Routines", to: "/app/routines" },
+            { key: "activity", label: "Activity", to: "/app/activity" },
+            { key: "team", label: "Team", to: "/app/team" },
+          ]}
+          more={[{ key: "workflows", label: "Workflows", to: "/app/workflows" }]}
+          pathname="/app/chief"
+          onOpen={noop}
         />
         <div className="flex flex-col gap-0.5 px-2.5">
           <SidebarRoster

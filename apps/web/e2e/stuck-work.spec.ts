@@ -44,35 +44,9 @@ function injectExpiredStatus(body: { json?: ThreadCarrier }) {
 }
 
 function activityRow(page: Page, botName: string) {
-  return page.locator("aside").getByRole("button", {
+  return page.getByTestId("activity-page").getByRole("button", {
     name: new RegExp(`^${botName}, `),
   });
-}
-
-async function captureActivitySidebar(
-  page: Page,
-  testInfo: Parameters<typeof captureScreenshot>[1],
-  name: string,
-) {
-  const aside = page.locator("aside").first();
-  const box = await aside.boundingBox();
-  if (box) {
-    const screenshotPath = testInfo.outputPath(`${name}.png`);
-    await page.screenshot({
-      animations: "disabled",
-      caret: "hide",
-      path: screenshotPath,
-      clip: {
-        x: Math.max(0, box.x),
-        y: Math.max(0, box.y),
-        width: Math.min(box.width + 24, 360),
-        height: Math.min(Math.max(box.height, 420), 720),
-      },
-    });
-    await testInfo.attach(name, { contentType: "image/png", path: screenshotPath });
-    return;
-  }
-  await captureScreenshot(page, testInfo, name);
 }
 
 test("aged queued work is marked and an expired wait leaves a status line", async ({
@@ -110,10 +84,9 @@ test("aged queued work is marked and an expired wait leaves a status line", asyn
     });
   });
 
-  const activityToggle = page.getByRole("button", { name: "Conversations", exact: true });
-  await activityToggle.click();
+  await page.getByTestId("sidebar-activity").click();
   await page.reload();
-  await expect(activityToggle).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByTestId("activity-page")).toBeVisible();
   await expect(page.getByRole("status", { name: "Loading activity…" })).toBeHidden({
     timeout: 20_000,
   });
@@ -122,7 +95,7 @@ test("aged queued work is marked and an expired wait leaves a status line", asyn
   await expect(row).toContainText("2d ago");
   await expect(row).toContainText("Maya asked: finish the report");
   await expect(row.locator(".text-warning").filter({ hasText: "Queued" })).toBeVisible();
-  await captureActivitySidebar(page, testInfo, "stuck-queued-activity");
+  await captureScreenshot(page, testInfo, "stuck-queued-activity");
 
   // A reload paints bootstrap.thread and skips threads/get when that thread is the open bot.
   const fulfillExpiredStatus = async (route: Parameters<Parameters<typeof page.route>[1]>[0]) => {

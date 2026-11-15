@@ -126,14 +126,15 @@ function Inbox() {
     <div className="flex min-h-screen bg-background text-foreground">
       <nav className="w-[240px] shrink-0 border-e border-sidebar-border bg-sidebar px-2.5 py-4">
         <SidebarNav
-          approvals={items.length}
-          conversationsOn={false}
-          showTasks={false}
-          onHome={() => undefined}
-          onApprovals={() => undefined}
-          onConversations={() => undefined}
-          onTasks={() => undefined}
-          onTeam={() => undefined}
+          items={[
+            { key: "home", label: "Home", to: "/app/chief" },
+            { key: "approvals", label: "Approvals", to: "/app/approvals", badge: items.length },
+            { key: "activity", label: "Activity", to: "/app/activity" },
+            { key: "team", label: "Team", to: "/app/team" },
+          ]}
+          more={[]}
+          pathname="/app/approvals"
+          onOpen={() => undefined}
         />
       </nav>
       <main className="flex-1 px-6 py-5">

@@ -17,7 +17,6 @@ import { errorText } from "../lib/user-error";
 import { formatWhen, insertStep, moveStep } from "../lib/workflow-flow";
 import { AddStepPanel } from "./AddStepPanel";
 import { NewRoutinePanel } from "./NewRoutinePanel";
-import { WindowChrome } from "./WindowChrome";
 
 const NO_BOTS: Bot[] = [];
 type PlainStep = { botId: string; instruction: string };
@@ -75,9 +74,6 @@ export function WorkflowsPage() {
 
   return (
     <div className="flex h-full flex-col bg-background text-foreground">
-      <div className="app-drag flex items-center gap-2 px-4 pt-3">
-        <WindowChrome />
-      </div>
       <header className="flex items-center gap-2 px-6 py-4">
         <h1 className="text-base font-medium">
           <Trans>Workflows</Trans>

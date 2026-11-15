@@ -38,13 +38,11 @@ import { PdfViewer } from "../components/PdfViewer";
 import { SandboxedHtmlViewer } from "../components/SandboxedHtmlViewer";
 import { decodeArtifactBase64, downloadArtifactBytes } from "../lib/artifact-open";
 import { takeInitialBootstrap } from "../lib/bootstrap";
-import { desktopBridge } from "../lib/desktop";
 import { useSpaceQueries } from "../lib/query";
 import { formatRelativeTime } from "../lib/relative-time";
 import { rpc } from "../lib/rpc";
 import { useObjectUrl } from "../lib/use-object-url";
 import { errorText } from "../lib/user-error";
-import { WindowChrome } from "./WindowChrome";
 
 type ViewMode = "grid" | "list";
 type DateFilter = "all" | "today" | "week" | "month";
@@ -223,8 +221,6 @@ export function ArtifactsPage() {
         {/* Wraps so window controls and the way back stay on screen with Filters. */}
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
           <div className="flex items-center gap-2">
-            {/* This route is the window's leading edge, so Electron window controls sit in the header. */}
-            {desktopBridge() ? <WindowChrome /> : null}
             <Link
               to="/app"
               className="app-no-drag flex shrink-0 items-center gap-0.5 rounded-lg py-1 pe-1.5 text-[13px] font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"

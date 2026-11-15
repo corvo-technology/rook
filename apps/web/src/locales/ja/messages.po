@@ -649,7 +649,9 @@ msgstr "スペースの操作"
 msgid "Active"
 msgstr "有効"
 
+#: src/pages/ActivityPage.tsx
 #: src/pages/shell/sidebar-header.tsx
+#: src/pages/shell/sidebar-team.tsx
 msgid "Activity"
 msgstr "アクティビティ"
 
@@ -902,7 +904,6 @@ msgstr "エージェント"
 msgid "Agent computer"
 msgstr "エージェントのコンピューター"
 
-#: src/components/AppRail.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/Shell.tsx
@@ -1139,7 +1140,6 @@ msgstr "承認の範囲"
 msgid "Approval model"
 msgstr "承認モデル"
 
-#: src/components/AppRail.tsx
 #: src/pages/ApprovalsPage.tsx
 #: src/pages/Settings.tsx
 #: src/pages/shell/sidebar-team.tsx
@@ -1198,10 +1198,9 @@ msgstr "アーカイブ済み"
 msgid "Arguments"
 msgstr "引数"
 
-#: src/components/AppRail.tsx
-#: src/components/SidebarFooter.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/PartnerTemplateEditor.tsx
+#: src/pages/shell/sidebar-team.tsx
 msgid "Artifacts"
 msgstr "成果物"
 
@@ -2136,10 +2135,6 @@ msgstr "{0}で続行"
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Control computers"
 msgstr "コンピューターを操作"
-
-#: src/pages/shell/sidebar-team.tsx
-msgid "Conversations"
-msgstr "会話"
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/markdown-copy.tsx
@@ -3591,8 +3586,8 @@ msgstr "ボットを絞り込む"
 msgid "Filter by date"
 msgstr "日付で絞り込む"
 
+#: src/pages/ActivityPage.tsx
 #: src/pages/Artifacts.tsx
-#: src/pages/shell/shell-sidebar.tsx
 msgid "Filters"
 msgstr "フィルター"
 
@@ -4358,10 +4353,6 @@ msgstr "低"
 msgid "Lowercase letters, numbers, hyphens and underscores, starting with a letter."
 msgstr "小文字、数字、ハイフン、アンダースコアのみ使用でき、先頭は文字にしてください。"
 
-#: src/components/AppRail.tsx
-msgid "Main"
-msgstr "メイン"
-
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Main model"
 msgstr "メインモデル"
@@ -4519,11 +4510,11 @@ msgstr "メンバー（{0}）"
 msgid "Members can create spaces"
 msgstr "メンバーがスペースを作成できる"
 
-#: src/components/AppRail.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/Settings.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-panel.tsx
+#: src/pages/shell/sidebar-team.tsx
 msgid "Memory"
 msgstr "メモリ"
 
@@ -4726,8 +4717,8 @@ msgstr "月間トークン上限"
 msgid "Monthly token limit for {name}"
 msgstr "{name} の月間トークン上限"
 
-#: src/components/RailMore.tsx
 #: src/pages/shell/message-hover-actions.tsx
+#: src/pages/shell/sidebar-team.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "More"
 msgstr "その他"
@@ -4957,6 +4948,10 @@ msgstr "次へ"
 #: src/components/markdown-copy.tsx
 msgid "Next page"
 msgstr "次のページ"
+
+#: src/pages/ActivityList.tsx
+msgid "No activity yet."
+msgstr "まだアクティビティはありません。"
 
 #: src/pages/Store.tsx
 msgid "No apps match your search."
@@ -5283,6 +5278,7 @@ msgid "Open in full window"
 msgstr "フルウィンドウで開く"
 
 #: src/pages/DirectChat.tsx
+#: src/pages/Shell.tsx
 #: src/pages/shell/channel-header.tsx
 #: src/pages/shell/chat-header.tsx
 msgid "Open navigation"
@@ -6172,11 +6168,10 @@ msgstr "ルーティン"
 msgid "Routine “{0}”"
 msgstr "ルーティン「{0}」"
 
-#: src/components/AppRail.tsx
-#: src/components/SidebarFooter.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
+#: src/pages/shell/sidebar-team.tsx
 msgid "Routines"
 msgstr "ルーティン"
 
@@ -6410,7 +6405,7 @@ msgstr "integrations.shを検索"
 msgid "Search models"
 msgstr "モデルを検索"
 
-#: src/pages/shell/shell-sidebar.tsx
+#: src/pages/ActivityPage.tsx
 msgid "Search runs"
 msgstr "実行を検索"
 
@@ -6792,7 +6787,6 @@ msgid "Speech model"
 msgstr "音声モデル"
 
 #: src/pages/shell/channel-header.tsx
-#: src/pages/shell/chat-header.tsx
 msgid "Squad"
 msgstr "スクワッド"
 
@@ -6884,7 +6878,6 @@ msgstr "停止しました。"
 msgid "Stopping…"
 msgstr "停止中…"
 
-#: src/components/AppRail.tsx
 #: src/components/SidebarFooter.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/Store.tsx
@@ -6993,8 +6986,6 @@ msgstr "エージェントに話しかける"
 msgid "Task settings"
 msgstr "タスクの設定"
 
-#: src/components/AppRail.tsx
-#: src/components/SidebarFooter.tsx
 #: src/pages/Board.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Tasks"
@@ -7012,7 +7003,6 @@ msgstr "あなたについて教える"
 msgid "Teaching in progress. Stop teaching before sending a new message."
 msgstr "ティーチング中です。新しいメッセージを送信する前にティーチングを停止してください。"
 
-#: src/components/AppRail.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/TeamPage.tsx
@@ -7570,10 +7560,9 @@ msgstr "ファイルをアップロード"
 msgid "Urgent"
 msgstr "緊急"
 
-#: src/components/AppRail.tsx
-#: src/components/SidebarFooter.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/Settings.tsx
+#: src/pages/shell/sidebar-team.tsx
 #: src/pages/Usage.tsx
 msgid "Usage"
 msgstr "使用量"
@@ -7880,7 +7869,7 @@ msgstr "{name} と話せる人"
 msgid "Who sees this channel"
 msgstr "このチャンネルを見られる人"
 
-#: src/components/AppRail.tsx
+#: src/pages/shell/sidebar-team.tsx
 #: src/pages/WikiPage.tsx
 msgid "Wiki"
 msgstr "Wiki"
@@ -7897,8 +7886,8 @@ msgstr "対応しない"
 msgid "Work"
 msgstr "仕事"
 
-#: src/components/AppRail.tsx
 #: src/pages/PartnerTemplateEditor.tsx
+#: src/pages/shell/sidebar-team.tsx
 #: src/pages/Workflows.tsx
 msgid "Workflows"
 msgstr "ワークフロー"

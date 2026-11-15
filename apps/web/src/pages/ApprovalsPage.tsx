@@ -7,7 +7,6 @@ import { useSpaceQueries } from "../lib/query";
 import { rpc } from "../lib/rpc";
 import { usePendingApprovals } from "../lib/use-pending-approvals";
 import { ApprovalsInbox } from "./ApprovalsInbox";
-import { WindowChrome } from "./WindowChrome";
 
 /** The approvals this person may decide, from every channel and agent in one list. */
 export function ApprovalsPage() {
@@ -47,9 +46,6 @@ export function ApprovalsPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto bg-background text-foreground">
-      <div className="app-drag flex items-center gap-2 px-4 pt-3">
-        <WindowChrome />
-      </div>
       <h1 className="mx-auto w-full max-w-3xl px-6 py-4 text-xl font-light tracking-tight">
         <Trans>Approvals</Trans>
       </h1>

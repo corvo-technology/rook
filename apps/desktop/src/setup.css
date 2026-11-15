@@ -394,15 +394,6 @@ html[data-platform="darwin"] .titlebar {
   margin-inline-start: 0;
 }
 
-.choice-soon {
-  margin-left: auto;
-  padding: 2px 10px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  color: var(--muted-foreground);
-  font-size: 12px;
-}
-
 .choice:has(input:disabled) {
   opacity: 0.55;
   cursor: not-allowed;

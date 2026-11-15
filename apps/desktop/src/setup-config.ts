@@ -17,7 +17,7 @@ export const PROBE_RESPONSE_LIMIT_BYTES = 64 * 1024;
 export const SETUP_FILE_NAME = "setup.json";
 
 export type StartupTarget =
-  | { kind: "app"; url: string; source: "env" | "saved" }
+  | { kind: "app"; url: string; source: "env" | "saved" | "first-run" }
   | { kind: "setup" };
 
 const SCHEME = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//;
@@ -101,14 +101,17 @@ export function serializeSetup(setup: DesktopSetup): string {
 }
 
 /**
- * Decides between the first-run setup window and the app window. An explicit
- * `CORVO_WEB_URL` still wins over saved configuration so test and performance
- * harnesses can point the shell anywhere without touching a user's real setup.
+ * Decides between the setup window and the app window. An explicit `CORVO_WEB_URL` still wins
+ * over saved configuration so test and performance harnesses can point the shell anywhere
+ * without touching a user's real setup. A new install has nothing saved and goes straight to
+ * Rook Cloud; the setup window stays for the other ways to connect and for saved setups that
+ * no longer open.
  */
 export function resolveStartupTarget(input: {
   envUrl?: string;
   saved?: DesktopSetup | null;
   forceSetup?: boolean;
+  cloudUrl?: string;
 }): StartupTarget {
   if (input.forceSetup === true) return { kind: "setup" };
 
@@ -118,8 +121,9 @@ export function resolveStartupTarget(input: {
   if (input.saved != null) {
     const saved = parseSetupInput(input.saved);
     if (saved !== null) return { kind: "app", url: saved.serverUrl, source: "saved" };
+    return { kind: "setup" };
   }
-  return { kind: "setup" };
+  return { kind: "app", url: input.cloudUrl ?? CORVO_CLOUD_URL, source: "first-run" };
 }
 
 /** Turns a network failure into something a person can act on. */

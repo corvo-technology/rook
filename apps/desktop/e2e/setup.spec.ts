@@ -1,4 +1,5 @@
 import { execFile } from "node:child_process";
+import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import type { Server, ServerResponse } from "node:http";
 import { createServer } from "node:http";
@@ -80,6 +81,14 @@ function launch(extraEnv: Record<string, string> = {}) {
   const env = { ...process.env, CORVO_PERFORMANCE_USER_DATA: userData };
   // A stale CORVO_WEB_URL from the developer's shell would bypass setup entirely.
   delete env.CORVO_WEB_URL;
+  delete env.CORVO_CLOUD_URL;
+  // Most tests are about the setup window. A new install skips it and opens Rook Cloud, so those
+  // tests ask for it, unless they bring a saved setup, an address, or a stand-in for the cloud.
+  const opensCloudOrApp =
+    existsSync(path.join(userData, "setup.json")) ||
+    "CORVO_WEB_URL" in extraEnv ||
+    "CORVO_CLOUD_URL" in extraEnv;
+  if (!opensCloudOrApp) env.CORVO_FORCE_SETUP = "1";
   const executablePath = process.env.CORVO_E2E_EXECUTABLE;
   return electron.launch({
     ...(executablePath ? { executablePath: path.resolve(executablePath) } : {}),
@@ -89,30 +98,85 @@ function launch(extraEnv: Record<string, string> = {}) {
   });
 }
 
-test("first run asks the language first, then where Rook should run", async () => {
+test("a new install opens Rook Cloud without asking and keeps it for the next launch", async () => {
   await rm(path.join(userData, "locale.json"));
-  app = await launch();
+  app = await launch({ CORVO_CLOUD_URL: serverUrl });
   if (process.env.CORVO_E2E_EXECUTABLE) {
     expect(await app.evaluate(({ app }) => app.isPackaged)).toBe(true);
   }
-  const setup = await app.firstWindow();
+  const appWindow = await app.firstWindow();
 
-  await expect(setup.getByRole("heading", { name: "Choose your language" })).toBeVisible();
-  await expect(setup.locator("#step-setup")).toBeHidden();
-  await setup.getByRole("radio", { name: "Português (Brasil)" }).check();
-  // The window follows the choice as it is made.
-  await expect(setup.getByRole("heading", { name: "Escolha seu idioma" })).toBeVisible();
-  await setup.getByRole("button", { name: "Continuar" }).click();
-  expect(JSON.parse(await readFile(path.join(userData, "locale.json"), "utf8"))).toEqual({
-    locale: "pt-BR",
-  });
-  await expect(setup.getByRole("heading", { name: "Bem-vindo ao Rook" })).toBeVisible();
-  await expect(setup.getByText("Onde o Rook deve rodar?")).toBeVisible();
-  await expect(setup.getByText("Neste computador", { exact: true })).toBeVisible();
-  await expect(setup.getByText("Servidor existente", { exact: true })).toBeVisible();
+  await expect(appWindow.getByText(APP_MARKER)).toBeVisible();
+  await expect
+    .poll(async () => {
+      try {
+        return JSON.parse(await readFile(path.join(userData, "setup.json"), "utf8"));
+      } catch {
+        return null;
+      }
+    })
+    .toEqual({ mode: "existing", serverUrl });
+  // The system language is remembered from the first launch, for the window and for the app.
+  const { locale } = JSON.parse(await readFile(path.join(userData, "locale.json"), "utf8"));
+  expect(["en", "de", "pt-BR", "zh-CN", "es", "fr", "ja"]).toContain(locale);
 });
 
-test("first run offers this computer first, with Rook Cloud and existing servers", async () => {
+test("an existing local or server setup is not migrated to Rook Cloud", async () => {
+  await rm(path.join(userData, "locale.json"));
+  await writeFile(
+    path.join(userData, "setup.json"),
+    `${JSON.stringify({ mode: "existing", serverUrl }, null, 2)}\n`,
+    { encoding: "utf8", mode: 0o600 },
+  );
+  app = await launch({ CORVO_CLOUD_URL: closedUrl });
+  const appWindow = await app.firstWindow();
+
+  await expect(appWindow.getByText(APP_MARKER)).toBeVisible();
+  expect(JSON.parse(await readFile(path.join(userData, "setup.json"), "utf8"))).toEqual({
+    mode: "existing",
+    serverUrl,
+  });
+  // An install that already existed keeps whatever language handling it had.
+  expect(existsSync(path.join(userData, "locale.json"))).toBe(false);
+});
+
+test("an unreachable Rook Cloud falls back to the other ways to connect", async () => {
+  app = await launch({ CORVO_CLOUD_URL: closedUrl });
+  const setup = await app.firstWindow();
+
+  await expect(setup.getByRole("radio", { name: /Rook Cloud/ })).toBeChecked();
+  await expect(setup.locator("#status")).toHaveText(
+    "Could not reach Rook Cloud. Check your connection.",
+  );
+  await expect(setup.getByRole("radio", { name: /This computer/ })).toBeEnabled();
+  await expect(setup.getByRole("radio", { name: /Existing server/ })).toBeEnabled();
+  expect(existsSync(path.join(userData, "setup.json"))).toBe(false);
+});
+
+for (const scheme of ["light", "dark"] as const) {
+  test(`the setup window follows the saved language in ${scheme} mode`, async () => {
+    await writeFile(path.join(userData, "locale.json"), '{"locale":"pt-BR"}\n');
+    app = await launch();
+    const setup = await app.firstWindow();
+    // The window is dark by default; the light tokens apply under data-theme="light".
+    await setup.evaluate((theme) => {
+      document.documentElement.dataset.theme = theme;
+    }, scheme);
+
+    await expect(setup.getByRole("heading", { name: "Bem-vindo ao Rook" })).toBeVisible();
+    await expect(setup.getByText("Onde o Rook deve rodar?")).toHaveCount(0);
+    await expect(setup.getByRole("radio", { name: /Rook Cloud/ })).toBeChecked();
+    await expect(setup.getByText("Neste computador", { exact: true })).toBeVisible();
+    await expect(setup.getByText("Servidor existente", { exact: true })).toBeVisible();
+    await expect(setup.getByRole("button", { name: "Sair" })).toBeVisible();
+    await expect(setup.getByRole("button", { name: "Idioma" })).toBeVisible();
+    await setup.screenshot({
+      path: path.join(import.meta.dirname, "screenshots", `06-first-run-pt-br-${scheme}.png`),
+    });
+  });
+}
+
+test("setup offers Rook Cloud first, with this computer and existing servers one choice away", async () => {
   app = await launch();
   if (process.env.CORVO_E2E_EXECUTABLE) {
     expect(await app.evaluate(({ app }) => app.isPackaged)).toBe(true);
@@ -120,15 +184,16 @@ test("first run offers this computer first, with Rook Cloud and existing servers
   const setup = await app.firstWindow();
 
   await expect(setup.getByRole("heading", { name: "Welcome to Rook" })).toBeVisible();
-  await expect(setup.getByText("Where should Rook run?")).toBeVisible();
+  await expect(setup.getByText("Where should Rook run?")).toHaveCount(0);
   await expect(setup.getByText("Rook Cloud", { exact: true })).toBeVisible();
   await expect(setup.getByText("This computer", { exact: true })).toBeVisible();
   await expect(setup.getByText("Existing server", { exact: true })).toBeVisible();
   await expect(setup.locator(".card")).toHaveCount(0);
 
-  // This computer is the default: nothing to fill in, and it needs no account or server.
-  await expect(setup.getByRole("radio", { name: /This computer/ })).toBeChecked();
+  // Rook Cloud is the default: nothing to fill in.
+  await expect(setup.getByRole("radio", { name: /Rook Cloud/ })).toBeChecked();
   await expect(setup.locator("#panel-existing")).toBeHidden();
+  await expect(setup.locator("#panel-new")).toBeHidden();
   await expect(setup.getByRole("button", { name: "Check connection" })).toBeHidden();
   await expect(setup.getByRole("button", { name: "Continue" })).toBeEnabled();
   await setup.screenshot({
@@ -136,6 +201,7 @@ test("first run offers this computer first, with Rook Cloud and existing servers
   });
 
   // This computer runs the engine itself at the local address.
+  await setup.getByRole("radio", { name: /This computer/ }).check();
   // The panel is empty until a start begins, so check the attribute rather than the box.
   await expect(setup.locator("#panel-new")).toHaveJSProperty("hidden", false);
   await expect(setup.locator("#stack")).toBeHidden();
@@ -175,29 +241,26 @@ test("first run offers this computer first, with Rook Cloud and existing servers
   }
 });
 
-test("Rook Cloud is listed but not open yet, and a saved Cloud choice falls back to this computer", async () => {
-  app = await launch();
+test("Rook Cloud can be chosen from setup and is saved as an ordinary server", async () => {
+  app = await launch({ CORVO_FORCE_SETUP: "1", CORVO_CLOUD_URL: serverUrl });
   const setup = await app.firstWindow();
-  await expect(setup.getByRole("radio", { name: /Rook Cloud/ })).toBeDisabled();
-  await expect(setup.getByText("Soon", { exact: true })).toBeVisible();
+  await expect(setup.getByRole("radio", { name: /Rook Cloud/ })).toBeEnabled();
+  await expect(setup.getByText("Soon", { exact: true })).toHaveCount(0);
 
-  const { cloudUrl } = await setup.evaluate(() =>
-    (
-      window as typeof window & { corvoSetup: { state: () => Promise<{ cloudUrl: string }> } }
-    ).corvoSetup.state(),
-  );
-  await app.evaluate(({ ipcMain }, url) => {
-    ipcMain.removeHandler("desktop.setup.state");
-    ipcMain.handle("desktop.setup.state", () => ({
-      defaultLocalUrl: "http://127.0.0.1:45173",
-      cloudUrl: url,
-      saved: { mode: "existing", serverUrl: url },
-      locale: { saved: "en", suggested: "en" },
-    }));
-  }, cloudUrl);
-  await setup.reload();
-  await expect(setup.getByRole("radio", { name: /This computer/ })).toBeChecked();
-  await expect(setup.locator("#panel-existing")).toBeHidden();
+  const appWindow = await Promise.all([
+    app.waitForEvent("window"),
+    setup.getByRole("button", { name: "Continue" }).click(),
+  ]).then(([window]) => window);
+  await expect(appWindow.getByText(APP_MARKER)).toBeVisible();
+  await expect
+    .poll(async () => {
+      try {
+        return JSON.parse(await readFile(path.join(userData, "setup.json"), "utf8"));
+      } catch {
+        return null;
+      }
+    })
+    .toEqual({ mode: "existing", serverUrl });
 });
 
 test("connecting to an existing instance verifies, saves, and opens it", async () => {

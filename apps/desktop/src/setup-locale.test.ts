@@ -60,3 +60,11 @@ describe("saved locale", () => {
     expect(await readSavedLocale(dir)).toBeNull();
   });
 });
+
+describe("first-launch language", () => {
+  it("reads a Portuguese system as pt-BR, the language the web app picks too", () => {
+    for (const tag of ["pt-BR", "pt-PT", "pt", "pt_BR"])
+      expect(matchSetupLocale(tag)).toBe("pt-BR");
+    expect(matchSetupLocale("zh-TW")).toBe("zh-CN");
+  });
+});

@@ -164,8 +164,30 @@ describe("the previous hosted address", () => {
 describe("startup target", () => {
   const saved = { mode: "existing", serverUrl: "https://corvo.example.com" } as const;
 
-  it("runs setup on a first launch", () => {
-    expect(resolveStartupTarget({})).toEqual({ kind: "setup" });
+  it("opens Rook Cloud on a first launch, without asking", () => {
+    expect(resolveStartupTarget({})).toEqual({
+      kind: "app",
+      url: CORVO_CLOUD_URL,
+      source: "first-run",
+    });
+    expect(resolveStartupTarget({ saved: null, cloudUrl: "http://127.0.0.1:4000" })).toEqual({
+      kind: "app",
+      url: "http://127.0.0.1:4000",
+      source: "first-run",
+    });
+  });
+
+  it("keeps a saved local setup exactly as it was", () => {
+    const local = { mode: "new", serverUrl: DEFAULT_LOCAL_WEB_URL } as const;
+    expect(resolveStartupTarget({ saved: local })).toEqual({
+      kind: "app",
+      url: DEFAULT_LOCAL_WEB_URL,
+      source: "saved",
+    });
+  });
+
+  it("keeps the other ways to connect reachable through setup", () => {
+    expect(resolveStartupTarget({ forceSetup: true })).toEqual({ kind: "setup" });
   });
 
   it("opens the saved instance on later launches", () => {

@@ -49,7 +49,7 @@ test("create group from + and see two bots in one transcript", async ({ page }, 
   });
   await page.reload();
   await expect(page).toHaveURL(groupUrl);
-  await expect(page.getByRole("combobox", { name: "Message Draft team" })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message #Draft team" })).toBeVisible();
 
   const groups = await rpc<
     Array<{
@@ -107,14 +107,14 @@ test("create group from + and see two bots in one transcript", async ({ page }, 
 
   // The route header renders before bootstrap finishes restoring the group.
   // Wait for its composer before opening a panel that bootstrap may reset.
-  await expect(page.getByRole("combobox", { name: "Message Draft team" })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message #Draft team" })).toBeVisible();
   await page.getByTestId("bot-settings-trigger").click();
   const desktopSettings = page.getByTestId("side-panel");
   const groupName = desktopSettings.getByRole("textbox", { name: "Name", exact: true });
   await groupName.fill("Unsaved Draft team name");
   const sidebar = page.locator("aside").first();
   await sidebar.getByRole("button", { name: /^Review team/ }).click();
-  await expect(page.getByRole("combobox", { name: "Message Review team" })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message #Review team" })).toBeVisible();
   await expect(desktopSettings).toHaveAttribute("data-panel", "closed");
   await sidebar.getByRole("button", { name: /^Draft team/ }).click();
   await expect(groupName).toHaveValue("Draft team");
@@ -127,16 +127,16 @@ test("create group from + and see two bots in one transcript", async ({ page }, 
   await expect(desktopSettings).not.toBeVisible();
 
   await page
-    .getByRole("combobox", { name: "Message Draft team" })
+    .getByRole("combobox", { name: "Message #Draft team" })
     .fill("@Researcher unfinished draft");
   await sidebar.getByRole("button", { name: /^Review team/ }).click();
-  await expect(page.getByRole("combobox", { name: "Message Review team" })).toHaveValue("");
+  await expect(page.getByRole("combobox", { name: "Message #Review team" })).toHaveValue("");
   await sidebar.getByRole("button", { name: /^Draft team/ }).click();
-  await expect(page.getByRole("combobox", { name: "Message Draft team" })).toHaveValue(
+  await expect(page.getByRole("combobox", { name: "Message #Draft team" })).toHaveValue(
     "@Researcher unfinished draft",
   );
 
-  const composer = page.getByRole("combobox", { name: "Message Draft team" });
+  const composer = page.getByRole("combobox", { name: "Message #Draft team" });
   await composer.fill("@Res");
   await captureScreenshot(page, testInfo, "group-mention-picker");
   await page.getByRole("option", { name: "@Research Writer", exact: true }).click();
@@ -192,7 +192,7 @@ test("create group from + and see two bots in one transcript", async ({ page }, 
   const cityAsk = page.locator("p").filter({ hasText: /^Which city should I use\?$/ });
   if ((await cityAsk.count()) === 0) {
     await page.reload({ waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("combobox", { name: "Message Draft team" })).toBeVisible({
+    await expect(page.getByRole("combobox", { name: "Message #Draft team" })).toBeVisible({
       timeout: 15_000,
     });
   }
@@ -238,7 +238,7 @@ test("create group from + and see two bots in one transcript", async ({ page }, 
   await expect(page).toHaveURL(new RegExp(`/app/g/${reviewGroup.id}$`));
   await expect(page.getByTestId("transcript").getByTestId("ask-answer")).toHaveCount(0);
   releaseReviewSnapshot();
-  await expect(page.getByRole("combobox", { name: "Message Review team" })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message #Review team" })).toBeVisible();
   await page.unroute("**/rpc/threads/get");
   await sidebar.getByRole("button", { name: /^Draft team/ }).click();
   await expect(page.getByTestId("ask-answer").filter({ hasText: "Paris" })).toBeVisible();
@@ -281,7 +281,7 @@ test("create group from + and see two bots in one transcript", async ({ page }, 
   await page.getByTestId("bot-settings-trigger").click();
   await settings.getByRole("button", { name: "Close panel", exact: true }).click();
   await expect(settings).toHaveAttribute("data-panel", "closed");
-  await expect(page.getByRole("combobox", { name: "Message Draft team" })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message #Draft team" })).toBeVisible();
 
   await rpc(page, "groups/remove", { groupId: reviewGroup.id });
   await page.goto(`/app/g/${reviewGroup.id}`);
@@ -315,7 +315,7 @@ test("group names stop at the length limit when creating and renaming", async ({
   const groups = await rpc<Array<{ id: string; name: string }>>(page, "groups/list", {});
   expect(groups.find((group) => group.id === groupId)?.name).toBe(groupName);
 
-  await expect(page.getByRole("combobox", { name: `Message ${groupName}` })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: `Message #${groupName}` })).toBeVisible();
   await page.getByTestId("bot-settings-trigger").click();
   const renamedName = "Renamed research team ".padEnd(GROUP_NAME_MAX_LENGTH, "x");
   await nameInput.clear();

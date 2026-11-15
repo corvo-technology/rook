@@ -63,3 +63,21 @@ jobs:
         env:
           DATABASE_URL: postgres://corvo:corvo@127.0.0.1:5433/corvo
       - run: pnpm test
+
+  # Runs beside the unit tests so a pull request waits no longer than they take. Space roles,
+  # sharing and row-level security only show their faults against a real database.
+  postgres:
+    name: Postgres journeys
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:integration

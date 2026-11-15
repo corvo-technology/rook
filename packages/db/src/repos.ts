@@ -36,10 +36,10 @@ import { withTransactionRetry } from "./transaction-retry.js";
 /**
  * The sidebar shows the newest message a person can see. The newest one nearly always is, so one
  * row per agent is read (and decrypted); only an agent whose newest messages are all hidden
- * (peer chatter, background runs) reads further back, a page at a time.
+ * (peer chatter, background runs) reads further back, 16 at a time.
  */
 const SIDEBAR_PREVIEW_FIRST_WINDOW = 1;
-const SIDEBAR_PREVIEW_OLDER_PAGE = 8;
+const SIDEBAR_PREVIEW_OLDER_PAGE = 16;
 
 function isUniqueViolation(error: unknown): boolean {
   return Boolean(error && typeof error === "object" && "code" in error && error.code === "P2002");

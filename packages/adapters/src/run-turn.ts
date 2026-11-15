@@ -68,7 +68,7 @@ import { applyTool } from "./run-tools.js";
 import { withRuntimeCleanup } from "./runtime-stream.js";
 import { stripNoResponseReply, stripStrayNoResponse } from "./silent-reply.js";
 import { takeoverCheckpointOf } from "./takeover-resume.js";
-import { announceTicketStep, endTicketRun } from "./ticket-run-moves.js";
+import { announceTicketStep, endTicketRun, waitTicketRun } from "./ticket-run-moves.js";
 import { appendToolCompletionAudit, toolCompletionFromResult } from "./tool-completion-audit.js";
 import {
   advanceOverLimitActionCalls,
@@ -263,6 +263,7 @@ async function pauseForAnswer(ctx: RunContext, event: RuntimeEvent<"ask">) {
     offeredActions: event.actions,
   });
   if (!paused) return;
+  await waitTicketRun(deps, run);
   if (paused.continuationRunId) {
     await deps.jobs
       .enqueue(runContinueJob(paused.continuationRunId))
@@ -335,6 +336,7 @@ async function pauseForTakeover(ctx: RunContext, event: RuntimeEvent<"takeover">
     computerId: ctx.computer.stored.id,
   });
   if (!paused) return;
+  await waitTicketRun(deps, run);
   ctx.state.lease.retainComputer = true;
   await notifyRun(deps, run, {
     kind: "takeover",

@@ -974,6 +974,8 @@ model Run {
   botOutcomeReturnedAt DateTime?
   // The ticket a run was woken to work on; null for every other run. Its moves follow the run.
   ticketId             String?
+  // The column this run last put that ticket in. A ticket anywhere else was moved by a person.
+  ticketStatus         String?
   messagingMirroredAt  DateTime?
   teamChatMirroredAt   DateTime?
   createdAt            DateTime          @default(now())

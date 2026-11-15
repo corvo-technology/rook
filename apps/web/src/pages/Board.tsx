@@ -250,6 +250,8 @@ function TicketPanel({
   const [status, setStatus] = useState<TicketStatus>(ticket?.status ?? "todo");
   const [priority, setPriority] = useState<TicketPriority>(ticket?.priority ?? "normal");
   const [fields, setFields] = useState<TicketField[]>(ticket?.fields ?? []);
+  const assignee = bots.find((bot) => bot.id === ticket?.assigneeBotId);
+  const name = assignee?.name ?? "";
   const queries = useSpaceQueries();
   const queryClient = useQueryClient();
   const commentsOptions = queries.tickets.comments.queryOptions({
@@ -379,6 +381,15 @@ function TicketPanel({
             ))}
           </NativeSelect>
         </label>
+        {ticket && assignee ? (
+          <Link
+            to={`/app/${assignee.id}`}
+            data-testid="ticket-conversation"
+            className="inline-block text-sm text-muted-foreground underline-offset-4 hover:underline"
+          >
+            {t`Open ${name}`}
+          </Link>
+        ) : null}
         {ticket ? (
           <label htmlFor={`${formId}-status`} className="block space-y-1 text-sm">
             <span>

@@ -5269,6 +5269,7 @@ msgstr "開く"
 msgid "Open {0}"
 msgstr "{0}を開く"
 
+#: src/pages/Board.tsx
 #: src/pages/ChatAppsRow.tsx
 #: src/pages/shell/import-setup-card.tsx
 msgid "Open {name}"

@@ -67,6 +67,7 @@ import { BUILTIN_AGENT_TOOL_NAMES, READ_ONLY_AGENT_TOOLS } from "./run-tool-sele
 import { callMediaTool } from "./run-tools-files.js";
 import { connectorTrustKeys } from "./run-trust.js";
 import { commandWatchFromTool } from "./schedule-tools.js";
+import { waitTicketRun } from "./ticket-run-moves.js";
 
 export type AppliedEffect = Awaited<ReturnType<typeof recordEffect>>;
 
@@ -661,6 +662,7 @@ async function showApprovalCard(
   if (!paused) {
     throw new Error("Could not pause this run for approval; try sending again.");
   }
+  await waitTicketRun(deps, run);
   if (paused.continuationRunId) {
     await deps.jobs
       .enqueue(runContinueJob(paused.continuationRunId))

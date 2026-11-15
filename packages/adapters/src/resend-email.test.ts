@@ -9,18 +9,6 @@ function provider(request: typeof fetch, timeoutMs = 1_000) {
 }
 
 describe("ResendEmailProvider", () => {
-  it("writes the sender in the email's language without sending the locale", async () => {
-    const request = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ id: "email-1" }));
-    await new ResendEmailProvider(
-      { ...config, from: "Pedro of Rook <hello@example.test>" },
-      { fetch: request, retryDelaysMs: [0], timeoutMs: 1000 },
-    ).send({ ...message, locale: "pt-BR" });
-    expect(JSON.parse(request.mock.calls[0]![1]!.body as string)).toEqual({
-      from: "Pedro do Rook <hello@example.test>",
-      ...message,
-    });
-  });
-
   it("retries lost responses, throttling and server failures with the same opaque key", async () => {
     for (const failure of [new Error("socket lost"), 429, 500]) {
       const request = vi

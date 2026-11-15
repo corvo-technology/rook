@@ -861,8 +861,6 @@ export interface TransactionalEmail {
   subject: string;
   text: string;
   html?: string;
-  /** Language of the message; the sender's display name follows it. */
-  locale?: string;
 }
 
 export type MessagingReceipt = "typing" | "reaction";

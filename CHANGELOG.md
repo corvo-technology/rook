@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Roles that add up for a space: an owner or whoever manages roles makes roles with permission keys, orders them, gives them to people or carries them on an invitation, and anyone may only change or give roles below their own and keys they hold. Today's owner, admin and member keep exactly what they could do. An agent's approvals can be answered by its owner or anyone allowed to approve actions, and the first answer wins.
 - Channel threads on web and desktop: replies stay out of the main column under their message, with a footer that opens the thread beside the channel, where a person answers and agents reply inside it. An agent's work handed off in a channel is answered in the hand-off's thread, and one quiet line above the composer says who is working. Mobile still shows thread replies inline.
 - Team channels on web and desktop: a routine's message names the routine beside its author, a channel's header searches its own messages and lists its pinned ones, any message can be pinned from its menu, and the composer says `@` calls an agent. An agent's finished tools fold into one "Used N tools" line.
 - Approving an action an agent is about to run now takes a hold of the allow button (a plain button with reduced motion, and the keyboard or a screen reader can approve too); on mobile it is a long press. The refusal reads "Not now".

@@ -1,4 +1,5 @@
 import type {
+  CustomSpaceRole,
   Space,
   SpaceInvitation,
   SpaceJoinRequest,
@@ -6,7 +7,8 @@ import type {
   SpaceRole,
 } from "@corvo/contracts";
 import { agentCatalogLocale } from "@corvo/contracts";
-import { can } from "@corvo/core";
+import type { SpaceMembership } from "@corvo/core";
+import { can, holdsAll, knownSpacePermissions } from "@corvo/core";
 import {
   Button,
   InlineConfirm,
@@ -71,6 +73,19 @@ function RolePicker({
       </SelectContent>
     </Select>
   );
+}
+
+/** The custom roles a person holds; Admin and Everyone are already told by the role beside it. */
+function RoleChips({ roles, ids }: { roles: CustomSpaceRole[]; ids: string[] }) {
+  const shown = roles.filter((role) => !role.systemKey && ids.includes(role.id));
+  return shown.map((role) => (
+    <span
+      key={role.id}
+      className="rounded-full border border-border px-2 py-0.5 text-[12px] text-muted-foreground"
+    >
+      {role.name}
+    </span>
+  ));
 }
 
 const NEW_WORKSPACE = "new-workspace";
@@ -208,18 +223,35 @@ export function MembersSettingsPanel({
   const [role, setRole] = useState<SpaceRole>("member");
   const [sending, setSending] = useState(false);
   const [notEmailed, setNotEmailed] = useState<SpaceInvitation[]>([]);
+  const [roles, setRoles] = useState<CustomSpaceRole[]>([]);
+  const [mine, setMine] = useState<SpaceMembership | null>(null);
+  const [inviteRoleIds, setInviteRoleIds] = useState<string[]>([]);
 
   const myRole = members?.find((member) => member.userId === userId)?.role ?? "member";
-  const manages = can({ role: myRole }, "manage_members");
+  const manages = can(mine, "manage_members");
+  const invites = can(mine, "invite_people");
+  // Roles the person invited could carry: the ones the sender holds every key of.
+  const givable = roles.filter(
+    (candidate) => !candidate.systemKey && mine && (mine.isOwner || holdsAll(mine, candidate.keys)),
+  );
   const grantable: SpaceRole[] =
     myRole === "owner" ? ["owner", "admin", "member"] : ["admin", "member"];
 
   const load = useCallback(async () => {
     try {
-      const list = await client.spaces.members.list();
+      const [list, rolesNow] = await Promise.all([
+        client.spaces.members.list(),
+        client.spaces.roles.list(),
+      ]);
       setMembers(list);
-      const mine = list.find((member) => member.userId === userId)?.role ?? "member";
-      if (can({ role: mine }, "invite")) {
+      setRoles(rolesNow.roles);
+      const standing: SpaceMembership = {
+        isOwner: rolesNow.me.isOwner,
+        roleIds: rolesNow.me.roleIds,
+        permissions: knownSpacePermissions(rolesNow.me.permissions),
+      };
+      setMine(standing);
+      if (can(standing, "invite_people")) {
         const [pending, asking, link] = await Promise.all([
           client.spaces.invitations.list(),
           client.spaces.joinRequests.list(),
@@ -240,6 +272,9 @@ export function MembersSettingsPanel({
     setRequests([]);
     setInviteLink({ link: null });
     setNotEmailed([]);
+    setRoles([]);
+    setMine(null);
+    setInviteRoleIds([]);
     setError(null);
     void load();
   }, [load]);
@@ -259,9 +294,14 @@ export function MembersSettingsPanel({
     setSending(true);
     setError(null);
     try {
-      const result = await client.spaces.invitations.create({ addresses, role });
+      const result = await client.spaces.invitations.create({
+        addresses,
+        role,
+        roleIds: inviteRoleIds,
+      });
       setNotEmailed(result.emailed ? [] : result.invitations);
       setAddresses("");
+      setInviteRoleIds([]);
       setInviting(false);
       await load();
     } catch (err) {
@@ -323,6 +363,7 @@ export function MembersSettingsPanel({
               }
               control={
                 <>
+                  <RoleChips roles={roles} ids={member.roleIds} />
                   {managed ? (
                     <RolePicker
                       value={member.role}
@@ -386,7 +427,7 @@ export function MembersSettingsPanel({
         })}
       </SettingsGroup>
 
-      {can({ role: myRole }, "invite") ? (
+      {invites ? (
         <div className="space-y-3">
           {inviting ? (
             <div className="space-y-3 rounded-xl border border-border p-4">
@@ -400,6 +441,32 @@ export function MembersSettingsPanel({
                   if (event.key === "Enter" && !event.nativeEvent.isComposing) void send();
                 }}
               />
+              {givable.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {givable.map((candidate) => {
+                    const on = inviteRoleIds.includes(candidate.id);
+                    return (
+                      <Button
+                        key={candidate.id}
+                        type="button"
+                        variant={on ? "secondary" : "ghost"}
+                        size="sm"
+                        className="rounded-full"
+                        aria-pressed={on}
+                        onClick={() =>
+                          setInviteRoleIds(
+                            on
+                              ? inviteRoleIds.filter((id) => id !== candidate.id)
+                              : [...inviteRoleIds, candidate.id],
+                          )
+                        }
+                      >
+                        {candidate.name}
+                      </Button>
+                    );
+                  })}
+                </div>
+              ) : null}
               <div className="flex items-center justify-between gap-2">
                 <RolePicker value={role} label={t`Role`} grantable={grantable} onChange={setRole} />
                 <Button
@@ -543,7 +610,7 @@ export function MembersSettingsPanel({
         </SettingsGroup>
       ) : null}
 
-      {manages || can({ role: myRole }, "invite") ? (
+      {manages || invites ? (
         <SettingsGroup>
           <SettingsRow
             label={<Trans>Invite link</Trans>}

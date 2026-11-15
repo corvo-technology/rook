@@ -3,6 +3,7 @@ import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useEffect, useId, useState } from "react";
 import { SettingsGroup, SettingsRow } from "../components/SettingsRows";
+import { SpaceRolesSettings } from "./SpaceRolesSettings";
 import { SpaceSettingOverrides } from "./SpaceSettingOverrides";
 import { SpaceTransfer } from "./SpaceTransfer";
 import type { SettingsSpace } from "./shell/dialogs";
@@ -103,6 +104,7 @@ export function SpaceSettingsPanel({
           </SettingsRow>
         </SettingsGroup>
       ) : null}
+      <SpaceRolesSettings />
       <SpaceSettingOverrides onBusyChange={setOverridesBusy} />
       <SpaceTransfer spaceName={space.name} onImported={onImported} />
       {space.canPause && onSetPaused ? (

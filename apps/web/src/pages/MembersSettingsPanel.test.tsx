@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import type { Space } from "@corvo/contracts";
+import { ADMIN_DEFAULT_KEYS } from "@corvo/core";
 import type { ComponentProps, ReactNode } from "react";
 import { act, createContext, useContext } from "react";
 import { createRoot } from "react-dom/client";
@@ -8,7 +9,8 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { MembersSettingsPanel } from "./MembersSettingsPanel";
 
 const group = () => ({
-  members: { list: vi.fn(), setRole: vi.fn(), remove: vi.fn(), leave: vi.fn() },
+  members: { list: vi.fn(), setRole: vi.fn(), setRoles: vi.fn(), remove: vi.fn(), leave: vi.fn() },
+  roles: { list: vi.fn() },
   invitations: { list: vi.fn(), create: vi.fn(), resend: vi.fn(), cancel: vi.fn() },
   inviteLink: { get: vi.fn(), create: vi.fn(), disable: vi.fn() },
   joinRequests: { list: vi.fn(), answer: vi.fn() },
@@ -37,10 +39,23 @@ function clientFor(id: string) {
 function prepare(client: ReturnType<typeof group>) {
   for (const calls of Object.values(client))
     for (const fn of Object.values(calls)) fn.mockReset().mockResolvedValue({ ok: true });
+  client.roles.list.mockImplementation(async () => {
+    const list = (await client.members.list()) as Array<{ userId: string; role: string }>;
+    const role = list?.find((member) => member.userId === currentUser)?.role ?? "member";
+    return {
+      roles: [],
+      me: {
+        isOwner: role === "owner",
+        roleIds: [],
+        permissions: role === "admin" ? [...ADMIN_DEFAULT_KEYS] : [],
+      },
+    };
+  });
   client.invitations.list.mockResolvedValue([]);
   client.joinRequests.list.mockResolvedValue([]);
   client.inviteLink.get.mockResolvedValue({ link: null });
 }
+let currentUser = "";
 const spaces = clientFor("s1");
 const PickContext = createContext<(value: string) => void>(() => undefined);
 function PickItem({ children, value }: { children: ReactNode; value: string }) {
@@ -126,6 +141,7 @@ const person = (userId: string, role: "owner" | "admin" | "member") => ({
   name: userId,
   email: `${userId}@example.test`,
   role,
+  roleIds: [],
   joinedAt: joined,
 });
 
@@ -156,6 +172,7 @@ async function render(
     membersCanCreateSpaces?: boolean | null;
   } = {},
 ) {
+  currentUser = userId;
   await act(async () => {
     root.render(
       <MembersSettingsPanel
@@ -253,8 +270,56 @@ it("follows the picked workspace for members and invitations", async () => {
   expect(staff.invitations.create).toHaveBeenCalledWith({
     addresses: "d@example.test",
     role: "member",
+    roleIds: [],
   });
   expect(spaces.invitations.create).not.toHaveBeenCalled();
+});
+
+it("shows each person's custom roles and lets an invitation carry one", async () => {
+  spaces.members.list.mockResolvedValue([
+    person("ana", "owner"),
+    { ...person("bia", "member"), roleIds: ["r-ops"] },
+  ]);
+  spaces.invitations.create.mockResolvedValue({
+    emailed: true,
+    invitations: [],
+    alreadyMembers: [],
+  });
+  spaces.roles.list.mockResolvedValue({
+    roles: [
+      {
+        id: "r-ops",
+        name: "Ops",
+        color: null,
+        position: 1,
+        keys: ["view_usage"],
+        systemKey: null,
+        memberCount: 1,
+      },
+    ],
+    me: { isOwner: true, roleIds: [], permissions: [] },
+  });
+  await render("ana");
+  expect(host.textContent).toContain("Ops");
+  await click(
+    [...host.querySelectorAll("button")].find((button) => button.textContent === "Invite") ?? null,
+  );
+  await type(
+    host.querySelector('input[aria-label="Email addresses"]') as HTMLInputElement,
+    "e@example.test",
+  );
+  await click(
+    [...host.querySelectorAll("button[aria-pressed]")].find(
+      (button) => button.textContent === "Ops",
+    ) ?? null,
+  );
+  const buttons = [...host.querySelectorAll("button")].filter((b) => b.textContent === "Invite");
+  await click(buttons[buttons.length - 1] ?? null);
+  expect(spaces.invitations.create).toHaveBeenCalledWith({
+    addresses: "e@example.test",
+    role: "member",
+    roleIds: ["r-ops"],
+  });
 });
 
 it("lets only the owner switch whether members create spaces", async () => {

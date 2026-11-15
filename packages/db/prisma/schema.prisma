@@ -343,6 +343,7 @@ model Space {
   messagingInstallations      MessagingInstallation[]
   messagingInstallSessions    MessagingInstallSession[]
   invitations                 SpaceInvitation[]
+  roles                       SpaceRole[]
   inviteLinks                 SpaceInviteLink[]
   joinRequests                SpaceJoinRequest[]
 
@@ -386,6 +387,7 @@ model SpaceMember {
   settingOverrides SpaceSettingOverride[]
   modelConnections SpaceModelConnection[]
   modelSetting     SpaceMemberModelSetting?
+  roles            SpaceMemberRole[]
 
   @@unique([spaceId, userId])
   @@index([organizationId, userId])
@@ -419,6 +421,8 @@ model SpaceInvitation {
   /// Lowercased address the invitation is bound to.
   email        String
   role         String    @default("member")
+  /// Custom roles the person gets on accepting, checked against the sender when it is created.
+  roleIds      String[]  @default([])
   /// pending, accepted or cancelled; an expired pending invitation is simply past `expiresAt`.
   status       String    @default("pending")
   expiresAt    DateTime
@@ -2396,4 +2400,39 @@ model WaitlistEntry {
   notifiedAt DateTime?
 
   @@map("waitlist_entries")
+}
+
+/// A role a space defines: the keys it grants, added to what every member holds. `systemKey`
+/// marks the two every space starts with, "everyone" (the base role, held by every member
+/// without a join row) and "admin". `position` 0 is the highest; "everyone" is below all.
+model SpaceRole {
+  id        String            @id
+  spaceId   String
+  space     Space             @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  name      String
+  color     String?
+  position  Int
+  keys      String[]          @default([])
+  systemKey String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  members   SpaceMemberRole[]
+
+  @@unique([spaceId, systemKey])
+  @@index([spaceId, position])
+  @@map("space_roles")
+}
+
+/// A member holding a custom role.
+model SpaceMemberRole {
+  spaceId   String
+  userId    String
+  roleId    String
+  member    SpaceMember @relation(fields: [spaceId, userId], references: [spaceId, userId], onDelete: Cascade)
+  role      SpaceRole   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now())
+
+  @@id([spaceId, userId, roleId])
+  @@index([roleId])
+  @@map("space_member_roles")
 }

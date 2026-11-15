@@ -9,6 +9,7 @@ import {
 } from "@corvo/core";
 import {
   AnswerTooLongError,
+  ApprovalNotAllowedError,
   appendEventInTransaction,
   completeMission,
   createExternalConversationRepos,
@@ -19,6 +20,7 @@ import {
 } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import { ORPCError } from "@orpc/server";
+import { approvalRefusal, approvalThreadId } from "../approval-access.js";
 import { listPinnedMessages, pinThreadMessage } from "../message-pins.js";
 import { assertTeachingSendAllowed } from "../taught-skills.js";
 import { compressThread } from "../thread-context.js";
@@ -569,11 +571,11 @@ export function threadsRoutes(ctx: RouterContext) {
         return { ok: true as const };
       }),
       answer: authed.threads.answer.handler(async ({ context, input }) => {
-        const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        const threadId = await approvalThreadId(deps.prisma, context.actor, input);
         const answered = await deps.events
           .answerRunInput({
             spaceId: context.actor.spaceId,
-            threadId: target.threadId,
+            threadId,
             runId: input.runId,
             messageId: input.messageId,
             answeredByUserId: context.actor.userId,
@@ -584,6 +586,7 @@ export function threadsRoutes(ctx: RouterContext) {
             approvalEffectId: input.approvalEffectId,
           })
           .catch((error: unknown) => {
+            if (error instanceof ApprovalNotAllowedError) throw approvalRefusal(error);
             if (error instanceof AnswerTooLongError)
               throw new ORPCError("BAD_REQUEST", { message: error.message });
             // A typed credential its destination cannot carry (e.g. a header with a line break).
@@ -606,7 +609,7 @@ export function threadsRoutes(ctx: RouterContext) {
         return { ok: true as const };
       }),
       answerBatch: authed.threads.answerBatch.handler(async ({ context, input }) => {
-        const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        const threadId = await approvalThreadId(deps.prisma, context.actor, input);
         const results: { approvalEffectId: string; ok: boolean; error?: string }[] = [];
         const resumed = new Set<string>();
         // One at a time through the same path as a single answer, so each card gets the same
@@ -615,7 +618,7 @@ export function threadsRoutes(ctx: RouterContext) {
           const answered = await deps.events
             .answerRunInput({
               spaceId: context.actor.spaceId,
-              threadId: target.threadId,
+              threadId,
               runId: item.runId,
               messageId: item.messageId,
               answeredByUserId: context.actor.userId,
@@ -624,6 +627,7 @@ export function threadsRoutes(ctx: RouterContext) {
               batchClass: input.batchClass,
             })
             .catch((error: unknown) => {
+              if (error instanceof ApprovalNotAllowedError) throw approvalRefusal(error);
               getLogger().error("thread answer batch item", error);
               return false;
             });

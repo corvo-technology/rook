@@ -15,6 +15,7 @@ describe("agent secrets", () => {
     spaceMember: {
       findUnique: vi.fn(async () => ({ role: "owner" })),
     },
+    spaceRole: { findMany: vi.fn(async () => []) },
     agentSecret: {
       findMany: vi.fn(async () => [
         {

@@ -32,6 +32,11 @@ msgstr "{0, plural, one {# canal} other {# canaux}}"
 msgid "{0, plural, one {# failed} other {# failed}}"
 msgstr "{0, plural, one {# échec} other {# échecs}}"
 
+#. placeholder {0}: role.keys.length
+#: src/pages/SpaceRolesSettings.tsx
+msgid "{0, plural, one {# permission} other {# permissions}}"
+msgstr "{0, plural, one {# autorisation} other {# autorisations}}"
+
 #. placeholder {0}: summary.count
 #: src/pages/shell/transcript.tsx
 msgid "{0, plural, one {# reply} other {# replies}}"
@@ -783,6 +788,10 @@ msgstr "Ajouter OpenAPI"
 msgid "Add passkey"
 msgstr "Ajouter une clé d’accès"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Add person"
+msgstr "Ajouter une personne"
+
 #: src/pages/model-settings/providers-section.tsx
 msgid "Add provider"
 msgstr "Ajouter un fournisseur"
@@ -840,6 +849,10 @@ msgstr "Ajout en cours…"
 msgid "Admin"
 msgstr "Admin"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Administrator"
+msgstr "Administrateur"
+
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -869,6 +882,7 @@ msgstr "Ordinateur de l'agent"
 
 #: src/components/AppRail.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
+#: src/pages/SpaceRolesSettings.tsx
 #: src/pages/Store.tsx
 msgid "Agents"
 msgstr "Agents"
@@ -1100,6 +1114,10 @@ msgstr "Approbations"
 msgid "Approve"
 msgstr "Approuver"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Approve actions"
+msgstr "Approuver les actions"
+
 #: src/pages/WikiBrowser.tsx
 msgid "Approve all"
 msgstr "Tout approuver"
@@ -1166,6 +1184,10 @@ msgstr "Demande avant tout changement"
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Asks you before it changes anything."
 msgstr "Vous demande avant de modifier quoi que ce soit."
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Assign work"
+msgstr "Confier du travail"
 
 #. placeholder {0}: preset.time
 #: src/lib/cron.ts
@@ -1539,6 +1561,10 @@ msgstr "Personnage"
 msgid "Chart failed to render: {error}"
 msgstr "Le graphique n'a pas pu s'afficher : {error}"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Chat"
+msgstr "Discussion"
+
 #: src/pages/shell/composer-mentions.tsx
 msgid "Chat Settings"
 msgstr "Paramètres de discussion"
@@ -1864,6 +1890,10 @@ msgstr "Les ordinateurs sont désactivés."
 msgid "Computers are off. Set SANDBOX_PROVIDER=docker with SANDBOX_SUPERVISOR_TOKEN, or set SANDBOX_PROVIDER to e2b, daytona, or boat with its API key. Recreate the stack after changing .env."
 msgstr "Les ordinateurs sont désactivés. Définissez SANDBOX_PROVIDER=docker avec SANDBOX_SUPERVISOR_TOKEN, ou définissez SANDBOX_PROVIDER sur e2b, daytona ou boat avec sa clé API. Recréez la pile après avoir modifié .env."
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Configure the space"
+msgstr "Configurer l'espace"
+
 #: src/pages/McpServersSettings.tsx
 msgid "Configured servers"
 msgstr "Serveurs configurés"
@@ -2052,6 +2082,10 @@ msgstr "Passer au paiement"
 #: src/pages/Auth.tsx
 msgid "Continue with {0}"
 msgstr "Continuer avec {0}"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Control computers"
+msgstr "Contrôler les ordinateurs"
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/markdown-copy.tsx
@@ -2691,6 +2725,7 @@ msgstr "Impossible de mettre à jour votre fuseau horaire"
 #: src/pages/shell/create-bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/sidebar-header.tsx
+#: src/pages/SpaceRolesSettings.tsx
 msgid "Create"
 msgstr "Créer"
 
@@ -2706,6 +2741,14 @@ msgstr "Créez une section et déplacez {0} dedans."
 #: src/pages/Auth.tsx
 msgid "Create account"
 msgstr "Créer un compte"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Create agents"
+msgstr "Créer des agents"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Create channels"
+msgstr "Créer des canaux"
 
 #: src/pages/GroupPanel.tsx
 msgid "Create group"
@@ -2723,6 +2766,10 @@ msgstr "Créer une routine"
 #: src/pages/shell/dialogs.tsx
 msgid "Create space"
 msgstr "Créer un espace"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Create spaces"
+msgstr "Créer des espaces"
 
 #: src/pages/Auth.tsx
 msgid "Create your Rook"
@@ -2879,6 +2926,7 @@ msgstr "Délègue à l’assistant : {value}"
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/archived-chats.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/SpaceRolesSettings.tsx
 #: src/pages/WikiBrowser.tsx
 msgid "Delete"
 msgstr "Supprimer"
@@ -2899,8 +2947,9 @@ msgstr "Supprimer {0} et {1, plural, one {son # bot} other {ses # bots}} ?"
 
 #. placeholder {0}: bot.name
 #. placeholder {0}: item.name
-#. placeholder {0}: space.name
+#. placeholder {0}: role.name
 #: src/pages/shell/dialogs.tsx
+#: src/pages/SpaceRolesSettings.tsx
 #: src/pages/SpaceSettingsPanel.tsx
 msgid "Delete {0}?"
 msgstr "Supprimer {0} ?"
@@ -3188,6 +3237,10 @@ msgstr "Modifier le nom"
 msgid "Edit Profile"
 msgstr "Modifier le profil"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Edit the wiki"
+msgstr "Modifier le wiki"
+
 #: src/pages/Auth.tsx
 msgid "Email"
 msgstr "E-mail"
@@ -3331,6 +3384,10 @@ msgstr "Chaque mois"
 #: src/pages/RoutineSchedule.tsx
 msgid "Every week"
 msgstr "Chaque semaine"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Everyone"
+msgstr "Tout le monde"
 
 #: src/pages/SpaceTransfer.tsx
 msgid "Everything in this file is already here."
@@ -3918,6 +3975,10 @@ msgstr "Inviter"
 msgid "Invite link"
 msgstr "Lien d’invitation"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Invite people"
+msgstr "Inviter des personnes"
+
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Isolated"
@@ -4014,6 +4075,10 @@ msgstr "Roi"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Knight"
 msgstr "Cavalier"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Knowledge"
+msgstr "Connaissances"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/LocalSpeechSection.tsx
@@ -4240,15 +4305,44 @@ msgstr "Gérer"
 msgid "Manage {0}"
 msgstr "Gérer {0}"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Manage agents"
+msgstr "Gérer les agents"
+
 #: src/components/ModelCredits.tsx
 #: src/pages/Paywall.tsx
+#: src/pages/SpaceRolesSettings.tsx
 msgid "Manage billing"
 msgstr "Gérer la facturation"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Manage channels"
+msgstr "Gérer les canaux"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Manage connections"
+msgstr "Gérer les connexions"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Manage credentials"
+msgstr "Gérer les identifiants"
 
 #: src/pages/Store.tsx
 #: src/pages/StoreInstalledApps.tsx
 msgid "Manage MCP servers"
 msgstr "Gérer les serveurs MCP"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Manage members"
+msgstr "Gérer les membres"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Manage roles"
+msgstr "Gérer les rôles"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Manage routines"
+msgstr "Gérer les routines"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Manage the bots it creates"
@@ -4566,6 +4660,16 @@ msgstr "Plus d'actions pour l'ordinateur"
 msgid "Morning summary"
 msgstr "Résumé du matin"
 
+#. placeholder {0}: role.name
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Move {0} down"
+msgstr "Descendre {0}"
+
+#. placeholder {0}: role.name
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Move {0} up"
+msgstr "Monter {0}"
+
 #: src/pages/ModelRoleSettings.tsx
 msgid "Move down"
 msgstr "Descendre"
@@ -4724,6 +4828,10 @@ msgstr "Nouveau mot de passe"
 #: src/pages/shell/bot-picker.tsx
 msgid "New private space"
 msgstr "Nouvel espace privé"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "New role"
+msgstr "Nouveau rôle"
 
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/Routines.tsx
@@ -5275,6 +5383,7 @@ msgstr "En pause"
 msgid "Pawn"
 msgstr "Pion"
 
+#: src/pages/SpaceRolesSettings.tsx
 #: src/pages/StoreCategoryChips.tsx
 msgid "People"
 msgstr "Personnes"
@@ -5358,6 +5467,10 @@ msgstr "Plugin"
 #: src/pages/RoutineEditor.tsx
 msgid "Post \"No changes\" in chat"
 msgstr "Publier « Aucun changement » dans le chat"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Post messages"
+msgstr "Envoyer des messages"
 
 #: src/pages/RoutineEditor.tsx
 msgid "POST to"
@@ -5625,7 +5738,9 @@ msgid "Remove"
 msgstr "Retirer"
 
 #. placeholder {0}: attachment.file.name
+#. placeholder {0}: member.name
 #: src/pages/shell/composer.tsx
+#: src/pages/SpaceRolesSettings.tsx
 msgid "Remove {0}"
 msgstr "Retirer {0}"
 
@@ -5886,6 +6001,10 @@ msgstr "Retour à Rook"
 msgid "Review before {reviewing}"
 msgstr "À vérifier avant : {reviewing}"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Review memory"
+msgstr "Examiner la mémoire"
+
 #: src/pages/WikiBrowser.tsx
 msgid "Review now"
 msgstr "Relancer la revue"
@@ -5899,10 +6018,18 @@ msgstr "Révision {0}"
 msgid "Role"
 msgstr "Rôle"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Role name"
+msgstr "Nom du rôle"
+
 #. placeholder {0}: member.name
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Role of {0}"
 msgstr "Rôle de {0}"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Roles"
+msgstr "Rôles"
 
 #: src/pages/Onboarding.tsx
 msgid "Rook credits"
@@ -6506,6 +6633,7 @@ msgstr "Source"
 
 #: src/lib/identity-display.ts
 #: src/pages/Settings.tsx
+#: src/pages/SpaceRolesSettings.tsx
 msgid "Space"
 msgstr "Espace"
 
@@ -6730,6 +6858,10 @@ msgstr "Tableau"
 #: src/pages/shell/computer-overlay.tsx
 msgid "Take control"
 msgstr "Prendre le contrôle"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Talk to agents"
+msgstr "Parler aux agents"
 
 #: src/components/MissionList.tsx
 msgid "Talk to your agent"
@@ -7113,6 +7245,7 @@ msgid "Tool sources"
 msgstr "Sources d'outils"
 
 #: src/pages/shell/bot-panel.tsx
+#: src/pages/SpaceRolesSettings.tsx
 #: src/pages/Store.tsx
 msgid "Tools"
 msgstr "Outils"
@@ -7297,6 +7430,10 @@ msgstr "Passer à la version supérieure"
 msgid "Upload"
 msgstr "Télécharger"
 
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Upload files"
+msgstr "Téléverser des fichiers"
+
 #: src/lib/ticket-priority.ts
 msgid "Urgent"
 msgstr "Urgente"
@@ -7333,6 +7470,10 @@ msgstr "Utilisez {oauthEnvReference} pour le jeton d'accès."
 #: src/pages/Onboarding.tsx
 msgid "Use a found model"
 msgstr "Utiliser un modèle trouvé"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "Use computers"
+msgstr "Utiliser les ordinateurs"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Use Connect to verify the key."
@@ -7427,6 +7568,10 @@ msgstr "Vérification en cours…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "Version"
+
+#: src/pages/SpaceRolesSettings.tsx
+msgid "View usage"
+msgstr "Voir l'utilisation"
 
 #: src/pages/Settings.tsx
 #: src/pages/shell/bot-panel.tsx

@@ -100,6 +100,7 @@ export * from "./secrets-guard.js";
 export * from "./self-update.js";
 export * from "./signup-policy.js";
 export * from "./skill-store-data.js";
+export * from "./space-permissions.js";
 export * from "./space-roles.js";
 export * from "./speech-locale.js";
 export * from "./speech-text.js";

@@ -964,6 +964,7 @@ msgid "Agents that can use it"
 msgstr "可以使用它的智能体"
 
 #: src/pages/DatabasesSettings.tsx
+#: src/pages/MailboxesSettings.tsx
 #: src/pages/McpServersSettings.tsx
 msgid "Agents:"
 msgstr "Agent："
@@ -2072,6 +2073,7 @@ msgstr "请先确认邮箱，然后重新打开此链接"
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/ChatAppsRow.tsx
 #: src/pages/DatabasesSettings.tsx
+#: src/pages/MailboxesSettings.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 #: src/pages/memory-providers/SupermemorySettingsForm.tsx
@@ -2163,6 +2165,7 @@ msgid "Connected {0}."
 msgstr "已连接 {0}。"
 
 #: src/pages/DatabasesSettings.tsx
+#: src/pages/MailboxesSettings.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
@@ -2550,6 +2553,10 @@ msgstr "无法加载凭据。"
 #: src/pages/Store.tsx
 msgid "Could not load integrations"
 msgstr "无法加载集成"
+
+#: src/pages/MailboxesSettings.tsx
+msgid "Could not load mailboxes"
+msgstr "无法加载邮箱"
 
 #: src/pages/McpServersSettings.tsx
 #: src/pages/Store.tsx
@@ -3422,6 +3429,7 @@ msgid "Edit the wiki"
 msgstr "编辑知识库"
 
 #: src/pages/Auth.tsx
+#: src/pages/MailboxesSettings.tsx
 msgid "Email"
 msgstr "邮箱"
 
@@ -4037,6 +4045,10 @@ msgstr "此模型尚未配置图片输入。"
 msgid "Image upload area"
 msgstr "图片上传区域"
 
+#: src/pages/MailboxesSettings.tsx
+msgid "IMAP server"
+msgstr "IMAP 服务器"
+
 #: src/pages/ImportFromApp.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/create-bot-panel.tsx
@@ -4509,6 +4521,10 @@ msgstr "低"
 #: src/pages/shell/bot-credentials.tsx
 msgid "Lowercase letters, numbers, hyphens and underscores, starting with a letter."
 msgstr "使用小写字母、数字、连字符和下划线，并以字母开头。"
+
+#: src/pages/Settings.tsx
+msgid "Mailboxes"
+msgstr "邮箱"
 
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Main model"
@@ -5630,6 +5646,7 @@ msgstr "通行密钥"
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
 #: src/pages/DatabasesSettings.tsx
+#: src/pages/MailboxesSettings.tsx
 #: src/pages/shell/bot-credentials.tsx
 msgid "Password"
 msgstr "密码"
@@ -6081,6 +6098,7 @@ msgstr "已记住"
 #: src/pages/ConnectionsSettingsPanel.tsx
 #: src/pages/DatabasesSettings.tsx
 #: src/pages/LocalSpeechSection.tsx
+#: src/pages/MailboxesSettings.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/MembersSettingsPanel.tsx
 #: src/pages/ModelRoleSettings.tsx
@@ -6956,6 +6974,10 @@ msgstr "未启用 Slack"
 #: src/components/composer/HoldToTalk.tsx
 msgid "Slide up to lock"
 msgstr "上滑锁定"
+
+#: src/pages/MailboxesSettings.tsx
+msgid "SMTP server"
+msgstr "SMTP 服务器"
 
 #: src/pages/Routines.tsx
 msgid "Some runs are not shown."
@@ -7921,6 +7943,7 @@ msgid "User peer"
 msgstr "用户对等方"
 
 #: src/components/AskCard.tsx
+#: src/pages/MailboxesSettings.tsx
 #: src/pages/shell/bot-credentials.tsx
 msgid "Username"
 msgstr "用户名"

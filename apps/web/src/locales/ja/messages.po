@@ -964,6 +964,7 @@ msgid "Agents that can use it"
 msgstr "使用できるエージェント"
 
 #: src/pages/DatabasesSettings.tsx
+#: src/pages/MailboxesSettings.tsx
 #: src/pages/McpServersSettings.tsx
 msgid "Agents:"
 msgstr "エージェント:"
@@ -2072,6 +2073,7 @@ msgstr "先にメールを確認してから、このリンクをもう一度開
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/ChatAppsRow.tsx
 #: src/pages/DatabasesSettings.tsx
+#: src/pages/MailboxesSettings.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 #: src/pages/memory-providers/SupermemorySettingsForm.tsx
@@ -2163,6 +2165,7 @@ msgid "Connected {0}."
 msgstr "{0}を接続しました。"
 
 #: src/pages/DatabasesSettings.tsx
+#: src/pages/MailboxesSettings.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
@@ -2550,6 +2553,10 @@ msgstr "認証情報を読み込めませんでした。"
 #: src/pages/Store.tsx
 msgid "Could not load integrations"
 msgstr "連携を読み込めませんでした"
+
+#: src/pages/MailboxesSettings.tsx
+msgid "Could not load mailboxes"
+msgstr "メールボックスを読み込めませんでした"
 
 #: src/pages/McpServersSettings.tsx
 #: src/pages/Store.tsx
@@ -3422,6 +3429,7 @@ msgid "Edit the wiki"
 msgstr "Wikiを編集"
 
 #: src/pages/Auth.tsx
+#: src/pages/MailboxesSettings.tsx
 msgid "Email"
 msgstr "メールアドレス"
 
@@ -4037,6 +4045,10 @@ msgstr "このモデルでは画像入力が設定されていません。"
 msgid "Image upload area"
 msgstr "画像アップロードエリア"
 
+#: src/pages/MailboxesSettings.tsx
+msgid "IMAP server"
+msgstr "IMAPサーバー"
+
 #: src/pages/ImportFromApp.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/create-bot-panel.tsx
@@ -4509,6 +4521,10 @@ msgstr "低"
 #: src/pages/shell/bot-credentials.tsx
 msgid "Lowercase letters, numbers, hyphens and underscores, starting with a letter."
 msgstr "小文字、数字、ハイフン、アンダースコアのみ使用でき、先頭は文字にしてください。"
+
+#: src/pages/Settings.tsx
+msgid "Mailboxes"
+msgstr "メールボックス"
 
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Main model"
@@ -5630,6 +5646,7 @@ msgstr "パスキー"
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
 #: src/pages/DatabasesSettings.tsx
+#: src/pages/MailboxesSettings.tsx
 #: src/pages/shell/bot-credentials.tsx
 msgid "Password"
 msgstr "パスワード"
@@ -6081,6 +6098,7 @@ msgstr "覚えました"
 #: src/pages/ConnectionsSettingsPanel.tsx
 #: src/pages/DatabasesSettings.tsx
 #: src/pages/LocalSpeechSection.tsx
+#: src/pages/MailboxesSettings.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/MembersSettingsPanel.tsx
 #: src/pages/ModelRoleSettings.tsx
@@ -6956,6 +6974,10 @@ msgstr "Slackが有効になっていません"
 #: src/components/composer/HoldToTalk.tsx
 msgid "Slide up to lock"
 msgstr "上にスライドしてロック"
+
+#: src/pages/MailboxesSettings.tsx
+msgid "SMTP server"
+msgstr "SMTPサーバー"
 
 #: src/pages/Routines.tsx
 msgid "Some runs are not shown."
@@ -7921,6 +7943,7 @@ msgid "User peer"
 msgstr "ユーザーピア"
 
 #: src/components/AskCard.tsx
+#: src/pages/MailboxesSettings.tsx
 #: src/pages/shell/bot-credentials.tsx
 msgid "Username"
 msgstr "ユーザー名"

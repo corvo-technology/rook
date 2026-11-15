@@ -964,6 +964,7 @@ msgid "Agents that can use it"
 msgstr "Agenten, die es nutzen können"
 
 #: src/pages/DatabasesSettings.tsx
+#: src/pages/MailboxesSettings.tsx
 #: src/pages/McpServersSettings.tsx
 msgid "Agents:"
 msgstr "Agents:"
@@ -2072,6 +2073,7 @@ msgstr "Bestätige zuerst deine E-Mail und öffne diesen Link erneut"
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/ChatAppsRow.tsx
 #: src/pages/DatabasesSettings.tsx
+#: src/pages/MailboxesSettings.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 #: src/pages/memory-providers/SupermemorySettingsForm.tsx
@@ -2163,6 +2165,7 @@ msgid "Connected {0}."
 msgstr "{0} verbunden."
 
 #: src/pages/DatabasesSettings.tsx
+#: src/pages/MailboxesSettings.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
@@ -2550,6 +2553,10 @@ msgstr "Zugangsdaten konnten nicht geladen werden."
 #: src/pages/Store.tsx
 msgid "Could not load integrations"
 msgstr "Integrationen konnten nicht geladen werden"
+
+#: src/pages/MailboxesSettings.tsx
+msgid "Could not load mailboxes"
+msgstr "Postfächer konnten nicht geladen werden"
 
 #: src/pages/McpServersSettings.tsx
 #: src/pages/Store.tsx
@@ -3422,6 +3429,7 @@ msgid "Edit the wiki"
 msgstr "Wiki bearbeiten"
 
 #: src/pages/Auth.tsx
+#: src/pages/MailboxesSettings.tsx
 msgid "Email"
 msgstr "E-Mail"
 
@@ -4037,6 +4045,10 @@ msgstr "Bildeingabe ist für dieses Modell nicht konfiguriert."
 msgid "Image upload area"
 msgstr "Bild-Upload-Bereich"
 
+#: src/pages/MailboxesSettings.tsx
+msgid "IMAP server"
+msgstr "IMAP-Server"
+
 #: src/pages/ImportFromApp.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/create-bot-panel.tsx
@@ -4509,6 +4521,10 @@ msgstr "Niedrig"
 #: src/pages/shell/bot-credentials.tsx
 msgid "Lowercase letters, numbers, hyphens and underscores, starting with a letter."
 msgstr "Kleinbuchstaben, Zahlen, Bindestriche und Unterstriche, beginnend mit einem Buchstaben."
+
+#: src/pages/Settings.tsx
+msgid "Mailboxes"
+msgstr "Postfächer"
 
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Main model"
@@ -5630,6 +5646,7 @@ msgstr "Passkeys"
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
 #: src/pages/DatabasesSettings.tsx
+#: src/pages/MailboxesSettings.tsx
 #: src/pages/shell/bot-credentials.tsx
 msgid "Password"
 msgstr "Passwort"
@@ -6081,6 +6098,7 @@ msgstr "Gemerkt"
 #: src/pages/ConnectionsSettingsPanel.tsx
 #: src/pages/DatabasesSettings.tsx
 #: src/pages/LocalSpeechSection.tsx
+#: src/pages/MailboxesSettings.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/MembersSettingsPanel.tsx
 #: src/pages/ModelRoleSettings.tsx
@@ -6956,6 +6974,10 @@ msgstr "Slack nicht aktiviert"
 #: src/components/composer/HoldToTalk.tsx
 msgid "Slide up to lock"
 msgstr "Zum Sperren nach oben schieben"
+
+#: src/pages/MailboxesSettings.tsx
+msgid "SMTP server"
+msgstr "SMTP-Server"
 
 #: src/pages/Routines.tsx
 msgid "Some runs are not shown."
@@ -7921,6 +7943,7 @@ msgid "User peer"
 msgstr "Nutzer-Peer"
 
 #: src/components/AskCard.tsx
+#: src/pages/MailboxesSettings.tsx
 #: src/pages/shell/bot-credentials.tsx
 msgid "Username"
 msgstr "Benutzername"

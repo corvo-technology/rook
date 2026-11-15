@@ -4,6 +4,13 @@ import { describe, expect, it, vi } from "vitest";
 import type { ThreadTarget } from "./thread-target.js";
 import { sendThreadMessage } from "./thread-target.js";
 
+// These tests are about the thread mechanics; who may talk to an agent has its own tests.
+vi.mock("./agent-audience.js", () => ({
+  requireInAudience: async () => undefined,
+  requireCanTalkTo: async () => undefined,
+  talkableBotIds: async (_prisma: unknown, _actor: unknown, ids: string[]) => new Set(ids),
+}));
+
 // Exercise the shared production send entrypoint with an owned stored image.
 // No model transport or credential material is needed to reject known text-only input.
 function fixture(group = false) {
@@ -84,7 +91,16 @@ function fixture(group = false) {
       { prisma, events: { notify } as never, jobs: { enqueue } as never, imageAdmission },
       { userId: "user-1", spaceId: "space-1" } as Actor,
       (group
-        ? { kind: "group", groupId: "group-1", threadId: "thread-1" }
+        ? {
+            kind: "group",
+            groupId: "group-1",
+            threadId: "thread-1",
+            members: [
+              { botId: "bot-1", name: "A", color: "ink", status: "idle" },
+              { botId: "bot-2", name: "B", color: "ink", status: "idle" },
+            ],
+            memberBotIds: ["bot-1", "bot-2"],
+          }
         : {
             kind: "bot",
             botId: "bot-1",

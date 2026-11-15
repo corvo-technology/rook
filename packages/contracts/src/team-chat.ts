@@ -6,6 +6,8 @@ import { Id, IsoDate } from "./ids.js";
 export const ChannelPeopleSchema = z.object({
   restricted: z.boolean(),
   userIds: z.array(Id),
+  /** The roles whose holders see the channel. */
+  roleIds: z.array(Id).default([]),
   /** Whether the caller may add and remove people: the creator, or someone who manages channels. */
   canManage: z.boolean(),
 });

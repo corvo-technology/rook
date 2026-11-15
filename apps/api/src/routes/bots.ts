@@ -24,9 +24,11 @@ import {
   BotSectionNameConflictError,
   botProfileLabelsChanged,
   ComputerLimitError,
+  channelVisibleTo,
   commitBotUpdate,
   InstructionConflictError,
   IsolationError,
+  loadGroupViewer,
   partnerModelPolicy,
   recordComputerRunEnd,
   restoreBotUnderComputerQuota,
@@ -231,9 +233,43 @@ export function botsRoutes(ctx: RouterContext) {
   } = ctx;
   const manageAgent = (actor: Actor, bot: { userId: string }) =>
     requireCreatorOrPermission(deps.prisma, actor, bot.userId, "manage_agents");
+  const audienceColumns = {
+    id: true,
+    userId: true,
+    audienceRestricted: true,
+    audienceRoleIds: true,
+    audienceUserIds: true,
+    consultable: true,
+  } as const;
+  const audienceDto = (bot: {
+    audienceRestricted: boolean;
+    audienceRoleIds: string[];
+    audienceUserIds: string[];
+    consultable: boolean;
+  }) => ({
+    restricted: bot.audienceRestricted,
+    roleIds: bot.audienceRoleIds,
+    userIds: bot.audienceUserIds,
+    consultable: bot.consultable,
+  });
+  /** The agent whose audience the actor may read and change: its owner, or `manage_agents`. */
+  const loadAudienceBot = async (actor: Actor, botId: string) => {
+    const bot = await deps.prisma.bot.findFirst({
+      where: { id: botId, spaceId: actor.spaceId },
+      select: audienceColumns,
+    });
+    if (!bot) throw new IsolationError();
+    await manageAgent(actor, bot);
+    return bot;
+  };
   const manageChannel = async (actor: Actor, groupId: string) => {
     const group = await deps.prisma.chatGroup.findFirst({
-      where: { id: groupId, spaceId: actor.spaceId },
+      where: {
+        id: groupId,
+        spaceId: actor.spaceId,
+        // A private channel the actor cannot see is not there.
+        AND: [channelVisibleTo(await loadGroupViewer(deps.prisma, actor))],
+      },
       select: { userId: true },
     });
     if (!group) throw new IsolationError();
@@ -323,6 +359,37 @@ export function botsRoutes(ctx: RouterContext) {
         if (!found) throw new IsolationError();
         return found;
       }),
+      audience: {
+        get: authed.bots.audience.get.handler(async ({ context, input }) => {
+          const bot = await loadAudienceBot(context.actor, input.botId);
+          return audienceDto(bot);
+        }),
+        set: authed.bots.audience.set.handler(async ({ context, input }) => {
+          const bot = await loadAudienceBot(context.actor, input.botId);
+          // Only roles and people of this space can be named; anything else is dropped.
+          const [roles, members] = await Promise.all([
+            deps.prisma.spaceRole.findMany({
+              where: { spaceId: context.actor.spaceId, id: { in: input.roleIds } },
+              select: { id: true },
+            }),
+            deps.prisma.spaceMember.findMany({
+              where: { spaceId: context.actor.spaceId, userId: { in: input.userIds } },
+              select: { userId: true },
+            }),
+          ]);
+          const updated = await deps.prisma.bot.update({
+            where: { id: bot.id },
+            data: {
+              audienceRestricted: input.restricted,
+              audienceRoleIds: input.restricted ? roles.map((role) => role.id) : [],
+              audienceUserIds: input.restricted ? members.map((member) => member.userId) : [],
+              consultable: input.consultable,
+            },
+            select: audienceColumns,
+          });
+          return audienceDto(updated);
+        }),
+      },
       duplicate: authed.bots.duplicate.handler(async ({ context, input }) => {
         await requireSpacePermission(deps.prisma, context.actor, "create_agents");
         const source = await repos.getBot(context.actor, input.botId);

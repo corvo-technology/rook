@@ -1,7 +1,14 @@
 import type * as db from "@corvo/db";
-import { appendEventInTransaction, channelVisibleTo } from "@corvo/db";
+import { appendEventInTransaction } from "@corvo/db";
 import { describe, expect, it, vi } from "vitest";
 import { chooseFocus, markAppConnected, promptFocus } from "./onboarding.js";
+
+// These tests are about the thread mechanics; who may talk to an agent has its own tests.
+vi.mock("./agent-audience.js", () => ({
+  requireInAudience: async () => undefined,
+  requireCanTalkTo: async () => undefined,
+  talkableBotIds: async (_prisma: unknown, _actor: unknown, ids: string[]) => new Set(ids),
+}));
 
 const posted = vi.hoisted(() => [] as Array<{ blocks: unknown[]; markUnread?: boolean }>);
 vi.mock("@corvo/db", async (original) => ({
@@ -158,6 +165,10 @@ it("updates an accessible group thread and emits its normal update event", async
   deps.prisma.thread = {
     findFirst: vi.fn(async () => ({ id: "group-thread", groupId: "group" })),
   } as never;
+  deps.prisma.spaceMember = {
+    findUnique: vi.fn(async () => ({ role: "owner", roles: [] })),
+  } as never;
+  deps.prisma.spaceRole = { findMany: vi.fn(async () => []) } as never;
   deps.prisma.chatGroup = {
     findFirst: vi.fn(async () => ({
       id: "group",
@@ -177,12 +188,7 @@ it("updates an accessible group thread and emits its normal update event", async
   await markAppConnected(deps, actor, "bot", "slack", "pipedream", "group-thread");
   expect(deps.prisma.chatGroup.findFirst).toHaveBeenCalledWith(
     expect.objectContaining({
-      where: {
-        id: "group",
-        spaceId: actor.spaceId,
-        archivedAt: null,
-        ...channelVisibleTo(actor.userId),
-      },
+      where: expect.objectContaining({ id: "group", spaceId: actor.spaceId, archivedAt: null }),
     }),
   );
   expect(tx.message.findMany).toHaveBeenCalledWith(

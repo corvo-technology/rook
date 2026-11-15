@@ -4,6 +4,15 @@ import type { PrismaClient } from "./client.js";
 import { createGroupRepos } from "./groups.js";
 import { IsolationError } from "./scope.js";
 
+vi.mock("./scope.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./scope.js")>()),
+  loadGroupViewer: async (_prisma: unknown, actor: { userId: string }) => ({
+    userId: actor.userId,
+    roleIds: [],
+    seesAll: false,
+  }),
+}));
+
 describe("listSpaceGroupsForSpaces", () => {
   it("loads and maps compact cross-space group fields", async () => {
     const findMany = vi.fn(async (_query: { where: unknown; select: Record<string, unknown> }) => [
@@ -578,7 +587,7 @@ describe("listGroups archived", () => {
     expect(query.where).toEqual({
       AND: [
         { spaceId: "space-1" },
-        channelVisibleTo("user-1"),
+        channelVisibleTo({ userId: "user-1", roleIds: [], seesAll: false }),
         {
           OR: [
             { archivedAt: { not: null } },
@@ -601,7 +610,7 @@ describe("listGroups archived", () => {
     expect(findMany.mock.calls[0]![0].where).toEqual({
       spaceId: "space-1",
       archivedAt: null,
-      ...channelVisibleTo("user-1"),
+      ...channelVisibleTo({ userId: "user-1", roleIds: [], seesAll: false }),
     });
   });
 });

@@ -10,9 +10,14 @@ import {
 } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
 import {
+  agentAudienceSql,
+  agentAudienceWhere,
+  channelVisibleTo,
   channelVisibleToSql,
   contentEncryptionOf,
   INDEXED_MESSAGE,
+  loadGroupViewer,
+  loadSpeaker,
   Prisma,
   UNINDEXED_MESSAGE,
 } from "@corvo/db";
@@ -99,6 +104,10 @@ export async function querySpaceSearch(
   const query = q.trim();
   if (!query) return [];
   if (within) return searchWithinThread(prisma, actor, query, within);
+  // Search reads what the person may read: not a private channel they cannot see, nor the
+  // conversation of an agent whose audience leaves them out.
+  const speaker = await loadSpeaker(prisma, actor);
+  const viewer = await loadGroupViewer(prisma, actor);
   // The database side has to match the text the user typed, the way
   // `matchesSearchQuery` does in memory: a `%` or `_` would otherwise widen
   // the match, and a `\` would swallow the character after it.
@@ -157,7 +166,7 @@ export async function querySpaceSearch(
       SELECT g.id FROM chat_groups g
       WHERE g."spaceId" = ${actor.spaceId}
         AND g."archivedAt" IS NULL
-        AND ${channelVisibleToSql("g", actor.userId)}
+        AND ${channelVisibleToSql("g", viewer)}
         AND (
           SELECT COUNT(*) FROM chat_group_members gm
           INNER JOIN bots gb ON gb.id = gm."botId"
@@ -197,7 +206,7 @@ export async function querySpaceSearch(
       groupId: null,
       botId: { not: null },
       name: { contains: likeQuery, mode: "insensitive" },
-      bot: { archivedAt: null },
+      bot: { archivedAt: null, ...agentAudienceWhere(speaker) },
     },
     include: { bot: { select: { name: true } } },
     take: SEARCH_LIMIT,
@@ -320,6 +329,7 @@ export async function querySpaceSearch(
       INNER JOIN bots b ON b.id = t."botId"
       WHERE t."spaceId" = ${actor.spaceId}
         AND b."archivedAt" IS NULL
+        AND ${agentAudienceSql(speaker, "b")}
         AND ${match.sql}
       ORDER BY m."createdAt" DESC, m.id DESC
       LIMIT ${match.limit} OFFSET ${page * match.limit}
@@ -387,13 +397,21 @@ async function searchWithinThread(
 ): Promise<SearchHit[]> {
   const group = within.groupId
     ? await prisma.chatGroup.findFirst({
-        where: { id: within.groupId, spaceId: actor.spaceId, userId: actor.userId },
+        where: {
+          id: within.groupId,
+          spaceId: actor.spaceId,
+          AND: [channelVisibleTo(await loadGroupViewer(prisma, actor))],
+        },
         select: { id: true, name: true },
       })
     : null;
   const bot = within.botId
     ? await prisma.bot.findFirst({
-        where: { id: within.botId, spaceId: actor.spaceId, userId: actor.userId },
+        where: {
+          id: within.botId,
+          spaceId: actor.spaceId,
+          ...agentAudienceWhere(await loadSpeaker(prisma, actor)),
+        },
         select: { id: true, name: true },
       })
     : null;
@@ -416,7 +434,6 @@ async function searchWithinThread(
       FROM messages m
       INNER JOIN threads t ON t.id = m."threadId"
       WHERE t."spaceId" = ${actor.spaceId}
-        AND t."userId" = ${actor.userId}
         AND ${thread}
         AND ${match.sql}
       ORDER BY m."createdAt" DESC, m.id DESC

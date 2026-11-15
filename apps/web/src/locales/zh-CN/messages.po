@@ -2598,6 +2598,7 @@ msgstr "无法运行例行任务"
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/MembersSettingsPanel.tsx
+#: src/pages/shell/agent-audience.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/chat-model-switcher.tsx
 #: src/pages/shell/dialogs.tsx
@@ -3442,6 +3443,7 @@ msgid "Every week"
 msgstr "每周"
 
 #: src/pages/MembersSettingsPanel.tsx
+#: src/pages/shell/agent-audience.tsx
 #: src/pages/shell/channel-members.tsx
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Everyone"
@@ -5198,6 +5200,10 @@ msgstr "仅用于在这台电脑上识别你。你的数据都保存在本机。
 msgid "Only read"
 msgstr "仅读取"
 
+#: src/pages/shell/agent-audience.tsx
+msgid "Only some roles or people"
+msgstr "仅限部分角色或成员"
+
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/shell/computer-panel.tsx
 #: src/pages/shell/import-setup-card.tsx
@@ -5328,6 +5334,10 @@ msgstr "组织 API 密钥"
 #: src/pages/shell/chat-context.tsx
 msgid "Original message unavailable"
 msgstr "原消息不可用"
+
+#: src/pages/shell/agent-audience.tsx
+msgid "Other agents can consult {name}"
+msgstr "其他智能体可以咨询 {name}"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
@@ -7832,6 +7842,10 @@ msgstr "Bot 应在哪里运行？"
 #: src/pages/shell/agent-import.tsx
 msgid "Where to import"
 msgstr "导入到哪里"
+
+#: src/pages/shell/agent-audience.tsx
+msgid "Who can talk to {name}"
+msgstr "谁可以与 {name} 对话"
 
 #: src/pages/shell/channel-members.tsx
 msgid "Who sees this channel"

@@ -2598,6 +2598,7 @@ msgstr "ルーティンを実行できませんでした"
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/MembersSettingsPanel.tsx
+#: src/pages/shell/agent-audience.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/chat-model-switcher.tsx
 #: src/pages/shell/dialogs.tsx
@@ -3442,6 +3443,7 @@ msgid "Every week"
 msgstr "毎週"
 
 #: src/pages/MembersSettingsPanel.tsx
+#: src/pages/shell/agent-audience.tsx
 #: src/pages/shell/channel-members.tsx
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Everyone"
@@ -5198,6 +5200,10 @@ msgstr "このコンピューター上であなたを識別するためだけの
 msgid "Only read"
 msgstr "読むだけ"
 
+#: src/pages/shell/agent-audience.tsx
+msgid "Only some roles or people"
+msgstr "一部のロールまたはメンバーのみ"
+
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/shell/computer-panel.tsx
 #: src/pages/shell/import-setup-card.tsx
@@ -5328,6 +5334,10 @@ msgstr "組織のAPIキー"
 #: src/pages/shell/chat-context.tsx
 msgid "Original message unavailable"
 msgstr "元のメッセージを表示できません"
+
+#: src/pages/shell/agent-audience.tsx
+msgid "Other agents can consult {name}"
+msgstr "他のエージェントが {name} に相談できる"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
@@ -7832,6 +7842,10 @@ msgstr "ボットをどこで実行しますか？"
 #: src/pages/shell/agent-import.tsx
 msgid "Where to import"
 msgstr "インポート先"
+
+#: src/pages/shell/agent-audience.tsx
+msgid "Who can talk to {name}"
+msgstr "{name} と話せる人"
 
 #: src/pages/shell/channel-members.tsx
 msgid "Who sees this channel"

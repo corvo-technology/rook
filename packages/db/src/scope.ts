@@ -1,5 +1,11 @@
 import type { Actor } from "@corvo/contracts";
+import type { Speaker } from "@corvo/core";
+import { can, speakerOf } from "@corvo/core";
+import type { GroupViewer } from "./channel-people.js";
 import type { PrismaClient } from "./client.js";
+import { Prisma } from "./client.js";
+import { runAsSystem } from "./row-security.js";
+import { getSpaceMembershipFor } from "./space-membership.js";
 
 export class IsolationError extends Error {
   constructor(message = "Resource not found") {
@@ -100,4 +106,58 @@ export async function memberSpaceIds(
     select: { spaceId: true },
   });
   return rows.map((row) => row.spaceId);
+}
+
+/** The person as the audience rule reads them: their keys and roles in the space they act in. */
+export async function loadSpeaker(
+  prisma: Pick<PrismaClient, "spaceMember" | "spaceRole">,
+  actor: Pick<Actor, "spaceId" | "userId">,
+  options: { inTransaction?: boolean } = {},
+): Promise<Speaker> {
+  const input = { spaceId: actor.spaceId, userId: actor.userId };
+  // Inside a transaction the connection already carries the space's context.
+  const membership = options.inTransaction
+    ? await getSpaceMembershipFor(prisma, input)
+    : await runAsSystem("read a member's roles in their space", () =>
+        getSpaceMembershipFor(prisma, input),
+      );
+  return speakerOf(actor.userId, membership);
+}
+
+export async function loadGroupViewer(
+  prisma: Pick<PrismaClient, "spaceMember" | "spaceRole">,
+  actor: Pick<Actor, "spaceId" | "userId">,
+  options: { inTransaction?: boolean } = {},
+): Promise<GroupViewer> {
+  const speaker = await loadSpeaker(prisma, actor, options);
+  return {
+    userId: actor.userId,
+    roleIds: speaker.roleIds,
+    seesAll: can(speaker.membership, "manage_channels"),
+  };
+}
+
+/**
+ * `inAudience` over raw SQL for `bots <alias>`: the agents whose conversations the person may
+ * read. An unrestricted agent is everyone's.
+ */
+export function agentAudienceSql(speaker: Pick<Speaker, "userId" | "roleIds">, alias = "b") {
+  const b = Prisma.raw(alias);
+  return Prisma.sql`(NOT ${b}."audienceRestricted" OR ${b}."userId" = ${speaker.userId}
+    OR ${speaker.userId} = ANY(${b}."audienceUserIds")
+    OR ${b}."audienceRoleIds" && ${[...speaker.roleIds]}::text[])`;
+}
+
+/** `inAudience` as a Prisma filter on bots. */
+export function agentAudienceWhere(
+  speaker: Pick<Speaker, "userId" | "roleIds">,
+): Prisma.BotWhereInput {
+  return {
+    OR: [
+      { audienceRestricted: false },
+      { userId: speaker.userId },
+      { audienceUserIds: { has: speaker.userId } },
+      ...(speaker.roleIds.length ? [{ audienceRoleIds: { hasSome: [...speaker.roleIds] } }] : []),
+    ],
+  };
 }

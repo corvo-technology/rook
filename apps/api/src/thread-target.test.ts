@@ -14,6 +14,13 @@ import {
   threadSnapshot,
 } from "./thread-target.js";
 
+// These tests are about the thread mechanics; who may talk to an agent has its own tests.
+vi.mock("./agent-audience.js", () => ({
+  requireInAudience: async () => undefined,
+  requireCanTalkTo: async () => undefined,
+  talkableBotIds: async (_prisma: unknown, _actor: unknown, ids: string[]) => new Set(ids),
+}));
+
 // Passthrough mock: every hint derives for real except the sentinel that
 // exercises the "derivation must never cost the send" path.
 vi.mock("@corvo/core/message-quote", async (importOriginal) => {

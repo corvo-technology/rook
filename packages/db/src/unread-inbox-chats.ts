@@ -26,7 +26,11 @@ export function countUnreadInboxChats(
         AND t."externalConversationId" IS NULL
         AND (
           EXISTS (SELECT 1 FROM bots b WHERE b.id = t."botId"
-            AND b."spaceId" = t."spaceId" AND b."archivedAt" IS NULL)
+            AND b."spaceId" = t."spaceId" AND b."archivedAt" IS NULL
+            AND (NOT b."audienceRestricted" OR b."userId" = ${userId}
+              OR ${userId} = ANY(b."audienceUserIds")
+              OR EXISTS (SELECT 1 FROM space_member_roles r WHERE r."spaceId" = b."spaceId"
+                AND r."userId" = ${userId} AND r."roleId" = ANY(b."audienceRoleIds"))))
           OR EXISTS (SELECT 1 FROM chat_groups g WHERE g.id = t."groupId"
             AND g."spaceId" = t."spaceId" AND g."archivedAt" IS NULL
             AND ${channelVisibleToSql("g", userId)}

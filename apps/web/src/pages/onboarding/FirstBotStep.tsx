@@ -7,6 +7,7 @@ import { AutonomyPicker } from "../../components/AutonomyPicker";
 import type { FirstBot } from "../../lib/first-bot";
 import { ensureFirstBot } from "../../lib/first-bot";
 import { rpc } from "../../lib/rpc";
+import { ImportFromApp } from "../ImportFromApp";
 
 type Setup = {
   first: FirstBot;
@@ -115,6 +116,7 @@ export function FirstBotStep({
       <Button size="lg" disabled={pending} onClick={() => void next()}>
         <Trans>Continue</Trans>
       </Button>
+      <ImportFromApp variant="ghost" />
     </div>
   );
 }

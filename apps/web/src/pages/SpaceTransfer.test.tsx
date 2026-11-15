@@ -27,6 +27,8 @@ vi.mock("@corvo/ui-web", () => ({
   Button: (props: ComponentProps<"button">) => <button type="button" {...props} />,
 }));
 
+vi.mock("./ImportFromApp", () => ({ ImportFromApp: () => null }));
+
 import { SpaceTransfer } from "./SpaceTransfer";
 
 const validFile = JSON.stringify({

@@ -16,6 +16,7 @@ import {
 import { AgentImportSetupStateInput, AgentImportSetupStateSchema } from "./agent-import-setup.js";
 import { AiConsentQuerySchema, AiConsentStatusSchema } from "./ai-consent.js";
 import { AnalyticsScreenInput } from "./analytics.js";
+import { ImportFromAppInput, ImportFromAppPreviewSchema } from "./app-import.js";
 import {
   ARTIFACT_DESCRIPTION_MAX_LENGTH,
   ARTIFACT_NAME_MAX_LENGTH,
@@ -603,6 +604,8 @@ export const appContract = {
     importPreview: oc.input(AgentImportPreviewInput).output(AgentImportPlanSchema),
     importCreate: oc.input(AgentImportCreateInput).output(BotSchema),
     importSpace: oc.input(SpaceExportSchema).output(SpaceImportResultSchema),
+    /** Reads another app's agent into the space file, to show before it is imported. */
+    importFromApp: oc.input(ImportFromAppInput).output(ImportFromAppPreviewSchema),
     importInfo: oc.input(botId).output(AgentImportInfoSchema.nullable()),
     importSetupState: oc.input(AgentImportSetupStateInput).output(AgentImportSetupStateSchema),
     importUndo: oc.input(AgentImportUndoInput).output(AgentImportInfoSchema),

@@ -46,6 +46,7 @@ import {
   undoAgentImport,
 } from "../agent-import.js";
 import { deleteAgentSecret, listAgentSecrets, putAgentSecret } from "../agent-secrets.js";
+import { previewAppImport } from "../import-from-app.js";
 import { partnerModelChangeRefused } from "../partner-models.js";
 import type { RouterDeps } from "../router.js";
 import { requireCreatorOrPermission, requireSpacePermission } from "../space-owner.js";
@@ -336,6 +337,14 @@ export function botsRoutes(ctx: RouterContext) {
           throw mapSpaceLifecycleError(error);
         }
       }),
+      importFromApp: authed.bots.importFromApp.handler(async ({ context, input }) =>
+        previewAppImport(
+          deps.prisma,
+          async () => (await repos.listBots(context.actor)).map((bot) => bot.name),
+          context.actor,
+          input,
+        ),
+      ),
       importInfo: authed.bots.importInfo.handler(async ({ context, input }) =>
         agentImportInfo(agentImportServices as AgentImportServices, context.actor, input.botId),
       ),

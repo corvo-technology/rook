@@ -46,6 +46,7 @@ import {
 import { deleteAgentSecret, listAgentSecrets, putAgentSecret } from "../agent-secrets.js";
 import { partnerModelChangeRefused } from "../partner-models.js";
 import type { RouterDeps } from "../router.js";
+import { requireCreatorOrPermission, requireSpacePermission } from "../space-owner.js";
 import { importSpace } from "../space-transfer.js";
 import { loadMessagePage } from "../thread-message-pages.js";
 import type { RouterContext } from "./context.js";
@@ -95,8 +96,9 @@ function mapBotSecretStoreError(error: unknown): unknown {
   return error;
 }
 
-function botSecretScope(actor: Actor, botId: string) {
-  return { userId: actor.userId, spaceId: actor.spaceId, botId };
+/** An agent's credentials belong to whoever created it, whichever member manages them. */
+function botSecretScope(actor: Actor, bot: { id: string; userId: string }) {
+  return { userId: bot.userId, spaceId: actor.spaceId, botId: bot.id };
 }
 
 function botSecretMetadataDto(row: {
@@ -227,6 +229,16 @@ export function botsRoutes(ctx: RouterContext) {
     groupRepos,
     authed,
   } = ctx;
+  const manageAgent = (actor: Actor, bot: { userId: string }) =>
+    requireCreatorOrPermission(deps.prisma, actor, bot.userId, "manage_agents");
+  const manageChannel = async (actor: Actor, groupId: string) => {
+    const group = await deps.prisma.chatGroup.findFirst({
+      where: { id: groupId, spaceId: actor.spaceId },
+      select: { userId: true },
+    });
+    if (!group) throw new IsolationError();
+    await requireCreatorOrPermission(deps.prisma, actor, group.userId, "manage_channels");
+  };
   return {
     bots: {
       list: authed.bots.list.handler(async ({ context }) => repos.listBots(context.actor)),
@@ -239,6 +251,7 @@ export function botsRoutes(ctx: RouterContext) {
         return found;
       }),
       create: authed.bots.create.handler(async ({ context, input }) => {
+        await requireSpacePermission(deps.prisma, context.actor, "create_agents");
         let bot: Bot;
         try {
           bot = await repos.createBot(context.actor, input);
@@ -262,6 +275,14 @@ export function botsRoutes(ctx: RouterContext) {
         previewAgentImport(agentImportServices as AgentImportServices, context.actor, input),
       ),
       importCreate: authed.bots.importCreate.handler(async ({ context, input }) => {
+        await requireSpacePermission(deps.prisma, context.actor, "create_agents");
+        // Importing into an existing agent changes it, so it is for its creator or a manager.
+        if (input.destination.kind === "existing") {
+          await manageAgent(
+            context.actor,
+            await repos.getBot(context.actor, input.destination.botId),
+          );
+        }
         let bot: Bot;
         try {
           bot = await createImportedBot(agentImportServices, context.actor, input, context.signal);
@@ -272,6 +293,7 @@ export function botsRoutes(ctx: RouterContext) {
         return bot;
       }),
       importSpace: authed.bots.importSpace.handler(async ({ context, input }) => {
+        await requireSpacePermission(deps.prisma, context.actor, "create_agents");
         try {
           return await importSpace(agentImportServices, deps, agentSkills, context.actor, input);
         } catch (error) {
@@ -288,8 +310,8 @@ export function botsRoutes(ctx: RouterContext) {
         undoAgentImport(agentImportServices as AgentImportServices, context.actor, input),
       ),
       designAvatar: authed.bots.designAvatar.handler(async ({ context, input }) => {
-        // Reads the bot under the caller's own scope first, so another account's bot is refused.
-        await repos.getBot(context.actor, input.botId);
+        // Reads the bot within the caller's space first, so another space's bot is refused.
+        await manageAgent(context.actor, await repos.getBot(context.actor, input.botId));
         if (deps.avatarDesign) {
           await chooseBotPiece(deps.avatarDesign, {
             botId: input.botId,
@@ -302,6 +324,7 @@ export function botsRoutes(ctx: RouterContext) {
         return found;
       }),
       duplicate: authed.bots.duplicate.handler(async ({ context, input }) => {
+        await requireSpacePermission(deps.prisma, context.actor, "create_agents");
         const source = await repos.getBot(context.actor, input.botId);
         const duplicate = await repos
           .createBot(context.actor, {
@@ -324,14 +347,14 @@ export function botsRoutes(ctx: RouterContext) {
           where: {
             botId: source.id,
             spaceId: context.actor.spaceId,
-            userId: context.actor.userId,
           },
         });
         if (assignments.length) {
           await deps.prisma.botMcpServer.createMany({
             data: assignments.map((assignment) => ({
               spaceId: context.actor.spaceId,
-              userId: context.actor.userId,
+              // The copy keeps the connections of whoever connected them for the original.
+              userId: assignment.userId,
               botId: duplicate.id,
               serverId: assignment.serverId,
               allowAllTools: assignment.allowAllTools,
@@ -342,17 +365,18 @@ export function botsRoutes(ctx: RouterContext) {
         return duplicate;
       }),
       reorder: authed.bots.reorder.handler(async ({ context, input }) => {
+        await requireSpacePermission(deps.prisma, context.actor, "manage_agents");
         await repos.reorderBots(context.actor, input.botIds);
         return { ok: true as const };
       }),
       update: authed.bots.update.handler(async ({ context, input }) => {
         const existing = await repos.getBot(context.actor, input.botId);
+        await manageAgent(context.actor, existing);
         if (input.sectionId) {
           const section = await deps.prisma.botSection.findFirst({
             where: {
               id: input.sectionId,
               spaceId: context.actor.spaceId,
-              userId: context.actor.userId,
             },
             select: { id: true },
           });
@@ -457,6 +481,7 @@ export function botsRoutes(ctx: RouterContext) {
       }),
       restoreInstructions: authed.bots.restoreInstructions.handler(async ({ context, input }) => {
         const bot = await repos.getBot(context.actor, input.botId);
+        await manageAgent(context.actor, bot);
         if (!bot.thread) throw new IsolationError();
         try {
           await commitBotUpdate({
@@ -478,6 +503,7 @@ export function botsRoutes(ctx: RouterContext) {
       }),
       setComputer: authed.bots.setComputer.handler(async ({ context, input }) => {
         const bot = await repos.getBot(context.actor, input.botId);
+        await manageAgent(context.actor, bot);
         if (!bot.computer) throw new IsolationError();
         const currentMode = bot.computer.scope === "dedicated" ? "dedicated" : "team";
         if (currentMode === input.mode) {
@@ -543,6 +569,7 @@ export function botsRoutes(ctx: RouterContext) {
       }),
       archive: authed.bots.archive.handler(async ({ context, input }) => {
         const bot = await repos.getBot(context.actor, input.botId, { includeArchived: true });
+        await manageAgent(context.actor, bot);
         await archiveBot(
           {
             prisma: deps.prisma,
@@ -559,6 +586,7 @@ export function botsRoutes(ctx: RouterContext) {
       }),
       restore: authed.bots.restore.handler(async ({ context, input }) => {
         const bot = await repos.getBot(context.actor, input.botId, { includeArchived: true });
+        await manageAgent(context.actor, bot);
         if (!bot.archivedAt) return { ok: true as const };
         try {
           if (bot.computer) {
@@ -576,11 +604,16 @@ export function botsRoutes(ctx: RouterContext) {
         return { ok: true as const };
       }),
       remove: authed.bots.remove.handler(async ({ context, input }) => {
+        await manageAgent(
+          context.actor,
+          await repos.getBot(context.actor, input.botId, { includeArchived: true }),
+        );
         await removeBot(context.actor, input.botId, { deleteMemories: input.deleteMemories });
         return { ok: true as const };
       }),
       rotateWebhookSecret: authed.bots.rotateWebhookSecret.handler(async ({ context, input }) => {
         const bot = await repos.getBot(context.actor, input.botId);
+        await manageAgent(context.actor, bot);
         const plaintext = randomBytes(32).toString("base64url");
         const stored = await deps.secrets.put(plaintext, {
           operationId: "bots.rotateWebhookSecret",
@@ -624,6 +657,7 @@ export function botsRoutes(ctx: RouterContext) {
     },
     groups: {
       create: authed.groups.create.handler(async ({ context, input }) => {
+        await requireSpacePermission(deps.prisma, context.actor, "create_channels");
         try {
           return await groupRepos.createGroup(context.actor, input);
         } catch (error) {
@@ -649,6 +683,7 @@ export function botsRoutes(ctx: RouterContext) {
         };
       }),
       duplicate: authed.groups.duplicate.handler(async ({ context, input }) => {
+        await requireSpacePermission(deps.prisma, context.actor, "create_channels");
         const source = await groupRepos.getGroup(context.actor, input.groupId);
         try {
           return await groupRepos.createGroup(context.actor, {
@@ -660,12 +695,12 @@ export function botsRoutes(ctx: RouterContext) {
         }
       }),
       update: authed.groups.update.handler(async ({ context, input }) => {
+        await manageChannel(context.actor, input.groupId);
         if (input.sectionId) {
           const section = await deps.prisma.botSection.findFirst({
             where: {
               id: input.sectionId,
               spaceId: context.actor.spaceId,
-              userId: context.actor.userId,
             },
             select: { id: true },
           });
@@ -680,6 +715,7 @@ export function botsRoutes(ctx: RouterContext) {
         return updated.group;
       }),
       archive: authed.groups.archive.handler(async ({ context, input }) => {
+        await manageChannel(context.actor, input.groupId);
         const archived = await groupRepos.archiveGroup(context.actor, input.groupId);
         await Promise.all(
           archived.cancelledRunIds.map((runId) =>
@@ -720,6 +756,7 @@ export function botsRoutes(ctx: RouterContext) {
         return { ok: true as const };
       }),
       restore: authed.groups.restore.handler(async ({ context, input }) => {
+        await manageChannel(context.actor, input.groupId);
         try {
           await groupRepos.restoreGroup(context.actor, input.groupId);
         } catch (error) {
@@ -728,6 +765,7 @@ export function botsRoutes(ctx: RouterContext) {
         return { ok: true as const };
       }),
       remove: authed.groups.remove.handler(async ({ context, input }) => {
+        await manageChannel(context.actor, input.groupId);
         const removed = await groupRepos.removeGroup(context.actor, input.groupId);
         const cleanup = await Promise.allSettled(
           removed.artifactStorageKeys.map((storageKey) =>
@@ -783,16 +821,20 @@ export function botsRoutes(ctx: RouterContext) {
     },
     botSecrets: {
       list: authed.botSecrets.list.handler(async ({ context, input }) => {
+        // Names and sites only, never values, so every member may see what an agent can sign in to.
         const bot = await repos.getBot(context.actor, input.botId);
-        const rows = await listBotSecretMetadata(
-          deps.prisma,
-          botSecretScope(context.actor, bot.id),
-        );
+        const rows = await listBotSecretMetadata(deps.prisma, botSecretScope(context.actor, bot));
         return rows.map(botSecretMetadataDto);
       }),
       put: authed.botSecrets.put.handler(async ({ context, input }) => {
         const bot = await repos.getBot(context.actor, input.botId);
-        const scope = botSecretScope(context.actor, bot.id);
+        await requireCreatorOrPermission(
+          deps.prisma,
+          context.actor,
+          bot.userId,
+          "manage_connections",
+        );
+        const scope = botSecretScope(context.actor, bot);
         // A pasted page URL is saved under its site. One with a username or password is left
         // as typed, so the origin rule turns it down and the person can fix it.
         const site = pageUrlOrigin(input.destination.origin, {
@@ -816,7 +858,13 @@ export function botsRoutes(ctx: RouterContext) {
       }),
       remove: authed.botSecrets.remove.handler(async ({ context, input }) => {
         const bot = await repos.getBot(context.actor, input.botId);
-        await forgetBotSecret(deps.prisma, botSecretScope(context.actor, bot.id), input.name);
+        await requireCreatorOrPermission(
+          deps.prisma,
+          context.actor,
+          bot.userId,
+          "manage_connections",
+        );
+        await forgetBotSecret(deps.prisma, botSecretScope(context.actor, bot), input.name);
         return { ok: true as const };
       }),
     },

@@ -557,6 +557,7 @@ export function reduceThreadSnapshot(
       botId: event.botId,
       runId: event.runId,
       callId: typeof event.payload.callId === "string" ? event.payload.callId : known?.callId,
+      ...authorMetadata(event.payload, known),
       routineName:
         typeof event.payload.routineName === "string"
           ? event.payload.routineName
@@ -575,6 +576,21 @@ export function reduceThreadSnapshot(
     return { ...prev, cursor: event.seq, messages: upsertMessageById(without, next) };
   }
   return prev;
+}
+
+/** Who wrote a user message, from the live event; an update that names nobody keeps what is known. */
+function authorMetadata(payload: Record<string, unknown>, known?: ThreadMessage) {
+  const authorUserId =
+    typeof payload.authorUserId === "string" ? payload.authorUserId : known?.authorUserId;
+  if (!authorUserId) return {};
+  return {
+    authorUserId,
+    authorName: typeof payload.authorName === "string" ? payload.authorName : known?.authorName,
+    authorImage:
+      typeof payload.authorImage === "string" || payload.authorImage === null
+        ? payload.authorImage
+        : known?.authorImage,
+  };
 }
 
 function updateMemberStatus(

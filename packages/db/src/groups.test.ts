@@ -15,6 +15,7 @@ describe("listSpaceGroupsForSpaces", () => {
         updatedAt: new Date("2026-08-20T00:00:00.000Z"),
         thread: {
           id: "thread-1",
+          userId: "user-1",
           unread: true,
         },
         members: [
@@ -31,6 +32,8 @@ describe("listSpaceGroupsForSpaces", () => {
       },
     ]);
     const repos = createGroupRepos({
+      spaceMember: { findMany: vi.fn(async () => [{ spaceId: "workspace-2" }]) },
+      threadMemberRead: { findMany: vi.fn(async () => []) },
       chatGroup: { findMany },
       $queryRaw: vi.fn(async () => [
         {
@@ -291,7 +294,6 @@ describe("archiveGroup", () => {
         where: {
           id: "group-1",
           spaceId: actor.spaceId,
-          userId: actor.userId,
         },
         select: { archivedAt: true, thread: { select: { id: true } } },
       }),
@@ -474,6 +476,12 @@ describe("createGroup", () => {
     // The bots come back in a different order than the caller asked for, so the recorded
     // order has to come from the input, not from the lookup.
     const prisma = {
+      spaceMember: {
+        findMany: vi.fn(async (args: { where: { spaceId: { in: string[] } } }) =>
+          args.where.spaceId.in.map((spaceId) => ({ spaceId })),
+        ),
+      },
+      threadMemberRead: { findMany: vi.fn(async () => []) },
       $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
       bot: {
         findMany: vi.fn(async () => [
@@ -539,6 +547,7 @@ describe("listGroups archived", () => {
     return {
       findMany,
       repos: createGroupRepos({
+        threadMemberRead: { findMany: vi.fn(async () => []) },
         chatGroup: { findMany },
         $queryRaw: vi.fn(async () => []),
       } as unknown as PrismaClient),
@@ -567,7 +576,6 @@ describe("listGroups archived", () => {
     };
     expect(query.where).toEqual({
       spaceId: "space-1",
-      userId: "user-1",
       OR: [
         { archivedAt: { not: null } },
         { members: { some: { bot: { archivedAt: { not: null } } } } },
@@ -585,7 +593,6 @@ describe("listGroups archived", () => {
     expect(listed.map((item) => item.id)).toEqual(["openable"]);
     expect(findMany.mock.calls[0]![0].where).toEqual({
       spaceId: "space-1",
-      userId: "user-1",
       archivedAt: null,
     });
   });

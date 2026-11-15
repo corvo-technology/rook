@@ -8,6 +8,7 @@ import {
 
 function transaction() {
   return {
+    $executeRaw: vi.fn(),
     thread: { update: vi.fn().mockResolvedValue({ nextMessageSeq: 1 }) },
     run: { findUnique: vi.fn().mockResolvedValue({ status: "running" }) },
     message: { create: vi.fn().mockResolvedValue({ id: "message-1" }) },

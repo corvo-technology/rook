@@ -26,8 +26,12 @@ import { persistPreparedSecret } from "./secret-persistence.js";
 import { readBodyCapped, withAbort } from "./web-ssrf.js";
 
 export type BotSecretScope = { userId: string; spaceId: string; botId: string };
-function scopeFields({ userId, spaceId, botId }: BotSecretScope): BotSecretScope {
-  return { userId, spaceId, botId };
+/**
+ * An agent's credentials belong to the agent, whoever created them: reads match the agent in its
+ * space, and `userId` only records who saved the value.
+ */
+function scopeFields({ spaceId, botId }: BotSecretScope): Omit<BotSecretScope, "userId"> {
+  return { spaceId, botId };
 }
 
 const metadata = { name: true, origin: true, auth: true } as const;
@@ -451,7 +455,13 @@ export async function prepareBotSecret(input: {
         await tx.botSecret.update({ where: { id }, data: { ciphertext: stored.ciphertext } });
       else
         await tx.botSecret.create({
-          data: { id, ...scopeFields(scope), ...destination, ciphertext: stored.ciphertext },
+          data: {
+            id,
+            userId: scope.userId,
+            ...scopeFields(scope),
+            ...destination,
+            ciphertext: stored.ciphertext,
+          },
         });
     },
   };

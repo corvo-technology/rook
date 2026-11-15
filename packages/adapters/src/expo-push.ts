@@ -168,7 +168,9 @@ export class ExpoPushProvider implements NotificationProvider {
    * Neither is an Expo acceptance, so callers must not record a reminder.
    */
   async deliver(message: NotificationMessage, context: AdapterContext): Promise<ExpoPushDelivery> {
-    const device = await this.deliverableDevice(context.userId);
+    // The member who started the run is told, not the owner of the agent they talked to.
+    const recipientId = context.requestedByUserId ?? context.userId;
+    const device = await this.deliverableDevice(recipientId);
     if (!device) return "undeliverable";
     const { token } = device;
     const wording = localizedApprovalPush(message, device.locale);
@@ -201,7 +203,7 @@ export class ExpoPushProvider implements NotificationProvider {
         throw new Error("Expo push returned an invalid response.");
       }
       if (ticket?.details?.error === "DeviceNotRegistered") {
-        await this.tokens.remove(context.userId, credentialDigest(token));
+        await this.tokens.remove(recipientId, credentialDigest(token));
         return "undeliverable";
       }
       const failure =
@@ -210,7 +212,7 @@ export class ExpoPushProvider implements NotificationProvider {
         getLogger().error(failure);
         throw new Error(failure);
       }
-      if (ticket?.id) await this.scheduleReceiptCheck(context.userId, token, ticket.id);
+      if (ticket?.id) await this.scheduleReceiptCheck(recipientId, token, ticket.id);
       return "delivered";
     }
   }

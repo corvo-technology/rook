@@ -1,6 +1,6 @@
 import { runContinueJob, runJobKey } from "@corvo/adapter-kit";
 import { botContextUsage, settleCallRequest } from "@corvo/adapters";
-import type { ProductEvent } from "@corvo/contracts";
+import type { Actor, ProductEvent } from "@corvo/contracts";
 import {
   CALL_CLIENT_NONCE_PREFIX,
   callClientNonce,
@@ -22,6 +22,7 @@ import { getLogger } from "@corvo/logging";
 import { ORPCError } from "@orpc/server";
 import { approvalRefusal, approvalThreadId } from "../approval-access.js";
 import { listPinnedMessages, pinThreadMessage } from "../message-pins.js";
+import { requireSpacePermission } from "../space-owner.js";
 import { assertTeachingSendAllowed } from "../taught-skills.js";
 import { compressThread } from "../thread-context.js";
 import {
@@ -30,6 +31,7 @@ import {
   loadMessagePage,
   shouldForwardBackgroundThreadEvent,
   shouldForwardPeerThreadEvent,
+  withAuthor,
   withEventRoutineName,
 } from "../thread-message-pages.js";
 import {
@@ -68,6 +70,7 @@ const HANG_UP_PROMPT =
 
 export function threadsRoutes(ctx: RouterContext) {
   const { deps, authed, callsEnabled } = ctx;
+  const talk = (actor: Actor) => requireSpacePermission(deps.prisma, actor, "talk_to_agents");
   return {
     threads: {
       head: authed.threads.head.handler(async ({ context, input }) => {
@@ -109,6 +112,10 @@ export function threadsRoutes(ctx: RouterContext) {
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);
         const peerRunCache = new Map<string, Promise<boolean>>();
         const backgroundRunCache = new Map<string, Promise<boolean>>();
+        const authorCache = new Map<
+          string,
+          Promise<{ name: string; image: string | null } | null>
+        >();
         const routineNameCache = new Map<string, Promise<string | undefined>>();
         const follow = deps.events.follow(target.threadId, input.cursor, context.signal);
         // A half-open stream looks identical to an idle one, so punctuate silence:
@@ -158,7 +165,11 @@ export function threadsRoutes(ctx: RouterContext) {
             } else if (await isBackgroundRun(deps.prisma, event.runId, backgroundRunCache)) {
               if (!shouldForwardBackgroundThreadEvent(event)) continue;
             }
-            yield await withEventRoutineName(deps.prisma, event, routineNameCache);
+            yield await withAuthor(
+              deps.prisma,
+              await withEventRoutineName(deps.prisma, event, routineNameCache),
+              authorCache,
+            );
           }
         } finally {
           // Not awaited: closing can queue behind a read that the abort has not landed on yet.
@@ -166,6 +177,7 @@ export function threadsRoutes(ctx: RouterContext) {
         }
       }),
       send: authed.threads.send.handler(async ({ context, input }) => {
+        await talk(context.actor);
         const setup = await modelSetup(deps, context.actor);
         if (setup.needsModel) {
           throw new ORPCError("BAD_REQUEST", { message: MODEL_REQUIRED_SEND_ERROR });
@@ -202,6 +214,7 @@ export function threadsRoutes(ctx: RouterContext) {
         );
       }),
       react: authed.threads.react.handler(async ({ context, input }) => {
+        await talk(context.actor);
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);
         // Without a model or while teaching, the reaction is still saved; it just starts no turn.
         const mayStartTurn =
@@ -242,11 +255,13 @@ export function threadsRoutes(ctx: RouterContext) {
         return { messages: await listPinnedMessages(deps.prisma, target) };
       }),
       stop: authed.threads.stop.handler(async ({ context, input }) => {
+        await talk(context.actor);
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);
         await stopThreadRuns(deps, context.actor, target);
         return { ok: true as const };
       }),
       retry: authed.threads.retry.handler(async ({ context, input }) => {
+        await talk(context.actor);
         const setup = await modelSetup(deps, context.actor);
         if (setup.needsModel) {
           throw new ORPCError("BAD_REQUEST", { message: MODEL_REQUIRED_SEND_ERROR });
@@ -318,6 +333,7 @@ export function threadsRoutes(ctx: RouterContext) {
         return { ok: true as const };
       }),
       followUp: authed.threads.followUp.handler(async ({ context, input }) => {
+        await talk(context.actor);
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);
         if (target.kind === "bot") {
           await assertTeachingSendAllowed(deps.prisma, context.actor.spaceId, target.botId);
@@ -362,6 +378,7 @@ export function threadsRoutes(ctx: RouterContext) {
           const message = await createThreadMessageInTransaction(tx, {
             threadId: target.threadId,
             role: "user",
+            authorUserId: context.actor.userId,
             blocks,
             clientNonce: input.clientNonce,
           });
@@ -416,7 +433,12 @@ export function threadsRoutes(ctx: RouterContext) {
             botId,
             type: "thread.message.created",
             runId: run?.id ?? active?.id,
-            payload: { messageId: message.id, role: "user", blocks },
+            payload: {
+              messageId: message.id,
+              role: "user",
+              blocks,
+              authorUserId: context.actor.userId,
+            },
           });
           await touchGroupUpdatedAt(tx, target.groupId);
           return { runId: run?.id, eventSeq: event.seq, message };

@@ -294,6 +294,7 @@ function fixture({
       findUniqueOrThrow: vi.fn(async () => ({
         ...instructionState,
         id: run.botId,
+        userId: run.userId,
         name: bot.name,
         title: bot.title,
         description: bot.description,
@@ -330,6 +331,7 @@ function fixture({
       update: vi.fn(),
       updateMany: vi.fn(async () => ({ count: 1 })),
     },
+    $executeRaw: vi.fn(),
     thread: {
       findUniqueOrThrow: vi.fn(async () => ({ id: run.threadId, groupId: null })),
       update: vi.fn(async () => ({ nextMessageSeq: 2, nextEventSeq: 2 })),
@@ -597,6 +599,7 @@ function fixture({
       };
       const tx = {
         $queryRaw: vi.fn(async () => []),
+        $executeRaw: vi.fn(),
         thread: { update: vi.fn(async () => ({ nextMessageSeq: 2, nextEventSeq: 2 })) },
         message: {
           create: vi.fn(async () => inboundMessage),

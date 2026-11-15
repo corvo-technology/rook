@@ -8,7 +8,13 @@ export interface AdapterContext {
   operationId: string;
   traceId: string;
   spaceId: string;
+  /**
+   * Whose connected accounts, servers and secrets the work acts with. In a run this is the
+   * agent's owner, so a shared agent keeps its tools for every member who talks to it.
+   */
   userId: string;
+  /** The member who started the run, for who is notified and who is charged. */
+  requestedByUserId?: string;
   botId?: string;
   runId?: string;
   /** Opaque fence for releasing a graphical screen without tearing down its replacement. */

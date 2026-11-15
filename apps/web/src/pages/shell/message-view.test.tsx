@@ -578,6 +578,57 @@ it("sets the person's own message in the column of a channel, with no bubble", (
   expect(bubble?.className).not.toContain("bg-chat-user");
 });
 
+function renderUserMessage(authorName?: string) {
+  const message: ThreadMessage = {
+    id: "message",
+    threadId: "thread",
+    seq: 1,
+    role: "user",
+    createdAt: new Date().toISOString(),
+    blocks: [{ kind: "text", text: "Can you check the invoice?" }],
+  };
+  act(() =>
+    root.render(
+      <MessageView
+        artifactTarget={{ botId: "parent" }}
+        canAnswer={false}
+        canDismiss={false}
+        message={message}
+        authorName={authorName}
+        onAnswer={vi.fn()}
+        onOpenBot={vi.fn()}
+        onOpenPeerMessages={vi.fn()}
+        onTogglePeerReplies={vi.fn()}
+        peerBot={missingBot}
+        onRefresh={vi.fn()}
+        onBotChanged={vi.fn()}
+        onAddRoutine={vi.fn()}
+        voiceReady={false}
+        speaking={false}
+        onSpeak={vi.fn()}
+        onOpenComputer={vi.fn()}
+        showToolActivity={false}
+        onReply={vi.fn()}
+        onMarkUnread={vi.fn()}
+        onReact={vi.fn()}
+      />,
+    ),
+  );
+}
+
+it("names the teammate who wrote a message in a shared conversation", () => {
+  renderUserMessage("Maya");
+  expect(container.textContent).toContain("Maya");
+  expect(container.querySelector('[data-testid="message-user-bubble"]')?.textContent).toBe(
+    "Can you check the invoice?",
+  );
+});
+
+it("shows your own message, and older ones that name nobody, as before", () => {
+  renderUserMessage(undefined);
+  expect(container.textContent).toBe("Can you check the invoice?");
+});
+
 it("names the routine behind a message beside the agent and the time", () => {
   mountReply("Cora", false, { message: { routineName: "Conciliação diária" } as ThreadMessage });
   const badge = container.querySelector('[data-testid="routine-badge"]');

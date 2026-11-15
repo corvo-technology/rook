@@ -765,6 +765,7 @@ model Thread {
   /// Highest message seq the user has read; the "New" divider goes after it. -1 = none read.
   lastReadSeq                    Int                   @default(-1)
   messages                       Message[]
+  memberReads                    ThreadMemberRead[]
   events                         Event[]
   tasks                          Task[]
   runs                           Run[]
@@ -773,6 +774,22 @@ model Thread {
 
   @@index([spaceId])
   @@map("threads")
+}
+
+/// Read state of a shared conversation for every member except its creator, whose state stays on the thread.
+model ThreadMemberRead {
+  threadId    String
+  thread      Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  spaceId     String
+  userId      String
+  unread      Boolean  @default(false)
+  /// Highest message seq this member has read; the "New" divider goes after it. -1 = none read.
+  lastReadSeq Int      @default(-1)
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  @@id([threadId, userId])
+  @@index([spaceId, userId])
+  @@map("thread_member_reads")
 }
 
 model Message {
@@ -791,6 +808,8 @@ model Message {
   replies               Message[]         @relation("MessageReplies")
   runId                 String?
   clientNonce           String?
+  /// The member who wrote a user message in a shared conversation; null on older rows, which belong to the thread's creator.
+  authorUserId          String?
   /// How a group message that named nobody was routed (strategy, scores, picked ids, reason, error).
   /// Kept for debugging, and to tell a run the router woke from one a mention or a DM started.
   routing               Json?

@@ -490,6 +490,10 @@ export const ThreadMessageSchema = z.object({
   runId: Id.optional(),
   /** Set when the message was sent from a live voice call; groups one call's transcript. */
   callId: z.string().optional(),
+  /** Who wrote a user message in a shared conversation; absent on older messages. */
+  authorUserId: Id.optional(),
+  authorName: z.string().optional(),
+  authorImage: z.string().nullable().optional(),
   /** The routine whose run wrote this message; absent for anything a person or a chat started. */
   routineName: z.string().optional(),
   /** When the message was pinned to the channel; absent when it is not pinned. */

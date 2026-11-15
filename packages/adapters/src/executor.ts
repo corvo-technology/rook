@@ -456,6 +456,13 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 .catch(() => [])
             : [],
         );
+        // Connections, servers and secrets belong to the agent's owner, not to the member talking.
+        const agentUserId = (
+          await deps.prisma.bot.findUniqueOrThrow({
+            where: { id: run.botId },
+            select: { userId: true },
+          })
+        ).userId;
         const [
           bot,
           thread,
@@ -482,8 +489,10 @@ export function createRunExecutor(deps: ExecutorDeps) {
             ? loadBotMessageContext(deps.prisma, run.sourceMessageId)
             : Promise.resolve(undefined),
           deps.prisma.task.findUniqueOrThrow({ where: { id: run.taskId } }),
+          // The agent acts with the accounts its owner connected, for every member who talks to
+          // it; a member's own connections are never lent to it.
           deps.prisma.connection.findMany({
-            where: { userId: run.userId, spaceId: run.spaceId },
+            where: { userId: agentUserId, spaceId: run.spaceId },
             select: {
               id: true,
               connectorId: true,
@@ -575,12 +584,15 @@ export function createRunExecutor(deps: ExecutorDeps) {
         );
         let liveSlugs: string[] = [];
         if (needsLivePluginSync(composioRows)) {
-          const listing = await loadLivePluginSlugs(deps.listConnectedPluginSlugs, run.userId);
+          const listing = await loadLivePluginSlugs(deps.listConnectedPluginSlugs, agentUserId);
           if (listing.ok) {
             liveSlugs = listing.slugs;
-            await persistLivePluginConnections(deps.prisma, run, composioRows, listing.slugs).catch(
-              () => undefined,
-            );
+            await persistLivePluginConnections(
+              deps.prisma,
+              { spaceId: run.spaceId, userId: agentUserId },
+              composioRows,
+              listing.slugs,
+            ).catch(() => undefined);
           }
         }
         const connectedComposio = mergeConnectedPlugins(composioRows, liveSlugs);
@@ -599,7 +611,8 @@ export function createRunExecutor(deps: ExecutorDeps) {
           operationId: runId,
           traceId: runId,
           spaceId: run.spaceId,
-          userId: run.userId,
+          userId: agentUserId,
+          requestedByUserId: run.userId,
           botId: bot.id,
           runId,
           screenLeaseId: screenLeaseIdForRun(computerLease, runId, fence),
@@ -1267,7 +1280,8 @@ export function createRunExecutor(deps: ExecutorDeps) {
         /** Fleet tools take every scope from the run, never from arguments. */
         const fleetRun: FleetRun = {
           spaceId: run.spaceId,
-          userId: run.userId,
+          userId: agentUserId,
+          requestedByUserId: run.userId,
           botId: bot.id,
           groupId: thread.groupId ?? null,
           threadId: thread.id,
@@ -1436,7 +1450,6 @@ export function createRunExecutor(deps: ExecutorDeps) {
             : deps.prisma.bot.findMany({
                 where: {
                   spaceId: run.spaceId,
-                  userId: run.userId,
                   archivedAt: null,
                   id: { not: bot.id },
                   thread: { isNot: null },

@@ -130,6 +130,7 @@ describe("tickRoutineWatch", () => {
     const updateMany = vi.fn(async () => ({ count: 1 }));
     const messages: Array<{ role: string; blocks: unknown }> = [];
     const tx = {
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn(async () => ({ nextMessageSeq: 1, nextEventSeq: 1 })) },
       message: {
         create: vi.fn(async ({ data }: { data: { role: string; blocks: unknown } }) => {
@@ -429,6 +430,7 @@ describe("tickRoutineWatch on a computer", () => {
     const updateMany = vi.fn(async () => ({ count: 1 }));
     const messages: unknown[] = [];
     const tx = {
+      $executeRaw: vi.fn(),
       thread: { update: vi.fn(async () => ({ nextMessageSeq: 1, nextEventSeq: 1 })) },
       message: {
         create: vi.fn(async ({ data }: { data: unknown }) => {

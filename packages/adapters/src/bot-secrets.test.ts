@@ -116,7 +116,8 @@ describe("authenticated secret requests", () => {
     },
   );
 
-  it.each(["userId", "spaceId", "botId"] as const)(
+  // An agent's credentials belong to the agent, whichever member of the space is talking to it.
+  it.each(["spaceId", "botId"] as const)(
     "denies a different %s before decrypting or sending",
     async (key) => {
       const { input, fetch } = await fixture();

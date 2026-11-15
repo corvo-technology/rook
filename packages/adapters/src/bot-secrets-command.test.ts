@@ -431,8 +431,12 @@ describe("shell command environment", () => {
     expect(await loadBotCommandEnvironment(db.prisma, secretStore, scope)).toEqual({
       CLI_TOKEN: "fake-cli-token-1",
     });
+    // The variables are the agent's, whichever member of the space is talking to it.
     expect(
       await loadBotCommandEnvironment(db.prisma, secretStore, { ...scope, userId: "user-2" }),
+    ).toEqual({ CLI_TOKEN: "fake-cli-token-1" });
+    expect(
+      await loadBotCommandEnvironment(db.prisma, secretStore, { ...scope, spaceId: "space-2" }),
     ).toEqual({});
   });
 });

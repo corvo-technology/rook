@@ -61,7 +61,7 @@ export async function handoffToGroupBot(
       throw error;
     }
     const group = await tx.chatGroup.findFirst({
-      where: { id: groupId, spaceId: run.spaceId, userId: run.userId, archivedAt: null },
+      where: { id: groupId, spaceId: run.spaceId, archivedAt: null },
       include: {
         thread: { select: { id: true } },
         members: {
@@ -295,16 +295,15 @@ type DirectoryGroup = {
   members: { id: string; name: string }[];
 };
 
-/** Only the current bot's active groups in the same owner/space are discoverable. */
+/** Only the current bot's active groups in the same space are discoverable. */
 export async function loadBotGroups(
   prisma: PrismaClient,
   actor: { botId: string; userId: string; spaceId: string },
-  /** `allGroups`: a squad-routing bot sees every active group of the owner in this space. */
+  /** `allGroups`: a squad-routing bot sees every active group in this space. */
   options: { allGroups?: boolean } = {},
 ): Promise<DirectoryGroup[]> {
   const groups = await prisma.chatGroup.findMany({
     where: {
-      userId: actor.userId,
       spaceId: actor.spaceId,
       archivedAt: null,
       members: options.allGroups

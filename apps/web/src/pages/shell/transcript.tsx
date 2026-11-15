@@ -113,7 +113,10 @@ export const Transcript = memo(function Transcript({
   starters,
   onStarter,
   app,
+  currentUserId,
 }: {
+  /** Who is reading; a user message from someone else in a shared conversation shows its author. */
+  currentUserId?: string;
   /** Who the chat is with, shown with the starters while the chat has no message. */
   intro?: { id: string; name: string; title: string; color: string };
   /** Tappable first messages, shown only while the chat has no message. */
@@ -648,6 +651,14 @@ export const Transcript = memo(function Transcript({
                       onAnswer={onAnswer}
                       continued={continued.has(message.id)}
                       face={faces.get(message.id)}
+                      authorName={
+                        message.role === "user" &&
+                        message.authorName &&
+                        message.authorUserId &&
+                        message.authorUserId !== currentUserId
+                          ? message.authorName
+                          : undefined
+                      }
                       speakerName={
                         peerReceipt
                           ? undefined

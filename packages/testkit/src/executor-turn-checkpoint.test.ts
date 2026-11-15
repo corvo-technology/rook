@@ -143,6 +143,7 @@ function fixture(
         update: async () => ({}),
         findUniqueOrThrow: async () => ({
           id: run.botId,
+          userId: run.userId,
           name: "Fixture",
           title: "Fixture",
           description: "Fixture",
@@ -166,6 +167,7 @@ function fixture(
         updateMany: async () => ({ count: 1 }),
         count: async () => 2,
       },
+      $executeRaw: async () => 0,
       thread: {
         update: async () => ({ nextEventSeq: 1, nextMessageSeq: 1 }),
         findUniqueOrThrow: async () => ({

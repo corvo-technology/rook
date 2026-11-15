@@ -400,7 +400,6 @@ export class McpConnector implements ConnectorProvider {
       where: {
         botId: context.botId,
         spaceId: context.spaceId,
-        userId: context.userId,
         server: { enabled: true },
       },
       include: { server: true },
@@ -600,7 +599,6 @@ export class McpConnector implements ConnectorProvider {
         botId: context.botId,
         serverId: call.route.resourceId,
         spaceId: context.spaceId,
-        userId: context.userId,
         server: { enabled: true },
       },
       include: { server: true },

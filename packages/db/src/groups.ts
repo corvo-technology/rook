@@ -5,7 +5,7 @@ import { cancelRunsInTransaction } from "./cancel-runs.js";
 import type { Prisma, PrismaClient } from "./client.js";
 import { expireComputerExecutionLeases, restoreBotUnderComputerQuota } from "./computers.js";
 import { withNewestThreadMessages } from "./preview-messages.js";
-import { IsolationError } from "./scope.js";
+import { IsolationError, memberSpaceIds } from "./scope.js";
 import { lockSpaceForContentCreation } from "./spaces.js";
 import {
   activeRunSelection,
@@ -13,6 +13,7 @@ import {
   previewFromBlocks,
   primaryActiveRun,
 } from "./thread-listing.js";
+import { memberUnreadByThread } from "./thread-reads.js";
 import { withTransactionRetry } from "./transaction-retry.js";
 
 type GroupRecord = {
@@ -115,7 +116,6 @@ async function assertOwnedBots(
     where: {
       id: { in: unique },
       spaceId: actor.spaceId,
-      userId: actor.userId,
       archivedAt: null,
     },
     select: { id: true, name: true, color: true },
@@ -289,14 +289,32 @@ async function attachNewestGroupMessage<T extends { thread: { id: string } | nul
 }
 
 export function createGroupRepos(prisma: PrismaClient) {
+  /** Shows each group's unread dot as this member sees it, not as its creator left it. */
+  async function withMemberUnread<
+    T extends { thread: { id: string; userId: string; unread: boolean } | null },
+  >(actor: Actor, groups: T[]): Promise<T[]> {
+    const unreadByThread = await memberUnreadByThread(
+      prisma,
+      actor.userId,
+      groups.flatMap((group) => (group.thread ? [group.thread] : [])),
+    );
+    return groups.map((group) => ({
+      ...group,
+      thread: group.thread && {
+        ...group.thread,
+        unread: unreadByThread.get(group.thread.id) ?? false,
+      },
+    }));
+  }
+
   async function listSpaceGroupsForSpaces(actor: Actor, spaceIds: string[]): Promise<SpaceGroup[]> {
-    if (spaceIds.length === 0) return [];
+    const memberSpaces = await memberSpaceIds(prisma, actor.userId, spaceIds);
+    if (memberSpaces.length === 0) return [];
     const groups = await withNewestThreadMessages(
       prisma,
       await prisma.chatGroup.findMany({
         where: {
-          spaceId: { in: spaceIds },
-          userId: actor.userId,
+          spaceId: { in: memberSpaces },
           archivedAt: null,
         },
         select: {
@@ -310,6 +328,7 @@ export function createGroupRepos(prisma: PrismaClient) {
           thread: {
             select: {
               id: true,
+              userId: true,
               unread: true,
             },
           },
@@ -319,9 +338,22 @@ export function createGroupRepos(prisma: PrismaClient) {
       }),
       1,
     );
+    const unreadByThread = await memberUnreadByThread(
+      prisma,
+      actor.userId,
+      groups.flatMap((group) => (group.thread ? [group.thread] : [])),
+    );
     return groups
       .filter((group) => hasMinimumActiveMembers(group.members))
-      .map((group) => mapSpaceGroup(group));
+      .map((group) =>
+        mapSpaceGroup({
+          ...group,
+          thread: group.thread && {
+            ...group.thread,
+            unread: unreadByThread.get(group.thread.id) ?? false,
+          },
+        }),
+      );
   }
 
   /**
@@ -334,7 +366,6 @@ export function createGroupRepos(prisma: PrismaClient) {
       await prisma.chatGroup.findMany({
         where: {
           spaceId: actor.spaceId,
-          userId: actor.userId,
           OR: [
             { archivedAt: { not: null } },
             { members: { some: { bot: { archivedAt: { not: null } } } } },
@@ -345,7 +376,7 @@ export function createGroupRepos(prisma: PrismaClient) {
       }),
       1,
     );
-    return groups
+    return (await withMemberUnread(actor, groups))
       .filter(
         (group) =>
           group.archivedAt !== null ||
@@ -362,7 +393,6 @@ export function createGroupRepos(prisma: PrismaClient) {
         await prisma.chatGroup.findMany({
           where: {
             spaceId: actor.spaceId,
-            userId: actor.userId,
             archivedAt: null,
           },
           include: groupInclude,
@@ -370,7 +400,7 @@ export function createGroupRepos(prisma: PrismaClient) {
         }),
         1,
       );
-      return groups
+      return (await withMemberUnread(actor, groups))
         .filter((group) => hasMinimumActiveMembers(group.members))
         .map((group) => mapGroup(group as GroupRecord));
     },
@@ -382,13 +412,13 @@ export function createGroupRepos(prisma: PrismaClient) {
         where: {
           id: groupId,
           spaceId: actor.spaceId,
-          userId: actor.userId,
           ...(options.includeArchived ? {} : { archivedAt: null }),
         },
         include: groupInclude,
       });
       if (!group || !hasMinimumActiveMembers(group.members)) throw new IsolationError();
-      return (await attachNewestGroupMessage(prisma, group)) as GroupRecord;
+      const [withUnread] = await withMemberUnread(actor, [group]);
+      return (await attachNewestGroupMessage(prisma, withUnread!)) as GroupRecord;
     },
 
     async getGroupTarget(actor: Actor, groupId: string) {
@@ -396,7 +426,6 @@ export function createGroupRepos(prisma: PrismaClient) {
         where: {
           id: groupId,
           spaceId: actor.spaceId,
-          userId: actor.userId,
           archivedAt: null,
         },
         include: groupTargetInclude,
@@ -464,7 +493,6 @@ export function createGroupRepos(prisma: PrismaClient) {
           where: {
             id: input.groupId,
             spaceId: actor.spaceId,
-            userId: actor.userId,
             archivedAt: null,
           },
           include: {
@@ -560,7 +588,6 @@ export function createGroupRepos(prisma: PrismaClient) {
           where: {
             id: groupId,
             spaceId: actor.spaceId,
-            userId: actor.userId,
           },
           select: { archivedAt: true, thread: { select: { id: true } } },
         });
@@ -673,7 +700,6 @@ export async function lockOwnedGroup(
     FROM chat_groups
     WHERE id = ${groupId}
       AND "spaceId" = ${actor.spaceId}
-      AND "userId" = ${actor.userId}
     FOR UPDATE
   `;
   if (locked.length !== 1) throw new IsolationError();

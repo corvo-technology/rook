@@ -36,6 +36,12 @@ const baseBot = {
 
 function reposFor(memoryScope: string | null) {
   const prisma = {
+    spaceMember: {
+      findMany: vi.fn(async (args: { where: { spaceId: { in: string[] } } }) =>
+        args.where.spaceId.in.map((spaceId) => ({ spaceId })),
+      ),
+    },
+    threadMemberRead: { findMany: vi.fn(async () => []) },
     bot: {
       findMany: vi.fn(async () => [{ ...baseBot, memoryScope }]),
     },
@@ -50,6 +56,12 @@ function reposFor(memoryScope: string | null) {
 describe("createRepos.listBots approval mode", () => {
   async function modeOf(approvalMode?: string | null) {
     const prisma = {
+      spaceMember: {
+        findMany: vi.fn(async (args: { where: { spaceId: { in: string[] } } }) =>
+          args.where.spaceId.in.map((spaceId) => ({ spaceId })),
+        ),
+      },
+      threadMemberRead: { findMany: vi.fn(async () => []) },
       bot: { findMany: vi.fn(async () => [{ ...baseBot, approvalMode }]) },
       run: { findMany: vi.fn(async () => []) },
       $queryRaw: vi.fn(async () => []),
@@ -72,6 +84,8 @@ describe("createRepos.listBots", () => {
     const queryRaw = vi.fn(async () => [] as unknown[]);
     queryRaw.mockResolvedValueOnce([{ id: "run-failed", threadId: "thread-1", status: "failed" }]);
     const repos = createRepos({
+      spaceMember: { findMany: vi.fn(async () => [{ spaceId: "ws-2" }]) },
+      threadMemberRead: { findMany: vi.fn(async () => []) },
       bot: { findMany },
       $queryRaw: queryRaw,
     } as unknown as PrismaClient);
@@ -86,6 +100,12 @@ describe("createRepos.listBots", () => {
 
   it("classifies initial preview runs once across bots, including non-peer results", async () => {
     const prisma = {
+      spaceMember: {
+        findMany: vi.fn(async (args: { where: { spaceId: { in: string[] } } }) =>
+          args.where.spaceId.in.map((spaceId) => ({ spaceId })),
+        ),
+      },
+      threadMemberRead: { findMany: vi.fn(async () => []) },
       bot: {
         findMany: vi.fn(async () =>
           ["one", "two"].map((id) => ({
@@ -118,6 +138,12 @@ describe("createRepos.listBots", () => {
 
   it("classifies unseen runs in older pages and retains negative results between pages", async () => {
     const prisma = {
+      spaceMember: {
+        findMany: vi.fn(async (args: { where: { spaceId: { in: string[] } } }) =>
+          args.where.spaceId.in.map((spaceId) => ({ spaceId })),
+        ),
+      },
+      threadMemberRead: { findMany: vi.fn(async () => []) },
       bot: {
         findMany: vi.fn(async () => [
           {
@@ -177,6 +203,12 @@ describe("createRepos.listBots", () => {
       },
     ]);
     const prisma = {
+      spaceMember: {
+        findMany: vi.fn(async (args: { where: { spaceId: { in: string[] } } }) =>
+          args.where.spaceId.in.map((spaceId) => ({ spaceId })),
+        ),
+      },
+      threadMemberRead: { findMany: vi.fn(async () => []) },
       bot: {
         findMany,
       },
@@ -222,6 +254,12 @@ describe("createRepos.listBots", () => {
 
   it("skips a peer-run preview tail when the receipt is outside the window", async () => {
     const prisma = {
+      spaceMember: {
+        findMany: vi.fn(async (args: { where: { spaceId: { in: string[] } } }) =>
+          args.where.spaceId.in.map((spaceId) => ({ spaceId })),
+        ),
+      },
+      threadMemberRead: { findMany: vi.fn(async () => []) },
       bot: {
         findMany: vi.fn(async () => [
           {
@@ -264,6 +302,12 @@ describe("createRepos.listBots", () => {
       { seq: 1, runId: "run-user", blocks: [{ kind: "text", text: "Older visible answer" }] },
     ]);
     const prisma = {
+      spaceMember: {
+        findMany: vi.fn(async (args: { where: { spaceId: { in: string[] } } }) =>
+          args.where.spaceId.in.map((spaceId) => ({ spaceId })),
+        ),
+      },
+      threadMemberRead: { findMany: vi.fn(async () => []) },
       bot: {
         findMany: vi.fn(async () => [
           {
@@ -313,6 +357,12 @@ describe("createRepos.listBots", () => {
       return peerWindows[windowIndex] ?? [];
     });
     const prisma = {
+      spaceMember: {
+        findMany: vi.fn(async (args: { where: { spaceId: { in: string[] } } }) =>
+          args.where.spaceId.in.map((spaceId) => ({ spaceId })),
+        ),
+      },
+      threadMemberRead: { findMany: vi.fn(async () => []) },
       bot: {
         findMany: vi.fn(async () => [
           {
@@ -344,6 +394,12 @@ describe("createRepos.listBots", () => {
 
   it("dates the row by its newest message, not the bot's last settings write", async () => {
     const prisma = {
+      spaceMember: {
+        findMany: vi.fn(async (args: { where: { spaceId: { in: string[] } } }) =>
+          args.where.spaceId.in.map((spaceId) => ({ spaceId })),
+        ),
+      },
+      threadMemberRead: { findMany: vi.fn(async () => []) },
       bot: {
         findMany: vi.fn(async () => [
           {
@@ -398,6 +454,7 @@ describe("createRepos.listSpaceBotsForSpaces", () => {
         parentBotId: null,
         thread: {
           id: "thread-2",
+          userId: "user-1",
           unread: true,
           runs: [{ id: "run-failed", status: "failed" }],
         },
@@ -405,6 +462,8 @@ describe("createRepos.listSpaceBotsForSpaces", () => {
       },
     ]);
     const repos = createRepos({
+      spaceMember: { findMany: vi.fn(async () => [{ spaceId: "ws-2" }]) },
+      threadMemberRead: { findMany: vi.fn(async () => []) },
       bot: { findMany },
       $queryRaw: vi
         .fn()
@@ -452,9 +511,7 @@ describe("createRepos.listSpaceBotsForSpaces", () => {
         }),
       }),
     );
-    expect(query.where).toEqual(
-      expect.objectContaining({ spaceId: { in: ["ws-2"] }, userId: actor.userId }),
-    );
+    expect(query.where).toEqual({ spaceId: { in: ["ws-2"] }, archivedAt: null });
     expect(query.select).not.toHaveProperty("description");
     expect(query.select).not.toHaveProperty("instructions");
     expect(query.select).not.toHaveProperty("computer");
@@ -471,6 +528,12 @@ describe("createRepos.reorderBots", () => {
       },
     };
     const prisma = {
+      spaceMember: {
+        findMany: vi.fn(async (args: { where: { spaceId: { in: string[] } } }) =>
+          args.where.spaceId.in.map((spaceId) => ({ spaceId })),
+        ),
+      },
+      threadMemberRead: { findMany: vi.fn(async () => []) },
       $transaction: vi.fn((run: (client: typeof tx) => Promise<void>) => run(tx)),
     };
     return { repos: createRepos(prisma as unknown as PrismaClient), update };
@@ -512,6 +575,12 @@ it("finds incoming calls independently of the sidebar message window", async () 
   ];
   const messageQuery = vi.fn(async () => [{ threadId: "thread-1", role: "bot", blocks }]);
   const prisma = {
+    spaceMember: {
+      findMany: vi.fn(async (args: { where: { spaceId: { in: string[] } } }) =>
+        args.where.spaceId.in.map((spaceId) => ({ spaceId })),
+      ),
+    },
+    threadMemberRead: { findMany: vi.fn(async () => []) },
     bot: {
       findMany: vi.fn(async () => [
         baseBot,

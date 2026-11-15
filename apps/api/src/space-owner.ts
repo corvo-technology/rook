@@ -34,3 +34,17 @@ export async function requireSpaceOwner(
 ): Promise<void> {
   if (!(await getSpaceMembership(prisma, actor))?.isOwner) throw new ORPCError("FORBIDDEN");
 }
+
+/** Whoever created the thing, or anyone holding the key, may change it. */
+export async function requireCreatorOrPermission(
+  prisma: PrismaClient,
+  actor: Pick<Actor, "spaceId" | "userId">,
+  createdBy: string,
+  key: SpacePermission,
+): Promise<void> {
+  const membership = await getSpaceMembership(prisma, actor);
+  // A creator who left the space no longer changes anything.
+  if (!membership) throw new ORPCError("FORBIDDEN");
+  if (createdBy === actor.userId) return;
+  if (!can(membership, key)) throw new ORPCError("FORBIDDEN");
+}

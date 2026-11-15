@@ -125,7 +125,6 @@ export function createAgentSkillsService(prisma: PrismaClient) {
       where: {
         id: skillId,
         spaceId: actor.spaceId,
-        userId: actor.userId,
       },
     });
     if (!row) throw new IsolationError();
@@ -135,7 +134,7 @@ export function createAgentSkillsService(prisma: PrismaClient) {
   return {
     async list(actor: Actor): Promise<Omit<AgentSkill, "content">[]> {
       const rows = await prisma.agentSkill.findMany({
-        where: { spaceId: actor.spaceId, userId: actor.userId },
+        where: { spaceId: actor.spaceId },
         orderBy: [{ name: "asc" }, { id: "asc" }],
       });
       return mergeBuiltinSkills(builtinCatalog(), rows.map(mapAgentSkill)).map(
@@ -145,7 +144,7 @@ export function createAgentSkillsService(prisma: PrismaClient) {
 
     async listWithContent(actor: Actor): Promise<AgentSkill[]> {
       const rows = await prisma.agentSkill.findMany({
-        where: { spaceId: actor.spaceId, userId: actor.userId },
+        where: { spaceId: actor.spaceId },
         orderBy: [{ name: "asc" }, { id: "asc" }],
       });
       return mergeBuiltinSkills(builtinCatalog(), rows.map(mapAgentSkill));
@@ -164,7 +163,6 @@ export function createAgentSkillsService(prisma: PrismaClient) {
       const rows = await prisma.agentSkill.findMany({
         where: {
           spaceId: actor.spaceId,
-          userId: actor.userId,
         },
         orderBy: [{ name: "asc" }, { id: "asc" }],
       });
@@ -183,7 +181,6 @@ export function createAgentSkillsService(prisma: PrismaClient) {
       const clash = await prisma.agentSkill.findFirst({
         where: {
           spaceId: actor.spaceId,
-          userId: actor.userId,
           name: { equals: resolved.name, mode: "insensitive" },
         },
       });
@@ -236,7 +233,6 @@ export function createAgentSkillsService(prisma: PrismaClient) {
         const clash = await prisma.agentSkill.findFirst({
           where: {
             spaceId: actor.spaceId,
-            userId: actor.userId,
             name: { equals: resolved.name, mode: "insensitive" },
             NOT: { id: existing.id },
           },
@@ -254,7 +250,6 @@ export function createAgentSkillsService(prisma: PrismaClient) {
           where: {
             id: existing.id,
             spaceId: actor.spaceId,
-            userId: actor.userId,
             source: "user",
           },
           data: {
@@ -279,7 +274,6 @@ export function createAgentSkillsService(prisma: PrismaClient) {
         where: {
           id: existing.id,
           spaceId: actor.spaceId,
-          userId: actor.userId,
         },
       });
       if (!row) throw new IsolationError();
@@ -295,7 +289,6 @@ export function createAgentSkillsService(prisma: PrismaClient) {
         where: {
           id: existing.id,
           spaceId: actor.spaceId,
-          userId: actor.userId,
           source: "user",
         },
       });

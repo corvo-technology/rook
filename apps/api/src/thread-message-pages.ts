@@ -1,4 +1,9 @@
-import type { MessageBlock, ThreadMessage, ThreadMessagePage } from "@corvo/contracts";
+import type {
+  MessageBlock,
+  ProductEvent,
+  ThreadMessage,
+  ThreadMessagePage,
+} from "@corvo/contracts";
 import { MessageBlock as MessageBlockSchema } from "@corvo/contracts";
 import {
   BACKGROUND_RUN_TRIGGERS,
@@ -111,8 +116,23 @@ export async function withRoutineNames(
       })
     : [];
   const names = new Map(runs.flatMap((run) => (run.routine ? [[run.id, run.routine.name]] : [])));
+  // Older rows name no author and show as before.
+  const authorIds = [
+    ...new Set(rows.flatMap((row) => (row.authorUserId ? [row.authorUserId] : []))),
+  ];
+  const users = authorIds.length
+    ? await prisma.user.findMany({
+        where: { id: { in: authorIds } },
+        select: { id: true, name: true, image: true },
+      })
+    : [];
+  const authors = new Map(users.map((user) => [user.id, user]));
   return rows.map((row) =>
-    toThreadMessage({ ...row, routineName: row.runId ? names.get(row.runId) : undefined }),
+    toThreadMessage({
+      ...row,
+      routineName: row.runId ? names.get(row.runId) : undefined,
+      author: row.authorUserId ? authors.get(row.authorUserId) : undefined,
+    }),
   );
 }
 
@@ -302,6 +322,9 @@ export function toThreadMessage(row: {
   clientNonce?: string | null;
   pinnedAt?: Date | null;
   routineName?: string;
+  /** Who wrote a user message, when it names an author; resolved by `withRoutineNames`. */
+  authorUserId?: string | null;
+  author?: { id: string; name: string; image: string | null };
   createdAt: Date;
 }): ThreadMessage {
   const parent = row.replyTo?.threadId === row.threadId ? row.replyTo : null;
@@ -330,7 +353,39 @@ export function toThreadMessage(row: {
     runId: row.runId ?? undefined,
     callId: callIdFromClientNonce(row.clientNonce),
     routineName: row.routineName,
+    ...(row.author
+      ? {
+          authorUserId: row.author.id,
+          authorName: row.author.name,
+          authorImage: row.author.image,
+        }
+      : {}),
     pinnedAt: row.pinnedAt?.toISOString(),
     createdAt: row.createdAt.toISOString(),
   };
+}
+
+/**
+ * A live user message names its author by id only; the stream adds their name and picture, so a
+ * teammate's message arrives with the same label a page load would give it.
+ */
+export async function withAuthor<E extends ProductEvent>(
+  prisma: MessageDb,
+  event: E,
+  cache: Map<string, Promise<{ name: string; image: string | null } | null>>,
+): Promise<E> {
+  const authorUserId = event.payload.authorUserId;
+  if (event.type !== "thread.message.created" || typeof authorUserId !== "string") return event;
+  let author = cache.get(authorUserId);
+  if (!author) {
+    author = prisma.user.findUnique({
+      where: { id: authorUserId },
+      select: { name: true, image: true },
+    });
+    cache.set(authorUserId, author);
+  }
+  const found = await author;
+  return found
+    ? { ...event, payload: { ...event.payload, authorName: found.name, authorImage: found.image } }
+    : event;
 }

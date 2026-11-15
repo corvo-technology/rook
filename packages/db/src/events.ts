@@ -511,6 +511,8 @@ export async function sendUserMessage(
       const message = await createThreadMessageInTransaction(tx, {
         threadId: input.threadId,
         role: "user",
+        // Only a person typing in the app is an author; webhooks and automations are not.
+        authorUserId: input.trigger === "follow_up" ? input.userId : undefined,
         blocks: input.blocks,
         clientNonce: input.clientNonce,
       });
@@ -683,7 +685,6 @@ export async function retryFailedRun(
         !failed ||
         failed.spaceId !== input.spaceId ||
         failed.threadId !== input.threadId ||
-        failed.userId !== input.userId ||
         failed.status !== "failed" ||
         !failed.sourceMessageId ||
         !isConversationalRun(failed.trigger)
@@ -712,7 +713,8 @@ export async function retryFailedRun(
           botId: failed.botId,
           threadId: failed.threadId,
           taskId: failed.taskId,
-          userId: failed.userId,
+          // Whoever retries starts the new run; credits and limits follow them.
+          userId: input.userId,
           status: "queued",
           trigger: failed.trigger,
           clientNonce,

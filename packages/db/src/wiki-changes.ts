@@ -475,14 +475,14 @@ export async function setWikiSettings(
   return { capture: row.capture, edits: row.edits as WikiSettings["edits"] };
 }
 
-/** One conversation's switch; false when the conversation is not this person's in this Space. */
+/** One conversation's switch; false when the conversation is not in this Space. Every member may flip it. */
 export async function setThreadWikiCapture(
   db: PrismaClient,
-  thread: { threadId: string; spaceId: string; userId: string },
+  thread: { threadId: string; spaceId: string },
   capture: boolean | null,
 ): Promise<boolean> {
   const { count } = await db.thread.updateMany({
-    where: { id: thread.threadId, spaceId: thread.spaceId, userId: thread.userId },
+    where: { id: thread.threadId, spaceId: thread.spaceId },
     data: { wikiCapture: capture },
   });
   return count === 1;

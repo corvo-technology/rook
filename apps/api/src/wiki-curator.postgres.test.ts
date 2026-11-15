@@ -365,12 +365,13 @@ describePostgres("the wiki curator procedures", () => {
         on: true,
       });
       const theirs = await call("linus", "wiki/capture/get", { groupId: group.groupId });
-      expect(theirs.status === 200 ? theirs.body.canChange : false).toBe(false);
-      const refused = await call("linus", "wiki/capture/set", {
+      // The conversation is the space's, so any member may switch it.
+      expect(theirs.status === 200 ? theirs.body.canChange : false).toBe(true);
+      const allowed = await call("linus", "wiki/capture/set", {
         groupId: group.groupId,
         capture: false,
       });
-      expect(refused.status).toBeGreaterThanOrEqual(400);
+      expect(allowed.status).toBe(200);
     });
   });
 

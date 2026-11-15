@@ -84,8 +84,16 @@ export type SpaceJoinRequest = z.infer<typeof SpaceJoinRequestSchema>;
 export const SpaceInviteLinkSchema = z.object({ link: z.string().nullable() });
 
 /** What the invited person sees before signing in; reachable only with the link's token. */
-export const InvitationPreviewSchema = z.object({
-  spaceName: z.string(),
-  inviterName: z.string(),
-  email: z.string(),
-});
+export const InvitationPreviewSchema = z.discriminatedUnion("state", [
+  z.object({
+    state: z.literal("pending"),
+    spaceName: z.string(),
+    inviterName: z.string(),
+    email: z.string(),
+    role: SpaceRoleSchema,
+    roleNames: z.array(z.string()),
+    hasAccount: z.boolean(),
+  }),
+  z.object({ state: z.literal("accepted") }),
+  z.object({ state: z.literal("expired"), inviterName: z.string() }),
+]);

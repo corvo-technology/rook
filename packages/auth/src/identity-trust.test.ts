@@ -393,14 +393,26 @@ describe("identity trust through auth endpoints", () => {
     vi.mocked(bootstrapUserSpace).mockClear();
     const response = await f.signup();
     expect(response.status).toBe(200);
+    // Signing in never trusts an unconfirmed address, with or without a mail provider.
     expect(acceptInvitationsForUser).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ email: expect.any(String) }),
-      expect.anything(),
     );
     expect(bootstrapUserSpace).not.toHaveBeenCalled();
     vi.mocked(hasPendingInvitation).mockResolvedValue(false);
     vi.mocked(acceptInvitationsForUser).mockResolvedValue([]);
+  });
+
+  it("does not give a session to an unconfirmed address that only an invitation admitted", async () => {
+    const f = fixture();
+    f.policy.signupsEnabled = false;
+    vi.mocked(hasPendingInvitation).mockResolvedValue(true);
+    vi.mocked(acceptInvitationsForUser).mockResolvedValue([]);
+    vi.mocked(bootstrapUserSpace).mockClear();
+    const response = await f.signup();
+    expect(response.status).not.toBe(200);
+    expect(bootstrapUserSpace).not.toHaveBeenCalled();
+    vi.mocked(hasPendingInvitation).mockResolvedValue(false);
   });
 
   it("keeps registration closed for an address nobody invited", async () => {

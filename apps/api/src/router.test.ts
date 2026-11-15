@@ -30,6 +30,7 @@ import { createRouterClient } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { mainRole, withModelRoles } from "../../../packages/adapters/src/testing/model-roles.js";
+import { accessRevocations } from "./access-revocations.js";
 import type { RouterDeps } from "./router.js";
 import {
   botIntroPrompt,
@@ -1143,6 +1144,17 @@ describe("thread stream authorization", () => {
     vi.setSystemTime(Date.now() + SESSION_RECHECK_MS);
     emit(3, "after revocation");
     await expect(stream.next()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    expect(follow.return).toHaveBeenCalled();
+  });
+
+  it("closes a removed member's stream at once, without waiting for a re-check or heartbeat", async () => {
+    const { client, follow, stillAuthorized } = threadStream();
+    const stream = await client.threads.subscribe({ botId: "bot-1", cursor: -1 });
+    const ended = expect(stream.next()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    for (let step = 0; step < 30; step++) await Promise.resolve();
+    accessRevocations.revoke("workspace-1", "user-1");
+    await ended;
+    expect(stillAuthorized).not.toHaveBeenCalled();
     expect(follow.return).toHaveBeenCalled();
   });
 

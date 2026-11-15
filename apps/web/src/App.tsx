@@ -275,8 +275,11 @@ function SessionApp() {
 /** An invitation or join link: signed-out visitors sign in first and come back to it. */
 function LinkedInvite({ kind, user }: { kind: "invite" | "join"; user: unknown }) {
   const { token = "" } = useParams();
+  const { search } = useLocation();
   if (!user) {
-    return <Navigate to={`/sign-in?next=${encodeURIComponent(`/${kind}/${token}`)}`} replace />;
+    return (
+      <Navigate to={`/sign-in?next=${encodeURIComponent(`/${kind}/${token}${search}`)}`} replace />
+    );
   }
   return <InvitePage kind={kind} token={token} />;
 }

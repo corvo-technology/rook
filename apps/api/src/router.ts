@@ -14,6 +14,7 @@ import type {
   CodexLiveCatalog,
   ComposioProvider,
   ConnectorRegistry,
+  DatabaseDriver,
   FaviconResolver,
   HostedVoice,
   IntegrationProviderSettings,
@@ -46,6 +47,7 @@ import { computerRoutes } from "./routes/computer.js";
 import { connectionsRoutes } from "./routes/connections.js";
 import { contentRoutes } from "./routes/content.js";
 import { createRouterContext } from "./routes/context.js";
+import { databaseRoutes } from "./routes/databases.js";
 import { emailAgentRoutes } from "./routes/email-agent.js";
 import { enginesRoutes } from "./routes/engines.js";
 import { inboxRoutes } from "./routes/inbox.js";
@@ -105,6 +107,8 @@ export interface RouterDeps {
   memoryProviders: MemoryProviderResolver;
   home: AgentHomeStore;
   secrets: SecretStore;
+  /** Database driver for read-only connections; defaults to the PostgreSQL pool. */
+  databaseDriver?: DatabaseDriver;
   oauthLogins: PiOAuthLogins;
   /** Live Codex catalog seam; defaults to the shared per-process cache. */
   codexCatalog?: CodexLiveCatalog;
@@ -219,6 +223,7 @@ export function createRouter(deps: RouterDeps) {
     ...routinesRoutes(ctx),
     ...boardsRoutes(ctx),
     ...mcpRoutes(ctx),
+    ...databaseRoutes(ctx),
     ...connectionsRoutes(ctx),
     ...messagingRoutes(ctx),
     ...emailAgentRoutes(ctx),

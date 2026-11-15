@@ -330,6 +330,8 @@ model Space {
   wikiImports                 WikiImport[]
   userMemories                UserMemory[]
   botMcpServers               BotMcpServer[]
+  databaseConnections         DatabaseConnection[]
+  botDatabaseGrants           BotDatabaseGrant[]
   messagingIdentities         MessagingIdentity[]
   actionApprovalRules         ActionApprovalRule[]
   actionAutoReviewPreferences ActionAutoReviewPreference[]
@@ -670,6 +672,7 @@ model Bot {
   runs                     Run[]
   steeringMessages         SteeringMessage[]
   mcpServers               BotMcpServer[]
+  databaseGrants           BotDatabaseGrant[]
   agentImports             AgentImport[]
   groupMembers             ChatGroupMember[]
   botSecrets               BotSecret[]
@@ -1660,6 +1663,7 @@ model Secret {
   mcpServers        McpServer[]
   spaceMemoryConfig SpaceMemoryConfig?
   agentSecret       AgentSecret?
+  databaseConnection DatabaseConnection?
 
   @@index([userId, spaceId])
   @@map("secrets")
@@ -1698,6 +1702,49 @@ model McpServer {
   @@unique([spaceId, userId, slug])
   @@index([spaceId, userId])
   @@map("mcp_servers")
+}
+
+/// A company database agents may query read-only. The password lives in `secret`; everything
+/// else here is safe to show.
+model DatabaseConnection {
+  id        String             @id @default(cuid())
+  spaceId   String
+  space     Space              @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId    String
+  name      String
+  host      String
+  port      Int
+  database  String
+  username  String
+  /// disable | require | verify-full
+  sslMode   String
+  secretId  String             @unique
+  secret    Secret             @relation(fields: [secretId], references: [id])
+  /// Outcome of the last connection test: null before the first one.
+  testedOk  Boolean?
+  testedAt  DateTime?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  grants    BotDatabaseGrant[]
+
+  @@unique([spaceId, name])
+  @@map("database_connections")
+}
+
+/// An agent allowed to query one database connection. No row, no access.
+model BotDatabaseGrant {
+  id           String             @id @default(cuid())
+  spaceId      String
+  space        Space              @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  botId        String
+  bot          Bot                @relation(fields: [botId], references: [id], onDelete: Cascade)
+  connectionId String
+  connection   DatabaseConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime           @default(now())
+
+  @@unique([botId, connectionId])
+  @@index([spaceId, botId])
+  @@map("bot_database_grants")
 }
 
 model McpOAuthSession {

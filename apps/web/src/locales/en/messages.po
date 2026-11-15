@@ -784,6 +784,10 @@ msgstr "Add credits"
 msgid "Add credits in Billing to keep using voice."
 msgstr "Add credits in Billing to keep using voice."
 
+#: src/pages/DatabasesSettings.tsx
+msgid "Add database"
+msgstr "Add database"
+
 #: src/pages/Store.tsx
 msgid "Add Executor"
 msgstr "Add Executor"
@@ -959,6 +963,7 @@ msgstr "Agents"
 msgid "Agents that can use it"
 msgstr "Agents that can use it"
 
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/McpServersSettings.tsx
 msgid "Agents:"
 msgstr "Agents:"
@@ -1608,6 +1613,7 @@ msgstr "Can't read images"
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/AddStepPanel.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/LocalSpeechSection.tsx
 #: src/pages/McpServersSettings.tsx
@@ -2065,6 +2071,7 @@ msgstr "Confirm your email first, then open this link again"
 
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/ChatAppsRow.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 #: src/pages/memory-providers/SupermemorySettingsForm.tsx
@@ -2155,6 +2162,7 @@ msgstr "Connected"
 msgid "Connected {0}."
 msgstr "Connected {0}."
 
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
@@ -2167,6 +2175,10 @@ msgstr "Connecting…"
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Connection"
 msgstr "Connection"
+
+#: src/pages/DatabasesSettings.tsx
+msgid "Connection string"
+msgstr "Connection string"
 
 #. placeholder {0}: item.name
 #: src/pages/Store.tsx
@@ -2692,6 +2704,7 @@ msgid "Could not run the routine"
 msgstr "Could not run the routine"
 
 #: src/pages/ConnectionsSettingsPanel.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersSettings.tsx
@@ -3025,6 +3038,14 @@ msgstr "Dark"
 msgid "Data"
 msgstr "Data"
 
+#: src/pages/DatabasesSettings.tsx
+msgid "Database"
+msgstr "Database"
+
+#: src/pages/Settings.tsx
+msgid "Databases"
+msgstr "Databases"
+
 #: src/lib/billing.ts
 #: src/lib/cron.ts
 msgid "day"
@@ -3186,6 +3207,7 @@ msgstr "Desktop update"
 
 #: src/components/AskCard.tsx
 #: src/components/ModelProblemNotice.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/RoutineRunDetail.tsx
 #: src/pages/RoutineRunHistory.tsx
 msgid "Details"
@@ -3420,9 +3442,17 @@ msgstr "Email verification required"
 msgid "Enable {0}"
 msgstr "Enable {0}"
 
+#: src/pages/DatabasesSettings.tsx
+msgid "Encrypted"
+msgstr "Encrypted"
+
 #: src/pages/shell/bot-credentials.tsx
 msgid "Encrypted and never shown again"
 msgstr "Encrypted and never shown again"
+
+#: src/pages/DatabasesSettings.tsx
+msgid "Encrypted, verified"
+msgstr "Encrypted, verified"
 
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Ends {day}"
@@ -3932,6 +3962,10 @@ msgstr "Hold to talk, release to send"
 #: src/pages/shell/sidebar-team.tsx
 msgid "Home"
 msgstr "Home"
+
+#: src/pages/DatabasesSettings.tsx
+msgid "Host"
+msgstr "Host"
 
 #: src/lib/cron.ts
 msgid "hour"
@@ -4919,6 +4953,7 @@ msgstr "My assistant"
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/model-settings/providers-section.tsx
@@ -5248,6 +5283,10 @@ msgstr "Not available to you"
 msgid "Not checked yet"
 msgstr "Not checked yet"
 
+#: src/pages/DatabasesSettings.tsx
+msgid "Not encrypted"
+msgstr "Not encrypted"
+
 #: src/pages/shell/agent-import.tsx
 msgid "Not imported"
 msgstr "Not imported"
@@ -5274,6 +5313,10 @@ msgstr "Not now"
 #: src/pages/shell/routing-line.tsx
 msgid "Not picked"
 msgstr "Not picked"
+
+#: src/pages/DatabasesSettings.tsx
+msgid "Not reachable"
+msgstr "Not reachable"
 
 #: src/components/MemoryFactCard.tsx
 msgid "Not remembered"
@@ -5586,6 +5629,7 @@ msgstr "Passkeys"
 #: src/components/AskCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/shell/bot-credentials.tsx
 msgid "Password"
 msgstr "Password"
@@ -5761,6 +5805,10 @@ msgstr "Playing…"
 #: src/pages/KnowledgeSection.tsx
 msgid "Plugin"
 msgstr "Plugin"
+
+#: src/pages/DatabasesSettings.tsx
+msgid "Port"
+msgstr "Port"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Post \"No changes\" in chat"
@@ -6031,6 +6079,7 @@ msgstr "Remembered"
 
 #: src/components/ApprovalRulesSettings.tsx
 #: src/pages/ConnectionsSettingsPanel.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/LocalSpeechSection.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/MembersSettingsPanel.tsx
@@ -6055,6 +6104,11 @@ msgstr "Remove {0}"
 #: src/pages/GroupPanel.tsx
 msgid "Remove {0} from the group"
 msgstr "Remove {0} from the group"
+
+#. placeholder {0}: row.name
+#: src/pages/DatabasesSettings.tsx
+msgid "Remove {0}?"
+msgstr "Remove {0}?"
 
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Remove {name}?"
@@ -6989,6 +7043,10 @@ msgstr "Speech model"
 msgid "Squad"
 msgstr "Squad"
 
+#: src/pages/DatabasesSettings.tsx
+msgid "SSL"
+msgstr "SSL"
+
 #: src/lib/user-error.ts
 msgid "SSO is temporarily unavailable. Try again."
 msgstr "SSO is temporarily unavailable. Try again."
@@ -7243,6 +7301,7 @@ msgid "Terminal input"
 msgstr "Terminal input"
 
 #: src/components/teach/SkillDraftCard.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Test"
 msgstr "Test"
@@ -7809,6 +7868,10 @@ msgstr "Use {oauthEnvReference} for the access token."
 msgid "Use a found model"
 msgstr "Use a found model"
 
+#: src/pages/DatabasesSettings.tsx
+msgid "Use a read-only database role."
+msgstr "Use a read-only database role."
+
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Use computers"
 msgstr "Use computers"
@@ -7848,6 +7911,10 @@ msgstr "Use space default"
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "Use up to 512 letters, digits, _ or -."
+
+#: src/pages/DatabasesSettings.tsx
+msgid "User"
+msgstr "User"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"

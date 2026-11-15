@@ -47,6 +47,7 @@ import {
   CliLoginStartSchema,
 } from "./cli-engines.js";
 import { TourMark } from "./coach-tour.js";
+import { DatabaseConnectionInput, DatabaseConnectionSchema } from "./database-connection.js";
 import {
   ActionApprovalRuleSchema,
   ActionAutoReviewSettingsSchema,
@@ -1765,6 +1766,17 @@ export const appContract = {
     list: oc.output(z.array(AgentSecretSchema)),
     put: oc.input(AgentSecretInputSchema).output(AgentSecretSchema),
     remove: oc.input(z.object({ id: Id })).output(z.object({ ok: z.literal(true) })),
+  },
+  databases: {
+    list: oc.output(z.array(DatabaseConnectionSchema)),
+    /** Saves the connection only when a test connection succeeds. */
+    create: oc.input(DatabaseConnectionInput).output(DatabaseConnectionSchema),
+    test: oc.input(z.object({ id: Id })).output(DatabaseConnectionSchema),
+    remove: oc.input(z.object({ id: Id })).output(z.object({ ok: z.literal(true) })),
+    /** Replaces the agents allowed to query the connection. */
+    setGrants: oc
+      .input(z.object({ id: Id, botIds: z.array(Id).max(500) }))
+      .output(DatabaseConnectionSchema),
   },
   botSecrets: {
     list: oc.input(z.object({ botId: Id })).output(z.array(BotSecretMetadata)),

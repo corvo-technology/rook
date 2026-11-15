@@ -43,6 +43,8 @@ export const CORE_BUILTIN_TOOL_NAMES: ReadonlySet<string> = new Set([
   "remember_about_user",
   "save_memory",
   "recall_memory",
+  "query_database",
+  "describe_database",
   "wiki_search",
   "wiki_read",
   "read_document",

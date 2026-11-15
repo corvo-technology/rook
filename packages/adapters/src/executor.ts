@@ -212,6 +212,7 @@ import {
   visitorConnectorTools,
 } from "./run-tool-selection.js";
 import { applyTool } from "./run-tools.js";
+import { botHasDatabaseGrants } from "./run-tools-databases.js";
 import { mayRouteWithoutOwner } from "./run-tools-messaging.js";
 import { createRunTrustLoaders } from "./run-trust.js";
 import {
@@ -1196,6 +1197,8 @@ export function createRunExecutor(deps: ExecutorDeps) {
             mediaImagesEnabled: Boolean(deps.artifacts && mediaGeneration?.capabilities.images),
             mediaVideoEnabled: Boolean(deps.artifacts && mediaGeneration?.capabilities.video),
             cloudAgentEnabled: cloudAgentsEnabled(cloudAgent, run.spaceId),
+            databasesGranted:
+              !visitorRun && (await botHasDatabaseGrants(deps.prisma, bot.id, run.spaceId)),
             messagingChannelRun,
             visitorRun,
             voiceCall,

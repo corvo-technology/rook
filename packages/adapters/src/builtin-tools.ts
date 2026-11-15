@@ -735,6 +735,40 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "query_database",
+    description:
+      "Run one read-only SQL query (SELECT, WITH ... SELECT or EXPLAIN) against a database connection granted to you. Only reads work: writes, DDL, SET, several statements and side-effect functions are refused. Results are capped in rows and size; aggregate or filter in SQL rather than fetching everything. Call describe_database first when you do not know the tables.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        connection: {
+          type: "string",
+          description: "Connection name. Optional when only one is granted to you.",
+        },
+        sql: { type: "string", description: "A single PostgreSQL statement." },
+      },
+      required: ["sql"],
+    },
+    readOnly: true,
+  },
+  {
+    name: "describe_database",
+    description:
+      "List the tables and columns of a granted database connection, to write correct SQL. Pass schema or table to look at one place.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        connection: {
+          type: "string",
+          description: "Connection name. Optional when only one is granted to you.",
+        },
+        schema: { type: "string" },
+        table: { type: "string" },
+      },
+    },
+    readOnly: true,
+  },
+  {
     name: "cloud_agent_status",
     description: "Get status, branch, and PR url for a cloud coding agent.",
     inputSchema: {

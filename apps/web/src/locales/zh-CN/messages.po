@@ -784,6 +784,10 @@ msgstr "添加额度"
 msgid "Add credits in Billing to keep using voice."
 msgstr "在账单中添加额度即可继续使用语音。"
 
+#: src/pages/DatabasesSettings.tsx
+msgid "Add database"
+msgstr "添加数据库"
+
 #: src/pages/Store.tsx
 msgid "Add Executor"
 msgstr "添加 Executor"
@@ -959,6 +963,7 @@ msgstr "智能体"
 msgid "Agents that can use it"
 msgstr "可以使用它的智能体"
 
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/McpServersSettings.tsx
 msgid "Agents:"
 msgstr "Agent："
@@ -1608,6 +1613,7 @@ msgstr "无法读取图像"
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/AddStepPanel.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/LocalSpeechSection.tsx
 #: src/pages/McpServersSettings.tsx
@@ -2065,6 +2071,7 @@ msgstr "请先确认邮箱，然后重新打开此链接"
 
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/ChatAppsRow.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 #: src/pages/memory-providers/SupermemorySettingsForm.tsx
@@ -2155,6 +2162,7 @@ msgstr "已连接"
 msgid "Connected {0}."
 msgstr "已连接 {0}。"
 
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
@@ -2167,6 +2175,10 @@ msgstr "正在连接…"
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Connection"
 msgstr "连接"
+
+#: src/pages/DatabasesSettings.tsx
+msgid "Connection string"
+msgstr "连接字符串"
 
 #. placeholder {0}: item.name
 #: src/pages/Store.tsx
@@ -2692,6 +2704,7 @@ msgid "Could not run the routine"
 msgstr "无法运行例行任务"
 
 #: src/pages/ConnectionsSettingsPanel.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersSettings.tsx
@@ -3025,6 +3038,14 @@ msgstr "深色"
 msgid "Data"
 msgstr "数据"
 
+#: src/pages/DatabasesSettings.tsx
+msgid "Database"
+msgstr "数据库"
+
+#: src/pages/Settings.tsx
+msgid "Databases"
+msgstr "数据库"
+
 #: src/lib/billing.ts
 #: src/lib/cron.ts
 msgid "day"
@@ -3186,6 +3207,7 @@ msgstr "桌面端更新"
 
 #: src/components/AskCard.tsx
 #: src/components/ModelProblemNotice.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/RoutineRunDetail.tsx
 #: src/pages/RoutineRunHistory.tsx
 msgid "Details"
@@ -3420,9 +3442,17 @@ msgstr "需要验证邮箱"
 msgid "Enable {0}"
 msgstr "启用 {0}"
 
+#: src/pages/DatabasesSettings.tsx
+msgid "Encrypted"
+msgstr "加密"
+
 #: src/pages/shell/bot-credentials.tsx
 msgid "Encrypted and never shown again"
 msgstr "已加密，且不再显示"
+
+#: src/pages/DatabasesSettings.tsx
+msgid "Encrypted, verified"
+msgstr "加密并验证"
 
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Ends {day}"
@@ -3932,6 +3962,10 @@ msgstr "按住说话，松开发送"
 #: src/pages/shell/sidebar-team.tsx
 msgid "Home"
 msgstr "首页"
+
+#: src/pages/DatabasesSettings.tsx
+msgid "Host"
+msgstr "主机"
 
 #: src/lib/cron.ts
 msgid "hour"
@@ -4919,6 +4953,7 @@ msgstr "我的助手"
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/model-settings/providers-section.tsx
@@ -5248,6 +5283,10 @@ msgstr "你无法使用"
 msgid "Not checked yet"
 msgstr "尚未检查"
 
+#: src/pages/DatabasesSettings.tsx
+msgid "Not encrypted"
+msgstr "不加密"
+
 #: src/pages/shell/agent-import.tsx
 msgid "Not imported"
 msgstr "未导入"
@@ -5274,6 +5313,10 @@ msgstr "暂不"
 #: src/pages/shell/routing-line.tsx
 msgid "Not picked"
 msgstr "未被选中"
+
+#: src/pages/DatabasesSettings.tsx
+msgid "Not reachable"
+msgstr "无法连接"
 
 #: src/components/MemoryFactCard.tsx
 msgid "Not remembered"
@@ -5586,6 +5629,7 @@ msgstr "通行密钥"
 #: src/components/AskCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/shell/bot-credentials.tsx
 msgid "Password"
 msgstr "密码"
@@ -5761,6 +5805,10 @@ msgstr "播放中…"
 #: src/pages/KnowledgeSection.tsx
 msgid "Plugin"
 msgstr "插件"
+
+#: src/pages/DatabasesSettings.tsx
+msgid "Port"
+msgstr "端口"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Post \"No changes\" in chat"
@@ -6031,6 +6079,7 @@ msgstr "已记住"
 
 #: src/components/ApprovalRulesSettings.tsx
 #: src/pages/ConnectionsSettingsPanel.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/LocalSpeechSection.tsx
 #: src/pages/McpServersSettings.tsx
 #: src/pages/MembersSettingsPanel.tsx
@@ -6055,6 +6104,11 @@ msgstr "移除 {0}"
 #: src/pages/GroupPanel.tsx
 msgid "Remove {0} from the group"
 msgstr "将 {0} 移出群组"
+
+#. placeholder {0}: row.name
+#: src/pages/DatabasesSettings.tsx
+msgid "Remove {0}?"
+msgstr "移除 {0}？"
 
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Remove {name}?"
@@ -6989,6 +7043,10 @@ msgstr "语音模型"
 msgid "Squad"
 msgstr "小队"
 
+#: src/pages/DatabasesSettings.tsx
+msgid "SSL"
+msgstr "SSL"
+
 #: src/lib/user-error.ts
 msgid "SSO is temporarily unavailable. Try again."
 msgstr "SSO 暂时不可用，请重试。"
@@ -7243,6 +7301,7 @@ msgid "Terminal input"
 msgstr "终端输入"
 
 #: src/components/teach/SkillDraftCard.tsx
+#: src/pages/DatabasesSettings.tsx
 #: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Test"
 msgstr "测试"
@@ -7809,6 +7868,10 @@ msgstr "访问令牌请使用 {oauthEnvReference}。"
 msgid "Use a found model"
 msgstr "使用找到的模型"
 
+#: src/pages/DatabasesSettings.tsx
+msgid "Use a read-only database role."
+msgstr "请使用只读数据库角色。"
+
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Use computers"
 msgstr "使用电脑"
@@ -7848,6 +7911,10 @@ msgstr "使用空间默认设置"
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "最多使用 512 个字母、数字、_ 或 -。"
+
+#: src/pages/DatabasesSettings.tsx
+msgid "User"
+msgstr "用户"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"

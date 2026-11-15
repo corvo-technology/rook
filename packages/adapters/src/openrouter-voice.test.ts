@@ -38,6 +38,44 @@ describe("OpenRouterVoiceProvider", () => {
     });
   });
 
+  it("reports the status and a clean reason when OpenRouter refuses, never the key", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValue(
+        Response.json(
+          {
+            error: {
+              message: "Provider timed out for deploy-key sk-or-v1-abcdef123456",
+              code: 502,
+            },
+          },
+          { status: 502 },
+        ),
+      );
+    const error = await new OpenRouterVoiceProvider(fetcher)
+      .synthesize({ text: "Olá", voiceId: "Kore", apiKey: "deploy-key" }, context)
+      .catch((caught: unknown) => caught);
+    expect(error).toMatchObject({
+      name: "VoiceProviderError",
+      status: 502,
+      detail: "Provider timed out for [key] [key]",
+    });
+  });
+
+  it("speaks with the model it is asked for", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(new Uint8Array([1, 2]), { headers: { "content-type": "audio/pcm" } }),
+      );
+    await new OpenRouterVoiceProvider(fetcher).synthesize(
+      { text: "Olá", voiceId: "Kore", apiKey: "k", model: "vendor/backup" },
+      context,
+    );
+    const [, init] = fetcher.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse(String(init.body)).model).toBe("vendor/backup");
+  });
+
   it("keeps a voice it knows", () => {
     expect(openRouterVoiceId("Puck")).toBe("Puck");
     expect(openRouterVoiceId(undefined)).toBe(OPENROUTER_DEFAULT_VOICE);

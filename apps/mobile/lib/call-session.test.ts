@@ -200,6 +200,28 @@ describe("mobile call session", () => {
     expect(fake.recordings).toHaveLength(2);
   });
 
+  it("shows the reply as text and keeps listening when it cannot be spoken", async () => {
+    const fake = fakes();
+    startCall({ botId: "bot-1", botName: "Ada" }, fake.deps);
+    await flush();
+    fake.say("status please");
+    await flush();
+    fake.replyWith("message-1", "It is green.");
+    fake.speeches[0]?.reject(new Error("Voice is unavailable right now."));
+    await flush();
+    expect(getSnapshot()).toMatchObject({
+      phase: "listening",
+      caption: "It is green.",
+      voiceFailed: true,
+    });
+    expect(fake.recordings).toHaveLength(2);
+
+    // The next utterance still goes through.
+    fake.say("thanks");
+    await flush();
+    expect(fake.send).toHaveBeenLastCalledWith("bot-1", "thanks", expect.any(String));
+  });
+
   it("plays the opening cue, speaks the greeting, then listens", async () => {
     const fake = fakes();
     startCall({ botId: "bot-1", botName: "Ada", greeting: "Hello Riley, Ada here." }, fake.deps);

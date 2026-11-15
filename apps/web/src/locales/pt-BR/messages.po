@@ -5081,6 +5081,10 @@ msgstr "Sem gatilho"
 msgid "No use in this period."
 msgstr "Nenhum uso neste período."
 
+#: src/components/call/CallCard.tsx
+msgid "No voice right now"
+msgstr "Sem voz agora"
+
 #: src/pages/Workflows.tsx
 msgid "No workflows yet"
 msgstr "Ainda não há fluxos de trabalho"

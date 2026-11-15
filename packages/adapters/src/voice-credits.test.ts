@@ -1,5 +1,5 @@
 import type { AdapterContext, VoiceProvider } from "@corvo/adapter-kit";
-import { VoiceAccountError } from "@corvo/adapter-kit";
+import { VoiceAccountError, VoiceProviderError } from "@corvo/adapter-kit";
 import type { PrismaClient } from "@corvo/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -26,6 +26,7 @@ import {
   synthesizeOnCredits,
   transcribeOnCredits,
 } from "./voice-credits.js";
+import { synthesizeResilient } from "./voice-resilience.js";
 
 const prisma = {} as PrismaClient;
 const charge = { prisma, organizationId: "org", userId: "user", spaceId: "space" };
@@ -149,6 +150,38 @@ describe("speaking on credits", () => {
       message: "Add credits in Billing to keep using voice.",
     });
     expect(synthesize).not.toHaveBeenCalled();
+  });
+
+  it("charges one hold at the price of the audio that finally came back after a retry", async () => {
+    const synthesize = vi
+      .fn()
+      .mockRejectedValueOnce(new VoiceProviderError("timed out", 502))
+      .mockResolvedValueOnce(spoken);
+    const base = { synthesize } as unknown as VoiceProvider;
+    const resilient = {
+      synthesize: (req: typeof request, ctx: AdapterContext) =>
+        synthesizeResilient(base, req, ctx, { backoffMs: 1 }),
+    } as unknown as VoiceProvider;
+    await synthesizeOnCredits(charge, resilient, request, context);
+    expect(synthesize).toHaveBeenCalledTimes(2);
+    expect(db.reserveModelCredits).toHaveBeenCalledOnce();
+    expect(db.settleModelCredits).toHaveBeenCalledOnce();
+    const [, , settled] = db.settleModelCredits.mock.calls[0] ?? [];
+    expect(settled).toBeCloseTo(twoSecondsUsd, 10);
+  });
+
+  it("releases the hold without charging when every try fails", async () => {
+    const synthesize = vi.fn().mockRejectedValue(new VoiceProviderError("down", 503));
+    const base = { synthesize } as unknown as VoiceProvider;
+    const resilient = {
+      synthesize: (req: typeof request, ctx: AdapterContext) =>
+        synthesizeResilient(base, req, ctx, { backoffMs: 1, fallbackModel: "vendor/backup" }),
+    } as unknown as VoiceProvider;
+    await expect(synthesizeOnCredits(charge, resilient, request, context)).rejects.toThrow();
+    expect(synthesize).toHaveBeenCalledTimes(3);
+    expect(db.reserveModelCredits).toHaveBeenCalledOnce();
+    expect(db.settleModelCredits).toHaveBeenCalledExactlyOnceWith(prisma, "entry", 0);
+    expect(db.recordModelCreditReceipt).not.toHaveBeenCalled();
   });
 
   it("gives the hold back when the provider fails", async () => {

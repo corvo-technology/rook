@@ -476,6 +476,28 @@ describe("call session", () => {
     expect(listen).not.toHaveBeenCalled();
   });
 
+  it("shows the reply as text and keeps listening when it cannot be spoken", async () => {
+    await answeredCall({ botId: "call-bot", botName: "Ada", transcribe: false });
+    getThread.mockResolvedValue(snapshot([botMessage("message-1", "Yes, I hear you")]) as never);
+    await heard("can you hear me");
+    const speech = vi.mocked(speaker.subscribe).mock.calls.at(-1)?.[0];
+    listen.mockClear();
+
+    // The voice provider failed before any audio played.
+    speech?.({ status: "idle", error: "Voice is unavailable right now (speaking failed)." });
+    expect(getSnapshot()).toMatchObject({ caption: "Yes, I hear you", voiceFailed: true });
+    await vi.advanceTimersByTimeAsync(ECHO_GUARD_MS);
+    expect(getSnapshot()?.phase).toBe("listening");
+    expect(listen).toHaveBeenCalledOnce();
+
+    // The next thing the caller says still goes through.
+    getThread.mockResolvedValue(snapshot([botMessage("message-2", "Booked")]) as never);
+    await heard("book it");
+    expect(send).toHaveBeenLastCalledWith(expect.objectContaining({ text: "book it" }));
+    speech?.({ status: "speaking", caption: "Booked" });
+    expect(getSnapshot()?.voiceFailed).toBe(false);
+  });
+
   it("waits out the echo guard when the mic was shut through playback", async () => {
     await answeredCall({ botId: "call-bot", botName: "Ada", transcribe: false });
     await Promise.resolve();

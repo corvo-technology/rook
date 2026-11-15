@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- A voice call no longer goes quiet when text-to-speech fails: a passing provider fault is retried once (then once on an optional `VOICE_FALLBACK_MODEL`) within 15 seconds, and if speech still fails the reply shows as text with "No voice right now" while the call keeps listening on web, desktop and mobile. Failed tries are never charged.
 - Mobile threads now show work started by another client as soon as the run starts, without hiding waiting runs or another group member's error.
 - Hovering a message no longer places its entire row above the floating chat header and other higher-priority controls.
 - Mobile chat and call subscriptions reject oversized event frames and release their readers after cancellation or connection failure.

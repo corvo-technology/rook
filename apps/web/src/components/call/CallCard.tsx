@@ -134,6 +134,7 @@ export function CallCard({ onSettings }: { onSettings: () => void }) {
               <>
                 <span>{callClock(elapsed)}</span>
                 <span>{activity}</span>
+                {call.voiceFailed ? <span>{t`No voice right now`}</span> : null}
               </>
             )}
           </span>

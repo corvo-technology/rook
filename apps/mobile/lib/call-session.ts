@@ -54,6 +54,8 @@ export type CallState = {
   transcriptOpen: boolean;
   caption: string;
   heard: string;
+  /** The last reply could not be spoken; it shows as text and the call keeps listening. */
+  voiceFailed: boolean;
   exchanges: CallExchange[];
 };
 
@@ -218,6 +220,7 @@ export function startCall(
     transcriptOpen: false,
     caption: "",
     heard: "",
+    voiceFailed: false,
     exchanges: [],
   };
   unwatch = deps.watch(call.botId, onReply, onCallEnded);
@@ -307,7 +310,8 @@ async function listen(): Promise<void> {
     endCall();
     return;
   }
-  set({ phase: "listening", heard: "", caption: "" });
+  // A reply that could not be spoken stays on screen until the next one.
+  set({ phase: "listening", heard: "", caption: state.voiceFailed ? state.caption : "" });
   if (state.muted) return;
   await openMic();
 }
@@ -577,7 +581,7 @@ function speakAndListen(text: string): void {
     turn = null;
     micOpen = false;
   }
-  set({ phase: "speaking", heard: "" });
+  set({ phase: "speaking", heard: "", caption: "", voiceFailed: false });
   if (onDevice) void openMic();
   void deps
     .speak(botId, text)
@@ -593,7 +597,8 @@ function speakAndListen(text: string): void {
         blockForConsent(error);
         return;
       }
-      set({ caption: errorText(error, t("Could not speak that.")) });
+      // The reply stays readable as text; the finally below opens the mic again.
+      set({ caption: text, voiceFailed: true });
     })
     .finally(() => {
       if (state?.botId !== botId || callId !== speakingCallId) return;

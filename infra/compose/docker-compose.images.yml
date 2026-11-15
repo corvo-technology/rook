@@ -416,6 +416,7 @@ services:
       CORVO_MIN_CLIENT_BUILD:
       CORVO_NAV_LINKS:
       VOICE_SUMMARY_MIN_CHARS:
+      VOICE_FALLBACK_MODEL:
     ports:
       - "127.0.0.1:${CORVO_API_PORT:-3100}:3100"
     volumes:

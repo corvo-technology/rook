@@ -383,6 +383,7 @@ services:
       CORVO_MIN_CLIENT_BUILD:
       CORVO_NAV_LINKS:
       VOICE_SUMMARY_MIN_CHARS:
+      VOICE_FALLBACK_MODEL:
     healthcheck:
       test:
         - CMD

@@ -912,6 +912,7 @@ export const DE_MESSAGES: Record<string, string> = {
   Call: "Anrufen",
   "Calls need transcription": "Anrufe brauchen eine Transkription",
   "Could not hear that.": "Das war nicht zu verstehen.",
+  "No voice right now": "Gerade keine Stimme",
   "Could not speak that.": "Das konnte nicht vorgelesen werden.",
   "Could not transcribe that.": "Das konnte nicht transkribiert werden.",
   "Hang up": "Auflegen",

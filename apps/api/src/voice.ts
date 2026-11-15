@@ -1,5 +1,5 @@
-import type { AdapterContext, SecretStore } from "@corvo/adapter-kit";
-import { VoiceAccountError } from "@corvo/adapter-kit";
+import type { AdapterContext, SecretStore, VoiceSynthesizeRequest } from "@corvo/adapter-kit";
+import { VoiceAccountError, VoiceProviderError } from "@corvo/adapter-kit";
 import type { HostedVoice, LocalSpeech } from "@corvo/adapters";
 import {
   createVoiceProvider,
@@ -20,6 +20,7 @@ import {
   retryInSpokenLanguage,
   serializeOpenAiCompatibleVoiceSecret,
   synthesizeOnCredits,
+  synthesizeResilient,
   transcribeOnCredits,
   voiceCatalogEntry,
 } from "@corvo/adapters";
@@ -866,7 +867,20 @@ export async function synthesizeVoice(
     throw new ORPCError("BAD_REQUEST", { message: "That utterance is too long to speak." });
   }
   const context = voiceContext(actor, input.signal);
-  const provider = await voiceProviderFor(deps, actor, target.provider);
+  const base = await voiceProviderFor(deps, actor, target.provider);
+  // A passing fault is asked again inside the credit hold, so a failed try is never charged.
+  const provider: typeof base =
+    target.provider === LOCAL_VOICE_PROVIDER_ID
+      ? base
+      : Object.assign(Object.create(base) as typeof base, {
+          synthesize: (request: VoiceSynthesizeRequest, ctx: AdapterContext) =>
+            synthesizeResilient(base, request, ctx, {
+              fallbackModel:
+                target.provider === OPENROUTER_VOICE_PROVIDER_ID
+                  ? deps.voiceCredits?.fallbackModel
+                  : undefined,
+            }),
+        });
   const request = {
     text,
     voiceId: target.voiceId,
@@ -1148,6 +1162,12 @@ function voiceHttpError(c: Context, error: unknown) {
   }
   const message = error instanceof Error ? error.message : "Voice request failed.";
   // Message only: request bodies, keys and audio never reach the log.
-  getLogger().warn("voice request failed", { route: c.req.path, reason: message });
+  getLogger().warn("voice request failed", {
+    route: c.req.path,
+    reason: message,
+    ...(error instanceof VoiceProviderError
+      ? { upstreamStatus: error.status, upstreamDetail: error.detail }
+      : {}),
+  });
   return c.json({ error: message }, 502);
 }

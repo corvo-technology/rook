@@ -5081,6 +5081,10 @@ msgstr "Aucun déclencheur"
 msgid "No use in this period."
 msgstr "Aucune utilisation sur cette période."
 
+#: src/components/call/CallCard.tsx
+msgid "No voice right now"
+msgstr "Pas de voix pour le moment"
+
 #: src/pages/Workflows.tsx
 msgid "No workflows yet"
 msgstr "Aucun workflow pour le moment"

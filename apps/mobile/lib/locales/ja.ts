@@ -855,6 +855,7 @@ export const JA_MESSAGES: Record<string, string> = {
   Call: "通話",
   "Calls need transcription": "通話には文字起こしが必要です",
   "Could not hear that.": "聞き取れませんでした。",
+  "No voice right now": "今は音声なし",
   "Could not speak that.": "読み上げできませんでした。",
   "Could not transcribe that.": "文字起こしできませんでした。",
   "Hang up": "通話を終了",

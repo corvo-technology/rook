@@ -33,12 +33,13 @@ try {
     });
     const respond = server.listeners("request");
     server.removeAllListeners("request");
-    server.on("request", (req, res) => {
-      void screen.request(req, res).then((handled) => {
+    // Returns the handler's promise so shutdown waits for it.
+    server.on("request", (req, res) =>
+      screen.request(req, res).then((handled) => {
         if (handled) return;
-        for (const listener of respond) listener.call(server, req, res);
-      });
-    });
+        return Promise.all(respond.map((listener) => listener.call(server, req, res)));
+      }),
+    );
     server.on("upgrade", (req, socket, head) => void screen.upgrade(req, socket, head));
   }
 

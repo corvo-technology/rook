@@ -7,6 +7,8 @@ export const READINESS_PROPAGATION_MS = 5_000;
 /** Hard bound from SIGTERM to exit. The platform's termination grace period must be at least this. */
 export const DRAIN_DEADLINE_MS = 25_000;
 const POLL_MS = 100;
+/** After a stream's socket is gone, how long its handler gets to unwind before pools close. */
+const STREAM_UNWIND_MS = 2_000;
 
 const streams = new WeakSet<ServerResponse>();
 
@@ -37,6 +39,11 @@ function isStream(res: ServerResponse): boolean {
  * Orderly shutdown for a deploy: fail readiness first, keep serving while the platform notices,
  * stop accepting, let in-flight requests finish, end long-lived streams so clients reconnect to
  * the new pod, and destroy whatever remains at the deadline.
+ *
+ * A request is in flight until its handler settles, not until its socket closes: a client or
+ * proxy that hangs up leaves the handler running, and `afterClose` (which ends the DB pools)
+ * must not run under it. Once `afterClose` starts, late requests get a 503 instead of reaching
+ * handlers that would fail on a closed pool, so clients retry on the new pod.
  */
 export function createGracefulShutdown(
   server: Server,
@@ -55,11 +62,33 @@ export function createGracefulShutdown(
     sockets.add(socket);
     socket.once("close", () => sockets.delete(socket));
   });
-  // First in line, so the response is watched before the app writes its headers.
-  server.prependListener("request", (_req, res) => {
+  const handlers = new Set<{ res: ServerResponse; done: Promise<unknown> }>();
+  let sealed = false;
+  // Replaces the app's listeners, so the response is watched before the app writes its headers
+  // and the handler's promise (Hono's listener returns one) is tracked to completion.
+  const appListeners = server.listeners("request") as ((...args: unknown[]) => unknown)[];
+  server.removeAllListeners("request");
+  server.on("request", (req, res) => {
+    if (sealed) {
+      res.writeHead(503, { "retry-after": "1", connection: "close" }).end();
+      return;
+    }
     active.add(res);
     watchForStream(res);
     res.once("close", () => active.delete(res));
+    for (const listener of appListeners) {
+      const result = listener.call(server, req, res);
+      if (!result || typeof (result as Promise<unknown>).then !== "function") continue;
+      const entry = {
+        res,
+        done: (result as Promise<unknown>).then(
+          () => undefined,
+          () => undefined,
+        ),
+      };
+      handlers.add(entry);
+      void entry.done.then(() => handlers.delete(entry));
+    }
   });
 
   let stopping: Promise<void> | undefined;
@@ -92,6 +121,18 @@ export function createGracefulShutdown(
       clearTimeout(deadline);
       clearInterval(sweep);
     }
+    // Sockets can be gone while handlers still run (client hang-ups, the deadline's destroy).
+    // Streams only get a short unwind: they never finish on their own.
+    const unwind = [...handlers].map((entry) =>
+      streams.has(entry.res)
+        ? Promise.race([entry.done, new Promise((r) => setTimeout(r, STREAM_UNWIND_MS))])
+        : entry.done,
+    );
+    const stuck = new Promise((r) =>
+      setTimeout(r, Math.max(0, deadlineMs - (Date.now() - startedAt)) + STREAM_UNWIND_MS),
+    );
+    await Promise.race([Promise.all(unwind), stuck]);
+    sealed = true;
     await afterClose?.();
   };
   return (opts: { immediate?: boolean } = {}) => {

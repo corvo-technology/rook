@@ -1,3 +1,4 @@
+import type { PoolClient } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { PrismaClient } from "./client.js";
 import { createDb } from "./client.js";
@@ -532,26 +533,150 @@ describePostgres("row-level security (PostgreSQL)", () => {
     drainUnscopedDatabaseAccess();
   });
 
-  it("leaves the newer tables open to the previous release, which sets no version", async () => {
+  const PROTECTED_BY_VERSION_POLICY = [
+    "bots",
+    "runs",
+    "tasks",
+    "routines",
+    "connections",
+    "mcp_servers",
+    "mcp_oauth_sessions",
+    "bot_mcp_servers",
+    "computers",
+    "boards",
+    "tickets",
+    "ticket_comments",
+    "messaging_identities",
+    "external_conversations",
+    "usage_records",
+    "scratchpad_items",
+    "action_approval_rules",
+    "messaging_outbound",
+    "external_messages",
+    "steering_messages",
+    "security_events",
+  ];
+
+  // A raw connection from the unscoped pool, as the job queue and listeners use it.
+  const rawConnection = async <T>(
+    settings: Record<string, string>,
+    fn: (client: PoolClient) => Promise<T>,
+  ) => {
     const client = await app.pool.connect();
     try {
-      // What the previous release's connections look like: a tenant without a version.
-      await client.query(
-        "SELECT set_config('app.space_id', $1, false), set_config('app.user_id', $2, false), set_config('app.rls_bypass', 'off', false), set_config('app.rls_version', '', false)",
-        [a.spaceId, a.userId],
-      );
-      const bots = await client.query("SELECT id FROM bots WHERE id = ANY($1)", [
-        tenants.map((t) => t.botId),
-      ]);
-      expect(bots.rowCount).toBe(2);
-      // The tables protected before keep their policies for it.
-      const threads = await client.query("SELECT id FROM threads WHERE id = ANY($1)", [
-        threadIds(),
-      ]);
-      expect(threads.rows.map((row) => row.id)).toEqual([a.threadId]);
+      for (const [name, value] of Object.entries(settings))
+        await client.query("SELECT set_config($1, $2, false)", [name, value]);
+      return await fn(client);
     } finally {
       client.release(true);
     }
+  };
+
+  it("has no policy that depends on a release or version setting", async () => {
+    const rows = await owner.prisma.$queryRaw<Array<{ policyname: string; qual: string | null }>>`
+      SELECT policyname, qual FROM pg_policies WHERE schemaname = 'public'`;
+    expect(rows.filter((row) => row.policyname.endsWith("_previous_release"))).toEqual([]);
+    expect(rows.filter((row) => row.qual?.includes("rls_version"))).toEqual([]);
+  });
+
+  it("shows nothing to a connection that sets no tenant context", async () => {
+    const counts = await rawConnection({}, async (client) => {
+      const found: Record<string, number> = {};
+      for (const table of PROTECTED_BY_VERSION_POLICY) {
+        const { rows } = await client.query(`SELECT count(*)::int AS n FROM "${table}"`);
+        found[table] = rows[0].n;
+      }
+      return found;
+    });
+    expect(Object.values(counts).filter((count) => count > 0)).toEqual([]);
+    // The rows exist, so the empty answer is the policy and not an empty table.
+    const present = await owner.prisma.bot.count({
+      where: { id: { in: tenants.map((t) => t.botId) } },
+    });
+    expect(present).toBe(2);
+    await rawConnection({}, async (client) => {
+      await expect(
+        client.query("INSERT INTO security_events (id, type) VALUES ($1, 'rls.test')", [
+          `rls-no-context-${suffix}`,
+        ]),
+      ).rejects.toThrow(/row-level security/);
+    });
+  });
+
+  it("does not widen a tenant context that claims no version", async () => {
+    // What a connection without app.rls_version looks like: only the tenant is set.
+    const seen = await rawConnection(
+      { "app.space_id": a.spaceId, "app.user_id": a.userId, "app.rls_bypass": "off" },
+      async (client) =>
+        (
+          await client.query("SELECT id FROM bots WHERE id = ANY($1)", [
+            tenants.map((t) => t.botId),
+          ])
+        ).rows,
+    );
+    expect(seen.map((row) => row.id)).toEqual([a.botId]);
+    // An older or empty version claim changes nothing either.
+    const claimed = await rawConnection(
+      { "app.space_id": b.spaceId, "app.user_id": b.userId, "app.rls_version": "1" },
+      async (client) =>
+        (
+          await client.query("SELECT id FROM bots WHERE id = ANY($1)", [
+            tenants.map((t) => t.botId),
+          ])
+        ).rows,
+    );
+    expect(claimed.map((row) => row.id)).toEqual([b.botId]);
+  });
+
+  it("hides the other Space's rows from a tenant", async () => {
+    const own = (tenant: Tenant) =>
+      runAsTenant(tenant, async () => ({
+        bots: (await db.bot.findMany({ where: { id: { in: tenants.map((t) => t.botId) } } })).map(
+          (row) => row.id,
+        ),
+        other: await db.bot.findUnique({ where: { id: tenant === a ? b.botId : a.botId } }),
+      }));
+    expect(await own(a)).toEqual({ bots: [a.botId], other: null });
+    expect(await own(b)).toEqual({ bots: [b.botId], other: null });
+  });
+
+  it("still finds an auth session without a tenant context", async () => {
+    const token = `rls-session-${suffix}`;
+    await owner.prisma.session.create({
+      data: {
+        id: token,
+        token,
+        userId: a.userId,
+        expiresAt: new Date(Date.now() + 60_000),
+      },
+    });
+    // better-auth reads the session, then the user, before any Space is known.
+    const session = await db.session.findUnique({ where: { token } });
+    expect(session?.userId).toBe(a.userId);
+    const user = await db.user.findUnique({ where: { id: a.userId } });
+    expect(user?.email).toBe(`${a.userId}@corvo.test`);
+    expect(drainUnscopedDatabaseAccess()).toEqual([]);
+  });
+
+  it("keeps the job queue and cross-Space dispatch working", async () => {
+    // The worker and its reconcilers use the unscoped pool for the queue and nothing else.
+    const queued = await rawConnection({}, async (client) => {
+      const { rows } = await client.query(
+        "SELECT id FROM graphile_worker.add_job('rls.test', '{}'::json, max_attempts => 1)",
+      );
+      const found = await client.query(
+        "SELECT id FROM graphile_worker._private_jobs WHERE id = $1",
+        [rows[0].id],
+      );
+      await client.query("DELETE FROM graphile_worker._private_jobs WHERE id = $1", [rows[0].id]);
+      return found.rowCount;
+    });
+    expect(queued).toBe(1);
+    // Dispatch that spans Spaces names itself as the system.
+    const dispatched = await runAsSystem("row-level security test", () =>
+      db.bot.findMany({ where: { id: { in: tenants.map((t) => t.botId) } } }),
+    );
+    expect(dispatched.map((row) => row.id).sort()).toEqual(tenants.map((t) => t.botId).sort());
   });
 
   it("gives the runtime login the job queue, replacing a hand-made policy", async () => {

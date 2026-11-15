@@ -151,7 +151,11 @@ describe("who a conversation's change reaches", () => {
       find({ spaceId: "s1", direct: { userAId: "a", userBId: "b" } }) as never,
       "t1",
     );
-    expect(target).toEqual({ spaceId: "s1", kinds: ["dm"], reach: { users: ["a", "b"] } });
+    expect(target).toEqual({
+      spaceId: "s1",
+      kinds: ["dm", "notifications"],
+      reach: { users: ["a", "b"] },
+    });
   });
 
   it("leaves an open channel to the whole space and limits a private one", async () => {

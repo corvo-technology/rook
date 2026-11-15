@@ -9,24 +9,31 @@ import {
   Sidebar,
 } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { MissionList } from "../../components/MissionList";
 import { PasskeyOffer } from "../../components/PasskeyOffer";
 import { SidebarFooter } from "../../components/SidebarFooter";
 import { useBilling } from "../../components/SubscriptionGate";
+import { SubscriptionRailRings } from "../../components/SubscriptionRings";
 import { formatBillingDate } from "../../lib/billing";
 import type { BotsSidebarDensity } from "../../lib/bots-sidebar-density-pref";
+import { isEmbedded } from "../../lib/embed";
 import { useLocalEdition } from "../../lib/local-edition";
 import type { Panel } from "../../lib/right-panel-state";
 import { clearSpaceSelection } from "../../lib/rpc";
 import { useSignOut } from "../../lib/sign-out";
-import { ActivityList } from "../ActivityList";
 import { SpaceSearchResults } from "../SpaceSearch";
 import type { SettingsSection } from "../shell-overlay";
 import { SidebarHeader } from "./sidebar-header";
-import { SidebarNavLive, SidebarPeopleList, useSpaceSummary } from "./sidebar-team";
+import {
+  SidebarNavLive,
+  SidebarPeopleList,
+  usePartnerHidden,
+  useSpaceSummary,
+} from "./sidebar-team";
 import { SpaceSwitcher } from "./space-switcher";
 import type { SidebarSearch } from "./use-sidebar-search";
 
@@ -108,15 +115,8 @@ export function ShellSidebar({
     searchLoading,
     showSpaceSearch,
     jumpToSearchHit,
-    activityMode,
-    toggleActivityMode,
-    activityFilters,
-    setActivityFilters,
-    activityFiltersExpanded,
-    setActivityFiltersExpanded,
-    activityFiltersId,
-    activityFilterCount,
   } = search;
+  const onActivity = useLocation().pathname === "/app/activity";
   return (
     <>
       <button
@@ -149,30 +149,21 @@ export function ShellSidebar({
           mini={mini}
           createMenuOpen={createMenuOpen}
           setCreateMenuOpen={setCreateMenuOpen}
-          activityMode={activityMode}
-          toggleActivityMode={() => {
-            if (mini) setCollapsedPref(false);
-            toggleActivityMode();
-          }}
+          activityOpen={onActivity}
+          onActivity={() => navigate("/app/activity")}
           searchOpen={searchOpen && !mini}
-          onSearch={
-            activityMode && !mini
-              ? undefined
-              : () => {
-                  if (searchOpen && !mini) {
-                    setQuery("");
-                    setSearchOpen(false);
-                    return;
-                  }
-                  if (mini) setCollapsedPref(false);
-                  setSearchOpen(true);
-                  requestAnimationFrame(() =>
-                    document
-                      .querySelector<HTMLInputElement>('input[name="sidebar-search"]')
-                      ?.focus(),
-                  );
-                }
-          }
+          onSearch={() => {
+            if (searchOpen && !mini) {
+              setQuery("");
+              setSearchOpen(false);
+              return;
+            }
+            if (mini) setCollapsedPref(false);
+            setSearchOpen(true);
+            requestAnimationFrame(() =>
+              document.querySelector<HTMLInputElement>('input[name="sidebar-search"]')?.focus(),
+            );
+          }}
           setBotsSidebarCollapsedPref={setCollapsedPref}
           bots={bots}
           setMobileSidebarOpen={setMobileOpen}
@@ -203,28 +194,16 @@ export function ShellSidebar({
         ) : null}
         {mini ? null : (
           <SidebarNavLive
-            conversationsOn={activityMode}
-            showTasks={ticketBoardEnabled}
-            onHome={() => {
+            bots={bots}
+            ticketBoardEnabled={ticketBoardEnabled}
+            embedded={isEmbedded()}
+            onOpen={(to) => {
               setMobileOpen(false);
-              navigate("/app");
-            }}
-            onApprovals={() => {
-              setMobileOpen(false);
-              navigate("/app/approvals");
-            }}
-            onConversations={toggleActivityMode}
-            onTasks={() => {
-              setMobileOpen(false);
-              navigate("/app/board");
-            }}
-            onTeam={() => {
-              setMobileOpen(false);
-              navigate("/app/team");
+              navigate(to);
             }}
           />
         )}
-        {mini || !(activityMode || searchOpen || query) ? null : (
+        {mini || !(searchOpen || query) ? null : (
           <InputGroup
             data-testid="sidebar-search"
             className="mx-2.5 mb-3 w-auto rounded-xl bg-card dark:bg-input border border-border text-muted-foreground focus-within:border-ring"
@@ -233,46 +212,18 @@ export function ShellSidebar({
               <Search size={16} strokeWidth={1.8} aria-hidden="true" />
             </InputGroupAddon>
             <InputGroupInput
-              value={activityMode ? activityFilters.query : query}
-              onChange={(e) => {
-                if (activityMode) setActivityFilters({ ...activityFilters, query: e.target.value });
-                else setQuery(e.target.value);
-              }}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(event) => {
                 if (event.key !== "Escape") return;
-                if (activityMode) {
-                  setActivityFilters({ ...activityFilters, query: "" });
-                  return;
-                }
                 setQuery("");
                 setSearchOpen(false);
               }}
-              placeholder={activityMode ? t`Search runs` : t`Search`}
-              aria-label={activityMode ? t`Search runs` : t`Search`}
+              placeholder={t`Search`}
+              aria-label={t`Search`}
               autoComplete="off"
               name="sidebar-search"
             />
-            {activityMode ? (
-              <InputGroupAddon align="inline-end">
-                <InputGroupButton
-                  size="icon-sm"
-                  aria-label={t`Filters`}
-                  aria-expanded={activityFiltersExpanded}
-                  aria-controls={activityFiltersId}
-                  onClick={() => setActivityFiltersExpanded((expanded) => !expanded)}
-                  className="relative rounded-lg"
-                >
-                  <SlidersHorizontal size={16} aria-hidden="true" />
-                  {activityFilterCount > 0 ? (
-                    <span
-                      data-testid="activity-filter-indicator"
-                      aria-hidden="true"
-                      className="absolute end-1 top-1 size-1.5 rounded-full bg-primary"
-                    />
-                  ) : null}
-                </InputGroupButton>
-              </InputGroupAddon>
-            ) : null}
           </InputGroup>
         )}
         <div className="rk-scroll scroll-fade-y scroll-fade-12 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2.5 pb-2.5">
@@ -284,21 +235,8 @@ export function ShellSidebar({
             />
           ) : (
             <>
-              {activityMode && !mini ? (
-                <ActivityList
-                  filters={activityFilters}
-                  onFiltersChange={setActivityFilters}
-                  filtersExpanded={activityFiltersExpanded}
-                  filtersId={activityFiltersId}
-                  onOpenRun={(run) => {
-                    setMobileOpen(false);
-                    if (run.groupId) navigate(`/app/g/${run.groupId}`);
-                    else navigate(`/app/${run.botId}`);
-                  }}
-                />
-              ) : null}
               {roster}
-              {mini || activityMode ? null : (
+              {mini ? null : (
                 <SidebarPeopleList
                   activeUserId={activeDmUserId}
                   onOpen={(userId) => {
@@ -315,12 +253,16 @@ export function ShellSidebar({
           <PasskeyOffer />
           <MissionList navigate={navigate} onNavigate={() => setMobileOpen(false)} />
         </div>
+        {mini || isEmbedded() ? null : (
+          <div className="flex justify-center pb-1">
+            <SubscriptionRailRings />
+          </div>
+        )}
         <ShellSidebarFooter
           mini={mini}
-          account={isMobile}
+          account={!isEmbedded()}
           logos={footerLogos}
           user={user}
-          ticketBoardEnabled={ticketBoardEnabled}
           navLinks={navLinks}
           closeMobileSidebar={() => setMobileOpen(false)}
           navigate={navigate}
@@ -337,7 +279,6 @@ export function ShellSidebarFooter({
   account,
   logos,
   user,
-  ticketBoardEnabled,
   navLinks,
   closeMobileSidebar,
   navigate,
@@ -345,11 +286,10 @@ export function ShellSidebarFooter({
   openIntegrations,
 }: {
   mini: boolean;
-  /** Whether this footer carries the account menu; on wide screens the narrow bar does. */
+  /** Whether this footer carries the account menu and the Store; a partner's frame has neither. */
   account: boolean;
   logos: Array<{ name: string; logo?: string | null }>;
   user: User | undefined;
-  ticketBoardEnabled: boolean;
   navLinks: NavLink[];
   closeMobileSidebar: () => void;
   navigate: (path: string) => void;
@@ -367,6 +307,7 @@ export function ShellSidebarFooter({
   const localEdition = useLocalEdition();
   const [menuOpen, setMenuOpen] = useState(false);
   const [logOutError, setLogOutError] = useState<string | null>(null);
+  const hideStore = usePartnerHidden().includes("store");
   const { signingOut, logOut } = useSignOut(() => {
     clearSpaceSelection();
     navigate("/");
@@ -404,38 +345,15 @@ export function ShellSidebarFooter({
             setMenuOpen(false);
             openIntegrations();
           }}
-          onBoard={
-            ticketBoardEnabled
-              ? () => {
-                  setMenuOpen(false);
-                  closeMobileSidebar();
-                  navigate("/app/board");
-                }
-              : undefined
-          }
           links={navLinks}
           onLink={(link) => {
             setMenuOpen(false);
             closeMobileSidebar();
             navigate(`/app/x/${link.id}`);
           }}
-          onRoutines={() => {
-            setMenuOpen(false);
-            closeMobileSidebar();
-            navigate("/app/routines");
-          }}
-          onArtifacts={() => {
-            setMenuOpen(false);
-            closeMobileSidebar();
-            navigate("/app/artifacts");
-          }}
           onSettings={() => {
             setMenuOpen(false);
             openSettings("general");
-          }}
-          onUsage={() => {
-            setMenuOpen(false);
-            openSettings("usage");
           }}
           onLogOut={() => {
             setLogOutError(null);
@@ -444,6 +362,7 @@ export function ShellSidebarFooter({
           signingOut={signingOut}
           logOutError={logOutError}
           localEdition={localEdition}
+          hideStore={hideStore}
         />
       ) : null}
     </>

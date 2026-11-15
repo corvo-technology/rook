@@ -81,16 +81,20 @@ it("says nothing is waiting when nothing is", async () => {
   );
 });
 
-const nav = (approvals: number) => (
+const NAV = [
+  { key: "home", label: "Home", to: "/app/bot-1" },
+  { key: "approvals", label: "Approvals", to: "/app/approvals", badge: 0 },
+  { key: "tasks", label: "Tasks", to: "/app/board" },
+  { key: "activity", label: "Activity", to: "/app/activity" },
+  { key: "team", label: "Team", to: "/app/team" },
+];
+
+const nav = (approvals: number, onOpen = vi.fn()) => (
   <SidebarNav
-    approvals={approvals}
-    conversationsOn={false}
-    showTasks
-    onHome={vi.fn()}
-    onApprovals={vi.fn()}
-    onConversations={vi.fn()}
-    onTasks={vi.fn()}
-    onTeam={vi.fn()}
+    items={NAV.map((item) => (item.key === "approvals" ? { ...item, badge: approvals } : item))}
+    more={[]}
+    pathname="/app/activity"
+    onOpen={onOpen}
   />
 );
 
@@ -103,8 +107,23 @@ it("keeps Approvals in the sidebar nav, its count shown only while something wai
   expect([...host!.querySelectorAll("button")].map((button) => button.textContent)).toEqual([
     "Home",
     "Approvals",
-    "Conversations",
     "Tasks",
+    "Activity",
     "Team",
   ]);
+});
+
+it("opens a place from the nav and marks the one that is open", async () => {
+  const onOpen = vi.fn();
+  await mount(nav(0, onOpen));
+  expect(
+    host!.querySelector('[data-testid="sidebar-activity"]')?.getAttribute("aria-current"),
+  ).toBe("page");
+  expect(host!.querySelector('[data-testid="sidebar-team"]')?.getAttribute("aria-current")).toBe(
+    null,
+  );
+  await act(async () =>
+    host!.querySelector<HTMLButtonElement>('[data-testid="sidebar-team"]')!.click(),
+  );
+  expect(onOpen).toHaveBeenCalledWith("/app/team");
 });

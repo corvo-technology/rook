@@ -1,15 +1,15 @@
 import type { Bot, Group, ThreadSnapshot } from "@corvo/contracts";
 import type { modelChangePatch } from "@corvo/core";
-import { BotAvatar, Button, GroupAvatar } from "@corvo/ui-web";
+import { BotAvatar, Button } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
-import { Columns3, Menu, Monitor, Phone } from "lucide-react";
+import { Menu, Monitor, Phone } from "lucide-react";
 import { IconTooltip } from "../../components/IconTooltip";
 import { ChannelFind, pinSignature } from "./channel-find";
 import { ChannelHeader } from "./channel-header";
 import { ChatModelSwitcher } from "./chat-model-switcher";
 import { ContextMeter } from "./context-meter";
 
-/** The floating header over the transcript: navigation, the chat's name, call and computer. */
+/** The solid row above the transcript: navigation, the chat's name, call and computer. */
 export function ChatHeader({
   inGroup,
   active,
@@ -80,85 +80,74 @@ export function ChatHeader({
     );
   }
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-0 z-10 grid grid-cols-[1fr_minmax(0,auto)_1fr] items-center gap-2 px-3 py-[13px] md:px-[22px] [&_button]:pointer-events-auto">
-      <div className="flex items-center">
-        <Button
-          variant="floating"
-          size="icon-lg"
-          aria-label={t`Open navigation`}
-          onClick={onOpenNavigation}
-          className="app-no-drag md:hidden"
-        >
-          <Menu strokeWidth={1.7} className="size-[19px]" />
-        </Button>
-      </div>
+    <div className="app-drag flex shrink-0 items-center gap-3 border-b border-border bg-background px-3 py-2 md:px-[22px]">
       <Button
-        variant="floating"
+        variant="ghost"
+        size="icon"
+        aria-label={t`Open navigation`}
+        onClick={onOpenNavigation}
+        className="app-no-drag md:hidden"
+      >
+        <Menu strokeWidth={1.7} className="size-[19px]" />
+      </Button>
+      <button
+        type="button"
         data-testid="bot-settings-trigger"
         onClick={onOpenChatSettings}
-        className="app-no-drag h-auto min-w-0 gap-2 py-1 ps-1 pe-3.5"
+        className="app-no-drag flex min-w-0 items-center gap-2.5 rounded-md text-start outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        {inGroup ? (
-          <GroupAvatar members={activeSnapshot?.members ?? activeGroup?.members ?? []} size={26} />
-        ) : active ? (
+        {active ? (
           <BotAvatar
             color={active.color}
             identity={active.id}
-            size={26}
+            size={28}
             status={active.status}
             live
           />
         ) : null}
-        <span className="min-w-0">
-          <span className="block truncate text-[15px] font-medium text-foreground" dir="auto">
-            {inGroup
-              ? (activeGroup?.name ?? activeSnapshot?.groupName ?? t`Group`)
-              : (active?.name ?? t`Select a bot`)}
+        <span className="flex min-w-0 items-baseline gap-2">
+          <span className="truncate text-[15px] font-semibold text-foreground" dir="auto">
+            {active?.name ?? t`Select a bot`}
           </span>
-        </span>
-      </Button>
-      <div className="flex items-center justify-self-end gap-2">
-        {inGroup ? (
-          <IconTooltip label={t`Squad`}>
-            <Button
-              variant="floating"
-              size="icon-lg"
-              aria-label={t`Squad`}
-              onClick={onOpenSquad}
-              className="app-no-drag"
+          {active?.title ? (
+            <span
+              dir="auto"
+              className="hidden min-w-0 truncate text-[13px] text-muted-foreground md:block"
             >
-              <Columns3 strokeWidth={1.6} className="size-[18px]" />
-            </Button>
-          </IconTooltip>
-        ) : null}
-        {!inGroup && active ? <ContextMeter botId={active.id} running={running} /> : null}
-        {!inGroup && active ? (
+              {active.title}
+            </span>
+          ) : null}
+        </span>
+      </button>
+      <div className="app-no-drag ms-auto flex shrink-0 items-center gap-2">
+        {active ? <ContextMeter botId={active.id} running={running} /> : null}
+        {active ? (
           <ChatModelSwitcher bot={active} onChange={(patch) => onChangeModel(active, patch)} />
         ) : null}
-        {phoneCallsEnabled && !inGroup && active ? (
+        {phoneCallsEnabled && active ? (
           <IconTooltip label={inCall ? t`Open call` : t`Call`}>
             <Button
-              variant="floating"
-              size="icon-lg"
+              variant="ghost"
+              size="icon"
               data-testid="call-button"
               aria-label={inCall ? t`Open call` : t`Call`}
               onClick={() => onCall(active)}
               data-active={inCall ? "" : undefined}
-              className="app-no-drag"
+              className="data-active:bg-accent"
             >
               <Phone strokeWidth={1.6} className="size-[17px]" />
             </Button>
           </IconTooltip>
         ) : null}
-        {!inGroup && active ? (
+        {active ? (
           <IconTooltip label={t`Agent computer`}>
             <Button
-              variant="floating"
-              size="icon-lg"
+              variant="ghost"
+              size="icon"
               aria-label={t`Agent computer`}
               aria-pressed={computerPanelOpen}
               onClick={() => onToggleComputer(active)}
-              className="app-no-drag"
+              className="aria-pressed:bg-accent"
             >
               <Monitor strokeWidth={1.6} className="size-[18px]" />
             </Button>

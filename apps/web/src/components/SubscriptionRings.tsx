@@ -143,7 +143,7 @@ export function SubscriptionRings({ quotas, now }: { quotas: SubscriptionQuota[]
   );
 }
 
-/** The rail's rings, kept fresh: read again every minute and whenever the window is focused. */
+/** The sidebar's rings, kept fresh: read again every minute and whenever the window is focused. */
 export function SubscriptionRailRings() {
   const queries = useSpaceQueries();
   const { data } = useQuery({

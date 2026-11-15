@@ -1,17 +1,7 @@
 import type { NavLink } from "@corvo/contracts";
 import { AppMarkStack, Button, Popover, PopoverContent, PopoverTrigger } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
-import {
-  CalendarClock,
-  Download,
-  FolderOpen,
-  Gauge,
-  Link2,
-  LogOut,
-  Settings,
-  SquareKanban,
-  UserRound,
-} from "lucide-react";
+import { Download, Link2, LogOut, Settings, UserRound } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { useSidebarUpdate } from "./DesktopUpdates";
 import { IconTooltip } from "./IconTooltip";
@@ -26,18 +16,16 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onIntegrations: () => void;
-  onBoard?: () => void;
   links?: NavLink[];
   onLink?: (link: NavLink) => void;
-  onArtifacts: () => void;
-  onRoutines: () => void;
   onSettings: () => void;
-  onUsage: () => void;
   onLogOut: () => void;
   signingOut: boolean;
   logOutError: string | null;
   /** On the person's own computer there is no account to show or to leave. */
   localEdition?: boolean;
+  /** A partner leaves the Store out for its customers. */
+  hideStore?: boolean;
 };
 
 // Marks are 24px wide, overlap by 2px, and need 2px for the outer ring.
@@ -55,17 +43,14 @@ export function SidebarFooter({
   open,
   onOpenChange,
   onIntegrations,
-  onBoard,
   links = [],
   onLink,
-  onArtifacts,
-  onRoutines,
   onSettings,
-  onUsage,
   onLogOut,
   signingOut,
   logOutError,
   localEdition = false,
+  hideStore = false,
 }: Props) {
   const { t } = useLingui();
   const update = useSidebarUpdate();
@@ -133,26 +118,6 @@ export function SidebarFooter({
                 <p className="truncate text-xs text-muted-foreground">{email}</p>
               ) : null}
             </div>
-            {mini ? null : (
-              <Button
-                variant="ghost"
-                className="h-9 w-full justify-start gap-2.5 font-normal"
-                onClick={onUsage}
-              >
-                <Gauge className="text-muted-foreground" strokeWidth={1.75} />
-                <Trans>Usage</Trans>
-              </Button>
-            )}
-            {onBoard ? (
-              <Button
-                variant="ghost"
-                className="h-9 w-full justify-start gap-2.5 font-normal"
-                onClick={onBoard}
-              >
-                <SquareKanban className="text-muted-foreground" strokeWidth={1.75} />
-                <Trans>Tasks</Trans>
-              </Button>
-            ) : null}
             {links.map((link) => (
               <Button
                 key={link.id}
@@ -164,26 +129,6 @@ export function SidebarFooter({
                 {link.label}
               </Button>
             ))}
-            {mini ? null : (
-              <Button
-                variant="ghost"
-                className="h-9 w-full justify-start gap-2.5 font-normal"
-                onClick={onRoutines}
-              >
-                <CalendarClock className="text-muted-foreground" strokeWidth={1.75} />
-                <Trans>Routines</Trans>
-              </Button>
-            )}
-            {mini ? null : (
-              <Button
-                variant="ghost"
-                className="h-9 w-full justify-start gap-2.5 font-normal"
-                onClick={onArtifacts}
-              >
-                <FolderOpen className="text-muted-foreground" strokeWidth={1.75} />
-                <Trans>Artifacts</Trans>
-              </Button>
-            )}
             <Button
               variant="ghost"
               className="h-9 w-full justify-start gap-2.5 font-normal"
@@ -215,7 +160,7 @@ export function SidebarFooter({
           </PopoverContent>
         ) : null}
       </Popover>
-      {!mini ? (
+      {!mini && !hideStore ? (
         <Button
           variant="outline"
           ref={pillRef}

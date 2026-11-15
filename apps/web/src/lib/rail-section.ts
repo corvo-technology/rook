@@ -8,7 +8,7 @@ export type Section =
   | "artifacts"
   | "wiki";
 
-/** The section a path belongs to; custom links are reached from the account menu. */
+/** The part of the nav a path belongs to; custom links are reached from the account menu. */
 export function railSection(pathname: string, _search: string): Section | null {
   if (pathname.startsWith("/app/team")) return "team";
   if (pathname.startsWith("/app/routines")) return "routines";

@@ -20,7 +20,6 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import { AppRail } from "./components/AppRail";
 import { LoadingState } from "./components/ai/primitives";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { PageLoading } from "./components/PageLoading";
@@ -32,7 +31,6 @@ import { identifyMonitoringUser } from "./lib/monitoring";
 import { markAfterPaint, markOnce } from "./lib/performance";
 import { importChunk, lazyComponent } from "./lib/preload-recovery";
 import { QueryUserProvider, setQueryUser } from "./lib/query";
-import { railSection } from "./lib/rail-section";
 import { getRemoteImagesEnabled, subscribeRemoteImages } from "./lib/remote-images-preference";
 import { rpc } from "./lib/rpc";
 import {
@@ -74,11 +72,14 @@ const ArtifactsPage = lazyComponent(loadArtifacts);
 const UsagePage = lazyComponent(loadUsage);
 const WorkflowsPage = lazyComponent(loadWorkflows);
 const RoutinesPage = lazyComponent(loadRoutines);
+const ActivityPage = lazyComponent(() =>
+  import("./pages/ActivityPage").then((module) => module.ActivityPage),
+);
 const ApprovalsPage = lazyComponent(() =>
   import("./pages/ApprovalsPage").then((module) => module.ApprovalsPage),
 );
 const WikiPage = lazyComponent(loadWiki);
-/** The areas the bar moves between; fetched once the app is idle so moving to one never waits. */
+/** The pages the sidebar opens; fetched once the app is idle so moving to one never waits. */
 const AREA_LOADERS = [loadUsage, loadWorkflows, loadRoutines, loadArtifacts, loadWiki];
 const TeamPage = lazyComponent(() => import("./pages/TeamPage").then((module) => module.TeamPage));
 const SquadPage = lazyComponent(() =>
@@ -252,22 +253,28 @@ function SessionApp() {
               <Route element={<AppFrame ticketBoardEnabled={ticketBoardEnabled} />}>
                 <Route path="/app" element={<ShellPage />} />
                 <Route path="/app/g/:groupId" element={<ShellPage />} />
-                <Route path="/app/g/:groupId/squad" element={<SquadPage />} />
-                <Route path="/app/team" element={<TeamPage />} />
-                <Route path="/app/approvals" element={<ApprovalsPage />} />
+                <Route path="/app/g/:groupId/squad" element={<ShellPage page={<SquadPage />} />} />
+                <Route path="/app/team" element={<ShellPage page={<TeamPage />} />} />
+                <Route path="/app/approvals" element={<ShellPage page={<ApprovalsPage />} />} />
+                <Route path="/app/activity" element={<ShellPage page={<ActivityPage />} />} />
                 <Route path="/app/dm/:userId" element={<ShellPage />} />
                 <Route path="/app/dm" element={<Navigate to="/app" replace />} />
                 <Route path="/settings/space/:spaceId" element={<SettingsPage />} />
                 <Route path="/settings/:section?" element={<SettingsPage />} />
-                <Route path="/app/store" element={<StorePage />} />
-                <Route path="/app/usage" element={<UsagePage />} />
-                <Route path="/app/workflows" element={<WorkflowsPage />} />
-                <Route path="/app/routines" element={<RoutinesPage />} />
-                <Route path="/app/artifacts" element={<ArtifactsPage />} />
-                <Route path="/app/artifacts/:artifactId" element={<ArtifactsPage />} />
-                <Route path="/app/wiki" element={<WikiPage />} />
-                {ticketBoardEnabled ? <Route path="/app/board" element={<BoardPage />} /> : null}
-                <Route path="/app/x/:linkId" element={<NavLinkPage />} />
+                <Route path="/app/store" element={<ShellPage page={<StorePage />} />} />
+                <Route path="/app/usage" element={<ShellPage page={<UsagePage />} />} />
+                <Route path="/app/workflows" element={<ShellPage page={<WorkflowsPage />} />} />
+                <Route path="/app/routines" element={<ShellPage page={<RoutinesPage />} />} />
+                <Route path="/app/artifacts" element={<ShellPage page={<ArtifactsPage />} />} />
+                <Route
+                  path="/app/artifacts/:artifactId"
+                  element={<ShellPage page={<ArtifactsPage />} />}
+                />
+                <Route path="/app/wiki" element={<ShellPage page={<WikiPage />} />} />
+                {ticketBoardEnabled ? (
+                  <Route path="/app/board" element={<ShellPage page={<BoardPage />} />} />
+                ) : null}
+                <Route path="/app/x/:linkId" element={<ShellPage page={<NavLinkPage />} />} />
                 <Route path="/app/:botId" element={<ShellPage />} />
               </Route>
             </Route>
@@ -290,13 +297,11 @@ function LinkedInvite({ kind, user }: { kind: "invite" | "join"; user: unknown }
   return <InvitePage kind={kind} token={token} />;
 }
 
-/** The narrow bar beside every signed-in screen; the wide agent list belongs to the agents screen. */
+/** Every signed-in screen: the pages of the app (settings and onboarding aside) open inside the shell's own sidebar. */
 function AppFrame({ ticketBoardEnabled }: { ticketBoardEnabled: boolean }) {
   useBoardNotifications(ticketBoardEnabled);
-  // Moving between areas fades the new one in; moving between agents keeps the same screen.
-  const area = railSection(useLocation().pathname, "") ?? "other";
   useEffect(() => {
-    // A failed fetch here is not an error: the area loads on demand when it is opened.
+    // A failed fetch here is not an error: the page loads on demand when it is opened.
     const preload = () => {
       for (const load of AREA_LOADERS) importChunk(load).catch(() => undefined);
     };
@@ -308,18 +313,10 @@ function AppFrame({ ticketBoardEnabled }: { ticketBoardEnabled: boolean }) {
     return () => window.clearTimeout(timer);
   }, []);
   return (
-    <div className="flex h-full min-w-0">
-      <AppRail ticketBoardEnabled={ticketBoardEnabled} />
-      {/* The transform makes the wide sidebar's fixed position start beside the bar, not under it. */}
-      <div
-        key={area}
-        className="h-full min-w-0 flex-1 transform-gpu animate-in fade-in-0 duration-200 motion-reduce:animate-none"
-      >
-        {/* Only this area waits for its page; the bar stays where it is. */}
-        <Suspense fallback={<PageLoading />}>
-          <Outlet />
-        </Suspense>
-      </div>
+    <div className="h-full min-w-0">
+      <Suspense fallback={<PageLoading />}>
+        <Outlet />
+      </Suspense>
     </div>
   );
 }

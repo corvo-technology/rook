@@ -8,7 +8,6 @@ import { takeInitialBootstrap } from "../lib/bootstrap";
 import { useSpaceQueries } from "../lib/query";
 import { buildTeamRoster, TICKET_WORK_STATUSES, ticketsByOwner } from "../lib/team-roster";
 import { TeamBoard } from "./TeamBoard";
-import { WindowChrome } from "./WindowChrome";
 
 const FAST_REFRESH_MS = 2_500;
 const IDLE_REFRESH_MS = 15_000;
@@ -45,9 +44,6 @@ export function TeamPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto bg-background text-foreground">
-      <div className="app-drag flex items-center gap-2 px-4 pt-3">
-        <WindowChrome />
-      </div>
       <h1 className="mx-auto w-full max-w-3xl px-6 py-4 text-xl font-light tracking-tight">
         <Trans>Team</Trans>
       </h1>

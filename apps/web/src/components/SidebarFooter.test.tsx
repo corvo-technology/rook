@@ -32,7 +32,6 @@ async function render(
   name = "Demo User",
   image?: string,
   onIntegrations = vi.fn(),
-  onBoard?: () => void,
   logos?: Array<{ name: string; logo?: string }>,
   localEdition = false,
 ) {
@@ -54,11 +53,7 @@ async function render(
           open
           onOpenChange={() => {}}
           onIntegrations={onIntegrations}
-          onBoard={onBoard}
-          onArtifacts={() => {}}
-          onRoutines={() => {}}
           onSettings={() => {}}
-          onUsage={() => {}}
           onLogOut={() => {}}
           signingOut={false}
           logOutError={null}
@@ -135,7 +130,7 @@ it("shows the account image and falls back to the initial after a load error", a
 
 it("opens integrations and keeps the existing account actions", async () => {
   const onIntegrations = vi.fn();
-  await render("Demo User", undefined, onIntegrations, vi.fn());
+  await render("Demo User", undefined, onIntegrations);
   const connect = [...host.querySelectorAll("button")].find((button) =>
     button.textContent?.includes("Store"),
   )!;
@@ -143,10 +138,6 @@ it("opens integrations and keeps the existing account actions", async () => {
   expect(onIntegrations).toHaveBeenCalledOnce();
   const menu = document.querySelector('[data-slot="popover-content"]')!;
   expect([...menu.querySelectorAll("button, a")].map((row) => row.textContent)).toEqual([
-    "Usage",
-    "Tasks",
-    "Routines",
-    "Artifacts",
     "Settings",
     "Log out",
   ]);
@@ -154,15 +145,8 @@ it("opens integrations and keeps the existing account actions", async () => {
     "Account menu for Demo User",
   );
 });
-it("omits Tasks when unavailable", async () => {
-  await render();
-  expect(document.querySelector('[data-slot="popover-content"]')?.textContent).not.toContain(
-    "Tasks",
-  );
-});
-
 it("falls back when app artwork fails and accepts replacement artwork", async () => {
-  await render("Demo User", undefined, undefined, undefined, [
+  await render("Demo User", undefined, undefined, [
     { name: "Slack", logo: "https://example.test/slack.svg" },
   ]);
   const pill = [...host.querySelectorAll("button")].find((button) =>
@@ -171,7 +155,7 @@ it("falls back when app artwork fails and accepts replacement artwork", async ()
   await act(async () => pill.querySelector("img")!.dispatchEvent(new Event("error")));
   expect(pill.querySelector("img")).toBeNull();
   expect(pill.textContent).toContain("S");
-  await render("Demo User", undefined, undefined, undefined, [
+  await render("Demo User", undefined, undefined, [
     { name: "Slack", logo: "https://example.test/new-slack.svg" },
   ]);
   expect(pill.querySelector("img")?.src).toBe("https://example.test/new-slack.svg");
@@ -225,7 +209,7 @@ it.each([
 });
 
 it("keeps at most three marks with the same tile and a missing-logo fallback", async () => {
-  await render("Demo User", undefined, undefined, undefined, [
+  await render("Demo User", undefined, undefined, [
     { name: "Gmail", logo: "https://example.test/gmail.svg" },
     { name: "Notion" },
     { name: "GitHub", logo: "https://example.test/github.svg" },
@@ -242,7 +226,7 @@ it("shows the account email and Log out on a server with accounts", async () => 
   expect(document.body.textContent).toContain("Log out");
 });
 it("shows neither the account email nor Log out on the person's own computer", async () => {
-  await render("Demo User", undefined, vi.fn(), undefined, undefined, true);
+  await render("Demo User", undefined, vi.fn(), undefined, true);
   expect(document.body.textContent).toContain("Settings");
   expect(document.body.textContent).not.toContain("account@corvo.test");
   expect(document.body.textContent).not.toContain("Log out");

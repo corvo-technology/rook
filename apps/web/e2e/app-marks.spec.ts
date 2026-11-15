@@ -41,7 +41,7 @@ for (const theme of ["light", "dark"]) {
     );
     await signup(page, `app-marks-${theme}-${Date.now()}@corvo.test`, "password12", "Demo User");
     await completeOnboarding(page);
-    // The narrow bar carries the Store icon on wide screens; the app marks live in the phone drawer.
+    // The marks are checked in the phone drawer.
     await page.setViewportSize({ width: 390, height: 844 });
     await page.getByRole("button", { name: "Open navigation" }).click();
     const footer = page.getByTestId("sidebar-footer");

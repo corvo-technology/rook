@@ -80,3 +80,27 @@ it("has no squad button in a chat with a single bot", async () => {
   expect(container.querySelector('button[aria-label="Squad"]')).toBeNull();
   await unmount();
 });
+
+it("is a row of its own with the name and role on the left, never floating over the messages", async () => {
+  const { unmount } = await render({
+    inGroup: false,
+    activeGroup: undefined,
+    phoneCallsEnabled: true,
+    active: {
+      id: "bot-1",
+      name: "Chief",
+      title: "Leads the team",
+      color: "blue",
+      status: "idle",
+    } as never,
+  });
+  const header = container.firstElementChild as HTMLElement;
+  expect(header.className).not.toContain("absolute");
+  expect(header.className).toContain("border-b");
+  const trigger = header.querySelector('[data-testid="bot-settings-trigger"]');
+  expect(trigger?.textContent).toContain("Chief");
+  expect(trigger?.textContent).toContain("Leads the team");
+  expect(header.querySelector('[data-testid="call-button"]')).not.toBeNull();
+  expect(header.querySelector('button[aria-label="Agent computer"]')).not.toBeNull();
+  await unmount();
+});

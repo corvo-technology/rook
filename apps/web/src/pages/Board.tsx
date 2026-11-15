@@ -38,7 +38,6 @@ import type { BoardSteps } from "./board/board-steps";
 import { applyBoardStep, boardEventChangesList } from "./board/board-steps";
 import { useTicketMoves } from "./board/use-ticket-moves";
 import { TicketFields } from "./TicketFields";
-import { WindowChrome } from "./WindowChrome";
 
 export function BoardPage() {
   const { t } = useLingui();
@@ -136,7 +135,6 @@ export function BoardPage() {
 
   return (
     <div className="flex h-full min-w-0 flex-col overflow-hidden bg-background text-foreground">
-      <WindowChrome />
       <header className="flex items-center gap-3 border-b px-4 py-3">
         <Link
           to="/app"

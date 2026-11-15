@@ -50,8 +50,8 @@ export function ContextMeter({ botId, running }: { botId: string; running: boole
         <PopoverTrigger
           render={
             <Button
-              variant="floating"
-              size="icon-lg"
+              variant="ghost"
+              size="icon"
               data-testid="context-meter"
               aria-label={t`Context`}
               className="app-no-drag"

@@ -57,10 +57,19 @@ vi.mock("./lib/rpc", () => ({ rpc: { analytics: { screen: capability.screen } } 
 vi.mock("./components/SubscriptionGate", () => ({
   SubscriptionGate: ({ children }: { children: ReactNode }) => children,
 }));
-vi.mock("./components/AppRail", () => ({ AppRail: () => <i data-rail /> }));
-// An area that is still loading: its chunk never arrives.
+// A page that is still loading: its chunk never arrives.
 vi.mock("./pages/Usage", () => new Promise(() => {}));
-vi.mock("./pages/Shell", () => ({ ShellPage: () => <div>Shell</div> }));
+// The shell holds the sidebar and shows the page it is given, or the chat.
+vi.mock("./pages/Shell", async () => {
+  const { Suspense } = await import("react");
+  return {
+    ShellPage: ({ page }: { page?: ReactNode }) => (
+      <div data-shell>
+        <Suspense fallback={null}>{page ?? "Shell"}</Suspense>
+      </div>
+    ),
+  };
+});
 vi.mock("./pages/Board", () => {
   capability.boardLoaded();
   return { BoardPage: () => <div>Board page</div> };
@@ -190,7 +199,7 @@ it.each(["throw", "reject"])(
   },
 );
 
-it("keeps the bar and the frame in place while an area's page is still loading", async () => {
+it("keeps the sidebar in place while a page is still loading", async () => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   const container = document.createElement("div");
   const root = createRoot(container);
@@ -202,8 +211,8 @@ it("keeps the bar and the frame in place while an area's page is still loading",
         </MemoryRouter>,
       ),
     );
-    // Only the content area waits; the bar never disappears behind a whole-page loader.
-    expect(container.querySelector("[data-rail]")).not.toBeNull();
+    // Only the main pane waits; the sidebar never disappears behind a whole-page loader.
+    expect(container.querySelector("[data-shell]")).not.toBeNull();
   } finally {
     await act(async () => root.unmount());
     vi.unstubAllGlobals();

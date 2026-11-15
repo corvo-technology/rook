@@ -31,7 +31,8 @@ import { Button } from "@corvo/ui-web";
 import { useIsMobile } from "@corvo/ui-web/hooks/use-mobile";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Menu, Plus } from "lucide-react";
+import type { ReactNode } from "react";
 import {
   Suspense,
   useCallback,
@@ -125,13 +126,14 @@ const NO_AGENT_SKILLS: AgentSkillCatalogEntry[] = [];
 const NO_PROVIDERS: string[] = [];
 const NO_THREAD_REPLIES: ThreadMessage[] = [];
 
-export function ShellPage() {
+/** The space's sidebar with a chat in the main pane, or the page that was asked for instead. */
+export function ShellPage({ page }: { page?: ReactNode }) {
   // A new key per space switch, so nothing from the previous space survives it.
   const spaceEpoch = useSpaceEpoch();
-  return <SpaceShell key={spaceEpoch} />;
+  return <SpaceShell key={spaceEpoch} page={page} />;
 }
 
-function SpaceShell() {
+function SpaceShell({ page }: { page?: ReactNode }) {
   const { t } = useLingui();
   const { botId, groupId, userId: dmUserId } = useParams();
   const [shellSpaceId] = useState(selectedSpaceId);
@@ -155,7 +157,7 @@ function SpaceShell() {
     setSearchParams,
     searchParamsRef,
     redirectKeepingOverlay,
-  } = useShellNavigation();
+  } = useShellNavigation({ paged: page != null });
   const openSettingsRoute = useOpenSettings();
   const queries = spaceQueries(userId ?? null, shellSpaceId);
   const roster = useSpaceRoster({ rpc, seed, botId, groupId, navigate, redirectKeepingOverlay });
@@ -923,8 +925,8 @@ function SpaceShell() {
             setDeleteSectionTarget={dialogs.setDeleteSectionTarget}
             toggleSidebarSection={toggleSidebarSection}
             inGroup={inGroup}
-            active={dmUserId ? undefined : active}
-            activeGroup={dmUserId ? undefined : activeGroup}
+            active={dmUserId || page ? undefined : active}
+            activeGroup={dmUserId || page ? undefined : activeGroup}
             botsSidebarDensity={botsSidebarDensity}
             dismissedRunErrorIds={composer.dismissedRunErrorIds}
             displayedRunError={composer.displayedRunError}
@@ -978,7 +980,25 @@ function SpaceShell() {
           />
         ) : null}
         <CallReturnBar />
-        {dmUserId ? (
+        {page ? (
+          <>
+            {/* On a phone the pages have no sidebar beside them; this opens it. */}
+            <div className="app-drag flex shrink-0 items-center border-b border-border px-3 py-2 md:hidden">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={t`Open navigation`}
+                onClick={() => setMobileSidebarOpen(true)}
+                className="app-no-drag"
+              >
+                <Menu strokeWidth={1.7} className="size-[19px]" />
+              </Button>
+            </div>
+            <div className="min-h-0 flex-1" data-testid="shell-page">
+              <Suspense fallback={<PageLoading />}>{page}</Suspense>
+            </div>
+          </>
+        ) : dmUserId ? (
           <DirectChat
             key={dmUserId}
             userId={dmUserId}
@@ -987,10 +1007,8 @@ function SpaceShell() {
           />
         ) : (
           <>
-            {/* The header floats so the transcript scrolls under its buttons. */}
+            {/* The header is a row of its own, so it never covers the messages. */}
             <div className="relative flex min-h-0 flex-1 flex-col">
-              {/* Only the pills take input; the gaps pass clicks and scrolling to the transcript. */}
-              <div aria-hidden="true" className="app-drag absolute inset-x-0 top-0 z-10 h-3" />
               <ChatHeader
                 inGroup={inGroup}
                 active={active}

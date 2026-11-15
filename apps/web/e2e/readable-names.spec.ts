@@ -95,10 +95,12 @@ test("legacy opaque names never appear in navigation, account, chats or Activity
     await page.evaluate(() => localStorage.setItem("corvo.uiLocale", "en"));
     await page.goto(`/app/${bot.id}`);
     await rpc(page, "threads/send", { botId: bot.id, text: "keep working until I stop you" });
-    await page.getByRole("button", { name: "Conversations", exact: true }).click();
+    await page.getByTestId("sidebar-activity").click();
     await page.reload();
     await expect(page.getByRole("status", { name: "Loading activity…" })).toBeHidden();
-    await expect(page.locator("aside").getByRole("button", { name: /^Bot, / })).toBeVisible();
+    await expect(
+      page.getByTestId("activity-page").getByRole("button", { name: /^Bot, / }),
+    ).toBeVisible();
     await expectReadableNames(page.locator("body"));
     await captureScreenshot(page, testInfo, "readable-names-activity");
   } finally {

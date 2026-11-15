@@ -113,6 +113,13 @@ export function ActivityList({
         <p className="px-2.5 py-2 text-[13px] text-muted-foreground/80">
           <Spinner aria-label={t`Loading activity…`} />
         </p>
+      ) : !loading && !error && !hasAnyRuns && !filtersOn ? (
+        <p
+          data-testid="activity-empty"
+          className="px-2.5 py-10 text-center text-sm text-muted-foreground"
+        >
+          <Trans>No activity yet.</Trans>
+        </p>
       ) : !error && filtersOn && hasAnyRuns && !hasVisibleRuns ? (
         <p className="px-2.5 py-2 text-[13px] text-muted-foreground/80" role="status">
           <Trans>No runs match these filters.</Trans>

@@ -32,8 +32,8 @@ export function SidebarHeader({
   mini = false,
   createMenuOpen,
   setCreateMenuOpen,
-  activityMode,
-  toggleActivityMode,
+  activityOpen,
+  onActivity,
   searchOpen = false,
   onSearch,
   setBotsSidebarCollapsedPref,
@@ -50,10 +50,11 @@ export function SidebarHeader({
   mini?: boolean;
   createMenuOpen: boolean;
   setCreateMenuOpen: (open: boolean) => void;
-  activityMode: boolean;
-  toggleActivityMode: () => void;
+  /** The activity page is the one open. */
+  activityOpen: boolean;
+  onActivity: () => void;
   searchOpen?: boolean;
-  onSearch?: () => void;
+  onSearch: () => void;
   setBotsSidebarCollapsedPref: (collapsed: boolean) => void;
   bots: Bot[];
   setMobileSidebarOpen: (open: boolean) => void;
@@ -91,32 +92,29 @@ export function SidebarHeader({
         </div>
       ) : null}
       <div className={`relative flex items-center ${mini ? "flex-col gap-0.5" : "gap-2.5"}`}>
-        {onSearch ? (
-          <IconTooltip label={t`Search`}>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label={t`Search`}
-              aria-pressed={searchOpen}
-              data-testid="sidebar-search-trigger"
-              onClick={onSearch}
-              className="app-no-drag flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground/70 hover:text-foreground/75"
-            >
-              <Search size={15} strokeWidth={1.8} aria-hidden="true" />
-            </Button>
-          </IconTooltip>
-        ) : null}
+        <IconTooltip label={t`Search`}>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={t`Search`}
+            aria-pressed={searchOpen}
+            data-testid="sidebar-search-trigger"
+            onClick={onSearch}
+            className="app-no-drag flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground/70 hover:text-foreground/75"
+          >
+            <Search size={15} strokeWidth={1.8} aria-hidden="true" />
+          </Button>
+        </IconTooltip>
         {mini ? (
           <IconTooltip label={t`Activity`}>
             <Button
               variant="ghost"
               size="icon-sm"
               aria-label={t`Activity`}
-              aria-pressed={activityMode}
-              data-activity-mode={activityMode ? "on" : "off"}
-              onClick={toggleActivityMode}
+              aria-pressed={activityOpen}
+              onClick={onActivity}
               className={`app-no-drag flex h-7 w-7 items-center justify-center rounded-full ${
-                activityMode
+                activityOpen
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground/70 hover:text-foreground/75"
               }`}
@@ -124,7 +122,7 @@ export function SidebarHeader({
               <Bell
                 size={15}
                 strokeWidth={1.8}
-                fill={activityMode ? "currentColor" : "none"}
+                fill={activityOpen ? "currentColor" : "none"}
                 aria-hidden="true"
               />
             </Button>

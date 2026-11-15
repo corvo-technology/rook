@@ -5,7 +5,10 @@ import { guardShellNavigate } from "../../lib/space-switch";
 import { legacyOverlayTarget, searchString, shellOverlaySearch } from "../shell-overlay";
 
 /** Router access for the shell: navigation stops once it unmounts, and old overlay links redirect. */
-export function useShellNavigation() {
+export function useShellNavigation(options: { paged?: boolean } = {}) {
+  // A page in the main pane (Team, Routines...) is not a chat, so nothing steers the route to one.
+  const pagedRef = useRef(Boolean(options.paged));
+  pagedRef.current = Boolean(options.paged);
   const routerNavigate = useNavigate();
   const navigateRef = useRef(routerNavigate);
   navigateRef.current = routerNavigate;
@@ -33,6 +36,7 @@ export function useShellNavigation() {
   /** Picking the thread for a bare or stale route keeps the plan choice the URL asked for. */
   const redirectKeepingOverlay = useCallback(
     (pathname: string) =>
+      pagedRef.current ||
       navigate(
         { pathname, search: shellOverlaySearch(searchParamsRef.current) },
         { replace: true },

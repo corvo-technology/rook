@@ -29,7 +29,6 @@ import { errorText } from "../lib/user-error";
 import { NewRoutinePanel } from "./NewRoutinePanel";
 import { RoutineCard } from "./RoutineCard";
 import { blockStyle, RoutineTimeGrid } from "./RoutineTimeGrid";
-import { WindowChrome } from "./WindowChrome";
 
 const NO_BOTS: Bot[] = [];
 const MONTH_CHIPS_PER_DAY = 3;
@@ -104,9 +103,6 @@ export function RoutinesPage() {
 
   return (
     <div className="flex h-full flex-col bg-background text-foreground">
-      <div className="app-drag flex items-center gap-2 px-4 pt-3">
-        <WindowChrome />
-      </div>
       <header className="flex flex-wrap items-center gap-2 px-6 py-4">
         <Button
           variant="ghost"

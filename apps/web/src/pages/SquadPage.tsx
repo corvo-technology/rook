@@ -8,7 +8,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { takeInitialBootstrap } from "../lib/bootstrap";
 import { useSpaceQueries } from "../lib/query";
 import { buildSquadLanes, squadRouter } from "../lib/squad-lanes";
-import { WindowChrome } from "./WindowChrome";
 
 const FAST_REFRESH_MS = 2_500;
 const IDLE_REFRESH_MS = 15_000;
@@ -51,9 +50,6 @@ export function SquadPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto bg-background text-foreground">
-      <div className="app-drag flex items-center gap-2 px-4 pt-3">
-        <WindowChrome />
-      </div>
       <header className="flex items-center gap-2 px-6 py-4">
         <Button
           variant="ghost"

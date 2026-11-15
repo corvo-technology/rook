@@ -148,9 +148,11 @@ test.describe("the channel as the approved canvas draws it", () => {
       await expect(sidebar.getByTestId("sidebar-nav").getByRole("button")).toHaveText([
         "Home",
         "Approvals1",
-        "Conversations",
         "Tasks",
+        "Routines",
+        "Activity",
         "Team",
+        "More",
       ]);
       await expect(sidebar.getByText("Channels")).toBeVisible();
       await expect(sidebar.getByText("Agents", { exact: true })).toBeVisible();

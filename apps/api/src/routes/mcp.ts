@@ -8,6 +8,7 @@ import {
   sanitizeComposioError,
   verifyMcpInstall,
 } from "@corvo/adapters";
+import type { Actor } from "@corvo/contracts";
 import { signupSurveyAsksTeamSize } from "@corvo/contracts";
 import { containsSecret } from "@corvo/core";
 import type { Prisma } from "@corvo/db";
@@ -38,6 +39,7 @@ import {
   promptFocus,
   startOnboarding,
 } from "../onboarding.js";
+import { actorForManaged, connectionOwners, mcpServersWhere } from "../shared-connections.js";
 import { startStarterTeam } from "../starter-team.js";
 import type { RouterContext } from "./context.js";
 import { computerContext, isUniqueViolation } from "./shared.js";
@@ -56,6 +58,16 @@ export function mcpRoutes(ctx: RouterContext) {
     announceMcpServer,
     authed,
   } = ctx;
+  const asServerOwner = async <C extends { actor: Actor }>(base: C, id: string): Promise<C> => ({
+    ...base,
+    // A row that is not reachable stays the not-found the handler already answers.
+    actor: await actorForManaged(deps.prisma, base.actor, async () =>
+      deps.prisma.mcpServer.findFirst({
+        where: { id, ...(await mcpServersWhere(deps.prisma, base.actor)) },
+        select: { userId: true },
+      }),
+    ),
+  });
   return {
     capabilities: {
       list: authed.capabilities.list.handler(async ({ context }) => {
@@ -246,33 +258,45 @@ export function mcpRoutes(ctx: RouterContext) {
     },
     mcp: {
       servers: {
-        list: authed.mcp.servers.list.handler(async ({ context }) => {
+        list: authed.mcp.servers.list.handler(async ({ context, input }) => {
           const rows = await deps.prisma.mcpServer.findMany({
-            where: { spaceId: context.actor.spaceId, userId: context.actor.userId },
+            where: await mcpServersWhere(deps.prisma, context.actor, {
+              listing: input?.scope === "space",
+            }),
             orderBy: [{ name: "asc" }, { createdAt: "asc" }],
           });
           const secretIds = rows.flatMap((row) => (row.secretId ? [row.secretId] : []));
+          // A server's secret is its owner's, whoever is looking at the list.
           const secrets = secretIds.length
             ? await deps.prisma.secret.findMany({
                 where: {
                   id: { in: secretIds },
                   spaceId: context.actor.spaceId,
-                  userId: context.actor.userId,
+                  userId: { in: [...new Set(rows.map((row) => row.userId))] },
                 },
                 select: { id: true, ciphertext: true },
               })
             : [];
           const ciphertextById = new Map(secrets.map((secret) => [secret.id, secret.ciphertext]));
+          const sharedView = rows.some((row) => row.userId !== context.actor.userId);
+          const owners = sharedView
+            ? await connectionOwners(
+                deps.prisma,
+                context.actor,
+                rows.map((row) => row.userId),
+              )
+            : new Map();
           return Promise.all(
-            rows.map(async (row) =>
-              mcpServerDto(
+            rows.map(async (row) => ({
+              ...mcpServerDto(
                 row,
                 await mcpOAuth.summaryForCiphertext(
                   row.secretId ? ciphertextById.get(row.secretId) : undefined,
                   row.secretId ?? undefined,
                 ),
               ),
-            ),
+              ...(sharedView && owners.get(row.userId) ? { owner: owners.get(row.userId) } : {}),
+            })),
           );
         }),
         create: authed.mcp.servers.create.handler(async ({ context, input }) => {
@@ -290,7 +314,9 @@ export function mcpRoutes(ctx: RouterContext) {
             });
           return announceMcpServer(row, context.actor);
         }),
-        update: authed.mcp.servers.update.handler(async ({ context, input }) => {
+        update: authed.mcp.servers.update.handler(async ({ context: base, input }) => {
+          // A manager works on another member's server acting as its owner, for this one row.
+          const context = await asServerOwner(base, input.id);
           for (let attempt = 0; attempt < 5; attempt++) {
             const { existing, existingSecret } = await deps.prisma.$transaction(async (tx) => {
               const existing = await tx.mcpServer.findFirst({
@@ -468,7 +494,9 @@ export function mcpRoutes(ctx: RouterContext) {
           }
           throw new ORPCError("CONFLICT", { message: "MCP credentials changed; retry" });
         }),
-        test: authed.mcp.servers.test.handler(async ({ context, input }) => {
+        test: authed.mcp.servers.test.handler(async ({ context: base, input }) => {
+          // A manager works on another member's server acting as its owner, for this one row.
+          const context = await asServerOwner(base, input.id);
           const scope = {
             id: input.id,
             spaceId: context.actor.spaceId,
@@ -494,7 +522,9 @@ export function mcpRoutes(ctx: RouterContext) {
           if (!fresh) throw new IsolationError();
           return mcpServerDto(fresh, oauth);
         }),
-        remove: authed.mcp.servers.remove.handler(async ({ context, input }) => {
+        remove: authed.mcp.servers.remove.handler(async ({ context: base, input }) => {
+          // A manager works on another member's server acting as its owner, for this one row.
+          const context = await asServerOwner(base, input.id);
           const server = await deps.prisma.mcpServer.findFirst({
             where: {
               id: input.id,

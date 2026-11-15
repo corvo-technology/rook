@@ -11,11 +11,13 @@ import {
   IsolationError,
   ProviderTransactionBusyError,
   recordSecurityEvent,
+  requireSpaceMember,
   runProviderTransaction,
 } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import { ORPCError } from "@orpc/server";
 import { connectionCreatedEvent } from "../security-audit.js";
+import { actorForManaged, connectionOwners, connectionsWhere } from "../shared-connections.js";
 import type { RouterContext } from "./context.js";
 
 async function reconcileConnections(
@@ -246,10 +248,21 @@ export function connectionsRoutes(ctx: RouterContext) {
         );
         return catalogs.flat();
       }),
-      list: authed.connections.list.handler(async ({ context }) => {
+      list: authed.connections.list.handler(async ({ context, input }) => {
         const rows = await deps.prisma.connection.findMany({
-          where: { spaceId: context.actor.spaceId, userId: context.actor.userId },
+          where: await connectionsWhere(deps.prisma, context.actor, {
+            listing: input?.scope === "space",
+          }),
+          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         });
+        const sharedView = rows.some((row) => row.userId !== context.actor.userId);
+        const owners = sharedView
+          ? await connectionOwners(
+              deps.prisma,
+              context.actor,
+              rows.map((row) => row.userId),
+            )
+          : new Map();
         return rows.map((row) => ({
           id: row.id,
           connectorId: row.connectorId,
@@ -258,7 +271,42 @@ export function connectionsRoutes(ctx: RouterContext) {
           status: row.status as "pending" | "connected" | "revoked" | "error",
           capabilities: [],
           createdAt: row.createdAt.toISOString(),
+          ...(sharedView && owners.get(row.userId) ? { owner: owners.get(row.userId) } : {}),
         }));
+      }),
+      forAgent: authed.connections.forAgent.handler(async ({ context, input }) => {
+        await requireSpaceMember(deps.prisma, context.actor);
+        const bot = await deps.prisma.bot.findFirst({
+          where: { id: input.botId, spaceId: context.actor.spaceId },
+          select: { id: true, userId: true },
+        });
+        if (!bot) throw new IsolationError();
+        // What an agent acts with is its owner's; only names and state leave, never ids or owners.
+        const [apps, servers] = await Promise.all([
+          deps.prisma.connection.findMany({
+            where: { spaceId: context.actor.spaceId, userId: bot.userId },
+            select: { displayName: true, status: true },
+            orderBy: [{ displayName: "asc" }, { id: "asc" }],
+          }),
+          deps.prisma.botMcpServer.findMany({
+            where: { botId: bot.id, spaceId: context.actor.spaceId, server: { enabled: true } },
+            select: { server: { select: { name: true, healthStatus: true } } },
+            orderBy: { createdAt: "asc" },
+          }),
+        ]);
+        return [
+          ...apps.map((row) => ({
+            kind: "app" as const,
+            name: row.displayName,
+            status: row.status as "pending" | "connected" | "revoked" | "error",
+          })),
+          ...servers.map((row) => ({
+            kind: "mcp" as const,
+            name: row.server.name,
+            status:
+              row.server.healthStatus === "error" ? ("error" as const) : ("connected" as const),
+          })),
+        ];
       }),
       begin: authed.connections.begin.handler(async ({ context, input }) => {
         const connector =
@@ -824,8 +872,7 @@ export function connectionsRoutes(ctx: RouterContext) {
         const existing = await deps.prisma.connection.findFirst({
           where: {
             id: input.connectionId,
-            spaceId: context.actor.spaceId,
-            userId: context.actor.userId,
+            ...(await connectionsWhere(deps.prisma, context.actor)),
           },
         });
         if (!existing) throw new IsolationError();
@@ -843,7 +890,21 @@ export function connectionsRoutes(ctx: RouterContext) {
           createdAt: row.createdAt.toISOString(),
         };
       }),
-      revoke: authed.connections.revoke.handler(async ({ context, input }) => {
+      revoke: authed.connections.revoke.handler(async ({ context: base, input }) => {
+        // A manager revokes another member's connection acting as its owner: the provider call
+        // and the rows are the owner's, for this one connection.
+        const context = {
+          ...base,
+          actor: await actorForManaged(deps.prisma, base.actor, async () =>
+            deps.prisma.connection.findFirst({
+              where: {
+                id: input.connectionId,
+                ...(await connectionsWhere(deps.prisma, base.actor)),
+              },
+              select: { userId: true },
+            }),
+          ),
+        };
         type RemoteRevoke = {
           connectorId: string;
           connectionRef: string;

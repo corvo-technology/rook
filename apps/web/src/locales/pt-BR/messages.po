@@ -835,6 +835,11 @@ msgstr "Adicionar gatilho"
 msgid "Added"
 msgstr "Adicionado"
 
+#: src/pages/McpServersSettings.tsx
+#: src/pages/Store.tsx
+msgid "Added by {otherOwner}"
+msgstr "Adicionado por {otherOwner}"
+
 #: src/components/WikiChangeCard.tsx
 msgid "Added to the wiki"
 msgstr "Adicionado à wiki"
@@ -1134,6 +1139,7 @@ msgstr "Aprovar edições"
 msgid "Approve this server to let your agent use its tools."
 msgstr "Aprove este servidor para permitir que seu agente use suas ferramentas."
 
+#: src/pages/shell/agent-connections.tsx
 #: src/pages/Store.tsx
 msgid "Apps"
 msgstr "Apps"
@@ -3063,6 +3069,7 @@ msgstr "Descartar gravação"
 #: src/pages/McpServersSettings.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/Store.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Disconnect"
@@ -3322,6 +3329,7 @@ msgid "Environment variables: {names}"
 msgstr "Variáveis de ambiente: {names}"
 
 #: src/lib/roster-status.ts
+#: src/pages/shell/agent-connections.tsx
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Error"
 msgstr "Erro"

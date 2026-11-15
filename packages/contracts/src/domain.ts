@@ -853,6 +853,13 @@ export function isDeletableMemoryDocument(path: string): boolean {
   return path !== MEMORY_INDEX_PATH;
 }
 
+export const ConnectionOwnerSchema = z.object({
+  userId: Id,
+  name: z.string(),
+  mine: z.boolean(),
+});
+export type ConnectionOwner = z.infer<typeof ConnectionOwnerSchema>;
+
 export const ConnectionSchema = z.object({
   id: Id,
   connectorId: z.string(),
@@ -861,8 +868,18 @@ export const ConnectionSchema = z.object({
   status: z.enum(["pending", "connected", "revoked", "error"]),
   capabilities: z.array(z.string()),
   createdAt: z.string(),
+  /** Whose it is. Present on the lists of someone who sees the space's, absent otherwise. */
+  owner: ConnectionOwnerSchema.optional(),
 });
 export type Connection = z.infer<typeof ConnectionSchema>;
+
+/** What an agent has connected, for a member who may not manage connections: names only. */
+export const AgentConnectionSummarySchema = z.object({
+  kind: z.enum(["app", "mcp"]),
+  name: z.string(),
+  status: z.enum(["pending", "connected", "revoked", "error"]).optional(),
+});
+export type AgentConnectionSummary = z.infer<typeof AgentConnectionSummarySchema>;
 
 export const ConnectionCatalogItemSchema = z.object({
   connectorId: z.string(),
@@ -1043,6 +1060,8 @@ export const McpServerSchema = z.object({
   revision: z.number().int().positive(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  /** Whose it is. Present on the lists of someone who sees the space's, absent otherwise. */
+  owner: ConnectionOwnerSchema.optional(),
 });
 export type McpServer = z.infer<typeof McpServerSchema>;
 

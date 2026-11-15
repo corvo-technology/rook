@@ -1867,6 +1867,10 @@ export const MeSchema = z.object({
   billingEnabled: z.boolean(),
   /** True until a user of a billing deployment answers or skips the signup survey. Absent from older servers. */
   needsSignupSurvey: z.boolean().optional(),
+  /** Whether this person may create a space from the current one. Absent from older servers. */
+  canCreateSpace: z.boolean().optional(),
+  /** The owner's switch for members creating spaces; null for everyone who is not the owner. */
+  membersCanCreateSpaces: z.boolean().nullable().optional(),
   /** The person's coach tour; null when they get none. Absent from older servers. */
   tour: TourStateSchema.nullable().optional(),
   /** Set for the person a partner's system opened this account for; they see no billing or setup. */

@@ -890,6 +890,7 @@ function SpaceShell() {
         setPanel={setPanel}
         navigate={navigate}
         setNewSpaceOpen={dialogs.setNewSpaceOpen}
+        canCreateSpace={bootstrapMe?.canCreateSpace !== false}
         setCreateBotOpen={dialogs.setCreateBotOpen}
         spaces={sidebarSpaces}
         currentSpaceId={bootstrapMe?.spaceId ?? null}

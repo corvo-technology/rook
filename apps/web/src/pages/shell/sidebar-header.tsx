@@ -42,6 +42,7 @@ export function SidebarHeader({
   setPanel,
   navigate,
   setNewSpaceOpen,
+  canCreateSpace = true,
   setCreateBotOpen,
   paused = false,
   onResume,
@@ -59,6 +60,7 @@ export function SidebarHeader({
   setPanel: (panel: Panel) => void;
   navigate: (path: string) => void;
   setNewSpaceOpen: (open: boolean) => void;
+  canCreateSpace?: boolean;
   setCreateBotOpen: (open: boolean) => void;
   /** The owner paused every bot in this space. */
   paused?: boolean;
@@ -175,11 +177,15 @@ export function SidebarHeader({
                   setMobileSidebarOpen(false);
                   setPanel("create-group");
                 }}
-                onCreateSpace={() => {
-                  setCreateMenuOpen(false);
-                  setMobileSidebarOpen(false);
-                  setNewSpaceOpen(true);
-                }}
+                onCreateSpace={
+                  canCreateSpace
+                    ? () => {
+                        setCreateMenuOpen(false);
+                        setMobileSidebarOpen(false);
+                        setNewSpaceOpen(true);
+                      }
+                    : undefined
+                }
               />
             </PopoverContent>
           ) : null}

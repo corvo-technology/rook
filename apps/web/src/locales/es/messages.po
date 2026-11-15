@@ -2504,6 +2504,7 @@ msgstr "No se pudo ejecutar la rutina"
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersSettings.tsx
+#: src/pages/MembersSettingsPanel.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/chat-model-switcher.tsx
 #: src/pages/shell/dialogs.tsx
@@ -4325,6 +4326,10 @@ msgstr "Miembros"
 #: src/pages/GroupPanel.tsx
 msgid "Members ({0})"
 msgstr "Miembros ({0})"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Members can create spaces"
+msgstr "Los miembros pueden crear espacios"
 
 #: src/components/AppRail.tsx
 #: src/pages/KnowledgeSection.tsx

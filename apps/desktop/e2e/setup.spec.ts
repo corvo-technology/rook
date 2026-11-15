@@ -108,8 +108,8 @@ test("first run asks the language first, then where Rook should run", async () =
   });
   await expect(setup.getByRole("heading", { name: "Bem-vindo ao Rook" })).toBeVisible();
   await expect(setup.getByText("Onde o Rook deve rodar?")).toBeVisible();
-  await expect(setup.getByText("Neste computador")).toBeVisible();
-  await expect(setup.getByText("Servidor existente")).toBeVisible();
+  await expect(setup.getByText("Neste computador", { exact: true })).toBeVisible();
+  await expect(setup.getByText("Servidor existente", { exact: true })).toBeVisible();
 });
 
 test("first run offers this computer first, with Rook Cloud and existing servers", async () => {
@@ -121,9 +121,9 @@ test("first run offers this computer first, with Rook Cloud and existing servers
 
   await expect(setup.getByRole("heading", { name: "Welcome to Rook" })).toBeVisible();
   await expect(setup.getByText("Where should Rook run?")).toBeVisible();
-  await expect(setup.getByText("Rook Cloud")).toBeVisible();
-  await expect(setup.getByText("This computer")).toBeVisible();
-  await expect(setup.getByText("Existing server")).toBeVisible();
+  await expect(setup.getByText("Rook Cloud", { exact: true })).toBeVisible();
+  await expect(setup.getByText("This computer", { exact: true })).toBeVisible();
+  await expect(setup.getByText("Existing server", { exact: true })).toBeVisible();
   await expect(setup.locator(".card")).toHaveCount(0);
 
   // This computer is the default: nothing to fill in, and it needs no account or server.
@@ -175,38 +175,17 @@ test("first run offers this computer first, with Rook Cloud and existing servers
   }
 });
 
-test("Rook Cloud saves the hosted address and is reselected when saved", async () => {
+test("Rook Cloud is listed but not open yet, and a saved Cloud choice falls back to this computer", async () => {
   app = await launch();
   const setup = await app.firstWindow();
-  await setup.getByRole("radio", { name: /Rook Cloud/ }).check();
-  await expect(setup.getByRole("button", { name: "Continue" })).toBeEnabled();
+  await expect(setup.getByRole("radio", { name: /Rook Cloud/ })).toBeDisabled();
+  await expect(setup.getByText("Soon", { exact: true })).toBeVisible();
 
-  // Capture the request instead of reaching the hosted server, so CI stays offline.
   const { cloudUrl } = await setup.evaluate(() =>
     (
       window as typeof window & { corvoSetup: { state: () => Promise<{ cloudUrl: string }> } }
     ).corvoSetup.state(),
   );
-  expect(cloudUrl).toMatch(/^https:\/\//);
-  await app.evaluate(({ ipcMain }) => {
-    const state = globalThis as typeof globalThis & { cloudSaves?: unknown[] };
-    state.cloudSaves = [];
-    ipcMain.removeHandler("desktop.setup.save");
-    ipcMain.handle("desktop.setup.save", (_event, payload: unknown) => {
-      state.cloudSaves?.push(payload);
-      return { ok: false, error: "Captured." };
-    });
-  });
-  await setup.getByRole("button", { name: "Continue" }).click();
-  await expect(setup.locator("#status")).toHaveText("Captured.");
-  expect(
-    await app.evaluate(
-      () => (globalThis as typeof globalThis & { cloudSaves?: unknown[] }).cloudSaves,
-    ),
-  ).toEqual([{ mode: "existing", serverUrl: cloudUrl }]);
-  expect(await readFile(path.join(userData, "setup.json"), "utf8").catch(() => null)).toBeNull();
-
-  // A saved Cloud setup reopens with Cloud chosen, not as a typed existing address.
   await app.evaluate(({ ipcMain }, url) => {
     ipcMain.removeHandler("desktop.setup.state");
     ipcMain.handle("desktop.setup.state", () => ({
@@ -217,7 +196,7 @@ test("Rook Cloud saves the hosted address and is reselected when saved", async (
     }));
   }, cloudUrl);
   await setup.reload();
-  await expect(setup.getByRole("radio", { name: /Rook Cloud/ })).toBeChecked();
+  await expect(setup.getByRole("radio", { name: /This computer/ })).toBeChecked();
   await expect(setup.locator("#panel-existing")).toBeHidden();
 });
 

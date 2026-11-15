@@ -1043,28 +1043,47 @@ describeWithDatabase("API authorization and resource isolation", () => {
       }),
     ]);
 
-    // Owning a target in a different organization does not authorize a rename
-    // from the active organization.
+    // A role in the target Space is what authorizes a rename, wherever its organization is: invited
+    // people own or administer Spaces of the organization that invited them. A Space the caller has
+    // no role in stays hidden, whatever its organization.
+    const strangerSpaceId = `spaces-stranger-space-${stamp}`;
+    await handles.prisma.space.create({
+      data: {
+        id: strangerSpaceId,
+        organizationId: otherOrganizationId,
+        name: "Stranger space",
+        createdAt: new Date(),
+      },
+    });
     await expect(
-      raw(app, cookie, "spaces/rename", { spaceId: otherWorkspaceId, name: "Wrong organization" }),
+      raw(app, cookie, "spaces/rename", { spaceId: strangerSpaceId, name: "Not mine" }),
     ).resolves.toMatchObject({ status: 404 });
     await expect(
       handles.prisma.space.findUniqueOrThrow({
-        where: { id: otherWorkspaceId },
+        where: { id: strangerSpaceId },
         select: { name: true },
       }),
-    ).resolves.toEqual({ name: "Other company space" });
+    ).resolves.toEqual({ name: "Stranger space" });
+    await expect(
+      raw(app, cookie, "spaces/rename", {
+        spaceId: otherWorkspaceId,
+        name: "Renamed by its owner",
+      }),
+    ).resolves.toMatchObject({ status: 200 });
 
     const supportMe = await rpc<Actor>(app, cookie, "me", {}, support.id);
     expect(supportMe.spaceId).toBe(support.id);
     const supportBot = await rpc<Bot>(app, cookie, "bots/create", botInput("Support"), support.id);
 
-    expect(await rpc<Array<{ id: string }>>(app, cookie, "bots/list")).toEqual([
-      expect.objectContaining({ id: originalBot.id }),
-    ]);
-    expect(await rpc<Array<{ id: string }>>(app, cookie, "bots/list", {}, support.id)).toEqual([
-      expect.objectContaining({ id: supportBot.id }),
-    ]);
+    // Every Space starts with its Chief, so a list holds that agent beside the one just created.
+    const botIds = async (spaceId?: string) =>
+      (await rpc<Array<{ id: string }>>(app, cookie, "bots/list", {}, spaceId)).map(
+        (bot) => bot.id,
+      );
+    expect(await botIds()).toContain(originalBot.id);
+    expect(await botIds()).not.toContain(supportBot.id);
+    expect(await botIds(support.id)).toContain(supportBot.id);
+    expect(await botIds(support.id)).not.toContain(originalBot.id);
     await expectDenied(app, cookie, "bots/get", { botId: supportBot.id });
     await expectDenied(app, cookie, "bots/get", { botId: originalBot.id }, support.id);
 
@@ -1072,25 +1091,32 @@ describeWithDatabase("API authorization and resource isolation", () => {
     expect(navigation.current).toEqual(
       expect.objectContaining({
         id: original.spaceId,
-        bots: [expect.objectContaining({ id: originalBot.id })],
+        bots: expect.arrayContaining([expect.objectContaining({ id: originalBot.id })]),
       }),
     );
     expect(navigation.spaces).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: original.spaceId,
-          bots: [expect.objectContaining({ id: originalBot.id, notifyOnFinish: false })],
+          bots: expect.arrayContaining([
+            expect.objectContaining({ id: originalBot.id, notifyOnFinish: false }),
+          ]),
         }),
         expect.objectContaining({
           id: support.id,
           name: "Customer support",
-          bots: [expect.objectContaining({ id: supportBot.id, notifyOnFinish: false })],
+          bots: expect.arrayContaining([
+            expect.objectContaining({ id: supportBot.id, notifyOnFinish: false }),
+          ]),
         }),
       ]),
     );
-    expect(navigation.spaces).not.toEqual(
+    // Navigation lists every Space the person has a role in, including ones another organization
+    // invited them into, and never one they have no role in.
+    expect(navigation.spaces).toEqual(
       expect.arrayContaining([expect.objectContaining({ id: otherWorkspaceId })]),
     );
+    expect(navigation.spaces.map((space) => space.id)).not.toContain(strangerSpaceId);
     const supportNavigation = await rpc<SpaceNavigation>(
       app,
       cookie,
@@ -1101,7 +1127,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
     expect(supportNavigation.current).toEqual(
       expect.objectContaining({
         id: support.id,
-        bots: [expect.objectContaining({ id: supportBot.id })],
+        bots: expect.arrayContaining([expect.objectContaining({ id: supportBot.id })]),
       }),
     );
     const otherOrganizationNavigation = await rpc<SpaceNavigation>(
@@ -1111,7 +1137,10 @@ describeWithDatabase("API authorization and resource isolation", () => {
       {},
       otherWorkspaceId,
     );
-    expect(otherOrganizationNavigation.spaces.map((space) => space.id)).toEqual([otherWorkspaceId]);
+    expect(otherOrganizationNavigation.spaces.map((space) => space.id)).toContain(otherWorkspaceId);
+    expect(otherOrganizationNavigation.spaces.map((space) => space.id)).not.toContain(
+      strangerSpaceId,
+    );
 
     const storedBots = await asSystem(handles.prisma).bot.findMany({
       where: { id: { in: [originalBot.id, supportBot.id] } },
@@ -1439,8 +1468,8 @@ describeWithDatabase("API authorization and resource isolation", () => {
       hasContent: true,
       canDelete: true,
       canRename: true,
-      // The archived bot goes too, so the confirmation counts it.
-      botCount: 3,
+      // The Chief every new Space starts with and the archived bot go too, so the confirmation counts them.
+      botCount: 4,
     });
     expect(listed.spaces.find((space) => space.id === actor.spaceId)?.canDelete).toBe(false);
     await expect(
@@ -1457,7 +1486,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
     await expect(
       raw(app, intruder, "spaces/rename", { spaceId: busy.id, name: "Stolen" }),
     ).resolves.toMatchObject({ status: 404 });
-    expect(await db.bot.count({ where: { spaceId: busy.id } })).toBe(3);
+    expect(await db.bot.count({ where: { spaceId: busy.id } })).toBe(4);
 
     const removed = await rpc<{ ok: true; activeSpaceId: string }>(app, cookie, "spaces/remove", {
       spaceId: busy.id,
@@ -1753,7 +1782,11 @@ describeWithDatabase("API authorization and resource isolation", () => {
     const blockedCreate = await raw(app, cookie, "bots/create", botInput("Racing bot"), space.id);
     expect(blockedCreate.ok).toBe(false);
     expect(blockedCreate.status).toBe(409);
-    expect(await asSystem(handles.prisma).bot.count({ where: { spaceId: space.id } })).toBe(0);
+    expect(
+      await asSystem(handles.prisma).bot.count({
+        where: { spaceId: space.id, name: "Racing bot" },
+      }),
+    ).toBe(0);
     expect(
       await asSystem(handles.prisma).computer.findFirst({
         where: { spaceId: space.id },
@@ -1836,7 +1869,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
       expect(lifecycle?.deletionClaimId).toBeTruthy();
       expect(
         await asSystem(handles.prisma).computer.findFirst({
-          where: { spaceId: space.id },
+          where: { spaceId: space.id, providerRef: `space-teardown-provider-${stamp}` },
           select: { providerRef: true },
         }),
       ).toEqual({ providerRef: `space-teardown-provider-${stamp}` });

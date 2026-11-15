@@ -114,6 +114,8 @@ describe.skipIf(!databaseAvailable)("offline Pi computer approval", () => {
           apiKey: fixtureKey,
           contextWindow: 160_000,
           maxTokens: 4096,
+          // Screenshot tools are withheld from a model that is not declared to see.
+          supportsImages: true,
         });
         const bot = await rpc<{ id: string }>(handles.app, cookie, "bots/create", {
           name: "Computer fixture",

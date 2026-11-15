@@ -19,6 +19,7 @@ describe.skipIf(!enabled)("short original product history", () => {
       ];
       const fixtureKey = "synthetic-short-history-key";
       const model = await startModelEmulator({
+        answerRepeatChecks: true,
         apiKey: fixtureKey,
         steps: questions.map((question) => ({
           expect(request) {

@@ -4,6 +4,7 @@ import type { PrismaClient } from "./client.js";
 import { createDb } from "./client.js";
 import { createGroupRepos } from "./groups.js";
 import { provisionMessagingIdentity } from "./messaging.js";
+import { observeQueries } from "./query-observer.test-support.js";
 import { createRepos } from "./repos.js";
 import { asSystem, runAsSystem, runAsTenant } from "./row-security.js";
 import { createSpaceForMember } from "./spaces.js";
@@ -41,18 +42,12 @@ function sqlValues(args: unknown[]): unknown[] {
 /** Sum of rows actually sent to the app, not rows Prisma later drops in memory. */
 function trackMessageReads(pool: Pool): MessageRead[] {
   const reads: MessageRead[] = [];
-  const original = pool.query.bind(pool);
-  pool.query = ((...args: unknown[]) => {
-    const result = (original as (...inner: unknown[]) => unknown)(...args);
-    if (!result || typeof (result as Promise<unknown>).then !== "function") return result;
-    return (result as Promise<QueryResult>).then((queryResult) => {
-      const text = sqlText(args[0]);
-      if (/^\s*select\b/i.test(text) && MESSAGE_FROM.test(text)) {
-        reads.push({ text, values: sqlValues(args), rowCount: queryResult.rowCount ?? 0 });
-      }
-      return queryResult;
-    });
-  }) as Pool["query"];
+  observeQueries(pool, (args, queryResult) => {
+    const text = sqlText(args[0]);
+    if (/^\s*select\b/i.test(text) && MESSAGE_FROM.test(text)) {
+      reads.push({ text, values: sqlValues(args), rowCount: queryResult.rowCount ?? 0 });
+    }
+  });
   return reads;
 }
 

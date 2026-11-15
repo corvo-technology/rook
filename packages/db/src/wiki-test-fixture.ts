@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import type { PrismaClient } from "./client.js";
 import { createDb } from "./client.js";
 import { LocalKeyProvider, masterKeysFromEnv } from "./content-keys.js";
-import { runAsSystem } from "./row-security.js";
+import { runAsSystem, scopeToDbContext } from "./row-security.js";
 
 /**
  * A user with two spaces in a real database, for the wiki's PostgreSQL tests. Content encryption
@@ -45,7 +45,7 @@ export async function wikiTestFixture() {
     prisma,
     pool: db.pool,
     query: async <T>(text: string, values: unknown[] = []) =>
-      (await db.pool.query(text, values)).rows as T[],
+      (await scopeToDbContext(db.pool).query(text, values)).rows as T[],
     async close() {
       await runAsSystem("test fixture", async () => {
         await prisma.organization.deleteMany({ where: { id: ids.organizationId } });

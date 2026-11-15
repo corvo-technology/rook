@@ -293,6 +293,26 @@ server integration credentials, or deployment updates, and cannot read deploymen
 `SIGNUPS_ENABLED` and `SIGNUP_ALLOWLIST` are authoritative on every start; an empty allowlist clears any old stored policy.
 There is no app-admin role, first-user privilege, or `ADMINS` list. Workspace owners manage only their own workspace.
 
+#### Connection poolers
+
+Row-level security is set inside each transaction (`SET LOCAL`), so `DATABASE_URL` may point at a
+pooler in any mode, including PgBouncer-style transaction pooling. Three things hold state on one
+server connection and need a session-capable connection (Postgres directly, or a pooler in session
+mode):
+
+- `REALTIME_DATABASE_URL` carries `LISTEN` for live updates and the advisory locks that pick the
+  worker's reconciliation leader and serialize WhatsApp number links. It defaults to
+  `DATABASE_URL`, so set it whenever `DATABASE_URL` is a transaction-mode pooler. The API logs
+  `realtime.listen_not_kept` when it sees the listener lose its channel; a transaction pooler that
+  happens to reuse one server connection can still go unnoticed, so set it up front.
+- `DATABASE_MIGRATION_URL` runs migrations under a session advisory lock and must reach Postgres
+  directly or through a session pooler.
+- Job wake-ups use `LISTEN` too. Behind a transaction pooler they fall back to polling, so jobs
+  start a few seconds later but are not lost.
+
+Each statement outside an explicit transaction now runs in a short transaction of its own to carry
+the context, which adds one round trip to a single query and none to a transaction.
+
 For an installation without email, first set `SIGNUPS_ENABLED=false` in `.env` and start the stack.
 Create the intended account privately (the password stays in the shell environment):
 

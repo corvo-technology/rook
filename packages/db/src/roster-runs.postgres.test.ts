@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { PrismaClient } from "./client.js";
 import { createDb } from "./client.js";
 import { provisionMessagingIdentity } from "./messaging.js";
+import { observeQueries } from "./query-observer.test-support.js";
 import { createRepos } from "./repos.js";
 import { asSystem, runAsSystem, runAsTenant } from "./row-security.js";
 import { createSpaceForMember } from "./spaces.js";
@@ -14,23 +15,17 @@ const describePostgres =
 /** Count rows Postgres sends, before Prisma applies a nested take in memory. */
 function trackRunReads(pool: Pool) {
   const reads: number[] = [];
-  const original = pool.query.bind(pool);
-  pool.query = ((...args: unknown[]) => {
-    const result = (original as (...args: unknown[]) => unknown)(...args);
-    if (!result || typeof (result as Promise<unknown>).then !== "function") return result;
-    return (result as Promise<QueryResult>).then((result) => {
-      const input = args[0];
-      const text =
-        typeof input === "string"
-          ? input
-          : input && typeof input === "object" && "text" in input
-            ? String(input.text)
-            : "";
-      if (/^\s*select\b/i.test(text) && /\bfrom\s+(?:"public"\s*\.\s*)?"?runs"?\b/i.test(text))
-        reads.push(result.rowCount ?? 0);
-      return result;
-    });
-  }) as Pool["query"];
+  observeQueries(pool, (args, result) => {
+    const input = args[0];
+    const text =
+      typeof input === "string"
+        ? input
+        : input && typeof input === "object" && "text" in input
+          ? String(input.text)
+          : "";
+    if (/^\s*select\b/i.test(text) && /\bfrom\s+(?:"public"\s*\.\s*)?"?runs"?\b/i.test(text))
+      reads.push(result.rowCount ?? 0);
+  });
   return reads;
 }
 

@@ -105,6 +105,8 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     kind: z.literal("card"),
     lines: z.array(z.object({ k: z.string(), v: z.string() })),
   }),
+  /** A task an agent created on the board: its reference, such as "FIN-42", and its title. */
+  z.object({ kind: z.literal("ticket"), ref: z.string(), title: z.string() }),
   z.object({
     kind: z.literal("ask"),
     text: z.string(),

@@ -10,7 +10,12 @@ for (const theme of ["light", "dark"]) {
     await page.goto(`/e2e/fixtures/team-panel.html?view=panel&theme=${theme}`);
     const panel = page.getByTestId("channel-members");
     await expect(panel.getByText("Who sees this channel")).toBeVisible();
-    await expect(panel.getByRole("heading")).toHaveText(["Owner", "Finance", "Everyone", "Agents"]);
+    await expect(panel.getByRole("heading")).toHaveText([
+      "Owner — 1",
+      "Finance — 1",
+      "Everyone — 1",
+      "Agents — 3",
+    ]);
     await expect(panel.getByText("Reports")).toBeVisible();
     await expect(panel.getByRole("button", { name: "Add people or agents" })).toBeVisible();
     await captureScreenshot(page, testInfo, `channel-members-${theme}`);
@@ -20,7 +25,7 @@ for (const theme of ["light", "dark"]) {
 test("a private channel lists only the people added to it", async ({ page }, testInfo) => {
   await page.goto("/e2e/fixtures/team-panel.html?view=panel&private=1");
   const panel = page.getByTestId("channel-members");
-  await expect(panel.getByRole("heading")).toHaveText(["Owner", "Finance", "Agents"]);
+  await expect(panel.getByRole("heading")).toHaveText(["Owner — 1", "Finance — 1", "Agents — 3"]);
   await expect(panel.getByText("Marta")).toHaveCount(0);
   await expect(panel.getByRole("button", { name: "Remove Joao" })).toBeAttached();
   await captureScreenshot(page, testInfo, "channel-members-private");
@@ -49,6 +54,8 @@ for (const theme of ["light", "dark"]) {
     await expect(count).toHaveText("1");
     await items.first().getByRole("button", { name: "Not now" }).click();
     await expect(page.getByTestId("approvals-empty")).toBeVisible();
-    await expect(page.getByTestId("sidebar-approvals")).toHaveCount(0);
+    // Approvals stays in the nav; only its count goes.
+    await expect(page.getByTestId("sidebar-approvals")).toBeVisible();
+    await expect(count).toHaveCount(0);
   });
 }

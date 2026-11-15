@@ -217,7 +217,6 @@ msgstr "{count, plural, other {# 個のボットを追加しました。}}"
 msgid "{count, plural, one {Added # bot} other {Added # bots}}. Routines start paused."
 msgstr "{count, plural, other {# 個のボットを追加しました}}。ルーティンは一時停止で始まります。"
 
-#: src/pages/shell/channel-header.tsx
 #: src/pages/TeamBoard.tsx
 msgid "{count} agents"
 msgstr "{count} 件のエージェント"
@@ -533,6 +532,10 @@ msgstr "{toolCount, plural, one {#個のツール} other {#個のツール}}"
 msgid "{toolCount, plural, one {Used # tool} other {Used # tools}}"
 msgstr "{toolCount, plural, other {#個のツールを使用}}"
 
+#: src/pages/shell/channel-header.tsx
+msgid "{total} members"
+msgstr "{total} メンバー"
+
 #: src/pages/Usage.tsx
 msgid "{used} of {limit}"
 msgstr "{used} / {limit}"
@@ -723,10 +726,6 @@ msgstr "このルーティンを実行するトリガーを追加してくださ
 msgid "Add agent"
 msgstr "エージェントを追加"
 
-#: src/pages/shell/channel-header.tsx
-msgid "Add agents"
-msgstr "エージェントを追加"
-
 #: src/pages/McpServersSettings.tsx
 msgid "Add an HTTPS server URL."
 msgstr "HTTPSのサーバーURLを追加してください。"
@@ -904,7 +903,9 @@ msgid "Agent computer"
 msgstr "エージェントのコンピューター"
 
 #: src/components/AppRail.tsx
+#: src/pages/BotContextMenu.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
+#: src/pages/Shell.tsx
 #: src/pages/shell/channel-members.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/Store.tsx
@@ -1081,6 +1082,10 @@ msgstr "Anthropic API"
 #: src/pages/Paywall.tsx
 msgid "Any model, with your own key"
 msgstr "自分のキーで、あらゆるモデルを"
+
+#: src/components/AskCard.tsx
+msgid "Anyone with “Approve actions” can also approve"
+msgstr "「操作を承認」権限のある人も承認できます"
 
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Anyone with the link asks to join"
@@ -1320,7 +1325,6 @@ msgstr "Avatar Studio"
 #: src/pages/AppCatalogGrid.tsx
 #: src/pages/Auth.tsx
 #: src/pages/Board.tsx
-#: src/pages/DirectPage.tsx
 #: src/pages/NavLinkPage.tsx
 #: src/pages/onboarding/OnboardingLayout.tsx
 #: src/pages/RoutineEditor.tsx
@@ -2133,6 +2137,10 @@ msgstr "{0}で続行"
 msgid "Control computers"
 msgstr "コンピューターを操作"
 
+#: src/pages/shell/sidebar-team.tsx
+msgid "Conversations"
+msgstr "会話"
+
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/markdown-copy.tsx
 #: src/pages/model-settings/connection-controls.tsx
@@ -2506,6 +2514,10 @@ msgstr "ログアウトできませんでした。もう一度お試しくださ
 msgid "Could not open billing"
 msgstr "請求ページを開けませんでした"
 
+#: src/pages/DirectChat.tsx
+msgid "Could not open this conversation"
+msgstr "この会話を開けませんでした"
+
 #: src/pages/shell/use-composer-actions.ts
 msgid "Could not pin message"
 msgstr "メッセージをピン留めできませんでした"
@@ -2833,6 +2845,10 @@ msgstr "Rookを作成"
 msgid "Created"
 msgstr "作成済み"
 
+#: src/components/TaskCard.tsx
+msgid "Created task <0>{taskRef}</0> · {title}"
+msgstr "タスク <0>{taskRef}</0> を作成しました · {title}"
+
 #: src/pages/GroupPanel.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/shell/agent-import.tsx
@@ -3081,6 +3097,7 @@ msgstr "デスクトップ操作"
 msgid "Desktop update"
 msgstr "デスクトップの更新"
 
+#: src/components/AskCard.tsx
 #: src/components/ModelProblemNotice.tsx
 #: src/pages/RoutineRunDetail.tsx
 #: src/pages/RoutineRunHistory.tsx
@@ -3090,11 +3107,6 @@ msgstr "詳細"
 #: src/pages/StoreCategoryChips.tsx
 msgid "Development"
 msgstr "開発"
-
-#: src/pages/BotContextMenu.tsx
-#: src/pages/Shell.tsx
-msgid "Direct messages"
-msgstr "ダイレクトメッセージ"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Disable a tool"
@@ -3806,6 +3818,10 @@ msgstr "長押しで話す"
 #: src/components/composer/HoldToTalk.tsx
 msgid "Hold to talk, release to send"
 msgstr "長押しで話し、離すと送信"
+
+#: src/pages/shell/sidebar-team.tsx
+msgid "Home"
+msgstr "ホーム"
 
 #: src/lib/cron.ts
 msgid "hour"
@@ -4833,6 +4849,14 @@ msgstr "引き継ぎが必要"
 msgid "Needs you"
 msgstr "対応が必要"
 
+#: src/components/AskCard.tsx
+msgid "Needs your approval · you can approve actions"
+msgstr "承認をお願いしています · 操作を承認できます"
+
+#: src/components/AskCard.tsx
+msgid "Needs your approval · you own {agentName}"
+msgstr "承認をお願いしています · あなたは {agentName} のオーナーです"
+
 #: src/pages/shell/import-status.ts
 msgid "Needs: {names}"
 msgstr "必要: {names}"
@@ -5252,6 +5276,7 @@ msgstr "外部リンクを開きますか？"
 msgid "Open in full window"
 msgstr "フルウィンドウで開く"
 
+#: src/pages/DirectChat.tsx
 #: src/pages/shell/channel-header.tsx
 #: src/pages/shell/chat-header.tsx
 msgid "Open navigation"
@@ -5347,6 +5372,7 @@ msgid "Output"
 msgstr "出力"
 
 #: src/lib/identity-display.ts
+#: src/lib/use-person-roles.ts
 #: src/pages/Board.tsx
 #: src/pages/InvitePage.tsx
 #: src/pages/MembersSettingsPanel.tsx
@@ -5464,7 +5490,6 @@ msgstr "一時停止中"
 msgid "Pawn"
 msgstr "ポーン"
 
-#: src/pages/DirectPage.tsx
 #: src/pages/shell/channel-members.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceRolesSettings.tsx
@@ -5513,10 +5538,6 @@ msgstr "確認するツールを選択"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Pick from role"
 msgstr "役割から選ぶ"
-
-#: src/pages/DirectPage.tsx
-msgid "Pick someone to write to"
-msgstr "メッセージを送る相手を選んでください"
 
 #: src/pages/board/BoardLanes.tsx
 msgid "Picked up {ref}."
@@ -6365,6 +6386,10 @@ msgstr "ボットを検索して会話を切り替え"
 msgid "Search by domain"
 msgstr "ドメインで検索"
 
+#: src/pages/shell/channel-find.tsx
+msgid "Search in #{channelName}"
+msgstr "#{channelName} 内を検索"
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Search integrations.sh"
 msgstr "integrations.shを検索"
@@ -6718,6 +6743,7 @@ msgstr "出典"
 
 #: src/lib/identity-display.ts
 #: src/pages/Settings.tsx
+#: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Space"
 msgstr "スペース"
@@ -6960,6 +6986,7 @@ msgstr "タスクの設定"
 #: src/components/AppRail.tsx
 #: src/components/SidebarFooter.tsx
 #: src/pages/Board.tsx
+#: src/pages/shell/sidebar-team.tsx
 msgid "Tasks"
 msgstr "タスク"
 
@@ -6977,6 +7004,7 @@ msgstr "ティーチング中です。新しいメッセージを送信する前
 
 #: src/components/AppRail.tsx
 #: src/pages/shell/bot-panel.tsx
+#: src/pages/shell/sidebar-team.tsx
 #: src/pages/TeamPage.tsx
 msgid "Team"
 msgstr "チーム"
@@ -7378,6 +7406,7 @@ msgstr "トリガー"
 #: src/components/ModelProblemNotice.tsx
 #: src/components/WikiChangeCard.tsx
 #: src/pages/ActivityList.tsx
+#: src/pages/DirectChat.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 msgid "Try again"
 msgstr "再試行"
@@ -7902,11 +7931,15 @@ msgid "year"
 msgstr "年"
 
 #: src/pages/shell/chat-context.tsx
-#: src/pages/shell/sidebar-roster.tsx
 msgid "Yesterday"
 msgstr "昨日"
 
+#: src/pages/shell/channel-members.tsx
+msgid "you"
+msgstr "あなた"
+
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/DirectChat.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/channel-find.tsx
 #: src/pages/shell/message-view.tsx

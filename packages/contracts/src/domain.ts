@@ -113,6 +113,8 @@ export type ApprovalMode = z.infer<typeof ApprovalModeSchema>;
 export const BotSchema = z.object({
   id: Id,
   spaceId: Id,
+  /** The person the agent belongs to; they answer for its approvals. */
+  ownerUserId: Id.optional(),
   name: z.string(),
   title: z.string(),
   description: z.string(),

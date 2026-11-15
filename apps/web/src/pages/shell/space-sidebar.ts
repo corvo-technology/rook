@@ -73,6 +73,20 @@ export function sidebarGroupsForSpaces<TBot extends SidebarChat, TGroup extends 
       space.botSections,
       { labels },
     );
+    // Channels lead, then what the person pinned or sorted, then the agents, the Chief first
+    // among them: the order the sidebar reads in.
+    const chief = grouped.find((group) => group.key === "chief");
+    if (chief) {
+      const agents = grouped.find((group) => group.key === "unassigned");
+      if (agents) agents.bots = [...chief.bots, ...agents.bots];
+      else grouped.push({ key: "unassigned", title: null, bots: chief.bots });
+      grouped.splice(grouped.indexOf(chief), 1);
+    }
+    const agentsGroup = grouped.find((group) => group.key === "unassigned");
+    if (agentsGroup && labels) agentsGroup.title = labels.unassigned;
+    const rank = (key: string) =>
+      key === "groups" ? 0 : key === "pinned" ? 1 : key === "unassigned" ? 3 : 2;
+    grouped.sort((a, b) => rank(a.key) - rank(b.key));
     // Keep destinations visible after their last bot is dragged out. Search
     // still hides empty lists, and spaces without sections keep their old layout.
     if (!needle && space.botSections.length > 0 && grouped.length > 0) {
@@ -85,14 +99,7 @@ export function sidebarGroupsForSpaces<TBot extends SidebarChat, TGroup extends 
       if (!grouped.some((group) => group.key === "unassigned")) {
         grouped.push({ key: "unassigned", title: labels?.unassigned ?? "Unassigned", bots: [] });
       }
-      const order = [
-        "chief",
-        "pinned",
-        "groups",
-        ...space.botSections.map((section) => `section:${section.id}`),
-        "unassigned",
-      ];
-      grouped.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
+      grouped.sort((a, b) => rank(a.key) - rank(b.key));
     }
     const sections = grouped.map((group, index) => ({
       ...group,

@@ -5,6 +5,7 @@ import {
 import { setPlanCard, updatePlanCard } from "./plan-card.js";
 import type { RunContext } from "./run-context.js";
 import { isSubagentToolExecution } from "./run-effects.js";
+import { publishMessage } from "./run-messages.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
 import {
   cancelScheduleFromTool,
@@ -160,17 +161,22 @@ export const taskTools: ToolHandlers = {
   async ticket_create(ctx, call) {
     const { deps, run, bot } = ctx;
     const { args } = call;
-    return call.finish(
-      await createTicket(deps, {
-        spaceId: run.spaceId,
-        botId: bot.id,
-        userId: run.userId,
-        title: String(args.title ?? ""),
-        description: args.description !== undefined ? String(args.description) : undefined,
-        priority: args.priority !== undefined ? String(args.priority) : undefined,
-        ownerBotId: args.ownerBotId !== undefined ? String(args.ownerBotId) : undefined,
-      }),
-    );
+    const created = await createTicket(deps, {
+      spaceId: run.spaceId,
+      botId: bot.id,
+      userId: run.userId,
+      title: String(args.title ?? ""),
+      description: args.description !== undefined ? String(args.description) : undefined,
+      priority: args.priority !== undefined ? String(args.priority) : undefined,
+      ownerBotId: args.ownerBotId !== undefined ? String(args.ownerBotId) : undefined,
+    });
+    // The task shows in the conversation as a card, so people see what the agent added.
+    if ("ticket" in created && created.ticket) {
+      await publishMessage(deps, run, "bot", [
+        { kind: "ticket", ref: created.ticket.ref, title: created.ticket.title },
+      ]).catch(() => undefined);
+    }
+    return call.finish(created);
   },
   async ticket_update(ctx, call) {
     const { deps, run, bot } = ctx;

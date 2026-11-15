@@ -15,7 +15,7 @@ async function captureActivitySidebar(
   name: string,
 ) {
   const aside = page.locator("aside").first();
-  const toggle = page.getByRole("button", { name: "Activity", exact: true });
+  const toggle = page.getByRole("button", { name: "Conversations", exact: true });
   await toggle.scrollIntoViewIfNeeded();
   // Keep the header (bell + Create) in frame with the Now/Recent list.
   const box = await aside.boundingBox();
@@ -44,7 +44,7 @@ test("sidebar Now and Recent surface active and terminal runs", async ({ page },
   await completeOnboarding(page);
 
   const aside = page.locator("aside").first();
-  const activityToggle = page.getByRole("button", { name: "Activity", exact: true });
+  const activityToggle = page.getByRole("button", { name: "Conversations", exact: true });
   await expect(activityToggle).toHaveAttribute("aria-pressed", "false");
   await expect(activityToggle).toHaveAttribute("data-activity-mode", "off");
   await expect(aside.getByText("Now", { exact: true })).toHaveCount(0);
@@ -238,7 +238,7 @@ test("activity filters keep retry when a refresh fails", async ({ page }, testIn
   });
 
   const aside = page.locator("aside").first();
-  const activityToggle = page.getByRole("button", { name: "Activity", exact: true });
+  const activityToggle = page.getByRole("button", { name: "Conversations", exact: true });
   await activityToggle.click();
   // The list refreshes every 15s; drive that poll with a controlled clock.
   await page.clock.install();

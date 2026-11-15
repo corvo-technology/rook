@@ -1,6 +1,6 @@
 import type { CustomSpaceRole, SpaceMember } from "@corvo/contracts";
 import { describe, expect, it } from "vitest";
-import { groupPeopleByRole } from "./channel-people-groups";
+import { groupPeopleByRole, highestRole } from "./channel-people-groups";
 
 const role = (id: string, name: string, position: number, systemKey: "admin" | "everyone" | null) =>
   ({
@@ -60,5 +60,20 @@ describe("groupPeopleByRole", () => {
     expect(
       groupPeopleByRole({ members, roles, visible: null }).flatMap((g) => g.members),
     ).toHaveLength(4);
+  });
+});
+
+describe("highestRole", () => {
+  const roles = [
+    { id: "a", name: "Finance", position: 1, systemKey: null },
+    { id: "b", name: "Sales", position: 0, systemKey: null },
+    { id: "all", name: "Everyone", position: 99, systemKey: "everyone" },
+  ] as never;
+  it("names the owner, then the highest custom role, and never the base role", () => {
+    expect(highestRole({ role: "owner", roleIds: [] }, roles)).toBe("owner");
+    expect(highestRole({ role: "member", roleIds: ["a", "b"] }, roles)).toMatchObject({
+      name: "Sales",
+    });
+    expect(highestRole({ role: "member", roleIds: ["all"] }, roles)).toBeUndefined();
   });
 });

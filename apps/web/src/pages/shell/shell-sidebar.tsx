@@ -26,7 +26,7 @@ import { ActivityList } from "../ActivityList";
 import { SpaceSearchResults } from "../SpaceSearch";
 import type { SettingsSection } from "../shell-overlay";
 import { SidebarHeader } from "./sidebar-header";
-import { SidebarApprovalsLink, SidebarPeopleList, useSpaceSummary } from "./sidebar-team";
+import { SidebarNavLive, SidebarPeopleList, useSpaceSummary } from "./sidebar-team";
 import { SpaceSwitcher } from "./space-switcher";
 import type { SidebarSearch } from "./use-sidebar-search";
 
@@ -63,7 +63,10 @@ export function ShellSidebar({
   openIntegrations,
   paused = false,
   onResume,
+  activeDmUserId,
 }: {
+  /** The person whose conversation is open, when one is. */
+  activeDmUserId?: string;
   isMobile: boolean;
   mobileOpen: boolean;
   setMobileOpen: (open: boolean) => void;
@@ -198,6 +201,29 @@ export function ShellSidebar({
             }
           />
         ) : null}
+        {mini ? null : (
+          <SidebarNavLive
+            conversationsOn={activityMode}
+            showTasks={ticketBoardEnabled}
+            onHome={() => {
+              setMobileOpen(false);
+              navigate("/app");
+            }}
+            onApprovals={() => {
+              setMobileOpen(false);
+              navigate("/app/approvals");
+            }}
+            onConversations={toggleActivityMode}
+            onTasks={() => {
+              setMobileOpen(false);
+              navigate("/app/board");
+            }}
+            onTeam={() => {
+              setMobileOpen(false);
+              navigate("/app/team");
+            }}
+          />
+        )}
         {mini || !(activityMode || searchOpen || query) ? null : (
           <InputGroup
             data-testid="sidebar-search"
@@ -271,17 +297,10 @@ export function ShellSidebar({
                   }}
                 />
               ) : null}
-              {mini ? null : (
-                <SidebarApprovalsLink
-                  onOpen={() => {
-                    setMobileOpen(false);
-                    navigate("/app/approvals");
-                  }}
-                />
-              )}
               {roster}
               {mini || activityMode ? null : (
                 <SidebarPeopleList
+                  activeUserId={activeDmUserId}
                   onOpen={(userId) => {
                     setMobileOpen(false);
                     navigate(`/app/dm/${userId}`);

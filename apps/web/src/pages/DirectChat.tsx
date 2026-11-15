@@ -4,7 +4,7 @@ import { newClientId } from "@corvo/core";
 import { Button, Spinner, Textarea } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, Menu } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { PersonAvatar } from "../components/PersonAvatar";
 import { useSpaceQueries } from "../lib/query";
@@ -21,7 +21,16 @@ function textOf(message: ThreadMessage): string {
  * A conversation between two people. Only they can read it, and no agent takes part: it is a
  * thread of messages like a channel's, written by name.
  */
-export function DirectChat({ userId, currentUserId }: { userId: string; currentUserId: string }) {
+export function DirectChat({
+  userId,
+  currentUserId,
+  onOpenNavigation,
+}: {
+  userId: string;
+  currentUserId: string;
+  /** Opens the sidebar drawer on a phone. */
+  onOpenNavigation?: () => void;
+}) {
   const { t } = useLingui();
   const queries = useSpaceQueries();
   const queryClient = useQueryClient();
@@ -97,9 +106,28 @@ export function DirectChat({ userId, currentUserId }: { userId: string; currentU
   }
 
   if (!thread.data) {
+    const failed = thread.isError || opened.isError;
     return (
-      <div className="flex flex-1 items-center justify-center">
-        {thread.isError || opened.isError ? null : <Spinner />}
+      <div className="flex flex-1 flex-col items-center justify-center gap-3">
+        {failed ? (
+          <>
+            <p role="alert" className="text-sm text-destructive">
+              {t`Could not open this conversation`}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                void opened.refetch();
+                void thread.refetch();
+              }}
+            >
+              {t`Try again`}
+            </Button>
+          </>
+        ) : (
+          <Spinner />
+        )}
       </div>
     );
   }
@@ -107,26 +135,52 @@ export function DirectChat({ userId, currentUserId }: { userId: string; currentU
   const activeName = partner.name;
   return (
     <div data-testid="direct-chat" className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center gap-2.5 border-b border-border px-6 py-3">
+      <div className="flex items-center gap-2.5 border-b border-border px-3 py-3 md:px-6">
+        {onOpenNavigation ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={t`Open navigation`}
+            onClick={onOpenNavigation}
+            className="app-no-drag md:hidden"
+          >
+            <Menu strokeWidth={1.7} className="size-[19px]" />
+          </Button>
+        ) : null}
         <PersonAvatar name={partner.name} image={partner.image} size={28} />
         <h1 className="text-[15px] font-semibold">{partner.name}</h1>
       </div>
-      <div className="rk-scroll flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 py-5">
+      <div className="rk-scroll flex min-h-0 flex-1 flex-col gap-[18px] overflow-y-auto px-6 py-5">
         {thread.data.messages.map((message) => {
           const mine = message.authorUserId === currentUserId;
+          const name = mine ? (message.authorName ?? t`You`) : partner.name;
           return (
             <div
               key={message.id}
               data-testid="direct-message"
-              className={`flex max-w-full gap-2.5 ${mine ? "justify-end" : "justify-start"}`}
+              className="grid max-w-[860px] grid-cols-[36px_minmax(0,1fr)] gap-3"
             >
-              {mine ? null : <PersonAvatar name={partner.name} image={partner.image} size={28} />}
-              <div
-                className={`min-w-0 max-w-[min(100%,640px)] rounded-[20px] px-[18px] py-3 text-body1 ${
-                  mine ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
-                }`}
-              >
-                <ChatMarkdown>{textOf(message)}</ChatMarkdown>
+              <PersonAvatar
+                name={name}
+                image={mine ? message.authorImage : partner.image}
+                size={36}
+              />
+              <div className="flex min-w-0 flex-col gap-1.5">
+                <span className="flex items-baseline gap-2">
+                  <span className="text-[15px] font-semibold">{name}</span>
+                  <time
+                    dateTime={message.createdAt}
+                    className="text-[12px] tabular-nums text-muted-foreground"
+                  >
+                    {new Date(message.createdAt).toLocaleTimeString(undefined, {
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  </time>
+                </span>
+                <div className="text-body1 text-foreground">
+                  <ChatMarkdown>{textOf(message)}</ChatMarkdown>
+                </div>
               </div>
             </div>
           );

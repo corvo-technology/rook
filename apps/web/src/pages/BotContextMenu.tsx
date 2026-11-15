@@ -79,7 +79,7 @@ export function BotContextMenu({
           ))}
           <ContextMenuItem onClick={() => onMoveToSection(null)}>
             <Folder />
-            {t`Direct messages`}
+            {t`Agents`}
             {bot.sectionId === null ? <Check className="ms-auto" /> : null}
           </ContextMenuItem>
           <ContextMenuSeparator />

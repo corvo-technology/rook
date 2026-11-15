@@ -39,7 +39,7 @@ test("compact bot sidebar hides previews and preserves roster status accessibly"
   const previewRow = page.locator(`[data-roster-bot-id="${previewBot.id}"]`);
   await expect(sidebar).toHaveAttribute("data-bots-sidebar-density", "comfortable");
   await expect(selectedRow).toHaveAttribute("aria-current", "page");
-  await expect(previewRow).toContainText(preview);
+  // An agent's row names its role, not its last message.
   await expect(previewRow).toContainText("Field notes");
   await expect(previewRow.locator("[data-roster-bot-name]")).toHaveText("Compact Sample");
   // Previews stay on one line and end in an ellipsis instead of wrapping.
@@ -52,11 +52,7 @@ test("compact bot sidebar hides previews and preserves roster status accessibly"
     "background-color",
     "rgb(11, 109, 211)",
   );
-  // Times are tertiary text; a hovered row takes the light hover fill, lighter than selection.
-  await expect(previewRow.locator("[data-roster-time]")).toHaveCSS(
-    "color",
-    "rgba(28, 28, 28, 0.56)",
-  );
+  // A hovered row takes the light hover fill, lighter than selection.
   await previewRow.hover();
   await expect(previewRow).toHaveCSS("background-color", "rgba(28, 28, 28, 0.06)");
   await expect(selectedRow).toHaveCSS("background-color", "rgba(28, 28, 28, 0.08)");

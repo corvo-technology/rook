@@ -27,6 +27,7 @@ export type ThreadTranscriptProps = Pick<
   TranscriptProps,
   | "artifactTarget"
   | "currentUserId"
+  | "personRole"
   | "showToolActivity"
   | "answerableAskIds"
   | "dismissableAskIds"

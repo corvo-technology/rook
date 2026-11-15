@@ -52,18 +52,13 @@ it("shows the channel as a name behind a hash, with what it is for", async () =>
   await act(async () => root.unmount());
 });
 
-it("shows the agents in it up top and how many there are", async () => {
-  const { host, root } = await render();
-  expect(host.textContent).toContain("4 agents");
-  expect(host.querySelectorAll(".corvo-mascot-avatar")).toHaveLength(4);
-  await act(async () => root.unmount());
-});
-
-it("shows at most five faces and still counts every agent", async () => {
-  const many = ["a", "b", "c", "d", "e", "f", "g"].map(member);
-  const { host, root } = await render({ members: many });
-  expect(host.querySelectorAll(".corvo-mascot-avatar")).toHaveLength(5);
-  expect(host.textContent).toContain("7 agents");
+it("counts the agents and the people in a members button that toggles the panel", async () => {
+  const onOpenMembers = vi.fn();
+  const { host, root } = await render({ onOpenMembers, peopleCount: 3 });
+  const button = host.querySelector<HTMLButtonElement>('[data-testid="channel-members-toggle"]')!;
+  expect(button.textContent).toBe("7 members");
+  await act(async () => button.click());
+  expect(onOpenMembers).toHaveBeenCalledTimes(1);
   await act(async () => root.unmount());
 });
 
@@ -73,20 +68,18 @@ it("has no purpose line when the channel has none", async () => {
   await act(async () => root.unmount());
 });
 
-it("opens the channel's settings from its name, its agents and the plus, and the squad from its own button", async () => {
+it("opens the channel's settings from its name, and the squad from its own button", async () => {
   const { host, root, handlers } = await render();
   const press = async (selector: string) =>
     act(async () => (host.querySelector(selector) as HTMLButtonElement).click());
   await press('[data-testid="bot-settings-trigger"]');
-  await press('button[aria-label="4 agents"]');
-  await press('button[aria-label="Add agents"]');
-  expect(handlers.onOpenSettings).toHaveBeenCalledTimes(3);
+  expect(handlers.onOpenSettings).toHaveBeenCalledTimes(1);
   await press('button[aria-label="Squad"]');
   expect(handlers.onOpenSquad).toHaveBeenCalledTimes(1);
   await act(async () => root.unmount());
 });
 
-it("shows who is working in place of the count, and puts them first with the working ring", async () => {
+it("says who is working beside the search", async () => {
   const members: GroupMember[] = [
     { ...member("a") },
     { ...member("b"), status: "idle" },
@@ -96,22 +89,13 @@ it("shows who is working in place of the count, and puts them first with the wor
   const { host, root } = await render({ members });
   const status = host.querySelector('[data-testid="channel-working"]');
   expect(status?.textContent).toBe("c +1 · Working…");
-  expect(host.textContent).not.toContain("4 agents");
-  const faces = [...host.querySelectorAll(".corvo-mascot-avatar")];
-  expect(faces.map((face) => face.getAttribute("data-working"))).toEqual([
-    "true",
-    "true",
-    "false",
-    "false",
-  ]);
   await act(async () => root.unmount());
 });
 
-it("goes back to the count once no one is working", async () => {
+it("shows nothing about work once no one is working", async () => {
   const { host, root } = await render({
     members: [member("a"), { ...member("b"), status: "idle" }],
   });
   expect(host.querySelector('[data-testid="channel-working"]')).toBeNull();
-  expect(host.textContent).toContain("2 agents");
   await act(async () => root.unmount());
 });

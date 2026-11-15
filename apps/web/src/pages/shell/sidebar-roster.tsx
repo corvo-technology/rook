@@ -12,7 +12,6 @@ import {
   ContextMenuTrigger,
   GroupAvatar,
 } from "@corvo/ui-web";
-import { i18n } from "@lingui/core";
 import { t } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { ChevronDown, CircleAlert, Lock, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
@@ -162,7 +161,7 @@ export function SidebarRoster({
                       render={
                         group.emptySpaceId ? <button type="button" /> : <CollapsibleTrigger />
                       }
-                      className={`flex min-w-0 items-center justify-between gap-2 rounded-lg px-2.5 py-1 text-[11px] font-semibold tracking-wider uppercase text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring ${hasSpaceActions ? "col-start-1 row-start-1 w-full" : "flex-1"}`}
+                      className={`flex min-w-0 items-center justify-between gap-2 rounded-lg px-2.5 py-1 text-[11px] font-semibold tracking-[0.08em] uppercase text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring ${hasSpaceActions ? "col-start-1 row-start-1 w-full" : "flex-1"}`}
                       onClick={() => {
                         if (group.emptySpaceId) {
                           openSpaceChat(group.emptySpaceId, "/onboarding");
@@ -295,7 +294,7 @@ export function SidebarRoster({
                   : (workStatusLabel ??
                     attentionLabel ??
                     (item.kind === "bot"
-                      ? approvalTextLabel(item.chat.preview)
+                      ? item.chat.title || approvalTextLabel(item.chat.preview)
                       : approvalTextLabel(item.chat.preview) ||
                         item.chat.members.map((member) => member.name).join(", ")));
                 const rowDropTarget: RosterDropTarget | null =
@@ -319,7 +318,7 @@ export function SidebarRoster({
                     <BotAvatar
                       color={item.chat.color}
                       identity={item.chat.id}
-                      size={mini ? 40 : compact ? 28 : 38}
+                      size={mini ? 40 : compact ? 28 : 24}
                       status={item.chat.status}
                     />
                   ) : channel ? (
@@ -423,7 +422,7 @@ export function SidebarRoster({
                           ? "w-full min-h-8 gap-1.5 rounded-lg px-2.5 py-1"
                           : compact
                             ? "w-full min-h-11 gap-2 rounded-xl px-2.5 py-1.5"
-                            : "w-full gap-3 rounded-xl px-2.5 py-[10px]"
+                            : "w-full gap-2.5 rounded-lg px-2.5 py-1.5"
                     } text-start ${
                       item.kind === "bot" ? "cursor-grab active:cursor-grabbing" : ""
                     } ${
@@ -527,20 +526,6 @@ export function SidebarRoster({
                             ) : null}
                           </div>
                           <div className="flex shrink-0 items-center gap-1.5">
-                            {!compact ? (
-                              <span
-                                data-roster-time
-                                // Quiet list: the time shows where attention is, on the open chat,
-                                // an unread one, and the row under the pointer.
-                                className={`text-label text-faint-foreground tabular-nums transition-opacity duration-150 motion-reduce:transition-none ${
-                                  selected || item.chat.unread
-                                    ? "opacity-100"
-                                    : "opacity-0 group-hover/row:opacity-100 group-focus-within/row:opacity-100"
-                                }`}
-                              >
-                                {formatRosterTime(item.chat.updatedAt)}
-                              </span>
-                            ) : null}
                             {item.chat.unread ? (
                               <span
                                 aria-hidden="true"
@@ -579,7 +564,7 @@ export function SidebarRoster({
                             data-roster-preview={
                               !workStatusLabel && !attentionLabel ? "true" : undefined
                             }
-                            className={`mt-1 truncate text-label ${
+                            className={`truncate text-label ${
                               workStatusLabel
                                 ? "font-semibold text-status-working"
                                 : attentionLabel
@@ -654,35 +639,4 @@ export function SidebarRoster({
 /** A space section header's name as one phrase, for accessible labels. */
 function headerName(group: { title?: string | null; subtitle?: string }): string {
   return group.subtitle ? `${group.title}, ${group.subtitle}` : (group.title ?? "");
-}
-
-function formatRosterTime(isoDate?: string | null): string {
-  if (!isoDate) return "";
-  try {
-    const d = new Date(isoDate);
-    if (Number.isNaN(d.getTime())) return "";
-    const locale = i18n.locale || "en";
-    const now = new Date();
-    const isToday =
-      d.getDate() === now.getDate() &&
-      d.getMonth() === now.getMonth() &&
-      d.getFullYear() === now.getFullYear();
-    if (isToday) {
-      return d.toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" });
-    }
-    const yesterday = new Date(now);
-    yesterday.setDate(now.getDate() - 1);
-    const isYesterday =
-      d.getDate() === yesterday.getDate() &&
-      d.getMonth() === yesterday.getMonth() &&
-      d.getFullYear() === yesterday.getFullYear();
-    if (isYesterday) return t`Yesterday`;
-    const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
-    if (diffDays < 7) {
-      return d.toLocaleDateString(locale, { weekday: "short" });
-    }
-    return d.toLocaleDateString(locale, { month: "short", day: "numeric" });
-  } catch {
-    return "";
-  }
 }

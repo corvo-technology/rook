@@ -87,7 +87,7 @@ const headings = () =>
 
 it("groups people by their highest role, then lists the agents with what they do", async () => {
   await render();
-  expect(headings()).toEqual(["Owner", "Finance", "Everyone", "Agents"]);
+  expect(headings()).toEqual(["Owner — 1", "Finance — 1", "Everyone — 1", "Agents — 2"]);
   const text = host!.textContent ?? "";
   expect(text).toContain("Who sees this channel");
   expect(text.indexOf("Pedro")).toBeLessThan(text.indexOf("Joao"));
@@ -98,7 +98,7 @@ it("groups people by their highest role, then lists the agents with what they do
 
 it("shows only the people added to a private channel", async () => {
   await render({ people: { restricted: true, userIds: ["u-pedro", "u-marta"], canManage: false } });
-  expect(headings()).toEqual(["Owner", "Everyone", "Agents"]);
+  expect(headings()).toEqual(["Owner — 1", "Everyone — 1", "Agents — 2"]);
   expect(host!.textContent).not.toContain("Joao");
 });
 

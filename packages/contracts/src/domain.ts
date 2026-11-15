@@ -279,6 +279,15 @@ export const BotSectionSchema = z.object({
 export type BotSection = z.infer<typeof BotSectionSchema>;
 
 /**
+ * How many messages wait for the member in a conversation (at most UNREAD_COUNT_CAP) and how many
+ * of those entries name them. Absent from older servers, which only send `unread`.
+ */
+export const UnreadCountsSchema = z.object({
+  unreadCount: z.number().int().nonnegative().optional(),
+  mentionCount: z.number().int().nonnegative().optional(),
+});
+
+/**
  * A space is a real privacy boundary, not just sidebar organization.
  * Bots are included so clients can keep every space visible without granting
  * those bots access to the currently active space.
@@ -298,10 +307,12 @@ export const SpaceBotSchema = BotSchema.pick({
   status: true,
   runErrorId: true,
   updatedAt: true,
-}).extend({
-  /** Names the Chief, which leads the sidebar; absent from older servers. */
-  spawnKey: z.string().nullable().optional(),
-});
+})
+  .extend({
+    /** Names the Chief, which leads the sidebar; absent from older servers. */
+    spawnKey: z.string().nullable().optional(),
+  })
+  .extend(UnreadCountsSchema.shape);
 export type SpaceBot = z.infer<typeof SpaceBotSchema>;
 
 export const SpaceGroupSchema = GroupSchema.pick({
@@ -315,7 +326,7 @@ export const SpaceGroupSchema = GroupSchema.pick({
   preview: true,
   unread: true,
   updatedAt: true,
-});
+}).extend(UnreadCountsSchema.shape);
 export type SpaceGroup = z.infer<typeof SpaceGroupSchema>;
 
 export const TEAM_CHAT_RULES_MAX_LENGTH = 4000;

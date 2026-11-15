@@ -38,6 +38,7 @@ import type { BoardEvents, PrismaClient, SpaceHints, ThreadEvents } from "@corvo
 import type { AudioHold } from "./audio-hold.js";
 import type { BillingService } from "./billing.js";
 import type { RouterModel } from "./channel-router.js";
+import type { PresenceTracker } from "./presence.js";
 import { accountRoutes } from "./routes/account.js";
 import { boardsRoutes } from "./routes/boards.js";
 import { botsRoutes } from "./routes/bots.js";
@@ -47,6 +48,7 @@ import { contentRoutes } from "./routes/content.js";
 import { createRouterContext } from "./routes/context.js";
 import { emailAgentRoutes } from "./routes/email-agent.js";
 import { enginesRoutes } from "./routes/engines.js";
+import { inboxRoutes } from "./routes/inbox.js";
 import { localSetupRoutes } from "./routes/local-setup.js";
 import { mcpRoutes } from "./routes/mcp.js";
 import { memoryRoutes } from "./routes/memory.js";
@@ -93,6 +95,8 @@ export interface RouterDeps {
   boardEvents: BoardEvents;
   /** Content-free hints for the member streams; absent in tests that publish none. */
   spaceHints?: SpaceHints;
+  /** Who has a stream open here; absent in tests, where everyone reads as offline. */
+  presence?: PresenceTracker;
   ticketChanges: TicketChangeNotifier;
   auth: Auth;
   jobs: JobPublisher;
@@ -205,6 +209,7 @@ export function createRouter(deps: RouterDeps) {
     ...bots,
     groups: { ...bots.groups, ...teamChat.groups },
     approvals: teamChat.approvals,
+    ...inboxRoutes(ctx),
     directMessages: teamChat.directMessages,
     ...threadsRoutes(ctx),
     ...computerRoutes(ctx),

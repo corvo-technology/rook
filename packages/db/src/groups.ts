@@ -15,7 +15,7 @@ import {
   previewFromBlocks,
   primaryActiveRun,
 } from "./thread-listing.js";
-import { memberUnreadByThread } from "./thread-reads.js";
+import { memberUnreadByThread, unreadCountFields } from "./thread-reads.js";
 import { withTransactionRetry } from "./transaction-retry.js";
 
 type GroupRecord = {
@@ -379,19 +379,21 @@ export function createGroupRepos(prisma: PrismaClient) {
       actor.userId,
       groups.flatMap((group) => (group.thread ? [group.thread] : [])),
     );
+    const countsFor = await unreadCountFields(prisma, actor.userId, unreadByThread);
     return groups
       .filter(hasConversation)
       .map((group) => visibleMembers(group))
       .filter((group) => hasMinimumActiveMembers(group.members))
-      .map((group) =>
-        mapSpaceGroup({
+      .map((group) => ({
+        ...mapSpaceGroup({
           ...group,
           thread: group.thread && {
             ...group.thread,
             unread: unreadByThread.get(group.thread.id) ?? false,
           },
         }),
-      );
+        ...(group.thread ? countsFor(group.thread.id) : {}),
+      }));
   }
 
   /**

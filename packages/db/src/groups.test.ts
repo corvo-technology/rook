@@ -44,6 +44,7 @@ describe("listSpaceGroupsForSpaces", () => {
     const repos = createGroupRepos({
       spaceMember: { findMany: vi.fn(async () => [{ spaceId: "workspace-2" }]) },
       threadMemberRead: { findMany: vi.fn(async () => []) },
+      notification: { groupBy: vi.fn(async () => []) },
       chatGroup: { findMany },
       $queryRaw: vi.fn(async () => [
         {
@@ -70,6 +71,9 @@ describe("listSpaceGroupsForSpaces", () => {
 
     await expect(repos.listSpaceGroupsForSpaces(actor, ["workspace-2"])).resolves.toEqual([
       {
+        unreadCount: 0,
+        mentionCount: 0,
+        purpose: undefined,
         id: "group-1",
         spaceId: "workspace-2",
         name: "Support crew",
@@ -492,6 +496,7 @@ describe("createGroup", () => {
         ),
       },
       threadMemberRead: { findMany: vi.fn(async () => []) },
+      notification: { groupBy: vi.fn(async () => []) },
       $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
       bot: {
         findMany: vi.fn(async () => [
@@ -558,6 +563,7 @@ describe("listGroups archived", () => {
       findMany,
       repos: createGroupRepos({
         threadMemberRead: { findMany: vi.fn(async () => []) },
+        notification: { groupBy: vi.fn(async () => []) },
         chatGroup: { findMany },
         $queryRaw: vi.fn(async () => []),
       } as unknown as PrismaClient),
@@ -643,6 +649,7 @@ describe("listSpaceGroupsForSpaces with bots of another space", () => {
     const repos = createGroupRepos({
       spaceMember: { findMany: vi.fn(async () => [{ spaceId: "space-2" }]) },
       threadMemberRead: { findMany: vi.fn(async () => []) },
+      notification: { groupBy: vi.fn(async () => []) },
       chatGroup: {
         findMany: vi.fn(async () => [
           {
@@ -689,6 +696,7 @@ describe("listSpaceGroupsForSpaces with bots of another space", () => {
     const repos = createGroupRepos({
       spaceMember: { findMany: vi.fn(async () => [{ spaceId: "space-2" }]) },
       threadMemberRead: { findMany: vi.fn(async () => []) },
+      notification: { groupBy: vi.fn(async () => []) },
       chatGroup: {
         findMany: vi.fn(async () => [
           group("headless", null),

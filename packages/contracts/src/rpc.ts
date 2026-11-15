@@ -173,6 +173,7 @@ import {
 import { MissionsViewSchema, NavPart } from "./missions.js";
 import { ModelHeadersSchema } from "./model-headers.js";
 import { ModelRoleSchema, ModelRoleUpdateSchema, ModelRoleViewSchema } from "./model-roles.js";
+import { NotificationListSchema, PresenceSchema } from "./notifications.js";
 import { PartnerAccountSchema, PartnerLimitsInput, PartnerTemplate } from "./partner.js";
 import { MessageReactionSchema } from "./reactions.js";
 import { RoutineWatchSchema } from "./routine-watch.js";
@@ -665,6 +666,27 @@ export const appContract = {
         .input(z.object({ groupId: Id, roleIds: z.array(Id).max(50) }))
         .output(z.object({ ok: z.literal(true) })),
     },
+  },
+  /** The caller's inbox in this space: mentions, replies, DMs and what waits on them. */
+  inbox: {
+    list: oc.output(NotificationListSchema),
+    /** Marks these entries, or every unread entry of one conversation, read. */
+    markRead: oc
+      .input(
+        z
+          .object({ ids: z.array(Id).max(200).optional(), threadId: Id.optional() })
+          .refine((input) => input.ids !== undefined || input.threadId !== undefined, {
+            message: "Name entries or a conversation",
+          }),
+      )
+      .output(z.object({ ok: z.literal(true) })),
+    markAllRead: oc.output(z.object({ ok: z.literal(true) })),
+  },
+  /** Who of the space is here now. Agents carry no presence: their run state is the signal. */
+  presence: {
+    list: oc.output(z.array(PresenceSchema)),
+    /** The caller's client is in use (`active`) or in the background; sent when that changes and about once a minute. */
+    touch: oc.input(z.object({ active: z.boolean() })).output(z.object({ ok: z.literal(true) })),
   },
   /** What waits on the caller across every chat: the approvals they may decide. */
   approvals: {

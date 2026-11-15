@@ -14,6 +14,7 @@ vi.mock("@lingui/react/macro", () => ({
 }));
 vi.mock("../../lib/query", () => ({ useSpaceQueries: () => ({}) }));
 vi.mock("../../lib/rpc", () => ({ rpc: {} }));
+vi.mock("../../lib/presence", () => ({ usePresence: () => new Map() }));
 
 import { ChannelMembersPanel } from "./channel-members";
 

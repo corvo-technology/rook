@@ -16,6 +16,7 @@ import {
   createThreadMessageInTransaction,
   IsolationError,
   lockOwnedGroup,
+  markNotificationsRead,
   touchGroupUpdatedAt,
 } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
@@ -682,6 +683,12 @@ export function threadsRoutes(ctx: RouterContext) {
       markRead: authed.threads.markRead.handler(async ({ context, input }) => {
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);
         const unreadAfterSeq = await markThreadRead(deps.prisma, context.actor, target);
+        // Reading a conversation answers what it raised in the inbox.
+        await markNotificationsRead(deps.prisma, {
+          spaceId: context.actor.spaceId,
+          userId: context.actor.userId,
+          threadId: target.threadId,
+        });
         return { ok: true as const, unreadAfterSeq };
       }),
       markUnread: authed.threads.markUnread.handler(async ({ context, input }) => {

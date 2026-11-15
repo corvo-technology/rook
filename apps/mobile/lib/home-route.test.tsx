@@ -111,7 +111,7 @@ it.each([false, true])(
           home.options
             .unstable_headerRightItems()
             .map((item: { accessibilityLabel: string }) => item.accessibilityLabel),
-        ).toEqual(["Activity", "Search", "Create"]);
+        ).toEqual(["Activity", "Inbox", "Search", "Create"]);
       }
     }
   },
@@ -126,12 +126,13 @@ it("leaves the navigation bar alone from the embedded inbox", () => {
 it("wires the compact header items to their actions", () => {
   act(() => root.render(<Inbox />));
   const [account] = home.options.unstable_headerLeftItems();
-  const [activity, search, create] = home.options.unstable_headerRightItems();
+  const [activity, inbox, search, create] = home.options.unstable_headerRightItems();
   account.onPress();
+  inbox.onPress();
   search.onPress();
   activity.onPress();
   for (const item of create.menu.items) item.onPress();
-  expect(home.push.mock.calls).toEqual([["/account"], ["/search"]]);
+  expect(home.push.mock.calls).toEqual([["/account"], ["/inbox"], ["/search"]]);
   expect(toggleActivityMode).toHaveBeenCalledOnce();
   expect(runCreateAction.mock.calls).toEqual([["bot"], ["group"], ["space"]]);
 });

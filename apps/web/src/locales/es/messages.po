@@ -13,7 +13,7 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: src/components/PeopleList.tsx
+#: src/components/UnreadBadge.tsx
 #: src/pages/shell/sidebar-roster.tsx
 msgid " (unread)"
 msgstr " (sin leer)"
@@ -649,6 +649,7 @@ msgstr "Acciones del espacio"
 msgid "Active"
 msgstr "Activo"
 
+#: src/components/InboxPanel.tsx
 #: src/pages/ActivityPage.tsx
 #: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-header.tsx
@@ -923,6 +924,10 @@ msgstr "Agentes que pueden usarlo"
 msgid "Agents:"
 msgstr "Agentes:"
 
+#: src/components/InboxPanel.tsx
+msgid "Alert"
+msgstr "Aviso"
+
 #: src/pages/AppCatalogGrid.tsx
 #: src/pages/Board.tsx
 #: src/pages/StoreCategoryChips.tsx
@@ -938,6 +943,10 @@ msgstr "Los ${0} completos se destinan al uso de modelos."
 #: src/pages/shell/agent-import.tsx
 msgid "All bots"
 msgstr "Todos los bots"
+
+#: src/components/InboxPanel.tsx
+msgid "All caught up"
+msgstr "Todo al día"
 
 #: src/pages/Routines.tsx
 msgid "All good"
@@ -1133,6 +1142,10 @@ msgstr "Aplicado"
 #: src/components/AskCard.tsx
 msgid "Apply"
 msgstr "Aplicar"
+
+#: src/components/InboxPanel.tsx
+msgid "Approval"
+msgstr "Aprobación"
 
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Approval boundaries"
@@ -3118,6 +3131,10 @@ msgstr "Detalles"
 msgid "Development"
 msgstr "Desarrollo"
 
+#: src/components/InboxPanel.tsx
+msgid "Direct message"
+msgstr "Mensaje directo"
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Disable a tool"
 msgstr "Desactivar una herramienta"
@@ -3541,6 +3558,7 @@ msgstr "Datos sobre ti"
 msgid "failed"
 msgstr "fallido"
 
+#: src/components/InboxPanel.tsx
 #: src/components/PlanCard.tsx
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
@@ -3963,6 +3981,10 @@ msgstr "En uso"
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Inactive"
 msgstr "Inactivo"
+
+#: src/components/InboxPanel.tsx
+msgid "Inbox"
+msgstr "Bandeja de entrada"
 
 #: src/pages/shell/message-cards.tsx
 msgid "Inbox & email"
@@ -4451,6 +4473,10 @@ msgstr "Manual"
 msgid "Manual setup required"
 msgstr "Se requiere configuración manual"
 
+#: src/components/InboxPanel.tsx
+msgid "Mark all read"
+msgstr "Marcar todo como leído"
+
 #: src/pages/BotContextMenu.tsx
 msgid "Mark as Read"
 msgstr "Marcar como leído"
@@ -4556,6 +4582,10 @@ msgstr "Memoria para {title}"
 #: src/pages/shell/bot-panel.tsx
 msgid "Memory scope"
 msgstr "Alcance de memoria"
+
+#: src/components/InboxPanel.tsx
+msgid "Mention"
+msgstr "Mención"
 
 #: src/pages/shell/composer-mentions.tsx
 msgid "Mentions"
@@ -5176,7 +5206,7 @@ msgstr "Aún no hay recuerdos"
 msgid "Nothing to approve"
 msgstr "Nada que aprobar"
 
-#: src/components/SidebarFooter.tsx
+#: src/components/InboxBell.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Notifications"
 msgstr "Notificaciones"
@@ -5707,6 +5737,10 @@ msgstr "Código QR"
 msgid "Queen"
 msgstr "Reina"
 
+#: src/components/InboxPanel.tsx
+msgid "Question"
+msgstr "Pregunta"
+
 #: src/pages/ActivityList.tsx
 msgid "Queued"
 msgstr "En cola"
@@ -6004,6 +6038,7 @@ msgstr "Reemplazar valor"
 msgid "Replies"
 msgstr "Respuestas"
 
+#: src/components/InboxPanel.tsx
 #: src/pages/shell/message-hover-actions.tsx
 #: src/pages/shell/quote-selection-button.tsx
 #: src/pages/shell/thread-panel.tsx

@@ -70,6 +70,7 @@ import { desktopBridge } from "../lib/desktop";
 import { groupRecipient } from "../lib/group-recipient";
 import { markAfterPaint, markOnce } from "../lib/performance";
 import { usePreloadRecoveryState } from "../lib/preload-recovery";
+import { usePresenceBeacon } from "../lib/presence";
 import { lastChatKey, lastChatOf, queryClient, spaceQueries, spaceSeedKey } from "../lib/query";
 import { rightPanelStorageKey } from "../lib/right-panel-state";
 import { createSpaceRpc, selectedSpaceId, selectSpace } from "../lib/rpc";
@@ -77,11 +78,14 @@ import { storePath, useOpenSettings } from "../lib/settings-route";
 import { markShellReady, useSpaceEpoch } from "../lib/space-switch";
 import { activeThreadRuns } from "../lib/thread-events";
 import { getToolActivityEnabled, subscribeToolActivity } from "../lib/tool-activity-preference";
+import { unreadTotal } from "../lib/unread";
 import { useChannelPeopleCount } from "../lib/use-channel-people-count";
 import { useDesktopBadge } from "../lib/use-desktop-badge";
+import { useDirectPeople } from "../lib/use-direct-people";
 import { useMissions } from "../lib/use-missions";
 import { usePersonRoles } from "../lib/use-person-roles";
 import { useSpaceStream } from "../lib/use-space-stream";
+import { useUnreadTitle } from "../lib/use-unread-title";
 import { DirectChat } from "./DirectChat";
 import { HostComputerPrompt } from "./HostComputerPrompt";
 import { ArchivedChats } from "./shell/archived-chats";
@@ -99,7 +103,11 @@ import { ShellSidePanel } from "./shell/side-panel";
 import { useCreateMenu } from "./shell/sidebar-header";
 import { BotsSidebarLayout } from "./shell/sidebar-layout";
 import { SidebarRoster } from "./shell/sidebar-roster";
-import { countUnreadChats, sidebarGroupsForSpaces } from "./shell/space-sidebar";
+import {
+  countUnreadMessages,
+  sidebarGroupsForSpaces,
+  withUnreadCounts,
+} from "./shell/space-sidebar";
 import type { ThreadTranscriptProps } from "./shell/thread-panel";
 import { ThreadPanel } from "./shell/thread-panel";
 import { Transcript } from "./shell/transcript";
@@ -375,7 +383,14 @@ function SpaceShell({ page }: { page?: ReactNode }) {
     () =>
       spaces.length > 0
         ? spaces.map((space) =>
-            space.id === bootstrapMe?.spaceId ? { ...space, bots, groups, botSections } : space,
+            space.id === bootstrapMe?.spaceId
+              ? {
+                  ...space,
+                  bots: withUnreadCounts(bots, space.bots),
+                  groups: withUnreadCounts(groups, space.groups),
+                  botSections,
+                }
+              : space,
           )
         : bootstrapMe
           ? [
@@ -413,12 +428,15 @@ function SpaceShell({ page }: { page?: ReactNode }) {
       ),
     [rosterSpaces, sidebarSpaces, search.query, miniSidebar, t],
   );
-  // The Dock badge ignores the roster search box: a filter must not hide unread chats.
-  const unreadChatCount = useMemo(
-    () => countUnreadChats(sidebarGroupsForSpaces(sidebarSpaces, "")),
-    [sidebarSpaces],
-  );
-  useDesktopBadge(userId ? unreadChatCount : 0);
+  // The title and the Dock badge ignore the roster search box: a filter must not hide unread chats.
+  const directPeople = useDirectPeople().data;
+  const unreadMessages = useMemo(() => {
+    const sections = sidebarGroupsForSpaces(sidebarSpaces, "");
+    return countUnreadMessages(sections) + unreadTotal(directPeople ?? []);
+  }, [sidebarSpaces, directPeople]);
+  useDesktopBadge(userId ? unreadMessages : 0);
+  useUnreadTitle(userId ? unreadMessages : 0);
+  usePresenceBeacon(Boolean(userId));
   const openSpaceChat = useOpenSpaceChat({
     bootstrapSpaceId: bootstrapMe?.spaceId,
     userId,

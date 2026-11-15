@@ -42,6 +42,7 @@ function reposFor(memoryScope: string | null) {
       ),
     },
     threadMemberRead: { findMany: vi.fn(async () => []) },
+    notification: { groupBy: vi.fn(async () => []) },
     bot: {
       findMany: vi.fn(async () => [{ ...baseBot, memoryScope }]),
     },
@@ -62,6 +63,7 @@ describe("createRepos.listBots approval mode", () => {
         ),
       },
       threadMemberRead: { findMany: vi.fn(async () => []) },
+      notification: { groupBy: vi.fn(async () => []) },
       bot: { findMany: vi.fn(async () => [{ ...baseBot, approvalMode }]) },
       run: { findMany: vi.fn(async () => []) },
       $queryRaw: vi.fn(async () => []),
@@ -86,6 +88,7 @@ describe("createRepos.listBots", () => {
     const repos = createRepos({
       spaceMember: { findMany: vi.fn(async () => [{ spaceId: "ws-2" }]) },
       threadMemberRead: { findMany: vi.fn(async () => []) },
+      notification: { groupBy: vi.fn(async () => []) },
       bot: { findMany },
       $queryRaw: queryRaw,
     } as unknown as PrismaClient);
@@ -106,6 +109,7 @@ describe("createRepos.listBots", () => {
         ),
       },
       threadMemberRead: { findMany: vi.fn(async () => []) },
+      notification: { groupBy: vi.fn(async () => []) },
       bot: {
         findMany: vi.fn(async () =>
           ["one", "two"].map((id) => ({
@@ -144,6 +148,7 @@ describe("createRepos.listBots", () => {
         ),
       },
       threadMemberRead: { findMany: vi.fn(async () => []) },
+      notification: { groupBy: vi.fn(async () => []) },
       bot: {
         findMany: vi.fn(async () => [
           {
@@ -209,6 +214,7 @@ describe("createRepos.listBots", () => {
         ),
       },
       threadMemberRead: { findMany: vi.fn(async () => []) },
+      notification: { groupBy: vi.fn(async () => []) },
       bot: {
         findMany,
       },
@@ -260,6 +266,7 @@ describe("createRepos.listBots", () => {
         ),
       },
       threadMemberRead: { findMany: vi.fn(async () => []) },
+      notification: { groupBy: vi.fn(async () => []) },
       bot: {
         findMany: vi.fn(async () => [
           {
@@ -308,6 +315,7 @@ describe("createRepos.listBots", () => {
         ),
       },
       threadMemberRead: { findMany: vi.fn(async () => []) },
+      notification: { groupBy: vi.fn(async () => []) },
       bot: {
         findMany: vi.fn(async () => [
           {
@@ -363,6 +371,7 @@ describe("createRepos.listBots", () => {
         ),
       },
       threadMemberRead: { findMany: vi.fn(async () => []) },
+      notification: { groupBy: vi.fn(async () => []) },
       bot: {
         findMany: vi.fn(async () => [
           {
@@ -400,6 +409,7 @@ describe("createRepos.listBots", () => {
         ),
       },
       threadMemberRead: { findMany: vi.fn(async () => []) },
+      notification: { groupBy: vi.fn(async () => []) },
       bot: {
         findMany: vi.fn(async () => [
           {
@@ -464,6 +474,7 @@ describe("createRepos.listSpaceBotsForSpaces", () => {
     const repos = createRepos({
       spaceMember: { findMany: vi.fn(async () => [{ spaceId: "ws-2" }]) },
       threadMemberRead: { findMany: vi.fn(async () => []) },
+      notification: { groupBy: vi.fn(async () => []) },
       bot: { findMany },
       $queryRaw: vi
         .fn()
@@ -482,11 +493,14 @@ describe("createRepos.listSpaceBotsForSpaces", () => {
             clientNonce: null,
             createdAt: new Date("2026-08-19T12:00:00.000Z"),
           },
-        ]),
+        ])
+        .mockResolvedValue([]),
     } as unknown as PrismaClient);
 
     await expect(repos.listSpaceBotsForSpaces(actor, ["ws-2"])).resolves.toEqual([
       {
+        unreadCount: 0,
+        mentionCount: 0,
         id: "bot-2",
         spaceId: "ws-2",
         name: "Support",
@@ -535,6 +549,7 @@ describe("createRepos.listSpaceBotsForSpaces", () => {
     const repos = createRepos({
       spaceMember: { findMany: vi.fn(async () => [{ spaceId: "ws-2" }]) },
       threadMemberRead: { findMany: vi.fn(async () => []) },
+      notification: { groupBy: vi.fn(async () => []) },
       bot: {
         findMany: vi.fn(async () => [
           row("headless", null),
@@ -565,6 +580,7 @@ describe("createRepos.reorderBots", () => {
         ),
       },
       threadMemberRead: { findMany: vi.fn(async () => []) },
+      notification: { groupBy: vi.fn(async () => []) },
       $transaction: vi.fn((run: (client: typeof tx) => Promise<void>) => run(tx)),
     };
     return { repos: createRepos(prisma as unknown as PrismaClient), update };
@@ -612,6 +628,7 @@ it("finds incoming calls independently of the sidebar message window", async () 
       ),
     },
     threadMemberRead: { findMany: vi.fn(async () => []) },
+    notification: { groupBy: vi.fn(async () => []) },
     bot: {
       findMany: vi.fn(async () => [
         baseBot,

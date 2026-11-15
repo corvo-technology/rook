@@ -18,6 +18,7 @@ import { ChevronDown, CircleAlert, Lock, MoreHorizontal, Pencil, Trash2 } from "
 import type { Dispatch, ReactNode, RefObject, SetStateAction } from "react";
 import { Suspense } from "react";
 import { IconTooltip } from "../../components/IconTooltip";
+import { UnreadBadge } from "../../components/UnreadBadge";
 import { approvalTextLabel } from "../../lib/activity-label";
 import type { BotsSidebarDensity } from "../../lib/bots-sidebar-density-pref";
 import { useFlipRows } from "../../lib/flip";
@@ -495,18 +496,11 @@ export function SidebarRoster({
                           {item.chat.name}
                         </span>
                         <ChannelPresence members={workingHere} />
-                        {item.chat.unread ? (
-                          <>
-                            <span
-                              aria-hidden="true"
-                              data-roster-unread-dot
-                              className="inline-block h-2 w-2 shrink-0 rounded-full bg-unread"
-                            />
-                            <span className="sr-only">
-                              <Trans> (unread)</Trans>
-                            </span>
-                          </>
-                        ) : null}
+                        <UnreadBadge
+                          count={item.chat.unreadCount}
+                          mentions={item.chat.mentionCount}
+                          unread={item.chat.unread}
+                        />
                       </div>
                     ) : !mini ? (
                       <div className="min-w-0 flex-1">
@@ -521,20 +515,13 @@ export function SidebarRoster({
                             >
                               {item.chat.name}
                             </span>
-                            {item.chat.unread ? (
-                              <span className="sr-only">
-                                <Trans> (unread)</Trans>
-                              </span>
-                            ) : null}
                           </div>
                           <div className="flex shrink-0 items-center gap-1.5">
-                            {item.chat.unread ? (
-                              <span
-                                aria-hidden="true"
-                                data-roster-unread-dot
-                                className="inline-block h-2 w-2 rounded-full bg-unread"
-                              />
-                            ) : null}
+                            <UnreadBadge
+                              count={item.chat.unreadCount}
+                              mentions={item.chat.mentionCount}
+                              unread={item.chat.unread}
+                            />
                           </div>
                         </div>
                         {compact ? (

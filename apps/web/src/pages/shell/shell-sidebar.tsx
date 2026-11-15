@@ -13,6 +13,7 @@ import { Search } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
+import { InboxBell } from "../../components/InboxBell";
 import { MissionList } from "../../components/MissionList";
 import { PasskeyOffer } from "../../components/PasskeyOffer";
 import { SidebarFooter } from "../../components/SidebarFooter";
@@ -267,7 +268,6 @@ export function ShellSidebar({
           navigate={navigate}
           openSettings={openSettings}
           openIntegrations={openIntegrations}
-          activityOpen={onActivity}
         />
       </Sidebar>
     </>
@@ -284,10 +284,7 @@ export function ShellSidebarFooter({
   navigate,
   openSettings,
   openIntegrations,
-  activityOpen,
 }: {
-  /** The activity page is the one open. */
-  activityOpen: boolean;
   mini: boolean;
   /** Whether this footer carries the account menu and the Store; a partner's frame has neither. */
   account: boolean;
@@ -366,11 +363,18 @@ export function ShellSidebarFooter({
           logOutError={logOutError}
           localEdition={localEdition}
           hideStore={hideStore}
-          onActivity={() => {
-            closeMobileSidebar();
-            navigate("/app/activity");
-          }}
-          activityOpen={activityOpen}
+          inbox={
+            <InboxBell
+              navigate={(path) => {
+                closeMobileSidebar();
+                navigate(path);
+              }}
+              onActivity={() => {
+                closeMobileSidebar();
+                navigate("/app/activity");
+              }}
+            />
+          }
           usage={<SubscriptionRailRings />}
         />
       ) : null}

@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { UnreadCountsSchema } from "./domain.js";
 import { MessageBlock } from "./events.js";
 import { Id, IsoDate } from "./ids.js";
 
@@ -35,6 +36,7 @@ export const DirectPersonSchema = z.object({
   image: z.string().nullable(),
   threadId: Id.nullable(),
   unread: z.boolean(),
+  ...UnreadCountsSchema.shape,
 });
 export type DirectPerson = z.infer<typeof DirectPersonSchema>;
 

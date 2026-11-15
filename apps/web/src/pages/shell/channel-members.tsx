@@ -19,6 +19,7 @@ import { X } from "lucide-react";
 import { useState } from "react";
 import { PersonAvatar } from "../../components/PersonAvatar";
 import { groupPeopleByRole } from "../../lib/channel-people-groups";
+import { usePresence } from "../../lib/presence";
 import { useSpaceQueries } from "../../lib/query";
 import type { createSpaceRpc } from "../../lib/rpc";
 import { errorText } from "../../lib/user-error";
@@ -59,6 +60,7 @@ export function ChannelMembersPanel({
   onOpenToEveryone: () => void;
 }) {
   const { t } = useLingui();
+  const presence = usePresence();
   const [pickerOpen, setPickerOpen] = useState(false);
   const groups = groupPeopleByRole({
     members,
@@ -89,7 +91,13 @@ export function ChannelMembersPanel({
           <ul className="flex flex-col gap-1.5">
             {group.members.map((member) => (
               <li key={member.userId} className="group/person flex items-center gap-2.5">
-                <PersonAvatar name={member.name} size={28} />
+                <PersonAvatar
+                  name={member.name}
+                  size={28}
+                  presence={
+                    member.userId === currentUserId ? undefined : presence.get(member.userId)
+                  }
+                />
                 <span className="flex min-w-0 flex-1 flex-col leading-tight">
                   <span className="truncate text-sm">{member.name}</span>
                   {member.userId === currentUserId ? (

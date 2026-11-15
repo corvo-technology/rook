@@ -411,6 +411,7 @@ function LayoutContent() {
                     <Stack.Screen name="artifacts" options={glassHeaderOptions(t("Artifacts"))} />
                     <Stack.Screen name="wiki" options={glassHeaderOptions(t("Wiki"))} />
                     <Stack.Screen name="you" options={glassHeaderOptions(t("You"))} />
+                    <Stack.Screen name="inbox" options={glassHeaderOptions(t("Inbox"))} />
                     <Stack.Screen name="missions" options={glassHeaderOptions(t("Missions"))} />
                     <Stack.Screen
                       name="wiki-page"

@@ -518,7 +518,15 @@ export function canReactToThreadMessage(message: Pick<ThreadMessage, "id" | "blo
 }
 
 /** What a space hint says changed. A hint carries no content: the client reads it through the RPC. */
-export const SPACE_HINT_KINDS = ["roster", "approvals", "dm", "computer", "routines"] as const;
+export const SPACE_HINT_KINDS = [
+  "roster",
+  "approvals",
+  "dm",
+  "computer",
+  "routines",
+  "notifications",
+  "presence",
+] as const;
 export const SpaceHintKind = z.enum(SPACE_HINT_KINDS);
 export type SpaceHintKind = z.infer<typeof SpaceHintKind>;
 

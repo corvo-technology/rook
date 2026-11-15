@@ -132,7 +132,15 @@ export function createSpaceHints(realtime?: RealtimeFanout): SpaceHints {
   };
 }
 
-const ALL_KINDS: readonly SpaceHintKind[] = ["roster", "approvals", "dm", "computer", "routines"];
+const ALL_KINDS: readonly SpaceHintKind[] = [
+  "roster",
+  "approvals",
+  "dm",
+  "computer",
+  "routines",
+  "notifications",
+  "presence",
+];
 
 /** What a change in a conversation can move, and who sees that conversation. */
 export async function threadHintTarget(
@@ -162,11 +170,11 @@ export async function threadHintTarget(
   if (thread.direct) {
     return {
       spaceId,
-      kinds: ["dm"],
+      kinds: ["dm", "notifications"],
       reach: { users: [thread.direct.userAId, thread.direct.userBId] },
     };
   }
-  const kinds: SpaceHintKind[] = ["roster", "approvals"];
+  const kinds: SpaceHintKind[] = ["roster", "approvals", "notifications"];
   if (thread.group) {
     const { group } = thread;
     if (group.people.length === 0 && group.accessRoleIds.length === 0) return { spaceId, kinds };

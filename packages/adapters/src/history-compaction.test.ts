@@ -81,7 +81,7 @@ describe("historyWindowSize", () => {
     ).toBe(PROMPT_HISTORY_WINDOW_SIZE);
   });
 
-  it("uses the 60-message window when semantic memory is not configured", () => {
+  it("uses the prompt window when semantic memory is not configured", () => {
     expect(
       historyWindowSize({ semanticMemoryEnabled: false, compacted: true, recallSucceeded: true }),
     ).toBe(PROMPT_HISTORY_WINDOW_SIZE);

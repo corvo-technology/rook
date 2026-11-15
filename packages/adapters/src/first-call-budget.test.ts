@@ -154,13 +154,13 @@ describe("the first model call stays within its token budget", () => {
     const call = await firstCall({ chief: false });
     expect(call.tools).toBeLessThan(8_000);
     expect(call.system).toBeLessThan(3_100);
-    expect(call.total).toBeLessThan(19_000);
+    expect(call.total).toBeLessThan(22_000);
   });
 
   it("the Chief", async () => {
     const call = await firstCall({ chief: true });
     expect(call.tools).toBeLessThan(8_100);
-    expect(call.total).toBeLessThan(20_000);
+    expect(call.total).toBeLessThan(23_000);
   });
 
   it("names at most the capped number of teammates", () => {

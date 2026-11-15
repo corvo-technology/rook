@@ -80,7 +80,7 @@ export const COMPACTION_BATCH_SIZE = 50;
 export const HISTORY_WINDOW_SIZE = 50;
 export const LEGACY_HISTORY_WINDOW_SIZE = 200;
 /** Most earlier messages a run's prompt carries when no local summary stands in for the rest. */
-export const PROMPT_HISTORY_WINDOW_SIZE = 60;
+export const PROMPT_HISTORY_WINDOW_SIZE = 120;
 /**
  * Most tokens the earlier conversation may take in a run's first model call. Older messages stay
  * reachable through search_history and read_history. The current request is never cut.

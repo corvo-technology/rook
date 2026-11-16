@@ -6,7 +6,6 @@ const SETTINGS_SECTIONS = [
   "memory",
   "members",
   "usage",
-  "mcp",
   "computer",
   "billing",
   "partnership",
@@ -40,7 +39,7 @@ export function legacyOverlayTarget(
     else to = `/settings/${isSettingsSection(section) ? section : "general"}`;
   } else if (params.has("integrations")) to = "/app/store";
   else if (mcp !== null)
-    to = mcp ? `/settings/mcp?server=${encodeURIComponent(mcp)}` : "/settings/mcp";
+    to = mcp ? `/settings/connections?server=${encodeURIComponent(mcp)}` : "/settings/connections";
   if (!to) return null;
   const rest = new URLSearchParams(params);
   for (const key of LEGACY_KEYS) rest.delete(key);

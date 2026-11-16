@@ -129,6 +129,16 @@ export function connectorToolRequiresApproval(toolName: string, readOnly?: boole
   return !READ_ONLY_CONNECTOR_PATTERN.test(toolName);
 }
 
+/**
+ * Whether a tool may be granted at read level: not declared a write, not named as one, and either
+ * declared read-only or named like a read. The provider chooses both the name and the hint, so a
+ * declared read never overrides a write-looking name.
+ */
+export function connectorToolIsRead(toolName: string, readOnly?: boolean): boolean {
+  if (readOnly === false || connectorToolNamedAsWrite(toolName)) return false;
+  return readOnly === true || READ_ONLY_CONNECTOR_PATTERN.test(toolName);
+}
+
 /** Unattended watches require explicit read-only metadata and must respect approval rules. */
 export function watchToolRefusal(input: {
   toolName: string;

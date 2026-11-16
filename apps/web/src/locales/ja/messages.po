@@ -148,12 +148,12 @@ msgid "{0} is calling you"
 msgstr "{0}から着信中"
 
 #. placeholder {0}: updated.name
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 msgid "{0} is not working"
 msgstr "{0}が動作していません"
 
 #. placeholder {0}: updated.name
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 msgid "{0} is running"
 msgstr "{0}は実行中です"
 
@@ -243,6 +243,10 @@ msgstr "{count, plural, other {#件の番号}}"
 #: src/components/markdown-copy.tsx
 msgid "{count, plural, one {# row} other {# rows}}"
 msgstr "{count, plural, one {# 行} other {# 行}}"
+
+#: src/pages/connections/connection-model.ts
+msgid "{count, plural, one {Connected · # tool} other {Connected · # tools}}"
+msgstr "{count, plural, other {接続済み · # 個のツール}}"
 
 #: src/pages/TeamBoard.tsx
 msgid "{count} agents"
@@ -557,7 +561,6 @@ msgstr "{title}（{savedAs} として保存）"
 msgid "{tokens} tokens"
 msgstr "{tokens} トークン"
 
-#: src/components/McpServerHealthLine.tsx
 #: src/components/ToolActivityDisclosure.tsx
 #: src/pages/Store.tsx
 msgid "{toolCount, plural, one {# tool} other {# tools}}"
@@ -645,11 +648,21 @@ msgstr "サブスクリプションの認証情報は安全に保存されてい
 msgid "About {label}"
 msgstr "{label}について"
 
+#: src/pages/connections/AgentAccessSection.tsx
+#: src/pages/ConnectionsPage.tsx
+msgid "Access"
+msgstr "アクセス"
+
+#. placeholder {0}: bot.name
+#: src/pages/connections/AccessSheet.tsx
+msgid "Access for {0}"
+msgstr "{0} のアクセス"
+
 #: src/pages/shell/message-cards.tsx
 msgid "Access for {forBotName}"
 msgstr "{forBotName}のアクセス"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Access token (optional)"
 msgstr "アクセストークン（任意）"
 
@@ -703,7 +716,7 @@ msgstr "アクティビティ"
 #: src/pages/AddStepPanel.tsx
 #: src/pages/AgentsStore.tsx
 #: src/pages/AppCatalogGrid.tsx
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 #: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/Store.tsx
@@ -748,11 +761,11 @@ msgstr "この1回限りの実行の日時を追加してください。"
 msgid "Add a second agent"
 msgstr "2人目のエージェントを追加する"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Add a server name."
 msgstr "サーバー名を追加してください。"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Add a stdio command."
 msgstr "stdioコマンドを追加してください。"
 
@@ -777,7 +790,7 @@ msgstr "このルーティンを実行するトリガーを追加してくださ
 msgid "Add agent"
 msgstr "エージェントを追加"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Add an HTTPS server URL."
 msgstr "HTTPSのサーバーURLを追加してください。"
 
@@ -800,10 +813,6 @@ msgstr "クレジットを追加"
 #: src/lib/user-error.ts
 msgid "Add credits in Billing to keep using voice."
 msgstr "音声を使い続けるには、請求でクレジットを追加してください。"
-
-#: src/pages/DatabasesSettings.tsx
-msgid "Add database"
-msgstr "データベースを追加"
 
 #: src/pages/Store.tsx
 msgid "Add Executor"
@@ -871,7 +880,7 @@ msgstr "プロバイダーを追加"
 msgid "Add remote MCP server"
 msgstr "リモートMCPサーバーを追加"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Add server"
 msgstr "サーバーを追加"
 
@@ -919,7 +928,6 @@ msgstr "追加済み"
 msgid "Added {0}."
 msgstr "追加しました: {0}。"
 
-#: src/pages/McpServersSettings.tsx
 #: src/pages/Store.tsx
 msgid "Added by {otherOwner}"
 msgstr "{otherOwner} が追加"
@@ -929,7 +937,7 @@ msgid "Added to the wiki"
 msgstr "Wikiに追加しました"
 
 #: src/pages/AppCatalogGrid.tsx
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 #: src/pages/Store.tsx
 msgid "Adding…"
 msgstr "追加中…"
@@ -944,12 +952,13 @@ msgid "Administrator"
 msgstr "管理者"
 
 #: src/pages/AccountSettingsOverlay.tsx
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/RoutineSchedule.tsx
+#: src/pages/Settings.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/Store.tsx
 msgid "Advanced"
@@ -987,12 +996,6 @@ msgstr "エージェント"
 #: src/pages/AppAgentAccess.tsx
 msgid "Agents that can use it"
 msgstr "使用できるエージェント"
-
-#: src/pages/DatabasesSettings.tsx
-#: src/pages/MailboxesSettings.tsx
-#: src/pages/McpServersSettings.tsx
-msgid "Agents:"
-msgstr "エージェント:"
 
 #: src/components/InboxPanel.tsx
 msgid "Alert"
@@ -1296,7 +1299,7 @@ msgstr "アーカイブ済み"
 msgid "Archived"
 msgstr "アーカイブ済み"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Arguments"
 msgstr "引数"
 
@@ -1367,11 +1370,11 @@ msgstr "添付ファイル"
 msgid "Authorization code"
 msgstr "認証コード"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Authorization parameters (optional)"
 msgstr "認証パラメーター（任意）"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Authorization server"
 msgstr "認証サーバー"
 
@@ -1428,6 +1431,7 @@ msgstr "Avatar Studio"
 #: src/pages/AppCatalogGrid.tsx
 #: src/pages/Auth.tsx
 #: src/pages/Board.tsx
+#: src/pages/connections/ConnectSheet.tsx
 #: src/pages/ImportFlow.tsx
 #: src/pages/NavLinkPage.tsx
 #: src/pages/onboarding/OnboardingLayout.tsx
@@ -1638,10 +1642,12 @@ msgstr "画像を読み取れません"
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/AddStepPanel.tsx
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
+#: src/pages/connections/MailboxForm.tsx
+#: src/pages/connections/McpServerForm.tsx
+#: src/pages/ConnectionsPage.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/LocalSpeechSection.tsx
-#: src/pages/McpServersSettings.tsx
 #: src/pages/MembersSettingsPanel.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/NewRoutinePanel.tsx
@@ -1767,17 +1773,9 @@ msgstr "ご自身で確認してください"
 msgid "Check your email"
 msgstr "メールを確認してください"
 
-#: src/components/McpServerHealthLine.tsx
-msgid "Checked {checked}"
-msgstr "{checked}に確認済み"
-
 #: src/components/ComputersUnavailableHint.tsx
 msgid "Checking computer setup…"
 msgstr "コンピューターの設定を確認中…"
-
-#: src/components/McpServerHealthLine.tsx
-msgid "Checking connection…"
-msgstr "接続を確認中…"
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/DesktopUpdates.tsx
@@ -1970,7 +1968,7 @@ msgstr "ゆったり"
 msgid "Coming soon"
 msgstr "近日公開"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 #: src/pages/RoutineEditor.tsx
 msgid "Command"
 msgstr "コマンド"
@@ -2062,17 +2060,12 @@ msgstr "コンピューターは無効です。SANDBOX_PROVIDER=docker と SANDB
 msgid "Configure the space"
 msgstr "スペースを設定"
 
-#: src/pages/McpServersSettings.tsx
-msgid "Configured servers"
-msgstr "設定済みのサーバー"
-
 #: src/pages/shell/agent-import-undo.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Confirm"
 msgstr "確認"
 
 #: src/pages/KnowledgeSection.tsx
-#: src/pages/McpServersSettings.tsx
 msgid "Confirm delete"
 msgstr "削除を確認"
 
@@ -2099,8 +2092,10 @@ msgstr "先にメールを確認してから、このリンクをもう一度開
 
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/ChatAppsRow.tsx
-#: src/pages/DatabasesSettings.tsx
-#: src/pages/MailboxesSettings.tsx
+#: src/pages/connections/ConnectSheet.tsx
+#: src/pages/connections/DatabaseForm.tsx
+#: src/pages/connections/MailboxForm.tsx
+#: src/pages/ConnectionsPage.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 #: src/pages/memory-providers/SupermemorySettingsForm.tsx
@@ -2159,7 +2154,7 @@ msgstr "メモリプロバイダーを接続"
 msgid "Connect my own"
 msgstr "自分のキーを接続"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 msgid "Connect OAuth"
 msgstr "OAuthを接続"
 
@@ -2178,6 +2173,7 @@ msgstr "モデルで自分のAPIキーを接続するか、請求でRookクレ�
 
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/ChatAppsRow.tsx
+#: src/pages/connections/connection-model.ts
 #: src/pages/ConnectionsSettingsPanel.tsx
 #: src/pages/McpOAuthCallback.tsx
 #: src/pages/MemorySettingsOverlay.tsx
@@ -2191,9 +2187,8 @@ msgstr "接続済み"
 msgid "Connected {0}."
 msgstr "{0}を接続しました。"
 
-#: src/pages/DatabasesSettings.tsx
-#: src/pages/MailboxesSettings.tsx
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
+#: src/pages/connections/MailboxForm.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 #: src/pages/memory-providers/SupermemorySettingsForm.tsx
@@ -2206,7 +2201,7 @@ msgstr "接続中…"
 msgid "Connection"
 msgstr "接続"
 
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
 msgid "Connection string"
 msgstr "接続文字列"
 
@@ -2323,7 +2318,7 @@ msgstr "コスト"
 msgid "Could not add"
 msgstr "追加できませんでした"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Could not add MCP server"
 msgstr "MCPサーバーを追加できませんでした"
 
@@ -2464,7 +2459,7 @@ msgstr "ボットを削除できませんでした"
 msgid "Could not delete group"
 msgstr "グループを削除できませんでした"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 msgid "Could not delete MCP server"
 msgstr "MCPサーバーを削除できませんでした"
 
@@ -2501,7 +2496,7 @@ msgstr "切断できませんでした"
 msgid "Could not disconnect memory provider"
 msgstr "メモリプロバイダーを切断できませんでした"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 msgid "Could not disconnect OAuth"
 msgstr "OAuthを切断できませんでした"
 
@@ -2582,11 +2577,7 @@ msgstr "認証情報を読み込めませんでした。"
 msgid "Could not load integrations"
 msgstr "連携を読み込めませんでした"
 
-#: src/pages/MailboxesSettings.tsx
-msgid "Could not load mailboxes"
-msgstr "メールボックスを読み込めませんでした"
-
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 #: src/pages/Store.tsx
 msgid "Could not load MCP servers"
 msgstr "MCPサーバーを読み込めませんでした"
@@ -2738,11 +2729,12 @@ msgstr "ルーティンを実行できませんでした"
 msgid "Could not run the routine"
 msgstr "ルーティンを実行できませんでした"
 
+#: src/pages/connections/DatabaseForm.tsx
+#: src/pages/connections/MailboxForm.tsx
+#: src/pages/connections/McpServerForm.tsx
 #: src/pages/ConnectionsSettingsPanel.tsx
-#: src/pages/DatabasesSettings.tsx
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/KnowledgeSection.tsx
-#: src/pages/McpServersSettings.tsx
 #: src/pages/MembersSettingsPanel.tsx
 #: src/pages/shell/agent-audience.tsx
 #: src/pages/shell/bot-panel.tsx
@@ -2838,7 +2830,7 @@ msgstr "送信できませんでした"
 msgid "Could not set up your bots"
 msgstr "ボットをセットアップできませんでした"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 msgid "Could not start OAuth"
 msgstr "OAuthを開始できませんでした"
 
@@ -2863,7 +2855,7 @@ msgstr "{failedNames}を切り替えられませんでした。もう一度お�
 msgid "Could not take control"
 msgstr "操作を引き継げませんでした"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 msgid "Could not test MCP server"
 msgstr "MCPサーバーをテストできませんでした"
 
@@ -2885,7 +2877,8 @@ msgid "Could not update"
 msgstr "更新できませんでした"
 
 #: src/pages/AppAgentAccess.tsx
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/AccessSheet.tsx
+#: src/pages/connections/AgentAccessSection.tsx
 msgid "Could not update agent access"
 msgstr "エージェントのアクセス権を更新できませんでした"
 
@@ -3008,7 +3001,6 @@ msgstr "作成中…"
 msgid "Credential"
 msgstr "認証情報"
 
-#: src/pages/McpServersSettings.tsx
 #: src/pages/Store.tsx
 msgid "Credential saved"
 msgstr "認証情報を保存しました"
@@ -3041,6 +3033,10 @@ msgstr "Cron式"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Current password"
 msgstr "現在のパスワード"
+
+#: src/pages/connections/connection-model.ts
+msgid "Custom"
+msgstr "カスタム"
 
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Custom color"
@@ -3086,12 +3082,9 @@ msgstr "ダーク"
 msgid "Data"
 msgstr "データ"
 
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/ConnectSheet.tsx
+#: src/pages/connections/DatabaseForm.tsx
 msgid "Database"
-msgstr "データベース"
-
-#: src/pages/Settings.tsx
-msgid "Databases"
 msgstr "データベース"
 
 #: src/lib/billing.ts
@@ -3155,8 +3148,8 @@ msgstr "ヘルパーに任せています: {value}"
 
 #: src/components/PasskeySettings.tsx
 #: src/pages/BotContextMenu.tsx
+#: src/pages/ConnectionsPage.tsx
 #: src/pages/KnowledgeSection.tsx
-#: src/pages/McpServersSettings.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/archived-chats.tsx
 #: src/pages/shell/dialogs.tsx
@@ -3263,7 +3256,7 @@ msgstr "デスクトップの更新"
 
 #: src/components/AskCard.tsx
 #: src/components/ModelProblemNotice.tsx
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
 #: src/pages/RoutineRunDetail.tsx
 #: src/pages/RoutineRunHistory.tsx
 msgid "Details"
@@ -3295,7 +3288,7 @@ msgstr "破棄"
 msgid "Discard recording"
 msgstr "録音を破棄"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Store.tsx
@@ -3344,8 +3337,8 @@ msgid "Dismissed"
 msgstr "閉じました"
 
 #: src/pages/shell/message-cards.tsx
-msgid "Dismissed. Reconnect anytime from MCP settings."
-msgstr "閉じました。MCP設定からいつでも再接続できます。"
+msgid "Dismissed. Reconnect anytime from Connections."
+msgstr "見送りました。接続はいつでも「接続」から再設定できます。"
 
 #: src/pages/Store.tsx
 msgid "Display name"
@@ -3440,7 +3433,7 @@ msgstr "画像をドラッグ＆ドロップまたは貼り付け"
 msgid "Duplicate"
 msgstr "複製"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Each name can be used once."
 msgstr "各名前は一度だけ使用できます。"
 
@@ -3450,7 +3443,7 @@ msgstr "それぞれ、実行すると自動でチェックされます。"
 
 #: src/components/AskCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/YouMemory.tsx
@@ -3478,7 +3471,7 @@ msgid "Edit the wiki"
 msgstr "Wikiを編集"
 
 #: src/pages/Auth.tsx
-#: src/pages/MailboxesSettings.tsx
+#: src/pages/connections/MailboxForm.tsx
 msgid "Email"
 msgstr "メールアドレス"
 
@@ -3500,7 +3493,7 @@ msgstr "メールアドレスの確認が必要です"
 msgid "Enable {0}"
 msgstr "{0}を有効にする"
 
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
 msgid "Encrypted"
 msgstr "暗号化"
 
@@ -3508,7 +3501,7 @@ msgstr "暗号化"
 msgid "Encrypted and never shown again"
 msgstr "暗号化され、再表示されません"
 
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
 msgid "Encrypted, verified"
 msgstr "暗号化（検証あり）"
 
@@ -3559,7 +3552,7 @@ msgstr "テストする前にAPIキーを入力してください。"
 msgid "Enter your name"
 msgstr "お名前を入力してください"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Environment variables"
 msgstr "環境変数"
 
@@ -3573,7 +3566,7 @@ msgstr "環境変数: {names}"
 msgid "Error"
 msgstr "エラー"
 
-#: src/components/McpServerHealthLine.tsx
+#: src/pages/connections/ErrorDetails.tsx
 msgid "Error details"
 msgstr "エラーの詳細"
 
@@ -3636,6 +3629,7 @@ msgstr "毎月"
 msgid "Every week"
 msgstr "毎週"
 
+#: src/pages/connections/AccessSheet.tsx
 #: src/pages/MembersSettingsPanel.tsx
 #: src/pages/shell/agent-audience.tsx
 #: src/pages/shell/channel-members.tsx
@@ -3758,7 +3752,7 @@ msgstr "変更とみなすフィールド"
 msgid "Fields to compare, e.g. id, modifiedTime (optional)"
 msgstr "比較するフィールド（例: id, modifiedTime）（任意）"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "File"
 msgstr "ファイル"
 
@@ -3907,6 +3901,14 @@ msgstr "音声を準備しています（{size} MB）。初回のみです。"
 msgid "Git event"
 msgstr "Gitイベント"
 
+#: src/pages/shell/message-cards.tsx
+msgid "Give {forBotName} read access to {name}?"
+msgstr "{forBotName} に {name} の読み取りアクセスを許可しますか？"
+
+#: src/pages/shell/message-cards.tsx
+msgid "Give read access to {name}?"
+msgstr "{name} の読み取りアクセスを許可しますか？"
+
 #: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Go to…"
@@ -3955,14 +3957,14 @@ msgid "Header \"{header}\""
 msgstr "ヘッダー「{header}」"
 
 #: src/components/ModelHeadersEditor.tsx
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/Store.tsx
 msgid "Header name"
 msgstr "ヘッダー名"
 
 #: src/components/ModelHeadersEditor.tsx
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Header value"
 msgstr "ヘッダー値"
 
@@ -4021,7 +4023,7 @@ msgstr "長押しで話し、離すと送信"
 msgid "Home"
 msgstr "ホーム"
 
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
 msgid "Host"
 msgstr "ホスト"
 
@@ -4095,7 +4097,7 @@ msgstr "このモデルでは画像入力が設定されていません。"
 msgid "Image upload area"
 msgstr "画像アップロードエリア"
 
-#: src/pages/MailboxesSettings.tsx
+#: src/pages/connections/MailboxForm.tsx
 msgid "IMAP server"
 msgstr "IMAPサーバー"
 
@@ -4182,7 +4184,7 @@ msgstr "アップデートをインストール"
 msgid "Installed"
 msgstr "インストール済み"
 
-#: src/components/McpServerHealthLine.tsx
+#: src/pages/connections/connection-model.ts
 #: src/pages/onboarding/CliEngineRows.tsx
 msgid "Installing…"
 msgstr "インストール中…"
@@ -4579,8 +4581,8 @@ msgstr "低"
 msgid "Lowercase letters, numbers, hyphens and underscores, starting with a letter."
 msgstr "小文字、数字、ハイフン、アンダースコアのみ使用でき、先頭は文字にしてください。"
 
-#: src/pages/Settings.tsx
-msgid "Mailboxes"
+#: src/pages/connections/ConnectSheet.tsx
+msgid "Mailbox"
 msgstr "メールボックス"
 
 #: src/pages/ModelSettingsOverlay.tsx
@@ -4707,7 +4709,10 @@ msgstr "最大出力トークン数"
 msgid "MCP endpoint"
 msgstr "MCPエンドポイント"
 
-#: src/pages/Settings.tsx
+#: src/pages/connections/ConnectSheet.tsx
+msgid "MCP server by URL"
+msgstr "URL で MCP サーバーを追加"
+
 #: src/pages/shell/agent-import.tsx
 #: src/pages/Store.tsx
 msgid "MCP servers"
@@ -4963,6 +4968,7 @@ msgstr "月間トークン上限"
 msgid "Monthly token limit for {name}"
 msgstr "{name} の月間トークン上限"
 
+#: src/pages/ConnectionsPage.tsx
 #: src/pages/shell/message-hover-actions.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/WhatsAppNumbers.tsx
@@ -5030,9 +5036,9 @@ msgstr "自分のアシスタント"
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
+#: src/pages/connections/McpServerForm.tsx
 #: src/pages/GroupPanel.tsx
-#: src/pages/McpServersSettings.tsx
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/PartnerTemplateEditor.tsx
@@ -5078,6 +5084,10 @@ msgstr "要確認"
 #: src/pages/ActivityList.tsx
 msgid "Needs input"
 msgstr "入力が必要"
+
+#: src/pages/connections/connection-model.ts
+msgid "Needs reconnecting"
+msgstr "再接続が必要"
 
 #: src/pages/ActivityList.tsx
 msgid "Needs takeover"
@@ -5200,6 +5210,10 @@ msgstr "次へ"
 msgid "Next page"
 msgstr "次のページ"
 
+#: src/pages/connections/connection-model.ts
+msgid "No access"
+msgstr "アクセスなし"
+
 #: src/pages/ActivityList.tsx
 msgid "No activity yet."
 msgstr "まだアクティビティはありません。"
@@ -5260,10 +5274,6 @@ msgstr "一致するモデルはありません"
 #: src/pages/Store.tsx
 msgid "No MCP or API tool sources installed yet."
 msgstr "インストール済みのMCPまたはAPIツールソースはまだありません。"
-
-#: src/pages/McpServersSettings.tsx
-msgid "No MCP servers yet."
-msgstr "MCPサーバーはまだありません。"
 
 #: src/pages/GroupPanel.tsx
 msgid "No members yet"
@@ -5360,11 +5370,11 @@ msgstr "有効なスキルではありません"
 msgid "Not available to you"
 msgstr "あなたは利用できません"
 
-#: src/components/McpServerHealthLine.tsx
+#: src/pages/connections/connection-model.ts
 msgid "Not checked yet"
 msgstr "未確認"
 
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
 msgid "Not encrypted"
 msgstr "暗号化なし"
 
@@ -5395,7 +5405,7 @@ msgstr "今はしない"
 msgid "Not picked"
 msgstr "選ばれませんでした"
 
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/connection-model.ts
 msgid "Not reachable"
 msgstr "接続できません"
 
@@ -5412,7 +5422,7 @@ msgstr "Rookでは未対応です"
 msgid "Not used by Rook"
 msgstr "Rookでは使用しません"
 
-#: src/components/McpServerHealthLine.tsx
+#: src/pages/connections/connection-model.ts
 msgid "Not working"
 msgstr "動作していません"
 
@@ -5441,15 +5451,14 @@ msgstr "現在"
 msgid "OAuth authorization was cancelled."
 msgstr "OAuth認証がキャンセルされました。"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "OAuth client ID (optional)"
 msgstr "OAuthクライアントID（任意）"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "OAuth client secret (optional)"
 msgstr "OAuthクライアントシークレット（任意）"
 
-#: src/pages/McpServersSettings.tsx
 #: src/pages/Store.tsx
 msgid "OAuth connected"
 msgstr "OAuth接続済み"
@@ -5458,7 +5467,6 @@ msgstr "OAuth接続済み"
 msgid "OAuth connection failed"
 msgstr "OAuth接続に失敗しました"
 
-#: src/pages/McpServersSettings.tsx
 #: src/pages/Store.tsx
 #: src/pages/StoreInstalledApps.tsx
 msgid "OAuth expired"
@@ -5628,7 +5636,7 @@ msgstr "オペレーション"
 msgid "Optional"
 msgstr "任意"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Optional header value"
 msgstr "ヘッダー値（任意）"
 
@@ -5714,8 +5722,8 @@ msgstr "パスキー"
 #: src/components/AskCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
-#: src/pages/DatabasesSettings.tsx
-#: src/pages/MailboxesSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
+#: src/pages/connections/MailboxForm.tsx
 #: src/pages/shell/bot-credentials.tsx
 msgid "Password"
 msgstr "パスワード"
@@ -5887,7 +5895,7 @@ msgstr "再生中…"
 msgid "Plugin"
 msgstr "プラグイン"
 
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
 msgid "Port"
 msgstr "ポート"
 
@@ -6014,6 +6022,18 @@ msgstr "リアクション"
 msgid "Reactions"
 msgstr "リアクション"
 
+#: src/pages/connections/connection-model.ts
+msgid "Read"
+msgstr "読み取り"
+
+#: src/pages/connections/connection-model.ts
+msgid "Read and write"
+msgstr "読み取りと書き込み"
+
+#: src/pages/connections/connection-model.ts
+msgid "Read only"
+msgstr "読み取り専用"
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Read replies aloud"
 msgstr "返信を読み上げる"
@@ -6059,7 +6079,7 @@ msgstr "最近"
 msgid "Reconnect"
 msgstr "再接続"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 msgid "Reconnect OAuth"
 msgstr "OAuthを再接続"
 
@@ -6119,7 +6139,7 @@ msgstr "動作していないコンピューターを再作成します。"
 msgid "Recreating the computer"
 msgstr "コンピューターを再作成中"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Redirect URI"
 msgstr "リダイレクトURI"
 
@@ -6167,11 +6187,9 @@ msgid "Remembered"
 msgstr "覚えました"
 
 #: src/components/ApprovalRulesSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 #: src/pages/ConnectionsSettingsPanel.tsx
-#: src/pages/DatabasesSettings.tsx
 #: src/pages/LocalSpeechSection.tsx
-#: src/pages/MailboxesSettings.tsx
-#: src/pages/McpServersSettings.tsx
 #: src/pages/MembersSettingsPanel.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/PartnerTemplateEditor.tsx
@@ -6195,8 +6213,8 @@ msgstr "{0}を削除"
 msgid "Remove {0} from the group"
 msgstr "{0}をグループから外す"
 
-#. placeholder {0}: row.name
-#: src/pages/DatabasesSettings.tsx
+#. placeholder {0}: removing?.name
+#: src/pages/ConnectionsPage.tsx
 msgid "Remove {0}?"
 msgstr "{0}を削除しますか？"
 
@@ -6570,7 +6588,6 @@ msgstr "実行日時は未来の日時を指定してください。"
 msgid "running"
 msgstr "実行中"
 
-#: src/components/McpServerHealthLine.tsx
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/RoutineCard.tsx
@@ -6620,11 +6637,11 @@ msgstr "土曜日"
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Board.tsx
 #: src/pages/BoardSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 #: src/pages/ConnectionsSettingsPanel.tsx
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/KnowledgeSection.tsx
-#: src/pages/McpServersSettings.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/ModelSettingsOverlay.tsx
@@ -6686,8 +6703,8 @@ msgstr "保存中..."
 
 #: src/components/AskCard.tsx
 #: src/components/teach/SkillDraftCard.tsx
+#: src/pages/connections/McpServerForm.tsx
 #: src/pages/GroupPanel.tsx
-#: src/pages/McpServersSettings.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/ModelSettingsOverlay.tsx
@@ -6713,7 +6730,7 @@ msgstr "ルーティンをスケジュールする"
 msgid "Scheduled routines"
 msgstr "スケジュール済みのルーティン"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Scopes (optional)"
 msgstr "スコープ（任意）"
 
@@ -6721,6 +6738,7 @@ msgstr "スコープ（任意）"
 msgid "Screen not connected"
 msgstr "画面が接続されていません"
 
+#: src/pages/connections/ConnectSheet.tsx
 #: src/pages/model-settings/model-picker.tsx
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/model-settings/role-model-picker.tsx
@@ -6736,6 +6754,7 @@ msgstr "画面が接続されていません"
 msgid "Search"
 msgstr "検索"
 
+#: src/pages/connections/AccessSheet.tsx
 #: src/pages/Store.tsx
 msgid "Search agents"
 msgstr "エージェントを検索"
@@ -6868,12 +6887,12 @@ msgstr "Sentryアラート"
 msgid "Serenity endpoint is required."
 msgstr "Serenityのエンドポイントは必須です。"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Server name"
 msgstr "サーバー名"
 
 #: src/components/integrations/IntegrationSetup.tsx
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
@@ -7072,7 +7091,7 @@ msgstr "Slackが有効になっていません"
 msgid "Slide up to lock"
 msgstr "上にスライドしてロック"
 
-#: src/pages/MailboxesSettings.tsx
+#: src/pages/connections/MailboxForm.tsx
 msgid "SMTP server"
 msgstr "SMTPサーバー"
 
@@ -7162,7 +7181,7 @@ msgstr "音声モデル"
 msgid "Squad"
 msgstr "スクワッド"
 
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
 msgid "SSL"
 msgstr "SSL"
 
@@ -7280,7 +7299,7 @@ msgstr "停止中…"
 msgid "Store"
 msgstr "ストア"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Stored encrypted"
 msgstr "暗号化して保存済み"
 
@@ -7434,7 +7453,6 @@ msgid "Terminal input"
 msgstr "ターミナル入力"
 
 #: src/components/teach/SkillDraftCard.tsx
-#: src/pages/DatabasesSettings.tsx
 #: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Test"
 msgstr "テスト"
@@ -7449,7 +7467,7 @@ msgid "Test API key"
 msgstr "APIキーをテスト"
 
 #: src/components/ModelConnectionPreflightNotice.tsx
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 msgid "Test connection"
 msgstr "接続をテスト"
 
@@ -7458,7 +7476,7 @@ msgid "Test run"
 msgstr "テスト実行"
 
 #: src/components/ModelConnectionPreflightNotice.tsx
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 #: src/pages/onboarding-quick-connect.tsx
 #: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Testing…"
@@ -7675,11 +7693,11 @@ msgstr "このリセットリンクは無効か期限切れです"
 msgid "This server cannot be assigned without a bot."
 msgstr "このサーバーはボットなしでは割り当てられません。"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 msgid "This server did not request browser authorization."
 msgstr "このサーバーはブラウザでの認可を要求しませんでした。"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 msgid "This server is already connected. Disconnect it first to authorize again."
 msgstr "このサーバーはすでに接続されています。再度認可するには、先に切断してください。"
 
@@ -8016,7 +8034,7 @@ msgstr "{0}を使用"
 msgid "Use {hostLabel}"
 msgstr "{hostLabel}を使用"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Use {oauthEnvReference} for the access token."
 msgstr "アクセストークンには{oauthEnvReference}を使用してください。"
 
@@ -8025,7 +8043,7 @@ msgstr "アクセストークンには{oauthEnvReference}を使用してくだ�
 msgid "Use a found model"
 msgstr "見つかったモデルを使用"
 
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
 msgid "Use a read-only database role."
 msgstr "読み取り専用のデータベースロールを使用してください。"
 
@@ -8069,7 +8087,11 @@ msgstr "スペースのデフォルトを使用"
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "英数字、_、-のみで512文字以内で入力してください。"
 
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/ConnectionsPage.tsx
+msgid "Used by {usedBy}"
+msgstr "使用中: {usedBy}"
+
+#: src/pages/connections/DatabaseForm.tsx
 msgid "User"
 msgstr "ユーザー"
 
@@ -8078,7 +8100,7 @@ msgid "User peer"
 msgstr "ユーザーピア"
 
 #: src/components/AskCard.tsx
-#: src/pages/MailboxesSettings.tsx
+#: src/pages/connections/MailboxForm.tsx
 #: src/pages/shell/bot-credentials.tsx
 msgid "Username"
 msgstr "ユーザー名"
@@ -8115,7 +8137,7 @@ msgstr "APIキーを使用中"
 msgid "Using your API key. Free plan ends {freeUntil}."
 msgstr "自分の API キーを使用中。無料プランは{freeUntil}に終了します。"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 #: src/pages/shell/bot-credentials.tsx
 msgid "Value"
 msgstr "値"
@@ -8306,6 +8328,11 @@ msgstr "インポート先"
 #: src/pages/shell/agent-audience.tsx
 msgid "Who can talk to {name}"
 msgstr "{name} と話せる人"
+
+#. placeholder {0}: item.name
+#: src/pages/connections/AccessSheet.tsx
+msgid "Who can use {0}"
+msgstr "{0} を使えるユーザー"
 
 #: src/pages/shell/channel-members.tsx
 msgid "Who sees this channel"

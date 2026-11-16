@@ -40,6 +40,7 @@ import type { AudioHold } from "./audio-hold.js";
 import type { BillingService } from "./billing.js";
 import type { RouterModel } from "./channel-router.js";
 import type { PresenceTracker } from "./presence.js";
+import { accessRoutes } from "./routes/access.js";
 import { accountRoutes } from "./routes/account.js";
 import { boardsRoutes } from "./routes/boards.js";
 import { botsRoutes } from "./routes/bots.js";
@@ -224,6 +225,7 @@ export function createRouter(deps: RouterDeps) {
     ...routinesRoutes(ctx),
     ...boardsRoutes(ctx),
     ...mcpRoutes(ctx),
+    ...accessRoutes(ctx),
     ...databaseRoutes(ctx),
     ...connectionsRoutes(ctx),
     ...messagingRoutes(ctx),

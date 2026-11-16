@@ -47,6 +47,7 @@ import {
   CliLoginStartSchema,
 } from "./cli-engines.js";
 import { OnboardingStep, TourMark } from "./coach-tour.js";
+import { ConnectionAccessSchema, ConnectionAccessSetInput } from "./connection-access.js";
 import { DatabaseConnectionInput, DatabaseConnectionSchema } from "./database-connection.js";
 import {
   ActionApprovalRuleSchema,
@@ -1288,7 +1289,14 @@ export const appContract = {
       list: oc.input(botId).output(z.array(BotMcpServerSchema)),
       all: oc.output(z.array(BotMcpServerSchema)),
       approve: oc
-        .input(z.object({ botId: Id, serverId: Id, threadId: Id.optional() }))
+        .input(
+          z.object({
+            botId: Id,
+            serverId: Id,
+            threadId: Id.optional(),
+            level: z.enum(["read", "write"]).default("write"),
+          }),
+        )
         .output(BotMcpServerSchema),
       dismiss: oc
         .input(z.object({ botId: Id, serverId: Id, threadId: Id.optional() }))
@@ -1302,6 +1310,8 @@ export const appContract = {
                 serverId: Id,
                 allowAllTools: z.boolean().default(true),
                 allowedTools: z.array(z.string().min(1).max(200)).max(500).default([]),
+                /** Left out, it keeps the level the agent already has, or write for a new one. */
+                level: z.enum(["read", "write"]).optional(),
               }),
             ),
           }),
@@ -1773,6 +1783,11 @@ export const appContract = {
     list: oc.output(z.array(AgentSecretSchema)),
     put: oc.input(AgentSecretInputSchema).output(AgentSecretSchema),
     remove: oc.input(z.object({ id: Id })).output(z.object({ ok: z.literal(true) })),
+  },
+  /** Which agents may use each connection, and how far. */
+  access: {
+    list: oc.output(z.array(ConnectionAccessSchema)),
+    set: oc.input(ConnectionAccessSetInput).output(z.object({ ok: z.literal(true) })),
   },
   databases: {
     list: oc.output(z.array(DatabaseConnectionSchema)),

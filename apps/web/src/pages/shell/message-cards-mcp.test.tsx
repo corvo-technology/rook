@@ -94,6 +94,7 @@ it("saves the key to the server, then gives the agent access", async () => {
     botId: "bot_1",
     serverId: "srv_1",
     threadId: "thread_1",
+    level: "write",
   });
   expect(api.update.mock.invocationCallOrder[0]).toBeLessThan(
     api.approve.mock.invocationCallOrder[0]!,
@@ -157,6 +158,7 @@ it("gives the access to the teammate, not to the agent whose chat shows the card
     botId: "bot_infra",
     serverId: "srv_2",
     threadId: "thread_1",
+    level: "write",
   });
   await unmount();
 });
@@ -168,6 +170,19 @@ it("dismisses the card for the teammate too", async () => {
     botId: "bot_infra",
     serverId: "srv_2",
     threadId: "thread_1",
+  });
+  await unmount();
+});
+
+it("asks to give a teammate read access, and approving grants only read", async () => {
+  const { host, unmount } = await mount({ ...teammateBlock, level: "read" });
+  expect(host.textContent).toContain("Give Infraestrutura e SRE read access to Sentry?");
+  await act(async () => button(host, "Approve")?.click());
+  expect(api.approve).toHaveBeenCalledWith({
+    botId: "bot_infra",
+    serverId: "srv_2",
+    threadId: "thread_1",
+    level: "read",
   });
   await unmount();
 });

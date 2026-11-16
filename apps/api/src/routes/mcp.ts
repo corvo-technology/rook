@@ -616,7 +616,9 @@ export function mcpRoutes(ctx: RouterContext) {
                   serverId: server.id,
                   allowAllTools: true,
                   allowedTools: [],
+                  level: input.level,
                 },
+                // A card never narrows an agent's access: it can only add the missing grant.
                 update: {},
               });
               const runId =
@@ -677,8 +679,9 @@ export function mcpRoutes(ctx: RouterContext) {
                 spaceId: context.actor.spaceId,
                 userId: context.actor.userId,
               },
-              select: { serverId: true },
+              select: { serverId: true, level: true },
             });
+            const levels = new Map(previous.map((row) => [row.serverId, row.level]));
             const nextIds = new Set(input.assignments.map((assignment) => assignment.serverId));
             const removed = previous
               .map((row) => row.serverId)
@@ -699,6 +702,7 @@ export function mcpRoutes(ctx: RouterContext) {
                   serverId: assignment.serverId,
                   allowAllTools: assignment.allowAllTools,
                   allowedTools: assignment.allowedTools as Prisma.InputJsonValue,
+                  level: assignment.level ?? levels.get(assignment.serverId) ?? "write",
                 })),
               });
             const seqs = (

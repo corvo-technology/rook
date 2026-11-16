@@ -17,6 +17,7 @@ import {
   resolveMcpOAuthEnv,
   resolveMcpOAuthFileTemplate,
 } from "@corvo/contracts";
+import { mcpToolOffered } from "@corvo/core";
 import type { McpServer, PrismaClient, ThreadEvents } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import { sanitizedError } from "@corvo/logging/monitoring";
@@ -335,6 +336,8 @@ export class McpConnector implements ConnectorProvider {
   private readonly probes = new Map<string, Promise<McpServerHealthUpdate>>();
   /** Last discovery failure per session key, returned by the unavailable stand-in tool. */
   private readonly unavailable = new Map<string, string>();
+  /** The read-only hint each tool declared when last listed, so a call is held to the same level. */
+  private readonly readHints = new Map<string, Map<string, boolean | undefined>>();
   private readonly healthWrites = new Map<string, { value: string; at: number }>();
   /** Servers whose last discovery failed; runs skip them until `until`, per revision. */
   private readonly discoveryBackoff = new Map<
@@ -451,11 +454,16 @@ export class McpConnector implements ConnectorProvider {
             toolCount: listed.tools.length,
           });
           reportAllowlistDrift(assignment, listed.tools, context);
+          this.readHints.set(
+            key,
+            new Map(listed.tools.map((tool) => [tool.name, tool.annotations?.readOnlyHint])),
+          );
           return listed.tools
-            .filter(
-              (tool) =>
-                assignment.allowAllTools ||
-                (assignment.allowedTools as unknown[]).includes(tool.name),
+            .filter((tool) =>
+              mcpToolOffered(assignment, {
+                name: tool.name,
+                readOnly: tool.annotations?.readOnlyHint,
+              }),
             )
             .map((tool) => ({
               name: `mcp__${assignment.server.slug}__${tool.name}`,
@@ -615,8 +623,12 @@ export class McpConnector implements ConnectorProvider {
     }
     if (
       !assignment ||
-      (!assignment.allowAllTools &&
-        !(assignment.allowedTools as unknown[]).includes(call.route.toolName))
+      !mcpToolOffered(assignment, {
+        name: call.route.toolName,
+        readOnly: this.readHints
+          .get(this.sessionKey(assignment.server, context))
+          ?.get(call.route.toolName),
+      })
     ) {
       yield { type: "error", message: "MCP tool is not assigned to this bot" };
       return;

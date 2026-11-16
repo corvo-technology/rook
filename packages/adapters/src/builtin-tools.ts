@@ -445,6 +445,12 @@ export const builtinAgentTools: ConnectorTool[] = [
           maxLength: 100,
           description: "A teammate to give the app to instead of yourself, by name.",
         },
+        level: {
+          type: "string",
+          enum: ["read", "write"],
+          description:
+            "read asks for access to only the app's read tools; leave it out to ask for all of them. Ask for read when reading is enough.",
+        },
       },
       required: ["app"],
       additionalProperties: false,

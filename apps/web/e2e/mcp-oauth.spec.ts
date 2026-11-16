@@ -2,7 +2,14 @@ import type { McpServer } from "@corvo/contracts";
 import type { Route } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 import { MCP_OAUTH_CHANNEL } from "../src/lib/mcp-oauth-channel";
-import { captureScreenshot, completeOnboarding, expandAdvancedSection, signup } from "./helpers";
+import {
+  captureScreenshot,
+  chooseConnectionAction,
+  completeOnboarding,
+  connectionRow,
+  expandAdvancedSection,
+  signup,
+} from "./helpers";
 
 test("connects an MCP server through the OAuth popup callback", async ({ page }, testInfo) => {
   const stamp = Date.now();
@@ -91,25 +98,29 @@ test("connects an MCP server through the OAuth popup callback", async ({ page },
   await expandAdvancedSection(page.getByTestId("integrations-advanced"));
   await page.getByRole("button", { name: "Manage MCP servers", exact: true }).click();
   await expect(page.getByText("Linear MCP", { exact: true })).toBeVisible();
-  await expect(page.getByLabel("Access token (optional)")).toBeHidden();
   await captureScreenshot(page, testInfo, "mcp-oauth-ready");
 
-  await page.getByText("Advanced", { exact: true }).click();
-  await expect(page.getByLabel("Access token (optional)")).toBeVisible();
-  await page.getByText("Advanced", { exact: true }).click();
+  await chooseConnectionAction(page, "Linear MCP", "Edit");
+  const editSheet = page.getByTestId("connect-sheet");
+  await expect(editSheet.getByLabel("Access token (optional)")).toBeHidden();
+  await editSheet.getByText("Advanced", { exact: true }).click();
+  await expect(editSheet.getByLabel("Access token (optional)")).toBeVisible();
+  await editSheet.getByRole("button", { name: "Cancel", exact: true }).click();
 
   const popupPromise = page.waitForEvent("popup");
-  await page.getByRole("button", { name: "Connect OAuth", exact: true }).click();
+  await chooseConnectionAction(page, "Linear MCP", "Connect OAuth");
   const popup = await popupPromise;
   await completionStarted;
   await expect(popup.getByText("Finishing MCP connection…", { exact: true })).toBeVisible();
   await captureScreenshot(popup, testInfo, "mcp-oauth-callback");
 
   releaseCompletion();
-  await expect(page.getByText("OAuth connected", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Reconnect OAuth", exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Disconnect", exact: true })).toBeVisible();
   await expect.poll(() => popup.isClosed()).toBe(true);
+  const row = connectionRow(page, "Linear MCP");
+  await row.getByRole("button", { name: "More", exact: true }).click();
+  await expect(page.getByRole("menuitem", { name: "Reconnect OAuth", exact: true })).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: "Disconnect", exact: true })).toBeVisible();
+  await page.keyboard.press("Escape");
   await captureScreenshot(page, testInfo, "mcp-oauth-connected");
 
   oauthStatus = "reconnect";
@@ -119,7 +130,7 @@ test("connects an MCP server through the OAuth popup callback", async ({ page },
     channel.postMessage({ type: "mcp-oauth-complete" });
     channel.close();
   }, MCP_OAUTH_CHANNEL);
-  await expect(page.getByText("OAuth expired", { exact: true })).toBeVisible();
+  await expect(connectionRow(page, "Linear MCP").getByText("Needs reconnecting")).toBeVisible();
   await captureScreenshot(page, testInfo, "mcp-oauth-expired");
 });
 
@@ -176,18 +187,19 @@ test("adds an MCP server with a pre-registered OAuth client", async ({ page }, t
   await expandAdvancedSection(page.getByTestId("integrations-advanced"));
   await page.getByRole("button", { name: "Manage MCP servers", exact: true }).click();
 
-  await page.getByLabel("Server name").fill("Gmail");
-  await page.getByLabel("Server URL").fill("https://gmailmcp.example.test/mcp/v1");
-  await page.getByText("Advanced", { exact: true }).click();
-  await expect(page.getByLabel("Redirect URI")).toBeHidden();
-  await page.getByLabel("OAuth client ID (optional)").fill("client-1.apps.example.test");
-  await page.getByLabel("OAuth client secret (optional)").fill("client-secret");
-  await expect(page.getByLabel("Redirect URI")).toHaveValue(`${browserOrigin}/mcp/oauth/callback`);
+  await page.getByRole("button", { name: "Connect", exact: true }).click();
+  const sheet = page.getByTestId("connect-sheet");
+  await sheet.getByRole("button", { name: "MCP server by URL" }).click();
+  await sheet.getByLabel("Server name").fill("Gmail");
+  await sheet.getByLabel("Server URL").fill("https://gmailmcp.example.test/mcp/v1");
+  await sheet.getByText("Advanced", { exact: true }).click();
+  await expect(sheet.getByLabel("Redirect URI")).toBeHidden();
+  await sheet.getByLabel("OAuth client ID (optional)").fill("client-1.apps.example.test");
+  await sheet.getByLabel("OAuth client secret (optional)").fill("client-secret");
+  await expect(sheet.getByLabel("Redirect URI")).toHaveValue(`${browserOrigin}/mcp/oauth/callback`);
   await captureScreenshot(page, testInfo, "mcp-oauth-client-form");
 
-  await page.getByRole("button", { name: "Add server", exact: true }).click();
-  await expect(page.getByText("Gmail", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Connect OAuth", exact: true })).toBeVisible();
-  await expect(page.getByLabel("OAuth client ID (optional)")).toHaveValue("");
-  await expect(page.getByLabel("OAuth client secret (optional)")).toHaveValue("");
+  await sheet.getByRole("button", { name: "Add server", exact: true }).click();
+  await expect(sheet).toBeHidden();
+  await expect(connectionRow(page, "Gmail")).toBeVisible();
 });

@@ -1949,6 +1949,8 @@ model BotMailbox {
   bot       Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
   mailboxId String
   mailbox   Mailbox  @relation(fields: [mailboxId], references: [id], onDelete: Cascade)
+  /// read (search and read mail) | write (also draft and send).
+  level     String   @default("write")
   createdAt DateTime @default(now())
 
   @@unique([botId, mailboxId])
@@ -1985,6 +1987,8 @@ model BotMcpServer {
   userId        String
   allowAllTools Boolean   @default(true)
   allowedTools  Json      @default("[]")
+  /// read | write. Applies while allowAllTools is true; an explicit tool list decides on its own.
+  level         String    @default("write")
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

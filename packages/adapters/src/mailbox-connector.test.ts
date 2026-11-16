@@ -18,6 +18,7 @@ function stored(address: string, id = `mbx-${address.split("@")[0]}`): StoredMai
     userId: "owner",
     address,
     secretId: `secret-${id}`,
+    level: "write",
     config: {
       username: address,
       imap: { host: "imap.example.test", port: 993, secure: true },
@@ -421,5 +422,30 @@ describe("secrets", () => {
     expect(opened[0]!.password).toBe(PASSWORD);
     expect(JSON.stringify(events)).not.toContain(PASSWORD);
     expect(redactSecrets(`login ${PASSWORD}`, [PASSWORD])).not.toContain(PASSWORD);
+  });
+});
+
+describe("mailbox access levels", () => {
+  const readOnly = () => [{ ...stored("owner@example.test"), level: "read" as const }];
+
+  it("offers only search and read at read, and every tool at write", async () => {
+    const read = setup(readOnly());
+    expect((await read.connector.discoverTools(context("bot-1"))).map((tool) => tool.name)).toEqual(
+      ["mailbox_search", "mailbox_read"],
+    );
+    const write = setup([stored("owner@example.test")]);
+    expect(
+      (await write.connector.discoverTools(context("bot-1"))).map((tool) => tool.name),
+    ).toEqual(["mailbox_search", "mailbox_read", "mailbox_draft", "mailbox_send"]);
+  });
+
+  it("refuses to draft or send from a read-only mailbox at call time", async () => {
+    const { connector } = setup(readOnly());
+    const body = { to: ["a@example.test"], subject: "Hi", body: "Hello" };
+    for (const name of ["draft", "send"]) {
+      const events = await run(connector, call(name, body));
+      expect(events.at(-1)).toMatchObject({ type: "error" });
+    }
+    expect((await run(connector, call("search", {}))).at(-1)).toMatchObject({ type: "result" });
   });
 });

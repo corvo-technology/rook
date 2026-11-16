@@ -359,6 +359,8 @@ export const MessageBlock = z.discriminatedUnion("kind", [
      */
     forBotId: Id.optional(),
     forBotName: z.string().max(200).optional(),
+    /** Set when the card asks for read access only. Approving grants exactly this level. */
+    level: z.enum(["read", "write"]).optional(),
   }),
   z.object({
     kind: z.literal("import_setup"),

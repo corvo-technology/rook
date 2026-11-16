@@ -41,6 +41,8 @@ export function AppCatalogGrid({
   onChanged,
   focus,
   botId,
+  hideAccess = false,
+  singleColumn = false,
 }: {
   query: string;
   servers: readonly McpServer[];
@@ -51,6 +53,10 @@ export function AppCatalogGrid({
   focus?: { slug: string; n: number };
   /** The agent the apps are added for; it can use each one it adds or sends an example to. */
   botId?: string;
+  /** Leaves out the agent chips: who may use an app is the Connections page's Access sheet. */
+  hideAccess?: boolean;
+  /** One app per line, for a narrow panel. */
+  singleColumn?: boolean;
 }) {
   const { t } = useLingui();
   const [category, setCategory] = useState<AppCategory | null>(null);
@@ -147,7 +153,7 @@ export function AppCatalogGrid({
             </Button>
           </div>
         ) : null}
-        {server ? <AppAgentAccess server={server} /> : null}
+        {server && !hideAccess ? <AppAgentAccess server={server} /> : null}
         {signedIn && onUsePrompt ? (
           <div className="flex flex-wrap gap-2">
             {detail.prompts.map((prompt) => (
@@ -237,7 +243,7 @@ export function AppCatalogGrid({
           ),
         )}
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className={`grid gap-2 ${singleColumn ? "grid-cols-1" : "grid-cols-2"}`}>
         {entries.map((entry) => (
           <div
             key={entry.slug}

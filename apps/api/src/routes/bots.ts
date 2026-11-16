@@ -454,6 +454,7 @@ export function botsRoutes(ctx: RouterContext) {
               serverId: assignment.serverId,
               allowAllTools: assignment.allowAllTools,
               allowedTools: assignment.allowedTools as Prisma.InputJsonValue,
+              level: assignment.level,
             })),
           });
         }

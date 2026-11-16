@@ -103,7 +103,13 @@ export const integrationTools: ToolHandlers = {
         : undefined;
     const addedApp =
       typeof args.app === "string" && args.app.trim() && args.app.length <= 100
-        ? await requestSpaceAppAccess(deps, run, args.app, teammate)
+        ? await requestSpaceAppAccess(
+            deps,
+            run,
+            args.app,
+            teammate,
+            args.level === "read" ? "read" : "write",
+          )
         : undefined;
     if (addedApp) return call.finish(addedApp);
     // A teammate's access is only ever the workspace's own app; never connect it for this agent.

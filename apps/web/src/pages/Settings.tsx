@@ -1,22 +1,18 @@
 import type { AppBootstrap, Me, SpaceMemoryConfig } from "@corvo/contracts";
-import { can, knownSpacePermissions } from "@corvo/core";
 import { writeSaved } from "@corvo/core/query";
 import type { SettingsLayoutSection } from "@corvo/ui-web";
-import { Button, SettingsLayout } from "@corvo/ui-web";
-import { useLingui } from "@lingui/react/macro";
+import { Button, Disclosure, SettingsLayout } from "@corvo/ui-web";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Brain,
   CloudDownload,
   Cpu,
   CreditCard,
-  Database,
   Gauge,
   Handshake,
-  Mail,
   Monitor,
   Plug,
-  Server,
   Settings,
   ShieldCheck,
   Users,
@@ -24,7 +20,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Navigate, useParams, useSearchParams } from "react-router-dom";
+import { Navigate, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { ApprovalRulesSettings } from "../components/ApprovalRulesSettings";
 import { SETTINGS_CONTENT_WIDTH, SettingsGroup, SettingsRow } from "../components/SettingsRows";
 import { authClient } from "../lib/auth";
@@ -34,7 +30,7 @@ import { desktopBridge } from "../lib/desktop";
 import { useLocalEdition } from "../lib/local-edition";
 import { useSpaceQueries } from "../lib/query";
 import { rpc, selectedSpaceId, selectSpace } from "../lib/rpc";
-import { settingsPath, useSettingsNavigation } from "../lib/settings-route";
+import { movedSettingsSection, settingsPath, useSettingsNavigation } from "../lib/settings-route";
 import { SpaceRpcProvider } from "../lib/space-rpc";
 import {
   ComputerSettingsPanel,
@@ -43,10 +39,8 @@ import {
   UsageSettingsPanel,
 } from "./AccountSettingsOverlay";
 import { BillingSettingsPanel } from "./BillingSettingsPanel";
+import { ConnectionsPage } from "./ConnectionsPage";
 import { ConnectionsSettingsPanel } from "./ConnectionsSettingsPanel";
-import { DatabasesSettings } from "./DatabasesSettings";
-import { MailboxesSettings } from "./MailboxesSettings";
-import { McpServersSettings } from "./McpServersSettings";
 import { MembersSettingsPanel } from "./MembersSettingsPanel";
 import { MemorySettingsOverlay } from "./MemorySettingsOverlay";
 import { ModelSettingsOverlay } from "./ModelSettingsOverlay";
@@ -69,7 +63,7 @@ function voiceStatusRefreshTimeout(): Promise<never> {
 }
 
 /** Sections that depend on the account's flags wait for it before anyone is sent elsewhere. */
-const ACCOUNT_SECTIONS = ["computer", "billing", "partnership", "mcp", "members"];
+const ACCOUNT_SECTIONS = ["computer", "billing", "partnership", "members"];
 
 /**
  * Settings as a page, one route per section (`/settings/:section`, and `/settings/space/:spaceId`
@@ -80,6 +74,7 @@ export function SettingsPage() {
   const { t } = useLingui();
   const { section: sectionParam, spaceId: spaceParam } = useParams();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const navigation = useSettingsNavigation();
   const client = useQueryClient();
   const queries = useSpaceQueries();
@@ -135,17 +130,7 @@ export function SettingsPage() {
   });
   const billingEnabled = me?.billingEnabled === true;
   const partnerAdmin = me?.partnerAdmin === true;
-  const roles = useQuery(queries.spaces.roles.list.queryOptions());
-  const canManageConnections = roles.data
-    ? can(
-        {
-          isOwner: roles.data.me.isOwner,
-          permissions: knownSpacePermissions(roles.data.me.permissions),
-        },
-        "manage_connections",
-      )
-    : false;
-  const showConnections = managedLocal && Boolean(desktopBridge()?.connections);
+  const showKeys = managedLocal && Boolean(desktopBridge()?.connections);
   const showUpdates = Boolean(desktopBridge()?.update);
 
   const activeId = spaceParam ? "space" : sectionParam;
@@ -337,33 +322,27 @@ export function SettingsPage() {
       content: <UsageSettingsPanel usage={usage.data ?? null} panelRef={usageRef} />,
     },
     {
-      id: "mcp",
-      label: t`MCP servers`,
-      icon: Server,
-      width: "full",
+      id: "connections",
+      label: t`Connections`,
+      icon: Plug,
       content: (
-        <McpServersSettings
-          editServerId={searchParams.get("server") || undefined}
-          stdioEnabled={me?.mcpStdioEnabled === true}
-        />
+        <div className="space-y-6">
+          <ConnectionsPage
+            editServerId={searchParams.get("server") || undefined}
+            stdioEnabled={me?.mcpStdioEnabled === true}
+          />
+          {showKeys ? (
+            <Disclosure
+              summary={<Trans>Advanced</Trans>}
+              summaryClassName="text-[13px] text-muted-foreground"
+            >
+              <div className="pt-3">
+                <ConnectionsSettingsPanel />
+              </div>
+            </Disclosure>
+          ) : null}
+        </div>
       ),
-    },
-    ...(canManageConnections
-      ? [
-          {
-            id: "databases",
-            label: t`Databases`,
-            icon: Database,
-            content: <DatabasesSettings />,
-          },
-        ]
-      : []),
-    {
-      id: "mailboxes",
-      label: t`Mailboxes`,
-      icon: Mail,
-      width: "full",
-      content: <MailboxesSettings />,
     },
     ...(showComputer
       ? [
@@ -402,16 +381,6 @@ export function SettingsPage() {
           },
         ]
       : []),
-    ...(showConnections
-      ? [
-          {
-            id: "connections",
-            label: t`Connections`,
-            icon: Plug,
-            content: <ConnectionsSettingsPanel />,
-          },
-        ]
-      : []),
     ...(showUpdates
       ? [
           {
@@ -425,6 +394,9 @@ export function SettingsPage() {
   ];
 
   if (!activeId) return <Navigate to={settingsPath("general")} replace />;
+  // The server, database and mailbox pages are one page now; their old links land on it.
+  const moved = movedSettingsSection(activeId);
+  if (moved) return <Navigate to={`${settingsPath(moved)}${location.search}`} replace />;
 
   if (spaceParam) {
     const space = spaces.find((candidate) => candidate.id === spaceParam);

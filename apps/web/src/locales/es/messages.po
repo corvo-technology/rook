@@ -148,12 +148,12 @@ msgid "{0} is calling you"
 msgstr "{0} te está llamando"
 
 #. placeholder {0}: updated.name
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 msgid "{0} is not working"
 msgstr "{0} no funciona"
 
 #. placeholder {0}: updated.name
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 msgid "{0} is running"
 msgstr "{0} está en ejecución"
 
@@ -243,6 +243,10 @@ msgstr "{count, plural, one {# número} other {# números}}"
 #: src/components/markdown-copy.tsx
 msgid "{count, plural, one {# row} other {# rows}}"
 msgstr "{count, plural, one {# fila} other {# filas}}"
+
+#: src/pages/connections/connection-model.ts
+msgid "{count, plural, one {Connected · # tool} other {Connected · # tools}}"
+msgstr "{count, plural, one {Conectado · # herramienta} other {Conectado · # herramientas}}"
 
 #: src/pages/TeamBoard.tsx
 msgid "{count} agents"
@@ -557,7 +561,6 @@ msgstr "{title}, guardado como {savedAs}"
 msgid "{tokens} tokens"
 msgstr "{tokens} tokens"
 
-#: src/components/McpServerHealthLine.tsx
 #: src/components/ToolActivityDisclosure.tsx
 #: src/pages/Store.tsx
 msgid "{toolCount, plural, one {# tool} other {# tools}}"
@@ -645,11 +648,21 @@ msgstr "Hay una credencial de suscripción guardada de forma segura."
 msgid "About {label}"
 msgstr "Acerca de {label}"
 
+#: src/pages/connections/AgentAccessSection.tsx
+#: src/pages/ConnectionsPage.tsx
+msgid "Access"
+msgstr "Acceso"
+
+#. placeholder {0}: bot.name
+#: src/pages/connections/AccessSheet.tsx
+msgid "Access for {0}"
+msgstr "Acceso de {0}"
+
 #: src/pages/shell/message-cards.tsx
 msgid "Access for {forBotName}"
 msgstr "Acceso para {forBotName}"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Access token (optional)"
 msgstr "Token de acceso (opcional)"
 
@@ -703,7 +716,7 @@ msgstr "Actividad"
 #: src/pages/AddStepPanel.tsx
 #: src/pages/AgentsStore.tsx
 #: src/pages/AppCatalogGrid.tsx
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 #: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/Store.tsx
@@ -748,11 +761,11 @@ msgstr "Agrega una hora de ejecución para este one-shot."
 msgid "Add a second agent"
 msgstr "Añade un segundo agente"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Add a server name."
 msgstr "Agrega un nombre de servidor."
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Add a stdio command."
 msgstr "Agrega un comando stdio."
 
@@ -777,7 +790,7 @@ msgstr "Añade un activador para ejecutar esta rutina."
 msgid "Add agent"
 msgstr "Añadir agente"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Add an HTTPS server URL."
 msgstr "Agrega una URL de servidor HTTPS."
 
@@ -800,10 +813,6 @@ msgstr "Añadir créditos"
 #: src/lib/user-error.ts
 msgid "Add credits in Billing to keep using voice."
 msgstr "Agrega créditos en Facturación para seguir usando la voz."
-
-#: src/pages/DatabasesSettings.tsx
-msgid "Add database"
-msgstr "Añadir base de datos"
 
 #: src/pages/Store.tsx
 msgid "Add Executor"
@@ -871,7 +880,7 @@ msgstr "Añadir proveedor"
 msgid "Add remote MCP server"
 msgstr "Agregar servidor MCP remoto"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Add server"
 msgstr "Agregar servidor"
 
@@ -919,7 +928,6 @@ msgstr "Añadido"
 msgid "Added {0}."
 msgstr "Añadido: {0}."
 
-#: src/pages/McpServersSettings.tsx
 #: src/pages/Store.tsx
 msgid "Added by {otherOwner}"
 msgstr "Añadido por {otherOwner}"
@@ -929,7 +937,7 @@ msgid "Added to the wiki"
 msgstr "Añadido a la wiki"
 
 #: src/pages/AppCatalogGrid.tsx
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 #: src/pages/Store.tsx
 msgid "Adding…"
 msgstr "Agregando…"
@@ -944,12 +952,13 @@ msgid "Administrator"
 msgstr "Administrador"
 
 #: src/pages/AccountSettingsOverlay.tsx
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/RoutineSchedule.tsx
+#: src/pages/Settings.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/Store.tsx
 msgid "Advanced"
@@ -987,12 +996,6 @@ msgstr "Agentes"
 #: src/pages/AppAgentAccess.tsx
 msgid "Agents that can use it"
 msgstr "Agentes que pueden usarlo"
-
-#: src/pages/DatabasesSettings.tsx
-#: src/pages/MailboxesSettings.tsx
-#: src/pages/McpServersSettings.tsx
-msgid "Agents:"
-msgstr "Agentes:"
 
 #: src/components/InboxPanel.tsx
 msgid "Alert"
@@ -1296,7 +1299,7 @@ msgstr "archivado"
 msgid "Archived"
 msgstr "Archivado"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Arguments"
 msgstr "Argumentos"
 
@@ -1367,11 +1370,11 @@ msgstr "Archivo adjunto"
 msgid "Authorization code"
 msgstr "Código de autorización"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Authorization parameters (optional)"
 msgstr "Parámetros de autorización (opcional)"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Authorization server"
 msgstr "Servidor de autorización"
 
@@ -1428,6 +1431,7 @@ msgstr "Estudio de avatares"
 #: src/pages/AppCatalogGrid.tsx
 #: src/pages/Auth.tsx
 #: src/pages/Board.tsx
+#: src/pages/connections/ConnectSheet.tsx
 #: src/pages/ImportFlow.tsx
 #: src/pages/NavLinkPage.tsx
 #: src/pages/onboarding/OnboardingLayout.tsx
@@ -1638,10 +1642,12 @@ msgstr "No puede leer imágenes"
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/AddStepPanel.tsx
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
+#: src/pages/connections/MailboxForm.tsx
+#: src/pages/connections/McpServerForm.tsx
+#: src/pages/ConnectionsPage.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/LocalSpeechSection.tsx
-#: src/pages/McpServersSettings.tsx
 #: src/pages/MembersSettingsPanel.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/NewRoutinePanel.tsx
@@ -1767,17 +1773,9 @@ msgstr "Compruébalo tú"
 msgid "Check your email"
 msgstr "Revisa tu correo"
 
-#: src/components/McpServerHealthLine.tsx
-msgid "Checked {checked}"
-msgstr "Comprobado {checked}"
-
 #: src/components/ComputersUnavailableHint.tsx
 msgid "Checking computer setup…"
 msgstr "Comprobando la configuración de la computadora…"
-
-#: src/components/McpServerHealthLine.tsx
-msgid "Checking connection…"
-msgstr "Comprobando la conexión…"
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/DesktopUpdates.tsx
@@ -1970,7 +1968,7 @@ msgstr "Cómoda"
 msgid "Coming soon"
 msgstr "Próximamente"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 #: src/pages/RoutineEditor.tsx
 msgid "Command"
 msgstr "Comando"
@@ -2062,17 +2060,12 @@ msgstr "Las computadoras están apagadas. Configura SANDBOX_PROVIDER=docker con 
 msgid "Configure the space"
 msgstr "Configurar el espacio"
 
-#: src/pages/McpServersSettings.tsx
-msgid "Configured servers"
-msgstr "Servidores configurados"
-
 #: src/pages/shell/agent-import-undo.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Confirm"
 msgstr "Confirmar"
 
 #: src/pages/KnowledgeSection.tsx
-#: src/pages/McpServersSettings.tsx
 msgid "Confirm delete"
 msgstr "Confirmar eliminación"
 
@@ -2099,8 +2092,10 @@ msgstr "Confirma primero tu correo y abre este enlace de nuevo"
 
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/ChatAppsRow.tsx
-#: src/pages/DatabasesSettings.tsx
-#: src/pages/MailboxesSettings.tsx
+#: src/pages/connections/ConnectSheet.tsx
+#: src/pages/connections/DatabaseForm.tsx
+#: src/pages/connections/MailboxForm.tsx
+#: src/pages/ConnectionsPage.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 #: src/pages/memory-providers/SupermemorySettingsForm.tsx
@@ -2159,7 +2154,7 @@ msgstr "Conectar proveedor de memoria"
 msgid "Connect my own"
 msgstr "Conectar el mío"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 msgid "Connect OAuth"
 msgstr "Conectar OAuth"
 
@@ -2178,6 +2173,7 @@ msgstr "Conecta tu propia clave de API en Modelos o elige créditos de Rook en F
 
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/ChatAppsRow.tsx
+#: src/pages/connections/connection-model.ts
 #: src/pages/ConnectionsSettingsPanel.tsx
 #: src/pages/McpOAuthCallback.tsx
 #: src/pages/MemorySettingsOverlay.tsx
@@ -2191,9 +2187,8 @@ msgstr "Conectado"
 msgid "Connected {0}."
 msgstr "Se conectó {0}."
 
-#: src/pages/DatabasesSettings.tsx
-#: src/pages/MailboxesSettings.tsx
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
+#: src/pages/connections/MailboxForm.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 #: src/pages/memory-providers/SupermemorySettingsForm.tsx
@@ -2206,7 +2201,7 @@ msgstr "Conectando…"
 msgid "Connection"
 msgstr "Conexión"
 
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
 msgid "Connection string"
 msgstr "Cadena de conexión"
 
@@ -2323,7 +2318,7 @@ msgstr "Coste"
 msgid "Could not add"
 msgstr "No se pudo agregar"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Could not add MCP server"
 msgstr "No se pudo agregar el servidor MCP"
 
@@ -2464,7 +2459,7 @@ msgstr "No se pudo eliminar el bot"
 msgid "Could not delete group"
 msgstr "No se pudo eliminar el grupo"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 msgid "Could not delete MCP server"
 msgstr "No se pudo eliminar el servidor MCP"
 
@@ -2501,7 +2496,7 @@ msgstr "No se pudo desconectar"
 msgid "Could not disconnect memory provider"
 msgstr "No se pudo desconectar el proveedor de memoria"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 msgid "Could not disconnect OAuth"
 msgstr "No se pudo desconectar OAuth"
 
@@ -2582,11 +2577,7 @@ msgstr "No se pudieron cargar las credenciales."
 msgid "Could not load integrations"
 msgstr "No se pudieron cargar las integraciones"
 
-#: src/pages/MailboxesSettings.tsx
-msgid "Could not load mailboxes"
-msgstr "No se pudieron cargar los buzones"
-
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 #: src/pages/Store.tsx
 msgid "Could not load MCP servers"
 msgstr "No se pudieron cargar los servidores MCP"
@@ -2738,11 +2729,12 @@ msgstr "No se pudo ejecutar la rutina"
 msgid "Could not run the routine"
 msgstr "No se pudo ejecutar la rutina"
 
+#: src/pages/connections/DatabaseForm.tsx
+#: src/pages/connections/MailboxForm.tsx
+#: src/pages/connections/McpServerForm.tsx
 #: src/pages/ConnectionsSettingsPanel.tsx
-#: src/pages/DatabasesSettings.tsx
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/KnowledgeSection.tsx
-#: src/pages/McpServersSettings.tsx
 #: src/pages/MembersSettingsPanel.tsx
 #: src/pages/shell/agent-audience.tsx
 #: src/pages/shell/bot-panel.tsx
@@ -2838,7 +2830,7 @@ msgstr "No se pudo enviar eso"
 msgid "Could not set up your bots"
 msgstr "No se pudieron configurar tus bots"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 msgid "Could not start OAuth"
 msgstr "No se pudo iniciar OAuth"
 
@@ -2863,7 +2855,7 @@ msgstr "No se pudo cambiar {failedNames}. Inténtalo de nuevo."
 msgid "Could not take control"
 msgstr "No se pudo tomar el control"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 msgid "Could not test MCP server"
 msgstr "No se pudo probar el servidor MCP"
 
@@ -2885,7 +2877,8 @@ msgid "Could not update"
 msgstr "No se pudo actualizar"
 
 #: src/pages/AppAgentAccess.tsx
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/AccessSheet.tsx
+#: src/pages/connections/AgentAccessSection.tsx
 msgid "Could not update agent access"
 msgstr "No se pudo actualizar el acceso del agente"
 
@@ -3008,7 +3001,6 @@ msgstr "Creando…"
 msgid "Credential"
 msgstr "Credencial"
 
-#: src/pages/McpServersSettings.tsx
 #: src/pages/Store.tsx
 msgid "Credential saved"
 msgstr "Credencial guardada"
@@ -3041,6 +3033,10 @@ msgstr "Expresión cron"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Current password"
 msgstr "Contraseña actual"
+
+#: src/pages/connections/connection-model.ts
+msgid "Custom"
+msgstr "Personalizado"
 
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Custom color"
@@ -3086,13 +3082,10 @@ msgstr "Oscuro"
 msgid "Data"
 msgstr "Datos"
 
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/ConnectSheet.tsx
+#: src/pages/connections/DatabaseForm.tsx
 msgid "Database"
 msgstr "Base de datos"
-
-#: src/pages/Settings.tsx
-msgid "Databases"
-msgstr "Bases de datos"
 
 #: src/lib/billing.ts
 #: src/lib/cron.ts
@@ -3155,8 +3148,8 @@ msgstr "Delegando al ayudante: {value}"
 
 #: src/components/PasskeySettings.tsx
 #: src/pages/BotContextMenu.tsx
+#: src/pages/ConnectionsPage.tsx
 #: src/pages/KnowledgeSection.tsx
-#: src/pages/McpServersSettings.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/archived-chats.tsx
 #: src/pages/shell/dialogs.tsx
@@ -3263,7 +3256,7 @@ msgstr "Actualización de escritorio"
 
 #: src/components/AskCard.tsx
 #: src/components/ModelProblemNotice.tsx
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
 #: src/pages/RoutineRunDetail.tsx
 #: src/pages/RoutineRunHistory.tsx
 msgid "Details"
@@ -3295,7 +3288,7 @@ msgstr "Descartar"
 msgid "Discard recording"
 msgstr "Descartar grabación"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Store.tsx
@@ -3344,8 +3337,8 @@ msgid "Dismissed"
 msgstr "Descartado"
 
 #: src/pages/shell/message-cards.tsx
-msgid "Dismissed. Reconnect anytime from MCP settings."
-msgstr "Descartado: puedes volver a conectar cuando quieras desde la configuración de MCP."
+msgid "Dismissed. Reconnect anytime from Connections."
+msgstr "Descartado. Puedes reconectar cuando quieras desde Conexiones."
 
 #: src/pages/Store.tsx
 msgid "Display name"
@@ -3440,7 +3433,7 @@ msgstr "Arrastra, suelta o pega una imagen"
 msgid "Duplicate"
 msgstr "Duplicar"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Each name can be used once."
 msgstr "Cada nombre solo se puede usar una vez."
 
@@ -3450,7 +3443,7 @@ msgstr "Cada una se marca sola cuando la haces."
 
 #: src/components/AskCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/YouMemory.tsx
@@ -3478,7 +3471,7 @@ msgid "Edit the wiki"
 msgstr "Editar la wiki"
 
 #: src/pages/Auth.tsx
-#: src/pages/MailboxesSettings.tsx
+#: src/pages/connections/MailboxForm.tsx
 msgid "Email"
 msgstr "Correo"
 
@@ -3500,7 +3493,7 @@ msgstr "Se requiere verificar el correo"
 msgid "Enable {0}"
 msgstr "Activar {0}"
 
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
 msgid "Encrypted"
 msgstr "Cifrada"
 
@@ -3508,7 +3501,7 @@ msgstr "Cifrada"
 msgid "Encrypted and never shown again"
 msgstr "Cifrado y no se vuelve a mostrar"
 
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
 msgid "Encrypted, verified"
 msgstr "Cifrada, verificada"
 
@@ -3559,7 +3552,7 @@ msgstr "Introduce una clave de API antes de probar."
 msgid "Enter your name"
 msgstr "Introduce tu nombre"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Environment variables"
 msgstr "Variables de entorno"
 
@@ -3573,7 +3566,7 @@ msgstr "Variables de entorno: {names}"
 msgid "Error"
 msgstr "Error"
 
-#: src/components/McpServerHealthLine.tsx
+#: src/pages/connections/ErrorDetails.tsx
 msgid "Error details"
 msgstr "Detalles del error"
 
@@ -3636,6 +3629,7 @@ msgstr "Cada mes"
 msgid "Every week"
 msgstr "Cada semana"
 
+#: src/pages/connections/AccessSheet.tsx
 #: src/pages/MembersSettingsPanel.tsx
 #: src/pages/shell/agent-audience.tsx
 #: src/pages/shell/channel-members.tsx
@@ -3758,7 +3752,7 @@ msgstr "Campos que indican un cambio"
 msgid "Fields to compare, e.g. id, modifiedTime (optional)"
 msgstr "Campos para comparar, p. ej. id, modifiedTime (opcional)"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "File"
 msgstr "Archivo"
 
@@ -3907,6 +3901,14 @@ msgstr "Preparando la voz ({size} MB). Solo ocurre una vez."
 msgid "Git event"
 msgstr "Evento de Git"
 
+#: src/pages/shell/message-cards.tsx
+msgid "Give {forBotName} read access to {name}?"
+msgstr "¿Dar a {forBotName} acceso de lectura a {name}?"
+
+#: src/pages/shell/message-cards.tsx
+msgid "Give read access to {name}?"
+msgstr "¿Dar acceso de lectura a {name}?"
+
 #: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Go to…"
@@ -3955,14 +3957,14 @@ msgid "Header \"{header}\""
 msgstr "Encabezado \"{header}\""
 
 #: src/components/ModelHeadersEditor.tsx
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/Store.tsx
 msgid "Header name"
 msgstr "Nombre del encabezado"
 
 #: src/components/ModelHeadersEditor.tsx
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Header value"
 msgstr "Valor del encabezado"
 
@@ -4021,7 +4023,7 @@ msgstr "Mantén para hablar, suelta para enviar"
 msgid "Home"
 msgstr "Inicio"
 
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
 msgid "Host"
 msgstr "Host"
 
@@ -4095,7 +4097,7 @@ msgstr "La entrada de imágenes no está configurada para este modelo."
 msgid "Image upload area"
 msgstr "Área de carga de imagen"
 
-#: src/pages/MailboxesSettings.tsx
+#: src/pages/connections/MailboxForm.tsx
 msgid "IMAP server"
 msgstr "Servidor IMAP"
 
@@ -4182,7 +4184,7 @@ msgstr "Instalar actualización"
 msgid "Installed"
 msgstr "Instalado"
 
-#: src/components/McpServerHealthLine.tsx
+#: src/pages/connections/connection-model.ts
 #: src/pages/onboarding/CliEngineRows.tsx
 msgid "Installing…"
 msgstr "Instalando…"
@@ -4579,9 +4581,9 @@ msgstr "Bajo"
 msgid "Lowercase letters, numbers, hyphens and underscores, starting with a letter."
 msgstr "Letras minúsculas, números, guiones y guiones bajos, empezando por una letra."
 
-#: src/pages/Settings.tsx
-msgid "Mailboxes"
-msgstr "Buzones"
+#: src/pages/connections/ConnectSheet.tsx
+msgid "Mailbox"
+msgstr "Buzón de correo"
 
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Main model"
@@ -4707,7 +4709,10 @@ msgstr "Máximo de tokens de salida"
 msgid "MCP endpoint"
 msgstr "Endpoint MCP"
 
-#: src/pages/Settings.tsx
+#: src/pages/connections/ConnectSheet.tsx
+msgid "MCP server by URL"
+msgstr "Servidor MCP por URL"
+
 #: src/pages/shell/agent-import.tsx
 #: src/pages/Store.tsx
 msgid "MCP servers"
@@ -4963,6 +4968,7 @@ msgstr "Límite mensual de tokens"
 msgid "Monthly token limit for {name}"
 msgstr "Límite mensual de tokens para {name}"
 
+#: src/pages/ConnectionsPage.tsx
 #: src/pages/shell/message-hover-actions.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/WhatsAppNumbers.tsx
@@ -5030,9 +5036,9 @@ msgstr "Mi asistente"
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
+#: src/pages/connections/McpServerForm.tsx
 #: src/pages/GroupPanel.tsx
-#: src/pages/McpServersSettings.tsx
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/PartnerTemplateEditor.tsx
@@ -5078,6 +5084,10 @@ msgstr "Requiere atención"
 #: src/pages/ActivityList.tsx
 msgid "Needs input"
 msgstr "Necesita entrada"
+
+#: src/pages/connections/connection-model.ts
+msgid "Needs reconnecting"
+msgstr "Necesita reconectarse"
 
 #: src/pages/ActivityList.tsx
 msgid "Needs takeover"
@@ -5200,6 +5210,10 @@ msgstr "Siguiente"
 msgid "Next page"
 msgstr "Página siguiente"
 
+#: src/pages/connections/connection-model.ts
+msgid "No access"
+msgstr "Sin acceso"
+
 #: src/pages/ActivityList.tsx
 msgid "No activity yet."
 msgstr "Aún no hay actividad."
@@ -5260,10 +5274,6 @@ msgstr "No hay modelos coincidentes"
 #: src/pages/Store.tsx
 msgid "No MCP or API tool sources installed yet."
 msgstr "Aún no hay fuentes de herramientas MCP o API instaladas."
-
-#: src/pages/McpServersSettings.tsx
-msgid "No MCP servers yet."
-msgstr "Aún no hay servidores MCP."
 
 #: src/pages/GroupPanel.tsx
 msgid "No members yet"
@@ -5360,11 +5370,11 @@ msgstr "No es una habilidad válida"
 msgid "Not available to you"
 msgstr "No disponible para ti"
 
-#: src/components/McpServerHealthLine.tsx
+#: src/pages/connections/connection-model.ts
 msgid "Not checked yet"
 msgstr "Aún no comprobado"
 
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
 msgid "Not encrypted"
 msgstr "Sin cifrar"
 
@@ -5395,7 +5405,7 @@ msgstr "Ahora no"
 msgid "Not picked"
 msgstr "No elegido"
 
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/connection-model.ts
 msgid "Not reachable"
 msgstr "No accesible"
 
@@ -5412,7 +5422,7 @@ msgstr "No compatible con Rook"
 msgid "Not used by Rook"
 msgstr "Rook no lo usa"
 
-#: src/components/McpServerHealthLine.tsx
+#: src/pages/connections/connection-model.ts
 msgid "Not working"
 msgstr "No funciona"
 
@@ -5441,15 +5451,14 @@ msgstr "Ahora"
 msgid "OAuth authorization was cancelled."
 msgstr "Se canceló la autorización OAuth."
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "OAuth client ID (optional)"
 msgstr "ID de cliente OAuth (opcional)"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "OAuth client secret (optional)"
 msgstr "Secreto de cliente OAuth (opcional)"
 
-#: src/pages/McpServersSettings.tsx
 #: src/pages/Store.tsx
 msgid "OAuth connected"
 msgstr "OAuth conectado"
@@ -5458,7 +5467,6 @@ msgstr "OAuth conectado"
 msgid "OAuth connection failed"
 msgstr "Falló la conexión OAuth"
 
-#: src/pages/McpServersSettings.tsx
 #: src/pages/Store.tsx
 #: src/pages/StoreInstalledApps.tsx
 msgid "OAuth expired"
@@ -5628,7 +5636,7 @@ msgstr "Operaciones"
 msgid "Optional"
 msgstr "Opcional"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Optional header value"
 msgstr "Valor de encabezado opcional"
 
@@ -5714,8 +5722,8 @@ msgstr "Llaves de acceso"
 #: src/components/AskCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
-#: src/pages/DatabasesSettings.tsx
-#: src/pages/MailboxesSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
+#: src/pages/connections/MailboxForm.tsx
 #: src/pages/shell/bot-credentials.tsx
 msgid "Password"
 msgstr "Contraseña"
@@ -5887,7 +5895,7 @@ msgstr "Reproduciendo…"
 msgid "Plugin"
 msgstr "Plugin"
 
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
 msgid "Port"
 msgstr "Puerto"
 
@@ -6014,6 +6022,18 @@ msgstr "Reaccionar"
 msgid "Reactions"
 msgstr "Reacciones"
 
+#: src/pages/connections/connection-model.ts
+msgid "Read"
+msgstr "Leer"
+
+#: src/pages/connections/connection-model.ts
+msgid "Read and write"
+msgstr "Leer y escribir"
+
+#: src/pages/connections/connection-model.ts
+msgid "Read only"
+msgstr "Solo lectura"
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Read replies aloud"
 msgstr "Leer respuestas en voz alta"
@@ -6059,7 +6079,7 @@ msgstr "Recientes"
 msgid "Reconnect"
 msgstr "Reconectar"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 msgid "Reconnect OAuth"
 msgstr "Reconectar OAuth"
 
@@ -6119,7 +6139,7 @@ msgstr "Recrear un ordenador que no funciona."
 msgid "Recreating the computer"
 msgstr "Recreando la computadora"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Redirect URI"
 msgstr "URI de redirección"
 
@@ -6167,11 +6187,9 @@ msgid "Remembered"
 msgstr "Recordado"
 
 #: src/components/ApprovalRulesSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 #: src/pages/ConnectionsSettingsPanel.tsx
-#: src/pages/DatabasesSettings.tsx
 #: src/pages/LocalSpeechSection.tsx
-#: src/pages/MailboxesSettings.tsx
-#: src/pages/McpServersSettings.tsx
 #: src/pages/MembersSettingsPanel.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/PartnerTemplateEditor.tsx
@@ -6195,8 +6213,8 @@ msgstr "Quitar {0}"
 msgid "Remove {0} from the group"
 msgstr "Quitar a {0} del grupo"
 
-#. placeholder {0}: row.name
-#: src/pages/DatabasesSettings.tsx
+#. placeholder {0}: removing?.name
+#: src/pages/ConnectionsPage.tsx
 msgid "Remove {0}?"
 msgstr "¿Quitar {0}?"
 
@@ -6570,7 +6588,6 @@ msgstr "La hora de ejecución debe ser en el futuro."
 msgid "running"
 msgstr "en ejecución"
 
-#: src/components/McpServerHealthLine.tsx
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/RoutineCard.tsx
@@ -6620,11 +6637,11 @@ msgstr "sábado"
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Board.tsx
 #: src/pages/BoardSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 #: src/pages/ConnectionsSettingsPanel.tsx
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/KnowledgeSection.tsx
-#: src/pages/McpServersSettings.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/ModelSettingsOverlay.tsx
@@ -6686,8 +6703,8 @@ msgstr "Guardando..."
 
 #: src/components/AskCard.tsx
 #: src/components/teach/SkillDraftCard.tsx
+#: src/pages/connections/McpServerForm.tsx
 #: src/pages/GroupPanel.tsx
-#: src/pages/McpServersSettings.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/ModelSettingsOverlay.tsx
@@ -6713,7 +6730,7 @@ msgstr "Programa una rutina"
 msgid "Scheduled routines"
 msgstr "Rutinas programadas"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Scopes (optional)"
 msgstr "Ámbitos (opcional)"
 
@@ -6721,6 +6738,7 @@ msgstr "Ámbitos (opcional)"
 msgid "Screen not connected"
 msgstr "Pantalla no conectada"
 
+#: src/pages/connections/ConnectSheet.tsx
 #: src/pages/model-settings/model-picker.tsx
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/model-settings/role-model-picker.tsx
@@ -6736,6 +6754,7 @@ msgstr "Pantalla no conectada"
 msgid "Search"
 msgstr "Buscar"
 
+#: src/pages/connections/AccessSheet.tsx
 #: src/pages/Store.tsx
 msgid "Search agents"
 msgstr "Buscar agentes"
@@ -6868,12 +6887,12 @@ msgstr "Alerta de Sentry"
 msgid "Serenity endpoint is required."
 msgstr "El endpoint de Serenity es obligatorio."
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Server name"
 msgstr "Nombre del servidor"
 
 #: src/components/integrations/IntegrationSetup.tsx
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
@@ -7072,7 +7091,7 @@ msgstr "Slack no activado"
 msgid "Slide up to lock"
 msgstr "Desliza hacia arriba para bloquear"
 
-#: src/pages/MailboxesSettings.tsx
+#: src/pages/connections/MailboxForm.tsx
 msgid "SMTP server"
 msgstr "Servidor SMTP"
 
@@ -7162,7 +7181,7 @@ msgstr "Modelo de habla"
 msgid "Squad"
 msgstr "Squad"
 
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
 msgid "SSL"
 msgstr "SSL"
 
@@ -7280,7 +7299,7 @@ msgstr "Deteniendo…"
 msgid "Store"
 msgstr "Tienda"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Stored encrypted"
 msgstr "Almacenado cifrado"
 
@@ -7434,7 +7453,6 @@ msgid "Terminal input"
 msgstr "Entrada de terminal"
 
 #: src/components/teach/SkillDraftCard.tsx
-#: src/pages/DatabasesSettings.tsx
 #: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Test"
 msgstr "Probar"
@@ -7449,7 +7467,7 @@ msgid "Test API key"
 msgstr "Probar clave de API"
 
 #: src/components/ModelConnectionPreflightNotice.tsx
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 msgid "Test connection"
 msgstr "Probar conexión"
 
@@ -7458,7 +7476,7 @@ msgid "Test run"
 msgstr "Ejecución de prueba"
 
 #: src/components/ModelConnectionPreflightNotice.tsx
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 #: src/pages/onboarding-quick-connect.tsx
 #: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Testing…"
@@ -7675,11 +7693,11 @@ msgstr "Este enlace de restablecimiento no es válido o expiró"
 msgid "This server cannot be assigned without a bot."
 msgstr "Este servidor no se puede asignar sin un bot."
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 msgid "This server did not request browser authorization."
 msgstr "Este servidor no solicitó autorización del navegador."
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/ConnectionsPage.tsx
 msgid "This server is already connected. Disconnect it first to authorize again."
 msgstr "Este servidor ya está conectado. Desconéctalo primero para autorizarlo de nuevo."
 
@@ -8016,7 +8034,7 @@ msgstr "Usar {0}"
 msgid "Use {hostLabel}"
 msgstr "Usar {hostLabel}"
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 msgid "Use {oauthEnvReference} for the access token."
 msgstr "Usa {oauthEnvReference} para el token de acceso."
 
@@ -8025,7 +8043,7 @@ msgstr "Usa {oauthEnvReference} para el token de acceso."
 msgid "Use a found model"
 msgstr "Usar un modelo encontrado"
 
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/connections/DatabaseForm.tsx
 msgid "Use a read-only database role."
 msgstr "Usa un rol de base de datos de solo lectura."
 
@@ -8069,7 +8087,11 @@ msgstr "Usar el valor predeterminado del espacio"
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "Usa hasta 512 letras, dígitos, _ o -."
 
-#: src/pages/DatabasesSettings.tsx
+#: src/pages/ConnectionsPage.tsx
+msgid "Used by {usedBy}"
+msgstr "Usado por {usedBy}"
+
+#: src/pages/connections/DatabaseForm.tsx
 msgid "User"
 msgstr "Usuario"
 
@@ -8078,7 +8100,7 @@ msgid "User peer"
 msgstr "Par humano"
 
 #: src/components/AskCard.tsx
-#: src/pages/MailboxesSettings.tsx
+#: src/pages/connections/MailboxForm.tsx
 #: src/pages/shell/bot-credentials.tsx
 msgid "Username"
 msgstr "Usuario"
@@ -8115,7 +8137,7 @@ msgstr "Usando tu clave de API"
 msgid "Using your API key. Free plan ends {freeUntil}."
 msgstr "Usando tu clave de API. El plan gratuito termina el {freeUntil}."
 
-#: src/pages/McpServersSettings.tsx
+#: src/pages/connections/McpServerForm.tsx
 #: src/pages/shell/bot-credentials.tsx
 msgid "Value"
 msgstr "Valor"
@@ -8306,6 +8328,11 @@ msgstr "Dónde importar"
 #: src/pages/shell/agent-audience.tsx
 msgid "Who can talk to {name}"
 msgstr "Quién puede hablar con {name}"
+
+#. placeholder {0}: item.name
+#: src/pages/connections/AccessSheet.tsx
+msgid "Who can use {0}"
+msgstr "Quién puede usar {0}"
 
 #: src/pages/shell/channel-members.tsx
 msgid "Who sees this channel"

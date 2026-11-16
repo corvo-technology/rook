@@ -79,6 +79,7 @@ vi.mock("../KnowledgeSection", () => ({ KnowledgeSection: () => null }));
 vi.mock("./avatar-studio-popover", () => ({ AvatarStudioPopover: () => null }));
 vi.mock("./bot-credentials", () => ({ BotCredentialsSection: () => null }));
 vi.mock("./agent-connections", () => ({ AgentConnectionsList: () => null }));
+vi.mock("../connections/AgentAccessSection", () => ({ AgentAccessSection: () => null }));
 vi.mock("./agent-audience", () => ({ AgentAudienceSection: () => null }));
 
 import { BotSettings } from "./bot-panel";

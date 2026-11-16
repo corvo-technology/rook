@@ -8,6 +8,7 @@ import {
 } from "@corvo/adapters";
 import type { Actor, McpServer, McpServerConfigInput } from "@corvo/contracts";
 import { mcpOAuthEnvReferences } from "@corvo/contracts";
+import { storedAccessLevel } from "@corvo/core";
 import type { McpServer as McpServerRow, Prisma } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import { ORPCError } from "@orpc/server";
@@ -149,6 +150,7 @@ export function mcpAssignmentDto(row: {
   serverId: string;
   allowAllTools: boolean;
   allowedTools: unknown;
+  level?: string;
   createdAt: Date;
   updatedAt: Date;
 }) {
@@ -160,6 +162,7 @@ export function mcpAssignmentDto(row: {
     allowedTools: Array.isArray(row.allowedTools)
       ? row.allowedTools.filter((item): item is string => typeof item === "string")
       : [],
+    level: storedAccessLevel(row.level),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };

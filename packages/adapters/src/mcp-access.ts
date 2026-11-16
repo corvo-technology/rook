@@ -1,5 +1,5 @@
 import type { MessageBlock } from "@corvo/contracts";
-import { APP_CATALOG } from "@corvo/core";
+import { APP_CATALOG, storedAccessLevel } from "@corvo/core";
 import { getLogger } from "@corvo/logging";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { isUniqueViolation, persistMessageInTransaction } from "./run-messages.js";
@@ -65,6 +65,7 @@ export async function requestSpaceAppAccess(
   run: Target,
   app: string,
   agent?: string,
+  level: "read" | "write" = "write",
 ) {
   // The card goes in the asking agent's own chat, where the user is; it is for the teammate named.
   const teammate = agent?.trim() ? await resolveTeammate(deps, run, agent) : undefined;
@@ -81,7 +82,10 @@ export async function requestSpaceAppAccess(
       transport: true,
       endpoint: true,
       secretId: true,
-      assignments: { where: { botId: subjectBotId }, select: { id: true } },
+      assignments: {
+        where: { botId: subjectBotId },
+        select: { id: true, allowAllTools: true, level: true },
+      },
     },
   });
   let server =
@@ -130,7 +134,11 @@ export async function requestSpaceAppAccess(
       };
     }
   }
-  if (server.assignments.length > 0) {
+  // Read access is met by any grant; write access by write, or a per-tool list set on purpose.
+  const granted = server.assignments.some(
+    (row) => level === "read" || !row.allowAllTools || storedAccessLevel(row.level) === "write",
+  );
+  if (granted) {
     return {
       status: "connected",
       message: forBot
@@ -152,6 +160,7 @@ export async function requestSpaceAppAccess(
     ...(needsKey ? { needsKey } : {}),
     status: "pending",
     ...(forBot ? { forBotId: forBot.id, forBotName: forBot.name } : {}),
+    ...(level === "read" ? { level } : {}),
   };
   const committed = await deps.prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT id FROM threads WHERE id = ${run.threadId} FOR UPDATE`;

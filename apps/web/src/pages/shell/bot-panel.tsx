@@ -55,6 +55,7 @@ import { thinkingLevelLabel } from "../../lib/model-catalog";
 import { lazyComponent } from "../../lib/preload-recovery";
 import { useSpaceQueries } from "../../lib/query";
 import { errorText } from "../../lib/user-error";
+import { AgentAccessSection } from "../connections/AgentAccessSection";
 import { AgentAudienceSection } from "./agent-audience";
 import { AgentConnectionsList } from "./agent-connections";
 import { AgentImportUndo } from "./agent-import-undo";
@@ -1010,6 +1011,7 @@ export function BotSettings({
                 </div>
               </section>
             </SettingsGroup>
+            <AgentAccessSection botId={bot.id} />
             <AgentConnectionsList botId={bot.id} />
             <AgentAudienceSection bot={bot} />
             <BotCredentialsSection botId={bot.id} />

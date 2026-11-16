@@ -14,6 +14,40 @@ export const SPEAK_BUDGET_MS = 15_000;
 const FIRST_ATTEMPT_MS = 9_000;
 const RETRY_BACKOFF_MS = 300;
 
+const TIMEOUT_TEXT = /time(?:d)?[\s-]?out|deadline exceeded/i;
+
+/**
+ * A failure of the clock or the wire, whatever its message: a per-attempt timeout, a provider
+ * that says it timed out (even inside a 4xx or 5xx body), or no response at all. Whether the
+ * caller hung up is decided separately, by its own signal.
+ */
+export function isTransientSpeechError(error: unknown): boolean {
+  if (error instanceof VoiceAccountError) return false;
+  if (error instanceof Error) {
+    if (error.name === "TimeoutError" || error.name === "AbortError") return true;
+    if (TIMEOUT_TEXT.test(error.message)) return true;
+    if (error instanceof VoiceProviderError && error.detail && TIMEOUT_TEXT.test(error.detail)) {
+      return true;
+    }
+  }
+  return isRetryableError(error);
+}
+
+function describeError(error: unknown) {
+  if (!(error instanceof Error)) return { reason: String(error) };
+  const cause = error.cause;
+  return {
+    reason: error.message,
+    name: error.name,
+    cause:
+      cause instanceof Error
+        ? `${cause.name}: ${cause.message}`
+        : cause === undefined
+          ? undefined
+          : String(cause),
+  };
+}
+
 export interface SpeakResilience {
   /** A second speech model to try when the first fails twice; omitted means no fallback. */
   fallbackModel?: string;
@@ -79,14 +113,16 @@ export async function synthesizeResilient(
           model: model ?? "default",
           status: error instanceof VoiceProviderError ? error.status : undefined,
           detail: error instanceof VoiceProviderError ? error.detail : undefined,
-          reason: error instanceof Error ? error.message : String(error),
+          ...describeError(error),
+          callerAborted: parent.aborted,
+          budgetSpent: budget.aborted && !parent.aborted,
         });
       // The caller hung up or the budget is spent; a refusal is final.
       if (
         parent.aborted ||
         budget.aborted ||
         error instanceof VoiceAccountError ||
-        !isRetryableError(error)
+        !isTransientSpeechError(error)
       )
         break;
       if (index === 0) await sleep(options.backoffMs ?? RETRY_BACKOFF_MS, budget);

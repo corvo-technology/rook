@@ -509,31 +509,141 @@ describe("Speaker.speakStream", () => {
     expect(speaker.state.error).toBeUndefined();
   });
 
-  it("fails cleanly mid-stream: the failure is reported once and the rest is dropped", async () => {
+  it("skips a sentence that fails and speaks the rest of the reply", async () => {
+    vi.useFakeTimers();
+    const debug = vi.spyOn(console, "debug").mockImplementation(() => undefined);
+    const { requests, playing, answer, settle } = harness();
+    const speaker = new Speaker();
+    const stream = speaker.speakStream();
+    for (const text of ["One.", "Two.", "Three."]) stream.push(text);
+    await settle();
+    answer(0);
+    await settle();
+    playing[0]?.end();
+    requests[1]?.answer(new Response(JSON.stringify({ error: "Busy" }), { status: 502 }));
+    await settle();
+    answer(2);
+    await settle();
+    expect(speaker.state).toMatchObject({ status: "speaking", caption: "Three." });
+    playing[1]?.end();
+    stream.end();
+    await expect(stream.done).resolves.toBeUndefined();
+    expect(speaker.state).toEqual({ status: "idle" });
+    const stages = debug.mock.calls
+      .filter(([label]) => label === "[voice] sentence")
+      .map(([, info]) => `${(info as { text: string }).text}:${(info as { stage: string }).stage}`);
+    expect(stages).toEqual(
+      expect.arrayContaining(["One.:sent", "One.:received", "One.:played", "Two.:failed"]),
+    );
+  });
+
+  it("reports a failure only when nothing of the reply could be spoken", async () => {
     vi.useFakeTimers();
     const { requests, playing, answer, settle } = harness();
     const speaker = new Speaker();
     const stream = speaker.speakStream();
     stream.push("One.");
     stream.push("Two.");
-    stream.push("Three.");
     await settle();
-    answer(0);
-    await settle();
-    playing[0]?.end();
-    requests[1]?.answer(
+    requests[0]?.answer(
       new Response(JSON.stringify({ error: "No credit", code: "VOICE_OUT_OF_CREDIT" }), {
         status: 402,
       }),
     );
-    await expect(stream.done).resolves.toBe("Your voice provider is out of credit.");
-    expect(speaker.state.error).toBe("Your voice provider is out of credit.");
-    expect(speaker.state.status).toBe("idle");
-    expect(stream.closed).toBe(true);
-    stream.push("Four.");
     await settle();
-    expect(requests).toHaveLength(3);
-    expect(requests[2]?.signal.aborted).toBe(true);
+    answer(1);
+    await settle();
+    playing[0]?.end();
+    stream.end();
+    await expect(stream.done).resolves.toBeUndefined();
+    expect(speaker.state.error).toBeUndefined();
+
+    const silent = new Speaker();
+    const second = silent.speakStream();
+    second.push("Only.");
+    await settle();
+    requests[2]?.answer(new Response("{}", { status: 502 }));
+    await settle();
+    second.end();
+    await expect(second.done).resolves.toEqual(expect.any(String));
+    expect(silent.state.status).toBe("idle");
+    expect(silent.state.error).toEqual(expect.any(String));
+  });
+
+  it("skips a clip the browser refuses to play and still speaks the next", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(console, "debug").mockImplementation(() => undefined);
+    const { requests, playing, answer, settle } = harness();
+    let first = true;
+    vi.stubGlobal(
+      "Audio",
+      class {
+        onended: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        src = "";
+        play() {
+          if (first) {
+            first = false;
+            return Promise.reject(new DOMException("blocked", "NotAllowedError"));
+          }
+          playing.push({ blob: this.src, end: () => this.onended?.() });
+          return Promise.resolve();
+        }
+        pause() {}
+      },
+    );
+    const speaker = new Speaker();
+    const stream = speaker.speakStream();
+    stream.push("One.");
+    stream.push("Two.");
+    await settle();
+    answer(0);
+    answer(1);
+    await settle();
+    expect(requests).toHaveLength(2);
+    expect(playing).toHaveLength(1);
+    expect(speaker.state).toMatchObject({ status: "speaking", caption: "Two." });
+    playing[0]?.end();
+    stream.end();
+    await expect(stream.done).resolves.toBeUndefined();
+  });
+
+  it("plays every clip on the one element that the start of the call unlocked", async () => {
+    vi.useFakeTimers();
+    const { answer, settle } = harness();
+    const created: unknown[] = [];
+    const played: string[] = [];
+    vi.stubGlobal(
+      "Audio",
+      class {
+        onended: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        src = "";
+        constructor() {
+          created.push(this);
+        }
+        play() {
+          played.push(this.src);
+          if (!this.src.startsWith("data:")) queueMicrotask(() => this.onended?.());
+          return Promise.resolve();
+        }
+        pause() {}
+      },
+    );
+    const speaker = new Speaker();
+    speaker.unlock();
+    const stream = speaker.speakStream();
+    stream.push("One.");
+    stream.push("Two.");
+    await settle();
+    answer(0);
+    answer(1);
+    await settle();
+    stream.end();
+    await settle();
+    expect(created).toHaveLength(1);
+    expect(played[0]).toMatch(/^data:audio\/wav/);
+    expect(played).toHaveLength(3);
   });
 
   it("fails before any audio when there is no voice to speak with", async () => {

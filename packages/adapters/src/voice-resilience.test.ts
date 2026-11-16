@@ -1,5 +1,6 @@
 import type { AdapterContext, SpeechClip, VoiceProvider } from "@corvo/adapter-kit";
 import { VoiceAccountError, VoiceProviderError } from "@corvo/adapter-kit";
+import * as logging from "@corvo/logging";
 import { describe, expect, it, vi } from "vitest";
 import { synthesizeResilient } from "./voice-resilience.js";
 
@@ -57,6 +58,39 @@ describe("synthesizeResilient", () => {
     const { synthesize, voice } = provider(timeout(), timeout(), clip);
     await expect(synthesizeResilient(voice, request, context, fast)).rejects.toThrow("timeout");
     expect(synthesize).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([
+    ["a plain timeout message", new Error("Request timed out")],
+    ["a TimeoutError", new DOMException("The operation timed out.", "TimeoutError")],
+    ["an attempt aborted by its own clock", new DOMException("aborted", "AbortError")],
+    [
+      "a timeout the provider reports inside a refusal",
+      new VoiceProviderError("no", 400, "Request timed out"),
+    ],
+  ])("asks again after %s", async (_name, failure) => {
+    const { synthesize, voice } = provider(failure, clip);
+    await expect(synthesizeResilient(voice, request, context, fast)).resolves.toBe(clip);
+    expect(synthesize).toHaveBeenCalledTimes(2);
+  });
+
+  it("logs the name and cause of a failure so the next one can be told apart", async () => {
+    const warn = vi.fn();
+    vi.spyOn(logging, "getLogger").mockReturnValue({ warn } as unknown as ReturnType<
+      typeof logging.getLogger
+    >);
+    const failure = new Error("Request timed out", { cause: new Error("socket hang up") });
+    failure.name = "TimeoutError";
+    const { voice } = provider(failure, clip);
+    await synthesizeResilient(voice, request, context, fast);
+    expect(warn).toHaveBeenCalledWith(
+      "voice provider failed to speak",
+      expect.objectContaining({
+        name: "TimeoutError",
+        cause: "Error: socket hang up",
+        callerAborted: false,
+      }),
+    );
   });
 
   it("does not repeat a refusal", async () => {

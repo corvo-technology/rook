@@ -4,6 +4,14 @@ import { PiAgentRuntime } from "@corvo/adapters";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { startModelEmulator } from "./model-emulator.js";
 
+/** A whole one-pixel PNG: a picture cut short never reaches a model. */
+const PIXEL_PNG = new Uint8Array(
+  Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+    "base64",
+  ),
+);
+
 const cleanups: Array<() => Promise<void>> = [];
 afterEach(async () => {
   await Promise.all(cleanups.splice(0).map((close) => close()));
@@ -12,7 +20,7 @@ afterEach(async () => {
 const image = {
   name: "picture.png",
   mimeType: "image/png" as const,
-  data: new Uint8Array([137, 80, 78, 71]),
+  data: PIXEL_PNG,
 };
 
 function request(model: AgentRunRequest["model"]): AgentRunRequest {

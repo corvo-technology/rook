@@ -6,6 +6,14 @@ import { createRunExecutor } from "../../adapters/src/executor.js";
 import { PiAgentRuntime } from "../../adapters/src/pi-runtime.js";
 import { startModelEmulator } from "./model-emulator.js";
 
+/** A whole one-pixel PNG: a picture cut short never reaches a model. */
+const PIXEL_PNG = new Uint8Array(
+  Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+    "base64",
+  ),
+);
+
 vi.mock("../../adapters/src/computer-lifecycle.js", async (original) => ({
   ...(await original<typeof ComputerLifecycle>()),
   acquireComputerExecutionLease: async () => null,
@@ -282,7 +290,7 @@ function fixture(
   );
   const executor = createRunExecutor({
     prisma,
-    artifacts: { get: async () => new Uint8Array([137, 80, 78, 71]) },
+    artifacts: { get: async () => PIXEL_PNG },
     runtime: new PiAgentRuntime(),
     mcpAllowPrivateEndpoint: true,
     deploymentModelKey: "fixture-key",
@@ -377,7 +385,9 @@ describe("executor paused transcript", () => {
           {
             expect(request) {
               expect(
-                JSON.stringify(request.messages).match(/data:image\/png;base64,iVBORw==/g),
+                JSON.stringify(request.messages).match(
+                  /data:image\/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk\+A8AAQUBAScY42YAAAAASUVORK5CYII=/g,
+                ),
               ).toHaveLength(1);
             },
             response: { type: "text", text: "Read the image." },

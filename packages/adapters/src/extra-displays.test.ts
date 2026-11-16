@@ -96,3 +96,19 @@ describe("extra display scroll", () => {
     );
   });
 });
+
+describe("a screenshot cut short", () => {
+  it("is refused as a full computer instead of being sent on", () => {
+    const png = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+      "base64",
+    );
+    const cut = png.subarray(0, png.length - 15).toString("base64");
+    expect(() => parseExtraDisplayObservation(`${cut}\nCURSOR X=1 Y=2`)).toThrow(
+      "The computer's storage is full.",
+    );
+    expect(parseExtraDisplayObservation(`${png.toString("base64")}\nCURSOR X=1 Y=2`).image).toEqual(
+      new Uint8Array(png),
+    );
+  });
+});

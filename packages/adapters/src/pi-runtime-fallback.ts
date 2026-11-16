@@ -15,6 +15,12 @@ import { getSupportedThinkingLevels } from "@earendil-works/pi-ai";
 import { AssistantMessageEventStream } from "@earendil-works/pi-ai/utils/event-stream";
 import { ModelImageLimitError, pruneForRebuild } from "./context-pruning.js";
 import { groqRequestContextWindow } from "./groq-request-budget.js";
+import {
+  hasImages,
+  isImageRejection,
+  withoutImages,
+  withoutUnreadableImages,
+} from "./image-integrity.js";
 import { estimateModelContextTokens } from "./model-context.js";
 import { IMAGE_RETURNING_COMPUTER_TOOLS } from "./model-vision.js";
 import { affordableOpenRouterOutput } from "./openrouter-output-budget.js";
@@ -72,6 +78,8 @@ export interface FallbackStreamState {
   isProviderFailure(message: AssistantMessage): boolean;
   /** Set once a provider rejected replayed thinking signatures; see thinking-signatures.ts. */
   dropThinkingBlocks?: boolean;
+  /** Set once a provider rejected an image; later requests in this run carry none. */
+  dropImages?: boolean;
   /** Output reservations reduced by a rejected request, scoped to this run and model. */
   outputCaps?: Map<string, number>;
   /**
@@ -312,11 +320,13 @@ export function fallbackAwareModelStream(
   // must use that same context, or a usable backup can be skipped on discarded text.
   // A backup is judged on the context it would get after the switch, without earlier thinking.
   const requestContext = (switching = false) => {
-    if (state.dropThinkingBlocks) return withoutThinkingBlocks(context);
-    const before = switching ? context.messages.length : state.messagesBeforeSwitch;
-    if (!before) return context;
-    const messages = withoutThinkingFrom(context.messages, 0, before);
-    return messages === context.messages ? context : { ...context, messages };
+    // An image cut short would make the provider reject the whole request, so it never goes out.
+    const base = state.dropImages ? withoutImages(context) : withoutUnreadableImages(context);
+    if (state.dropThinkingBlocks) return withoutThinkingBlocks(base);
+    const before = switching ? base.messages.length : state.messagesBeforeSwitch;
+    if (!before) return base;
+    const messages = withoutThinkingFrom(base.messages, 0, before);
+    return messages === base.messages ? base : { ...base, messages };
   };
   const signalAborted = () => signal.aborted;
   const recordFailure = (target: RuntimeModelTarget, error: string) => {
@@ -568,6 +578,27 @@ export function fallbackAwareModelStream(
             ) {
               // Later calls in this run skip the stale thinking up front instead of failing first.
               state.dropThinkingBlocks = true;
+              buffered = [];
+              restart = true;
+              break;
+            }
+            if (
+              !sawVisibleOutput &&
+              !hasTerminalVisibleOutput &&
+              event.reason === "error" &&
+              !signalAborted() &&
+              !state.dropImages &&
+              isImageRejection(event.error.errorMessage) &&
+              hasImages(context)
+            ) {
+              // The check above passed an image the provider still cannot read. Answering
+              // without pictures beats failing the run; this happens once per run.
+              getLogger().warn("model provider rejected an image; retrying without images", {
+                runId: state.request.runId,
+                provider: target.config.provider,
+                model: target.config.id,
+              });
+              state.dropImages = true;
               buffered = [];
               restart = true;
               break;

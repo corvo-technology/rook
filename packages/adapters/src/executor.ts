@@ -232,6 +232,7 @@ import {
 import { loadAgentScratchpadContext } from "./scratchpad-context.js";
 import { inferScript } from "./scripted-runtime.js";
 import { listAgentSkillRecords } from "./skill-tools.js";
+import { alertStorageFull } from "./storage-alert.js";
 import {
   continueRunClaimFence,
   refreshTakeoverContinuePlan,
@@ -1009,11 +1010,18 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const storedComputer = bot.computer;
         const computerMode = parseComputerMode(storedComputer.scope);
         const artifacts = deps.artifacts;
+        let storageFullTold = false;
+        const onStorageFull = () => {
+          if (storageFullTold) return;
+          storageFullTold = true;
+          void alertStorageFull(deps, run, bot);
+        };
         const recentFilesInput = {
           context,
           computerMode,
           skipMessageId: currentTurnMessage?.id,
           maxTurns: RECENT_TURN_IMAGE_TURNS,
+          onStorageFull,
         };
         const runComputer = lazyRunComputer(
           async () => {
@@ -1068,6 +1076,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
                         computer: async () => computer,
                         computerMode,
                         markWorkspaceDirty: workspaceCheckpoint.markDirty,
+                        onStorageFull,
                       },
                     );
                     workspaceCheckpoint.markFiles(files);

@@ -7565,6 +7565,10 @@ msgstr "Thinking: {thinking}"
 msgid "Thinking: Default"
 msgstr "Thinking: Default"
 
+#: src/lib/server-copy.ts
+msgid "This agent's computer is full. Delete files it no longer needs."
+msgstr "This agent's computer is full. Delete files it no longer needs."
+
 #: src/pages/shell/agent-import.tsx
 msgid "This backup could not be read."
 msgstr "This backup could not be read."

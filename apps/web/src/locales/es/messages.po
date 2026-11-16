@@ -7565,6 +7565,10 @@ msgstr "Razonamiento: {thinking}"
 msgid "Thinking: Default"
 msgstr "Razonamiento: Predeterminado"
 
+#: src/lib/server-copy.ts
+msgid "This agent's computer is full. Delete files it no longer needs."
+msgstr "El ordenador de este agente está lleno. Elimina los archivos que ya no necesite."
+
 #: src/pages/shell/agent-import.tsx
 msgid "This backup could not be read."
 msgstr "No se pudo leer esta copia de seguridad."

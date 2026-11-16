@@ -7565,6 +7565,10 @@ msgstr "思考：{thinking}"
 msgid "Thinking: Default"
 msgstr "思考：默认"
 
+#: src/lib/server-copy.ts
+msgid "This agent's computer is full. Delete files it no longer needs."
+msgstr "此智能体的电脑已满。请删除它不再需要的文件。"
+
 #: src/pages/shell/agent-import.tsx
 msgid "This backup could not be read."
 msgstr "无法读取此备份。"

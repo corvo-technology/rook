@@ -158,6 +158,8 @@ export function metaCopy(code: MetaCode, p: Params): string | undefined {
       return t`${name} routine: watching for changes`;
     case "routine_no_changes":
       return t`${name} routine: no changes`;
+    case "sandbox_storage_full":
+      return t`This agent's computer is full. Delete files it no longer needs.`;
     case "routine_check_paused":
       return t`The ${name} routine is paused because its change check failed: ${reason}`;
   }

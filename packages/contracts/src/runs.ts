@@ -4,6 +4,9 @@ import { Id, IsoDate, RunStatus } from "./ids.js";
 /** The computer provider refused a request at its own rate limit; the run tells the user to wait. */
 export const COMPUTER_RATE_LIMIT_ERROR = "Too many computer requests. Try again later.";
 
+/** First line of a run error whose cause was starting the agent's computer; details follow it. */
+export const COMPUTER_SETUP_RUN_ERROR = "Couldn't start the agent's computer.";
+
 export const RUN_TRIGGERS = [
   "user",
   "routine",

@@ -90,6 +90,7 @@ describe("computer recovery preserves live work", () => {
       load: async () => undefined,
       create: async () => undefined,
       advance: async () => false,
+      forget: async () => false,
       revisions: async () => new Map(),
       kinds: async () => new Map(),
     });

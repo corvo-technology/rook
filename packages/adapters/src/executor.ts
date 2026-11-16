@@ -14,6 +14,7 @@ import {
   BOT_DAILY_LIMIT_RUN_ERROR,
   BOT_MONTHLY_LIMIT_RUN_ERROR,
   botMessageAllowsSilence,
+  computerSetupRunError,
   expandSkillReferencesInPrompt,
   formatSkillRunPrompt,
   formatSkillsCatalogInstruction,
@@ -87,6 +88,7 @@ import {
   renewComputerExecutionLease,
   screenLeaseIdForRun,
 } from "./computer-lifecycle.js";
+import { isComputerSetupFailure, markComputerSetupFailure } from "./computer-setup-error.js";
 import { teamBotWorkspaceDirectory } from "./computer-support.js";
 import { checkpointRunComputerWorkspace } from "./computer-workspace.js";
 import {
@@ -112,6 +114,7 @@ import {
   selectCompactedHistory,
   stableHistoryWindow,
 } from "./history-compaction.js";
+import { alertHomeLost } from "./home-lost-alert.js";
 import { createMediaGenerationProvider } from "./media-generation-factory.js";
 import { memberMonthlyLimitReached } from "./member-monthly-limit.js";
 import { loadAgentMemoryContext } from "./memory-context.js";
@@ -1010,6 +1013,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const storedComputer = bot.computer;
         const computerMode = parseComputerMode(storedComputer.scope);
         const artifacts = deps.artifacts;
+        let homeLostTold = false;
         let storageFullTold = false;
         const onStorageFull = () => {
           if (storageFullTold) return;
@@ -1026,7 +1030,20 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const runComputer = lazyRunComputer(
           async () => {
             getLogger().info("computer.requested");
-            const computer = await provisionComputer(deps, storedComputer.id, context, "bot");
+            const computer = await provisionComputer(
+              deps,
+              storedComputer.id,
+              context,
+              "bot",
+              undefined,
+              {
+                onHomeLost: () => {
+                  if (homeLostTold) return;
+                  homeLostTold = true;
+                  void alertHomeLost(deps, run);
+                },
+              },
+            );
             computerUse.screenRelease = { computer, context, keepWarm: false };
             scheduleComputerSleep(deps.jobs, storedComputer.id);
             // Earlier attachments wait for the computer's first use; every start copies them
@@ -1039,7 +1056,10 @@ export function createRunExecutor(deps: ExecutorDeps) {
             }
             return computer;
           },
-          () => runAbortController?.abort(),
+          (error) => {
+            if (!context.signal.aborted) markComputerSetupFailure(error);
+            runAbortController?.abort();
+          },
         );
         const computerKind = (await deps.sandbox.provisionKind?.()) ?? storedComputer.kind;
         const workspaceCheckpoint = createRunWorkspaceCheckpoint(async () => {
@@ -2043,7 +2063,12 @@ export function createRunExecutor(deps: ExecutorDeps) {
       } catch (setupError) {
         const computerBusy = setupError instanceof ComputerBusyError;
         const retryForever = computerBusy || isTooManyDatabaseConnections(setupError);
-        const setupMessage = redactSecrets(userRunError(setupError), runSecrets);
+        const setupMessage = redactSecrets(
+          isComputerSetupFailure(setupError)
+            ? computerSetupRunError(setupError)
+            : userRunError(setupError),
+          runSecrets,
+        );
         const reportedSetupError = sanitizedError(setupError, (text) =>
           redactSecrets(text, runSecrets),
         );

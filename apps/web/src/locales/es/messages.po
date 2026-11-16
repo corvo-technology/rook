@@ -2910,6 +2910,11 @@ msgstr "No se pudo actualizar el modelo de voz"
 msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
 msgstr "No se pudo comprobar la configuración de la computadora ({failureMessage}). Corrige la conexión y vuelve a comprobar."
 
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "Couldn't start the agent's computer."
+msgstr "No se pudo iniciar el computador del agente."
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Couldn't update your timezone"
 msgstr "No se pudo actualizar tu zona horaria"
@@ -7602,6 +7607,10 @@ msgstr "Esto no se puede deshacer."
 #: src/pages/Onboarding.tsx
 msgid "this computer"
 msgstr "esta computadora"
+
+#: src/lib/server-copy.ts
+msgid "This computer's saved files couldn't be found; it started fresh."
+msgstr "No se encontraron los archivos guardados de este computador; empezó desde cero."
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts

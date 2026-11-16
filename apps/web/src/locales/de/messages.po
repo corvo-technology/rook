@@ -2910,6 +2910,11 @@ msgstr "Das Sprachmodell konnte nicht aktualisiert werden"
 msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
 msgstr "Die Computer-Einrichtung konnte nicht überprüft werden ({failureMessage}). Beheben Sie die Verbindung und prüfen Sie erneut."
 
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "Couldn't start the agent's computer."
+msgstr "Der Computer des Agenten konnte nicht gestartet werden."
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Couldn't update your timezone"
 msgstr "Ihre Zeitzone konnte nicht aktualisiert werden"
@@ -7602,6 +7607,10 @@ msgstr "Dies kann nicht rückgängig gemacht werden."
 #: src/pages/Onboarding.tsx
 msgid "this computer"
 msgstr "dieser Computer"
+
+#: src/lib/server-copy.ts
+msgid "This computer's saved files couldn't be found; it started fresh."
+msgstr "Die gespeicherten Dateien dieses Computers wurden nicht gefunden; er wurde neu gestartet."
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts

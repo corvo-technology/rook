@@ -8,6 +8,7 @@ import type {
   ObjectStorage,
   PortableFile,
 } from "@corvo/adapter-kit";
+import { ObjectNotFoundError } from "@corvo/adapter-kit";
 import type { ContentKeyRing, ContentLocation, DataKey, PrismaClient } from "@corvo/db";
 import {
   ContentDecryptionError,
@@ -58,6 +59,8 @@ export interface AgentHomeRecords {
   create(homeKey: string): Promise<StoredHome | undefined>;
   /** Moves the current revision from `from` to `to`; false when another save got there first. */
   advance(homeKey: string, storageId: string, from: string | null, to: string): Promise<boolean>;
+  /** Forgets a saved revision whose object is gone; false when the home has moved past it. */
+  forget(homeKey: string, storageId: string, revision: string): Promise<boolean>;
   /** The current revision of each storage id that still belongs to a home. */
   revisions(storageIds: readonly string[]): Promise<Map<string, string | null>>;
   /** The computer kind of each home that still has a computer. */
@@ -250,20 +253,39 @@ export class ObjectAgentHomeStore extends LocalAgentHomeStore {
    * keeps its local copy, so homes from before object storage keep working until they are
    * migrated or next saved.
    */
-  async hydrate(botId: string): Promise<void> {
-    await this.withBotWrite(botId, async () => {
-      const stored = await this.records.load(botId);
-      if (!stored?.revision) return;
-      // A removed cache directory leaves its marker behind; only a present copy counts.
-      if ((await this.localRevision(botId)) === stored.revision && (await this.hasCache(botId))) {
-        await this.touchRevision(botId);
-        return;
+  async hydrate(botId: string): Promise<{ lostObject?: string }> {
+    return this.withBotWrite(botId, async () => {
+      for (let attempt = 0; ; attempt += 1) {
+        const stored = await this.records.load(botId);
+        if (!stored?.revision) return {};
+        // A removed cache directory leaves its marker behind; only a present copy counts.
+        if ((await this.localRevision(botId)) === stored.revision && (await this.hasCache(botId))) {
+          await this.touchRevision(botId);
+          return {};
+        }
+        const revision = stored.revision;
+        try {
+          await this.replaceHome(botId, (staging) =>
+            unpackHome(this.download(stored, revision), staging, this.limits),
+          );
+          await super.writeRevision(botId, revision);
+          return {};
+        } catch (error) {
+          if (!isMissingObject(error)) throw error;
+          // Another host may have saved and removed this revision since it was read.
+          if (!(await this.records.forget(botId, stored.storageId, revision))) {
+            if (attempt >= 2) throw error;
+            continue;
+          }
+          // The saved files are gone for good: start the home fresh instead of failing on
+          // them every time, and let the next save write a new first revision.
+          const lostObject = objectKey(stored.storageId, revision);
+          getLogger().warn("home.storage.object_missing", { "home.object": lostObject });
+          await this.removeCopy(botId);
+          await mkdir(this.pathFor(botId), { recursive: true });
+          return { lostObject };
+        }
       }
-      const revision = stored.revision;
-      await this.replaceHome(botId, (staging) =>
-        unpackHome(this.download(stored, revision), staging, this.limits),
-      );
-      await super.writeRevision(botId, revision);
     });
   }
 
@@ -520,6 +542,15 @@ export class PrismaAgentHomeRecords implements AgentHomeRecords {
     return kinds;
   }
 
+  async forget(homeKey: string, storageId: string, revision: string) {
+    return this.updateKeepingClaim(
+      "forget an agent home's missing revision",
+      homeKey,
+      { homeStorageId: storageId, homeStorageRevision: revision },
+      { homeStorageRevision: null },
+    );
+  }
+
   async revisions(storageIds: readonly string[]) {
     const current = new Map<string, string | null>();
     for (let start = 0; start < storageIds.length; start += 1000) {
@@ -602,6 +633,14 @@ export function homeStorageSweeper(home: AgentHomeStore): (() => Promise<void>) 
     const removed = await home.sweep(now);
     if (removed) getLogger().info("home.storage.swept", { "home.objects.removed": removed });
   };
+}
+
+function isMissingObject(error: unknown): boolean {
+  for (let current = error, depth = 0; current && depth < 5; depth += 1) {
+    if (current instanceof ObjectNotFoundError) return true;
+    current = (current as { cause?: unknown }).cause;
+  }
+  return false;
 }
 
 function objectKey(storageId: string, revision: string) {

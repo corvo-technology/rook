@@ -11,6 +11,7 @@ import {
   UploadPartCommand,
 } from "@aws-sdk/client-s3";
 import type { ObjectStorage } from "@corvo/adapter-kit";
+import { ObjectNotFoundError } from "@corvo/adapter-kit";
 
 /** Upload part size: large enough that most homes are one request, small enough to hold in memory. */
 const PART_BYTES = 16 * 1024 * 1024;
@@ -151,9 +152,14 @@ export class S3ObjectStorage implements ObjectStorage {
   }
 
   async *get(key: string): AsyncGenerator<Uint8Array> {
-    const { Body } = await this.client.send(
-      new GetObjectCommand({ Bucket: this.config.bucket, Key: this.key(key) }),
-    );
+    const { Body } = await this.client
+      .send(new GetObjectCommand({ Bucket: this.config.bucket, Key: this.key(key) }))
+      .catch((error: unknown) => {
+        const failure = error as { name?: string; $metadata?: { httpStatusCode?: number } };
+        if (failure?.name === "NoSuchKey" || failure?.$metadata?.httpStatusCode === 404)
+          throw new ObjectNotFoundError(key, { cause: error });
+        throw error;
+      });
     if (!Body) throw new Error("Object storage returned no body");
     yield* Body as Readable;
   }

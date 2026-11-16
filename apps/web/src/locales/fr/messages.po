@@ -2910,6 +2910,11 @@ msgstr "Impossible de mettre à jour le modèle vocal"
 msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
 msgstr "Impossible de vérifier la configuration de l’ordinateur ({failureMessage}). Corrigez la connexion, puis vérifiez à nouveau."
 
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "Couldn't start the agent's computer."
+msgstr "Impossible de démarrer l'ordinateur de l'agent."
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Couldn't update your timezone"
 msgstr "Impossible de mettre à jour votre fuseau horaire"
@@ -7602,6 +7607,10 @@ msgstr "Cette action est irréversible."
 #: src/pages/Onboarding.tsx
 msgid "this computer"
 msgstr "cet ordinateur"
+
+#: src/lib/server-copy.ts
+msgid "This computer's saved files couldn't be found; it started fresh."
+msgstr "Les fichiers enregistrés de cet ordinateur sont introuvables ; il a démarré à neuf."
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts

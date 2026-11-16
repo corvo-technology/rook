@@ -36,6 +36,12 @@ export const translateRunError: RunErrorTranslator = (message, values) => {
         message: "Connect your own API key in Models or choose Rook credits in Billing.",
         values,
       });
+    case "Couldn't start the agent's computer.":
+      return i18n._({
+        id: "Couldn't start the agent's computer.",
+        message: "Couldn't start the agent's computer.",
+        values,
+      });
     case "The model provider returned an error.":
       return i18n._({
         id: "The model provider returned an error.",

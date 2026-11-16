@@ -2910,6 +2910,11 @@ msgstr "Could not update the speech model"
 msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
 msgstr "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
 
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "Couldn't start the agent's computer."
+msgstr "Couldn't start the agent's computer."
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Couldn't update your timezone"
 msgstr "Couldn't update your timezone"
@@ -7602,6 +7607,10 @@ msgstr "This cannot be undone."
 #: src/pages/Onboarding.tsx
 msgid "this computer"
 msgstr "this computer"
+
+#: src/lib/server-copy.ts
+msgid "This computer's saved files couldn't be found; it started fresh."
+msgstr "This computer's saved files couldn't be found; it started fresh."
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts

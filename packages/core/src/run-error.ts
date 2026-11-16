@@ -1,5 +1,9 @@
 import type { CliEngineId, RunErrorKind, TurnGuardKind } from "@corvo/contracts";
-import { COMPUTER_RATE_LIMIT_ERROR, providerQuotaResetAt } from "@corvo/contracts";
+import {
+  COMPUTER_RATE_LIMIT_ERROR,
+  COMPUTER_SETUP_RUN_ERROR,
+  providerQuotaResetAt,
+} from "@corvo/contracts";
 import { stuckWorkStatusMessages } from "./stuck-work.js";
 
 export const MISSING_TOOL_FINAL_RESPONSE_ERROR =
@@ -127,6 +131,11 @@ export function userRunError(error: unknown): string {
     .replace(SERVER_FILE_PATH, "[path]")
     .trim();
   return cleaned || INTERNAL_RUN_ERROR;
+}
+
+/** The run error for a failure to start the agent's computer: a fixed line, then the details. */
+export function computerSetupRunError(error: unknown): string {
+  return `${COMPUTER_SETUP_RUN_ERROR}\n${userRunError(error)}`;
 }
 
 const MODEL_OUTPUT_RUN_ERRORS = new Set([
@@ -279,6 +288,10 @@ export function normalizeRunError(
   period?: "none" | "daily" | "weekly" | "monthly";
 } {
   const trimmed = details.trim();
+  // A computer that could not start says nothing about the model, whatever its details quote.
+  if (trimmed === COMPUTER_SETUP_RUN_ERROR || trimmed.startsWith(`${COMPUTER_SETUP_RUN_ERROR}\n`)) {
+    return { summary: translate(COMPUTER_SETUP_RUN_ERROR), details };
+  }
   if ([MODEL_IMAGE_INPUT_ERROR, MODEL_IMAGE_INPUT_UNKNOWN].includes(trimmed)) {
     return {
       summary: translate(trimmed),

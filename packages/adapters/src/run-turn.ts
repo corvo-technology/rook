@@ -8,6 +8,7 @@ import {
   TransientModelError,
 } from "@corvo/adapter-kit";
 import {
+  computerSetupRunError,
   containsSecret,
   displayName,
   humanizeToolName,
@@ -24,6 +25,7 @@ import { isToolPauseResult } from "./approval-effect.js";
 import { returnBotMessageOutcome, runReturnsOutcome } from "./bot-messages.js";
 import { scheduleComputerSleep } from "./computer-idle.js";
 import { holdComputerExecutionLeaseForTakeover } from "./computer-lifecycle.js";
+import { isComputerSetupFailure } from "./computer-setup-error.js";
 import { resolveBotWorkspacePath } from "./computer-support.js";
 import { closeHandoffGroup } from "./handoff-summary.js";
 import { compactionJobAfterTurn } from "./history-compaction.js";
@@ -821,7 +823,10 @@ export async function failRun(
   if (!ctx.state.terminalCheckpointComplete) {
     await ctx.computer.checkpoint.flush().catch(() => undefined);
   }
-  const message = redactSecrets(userRunError(error), ctx.secrets);
+  const message = redactSecrets(
+    isComputerSetupFailure(error) ? computerSetupRunError(error) : userRunError(error),
+    ctx.secrets,
+  );
   // Reply text the user watched stream in since the last saved message stays in the
   // thread, above the error, instead of vanishing with the live row.
   const partialReply = partialReplyBlocks(ctx);

@@ -2910,6 +2910,11 @@ msgstr "无法更新语音模型"
 msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
 msgstr "无法验证电脑设置（{failureMessage}）。请修复连接后重新检查。"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "Couldn't start the agent's computer."
+msgstr "无法启动智能体的电脑。"
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Couldn't update your timezone"
 msgstr "无法更新你的时区"
@@ -7602,6 +7607,10 @@ msgstr "此操作无法撤销。"
 #: src/pages/Onboarding.tsx
 msgid "this computer"
 msgstr "这台电脑"
+
+#: src/lib/server-copy.ts
+msgid "This computer's saved files couldn't be found; it started fresh."
+msgstr "找不到这台电脑已保存的文件，已重新开始。"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts

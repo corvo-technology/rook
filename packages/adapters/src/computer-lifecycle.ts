@@ -164,6 +164,10 @@ export async function provisionComputer(
   context: AdapterContext,
   controlHolder: "bot" | "none" = "none",
   onProgress?: ComputerUpdateProgress,
+  options: {
+    /** The computer's saved files were missing from storage, so it started without them. */
+    onHomeLost?: () => void;
+  } = {},
 ): Promise<ComputerRef> {
   const started = performance.now();
   const log = getLogger().child({ "computer.id": computerId, "run.id": context.runId });
@@ -330,8 +334,18 @@ export async function provisionComputer(
   let provisioned: ComputerRef | undefined;
   try {
     // Docker mounts the cached directory, so it must hold the stored revision before boot.
-    if (!reconnecting && deps.home instanceof ObjectAgentHomeStore)
-      await deps.home.hydrate(existing.homeKey);
+    if (!reconnecting && deps.home instanceof ObjectAgentHomeStore) {
+      const { lostObject } = await deps.home.hydrate(existing.homeKey);
+      if (lostObject) {
+        // Its saved files are gone from storage; the computer starts with an empty workspace.
+        log.warn("computer.home_missing", { "home.object": lostObject });
+        try {
+          options.onHomeLost?.();
+        } catch (noticeError) {
+          log.warn("computer.home_missing notice failed", { error: noticeError });
+        }
+      }
+    }
     await onProgress?.("recreating");
     const provision = () =>
       getLogger().withContext(

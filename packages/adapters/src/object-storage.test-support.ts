@@ -1,4 +1,5 @@
 import type { ObjectStorage } from "@corvo/adapter-kit";
+import { ObjectNotFoundError } from "@corvo/adapter-kit";
 import { expect, it } from "vitest";
 
 /** An in-memory bucket; `objects` is exposed so tests can tamper with stored bytes. */
@@ -13,7 +14,7 @@ export class MemoryObjectStorage implements ObjectStorage {
 
   async *get(key: string) {
     const object = this.objects.get(key);
-    if (!object) throw new Error(`No object ${key}`);
+    if (!object) throw new ObjectNotFoundError(key);
     // Small chunks, so readers cannot rely on getting a whole object at once.
     for (let offset = 0; offset < object.bytes.length; offset += 1000)
       yield object.bytes.subarray(offset, offset + 1000);
@@ -59,7 +60,7 @@ export function objectStorageConformance(create: () => Promise<ObjectStorage>) {
 
     await storage.delete(["homes/a/1", "homes/missing"]);
     expect(await keys(storage, "homes/")).toEqual(["homes/a/2"]);
-    await expect(read(storage, "homes/a/1")).rejects.toThrow();
+    await expect(read(storage, "homes/a/1")).rejects.toBeInstanceOf(ObjectNotFoundError);
   });
 
   it("replaces an object written again under the same key", async () => {

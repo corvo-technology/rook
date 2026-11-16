@@ -243,6 +243,64 @@ describe("ObjectAgentHomeStore", () => {
     ]);
   });
 
+  it("starts fresh and forgets the saved revision when its object is gone", async () => {
+    const { root, store, storage, rows } = await setup();
+    await store.commit("bot-1", await staged({ "a.txt": "stored" }), context);
+    const key = `homes/${rows[0]!.homeStorageId}/${rows[0]!.homeStorageRevision}`;
+    storage.objects.delete(key);
+    await rm(path.join(root, "homes"), { recursive: true, force: true });
+
+    expect(await store.hydrate("bot-1")).toEqual({ lostObject: key });
+    expect(rows[0]!.homeStorageRevision).toBeNull();
+    // The computer boots from an empty home, and a later start has nothing left to fail on.
+    expect(await exported(store, "bot-1")).toEqual({});
+    expect(await store.hydrate("bot-1")).toEqual({});
+
+    // The next save is a first revision again.
+    await store.commit("bot-1", await staged({ "a.txt": "again" }), context);
+    expect(rows[0]!.homeStorageRevision).not.toBeNull();
+    expect(await store.readFile("bot-1", "a.txt", context)).toBe("again");
+  });
+
+  it("keeps a revision another host replaced while it was being read", async () => {
+    const { store, storage, rows, otherHost } = await setup();
+    await store.commit("bot-1", await staged({ "a.txt": "first" }), context);
+    const old = `homes/${rows[0]!.homeStorageId}/${rows[0]!.homeStorageRevision}`;
+    // Another host saves and removes the old object after this one read its revision.
+    const other = await otherHost();
+    const realGet = storage.get.bind(storage);
+    let raced = false;
+    storage.get = ((key: string) => {
+      if (!raced && key === old) {
+        raced = true;
+        return (async function* () {
+          await other.hydrate("bot-1");
+          await other.commit("bot-1", await staged({ "a.txt": "second" }), context);
+          yield* realGet(key);
+        })();
+      }
+      return realGet(key);
+    }) as typeof storage.get;
+    const reader = await otherHost();
+
+    expect(await reader.hydrate("bot-1")).toEqual({});
+    expect(await reader.readFile("bot-1", "a.txt", context)).toBe("second");
+    expect(rows[0]!.homeStorageRevision).not.toBeNull();
+  });
+
+  it("does not forget a revision for any other failure", async () => {
+    const { root, store, storage, rows } = await setup();
+    await store.commit("bot-1", await staged({ "a.txt": "stored" }), context);
+    const revision = rows[0]!.homeStorageRevision;
+    storage.get = (() => {
+      throw new Error("bucket unreachable");
+    }) as typeof storage.get;
+    await rm(path.join(root, "homes"), { recursive: true, force: true });
+
+    await expect(store.hydrate("bot-1")).rejects.toThrow("bucket unreachable");
+    expect(rows[0]!.homeStorageRevision).toBe(revision);
+  });
+
   it("does not let a save that started before a newer one replace it", async () => {
     const { root, storage, records, otherHost } = await setup();
     let interleave: (() => Promise<unknown>) | undefined;
@@ -252,6 +310,7 @@ describe("ObjectAgentHomeStore", () => {
       advance: (...args) => records.advance(...args),
       revisions: (ids) => records.revisions(ids),
       kinds: (keys) => records.kinds(keys),
+      forget: (...args) => records.forget(...args),
       create: async (homeKey) => {
         await interleave?.();
         return records.create(homeKey);
@@ -277,6 +336,7 @@ describe("ObjectAgentHomeStore", () => {
       create: (homeKey) => records.create(homeKey),
       revisions: (ids) => records.revisions(ids),
       kinds: (keys) => records.kinds(keys),
+      forget: (...args) => records.forget(...args),
       // The update commits, then the connection drops before the reply.
       advance: async (...args) => {
         await records.advance(...args);

@@ -130,6 +130,7 @@ export const MetaCode = z.enum([
   "routine_no_changes",
   "routine_check_paused",
   "sandbox_storage_full",
+  "computer_home_lost",
 ]);
 export type MetaCode = z.infer<typeof MetaCode>;
 

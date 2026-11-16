@@ -7,6 +7,7 @@ import {
   BOT_MONTHLY_LIMIT_RUN_ERROR,
   BOT_REPLY_CAP_RUN_ERROR,
   CLI_ENGINE_RUN_ERRORS,
+  computerSetupRunError,
   HOSTED_MODEL_CREDITS_REQUIRED_ERROR,
   isImageInputConfirmation,
   isModelRequiredSendError,
@@ -117,6 +118,25 @@ describe("normalizeRunError", () => {
     ["", "The model provider returned an error."],
   ])("normalizes %s", (details, summary) => {
     expect(normalizeRunError(details)).toMatchObject({ summary, details });
+  });
+
+  it("reports a computer that could not start as that, not as a model error", () => {
+    const error = new Error("NoSuchKey: The specified key does not exist.");
+    const message = computerSetupRunError(error);
+    expect(message).toBe(
+      "Couldn't start the agent's computer.\nNoSuchKey: The specified key does not exist.",
+    );
+    expect(normalizeRunError(message)).toEqual({
+      summary: "Couldn't start the agent's computer.",
+      details: message,
+    });
+    // The fixed line alone, and a model error that merely mentions the computer, differ.
+    expect(normalizeRunError("Couldn't start the agent's computer.").summary).toBe(
+      "Couldn't start the agent's computer.",
+    );
+    expect(normalizeRunError("Provider said: Couldn't start the agent's computer.").summary).toBe(
+      "The model provider returned an error.",
+    );
   });
 
   it.each([

@@ -48,7 +48,7 @@ const MENU_STRINGS: Record<SetupLocale, MenuStrings> = {
     view: "Visualizar",
     window: "Janela",
     file: "Arquivo",
-    cloudUnreachable: "Não foi possível acessar o Rook Cloud. Verifique sua conexão.",
+    cloudUnreachable: "Não foi possível acessar o Rook Nuvem. Verifique sua conexão.",
   },
   de: {
     about: "Über {name}",
@@ -78,7 +78,7 @@ const MENU_STRINGS: Record<SetupLocale, MenuStrings> = {
     view: "视图",
     window: "窗口",
     file: "文件",
-    cloudUnreachable: "无法连接 Rook Cloud。请检查网络。",
+    cloudUnreachable: "无法连接 Rook 云。请检查网络。",
   },
   es: {
     about: "Acerca de {name}",
@@ -93,7 +93,7 @@ const MENU_STRINGS: Record<SetupLocale, MenuStrings> = {
     view: "Visualización",
     window: "Ventana",
     file: "Archivo",
-    cloudUnreachable: "No se pudo acceder a Rook Cloud. Revisa tu conexión.",
+    cloudUnreachable: "No se pudo acceder a Rook Nube. Revisa tu conexión.",
   },
   fr: {
     about: "À propos de {name}",
@@ -108,7 +108,7 @@ const MENU_STRINGS: Record<SetupLocale, MenuStrings> = {
     view: "Présentation",
     window: "Fenêtre",
     file: "Fichier",
-    cloudUnreachable: "Impossible de joindre Rook Cloud. Vérifiez votre connexion.",
+    cloudUnreachable: "Impossible de joindre Rook Nuage. Vérifiez votre connexion.",
   },
   ja: {
     about: "{name}について",
@@ -123,7 +123,7 @@ const MENU_STRINGS: Record<SetupLocale, MenuStrings> = {
     view: "表示",
     window: "ウインドウ",
     file: "ファイル",
-    cloudUnreachable: "Rook Cloud に接続できません。接続を確認してください。",
+    cloudUnreachable: "Rook クラウドに接続できません。接続を確認してください。",
   },
 };
 

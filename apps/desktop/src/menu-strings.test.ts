@@ -14,4 +14,19 @@ describe("menu strings", () => {
     expect(withName(menuStrings("pt-BR").quit, "Rook")).toBe("Sair do Rook");
     expect(menuStrings("pt-BR").file).toBe("Arquivo");
   });
+
+  it("names the hosted product in each language's own word for the cloud", () => {
+    const names = {
+      en: "Rook Cloud",
+      "pt-BR": "Rook Nuvem",
+      es: "Rook Nube",
+      fr: "Rook Nuage",
+      de: "Rook Cloud",
+      ja: "Rook クラウド",
+      "zh-CN": "Rook 云",
+    } as const;
+    for (const locale of SETUP_LOCALES) {
+      expect(menuStrings(locale).cloudUnreachable, locale).toContain(names[locale]);
+    }
+  });
 });

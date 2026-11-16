@@ -73,10 +73,43 @@ function wait(ms: number, signal: AbortSignal) {
 
 const IDLE: SpeechSnapshot = { status: "idle" };
 
+/** A tenth of a second of silence, played from the tap that starts a call to unlock the speaker. */
+function silence(): string {
+  const samples = 800;
+  const bytes = new Uint8Array(44 + samples * 2);
+  const view = new DataView(bytes.buffer);
+  const text = (offset: number, value: string) => {
+    for (let index = 0; index < value.length; index += 1)
+      view.setUint8(offset + index, value.charCodeAt(index));
+  };
+  text(0, "RIFF");
+  view.setUint32(4, 36 + samples * 2, true);
+  text(8, "WAVEfmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, 8000, true);
+  view.setUint32(28, 16000, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  text(36, "data");
+  view.setUint32(40, samples * 2, true);
+  return `data:audio/wav;base64,${btoa(String.fromCharCode(...bytes))}`;
+}
+
+function debugSentence(stage: string, text: string, extra: Record<string, unknown> = {}) {
+  console.debug("[voice] sentence", { stage, text: text.slice(0, 40), ...extra });
+}
+
 export class Speaker {
   private snapshot: SpeechSnapshot = IDLE;
   private watchers = new Set<(s: SpeechSnapshot) => void>();
   private token = 0;
+  /**
+   * One element plays every clip. Safari lets an element play only after it was started by a tap,
+   * and a clip that arrives from the network seconds later is no longer inside that tap, so a
+   * fresh element per clip stays silent. This one is unlocked when the call starts and reused.
+   */
   private audio: HTMLAudioElement | null = null;
   private objectUrl: string | null = null;
   private settlePlayback: ((finished: boolean) => void) | null = null;
@@ -113,11 +146,36 @@ export class Speaker {
     if (this.snapshot.status !== "idle" || this.snapshot.error) this.set(IDLE);
   }
 
+  private element(): HTMLAudioElement {
+    this.audio ??= new Audio();
+    return this.audio;
+  }
+
+  /** Call from a tap: lets this speaker play later clips without another tap (Safari). */
+  unlock(): void {
+    if (typeof Audio === "undefined") return;
+    try {
+      const audio = this.element();
+      if (this.settlePlayback) return;
+      const quiet = silence();
+      audio.src = quiet;
+      audio.play().then(
+        () => {
+          if (!this.settlePlayback && audio.src === quiet) audio.pause();
+        },
+        () => undefined,
+      );
+    } catch {
+      // No audio element here; speaking reports it.
+    }
+  }
+
   private teardownAudio() {
     if (this.audio) {
+      this.audio.onended = null;
+      this.audio.onerror = null;
       this.audio.pause();
       this.audio.src = "";
-      this.audio = null;
     }
     if (this.objectUrl) {
       URL.revokeObjectURL(this.objectUrl);
@@ -127,6 +185,7 @@ export class Speaker {
 
   /** A call is starting: the engine loads its voice now so the first sentence is not slowed by it. */
   warm(botId?: string): void {
+    this.unlock();
     void rpc.voice
       .warm(
         { botId, language: conversationLanguage() },
@@ -171,18 +230,18 @@ export class Speaker {
         (error: unknown) => ({ error }),
       );
     let next: Promise<Rendered> | null = render(utterances[0] ?? "");
+    let spoken = 0;
+    let firstFailure: unknown;
     for (let i = 0; i < utterances.length; i += 1) {
       const current = next;
       next = i + 1 < utterances.length ? render(utterances[i + 1] ?? "") : null;
       if (!current) break;
       const rendered = await current;
-      if ("error" in rendered) {
-        const failure = live() ? errorText(rendered.error) : undefined;
-        if (failure) this.set({ ...IDLE, error: failure });
-        if (this.request === controller) this.request = null;
-        return failure;
-      }
       if (!live()) return;
+      if ("error" in rendered) {
+        firstFailure ??= rendered.error;
+        continue;
+      }
       this.set({
         status: "speaking",
         botId: opts.botId,
@@ -190,11 +249,18 @@ export class Speaker {
         caption: utterances[i],
       });
       const finished = await this.play(rendered.blob, live);
-      if (!finished || !live()) {
-        if (live()) this.set(IDLE);
+      if (!live()) {
         if (this.request === controller) this.request = null;
         return;
       }
+      if (finished) spoken += 1;
+      else firstFailure ??= new Error("The browser could not play the voice.");
+    }
+    if (spoken === 0 && firstFailure !== undefined) {
+      const failure = errorText(firstFailure);
+      this.set({ ...IDLE, error: failure });
+      if (this.request === controller) this.request = null;
+      return failure;
     }
     if (live()) this.set(IDLE);
     if (this.request === controller) this.request = null;
@@ -248,6 +314,8 @@ export class Speaker {
     const run = async (): Promise<string | undefined> => {
       this.set({ status: "preparing", botId: opts.botId, messageId: opts.messageId });
       let first = true;
+      let spoken = 0;
+      let firstFailure: unknown;
       for (;;) {
         if (!live()) return release();
         kick();
@@ -261,7 +329,6 @@ export class Speaker {
         }
         const rendered = await item.rendered;
         if (!live()) return release();
-        if ("error" in rendered) return fail(rendered.error);
         if (gate) {
           // Readiness (a voice to speak with, a local voice still downloading) is checked
           // next to the first render rather than before it.
@@ -269,6 +336,12 @@ export class Speaker {
           gate = null;
           if (!live()) return release();
           if (ready.error) return fail(ready.error);
+        }
+        if ("error" in rendered) {
+          // One sentence the provider could not speak is skipped, not the rest of the reply.
+          firstFailure ??= rendered.error;
+          queue.shift();
+          continue;
         }
         this.set({
           status: "speaking",
@@ -287,11 +360,17 @@ export class Speaker {
         }
         const finished = await this.play(rendered.blob, live);
         queue.shift();
-        if (!finished || !live()) {
-          if (live()) this.set(IDLE);
-          return release();
+        if (!live()) return release();
+        if (finished) {
+          spoken += 1;
+          debugSentence("played", item.text);
+        } else {
+          firstFailure ??= new Error("The browser could not play the voice.");
+          debugSentence("failed", item.text, { stage: "play" });
         }
       }
+      // Only a reply of which nothing could be spoken says so.
+      if (spoken === 0 && firstFailure !== undefined) return fail(firstFailure);
       if (live()) this.set(IDLE);
       release();
     };
@@ -361,6 +440,8 @@ export class Speaker {
     spaceId: string | null,
   ): Promise<Blob> {
     const deadline = requestDeadline(VOICE_RESPONSE_TIMEOUT_MS, "Voice request timed out.", signal);
+    const sentAt = performance.now();
+    debugSentence("sent", text);
     try {
       const res = await withAbort(
         fetch("/api/voice/speak", {
@@ -385,9 +466,19 @@ export class Speaker {
       }
       if (res.headers.get("x-voice-fallback") === "local") announceLocalFallback();
       const bytes = await readVoiceAudio(res, deadline.signal);
+      debugSentence("received", text, {
+        bytes: bytes.byteLength,
+        ms: Math.round(performance.now() - sentAt),
+      });
       return new Blob([new Uint8Array(bytes)], {
         type: res.headers.get("content-type") ?? "audio/mpeg",
       });
+    } catch (error) {
+      debugSentence("failed", text, {
+        ms: Math.round(performance.now() - sentAt),
+        reason: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
     } finally {
       deadline.dispose();
     }
@@ -398,23 +489,28 @@ export class Speaker {
       if (!live()) return resolve(false);
       this.teardownAudio();
       const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      this.audio = audio;
+      const audio = this.element();
       this.objectUrl = url;
       let settled = false;
-      const done = (ok: boolean) => {
+      const done = (ok: boolean, reason?: unknown) => {
         if (settled) return;
         settled = true;
         audio.onended = null;
         audio.onerror = null;
         if (this.settlePlayback === done) this.settlePlayback = null;
         if (this.audio === audio) this.teardownAudio();
+        if (!ok && live()) {
+          console.debug("[voice] playback failed", {
+            reason: reason instanceof Error ? `${reason.name}: ${reason.message}` : reason,
+          });
+        }
         resolve(ok);
       };
       this.settlePlayback = done;
       audio.onended = () => done(true);
-      audio.onerror = () => done(false);
-      audio.play().catch(() => done(false));
+      audio.onerror = () => done(false, "media error");
+      audio.src = url;
+      audio.play().catch((error: unknown) => done(false, error));
     });
   }
 }

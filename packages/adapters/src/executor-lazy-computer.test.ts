@@ -467,6 +467,8 @@ describe("run computer provisioning", () => {
       "computer-1",
       expect.objectContaining({ runId: "run-1" }),
       "bot",
+      undefined,
+      { onHomeLost: expect.any(Function) },
     );
     expect(sandbox.listFiles).toHaveBeenCalledTimes(2);
     expect(sandbox.listFiles).toHaveBeenCalledWith(COMPUTER, expect.any(String), expect.anything());
@@ -522,7 +524,10 @@ describe("run computer provisioning", () => {
     );
 
     expect(finalizeRun).toHaveBeenCalledExactlyOnceWith(
-      expect.objectContaining({ outcome: "failed", error: "provider unavailable" }),
+      expect.objectContaining({
+        outcome: "failed",
+        error: "Couldn't start the agent's computer.\nprovider unavailable",
+      }),
     );
     expect(enqueue).not.toHaveBeenCalled();
     // Busy-computer and database waits between failures neither count nor reset the streak.

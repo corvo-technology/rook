@@ -69,6 +69,14 @@ const primary = model("provider-a", "primary", 32_768);
 const backupA = model("provider-b", "backup-a", 8_192);
 const backupB = model("provider-c", "backup-b", 16_384);
 
+/** A whole one-pixel PNG: images that are cut short or not images never reach a model. */
+const PIXEL_PNG = Uint8Array.from(
+  Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+    "base64",
+  ),
+);
+
 function model(provider: string, id: string, contextWindow: number): Model<"openai-completions"> {
   return {
     provider,
@@ -1282,7 +1290,9 @@ describe("Pi runtime ordered model fallback", () => {
     ];
     input.executeTool = vi.fn(async () => ({
       kind: "agent_tool_result",
-      content: [{ type: "image", data: "iVBORw0KGgo=", mimeType: "image/png" }],
+      content: [
+        { type: "image", data: Buffer.from(PIXEL_PNG).toString("base64"), mimeType: "image/png" },
+      ],
       details: { frameId: "test-frame" },
     }));
     let calls = 0;
@@ -1451,7 +1461,13 @@ describe("Pi runtime ordered model fallback", () => {
       shots += 1;
       return {
         kind: "agent_tool_result" as const,
-        content: [{ type: "image" as const, data: "iVBORw0KGgo=", mimeType: "image/png" as const }],
+        content: [
+          {
+            type: "image" as const,
+            data: Buffer.from(PIXEL_PNG).toString("base64"),
+            mimeType: "image/png" as const,
+          },
+        ],
         details: { frameId: `frame-${shots}` },
       };
     });
@@ -1507,7 +1523,11 @@ describe("Pi runtime ordered model fallback", () => {
         kind: "agent_tool_result" as const,
         content: [
           { type: "text" as const, text: `frame ${shots}` },
-          { type: "image" as const, data: "iVBORw0KGgo=", mimeType: "image/png" as const },
+          {
+            type: "image" as const,
+            data: Buffer.from(PIXEL_PNG).toString("base64"),
+            mimeType: "image/png" as const,
+          },
         ],
         details: { frameId: `frame-${shots}` },
       };
@@ -1748,8 +1768,8 @@ describe("Pi runtime ordered model fallback", () => {
       maxImagesPerPrompt: 1,
     });
     input.currentTurnImages = [
-      { name: "first.png", mimeType: "image/png", data: new Uint8Array([1]) },
-      { name: "second.png", mimeType: "image/png", data: new Uint8Array([2]) },
+      { name: "first.png", mimeType: "image/png", data: PIXEL_PNG },
+      { name: "second.png", mimeType: "image/png", data: PIXEL_PNG },
     ];
     providerState.stream.mockImplementation((target: Model<"openai-completions">) =>
       stream(target, message(target, [], "error", "429 quota exhausted")),
@@ -2065,9 +2085,7 @@ describe("Pi runtime ordered model fallback", () => {
       { provider: backupA.provider, id: backupA.id, apiKey: "text-only-key" },
       { provider: backupB.provider, id: backupB.id, apiKey: "image-backup-key" },
     ]);
-    input.currentTurnImages = [
-      { name: "fixture.png", mimeType: "image/png", data: new Uint8Array([1]) },
-    ];
+    input.currentTurnImages = [{ name: "fixture.png", mimeType: "image/png", data: PIXEL_PNG }];
     providerState.stream.mockImplementation((target: Model<"openai-completions">) =>
       target.provider === primary.provider
         ? stream(target, message(target, [], "error", "429 rate_limit_error"))
@@ -2090,9 +2108,7 @@ describe("Pi runtime ordered model fallback", () => {
       { provider: backupA.provider, id: backupA.id, apiKey: "text-only-key" },
       { provider: backupB.provider, id: backupB.id, apiKey: "image-backup-key" },
     ]);
-    input.currentTurnImages = [
-      { name: "fixture.png", mimeType: "image/png", data: new Uint8Array([1]) },
-    ];
+    input.currentTurnImages = [{ name: "fixture.png", mimeType: "image/png", data: PIXEL_PNG }];
     providerState.stream.mockImplementation((target: Model<"openai-completions">) =>
       target.provider === primary.provider
         ? stream(target, message(target, [], "error", "429 rate_limit_error"))
@@ -2119,8 +2135,8 @@ describe("Pi runtime ordered model fallback", () => {
       { provider: backupB.provider, id: backupB.id, apiKey: "image-backup-key" },
     ]);
     input.currentTurnImages = [
-      { name: "first.png", mimeType: "image/png", data: new Uint8Array([1]) },
-      { name: "second.png", mimeType: "image/png", data: new Uint8Array([2]) },
+      { name: "first.png", mimeType: "image/png", data: PIXEL_PNG },
+      { name: "second.png", mimeType: "image/png", data: PIXEL_PNG },
     ];
     providerState.stream.mockImplementation((target: Model<"openai-completions">) =>
       target.provider === primary.provider
@@ -2237,9 +2253,7 @@ describe("Pi runtime ordered model fallback", () => {
         acceptsImages: true,
       },
     ]);
-    input.currentTurnImages = [
-      { name: "fixture.png", mimeType: "image/png", data: new Uint8Array([1]) },
-    ];
+    input.currentTurnImages = [{ name: "fixture.png", mimeType: "image/png", data: PIXEL_PNG }];
     providerState.stream.mockImplementation((target: Model<"openai-completions">) =>
       target.provider === primary.provider
         ? stream(target, message(target, [], "error", "429 rate_limit_error"))
@@ -2827,5 +2841,65 @@ describe("Pi runtime fallback error classes and mid-run switches", () => {
       backupA.provider,
       backupA.provider,
     ]);
+  });
+});
+
+describe("Pi runtime images the provider cannot read", () => {
+  const whole = PIXEL_PNG;
+  const rejection =
+    "Codex error: input_image image_url could not parse image: unexpected end of file";
+  const imageParts = (context: Context) =>
+    context.messages.flatMap((entry) =>
+      entry.role === "user" && typeof entry.content !== "string"
+        ? entry.content.filter((part) => part.type === "image")
+        : [],
+    );
+  const withImage = (bytes: Uint8Array) =>
+    ({
+      ...request(),
+      currentTurnImages: [{ name: "shot.png", mimeType: "image/png", data: bytes }],
+    }) as AgentRunRequest;
+
+  it("sends a whole image as it is", async () => {
+    providerState.stream.mockImplementation(() =>
+      stream(primary, message(primary, [{ type: "text", text: "Seen." }], "stop")),
+    );
+    await run(withImage(whole));
+    const contexts = providerState.stream.mock.calls.map(([, context]) => context as Context);
+    expect(imageParts(contexts[0]!)).toHaveLength(1);
+  });
+
+  it("replaces an image cut short with a note and never sends its bytes", async () => {
+    providerState.stream.mockImplementation(() =>
+      stream(primary, message(primary, [{ type: "text", text: "Seen." }], "stop")),
+    );
+    const events = await run(withImage(whole.slice(0, whole.length - 20)));
+    const context = providerState.stream.mock.calls[0]![1] as Context;
+    expect(imageParts(context)).toEqual([]);
+    expect(JSON.stringify(context.messages)).toContain("[image could not be read: truncated]");
+    expect(events.at(-1)).toEqual({ type: "done", text: "Seen." });
+    expect(providerState.stream).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries once without images when the provider still rejects one", async () => {
+    providerState.stream
+      .mockImplementationOnce(() => stream(primary, message(primary, [], "error", rejection)))
+      .mockImplementation(() =>
+        stream(primary, message(primary, [{ type: "text", text: "Answered." }], "stop")),
+      );
+    const events = await run(withImage(whole));
+    expect(events.at(-1)).toEqual({ type: "done", text: "Answered." });
+    const contexts = providerState.stream.mock.calls.map(([, context]) => context as Context);
+    expect(contexts).toHaveLength(2);
+    expect(imageParts(contexts[0]!)).toHaveLength(1);
+    expect(imageParts(contexts[1]!)).toEqual([]);
+  });
+
+  it("does not retry a second time when the retry fails too", async () => {
+    providerState.stream.mockImplementation(() =>
+      stream(primary, message(primary, [], "error", rejection)),
+    );
+    await expect(run(withImage(whole))).rejects.toThrow();
+    expect(providerState.stream).toHaveBeenCalledTimes(2);
   });
 });

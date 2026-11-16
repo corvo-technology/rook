@@ -8,6 +8,17 @@ import * as turnCheckpoints from "../../adapters/src/turn-checkpoint.js";
 import type { ModelEmulatorRequest } from "./model-emulator.js";
 import { startModelEmulator } from "./model-emulator.js";
 
+/** A whole one-pixel PNG: a picture cut short never reaches a model. */
+const PIXEL_PNG = new Uint8Array(
+  Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+    "base64",
+  ),
+);
+const PIXEL_GIF = new Uint8Array(
+  Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64"),
+);
+
 async function collect(events: AsyncIterable<AgentRuntimeEvent>) {
   const result: AgentRuntimeEvent[] = [];
   for await (const event of events) result.push(event);
@@ -272,10 +283,14 @@ describe("paused turn context", () => {
               if (pause === "ask_user") {
                 const wire = JSON.stringify(request.messages);
                 expect(wire).toContain("answer-image.png");
-                expect(wire).toContain("data:image/png;base64,AQID");
+                expect(wire).toContain(
+                  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+                );
                 expect(wire).toContain("new-thread-text");
                 expect(wire.match(/steering-text/g)).toHaveLength(1);
-                expect(wire).toContain("data:image/png;base64,BAUG");
+                expect(wire).toContain(
+                  "data:image/png;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+                );
               }
             },
             response: { type: "text", text: "Done." },
@@ -323,7 +338,7 @@ describe("paused turn context", () => {
                         {
                           name: "answer-image.png",
                           mimeType: "image/png" as const,
-                          data: new Uint8Array([1, 2, 3]),
+                          data: PIXEL_PNG,
                         },
                       ],
                     },
@@ -342,7 +357,7 @@ describe("paused turn context", () => {
                               {
                                 name: "steering.png",
                                 mimeType: "image/png" as const,
-                                data: new Uint8Array([4, 5, 6]),
+                                data: PIXEL_GIF,
                               },
                             ],
                           },

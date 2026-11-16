@@ -24,3 +24,16 @@ export function isSandboxDamagedError(error: unknown): boolean {
   }
   return false;
 }
+
+// Provider and kernel wording for a disk with no room left.
+const STORAGE_FULL_MESSAGE =
+  /storage is full|no space left on device|\bENOSPC\b|disk quota exceeded|disk (?:is )?full/i;
+
+/** A computer out of room, reported as `SandboxStorageFullError` or in the system's own words. */
+export function isSandboxStorageFullError(error: unknown): boolean {
+  for (let current: unknown = error; current instanceof Error; current = current.cause) {
+    if (current.name === "SandboxStorageFullError" || STORAGE_FULL_MESSAGE.test(current.message))
+      return true;
+  }
+  return false;
+}

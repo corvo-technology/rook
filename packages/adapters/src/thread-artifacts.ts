@@ -23,7 +23,9 @@ import {
 import type { Artifact, Prisma, PrismaClient } from "@corvo/db";
 import { withResolvedArtifactVersion } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
+import { writeFileWithRoom } from "./computer-storage.js";
 import { resolveBotWorkspacePath } from "./computer-support.js";
+import { isSandboxStorageFullError } from "./sandbox-errors.js";
 
 export type MaterializedThreadFile = {
   name: string;
@@ -183,6 +185,8 @@ export async function materializeCurrentTurnFiles(
     computer: () => Promise<ComputerRef>;
     computerMode: ComputerMode;
     markWorkspaceDirty?: () => void;
+    /** Called when the computer had no room for a file, so its owner can be told. */
+    onStorageFull?: () => void;
   },
 ): Promise<MaterializedThreadFile[]> {
   return materializeThreadFiles(deps, blocks, input, false);
@@ -213,6 +217,7 @@ async function materializeThreadFiles(
       input.context.botId,
       metadata.path,
     );
+    // A copy the agent edited stays as it is.
     const exists = preserveExisting
       ? await deps.sandbox.readFile(await input.computer(), workspacePath, input.context).then(
           () => true,
@@ -227,11 +232,17 @@ async function materializeThreadFiles(
         );
       }
       input.markWorkspaceDirty?.();
-      await deps.sandbox.writeFile(
-        await input.computer(),
-        { path: workspacePath, content: bytes },
-        input.context,
-      );
+      try {
+        await writeFileWithRoom(
+          deps.sandbox,
+          await input.computer(),
+          { path: workspacePath, content: bytes },
+          input.context,
+        );
+      } catch (error) {
+        if (isSandboxStorageFullError(error)) input.onStorageFull?.();
+        throw error;
+      }
     }
     materialized.push(metadata);
   }

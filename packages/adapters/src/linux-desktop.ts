@@ -31,6 +31,7 @@ import {
   ComputerScreenUnavailableError,
   screenSessionKey,
 } from "./computer-screens.js";
+import { managedTempCleanupCommand } from "./computer-storage.js";
 import {
   boundedComputerActions,
   clampRounded,
@@ -43,6 +44,7 @@ import {
   observeExtraDisplayCommand,
   parseExtraDisplayObservation,
 } from "./extra-displays.js";
+import { isSandboxStorageFullError } from "./sandbox-errors.js";
 
 export interface LinuxDesktopHost {
   environment(computer: ComputerRef, context: AdapterContext): Promise<DesktopEnvironment>;
@@ -182,8 +184,19 @@ export class LinuxDesktop {
     layout: { display: string; displayNumber: number },
     context: AdapterContext,
   ) {
-    const output = await this.run(computer, observeExtraDisplayCommand(layout), context);
-    const observed = parseExtraDisplayObservation(output);
+    const capture = async () =>
+      parseExtraDisplayObservation(
+        await this.run(computer, observeExtraDisplayCommand(layout), context),
+      );
+    let observed: ReturnType<typeof parseExtraDisplayObservation>;
+    try {
+      observed = await capture();
+    } catch (error) {
+      if (!isSandboxStorageFullError(error)) throw error;
+      // Make room from Rook's own scratch files, then capture once more.
+      await this.run(computer, managedTempCleanupCommand(), context).catch(() => undefined);
+      observed = await capture();
+    }
     return computerObservation(observed.image, {
       mimeType: "image/png",
       width: 1280,

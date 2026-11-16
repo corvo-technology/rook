@@ -7565,6 +7565,10 @@ msgstr "Réflexion : {thinking}"
 msgid "Thinking: Default"
 msgstr "Réflexion : Par défaut"
 
+#: src/lib/server-copy.ts
+msgid "This agent's computer is full. Delete files it no longer needs."
+msgstr "L'ordinateur de cet agent est plein. Supprimez les fichiers dont il n'a plus besoin."
+
 #: src/pages/shell/agent-import.tsx
 msgid "This backup could not be read."
 msgstr "Impossible de lire cette sauvegarde."

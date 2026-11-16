@@ -7565,6 +7565,10 @@ msgstr "Denktiefe: {thinking}"
 msgid "Thinking: Default"
 msgstr "Denktiefe: Standard"
 
+#: src/lib/server-copy.ts
+msgid "This agent's computer is full. Delete files it no longer needs."
+msgstr "Der Computer dieses Agenten ist voll. Lösche Dateien, die er nicht mehr braucht."
+
 #: src/pages/shell/agent-import.tsx
 msgid "This backup could not be read."
 msgstr "Dieses Backup konnte nicht gelesen werden."

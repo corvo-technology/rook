@@ -1,5 +1,7 @@
 import type { ComputerAction, ComputerInput } from "@corvo/adapter-kit";
+import { SandboxStorageFullError } from "@corvo/adapter-kit";
 import { clampRounded, shellQuote } from "./computer-support.js";
+import { imageProblem } from "./image-integrity.js";
 export interface ExtraDisplayLayout {
   display: string;
   displayNumber: number;
@@ -38,6 +40,10 @@ export function parseExtraDisplayObservation(output: string): {
       .find(Boolean) ?? "";
   const image = Uint8Array.from(Buffer.from(base64Line, "base64"));
   if (!image.byteLength) throw new Error("extra display observation did not capture an image");
+  // A capture written to a full disk is cut short, and the shell still reports success.
+  if (imageProblem(image) === "truncated") {
+    throw new SandboxStorageFullError({ cause: new Error("the screenshot was cut short") });
+  }
   return {
     image,
     ...(cursorLine ? { cursor: { x: Number(cursorLine[1]), y: Number(cursorLine[2]) } } : {}),

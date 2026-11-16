@@ -53,3 +53,15 @@ export class SandboxDamagedError extends Error {
     this.name = "SandboxDamagedError";
   }
 }
+
+/**
+ * The computer has no room left, so a write or a capture failed or came out cut short. Rook's own
+ * temporary files can be cleared to make room; the person's files are never touched.
+ */
+export class SandboxStorageFullError extends Error {
+  readonly code = "SANDBOX_STORAGE_FULL";
+  constructor(options?: { cause?: unknown }) {
+    super("The computer's storage is full.", options);
+    this.name = "SandboxStorageFullError";
+  }
+}

@@ -3,13 +3,14 @@ import { STORE_CATEGORIES } from "@corvo/contracts";
 import { Button } from "@corvo/ui-web";
 import { Trans } from "@lingui/react/macro";
 import { useState } from "react";
-import { ImportFromApp } from "../ImportFromApp";
+import { ImportFlow } from "../ImportFlow";
 import { useStoreCategoryLabels } from "../StoreCategoryChips";
 
 type Way = "team" | "import" | "blank";
 
 /** How the space starts: a ready team for the areas picked, agents brought in, or just the Chief. */
 export function StartStep({ onDone }: { onDone: (picks: OnboardingPicks) => void }) {
+  const [screen, setScreen] = useState<"start" | "import">("start");
   const labels = useStoreCategoryLabels();
   const [way, setWay] = useState<Way>("team");
   // In the order tapped: the first one decides which agent is made.
@@ -27,6 +28,17 @@ export function StartStep({ onDone }: { onDone: (picks: OnboardingPicks) => void
     `w-full rounded-xl border p-4 text-left motion-safe:transition-colors ${
       way === value ? "border-foreground bg-muted" : "border-border hover:bg-muted/50"
     }`;
+
+  if (screen === "import") {
+    return (
+      <div>
+        <h1 className="mb-6 text-[32px] font-medium text-foreground">
+          <Trans>Import</Trans>
+        </h1>
+        <ImportFlow onBack={() => setScreen("start")} onFinish={() => onDone({ categories: [] })} />
+      </div>
+    );
+  }
 
   return (
     <form
@@ -65,21 +77,13 @@ export function StartStep({ onDone }: { onDone: (picks: OnboardingPicks) => void
             </div>
           ) : null}
         </div>
-        <div className={card("import")}>
-          <button
-            type="button"
-            aria-pressed={way === "import"}
-            className="w-full text-left font-medium"
-            onClick={() => setWay("import")}
-          >
-            <Trans>Import from another app</Trans>
-          </button>
-          {way === "import" ? (
-            <div className="mt-3">
-              <ImportFromApp variant="outline" />
-            </div>
-          ) : null}
-        </div>
+        <button
+          type="button"
+          className={`${card("import")} font-medium`}
+          onClick={() => setScreen("import")}
+        >
+          <Trans>Import</Trans>
+        </button>
         <button
           type="button"
           aria-pressed={way === "blank"}

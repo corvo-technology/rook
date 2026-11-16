@@ -24,9 +24,10 @@ test("an agent from another app is previewed, then imported with its routine pau
   await sidebar.getByRole("button", { name: "Actions for Personal" }).click();
   await page.getByRole("menuitem", { name: "Settings" }).click();
   const settings = page.getByTestId("settings-page");
-  await settings.getByRole("button", { name: "Import from another app" }).click();
+  await settings.getByRole("button", { name: "Import", exact: true }).click();
 
   const dialog = page.getByRole("dialog");
+  await dialog.getByRole("button", { name: "ChatGPT" }).click();
   await dialog.getByRole("textbox", { name: "Answer" }).fill(`\`\`\`json\n${answer}\n\`\`\``);
   await dialog.getByRole("button", { name: "Preview" }).click();
 
@@ -46,6 +47,7 @@ test("an agent from another app is previewed, then imported with its routine pau
 
   await dialog.getByRole("button", { name: "Import", exact: true }).click();
   await expect(dialog.getByText(/^Added 1 agent/)).toBeVisible();
+  await expect(dialog.getByTestId("imported-agents").getByText("Sales Coach")).toBeVisible();
 
   const bots = await rpc<Bot[]>(page, "bots/list", {});
   const added = bots.find((bot) => bot.name === "Sales Coach");

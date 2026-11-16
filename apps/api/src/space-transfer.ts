@@ -29,6 +29,8 @@ import { getLogger } from "@corvo/logging";
 import type { AgentImportServices } from "./agent-import.js";
 import type { AgentSkillsService } from "./agent-skills.js";
 
+/** Whether this server can run a model a routine of the file names (a CLI engine or local model may not exist here). */
+export type ModelUsable = (provider: string, modelId: string) => Promise<boolean>;
 type TransferDeps = { prisma: PrismaClient; home: AgentHomeStore };
 type ExportedBot = SpaceExport["bots"][number];
 type ExportedRoutine = ExportedBot["routines"][number];
@@ -276,6 +278,7 @@ export async function importSpace<PreparedKey>(
   agentSkills: Pick<AgentSkillsService, "create">,
   actor: Actor,
   input: SpaceExport,
+  modelUsable: ModelUsable = async () => true,
 ): Promise<SpaceImportResult> {
   const owner = { spaceId: actor.spaceId, userId: actor.userId };
   // Every bot of the space by lowercase name; the ones this file adds join it as they are made.
@@ -298,7 +301,23 @@ export async function importSpace<PreparedKey>(
     facts: 0,
     channels: 0,
     tickets: 0,
+    modelsReset: 0,
   };
+  // A routine pinned to a model this server cannot run (a CLI engine or local model of the machine
+  // that exported) goes back to the space's model, so it works as soon as it is turned on.
+  const usable = new Map<string, boolean>();
+  for (const entry of input.bots) {
+    for (const routine of entry.routines) {
+      if (!routine.modelProvider || !routine.modelId) continue;
+      const key = `${routine.modelProvider}\u0000${routine.modelId}`;
+      if (!usable.has(key)) {
+        usable.set(
+          key,
+          await modelUsable(routine.modelProvider, routine.modelId).catch(() => false),
+        );
+      }
+    }
+  }
   const announce: { botId: string; rows: Prisma.RoutineGetPayload<object>[] }[] = [];
 
   for (const entry of input.bots) {
@@ -314,7 +333,16 @@ export async function importSpace<PreparedKey>(
     const routines = entry.routines.flatMap((routine) => {
       try {
         const { steps, ...fields } = routine;
-        const parsed = CreateRoutineInput.parse({ ...fields, botId: "pending", active: false });
+        const pinned = fields.modelProvider && fields.modelId;
+        const reset =
+          pinned && usable.get(`${fields.modelProvider}\u0000${fields.modelId}`) === false;
+        const parsed = CreateRoutineInput.parse({
+          ...fields,
+          ...(reset ? { modelProvider: null, modelId: null } : {}),
+          botId: "pending",
+          active: false,
+        });
+        if (reset) result.modelsReset += 1;
         services.assertRoutineSchedule(parsed);
         services.routineNextRunAt(parsed);
         return [{ input: parsed, steps }];

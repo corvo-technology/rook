@@ -11,8 +11,17 @@ vi.mock("@lingui/react/macro", () => {
     parts.reduce((text, part, index) => `${text}${index > 0 ? values[index - 1] : ""}${part}`, "");
   return { useLingui: () => ({ t }), Trans: ({ children }: { children: ReactNode }) => children };
 });
-vi.mock("../ImportFromApp", () => ({
-  ImportFromApp: () => <button type="button">Choose a file</button>,
+vi.mock("../ImportFlow", () => ({
+  ImportFlow: ({ onBack, onFinish }: { onBack: () => void; onFinish: () => void }) => (
+    <div>
+      <button type="button" onClick={onBack}>
+        Back
+      </button>
+      <button type="button" onClick={onFinish}>
+        Finish import
+      </button>
+    </div>
+  ),
 }));
 
 import { StartStep } from "./StartStep";
@@ -57,9 +66,17 @@ describe("StartStep", () => {
     expect(onDone).toHaveBeenCalledWith({ categories: [] });
   });
 
-  it("shows the import only once it is chosen", async () => {
-    expect(container.textContent).not.toContain("Choose a file");
-    await click("Import from another app");
-    expect(button("Choose a file")).toBeTruthy();
+  it("opens the import as its own screen, and comes back from it", async () => {
+    expect(container.textContent).not.toContain("Finish import");
+    await click("Import");
+    expect(container.textContent).not.toContain("Just the Chief");
+    await click("Back");
+    expect(button("Just the Chief")).toBeTruthy();
+  });
+
+  it("goes on to the next step once the import is finished", async () => {
+    await click("Import");
+    await click("Finish import");
+    expect(onDone).toHaveBeenCalledWith({ categories: [] });
   });
 });

@@ -47,6 +47,7 @@ import {
 } from "../agent-import.js";
 import { deleteAgentSecret, listAgentSecrets, putAgentSecret } from "../agent-secrets.js";
 import { previewAppImport } from "../import-from-app.js";
+import { assertRoutineModel } from "../model-pins.js";
 import { partnerModelChangeRefused } from "../partner-models.js";
 import type { RouterDeps } from "../router.js";
 import { requireCreatorOrPermission, requireSpacePermission } from "../space-owner.js";
@@ -231,6 +232,7 @@ export function botsRoutes(ctx: RouterContext) {
     agentSkills,
     groupRepos,
     authed,
+    codexCatalog,
   } = ctx;
   const manageAgent = (actor: Actor, bot: { userId: string }) =>
     requireCreatorOrPermission(deps.prisma, actor, bot.userId, "manage_agents");
@@ -332,7 +334,23 @@ export function botsRoutes(ctx: RouterContext) {
       importSpace: authed.bots.importSpace.handler(async ({ context, input }) => {
         await requireSpacePermission(deps.prisma, context.actor, "create_agents");
         try {
-          return await importSpace(agentImportServices, deps, agentSkills, context.actor, input);
+          return await importSpace(
+            agentImportServices,
+            deps,
+            agentSkills,
+            context.actor,
+            input,
+            (modelProvider, modelId) =>
+              assertRoutineModel(
+                deps,
+                context.actor,
+                { modelProvider, modelId },
+                codexCatalog,
+              ).then(
+                () => true,
+                () => false,
+              ),
+          );
         } catch (error) {
           throw mapSpaceLifecycleError(error);
         }

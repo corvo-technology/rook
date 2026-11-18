@@ -6302,6 +6302,7 @@ msgstr "Pages"
 msgid "Paid"
 msgstr "Payé"
 
+#: src/pages/connections/connection-model.ts
 #: src/pages/shell/sidebar-partner.tsx
 msgid "Partnership"
 msgstr "Partenariat"

@@ -6302,6 +6302,7 @@ msgstr "页面"
 msgid "Paid"
 msgstr "已付"
 
+#: src/pages/connections/connection-model.ts
 #: src/pages/shell/sidebar-partner.tsx
 msgid "Partnership"
 msgstr "合作关系"

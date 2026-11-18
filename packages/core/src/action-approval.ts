@@ -87,6 +87,25 @@ const UNATTENDED_SAFE_BUILTIN_TOOLS = new Set([
   "pass",
 ]);
 
+/**
+ * The partner connection's own tools. Its reads are numbers and states of the organization's
+ * portfolio; its writes move credit or stop a customer, so they ask a person every time, whatever
+ * the access level, the approval mode or an allow rule.
+ */
+const PARTNER_READ_CONNECTOR_TOOLS = new Set([
+  "partner_list_customers",
+  "partner_customer_usage",
+  "partner_attention",
+  "partner_revenue_summary",
+  "partner_invoices",
+]);
+const PARTNER_WRITE_CONNECTOR_TOOLS = new Set([
+  "partner_add_credit",
+  "partner_pause_customer",
+  "partner_resume_customer",
+  "partner_set_customer_limit",
+]);
+
 const READ_ONLY_CONNECTOR_PATTERN = /(^|_)(get|list|search|find|read)(_|$)/i;
 const MUTATING_CONNECTOR_PATTERN =
   /(^|_)(accept|add|approve|archive|assign|buy|cancel|charge|checkout|close|commit|copy|create|delete|deploy|disable|enable|execute|forward|grant|invite|link|mark|merge|modify|move|patch|pay|post|publish|purchase|put|register|reject|remove|rename|replace|reply|reset|revoke|run|schedule|send|set|share|start|stop|submit|subscribe|trigger|unassign|unlink|unsubscribe|update|upload|upsert|write)(_|$)/i;
@@ -124,7 +143,8 @@ export function connectorToolNamedAsWrite(toolName: string): boolean {
  * relaxes the name check: the provider chooses both the name and the hint.
  */
 export function connectorToolRequiresApproval(toolName: string, readOnly?: boolean): boolean {
-  if (readOnly === false) return true;
+  if (readOnly === false || PARTNER_WRITE_CONNECTOR_TOOLS.has(toolName)) return true;
+  if (readOnly === true && PARTNER_READ_CONNECTOR_TOOLS.has(toolName)) return false;
   if (connectorToolNamedAsWrite(toolName)) return true;
   return !READ_ONLY_CONNECTOR_PATTERN.test(toolName);
 }
@@ -177,7 +197,9 @@ export function toolRequiresApproval(
 
 /** Security-boundary changes cannot be auto-reviewed or permanently allowed. */
 export function toolRequiresExplicitApproval(toolName: string): boolean {
-  return EXPLICIT_APPROVAL_BUILTIN_TOOLS.has(toolName);
+  return (
+    EXPLICIT_APPROVAL_BUILTIN_TOOLS.has(toolName) || PARTNER_WRITE_CONNECTOR_TOOLS.has(toolName)
+  );
 }
 
 /**

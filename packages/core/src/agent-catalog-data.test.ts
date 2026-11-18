@@ -23,7 +23,7 @@ describe("AGENT_CATALOG", () => {
       const parsed = AgentCatalogEntrySchema.parse(entry);
       expect(parsed.firstTask).toEqual(entry.firstTask);
     }
-    expect(AGENT_CATALOG.filter((entry) => entry.firstTask).length).toBe(10);
+    expect(AGENT_CATALOG.filter((entry) => entry.firstTask).length).toBe(12);
   });
 
   it("only names apps that are in the app catalog", () => {

@@ -14,6 +14,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { addCatalogAgent, connectedServersFor } from "../lib/agent-catalog-install";
 import { useSpaceQueries } from "../lib/query";
+import { usePartnerNames } from "../lib/use-partners";
 import { errorText } from "../lib/user-error";
 import { StoreCategoryChips } from "./StoreCategoryChips";
 
@@ -79,11 +80,14 @@ export function AgentsStore({
     }
   }
 
-  const entries = AGENT_CATALOG.filter(
+  // Partner agents are offered only to an organization that is a member of a partner.
+  const hasPartner = usePartnerNames().length > 0;
+  const offered = AGENT_CATALOG.filter((entry) => hasPartner || !entry.partnerAccess);
+  const entries = offered.filter(
     (entry) => (!category || entry.category === category) && matches(entry, locale, query),
   );
   const categories = STORE_CATEGORIES.filter((item) =>
-    AGENT_CATALOG.some((entry) => entry.category === item),
+    offered.some((entry) => entry.category === item),
   );
 
   return (

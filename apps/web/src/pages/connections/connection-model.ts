@@ -6,6 +6,7 @@ import type {
   MailboxDto,
   McpServer,
 } from "@corvo/contracts";
+import { PARTNER_CONNECTION_ID } from "@corvo/contracts";
 import { APP_CATALOG, matchAddedServer } from "@corvo/core";
 import { plural, t } from "@lingui/core/macro";
 
@@ -102,6 +103,19 @@ export function mailboxItem(mailbox: MailboxDto): ConnectionItem {
     status: t`Connected`,
     otherOwner: null,
     mailbox,
+  };
+}
+
+/** The built-in Partnership connection: only organizations that are members of a partner have it. */
+export function partnerItem(partnerNames: readonly string[]): ConnectionItem {
+  return {
+    kind: "partner",
+    id: PARTNER_CONNECTION_ID,
+    name: t`Partnership`,
+    detail: partnerNames.join(", "),
+    tone: "ok",
+    status: partnerNames.join(", "),
+    otherOwner: null,
   };
 }
 

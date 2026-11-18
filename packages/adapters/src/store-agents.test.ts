@@ -15,12 +15,27 @@ const run = {
 type Row = Record<string, unknown>;
 
 function fixture(
-  over: { bots?: Row[]; servers?: Row[]; skills?: Row[]; createBot?: () => Promise<Row> } = {},
+  over: {
+    bots?: Row[];
+    servers?: Row[];
+    skills?: Row[];
+    createBot?: () => Promise<Row>;
+    partner?: boolean;
+  } = {},
 ) {
   const created: Row[] = [];
   const assigned: Row[] = [];
   const skillsCreated: Row[] = [];
+  const partnerGrants: Row[] = [];
   const prisma = {
+    space: { findUnique: vi.fn(async () => ({ organizationId: "org-1" })) },
+    partnerMember: { count: vi.fn(async () => (over.partner ? 1 : 0)) },
+    botPartnerGrant: {
+      upsert: vi.fn(async ({ create }: { create: Row }) => {
+        partnerGrants.push(create);
+        return create;
+      }),
+    },
     bot: {
       findMany: vi.fn(async () => over.bots ?? []),
       findUnique: vi.fn(async () => ({
@@ -51,14 +66,49 @@ function fixture(
     created.push(input);
     return { id: "new-bot", name: input.name, title: "", threadId: "t-1" };
   });
-  return { prisma, createBot, created, assigned, skillsCreated };
+  return { prisma, createBot, created, assigned, skillsCreated, partnerGrants };
 }
+
+describe("partner agents", () => {
+  const partnerSlugs = AGENT_CATALOG.filter((entry) => entry.partnerAccess).map((e) => e.slug);
+
+  it("are offered, and can be installed, only where the organization is a member of a partner", async () => {
+    expect(partnerSlugs).toEqual(["portfolio-manager", "customer-success"]);
+    const without = fixture();
+    const hidden = await listStoreAgents({ prisma: without.prisma }, run, {});
+    expect(hidden.agents.some((agent) => partnerSlugs.includes(agent.slug))).toBe(false);
+    const refused = await installStoreAgent(
+      { prisma: without.prisma, createBot: without.createBot },
+      run,
+      { slug: "portfolio-manager" },
+    );
+    expect(refused).toHaveProperty("error");
+    expect(without.createBot).not.toHaveBeenCalled();
+
+    const member = fixture({ partner: true });
+    const shown = await listStoreAgents({ prisma: member.prisma }, run, {});
+    expect(shown.agents.filter((agent) => partnerSlugs.includes(agent.slug))).toHaveLength(2);
+  });
+
+  it("are added with read access to the Partnership connection, and nothing more", async () => {
+    const f = fixture({ partner: true });
+    await addStoreAgent(
+      { prisma: f.prisma, createBot: f.createBot },
+      { spaceId: "space-1", userId: "user-1" },
+      {
+        entry: AGENT_CATALOG.find((entry) => entry.slug === "customer-success")!,
+        locale: "pt-BR",
+      },
+    );
+    expect(f.partnerGrants).toEqual([{ spaceId: "space-1", botId: "new-bot", level: "read" }]);
+  });
+});
 
 describe("listStoreAgents", () => {
   it("lists every agent in the language asked for, with what each needs", async () => {
     const f = fixture();
     const result = await listStoreAgents({ prisma: f.prisma }, run, { language: "pt-BR" });
-    expect(result.agents).toHaveLength(AGENT_CATALOG.length);
+    expect(result.agents).toHaveLength(AGENT_CATALOG.filter((a) => !a.partnerAccess).length);
     const financial = result.agents.find((agent) => agent.slug === "financial-manager");
     expect(financial).toMatchObject({
       name: "Fluxo de caixa",

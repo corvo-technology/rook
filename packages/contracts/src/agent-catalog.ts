@@ -50,6 +50,11 @@ export const AgentCatalogEntrySchema = z.object({
   greeting: localizedCatalogText(200).optional(),
   /** A first message that waits unsent in the composer; it asks before acting. */
   firstTask: localizedCatalogText(200).optional(),
+  /**
+   * Offered only to an organization that is a member of a partner, and added with this access to
+   * the Partnership connection.
+   */
+  partnerAccess: z.literal("read").optional(),
   /** The email agent is installed through its own setup, which needs an inbox service. */
   setup: z.literal("email").optional(),
 });

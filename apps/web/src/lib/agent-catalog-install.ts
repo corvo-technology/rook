@@ -1,5 +1,5 @@
 import type { AgentCatalogEntry, AgentCatalogLocale, McpServer } from "@corvo/contracts";
-import { agentCatalogSpawnKey } from "@corvo/contracts";
+import { agentCatalogSpawnKey, PARTNER_CONNECTION_ID } from "@corvo/contracts";
 import { AGENT_CATALOG, SKILL_STORE } from "@corvo/core";
 import { rpc } from "./rpc";
 import { installStoreSkill, isSkillInstalled } from "./skill-store-install";
@@ -75,6 +75,14 @@ export async function addCatalogAgent(
     ...(entry.disabledTools ? { disabledBuiltinTools: entry.disabledTools } : {}),
   });
   await installAgentSkills(entry, locale, installedSkillNames);
+  if (entry.partnerAccess) {
+    await rpc.access.set({
+      kind: "partner",
+      connectionId: PARTNER_CONNECTION_ID,
+      botIds: [bot.id],
+      level: entry.partnerAccess,
+    });
+  }
   const connected = connectedServersFor(entry, servers);
   if (connected.length > 0) {
     await rpc.mcp.assignments.replace({

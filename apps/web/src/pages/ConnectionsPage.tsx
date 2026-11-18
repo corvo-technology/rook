@@ -17,7 +17,7 @@ import {
 } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
-import { Database, Mail, Plus, Server } from "lucide-react";
+import { Database, Handshake, Mail, Plus, Server } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { connectMcpOauth, MCP_OAUTH_CHANNEL } from "../lib/mcp-connect";
 import { rpc } from "../lib/rpc";
@@ -51,7 +51,14 @@ function ConnectionIcon({ item }: { item: ConnectionItem }) {
       />
     );
   }
-  const Icon = item.kind === "database" ? Database : item.kind === "mailbox" ? Mail : Server;
+  const Icon =
+    item.kind === "database"
+      ? Database
+      : item.kind === "mailbox"
+        ? Mail
+        : item.kind === "partner"
+          ? Handshake
+          : Server;
   return (
     <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent text-muted-foreground">
       <Icon aria-hidden="true" className="size-4" />
@@ -240,48 +247,50 @@ export function ConnectionsPage({
                     <Trans>Access</Trans>
                   </Button>
                 )}
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    aria-label={t`More`}
-                    className="rounded-full px-2 py-1 text-[14px] text-muted-foreground hover:bg-accent"
-                  >
-                    ⋯
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {signable ? (
-                      <DropdownMenuItem onClick={() => void signIn(server)}>
-                        {server.oauthStatus === "none" ? (
-                          <Trans>Connect OAuth</Trans>
-                        ) : (
-                          <Trans>Reconnect OAuth</Trans>
-                        )}
+                {item.kind === "partner" ? null : (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      aria-label={t`More`}
+                      className="rounded-full px-2 py-1 text-[14px] text-muted-foreground hover:bg-accent"
+                    >
+                      ⋯
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {signable ? (
+                        <DropdownMenuItem onClick={() => void signIn(server)}>
+                          {server.oauthStatus === "none" ? (
+                            <Trans>Connect OAuth</Trans>
+                          ) : (
+                            <Trans>Reconnect OAuth</Trans>
+                          )}
+                        </DropdownMenuItem>
+                      ) : null}
+                      {signable && server.oauthStatus !== "none" ? (
+                        <DropdownMenuItem onClick={() => void disconnect(server)}>
+                          <Trans>Disconnect</Trans>
+                        </DropdownMenuItem>
+                      ) : null}
+                      {server ? (
+                        <DropdownMenuItem
+                          onClick={() => setSheet({ kind: "connect", editing: server })}
+                        >
+                          <Trans>Edit</Trans>
+                        </DropdownMenuItem>
+                      ) : null}
+                      {item.kind !== "mailbox" ? (
+                        <DropdownMenuItem
+                          disabled={testing.has(item.id) || server?.health.status === "installing"}
+                          onClick={() => void test(item)}
+                        >
+                          <Trans>Test connection</Trans>
+                        </DropdownMenuItem>
+                      ) : null}
+                      <DropdownMenuItem variant="destructive" onClick={() => setRemoving(item)}>
+                        <Trans>Delete</Trans>
                       </DropdownMenuItem>
-                    ) : null}
-                    {signable && server.oauthStatus !== "none" ? (
-                      <DropdownMenuItem onClick={() => void disconnect(server)}>
-                        <Trans>Disconnect</Trans>
-                      </DropdownMenuItem>
-                    ) : null}
-                    {server ? (
-                      <DropdownMenuItem
-                        onClick={() => setSheet({ kind: "connect", editing: server })}
-                      >
-                        <Trans>Edit</Trans>
-                      </DropdownMenuItem>
-                    ) : null}
-                    {item.kind !== "mailbox" ? (
-                      <DropdownMenuItem
-                        disabled={testing.has(item.id) || server?.health.status === "installing"}
-                        onClick={() => void test(item)}
-                      >
-                        <Trans>Test connection</Trans>
-                      </DropdownMenuItem>
-                    ) : null}
-                    <DropdownMenuItem variant="destructive" onClick={() => setRemoving(item)}>
-                      <Trans>Delete</Trans>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </li>
             );
           })}

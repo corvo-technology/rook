@@ -394,6 +394,7 @@ model Space {
   botDatabaseGrants           BotDatabaseGrant[]
   mailboxes                   Mailbox[]
   botMailboxes                BotMailbox[]
+  botPartnerGrants            BotPartnerGrant[]
   messagingIdentities         MessagingIdentity[]
   actionApprovalRules         ActionApprovalRule[]
   actionAutoReviewPreferences ActionAutoReviewPreference[]
@@ -738,6 +739,7 @@ model Bot {
   mcpServers               BotMcpServer[]
   databaseGrants           BotDatabaseGrant[]
   mailboxes                BotMailbox[]
+  partnerGrant             BotPartnerGrant?
   agentImports             AgentImport[]
   groupMembers             ChatGroupMember[]
   botSecrets               BotSecret[]
@@ -1999,6 +2001,23 @@ model Mailbox {
 }
 
 /// Which agents may use a mailbox. An agent without a row here never sees its tools.
+/// Lets an agent work the partner portfolio of the space's organization: read (look at customers,
+/// usage and revenue) or write (also add credit, pause, resume and cap a customer). Which partners
+/// that means is not stored here: it is always the organization's own partner memberships.
+model BotPartnerGrant {
+  id        String   @id @default(cuid())
+  spaceId   String
+  space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  botId     String   @unique
+  bot       Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
+  /// read | write
+  level     String   @default("read")
+  createdAt DateTime @default(now())
+
+  @@index([spaceId])
+  @@map("bot_partner_grants")
+}
+
 model BotMailbox {
   id        String   @id @default(cuid())
   spaceId   String

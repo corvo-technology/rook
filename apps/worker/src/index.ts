@@ -60,6 +60,7 @@ import {
   mcpStdioOptionsFromEnv,
   messagingEnvFromProcess,
   messagingPlatformsFromEnv,
+  PartnerConnector,
   PiAgentRuntime,
   PipedreamConnector,
   PostgresRealtimeFanout,
@@ -82,6 +83,7 @@ import {
   withRunWorker,
   withSecretPersistence,
 } from "@corvo/adapters";
+import { createPrismaPartnerToolsPort } from "@corvo/api/partner-tools";
 import { resolveEncryptionKey, resolveSupervisorToken, uploadSizeFromEnv } from "@corvo/core";
 import {
   createBoardEvents,
@@ -260,6 +262,7 @@ async function main() {
       store: new PrismaMailboxStore(prisma, secrets),
       hostPolicy: { allowPrivateEndpoint },
     }),
+    new PartnerConnector({ prisma, port: createPrismaPartnerToolsPort(prisma) }),
     ...integrationSettings.providers(),
     mcp,
   ]);

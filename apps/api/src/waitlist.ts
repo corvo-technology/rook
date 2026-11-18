@@ -7,6 +7,7 @@ import type { Context } from "hono";
 import { Hono } from "hono";
 import { z } from "zod";
 import { readBoundedBody } from "./http-body.js";
+import { formCors, windowCounter } from "./public-form.js";
 
 /**
  * Closed-beta waitlist, filled from the marketing site. The endpoint is open, so it answers every
@@ -20,7 +21,6 @@ const IP_WINDOW_MS = 10 * 60_000;
 const IP_LIMIT = 8;
 const EMAIL_WINDOW_MS = 60 * 60_000;
 const EMAIL_LIMIT = 3;
-const MAX_TRACKED_KEYS = 10_000;
 
 export type WaitlistLocale = "pt-BR" | "en";
 
@@ -86,19 +86,6 @@ export function waitlistLocale(value: string | undefined): WaitlistLocale {
   return /^pt([-_]|$)/i.test(value?.trim() ?? "") ? "pt-BR" : "en";
 }
 
-/** Fixed-window counters per key. The table is bounded: when full it starts over. */
-function windowCounter(windowMs: number, now: () => number) {
-  const windows = new Map<string, { start: number; count: number }>();
-  return (key: string): number => {
-    const at = now();
-    const current = windows.get(key);
-    if (current && at - current.start < windowMs) return ++current.count;
-    if (windows.size >= MAX_TRACKED_KEYS) windows.clear();
-    windows.set(key, { start: at, count: 1 });
-    return 1;
-  };
-}
-
 export interface WaitlistOptions {
   store: WaitlistStore;
   email?: TransactionalEmailProvider;
@@ -152,30 +139,9 @@ export function waitlistRoutes(options: WaitlistOptions) {
     }
   }
 
-  const allowOrigin = (c: Context): string | undefined => {
-    const origin = c.req.header("origin");
-    return origin && allowedOrigins.includes(origin) ? origin : undefined;
-  };
+  const { allowOrigin, reply, preflight } = formCors(allowedOrigins);
 
-  const reply = (c: Context, status: 200 | 400 | 403 | 413 | 415 | 429, payload: object) => {
-    const origin = allowOrigin(c);
-    if (origin) c.header("access-control-allow-origin", origin);
-    c.header("vary", "Origin");
-    c.header("cache-control", "no-store");
-    return c.json(payload, status);
-  };
-
-  app.options(WAITLIST_PATH, (c) => {
-    const origin = allowOrigin(c);
-    if (!origin) return c.body(null, 403);
-    return c.body(null, 204, {
-      "access-control-allow-origin": origin,
-      "access-control-allow-methods": "POST, OPTIONS",
-      "access-control-allow-headers": "content-type",
-      "access-control-max-age": "600",
-      vary: "Origin",
-    });
-  });
+  app.options(WAITLIST_PATH, preflight);
 
   app.post(WAITLIST_PATH, async (c) => {
     // A browser always sends Origin on a cross-site POST; a request without an allowed one is not the form.

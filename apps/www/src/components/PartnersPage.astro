@@ -1,0 +1,297 @@
+---
+import { LOCALES, LOCALE_HTML_LANG } from "../i18n/locales";
+import type { Locale } from "../i18n/locales";
+import { getLaunchCopy } from "../i18n/launch";
+import { getPartnersCopy } from "../i18n/partners";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { MASCOT_COLOR } from "../mascot";
+import { PARTNER_DOCS_URL, PARTNER_LEADS_ENDPOINT } from "../site";
+import "../styles/launch.css";
+import "../styles/partners.css";
+import Avatar from "./Avatar.astro";
+import Footer from "./Footer.astro";
+import Header from "./Header.astro";
+import { Rook } from "./Rook";
+
+type Props = { locale: Locale };
+
+const { locale } = Astro.props;
+const copy = getPartnersCopy(locale);
+const launch = getLaunchCopy(locale);
+const alternates = Object.fromEntries(LOCALES.map((l) => [l, `${getPartnersCopy(l).path}/`]));
+const form = copy.form;
+const EARN = { price: 100, commission: 20, markup: 30 };
+const earnRows = [
+  { label: copy.earn.price, value: EARN.price, kind: "price" },
+  { label: copy.earn.commission, value: EARN.commission, kind: "commission" },
+  { label: copy.earn.markup, value: EARN.markup, kind: "markup" },
+] as const;
+const RANGES = ["0-50", "50-200", "200-1000", "1000+"] as const;
+const MODE_HUES = ["menta", "violeta"] as const;
+---
+
+<BaseLayout
+  title={copy.meta.title}
+  description={copy.meta.description}
+  locale={locale}
+  skipLabel={launch.meta.skipToContent}
+  localeAlternates={false}
+  pageAlternates={alternates}
+  ogImageAlt={launch.meta.ogImageAlt}
+>
+  <div class="container">
+    <Header locale={locale} copy={launch.nav} />
+
+    <main id="main" lang={LOCALE_HTML_LANG[locale]} class="partners">
+      <section class="lp-hero partners-hero">
+        <Avatar color={MASCOT_COLOR.menta} mood="happy" class="partners-hero__rook" />
+        <h1>{copy.hero.title}</h1>
+        <p class="lp-hero__lead">{copy.hero.lead}</p>
+        <div class="lp-hero__actions">
+          <a class="button button--primary" href="#contact" data-attr="partners-cta">{copy.hero.cta}</a>
+          <a class="button button--secondary" href={PARTNER_DOCS_URL} data-attr="partners-docs">{copy.hero.docs}</a>
+        </div>
+      </section>
+
+      <section class="partners-section" aria-labelledby="modes-heading">
+        <h2 id="modes-heading" class="lp-title lp-title--center">{copy.modes.heading}</h2>
+        <div class="partners-modes">
+          {
+            copy.modes.items.map((item, index) => (
+              <article class="lp-card partners-mode">
+                <Rook hue={MODE_HUES[index] ?? "menta"} size={44} gaze={false} />
+                <p class="partners-eyebrow">{item.who}</p>
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
+              </article>
+            ))
+          }
+        </div>
+      </section>
+
+      <section class="partners-section partners-earn" aria-labelledby="earn-heading">
+        <div class="partners-earn__text">
+          <h2 id="earn-heading" class="lp-title">{copy.earn.heading}</h2>
+          <p class="lp-lead">{copy.earn.lead}</p>
+        </div>
+        <figure class="lp-card partners-ledger">
+          <figcaption class="partners-eyebrow">{copy.earn.exampleLabel}</figcaption>
+          <dl>
+            {
+              earnRows.map((row) => (
+                <div class={`partners-ledger__row partners-ledger__row--${row.kind}`}>
+                  <dt>{row.label}</dt>
+                  <dd>
+                    <span class="partners-ledger__bar" style={`--share: ${row.value}%`} aria-hidden="true" />
+                    <span class="partners-ledger__value">{row.value}</span>
+                  </dd>
+                </div>
+              ))
+            }
+            <div class="partners-ledger__row partners-ledger__total">
+              <dt>{copy.earn.total}</dt>
+              <dd>
+                <span class="partners-ledger__sum">{EARN.commission} + {EARN.markup} =</span>
+                <span class="partners-ledger__value">{EARN.commission + EARN.markup}</span>
+              </dd>
+            </div>
+          </dl>
+          <p class="partners-note">{copy.earn.note}</p>
+        </figure>
+      </section>
+
+      <section class="partners-section" aria-labelledby="included-heading">
+        <h2 id="included-heading" class="lp-title lp-title--center">{copy.included.heading}</h2>
+        <ul class="partners-included">
+          {
+            copy.included.items.map((item) => (
+              <li class="lp-card">
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
+      <section class="partners-section partners-proof" aria-labelledby="proof-heading">
+        <div class="partners-proof__rooks" aria-hidden="true">
+          <Rook hue="menta" size={36} gaze={false} />
+          <Rook hue="azul" size={36} gaze={false} />
+          <Rook hue="rosa" size={36} gaze={false} />
+        </div>
+        <h2 id="proof-heading" class="lp-title lp-title--center">{copy.proof.heading}</h2>
+        <p class="lp-lead">{copy.proof.body}</p>
+      </section>
+
+      <section class="partners-section" aria-labelledby="how-heading">
+        <h2 id="how-heading" class="lp-title lp-title--center">{copy.how.heading}</h2>
+        <ol class="partners-steps">
+          {
+            copy.how.steps.map((step) => (
+              <li>
+                <h3>{step.title}</h3>
+                <p>{step.body}</p>
+              </li>
+            ))
+          }
+        </ol>
+      </section>
+
+      <section class="lp-faq partners-faq" aria-labelledby="faq-heading">
+        <h2 id="faq-heading" class="lp-title">{copy.faq.heading}</h2>
+        <div class="home-faq">
+          {
+            copy.faq.items.map((item, index) => (
+              <details name="partners-faq" open={index === 0}>
+                <summary>
+                  <h3>{item.question}</h3>
+                  <span class="home-faq__mark" aria-hidden="true" />
+                </summary>
+                <p>{item.answer}</p>
+              </details>
+            ))
+          }
+        </div>
+      </section>
+
+      <section id="contact" class="partners-section partners-contact" aria-labelledby="contact-heading">
+        <article class="lp-card lp-wait partners-form-card">
+          <h2 id="contact-heading" class="lp-title">{form.heading}</h2>
+          <form
+            class="lp-wait__form partners-form"
+            novalidate
+            data-partner-form={PARTNER_LEADS_ENDPOINT}
+            data-locale={locale}
+            data-success={form.success}
+            data-required-error={form.requiredError}
+            data-email-error={form.emailError}
+            data-consent-error={form.consentError}
+            data-error={form.error}
+          >
+            <div class="partners-form__grid">
+              <label>
+                <span>{form.name}</span>
+                <input type="text" name="name" required maxlength="120" autocomplete="name" />
+                <small data-error-for="name" role="alert"></small>
+              </label>
+              <label>
+                <span>{form.email}</span>
+                <input type="email" name="email" required maxlength="254" autocomplete="email" />
+                <small data-error-for="email" role="alert"></small>
+              </label>
+              <label>
+                <span>{form.company}</span>
+                <input type="text" name="company" required maxlength="120" autocomplete="organization" />
+                <small data-error-for="company" role="alert"></small>
+              </label>
+              <label>
+                <span>{form.website}</span>
+                <input type="url" name="website" maxlength="300" autocomplete="url" inputmode="url" placeholder="https://" />
+              </label>
+              <label>
+                <span>{form.type}</span>
+                <select name="partnerType">
+                  <option value="embedded">{form.types.embedded}</option>
+                  <option value="white_label">{form.types.white_label}</option>
+                  <option value="unsure" selected>{form.types.unsure}</option>
+                </select>
+              </label>
+              <label>
+                <span>{form.country}</span>
+                <input type="text" name="country" maxlength="80" autocomplete="country-name" />
+              </label>
+              <label class="partners-form__wide">
+                <span>{form.customers}</span>
+                <select name="customers">
+                  <option value=""></option>
+                  {RANGES.map((value, index) => <option value={value}>{form.customerRanges[index]}</option>)}
+                </select>
+              </label>
+              <label class="partners-form__wide">
+                <span>{form.message}</span>
+                <textarea name="message" rows="4" maxlength="2000"></textarea>
+              </label>
+            </div>
+            <div class="lp-wait__trap" aria-hidden="true">
+              <label>Website <input type="text" name="hp" tabindex="-1" autocomplete="off" /></label>
+            </div>
+            <label class="partners-consent">
+              <input type="checkbox" name="consent" required />
+              <span>{form.consent}</span>
+            </label>
+            <small class="partners-consent__error" data-error-for="consent" role="alert"></small>
+            <button type="submit" class="button button--primary" data-attr="partners-submit">{form.submit}</button>
+            <p class="lp-wait__error" data-form-error role="alert" hidden></p>
+          </form>
+          <div class="lp-wait__done" data-partner-done aria-live="polite" hidden tabindex="-1">
+            <strong>{form.successTitle}</strong>
+            <p data-done-body></p>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <Footer locale={locale} />
+  </div>
+</BaseLayout>
+
+<script>
+  const root = document.querySelector<HTMLFormElement>("form[data-partner-form]");
+  if (root) {
+    const form = root;
+    const control = (name: string) => form.elements.namedItem(name) as HTMLInputElement;
+    const fail = (name: string, message: string) => {
+      form.querySelector<HTMLElement>(`[data-error-for="${name}"]`)!.textContent = message;
+      control(name).setAttribute("aria-invalid", message ? "true" : "false");
+    };
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const value = (name: string) => control(name).value.trim();
+      const { requiredError = "", emailError = "", consentError = "" } = form.dataset;
+      fail("name", value("name") ? "" : requiredError);
+      fail("company", value("company") ? "" : requiredError);
+      fail("email", /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value("email")) ? "" : emailError);
+      fail("consent", control("consent").checked ? "" : consentError);
+      const invalid = form.querySelector<HTMLElement>('[aria-invalid="true"]');
+      if (invalid) return invalid.focus();
+      const button = form.querySelector<HTMLButtonElement>("button[type=submit]")!;
+      const failure = form.querySelector<HTMLElement>("[data-form-error]")!;
+      failure.hidden = true;
+      button.disabled = true;
+      try {
+        const response = await fetch(form.dataset.partnerForm ?? "", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            name: value("name"),
+            email: value("email"),
+            company: value("company"),
+            website: value("website"),
+            partnerType: value("partnerType"),
+            country: value("country"),
+            customers: value("customers") || undefined,
+            message: value("message"),
+            consent: true,
+            locale: form.dataset.locale,
+            source: "www-partners",
+            hp: control("hp").value,
+          }),
+        });
+        if (response.status !== 200) throw new Error(String(response.status));
+        const done = form.parentElement!.querySelector<HTMLElement>("[data-partner-done]")!;
+        done.querySelector("[data-done-body]")!.textContent = (form.dataset.success ?? "").replace(
+          "{email}",
+          value("email"),
+        );
+        form.hidden = true;
+        done.hidden = false;
+        done.focus();
+      } catch {
+        failure.textContent = form.dataset.error ?? "";
+        failure.hidden = false;
+        button.disabled = false;
+      }
+    });
+  }
+</script>

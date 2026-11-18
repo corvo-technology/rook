@@ -15,6 +15,10 @@ export const RELEASES_URL = "https://github.com/corvo-technology/rook-releases/r
 export const API_ORIGIN =
   (import.meta.env?.PUBLIC_API_ORIGIN as string | undefined)?.trim().replace(/\/$/, "") || "https://api.rook.team";
 export const WAITLIST_ENDPOINT = `${API_ORIGIN}/api/public/waitlist`;
+export const PARTNER_LEADS_ENDPOINT = `${API_ORIGIN}/api/public/partner-leads`;
+
+/** The technical docs for partners. */
+export const PARTNER_DOCS_URL = "https://docs.rook.team/parceiros";
 
 /**
  * The macOS installer (one universal app for Apple silicon and Intel) of the latest release. Its file name carries no version, so

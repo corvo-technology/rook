@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   accountDeletionEmail,
   invitationEmail,
+  partnerLeadConfirmationEmail,
+  partnerLeadNotificationEmail,
   passwordResetEmail,
   signInCodeEmail,
   verificationEmail,
@@ -57,6 +59,14 @@ describe("account email templates", () => {
       waitlistConfirmationEmail(origin, to, "pt-BR"),
       waitlistConfirmationEmail(origin, to, "en"),
       waitlistNotificationEmail(origin, to, { company: "Acme", email: "a@b.example" }),
+      partnerLeadConfirmationEmail(origin, to, "pt-BR"),
+      partnerLeadConfirmationEmail(origin, to, "en"),
+      partnerLeadNotificationEmail(origin, to, {
+        name: "Ana",
+        company: "Acme",
+        email: "a@b.example",
+        partnerType: "embedded",
+      }),
     ]);
     for (const message of messages) {
       expect(message.html).toContain('src="https://app.example.test/icon-192.png"');

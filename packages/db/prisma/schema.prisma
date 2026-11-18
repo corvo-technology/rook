@@ -2726,6 +2726,27 @@ model WaitlistEntry {
   @@map("waitlist_entries")
 }
 
+/// A company that asked to become a partner, filled from the marketing site. Internal: only
+/// server code running as the system reads or writes it.
+model PartnerLead {
+  id          String    @id @default(cuid())
+  name        String
+  email       String
+  company     String
+  website     String?
+  partnerType String
+  country     String?
+  customers   String?
+  message     String?
+  locale      String?
+  source      String?
+  createdAt   DateTime  @default(now())
+  notifiedAt  DateTime?
+
+  @@index([createdAt])
+  @@map("partner_leads")
+}
+
 /// A role a space defines: the keys it grants, added to what every member holds. `systemKey`
 /// marks the two every space starts with, "everyone" (the base role, held by every member
 /// without a join row) and "admin". `position` 0 is the highest; "everyone" is below all.

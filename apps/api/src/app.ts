@@ -208,6 +208,7 @@ import { mountPartnerConsultationRoutes } from "./partner-consultations.js";
 import { partnerConsultationDeps } from "./partner-consultations-deps.js";
 import { installPartnerTenantContent } from "./partner-content.js";
 import { hashEntryCode, mountPartnerEmbedRoute, mountPartnerEntryRoute } from "./partner-entry.js";
+import { partnerLeadRoutes, prismaPartnerLeadStore } from "./partner-leads.js";
 import { mountPartnerRoutes } from "./partner-routes.js";
 import { PresenceTracker } from "./presence.js";
 import { mountApiRequestBodyLimits } from "./request-body-limit.js";
@@ -986,6 +987,15 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     clientIp: requestClientIp,
   });
   app.route("/", waitlist);
+  const partnerLeads = partnerLeadRoutes({
+    store: prismaPartnerLeadStore(prisma),
+    email,
+    webOrigin: env.webOrigin,
+    allowedOrigins: env.waitlistAllowedOrigins,
+    notifyEmail: env.waitlistNotifyEmail,
+    clientIp: requestClientIp,
+  });
+  app.route("/", partnerLeads);
   app.use(
     "*",
     cors({
@@ -1742,6 +1752,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       await teamChatBridge?.stop();
       await stopInstalledBridges?.();
       await waitlist.idle();
+      await partnerLeads.idle();
       await email?.drain?.();
       await reconciler?.stop();
       await oauthTokenUpgrade;

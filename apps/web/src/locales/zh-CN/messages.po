@@ -1658,6 +1658,10 @@ msgstr "此空间的机器人、群组、聊天、文件、记忆和集成与其
 msgid "Brain label"
 msgstr "大脑标签"
 
+#: src/pages/PartnerTemplateEditor.tsx
+msgid "Brand colour"
+msgstr "品牌颜色"
+
 #: src/pages/Onboarding.tsx
 msgid "Bring agents you already use, or I'll suggest a team."
 msgstr "带上你已在用的智能体,或由我推荐一个团队。"
@@ -1877,6 +1881,10 @@ msgstr "正在检查电脑设置…"
 #: src/pages/HostComputerPrompt.tsx
 msgid "Checking…"
 msgstr "正在检查…"
+
+#: src/pages/PartnerTemplateEditor.tsx
+msgid "Chief name"
+msgstr "Chief 名称"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Choose a bot"
@@ -4326,6 +4334,7 @@ msgstr "IMAP 服务器"
 #: src/pages/ImportFlow.tsx
 #: src/pages/ImportFromApp.tsx
 #: src/pages/onboarding/TeamStep.tsx
+#: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/create-bot-panel.tsx
 msgid "Import"
@@ -7473,12 +7482,12 @@ msgstr "部分设置不会导入"
 msgid "Something else"
 msgstr "其他"
 
-#. js-lingui-explicit-id
-#: src/lib/run-error-copy.ts
+#: src/pages/PartnershipSettingsPanel.tsx
 msgid "Something went wrong"
 msgstr "出了点问题"
 
-#: src/pages/PartnershipSettingsPanel.tsx
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
 msgid "Something went wrong"
 msgstr "出了点问题"
 
@@ -7877,6 +7886,10 @@ msgstr "测试运行"
 #: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Testing…"
 msgstr "正在测试…"
+
+#: src/pages/PartnershipSettingsPanel.tsx
+msgid "That file is not a valid template"
+msgstr "该文件不是有效的模板"
 
 #: src/lib/server-copy.ts
 msgid "The {name} routine is paused because its change check failed: {reason}"

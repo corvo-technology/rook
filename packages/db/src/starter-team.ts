@@ -14,14 +14,14 @@ type Repos = Pick<ReturnType<typeof createRepos>, "createBot">;
  * adds the Store's agents the person asks for. Calling it again returns the Chief that is already
  * there. `created` says whether this call made the Chief, so the caller can start its greeting
  * once. `channel` is the chat app the person reached us through, which shapes how the Chief
- * writes.
+ * writes. `name` replaces the localized name, for a partner that brands its Chief.
  */
 export async function ensureStarterTeam(
   prisma: PrismaClient,
   actor: Actor,
   locale: AgentCatalogLocale,
   repos: Repos = createRepos(prisma),
-  options: { channel?: string; storeAccess?: boolean } = {},
+  options: { channel?: string; storeAccess?: boolean; name?: string } = {},
 ): Promise<{ botId: string; created: boolean /** The Chief this call made. */; bot?: Bot }> {
   const active = () =>
     prisma.bot.findMany({
@@ -42,7 +42,7 @@ export async function ensureStarterTeam(
   let chief: Bot;
   try {
     chief = await repos.createBot(actor, {
-      name: CHIEF_AGENT.name[locale],
+      name: options.name ?? CHIEF_AGENT.name[locale],
       title: "",
       description: CHIEF_AGENT.description[locale],
       instructions: chiefInstructions(locale, options.channel),

@@ -1,4 +1,4 @@
-import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 const KEY_PREFIX = "cpk_";
 const PREFIX_BYTES = 6;
@@ -31,4 +31,24 @@ export function partnerKeyPrefix(key: string): string | null {
 export function verifyPartnerKey(key: string, storedHash: string): boolean {
   if (partnerKeyPrefix(key) === null || !/^[0-9a-f]{64}$/.test(storedHash)) return false;
   return timingSafeEqual(Buffer.from(hashPartnerKey(key), "hex"), Buffer.from(storedHash, "hex"));
+}
+
+/**
+ * The secret that signs a partner's webhook. It is derived from the deployment's encryption key, so
+ * the database holds nothing that could forge a notice; raising `version` replaces it.
+ */
+export function partnerWebhookSecret(
+  encryptionKey: string,
+  partnerId: string,
+  version: number,
+): string {
+  const mac = createHmac("sha256", encryptionKey)
+    .update(`corvo/partner-webhook/v1\0${partnerId}\0${version}`)
+    .digest("base64url");
+  return `whsec_${mac}`;
+}
+
+/** The value of the `X-Rook-Signature` header: `sha256=` and the hex HMAC of `<timestamp>.<body>`. */
+export function signPartnerWebhook(secret: string, timestamp: string, body: string): string {
+  return `sha256=${createHmac("sha256", secret).update(`${timestamp}.${body}`).digest("hex")}`;
 }

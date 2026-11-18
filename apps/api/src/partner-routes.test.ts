@@ -175,6 +175,22 @@ describe("partner routes: tenants", () => {
     }
   });
 
+  it("names the Chief as the partner's template says, in the customer's language", async () => {
+    const f = fixture({ template: { agents: [], chiefName: "Assistente GreenBarber" } });
+    await f.call("PUT", put, { body: { name: "Shop", locale: "pt-BR" } });
+    expect(f.deps.ensureChief).toHaveBeenCalledWith(expect.anything(), "pt-BR", {
+      name: "Assistente GreenBarber",
+    });
+  });
+
+  it("leaves the Chief's default name when the template has none or is not valid", async () => {
+    for (const template of [{ agents: [] }, { agents: [], chiefName: "" }, { chiefName: 7 }]) {
+      const f = fixture({ template });
+      await f.call("PUT", put, { body: { name: "Shop" } });
+      expect(f.deps.ensureChief).toHaveBeenCalledWith(expect.anything(), "en");
+    }
+  });
+
   it("installs the connector and agents and sets the month's allowance when sent", async () => {
     const f = fixture();
     await f.call("PUT", put, {

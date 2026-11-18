@@ -61,6 +61,7 @@ const payloadSchemas = {
     tokenDigest: z.string().min(1),
   }),
   "audio.transcribe": z.object({ runId: z.string().min(1) }),
+  "partner.webhook": z.object({ eventId: z.string().min(1) }),
 } satisfies { [Name in BackgroundJobName]: z.ZodType<BackgroundJobPayloads[Name]> };
 
 export function parseBackgroundJob(name: string, payload: unknown): BackgroundJob {

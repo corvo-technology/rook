@@ -3,6 +3,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   accentTokens,
+  applyEmbedAccent,
+  applyPartnerAccent,
   installEmbedToken,
   parseEmbedLaunch,
   parseEmbedMessage,
@@ -173,5 +175,31 @@ describe("accentTokens", () => {
 
   it("makes the text on the accent light or dark by the accent's lightness", () => {
     expect(accentTokens("#fde047")["--primary-foreground"]).toContain("(0.62 - l)");
+  });
+});
+
+describe("the partner's own accent", () => {
+  const primary = () => document.documentElement.style.getPropertyValue("--primary");
+  afterEach(() => {
+    applyEmbedAccent(null);
+    applyPartnerAccent(null);
+  });
+
+  it("is used when the embedding page passes none", () => {
+    applyPartnerAccent("#16A34A");
+    expect(primary()).toBe("#16a34a");
+  });
+
+  it("yields to the embedding page's accent, and returns when that is taken away", () => {
+    applyPartnerAccent("#16a34a");
+    applyEmbedAccent("#e11d48");
+    expect(primary()).toBe("#e11d48");
+    applyEmbedAccent(null);
+    expect(primary()).toBe("#16a34a");
+  });
+
+  it("gives the app's own colour back when neither is set, and ignores anything not a hex colour", () => {
+    applyPartnerAccent("red;background:url(x)");
+    expect(primary()).toBe("");
   });
 });

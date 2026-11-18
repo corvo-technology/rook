@@ -32,6 +32,7 @@ import { SidebarHeader } from "./sidebar-header";
 import {
   SidebarNavLive,
   SidebarPeopleList,
+  usePartnerAccent,
   usePartnerHidden,
   useSpaceSummary,
 } from "./sidebar-team";
@@ -306,6 +307,7 @@ export function ShellSidebarFooter({
   const localEdition = useLocalEdition();
   const [menuOpen, setMenuOpen] = useState(false);
   const [logOutError, setLogOutError] = useState<string | null>(null);
+  usePartnerAccent();
   const hideStore = usePartnerHidden().includes("store");
   const { signingOut, logOut } = useSignOut(() => {
     clearSpaceSelection();

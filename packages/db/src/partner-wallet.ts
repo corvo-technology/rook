@@ -16,8 +16,9 @@ const GRANT_SOURCE = /^purchase:partner:([^:]+):.+:\d{4}-(?:0[1-9]|1[0-2]):(?:ba
 
 /**
  * The credit account that pays for a partner's customers: the one its owner buys credit for in
- * Billing. A partner without an owner (made on the command line) has none and cannot pass credit
- * on. Call with a client that runs as the system.
+ * Billing. A partner made on the command line has no owner and draws on the account it was told
+ * to (`walletOwnerUserId`); told none, it has no credit to pass on. Call with a client that runs
+ * as the system.
  */
 export async function partnerWalletOrganization(
   prisma: PrismaClient,
@@ -25,11 +26,12 @@ export async function partnerWalletOrganization(
 ): Promise<string | null> {
   const partner = await prisma.partner.findUnique({
     where: { id: partnerId },
-    select: { ownerUserId: true },
+    select: { ownerUserId: true, walletOwnerUserId: true },
   });
-  if (!partner?.ownerUserId) return null;
+  const payer = partner?.ownerUserId ?? partner?.walletOwnerUserId;
+  if (!payer) return null;
   const membership = await prisma.member.findFirst({
-    where: { userId: partner.ownerUserId, role: "owner" },
+    where: { userId: payer, role: "owner" },
     orderBy: { createdAt: "asc" },
     select: { organizationId: true },
   });

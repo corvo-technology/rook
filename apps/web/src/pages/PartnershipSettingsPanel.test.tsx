@@ -275,4 +275,111 @@ describe("PartnershipSettingsPanel", () => {
     await render();
     expect(container.querySelector('[role="alert"]')).not.toBeNull();
   });
+
+  const typeInto = async (el: HTMLInputElement | null, value: string) =>
+    act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(el, value);
+      el?.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  const saveEditor = async () => {
+    const saves = [...container.querySelectorAll("button")].filter(
+      (b) => b.textContent?.trim() === "Save",
+    );
+    await act(async () => saves.at(-1)?.click());
+  };
+
+  it("saves the Chief's name and the brand colour, lowercased", async () => {
+    rpcMock.partner.status.mockResolvedValue({ partner: account });
+    rpcMock.partner.setTemplate.mockResolvedValue({ ok: true });
+    await render();
+    await act(async () => button("Edit")?.click());
+    await typeInto(
+      container.querySelector('input[aria-label="Chief name"]'),
+      " Assistente GreenBarber ",
+    );
+    await typeInto(container.querySelector('input[aria-label="Brand colour"]'), "#16A34A");
+    await saveEditor();
+    expect(rpcMock.partner.setTemplate).toHaveBeenCalledWith({
+      template: { agents: [], chiefName: "Assistente GreenBarber", accent: "#16a34a" },
+    });
+  });
+
+  it("does not save a brand colour that is not #rrggbb", async () => {
+    rpcMock.partner.status.mockResolvedValue({ partner: account });
+    await render();
+    await act(async () => button("Edit")?.click());
+    await typeInto(container.querySelector('input[aria-label="Brand colour"]'), "green");
+    await saveEditor();
+    expect(rpcMock.partner.setTemplate).not.toHaveBeenCalled();
+  });
+
+  const chooseFile = async (contents: string) => {
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File([contents], "greenbarber.json", { type: "application/json" });
+    Object.defineProperty(input, "files", { value: [file], configurable: true });
+    await act(async () => {
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  };
+
+  it("imports a template file into the editor, asks for the server address, then saves", async () => {
+    rpcMock.partner.status.mockResolvedValue({ partner: account });
+    rpcMock.partner.setTemplate.mockResolvedValue({ ok: true });
+    await render();
+    await chooseFile(
+      JSON.stringify({
+        connector: { slug: "greenflow", name: "Greenflow", endpoint: "{{MCP_PUBLIC_URL}}" },
+        agents: [
+          {
+            key: "recepcao",
+            name: "Recepção",
+            instructions: "Cuide da agenda.",
+            usesConnector: true,
+            starters: ["Como está a agenda de hoje?"],
+          },
+        ],
+        hide: ["store"],
+        chiefName: "Assistente GreenBarber",
+      }),
+    );
+    // Nothing is saved until the owner has checked it and filled in the address.
+    expect(rpcMock.partner.setTemplate).not.toHaveBeenCalled();
+    expect((container.querySelector('input[aria-label="Name"]') as HTMLInputElement).value).toBe(
+      "Recepção",
+    );
+    await saveEditor();
+    expect(rpcMock.partner.setTemplate).not.toHaveBeenCalled();
+    await typeInto(
+      container.querySelector('input[aria-label="Connector address"]'),
+      "https://mcp.example.test",
+    );
+    await saveEditor();
+    expect(rpcMock.partner.setTemplate).toHaveBeenCalledWith({
+      template: {
+        connector: { slug: "greenflow", name: "Greenflow", endpoint: "https://mcp.example.test" },
+        agents: [
+          {
+            key: "recepcao",
+            name: "Recepção",
+            instructions: "Cuide da agenda.",
+            usesConnector: true,
+            starters: ["Como está a agenda de hoje?"],
+          },
+        ],
+        hide: ["store"],
+        chiefName: "Assistente GreenBarber",
+      },
+    });
+  });
+
+  it("says so, and changes nothing, when the imported file is not a template", async () => {
+    rpcMock.partner.status.mockResolvedValue({ partner: account });
+    await render();
+    await chooseFile("not json");
+    expect(text()).toContain("That file is not a valid template");
+    await chooseFile(JSON.stringify({ agents: [], accent: "red" }));
+    expect(text()).toContain("That file is not a valid template");
+    expect(container.querySelector('input[aria-label="Name"]')).toBeNull();
+    expect(rpcMock.partner.setTemplate).not.toHaveBeenCalled();
+  });
 });

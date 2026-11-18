@@ -1658,6 +1658,10 @@ msgstr "このスペースのボット、グループ、チャット、ファイ
 msgid "Brain label"
 msgstr "Brainラベル"
 
+#: src/pages/PartnerTemplateEditor.tsx
+msgid "Brand colour"
+msgstr "ブランドカラー"
+
 #: src/pages/Onboarding.tsx
 msgid "Bring agents you already use, or I'll suggest a team."
 msgstr "すでに使っているエージェントを持ち込むか、チームを提案します。"
@@ -1877,6 +1881,10 @@ msgstr "コンピューターの設定を確認中…"
 #: src/pages/HostComputerPrompt.tsx
 msgid "Checking…"
 msgstr "確認中…"
+
+#: src/pages/PartnerTemplateEditor.tsx
+msgid "Chief name"
+msgstr "チーフの名前"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Choose a bot"
@@ -4326,6 +4334,7 @@ msgstr "IMAPサーバー"
 #: src/pages/ImportFlow.tsx
 #: src/pages/ImportFromApp.tsx
 #: src/pages/onboarding/TeamStep.tsx
+#: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/create-bot-panel.tsx
 msgid "Import"
@@ -7473,12 +7482,12 @@ msgstr "一部の設定はインポートされません"
 msgid "Something else"
 msgstr "その他"
 
-#. js-lingui-explicit-id
-#: src/lib/run-error-copy.ts
+#: src/pages/PartnershipSettingsPanel.tsx
 msgid "Something went wrong"
 msgstr "問題が発生しました"
 
-#: src/pages/PartnershipSettingsPanel.tsx
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
 msgid "Something went wrong"
 msgstr "問題が発生しました"
 
@@ -7877,6 +7886,10 @@ msgstr "テスト実行"
 #: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Testing…"
 msgstr "テスト中…"
+
+#: src/pages/PartnershipSettingsPanel.tsx
+msgid "That file is not a valid template"
+msgstr "このファイルは有効なテンプレートではありません"
 
 #: src/lib/server-copy.ts
 msgid "The {name} routine is paused because its change check failed: {reason}"

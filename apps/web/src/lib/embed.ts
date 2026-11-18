@@ -54,8 +54,24 @@ export function accentTokens(hex: string): Record<string, string> {
   };
 }
 
-/** Applies the partner's accent, or gives the app's own colours back when there is none. */
+/** What the embedding page asked for, and what the partner set for itself; the page's wins. */
+let pageAccent: string | null = null;
+let partnerAccent: string | null = null;
+
+/** Applies the embedding page's accent, or the partner's own, or the app's colours when neither. */
 export function applyEmbedAccent(hex: string | null): void {
+  pageAccent = hex;
+  paintAccent();
+}
+
+/** The accent the partner set in its template, used only when the embedding page passes none. */
+export function applyPartnerAccent(hex: string | null): void {
+  partnerAccent = hex ? accent(hex) : null;
+  paintAccent();
+}
+
+function paintAccent(): void {
+  const hex = pageAccent ?? partnerAccent;
   const style = document.documentElement.style;
   const names = ["--primary", "--primary-foreground", "--primary-hover", "--primary-disabled"];
   if (!hex) {

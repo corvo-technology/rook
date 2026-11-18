@@ -53,6 +53,8 @@ export function PartnerTemplateEditor({
   );
   const [hidden, setHidden] = useState<PartnerHiddenArea[]>(template?.hide ?? []);
   const [choose, setChoose] = useState(template?.models === "choose");
+  const [chiefName, setChiefName] = useState(template?.chiefName ?? "");
+  const [accent, setAccent] = useState(template?.accent ?? "");
   const [busy, setBusy] = useState(false);
   const areaLabels: Record<PartnerHiddenArea, string> = {
     routines: t`Routines`,
@@ -65,7 +67,11 @@ export function PartnerTemplateEditor({
   const change = (index: number, patch: Partial<Draft>) =>
     setAgents((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
   const hasConnector = connectorName.trim() !== "" && endpoint.trim() !== "";
-  const valid = agents.every((agent) => agent.name.trim() !== "");
+  // A half-filled connector, or an address still holding a placeholder, would be saved as none.
+  const connectorReady =
+    (connectorName.trim() === "") === (endpoint.trim() === "") && !endpoint.includes("{{");
+  const accentReady = accent.trim() === "" || /^#[0-9a-f]{6}$/i.test(accent.trim());
+  const valid = agents.every((agent) => agent.name.trim() !== "") && connectorReady && accentReady;
 
   async function save() {
     if (busy || !valid) return;
@@ -89,7 +95,12 @@ export function PartnerTemplateEditor({
         };
       });
       await onSave(
-        named.length === 0 && !hasConnector && hidden.length === 0 && !choose
+        named.length === 0 &&
+          !hasConnector &&
+          hidden.length === 0 &&
+          !choose &&
+          !chiefName.trim() &&
+          !accent.trim()
           ? null
           : {
               ...(hasConnector
@@ -104,6 +115,8 @@ export function PartnerTemplateEditor({
               agents: named,
               ...(hidden.length > 0 ? { hide: hidden } : {}),
               ...(choose ? { models: "choose" as const } : {}),
+              ...(chiefName.trim() ? { chiefName: chiefName.trim() } : {}),
+              ...(accent.trim() ? { accent: accent.trim().toLowerCase() } : {}),
             },
       );
     } finally {
@@ -113,6 +126,23 @@ export function PartnerTemplateEditor({
 
   return (
     <div className="space-y-3 rounded-xl border border-border p-4">
+      <div className="flex gap-2">
+        <Input
+          value={chiefName}
+          onChange={(event) => setChiefName(event.target.value)}
+          aria-label={t`Chief name`}
+          placeholder={t`Chief name`}
+          maxLength={80}
+        />
+        <Input
+          value={accent}
+          onChange={(event) => setAccent(event.target.value)}
+          aria-label={t`Brand colour`}
+          placeholder="#rrggbb"
+          maxLength={7}
+          aria-invalid={!accentReady}
+        />
+      </div>
       <div className="flex gap-2">
         <Input
           value={connectorName}

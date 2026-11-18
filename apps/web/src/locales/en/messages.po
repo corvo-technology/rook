@@ -1658,6 +1658,10 @@ msgstr "Bots, groups, chats, files, memory, and integrations in this space stay 
 msgid "Brain label"
 msgstr "Brain label"
 
+#: src/pages/PartnerTemplateEditor.tsx
+msgid "Brand colour"
+msgstr "Brand colour"
+
 #: src/pages/Onboarding.tsx
 msgid "Bring agents you already use, or I'll suggest a team."
 msgstr "Bring agents you already use, or I'll suggest a team."
@@ -1877,6 +1881,10 @@ msgstr "Checking computer setup…"
 #: src/pages/HostComputerPrompt.tsx
 msgid "Checking…"
 msgstr "Checking…"
+
+#: src/pages/PartnerTemplateEditor.tsx
+msgid "Chief name"
+msgstr "Chief name"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Choose a bot"
@@ -4326,6 +4334,7 @@ msgstr "IMAP server"
 #: src/pages/ImportFlow.tsx
 #: src/pages/ImportFromApp.tsx
 #: src/pages/onboarding/TeamStep.tsx
+#: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/create-bot-panel.tsx
 msgid "Import"
@@ -7473,12 +7482,12 @@ msgstr "Some settings are not imported"
 msgid "Something else"
 msgstr "Something else"
 
-#. js-lingui-explicit-id
-#: src/lib/run-error-copy.ts
+#: src/pages/PartnershipSettingsPanel.tsx
 msgid "Something went wrong"
 msgstr "Something went wrong"
 
-#: src/pages/PartnershipSettingsPanel.tsx
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
 msgid "Something went wrong"
 msgstr "Something went wrong"
 
@@ -7877,6 +7886,10 @@ msgstr "Test run"
 #: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Testing…"
 msgstr "Testing…"
+
+#: src/pages/PartnershipSettingsPanel.tsx
+msgid "That file is not a valid template"
+msgstr "That file is not a valid template"
 
 #: src/lib/server-copy.ts
 msgid "The {name} routine is paused because its change check failed: {reason}"

@@ -1951,6 +1951,8 @@ export const MeSchema = z.object({
       name: z.string(),
       hide: z.array(PartnerHiddenArea).optional(),
       models: z.enum(["fixed", "choose"]).optional(),
+      /** The partner's colour for the page when the embedding page passes none; `#rrggbb`. */
+      accent: z.string().optional(),
     })
     .nullable()
     .optional(),

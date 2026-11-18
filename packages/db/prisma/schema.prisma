@@ -2597,9 +2597,17 @@ model Partner {
   /// The most this partner passes on to one customer, and to all customers together, per month.
   perTenantLimitCents Int?
   monthlyLimitCents   Int?
+  /// Whose credit pays for this partner's customers when the partner has no owner of its own, so
+  /// several partners (one per product) can draw on one account.
+  walletOwnerUserId   String?
+  /// Where low-credit notices go. The secret that signs them is derived from the deployment's key
+  /// and this version, so nothing secret is stored; raising the version replaces the secret.
+  webhookUrl          String?
+  webhookSecretVersion Int                   @default(0)
   tenants             PartnerTenant[]
   codes               PartnerEntryCode[]
   windows             PartnerRequestWindow[]
+  webhookEvents       PartnerWebhookEvent[]
 
   @@map("partners")
 }
@@ -2622,6 +2630,25 @@ model PartnerTenant {
 
   @@unique([partnerId, externalTenantId])
   @@map("partner_tenants")
+}
+
+/// A notice owed to a partner about one customer's credit. One row per partner, customer, kind
+/// and month, so a notice is sent once; the row also records when it was delivered.
+model PartnerWebhookEvent {
+  id               String    @id @default(cuid())
+  partnerId        String
+  partner          Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  externalTenantId String
+  /// tenant.allowance_low | tenant.allowance_exhausted
+  kind             String
+  period           String
+  grantedCents     Int
+  usedCents        Int
+  createdAt        DateTime  @default(now())
+  deliveredAt      DateTime?
+
+  @@unique([partnerId, externalTenantId, kind, period])
+  @@map("partner_webhook_events")
 }
 
 /// A one-time code that turns a partner's request into a session. Only its hash is stored.

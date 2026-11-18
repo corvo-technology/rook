@@ -60,7 +60,7 @@ export function createEmbedDemo(
   const key = env.PARTNER_API_KEY;
   if (!api) throw new Error("Set PARTNER_API_URL to the Rook API address.");
   if (!key) throw new Error("Set PARTNER_API_KEY to the key from Settings > Partnership.");
-  const web = env.CORVO_WEB_URL ?? env.ROOK_WEB_URL;
+  const web = env.CORVO_WEB_URL;
   // The API and the web app share an address only on one machine; a deployed API serves no SDK.
   if (!web && !isLocal(api)) {
     throw new Error("Set CORVO_WEB_URL to the Rook web app address, where sdk.js is served.");

@@ -216,6 +216,11 @@ msgstr "Tela de {0}"
 msgid "{a} and {b} are working…"
 msgstr "{a} e {b} estão trabalhando…"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "{agent}'s computer is out of space"
+msgstr "O computador do {agent} está sem espaço"
+
 #: src/pages/shell/sidebar-team.tsx
 msgid "{agents, plural, one {# agent} other {# agents}}"
 msgstr "{agents, plural, one {# agente} other {# agentes}}"
@@ -352,6 +357,11 @@ msgstr "Faltam {left} etapas"
 #: src/lib/relative-time.ts
 msgid "{minutes}m ago"
 msgstr "{minutes}m atrás"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "{model} couldn't answer"
+msgstr "{model} não conseguiu responder"
 
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "{moved, plural, one {# bot now uses the space default.} other {# bots now use the space default.}}"
@@ -989,6 +999,10 @@ msgstr "Adicionado à wiki"
 msgid "Adding…"
 msgstr "Adicionando"
 
+#: src/components/RunErrorCard.tsx
+msgid "Adjust limit"
+msgstr "Ajustar limite"
+
 #: src/pages/InvitePage.tsx
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Admin"
@@ -1045,6 +1059,11 @@ msgstr "Computador do agente"
 #: src/pages/Store.tsx
 msgid "Agents"
 msgstr "Agentes"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Agents are paused"
+msgstr "Os agentes estão pausados"
 
 #: src/pages/AppAgentAccess.tsx
 msgid "Agents that can use it"
@@ -1651,6 +1670,11 @@ msgstr "Traga sua equipe. Você pode fazer isso depois."
 msgid "Browse MCP servers"
 msgstr "Explorar servidores MCP"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "browser profiles"
+msgstr "perfis do navegador"
+
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Built-in"
@@ -1766,6 +1790,7 @@ msgstr "Alterar {name}"
 msgid "Change {title}"
 msgstr "Alterar {title}"
 
+#: src/components/RunErrorCard.tsx
 #: src/pages/shell/composer-error.tsx
 msgid "Change model"
 msgstr "Trocar modelo"
@@ -2158,6 +2183,7 @@ msgid "Confirm password"
 msgstr "Confirmar senha"
 
 #: src/components/ComputerMaintenanceActions.tsx
+#: src/components/RunErrorCard.tsx
 msgid "Confirm recover?"
 msgstr "Confirmar recuperação?"
 
@@ -2195,6 +2221,7 @@ msgstr "Conectar {0}"
 msgid "Connect {selectedProviderName}"
 msgstr "Conectar {selectedProviderName}"
 
+#: src/components/RunErrorCard.tsx
 #: src/lib/model-problem.ts
 #: src/pages/Onboarding.tsx
 msgid "Connect a model"
@@ -2204,6 +2231,11 @@ msgstr "Conectar um modelo"
 #: src/lib/run-error.ts
 msgid "Connect a model in Settings before running bots."
 msgstr "Conecte um modelo em Configurações antes de executar bots."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Connect a model or subscribe to keep running agents."
+msgstr "Conecte um modelo ou assine para continuar executando agentes."
 
 #: src/pages/shell/composer-error.tsx
 msgid "Connect a model to start a run."
@@ -2975,6 +3007,7 @@ msgid "Could not update billing"
 msgstr "Não foi possível atualizar a cobrança"
 
 #: src/components/ComputerMaintenanceActions.tsx
+#: src/components/RunErrorCard.tsx
 msgid "Could not update computer"
 msgstr "Não foi possível atualizar o computador"
 
@@ -3003,10 +3036,24 @@ msgstr "Não foi possível usar essa imagem"
 msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
 msgstr "Não foi possível verificar a configuração do computador ({failureMessage}). Corrija a conexão e verifique de novo."
 
+#: src/components/RunErrorCard.tsx
+msgid "Couldn't free up space"
+msgstr "Não foi possível liberar espaço"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Couldn't start {agent}'s computer"
+msgstr "Não foi possível iniciar o computador do {agent}"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "Couldn't start the agent's computer."
 msgstr "Não foi possível iniciar o computador do agente."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Couldn't start the computer"
+msgstr "Não foi possível iniciar o computador"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Couldn't update your timezone"
@@ -3123,6 +3170,11 @@ msgstr "Credenciais: {names}"
 msgid "Credit amount"
 msgstr "Valor do crédito"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Credit used up"
+msgstr "Crédito esgotado"
+
 #: src/lib/cron.ts
 msgid "Cron"
 msgstr "Cron"
@@ -3172,6 +3224,11 @@ msgstr "Personalizar {label}"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Customize bot avatar"
 msgstr "Personalizar avatar do bot"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Daily limit reached"
+msgstr "Limite diário atingido"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Daily spending limit"
@@ -3359,6 +3416,7 @@ msgstr "Atualização do desktop"
 
 #: src/components/AskCard.tsx
 #: src/components/ModelProblemNotice.tsx
+#: src/components/RunErrorCard.tsx
 #: src/pages/connections/DatabaseForm.tsx
 #: src/pages/RoutineRunDetail.tsx
 #: src/pages/RoutineRunHistory.tsx
@@ -3964,6 +4022,20 @@ msgstr "Grátis"
 msgid "Free plan ends {day}"
 msgstr "O plano gratuito termina em {day}"
 
+#: src/components/RunErrorCard.tsx
+msgid "Free up space"
+msgstr "Liberar espaço"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Free up space or recover the computer."
+msgstr "Libere espaço ou recupere o computador."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Free up space or upgrade your plan."
+msgstr "Libere espaço ou faça upgrade do plano."
+
 #: src/lib/cron.ts
 msgid "Friday"
 msgstr "sexta-feira"
@@ -4446,6 +4518,26 @@ msgstr "Isolado"
 msgid "Isolated preview — no access to your account"
 msgstr "Prévia isolada, sem acesso à sua conta"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "It got stuck and nothing was moving."
+msgstr "Ficou travado e nada avançava."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "It kept repeating the same step."
+msgstr "Repetiu o mesmo passo sem parar."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "It kept waiting for something that didn't arrive."
+msgstr "Ficou esperando algo que não chegou."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "It started fresh. Recover the computer to rebuild it."
+msgstr "Ele começou do zero. Recupere o computador para reconstruí-lo."
+
 #: src/pages/shell/shell-dialogs.tsx
 msgid "Its bots and groups are kept and leave the section."
 msgstr "Seus bots e grupos são mantidos e saem da seção."
@@ -4473,6 +4565,16 @@ msgstr "O modelo mudou desde a importação, então continua."
 #: src/pages/shell/agent-import-undo.tsx
 msgid "Its model goes back to before the import."
 msgstr "O modelo volta ao que era antes da importação."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Its system is damaged. Recover it to rebuild it."
+msgstr "O sistema está danificado. Recupere o computador para reconstruí-lo."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Its tools kept failing."
+msgstr "As ferramentas continuaram falhando."
 
 #: src/pages/InvitePage.tsx
 msgid "Join"
@@ -4546,6 +4648,11 @@ msgstr "Idioma"
 #: src/lib/plan-view.ts
 msgid "Large"
 msgstr "Grande"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Largest: {top}."
+msgstr "Os maiores: {top}."
 
 #: src/pages/Usage.tsx
 msgid "Last 30 days"
@@ -5131,6 +5238,11 @@ msgstr "Créditos mensais"
 msgid "Monthly credits expire at renewal. Top-ups do not expire."
 msgstr "Os créditos mensais expiram na renovação. As recargas não expiram."
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Monthly limit reached"
+msgstr "Limite mensal atingido"
+
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/Usage.tsx
 msgid "Monthly token limit"
@@ -5464,6 +5576,11 @@ msgstr "Ainda sem mensagens com {peerBotName}."
 msgid "No model catalog is available."
 msgstr "Nenhum catálogo de modelos está disponível."
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "No model to run"
+msgstr "Nenhum modelo para executar"
+
 #: src/lib/model-connection-preflight.ts
 msgid "No models listed."
 msgstr "Nenhum modelo listado."
@@ -5790,6 +5907,10 @@ msgstr "Abra o Rook diretamente para conectar este app."
 #: src/pages/shell/channel-members.tsx
 msgid "Open to everyone"
 msgstr "Abrir para todos"
+
+#: src/components/RunErrorCard.tsx
+msgid "Open usage"
+msgstr "Abrir uso"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Open work"
@@ -6217,6 +6338,16 @@ msgstr "Na fila"
 msgid "Raise limit"
 msgstr "Aumentar limite"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Raise the agent's limit, or ask for a shorter reply."
+msgstr "Aumente o limite do agente ou peça uma resposta mais curta."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Raise this agent's token limit to keep going."
+msgstr "Aumente o limite de tokens deste agente para continuar."
+
 #: src/pages/shell/message-hover-actions.tsx
 msgid "React"
 msgstr "Reagir"
@@ -6306,6 +6437,7 @@ msgstr "Gravação: {0}"
 
 #: src/components/ComputerMaintenanceActions.tsx
 #: src/components/ComputerUpdateProgress.tsx
+#: src/components/RunErrorCard.tsx
 msgid "Recover computer"
 msgstr "Recuperar computador"
 
@@ -6333,6 +6465,10 @@ msgstr "A recuperação fica indisponível até a operação anterior parar."
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Recovery restores the last saved workspace. Unsaved work may be lost."
 msgstr "A recuperação restaura o último espaço de trabalho salvo. O trabalho não salvo pode ser perdido."
+
+#: src/components/RunErrorCard.tsx
+msgid "Recovery started."
+msgstr "Recuperação iniciada."
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Recreate a computer that is not working."
@@ -6522,6 +6658,7 @@ msgstr "Substituir chave de API"
 msgid "Replace its instructions"
 msgstr "Substituir as instruções"
 
+#: src/components/RunErrorCard.tsx
 #: src/lib/model-problem.ts
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Replace key"
@@ -6641,6 +6778,7 @@ msgstr "Restaurado"
 msgid "Restoring your workspace"
 msgstr "Restaurando seu espaço"
 
+#: src/components/RunErrorCard.tsx
 #: src/lib/model-problem.ts
 #: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/shell/sidebar-header.tsx
@@ -6652,6 +6790,11 @@ msgstr "Retomar"
 #: src/pages/SpaceSettingsPanel.tsx
 msgid "Resume bots"
 msgstr "Retomar bots"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Resume this space to keep going."
+msgstr "Retome este espaço para continuar."
 
 #: src/components/AccountAccess.tsx
 #: src/components/PasskeySettings.tsx
@@ -7212,6 +7355,7 @@ msgid "Sign in"
 msgstr "Entrar"
 
 #: src/components/AccountAccess.tsx
+#: src/components/RunErrorCard.tsx
 #: src/lib/model-problem.ts
 #: src/lib/passkeys.ts
 #: src/lib/user-error.ts
@@ -7329,6 +7473,11 @@ msgstr "Algumas configurações não são importadas"
 msgid "Something else"
 msgstr "Outra coisa"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Something went wrong"
+msgstr "Algo deu errado"
+
 #: src/pages/PartnershipSettingsPanel.tsx
 msgid "Something went wrong"
 msgstr "Algo deu errado"
@@ -7382,6 +7531,10 @@ msgstr "Padrão do espaço"
 #: src/pages/SpaceTransfer.tsx
 msgid "Space exported."
 msgstr "Espaço exportado."
+
+#: src/components/RunErrorCard.tsx
+msgid "Space freed up."
+msgstr "Espaço liberado."
 
 #: src/pages/Settings.tsx
 msgid "Spaces"
@@ -7729,6 +7882,11 @@ msgstr "Testando…"
 msgid "The {name} routine is paused because its change check failed: {reason}"
 msgstr "A rotina {name} foi pausada porque a verificação de mudanças falhou: {reason}"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "The agent stopped"
+msgstr "O agente parou"
+
 #: src/pages/shell/agent-import-undo.tsx
 msgid "The bot and what its import added will be removed."
 msgstr "O bot e o que a importação adicionou serão removidos."
@@ -7737,14 +7895,34 @@ msgstr "O bot e o que a importação adicionou serão removidos."
 msgid "The bot can use the file but won't see the picture."
 msgstr "O bot pode usar o arquivo, mas não verá a imagem."
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "The computer is out of space"
+msgstr "O computador está sem espaço"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "The computer lost its saved files"
+msgstr "O computador perdeu os arquivos salvos"
+
 #: src/pages/onboarding/CliEngineRows.tsx
 msgid "The download did not match the published file. Nothing was installed."
 msgstr "O download não correspondeu ao arquivo publicado. Nada foi instalado."
 
 #. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "The model couldn't answer"
+msgstr "O modelo não conseguiu responder"
+
+#. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "The model hit its output limit before finishing its reply."
 msgstr "O modelo atingiu o limite de saída antes de terminar a resposta."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "The model is busy"
+msgstr "O modelo está ocupado"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -7755,6 +7933,11 @@ msgstr "O provedor de modelos retornou um erro."
 #: src/lib/run-error.ts
 msgid "The model returned an unusable response. Try again."
 msgstr "O modelo retornou uma resposta inutilizável. Tente novamente."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "The model took too long"
+msgstr "O modelo demorou demais"
 
 #: src/lib/computer-screen.ts
 msgid "The screen connection closed."
@@ -7807,6 +7990,16 @@ msgstr "Raciocínio: {thinking}"
 #: src/lib/server-copy.ts
 msgid "Thinking: Default"
 msgstr "Raciocínio: Padrão"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "This account is paused"
+msgstr "Esta conta está pausada"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "This agent used its daily budget. Raise the limit or wait until tomorrow."
+msgstr "Este agente usou o orçamento diário. Aumente o limite ou espere até amanhã."
 
 #: src/lib/server-copy.ts
 msgid "This agent's computer is full. Delete files it no longer needs."
@@ -7930,6 +8123,11 @@ msgstr "Este provedor não pode ser testado sem salvar."
 #: src/lib/model-connection-preflight.ts
 msgid "This provider is not connected yet."
 msgstr "Este provedor ainda não está conectado."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "This reply hit its token limit"
+msgstr "Esta resposta atingiu o limite de tokens"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -8098,12 +8296,23 @@ msgid "Trigger"
 msgstr "Gatilho"
 
 #: src/components/ModelProblemNotice.tsx
+#: src/components/RunErrorCard.tsx
 #: src/components/WikiChangeCard.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/DirectChat.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 msgid "Try again"
 msgstr "Tentar novamente"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Try again in a moment."
+msgstr "Tente de novo em instantes."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Try again. If it keeps failing, recover the computer."
+msgstr "Tente de novo. Se continuar falhando, recupere o computador."
 
 #: src/lib/model-connection-preflight.ts
 msgid "Try the test again."
@@ -8257,6 +8466,11 @@ msgstr "Fazer upgrade"
 msgid "Upgrade now"
 msgstr "Aumentar agora"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Upgrade your plan to add more computers."
+msgstr "Faça upgrade do plano para adicionar mais computadores."
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Upload"
 msgstr "Enviar"
@@ -8276,6 +8490,16 @@ msgstr "Urgente"
 #: src/pages/Usage.tsx
 msgid "Usage"
 msgstr "Uso"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Usage resumes when the account does."
+msgstr "O uso volta quando a conta voltar."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Usage resumes when the period resets."
+msgstr "O uso volta quando o período reiniciar."
 
 #: src/pages/LocalSpeechSection.tsx
 msgid "Use"
@@ -8378,6 +8602,11 @@ msgstr "Usa o conector"
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Uses this server's own {hostCredentialSource} credentials to access {selectedProviderName}."
 msgstr "Usa as credenciais de {hostCredentialSource} próprias deste servidor para acessar {selectedProviderName}."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Using {used} of {total}."
+msgstr "Usa {used} de {total}."
 
 #: src/lib/activity-label.ts
 msgid "Using {value}"
@@ -8758,6 +8987,11 @@ msgstr "Seu primeiro bot já existe."
 msgid "Your model provider"
 msgstr "Seu provedor de modelos"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Your monthly use of this space's model is used up."
+msgstr "Seu uso mensal do modelo deste espaço acabou."
+
 #: src/pages/Auth.tsx
 msgid "Your name"
 msgstr "O seu nome"
@@ -8772,10 +9006,6 @@ msgstr "Seu OpenAI"
 msgid "Your OpenRouter"
 msgstr "Seu OpenRouter"
 
-#: src/pages/onboarding/TeamStep.tsx
-msgid "Your team"
-msgstr "Seu time"
-
 #: src/lib/user-error.ts
 msgid "Your plan has no room for another computer. Upgrade to add more."
 msgstr "Seu plano não comporta outro computador. Faça upgrade para adicionar mais."
@@ -8783,6 +9013,20 @@ msgstr "Seu plano não comporta outro computador. Faça upgrade para adicionar m
 #: src/lib/user-error.ts
 msgid "Your plan has no seat for another person. Upgrade to add more."
 msgstr "Seu plano não comporta mais uma pessoa. Faça upgrade para adicionar mais."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Your plan's computer limit is reached"
+msgstr "O plano atingiu o limite de computadores"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Your plan's storage is full"
+msgstr "O armazenamento do plano está cheio"
+
+#: src/pages/onboarding/TeamStep.tsx
+msgid "Your team"
+msgstr "Seu time"
 
 #: src/lib/user-error.ts
 msgid "Your voice provider is out of credit."

@@ -103,4 +103,38 @@ describe("ComposerError", () => {
     expect(container.textContent).toContain("Failed to send message");
     expect(container.querySelector("details")).toBeNull();
   });
+
+  it("shows the coded card with its actions and no English raw text", async () => {
+    const onRetryRun = vi.fn();
+    await render({
+      runError: "Couldn't start the agent's computer.\nThe computer's storage is full.",
+      runErrorInfo: { code: "computer_storage_full", params: { agent: "QA" } },
+      runBotId: "bot-1",
+      onRetryRun,
+    });
+    expect(container.querySelector('[data-testid="run-error-card"]')).not.toBeNull();
+    expect(container.textContent).toContain("QA's computer is out of space");
+    expect(button("Free up space")).toBeDefined();
+    expect(button("Recover computer")).toBeDefined();
+    expect(container.textContent).not.toContain("storage is full");
+    expect(container.querySelector("details")?.hasAttribute("open")).toBe(false);
+  });
+
+  it("dismisses the coded card", async () => {
+    const props = await render({
+      runError: "x",
+      runErrorInfo: { code: "unknown" },
+      runBotId: "bot-1",
+    });
+    await act(async () =>
+      container.querySelector<HTMLButtonElement>('[data-testid="composer-error-dismiss"]')?.click(),
+    );
+    expect(props.onDismissError).toHaveBeenCalledOnce();
+  });
+
+  it("renders an older failure without a code through its text", async () => {
+    await render({ runErrorInfo: null });
+    expect(container.querySelector('[data-testid="run-error-card"]')).toBeNull();
+    expect(button("Replace key")).toBeDefined();
+  });
 });

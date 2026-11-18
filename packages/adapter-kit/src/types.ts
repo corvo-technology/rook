@@ -1,6 +1,7 @@
 import type {
   CacheCapabilities as ConnectionCacheCapabilities,
   ConnectionCatalogItem,
+  RunErrorInfo,
   SandboxKind,
 } from "@corvo/contracts";
 
@@ -874,6 +875,8 @@ export interface NotificationMessage {
   groupId?: string;
   /** Unread chats to show on the app icon, when the sender knows them. */
   badge?: number;
+  /** Why a failed run failed, so the push can word it in the person's language. */
+  errorInfo?: RunErrorInfo;
 }
 
 /** A product-authored transactional email, independent of its delivery vendor. */

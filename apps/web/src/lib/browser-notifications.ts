@@ -1,6 +1,8 @@
 import type { ProductEvent } from "@corvo/contracts";
+import { RunErrorInfoSchema } from "@corvo/contracts";
 import { displayName, plainTextFromMarkdown } from "@corvo/core";
 import { i18n } from "./i18n";
+import { describeRunError } from "./run-error-copy";
 
 export type BrowserNotificationPermission = "default" | "denied" | "granted";
 
@@ -84,9 +86,13 @@ export function browserNotificationMessage(
     return { title: name, body: body || i18n._({ id: "Message", message: "Message" }) };
   }
   if (event.type === "run.failed") {
+    const info = RunErrorInfoSchema.safeParse(event.payload.errorInfo);
+    const raw = typeof event.payload.error === "string" ? event.payload.error : "";
     return {
       title: i18n._({ id: "{name} failed", message: "{name} failed", values: { name } }),
-      body: i18n._({ id: "Failed.", message: "Failed." }),
+      body: info.success
+        ? describeRunError(info.data, raw).title
+        : i18n._({ id: "Failed.", message: "Failed." }),
     };
   }
   if (event.type === "run.cancelled") {

@@ -3,7 +3,6 @@ import {
   formatRoutineRunAt,
   isRetryableError,
   mergeRoutineRunPages,
-  normalizeRunError,
   routineHistoryPage,
   routineRunAt,
 } from "@corvo/core";
@@ -12,7 +11,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useSpaceQueries } from "../lib/query";
-import { translateRunError } from "../lib/run-error";
+import { runFailureLines } from "../lib/run-error-copy";
 import { statusLabel, statusTone } from "./ActivityList";
 
 export function RoutineRunHistory({ routineId }: { routineId: string }) {
@@ -75,6 +74,7 @@ function RunRow({ run }: { run: RoutineRun }) {
   const { i18n, t } = useLingui();
   const locale = i18n.locale || "en";
   const at = routineRunAt(run);
+  const failure = run.error ? runFailureLines(run.error, run.errorInfo, locale) : null;
   const chatTo = run.messageId
     ? run.groupId
       ? `/app/g/${encodeURIComponent(run.groupId)}?m=${encodeURIComponent(run.messageId)}`
@@ -100,12 +100,13 @@ function RunRow({ run }: { run: RoutineRun }) {
       ) : (
         <div className={lineClass}>{line}</div>
       )}
-      {run.status === "failed" && run.error ? (
+      {run.status === "failed" && run.error && failure ? (
         <div className="-mt-1 pb-2 text-destructive">
-          <p>{normalizeRunError(run.error, translateRunError, locale).summary}</p>
+          <p>{failure.title}</p>
+          {failure.line ? <p className="text-muted-foreground">{failure.line}</p> : null}
           <details key={run.error} className="mt-1">
             <summary className="w-fit cursor-pointer">{t`Details`}</summary>
-            <pre className="mt-2 whitespace-pre-wrap break-words text-xs">{run.error}</pre>
+            <pre className="mt-2 whitespace-pre-wrap break-words text-xs">{failure.details}</pre>
           </details>
         </div>
       ) : null}

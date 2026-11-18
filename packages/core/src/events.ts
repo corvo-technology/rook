@@ -1,4 +1,5 @@
-import type { MessageBlock, ThreadMessage } from "@corvo/contracts";
+import type { MessageBlock, RunErrorInfo, ThreadMessage } from "@corvo/contracts";
+import { RunErrorInfoSchema } from "@corvo/contracts";
 import { cloudAgentBlockFromPayload } from "./cloud-agent.js";
 import { preserveIdentitySource } from "./identity-source.js";
 import { modelFallbackFailure, parseModelFallbackFailure } from "./run-error.js";
@@ -264,6 +265,16 @@ export function withLiveStreamingProgress<
   const messages = stripLiveStreamingProgress(snapshot.messages);
   if (messages === snapshot.messages) return snapshot;
   return { ...snapshot, messages };
+}
+
+/** The code and params a failed run carries beside its text, when it carries any. */
+export function runFailureErrorInfo(event: {
+  type: string;
+  payload?: Record<string, unknown>;
+}): RunErrorInfo | undefined {
+  if (event.type !== "run.failed") return undefined;
+  const parsed = RunErrorInfoSchema.safeParse(event.payload?.errorInfo);
+  return parsed.success ? parsed.data : undefined;
 }
 
 const RUN_FAILURE_ERROR_MAX = 300;

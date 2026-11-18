@@ -9,7 +9,11 @@ import type {
   ReplyPreview,
   ThreadSnapshot,
 } from "@corvo/contracts";
-import { GROUP_MEMBER_MIN, MessageBlock as MessageBlockSchema } from "@corvo/contracts";
+import {
+  GROUP_MEMBER_MIN,
+  MessageBlock as MessageBlockSchema,
+  RunErrorInfoSchema,
+} from "@corvo/contracts";
 import {
   ACTIVE_RUN_STATUSES,
   BACKGROUND_RUN_TRIGGERS,
@@ -706,10 +710,12 @@ function mapRun(run: {
   modelProvider: string | null;
   modelId: string | null;
   error: string | null;
+  errorInfo?: unknown;
   startedAt: Date | null;
   completedAt: Date | null;
   createdAt: Date;
 }) {
+  const errorInfo = run.status === "failed" ? RunErrorInfoSchema.safeParse(run.errorInfo) : null;
   return {
     id: run.id,
     userId: run.userId,
@@ -726,6 +732,7 @@ function mapRun(run: {
       run.status === "failed"
         ? runFailureError({ type: "run.failed", payload: { error: run.error } })
         : run.error,
+    ...(errorInfo?.success ? { errorInfo: errorInfo.data } : {}),
     startedAt: run.startedAt?.toISOString() ?? null,
     completedAt: run.completedAt?.toISOString() ?? null,
     createdAt: run.createdAt.toISOString(),

@@ -216,6 +216,11 @@ msgstr "{0} 的屏幕"
 msgid "{a} and {b} are working…"
 msgstr "{a}和{b}正在工作…"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "{agent}'s computer is out of space"
+msgstr "{agent}的电脑没有空间了"
+
 #: src/pages/shell/sidebar-team.tsx
 msgid "{agents, plural, one {# agent} other {# agents}}"
 msgstr "{agents, plural, other {# 个智能体}}"
@@ -352,6 +357,11 @@ msgstr "还剩 {left} 步"
 #: src/lib/relative-time.ts
 msgid "{minutes}m ago"
 msgstr "{minutes} 分钟前"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "{model} couldn't answer"
+msgstr "{model}无法回答"
 
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "{moved, plural, one {# bot now uses the space default.} other {# bots now use the space default.}}"
@@ -989,6 +999,10 @@ msgstr "已添加到 Wiki"
 msgid "Adding…"
 msgstr "正在添加…"
 
+#: src/components/RunErrorCard.tsx
+msgid "Adjust limit"
+msgstr "调整上限"
+
 #: src/pages/InvitePage.tsx
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Admin"
@@ -1045,6 +1059,11 @@ msgstr "Agent 电脑"
 #: src/pages/Store.tsx
 msgid "Agents"
 msgstr "智能体"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Agents are paused"
+msgstr "智能体已暂停"
 
 #: src/pages/AppAgentAccess.tsx
 msgid "Agents that can use it"
@@ -1651,6 +1670,11 @@ msgstr "邀请你的同事。也可以稍后再做。"
 msgid "Browse MCP servers"
 msgstr "浏览 MCP 服务器"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "browser profiles"
+msgstr "浏览器配置文件"
+
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Built-in"
@@ -1766,6 +1790,7 @@ msgstr "更改 {name}"
 msgid "Change {title}"
 msgstr "更改{title}"
 
+#: src/components/RunErrorCard.tsx
 #: src/pages/shell/composer-error.tsx
 msgid "Change model"
 msgstr "更换模型"
@@ -2158,6 +2183,7 @@ msgid "Confirm password"
 msgstr "确认密码"
 
 #: src/components/ComputerMaintenanceActions.tsx
+#: src/components/RunErrorCard.tsx
 msgid "Confirm recover?"
 msgstr "确认恢复？"
 
@@ -2195,6 +2221,7 @@ msgstr "连接 {0}"
 msgid "Connect {selectedProviderName}"
 msgstr "连接 {selectedProviderName}"
 
+#: src/components/RunErrorCard.tsx
 #: src/lib/model-problem.ts
 #: src/pages/Onboarding.tsx
 msgid "Connect a model"
@@ -2204,6 +2231,11 @@ msgstr "连接模型"
 #: src/lib/run-error.ts
 msgid "Connect a model in Settings before running bots."
 msgstr "运行机器人前，请先在设置中连接模型。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Connect a model or subscribe to keep running agents."
+msgstr "连接模型或订阅后即可继续运行智能体。"
 
 #: src/pages/shell/composer-error.tsx
 msgid "Connect a model to start a run."
@@ -2975,6 +3007,7 @@ msgid "Could not update billing"
 msgstr "无法更新账单"
 
 #: src/components/ComputerMaintenanceActions.tsx
+#: src/components/RunErrorCard.tsx
 msgid "Could not update computer"
 msgstr "无法更新电脑"
 
@@ -3003,10 +3036,24 @@ msgstr "无法使用这张图片"
 msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
 msgstr "无法验证电脑设置（{failureMessage}）。请修复连接后重新检查。"
 
+#: src/components/RunErrorCard.tsx
+msgid "Couldn't free up space"
+msgstr "无法释放空间"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Couldn't start {agent}'s computer"
+msgstr "无法启动{agent}的电脑"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "Couldn't start the agent's computer."
 msgstr "无法启动智能体的电脑。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Couldn't start the computer"
+msgstr "无法启动电脑"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Couldn't update your timezone"
@@ -3123,6 +3170,11 @@ msgstr "凭据：{names}"
 msgid "Credit amount"
 msgstr "额度金额"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Credit used up"
+msgstr "额度已用完"
+
 #: src/lib/cron.ts
 msgid "Cron"
 msgstr "Cron"
@@ -3172,6 +3224,11 @@ msgstr "自定义{label}"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Customize bot avatar"
 msgstr "自定义机器人头像"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Daily limit reached"
+msgstr "已达到每日上限"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Daily spending limit"
@@ -3359,6 +3416,7 @@ msgstr "桌面端更新"
 
 #: src/components/AskCard.tsx
 #: src/components/ModelProblemNotice.tsx
+#: src/components/RunErrorCard.tsx
 #: src/pages/connections/DatabaseForm.tsx
 #: src/pages/RoutineRunDetail.tsx
 #: src/pages/RoutineRunHistory.tsx
@@ -3964,6 +4022,20 @@ msgstr "免费"
 msgid "Free plan ends {day}"
 msgstr "免费方案将于 {day} 结束"
 
+#: src/components/RunErrorCard.tsx
+msgid "Free up space"
+msgstr "释放空间"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Free up space or recover the computer."
+msgstr "请释放空间或恢复电脑。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Free up space or upgrade your plan."
+msgstr "请释放空间或升级套餐。"
+
 #: src/lib/cron.ts
 msgid "Friday"
 msgstr "周五"
@@ -4446,6 +4518,26 @@ msgstr "隔离"
 msgid "Isolated preview — no access to your account"
 msgstr "隔离预览——无法访问你的账户"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "It got stuck and nothing was moving."
+msgstr "它卡住了，没有任何进展。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "It kept repeating the same step."
+msgstr "它一直在重复同一步骤。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "It kept waiting for something that didn't arrive."
+msgstr "它一直在等待未到达的内容。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "It started fresh. Recover the computer to rebuild it."
+msgstr "它已重新开始。请恢复电脑以重建。"
+
 #: src/pages/shell/shell-dialogs.tsx
 msgid "Its bots and groups are kept and leave the section."
 msgstr "其中的 Bot 和群组会保留，并移出该分组。"
@@ -4473,6 +4565,16 @@ msgstr "导入后模型已被修改，因此保持不变。"
 #: src/pages/shell/agent-import-undo.tsx
 msgid "Its model goes back to before the import."
 msgstr "模型将恢复到导入之前。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Its system is damaged. Recover it to rebuild it."
+msgstr "它的系统已损坏。请恢复电脑以重建。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Its tools kept failing."
+msgstr "它的工具一直失败。"
 
 #: src/pages/InvitePage.tsx
 msgid "Join"
@@ -4546,6 +4648,11 @@ msgstr "语言"
 #: src/lib/plan-view.ts
 msgid "Large"
 msgstr "大"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Largest: {top}."
+msgstr "最大的：{top}。"
 
 #: src/pages/Usage.tsx
 msgid "Last 30 days"
@@ -5131,6 +5238,11 @@ msgstr "每月额度"
 msgid "Monthly credits expire at renewal. Top-ups do not expire."
 msgstr "每月额度在续订时失效。充值额度不会失效。"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Monthly limit reached"
+msgstr "已达到每月上限"
+
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/Usage.tsx
 msgid "Monthly token limit"
@@ -5464,6 +5576,11 @@ msgstr "还没有与 {peerBotName} 的消息。"
 msgid "No model catalog is available."
 msgstr "没有可用的模型目录。"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "No model to run"
+msgstr "没有可运行的模型"
+
 #: src/lib/model-connection-preflight.ts
 msgid "No models listed."
 msgstr "未列出模型。"
@@ -5790,6 +5907,10 @@ msgstr "请直接打开 Rook 来连接此应用。"
 #: src/pages/shell/channel-members.tsx
 msgid "Open to everyone"
 msgstr "对所有人开放"
+
+#: src/components/RunErrorCard.tsx
+msgid "Open usage"
+msgstr "打开用量"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Open work"
@@ -6217,6 +6338,16 @@ msgstr "排队中"
 msgid "Raise limit"
 msgstr "提高上限"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Raise the agent's limit, or ask for a shorter reply."
+msgstr "请提高智能体的上限，或要求更短的回复。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Raise this agent's token limit to keep going."
+msgstr "请提高此智能体的令牌上限以继续。"
+
 #: src/pages/shell/message-hover-actions.tsx
 msgid "React"
 msgstr "回应"
@@ -6306,6 +6437,7 @@ msgstr "录制中：{0}"
 
 #: src/components/ComputerMaintenanceActions.tsx
 #: src/components/ComputerUpdateProgress.tsx
+#: src/components/RunErrorCard.tsx
 msgid "Recover computer"
 msgstr "恢复电脑"
 
@@ -6333,6 +6465,10 @@ msgstr "在上一个操作停止之前无法恢复。"
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Recovery restores the last saved workspace. Unsaved work may be lost."
 msgstr "恢复操作会还原上次保存的工作区。未保存的工作可能会丢失。"
+
+#: src/components/RunErrorCard.tsx
+msgid "Recovery started."
+msgstr "已开始恢复。"
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Recreate a computer that is not working."
@@ -6522,6 +6658,7 @@ msgstr "替换 API 密钥"
 msgid "Replace its instructions"
 msgstr "替换其指令"
 
+#: src/components/RunErrorCard.tsx
 #: src/lib/model-problem.ts
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Replace key"
@@ -6641,6 +6778,7 @@ msgstr "已恢复"
 msgid "Restoring your workspace"
 msgstr "正在恢复你的工作区"
 
+#: src/components/RunErrorCard.tsx
 #: src/lib/model-problem.ts
 #: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/shell/sidebar-header.tsx
@@ -6652,6 +6790,11 @@ msgstr "继续"
 #: src/pages/SpaceSettingsPanel.tsx
 msgid "Resume bots"
 msgstr "恢复机器人"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Resume this space to keep going."
+msgstr "请恢复此空间以继续。"
 
 #: src/components/AccountAccess.tsx
 #: src/components/PasskeySettings.tsx
@@ -7212,6 +7355,7 @@ msgid "Sign in"
 msgstr "登录"
 
 #: src/components/AccountAccess.tsx
+#: src/components/RunErrorCard.tsx
 #: src/lib/model-problem.ts
 #: src/lib/passkeys.ts
 #: src/lib/user-error.ts
@@ -7329,6 +7473,11 @@ msgstr "部分设置不会导入"
 msgid "Something else"
 msgstr "其他"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Something went wrong"
+msgstr "出了点问题"
+
 #: src/pages/PartnershipSettingsPanel.tsx
 msgid "Something went wrong"
 msgstr "出了点问题"
@@ -7382,6 +7531,10 @@ msgstr "工作区默认"
 #: src/pages/SpaceTransfer.tsx
 msgid "Space exported."
 msgstr "空间已导出。"
+
+#: src/components/RunErrorCard.tsx
+msgid "Space freed up."
+msgstr "已释放空间。"
 
 #: src/pages/Settings.tsx
 msgid "Spaces"
@@ -7729,6 +7882,11 @@ msgstr "正在测试…"
 msgid "The {name} routine is paused because its change check failed: {reason}"
 msgstr "例程 {name} 已暂停，因为其变化检查失败：{reason}"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "The agent stopped"
+msgstr "智能体已停止"
+
 #: src/pages/shell/agent-import-undo.tsx
 msgid "The bot and what its import added will be removed."
 msgstr "此 Bot 及其导入添加的内容将被移除。"
@@ -7737,14 +7895,34 @@ msgstr "此 Bot 及其导入添加的内容将被移除。"
 msgid "The bot can use the file but won't see the picture."
 msgstr "Bot 可以使用该文件，但看不到图片内容。"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "The computer is out of space"
+msgstr "电脑没有空间了"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "The computer lost its saved files"
+msgstr "电脑丢失了已保存的文件"
+
 #: src/pages/onboarding/CliEngineRows.tsx
 msgid "The download did not match the published file. Nothing was installed."
 msgstr "下载内容与已发布的文件不一致。未安装任何内容。"
 
 #. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "The model couldn't answer"
+msgstr "模型无法回答"
+
+#. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "The model hit its output limit before finishing its reply."
 msgstr "模型在完成回复前达到了输出上限。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "The model is busy"
+msgstr "模型正忙"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -7755,6 +7933,11 @@ msgstr "模型提供商返回了错误。"
 #: src/lib/run-error.ts
 msgid "The model returned an unusable response. Try again."
 msgstr "模型返回了无法使用的回复。请重试。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "The model took too long"
+msgstr "模型响应时间过长"
 
 #: src/lib/computer-screen.ts
 msgid "The screen connection closed."
@@ -7807,6 +7990,16 @@ msgstr "思考：{thinking}"
 #: src/lib/server-copy.ts
 msgid "Thinking: Default"
 msgstr "思考：默认"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "This account is paused"
+msgstr "此账户已暂停"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "This agent used its daily budget. Raise the limit or wait until tomorrow."
+msgstr "此智能体已用完当日预算。请提高上限或等到明天。"
 
 #: src/lib/server-copy.ts
 msgid "This agent's computer is full. Delete files it no longer needs."
@@ -7930,6 +8123,11 @@ msgstr "此提供方必须先保存才能测试。"
 #: src/lib/model-connection-preflight.ts
 msgid "This provider is not connected yet."
 msgstr "此提供方尚未连接。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "This reply hit its token limit"
+msgstr "此回复已达到令牌上限"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -8098,12 +8296,23 @@ msgid "Trigger"
 msgstr "触发器"
 
 #: src/components/ModelProblemNotice.tsx
+#: src/components/RunErrorCard.tsx
 #: src/components/WikiChangeCard.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/DirectChat.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 msgid "Try again"
 msgstr "重试"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Try again in a moment."
+msgstr "请稍后再试。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Try again. If it keeps failing, recover the computer."
+msgstr "请重试。如果仍然失败，请恢复电脑。"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Try the test again."
@@ -8257,6 +8466,11 @@ msgstr "升级"
 msgid "Upgrade now"
 msgstr "立即升级"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Upgrade your plan to add more computers."
+msgstr "请升级套餐以添加更多电脑。"
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Upload"
 msgstr "上传"
@@ -8276,6 +8490,16 @@ msgstr "紧急"
 #: src/pages/Usage.tsx
 msgid "Usage"
 msgstr "用量"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Usage resumes when the account does."
+msgstr "账户恢复后用量也会恢复。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Usage resumes when the period resets."
+msgstr "周期重置后用量会恢复。"
 
 #: src/pages/LocalSpeechSection.tsx
 msgid "Use"
@@ -8378,6 +8602,11 @@ msgstr "使用连接器"
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Uses this server's own {hostCredentialSource} credentials to access {selectedProviderName}."
 msgstr "使用此服务器自己的 {hostCredentialSource} 凭据访问 {selectedProviderName}。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Using {used} of {total}."
+msgstr "已使用 {used}，共 {total}。"
 
 #: src/lib/activity-label.ts
 msgid "Using {value}"
@@ -8758,6 +8987,11 @@ msgstr "你的第一个机器人已存在。"
 msgid "Your model provider"
 msgstr "你的模型提供商"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Your monthly use of this space's model is used up."
+msgstr "你本月对此空间模型的用量已用完。"
+
 #: src/pages/Auth.tsx
 msgid "Your name"
 msgstr "你的名字"
@@ -8772,10 +9006,6 @@ msgstr "你的 OpenAI"
 msgid "Your OpenRouter"
 msgstr "你的 OpenRouter"
 
-#: src/pages/onboarding/TeamStep.tsx
-msgid "Your team"
-msgstr "你的团队"
-
 #: src/lib/user-error.ts
 msgid "Your plan has no room for another computer. Upgrade to add more."
 msgstr "当前套餐无法再添加电脑。请升级套餐。"
@@ -8783,6 +9013,20 @@ msgstr "当前套餐无法再添加电脑。请升级套餐。"
 #: src/lib/user-error.ts
 msgid "Your plan has no seat for another person. Upgrade to add more."
 msgstr "当前套餐无法再添加成员。请升级套餐。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Your plan's computer limit is reached"
+msgstr "套餐已达到电脑数量上限"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Your plan's storage is full"
+msgstr "套餐存储空间已满"
+
+#: src/pages/onboarding/TeamStep.tsx
+msgid "Your team"
+msgstr "你的团队"
 
 #: src/lib/user-error.ts
 msgid "Your voice provider is out of credit."

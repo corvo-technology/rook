@@ -1,10 +1,9 @@
 import type { RoutineRun } from "@corvo/contracts";
-import { normalizeRunError } from "@corvo/core";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { useSpaceQueries } from "../lib/query";
 import { formatRunDuration } from "../lib/routine-calendar";
-import { translateRunError } from "../lib/run-error";
+import { runFailureLines } from "../lib/run-error-copy";
 
 /** What a finished run did: how long it took, and why it stopped when it did not work. */
 export function RunSummary({ run }: { run: RoutineRun }) {
@@ -14,6 +13,7 @@ export function RunSummary({ run }: { run: RoutineRun }) {
     run.startedAt && run.completedAt
       ? formatRunDuration(Date.parse(run.completedAt) - Date.parse(run.startedAt), locale)
       : null;
+  const failure = run.error ? runFailureLines(run.error, run.errorInfo, locale) : null;
   return (
     <div className="space-y-2 text-[13.5px]">
       {took ? (
@@ -21,12 +21,13 @@ export function RunSummary({ run }: { run: RoutineRun }) {
           <Trans>Took {took}</Trans>
         </p>
       ) : null}
-      {run.status === "failed" && run.error ? (
+      {run.status === "failed" && run.error && failure ? (
         <div className="text-destructive">
-          <p>{normalizeRunError(run.error, translateRunError, locale).summary}</p>
+          <p>{failure.title}</p>
+          {failure.line ? <p className="text-muted-foreground">{failure.line}</p> : null}
           <details key={run.error} className="mt-1 text-xs">
             <summary className="w-fit cursor-pointer">{t`Details`}</summary>
-            <pre className="mt-2 break-words whitespace-pre-wrap">{run.error}</pre>
+            <pre className="mt-2 break-words whitespace-pre-wrap">{failure.details}</pre>
           </details>
         </div>
       ) : null}

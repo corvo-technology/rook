@@ -1189,6 +1189,9 @@ function SpaceShell({ page }: { page?: ReactNode }) {
                   onRetryRun={() => void composer.retryRun()}
                   retryingRun={composer.retryingRun}
                   runError={composer.displayedRunError}
+                  runErrorInfo={composer.displayedRunErrorInfo}
+                  runBotId={activeSnapshot?.run?.botId}
+                  onOpenUsage={() => openSettings("usage")}
                   runErrorId={composer.displayedRunErrorId}
                   onRunErrorPresented={composer.handleRunErrorPresented}
                   onDismissError={composer.dismissComposerError}

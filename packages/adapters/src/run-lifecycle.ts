@@ -7,6 +7,7 @@ import { returnBotMessageOutcome, runReturnsOutcome } from "./bot-messages.js";
 import { withComputerScreenAvailability } from "./computer-screens.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { closeHandoffGroup } from "./handoff-summary.js";
+import { classifyRunError } from "./run-error-code.js";
 import { notifyRun } from "./run-notifications.js";
 import type { TakeoverResumeCheckpoint } from "./takeover-resume.js";
 import { TAKEOVER_RESUME_CHECKPOINTS } from "./takeover-resume.js";
@@ -73,6 +74,10 @@ export async function failRunBeforeTurn(
   message: string,
   options: { stopReason?: RunStopReason; silent?: boolean } = {},
 ): Promise<boolean> {
+  const errorInfo = classifyRunError(new Error(message), message, {
+    botName,
+    stopReason: options.stopReason,
+  });
   const failed = await deps.events.finalizeRun({
     spaceId: run.spaceId,
     threadId: run.threadId,
@@ -84,6 +89,7 @@ export async function failRunBeforeTurn(
     leaseFence: lease.fence,
     outcome: "failed",
     error: message,
+    errorInfo,
     ...(options.stopReason ? { stopReason: options.stopReason } : {}),
   });
   if (!failed) return false;
@@ -110,6 +116,7 @@ export async function failRunBeforeTurn(
       body: message,
       botId: run.botId,
       threadId: run.threadId,
+      errorInfo,
     });
   }
   await closeHandoffGroup(deps, run);

@@ -16,6 +16,7 @@ import {
   enqueueTakeoverContinuation,
   ensureComputerWorkspaceLayout,
   expireComputerControl,
+  freeComputerSpace,
   hasActiveComputerControl,
   isComputerScreenUnavailable,
   isSandboxGoneError,
@@ -215,6 +216,21 @@ export function computerRoutes(ctx: RouterContext) {
             throw new ORPCError("CONFLICT", { message: "Computer is busy" });
           throw error;
         }
+      }),
+      freeSpace: authed.computer.freeSpace.handler(async ({ context, input }) => {
+        const bot = await repos.getBot(context.actor, input.botId);
+        const computer = bot.computer;
+        if (!computer) throw new IsolationError();
+        if (!computer.providerRef) return { freedBytes: null };
+        if (computer.state !== "running") {
+          throw new ORPCError("CONFLICT", { message: "Start the computer first." });
+        }
+        await keepComputerAwake(deps, computer.id);
+        return freeComputerSpace(
+          deps.sandbox,
+          toComputerRef(computer),
+          computerContext(context.actor, bot.id, "free-space"),
+        );
       }),
       reset: authed.computer.reset.handler(async ({ context, input }) =>
         runComputerReplace(deps, context, input.botId, "reset", "reset"),

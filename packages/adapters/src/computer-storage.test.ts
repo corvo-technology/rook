@@ -2,6 +2,7 @@ import type { AdapterContext, ComputerRef, ProcessEvent } from "@corvo/adapter-k
 import { describe, expect, it, vi } from "vitest";
 import {
   ensureFreeSpace,
+  freeComputerSpace,
   freeManagedTemp,
   MIN_FREE_BYTES,
   managedTempCleanupCommand,
@@ -155,6 +156,26 @@ describe("ensureFreeSpace", () => {
     const error = await ensureFreeSpace(box as never, computer, context).catch((e) => e);
     expect(isSandboxStorageFullError(error)).toBe(true);
     expect(error.usage).toContain(".codex 475 MB");
+    expect(error.disk).toEqual({ usedBytes: 1024, totalBytes: 2560000 * 1024 });
+  });
+
+  it("reports the room a clean-up on request opened up", async () => {
+    const box = disk([5, 205]);
+    await expect(freeComputerSpace(box as never, computer, context)).resolves.toEqual({
+      freedBytes: 200 * MB,
+    });
+    expect(box.commands).toContain(managedTempCleanupCommand());
+  });
+
+  it("cleans up on request even when the disk cannot be read", async () => {
+    const box = {
+      execute: vi.fn(async function* () {
+        yield { type: "stdout", data: "garbage" } satisfies ProcessEvent;
+      }),
+    };
+    await expect(freeComputerSpace(box as never, computer, context)).resolves.toEqual({
+      freedBytes: null,
+    });
   });
 
   it("does not block when the disk cannot be read", async () => {

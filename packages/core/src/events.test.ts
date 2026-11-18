@@ -15,6 +15,7 @@ import {
   reduceLiveMessageBlocks,
   responseStreamingEnabled,
   runFailureError,
+  runFailureErrorInfo,
   sanitizeJsonValue,
   sanitizeUtf16ForJson,
   stripLiveStreamingProgress,
@@ -982,6 +983,25 @@ describe("liveActivityLine", () => {
     ).toBeUndefined();
     expect(
       liveActivityLine([{ id: "m1", blocks: [{ kind: "text", text: "Done" }] }]),
+    ).toBeUndefined();
+  });
+});
+
+describe("runFailureErrorInfo", () => {
+  it("reads the code and params a failed run carries", () => {
+    const errorInfo = { code: "computer_storage_full", params: { agent: "QA" } };
+    expect(runFailureErrorInfo({ type: "run.failed", payload: { error: "x", errorInfo } })).toEqual(
+      errorInfo,
+    );
+  });
+
+  it("ignores a missing, unknown or misplaced code", () => {
+    expect(runFailureErrorInfo({ type: "run.failed", payload: { error: "x" } })).toBeUndefined();
+    expect(
+      runFailureErrorInfo({ type: "run.failed", payload: { errorInfo: { code: "nope" } } }),
+    ).toBeUndefined();
+    expect(
+      runFailureErrorInfo({ type: "run.completed", payload: { errorInfo: { code: "unknown" } } }),
     ).toBeUndefined();
   });
 });

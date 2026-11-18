@@ -34,7 +34,7 @@ import { ModelHeadersSchema } from "./model-headers.js";
 import { NavLinkSchema } from "./nav-links.js";
 import { PartnerHiddenArea } from "./partner.js";
 import { RoutineWatchSchema, RoutineWatchStateSchema } from "./routine-watch.js";
-import { RunTriggerSchema } from "./runs.js";
+import { RunErrorInfoSchema, RunTriggerSchema } from "./runs.js";
 import { SettingsScopeSchema } from "./settings-scope.js";
 import { MemoryModeSchema, UserMemorySourceSchema, UserMemoryTextSchema } from "./user-memory.js";
 import { WikiSettingsSchema } from "./wiki.js";
@@ -1396,6 +1396,7 @@ export const RunSchema = z.object({
   modelProvider: z.string().nullable(),
   modelId: z.string().nullable(),
   error: z.string().nullable(),
+  errorInfo: RunErrorInfoSchema.nullish(),
   startedAt: z.string().nullable(),
   completedAt: z.string().nullable(),
   createdAt: z.string(),

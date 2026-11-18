@@ -33,6 +33,7 @@ import {
   applyThreadSendReceipt,
   clearActiveThreadRuns,
   threadRunError,
+  threadRunErrorInfo,
 } from "../../lib/thread-events";
 import { errorText } from "../../lib/user-error";
 import type { PendingAttachment } from "./chat-shared";
@@ -135,6 +136,9 @@ export function useComposerActions({
   const runError = threadRunError(activeSnapshot, dismissedRunErrorIds);
   const displayedRunError = !sendError ? runError : null;
   const displayedRunErrorId = displayedRunError ? (activeSnapshot?.run?.id ?? null) : null;
+  const displayedRunErrorInfo = displayedRunError
+    ? threadRunErrorInfo(activeSnapshot, dismissedRunErrorIds)
+    : null;
   const handleRunErrorPresented = useCallback((runId: string) => {
     rememberSeenRunErrorId(runId);
   }, []);
@@ -666,6 +670,7 @@ export function useComposerActions({
     handleRunErrorPresented,
     dismissComposerError,
     retryRun,
+    displayedRunErrorInfo,
     retryingRun,
     startFocusPrompt,
   };

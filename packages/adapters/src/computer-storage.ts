@@ -134,18 +134,29 @@ async function runCapture(
   return out;
 }
 
+async function diskBytes(
+  sandbox: Pick<SandboxProvider, "execute">,
+  computer: ComputerRef,
+  context: AdapterContext,
+): Promise<{ free: number; used: number; total: number } | undefined> {
+  try {
+    const out = await runCapture(sandbox, computer, 'df -Pk "$HOME" | tail -n 1', context);
+    const [, total, used, free] = out.trim().split(/\s+/).map(Number);
+    if (total === undefined || used === undefined || free === undefined) return undefined;
+    return [total, used, free].every(Number.isFinite)
+      ? { total: total * 1024, used: used * 1024, free: free * 1024 }
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 async function freeBytes(
   sandbox: Pick<SandboxProvider, "execute">,
   computer: ComputerRef,
   context: AdapterContext,
 ): Promise<number | undefined> {
-  try {
-    const out = await runCapture(sandbox, computer, 'df -Pk "$HOME" | tail -n 1', context);
-    const kilobytes = Number(out.trim().split(/\s+/)[3]);
-    return Number.isFinite(kilobytes) ? kilobytes * 1024 : undefined;
-  } catch {
-    return undefined;
-  }
+  return (await diskBytes(sandbox, computer, context))?.free;
 }
 
 /** The largest directories under the home, e.g. ".codex 475 MB, .nvm 229 MB", for the owner. */
@@ -186,10 +197,28 @@ export async function ensureFreeSpace(
   const before = await freeBytes(sandbox, computer, context);
   if (before === undefined || before >= minFree) return;
   await freeManagedTemp(sandbox, computer, context);
-  const after = await freeBytes(sandbox, computer, context);
-  if (after === undefined || after >= minFree) return;
+  const after = await diskBytes(sandbox, computer, context);
+  if (after === undefined || after.free >= minFree) return;
   throw new SandboxStorageFullError({
-    cause: new Error(`only ${Math.floor(after / 1024 / 1024)} MB free`),
+    cause: new Error(`only ${Math.floor(after.free / 1024 / 1024)} MB free`),
     usage: await describeLargestDirectories(sandbox, computer, context),
+    disk: { usedBytes: after.used, totalBytes: after.total },
   });
+}
+
+/**
+ * Clears Rook's stale temporary files on request and reports the room that opened up, so a
+ * person can free a full computer without waiting for the next start to do it.
+ */
+export async function freeComputerSpace(
+  sandbox: Pick<SandboxProvider, "execute">,
+  computer: ComputerRef,
+  context: AdapterContext,
+): Promise<{ freedBytes: number | null }> {
+  const before = await freeBytes(sandbox, computer, context);
+  await freeManagedTemp(sandbox, computer, context);
+  const after = await freeBytes(sandbox, computer, context);
+  return {
+    freedBytes: before === undefined || after === undefined ? null : Math.max(0, after - before),
+  };
 }

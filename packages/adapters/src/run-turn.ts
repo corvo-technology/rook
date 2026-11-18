@@ -7,6 +7,7 @@ import {
   SandboxRateLimitError,
   TransientModelError,
 } from "@corvo/adapter-kit";
+import type { RunStopReason } from "@corvo/contracts";
 import {
   computerSetupRunError,
   containsSecret,
@@ -38,6 +39,7 @@ import {
 import { startWorkflowStepAfter } from "./routine-steps.js";
 import type { RunContext } from "./run-context.js";
 import { persistTurnCheckpoint } from "./run-context.js";
+import { classifyRunError } from "./run-error-code.js";
 import { TurnGuardStopError } from "./run-guards.js";
 import { releaseRunForShutdown, renewRunLease, requeueComputerRun } from "./run-lifecycle.js";
 import { publishMessage, redactBlocks } from "./run-messages.js";
@@ -831,6 +833,18 @@ export async function failRun(
   // thread, above the error, instead of vanishing with the live row.
   const partialReply = partialReplyBlocks(ctx);
   await ctx.settleRunningHelpers();
+  const stopReason: RunStopReason | undefined =
+    error instanceof ReplyCapExceededError
+      ? "reply_cap"
+      : error instanceof TurnGuardStopError
+        ? error.kind
+        : undefined;
+  const errorInfo = classifyRunError(error, message, {
+    botName: bot.name,
+    provider: model.active["model.provider"],
+    model: model.active["model.id"],
+    stopReason,
+  });
   const failed = await deps.events.finalizeRun({
     spaceId: run.spaceId,
     threadId: thread.id,
@@ -842,8 +856,8 @@ export async function failRun(
     leaseFence: ctx.fence,
     outcome: "failed",
     error: message,
-    ...(error instanceof ReplyCapExceededError ? { stopReason: "reply_cap" as const } : {}),
-    ...(error instanceof TurnGuardStopError ? { stopReason: error.kind } : {}),
+    errorInfo,
+    ...(stopReason ? { stopReason } : {}),
     ...(partialReply.length > 0 ? { partialReply } : {}),
   });
   if (!failed) return;
@@ -907,6 +921,7 @@ export async function failRun(
       body: message,
       botId: bot.id,
       threadId: thread.id,
+      errorInfo,
     });
   }
   await closeHandoffGroup(deps, run);

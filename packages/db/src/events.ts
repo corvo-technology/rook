@@ -3,6 +3,7 @@ import type {
   BotSecretDestination,
   MessageBlock,
   ProductEvent,
+  RunErrorInfo,
   RunStopReason,
 } from "@corvo/contracts";
 import {
@@ -171,6 +172,8 @@ export type FinalizeRunInput = FinalizeRunBase &
     | {
         outcome: "failed";
         error: string;
+        /** The failure as a code plus params, for clients to word in the viewer's language. */
+        errorInfo?: RunErrorInfo;
         /** Set when a rule of the app or a run guard, not a fault, ended the run. */
         stopReason?: RunStopReason;
         /** Reply text the user saw streaming before the failure, kept as a bot message. */
@@ -1872,6 +1875,9 @@ async function finalizeRunOnce(
         status: input.outcome,
         error: input.outcome === "failed" ? input.error : null,
         stopReason: input.outcome === "failed" ? (input.stopReason ?? null) : null,
+        ...(input.outcome === "failed" && input.errorInfo
+          ? { errorInfo: input.errorInfo as Prisma.InputJsonValue }
+          : {}),
         completedAt: now,
         leaseOwner: null,
         leaseExpiresAt: null,
@@ -1962,7 +1968,10 @@ async function finalizeRunOnce(
       botId: input.botId,
       type: input.outcome === "completed" ? "run.completed" : "run.failed",
       runId: input.runId,
-      payload: input.outcome === "completed" ? {} : { error: input.error },
+      payload:
+        input.outcome === "completed"
+          ? {}
+          : { error: input.error, ...(input.errorInfo ? { errorInfo: input.errorInfo } : {}) },
     });
     await tx.event.deleteMany({ where: { runId: input.runId, type: "thread.progress" } });
     if (writableRun) {

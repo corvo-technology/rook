@@ -2,6 +2,7 @@ import type {
   ComputerStatus,
   ProductEvent,
   Run,
+  RunErrorInfo,
   RunStatus,
   RunTrigger,
   ThreadMessage,
@@ -20,6 +21,7 @@ import {
   reduceLiveMessageBlocks,
   replyMetadata,
   runFailureError,
+  runFailureErrorInfo,
   settleRunSubagents,
   stopsRunHelpers,
   subagentBlockFromPayload,
@@ -132,6 +134,16 @@ export function threadRunError(
   const run = snapshot?.run;
   if (run?.status !== "failed" || dismissedRunIds?.has(run.id)) return null;
   return run.error ?? null;
+}
+
+/** The code and params behind `threadRunError`, for a run that saved them. */
+export function threadRunErrorInfo(
+  snapshot: ThreadSnapshot | null,
+  dismissedRunIds?: ReadonlySet<string>,
+): RunErrorInfo | null {
+  const run = snapshot?.run;
+  if (run?.status !== "failed" || dismissedRunIds?.has(run.id)) return null;
+  return run.errorInfo ?? null;
 }
 
 export function clearActiveThreadRuns(snapshot: ThreadSnapshot): ThreadSnapshot {
@@ -436,6 +448,7 @@ export function reduceThreadSnapshot(
     const activeRuns = prev.activeRuns?.filter((candidate) => candidate.id !== event.runId);
     const nextMemberRun = activeRuns?.find((candidate) => candidate.botId === event.botId);
     const failure = runFailureError(event);
+    const failureInfo = runFailureErrorInfo(event);
     const primaryEnded = prev.run?.id === event.runId ? prev.run : null;
     // In a group the failing run may be a member run rather than the displayed one, so look
     // it up in activeRuns as well or its error would be dropped with it.
@@ -450,7 +463,12 @@ export function reduceThreadSnapshot(
       // why it stopped, matching what threads.get returns on the next load.
       run:
         endedRun && failure
-          ? { ...endedRun, status: "failed", error: failure }
+          ? {
+              ...endedRun,
+              status: "failed",
+              error: failure,
+              ...(failureInfo ? { errorInfo: failureInfo } : {}),
+            }
           : primaryEnded
             ? (activeRuns?.[0] ?? null)
             : prev.run,

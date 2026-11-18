@@ -18,6 +18,7 @@ const sizes = requested ? [requested as E2BComputerSize] : E2B_COMPUTER_SIZE_NAM
 for (const size of sizes) {
   const built = await buildE2BComputerTemplate(apiKey, {
     size,
+    domain: process.env.E2B_DOMAIN,
     onBuildLogs: (line) => process.stdout.write(`${line}\n`),
   });
   process.stdout.write(`Built E2B template ${built.name} (${size}).\n`);

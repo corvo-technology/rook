@@ -209,11 +209,12 @@ rechecks each selected PID's marker descriptors before signaling it.
 
 E2B computers start from a sized template built on E2B's stock desktop (which reserves
 8 vCPU and 8 GB): `rook-computer-s` (2 vCPU, 4 GB), `rook-computer-m` (4 vCPU, 8 GB) and
-`rook-computer-l` (8 vCPU, 16 GB). Each also asks E2B for free disk on top of the image with
-`minFreeDiskMb`. The host decides whether to honour it: e2b.dev caps it by plan, and an
-E2B-compatible host you run yourself (for example Rookbox, `E2B_DOMAIN`) controls the real disk
-size on its own side. Build them in the E2B team that owns `E2B_API_KEY`, and again whenever
-their definition in `packages/adapters/src/e2b-template.ts` changes:
+`rook-computer-l` (8 vCPU, 16 GB). Against e2b.dev (no `E2B_DOMAIN`, or `e2b.app`/`e2b.dev`),
+each also asks for free disk on top of the image with `minFreeDiskMb`, which the plan caps. Any
+other E2B-compatible host (for example Rookbox) rejects `minFreeDiskMb`, so it is not sent; on
+Rookbox the disk per template comes from the Rookbox operator's `SPACE_TEMPLATE_BUILD_DISK_MIB`,
+for example `{"rook-computer-s":10240,"rook-computer-m":20480,"rook-computer-l":40960}`.
+Build them in the E2B team that owns `E2B_API_KEY`, and again whenever their definition in `packages/adapters/src/e2b-template.ts` changes:
 
 ```bash
 E2B_API_KEY=<deployment key> pnpm sandbox:e2b-template          # every size

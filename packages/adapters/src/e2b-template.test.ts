@@ -5,12 +5,13 @@ import {
   buildE2BComputerTemplate,
   E2B_COMPUTER_SIZES,
   E2B_DESKTOP_TEMPLATE,
+  e2bSupportsMinFreeDisk,
   e2bTemplatesForSize,
 } from "./e2b-template.js";
 
-async function buildSize(size?: "small" | "medium" | "large") {
+async function buildSize(size?: "small" | "medium" | "large", domain?: string) {
   const build = vi.fn(async (_t: TemplateClass, name: string) => ({ name }));
-  await buildE2BComputerTemplate("e2b_test", { build, size });
+  await buildE2BComputerTemplate("e2b_test", { build, size, domain });
   return build.mock.calls[0] as unknown as [TemplateClass, string, Record<string, unknown>];
 }
 
@@ -38,6 +39,18 @@ describe("E2B computer template", () => {
     expect(name).toBe(template);
     expect(options).toMatchObject({ cpuCount, memoryMB });
     expect(options.minFreeDiskMb).toBe(E2B_COMPUTER_SIZES[size].minFreeDiskMb);
+  });
+
+  it("sends minFreeDiskMb for e2b.dev or an unset domain only", async () => {
+    expect(e2bSupportsMinFreeDisk(undefined)).toBe(true);
+    expect(e2bSupportsMinFreeDisk("")).toBe(true);
+    expect(e2bSupportsMinFreeDisk("e2b.app")).toBe(true);
+    expect(e2bSupportsMinFreeDisk("e2b.dev")).toBe(true);
+    expect(e2bSupportsMinFreeDisk("box.rookbox.run")).toBe(false);
+    expect((await buildSize("small", "e2b.dev"))[2]).toHaveProperty("minFreeDiskMb", 8192);
+    const [, , custom] = await buildSize("small", "box.rookbox.run");
+    expect(custom).not.toHaveProperty("minFreeDiskMb");
+    expect(custom).toMatchObject({ cpuCount: 2, memoryMB: 4096 });
   });
 
   it("grows disk and compute with the size", () => {

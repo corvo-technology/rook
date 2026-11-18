@@ -96,7 +96,7 @@ const COPY: LaunchCopy = {
       sales: "销售",
       people: "人事",
     },
-    health: { label: "健康与美容", agents: ["前台接待", "问诊记录员", "客户回访"] },
+    health: { label: "健康与美容", agents: ["前台接待", "病历助手", "客户回访"] },
   },
   preview: {
     window: "Rook",

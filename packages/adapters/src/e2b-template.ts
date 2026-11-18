@@ -12,13 +12,13 @@ export const E2B_LEGACY_COMPUTER_TEMPLATE = "corvo-computer";
  * bot's Chromium on a Team Computer, where 2 GB would start swapping or killing tabs. Larger
  * sizes scale the same desktop for heavier work.
  *
- * Disk is a free-space request, not a total. It is passed as `minFreeDiskMb` in the template
- * build, the E2B SDK's field for "requested minimum free space after the template's build steps"
- * (docs.e2b.dev/template/build, "Minimum free disk space"). It only takes effect if the
- * E2B-compatible host honours it; on e2b.dev the plan caps it, and on a self-run host such as
- * Rookbox the operator controls the real disk. Without it the filesystem stays near the image's
- * size (about 2.5 GB, of which the image uses 1.3 GB), which browser profiles and the agent CLIs'
- * caches fill. The figures are a target total minus the image.
+ * Disk is a free-space request, not a total. On e2b.dev it is passed as `minFreeDiskMb` in the
+ * template build, the E2B SDK's field for "requested minimum free space after the template's
+ * build steps" (docs.e2b.dev/template/build, "Minimum free disk space"); the plan caps it. Other
+ * E2B-compatible hosts such as Rookbox reject any `minFreeDiskMb`, so it is omitted for them and
+ * the host operator sets the disk (Rookbox: `SPACE_TEMPLATE_BUILD_DISK_MIB`). Without it the
+ * filesystem stays near the image's size (about 2.5 GB, of which the image uses 1.3 GB), which
+ * browser profiles and the agent CLIs' caches fill. The figures are a target total minus the image.
  */
 export const E2B_COMPUTER_SIZES = {
   small: { template: "rook-computer-s", cpuCount: 2, memoryMB: 4096, minFreeDiskMb: 8192 },
@@ -35,6 +35,12 @@ export function e2bTemplatesForSize(size: E2BComputerSize): string[] {
   return size === "small" ? [template, E2B_LEGACY_COMPUTER_TEMPLATE] : [template];
 }
 
+/** Only e2b.dev itself accepts `minFreeDiskMb`; an unset domain means e2b.dev. */
+export function e2bSupportsMinFreeDisk(domain: string | undefined): boolean {
+  const host = domain?.trim().toLowerCase();
+  return !host || host === "e2b.app" || host === "e2b.dev";
+}
+
 type BuildTemplate = (
   template: TemplateClass,
   name: string,
@@ -47,15 +53,20 @@ export function buildE2BComputerTemplate(
   options: {
     size?: E2BComputerSize;
     build?: BuildTemplate;
+    /** E2B API domain; defaults to `E2B_DOMAIN`. */
+    domain?: string;
     onBuildLogs?: (line: string) => void;
   } = {},
 ) {
-  const { template, ...resources } = E2B_COMPUTER_SIZES[options.size ?? E2B_DEFAULT_COMPUTER_SIZE];
+  const { template, minFreeDiskMb, ...resources } =
+    E2B_COMPUTER_SIZES[options.size ?? E2B_DEFAULT_COMPUTER_SIZE];
+  const sendDisk = e2bSupportsMinFreeDisk(options.domain ?? process.env.E2B_DOMAIN);
   const build: BuildTemplate =
     options.build ?? ((image, name, buildOptions) => Template.build(image, name, buildOptions));
   return build(Template().fromTemplate(E2B_DESKTOP_TEMPLATE), template, {
     apiKey,
     ...resources,
+    ...(sendDisk ? { minFreeDiskMb } : {}),
     ...(options.onBuildLogs
       ? { onBuildLogs: (entry) => options.onBuildLogs?.(entry.toString()) }
       : {}),

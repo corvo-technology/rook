@@ -49,6 +49,20 @@ const answers: Record<string, unknown> = {
       { kind: "past_due", tenantId: "tenant-2", tenantName: "Studio Corte", detail: "4", at: "x" },
     ],
   },
+  integration: {
+    keys: [{ prefix: "cpk_acme", createdAt: "2026-03-01T00:00:00.000Z" }],
+    webhook: { url: null, enabled: false },
+    alerts: [
+      { kind: "customer.credit_limit_reached", email: true },
+      { kind: "partner.balance_low", email: true },
+      { kind: "partner.autotopup_started", email: false },
+      { kind: "partner.autotopup_failed", email: true },
+      { kind: "invoice.issued", email: true },
+      { kind: "subscription.lapsed", email: true },
+      { kind: "customer.connector_down", email: true },
+    ],
+    docsUrl: "https://example.test/docs",
+  },
   customers: { items: [customer], next: null },
   customer: {
     ...customer,
@@ -92,4 +106,10 @@ test("The partner area lists the customers and opens one", async ({ page }, test
   await expect(panel.getByRole("button", { name: "Open as support" })).toBeVisible();
   await expect(panel.getByRole("button", { name: "Pause" })).toBeVisible();
   await captureScreenshot(page, testInfo, "partner-customers");
+
+  await nav.getByTestId("sidebar-partner-integration").click();
+  const alerts = page.getByTestId("partner-alerts");
+  await expect(alerts.getByRole("switch", { name: "Credit fund running low" })).toBeChecked();
+  await expect(alerts.getByRole("switch", { name: "Automatic top-up started" })).not.toBeChecked();
+  await captureScreenshot(page, testInfo, "partner-alerts");
 });

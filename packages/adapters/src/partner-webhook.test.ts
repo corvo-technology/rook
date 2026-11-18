@@ -201,4 +201,18 @@ describe("partner webhook reconciler", () => {
       keepExisting: true,
     });
   });
+
+  it("tells the partner's people after recording, and a failure there stops nothing else", async () => {
+    const enqueue = vi.fn(async () => undefined);
+    const alerts = vi.fn(async () => {
+      throw new Error("mail is down");
+    });
+    const prisma = {
+      partner: { findMany: vi.fn(async () => []) },
+      partnerWebhookEvent: { findMany: vi.fn(async () => [{ id: "lost-1" }]) },
+    } as unknown as PrismaClient;
+    await createPartnerWebhookReconciler({ prisma, jobs: { enqueue }, now: () => NOW, alerts })();
+    expect(alerts).toHaveBeenCalledTimes(1);
+    expect(enqueue).toHaveBeenCalled();
+  });
 });

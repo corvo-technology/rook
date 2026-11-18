@@ -76,6 +76,7 @@ function world(overrides: Partial<World> = {}) {
     ...overrides,
   };
   const events: Row[] = [];
+  const alerts: Row[] = [];
   const attempts: Row[] = [];
   const invoices: Row[] = [];
   const lines: Row[] = [];
@@ -113,6 +114,20 @@ function world(overrides: Partial<World> = {}) {
     },
     partnerPricingVersion: {
       findFirst: async () => ({ version: 3, config: CONFIG, createdAt: NOW }),
+    },
+    partnerAlert: {
+      create: async ({ data }: { data: Row }) => {
+        const same = alerts.some(
+          (alert) =>
+            alert.partnerId === data.partnerId &&
+            alert.externalTenantId === data.externalTenantId &&
+            alert.kind === data.kind &&
+            alert.key === data.key,
+        );
+        if (same) throw unique();
+        alerts.push(data);
+        return { id: `alert-${alerts.length}` };
+      },
     },
     partnerWebhookEvent: {
       create: async ({ data }: { data: Row }) => {
@@ -197,6 +212,7 @@ function world(overrides: Partial<World> = {}) {
     prisma: prisma as unknown as PrismaClient,
     state,
     events,
+    alerts,
     attempts,
     invoices,
     lines,
@@ -291,10 +307,16 @@ describe("webhooks", () => {
   it("sends nothing while the fund is above the share and nobody is at a limit", async () => {
     expect(await claimPartnerCreditNotices(world({ limit: null }).prisma, NOW)).toEqual([]);
   });
-  it("sends nothing to a partner with no webhook address", async () => {
+  it("queues no webhook for a partner without an address, but still tells its people", async () => {
     const quiet = world({ spent: 100n * CREDIT, webhookUrl: null });
     expect(await claimPartnerCreditNotices(quiet.prisma, NOW)).toEqual([]);
     expect(quiet.events).toHaveLength(0);
+    expect(quiet.alerts).toEqual([
+      expect.objectContaining({ kind: "customer.credit_limit_reached", key: "2026-11" }),
+    ]);
+    // Told once, however often it is checked.
+    await claimPartnerCreditNotices(quiet.prisma, NOW);
+    expect(quiet.alerts).toHaveLength(1);
   });
 });
 

@@ -111,3 +111,7 @@ Com a [API de comércio](/partners/commerce/) chegam `subscription.updated`, `su
 ```json
 { "type": "partner.balance_low", "balanceCredits": 0, "thresholdCredits": 0 }
 ```
+
+## Avisos para a sua equipe
+
+Quem gerencia o parceiro também é avisado dentro do app e por e-mail, sem precisar de webhook: cliente que atingiu o limite mensal, fundo de créditos acabando, recarga automática, nova fatura, pagamento em atraso e conector fora do ar. Vários avisos seguidos chegam em um único e-mail. Em **Integração** dá para desligar o e-mail de cada tipo; o aviso no app fica sempre ligado. O webhook continua opcional, para integrar com o seu sistema.

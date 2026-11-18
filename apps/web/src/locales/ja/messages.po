@@ -397,6 +397,10 @@ msgstr "{name}が失敗しました"
 msgid "{name} finished"
 msgstr "{name}が完了しました"
 
+#: src/lib/server-copy.ts
+msgid "{name} has a payment past due"
+msgstr "{name}の支払いが滞っています"
+
 #: src/lib/activity-label.ts
 msgid "{name} is waiting for your approval."
 msgstr "{name} があなたの承認を待っています。"
@@ -414,6 +418,10 @@ msgid "{name} options"
 msgstr "{name} のオプション"
 
 #: src/lib/server-copy.ts
+msgid "{name} reached the monthly limit"
+msgstr "{name}が月間上限に達しました"
+
+#: src/lib/server-copy.ts
 msgid "{name} routine: no changes"
 msgstr "{name} ルーティン：変更なし"
 
@@ -425,6 +433,10 @@ msgstr "{name} ルーティン：変更を監視中"
 #: src/lib/browser-notifications.ts
 msgid "{name} stopped"
 msgstr "{name}が停止しました"
+
+#: src/lib/server-copy.ts
+msgid "{name}'s connector is down"
+msgstr "{name}のコネクターが停止しています"
 
 #: src/pages/shell/sidebar-team.tsx
 msgid "{people, plural, one {# person} other {# people}}"
@@ -1535,6 +1547,16 @@ msgstr "自動"
 #: src/pages/partner/PartnerCredits.tsx
 msgid "Automatic top-up"
 msgstr "自動チャージ"
+
+#: src/lib/server-copy.ts
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Automatic top-up failed"
+msgstr "自動チャージに失敗しました"
+
+#: src/lib/server-copy.ts
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Automatic top-up started"
+msgstr "自動チャージを開始しました"
 
 #: src/pages/AppCatalogGrid.tsx
 msgid "Automation"
@@ -3253,6 +3275,10 @@ msgstr "認証情報: {names}"
 msgid "Credit amount"
 msgstr "クレジット額"
 
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Credit fund running low"
+msgstr "クレジットの残りが少ない"
+
 #: src/pages/partner/PartnerCustomers.tsx
 msgid "Credit left"
 msgstr "残りクレジット"
@@ -3305,9 +3331,21 @@ msgstr "カスタムヘッダー"
 msgid "Customer"
 msgstr "顧客"
 
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Customer connector down"
+msgstr "お客様のコネクターが停止"
+
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Customer payment past due"
+msgstr "お客様の支払いの滞納"
+
 #: src/pages/partner/PartnerPricing.tsx
 msgid "Customer pays"
 msgstr "顧客の支払額"
+
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Customer reached the monthly limit"
+msgstr "お客様が月間上限に到達"
 
 #: src/pages/onboarding/labels.ts
 #: src/pages/WhatsAppNumbers.tsx
@@ -3776,6 +3814,10 @@ msgstr "メールアドレス"
 #: src/pages/onboarding/InviteStep.tsx
 msgid "Email addresses"
 msgstr "メールアドレス"
+
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Email alerts"
+msgstr "メールでのお知らせ"
 
 #: src/lib/user-error.ts
 msgid "Email is not allowed to register"
@@ -5641,6 +5683,11 @@ msgstr "新しいグループ"
 #: src/pages/shell/bot-picker.tsx
 msgid "New group chat"
 msgstr "新しいグループチャット"
+
+#: src/lib/server-copy.ts
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "New invoice"
+msgstr "新しい請求書"
 
 #: src/pages/partner/PartnerIntegration.tsx
 msgid "New key"
@@ -9399,6 +9446,10 @@ msgstr "お使いのAnthropic"
 #: src/pages/StoreInstalledApps.tsx
 msgid "Your apps"
 msgstr "あなたのアプリ"
+
+#: src/lib/server-copy.ts
+msgid "Your credit fund is running low"
+msgstr "クレジットの残りが少なくなっています"
 
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Your defaults"

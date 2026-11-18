@@ -169,10 +169,25 @@ export function metaCopy(code: MetaCode, p: Params): string | undefined {
 
 /** The line an inbox alert shows, worded in the viewer's language from its code. */
 export function notificationCopy(code: NotificationCode, p: Params): string {
+  const name = p.name ?? "";
   switch (code) {
     case "storage_near_limit": {
       const percent = p.percent ?? "80";
       return t`Storage is ${percent}% full`;
     }
+    case "partner_limit_reached":
+      return t`${name} reached the monthly limit`;
+    case "partner_balance_low":
+      return t`Your credit fund is running low`;
+    case "partner_autotopup_started":
+      return t`Automatic top-up started`;
+    case "partner_autotopup_failed":
+      return t`Automatic top-up failed`;
+    case "partner_invoice_issued":
+      return t`New invoice`;
+    case "partner_past_due":
+      return t`${name} has a payment past due`;
+    case "partner_connector_down":
+      return t`${name}'s connector is down`;
   }
 }

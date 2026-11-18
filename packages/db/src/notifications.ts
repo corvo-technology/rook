@@ -1,4 +1,5 @@
 import type { AppNotification, NotificationKind, NotificationList } from "@corvo/contracts";
+import { NotificationCodeSchema } from "@corvo/contracts";
 import { hasMentionToken, personName } from "@corvo/core";
 import type { Prisma, PrismaClient } from "./client.js";
 import { previewFromBlocks } from "./thread-listing.js";
@@ -276,11 +277,12 @@ export async function describeNotifications(
       groupId: thread?.groupId ?? null,
       messageId: row.messageId,
       botId: row.botId,
-      source: thread?.group?.name ?? bot?.name ?? actor?.name ?? "",
+      source:
+        thread?.group?.name ?? bot?.name ?? actor?.name ?? asParams(row.params)?.partner ?? "",
       actor,
       preview: preview || null,
       detail: row.detail,
-      code: row.code === "storage_near_limit" ? row.code : null,
+      code: NotificationCodeSchema.safeParse(row.code).data ?? null,
       params: asParams(row.params),
       read: row.readAt !== null,
       createdAt: row.createdAt.toISOString(),

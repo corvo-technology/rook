@@ -111,3 +111,7 @@ With the [commerce API](/en/partners/commerce/) come `subscription.updated`, `su
 ```json
 { "type": "partner.balance_low", "balanceCredits": 0, "thresholdCredits": 0 }
 ```
+
+## Alerts for your team
+
+Whoever manages the partner is also told in the app and by email, with no webhook needed: a customer reaching the monthly limit, the credit fund running low, an automatic top-up, a new invoice, a payment past due and a connector down. Several alerts in a row arrive as one email. In **Integration** you can turn the email off for each kind; the in-app alert is always on. The webhook stays optional, for connecting your own system.

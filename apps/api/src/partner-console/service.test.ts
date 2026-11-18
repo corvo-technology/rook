@@ -21,6 +21,7 @@ import {
   openSupportSession,
   rotateIntegrationKey,
   runCustomerAction,
+  setIntegrationAlertEmail,
   setIntegrationWebhook,
   setPricing,
   setTemplate,
@@ -674,6 +675,28 @@ describe("integration", () => {
       expect.objectContaining({ kind: "key.rotated", detail: { prefix: "cpk_NEWKEY00" } }),
     ]);
     expect(JSON.stringify(audit)).not.toContain("secret");
+  });
+
+  it("lists every alert as emailed until switched off, and only for a partner the caller manages", async () => {
+    const { deps } = world();
+    const before = await getIntegration(deps, ORG_A, { partnerId: "pa1" });
+    expect(before.alerts.length).toBeGreaterThan(0);
+    expect(before.alerts.every((item) => item.email)).toBe(true);
+    await setIntegrationAlertEmail(deps, ORG_A, {
+      partnerId: "pa1",
+      kind: "partner.balance_low",
+      email: false,
+    });
+    const after = await getIntegration(deps, ORG_A, { partnerId: "pa1" });
+    expect(after.alerts.find((item) => item.kind === "partner.balance_low")?.email).toBe(false);
+    expect(after.alerts.filter((item) => !item.email)).toHaveLength(1);
+    await expect(
+      setIntegrationAlertEmail(deps, ORG_A, {
+        partnerId: "pb",
+        kind: "partner.balance_low",
+        email: false,
+      }),
+    ).rejects.toMatchObject({ code: "not_found" });
   });
 
   it("sets and clears the webhook, https only", async () => {

@@ -19,6 +19,7 @@ const api = vi.hoisted(() => ({
   setPricing: vi.fn(),
   integration: vi.fn(),
   rotateKey: vi.fn(),
+  setAlertEmail: vi.fn(),
   template: vi.fn(),
   setTemplate: vi.fn(),
 }));
@@ -293,10 +294,33 @@ describe("partner console", () => {
     );
   });
 
+  it("switches the email for one kind of alert, leaving the others on", async () => {
+    api.integration.mockResolvedValue({
+      keys: [],
+      webhook: { url: null, enabled: false },
+      alerts: [
+        { kind: "partner.balance_low", email: true },
+        { kind: "invoice.issued", email: true },
+      ],
+      docsUrl: "https://example.test/docs",
+    });
+    api.setAlertEmail.mockResolvedValue({ ok: true });
+    await render("/app/partner/p1/integration");
+    const toggle = container.querySelector<HTMLElement>('[aria-label="Credit fund running low"]');
+    expect(toggle?.getAttribute("aria-checked")).toBe("true");
+    await click(toggle ?? undefined);
+    expect(api.setAlertEmail).toHaveBeenCalledWith({
+      partnerId: "p1",
+      kind: "partner.balance_low",
+      email: false,
+    });
+  });
+
   it("shows a replaced key once, after asking", async () => {
     api.integration.mockResolvedValue({
       keys: [{ prefix: "pk_live_ab", createdAt: "2026-01-01" }],
       webhook: { url: null, enabled: false },
+      alerts: [],
       docsUrl: "https://example.test/docs",
     });
     api.rotateKey.mockResolvedValue({ key: "pk_live_secret_value", prefix: "pk_live_cd" });

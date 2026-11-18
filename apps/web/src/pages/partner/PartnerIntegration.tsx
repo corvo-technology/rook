@@ -1,10 +1,32 @@
-import type { PartnerConsolePartner } from "@corvo/contracts";
-import { Button, InlineConfirm, Input } from "@corvo/ui-web";
+import type { PartnerAlertKind, PartnerConsolePartner } from "@corvo/contracts";
+import { Button, InlineConfirm, Input, Switch } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { rpc } from "../../lib/rpc";
 import { Panel, PartnerError, PartnerLoading, useAction } from "./partner-ui";
+
+function useAlertLabel() {
+  const { t } = useLingui();
+  return (kind: PartnerAlertKind) => {
+    switch (kind) {
+      case "customer.credit_limit_reached":
+        return t`Customer reached the monthly limit`;
+      case "partner.balance_low":
+        return t`Credit fund running low`;
+      case "partner.autotopup_started":
+        return t`Automatic top-up started`;
+      case "partner.autotopup_failed":
+        return t`Automatic top-up failed`;
+      case "invoice.issued":
+        return t`New invoice`;
+      case "subscription.lapsed":
+        return t`Customer payment past due`;
+      case "customer.connector_down":
+        return t`Customer connector down`;
+    }
+  };
+}
 
 /** The keys, the webhook and the docs a partner connects its product with. */
 export function PartnerIntegration({ partner }: { partner: PartnerConsolePartner }) {
@@ -12,6 +34,8 @@ export function PartnerIntegration({ partner }: { partner: PartnerConsolePartner
   const queryClient = useQueryClient();
   const rotate = useAction();
   const hook = useAction();
+  const alert = useAction();
+  const alertLabel = useAlertLabel();
   const [fresh, setFresh] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
@@ -73,6 +97,31 @@ export function PartnerIntegration({ partner }: { partner: PartnerConsolePartner
           </ul>
           {rotate.error ? <PartnerError error={rotate.error} /> : null}
         </div>
+      </Panel>
+      <Panel title={t`Email alerts`} data-testid="partner-alerts">
+        <ul className="divide-y divide-border">
+          {data.alerts.map((item) => (
+            <li key={item.kind} className="flex items-center justify-between gap-3 py-2">
+              <span className="min-w-0 text-[14px]">{alertLabel(item.kind)}</span>
+              <Switch
+                checked={item.email}
+                disabled={alert.busy}
+                aria-label={alertLabel(item.kind)}
+                onCheckedChange={(email) =>
+                  void alert.run(async () => {
+                    await rpc.partnerConsole.setAlertEmail({
+                      partnerId: partner.id,
+                      kind: item.kind,
+                      email,
+                    });
+                    await refresh();
+                  })
+                }
+              />
+            </li>
+          ))}
+        </ul>
+        {alert.error ? <PartnerError error={alert.error} /> : null}
       </Panel>
       <Panel title={t`Webhook`}>
         <form

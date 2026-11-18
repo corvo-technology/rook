@@ -1,4 +1,4 @@
-import type { PartnerTemplate } from "@corvo/contracts";
+import type { PartnerAlertKind, PartnerTemplate } from "@corvo/contracts";
 import type { CatalogView, IdempotentOutcome, MarkupKind, MarkupRule } from "@corvo/db";
 
 /**
@@ -193,6 +193,11 @@ export interface PartnerConsoleStore {
   keyIssuedAt(partner: PartnerRecord): Promise<Date>;
   rotateKey(partner: PartnerRecord): Promise<{ key: string; prefix: string }>;
   setWebhookUrl(partner: PartnerRecord, url: string | null): Promise<void>;
+  /** Whether each alert is also emailed to the partner's people; the app always shows it. */
+  alertEmailSettings(
+    partner: PartnerRecord,
+  ): Promise<Array<{ kind: PartnerAlertKind; email: boolean }>>;
+  setAlertEmail(partner: PartnerRecord, kind: PartnerAlertKind, email: boolean): Promise<void>;
   setTemplate(partner: PartnerRecord, template: PartnerTemplate | null): Promise<void>;
   audit(event: {
     partnerId: string;

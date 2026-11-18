@@ -1,3 +1,4 @@
+import { PARTNER_ALERT_KINDS } from "@corvo/contracts";
 import type { IdempotentOutcome, MarkupRule } from "@corvo/db";
 import { markupItemId } from "@corvo/db";
 import type {
@@ -86,6 +87,7 @@ export function createFakeStore(data: FakeData) {
     thresholdCredits: null as number | null,
     amountMinor: null as number | null,
   };
+  const alertsOff = new Set<string>();
   const writes = { markups: 0, state: 0, key: 0, webhook: 0, checkout: 0, template: 0 };
 
   const managed = (organizationId: string) =>
@@ -198,6 +200,12 @@ export function createFakeStore(data: FakeData) {
     setWebhookUrl: async (partner, url) => {
       writes.webhook += 1;
       partner.webhookUrl = url;
+    },
+    alertEmailSettings: async () =>
+      PARTNER_ALERT_KINDS.map((kind) => ({ kind, email: !alertsOff.has(kind) })),
+    setAlertEmail: async (_partner, kind, email) => {
+      if (email) alertsOff.delete(kind);
+      else alertsOff.add(kind);
     },
     setTemplate: async (partner, template) => {
       writes.template += 1;

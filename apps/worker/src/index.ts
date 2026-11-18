@@ -83,6 +83,7 @@ import {
   withRunWorker,
   withSecretPersistence,
 } from "@corvo/adapters";
+import { createPartnerAlertDispatcherFromEnv } from "@corvo/api/partner-alerts";
 import { createPrismaPartnerToolsPort } from "@corvo/api/partner-tools";
 import { resolveEncryptionKey, resolveSupervisorToken, uploadSizeFromEnv } from "@corvo/core";
 import {
@@ -402,7 +403,11 @@ async function main() {
       prisma,
       lookup: deploymentModelUsageLookup(),
     }),
-    reconcilePartnerWebhooks: createPartnerWebhookReconciler({ prisma, jobs }),
+    reconcilePartnerWebhooks: createPartnerWebhookReconciler({
+      prisma,
+      jobs,
+      alerts: createPartnerAlertDispatcherFromEnv(prisma, process.env),
+    }),
     reconcileCloudAgents: () => reconcileCloudAgents({ prisma, jobs, cloudAgent }),
     reconcileComputerUpdates: () => reconcileComputerUpdates({ prisma, jobs }),
     reconcileRoutineRetryNotices: inMemoryJobs

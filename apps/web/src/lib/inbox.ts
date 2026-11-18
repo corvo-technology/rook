@@ -27,6 +27,12 @@ export function groupInbox(items: readonly AppNotification[]): InboxGroup[] {
 export function inboxPath(item: AppNotification): string | null {
   const params = item.messageId ? `?m=${encodeURIComponent(item.messageId)}` : "";
   if (item.code === "storage_near_limit") return "/app/usage";
+  if (item.code?.startsWith("partner_") && item.params?.partnerId) {
+    const customer = item.params.tenantId
+      ? `?customer=${encodeURIComponent(item.params.tenantId)}`
+      : "";
+    return `/app/partner/${encodeURIComponent(item.params.partnerId)}/${item.params.section ?? "overview"}${customer}`;
+  }
   if (item.kind === "dm") return item.actor ? `/app/dm/${item.actor.userId}` : null;
   if (item.groupId) return `/app/g/${item.groupId}${params}`;
   if (item.botId) return `/app/${item.botId}${params}`;

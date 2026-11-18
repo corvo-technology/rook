@@ -1,0 +1,46 @@
+{
+  "plans": [
+    {
+      "key": "personal",
+      "name": "Personal",
+      "prices": {
+        "USD": { "amountMinor": 2900, "creditMinor": 1000 },
+        "BRL": { "amountMinor": 14900, "creditMinor": 5000 }
+      }
+    },
+    {
+      "key": "team",
+      "name": "Team",
+      "prices": {
+        "USD": { "amountMinor": 9900, "creditMinor": 4000 },
+        "BRL": { "amountMinor": 49900, "creditMinor": 20000 }
+      }
+    },
+    {
+      "key": "company",
+      "name": "Company",
+      "prices": {
+        "USD": { "amountMinor": 24900, "creditMinor": 10000 },
+        "BRL": { "amountMinor": 124900, "creditMinor": 50000 }
+      }
+    }
+  ],
+  "packs": [
+    {
+      "key": "pack_s",
+      "name": "Small",
+      "prices": {
+        "USD": { "amountMinor": 1000, "creditMinor": 1000 },
+        "BRL": { "amountMinor": 5000, "creditMinor": 5000 }
+      }
+    },
+    {
+      "key": "pack_m",
+      "name": "Medium",
+      "prices": {
+        "USD": { "amountMinor": 2500, "creditMinor": 2700 },
+        "BRL": { "amountMinor": 12500, "creditMinor": 13500 }
+      }
+    }
+  ]
+}

@@ -12,12 +12,15 @@ function fixture(
     webhookUrl?: string | null;
     deliveredAt?: Date | null;
     kind?: string;
+    payload?: unknown;
+    externalTenantId?: string;
   } = {},
 ) {
   const row = {
     id: "evt-1",
     partnerId: "partner-1",
-    externalTenantId: "tenant-9",
+    externalTenantId: over.externalTenantId ?? "tenant-9",
+    payload: over.payload ?? null,
     kind: over.kind ?? "tenant.allowance_low",
     period: "2026-11",
     grantedCents: 1500,
@@ -53,6 +56,45 @@ function deps(f: ReturnType<typeof fixture>, fetchFn: typeof fetch) {
 }
 
 describe("partner webhook delivery", () => {
+  it("posts a commerce notice with its own body, in minor units and currency", async () => {
+    const f = fixture({
+      kind: "credit.granted",
+      payload: { period: "2026-11", currency: "BRL", kind: "topup", creditMinor: 5000 },
+    });
+    let body = "";
+    const fetchFn = vi.fn(async (_url: string | URL, init?: RequestInit) => {
+      body = String(init?.body);
+      return new Response("ok", { status: 200 });
+    }) as unknown as typeof fetch;
+    await deliverPartnerWebhook(deps(f, fetchFn), "evt-1");
+    expect(JSON.parse(body)).toEqual({
+      id: "evt-1",
+      type: "credit.granted",
+      createdAt: "2026-11-20T11:59:00.000Z",
+      externalTenantId: "tenant-9",
+      period: "2026-11",
+      currency: "BRL",
+      kind: "topup",
+      creditMinor: 5000,
+    });
+  });
+
+  it("leaves the customer out of a notice that is about the partner, such as an invoice", async () => {
+    const f = fixture({
+      kind: "invoice.issued",
+      externalTenantId: "",
+      payload: { invoiceId: "i1", totalMinor: 100 },
+    });
+    let body = "";
+    const fetchFn = vi.fn(async (_url: string | URL, init?: RequestInit) => {
+      body = String(init?.body);
+      return new Response("ok", { status: 200 });
+    }) as unknown as typeof fetch;
+    await deliverPartnerWebhook(deps(f, fetchFn), "evt-1");
+    expect(JSON.parse(body)).not.toHaveProperty("externalTenantId");
+    expect(JSON.parse(body)).toMatchObject({ type: "invoice.issued", invoiceId: "i1" });
+  });
+
   it("posts a signed notice that carries the customer's credit and no secret", async () => {
     const f = fixture();
     const seen: { url: string; headers: Headers; body: string }[] = [];

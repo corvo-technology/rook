@@ -30,6 +30,14 @@ function deps() {
       (p: { webhookSecretVersion: number }) => `whsec_v${p.webhookSecretVersion}`,
     ),
     setScribeRetentionDays: vi.fn(async () => undefined),
+    configureCommerce: vi.fn(async () => ({
+      billingModel: "commerce",
+      mode: "embedded",
+      currency: "BRL",
+      commissionBps: 2000,
+    })),
+    seedCatalog: vi.fn(async () => undefined),
+    recordFxRate: vi.fn(async () => undefined),
   };
 }
 
@@ -200,4 +208,51 @@ describe("the shipped templates", () => {
       expect(() => parseTemplateFile(raw)).toThrow(/--mcp-url/);
     });
   }
+
+  it("turns a partner into a commerce partner and says what that means", async () => {
+    const d = deps();
+    const output = await runPartnerCommand(
+      [
+        "commerce",
+        "acme-saas",
+        "--billing-model",
+        "commerce",
+        "--country",
+        "BR",
+        "--commission-bps",
+        "2000",
+      ],
+      d,
+    );
+    expect(d.configureCommerce).toHaveBeenCalledWith("acme-saas", {
+      billingModel: "commerce",
+      country: "BR",
+      commissionBps: 2000,
+    });
+    expect(output).toContain("BRL");
+    expect(output).toContain("20%");
+  });
+
+  it("refuses a commerce flag on another command and an unsafe checkout address", async () => {
+    const d = deps();
+    await expect(
+      runPartnerCommand(["rotate", "acme-saas", "--country", "BR"], d),
+    ).rejects.toThrow();
+    await expect(
+      runPartnerCommand(["commerce", "acme-saas", "--checkout-url", "http://shop.example"], d),
+    ).rejects.toThrow(/https/);
+  });
+
+  it("loads a catalog file and a manual exchange rate", async () => {
+    const d = deps();
+    d.readFile.mockResolvedValueOnce(JSON.stringify({ plans: [], packs: [] }));
+    await runPartnerCommand(["catalog-seed", "catalog.json"], d);
+    expect(d.seedCatalog).toHaveBeenCalledWith({ plans: [], packs: [] });
+    await runPartnerCommand(["fx-set", "BRL", "5.12", "--date", "2026-11-01"], d);
+    expect(d.recordFxRate).toHaveBeenCalledWith({
+      quote: "BRL",
+      rate: "5.12",
+      validFrom: new Date("2026-11-01T00:00:00Z"),
+    });
+  });
 });

@@ -15,6 +15,12 @@ const USAGE = [
   "  partner webhook-secret <slug>    print the signing secret again",
   "  partner webhook-rotate <slug>    replace the signing secret",
   "  partner retention <slug> <days|default>   days a consultation's audio and transcript are kept",
+  "  partner commerce <slug> [--billing-model wallet|commerce] [--mode embedded|white_label]",
+  "                   [--country BR] [--commission-bps 2000] [--checkout-url <https://...>|off]",
+  "                   [--scopes tenants:write,commerce:read,commerce:write]",
+  "                                   how Rook bills the partner; the country fixes the currency",
+  "  partner catalog-seed <file.json> load the plans and packs with their prices; safe to repeat",
+  "  partner fx-set <BRL|USD> <rate> [--date YYYY-MM-DD]   the day's USD rate (a manual override)",
 ].join("\n");
 
 const SLUG = /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/;
@@ -39,6 +45,19 @@ export interface PartnerCommandDeps {
   findPartner(slug: string): Promise<{ id: string; webhookSecretVersion: number } | null>;
   rotateWebhookSecret(slug: string): Promise<{ id: string; webhookSecretVersion: number }>;
   webhookSecret(partner: { id: string; webhookSecretVersion: number }): string;
+  configureCommerce(
+    slug: string,
+    input: {
+      billingModel?: "wallet" | "commerce";
+      mode?: "embedded" | "white_label";
+      country?: string;
+      commissionBps?: number;
+      checkoutUrl?: string | null;
+      scopes?: string[];
+    },
+  ): Promise<{ billingModel: string; mode: string; currency: string; commissionBps: number }>;
+  seedCatalog(seed: unknown): Promise<void>;
+  recordFxRate(input: { quote: string; rate: string; validFrom: Date }): Promise<void>;
 }
 
 function takeFlag(args: string[], flag: string): string | undefined {
@@ -94,12 +113,44 @@ export async function runPartnerCommand(
   deps: PartnerCommandDeps,
 ): Promise<string> {
   const args = [...argv];
+  if (args[0] === "catalog-seed") {
+    const file = args[1];
+    if (!file || args.length > 2) throw new Error(USAGE);
+    let seed: unknown;
+    try {
+      seed = JSON.parse(await deps.readFile(file));
+    } catch {
+      throw new Error("The catalog file is not valid JSON.");
+    }
+    await deps.seedCatalog(seed);
+    return "The catalog is loaded.";
+  }
+  if (args[0] === "fx-set") {
+    const date = takeFlag(args, "--date");
+    const [, quote, rate, ...rest] = args;
+    if (!quote || !rate || rest.length > 0) throw new Error(USAGE);
+    if (quote !== "BRL") throw new Error("Only BRL needs a rate.");
+    const validFrom = date ? new Date(`${date}T00:00:00Z`) : new Date();
+    if (Number.isNaN(validFrom.getTime())) throw new Error("The date is YYYY-MM-DD.");
+    await deps.recordFxRate({ quote, rate, validFrom });
+    return `USD to ${quote} is ${rate} from ${validFrom.toISOString().slice(0, 10)}.`;
+  }
+  const billingModel = takeFlag(args, "--billing-model");
+  const mode = takeFlag(args, "--mode");
+  const country = takeFlag(args, "--country");
+  const commissionBps = takeFlag(args, "--commission-bps");
+  const checkoutUrl = takeFlag(args, "--checkout-url");
+  const scopes = takeFlag(args, "--scopes");
   const walletOwner = takeFlag(args, "--wallet-owner");
   const mcpUrl = takeFlag(args, "--mcp-url");
   const [command, slug, name, ...extra] = args;
   if (!command || !slug || extra.length > 0) throw new Error(USAGE);
   if (!SLUG.test(slug)) {
     throw new Error("The slug must be 3 to 40 lowercase letters, digits or hyphens.");
+  }
+  const commerceFlags = [billingModel, mode, country, commissionBps, checkoutUrl, scopes];
+  if (commerceFlags.some((flag) => flag !== undefined) && command !== "commerce") {
+    throw new Error(USAGE);
   }
   if ((walletOwner && command !== "create") || (mcpUrl && command !== "apply-template")) {
     throw new Error(USAGE);
@@ -155,6 +206,28 @@ export async function runPartnerCommand(
           : await deps.findPartner(slug);
       if (!partner) throw new Error(`Unknown partner: ${slug}`);
       return `Signing secret for ${slug}: ${deps.webhookSecret(partner)}`;
+    }
+    case "commerce": {
+      if (name) throw new Error(USAGE);
+      if (billingModel && billingModel !== "wallet" && billingModel !== "commerce") {
+        throw new Error("--billing-model is wallet or commerce.");
+      }
+      if (mode && mode !== "embedded" && mode !== "white_label") {
+        throw new Error("--mode is embedded or white_label.");
+      }
+      if (checkoutUrl && checkoutUrl !== "off" && !isSafeAddress(checkoutUrl)) {
+        throw new Error("The checkout address must be https.");
+      }
+      const bps = commissionBps === undefined ? undefined : Number(commissionBps);
+      const partner = await deps.configureCommerce(slug, {
+        ...(billingModel ? { billingModel: billingModel as "wallet" | "commerce" } : {}),
+        ...(mode ? { mode: mode as "embedded" | "white_label" } : {}),
+        ...(country ? { country } : {}),
+        ...(bps !== undefined ? { commissionBps: bps } : {}),
+        ...(checkoutUrl ? { checkoutUrl: checkoutUrl === "off" ? null : checkoutUrl } : {}),
+        ...(scopes ? { scopes: scopes.split(",").map((scope) => scope.trim()) } : {}),
+      });
+      return `${slug}: ${partner.billingModel}, ${partner.mode}, ${partner.currency}, commission ${partner.commissionBps / 100}%.`;
     }
     case "retention": {
       if (name === "default") {

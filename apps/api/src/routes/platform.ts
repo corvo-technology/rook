@@ -1,9 +1,13 @@
+import { enqueuePartnerWebhook } from "@corvo/adapters";
 import { planConfigFromEnv } from "@corvo/contracts";
 import {
+  draftPartnerInvoices,
+  listPartnerInvoices,
   organizationEntitlements,
   organizationOverride,
   runAsSystem,
   setOrganizationOverride,
+  setPartnerInvoiceState,
 } from "@corvo/db";
 import { ORPCError } from "@orpc/server";
 import type { RouterContext } from "./context.js";
@@ -23,6 +27,36 @@ export function platformRoutes(ctx: RouterContext) {
   const asSystem = <T>(fn: () => Promise<T>) => runAsSystem("platform limit overrides", fn);
   return {
     platform: {
+      invoices: {
+        list: admin.platform.invoices.list.handler(({ input }) =>
+          asSystem(async () => invoiceViews(await listPartnerInvoices(deps.prisma, input.period))),
+        ),
+        draft: admin.platform.invoices.draft.handler(({ input }) =>
+          asSystem(async () => {
+            await draftPartnerInvoices(deps.prisma, input.period);
+            return invoiceViews(await listPartnerInvoices(deps.prisma, input.period));
+          }),
+        ),
+        setState: admin.platform.invoices.setState.handler(({ input }) =>
+          asSystem(async () => {
+            try {
+              const { eventId } = await setPartnerInvoiceState(deps.prisma, input.id, input.state, {
+                externalRef: input.externalRef,
+              });
+              if (eventId) await enqueuePartnerWebhook(deps.jobs, eventId).catch(() => undefined);
+            } catch (error) {
+              if (error instanceof Error && error.message === "Not found") {
+                throw new ORPCError("NOT_FOUND");
+              }
+              if (error instanceof Error && error.message === "Invalid transition") {
+                throw new ORPCError("CONFLICT");
+              }
+              throw error;
+            }
+            return { ok: true as const };
+          }),
+        ),
+      },
       limits: {
         get: admin.platform.limits.get.handler(({ input }) =>
           asSystem(async () => {
@@ -52,4 +86,18 @@ export function platformRoutes(ctx: RouterContext) {
       },
     },
   };
+}
+
+function invoiceViews(rows: Awaited<ReturnType<typeof listPartnerInvoices>>) {
+  return rows.map((row) => ({
+    id: row.id,
+    partner: row.partner.slug,
+    period: row.period,
+    currency: row.currency,
+    state: row.state as "draft" | "issued" | "paid" | "void",
+    totalMinor: row.totalMinor,
+    lines: row._count.lines,
+    dueAt: row.dueAt?.toISOString() ?? null,
+    externalRef: row.externalRef,
+  }));
 }

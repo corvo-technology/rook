@@ -4,12 +4,15 @@ import { readFile } from "node:fs/promises";
 import { resolveEncryptionKey } from "@corvo/core";
 import { partnerWebhookSecret } from "@corvo/core/node/partner-key";
 import {
+  configurePartnerCommerce,
   createDb,
   createPartner,
   findUserIdByEmail,
+  recordFxRate,
   rotatePartnerKey,
   rotatePartnerWebhookSecret,
   runAsSystem,
+  seedCatalog,
   setPartnerEnabled,
   setPartnerScribeRetentionDays,
   setPartnerTemplateBySlug,
@@ -39,6 +42,9 @@ try {
           partner.id,
           partner.webhookSecretVersion,
         ),
+      configureCommerce: (slug, input) => configurePartnerCommerce(prisma, slug, input),
+      seedCatalog: (seed) => seedCatalog(prisma, seed as Parameters<typeof seedCatalog>[1]),
+      recordFxRate: (input) => recordFxRate(prisma, { ...input, source: "manual" }),
       setScribeRetentionDays: (slug, days) => setPartnerScribeRetentionDays(prisma, slug, days),
     }),
   );

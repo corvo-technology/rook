@@ -245,6 +245,8 @@ export class E2BSandboxProvider implements SandboxProvider {
       homePath: string;
       providerRef?: string;
       providerKind?: ComputerRef["kind"];
+      /** The plan's size for a new computer; without one the provider's own default applies. */
+      computerSize?: E2BComputerSize;
     },
     _context: AdapterContext,
   ): Promise<ComputerRef> {
@@ -269,7 +271,10 @@ export class E2BSandboxProvider implements SandboxProvider {
         if (!isSandboxGoneError(error)) throw error;
       }
     }
-    const desktop = await this.createDesktop(e2bCreateOptions(request.botId, this.apiKey));
+    const desktop = await this.createDesktop(
+      e2bCreateOptions(request.botId, this.apiKey),
+      request.computerSize,
+    );
     this.boxes.set(desktop.sandboxId, desktop);
     this.lastTouchedAt.set(desktop.sandboxId, Date.now());
     return {
@@ -474,8 +479,11 @@ export class E2BSandboxProvider implements SandboxProvider {
   }
 
   /** Prefer this size's template; an account that has not built it keeps the stock one. */
-  private async createDesktop(options: ReturnType<typeof e2bCreateOptions>): Promise<E2BDesktop> {
-    for (const template of e2bTemplatesForSize(this.size)) {
+  private async createDesktop(
+    options: ReturnType<typeof e2bCreateOptions>,
+    size: E2BComputerSize = this.size,
+  ): Promise<E2BDesktop> {
+    for (const template of e2bTemplatesForSize(size)) {
       try {
         return await this.sdk.create(template, options);
       } catch (error) {
@@ -483,7 +491,7 @@ export class E2BSandboxProvider implements SandboxProvider {
       }
     }
     getLogger().warn("E2B computer template is not built; using the stock desktop template", {
-      size: this.size,
+      size,
     });
     return this.sdk.create(E2B_DESKTOP_TEMPLATE, options);
   }

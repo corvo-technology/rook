@@ -7,7 +7,8 @@ import type {
   SandboxProvider,
 } from "@corvo/adapter-kit";
 import { computerControlExpireJobKey } from "@corvo/adapter-kit";
-import type { ComputerUpdate } from "@corvo/contracts";
+import type { ComputerSize, ComputerUpdate } from "@corvo/contracts";
+import { planConfigFromEnv } from "@corvo/contracts";
 import { ACTIVE_RUN_STATUSES, parseScreenLeaseId, screenLeaseId } from "@corvo/core";
 import type { PrismaClient, ThreadEvents } from "@corvo/db";
 import {
@@ -15,6 +16,7 @@ import {
   parseComputerMode,
   recordComputerRunEnd,
   recordComputerRunStart,
+  spaceComputerSize,
 } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import {
@@ -347,6 +349,7 @@ export async function provisionComputer(
       }
     }
     await onProgress?.("recreating");
+    const { computerSize, providerRef } = await sizeForStart(deps, existing, reconnecting, context);
     const provision = () =>
       getLogger().withContext(
         { "computer.id": computerId, "run.id": context.runId, previousState: existing.state },
@@ -355,8 +358,9 @@ export async function provisionComputer(
             {
               botId: existing.homeKey,
               homePath,
-              providerRef: existing.providerRef ?? undefined,
+              providerRef,
               providerKind: existing.kind as ComputerRef["kind"],
+              ...(computerSize ? { computerSize } : {}),
               // A save from an older release has no time; the provider keeps its own state then.
               savedAt:
                 existing.homeRevision === "empty"
@@ -440,6 +444,8 @@ export async function provisionComputer(
         state: "running",
         providerRef: ref.providerRef,
         kind: ref.kind,
+        // A computer created now has the plan's size; one that kept running keeps what it had.
+        ...(replacement && computerSize ? { sizeApplied: computerSize } : {}),
         runningSince,
         ...(!reconnecting
           ? {
@@ -514,6 +520,47 @@ export async function provisionComputer(
     }
     throw error;
   }
+}
+
+/**
+ * The size a start asks for under the plan, and the computer to reconnect to. A stopped computer
+ * whose size differs from the plan's is removed here so this start creates a new one at the
+ * plan's size from its saved files: an upgrade or downgrade lands on the next start, never
+ * mid-run. Computers from before plans count as small. Without plans nothing is asked for.
+ */
+export async function sizeForStart(
+  deps: { prisma: PrismaClient; sandbox: SandboxProvider },
+  existing: {
+    spaceId: string;
+    state: string;
+    providerRef: string | null;
+    homeKey: string;
+    kind: string;
+    sizeApplied: string | null;
+    homeRevision: string;
+  },
+  reconnecting: boolean,
+  context: AdapterContext,
+): Promise<{ computerSize?: ComputerSize; providerRef?: string }> {
+  const plans = planConfigFromEnv();
+  const computerSize = plans
+    ? await spaceComputerSize(deps.prisma, plans, existing.spaceId)
+    : undefined;
+  const providerRef = existing.providerRef ?? undefined;
+  const stopped = existing.state === "stopped" || existing.state === "suspended";
+  // A computer whose files were never saved would lose them, so it keeps its size until saved.
+  if (
+    !computerSize ||
+    !providerRef ||
+    reconnecting ||
+    !stopped ||
+    existing.homeRevision === "empty"
+  )
+    return { computerSize, providerRef };
+  if ((existing.sizeApplied ?? "small") === computerSize) return { computerSize, providerRef };
+  getLogger().info("computer.resize", { from: existing.sizeApplied ?? "small", to: computerSize });
+  await deps.sandbox.destroy(toComputerRef(existing), context);
+  return { computerSize };
 }
 
 /**

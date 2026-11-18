@@ -1,3 +1,4 @@
+import type { ComputerSize } from "@corvo/contracts";
 import type {
   AdapterContext,
   AdapterDescriptor,
@@ -123,6 +124,11 @@ export interface SandboxProvider {
       homePath: string;
       providerRef?: string;
       providerKind?: ComputerRef["kind"];
+      /**
+       * How big a new computer should be. The plan chooses it; each provider maps it to its own
+       * mechanism (a template, a shape, resource limits) and ignores it where it cannot resize.
+       */
+      computerSize?: ComputerSize;
       /**
        * When the saved workspace a replacement would restore was read from the computer. A
        * provider that can only bring `providerRef` back from an older snapshot of its own
@@ -371,7 +377,7 @@ export interface ObjectStorage {
   put(key: string, body: AsyncIterable<Uint8Array>): Promise<void>;
   /** Throws when the object does not exist. */
   get(key: string): AsyncIterable<Uint8Array>;
-  list(prefix: string): AsyncIterable<{ key: string; lastModified: Date }>;
+  list(prefix: string): AsyncIterable<{ key: string; lastModified: Date; size?: number }>;
   /** Missing keys are not an error. */
   delete(keys: readonly string[]): Promise<void>;
 }
@@ -465,6 +471,14 @@ export interface BillingProvider {
   getCustomerSubscription(customerId: string): Promise<BillingSubscriptionSnapshot | null>;
   /** Sets seats on the customer's subscription; a no-op when none can still take updates. */
   updateSeats(customerId: string, seats: number): Promise<void>;
+  /**
+   * Sets how many extra seats the subscription bills at `priceId`, a price separate from the plan's:
+   * adds the line, changes its quantity, or removes it at zero. A no-op when no subscription can
+   * still take updates.
+   */
+  setExtraSeats?(customerId: string, input: { priceId: string; quantity: number }): Promise<void>;
+  /** One price's amount and interval, for telling the customer what an extra seat costs. */
+  getPriceById?(priceId: string): Promise<BillingPrice>;
   cancelCustomerSubscriptions(customerId: string): Promise<void>;
   /** Verifies the signature. `null` means the request is not authentic. */
   parseWebhook(rawBody: string, headers: Headers): { customerId: string } | "ignored" | null;

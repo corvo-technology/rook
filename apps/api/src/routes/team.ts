@@ -260,6 +260,7 @@ export function teamRoutes(ctx: RouterContext) {
               addresses: parsed.addresses,
             }),
           );
+          await changed(team, context.actor.spaceId);
           return mailAndAnswer(team, context.actor, result.invitations, result.alreadyMembers);
         }),
         resend: spaces.invitations.resend.handler(async ({ context, input }) => {
@@ -274,6 +275,7 @@ export function teamRoutes(ctx: RouterContext) {
               id: input.id,
             }),
           );
+          await changed(team, context.actor.spaceId);
           return mailAndAnswer(team, context.actor, [row], [], false);
         }),
         cancel: spaces.invitations.cancel.handler(async ({ context, input }) => {
@@ -284,6 +286,7 @@ export function teamRoutes(ctx: RouterContext) {
               id: input.id,
             }),
           );
+          await changed(deps.team, context.actor.spaceId);
           return { ok: true as const };
         }),
       },

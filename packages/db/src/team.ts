@@ -3,6 +3,7 @@ import type { SpaceRole } from "@corvo/contracts";
 import type { SpaceMembership, SpacePermission } from "@corvo/core";
 import { can, personName, spaceRank, spaceRoleOf } from "@corvo/core";
 import type { PrismaClient } from "./client.js";
+import { assertSeatRoom, assertSeatRoomForAddresses, SeatLimitError } from "./seats.js";
 import {
   getSpaceMembershipFor,
   loadSpaceRoles,
@@ -36,6 +37,8 @@ type Client = Pick<
   | "notificationPreference"
   | "spaceRole"
   | "spaceMemberRole"
+  | "billingAccount"
+  | "organizationLimitOverride"
 >;
 
 async function roleIn(db: Client, spaceId: string, userId: string): Promise<string | null> {
@@ -217,7 +220,14 @@ export async function removeMember(
 /** Adds a person to a space with a role; no-op when they already belong. */
 async function addMember(
   tx: Client,
-  input: { spaceId: string; userId: string; role: SpaceRole; roleIds?: readonly string[] },
+  input: {
+    spaceId: string;
+    userId: string;
+    role: SpaceRole;
+    roleIds?: readonly string[];
+    /** The person joins on an invitation that already holds their seat. */
+    onInvitation?: boolean;
+  },
 ): Promise<{ organizationId: string; added: boolean }> {
   const space = await tx.space.findUnique({
     where: { id: input.spaceId },
@@ -237,6 +247,7 @@ async function addMember(
     select: { id: true },
   });
   if (!member) {
+    await assertSeatRoom(tx, space.organizationId, 1, { converts: input.onInvitation });
     member = await tx.member.create({
       data: {
         id: randomUUID(),
@@ -372,6 +383,16 @@ export async function createInvitations(
     select: { member: { select: { user: { select: { email: true } } } } },
   });
   const alreadyMembers = members.map((row) => row.member.user.email.toLowerCase());
+  const space = await prisma.space.findUnique({
+    where: { id: input.spaceId },
+    select: { organizationId: true },
+  });
+  if (space)
+    await assertSeatRoomForAddresses(
+      prisma,
+      space.organizationId,
+      addresses.filter((email) => !alreadyMembers.includes(email)),
+    );
   const invitations: InvitationRow[] = [];
   for (const email of addresses) {
     if (alreadyMembers.includes(email)) continue;
@@ -426,6 +447,12 @@ export async function resendInvitation(
       roleIds: row.roleIds,
     }),
   );
+  // An invitation that ran out holds no seat; sending it again takes one.
+  const space = await prisma.space.findUnique({
+    where: { id: input.spaceId },
+    select: { organizationId: true },
+  });
+  if (space) await assertSeatRoomForAddresses(prisma, space.organizationId, [row.email]);
   const now = input.now ?? new Date();
   return invitationRow(
     await prisma.spaceInvitation.update({
@@ -544,6 +571,7 @@ export async function acceptInvitation(
       userId: input.user.id,
       role: spaceRoleOf(row.role),
       roleIds: row.roleIds,
+      onInvitation: true,
     });
     await tx.spaceInvitation.update({
       where: { id: row.id },
@@ -583,7 +611,11 @@ export async function acceptInvitationsForUser(
   });
   const joined: Array<{ spaceId: string; organizationId: string }> = [];
   for (const { id } of rows) {
-    const result = await acceptInvitation(prisma, { id, user, ...options });
+    // A plan with no seat left leaves the invitation waiting; signing in still works.
+    const result = await acceptInvitation(prisma, { id, user, ...options }).catch((error) => {
+      if (error instanceof SeatLimitError) return null;
+      throw error;
+    });
     if (result && result !== "unverified") joined.push(result);
   }
   return joined;

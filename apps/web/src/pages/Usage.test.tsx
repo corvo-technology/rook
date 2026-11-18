@@ -8,7 +8,8 @@ import { beforeEach, expect, it, vi } from "vitest";
 
 const overview = vi.hoisted(() => vi.fn());
 const budgets = vi.hoisted(() => vi.fn());
-const rpcClient = vi.hoisted(() => ({ usage: { overview, budgets } }));
+const plan = vi.hoisted(() => vi.fn(async () => null));
+const rpcClient = vi.hoisted(() => ({ usage: { overview, budgets, plan } }));
 vi.mock("../lib/rpc", () => ({
   rpc: rpcClient,
   rpcForSpace: () => rpcClient,

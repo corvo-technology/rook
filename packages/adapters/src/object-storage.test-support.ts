@@ -22,7 +22,8 @@ export class MemoryObjectStorage implements ObjectStorage {
 
   async *list(prefix: string) {
     for (const [key, object] of [...this.objects].sort(([a], [b]) => a.localeCompare(b)))
-      if (key.startsWith(prefix)) yield { key, lastModified: object.lastModified };
+      if (key.startsWith(prefix))
+        yield { key, lastModified: object.lastModified, size: object.bytes.length };
   }
 
   async delete(keys: readonly string[]) {

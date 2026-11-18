@@ -164,7 +164,7 @@ export class S3ObjectStorage implements ObjectStorage {
     yield* Body as Readable;
   }
 
-  async *list(prefix: string): AsyncGenerator<{ key: string; lastModified: Date }> {
+  async *list(prefix: string): AsyncGenerator<{ key: string; lastModified: Date; size?: number }> {
     let ContinuationToken: string | undefined;
     do {
       const page = await this.client.send(
@@ -179,6 +179,7 @@ export class S3ObjectStorage implements ObjectStorage {
         yield {
           key: object.Key.slice(this.config.prefix.length),
           lastModified: object.LastModified ?? new Date(0),
+          size: object.Size,
         };
       }
       ContinuationToken = page.IsTruncated ? page.NextContinuationToken : undefined;

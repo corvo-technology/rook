@@ -1,4 +1,4 @@
-import { isVoiceAccountErrorCode } from "@corvo/contracts";
+import { isVoiceAccountErrorCode, PLAN_ERROR_CODES } from "@corvo/contracts";
 import type { CredentialField } from "@corvo/core";
 import {
   authErrorMessage,
@@ -23,6 +23,7 @@ export function errorText(error: unknown, fallback = t`Something went wrong. Try
     return t`Image input is not configured for this model.`;
   return (
     voiceAccountErrorText(error) ??
+    planErrorText(error) ??
     userErrorMessage(error, { fallback, offline: t`Could not reach the server` })
   );
 }
@@ -35,6 +36,27 @@ export function voiceAccountErrorText(error: unknown): string | undefined {
   return code === "VOICE_OUT_OF_CREDIT"
     ? t`Your voice provider is out of credit.`
     : t`Your voice provider key was rejected.`;
+}
+
+export function isSeatLimit(error: unknown): boolean {
+  return (
+    Boolean(error) &&
+    typeof error === "object" &&
+    "code" in (error as object) &&
+    (error as { code?: unknown }).code === PLAN_ERROR_CODES.seatLimit
+  );
+}
+
+/** Text for an RPC error whose code says the plan has no room: storage or computers. */
+export function planErrorText(error: unknown): string | undefined {
+  const code = error && typeof error === "object" && "code" in error ? error.code : undefined;
+  if (code === PLAN_ERROR_CODES.storageFull)
+    return t`Storage is full. Upgrade your plan or delete files.`;
+  if (code === PLAN_ERROR_CODES.seatLimit)
+    return t`Your plan has no seat for another person. Upgrade to add more.`;
+  if (code === PLAN_ERROR_CODES.computerLimit)
+    return t`Your plan has no room for another computer. Upgrade to add more.`;
+  return undefined;
 }
 
 export function credentialIssueText(field: CredentialField): string {

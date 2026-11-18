@@ -6,7 +6,7 @@ import type { PrismaClient } from "@corvo/db";
 import { ContentDecryptionError, contentEncryptionOf, openArtifact, sealArtifact } from "@corvo/db";
 import type { ArtifactKeys } from "./artifacts.js";
 import { LocalArtifactStore } from "./artifacts.js";
-import { objectStorageConfigFromEnv, S3ObjectStorage } from "./s3-object-storage.js";
+import { createObjectStorage } from "./metered-object-storage.js";
 
 const OBJECT_ID = /^object:([0-9a-f-]{36})$/;
 
@@ -98,11 +98,8 @@ export function createArtifactStore(
 ): ArtifactStore {
   const keys = contentEncryptionOf(prisma)?.ring;
   const local = new LocalArtifactStore(dataDir, keys);
-  const config = objectStorageConfigFromEnv(env);
-  if (!config) return new DeploymentArtifactStore(local);
+  const storage = createObjectStorage(prisma, env);
+  if (!storage) return new DeploymentArtifactStore(local);
   if (!keys) throw new Error("Storing artifacts in object storage needs content encryption keys");
-  return new DeploymentArtifactStore(
-    local,
-    new ObjectArtifactStore(new S3ObjectStorage(config), keys),
-  );
+  return new DeploymentArtifactStore(local, new ObjectArtifactStore(storage, keys));
 }

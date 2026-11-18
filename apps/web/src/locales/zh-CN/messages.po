@@ -224,6 +224,14 @@ msgstr "{agents, plural, other {# 个智能体}}"
 msgid "{amount} / {period}"
 msgstr "{amount} / {period}"
 
+#: src/lib/plan-view.ts
+msgid "{amount} per month"
+msgstr "每月 {amount}"
+
+#: src/lib/plan-view.ts
+msgid "{amount} per year"
+msgstr "每年 {amount}"
+
 #: src/pages/shell/dialogs.tsx
 msgid "{botCount, plural, one {Delete {name} and its # bot?} other {Delete {name} and its # bots?}}"
 msgstr "{botCount, plural, other {删除 {name} 及其 # 个机器人？}}"
@@ -235,6 +243,14 @@ msgstr "{botName} 的电脑"
 #: src/pages/shell/bot-credentials.tsx
 msgid "{commandVariable} is reserved and cannot be used as a command variable. Choose another name."
 msgstr "{commandVariable} 是保留名称，不能用作命令变量。请选择其他名称。"
+
+#: src/components/PlanList.tsx
+msgid "{computers, plural, one {# computer} other {# computers}}"
+msgstr "{computers, plural, other {# 台电脑}}"
+
+#: src/pages/usage/plan-usage.tsx
+msgid "{computersUsed} of {computersLimit}"
+msgstr "{computersUsed} / {computersLimit}"
 
 #: src/pages/WhatsAppNumbers.tsx
 msgid "{count, plural, one {# number} other {# numbers}}"
@@ -291,6 +307,10 @@ msgstr "{days} 天前"
 #: src/components/ApproveAllBar.tsx
 msgid "{failedCount} could not be approved"
 msgstr "有 {failedCount} 项无法批准"
+
+#: src/components/PlanList.tsx
+msgid "{files} of files"
+msgstr "{files} 文件空间"
 
 #: src/components/markdown-copy.tsx
 msgid "{from}–{to} of {total} rows"
@@ -382,6 +402,10 @@ msgstr "{name} 已停止"
 #: src/pages/shell/sidebar-team.tsx
 msgid "{people, plural, one {# person} other {# people}}"
 msgstr "{people, plural, other {# 人}}"
+
+#: src/pages/usage/plan-usage.tsx
+msgid "{peopleUsed} of {peopleMax}"
+msgstr "{peopleUsed} / {peopleMax}"
 
 #: src/components/SubscriptionRings.tsx
 msgid "{percent}% used"
@@ -517,9 +541,14 @@ msgstr "{ref} 保留在 {lane}。"
 msgid "{remaining} left"
 msgstr "剩余 {remaining}"
 
+#: src/components/PlanList.tsx
 #: src/pages/BillingSettingsPanel.tsx
 msgid "{seats, plural, one {# seat} other {# seats}}"
 msgstr "{seats, plural, one {# 个席位} other {# 个席位}}"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "{seatsUsed} of {seatsMax} people"
+msgstr "{seatsUsed} / {seatsMax} 人"
 
 #: src/pages/MembersSettingsPanel.tsx
 msgid "{sent, plural, one {# invitation sent} other {# invitations sent}}"
@@ -528,6 +557,10 @@ msgstr "{sent, plural, other {已发送 # 个邀请}}"
 #: src/components/ArtifactFileCard.tsx
 msgid "{size} B"
 msgstr "{size} B"
+
+#: src/components/PlanList.tsx
+msgid "{size} computer"
+msgstr "{size}电脑"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -575,6 +608,7 @@ msgid "{total} members"
 msgstr "{total} 位成员"
 
 #: src/pages/Usage.tsx
+#: src/pages/usage/plan-usage.tsx
 msgid "{used} of {limit}"
 msgstr "{used} / {limit}"
 
@@ -1986,6 +2020,10 @@ msgstr "评论"
 msgid "Compact"
 msgstr "紧凑"
 
+#: src/lib/plan-view.ts
+msgid "Company"
+msgstr "企业"
+
 #: src/pages/PartnershipSettingsPanel.tsx
 msgid "Company name"
 msgstr "公司名称"
@@ -2041,6 +2079,7 @@ msgid "Computer is stopped"
 msgstr "电脑已停止"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/usage/plan-usage.tsx
 msgid "Computers"
 msgstr "电脑"
 
@@ -3446,6 +3485,10 @@ msgstr "每个名称只能使用一次。"
 msgid "Each one checks itself off when you do it."
 msgstr "完成后，每一项都会自动打勾。"
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Each seat above {included} costs {extraCostPrice}"
+msgstr "超过 {included} 人的每个席位 {extraCostPrice}"
+
 #: src/components/AskCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/ConnectionsPage.tsx
@@ -4386,6 +4429,10 @@ msgstr "知识"
 msgid "Language"
 msgstr "语言"
 
+#: src/lib/plan-view.ts
+msgid "Large"
+msgstr "大"
+
 #: src/pages/Usage.tsx
 msgid "Last 30 days"
 msgstr "过去 30 天"
@@ -4723,6 +4770,7 @@ msgstr "通过 URL 添加 MCP 服务器"
 msgid "MCP servers"
 msgstr "MCP 服务器"
 
+#: src/lib/plan-view.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Medium"
@@ -5818,6 +5866,7 @@ msgstr "兵"
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/StoreCategoryChips.tsx
+#: src/pages/usage/plan-usage.tsx
 msgid "People"
 msgstr "成员"
 
@@ -5829,6 +5878,7 @@ msgstr "权限"
 msgid "Persona"
 msgstr "人设"
 
+#: src/lib/plan-view.ts
 #: src/pages/onboarding/WorkspaceStep.tsx
 msgid "Personal"
 msgstr "个人"
@@ -7096,6 +7146,10 @@ msgstr "未启用 Slack"
 msgid "Slide up to lock"
 msgstr "上滑锁定"
 
+#: src/lib/plan-view.ts
+msgid "Small"
+msgstr "小"
+
 #: src/pages/connections/MailboxForm.tsx
 msgid "SMTP server"
 msgstr "SMTP 服务器"
@@ -7298,6 +7352,18 @@ msgstr "已停止。仍在屏幕上等你操作。"
 msgid "Stopping…"
 msgstr "正在停止…"
 
+#: src/pages/usage/plan-usage.tsx
+msgid "Storage"
+msgstr "存储空间"
+
+#: src/lib/server-copy.ts
+msgid "Storage is {percent}% full"
+msgstr "存储空间已使用 {percent}%"
+
+#: src/lib/user-error.ts
+msgid "Storage is full. Upgrade your plan or delete files."
+msgstr "存储空间已满。请升级套餐或删除文件。"
+
 #: src/components/SidebarFooter.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/Store.tsx
@@ -7428,6 +7494,7 @@ msgstr "告诉我一些关于你的事"
 msgid "Teaching in progress. Stop teaching before sending a new message."
 msgstr "正在示范，发送新消息前请先停止示范。"
 
+#: src/lib/plan-view.ts
 #: src/pages/Onboarding.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/command-palette.tsx
@@ -7939,6 +8006,10 @@ msgstr "不支持的文件类型：{0}"
 msgid "Untitled"
 msgstr "无标题"
 
+#: src/components/PlanList.tsx
+msgid "up to {maxSeats}"
+msgstr "最多 {maxSeats}"
+
 #: src/components/DesktopUpdates.tsx
 msgid "Up to date"
 msgstr "已是最新"
@@ -8004,7 +8075,9 @@ msgstr "正在更新团队电脑"
 msgid "Updating…"
 msgstr "正在更新…"
 
+#: src/pages/MembersSettingsPanel.tsx
 #: src/pages/shell/shell-sidebar.tsx
+#: src/pages/usage/plan-usage.tsx
 msgid "Upgrade"
 msgstr "升级"
 
@@ -8501,6 +8574,14 @@ msgstr "你的 OpenAI"
 #: src/lib/run-error.ts
 msgid "Your OpenRouter"
 msgstr "你的 OpenRouter"
+
+#: src/lib/user-error.ts
+msgid "Your plan has no room for another computer. Upgrade to add more."
+msgstr "当前套餐无法再添加电脑。请升级套餐。"
+
+#: src/lib/user-error.ts
+msgid "Your plan has no seat for another person. Upgrade to add more."
+msgstr "当前套餐无法再添加成员。请升级套餐。"
 
 #: src/lib/user-error.ts
 msgid "Your voice provider is out of credit."

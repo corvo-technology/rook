@@ -96,7 +96,7 @@ const COPY: LaunchCopy = {
       sales: "営業",
       people: "人事",
     },
-    health: { label: "ヘルスケアと美容", agents: ["受付", "診察の記録", "お客様フォロー"] },
+    health: { label: "ヘルスケアと美容", agents: ["受付", "カルテアシスタント", "お客様フォロー"] },
   },
   preview: {
     window: "Rook",

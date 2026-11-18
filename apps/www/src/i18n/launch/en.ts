@@ -96,7 +96,7 @@ const COPY: LaunchCopy = {
       sales: "Sales",
       people: "People",
     },
-    health: { label: "Health and beauty", agents: ["Reception", "Visit scribe", "Client follow-up"] },
+    health: { label: "Health and beauty", agents: ["Reception", "Patient record assistant", "Client follow-up"] },
   },
   preview: {
     window: "Rook",

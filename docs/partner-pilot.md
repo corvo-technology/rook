@@ -316,7 +316,7 @@ Requirements on the partner side:
   entryTypeCode, content, occurredAt, appointmentId?, source: "ai_scribe", consultationId }` to
   `{ entryId }`). Writes carry an `idempotencyKey` (the consultation id), and the record system adds
   the `aiDraft` badge. When `existingDraft` is set, or creating answers `MCP_RECORDS_DRAFT_EXISTS`, Rook
-  updates that draft with `expectedRevision` instead of creating a second. Rook calls them as the customer's **Escriba** agent
+  updates that draft with `expectedRevision` instead of creating a second. Rook calls them as the customer's **Assistente de prontuário** agent
   (the template agent with the key `escriba`; any agent that holds the connector when there is none),
   so the connector's own authorization applies. Drafts only: Rook has no tool to sign.
 - The patient's consent is the partner's to obtain before it creates the consultation, and is
@@ -365,7 +365,7 @@ DELETE .../consultations/{id}                deletes the audio and transcript no
 - Rook concatenates the chunks, transcribes them in Portuguese through the customer's configured
   speech provider (long recordings are cut at container boundaries into 8 MB segments transcribed
   in parallel and stitched in order), labels who speaks (`professional`, `patient` or `unknown`)
-  with a short model pass on the fast tier, has the Escriba fill the template on the strong tier
+  with a short model pass on the fast tier, has the Assistente de prontuário fill the template on the strong tier
   with an explicit, versioned prompt, and files the draft. Speaker times are estimates.
   Transcription and model use are charged to the customer's allowance like any other use.
 - Privacy: audio chunks and the transcript and note are stored only in sealed object storage, never

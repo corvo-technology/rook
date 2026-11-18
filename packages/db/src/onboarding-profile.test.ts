@@ -1,5 +1,6 @@
+import { businessCopy } from "@corvo/core";
 import { describe, expect, it, vi } from "vitest";
-import { BUSINESS_WIKI_TITLE, businessWikiBody, readHomeChecklist } from "./onboarding-profile.js";
+import { businessWikiBody, readHomeChecklist } from "./onboarding-profile.js";
 
 describe("businessWikiBody", () => {
   it("leads with the person's sentence, which the wiki index shows to every agent", () => {
@@ -12,8 +13,21 @@ describe("businessWikiBody", () => {
     expect(businessWikiBody({ kind: "clinic", summary: "" })).toContain("\nClinic or practice.\n");
   });
 
-  it("is one page per workspace, by a fixed title", () => {
-    expect(BUSINESS_WIKI_TITLE).toBe("About the business");
+  it("is written in the member's language, with no English left in pt-BR", () => {
+    const body = businessWikiBody({ kind: "clinic", summary: "" }, "pt-BR");
+    expect(body).toBe(
+      "---\ntype: Negócio\n---\nClínica ou consultório.\n\nTipo de negócio: Clínica ou consultório.\n",
+    );
+    expect(businessCopy("pt-BR").title).toBe("Sobre o negócio");
+    expect(businessCopy("pt").title).toBe("Sobre o negócio");
+  });
+
+  it("has a title in every shipped language and reads English for any other", () => {
+    for (const locale of ["en", "pt-BR", "es", "de", "fr", "ja", "zh-CN"]) {
+      expect(businessCopy(locale).title).toBeTruthy();
+    }
+    expect(businessCopy("pt-BR").title).not.toBe(businessCopy("en").title);
+    expect(businessCopy("sv").title).toBe("About the business");
   });
 });
 

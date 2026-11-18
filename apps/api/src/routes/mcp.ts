@@ -849,7 +849,8 @@ export function mcpRoutes(ctx: RouterContext) {
         };
       }),
       saveBusiness: authed.onboarding.saveBusiness.handler(async ({ context, input }) => {
-        await saveBusinessAnswer(deps.prisma, context.actor, input);
+        const { locale, ...answer } = input;
+        await saveBusinessAnswer(deps.prisma, context.actor, answer, locale);
         return { ok: true as const };
       }),
       saveAreas: authed.onboarding.saveAreas.handler(async ({ context, input }) => {

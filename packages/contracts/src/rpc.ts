@@ -179,9 +179,9 @@ import { ModelHeadersSchema } from "./model-headers.js";
 import { ModelRoleSchema, ModelRoleUpdateSchema, ModelRoleViewSchema } from "./model-roles.js";
 import { NotificationListSchema, PresenceSchema } from "./notifications.js";
 import {
-  BusinessAnswerSchema,
   HomeChecklistSchema,
   OnboardingAnswersSchema,
+  SaveBusinessInputSchema,
   SpaceLogoSchema,
   WORK_AREAS,
   WorkArea,
@@ -1370,7 +1370,7 @@ export const appContract = {
      * What the workspace does. Saved as a page of the shared wiki, which every agent reads, and as
      * the answer the rail shows.
      */
-    saveBusiness: oc.input(BusinessAnswerSchema).output(z.object({ ok: z.literal(true) })),
+    saveBusiness: oc.input(SaveBusinessInputSchema).output(z.object({ ok: z.literal(true) })),
     /** What this person looks after in the space. */
     saveAreas: oc
       .input(z.object({ areas: z.array(WorkArea).max(WORK_AREAS.length) }))

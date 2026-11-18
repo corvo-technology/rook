@@ -1,37 +1,19 @@
-import type {
-  BusinessAnswer,
-  BusinessKind,
-  HomeChecklist,
-  OnboardingAnswers,
-  WorkArea,
-} from "@corvo/contracts";
+import type { BusinessAnswer, HomeChecklist, OnboardingAnswers, WorkArea } from "@corvo/contracts";
 import { BusinessAnswerSchema, WorkArea as WorkAreaSchema } from "@corvo/contracts";
-import { homeChecklist } from "@corvo/core";
+import { businessCopy, homeChecklist } from "@corvo/core";
 import type { PrismaClient } from "./client.js";
 import { CHIEF_SPAWN_KEY } from "./starter-team.js";
 import { writeWikiPage } from "./wiki.js";
 
 type Scope = { spaceId: string; userId: string };
 
-/** The wiki page every agent reads for what the workspace does. */
-export const BUSINESS_WIKI_TITLE = "About the business";
-
-const BUSINESS_LABEL: Record<BusinessKind, string> = {
-  agency: "Agency",
-  "online-store": "Online store",
-  clinic: "Clinic or practice",
-  software: "Software and apps",
-  "customer-service": "Customer service",
-  "services-office": "Services office",
-  other: "Something else",
-};
-
 /** The wiki page text for a business answer: its sentence first, which the wiki index shows. */
-export function businessWikiBody(answer: BusinessAnswer): string {
-  const kind = BUSINESS_LABEL[answer.kind];
+export function businessWikiBody(answer: BusinessAnswer, locale = "en"): string {
+  const copy = businessCopy(locale);
+  const kind = copy.kinds[answer.kind];
   const summary = answer.summary.trim();
-  const sentence = summary ? (/[.!?]$/.test(summary) ? summary : `${summary}.`) : `${kind}.`;
-  return `---\ntype: Business\n---\n${sentence}\n\nType of business: ${kind}.\n`;
+  const sentence = summary ? (/[.!?。]$/.test(summary) ? summary : `${summary}.`) : `${kind}.`;
+  return `---\ntype: ${copy.type}\n---\n${sentence}\n\n${copy.line(kind)}\n`;
 }
 
 /** Saves what the workspace does as shared knowledge, and as the answer the rail shows. */
@@ -39,10 +21,11 @@ export async function saveBusinessAnswer(
   prisma: PrismaClient,
   scope: Scope,
   answer: BusinessAnswer,
+  locale = "en",
 ): Promise<void> {
   await writeWikiPage(prisma, scope, {
-    title: BUSINESS_WIKI_TITLE,
-    body: businessWikiBody(answer),
+    title: businessCopy(locale).title,
+    body: businessWikiBody(answer, locale),
   });
   const row = await prisma.onboardingProgress.findUnique({ where: { userId: scope.userId } });
   const answers = { ...((row?.answers as Record<string, unknown> | null) ?? {}), business: answer };

@@ -11,7 +11,10 @@ vi.mock("../../lib/rpc", () => ({ rpc: { onboarding: { saveBusiness } } }));
 vi.mock("@lingui/react/macro", () => {
   const t = (parts: TemplateStringsArray, ...values: unknown[]) =>
     parts.reduce((text, part, index) => `${text}${index > 0 ? values[index - 1] : ""}${part}`, "");
-  return { useLingui: () => ({ t }), Trans: ({ children }: { children: ReactNode }) => children };
+  return {
+    useLingui: () => ({ t, i18n: { locale: "pt-BR" } }),
+    Trans: ({ children }: { children: ReactNode }) => children,
+  };
 });
 
 import { BusinessStep } from "./BusinessStep";
@@ -77,6 +80,7 @@ describe("BusinessStep", () => {
     expect(saveBusiness).toHaveBeenCalledWith({
       kind: "agency",
       summary: "We run ads for dentists",
+      locale: "pt-BR",
     });
     expect(onDone).toHaveBeenCalledWith({ kind: "agency", summary: "We run ads for dentists" });
   });
@@ -84,7 +88,11 @@ describe("BusinessStep", () => {
   it("counts a sentence alone as something else", async () => {
     type("Beekeeping");
     await submit();
-    expect(saveBusiness).toHaveBeenCalledWith({ kind: "other", summary: "Beekeeping" });
+    expect(saveBusiness).toHaveBeenCalledWith({
+      kind: "other",
+      summary: "Beekeeping",
+      locale: "pt-BR",
+    });
   });
 
   it("says nothing and saves nothing when nothing was answered", async () => {

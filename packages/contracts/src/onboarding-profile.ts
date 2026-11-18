@@ -77,3 +77,9 @@ export const HomeChecklistSchema = z.object({
   chiefId: Id.nullable(),
 });
 export type HomeChecklist = z.infer<typeof HomeChecklistSchema>;
+
+/** The business answer with the language its wiki page is written in. */
+export const SaveBusinessInputSchema = BusinessAnswerSchema.extend({
+  /** The app's language tag; the page is written in it, English when it is not shipped. */
+  locale: z.string().max(20).default("en"),
+});

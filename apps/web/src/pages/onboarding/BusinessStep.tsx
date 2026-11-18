@@ -21,7 +21,7 @@ export function BusinessStep({
   onChange?: (kind: BusinessKind | null) => void;
   onDone: (answer: BusinessAnswer | null) => void;
 }) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const labels = useBusinessLabels();
   const sentenceId = useId();
   const [kind, setKind] = useState<BusinessKind | null>(initial?.kind ?? null);
@@ -42,7 +42,7 @@ export function BusinessStep({
     setPending(true);
     setError(null);
     try {
-      await rpc.onboarding.saveBusiness(answer);
+      await rpc.onboarding.saveBusiness({ ...answer, locale: i18n.locale });
       onDone(answer);
     } catch (err) {
       started.current = false;

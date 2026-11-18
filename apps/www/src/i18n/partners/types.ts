@@ -26,7 +26,9 @@ export type PartnersCopy = {
   };
   pain: { heading: string; paragraphs: [string, string] };
   how: { heading: string; steps: [Item, Item, Item, Item, Item] };
-  earn: { heading: string; cards: [Item, Item, Item] };
+  earn: { heading: string; /** Tag on the card that is not available yet. */ soon: string; cards: [Item, Item, Item] };
+  billing: { heading: string; lead: string; items: [Item, Item, Item, Item] };
+  central: { heading: string; lead: string; items: [Item, Item, Item, Item, Item, Item] };
   benefits: { heading: string; items: Item[] };
   split: { heading: string; lead: string; you: Side; us: Side };
   platform: { heading: string; lead: string; items: Item[] };

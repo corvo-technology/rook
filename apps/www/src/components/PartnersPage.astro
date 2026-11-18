@@ -133,7 +133,44 @@ const RANGES = ["0-50", "50-200", "200-1000", "1000+"] as const;
             copy.earn.cards.map((card, index) => (
               <article class="lp-card" data-accent={index === 2 ? "" : undefined}>
                 <h3>{card.title}</h3>
-                <p>{card.body}</p>
+                <p>
+                  {index === 1 && <b class="partners-soon">{copy.earn.soon}</b>}
+                  {card.body}
+                </p>
+              </article>
+            ))
+          }
+        </div>
+      </section>
+
+      <section class="partners-section" aria-labelledby="billing-heading">
+        <div class="partners-head" data-reveal>
+          <h2 id="billing-heading" class="lp-title">{copy.billing.heading}</h2>
+          <p class="lp-lead">{copy.billing.lead}</p>
+        </div>
+        <div class="partners-cards partners-cards--dense partners-cards--pair" data-reveal>
+          {
+            copy.billing.items.map((item) => (
+              <article class="lp-card">
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
+              </article>
+            ))
+          }
+        </div>
+      </section>
+
+      <section class="partners-section" aria-labelledby="central-heading">
+        <div class="partners-head" data-reveal>
+          <h2 id="central-heading" class="lp-title">{copy.central.heading}</h2>
+          <p class="lp-lead">{copy.central.lead}</p>
+        </div>
+        <div class="partners-cards partners-cards--dense" data-reveal>
+          {
+            copy.central.items.map((item) => (
+              <article class="lp-card">
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
               </article>
             ))
           }

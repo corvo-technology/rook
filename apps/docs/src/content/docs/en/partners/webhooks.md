@@ -1,9 +1,11 @@
 ---
 title: "Webhooks"
-description: "Credit notices and how to verify the signature."
+description: "Advanced, optional automation: credit alerts by webhook and how to verify the signature."
 sidebar:
   order: 5
 ---
+
+The alerts that matter (a customer's limit reached, low fund, auto top-up, invoice issued, payment failed, connector down) reach you by **email** and **in the app**, in the [partner console](/en/partners/central/). The webhooks below are an **advanced, optional** integration, to automate things in your own system.
 
 Rook calls a URL of yours when a customer has used **80%** of the month's credit and again when it **runs out**. The URL must be `https` and public; it and the signing secret are configured with the Rook team, who can also replace the secret on request (the old one stops matching).
 
@@ -102,12 +104,12 @@ With the [commerce API](/en/partners/commerce/) come `subscription.updated`, `su
 
 ## Credit events (embedded partners)
 
-`customer.credit_limit_reached` is sent when a customer reaches the monthly credit limit you set. `partner.balance_low` is sent when your fund falls under the low-balance threshold. Both carry credit amounts, not currency, and use the same signing and delivery.
+`customer.credit_limit_reached` is sent **once per customer and month**, when the customer reaches the monthly credit limit you set. `partner.balance_low` is sent when your fund falls under the low-balance share, and again only after a new top-up; it has no `externalTenantId`, because it is about the fund. Amounts are credits, not currency, and signing and delivery are the same.
 
 ```json
-{ "type": "customer.credit_limit_reached", "externalTenantId": "clinic-1", "limitCredits": 0, "usedCredits": 0 }
+{ "type": "customer.credit_limit_reached", "externalTenantId": "clinic-1", "period": "2026-11", "limitCredits": 1000, "usedCredits": 1000 }
 ```
 
 ```json
-{ "type": "partner.balance_low", "balanceCredits": 0, "thresholdCredits": 0 }
+{ "type": "partner.balance_low", "balanceCredits": 400, "thresholdBps": 2000, "currency": "BRL" }
 ```

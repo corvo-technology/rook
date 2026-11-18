@@ -1,9 +1,11 @@
 ---
 title: "Webhooks"
-description: "Avisos de crédito e como verificar a assinatura."
+description: "Automação avançada e opcional: avisos de crédito por webhook e como verificar a assinatura."
 sidebar:
   order: 5
 ---
+
+Os avisos importantes (limite de um cliente atingido, fundo baixo, recarga automática, fatura emitida, pagamento que falhou, conector fora do ar) chegam por **e-mail** e **no app**, na [Central do parceiro](/partners/central/). Os webhooks abaixo são uma integração **avançada e opcional**, para automatizar no seu próprio sistema.
 
 O Rook chama uma URL sua quando um cliente usa **80%** do crédito do mês e de novo quando ele **acaba**. A URL precisa ser `https` e pública; ela e o segredo de assinatura são configurados com a equipe do Rook, que também pode trocar o segredo quando você pedir (o antigo deixa de valer).
 
@@ -100,14 +102,14 @@ Responda qualquer `2xx` quando tiver tratado o aviso. Qualquer outra resposta, o
 
 Com a [API de comércio](/partners/commerce/) chegam `subscription.updated`, `subscription.lapsed`, `credit.granted`, `credit.expired`, `invoice.issued` e `payout.paid`, com a mesma assinatura e entrega.
 
-## Eventos de crédito (parceiros embarcados)
+## Eventos de crédito (parceiros embutidos)
 
-`customer.credit_limit_reached` é enviado quando um cliente chega ao limite mensal de créditos que você definiu. `partner.balance_low` é enviado quando o seu fundo fica abaixo do limite de saldo baixo. Os dois trazem valores em créditos, não em moeda, e usam a mesma assinatura e entrega.
+`customer.credit_limit_reached` é enviado **uma vez por cliente e mês**, quando o cliente chega ao limite mensal de créditos que você definiu. `partner.balance_low` é enviado quando o seu fundo cai abaixo da parcela de saldo baixo, e de novo só depois de uma nova recarga; ele não tem `externalTenantId`, porque é sobre o fundo. Os valores são em créditos, não em moeda, e a assinatura e a entrega são as mesmas.
 
 ```json
-{ "type": "customer.credit_limit_reached", "externalTenantId": "clinic-1", "limitCredits": 0, "usedCredits": 0 }
+{ "type": "customer.credit_limit_reached", "externalTenantId": "clinic-1", "period": "2026-11", "limitCredits": 1000, "usedCredits": 1000 }
 ```
 
 ```json
-{ "type": "partner.balance_low", "balanceCredits": 0, "thresholdCredits": 0 }
+{ "type": "partner.balance_low", "balanceCredits": 400, "thresholdBps": 2000, "currency": "BRL" }
 ```

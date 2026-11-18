@@ -11,9 +11,9 @@ import {
   rotatePartnerWebhookSecret,
   runAsSystem,
   setPartnerEnabled,
+  setPartnerScribeRetentionDays,
   setPartnerTemplateBySlug,
   setPartnerWebhookUrl,
-  setPartnerScribeRetentionDays,
 } from "@corvo/db";
 import { runPartnerCommand } from "./partner-command.js";
 

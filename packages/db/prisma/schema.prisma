@@ -222,6 +222,7 @@ model Organization {
   limitOverride          OrganizationLimitOverride?
   modelCredits           ModelCreditAccount?
   partnerTenant          PartnerTenant?
+  partnerMemberships     PartnerMember[]
 
   @@unique([slug])
   @@map("organization")
@@ -2629,8 +2630,68 @@ model Partner {
   windows              PartnerRequestWindow[]
   webhookEvents        PartnerWebhookEvent[]
   consultations        Consultation[]
+  members              PartnerMember[]
+  markups              PartnerMarkup[]
+  auditEvents          PartnerAuditEvent[]
 
   @@map("partners")
+}
+
+/// Which organizations run a partner in the console, so one organization can manage several
+/// partners (one per product). `Partner.ownerUserId` stays for the previous release.
+model PartnerMember {
+  id             String       @id @default(cuid())
+  partnerId      String
+  partner        Partner      @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// manager
+  role           String       @default("manager")
+  createdAt      DateTime     @default(now())
+
+  @@unique([partnerId, organizationId])
+  @@index([organizationId])
+  @@map("partner_members")
+}
+
+/// What a partner adds to the catalog price of one plan or pack, kept entirely by the partner.
+/// `value` is minor units for "fixed" and basis points for "percent". Changing it affects new
+/// charges only: a subscription keeps the price in its own snapshot until it renews.
+model PartnerMarkup {
+  id        String   @id @default(cuid())
+  partnerId String
+  partner   Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  /// plan | pack
+  itemKind  String
+  /// The catalog key of the plan or pack.
+  itemKey   String
+  /// fixed | percent
+  kind      String
+  value     Int
+  updatedAt DateTime @updatedAt
+
+  @@unique([partnerId, itemKind, itemKey])
+  @@map("partner_markups")
+}
+
+/// Changes made in the console, for audit. Numbers and ids only: never customer content, and no
+/// secret, email or address of a person.
+model PartnerAuditEvent {
+  id          String   @id @default(cuid())
+  partnerId   String
+  partner     Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  /// The Rook user who acted; null when an agent or a job did.
+  actorUserId String?
+  /// customer.paused | customer.resumed | customer.credit_added | support.session_opened |
+  /// pricing.changed | key.rotated | webhook.changed
+  kind        String
+  /// The partner customer concerned, when there is one.
+  tenantId    String?
+  detail      Json
+  createdAt   DateTime @default(now())
+
+  @@index([partnerId, createdAt])
+  @@map("partner_audit_events")
 }
 
 /// One partner customer: its own organization and the single Corvo user that owns its agents.

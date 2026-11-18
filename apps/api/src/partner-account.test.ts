@@ -27,6 +27,7 @@ function setup(options: { admins?: string[]; email?: string; owned?: boolean } =
       findUniqueOrThrow: vi.fn(async () => partnerRow),
     },
     member: { findFirst: vi.fn(async () => ({ organizationId: "owner-org" })) },
+    partnerMember: { upsert: vi.fn(async () => ({})) },
     modelCreditEntry: {
       aggregate: vi.fn(async () => ({ _sum: { amountMicros: -2_500_000n } })),
       groupBy: vi.fn(async () => [
@@ -111,9 +112,15 @@ describe("partner account", () => {
   });
 
   it("becomes a partner and hands back the key once", async () => {
-    const { client } = setup();
+    const { client, prisma } = setup();
     const { key } = await client.partner.create({ name: "Acme SaaS" });
     expect(key).toMatch(/^cpk_/);
+    // The owner's organization manages the new partner in the console.
+    expect(prisma.partnerMember.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ organizationId: "owner-org" }),
+      }),
+    );
   });
 
   it("rotates the key and changes a customer's state only within the caller's own partner", async () => {

@@ -4961,6 +4961,10 @@ msgid "Manage members"
 msgstr "Gestionar miembros"
 
 #: src/pages/SpaceRolesSettings.tsx
+msgid "Manage partners"
+msgstr "Gestionar socios"
+
+#: src/pages/SpaceRolesSettings.tsx
 msgid "Manage roles"
 msgstr "Gestionar roles"
 

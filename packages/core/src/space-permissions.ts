@@ -26,6 +26,7 @@ export const SPACE_PERMISSION_AREAS = {
     "manage_roles",
     "manage_billing",
     "create_spaces",
+    "manage_partner",
   ],
 } as const;
 

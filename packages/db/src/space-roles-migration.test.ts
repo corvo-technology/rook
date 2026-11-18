@@ -38,7 +38,10 @@ describe("the space roles migration", () => {
 
   it("gives Everyone what a member could do and Admin what an admin could", () => {
     expect(migratedKeys("everyone")).toEqual([...EVERYONE_DEFAULT_KEYS]);
-    expect(migratedKeys("admin")).toEqual([...ADMIN_DEFAULT_KEYS]);
+    // Keys added after this migration reach the existing Admin roles in their own migration.
+    expect(migratedKeys("admin")).toEqual(
+      ADMIN_DEFAULT_KEYS.filter((key) => key !== "manage_partner"),
+    );
     const member = buildSpaceMembership({
       isOwner: false,
       everyoneKeys: migratedKeys("everyone"),

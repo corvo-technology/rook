@@ -60,6 +60,7 @@ import { messagingRoutes } from "./routes/messaging.js";
 import { missionsRoutes } from "./routes/missions.js";
 import { modelsRoutes } from "./routes/models.js";
 import { partnerRoutes } from "./routes/partner.js";
+import { partnerConsoleRoutes } from "./routes/partner-console.js";
 import { platformRoutes } from "./routes/platform.js";
 import { routinesRoutes } from "./routes/routines.js";
 import { spacesRoutes } from "./routes/spaces.js";
@@ -233,6 +234,7 @@ export function createRouter(deps: RouterDeps) {
     ...emailAgentRoutes(ctx),
     ...mailboxRoutes(ctx),
     ...partnerRoutes(ctx),
+    ...partnerConsoleRoutes(ctx),
     ...platformRoutes(ctx),
     ...contentRoutes(ctx),
   });

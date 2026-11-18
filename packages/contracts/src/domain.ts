@@ -429,6 +429,8 @@ export type MemberUsage = z.infer<typeof MemberUsageSchema>;
 export const SpaceSchema = z.object({
   id: Id,
   name: z.string(),
+  /** A small picture chosen in onboarding, as a data URL. */
+  logo: z.string().nullable().optional(),
   isDefault: z.boolean(),
   /** True when the space has any bot or group, including archived. */
   hasContent: z.boolean(),
@@ -1986,6 +1988,24 @@ export type SignupSurvey = z.infer<typeof SignupSurveySchema>;
 export const OnboardingPicksSchema = z.object({
   use: z.enum(SIGNUP_SURVEY_USES).optional(),
   categories: z.array(z.enum(STORE_CATEGORIES)).max(STORE_CATEGORIES.length).default([]),
+  /** The suggested team the person kept: catalog agents added beside the Chief. */
+  agents: z
+    .array(z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/))
+    .max(6)
+    .optional(),
+  /** Channels for the suggested team, each with the agents in it. */
+  channels: z
+    .array(
+      z.object({
+        name: z.string().trim().min(1).max(40),
+        agentSlugs: z
+          .array(z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/))
+          .min(1)
+          .max(6),
+      }),
+    )
+    .max(4)
+    .optional(),
 });
 export type OnboardingPicks = z.infer<typeof OnboardingPicksSchema>;
 

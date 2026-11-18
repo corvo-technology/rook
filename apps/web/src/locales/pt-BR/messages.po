@@ -264,6 +264,7 @@ msgstr "{count, plural, one {# linha} other {# linhas}}"
 msgid "{count, plural, one {Connected · # tool} other {Connected · # tools}}"
 msgstr "{count, plural, one {Conectado · # ferramenta} other {Conectado · # ferramentas}}"
 
+#: src/pages/Onboarding.tsx
 #: src/pages/TeamBoard.tsx
 msgid "{count} agents"
 msgstr "{count} agentes"
@@ -343,6 +344,10 @@ msgstr "{label}, vazio"
 #: src/components/SubscriptionRings.tsx
 msgid "{label}: {percent}% used"
 msgstr "{label}: {percent}% usado"
+
+#: src/pages/onboarding/OnboardingLayout.tsx
+msgid "{left} steps left"
+msgstr "Faltam {left} etapas"
 
 #: src/lib/relative-time.ts
 msgid "{minutes}m ago"
@@ -643,6 +648,14 @@ msgstr "@{0}"
 msgid "${0} / month"
 msgstr "US$ {0} / mês"
 
+#: src/pages/Onboarding.tsx
+msgid "1 agent"
+msgstr "1 agente"
+
+#: src/pages/onboarding/OnboardingLayout.tsx
+msgid "1 step left"
+msgstr "Falta 1 etapa"
+
 #: src/components/SubscriptionRings.tsx
 msgid "5-hour window"
 msgstr "Janela de 5 horas"
@@ -659,10 +672,6 @@ msgstr "A saída de um comando"
 #: src/pages/WikiBrowser.tsx
 msgid "A page changed since"
 msgstr "Uma página mudou desde então"
-
-#: src/pages/onboarding/StartStep.tsx
-msgid "A ready team"
-msgstr "Uma equipe pronta"
 
 #: src/components/ApprovalRulesSettings.tsx
 msgid "A second model approves what fits your request. You decide the rest."
@@ -681,6 +690,10 @@ msgstr "Uma credencial de assinatura está armazenada com segurança."
 #: src/components/InfoTooltip.tsx
 msgid "About {label}"
 msgstr "Sobre {label}"
+
+#: src/pages/onboarding/YouStep.tsx
+msgid "About you"
+msgstr "Sobre você"
 
 #: src/pages/connections/AgentAccessSection.tsx
 #: src/pages/ConnectionsPage.tsx
@@ -1006,8 +1019,13 @@ msgstr "Avançado..."
 msgid "After {lastAgent} finishes, {agent} runs it"
 msgstr "Quando {lastAgent} terminar, {agent} executa"
 
+#: src/pages/onboarding/labels.ts
+msgid "Agency"
+msgstr "Agência"
+
 #: src/components/WorkingLine.tsx
 #: src/pages/AddStepPanel.tsx
+#: src/pages/HomePage.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Agent"
@@ -1018,6 +1036,7 @@ msgid "Agent computer"
 msgstr "Computador do agente"
 
 #: src/pages/BotContextMenu.tsx
+#: src/pages/onboarding/OnboardingPreview.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/channel-members.tsx
@@ -1353,6 +1372,10 @@ msgstr "Perguntar"
 msgid "Ask {0} for a new one"
 msgstr "Peça um novo a {0}"
 
+#: src/pages/HomePage.tsx
+msgid "Ask {agentName} for something"
+msgstr "Peça algo para {agentName}"
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Ask first"
 msgstr "Perguntar antes"
@@ -1616,6 +1639,14 @@ msgstr "Bots, grupos, conversas, arquivos, memória e integrações deste espaç
 msgid "Brain label"
 msgstr "Nome do cérebro"
 
+#: src/pages/Onboarding.tsx
+msgid "Bring agents you already use, or I'll suggest a team."
+msgstr "Traga os agentes que você já usa, ou eu sugiro um time."
+
+#: src/pages/Onboarding.tsx
+msgid "Bring your people. You can do this later."
+msgstr "Traga sua equipe. Você pode fazer isso depois."
+
 #: src/pages/Store.tsx
 msgid "Browse MCP servers"
 msgstr "Explorar servidores MCP"
@@ -1624,6 +1655,10 @@ msgstr "Explorar servidores MCP"
 #: src/pages/shell/agent-import.tsx
 msgid "Built-in"
 msgstr "Integrado"
+
+#: src/pages/Onboarding.tsx
+msgid "Business"
+msgstr "Negócio"
 
 #: src/pages/Usage.tsx
 msgid "By agent"
@@ -1747,6 +1782,7 @@ msgstr "Trocar o modelo de {bot}?"
 msgid "Changing…"
 msgstr "Alterando…"
 
+#: src/pages/onboarding/OnboardingPreview.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/command-palette.tsx
 msgid "Channels"
@@ -1905,6 +1941,10 @@ msgstr "Limpar o propósito"
 #: src/pages/shell/dialogs.tsx
 msgid "Clearing…"
 msgstr "Limpeza"
+
+#: src/pages/onboarding/labels.ts
+msgid "Clinic or practice"
+msgstr "Clínica ou consultório"
 
 #: src/components/ErrorBoundary.tsx
 #: src/pages/AddStepPanel.tsx
@@ -2169,6 +2209,10 @@ msgstr "Conecte um modelo em Configurações antes de executar bots."
 msgid "Connect a model to start a run."
 msgstr "Conecte um modelo para iniciar."
 
+#: src/pages/HomePage.tsx
+msgid "Connect a tool"
+msgstr "Conectar uma ferramenta"
+
 #: src/components/MissionList.tsx
 msgid "Connect an app"
 msgstr "Conecte um app"
@@ -2280,11 +2324,13 @@ msgstr "Limite de contexto"
 #: src/pages/ImportFlow.tsx
 #: src/pages/onboarding-quick-connect.tsx
 #: src/pages/Onboarding.tsx
+#: src/pages/onboarding/BusinessStep.tsx
 #: src/pages/onboarding/ComputerStep.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 #: src/pages/onboarding/LocalModelChoice.tsx
-#: src/pages/onboarding/StartStep.tsx
+#: src/pages/onboarding/TeamStep.tsx
 #: src/pages/onboarding/WorkspaceStep.tsx
+#: src/pages/onboarding/YouStep.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Continue"
 msgstr "Continuar"
@@ -2775,6 +2821,8 @@ msgstr "Não foi possível executar a rotina"
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MembersSettingsPanel.tsx
+#: src/pages/onboarding/BusinessStep.tsx
+#: src/pages/onboarding/YouStep.tsx
 #: src/pages/shell/agent-audience.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/chat-model-switcher.tsx
@@ -2848,6 +2896,7 @@ msgid "Could not search catalog"
 msgstr "Não foi possível pesquisar o catálogo"
 
 #: src/pages/DirectChat.tsx
+#: src/pages/HomePage.tsx
 msgid "Could not send"
 msgstr "Não foi possível enviar"
 
@@ -2945,6 +2994,11 @@ msgstr "Não foi possível atualizar o escopo de memória padrão"
 msgid "Could not update the speech model"
 msgstr "Não foi possível atualizar o modelo de fala"
 
+#: src/pages/onboarding/WorkspaceStep.tsx
+#: src/pages/onboarding/YouStep.tsx
+msgid "Could not use that image"
+msgstr "Não foi possível usar essa imagem"
+
 #: src/components/ComputersUnavailableHint.tsx
 msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
 msgstr "Não foi possível verificar a configuração do computador ({failureMessage}). Corrija a conexão e verifique de novo."
@@ -2971,6 +3025,10 @@ msgstr "Criar"
 #: src/pages/ConnectionsSettingsPanel.tsx
 msgid "Create a bot with @BotFather and paste its token."
 msgstr "Crie um bot com o @BotFather e cole o token dele."
+
+#: src/pages/HomePage.tsx
+msgid "Create a routine"
+msgstr "Criar uma rotina"
 
 #. placeholder {0}: bot.name
 #: src/pages/shell/dialogs.tsx
@@ -3090,6 +3148,7 @@ msgstr "Cor personalizada"
 msgid "Custom header"
 msgstr "Cabeçalho personalizado"
 
+#: src/pages/onboarding/labels.ts
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Customer service"
 msgstr "Atendimento"
@@ -3306,6 +3365,7 @@ msgstr "Atualização do desktop"
 msgid "Details"
 msgstr "Detalhes"
 
+#: src/pages/onboarding/labels.ts
 #: src/pages/StoreCategoryChips.tsx
 msgid "Development"
 msgstr "Desenvolvimento"
@@ -3597,6 +3657,7 @@ msgid "Enter an API key before testing."
 msgstr "Informe uma chave de API antes de testar."
 
 #: src/pages/Auth.tsx
+#: src/pages/onboarding/YouStep.tsx
 msgid "Enter your name"
 msgstr "Digite seu nome"
 
@@ -3825,6 +3886,7 @@ msgstr "Filtrar por data"
 msgid "Filters"
 msgstr "Filtros"
 
+#: src/pages/onboarding/labels.ts
 #: src/pages/StoreCategoryChips.tsx
 msgid "Finance"
 msgstr "Finanças"
@@ -3966,6 +4028,30 @@ msgstr "Ir para…"
 msgid "Goes to {recipient}"
 msgstr "Vai para {recipient}"
 
+#: src/pages/HomePage.tsx
+msgid "Good afternoon"
+msgstr "Boa tarde"
+
+#: src/pages/HomePage.tsx
+msgid "Good afternoon, {name}"
+msgstr "Boa tarde, {name}"
+
+#: src/pages/HomePage.tsx
+msgid "Good evening"
+msgstr "Boa noite"
+
+#: src/pages/HomePage.tsx
+msgid "Good evening, {name}"
+msgstr "Boa noite, {name}"
+
+#: src/pages/HomePage.tsx
+msgid "Good morning"
+msgstr "Bom dia"
+
+#: src/pages/HomePage.tsx
+msgid "Good morning, {name}"
+msgstr "Bom dia, {name}"
+
 #: src/components/CoachLayer.tsx
 msgid "Got it"
 msgstr "Entendi"
@@ -4024,9 +4110,17 @@ msgstr "Cabeçalhos"
 msgid "Hear a sample"
 msgstr "Ouvir uma amostra"
 
+#: src/pages/Onboarding.tsx
+msgid "Hi, {name}. I'm the Chief. We'll set up your team in about two minutes."
+msgstr "Oi, {name}. Eu sou o Chefe. Vou montar o time com você em uns dois minutos."
+
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Hi, this is how I'll sound when I read replies out loud."
 msgstr "Olá, é assim que vou soar quando ler as respostas em voz alta."
+
+#: src/pages/Onboarding.tsx
+msgid "Hi. I'm the Chief. We'll set up your team in about two minutes."
+msgstr "Oi. Eu sou o Chefe. Vou montar o time com você em uns dois minutos."
 
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Hide from customers"
@@ -4084,13 +4178,13 @@ msgstr "hora"
 msgid "hours"
 msgstr "horas"
 
-#: src/pages/onboarding/StartStep.tsx
-msgid "How do you want to start?"
-msgstr "Como quer começar?"
-
 #: src/components/AutonomyPicker.tsx
 msgid "How much does {name} do on its own?"
 msgstr "Quanto {name} faz por conta própria?"
+
+#: src/pages/Onboarding.tsx
+msgid "How much should I do on my own?"
+msgstr "O quanto devo fazer por conta própria?"
 
 #: src/pages/RoutineSchedule.tsx
 msgid "How often"
@@ -4099,6 +4193,14 @@ msgstr "Com que frequência"
 #: src/components/teach/SkillDraftCard.tsx
 msgid "How to check"
 msgstr "Como verificar"
+
+#: src/pages/onboarding/TeamStep.tsx
+msgid "I don't use any yet: the Chief builds a team from what you do"
+msgstr "Ainda não uso nenhum: o Chefe monta um time a partir do que vocês fazem"
+
+#: src/pages/Onboarding.tsx
+msgid "I need an AI to think with."
+msgstr "Preciso de uma IA para pensar junto."
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -4151,7 +4253,7 @@ msgstr "Servidor IMAP"
 
 #: src/pages/ImportFlow.tsx
 #: src/pages/ImportFromApp.tsx
-#: src/pages/onboarding/StartStep.tsx
+#: src/pages/onboarding/TeamStep.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/create-bot-panel.tsx
 msgid "Import"
@@ -4170,9 +4272,17 @@ msgstr "Importar OpenAPI JSON"
 msgid "Import this agent as a bot?"
 msgstr "Importar este agente como bot?"
 
+#: src/pages/Onboarding.tsx
+msgid "Imported"
+msgstr "Importado"
+
 #: src/pages/ImportFlow.tsx
 msgid "Importing…"
 msgstr "Importando…"
+
+#: src/pages/onboarding/BusinessStep.tsx
+msgid "In one sentence"
+msgstr "Em uma frase"
 
 #: src/components/PlanCard.tsx
 #: src/lib/ticket-status.ts
@@ -4319,6 +4429,10 @@ msgstr "Convidar"
 msgid "Invite people"
 msgstr "Convidar pessoas"
 
+#: src/pages/HomePage.tsx
+msgid "Invite someone"
+msgstr "Convidar alguém"
+
 #: src/pages/onboarding/InviteStep.tsx
 msgid "Invite your team"
 msgstr "Convide sua equipe"
@@ -4376,7 +4490,7 @@ msgstr "Ir para a mensagem respondida: {excerpt}"
 msgid "just now"
 msgstr "agora mesmo"
 
-#: src/pages/onboarding/StartStep.tsx
+#: src/pages/Onboarding.tsx
 msgid "Just the Chief"
 msgstr "Só o Chief"
 
@@ -4610,6 +4724,10 @@ msgstr "O acesso ao computador local exige o app desktop mais recente."
 msgid "Log out"
 msgstr "Sair"
 
+#: src/pages/onboarding/WorkspaceStep.tsx
+msgid "Logo"
+msgstr "Logo"
+
 #: src/lib/activity-label.ts
 msgid "Looking at the screen"
 msgstr "Olhando a tela"
@@ -4728,6 +4846,7 @@ msgstr "Marcar como Não Lida"
 msgid "Markdown table"
 msgstr "Tabela Markdown"
 
+#: src/pages/onboarding/labels.ts
 #: src/pages/StoreCategoryChips.tsx
 msgid "Marketing"
 msgstr "Marketing"
@@ -5094,6 +5213,7 @@ msgstr "Meu assistente"
 #: src/pages/GroupPanel.tsx
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/NewRoutinePanel.tsx
+#: src/pages/onboarding/YouStep.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
@@ -5263,6 +5383,10 @@ msgstr "Próximo"
 msgid "Next page"
 msgstr "Próxima página"
 
+#: src/pages/HomePage.tsx
+msgid "Next routines"
+msgstr "Próximas rotinas"
+
 #: src/pages/connections/connection-model.ts
 msgid "No access"
 msgstr "Sem acesso"
@@ -5370,6 +5494,10 @@ msgstr "Nenhum servidor MCP remoto encontrado"
 #: src/pages/Store.tsx
 msgid "No results"
 msgstr "Nenhum resultado"
+
+#: src/pages/HomePage.tsx
+msgid "No routines scheduled"
+msgstr "Nenhuma rotina agendada"
 
 #: src/pages/Routines.tsx
 msgid "No routines yet"
@@ -5483,7 +5611,12 @@ msgstr "Não está funcionando"
 msgid "Nothing remembered yet"
 msgstr "Nada memorizado ainda"
 
+#: src/pages/HomePage.tsx
+msgid "Nothing running"
+msgstr "Nada em andamento"
+
 #: src/pages/ApprovalsInbox.tsx
+#: src/pages/HomePage.tsx
 msgid "Nothing to approve"
 msgstr "Nada para aprovar"
 
@@ -5499,6 +5632,10 @@ msgstr "Notificações"
 #: src/pages/ActivityList.tsx
 msgid "Now"
 msgstr "Agora"
+
+#: src/pages/Onboarding.tsx
+msgid "Now a little about you."
+msgstr "Agora, um pouco sobre você."
 
 #: src/pages/McpOAuthCallback.tsx
 msgid "OAuth authorization was cancelled."
@@ -5559,6 +5696,10 @@ msgstr "Uma vez"
 #: src/components/ModelCredits.tsx
 msgid "One-time purchase. Credits do not expire."
 msgstr "Compra única. Os créditos não expiram."
+
+#: src/pages/onboarding/labels.ts
+msgid "Online store"
+msgstr "Loja online"
 
 #: src/pages/Auth.tsx
 msgid "Only identifies you on this computer. Your data stays here."
@@ -5679,6 +5820,7 @@ msgstr "Abrindo a página: {value}"
 msgid "Operating the computer"
 msgstr "Operando o computador"
 
+#: src/pages/onboarding/labels.ts
 #: src/pages/StoreCategoryChips.tsx
 msgid "Operations"
 msgstr "Operação"
@@ -5861,6 +6003,7 @@ msgstr "Pausado"
 msgid "Pawn"
 msgstr "Peão"
 
+#: src/pages/Onboarding.tsx
 #: src/pages/shell/channel-members.tsx
 #: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
@@ -5887,6 +6030,7 @@ msgstr "Pessoal"
 msgid "Phone call"
 msgstr "Ligação"
 
+#: src/pages/onboarding/YouStep.tsx
 #: src/pages/shell/chat-context.tsx
 #: src/pages/shell/chat-shared.ts
 msgid "Photo"
@@ -5911,6 +6055,10 @@ msgstr "Escolha uma ferramenta para verificar"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Pick from role"
 msgstr "Escolher pela função"
+
+#: src/pages/HomePage.tsx
+msgid "Pick up where you left off · {done} of {total}"
+msgstr "Continue de onde parou · {done} de {total}"
 
 #: src/pages/shell/routing-line.tsx
 msgid "Picked for this"
@@ -6677,6 +6825,7 @@ msgstr "Executa em {when}"
 msgid "Runs when this bot receives a verified message from this provider."
 msgstr "Executa quando este bot recebe uma mensagem verificada deste provedor."
 
+#: src/pages/onboarding/labels.ts
 #: src/pages/StoreCategoryChips.tsx
 msgid "Sales"
 msgstr "Vendas"
@@ -6871,6 +7020,10 @@ msgstr "Pesquisando…"
 msgid "Security"
 msgstr "Segurança"
 
+#: src/pages/HomePage.tsx
+msgid "See all"
+msgstr "Ver tudo"
+
 #: src/pages/shell/chat-header.tsx
 msgid "Select a bot"
 msgstr "Selecione um bot"
@@ -6880,6 +7033,7 @@ msgid "Self-hosted"
 msgstr "Auto-hospedado"
 
 #: src/pages/DirectChat.tsx
+#: src/pages/HomePage.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/thread-panel.tsx
 msgid "Send"
@@ -6953,6 +7107,10 @@ msgstr "Nome do servidor"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Server URL"
 msgstr "URL do servidor"
+
+#: src/pages/onboarding/labels.ts
+msgid "Services office"
+msgstr "Escritório de serviços"
 
 #: src/components/call/CallCard.tsx
 #: src/components/SidebarFooter.tsx
@@ -7116,6 +7274,7 @@ msgid "Skills join the library all your bots share."
 msgstr "As habilidades entram na biblioteca que todos os seus bots compartilham."
 
 #: src/pages/onboarding/InviteStep.tsx
+#: src/pages/onboarding/OnboardingLayout.tsx
 #: src/pages/shell/computer-release-actions.tsx
 msgid "Skip"
 msgstr "Pular"
@@ -7154,6 +7313,10 @@ msgstr "Pequeno"
 msgid "SMTP server"
 msgstr "Servidor SMTP"
 
+#: src/pages/onboarding/labels.ts
+msgid "Software and apps"
+msgstr "Software e apps"
+
 #: src/pages/Routines.tsx
 msgid "Some runs are not shown."
 msgstr "Algumas execuções não estão sendo exibidas."
@@ -7161,6 +7324,10 @@ msgstr "Algumas execuções não estão sendo exibidas."
 #: src/pages/shell/agent-import.tsx
 msgid "Some settings are not imported"
 msgstr "Algumas configurações não são importadas"
+
+#: src/pages/onboarding/labels.ts
+msgid "Something else"
+msgstr "Outra coisa"
 
 #: src/pages/PartnershipSettingsPanel.tsx
 msgid "Something went wrong"
@@ -7252,7 +7419,6 @@ msgstr "SSO está temporariamente indisponível. Tente novamente."
 msgid "Standard"
 msgstr "Padrão"
 
-#: src/pages/Onboarding.tsx
 #: src/pages/shell/computer-overlay.tsx
 msgid "Start"
 msgstr "Iniciar"
@@ -7425,6 +7591,7 @@ msgstr "Sugerir pelo que eu digo"
 msgid "Sunday"
 msgstr "domingo"
 
+#: src/pages/onboarding/labels.ts
 #: src/pages/StoreCategoryChips.tsx
 msgid "Support"
 msgstr "Atendimento"
@@ -7466,6 +7633,10 @@ msgstr "Assumir o controle"
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Talk to agents"
 msgstr "Falar com agentes"
+
+#: src/pages/HomePage.tsx
+msgid "Talk to an agent"
+msgstr "Falar com um agente"
 
 #: src/components/MissionList.tsx
 msgid "Talk to your agent"
@@ -7811,6 +7982,7 @@ msgid "Time of day"
 msgstr "Hora do dia"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/onboarding/WorkspaceStep.tsx
 msgid "Timezone"
 msgstr "Fuso horário"
 
@@ -8287,6 +8459,10 @@ msgstr "Aguardando {value}"
 msgid "Waiting for approval"
 msgstr "Aguardando aprovação"
 
+#: src/pages/HomePage.tsx
+msgid "Waiting for you"
+msgstr "Esperando você"
+
 #: src/lib/roster-status.ts
 msgid "Waiting in line…"
 msgstr "Aguardando na fila…"
@@ -8339,9 +8515,21 @@ msgstr "Fins de semana"
 msgid "What about its memories?"
 msgstr "E suas memórias?"
 
+#: src/pages/onboarding/BusinessStep.tsx
+msgid "What do you do?"
+msgstr "O que você faz?"
+
+#: src/pages/onboarding/YouStep.tsx
+msgid "What do you look after?"
+msgstr "Você cuida de quê?"
+
 #: src/pages/shell/message-cards.tsx
 msgid "What do you want me on first?"
 msgstr "Em que você quer que eu comece?"
+
+#: src/pages/Onboarding.tsx
+msgid "What does the workspace do? Every agent will know."
+msgstr "O que o espaço faz? Todos os agentes vão saber."
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "What result will you demonstrate?"
@@ -8407,6 +8595,10 @@ msgstr "Quando usar"
 msgid "Where should bots run?"
 msgstr "Onde os bots devem ser executados?"
 
+#: src/pages/Onboarding.tsx
+msgid "Where should my computer live?"
+msgstr "Onde meu computador deve ficar?"
+
 #: src/pages/shell/agent-import.tsx
 msgid "Where to import"
 msgstr "Onde importar"
@@ -8449,9 +8641,17 @@ msgstr "Fluxos de trabalho"
 msgid "working"
 msgstr "trabalhando"
 
+#: src/pages/HomePage.tsx
+msgid "Working"
+msgstr "Trabalhando"
+
 #: src/pages/shell/agent-import.tsx
 msgid "Working instructions"
 msgstr "Instruções de trabalho"
+
+#: src/pages/HomePage.tsx
+msgid "Working now"
+msgstr "Trabalhando agora"
 
 #: src/components/ToolActivityDisclosure.tsx
 #: src/lib/roster-status.ts
@@ -8496,6 +8696,7 @@ msgstr "você"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/DirectChat.tsx
+#: src/pages/Onboarding.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/channel-find.tsx
 #: src/pages/shell/message-view.tsx
@@ -8530,10 +8731,6 @@ msgstr "Você atingiu seu limite mensal no modelo deste espaço."
 #: src/lib/server-copy.ts
 msgid "You were added to the group chat “{name}”. Reply YES in this conversation to join it with your agent."
 msgstr "Você foi adicionado ao grupo “{name}”. Responda SIM nesta conversa para entrar com seu agente."
-
-#: src/pages/onboarding/WorkspaceStep.tsx
-msgid "Your agents and chats live here. You can rename it any time."
-msgstr "Seus agentes e conversas ficam aqui. Você pode renomear quando quiser."
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -8574,6 +8771,10 @@ msgstr "Seu OpenAI"
 #: src/lib/run-error.ts
 msgid "Your OpenRouter"
 msgstr "Seu OpenRouter"
+
+#: src/pages/onboarding/TeamStep.tsx
+msgid "Your team"
+msgstr "Seu time"
 
 #: src/lib/user-error.ts
 msgid "Your plan has no room for another computer. Upgrade to add more."

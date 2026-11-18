@@ -673,7 +673,7 @@ export async function deleteSpaceLeavingWithAccount(
 /** Rename a space the caller owns in the active organization. */
 export async function renameSpaceForMember(
   prisma: PrismaClient,
-  input: SpaceMemberTargetInput & { name: string },
+  input: SpaceMemberTargetInput & { name: string; logo?: string | null },
 ): Promise<{ id: string; name: string }> {
   const name = normalizeSpaceName(input.name);
   return withTransactionRetry(() =>
@@ -686,7 +686,7 @@ export async function renameSpaceForMember(
         if (owned.deletingAt) throw new SpaceDeletionInProgressError();
         await tx.space.update({
           where: { id: input.spaceId },
-          data: { name },
+          data: { name, ...(input.logo !== undefined ? { logo: input.logo } : {}) },
         });
         return { id: input.spaceId, name };
       },

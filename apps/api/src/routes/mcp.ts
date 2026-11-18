@@ -12,7 +12,14 @@ import type { Actor, OnboardingStep } from "@corvo/contracts";
 import { ONBOARDING_STEPS, signupSurveyAsksTeamSize } from "@corvo/contracts";
 import { containsSecret } from "@corvo/core";
 import type { Prisma } from "@corvo/db";
-import { IsolationError, markTourDone, skipTour } from "@corvo/db";
+import {
+  IsolationError,
+  markTourDone,
+  readOnboardingAnswers,
+  saveBusinessAnswer,
+  saveWorkAreas,
+  skipTour,
+} from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import { ORPCError } from "@orpc/server";
 import { searchIntegrationCatalog } from "../integration-catalog.js";
@@ -836,7 +843,19 @@ export function mcpRoutes(ctx: RouterContext) {
           where: { userId: context.actor.userId },
         });
         const known = new Set<string>(ONBOARDING_STEPS);
-        return { done: (row?.done ?? []).filter((step) => known.has(step)) as OnboardingStep[] };
+        return {
+          done: (row?.done ?? []).filter((step) => known.has(step)) as OnboardingStep[],
+          answers: await readOnboardingAnswers(deps.prisma, context.actor),
+        };
+      }),
+      saveBusiness: authed.onboarding.saveBusiness.handler(async ({ context, input }) => {
+        const { locale, ...answer } = input;
+        await saveBusinessAnswer(deps.prisma, context.actor, answer, locale);
+        return { ok: true as const };
+      }),
+      saveAreas: authed.onboarding.saveAreas.handler(async ({ context, input }) => {
+        await saveWorkAreas(deps.prisma, context.actor, input.areas);
+        return { ok: true as const };
       }),
       stepDone: authed.onboarding.stepDone.handler(async ({ context, input }) => {
         const userId = context.actor.userId;

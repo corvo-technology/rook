@@ -1,4 +1,10 @@
-import type { ModelHeaderRow, OnboardingPicks, ThinkingLevel } from "@corvo/contracts";
+import type {
+  BusinessAnswer,
+  ModelHeaderRow,
+  OnboardingPicks,
+  ThinkingLevel,
+  WorkArea,
+} from "@corvo/contracts";
 import {
   agentCatalogLocale,
   CLOUDFLARE_AI_GATEWAY_PROVIDER_ID,
@@ -21,6 +27,8 @@ import {
 } from "@corvo/contracts";
 import type { ModelProblem } from "@corvo/core";
 import {
+  AGENT_CATALOG,
+  CHIEF_AGENT,
   COMPATIBLE_THINKING_LEVELS,
   clampCatalogThinkingLevel,
   createModelProbe,
@@ -28,6 +36,7 @@ import {
   modelFailureData,
   pickCatalogModelId,
   popularModelProvidersFirst,
+  suggestTeam,
 } from "@corvo/core";
 import {
   Button,
@@ -53,9 +62,11 @@ import {
 import { ModelHeadersEditor } from "../components/ModelHeadersEditor";
 import { ModelProblemNotice } from "../components/ModelProblemNotice";
 import { PageLoading } from "../components/PageLoading";
+import { authClient } from "../lib/auth";
 import { botDraftKey, prefillComposerDraft } from "../lib/composer-draft";
 import { useCopyText } from "../lib/copy-text";
 import { desktopBridge } from "../lib/desktop";
+import { localTimezone } from "../lib/local-timezone";
 import { providerDisplayName } from "../lib/localized-provider-hint";
 import type { ModelCatalogEntry } from "../lib/model-auth";
 import type { ModelPreflightFailure } from "../lib/model-connection-preflight";
@@ -73,19 +84,26 @@ import {
   saveDoneSteps,
   savePicks,
 } from "../lib/onboarding-progress";
+import { firstName, railDetails } from "../lib/onboarding-rail";
 import type { OnboardingContext, OnboardingStepId } from "../lib/onboarding-steps";
 import { nextStep, resolveStep, visibleSteps } from "../lib/onboarding-steps";
 import { rpc } from "../lib/rpc";
 import { useModelOAuthSignIn } from "../lib/use-model-oauth-signin";
 import { errorText } from "../lib/user-error";
 import { CompatibleKeyField } from "./model-settings/compatible-key-field";
+import { BusinessStep } from "./onboarding/BusinessStep";
 import { ComputerStep } from "./onboarding/ComputerStep";
 import { FirstBotStep } from "./onboarding/FirstBotStep";
 import { InviteStep } from "./onboarding/InviteStep";
 import { LocalModelStep } from "./onboarding/LocalModelStep";
+import { useBusinessLabels } from "./onboarding/labels";
 import { OnboardingLayout } from "./onboarding/OnboardingLayout";
-import { StartStep } from "./onboarding/StartStep";
+import { OnboardingPreview } from "./onboarding/OnboardingPreview";
+import type { TeamDropped } from "./onboarding/TeamStep";
+import { agentName, keptTeam, NOTHING_DROPPED, TeamStep } from "./onboarding/TeamStep";
 import { WorkspaceStep } from "./onboarding/WorkspaceStep";
+import { YouStep } from "./onboarding/YouStep";
+import { useStoreCategoryLabels } from "./StoreCategoryChips";
 
 const CUSTOM_MODEL_OPTION = "__corvo_custom_model__";
 /** Rook credits sit among the providers as the one choice that needs no account of its own. */
@@ -115,6 +133,26 @@ export function OnboardingPage() {
   const [flow, setFlow] = useState<OnboardingContext | null>(null);
   const flowRef = useRef<OnboardingContext | null>(null);
   const [space, setSpace] = useState<{ id: string; name: string } | null>(null);
+  const [logo, setLogo] = useState<string | null>(null);
+  const [timezone, setTimezone] = useState(localTimezone);
+  const [business, setBusiness] = useState<BusinessAnswer | null>(null);
+  const [areas, setAreas] = useState<WorkArea[]>([]);
+  const [person, setPerson] = useState<{ name: string; image: string | null }>({
+    name: "",
+    image: null,
+  });
+  // What is typed in a step, shown in the preview before it is saved.
+  const [workspaceDraft, setWorkspaceDraft] = useState<{
+    name: string;
+    logo: string | null;
+  } | null>(null);
+  const [personDraft, setPersonDraft] = useState<{ name: string; image: string | null } | null>(
+    null,
+  );
+  const [teamWay, setTeamWay] = useState<"team" | "import" | null>(null);
+  const [dropped, setDropped] = useState<TeamDropped>(NOTHING_DROPPED);
+  const businessLabels = useBusinessLabels();
+  const storeCategoryLabels = useStoreCategoryLabels();
   const [done, setDone] = useState<ReadonlySet<OnboardingStepId>>(new Set());
   // The desktop app's own engine has no Docker, so its computer step is this computer or nothing.
   const [dockerOffered, setDockerOffered] = useState(true);
@@ -184,7 +222,7 @@ export function OnboardingPage() {
       .then(([me, models, spaces]) => {
         // A partner's customer arrives with everything set up.
         if (me.partner && !routeStep) {
-          navigate("/app", { replace: true });
+          navigate("/app/home", { replace: true });
           return;
         }
         setBillingEnabled(me.billingEnabled);
@@ -193,11 +231,21 @@ export function OnboardingPage() {
         // An account that already has a bot has nothing to set up; /onboarding opens its chat.
         const existingBot = current?.bots[0];
         if (!routeStep && existingBot) {
-          navigate(`/app/${existingBot.id}`, { replace: true });
+          navigate("/app/home", { replace: true });
           return;
         }
         const canRename = spaces?.spaces.find((row) => row.id === current?.id)?.canRename === true;
         if (current) setSpace({ id: current.id, name: current.name });
+        setLogo(spaces?.spaces.find((row) => row.id === current?.id)?.logo ?? null);
+        setPerson({ name: me.name, image: null });
+        if (me.timezone) setTimezone(me.timezone);
+        void authClient
+          .getSession()
+          .then((session) => {
+            const image = session.data?.user.image ?? null;
+            setPerson((currentPerson) => ({ ...currentPerson, image }));
+          })
+          .catch(() => undefined);
         userIdRef.current = me.userId;
         setDockerOffered(me.sandboxProvider === "docker");
         const local = loadDoneSteps(me.userId);
@@ -205,7 +253,11 @@ export function OnboardingPage() {
         // Steps finished on another device count too; they arrive after the first paint.
         void rpc.onboarding
           .progress()
-          .then(({ done: server }) => setDone((current) => mergeDoneSteps(current, server)))
+          .then(({ done: server, answers }) => {
+            setDone((current) => mergeDoneSteps(current, server));
+            setBusiness((current) => current ?? answers.business);
+            setAreas((current) => (current.length > 0 ? current : answers.areas));
+          })
           .catch(() => undefined);
         setPicks(loadPicks(me.userId));
         begin({
@@ -216,10 +268,11 @@ export function OnboardingPage() {
           canChooseHostComputer: me.canChooseHostComputer,
           computerHost: me.computerHost,
           hasDesktopHostChoice: Boolean(desktopBridge()?.computer?.managesHostChoice),
-          // A new space for someone who already uses Rook skips the questions about themselves.
-          returning: Boolean(
-            spaces?.spaces.some((row) => row.id !== current?.id && row.hasContent),
-          ),
+          // A new space for someone who already uses Rook skips the questions about themselves,
+          // and so does a person someone invited into a space that is not theirs.
+          returning:
+            !canRename ||
+            Boolean(spaces?.spaces.some((row) => row.id !== current?.id && row.hasContent)),
         });
       })
       .catch(() =>
@@ -262,7 +315,19 @@ export function OnboardingPage() {
       navigate(`/onboarding/${next}`, { replace: true });
       return;
     }
-    navigate(chosenBotRef.current ? `/app/${chosenBotRef.current}` : "/app");
+    navigate("/app/home");
+  }
+
+  /** Moves on without an answer. A model left unconnected stays to be asked for later. */
+  function skip(from: OnboardingStepId) {
+    const context = flowRef.current;
+    if (!context || from !== stepRef.current) return;
+    if (from !== "model") {
+      advance(from);
+      return;
+    }
+    const next = nextStep(context, from);
+    navigate(next ? `/onboarding/${next}` : "/app/home", { replace: true });
   }
 
   const providers = useMemo(() => {
@@ -573,48 +638,144 @@ export function OnboardingPage() {
 
   const sidebarLabels: Record<OnboardingStepId, string> = {
     workspace: t`Workspace`,
-    start: t`Start`,
+    business: t`Business`,
+    you: t`You`,
+    start: t`Team`,
     model: t`Model`,
     bot: t`First bot`,
-    invite: t`Team`,
+    invite: t`People`,
     computer: t`Computer`,
   };
+  const catalogLocale = agentCatalogLocale(i18n.locale);
+  const suggestion = suggestTeam({ business: business?.kind ?? null, areas });
+  const team = keptTeam(suggestion, dropped);
+  const details = railDetails(
+    {
+      spaceName: space?.name ?? null,
+      business: business?.kind ?? null,
+      userName: person.name,
+      team: teamWay ? { way: teamWay, agents: team.agents.length } : null,
+    },
+    {
+      business: businessLabels,
+      imported: t`Imported`,
+      justTheChief: t`Just the Chief`,
+      agents: (count) => (count === 1 ? t`1 agent` : t`${count} agents`),
+    },
+  );
   const steps = visibleSteps(flow).map((id) => ({
     id,
     label: sidebarLabels[id],
-    detail: id === "workspace" && space ? space.name : undefined,
+    detail: details[id],
   }));
   const index = steps.findIndex((entry) => entry.id === step);
   const previous = steps[index - 1];
   const mac = desktopBridge()?.platform === "darwin";
+  const name = firstName(person.name);
+  const narration: Record<OnboardingStepId, string> = {
+    workspace: name
+      ? t`Hi, ${name}. I'm the Chief. We'll set up your team in about two minutes.`
+      : t`Hi. I'm the Chief. We'll set up your team in about two minutes.`,
+    business: t`What does the workspace do? Every agent will know.`,
+    you: t`Now a little about you.`,
+    start: t`Bring agents you already use, or I'll suggest a team.`,
+    model: t`I need an AI to think with.`,
+    bot: t`How much should I do on my own?`,
+    invite: t`Bring your people. You can do this later.`,
+    computer: t`Where should my computer live?`,
+  };
 
   return (
     <OnboardingLayout
       steps={steps}
       current={step}
       done={done}
+      narration={narration[step]}
+      preview={
+        <OnboardingPreview
+          workspaceName={workspaceDraft?.name ?? space?.name ?? ""}
+          logo={workspaceDraft ? workspaceDraft.logo : logo}
+          chiefName={CHIEF_AGENT.name[catalogLocale]}
+          agents={
+            teamWay === "import"
+              ? []
+              : team.agents.map((agent) => ({
+                  key: agent.slug,
+                  name: agentName(agent.slug, catalogLocale),
+                  color: AGENT_CATALOG.find((entry) => entry.slug === agent.slug)?.color ?? "",
+                }))
+          }
+          channels={
+            teamWay === "import"
+              ? []
+              : team.channels.map((agent) => storeCategoryLabels[agent.category])
+          }
+          personName={personDraft?.name ?? person.name}
+          personImage={personDraft ? personDraft.image : person.image}
+        />
+      }
       // The bot already exists once the computer is asked, so there is nothing to go back to.
       onBack={
         previous && step !== "invite" && step !== "computer"
           ? () => navigate(`/onboarding/${previous.id}`, { replace: true })
           : undefined
       }
+      onSkip={
+        step === "bot" || step === "invite" || step === "computer" ? undefined : () => skip(step)
+      }
     >
       {step === "workspace" && space ? (
         <WorkspaceStep
           spaceId={space.id}
           initialName={space.name}
-          onDone={(name) => {
-            setSpace({ id: space.id, name });
+          initialLogo={logo}
+          timezone={timezone}
+          onChange={setWorkspaceDraft}
+          onDone={(saved) => {
+            setWorkspaceDraft(null);
+            setSpace({ id: space.id, name: saved.name });
+            setLogo(saved.logo);
             advance("workspace");
           }}
         />
       ) : null}
+      {step === "business" ? (
+        <BusinessStep
+          initial={business}
+          onChange={(kind) => setBusiness(kind ? { kind, summary: business?.summary ?? "" } : null)}
+          onDone={(answer) => {
+            setBusiness(answer);
+            advance("business");
+          }}
+        />
+      ) : null}
+      {step === "you" ? (
+        <YouStep
+          initialName={person.name}
+          initialImage={person.image}
+          initialAreas={areas}
+          onChange={(draft) => {
+            setPersonDraft({ name: draft.name, image: draft.image });
+            setAreas(draft.areas);
+          }}
+          onDone={(saved) => {
+            setPersonDraft(null);
+            setPerson({ name: saved.name, image: saved.image });
+            setAreas(saved.areas);
+            advance("you");
+          }}
+        />
+      ) : null}
       {step === "start" ? (
-        <StartStep
-          onDone={(next) => {
+        <TeamStep
+          suggestion={suggestion}
+          dropped={dropped}
+          locale={catalogLocale}
+          onDroppedChange={setDropped}
+          onDone={(next, way) => {
             setPicks(next);
             savePicks(userIdRef.current, next);
+            setTeamWay(way);
             advance("start");
           }}
         />

@@ -27,8 +27,8 @@ export async function rpc<T>(page: Page, procedure: string, body: unknown): Prom
 }
 
 /**
- * Moves through the onboarding steps without choosing anything: Continue on each step, then Skip
- * on the first-bot gallery, which opens the Chief's chat. A no-op once the app is open, and it
+ * Moves through the onboarding steps without choosing anything: Continue on each step until Home
+ * opens, then the Chief's chat. A no-op once the app is open, and it
  * stops at the model step when one is due.
  */
 export async function skipOnboardingSteps(page: Page) {
@@ -37,7 +37,7 @@ export async function skipOnboardingSteps(page: Page) {
     // A model that must be connected is the test's to handle, so stop in front of it.
     return pathname.startsWith("/onboarding") && !pathname.endsWith("/onboarding/model");
   };
-  for (let steps = 0; steps < 6 && open(); steps++) {
+  for (let steps = 0; steps < 10 && open(); steps++) {
     const before = page.url();
     await page
       .getByRole("button", { name: /^(Skip|Continue)$/ })
@@ -45,6 +45,8 @@ export async function skipOnboardingSteps(page: Page) {
       .click();
     await page.waitForURL((url) => url.href !== before, { timeout: 20_000 });
   }
+  // The first run ends on Home; specs that go on from there start in the Chief's chat.
+  if (new URL(page.url()).pathname === "/app/home") await page.goto("/app");
 }
 
 export async function completeOnboarding(page: Page, testInfo?: TestInfo) {

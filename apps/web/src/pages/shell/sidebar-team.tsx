@@ -24,7 +24,6 @@ import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { NewDot } from "../../components/NewDot";
 import { PeopleList } from "../../components/PeopleList";
-import { findFirstBot } from "../../lib/first-bot";
 import { usePresence } from "../../lib/presence";
 import { useSpaceQueries } from "../../lib/query";
 import { useDirectPeople } from "../../lib/use-direct-people";
@@ -162,13 +161,11 @@ export function usePartnerHidden(): readonly string[] {
 
 /** The nav with what this account may see: its approvals waiting, the parts a mission has brought, and what a partner hides. */
 export function SidebarNavLive({
-  bots,
   ticketBoardEnabled,
   embedded,
   onOpen,
   onQuickSwitch,
 }: {
-  bots: readonly Bot[];
   ticketBoardEnabled: boolean;
   embedded: boolean;
   onOpen: (to: string) => void;
@@ -179,10 +176,6 @@ export function SidebarNavLive({
   const missions = useMissions();
   const approvals = usePendingApprovals().data?.length ?? 0;
   const hidden = usePartnerHidden();
-  const staff = bots.filter((bot) => !bot.archivedAt);
-  // Home is the Chief's chat, or the first agent's where an older account has none.
-  const chief =
-    findFirstBot(staff.map((bot) => ({ ...bot, spawnKey: bot.spawnKey ?? null }))) ?? staff[0];
   const visible = (part: NavPart) => !hidden.includes(part) && missions.shows(part);
   const target = (part: NavPart, label: string, to: string, icon: LucideIcon): NavTarget => ({
     key: part,
@@ -192,7 +185,7 @@ export function SidebarNavLive({
     isNew: missions.isNew(part),
   });
   const items: NavTarget[] = [
-    { key: "home", label: t`Home`, to: chief ? `/app/${chief.id}` : "/app", icon: Home },
+    { key: "home", label: t`Home`, to: "/app/home", icon: Home },
     {
       key: "approvals",
       label: t`Approvals`,

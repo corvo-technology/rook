@@ -8,9 +8,16 @@ test("new users choose how to start before their first chat", async ({ page }, t
   await captureScreenshot(page, testInfo, "01-workspace");
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
-  await expect(page.getByRole("heading", { name: "How do you want to start?" })).toBeVisible();
-  await expect(page).toHaveURL(/\/onboarding\/start$/);
+  await expect(page.getByRole("heading", { name: "What do you do?" })).toBeVisible();
+  await page.getByRole("button", { name: "Agency", exact: true }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+
+  await expect(page.getByRole("heading", { name: "About you" })).toBeVisible();
   await page.getByRole("button", { name: "Sales", exact: true }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+
+  await expect(page.getByRole("heading", { name: "Your team" })).toBeVisible();
+  await expect(page).toHaveURL(/\/onboarding\/start$/);
   await captureScreenshot(page, testInfo, "02-use");
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
@@ -19,7 +26,7 @@ test("new users choose how to start before their first chat", async ({ page }, t
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Invite your team" })).toBeVisible();
   await page.getByRole("button", { name: "Skip", exact: true }).click();
-  await page.waitForURL(/\/app\//, { timeout: 20_000 });
+  await page.waitForURL(/\/app\/home$/, { timeout: 20_000 });
 });
 
 test("each onboarding step opens directly from its URL while it applies", async ({ page }) => {
@@ -27,7 +34,7 @@ test("each onboarding step opens directly from its URL while it applies", async 
   await page.waitForURL(/\/app\//, { timeout: 20_000 });
 
   await page.goto("/onboarding/survey");
-  await expect(page.getByRole("heading", { name: "How do you want to start?" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your team" })).toBeVisible();
 
   // No model is due, so that step is not offered; every step is done, so the last one opens.
   await page.goto("/onboarding/model");

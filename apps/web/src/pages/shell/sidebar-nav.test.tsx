@@ -34,9 +34,6 @@ vi.mock("@lingui/core/macro", () => ({ plural: () => "" }));
 
 import { SidebarNavLive } from "./sidebar-team";
 
-const bot = (id: string, name: string, spawnKey: string | null = null) =>
-  ({ id, name, spawnKey, archivedAt: null }) as never;
-
 let queryClient: QueryClient;
 beforeEach(() => {
   queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -58,7 +55,6 @@ async function renderNav(
       <QueryClientProvider client={queryClient}>
         <MemoryRouter initialEntries={[props.path ?? "/app"]}>
           <SidebarNavLive
-            bots={[bot("bot-2", "Scout"), bot("bot-1", "Chief", "onboarding:first")]}
             ticketBoardEnabled={props.ticketBoardEnabled ?? true}
             embedded={props.embedded ?? false}
             onOpen={onOpen}
@@ -140,7 +136,6 @@ it("opens the quick switcher from the field above the places", async () => {
       <QueryClientProvider client={queryClient}>
         <MemoryRouter>
           <SidebarNavLive
-            bots={[]}
             ticketBoardEnabled
             embedded={false}
             onOpen={vi.fn()}
@@ -158,13 +153,13 @@ it("opens the quick switcher from the field above the places", async () => {
   container.remove();
 });
 
-it("opens Home on the Chief, not on whichever agent comes first", async () => {
+it("opens Home on the home page, not on a chat", async () => {
   const onOpen = vi.fn();
   const { container, cleanup } = await renderNav({}, onOpen);
   await act(async () =>
     container.querySelector<HTMLButtonElement>('[data-testid="sidebar-home"]')!.click(),
   );
-  expect(onOpen).toHaveBeenCalledWith("/app/bot-1");
+  expect(onOpen).toHaveBeenCalledWith("/app/home");
   await cleanup();
 });
 

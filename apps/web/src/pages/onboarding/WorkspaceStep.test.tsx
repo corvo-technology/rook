@@ -8,9 +8,12 @@ import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const rename = vi.hoisted(() => vi.fn());
+const updatePreferences = vi.hoisted(() => vi.fn());
 /** What the person's language calls things; empty means English, which has no translation to apply. */
 const translated = vi.hoisted(() => ({ text: {} as Record<string, string> }));
-vi.mock("../../lib/rpc", () => ({ rpc: { spaces: { rename } } }));
+vi.mock("../../lib/rpc", () => ({
+  rpc: { spaces: { rename }, preferences: { update: updatePreferences } },
+}));
 vi.mock("@lingui/react/macro", () => {
   const t = (parts: TemplateStringsArray, ...values: unknown[]) => {
     const text = parts.reduce(
@@ -29,7 +32,7 @@ let container: HTMLDivElement;
 let root: Root;
 
 function type(value: string) {
-  const input = container.querySelector("input") as HTMLInputElement;
+  const input = container.querySelector("input:not([type=file])") as HTMLInputElement;
   const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
   act(() => {
     setter?.call(input, value);
@@ -46,12 +49,22 @@ async function submit() {
 
 beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  updatePreferences.mockReset().mockResolvedValue({});
   rename.mockReset().mockImplementation(async ({ name }: { name: string }) => ({ id: "s1", name }));
   onDone.mockReset();
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
-  act(() => root.render(<WorkspaceStep spaceId="s1" initialName="Personal" onDone={onDone} />));
+  act(() =>
+    root.render(
+      <WorkspaceStep
+        spaceId="s1"
+        initialName="Personal"
+        timezone="America/Sao_Paulo"
+        onDone={onDone}
+      />,
+    ),
+  );
 });
 
 afterEach(() => {
@@ -64,7 +77,8 @@ describe("WorkspaceStep", () => {
   it("moves on without renaming when the name is unchanged", async () => {
     await submit();
     expect(rename).not.toHaveBeenCalled();
-    expect(onDone).toHaveBeenCalledWith("Personal");
+    expect(updatePreferences).not.toHaveBeenCalled();
+    expect(onDone).toHaveBeenCalledWith({ name: "Personal", logo: null });
   });
 
   it("shows an error and saves nothing for a blank or too long name", async () => {
@@ -82,7 +96,17 @@ describe("WorkspaceStep", () => {
     await submit();
     await submit();
     expect(rename).toHaveBeenCalledWith({ spaceId: "s1", name: "Alves Studio" });
-    expect(onDone).toHaveBeenCalledWith("Alves Studio");
+    expect(onDone).toHaveBeenCalledWith({ name: "Alves Studio", logo: null });
+  });
+
+  it("saves a timezone the person changed", async () => {
+    const select = container.querySelector("select") as HTMLSelectElement;
+    act(() => {
+      select.value = "UTC";
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    await submit();
+    expect(updatePreferences).toHaveBeenCalledWith({ timezone: "UTC" });
   });
 
   it("stays on the step when the rename fails", async () => {
@@ -96,9 +120,19 @@ describe("WorkspaceStep", () => {
   it("shows the starting name of a new space in the person's language", async () => {
     translated.text = { Personal: "Pessoal" };
     act(() =>
-      root.render(<WorkspaceStep key="pt" spaceId="s1" initialName="Personal" onDone={onDone} />),
+      root.render(
+        <WorkspaceStep
+          key="pt"
+          spaceId="s1"
+          initialName="Personal"
+          timezone="America/Sao_Paulo"
+          onDone={onDone}
+        />,
+      ),
     );
-    expect((container.querySelector("input") as HTMLInputElement).value).toBe("Pessoal");
+    expect((container.querySelector("input:not([type=file])") as HTMLInputElement).value).toBe(
+      "Pessoal",
+    );
     await submit();
     expect(rename).toHaveBeenCalledWith({ spaceId: "s1", name: "Pessoal" });
   });
@@ -107,9 +141,17 @@ describe("WorkspaceStep", () => {
     translated.text = { Personal: "Pessoal" };
     act(() =>
       root.render(
-        <WorkspaceStep key="named" spaceId="s1" initialName="Alves Studio" onDone={onDone} />,
+        <WorkspaceStep
+          key="named"
+          spaceId="s1"
+          initialName="Alves Studio"
+          timezone="America/Sao_Paulo"
+          onDone={onDone}
+        />,
       ),
     );
-    expect((container.querySelector("input") as HTMLInputElement).value).toBe("Alves Studio");
+    expect((container.querySelector("input:not([type=file])") as HTMLInputElement).value).toBe(
+      "Alves Studio",
+    );
   });
 });

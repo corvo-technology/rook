@@ -198,7 +198,6 @@ export function ShellSidebar({
         ) : null}
         {mini ? null : (
           <SidebarNavLive
-            bots={bots}
             ticketBoardEnabled={ticketBoardEnabled}
             embedded={isEmbedded()}
             onQuickSwitch={onQuickSwitch}

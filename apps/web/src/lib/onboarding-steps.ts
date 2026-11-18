@@ -20,6 +20,8 @@ export type OnboardingContext = {
 
 const STEP_ORDER: readonly OnboardingStepId[] = [
   "workspace",
+  "business",
+  "you",
   "start",
   "model",
   "bot",
@@ -31,6 +33,10 @@ function isVisible(ctx: OnboardingContext, step: OnboardingStepId): boolean {
   switch (step) {
     case "workspace":
       return ctx.canRenameSpace && !ctx.returning;
+    case "business":
+      // What the workspace does is the owner's to say; a member of someone's space is not asked.
+      return ctx.canRenameSpace && !ctx.returning;
+    case "you":
     case "start":
       return !ctx.returning;
     case "invite":

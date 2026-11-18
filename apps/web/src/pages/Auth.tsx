@@ -214,11 +214,13 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
             provider: "oidc",
             newUserCallbackURL: callbackURL("/onboarding"),
             callbackURL: callbackURL(
-              searchParams.get("next") === "/integrations/setup" ? "/integrations/setup" : "/app",
+              searchParams.get("next") === "/integrations/setup"
+                ? "/integrations/setup"
+                : "/app/home",
             ),
             errorCallbackURL: callbackURL("/sign-in"),
           }),
-        ["/app", "/onboarding", "/integrations/setup", "/sign-in"],
+        ["/app", "/app/home", "/onboarding", "/integrations/setup", "/sign-in"],
       );
       if (result.error) setError(authErrorText(result.error, t`Could not continue`));
     } catch {

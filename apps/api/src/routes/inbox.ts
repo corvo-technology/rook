@@ -1,4 +1,9 @@
-import { listNotifications, markAllNotificationsRead, markNotificationsRead } from "@corvo/db";
+import {
+  listNotifications,
+  markAllNotificationsRead,
+  markNotificationsRead,
+  readHomeChecklist,
+} from "@corvo/db";
 import { ORPCError } from "@orpc/server";
 import { getSpaceMembership } from "../space-owner.js";
 import type { RouterContext } from "./context.js";
@@ -12,6 +17,12 @@ export function inboxRoutes(ctx: RouterContext) {
   }
 
   return {
+    home: {
+      checklist: authed.home.checklist.handler(async ({ context }) => {
+        await requireMember(context.actor);
+        return readHomeChecklist(prisma, context.actor);
+      }),
+    },
     inbox: {
       list: authed.inbox.list.handler(async ({ context }) => {
         await requireMember(context.actor);

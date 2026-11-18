@@ -14,6 +14,8 @@ export type TourState = z.infer<typeof TourStateSchema>;
 /** The steps of first-run onboarding, in the order they come. */
 export const ONBOARDING_STEPS = [
   "workspace",
+  "business",
+  "you",
   "start",
   "model",
   "bot",

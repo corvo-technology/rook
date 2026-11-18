@@ -2,7 +2,8 @@
 
 A SaaS partner (here `acme-saas`) embeds Rook agents for its own customers. The partner's backend
 calls a small API; each customer gets an isolated organization with one owner, a connector to the
-partner's system, and starter agents. Nothing here needs a hosted vendor.
+partner's system, and starter agents. Nothing here needs a hosted vendor. How partners will sell plans and top-ups, and how revenue is
+shared, is designed in [partner-commerce.md](partner-commerce.md).
 
 ## Operator: the Partnership page
 

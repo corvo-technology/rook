@@ -24,7 +24,12 @@ import {
   PORTABLE_TRANSFER_BATCH_BYTES,
   shouldSkipPortableWorkspaceFile,
 } from "./computer-workspace.js";
-import { E2B_COMPUTER_TEMPLATE, E2B_DESKTOP_TEMPLATE } from "./e2b-template.js";
+import type { E2BComputerSize } from "./e2b-template.js";
+import {
+  E2B_DEFAULT_COMPUTER_SIZE,
+  E2B_DESKTOP_TEMPLATE,
+  e2bTemplatesForSize,
+} from "./e2b-template.js";
 import { LinuxDesktop, PREPARE_LINUX_DESKTOP } from "./linux-desktop.js";
 import { sandboxCommandArgv } from "./sandbox-command-environment.js";
 import { isSandboxGoneError } from "./sandbox-errors.js";
@@ -136,6 +141,8 @@ export class E2BSandboxProvider implements SandboxProvider {
   constructor(
     private readonly apiKey: string,
     private readonly sdk: E2BSandboxSdk = e2bSdk,
+    /** Which computer size new computers start as; the caller picks it, for example by plan. */
+    private readonly size: E2BComputerSize = E2B_DEFAULT_COMPUTER_SIZE,
   ) {}
 
   describe() {
@@ -466,17 +473,19 @@ export class E2BSandboxProvider implements SandboxProvider {
     await this.sdk.kill(id, { apiKey: this.apiKey });
   }
 
-  /** Prefer the right-sized template; an account that has not built it keeps the stock one. */
+  /** Prefer this size's template; an account that has not built it keeps the stock one. */
   private async createDesktop(options: ReturnType<typeof e2bCreateOptions>): Promise<E2BDesktop> {
-    try {
-      return await this.sdk.create(E2B_COMPUTER_TEMPLATE, options);
-    } catch (error) {
-      if (!isTemplateMissingError(error)) throw error;
-      getLogger().warn("E2B computer template is not built; using the stock desktop template", {
-        template: E2B_COMPUTER_TEMPLATE,
-      });
-      return this.sdk.create(E2B_DESKTOP_TEMPLATE, options);
+    for (const template of e2bTemplatesForSize(this.size)) {
+      try {
+        return await this.sdk.create(template, options);
+      } catch (error) {
+        if (!isTemplateMissingError(error)) throw error;
+      }
     }
+    getLogger().warn("E2B computer template is not built; using the stock desktop template", {
+      size: this.size,
+    });
+    return this.sdk.create(E2B_DESKTOP_TEMPLATE, options);
   }
 
   private forget(id: string): void {

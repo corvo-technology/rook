@@ -3,30 +3,38 @@ import { Template } from "@e2b/desktop";
 
 /** E2B's stock desktop image, which reserves 8 vCPU and 8 GB for every sandbox. */
 export const E2B_DESKTOP_TEMPLATE = "desktop";
-/** The same desktop at the size a bot computer needs; see buildE2BComputerTemplate. */
-export const E2B_COMPUTER_TEMPLATE = "corvo-computer";
+/** The single-size template published before sizes existed; computers on it count as `small`. */
+export const E2B_LEGACY_COMPUTER_TEMPLATE = "corvo-computer";
 
 /**
  * A computer runs one desktop per active bot (Xvfb, fluxbox, x11vnc, Chromium) plus shell
  * work. Two cores keep the desktop and a browser responsive; 4 GB leaves room for a second
- * bot's Chromium on a Team Computer, where 2 GB would start swapping or killing tabs.
- */
-/**
- * Disk is not set directly. E2B takes the sandbox's disk from the team plan (10 GiB on Hobby,
+ * bot's Chromium on a Team Computer, where 2 GB would start swapping or killing tabs. Larger
+ * sizes scale the same desktop for heavier work.
+ *
+ * Disk is not set directly. E2B takes a sandbox's disk from the team plan (10 GiB on Hobby,
  * 20+ GiB on Pro) and `minFreeDiskMb` asks the build to grow the root filesystem until that
  * much space is free on top of the image: "a free-space target for a template build, not a total
- * disk-size setting" (docs.e2b.dev/template/build, "Minimum free disk space"; docs.e2b.dev/faq/build-limits).
- * Without it the filesystem stays near the image's size (about 2.5 GB, of which the image uses
- * 1.3 GB), which a browser profile and the agent CLIs' caches fill. The growth is best effort and
- * never shrinks, and a plan smaller than the image plus this figure gets the plan's maximum.
+ * disk-size setting" (docs.e2b.dev/template/build, "Minimum free disk space";
+ * docs.e2b.dev/faq/build-limits). Without it the filesystem stays near the image's size (about
+ * 2.5 GB, of which the image uses 1.3 GB), which a browser profile and the agent CLIs' caches
+ * fill. The figures below are the target total minus the image; growth is best effort, never
+ * shrinks, and a plan with less disk than a size asks for gets the plan's maximum.
  */
-export const E2B_COMPUTER_MIN_FREE_DISK_MB = 8192;
-
-const E2B_COMPUTER_RESOURCES = {
-  cpuCount: 2,
-  memoryMB: 4096,
-  minFreeDiskMb: E2B_COMPUTER_MIN_FREE_DISK_MB,
+export const E2B_COMPUTER_SIZES = {
+  small: { template: "rook-computer-s", cpuCount: 2, memoryMB: 4096, minFreeDiskMb: 8192 },
+  medium: { template: "rook-computer-m", cpuCount: 4, memoryMB: 8192, minFreeDiskMb: 18432 },
+  large: { template: "rook-computer-l", cpuCount: 8, memoryMB: 16384, minFreeDiskMb: 38912 },
 } as const;
+export type E2BComputerSize = keyof typeof E2B_COMPUTER_SIZES;
+export const E2B_DEFAULT_COMPUTER_SIZE: E2BComputerSize = "small";
+export const E2B_COMPUTER_SIZE_NAMES = Object.keys(E2B_COMPUTER_SIZES) as E2BComputerSize[];
+
+/** Templates to try for a size, best first. The legacy name is still the small computer. */
+export function e2bTemplatesForSize(size: E2BComputerSize): string[] {
+  const { template } = E2B_COMPUTER_SIZES[size];
+  return size === "small" ? [template, E2B_LEGACY_COMPUTER_TEMPLATE] : [template];
+}
 
 type BuildTemplate = (
   template: TemplateClass,
@@ -34,20 +42,21 @@ type BuildTemplate = (
   options: Omit<BuildOptions, "alias">,
 ) => Promise<{ name: string }>;
 
-/** Publish the Rook computer template to the E2B team that owns this API key. */
+/** Publish one size of the Rook computer template to the E2B team that owns this API key. */
 export function buildE2BComputerTemplate(
   apiKey: string,
   options: {
+    size?: E2BComputerSize;
     build?: BuildTemplate;
     onBuildLogs?: (line: string) => void;
   } = {},
 ) {
+  const { template, ...resources } = E2B_COMPUTER_SIZES[options.size ?? E2B_DEFAULT_COMPUTER_SIZE];
   const build: BuildTemplate =
-    options.build ??
-    ((template, name, buildOptions) => Template.build(template, name, buildOptions));
-  return build(Template().fromTemplate(E2B_DESKTOP_TEMPLATE), E2B_COMPUTER_TEMPLATE, {
+    options.build ?? ((image, name, buildOptions) => Template.build(image, name, buildOptions));
+  return build(Template().fromTemplate(E2B_DESKTOP_TEMPLATE), template, {
     apiKey,
-    ...E2B_COMPUTER_RESOURCES,
+    ...resources,
     ...(options.onBuildLogs
       ? { onBuildLogs: (entry) => options.onBuildLogs?.(entry.toString()) }
       : {}),

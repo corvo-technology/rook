@@ -12,14 +12,13 @@ export const E2B_LEGACY_COMPUTER_TEMPLATE = "corvo-computer";
  * bot's Chromium on a Team Computer, where 2 GB would start swapping or killing tabs. Larger
  * sizes scale the same desktop for heavier work.
  *
- * Disk is not set directly. E2B takes a sandbox's disk from the team plan (10 GiB on Hobby,
- * 20+ GiB on Pro) and `minFreeDiskMb` asks the build to grow the root filesystem until that
- * much space is free on top of the image: "a free-space target for a template build, not a total
- * disk-size setting" (docs.e2b.dev/template/build, "Minimum free disk space";
- * docs.e2b.dev/faq/build-limits). Without it the filesystem stays near the image's size (about
- * 2.5 GB, of which the image uses 1.3 GB), which a browser profile and the agent CLIs' caches
- * fill. The figures below are the target total minus the image; growth is best effort, never
- * shrinks, and a plan with less disk than a size asks for gets the plan's maximum.
+ * Disk is a free-space request, not a total. It is passed as `minFreeDiskMb` in the template
+ * build, the E2B SDK's field for "requested minimum free space after the template's build steps"
+ * (docs.e2b.dev/template/build, "Minimum free disk space"). It only takes effect if the
+ * E2B-compatible host honours it; on e2b.dev the plan caps it, and on a self-run host such as
+ * Rookbox the operator controls the real disk. Without it the filesystem stays near the image's
+ * size (about 2.5 GB, of which the image uses 1.3 GB), which browser profiles and the agent CLIs'
+ * caches fill. The figures are a target total minus the image.
  */
 export const E2B_COMPUTER_SIZES = {
   small: { template: "rook-computer-s", cpuCount: 2, memoryMB: 4096, minFreeDiskMb: 8192 },

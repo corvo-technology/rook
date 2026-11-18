@@ -210,8 +210,9 @@ rechecks each selected PID's marker descriptors before signaling it.
 E2B computers start from a sized template built on E2B's stock desktop (which reserves
 8 vCPU and 8 GB): `rook-computer-s` (2 vCPU, 4 GB), `rook-computer-m` (4 vCPU, 8 GB) and
 `rook-computer-l` (8 vCPU, 16 GB). Each also asks E2B for free disk on top of the image with
-`minFreeDiskMb`; E2B takes total disk from the team plan, so the request is best effort and
-capped by the plan. Build them in the E2B team that owns `E2B_API_KEY`, and again whenever
+`minFreeDiskMb`. The host decides whether to honour it: e2b.dev caps it by plan, and an
+E2B-compatible host you run yourself (for example Rookbox, `E2B_DOMAIN`) controls the real disk
+size on its own side. Build them in the E2B team that owns `E2B_API_KEY`, and again whenever
 their definition in `packages/adapters/src/e2b-template.ts` changes:
 
 ```bash

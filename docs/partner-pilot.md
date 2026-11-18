@@ -249,6 +249,85 @@ a test partner, and pause the customer when done.
 The first command creates a demo customer with two agents and prints the link. Open it: you land signed in, with
 the agents present and no onboarding or billing screen.
 
+## Consultation recording
+
+A partner whose customers keep records (a clinic, a salon) can send Rook the audio of a visit and
+get back a **draft** note in the customer's own record. Rook never signs: the professional reviews,
+edits and signs in the partner's product. The call set is scoped to one customer and uses the same
+partner key, the same `401` for a wrong key and the same `404` for a customer or consultation that
+is missing or belongs to another partner (a paused customer answers `404` too).
+
+Requirements on the partner side:
+
+- The customer's connector must offer the record tools `mcp_records_get_by_client` (`{ clientId }` to
+  `{ recordId, existingDraft }`; called with `{ clientId, appointmentId }`, `existingDraft` is the
+  unsigned AI draft already made for that appointment, as `{ entryId, revision }` or null),
+  `mcp_records_entries_update_draft` (`{ recordId,
+  entryId, expectedRevision, content }`) and `mcp_records_entries_create_draft` (`{ recordId,
+  entryTypeCode, content, occurredAt, appointmentId?, source: "ai_scribe", consultationId }` to
+  `{ entryId }`). Writes carry an `idempotencyKey` (the consultation id), and the record system adds
+  the `aiDraft` badge. When `existingDraft` is set, or creating answers `MCP_RECORDS_DRAFT_EXISTS`, Rook
+  updates that draft with `expectedRevision` instead of creating a second. Rook calls them as the customer's **Escriba** agent
+  (the template agent with the key `escriba`; any agent that holds the connector when there is none),
+  so the connector's own authorization applies. Drafts only: Rook has no tool to sign.
+- The patient's consent is the partner's to obtain before it creates the consultation, and is
+  stored with it.
+
+```
+POST /api/partner/v1/tenants/{externalTenantId}/consultations
+{ "externalUserId": "doctor-1", "template": "prontu_evolution",
+  "context": { "clientId": "c-123", "appointmentId": "a-9",
+               "professionalName": "Dr. Lima", "clientName": "Maria" },
+  "consent": { "obtained": true, "at": "2026-12-01T10:00:00Z", "method": "verbal" },
+  "retentionDays": 30 }
+→ { "consultationId": "..." }
+
+PUT  .../consultations/{id}/chunks/{seq}     raw audio, Content-Type audio/webm or audio/ogg
+→ { "ok": true }
+POST .../consultations/{id}/finish
+→ { "state": "processing" }
+POST .../consultations/{id}/reprocess      a failed consultation again, from its stored chunks
+→ { "state": "processing" }  (the current state when it is not failed)
+GET  .../consultations/{id}
+→ { "state": "drafted", "transcript": [{ "speaker": "professional", "startMs": 0, "text": "..." }],
+    "note": { ... }, "draftEntryId": "..." }
+DELETE .../consultations/{id}                deletes the audio and transcript now
+```
+
+- `template`: `prontu_evolution` (files an entry of type `evolution` with `{ schemaVersion: 1,
+  title, notes, chiefComplaint, history, exam, assessment, plan, prescriptions: [string], followUp,
+  appointmentId, aiDraft }`) or `salon_service_record` (type `service_record`, `{ schemaVersion: 1,
+  title, servicesDone, productsUsed, clientPreferences, nextVisit, notes, appointmentId, aiDraft }`).
+  Every field is text except `prescriptions`; what was not said is an empty string. `notes` always
+  holds the whole note as readable text (a summary, then each structured field as a titled section),
+  so an editor that keeps only `notes` loses nothing.
+- `consent.obtained` must be `true`; `method` is `verbal` or `written`; `text` is optional.
+- Upload a chunk about every 10 seconds, numbered from 0, in order or not. A chunk is at most 2 MB,
+  a consultation at most 540 chunks (90 minutes) and 96 MB; past that the answer is `413` with
+  `too_long` or `too_large`. Repeating a `seq` is safe and changes nothing. Record opus at about
+  32 kbit/s (`audioBitsPerSecond: 32000`) so 20 minutes stay near 5 MB. Chunk uploads are not
+  counted against the partner's per-minute request limit.
+- States: `recording` (chunks accepted), `processing` (after `finish`), `drafted` (the note is in the
+  record; `draftEntryId` names it) and `failed` with `error.code`: `no_audio`, `no_speech`,
+  `transcription_failed`, `model_failed`, `connector_failed`, `record_not_found`,
+  `credit_exhausted` or `internal`. Poll `GET` every few seconds. `finish` twice answers the
+  current state, and `finish` on a `failed` consultation processes it again from the stored chunks. Creating or finishing when the customer's credit is used up answers
+  `402 {"error": "allowance_exhausted"}`; add credit as for any customer.
+- Rook concatenates the chunks, transcribes them in Portuguese through the customer's configured
+  speech provider (long recordings are cut at container boundaries into 8 MB segments transcribed
+  in parallel and stitched in order), labels who speaks (`professional`, `patient` or `unknown`)
+  with a short model pass on the fast tier, has the Escriba fill the template on the strong tier
+  with an explicit, versioned prompt, and files the draft. Speaker times are estimates.
+  Transcription and model use are charged to the customer's allowance like any other use.
+- Privacy: audio chunks and the transcript and note are stored only in sealed object storage, never
+  in database rows, and sent only to the configured speech and model providers and to the
+  customer's connector. They are never used for training and never written to logs or security
+  events. Creating, reading (a `GET` that returns the transcript) and deleting are audited without
+  content. Audio and transcript are deleted `retentionDays` after the visit finished (default 30;
+  set a partner default with `partner retention <slug> <days|default>`; `1` to `365`), or, for a recording with no chunk for 2 hours, after that; or at once on
+  `DELETE`; afterwards the consultation answers `404` and only a bare record remains (names and
+  consent wording removed).
+
 ## What the pilot deliberately does not do
 
 - One Rook seat (the owner) per customer; the partner's own users share it.

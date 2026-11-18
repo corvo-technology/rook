@@ -14,6 +14,7 @@ const USAGE = [
   "                                   tell the partner about customers' credit; prints the signing secret",
   "  partner webhook-secret <slug>    print the signing secret again",
   "  partner webhook-rotate <slug>    replace the signing secret",
+  "  partner retention <slug> <days|default>   days a consultation's audio and transcript are kept",
 ].join("\n");
 
 const SLUG = /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/;
@@ -26,6 +27,7 @@ export interface PartnerCommandDeps {
   createPartner(input: { slug: string; name: string; walletOwnerUserId?: string }): Promise<Issued>;
   rotatePartnerKey(slug: string): Promise<Issued>;
   setPartnerEnabled(slug: string, enabled: boolean): Promise<void>;
+  setScribeRetentionDays(slug: string, days: number | null): Promise<void>;
   findUserIdByEmail(email: string): Promise<string | null>;
   readFile(path: string): Promise<string>;
   /** False when no partner has the slug. */
@@ -153,6 +155,18 @@ export async function runPartnerCommand(
           : await deps.findPartner(slug);
       if (!partner) throw new Error(`Unknown partner: ${slug}`);
       return `Signing secret for ${slug}: ${deps.webhookSecret(partner)}`;
+    }
+    case "retention": {
+      if (name === "default") {
+        await deps.setScribeRetentionDays(slug, null);
+        return `${slug} keeps consultation recordings for the default 30 days.`;
+      }
+      const days = Number(name);
+      if (!Number.isInteger(days) || days < 1 || days > 365) {
+        throw new Error("The retention must be a whole number of days from 1 to 365, or default.");
+      }
+      await deps.setScribeRetentionDays(slug, days);
+      return `${slug} keeps consultation recordings for ${days} days.`;
     }
     default:
       throw new Error(USAGE);

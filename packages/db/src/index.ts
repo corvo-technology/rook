@@ -14,6 +14,7 @@ export * from "./client.js";
 export * from "./coach-tour.js";
 export * from "./computer-runs.js";
 export * from "./computers.js";
+export * from "./consultations.js";
 export * from "./content-crypto.js";
 export * from "./content-encryption.js";
 export * from "./content-export.js";

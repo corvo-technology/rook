@@ -643,18 +643,19 @@ export async function resolveRunModel(
 }
 
 /**
- * The member's fast model for chores such as summaries and small decisions, with the connection
- * that serves it. Undefined when they chose none or it cannot run, so callers use their main model.
+ * The member's model for a tier other than the main one, with the connection that serves it.
+ * Undefined when they chose none or it cannot run, so callers use their main model.
  */
-export async function resolveFastRunModel(
+async function resolveTierRunModel(
   deps: ExecutorDeps,
   scope: { userId: string; spaceId: string },
+  tier: "fast" | "strong",
 ): Promise<AgentRunRequest["model"] | undefined> {
   try {
     const { primary } = await effectiveModelRole(
       deps.prisma,
       scope,
-      "fast",
+      tier,
       await deploymentModelDefaults(deps),
     );
     if (!primary) return undefined;
@@ -671,4 +672,20 @@ export async function resolveFastRunModel(
   } catch {
     return undefined;
   }
+}
+
+/** The member's fast model for chores such as summaries and small decisions. */
+export function resolveFastRunModel(
+  deps: ExecutorDeps,
+  scope: { userId: string; spaceId: string },
+): Promise<AgentRunRequest["model"] | undefined> {
+  return resolveTierRunModel(deps, scope, "fast");
+}
+
+/** The member's strong model for work that must be done carefully, such as drafting a record. */
+export function resolveStrongRunModel(
+  deps: ExecutorDeps,
+  scope: { userId: string; spaceId: string },
+): Promise<AgentRunRequest["model"] | undefined> {
+  return resolveTierRunModel(deps, scope, "strong");
 }

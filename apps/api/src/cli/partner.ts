@@ -1,4 +1,4 @@
-// `pnpm partner create|rotate|disable|enable|apply-template|webhook ... <slug> ...`: manages the SaaS partners that send
+// `pnpm partner create|rotate|disable|enable|apply-template|webhook|retention ... <slug> ...`: manages the SaaS partners that send
 // their customers to Rook. Run on the server, as the runtime login, with DATABASE_URL set.
 import { readFile } from "node:fs/promises";
 import { resolveEncryptionKey } from "@corvo/core";
@@ -11,6 +11,7 @@ import {
   rotatePartnerWebhookSecret,
   runAsSystem,
   setPartnerEnabled,
+  setPartnerScribeRetentionDays,
   setPartnerTemplateBySlug,
   setPartnerWebhookUrl,
 } from "@corvo/db";
@@ -38,6 +39,7 @@ try {
           partner.id,
           partner.webhookSecretVersion,
         ),
+      setScribeRetentionDays: (slug, days) => setPartnerScribeRetentionDays(prisma, slug, days),
     }),
   );
   process.stdout.write(`${output}\n`);

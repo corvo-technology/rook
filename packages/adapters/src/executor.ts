@@ -201,6 +201,7 @@ import {
   resolveFastRunModel,
   resolveModelKey,
   resolveRunModel,
+  resolveStrongRunModel,
   runtimeFallbackModel,
 } from "./run-model.js";
 import { routeTurn, strongerTierFor } from "./run-model-routing.js";
@@ -277,6 +278,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
     contextStrategy,
     resolveModel: resolveRunModel.bind(undefined, deps),
     resolveFastModel: resolveFastRunModel.bind(undefined, deps),
+    resolveStrongModel: resolveStrongRunModel.bind(undefined, deps),
     wakeRoutine: wakeRoutine.bind(undefined, deps),
     notifyRoutineRetryAttemptsExhausted: notifyRoutineRetryAttemptsExhausted.bind(undefined, deps),
     retryRoutineRun: retryRoutineRun.bind(undefined, deps),

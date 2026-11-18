@@ -134,6 +134,7 @@ export function createJobReconciler(
     reconcilePartnerWebhooks?: () => Promise<void>;
     reconcileRoutineRetryNotices?: () => Promise<void>;
     reconcileSecurityEventRetention?: () => Promise<void>;
+    reconcileConsultationRetention?: () => Promise<void>;
     reconcileHomeStorage?: () => Promise<void>;
     reconcileStorageUsage?: () => Promise<void>;
     reconcileIdleComputers?: () => Promise<void>;
@@ -174,6 +175,7 @@ export function createJobReconciler(
           deps.reconcileComputerUpdates,
           deps.reconcileRoutineRetryNotices,
           deps.reconcileSecurityEventRetention,
+          deps.reconcileConsultationRetention,
           deps.reconcileHomeStorage,
           deps.reconcileStorageUsage,
           deps.reconcileIdleComputers,

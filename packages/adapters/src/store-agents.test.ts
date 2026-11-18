@@ -78,7 +78,7 @@ describe("partner agents", () => {
     const hidden = await listStoreAgents({ prisma: without.prisma }, run, {});
     expect(hidden.agents.some((agent) => partnerSlugs.includes(agent.slug))).toBe(false);
     const refused = await installStoreAgent(
-      { prisma: without.prisma, createBot: without.createBot },
+      { prisma: without.prisma, createBot: without.createBot as never },
       run,
       { slug: "portfolio-manager" },
     );
@@ -93,7 +93,7 @@ describe("partner agents", () => {
   it("are added with read access to the Partnership connection, and nothing more", async () => {
     const f = fixture({ partner: true });
     await addStoreAgent(
-      { prisma: f.prisma, createBot: f.createBot },
+      { prisma: f.prisma, createBot: f.createBot as never },
       { spaceId: "space-1", userId: "user-1" },
       {
         entry: AGENT_CATALOG.find((entry) => entry.slug === "customer-success")!,

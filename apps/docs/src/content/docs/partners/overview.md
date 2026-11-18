@@ -1,53 +1,44 @@
 ---
 title: "Visão geral"
-description: "Embutido ou marca própria, e como a receita é dividida."
+description: "Embutido, white label ou indicação, e como funciona a cobrança."
 sidebar:
   order: 1
 ---
 
-Um **parceiro** é uma empresa que leva agentes do Rook aos seus próprios clientes. O seu backend chama uma API pequena; cada cliente recebe uma organização isolada, com um dono, um conector para o seu sistema e agentes iniciais. Nenhum dado de um cliente é visível a outro.
+Um **parceiro** é uma empresa que leva agentes do Rook aos seus próprios clientes. Há três formas de fazer isso.
 
-## Dois modos
+## Três formas de ser parceiro
 
-| | Embutido | Marca própria (white label) |
-| --- | --- | --- |
-| Onde o cliente usa o Rook | Dentro do seu produto, pelo SDK, logado com o login do seu produto | Em um app próprio, no seu domínio e com a sua marca |
-| Exemplo | Um prontuário eletrônico que embute o assistente | Uma agência que vende o seu próprio sistema de agentes |
-| Quem vende a assinatura | Você, no seu checkout | O Rook, em seu nome, via Stripe Connect |
-| Como o Rook recebe | Fatura mensal da parte do Rook | Taxa de aplicação sobre cada cobrança |
-| Disponibilidade | **Disponível** | <span class="soon">Em breve</span> |
+| | Embutido | White label | Indicação |
+| --- | --- | --- | --- |
+| O que é | O Rook dentro do seu software, pelo SDK ou por um frame | O cliente usa o produto na sua marca, no seu domínio e com os seus e-mails | Você indica clientes que assinam o Rook |
+| Exemplo | Um prontuário eletrônico que embute o assistente | Uma agência que vende o seu próprio sistema de agentes | Uma consultoria que recomenda o Rook aos clientes |
+| Quem cobra o cliente | Você, como quiser | <span class="soon">Em breve</span> | O Rook |
+| Como você ganha | O cliente paga você; você paga um plano de parceiro ao Rook | <span class="soon">Em breve</span> | Comissão de 20%, mais um markup opcional |
+| Disponibilidade | **Disponível** | <span class="soon">Em breve</span> | **Disponível** |
 
-O modo embutido funciona hoje: [comece pelo quickstart](/partners/quickstart/). A marca própria está em desenho.
+O modo embutido funciona hoje: [comece pelo quickstart](/partners/quickstart/). O white label está em construção e ainda não tem API documentada.
 
-## Como o dinheiro funciona
+## Embutido: como a cobrança funciona
 
-:::note[Valores são exemplos]
-Preços, percentuais e limites abaixo são exemplos. Tudo é configurável por parceiro; os números reais fazem parte do seu acordo.
-:::
+No modo embutido os clientes finais são **seus**. O Rook nunca cobra esses clientes e você mostra o assistente só a quem paga você.
 
-- O Rook vende de uma **tabela de preços** (o catálogo). Cada plano inclui crédito de IA.
-- Você recebe uma **comissão** (exemplo: 20%) sobre o preço de catálogo e pode somar um **markup**, que é todo seu.
-- Os clientes **sempre usam a IA da plataforma**; não há chave ou assinatura de IA do cliente nos fluxos de parceiro.
-- A parte do Rook não depende do que você cobrou: um desconto que você der sai do seu lado.
+- Você paga ao Rook um **plano de parceiro** mensal, com créditos incluídos, mais **recargas**.
+- Tudo o que os seus clientes usam sai de **um fundo** só, o seu.
+- Quem usa o **próprio modelo** (a própria chave, um modelo local ou a própria assinatura de CLI) não gasta créditos com ele.
+- Você controla o uso por cliente, um limite mensal por cliente, os modelos permitidos, a recarga automática e os avisos de saldo baixo e de limite, tudo na [Central do parceiro](/partners/central/).
 
-Exemplo: preço de catálogo 100, comissão 20%, markup 30.
+Preços e condições: fale com a gente. Detalhes em [Comércio](/partners/commerce/).
 
-| | Valor |
-| --- | --- |
-| O cliente paga | 130 |
-| Parte do Rook (`100 × 80%`) | 80 |
-| Sua comissão (`100 × 20%`) | 20 |
-| Seu markup | 30 |
-| **Seu total** | **50** |
+## Indicação: como a cobrança funciona
 
-No modo embutido o cliente paga 130 a você e você deve 80 ao Rook na fatura mensal. A API de catálogo, assinaturas e recargas que automatiza isso é <span class="soon">em breve</span>; veja [Comércio](/partners/commerce/).
-
-## Hoje, no piloto
-
-Hoje cada cliente tem uma cota mensal de crédito (`allowanceCents`) que você define a cada chamada, paga com o saldo da conta dona do parceiro. Quando a cota chega a 80% e quando acaba, o Rook avisa por [webhook](/partners/webhooks/).
+Os clientes assinam o Rook e o Rook cobra. Você recebe uma **comissão de 20%** sobre o preço de catálogo e pode somar um **markup** opcional, que é todo seu. Um desconto que você der sai do seu lado, nunca da parte do Rook.
 
 ## Como se tornar parceiro
 
-Fale com a gente em [rook.team](https://rook.team). Criamos o seu parceiro, você recebe a chave (mostrada uma única vez) e acessa o console em **Configurações > Parceria**, onde importa o modelo de agentes, define limites e pausa clientes.
+1. Preencha o formulário em [rook.team](https://rook.team/parceiros).
+2. O Rook analisa o pedido.
+3. Parceiros aprovados recebem um convite por e-mail.
+4. A [Central do parceiro](/partners/central/) aparece dentro do seu próprio Rook.
 
-Uma empresa com vários produtos cria **um parceiro por produto**: cada um tem chave, modelo, nome e cor do Chief próprios, e os clientes nunca se misturam. Todos podem usar o mesmo saldo.
+Uma empresa com vários produtos cria **um parceiro por produto**: cada um tem chave, modelo, nome e cor do Chief próprios, e os clientes nunca se misturam.

@@ -102,12 +102,12 @@ With the [commerce API](/en/partners/commerce/) come `subscription.updated`, `su
 
 ## Credit events (embedded partners)
 
-`customer.credit_limit_reached` is sent when a customer reaches the monthly credit limit you set. `partner.balance_low` is sent when your fund falls under the low-balance threshold. Both carry credit amounts, not currency, and use the same signing and delivery.
+`customer.credit_limit_reached` is sent **once per customer and month**, when the customer reaches the monthly credit limit you set. `partner.balance_low` is sent when your fund falls under the low-balance share, and again only after a new top-up; it has no `externalTenantId`, because it is about the fund. Amounts are credits, not currency, and signing and delivery are the same.
 
 ```json
-{ "type": "customer.credit_limit_reached", "externalTenantId": "clinic-1", "limitCredits": 0, "usedCredits": 0 }
+{ "type": "customer.credit_limit_reached", "externalTenantId": "clinic-1", "period": "2026-11", "limitCredits": 1000, "usedCredits": 1000 }
 ```
 
 ```json
-{ "type": "partner.balance_low", "balanceCredits": 0, "thresholdCredits": 0 }
+{ "type": "partner.balance_low", "balanceCredits": 400, "thresholdBps": 2000, "currency": "BRL" }
 ```

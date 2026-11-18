@@ -67,11 +67,7 @@ The balance separates plan credit (which expires at period end) from top-up cred
 
 ## Credits for embedded partners
 
-:::caution[Coming soon]
-Formats may change before launch. All figures are placeholders.
-:::
-
-In embedded mode your customers belong to you: you create their accounts with the API, show Rook only to those who pay you, and charge them however you like. Only you pay Rook, a monthly **partner plan** with included credits plus **top-ups**. Everything your customers use is debited from **one fund** of yours, in credits.
+In embedded mode your customers belong to you: you create their accounts with the API, show Rook only to those who pay you, and charge them however you like. Rook never bills those customers. Only you pay Rook, a monthly **partner plan** with included credits plus **top-ups**. Everything your customers use is debited from **one fund** of yours, in credits.
 
 What is debited:
 
@@ -82,11 +78,12 @@ What is debited:
 
 A customer who connects **their own model** (their own key, a local model or their own coding-agent plan) uses no credits for it. Computer minutes and storage are still debited.
 
-Controls you set, in the console, here or by API:
+Controls you set in the [partner console](/en/partners/central/):
 
 - a monthly **credit limit** per customer (optional). At the limit the customer stops using Rook-provided AI until you raise it or the next period starts, and you get `customer.credit_limit_reached`;
 - a list of **allowed models** (optional), which applies only to Rook-provided models;
-- **auto top-up**: when the fund falls under `{threshold}` credits, buy `{amount}`;
-- usage per customer, by resource and model.
+- **auto top-up**: when the fund falls under the amount you set, open a top-up;
+- usage per customer, by resource and model;
+- low-balance and limit alerts, by [webhook](/en/partners/webhooks/).
 
-Prices, included credits, margins and expiry are set by Rook and published with the platform, not fixed in this page.
+Prices, included credits, margins and expiry: talk to us.

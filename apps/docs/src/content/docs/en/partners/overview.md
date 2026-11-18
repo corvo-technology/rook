@@ -1,53 +1,44 @@
 ---
 title: "Overview"
-description: "Embedded or white label, and how revenue is shared."
+description: "Embedded, white label or referral, and how billing works."
 sidebar:
   order: 1
 ---
 
-A **partner** is a company that brings Rook agents to its own customers. Your backend calls a small API; each customer gets an isolated organization with one owner, a connector to your system and starter agents. No customer's data is visible to another.
+A **partner** is a company that brings Rook agents to its own customers. There are three ways to do it.
 
-## Two modes
+## Three ways to partner
 
-| | Embedded | White label |
-| --- | --- | --- |
-| Where the customer uses Rook | Inside your product, through the SDK, signed in with your product's login | In a standalone app on your domain, with your brand |
-| Example | An electronic health record that embeds the assistant | An agency selling its own agent system |
-| Who sells the subscription | You, in your checkout | Rook, on your behalf, through Stripe Connect |
-| How Rook is paid | A monthly invoice for Rook's share | An application fee on each charge |
-| Availability | **Available** | <span class="soon">Coming soon</span> |
+| | Embedded | White label | Referral |
+| --- | --- | --- | --- |
+| What it is | Rook inside your software, through the SDK or a frame | Customers use the product under your brand, on your domain, with your emails | You refer customers who subscribe to Rook |
+| Example | An electronic health record that embeds the assistant | An agency selling its own agent system | A consultancy that recommends Rook to its clients |
+| Who bills the customer | You, however you like | <span class="soon">Coming soon</span> | Rook |
+| How you earn | The customer pays you; you pay Rook a partner plan | <span class="soon">Coming soon</span> | A 20% commission, plus an optional markup |
+| Availability | **Available** | <span class="soon">Coming soon</span> | **Available** |
 
-Embedded works today: [start with the quickstart](/en/partners/quickstart/). White label is being designed.
+Embedded works today: [start with the quickstart](/en/partners/quickstart/). White label is being built and has no documented API yet.
 
-## How the money works
+## Embedded: how billing works
 
-:::note[Figures are examples]
-Prices, percentages and limits below are examples. Everything is configurable per partner; the real numbers are part of your agreement.
-:::
+In embedded mode the end customers are **yours**. Rook never bills them, and you show the assistant only to those who pay you.
 
-- Rook sells from a **price list** (the catalog). Each plan includes AI credit.
-- You earn a **commission** (example: 20%) of the catalog price and may add a **markup** that is entirely yours.
-- Customers **always use the platform's AI**; there is no customer-owned AI key or subscription in partner flows.
-- Rook's share never depends on what you charged: a discount you give comes out of your side.
+- You pay Rook a monthly **partner plan** with included credits, plus **top-ups**.
+- Everything your customers use comes out of **one fund**: yours.
+- A customer on their **own model** (their own key, a local model or their own CLI subscription) spends no credits on it.
+- You control usage per customer, a monthly limit per customer, allowed models, auto top-up and low-balance and limit alerts, all in the [partner console](/en/partners/central/).
 
-Example: catalog price 100, commission 20%, markup 30.
+Prices and terms: talk to us. Details in [Commerce](/en/partners/commerce/).
 
-| | Amount |
-| --- | --- |
-| The customer pays | 130 |
-| Rook's share (`100 × 80%`) | 80 |
-| Your commission (`100 × 20%`) | 20 |
-| Your markup | 30 |
-| **Your total** | **50** |
+## Referral: how billing works
 
-In embedded mode the customer pays you 130 and you owe Rook 80 on the monthly invoice. The catalog, subscription and top-up API that automates this is <span class="soon">coming soon</span>; see [Commerce](/en/partners/commerce/).
-
-## Today, in the pilot
-
-Today each customer has a monthly credit allowance (`allowanceCents`) that you set on each call, paid from the balance of the account that owns the partner. When it reaches 80% and when it runs out, Rook tells you through a [webhook](/en/partners/webhooks/).
+Customers subscribe to Rook and Rook bills them. You earn a **20% commission** on the catalog price and may add an optional **markup**, which is entirely yours. A discount you give comes out of your side, never Rook's share.
 
 ## Becoming a partner
 
-Talk to us at [rook.team](https://rook.team). We create your partner, you receive the key (shown once) and get the console under **Settings > Partnership**, where you import the agent template, set limits and pause customers.
+1. Fill in the form at [rook.team](https://rook.team/partners).
+2. Rook reviews the request.
+3. Approved partners receive an invitation by email.
+4. The [partner console](/en/partners/central/) appears inside your own Rook.
 
-A company with several products creates **one partner per product**: each has its own key, template, and Chief name and color, and customers never mix. They can all draw on the same balance.
+A company with several products creates **one partner per product**: each has its own key, template, and Chief name and color, and customers never mix.

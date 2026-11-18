@@ -1,6 +1,8 @@
 import { createHash, randomBytes } from "node:crypto";
 import { PartnerTemplate } from "@corvo/contracts";
 import type { PrismaClient } from "./client.js";
+import { commerceSettings } from "./commerce-config.js";
+import { stateAllowsAccess, subscriptionState } from "./commerce-money.js";
 import type { PartnerTenant } from "./generated/prisma/client.js";
 
 export type PartnerTenantState = "enabled" | "suspended";
@@ -174,16 +176,31 @@ export async function setPartnerTenantState(
   return result.count > 0;
 }
 
-/** The partner's state for the customer a space belongs to, or null for any other space. */
+/**
+ * The partner's state for the customer a space belongs to, or null for any other space. A commerce
+ * customer without a usable plan (none reported, past its grace period, or canceled and ended) is
+ * "inactive": runs are refused, and its data stays readable.
+ */
 export async function partnerSpaceState(
   prisma: PrismaClient,
   spaceId: string,
-): Promise<PartnerTenantState | null> {
+  now = new Date(),
+): Promise<PartnerTenantState | "inactive" | null> {
   const tenant = await prisma.partnerTenant.findFirst({
     where: { organization: { spaces: { some: { id: spaceId } } } },
-    select: { state: true },
+    select: {
+      state: true,
+      partner: { select: { billingModel: true } },
+      subscription: { select: { status: true, periodEnd: true, pastDueSince: true } },
+    },
   });
-  return tenant ? (tenant.state === "suspended" ? "suspended" : "enabled") : null;
+  if (!tenant) return null;
+  if (tenant.state === "suspended") return "suspended";
+  if (tenant.partner.billingModel !== "commerce") return "enabled";
+  const { graceDays } = await commerceSettings(prisma);
+  return stateAllowsAccess(subscriptionState(tenant.subscription, now, graceDays))
+    ? "enabled"
+    : "inactive";
 }
 
 /**

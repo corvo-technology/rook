@@ -186,7 +186,13 @@ import {
   WORK_AREAS,
   WorkArea,
 } from "./onboarding-profile.js";
-import { PartnerAccountSchema, PartnerLimitsInput, PartnerTemplate } from "./partner.js";
+import {
+  PartnerAccountSchema,
+  PartnerBalanceSchema,
+  PartnerInvoiceSchema,
+  PartnerLimitsInput,
+  PartnerTemplate,
+} from "./partner.js";
 import { PlanIdSchema, PlanOverrideSchema, PlanUsageSchema } from "./plans.js";
 import { MessageReactionSchema } from "./reactions.js";
 import { RoutineWatchSchema } from "./routine-watch.js";
@@ -342,6 +348,13 @@ export const appContract = {
       .output(z.object({ ok: z.literal(true) })),
     checkout: oc.output(z.object({ url: z.string().url() })),
     portal: oc.output(z.object({ url: z.string().url() })),
+    /**
+     * A partner's commerce customer reads its plan, credit and checkout link; null for anyone else.
+     * `pack` is a hint passed on to the partner's checkout.
+     */
+    partnerBalance: oc
+      .input(z.object({ pack: z.string().max(64).optional() }).default({}))
+      .output(PartnerBalanceSchema.nullable()),
   },
   preferences: {
     update: oc
@@ -1484,6 +1497,35 @@ export const appContract = {
       /** What is set replaces the plan's value; setting nothing clears the override. */
       set: oc
         .input(z.object({ organizationId: Id, override: PlanOverrideSchema }))
+        .output(z.object({ ok: z.literal(true) })),
+    },
+    /** Rook's monthly invoices of its share to embedded commerce partners. */
+    invoices: {
+      list: oc
+        .input(
+          z
+            .object({
+              period: z
+                .string()
+                .regex(/^\d{4}-\d{2}$/)
+                .optional(),
+            })
+            .default({}),
+        )
+        .output(z.array(PartnerInvoiceSchema)),
+      /** Drafts the invoices of a month from the revenue-share ledger; safe to repeat. */
+      draft: oc
+        .input(z.object({ period: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/) }))
+        .output(z.array(PartnerInvoiceSchema)),
+      /** draft to issued or void, issued to paid or void; `externalRef` is the fiscal document number. */
+      setState: oc
+        .input(
+          z.object({
+            id: Id,
+            state: z.enum(["issued", "paid", "void"]),
+            externalRef: z.string().trim().min(1).max(120).optional(),
+          }),
+        )
         .output(z.object({ ok: z.literal(true) })),
     },
   },

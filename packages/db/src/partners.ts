@@ -1,3 +1,4 @@
+import { PARTNER_SCOPES } from "@corvo/contracts";
 import {
   generatePartnerKey,
   partnerKeyPrefix,
@@ -110,4 +111,95 @@ export async function rotatePartnerWebhookSecret(
   });
   if (result.count === 0) throw new Error(`Unknown partner: ${slug}`);
   return prisma.partner.findUniqueOrThrow({ where: { slug } });
+}
+
+export interface PartnerCommerceSettings {
+  billingModel?: "wallet" | "commerce";
+  mode?: "embedded" | "white_label";
+  country?: string;
+  commissionBps?: number;
+  checkoutUrl?: string | null;
+  scopes?: string[];
+}
+
+/**
+ * What Rook decides about a partner's commerce: how it is billed, its country (which fixes the
+ * currency), its commission and what its key may do. The currency can change only while the
+ * partner has no subscription. Call with a client that runs as the system.
+ */
+export async function configurePartnerCommerce(
+  prisma: PrismaClient,
+  slug: string,
+  input: PartnerCommerceSettings,
+): Promise<Partner> {
+  const partner = await prisma.partner.findUnique({ where: { slug } });
+  if (!partner) throw new Error(`Unknown partner: ${slug}`);
+  const data: Prisma.PartnerUpdateInput = {};
+  if (input.billingModel) data.billingModel = input.billingModel;
+  if (input.mode) data.mode = input.mode;
+  if (input.commissionBps !== undefined) {
+    if (
+      !Number.isInteger(input.commissionBps) ||
+      input.commissionBps < 0 ||
+      input.commissionBps > 10_000
+    ) {
+      throw new Error("The commission is basis points from 0 to 10000");
+    }
+    data.commissionBps = input.commissionBps;
+  }
+  if (input.country !== undefined) {
+    const country = input.country.trim().toUpperCase();
+    if (!/^[A-Z]{2}$/.test(country)) throw new Error("The country is a two-letter code");
+    const currency = country === "BR" ? "BRL" : "USD";
+    if (currency !== partner.currency) {
+      const active = await prisma.tenantSubscription.count({
+        where: { tenant: { partnerId: partner.id } },
+      });
+      if (active > 0) throw new Error("The currency cannot change while customers have plans");
+    }
+    data.country = country;
+    data.currency = currency;
+  }
+  if (input.checkoutUrl !== undefined) {
+    if (input.checkoutUrl !== null && !isHttpsUrl(input.checkoutUrl)) {
+      throw new Error("The checkout address must be https");
+    }
+    data.checkoutUrl = input.checkoutUrl;
+  }
+  if (input.scopes) {
+    const unknown = input.scopes.filter(
+      (scope) => !(PARTNER_SCOPES as readonly string[]).includes(scope),
+    );
+    if (unknown.length > 0) throw new Error(`Unknown scope: ${unknown.join(", ")}`);
+    data.scopes = { set: [...new Set(input.scopes)] };
+  }
+  return prisma.partner.update({ where: { slug }, data });
+}
+
+function isHttpsUrl(value: string): boolean {
+  try {
+    return (
+      new URL(value.replaceAll("{tenant}", "x").replaceAll("{pack}", "x")).protocol === "https:"
+    );
+  } catch {
+    return false;
+  }
+}
+
+/** The address "Comprar mais" opens: the partner's checkout with the customer and pack filled in. */
+export function partnerCheckoutUrl(
+  template: string | null,
+  externalTenantId: string,
+  pack?: string,
+): string | null {
+  if (!template || !isHttpsUrl(template)) return null;
+  if (template.includes("{tenant}") || template.includes("{pack}")) {
+    return template
+      .replaceAll("{tenant}", encodeURIComponent(externalTenantId))
+      .replaceAll("{pack}", encodeURIComponent(pack ?? ""));
+  }
+  const url = new URL(template);
+  url.searchParams.set("tenant", externalTenantId);
+  if (pack) url.searchParams.set("pack", pack);
+  return url.toString();
 }

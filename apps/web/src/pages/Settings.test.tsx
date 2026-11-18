@@ -70,7 +70,6 @@ vi.mock("./ConnectionsPage", () => ({
   ConnectionsPage: () => <div data-testid="connections-page" />,
 }));
 vi.mock("./MemorySettingsOverlay", () => ({ MemorySettingsOverlay: () => null }));
-vi.mock("./PartnershipSettingsPanel", () => ({ PartnershipSettingsPanel: () => null }));
 const { scopes } = vi.hoisted(() => ({ scopes: [] as string[] }));
 vi.mock("./ModelSettingsOverlay", () => ({
   ModelSettingsOverlay: ({ scope }: { scope: string }) => {

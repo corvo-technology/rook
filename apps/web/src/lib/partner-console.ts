@@ -5,6 +5,7 @@ import { rpc } from "./rpc";
 export const PARTNER_SECTIONS = [
   "overview",
   "customers",
+  "template",
   "credits",
   "invoices",
   "pricing",
@@ -16,8 +17,8 @@ export type PartnerSection = (typeof PARTNER_SECTIONS)[number];
 /** The screens of a partner: embedded ones are paid for credits, the others earn on prices. */
 export function sectionsFor(mode: PartnerConsolePartner["mode"]): PartnerSection[] {
   return mode === "embedded"
-    ? ["overview", "customers", "credits", "invoices", "integration"]
-    : ["overview", "customers", "pricing", "revenue", "integration"];
+    ? ["overview", "customers", "template", "credits", "invoices", "integration"]
+    : ["overview", "customers", "template", "pricing", "revenue", "integration"];
 }
 
 export function partnerPath(partnerId: string, section: PartnerSection): string {

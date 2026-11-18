@@ -17,6 +17,7 @@ describe("partner console helpers", () => {
     expect(sectionsFor("embedded")).toEqual([
       "overview",
       "customers",
+      "template",
       "credits",
       "invoices",
       "integration",
@@ -24,6 +25,7 @@ describe("partner console helpers", () => {
     expect(sectionsFor("white_label")).toEqual([
       "overview",
       "customers",
+      "template",
       "pricing",
       "revenue",
       "integration",

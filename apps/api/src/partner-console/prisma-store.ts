@@ -18,6 +18,7 @@ import {
   rotatePartnerKey,
   runAsSystem,
   runIdempotent,
+  setPartnerTemplateById,
   setPartnerTenantState,
   setPartnerWebhookUrl,
 } from "@corvo/db";
@@ -64,6 +65,7 @@ function toRecord(partner: {
     webhookUrl: partner.webhookUrl,
     accent: template?.accent ?? null,
     chiefName: template?.chiefName ?? null,
+    template: template ?? null,
     createdAt: partner.createdAt,
   };
 }
@@ -525,6 +527,9 @@ export function createPrismaPartnerConsoleStore(prisma: PrismaClient): PartnerCo
       system(async () => {
         await setPartnerWebhookUrl(prisma, partner.slug, url);
       }),
+
+    setTemplate: (partner, template) =>
+      system(() => setPartnerTemplateById(prisma, partner.id, template)),
 
     audit: (event) =>
       system(async () => {

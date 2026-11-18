@@ -3,6 +3,7 @@ import { useLingui } from "@lingui/react/macro";
 import type { LucideIcon } from "lucide-react";
 import {
   Banknote,
+  Bot,
   CircleDollarSign,
   FileText,
   KeyRound,
@@ -18,6 +19,7 @@ import { usePartnerSectionTitle } from "../partner/PartnerConsolePage";
 const ICONS: Record<PartnerSection, LucideIcon> = {
   overview: LayoutDashboard,
   customers: Users,
+  template: Bot,
   credits: Banknote,
   invoices: FileText,
   pricing: Tag,

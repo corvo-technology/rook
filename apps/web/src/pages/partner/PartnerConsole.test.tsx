@@ -19,12 +19,17 @@ const api = vi.hoisted(() => ({
   setPricing: vi.fn(),
   integration: vi.fn(),
   rotateKey: vi.fn(),
+  template: vi.fn(),
+  setTemplate: vi.fn(),
 }));
 vi.mock("../../lib/rpc", () => ({ rpc: { partnerConsole: api } }));
 vi.mock("@lingui/react/macro", () => {
   const t = (parts: TemplateStringsArray, ...values: unknown[]) =>
     parts.reduce((text, part, index) => `${text}${index > 0 ? values[index - 1] : ""}${part}`, "");
-  return { useLingui: () => ({ t, i18n: { locale: "en" } }) };
+  return {
+    useLingui: () => ({ t, i18n: { locale: "en" } }),
+    Trans: ({ children }: { children: ReactNode }) => children,
+  };
 });
 vi.mock("@lingui/core/macro", () => ({
   t: (parts: TemplateStringsArray, ...values: unknown[]) =>
@@ -303,6 +308,29 @@ describe("partner console", () => {
     expect(container.querySelector('[data-testid="partner-new-key"]')?.textContent).toBe(
       "pk_live_secret_value",
     );
+  });
+});
+
+describe("partner template", () => {
+  it("shows the template and saves an edited one through the console", async () => {
+    const template = {
+      agents: [
+        { key: "reception", name: "Reception", instructions: "Greet.", usesConnector: false },
+      ],
+      chiefName: "Ana",
+    };
+    api.template.mockResolvedValue({ template });
+    api.setTemplate.mockResolvedValue({ template });
+    await render("/app/partner/p1/template");
+    expect(container.textContent).toContain("Agent model");
+    expect(container.textContent).toContain("Reception");
+    expect(container.textContent).toContain("Ana");
+    await click(byText("Edit"));
+    await click(byText("Save"));
+    expect(api.setTemplate).toHaveBeenCalledWith({
+      partnerId: "p1",
+      template: expect.objectContaining({ chiefName: "Ana" }),
+    });
   });
 });
 

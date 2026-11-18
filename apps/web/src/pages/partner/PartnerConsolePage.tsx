@@ -11,6 +11,7 @@ import { PartnerInvoices } from "./PartnerInvoices";
 import { PartnerOverview } from "./PartnerOverview";
 import { PartnerPricing } from "./PartnerPricing";
 import { PartnerRevenue } from "./PartnerRevenue";
+import { PartnerTemplatePanel } from "./PartnerTemplatePanel";
 import { PartnerError, PartnerLoading } from "./partner-ui";
 
 export function usePartnerSectionTitle() {
@@ -21,6 +22,8 @@ export function usePartnerSectionTitle() {
         return t`Overview`;
       case "customers":
         return t`Customers`;
+      case "template":
+        return t`Agent model`;
       case "credits":
         return t`Credits`;
       case "invoices":
@@ -70,6 +73,7 @@ export function PartnerConsolePage() {
     <Frame title={title(active)}>
       {active === "overview" ? <PartnerOverview partner={partner} /> : null}
       {active === "customers" ? <PartnerCustomers partner={partner} /> : null}
+      {active === "template" ? <PartnerTemplatePanel partner={partner} /> : null}
       {active === "credits" ? <PartnerCredits partner={partner} /> : null}
       {active === "invoices" ? <PartnerInvoices partner={partner} /> : null}
       {active === "pricing" ? <PartnerPricing partner={partner} /> : null}

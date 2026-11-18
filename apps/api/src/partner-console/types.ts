@@ -1,3 +1,4 @@
+import type { PartnerTemplate } from "@corvo/contracts";
 import type { CatalogView, IdempotentOutcome, MarkupKind, MarkupRule } from "@corvo/db";
 
 /**
@@ -31,6 +32,8 @@ export interface PartnerRecord {
   webhookUrl: string | null;
   accent: string | null;
   chiefName: string | null;
+  /** What every new customer gets; null when the partner has none. */
+  template: PartnerTemplate | null;
   createdAt: Date;
 }
 
@@ -101,6 +104,7 @@ export type AuditKind =
   | "pricing.changed"
   | "key.rotated"
   | "webhook.changed"
+  | "template.changed"
   | "credit.limit_changed"
   | "credit.models_changed"
   | "credit.autotopup_changed"
@@ -178,6 +182,7 @@ export interface PartnerConsoleStore {
   keyIssuedAt(partner: PartnerRecord): Promise<Date>;
   rotateKey(partner: PartnerRecord): Promise<{ key: string; prefix: string }>;
   setWebhookUrl(partner: PartnerRecord, url: string | null): Promise<void>;
+  setTemplate(partner: PartnerRecord, template: PartnerTemplate | null): Promise<void>;
   audit(event: {
     partnerId: string;
     actorUserId: string | null;

@@ -7,6 +7,7 @@ import type {
   PartnerConsolePricingSchema,
   PartnerConsoleRevenueSchema,
   PartnerCreditsSchema,
+  PartnerTemplate,
 } from "@corvo/contracts";
 import type { MarkupRule } from "@corvo/db";
 import {
@@ -586,6 +587,33 @@ export async function rotateIntegrationKey(
     detail: { prefix: issued.prefix },
   });
   return issued;
+}
+
+/** What every new customer of the partner gets: agents, connector, Chief name. */
+export async function getTemplate(
+  deps: PartnerConsoleDeps,
+  scope: PartnerScope,
+  input: { partnerId: string },
+): Promise<{ template: PartnerTemplate | null }> {
+  const partner = await requirePartner(deps, scope, input.partnerId);
+  return { template: partner.template };
+}
+
+/** Replaces the template, or removes it with null. The shape is checked by the contract. */
+export async function setTemplate(
+  deps: PartnerConsoleDeps,
+  scope: PartnerScope,
+  input: { partnerId: string; template: PartnerTemplate | null },
+): Promise<{ template: PartnerTemplate | null }> {
+  const partner = await requirePartner(deps, scope, input.partnerId);
+  await deps.store.setTemplate(partner, input.template);
+  await deps.store.audit({
+    partnerId: partner.id,
+    actorUserId: scope.actorUserId ?? null,
+    kind: "template.changed",
+    detail: { agents: input.template?.agents.length ?? 0, removed: input.template === null },
+  });
+  return { template: input.template };
 }
 
 export async function setIntegrationWebhook(

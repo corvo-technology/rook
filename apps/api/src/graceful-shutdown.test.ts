@@ -178,4 +178,30 @@ describe("graceful shutdown", () => {
     expect(late).toBe(503);
     expect(reachedApp).toBe(0);
   });
+
+  it("answers 503 to a WebSocket upgrade once the pools are closing", async () => {
+    let reachedApp = 0;
+    const server = createServer(() => {});
+    server.on("upgrade", (_req, socket: Socket) => {
+      reachedApp++;
+      socket.end();
+    });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const shutdown = createGracefulShutdown(server, {
+      drain: { draining: false },
+      propagationMs: 0,
+      deadlineMs: 5_000,
+    });
+    let answer = "";
+    const wire = new Writable({
+      write(chunk, _encoding, done) {
+        answer += chunk.toString();
+        done();
+      },
+    }) as unknown as Socket;
+    await shutdown();
+    server.emit("upgrade", new IncomingMessage(wire), wire, Buffer.alloc(0));
+    expect(answer).toMatch(/^HTTP\/1\.1 503/);
+    expect(reachedApp).toBe(0);
+  });
 });

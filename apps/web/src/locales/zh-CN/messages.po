@@ -240,6 +240,10 @@ msgstr "{botName} 的电脑"
 msgid "{commandVariable} is reserved and cannot be used as a command variable. Choose another name."
 msgstr "{commandVariable} 是保留名称，不能用作命令变量。请选择其他名称。"
 
+#: src/pages/platform/SimulatorSection.tsx
+msgid "{computerMinutes} min"
+msgstr "{computerMinutes} 分钟"
+
 #: src/components/PlanList.tsx
 msgid "{computers, plural, one {# computer} other {# computers}}"
 msgstr "{computers, plural, other {# 台电脑}}"
@@ -332,6 +336,10 @@ msgstr "{hidden, plural, one {+# 个更多} other {+# 个更多}}"
 #: src/lib/relative-time.ts
 msgid "{hours}h ago"
 msgstr "{hours} 小时前"
+
+#: src/pages/platform/SimulatorSection.tsx
+msgid "{inputM}M in, {outputM}M out"
+msgstr "输入 {inputM}M,输出 {outputM}M"
 
 #: src/components/markdown-copy.tsx
 msgid "{label}, empty"
@@ -659,6 +667,10 @@ msgstr "平均{value}分钟"
 msgid "{value} s avg"
 msgstr "平均{value}秒"
 
+#: src/pages/platform/SimulatorSection.tsx
+msgid "{voiceMinutes} min"
+msgstr "{voiceMinutes} 分钟"
+
 #: src/pages/TeamBoard.tsx
 msgid "{working} working"
 msgstr "{working} 个正在工作"
@@ -681,6 +693,10 @@ msgstr "1 个智能体"
 #: src/pages/onboarding/OnboardingLayout.tsx
 msgid "1 step left"
 msgstr "还剩 1 步"
+
+#: src/pages/platform/PricingSection.tsx
+msgid "1M tokens in / out"
+msgstr "100万词元 输入 / 输出"
 
 #: src/components/SubscriptionRings.tsx
 msgid "5-hour window"
@@ -780,6 +796,7 @@ msgid "Active"
 msgstr "启用"
 
 #: src/pages/partner/PartnerOverview.tsx
+#: src/pages/platform/PartnersSection.tsx
 msgid "Active customers"
 msgstr "活跃客户"
 
@@ -925,6 +942,10 @@ msgstr "添加项目"
 msgid "Add MCP server"
 msgstr "添加 MCP 服务器"
 
+#: src/pages/platform/PricingSection.tsx
+msgid "Add model"
+msgstr "添加模型"
+
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Add number"
 msgstr "添加号码"
@@ -949,6 +970,10 @@ msgstr "添加成员或智能体"
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Add person"
 msgstr "添加成员"
+
+#: src/pages/platform/PricingSection.tsx
+msgid "Add plan"
+msgstr "添加套餐"
 
 #: src/pages/model-settings/providers-section.tsx
 msgid "Add provider"
@@ -1211,6 +1236,7 @@ msgstr "始终允许"
 
 #: src/pages/partner/PartnerCredits.tsx
 #: src/pages/partner/PartnerCustomers.tsx
+#: src/pages/platform/SimulatorSection.tsx
 msgid "Amount"
 msgstr "金额"
 
@@ -1371,6 +1397,8 @@ msgstr "审批"
 
 #: src/components/WikiChangeCard.tsx
 #: src/pages/MembersSettingsPanel.tsx
+#: src/pages/platform/IntakeSections.tsx
+#: src/pages/platform/NewPartnerDialog.tsx
 #: src/pages/shell/message-cards.tsx
 msgid "Approve"
 msgstr "批准"
@@ -1395,9 +1423,17 @@ msgstr "批准与“{name}”的连接吗？"
 msgid "Approve edits"
 msgstr "批准编辑"
 
+#: src/pages/platform/NewPartnerDialog.tsx
+msgid "Approve partner"
+msgstr "批准合作伙伴"
+
 #: src/pages/shell/message-cards.tsx
 msgid "Approve this server to let your agent use its tools."
 msgstr "批准此服务器后，Agent 才能使用它的工具。"
+
+#: src/pages/platform/IntakeSections.tsx
+msgid "Approved"
+msgstr "已批准"
 
 #: src/pages/shell/agent-connections.tsx
 #: src/pages/Store.tsx
@@ -1811,6 +1847,9 @@ msgstr "无法读取图像"
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/PartnerTemplateEditor.tsx
+#: src/pages/platform/IntakeSections.tsx
+#: src/pages/platform/NewPartnerDialog.tsx
+#: src/pages/platform/PricingSection.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/Store.tsx
 #: src/pages/WhatsAppNumbers.tsx
@@ -1882,6 +1921,10 @@ msgstr "频道"
 msgid "Character"
 msgstr "角色"
 
+#: src/pages/platform/PartnersSection.tsx
+msgid "Charged"
+msgstr "已收费"
+
 #: src/pages/shell/message-cards.tsx
 msgid "Chart failed to render: {error}"
 msgstr "图表渲染失败：{error}"
@@ -1926,6 +1969,10 @@ msgstr "检查更新"
 #: src/pages/shell/use-routine-editor.ts
 msgid "Check in."
 msgstr "报到。"
+
+#: src/pages/platform/PricingSection.tsx
+msgid "Check the numbers"
+msgstr "请检查数字"
 
 #: src/pages/shell/import-setup-card.tsx
 msgid "Check this yourself"
@@ -2205,6 +2252,8 @@ msgid "Compressing…"
 msgstr "正在压缩…"
 
 #: src/pages/Onboarding.tsx
+#: src/pages/platform/PricingSection.tsx
+#: src/pages/platform/SimulatorSection.tsx
 #: src/pages/Settings.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/message-view.tsx
@@ -2229,7 +2278,16 @@ msgstr "电脑已休眠。打开即可唤醒。"
 msgid "Computer is stopped"
 msgstr "电脑已停止"
 
+#: src/pages/platform/SimulatorSection.tsx
+msgid "Computer minutes"
+msgstr "电脑分钟数"
+
+#: src/pages/platform/LimitsSection.tsx
+msgid "Computer size"
+msgstr "电脑规格"
+
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/platform/LimitsSection.tsx
 #: src/pages/usage/plan-usage.tsx
 msgid "Computers"
 msgstr "电脑"
@@ -2514,9 +2572,15 @@ msgid "corvo-shared and IDs starting with bot- are reserved for Rook."
 msgstr "corvo-shared 和以 bot- 开头的 ID 为 Rook 保留。"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/platform/PartnersSection.tsx
+#: src/pages/platform/SimulatorSection.tsx
 #: src/pages/Usage.tsx
 msgid "Cost"
 msgstr "费用"
+
+#: src/pages/platform/PricingSection.tsx
+msgid "Cost and margin per resource"
+msgstr "各资源的成本与利润率"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Could not add"
@@ -2748,6 +2812,10 @@ msgstr "无法退出"
 #: src/components/ErrorBoundary.tsx
 #: src/components/PasskeySettings.tsx
 #: src/pages/KnowledgeSection.tsx
+#: src/pages/platform/IntakeSections.tsx
+#: src/pages/platform/InvoicesSection.tsx
+#: src/pages/platform/LimitsSection.tsx
+#: src/pages/platform/PartnersSection.tsx
 #: src/pages/Usage.tsx
 #: src/pages/Workflows.tsx
 msgid "Could not load"
@@ -2850,6 +2918,10 @@ msgstr "无法置顶消息"
 msgid "Could not play a test clip"
 msgstr "无法播放测试片段"
 
+#: src/pages/platform/PricingSection.tsx
+msgid "Could not publish"
+msgstr "无法发布"
+
 #: src/components/PasskeyOffer.tsx
 #: src/components/PasskeySettings.tsx
 #: src/lib/computer-sandbox.ts
@@ -2938,6 +3010,9 @@ msgstr "无法运行例行任务"
 #: src/pages/MembersSettingsPanel.tsx
 #: src/pages/onboarding/BusinessStep.tsx
 #: src/pages/onboarding/YouStep.tsx
+#: src/pages/platform/LimitsSection.tsx
+#: src/pages/platform/NewPartnerDialog.tsx
+#: src/pages/platform/PartnersSection.tsx
 #: src/pages/shell/agent-audience.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/chat-model-switcher.tsx
@@ -3142,8 +3217,13 @@ msgstr "无法启动电脑"
 msgid "Couldn't update your timezone"
 msgstr "无法更新你的时区"
 
+#: src/pages/platform/NewPartnerDialog.tsx
+msgid "Country"
+msgstr "国家"
+
 #: src/pages/Board.tsx
 #: src/pages/MembersSettingsPanel.tsx
+#: src/pages/platform/NewPartnerDialog.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/create-bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
@@ -3271,8 +3351,17 @@ msgid "Credit used up"
 msgstr "额度已用完"
 
 #: src/pages/partner/PartnerConsolePage.tsx
+#: src/pages/platform/SimulatorSection.tsx
 msgid "Credits"
 msgstr "额度"
+
+#: src/pages/platform/PricingSection.tsx
+msgid "Credits debited"
+msgstr "扣除额度"
+
+#: src/pages/platform/SimulatorSection.tsx
+msgid "Credits per customer"
+msgstr "每位客户额度"
 
 #: src/lib/cron.ts
 msgid "Cron"
@@ -3281,6 +3370,10 @@ msgstr "Cron"
 #: src/pages/RoutineSchedule.tsx
 msgid "Cron expression"
 msgstr "Cron 表达式"
+
+#: src/pages/platform/PricingSection.tsx
+msgid "Currency"
+msgstr "币种"
 
 #: src/components/AccountAccess.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -3318,7 +3411,12 @@ msgstr "客户服务"
 msgid "Customer support"
 msgstr "客户支持"
 
+#: src/pages/platform/PricingSection.tsx
+msgid "Customer-owned models are never charged"
+msgstr "客户自有模型从不收费"
+
 #: src/pages/partner/PartnerConsolePage.tsx
+#: src/pages/platform/SimulatorSection.tsx
 msgid "Customers"
 msgstr "客户"
 
@@ -3329,6 +3427,10 @@ msgstr "客户可以选择模型"
 #: src/pages/partner/PartnerRevenue.tsx
 msgid "Customers paid"
 msgstr "客户已付"
+
+#: src/pages/platform/SimulatorSection.tsx
+msgid "Customers the fund supports"
+msgstr "资金可支撑的客户数"
 
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Customize"
@@ -3378,16 +3480,26 @@ msgid "Day-to-day work"
 msgstr "日常工作"
 
 #: src/lib/cron.ts
+#: src/pages/platform/PricingSection.tsx
 msgid "days"
 msgstr "天"
 
 #: src/components/call/IncomingCall.tsx
+#: src/pages/platform/IntakeSections.tsx
 msgid "Decline"
 msgstr "拒绝"
+
+#: src/pages/platform/IntakeSections.tsx
+msgid "Decline application"
+msgstr "拒绝申请"
 
 #: src/lib/server-copy.ts
 msgid "Decline connection with “{name}”?"
 msgstr "拒绝与“{name}”的连接吗？"
+
+#: src/pages/platform/IntakeSections.tsx
+msgid "Declined"
+msgstr "已拒绝"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/model-settings/role-model-picker.tsx
@@ -3637,9 +3749,17 @@ msgstr "Docker 已配置，但电脑没有响应。请确认沙箱监督程序�
 msgid "Docker limits access to your computer for added security. Using {hostLabel} lets bots work with your local files and tools."
 msgstr "Docker 限制对你电脑的访问，以提高安全性。使用{hostLabel}时，Bot 可以处理你的本地文件并使用本地工具。"
 
+#: src/pages/platform/InvoicesSection.tsx
+msgid "Document"
+msgstr "文档"
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Document changed. Reopen to edit the latest version."
 msgstr "文档已更改。请重新打开以编辑最新版本。"
+
+#: src/pages/platform/InvoicesSection.tsx
+msgid "Document number"
+msgstr "文档编号"
 
 #: src/pages/partner/PartnerIntegration.tsx
 msgid "Documentation"
@@ -3711,8 +3831,14 @@ msgid "Downloading…"
 msgstr "正在下载…"
 
 #: src/pages/partner/PartnerInvoices.tsx
+#: src/pages/platform/InvoicesSection.tsx
+#: src/pages/platform/SimulatorSection.tsx
 msgid "Draft"
 msgstr "草稿"
+
+#: src/pages/platform/InvoicesSection.tsx
+msgid "Draft invoices"
+msgstr "生成草稿"
 
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Draft skill"
@@ -3767,6 +3893,10 @@ msgstr "编辑资料"
 msgid "Edit the wiki"
 msgstr "编辑知识库"
 
+#: src/pages/platform/PricingSection.tsx
+msgid "Effective date"
+msgstr "生效日期"
+
 #: src/pages/Auth.tsx
 #: src/pages/connections/MailboxForm.tsx
 msgid "Email"
@@ -3784,6 +3914,11 @@ msgstr "该邮箱不允许注册"
 #: src/lib/user-error.ts
 msgid "Email verification required"
 msgstr "需要验证邮箱"
+
+#: src/pages/platform/NewPartnerDialog.tsx
+#: src/pages/platform/PartnersSection.tsx
+msgid "Embedded"
+msgstr "嵌入式"
 
 #. placeholder {0}: humanizeTool(toolName)
 #: src/pages/shell/bot-panel.tsx
@@ -4205,6 +4340,7 @@ msgid "Fullscreen"
 msgstr "全屏"
 
 #: src/pages/partner/PartnerCredits.tsx
+#: src/pages/platform/PartnersSection.tsx
 msgid "Fund"
 msgstr "资金池"
 
@@ -4212,6 +4348,10 @@ msgstr "资金池"
 #: src/pages/Onboarding.tsx
 msgid "Gateway ID"
 msgstr "网关 ID"
+
+#: src/pages/platform/PricingSection.tsx
+msgid "GB per month"
+msgstr "GB/月"
 
 #: src/pages/Settings.tsx
 msgid "General"
@@ -4376,6 +4516,7 @@ msgstr "高"
 msgid "High"
 msgstr "高"
 
+#: src/pages/platform/PricingSection.tsx
 #: src/pages/WikiBrowser.tsx
 msgid "History"
 msgstr "历史记录"
@@ -4547,17 +4688,30 @@ msgstr "收件箱和邮件"
 msgid "Include API keys"
 msgstr "包含 API 密钥"
 
+#: src/pages/platform/PricingSection.tsx
+msgid "Included credits"
+msgstr "包含额度"
+
 #: src/components/call/VoiceChatCard.tsx
 msgid "Incoming call"
 msgstr "来电"
+
+#: src/pages/platform/SimulatorSection.tsx
+msgid "Infrastructure"
+msgstr "基础设施"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Inherit default"
 msgstr "沿用默认"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/platform/PricingSection.tsx
 msgid "Input"
 msgstr "输入"
+
+#: src/pages/platform/SimulatorSection.tsx
+msgid "Input (M tokens)"
+msgstr "输入(百万词元)"
 
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Inputs"
@@ -4681,6 +4835,8 @@ msgid "Invoice for {0} issued"
 msgstr "已开具 {0} 的发票"
 
 #: src/pages/partner/PartnerConsolePage.tsx
+#: src/pages/platform/InvoicesSection.tsx
+#: src/pages/platform/PlatformPage.tsx
 msgid "Invoices"
 msgstr "发票"
 
@@ -4693,9 +4849,22 @@ msgstr "隔离"
 msgid "Isolated preview — no access to your account"
 msgstr "隔离预览——无法访问你的账户"
 
+#: src/pages/platform/InvoicesSection.tsx
+msgid "Issue"
+msgstr "开具"
+
 #: src/pages/partner/PartnerInvoices.tsx
+#: src/pages/platform/InvoicesSection.tsx
 msgid "Issued"
 msgstr "已开具"
+
+#: src/pages/platform/PricingSection.tsx
+msgid "It applies from the chosen day."
+msgstr "将从所选日期起生效。"
+
+#: src/pages/platform/PricingSection.tsx
+msgid "It applies to every partner right away."
+msgstr "将立即对所有合作伙伴生效。"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error-copy.ts
@@ -4911,9 +5080,18 @@ msgstr "浅色"
 msgid "Light tasks model"
 msgstr "轻量任务模型"
 
+#: src/pages/platform/LimitsSection.tsx
+#: src/pages/platform/PlatformPage.tsx
+msgid "Limits by organization"
+msgstr "按组织设置限额"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Linear issue"
 msgstr "Linear 工单"
+
+#: src/pages/platform/InvoicesSection.tsx
+msgid "Lines"
+msgstr "明细"
 
 #: src/components/AccountAccess.tsx
 msgid "Link SSO"
@@ -4940,6 +5118,10 @@ msgstr "正在收听…"
 #: src/lib/activity-label.ts
 msgid "Listing {value}"
 msgstr "正在列出 {value}"
+
+#: src/pages/platform/PricingSection.tsx
+msgid "Live"
+msgstr "生效中"
 
 #: src/pages/shell/transcript.tsx
 msgid "Load earlier messages"
@@ -5029,6 +5211,10 @@ msgstr "低"
 msgid "Low"
 msgstr "低"
 
+#: src/pages/platform/PricingSection.tsx
+msgid "Low balance alert"
+msgstr "余额不足提醒"
+
 #: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/partner/PartnerOverview.tsx
 msgid "Low credit"
@@ -5043,6 +5229,7 @@ msgid "Mailbox"
 msgstr "邮箱"
 
 #: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/platform/SimulatorSection.tsx
 msgid "Main model"
 msgstr "主模型"
 
@@ -5117,6 +5304,14 @@ msgstr "手动"
 msgid "Manual setup required"
 msgstr "需要手动设置"
 
+#: src/pages/platform/PartnersSection.tsx
+msgid "Margin"
+msgstr "利润"
+
+#: src/pages/platform/PricingSection.tsx
+msgid "Margin (%)"
+msgstr "利润率(%)"
+
 #: src/components/InboxPanel.tsx
 msgid "Mark all read"
 msgstr "全部标为已读"
@@ -5132,6 +5327,10 @@ msgstr "标为未读"
 #: src/pages/BotContextMenu.tsx
 msgid "Mark as Unread"
 msgstr "标为未读"
+
+#: src/pages/platform/InvoicesSection.tsx
+msgid "Mark paid"
+msgstr "标记为已付"
 
 #: src/components/markdown-copy.tsx
 msgid "Markdown table"
@@ -5346,6 +5545,7 @@ msgid "Minimize call"
 msgstr "最小化通话"
 
 #: src/lib/cron.ts
+#: src/pages/platform/PricingSection.tsx
 msgid "minute"
 msgstr "分钟"
 
@@ -5363,6 +5563,8 @@ msgid "Missions"
 msgstr "任务"
 
 #: src/components/ApprovalRulesSettings.tsx
+#: src/pages/platform/NewPartnerDialog.tsx
+#: src/pages/platform/PartnersSection.tsx
 msgid "Mode"
 msgstr "模式"
 
@@ -5371,6 +5573,7 @@ msgstr "模式"
 #: src/pages/model-settings/model-picker.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/onboarding/LocalModelChoice.tsx
+#: src/pages/platform/PricingSection.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-panel.tsx
@@ -5400,6 +5603,7 @@ msgstr "模型不可用"
 msgid "Model options"
 msgstr "模型选项"
 
+#: src/pages/platform/SimulatorSection.tsx
 #: src/pages/Settings.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Models"
@@ -5428,6 +5632,8 @@ msgstr "月"
 
 #: src/pages/partner/PartnerInvoices.tsx
 #: src/pages/partner/PartnerRevenue.tsx
+#: src/pages/platform/InvoicesSection.tsx
+#: src/pages/platform/PartnersSection.tsx
 #: src/pages/Routines.tsx
 msgid "Month"
 msgstr "月"
@@ -5456,6 +5662,10 @@ msgstr "{name} 的每月上限"
 #: src/lib/run-error-copy.ts
 msgid "Monthly limit reached"
 msgstr "已达到每月上限"
+
+#: src/pages/platform/PricingSection.tsx
+msgid "Monthly price"
+msgstr "月价格"
 
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/Usage.tsx
@@ -5617,6 +5827,10 @@ msgstr "请求你的批准 · 你是 {agentName} 的所有者"
 msgid "Needs: {names}"
 msgstr "需要：{names}"
 
+#: src/pages/platform/PricingSection.tsx
+msgid "Never"
+msgstr "永不"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Never ask"
 msgstr "从不询问"
@@ -5665,6 +5879,11 @@ msgstr "新的待办"
 #: src/pages/WikiBrowser.tsx
 msgid "New page"
 msgstr "新建页面"
+
+#: src/pages/platform/NewPartnerDialog.tsx
+#: src/pages/platform/PartnersSection.tsx
+msgid "New partner"
+msgstr "新建合作伙伴"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
@@ -5842,6 +6061,10 @@ msgstr "还没有页面"
 #: src/pages/partner/PartnerConsolePage.tsx
 msgid "No partnerships"
 msgstr "暂无合作"
+
+#: src/pages/platform/LimitsSection.tsx
+msgid "No plan"
+msgstr "无套餐"
 
 #: src/pages/AgentsStore.tsx
 msgid "No public address here, so it checks your inbox on a schedule you approve."
@@ -6058,10 +6281,22 @@ msgstr "{day}日 {time}"
 msgid "On open"
 msgstr "启动时"
 
+#: src/pages/platform/SimulatorSection.tsx
+msgid "On own models (%)"
+msgstr "使用自有模型(%)"
+
 #. placeholder {0}: preset.time
 #: src/lib/cron.ts
 msgid "on the 1st at {0}"
 msgstr "1 日 {0}"
+
+#: src/pages/platform/SimulatorSection.tsx
+msgid "One typical customer"
+msgstr "典型客户"
+
+#: src/pages/platform/SimulatorSection.tsx
+msgid "One typical customer, per month"
+msgstr "典型客户,每月"
 
 #: src/lib/cron.ts
 msgid "One-time"
@@ -6089,6 +6324,7 @@ msgstr "仅限部分角色或成员"
 
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/partner/PartnerOverview.tsx
+#: src/pages/platform/LimitsSection.tsx
 #: src/pages/shell/computer-panel.tsx
 #: src/pages/shell/import-setup-card.tsx
 #: src/pages/shell/message-view.tsx
@@ -6231,6 +6467,10 @@ msgstr "或粘贴 API 密钥"
 msgid "Organization API key"
 msgstr "组织 API 密钥"
 
+#: src/pages/platform/LimitsSection.tsx
+msgid "Organization ID"
+msgstr "组织 ID"
+
 #: src/pages/HomePage.tsx
 msgid "Organize"
 msgstr "整理"
@@ -6248,6 +6488,10 @@ msgstr "其他智能体可以咨询 {name}"
 msgid "Other model…"
 msgstr "其他模型…"
 
+#: src/pages/platform/PricingSection.tsx
+msgid "Other models"
+msgstr "其他模型"
+
 #: src/pages/onboarding-quick-connect.tsx
 msgid "Other providers"
 msgstr "其他服务商"
@@ -6257,8 +6501,13 @@ msgid "Other ways to connect"
 msgstr "其他连接方式"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/platform/PricingSection.tsx
 msgid "Output"
 msgstr "输出"
+
+#: src/pages/platform/SimulatorSection.tsx
+msgid "Output (M tokens)"
+msgstr "输出(百万词元)"
 
 #: src/pages/shell/routing-line.tsx
 msgid "Over its budget"
@@ -6276,6 +6525,10 @@ msgstr "概览"
 #: src/pages/shell/channel-members.tsx
 msgid "Owner"
 msgstr "所有者"
+
+#: src/pages/platform/NewPartnerDialog.tsx
+msgid "Owner email"
+msgstr "负责人邮箱"
 
 #: src/components/markdown-copy.tsx
 msgid "Page {page} of {count}"
@@ -6299,8 +6552,28 @@ msgstr "页面"
 
 #: src/pages/partner/PartnerInvoices.tsx
 #: src/pages/partner/PartnerRevenue.tsx
+#: src/pages/platform/InvoicesSection.tsx
 msgid "Paid"
 msgstr "已付"
+
+#: src/pages/platform/InvoicesSection.tsx
+#: src/pages/platform/PartnersSection.tsx
+msgid "Partner"
+msgstr "合作伙伴"
+
+#: src/pages/platform/IntakeSections.tsx
+#: src/pages/platform/PlatformPage.tsx
+msgid "Partner applications"
+msgstr "合作伙伴申请"
+
+#: src/pages/platform/PricingSection.tsx
+msgid "Partner plans"
+msgstr "合作伙伴套餐"
+
+#: src/pages/platform/PartnersSection.tsx
+#: src/pages/platform/PlatformPage.tsx
+msgid "Partners"
+msgstr "合作伙伴"
 
 #: src/pages/connections/connection-model.ts
 #: src/pages/shell/sidebar-partner.tsx
@@ -6345,6 +6618,10 @@ msgstr "密码已更新"
 #: src/pages/Auth.tsx
 msgid "Passwords do not match"
 msgstr "两次密码不一致"
+
+#: src/pages/platform/PricingSection.tsx
+msgid "Past"
+msgstr "已结束"
 
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/partner/PartnerCustomers.tsx
@@ -6410,6 +6687,10 @@ msgstr "已暂停"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Pawn"
 msgstr "兵"
+
+#: src/pages/platform/IntakeSections.tsx
+msgid "Pending"
+msgstr "待处理"
 
 #: src/pages/Onboarding.tsx
 #: src/pages/shell/channel-members.tsx
@@ -6492,20 +6773,41 @@ msgstr "置顶消息"
 
 #: src/pages/partner/PartnerCredits.tsx
 #: src/pages/partner/PartnerCustomers.tsx
+#: src/pages/platform/NewPartnerDialog.tsx
+#: src/pages/platform/PartnersSection.tsx
+#: src/pages/platform/PricingSection.tsx
+#: src/pages/platform/SimulatorSection.tsx
 msgid "Plan"
 msgstr "套餐"
+
+#: src/pages/platform/LimitsSection.tsx
+msgid "Plan default"
+msgstr "套餐默认值"
 
 #: src/pages/home/PartnerBalance.tsx
 msgid "Plan inactive"
 msgstr "套餐未生效"
 
+#: src/pages/platform/PricingSection.tsx
+msgid "Plan name"
+msgstr "套餐名称"
+
 #: src/pages/home/HomeComposer.tsx
 msgid "Plan the week"
 msgstr "规划本周"
 
+#: src/pages/platform/LimitsSection.tsx
+msgid "Plan: {plan}"
+msgstr "套餐:{plan}"
+
 #: src/pages/partner/PartnerPricing.tsx
 msgid "Plans"
 msgstr "套餐"
+
+#: src/pages/platform/PlatformPage.tsx
+#: src/pages/shell/sidebar-team.tsx
+msgid "Platform"
+msgstr "平台"
 
 #: src/pages/LocalSpeechSection.tsx
 msgid "Play"
@@ -6572,6 +6874,11 @@ msgstr "上一页"
 msgid "Price"
 msgstr "价格"
 
+#: src/pages/platform/PlatformPage.tsx
+#: src/pages/platform/PricingSection.tsx
+msgid "Prices and margins"
+msgstr "价格与利润率"
+
 #: src/pages/partner/PartnerConsolePage.tsx
 msgid "Pricing"
 msgstr "定价"
@@ -6591,6 +6898,10 @@ msgstr "拥有独立机器人和群组的私有工作区。"
 #: src/pages/shell/sidebar-partner.tsx
 msgid "Product"
 msgstr "产品"
+
+#: src/pages/platform/NewPartnerDialog.tsx
+msgid "Product name"
+msgstr "产品名称"
 
 #: src/pages/AppCatalogGrid.tsx
 msgid "Productivity"
@@ -6618,9 +6929,25 @@ msgstr "受保护输入"
 msgid "Provider"
 msgstr "提供方"
 
+#: src/pages/platform/PricingSection.tsx
+msgid "Provider cost (US$)"
+msgstr "供应商成本(美元)"
+
 #: src/pages/model-settings/providers-section.tsx
 msgid "Providers"
 msgstr "提供方"
+
+#: src/pages/platform/PricingSection.tsx
+msgid "Publish"
+msgstr "发布"
+
+#: src/pages/platform/PricingSection.tsx
+msgid "Publish version {next}"
+msgstr "发布版本 {next}"
+
+#: src/pages/platform/PricingSection.tsx
+msgid "Publish version {next}?"
+msgstr "发布版本 {next}?"
 
 #: src/components/CloudAgentCard.tsx
 msgid "Pull request"
@@ -6707,6 +7034,14 @@ msgstr "正在阅读页面"
 #: src/pages/shell/import-status.ts
 msgid "Ready"
 msgstr "就绪"
+
+#: src/pages/platform/PartnersSection.tsx
+msgid "Real margin"
+msgstr "实际利润"
+
+#: src/pages/platform/IntakeSections.tsx
+msgid "Reason (optional)"
+msgstr "原因(可选)"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
@@ -6797,6 +7132,11 @@ msgstr "正在重新创建电脑"
 #: src/pages/connections/McpServerForm.tsx
 msgid "Redirect URI"
 msgstr "重定向 URI"
+
+#: src/pages/platform/NewPartnerDialog.tsx
+#: src/pages/platform/PartnersSection.tsx
+msgid "Referral"
+msgstr "推荐"
 
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
@@ -6910,6 +7250,10 @@ msgstr "移除提及 {0}"
 #: src/pages/RoutineEditor.tsx
 msgid "Remove message trigger"
 msgstr "移除消息触发器"
+
+#: src/pages/platform/PricingSection.tsx
+msgid "Remove plan"
+msgstr "移除套餐"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Remove schedule"
@@ -7076,6 +7420,10 @@ msgstr "调整机器人侧边栏大小"
 msgid "Resize panel"
 msgstr "调整面板大小"
 
+#: src/pages/platform/PricingSection.tsx
+msgid "Resource"
+msgstr "资源"
+
 #: src/components/DesktopUpdates.tsx
 msgid "Restart to update"
 msgstr "重启以更新"
@@ -7197,6 +7545,10 @@ msgstr "{name} 的角色"
 #: src/pages/Onboarding.tsx
 msgid "Rook credits"
 msgstr "Rook 额度"
+
+#: src/pages/platform/SimulatorSection.tsx
+msgid "Rook margin"
+msgstr "Rook 利润"
 
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Room guidance"
@@ -7342,6 +7694,7 @@ msgstr "周六"
 #: src/pages/partner/PartnerIntegration.tsx
 #: src/pages/partner/PartnerPricing.tsx
 #: src/pages/PartnerTemplateEditor.tsx
+#: src/pages/platform/LimitsSection.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
@@ -7369,6 +7722,7 @@ msgstr "保存工作区并安装最新软件。"
 #: src/components/AskCard.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/ExternalConversationSettings.tsx
+#: src/pages/platform/LimitsSection.tsx
 msgid "Saved"
 msgstr "已保存"
 
@@ -7420,6 +7774,10 @@ msgstr "要为 {bot} 安排“{name}”吗？"
 #: src/components/MissionList.tsx
 msgid "Schedule a routine"
 msgstr "安排一个例行任务"
+
+#: src/pages/platform/PricingSection.tsx
+msgid "Scheduled"
+msgstr "已排期"
 
 #: src/components/ModelCredits.tsx
 msgid "Scheduled routines"
@@ -7510,6 +7868,10 @@ msgstr "正在搜索网页：{value}"
 #: src/pages/Store.tsx
 msgid "Searching…"
 msgstr "正在搜索…"
+
+#: src/pages/platform/LimitsSection.tsx
+msgid "Seats"
+msgstr "席位"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Security"
@@ -7747,6 +8109,11 @@ msgstr "请使用订阅登录，或改为测试 API 密钥。"
 msgid "Sign up"
 msgstr "注册"
 
+#: src/pages/platform/PlatformPage.tsx
+#: src/pages/platform/SimulatorSection.tsx
+msgid "Simulator"
+msgstr "模拟器"
+
 #: src/pages/shell/bot-credentials.tsx
 msgid "Site"
 msgstr "网站"
@@ -7802,6 +8169,10 @@ msgstr "未启用 Slack"
 #: src/components/composer/HoldToTalk.tsx
 msgid "Slide up to lock"
 msgstr "上滑锁定"
+
+#: src/pages/platform/NewPartnerDialog.tsx
+msgid "Slug"
+msgstr "标识"
 
 #: src/lib/plan-view.ts
 msgid "Small"
@@ -7956,6 +8327,7 @@ msgstr "状态"
 
 #: src/pages/ActivityList.tsx
 #: src/pages/Board.tsx
+#: src/pages/platform/InvoicesSection.tsx
 msgid "Status"
 msgstr "状态"
 
@@ -8026,9 +8398,18 @@ msgstr "已停止。仍在屏幕上等你操作。"
 msgid "Stopping…"
 msgstr "正在停止…"
 
+#: src/pages/platform/PricingSection.tsx
 #: src/pages/usage/plan-usage.tsx
 msgid "Storage"
 msgstr "存储空间"
+
+#: src/pages/platform/LimitsSection.tsx
+msgid "Storage (GB)"
+msgstr "存储(GB)"
+
+#: src/pages/platform/PricingSection.tsx
+msgid "Storage allowance (GB)"
+msgstr "包含存储(GB)"
 
 #: src/lib/server-copy.ts
 msgid "Storage is {percent}% full"
@@ -8531,6 +8912,10 @@ msgstr "此空间的模型是个人登录，只有其所有者可以使用。"
 msgid "This subscription sign-in is not available in Rook yet. Use a deployment credential or choose another provider."
 msgstr "此订阅登录在 Rook 中尚不可用。请使用部署凭据或选择其他提供方。"
 
+#: src/pages/platform/SimulatorSection.tsx
+msgid "This usage cannot be simulated"
+msgstr "无法模拟此用量"
+
 #: src/pages/WhatsAppNumbers.tsx
 msgid "This uses WhatsApp without the official API. WhatsApp can ban the number."
 msgstr "这会在不使用官方 API 的情况下使用 WhatsApp。该号码可能被 WhatsApp 封禁。"
@@ -8651,9 +9036,22 @@ msgstr "充值"
 msgid "Top-up"
 msgstr "充值"
 
+#: src/pages/platform/PricingSection.tsx
+msgid "Top-up expiry"
+msgstr "充值有效期"
+
+#: src/pages/platform/PricingSection.tsx
+msgid "Top-up markup"
+msgstr "充值加价"
+
 #: src/pages/partner/PartnerInvoices.tsx
+#: src/pages/platform/InvoicesSection.tsx
 msgid "Total"
 msgstr "合计"
+
+#: src/pages/platform/SimulatorSection.tsx
+msgid "Total per customer"
+msgstr "每位客户合计"
 
 #: src/components/composer/HoldToTalk.tsx
 msgid "Transcribing…"
@@ -8757,6 +9155,10 @@ msgstr "已撤销"
 #: src/pages/Store.tsx
 msgid "Uninstall"
 msgstr "卸载"
+
+#: src/pages/platform/PricingSection.tsx
+msgid "Unit"
+msgstr "单位"
 
 #: src/pages/ChatAppsRow.tsx
 msgid "Unlink"
@@ -9047,6 +9449,14 @@ msgstr "正在校验…"
 msgid "Version"
 msgstr "版本"
 
+#: src/pages/platform/PricingSection.tsx
+msgid "Version {n}"
+msgstr "版本 {n}"
+
+#: src/pages/platform/PricingSection.tsx
+msgid "Version {version} live since {since}"
+msgstr "版本 {version} 自 {since} 起生效"
+
 #: src/pages/shell/message-view.tsx
 msgid "via {relayedVia}"
 msgstr "经由 {relayedVia}"
@@ -9055,6 +9465,8 @@ msgstr "经由 {relayedVia}"
 msgid "View usage"
 msgstr "查看用量"
 
+#: src/pages/platform/PricingSection.tsx
+#: src/pages/platform/SimulatorSection.tsx
 #: src/pages/Settings.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/SpaceSettingOverrides.tsx
@@ -9062,11 +9474,16 @@ msgstr "查看用量"
 msgid "Voice"
 msgstr "语音"
 
+#: src/pages/platform/SimulatorSection.tsx
+msgid "Voice minutes"
+msgstr "语音分钟数"
+
 #: src/pages/LocalSpeechSection.tsx
 msgid "Voices"
 msgstr "语音"
 
 #: src/pages/partner/PartnerInvoices.tsx
+#: src/pages/platform/InvoicesSection.tsx
 msgid "Void"
 msgstr "已作废"
 
@@ -9111,6 +9528,11 @@ msgstr "排队等候…"
 #: src/pages/SquadPage.tsx
 msgid "Waiting…"
 msgstr "等待中…"
+
+#: src/pages/platform/IntakeSections.tsx
+#: src/pages/platform/PlatformPage.tsx
+msgid "Waitlist"
+msgstr "候补名单"
 
 #: src/components/ModelCredits.tsx
 msgid "Web, desktop and mobile"
@@ -9248,9 +9670,18 @@ msgstr "Bot 应在哪里运行？"
 msgid "Where should my computer live?"
 msgstr "我的电脑应该放在哪里?"
 
+#: src/pages/platform/SimulatorSection.tsx
+msgid "Where the money goes"
+msgstr "资金去向"
+
 #: src/pages/shell/agent-import.tsx
 msgid "Where to import"
 msgstr "导入到哪里"
+
+#: src/pages/platform/NewPartnerDialog.tsx
+#: src/pages/platform/PartnersSection.tsx
+msgid "White label"
+msgstr "白标"
 
 #: src/pages/shell/agent-audience.tsx
 msgid "Who can talk to {name}"

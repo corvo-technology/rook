@@ -1,13 +1,23 @@
 import { enqueuePartnerWebhook } from "@corvo/adapters";
 import { planConfigFromEnv } from "@corvo/contracts";
 import {
+  approvePartnerLead,
+  createPlatformPartner,
+  decideWaitlistEntry,
+  declinePartnerLead,
   draftPartnerInvoices,
   listPartnerInvoices,
+  listPartnerLeads,
+  listWaitlist,
   livePartnerPricing,
+  type NewInvitation,
+  OnboardingError,
   organizationEntitlements,
   organizationOverride,
   PartnerPlanError,
   PartnerPricingError,
+  partnerPricingHistory,
+  platformPartnerOverview,
   publishPartnerPricing,
   runAsSystem,
   setOrganizationOverride,
@@ -16,6 +26,7 @@ import {
   simulatePartnerPricing,
 } from "@corvo/db";
 import { ORPCError } from "@orpc/server";
+import { sendInvitationEmail } from "../team.js";
 import type { RouterContext } from "./context.js";
 import { isPartnerAdmin } from "./partner.js";
 
@@ -30,7 +41,34 @@ export function platformRoutes(ctx: RouterContext) {
     if (!isPartnerAdmin(deps.env, context.actor.email)) throw new ORPCError("NOT_FOUND");
     return next();
   });
-  const asSystem = <T>(fn: () => Promise<T>) => runAsSystem("platform limit overrides", fn);
+  const asSystem = <T>(fn: () => Promise<T>) =>
+    runAsSystem("platform limit overrides", fn).catch((error) => {
+      if (error instanceof OnboardingError) {
+        const code = {
+          not_found: "NOT_FOUND",
+          invalid: "BAD_REQUEST",
+          conflict: "CONFLICT",
+        } as const;
+        throw new ORPCError(code[error.code]);
+      }
+      throw error;
+    });
+  /** Mails the invitation just made, in the operator's name; false where mail is not set up. */
+  async function mail(actorUserId: string, invitation: NewInvitation | null): Promise<boolean> {
+    if (!invitation || !deps.team) return false;
+    const inviter = await deps.prisma.user.findUnique({
+      where: { id: actorUserId },
+      select: { name: true },
+    });
+    return sendInvitationEmail(deps.team, {
+      id: invitation.id,
+      email: invitation.email,
+      inviterName: inviter?.name ?? "",
+      spaceName: invitation.spaceName,
+    });
+  }
+  const dated = <T extends { createdAt: Date }>(rows: T[]) =>
+    rows.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }));
   return {
     platform: {
       partnerPricing: {
@@ -42,12 +80,33 @@ export function platformRoutes(ctx: RouterContext) {
                   version: live.version,
                   config: live.config,
                   createdAt: live.createdAt.toISOString(),
+                  effectiveAt: live.effectiveAt.toISOString(),
                 }
               : null;
           }),
         ),
+        history: admin.platform.partnerPricing.history.handler(() =>
+          asSystem(async () =>
+            (await partnerPricingHistory(deps.prisma)).map((row) => ({
+              ...row,
+              createdAt: row.createdAt.toISOString(),
+              effectiveAt: row.effectiveAt.toISOString(),
+            })),
+          ),
+        ),
         publish: admin.platform.partnerPricing.publish.handler(({ context, input }) =>
-          asSystem(() => publishPartnerPricing(deps.prisma, input.config, context.actor.userId)),
+          asSystem(async () => {
+            try {
+              return await publishPartnerPricing(deps.prisma, input.config, context.actor.userId, {
+                effectiveOn: input.effectiveOn,
+              });
+            } catch (error) {
+              if (error instanceof PartnerPricingError) {
+                throw new ORPCError("BAD_REQUEST", { message: error.code });
+              }
+              throw error;
+            }
+          }),
         ),
         simulate: admin.platform.partnerPricing.simulate.handler(({ input }) =>
           asSystem(async () => {
@@ -75,6 +134,63 @@ export function platformRoutes(ctx: RouterContext) {
               }
               throw error;
             }
+            return { ok: true as const };
+          }),
+        ),
+      },
+      partners: {
+        list: admin.platform.partners.list.handler(({ input }) =>
+          asSystem(() => platformPartnerOverview(deps.prisma, input.period)),
+        ),
+        create: admin.platform.partners.create.handler(({ context, input }) =>
+          asSystem(async () => {
+            const { ownerEmail, ...partner } = input;
+            const created = await createPlatformPartner(deps.prisma, {
+              ...partner,
+              ownerEmail,
+              actorUserId: context.actor.userId,
+            });
+            return {
+              partnerId: created.partnerId,
+              emailed: await mail(context.actor.userId, created.invitation),
+            };
+          }),
+        ),
+      },
+      waitlist: {
+        list: admin.platform.waitlist.list.handler(() =>
+          asSystem(async () => dated(await listWaitlist(deps.prisma)) as never),
+        ),
+        decide: admin.platform.waitlist.decide.handler(({ context, input }) =>
+          asSystem(async () => {
+            const { invitation } = await decideWaitlistEntry(deps.prisma, {
+              ...input,
+              actorUserId: context.actor.userId,
+            });
+            return { emailed: await mail(context.actor.userId, invitation) };
+          }),
+        ),
+      },
+      partnerLeads: {
+        list: admin.platform.partnerLeads.list.handler(() =>
+          asSystem(async () => dated(await listPartnerLeads(deps.prisma)) as never),
+        ),
+        approve: admin.platform.partnerLeads.approve.handler(({ context, input }) =>
+          asSystem(async () => {
+            const result = await approvePartnerLead(deps.prisma, {
+              id: input.id,
+              actorUserId: context.actor.userId,
+              partner: input.partner,
+            });
+            return {
+              partnerId: result.partnerId,
+              emailed: await mail(context.actor.userId, result.invitation),
+            };
+          }),
+        ),
+        decline: admin.platform.partnerLeads.decline.handler(({ context, input }) =>
+          asSystem(async () => {
+            await declinePartnerLead(deps.prisma, { ...input, actorUserId: context.actor.userId });
             return { ok: true as const };
           }),
         ),

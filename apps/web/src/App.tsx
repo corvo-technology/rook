@@ -85,6 +85,9 @@ const WikiPage = lazyComponent(loadWiki);
 /** The pages the sidebar opens; fetched once the app is idle so moving to one never waits. */
 const AREA_LOADERS = [loadUsage, loadWorkflows, loadRoutines, loadArtifacts, loadWiki];
 const TeamPage = lazyComponent(() => import("./pages/TeamPage").then((module) => module.TeamPage));
+const PlatformPage = lazyComponent(() =>
+  import("./pages/platform/PlatformPage").then((module) => module.PlatformPage),
+);
 const SquadPage = lazyComponent(() =>
   import("./pages/SquadPage").then((module) => module.SquadPage),
 );
@@ -283,6 +286,10 @@ function SessionApp() {
                 <Route
                   path="/app/artifacts/:artifactId"
                   element={<ShellPage page={<ArtifactsPage />} />}
+                />
+                <Route
+                  path="/app/platform/:section?"
+                  element={<ShellPage page={<PlatformPage />} />}
                 />
                 <Route path="/app/wiki" element={<ShellPage page={<WikiPage />} />} />
                 <Route

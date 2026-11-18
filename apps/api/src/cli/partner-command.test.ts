@@ -184,7 +184,7 @@ describe("the shipped templates", () => {
   const expected: Record<string, string[]> = {
     greenbarber: ["Recepção", "Retorno de clientes", "Gestor"],
     divellas: ["Recepção", "Pós-atendimento", "Gestor"],
-    prontu: ["Recepção", "Escriba", "Gestor"],
+    prontu: ["Recepção", "Assistente de prontuário", "Gestor"],
   };
   for (const [slug, names] of Object.entries(expected)) {
     it(`${slug} is a valid template with its agents, four starters each, the Store hidden`, async () => {

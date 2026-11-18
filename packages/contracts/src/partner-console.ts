@@ -196,3 +196,5 @@ export const PartnerConsoleIntegrationSchema = z.object({
   webhook: z.object({ url: z.string().nullable(), enabled: z.boolean() }),
   docsUrl: z.string(),
 });
+
+export type PartnerConsolePricing = z.infer<typeof PartnerConsolePricingSchema>;

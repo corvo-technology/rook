@@ -146,3 +146,5 @@ export const PartnerCreditsSchema = z.object({
   allowedModels: z.array(z.string()),
   customers: z.array(PartnerCreditCustomerSchema),
 });
+
+export type PartnerCredits = z.infer<typeof PartnerCreditsSchema>;

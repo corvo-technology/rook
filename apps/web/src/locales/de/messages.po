@@ -116,6 +116,12 @@ msgstr "{0} (über {1})"
 msgid "{0} {unitLabel}"
 msgstr "{0} {unitLabel}"
 
+#. placeholder {0}: money(data.revenue.commission)
+#. placeholder {1}: money(data.revenue.markup)
+#: src/pages/partner/PartnerOverview.tsx
+msgid "{0} commission · {1} markup"
+msgstr "{0} Provision · {1} Aufschlag"
+
 #. placeholder {0}: block.name
 #: src/pages/shell/message-cards.tsx
 msgid "{0} connection"
@@ -171,6 +177,11 @@ msgstr "{0} übrig"
 #: src/components/ArtifactFileCard.tsx
 msgid "{0} MB"
 msgstr "{0} MB"
+
+#. placeholder {0}: data.newCustomers
+#: src/pages/partner/PartnerOverview.tsx
+msgid "{0} new"
+msgstr "{0} neu"
 
 #. placeholder {0}: money(account.wallet.passedOnUsd)
 #: src/pages/PartnershipSettingsPanel.tsx
@@ -374,6 +385,19 @@ msgstr "{n, plural, one {# Agent arbeitet} other {# Agenten arbeiten}}"
 #: src/pages/home/HomeHero.tsx
 msgid "{n, plural, one {# waiting for you} other {# waiting for you}}"
 msgstr "{n, plural, one {# wartet auf dich} other {# warten auf dich}}"
+
+#: src/pages/partner/PartnerOverview.tsx
+msgid "{name} · connection down"
+msgstr "{name} · Verbindung unterbrochen"
+
+#. placeholder {0}: item.detail
+#: src/pages/partner/PartnerOverview.tsx
+msgid "{name} · credit at {0}"
+msgstr "{name} · Guthaben bei {0}"
+
+#: src/pages/partner/PartnerOverview.tsx
+msgid "{name} · payment overdue"
+msgstr "{name} · Zahlung überfällig"
 
 #: src/lib/activity-list-filters.ts
 msgid "{name} asked"
@@ -769,10 +793,15 @@ msgid "Actions for space"
 msgstr "Aktionen für den Space"
 
 #: src/pages/BillingSettingsPanel.tsx
+#: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/Workflows.tsx
 msgid "Active"
 msgstr "Aktiv"
+
+#: src/pages/partner/PartnerOverview.tsx
+msgid "Active customers"
+msgstr "Aktive Kunden"
 
 #: src/components/InboxPanel.tsx
 #: src/pages/ActivityPage.tsx
@@ -871,6 +900,7 @@ msgstr "Weiteren hinzufügen"
 msgid "Add credential"
 msgstr "Zugangsdaten hinzufügen"
 
+#: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
 msgid "Add credit"
 msgstr "Guthaben aufladen"
@@ -1019,6 +1049,10 @@ msgstr "Wird hinzugefügt…"
 msgid "Adjust limit"
 msgstr "Limit anpassen"
 
+#: src/pages/partner/PartnerRevenue.tsx
+msgid "Adjustment"
+msgstr "Anpassung"
+
 #: src/pages/InvitePage.tsx
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Admin"
@@ -1067,6 +1101,7 @@ msgstr "Agent-Computer"
 
 #: src/pages/BotContextMenu.tsx
 #: src/pages/onboarding/OnboardingPreview.tsx
+#: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/channel-members.tsx
@@ -1092,6 +1127,7 @@ msgstr "Hinweis"
 
 #: src/pages/AppCatalogGrid.tsx
 #: src/pages/Board.tsx
+#: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/StoreCategoryChips.tsx
 msgid "All"
 msgstr "Alle"
@@ -1113,6 +1149,10 @@ msgstr "Alles erledigt"
 #: src/pages/Routines.tsx
 msgid "All good"
 msgstr "Alles in Ordnung"
+
+#: src/pages/partner/PartnerCredits.tsx
+msgid "All models"
+msgstr "Alle Modelle"
 
 #: src/pages/ActivityList.tsx
 msgid "All statuses"
@@ -1141,6 +1181,10 @@ msgstr "Erlaube Rook unter Bedienungshilfen in den Datenschutzeinstellungen des 
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Allow writing"
 msgstr "Schreiben erlauben"
+
+#: src/pages/partner/PartnerCredits.tsx
+msgid "Allowed models"
+msgstr "Erlaubte Modelle"
 
 #: src/components/AskCard.tsx
 msgid "Allowed once"
@@ -1181,6 +1225,11 @@ msgstr "Dieses Tool immer erlauben"
 #: src/components/AskCard.tsx
 msgid "Always allowed"
 msgstr "Immer erlaubt"
+
+#: src/pages/partner/PartnerCredits.tsx
+#: src/pages/partner/PartnerCustomers.tsx
+msgid "Amount"
+msgstr "Betrag"
 
 #: src/lib/model-connection-preflight.ts
 msgid "An API key is stored for this provider, not a subscription sign-in."
@@ -1500,6 +1549,10 @@ msgstr "Automatische Absender erscheinen, sobald sie hier etwas posten."
 msgid "Automatic"
 msgstr "Automatisch"
 
+#: src/pages/partner/PartnerCredits.tsx
+msgid "Automatic top-up"
+msgstr "Automatisches Aufladen"
+
 #: src/pages/AppCatalogGrid.tsx
 msgid "Automation"
 msgstr "Automatisierung"
@@ -1541,6 +1594,10 @@ msgstr "Zurück"
 msgid "Back to sign in"
 msgstr "Zurück zur Anmeldung"
 
+#: src/pages/partner/PartnerPricing.tsx
+msgid "Base"
+msgstr "Basis"
+
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
 msgstr "Basis-URL"
@@ -1562,6 +1619,10 @@ msgstr "Bearer-Token"
 #: src/pages/PartnershipSettingsPanel.tsx
 msgid "Become a partner"
 msgstr "Partner werden"
+
+#: src/pages/partner/PartnerCredits.tsx
+msgid "Below credits"
+msgstr "Unter Guthaben"
 
 #: src/pages/Settings.tsx
 msgid "Billing"
@@ -1905,6 +1966,14 @@ msgstr "Computer-Einrichtung wird geprüft …"
 msgid "Checking…"
 msgstr "Wird geprüft …"
 
+#: src/pages/partner/PartnerPricing.tsx
+msgid "Checkout"
+msgstr "Checkout"
+
+#: src/pages/partner/PartnerPricing.tsx
+msgid "Checkout URL"
+msgstr "Checkout-URL"
+
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Chief name"
 msgstr "Name des Chiefs"
@@ -2010,6 +2079,7 @@ msgstr "Klinik oder Praxis"
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/NewRoutinePanel.tsx
+#: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/RoutineCard.tsx
 #: src/pages/RoutineEditor.tsx
@@ -2111,6 +2181,11 @@ msgstr "Befehlsvariable"
 #: src/pages/Board.tsx
 msgid "Comment"
 msgstr "Kommentar"
+
+#: src/pages/partner/PartnerPricing.tsx
+#: src/pages/partner/PartnerRevenue.tsx
+msgid "Commission"
+msgstr "Provision"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Compact"
@@ -2344,6 +2419,7 @@ msgid "Connecting…"
 msgstr "Verbindung wird hergestellt…"
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
+#: src/pages/partner/PartnerCustomers.tsx
 msgid "Connection"
 msgstr "Verbindung"
 
@@ -2416,6 +2492,7 @@ msgstr "Computer steuern"
 #: src/pages/ImportFlow.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
+#: src/pages/partner/PartnerIntegration.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Copied"
@@ -2423,6 +2500,7 @@ msgstr "Kopiert"
 
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
+#: src/pages/partner/PartnerIntegration.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/shell/message-hover-actions.tsx
 msgid "Copy"
@@ -3201,10 +3279,26 @@ msgstr "Zugangsdaten: {names}"
 msgid "Credit amount"
 msgstr "Guthabenbetrag"
 
+#: src/pages/partner/PartnerCustomers.tsx
+msgid "Credit left"
+msgstr "Restguthaben"
+
+#: src/pages/partner/PartnerPricing.tsx
+msgid "Credit packs"
+msgstr "Guthabenpakete"
+
+#: src/pages/partner/PartnerCustomers.tsx
+msgid "Credit used"
+msgstr "Genutztes Guthaben"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error-copy.ts
 msgid "Credit used up"
 msgstr "Guthaben aufgebraucht"
+
+#: src/pages/partner/PartnerConsolePage.tsx
+msgid "Credits"
+msgstr "Guthaben"
 
 #: src/lib/cron.ts
 msgid "Cron"
@@ -3231,6 +3325,16 @@ msgstr "Eigene Farbe"
 msgid "Custom header"
 msgstr "Eigener Header"
 
+#: src/pages/partner/PartnerCredits.tsx
+#: src/pages/partner/PartnerCustomers.tsx
+#: src/pages/partner/PartnerRevenue.tsx
+msgid "Customer"
+msgstr "Kunde"
+
+#: src/pages/partner/PartnerPricing.tsx
+msgid "Customer pays"
+msgstr "Kunde zahlt"
+
 #: src/pages/onboarding/labels.ts
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Customer service"
@@ -3240,9 +3344,17 @@ msgstr "Kundenservice"
 msgid "Customer support"
 msgstr "Kundensupport"
 
+#: src/pages/partner/PartnerConsolePage.tsx
+msgid "Customers"
+msgstr "Kunden"
+
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Customers can choose the model"
 msgstr "Kunden können das Modell wählen"
+
+#: src/pages/partner/PartnerRevenue.tsx
+msgid "Customers paid"
+msgstr "Kunden zahlten"
 
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Customize"
@@ -3555,6 +3667,10 @@ msgstr "Docker begrenzt für mehr Sicherheit den Zugriff auf deinen Computer. We
 msgid "Document changed. Reopen to edit the latest version."
 msgstr "Das Dokument wurde geändert. Öffne es erneut, um die neueste Version zu bearbeiten."
 
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Documentation"
+msgstr "Dokumentation"
+
 #: src/components/AutonomyPicker.tsx
 msgid "Does everything without asking"
 msgstr "Macht alles ohne Nachfrage"
@@ -3584,6 +3700,10 @@ msgstr "Du hast noch kein Konto?"
 msgid "Done"
 msgstr "Fertig"
 
+#: src/pages/partner/PartnerCustomers.tsx
+msgid "Down"
+msgstr "Unterbrochen"
+
 #: src/components/ModelCredits.tsx
 msgid "Downgrade at renewal"
 msgstr "Beim Verlängern herabstufen"
@@ -3604,6 +3724,7 @@ msgid "Download {name}"
 msgstr "{name} herunterladen"
 
 #: src/components/markdown-copy.tsx
+#: src/pages/partner/PartnerRevenue.tsx
 msgid "Download CSV"
 msgstr "CSV herunterladen"
 
@@ -3614,6 +3735,10 @@ msgstr "Download-Fortschritt"
 #: src/components/DesktopUpdates.tsx
 msgid "Downloading…"
 msgstr "Wird heruntergeladen …"
+
+#: src/pages/partner/PartnerInvoices.tsx
+msgid "Draft"
+msgstr "Entwurf"
 
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Draft skill"
@@ -3963,6 +4088,10 @@ msgstr "Dateien oder Ordner auf dem Computer"
 msgid "Files or folders, one per line"
 msgstr "Dateien oder Ordner, einer pro Zeile"
 
+#: src/pages/partner/PartnerCustomers.tsx
+msgid "Filter"
+msgstr "Filter"
+
 #: src/pages/GroupPanel.tsx
 msgid "Filter bots"
 msgstr "Bots filtern"
@@ -4085,6 +4214,14 @@ msgstr "Von"
 msgid "From {0}"
 msgstr "Von {0}"
 
+#: src/pages/partner/PartnerCredits.tsx
+msgid "From the plan"
+msgstr "Aus dem Tarif"
+
+#: src/pages/partner/PartnerCredits.tsx
+msgid "From top-ups"
+msgstr "Aus Aufladungen"
+
 #: src/lib/server-copy.ts
 msgid "From: {fromModel}"
 msgstr "Von: {fromModel}"
@@ -4092,6 +4229,10 @@ msgstr "Von: {fromModel}"
 #: src/pages/WindowChrome.tsx
 msgid "Fullscreen"
 msgstr "Vollbild"
+
+#: src/pages/partner/PartnerCredits.tsx
+msgid "Fund"
+msgstr "Guthaben-Pool"
 
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
@@ -4505,6 +4646,10 @@ msgstr "Die Anweisungen sind zu lang. Wähle einige Dateien ab."
 msgid "Instructions updated"
 msgstr "Anweisungen aktualisiert"
 
+#: src/pages/partner/PartnerConsolePage.tsx
+msgid "Integration"
+msgstr "Integration"
+
 #: src/pages/Store.tsx
 msgid "Integration domain"
 msgstr "Integrations-Domain"
@@ -4556,6 +4701,15 @@ msgstr "Jemanden einladen"
 msgid "Invite your team"
 msgstr "Lade dein Team ein"
 
+#. placeholder {0}: item.detail
+#: src/pages/partner/PartnerOverview.tsx
+msgid "Invoice for {0} issued"
+msgstr "Rechnung für {0} ausgestellt"
+
+#: src/pages/partner/PartnerConsolePage.tsx
+msgid "Invoices"
+msgstr "Rechnungen"
+
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Isolated"
@@ -4564,6 +4718,10 @@ msgstr "Isoliert"
 #: src/pages/Artifacts.tsx
 msgid "Isolated preview — no access to your account"
 msgstr "Isolierte Vorschau – kein Zugriff auf Ihr Konto"
+
+#: src/pages/partner/PartnerInvoices.tsx
+msgid "Issued"
+msgstr "Ausgestellt"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error-copy.ts
@@ -4584,6 +4742,10 @@ msgstr "Er hat auf etwas gewartet, das nicht kam."
 #: src/lib/run-error-copy.ts
 msgid "It started fresh. Recover the computer to rebuild it."
 msgstr "Er hat neu begonnen. Stelle den Computer wieder her, um ihn neu aufzubauen."
+
+#: src/pages/partner/PartnerPricing.tsx
+msgid "Item"
+msgstr "Posten"
 
 #: src/pages/shell/shell-dialogs.tsx
 msgid "Its bots and groups are kept and leave the section."
@@ -4675,6 +4837,10 @@ msgstr "Schlüssel"
 msgid "Key not recognized. Choose a provider."
 msgstr "Schlüssel nicht erkannt. Wählen Sie einen Anbieter."
 
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Keys"
+msgstr "Schlüssel"
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "King"
 msgstr "König"
@@ -4691,6 +4857,10 @@ msgstr "Wissen"
 #: src/pages/LocalSpeechSection.tsx
 msgid "Language"
 msgstr "Sprache"
+
+#: src/pages/partner/PartnerCustomers.tsx
+msgid "Lapsed"
+msgstr "Abgelaufen"
 
 #: src/lib/plan-view.ts
 msgid "Large"
@@ -4901,6 +5071,11 @@ msgstr "Niedrig"
 msgid "Low"
 msgstr "Niedrig"
 
+#: src/pages/partner/PartnerCustomers.tsx
+#: src/pages/partner/PartnerOverview.tsx
+msgid "Low credit"
+msgstr "Wenig Guthaben"
+
 #: src/pages/shell/bot-credentials.tsx
 msgid "Lowercase letters, numbers, hyphens and underscores, starting with a letter."
 msgstr "Kleinbuchstaben, Zahlen, Bindestriche und Unterstriche, beginnend mit einem Buchstaben."
@@ -5008,6 +5183,21 @@ msgstr "Markdown-Tabelle"
 #: src/pages/StoreCategoryChips.tsx
 msgid "Marketing"
 msgstr "Marketing"
+
+#: src/pages/partner/PartnerPricing.tsx
+#: src/pages/partner/PartnerRevenue.tsx
+msgid "Markup"
+msgstr "Aufschlag"
+
+#. placeholder {0}: item.name
+#: src/pages/partner/PartnerPricing.tsx
+msgid "Markup for {0}"
+msgstr "Aufschlag für {0}"
+
+#. placeholder {0}: item.name
+#: src/pages/partner/PartnerPricing.tsx
+msgid "Markup type for {0}"
+msgstr "Aufschlagsart für {0}"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
@@ -5273,6 +5463,8 @@ msgstr "Montag"
 msgid "month"
 msgstr "Monat"
 
+#: src/pages/partner/PartnerInvoices.tsx
+#: src/pages/partner/PartnerRevenue.tsx
 #: src/pages/Routines.tsx
 msgid "Month"
 msgstr "Monat"
@@ -5288,6 +5480,14 @@ msgstr "Monatliches Guthaben"
 #: src/components/ModelCredits.tsx
 msgid "Monthly credits expire at renewal. Top-ups do not expire."
 msgstr "Monatliches Guthaben verfällt bei der Verlängerung. Aufladungen verfallen nicht."
+
+#: src/pages/partner/PartnerCredits.tsx
+msgid "Monthly limit"
+msgstr "Monatslimit"
+
+#: src/pages/partner/PartnerCredits.tsx
+msgid "Monthly limit for {name}"
+msgstr "Monatslimit für {name}"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error-copy.ts
@@ -5437,6 +5637,7 @@ msgstr "Übernahme erforderlich"
 
 #: src/components/AskCard.tsx
 #: src/lib/roster-status.ts
+#: src/pages/partner/PartnerOverview.tsx
 #: src/pages/shell/computer-overlay.tsx
 msgid "Needs you"
 msgstr "Braucht Sie"
@@ -5478,6 +5679,7 @@ msgstr "Neue Gruppe"
 msgid "New group chat"
 msgstr "Neuer Gruppenchat"
 
+#: src/pages/partner/PartnerIntegration.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
 msgid "New key"
 msgstr "Neuer Schlüssel"
@@ -5605,7 +5807,16 @@ msgstr "Keine Bots"
 msgid "No bots match"
 msgstr "Keine passenden Bots"
 
+#: src/pages/partner/PartnerCustomers.tsx
+msgid "No customers"
+msgstr "Keine Kunden"
+
+#: src/pages/partner/PartnerInvoices.tsx
+msgid "No invoices"
+msgstr "Keine Rechnungen"
+
 #: src/pages/MemberUsageSection.tsx
+#: src/pages/partner/PartnerCredits.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "No limit"
 msgstr "Kein Limit"
@@ -5666,6 +5877,10 @@ msgstr "Keine OpenClaw-, Hermes- oder Agent-Dateien gefunden."
 msgid "No pages yet"
 msgstr "Noch keine Seiten"
 
+#: src/pages/partner/PartnerConsolePage.tsx
+msgid "No partnerships"
+msgstr "Keine Partnerschaften"
+
 #: src/pages/AgentsStore.tsx
 msgid "No public address here, so it checks your inbox on a schedule you approve."
 msgstr "Hier gibt es keine öffentliche Adresse, deshalb prüft er dein Postfach nach einem Zeitplan, den du genehmigst."
@@ -5680,6 +5895,10 @@ msgstr "Keine Remote-MCP-Server gefunden"
 #: src/pages/Store.tsx
 msgid "No results"
 msgstr "Keine Ergebnisse"
+
+#: src/pages/partner/PartnerRevenue.tsx
+msgid "No revenue this month"
+msgstr "Diesen Monat keine Einnahmen"
 
 #: src/pages/home/RoutineTimeline.tsx
 msgid "No routines scheduled."
@@ -5907,6 +6126,7 @@ msgid "Only some roles or people"
 msgstr "Nur bestimmte Rollen oder Personen"
 
 #: src/components/markdown-link-prompt.tsx
+#: src/pages/partner/PartnerOverview.tsx
 #: src/pages/shell/computer-panel.tsx
 #: src/pages/shell/import-setup-card.tsx
 #: src/pages/shell/message-view.tsx
@@ -5935,6 +6155,10 @@ msgstr "Öffnen Sie <0>{0}</0> und geben Sie diesen Code ein:"
 #: src/pages/RoutineCard.tsx
 msgid "Open agent"
 msgstr "Agent öffnen"
+
+#: src/pages/partner/PartnerCustomers.tsx
+msgid "Open as support"
+msgstr "Als Support öffnen"
 
 #: src/pages/shell/chat-header.tsx
 msgid "Open call"
@@ -6078,6 +6302,10 @@ msgstr "Ausgabe"
 msgid "Over its budget"
 msgstr "Über dem Budget"
 
+#: src/pages/partner/PartnerConsolePage.tsx
+msgid "Overview"
+msgstr "Übersicht"
+
 #: src/lib/identity-display.ts
 #: src/lib/use-person-roles.ts
 #: src/pages/Board.tsx
@@ -6107,7 +6335,13 @@ msgstr "PagerDuty-Vorfall"
 msgid "Pages"
 msgstr "Seiten"
 
+#: src/pages/partner/PartnerInvoices.tsx
+#: src/pages/partner/PartnerRevenue.tsx
+msgid "Paid"
+msgstr "Bezahlt"
+
 #: src/pages/Settings.tsx
+#: src/pages/shell/sidebar-partner.tsx
 msgid "Partnership"
 msgstr "Partnerschaft"
 
@@ -6151,6 +6385,8 @@ msgid "Passwords do not match"
 msgstr "Die Passwörter stimmen nicht überein"
 
 #: src/pages/BillingSettingsPanel.tsx
+#: src/pages/partner/PartnerCustomers.tsx
+#: src/pages/partner/PartnerOverview.tsx
 msgid "Past due"
 msgstr "Überfällig"
 
@@ -6184,6 +6420,7 @@ msgstr "Füge deinen API-Schlüssel ein"
 msgid "Paste your API key, then test again."
 msgstr "Füge deinen API-Schlüssel ein und teste erneut."
 
+#: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Pause"
@@ -6195,7 +6432,12 @@ msgstr "Pausieren"
 msgid "Pause all bots"
 msgstr "Alle Bots pausieren"
 
+#: src/pages/partner/PartnerCustomers.tsx
+msgid "Pause customer?"
+msgstr "Kunden pausieren?"
+
 #: src/lib/routine-trigger.ts
+#: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/shell/import-status.ts
 #: src/pages/shell/routing-line.tsx
 #: src/pages/shell/sidebar-header.tsx
@@ -6287,6 +6529,11 @@ msgstr "Angeheftet"
 msgid "Pinned messages"
 msgstr "Angeheftete Nachrichten"
 
+#: src/pages/partner/PartnerCredits.tsx
+#: src/pages/partner/PartnerCustomers.tsx
+msgid "Plan"
+msgstr "Tarif"
+
 #: src/pages/home/PartnerBalance.tsx
 msgid "Plan inactive"
 msgstr "Tarif inaktiv"
@@ -6294,6 +6541,10 @@ msgstr "Tarif inaktiv"
 #: src/pages/home/HomeComposer.tsx
 msgid "Plan the week"
 msgstr "Die Woche planen"
+
+#: src/pages/partner/PartnerPricing.tsx
+msgid "Plans"
+msgstr "Tarife"
 
 #: src/pages/LocalSpeechSection.tsx
 msgid "Play"
@@ -6356,6 +6607,14 @@ msgstr "Zurück"
 msgid "Previous page"
 msgstr "Vorherige Seite"
 
+#: src/pages/partner/PartnerCustomers.tsx
+msgid "Price"
+msgstr "Preis"
+
+#: src/pages/partner/PartnerConsolePage.tsx
+msgid "Pricing"
+msgstr "Preise"
+
 #: src/pages/Board.tsx
 msgid "Priority"
 msgstr "Priorität"
@@ -6367,6 +6626,10 @@ msgstr "Privat"
 #: src/pages/shell/bot-picker.tsx
 msgid "Private workspace with its own bots and groups."
 msgstr "Privater Workspace mit eigenen Bots und Gruppen."
+
+#: src/pages/shell/sidebar-partner.tsx
+msgid "Product"
+msgstr "Produkt"
 
 #: src/pages/AppCatalogGrid.tsx
 msgid "Productivity"
@@ -6592,6 +6855,10 @@ msgstr "Ansicht aktualisieren"
 msgid "Refreshing…"
 msgstr "Wird aktualisiert …"
 
+#: src/pages/partner/PartnerRevenue.tsx
+msgid "Refund"
+msgstr "Erstattung"
+
 #: src/components/WikiChangeCard.tsx
 msgid "Refuse"
 msgstr "Ablehnen"
@@ -6756,6 +7023,10 @@ msgstr "Anweisungen ersetzen"
 msgid "Replace key"
 msgstr "Schlüssel ersetzen"
 
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Replace key? The old one stops working."
+msgstr "Schlüssel ersetzen? Der alte funktioniert nicht mehr."
+
 #: src/lib/server-copy.ts
 msgid "Replace the instructions of {bot}?"
 msgstr "Anweisungen von {bot} ersetzen?"
@@ -6872,6 +7143,7 @@ msgstr "Ihr Workspace wird wiederhergestellt"
 
 #: src/components/RunErrorCard.tsx
 #: src/lib/model-problem.ts
+#: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/shell/sidebar-header.tsx
 #: src/pages/WhatsAppNumbers.tsx
@@ -6882,6 +7154,10 @@ msgstr "Fortsetzen"
 #: src/pages/SpaceSettingsPanel.tsx
 msgid "Resume bots"
 msgstr "Bots fortsetzen"
+
+#: src/pages/partner/PartnerCustomers.tsx
+msgid "Resume customer?"
+msgstr "Kunden fortsetzen?"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error-copy.ts
@@ -6914,6 +7190,15 @@ msgstr "Zurück zum Anruf mit {0}"
 #: src/pages/McpOAuthCallback.tsx
 msgid "Return to Rook"
 msgstr "Zurück zu Rook"
+
+#: src/pages/partner/PartnerConsolePage.tsx
+#: src/pages/partner/PartnerOverview.tsx
+msgid "Revenue"
+msgstr "Einnahmen"
+
+#: src/pages/partner/PartnerOverview.tsx
+msgid "Revenue by month"
+msgstr "Einnahmen pro Monat"
 
 #: src/components/AskCard.tsx
 #: src/lib/activity-label.ts
@@ -7061,6 +7346,10 @@ msgstr "Ausführungen"
 msgid "Runs at {when}"
 msgstr "Läuft am {when}"
 
+#: src/pages/partner/PartnerCustomers.tsx
+msgid "Runs in 30 days"
+msgstr "Läufe in 30 Tagen"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Runs when this bot receives a verified message from this provider."
 msgstr "Läuft, wenn dieser Bot eine verifizierte Nachricht von diesem Anbieter erhält."
@@ -7089,6 +7378,9 @@ msgstr "Samstag"
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/partner/PartnerCredits.tsx
+#: src/pages/partner/PartnerIntegration.tsx
+#: src/pages/partner/PartnerPricing.tsx
 #: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/RoutineEditor.tsx
@@ -7219,6 +7511,10 @@ msgstr "Nach Domain suchen"
 #: src/pages/shell/command-palette.tsx
 msgid "Search channels, agents, people and pages"
 msgstr "Kanäle, Agenten, Personen und Seiten suchen"
+
+#: src/pages/partner/PartnerCustomers.tsx
+msgid "Search customers"
+msgstr "Kunden suchen"
 
 #: src/pages/shell/channel-find.tsx
 msgid "Search in #{channelName}"
@@ -7410,6 +7706,7 @@ msgid "Show list"
 msgstr "Liste anzeigen"
 
 #: src/pages/KnowledgeSection.tsx
+#: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/ScratchpadSection.tsx
 #: src/pages/Store.tsx
 msgid "Show more"
@@ -7697,6 +7994,11 @@ msgstr "Startet"
 msgid "Starting…"
 msgstr "Wird gestartet…"
 
+#: src/pages/partner/PartnerCustomers.tsx
+#: src/pages/partner/PartnerInvoices.tsx
+msgid "State"
+msgstr "Status"
+
 #: src/pages/ActivityList.tsx
 #: src/pages/Board.tsx
 msgid "Status"
@@ -7829,6 +8131,10 @@ msgstr "Rook-Guthaben abonnieren"
 #: src/components/ModelCredits.tsx
 msgid "Subscribe with your own AI"
 msgstr "Mit eigener KI abonnieren"
+
+#: src/pages/partner/PartnerRevenue.tsx
+msgid "Subscription"
+msgstr "Abonnement"
 
 #: src/pages/Paywall.tsx
 msgid "Subscription required"
@@ -8382,6 +8688,18 @@ msgstr "Toolquellen"
 msgid "Tools"
 msgstr "Tools"
 
+#: src/pages/partner/PartnerCredits.tsx
+msgid "Top up"
+msgstr "Aufladen"
+
+#: src/pages/partner/PartnerRevenue.tsx
+msgid "Top-up"
+msgstr "Aufladung"
+
+#: src/pages/partner/PartnerInvoices.tsx
+msgid "Total"
+msgstr "Gesamt"
+
 #: src/components/composer/HoldToTalk.tsx
 msgid "Transcribing…"
 msgstr "Wird transkribiert…"
@@ -8420,6 +8738,7 @@ msgstr "Auslöser"
 #: src/pages/ActivityList.tsx
 #: src/pages/DirectChat.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
+#: src/pages/partner/partner-ui.tsx
 msgid "Try again"
 msgstr "Erneut versuchen"
 
@@ -8445,6 +8764,7 @@ msgstr "Dienstag"
 msgid "Turn off"
 msgstr "Ausschalten"
 
+#: src/pages/partner/PartnerRevenue.tsx
 #: src/pages/shell/bot-credentials.tsx
 msgid "Type"
 msgstr "Typ"
@@ -8648,6 +8968,10 @@ msgstr "Gefundenes Modell verwenden"
 msgid "Use a read-only database role."
 msgstr "Eine schreibgeschützte Datenbankrolle verwenden."
 
+#: src/pages/partner/PartnerCredits.tsx
+msgid "Use by customer"
+msgstr "Nutzung pro Kunde"
+
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Use computers"
 msgstr "Computer nutzen"
@@ -8687,6 +9011,10 @@ msgstr "Space-Standard verwenden"
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "Verwenden Sie bis zu 512 Buchstaben, Ziffern, _ oder -."
+
+#: src/pages/partner/PartnerCredits.tsx
+msgid "Used"
+msgstr "Genutzt"
 
 #: src/pages/ConnectionsPage.tsx
 msgid "Used by {usedBy}"
@@ -8783,6 +9111,10 @@ msgstr "Stimme"
 msgid "Voices"
 msgstr "Stimmen"
 
+#: src/pages/partner/PartnerInvoices.tsx
+msgid "Void"
+msgstr "Storniert"
+
 #: src/pages/Usage.tsx
 msgid "vs. the 30 days before"
 msgstr "gegenüber den 30 Tagen davor"
@@ -8833,9 +9165,14 @@ msgstr "Web, Desktop und Mobil"
 msgid "Web, desktop and mobile apps"
 msgstr "Web-, Desktop- und Mobil-Apps"
 
+#: src/pages/partner/PartnerIntegration.tsx
 #: src/pages/RoutineEditor.tsx
 msgid "Webhook"
 msgstr "Webhook"
+
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Webhook URL"
+msgstr "Webhook-URL"
 
 #: src/pages/shell/bot-credentials.tsx
 msgid "Website login"
@@ -9003,6 +9340,7 @@ msgid "working"
 msgstr "arbeitet"
 
 #: src/pages/home/WorkingFeed.tsx
+#: src/pages/partner/PartnerCustomers.tsx
 msgid "Working"
 msgstr "Arbeitet"
 
@@ -9080,6 +9418,10 @@ msgstr "Du kannst dieses Fenster schließen."
 #: src/components/call/VoiceChatCard.tsx
 msgid "You declined"
 msgstr "Du hast abgelehnt"
+
+#: src/pages/partner/PartnerRevenue.tsx
+msgid "You earn"
+msgstr "Sie verdienen"
 
 #: src/pages/shell/computer-overlay.tsx
 msgid "You have control"

@@ -3,6 +3,7 @@ import { generatePartnerKey } from "@corvo/core/node/partner-key";
 import type { PrismaClient } from "./client.js";
 import { Prisma } from "./client.js";
 import type { Partner } from "./generated/prisma/client.js";
+import { ensurePartnerMember } from "./partners.js";
 
 /** These manage a partner by the person who owns it. Call with a client that runs as the system. */
 
@@ -22,6 +23,7 @@ export async function createOwnedPartner(
         ownerUserId: userId,
       },
     });
+    await ensurePartnerMember(prisma, partner);
     return { partner, key: issued.key };
   } catch (error) {
     if ((error as { code?: unknown })?.code === "P2002") throw new Error("Already a partner");

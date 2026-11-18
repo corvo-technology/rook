@@ -478,6 +478,65 @@ export async function addTenantTopup(
   };
 }
 
+/**
+ * Credit the partner gives a customer outside a sale (from the console or an agent), as a top-up
+ * lot that lasts as long as a purchased one. Rook's cost is billed to the partner as an
+ * `adjustment` row (all of it Rook's share, nothing paid), so a gift is never free to Rook. The
+ * same idempotency key adds it once, even across processes.
+ */
+export async function addTenantCredit(
+  prisma: PrismaClient,
+  partner: CommercePartner,
+  tenant: CommerceTenant,
+  input: { amountMinor: number; idempotencyKey: string },
+  now = new Date(),
+) {
+  if (tenant.state === "suspended") throw new CommerceError("tenant_suspended");
+  if (!Number.isSafeInteger(input.amountMinor) || input.amountMinor <= 0) {
+    throw new CommerceError("invalid_amount");
+  }
+  const settings = await commerceSettings(prisma);
+  if (input.amountMinor > settings.maxTopupMinorPerCall) throw new CommerceError("limit_exceeded");
+  const subscription = await prisma.tenantSubscription.findUnique({
+    where: { partnerTenantId: tenant.id },
+  });
+  if (!stateAllowsAccess(subscriptionState(subscription, now, settings.graceDays))) {
+    throw new CommerceError("plan_inactive");
+  }
+  const key = short(input.idempotencyKey);
+  const source = `${partner.id}:${tenant.id}:credit:${key}`;
+  await grantCredit(
+    prisma,
+    tenant,
+    {
+      source: `commerce:${source}`,
+      kind: "topup",
+      period: periodLabel(now),
+      currency: partner.currency,
+      creditMinor: input.amountMinor,
+      rateAt: now,
+      expiresAt: addMonthsUtc(now, settings.topupExpiryMonths),
+      spreadBps: settings.fxSpreadBps,
+    },
+    now,
+  );
+  await writeEntry(prisma, {
+    source: `rs:${source}`,
+    partnerId: partner.id,
+    partnerTenantId: tenant.id,
+    kind: "adjustment",
+    period: periodLabel(now),
+    currency: partner.currency,
+    baseMinor: input.amountMinor,
+    rookShareMinor: input.amountMinor,
+    partnerCommissionMinor: 0,
+    markupMinor: 0,
+    paidMinor: 0,
+  });
+  const balance = await commerceBalance(prisma, partner, tenant, now);
+  return { creditMinor: input.amountMinor, remainingMinor: balance.remainingMinor };
+}
+
 export interface RefundInput {
   externalPaymentId: string;
   amountMinor?: number;

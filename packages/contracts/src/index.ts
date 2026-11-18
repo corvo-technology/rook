@@ -43,6 +43,8 @@ export * from "./notifications.js";
 export * from "./onboarding-profile.js";
 export * from "./openai-compatible-ui.js";
 export * from "./partner.js";
+export * from "./partner-console.js";
+export * from "./partner-credits.js";
 export * from "./plans.js";
 export * from "./reactions.js";
 export * from "./routine-watch.js";

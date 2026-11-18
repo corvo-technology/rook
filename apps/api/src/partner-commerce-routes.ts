@@ -10,11 +10,12 @@ import type {
   CommercePartner,
   CommerceTenant,
   IdempotentOutcome,
+  MarkupRule,
   RefundInput,
   SubscriptionInput,
   TopupInput,
 } from "@corvo/db";
-import { CommerceError, requestHash } from "@corvo/db";
+import { CommerceError, markupItemId, markupMinor, requestHash } from "@corvo/db";
 import type { Context, Hono } from "hono";
 import { readBoundedBody } from "./http-body.js";
 import type { PartnerAuth } from "./partner-routes.js";
@@ -56,6 +57,8 @@ export interface PartnerCommerceDeps {
   /** Only ever finds a customer of the partner asking. */
   findTenant(partnerId: string, externalTenantId: string): Promise<CommerceTenant | null>;
   catalog(currency: string): Promise<CatalogView>;
+  /** The partner's markups by item id (`plan:<key>`, `pack:<key>`); empty when it set none. */
+  markups(partnerId: string): Promise<ReadonlyMap<string, MarkupRule>>;
   setSubscription(
     partner: CommercePartner,
     tenant: CommerceTenant,
@@ -162,19 +165,26 @@ export function mountPartnerCommerceRoutes(app: Hono, deps: PartnerCommerceDeps)
   app.get("/api/partner/v1/catalog", async (c) => {
     const partner = await guard(c, "commerce:read");
     if (partner instanceof Response) return partner;
-    const catalog = await deps.catalog(partner.currency);
-    // Markups arrive with the partner console; until then the price to charge is the base.
-    const priced = (item: CatalogView["plans"][number]) => ({
-      key: item.key,
-      baseMinor: item.baseMinor,
-      markupMinor: 0,
-      priceMinor: item.baseMinor,
-      creditMinor: item.creditMinor,
-    });
+    const [catalog, markups] = await Promise.all([
+      deps.catalog(partner.currency),
+      deps.markups(partner.id),
+    ]);
+    // What to charge a new sale: the base plus the markup the partner set in the console. A
+    // subscription already sold keeps the price in its own snapshot until it renews.
+    const priced = (kind: "plan" | "pack") => (item: CatalogView["plans"][number]) => {
+      const markup = markupMinor(item.baseMinor, markups.get(markupItemId(kind, item.key)));
+      return {
+        key: item.key,
+        baseMinor: item.baseMinor,
+        markupMinor: markup,
+        priceMinor: item.baseMinor + markup,
+        creditMinor: item.creditMinor,
+      };
+    };
     return c.json({
       currency: catalog.currency,
-      plans: catalog.plans.map(priced),
-      packs: catalog.packs.map(priced),
+      plans: catalog.plans.map(priced("plan")),
+      packs: catalog.packs.map(priced("pack")),
     });
   });
 

@@ -764,3 +764,64 @@ What shipped, and where it differs from the sketch above.
   lowThresholdReached }` in minor units, or `null` for anyone who is not a commerce customer.
   `remaining` is the plan credit left this period and `topupRemaining` the purchased credit on top of it (sold out is their sum at zero); `state` is `active`, `past_due` or `lapsed`; `checkoutUrl` is the partner's address
   with the customer and pack filled in (`{tenant}` and `{pack}` placeholders, or `?tenant=&pack=`).
+
+## 16. F3 console (server side)
+
+The console lives inside the partner's own workspace and is driven by the `partnerConsole` RPC
+namespace. The service functions in `apps/api/src/partner-console/` hold all the logic; the routes
+only authorize and translate, so agent tools use the same functions.
+
+- **Who.** An organization manages a partner through `PartnerMember`, so one organization can run
+  several partners. The migration backfills a row for every existing partner (the organization of
+  its owner, or of the account whose credit pays for it); `Partner.ownerUserId` stays as it was for
+  the previous release. Calls need the `manage_partner` permission, which owners hold and the
+  default Admin role gets (existing Admin roles are updated by the migration). A partner the
+  organization does not manage is answered as not found.
+- **Markup.** `PartnerMarkup` stores one rule per plan or pack: fixed (minor units) or percent
+  (basis points), capped at 100% of the base. The customer pays `base + markup`; the commission is
+  inside the base (section 1), so the partner earns `commission + markup`. `GET /catalog` now
+  returns the markup and price. A subscription keeps the price in its snapshot until its period
+  ends; the console shows the snapshot, then the current price.
+- **Customers.** List (filters: credit low, past due, paused; search; cursor), detail (numbers and
+  states only, never conversations), and pause, resume and add credit under an idempotency key.
+  Credit given outside a sale is a top-up lot billed to the partner as an `adjustment` row, so it is
+  never free to Rook; a wallet partner's credit comes out of its own credit like the allowance.
+- **Support session.** A one-use entry address as the customer, valid for a minute, audited.
+- **Revenue.** Per-month ledger lines and totals, the partner's invoices, and a CSV statement.
+- **Integration.** Key prefix, webhook address, key rotation (the new key is shown once).
+- **Audit.** `PartnerAuditEvent` records every console change with who made it, as numbers and ids
+  only. Commission, mode, country and currency cannot be changed from the console.
+
+### 16.1 Embedded credit model (supersedes markup and commission for embedded partners)
+
+In embedded mode the customer belongs to the partner and Rook never bills or controls it. Only the
+partner pays Rook: a monthly partner plan with included credits, plus top-ups. All usage of all of
+the partner's customers is debited from one fund, the partner's credit wallet. One credit is one
+US cent of the fund.
+
+- **What is debited.** Rook-provided model tokens (each model at its own rate), platform voice,
+  computer minutes and storage above an allowance. Credit price is provider cost plus Rook's margin.
+  Plan credits expire with the period; top-ups follow the configured expiry.
+- **Own models are free.** A run on a customer's or partner's own connection (own key, a local or
+  self-hosted model, a CLI engine on their own plan) debits no model credits: only deployment
+  credentials reach the credit meter. Computer minutes, storage above the allowance and platform
+  voice are still debited. The partner's allowed-models list applies only to Rook-provided models.
+- **No numbers in code.** Plan tiers, margins per model and per resource, provider costs, top-up
+  markup, top-up expiry and the low-balance threshold are one versioned config
+  (`PartnerPricingVersion`), written by a platform admin through `platform.partnerPricing`
+  (`get`, `publish`, `simulate`). The highest version is live; earlier ones are kept.
+- **Simulator.** `simulatePartnerPricing` takes a plan price and credits, a number of customers and a
+  usage mix (models with tokens and an `own` flag, voice minutes, computer minutes, storage) and
+  returns credits per customer, the cost split between models and infrastructure, Rook's margin and
+  how many customers the plan's credits cover. Integer maths, deterministic.
+- **Partner controls.** Per-customer monthly credit limit (`creditLimitCredits`; at the limit the
+  customer is blocked from Rook-provided AI and `customer.credit_limit_reached` is sent), allowed
+  models, auto top-up settings, and `partner.balance_low` when the fund falls under the configured
+  share. Console RPCs: `partnerConsole.credits`, `setCustomerLimit`, `setAllowedModels`,
+  `setAutoTopup`, `topup` (through Rook's checkout) and `invoices`.
+- **Referral and white label** keep section 1: Rook sells, the partner gets the commission plus an
+  optional markup. `pricing` and `setPricing` are refused for embedded partners, and `credits` for
+  the others.
+- **Status.** Built: the config, the simulator, the controls and the RPCs. Not yet: stopping a run at
+  a customer's limit or outside the allowed models, sending the two new webhooks, running auto
+  top-up, and billing the partner plan itself (the console shows no plan until then).

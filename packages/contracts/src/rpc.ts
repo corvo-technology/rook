@@ -193,6 +193,26 @@ import {
   PartnerLimitsInput,
   PartnerTemplate,
 } from "./partner.js";
+import {
+  PartnerConsoleActionInput,
+  PartnerConsoleActionResultSchema,
+  PartnerConsoleCustomerDetailSchema,
+  PartnerConsoleCustomerSchema,
+  PartnerConsoleCustomersInput,
+  PartnerConsoleIntegrationSchema,
+  PartnerConsoleOverviewSchema,
+  PartnerConsolePartnerSchema,
+  PartnerConsolePricingSchema,
+  PartnerConsoleRevenueSchema,
+  PartnerConsoleSetPricingInput,
+} from "./partner-console.js";
+import {
+  PartnerCreditsSchema,
+  PartnerPricingConfigSchema,
+  PartnerPricingVersionSchema,
+  PartnerSimulationInputSchema,
+  PartnerSimulationSchema,
+} from "./partner-credits.js";
 import { PlanIdSchema, PlanOverrideSchema, PlanUsageSchema } from "./plans.js";
 import { MessageReactionSchema } from "./reactions.js";
 import { RoutineWatchSchema } from "./routine-watch.js";
@@ -1499,6 +1519,16 @@ export const appContract = {
         .input(z.object({ organizationId: Id, override: PlanOverrideSchema }))
         .output(z.object({ ok: z.literal(true) })),
     },
+    /** The embedded partner credit pricing: versioned, written here and nowhere in code. */
+    partnerPricing: {
+      get: oc.output(PartnerPricingVersionSchema.nullable()),
+      /** Writes the next version; earlier ones are kept. */
+      publish: oc
+        .input(z.object({ config: PartnerPricingConfigSchema }))
+        .output(z.object({ version: z.number().int() })),
+      /** Against the live version, or against `config` when an admin tries a draft. */
+      simulate: oc.input(PartnerSimulationInputSchema).output(PartnerSimulationSchema),
+    },
     /** Rook's monthly invoices of its share to embedded commerce partners. */
     invoices: {
       list: oc
@@ -1552,6 +1582,108 @@ export const appContract = {
         }),
       )
       .output(z.object({ ok: z.literal(true) })),
+  },
+  /**
+   * The partner console, for members of an organization that runs one or more partners and holds
+   * the `manage_partner` permission. Every call names a partner the caller's organization manages;
+   * any other is answered as if it did not exist. Money is minor units; never customer content.
+   */
+  partnerConsole: {
+    partners: oc.output(z.array(PartnerConsolePartnerSchema)),
+    overview: oc
+      .input(
+        z.object({
+          partnerId: Id,
+          /** A month such as 2026-11; the current one when left out. */
+          period: z
+            .string()
+            .regex(/^\d{4}-(0[1-9]|1[0-2])$/)
+            .optional(),
+        }),
+      )
+      .output(PartnerConsoleOverviewSchema),
+    customers: oc
+      .input(PartnerConsoleCustomersInput)
+      .output(
+        z.object({ items: z.array(PartnerConsoleCustomerSchema), next: z.string().nullable() }),
+      ),
+    customer: oc
+      .input(z.object({ partnerId: Id, tenantId: Id }))
+      .output(PartnerConsoleCustomerDetailSchema),
+    /** pause, resume or add_credit; the same idempotencyKey acts once. */
+    customerAction: oc.input(PartnerConsoleActionInput).output(PartnerConsoleActionResultSchema),
+    /** "Open as support": a one-use address that signs in as the customer; audited. */
+    supportSession: oc
+      .input(z.object({ partnerId: Id, tenantId: Id }))
+      .output(z.object({ url: z.string(), expiresAt: z.string() })),
+    pricing: oc.input(z.object({ partnerId: Id })).output(PartnerConsolePricingSchema),
+    setPricing: oc.input(PartnerConsoleSetPricingInput).output(PartnerConsolePricingSchema),
+    revenue: oc
+      .input(z.object({ partnerId: Id, period: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/) }))
+      .output(PartnerConsoleRevenueSchema),
+    /** A `data:text/csv` address for the month's statement, ready for a download link. */
+    revenueCsv: oc
+      .input(z.object({ partnerId: Id, period: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/) }))
+      .output(z.object({ url: z.string(), filename: z.string() })),
+    integration: oc.input(z.object({ partnerId: Id })).output(PartnerConsoleIntegrationSchema),
+    /** Replaces the key; the old one stops working at once and the new one is shown once. */
+    rotateKey: oc
+      .input(z.object({ partnerId: Id }))
+      .output(z.object({ key: z.string(), prefix: z.string() })),
+    /**
+     * Embedded partners: the plan, the fund and each customer's use of it, in credits (one credit
+     * is one US cent of the fund). White-label and referral partners use pricing instead.
+     */
+    credits: oc.input(z.object({ partnerId: Id })).output(PartnerCreditsSchema),
+    /** A monthly cap per customer; null removes it. At the cap `customer.credit_limit_reached` is sent. */
+    setCustomerLimit: oc
+      .input(
+        z.object({
+          partnerId: Id,
+          tenantId: Id,
+          limitCredits: z.number().int().positive().max(2_000_000_000).nullable(),
+        }),
+      )
+      .output(z.object({ limitCredits: z.number().int().nullable() })),
+    /** The models customers may use; an empty list allows all. */
+    setAllowedModels: oc
+      .input(z.object({ partnerId: Id, models: z.array(z.string().min(1).max(120)).max(200) }))
+      .output(z.object({ models: z.array(z.string()) })),
+    setAutoTopup: oc
+      .input(
+        z.object({
+          partnerId: Id,
+          enabled: z.boolean(),
+          thresholdCredits: z.number().int().positive().max(2_000_000_000).nullable(),
+          amountMinor: z.number().int().positive().max(2_000_000_000).nullable(),
+        }),
+      )
+      .output(z.object({ ok: z.literal(true) })),
+    /** Starts a top-up of the partner's fund through Rook's checkout; pay at the address returned. */
+    topup: oc
+      .input(
+        z.object({
+          partnerId: Id,
+          amountMinor: z.number().int().positive().max(2_000_000_000),
+          idempotencyKey: z.string().min(8).max(128),
+        }),
+      )
+      .output(z.object({ url: z.string() })),
+    /** What the partner has paid Rook: invoices by period. */
+    invoices: oc.input(z.object({ partnerId: Id })).output(
+      z.array(
+        z.object({
+          id: Id,
+          period: z.string(),
+          state: z.enum(["draft", "issued", "paid", "void"]),
+          totalMinor: z.number().int(),
+        }),
+      ),
+    ),
+    /** An https address, or null to stop notices. */
+    setWebhook: oc
+      .input(z.object({ partnerId: Id, url: z.string().trim().max(2048).nullable() }).strict())
+      .output(z.object({ url: z.string().nullable(), enabled: z.boolean() })),
   },
   /** The email agent: a bot that uses an inbox service's MCP server for its own inbox. */
   emailAgent: {

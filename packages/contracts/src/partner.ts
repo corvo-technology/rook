@@ -172,6 +172,8 @@ export const PARTNER_WEBHOOK_EVENTS = [
   "credit.granted",
   "credit.expired",
   "invoice.issued",
+  "customer.credit_limit_reached",
+  "partner.balance_low",
 ] as const;
 export type PartnerWebhookEventType = (typeof PARTNER_WEBHOOK_EVENTS)[number];
 

@@ -67,6 +67,13 @@ function fixture() {
       plans: [{ key: "team", name: "Team", baseMinor: 49900, creditMinor: 20000 }],
       packs: [{ key: "pack_s", name: "Small", baseMinor: 5000, creditMinor: 5000 }],
     }),
+    markups: async (partnerId) =>
+      partnerId === "a"
+        ? new Map([
+            ["plan:team", { kind: "percent" as const, value: 1500 }],
+            ["pack:pack_s", { kind: "fixed" as const, value: 700 }],
+          ])
+        : new Map(),
     setSubscription: vi.fn(async (_p, _t, input) => {
       if (input.plan === "nope") throw new CommerceError("unknown_plan");
       return { events: [], body: { plan: input.plan, status: input.status } };
@@ -123,18 +130,27 @@ const SUBSCRIPTION = {
 };
 
 describe("partner commerce API", () => {
-  it("answers the catalog in the partner's currency with prices in minor units", async () => {
+  it("answers the catalog with the partner's markup added, in minor units", async () => {
     const { call } = fixture();
     const response = await call("GET", "/catalog", KEY_COMMERCE);
     expect(response.status).toBe(200);
+    // 15% of 49900 rounds down to 7485; the fixed markup on the pack is 700.
     expect(await response.json()).toEqual({
       currency: "BRL",
       plans: [
-        { key: "team", baseMinor: 49900, markupMinor: 0, priceMinor: 49900, creditMinor: 20000 },
+        { key: "team", baseMinor: 49900, markupMinor: 7485, priceMinor: 57385, creditMinor: 20000 },
       ],
       packs: [
-        { key: "pack_s", baseMinor: 5000, markupMinor: 0, priceMinor: 5000, creditMinor: 5000 },
+        { key: "pack_s", baseMinor: 5000, markupMinor: 700, priceMinor: 5700, creditMinor: 5000 },
       ],
+    });
+  });
+
+  it("answers the base price for a partner that set no markup", async () => {
+    const { call } = fixture();
+    const response = await call("GET", "/catalog", KEY_OTHER);
+    expect(await response.json()).toMatchObject({
+      plans: [{ markupMinor: 0, priceMinor: 49900 }],
     });
   });
 

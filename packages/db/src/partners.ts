@@ -22,7 +22,36 @@ export async function createPartner(
       keyHash: issued.hash,
     },
   });
+  await ensurePartnerMember(prisma, partner);
   return { partner, key: issued.key };
+}
+
+/**
+ * Makes the organization that owns a partner (or whose credit pays for it) its manager in the
+ * console. Safe to repeat; a partner with neither has no manager until one is added.
+ */
+export async function ensurePartnerMember(
+  prisma: PrismaClient,
+  partner: { id: string; ownerUserId?: string | null; walletOwnerUserId?: string | null },
+): Promise<void> {
+  const payer = partner.ownerUserId ?? partner.walletOwnerUserId;
+  if (!payer) return;
+  const membership = await prisma.member.findFirst({
+    where: { userId: payer, role: "owner" },
+    orderBy: { createdAt: "asc" },
+    select: { organizationId: true },
+  });
+  if (!membership) return;
+  await prisma.partnerMember.upsert({
+    where: {
+      partnerId_organizationId: {
+        partnerId: partner.id,
+        organizationId: membership.organizationId,
+      },
+    },
+    create: { partnerId: partner.id, organizationId: membership.organizationId },
+    update: {},
+  });
 }
 
 /** The old key stops working in the same statement that stores the new one. */
@@ -176,7 +205,8 @@ export async function configurePartnerCommerce(
   return prisma.partner.update({ where: { slug }, data });
 }
 
-function isHttpsUrl(value: string): boolean {
+/** True for an https address, with the `{tenant}` and `{pack}` placeholders allowed. */
+export function isHttpsUrl(value: string): boolean {
   try {
     return (
       new URL(value.replaceAll("{tenant}", "x").replaceAll("{pack}", "x")).protocol === "https:"

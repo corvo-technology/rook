@@ -418,6 +418,7 @@ export function useKeyLabels() {
       manage_roles: t`Manage roles`,
       manage_billing: t`Manage billing`,
       create_spaces: t`Create spaces`,
+      manage_partner: t`Manage partners`,
     } satisfies Record<Exclude<SpacePermission, "administrator">, string>,
   };
 }

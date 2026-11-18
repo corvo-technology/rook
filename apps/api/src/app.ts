@@ -151,6 +151,7 @@ import {
   purgeExpiredEntryCodes,
   pushSessionExpiresAt,
   readCatalog,
+  readPartnerMarkups,
   refundTenantPayment,
   requireMembership,
   rowSecurityWarning,
@@ -1263,6 +1264,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     findTenant: (partnerId, externalTenantId) =>
       findPartnerTenant(prisma, partnerId, externalTenantId),
     catalog: (currency) => readCatalog(prisma, currency),
+    markups: (partnerId) => readPartnerMarkups(prisma, partnerId),
     setSubscription: (partner, tenant, input, now) =>
       setTenantSubscription(prisma, partner, tenant, input, now),
     topup: (partner, tenant, input, now) => addTenantTopup(prisma, partner, tenant, input, now),

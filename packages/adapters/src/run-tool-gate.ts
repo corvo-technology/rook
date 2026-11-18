@@ -141,6 +141,9 @@ export async function gateToolCall(
   const composioBatch = composioBatchActions(name, args);
   const unidentifiedAction = Boolean(composioBatch && !composioBatch.complete);
   const approvalToolNames = composioBatch?.slugs.length ? composioBatch.slugs : [name];
+  // Only the built-in partner connection's own reads skip the name check; the same name from any
+  // other source (an MCP server, an installed API) still asks.
+  const fromPartnerConnector = viaConnector && connectorCall.route?.connectorId === "partner";
   const declaredReadOnlyFor = (toolName: string) =>
     toolName === name ? declaredReadOnly : ctx.tools.connector.get(toolName)?.readOnly;
   // Looking a tool up in the catalog runs nothing at the provider, so its name need not read as a
@@ -193,7 +196,12 @@ export async function gateToolCall(
     !unidentifiedAction &&
     approvalToolNames.every(
       (toolName) =>
-        catalogLookup || !connectorToolRequiresApproval(toolName, declaredReadOnlyFor(toolName)),
+        catalogLookup ||
+        !connectorToolRequiresApproval(
+          toolName,
+          declaredReadOnlyFor(toolName),
+          fromPartnerConnector,
+        ),
     ) &&
     connectorReadRequiresApproval({
       tainted: await isRunTainted(ctx),
@@ -219,7 +227,12 @@ export async function gateToolCall(
     unidentifiedAction ||
     (!catalogLookup &&
       approvalToolNames.some((toolName) =>
-        toolRequiresApproval(toolName, viaConnector, declaredReadOnlyFor(toolName)),
+        toolRequiresApproval(
+          toolName,
+          viaConnector,
+          declaredReadOnlyFor(toolName),
+          fromPartnerConnector,
+        ),
       ));
   // A gated read still fails closed when its review errors, and keeps its approval key.
   const gated = requiresApprovalByDefault || connectorReadGated;

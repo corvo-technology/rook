@@ -3,8 +3,9 @@ import { fetchFresh } from "@corvo/core/query";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useSpaceQueries } from "../../lib/query";
+import { usePartnerNames } from "../../lib/use-partners";
 import type { ConnectionItem } from "./connection-model";
-import { databaseItem, lendableBots, mailboxItem, mcpItem } from "./connection-model";
+import { databaseItem, lendableBots, mailboxItem, mcpItem, partnerItem } from "./connection-model";
 
 /** How often the list is re-read while a server installs its package or is being tested. */
 const INSTALL_POLL_MS = 2500;
@@ -40,6 +41,7 @@ export function useConnections({ testing = false }: { testing?: boolean } = {}) 
   // Databases are listed only to people who manage connections, as before.
   const databasesOptions = queries.databases.list.queryOptions();
   const databases = useQuery({ ...databasesOptions, enabled: canManage });
+  const partnerNames = usePartnerNames();
   const accessOptions = queries.access.list.queryOptions();
   const access = useQuery(accessOptions);
   const botsOptions = queries.bots.list.queryOptions();
@@ -50,8 +52,9 @@ export function useConnections({ testing = false }: { testing?: boolean } = {}) 
       ...(servers.data ?? []).map(mcpItem),
       ...(databases.data ?? []).map(databaseItem),
       ...(mailboxes.data ?? []).map(mailboxItem),
+      ...(partnerNames.length > 0 ? [partnerItem(partnerNames)] : []),
     ],
-    [servers.data, databases.data, mailboxes.data],
+    [servers.data, databases.data, mailboxes.data, partnerNames],
   );
 
   async function refresh() {

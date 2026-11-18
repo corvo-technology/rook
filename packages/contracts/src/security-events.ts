@@ -23,6 +23,7 @@ export const SECURITY_EVENT_TYPES = [
   "database.query",
   "mailbox.sent",
   "mailbox.send_refused",
+  "partner.agent_action",
   "rate_limit.hit",
   "consultation.created",
   "consultation.accessed",

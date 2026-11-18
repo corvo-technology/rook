@@ -12,6 +12,7 @@ const skillList = vi.hoisted(() => ({ current: [] as Array<{ name: string }> }))
 const addAgent = vi.hoisted(() => vi.fn());
 const navigate = vi.hoisted(() => vi.fn());
 const emailStatus = vi.hoisted(() => ({ available: true }));
+const partners = vi.hoisted(() => ({ current: [] as string[] }));
 
 vi.mock("../lib/agent-catalog-install", async () => {
   const actual = await vi.importActual<typeof import("../lib/agent-catalog-install")>(
@@ -41,6 +42,7 @@ vi.mock("../lib/query", () => ({
     },
   }),
 }));
+vi.mock("../lib/use-partners", () => ({ usePartnerNames: () => partners.current }));
 vi.mock("react-router-dom", () => ({ useNavigate: () => navigate }));
 vi.mock("@lingui/react/macro", () => ({
   Trans: ({ children }: { children: ReactNode }) => children,
@@ -74,6 +76,7 @@ beforeEach(() => {
   bots.current = [];
   skillList.current = [];
   emailStatus.available = true;
+  partners.current = [];
   addAgent.mockReset().mockResolvedValue({ botId: "bot-1" });
   navigate.mockReset();
   onOpenApp.mockReset();
@@ -221,4 +224,16 @@ it("filters by category, and combines the category with the search", async () =>
   // Invoice Assistant is a finance agent, so marketing plus that search leaves nothing.
   expect(card(searched.host, "invoice-assistant")).toBeNull();
   await searched.unmount();
+});
+
+it("offers the partner agents only to an organization that is a member of a partner", async () => {
+  const without = await mount();
+  expect(card(without.host, "portfolio-manager")).toBeNull();
+  expect(card(without.host, "customer-success")).toBeNull();
+  await without.unmount();
+  partners.current = ["Clinic Suite"];
+  const member = await mount();
+  expect(card(member.host, "portfolio-manager")).not.toBeNull();
+  expect(card(member.host, "customer-success")).not.toBeNull();
+  await member.unmount();
 });

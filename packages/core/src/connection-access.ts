@@ -4,7 +4,7 @@ import { connectorToolIsRead } from "./action-approval.js";
 export const ACCESS_LEVELS = ["none", "read", "write"] as const;
 export type AccessLevel = (typeof ACCESS_LEVELS)[number];
 export type StoredAccessLevel = Exclude<AccessLevel, "none">;
-export type ConnectionKind = "mcp" | "database" | "mailbox";
+export type ConnectionKind = "mcp" | "database" | "mailbox" | "partner";
 
 /** The levels a kind of connection offers. A database is only ever read. */
 export function accessLevelsFor(kind: ConnectionKind): readonly AccessLevel[] {
@@ -48,4 +48,25 @@ export function mailboxToolOffered(
   tool: "search" | "read" | "draft" | "send" | string,
 ): boolean {
   return storedAccessLevel(level) === "write" || MAILBOX_READ_TOOLS.includes(tool);
+}
+
+/** The partner tools that only look at numbers and states. Everything else changes a customer. */
+export const PARTNER_READ_TOOLS: readonly string[] = [
+  "list_customers",
+  "customer_usage",
+  "attention",
+  "revenue_summary",
+  "invoices",
+];
+
+/** The partner tools that change a customer. They need write, and always a person's approval. */
+export const PARTNER_WRITE_TOOLS: readonly string[] = [
+  "add_credit",
+  "pause_customer",
+  "resume_customer",
+  "set_customer_limit",
+];
+
+export function partnerToolOffered(level: string | null | undefined, tool: string): boolean {
+  return storedAccessLevel(level) === "write" || PARTNER_READ_TOOLS.includes(tool);
 }

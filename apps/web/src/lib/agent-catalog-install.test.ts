@@ -7,6 +7,7 @@ const replace = vi.hoisted(() => vi.fn());
 const emailInstall = vi.hoisted(() => vi.fn());
 const send = vi.hoisted(() => vi.fn());
 const createSkill = vi.hoisted(() => vi.fn());
+const setAccess = vi.hoisted(() => vi.fn());
 
 vi.mock("./rpc", () => ({
   rpc: {
@@ -15,6 +16,7 @@ vi.mock("./rpc", () => ({
     emailAgent: { install: emailInstall },
     threads: { send },
     agentSkills: { create: createSkill },
+    access: { set: setAccess },
   },
 }));
 
@@ -28,6 +30,7 @@ beforeEach(() => {
   emailInstall.mockReset().mockResolvedValue({ botId: "bot-2" });
   send.mockReset().mockResolvedValue({});
   createSkill.mockReset().mockResolvedValue({});
+  setAccess.mockReset().mockResolvedValue({ ok: true });
 });
 
 describe("connectedServersFor", () => {
@@ -148,5 +151,21 @@ describe("catalogAgentOf", () => {
     expect(catalogAgentOf({ spawnKey: null })).toBeUndefined();
     expect(catalogAgentOf({ spawnKey: "onboarding:first" })).toBeUndefined();
     expect(catalogAgentOf({})).toBeUndefined();
+  });
+});
+
+describe("addCatalogAgent for a partner agent", () => {
+  it("lends it the Partnership connection at read, and no other agent gets it", async () => {
+    await addCatalogAgent(agent("customer-success"), "pt-BR", [], []);
+    expect(setAccess).toHaveBeenCalledOnce();
+    expect(setAccess).toHaveBeenCalledWith({
+      kind: "partner",
+      connectionId: "partner",
+      botIds: ["bot-1"],
+      level: "read",
+    });
+    setAccess.mockClear();
+    await addCatalogAgent(agent("bug-triage"), "en", [], []);
+    expect(setAccess).not.toHaveBeenCalled();
   });
 });

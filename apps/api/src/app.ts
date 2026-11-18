@@ -86,6 +86,7 @@ import {
   McpConnector,
   McpOAuthBroker,
   messagingPlatformsFromEnv,
+  PartnerConnector,
   PiAgentRuntime,
   PiOAuthLogins,
   PipedreamConnector,
@@ -214,6 +215,7 @@ import { messagingStatusSource } from "./messaging-status.js";
 import { mountMessagingWebhookRoutes } from "./messaging-webhook.js";
 import { monitoringRoutes } from "./monitoring.js";
 import { mountPartnerCommerceRoutes } from "./partner-commerce-routes.js";
+import { createPrismaPartnerToolsPort } from "./partner-console/agent-tools.js";
 import { createAutoTopupRunner } from "./partner-console/index.js";
 import { mountPartnerConsultationRoutes } from "./partner-consultations.js";
 import { partnerConsultationDeps } from "./partner-consultations-deps.js";
@@ -593,6 +595,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   const stack = createConnectorStack(composioOverride, [
     installed,
     mailboxes,
+    new PartnerConnector({ prisma, port: createPrismaPartnerToolsPort(prisma) }),
     ...integrationSettings
       .providers()
       .filter((provider) => !composioOverride || provider.describe().id !== "composio"),

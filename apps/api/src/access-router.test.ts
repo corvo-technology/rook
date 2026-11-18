@@ -18,6 +18,9 @@ type Rows = {
   servers?: unknown[];
   mailboxes?: unknown[];
   databases?: unknown[];
+  partnerGrants?: unknown[];
+  /** Whether the space's organization is a member of a partner. */
+  partnerMember?: boolean;
 };
 
 function setup(role: string, rows: Rows = {}) {
@@ -62,6 +65,30 @@ function setup(role: string, rows: Rows = {}) {
     botDatabaseGrant: {
       findMany: vi.fn(async () => rows.databases ?? []),
       createMany: vi.fn(async () => ({ count: 0 })),
+      deleteMany: vi.fn(async () => ({ count: 0 })),
+    },
+    space: { findUnique: vi.fn(async () => ({ organizationId: "org-1" })) },
+    partnerMember: {
+      findMany: vi.fn(async () =>
+        rows.partnerMember
+          ? [
+              {
+                partner: {
+                  id: "p1",
+                  slug: "p1",
+                  name: "P1",
+                  mode: "embedded",
+                  createdAt: new Date(),
+                },
+              },
+            ]
+          : [],
+      ),
+    },
+    botPartnerGrant: {
+      findMany: vi.fn(async () => rows.partnerGrants ?? []),
+      createMany: vi.fn(async () => ({ count: 0 })),
+      updateMany: vi.fn(async () => ({ count: 0 })),
       deleteMany: vi.fn(async () => ({ count: 0 })),
     },
     // Cards of a removed grant are looked up by message; there are none here.
@@ -225,5 +252,53 @@ describe("access.set", () => {
     });
     expect(read.status).toBe(200);
     expect(admin.prisma.botDatabaseGrant.createMany).toHaveBeenCalledOnce();
+  });
+});
+
+describe("the partner connection", () => {
+  const grants = [{ botId: "bot-1", level: "read" }];
+  const set = (level: string, connectionId = "partner") => ({
+    kind: "partner",
+    connectionId,
+    botIds: ["bot-1"],
+    level,
+  });
+
+  it("lists its grants only for someone who manages the partner, in an organization that has one", async () => {
+    const managed = setup("admin", { partnerMember: true, partnerGrants: grants });
+    expect((await managed.call("list")).body).toEqual([
+      { kind: "partner", connectionId: "partner", botId: "bot-1", level: "read" },
+    ]);
+    const member = setup("member", { partnerMember: true, partnerGrants: grants });
+    expect((await member.call("list")).body).toEqual([]);
+    const noPartner = setup("admin", { partnerGrants: grants });
+    expect((await noPartner.call("list")).body).toEqual([]);
+  });
+
+  it("sets a level for the partner connection and takes it away at none", async () => {
+    const { call, prisma } = setup("admin", { partnerMember: true });
+    expect((await call("set", set("write"))).status).toBe(200);
+    expect(prisma.botPartnerGrant.updateMany).toHaveBeenCalledWith({
+      where: { botId: { in: ["bot-1"] } },
+      data: { level: "write" },
+    });
+    await call("set", set("none"));
+    expect(prisma.botPartnerGrant.deleteMany).toHaveBeenCalledWith({
+      where: { botId: { in: ["bot-1"] } },
+    });
+  });
+
+  it("refuses a member without manage_partner, another connection, and an organization with no partner", async () => {
+    const member = setup("member", { partnerMember: true });
+    expect((await member.call("set", set("read"))).status).toBe(403);
+    const admin = setup("admin", { partnerMember: true });
+    expect((await admin.call("set", set("read", "partner-other"))).status).toBeGreaterThanOrEqual(
+      400,
+    );
+    const none = setup("admin");
+    expect((await none.call("set", set("read"))).status).toBeGreaterThanOrEqual(400);
+    for (const fake of [member, admin, none]) {
+      expect(fake.prisma.botPartnerGrant.createMany).not.toHaveBeenCalled();
+    }
   });
 });

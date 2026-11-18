@@ -1,8 +1,10 @@
 import type { ConnectionAccess } from "@corvo/contracts";
+import { PARTNER_CONNECTION_ID } from "@corvo/contracts";
 import { can, mcpGrantLevel, storedAccessLevel } from "@corvo/core";
-import { IsolationError } from "@corvo/db";
+import { IsolationError, runAsSystem } from "@corvo/db";
 import { ORPCError } from "@orpc/server";
 import { revertConnectedMcpApprovals } from "../mcp-approval.js";
+import { createPrismaPartnerConsoleStore } from "../partner-console/index.js";
 import { getSpaceMembership } from "../space-owner.js";
 import type { RouterContext } from "./context.js";
 
@@ -14,6 +16,16 @@ import type { RouterContext } from "./context.js";
 export function accessRoutes(ctx: RouterContext) {
   const { deps, onboardingDeps, authed } = ctx;
   const { prisma } = deps;
+  const partners = createPrismaPartnerConsoleStore(prisma);
+
+  /** Whether the space's organization is a member of at least one partner: then it has the connection. */
+  async function hasPartner(spaceId: string): Promise<boolean> {
+    const space = await runAsSystem("partner access organization", () =>
+      prisma.space.findUnique({ where: { id: spaceId }, select: { organizationId: true } }),
+    );
+    if (!space) return false;
+    return (await partners.listPartners(space.organizationId)).length > 0;
+  }
 
   return {
     access: {
@@ -21,7 +33,9 @@ export function accessRoutes(ctx: RouterContext) {
         const { actor } = context;
         const owned = { spaceId: actor.spaceId, bot: { archivedAt: null, userId: actor.userId } };
         const membership = await getSpaceMembership(prisma, actor);
-        const [servers, mailboxes, databases] = await Promise.all([
+        const managesPartner =
+          can(membership, "manage_partner") && (await hasPartner(actor.spaceId));
+        const [servers, mailboxes, databases, partnerGrants] = await Promise.all([
           prisma.botMcpServer.findMany({
             where: { ...owned, userId: actor.userId },
             select: { botId: true, serverId: true, allowAllTools: true, level: true },
@@ -34,6 +48,12 @@ export function accessRoutes(ctx: RouterContext) {
             ? prisma.botDatabaseGrant.findMany({
                 where: { spaceId: actor.spaceId, bot: { archivedAt: null } },
                 select: { botId: true, connectionId: true },
+              })
+            : [],
+          managesPartner
+            ? prisma.botPartnerGrant.findMany({
+                where: { spaceId: actor.spaceId, bot: { archivedAt: null } },
+                select: { botId: true, level: true },
               })
             : [],
         ]);
@@ -56,6 +76,12 @@ export function accessRoutes(ctx: RouterContext) {
             botId: row.botId,
             level: "read" as const,
           })),
+          ...partnerGrants.map((row) => ({
+            kind: "partner" as const,
+            connectionId: PARTNER_CONNECTION_ID,
+            botId: row.botId,
+            level: storedAccessLevel(row.level),
+          })),
         ];
       }),
 
@@ -67,6 +93,37 @@ export function accessRoutes(ctx: RouterContext) {
           input.kind === "database" &&
           can(await getSpaceMembership(prisma, actor), "manage_connections");
         const seqs = await prisma.$transaction(async (tx) => {
+          if (input.kind === "partner") {
+            // The portfolio's money and customers: only people who manage the partner hand it out,
+            // and only where the organization has a partner, to agents of this space.
+            if (!can(await getSpaceMembership(prisma, actor), "manage_partner")) {
+              throw new ORPCError("FORBIDDEN");
+            }
+            if (
+              input.connectionId !== PARTNER_CONNECTION_ID ||
+              !(await hasPartner(actor.spaceId))
+            ) {
+              throw new IsolationError();
+            }
+            const bots = await tx.bot.findMany({
+              where: { id: { in: botIds }, spaceId: actor.spaceId, archivedAt: null },
+              select: { id: true },
+            });
+            if (bots.length !== botIds.length) throw new IsolationError();
+            if (level === "none") {
+              await tx.botPartnerGrant.deleteMany({ where: { botId: { in: botIds } } });
+            } else {
+              await tx.botPartnerGrant.createMany({
+                data: botIds.map((botId) => ({ spaceId: actor.spaceId, botId, level })),
+                skipDuplicates: true,
+              });
+              await tx.botPartnerGrant.updateMany({
+                where: { botId: { in: botIds } },
+                data: { level },
+              });
+            }
+            return [];
+          }
           if (input.kind === "database") {
             // Agents only ever read a database, and only people who manage connections hand it out.
             if (level === "write") {

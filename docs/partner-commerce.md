@@ -870,3 +870,18 @@ The rules are pure functions in `packages/db/src/partner-credit-rules.ts`; the d
   invoiced but no payment provider collects it (invoices are issued by hand, as in 7.1). The
   automatic model router can still pick a disallowed hosted model; the call is then refused with the
   card above.
+
+- **Status.** Built: the config, the simulator, the controls and the RPCs. Not yet: stopping a run at
+  a customer's limit or outside the allowed models, sending the two new webhooks, running auto
+  top-up, and billing the partner plan itself (the console shows no plan until then).
+
+### 16.3 Agent tools (the "Partnership" connection)
+
+Agents work the portfolio through a built-in connection, offered only to an organization that is a member of at least one partner and lent to an agent like any connection (none, read, or read and write; one `bot_partner_grants` row per agent, shown on the Connections page as "Partnership").
+
+- Reads (read level): `partner_list_customers`, `partner_customer_usage`, `partner_attention`, `partner_revenue_summary`, `partner_invoices`. Writes (write level): `partner_add_credit`, `partner_pause_customer`, `partner_resume_customer`, `partner_set_customer_limit`. Every write asks a person each time, whatever the approval mode or an allow rule.
+- The tools are thin wrappers over the console's service functions (`apps/api/src/partner-console/agent-tools.ts`), through the `PartnerToolsPort` of `packages/adapters`, so scoping, idempotency and the audit trail are the console's own. The API and the worker wire the same port.
+- Every tool takes an optional `partner` slug; with one partner it is the default, with several the agent is told which to name.
+- Results are numbers, states and names. Never a customer's conversation, nor the names of their agents.
+- A write is audited twice: by the console (who, which customer, what) and by a `partner.agent_action` security event (which agent, which run).
+- Two installable agents, "Portfolio Manager" and "Customer Success", are added with read access and offered only to such organizations.

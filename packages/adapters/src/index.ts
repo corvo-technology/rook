@@ -162,6 +162,7 @@ export * from "./openrouter-usage.js";
 export * from "./openrouter-voice.js";
 export * from "./page-browser-session.js";
 export * from "./parallel-web.js";
+export * from "./partner-connector.js";
 export * from "./partner-webhook.js";
 export * from "./pi-catalog-availability.js";
 export * from "./pi-codex-catalog.js";

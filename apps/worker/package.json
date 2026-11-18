@@ -13,6 +13,7 @@
   "dependencies": {
     "@corvo/adapter-kit": "workspace:*",
     "@corvo/adapters": "workspace:*",
+    "@corvo/api": "workspace:*",
     "@corvo/core": "workspace:*",
     "@corvo/db": "workspace:*",
     "@corvo/logging": "workspace:*",

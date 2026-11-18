@@ -2,13 +2,27 @@ import type { AgentCatalogEntry, AgentCatalogLocale } from "@corvo/contracts";
 import { agentCatalogLocale, agentCatalogSpawnKey } from "@corvo/contracts";
 import { AGENT_CATALOG, APP_CATALOG, SKILL_STORE } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
-import { createRepos } from "@corvo/db";
+import { createRepos, runAsSystem } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import { fleetStarterId } from "./child-bots.js";
 import type { FleetRun } from "./fleet-tools.js";
 import { installStoreSkill } from "./store-skills.js";
 
 const appName = (slug: string) => APP_CATALOG.find((app) => app.slug === slug)?.name ?? slug;
+
+/** Whether the space's organization is a member of a partner: only then are partner agents offered. */
+async function spaceHasPartner(prisma: PrismaClient, spaceId: string): Promise<boolean> {
+  return runAsSystem("store partner agents", async () => {
+    const space = await prisma.space.findUnique({
+      where: { id: spaceId },
+      select: { organizationId: true },
+    });
+    if (!space) return false;
+    return (
+      (await prisma.partnerMember.count({ where: { organizationId: space.organizationId } })) > 0
+    );
+  });
+}
 
 /** The Store's language for what the model says it is speaking with the owner. */
 function languageOf(args: { language?: unknown }) {
@@ -25,7 +39,7 @@ export async function listStoreAgents(
   args: { language?: unknown },
 ) {
   const locale = languageOf(args);
-  const [bots, servers] = await Promise.all([
+  const [bots, servers, partner] = await Promise.all([
     deps.prisma.bot.findMany({
       where: {
         spaceId: run.spaceId,
@@ -39,11 +53,12 @@ export async function listStoreAgents(
       where: { spaceId: run.spaceId, userId: fleetStarterId(run), enabled: true },
       select: { slug: true },
     }),
+    spaceHasPartner(deps.prisma, run.spaceId),
   ]);
   const keys = new Set(bots.map((bot) => bot.spawnKey));
   const connected = new Set(servers.map((server) => server.slug));
   return {
-    agents: AGENT_CATALOG.map((entry) => ({
+    agents: AGENT_CATALOG.filter((entry) => partner || !entry.partnerAccess).map((entry) => ({
       slug: entry.slug,
       name: entry.name[locale],
       description: entry.description[locale],
@@ -81,6 +96,9 @@ export async function installStoreAgent(
   const entry = AGENT_CATALOG.find((agent) => agent.slug === String(args.slug ?? ""));
   if (!entry) return { error: "No agent with that slug. Call store_agents for the list." };
   const locale = languageOf(args);
+  if (entry.partnerAccess && !(await spaceHasPartner(deps.prisma, run.spaceId))) {
+    return { error: "No agent with that slug. Call store_agents for the list." };
+  }
   if (entry.setup === "email") {
     return {
       error: `${entry.name[locale]} needs an inbox service first. The owner connects MillionSend or Resend under Apps in the Store, then adds it under Agents.`,
@@ -172,6 +190,14 @@ export async function addStoreAgent(
     if ("error" in result)
       getLogger().warn("store agent skill not installed", { skill: skill.slug });
     else if (!result.already) skillsInstalled.push(result.name);
+  }
+
+  if (entry.partnerAccess) {
+    await deps.prisma.botPartnerGrant.upsert({
+      where: { botId: created.id },
+      create: { spaceId: owner.spaceId, botId: created.id, level: entry.partnerAccess },
+      update: {},
+    });
   }
 
   const connected = new Set(servers.map((server) => server.slug));

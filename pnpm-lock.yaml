@@ -478,6 +478,9 @@ importers:
       '@corvo/adapters':
         specifier: workspace:*
         version: link:../../packages/adapters
+      '@corvo/api':
+        specifier: workspace:*
+        version: link:../api
       '@corvo/core':
         specifier: workspace:*
         version: link:../../packages/core

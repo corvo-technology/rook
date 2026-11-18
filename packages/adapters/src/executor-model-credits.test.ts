@@ -63,6 +63,7 @@ describe("funding selects credentials without deleting saved connections", () =>
               member: { findUnique: async () => ({ role: "owner" }) },
               billingAccount: { findUnique: async () => null },
               modelCreditAccount: { upsert: async () => ({ mode }) },
+              partnerTenant: { findUnique: async () => null },
             },
           } as unknown as Parameters<typeof createRunExecutor>[0]);
           if (rejected) {

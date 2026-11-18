@@ -875,7 +875,7 @@ The rules are pure functions in `packages/db/src/partner-credit-rules.ts`; the d
   a customer's limit or outside the allowed models, sending the two new webhooks, running auto
   top-up, and billing the partner plan itself (the console shows no plan until then).
 
-### 16.2 Agent tools (the "Partnership" connection)
+### 16.3 Agent tools (the "Partnership" connection)
 
 Agents work the portfolio through a built-in connection, offered only to an organization that is a member of at least one partner and lent to an agent like any connection (none, read, or read and write; one `bot_partner_grants` row per agent, shown on the Connections page as "Partnership").
 

@@ -89,7 +89,15 @@ describe("the partner connection's tools", () => {
       "invoices",
     ]) {
       expect(toolRequiresExplicitApproval(`partner_${name}`)).toBe(false);
-      expect(toolRequiresApproval(`partner_${name}`, true, true)).toBe(false);
+      // Exempt only for a call from the built-in connection.
+      expect(toolRequiresApproval(`partner_${name}`, true, true, true)).toBe(false);
+    }
+  });
+
+  it("still asks for a read-named tool of any other source with the same name", () => {
+    for (const name of ["customer_usage", "attention", "revenue_summary", "invoices"]) {
+      expect(toolRequiresApproval(`partner_${name}`, true, true)).toBe(true);
+      expect(toolRequiresApproval(`partner_${name}`, true, true, false)).toBe(true);
     }
   });
 

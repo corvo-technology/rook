@@ -90,7 +90,9 @@ const UNATTENDED_SAFE_BUILTIN_TOOLS = new Set([
 /**
  * The partner connection's own tools. Its reads are numbers and states of the organization's
  * portfolio; its writes move credit or stop a customer, so they ask a person every time, whatever
- * the access level, the approval mode or an allow rule.
+ * the access level, the approval mode or an allow rule. A read is exempt from the name check only
+ * when the call comes from that built-in connection (see `connectorToolRequiresApproval`): the
+ * same name from any other source still asks.
  */
 const PARTNER_READ_CONNECTOR_TOOLS = new Set([
   "partner_list_customers",
@@ -142,9 +144,15 @@ export function connectorToolNamedAsWrite(toolName: string): boolean {
  * HTTP method and read-only flag). A declared write always needs approval. A declared read never
  * relaxes the name check: the provider chooses both the name and the hint.
  */
-export function connectorToolRequiresApproval(toolName: string, readOnly?: boolean): boolean {
+export function connectorToolRequiresApproval(
+  toolName: string,
+  readOnly?: boolean,
+  fromPartnerConnector = false,
+): boolean {
   if (readOnly === false || PARTNER_WRITE_CONNECTOR_TOOLS.has(toolName)) return true;
-  if (readOnly === true && PARTNER_READ_CONNECTOR_TOOLS.has(toolName)) return false;
+  if (fromPartnerConnector && readOnly === true && PARTNER_READ_CONNECTOR_TOOLS.has(toolName)) {
+    return false;
+  }
   if (connectorToolNamedAsWrite(toolName)) return true;
   return !READ_ONLY_CONNECTOR_PATTERN.test(toolName);
 }
@@ -187,11 +195,12 @@ export function toolRequiresApproval(
   toolName: string,
   viaConnector: boolean,
   readOnly?: boolean,
+  fromPartnerConnector = false,
 ): boolean {
   if (APPROVAL_EXEMPT_TOOLS.has(toolName)) return false;
   if (toolRequiresExplicitApproval(toolName)) return true;
   if (APPROVAL_REQUIRED_BUILTIN_TOOLS.has(toolName)) return true;
-  if (viaConnector) return connectorToolRequiresApproval(toolName, readOnly);
+  if (viaConnector) return connectorToolRequiresApproval(toolName, readOnly, fromPartnerConnector);
   return false;
 }
 

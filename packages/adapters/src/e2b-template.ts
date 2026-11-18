@@ -53,14 +53,14 @@ export function buildE2BComputerTemplate(
   options: {
     size?: E2BComputerSize;
     build?: BuildTemplate;
-    /** E2B API domain; defaults to `E2B_DOMAIN`. */
+    /** E2B API domain; unset means e2b.dev. */
     domain?: string;
     onBuildLogs?: (line: string) => void;
   } = {},
 ) {
   const { template, minFreeDiskMb, ...resources } =
     E2B_COMPUTER_SIZES[options.size ?? E2B_DEFAULT_COMPUTER_SIZE];
-  const sendDisk = e2bSupportsMinFreeDisk(options.domain ?? process.env.E2B_DOMAIN);
+  const sendDisk = e2bSupportsMinFreeDisk(options.domain);
   const build: BuildTemplate =
     options.build ?? ((image, name, buildOptions) => Template.build(image, name, buildOptions));
   return build(Template().fromTemplate(E2B_DESKTOP_TEMPLATE), template, {

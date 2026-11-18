@@ -78,6 +78,28 @@ one filled in Billing. Without it a partner made on the command line has no cred
 every `allowanceCents` is answered `402`. Several partners can name the same account, which is how one
 company runs one partner per product on one balance.
 
+## Commerce partners
+
+A partner billed as `commerce` sells Rook plans and top-ups instead of drawing on a wallet (see
+[partner-commerce.md](partner-commerce.md)). Pilot partners stay `wallet` and behave exactly as
+described on this page; the commerce endpoints answer them `409 {"error":"not_commerce_partner"}`, and
+a commerce partner's `allowanceCents` is refused with `409 commerce_partner`.
+
+```
+pnpm --filter @corvo/api partner catalog-seed apps/api/src/commerce-catalog.example.json
+pnpm --filter @corvo/api partner fx-set BRL 5.12 --date 2026-11-01
+pnpm --filter @corvo/api partner commerce acme-saas --billing-model commerce --country BR \
+  --commission-bps 2000 --checkout-url "https://shop.example.com/buy" \
+  --scopes tenants:write,commerce:read,commerce:write
+```
+
+The example catalog holds editable example prices; replace them with the real ones before use. The
+country fixes the currency (`BR` is `BRL`, anything else `USD`), and it cannot change while customers
+have plans. Keys keep `tenants:write` only until given the commerce scopes. Money calls
+(`PUT /tenants/{id}/subscription`, `POST /tenants/{id}/topups`, `POST /tenants/{id}/refunds`) need an
+`Idempotency-Key` header. Platform admins draft and issue the monthly invoice of Rook's share with the
+`platform.invoices` calls.
+
 ## One partner per product
 
 A company with several products makes one partner for each (for Greenflow: `greenbarber`,

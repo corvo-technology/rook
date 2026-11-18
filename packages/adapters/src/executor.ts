@@ -38,6 +38,7 @@ import {
   monthlyLimitReached,
   nextFence,
   PARTNER_CREDIT_USED_UP_RUN_ERROR,
+  PLAN_INACTIVE_RUN_ERROR,
   promptInvokesSkill,
   redactSecrets,
   renderBotDirectory,
@@ -919,6 +920,10 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const partnerState = await deps.spacePartnerState?.(run.spaceId);
         if (partnerState === "suspended") {
           await failRunBeforeModel(ACCOUNT_PAUSED_RUN_ERROR, true);
+          return;
+        }
+        if (partnerState === "inactive") {
+          await failRunBeforeModel(PLAN_INACTIVE_RUN_ERROR, true);
           return;
         }
         if (bot.space?.pausedAt) {

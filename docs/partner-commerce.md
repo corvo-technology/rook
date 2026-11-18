@@ -1,7 +1,7 @@
 # Partner commerce
 
-Design spec. Nothing here is built yet; the pilot in [partner-pilot.md](partner-pilot.md) is what runs
-today. All prices, percentages and limits below are **examples** unless stated, and every one is
+Design spec. F1 (the pilot in [partner-pilot.md](partner-pilot.md)) and the server side of F2 (section 15)
+are built; the rest is design. All prices, percentages and limits below are **examples** unless stated, and every one is
 configurable data (catalog rows, per-partner settings), never code.
 
 ## 1. Goals and non-goals
@@ -285,10 +285,11 @@ checkout price) and is enforced for white label.
 PUT /tenants/{externalTenantId}/subscription
 Idempotency-Key: <uuid>
 { "plan": "team",
-  "status": "active",                 // trialing | active | past_due | canceled
+  "status": "active",                 // active | past_due | canceled
   "currentPeriodStart": "2026-11-01T00:00:00Z",
   "currentPeriodEnd":   "2026-12-01T00:00:00Z",
-  "chargedMinor": 54900 }              // optional; what the customer actually paid, for statements
+  "chargedMinor": 54900,               // optional; what the customer actually paid, for statements
+  "externalPaymentId": "pay_9" }       // optional; a later refund names it
 → 200 { "tenantId": "...", "plan": "team", "status": "active",
         "period": "2026-11",
         "credit": { "currency": "BRL", "grantedMinor": 20000, "usedMinor": 0, "remainingMinor": 20000 },
@@ -691,31 +692,75 @@ Acceptance criteria:
 7. One partner's customer cannot read or be moved to another partner; isolation tests pass.
 8. The conformance suite passes for the fake and the Stripe adapter offline.
 
-## 14. Open questions
+## 14. Decisions
 
-1. **Catalog values.** Plan and pack prices and credit amounts per currency (the tables above are
-   examples). Who sets them and how often are they reviewed?
-2. **Markup shape.** Fixed amount per plan and pack (this spec), or also a percentage?
-3. **Unused credit.** Confirm: plan credit expires at period end; top-ups last 12 months.
-4. **Merchant of record in white label.** Direct charges on the partner's account (this spec: the
-   partner is the seller, pays Stripe fees and issues the customer's fiscal note), or Rook as seller
-   with transfers to the partner? It changes tax, fees and refunds.
-5. **Who pays the Stripe processing fee** in white label, and is the 20% computed before or after it?
-6. **Stripe Connect availability.** Which countries are in scope at launch, and is Connect usable for
-   Brazilian connected accounts and BRL payouts as needed? An alternative for BRL (Pix or a local
-   gateway) would need a second adapter.
-7. **Fiscal.** The accountant questions in 9.6, especially NFS-e for BRL and the treatment of the
-   commission.
-8. **FX spread and review threshold.** Is 3% and a monthly lock acceptable?
-9. **Grace period and lapse.** 7 days acceptable? Should a lapsed customer keep read-only access to
-   its data?
-10. **Mixed partners.** Can one partner run both modes (embedded for its own product, white label for
-    resellers)? This spec assumes one mode per partner and a second partner for the other.
-11. **Commission rules.** One rate per partner, or per plan, or volume tiers? Does commission apply to
-    top-ups at the same rate (this spec: yes)?
-12. **"Powered by Rook".** Any visible mention in white label, even on a free tier?
-13. **Wallet partners.** Keep `billingModel: wallet` for Greenflow's pilot until F2 ships, then migrate
-    them to commerce, or leave both?
-14. **Trials.** Can a partner grant a trial period with credit, and who bears its cost?
-15. **Desktop and mobile apps** for white label customers: web only for now (this spec), or a later
-    phase?
+The owner answered the open questions of the first draft. Keep it simple.
+
+1. **Catalog values** are set by the owner. The repository ships editable **example** values in a
+   seed file (`apps/api/src/commerce-catalog.example.json`, loaded with `partner catalog-seed`), never
+   in code.
+2. **Markup** is a fixed amount **or** a percentage per plan and pack (F3 stores it in
+   `PartnerMarkup`). Until then F2 derives the markup from what the partner reports it charged.
+3. **Credit.** Plan credit expires at period end; top-ups last 12 months.
+4. **White label merchant of record** is the partner: direct charges, the partner issues the fiscal
+   note and pays the Stripe fees (F4).
+5. **Commission base.** 20% is computed on the full price, **before** processor fees.
+6. **Stripe Connect for Brazil and BRL** is still to be confirmed; the payments interface stays
+   provider-neutral (F4).
+7. **Taxes** are settled with the accountant before the first real invoice (section 9.6).
+8. **FX.** A 3% spread, rate locked monthly.
+9. **A lapsed customer keeps read-only access.** Runs are refused ("Plan inactive."), data stays
+   viewable.
+10. **One mode per partner.** Two modes means two partners.
+11. **One commission rate per partner**, which also applies to top-ups.
+12. **No "Powered by Rook"** in white label.
+13. **Greenflow** is migrated from wallet to commerce after F2.
+14. **No free trials for now.** There is no trial status and no trial logic.
+15. **Web only.** No branded desktop or mobile apps.
+
+## 15. F2 as built (server side)
+
+What shipped, and where it differs from the sketch above.
+
+- **Tables.** The F2 list plus `CreditGrant` (what each credit lot was for, with the FX rate id and
+  value applied, and the credit as the customer reads it) and `CommerceSetting` (policy as data:
+  grace days, FX spread, top-up expiry, invoice terms, top-up limits). `partner_webhook_events` gains
+  a nullable `payload`. `Partner.scopes` defaults to `{tenants:write}`, so existing keys behave as
+  before.
+- **Lots.** Grants use the existing credit lots (`purchase:commerce:...` sources), so the existing
+  reserve and settle debit the lot that expires first: the plan lot (period end) before the top-up
+  lot (12 months). Each grant has a source derived from the period or the call's idempotency key,
+  so a replay never adds credit twice, across processes.
+- **Idempotency.** `IdempotencyRecord` stores the request hash and the response for 30 days. The
+  same key and body answers 200 with the first answer; another body or route under the key is
+  `409 idempotency_conflict`; a call still running is `409 idempotency_in_progress`. Only successes
+  are remembered, so a partner can repeat a refused call under the same key after fixing the cause
+  (a paid top-up whose tenant was paused, for example).
+- **Rounding.** As section 9.7, in `commerce-money.ts` with BigInt in the middle and a table test.
+  Partial refunds reverse `floor(total x refunded / paid)` cumulatively and the full amount exactly,
+  so any sequence of refunds sums to the original with nothing left over.
+- **Markup in F2.** The ledger markup is `max(0, paid - base)` where `paid` is `chargedMinor` on a
+  subscription and `paidMinor` on a top-up; a discount lowers only the partner's side. `GET /catalog`
+  returns `markupMinor: 0` and `priceMinor = baseMinor` until F3 adds `PartnerMarkup`.
+- **Plan changes.** An upgrade adds the prorated credit difference as a new lot and a prorated
+  `subscription` ledger row. A downgrade is stored as `pendingPlanKey` and changes nothing until the
+  next period. Plan entitlements (seats, computers) for embedded tenants are **not** wired in F2.
+- **Lapse.** `active` runs to the period end plus the grace period; `past_due` runs for the grace
+  period from the first report; `canceled` runs to the period end. After that runs fail with "Plan
+  inactive." A customer with no plan at all is refused the same way. A top-up for a lapsed customer
+  is refused with `409 plan_inactive` (no per-partner override yet).
+- **Webhooks.** New events carry `currency` and minor units: `subscription.updated`,
+  `subscription.lapsed`, `credit.granted`, `credit.expired`, `invoice.issued`; `tenant.allowance_low`
+  and `tenant.allowance_exhausted` also cover commerce customers (once per period). `payout.paid` is
+  F4. Events are recorded only for partners with a webhook URL and use the existing signed delivery.
+- **Not in F2:** the automatic FX source adapter (a rate is written by `partner fx-set`, or any
+  writer of `fx_rates`; the lock and spread policy are in place), the daily reconciliation job, and
+  suspending a partner's commerce for unpaid invoices. All three are follow-ups.
+- **Admin.** Platform admins (the `PARTNER_ADMIN_EMAILS` gate) have `platform.invoices.list`,
+  `draft` and `setState` RPCs; the reconciler also drafts the month that just ended. CLI:
+  `partner commerce`, `partner catalog-seed`, `partner fx-set`.
+- **In-app RPC.** `billing.partnerBalance({ pack? })` returns, for the caller's own organization,
+  `{ currency, planName, planCredit, used, remaining, topupRemaining, periodEnd, state, checkoutUrl,
+  lowThresholdReached }` in minor units, or `null` for anyone who is not a commerce customer.
+  `remaining` is the plan credit left this period and `topupRemaining` the purchased credit on top of it (sold out is their sum at zero); `state` is `active`, `past_due` or `lapsed`; `checkoutUrl` is the partner's address
+  with the customer and pack filled in (`{tenant}` and `{pack}` placeholders, or `?tenant=&pack=`).

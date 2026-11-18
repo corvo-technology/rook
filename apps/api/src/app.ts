@@ -69,6 +69,7 @@ import {
   EmailEmulator,
   ExpoPushProvider,
   egressCapabilityKey,
+  enqueuePartnerWebhook,
   GraphileJobPublisher,
   InMemoryJobQueue,
   InMemoryRealtimeFanout,
@@ -122,8 +123,11 @@ import {
 import { isMessagingEmail, signupPolicyFromEnv } from "@corvo/core";
 import type { Pool, PrismaClient } from "@corvo/db";
 import {
+  addTenantTopup,
   authenticatePartner,
   ComputerLimitError,
+  commerceBalance,
+  commerceUsage,
   consumePartnerEntryCode,
   createBoardEvents,
   createDb,
@@ -146,12 +150,16 @@ import {
   provisionPartnerTenant,
   purgeExpiredEntryCodes,
   pushSessionExpiresAt,
+  readCatalog,
+  refundTenantPayment,
   requireMembership,
   rowSecurityWarning,
   runAsSystem,
+  runIdempotent,
   SeatLimitError,
   securityEventRetentionDays,
   setPartnerTenantState,
+  setTenantSubscription,
   takePartnerRequest,
   verifyContentKeys,
 } from "@corvo/db";
@@ -204,6 +212,7 @@ import { createMessagingReceipts } from "./messaging-receipts.js";
 import { messagingStatusSource } from "./messaging-status.js";
 import { mountMessagingWebhookRoutes } from "./messaging-webhook.js";
 import { monitoringRoutes } from "./monitoring.js";
+import { mountPartnerCommerceRoutes } from "./partner-commerce-routes.js";
 import { mountPartnerConsultationRoutes } from "./partner-consultations.js";
 import { partnerConsultationDeps } from "./partner-consultations-deps.js";
 import { installPartnerTenantContent } from "./partner-content.js";
@@ -1234,6 +1243,26 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
           expiresAt: row.expiresAt,
         },
       });
+    },
+  });
+  // The commerce half of the same API: catalog, plans, top-ups, refunds, balance and usage.
+  mountPartnerCommerceRoutes(app, {
+    now: () => new Date(),
+    allowRequest: (partnerId) => takePartnerRequest(prisma, partnerId, 120),
+    authenticate: (key) => authenticatePartner(prisma, key),
+    findTenant: (partnerId, externalTenantId) =>
+      findPartnerTenant(prisma, partnerId, externalTenantId),
+    catalog: (currency) => readCatalog(prisma, currency),
+    setSubscription: (partner, tenant, input, now) =>
+      setTenantSubscription(prisma, partner, tenant, input, now),
+    topup: (partner, tenant, input, now) => addTenantTopup(prisma, partner, tenant, input, now),
+    refund: (partner, tenant, input, now) =>
+      refundTenantPayment(prisma, partner, tenant, input, now),
+    balance: (partner, tenant, now) => commerceBalance(prisma, partner, tenant, now),
+    usage: (partner, tenant, period) => commerceUsage(prisma, partner, tenant, period),
+    idempotent: (partnerId, key, hash, run) => runIdempotent(prisma, partnerId, key, hash, run),
+    notify: async (ids) => {
+      for (const id of ids) await enqueuePartnerWebhook(jobs, id);
     },
   });
   // The recording API of the same partners: audio in, a draft note out.

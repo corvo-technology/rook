@@ -4,7 +4,11 @@ import { PARTNER_WEBHOOK_EVENTS } from "@corvo/contracts";
 import { partnerWebhookSecret, signPartnerWebhook } from "@corvo/core/node/partner-key";
 import type { PrismaClient } from "@corvo/db";
 import {
+  claimCommerceNotices,
   claimPartnerAllowanceNotices,
+  draftPartnerInvoices,
+  previousPeriod,
+  purgeExpiredIdempotency,
   runAsSystem,
   undeliveredPartnerWebhookEvents,
 } from "@corvo/db";
@@ -52,16 +56,30 @@ export async function deliverPartnerWebhook(
   if (!partner.enabled || !partner.webhookUrl) return;
   if (!(PARTNER_WEBHOOK_EVENTS as readonly string[]).includes(event.kind)) return;
 
-  const payload: PartnerWebhookPayload = {
+  const base = {
     id: event.id,
     type: event.kind as PartnerWebhookPayload["type"],
     createdAt: event.createdAt.toISOString(),
-    externalTenantId: event.externalTenantId,
-    period: event.period,
-    grantedCents: event.grantedCents,
-    usedCents: event.usedCents,
-    remainingCents: Math.max(0, event.grantedCents - event.usedCents),
   };
+  // A commerce notice carries its own body in minor units and currency; the pilot's is in cents.
+  const commerce =
+    event.payload && typeof event.payload === "object" && !Array.isArray(event.payload)
+      ? (event.payload as Record<string, unknown>)
+      : null;
+  const payload: PartnerWebhookPayload = commerce
+    ? {
+        ...base,
+        ...(event.externalTenantId ? { externalTenantId: event.externalTenantId } : {}),
+        ...commerce,
+      }
+    : {
+        ...base,
+        externalTenantId: event.externalTenantId,
+        period: event.period,
+        grantedCents: event.grantedCents,
+        usedCents: event.usedCents,
+        remainingCents: Math.max(0, event.grantedCents - event.usedCents),
+      };
   const body = JSON.stringify(payload);
   const timestamp = String(Math.floor((deps.now?.() ?? new Date()).getTime() / 1000));
   const secret = partnerWebhookSecret(deps.encryptionKey, partner.id, partner.webhookSecretVersion);
@@ -120,11 +138,22 @@ export function createPartnerWebhookReconciler(deps: {
   return () =>
     runAsSystem("find partner credit notices", async () => {
       const now = deps.now?.() ?? new Date();
-      for (const id of await claimPartnerAllowanceNotices(deps.prisma, now)) {
+      const claimed = [
+        ...(await claimPartnerAllowanceNotices(deps.prisma, now)),
+        ...(await claimCommerceNotices(deps.prisma, now)),
+      ];
+      for (const id of claimed) {
         await enqueuePartnerWebhook(deps.jobs, id).catch((error) =>
           getLogger().error("partner webhook enqueue", error),
         );
       }
+      await purgeExpiredIdempotency(deps.prisma, now).catch((error) =>
+        getLogger().error("idempotency purge", error),
+      );
+      // The month that just ended gets its draft invoices; issuing stays a manual click.
+      await draftPartnerInvoices(deps.prisma, previousPeriod(now)).catch((error) =>
+        getLogger().error("partner invoice draft", error),
+      );
       for (const id of await undeliveredPartnerWebhookEvents(deps.prisma, now)) {
         await enqueuePartnerWebhook(deps.jobs, id, { keepExisting: true }).catch((error) =>
           getLogger().error("partner webhook re-enqueue", error),

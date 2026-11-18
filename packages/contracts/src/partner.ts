@@ -146,17 +146,110 @@ export type PartnerAccount = z.infer<typeof PartnerAccountSchema>;
 export const PARTNER_WEBHOOK_EVENTS = [
   "tenant.allowance_low",
   "tenant.allowance_exhausted",
+  "subscription.updated",
+  "subscription.lapsed",
+  "credit.granted",
+  "credit.expired",
+  "invoice.issued",
 ] as const;
 export type PartnerWebhookEventType = (typeof PARTNER_WEBHOOK_EVENTS)[number];
 
+/**
+ * The pilot's credit notice, in cents. Commerce events (`subscription.*`, `credit.*`,
+ * `invoice.issued`, and `tenant.allowance_*` for commerce customers) carry `currency` and minor
+ * units instead; see docs/partner-commerce.md.
+ */
 export interface PartnerWebhookPayload {
   id: string;
   type: PartnerWebhookEventType;
   createdAt: string;
-  externalTenantId: string;
+  externalTenantId?: string;
   /** The month the credit was granted for, such as 2026-11. */
-  period: string;
-  grantedCents: number;
-  usedCents: number;
-  remainingCents: number;
+  period?: string;
+  grantedCents?: number;
+  usedCents?: number;
+  remainingCents?: number;
+  [field: string]: unknown;
 }
+
+const Period = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
+const Minor = z.number().int().nonnegative().max(2_000_000_000);
+const IsoInstant = z.iso.datetime({ offset: true });
+
+/** `PUT /tenants/{id}/subscription`. Trials are not offered: a plan is active, past due or canceled. */
+export const PartnerSubscriptionInput = z
+  .object({
+    plan: Key,
+    status: z.enum(["active", "past_due", "canceled"]),
+    currentPeriodStart: IsoInstant,
+    currentPeriodEnd: IsoInstant,
+    /** What the customer actually paid, for statements and the markup. */
+    chargedMinor: Minor.optional(),
+    /** The partner's payment id; a later refund names it. */
+    externalPaymentId: Key.optional(),
+  })
+  .strict();
+export type PartnerSubscriptionInput = z.infer<typeof PartnerSubscriptionInput>;
+
+/** `POST /tenants/{id}/topups`. */
+export const PartnerTopupInput = z
+  .object({
+    pack: Key,
+    quantity: z.number().int().min(1).max(100).default(1),
+    paidMinor: Minor,
+    externalPaymentId: Key,
+  })
+  .strict();
+export type PartnerTopupInput = z.infer<typeof PartnerTopupInput>;
+
+/** `POST /tenants/{id}/refunds`; without an amount the whole payment is refunded. */
+export const PartnerRefundInput = z
+  .object({
+    externalPaymentId: Key,
+    amountMinor: Minor.positive().optional(),
+  })
+  .strict();
+export type PartnerRefundInput = z.infer<typeof PartnerRefundInput>;
+
+export const PartnerUsageQuery = z.object({ period: Period });
+
+export const PARTNER_SCOPES = ["tenants:write", "commerce:read", "commerce:write"] as const;
+export type PartnerScope = (typeof PARTNER_SCOPES)[number];
+
+/**
+ * What a commerce customer reads of its own balance, in integer minor units of `currency` (cents or
+ * centavos). "R$ 18 of R$ 30 this month" is `remaining` of `planCredit`: `remaining` is the plan
+ * credit still unspent this period, and `topupRemaining` is purchased credit on top of it, which
+ * survives the period end. Sold out is `remaining + topupRemaining <= 0`.
+ *
+ * `state`: "active" (a plan in force, including one canceled until its period ends), "past_due"
+ * (grace period, still usable) or "lapsed" (plan inactive or none: runs are refused, data stays
+ * readable).
+ */
+export const PartnerBalanceSchema = z.object({
+  currency: z.enum(["BRL", "USD"]),
+  planName: z.string().nullable(),
+  planCredit: Minor,
+  used: Minor,
+  remaining: Minor,
+  topupRemaining: Minor,
+  periodEnd: z.string().nullable(),
+  state: z.enum(["active", "past_due", "lapsed"]),
+  /** The partner's checkout with the customer filled in; null when it has none. */
+  checkoutUrl: z.string().nullable(),
+  lowThresholdReached: z.boolean(),
+});
+export type PartnerBalance = z.infer<typeof PartnerBalanceSchema>;
+
+export const PartnerInvoiceSchema = z.object({
+  id: z.string(),
+  partner: z.string(),
+  period: Period,
+  currency: z.string(),
+  state: z.enum(["draft", "issued", "paid", "void"]),
+  totalMinor: z.number().int(),
+  lines: z.number().int(),
+  dueAt: z.string().nullable(),
+  externalRef: z.string().nullable(),
+});
+export type PartnerInvoice = z.infer<typeof PartnerInvoiceSchema>;

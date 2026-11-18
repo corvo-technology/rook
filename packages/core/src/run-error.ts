@@ -36,6 +36,9 @@ export const MODEL_ACCESS_REQUIRED_RUN_ERROR = "Subscribe in Billing to keep run
 /** A partner has paused this account; nothing runs until it resumes. */
 export const ACCOUNT_PAUSED_RUN_ERROR = "This account is paused.";
 
+/** A commerce customer has no usable plan: none reported, or it lapsed. Data stays readable. */
+export const PLAN_INACTIVE_RUN_ERROR = "Plan inactive.";
+
 /** A partner's customer has spent its credit for the period. */
 export const PARTNER_CREDIT_USED_UP_RUN_ERROR = "This month's credit is used up.";
 
@@ -167,6 +170,7 @@ const APP_RUN_ERRORS = new Set([
   ...MODEL_CONNECTION_RUN_ERRORS,
   MODEL_ACCESS_REQUIRED_RUN_ERROR,
   ACCOUNT_PAUSED_RUN_ERROR,
+  PLAN_INACTIVE_RUN_ERROR,
   PARTNER_CREDIT_USED_UP_RUN_ERROR,
   BOT_DAILY_LIMIT_RUN_ERROR,
   BOT_MONTHLY_LIMIT_RUN_ERROR,

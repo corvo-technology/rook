@@ -205,14 +205,14 @@ model RateLimit {
 }
 
 model Organization {
-  id                     String              @id
+  id                     String                     @id
   name                   String
   slug                   String
   logo                   String?
   createdAt              DateTime
   metadata               String?
   /// Whether people who are not the owner may create spaces in this organization.
-  membersCanCreateSpaces Boolean             @default(false)
+  membersCanCreateSpaces Boolean                    @default(false)
   members                Member[]
   invitations            Invitation[]
   spaces                 Space[]
@@ -659,60 +659,60 @@ model SpaceVoicePreference {
 }
 
 model Bot {
-  screenGeneration         Int               @default(0)
-  id                       String            @id @default(cuid())
+  screenGeneration         Int                @default(0)
+  id                       String             @id @default(cuid())
   spaceId                  String
-  space                    Space             @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  space                    Space              @relation(fields: [spaceId], references: [id], onDelete: Cascade)
   userId                   String
   name                     String
-  title                    String            @default("")
-  description              String            @default("")
-  instructions             String            @default("")
-  selfUpdateInstructions   Boolean           @default(false)
-  instructionHistory       Json              @default("[]")
+  title                    String             @default("")
+  description              String             @default("")
+  instructions             String             @default("")
+  selfUpdateInstructions   Boolean            @default(false)
+  instructionHistory       Json               @default("[]")
   pendingInstructionsRunId String?
   color                    String
-  notifyOnFinish           Boolean           @default(true)
-  pinned                   Boolean           @default(false)
-  position                 Int               @default(0)
+  notifyOnFinish           Boolean            @default(true)
+  pinned                   Boolean            @default(false)
+  position                 Int                @default(0)
   sectionId                String?
-  section                  BotSection?       @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  section                  BotSection?        @relation(fields: [sectionId], references: [id], onDelete: SetNull)
   archivedAt               DateTime?
   parentBotId              String?
   spawnKey                 String?
   /// Short first messages shown as buttons while the chat is empty: ["Show today's bookings", ...].
   starters                 Json?
   memoryScope              String?
-  parent                   Bot?              @relation("BotChildren", fields: [parentBotId], references: [id], onDelete: SetNull)
-  children                 Bot[]             @relation("BotChildren")
-  createdAt                DateTime          @default(now())
-  updatedAt                DateTime          @updatedAt
+  parent                   Bot?               @relation("BotChildren", fields: [parentBotId], references: [id], onDelete: SetNull)
+  children                 Bot[]              @relation("BotChildren")
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
   thread                   Thread?
   computerId               String?
-  computer                 Computer?         @relation(fields: [computerId], references: [id], onDelete: SetNull)
-  computerSwitching        Boolean           @default(false)
+  computer                 Computer?          @relation(fields: [computerId], references: [id], onDelete: SetNull)
+  computerSwitching        Boolean            @default(false)
   voiceId                  String?
-  autoSpeak                Boolean           @default(false)
+  autoSpeak                Boolean            @default(false)
   modelProvider            String?
   modelId                  String?
   thinkingLevel            String?
   /// The agent picks a model tier for each turn. Pinned agents leave this false and keep their model.
-  modelAuto                Boolean           @default(false)
-  disabledBuiltinTools     String[]          @default([])
+  modelAuto                Boolean            @default(false)
+  disabledBuiltinTools     String[]           @default([])
   webhookSecretId          String?
-  teamChatAmbientEnabled   Boolean           @default(false)
-  teamChatRules            String            @default("")
-  crossSpaceCommunication  Boolean           @default(false)
-  fleetManagement          Boolean           @default(true)
+  teamChatAmbientEnabled   Boolean            @default(false)
+  teamChatRules            String             @default("")
+  crossSpaceCommunication  Boolean            @default(false)
+  fleetManagement          Boolean            @default(true)
   /// Who may talk to the agent. False: everyone in the space. True: its owner, the people in
   /// `audienceUserIds` and whoever holds one of `audienceRoleIds`.
-  audienceRestricted       Boolean           @default(false)
-  audienceRoleIds          String[]          @default([])
-  audienceUserIds          String[]          @default([])
+  audienceRestricted       Boolean            @default(false)
+  audienceRoleIds          String[]           @default([])
+  audienceUserIds          String[]           @default([])
   /// Another agent may consult it for someone outside its audience; the answer goes only to the
   /// asking agent.
-  consultable              Boolean           @default(true)
-  squadRouting             Boolean           @default(false)
+  consultable              Boolean            @default(true)
+  squadRouting             Boolean            @default(false)
   /// This bot's own approval mode (never, auto, ask); null follows the member's default.
   approvalMode             String?
   /// Most a bot may spend on hosted model credits in a UTC day; null means no limit.
@@ -740,9 +740,9 @@ model Bot {
   agentImports             AgentImport[]
   groupMembers             ChatGroupMember[]
   botSecrets               BotSecret[]
-  assignedTickets          Ticket[]          @relation("TicketAssigneeBot")
-  createdTickets           Ticket[]          @relation("TicketCreatorBot")
-  ticketComments           TicketComment[]   @relation("TicketCommentAuthorBot")
+  assignedTickets          Ticket[]           @relation("TicketAssigneeBot")
+  createdTickets           Ticket[]           @relation("TicketCreatorBot")
+  ticketComments           TicketComment[]    @relation("TicketCommentAuthorBot")
 
   externalConversations    ExternalConversation[]
   messagingInstallations   MessagingInstallation[]
@@ -899,27 +899,27 @@ model Thread {
 /// One inbox entry for one member of one space. It holds references and no content: the preview
 /// is read from the message when the inbox is listed, so nothing is stored outside encryption.
 model Notification {
-  id         String    @id @default(cuid())
-  spaceId    String
-  space      Space     @relation(fields: [spaceId], references: [id], onDelete: Cascade)
-  userId     String
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String    @id @default(cuid())
+  spaceId   String
+  space     Space     @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   /// mention | reply | dm | approval | question | failure | alert
-  kind       String
-  threadId   String?
-  messageId  String?
-  botId      String?
+  kind      String
+  threadId  String?
+  messageId String?
+  botId     String?
   /// The person who caused it, when a person did.
-  actorId    String?
+  actorId   String?
   /// A short product-authored line for kinds that carry no message (alert); never user content.
-  detail     String?
+  detail    String?
   /// What `detail` says as a code plus params, so each client words it in the member's language.
-  code       String?
-  params     Json?
+  code      String?
+  params    Json?
   /// One live entry per source: the same source again refreshes this row instead of adding one.
-  dedupeKey  String
-  readAt     DateTime?
-  createdAt  DateTime  @default(now())
+  dedupeKey String
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
 
   @@unique([userId, dedupeKey])
   @@index([spaceId, userId, readAt, createdAt])
@@ -1723,17 +1723,17 @@ model SpaceMemoryConfig {
 }
 
 model Secret {
-  id                String             @id @default(cuid())
-  userId            String
-  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  spaceId           String?
-  space             Space?             @relation(fields: [spaceId], references: [id], onDelete: Cascade)
-  kind              String
-  ciphertext        String
-  createdAt         DateTime           @default(now())
-  mcpServers        McpServer[]
-  spaceMemoryConfig SpaceMemoryConfig?
-  agentSecret       AgentSecret?
+  id                 String              @id @default(cuid())
+  userId             String
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  spaceId            String?
+  space              Space?              @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  kind               String
+  ciphertext         String
+  createdAt          DateTime            @default(now())
+  mcpServers         McpServer[]
+  spaceMemoryConfig  SpaceMemoryConfig?
+  agentSecret        AgentSecret?
   databaseConnection DatabaseConnection?
 
   @@index([userId, spaceId])
@@ -2581,56 +2581,75 @@ model MessagingInstallSession {
 
 /// A SaaS that sends its customers to Corvo. Platform-level: only server code reads it.
 model Partner {
-  id                  String                 @id @default(cuid())
-  slug                String                 @unique
-  name                String
+  id                   String                 @id @default(cuid())
+  slug                 String                 @unique
+  name                 String
   /// Looks the row up without revealing the key; the key itself is never stored.
-  keyPrefix           String                 @unique
-  keyHash             String
-  enabled             Boolean                @default(true)
-  createdAt           DateTime               @default(now())
+  keyPrefix            String                 @unique
+  keyHash              String
+  enabled              Boolean                @default(true)
+  createdAt            DateTime               @default(now())
   /// The person who manages this partner in the app; null for one made on the command line.
-  ownerUserId         String?                @unique
-  owner               User?                  @relation(fields: [ownerUserId], references: [id], onDelete: SetNull)
+  ownerUserId          String?                @unique
+  owner                User?                  @relation(fields: [ownerUserId], references: [id], onDelete: SetNull)
   /// What every new customer gets: { connector?: {slug,name,endpoint}, agents: [...] }.
-  template            Json?
+  template             Json?
   /// The most this partner passes on to one customer, and to all customers together, per month.
-  perTenantLimitCents Int?
-  monthlyLimitCents   Int?
+  perTenantLimitCents  Int?
+  monthlyLimitCents    Int?
   /// Whose credit pays for this partner's customers when the partner has no owner of its own, so
   /// several partners (one per product) can draw on one account.
-  walletOwnerUserId   String?
+  walletOwnerUserId    String?
   /// Where low-credit notices go. The secret that signs them is derived from the deployment's key
   /// and this version, so nothing secret is stored; raising the version replaces the secret.
-  webhookUrl          String?
-  webhookSecretVersion Int                   @default(0)
+  webhookUrl           String?
+  webhookSecretVersion Int                    @default(0)
   /// Days a consultation's audio and transcript are kept; null means the platform default of 30.
-  scribeRetentionDays Int?
-  tenants             PartnerTenant[]
-  codes               PartnerEntryCode[]
-  windows             PartnerRequestWindow[]
-  webhookEvents       PartnerWebhookEvent[]
-  consultations       Consultation[]
+  scribeRetentionDays  Int?
+  /// Commerce (docs/partner-commerce.md). Everything defaults to the pilot's behaviour: a "wallet"
+  /// partner draws on its owner's credit and the commerce API refuses it.
+  /// embedded | white_label
+  mode                 String                 @default("embedded")
+  country              String?
+  /// BRL | USD, from the country at creation; one per partner.
+  currency             String                 @default("USD")
+  /// The partner's share of the catalog price, in basis points.
+  commissionBps        Int                    @default(2000)
+  /// wallet | commerce
+  billingModel         String                 @default("wallet")
+  /// Where "Comprar mais" goes; https, never fetched by the server.
+  checkoutUrl          String?
+  /// What this key may do: tenants:write, commerce:read, commerce:write.
+  scopes               String[]               @default(["tenants:write"])
+  tenants              PartnerTenant[]
+  revenueEntries       RevenueShareEntry[]
+  invoices             PartnerInvoice[]
+  idempotencyRecords   IdempotencyRecord[]
+  codes                PartnerEntryCode[]
+  windows              PartnerRequestWindow[]
+  webhookEvents        PartnerWebhookEvent[]
+  consultations        Consultation[]
 
   @@map("partners")
 }
 
 /// One partner customer: its own organization and the single Corvo user that owns its agents.
 model PartnerTenant {
-  id               String             @id @default(cuid())
+  id               String              @id @default(cuid())
   partnerId        String
-  partner          Partner            @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partner          Partner             @relation(fields: [partnerId], references: [id], onDelete: Cascade)
   externalTenantId String
-  organizationId   String             @unique
-  organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId   String              @unique
+  organization     Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   ownerUserId      String
-  owner            User               @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  owner            User                @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
   /// enabled | suspended. The partner decides; Corvo enforces.
-  state            String             @default("enabled")
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
+  state            String              @default("enabled")
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
   codes            PartnerEntryCode[]
   consultations    Consultation[]
+  subscription     TenantSubscription?
 
   @@unique([partnerId, externalTenantId])
   @@map("partner_tenants")
@@ -2648,6 +2667,9 @@ model PartnerWebhookEvent {
   period           String
   grantedCents     Int
   usedCents        Int
+  /// The body of a commerce event (minor units and currency); null for the cents-based credit notices.
+  /// `period` is the dedupe key: commerce events that can repeat in a month add a suffix to it.
+  payload          Json?
   createdAt        DateTime  @default(now())
   deliveredAt      DateTime?
 
@@ -2807,4 +2829,208 @@ model ConsultationChunk {
 
   @@id([consultationId, seq])
   @@map("consultation_chunks")
+}
+
+/// Rook's price list. Plan keys reuse the entitlement ids (personal, team, company).
+model CatalogPlan {
+  id       String             @id @default(cuid())
+  key      String             @unique
+  name     String
+  position Int                @default(0)
+  active   Boolean            @default(true)
+  prices   CatalogPlanPrice[]
+
+  @@map("catalog_plans")
+}
+
+/// A plan's price and included AI credit in one currency, both in that currency's minor unit.
+model CatalogPlanPrice {
+  id            String      @id @default(cuid())
+  planId        String
+  plan          CatalogPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  currency      String
+  amountMinor   Int
+  creditMinor   Int
+  creditExpires String      @default("period_end")
+
+  @@unique([planId, currency])
+  @@map("catalog_plan_prices")
+}
+
+model CatalogPack {
+  id       String             @id @default(cuid())
+  key      String             @unique
+  name     String
+  position Int                @default(0)
+  active   Boolean            @default(true)
+  prices   CatalogPackPrice[]
+
+  @@map("catalog_packs")
+}
+
+model CatalogPackPrice {
+  id          String      @id @default(cuid())
+  packId      String
+  pack        CatalogPack @relation(fields: [packId], references: [id], onDelete: Cascade)
+  currency    String
+  amountMinor Int
+  creditMinor Int
+
+  @@unique([packId, currency])
+  @@map("catalog_pack_prices")
+}
+
+/// One row per day and pair, written by a rate source or by hand. Grants lock a row by id.
+model FxRate {
+  id        String   @id @default(cuid())
+  base      String   @default("USD")
+  quote     String
+  /// How many `quote` one `base` buys, for example 5.12 for USD to BRL.
+  rate      Decimal  @db.Decimal(18, 8)
+  source    String
+  validFrom DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([base, quote, validFrom])
+  @@map("fx_rates")
+}
+
+/// Commerce policy as data: grace days, FX spread, top-up expiry, invoice terms, top-up limits.
+model CommerceSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("commerce_settings")
+}
+
+/// The plan a commerce customer is on, as the partner reported it.
+model TenantSubscription {
+  id              String        @id @default(cuid())
+  partnerTenantId String        @unique
+  tenant          PartnerTenant @relation(fields: [partnerTenantId], references: [id], onDelete: Cascade)
+  planKey         String
+  /// A downgrade reported mid-period, applied at the next period.
+  pendingPlanKey  String?
+  /// trialing | active | past_due | canceled
+  status          String
+  currency        String
+  periodStart     DateTime
+  periodEnd       DateTime
+  /// Snapshots of the price the plan was sold at.
+  baseMinor       Int
+  markupMinor     Int           @default(0)
+  chargedMinor    Int?
+  /// partner_reported | stripe
+  source          String        @default("partner_reported")
+  externalRef     String?
+  pastDueSince    DateTime?
+  /// Set once when access ended and subscription.lapsed was queued; cleared by a renewal.
+  lapsedAt        DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("tenant_subscriptions")
+}
+
+/// Credit given to a customer as one lot, with the FX conversion that was applied. The lot itself
+/// is the model credit lot named by `source` (`purchase:<source>`); this row says what it was for.
+model CreditGrant {
+  id              String   @id @default(cuid())
+  source          String   @unique
+  partnerTenantId String
+  /// plan | plan_upgrade | topup
+  kind            String
+  period          String
+  currency        String
+  /// What the customer reads, in minor units; reduced by a refund together with the lot.
+  creditMinor     Int
+  creditMicros    BigInt
+  fxRateId        String?
+  fxRate          String?
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+
+  @@index([partnerTenantId, period])
+  @@map("credit_grants")
+}
+
+/// Immutable: one row per money event. A correction is a new row that references the old one.
+model RevenueShareEntry {
+  id                     String   @id @default(cuid())
+  source                 String   @unique
+  partnerId              String
+  partner                Partner  @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+  partnerTenantId        String
+  /// subscription | topup | refund | adjustment
+  kind                   String
+  period                 String
+  currency               String
+  baseMinor              Int
+  rookShareMinor         Int
+  partnerCommissionMinor Int
+  markupMinor            Int
+  /// What the customer paid (or was refunded, negative), for refunds and statements.
+  paidMinor              Int      @default(0)
+  /// The partner's payment id, which a refund names.
+  externalRef            String?
+  reverses               String?
+  createdAt              DateTime @default(now())
+
+  @@index([partnerId, period])
+  @@index([partnerTenantId, externalRef])
+  @@map("revenue_share_entries")
+}
+
+model PartnerInvoice {
+  id          String               @id @default(cuid())
+  partnerId   String
+  partner     Partner              @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+  period      String
+  currency    String
+  /// draft | issued | paid | void
+  state       String               @default("draft")
+  totalMinor  Int
+  dueAt       DateTime?
+  issuedAt    DateTime?
+  /// The fiscal document number, marked by hand until the tax rules are settled.
+  externalRef String?
+  createdAt   DateTime             @default(now())
+  lines       PartnerInvoiceLine[]
+
+  @@unique([partnerId, period, currency])
+  @@map("partner_invoices")
+}
+
+model PartnerInvoiceLine {
+  id              String         @id @default(cuid())
+  invoiceId       String
+  invoice         PartnerInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  partnerTenantId String
+  kind            String
+  entryId         String         @unique
+  rookShareMinor  Int
+
+  @@index([invoiceId])
+  @@map("partner_invoice_lines")
+}
+
+/// A money call already handled, kept 30 days: the same key and body answers the same, another
+/// body under the key is refused.
+model IdempotencyRecord {
+  id          String   @id @default(cuid())
+  partnerId   String
+  partner     Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  key         String
+  requestHash String
+  /// pending | done
+  state       String   @default("pending")
+  status      Int?
+  response    Json?
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+
+  @@unique([partnerId, key])
+  @@index([expiresAt])
+  @@map("idempotency_records")
 }

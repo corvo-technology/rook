@@ -23,13 +23,25 @@ interface TenantRow {
   state: string;
 }
 
+/** What a key may do; a partner with no scopes recorded keeps the pilot's single one. */
+export function partnerHasScope(partner: { scopes?: string[] | null }, scope: string): boolean {
+  return (partner.scopes ?? ["tenants:write"]).includes(scope);
+}
+
+export interface PartnerAuth {
+  id: string;
+  template?: unknown;
+  scopes?: string[] | null;
+  billingModel?: string;
+}
+
 export interface PartnerRouteDeps {
   webOrigin: string;
   now(): Date;
   /** Counts one request and says whether the partner is still within its limit. */
   allowRequest(partnerId: string): Promise<boolean>;
   /** The partner a key belongs to, or null for any key that is not usable. */
-  authenticate(key: string): Promise<{ id: string; template?: unknown } | null>;
+  authenticate(key: string): Promise<PartnerAuth | null>;
   provision(
     partner: { id: string },
     input: { externalTenantId: string; name: string },
@@ -81,11 +93,15 @@ function currentPeriod(now: Date): string {
 /** The API a partner's own system calls to manage its customers and let their people in. */
 export function mountPartnerRoutes(app: Hono, deps: PartnerRouteDeps): void {
   /** Resolves the calling partner, or the response that refuses the call. */
-  const authorize = async (c: Context): Promise<{ id: string; template?: unknown } | Response> => {
+  const authorize = async (
+    c: Context,
+    scope = "tenants:write",
+  ): Promise<PartnerAuth | Response> => {
     const header = c.req.header("authorization") ?? "";
     const key = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
     const partner = key && key.length <= MAX_KEY_LENGTH ? await deps.authenticate(key) : null;
     if (!partner) return c.json({ error: "Unauthorized" }, 401);
+    if (!partnerHasScope(partner, scope)) return c.json({ error: "scope" }, 403);
     if (!(await deps.allowRequest(partner.id))) return c.json({ error: "Too many requests" }, 429);
     return partner;
   };
@@ -111,6 +127,10 @@ export function mountPartnerRoutes(app: Hono, deps: PartnerRouteDeps): void {
     const parsed = PartnerTenantInput.safeParse(json);
     if (!parsed.success) return c.json({ error: "Invalid request" }, 400);
     const input = parsed.data;
+    // A commerce partner's credit comes from its customers' plans, not from a wallet.
+    if (input.allowanceCents && partner.billingModel === "commerce") {
+      return c.json({ error: "commerce_partner" }, 409);
+    }
 
     const tenant = await deps.provision(partner, { externalTenantId, name: input.name });
     // What the call names wins; what it leaves out comes from the partner's template.

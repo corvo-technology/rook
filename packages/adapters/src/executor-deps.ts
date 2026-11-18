@@ -49,7 +49,7 @@ export interface ExecutorDeps {
   secretStore: SecretStore;
   billingEnabled?: boolean;
   /** The partner's state for a space that belongs to a partner's customer; null for any other. */
-  spacePartnerState?(spaceId: string): Promise<"enabled" | "suspended" | null>;
+  spacePartnerState?(spaceId: string): Promise<"enabled" | "suspended" | "inactive" | null>;
   deploymentModelKey?: string;
   /** The deployment default model can run; see resolveDeploymentModel. */
   deploymentModelConfigured?: boolean;

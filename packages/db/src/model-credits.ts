@@ -39,22 +39,44 @@ export async function reconcileCreditPurchase(
 ) {
   if (!Number.isSafeInteger(purchase.amountCents) || purchase.amountCents < 0)
     throw new Error("Invalid credit purchase");
+  const expiresAt = purchase.expiresAt === undefined ? undefined : new Date(purchase.expiresAt);
+  if (expiresAt && !Number.isFinite(expiresAt.getTime()))
+    throw new Error("Invalid credit expiration");
+  const delta = await reconcileCreditGrantMicros(
+    prisma,
+    organizationId,
+    { id: purchase.id, amountMicros: BigInt(purchase.amountCents) * 10_000n, expiresAt },
+    now,
+  );
+  return Number(delta);
+}
+
+/**
+ * The grant itself, in micro-dollars: a grant for `purchase:<id>` is created, or shrunk to a smaller
+ * amount (never grown), and the change in the balance is returned. A grant in another currency is
+ * converted by the caller, which keeps the conversion on its own record.
+ */
+export async function reconcileCreditGrantMicros(
+  prisma: PrismaClient,
+  organizationId: string,
+  grant: { id: string; amountMicros: bigint; expiresAt?: Date },
+  now = new Date(),
+): Promise<bigint> {
+  if (grant.amountMicros < 0n) throw new Error("Invalid credit purchase");
   await creditAccount(prisma, organizationId);
   return prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT "organizationId" FROM model_credit_accounts WHERE "organizationId" = ${organizationId} FOR UPDATE`;
     await prepareCreditLots(tx, organizationId, now);
     await expireCreditLots(tx, organizationId, now);
-    const source = `purchase:${purchase.id}`;
+    const source = `purchase:${grant.id}`;
     const existing = await tx.modelCreditEntry.findUnique({ where: { source } });
     if (existing && existing.organizationId !== organizationId)
       throw new Error("Credit purchase belongs to another account");
-    if (!existing && purchase.amountCents === 0) return 0;
-    const paid = BigInt(purchase.amountCents) * 10_000n;
+    if (!existing && grant.amountMicros === 0n) return 0n;
+    const paid = grant.amountMicros;
     const amountMicros = existing && existing.amountMicros < paid ? existing.amountMicros : paid;
     const delta = amountMicros - (existing?.amountMicros ?? 0n);
-    const expiresAt = purchase.expiresAt === undefined ? undefined : new Date(purchase.expiresAt);
-    if (expiresAt && !Number.isFinite(expiresAt.getTime()))
-      throw new Error("Invalid credit expiration");
+    const expiresAt = grant.expiresAt;
     const previousLot = existing
       ? await tx.modelCreditLot.findUnique({ where: { id: existing.id } })
       : null;
@@ -64,7 +86,7 @@ export async function reconcileCreditPurchase(
       previousLot &&
       (!expiresAt || previousLot.expiresAt?.getTime() === expiresAt.getTime())
     )
-      return 0;
+      return 0n;
     const entry = await tx.modelCreditEntry.upsert({
       where: { source },
       create: { source, organizationId, amountMicros },
@@ -89,7 +111,7 @@ export async function reconcileCreditPurchase(
     await resizeCreditLot(tx, entry.id, amountMicros, expiresAt);
     await syncLotBalance(tx, organizationId);
     await expireCreditLots(tx, organizationId, now);
-    return Number(delta);
+    return delta;
   });
 }
 

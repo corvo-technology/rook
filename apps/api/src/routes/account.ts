@@ -18,7 +18,9 @@ import {
   lockSpaceSettings,
   newestVoiceCredentialOrder,
   Prisma,
+  partnerBalanceForOrganization,
   removeApprovalRule,
+  runAsSystem,
   saveApprovalRule,
   saveAutoReviewPreference,
   selectVoicePreference,
@@ -84,6 +86,20 @@ export function accountRoutes(ctx: RouterContext) {
     health: os.health.handler(async () => ({ ok: true as const, version: "0.1.0" })),
     me: authed.me.handler(async ({ context }): Promise<Me> => meDto(deps, context.actor)),
     billing: {
+      partnerBalance: authed.billing.partnerBalance.handler(({ context, input }) =>
+        // Partner tables belong to the system; the caller's own organization is the only lookup.
+        runAsSystem("partner customer balance", async () => {
+          const space = await deps.prisma.space.findUnique({
+            where: { id: context.actor.spaceId },
+            select: { organizationId: true },
+          });
+          return space
+            ? partnerBalanceForOrganization(deps.prisma, space.organizationId, {
+                pack: input.pack,
+              })
+            : null;
+        }),
+      ),
       selectFunding: authed.billing.selectFunding.handler(async ({ context, input }) => {
         const billing = requireBilling(deps);
         if (input.funding === "credits") {

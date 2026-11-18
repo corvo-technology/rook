@@ -10,13 +10,20 @@ const TEMPLATE = {
   connector: { slug: "acme", name: "Acme", endpoint: "https://mcp.acme.example/v1" },
   agents: [{ key: "manager", name: "Manager", instructions: "Run it.", usesConnector: true }],
 };
+const KEY_COMMERCE = "cpk_CCCCCCCC.key-for-commerce";
+const KEY_NO_SCOPE = "cpk_SSSSSSSS.key-without-tenant-scope";
 const KEY_B = "cpk_BBBBBBBB.key-for-partner-b";
 const NOW = new Date("2026-11-05T12:00:00.000Z");
 
 function fixture(options: { maxRequests?: number; template?: unknown } = {}) {
   const used = new Map<string, number>();
-  const partners: Record<string, { id: string; enabled: boolean; template?: unknown }> = {
+  const partners: Record<
+    string,
+    { id: string; enabled: boolean; template?: unknown; billingModel?: string; scopes?: string[] }
+  > = {
     [KEY_A]: { id: "partner-a", enabled: true, template: options.template },
+    [KEY_COMMERCE]: { id: "partner-c", enabled: true, billingModel: "commerce" },
+    [KEY_NO_SCOPE]: { id: "partner-s", enabled: true, scopes: ["commerce:read"] },
     [KEY_B]: { id: "partner-b", enabled: true },
     "cpk_DDDDDDDD.key-for-disabled": { id: "partner-d", enabled: false },
   };
@@ -37,7 +44,14 @@ function fixture(options: { maxRequests?: number; template?: unknown } = {}) {
     }),
     authenticate: vi.fn(async (key: string) => {
       const found = partners[key];
-      return found?.enabled ? { id: found.id, template: found.template } : null;
+      return found?.enabled
+        ? {
+            id: found.id,
+            template: found.template,
+            billingModel: found.billingModel,
+            scopes: found.scopes,
+          }
+        : null;
     }),
     provision: vi.fn(
       async (partner: { id: string }, input: { externalTenantId: string; name: string }) => {
@@ -223,6 +237,25 @@ describe("partner routes: tenants", () => {
       tenantId: expect.any(String),
     });
     expect(f.tenants.size).toBe(1);
+  });
+
+  it("refuses a pass-on from a wallet to a commerce partner, whose credit comes from plans", async () => {
+    const f = fixture();
+    const response = await f.call("PUT", put, {
+      key: KEY_COMMERCE,
+      body: { name: "Shop", allowanceCents: 500 },
+    });
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({ error: "commerce_partner" });
+    expect(f.allowances).toEqual([]);
+  });
+
+  it("refuses a key without the tenants scope after authenticating it", async () => {
+    const f = fixture();
+    const response = await f.call("PUT", put, { key: KEY_NO_SCOPE, body: { name: "Shop" } });
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({ error: "scope" });
+    expect(f.tenants.size).toBe(0);
   });
 
   it("answers 409 when the allowance is over a limit the partner set", async () => {

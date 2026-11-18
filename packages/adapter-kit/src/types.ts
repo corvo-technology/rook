@@ -807,6 +807,8 @@ export interface BackgroundJobPayloads {
   "push.receipt": { userId: string; ticketId: string; tokenDigest: string };
   /** Transcribe the audio of a queued run's message, then start the run. */
   "audio.transcribe": { runId: string };
+  /** Tell a partner's webhook about one customer's credit; the row holds what happened. */
+  "partner.webhook": { eventId: string };
 }
 
 export type BackgroundJobName = keyof BackgroundJobPayloads;

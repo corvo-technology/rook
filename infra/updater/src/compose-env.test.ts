@@ -43,6 +43,10 @@ const KUBERNETES_SANDBOX =
 const NOT_PASSED: Record<string, string> = {
   VITEST: "set by the test runner",
   CORVO_WEB_URL: "input of the partner embed demo command, passed on its own command line",
+  PARTNER_DEMO_TEMPLATE: "input of the partner embed demo command, passed on its own command line",
+  PARTNER_DEMO_LOCALE: "input of the partner embed demo command, passed on its own command line",
+  PARTNER_DEMO_CONNECTOR_TOKEN:
+    "input of the partner embed demo command, passed on its own command line",
   DEMO_CONNECTOR_TOKEN: "input of the partner demo command, passed on its own command line",
   DEMO_CONNECTOR_URL: "input of the partner demo command, passed on its own command line",
   PARTNER_API_KEY: "input of the partner demo commands, passed on their own command line",

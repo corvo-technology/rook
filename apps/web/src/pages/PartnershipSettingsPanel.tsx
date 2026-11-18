@@ -1,7 +1,8 @@
 import type { PartnerAccount } from "@corvo/contracts";
+import { PartnerTemplate } from "@corvo/contracts";
 import { Button, Input, Skeleton } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { rpc } from "../lib/rpc";
 import { PartnerTemplateEditor } from "./PartnerTemplateEditor";
 
@@ -14,10 +15,13 @@ export function PartnershipSettingsPanel({ onAddCredit }: { onAddCredit?: () => 
   const [key, setKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [editing, setEditing] = useState(false);
+  /** A template read from a file, shown in the editor to be checked and saved. */
+  const [imported, setImported] = useState<PartnerTemplate | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [perCustomer, setPerCustomer] = useState("");
   const [perMonth, setPerMonth] = useState("");
+  const importInput = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     try {
@@ -43,6 +47,35 @@ export function PartnershipSettingsPanel({ onAddCredit }: { onAddCredit?: () => 
       setError(t`Something went wrong`);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function importTemplate(file: File) {
+    setError(null);
+    try {
+      // The address of the partner's server is filled in here, so a placeholder stands for none.
+      const text = (await file.text())
+        .split("{{MCP_PUBLIC_URL}}")
+        .join("https://placeholder.invalid");
+      const parsed = PartnerTemplate.safeParse(JSON.parse(text));
+      if (!parsed.success) throw new Error("invalid");
+      const { connector } = parsed.data;
+      setImported({
+        ...parsed.data,
+        ...(connector
+          ? {
+              connector: {
+                ...connector,
+                endpoint: connector.endpoint.includes("placeholder.invalid")
+                  ? ""
+                  : connector.endpoint,
+              },
+            }
+          : {}),
+      });
+      setEditing(true);
+    } catch {
+      setError(t`That file is not a valid template`);
     }
   }
 
@@ -177,13 +210,17 @@ export function PartnershipSettingsPanel({ onAddCredit }: { onAddCredit?: () => 
           ) : null}
           {editing ? (
             <PartnerTemplateEditor
-              template={account.template}
-              onCancel={() => setEditing(false)}
+              template={imported ?? account.template}
+              onCancel={() => {
+                setEditing(false);
+                setImported(null);
+              }}
               onSave={async (template) => {
                 await run(async () => {
                   await rpc.partner.setTemplate({ template });
                   await load();
                   setEditing(false);
+                  setImported(null);
                 });
               }}
             />
@@ -196,9 +233,27 @@ export function PartnershipSettingsPanel({ onAddCredit }: { onAddCredit?: () => 
                   <Trans>Agents</Trans>
                 )}
               </span>
-              <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
-                <Trans>Edit</Trans>
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="secondary" size="sm" onClick={() => importInput.current?.click()}>
+                  <Trans>Import</Trans>
+                </Button>
+                <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
+                  <Trans>Edit</Trans>
+                </Button>
+              </div>
+              <input
+                ref={importInput}
+                type="file"
+                accept="application/json,.json"
+                className="sr-only"
+                tabIndex={-1}
+                aria-label={t`Import`}
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  if (file) void importTemplate(file);
+                }}
+              />
             </div>
           )}
           {account.tenants.length > 0 ? (

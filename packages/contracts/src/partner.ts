@@ -52,6 +52,13 @@ export const PartnerTemplate = z
     models: z.enum(["fixed", "choose"]).optional(),
     /** Left out of the bar for the partner's customers. */
     hide: z.array(PartnerHiddenArea).max(PARTNER_HIDEABLE_AREAS.length).optional(),
+    /** What a new customer's Chief is called; the localized default when left out. */
+    chiefName: z.string().trim().min(1).max(80).optional(),
+    /** The partner's main colour as `#rrggbb`, used when the page that embeds Rook passes none. */
+    accent: z
+      .string()
+      .regex(/^#[0-9a-f]{6}$/i)
+      .optional(),
   })
   .strict();
 export type PartnerTemplate = z.infer<typeof PartnerTemplate>;
@@ -134,3 +141,22 @@ export const PartnerAccountSchema = z.object({
   ),
 });
 export type PartnerAccount = z.infer<typeof PartnerAccountSchema>;
+
+/** What a partner's webhook is told, in the JSON body of a signed POST. It never carries a secret. */
+export const PARTNER_WEBHOOK_EVENTS = [
+  "tenant.allowance_low",
+  "tenant.allowance_exhausted",
+] as const;
+export type PartnerWebhookEventType = (typeof PARTNER_WEBHOOK_EVENTS)[number];
+
+export interface PartnerWebhookPayload {
+  id: string;
+  type: PartnerWebhookEventType;
+  createdAt: string;
+  externalTenantId: string;
+  /** The month the credit was granted for, such as 2026-11. */
+  period: string;
+  grantedCents: number;
+  usedCents: number;
+  remainingCents: number;
+}

@@ -1,5 +1,6 @@
+import { readFile } from "node:fs/promises";
 import { describe, expect, it, vi } from "vitest";
-import { runPartnerCommand } from "./partner-command.js";
+import { parseTemplateFile, runPartnerCommand } from "./partner-command.js";
 
 function deps() {
   return {
@@ -12,8 +13,30 @@ function deps() {
       key: "cpk_NEW.new-secret",
     })),
     setPartnerEnabled: vi.fn(async () => undefined),
+    findUserIdByEmail: vi.fn(async (email: string) =>
+      email === "owner@example.test" ? "user-1" : null,
+    ),
+    readFile: vi.fn(async () => TEMPLATE),
+    setTemplate: vi.fn(async () => true),
+    setWebhookUrl: vi.fn(async () => ({ id: "p1", webhookSecretVersion: 0 })),
+    findPartner: vi.fn(
+      async (): Promise<{ id: string; webhookSecretVersion: number } | null> => ({
+        id: "p1",
+        webhookSecretVersion: 0,
+      }),
+    ),
+    rotateWebhookSecret: vi.fn(async () => ({ id: "p1", webhookSecretVersion: 1 })),
+    webhookSecret: vi.fn(
+      (p: { webhookSecretVersion: number }) => `whsec_v${p.webhookSecretVersion}`,
+    ),
   };
 }
+
+const TEMPLATE = JSON.stringify({
+  connector: { slug: "greenflow", name: "Greenflow", endpoint: "{{MCP_PUBLIC_URL}}" },
+  agents: [{ key: "recepcao", name: "Recepção", instructions: "x", usesConnector: true }],
+  chiefName: "Assistente Teste",
+});
 
 describe("partner command", () => {
   it("creates a partner and shows its key once, saying it cannot be shown again", async () => {
@@ -50,4 +73,130 @@ describe("partner command", () => {
     expect(d.rotatePartnerKey).not.toHaveBeenCalled();
     expect(d.setPartnerEnabled).not.toHaveBeenCalled();
   });
+
+  it("makes a partner that draws on a named account's credit", async () => {
+    const d = deps();
+    await runPartnerCommand(
+      ["create", "divellas", "Divellas", "--wallet-owner", "owner@example.test"],
+      d,
+    );
+    expect(d.createPartner).toHaveBeenCalledWith({
+      slug: "divellas",
+      name: "Divellas",
+      walletOwnerUserId: "user-1",
+    });
+    await expect(
+      runPartnerCommand(["create", "prontu", "Prontu", "--wallet-owner", "nobody@example.test"], d),
+    ).rejects.toThrow(/no account/i);
+  });
+
+  it("applies a template, filling in the MCP address, and says what it set", async () => {
+    const d = deps();
+    const output = await runPartnerCommand(
+      ["apply-template", "greenbarber", "t.json", "--mcp-url", "https://mcp.example.test/"],
+      d,
+    );
+    expect(d.setTemplate).toHaveBeenCalledWith(
+      "greenbarber",
+      expect.objectContaining({
+        chiefName: "Assistente Teste",
+        connector: expect.objectContaining({ endpoint: "https://mcp.example.test" }),
+      }),
+    );
+    expect(output).toContain("Recepção");
+  });
+
+  it("applying the same template twice stores the same thing", async () => {
+    const d = deps();
+    const argv = [
+      "apply-template",
+      "greenbarber",
+      "t.json",
+      "--mcp-url",
+      "https://mcp.example.test",
+    ];
+    await runPartnerCommand(argv, d);
+    await runPartnerCommand(argv, d);
+    expect(d.setTemplate.mock.calls[0]).toEqual(d.setTemplate.mock.calls[1]);
+  });
+
+  it("refuses a template with an unfilled address, bad JSON or invalid fields, storing nothing", async () => {
+    const d = deps();
+    await expect(runPartnerCommand(["apply-template", "greenbarber", "t.json"], d)).rejects.toThrow(
+      /--mcp-url/,
+    );
+    await expect(
+      runPartnerCommand(
+        ["apply-template", "greenbarber", "t.json", "--mcp-url", "http://evil.test"],
+        d,
+      ),
+    ).rejects.toThrow(/https/);
+    d.readFile.mockResolvedValueOnce("{nope");
+    await expect(
+      runPartnerCommand(
+        ["apply-template", "greenbarber", "t.json", "--mcp-url", "https://m.test"],
+        d,
+      ),
+    ).rejects.toThrow(/JSON/);
+    d.readFile.mockResolvedValueOnce(JSON.stringify({ agents: [], accent: "red" }));
+    await expect(
+      runPartnerCommand(
+        ["apply-template", "greenbarber", "t.json", "--mcp-url", "https://m.test"],
+        d,
+      ),
+    ).rejects.toThrow(/accent/);
+    expect(d.setTemplate).not.toHaveBeenCalled();
+    d.setTemplate.mockResolvedValueOnce(false);
+    await expect(
+      runPartnerCommand(["apply-template", "ghost", "t.json", "--mcp-url", "https://m.test"], d),
+    ).rejects.toThrow(/unknown partner/i);
+  });
+
+  it("sets, shows, rotates and removes the webhook, printing the secret only for the partner", async () => {
+    const d = deps();
+    const set = await runPartnerCommand(
+      ["webhook", "greenbarber", "https://hooks.example.test/rook"],
+      d,
+    );
+    expect(d.setWebhookUrl).toHaveBeenCalledWith("greenbarber", "https://hooks.example.test/rook");
+    expect(set).toContain("whsec_v0");
+    expect(await runPartnerCommand(["webhook-secret", "greenbarber"], d)).toContain("whsec_v0");
+    expect(await runPartnerCommand(["webhook-rotate", "greenbarber"], d)).toContain("whsec_v1");
+    expect(await runPartnerCommand(["webhook", "greenbarber", "off"], d)).not.toContain("whsec_");
+    expect(d.setWebhookUrl).toHaveBeenLastCalledWith("greenbarber", null);
+    await expect(
+      runPartnerCommand(["webhook", "greenbarber", "http://insecure.test"], d),
+    ).rejects.toThrow(/https/);
+  });
+});
+
+describe("the shipped templates", () => {
+  const dir = new URL("../partner-templates/", import.meta.url);
+  const expected: Record<string, string[]> = {
+    greenbarber: ["Recepção", "Retorno de clientes", "Gestor"],
+    divellas: ["Recepção", "Pós-atendimento", "Gestor"],
+    prontu: ["Recepção", "Escriba", "Gestor"],
+  };
+  for (const [slug, names] of Object.entries(expected)) {
+    it(`${slug} is a valid template with its agents, four starters each, the Store hidden`, async () => {
+      const raw = await readFile(new URL(`${slug}.json`, dir), "utf8");
+      const template = parseTemplateFile(raw, "https://mcp.example.test");
+      expect(template.agents.map((agent) => agent.name)).toEqual(names);
+      expect(template.connector).toEqual({
+        slug: "greenflow",
+        name: "Greenflow",
+        endpoint: "https://mcp.example.test",
+      });
+      expect(template.hide).toEqual(["store"]);
+      expect(template.models).toBeUndefined();
+      expect(template.chiefName).toMatch(/^Assistente /);
+      for (const agent of template.agents) {
+        expect(agent.usesConnector).toBe(true);
+        expect(agent.starters).toHaveLength(4);
+        expect(agent.instructions).toMatch(/aprovação do dono/);
+        expect(agent.instructions).toMatch(/Nunca assine/);
+      }
+      expect(() => parseTemplateFile(raw)).toThrow(/--mcp-url/);
+    });
+  }
 });

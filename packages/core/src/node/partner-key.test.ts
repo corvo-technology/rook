@@ -3,6 +3,8 @@ import {
   generatePartnerKey,
   hashPartnerKey,
   partnerKeyPrefix,
+  partnerWebhookSecret,
+  signPartnerWebhook,
   verifyPartnerKey,
 } from "./partner-key.js";
 
@@ -50,5 +52,24 @@ describe("partner keys", () => {
     expect(partnerKeyPrefix("")).toBeNull();
     expect(partnerKeyPrefix("Bearer nonsense")).toBeNull();
     expect(partnerKeyPrefix(`${"a".repeat(400)}`)).toBeNull();
+  });
+});
+
+describe("partner webhook signing", () => {
+  it("derives a stable secret per partner and version, from the deployment key", () => {
+    const secret = partnerWebhookSecret("deployment-key", "partner-1", 0);
+    expect(secret).toBe(partnerWebhookSecret("deployment-key", "partner-1", 0));
+    expect(secret).toMatch(/^whsec_[A-Za-z0-9_-]{43}$/);
+    expect(partnerWebhookSecret("deployment-key", "partner-2", 0)).not.toBe(secret);
+    expect(partnerWebhookSecret("deployment-key", "partner-1", 1)).not.toBe(secret);
+    expect(partnerWebhookSecret("other-key", "partner-1", 0)).not.toBe(secret);
+  });
+
+  it("signs the timestamp and body together so neither can be swapped", () => {
+    const secret = partnerWebhookSecret("deployment-key", "partner-1", 0);
+    const signature = signPartnerWebhook(secret, "1700000000", '{"a":1}');
+    expect(signature).toMatch(/^sha256=[0-9a-f]{64}$/);
+    expect(signPartnerWebhook(secret, "1700000001", '{"a":1}')).not.toBe(signature);
+    expect(signPartnerWebhook(secret, "1700000000", '{"a":2}')).not.toBe(signature);
   });
 });

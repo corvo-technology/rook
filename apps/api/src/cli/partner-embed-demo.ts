@@ -1,6 +1,9 @@
 // `pnpm --filter @corvo/api partner:embed-demo`: a pretend partner website on http://localhost:4310
-// for trying the embedded assistant. Needs PARTNER_API_URL and PARTNER_API_KEY; CORVO_WEB_URL is
-// where the browser loads the SDK from (default: PARTNER_API_URL).
+// for trying the embedded assistant. Needs PARTNER_API_URL and PARTNER_API_KEY. CORVO_WEB_URL is
+// where the browser loads the SDK from; it defaults to PARTNER_API_URL only for a local API, so
+// against a deployment set both (https://api.rook.team and https://app.rook.team). Optional:
+// PARTNER_DEMO_TEMPLATE=1 (use the partner's template agents), PARTNER_DEMO_LOCALE=pt-BR,
+// PARTNER_DEMO_CONNECTOR_TOKEN=<the customer's connector token>.
 import { createServer } from "node:http";
 import { createEmbedDemo } from "./partner-embed-demo-command.js";
 

@@ -1670,6 +1670,10 @@ msgstr "Los bots, grupos, chats, archivos, memoria e integraciones de este espac
 msgid "Brain label"
 msgstr "Nombre del cerebro"
 
+#: src/pages/PartnerTemplateEditor.tsx
+msgid "Brand colour"
+msgstr "Color de la marca"
+
 #: src/pages/Onboarding.tsx
 msgid "Bring agents you already use, or I'll suggest a team."
 msgstr "Trae los agentes que ya usas, o te propongo un equipo."
@@ -1890,6 +1894,10 @@ msgstr "Comprobando la configuración de la computadora…"
 #: src/pages/HostComputerPrompt.tsx
 msgid "Checking…"
 msgstr "Comprobando…"
+
+#: src/pages/PartnerTemplateEditor.tsx
+msgid "Chief name"
+msgstr "Nombre del Jefe"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Choose a bot"
@@ -4353,6 +4361,7 @@ msgstr "Servidor IMAP"
 #: src/pages/ImportFlow.tsx
 #: src/pages/ImportFromApp.tsx
 #: src/pages/onboarding/TeamStep.tsx
+#: src/pages/PartnershipSettingsPanel.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/create-bot-panel.tsx
 msgid "Import"
@@ -7949,6 +7958,10 @@ msgstr "Ejecución de prueba"
 #: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Testing…"
 msgstr "Probando…"
+
+#: src/pages/PartnershipSettingsPanel.tsx
+msgid "That file is not a valid template"
+msgstr "Ese archivo no es una plantilla válida"
 
 #: src/lib/server-copy.ts
 msgid "The {name} routine is paused because its change check failed: {reason}"

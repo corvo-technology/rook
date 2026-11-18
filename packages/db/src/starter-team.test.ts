@@ -39,7 +39,7 @@ function fixture(initial: Bot[] = [], over: { chiefRace?: boolean } = {}) {
 const run = (
   f: ReturnType<typeof fixture>,
   locale: "en" | "pt-BR" = "en",
-  options?: { channel?: string; storeAccess?: boolean },
+  options?: { channel?: string; storeAccess?: boolean; name?: string },
 ) => ensureStarterTeam(f.prisma, actor, locale, { createBot: f.createBot as never }, options);
 
 describe("ensureStarterTeam", () => {
@@ -70,6 +70,20 @@ describe("ensureStarterTeam", () => {
     const partner = fixture();
     await run(partner, "en", { storeAccess: false });
     expect(partner.inputs[0]).toMatchObject({ fleetManagement: false, squadRouting: true });
+  });
+
+  it("names the Chief as the partner asked, and finds it again by its key rather than its name", async () => {
+    const f = fixture();
+    const first = await run(f, "pt-BR", { name: "Assistente GreenBarber" });
+    expect(first.bot).toMatchObject({ name: "Assistente GreenBarber" });
+    const again = await run(f, "pt-BR", { name: "Assistente GreenBarber" });
+    expect(again.created).toBe(false);
+    expect(f.inputs).toHaveLength(1);
+  });
+
+  it("keeps the localized name when no name is given", async () => {
+    const f = fixture();
+    expect((await run(f, "pt-BR")).bot).toMatchObject({ name: "Chefe" });
   });
 
   it("writes the Chief for the chat app the person came through", async () => {

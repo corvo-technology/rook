@@ -20,10 +20,11 @@ import {
   Users,
   Workflow,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { NewDot } from "../../components/NewDot";
 import { PeopleList } from "../../components/PeopleList";
+import { applyPartnerAccent } from "../../lib/embed";
 import { usePresence } from "../../lib/presence";
 import { useSpaceQueries } from "../../lib/query";
 import { useDirectPeople } from "../../lib/use-direct-people";
@@ -157,6 +158,19 @@ export function usePartnerHidden(): readonly string[] {
       select: (bootstrap: AppBootstrap) => bootstrap.me?.partner?.hide ?? [],
     }).data ?? []
   );
+}
+
+/** Paints the partner's own colour, unless the page that embeds Rook brought one. */
+export function usePartnerAccent(): void {
+  const queries = useSpaceQueries();
+  const accent = useQuery({
+    ...queries.bootstrap.queryOptions({ input: {} }),
+    queryFn: skipToken,
+    select: (bootstrap: AppBootstrap) => bootstrap.me?.partner?.accent ?? null,
+  }).data;
+  useEffect(() => {
+    applyPartnerAccent(accent ?? null);
+  }, [accent]);
 }
 
 /** The nav with what this account may see: its approvals waiting, the parts a mission has brought, and what a partner hides. */

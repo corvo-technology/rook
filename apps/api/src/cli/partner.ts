@@ -1,11 +1,18 @@
-// `pnpm partner create|rotate|disable|enable <slug> ...`: manages the SaaS partners that send
+// `pnpm partner create|rotate|disable|enable|apply-template|webhook ... <slug> ...`: manages the SaaS partners that send
 // their customers to Rook. Run on the server, as the runtime login, with DATABASE_URL set.
+import { readFile } from "node:fs/promises";
+import { resolveEncryptionKey } from "@corvo/core";
+import { partnerWebhookSecret } from "@corvo/core/node/partner-key";
 import {
   createDb,
   createPartner,
+  findUserIdByEmail,
   rotatePartnerKey,
+  rotatePartnerWebhookSecret,
   runAsSystem,
   setPartnerEnabled,
+  setPartnerTemplateBySlug,
+  setPartnerWebhookUrl,
 } from "@corvo/db";
 import { runPartnerCommand } from "./partner-command.js";
 
@@ -19,6 +26,18 @@ try {
       createPartner: (input) => createPartner(prisma, input),
       rotatePartnerKey: (slug) => rotatePartnerKey(prisma, slug),
       setPartnerEnabled: (slug, enabled) => setPartnerEnabled(prisma, slug, enabled),
+      findUserIdByEmail: (email) => findUserIdByEmail(prisma, email),
+      readFile: (path) => readFile(path, "utf8"),
+      setTemplate: (slug, template) => setPartnerTemplateBySlug(prisma, slug, template),
+      setWebhookUrl: (slug, url) => setPartnerWebhookUrl(prisma, slug, url),
+      findPartner: (slug) => prisma.partner.findUnique({ where: { slug } }),
+      rotateWebhookSecret: (slug) => rotatePartnerWebhookSecret(prisma, slug),
+      webhookSecret: (partner) =>
+        partnerWebhookSecret(
+          resolveEncryptionKey(process.env),
+          partner.id,
+          partner.webhookSecretVersion,
+        ),
     }),
   );
   process.stdout.write(`${output}\n`);

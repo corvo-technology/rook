@@ -54,6 +54,9 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
     choiceEnabled: Boolean(deps.env.desktopHostChoiceEnabled),
     stored: setup.settings?.computerHost,
   });
+  const partnerTemplate = partner
+    ? PartnerTemplate.safeParse(partner.partner.template).data
+    : undefined;
   return {
     ticketBoardEnabled: deps.env.ticketBoardEnabled === true,
     phoneCallsEnabled: deps.env.phoneCallsEnabled === true,
@@ -111,11 +114,9 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
     partner: partner
       ? {
           name: partner.partner.name,
-          hide: PartnerTemplate.safeParse(partner.partner.template).data?.hide ?? [],
-          models:
-            PartnerTemplate.safeParse(partner.partner.template).data?.models === "choose"
-              ? ("choose" as const)
-              : ("fixed" as const),
+          hide: partnerTemplate?.hide ?? [],
+          models: partnerTemplate?.models === "choose" ? ("choose" as const) : ("fixed" as const),
+          ...(partnerTemplate?.accent ? { accent: partnerTemplate.accent.toLowerCase() } : {}),
         }
       : null,
     partnerAdmin: isPartnerAdmin(deps.env, actor.email),

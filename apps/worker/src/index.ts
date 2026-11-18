@@ -31,6 +31,7 @@ import {
   createLocalSpeech,
   createMessagingContextLoader,
   createModelCreditReconciler,
+  createPartnerWebhookReconciler,
   createPostgresReconciliationLeadership,
   createProductAnalytics,
   createReservedGraphileJobWorkerHost,
@@ -384,6 +385,7 @@ async function main() {
       desktopStackToken: process.env.CORVO_DESKTOP_STACK_TOKEN,
     }),
     allowPrivateEndpoint,
+    encryptionKey: resolveEncryptionKey(process.env),
   });
   const reconciler = createJobReconciler({
     prisma,
@@ -395,6 +397,7 @@ async function main() {
       prisma,
       lookup: deploymentModelUsageLookup(),
     }),
+    reconcilePartnerWebhooks: createPartnerWebhookReconciler({ prisma, jobs }),
     reconcileCloudAgents: () => reconcileCloudAgents({ prisma, jobs, cloudAgent }),
     reconcileComputerUpdates: () => reconcileComputerUpdates({ prisma, jobs }),
     reconcileRoutineRetryNotices: inMemoryJobs

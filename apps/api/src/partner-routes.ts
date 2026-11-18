@@ -47,8 +47,15 @@ export interface PartnerRouteDeps {
     externalTenantId: string,
     state: "enabled" | "suspended",
   ): Promise<boolean>;
-  /** The Chief every customer starts with, in front of the partner's agents. Safe to repeat. */
-  ensureChief(actor: Actor, locale: AgentCatalogLocale): Promise<unknown>;
+  /**
+   * The Chief every customer starts with, in front of the partner's agents. Safe to repeat. `name`
+   * is the partner's own name for it; without one the Chief has its localized default.
+   */
+  ensureChief(
+    actor: Actor,
+    locale: AgentCatalogLocale,
+    options?: { name?: string },
+  ): Promise<unknown>;
   install(actor: Actor, partnerId: string, content: PartnerContent): Promise<unknown>;
   grantAllowance(
     tenant: { organizationId: string; partnerId: string; externalTenantId: string },
@@ -120,7 +127,9 @@ export function mountPartnerRoutes(app: Hono, deps: PartnerRouteDeps): void {
       email: "owner@partner.invalid",
       isDeploymentOwner: false,
     };
-    await deps.ensureChief(owner, agentCatalogLocale(input.locale ?? "en"));
+    const locale = agentCatalogLocale(input.locale ?? "en");
+    if (template?.chiefName) await deps.ensureChief(owner, locale, { name: template.chiefName });
+    else await deps.ensureChief(owner, locale);
     if (connector || agents.length > 0) {
       try {
         await deps.install(owner, partner.id, { connector, agents });

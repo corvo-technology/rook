@@ -44,6 +44,7 @@ export * from "./partner-entry.js";
 export * from "./partner-housekeeping.js";
 export * from "./partner-tenants.js";
 export * from "./partner-wallet.js";
+export * from "./partner-webhook.js";
 export * from "./partners.js";
 export * from "./plans.js";
 export * from "./provider-transactions.js";

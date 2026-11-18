@@ -32,6 +32,7 @@ import { compactHistory } from "./history-compaction.js";
 import type { LocalSpeech } from "./local-speech.js";
 import type { MemoryProviderResolver } from "./memory-provider-factory.js";
 import { deliverMessagingOutbound, mirrorMessagingOutbound } from "./messaging-delivery.js";
+import { deliverPartnerWebhook } from "./partner-webhook.js";
 import { expireTaughtSkillTeaching } from "./teaching-session.js";
 import { learnUserMemories } from "./user-memory-run.js";
 import type { HostedVoice } from "./voice-credits.js";
@@ -109,6 +110,8 @@ export function createBackgroundJobHandlers(deps: {
   allowPrivateEndpoint?: boolean;
   /** The deployment's speech key where customers on credits may use it. */
   voiceCredits?: HostedVoice;
+  /** Signs partner webhooks; without it a partner webhook job fails and is retried. */
+  encryptionKey?: string;
 }): BackgroundJobHandlers {
   const audioTranscription = {
     prisma: deps.prisma,
@@ -212,6 +215,20 @@ export function createBackgroundJobHandlers(deps: {
         await asOwner(run, () => mirrorMessagingOutbound(messagingDeps, runId))({ runId });
       }
       await drainMessaging();
+    },
+    // A notice belongs to a partner, not to a Space.
+    "partner.webhook": async ({ eventId }) => {
+      if (!deps.encryptionKey) throw new Error("No key to sign partner webhooks with");
+      await deliverPartnerWebhook(
+        {
+          prisma: deps.prisma,
+          encryptionKey: deps.encryptionKey,
+          ...(deps.allowPrivateEndpoint === undefined
+            ? {}
+            : { allowPrivateEndpoint: deps.allowPrivateEndpoint }),
+        },
+        eventId,
+      );
     },
     "audio.transcribe": asOwner(run, async (payload) => {
       await runAudioTranscribeJob(audioJob, payload);

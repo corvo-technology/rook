@@ -79,4 +79,68 @@ describe("embed demo partner", () => {
       /PARTNER_API_KEY/,
     );
   });
+
+  describe("against a deployment", () => {
+    const production = {
+      PARTNER_API_URL: "https://api.rook.test",
+      PARTNER_API_KEY: "cpk_DEMOKEY1.demo-secret-not-shown",
+      CORVO_WEB_URL: "https://app.rook.test",
+    };
+
+    it("loads the SDK from the web app and calls the API address, never localhost", async () => {
+      const { fetchFn, calls } = fakeCorvo();
+      const demo = createEmbedDemo(production, fetchFn);
+      const html = await (await demo(new Request("http://localhost:4310/"))).text();
+      expect(html).toContain('<script src="https://app.rook.test/sdk.js">');
+      await demo(new Request("http://localhost:4310/corvo/session", { method: "POST" }));
+      const urls = (fetchFn as unknown as { mock: { calls: Array<[string]> } }).mock.calls.map(
+        ([url]) => url,
+      );
+      expect(urls.every((url) => url.startsWith("https://api.rook.test/api/partner/v1/"))).toBe(
+        true,
+      );
+      expect(calls).toHaveLength(2);
+    });
+
+    it("accepts the API address with its partner path and a trailing slash", async () => {
+      const { fetchFn } = fakeCorvo();
+      const demo = createEmbedDemo(
+        { ...production, PARTNER_API_URL: "https://api.rook.test/api/partner/v1/" },
+        fetchFn,
+      );
+      await demo(new Request("http://localhost:4310/corvo/session", { method: "POST" }));
+      expect(
+        String((fetchFn as unknown as { mock: { calls: Array<[string]> } }).mock.calls[0]![0]),
+      ).toBe("https://api.rook.test/api/partner/v1/tenants/demo-shop");
+    });
+
+    it("refuses to guess the web app from a deployed API, which serves no SDK", () => {
+      expect(() =>
+        createEmbedDemo({ PARTNER_API_URL: "https://api.rook.test", PARTNER_API_KEY: "k" }, fetch),
+      ).toThrow(/CORVO_WEB_URL/);
+      expect(() =>
+        createEmbedDemo({ PARTNER_API_URL: "http://127.0.0.1:3100", PARTNER_API_KEY: "k" }, fetch),
+      ).not.toThrow();
+    });
+
+    it("can use the partner's template and language instead of its own agents", async () => {
+      const { fetchFn, calls } = fakeCorvo();
+      const demo = createEmbedDemo(
+        {
+          ...production,
+          PARTNER_DEMO_TEMPLATE: "1",
+          PARTNER_DEMO_LOCALE: "pt-BR",
+          PARTNER_DEMO_CONNECTOR_TOKEN: "gfmcp_fake",
+        },
+        fetchFn,
+      );
+      await demo(new Request("http://localhost:4310/corvo/session", { method: "POST" }));
+      expect(calls[0]?.body).toEqual({
+        name: "Demo Shop",
+        locale: "pt-BR",
+        connectorToken: "gfmcp_fake",
+        allowanceCents: 500,
+      });
+    });
+  });
 });

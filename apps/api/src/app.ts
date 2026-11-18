@@ -52,6 +52,7 @@ import {
   createMessagingTeamChatHistory,
   createMessagingTeamChatSender,
   createModelCreditReconciler,
+  createPartnerWebhookReconciler,
   createProductAnalytics,
   createRunExecutor,
   createRunSandbox,
@@ -826,6 +827,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     localSpeech,
     voiceCredits,
     allowPrivateEndpoint: env.mcpAllowPrivateEndpoint,
+    encryptionKey: env.encryptionKey,
   });
   if (inMemoryJobs) {
     await inMemoryJobs.start(jobHandlers);
@@ -840,6 +842,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
           prisma,
           lookup: deploymentModelUsageLookup(),
         }),
+        reconcilePartnerWebhooks: createPartnerWebhookReconciler({ prisma, jobs }),
         reconcileCloudAgents: () => reconcileCloudAgents({ prisma, jobs, cloudAgent }),
         reconcileComputerUpdates: () => reconcileComputerUpdates({ prisma, jobs }),
         reconcileSecurityEventRetention: createSecurityEventPruner(
@@ -1195,8 +1198,11 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       findPartnerTenant(prisma, partnerId, externalTenantId),
     setState: (partnerId, externalTenantId, state) =>
       setPartnerTenantState(prisma, partnerId, externalTenantId, state),
-    ensureChief: (actor, locale) =>
-      ensureStarterTeam(prisma, actor, locale, undefined, { storeAccess: false }),
+    ensureChief: (actor, locale, options) =>
+      ensureStarterTeam(prisma, actor, locale, undefined, {
+        storeAccess: false,
+        ...(options?.name ? { name: options.name } : {}),
+      }),
     install: (actor, partnerId, content) =>
       installPartnerTenantContent(
         {

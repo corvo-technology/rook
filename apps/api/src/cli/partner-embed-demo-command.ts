@@ -2,6 +2,17 @@ const TENANT = "demo-shop";
 
 type Env = Record<string, string | undefined>;
 
+/** The address as an origin: no trailing slash, and not the partner API path that follows it. */
+const origin = (value: string) => value.replace(/\/+$/, "").replace(/\/api\/partner\/v1$/, "");
+
+const isLocal = (value: string) => {
+  try {
+    return ["localhost", "127.0.0.1", "[::1]"].includes(new URL(value).hostname);
+  } catch {
+    return false;
+  }
+};
+
 const page = (webUrl: string) => `<!doctype html>
 <html lang="en">
 <head>
@@ -45,11 +56,20 @@ export function createEmbedDemo(
   env: Env,
   fetchFn: typeof fetch = fetch,
 ): (request: Request) => Promise<Response> {
-  const api = env.PARTNER_API_URL?.replace(/\/+$/, "");
+  const api = env.PARTNER_API_URL ? origin(env.PARTNER_API_URL) : undefined;
   const key = env.PARTNER_API_KEY;
   if (!api) throw new Error("Set PARTNER_API_URL to the Rook API address.");
   if (!key) throw new Error("Set PARTNER_API_KEY to the key from Settings > Partnership.");
-  const webUrl = (env.CORVO_WEB_URL ?? api).replace(/\/+$/, "");
+  const web = env.CORVO_WEB_URL;
+  // The API and the web app share an address only on one machine; a deployed API serves no SDK.
+  if (!web && !isLocal(api)) {
+    throw new Error("Set CORVO_WEB_URL to the Rook web app address, where sdk.js is served.");
+  }
+  const webUrl = origin(web ?? api);
+  // With the template on, the call names no agents, so what the partner's template defines is used.
+  const useTemplate = env.PARTNER_DEMO_TEMPLATE === "1";
+  const locale = env.PARTNER_DEMO_LOCALE;
+  const connectorToken = env.PARTNER_DEMO_CONNECTOR_TOKEN;
   let customerReady = false;
 
   const call = async (method: string, path: string, body: unknown) => {
@@ -74,14 +94,20 @@ export function createEmbedDemo(
         if (!customerReady) {
           await call("PUT", `/tenants/${TENANT}`, {
             name: "Demo Shop",
-            agents: [
-              {
-                key: "assistant",
-                name: "Assistant",
-                instructions: "You help the owner of a small shop. Keep answers short.",
-                usesConnector: false,
-              },
-            ],
+            ...(locale ? { locale } : {}),
+            ...(connectorToken ? { connectorToken } : {}),
+            ...(useTemplate
+              ? {}
+              : {
+                  agents: [
+                    {
+                      key: "assistant",
+                      name: "Assistant",
+                      instructions: "You help the owner of a small shop. Keep answers short.",
+                      usesConnector: false,
+                    },
+                  ],
+                }),
             allowanceCents: 500,
           });
           customerReady = true;

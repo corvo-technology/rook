@@ -131,6 +131,7 @@ export function createJobReconciler(
     reconcileComputerUpdates?: () => Promise<void>;
     reconcileCloudAgents?: () => Promise<void>;
     reconcileModelCredits?: () => Promise<void>;
+    reconcilePartnerWebhooks?: () => Promise<void>;
     reconcileRoutineRetryNotices?: () => Promise<void>;
     reconcileSecurityEventRetention?: () => Promise<void>;
     reconcileHomeStorage?: () => Promise<void>;
@@ -169,6 +170,7 @@ export function createJobReconciler(
           () => reconcileComputerRuns(deps.prisma),
           deps.reconcileCloudAgents,
           deps.reconcileModelCredits,
+          deps.reconcilePartnerWebhooks,
           deps.reconcileComputerUpdates,
           deps.reconcileRoutineRetryNotices,
           deps.reconcileSecurityEventRetention,

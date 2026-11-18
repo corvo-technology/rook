@@ -128,6 +128,7 @@ export const ROW_SECURITY_MODELS: ReadonlySet<string> = new Set([
   "Consultation",
   "ConsultationChunk",
   "WaitlistEntry",
+  "PartnerLead",
   "PushToken",
   "Thread",
   "Message",

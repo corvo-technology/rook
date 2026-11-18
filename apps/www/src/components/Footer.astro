@@ -11,6 +11,7 @@ import {
 } from "../i18n/locales";
 import { getLaunchCopy } from "../i18n/launch";
 import type { LaunchCopy } from "../i18n/launch";
+import { getPartnersCopy, partnersPath } from "../i18n/partners";
 import Logo from "./Logo.astro";
 
 type Props = {
@@ -22,9 +23,8 @@ type Props = {
   linkLabels?: LaunchCopy["footer"];
 };
 
-const currentLocale: Locale = isLocale(Astro.currentLocale)
-  ? Astro.currentLocale
-  : (Astro.props.locale ?? DEFAULT_LOCALE);
+const currentLocale: Locale =
+  Astro.props.locale ?? (isLocale(Astro.currentLocale) ? Astro.currentLocale : DEFAULT_LOCALE);
 const localeCopy = getLaunchCopy(currentLocale);
 
 const {
@@ -57,6 +57,7 @@ const columns: Array<{ heading: string; links: FooterLink[] }> = [
     heading: linkLabels.company,
     links: [
       { href: "/about/", label: linkLabels.about },
+      { href: partnersPath(currentLocale), label: getPartnersCopy(currentLocale).link },
       { href: "/support/", label: linkLabels.support },
       { href: "/privacy/", label: linkLabels.privacy },
       { href: "/terms/", label: linkLabels.terms },

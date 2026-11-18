@@ -55,6 +55,8 @@ import { encryptStoredOAuthTokens, openIdToken, sealIdToken } from "./token-stor
 
 export {
   invitationEmail,
+  partnerLeadConfirmationEmail,
+  partnerLeadNotificationEmail,
   passwordResetEmail,
   signInCodeEmail,
   verificationEmail,

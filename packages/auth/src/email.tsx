@@ -297,3 +297,76 @@ export function waitlistNotificationEmail(
     </>,
   );
 }
+
+const partnerLeadCopy = {
+  "pt-BR": {
+    subject: "Recebemos o seu interesse em ser parceiro do Rook",
+    heading: "Recebemos o seu contato.",
+    body: "Obrigado por querer levar agentes do Rook para os seus clientes.",
+    next: "Vamos escrever de volta em breve para marcar uma conversa.",
+    signoff: "Equipe Rook",
+  },
+  en: {
+    subject: "We got your Rook partner request",
+    heading: "We got your message.",
+    body: "Thanks for wanting to bring Rook agents to your customers.",
+    next: "We'll write back soon to schedule a conversation.",
+    signoff: "The Rook team",
+  },
+} as const;
+
+export function partnerLeadConfirmationEmail(
+  webOrigin: string,
+  to: string,
+  locale: WaitlistEmailLocale,
+): Promise<TransactionalEmail> {
+  const copy = partnerLeadCopy[locale];
+  return message(
+    webOrigin,
+    to,
+    copy.subject,
+    <>
+      <Text style={{ ...text, fontSize: "20px", fontWeight: 700, color: lightTokens.foreground }}>
+        {copy.heading}
+      </Text>
+      <Text style={text}>{copy.body}</Text>
+      <Text style={text}>{copy.next}</Text>
+      <Text style={note}>{copy.signoff}</Text>
+    </>,
+    locale,
+  );
+}
+
+export interface PartnerLeadSummary {
+  name: string;
+  email: string;
+  company: string;
+  website?: string | undefined;
+  partnerType: string;
+  country?: string | undefined;
+  customers?: string | undefined;
+  message?: string | undefined;
+}
+
+/** The lead's own words go through React, which escapes them; the text part is plain. */
+export function partnerLeadNotificationEmail(
+  webOrigin: string,
+  to: string,
+  lead: PartnerLeadSummary,
+): Promise<TransactionalEmail> {
+  return message(
+    webOrigin,
+    to,
+    "New Rook partner lead",
+    <>
+      <Text style={text}>Name: {lead.name}</Text>
+      <Text style={text}>Email: {lead.email}</Text>
+      <Text style={text}>Company: {lead.company}</Text>
+      <Text style={text}>Website: {lead.website ?? "-"}</Text>
+      <Text style={text}>Type: {lead.partnerType}</Text>
+      <Text style={text}>Country: {lead.country ?? "-"}</Text>
+      <Text style={text}>Customers: {lead.customers ?? "-"}</Text>
+      <Text style={note}>Message: {lead.message ?? "-"}</Text>
+    </>,
+  );
+}

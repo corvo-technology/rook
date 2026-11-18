@@ -66,7 +66,7 @@ const fr: PartnersCopy = {
       { title: "Vos clients sont les vôtres", body: "Rook ne facture jamais vos clients. Vous facturez comme vous voulez et n'affichez l'assistant qu'à ceux qui paient." },
       { title: "Un forfait, un fonds", body: "Vous payez un forfait mensuel avec des crédits inclus, plus des recharges. L'usage de tous vos clients vient du même fonds." },
       { title: "Votre propre modèle ne coûte aucun crédit", body: "Un client avec sa propre clé, un modèle local ou son propre abonnement CLI ne consomme aucun crédit." },
-      { title: "Contrôles par client", body: "Usage et plafond mensuel par client, modèles autorisés, recharge automatique et alertes de solde bas et de plafond." },
+      { title: "Contrôles par client", body: "Usage et plafond mensuel par client, modèles autorisés, recharge automatique et alertes par e-mail et dans l'app, comme solde bas et plafond atteint." },
     ],
   },
   central: {
@@ -76,7 +76,7 @@ const fr: PartnersCopy = {
       { title: "Vue d'ensemble", body: "Clients, usage et ce qui a besoin de vous." },
       { title: "Clients", body: "Voyez chaque client et ouvrez son espace en support." },
       { title: "Crédits et factures", body: "En mode intégré. En recommandation, tarifs et revenus." },
-      { title: "Intégration", body: "Clés, webhook et modèle d'agents." },
+      { title: "Intégration", body: "Clés, webhook optionnel et modèle d'agents." },
       { title: "Gestionnaire de portefeuille", body: "Un agent qui travaille votre portefeuille et demande votre accord avant d'agir." },
       { title: "Succès client", body: "Suit chaque client et demande votre accord avant toute action." },
     ],

@@ -66,7 +66,7 @@ const pt: PartnersCopy = {
       { title: "Seus clientes são seus", body: "O Rook nunca cobra seus clientes. Você cobra como quiser e mostra o assistente só a quem paga." },
       { title: "Um plano, um fundo", body: "Você paga um plano mensal com créditos incluídos, mais recargas. O uso de todos os clientes sai do mesmo fundo." },
       { title: "Modelo próprio não gasta crédito", body: "Quem usa a própria chave, um modelo local ou a própria assinatura de CLI não consome créditos." },
-      { title: "Controles por cliente", body: "Uso e limite mensal por cliente, modelos permitidos, recarga automática e avisos de saldo baixo e de limite." },
+      { title: "Controles por cliente", body: "Uso e limite mensal por cliente, modelos permitidos, recarga automática e avisos por e-mail e no app, como saldo baixo e limite atingido." },
     ],
   },
   central: {
@@ -76,7 +76,7 @@ const pt: PartnersCopy = {
       { title: "Visão geral", body: "Clientes, uso e o que precisa de você." },
       { title: "Clientes", body: "Veja cada cliente e abra o espaço dele como suporte." },
       { title: "Créditos e faturas", body: "No modo embutido. Na indicação, preços e receita." },
-      { title: "Integração", body: "Chaves, webhook e o modelo de agentes." },
+      { title: "Integração", body: "Chaves, webhook opcional e o modelo de agentes." },
       { title: "Gestor da carteira", body: "Um agente que trabalha a carteira e pede a sua aprovação antes de agir." },
       { title: "Sucesso do cliente", body: "Acompanha cada cliente e pede a sua aprovação antes de qualquer ação." },
     ],

@@ -26,7 +26,7 @@ No modo embutido os clientes finais são **seus**. O Rook nunca cobra esses clie
 - Você paga ao Rook um **plano de parceiro** mensal, com créditos incluídos, mais **recargas**.
 - Tudo o que os seus clientes usam sai de **um fundo** só, o seu.
 - Quem usa o **próprio modelo** (a própria chave, um modelo local ou a própria assinatura de CLI) não gasta créditos com ele.
-- Você controla o uso por cliente, um limite mensal por cliente, os modelos permitidos, a recarga automática e os avisos de saldo baixo e de limite, tudo na [Central do parceiro](/partners/central/).
+- Você controla o uso por cliente, um limite mensal por cliente, os modelos permitidos, a recarga automática e os avisos de saldo baixo e de limite (por e-mail e no app), tudo na [Central do parceiro](/partners/central/).
 
 Preços e condições: fale com a gente. Detalhes em [Comércio](/partners/commerce/).
 

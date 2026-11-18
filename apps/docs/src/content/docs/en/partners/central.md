@@ -21,7 +21,7 @@ The **partner console** lives inside your own Rook, under **Settings > Partnersh
 - **Monthly limit per customer.** At the limit the customer stops using Rook-provided AI until you raise it or the month turns. You get `customer.credit_limit_reached`.
 - **Allowed models.** Applies only to Rook-provided models; empty allows all. A model outside the list is refused and disappears from the customer's picker. Models the customer connected on their own stay available.
 - **Auto top-up.** When the fund falls under the amount you set, Rook opens a top-up through checkout.
-- **Alerts.** `partner.balance_low` when the fund is low; see [Webhooks](/en/partners/webhooks/).
+- **Alerts.** A customer's limit reached, low fund, auto top-up, invoice issued, payment failed and connector down reach you by email and in the app. To automate in your own system, there are optional [webhooks](/en/partners/webhooks/).
 
 These controls are set in the console; the public partner API has no fields for them yet.
 

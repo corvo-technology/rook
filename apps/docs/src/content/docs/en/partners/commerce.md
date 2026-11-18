@@ -84,6 +84,6 @@ Controls you set in the [partner console](/en/partners/central/):
 - a list of **allowed models** (optional), which applies only to Rook-provided models;
 - **auto top-up**: when the fund falls under the amount you set, open a top-up;
 - usage per customer, by resource and model;
-- low-balance and limit alerts, by [webhook](/en/partners/webhooks/).
+- low-balance and limit alerts by email and in the app (and, to automate, by optional [webhook](/en/partners/webhooks/)).
 
 Prices, included credits, margins and expiry: talk to us.

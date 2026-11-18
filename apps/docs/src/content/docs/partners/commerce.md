@@ -84,6 +84,6 @@ Controles que você define na [Central do parceiro](/partners/central/):
 - uma lista de **modelos permitidos** (opcional), que vale só para os modelos fornecidos pelo Rook;
 - **recarga automática**: quando o fundo ficar abaixo do valor que você definir, abrir uma recarga;
 - uso por cliente, por recurso e modelo;
-- avisos de saldo baixo e de limite, por [webhook](/partners/webhooks/).
+- avisos de saldo baixo e de limite por e-mail e no app (e, se quiser automatizar, por [webhook](/partners/webhooks/) opcional).
 
 Preços, créditos incluídos, margens e validade: fale com a gente.

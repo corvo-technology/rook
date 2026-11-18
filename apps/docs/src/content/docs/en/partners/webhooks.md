@@ -1,9 +1,11 @@
 ---
 title: "Webhooks"
-description: "Credit notices and how to verify the signature."
+description: "Advanced, optional automation: credit alerts by webhook and how to verify the signature."
 sidebar:
   order: 5
 ---
+
+The alerts that matter (a customer's limit reached, low fund, auto top-up, invoice issued, payment failed, connector down) reach you by **email** and **in the app**, in the [partner console](/en/partners/central/). The webhooks below are an **advanced, optional** integration, to automate things in your own system.
 
 Rook calls a URL of yours when a customer has used **80%** of the month's credit and again when it **runs out**. The URL must be `https` and public; it and the signing secret are configured with the Rook team, who can also replace the secret on request (the old one stops matching).
 

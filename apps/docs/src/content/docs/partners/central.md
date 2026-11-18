@@ -21,7 +21,7 @@ A **Central do parceiro** fica dentro do seu próprio Rook, em **Configurações
 - **Limite mensal por cliente.** No limite, o cliente deixa de usar a IA fornecida pelo Rook até você aumentar ou o mês virar. Você recebe `customer.credit_limit_reached`.
 - **Modelos permitidos.** Vale só para os modelos fornecidos pelo Rook; vazio permite todos. Um modelo fora da lista é recusado e some do seletor do cliente. Modelos que o cliente conectou sozinho continuam disponíveis.
 - **Recarga automática.** Quando o fundo cai abaixo do valor que você define, o Rook abre uma recarga pelo checkout.
-- **Avisos.** `partner.balance_low` quando o fundo está baixo; veja [Webhooks](/partners/webhooks/).
+- **Avisos.** Limite de um cliente atingido, fundo baixo, recarga automática, fatura emitida, pagamento que falhou e conector fora do ar chegam por e-mail e no app. Se quiser automatizar no seu sistema, há [webhooks](/partners/webhooks/) opcionais.
 
 Estes controles são feitos na Central; ainda não há campos na API pública de parceiros para eles.
 

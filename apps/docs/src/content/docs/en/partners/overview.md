@@ -26,7 +26,7 @@ In embedded mode the end customers are **yours**. Rook never bills them, and you
 - You pay Rook a monthly **partner plan** with included credits, plus **top-ups**.
 - Everything your customers use comes out of **one fund**: yours.
 - A customer on their **own model** (their own key, a local model or their own CLI subscription) spends no credits on it.
-- You control usage per customer, a monthly limit per customer, allowed models, auto top-up and low-balance and limit alerts, all in the [partner console](/en/partners/central/).
+- You control usage per customer, a monthly limit per customer, allowed models, auto top-up and low-balance and limit alerts (by email and in the app), all in the [partner console](/en/partners/central/).
 
 Prices and terms: talk to us. Details in [Commerce](/en/partners/commerce/).
 

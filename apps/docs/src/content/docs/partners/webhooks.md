@@ -1,9 +1,11 @@
 ---
 title: "Webhooks"
-description: "Avisos de crédito e como verificar a assinatura."
+description: "Automação avançada e opcional: avisos de crédito por webhook e como verificar a assinatura."
 sidebar:
   order: 5
 ---
+
+Os avisos importantes (limite de um cliente atingido, fundo baixo, recarga automática, fatura emitida, pagamento que falhou, conector fora do ar) chegam por **e-mail** e **no app**, na [Central do parceiro](/partners/central/). Os webhooks abaixo são uma integração **avançada e opcional**, para automatizar no seu próprio sistema.
 
 O Rook chama uma URL sua quando um cliente usa **80%** do crédito do mês e de novo quando ele **acaba**. A URL precisa ser `https` e pública; ela e o segredo de assinatura são configurados com a equipe do Rook, que também pode trocar o segredo quando você pedir (o antigo deixa de valer).
 

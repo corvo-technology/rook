@@ -66,7 +66,7 @@ const en: PartnersCopy = {
       { title: "Your clients are yours", body: "Rook never bills your clients. You charge however you like and show the assistant only to those who pay." },
       { title: "One plan, one fund", body: "You pay a monthly plan with included credits, plus top-ups. Every client's usage comes out of the same fund." },
       { title: "Your own model costs no credit", body: "Clients on their own key, a local model or their own CLI subscription spend no credits." },
-      { title: "Controls per client", body: "Usage and a monthly limit per client, allowed models, auto top-up, and low-balance and limit alerts." },
+      { title: "Controls per client", body: "Usage and a monthly limit per client, allowed models, auto top-up, and alerts by email and in the app, like low balance and limit reached." },
     ],
   },
   central: {
@@ -76,7 +76,7 @@ const en: PartnersCopy = {
       { title: "Overview", body: "Clients, usage and what needs you." },
       { title: "Clients", body: "See each client and open their space as support." },
       { title: "Credits and invoices", body: "In embedded mode. For referral, prices and revenue." },
-      { title: "Integration", body: "Keys, webhook and the agent template." },
+      { title: "Integration", body: "Keys, optional webhook and the agent template." },
       { title: "Portfolio Manager", body: "An agent that works your portfolio and asks your approval before acting." },
       { title: "Customer Success", body: "Keeps an eye on each client and asks your approval before any action." },
     ],

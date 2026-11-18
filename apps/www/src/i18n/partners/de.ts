@@ -66,7 +66,7 @@ const de: PartnersCopy = {
       { title: "Ihre Kunden sind Ihre", body: "Rook rechnet nie mit Ihren Kunden ab. Sie rechnen ab, wie Sie wollen, und zeigen den Assistenten nur zahlenden Kunden." },
       { title: "Ein Tarif, ein Guthaben", body: "Sie zahlen einen Monatstarif mit enthaltenem Guthaben, plus Aufladungen. Die Nutzung aller Kunden kommt aus demselben Guthaben." },
       { title: "Eigenes Modell kostet kein Guthaben", body: "Wer einen eigenen Schlüssel, ein lokales Modell oder ein eigenes CLI-Abo nutzt, verbraucht kein Guthaben." },
-      { title: "Steuerung je Kunde", body: "Nutzung und Monatslimit je Kunde, erlaubte Modelle, automatisches Aufladen und Hinweise bei niedrigem Guthaben und beim Limit." },
+      { title: "Steuerung je Kunde", body: "Nutzung und Monatslimit je Kunde, erlaubte Modelle, automatisches Aufladen und Hinweise per E-Mail und in der App, etwa bei niedrigem Guthaben oder erreichtem Limit." },
     ],
   },
   central: {
@@ -76,7 +76,7 @@ const de: PartnersCopy = {
       { title: "Übersicht", body: "Kunden, Nutzung und was Sie brauchen." },
       { title: "Kunden", body: "Jeden Kunden ansehen und seinen Bereich als Support öffnen." },
       { title: "Guthaben und Rechnungen", body: "Im eingebetteten Modus. Bei Empfehlung: Preise und Umsatz." },
-      { title: "Integration", body: "Schlüssel, Webhook und Agenten-Vorlage." },
+      { title: "Integration", body: "Schlüssel, optionaler Webhook und Agenten-Vorlage." },
       { title: "Portfolio-Manager", body: "Ein Agent, der Ihr Portfolio betreut und vor jeder Aktion um Ihre Freigabe bittet." },
       { title: "Kundenerfolg", body: "Behält jeden Kunden im Blick und bittet vor jeder Aktion um Ihre Freigabe." },
     ],

@@ -25,7 +25,7 @@ function fakePrisma() {
         orderBy: unknown;
       }) => {
         const found = rows.filter((row) => !where || row.effectiveAt <= where.effectiveAt.lte);
-        const byVersion = Array.isArray(orderBy) ? false : true;
+        const byVersion = !Array.isArray(orderBy);
         return [...found].sort(byVersion ? (a, b) => b.version - a.version : byNewest)[0] ?? null;
       },
       findMany: async () => [...rows].sort(byNewest),

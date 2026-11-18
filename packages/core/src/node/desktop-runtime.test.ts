@@ -15,6 +15,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  browserCacheFlags,
   browserCloseProgram,
   DEFAULT_DESKTOP_ENV,
   desktopControlCommand,
@@ -810,5 +811,14 @@ describe("browser launcher with egress", () => {
     const { status, args } = browserArgs(false);
     expect(status).toBe(0);
     expect(args.some((arg) => arg.startsWith("--proxy"))).toBe(false);
+  });
+});
+
+describe("browser cache flags", () => {
+  it("keeps the HTTP cache outside the saved profile with a ceiling", () => {
+    const flags = browserCacheFlags("screen-1");
+    expect(flags).toMatch(/--disk-cache-dir=\/tmp\/corvo\/chrome-cache-[0-9a-f]{32} /);
+    expect(flags).toContain(`--disk-cache-size=${100 * 1024 * 1024}`);
+    expect(flags).not.toContain(".browser-profiles");
   });
 });

@@ -1,5 +1,9 @@
 import type { AgentRunRequest, SemanticMemoryProvider } from "@corvo/adapter-kit";
-import { DEFAULT_CONTEXT_STRATEGY, runContinueJob } from "@corvo/adapter-kit";
+import {
+  DEFAULT_CONTEXT_STRATEGY,
+  runContinueJob,
+  SandboxStorageFullError,
+} from "@corvo/adapter-kit";
 import type {
   MessageBlock,
   ModelRoleChoice,
@@ -89,6 +93,7 @@ import {
   screenLeaseIdForRun,
 } from "./computer-lifecycle.js";
 import { isComputerSetupFailure, markComputerSetupFailure } from "./computer-setup-error.js";
+import { ensureFreeSpace } from "./computer-storage.js";
 import { teamBotWorkspaceDirectory } from "./computer-support.js";
 import { checkpointRunComputerWorkspace } from "./computer-workspace.js";
 import {
@@ -1015,10 +1020,10 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const artifacts = deps.artifacts;
         let homeLostTold = false;
         let storageFullTold = false;
-        const onStorageFull = () => {
+        const onStorageFull = (usage?: string) => {
           if (storageFullTold) return;
           storageFullTold = true;
-          void alertStorageFull(deps, run, bot);
+          void alertStorageFull(deps, run, bot, usage);
         };
         const recentFilesInput = {
           context,
@@ -1044,6 +1049,13 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 },
               },
             );
+            // Fail here, with what fills the disk, rather than partway through the run.
+            try {
+              await ensureFreeSpace(deps.sandbox, computer, context);
+            } catch (error) {
+              if (error instanceof SandboxStorageFullError) onStorageFull(error.usage);
+              throw error;
+            }
             computerUse.screenRelease = { computer, context, keepWarm: false };
             scheduleComputerSleep(deps.jobs, storedComputer.id);
             // Earlier attachments wait for the computer's first use; every start copies them

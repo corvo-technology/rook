@@ -60,8 +60,11 @@ export class SandboxDamagedError extends Error {
  */
 export class SandboxStorageFullError extends Error {
   readonly code = "SANDBOX_STORAGE_FULL";
-  constructor(options?: { cause?: unknown }) {
+  /** What is using the space, such as ".codex 475 MB, .nvm 229 MB", when it was measured. */
+  readonly usage?: string;
+  constructor(options?: { cause?: unknown; usage?: string }) {
     super("The computer's storage is full.", options);
     this.name = "SandboxStorageFullError";
+    this.usage = options?.usage;
   }
 }

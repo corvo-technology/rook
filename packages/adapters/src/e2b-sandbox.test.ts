@@ -16,7 +16,11 @@ import { sandboxIdleMs } from "./computer-idle.js";
 import { shouldSkipPortableWorkspaceFile } from "./computer-workspace.js";
 import type { E2BDesktop, E2BSandboxSdk } from "./e2b-sandbox.js";
 import { E2BSandboxProvider, e2bCreateOptions, keepingAwake } from "./e2b-sandbox.js";
-import { E2B_COMPUTER_TEMPLATE, E2B_DESKTOP_TEMPLATE } from "./e2b-template.js";
+import {
+  E2B_COMPUTER_SIZES,
+  E2B_DESKTOP_TEMPLATE,
+  E2B_LEGACY_COMPUTER_TEMPLATE,
+} from "./e2b-template.js";
 import { desktopCommandResponder } from "./linux-desktop.test-support.js";
 import { isSandboxGoneError } from "./sandbox-errors.js";
 
@@ -232,7 +236,39 @@ describe("E2B computer backend", () => {
     ).resolves.toMatchObject({ providerRef: "fresh", fresh: true });
     expect(sdk.create).toHaveBeenCalledOnce();
     expect(sdk.create).toHaveBeenCalledWith(
-      E2B_COMPUTER_TEMPLATE,
+      E2B_COMPUTER_SIZES.small.template,
+      e2bCreateOptions("bot-1", "test-key"),
+    );
+  });
+
+  it("starts the requested size", async () => {
+    const sdk: E2BSandboxSdk = {
+      create: vi.fn(async () => ({ sandboxId: "big" }) as never),
+      connect: vi.fn(),
+      pause: vi.fn(),
+      kill: vi.fn(async () => true),
+    };
+    const provider = new E2BSandboxProvider("test-key", sdk, "large");
+    await provider.provision({ botId: "bot-1", homePath: "/unused" }, context);
+    expect(sdk.create).toHaveBeenCalledWith(
+      E2B_COMPUTER_SIZES.large.template,
+      e2bCreateOptions("bot-1", "test-key"),
+    );
+  });
+
+  it("keeps the legacy template working as the small size", async () => {
+    const missing = Object.assign(new SandboxError("404: template not found"), { statusCode: 404 });
+    const sdk: E2BSandboxSdk = {
+      create: vi.fn().mockRejectedValueOnce(missing).mockResolvedValue({ sandboxId: "legacy" }),
+      connect: vi.fn(),
+      pause: vi.fn(),
+      kill: vi.fn(async () => true),
+    };
+    const provider = new E2BSandboxProvider("test-key", sdk);
+    await provider.provision({ botId: "bot-1", homePath: "/unused" }, context);
+    expect(sdk.create).toHaveBeenNthCalledWith(
+      2,
+      E2B_LEGACY_COMPUTER_TEMPLATE,
       e2bCreateOptions("bot-1", "test-key"),
     );
   });
@@ -242,7 +278,11 @@ describe("E2B computer backend", () => {
       statusCode: 404,
     });
     const sdk: E2BSandboxSdk = {
-      create: vi.fn().mockRejectedValueOnce(missing).mockResolvedValue({ sandboxId: "stock" }),
+      create: vi
+        .fn()
+        .mockRejectedValueOnce(missing)
+        .mockRejectedValueOnce(missing)
+        .mockResolvedValue({ sandboxId: "stock" }),
       connect: vi.fn(),
       pause: vi.fn(),
       kill: vi.fn(async () => true),
@@ -253,7 +293,7 @@ describe("E2B computer backend", () => {
       provider.provision({ botId: "bot-1", homePath: "/unused" }, context),
     ).resolves.toMatchObject({ providerRef: "stock", fresh: true });
     expect(sdk.create).toHaveBeenNthCalledWith(
-      2,
+      3,
       E2B_DESKTOP_TEMPLATE,
       e2bCreateOptions("bot-1", "test-key"),
     );

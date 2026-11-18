@@ -207,17 +207,22 @@ rechecks each selected PID's marker descriptors before signaling it.
 
 ### E2B computer template
 
-E2B computers start from the `corvo-computer` template: E2B's stock desktop at
-2 vCPU and 4 GB instead of its 8 vCPU and 8 GB. Build it once in the E2B team that
-owns `E2B_API_KEY`, and again whenever its definition in
-`packages/adapters/src/e2b-template.ts` changes:
+E2B computers start from a sized template built on E2B's stock desktop (which reserves
+8 vCPU and 8 GB): `rook-computer-s` (2 vCPU, 4 GB), `rook-computer-m` (4 vCPU, 8 GB) and
+`rook-computer-l` (8 vCPU, 16 GB). Each also asks E2B for free disk on top of the image with
+`minFreeDiskMb`. The host decides whether to honour it: e2b.dev caps it by plan, and an
+E2B-compatible host you run yourself (for example Rookbox, `E2B_DOMAIN`) controls the real disk
+size on its own side. Build them in the E2B team that owns `E2B_API_KEY`, and again whenever
+their definition in `packages/adapters/src/e2b-template.ts` changes:
 
 ```bash
-E2B_API_KEY=<deployment key> pnpm sandbox:e2b-template
+E2B_API_KEY=<deployment key> pnpm sandbox:e2b-template          # every size
+E2B_API_KEY=<deployment key> pnpm sandbox:e2b-template small    # one size
 ```
 
-Until it exists, new computers use the stock desktop template. Existing computers keep
-the size they were created with until they are replaced.
+Until a size exists, new computers fall back to the stock desktop template; `small` also
+falls back to the older `corvo-computer` template. Existing computers keep the size they
+were created with until they are replaced.
 
 ### Boat computer snapshot
 

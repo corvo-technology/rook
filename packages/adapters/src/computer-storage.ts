@@ -8,16 +8,40 @@ import { SandboxStorageFullError } from "@corvo/adapter-kit";
 import { getLogger } from "@corvo/logging";
 import { isSandboxStorageFullError } from "./sandbox-errors.js";
 
+/** Browser caches that Chromium rebuilds on demand. Cookies, logins and history are not named. */
+export const PRUNED_BROWSER_CACHE_NAMES = [
+  "Cache",
+  "Code Cache",
+  "GPUCache",
+  "GrShaderCache",
+  "ShaderCache",
+  "DawnCache",
+] as const;
+/** Where profiles live on a cloud computer and, for a local one, directly under the home. */
+const BROWSER_PROFILE_ROOTS = ['"$HOME/corvo-home/.browser-profiles"', '"$HOME/.browser-profiles"'];
+/** Codex CLI session logs and logs older than this are history, not state; auth and config stay. */
+export const CODEX_SESSION_RETENTION_DAYS = 7;
+export const CODEX_LOG_RETENTION_DAYS = 3;
+
 /**
- * Temporary files Rook itself leaves on a computer: screenshot scratch directories, command
- * logs and markers, and interrupted workspace archives. Nothing else is named here, so a clean-up
- * can never reach the person's files. Items younger than a few minutes may still be in use.
+ * Files Rook itself leaves on a computer, or that the browser and Codex CLI rebuild or age out:
+ * screenshot scratch directories, command logs and markers, interrupted workspace archives,
+ * stale browser caches, and old Codex sessions and logs. Nothing else is named here, so a
+ * clean-up can never reach the person's files, logins or settings. Items younger than a few
+ * minutes may still be in use.
  */
 export function managedTempCleanupCommand(): string {
   const stale = "-mmin +3";
+  const cacheNames = PRUNED_BROWSER_CACHE_NAMES.map((name) => `-name '${name}'`).join(" -o ");
   return [
     `find /tmp/corvo -mindepth 1 -maxdepth 1 \\( -name 'observe-*' -o -name '*.log' \\) ${stale} -exec rm -rf -- {} + 2>/dev/null`,
     `find /tmp -maxdepth 1 \\( -name 'corvo-workspace-archive-*' -o -name 'corvo-command-*' -o -name 'corvo-chrome.log' \\) ${stale} -exec rm -rf -- {} + 2>/dev/null`,
+    ...BROWSER_PROFILE_ROOTS.flatMap((root) => [
+      `find ${root} -mindepth 2 -maxdepth 4 -type d \\( ${cacheNames} \\) ${stale} -prune -exec rm -rf -- {} + 2>/dev/null`,
+      `find ${root} -mindepth 3 -maxdepth 4 -type d -name 'CacheStorage' -path '*/Service Worker/CacheStorage' ${stale} -prune -exec rm -rf -- {} + 2>/dev/null`,
+    ]),
+    `find "$HOME/.codex/sessions" -type f -mtime +${CODEX_SESSION_RETENTION_DAYS} -delete 2>/dev/null`,
+    `find "$HOME/.codex/log" -type f -mtime +${CODEX_LOG_RETENTION_DAYS} -delete 2>/dev/null`,
     "true",
   ].join("; ");
 }
@@ -87,4 +111,85 @@ async function removeFile(
   } catch {
     // Best effort: the failure being reported is the full computer.
   }
+}
+
+/** A run or browser start needs at least this much free space on the computer's disk. */
+export const MIN_FREE_BYTES = 300 * 1024 * 1024;
+const TOP_DIRECTORIES = 4;
+
+async function runCapture(
+  sandbox: Pick<SandboxProvider, "execute">,
+  computer: ComputerRef,
+  script: string,
+  context: AdapterContext,
+): Promise<string> {
+  let out = "";
+  for await (const event of sandbox.execute(
+    computer,
+    { argv: ["sh", "-c", script], timeoutMs: 30_000 },
+    context,
+  )) {
+    if (event.type === "stdout") out += event.data;
+  }
+  return out;
+}
+
+async function freeBytes(
+  sandbox: Pick<SandboxProvider, "execute">,
+  computer: ComputerRef,
+  context: AdapterContext,
+): Promise<number | undefined> {
+  try {
+    const out = await runCapture(sandbox, computer, 'df -Pk "$HOME" | tail -n 1', context);
+    const kilobytes = Number(out.trim().split(/\s+/)[3]);
+    return Number.isFinite(kilobytes) ? kilobytes * 1024 : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** The largest directories under the home, e.g. ".codex 475 MB, .nvm 229 MB", for the owner. */
+export async function describeLargestDirectories(
+  sandbox: Pick<SandboxProvider, "execute">,
+  computer: ComputerRef,
+  context: AdapterContext,
+): Promise<string | undefined> {
+  try {
+    const out = await runCapture(
+      sandbox,
+      computer,
+      `cd "$HOME" 2>/dev/null && du -xk -d 2 . 2>/dev/null | sort -rn | sed -n '2,${TOP_DIRECTORIES + 1}p'`,
+      context,
+    );
+    const rows = out
+      .split("\n")
+      .map((line) => line.trim().match(/^(\d+)\s+(?:\.\/)?(.+)$/))
+      .filter((match): match is RegExpMatchArray => match !== null)
+      .map((match) => `${match[2]} ${Math.max(1, Math.round(Number(match[1]) / 1024))} MB`);
+    return rows.length ? rows.join(", ") : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Checks the computer's free space before a run or browser starts. Below the threshold Rook's
+ * managed clean-up runs first; if that is not enough, the start fails here with the full-computer
+ * error and the largest directories, instead of failing partway. An unreadable disk never blocks.
+ */
+export async function ensureFreeSpace(
+  sandbox: Pick<SandboxProvider, "execute">,
+  computer: ComputerRef,
+  context: AdapterContext,
+  minFree = MIN_FREE_BYTES,
+): Promise<void> {
+  const before = await freeBytes(sandbox, computer, context);
+  if (before === undefined || before >= minFree) return;
+  await freeManagedTemp(sandbox, computer, context);
+  const after = await freeBytes(sandbox, computer, context);
+  if (after === undefined || after >= minFree) return;
+  throw new SandboxStorageFullError({
+    cause: new Error(`only ${Math.floor(after / 1024 / 1024)} MB free`),
+    usage: await describeLargestDirectories(sandbox, computer, context),
+  });
 }

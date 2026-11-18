@@ -36,6 +36,7 @@ export * from "./model-credentials.js";
 export * from "./model-credits.js";
 export * from "./model-roles.js";
 export * from "./notifications.js";
+export * from "./onboarding-profile.js";
 export * from "./partner-accounts.js";
 export * from "./partner-allowance.js";
 export * from "./partner-entry.js";

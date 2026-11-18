@@ -42,12 +42,14 @@ for (const theme of ["light", "dark"] as const) {
       "Mover",
     );
     await expect(page).toHaveURL(/\/onboarding\/workspace$/);
-    await page
-      .getByRole("button", { name: /^(Continuar|Pular)$/ })
-      .first()
-      .click();
-
-    await expect(page.getByRole("heading", { name: "Como quer começar?" })).toBeVisible();
+    for (const step of ["business", "you", "start"]) {
+      await page
+        .getByRole("button", { name: /^(Continuar|Pular)$/ })
+        .first()
+        .click();
+      await expect(page).toHaveURL(new RegExp(`/onboarding/${step}$`));
+    }
+    await expect(page.getByRole("heading", { name: "Seu time" })).toBeVisible();
     await page.getByRole("button", { name: "Importar" }).click();
     await expect(page.getByRole("button", { name: "ChatGPT" })).toBeVisible();
     await captureScreenshot(page, testInfo, `import-sources-${theme}`);

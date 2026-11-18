@@ -163,3 +163,75 @@ describe("chiefAsFirstAgent", () => {
     ).rejects.toThrow("down");
   });
 });
+
+describe("startStarterTeam with a suggested team", () => {
+  function team(over: { fleetManagement?: boolean; existingChannels?: string[] } = {}) {
+    const s = steps(true);
+    let next = 0;
+    const addAgent = vi.fn(async () => ({
+      botId: `agent-${++next}`,
+      name: "Agent",
+      title: "",
+      threadId: null,
+      duplicate: false,
+      skillsInstalled: [],
+      appsToConnect: [],
+    }));
+    const createChannel = vi.fn(async () => undefined);
+    const prisma = {
+      bot: { findUnique: vi.fn(async () => ({ fleetManagement: over.fleetManagement ?? true })) },
+      message: { count: vi.fn(async () => 0) },
+      chatGroup: {
+        findMany: vi.fn(async () => (over.existingChannels ?? []).map((name) => ({ name }))),
+      },
+    };
+    const d = { prisma, jobs: {}, env: {} } as never;
+    return {
+      d,
+      addAgent,
+      createChannel,
+      steps: { ...s, addAgent: addAgent as never, createChannel },
+    };
+  }
+  const picks = {
+    categories: [],
+    agents: ["sales-prospector", "support-agent", "not-in-the-catalog"],
+    channels: [
+      { name: "Sales", agentSlugs: ["sales-prospector"] },
+      { name: "Support", agentSlugs: ["support-agent"] },
+    ],
+  } as never;
+
+  it("adds each catalog agent beside the Chief and a channel with the Chief and its agent", async () => {
+    const t = team();
+    const result = await startStarterTeam(t.d, actor, "en", t.steps, picks);
+    expect(t.addAgent).toHaveBeenCalledTimes(2);
+    expect(t.createChannel).toHaveBeenNthCalledWith(1, actor, {
+      name: "Sales",
+      botIds: ["chief-1", "agent-1"],
+    });
+    expect(t.createChannel).toHaveBeenNthCalledWith(2, actor, {
+      name: "Support",
+      botIds: ["chief-1", "agent-2"],
+    });
+    expect(result).not.toHaveProperty("pickedAgent");
+  });
+
+  it("does not make a channel that already exists", async () => {
+    const t = team({ existingChannels: ["sales"] });
+    await startStarterTeam(t.d, actor, "en", t.steps, picks);
+    expect(t.createChannel).toHaveBeenCalledTimes(1);
+  });
+
+  it("adds nothing for a Chief without Store access, and never fails the Chief", async () => {
+    const t = team({ fleetManagement: false });
+    await startStarterTeam(t.d, actor, "en", t.steps, picks);
+    expect(t.addAgent).not.toHaveBeenCalled();
+    const u = team();
+    u.addAgent.mockRejectedValue(new Error("limit"));
+    await expect(startStarterTeam(u.d, actor, "en", u.steps, picks)).resolves.toMatchObject({
+      botId: "chief-1",
+    });
+    expect(u.createChannel).not.toHaveBeenCalled();
+  });
+});

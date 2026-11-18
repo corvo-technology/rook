@@ -77,6 +77,7 @@ export * from "./model-problem.js";
 export * from "./model-providers.js";
 export * from "./model-role-settings.js";
 export * from "./onboarding-agent.js";
+export * from "./onboarding-team.js";
 export * from "./passkey-offer.js";
 export * from "./password-policy.js";
 export * from "./peer-history.js";

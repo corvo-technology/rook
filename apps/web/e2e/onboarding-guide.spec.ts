@@ -1,15 +1,17 @@
 import { expect, test } from "@playwright/test";
 import { captureScreenshot, signupToOnboarding } from "./helpers";
 
-test("one rook guides the first run and moves to the next step", async ({ page }, testInfo) => {
+test("the Chief narrates each step and the preview follows the answers", async ({
+  page,
+}, testInfo) => {
   await signupToOnboarding(page, `guide-${Date.now()}@corvo.test`, "password12", "Guide");
-  const rook = page.locator("[data-guide-rook]");
-  await expect(rook).toHaveAttribute("data-guide-rook", "workspace");
-  await expect(rook).toHaveCount(1);
-  await captureScreenshot(page, testInfo, "onboarding-guide-workspace");
+  const narration = page.getByTestId("onboarding-narration");
+  await expect(narration).toContainText("I'm the Chief");
+  await page.getByRole("textbox").first().fill("Alves Studio");
+  await expect(page.getByTestId("preview-name")).toHaveText("Alves Studio");
+  await captureScreenshot(page, testInfo, "onboarding-narration-workspace");
 
   await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await expect(rook).toHaveAttribute("data-guide-rook", "survey");
-  await expect(rook).toHaveCount(1);
-  await captureScreenshot(page, testInfo, "onboarding-guide-use");
+  await expect(narration).toContainText("What does the workspace do?");
+  await expect(page.getByTestId("onboarding-rail")).toContainText("Alves Studio");
 });

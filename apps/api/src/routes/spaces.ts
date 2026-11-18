@@ -197,6 +197,7 @@ export function spacesRoutes(ctx: RouterContext) {
               userId: context.actor.userId,
               spaceId: input.spaceId,
               name: input.name,
+              logo: input.logo,
             });
           } catch (error) {
             if (error instanceof SpaceNotFoundError) {
@@ -346,7 +347,9 @@ async function memberSpaceNavigation(
       spaceId: true,
       organizationId: true,
       role: true,
-      space: { select: { name: true, isDefault: true, deletingAt: true, pausedAt: true } },
+      space: {
+        select: { name: true, logo: true, isDefault: true, deletingAt: true, pausedAt: true },
+      },
     },
     orderBy: { createdAt: "asc" },
   });
@@ -418,6 +421,7 @@ async function memberSpaceNavigation(
       return {
         id: membership.spaceId,
         name: membership.space.name,
+        logo: membership.space.logo,
         isDefault: membership.space.isDefault,
         hasContent: spacesWithContent.has(membership.spaceId),
         botCount: botCounts.get(membership.spaceId) ?? 0,

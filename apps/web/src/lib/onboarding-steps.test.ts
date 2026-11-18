@@ -15,15 +15,31 @@ const all: OnboardingContext = {
 
 describe("visibleSteps", () => {
   it("lists every step in order when none is omitted", () => {
-    expect(visibleSteps(all)).toEqual(["workspace", "start", "model", "bot", "invite", "computer"]);
+    expect(visibleSteps(all)).toEqual([
+      "workspace",
+      "business",
+      "you",
+      "start",
+      "model",
+      "bot",
+      "invite",
+      "computer",
+    ]);
   });
 
   it("omits the workspace step when the space cannot be renamed", () => {
     expect(visibleSteps({ ...all, canRenameSpace: false })).not.toContain("workspace");
   });
 
-  it("omits the model step when no model is needed", () => {
+  it("omits the model step when the workspace already has model access", () => {
     expect(visibleSteps({ ...all, needsModel: false })).not.toContain("model");
+    expect(nextStep({ ...all, needsModel: false }, "start")).toBe("bot");
+  });
+
+  it("does not ask a member of someone else's space what the business does", () => {
+    const steps = visibleSteps({ ...all, canRenameSpace: false });
+    expect(steps).not.toContain("business");
+    expect(steps).toContain("you");
   });
 
   it("omits the computer step unless the host can be chosen and has not been", () => {
@@ -34,7 +50,7 @@ describe("visibleSteps", () => {
 });
 
 describe("a returning account", () => {
-  it("skips the workspace and use steps when it already has content elsewhere", () => {
+  it("skips the workspace, business, about-you and start steps when it already has content elsewhere", () => {
     expect(visibleSteps({ ...all, returning: true })).toEqual(["model", "bot", "computer"]);
   });
 });
@@ -67,9 +83,9 @@ describe("nextStep", () => {
 describe("resolveStep", () => {
   it("opens the first visible step when the requested one is hidden or missing", () => {
     const ctx = { ...all, canRenameSpace: false, canChooseHostComputer: false };
-    expect(resolveStep(ctx, "computer")).toBe("start");
-    expect(resolveStep(ctx, undefined)).toBe("start");
-    expect(resolveStep(ctx, "nonsense")).toBe("start");
+    expect(resolveStep(ctx, "computer")).toBe("you");
+    expect(resolveStep(ctx, undefined)).toBe("you");
+    expect(resolveStep(ctx, "nonsense")).toBe("you");
   });
 
   it("opens a visible requested step", () => {
@@ -77,13 +93,21 @@ describe("resolveStep", () => {
   });
 
   it("does not open a hidden step from its URL", () => {
-    expect(resolveStep({ ...all, canRenameSpace: false }, "workspace")).toBe("start");
+    expect(resolveStep({ ...all, canRenameSpace: false }, "workspace")).toBe("you");
   });
 });
 
 describe("resolveStep with progress", () => {
   it("opens the first step that is not done yet", () => {
-    expect(resolveStep(all, undefined, new Set(["workspace", "start"]))).toBe("model");
+    expect(resolveStep(all, undefined, new Set(["workspace", "start"]))).toBe("business");
+    expect(resolveStep(all, undefined, new Set(["workspace", "business", "you", "start"]))).toBe(
+      "model",
+    );
+  });
+
+  it("resumes after the answers given on another device", () => {
+    const done = new Set<"workspace" | "business">(["workspace", "business"]);
+    expect(resolveStep(all, undefined, done)).toBe("you");
   });
 
   it("opens the last step when everything is done", () => {
@@ -101,8 +125,8 @@ describe("progress", () => {
     const visible = visibleSteps(all);
     expect(progress(visible, new Set(["workspace", "start"]))).toEqual({
       done: 2,
-      total: 6,
-      percent: 33,
+      total: 8,
+      percent: 25,
     });
   });
 

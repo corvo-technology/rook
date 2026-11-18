@@ -178,6 +178,14 @@ import { MissionsViewSchema, NavPart } from "./missions.js";
 import { ModelHeadersSchema } from "./model-headers.js";
 import { ModelRoleSchema, ModelRoleUpdateSchema, ModelRoleViewSchema } from "./model-roles.js";
 import { NotificationListSchema, PresenceSchema } from "./notifications.js";
+import {
+  BusinessAnswerSchema,
+  HomeChecklistSchema,
+  OnboardingAnswersSchema,
+  SpaceLogoSchema,
+  WORK_AREAS,
+  WorkArea,
+} from "./onboarding-profile.js";
 import { PartnerAccountSchema, PartnerLimitsInput, PartnerTemplate } from "./partner.js";
 import { MessageReactionSchema } from "./reactions.js";
 import { RoutineWatchSchema } from "./routine-watch.js";
@@ -362,7 +370,9 @@ export const appContract = {
       .input(z.object({ allowed: z.boolean() }))
       .output(z.object({ allowed: z.boolean() })),
     rename: oc
-      .input(z.object({ spaceId: Id, name: spaceName }))
+      .input(
+        z.object({ spaceId: Id, name: spaceName, logo: SpaceLogoSchema.nullable().optional() }),
+      )
       .output(z.object({ id: Id, name: z.string() })),
     /** Pauses or resumes every bot in a space the caller owns; pausing cancels active runs. */
     setPaused: oc
@@ -672,6 +682,10 @@ export const appContract = {
         .input(z.object({ groupId: Id, roleIds: z.array(Id).max(50) }))
         .output(z.object({ ok: z.literal(true) })),
     },
+  },
+  home: {
+    /** The getting-started list, computed from what the space has; null once all of it is done. */
+    checklist: oc.output(HomeChecklistSchema.nullable()),
   },
   /** The caller's inbox in this space: mentions, replies, DMs and what waits on them. */
   inbox: {
@@ -1349,7 +1363,18 @@ export const appContract = {
     /** Record the optional signup survey; an empty submission marks it skipped. */
     signupSurvey: oc.input(SignupSurveySchema).output(z.object({ ok: z.literal(true) })),
     /** The first-run steps this person finished, on any device. */
-    progress: oc.output(z.object({ done: z.array(OnboardingStep) })),
+    progress: oc.output(
+      z.object({ done: z.array(OnboardingStep), answers: OnboardingAnswersSchema }),
+    ),
+    /**
+     * What the workspace does. Saved as a page of the shared wiki, which every agent reads, and as
+     * the answer the rail shows.
+     */
+    saveBusiness: oc.input(BusinessAnswerSchema).output(z.object({ ok: z.literal(true) })),
+    /** What this person looks after in the space. */
+    saveAreas: oc
+      .input(z.object({ areas: z.array(WorkArea).max(WORK_AREAS.length) }))
+      .output(z.object({ ok: z.literal(true) })),
     /** Record a finished first-run step. Safe to repeat. */
     stepDone: oc
       .input(z.object({ step: OnboardingStep }))

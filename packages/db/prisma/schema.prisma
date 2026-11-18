@@ -103,6 +103,8 @@ model OnboardingProgress {
   userId    String   @id
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   done      String[] @default([])
+  /// What the person answered (the kind of business), so the rail reads the same on any device.
+  answers   Json     @default("{}")
   updatedAt DateTime @updatedAt
 
   @@map("onboarding_progress")
@@ -299,6 +301,8 @@ model Space {
   organization                Organization                 @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   name                        String
   isDefault                   Boolean                      @default(false)
+  /// A small picture chosen in onboarding, as a data URL; null shows the name's initial.
+  logo                        String?
   createdByUserId             String?
   createdByUser               User?                        @relation("SpaceCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
   createdAt                   DateTime                     @default(now())
@@ -396,6 +400,8 @@ model SpaceMember {
   role             String                   @default("member")
   /// Whether the memory model suggests facts from what this member says.
   memoryLearning   Boolean                  @default(false)
+  /// What the member looks after (areas of work), picked in onboarding.
+  areas            String[]                 @default([])
   /// When the member's client last said it was in use; the offline fallback of presence.
   lastSeenAt       DateTime?
   createdAt        DateTime

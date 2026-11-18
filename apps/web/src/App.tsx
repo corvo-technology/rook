@@ -75,6 +75,7 @@ const RoutinesPage = lazyComponent(loadRoutines);
 const ActivityPage = lazyComponent(() =>
   import("./pages/ActivityPage").then((module) => module.ActivityPage),
 );
+const HomePage = lazyComponent(() => import("./pages/HomePage").then((module) => module.HomePage));
 const ApprovalsPage = lazyComponent(() =>
   import("./pages/ApprovalsPage").then((module) => module.ApprovalsPage),
 );
@@ -130,7 +131,7 @@ function SessionApp() {
   const next = searchParams.get("next") ?? "";
   // Only places the app itself sends someone through sign-in for.
   const signInDestination =
-    next === "/integrations/setup" || /^\/(invite|join)\/[\w.-]+$/.test(next) ? next : "/app";
+    next === "/integrations/setup" || /^\/(invite|join)\/[\w.-]+$/.test(next) ? next : "/app/home";
   const ticketBoardEnabled = useSyncExternalStore(
     subscribeTicketBoardEnabled,
     getTicketBoardEnabled,
@@ -189,7 +190,7 @@ function SessionApp() {
       <div className="h-full" data-corvo-app-state="ready">
         <Suspense fallback={<PageLoading />}>
           <Routes>
-            <Route path="/" element={<Navigate to={user ? "/app" : "/sign-in"} replace />} />
+            <Route path="/" element={<Navigate to={user ? "/app/home" : "/sign-in"} replace />} />
             <Route
               path="/sign-in"
               element={
@@ -201,7 +202,7 @@ function SessionApp() {
               element={
                 user ? (
                   <Navigate
-                    to={signInDestination === "/app" ? "/onboarding" : signInDestination}
+                    to={signInDestination === "/app/home" ? "/onboarding" : signInDestination}
                     replace
                   />
                 ) : (
@@ -255,6 +256,7 @@ function SessionApp() {
                 <Route path="/app/g/:groupId" element={<ShellPage />} />
                 <Route path="/app/g/:groupId/squad" element={<ShellPage page={<SquadPage />} />} />
                 <Route path="/app/team" element={<ShellPage page={<TeamPage />} />} />
+                <Route path="/app/home" element={<ShellPage page={<HomePage />} />} />
                 <Route path="/app/approvals" element={<ShellPage page={<ApprovalsPage />} />} />
                 <Route path="/app/activity" element={<ShellPage page={<ActivityPage />} />} />
                 <Route path="/app/dm/:userId" element={<ShellPage />} />

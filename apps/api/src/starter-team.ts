@@ -1,8 +1,8 @@
 import { addStoreAgent } from "@corvo/adapters";
 import type { Actor, AgentCatalogLocale, Bot, OnboardingPicks } from "@corvo/contracts";
-import { agentForPicks } from "@corvo/core";
+import { AGENT_CATALOG, agentForPicks } from "@corvo/core";
 import type { MessagingProvisionOptions, PrismaClient } from "@corvo/db";
-import { ensureStarterTeam } from "@corvo/db";
+import { createGroupRepos, ensureStarterTeam } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import type { RouterDeps } from "./router.js";
 import { enqueueBotIntroRun } from "./routes/bots.js";
@@ -23,6 +23,7 @@ export async function startStarterTeam(
     ) => Promise<{ botId: string; created: boolean; bot?: Bot }>;
     greet?: typeof enqueueBotIntroRun;
     addAgent?: typeof addStoreAgent;
+    createChannel?: (actor: Actor, input: { name: string; botIds: string[] }) => Promise<unknown>;
   } = {},
   picks?: OnboardingPicks,
 ): Promise<{
@@ -42,6 +43,7 @@ export async function startStarterTeam(
     }
   }
   const pickedAgent = await addPickedAgent(deps, actor, locale, botId, picks, steps.addAgent);
+  await addSuggestedTeam(deps, actor, locale, botId, picks, steps.addAgent, steps.createChannel);
   return { botId, created, ...(pickedAgent ? { pickedAgent } : {}) };
 }
 
@@ -99,4 +101,67 @@ export function chiefAsFirstAgent(
     const { botId } = await ensure(prisma, actor, "en", undefined, { channel: provider });
     return { botId };
   };
+}
+
+/**
+ * The team the person kept in onboarding: each catalog agent beside the Chief, then a channel per
+ * group with the Chief and its agents in it. Safe to repeat (agents are found by their catalog key,
+ * channels by name), and never blocks: a failure is logged and the person lands in the Chief's chat.
+ */
+async function addSuggestedTeam(
+  deps: Pick<RouterDeps, "prisma">,
+  actor: Actor,
+  locale: AgentCatalogLocale,
+  chiefId: string,
+  picks: OnboardingPicks | undefined,
+  addAgent: typeof addStoreAgent = addStoreAgent,
+  createChannel: NonNullable<Parameters<typeof startStarterTeam>[3]>["createChannel"] = (
+    who,
+    input,
+  ) => createGroupRepos(deps.prisma).createGroup(who, input),
+): Promise<void> {
+  if (!picks?.agents?.length) return;
+  try {
+    const chief = await deps.prisma.bot.findUnique({
+      where: { id: chiefId },
+      select: { fleetManagement: true },
+    });
+    if (!chief?.fleetManagement) return;
+    const botBySlug = new Map<string, string>();
+    for (const slug of picks.agents) {
+      const entry = AGENT_CATALOG.find((candidate) => candidate.slug === slug);
+      if (!entry) continue;
+      try {
+        const added = await addAgent(
+          { prisma: deps.prisma },
+          { spaceId: actor.spaceId, userId: actor.userId },
+          { entry, locale, parentBotId: chiefId },
+        );
+        botBySlug.set(slug, added.botId);
+      } catch (error) {
+        getLogger().error("onboarding team agent", error);
+      }
+    }
+    const existing = new Set(
+      (
+        await deps.prisma.chatGroup.findMany({
+          where: { spaceId: actor.spaceId, userId: actor.userId, archivedAt: null },
+          select: { name: true },
+        })
+      ).map((row) => row.name.toLowerCase()),
+    );
+    for (const channel of picks.channels ?? []) {
+      if (existing.has(channel.name.toLowerCase())) continue;
+      const members = channel.agentSlugs.flatMap((slug) => botBySlug.get(slug) ?? []);
+      if (members.length === 0) continue;
+      try {
+        await createChannel(actor, { name: channel.name, botIds: [chiefId, ...members] });
+        existing.add(channel.name.toLowerCase());
+      } catch (error) {
+        getLogger().error("onboarding team channel", error);
+      }
+    }
+  } catch (error) {
+    getLogger().error("onboarding team", error);
+  }
 }

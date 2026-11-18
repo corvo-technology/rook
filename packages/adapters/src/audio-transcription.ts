@@ -1,4 +1,5 @@
 import type { AdapterContext, ArtifactStore, SecretStore, VoiceProvider } from "@corvo/adapter-kit";
+import { VoiceAccountError } from "@corvo/adapter-kit";
 import type { Actor } from "@corvo/contracts";
 import { AI_DISCLOSURE_VERSION, LOCAL_VOICE_PROVIDER_ID } from "@corvo/contracts";
 import type { PrismaClient } from "@corvo/db";
@@ -28,6 +29,7 @@ export type TranscriptionFailure =
   | "model-removed"
   | "model-missing"
   | "busy"
+  | "credits-used-up"
   | "provider-failed"
   | "unavailable";
 
@@ -273,6 +275,75 @@ export async function transcribeAudioArtifact(
   }
 }
 
+/**
+ * Transcribes audio held in memory for a caller that already has the right to send it (the
+ * consultation pipeline, whose partner vouched for the patient's consent). The provider choice,
+ * the credit hold and its settlement are the ones every transcription uses; nothing is stored.
+ */
+export async function transcribeAudioBytes(
+  deps: AudioTranscriptionDeps,
+  input: {
+    actor: Actor;
+    audio: Uint8Array;
+    mimeType: string;
+    language?: string;
+    signal?: AbortSignal;
+  },
+): Promise<TranscriptionOutcome> {
+  const { actor } = input;
+  if (input.audio.byteLength === 0) return failed("unreadable");
+  const chosen = await chooseProvider(deps, actor);
+  if ("failure" in chosen) return failed(chosen.failure);
+  const hostedSignal =
+    chosen.kind !== "local" ? AbortSignal.timeout(HOSTED_TRANSCRIBE_TIMEOUT_MS) : undefined;
+  const signal =
+    input.signal && hostedSignal
+      ? AbortSignal.any([input.signal, hostedSignal])
+      : (input.signal ?? hostedSignal ?? new AbortController().signal);
+  const context: AdapterContext = {
+    operationId: "consultation-transcription",
+    traceId: "consultation-transcription",
+    spaceId: actor.spaceId,
+    userId: actor.userId,
+    signal,
+  };
+  try {
+    const request = {
+      audio: input.audio,
+      mimeType: input.mimeType,
+      apiKey: chosen.secret,
+      ...(input.language ? { language: input.language } : {}),
+      signal,
+    };
+    const result =
+      chosen.kind === "credits" && chosen.organizationId
+        ? await transcribeOnCredits(
+            {
+              prisma: deps.prisma,
+              organizationId: chosen.organizationId,
+              userId: actor.userId,
+              spaceId: actor.spaceId,
+            },
+            chosen.provider,
+            request,
+            context,
+          )
+        : await chosen.provider.transcribe?.(request, context);
+    const text = result?.text.trim() ?? "";
+    if (!result || !text) return failed("no-speech");
+    return {
+      status: "transcribed",
+      text,
+      ...(result.language ? { language: result.language } : {}),
+    };
+  } catch (error) {
+    if (error instanceof VoiceAccountError && error.code === "VOICE_CREDITS_USED_UP") {
+      return failed("credits-used-up");
+    }
+    return failed(failureFor(error, chosen.kind));
+  }
+}
+
 const REASON_TEXT: Record<TranscriptionFailure, string> = {
   "unsupported-format": "this audio format is not supported",
   unreadable: "the file could not be read",
@@ -282,6 +353,7 @@ const REASON_TEXT: Record<TranscriptionFailure, string> = {
   "model-removed": "the speech model was removed",
   "model-missing": "the speech model is not on this computer",
   busy: "too many audio messages were sent at once",
+  "credits-used-up": "the account's credit is used up",
   "provider-failed": "transcription is not available",
   unavailable: "the file is not available",
 };

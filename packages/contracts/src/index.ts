@@ -19,6 +19,7 @@ export * from "./client-build.js";
 export * from "./cloudflare-ai-gateway.js";
 export * from "./coach-tour.js";
 export * from "./connection-access.js";
+export * from "./consultations.js";
 export * from "./database-connection.js";
 export * from "./desktop.js";
 export * from "./domain.js";

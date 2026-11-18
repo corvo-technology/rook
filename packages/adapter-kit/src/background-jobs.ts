@@ -62,6 +62,7 @@ const payloadSchemas = {
   }),
   "audio.transcribe": z.object({ runId: z.string().min(1) }),
   "partner.webhook": z.object({ eventId: z.string().min(1) }),
+  "consultation.process": z.object({ consultationId: z.string().min(1) }),
 } satisfies { [Name in BackgroundJobName]: z.ZodType<BackgroundJobPayloads[Name]> };
 
 export function parseBackgroundJob(name: string, payload: unknown): BackgroundJob {
@@ -118,6 +119,19 @@ export function audioTranscribeJob(runId: string): BackgroundJob {
     name: "audio.transcribe",
     payload: { runId },
     replaceKey: audioTranscribeJobKey(runId),
+  };
+}
+
+/** A few tries ride out a provider blip; finished steps are kept, so a retry pays only for the rest. */
+export const CONSULTATION_PROCESS_MAX_ATTEMPTS = 3;
+
+/** Keyed to the consultation, so a repeated finish is one job. */
+export function consultationProcessJob(consultationId: string): BackgroundJob {
+  return {
+    name: "consultation.process",
+    payload: { consultationId },
+    replaceKey: `consultation.process:${consultationId}`,
+    maxAttempts: CONSULTATION_PROCESS_MAX_ATTEMPTS,
   };
 }
 

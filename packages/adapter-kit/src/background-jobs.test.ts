@@ -21,6 +21,7 @@ import type { BackgroundJobHandlers } from "./types.js";
 function handlers(): BackgroundJobHandlers {
   return {
     "run.continue": vi.fn(async () => undefined),
+    "consultation.process": vi.fn(async () => undefined),
     "routine.wakeup": vi.fn(async () => undefined),
     "routine.retry": vi.fn(async () => undefined),
     "routine.next-step": vi.fn(async () => undefined),

@@ -809,6 +809,8 @@ export interface BackgroundJobPayloads {
   "audio.transcribe": { runId: string };
   /** Tell a partner's webhook about one customer's credit; the row holds what happened. */
   "partner.webhook": { eventId: string };
+  /** Turn a finished consultation recording into a draft note in the partner's system. */
+  "consultation.process": { consultationId: string };
 }
 
 export type BackgroundJobName = keyof BackgroundJobPayloads;

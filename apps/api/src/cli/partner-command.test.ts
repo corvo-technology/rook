@@ -29,6 +29,7 @@ function deps() {
     webhookSecret: vi.fn(
       (p: { webhookSecretVersion: number }) => `whsec_v${p.webhookSecretVersion}`,
     ),
+    setScribeRetentionDays: vi.fn(async () => undefined),
   };
 }
 

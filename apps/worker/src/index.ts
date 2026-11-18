@@ -25,6 +25,7 @@ import {
   createBackgroundJobHandlers,
   createCloudAgentConnection,
   createConnectorStack,
+  createConsultationRetentionSweeper,
   createDeadJobPruner,
   createIdleComputerSweeper,
   createJobReconciler,
@@ -371,6 +372,7 @@ async function main() {
     spaceHints,
     // Unique per boot: pods of two releases can share a process id.
     workerId: `${hostname()}:${process.pid}:${randomUUID().slice(0, 8)}`,
+    connector: stack.connector,
     runtime,
     secretStore: secrets,
     memoryProviders,
@@ -409,6 +411,7 @@ async function main() {
       prisma,
       securityEventRetentionDays(),
     ),
+    reconcileConsultationRetention: createConsultationRetentionSweeper({ prisma, artifacts }),
     reconcileHomeStorage: homeStorageSweeper(home),
     reconcileStorageUsage: storageUsageReconciler(prisma),
     reconcileIdleComputers: createIdleComputerSweeper({ prisma, jobs }),

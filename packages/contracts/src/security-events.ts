@@ -24,6 +24,10 @@ export const SECURITY_EVENT_TYPES = [
   "mailbox.sent",
   "mailbox.send_refused",
   "rate_limit.hit",
+  "consultation.created",
+  "consultation.accessed",
+  "consultation.deleted",
+  "consultation.expired",
 ] as const;
 
 export const SecurityEventTypeSchema = z.enum(SECURITY_EVENT_TYPES);

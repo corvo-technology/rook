@@ -4,6 +4,7 @@ import type {
   ArtifactStore,
   BackgroundJobExecution,
   BackgroundJobHandlers,
+  ConnectorProvider,
   JobPublisher,
   MessagingSurface,
   SandboxProvider,
@@ -26,6 +27,7 @@ import { pollCloudAgent } from "./cloud-agent-poll.js";
 import { expireComputerControl } from "./computer-control.js";
 import { scheduleComputerSleep, sleepComputerIfIdle } from "./computer-idle.js";
 import { performComputerUpdate } from "./computer-update.js";
+import { createConsultationProcessor } from "./consultation-wiring.js";
 import type { createRunExecutor } from "./executor.js";
 import type { ExpoPushProvider } from "./expo-push.js";
 import { compactHistory } from "./history-compaction.js";
@@ -112,6 +114,8 @@ export function createBackgroundJobHandlers(deps: {
   voiceCredits?: HostedVoice;
   /** Signs partner webhooks; without it a partner webhook job fails and is retried. */
   encryptionKey?: string;
+  /** Reaches a customer's connector tools; consultations file their drafts through it. */
+  connector?: Pick<ConnectorProvider, "execute">;
 }): BackgroundJobHandlers {
   const audioTranscription = {
     prisma: deps.prisma,
@@ -160,6 +164,22 @@ export function createBackgroundJobHandlers(deps: {
       ),
     );
   };
+  const processConsultationJob = deps.connector
+    ? createConsultationProcessor({
+        prisma: deps.prisma,
+        artifacts: deps.artifacts,
+        runtime: deps.runtime,
+        secretStore: deps.secretStore,
+        resolveModel: deps.executor.resolveModel,
+        resolveFastModel: deps.executor.resolveFastModel,
+        resolveStrongModel: deps.executor.resolveStrongModel,
+        connector: deps.connector,
+        ...(deps.deploymentModelKey ? { deploymentModelKey: deps.deploymentModelKey } : {}),
+        ...(deps.allowPrivateEndpoint === undefined
+          ? {}
+          : { allowPrivateEndpoint: deps.allowPrivateEndpoint }),
+      })
+    : undefined;
   const run = ({ runId }: { runId: string }) =>
     deps.prisma.run.findUnique({ where: { id: runId }, select: OWNER });
   const routine = ({ routineId }: { routineId: string }) =>
@@ -233,6 +253,10 @@ export function createBackgroundJobHandlers(deps: {
     "audio.transcribe": asOwner(run, async (payload) => {
       await runAudioTranscribeJob(audioJob, payload);
     }),
+    "consultation.process": async ({ consultationId }) => {
+      if (!processConsultationJob) throw new Error("Consultation processing needs a connector");
+      await processConsultationJob(consultationId);
+    },
     "routine.wakeup": asOwner(routine, async (payload) => {
       await deps.executor.wakeRoutine(payload.routineId, payload.scheduledFor);
     }),

@@ -2604,10 +2604,13 @@ model Partner {
   /// and this version, so nothing secret is stored; raising the version replaces the secret.
   webhookUrl          String?
   webhookSecretVersion Int                   @default(0)
+  /// Days a consultation's audio and transcript are kept; null means the platform default of 30.
+  scribeRetentionDays Int?
   tenants             PartnerTenant[]
   codes               PartnerEntryCode[]
   windows             PartnerRequestWindow[]
   webhookEvents       PartnerWebhookEvent[]
+  consultations       Consultation[]
 
   @@map("partners")
 }
@@ -2627,6 +2630,7 @@ model PartnerTenant {
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
   codes            PartnerEntryCode[]
+  consultations    Consultation[]
 
   @@unique([partnerId, externalTenantId])
   @@map("partner_tenants")
@@ -2755,4 +2759,52 @@ model SpaceMemberRole {
   @@id([spaceId, userId, roleId])
   @@index([roleId])
   @@map("space_member_roles")
+}
+
+/// A recorded visit a partner's customer asked Rook to turn into a draft note. The audio chunks and
+/// the transcript live in the sealed artifact store; this row holds only references and state.
+model Consultation {
+  id               String              @id @default(cuid())
+  partnerId        String
+  partner          Partner             @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  tenantId         String
+  tenant           PartnerTenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  externalUserId   String
+  /// prontu_evolution | salon_service_record
+  template         String
+  /// { clientId, appointmentId?, professionalName?, clientName? }
+  context          Json
+  /// { obtained, at, method, text? } exactly as the partner sent it.
+  consent          Json
+  /// recording | processing | drafted | failed
+  state            String              @default("recording")
+  retentionDays    Int
+  /// The sealed transcript (turns and the filled note), set once processing succeeds.
+  resultArtifactId String?
+  draftEntryId     String?
+  errorCode        String?
+  /// Set when the audio and transcript were deleted, on request or by retention.
+  purgedAt         DateTime?
+  finishedAt       DateTime?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  chunks           ConsultationChunk[]
+
+  @@index([tenantId])
+  @@index([state, createdAt])
+  @@map("consultations")
+}
+
+/// One uploaded piece of a consultation's audio. The bytes are a sealed artifact.
+model ConsultationChunk {
+  consultationId String
+  consultation   Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  seq            Int
+  artifactId     String
+  size           Int
+  mimeType       String
+  createdAt      DateTime     @default(now())
+
+  @@id([consultationId, seq])
+  @@map("consultation_chunks")
 }

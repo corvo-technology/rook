@@ -44,6 +44,7 @@ import {
   createBackgroundJobHandlers,
   createCloudAgentConnection,
   createConnectorStack,
+  createConsultationRetentionSweeper,
   createEgressGateway,
   createIdleComputerSweeper,
   createJobReconciler,
@@ -203,6 +204,8 @@ import { createMessagingReceipts } from "./messaging-receipts.js";
 import { messagingStatusSource } from "./messaging-status.js";
 import { mountMessagingWebhookRoutes } from "./messaging-webhook.js";
 import { monitoringRoutes } from "./monitoring.js";
+import { mountPartnerConsultationRoutes } from "./partner-consultations.js";
+import { partnerConsultationDeps } from "./partner-consultations-deps.js";
 import { installPartnerTenantContent } from "./partner-content.js";
 import { hashEntryCode, mountPartnerEmbedRoute, mountPartnerEntryRoute } from "./partner-entry.js";
 import { mountPartnerRoutes } from "./partner-routes.js";
@@ -816,6 +819,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     jobs,
     events,
     workerId: "api",
+    connector: stack.connector,
     runtime,
     notifications: notifications instanceof ExpoPushProvider ? notifications : undefined,
     secretStore: secrets,
@@ -849,6 +853,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
           prisma,
           securityEventRetentionDays(),
         ),
+        reconcileConsultationRetention: createConsultationRetentionSweeper({ prisma, artifacts }),
         reconcileIdleComputers: createIdleComputerSweeper({ prisma, jobs }),
       })
     : undefined;
@@ -1231,6 +1236,22 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       });
     },
   });
+  // The recording API of the same partners: audio in, a draft note out.
+  mountPartnerConsultationRoutes(
+    app,
+    partnerConsultationDeps({
+      prisma,
+      artifacts,
+      jobs,
+      base: {
+        now: () => new Date(),
+        allowRequest: (partnerId) => takePartnerRequest(prisma, partnerId, 120),
+        authenticate: (key) => authenticatePartner(prisma, key),
+        findTenant: (partnerId, externalTenantId) =>
+          findPartnerTenant(prisma, partnerId, externalTenantId),
+      },
+    }),
+  );
   if (billing && billingProvider) {
     mountBillingRoutes(app, {
       billing,

@@ -110,6 +110,7 @@ export async function listSpaceRuns(
         prompt: row.task.prompt,
         sourceBlocks: row.sourceMessage?.blocks,
       }),
+      startedAt: (row.startedAt ?? row.createdAt).toISOString(),
       updatedAt: (filter === "recent" && row.completedAt
         ? row.completedAt
         : row.updatedAt

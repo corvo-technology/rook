@@ -1,0 +1,137 @@
+/* Home: one orchestrated load, live rows that arrive instead of jump, and rings on working agents.
+   All of it is off under prefers-reduced-motion. Colors come from the atmosphere tokens. */
+
+.rk-home-dots {
+  background-image: radial-gradient(var(--atmosphere-dot) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 100%);
+}
+
+.rk-home-glow {
+  transition: box-shadow var(--motion-panel) var(--motion-ease-out);
+}
+.rk-home-glow:focus-within {
+  box-shadow: var(--atmosphere-glow);
+}
+
+.rk-home-rise {
+  animation: rk-home-rise 560ms var(--motion-ease-out) both;
+  animation-delay: calc(var(--rk-i, 0) * 80ms);
+}
+@keyframes rk-home-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+.rk-home-row-in {
+  animation: rk-home-row-in 360ms var(--motion-ease-out) both;
+}
+@keyframes rk-home-row-in {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+}
+
+.rk-home-ring::after {
+  content: "";
+  position: absolute;
+  inset: -9px;
+  border-radius: 9999px;
+  border: 1px solid var(--atmosphere-pulse);
+  animation: rk-home-ring 2s var(--motion-ease-out) infinite;
+  pointer-events: none;
+}
+@keyframes rk-home-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
+
+.rk-home-caret::after {
+  content: "";
+  display: inline-block;
+  width: 0.5ch;
+  height: 1em;
+  margin-inline-start: 2px;
+  vertical-align: -0.12em;
+  background: currentColor;
+  animation: rk-home-caret 1s steps(1) infinite;
+}
+@keyframes rk-home-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+.rk-home-now {
+  background: linear-gradient(90deg, var(--foreground), transparent);
+  animation: rk-home-now 3s ease-in-out infinite;
+}
+@keyframes rk-home-now {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.rk-home-lift {
+  transition:
+    transform var(--motion-fast) var(--motion-ease-out),
+    background-color var(--motion-fast) var(--motion-ease-out);
+}
+.rk-home-lift:hover {
+  transform: translateX(2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rk-home-rise,
+  .rk-home-row-in,
+  .rk-home-ring::after,
+  .rk-home-caret::after,
+  .rk-home-now,
+  .rk-home-lift,
+  .rk-home-lift:hover {
+    animation: none;
+    transition: none;
+    transform: none;
+  }
+  .rk-home-ring::after,
+  .rk-home-caret::after {
+    display: none;
+  }
+}
+
+/* The signature band at the foot of a card: ink dithered away to nothing, two pixel sizes deep. */
+.rk-home-dither {
+  position: relative;
+  isolation: isolate;
+}
+.rk-home-dither::before,
+.rk-home-dither::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: -1;
+  border-radius: 0 0 1.5rem 1.5rem;
+  pointer-events: none;
+  background-image: radial-gradient(var(--atmosphere-dither) 38%, transparent 40%);
+}
+.rk-home-dither::before {
+  height: 4.5rem;
+  background-size: 3px 3px;
+  mask-image: linear-gradient(to top, #000 0%, transparent 85%);
+}
+.rk-home-dither::after {
+  height: 7rem;
+  background-size: 7px 7px;
+  mask-image: linear-gradient(to top, transparent 15%, #000 45%, transparent 100%);
+  opacity: 0.7;
+}

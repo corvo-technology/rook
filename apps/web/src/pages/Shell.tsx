@@ -885,7 +885,7 @@ function SpaceShell({ page }: { page?: ReactNode }) {
       computerOpen={computerOpen}
       data-testid="shell-root"
       data-ready={shellReady}
-      className="relative flex h-full min-h-0 min-w-0 overflow-hidden bg-background text-foreground/90 [&[data-resizing-sidebar]_*[data-slot=sidebar-gap]]:transition-none [&[data-resizing-sidebar]_*[data-slot=sidebar-container]]:transition-none"
+      className="relative flex h-full min-h-0 min-w-0 overflow-hidden bg-sidebar text-foreground/90 [&[data-resizing-sidebar]_*[data-slot=sidebar-gap]]:transition-none [&[data-resizing-sidebar]_*[data-slot=sidebar-container]]:transition-none"
       {...swipeHandlers}
     >
       <ComputerUpdateProgress
@@ -988,7 +988,7 @@ function SpaceShell({ page }: { page?: ReactNode }) {
         data-space-switch="main"
         aria-hidden={mobileSidebarOpen || undefined}
         inert={mobileSidebarOpen}
-        className="isolate flex min-w-0 flex-1 flex-col bg-background"
+        className={`isolate flex min-w-0 flex-1 flex-col bg-background md:my-2 md:me-2 md:overflow-hidden md:rounded-3xl md:border md:border-border md:shadow-raised ${botsSidebarCollapsed ? "md:ms-2" : "md:ms-0"}`}
       >
         {/* Inside main so the composer and its menus stay above it. */}
         {!mobileSidebarOpen ? (

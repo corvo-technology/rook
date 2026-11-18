@@ -167,6 +167,8 @@ export const RunActivityRowSchema = z.object({
     ])
     .nullable(),
   updatedAt: z.string(),
+  /** When the run began, so a screen can tick its elapsed time. Absent from older servers. */
+  startedAt: z.string().optional(),
 });
 export type RunActivityRow = z.infer<typeof RunActivityRowSchema>;
 

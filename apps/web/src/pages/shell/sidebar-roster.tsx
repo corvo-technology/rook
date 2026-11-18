@@ -524,6 +524,14 @@ export function SidebarRoster({
                             />
                           </div>
                         </div>
+                        {item.kind === "bot" && item.chat.title ? (
+                          <span
+                            data-roster-role=""
+                            className="mt-0.5 inline-block max-w-full truncate rounded-full bg-foreground/6 px-2 py-px text-meta font-medium text-foreground/65"
+                          >
+                            {item.chat.title}
+                          </span>
+                        ) : null}
                         {compact ? (
                           compactStatusLabel ? (
                             <div

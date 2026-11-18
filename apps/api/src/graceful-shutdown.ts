@@ -91,6 +91,22 @@ export function createGracefulShutdown(
     }
   });
 
+  // WebSocket tunnels reach the app's stores too (screen proxy, egress), so once the pools are
+  // closing a late upgrade is refused the way a late request is.
+  const upgradeListeners = server.listeners("upgrade") as ((...args: unknown[]) => unknown)[];
+  if (upgradeListeners.length) {
+    server.removeAllListeners("upgrade");
+    server.on("upgrade", (req, socket: Socket, head) => {
+      if (sealed) {
+        socket.end(
+          "HTTP/1.1 503 Service Unavailable\r\nretry-after: 1\r\nconnection: close\r\n\r\n",
+        );
+        return;
+      }
+      for (const listener of upgradeListeners) listener.call(server, req, socket, head);
+    });
+  }
+
   let stopping: Promise<void> | undefined;
   const run = async (immediate: boolean) => {
     const propagationMs = immediate ? 0 : (options.propagationMs ?? READINESS_PROPAGATION_MS);

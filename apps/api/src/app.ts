@@ -189,6 +189,7 @@ import type { AppEnv } from "./env.js";
 import { loadEnv } from "./env.js";
 import type { DrainState } from "./health.js";
 import { healthRoutes } from "./health.js";
+import { createInFlight } from "./in-flight.js";
 import { mountLocalEntryRoute } from "./local-entry.js";
 import { mountLocalComputerHost } from "./local-settings.js";
 import { assertMcpRemoteEndpoint } from "./mcp-servers.js";
@@ -648,6 +649,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       }),
   });
   presence.start();
+  const sessionChecks = createInFlight();
   const auth = createAuth(prisma, {
     analytics,
     passwordAuth: env.passwordAuth,
@@ -1124,12 +1126,15 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
         signal: c.req.raw.signal,
         // Same user in the same space, so leaving the space also ends a stream.
         // A database failure rejects this check; only a missing membership is unauthorized.
-        stillAuthorized: async () => {
-          const current = await sessionActor(c.req.raw);
-          return Boolean(
-            actor && current?.userId === actor.userId && current.spaceId === actor.spaceId,
-          );
-        },
+        // A stream re-checks after its response may have ended, when the handler's promise no
+        // longer holds shutdown back, so stop() waits for these itself.
+        stillAuthorized: () =>
+          sessionChecks.run(async () => {
+            const current = await sessionActor(c.req.raw);
+            return Boolean(
+              actor && current?.userId === actor.userId && current.spaceId === actor.spaceId,
+            );
+          }),
       },
     });
     if (matched) return c.newResponse(response.body, response);
@@ -1685,6 +1690,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     awaitIdle: inMemoryJobs ? () => inMemoryJobs.awaitIdle() : undefined,
     backgroundFailures: inMemoryJobs ? () => inMemoryJobs.failureCounts() : undefined,
     stop: async () => {
+      await sessionChecks.close();
       await egress?.stop();
       // Abort in-flight continueRun boot waits before draining jobs so stop() cannot sit
       // on waitForComputerReady for the full boot-wait window during shared Postgres journeys.

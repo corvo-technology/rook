@@ -91,6 +91,7 @@ import {
   describeRowSecurity,
   installSecurityEventStore,
   isTooManyDatabaseConnections,
+  latestMigrationName,
   parsePositiveInteger,
   partnerSpaceState,
   pushSessionExpiresAt,
@@ -98,6 +99,7 @@ import {
   runAsSystem,
   securityEventRetentionDays,
   verifyContentKeys,
+  waitForMigrationLevel,
 } from "@corvo/db";
 import { SERVICE_NAMES } from "@corvo/logging";
 import { createRootLogger } from "@corvo/logging/axiom";
@@ -123,6 +125,15 @@ async function main() {
   });
   const { pool } = created;
   let { prisma } = created;
+  // The API applies migrations as it starts, while this process boots in parallel.
+  const migrationsDir = process.env.MIGRATIONS_DIR?.trim();
+  const expectedMigration = migrationsDir ? await latestMigrationName(migrationsDir) : undefined;
+  if (expectedMigration) {
+    await waitForMigrationLevel(expectedMigration, {
+      query: (sql, values) => pool.query(sql, values),
+      log: (message, fields) => logger.warn(message, fields),
+    });
+  }
   const rowSecurity = rowSecurityWarning(await describeRowSecurity(prisma));
   if (rowSecurity) logger.warn(rowSecurity);
   // Listening and the leadership lock live as long as their connection, so they cannot sit behind

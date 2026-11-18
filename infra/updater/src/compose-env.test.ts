@@ -47,6 +47,7 @@ const NOT_PASSED: Record<string, string> = {
   DEMO_CONNECTOR_URL: "input of the partner demo command, passed on its own command line",
   PARTNER_API_KEY: "input of the partner demo commands, passed on their own command line",
   PARTNER_API_URL: "input of the partner demo commands, passed on their own command line",
+  E2B_DOMAIN: "input of the E2B template build command, passed on its own command line",
   MIGRATIONS_DIR: "set by the migration command for the bundled engine only",
   CORVO_AGENT_DESKTOP_BIN: "set by the desktop app for the local desktop control server only",
   PATH: "the process's own search path, which the container image sets",

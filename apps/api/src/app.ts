@@ -214,6 +214,7 @@ import { messagingStatusSource } from "./messaging-status.js";
 import { mountMessagingWebhookRoutes } from "./messaging-webhook.js";
 import { monitoringRoutes } from "./monitoring.js";
 import { mountPartnerCommerceRoutes } from "./partner-commerce-routes.js";
+import { createAutoTopupRunner } from "./partner-console/index.js";
 import { mountPartnerConsultationRoutes } from "./partner-consultations.js";
 import { partnerConsultationDeps } from "./partner-consultations-deps.js";
 import { installPartnerTenantContent } from "./partner-content.js";
@@ -857,7 +858,11 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
           prisma,
           lookup: deploymentModelUsageLookup(),
         }),
-        reconcilePartnerWebhooks: createPartnerWebhookReconciler({ prisma, jobs }),
+        reconcilePartnerWebhooks: createPartnerWebhookReconciler({
+          prisma,
+          jobs,
+          autoTopup: billing ? createAutoTopupRunner(prisma, billing) : undefined,
+        }),
         reconcileCloudAgents: () => reconcileCloudAgents({ prisma, jobs, cloudAgent }),
         reconcileComputerUpdates: () => reconcileComputerUpdates({ prisma, jobs }),
         reconcileSecurityEventRetention: createSecurityEventPruner(

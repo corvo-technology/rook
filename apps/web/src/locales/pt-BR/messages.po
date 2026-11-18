@@ -1974,6 +1974,11 @@ msgstr "Escolha uma nova senha"
 msgid "Choose a provider"
 msgstr "Escolha um provedor"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Choose another model."
+msgstr "Escolha outro modelo."
+
 #: src/pages/shell/agent-import.tsx
 msgid "Choose backup"
 msgstr "Escolher backup"
@@ -5384,6 +5389,11 @@ msgstr "Conexões de modelos"
 #: src/pages/Onboarding.tsx
 msgid "Model id"
 msgstr "ID do modelo"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Model not available"
+msgstr "Modelo indisponível"
 
 #: src/pages/model-settings/model-picker.tsx
 #: src/pages/model-settings/role-model-picker.tsx

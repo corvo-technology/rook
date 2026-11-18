@@ -6,9 +6,12 @@ import type { PrismaClient } from "@corvo/db";
 import {
   claimCommerceNotices,
   claimPartnerAllowanceNotices,
+  claimPartnerCreditNotices,
   draftPartnerInvoices,
+  meterPartnerResources,
   previousPeriod,
   purgeExpiredIdempotency,
+  renewPartnerPlans,
   runAsSystem,
   undeliveredPartnerWebhookEvents,
 } from "@corvo/db";
@@ -134,14 +137,26 @@ export function createPartnerWebhookReconciler(deps: {
   prisma: PrismaClient;
   jobs: Pick<JobPublisher, "enqueue">;
   now?: () => Date;
+  /** Starts the auto top-ups owed; only where there is billing to start them through. */
+  autoTopup?: () => Promise<unknown>;
 }) {
   return () =>
     runAsSystem("find partner credit notices", async () => {
       const now = deps.now?.() ?? new Date();
+      // The plan's credits for the new month and the compute and storage used come before the
+      // notices, so the fund the notices read is current.
+      await renewPartnerPlans(deps.prisma, now).catch((error) =>
+        getLogger().error("partner plan renewal", error),
+      );
+      await meterPartnerResources(deps.prisma, now).catch((error) =>
+        getLogger().error("partner resource metering", error),
+      );
       const claimed = [
         ...(await claimPartnerAllowanceNotices(deps.prisma, now)),
         ...(await claimCommerceNotices(deps.prisma, now)),
+        ...(await claimPartnerCreditNotices(deps.prisma, now)),
       ];
+      await deps.autoTopup?.().catch((error) => getLogger().error("partner auto top-up", error));
       for (const id of claimed) {
         await enqueuePartnerWebhook(deps.jobs, id).catch((error) =>
           getLogger().error("partner webhook enqueue", error),

@@ -1529,6 +1529,12 @@ export const appContract = {
       /** Against the live version, or against `config` when an admin tries a draft. */
       simulate: oc.input(PartnerSimulationInputSchema).output(PartnerSimulationSchema),
     },
+    /** Puts an embedded partner on a tier of the live pricing, or takes it off with a null tier. */
+    partnerPlan: {
+      set: oc
+        .input(z.object({ partnerId: z.string().min(1), tierKey: z.string().min(1).nullable() }))
+        .output(z.object({ ok: z.literal(true) })),
+    },
     /** Rook's monthly invoices of its share to embedded commerce partners. */
     invoices: {
       list: oc

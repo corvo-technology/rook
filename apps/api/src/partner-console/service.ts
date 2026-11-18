@@ -647,8 +647,15 @@ export async function getCredits(
   const usage = await deps.store.creditUsage(partner, deps.now());
   return {
     currency: partner.currency,
-    // The partner plan is not billed yet: until it is, there is no plan to show.
-    plan: null,
+    plan:
+      usage.plan && usage.plan.status === "active"
+        ? {
+            name: usage.plan.tierKey,
+            priceMinor: usage.plan.priceMinor,
+            includedCredits: usage.plan.includedCredits,
+            periodEnd: usage.plan.periodEnd.toISOString(),
+          }
+        : null,
     balance: { planCredits: usage.planCredits, topupCredits: usage.topupCredits },
     autoTopup: usage.autoTopup,
     allowedModels: usage.allowedModels,

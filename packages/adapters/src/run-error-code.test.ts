@@ -17,6 +17,7 @@ import {
   MISSING_MODEL_RUN_ERROR,
   MODEL_ACCESS_REQUIRED_RUN_ERROR,
   PARTNER_CREDIT_USED_UP_RUN_ERROR,
+  PARTNER_MODEL_NOT_ALLOWED_RUN_ERROR,
   SPACE_PAUSED_RUN_ERROR,
 } from "@corvo/core";
 import { describe, expect, it } from "vitest";
@@ -77,6 +78,15 @@ describe("classifyRunError", () => {
     [SPACE_PAUSED_RUN_ERROR, "paused", "space"],
   ])("maps the app's run error %s", (message, code, scope) => {
     expect(classifyRunError(new Error(message), message)).toEqual({ code, params: { scope } });
+  });
+
+  it("maps a model the partner did not allow to its own code", () => {
+    expect(
+      classifyRunError(
+        new Error(PARTNER_MODEL_NOT_ALLOWED_RUN_ERROR),
+        PARTNER_MODEL_NOT_ALLOWED_RUN_ERROR,
+      ),
+    ).toEqual({ code: "model_not_allowed" });
   });
 
   it.each([MODEL_ACCESS_REQUIRED_RUN_ERROR, MISSING_MODEL_RUN_ERROR])(

@@ -10,7 +10,7 @@ import {
   configurePartnerCommerce,
   listOwnedPartnerTenants,
   PartnerAllowanceRefused,
-  partnerWalletOrganization,
+  partnerFund,
   periodLabel,
   purgeExpiredEntryCodes,
   readCatalog,
@@ -407,7 +407,7 @@ export function createPrismaPartnerConsoleStore(prisma: PrismaClient): PartnerCo
     creditUsage: (partner, now) =>
       system(async () => {
         const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-        const [row, tenants, walletOrganization] = await Promise.all([
+        const [row, tenants] = await Promise.all([
           prisma.partner.findUniqueOrThrow({
             where: { id: partner.id },
             select: {
@@ -428,30 +428,37 @@ export function createPrismaPartnerConsoleStore(prisma: PrismaClient): PartnerCo
               organization: { select: { name: true } },
             },
           }),
-          partnerWalletOrganization(prisma, partner.id),
         ]);
-        const [spent, account] = await Promise.all([
+        const organizationIds = tenants.map((tenant) => tenant.organizationId);
+        const spentWhere = {
+          organizationId: { in: organizationIds },
+          amountMicros: { lt: 0n },
+          createdAt: { gte: monthStart },
+        };
+        const resources = ["voice", "computer", "storage"] as const;
+        const [spent, resourceSpent, fund] = await Promise.all([
+          // Model calls by model; what is not a model call (and not a resource) lands in "other".
           prisma.modelCreditEntry.groupBy({
             by: ["organizationId", "model"],
-            where: {
-              organizationId: { in: tenants.map((tenant) => tenant.organizationId) },
-              amountMicros: { lt: 0n },
-              createdAt: { gte: monthStart },
-            },
+            where: { ...spentWhere, NOT: { source: { startsWith: "hold:resource:" } } },
             _sum: { amountMicros: true },
           }),
-          walletOrganization
-            ? prisma.modelCreditAccount.findUnique({
-                where: { organizationId: walletOrganization },
-                select: { balanceMicros: true },
-              })
-            : null,
+          Promise.all(
+            resources.map((resource) =>
+              prisma.modelCreditEntry.groupBy({
+                by: ["organizationId"],
+                where: { ...spentWhere, source: { startsWith: `hold:resource:${resource}:` } },
+                _sum: { amountMicros: true },
+              }),
+            ),
+          ),
+          partnerFund(prisma, partner.id, now),
         ]);
         const credits = (micros: bigint) => Number(micros / CREDIT_MICROS);
         return {
-          // The fund is one wallet: plan credits and top-ups are told apart once a partner plan is billed.
-          planCredits: 0,
-          topupCredits: credits(account?.balanceMicros ?? 0n),
+          planCredits: fund.planCredits,
+          topupCredits: fund.topupCredits,
+          plan: fund.plan,
           customers: tenants.map((tenant) => {
             const byResource: Record<string, number> = {};
             let used = 0;
@@ -462,6 +469,15 @@ export function createPrismaPartnerConsoleStore(prisma: PrismaClient): PartnerCo
                 (byResource[entry.model ?? "other"] ?? 0) + amount;
               used += amount;
             }
+            resources.forEach((resource, index) => {
+              const entry = resourceSpent[index]?.find(
+                (row) => row.organizationId === tenant.organizationId,
+              );
+              if (!entry) return;
+              const amount = credits(-(entry._sum.amountMicros ?? 0n));
+              byResource[resource] = amount;
+              used += amount;
+            });
             return {
               tenantId: tenant.id,
               name: tenant.organization.name,

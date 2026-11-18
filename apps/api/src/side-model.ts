@@ -101,7 +101,7 @@ async function resolveSideModel(
   if (!credential || hosted) {
     const apiKey = provider === deps.deploymentProvider ? deps.deploymentModelKey : undefined;
     const callObserver = settings?.modelCreditsEnabled
-      ? await hostedModelCreditObserver(deps.prisma, scope)
+      ? await hostedModelCreditObserver(deps.prisma, scope, { provider, id: modelId })
       : undefined;
     return { model: { provider, id: modelId, ...(apiKey ? { apiKey } : {}), callObserver } };
   }

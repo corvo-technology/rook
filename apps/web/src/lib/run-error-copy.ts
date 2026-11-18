@@ -321,6 +321,13 @@ export function describeRunError(
         tone: "warning",
         actions: ["connect"],
       });
+    case "model_not_allowed":
+      return view(info, raw, {
+        title: i18n._({ id: "Model not available", message: "Model not available" }),
+        line: i18n._({ id: "Choose another model.", message: "Choose another model." }),
+        tone: "warning",
+        actions: ["change-model"],
+      });
     case "turn_stopped":
       return view(info, raw, {
         title: i18n._({ id: "The agent stopped", message: "The agent stopped" }),

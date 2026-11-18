@@ -108,11 +108,22 @@ export type AuditKind =
   | "credit.limit_changed"
   | "credit.models_changed"
   | "credit.autotopup_changed"
-  | "credit.topup_started";
+  | "credit.topup_started"
+  | "credit.autotopup_started"
+  | "credit.autotopup_failed";
 
 export interface CreditUsage {
+  /** Credits that end with the plan's period, and credits that stay until used. */
   planCredits: number;
   topupCredits: number;
+  /** The partner's monthly plan; null when it has none. */
+  plan: {
+    tierKey: string;
+    priceMinor: number;
+    includedCredits: number;
+    periodEnd: Date;
+    status: string;
+  } | null;
   customers: Array<{
     tenantId: string;
     name: string;

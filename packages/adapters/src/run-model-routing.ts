@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { ModelTier, RunTrigger } from "@corvo/contracts";
 import { MODEL_TIERS } from "@corvo/contracts";
-import { recordUsage } from "@corvo/db";
+import { modelAllowed, partnerAllowedModels, recordUsage } from "@corvo/db";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { type DeploymentModelDefaults, effectiveModelRole } from "./model-roles.js";
 import {
@@ -15,6 +15,7 @@ import {
   type TurnSignals,
 } from "./model-routing.js";
 import type { ModelChoice } from "./model-selection.js";
+import { catalogModelCost } from "./pi-runtime-models.js";
 import { deploymentModelDefaults, resolveFastRunModel } from "./run-model.js";
 
 export interface RoutedModel {
@@ -23,6 +24,30 @@ export interface RoutedModel {
   choice: (ModelChoice & { credentialId?: string }) | null;
   /** The tier's model is the deployment's, so the deployment's key serves it. */
   fromDeployment: boolean;
+}
+
+/**
+ * A Rook-provided tier model the customer's partner allows: the model itself, or, when the
+ * partner's list excludes it, the cheapest model on that list (the first when none has a price).
+ */
+async function allowedHostedModel<T extends { provider: string; modelId: string }>(
+  deps: Pick<ExecutorDeps, "prisma">,
+  spaceId: string,
+  primary: T,
+): Promise<T> {
+  const allowed = await partnerAllowedModels(deps.prisma, spaceId);
+  if (!allowed?.length || modelAllowed(allowed, primary.provider, primary.modelId)) return primary;
+  const prefix = `${primary.provider}/`;
+  const ids = allowed.map((name) => (name.startsWith(prefix) ? name.slice(prefix.length) : name));
+  const price = (id: string) => {
+    const cost = catalogModelCost(primary.provider, id);
+    return cost ? cost.input + cost.output : Number.POSITIVE_INFINITY;
+  };
+  const cheapest = ids.reduce(
+    (best, id) => (price(id) < price(best) ? id : best),
+    ids[0] as string,
+  );
+  return { ...primary, modelId: cheapest };
 }
 
 /**
@@ -38,11 +63,15 @@ export async function resolveTierModel(
   if (tier === "main") return { tier, choice: null, fromDeployment: false };
   const role = await effectiveModelRole(deps.prisma, scope, tier, defaults);
   if (!role.primary) return { tier: "main", choice: null, fromDeployment: false };
+  const primary =
+    role.primarySource === "deployment"
+      ? await allowedHostedModel(deps, scope.spaceId, role.primary)
+      : role.primary;
   return {
     tier,
     choice: {
-      modelProvider: role.primary.provider,
-      modelId: role.primary.modelId,
+      modelProvider: primary.provider,
+      modelId: primary.modelId,
       thinkingLevel: role.primary.thinkingLevel ?? null,
       ...(role.primary.credentialId ? { credentialId: role.primary.credentialId } : {}),
     },

@@ -25,7 +25,14 @@ const defaults = {
   deployment: { provider: "cloud", model: "standard", fastModel: "cheap", strongModel: "big" },
 };
 
-function deps(opts: { answer?: string; fails?: boolean; roles?: Array<{ role: string }> } = {}) {
+function deps(
+  opts: {
+    answer?: string;
+    fails?: boolean;
+    roles?: Array<{ role: string }>;
+    partnerAllowed?: string[];
+  } = {},
+) {
   const run = vi.fn(async function* (): AsyncGenerator<AgentRuntimeEvent> {
     if (opts.fails) throw new Error("model down");
     yield { type: "done", text: opts.answer ?? "" } as AgentRuntimeEvent;
@@ -43,6 +50,13 @@ function deps(opts: { answer?: string; fails?: boolean; roles?: Array<{ role: st
     deps: {
       runtime: { run },
       prisma: {
+        partnerTenant: {
+          findFirst: vi.fn(async () =>
+            opts.partnerAllowed
+              ? { partner: { creditAllowedModels: opts.partnerAllowed, mode: "embedded" } }
+              : null,
+          ),
+        },
         spaceSettingOverride: { findUnique: vi.fn(async () => null) },
         userModelRoleChoice: {
           findMany: vi.fn(async ({ where }: { where: { role: string } }) =>
@@ -86,6 +100,36 @@ describe("tier models", () => {
       choice: { modelProvider: "member", modelId: "member-strong" },
       fromDeployment: false,
     });
+  });
+
+  it("never routes a partner's customer to a hosted model the partner did not allow", async () => {
+    const routed = await resolveTierModel(
+      deps({ partnerAllowed: ["cloud/other"] }).deps,
+      scope,
+      "fast",
+      defaults,
+    );
+    expect(routed).toMatchObject({
+      choice: { modelProvider: "cloud", modelId: "other" },
+      fromDeployment: true,
+    });
+  });
+
+  it("keeps an allowed hosted model, and a member's own model whatever the list says", async () => {
+    const allowedModel = await resolveTierModel(
+      deps({ partnerAllowed: ["cheap"] }).deps,
+      scope,
+      "fast",
+      defaults,
+    );
+    expect(allowedModel.choice?.modelId).toBe("cheap");
+    const own = await resolveTierModel(
+      deps({ roles: [{ role: "strong" }], partnerAllowed: ["cheap"] }).deps,
+      scope,
+      "strong",
+      defaults,
+    );
+    expect(own.choice?.modelId).toBe("member-strong");
   });
 
   it("serves a tier nobody configured from the main model", async () => {

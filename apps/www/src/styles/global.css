@@ -53,9 +53,14 @@
   --radius-frame: 26px;
 }
 
-/* The black rooms: the product window, the closing band and the footer. Everything inside reads
+/* The black rooms: the product window and the closing band. The dark theme gives the whole page the same tokens. Everything inside reads
    the same tokens, now dark. */
-.ink {
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+.ink,
+:root[data-theme="dark"] {
   --rook-asleep: #4a4a52;
   --page: #0b0b0c;
   --surface: #111113;
@@ -184,11 +189,7 @@ button {
   margin: 0 auto;
 }
 
-.site-footer.ink {
-  border-top: 0;
-}
-
-/* On a short page the footer sits at the bottom, so the black room reaches the edge. */
+/* On a short page the footer sits at the bottom. */
 .container > .site-footer {
   margin-top: auto;
 }
@@ -939,77 +940,109 @@ html[data-platform="web"] [data-show]:not([data-show~="web"]) {
 
 .site-footer {
   display: flex;
-  justify-content: space-between;
-  gap: 48px;
+  flex-direction: column;
+  gap: 28px;
   margin-top: 70px;
-  padding: 60px 0 70px;
+  padding: 48px 0 56px;
   border-top: 1px solid var(--line);
+  color: var(--body);
+  font-size: 15px;
+}
+
+.site-footer__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
 }
 
 .site-footer__brand {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 16px;
+  gap: 14px;
 }
 
-.site-footer__legal {
-  color: #a0a0a0;
-  font-size: 13.5px;
-}
-
-.site-footer__legal a:hover,
-.site-footer__legal a:focus-visible {
-  color: var(--ink);
-}
-
-.site-footer__languages {
+.site-footer__social {
   display: flex;
   flex-wrap: wrap;
-  color: var(--muted);
-  font-size: 14px;
-}
-
-.site-footer__languages a + a::before {
-  content: "·";
-  margin: 0 10px;
-  color: var(--muted);
-  pointer-events: none;
-}
-
-.site-footer__languages a[aria-current="page"],
-.site-footer__column a[aria-current="page"] {
-  color: var(--ink);
-}
-
-.site-footer__columns {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(140px, auto));
-  gap: 48px;
-}
-
-.site-footer__column h2 {
-  margin: 0 0 14px;
-  color: var(--ink);
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.site-footer__column ul {
-  display: grid;
-  gap: 10px;
+  gap: 4px 18px;
   margin: 0;
   padding: 0;
   list-style: none;
-  color: var(--muted);
+  color: var(--muted-2);
+}
+
+.site-footer__tools {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.site-footer__language {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.site-footer__language select {
+  padding: 8px 12px;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  background: var(--page);
+  color: var(--ink);
+  font: inherit;
   font-size: 14px;
 }
 
-.site-footer__languages a:hover,
-.site-footer__languages a:focus-visible,
-.site-footer__column a:hover,
-.site-footer__column a:focus-visible {
+.site-footer__theme {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  background: var(--page);
   color: var(--ink);
+}
+
+.site-footer__theme svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.site-footer__sun,
+:root[data-theme="dark"] .site-footer__moon {
+  display: none;
+}
+
+:root[data-theme="dark"] .site-footer__sun {
+  display: block;
+}
+
+.site-footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+}
+
+.site-footer a:hover,
+.site-footer a:focus-visible {
+  color: var(--ink);
+}
+
+.site-footer__fine {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 14px;
 }
 
 .platforms {
@@ -3211,15 +3244,6 @@ button.product-demo__dock-icon {
 
   .stats-grid {
     gap: 20px;
-  }
-
-  .site-footer {
-    flex-direction: column;
-  }
-
-  .site-footer__columns {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 32px;
   }
 
   .product-demo__topbar {

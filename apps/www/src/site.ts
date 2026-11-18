@@ -17,6 +17,9 @@ export const API_ORIGIN =
 export const WAITLIST_ENDPOINT = `${API_ORIGIN}/api/public/waitlist`;
 export const PARTNER_LEADS_ENDPOINT = `${API_ORIGIN}/api/public/partner-leads`;
 
+/** The documentation site. */
+export const DOCS_URL = "https://docs.rook.team";
+
 /** The technical docs for partners. */
 export const PARTNER_DOCS_URL = "https://docs.rook.team/parceiros";
 

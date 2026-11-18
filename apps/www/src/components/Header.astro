@@ -2,6 +2,7 @@
 import { getLaunchCopy } from "../i18n/launch";
 import type { LaunchCopy } from "../i18n/launch";
 import { DEFAULT_LOCALE, localeHashPath, localeHomePath } from "../i18n/locales";
+import { partnersPath } from "../i18n/partners";
 import type { Locale } from "../i18n/locales";
 import { MASCOT_COLOR } from "../mascot";
 import type { MascotHue } from "../mascot";
@@ -12,20 +13,27 @@ type Props = {
   locale?: Locale;
   copy?: LaunchCopy["nav"];
   homeHref?: string;
+  /** The page's own links and button, when it is not the home page. */
+  links?: NavLink[];
+  cta?: { href: string; label: string };
 };
+
+type NavLink = { section: string; hue: MascotHue; label: string; href?: string };
 
 const locale = Astro.props.locale ?? DEFAULT_LOCALE;
 const copy = Astro.props.copy ?? getLaunchCopy(locale).nav;
 const homeHref = Astro.props.homeHref ?? localeHomePath(locale);
 
 // Each section a link points to gets its own rook color when the page reaches it.
-const NAV_LINKS: Array<{ section: string; hue: MascotHue; label: string }> = [
+const NAV_LINKS: NavLink[] = Astro.props.links ?? [
   { section: "agents", hue: "menta", label: copy.demo },
   { section: "features", hue: "azul", label: copy.features },
   { section: "runs", hue: "violeta", label: copy.runs },
   { section: "faq", hue: "rosa", label: copy.faq },
+  { section: "partners", hue: "laranja", label: copy.partners, href: partnersPath(locale) },
 ];
-const hrefOf = (section: string) => localeHashPath(locale, section);
+const cta = Astro.props.cta ?? { href: localeHashPath(locale, "waitlist"), label: copy.waitlist };
+const hrefOf = (link: NavLink) => link.href ?? localeHashPath(locale, link.section);
 ---
 
 <header class="site-header">
@@ -33,7 +41,7 @@ const hrefOf = (section: string) => localeHashPath(locale, section);
   <nav class="site-nav" aria-label={copy.primary}>
     {
       NAV_LINKS.map((link) => (
-        <a href={hrefOf(link.section)} data-section={link.section} data-color={MASCOT_COLOR[link.hue]}>
+        <a href={hrefOf(link)} data-section={link.section} data-color={MASCOT_COLOR[link.hue]}>
           {link.label}
         </a>
       ))
@@ -44,8 +52,8 @@ const hrefOf = (section: string) => localeHashPath(locale, section);
   </nav>
   <div class="site-header__right">
     <div class="site-header__cta">
-      <a class="button button--primary button--small" href={hrefOf("waitlist")} data-attr="header-waitlist">
-        {copy.waitlist}
+      <a class="button button--primary button--small" href={cta.href} data-attr="header-waitlist">
+        {cta.label}
       </a>
     </div>
     <details class="site-menu" data-site-menu>
@@ -60,7 +68,7 @@ const hrefOf = (section: string) => localeHashPath(locale, section);
       <nav class="site-menu__panel" aria-label={copy.primary}>
         {
           NAV_LINKS.map((link) => (
-            <a href={hrefOf(link.section)} data-section={link.section}>
+            <a href={hrefOf(link)} data-section={link.section}>
               {link.label}
               <Rook hue={link.hue} size={16} gaze={false} />
             </a>

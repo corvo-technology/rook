@@ -66,22 +66,30 @@ export type LaunchCopy = {
     features: string;
     runs: string;
     faq: string;
+    partners: string;
     waitlist: string;
   };
-  faq: { heading: string; items: Array<{ question: string; answer: string }> };
+  /** `partnersLink` is the link under the question about reselling. */
+  faq: { heading: string; partnersLink: string; items: Array<{ question: string; answer: string }> };
   footer: {
     navLabel: string;
     languagesLabel: string;
-    product: string;
-    features: string;
-    runs: string;
-    install: string;
-    faq: string;
-    company: string;
+    resources: string;
+    download: string;
+    partners: string;
+    docs: string;
+    useCases: string;
     about: string;
     support: string;
-    privacy: string;
     terms: string;
+    privacy: string;
+    legalLabel: string;
+    socialLabel: string;
+    tagline: string;
+    /** Reads before the company name: "Rook is a product of". */
+    producedBy: string;
+    themeDark: string;
+    themeLight: string;
   };
   /** The headline reads `line1`, the rook mascot, then `line2`; `lead` is the two lines under it. */
   hero: {
@@ -109,6 +117,8 @@ export type LaunchCopy = {
     accent: string;
     copy: string;
     categories: Record<StoreCategory, string>;
+    /** Not in the product's catalog yet, so the page names its agents itself. */
+    health: { label: string; agents: [string, string, string] };
   };
   preview: {
     window: string;

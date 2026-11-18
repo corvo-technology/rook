@@ -2755,6 +2755,7 @@ model PartnerLead {
   name        String
   email       String
   company     String
+  whatsapp    String?
   website     String?
   partnerType String
   country     String?

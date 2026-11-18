@@ -341,6 +341,7 @@ export interface PartnerLeadSummary {
   name: string;
   email: string;
   company: string;
+  whatsapp?: string | undefined;
   website?: string | undefined;
   partnerType: string;
   country?: string | undefined;
@@ -362,6 +363,7 @@ export function partnerLeadNotificationEmail(
       <Text style={text}>Name: {lead.name}</Text>
       <Text style={text}>Email: {lead.email}</Text>
       <Text style={text}>Company: {lead.company}</Text>
+      <Text style={text}>WhatsApp: {lead.whatsapp ?? "-"}</Text>
       <Text style={text}>Website: {lead.website ?? "-"}</Text>
       <Text style={text}>Type: {lead.partnerType}</Text>
       <Text style={text}>Country: {lead.country ?? "-"}</Text>

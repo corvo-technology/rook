@@ -38,6 +38,27 @@ CREATE TABLE "partner_audit_events" (
     CONSTRAINT "partner_audit_events_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "partner_pricing_versions" (
+    "id" TEXT NOT NULL,
+    "version" INTEGER NOT NULL,
+    "config" JSONB NOT NULL,
+    "createdByUserId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "partner_pricing_versions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "partner_pricing_versions_version_key" ON "partner_pricing_versions"("version");
+
+-- Credit controls: nullable or defaulted, so the previous release is unaffected.
+ALTER TABLE "partners" ADD COLUMN "creditAllowedModels" TEXT[] DEFAULT ARRAY[]::TEXT[],
+ADD COLUMN "autoTopupEnabled" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN "autoTopupThresholdCredits" INTEGER,
+ADD COLUMN "autoTopupAmountMinor" INTEGER;
+ALTER TABLE "partner_tenants" ADD COLUMN "creditLimitCredits" INTEGER;
+
 -- CreateIndex
 CREATE UNIQUE INDEX "partner_members_partnerId_organizationId_key" ON "partner_members"("partnerId", "organizationId");
 
@@ -90,4 +111,7 @@ CREATE POLICY partner_markups_system ON "partner_markups"
   USING (current_setting('app.rls_bypass', true) = 'on');
 ALTER TABLE "partner_audit_events" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY partner_audit_events_system ON "partner_audit_events"
+  USING (current_setting('app.rls_bypass', true) = 'on');
+ALTER TABLE "partner_pricing_versions" ENABLE ROW LEVEL SECURITY;
+CREATE POLICY partner_pricing_versions_system ON "partner_pricing_versions"
   USING (current_setting('app.rls_bypass', true) = 'on');

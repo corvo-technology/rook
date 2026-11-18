@@ -100,7 +100,25 @@ export type AuditKind =
   | "support.session_opened"
   | "pricing.changed"
   | "key.rotated"
-  | "webhook.changed";
+  | "webhook.changed"
+  | "credit.limit_changed"
+  | "credit.models_changed"
+  | "credit.autotopup_changed"
+  | "credit.topup_started";
+
+export interface CreditUsage {
+  planCredits: number;
+  topupCredits: number;
+  customers: Array<{
+    tenantId: string;
+    name: string;
+    usedCredits: number;
+    limitCredits: number | null;
+    byResource: Record<string, number>;
+  }>;
+  autoTopup: { enabled: boolean; thresholdCredits: number | null; amountMinor: number | null };
+  allowedModels: string[];
+}
 
 /** What the service needs from storage. The Prisma store is the one real implementation. */
 export interface PartnerConsoleStore {
@@ -149,6 +167,14 @@ export interface PartnerConsoleStore {
     periods: string[],
   ): Promise<Map<string, { commissionMinor: number; markupMinor: number }>>;
   invoices(partnerId: string, limit: number): Promise<InvoiceRow[]>;
+  /** The fund and each customer's use of it this month, from the existing credit metering. */
+  creditUsage(partner: PartnerRecord, now: Date): Promise<CreditUsage>;
+  setCustomerLimit(partner: PartnerRecord, row: CustomerRow, limit: number | null): Promise<void>;
+  setAllowedModels(partner: PartnerRecord, models: string[]): Promise<void>;
+  setAutoTopup(
+    partner: PartnerRecord,
+    input: { enabled: boolean; thresholdCredits: number | null; amountMinor: number | null },
+  ): Promise<void>;
   keyIssuedAt(partner: PartnerRecord): Promise<Date>;
   rotateKey(partner: PartnerRecord): Promise<{ key: string; prefix: string }>;
   setWebhookUrl(partner: PartnerRecord, url: string | null): Promise<void>;
@@ -168,6 +194,8 @@ export interface PartnerConsoleDeps {
   webOrigin: string;
   /** A fresh unguessable one-use code. */
   newCode(): string;
+  /** Opens Rook's checkout for a top-up of the partner's fund; absent where nothing bills. */
+  topupCheckout?(partner: PartnerRecord, amountMinor: number): Promise<{ url: string }>;
 }
 
 export type PartnerConsoleErrorCode = "not_found" | "invalid" | "conflict" | "refused";

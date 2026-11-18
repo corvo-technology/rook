@@ -99,3 +99,15 @@ Answer any `2xx` once handled. Anything else, or no answer within ten seconds, i
 ## Coming soon
 
 With the [commerce API](/en/partners/commerce/) come `subscription.updated`, `subscription.lapsed`, `credit.granted`, `credit.expired`, `invoice.issued` and `payout.paid`, with the same signing and delivery.
+
+## Credit events (embedded partners)
+
+`customer.credit_limit_reached` is sent when a customer reaches the monthly credit limit you set. `partner.balance_low` is sent when your fund falls under the low-balance threshold. Both carry credit amounts, not currency, and use the same signing and delivery.
+
+```json
+{ "type": "customer.credit_limit_reached", "externalTenantId": "clinic-1", "limitCredits": 0, "usedCredits": 0 }
+```
+
+```json
+{ "type": "partner.balance_low", "balanceCredits": 0, "thresholdCredits": 0 }
+```

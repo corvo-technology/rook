@@ -5,6 +5,7 @@ import { ORPCError } from "@orpc/server";
 import type { PartnerConsoleDeps, PartnerScope } from "../partner-console/index.js";
 import {
   createPrismaPartnerConsoleStore,
+  getCredits,
   getCustomer,
   getIntegration,
   getOverview,
@@ -12,13 +13,18 @@ import {
   getRevenue,
   getRevenueCsv,
   listCustomers,
+  listInvoices,
   listPartners,
   openSupportSession,
   PartnerConsoleError,
   rotateIntegrationKey,
   runCustomerAction,
+  setAllowedModels,
+  setAutoTopup,
+  setCustomerCreditLimit,
   setIntegrationWebhook,
   setPricing,
+  startTopup,
 } from "../partner-console/index.js";
 import { requireSpacePermission } from "../space-owner.js";
 import type { RouterContext } from "./context.js";
@@ -68,10 +74,22 @@ export function partnerConsoleRoutes(ctx: RouterContext) {
     return { organizationId: space.organizationId, actorUserId: actor.userId };
   }
 
-  const run = async <T>(actor: Actor, call: (scope: PartnerScope) => Promise<T>): Promise<T> => {
+  const run = async <T>(
+    actor: Actor,
+    call: (scope: PartnerScope, deps: PartnerConsoleDeps) => Promise<T>,
+  ): Promise<T> => {
     const scope = await scopeOf(actor);
+    // A top-up goes through the caller's own billing: the fund is the credit of their account.
+    const billing = deps.billing;
+    const withBilling: PartnerConsoleDeps = billing
+      ? {
+          ...service,
+          topupCheckout: (_partner, amountMinor) =>
+            billing.purchaseCredits(actor, { amountCents: amountMinor, monthly: false }),
+        }
+      : service;
     try {
-      return await call(scope);
+      return await call(scope, withBilling);
     } catch (error) {
       throw orpcError(error);
     }
@@ -114,6 +132,24 @@ export function partnerConsoleRoutes(ctx: RouterContext) {
       ),
       rotateKey: managed.partnerConsole.rotateKey.handler(({ context, input }) =>
         run(context.actor, (scope) => rotateIntegrationKey(service, scope, input)),
+      ),
+      credits: managed.partnerConsole.credits.handler(({ context, input }) =>
+        run(context.actor, (scope) => getCredits(service, scope, input)),
+      ),
+      setCustomerLimit: managed.partnerConsole.setCustomerLimit.handler(({ context, input }) =>
+        run(context.actor, (scope) => setCustomerCreditLimit(service, scope, input)),
+      ),
+      setAllowedModels: managed.partnerConsole.setAllowedModels.handler(({ context, input }) =>
+        run(context.actor, (scope) => setAllowedModels(service, scope, input)),
+      ),
+      setAutoTopup: managed.partnerConsole.setAutoTopup.handler(({ context, input }) =>
+        run(context.actor, (scope) => setAutoTopup(service, scope, input)),
+      ),
+      topup: managed.partnerConsole.topup.handler(({ context, input }) =>
+        run(context.actor, (scope, withBilling) => startTopup(withBilling, scope, input)),
+      ),
+      invoices: managed.partnerConsole.invoices.handler(({ context, input }) =>
+        run(context.actor, (scope) => listInvoices(service, scope, input)),
       ),
       setWebhook: managed.partnerConsole.setWebhook.handler(({ context, input }) =>
         run(context.actor, (scope) => setIntegrationWebhook(service, scope, input)),

@@ -18,7 +18,7 @@ export function partnerRecord(id: string, overrides: Partial<PartnerRecord> = {}
     id,
     slug: `slug-${id}`,
     name: `Partner ${id}`,
-    mode: "embedded",
+    mode: "white_label",
     currency: "BRL",
     billingModel: "commerce",
     commissionBps: 2000,
@@ -76,6 +76,13 @@ export function createFakeStore(data: FakeData) {
   const codes: Array<{ partnerId: string; tenantId: string; codeHash: string; expiresAt: Date }> =
     [];
   const idempotency = new Map<string, { hash: string; body: unknown }>();
+  const limits = new Map<string, number>();
+  const allowed: string[] = [];
+  const autoTopup = {
+    enabled: false,
+    thresholdCredits: null as number | null,
+    amountMinor: null as number | null,
+  };
   const writes = { markups: 0, state: 0, key: 0, webhook: 0, checkout: 0 };
 
   const managed = (organizationId: string) =>
@@ -155,6 +162,29 @@ export function createFakeStore(data: FakeData) {
       return result;
     },
     invoices: async (partnerId) => data.invoices?.[partnerId] ?? [],
+    creditUsage: async (partner) => ({
+      planCredits: 0,
+      topupCredits: 5000,
+      customers: (data.customers[partner.id] ?? []).map((row) => ({
+        tenantId: row.tenantId,
+        name: row.name,
+        usedCredits: 120,
+        limitCredits: limits.get(row.tenantId) ?? null,
+        byResource: { "model-a": 100, other: 20 },
+      })),
+      autoTopup: { ...autoTopup },
+      allowedModels: [...allowed],
+    }),
+    setCustomerLimit: async (_partner, row, limit) => {
+      if (limit === null) limits.delete(row.tenantId);
+      else limits.set(row.tenantId, limit);
+    },
+    setAllowedModels: async (_partner, models) => {
+      allowed.splice(0, allowed.length, ...models);
+    },
+    setAutoTopup: async (_partner, input) => {
+      Object.assign(autoTopup, input);
+    },
     keyIssuedAt: async (partner) => partner.createdAt,
     rotateKey: async (partner) => {
       writes.key += 1;

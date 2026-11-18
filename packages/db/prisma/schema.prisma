@@ -2582,57 +2582,63 @@ model MessagingInstallSession {
 
 /// A SaaS that sends its customers to Corvo. Platform-level: only server code reads it.
 model Partner {
-  id                   String                 @id @default(cuid())
-  slug                 String                 @unique
-  name                 String
+  id                        String                 @id @default(cuid())
+  slug                      String                 @unique
+  name                      String
   /// Looks the row up without revealing the key; the key itself is never stored.
-  keyPrefix            String                 @unique
-  keyHash              String
-  enabled              Boolean                @default(true)
-  createdAt            DateTime               @default(now())
+  keyPrefix                 String                 @unique
+  keyHash                   String
+  enabled                   Boolean                @default(true)
+  createdAt                 DateTime               @default(now())
   /// The person who manages this partner in the app; null for one made on the command line.
-  ownerUserId          String?                @unique
-  owner                User?                  @relation(fields: [ownerUserId], references: [id], onDelete: SetNull)
+  ownerUserId               String?                @unique
+  owner                     User?                  @relation(fields: [ownerUserId], references: [id], onDelete: SetNull)
   /// What every new customer gets: { connector?: {slug,name,endpoint}, agents: [...] }.
-  template             Json?
+  template                  Json?
   /// The most this partner passes on to one customer, and to all customers together, per month.
-  perTenantLimitCents  Int?
-  monthlyLimitCents    Int?
+  perTenantLimitCents       Int?
+  monthlyLimitCents         Int?
   /// Whose credit pays for this partner's customers when the partner has no owner of its own, so
   /// several partners (one per product) can draw on one account.
-  walletOwnerUserId    String?
+  walletOwnerUserId         String?
   /// Where low-credit notices go. The secret that signs them is derived from the deployment's key
   /// and this version, so nothing secret is stored; raising the version replaces the secret.
-  webhookUrl           String?
-  webhookSecretVersion Int                    @default(0)
+  webhookUrl                String?
+  webhookSecretVersion      Int                    @default(0)
   /// Days a consultation's audio and transcript are kept; null means the platform default of 30.
-  scribeRetentionDays  Int?
+  scribeRetentionDays       Int?
   /// Commerce (docs/partner-commerce.md). Everything defaults to the pilot's behaviour: a "wallet"
   /// partner draws on its owner's credit and the commerce API refuses it.
   /// embedded | white_label
-  mode                 String                 @default("embedded")
-  country              String?
+  mode                      String                 @default("embedded")
+  country                   String?
   /// BRL | USD, from the country at creation; one per partner.
-  currency             String                 @default("USD")
+  currency                  String                 @default("USD")
   /// The partner's share of the catalog price, in basis points.
-  commissionBps        Int                    @default(2000)
+  commissionBps             Int                    @default(2000)
   /// wallet | commerce
-  billingModel         String                 @default("wallet")
+  billingModel              String                 @default("wallet")
   /// Where "Comprar mais" goes; https, never fetched by the server.
-  checkoutUrl          String?
+  checkoutUrl               String?
   /// What this key may do: tenants:write, commerce:read, commerce:write.
-  scopes               String[]               @default(["tenants:write"])
-  tenants              PartnerTenant[]
-  revenueEntries       RevenueShareEntry[]
-  invoices             PartnerInvoice[]
-  idempotencyRecords   IdempotencyRecord[]
-  codes                PartnerEntryCode[]
-  windows              PartnerRequestWindow[]
-  webhookEvents        PartnerWebhookEvent[]
-  consultations        Consultation[]
-  members              PartnerMember[]
-  markups              PartnerMarkup[]
-  auditEvents          PartnerAuditEvent[]
+  scopes                    String[]               @default(["tenants:write"])
+  tenants                   PartnerTenant[]
+  revenueEntries            RevenueShareEntry[]
+  invoices                  PartnerInvoice[]
+  idempotencyRecords        IdempotencyRecord[]
+  codes                     PartnerEntryCode[]
+  windows                   PartnerRequestWindow[]
+  webhookEvents             PartnerWebhookEvent[]
+  consultations             Consultation[]
+  /// Embedded credit model: the models this partner's customers may use (empty means all), and
+  /// when to buy a top-up on its own. The fund is the partner's credit wallet.
+  creditAllowedModels       String[]               @default([])
+  autoTopupEnabled          Boolean                @default(false)
+  autoTopupThresholdCredits Int?
+  autoTopupAmountMinor      Int?
+  members                   PartnerMember[]
+  markups                   PartnerMarkup[]
+  auditEvents               PartnerAuditEvent[]
 
   @@map("partners")
 }
@@ -2674,6 +2680,18 @@ model PartnerMarkup {
   @@map("partner_markups")
 }
 
+/// The platform's partner pricing, as versions: plan tiers, margins per model and resource, top-up
+/// markup, expiry and thresholds. Nothing is in code; the highest version is the live one.
+model PartnerPricingVersion {
+  id              String   @id @default(cuid())
+  version         Int      @unique
+  config          Json
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+
+  @@map("partner_pricing_versions")
+}
+
 /// Changes made in the console, for audit. Numbers and ids only: never customer content, and no
 /// secret, email or address of a person.
 model PartnerAuditEvent {
@@ -2696,21 +2714,23 @@ model PartnerAuditEvent {
 
 /// One partner customer: its own organization and the single Corvo user that owns its agents.
 model PartnerTenant {
-  id               String              @id @default(cuid())
-  partnerId        String
-  partner          Partner             @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-  externalTenantId String
-  organizationId   String              @unique
-  organization     Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  ownerUserId      String
-  owner            User                @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  id                 String              @id @default(cuid())
+  partnerId          String
+  partner            Partner             @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  externalTenantId   String
+  organizationId     String              @unique
+  organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  ownerUserId        String
+  owner              User                @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
   /// enabled | suspended. The partner decides; Corvo enforces.
-  state            String              @default("enabled")
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
-  codes            PartnerEntryCode[]
-  consultations    Consultation[]
-  subscription     TenantSubscription?
+  state              String              @default("enabled")
+  /// The most credits this customer may use in a month; null means no limit.
+  creditLimitCredits Int?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  codes              PartnerEntryCode[]
+  consultations      Consultation[]
+  subscription       TenantSubscription?
 
   @@unique([partnerId, externalTenantId])
   @@map("partner_tenants")

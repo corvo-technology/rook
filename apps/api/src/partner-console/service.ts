@@ -6,6 +6,7 @@ import type {
   PartnerConsolePartnerSchema,
   PartnerConsolePricingSchema,
   PartnerConsoleRevenueSchema,
+  PartnerCreditsSchema,
 } from "@corvo/contracts";
 import type { MarkupRule } from "@corvo/db";
 import {
@@ -46,6 +47,7 @@ export type CustomerItem = z.infer<typeof PartnerConsoleCustomerSchema>;
 export type CustomerDetail = z.infer<typeof PartnerConsoleCustomerDetailSchema>;
 export type PricingResult = z.infer<typeof PartnerConsolePricingSchema>;
 export type RevenueResult = z.infer<typeof PartnerConsoleRevenueSchema>;
+export type CreditsResult = z.infer<typeof PartnerCreditsSchema>;
 export type IntegrationResult = z.infer<typeof PartnerConsoleIntegrationSchema>;
 
 /** How long a support session's address works: long enough to click, short enough to be useless later. */
@@ -384,12 +386,18 @@ export async function openSupportSession(
   return { url: url.toString(), expiresAt: expiresAt.toISOString() };
 }
 
+/** Markup and commission belong to white-label and referral partners; embedded ones use credits. */
+function requireReferralModel(partner: PartnerRecord): void {
+  if (partner.mode === "embedded") throw new PartnerConsoleError("refused", "credits_model");
+}
+
 export async function getPricing(
   deps: PartnerConsoleDeps,
   scope: PartnerScope,
   input: { partnerId: string },
 ): Promise<PricingResult> {
   const partner = await requirePartner(deps, scope, input.partnerId);
+  requireReferralModel(partner);
   return buildPricing(deps, partner);
 }
 
@@ -441,6 +449,7 @@ export async function setPricing(
   },
 ): Promise<PricingResult> {
   const partner = await requirePartner(deps, scope, input.partnerId);
+  requireReferralModel(partner);
   const catalog = await deps.store.catalog(partner);
   const changes: MarkupChange[] = [];
   const seen = new Set<string>();
@@ -597,4 +606,142 @@ export async function setIntegrationWebhook(
     detail: { enabled: url !== null },
   });
   return { url, enabled: url !== null };
+}
+
+/** Embedded partners only: the fund, the plan and each customer's use, in credits. */
+export async function getCredits(
+  deps: PartnerConsoleDeps,
+  scope: PartnerScope,
+  input: { partnerId: string },
+): Promise<CreditsResult> {
+  const partner = await requirePartner(deps, scope, input.partnerId);
+  if (partner.mode !== "embedded") throw new PartnerConsoleError("refused", "referral_model");
+  const usage = await deps.store.creditUsage(partner, deps.now());
+  return {
+    currency: partner.currency,
+    // The partner plan is not billed yet: until it is, there is no plan to show.
+    plan: null,
+    balance: { planCredits: usage.planCredits, topupCredits: usage.topupCredits },
+    autoTopup: usage.autoTopup,
+    allowedModels: usage.allowedModels,
+    customers: usage.customers,
+  };
+}
+
+/** A monthly cap on one customer's credits; null removes it. */
+export async function setCustomerCreditLimit(
+  deps: PartnerConsoleDeps,
+  scope: PartnerScope,
+  input: { partnerId: string; tenantId: string; limitCredits: number | null },
+): Promise<{ limitCredits: number | null }> {
+  const partner = await requirePartner(deps, scope, input.partnerId);
+  if (
+    input.limitCredits !== null &&
+    (!Number.isSafeInteger(input.limitCredits) || input.limitCredits <= 0)
+  ) {
+    throw new PartnerConsoleError("invalid", "limitCredits");
+  }
+  const row = await requireCustomer(deps, partner, input.tenantId);
+  await deps.store.setCustomerLimit(partner, row, input.limitCredits);
+  await deps.store.audit({
+    partnerId: partner.id,
+    actorUserId: scope.actorUserId ?? null,
+    kind: "credit.limit_changed",
+    tenantId: row.tenantId,
+    detail: { limitCredits: input.limitCredits },
+  });
+  return { limitCredits: input.limitCredits };
+}
+
+/** Limits the Rook-provided models customers may use; a customer's own connections are never limited. */
+export async function setAllowedModels(
+  deps: PartnerConsoleDeps,
+  scope: PartnerScope,
+  input: { partnerId: string; models: string[] },
+): Promise<{ models: string[] }> {
+  const partner = await requirePartner(deps, scope, input.partnerId);
+  const models = [...new Set(input.models.map((model) => model.trim()).filter(Boolean))].sort();
+  await deps.store.setAllowedModels(partner, models);
+  await deps.store.audit({
+    partnerId: partner.id,
+    actorUserId: scope.actorUserId ?? null,
+    kind: "credit.models_changed",
+    detail: { count: models.length },
+  });
+  return { models };
+}
+
+export async function setAutoTopup(
+  deps: PartnerConsoleDeps,
+  scope: PartnerScope,
+  input: {
+    partnerId: string;
+    enabled: boolean;
+    thresholdCredits: number | null;
+    amountMinor: number | null;
+  },
+): Promise<{ ok: true }> {
+  const partner = await requirePartner(deps, scope, input.partnerId);
+  if (input.enabled && (input.thresholdCredits === null || input.amountMinor === null)) {
+    throw new PartnerConsoleError("invalid", "autoTopup");
+  }
+  await deps.store.setAutoTopup(partner, {
+    enabled: input.enabled,
+    thresholdCredits: input.thresholdCredits,
+    amountMinor: input.amountMinor,
+  });
+  await deps.store.audit({
+    partnerId: partner.id,
+    actorUserId: scope.actorUserId ?? null,
+    kind: "credit.autotopup_changed",
+    detail: {
+      enabled: input.enabled,
+      thresholdCredits: input.thresholdCredits,
+      amountMinor: input.amountMinor,
+    },
+  });
+  return { ok: true };
+}
+
+/** Starts a top-up through Rook's checkout. The credit arrives when the payment settles. */
+export async function startTopup(
+  deps: PartnerConsoleDeps,
+  scope: PartnerScope,
+  input: { partnerId: string; amountMinor: number },
+): Promise<{ url: string }> {
+  const partner = await requirePartner(deps, scope, input.partnerId);
+  if (!Number.isSafeInteger(input.amountMinor) || input.amountMinor <= 0) {
+    throw new PartnerConsoleError("invalid", "amountMinor");
+  }
+  if (!deps.topupCheckout) throw new PartnerConsoleError("refused", "billing_unavailable");
+  const checkout = await deps.topupCheckout(partner, input.amountMinor);
+  await deps.store.audit({
+    partnerId: partner.id,
+    actorUserId: scope.actorUserId ?? null,
+    kind: "credit.topup_started",
+    detail: { amountMinor: input.amountMinor, currency: partner.currency },
+  });
+  return checkout;
+}
+
+/** What the partner has paid Rook, newest period first. */
+export async function listInvoices(
+  deps: PartnerConsoleDeps,
+  scope: PartnerScope,
+  input: { partnerId: string },
+): Promise<
+  Array<{
+    id: string;
+    period: string;
+    state: "draft" | "issued" | "paid" | "void";
+    totalMinor: number;
+  }>
+> {
+  const partner = await requirePartner(deps, scope, input.partnerId);
+  return (await deps.store.invoices(partner.id, INVOICES_SHOWN)).map((invoice) => ({
+    id: invoice.id,
+    period: invoice.period,
+    state: invoice.state,
+    totalMinor: invoice.totalMinor,
+  }));
 }

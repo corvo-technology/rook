@@ -791,3 +791,37 @@ only authorize and translate, so agent tools use the same functions.
 - **Integration.** Key prefix, webhook address, key rotation (the new key is shown once).
 - **Audit.** `PartnerAuditEvent` records every console change with who made it, as numbers and ids
   only. Commission, mode, country and currency cannot be changed from the console.
+
+### 16.1 Embedded credit model (supersedes markup and commission for embedded partners)
+
+In embedded mode the customer belongs to the partner and Rook never bills or controls it. Only the
+partner pays Rook: a monthly partner plan with included credits, plus top-ups. All usage of all of
+the partner's customers is debited from one fund, the partner's credit wallet. One credit is one
+US cent of the fund.
+
+- **What is debited.** Rook-provided model tokens (each model at its own rate), platform voice,
+  computer minutes and storage above an allowance. Credit price is provider cost plus Rook's margin.
+  Plan credits expire with the period; top-ups follow the configured expiry.
+- **Own models are free.** A run on a customer's or partner's own connection (own key, a local or
+  self-hosted model, a CLI engine on their own plan) debits no model credits: only deployment
+  credentials reach the credit meter. Computer minutes, storage above the allowance and platform
+  voice are still debited. The partner's allowed-models list applies only to Rook-provided models.
+- **No numbers in code.** Plan tiers, margins per model and per resource, provider costs, top-up
+  markup, top-up expiry and the low-balance threshold are one versioned config
+  (`PartnerPricingVersion`), written by a platform admin through `platform.partnerPricing`
+  (`get`, `publish`, `simulate`). The highest version is live; earlier ones are kept.
+- **Simulator.** `simulatePartnerPricing` takes a plan price and credits, a number of customers and a
+  usage mix (models with tokens and an `own` flag, voice minutes, computer minutes, storage) and
+  returns credits per customer, the cost split between models and infrastructure, Rook's margin and
+  how many customers the plan's credits cover. Integer maths, deterministic.
+- **Partner controls.** Per-customer monthly credit limit (`creditLimitCredits`; at the limit the
+  customer is blocked from Rook-provided AI and `customer.credit_limit_reached` is sent), allowed
+  models, auto top-up settings, and `partner.balance_low` when the fund falls under the configured
+  share. Console RPCs: `partnerConsole.credits`, `setCustomerLimit`, `setAllowedModels`,
+  `setAutoTopup`, `topup` (through Rook's checkout) and `invoices`.
+- **Referral and white label** keep section 1: Rook sells, the partner gets the commission plus an
+  optional markup. `pricing` and `setPricing` are refused for embedded partners, and `credits` for
+  the others.
+- **Status.** Built: the config, the simulator, the controls and the RPCs. Not yet: stopping a run at
+  a customer's limit or outside the allowed models, sending the two new webhooks, running auto
+  top-up, and billing the partner plan itself (the console shows no plan until then).

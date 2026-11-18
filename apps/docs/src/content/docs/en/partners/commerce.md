@@ -64,3 +64,29 @@ The balance separates plan credit (which expires at period end) from top-up cred
 ## Webhook events
 
 `subscription.updated`, `subscription.lapsed`, `credit.granted`, `credit.expired`, `invoice.issued` and `payout.paid`, with the same [signing](/en/partners/webhooks/) as the rest.
+
+## Credits for embedded partners
+
+:::caution[Coming soon]
+Formats may change before launch. All figures are placeholders.
+:::
+
+In embedded mode your customers belong to you: you create their accounts with the API, show Rook only to those who pay you, and charge them however you like. Only you pay Rook, a monthly **partner plan** with included credits plus **top-ups**. Everything your customers use is debited from **one fund** of yours, in credits.
+
+What is debited:
+
+- tokens of the models Rook provides, each model at its own rate;
+- platform voice (calls and transcription);
+- computer minutes;
+- storage above an allowance.
+
+A customer who connects **their own model** (their own key, a local model or their own coding-agent plan) uses no credits for it. Computer minutes and storage are still debited.
+
+Controls you set, in the console, here or by API:
+
+- a monthly **credit limit** per customer (optional). At the limit the customer stops using Rook-provided AI until you raise it or the next period starts, and you get `customer.credit_limit_reached`;
+- a list of **allowed models** (optional), which applies only to Rook-provided models;
+- **auto top-up**: when the fund falls under `{threshold}` credits, buy `{amount}`;
+- usage per customer, by resource and model.
+
+Prices, included credits, margins and expiry are set by Rook and published with the platform, not fixed in this page.

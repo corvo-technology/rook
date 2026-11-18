@@ -4,11 +4,13 @@ import {
   addPartnerAllowance,
   addTenantCredit,
   CommerceError,
+  CREDIT_MICROS,
   commerceBalance,
   commerceSettings,
   configurePartnerCommerce,
   listOwnedPartnerTenants,
   PartnerAllowanceRefused,
+  partnerWalletOrganization,
   periodLabel,
   purgeExpiredEntryCodes,
   readCatalog,
@@ -398,6 +400,109 @@ export function createPrismaPartnerConsoleStore(prisma: PrismaClient): PartnerCo
           totalMinor: row.totalMinor,
           issuedAt: row.issuedAt,
         }));
+      }),
+
+    creditUsage: (partner, now) =>
+      system(async () => {
+        const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+        const [row, tenants, walletOrganization] = await Promise.all([
+          prisma.partner.findUniqueOrThrow({
+            where: { id: partner.id },
+            select: {
+              creditAllowedModels: true,
+              autoTopupEnabled: true,
+              autoTopupThresholdCredits: true,
+              autoTopupAmountMinor: true,
+            },
+          }),
+          prisma.partnerTenant.findMany({
+            where: { partnerId: partner.id },
+            orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+            take: MAX_CUSTOMERS,
+            select: {
+              id: true,
+              organizationId: true,
+              creditLimitCredits: true,
+              organization: { select: { name: true } },
+            },
+          }),
+          partnerWalletOrganization(prisma, partner.id),
+        ]);
+        const [spent, account] = await Promise.all([
+          prisma.modelCreditEntry.groupBy({
+            by: ["organizationId", "model"],
+            where: {
+              organizationId: { in: tenants.map((tenant) => tenant.organizationId) },
+              amountMicros: { lt: 0n },
+              createdAt: { gte: monthStart },
+            },
+            _sum: { amountMicros: true },
+          }),
+          walletOrganization
+            ? prisma.modelCreditAccount.findUnique({
+                where: { organizationId: walletOrganization },
+                select: { balanceMicros: true },
+              })
+            : null,
+        ]);
+        const credits = (micros: bigint) => Number(micros / CREDIT_MICROS);
+        return {
+          // The fund is one wallet: plan credits and top-ups are told apart once a partner plan is billed.
+          planCredits: 0,
+          topupCredits: credits(account?.balanceMicros ?? 0n),
+          customers: tenants.map((tenant) => {
+            const byResource: Record<string, number> = {};
+            let used = 0;
+            for (const entry of spent) {
+              if (entry.organizationId !== tenant.organizationId) continue;
+              const amount = credits(-(entry._sum.amountMicros ?? 0n));
+              byResource[entry.model ?? "other"] =
+                (byResource[entry.model ?? "other"] ?? 0) + amount;
+              used += amount;
+            }
+            return {
+              tenantId: tenant.id,
+              name: tenant.organization.name,
+              usedCredits: used,
+              limitCredits: tenant.creditLimitCredits,
+              byResource,
+            };
+          }),
+          autoTopup: {
+            enabled: row.autoTopupEnabled,
+            thresholdCredits: row.autoTopupThresholdCredits,
+            amountMinor: row.autoTopupAmountMinor,
+          },
+          allowedModels: row.creditAllowedModels,
+        };
+      }),
+
+    setCustomerLimit: (partner, row, limit) =>
+      system(async () => {
+        await prisma.partnerTenant.updateMany({
+          where: { id: row.tenantId, partnerId: partner.id },
+          data: { creditLimitCredits: limit },
+        });
+      }),
+
+    setAllowedModels: (partner, models) =>
+      system(async () => {
+        await prisma.partner.update({
+          where: { id: partner.id },
+          data: { creditAllowedModels: { set: models } },
+        });
+      }),
+
+    setAutoTopup: (partner, input) =>
+      system(async () => {
+        await prisma.partner.update({
+          where: { id: partner.id },
+          data: {
+            autoTopupEnabled: input.enabled,
+            autoTopupThresholdCredits: input.thresholdCredits,
+            autoTopupAmountMinor: input.amountMinor,
+          },
+        });
       }),
 
     keyIssuedAt: (partner) =>

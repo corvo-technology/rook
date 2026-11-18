@@ -116,6 +116,7 @@ export const ROW_SECURITY_MODELS: ReadonlySet<string> = new Set([
   "PartnerMember",
   "PartnerMarkup",
   "PartnerAuditEvent",
+  "PartnerPricingVersion",
   "CatalogPlan",
   "CatalogPlanPrice",
   "CatalogPack",

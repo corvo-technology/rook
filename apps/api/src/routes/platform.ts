@@ -3,11 +3,15 @@ import { planConfigFromEnv } from "@corvo/contracts";
 import {
   draftPartnerInvoices,
   listPartnerInvoices,
+  livePartnerPricing,
   organizationEntitlements,
   organizationOverride,
+  PartnerPricingError,
+  publishPartnerPricing,
   runAsSystem,
   setOrganizationOverride,
   setPartnerInvoiceState,
+  simulatePartnerPricing,
 } from "@corvo/db";
 import { ORPCError } from "@orpc/server";
 import type { RouterContext } from "./context.js";
@@ -27,6 +31,37 @@ export function platformRoutes(ctx: RouterContext) {
   const asSystem = <T>(fn: () => Promise<T>) => runAsSystem("platform limit overrides", fn);
   return {
     platform: {
+      partnerPricing: {
+        get: admin.platform.partnerPricing.get.handler(() =>
+          asSystem(async () => {
+            const live = await livePartnerPricing(deps.prisma);
+            return live
+              ? {
+                  version: live.version,
+                  config: live.config,
+                  createdAt: live.createdAt.toISOString(),
+                }
+              : null;
+          }),
+        ),
+        publish: admin.platform.partnerPricing.publish.handler(({ context, input }) =>
+          asSystem(() => publishPartnerPricing(deps.prisma, input.config, context.actor.userId)),
+        ),
+        simulate: admin.platform.partnerPricing.simulate.handler(({ input }) =>
+          asSystem(async () => {
+            const config = input.config ?? (await livePartnerPricing(deps.prisma))?.config;
+            if (!config) throw new ORPCError("PRECONDITION_FAILED");
+            try {
+              return simulatePartnerPricing(config, input);
+            } catch (error) {
+              if (error instanceof PartnerPricingError) {
+                throw new ORPCError("BAD_REQUEST", { message: error.code });
+              }
+              throw error;
+            }
+          }),
+        ),
+      },
       invoices: {
         list: admin.platform.invoices.list.handler(({ input }) =>
           asSystem(async () => invoiceViews(await listPartnerInvoices(deps.prisma, input.period))),

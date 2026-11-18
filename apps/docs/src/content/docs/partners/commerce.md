@@ -64,3 +64,29 @@ O saldo separa o crédito do plano (que expira no fim do período) do crédito d
 ## Eventos de webhook
 
 `subscription.updated`, `subscription.lapsed`, `credit.granted`, `credit.expired`, `invoice.issued` e `payout.paid`, com a mesma [assinatura](/partners/webhooks/) dos demais.
+
+## Créditos para parceiros embarcados
+
+:::caution[Em breve]
+Os formatos podem mudar até o lançamento. Todos os valores são exemplos.
+:::
+
+No modo embarcado seus clientes são seus: você cria as contas deles pela API, mostra o Rook só a quem paga você e cobra como quiser. Só você paga o Rook, com um **plano de parceiro** mensal que inclui créditos, mais **recargas**. Tudo o que seus clientes usam sai de **um fundo** seu, em créditos.
+
+O que é debitado:
+
+- tokens dos modelos que o Rook fornece, cada modelo na sua tarifa;
+- voz da plataforma (ligações e transcrição);
+- minutos de computador;
+- armazenamento acima de uma franquia.
+
+Um cliente que conecta **o próprio modelo** (a própria chave, um modelo local ou o próprio plano de agente de código) não gasta créditos com ele. Minutos de computador e armazenamento continuam sendo debitados.
+
+Controles que você define, no console, aqui ou pela API:
+
+- um **limite mensal de créditos** por cliente (opcional). No limite o cliente deixa de usar a IA fornecida pelo Rook até você aumentar ou o próximo período começar, e você recebe `customer.credit_limit_reached`;
+- uma lista de **modelos permitidos** (opcional), que vale só para os modelos fornecidos pelo Rook;
+- **recarga automática**: quando o fundo ficar abaixo de `{limite}` créditos, comprar `{valor}`;
+- uso por cliente, por recurso e modelo.
+
+Preços, créditos incluídos, margens e validade são definidos pelo Rook e publicados com a plataforma, não fixados nesta página.

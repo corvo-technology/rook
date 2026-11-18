@@ -116,6 +116,9 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
           name: partner.partner.name,
           hide: partnerTemplate?.hide ?? [],
           models: partnerTemplate?.models === "choose" ? ("choose" as const) : ("fixed" as const),
+          ...(partnerTemplate?.quickActions?.length
+            ? { quickActions: partnerTemplate.quickActions }
+            : {}),
           ...(partnerTemplate?.accent ? { accent: partnerTemplate.accent.toLowerCase() } : {}),
         }
       : null,

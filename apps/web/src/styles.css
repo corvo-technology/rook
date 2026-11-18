@@ -194,3 +194,8 @@ body,
     transform: none;
   }
 }
+
+/* A partner's frame has a tab bar instead of the sidebar these buttons open. */
+html[data-embedded] [data-open-navigation] {
+  display: none;
+}

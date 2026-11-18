@@ -28,6 +28,7 @@ export function HomeComposer({
   error,
   onSend,
   inputRef,
+  suggestions = true,
 }: {
   bots: readonly Bot[];
   target: Bot;
@@ -38,6 +39,8 @@ export function HomeComposer({
   error: string | null;
   onSend: () => void;
   inputRef: Ref<HTMLTextAreaElement>;
+  /** The generic starter chips; a partner's Home has shortcuts of its own instead. */
+  suggestions?: boolean;
 }) {
   const { t } = useLingui();
   const [open, setOpen] = useState(false);
@@ -122,19 +125,21 @@ export function HomeComposer({
           {error}
         </p>
       ) : null}
-      <ul className="flex flex-wrap gap-2" aria-label={t`Suggestions`}>
-        {[t`Summary of the day`, t`What is stuck?`, t`Plan the week`].map((suggestion) => (
-          <li key={suggestion}>
-            <button
-              type="button"
-              className="rk-home-lift rounded-full border border-border bg-card/60 px-3 py-1.5 text-[13px] text-muted-foreground outline-none hover:border-foreground/30 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-              onClick={() => onText(suggestion)}
-            >
-              {suggestion}
-            </button>
-          </li>
-        ))}
-      </ul>
+      {suggestions ? (
+        <ul className="flex flex-wrap gap-2" aria-label={t`Suggestions`}>
+          {[t`Summary of the day`, t`What is stuck?`, t`Plan the week`].map((suggestion) => (
+            <li key={suggestion}>
+              <button
+                type="button"
+                className="rk-home-lift rounded-full border border-border bg-card/60 px-3 py-1.5 text-[13px] text-muted-foreground outline-none hover:border-foreground/30 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={() => onText(suggestion)}
+              >
+                {suggestion}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   );
 }

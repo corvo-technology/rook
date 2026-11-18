@@ -12,6 +12,8 @@ import { Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { takeInitialBootstrap } from "../lib/bootstrap";
+import { isEmbedded, openInHost } from "../lib/embed";
+import { quickActions } from "../lib/embedded-home";
 import { findFirstBot } from "../lib/first-bot";
 import { daypart, routinesCard, waitingCard, workingCard } from "../lib/home-cards";
 import { greetingName, statusCounts, timelineGroups } from "../lib/home-live";
@@ -30,13 +32,16 @@ import { useSpaceRpc } from "../lib/space-rpc";
 import { usePendingApprovals } from "../lib/use-pending-approvals";
 import { errorText } from "../lib/user-error";
 import { ChecklistStrip } from "./home/ChecklistStrip";
+import { EmbeddedHome } from "./home/EmbeddedHome";
 import { cardLink, HomeCard } from "./home/HomeCard";
 import { HomeComposer } from "./home/HomeComposer";
 import { HomeHero } from "./home/HomeHero";
 import { useNow } from "./home/hooks";
+import { usePartnerBalance } from "./home/PartnerBalance";
 import { RoutineTimeline } from "./home/RoutineTimeline";
 import { WaitingList } from "./home/WaitingList";
 import { WorkingFeed } from "./home/WorkingFeed";
+import { EmbedHomeSkeleton } from "./shell/embed-tabs";
 import "./home/home.css";
 
 const NO_BOTS: Bot[] = [];
@@ -144,8 +149,8 @@ export function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const input = useRef<HTMLTextAreaElement>(null);
 
-  async function send() {
-    const message = text.trim();
+  async function send(override?: string) {
+    const message = (override ?? text).trim();
     if (!message || !target || sending) return;
     setSending(true);
     setError(null);
@@ -163,6 +168,7 @@ export function HomePage() {
     }
   }
 
+  const balance = usePartnerBalance();
   const list = checklist.data;
   const chiefLink = list?.chiefId ?? chief?.id ?? null;
   const checklistLabels: Record<HomeChecklistItemId, string> = {
@@ -225,6 +231,42 @@ export function HomePage() {
     working: "home-working",
     routines: "home-routines",
   };
+
+  if (isEmbedded()) {
+    if (!bootstrap?.me.partner) return <EmbedHomeSkeleton />;
+    return (
+      <EmbeddedHome
+        greeting={greeting}
+        actions={quickActions(bootstrap.me.partner, bots, chiefId)}
+        onAction={(action) => {
+          if (action.open) openInHost(action.open);
+          else if (action.prompt) void send(action.prompt);
+        }}
+        composer={
+          target ? (
+            <HomeComposer
+              bots={bots}
+              target={target}
+              onTarget={setAgentId}
+              text={text}
+              onText={setText}
+              sending={sending}
+              error={error}
+              onSend={() => void send()}
+              inputRef={input}
+              suggestions={false}
+            />
+          ) : null
+        }
+        waiting={waiting}
+        working={working}
+        bots={bots}
+        balance={balance}
+        locale={i18n.locale || "en"}
+        onGiveWork={() => input.current?.focus()}
+      />
+    );
+  }
 
   return (
     <div

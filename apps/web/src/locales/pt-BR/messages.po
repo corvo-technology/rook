@@ -564,6 +564,10 @@ msgstr "{ref} continua em {lane}."
 msgid "{remaining} left"
 msgstr "{remaining} restantes"
 
+#: src/pages/home/PartnerBalance.tsx
+msgid "{remaining} of {total} this month"
+msgstr "{remaining} de {total} este mês"
+
 #: src/components/PlanList.tsx
 #: src/pages/BillingSettingsPanel.tsx
 msgid "{seats, plural, one {# seat} other {# seats}}"
@@ -1067,6 +1071,7 @@ msgstr "Computador do agente"
 #: src/pages/Shell.tsx
 #: src/pages/shell/channel-members.tsx
 #: src/pages/shell/command-palette.tsx
+#: src/pages/shell/embed-tabs.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/Store.tsx
 msgid "Agents"
@@ -1700,6 +1705,10 @@ msgstr "Integrado"
 msgid "Business"
 msgstr "Negócio"
 
+#: src/pages/home/PartnerBalance.tsx
+msgid "Buy more"
+msgstr "Comprar mais"
+
 #: src/pages/Usage.tsx
 msgid "By agent"
 msgstr "Por agente"
@@ -1851,6 +1860,7 @@ msgid "ChatGPT subscription"
 msgstr "Assinatura do ChatGPT"
 
 #: src/lib/identity-display.ts
+#: src/pages/shell/embed-tabs.tsx
 msgid "Chats"
 msgstr "Conversas"
 
@@ -4268,6 +4278,7 @@ msgid "Hold to talk, release to send"
 msgstr "Segure para falar, solte para enviar"
 
 #: src/pages/home/HomeHero.tsx
+#: src/pages/shell/embed-tabs.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Home"
 msgstr "Início"
@@ -6272,6 +6283,10 @@ msgstr "Fixados"
 msgid "Pinned messages"
 msgstr "Mensagens fixadas"
 
+#: src/pages/home/PartnerBalance.tsx
+msgid "Plan inactive"
+msgstr "Plano inativo"
+
 #: src/pages/home/HomeComposer.tsx
 msgid "Plan the week"
 msgstr "Planeje a semana"
@@ -6966,6 +6981,7 @@ msgstr "Rotina «{0}»"
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/command-palette.tsx
+#: src/pages/shell/embed-tabs.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Routines"
 msgstr "Rotinas"
@@ -7015,6 +7031,10 @@ msgstr "em execução"
 #: src/pages/Workflows.tsx
 msgid "Running"
 msgstr "Em execução"
+
+#: src/pages/home/PartnerBalance.tsx
+msgid "Running low"
+msgstr "Acabando"
 
 #: src/pages/shell/dialogs.tsx
 msgid "Running work stops and nothing starts until you resume."
@@ -7236,6 +7256,7 @@ msgstr "Pesquisando…"
 msgid "Security"
 msgstr "Segurança"
 
+#: src/pages/home/EmbeddedHome.tsx
 #: src/pages/HomePage.tsx
 msgid "See all"
 msgstr "Ver tudo"
@@ -7883,6 +7904,7 @@ msgstr "Configurações das tarefas"
 
 #: src/pages/Board.tsx
 #: src/pages/shell/command-palette.tsx
+#: src/pages/shell/embed-tabs.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Tasks"
 msgstr "Tarefas"
@@ -8666,6 +8688,10 @@ msgstr "Use até 512 letras, dígitos, _ ou -."
 msgid "Used by {usedBy}"
 msgstr "Usado por {usedBy}"
 
+#: src/pages/home/PartnerBalance.tsx
+msgid "Used up"
+msgstr "Esgotado"
+
 #: src/pages/connections/DatabaseForm.tsx
 msgid "User"
 msgstr "Usuário"
@@ -8781,6 +8807,7 @@ msgstr "Aguardando {value}"
 msgid "Waiting for approval"
 msgstr "Aguardando aprovação"
 
+#: src/pages/home/EmbeddedHome.tsx
 #: src/pages/HomePage.tsx
 msgid "Waiting for you"
 msgstr "Esperando você"
@@ -8979,6 +9006,7 @@ msgstr "Trabalhando"
 msgid "Working instructions"
 msgstr "Instruções de trabalho"
 
+#: src/pages/home/EmbeddedHome.tsx
 #: src/pages/HomePage.tsx
 msgid "Working now"
 msgstr "Trabalhando agora"

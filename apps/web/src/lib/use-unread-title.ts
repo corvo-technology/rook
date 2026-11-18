@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { isEmbedded, reportUnread } from "./embed";
 import { titleWithUnread } from "./unread";
 
 /** Shows the unread total in the document title, and takes it away at zero or on leaving. */
@@ -8,5 +9,8 @@ export function useUnreadTitle(total: number) {
     return () => {
       document.title = titleWithUnread(document.title, 0);
     };
+  }, [total]);
+  useEffect(() => {
+    if (isEmbedded()) reportUnread(total);
   }, [total]);
 }

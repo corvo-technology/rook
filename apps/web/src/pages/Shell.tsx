@@ -42,7 +42,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { CoachLayer } from "../components/CoachLayer";
 import { ComputerUpdateProgress } from "../components/ComputerUpdateProgress";
 import { CallCard, CallReturnBar } from "../components/call/CallCard";
@@ -67,6 +67,9 @@ import {
   subscribeComposerEnterToSend,
 } from "../lib/composer-enter-to-send-pref";
 import { desktopBridge } from "../lib/desktop";
+import { isEmbedded } from "../lib/embed";
+import { embedTabs } from "../lib/embedded-home";
+import { findFirstBot } from "../lib/first-bot";
 import { groupRecipient } from "../lib/group-recipient";
 import { markAfterPaint, markOnce } from "../lib/performance";
 import { usePreloadRecoveryState } from "../lib/preload-recovery";
@@ -96,6 +99,7 @@ import { Composer } from "./shell/composer";
 import { ComputerOverlay } from "./shell/computer-overlay";
 import { ComputerPanel } from "./shell/computer-panel";
 import type { CreateBotPanelInput } from "./shell/create-bot-panel";
+import { EmbedTabs } from "./shell/embed-tabs";
 import { ShellDialogs, useShellDialogs } from "./shell/shell-dialogs";
 import { PeerConversationOverlay } from "./shell/shell-overlays";
 import { ShellSidebar } from "./shell/shell-sidebar";
@@ -265,6 +269,10 @@ function SpaceShell({ page }: { page?: ReactNode }) {
   const voiceStatus: VoiceStatus | null =
     useQuery(queries.voice.status.queryOptions()).data ?? null;
   const { mobileSidebarOpen, setMobileSidebarOpen, swipeHandlers } = useMobileSidebar();
+  const embedded = isEmbedded();
+  const { pathname } = useLocation();
+  const chiefId = findFirstBot(bots.map((bot) => ({ ...bot, spawnKey: bot.spawnKey ?? null })))?.id;
+  const chiefBot = bots.find((bot) => bot.id === chiefId) ?? bots[0];
   const isMobileSidebar = useIsMobile();
   const miniSidebar = botsSidebarCollapsed && !isMobileSidebar;
   const dialogs = useShellDialogs();
@@ -885,7 +893,7 @@ function SpaceShell({ page }: { page?: ReactNode }) {
       computerOpen={computerOpen}
       data-testid="shell-root"
       data-ready={shellReady}
-      className="relative flex h-full min-h-0 min-w-0 overflow-hidden bg-sidebar text-foreground/90 [&[data-resizing-sidebar]_*[data-slot=sidebar-gap]]:transition-none [&[data-resizing-sidebar]_*[data-slot=sidebar-container]]:transition-none"
+      className={`relative flex h-full min-h-0 min-w-0 overflow-hidden ${embedded ? "flex-col bg-background" : "bg-sidebar"} text-foreground/90 text-foreground/90 [&[data-resizing-sidebar]_*[data-slot=sidebar-gap]]:transition-none [&[data-resizing-sidebar]_*[data-slot=sidebar-container]]:transition-none`}
       {...swipeHandlers}
     >
       <ComputerUpdateProgress
@@ -903,92 +911,104 @@ function SpaceShell({ page }: { page?: ReactNode }) {
       {bootstrapMe !== undefined ? (
         <HostComputerPrompt initialMe={bootstrapMe ?? undefined} onMeUpdated={setBootstrapMe} />
       ) : null}
-      <ShellSidebar
-        activeDmUserId={dmUserId}
-        isMobile={isMobileSidebar}
-        mobileOpen={mobileSidebarOpen}
-        setMobileOpen={setMobileSidebarOpen}
-        density={botsSidebarDensity}
-        collapsed={botsSidebarCollapsed}
-        mini={miniSidebar}
-        setCollapsedPref={setBotsSidebarCollapsedPref}
-        createMenuOpen={createMenuOpen}
-        setCreateMenuOpen={setCreateMenuOpen}
-        search={search}
-        bots={bots}
-        setPanel={setPanel}
-        navigate={navigate}
-        setNewSpaceOpen={dialogs.setNewSpaceOpen}
-        canCreateSpace={bootstrapMe?.canCreateSpace !== false}
-        setCreateBotOpen={dialogs.setCreateBotOpen}
-        spaces={sidebarSpaces}
-        currentSpaceId={bootstrapMe?.spaceId ?? null}
-        openSpaceChat={openSpaceChat}
-        roster={
-          <SidebarRoster
-            mini={miniSidebar}
-            sidebarGroups={sidebarGroups}
-            collapsedSidebarSections={collapsedSidebarSections}
-            bootstrapMe={bootstrapMe}
-            botSections={botSections}
-            spaces={spaces}
-            rosterDropKey={rosterDrop.rosterDropKey}
-            setRosterDropKey={rosterDrop.setRosterDropKey}
-            rosterDropAction={rosterDrop.rosterDropAction}
-            applyRosterDrop={rosterDrop.applyRosterDrop}
-            openSpaceChat={openSpaceChat}
-            spaceMenuAnchor={dialogs.spaceMenuAnchor}
-            setSpaceMenu={dialogs.setSpaceMenu}
-            setRenameSectionTarget={dialogs.setRenameSectionTarget}
-            setDeleteSectionTarget={dialogs.setDeleteSectionTarget}
-            toggleSidebarSection={toggleSidebarSection}
-            inGroup={inGroup}
-            active={dmUserId || page ? undefined : active}
-            activeGroup={dmUserId || page ? undefined : activeGroup}
-            botsSidebarDensity={botsSidebarDensity}
-            dismissedRunErrorIds={composer.dismissedRunErrorIds}
-            displayedRunError={composer.displayedRunError}
-            draggedBotId={rosterDrop.draggedBotId}
-            setDraggedBotId={rosterDrop.setDraggedBotId}
-            botMenu={botMenu}
-            setBotMenu={setBotMenu}
-            reorderRosterBot={roster.reorderRosterBot}
-            activeSnapshot={activeSnapshot}
-            botMenuContent={botMenuContent}
-          />
-        }
-        archived={
-          <ArchivedChats
-            archivedBots={archivedBots}
-            archivedGroups={archivedGroups}
-            showSpaceSearch={search.showSpaceSearch}
-            rpc={rpc}
-            refreshBots={refreshBots}
-            setDeleteTarget={dialogs.setDeleteTarget}
-            setDeleteGroupTarget={dialogs.setDeleteGroupTarget}
-          />
-        }
-        footerLogos={footerLogos}
-        user={session.data?.user}
-        ticketBoardEnabled={Boolean(bootstrapMe?.ticketBoardEnabled)}
-        onQuickSwitch={() => dialogs.setCommandPaletteOpen(true)}
-        navLinks={desktopBridge() ? [] : (bootstrapMe?.navLinks ?? [])}
-        openSettings={openSettings}
-        openIntegrations={() => navigate(storePath(activeBotId.current))}
-        paused={Boolean(appSpace?.pausedAt)}
-        onResume={
-          appSpace?.canPause
-            ? () => void setSpacePaused(appSpace.id, false).catch(() => undefined)
-            : undefined
-        }
-      />
+      {embedded ? (
+        <EmbedTabs
+          tabs={embedTabs({
+            hidden: bootstrapMe?.partner?.hide ?? [],
+            ticketBoardEnabled: Boolean(bootstrapMe?.ticketBoardEnabled),
+          })}
+          pathname={pathname}
+          chief={chiefBot}
+          onOpen={(to) => navigate(to)}
+        />
+      ) : (
+        <ShellSidebar
+          activeDmUserId={dmUserId}
+          isMobile={isMobileSidebar}
+          mobileOpen={mobileSidebarOpen}
+          setMobileOpen={setMobileSidebarOpen}
+          density={botsSidebarDensity}
+          collapsed={botsSidebarCollapsed}
+          mini={miniSidebar}
+          setCollapsedPref={setBotsSidebarCollapsedPref}
+          createMenuOpen={createMenuOpen}
+          setCreateMenuOpen={setCreateMenuOpen}
+          search={search}
+          bots={bots}
+          setPanel={setPanel}
+          navigate={navigate}
+          setNewSpaceOpen={dialogs.setNewSpaceOpen}
+          canCreateSpace={bootstrapMe?.canCreateSpace !== false}
+          setCreateBotOpen={dialogs.setCreateBotOpen}
+          spaces={sidebarSpaces}
+          currentSpaceId={bootstrapMe?.spaceId ?? null}
+          openSpaceChat={openSpaceChat}
+          roster={
+            <SidebarRoster
+              mini={miniSidebar}
+              sidebarGroups={sidebarGroups}
+              collapsedSidebarSections={collapsedSidebarSections}
+              bootstrapMe={bootstrapMe}
+              botSections={botSections}
+              spaces={spaces}
+              rosterDropKey={rosterDrop.rosterDropKey}
+              setRosterDropKey={rosterDrop.setRosterDropKey}
+              rosterDropAction={rosterDrop.rosterDropAction}
+              applyRosterDrop={rosterDrop.applyRosterDrop}
+              openSpaceChat={openSpaceChat}
+              spaceMenuAnchor={dialogs.spaceMenuAnchor}
+              setSpaceMenu={dialogs.setSpaceMenu}
+              setRenameSectionTarget={dialogs.setRenameSectionTarget}
+              setDeleteSectionTarget={dialogs.setDeleteSectionTarget}
+              toggleSidebarSection={toggleSidebarSection}
+              inGroup={inGroup}
+              active={dmUserId || page ? undefined : active}
+              activeGroup={dmUserId || page ? undefined : activeGroup}
+              botsSidebarDensity={botsSidebarDensity}
+              dismissedRunErrorIds={composer.dismissedRunErrorIds}
+              displayedRunError={composer.displayedRunError}
+              draggedBotId={rosterDrop.draggedBotId}
+              setDraggedBotId={rosterDrop.setDraggedBotId}
+              botMenu={botMenu}
+              setBotMenu={setBotMenu}
+              reorderRosterBot={roster.reorderRosterBot}
+              activeSnapshot={activeSnapshot}
+              botMenuContent={botMenuContent}
+            />
+          }
+          archived={
+            <ArchivedChats
+              archivedBots={archivedBots}
+              archivedGroups={archivedGroups}
+              showSpaceSearch={search.showSpaceSearch}
+              rpc={rpc}
+              refreshBots={refreshBots}
+              setDeleteTarget={dialogs.setDeleteTarget}
+              setDeleteGroupTarget={dialogs.setDeleteGroupTarget}
+            />
+          }
+          footerLogos={footerLogos}
+          user={session.data?.user}
+          ticketBoardEnabled={Boolean(bootstrapMe?.ticketBoardEnabled)}
+          onQuickSwitch={() => dialogs.setCommandPaletteOpen(true)}
+          navLinks={desktopBridge() ? [] : (bootstrapMe?.navLinks ?? [])}
+          openSettings={openSettings}
+          openIntegrations={() => navigate(storePath(activeBotId.current))}
+          paused={Boolean(appSpace?.pausedAt)}
+          onResume={
+            appSpace?.canPause
+              ? () => void setSpacePaused(appSpace.id, false).catch(() => undefined)
+              : undefined
+          }
+        />
+      )}
 
       {/* Keep the composer's z-index inside the chat so phone overlays like the side panel cover it. */}
       <main
         data-space-switch="main"
         aria-hidden={mobileSidebarOpen || undefined}
         inert={mobileSidebarOpen}
-        className={`isolate flex min-w-0 flex-1 flex-col bg-background md:my-2 md:me-2 md:overflow-hidden md:rounded-3xl md:border md:border-border md:shadow-raised ${botsSidebarCollapsed ? "md:ms-2" : "md:ms-0"}`}
+        className={`isolate flex min-h-0 min-w-0 flex-1 flex-col bg-background ${embedded ? "overflow-hidden" : `md:my-2 md:me-2 md:overflow-hidden md:rounded-3xl md:border md:border-border md:shadow-raised ${botsSidebarCollapsed ? "md:ms-2" : "md:ms-0"}`}`}
       >
         {/* Inside main so the composer and its menus stay above it. */}
         {!mobileSidebarOpen ? (
@@ -1007,6 +1027,7 @@ function SpaceShell({ page }: { page?: ReactNode }) {
                 variant="ghost"
                 size="icon"
                 aria-label={t`Open navigation`}
+                data-open-navigation
                 onClick={() => setMobileSidebarOpen(true)}
                 className="app-no-drag"
               >

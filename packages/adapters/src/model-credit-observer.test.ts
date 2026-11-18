@@ -1,5 +1,12 @@
 import type { ModelCallObserver } from "@corvo/adapter-kit";
-import { creditAccount, organizationForMember, reserveModelCredits } from "@corvo/db";
+import { PARTNER_CREDIT_USED_UP_RUN_ERROR, PARTNER_MODEL_NOT_ALLOWED_RUN_ERROR } from "@corvo/core";
+import {
+  assertPartnerSpendAllowed,
+  creditAccount,
+  organizationForMember,
+  PartnerSpendRefused,
+  reserveModelCredits,
+} from "@corvo/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { hostedModelCreditObserver } from "./model-credit-observer.js";
 
@@ -8,6 +15,12 @@ vi.mock("@corvo/db", () => ({
   creditAccount: vi.fn(),
   reserveModelCredits: vi.fn(),
   recordModelCreditReceipt: vi.fn(),
+  assertPartnerSpendAllowed: vi.fn(),
+  PartnerSpendRefused: class extends Error {
+    constructor(readonly reason: string) {
+      super(reason);
+    }
+  },
 }));
 
 const scope = { userId: "user-1", spaceId: "space-1" };
@@ -47,6 +60,40 @@ describe("hosted model credit gate", () => {
       runId: "run-1",
       provider: "test-provider",
       model: "test-model",
+    });
+  });
+});
+
+describe("a partner's rules on Rook-provided models", () => {
+  const call = {
+    callId: "call-2",
+    maxCostUsd: 0.02,
+    provider: "test-provider",
+    modelId: "test-model",
+    runId: "run-1",
+  } as Parameters<ModelCallObserver["beforeCall"]>[0];
+
+  it("stops a call from a customer at its limit, with the coded message, before any credit is taken", async () => {
+    vi.mocked(creditAccount).mockResolvedValue({ mode: "credits" } as never);
+    const observer = await hostedModelCreditObserver({} as never, scope);
+    vi.mocked(assertPartnerSpendAllowed).mockRejectedValueOnce(
+      new PartnerSpendRefused("credit_limit_reached"),
+    );
+    await expect(observer.beforeCall(call)).rejects.toThrow(PARTNER_CREDIT_USED_UP_RUN_ERROR);
+    expect(reserveModelCredits).not.toHaveBeenCalled();
+  });
+
+  it("refuses a model the partner did not allow, before the run starts", async () => {
+    vi.mocked(creditAccount).mockResolvedValue({ mode: "credits" } as never);
+    vi.mocked(assertPartnerSpendAllowed).mockRejectedValueOnce(
+      new PartnerSpendRefused("model_not_allowed"),
+    );
+    await expect(
+      hostedModelCreditObserver({} as never, scope, { provider: "p", id: "m" }),
+    ).rejects.toThrow(PARTNER_MODEL_NOT_ALLOWED_RUN_ERROR);
+    expect(assertPartnerSpendAllowed).toHaveBeenCalledWith({}, "org-1", {
+      provider: "p",
+      model: "m",
     });
   });
 });

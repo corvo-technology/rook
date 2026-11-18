@@ -6,11 +6,13 @@ import {
   livePartnerPricing,
   organizationEntitlements,
   organizationOverride,
+  PartnerPlanError,
   PartnerPricingError,
   publishPartnerPricing,
   runAsSystem,
   setOrganizationOverride,
   setPartnerInvoiceState,
+  setPartnerPlan,
   simulatePartnerPricing,
 } from "@corvo/db";
 import { ORPCError } from "@orpc/server";
@@ -59,6 +61,21 @@ export function platformRoutes(ctx: RouterContext) {
               }
               throw error;
             }
+          }),
+        ),
+      },
+      partnerPlan: {
+        set: admin.platform.partnerPlan.set.handler(({ input }) =>
+          asSystem(async () => {
+            try {
+              await setPartnerPlan(deps.prisma, input.partnerId, input.tierKey);
+            } catch (error) {
+              if (error instanceof PartnerPlanError) {
+                throw new ORPCError("BAD_REQUEST", { message: error.code });
+              }
+              throw error;
+            }
+            return { ok: true as const };
           }),
         ),
       },

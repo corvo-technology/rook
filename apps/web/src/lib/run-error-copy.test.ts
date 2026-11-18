@@ -71,6 +71,7 @@ const SAMPLES: Record<(typeof RUN_ERROR_CODES)[number], { info: RunErrorInfo; ra
   plan_storage_full: { info: { code: "plan_storage_full" }, raw: "x" },
   plan_computer_limit: { info: { code: "plan_computer_limit" }, raw: "x" },
   no_model_access: { info: { code: "no_model_access" }, raw: "x" },
+  model_not_allowed: { info: { code: "model_not_allowed" }, raw: "x" },
   timeout: { info: { code: "timeout" }, raw: "Request timed out" },
   turn_stopped: { info: { code: "turn_stopped", params: { kind: "loop" } }, raw: "x" },
   unknown: { info: { code: "unknown" }, raw: "boom" },
@@ -153,6 +154,7 @@ describe("describeRunError", () => {
     ["plan_storage_full", ["open-usage"]],
     ["plan_computer_limit", ["open-usage"]],
     ["no_model_access", ["connect"]],
+    ["model_not_allowed", ["change-model"]],
     ["turn_stopped", ["retry"]],
     ["unknown", ["retry"]],
   ] as const)("offers the actions that fit %s", (code, actions) => {

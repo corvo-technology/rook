@@ -2,6 +2,7 @@ import type { IdempotentOutcome, MarkupRule } from "@corvo/db";
 import { markupItemId } from "@corvo/db";
 import type {
   AuditKind,
+  CreditUsage,
   CustomerRow,
   InvoiceRow,
   MarkupChange,
@@ -61,6 +62,7 @@ export interface FakeData {
   customers: Record<string, CustomerRow[]>;
   revenue?: Record<string, RevenueEntryRow[]>;
   invoices?: Record<string, InvoiceRow[]>;
+  plan?: CreditUsage["plan"];
 }
 
 /** The same contract as the database store, in memory, recording every write for assertions. */
@@ -164,8 +166,9 @@ export function createFakeStore(data: FakeData) {
     },
     invoices: async (partnerId) => data.invoices?.[partnerId] ?? [],
     creditUsage: async (partner) => ({
-      planCredits: 0,
+      planCredits: data.plan ? 3000 : 0,
       topupCredits: 5000,
+      plan: data.plan ?? null,
       customers: (data.customers[partner.id] ?? []).map((row) => ({
         tenantId: row.tenantId,
         name: row.name,

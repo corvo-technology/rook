@@ -822,6 +822,51 @@ US cent of the fund.
 - **Referral and white label** keep section 1: Rook sells, the partner gets the commission plus an
   optional markup. `pricing` and `setPricing` are refused for embedded partners, and `credits` for
   the others.
-- **Status.** Built: the config, the simulator, the controls and the RPCs. Not yet: stopping a run at
-  a customer's limit or outside the allowed models, sending the two new webhooks, running auto
-  top-up, and billing the partner plan itself (the console shows no plan until then).
+- **Status.** Built: the config, the simulator, the controls, the RPCs and, in section 16.2, their
+  run-time enforcement. Not yet: see the end of 16.2.
+
+### 16.2 Credit model at run time
+
+Everything below applies to customers of embedded partners and to Rook-provided models only. A run
+on a customer's own key, a local model or its own CLI plan never reaches the credit meter, so it is
+never blocked or debited (`partner-own-model-ledger.test.ts` asserts the ledger is not touched).
+The rules are pure functions in `packages/db/src/partner-credit-rules.ts`; the database glue is in
+`partner-credit-enforcement.ts`.
+
+- **Limit.** `hostedModelCreditObserver` asks `assertPartnerSpendAllowed` before the run starts and
+  before every model call. A customer whose spend since the start of the UTC month has reached
+  `creditLimitCredits` is refused with the existing "credit used up" run error
+  (`daily_credit_limit`, scope `credit`).
+- **Allowed models.** An empty list allows everything; a name matches the model id or
+  `provider/model`. A hosted model outside the list is refused with `model_not_allowed` (a new run
+  error code and card: "Model not available", "Choose another model."), and the model picker no
+  longer lists it for that customer's space. Models the customer connected itself stay listed.
+- **Webhooks.** The reconciler records `customer.credit_limit_reached` (once per customer and
+  month) and `partner.balance_low` (once until the fund is refilled) in `PartnerWebhookEvent`,
+  which the signed delivery pipeline already sends. The fund is low when it is under
+  `lowBalanceBps` of what it was filled with this month, or of the last refill if that is larger.
+  The "refill" is named by the latest purchase entry, so each refill re-arms the notice.
+- **Auto top-up.** When the fund is under `autoTopupThresholdCredits`, one `PartnerAutoTopupAttempt`
+  is created per crossing (named by the last refill, unique per partner), so the same crossing never
+  starts twice. The attempt goes through the same billing call as `partnerConsole.topup`
+  (`billing.purchaseCredits`) as the person whose account holds the fund, is retried with a 15
+  minute doubling backoff (at most 6 attempts) and audited (`credit.autotopup_started` and
+  `credit.autotopup_failed`). A deployment without billing has no runner, so nothing is claimed.
+- **Partner plan.** `PartnerPlan` holds the tier of the live pricing version, its price and included
+  credits. Each month the included credits are granted to the fund as a lot named
+  `partner-plan:<partner>:<month>` that expires at the end of the month, and the fee is a
+  `partner_plan` line on that month's `PartnerInvoice`. Top-ups stay as lots that do not expire.
+  `credits.plan` and `planCredits` read from this. A platform admin sets or removes a plan with
+  `platform.partnerPlan.set`; renewal runs in the reconciler.
+- **Usage split.** `creditUsage.byResource` reports credits per model (by `ModelCreditEntry.model`),
+  plus `voice`, `computer` and `storage`. Computer minutes are debited per ended `ComputerRun`,
+  storage above `storageAllowanceGb` once for the closed month, and platform voice through
+  `debitPartnerResource`, all at the published rates and once per key (a named hold on the
+  customer's credit).
+- **Not yet.** Voice minutes are not wired to a source (consultations store no duration), so only
+  the debit function exists. Auto top-up opens Rook's checkout; unattended charging needs a saved
+  payment method in the billing provider, which the billing interface does not offer, and the
+  worker process has no billing service, so only the API process runs it. The partner plan fee is
+  invoiced but no payment provider collects it (invoices are issued by hand, as in 7.1). The
+  automatic model router can still pick a disallowed hosted model; the call is then refused with the
+  card above.

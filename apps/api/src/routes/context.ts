@@ -37,7 +37,15 @@ import {
   modelSupportsRole,
   OPENAI_COMPATIBLE_PROVIDER_ID,
 } from "@corvo/contracts";
-import { createGroupRepos, createRepos, recordSecurityEvent, runAsTenant } from "@corvo/db";
+import {
+  createGroupRepos,
+  createRepos,
+  modelAllowed,
+  partnerAllowedModels,
+  recordSecurityEvent,
+  runAsSystem,
+  runAsTenant,
+} from "@corvo/db";
 import { implement, ORPCError } from "@orpc/server";
 import { createAgentImportServices } from "../agent-import-services.js";
 import { createAgentSkillsService } from "../agent-skills.js";
@@ -182,20 +190,35 @@ export function createRouterContext(deps: RouterDeps) {
       )
     )
       selected = await savedCatalogSelections(deps.prisma, actor.userId);
-    const offered = offeredCatalog(merged, selected).map((entry) =>
-      entry.provider === auth.managedProvider
-        ? {
-            ...entry,
-            managed: true,
-            billing:
-              auth.secretIdByModel[entry.provider]?.[entry.id] ||
-              auth.secretIdByProvider[entry.provider]
-                ? entry.billing
-                : "Uses Rook credits",
-          }
-        : // A model the operator listed for the local server is offered without a connection.
-          withLocalModelsOffered(entry),
-    );
+    // A partner can limit the Rook-provided models its customers see; their own connections stay.
+    const partnerModels = auth.managedProvider
+      ? await runAsSystem("partner allowed models", () =>
+          partnerAllowedModels(deps.prisma, actor.spaceId),
+        )
+      : null;
+    const offered = offeredCatalog(merged, selected)
+      .filter(
+        (entry) =>
+          !partnerModels?.length ||
+          entry.provider !== auth.managedProvider ||
+          auth.secretIdByModel[entry.provider]?.[entry.id] ||
+          auth.secretIdByProvider[entry.provider] ||
+          modelAllowed(partnerModels, entry.provider, entry.id),
+      )
+      .map((entry) =>
+        entry.provider === auth.managedProvider
+          ? {
+              ...entry,
+              managed: true,
+              billing:
+                auth.secretIdByModel[entry.provider]?.[entry.id] ||
+                auth.secretIdByProvider[entry.provider]
+                  ? entry.billing
+                  : "Uses Rook credits",
+            }
+          : // A model the operator listed for the local server is offered without a connection.
+            withLocalModelsOffered(entry),
+      );
     // The models of a coding-agent CLI the operator turned on, only while it is ready.
     return [...offered, ...(cliEngineHost()?.catalog() ?? [])];
   };

@@ -234,7 +234,9 @@ export async function resolveModelKey(...args: Parameters<typeof resolveModelKey
     throw new UnavailableModelForAuthError(MISSING_MODEL_RUN_ERROR);
   }
   const callObserver =
-    !credential && billingEnabled ? await hostedModelCreditObserver(deps.prisma, scope) : undefined;
+    !credential && billingEnabled
+      ? await hostedModelCreditObserver(deps.prisma, scope, { provider, id: args[5] })
+      : undefined;
   return { ...material, apiKey: material.apiKey ?? runtimeKey, callObserver };
 }
 

@@ -48,6 +48,8 @@ export * from "./notifications.js";
 export * from "./onboarding-profile.js";
 export * from "./partner-accounts.js";
 export * from "./partner-allowance.js";
+export * from "./partner-credit-enforcement.js";
+export * from "./partner-credit-rules.js";
 export * from "./partner-entry.js";
 export * from "./partner-housekeeping.js";
 export * from "./partner-markup.js";

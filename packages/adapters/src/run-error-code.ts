@@ -12,6 +12,7 @@ import {
   maskSecrets,
   normalizeRunError,
   PARTNER_CREDIT_USED_UP_RUN_ERROR,
+  PARTNER_MODEL_NOT_ALLOWED_RUN_ERROR,
   SPACE_PAUSED_RUN_ERROR,
   WORKSPACE_PERSONAL_MODEL_RUN_ERROR,
 } from "@corvo/core";
@@ -33,6 +34,7 @@ const BY_MESSAGE: Record<string, RunErrorInfo> = {
   [MEMBER_MONTHLY_LIMIT_RUN_ERROR]: { code: "monthly_limit", params: { scope: "member" } },
   [BOT_DAILY_LIMIT_RUN_ERROR]: { code: "daily_credit_limit", params: { scope: "bot" } },
   [PARTNER_CREDIT_USED_UP_RUN_ERROR]: { code: "daily_credit_limit", params: { scope: "credit" } },
+  [PARTNER_MODEL_NOT_ALLOWED_RUN_ERROR]: { code: "model_not_allowed" },
   [ACCOUNT_PAUSED_RUN_ERROR]: { code: "paused", params: { scope: "account" } },
   [SPACE_PAUSED_RUN_ERROR]: { code: "paused", params: { scope: "space" } },
   [BOT_REPLY_CAP_RUN_ERROR]: { code: "reply_cap" },

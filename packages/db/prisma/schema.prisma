@@ -2639,6 +2639,8 @@ model Partner {
   members                   PartnerMember[]
   markups                   PartnerMarkup[]
   auditEvents               PartnerAuditEvent[]
+  plan                      PartnerPlan?
+  autoTopupAttempts         PartnerAutoTopupAttempt[]
 
   @@map("partners")
 }
@@ -2690,6 +2692,46 @@ model PartnerPricingVersion {
   createdAt       DateTime @default(now())
 
   @@map("partner_pricing_versions")
+}
+
+/// The monthly plan an embedded partner pays Rook, priced from a published pricing version. Each
+/// period grants the plan's included credits to the partner's fund as a lot that ends with the period.
+model PartnerPlan {
+  partnerId       String   @id
+  partner         Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  tierKey         String
+  /// The pricing version the tier and its price came from; a renewal keeps the price it started at.
+  pricingVersion  Int
+  currency        String
+  priceMinor      Int
+  includedCredits Int
+  /// active | canceled
+  status          String   @default("active")
+  periodStart     DateTime
+  periodEnd       DateTime
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("partner_plans")
+}
+
+/// One attempt at topping up a partner's fund on its own, once per time the fund falls under the
+/// threshold (`crossingKey`), with backoff while it fails.
+model PartnerAutoTopupAttempt {
+  id            String   @id @default(cuid())
+  partnerId     String
+  partner       Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  crossingKey   String
+  amountMinor   Int
+  /// started | failed
+  state         String
+  attempts      Int      @default(0)
+  nextAttemptAt DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([partnerId, crossingKey])
+  @@map("partner_auto_topup_attempts")
 }
 
 /// Changes made in the console, for audit. Numbers and ids only: never customer content, and no

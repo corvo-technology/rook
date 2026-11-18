@@ -7,6 +7,9 @@ import { writeWikiPage } from "./wiki.js";
 
 type Scope = { spaceId: string; userId: string };
 
+/** Only the member's own keys: callers pass a whole actor, which Prisma rejects inside a `where`. */
+const memberWhere = ({ spaceId, userId }: Scope): Scope => ({ spaceId, userId });
+
 /** The wiki page text for a business answer: its sentence first, which the wiki index shows. */
 export function businessWikiBody(answer: BusinessAnswer, locale = "en"): string {
   const copy = businessCopy(locale);
@@ -42,7 +45,7 @@ export async function saveWorkAreas(
   areas: readonly WorkArea[],
 ): Promise<void> {
   await prisma.spaceMember.updateMany({
-    where: scope,
+    where: memberWhere(scope),
     data: { areas: [...new Set(areas)] },
   });
 }
@@ -54,7 +57,7 @@ export async function readOnboardingAnswers(
 ): Promise<OnboardingAnswers> {
   const [progress, member, space] = await Promise.all([
     prisma.onboardingProgress.findUnique({ where: { userId: scope.userId } }),
-    prisma.spaceMember.findFirst({ where: scope, select: { areas: true } }),
+    prisma.spaceMember.findFirst({ where: memberWhere(scope), select: { areas: true } }),
     prisma.space.findUnique({ where: { id: scope.spaceId }, select: { logo: true } }),
   ]);
   const business = BusinessAnswerSchema.safeParse(
@@ -78,13 +81,16 @@ export async function readHomeChecklist(
   scope: Scope,
 ): Promise<HomeChecklist | null> {
   const [talked, connected, routine, members, invitations, chief] = await Promise.all([
-    prisma.run.count({ where: { ...scope, trigger: { in: PERSON_TRIGGERS } }, take: 1 }),
-    prisma.connection.count({ where: { ...scope, status: "connected" }, take: 1 }),
+    prisma.run.count({
+      where: { ...memberWhere(scope), trigger: { in: PERSON_TRIGGERS } },
+      take: 1,
+    }),
+    prisma.connection.count({ where: { ...memberWhere(scope), status: "connected" }, take: 1 }),
     prisma.routine.count({ where: { spaceId: scope.spaceId }, take: 1 }),
     prisma.spaceMember.count({ where: { spaceId: scope.spaceId }, take: 2 }),
     prisma.spaceInvitation.count({ where: { spaceId: scope.spaceId }, take: 1 }),
     prisma.bot.findFirst({
-      where: { ...scope, spawnKey: CHIEF_SPAWN_KEY, archivedAt: null },
+      where: { ...memberWhere(scope), spawnKey: CHIEF_SPAWN_KEY, archivedAt: null },
       select: { id: true },
     }),
   ]);

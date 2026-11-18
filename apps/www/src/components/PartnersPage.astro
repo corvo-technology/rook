@@ -26,8 +26,14 @@ const earnRows = [
   { label: copy.earn.commission, value: EARN.commission, kind: "commission" },
   { label: copy.earn.markup, value: EARN.markup, kind: "markup" },
 ] as const;
+const STEP_HUES = ["menta", "azul", "violeta", "rosa", "laranja"] as const;
+// Escape first, then turn **lead-ins** into <strong>.
+const bold = (text: string) =>
+  text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
 const RANGES = ["0-50", "50-200", "200-1000", "1000+"] as const;
-const MODE_HUES = ["menta", "violeta"] as const;
 ---
 
 <BaseLayout
@@ -44,37 +50,57 @@ const MODE_HUES = ["menta", "violeta"] as const;
 
     <main id="main" lang={LOCALE_HTML_LANG[locale]} class="partners">
       <section class="lp-hero partners-hero">
+        <p class="partners-scarcity">{copy.hero.scarcity}</p>
         <Avatar color={MASCOT_COLOR.menta} mood="happy" class="partners-hero__rook" />
         <h1>{copy.hero.title}</h1>
         <p class="lp-hero__lead">{copy.hero.lead}</p>
         <div class="lp-hero__actions">
-          <a class="button button--primary" href="#contact" data-attr="partners-cta">{copy.hero.cta}</a>
+          <a class="button button--primary" href="#inscricao" data-attr="partners-cta">{copy.hero.cta}</a>
           <a class="button button--secondary" href={PARTNER_DOCS_URL} data-attr="partners-docs">{copy.hero.docs}</a>
         </div>
       </section>
 
-      <section class="partners-section" aria-labelledby="modes-heading">
-        <h2 id="modes-heading" class="lp-title lp-title--center">{copy.modes.heading}</h2>
-        <div class="partners-modes">
+      <section class="partners-section partners-pain" aria-labelledby="pain-heading">
+        <h2 id="pain-heading" class="lp-title" data-reveal>{copy.pain.heading}</h2>
+        <div class="partners-pain__body" data-reveal>
+          {copy.pain.paragraphs.map((text) => <p set:html={bold(text)} />)}
+        </div>
+      </section>
+
+      <section class="partners-section" aria-labelledby="how-heading">
+        <h2 id="how-heading" class="lp-title lp-title--center" data-reveal>{copy.how.heading}</h2>
+        <ol class="partners-stepper">
           {
-            copy.modes.items.map((item, index) => (
-              <article class="lp-card partners-mode">
-                <Rook hue={MODE_HUES[index] ?? "menta"} size={44} gaze={false} />
-                <p class="partners-eyebrow">{item.who}</p>
-                <h3>{item.title}</h3>
-                <p>{item.body}</p>
+            copy.how.steps.map((step, index) => (
+              <li data-reveal>
+                <Rook hue={STEP_HUES[index] ?? "menta"} size={32} gaze={false} />
+                <div>
+                  <h3>{step.title}</h3>
+                  <p>{step.body}</p>
+                </div>
+              </li>
+            ))
+          }
+        </ol>
+      </section>
+
+      <section class="partners-section" aria-labelledby="earn-heading">
+        <div class="partners-earn__head" data-reveal>
+          <h2 id="earn-heading" class="lp-title lp-title--center">{copy.earn.heading}</h2>
+          <p class="lp-lead">{copy.earn.lead}</p>
+        </div>
+        <div class="partners-earn-cards">
+          {
+            copy.earn.cards.map((card, index) => (
+              <article class="lp-card" data-reveal>
+                <span class="partners-eyebrow">{index + 1}</span>
+                <h3>{card.title}</h3>
+                <p>{card.body}</p>
               </article>
             ))
           }
         </div>
-      </section>
-
-      <section class="partners-section partners-earn" aria-labelledby="earn-heading">
-        <div class="partners-earn__text">
-          <h2 id="earn-heading" class="lp-title">{copy.earn.heading}</h2>
-          <p class="lp-lead">{copy.earn.lead}</p>
-        </div>
-        <figure class="lp-card partners-ledger">
+        <figure class="lp-card partners-ledger" data-reveal>
           <figcaption class="partners-eyebrow">{copy.earn.exampleLabel}</figcaption>
           <dl>
             {
@@ -100,12 +126,39 @@ const MODE_HUES = ["menta", "violeta"] as const;
         </figure>
       </section>
 
-      <section class="partners-section" aria-labelledby="included-heading">
-        <h2 id="included-heading" class="lp-title lp-title--center">{copy.included.heading}</h2>
-        <ul class="partners-included">
+      <section class="partners-section partners-split" aria-label={`${copy.split.you.title} ${copy.split.us.title}`}>
+        {
+          [copy.split.you, copy.split.us].map((side, index) => (
+            <article class:list={["lp-card", "partners-split__side", index === 1 && "partners-split__side--us"]} data-reveal>
+              <Rook hue={index === 0 ? "menta" : "neutro"} size={36} gaze={false} />
+              <h2>{side.title}</h2>
+              <ul>
+                {side.items.map((item) => <li>{item}</li>)}
+              </ul>
+            </article>
+          ))
+        }
+      </section>
+
+      <section class="partners-section" aria-labelledby="benefits-heading">
+        <h2 id="benefits-heading" class="lp-title lp-title--center" data-reveal>{copy.benefits.heading}</h2>
+        <ul class="partners-grid partners-grid--benefits">
           {
-            copy.included.items.map((item) => (
-              <li class="lp-card">
+            copy.benefits.items.map((item) => (
+              <li data-reveal>
+                <strong>{item.title}</strong> {item.body}
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
+      <section class="partners-section" aria-labelledby="features-heading">
+        <h2 id="features-heading" class="lp-title lp-title--center" data-reveal>{copy.features.heading}</h2>
+        <ul class="partners-grid partners-grid--features">
+          {
+            copy.features.items.map((item) => (
+              <li class="lp-card" data-reveal>
                 <h3>{item.title}</h3>
                 <p>{item.body}</p>
               </li>
@@ -114,33 +167,33 @@ const MODE_HUES = ["menta", "violeta"] as const;
         </ul>
       </section>
 
-      <section class="partners-section partners-proof" aria-labelledby="proof-heading">
-        <div class="partners-proof__rooks" aria-hidden="true">
-          <Rook hue="menta" size={36} gaze={false} />
-          <Rook hue="azul" size={36} gaze={false} />
-          <Rook hue="rosa" size={36} gaze={false} />
-        </div>
-        <h2 id="proof-heading" class="lp-title lp-title--center">{copy.proof.heading}</h2>
-        <p class="lp-lead">{copy.proof.body}</p>
+      <section class="partners-section partners-who" aria-labelledby="who-heading">
+        <h2 id="who-heading" class="lp-title lp-title--center" data-reveal>{copy.who.heading}</h2>
+        <ul class="partners-chips" data-reveal>
+          {copy.who.items.map((item) => <li>{item}</li>)}
+        </ul>
       </section>
 
-      <section class="partners-section" aria-labelledby="how-heading">
-        <h2 id="how-heading" class="lp-title lp-title--center">{copy.how.heading}</h2>
-        <ol class="partners-steps">
-          {
-            copy.how.steps.map((step) => (
-              <li>
-                <h3>{step.title}</h3>
-                <p>{step.body}</p>
-              </li>
-            ))
-          }
-        </ol>
+      <section class="partners-section" aria-labelledby="cohort-heading">
+        <div class="lp-card partners-cohort ink" data-reveal>
+          <h2 id="cohort-heading" class="lp-title">{copy.cohort.heading}</h2>
+          <ul>
+            {
+              copy.cohort.perks.map((perk) => (
+                <li>
+                  <h3>{perk.title}</h3>
+                  <p>{perk.body}</p>
+                </li>
+              ))
+            }
+          </ul>
+          <a class="button button--primary" href="#inscricao" data-attr="partners-cohort">{copy.cohort.cta}</a>
+        </div>
       </section>
 
       <section class="lp-faq partners-faq" aria-labelledby="faq-heading">
-        <h2 id="faq-heading" class="lp-title">{copy.faq.heading}</h2>
-        <div class="home-faq">
+        <h2 id="faq-heading" class="lp-title" data-reveal>{copy.faq.heading}</h2>
+        <div class="home-faq" data-reveal>
           {
             copy.faq.items.map((item, index) => (
               <details name="partners-faq" open={index === 0}>
@@ -155,7 +208,7 @@ const MODE_HUES = ["menta", "violeta"] as const;
         </div>
       </section>
 
-      <section id="contact" class="partners-section partners-contact" aria-labelledby="contact-heading">
+      <section id="inscricao" class="partners-section partners-contact" aria-labelledby="contact-heading">
         <article class="lp-card lp-wait partners-form-card">
           <h2 id="contact-heading" class="lp-title">{form.heading}</h2>
           <form
@@ -237,6 +290,33 @@ const MODE_HUES = ["menta", "violeta"] as const;
 </BaseLayout>
 
 <script>
+  // Blocks below the fold rise once as they arrive. Everything stays visible until the first scroll.
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches && "IntersectionObserver" in window) {
+    const first = new AbortController();
+    const arm = () => {
+      first.abort();
+      document.documentElement.classList.add("js-reveal");
+      const observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+            entry.target.classList.add("is-in");
+            observer.unobserve(entry.target);
+          }
+        },
+        { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
+      );
+      document.querySelectorAll("[data-reveal]").forEach((el) => {
+        if (el.getBoundingClientRect().top < window.innerHeight) return;
+        el.setAttribute("data-armed", "");
+        observer.observe(el);
+      });
+    };
+    for (const type of ["scroll", "wheel", "touchmove", "keydown"]) {
+      window.addEventListener(type, arm, { passive: true, signal: first.signal });
+    }
+  }
+
   const root = document.querySelector<HTMLFormElement>("form[data-partner-form]");
   if (root) {
     const form = root;

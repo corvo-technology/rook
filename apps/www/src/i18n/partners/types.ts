@@ -6,11 +6,13 @@ export type PartnersCopy = {
   /** The footer link. */
   link: string;
   meta: { title: string; description: string };
-  hero: { title: string; lead: string; cta: string; docs: string };
-  modes: { heading: string; items: [Item & { who: string }, Item & { who: string }] };
+  hero: { scarcity: string; title: string; lead: string; cta: string; docs: string };
+  pain: { heading: string; paragraphs: string[] };
+  how: { heading: string; steps: Item[] };
   earn: {
     heading: string;
     lead: string;
+    cards: Item[];
     exampleLabel: string;
     price: string;
     commission: string;
@@ -18,9 +20,11 @@ export type PartnersCopy = {
     total: string;
     note: string;
   };
-  included: { heading: string; items: Item[] };
-  proof: { heading: string; body: string };
-  how: { heading: string; steps: Item[] };
+  split: { you: { title: string; items: string[] }; us: { title: string; items: string[] } };
+  benefits: { heading: string; items: Item[] };
+  features: { heading: string; items: Item[] };
+  who: { heading: string; items: string[] };
+  cohort: { heading: string; perks: Item[]; cta: string };
   faq: { heading: string; items: Array<{ question: string; answer: string }> };
   form: {
     heading: string;

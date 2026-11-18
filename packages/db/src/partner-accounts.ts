@@ -105,6 +105,18 @@ export async function listOwnedPartnerTenants(
   }));
 }
 
+/** Stores a partner's template by its id, or removes it with null. */
+export async function setPartnerTemplateById(
+  prisma: PrismaClient,
+  partnerId: string,
+  template: unknown | null,
+): Promise<void> {
+  await prisma.partner.update({
+    where: { id: partnerId },
+    data: { template: template === null ? Prisma.DbNull : (template as Prisma.InputJsonValue) },
+  });
+}
+
 /** Stores what every new customer of the partner gets, or removes it with null. */
 export async function setOwnedPartnerTemplate(
   prisma: PrismaClient,

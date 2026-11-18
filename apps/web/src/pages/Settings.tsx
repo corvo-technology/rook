@@ -10,7 +10,6 @@ import {
   Cpu,
   CreditCard,
   Gauge,
-  Handshake,
   Monitor,
   Plug,
   Settings,
@@ -44,7 +43,6 @@ import { ConnectionsSettingsPanel } from "./ConnectionsSettingsPanel";
 import { MembersSettingsPanel } from "./MembersSettingsPanel";
 import { MemorySettingsOverlay } from "./MemorySettingsOverlay";
 import { ModelSettingsOverlay } from "./ModelSettingsOverlay";
-import { PartnershipSettingsPanel } from "./PartnershipSettingsPanel";
 import { SpaceSettingsPanel } from "./SpaceSettingsPanel";
 import { commitSpaceRename } from "./shell/space-sidebar";
 import { VoiceSettingsOverlay } from "./VoiceSettingsOverlay";
@@ -63,7 +61,7 @@ function voiceStatusRefreshTimeout(): Promise<never> {
 }
 
 /** Sections that depend on the account's flags wait for it before anyone is sent elsewhere. */
-const ACCOUNT_SECTIONS = ["computer", "billing", "partnership", "members"];
+const ACCOUNT_SECTIONS = ["computer", "billing", "members"];
 
 /**
  * Settings as a page, one route per section (`/settings/:section`, and `/settings/space/:spaceId`
@@ -129,7 +127,6 @@ export function SettingsPage() {
     managedLocal,
   });
   const billingEnabled = me?.billingEnabled === true;
-  const partnerAdmin = me?.partnerAdmin === true;
   const showKeys = managedLocal && Boolean(desktopBridge()?.connections);
   const showUpdates = Boolean(desktopBridge()?.update);
 
@@ -366,20 +363,6 @@ export function SettingsPage() {
       : []),
     ...(billingEnabled
       ? [{ id: "billing", label: t`Billing`, icon: CreditCard, content: <BillingSettingsPanel /> }]
-      : []),
-    ...(partnerAdmin
-      ? [
-          {
-            id: "partnership",
-            label: t`Partnership`,
-            icon: Handshake,
-            content: (
-              <PartnershipSettingsPanel
-                onAddCredit={billingEnabled ? () => navigation.select("billing") : undefined}
-              />
-            ),
-          },
-        ]
       : []),
     ...(showUpdates
       ? [

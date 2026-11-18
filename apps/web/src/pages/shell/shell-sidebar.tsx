@@ -29,6 +29,7 @@ import { useSignOut } from "../../lib/sign-out";
 import { SpaceSearchResults } from "../SpaceSearch";
 import type { SettingsSection } from "../shell-overlay";
 import { SidebarHeader } from "./sidebar-header";
+import { SidebarPartnership } from "./sidebar-partner";
 import {
   SidebarNavLive,
   SidebarPeopleList,
@@ -202,6 +203,14 @@ export function ShellSidebar({
             ticketBoardEnabled={ticketBoardEnabled}
             embedded={isEmbedded()}
             onQuickSwitch={onQuickSwitch}
+            onOpen={(to) => {
+              setMobileOpen(false);
+              navigate(to);
+            }}
+          />
+        )}
+        {mini ? null : (
+          <SidebarPartnership
             onOpen={(to) => {
               setMobileOpen(false);
               navigate(to);

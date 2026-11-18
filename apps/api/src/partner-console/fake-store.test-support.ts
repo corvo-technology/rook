@@ -27,6 +27,7 @@ export function partnerRecord(id: string, overrides: Partial<PartnerRecord> = {}
     webhookUrl: null,
     accent: null,
     chiefName: null,
+    template: null,
     createdAt: new Date("2026-01-01T00:00:00Z"),
     ...overrides,
   };
@@ -83,7 +84,7 @@ export function createFakeStore(data: FakeData) {
     thresholdCredits: null as number | null,
     amountMinor: null as number | null,
   };
-  const writes = { markups: 0, state: 0, key: 0, webhook: 0, checkout: 0 };
+  const writes = { markups: 0, state: 0, key: 0, webhook: 0, checkout: 0, template: 0 };
 
   const managed = (organizationId: string) =>
     data.partners.filter((partner) => data.members[partner.id]?.includes(organizationId));
@@ -194,6 +195,10 @@ export function createFakeStore(data: FakeData) {
     setWebhookUrl: async (partner, url) => {
       writes.webhook += 1;
       partner.webhookUrl = url;
+    },
+    setTemplate: async (partner, template) => {
+      writes.template += 1;
+      partner.template = template;
     },
     audit: async (event) => {
       audit.push({ ...event, actorUserId: event.actorUserId });

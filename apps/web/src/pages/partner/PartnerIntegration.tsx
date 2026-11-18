@@ -1,0 +1,115 @@
+import type { PartnerConsolePartner } from "@corvo/contracts";
+import { Button, InlineConfirm, Input } from "@corvo/ui-web";
+import { useLingui } from "@lingui/react/macro";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { rpc } from "../../lib/rpc";
+import { Panel, PartnerError, PartnerLoading, useAction } from "./partner-ui";
+
+/** The keys, the webhook and the docs a partner connects its product with. */
+export function PartnerIntegration({ partner }: { partner: PartnerConsolePartner }) {
+  const { t } = useLingui();
+  const queryClient = useQueryClient();
+  const rotate = useAction();
+  const hook = useAction();
+  const [fresh, setFresh] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [url, setUrl] = useState<string | null>(null);
+  const integration = useQuery({
+    queryKey: ["partner-console", partner.id, "integration"],
+    queryFn: () => rpc.partnerConsole.integration({ partnerId: partner.id }),
+  });
+  if (integration.isPending) return <PartnerLoading />;
+  if (integration.isError)
+    return <PartnerError error={integration.error} onRetry={integration.refetch} />;
+  const data = integration.data;
+  const webhook = url ?? data.webhook.url ?? "";
+  const refresh = () =>
+    queryClient.invalidateQueries({ queryKey: ["partner-console", partner.id, "integration"] });
+
+  return (
+    <div className="space-y-4" data-testid="partner-integration">
+      <Panel title={t`Keys`}>
+        <div className="space-y-3">
+          {fresh ? (
+            <div className="flex items-center gap-2 rounded-xl border border-border px-3 py-2">
+              <code className="min-w-0 flex-1 break-all text-[13px]" data-testid="partner-new-key">
+                {fresh}
+              </code>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  void navigator.clipboard?.writeText(fresh);
+                  setCopied(true);
+                }}
+              >
+                {copied ? t`Copied` : t`Copy`}
+              </Button>
+            </div>
+          ) : null}
+          <ul className="divide-y divide-border">
+            {data.keys.map((key) => (
+              <li key={key.prefix} className="flex items-center justify-between gap-3 py-2">
+                <code className="text-[13px]">{key.prefix}…</code>
+                <InlineConfirm
+                  variant="secondary"
+                  size="sm"
+                  disabled={rotate.busy}
+                  confirmLabel={t`Replace key? The old one stops working.`}
+                  onConfirm={() =>
+                    void rotate.run(async () => {
+                      const next = await rpc.partnerConsole.rotateKey({ partnerId: partner.id });
+                      setFresh(next.key);
+                      setCopied(false);
+                      await refresh();
+                    })
+                  }
+                >
+                  {t`New key`}
+                </InlineConfirm>
+              </li>
+            ))}
+          </ul>
+          {rotate.error ? <PartnerError error={rotate.error} /> : null}
+        </div>
+      </Panel>
+      <Panel title={t`Webhook`}>
+        <form
+          className="flex gap-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void hook.run(async () => {
+              await rpc.partnerConsole.setWebhook({
+                partnerId: partner.id,
+                url: webhook.trim() === "" ? null : webhook.trim(),
+              });
+              setUrl(null);
+              await refresh();
+            });
+          }}
+        >
+          <Input
+            value={webhook}
+            onChange={(event) => setUrl(event.target.value)}
+            placeholder="https://"
+            inputMode="url"
+            aria-label={t`Webhook URL`}
+          />
+          <Button type="submit" variant="secondary" disabled={hook.busy}>
+            {t`Save`}
+          </Button>
+        </form>
+        {hook.error ? <PartnerError error={hook.error} /> : null}
+      </Panel>
+      <a
+        href={data.docsUrl}
+        target="_blank"
+        rel="noreferrer noopener"
+        className="inline-block text-[14px] underline-offset-4 hover:underline"
+      >
+        {t`Documentation`}
+      </a>
+    </div>
+  );
+}

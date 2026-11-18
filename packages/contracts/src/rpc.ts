@@ -1680,6 +1680,14 @@ export const appContract = {
         }),
       ),
     ),
+    /** What every new customer gets; null when the partner has none. */
+    template: oc
+      .input(z.object({ partnerId: Id }))
+      .output(z.object({ template: PartnerTemplate.nullable() })),
+    /** Replaces the template, or removes it with null; audited. */
+    setTemplate: oc
+      .input(z.object({ partnerId: Id, template: PartnerTemplate.nullable() }))
+      .output(z.object({ template: PartnerTemplate.nullable() })),
     /** An https address, or null to stop notices. */
     setWebhook: oc
       .input(z.object({ partnerId: Id, url: z.string().trim().max(2048).nullable() }).strict())

@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import type { Actor } from "@corvo/contracts";
 import { runAsSystem } from "@corvo/db";
 import { ORPCError } from "@orpc/server";
+import { assertMcpRemoteEndpoint } from "../mcp-servers.js";
 import type { PartnerConsoleDeps, PartnerScope } from "../partner-console/index.js";
 import {
   createPrismaPartnerConsoleStore,
@@ -12,6 +13,7 @@ import {
   getPricing,
   getRevenue,
   getRevenueCsv,
+  getTemplate,
   listCustomers,
   listInvoices,
   listPartners,
@@ -24,6 +26,7 @@ import {
   setCustomerCreditLimit,
   setIntegrationWebhook,
   setPricing,
+  setTemplate,
   startTopup,
 } from "../partner-console/index.js";
 import { requireSpacePermission } from "../space-owner.js";
@@ -151,6 +154,16 @@ export function partnerConsoleRoutes(ctx: RouterContext) {
       invoices: managed.partnerConsole.invoices.handler(({ context, input }) =>
         run(context.actor, (scope) => listInvoices(service, scope, input)),
       ),
+      template: managed.partnerConsole.template.handler(({ context, input }) =>
+        run(context.actor, (scope) => getTemplate(service, scope, input)),
+      ),
+      setTemplate: managed.partnerConsole.setTemplate.handler(async ({ context, input }) => {
+        // The same network policy as any other connector, checked when it is saved.
+        if (input.template?.connector) {
+          await assertMcpRemoteEndpoint(input.template.connector.endpoint, deps);
+        }
+        return run(context.actor, (scope) => setTemplate(service, scope, input));
+      }),
       setWebhook: managed.partnerConsole.setWebhook.handler(({ context, input }) =>
         run(context.actor, (scope) => setIntegrationWebhook(service, scope, input)),
       ),

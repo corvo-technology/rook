@@ -15,6 +15,7 @@ import {
   getPricing,
   getRevenue,
   getRevenueCsv,
+  getTemplate,
   listCustomers,
   listPartners,
   openSupportSession,
@@ -22,6 +23,7 @@ import {
   runCustomerAction,
   setIntegrationWebhook,
   setPricing,
+  setTemplate,
 } from "./service.js";
 import { PartnerConsoleError } from "./types.js";
 
@@ -138,6 +140,7 @@ describe("tenant isolation", () => {
       () => getRevenue(deps, ORG_A, { partnerId: "pb", period: "2026-11" }),
       () => getRevenueCsv(deps, ORG_A, { partnerId: "pb", period: "2026-11" }),
       () => getIntegration(deps, ORG_A, { partnerId: "pb" }),
+      () => getTemplate(deps, ORG_A, { partnerId: "pb" }),
       () => getOverview(deps, ORG_A, { partnerId: "does-not-exist" }),
     ];
     for (const read of reads) {
@@ -173,11 +176,12 @@ describe("tenant isolation", () => {
       () => rotateIntegrationKey(deps, ORG_A, { partnerId: "pb" }),
       () =>
         setIntegrationWebhook(deps, ORG_A, { partnerId: "pb", url: "https://hook.example.test" }),
+      () => setTemplate(deps, ORG_A, { partnerId: "pb", template: { agents: [] } }),
     ];
     for (const write of writesTried) {
       await expect(write()).rejects.toMatchObject({ code: "not_found" });
     }
-    expect(writes).toEqual({ markups: 0, state: 0, key: 0, webhook: 0, checkout: 0 });
+    expect(writes).toEqual({ markups: 0, state: 0, key: 0, webhook: 0, checkout: 0, template: 0 });
     expect([audit.length, credits.length, codes.length]).toEqual([0, 0, 0]);
   });
 
@@ -688,5 +692,30 @@ describe("integration", () => {
       enabled: false,
     });
     expect(audit.map((event) => event.detail)).toEqual([{ enabled: true }, { enabled: false }]);
+  });
+});
+
+describe("partner template", () => {
+  it("reads and replaces the template of the organization's partner, and audits the change", async () => {
+    const { deps, audit } = world();
+    expect(await getTemplate(deps, ORG_A, { partnerId: "pa1" })).toEqual({ template: null });
+    const template = {
+      agents: [
+        {
+          key: "reception",
+          name: "Reception",
+          instructions: "Greet people.",
+          usesConnector: false,
+        },
+      ],
+      chiefName: "Ana",
+    };
+    expect(await setTemplate(deps, ORG_A, { partnerId: "pa1", template })).toEqual({ template });
+    expect(await getTemplate(deps, ORG_A, { partnerId: "pa1" })).toEqual({ template });
+    await setTemplate(deps, ORG_A, { partnerId: "pa1", template: null });
+    expect(audit.map((event) => [event.kind, event.detail])).toEqual([
+      ["template.changed", { agents: 1, removed: false }],
+      ["template.changed", { agents: 0, removed: true }],
+    ]);
   });
 });

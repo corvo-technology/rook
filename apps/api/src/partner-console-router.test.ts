@@ -126,4 +126,18 @@ describe("partnerConsole routes", () => {
     expect(result.status).toBe(400);
     expect(prisma.partnerAuditEvent.create).not.toHaveBeenCalled();
   });
+
+  it("reads and saves the template for a member who manages the partner, and not for another", async () => {
+    const { call, prisma } = setup("admin");
+    expect((await call("template", { partnerId: "p-a" })).body).toEqual({
+      template: { agents: [], accent: "#112233", chiefName: "Ana" },
+    });
+    const saved = await call("setTemplate", { partnerId: "p-a", template: { agents: [] } });
+    expect(saved.status).toBe(200);
+    expect(prisma.partner.update).toHaveBeenCalledTimes(1);
+    expect((await call("setTemplate", { partnerId: "p-b", template: null })).status).toBe(404);
+    expect(prisma.partner.update).toHaveBeenCalledTimes(1);
+    const refused = setup("member");
+    expect((await refused.call("template", { partnerId: "p-a" })).status).toBe(403);
+  });
 });

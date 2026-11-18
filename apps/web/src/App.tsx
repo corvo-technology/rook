@@ -46,6 +46,7 @@ import { IntegrationCallbackPage } from "./pages/IntegrationCallback";
 import { IntegrationSetupPage } from "./pages/IntegrationSetup";
 import { InvitePage } from "./pages/InvitePage";
 import { McpOAuthCallbackPage } from "./pages/McpOAuthCallback";
+import { PartnerConsolePage } from "./pages/partner/PartnerConsolePage";
 import { ShellPage } from "./pages/Shell";
 import { useBoardNotifications } from "./pages/shell/use-board-notifications";
 
@@ -284,6 +285,10 @@ function SessionApp() {
                   element={<ShellPage page={<ArtifactsPage />} />}
                 />
                 <Route path="/app/wiki" element={<ShellPage page={<WikiPage />} />} />
+                <Route
+                  path="/app/partner/:partnerId?/:section?"
+                  element={<ShellPage page={<PartnerConsolePage />} />}
+                />
                 {ticketBoardEnabled ? (
                   <Route path="/app/board" element={<ShellPage page={<BoardPage />} />} />
                 ) : null}

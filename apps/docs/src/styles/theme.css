@@ -1,0 +1,149 @@
+@import "@corvo/ui-tokens/css";
+
+/*
+ * Rook's semantic tokens drive Starlight's palette. Dark is the app's ink on near-black; light is
+ * warm paper. The accent is the quiet mint, kept for links and focus; everything else is monochrome.
+ * Starlight flips white/black between themes, so each theme maps them explicitly.
+ */
+:root {
+  --sl-font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --sl-font-display: "Inter Tight", var(--sl-font);
+  --sl-font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --sl-content-width: 46rem;
+  --sl-text-body: 1rem;
+  --sl-line-height: 1.7;
+}
+
+:root,
+:root[data-theme="dark"] {
+  --sl-color-white: var(--foreground);
+  --sl-color-gray-1: #d9d9dc;
+  --sl-color-gray-2: var(--muted-foreground);
+  --sl-color-gray-3: #85858c;
+  --sl-color-gray-4: var(--input);
+  --sl-color-gray-5: var(--sidebar-border);
+  --sl-color-gray-6: var(--card);
+  --sl-color-gray-7: #0e0e10;
+  --sl-color-black: var(--background);
+  --sl-color-accent-low: #10261d;
+  --sl-color-accent: #f4f4f5;
+  --sl-color-text-invert: #0a0a0a;
+  --sl-color-accent-high: var(--brand);
+  --sl-color-text-accent: var(--link);
+  --sl-color-bg-nav: var(--background);
+  --sl-color-bg-sidebar: var(--background);
+  --sl-color-hairline: var(--border);
+  --sl-color-hairline-light: var(--border);
+  --sl-color-hairline-shade: var(--border);
+}
+
+:root[data-theme="light"] {
+  --sl-color-white: var(--foreground);
+  --sl-color-gray-1: #26262b;
+  --sl-color-gray-2: #45454c;
+  --sl-color-gray-3: var(--muted-foreground);
+  --sl-color-gray-4: #a8a8a2;
+  --sl-color-gray-5: var(--input);
+  --sl-color-gray-6: var(--secondary);
+  --sl-color-gray-7: #fafaf8;
+  --sl-color-black: var(--background);
+  --sl-color-accent-low: #d3ecdf;
+  --sl-color-accent: #0a0a0a;
+  --sl-color-text-invert: #fafaf8;
+  --sl-color-accent-high: #0f5a3f;
+  --sl-color-text-accent: var(--link);
+  --sl-color-bg-nav: var(--background);
+  --sl-color-bg-sidebar: var(--sidebar);
+  --sl-color-hairline: var(--border);
+  --sl-color-hairline-light: var(--border);
+  --sl-color-hairline-shade: var(--border);
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--sl-font-display);
+  letter-spacing: -0.02em;
+  font-weight: 500;
+}
+
+h1 {
+  letter-spacing: -0.03em;
+}
+
+.sl-markdown-content :not(pre) > code {
+  background: var(--sl-color-gray-6);
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 6px;
+  padding: 0.1em 0.35em;
+  font-size: 0.875em;
+}
+
+/* Primary buttons are ink on paper, like the app. */
+.sl-link-button.primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--primary);
+  font-weight: 500;
+}
+.sl-link-button.secondary {
+  background: transparent;
+  color: var(--sl-color-white);
+  border-color: var(--sl-color-gray-4);
+}
+
+/* Cards: hairline, flat, a little lift on hover. */
+.sl-markdown-content .card {
+  border-radius: 14px;
+  border-color: var(--sl-color-hairline);
+  background: var(--sl-color-gray-6);
+}
+.sl-markdown-content .card .title {
+  font-family: var(--sl-font-display);
+  font-weight: 500;
+}
+
+table {
+  font-size: 0.9rem;
+}
+
+.sl-badge.caution,
+.sl-badge.default {
+  border-radius: 999px;
+}
+
+/* Splash pages have no sidebar; keep the page calm. */
+[data-has-hero] header.header {
+  border-bottom-color: transparent;
+}
+
+/* "Em breve" marker for what is designed but not live. */
+.soon {
+  display: inline-block;
+  padding: 0.05em 0.6em;
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 999px;
+  background: var(--sl-color-gray-6);
+  color: var(--sl-color-gray-2);
+  font-size: 0.8em;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.site-title {
+  color: var(--sl-color-white);
+  font-family: var(--sl-font-display);
+  font-weight: 500;
+}
+
+/* The soon badge in the sidebar is a quiet pill, not a warning. */
+.sl-badge.caution {
+  background: var(--sl-color-gray-6);
+  border-color: var(--sl-color-hairline);
+  color: var(--sl-color-gray-2);
+}

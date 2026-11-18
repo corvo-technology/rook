@@ -1,0 +1,30 @@
+---
+interface Props {
+  color?: string;
+  size?: number;
+  class?: string;
+  look?: "ahead" | "left" | "right";
+}
+const { color = "#54c398", size = 72, look = "ahead", class: className } = Astro.props;
+const dx = look === "left" ? -2 : look === "right" ? 2 : 0;
+---
+
+<svg
+  class={className}
+  viewBox="14 8 72 84"
+  width={size}
+  height={(size * 84) / 72}
+  aria-hidden="true"
+  focusable="false"
+>
+  <g fill={color}>
+    <rect x="18" y="12" width="16" height="26" rx="5"></rect>
+    <rect x="42" y="12" width="16" height="26" rx="5"></rect>
+    <rect x="66" y="12" width="16" height="26" rx="5"></rect>
+    <rect x="18" y="28" width="64" height="60" rx="18"></rect>
+  </g>
+  <g fill="#0b0b0c">
+    <ellipse cx={38 + dx} cy="56" rx="5" ry="7.5"></ellipse>
+    <ellipse cx={62 + dx} cy="56" rx="5" ry="7.5"></ellipse>
+  </g>
+</svg>

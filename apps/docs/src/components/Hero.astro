@@ -1,0 +1,86 @@
+---
+import { LinkButton } from "@astrojs/starlight/components";
+import Rook from "./Rook.astro";
+
+const { hero } = Astro.locals.starlightRoute.entry.data;
+const { title, tagline, actions = [] } = hero ?? { title: "" };
+// One rook per agent color the app has; each one wears a single color.
+const flock = [
+  { color: "#75aef5", look: "right", size: 64 },
+  { color: "#e788b6", look: "right", size: 76 },
+  { color: "#54c398", look: "ahead", size: 104 },
+  { color: "#e59651", look: "left", size: 76 },
+  { color: "#b797ef", look: "left", size: 64 },
+] as const;
+---
+
+<div class="hero">
+  <div class="flock" aria-hidden="true">
+    {flock.map((rook, index) => (
+      <Rook {...rook} class="rook" style={`--i:${index}`} />
+    ))}
+  </div>
+  <div class="copy">
+    <h1 id="_top" data-page-title set:html={title} />
+    {tagline && <p class="tagline" set:html={tagline} />}
+    {actions.length > 0 && (
+      <div class="actions">
+        {actions.map(({ attrs, icon, link: href, text, variant }) => (
+          <LinkButton {href} {variant} icon={icon?.name} {...attrs}>{text}</LinkButton>
+        ))}
+      </div>
+    )}
+  </div>
+</div>
+
+<style>
+  .hero {
+    display: grid;
+    justify-items: center;
+    gap: 2.25rem;
+    padding: clamp(1.5rem, 6vw, 4rem) 0 1rem;
+    text-align: center;
+  }
+  .flock {
+    display: flex;
+    align-items: flex-end;
+    gap: clamp(0.5rem, 2.4vw, 1.4rem);
+  }
+  .flock :global(.rook) {
+    animation: bob 5s ease-in-out infinite;
+    animation-delay: calc(var(--i) * -0.9s);
+  }
+  @keyframes bob {
+    50% {
+      transform: translateY(-6px);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .flock :global(.rook) {
+      animation: none;
+    }
+  }
+  h1 {
+    font-family: var(--sl-font-display);
+    font-size: clamp(2.4rem, 7vw, 4rem);
+    font-weight: 500;
+    letter-spacing: -0.035em;
+    line-height: 1.04;
+    color: var(--sl-color-white);
+    margin: 0;
+  }
+  .tagline {
+    margin: 1.1rem auto 0;
+    max-width: 34rem;
+    font-size: clamp(1.05rem, 2.4vw, 1.25rem);
+    color: var(--sl-color-gray-2);
+    text-wrap: balance;
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 1.75rem;
+  }
+</style>

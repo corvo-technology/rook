@@ -367,6 +367,14 @@ msgstr "{model}无法回答"
 msgid "{moved, plural, one {# bot now uses the space default.} other {# bots now use the space default.}}"
 msgstr "{moved, plural, one {# 个机器人现在使用空间默认设置。} other {# 个机器人现在使用空间默认设置。}}"
 
+#: src/pages/home/HomeHero.tsx
+msgid "{n, plural, one {# agent working} other {# agents working}}"
+msgstr "{n, plural, other {# 个智能体正在工作}}"
+
+#: src/pages/home/HomeHero.tsx
+msgid "{n, plural, one {# waiting for you} other {# waiting for you}}"
+msgstr "{n, plural, other {# 项等你处理}}"
+
 #: src/lib/activity-list-filters.ts
 msgid "{name} asked"
 msgstr "{name} 问"
@@ -970,6 +978,10 @@ msgstr "添加 Treg"
 msgid "Add trigger"
 msgstr "添加触发器"
 
+#: src/pages/HomePage.tsx
+msgid "Add widget"
+msgstr "添加小组件"
+
 #: src/lib/server-copy.ts
 msgid "Add: {add}"
 msgstr "添加：{add}"
@@ -1039,7 +1051,7 @@ msgstr "代理机构"
 
 #: src/components/WorkingLine.tsx
 #: src/pages/AddStepPanel.tsx
-#: src/pages/HomePage.tsx
+#: src/pages/home/HomeComposer.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Agent"
@@ -1391,7 +1403,7 @@ msgstr "询问"
 msgid "Ask {0} for a new one"
 msgstr "请向 {0} 索取新的邀请"
 
-#: src/pages/HomePage.tsx
+#: src/pages/home/HomeComposer.tsx
 msgid "Ask {agentName} for something"
 msgstr "请 {agentName} 帮个忙"
 
@@ -1821,6 +1833,7 @@ msgstr "角色"
 msgid "Chart failed to render: {error}"
 msgstr "图表渲染失败：{error}"
 
+#: src/pages/home/HomeHero.tsx
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Chat"
 msgstr "聊天"
@@ -3543,6 +3556,7 @@ msgstr "还没有账户？"
 #: src/components/PlanCard.tsx
 #: src/lib/ticket-status.ts
 #: src/pages/ActivityList.tsx
+#: src/pages/HomePage.tsx
 #: src/pages/RoutineCard.tsx
 #: src/pages/RoutineTimeGrid.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
@@ -3949,6 +3963,10 @@ msgstr "筛选器"
 msgid "Finance"
 msgstr "财务"
 
+#: src/pages/home/HomeComposer.tsx
+msgid "Find an agent"
+msgstr "查找智能体"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Find models"
@@ -4091,6 +4109,10 @@ msgstr "让 {forBotName} 以只读方式访问 {name}？"
 msgid "Give read access to {name}?"
 msgstr "允许以只读方式访问 {name}？"
 
+#: src/pages/home/WorkingFeed.tsx
+msgid "Give work"
+msgstr "分配工作"
+
 #: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Go to…"
@@ -4194,6 +4216,10 @@ msgstr "你好，这是我朗读回复时的声音。"
 msgid "Hi. I'm the Chief. We'll set up your team in about two minutes."
 msgstr "你好。我是 Chief。大约两分钟就能搭好你的团队。"
 
+#: src/pages/home/HomeCard.tsx
+msgid "Hide"
+msgstr "隐藏"
+
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Hide from customers"
 msgstr "对客户隐藏"
@@ -4233,6 +4259,7 @@ msgstr "按住说话"
 msgid "Hold to talk, release to send"
 msgstr "按住说话，松开发送"
 
+#: src/pages/home/HomeHero.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Home"
 msgstr "首页"
@@ -5281,10 +5308,12 @@ msgstr "上移 {0}"
 msgid "Move down"
 msgstr "下移"
 
+#: src/pages/home/HomeCard.tsx
 #: src/pages/Workflows.tsx
 msgid "Move earlier"
 msgstr "前移"
 
+#: src/pages/home/HomeCard.tsx
 #: src/pages/Workflows.tsx
 msgid "Move later"
 msgstr "后移"
@@ -5316,6 +5345,10 @@ msgstr "已静音"
 #: src/pages/WhatsAppNumbers.tsx
 msgid "My assistant"
 msgstr "我的助手"
+
+#: src/pages/HomePage.tsx
+msgid "My Home"
+msgstr "我的首页"
 
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -5495,6 +5528,14 @@ msgstr "下一步"
 msgid "Next page"
 msgstr "下一页"
 
+#: src/pages/home/HomeHero.tsx
+msgid "next routine in {n, plural, one {# hour} other {# hours}}"
+msgstr "下一个例行任务在 {n, plural, other {# 小时}} 后"
+
+#: src/pages/home/HomeHero.tsx
+msgid "next routine in {n} min"
+msgstr "下一个例行任务在 {n} 分钟后"
+
 #: src/pages/HomePage.tsx
 msgid "Next routines"
 msgstr "接下来的例行任务"
@@ -5506,6 +5547,10 @@ msgstr "无访问权限"
 #: src/pages/ActivityList.tsx
 msgid "No activity yet."
 msgstr "还没有活动。"
+
+#: src/pages/home/HomeComposer.tsx
+msgid "No agent found"
+msgstr "未找到智能体"
 
 #: src/pages/shell/routing-line.tsx
 msgid "No answer needed"
@@ -5612,9 +5657,9 @@ msgstr "未找到远程 MCP 服务器"
 msgid "No results"
 msgstr "无结果"
 
-#: src/pages/HomePage.tsx
-msgid "No routines scheduled"
-msgstr "没有已安排的例行任务"
+#: src/pages/home/RoutineTimeline.tsx
+msgid "No routines scheduled."
+msgstr "没有已安排的例行任务。"
 
 #: src/pages/Routines.tsx
 msgid "No routines yet"
@@ -5728,18 +5773,21 @@ msgstr "无法正常工作"
 msgid "Nothing remembered yet"
 msgstr "暂无记忆"
 
-#: src/pages/HomePage.tsx
-msgid "Nothing running"
-msgstr "没有正在运行的任务"
+#: src/pages/home/WorkingFeed.tsx
+msgid "Nothing running now."
+msgstr "目前没有运行中的任务。"
 
 #: src/pages/ApprovalsInbox.tsx
-#: src/pages/HomePage.tsx
 msgid "Nothing to approve"
 msgstr "没有待批准的内容"
 
 #: src/pages/ImportFlow.tsx
 msgid "Nothing to import in these files."
 msgstr "这些文件中没有可导入的内容。"
+
+#: src/pages/home/WaitingList.tsx
+msgid "Nothing waiting for you now."
+msgstr "目前没有等你处理的事项。"
 
 #: src/components/InboxBell.tsx
 #: src/pages/shell/bot-panel.tsx
@@ -5800,6 +5848,10 @@ msgstr "按计划"
 #: src/lib/cron.ts
 msgid "on day {day} at {time}"
 msgstr "{day}日 {time}"
+
+#: src/pages/home/HomeHero.tsx
+msgid "On open"
+msgstr "启动时"
 
 #. placeholder {0}: preset.time
 #: src/lib/cron.ts
@@ -5885,6 +5937,10 @@ msgstr "打开外部链接？"
 msgid "Open in full window"
 msgstr "在完整窗口中打开"
 
+#: src/pages/HomePage.tsx
+msgid "Open in manager"
+msgstr "在管理器中打开"
+
 #: src/pages/DirectChat.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/channel-header.tsx
@@ -5964,6 +6020,10 @@ msgstr "或粘贴 API 密钥"
 #: src/pages/memory-providers/SupermemorySettingsForm.tsx
 msgid "Organization API key"
 msgstr "组织 API 密钥"
+
+#: src/pages/HomePage.tsx
+msgid "Organize"
+msgstr "整理"
 
 #: src/pages/shell/chat-context.tsx
 msgid "Original message unavailable"
@@ -6177,7 +6237,7 @@ msgstr "选择要检查的工具"
 msgid "Pick from role"
 msgstr "根据角色选择"
 
-#: src/pages/HomePage.tsx
+#: src/pages/home/ChecklistStrip.tsx
 msgid "Pick up where you left off · {done} of {total}"
 msgstr "继续上次的进度 · {done}/{total}"
 
@@ -6202,6 +6262,10 @@ msgstr "置顶"
 #: src/pages/shell/channel-find.tsx
 msgid "Pinned messages"
 msgstr "置顶消息"
+
+#: src/pages/home/HomeComposer.tsx
+msgid "Plan the week"
+msgstr "规划本周"
 
 #: src/pages/LocalSpeechSection.tsx
 msgid "Play"
@@ -7176,7 +7240,7 @@ msgid "Self-hosted"
 msgstr "自托管"
 
 #: src/pages/DirectChat.tsx
-#: src/pages/HomePage.tsx
+#: src/pages/home/HomeComposer.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/thread-panel.tsx
 msgid "Send"
@@ -7473,12 +7537,12 @@ msgstr "部分设置不会导入"
 msgid "Something else"
 msgstr "其他"
 
-#. js-lingui-explicit-id
-#: src/lib/run-error-copy.ts
+#: src/pages/PartnershipSettingsPanel.tsx
 msgid "Something went wrong"
 msgstr "出了点问题"
 
-#: src/pages/PartnershipSettingsPanel.tsx
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
 msgid "Something went wrong"
 msgstr "出了点问题"
 
@@ -7739,6 +7803,14 @@ msgstr "需要订阅"
 #: src/pages/YouMemory.tsx
 msgid "Suggest from what I say"
 msgstr "根据我说的话提出建议"
+
+#: src/pages/home/HomeComposer.tsx
+msgid "Suggestions"
+msgstr "建议"
+
+#: src/pages/home/HomeComposer.tsx
+msgid "Summary of the day"
+msgstr "今日摘要"
 
 #: src/lib/cron.ts
 msgid "Sunday"
@@ -8225,6 +8297,10 @@ msgstr "到:{toModel}"
 msgid "Today"
 msgstr "今天"
 
+#: src/pages/home/RoutineTimeline.tsx
+msgid "today {time}"
+msgstr "今天 {time}"
+
 #: src/pages/Usage.tsx
 msgid "tokens"
 msgstr "令牌"
@@ -8232,6 +8308,10 @@ msgstr "令牌"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Tokens"
 msgstr "Token"
+
+#: src/pages/home/RoutineTimeline.tsx
+msgid "tomorrow {time}"
+msgstr "明天 {time}"
 
 #: src/pages/RoutineRunDetail.tsx
 msgid "Took {took}"
@@ -8760,6 +8840,10 @@ msgstr "你想让我先做什么？"
 msgid "What does the workspace do? Every agent will know."
 msgstr "这个工作区是做什么的?每个智能体都会知道。"
 
+#: src/pages/home/HomeComposer.tsx
+msgid "What is stuck?"
+msgstr "什么卡住了？"
+
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "What result will you demonstrate?"
 msgstr "你要示范什么结果？"
@@ -8845,6 +8929,10 @@ msgstr "谁可以使用 {0}"
 msgid "Who sees this channel"
 msgstr "谁可以查看此频道"
 
+#: src/pages/HomePage.tsx
+msgid "Widget"
+msgstr "小组件"
+
 #: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/WikiPage.tsx
@@ -8870,7 +8958,7 @@ msgstr "工作流"
 msgid "working"
 msgstr "工作中"
 
-#: src/pages/HomePage.tsx
+#: src/pages/home/WorkingFeed.tsx
 msgid "Working"
 msgstr "工作中"
 
@@ -9035,3 +9123,7 @@ msgstr "你的语音提供方额度已用完。"
 #: src/lib/user-error.ts
 msgid "Your voice provider key was rejected."
 msgstr "你的语音提供方拒绝了该密钥。"
+
+#: src/pages/home/HomeHero.tsx
+msgid "Your workspace is ready. Start here."
+msgstr "你的工作区已就绪。从这里开始。"

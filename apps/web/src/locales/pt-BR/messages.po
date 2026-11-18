@@ -367,6 +367,14 @@ msgstr "{model} não conseguiu responder"
 msgid "{moved, plural, one {# bot now uses the space default.} other {# bots now use the space default.}}"
 msgstr "{moved, plural, one {# bot agora usa o padrão do espaço.} other {# bots agora usam o padrão do espaço.}}"
 
+#: src/pages/home/HomeHero.tsx
+msgid "{n, plural, one {# agent working} other {# agents working}}"
+msgstr "{n, plural, one {# agente trabalhando} other {# agentes trabalhando}}"
+
+#: src/pages/home/HomeHero.tsx
+msgid "{n, plural, one {# waiting for you} other {# waiting for you}}"
+msgstr "{n, plural, one {# esperando você} other {# esperando você}}"
+
 #: src/lib/activity-list-filters.ts
 msgid "{name} asked"
 msgstr "{name} pergunta"
@@ -970,6 +978,10 @@ msgstr "Adicionar Treg"
 msgid "Add trigger"
 msgstr "Adicionar gatilho"
 
+#: src/pages/HomePage.tsx
+msgid "Add widget"
+msgstr "Adicionar widget"
+
 #: src/lib/server-copy.ts
 msgid "Add: {add}"
 msgstr "Adicionar: {add}"
@@ -1039,7 +1051,7 @@ msgstr "Agência"
 
 #: src/components/WorkingLine.tsx
 #: src/pages/AddStepPanel.tsx
-#: src/pages/HomePage.tsx
+#: src/pages/home/HomeComposer.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Agent"
@@ -1391,7 +1403,7 @@ msgstr "Perguntar"
 msgid "Ask {0} for a new one"
 msgstr "Peça um novo a {0}"
 
-#: src/pages/HomePage.tsx
+#: src/pages/home/HomeComposer.tsx
 msgid "Ask {agentName} for something"
 msgstr "Peça algo para {agentName}"
 
@@ -1821,6 +1833,7 @@ msgstr "Personagem"
 msgid "Chart failed to render: {error}"
 msgstr "Falha na renderização do gráfico: {error}"
 
+#: src/pages/home/HomeHero.tsx
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Chat"
 msgstr "Conversa"
@@ -3543,6 +3556,7 @@ msgstr "Não tem uma conta?"
 #: src/components/PlanCard.tsx
 #: src/lib/ticket-status.ts
 #: src/pages/ActivityList.tsx
+#: src/pages/HomePage.tsx
 #: src/pages/RoutineCard.tsx
 #: src/pages/RoutineTimeGrid.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
@@ -3949,6 +3963,10 @@ msgstr "Filtros"
 msgid "Finance"
 msgstr "Finanças"
 
+#: src/pages/home/HomeComposer.tsx
+msgid "Find an agent"
+msgstr "Buscar um agente"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Find models"
@@ -4091,6 +4109,10 @@ msgstr "Dar a {forBotName} acesso de leitura a {name}?"
 msgid "Give read access to {name}?"
 msgstr "Dar acesso de leitura a {name}?"
 
+#: src/pages/home/WorkingFeed.tsx
+msgid "Give work"
+msgstr "Dar trabalho"
+
 #: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Go to…"
@@ -4194,6 +4216,10 @@ msgstr "Olá, é assim que vou soar quando ler as respostas em voz alta."
 msgid "Hi. I'm the Chief. We'll set up your team in about two minutes."
 msgstr "Oi. Eu sou o Chefe. Vou montar o time com você em uns dois minutos."
 
+#: src/pages/home/HomeCard.tsx
+msgid "Hide"
+msgstr "Ocultar"
+
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Hide from customers"
 msgstr "Ocultar dos clientes"
@@ -4233,6 +4259,7 @@ msgstr "Segure para falar"
 msgid "Hold to talk, release to send"
 msgstr "Segure para falar, solte para enviar"
 
+#: src/pages/home/HomeHero.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Home"
 msgstr "Início"
@@ -5281,10 +5308,12 @@ msgstr "Mover {0} para cima"
 msgid "Move down"
 msgstr "Mover para baixo"
 
+#: src/pages/home/HomeCard.tsx
 #: src/pages/Workflows.tsx
 msgid "Move earlier"
 msgstr "Mover para antes"
 
+#: src/pages/home/HomeCard.tsx
 #: src/pages/Workflows.tsx
 msgid "Move later"
 msgstr "Mover para depois"
@@ -5316,6 +5345,10 @@ msgstr "Silenciado"
 #: src/pages/WhatsAppNumbers.tsx
 msgid "My assistant"
 msgstr "Meu assistente"
+
+#: src/pages/HomePage.tsx
+msgid "My Home"
+msgstr "Meu Início"
 
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -5495,6 +5528,14 @@ msgstr "Próximo"
 msgid "Next page"
 msgstr "Próxima página"
 
+#: src/pages/home/HomeHero.tsx
+msgid "next routine in {n, plural, one {# hour} other {# hours}}"
+msgstr "próxima rotina em {n, plural, one {# hora} other {# horas}}"
+
+#: src/pages/home/HomeHero.tsx
+msgid "next routine in {n} min"
+msgstr "próxima rotina em {n} min"
+
 #: src/pages/HomePage.tsx
 msgid "Next routines"
 msgstr "Próximas rotinas"
@@ -5506,6 +5547,10 @@ msgstr "Sem acesso"
 #: src/pages/ActivityList.tsx
 msgid "No activity yet."
 msgstr "Nenhuma atividade ainda."
+
+#: src/pages/home/HomeComposer.tsx
+msgid "No agent found"
+msgstr "Nenhum agente encontrado"
 
 #: src/pages/shell/routing-line.tsx
 msgid "No answer needed"
@@ -5612,9 +5657,9 @@ msgstr "Nenhum servidor MCP remoto encontrado"
 msgid "No results"
 msgstr "Nenhum resultado"
 
-#: src/pages/HomePage.tsx
-msgid "No routines scheduled"
-msgstr "Nenhuma rotina agendada"
+#: src/pages/home/RoutineTimeline.tsx
+msgid "No routines scheduled."
+msgstr "Nenhuma rotina agendada."
 
 #: src/pages/Routines.tsx
 msgid "No routines yet"
@@ -5728,18 +5773,21 @@ msgstr "Não está funcionando"
 msgid "Nothing remembered yet"
 msgstr "Nada memorizado ainda"
 
-#: src/pages/HomePage.tsx
-msgid "Nothing running"
-msgstr "Nada em andamento"
+#: src/pages/home/WorkingFeed.tsx
+msgid "Nothing running now."
+msgstr "Nada em andamento agora."
 
 #: src/pages/ApprovalsInbox.tsx
-#: src/pages/HomePage.tsx
 msgid "Nothing to approve"
 msgstr "Nada para aprovar"
 
 #: src/pages/ImportFlow.tsx
 msgid "Nothing to import in these files."
 msgstr "Nada para importar nesses arquivos."
+
+#: src/pages/home/WaitingList.tsx
+msgid "Nothing waiting for you now."
+msgstr "Nada esperando você agora."
 
 #: src/components/InboxBell.tsx
 #: src/pages/shell/bot-panel.tsx
@@ -5800,6 +5848,10 @@ msgstr "Em um horário"
 #: src/lib/cron.ts
 msgid "on day {day} at {time}"
 msgstr "no dia {day} às {time}"
+
+#: src/pages/home/HomeHero.tsx
+msgid "On open"
+msgstr "Ao abrir o app"
 
 #. placeholder {0}: preset.time
 #: src/lib/cron.ts
@@ -5885,6 +5937,10 @@ msgstr "Abrir link externo?"
 msgid "Open in full window"
 msgstr "Abrir em janela cheia"
 
+#: src/pages/HomePage.tsx
+msgid "Open in manager"
+msgstr "Abrir no gerenciador"
+
 #: src/pages/DirectChat.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/channel-header.tsx
@@ -5964,6 +6020,10 @@ msgstr "Ou cole uma chave de API"
 #: src/pages/memory-providers/SupermemorySettingsForm.tsx
 msgid "Organization API key"
 msgstr "Chave da API da organização"
+
+#: src/pages/HomePage.tsx
+msgid "Organize"
+msgstr "Organizar"
 
 #: src/pages/shell/chat-context.tsx
 msgid "Original message unavailable"
@@ -6177,7 +6237,7 @@ msgstr "Escolha uma ferramenta para verificar"
 msgid "Pick from role"
 msgstr "Escolher pela função"
 
-#: src/pages/HomePage.tsx
+#: src/pages/home/ChecklistStrip.tsx
 msgid "Pick up where you left off · {done} of {total}"
 msgstr "Continue de onde parou · {done} de {total}"
 
@@ -6202,6 +6262,10 @@ msgstr "Fixados"
 #: src/pages/shell/channel-find.tsx
 msgid "Pinned messages"
 msgstr "Mensagens fixadas"
+
+#: src/pages/home/HomeComposer.tsx
+msgid "Plan the week"
+msgstr "Planeje a semana"
 
 #: src/pages/LocalSpeechSection.tsx
 msgid "Play"
@@ -7176,7 +7240,7 @@ msgid "Self-hosted"
 msgstr "Auto-hospedado"
 
 #: src/pages/DirectChat.tsx
-#: src/pages/HomePage.tsx
+#: src/pages/home/HomeComposer.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/thread-panel.tsx
 msgid "Send"
@@ -7473,12 +7537,12 @@ msgstr "Algumas configurações não são importadas"
 msgid "Something else"
 msgstr "Outra coisa"
 
-#. js-lingui-explicit-id
-#: src/lib/run-error-copy.ts
+#: src/pages/PartnershipSettingsPanel.tsx
 msgid "Something went wrong"
 msgstr "Algo deu errado"
 
-#: src/pages/PartnershipSettingsPanel.tsx
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
 msgid "Something went wrong"
 msgstr "Algo deu errado"
 
@@ -7739,6 +7803,14 @@ msgstr "Assinatura necessária"
 #: src/pages/YouMemory.tsx
 msgid "Suggest from what I say"
 msgstr "Sugerir pelo que eu digo"
+
+#: src/pages/home/HomeComposer.tsx
+msgid "Suggestions"
+msgstr "Sugestões"
+
+#: src/pages/home/HomeComposer.tsx
+msgid "Summary of the day"
+msgstr "Resumo do dia"
 
 #: src/lib/cron.ts
 msgid "Sunday"
@@ -8225,6 +8297,10 @@ msgstr "Para: {toModel}"
 msgid "Today"
 msgstr "Hoje"
 
+#: src/pages/home/RoutineTimeline.tsx
+msgid "today {time}"
+msgstr "hoje {time}"
+
 #: src/pages/Usage.tsx
 msgid "tokens"
 msgstr "tokens"
@@ -8232,6 +8308,10 @@ msgstr "tokens"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Tokens"
 msgstr "Tokens"
+
+#: src/pages/home/RoutineTimeline.tsx
+msgid "tomorrow {time}"
+msgstr "amanhã {time}"
 
 #: src/pages/RoutineRunDetail.tsx
 msgid "Took {took}"
@@ -8760,6 +8840,10 @@ msgstr "Em que você quer que eu comece?"
 msgid "What does the workspace do? Every agent will know."
 msgstr "O que o espaço faz? Todos os agentes vão saber."
 
+#: src/pages/home/HomeComposer.tsx
+msgid "What is stuck?"
+msgstr "O que está travado?"
+
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "What result will you demonstrate?"
 msgstr "Que resultado você demonstrará?"
@@ -8845,6 +8929,10 @@ msgstr "Quem pode usar {0}"
 msgid "Who sees this channel"
 msgstr "Quem vê este canal"
 
+#: src/pages/HomePage.tsx
+msgid "Widget"
+msgstr "Widget"
+
 #: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/WikiPage.tsx
@@ -8870,7 +8958,7 @@ msgstr "Fluxos de trabalho"
 msgid "working"
 msgstr "trabalhando"
 
-#: src/pages/HomePage.tsx
+#: src/pages/home/WorkingFeed.tsx
 msgid "Working"
 msgstr "Trabalhando"
 
@@ -9035,3 +9123,7 @@ msgstr "Seu provedor de voz está sem crédito."
 #: src/lib/user-error.ts
 msgid "Your voice provider key was rejected."
 msgstr "Seu provedor de voz recusou a chave."
+
+#: src/pages/home/HomeHero.tsx
+msgid "Your workspace is ready. Start here."
+msgstr "Seu workspace está pronto. Comece por aqui."

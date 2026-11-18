@@ -217,9 +217,14 @@ export const PARTNER_SCOPES = ["tenants:write", "commerce:read", "commerce:write
 export type PartnerScope = (typeof PARTNER_SCOPES)[number];
 
 /**
- * What a commerce customer reads of its own balance, in the minor unit of `currency` (cents or
- * centavos). `remaining` is everything left to spend (plan credit plus top-ups); `topupRemaining`
- * is the part of it that survives the period end.
+ * What a commerce customer reads of its own balance, in integer minor units of `currency` (cents or
+ * centavos). "R$ 18 of R$ 30 this month" is `remaining` of `planCredit`: `remaining` is the plan
+ * credit still unspent this period, and `topupRemaining` is purchased credit on top of it, which
+ * survives the period end. Sold out is `remaining + topupRemaining <= 0`.
+ *
+ * `state`: "active" (a plan in force, including one canceled until its period ends), "past_due"
+ * (grace period, still usable) or "lapsed" (plan inactive or none: runs are refused, data stays
+ * readable).
  */
 export const PartnerBalanceSchema = z.object({
   currency: z.enum(["BRL", "USD"]),
@@ -229,7 +234,7 @@ export const PartnerBalanceSchema = z.object({
   remaining: Minor,
   topupRemaining: Minor,
   periodEnd: z.string().nullable(),
-  state: z.enum(["none", "active", "past_due", "canceled", "lapsed"]),
+  state: z.enum(["active", "past_due", "lapsed"]),
   /** The partner's checkout with the customer filled in; null when it has none. */
   checkoutUrl: z.string().nullable(),
   lowThresholdReached: z.boolean(),

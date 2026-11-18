@@ -10,7 +10,7 @@ export interface PartnerBalanceView {
   remaining: number;
   topupRemaining: number;
   periodEnd: string | null;
-  state: "none" | "active" | "past_due" | "canceled" | "lapsed";
+  state: "active" | "past_due" | "lapsed";
   checkoutUrl: string | null;
   lowThresholdReached: boolean;
 }
@@ -36,10 +36,12 @@ export async function partnerBalanceForOrganization(
     planName: balance.planName,
     planCredit: balance.plan.grantedMinor,
     used: balance.plan.usedMinor,
-    remaining: balance.remainingMinor,
+    remaining: balance.plan.remainingMinor,
     topupRemaining: balance.topup.remainingMinor,
     periodEnd: balance.periodEnd?.toISOString() ?? null,
-    state: balance.state,
+    // A canceled plan works until its period ends; no plan at all is as good as a lapsed one.
+    state:
+      balance.state === "canceled" ? "active" : balance.state === "none" ? "lapsed" : balance.state,
     checkoutUrl: partnerCheckoutUrl(
       tenant.partner.checkoutUrl,
       tenant.externalTenantId,

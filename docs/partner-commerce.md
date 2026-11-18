@@ -762,5 +762,5 @@ What shipped, and where it differs from the sketch above.
 - **In-app RPC.** `billing.partnerBalance({ pack? })` returns, for the caller's own organization,
   `{ currency, planName, planCredit, used, remaining, topupRemaining, periodEnd, state, checkoutUrl,
   lowThresholdReached }` in minor units, or `null` for anyone who is not a commerce customer.
-  `remaining` is everything left to spend (plan plus top-up); `checkoutUrl` is the partner's address
+  `remaining` is the plan credit left this period and `topupRemaining` the purchased credit on top of it (sold out is their sum at zero); `state` is `active`, `past_due` or `lapsed`; `checkoutUrl` is the partner's address
   with the customer and pack filled in (`{tenant}` and `{pack}` placeholders, or `?tenant=&pack=`).

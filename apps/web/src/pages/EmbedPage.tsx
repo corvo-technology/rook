@@ -9,6 +9,7 @@ import {
   scheduleEmbedRefresh,
   tellParent,
 } from "../lib/embed";
+import { EmbedSkeleton } from "./shell/embed-tabs";
 
 /**
  * Where the partner's frame lands: trades the one-use code from the address for a session token,
@@ -43,5 +44,5 @@ export function EmbedPage() {
     }
   }, [signedIn, session.data?.user, navigate]);
 
-  return <div className="h-full" data-corvo-app-state="embed-pending" />;
+  return <EmbedSkeleton />;
 }

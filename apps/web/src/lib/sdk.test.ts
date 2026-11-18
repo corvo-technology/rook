@@ -127,3 +127,67 @@ describe("<corvo-assistant>", () => {
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("<corvo-assistant> events from the frame", () => {
+  async function fromFrame(data: unknown, listen: (element: Element) => void) {
+    const element = mount();
+    listen(element);
+    await settle();
+    const frame = frameOf(element);
+    Object.defineProperty(frame, "contentWindow", { value: { postMessage: vi.fn() } });
+    window.dispatchEvent(
+      new MessageEvent("message", {
+        data,
+        origin: ORIGIN,
+        source: frame.contentWindow as unknown as MessageEventSource,
+      }),
+    );
+  }
+
+  it("announces unread and navigate requests with their details", async () => {
+    const unread = vi.fn();
+    const navigate = vi.fn();
+    await fromFrame({ type: "corvo:unread", count: 4.9 }, (el) =>
+      el.addEventListener("corvo-unread", unread),
+    );
+    expect(unread.mock.calls[0]?.[0].detail).toEqual({ count: 4 });
+    await fromFrame({ type: "corvo:navigate", path: "/consultas/gravar" }, (el) =>
+      el.addEventListener("corvo-navigate", navigate),
+    );
+    expect(navigate.mock.calls[0]?.[0].detail).toEqual({ path: "/consultas/gravar" });
+  });
+
+  it("ignores a navigate path that leaves the host's site", async () => {
+    const navigate = vi.fn();
+    await fromFrame({ type: "corvo:navigate", path: "//evil.example" }, (el) =>
+      el.addEventListener("corvo-navigate", navigate),
+    );
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it("opens the checkout in the top window unless the page handles it", async () => {
+    const open = vi.spyOn(window, "open").mockReturnValue(null);
+    const seen = vi.fn();
+    await fromFrame({ type: "corvo:checkout", url: "https://pay.example.test/buy" }, (el) =>
+      el.addEventListener("corvo-checkout", seen),
+    );
+    expect(seen.mock.calls[0]?.[0].detail).toEqual({ url: "https://pay.example.test/buy" });
+    expect(open).toHaveBeenCalledWith(
+      "https://pay.example.test/buy",
+      "_blank",
+      "noopener,noreferrer",
+    );
+
+    open.mockClear();
+    await fromFrame({ type: "corvo:checkout", url: "https://pay.example.test/buy" }, (el) =>
+      el.addEventListener("corvo-checkout", (event) => event.preventDefault()),
+    );
+    expect(open).not.toHaveBeenCalled();
+  });
+
+  it("never opens an address that is not https", async () => {
+    const open = vi.spyOn(window, "open").mockReturnValue(null);
+    await fromFrame({ type: "corvo:checkout", url: "javascript:alert(1)" }, () => undefined);
+    expect(open).not.toHaveBeenCalled();
+  });
+});

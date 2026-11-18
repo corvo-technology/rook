@@ -34,6 +34,7 @@ applyUiAppearance(
     : undefined,
 );
 applyEmbedAccent(initialEmbedLaunch?.accent ?? null);
+if (isEmbedded()) document.documentElement.dataset.embedded = "";
 
 function PerformanceProbe() {
   useLayoutEffect(() => {

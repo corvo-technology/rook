@@ -174,9 +174,50 @@ export function clearEmbedFragment(): void {
   history.replaceState(null, "", location.pathname + location.search);
 }
 
+export type FrameMessage =
+  | { type: "corvo:refresh" | "corvo:expired" | "corvo:ready" }
+  | { type: "corvo:checkout"; url: string }
+  | { type: "corvo:navigate"; path: string }
+  | { type: "corvo:unread"; count: number };
+
 /** Tells the partner's page something about the frame; it never carries the token. */
-export function tellParent(message: { type: "corvo:refresh" | "corvo:expired" | "corvo:ready" }) {
+export function tellParent(message: FrameMessage) {
   if (window.parent !== window) window.parent.postMessage(message, "*");
+}
+
+/** Only a web address a person can pay at. */
+export function isCheckoutUrl(value: string): boolean {
+  try {
+    return new URL(value).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+/** A path inside the partner's product: absolute, and never another site. */
+export function isHostPath(value: string): boolean {
+  return /^\/(?!\/)[^\s\\]*$/.test(value);
+}
+
+/**
+ * Sends the person to the partner's checkout. Framed, the page that embeds Rook decides (its
+ * `corvo-checkout` event, which opens the address in the top window by default); alone, the
+ * address opens in a new tab.
+ */
+export function openCheckout(url: string): void {
+  if (!isCheckoutUrl(url)) return;
+  if (window.parent !== window) tellParent({ type: "corvo:checkout", url });
+  else window.open(url, "_blank", "noopener,noreferrer");
+}
+
+/** Asks the partner's page to open a place in its own product, such as a recording screen. */
+export function openInHost(path: string): void {
+  if (isHostPath(path)) tellParent({ type: "corvo:navigate", path });
+}
+
+/** Tells the partner's page how many things wait, so it can badge its own menu. */
+export function reportUnread(count: number): void {
+  tellParent({ type: "corvo:unread", count: Math.max(0, Math.floor(count)) });
 }
 
 export interface EmbedSession {

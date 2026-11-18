@@ -46,6 +46,7 @@ export function ChannelHeader({
         variant="ghost"
         size="icon"
         aria-label={t`Open navigation`}
+        data-open-navigation
         onClick={onOpenNavigation}
         className="app-no-drag md:hidden"
       >

@@ -191,6 +191,7 @@ describe("the shipped templates", () => {
       expect(template.hide).toEqual(["store"]);
       expect(template.models).toBeUndefined();
       expect(template.chiefName).toMatch(/^Assistente /);
+      expect(template.quickActions?.length).toBeGreaterThanOrEqual(3);
       for (const agent of template.agents) {
         expect(agent.usesConnector).toBe(true);
         expect(agent.starters).toHaveLength(4);

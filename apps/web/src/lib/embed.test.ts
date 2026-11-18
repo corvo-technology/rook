@@ -203,3 +203,42 @@ describe("the partner's own accent", () => {
     expect(primary()).toBe("");
   });
 });
+
+describe("what the frame tells the partner's page", () => {
+  const posted = vi.fn();
+  beforeEach(() => {
+    posted.mockReset();
+    vi.spyOn(window, "parent", "get").mockReturnValue({ postMessage: posted } as never);
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  it("sends the checkout address only when it is https", async () => {
+    const { openCheckout } = await import("./embed");
+    openCheckout("https://pay.example.test/buy?tenant=1");
+    openCheckout("http://pay.example.test");
+    openCheckout("javascript:alert(1)");
+    expect(posted).toHaveBeenCalledTimes(1);
+    expect(posted).toHaveBeenCalledWith(
+      { type: "corvo:checkout", url: "https://pay.example.test/buy?tenant=1" },
+      "*",
+    );
+  });
+
+  it("sends a place in the partner's product only as an absolute path", async () => {
+    const { openInHost } = await import("./embed");
+    openInHost("/consultas/gravar");
+    openInHost("//evil.example");
+    openInHost("https://evil.example");
+    openInHost("consultas");
+    expect(posted).toHaveBeenCalledTimes(1);
+    expect(posted).toHaveBeenCalledWith({ type: "corvo:navigate", path: "/consultas/gravar" }, "*");
+  });
+
+  it("sends the unread count as a whole number, never negative", async () => {
+    const { reportUnread } = await import("./embed");
+    reportUnread(3);
+    reportUnread(-2);
+    expect(posted).toHaveBeenNthCalledWith(1, { type: "corvo:unread", count: 3 }, "*");
+    expect(posted).toHaveBeenNthCalledWith(2, { type: "corvo:unread", count: 0 }, "*");
+  });
+});

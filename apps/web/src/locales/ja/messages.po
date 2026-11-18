@@ -564,6 +564,10 @@ msgstr "{ref} は {lane} のままです。"
 msgid "{remaining} left"
 msgstr "残り{remaining}"
 
+#: src/pages/home/PartnerBalance.tsx
+msgid "{remaining} of {total} this month"
+msgstr "今月 {total} 中 {remaining}"
+
 #: src/components/PlanList.tsx
 #: src/pages/BillingSettingsPanel.tsx
 msgid "{seats, plural, one {# seat} other {# seats}}"
@@ -1067,6 +1071,7 @@ msgstr "エージェントのコンピューター"
 #: src/pages/Shell.tsx
 #: src/pages/shell/channel-members.tsx
 #: src/pages/shell/command-palette.tsx
+#: src/pages/shell/embed-tabs.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/Store.tsx
 msgid "Agents"
@@ -1700,6 +1705,10 @@ msgstr "組み込み"
 msgid "Business"
 msgstr "ビジネス"
 
+#: src/pages/home/PartnerBalance.tsx
+msgid "Buy more"
+msgstr "追加購入"
+
 #: src/pages/Usage.tsx
 msgid "By agent"
 msgstr "エージェント別"
@@ -1851,6 +1860,7 @@ msgid "ChatGPT subscription"
 msgstr "ChatGPTサブスクリプション"
 
 #: src/lib/identity-display.ts
+#: src/pages/shell/embed-tabs.tsx
 msgid "Chats"
 msgstr "チャット"
 
@@ -4268,6 +4278,7 @@ msgid "Hold to talk, release to send"
 msgstr "長押しで話し、離すと送信"
 
 #: src/pages/home/HomeHero.tsx
+#: src/pages/shell/embed-tabs.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Home"
 msgstr "ホーム"
@@ -6272,6 +6283,10 @@ msgstr "ピン留め済み"
 msgid "Pinned messages"
 msgstr "ピン留めしたメッセージ"
 
+#: src/pages/home/PartnerBalance.tsx
+msgid "Plan inactive"
+msgstr "プランが無効です"
+
 #: src/pages/home/HomeComposer.tsx
 msgid "Plan the week"
 msgstr "今週を計画"
@@ -6966,6 +6981,7 @@ msgstr "ルーティン「{0}」"
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/command-palette.tsx
+#: src/pages/shell/embed-tabs.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Routines"
 msgstr "ルーティン"
@@ -7015,6 +7031,10 @@ msgstr "実行中"
 #: src/pages/Workflows.tsx
 msgid "Running"
 msgstr "実行中"
+
+#: src/pages/home/PartnerBalance.tsx
+msgid "Running low"
+msgstr "残りわずか"
 
 #: src/pages/shell/dialogs.tsx
 msgid "Running work stops and nothing starts until you resume."
@@ -7236,6 +7256,7 @@ msgstr "検索中…"
 msgid "Security"
 msgstr "セキュリティ"
 
+#: src/pages/home/EmbeddedHome.tsx
 #: src/pages/HomePage.tsx
 msgid "See all"
 msgstr "すべて表示"
@@ -7883,6 +7904,7 @@ msgstr "タスクの設定"
 
 #: src/pages/Board.tsx
 #: src/pages/shell/command-palette.tsx
+#: src/pages/shell/embed-tabs.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Tasks"
 msgstr "タスク"
@@ -8666,6 +8688,10 @@ msgstr "英数字、_、-のみで512文字以内で入力してください。"
 msgid "Used by {usedBy}"
 msgstr "使用中: {usedBy}"
 
+#: src/pages/home/PartnerBalance.tsx
+msgid "Used up"
+msgstr "使い切りました"
+
 #: src/pages/connections/DatabaseForm.tsx
 msgid "User"
 msgstr "ユーザー"
@@ -8781,6 +8807,7 @@ msgstr "{value} を待機中"
 msgid "Waiting for approval"
 msgstr "承認待ち"
 
+#: src/pages/home/EmbeddedHome.tsx
 #: src/pages/HomePage.tsx
 msgid "Waiting for you"
 msgstr "あなたを待っています"
@@ -8979,6 +9006,7 @@ msgstr "作業中"
 msgid "Working instructions"
 msgstr "作業の指示"
 
+#: src/pages/home/EmbeddedHome.tsx
 #: src/pages/HomePage.tsx
 msgid "Working now"
 msgstr "作業中"

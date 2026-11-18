@@ -43,5 +43,19 @@
     }
   ],
   "hide": ["store"],
-  "chiefName": "Assistente GreenBarber"
+  "chiefName": "Assistente GreenBarber",
+  "quickActions": [
+    {
+      "label": "Quem vem hoje?",
+      "prompt": "Quem vem hoje?"
+    },
+    {
+      "label": "Clientes sumidos há 30+ dias",
+      "prompt": "Quais clientes não voltam há mais de 30 dias?"
+    },
+    {
+      "label": "Faturamento da semana",
+      "prompt": "Qual foi o faturamento desta semana?"
+    }
+  ]
 }

@@ -214,8 +214,34 @@ Instead of redirecting, put the assistant in a frame on your page, signed in as 
    `accent="#e11d48"`): buttons and the current state use it, and the text on it turns light or dark
    to stay readable; leave it out to use the partner template's `accent`, or Rook's own green when
    the template has none. Change any attribute and the frame
-   follows without reloading. The element asks your route for a new code whenever the frame needs one, and fires
-   `corvo-ready` and `corvo-expired` events.
+   follows without reloading. The element asks your route for a new code whenever the frame needs one.
+
+   Inside your product the frame looks like part of it: no workspace switcher, billing or download
+   prompts, a tab bar (Home, Chats, Tasks, Routines, Agents, minus the areas the template hides), the
+   Chief under the template's `chiefName`, your `accent`, and a Home built for your trade: the
+   template's `quickActions`, what the agents are doing, and the month's credit with a **Buy more**
+   button once the commerce balance is on.
+
+   The template's `quickActions` are shortcuts, each either a `prompt` sent to the Chief or an
+   `open` path in your product (for example `{ "label": "Gravar consulta (abrir no Prontu)",
+   "open": "/consultas/gravar" }`); without them the Home shows the first starter of each agent.
+
+   Events on `<corvo-assistant>`:
+
+   | Event | `detail` | What to do |
+   | --- | --- | --- |
+   | `corvo-ready` | none | The customer is signed in; hide your own loading state. |
+   | `corvo-expired` | none | The session could not open; the element asks your route for a new code. |
+   | `corvo-checkout` | `{ url }` | The customer tapped **Buy more**. Call `event.preventDefault()` to open your own checkout; otherwise the `https` address opens in a new tab of your page. |
+   | `corvo-navigate` | `{ path }` | Open that path in your product (a quick action with `open`). Always an absolute path of your site. |
+   | `corvo-unread` | `{ count }` | Messages waiting for the customer; badge your "Assistente" menu, and clear it at 0. |
+
+   ```js
+   const el = document.querySelector("corvo-assistant");
+   el.addEventListener("corvo-navigate", (e) => router.push(e.detail.path));
+   el.addEventListener("corvo-unread", (e) => setBadge(e.detail.count));
+   el.addEventListener("corvo-checkout", (e) => { e.preventDefault(); openCheckout(e.detail.url); });
+   ```
 
 The frame keeps its session token in memory only (a frame cannot keep a cookie on another site),
 so the page never sees it. Any site may frame the page, but a frame without a valid one-use code

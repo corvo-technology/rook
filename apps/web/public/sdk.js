@@ -8,7 +8,10 @@
 // Attributes: session-url (required), theme (light | dark | auto, default auto), locale (en, de,
 // pt-BR, zh-CN, es, fr, ja; default: the visitor's language), accent (your main colour as #rrggbb;
 // default: Rook's own), origin (default: where this file came
-// from). Events: corvo-ready, corvo-expired.
+// from). Events (on the element): corvo-ready, corvo-expired, corvo-checkout { url } (the customer
+// tapped "Buy more": cancel it with preventDefault() to handle it yourself, otherwise the address
+// opens in a new tab of the top window), corvo-navigate { path } (open that place in your product,
+// such as a recording screen), corvo-unread { count } (badge your own menu).
 (() => {
   if (customElements.get("corvo-assistant")) return;
   const scriptOrigin = (() => {
@@ -18,6 +21,15 @@
       return null;
     }
   })();
+
+  const isHttps = (value) => {
+    try {
+      return typeof value === "string" && new URL(value).protocol === "https:";
+    } catch {
+      return false;
+    }
+  };
+  const isPath = (value) => typeof value === "string" && /^\/(?!\/)[^\s\\]*$/.test(value);
 
   class CorvoAssistant extends HTMLElement {
     static get observedAttributes() {
@@ -103,6 +115,23 @@
           if (code) this.send({ type: "corvo:code", code });
           else this.dispatchEvent(new CustomEvent("corvo-expired"));
         });
+      }
+      const data = event.data || {};
+      if (type === "corvo:checkout" && isHttps(data.url)) {
+        const proceed = this.dispatchEvent(
+          new CustomEvent("corvo-checkout", { detail: { url: data.url }, cancelable: true }),
+        );
+        if (proceed) window.open(data.url, "_blank", "noopener,noreferrer");
+      }
+      if (type === "corvo:navigate" && isPath(data.path)) {
+        this.dispatchEvent(new CustomEvent("corvo-navigate", { detail: { path: data.path } }));
+      }
+      if (type === "corvo:unread" && Number.isFinite(data.count)) {
+        this.dispatchEvent(
+          new CustomEvent("corvo-unread", {
+            detail: { count: Math.max(0, Math.floor(data.count)) },
+          }),
+        );
       }
       if (type === "corvo:expired") {
         this.dispatchEvent(new CustomEvent("corvo-expired"));

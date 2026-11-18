@@ -26,3 +26,24 @@ describe("the partner template's Chief name and accent", () => {
     expect(PartnerTemplate.safeParse({ agents: [], logoUrl: "https://x" }).success).toBe(false);
   });
 });
+
+describe("the template's quick actions", () => {
+  it("each send a message or open a place in the partner's product, never both or neither", () => {
+    const ok = [
+      { label: "Hoje", prompt: "Como está hoje?" },
+      { label: "Gravar", open: "/gravar" },
+    ];
+    expect(PartnerTemplate.safeParse({ agents: [], quickActions: ok }).success).toBe(true);
+    for (const bad of [
+      { label: "x" },
+      { label: "x", prompt: "y", open: "/z" },
+      { label: "x", open: "//evil.example" },
+      { label: "x", open: "https://evil.example" },
+    ]) {
+      expect(
+        PartnerTemplate.safeParse({ agents: [], quickActions: [bad] }).success,
+        JSON.stringify(bad),
+      ).toBe(false);
+    }
+  });
+});

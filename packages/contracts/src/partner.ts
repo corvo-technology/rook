@@ -43,6 +43,25 @@ export const PARTNER_HIDEABLE_AREAS = [
 export const PartnerHiddenArea = z.enum(PARTNER_HIDEABLE_AREAS);
 export type PartnerHiddenArea = z.infer<typeof PartnerHiddenArea>;
 
+/** One tappable shortcut on the embedded Home: a message for the Chief, or a place in the partner's product. */
+export const PartnerQuickAction = z
+  .object({
+    label: z.string().trim().min(1).max(60),
+    /** Sent to the Chief when tapped. */
+    prompt: z.string().trim().min(1).max(500).optional(),
+    /** A path in the partner's own product, handed to the page that embeds Rook. */
+    open: z
+      .string()
+      .regex(/^\/(?!\/)[^\s]*$/)
+      .max(200)
+      .optional(),
+  })
+  .strict()
+  .refine((action) => Boolean(action.prompt) !== Boolean(action.open), {
+    message: "Give either a prompt or a path to open",
+  });
+export type PartnerQuickAction = z.infer<typeof PartnerQuickAction>;
+
 /** What every new customer gets, defined once so the partner's calls only name the customer. */
 export const PartnerTemplate = z
   .object({
@@ -54,6 +73,8 @@ export const PartnerTemplate = z
     hide: z.array(PartnerHiddenArea).max(PARTNER_HIDEABLE_AREAS.length).optional(),
     /** What a new customer's Chief is called; the localized default when left out. */
     chiefName: z.string().trim().min(1).max(80).optional(),
+    /** Shortcuts on the embedded Home, in order. */
+    quickActions: z.array(PartnerQuickAction).max(6).optional(),
     /** The partner's main colour as `#rrggbb`, used when the page that embeds Rook passes none. */
     accent: z
       .string()

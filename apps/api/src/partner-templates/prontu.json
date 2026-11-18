@@ -43,5 +43,23 @@
     }
   ],
   "hide": ["store"],
-  "chiefName": "Assistente Prontu"
+  "chiefName": "Assistente Prontu",
+  "quickActions": [
+    {
+      "label": "Resumo da agenda de hoje",
+      "prompt": "Faça o resumo da agenda de hoje"
+    },
+    {
+      "label": "Pacientes para retorno",
+      "prompt": "Quais pacientes estão para retorno?"
+    },
+    {
+      "label": "Gravar consulta (abrir no Prontu)",
+      "open": "/consultas/gravar"
+    },
+    {
+      "label": "Resumo do mês",
+      "prompt": "Faça o resumo do mês"
+    }
+  ]
 }

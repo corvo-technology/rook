@@ -1,4 +1,9 @@
-import type { AgentSkillCatalogEntry, GroupMember, ThreadMessage } from "@corvo/contracts";
+import type {
+  AgentSkillCatalogEntry,
+  GroupMember,
+  RunErrorInfo,
+  ThreadMessage,
+} from "@corvo/contracts";
 import type {
   AgentImportReader,
   ComposerMention,
@@ -71,6 +76,9 @@ export const Composer = memo(function Composer({
   onRetryRun,
   retryingRun,
   runError,
+  runErrorInfo,
+  runBotId,
+  onOpenUsage,
   runErrorId,
   onRunErrorPresented,
   onDismissError,
@@ -112,6 +120,9 @@ export const Composer = memo(function Composer({
   onRetryRun?: () => void;
   retryingRun?: boolean;
   runError: string | null;
+  runErrorInfo?: RunErrorInfo | null;
+  runBotId?: string | null;
+  onOpenUsage?: () => void;
   runErrorId: string | null;
   onRunErrorPresented: (runId: string) => void;
   onDismissError: () => void;
@@ -574,6 +585,9 @@ export const Composer = memo(function Composer({
         imageConfirmation={imageConfirmation}
         onSendAsFile={imageConfirmation && !sending ? () => void send("file") : undefined}
         runError={runError}
+        runErrorInfo={runErrorInfo}
+        runBotId={runBotId}
+        onOpenUsage={onOpenUsage}
         runErrorId={runErrorId}
         onRunErrorPresented={onRunErrorPresented}
         onOpenModels={onOpenModels}

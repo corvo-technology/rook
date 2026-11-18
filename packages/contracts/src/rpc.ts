@@ -931,6 +931,10 @@ export const appContract = {
     boot: oc.input(botId).output(ComputerStatusSchema),
     stop: oc.input(botId).output(ComputerStatusSchema),
     recover: oc.input(botId).output(ComputerUpdateSchema),
+    /** Clears Rook's own temporary files on the computer; the person's files are never touched. */
+    freeSpace: oc
+      .input(botId)
+      .output(z.object({ freedBytes: z.number().int().nonnegative().nullable() })),
     reset: oc.input(botId).output(ComputerStatusSchema),
     update: oc.input(botId).output(ComputerUpdateSchema),
     updates: oc.output(z.array(ComputerUpdateSchema)),

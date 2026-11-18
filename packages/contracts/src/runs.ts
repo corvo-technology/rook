@@ -41,6 +41,38 @@ export const RunStopReasonSchema = z.enum(RUN_STOP_REASONS);
 export type RunStopReason = z.infer<typeof RunStopReasonSchema>;
 
 /**
+ * What a failed run saved beside its English `error`, so each client words the failure in the
+ * viewer's language. Add a code here, map it where the run is finalized, and word it in
+ * `apps/web/src/lib/run-error-copy.ts`. Old runs carry none and keep rendering their text.
+ */
+export const RUN_ERROR_CODES = [
+  "computer_storage_full",
+  "computer_start_failed",
+  "computer_home_lost",
+  "model_provider_error",
+  "model_rate_limited",
+  "monthly_limit",
+  "daily_credit_limit",
+  "paused",
+  "reply_cap",
+  "plan_storage_full",
+  "plan_computer_limit",
+  "no_model_access",
+  "timeout",
+  "turn_stopped",
+  "unknown",
+] as const;
+export const RunErrorCodeSchema = z.enum(RUN_ERROR_CODES);
+export type RunErrorCode = z.infer<typeof RunErrorCodeSchema>;
+
+/** A run error as a code plus flat string params; the English `error` stays as the fallback. */
+export const RunErrorInfoSchema = z.object({
+  code: RunErrorCodeSchema,
+  params: z.record(z.string(), z.string().max(300)).optional(),
+});
+export type RunErrorInfo = z.infer<typeof RunErrorInfoSchema>;
+
+/**
  * Whose problem a failed run is. Every kind except "output" is the user's provider account,
  * key, plan or model choice; "output" is a model that returned nothing usable.
  */
@@ -94,6 +126,7 @@ export const RoutineRunSchema = z.object({
   groupId: Id.nullable(),
   status: RunStatus,
   error: z.string().nullable(),
+  errorInfo: RunErrorInfoSchema.nullish(),
   createdAt: IsoDate,
   startedAt: IsoDate.nullable(),
   completedAt: IsoDate.nullable(),

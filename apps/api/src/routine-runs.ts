@@ -1,5 +1,5 @@
 import type { Actor, RoutineHistory, RoutineRun, RoutineRunCursor } from "@corvo/contracts";
-import { ROUTINE_HISTORY_PAGE_SIZE } from "@corvo/contracts";
+import { ROUTINE_HISTORY_PAGE_SIZE, RunErrorInfoSchema } from "@corvo/contracts";
 import { runFailureError } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
 import { Prisma } from "@corvo/db";
@@ -43,6 +43,7 @@ export async function listRoutineRuns(
       thread: { select: { groupId: true } },
       status: true,
       error: true,
+      errorInfo: true,
       createdAt: true,
       startedAt: true,
       completedAt: true,
@@ -77,10 +78,16 @@ export async function listRoutineRuns(
       groupId: run.thread.groupId,
       status: run.status as RoutineRun["status"],
       error: runFailureError({ type: `run.${run.status}`, payload: { error: run.error } }),
+      ...(run.status === "failed" ? errorInfoField(run.errorInfo) : {}),
       createdAt: run.createdAt.toISOString(),
       startedAt: run.startedAt?.toISOString() ?? null,
       completedAt: run.completedAt?.toISOString() ?? null,
       messageId: replyByRun.get(run.id) ?? null,
     })),
   };
+}
+
+function errorInfoField(value: unknown) {
+  const parsed = RunErrorInfoSchema.safeParse(value);
+  return parsed.success ? { errorInfo: parsed.data } : {};
 }

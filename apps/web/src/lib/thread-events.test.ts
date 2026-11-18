@@ -17,6 +17,7 @@ import {
   screenMissing,
   screenReadLoaded,
   threadRunError,
+  threadRunErrorInfo,
   userHoldsComputerControl,
 } from "./thread-events.js";
 
@@ -1082,6 +1083,31 @@ describe("thread event reduction", () => {
     expect(threadRunError(next, new Set(["other-run"]))).toBe(
       "Provider is not configured: openrouter",
     );
+  });
+
+  it("keeps the code and params a failed run carries beside its error", () => {
+    const failing = threadRun("run-a");
+    const errorInfo = { code: "computer_storage_full" as const, params: { agent: "QA" } };
+    const next = reduceThreadSnapshot(
+      { ...snapshot([]), run: failing },
+      event({
+        type: "run.failed",
+        seq: 11,
+        runId: failing.id,
+        payload: { error: "The computer's storage is full.", errorInfo },
+      }),
+    );
+    expect(threadRunErrorInfo(next)).toEqual(errorInfo);
+    expect(threadRunErrorInfo(next, new Set([failing.id]))).toBeNull();
+  });
+
+  it("has no code for a failure from before codes", () => {
+    const failing = threadRun("run-a");
+    const next = reduceThreadSnapshot(
+      { ...snapshot([]), run: failing },
+      event({ type: "run.failed", seq: 11, runId: failing.id, payload: { error: "boom" } }),
+    );
+    expect(threadRunErrorInfo(next)).toBeNull();
   });
 
   it("keeps the error when a member run fails while another member is still running", () => {

@@ -1056,6 +1056,8 @@ model Run {
   error                String?
   // Set when a rule of the app or a run guard ended the run on purpose (RUN_STOP_REASONS); null otherwise.
   stopReason           String?
+  /// The failure as a code plus params (RunErrorInfo), so clients word it in the viewer's language; null on older runs.
+  errorInfo            Json?
   leaseOwner           String?
   leaseFence           Int               @default(0)
   leaseExpiresAt       DateTime?

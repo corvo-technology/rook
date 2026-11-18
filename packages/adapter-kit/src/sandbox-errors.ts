@@ -62,9 +62,16 @@ export class SandboxStorageFullError extends Error {
   readonly code = "SANDBOX_STORAGE_FULL";
   /** What is using the space, such as ".codex 475 MB, .nvm 229 MB", when it was measured. */
   readonly usage?: string;
-  constructor(options?: { cause?: unknown; usage?: string }) {
+  /** Bytes in use and the disk's size, when they were measured. */
+  readonly disk?: { usedBytes: number; totalBytes: number };
+  constructor(options?: {
+    cause?: unknown;
+    usage?: string;
+    disk?: { usedBytes: number; totalBytes: number };
+  }) {
     super("The computer's storage is full.", options);
     this.name = "SandboxStorageFullError";
     this.usage = options?.usage;
+    this.disk = options?.disk;
   }
 }

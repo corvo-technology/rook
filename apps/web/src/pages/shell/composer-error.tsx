@@ -1,3 +1,4 @@
+import type { RunErrorInfo } from "@corvo/contracts";
 import type { ModelProblemAction, ModelProblemOptions } from "@corvo/core";
 import { isModelRequiredSendError } from "@corvo/core";
 import { Button } from "@corvo/ui-web";
@@ -6,15 +7,21 @@ import { FileIcon, X } from "lucide-react";
 import type { RefObject } from "react";
 import { useEffect, useId, useRef } from "react";
 import { ModelProblemNotice } from "../../components/ModelProblemNotice";
+import { RunErrorCard } from "../../components/RunErrorCard";
+import { computerUpdates } from "../../lib/computer-updates";
 import { webRunProblem } from "../../lib/model-problem";
+import { rpc } from "../../lib/rpc";
 
 export function ComposerError({
   sendError,
   imageConfirmation = false,
   onSendAsFile,
   runError,
+  runErrorInfo,
+  runBotId,
   runErrorId,
   onRunErrorPresented,
+  onOpenUsage,
   onOpenModels,
   onOpenConnections,
   onOpenBotSettings,
@@ -30,7 +37,12 @@ export function ComposerError({
   imageConfirmation?: boolean;
   onSendAsFile?: () => void;
   runError: string | null;
+  /** The code and params the failed run saved; older runs have none and show their text. */
+  runErrorInfo?: RunErrorInfo | null;
+  /** The agent whose run failed, whose computer the card's actions act on. */
+  runBotId?: string | null;
   runErrorId: string | null;
+  onOpenUsage?: () => void;
   onRunErrorPresented: (runId: string) => void;
   onOpenModels: () => void;
   onOpenBotSettings: () => void;
@@ -87,6 +99,54 @@ export function ComposerError({
       : rawRunProblem;
 
   const warning = Boolean(sendError) && imageConfirmation;
+  if (runError && runErrorInfo && !sendError) {
+    return (
+      <div
+        ref={runErrorRef}
+        data-testid="composer-error"
+        className="relative mb-3 animate-in fade-in-0 slide-in-from-bottom-1 duration-150 motion-reduce:animate-none"
+      >
+        <RunErrorCard
+          info={runErrorInfo}
+          raw={runError}
+          authKind={runAuthKind}
+          onRetry={onRetryRun}
+          retrying={retryingRun}
+          onFreeSpace={
+            runBotId
+              ? async () => {
+                  await rpc.computer.freeSpace({ botId: runBotId });
+                }
+              : undefined
+          }
+          onRecover={
+            runBotId
+              ? async () => {
+                  await computerUpdates.start(runBotId, "recover");
+                }
+              : undefined
+          }
+          onOpenUsage={onOpenUsage}
+          onAdjustLimit={onOpenBotSettings}
+          onResume={onResumeSpace}
+          onChangeModel={onOpenModels}
+          onConnect={onOpenConnections}
+        />
+        <button
+          type="button"
+          aria-label={t`Dismiss error`}
+          data-testid="composer-error-dismiss"
+          onClick={() => {
+            onDismissError();
+            window.requestAnimationFrame(() => textareaRef.current?.focus());
+          }}
+          className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+        >
+          <X size={13} strokeWidth={2} />
+        </button>
+      </div>
+    );
+  }
   return sendError || runError ? (
     <div
       ref={runErrorRef}

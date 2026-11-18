@@ -367,6 +367,14 @@ msgstr "{model}は応答できませんでした"
 msgid "{moved, plural, one {# bot now uses the space default.} other {# bots now use the space default.}}"
 msgstr "{moved, plural, one {#個のボットがスペースのデフォルトを使用するようになりました。} other {#個のボットがスペースのデフォルトを使用するようになりました。}}"
 
+#: src/pages/home/HomeHero.tsx
+msgid "{n, plural, one {# agent working} other {# agents working}}"
+msgstr "{n, plural, other {#件のエージェントが作業中}}"
+
+#: src/pages/home/HomeHero.tsx
+msgid "{n, plural, one {# waiting for you} other {# waiting for you}}"
+msgstr "{n, plural, other {#件があなたを待っています}}"
+
 #: src/lib/activity-list-filters.ts
 msgid "{name} asked"
 msgstr "{name}からの質問"
@@ -970,6 +978,10 @@ msgstr "Tregを追加"
 msgid "Add trigger"
 msgstr "トリガーを追加"
 
+#: src/pages/HomePage.tsx
+msgid "Add widget"
+msgstr "ウィジェットを追加"
+
 #: src/lib/server-copy.ts
 msgid "Add: {add}"
 msgstr "追加：{add}"
@@ -1039,7 +1051,7 @@ msgstr "エージェンシー"
 
 #: src/components/WorkingLine.tsx
 #: src/pages/AddStepPanel.tsx
-#: src/pages/HomePage.tsx
+#: src/pages/home/HomeComposer.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Agent"
@@ -1391,7 +1403,7 @@ msgstr "確認"
 msgid "Ask {0} for a new one"
 msgstr "{0} に新しい招待を依頼してください"
 
-#: src/pages/HomePage.tsx
+#: src/pages/home/HomeComposer.tsx
 msgid "Ask {agentName} for something"
 msgstr "{agentName} に頼む"
 
@@ -1821,6 +1833,7 @@ msgstr "キャラクター"
 msgid "Chart failed to render: {error}"
 msgstr "チャートを表示できませんでした: {error}"
 
+#: src/pages/home/HomeHero.tsx
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Chat"
 msgstr "チャット"
@@ -3543,6 +3556,7 @@ msgstr "アカウントをお持ちでないですか？"
 #: src/components/PlanCard.tsx
 #: src/lib/ticket-status.ts
 #: src/pages/ActivityList.tsx
+#: src/pages/HomePage.tsx
 #: src/pages/RoutineCard.tsx
 #: src/pages/RoutineTimeGrid.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
@@ -3949,6 +3963,10 @@ msgstr "フィルター"
 msgid "Finance"
 msgstr "財務"
 
+#: src/pages/home/HomeComposer.tsx
+msgid "Find an agent"
+msgstr "エージェントを探す"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Find models"
@@ -4091,6 +4109,10 @@ msgstr "{forBotName} に {name} の読み取りアクセスを許可しますか
 msgid "Give read access to {name}?"
 msgstr "{name} の読み取りアクセスを許可しますか？"
 
+#: src/pages/home/WorkingFeed.tsx
+msgid "Give work"
+msgstr "仕事を渡す"
+
 #: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Go to…"
@@ -4194,6 +4216,10 @@ msgstr "こんにちは。返信を読み上げるときは、このような声
 msgid "Hi. I'm the Chief. We'll set up your team in about two minutes."
 msgstr "こんにちは、Chief です。2 分ほどでチームを作りましょう。"
 
+#: src/pages/home/HomeCard.tsx
+msgid "Hide"
+msgstr "非表示"
+
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Hide from customers"
 msgstr "顧客に表示しない"
@@ -4233,6 +4259,7 @@ msgstr "長押しで話す"
 msgid "Hold to talk, release to send"
 msgstr "長押しで話し、離すと送信"
 
+#: src/pages/home/HomeHero.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Home"
 msgstr "ホーム"
@@ -5281,10 +5308,12 @@ msgstr "{0}を上へ"
 msgid "Move down"
 msgstr "下へ移動"
 
+#: src/pages/home/HomeCard.tsx
 #: src/pages/Workflows.tsx
 msgid "Move earlier"
 msgstr "前へ移動"
 
+#: src/pages/home/HomeCard.tsx
 #: src/pages/Workflows.tsx
 msgid "Move later"
 msgstr "後ろへ移動"
@@ -5316,6 +5345,10 @@ msgstr "ミュート中"
 #: src/pages/WhatsAppNumbers.tsx
 msgid "My assistant"
 msgstr "自分のアシスタント"
+
+#: src/pages/HomePage.tsx
+msgid "My Home"
+msgstr "マイホーム"
 
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -5495,6 +5528,14 @@ msgstr "次へ"
 msgid "Next page"
 msgstr "次のページ"
 
+#: src/pages/home/HomeHero.tsx
+msgid "next routine in {n, plural, one {# hour} other {# hours}}"
+msgstr "次のルーティンまで{n, plural, other {#時間}}"
+
+#: src/pages/home/HomeHero.tsx
+msgid "next routine in {n} min"
+msgstr "次のルーティンまで{n}分"
+
 #: src/pages/HomePage.tsx
 msgid "Next routines"
 msgstr "次のルーティン"
@@ -5506,6 +5547,10 @@ msgstr "アクセスなし"
 #: src/pages/ActivityList.tsx
 msgid "No activity yet."
 msgstr "まだアクティビティはありません。"
+
+#: src/pages/home/HomeComposer.tsx
+msgid "No agent found"
+msgstr "エージェントが見つかりません"
 
 #: src/pages/shell/routing-line.tsx
 msgid "No answer needed"
@@ -5612,9 +5657,9 @@ msgstr "リモートMCPサーバーが見つかりません"
 msgid "No results"
 msgstr "結果なし"
 
-#: src/pages/HomePage.tsx
-msgid "No routines scheduled"
-msgstr "予定されたルーティンはありません"
+#: src/pages/home/RoutineTimeline.tsx
+msgid "No routines scheduled."
+msgstr "予定されているルーティンはありません。"
 
 #: src/pages/Routines.tsx
 msgid "No routines yet"
@@ -5728,18 +5773,21 @@ msgstr "動作していません"
 msgid "Nothing remembered yet"
 msgstr "記憶はまだありません"
 
-#: src/pages/HomePage.tsx
-msgid "Nothing running"
-msgstr "実行中のものはありません"
+#: src/pages/home/WorkingFeed.tsx
+msgid "Nothing running now."
+msgstr "今は何も実行されていません。"
 
 #: src/pages/ApprovalsInbox.tsx
-#: src/pages/HomePage.tsx
 msgid "Nothing to approve"
 msgstr "承認待ちはありません"
 
 #: src/pages/ImportFlow.tsx
 msgid "Nothing to import in these files."
 msgstr "これらのファイルにインポートできるものはありません。"
+
+#: src/pages/home/WaitingList.tsx
+msgid "Nothing waiting for you now."
+msgstr "今あなたを待っているものはありません。"
 
 #: src/components/InboxBell.tsx
 #: src/pages/shell/bot-panel.tsx
@@ -5800,6 +5848,10 @@ msgstr "スケジュール"
 #: src/lib/cron.ts
 msgid "on day {day} at {time}"
 msgstr "{day}日 {time}"
+
+#: src/pages/home/HomeHero.tsx
+msgid "On open"
+msgstr "起動時"
 
 #. placeholder {0}: preset.time
 #: src/lib/cron.ts
@@ -5885,6 +5937,10 @@ msgstr "外部リンクを開きますか？"
 msgid "Open in full window"
 msgstr "フルウィンドウで開く"
 
+#: src/pages/HomePage.tsx
+msgid "Open in manager"
+msgstr "マネージャーで開く"
+
 #: src/pages/DirectChat.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/channel-header.tsx
@@ -5964,6 +6020,10 @@ msgstr "またはAPIキーを貼り付け"
 #: src/pages/memory-providers/SupermemorySettingsForm.tsx
 msgid "Organization API key"
 msgstr "組織のAPIキー"
+
+#: src/pages/HomePage.tsx
+msgid "Organize"
+msgstr "整理"
 
 #: src/pages/shell/chat-context.tsx
 msgid "Original message unavailable"
@@ -6177,7 +6237,7 @@ msgstr "確認するツールを選択"
 msgid "Pick from role"
 msgstr "役割から選ぶ"
 
-#: src/pages/HomePage.tsx
+#: src/pages/home/ChecklistStrip.tsx
 msgid "Pick up where you left off · {done} of {total}"
 msgstr "前回の続きから · {done}/{total}"
 
@@ -6202,6 +6262,10 @@ msgstr "ピン留め済み"
 #: src/pages/shell/channel-find.tsx
 msgid "Pinned messages"
 msgstr "ピン留めしたメッセージ"
+
+#: src/pages/home/HomeComposer.tsx
+msgid "Plan the week"
+msgstr "今週を計画"
 
 #: src/pages/LocalSpeechSection.tsx
 msgid "Play"
@@ -7176,7 +7240,7 @@ msgid "Self-hosted"
 msgstr "セルフホスト"
 
 #: src/pages/DirectChat.tsx
-#: src/pages/HomePage.tsx
+#: src/pages/home/HomeComposer.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/thread-panel.tsx
 msgid "Send"
@@ -7473,12 +7537,12 @@ msgstr "一部の設定はインポートされません"
 msgid "Something else"
 msgstr "その他"
 
-#. js-lingui-explicit-id
-#: src/lib/run-error-copy.ts
+#: src/pages/PartnershipSettingsPanel.tsx
 msgid "Something went wrong"
 msgstr "問題が発生しました"
 
-#: src/pages/PartnershipSettingsPanel.tsx
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
 msgid "Something went wrong"
 msgstr "問題が発生しました"
 
@@ -7739,6 +7803,14 @@ msgstr "サブスクリプションが必要です"
 #: src/pages/YouMemory.tsx
 msgid "Suggest from what I say"
 msgstr "私の発言から提案"
+
+#: src/pages/home/HomeComposer.tsx
+msgid "Suggestions"
+msgstr "候補"
+
+#: src/pages/home/HomeComposer.tsx
+msgid "Summary of the day"
+msgstr "今日のまとめ"
 
 #: src/lib/cron.ts
 msgid "Sunday"
@@ -8225,6 +8297,10 @@ msgstr "変更後: {toModel}"
 msgid "Today"
 msgstr "今日"
 
+#: src/pages/home/RoutineTimeline.tsx
+msgid "today {time}"
+msgstr "今日 {time}"
+
 #: src/pages/Usage.tsx
 msgid "tokens"
 msgstr "トークン"
@@ -8232,6 +8308,10 @@ msgstr "トークン"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Tokens"
 msgstr "トークン"
+
+#: src/pages/home/RoutineTimeline.tsx
+msgid "tomorrow {time}"
+msgstr "明日 {time}"
 
 #: src/pages/RoutineRunDetail.tsx
 msgid "Took {took}"
@@ -8760,6 +8840,10 @@ msgstr "まず何から取りかかりましょうか？"
 msgid "What does the workspace do? Every agent will know."
 msgstr "このワークスペースは何をしますか?すべてのエージェントが把握します。"
 
+#: src/pages/home/HomeComposer.tsx
+msgid "What is stuck?"
+msgstr "止まっているものは？"
+
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "What result will you demonstrate?"
 msgstr "どんな結果を実演しますか？"
@@ -8845,6 +8929,10 @@ msgstr "{0} を使えるユーザー"
 msgid "Who sees this channel"
 msgstr "このチャンネルを見られる人"
 
+#: src/pages/HomePage.tsx
+msgid "Widget"
+msgstr "ウィジェット"
+
 #: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/WikiPage.tsx
@@ -8870,7 +8958,7 @@ msgstr "ワークフロー"
 msgid "working"
 msgstr "作業中"
 
-#: src/pages/HomePage.tsx
+#: src/pages/home/WorkingFeed.tsx
 msgid "Working"
 msgstr "作業中"
 
@@ -9035,3 +9123,7 @@ msgstr "音声プロバイダーのクレジットが不足しています。"
 #: src/lib/user-error.ts
 msgid "Your voice provider key was rejected."
 msgstr "音声プロバイダーのキーが拒否されました。"
+
+#: src/pages/home/HomeHero.tsx
+msgid "Your workspace is ready. Start here."
+msgstr "ワークスペースの準備ができました。ここから始めましょう。"

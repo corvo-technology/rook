@@ -142,10 +142,10 @@ export const lightTokens = {
   border: "#E7E7E2",
   input: "#D4D4CE",
   ring: "#2FA77A",
-  sidebar: "#F8F8F6",
+  sidebar: "#E9E9E4",
   sidebarForeground: "#0A0A0A",
-  sidebarBorder: "#DEDED8",
-  sidebarAccent: "#EDEDE9",
+  sidebarBorder: "#DCDCD6",
+  sidebarAccent: "#DEDED8",
   sidebarAccentForeground: "#0A0A0A",
   link: "#197B56",
   faviconPlate: "#FFFFFF",
@@ -206,6 +206,25 @@ export const elevation = {
       "0 0 0 1px rgb(255 255 255 / 0.06), 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 12px rgb(0 0 0 / 0.3)",
     overlay:
       "0 0 0 1px rgb(255 255 255 / 0.08), 0 2px 4px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.5), 0 32px 64px rgb(0 0 0 / 0.35)",
+  },
+} as const;
+
+/**
+ * Atmosphere for the Home page: a fine dot grid under the content and the soft rings a focused
+ * prompt and a working agent glow in. Neutral ink only, so no identity color leaks into chrome.
+ */
+export const atmosphere = {
+  light: {
+    dot: "rgb(10 10 10 / 0.1)",
+    glow: "0 0 0 1px rgb(10 10 10 / 0.16), 0 0 0 4px rgb(10 10 10 / 0.05), 0 8px 28px rgb(10 10 10 / 0.08)",
+    pulse: "rgb(10 10 10 / 0.22)",
+    dither: "rgb(10 10 10 / 0.34)",
+  },
+  dark: {
+    dot: "rgb(255 255 255 / 0.09)",
+    glow: "0 0 0 1px rgb(255 255 255 / 0.22), 0 0 0 4px rgb(255 255 255 / 0.06), 0 8px 32px rgb(0 0 0 / 0.5)",
+    pulse: "rgb(255 255 255 / 0.28)",
+    dither: "rgb(255 255 255 / 0.3)",
   },
 } as const;
 
@@ -384,6 +403,10 @@ function renderBlock(selector: string, colorScheme: ResolvedAppearance, palette:
   const extras = [
     cssShadow("--elevation-raised", elevation[colorScheme].raised),
     cssShadow("--elevation-overlay", elevation[colorScheme].overlay),
+    `  --atmosphere-dot: ${atmosphere[colorScheme].dot};`,
+    cssShadow("--atmosphere-glow", atmosphere[colorScheme].glow),
+    `  --atmosphere-pulse: ${atmosphere[colorScheme].pulse};`,
+    `  --atmosphere-dither: ${atmosphere[colorScheme].dither};`,
     `  --radius: ${RADIUS};`,
     `  --motion-fast: ${motion.fast};`,
     `  --motion-panel: ${motion.panel};`,

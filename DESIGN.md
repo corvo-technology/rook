@@ -27,7 +27,7 @@ The dashboard is less dense than a typical operate surface on purpose: the audie
 ## 3. Visual direction and project bans
 
 - Monochrome. Ink and paper do the work; **green is the only identity color**, and bots carry their own colors.
-- Quiet by default: hairline borders, no decorative gradients, no glow, no stock illustration.
+- Quiet by default: hairline borders, no stock illustration. The app is an inset panel (large radius, hairline, soft shadow) on a tinted sidebar. Home alone may use the `atmosphere` tokens: a fine dot grid, a focus glow and a monochrome dithered band at the foot of its cards.
 - Names beat icons. An icon alone is never the only way to learn what something is.
 - Progressive disclosure: advanced controls sit behind "Advanced", never in the first screen.
 - Bans: no hardcoded product hex in components (use semantic tokens); no `[var(--…)]` arbitrary values; no third-party shadcn registries; no font, icon or script loaded from a third party.
@@ -76,7 +76,7 @@ The theme follows the system unless the person chooses one.
 
 ## 8. Motion
 
-Short and functional: 150 to 200 milliseconds for hover and press, `opacity` and `transform` only, and everything guarded by `prefers-reduced-motion`. Nothing animates on first load for decoration.
+Short and functional: 150 to 200 milliseconds for hover and press, `opacity` and `transform` only, and everything guarded by `prefers-reduced-motion`. Home is the one exception: a gentle staggered rise on load, live rows that arrive in place and a soft ring on working agents, all off under reduced motion.
 
 ## 9. Imagery and content
 

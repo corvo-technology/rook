@@ -1,21 +1,43 @@
-import type { Bot, HomeChecklistItemId, PendingApproval } from "@corvo/contracts";
-import { BotAvatar, Button, NativeSelect, NativeSelectOption, Textarea } from "@corvo/ui-web";
+import type { Bot, HomeChecklistItemId } from "@corvo/contracts";
+import {
+  Badge,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowUp, Check } from "lucide-react";
-import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Shimmer } from "../components/ai/primitives";
+import { Plus } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { takeInitialBootstrap } from "../lib/bootstrap";
 import { findFirstBot } from "../lib/first-bot";
 import { daypart, routinesCard, waitingCard, workingCard } from "../lib/home-cards";
-import { firstName } from "../lib/onboarding-rail";
+import { greetingName, statusCounts, timelineGroups } from "../lib/home-live";
+import type { HomeCardId } from "../lib/home-prefs";
+import {
+  moveCard,
+  readHomeLayout,
+  readStartPage,
+  setCardHidden,
+  writeHomeLayout,
+  writeStartPage,
+} from "../lib/home-prefs";
 import { useSpaceQueries } from "../lib/query";
 import { useSpaceHint } from "../lib/space-hints";
 import { useSpaceRpc } from "../lib/space-rpc";
 import { usePendingApprovals } from "../lib/use-pending-approvals";
 import { errorText } from "../lib/user-error";
+import { ChecklistStrip } from "./home/ChecklistStrip";
+import { cardLink, HomeCard } from "./home/HomeCard";
+import { HomeComposer } from "./home/HomeComposer";
+import { HomeHero } from "./home/HomeHero";
+import { useNow } from "./home/hooks";
+import { RoutineTimeline } from "./home/RoutineTimeline";
+import { WaitingList } from "./home/WaitingList";
+import { WorkingFeed } from "./home/WorkingFeed";
+import "./home/home.css";
 
 const NO_BOTS: Bot[] = [];
 const DAY_MS = 24 * 60 * 60_000;
@@ -35,60 +57,21 @@ function checklistTarget(id: HomeChecklistItemId, chiefId: string | null): strin
   }
 }
 
-function HomeCardFrame({
-  title,
-  to,
-  total,
-  testId,
-  children,
-}: {
-  title: string;
-  to: string;
-  total: number;
-  testId: string;
-  children: ReactNode;
-}) {
-  const { t } = useLingui();
-  return (
-    <section data-testid={testId} className="rounded-2xl border border-border bg-card p-4">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <h2 className="text-sm font-medium">{title}</h2>
-        {total > 0 ? (
-          <Link
-            to={to}
-            className="rounded text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            {t`See all`}
-          </Link>
-        ) : null}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-const rowClass =
-  "flex w-full min-w-0 items-center gap-2 rounded-lg px-2 py-1.5 text-start text-sm outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring";
-
-function Empty({ children }: { children: ReactNode }) {
-  return <p className="px-2 py-1.5 text-sm text-muted-foreground">{children}</p>;
-}
-
-function waitingText(item: PendingApproval): string {
-  return item.block.kind === "ask" ? item.block.text : "";
-}
+const rise = (i: number) => ({ "--rk-i": i }) as React.CSSProperties;
 
 /**
- * Where the app opens: a greeting, what is left of getting started, a line to ask the Chief (or
- * another agent) for something, and three live cards: what waits on the person, who is working
- * and what runs next.
+ * Where the app opens: a greeting with one live line of what the team is doing, a prompt to give
+ * work to the Chief (or another agent), and live activity: who is working, what waits on the
+ * person and what runs next.
  */
 export function HomePage() {
   const { t, i18n } = useLingui();
   const navigate = useNavigate();
   const queries = useSpaceQueries();
   const rpc = useSpaceRpc();
-  const [now] = useState(() => new Date());
+  const [opened] = useState(() => new Date());
+  const tick = useNow(30_000);
+  const now = useMemo(() => new Date(Math.max(tick, opened.getTime())), [tick, opened]);
 
   const bootstrap = useQuery({
     queryKey: queries.bootstrap.queryKey({ input: {} }),
@@ -103,9 +86,16 @@ export function HomePage() {
     ...queries.runs.list.queryOptions({ input: { filter: "active" } }),
     refetchInterval: POLL_MS,
   });
+  const dayStart = useMemo(
+    () => new Date(opened.getFullYear(), opened.getMonth(), opened.getDate()),
+    [opened],
+  );
   const calendar = useQuery({
     ...queries.routines.calendar.queryOptions({
-      input: { from: now.toISOString(), to: new Date(now.getTime() + 7 * DAY_MS).toISOString() },
+      input: {
+        from: dayStart.toISOString(),
+        to: new Date(dayStart.getTime() + 2 * DAY_MS).toISOString(),
+      },
     }),
     refetchInterval: POLL_MS * 4,
   });
@@ -123,13 +113,18 @@ export function HomePage() {
 
   const waiting = useMemo(() => waitingCard(approvals.data ?? []), [approvals.data]);
   const working = useMemo(() => workingCard(runs.data?.runs ?? []), [runs.data]);
-  const next = useMemo(
-    () => routinesCard(calendar.data?.occurrences ?? [], now),
-    [calendar.data, now],
-  );
+  const occurrences = calendar.data?.occurrences;
+  const timeline = useMemo(() => timelineGroups(occurrences ?? [], now), [occurrences, now]);
+  const upcoming = useMemo(() => routinesCard(occurrences ?? [], now), [occurrences, now]);
+  const status = statusCounts({
+    workingTotal: working.total,
+    waitingTotal: waiting.total,
+    upcoming: upcoming.items,
+    now,
+  });
 
-  const name = firstName(bootstrap?.me.name);
-  const part = daypart(now.getHours());
+  const name = greetingName({ name: bootstrap?.me.name, email: bootstrap?.me.email });
+  const part = daypart(opened.getHours());
   const greeting = name
     ? part === "morning"
       ? t`Good morning, ${name}`
@@ -147,6 +142,7 @@ export function HomePage() {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const input = useRef<HTMLTextAreaElement>(null);
 
   async function send() {
     const message = text.trim();
@@ -168,8 +164,6 @@ export function HomePage() {
   }
 
   const list = checklist.data;
-  const { done, total } = list ?? { done: 0, total: 0 };
-  const agentName = target?.name ?? "";
   const chiefLink = list?.chiefId ?? chief?.id ?? null;
   const checklistLabels: Record<HomeChecklistItemId, string> = {
     talk: t`Talk to an agent`,
@@ -178,196 +172,178 @@ export function HomePage() {
     invite: t`Invite someone`,
   };
 
+  const userId = bootstrap?.me.userId;
+  const [start, setStart] = useState(() => readStartPage(userId));
+  const [layout, setLayout] = useState(() => readHomeLayout(userId));
+  const [organizing, setOrganizing] = useState(false);
+  // The person is known once the bootstrap lands; read their choices then.
+  useEffect(() => {
+    setStart(readStartPage(userId));
+    setLayout(readHomeLayout(userId));
+  }, [userId]);
+  const update = (next: typeof layout) => {
+    setLayout(next);
+    writeHomeLayout(userId, next);
+  };
+  const shown = layout.order.filter((id) => !layout.hidden.includes(id));
+  const cardTitles: Record<HomeCardId, string> = {
+    waiting: t`Waiting for you`,
+    working: t`Working now`,
+    routines: t`Next routines`,
+  };
+  const body: Record<HomeCardId, React.ReactNode> = {
+    waiting: <WaitingList items={waiting.items} />,
+    working: (
+      <WorkingFeed runs={working.items} bots={bots} onGiveWork={() => input.current?.focus()} />
+    ),
+    routines: (
+      <RoutineTimeline timeline={timeline} bots={bots} now={now} locale={i18n.locale || "en"} />
+    ),
+  };
+  const action: Partial<Record<HomeCardId, React.ReactNode>> = {
+    waiting:
+      waiting.total > 0 ? (
+        <button type="button" className={cardLink} onClick={() => navigate("/app/approvals")}>
+          {t`See all`}
+        </button>
+      ) : null,
+    working:
+      working.total > 0 ? (
+        <button type="button" className={cardLink} onClick={() => navigate("/app/activity")}>
+          {t`Open in manager`}
+        </button>
+      ) : null,
+    routines:
+      timeline.today.length + timeline.tomorrow.length > 0 ? (
+        <button type="button" className={cardLink} onClick={() => navigate("/app/routines")}>
+          {t`See all`}
+        </button>
+      ) : null,
+  };
+  const testIds: Record<HomeCardId, string> = {
+    waiting: "home-waiting",
+    working: "home-working",
+    routines: "home-routines",
+  };
+
   return (
     <div
       data-testid="home-page"
-      className="h-full min-h-0 overflow-y-auto bg-background text-foreground"
+      className="relative h-full min-h-0 overflow-y-auto bg-background text-foreground"
     >
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-10">
-        <h1 className="text-[32px] font-medium tracking-tight">{greeting}</h1>
+      <div
+        aria-hidden
+        className="rk-home-dots pointer-events-none absolute inset-x-0 top-0 h-100"
+      />
+      <div className="relative mx-auto flex w-full max-w-5xl flex-col gap-8 px-5 py-10 sm:px-10 sm:py-14">
+        <div className="rk-home-rise" style={rise(0)}>
+          <HomeHero
+            greeting={greeting}
+            status={status}
+            start={start}
+            onStart={(page) => {
+              setStart(page);
+              writeStartPage(userId, page);
+            }}
+          />
+        </div>
 
         {list ? (
-          <section
-            data-testid="home-checklist"
-            className="rounded-2xl border border-border bg-card p-4"
-          >
-            <h2 className="mb-2 text-sm font-medium">
-              {t`Pick up where you left off · ${done} of ${total}`}
-            </h2>
-            <ul className="flex flex-col">
-              {list.items.map((item) => (
-                <li key={item.id}>
-                  <Link to={checklistTarget(item.id, chiefLink)} className={rowClass}>
-                    <span
-                      aria-hidden
-                      className={`grid size-4 shrink-0 place-items-center rounded-full border ${
-                        item.done
-                          ? "border-foreground bg-foreground text-background"
-                          : "border-border"
-                      }`}
-                    >
-                      {item.done ? <Check className="size-3" /> : null}
-                    </span>
-                    <span className={item.done ? "text-muted-foreground line-through" : ""}>
-                      {checklistLabels[item.id]}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
+          <div className="rk-home-rise" style={rise(1)}>
+            <ChecklistStrip
+              list={list}
+              chief={chief}
+              labels={checklistLabels}
+              target={(id) => checklistTarget(id, chiefLink)}
+            />
+          </div>
         ) : null}
 
         {target ? (
-          <form
-            data-testid="home-composer"
-            className="rounded-2xl border border-border bg-card p-3 focus-within:border-ring"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void send();
-            }}
-          >
-            <Textarea
-              aria-label={t`Ask ${agentName} for something`}
-              placeholder={t`Ask ${agentName} for something`}
-              rows={2}
-              value={text}
-              disabled={sending}
-              className="resize-none border-0 bg-transparent shadow-none focus-visible:ring-0"
-              onChange={(event) => setText(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
-                  event.preventDefault();
-                  void send();
-                }
-              }}
+          <div className="rk-home-rise" style={rise(2)}>
+            <HomeComposer
+              bots={bots}
+              target={target}
+              onTarget={setAgentId}
+              text={text}
+              onText={setText}
+              sending={sending}
+              error={error}
+              onSend={() => void send()}
+              inputRef={input}
             />
-            <div className="mt-2 flex items-center justify-between gap-2">
-              {bots.length > 1 ? (
-                <NativeSelect
-                  size="sm"
-                  aria-label={t`Agent`}
-                  value={target.id}
-                  onChange={(event) => setAgentId(event.target.value)}
-                >
-                  {bots.map((bot) => (
-                    <NativeSelectOption key={bot.id} value={bot.id}>
-                      {bot.name}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
-              ) : (
-                <span />
-              )}
-              <Button
-                type="submit"
-                size="icon"
-                aria-label={t`Send`}
-                disabled={sending || text.trim().length === 0}
-              >
-                <ArrowUp aria-hidden />
-              </Button>
-            </div>
-            {error ? (
-              <p role="alert" className="mt-2 text-sm text-destructive">
-                {error}
-              </p>
-            ) : null}
-          </form>
+          </div>
         ) : null}
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <HomeCardFrame
-            title={t`Waiting for you`}
-            to="/app/approvals"
-            total={waiting.total}
-            testId="home-waiting"
-          >
-            {waiting.items.length === 0 ? (
-              <Empty>{t`Nothing to approve`}</Empty>
-            ) : (
-              <ul className="flex flex-col">
-                {waiting.items.map((item) => (
-                  <li
-                    key={`${item.messageId}:${item.block.kind === "ask" ? item.block.approvalEffectId : ""}`}
-                  >
-                    <button
-                      type="button"
-                      className={rowClass}
-                      onClick={() =>
-                        navigate(item.groupId ? `/app/g/${item.groupId}` : `/app/${item.botId}`)
-                      }
+        <section className="rk-home-rise flex flex-col gap-4" style={rise(3)}>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-2xl font-semibold tracking-tight">{t`My Home`}</h2>
+            <div className="flex items-center rounded-full border border-border bg-card p-0.5 text-sm">
+              <button
+                type="button"
+                aria-pressed={organizing}
+                data-testid="home-organize"
+                className={`rounded-full px-3 py-1 outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  organizing ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                }`}
+                onClick={() => setOrganizing((value) => !value)}
+              >
+                {organizing ? t`Done` : t`Organize`}
+              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  disabled={layout.hidden.length === 0}
+                  aria-label={t`Add widget`}
+                  className="flex items-center gap-1 rounded-full px-3 py-1 outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40"
+                >
+                  <Plus aria-hidden className="size-3.5" />
+                  {t`Widget`}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {layout.hidden.map((id) => (
+                    <DropdownMenuItem
+                      key={id}
+                      onClick={() => update(setCardHidden(layout, id, false))}
                     >
-                      <BotAvatar color={item.botColor} identity={item.botId} size={20} />
-                      <span className="min-w-0 truncate">
-                        <span className="font-medium">{item.botName}</span>
-                        <span className="text-muted-foreground"> {waitingText(item)}</span>
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </HomeCardFrame>
-
-          <HomeCardFrame
-            title={t`Working now`}
-            to="/app/activity"
-            total={working.total}
-            testId="home-working"
-          >
-            {working.items.length === 0 ? (
-              <Empty>{t`Nothing running`}</Empty>
-            ) : (
-              <ul className="flex flex-col">
-                {working.items.map((run) => (
-                  <li key={run.runId}>
-                    <button
-                      type="button"
-                      className={rowClass}
-                      onClick={() =>
-                        navigate(run.groupId ? `/app/g/${run.groupId}` : `/app/${run.botId}`)
-                      }
-                    >
-                      <span className="min-w-0 truncate">
-                        <span className="font-medium">{run.botName}</span>{" "}
-                        <Shimmer>{run.promptSnippet || t`Working`}</Shimmer>
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </HomeCardFrame>
-
-          <HomeCardFrame
-            title={t`Next routines`}
-            to="/app/routines"
-            total={next.total}
-            testId="home-routines"
-          >
-            {next.items.length === 0 ? (
-              <Empty>{t`No routines scheduled`}</Empty>
-            ) : (
-              <ul className="flex flex-col">
-                {next.items.map((entry) => (
-                  <li key={`${entry.routineId}:${entry.at}`}>
-                    <Link to="/app/routines" className={rowClass}>
-                      <span className="min-w-0 flex-1 truncate">{entry.name}</span>
-                      <span className="shrink-0 text-xs text-muted-foreground">
-                        {new Date(entry.at).toLocaleString(i18n.locale || "en", {
-                          weekday: "short",
-                          hour: "numeric",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </HomeCardFrame>
-        </div>
+                      {cardTitles[id]}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+          <div className="grid items-stretch gap-4 md:grid-cols-2">
+            {shown.map((id, index) => (
+              <div
+                key={id}
+                className={`rk-home-rise flex flex-col ${id === "routines" ? "md:col-span-2" : ""}`}
+                style={rise(4 + index)}
+              >
+                <HomeCard
+                  className="flex-1"
+                  testId={testIds[id]}
+                  title={
+                    <>
+                      {cardTitles[id]}
+                      {id === "waiting" && waiting.total > 0 ? (
+                        <Badge className="bg-brand font-mono text-brand-foreground tabular-nums">
+                          {waiting.total}
+                        </Badge>
+                      ) : null}
+                    </>
+                  }
+                  action={action[id]}
+                  band={id !== "routines"}
+                  organizing={organizing}
+                  onMove={(by) => update(moveCard(layout, id, by))}
+                  onHide={() => update(setCardHidden(layout, id, true))}
+                >
+                  {body[id]}
+                </HomeCard>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     </div>
   );

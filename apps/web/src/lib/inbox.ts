@@ -26,6 +26,7 @@ export function groupInbox(items: readonly AppNotification[]): InboxGroup[] {
 /** Where an entry leads: its channel, agent chat or direct conversation, at the message when known. */
 export function inboxPath(item: AppNotification): string | null {
   const params = item.messageId ? `?m=${encodeURIComponent(item.messageId)}` : "";
+  if (item.code === "storage_near_limit") return "/app/usage";
   if (item.kind === "dm") return item.actor ? `/app/dm/${item.actor.userId}` : null;
   if (item.groupId) return `/app/g/${item.groupId}${params}`;
   if (item.botId) return `/app/${item.botId}${params}`;

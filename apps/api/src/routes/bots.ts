@@ -61,7 +61,8 @@ function mapSpaceLifecycleError(error: unknown): unknown {
   if (error instanceof SpaceDeletionInProgressError) {
     return new ORPCError("CONFLICT", { message: error.message });
   }
-  if (error instanceof ComputerLimitError) {
+  // A plan's limit keeps its error so the client can offer the upgrade.
+  if (error instanceof ComputerLimitError && !error.plan) {
     return new ORPCError("BAD_REQUEST", { message: error.message });
   }
   return error;

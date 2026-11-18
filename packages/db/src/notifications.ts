@@ -280,6 +280,8 @@ export async function describeNotifications(
       actor,
       preview: preview || null,
       detail: row.detail,
+      code: row.code === "storage_near_limit" ? row.code : null,
+      params: asParams(row.params),
       read: row.readAt !== null,
       createdAt: row.createdAt.toISOString(),
     };
@@ -308,4 +310,13 @@ export async function markAllNotificationsRead(
   input: { spaceId: string; userId: string },
 ): Promise<void> {
   await markNotificationsRead(client, input);
+}
+
+function asParams(value: unknown): Record<string, string> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return Object.fromEntries(
+    Object.entries(value).filter(
+      (entry): entry is [string, string] => typeof entry[1] === "string",
+    ),
+  );
 }

@@ -179,6 +179,7 @@ import { ModelHeadersSchema } from "./model-headers.js";
 import { ModelRoleSchema, ModelRoleUpdateSchema, ModelRoleViewSchema } from "./model-roles.js";
 import { NotificationListSchema, PresenceSchema } from "./notifications.js";
 import { PartnerAccountSchema, PartnerLimitsInput, PartnerTemplate } from "./partner.js";
+import { PlanIdSchema, PlanOverrideSchema, PlanUsageSchema } from "./plans.js";
 import { MessageReactionSchema } from "./reactions.js";
 import { RoutineWatchSchema } from "./routine-watch.js";
 import {
@@ -1445,6 +1446,18 @@ export const appContract = {
       ),
     ),
   },
+  /** Custom limits for one organization: only for the people the deployment names. */
+  platform: {
+    limits: {
+      get: oc
+        .input(z.object({ organizationId: Id }))
+        .output(z.object({ override: PlanOverrideSchema, plan: PlanIdSchema.nullable() })),
+      /** What is set replaces the plan's value; setting nothing clears the override. */
+      set: oc
+        .input(z.object({ organizationId: Id, override: PlanOverrideSchema }))
+        .output(z.object({ ok: z.literal(true) })),
+    },
+  },
   /** Running a partner programme: only for the people the deployment names. */
   partner: {
     status: oc.output(z.object({ partner: PartnerAccountSchema.nullable() })),
@@ -1621,6 +1634,8 @@ export const appContract = {
     list: oc.output(z.array(UsageRecordSchema)),
     summary: oc.output(UsageSummarySchema),
     overview: oc.input(z.object({ period: UsagePeriodSchema })).output(UsageOverviewSchema),
+    /** The organization's plan limits and use; null where the deployment has no plans. */
+    plan: oc.output(PlanUsageSchema.nullable()),
     subscriptions: oc.output(z.array(SubscriptionQuotaSchema)),
     /** This UTC month's tokens for each bot of the space that has a monthly limit. */
     budgets: oc.output(z.array(BotBudgetSchema)),

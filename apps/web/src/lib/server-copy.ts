@@ -1,4 +1,4 @@
-import type { ApprovalCardCode, MetaCode } from "@corvo/contracts";
+import type { ApprovalCardCode, MetaCode, NotificationCode } from "@corvo/contracts";
 import { i18n } from "@lingui/core";
 import { t } from "@lingui/core/macro";
 
@@ -164,5 +164,15 @@ export function metaCopy(code: MetaCode, p: Params): string | undefined {
       return t`This computer's saved files couldn't be found; it started fresh.`;
     case "routine_check_paused":
       return t`The ${name} routine is paused because its change check failed: ${reason}`;
+  }
+}
+
+/** The line an inbox alert shows, worded in the viewer's language from its code. */
+export function notificationCopy(code: NotificationCode, p: Params): string {
+  switch (code) {
+    case "storage_near_limit": {
+      const percent = p.percent ?? "80";
+      return t`Storage is ${percent}% full`;
+    }
   }
 }

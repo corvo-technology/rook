@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, readdir, readFile, rm, stat, utimes, writeFile } from "
 import { tmpdir } from "node:os";
 import path from "node:path";
 import type { PortableFile, SandboxProvider, StreamedPortableFile } from "@corvo/adapter-kit";
-import { WorkspaceTooLargeError } from "@corvo/adapter-kit";
+import { StorageQuotaError, WorkspaceTooLargeError } from "@corvo/adapter-kit";
 import type { PrismaClient, SpaceKeyRecord, SpaceKeyStore } from "@corvo/db";
 import { ContentDecryptionError, ContentKeyRing, LocalKeyProvider } from "@corvo/db";
 import { afterEach, describe, expect, it } from "vitest";
@@ -149,6 +149,33 @@ async function exported(store: LocalAgentHomeStore, homeKey: string) {
 }
 
 describe("ObjectAgentHomeStore", () => {
+  it("keeps the saved revision and the files when the plan has no room, and saves once there is", async () => {
+    const { rows, storage, records, root } = await setup();
+    let full = true;
+    const metered = {
+      put: async (key: string, body: AsyncIterable<Uint8Array>) => {
+        if (full) throw new StorageQuotaError(100, 100);
+        return storage.put(key, body);
+      },
+      get: (key: string) => storage.get(key),
+      list: (prefix: string) => storage.list(prefix),
+      delete: (keys: readonly string[]) => storage.delete(keys),
+    };
+    const store = new ObjectAgentHomeStore(root, metered, records);
+    const first = await store
+      .commit("bot-1", await staged({ "a.txt": "kept" }), context)
+      .catch((e) => e);
+    expect(first).toBeInstanceOf(StorageQuotaError);
+    // Nothing was stored or advanced, and nothing was deleted.
+    expect(storage.objects.size).toBe(0);
+    expect(rows[0]!.homeStorageRevision).toBeNull();
+    // The next save, with space freed, goes through.
+    full = false;
+    const revision = await store.commit("bot-1", await staged({ "a.txt": "kept" }), context);
+    expect(rows[0]!.homeStorageRevision).toBe(revision);
+    expect(storage.objects.size).toBe(1);
+  });
+
   it("stores each revision as one encrypted object under an opaque key", async () => {
     const { store, storage, rows } = await setup(["bot-named-ada"]);
     const revision = await store.commit(

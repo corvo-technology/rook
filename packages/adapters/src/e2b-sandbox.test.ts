@@ -256,6 +256,24 @@ describe("E2B computer backend", () => {
     );
   });
 
+  it("starts the size the plan asks for, over the provider's own default", async () => {
+    const sdk: E2BSandboxSdk = {
+      create: vi.fn(async () => ({ sandboxId: "planned" }) as never),
+      connect: vi.fn(),
+      pause: vi.fn(),
+      kill: vi.fn(async () => true),
+    };
+    const provider = new E2BSandboxProvider("test-key", sdk, "small");
+    await provider.provision(
+      { botId: "bot-1", homePath: "/unused", computerSize: "medium" },
+      context,
+    );
+    expect(sdk.create).toHaveBeenCalledWith(
+      E2B_COMPUTER_SIZES.medium.template,
+      e2bCreateOptions("bot-1", "test-key"),
+    );
+  });
+
   it("keeps the legacy template working as the small size", async () => {
     const missing = Object.assign(new SandboxError("404: template not found"), { statusCode: 404 });
     const sdk: E2BSandboxSdk = {

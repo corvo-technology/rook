@@ -2,10 +2,11 @@ import {
   SandboxDamagedError,
   SandboxRateLimitError,
   SandboxUnavailableError,
+  StorageQuotaError,
   VoiceAccountError,
 } from "@corvo/adapter-kit";
 import { MODEL_IMAGE_INPUT_ERROR } from "@corvo/core";
-import { IsolationError } from "@corvo/db";
+import { ComputerLimitError, IsolationError } from "@corvo/db";
 import { createLogger, createTestSink, installLogger } from "@corvo/logging";
 import { ORPCError, onError, os } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
@@ -59,6 +60,30 @@ describe("logUnexpectedRpcError", () => {
         cause: { message: "connect ECONNREFUSED 127.0.0.1:7091" },
       },
     });
+  });
+
+  it("returns a full plan as a coded 402 the client words, not a server error", () => {
+    const sink = createTestSink();
+    installLogger(createLogger({ service: "corvo-api", sinks: [sink] }));
+    const thrown = (error: unknown) => {
+      try {
+        handleRpcError(error, ["attachments", "upload"]);
+      } catch (failure) {
+        return failure;
+      }
+    };
+
+    expect(thrown(new StorageQuotaError(100, 100))).toMatchObject({
+      code: "PLAN_STORAGE_FULL",
+      status: 402,
+    });
+    expect(thrown(new ComputerLimitError(1, "personal"))).toMatchObject({
+      code: "PLAN_COMPUTER_LIMIT",
+      status: 402,
+    });
+    expect(sink.events.every((event) => event.level !== "error")).toBe(true);
+    // A cap with no plan behind it has nothing to upgrade, so it keeps its own handling.
+    expect(thrown(new ComputerLimitError(1))).toBeUndefined();
   });
 
   it("returns a provider rate limit as too many requests without an error report", () => {

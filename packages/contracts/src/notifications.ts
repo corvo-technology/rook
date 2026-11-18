@@ -27,6 +27,11 @@ export function unreadBadgeText(count: number): string {
   return count > UNREAD_COUNT_DISPLAY_MAX ? `${UNREAD_COUNT_DISPLAY_MAX}+` : String(count);
 }
 
+/** Alerts the client words itself in the member's language; `detail` is the English fallback. */
+export const NOTIFICATION_CODES = ["storage_near_limit"] as const;
+export const NotificationCodeSchema = z.enum(NOTIFICATION_CODES);
+export type NotificationCode = z.infer<typeof NotificationCodeSchema>;
+
 export const NotificationSchema = z.object({
   id: Id,
   kind: NotificationKindSchema,
@@ -43,6 +48,9 @@ export const NotificationSchema = z.object({
   preview: z.string().nullable(),
   /** A product-authored line for kinds without a message. */
   detail: z.string().nullable(),
+  /** What `detail` says, as a code and params the client words in the member's language. */
+  code: NotificationCodeSchema.nullable().optional(),
+  params: z.record(z.string(), z.string()).nullable().optional(),
   read: z.boolean(),
   createdAt: z.string(),
 });

@@ -224,6 +224,14 @@ msgstr "{agents, plural, one {# agent} other {# agents}}"
 msgid "{amount} / {period}"
 msgstr "{amount} / {period}"
 
+#: src/lib/plan-view.ts
+msgid "{amount} per month"
+msgstr "{amount} per month"
+
+#: src/lib/plan-view.ts
+msgid "{amount} per year"
+msgstr "{amount} per year"
+
 #: src/pages/shell/dialogs.tsx
 msgid "{botCount, plural, one {Delete {name} and its # bot?} other {Delete {name} and its # bots?}}"
 msgstr "{botCount, plural, one {Delete {name} and its # bot?} other {Delete {name} and its # bots?}}"
@@ -235,6 +243,14 @@ msgstr "{botName}’s computer"
 #: src/pages/shell/bot-credentials.tsx
 msgid "{commandVariable} is reserved and cannot be used as a command variable. Choose another name."
 msgstr "{commandVariable} is reserved and cannot be used as a command variable. Choose another name."
+
+#: src/components/PlanList.tsx
+msgid "{computers, plural, one {# computer} other {# computers}}"
+msgstr "{computers, plural, one {# computer} other {# computers}}"
+
+#: src/pages/usage/plan-usage.tsx
+msgid "{computersUsed} of {computersLimit}"
+msgstr "{computersUsed} of {computersLimit}"
 
 #: src/pages/WhatsAppNumbers.tsx
 msgid "{count, plural, one {# number} other {# numbers}}"
@@ -291,6 +307,10 @@ msgstr "{days}d ago"
 #: src/components/ApproveAllBar.tsx
 msgid "{failedCount} could not be approved"
 msgstr "{failedCount} could not be approved"
+
+#: src/components/PlanList.tsx
+msgid "{files} of files"
+msgstr "{files} of files"
 
 #: src/components/markdown-copy.tsx
 msgid "{from}–{to} of {total} rows"
@@ -382,6 +402,10 @@ msgstr "{name} stopped"
 #: src/pages/shell/sidebar-team.tsx
 msgid "{people, plural, one {# person} other {# people}}"
 msgstr "{people, plural, one {# person} other {# people}}"
+
+#: src/pages/usage/plan-usage.tsx
+msgid "{peopleUsed} of {peopleMax}"
+msgstr "{peopleUsed} of {peopleMax}"
 
 #: src/components/SubscriptionRings.tsx
 msgid "{percent}% used"
@@ -517,9 +541,14 @@ msgstr "{ref} stays in {lane}."
 msgid "{remaining} left"
 msgstr "{remaining} left"
 
+#: src/components/PlanList.tsx
 #: src/pages/BillingSettingsPanel.tsx
 msgid "{seats, plural, one {# seat} other {# seats}}"
 msgstr "{seats, plural, one {# seat} other {# seats}}"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "{seatsUsed} of {seatsMax} people"
+msgstr "{seatsUsed} of {seatsMax} people"
 
 #: src/pages/MembersSettingsPanel.tsx
 msgid "{sent, plural, one {# invitation sent} other {# invitations sent}}"
@@ -528,6 +557,10 @@ msgstr "{sent, plural, one {# invitation sent} other {# invitations sent}}"
 #: src/components/ArtifactFileCard.tsx
 msgid "{size} B"
 msgstr "{size} B"
+
+#: src/components/PlanList.tsx
+msgid "{size} computer"
+msgstr "{size} computer"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -575,6 +608,7 @@ msgid "{total} members"
 msgstr "{total} members"
 
 #: src/pages/Usage.tsx
+#: src/pages/usage/plan-usage.tsx
 msgid "{used} of {limit}"
 msgstr "{used} of {limit}"
 
@@ -1986,6 +2020,10 @@ msgstr "Comment"
 msgid "Compact"
 msgstr "Compact"
 
+#: src/lib/plan-view.ts
+msgid "Company"
+msgstr "Company"
+
 #: src/pages/PartnershipSettingsPanel.tsx
 msgid "Company name"
 msgstr "Company name"
@@ -2041,6 +2079,7 @@ msgid "Computer is stopped"
 msgstr "Computer is stopped"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/usage/plan-usage.tsx
 msgid "Computers"
 msgstr "Computers"
 
@@ -3446,6 +3485,10 @@ msgstr "Each name can be used once."
 msgid "Each one checks itself off when you do it."
 msgstr "Each one checks itself off when you do it."
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Each seat above {included} costs {extraCostPrice}"
+msgstr "Each seat above {included} costs {extraCostPrice}"
+
 #: src/components/AskCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/ConnectionsPage.tsx
@@ -4386,6 +4429,10 @@ msgstr "Knowledge"
 msgid "Language"
 msgstr "Language"
 
+#: src/lib/plan-view.ts
+msgid "Large"
+msgstr "Large"
+
 #: src/pages/Usage.tsx
 msgid "Last 30 days"
 msgstr ""
@@ -4723,6 +4770,7 @@ msgstr "MCP server by URL"
 msgid "MCP servers"
 msgstr "MCP servers"
 
+#: src/lib/plan-view.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Medium"
@@ -5818,6 +5866,7 @@ msgstr "Pawn"
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/StoreCategoryChips.tsx
+#: src/pages/usage/plan-usage.tsx
 msgid "People"
 msgstr "People"
 
@@ -5829,6 +5878,7 @@ msgstr "Permissions"
 msgid "Persona"
 msgstr "Persona"
 
+#: src/lib/plan-view.ts
 #: src/pages/onboarding/WorkspaceStep.tsx
 msgid "Personal"
 msgstr "Personal"
@@ -7096,6 +7146,10 @@ msgstr "Slack not enabled"
 msgid "Slide up to lock"
 msgstr "Slide up to lock"
 
+#: src/lib/plan-view.ts
+msgid "Small"
+msgstr "Small"
+
 #: src/pages/connections/MailboxForm.tsx
 msgid "SMTP server"
 msgstr "SMTP server"
@@ -7298,6 +7352,18 @@ msgstr "Stopped. This was still waiting for you on the screen."
 msgid "Stopping…"
 msgstr "Stopping…"
 
+#: src/pages/usage/plan-usage.tsx
+msgid "Storage"
+msgstr "Storage"
+
+#: src/lib/server-copy.ts
+msgid "Storage is {percent}% full"
+msgstr "Storage is {percent}% full"
+
+#: src/lib/user-error.ts
+msgid "Storage is full. Upgrade your plan or delete files."
+msgstr "Storage is full. Upgrade your plan or delete files."
+
 #: src/components/SidebarFooter.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/Store.tsx
@@ -7428,6 +7494,7 @@ msgstr "Teach something about you"
 msgid "Teaching in progress. Stop teaching before sending a new message."
 msgstr "Teaching in progress. Stop teaching before sending a new message."
 
+#: src/lib/plan-view.ts
 #: src/pages/Onboarding.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/command-palette.tsx
@@ -7939,6 +8006,10 @@ msgstr "Unsupported file type: {0}"
 msgid "Untitled"
 msgstr "Untitled"
 
+#: src/components/PlanList.tsx
+msgid "up to {maxSeats}"
+msgstr "up to {maxSeats}"
+
 #: src/components/DesktopUpdates.tsx
 msgid "Up to date"
 msgstr "Up to date"
@@ -8004,7 +8075,9 @@ msgstr "Updating Team Computer"
 msgid "Updating…"
 msgstr "Updating…"
 
+#: src/pages/MembersSettingsPanel.tsx
 #: src/pages/shell/shell-sidebar.tsx
+#: src/pages/usage/plan-usage.tsx
 msgid "Upgrade"
 msgstr "Upgrade"
 
@@ -8501,6 +8574,14 @@ msgstr "Your OpenAI"
 #: src/lib/run-error.ts
 msgid "Your OpenRouter"
 msgstr "Your OpenRouter"
+
+#: src/lib/user-error.ts
+msgid "Your plan has no room for another computer. Upgrade to add more."
+msgstr "Your plan has no room for another computer. Upgrade to add more."
+
+#: src/lib/user-error.ts
+msgid "Your plan has no seat for another person. Upgrade to add more."
+msgstr "Your plan has no seat for another person. Upgrade to add more."
 
 #: src/lib/user-error.ts
 msgid "Your voice provider is out of credit."

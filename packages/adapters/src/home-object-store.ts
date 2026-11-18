@@ -29,7 +29,7 @@ import {
   packHome,
   unpackHome,
 } from "./home-archive.js";
-import { objectStorageConfigFromEnv, S3ObjectStorage } from "./s3-object-storage.js";
+import { createObjectStorage } from "./metered-object-storage.js";
 
 const HOMES_PREFIX = "homes/";
 const SWEEP_INTERVAL_MS = 60 * 60_000;
@@ -596,15 +596,11 @@ export function createAgentHomeStore(
   prisma: PrismaClient,
   env: NodeJS.ProcessEnv = process.env,
 ): LocalAgentHomeStore {
-  const config = objectStorageConfigFromEnv(env);
-  if (!config) return new LocalAgentHomeStore(dataDir);
+  const storage = createObjectStorage(prisma, env);
+  if (!storage) return new LocalAgentHomeStore(dataDir);
   const ring = contentEncryptionOf(prisma)?.ring;
   if (!ring) throw new Error("Storing homes in object storage needs content encryption keys");
-  return new ObjectAgentHomeStore(
-    dataDir,
-    new S3ObjectStorage(config),
-    new PrismaAgentHomeRecords(prisma, ring),
-  );
+  return new ObjectAgentHomeStore(dataDir, storage, new PrismaAgentHomeRecords(prisma, ring));
 }
 
 /**

@@ -3,10 +3,20 @@ import { Button, Skeleton } from "@corvo/ui-web";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useEffect, useState } from "react";
 import { ModelCreditsSettings } from "../components/ModelCredits";
+import { PlanList } from "../components/PlanList";
 import { formatBillingDate, formatBillingPrice } from "../lib/billing";
 import { rpc } from "../lib/rpc";
 
 export function BillingSettingsPanel() {
+  return (
+    <div className="flex flex-col gap-6">
+      <BillingStatusPanel />
+      <PlanList />
+    </div>
+  );
+}
+
+function BillingStatusPanel() {
   const { t, i18n } = useLingui();
   const locale = i18n.locale || "en";
   const [status, setStatus] = useState<BillingStatus | null>(null);

@@ -41,6 +41,7 @@ export * from "./network-host.js";
 export * from "./notifications.js";
 export * from "./openai-compatible-ui.js";
 export * from "./partner.js";
+export * from "./plans.js";
 export * from "./reactions.js";
 export * from "./routine-watch.js";
 export * from "./rpc.js";

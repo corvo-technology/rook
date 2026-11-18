@@ -1,5 +1,6 @@
 import type {
   CustomSpaceRole,
+  PlanUsage,
   Space,
   SpaceInvitation,
   SpaceJoinRequest,
@@ -38,12 +39,17 @@ import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useId, useState } from "react";
 import { SettingsGroup, SettingsRow } from "../components/SettingsRows";
+import { formatMoney, planName } from "../lib/plan-view";
 import { rpc, rpcForSpace } from "../lib/rpc";
+import { isSeatLimit, planErrorText } from "../lib/user-error";
 
 type InviteLink = { link: string | null };
 
 function message(error: unknown, fallback: string): string {
-  return error instanceof Error && error.message.trim() ? error.message : fallback;
+  return (
+    planErrorText(error) ??
+    (error instanceof Error && error.message.trim() ? error.message : fallback)
+  );
 }
 
 const EVERYONE = "everyone";
@@ -265,6 +271,8 @@ export function MembersSettingsPanel({
   const [sent, setSent] = useState<number | null>(null);
   const [roles, setRoles] = useState<CustomSpaceRole[]>([]);
   const [mine, setMine] = useState<SpaceMembership | null>(null);
+  const [plan, setPlan] = useState<PlanUsage | null>(null);
+  const [seatsFull, setSeatsFull] = useState(false);
 
   const myRole = members?.find((member) => member.userId === userId)?.role ?? "member";
   const manages = can(mine, "manage_members");
@@ -280,7 +288,22 @@ export function MembersSettingsPanel({
     (members ?? []).map((member) => member.email),
   );
 
+  const included = plan?.seats.included ?? 0;
+  const seatsUsed = plan?.seats.used ?? 0;
+  const seatsMax = plan?.seats.max ?? 0;
+  const extraPrice = plan?.seats.extraPrice;
+  const extraCostPrice = extraPrice ? formatMoney(extraPrice, i18n.locale || "en") : "";
+  const extraCost =
+    plan && extraPrice && plan.seats.used + toInvite.length > included
+      ? t`Each seat above ${included} costs ${extraCostPrice}`
+      : null;
+
   const load = useCallback(async () => {
+    // Where plans are off this answers null, and without it the page simply shows no count.
+    void Promise.resolve()
+      .then(() => client.usage.plan())
+      .then(setPlan)
+      .catch(() => setPlan(null));
     try {
       const [list, rolesNow] = await Promise.all([
         client.spaces.members.list(),
@@ -320,6 +343,7 @@ export function MembersSettingsPanel({
     setInviteRole(EVERYONE);
     setSent(null);
     setError(null);
+    setSeatsFull(false);
     void load();
   }, [load]);
 
@@ -337,6 +361,7 @@ export function MembersSettingsPanel({
     if (sending || toInvite.length === 0 || parsed.rejected.length > 0) return;
     setSending(true);
     setError(null);
+    setSeatsFull(false);
     try {
       const admin = inviteRole === ADMIN;
       const result = await client.spaces.invitations.create({
@@ -350,6 +375,7 @@ export function MembersSettingsPanel({
       setInviteRole(EVERYONE);
       await load();
     } catch (err) {
+      setSeatsFull(isSeatLimit(err));
       setError(message(err, t`Could not send invitations`));
     } finally {
       setSending(false);
@@ -393,6 +419,15 @@ export function MembersSettingsPanel({
           onCreate={canCreateSpace ? createWorkspace : undefined}
         />
       ) : null}
+      {plan ? (
+        <p data-testid="seat-count" className="text-[13px] text-muted-foreground">
+          <span className="tabular-nums text-foreground">
+            {t`${seatsUsed} of ${seatsMax} people`}
+          </span>
+          {" · "}
+          {planName(plan.plan)}
+        </p>
+      ) : null}
       {invites ? (
         <div className="space-y-2">
           <Textarea
@@ -412,6 +447,11 @@ export function MembersSettingsPanel({
           {alreadyIn.length > 0 ? (
             <p className="text-[12.5px] text-muted-foreground">
               {alreadyIn.join(", ")} <Trans>already in the space</Trans>
+            </p>
+          ) : null}
+          {extraCost ? (
+            <p data-testid="extra-seat-cost" className="text-[12.5px] text-muted-foreground">
+              {extraCost}
             </p>
           ) : null}
           <div className="flex items-center justify-between gap-2">
@@ -713,6 +753,14 @@ export function MembersSettingsPanel({
       {error ? (
         <p role="alert" className="text-[12.5px] text-destructive">
           {error}
+          {seatsFull ? (
+            <>
+              {" "}
+              <a href="/settings/billing" className="underline underline-offset-2">
+                <Trans>Upgrade</Trans>
+              </a>
+            </>
+          ) : null}
         </p>
       ) : null}
     </div>

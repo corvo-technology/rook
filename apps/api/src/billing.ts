@@ -5,7 +5,7 @@ import type {
 } from "@corvo/adapter-kit";
 import { BillingCheckoutCompletedError, BillingCustomerNotFoundError } from "@corvo/adapter-kit";
 import type { Actor, BillingStatus } from "@corvo/contracts";
-import { BYOK_MONTHLY_PRICE_CENTS } from "@corvo/contracts";
+import { BYOK_MONTHLY_PRICE_CENTS, planConfigFromEnv } from "@corvo/contracts";
 import type { BillingAccount, PrismaClient } from "@corvo/db";
 import {
   billingAccountForOrganization,
@@ -13,12 +13,15 @@ import {
   createBillingAccount,
   creditAccount,
   expireModelCredits,
+  extraSeats,
   hasBillingAccess,
   hasModelAccess,
   MICROS_PER_DOLLAR,
   needsBillingPortal,
+  organizationEntitlements,
   organizationForMember,
   organizationSeatCount,
+  organizationSeats,
   ownedBillingAccounts,
   reconcileCreditPurchase,
   replaceBillingCustomer,
@@ -55,6 +58,8 @@ export interface BillingService {
   /** Pushes the organization's member count to the provider. Call when members change. */
   syncSeats(organizationId: string): Promise<void>;
   cancelForDeletedUser(userId: string): Promise<void>;
+  /** What one seat above the plan's included ones costs; null when it has no price. */
+  extraSeatPrice(priceId: string): Promise<BillingPrice | null>;
 }
 
 /**
@@ -83,6 +88,7 @@ export function createBillingService(deps: {
   const appUrl = `${deps.webOrigin}/app`;
   const modelCredits = provider.describe().capabilities.modelCredits === true;
   let cachedPrice: { value: BillingPrice; expiresAt: number } | undefined;
+  const extraSeatPrices = new Map<string, { value: BillingPrice; expiresAt: number }>();
 
   async function price(): Promise<BillingPrice | null> {
     if (cachedPrice && cachedPrice.expiresAt > Date.now()) return cachedPrice.value;
@@ -439,9 +445,35 @@ export function createBillingService(deps: {
       if (account) await sync(account.customerId);
     },
 
+    async extraSeatPrice(priceId) {
+      if (!provider.getPriceById) return null;
+      const cached = extraSeatPrices.get(priceId);
+      if (cached && cached.expiresAt > Date.now()) return cached.value;
+      try {
+        const value = await provider.getPriceById(priceId);
+        extraSeatPrices.set(priceId, { value, expiresAt: Date.now() + PRICE_CACHE_MS });
+        return value;
+      } catch (error) {
+        getLogger().error("extra seat price lookup failed", error);
+        return null;
+      }
+    },
+
     async syncSeats(organizationId) {
       const account = await billingAccountForOrganization(prisma, organizationId);
       if (!account || account.creditAmountCents) return;
+      // Under plans the price includes people; only seats above that are billed, on their own line.
+      if (planConfigFromEnv()) {
+        const limits = await organizationEntitlements(prisma, planConfigFromEnv(), organizationId);
+        if (!limits?.extraSeatPriceId || !provider.setExtraSeats) return;
+        const { total } = await organizationSeats(prisma, organizationId);
+        await provider.setExtraSeats(account.customerId, {
+          priceId: limits.extraSeatPriceId,
+          quantity: extraSeats(limits, total),
+        });
+        await sync(account.customerId);
+        return;
+      }
       const seats = await organizationSeatCount(prisma, organizationId);
       if (account.seats === seats) return;
       await provider.updateSeats(account.customerId, seats);

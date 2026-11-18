@@ -224,6 +224,14 @@ msgstr "{agents, plural, one {# agente} other {# agentes}}"
 msgid "{amount} / {period}"
 msgstr "{amount} / {period}"
 
+#: src/lib/plan-view.ts
+msgid "{amount} per month"
+msgstr "{amount} al mes"
+
+#: src/lib/plan-view.ts
+msgid "{amount} per year"
+msgstr "{amount} al año"
+
 #: src/pages/shell/dialogs.tsx
 msgid "{botCount, plural, one {Delete {name} and its # bot?} other {Delete {name} and its # bots?}}"
 msgstr "{botCount, plural, one {¿Eliminar {name} y su # bot?} other {¿Eliminar {name} y sus # bots?}}"
@@ -235,6 +243,14 @@ msgstr "Computadora de {botName}"
 #: src/pages/shell/bot-credentials.tsx
 msgid "{commandVariable} is reserved and cannot be used as a command variable. Choose another name."
 msgstr "{commandVariable} está reservada y no puede usarse como variable de comando. Elige otro nombre."
+
+#: src/components/PlanList.tsx
+msgid "{computers, plural, one {# computer} other {# computers}}"
+msgstr "{computers, plural, one {# computadora} other {# computadoras}}"
+
+#: src/pages/usage/plan-usage.tsx
+msgid "{computersUsed} of {computersLimit}"
+msgstr "{computersUsed} de {computersLimit}"
 
 #: src/pages/WhatsAppNumbers.tsx
 msgid "{count, plural, one {# number} other {# numbers}}"
@@ -291,6 +307,10 @@ msgstr "hace {days} d"
 #: src/components/ApproveAllBar.tsx
 msgid "{failedCount} could not be approved"
 msgstr "{failedCount} no se pudieron aprobar"
+
+#: src/components/PlanList.tsx
+msgid "{files} of files"
+msgstr "{files} de archivos"
 
 #: src/components/markdown-copy.tsx
 msgid "{from}–{to} of {total} rows"
@@ -382,6 +402,10 @@ msgstr "{name} se detuvo"
 #: src/pages/shell/sidebar-team.tsx
 msgid "{people, plural, one {# person} other {# people}}"
 msgstr "{people, plural, one {# persona} other {# personas}}"
+
+#: src/pages/usage/plan-usage.tsx
+msgid "{peopleUsed} of {peopleMax}"
+msgstr "{peopleUsed} de {peopleMax}"
 
 #: src/components/SubscriptionRings.tsx
 msgid "{percent}% used"
@@ -517,9 +541,14 @@ msgstr "{ref} se queda en {lane}."
 msgid "{remaining} left"
 msgstr "Quedan {remaining}"
 
+#: src/components/PlanList.tsx
 #: src/pages/BillingSettingsPanel.tsx
 msgid "{seats, plural, one {# seat} other {# seats}}"
 msgstr "{seats, plural, one {# puesto} other {# puestos}}"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "{seatsUsed} of {seatsMax} people"
+msgstr "{seatsUsed} de {seatsMax} personas"
 
 #: src/pages/MembersSettingsPanel.tsx
 msgid "{sent, plural, one {# invitation sent} other {# invitations sent}}"
@@ -528,6 +557,10 @@ msgstr "{sent, plural, one {# invitación enviada} other {# invitaciones enviada
 #: src/components/ArtifactFileCard.tsx
 msgid "{size} B"
 msgstr "{size} B"
+
+#: src/components/PlanList.tsx
+msgid "{size} computer"
+msgstr "Computadora {size}"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -575,6 +608,7 @@ msgid "{total} members"
 msgstr "{total} miembros"
 
 #: src/pages/Usage.tsx
+#: src/pages/usage/plan-usage.tsx
 msgid "{used} of {limit}"
 msgstr "{used} de {limit}"
 
@@ -1986,6 +2020,10 @@ msgstr "Comentario"
 msgid "Compact"
 msgstr "Compacta"
 
+#: src/lib/plan-view.ts
+msgid "Company"
+msgstr "Empresa"
+
 #: src/pages/PartnershipSettingsPanel.tsx
 msgid "Company name"
 msgstr "Nombre de la empresa"
@@ -2041,6 +2079,7 @@ msgid "Computer is stopped"
 msgstr "La computadora está detenida"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/usage/plan-usage.tsx
 msgid "Computers"
 msgstr "Computadoras"
 
@@ -3446,6 +3485,10 @@ msgstr "Cada nombre solo se puede usar una vez."
 msgid "Each one checks itself off when you do it."
 msgstr "Cada una se marca sola cuando la haces."
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Each seat above {included} costs {extraCostPrice}"
+msgstr "Cada puesto por encima de {included} cuesta {extraCostPrice}"
+
 #: src/components/AskCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/ConnectionsPage.tsx
@@ -4386,6 +4429,10 @@ msgstr "Conocimiento"
 msgid "Language"
 msgstr "Idioma"
 
+#: src/lib/plan-view.ts
+msgid "Large"
+msgstr "Grande"
+
 #: src/pages/Usage.tsx
 msgid "Last 30 days"
 msgstr "Últimos 30 días"
@@ -4723,6 +4770,7 @@ msgstr "Servidor MCP por URL"
 msgid "MCP servers"
 msgstr "Servidores MCP"
 
+#: src/lib/plan-view.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Medium"
@@ -5818,6 +5866,7 @@ msgstr "Peón"
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/StoreCategoryChips.tsx
+#: src/pages/usage/plan-usage.tsx
 msgid "People"
 msgstr "Personas"
 
@@ -5829,6 +5878,7 @@ msgstr "Permisos"
 msgid "Persona"
 msgstr "Personalidad"
 
+#: src/lib/plan-view.ts
 #: src/pages/onboarding/WorkspaceStep.tsx
 msgid "Personal"
 msgstr "Personal"
@@ -7096,6 +7146,10 @@ msgstr "Slack no activado"
 msgid "Slide up to lock"
 msgstr "Desliza hacia arriba para bloquear"
 
+#: src/lib/plan-view.ts
+msgid "Small"
+msgstr "Pequeño"
+
 #: src/pages/connections/MailboxForm.tsx
 msgid "SMTP server"
 msgstr "Servidor SMTP"
@@ -7298,6 +7352,18 @@ msgstr "Detenido. Seguía esperándote en la pantalla."
 msgid "Stopping…"
 msgstr "Deteniendo…"
 
+#: src/pages/usage/plan-usage.tsx
+msgid "Storage"
+msgstr "Almacenamiento"
+
+#: src/lib/server-copy.ts
+msgid "Storage is {percent}% full"
+msgstr "El almacenamiento está al {percent} %"
+
+#: src/lib/user-error.ts
+msgid "Storage is full. Upgrade your plan or delete files."
+msgstr "El almacenamiento está lleno. Mejora tu plan o elimina archivos."
+
 #: src/components/SidebarFooter.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/Store.tsx
@@ -7428,6 +7494,7 @@ msgstr "Enseña algo sobre ti"
 msgid "Teaching in progress. Stop teaching before sending a new message."
 msgstr "Enseñanza en curso: detén la enseñanza antes de enviar un nuevo mensaje."
 
+#: src/lib/plan-view.ts
 #: src/pages/Onboarding.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/command-palette.tsx
@@ -7939,6 +8006,10 @@ msgstr "Tipo de archivo no compatible: {0}"
 msgid "Untitled"
 msgstr "Sin título"
 
+#: src/components/PlanList.tsx
+msgid "up to {maxSeats}"
+msgstr "hasta {maxSeats}"
+
 #: src/components/DesktopUpdates.tsx
 msgid "Up to date"
 msgstr "Actualizado"
@@ -8004,7 +8075,9 @@ msgstr "Actualizando la computadora del equipo"
 msgid "Updating…"
 msgstr "Actualizando…"
 
+#: src/pages/MembersSettingsPanel.tsx
 #: src/pages/shell/shell-sidebar.tsx
+#: src/pages/usage/plan-usage.tsx
 msgid "Upgrade"
 msgstr "Mejorar plan"
 
@@ -8501,6 +8574,14 @@ msgstr "Tu OpenAI"
 #: src/lib/run-error.ts
 msgid "Your OpenRouter"
 msgstr "Tu OpenRouter"
+
+#: src/lib/user-error.ts
+msgid "Your plan has no room for another computer. Upgrade to add more."
+msgstr "Tu plan no admite otra computadora. Mejora el plan para añadir más."
+
+#: src/lib/user-error.ts
+msgid "Your plan has no seat for another person. Upgrade to add more."
+msgstr "Tu plan no tiene espacio para otra persona. Mejora el plan para añadir más."
 
 #: src/lib/user-error.ts
 msgid "Your voice provider is out of credit."

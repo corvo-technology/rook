@@ -14,6 +14,7 @@ import {
   listArtifactVersions,
   listSpaceArtifacts,
 } from "../artifacts.js";
+import { planUsage } from "../plan-usage.js";
 import { listSpaceRuns } from "../runs.js";
 import { querySpaceSearch } from "../search.js";
 import { getSpaceMembership, requireSpacePermission } from "../space-owner.js";
@@ -307,6 +308,9 @@ export function contentRoutes(ctx: RouterContext) {
           requestedEscalations,
         });
       }),
+      plan: authed.usage.plan.handler(async ({ context }) =>
+        planUsage(deps.prisma, context.actor, deps.billing),
+      ),
       subscriptions: authed.usage.subscriptions.handler(async ({ context }) => {
         const rows = await deps.prisma.providerQuota.findMany({
           where: { spaceId: context.actor.spaceId, userId: context.actor.userId },

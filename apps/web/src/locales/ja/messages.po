@@ -224,6 +224,14 @@ msgstr "{agents, plural, other {# 件のエージェント}}"
 msgid "{amount} / {period}"
 msgstr "{amount} / {period}"
 
+#: src/lib/plan-view.ts
+msgid "{amount} per month"
+msgstr "月額 {amount}"
+
+#: src/lib/plan-view.ts
+msgid "{amount} per year"
+msgstr "年額 {amount}"
+
 #: src/pages/shell/dialogs.tsx
 msgid "{botCount, plural, one {Delete {name} and its # bot?} other {Delete {name} and its # bots?}}"
 msgstr "{botCount, plural, other {{name} と # 個のボットを削除しますか？}}"
@@ -235,6 +243,14 @@ msgstr "{botName}のコンピューター"
 #: src/pages/shell/bot-credentials.tsx
 msgid "{commandVariable} is reserved and cannot be used as a command variable. Choose another name."
 msgstr "{commandVariable}は予約済みのため、コマンド変数として使用できません。別の名前を選んでください。"
+
+#: src/components/PlanList.tsx
+msgid "{computers, plural, one {# computer} other {# computers}}"
+msgstr "{computers, plural, other {コンピューター#台}}"
+
+#: src/pages/usage/plan-usage.tsx
+msgid "{computersUsed} of {computersLimit}"
+msgstr "{computersUsed} / {computersLimit}"
 
 #: src/pages/WhatsAppNumbers.tsx
 msgid "{count, plural, one {# number} other {# numbers}}"
@@ -291,6 +307,10 @@ msgstr "{days}日前"
 #: src/components/ApproveAllBar.tsx
 msgid "{failedCount} could not be approved"
 msgstr "{failedCount} 件を承認できませんでした"
+
+#: src/components/PlanList.tsx
+msgid "{files} of files"
+msgstr "ファイル {files}"
 
 #: src/components/markdown-copy.tsx
 msgid "{from}–{to} of {total} rows"
@@ -382,6 +402,10 @@ msgstr "{name}が停止しました"
 #: src/pages/shell/sidebar-team.tsx
 msgid "{people, plural, one {# person} other {# people}}"
 msgstr "{people, plural, other {# 人}}"
+
+#: src/pages/usage/plan-usage.tsx
+msgid "{peopleUsed} of {peopleMax}"
+msgstr "{peopleUsed} / {peopleMax}"
 
 #: src/components/SubscriptionRings.tsx
 msgid "{percent}% used"
@@ -517,9 +541,14 @@ msgstr "{ref} は {lane} のままです。"
 msgid "{remaining} left"
 msgstr "残り{remaining}"
 
+#: src/components/PlanList.tsx
 #: src/pages/BillingSettingsPanel.tsx
 msgid "{seats, plural, one {# seat} other {# seats}}"
 msgstr "{seats, plural, one {#席} other {#席}}"
+
+#: src/pages/MembersSettingsPanel.tsx
+msgid "{seatsUsed} of {seatsMax} people"
+msgstr "{seatsUsed} / {seatsMax} 人"
 
 #: src/pages/MembersSettingsPanel.tsx
 msgid "{sent, plural, one {# invitation sent} other {# invitations sent}}"
@@ -528,6 +557,10 @@ msgstr "{sent, plural, other {# 件の招待を送りました}}"
 #: src/components/ArtifactFileCard.tsx
 msgid "{size} B"
 msgstr "{size} B"
+
+#: src/components/PlanList.tsx
+msgid "{size} computer"
+msgstr "{size}のコンピューター"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -575,6 +608,7 @@ msgid "{total} members"
 msgstr "{total} メンバー"
 
 #: src/pages/Usage.tsx
+#: src/pages/usage/plan-usage.tsx
 msgid "{used} of {limit}"
 msgstr "{used} / {limit}"
 
@@ -1986,6 +2020,10 @@ msgstr "コメント"
 msgid "Compact"
 msgstr "コンパクト"
 
+#: src/lib/plan-view.ts
+msgid "Company"
+msgstr "企業"
+
 #: src/pages/PartnershipSettingsPanel.tsx
 msgid "Company name"
 msgstr "会社名"
@@ -2041,6 +2079,7 @@ msgid "Computer is stopped"
 msgstr "コンピューターは停止しています"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/usage/plan-usage.tsx
 msgid "Computers"
 msgstr "コンピューター"
 
@@ -3446,6 +3485,10 @@ msgstr "各名前は一度だけ使用できます。"
 msgid "Each one checks itself off when you do it."
 msgstr "それぞれ、実行すると自動でチェックされます。"
 
+#: src/pages/MembersSettingsPanel.tsx
+msgid "Each seat above {included} costs {extraCostPrice}"
+msgstr "{included} 人を超える席は1席あたり {extraCostPrice}"
+
 #: src/components/AskCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/ConnectionsPage.tsx
@@ -4386,6 +4429,10 @@ msgstr "ナレッジ"
 msgid "Language"
 msgstr "言語"
 
+#: src/lib/plan-view.ts
+msgid "Large"
+msgstr "大"
+
 #: src/pages/Usage.tsx
 msgid "Last 30 days"
 msgstr "過去30日間"
@@ -4723,6 +4770,7 @@ msgstr "URL で MCP サーバーを追加"
 msgid "MCP servers"
 msgstr "MCPサーバー"
 
+#: src/lib/plan-view.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Medium"
@@ -5818,6 +5866,7 @@ msgstr "ポーン"
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/StoreCategoryChips.tsx
+#: src/pages/usage/plan-usage.tsx
 msgid "People"
 msgstr "メンバー"
 
@@ -5829,6 +5878,7 @@ msgstr "権限"
 msgid "Persona"
 msgstr "ペルソナ"
 
+#: src/lib/plan-view.ts
 #: src/pages/onboarding/WorkspaceStep.tsx
 msgid "Personal"
 msgstr "個人"
@@ -7096,6 +7146,10 @@ msgstr "Slackが有効になっていません"
 msgid "Slide up to lock"
 msgstr "上にスライドしてロック"
 
+#: src/lib/plan-view.ts
+msgid "Small"
+msgstr "小"
+
 #: src/pages/connections/MailboxForm.tsx
 msgid "SMTP server"
 msgstr "SMTPサーバー"
@@ -7298,6 +7352,18 @@ msgstr "停止しました。まだ画面での操作を待っていました。
 msgid "Stopping…"
 msgstr "停止中…"
 
+#: src/pages/usage/plan-usage.tsx
+msgid "Storage"
+msgstr "ストレージ"
+
+#: src/lib/server-copy.ts
+msgid "Storage is {percent}% full"
+msgstr "ストレージの {percent}% を使用中"
+
+#: src/lib/user-error.ts
+msgid "Storage is full. Upgrade your plan or delete files."
+msgstr "ストレージがいっぱいです。プランをアップグレードするか、ファイルを削除してください。"
+
 #: src/components/SidebarFooter.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/Store.tsx
@@ -7428,6 +7494,7 @@ msgstr "あなたについて教える"
 msgid "Teaching in progress. Stop teaching before sending a new message."
 msgstr "ティーチング中です。新しいメッセージを送信する前にティーチングを停止してください。"
 
+#: src/lib/plan-view.ts
 #: src/pages/Onboarding.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/command-palette.tsx
@@ -7939,6 +8006,10 @@ msgstr "サポートされていないファイル形式です: {0}"
 msgid "Untitled"
 msgstr "無題"
 
+#: src/components/PlanList.tsx
+msgid "up to {maxSeats}"
+msgstr "最大 {maxSeats}"
+
 #: src/components/DesktopUpdates.tsx
 msgid "Up to date"
 msgstr "最新です"
@@ -8004,7 +8075,9 @@ msgstr "チームのコンピューターを更新中"
 msgid "Updating…"
 msgstr "更新中…"
 
+#: src/pages/MembersSettingsPanel.tsx
 #: src/pages/shell/shell-sidebar.tsx
+#: src/pages/usage/plan-usage.tsx
 msgid "Upgrade"
 msgstr "アップグレード"
 
@@ -8501,6 +8574,14 @@ msgstr "お使いのOpenAI"
 #: src/lib/run-error.ts
 msgid "Your OpenRouter"
 msgstr "お使いのOpenRouter"
+
+#: src/lib/user-error.ts
+msgid "Your plan has no room for another computer. Upgrade to add more."
+msgstr "現在のプランではコンピューターをこれ以上追加できません。アップグレードしてください。"
+
+#: src/lib/user-error.ts
+msgid "Your plan has no seat for another person. Upgrade to add more."
+msgstr "現在のプランではこれ以上人を追加できません。アップグレードしてください。"
 
 #: src/lib/user-error.ts
 msgid "Your voice provider is out of credit."

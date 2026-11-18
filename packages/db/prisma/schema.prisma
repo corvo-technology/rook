@@ -215,6 +215,9 @@ model Organization {
   invitations            Invitation[]
   spaces                 Space[]
   billing                BillingAccount?
+  storageUsage           StorageUsage?
+  storageObjects         StorageObject[]
+  limitOverride          OrganizationLimitOverride?
   modelCredits           ModelCreditAccount?
   partnerTenant          PartnerTenant?
 
@@ -242,6 +245,47 @@ model BillingAccount {
   updatedAt           DateTime     @updatedAt
 
   @@map("billing_accounts")
+}
+
+/// Bytes an organization keeps in object storage (drive files, attachments, computer homes),
+/// counted on every put and delete and corrected by a periodic reconcile. Only kept where the
+/// deployment has plans.
+model StorageUsage {
+  organizationId String       @id
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  bytes          BigInt       @default(0)
+  /// The period (UTC month) the 80% alert was last sent for.
+  alertedPeriod  String?
+  reconciledAt   DateTime?
+  updatedAt      DateTime     @updatedAt
+
+  @@map("storage_usage")
+}
+
+/// Custom limits the platform owner gives one organization. A value set here replaces the plan's.
+model OrganizationLimitOverride {
+  organizationId  String       @id
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  computerSize    String?
+  computers       Int?
+  storageGb       Float?
+  maxSeats        Int?
+  updatedByUserId String?
+  updatedAt       DateTime     @updatedAt
+
+  @@map("organization_limit_overrides")
+}
+
+/// One stored object and its size, so a delete subtracts what the put added.
+model StorageObject {
+  key            String       @id
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  bytes          BigInt
+  recordedAt     DateTime     @default(now())
+
+  @@index([organizationId])
+  @@map("storage_objects")
 }
 
 model ActionApprovalRule {
@@ -863,6 +907,9 @@ model Notification {
   actorId    String?
   /// A short product-authored line for kinds that carry no message (alert); never user content.
   detail     String?
+  /// What `detail` says as a code plus params, so each client words it in the member's language.
+  code       String?
+  params     Json?
   /// One live entry per source: the same source again refreshes this row instead of adding one.
   dedupeKey  String
   readAt     DateTime?
@@ -1463,6 +1510,8 @@ model Computer {
   homeStorageId           String?                  @unique
   homeStorageKey          String?
   homeStorageRevision     String?
+  /// The size the computer was last provisioned at; a different plan size applies at next start.
+  sizeApplied             String?
   kind                    String
   providerRef             String?
   state                   String                   @default("stopped")

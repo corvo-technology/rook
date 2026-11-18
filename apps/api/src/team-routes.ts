@@ -1,4 +1,10 @@
-import { acceptInvitation, previewInvitation, requestToJoin, runAsSystem } from "@corvo/db";
+import {
+  acceptInvitation,
+  previewInvitation,
+  requestToJoin,
+  runAsSystem,
+  SeatLimitError,
+} from "@corvo/db";
 import type { Hono } from "hono";
 import { requestClientIp } from "./client-ip.js";
 import type { TeamDeps } from "./team.js";
@@ -50,16 +56,24 @@ export function mountTeamRoutes(
     )
       return c.json({ error: "Too many requests" }, 429, NO_STORE);
     const id = readTeamToken(deps.secret, "invite", c.req.param("token"));
-    const joined = id
-      ? await runAsSystem("accept an invitation", () =>
-          acceptInvitation(deps.prisma, {
-            id,
-            user: session,
-            trustUnverified: deps.trustUnverified,
-            mailProof: isInvitationMailProof(deps.secret, id, c.req.query("mail")),
-          }),
-        )
-      : null;
+    let joined: Awaited<ReturnType<typeof acceptInvitation>> = null;
+    try {
+      joined = id
+        ? await runAsSystem("accept an invitation", () =>
+            acceptInvitation(deps.prisma, {
+              id,
+              user: session,
+              trustUnverified: deps.trustUnverified,
+              mailProof: isInvitationMailProof(deps.secret, id, c.req.query("mail")),
+            }),
+          )
+        : null;
+    } catch (error) {
+      // The plan has no seat for another person; the invitation stays and the inviter is told by the code.
+      if (error instanceof SeatLimitError)
+        return c.json({ error: error.message, code: error.code }, 402, NO_STORE);
+      throw error;
+    }
     if (joined === "unverified") return c.json({ error: "Unverified" }, 403, NO_STORE);
     if (!joined) return c.json({ error: "Not found" }, 404, NO_STORE);
     syncSeats(deps, joined.organizationId);

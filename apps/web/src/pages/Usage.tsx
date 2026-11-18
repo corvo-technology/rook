@@ -15,6 +15,7 @@ import {
   usageShare,
 } from "../lib/usage-view";
 import { errorText } from "../lib/user-error";
+import { PlanUsageSection } from "./usage/plan-usage";
 import { UsageChart } from "./usage/usage-chart";
 
 /** What the account has run, by day and by agent, for the month or the last thirty days. */
@@ -110,6 +111,8 @@ export function UsagePage() {
               ))}
             </div>
           </header>
+
+          <PlanUsageSection />
 
           {usage.error && !overview ? (
             <p role="alert" className="text-sm text-destructive">

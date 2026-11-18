@@ -14,6 +14,7 @@ import {
   SquareActivity,
 } from "lucide-react";
 import { groupInbox, relativeTime } from "../lib/inbox";
+import { notificationCopy } from "../lib/server-copy";
 import { IconTooltip } from "./IconTooltip";
 import { PersonAvatar } from "./PersonAvatar";
 
@@ -86,7 +87,12 @@ export function InboxPanel({
               <ul>
                 {group.items.map((item) => {
                   const Icon = KIND_ICON[item.kind];
-                  const text = item.kind === "alert" ? (item.detail ?? item.preview) : item.preview;
+                  const text =
+                    item.kind === "alert"
+                      ? item.code
+                        ? notificationCopy(item.code, item.params ?? {})
+                        : (item.detail ?? item.preview)
+                      : item.preview;
                   return (
                     <li key={item.id}>
                       <button

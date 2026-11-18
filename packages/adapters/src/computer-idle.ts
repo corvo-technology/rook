@@ -10,6 +10,7 @@ import {
   SandboxRateLimitError,
   SandboxUnavailableError,
   SandboxUnresponsiveError,
+  StorageQuotaError,
   WorkspaceTooLargeError,
 } from "@corvo/adapter-kit";
 import { ACTIVE_RUN_STATUSES } from "@corvo/core";
@@ -664,7 +665,8 @@ function mayNeedSleep(computer: { state: string; updatedAt: Date }): boolean {
 /**
  * A provider that is rate limiting, too busy to answer, or that can only bring the sandbox back
  * from its own snapshot cannot be checkpointed or stopped now, and a workspace over the save
- * limits cannot be saved, so stopping it would lose its files. The caller has already scheduled
+ * limits cannot be saved, nor one the plan has no storage left for, so stopping it would lose
+ * its files; it keeps running and is saved at the next idle check. The caller has already scheduled
  * the next idle check, so the job succeeds instead of spending its retries on the same answer.
  */
 function deferSleep(error: unknown, computer: { id: string; kind: string }): boolean {
@@ -675,11 +677,13 @@ function deferSleep(error: unknown, computer: { id: string; kind: string }): boo
         ? "unresponsive"
         : error instanceof SandboxUnavailableError
           ? "unavailable"
-          : error instanceof WorkspaceTooLargeError
-            ? error.limit === "bytes"
-              ? "too_large"
-              : "too_many_files"
-            : undefined;
+          : error instanceof StorageQuotaError
+            ? "storage_quota"
+            : error instanceof WorkspaceTooLargeError
+              ? error.limit === "bytes"
+                ? "too_large"
+                : "too_many_files"
+              : undefined;
   if (!reason) return false;
   getLogger().warn("computer.sleep_deferred", {
     "computer.id": computer.id,

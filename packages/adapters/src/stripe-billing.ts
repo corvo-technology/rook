@@ -53,6 +53,7 @@ const subscriptionSchema = z.object({
       z.object({
         id: z.string(),
         quantity: z.number().int().nullish(),
+        metadata: z.record(z.string(), z.string()).nullish(),
         current_period_end: z.number().nullish(),
         price: idSchema.extend({ product: z.string().optional() }),
       }),
@@ -115,8 +116,12 @@ export class StripeBillingProvider implements BillingProvider {
 
   async getPrice(): Promise<BillingPrice> {
     if (!this.config.priceId) throw new Error("Legacy subscription price is not configured");
+    return this.getPriceById(this.config.priceId);
+  }
+
+  async getPriceById(priceId: string): Promise<BillingPrice> {
     const price = priceSchema.parse(
-      await this.request("GET", `/v1/prices/${encodeURIComponent(this.config.priceId)}`),
+      await this.request("GET", `/v1/prices/${encodeURIComponent(priceId)}`),
     );
     return {
       amount: price.unit_amount,
@@ -548,13 +553,52 @@ export class StripeBillingProvider implements BillingProvider {
         isByokPlan(chosen.subscription)
       )
         return;
-      const item = chosen.subscription.items.data[0];
+      const item = baseItem(chosen.subscription);
       if (!item || item.quantity === seats) return;
       try {
         await this.request("POST", `/v1/subscription_items/${encodeURIComponent(item.id)}`, {
           quantity: seats,
           proration_behavior: "create_prorations",
         });
+        return;
+      } catch (error) {
+        await this.rethrowUnlessEnded(error, customerId, chosen.subscription.id);
+      }
+    }
+  }
+
+  async setExtraSeats(customerId: string, input: { priceId: string; quantity: number }) {
+    const proration = "create_prorations";
+    for (;;) {
+      const chosen = pickStripeSubscription(await this.listLiveSubscriptions(customerId));
+      if (!chosen || !holdsBillingSubscription(chosen.status)) return;
+      if (
+        creditAmount(chosen.subscription.metadata?.corvo_credit_cents) ||
+        isByokPlan(chosen.subscription)
+      )
+        return;
+      const extra = chosen.subscription.items.data.find((item) => item.price.id === input.priceId);
+      try {
+        if (!extra) {
+          if (input.quantity < 1) return;
+          await this.request("POST", "/v1/subscription_items", {
+            subscription: chosen.subscription.id,
+            price: input.priceId,
+            quantity: input.quantity,
+            metadata: { corvo_extra_seats: "1" },
+            proration_behavior: proration,
+          });
+        } else if (input.quantity < 1) {
+          await this.request(
+            "DELETE",
+            `/v1/subscription_items/${encodeURIComponent(extra.id)}?proration_behavior=${proration}`,
+          );
+        } else if (extra.quantity !== input.quantity) {
+          await this.request("POST", `/v1/subscription_items/${encodeURIComponent(extra.id)}`, {
+            quantity: input.quantity,
+            proration_behavior: proration,
+          });
+        }
         return;
       } catch (error) {
         await this.rethrowUnlessEnded(error, customerId, chosen.subscription.id);
@@ -753,11 +797,19 @@ export function holdsBillingSubscription(status: BillingSubscriptionStatus) {
   return grantsAccess(status) || status === "unpaid" || status === "paused";
 }
 
+/** The plan's own line: the one that is not an extra-seat line this adapter added. */
+function baseItem(subscription: StripeSubscription) {
+  return (
+    subscription.items.data.find((item) => !item.metadata?.corvo_extra_seats) ??
+    subscription.items.data[0]
+  );
+}
+
 function toSnapshot(
   subscription: StripeSubscription,
   status: BillingSubscriptionStatus,
 ): BillingSubscriptionSnapshot {
-  const item = subscription.items.data[0];
+  const item = baseItem(subscription);
   if (!item) throw new Error("Stripe subscription has no items");
   return {
     creditAmountCents: creditAmount(subscription.metadata?.corvo_credit_cents),

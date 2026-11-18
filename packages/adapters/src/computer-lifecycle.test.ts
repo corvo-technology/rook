@@ -23,6 +23,7 @@ import {
   renewComputerExecutionLease,
   replaceComputer,
   screenLeaseIdForRun,
+  sizeForStart,
 } from "./computer-lifecycle.js";
 import { checkpointComputerWorkspace } from "./computer-workspace.js";
 import { FakeSandboxProvider } from "./fake-sandbox.js";
@@ -3443,3 +3444,97 @@ function replaceDeps(
     events: { append: vi.fn() } as unknown as ThreadEvents,
   };
 }
+
+describe("computer size by plan", () => {
+  const PLANS = JSON.stringify({ price_team: "team" });
+  const row = {
+    spaceId: "space-1",
+    state: "stopped",
+    providerRef: "provider-1",
+    homeKey: "bot-1",
+    kind: "cloud",
+    sizeApplied: "small" as string | null,
+    homeRevision: "rev-1",
+  };
+  function setup(billing: { status: string; priceId: string } | null) {
+    const destroy = vi.fn().mockResolvedValue(undefined);
+    return {
+      destroy,
+      deps: {
+        prisma: {
+          space: { findUnique: vi.fn(async () => ({ organizationId: "org-1" })) },
+          billingAccount: { findUnique: vi.fn(async () => billing) },
+          organizationLimitOverride: { findUnique: vi.fn(async () => null) },
+        } as unknown as PrismaClient,
+        sandbox: { destroy } as unknown as SandboxProvider,
+      },
+    };
+  }
+
+  it("asks for nothing without plans, whatever the computer is", async () => {
+    vi.stubEnv("PLAN_PRICES", "");
+    const { deps, destroy } = setup({ status: "active", priceId: "price_team" });
+    expect(await sizeForStart(deps, row, false, context)).toEqual({
+      computerSize: undefined,
+      providerRef: "provider-1",
+    });
+    expect(destroy).not.toHaveBeenCalled();
+    vi.unstubAllEnvs();
+  });
+
+  it("starts a new computer at the plan's size", async () => {
+    vi.stubEnv("PLAN_PRICES", PLANS);
+    const { deps } = setup(null);
+    const fresh = { ...row, providerRef: null, sizeApplied: null };
+    expect(await sizeForStart(deps, fresh, false, context)).toEqual({
+      computerSize: "small",
+      providerRef: undefined,
+    });
+    vi.unstubAllEnvs();
+  });
+
+  it("applies an upgrade on the next start by replacing the stopped computer", async () => {
+    vi.stubEnv("PLAN_PRICES", PLANS);
+    const { deps, destroy } = setup({ status: "active", priceId: "price_team" });
+    expect(await sizeForStart(deps, row, false, context)).toEqual({ computerSize: "medium" });
+    expect(destroy).toHaveBeenCalledOnce();
+    vi.unstubAllEnvs();
+  });
+
+  it("applies a downgrade the same way", async () => {
+    vi.stubEnv("PLAN_PRICES", PLANS);
+    const { deps, destroy } = setup({ status: "canceled", priceId: "price_team" });
+    const large = { ...row, sizeApplied: "large" };
+    expect(await sizeForStart(deps, large, false, context)).toEqual({ computerSize: "small" });
+    expect(destroy).toHaveBeenCalledOnce();
+    vi.unstubAllEnvs();
+  });
+
+  it("never resizes a computer that is running or whose files were never saved", async () => {
+    vi.stubEnv("PLAN_PRICES", PLANS);
+    const { deps, destroy } = setup({ status: "active", priceId: "price_team" });
+    const running = { ...row, state: "running" };
+    expect(await sizeForStart(deps, running, true, context)).toEqual({
+      computerSize: "medium",
+      providerRef: "provider-1",
+    });
+    const unsaved = { ...row, homeRevision: "empty" };
+    expect(await sizeForStart(deps, unsaved, false, context)).toMatchObject({
+      providerRef: "provider-1",
+    });
+    expect(destroy).not.toHaveBeenCalled();
+    vi.unstubAllEnvs();
+  });
+
+  it("treats a computer from before plans as small", async () => {
+    vi.stubEnv("PLAN_PRICES", PLANS);
+    const { deps, destroy } = setup(null);
+    const legacy = { ...row, sizeApplied: null };
+    expect(await sizeForStart(deps, legacy, false, context)).toEqual({
+      computerSize: "small",
+      providerRef: "provider-1",
+    });
+    expect(destroy).not.toHaveBeenCalled();
+    vi.unstubAllEnvs();
+  });
+});

@@ -17,6 +17,7 @@ import {
   SandboxDamagedError,
   SandboxRateLimitError,
   SandboxUnavailableError,
+  StorageQuotaError,
   VoiceAccountError,
 } from "@corvo/adapter-kit";
 import type {
@@ -113,12 +114,14 @@ import type { Actor, AuthCapabilities } from "@corvo/contracts";
 import {
   isLocalhostOrLoopbackIp,
   LOCAL_SETTINGS_TOKEN_HEADER,
+  PLAN_ERROR_CODES,
   SERVER_BUILD_HEADER,
 } from "@corvo/contracts";
 import { isMessagingEmail, signupPolicyFromEnv } from "@corvo/core";
 import type { Pool, PrismaClient } from "@corvo/db";
 import {
   authenticatePartner,
+  ComputerLimitError,
   consumePartnerEntryCode,
   createBoardEvents,
   createDb,
@@ -144,6 +147,7 @@ import {
   requireMembership,
   rowSecurityWarning,
   runAsSystem,
+  SeatLimitError,
   securityEventRetentionDays,
   setPartnerTenantState,
   takePartnerRequest,
@@ -1810,6 +1814,30 @@ export function handleRpcError(error: unknown, path: readonly string[]): void {
     });
     throw new ORPCError(error.code, {
       status: voiceAccountErrorStatus(error.code),
+      message: error.message,
+      cause: error,
+    });
+  }
+  // The organization's plan has no storage left. Nothing was deleted; the same write works once
+  // space is freed or the plan grows, and clients word the code in the member's language.
+  if (error instanceof StorageQuotaError) {
+    getLogger().warn(`rpc ${path.join("/")} storage full for the plan`);
+    throw new ORPCError(PLAN_ERROR_CODES.storageFull, {
+      status: 402,
+      message: error.message,
+      cause: error,
+    });
+  }
+  if (error instanceof SeatLimitError) {
+    throw new ORPCError(PLAN_ERROR_CODES.seatLimit, {
+      status: 402,
+      message: error.message,
+      cause: error,
+    });
+  }
+  if (error instanceof ComputerLimitError && error.plan) {
+    throw new ORPCError(PLAN_ERROR_CODES.computerLimit, {
+      status: 402,
       message: error.message,
       cause: error,
     });

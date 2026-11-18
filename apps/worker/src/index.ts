@@ -76,6 +76,7 @@ import {
   SpaceMemoryProviderResolver,
   sandboxProviderOptionsFromEnv,
   shutdownPiTelemetry,
+  storageUsageReconciler,
   withRunWorker,
   withSecretPersistence,
 } from "@corvo/adapters";
@@ -395,6 +396,7 @@ async function main() {
       securityEventRetentionDays(),
     ),
     reconcileHomeStorage: homeStorageSweeper(home),
+    reconcileStorageUsage: storageUsageReconciler(prisma),
     reconcileIdleComputers: createIdleComputerSweeper({ prisma, jobs }),
     reconcileDeadJobs: inMemoryJobs ? undefined : createDeadJobPruner(pool),
   });

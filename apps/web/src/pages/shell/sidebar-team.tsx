@@ -14,6 +14,7 @@ import {
   FileText,
   Gauge,
   Home,
+  Landmark,
   ListChecks,
   Search,
   ShieldCheck,
@@ -160,6 +161,16 @@ export function usePartnerHidden(): readonly string[] {
   );
 }
 
+/** Whether this person is one of the platform's operators; undefined until the first bootstrap. */
+export function usePartnerAdmin(): boolean | undefined {
+  const queries = useSpaceQueries();
+  return useQuery({
+    ...queries.bootstrap.queryOptions({ input: {} }),
+    queryFn: skipToken,
+    select: (bootstrap: AppBootstrap) => bootstrap.me?.partnerAdmin === true,
+  }).data;
+}
+
 /** Paints the partner's own colour, unless the page that embeds Rook brought one. */
 export function usePartnerAccent(): void {
   const queries = useSpaceQueries();
@@ -190,6 +201,7 @@ export function SidebarNavLive({
   const missions = useMissions();
   const approvals = usePendingApprovals().data?.length ?? 0;
   const hidden = usePartnerHidden();
+  const operator = usePartnerAdmin() === true;
   const visible = (part: NavPart) => !hidden.includes(part) && missions.shows(part);
   const target = (part: NavPart, label: string, to: string, icon: LucideIcon): NavTarget => ({
     key: part,
@@ -227,6 +239,9 @@ export function SidebarNavLive({
       : []),
     ...(visible("wiki") ? [target("wiki", t`Wiki`, "/app/wiki", BookOpen)] : []),
     // Memory is an account setting, which a partner's frame does not offer.
+    ...(operator
+      ? [{ key: "platform", label: t`Platform`, to: "/app/platform/pricing", icon: Landmark }]
+      : []),
     ...(embedded || !visible("memory")
       ? []
       : [target("memory", t`Memory`, "/settings/memory", Brain)]),

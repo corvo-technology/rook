@@ -209,9 +209,14 @@ import {
 import {
   PartnerCreditsSchema,
   PartnerPricingConfigSchema,
+  PartnerPricingHistoryEntrySchema,
   PartnerPricingVersionSchema,
   PartnerSimulationInputSchema,
   PartnerSimulationSchema,
+  PlatformNewPartnerSchema,
+  PlatformPartnerLeadSchema,
+  PlatformPartnerSchema,
+  PlatformWaitlistEntrySchema,
 } from "./partner-credits.js";
 import { PlanIdSchema, PlanOverrideSchema, PlanUsageSchema } from "./plans.js";
 import { MessageReactionSchema } from "./reactions.js";
@@ -1524,8 +1529,19 @@ export const appContract = {
       get: oc.output(PartnerPricingVersionSchema.nullable()),
       /** Writes the next version; earlier ones are kept. */
       publish: oc
-        .input(z.object({ config: PartnerPricingConfigSchema }))
+        .input(
+          z.object({
+            config: PartnerPricingConfigSchema,
+            /** A day, today or later; left out it is today, so the version is live at once. */
+            effectiveOn: z
+              .string()
+              .regex(/^\d{4}-\d{2}-\d{2}$/)
+              .optional(),
+          }),
+        )
         .output(z.object({ version: z.number().int() })),
+      /** Every version, newest first. */
+      history: oc.output(z.array(PartnerPricingHistoryEntrySchema)),
       /** Against the live version, or against `config` when an admin tries a draft. */
       simulate: oc.input(PartnerSimulationInputSchema).output(PartnerSimulationSchema),
     },
@@ -1533,6 +1549,42 @@ export const appContract = {
     partnerPlan: {
       set: oc
         .input(z.object({ partnerId: z.string().min(1), tierKey: z.string().min(1).nullable() }))
+        .output(z.object({ ok: z.literal(true) })),
+    },
+    /** Every partner with the month's use of its fund against what it cost; read-only. */
+    partners: {
+      list: oc
+        .input(
+          z
+            .object({
+              period: z
+                .string()
+                .regex(/^\d{4}-(0[1-9]|1[0-2])$/)
+                .optional(),
+            })
+            .default({}),
+        )
+        .output(z.array(PlatformPartnerSchema)),
+      /** Makes a partner and invites its owner (or adds it to the owner's organization). */
+      create: oc
+        .input(PlatformNewPartnerSchema.extend({ ownerEmail: z.email().max(254) }))
+        .output(z.object({ partnerId: z.string(), emailed: z.boolean() })),
+    },
+    /** People waiting for a place; approving invites the address in. */
+    waitlist: {
+      list: oc.output(z.array(PlatformWaitlistEntrySchema)),
+      decide: oc
+        .input(z.object({ id: Id, decision: z.enum(["approved", "declined"]) }))
+        .output(z.object({ emailed: z.boolean() })),
+    },
+    /** Companies that asked to be partners; approving makes the partner. */
+    partnerLeads: {
+      list: oc.output(z.array(PlatformPartnerLeadSchema)),
+      approve: oc
+        .input(z.object({ id: Id, partner: PlatformNewPartnerSchema }))
+        .output(z.object({ partnerId: z.string().nullable(), emailed: z.boolean() })),
+      decline: oc
+        .input(z.object({ id: Id, reason: z.string().trim().max(300).optional() }))
         .output(z.object({ ok: z.literal(true) })),
     },
     /** Rook's monthly invoices of its share to embedded commerce partners. */

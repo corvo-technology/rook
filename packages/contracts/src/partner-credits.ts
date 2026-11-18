@@ -62,7 +62,18 @@ export const PartnerPricingVersionSchema = z.object({
   version: z.number().int().positive(),
   config: PartnerPricingConfigSchema,
   createdAt: z.string(),
+  /** From when this version is the live one. */
+  effectiveAt: z.string(),
 });
+
+/** One version in the history: the live one, the ones that ended and the ones still to start. */
+export const PartnerPricingHistoryEntrySchema = z.object({
+  version: z.number().int().positive(),
+  createdAt: z.string(),
+  effectiveAt: z.string(),
+  status: z.enum(["live", "scheduled", "past"]),
+});
+export type PartnerPricingHistoryEntry = z.infer<typeof PartnerPricingHistoryEntrySchema>;
 
 /** What one typical customer uses in a month. */
 export const PartnerUsageMixSchema = z.object({
@@ -148,3 +159,69 @@ export const PartnerCreditsSchema = z.object({
 });
 
 export type PartnerCredits = z.infer<typeof PartnerCreditsSchema>;
+
+/** One partner as the platform operators see it for a month. Credits are US cents of the fund. */
+export const PlatformPartnerSchema = z.object({
+  id: z.string(),
+  slug: z.string(),
+  name: z.string(),
+  mode: z.enum(["embedded", "white_label", "referral"]),
+  /** The partner plan (a tier key of the published pricing), for embedded partners. */
+  plan: z.string().nullable(),
+  /** Customers whose space is enabled. */
+  activeCustomers: z.number().int().nonnegative(),
+  /** What is left in the fund, and the share of fund plus this month's use that it is. */
+  fundBalanceCredits: z.number().int(),
+  fundPercent: z.number().int().min(0).max(100).nullable(),
+  /** What customers' use was charged to the fund this month. */
+  chargedCredits: z.number().int().nonnegative(),
+  /** What the providers charged Rook for that use; null when it is not reported. */
+  costCredits: z.number().int().nonnegative().nullable(),
+});
+export type PlatformPartner = z.infer<typeof PlatformPartnerSchema>;
+
+/** Who asked to get in, and what an operator decided. */
+export const PlatformDecisionSchema = z.enum(["pending", "approved", "declined"]);
+
+export const PlatformWaitlistEntrySchema = z.object({
+  id: z.string(),
+  email: z.string(),
+  company: z.string(),
+  task: z.string().nullable(),
+  locale: z.string().nullable(),
+  status: PlatformDecisionSchema,
+  createdAt: z.string(),
+});
+
+export const PlatformPartnerLeadSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  company: z.string(),
+  email: z.string(),
+  whatsapp: z.string().nullable(),
+  website: z.string().nullable(),
+  partnerType: z.string(),
+  country: z.string().nullable(),
+  customers: z.string().nullable(),
+  message: z.string().nullable(),
+  status: PlatformDecisionSchema,
+  createdAt: z.string(),
+});
+
+export type PlatformWaitlistEntry = z.infer<typeof PlatformWaitlistEntrySchema>;
+export type PlatformPartnerLead = z.infer<typeof PlatformPartnerLeadSchema>;
+
+/** A partner an operator makes: the product, how it is billed and the plan it is on. */
+export const PlatformNewPartnerSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  slug: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .regex(/^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/),
+  mode: z.enum(["embedded", "white_label", "referral"]),
+  /** Two letters; Brazil bills in reais, everywhere else in dollars. */
+  country: z.string().trim().length(2),
+  /** A tier of the published pricing; only embedded partners are on a plan. */
+  planKey: z.string().max(40).nullish(),
+});

@@ -2628,7 +2628,7 @@ model Partner {
   scribeRetentionDays       Int?
   /// Commerce (docs/partner-commerce.md). Everything defaults to the pilot's behaviour: a "wallet"
   /// partner draws on its owner's credit and the commerce API refuses it.
-  /// embedded | white_label
+  /// embedded | white_label | referral
   mode                      String                 @default("embedded")
   country                   String?
   /// BRL | USD, from the country at creation; one per partner.
@@ -2652,6 +2652,8 @@ model Partner {
   /// Embedded credit model: the models this partner's customers may use (empty means all), and
   /// when to buy a top-up on its own. The fund is the partner's credit wallet.
   creditAllowedModels       String[]               @default([])
+  /// The platform's partner plan (a tier key of the published pricing) an embedded partner is on.
+  planKey                   String?
   autoTopupEnabled          Boolean                @default(false)
   autoTopupThresholdCredits Int?
   autoTopupAmountMinor      Int?
@@ -2709,6 +2711,8 @@ model PartnerPricingVersion {
   config          Json
   createdByUserId String?
   createdAt       DateTime @default(now())
+  /// From when this version is the live one; the live version is the latest that has started.
+  effectiveAt     DateTime @default(now())
 
   @@map("partner_pricing_versions")
 }
@@ -2878,14 +2882,20 @@ model SpaceMemberModelSetting {
 /// A company on the closed-beta cloud waitlist, filled from the marketing site. Internal:
 /// only server code running as the system reads or writes it. No address or agent is stored.
 model WaitlistEntry {
-  id         String    @id @default(cuid())
-  email      String    @unique
-  company    String
-  task       String?
-  locale     String?
-  source     String?
-  createdAt  DateTime  @default(now())
-  notifiedAt DateTime?
+  id              String    @id @default(cuid())
+  email           String    @unique
+  company         String
+  task            String?
+  locale          String?
+  source          String?
+  createdAt       DateTime  @default(now())
+  notifiedAt      DateTime?
+  /// pending | approved | declined, decided by an operator in the platform area.
+  status          String    @default("pending")
+  decidedAt       DateTime?
+  decidedByUserId String?
+  /// The invitation sent on approval, so approving twice sends one.
+  invitationId    String?
 
   @@map("waitlist_entries")
 }
@@ -2893,20 +2903,27 @@ model WaitlistEntry {
 /// A company that asked to become a partner, filled from the marketing site. Internal: only
 /// server code running as the system reads or writes it.
 model PartnerLead {
-  id          String    @id @default(cuid())
-  name        String
-  email       String
-  company     String
-  whatsapp    String?
-  website     String?
-  partnerType String
-  country     String?
-  customers   String?
-  message     String?
-  locale      String?
-  source      String?
-  createdAt   DateTime  @default(now())
-  notifiedAt  DateTime?
+  id              String    @id @default(cuid())
+  name            String
+  email           String
+  company         String
+  whatsapp        String?
+  website         String?
+  partnerType     String
+  country         String?
+  customers       String?
+  message         String?
+  locale          String?
+  source          String?
+  createdAt       DateTime  @default(now())
+  notifiedAt      DateTime?
+  /// pending | approved | declined, decided by an operator in the platform area.
+  status          String    @default("pending")
+  decidedAt       DateTime?
+  decidedByUserId String?
+  declineReason   String?
+  /// The partner made on approval, so approving twice makes one.
+  partnerId       String?
 
   @@index([createdAt])
   @@map("partner_leads")

@@ -7,7 +7,7 @@ export const CREDIT_MICROS = 10_000n;
 const BPS = 10_000n;
 
 export class PartnerPricingError extends Error {
-  constructor(readonly code: "unknown_model" | "no_pricing" | "overflow") {
+  constructor(readonly code: "unknown_model" | "no_pricing" | "overflow" | "past_date") {
     super(code);
     this.name = "PartnerPricingError";
   }
@@ -103,25 +103,92 @@ export function simulatePartnerPricing(
   };
 }
 
-/** The live pricing: the highest version, or null before an admin has written one. */
-export async function livePartnerPricing(
+export interface PricingVersionRow {
+  version: number;
+  config: PartnerPricingConfig;
+  createdAt: Date;
+  effectiveAt: Date;
+}
+
+/**
+ * The pricing that applied at `at`: the latest version that had started by then, or null before
+ * an admin has written one. A partner's period is priced with the version live when it began, so a
+ * later version never changes a period that is already running.
+ */
+export async function partnerPricingAt(
   prisma: PrismaClient,
-): Promise<{ version: number; config: PartnerPricingConfig; createdAt: Date } | null> {
-  const row = await prisma.partnerPricingVersion.findFirst({ orderBy: { version: "desc" } });
+  at: Date,
+): Promise<PricingVersionRow | null> {
+  const row = await prisma.partnerPricingVersion.findFirst({
+    where: { effectiveAt: { lte: at } },
+    orderBy: [{ effectiveAt: "desc" }, { version: "desc" }],
+  });
   if (!row) return null;
   const parsed = PartnerPricingConfigSchema.safeParse(row.config);
   return parsed.success
-    ? { version: row.version, config: parsed.data, createdAt: row.createdAt }
+    ? {
+        version: row.version,
+        config: parsed.data,
+        createdAt: row.createdAt,
+        effectiveAt: row.effectiveAt,
+      }
     : null;
 }
 
-/** Writes the next version; earlier ones stay as the record of what was live. */
+/** The live pricing now. */
+export function livePartnerPricing(
+  prisma: PrismaClient,
+  now = new Date(),
+): Promise<PricingVersionRow | null> {
+  return partnerPricingAt(prisma, now);
+}
+
+/** Every version, newest first, with whether it is live, still to start, or over. */
+export async function partnerPricingHistory(
+  prisma: PrismaClient,
+  now = new Date(),
+): Promise<
+  Array<{
+    version: number;
+    createdAt: Date;
+    effectiveAt: Date;
+    status: "live" | "scheduled" | "past";
+  }>
+> {
+  const rows = await prisma.partnerPricingVersion.findMany({
+    orderBy: [{ effectiveAt: "desc" }, { version: "desc" }],
+    take: 100,
+    select: { version: true, createdAt: true, effectiveAt: true },
+  });
+  const live = rows.find((row) => row.effectiveAt <= now);
+  return rows.map((row) => ({
+    ...row,
+    status: row.effectiveAt > now ? "scheduled" : row === live ? "live" : "past",
+  }));
+}
+
+const DAY_MS = 86_400_000;
+
+/**
+ * Writes the next version, live from `effectiveOn` (a day, today or later; today means now).
+ * Earlier versions stay as the record of what was live.
+ */
 export async function publishPartnerPricing(
   prisma: PrismaClient,
   config: PartnerPricingConfig,
   createdByUserId: string | null,
+  options: { effectiveOn?: string; now?: Date } = {},
 ): Promise<{ version: number }> {
   const valid = PartnerPricingConfigSchema.parse(config);
+  const now = options.now ?? new Date();
+  let effectiveAt = now;
+  if (options.effectiveOn) {
+    const day = new Date(`${options.effectiveOn}T00:00:00.000Z`);
+    if (Number.isNaN(day.getTime())) throw new PartnerPricingError("past_date");
+    const today = new Date(Math.floor(now.getTime() / DAY_MS) * DAY_MS);
+    if (day < today) throw new PartnerPricingError("past_date");
+    if (day > now) effectiveAt = day;
+  }
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const last = await prisma.partnerPricingVersion.findFirst({
       orderBy: { version: "desc" },
@@ -130,7 +197,7 @@ export async function publishPartnerPricing(
     const version = (last?.version ?? 0) + 1;
     try {
       await prisma.partnerPricingVersion.create({
-        data: { version, config: valid as never, createdByUserId },
+        data: { version, config: valid as never, createdByUserId, effectiveAt },
       });
       return { version };
     } catch (error) {

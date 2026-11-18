@@ -144,7 +144,7 @@ export async function rotatePartnerWebhookSecret(
 
 export interface PartnerCommerceSettings {
   billingModel?: "wallet" | "commerce";
-  mode?: "embedded" | "white_label";
+  mode?: "embedded" | "white_label" | "referral";
   country?: string;
   commissionBps?: number;
   checkoutUrl?: string | null;

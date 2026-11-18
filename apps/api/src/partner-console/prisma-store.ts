@@ -56,7 +56,7 @@ function toRecord(partner: {
     id: partner.id,
     slug: partner.slug,
     name: partner.name,
-    mode: partner.mode === "white_label" ? "white_label" : "embedded",
+    mode: partner.mode === "embedded" ? "embedded" : "white_label",
     currency: partner.currency === "BRL" ? "BRL" : "USD",
     billingModel: partner.billingModel === "commerce" ? "commerce" : "wallet",
     commissionBps: partner.commissionBps,

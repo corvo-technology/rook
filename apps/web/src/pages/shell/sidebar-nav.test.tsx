@@ -96,6 +96,23 @@ it("lists every place once, with the rest behind More", async () => {
   await cleanup();
 });
 
+it("offers the platform area to its operators only, and opens its pricing", async () => {
+  const other = await renderNav();
+  expect(await other.more()).not.toContain("Platform");
+  await other.cleanup();
+  document.body.innerHTML = "";
+  queryClient.setQueryData(["bootstrap"], { me: { partnerAdmin: true } });
+  const onOpen = vi.fn();
+  const operator = await renderNav({}, onOpen);
+  expect(await operator.more()).toContain("Platform");
+  const entry = [...document.querySelectorAll('[data-slot="popover-content"] button')].find(
+    (button) => button.textContent === "Platform",
+  ) as HTMLButtonElement;
+  await act(async () => entry.click());
+  expect(onOpen).toHaveBeenCalledWith("/app/platform/pricing");
+  await operator.cleanup();
+});
+
 it("leaves Tasks out only where the board is off", async () => {
   const { labels, cleanup } = await renderNav({ ticketBoardEnabled: false });
   expect(labels()).not.toContain("Tasks");

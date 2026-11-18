@@ -12,6 +12,7 @@ import type { StoreCategory } from "../i18n/launch";
 import type { Locale } from "../i18n/locales";
 import { getLaunchCopy } from "../i18n/launch";
 import { DEFAULT_LOCALE, LOCALE_HTML_LANG, isLocale, localeHomePath } from "../i18n/locales";
+import { partnersPath } from "../i18n/partners";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import {
   DOWNLOAD_URL,
@@ -51,12 +52,15 @@ const { works } = copy;
 // The Store's agents come from the product's own catalog, so the page says what is there.
 const catalogLocale = locale === "pt" ? "pt-BR" : "en";
 const CATEGORY_ORDER: StoreCategory[] = ["finance", "operations", "marketing", "support"];
-const storeGroups = CATEGORY_ORDER.map((category) => ({
-  category,
-  names: AGENT_CATALOG.filter((entry) => entry.category === category)
-    .slice(0, 3)
-    .map((entry) => entry.name[catalogLocale] ?? entry.name.en),
-}));
+const storeGroups = [
+  ...CATEGORY_ORDER.map((category) => ({
+    label: copy.store.categories[category],
+    names: AGENT_CATALOG.filter((entry) => entry.category === category)
+      .slice(0, 3)
+      .map((entry) => entry.name[catalogLocale] ?? entry.name.en),
+  })),
+  { label: copy.store.health.label, names: copy.store.health.agents },
+];
 // Brand names, the same in every language.
 const MODEL_CHIPS = ["Claude", "ChatGPT", "OpenRouter"];
 // The four states an agent is in, the same ones the app shows on its rooks.
@@ -161,7 +165,7 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
           {
             storeGroups.map((group) => (
               <div class="lp-store__row">
-                <h3>{copy.store.categories[group.category]}</h3>
+                <h3>{group.label}</h3>
                 <ul>
                   {group.names.map((name) => (
                     <li>{name}</li>
@@ -353,6 +357,11 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
                   <span class="home-faq__mark" aria-hidden="true" />
                 </summary>
                 <p>{item.answer}</p>
+                {index === copy.faq.items.length - 1 && (
+                  <p>
+                    <a href={partnersPath(locale)}>{copy.faq.partnersLink}</a>
+                  </p>
+                )}
               </details>
             ))
           }

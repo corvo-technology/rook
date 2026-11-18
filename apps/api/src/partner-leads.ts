@@ -39,6 +39,7 @@ const body = z.object({
   name: z.string().trim().min(1).max(120),
   email: z.string().trim().toLowerCase().max(254).pipe(z.email()),
   company: z.string().trim().min(1).max(120),
+  whatsapp: optional(40),
   website: optional(300),
   partnerType: z.enum(PARTNER_TYPES),
   country: optional(80),
@@ -55,6 +56,7 @@ export interface PartnerLeadInput {
   name: string;
   email: string;
   company: string;
+  whatsapp?: string;
   website?: string;
   partnerType: (typeof PARTNER_TYPES)[number];
   country?: string;
@@ -78,6 +80,7 @@ export function prismaPartnerLeadStore(prisma: PrismaClient): PartnerLeadStore {
             name: lead.name,
             email: lead.email,
             company: lead.company,
+            whatsapp: lead.whatsapp ?? null,
             website: lead.website ?? null,
             partnerType: lead.partnerType,
             country: lead.country ?? null,
@@ -181,6 +184,7 @@ export function partnerLeadRoutes(options: PartnerLeadOptions) {
       email: fields.email,
       company: fields.company,
       partnerType: fields.partnerType,
+      ...(fields.whatsapp ? { whatsapp: fields.whatsapp } : {}),
       ...(fields.website ? { website: fields.website } : {}),
       ...(fields.country ? { country: fields.country } : {}),
       ...(fields.customers ? { customers: fields.customers } : {}),

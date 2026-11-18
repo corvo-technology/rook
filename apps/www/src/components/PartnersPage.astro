@@ -4,11 +4,10 @@ import type { Locale } from "../i18n/locales";
 import { getLaunchCopy } from "../i18n/launch";
 import { getPartnersCopy } from "../i18n/partners";
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { MASCOT_COLOR } from "../mascot";
-import { PARTNER_DOCS_URL, PARTNER_LEADS_ENDPOINT } from "../site";
+import { PARTNER_LEADS_ENDPOINT } from "../site";
 import "../styles/launch.css";
 import "../styles/partners.css";
-import Avatar from "./Avatar.astro";
+import Button from "./Button.astro";
 import Footer from "./Footer.astro";
 import Header from "./Header.astro";
 import { Rook } from "./Rook";
@@ -20,19 +19,16 @@ const copy = getPartnersCopy(locale);
 const launch = getLaunchCopy(locale);
 const alternates = Object.fromEntries(LOCALES.map((l) => [l, `${getPartnersCopy(l).path}/`]));
 const form = copy.form;
-const EARN = { price: 100, commission: 20, markup: 30 };
-const earnRows = [
-  { label: copy.earn.price, value: EARN.price, kind: "price" },
-  { label: copy.earn.commission, value: EARN.commission, kind: "commission" },
-  { label: copy.earn.markup, value: EARN.markup, kind: "markup" },
+const FORM_STEPS = 3;
+const HEROES = ["menta", "azul", "laranja", "violeta", "vermelho"] as const;
+const NAV = [
+  { section: "como", hue: "menta", label: copy.nav.how },
+  { section: "ganhos", hue: "azul", label: copy.nav.earn },
+  { section: "plataforma", hue: "violeta", label: copy.nav.platform },
+  { section: "perguntas", hue: "rosa", label: copy.nav.faq },
 ] as const;
-const STEP_HUES = ["menta", "azul", "violeta", "rosa", "laranja"] as const;
-// Escape first, then turn **lead-ins** into <strong>.
-const bold = (text: string) =>
-  text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+// Made-up bars for the console, from the oldest month to the newest.
+const BARS = [22, 30, 38, 47, 58, 70, 86];
 const RANGES = ["0-50", "50-200", "200-1000", "1000+"] as const;
 ---
 
@@ -46,152 +42,265 @@ const RANGES = ["0-50", "50-200", "200-1000", "1000+"] as const;
   ogImageAlt={launch.meta.ogImageAlt}
 >
   <div class="container">
-    <Header locale={locale} copy={launch.nav} />
+    <Header locale={locale} copy={launch.nav} links={[...NAV]} cta={{ href: "#inscricao", label: copy.nav.cta }} />
 
     <main id="main" lang={LOCALE_HTML_LANG[locale]} class="partners">
       <section class="lp-hero partners-hero">
-        <p class="partners-scarcity">{copy.hero.scarcity}</p>
-        <Avatar color={MASCOT_COLOR.menta} mood="happy" class="partners-hero__rook" />
+        <p class="lp-hero__pill">{copy.hero.pill}</p>
         <h1>{copy.hero.title}</h1>
         <p class="lp-hero__lead">{copy.hero.lead}</p>
         <div class="lp-hero__actions">
-          <a class="button button--primary" href="#inscricao" data-attr="partners-cta">{copy.hero.cta}</a>
-          <a class="button button--secondary" href={PARTNER_DOCS_URL} data-attr="partners-docs">{copy.hero.docs}</a>
+          <Button href="#inscricao" data-attr="partners-cta">{copy.hero.cta}</Button>
+        </div>
+        <p class="partners-note">{copy.hero.scarcity}</p>
+        <div class="partners-rooks" aria-hidden="true">
+          {HEROES.map((hue, index) => <Rook hue={hue} size={40} seed={index} />)}
         </div>
       </section>
 
-      <section class="partners-section partners-pain" aria-labelledby="pain-heading">
+      <section class="partners-band" aria-label={copy.preview.console}>
+        <div class="partners-console ink" role="img" aria-label={copy.preview.caption}>
+          <aside>
+            <strong>{copy.preview.company}</strong>
+            <span>{copy.preview.console}</span>
+            <ul>
+              {copy.preview.menu.map((item, index) => <li aria-current={index === 0 ? "true" : undefined}>{item}</li>)}
+            </ul>
+          </aside>
+          <div class="partners-console__main">
+            <div class="partners-console__head">
+              <div>
+                <strong>{copy.preview.greeting}</strong>
+                <span>{copy.preview.month}</span>
+              </div>
+              <span class="partners-console__add">{copy.preview.add}</span>
+            </div>
+            <div class="partners-console__metrics">
+              {
+                copy.preview.metrics.map((label, index) => (
+                  <div data-tone={index === 2 ? "warn" : index === 3 ? "good" : undefined}>
+                    <span>{label}</span>
+                    <strong>{index === 0 ? "R$ —" : "—"}</strong>
+                  </div>
+                ))
+              }
+            </div>
+            <div class="partners-console__panels">
+              <div>
+                <span>{copy.preview.chart}</span>
+                <div class="partners-console__bars">
+                  {BARS.map((height, index) => <i style={`--h: ${height}%`} data-last={index === BARS.length - 1 ? "" : undefined} />)}
+                </div>
+              </div>
+              <div>
+                <span>{copy.preview.queue}</span>
+                <ul>
+                  {copy.preview.items.map((item) => <li><span>{item.text}</span><b>{item.action}</b></li>)}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="partners-caption">{copy.preview.caption}</p>
+      </section>
+
+      <section class="partners-section partners-two" aria-labelledby="pain-heading">
         <h2 id="pain-heading" class="lp-title" data-reveal>{copy.pain.heading}</h2>
-        <div class="partners-pain__body" data-reveal>
-          {copy.pain.paragraphs.map((text) => <p set:html={bold(text)} />)}
+        <div class="partners-two__body" data-reveal>
+          {copy.pain.paragraphs.map((text) => <p>{text}</p>)}
         </div>
       </section>
 
-      <section class="partners-section" aria-labelledby="how-heading">
-        <h2 id="how-heading" class="lp-title lp-title--center" data-reveal>{copy.how.heading}</h2>
-        <ol class="partners-stepper">
+      <section id="como" class="partners-section" aria-labelledby="how-heading">
+        <h2 id="how-heading" class="lp-title" data-reveal>{copy.how.heading}</h2>
+        <ol class="partners-steps" data-reveal>
           {
             copy.how.steps.map((step, index) => (
-              <li data-reveal>
-                <Rook hue={STEP_HUES[index] ?? "menta"} size={32} gaze={false} />
-                <div>
-                  <h3>{step.title}</h3>
-                  <p>{step.body}</p>
-                </div>
+              <li class:list={[index === copy.how.steps.length - 1 && "ink"]}>
+                <span>{index + 1}</span>
+                <h3>{step.title}</h3>
+                <p>{step.body}</p>
               </li>
             ))
           }
         </ol>
       </section>
 
-      <section class="partners-section" aria-labelledby="earn-heading">
-        <div class="partners-earn__head" data-reveal>
-          <h2 id="earn-heading" class="lp-title lp-title--center">{copy.earn.heading}</h2>
-          <p class="lp-lead">{copy.earn.lead}</p>
-        </div>
-        <div class="partners-earn-cards">
+      <section id="ganhos" class="partners-earn ink ink-band" aria-labelledby="earn-heading">
+        <h2 id="earn-heading" class="lp-title" data-reveal>{copy.earn.heading}</h2>
+        <div class="partners-cards partners-cards--earn" data-reveal>
           {
             copy.earn.cards.map((card, index) => (
-              <article class="lp-card" data-reveal>
-                <span class="partners-eyebrow">{index + 1}</span>
+              <article class="lp-card" data-accent={index === 2 ? "" : undefined}>
                 <h3>{card.title}</h3>
                 <p>{card.body}</p>
               </article>
             ))
           }
         </div>
-        <figure class="lp-card partners-ledger" data-reveal>
-          <figcaption class="partners-eyebrow">{copy.earn.exampleLabel}</figcaption>
-          <dl>
-            {
-              earnRows.map((row) => (
-                <div class={`partners-ledger__row partners-ledger__row--${row.kind}`}>
-                  <dt>{row.label}</dt>
-                  <dd>
-                    <span class="partners-ledger__bar" style={`--share: ${row.value}%`} aria-hidden="true" />
-                    <span class="partners-ledger__value">{row.value}</span>
-                  </dd>
-                </div>
-              ))
-            }
-            <div class="partners-ledger__row partners-ledger__total">
-              <dt>{copy.earn.total}</dt>
-              <dd>
-                <span class="partners-ledger__sum">{EARN.commission} + {EARN.markup} =</span>
-                <span class="partners-ledger__value">{EARN.commission + EARN.markup}</span>
-              </dd>
-            </div>
-          </dl>
-          <p class="partners-note">{copy.earn.note}</p>
-        </figure>
-      </section>
-
-      <section class="partners-section partners-split" aria-label={`${copy.split.you.title} ${copy.split.us.title}`}>
-        {
-          [copy.split.you, copy.split.us].map((side, index) => (
-            <article class:list={["lp-card", "partners-split__side", index === 1 && "partners-split__side--us"]} data-reveal>
-              <Rook hue={index === 0 ? "menta" : "neutro"} size={36} gaze={false} />
-              <h2>{side.title}</h2>
-              <ul>
-                {side.items.map((item) => <li>{item}</li>)}
-              </ul>
-            </article>
-          ))
-        }
       </section>
 
       <section class="partners-section" aria-labelledby="benefits-heading">
-        <h2 id="benefits-heading" class="lp-title lp-title--center" data-reveal>{copy.benefits.heading}</h2>
-        <ul class="partners-grid partners-grid--benefits">
+        <h2 id="benefits-heading" class="lp-title" data-reveal>{copy.benefits.heading}</h2>
+        <div class="partners-cards" data-reveal>
           {
             copy.benefits.items.map((item) => (
-              <li data-reveal>
-                <strong>{item.title}</strong> {item.body}
-              </li>
-            ))
-          }
-        </ul>
-      </section>
-
-      <section class="partners-section" aria-labelledby="features-heading">
-        <h2 id="features-heading" class="lp-title lp-title--center" data-reveal>{copy.features.heading}</h2>
-        <ul class="partners-grid partners-grid--features">
-          {
-            copy.features.items.map((item) => (
-              <li class="lp-card" data-reveal>
+              <article class="lp-card">
                 <h3>{item.title}</h3>
                 <p>{item.body}</p>
-              </li>
+              </article>
             ))
           }
-        </ul>
+        </div>
       </section>
 
-      <section class="partners-section partners-who" aria-labelledby="who-heading">
-        <h2 id="who-heading" class="lp-title lp-title--center" data-reveal>{copy.who.heading}</h2>
-        <ul class="partners-chips" data-reveal>
+      <section class="partners-section" aria-labelledby="split-heading">
+        <div class="partners-head" data-reveal>
+          <h2 id="split-heading" class="lp-title">
+            {copy.split.heading.split("\n").map((line, index) => (index === 0 ? line : [<br />, line]))}
+          </h2>
+          <p class="lp-lead">{copy.split.lead}</p>
+        </div>
+        <div class="partners-sides" data-reveal>
+          <article class="lp-card">
+            <h3>{copy.split.you.title}</h3>
+            <ul class="partners-checks">{copy.split.you.items.map((item) => <li>{item}</li>)}</ul>
+          </article>
+          <article class="lp-card" data-accent="">
+            <h3>{copy.split.us.title}</h3>
+            <ul class="partners-checks">{copy.split.us.items.map((item) => <li>{item}</li>)}</ul>
+          </article>
+        </div>
+      </section>
+
+      <section id="plataforma" class="partners-section" aria-labelledby="platform-heading">
+        <div class="partners-head" data-reveal>
+          <h2 id="platform-heading" class="lp-title">{copy.platform.heading}</h2>
+          <p class="lp-lead">{copy.platform.lead}</p>
+        </div>
+        <div class="partners-cards partners-cards--dense" data-reveal>
+          {
+            copy.platform.items.map((item, index) => (
+              <article class="lp-card" data-accent={index === copy.platform.items.length - 1 ? "" : undefined}>
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
+              </article>
+            ))
+          }
+        </div>
+      </section>
+
+      <section class="partners-section" aria-labelledby="who-heading">
+        <h2 id="who-heading" class="lp-title" data-reveal>{copy.who.heading}</h2>
+        <ul class="partners-checks partners-checks--ruled" data-reveal>
           {copy.who.items.map((item) => <li>{item}</li>)}
         </ul>
       </section>
 
-      <section class="partners-section" aria-labelledby="cohort-heading">
-        <div class="lp-card partners-cohort ink" data-reveal>
+      <section id="inscricao" class="partners-section partners-contact" aria-labelledby="cohort-heading">
+        <div class="partners-contact__intro" data-reveal>
           <h2 id="cohort-heading" class="lp-title">{copy.cohort.heading}</h2>
-          <ul>
-            {
-              copy.cohort.perks.map((perk) => (
-                <li>
-                  <h3>{perk.title}</h3>
-                  <p>{perk.body}</p>
-                </li>
-              ))
-            }
-          </ul>
-          <a class="button button--primary" href="#inscricao" data-attr="partners-cohort">{copy.cohort.cta}</a>
+          <p class="lp-lead">{copy.cohort.lead}</p>
+          <ul class="partners-checks">{copy.cohort.perks.map((perk) => <li>{perk}</li>)}</ul>
         </div>
+        <article class="lp-card lp-wait ink partners-form-card" data-reveal>
+          <div class="partners-form-card__head">
+            <h3>{form.title}</h3>
+            <p>{form.hint}</p>
+          </div>
+          <form
+            class="lp-wait__form partners-form"
+            novalidate
+            data-partner-form={PARTNER_LEADS_ENDPOINT}
+            data-locale={locale}
+            data-steps={FORM_STEPS}
+            data-progress={form.progress}
+            data-next={form.next}
+            data-submit={form.submit}
+            data-success={form.success}
+            data-required-error={form.requiredError}
+            data-email-error={form.emailError}
+            data-consent-error={form.consentError}
+            data-error={form.error}
+          >
+            <div class="partners-progress">
+              <span data-progress-label>{form.progress.replace("{n}", "1").replace("{total}", String(FORM_STEPS))}</span>
+              <div aria-hidden="true"><i data-progress-bar style={`width: ${100 / FORM_STEPS}%`}></i></div>
+            </div>
+            <div class="partners-step" data-step="1">
+              <label>
+                <span>{form.name}</span>
+                <input type="text" name="name" required maxlength="120" autocomplete="name" />
+                <small data-error-for="name" role="alert"></small>
+              </label>
+              <label>
+                <span>{form.email}</span>
+                <input type="email" name="email" required maxlength="254" autocomplete="email" />
+                <small data-error-for="email" role="alert"></small>
+              </label>
+              <label>
+                <span>{form.whatsapp}</span>
+                <input type="tel" name="whatsapp" maxlength="40" autocomplete="tel" inputmode="tel" />
+              </label>
+              <label>
+                <span>{form.company}</span>
+                <input type="text" name="company" required maxlength="120" autocomplete="organization" />
+                <small data-error-for="company" role="alert"></small>
+              </label>
+              <label>
+                <span>{form.website}</span>
+                <input type="text" name="website" maxlength="300" autocomplete="url" />
+              </label>
+            </div>
+            <div class="partners-step" data-step="2" hidden>
+              <label>
+                <span>{form.type}</span>
+                <select name="partnerType">
+                  <option value="embedded">{form.types.embedded}</option>
+                  <option value="white_label">{form.types.white_label}</option>
+                  <option value="unsure" selected>{form.types.unsure}</option>
+                </select>
+              </label>
+              <label>
+                <span>{form.customers}</span>
+                <select name="customers">
+                  <option value=""></option>
+                  {RANGES.map((value, index) => <option value={value}>{form.customerRanges[index]}</option>)}
+                </select>
+              </label>
+              <label>
+                <span>{form.country}</span>
+                <input type="text" name="country" maxlength="80" autocomplete="country-name" />
+              </label>
+            </div>
+            <div class="partners-step" data-step="3" hidden>
+              <label>
+                <span>{form.message}</span>
+                <textarea name="message" rows="4" maxlength="2000"></textarea>
+              </label>
+              <label class="partners-consent">
+                <input type="checkbox" name="consent" required />
+                <span>{form.consent}</span>
+              </label>
+              <small data-error-for="consent" role="alert"></small>
+            </div>
+            <div class="lp-wait__trap" aria-hidden="true">
+              <label>Website <input type="text" name="hp" tabindex="-1" autocomplete="off" /></label>
+            </div>
+            <div class="partners-actions">
+              <button type="button" class="button button--secondary" data-back hidden>{form.back}</button>
+              <button type="submit" class="button button--primary" data-attr="partners-submit">{form.next}</button>
+            </div>
+            <p class="lp-wait__error" data-form-error role="alert" hidden></p>
+          </form>
+          <div class="lp-wait__done" data-partner-done aria-live="polite" hidden tabindex="-1">
+            <strong>{form.successTitle}</strong>
+            <p data-done-body></p>
+          </div>
+        </article>
       </section>
 
-      <section class="lp-faq partners-faq" aria-labelledby="faq-heading">
+      <section id="perguntas" class="lp-faq partners-faq" aria-labelledby="faq-heading">
         <h2 id="faq-heading" class="lp-title" data-reveal>{copy.faq.heading}</h2>
         <div class="home-faq" data-reveal>
           {
@@ -208,80 +317,9 @@ const RANGES = ["0-50", "50-200", "200-1000", "1000+"] as const;
         </div>
       </section>
 
-      <section id="inscricao" class="partners-section partners-contact" aria-labelledby="contact-heading">
-        <article class="lp-card lp-wait partners-form-card">
-          <h2 id="contact-heading" class="lp-title">{form.heading}</h2>
-          <form
-            class="lp-wait__form partners-form"
-            novalidate
-            data-partner-form={PARTNER_LEADS_ENDPOINT}
-            data-locale={locale}
-            data-success={form.success}
-            data-required-error={form.requiredError}
-            data-email-error={form.emailError}
-            data-consent-error={form.consentError}
-            data-error={form.error}
-          >
-            <div class="partners-form__grid">
-              <label>
-                <span>{form.name}</span>
-                <input type="text" name="name" required maxlength="120" autocomplete="name" />
-                <small data-error-for="name" role="alert"></small>
-              </label>
-              <label>
-                <span>{form.email}</span>
-                <input type="email" name="email" required maxlength="254" autocomplete="email" />
-                <small data-error-for="email" role="alert"></small>
-              </label>
-              <label>
-                <span>{form.company}</span>
-                <input type="text" name="company" required maxlength="120" autocomplete="organization" />
-                <small data-error-for="company" role="alert"></small>
-              </label>
-              <label>
-                <span>{form.website}</span>
-                <input type="url" name="website" maxlength="300" autocomplete="url" inputmode="url" placeholder="https://" />
-              </label>
-              <label>
-                <span>{form.type}</span>
-                <select name="partnerType">
-                  <option value="embedded">{form.types.embedded}</option>
-                  <option value="white_label">{form.types.white_label}</option>
-                  <option value="unsure" selected>{form.types.unsure}</option>
-                </select>
-              </label>
-              <label>
-                <span>{form.country}</span>
-                <input type="text" name="country" maxlength="80" autocomplete="country-name" />
-              </label>
-              <label class="partners-form__wide">
-                <span>{form.customers}</span>
-                <select name="customers">
-                  <option value=""></option>
-                  {RANGES.map((value, index) => <option value={value}>{form.customerRanges[index]}</option>)}
-                </select>
-              </label>
-              <label class="partners-form__wide">
-                <span>{form.message}</span>
-                <textarea name="message" rows="4" maxlength="2000"></textarea>
-              </label>
-            </div>
-            <div class="lp-wait__trap" aria-hidden="true">
-              <label>Website <input type="text" name="hp" tabindex="-1" autocomplete="off" /></label>
-            </div>
-            <label class="partners-consent">
-              <input type="checkbox" name="consent" required />
-              <span>{form.consent}</span>
-            </label>
-            <small class="partners-consent__error" data-error-for="consent" role="alert"></small>
-            <button type="submit" class="button button--primary" data-attr="partners-submit">{form.submit}</button>
-            <p class="lp-wait__error" data-form-error role="alert" hidden></p>
-          </form>
-          <div class="lp-wait__done" data-partner-done aria-live="polite" hidden tabindex="-1">
-            <strong>{form.successTitle}</strong>
-            <p data-done-body></p>
-          </div>
-        </article>
+      <section class="lp-cta partners-cta ink ink-band" aria-labelledby="cta-heading">
+        <h2 id="cta-heading" class="lp-title lp-title--cta">{copy.cta.heading}</h2>
+        <Button href="#inscricao" data-attr="partners-closing">{copy.cta.button}</Button>
       </section>
     </main>
 
@@ -321,22 +359,50 @@ const RANGES = ["0-50", "50-200", "200-1000", "1000+"] as const;
   if (root) {
     const form = root;
     const control = (name: string) => form.elements.namedItem(name) as HTMLInputElement;
+    const steps = [...form.querySelectorAll<HTMLElement>("[data-step]")];
+    const back = form.querySelector<HTMLButtonElement>("[data-back]")!;
+    const button = form.querySelector<HTMLButtonElement>("button[type=submit]")!;
+    const label = form.querySelector<HTMLElement>("[data-progress-label]")!;
+    const bar = form.querySelector<HTMLElement>("[data-progress-bar]")!;
+    const failure = form.querySelector<HTMLElement>("[data-form-error]")!;
+    const { requiredError = "", emailError = "", consentError = "" } = form.dataset;
+    let current = 0;
+
+    const value = (name: string) => control(name).value.trim();
     const fail = (name: string, message: string) => {
       form.querySelector<HTMLElement>(`[data-error-for="${name}"]`)!.textContent = message;
       control(name).setAttribute("aria-invalid", message ? "true" : "false");
     };
+    // Each step checks only its own fields; the first bad one takes focus.
+    const check: Array<() => void> = [
+      () => {
+        fail("name", value("name") ? "" : requiredError);
+        fail("email", /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value("email")) ? "" : emailError);
+        fail("company", value("company") ? "" : requiredError);
+      },
+      () => {},
+      () => fail("consent", control("consent").checked ? "" : consentError),
+    ];
+    const show = (index: number, focus = true) => {
+      current = index;
+      steps.forEach((step, i) => (step.hidden = i !== index));
+      back.hidden = index === 0;
+      button.textContent = (index === steps.length - 1 ? form.dataset.submit : form.dataset.next) ?? "";
+      label.textContent = (form.dataset.progress ?? "")
+        .replace("{n}", String(index + 1))
+        .replace("{total}", String(steps.length));
+      bar.style.width = `${((index + 1) / steps.length) * 100}%`;
+      if (focus) steps[index]!.querySelector<HTMLElement>("input, select, textarea")?.focus();
+    };
+    const invalid = () => steps[current]!.querySelector<HTMLElement>('[aria-invalid="true"]');
+    back.addEventListener("click", () => show(current - 1));
+
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const value = (name: string) => control(name).value.trim();
-      const { requiredError = "", emailError = "", consentError = "" } = form.dataset;
-      fail("name", value("name") ? "" : requiredError);
-      fail("company", value("company") ? "" : requiredError);
-      fail("email", /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value("email")) ? "" : emailError);
-      fail("consent", control("consent").checked ? "" : consentError);
-      const invalid = form.querySelector<HTMLElement>('[aria-invalid="true"]');
-      if (invalid) return invalid.focus();
-      const button = form.querySelector<HTMLButtonElement>("button[type=submit]")!;
-      const failure = form.querySelector<HTMLElement>("[data-form-error]")!;
+      check[current]!();
+      const bad = invalid();
+      if (bad) return bad.focus();
+      if (current < steps.length - 1) return show(current + 1);
       failure.hidden = true;
       button.disabled = true;
       try {
@@ -346,6 +412,7 @@ const RANGES = ["0-50", "50-200", "200-1000", "1000+"] as const;
           body: JSON.stringify({
             name: value("name"),
             email: value("email"),
+            whatsapp: value("whatsapp"),
             company: value("company"),
             website: value("website"),
             partnerType: value("partnerType"),
@@ -373,5 +440,7 @@ const RANGES = ["0-50", "50-200", "200-1000", "1000+"] as const;
         button.disabled = false;
       }
     });
+    // Without a script the three steps all show; with it, one at a time.
+    show(0, false);
   }
 </script>

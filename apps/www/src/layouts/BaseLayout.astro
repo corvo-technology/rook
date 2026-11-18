@@ -137,6 +137,11 @@ const homeUrls = Object.fromEntries(
     />
     {structuredDataJson && <script is:inline type="application/ld+json" set:html={structuredDataJson} />}
     <title>{title}</title>
+    <script is:inline>
+      try {
+        if (localStorage.getItem("theme") === "dark") document.documentElement.dataset.theme = "dark";
+      } catch {}
+    </script>
     <script>
       import "../analytics";
     </script>

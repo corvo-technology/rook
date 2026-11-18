@@ -10,6 +10,7 @@ const valid = {
   name: "Ana",
   email: "Ana@Acme.example",
   company: "Acme",
+  whatsapp: "+55 14 99999-0000",
   website: "https://acme.example",
   partnerType: "embedded",
   country: "Brasil",
@@ -102,6 +103,7 @@ describe("partner lead", () => {
     expect(rows[0]).toMatchObject({
       name: "Ana",
       email: "ana@acme.example",
+      whatsapp: "+55 14 99999-0000",
       partnerType: "embedded",
       customers: "50-200",
       locale: "pt-BR",
@@ -131,6 +133,7 @@ describe("partner lead", () => {
     });
     expect(response.status).toBe(200);
     expect(rows[0]?.website).toBeUndefined();
+    expect(rows[0]?.whatsapp).toBeUndefined();
   });
 
   it("rejects invalid, oversized or unconsented fields", async () => {
@@ -142,6 +145,7 @@ describe("partner lead", () => {
       { ...valid, partnerType: "reseller" },
       { ...valid, customers: "many" },
       { ...valid, message: "m".repeat(2001) },
+      { ...valid, whatsapp: "9".repeat(41) },
       { ...valid, consent: false },
       { ...valid, consent: undefined },
       "{not json",
@@ -198,7 +202,15 @@ describe("partner lead emails", () => {
     await app.idle();
     expect(sent.map((message) => message.to)).toEqual(["ana@acme.example", "team@example.test"]);
     const notice = sent[1];
-    for (const value of ["Ana", "Acme", "https://acme.example", "embedded", "Brasil", "50-200"]) {
+    for (const value of [
+      "Ana",
+      "Acme",
+      "+55 14 99999-0000",
+      "https://acme.example",
+      "embedded",
+      "Brasil",
+      "50-200",
+    ]) {
       expect(notice?.text).toContain(value);
     }
     expect(notice?.html).not.toContain("<script>alert(1)</script>");

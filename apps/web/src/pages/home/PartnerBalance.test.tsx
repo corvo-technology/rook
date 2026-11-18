@@ -9,9 +9,10 @@ vi.mock("@lingui/react/macro", () => ({
 }));
 vi.mock("../../lib/rpc", () => ({ rpc: {} }));
 
+import type { PartnerBalance } from "../../lib/embedded-home";
 import { PartnerBalanceLine } from "./PartnerBalance";
 
-const balance = {
+const balance: PartnerBalance = {
   currency: "BRL",
   planCredit: 3000,
   used: 1200,
@@ -21,7 +22,7 @@ const balance = {
   checkoutUrl: "https://pay.example.test/buy",
   lowThresholdReached: false,
 };
-const html = (value: typeof balance | null) =>
+const html = (value: PartnerBalance | null) =>
   renderToString(<PartnerBalanceLine balance={value} locale="pt-BR" />).replace(/&nbsp;| /g, " ");
 
 it("renders nothing when the server offers no balance", () => {

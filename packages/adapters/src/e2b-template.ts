@@ -11,7 +11,22 @@ export const E2B_COMPUTER_TEMPLATE = "corvo-computer";
  * work. Two cores keep the desktop and a browser responsive; 4 GB leaves room for a second
  * bot's Chromium on a Team Computer, where 2 GB would start swapping or killing tabs.
  */
-const E2B_COMPUTER_RESOURCES = { cpuCount: 2, memoryMB: 4096 } as const;
+/**
+ * Disk is not set directly. E2B takes the sandbox's disk from the team plan (10 GiB on Hobby,
+ * 20+ GiB on Pro) and `minFreeDiskMb` asks the build to grow the root filesystem until that
+ * much space is free on top of the image: "a free-space target for a template build, not a total
+ * disk-size setting" (docs.e2b.dev/template/build, "Minimum free disk space"; docs.e2b.dev/faq/build-limits).
+ * Without it the filesystem stays near the image's size (about 2.5 GB, of which the image uses
+ * 1.3 GB), which a browser profile and the agent CLIs' caches fill. The growth is best effort and
+ * never shrinks, and a plan smaller than the image plus this figure gets the plan's maximum.
+ */
+export const E2B_COMPUTER_MIN_FREE_DISK_MB = 8192;
+
+const E2B_COMPUTER_RESOURCES = {
+  cpuCount: 2,
+  memoryMB: 4096,
+  minFreeDiskMb: E2B_COMPUTER_MIN_FREE_DISK_MB,
+} as const;
 
 type BuildTemplate = (
   template: TemplateClass,

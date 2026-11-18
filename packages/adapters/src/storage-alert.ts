@@ -21,15 +21,17 @@ export async function alertStorageFull(
     routineId?: string | null;
   },
   bot: { id: string; name: string },
+  usage?: string,
 ): Promise<void> {
+  const text = usage ? `${STORAGE_FULL_NOTICE} Using the space: ${usage}.` : STORAGE_FULL_NOTICE;
   try {
     await publishMessage(deps, run, "system", [
-      { kind: "meta", text: STORAGE_FULL_NOTICE, code: "sandbox_storage_full" },
+      { kind: "meta", text, code: "sandbox_storage_full" },
     ]);
     await notifyRun(deps, run, {
       kind: "help",
       title: `${bot.name}'s computer is full`,
-      body: STORAGE_FULL_NOTICE,
+      body: text,
       botId: bot.id,
       threadId: run.threadId,
     });

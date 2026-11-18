@@ -114,6 +114,13 @@ export function browserProfilePathForScreen(screenId: string, env = DEFAULT_DESK
   return `${env.browserProfilesDir}/chromium-bot-${browserKeyForScreen(screenId)}`;
 }
 
+/** The HTTP cache is rebuilt on demand, so it lives outside the saved profile and has a ceiling. */
+export const BROWSER_DISK_CACHE_BYTES = 100 * 1024 * 1024;
+
+export function browserCacheFlags(screenId: string) {
+  return `--disk-cache-dir=/tmp/corvo/chrome-cache-${browserKeyForScreen(screenId)} --disk-cache-size=${BROWSER_DISK_CACHE_BYTES}`;
+}
+
 function browserPidPathForScreen(screenId: string) {
   return `/tmp/corvo/browser-pid-${browserKeyForScreen(screenId)}`;
 }
@@ -225,7 +232,7 @@ function browserLauncherCommand(
     "  unset _kept _rest _entry",
     "fi",
     ...egressLauncherLines(layout.displayNumber, env),
-    `exec "$browser" --test-type --no-sandbox --disable-dev-shm-usage --disable-gpu --enable-unsafe-swiftshader --no-first-run --no-default-browser-check --disable-session-crashed-bubble --hide-crash-restore-bubble --password-store=basic --restore-last-session --start-maximized --remote-debugging-address=127.0.0.1 --remote-debugging-port=${layout.debugPort} --user-data-dir=${shellQuote(browserProfilePathForScreen(screenId, env))}${env.browserEgress ? EGRESS_BROWSER_FLAGS : ""} "$@"`,
+    `exec "$browser" --test-type --no-sandbox --disable-dev-shm-usage --disable-gpu --enable-unsafe-swiftshader --no-first-run --no-default-browser-check --disable-session-crashed-bubble --hide-crash-restore-bubble --password-store=basic --restore-last-session --start-maximized --remote-debugging-address=127.0.0.1 --remote-debugging-port=${layout.debugPort} --user-data-dir=${shellQuote(browserProfilePathForScreen(screenId, env))} ${browserCacheFlags(screenId)}${env.browserEgress ? EGRESS_BROWSER_FLAGS : ""} "$@"`,
   ].join("\n");
 }
 

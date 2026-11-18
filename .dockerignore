@@ -80,3 +80,6 @@ apps/mobile/**
 !apps/mobile/package.json
 packages/testkit/**
 !packages/testkit/package.json
+
+# The docs site's search index and dev cache are rebuilt in the image.
+apps/docs/.astro

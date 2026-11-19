@@ -1,5 +1,11 @@
 import type { PartnerConsolePartner } from "@corvo/contracts";
-import { PartnerTemplate } from "@corvo/contracts";
+import {
+  PartnerTemplate,
+  VERTICAL_IDS,
+  verticalLocalized,
+  verticalPartnerTemplate,
+  verticalTemplate,
+} from "@corvo/contracts";
 import { Button } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -34,7 +40,7 @@ export function parseTemplateFile(text: string): PartnerTemplate | null {
 
 /** What every new customer gets: its agents, connector and Chief name, to read, import and edit. */
 export function PartnerTemplatePanel({ partner }: { partner: PartnerConsolePartner }) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const queryClient = useQueryClient();
   const action = useAction();
   const input = useRef<HTMLInputElement>(null);
@@ -87,6 +93,24 @@ export function PartnerTemplatePanel({ partner }: { partner: PartnerConsolePartn
         }
         action={
           <div className="flex gap-2">
+            <select
+              aria-label={t`Start from`}
+              className="h-8 rounded-md border border-border bg-background px-2 text-[13px]"
+              value=""
+              onChange={(event) => {
+                const vertical = VERTICAL_IDS.find((name) => name === event.target.value);
+                if (!vertical) return;
+                setImported(verticalPartnerTemplate(vertical));
+                setEditing(true);
+              }}
+            >
+              <option value="">{t`Start from`}</option>
+              {VERTICAL_IDS.map((name) => (
+                <option key={name} value={name}>
+                  {verticalLocalized(verticalTemplate(name).name, i18n.locale)}
+                </option>
+              ))}
+            </select>
             <Button variant="secondary" size="sm" onClick={() => input.current?.click()}>
               {t`Import`}
             </Button>

@@ -1,5 +1,5 @@
 import type { PartnerHiddenArea, PartnerTemplate } from "@corvo/contracts";
-import { PARTNER_HIDEABLE_AREAS } from "@corvo/contracts";
+import { PARTNER_HIDEABLE_AREAS, PartnerTemplate as PartnerTemplateSchema } from "@corvo/contracts";
 import { Button, Checkbox, Input, Textarea } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
@@ -13,6 +13,36 @@ type Draft = {
   /** One starter per line while it is edited. */
   starters: string;
 };
+
+/** The parts of a template that are edited as data: shortcuts, presets, routines and roles. */
+const ADVANCED_KEYS = ["quickActions", "assist", "routines", "roles"] as const;
+const AdvancedSchema = PartnerTemplateSchema.pick({
+  quickActions: true,
+  assist: true,
+  routines: true,
+  roles: true,
+});
+
+function advancedText(template: PartnerTemplate | null): string {
+  const picked = Object.fromEntries(
+    ADVANCED_KEYS.filter((key) => template?.[key] !== undefined).map((key) => [
+      key,
+      template?.[key],
+    ]),
+  );
+  return Object.keys(picked).length > 0 ? JSON.stringify(picked, null, 2) : "";
+}
+
+/** The advanced part read back, `{}` when empty, or null when it is not valid. */
+function readAdvanced(text: string) {
+  if (text.trim() === "") return {};
+  try {
+    const parsed = AdvancedSchema.safeParse(JSON.parse(text));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
+}
 
 const slug = (text: string) =>
   text
@@ -55,6 +85,8 @@ export function PartnerTemplateEditor({
   const [choose, setChoose] = useState(template?.models === "choose");
   const [chiefName, setChiefName] = useState(template?.chiefName ?? "");
   const [accent, setAccent] = useState(template?.accent ?? "");
+  const [advanced, setAdvanced] = useState(advancedText(template));
+  const [showAdvanced, setShowAdvanced] = useState(advanced !== "");
   const [busy, setBusy] = useState(false);
   const areaLabels: Record<PartnerHiddenArea, string> = {
     routines: t`Routines`,
@@ -71,10 +103,15 @@ export function PartnerTemplateEditor({
   const connectorReady =
     (connectorName.trim() === "") === (endpoint.trim() === "") && !endpoint.includes("{{");
   const accentReady = accent.trim() === "" || /^#[0-9a-f]{6}$/i.test(accent.trim());
-  const valid = agents.every((agent) => agent.name.trim() !== "") && connectorReady && accentReady;
+  const advancedParsed = readAdvanced(advanced);
+  const valid =
+    agents.every((agent) => agent.name.trim() !== "") &&
+    connectorReady &&
+    accentReady &&
+    advancedParsed !== null;
 
   async function save() {
-    if (busy || !valid) return;
+    if (busy || !valid || advancedParsed === null) return;
     setBusy(true);
     try {
       const taken = new Set<string>();
@@ -101,8 +138,7 @@ export function PartnerTemplateEditor({
           !choose &&
           !chiefName.trim() &&
           !accent.trim() &&
-          !template?.quickActions?.length &&
-          !template?.roles
+          Object.keys(advancedParsed).length === 0
           ? null
           : {
               ...(hasConnector
@@ -118,8 +154,7 @@ export function PartnerTemplateEditor({
               ...(hidden.length > 0 ? { hide: hidden } : {}),
               ...(choose ? { models: "choose" as const } : {}),
               ...(chiefName.trim() ? { chiefName: chiefName.trim() } : {}),
-              ...(template?.quickActions?.length ? { quickActions: template.quickActions } : {}),
-              ...(template?.roles ? { roles: template.roles } : {}),
+              ...advancedParsed,
               ...(accent.trim() ? { accent: accent.trim().toLowerCase() } : {}),
             },
       );
@@ -242,21 +277,39 @@ export function PartnerTemplateEditor({
         />
         <Trans>Customers can choose the model</Trans>
       </div>
+      {showAdvanced ? (
+        <Textarea
+          value={advanced}
+          onChange={(event) => setAdvanced(event.target.value)}
+          aria-label={t`Shortcuts, presets, routines and roles (JSON)`}
+          placeholder={t`Shortcuts, presets, routines and roles (JSON)`}
+          aria-invalid={advancedParsed === null}
+          className="font-mono text-[12px]"
+          rows={8}
+        />
+      ) : null}
       <div className="flex items-center justify-between gap-2">
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          disabled={agents.length >= 10}
-          onClick={() =>
-            setAgents((rows) => [
-              ...rows,
-              { key: "", name: "", instructions: "", usesConnector: false, starters: "" },
-            ])
-          }
-        >
-          <Trans>Add agent</Trans>
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            disabled={agents.length >= 10}
+            onClick={() =>
+              setAgents((rows) => [
+                ...rows,
+                { key: "", name: "", instructions: "", usesConnector: false, starters: "" },
+              ])
+            }
+          >
+            <Trans>Add agent</Trans>
+          </Button>
+          {showAdvanced ? null : (
+            <Button type="button" variant="ghost" size="sm" onClick={() => setShowAdvanced(true)}>
+              <Trans>Advanced</Trans>
+            </Button>
+          )}
+        </div>
         <div className="flex gap-2">
           <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
             <Trans>Cancel</Trans>

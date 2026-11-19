@@ -359,6 +359,7 @@ describe("partner console", () => {
     api.integration.mockResolvedValue({
       keys: [],
       webhook: { url: null, enabled: false },
+      testWebhook: { url: null },
       alerts: [],
       docsUrl: "https://example.test/docs",
     });

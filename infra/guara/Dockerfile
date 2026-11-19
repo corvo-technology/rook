@@ -8,7 +8,7 @@
 # bundled by scripts/build-server.mjs, which rewrites each package import to a relative
 # path into node_modules/.pnpm, so node_modules must keep the layout pnpm made; the
 # production install reads the same lockfile and so produces the same directory names.
-FROM node:22-bookworm@sha256:0557ac14e0d45d02ed563067b82856ca5e7aa3437fa28d98d4350ea9c3d9494a AS base
+FROM node:22-bookworm@sha256:e13726ca604184d7a91fcacab1fc09eefd642dc28e79ac34e85540dd93b78cfb AS base
 ENV COREPACK_HOME=/usr/local/share/corepack
 RUN corepack enable
 WORKDIR /app

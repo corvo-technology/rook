@@ -237,6 +237,12 @@ model BillingAccount {
   subscriptionId      String?
   subscriptionItemId  String?
   priceId             String?
+  /// Lookup key of the plan's price when it is a catalog price; names the plan, currency and interval.
+  priceLookupKey      String?
+  /// Fixed by the first plan payment: "usd" or "brl".
+  currency            String?
+  /// "month" or "year", from the catalog price.
+  interval            String?
   status              String?
   seats               Int?
   trialEndsAt         DateTime?

@@ -122,6 +122,32 @@ describePostgres("billing accounts (PostgreSQL)", () => {
     expect(cleared?.subscribedAt).toEqual(first?.subscribedAt);
   });
 
+  it("stores the currency and interval of a catalog plan, and none for a hand-made price", async () => {
+    await syncBillingSnapshot(prisma, customerId, async () => ({
+      ...snapshot,
+      status: "active",
+      priceLookupKey: "plan_team_brl_year",
+    }));
+    expect(await billingAccountForOrganization(prisma, organizationId)).toMatchObject({
+      priceLookupKey: "plan_team_brl_year",
+      currency: "brl",
+      interval: "year",
+    });
+    // A canceled subscription keeps the currency Stripe has fixed for the customer.
+    await syncBillingSnapshot(prisma, customerId, async () => ({
+      ...snapshot,
+      status: "canceled",
+      priceLookupKey: "plan_team_brl_year",
+    }));
+    expect((await billingAccountForOrganization(prisma, organizationId))?.currency).toBe("brl");
+    await syncBillingSnapshot(prisma, customerId, async () => ({ ...snapshot, status: "active" }));
+    expect(await billingAccountForOrganization(prisma, organizationId)).toMatchObject({
+      priceLookupKey: null,
+      currency: null,
+      interval: null,
+    });
+  });
+
   it("applies concurrent syncs in order so an older read cannot win", async () => {
     let releaseOlder!: () => void;
     let olderLoaded!: () => void;

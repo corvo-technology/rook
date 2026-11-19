@@ -119,3 +119,151 @@ describe("free trial", () => {
     expect(vi.mocked(provider.createCheckout).mock.calls[0]?.[0]).not.toHaveProperty("trialDays");
   });
 });
+
+describe("plan checkout", () => {
+  const input = {
+    plan: "team" as const,
+    interval: "year" as const,
+    currency: "brl" as const,
+    aiUseCents: null,
+  };
+
+  function planService(
+    options: {
+      role?: string;
+      account?: Record<string, unknown> | null;
+      people?: number;
+      managedModels?: boolean;
+    } = {},
+  ) {
+    const people = options.people ?? 3;
+    const lock = vi.fn();
+    const tx = { $executeRaw: lock };
+    const prisma = {
+      space: { findUnique: vi.fn().mockResolvedValue({ organizationId: "org-1" }) },
+      member: {
+        findUnique: vi.fn().mockResolvedValue({ role: options.role ?? "owner" }),
+        count: vi.fn().mockResolvedValue(people),
+        findMany: vi
+          .fn()
+          .mockResolvedValue(
+            Array.from({ length: people }, (_, i) => ({ user: { email: `p${i}@corvo.test` } })),
+          ),
+      },
+      spaceInvitation: { findMany: vi.fn().mockResolvedValue([]) },
+      billingAccount: {
+        findUnique: vi.fn().mockResolvedValue(options.account ?? null),
+        upsert: vi.fn().mockResolvedValue({
+          organizationId: "org-1",
+          customerId: "cus_1",
+          status: null,
+          currency: null,
+          subscribedAt: null,
+        }),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+      $queryRaw: vi.fn().mockResolvedValue([{ startedAt: new Date() }]),
+      $transaction: vi.fn(async (fn: (client: unknown) => unknown) => fn(tx)),
+    } as unknown as PrismaClient;
+    const provider = {
+      describe: () => ({ capabilities: { trials: true, portal: true } }),
+      createCustomer: vi.fn(async () => ({ customerId: "cus_1" })),
+      createPlanCheckout: vi.fn(async () => ({ url: "https://pay.example.com/plan" })),
+      getCustomerSubscription: vi.fn(async () => null),
+    } as unknown as BillingProvider;
+    return {
+      provider,
+      lock,
+      prisma,
+      billing: createBillingService({
+        prisma,
+        provider,
+        webOrigin: "https://app.example.com",
+        managedModelsAvailable: options.managedModels,
+      }),
+    };
+  }
+
+  it("lets only the owner open it", async () => {
+    const { billing, provider } = planService({ role: "member" });
+    await expect(billing.planCheckout(actor, input)).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(provider.createPlanCheckout).not.toHaveBeenCalled();
+  });
+
+  it("charges for the people above what the plan includes, never below zero", async () => {
+    const small = planService({ people: 3 });
+    await small.billing.planCheckout(actor, input);
+    expect(small.provider.createPlanCheckout).toHaveBeenCalledWith(
+      expect.objectContaining({ plan: "team", currency: "brl", interval: "year", extraPeople: 0 }),
+    );
+    const eleven = planService({ people: 11 });
+    await eleven.billing.planCheckout(actor, input);
+    expect(eleven.provider.createPlanCheckout).toHaveBeenCalledWith(
+      expect.objectContaining({ extraPeople: 1 }),
+    );
+  });
+
+  it("refuses a plan that has no room for the people already there", async () => {
+    const { billing, provider } = planService({ people: 3 });
+    await expect(billing.planCheckout(actor, { ...input, plan: "personal" })).rejects.toMatchObject(
+      { code: "PLAN_SEAT_LIMIT" },
+    );
+    expect(provider.createPlanCheckout).not.toHaveBeenCalled();
+  });
+
+  it("refuses a second currency once a plan has been paid in the first", async () => {
+    const { billing, provider } = planService({
+      account: {
+        organizationId: "org-1",
+        customerId: "cus_1",
+        status: "canceled",
+        currency: "usd",
+        subscribedAt: new Date(),
+      },
+    });
+    await expect(billing.planCheckout(actor, input)).rejects.toMatchObject({ code: "CONFLICT" });
+    expect(provider.createPlanCheckout).not.toHaveBeenCalled();
+    await billing.planCheckout(actor, { ...input, currency: "usd" });
+    expect(provider.createPlanCheckout).toHaveBeenCalledOnce();
+  });
+
+  it("opens the checkout under the per-organization lock, so two calls open one", async () => {
+    const { billing, lock, prisma } = planService();
+    await Promise.all([billing.planCheckout(actor, input), billing.planCheckout(actor, input)]);
+    expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+    expect(lock).toHaveBeenCalledTimes(2);
+  });
+
+  it("answers an already subscribed organization with a conflict, not a second charge", async () => {
+    const { billing, provider } = planService({
+      account: { organizationId: "org-1", customerId: "cus_1", status: "active", currency: "brl" },
+    });
+    await expect(billing.planCheckout(actor, input)).rejects.toMatchObject({ code: "CONFLICT" });
+    expect(provider.createPlanCheckout).not.toHaveBeenCalled();
+  });
+
+  it("does not sell AI where hosted models are off", async () => {
+    const { billing } = planService({ managedModels: false });
+    await expect(billing.planCheckout(actor, { ...input, aiUseCents: 1000 })).rejects.toMatchObject(
+      { code: "PRECONDITION_FAILED" },
+    );
+  });
+
+  it("reports the plan, currency and interval a subscription is on", async () => {
+    const { billing } = planService({
+      account: {
+        organizationId: "org-1",
+        customerId: "cus_1",
+        status: "active",
+        priceLookupKey: "plan_team_brl_year",
+        currency: "brl",
+        interval: "year",
+      },
+    });
+    await expect(billing.status(actor)).resolves.toMatchObject({
+      plan: "team",
+      currency: "brl",
+      interval: "year",
+    });
+  });
+});

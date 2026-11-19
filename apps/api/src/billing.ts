@@ -4,8 +4,14 @@ import type {
   BillingSubscriptionSnapshot,
 } from "@corvo/adapter-kit";
 import { BillingCheckoutCompletedError, BillingCustomerNotFoundError } from "@corvo/adapter-kit";
-import type { Actor, BillingStatus } from "@corvo/contracts";
-import { BYOK_MONTHLY_PRICE_CENTS, planConfigFromEnv } from "@corvo/contracts";
+import type { Actor, BillingStatus, PlanCheckoutInput } from "@corvo/contracts";
+import {
+  BYOK_MONTHLY_PRICE_CENTS,
+  DEFAULT_PLANS,
+  PLAN_ERROR_CODES,
+  parsePlanLookupKey,
+  planConfigFromEnv,
+} from "@corvo/contracts";
 import type { BillingAccount, PrismaClient } from "@corvo/db";
 import {
   billingAccountForOrganization,
@@ -50,6 +56,8 @@ export interface BillingService {
   ): Promise<{ url: string }>;
   setMonthlyCredits(actor: Actor, amountCents: number): Promise<{ ok: true }>;
   checkout(actor: Actor): Promise<{ url: string }>;
+  /** Opens the checkout of a plan in the chosen currency; the owner only. */
+  planCheckout(actor: Actor, input: PlanCheckoutInput): Promise<{ url: string }>;
   portal(actor: Actor): Promise<{ url: string }>;
   /** Re-fetches the customer's subscription from the provider and overwrites the stored snapshot. */
   sync(customerId: string): Promise<void>;
@@ -225,6 +233,20 @@ export function createBillingService(deps: {
     );
   }
 
+  /** What a subscription says about its plan, for the status. */
+  function planFields(
+    account: {
+      priceLookupKey: string | null;
+      currency: string | null;
+      interval: string | null;
+    } | null,
+  ): Pick<BillingStatus, "plan" | "currency" | "interval"> {
+    const catalog = parsePlanLookupKey(account?.priceLookupKey);
+    return catalog
+      ? { plan: catalog.plan, currency: catalog.currency, interval: catalog.interval }
+      : {};
+  }
+
   async function byokCheckout(actor: Actor, organizationId: string) {
     const amountCents = BYOK_MONTHLY_PRICE_CENTS;
     if (amountCents === null || !provider.createByokCheckout) throw new ORPCError("NOT_FOUND");
@@ -366,6 +388,7 @@ export function createBillingService(deps: {
           currentPeriodEndsAt: account?.currentPeriodEndsAt?.toISOString() ?? null,
           cancelAtPeriodEnd: account?.cancelAtPeriodEnd ?? false,
           hasCustomer: Boolean(account),
+          ...planFields(account),
         };
       }
       const { organizationId, isOwner } = await organization(actor);
@@ -386,7 +409,57 @@ export function createBillingService(deps: {
         currentPeriodEndsAt: account?.currentPeriodEndsAt?.toISOString() ?? null,
         cancelAtPeriodEnd: account?.cancelAtPeriodEnd ?? false,
         hasCustomer: Boolean(account),
+        ...planFields(account),
       };
+    },
+
+    async planCheckout(actor, input) {
+      if (!provider.createPlanCheckout) throw new ORPCError("NOT_FOUND");
+      if (input.aiUseCents !== null && (!modelCredits || deps.managedModelsAvailable === false))
+        throw new ORPCError("PRECONDITION_FAILED");
+      const { organizationId } = await managedOrganization(actor);
+      let account = await billingAccountForOrganization(prisma, organizationId);
+      if (account) {
+        // Decide from the provider, not a snapshot a missed webhook may have left stale.
+        await sync(account.customerId);
+        account = await billingAccountForOrganization(prisma, organizationId);
+      }
+      if (hasBillingAccess(account?.status ?? null))
+        throw new ORPCError("CONFLICT", { message: "Already subscribed" });
+      if (needsBillingPortal(account?.status ?? null))
+        throw new ORPCError("CONFLICT", { message: "Resume the subscription in billing" });
+      // The provider fixes a customer's currency at the first payment.
+      if (account?.currency && account.currency !== input.currency)
+        throw new ORPCError("CONFLICT", {
+          message: "Billing currency is fixed by the first payment",
+        });
+      const limits = (planConfigFromEnv()?.plans ?? DEFAULT_PLANS)[input.plan];
+      const { total } = await organizationSeats(prisma, organizationId);
+      // Never a plan that would leave people without a seat.
+      if (total > limits.maxSeats)
+        throw new ORPCError(PLAN_ERROR_CODES.seatLimit, {
+          status: 402,
+          message: `The ${input.plan} plan allows ${limits.maxSeats} people`,
+        });
+      const target = account ?? (await billingAccountFor(actor, organizationId));
+      try {
+        return await openCheckout(actor, target, true, (customerId) =>
+          provider.createPlanCheckout!({
+            customerId,
+            plan: input.plan,
+            currency: input.currency,
+            interval: input.interval,
+            extraPeople: extraSeats(limits, total),
+            aiUseCents: input.aiUseCents,
+            successUrl: `${deps.webOrigin}${BILLING_RETURN_PATH}`,
+            cancelUrl: `${appUrl}?billing=canceled`,
+          }),
+        );
+      } catch (error) {
+        if (!(error instanceof BillingCheckoutCompletedError)) throw error;
+        await sync(target.customerId);
+        throw new ORPCError("CONFLICT", { message: "Already subscribed" });
+      }
     },
 
     async checkout(actor) {

@@ -10,14 +10,16 @@ O assistente não precisa ser uma janela de chat. Duas chamadas deixam a IA **de
 As chamadas usam o Chief, os modelos e o crédito do cliente, como qualquer conversa, e valem só enquanto o cliente está ativo e com crédito.
 
 ```html
-<script src="https://app.rook.team/sdk-assist.js"></script>
+<script src="https://app.rook.team/sdk.js"></script>
 <script>
-  // Opcional: sem isto vale o session-url de um <corvo-assistant> da página.
+  // Opcional: com um <corvo-assistant> na página, a sessão dele é compartilhada e isto não é preciso.
   Rook.configure({ sessionUrl: "/rook/session" });
 </script>
 ```
 
 A rota `sessionUrl` é a mesma do [quickstart](/partners/quickstart/): o seu backend devolve `{ "code": "..." }` e a chave de parceiro nunca chega ao navegador.
+
+É o mesmo `sdk.js` do elemento `<corvo-assistant>`, então um só script serve aos dois. Com o elemento na página (o [launcher](/partners/sdk/), por exemplo), `Rook.ask` e `Rook.recorder` entram por ele: usam o `session-url` e o `origin` dele, e uma única sessão compartilhada por todas as chamadas. Sem o elemento, entram sozinhos, com o `sessionUrl` que você configurar; `Rook.configure({ getToken })` substitui os dois. Páginas que ainda carregam `sdk-assist.js` continuam funcionando: ele só carrega o `sdk.js`.
 
 ## Tarefas por nome
 

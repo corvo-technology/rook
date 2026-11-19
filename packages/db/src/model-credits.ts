@@ -216,6 +216,9 @@ export async function holdCredits(
         throw new Error("Credit hold belongs to another account");
       return "exists";
     }
+    // An organization that never had credit has no account, which is a zero balance.
+    if (!(await tx.modelCreditAccount.findUnique({ where: { organizationId } })))
+      return "insufficient";
     await prepareCreditLots(tx, organizationId, now);
     await expireCreditLots(tx, organizationId, now);
     const reserved = await tx.modelCreditAccount.updateMany({

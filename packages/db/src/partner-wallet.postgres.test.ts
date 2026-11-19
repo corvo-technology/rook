@@ -175,6 +175,16 @@ describePostgres("partner wallet (PostgreSQL)", () => {
     expect(await balance(s.ownerOrg)).toBe(4100n * MICROS_PER_CENT);
   });
 
+  it("refuses an allowance when the owner has no credit account at all", async () => {
+    const s = await setup("noacct", 0);
+    await db.modelCreditAccount.delete({ where: { organizationId: s.ownerOrg } });
+    await expect(
+      grantPartnerAllowance(db, s.tenant, { amountCents: 500, period }),
+    ).rejects.toMatchObject({ reason: "wallet" });
+    expect(await balance(s.tenant.organizationId)).toBe(0n);
+    expect(await db.modelCreditAccount.count({ where: { organizationId: s.ownerOrg } })).toBe(0);
+  });
+
   it("refuses a partner without an owner, which has no credit to pass on", async () => {
     const s = await setup("legacy", 1000);
     await db.partner.update({ where: { id: s.partnerId }, data: { ownerUserId: null } });

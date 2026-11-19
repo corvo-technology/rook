@@ -1,3 +1,5 @@
+import type { HostAction, HostContext } from "@corvo/contracts";
+import { HostActionSchema, HostContextSchema } from "@corvo/contracts";
 import type { UiLocale } from "./ui-locale";
 import { normalizeUiLocale } from "./ui-locale";
 
@@ -13,14 +15,25 @@ export interface EmbedLaunch {
 
 export type EmbedMessage =
   | { type: "config"; theme: EmbedTheme | null; locale: UiLocale | null; accent: string | null }
-  | { type: "code"; code: string };
+  | { type: "code"; code: string }
+  /** Where the person is in the partner's product, or null when the page cleared it. */
+  | { type: "context"; context: HostContext | null }
+  | { type: "actions"; actions: HostAction[] }
+  /** The person typed in the partner's own quick-ask box. */
+  | { type: "ask"; text: string }
+  /** How a confirmed action went in the partner's page. */
+  | { type: "action-result"; id: string; ok: boolean; result: string | null };
 
 const THEMES: readonly string[] = ["light", "dark", "auto"];
 
 /** True for the whole life of a page that was opened as the partner's frame. */
 let embedded = typeof location !== "undefined" && /^\/embed(\/|$)/.test(location.pathname);
+/** The launcher's frame: the chat alone, with the partner's own chrome around it. */
+let compact =
+  embedded && new URLSearchParams(location.hash.replace(/^#/, "")).get("mode") === "compact";
 
 export const isEmbedded = (): boolean => embedded;
+export const isCompactEmbed = (): boolean => compact;
 
 function theme(value: string | null): EmbedTheme | null {
   return value && THEMES.includes(value) ? (value as EmbedTheme) : null;
@@ -113,6 +126,34 @@ export function parseEmbedMessage(data: unknown): EmbedMessage | null {
   if (message.type === "corvo:code" && typeof message.code === "string" && message.code) {
     return { type: "code", code: message.code };
   }
+  if (message.type === "corvo:context") {
+    if (message.context === null) return { type: "context", context: null };
+    const context = HostContextSchema.safeParse(message.context);
+    return context.success ? { type: "context", context: context.data } : null;
+  }
+  if (message.type === "corvo:actions" && Array.isArray(message.actions)) {
+    const actions = message.actions.flatMap((item) => {
+      const parsed = HostActionSchema.safeParse(item);
+      return parsed.success ? [parsed.data] : [];
+    });
+    return { type: "actions", actions };
+  }
+  if (message.type === "corvo:ask" && typeof message.text === "string") {
+    const text = message.text.trim().slice(0, 2000);
+    return text ? { type: "ask", text } : null;
+  }
+  if (
+    message.type === "corvo:action-result" &&
+    typeof message.id === "string" &&
+    typeof message.ok === "boolean"
+  ) {
+    return {
+      type: "action-result",
+      id: message.id,
+      ok: message.ok,
+      result: typeof message.result === "string" ? message.result.slice(0, 300) : null,
+    };
+  }
   return null;
 }
 
@@ -162,6 +203,7 @@ export function resetEmbedForTests(): void {
   wrapped = false;
   originalFetch = null;
   embedded = false;
+  compact = false;
 }
 
 /** What the page was opened with; read once, because the fragment is cleared right after. */
@@ -175,10 +217,16 @@ export function clearEmbedFragment(): void {
 }
 
 export type FrameMessage =
-  | { type: "corvo:refresh" | "corvo:expired" | "corvo:ready" }
+  | { type: "corvo:refresh" | "corvo:expired" | "corvo:ready" | "corvo:escape" }
   | { type: "corvo:checkout"; url: string }
   | { type: "corvo:navigate"; path: string }
-  | { type: "corvo:unread"; count: number };
+  | { type: "corvo:unread"; count: number }
+  | {
+      type: "corvo:action";
+      id: string;
+      name: string;
+      params: Record<string, string | number | boolean>;
+    };
 
 /** Tells the partner's page something about the frame; it never carries the token. */
 export function tellParent(message: FrameMessage) {

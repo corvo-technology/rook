@@ -70,6 +70,11 @@ export const AUDITED_PROCEDURES: Record<string, AuditedProcedure> = {
     kind: "mcp",
     fields: ["botId", "serverId"],
   },
+  "threads.resolveHostAction": {
+    type: "approval.decided",
+    kind: "host_action",
+    fields: ["botId", "actionName", "outcome"],
+  },
   "approvalRules.set": { type: "approval.policy.changed", fields: ["effect", "matchKind"] },
   "approvalRules.remove": { type: "approval.policy.changed", fields: ["id"] },
   "models.setRole": { type: "approval.policy.changed", fields: ["role", "scope"] },

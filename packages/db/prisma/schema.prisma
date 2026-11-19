@@ -1068,6 +1068,9 @@ model Run {
   checkpoint           String?
   clientNonce          String?
   sourceMessageId      String?
+  /// What the partner's page said when this turn was sent (HostTurn, already limited): the page the
+  /// person is on and the actions it offers. Null for every turn that did not come from an embed.
+  hostContext          Json?
   sourceMessage        Message?          @relation("RunSourceMessage", fields: [sourceMessageId], references: [id], onDelete: SetNull)
   routineId            String?
   routine              Routine?          @relation(fields: [routineId], references: [id], onDelete: SetNull)

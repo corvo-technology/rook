@@ -20,6 +20,7 @@ import type { RefObject } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { requestBrowserNotificationPermission } from "../../lib/browser-notifications";
 import { setComposerUnsavedWork } from "../../lib/composer-draft";
+import { takeHostTurn } from "../../lib/embed-host";
 import { scheduleFocusPrompt } from "../../lib/focus-prompt";
 import {
   readFileAsBase64,
@@ -463,6 +464,7 @@ export function useComposerActions({
             artifactIds: artifactIds.length ? artifactIds : undefined,
             replyToMessageId: reroutedToGroup ? undefined : activeReplyTarget?.id,
             replyQuote: reroutedToGroup ? undefined : (activeReplyQuote ?? undefined),
+            host: takeHostTurn(),
           });
           accepted = true;
         } else if (botTarget) {
@@ -475,6 +477,7 @@ export function useComposerActions({
             artifactIds: artifactIds.length ? artifactIds : undefined,
             replyToMessageId: activeReplyTarget?.id,
             replyQuote: activeReplyQuote ?? undefined,
+            host: takeHostTurn(),
           });
           accepted = true;
           const { runId, taskId } = sent;

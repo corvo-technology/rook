@@ -207,6 +207,16 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     status: z.enum(["pending", "connected"]),
   }),
   z.object({
+    /** An action the partner's page can carry out, proposed by the agent. Nothing runs until
+        the person confirms it in the card; the page then reports how it went. */
+    kind: z.literal("host_action"),
+    actionId: z.string().min(1).max(64),
+    name: z.string().max(40),
+    label: z.string().max(200),
+    params: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])),
+    status: z.enum(["pending", "done", "denied", "failed"]),
+  }),
+  z.object({
     kind: z.literal("connect"),
     name: z.string(),
     initial: z.string(),

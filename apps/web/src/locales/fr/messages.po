@@ -2376,6 +2376,7 @@ msgstr "Configurer l'espace"
 
 #: src/pages/shell/agent-import-undo.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/host-action-card.tsx
 msgid "Confirm"
 msgstr "Confirmer"
 
@@ -3916,6 +3917,7 @@ msgstr "Vous n'avez pas de compte ?"
 #: src/pages/RoutineCard.tsx
 #: src/pages/RoutineTimeGrid.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
+#: src/pages/shell/host-action-card.tsx
 #: src/pages/shell/import-setup-card.tsx
 #: src/pages/SquadPage.tsx
 #: src/pages/Workflows.tsx
@@ -6376,6 +6378,7 @@ msgstr "Pas dans le catalogue de plugins"
 #: src/components/AskCard.tsx
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/onboarding/ComputerStep.tsx
+#: src/pages/shell/host-action-card.tsx
 #: src/pages/shell/message-cards.tsx
 msgid "Not now"
 msgstr "Pas maintenant"
@@ -8915,6 +8918,10 @@ msgstr "Exécution de test"
 msgid "Testing…"
 msgstr "Test en cours…"
 
+#: src/pages/shell/host-action-card.tsx
+msgid "That didn't work"
+msgstr "Ça n'a pas marché"
+
 #: src/pages/partner/PartnerTemplatePanel.tsx
 msgid "That file is not a valid template"
 msgstr "Ce fichier n'est pas un modèle valide"
@@ -9783,6 +9790,10 @@ msgstr "via {relayedVia}"
 #: src/pages/SpaceRolesSettings.tsx
 msgid "View usage"
 msgstr "Voir l'utilisation"
+
+#: src/pages/shell/host-context-chip.tsx
+msgid "Viewing: {label}"
+msgstr "Vue : {label}"
 
 #: src/pages/platform/PricingSection.tsx
 #: src/pages/platform/SimulatorSection.tsx

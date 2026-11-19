@@ -1,11 +1,14 @@
 ---
 title: "SDK and events"
-description: "The <corvo-assistant> element, its attributes and events."
+description: "The <corvo-assistant> element: inline or as a launcher, its attributes, methods and events."
 sidebar:
   order: 6
 ---
 
-The SDK is a single script that registers the `<corvo-assistant>` element.
+The SDK is a single script that registers the `<corvo-assistant>` element. It has two modes.
+
+- **Inline** (the default): the element is the chat, sized by you.
+- **Launcher** (`mode="launcher"`): a floating button available on every screen of your product. It opens a quick-ask box, or a side panel with the full chat, in your own accent, corner radius and font.
 
 ```html
 <script src="https://app.rook.team/sdk.js"></script>
@@ -23,27 +26,148 @@ The SDK is a single script that registers the `<corvo-assistant>` element.
 | Attribute | Value |
 | --- | --- |
 | `session-url` | A route on **your** backend that returns `{ "code": "..." }` (see the [quickstart](/en/partners/quickstart/)). Called with `POST` and same-origin cookies. |
+| `mode` | `inline` (default) or `launcher`. |
 | `theme` | `light`, `dark` or `auto`. |
 | `locale` | `en`, `de`, `pt-BR`, `zh-CN`, `es`, `fr` or `ja`. Default: the visitor's language. |
 | `accent` | Your main color, `#rrggbb`. Buttons and the current state use it; the text on it turns light or dark to stay readable. Without it the template's `accent` applies, or Rook's own green. |
+| `origin` | Where the frame is loaded from. Default: where `sdk.js` came from. |
 
-Change `theme`, `locale` or `accent` and the frame follows, without reloading.
+Launcher only:
+
+| Attribute | Value |
+| --- | --- |
+| `dock` | `overlay` (default) covers the page; `push` makes room for the panel. On a phone the panel is always a bottom sheet. |
+| `radius` | A CSS length for the corners, such as `10px`. |
+| `font-family` | A font stack. Without it the launcher uses your page's font. |
+| `name` | The assistant's name, used as the panel title and the button's accessible name. |
+| `context` | The page context as JSON (see below). |
+| `shortcut` | `off` turns off the <kbd>⌘J</kbd> / <kbd>Ctrl+J</kbd> key. |
+
+Change `theme`, `locale`, `accent`, `radius`, `font-family`, `dock` or `name` and everything follows, without reloading.
+
+## Launcher
+
+Mount the element **once** in your app shell, so it stays in place as people move between screens. It prepares the session while your product is in use (it warms the connection when the page loads, and signs the session in when the browser is idle or the button is hovered), so opening it shows the chat at once.
+
+- The button sits at the bottom right, with an unread badge. <kbd>⌘J</kbd> or <kbd>Ctrl+J</kbd> opens and closes it, <kbd>Esc</kbd> closes it, and focus goes back to where it was.
+- The quick-ask box shows what the person is looking at, one input, suggestions for the current page and a link to the full conversation.
+- The panel is 440 px wide, can expand to the full screen, and is a bottom sheet below 640 px.
+- If the session cannot be opened (for example your route answers `403`), the launcher hides itself and fires `corvo-unavailable`.
+
+## Page context
+
+Tell the assistant where the person is, so "this customer" means something. Call it again whenever the page changes.
+
+```js
+el.setContext({
+  page: "/customers/42",
+  title: "Customer",
+  entities: [{ type: "customer", id: "42", label: "Carlos Souza" }],
+  suggestions: ["Is this customer overdue?"], // optional, for the quick-ask box
+});
+```
+
+Or set the `context` attribute to the same JSON. Everything is length-limited (at most 5 entities, short labels), shown to the person as a chip, and given to the assistant as data, never as instructions. Send only what the person already sees in your product.
+
+## Actions
+
+Register what your page can do for the person. The assistant may *propose* one of them; the person always confirms in a card before anything reaches your page.
+
+```js
+el.registerActions([
+  {
+    name: "open_agenda",
+    description: "Open in the schedule",
+    params: {
+      type: "object",
+      properties: { day: { type: "string" } },
+      required: ["day"],
+    },
+  },
+]);
+
+el.addEventListener("corvo-action", async (event) => {
+  const { name, params, id } = event.detail;
+  const ok = await myApp.run(name, params);
+  el.resolveAction(id, { ok, message: ok ? "Opened" : "No slot" });
+});
+```
+
+- `params` is a small subset of JSON Schema: a flat object whose values are `string`, `number`, `integer` or `boolean`, with `enum`, `maxLength`, `minimum`, `maximum` and `required`.
+- The SDK and the server both check the params against your schema; an unknown name or a value that does not fit never reaches `corvo-action`.
+- Actions exist only for this session and this page. Every confirmation is recorded in the account's security log.
+- The result you pass to `resolveAction` goes back into the conversation.
+
+## Suggestions
+
+`el.setSuggestions(["Who is coming today?", "Overdue customers"])` sets the lines in the quick-ask box. Without it, the `suggestions` of the context apply, then the descriptions of your registered actions.
+
+## Methods
+
+| Method | What it does |
+| --- | --- |
+| `setContext(context)` | Sets where the person is (see above). |
+| `registerActions(actions)` | Replaces the list of actions your page offers. |
+| `resolveAction(id, result)` | Answers a `corvo-action`: `{ ok?, message? }` or a message string. |
+| `setSuggestions(list)` | Sets the quick-ask suggestions. |
+| `open()`, `close()`, `toggle()` | Control the launcher. |
 
 ## Events
 
 | Event | When |
 | --- | --- |
 | `corvo-ready` | The frame loaded and the session is ready. |
-| `corvo-expired` | The session could not be opened or renewed (your route failed or returned no code). Show your own state or ask for a new sign-in. |
+| `corvo-expired` | The session could not be renewed (your route failed or returned no code). Show your own state or ask for a new sign-in. |
+| `corvo-checkout` `{ url }` | The customer tapped to buy more. Call `preventDefault()` to handle it yourself; otherwise the address opens in a new tab. |
+| `corvo-navigate` `{ path }` | Open that place in your product, such as a recording screen. |
+| `corvo-unread` `{ count }` | Badge your own menu. |
+| `corvo-open`, `corvo-close` | Launcher only: the launcher opened or closed. |
+| `corvo-unavailable` `{ reason }` | Launcher only: the assistant cannot be offered, so the launcher hid itself. `reason` is `forbidden`, `unavailable`, `network`, `no_code` or `expired`. |
+| `corvo-action` `{ name, params, id }` | Launcher only: the customer confirmed an action you registered. Do it, then call `resolveAction(id, result)`. |
 
-The element asks your route for a new code whenever the frame needs one, on its own. You only listen for the events.
+The element asks your route for a new code whenever the frame needs one, on its own.
 
-```js
-const el = document.querySelector("corvo-assistant");
-el.addEventListener("corvo-ready", () => console.log("assistant ready"));
-el.addEventListener("corvo-expired", () => (location.href = "/login"));
+## React app shell
+
+```jsx
+import { useEffect, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+
+export function Assistant({ customer }) {
+  const el = useRef(null);
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const node = el.current;
+    node.registerActions([
+      { name: "open_agenda", description: "Open in the schedule",
+        params: { type: "object", properties: { day: { type: "string" } } } },
+    ]);
+    const onAction = (e) => {
+      navigate(`/agenda?day=${e.detail.params.day ?? ""}`);
+      node.resolveAction(e.detail.id, { ok: true });
+    };
+    node.addEventListener("corvo-action", onAction);
+    node.addEventListener("corvo-navigate", (e) => navigate(e.detail.path));
+    return () => node.removeEventListener("corvo-action", onAction);
+  }, [navigate]);
+
+  useEffect(() => {
+    el.current.setContext({
+      page: pathname,
+      entities: customer ? [{ type: "customer", id: customer.id, label: customer.name }] : [],
+    });
+  }, [pathname, customer]);
+
+  return (
+    <corvo-assistant ref={el} mode="launcher" session-url="/rook/session" accent="#e11d48" />
+  );
+}
 ```
+
+Render `<Assistant />` once, next to your router, not inside a screen.
 
 ## Frame security
 
-The frame keeps its session token **in memory only** (a frame on another site cannot keep a cookie), so your page never sees it. Any site may frame the page, but a frame without a valid one-use code shows nothing.
+The frame keeps its session token **in memory only** (a frame on another site cannot keep a cookie), so your page never sees it. Any site may frame the page, but a frame without a valid one-use code shows nothing. Messages between your page and the frame are checked on both sides by origin and by shape; the page can only send its look, its context, its actions and the result of an action, and never touches the session.

@@ -51,6 +51,7 @@ import {
 } from "../../lib/tool-activity-view";
 import { ReplyLine } from "./chat-context";
 import { FALLBACK_BOT_COLOR, previewMessageText } from "./chat-shared";
+import { HostActionCard } from "./host-action-card";
 import type { ImportSetupTarget } from "./import-setup-card";
 import { ImportSetupCard } from "./import-setup-card";
 import {
@@ -708,6 +709,15 @@ export const MessageView = memo(function MessageView({
                   messageId={message.id}
                   block={block}
                 />
+              </div>
+            );
+          }
+          if (block.kind === "host_action") {
+            const botId = "botId" in artifactTarget ? artifactTarget.botId : message.botId;
+            if (!botId) return null;
+            return (
+              <div key={i} className="flex justify-start">
+                <HostActionCard botId={botId} messageId={message.id} block={block} />
               </div>
             );
           }

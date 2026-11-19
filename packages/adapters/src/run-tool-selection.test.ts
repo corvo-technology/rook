@@ -53,3 +53,10 @@ describe("the wiki tools", () => {
       expect(names({ trigger: "user", messagingChannelRun: true })).not.toContain(name);
   });
 });
+
+describe("propose_host_action", () => {
+  it("is offered only when the partner's page registered actions for the turn", () => {
+    expect(names({ trigger: "user", hostActionsOffered: true })).toContain("propose_host_action");
+    expect(names({ trigger: "user" })).not.toContain("propose_host_action");
+  });
+});

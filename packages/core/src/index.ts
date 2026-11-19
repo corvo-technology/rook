@@ -53,6 +53,7 @@ export * from "./featured-connectors.js";
 export * from "./format-file-size.js";
 export * from "./group-mentions.js";
 export * from "./guide/index.js";
+export * from "./host-context.js";
 export * from "./http-response.js";
 export * from "./identity-display.js";
 export { identitySource } from "./identity-source.js";

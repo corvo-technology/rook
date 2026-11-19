@@ -50,7 +50,7 @@ export const DEFAULT_PLANS: Record<PlanId, PlanEntitlements> = {
   team: {
     plan: "team",
     computerSize: "medium",
-    computers: 3,
+    computers: 1,
     storageBytes: 50 * GIB,
     seatsIncluded: 10,
     maxSeats: 15,
@@ -58,7 +58,7 @@ export const DEFAULT_PLANS: Record<PlanId, PlanEntitlements> = {
   company: {
     plan: "company",
     computerSize: "large",
-    computers: 10,
+    computers: 1,
     storageBytes: 200 * GIB,
     seatsIncluded: 25,
     maxSeats: 50,

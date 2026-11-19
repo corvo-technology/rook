@@ -91,7 +91,7 @@ describePostgres("plan entitlements (PostgreSQL)", () => {
     await subscribe("price_team", "trialing");
     expect((await plan())?.plan).toBe("personal");
     await subscribe("price_team", "active");
-    expect(await plan()).toMatchObject({ plan: "team", computerSize: "medium", computers: 3 });
+    expect(await plan()).toMatchObject({ plan: "team", computerSize: "medium", computers: 1 });
     await subscribe("price_unknown", "active");
     expect((await plan())?.plan).toBe("personal");
     await subscribe("price_company", "past_due");

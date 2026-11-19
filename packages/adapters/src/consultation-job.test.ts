@@ -157,6 +157,56 @@ beforeEach(() => {
 });
 afterEach(() => vi.restoreAllMocks());
 
+describe("processConsultation, structured", () => {
+  const output = {
+    task: "Fill the anamnesis",
+    schema: {
+      type: "object",
+      properties: {
+        chiefComplaint: { type: "string" },
+        allergies: { type: "array", items: { type: "string" } },
+      },
+      required: ["chiefComplaint"],
+    },
+  };
+  const structured = () => ({
+    template: "structured" as const,
+    context: { clientId: "client-1", clientName: "Maria Souza", output },
+  });
+
+  it("returns the schema's fields from the transcript and files nothing in the partner's system", async () => {
+    const complete = vi.fn(async (_record, call) =>
+      call.tier === "fast"
+        ? '["p","c","p"]'
+        : '{"chiefComplaint":"Enxaqueca","allergies":["Dipirona"]}',
+    );
+    const f = fixture({ record: structured(), complete });
+    await processConsultation(f.deps, "cons-1");
+
+    expect(f.callTool).not.toHaveBeenCalled();
+    expect(f.settled).toEqual([expect.objectContaining({ state: "drafted", draftEntryId: null })]);
+    const stored = await readConsultationResult(f.deps, f.record());
+    expect(stored?.note).toEqual({ chiefComplaint: "Enxaqueca", allergies: ["Dipirona"] });
+    // The transcript reaches the model fenced, and the note is written on the strong tier.
+    const call = complete.mock.calls.find(([, c]) => c.tier === "strong")?.[1];
+    expect(call?.operation).toBe("consultation-structured");
+    expect(call?.prompt).toContain("<untrusted");
+    expect(call?.prompt).toContain("Task: Fill the anamnesis");
+  });
+
+  it("asks again once for a result that breaks the schema, then fails without repeating the step", async () => {
+    const complete = vi.fn(async (_record, call) =>
+      call.tier === "fast" ? '["p","c","p"]' : '{"allergies":"none"}',
+    );
+    const f = fixture({ record: structured(), complete });
+    await processConsultation(f.deps, "cons-1");
+    const strong = complete.mock.calls.filter(([, c]) => c.tier === "strong");
+    expect(strong).toHaveLength(2);
+    expect(f.callTool).not.toHaveBeenCalled();
+    expect(f.settled).toEqual([{ state: "failed", errorCode: "model_failed" }]);
+  });
+});
+
 describe("processConsultation", () => {
   it("drafts the note: transcribes, labels, fills the template and files it with the record connector", async () => {
     const f = fixture();

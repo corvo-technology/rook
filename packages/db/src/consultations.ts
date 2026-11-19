@@ -102,7 +102,7 @@ export async function settleConsultation(
   prisma: PrismaClient,
   consultationId: string,
   outcome:
-    | { state: "drafted"; draftEntryId: string; resultArtifactId: string }
+    | { state: "drafted"; draftEntryId: string | null; resultArtifactId: string }
     | { state: "failed"; errorCode: ConsultationErrorCode },
 ): Promise<boolean> {
   const data =

@@ -29,6 +29,7 @@ export const SECURITY_EVENT_TYPES = [
   "consultation.accessed",
   "consultation.deleted",
   "consultation.expired",
+  "partner.assist",
 ] as const;
 
 export const SecurityEventTypeSchema = z.enum(SECURITY_EVENT_TYPES);

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { AssistPresets } from "./assist.js";
 import { BotStartersSchema } from "./bot-starters.js";
 
 const Key = z
@@ -75,6 +76,8 @@ export const PartnerTemplate = z
     chiefName: z.string().trim().min(1).max(80).optional(),
     /** Shortcuts on the embedded Home, in order. */
     quickActions: z.array(PartnerQuickAction).max(6).optional(),
+    /** Tasks the partner's pages run by name (`Rook.ask({ preset })`), as data. */
+    assist: AssistPresets.optional(),
     /** The partner's main colour as `#rrggbb`, used when the page that embeds Rook passes none. */
     accent: z
       .string()

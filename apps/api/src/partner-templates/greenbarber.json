@@ -57,5 +57,66 @@
       "label": "Faturamento da semana",
       "prompt": "Qual foi o faturamento desta semana?"
     }
-  ]
+  ],
+  "assist": {
+    "best_slot": {
+      "description": "Sugere o melhor horário entre os livres do contexto.",
+      "task": "Sugira o melhor horário para este atendimento entre os horários livres do contexto, considerando a duração do serviço e a preferência da cliente.",
+      "instructions": "Escreva em português do Brasil. Use só os dados do contexto: horários, nomes e valores que não constam nele não existem. Escolha só entre os horários livres informados; se nenhum serve, deixe slot vazio e explique em reason.",
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "slot": {
+            "type": "string",
+            "description": "O horário escolhido, exatamente como veio no contexto."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Por que este horário, em uma frase.",
+            "maxLength": 300
+          },
+          "alternatives": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Até dois outros horários possíveis."
+          }
+        },
+        "required": ["slot", "reason"]
+      }
+    },
+    "customer_summary": {
+      "description": "Resume o histórico de uma cliente para quem vai atendê-la.",
+      "task": "Resuma o histórico desta cliente para quem vai atendê-la: o que costuma fazer, preferências e o que vale lembrar.",
+      "instructions": "Escreva em português do Brasil. Use só os dados do contexto: horários, nomes e valores que não constam nele não existem. Seja breve e prático.",
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "summary": {
+            "type": "string",
+            "description": "Resumo em até três frases.",
+            "maxLength": 600
+          },
+          "preferences": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Preferências da cliente."
+          },
+          "attention": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "O que merece atenção neste atendimento."
+          }
+        },
+        "required": ["summary"]
+      }
+    }
+  }
 }

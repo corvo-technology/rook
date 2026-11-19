@@ -962,3 +962,48 @@ What makes the app look like the partner's, for white label partners only. No pa
   (Caddy does by default).
 - **Not here.** Desktop and mobile are not rebranded. Passkeys are still bound to the app's own
   host. Receipts and notices have no email templates yet: they arrive with payments.
+
+## 17. F4 payments as built (white label collection)
+
+- **Interface.** `PaymentsProvider` (`packages/adapter-kit/src/payments.ts`) sits beside
+  `BillingProvider`: connected account, onboarding and dashboard links, subscription and top-up
+  checkout with an application fee, customer portal, plan change, refund, fee refund, fee listing and
+  `parseWebhook`, which verifies the signature and returns a `NormalizedPaymentEvent` with no vendor
+  field left. The Stripe adapter is `stripe-connect.ts`; it shares its HTTP, retry and signature code
+  with the billing adapter (`stripe-http.ts`). The Stripe emulator has a Connect half
+  (`testing/stripe-connect-emulator.ts`) so every test is offline.
+- **Data.** `Partner.connectAccountId` and `connectState` (`none`, `pending`, `restricted`, `active`,
+  `disabled`); `PartnerPayout` and `PartnerDispute`, mirrors keyed by the provider's id;
+  `TenantSubscription.providerCustomerRef` and `providerSubscriptionRef`. A white label customer is a
+  `PartnerTenant` of its own organization (`attachWhiteLabelCustomer`), so the F2 ledger, credit lots,
+  lapse rules and `partnerSpaceState` apply unchanged.
+- **Price and fee.** The partner's list is the catalog plus its markup, in its currency. The fee is
+  `rookShare(base)` (section 7.2), not a share of the charged price: 130 charged on a base of 100
+  takes 80 and leaves 50 to the partner, in BRL and in USD. A top-up sends the absolute
+  `application_fee_amount`. Stripe only takes a percentage on a subscription, so the first invoice
+  uses the percentage rounded to two decimals, and every renewal's draft invoice (`invoice.created`)
+  gets the exact amount from Rook. The reconciliation view shows what is left: a first invoice can
+  differ by a few minor units, a plan change prorates, and a lost dispute does not hand the fee back.
+- **Credit only from the webhook.** `POST /api/v1/billing/connect-webhook` verifies the Connect
+  endpoint's signature and applies the event through the F2 functions (`setTenantSubscription`,
+  `addTenantTopup`, `refundTenantPayment`) with keys derived from the invoice or payment ids, so a
+  repeated delivery changes nothing. The redirect after checkout grants nothing: the plans screen
+  waits for the confirmed payment and then opens the app.
+- **Plan changes** go through Rook: an upgrade changes the price with the new fee and charges the
+  difference at once (its credit comes from that payment); a downgrade changes what the next period
+  charges and is shown as pending; going back to the plan in force cancels it. The portal of the
+  connected account offers the card, invoices and cancel at period end, not plan changes.
+- **Failures (section 9).** `invoice.payment_failed` and `past_due` start the grace period;
+  `unpaid` and `canceled` end access (read-only, data and credit untouched); a paid invoice restores
+  it. A refund, from Rook or from the partner's own dashboard, writes the negative ledger rows in
+  proportion and hands Rook's fee back in proportion; a lost dispute follows the same path. The
+  partner's webhook gets `payment.failed`, `payment.refunded`, `payment.disputed` and `payout.paid`
+  on top of the F2 events, through the existing signed delivery.
+- **Console and admin.** White label partners get a Receipts section (`partnerConsole.payments`,
+  `connect`, `connectDashboard`): state, payouts, disputes and the links; the state is also read from
+  the provider on load, so a missed event does not leave it stale. Platform admins get
+  `platform.connect.list` and `platform.connect.reconcile` (ledger against the provider's
+  application fees for a month), shown as the Connected accounts section of the platform area.
+- **Not yet.** The customer's checkout return address is the app origin until host-based branding
+  decides it; no sidebar entry leads a customer to the plans screen (`/app/plans`) apart from "Buy
+  more" on the balance line; lost-dispute fee refunds and a console refund action are follow-ups.

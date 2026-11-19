@@ -11,6 +11,7 @@ import { PartnerLeadsSection, WaitlistSection } from "./IntakeSections";
 import { InvoicesSection } from "./InvoicesSection";
 import { LimitsSection } from "./LimitsSection";
 import { PartnersSection } from "./PartnersSection";
+import { PlatformConnect } from "./PlatformConnect";
 import { PricingSection } from "./PricingSection";
 import { SimulatorSection } from "./SimulatorSection";
 
@@ -21,6 +22,7 @@ export const PLATFORM_SECTIONS = [
   "applications",
   "waitlist",
   "invoices",
+  "connect",
   "limits",
 ] as const;
 type Section = (typeof PLATFORM_SECTIONS)[number];
@@ -55,6 +57,7 @@ export function PlatformPage() {
     simulator: t`Simulator`,
     partners: t`Partners`,
     invoices: t`Invoices`,
+    connect: t`Connected accounts`,
     limits: t`Limits by organization`,
   };
 
@@ -104,6 +107,8 @@ export function PlatformPage() {
             <PartnersSection />
           ) : section === "invoices" ? (
             <InvoicesSection />
+          ) : section === "connect" ? (
+            <PlatformConnect />
           ) : (
             <LimitsSection />
           )}

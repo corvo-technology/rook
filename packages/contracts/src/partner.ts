@@ -174,6 +174,10 @@ export const PARTNER_WEBHOOK_EVENTS = [
   "invoice.issued",
   "customer.credit_limit_reached",
   "partner.balance_low",
+  "payment.failed",
+  "payment.refunded",
+  "payment.disputed",
+  "payout.paid",
 ] as const;
 export type PartnerWebhookEventType = (typeof PARTNER_WEBHOOK_EVENTS)[number];
 
@@ -297,6 +301,8 @@ export const PartnerBalanceSchema = z.object({
   state: z.enum(["active", "past_due", "lapsed"]),
   /** The partner's checkout with the customer filled in; null when it has none. */
   checkoutUrl: z.string().nullable(),
+  /** White label: buying more happens in the app itself, on the plans screen. */
+  buyInApp: z.boolean().optional(),
   lowThresholdReached: z.boolean(),
 });
 export type PartnerBalance = z.infer<typeof PartnerBalanceSchema>;

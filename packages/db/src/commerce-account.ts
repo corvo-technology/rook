@@ -12,6 +12,7 @@ export interface PartnerBalanceView {
   periodEnd: string | null;
   state: "active" | "past_due" | "lapsed";
   checkoutUrl: string | null;
+  buyInApp?: boolean;
   lowThresholdReached: boolean;
 }
 
@@ -47,6 +48,7 @@ export async function partnerBalanceForOrganization(
       tenant.externalTenantId,
       options.pack,
     ),
+    ...(tenant.partner.mode === "white_label" ? { buyInApp: true } : {}),
     lowThresholdReached: balance.lowThresholdReached,
   };
 }

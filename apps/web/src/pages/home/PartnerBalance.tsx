@@ -91,6 +91,18 @@ export function PartnerBalanceLine({
         >
           {t`Buy more`}
         </button>
+      ) : balance.buyInApp ? (
+        <a
+          data-testid="partner-buy-more"
+          href="/app/plans"
+          className={`inline-flex h-9 items-center rounded-full px-4 text-sm font-medium outline-none transition-transform duration-150 hover:scale-[1.03] focus-visible:ring-2 focus-visible:ring-ring ${
+            warn
+              ? "bg-primary text-primary-foreground"
+              : "border border-border bg-background hover:bg-muted"
+          }`}
+        >
+          {t`Buy more`}
+        </a>
       ) : null}
     </div>
   );

@@ -11,6 +11,7 @@ import { PartnerDomain } from "./PartnerDomain";
 import { PartnerIntegration } from "./PartnerIntegration";
 import { PartnerInvoices } from "./PartnerInvoices";
 import { PartnerOverview } from "./PartnerOverview";
+import { PartnerPayments } from "./PartnerPayments";
 import { PartnerPricing } from "./PartnerPricing";
 import { PartnerRevenue } from "./PartnerRevenue";
 import { PartnerTemplatePanel } from "./PartnerTemplatePanel";
@@ -38,6 +39,8 @@ export function usePartnerSectionTitle() {
         return t`Brand`;
       case "domain":
         return t`Domain`;
+      case "payments":
+        return t`Receipts`;
       case "integration":
         return t`Integration`;
     }
@@ -86,6 +89,7 @@ export function PartnerConsolePage() {
       {active === "revenue" ? <PartnerRevenue partner={partner} /> : null}
       {active === "brand" ? <PartnerBrand partner={partner} /> : null}
       {active === "domain" ? <PartnerDomain partner={partner} /> : null}
+      {active === "payments" ? <PartnerPayments partner={partner} /> : null}
       {active === "integration" ? <PartnerIntegration partner={partner} /> : null}
     </Frame>
   );

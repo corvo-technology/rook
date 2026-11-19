@@ -517,6 +517,7 @@ async function main() {
       STRIPE_SECRET_KEY: "",
       STRIPE_WEBHOOK_SECRET: "",
       STRIPE_PRICE_ID: "",
+      STRIPE_CONNECT_WEBHOOK_SECRET: "",
     });
     execFileSync("pnpm", ["--filter", "@corvo/db", "generate"], {
       stdio: "pipe",

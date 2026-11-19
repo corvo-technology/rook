@@ -3,6 +3,7 @@ import type {
   ArtifactStore,
   JobPublisher,
   MemoryStore,
+  PaymentsProvider,
   ProductAnalytics,
   SandboxProvider,
   SecretStore,
@@ -162,6 +163,8 @@ export interface RouterDeps {
   };
   /** Present only when the deployment bills; self-hosted installs leave it unset. */
   billing?: BillingService;
+  /** White label collection through connected accounts; absent without a payment provider. */
+  payments?: PaymentsProvider;
   /** Inviting people into a space; absent keeps the invitation procedures closed. */
   team?: TeamDeps;
   /** White label: brand, hosts and sender domains; absent keeps those procedures closed. */

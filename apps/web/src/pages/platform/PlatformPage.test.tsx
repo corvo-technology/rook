@@ -15,6 +15,7 @@ const platform = vi.hoisted(() => ({
   waitlist: { list: vi.fn(), decide: vi.fn() },
   partnerLeads: { list: vi.fn(), approve: vi.fn(), decline: vi.fn() },
   invoices: { list: vi.fn(), draft: vi.fn(), setState: vi.fn() },
+  connect: { list: vi.fn(), reconcile: vi.fn() },
   limits: { get: vi.fn(), set: vi.fn() },
 }));
 const operator = vi.hoisted(() => ({ value: true as boolean | undefined }));
@@ -227,6 +228,31 @@ beforeEach(() => {
     },
   ]);
   platform.invoices.setState.mockReset().mockResolvedValue({ ok: true });
+  platform.connect.list.mockReset().mockResolvedValue([
+    {
+      id: "p5",
+      slug: "agency",
+      name: "Agency",
+      currency: "BRL",
+      state: "restricted",
+      accountHint: "Ab12Cd",
+      customers: 12,
+      disputesOpen: 1,
+    },
+  ]);
+  platform.connect.reconcile.mockReset().mockResolvedValue({
+    period: "2026-11",
+    rows: [
+      {
+        partnerId: "p5",
+        partnerName: "Agency",
+        currency: "BRL",
+        ledgerMinor: 16_000,
+        providerMinor: 16_005,
+        differenceMinor: 5,
+      },
+    ],
+  });
   platform.limits.get
     .mockReset()
     .mockResolvedValue({ override: { computers: 3 }, plan: "personal" });
@@ -330,6 +356,17 @@ it("reads a white label partner's host and its state, and asks nothing for the o
   );
   expect(platform.partnerBranding.get).toHaveBeenCalledTimes(1);
   expect(platform.partnerBranding.get).toHaveBeenCalledWith({ partnerId: "p2" }, expect.anything());
+});
+
+it("shows each connected account's state and the ledger against the provider's fees", async () => {
+  await open("/app/platform/connect");
+  const connect = container.querySelector('[data-testid="platform-connect"]');
+  expect(connect?.textContent).toContain("Agency");
+  expect(connect?.textContent).toContain("Action needed");
+  expect(connect?.textContent).toContain("Ab12Cd");
+  const difference = connect?.querySelector('[data-testid="platform-connect-difference"]');
+  expect(difference?.textContent).toContain("0.05");
+  expect(platform.connect.reconcile).toHaveBeenCalled();
 });
 
 it("moves an invoice to the next state, with its document number", async () => {

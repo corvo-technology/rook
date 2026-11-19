@@ -53,11 +53,37 @@ import {
   voiceProviderFor,
   warmVoice,
 } from "../voice.js";
+import { createWhiteLabelPayments, WhiteLabelError } from "../white-label-payments.js";
 import type { RouterContext } from "./context.js";
 import { meDto } from "./shared.js";
 
 export function accountRoutes(ctx: RouterContext) {
   const { deps, os, authed } = ctx;
+  const whiteLabel = deps.payments
+    ? createWhiteLabelPayments({
+        prisma: deps.prisma,
+        provider: deps.payments,
+        webOrigin: deps.env.webOrigin,
+        jobs: deps.jobs,
+      })
+    : undefined;
+  const customerPayments = async <T>(
+    call: (payments: NonNullable<typeof whiteLabel>) => Promise<T>,
+  ) => {
+    if (!whiteLabel) throw new ORPCError("PRECONDITION_FAILED");
+    try {
+      return await call(whiteLabel);
+    } catch (error) {
+      if (!(error instanceof WhiteLabelError)) throw error;
+      throw new ORPCError(
+        error.code === "conflict"
+          ? "CONFLICT"
+          : error.code === "unavailable"
+            ? "PRECONDITION_FAILED"
+            : "NOT_FOUND",
+      );
+    }
+  };
   return {
     aiConsent: {
       status: authed.aiConsent.status.handler(({ context, input }) =>
@@ -99,6 +125,18 @@ export function accountRoutes(ctx: RouterContext) {
               })
             : null;
         }),
+      ),
+      whiteLabelCatalog: authed.billing.whiteLabelCatalog.handler(({ context }) =>
+        whiteLabel ? whiteLabel.catalog(context.actor) : null,
+      ),
+      whiteLabelCheckout: authed.billing.whiteLabelCheckout.handler(({ context, input }) =>
+        customerPayments((payments) => payments.checkout(context.actor, input)),
+      ),
+      whiteLabelChangePlan: authed.billing.whiteLabelChangePlan.handler(({ context, input }) =>
+        customerPayments((payments) => payments.changePlan(context.actor, input.key)),
+      ),
+      whiteLabelPortal: authed.billing.whiteLabelPortal.handler(({ context }) =>
+        customerPayments((payments) => payments.portal(context.actor)),
       ),
       selectFunding: authed.billing.selectFunding.handler(async ({ context, input }) => {
         const billing = requireBilling(deps);

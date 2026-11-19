@@ -1,6 +1,7 @@
 import type { BillingStatus } from "@corvo/contracts";
 import { Button, Skeleton } from "@corvo/ui-web";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ModelCreditsSettings } from "../components/ModelCredits";
 import { PlanList } from "../components/PlanList";
@@ -8,6 +9,26 @@ import { formatBillingDate, formatBillingPrice } from "../lib/billing";
 import { rpc } from "../lib/rpc";
 
 export function BillingSettingsPanel() {
+  const { t } = useLingui();
+  const whiteLabel = useQuery({
+    queryKey: ["billing", "whiteLabelCatalog"],
+    queryFn: () => rpc.billing.whiteLabelCatalog(),
+    retry: false,
+    staleTime: 60_000,
+  });
+  // A customer of a white-label partner pays the partner, on the plans screen, not Rook.
+  if (whiteLabel.data) {
+    return (
+      <div className="flex flex-col gap-3" data-testid="white-label-billing">
+        <a
+          href="/app/plans"
+          className="inline-flex h-9 w-fit items-center rounded-full border border-border bg-background px-4 text-sm font-medium outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {t`Plans`}
+        </a>
+      </div>
+    );
+  }
   return (
     <div className="flex flex-col gap-6">
       <BillingStatusPanel />

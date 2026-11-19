@@ -1,4 +1,3 @@
-import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import type {
   BillingByokCheckoutRequest,
   BillingCheckoutRequest,
@@ -12,11 +11,14 @@ import type {
 import { BillingCheckoutCompletedError, BillingCustomerNotFoundError } from "@corvo/adapter-kit";
 import { ModelCreditAmountSchema } from "@corvo/contracts";
 import { z } from "zod";
+import {
+  encodeStripeForm,
+  StripeHttp,
+  StripeRequestError,
+  verifyStripeSignature,
+} from "./stripe-http.js";
 
-export const STRIPE_API_VERSION = "2026-09-30.endive";
-const WEBHOOK_TOLERANCE_SECONDS = 300;
-const MAX_RETRIES = 2;
-const MAX_RETRY_DELAY_MS = 5_000;
+export { encodeStripeForm, STRIPE_API_VERSION, signStripeWebhook } from "./stripe-http.js";
 
 export interface StripeBillingConfig {
   secretKey: string;
@@ -68,41 +70,19 @@ const checkoutListSchema = z.object({
   data: z.array(z.object({ id: z.string().min(1) })),
   has_more: z.boolean(),
 });
-const errorSchema = z.object({
-  error: z.object({
-    type: z.string().optional(),
-    code: z.string().optional(),
-    param: z.string().optional(),
-    message: z.string().optional(),
-  }),
-});
 type StripeSubscription = z.infer<typeof subscriptionSchema>;
-
-class StripeRequestError extends Error {
-  constructor(
-    message: string,
-    readonly type: string | undefined,
-  ) {
-    super(message);
-    this.name = "StripeRequestError";
-  }
-}
 
 /** Stripe REST wire format and credentials stay inside this adapter. */
 export class StripeBillingProvider implements BillingProvider {
   private readonly config: StripeBillingConfig;
-  private readonly fetchImpl: typeof fetch;
-  private readonly apiBase: string;
+  private readonly http: StripeHttp;
   private readonly now: () => number;
-  private readonly sleep: (ms: number) => Promise<void>;
   private readonly monthlyPrices = new Map<string, string>();
 
   constructor(config: StripeBillingConfig) {
     this.config = config;
-    this.fetchImpl = config.fetch ?? fetch;
-    this.apiBase = config.apiBase ?? "https://api.stripe.com";
+    this.http = new StripeHttp(config);
     this.now = config.now ?? Date.now;
-    this.sleep = config.sleep ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
   }
 
   describe() {
@@ -692,61 +672,22 @@ export class StripeBillingProvider implements BillingProvider {
     path: string,
     params?: Record<string, unknown> | string,
   ): Promise<unknown> {
-    const body = typeof params === "string" ? params : params && encodeStripeForm(params);
-    // One key per call: retries replay the first outcome, a later call starts fresh. Stripe
-    // keeps a key's response, even a 500, for 24 hours, so a fixed key would wedge the call.
-    const idempotencyKey = method === "POST" ? randomUUID() : undefined;
-    for (let attempt = 0; ; attempt++) {
-      const response = await this.fetchImpl(`${this.apiBase}${path}`, {
-        method,
-        redirect: "error",
-        signal: AbortSignal.timeout(30_000),
-        headers: {
-          Authorization: `Bearer ${this.config.secretKey}`,
-          "Stripe-Version": STRIPE_API_VERSION,
-          Accept: "application/json",
-          ...(body === undefined ? {} : { "Content-Type": "application/x-www-form-urlencoded" }),
-          ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
-        },
-        body,
-      });
-      const json: unknown = await response.json().catch(() => undefined);
-      if (response.ok) {
-        if (json === undefined) throw new Error("Invalid Stripe response");
-        return json;
-      }
-      if (attempt < MAX_RETRIES && shouldRetry(response)) {
-        await this.sleep(retryDelayMs(response, attempt));
-        continue;
-      }
-      const error = errorSchema.safeParse(json).data?.error;
-      if (error?.code === "resource_missing" && error.param === "customer")
+    try {
+      return await this.http.request(method, path, params);
+    } catch (error) {
+      if (
+        error instanceof StripeRequestError &&
+        error.code === "resource_missing" &&
+        error.param === "customer"
+      )
         throw new BillingCustomerNotFoundError();
-      const message = error?.message?.replaceAll(this.config.secretKey, "[redacted]");
-      throw new StripeRequestError(
-        `Stripe request failed (${response.status})${message ? `: ${message}` : ""}`,
-        error?.type,
-      );
+      throw error;
     }
   }
 }
 
 function ignoreDeletedCustomer(error: unknown): void {
   if (!(error instanceof BillingCustomerNotFoundError)) throw error;
-}
-
-/** Stripe's explicit hint wins; otherwise lock conflicts, rate limits and 5xx are transient. */
-function shouldRetry(response: Response): boolean {
-  const hint = response.headers.get("stripe-should-retry");
-  if (hint === "true") return true;
-  if (hint === "false") return false;
-  return response.status === 409 || response.status === 429 || response.status >= 500;
-}
-
-function retryDelayMs(response: Response, attempt: number): number {
-  const retryAfter = Number(response.headers.get("retry-after"));
-  const delay = retryAfter > 0 ? retryAfter * 1000 : 500 * 2 ** attempt;
-  return Math.min(delay, MAX_RETRY_DELAY_MS);
 }
 
 /** Stripe statuses collapse onto the provider-neutral set; `incomplete_expired` is terminal. */
@@ -830,27 +771,6 @@ function fromSeconds(value: number | null | undefined) {
   return value == null ? null : new Date(value * 1000);
 }
 
-/** Stripe's bracketed form encoding: `line_items[0][price]=...`. Undefined values are omitted. */
-export function encodeStripeForm(params: Record<string, unknown>): string {
-  const form = new URLSearchParams();
-  const append = (key: string, value: unknown) => {
-    if (value === undefined || value === null) return;
-    if (Array.isArray(value)) {
-      for (const [i, entry] of value.entries()) append(`${key}[${i}]`, entry);
-    } else if (typeof value === "object")
-      for (const [k, v] of Object.entries(value)) append(`${key}[${k}]`, v);
-    else form.append(key, String(value));
-  };
-  for (const [key, value] of Object.entries(params)) append(key, value);
-  return form.toString();
-}
-
-/** `stripe-signature` header value for `body` at `timestamp` (seconds). */
-export function signStripeWebhook(secret: string, body: string, timestamp: number): string {
-  const signature = createHmac("sha256", secret).update(`${timestamp}.${body}`).digest("hex");
-  return `t=${timestamp},v1=${signature}`;
-}
-
 const syncEventTypes = new Set([
   "checkout.session.completed",
   "customer.deleted",
@@ -869,19 +789,7 @@ export function parseStripeWebhook(
   headers: Headers,
   nowMs: number,
 ): { customerId: string } | "ignored" | null {
-  const parts = (headers.get("stripe-signature") ?? "").split(",").map((part) => part.split("="));
-  const timestamp = Number(parts.find(([key]) => key === "t")?.[1]);
-  if (!Number.isFinite(timestamp)) return null;
-  if (Math.abs(nowMs / 1000 - timestamp) > WEBHOOK_TOLERANCE_SECONDS) return null;
-  const expected = Buffer.from(
-    createHmac("sha256", secret).update(`${timestamp}.${rawBody}`).digest("hex"),
-  );
-  const valid = parts.some(([key, value]) => {
-    if (key !== "v1" || !value) return false;
-    const candidate = Buffer.from(value);
-    return candidate.length === expected.length && timingSafeEqual(candidate, expected);
-  });
-  if (!valid) return null;
+  if (!verifyStripeSignature(secret, rawBody, headers, nowMs)) return null;
 
   let event: { type?: unknown; data?: { object?: Record<string, unknown> } };
   try {

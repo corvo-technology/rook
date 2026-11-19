@@ -226,6 +226,13 @@ import {
   PlatformPartnerSchema,
   PlatformWaitlistEntrySchema,
 } from "./partner-credits.js";
+import {
+  PartnerPaymentsSchema,
+  PlatformConnectPartnerSchema,
+  PlatformReconciliationSchema,
+  WhiteLabelCatalogSchema,
+  WhiteLabelCheckoutInput,
+} from "./partner-payments.js";
 import { PlanIdSchema, PlanOverrideSchema, PlanUsageSchema } from "./plans.js";
 import { MessageReactionSchema } from "./reactions.js";
 import { RoutineWatchSchema } from "./routine-watch.js";
@@ -388,6 +395,21 @@ export const appContract = {
     partnerBalance: oc
       .input(z.object({ pack: z.string().max(64).optional() }).default({}))
       .output(PartnerBalanceSchema.nullable()),
+    /**
+     * White label customer: the partner's price list and the customer's own plan; null for anyone
+     * who is not a white-label customer. Credit is granted only when the payment is confirmed.
+     */
+    whiteLabelCatalog: oc.output(WhiteLabelCatalogSchema.nullable()),
+    /** Opens the checkout of a plan or a top-up pack on the partner's account. */
+    whiteLabelCheckout: oc
+      .input(WhiteLabelCheckoutInput)
+      .output(z.object({ url: z.string().url() })),
+    /** Moves to another plan: an upgrade now, a downgrade at the next period. */
+    whiteLabelChangePlan: oc
+      .input(z.object({ key: z.string().min(1).max(64) }))
+      .output(z.object({ effective: z.enum(["now", "period_end", "unchanged"]) })),
+    /** Card change and cancellation, in the provider's portal on the partner's account. */
+    whiteLabelPortal: oc.output(z.object({ url: z.string().url() })),
   },
   preferences: {
     update: oc
@@ -1599,6 +1621,13 @@ export const appContract = {
         .input(z.object({ id: Id, reason: z.string().trim().max(300).optional() }))
         .output(z.object({ ok: z.literal(true) })),
     },
+    /** White label partners: the state of each connected account, and the ledger against the provider. */
+    connect: {
+      list: oc.output(z.array(PlatformConnectPartnerSchema)),
+      reconcile: oc
+        .input(z.object({ period: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/) }))
+        .output(PlatformReconciliationSchema),
+    },
     /** Rook's monthly invoices of its share to embedded commerce partners. */
     invoices: {
       list: oc
@@ -1778,6 +1807,12 @@ export const appContract = {
     setAlertEmail: oc
       .input(z.object({ partnerId: Id, kind: z.enum(PARTNER_ALERT_KINDS), email: z.boolean() }))
       .output(z.object({ ok: z.literal(true) })),
+    /** White label: the connected account, its payouts and disputes. */
+    payments: oc.input(z.object({ partnerId: Id })).output(PartnerPaymentsSchema),
+    /** Starts or resumes onboarding; the address is short-lived and used at once. */
+    connect: oc.input(z.object({ partnerId: Id })).output(z.object({ url: z.string() })),
+    /** An address into the partner's own dashboard of the connected account. */
+    connectDashboard: oc.input(z.object({ partnerId: Id })).output(z.object({ url: z.string() })),
   },
   /** The email agent: a bot that uses an inbox service's MCP server for its own inbox. */
   emailAgent: {

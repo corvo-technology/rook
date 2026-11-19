@@ -9,6 +9,7 @@ import type {
   MessagingInboundEvent,
   MessagingSurface,
   NotificationProvider,
+  PaymentsProvider,
   RealtimeFanout,
   SandboxProvider,
   TransactionalEmailProvider,
@@ -108,9 +109,11 @@ import {
   ScriptedAgentRuntime,
   SpaceMemoryProviderResolver,
   StripeBillingProvider,
+  StripePaymentsProvider,
   sandboxProviderOptionsFromEnv,
   senderDomainProviderFromEnv,
   stripeBillingConfigFromEnv,
+  stripeConnectConfigFromEnv,
   toTeamChatInbound,
   verifyModelServesAgents,
   WHATSAPP_LINK_PROVIDER,
@@ -254,6 +257,7 @@ import { mountVoiceHttpRoutes, voiceAccountErrorStatus } from "./voice.js";
 import { prismaWaitlistStore, waitlistRoutes } from "./waitlist.js";
 import { mountWebhookHttpRoutes } from "./webhook.js";
 import { createWhatsAppInboundHandler } from "./whatsapp-inbound.js";
+import { mountPaymentsWebhook } from "./white-label-payments.js";
 
 /**
  * Native clients always send the app scheme, including in Expo Go, so no
@@ -306,6 +310,8 @@ type CreateAppOverrides = Partial<AppEnv> & {
   email?: TransactionalEmailProvider;
   notifications?: NotificationProvider;
   billing?: BillingProvider;
+  /** White label collection; tests pass the emulator-backed provider. */
+  payments?: PaymentsProvider;
   remoteConnectors?: RemoteConnectorDependencies;
   modelConnectionFetch?: typeof fetch;
   logger?: Logger;
@@ -327,6 +333,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     email: emailOverride,
     notifications: notificationsOverride,
     billing: billingOverride,
+    payments: paymentsOverride,
     remoteConnectors,
     modelConnectionFetch,
     logger: loggerOverride,
@@ -552,6 +559,9 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
         managedModelsAvailable: resolveDeploymentModel().configured,
       })
     : undefined;
+  const stripeConnect = stripeConnectConfigFromEnv(env);
+  const paymentsProvider: PaymentsProvider | undefined =
+    paymentsOverride ?? (stripeConnect ? new StripePaymentsProvider(stripeConnect) : undefined);
   const modelCreditsEnabled = billing?.modelCreditsEnabled ?? false;
   const voiceCredits = creditVoiceKey({
     creditsEnabled: modelCreditsEnabled,
@@ -985,6 +995,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     artifacts,
     dataDir: env.dataDir,
     billing,
+    payments: paymentsProvider,
     team,
     branding,
     messagingInstallations,
@@ -1352,6 +1363,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       authenticate: sessionActor,
     });
   }
+  if (paymentsProvider) mountPaymentsWebhook(app, { prisma, provider: paymentsProvider, jobs });
   // Shared with stop so a shutdown during retry delays does not restart polling.
   let messagingStopped = false;
   let stopInstalledBridges: (() => Promise<void>) | undefined;

@@ -2642,6 +2642,12 @@ model Partner {
   checkoutUrl               String?
   /// What this key may do: tenants:write, commerce:read, commerce:write.
   scopes                    String[]               @default(["tenants:write"])
+  /// White label: the partner's connected account at the payment provider, and where onboarding
+  /// stands (none | pending | restricted | active | disabled).
+  connectAccountId          String?                @unique
+  connectState              String                 @default("none")
+  payouts                   PartnerPayout[]
+  disputes                  PartnerDispute[]
   tenants                   PartnerTenant[]
   revenueEntries            RevenueShareEntry[]
   invoices                  PartnerInvoice[]
@@ -3195,30 +3201,34 @@ model CommerceSetting {
 
 /// The plan a commerce customer is on, as the partner reported it.
 model TenantSubscription {
-  id              String        @id @default(cuid())
-  partnerTenantId String        @unique
-  tenant          PartnerTenant @relation(fields: [partnerTenantId], references: [id], onDelete: Cascade)
-  planKey         String
+  id                      String        @id @default(cuid())
+  partnerTenantId         String        @unique
+  tenant                  PartnerTenant @relation(fields: [partnerTenantId], references: [id], onDelete: Cascade)
+  planKey                 String
   /// A downgrade reported mid-period, applied at the next period.
-  pendingPlanKey  String?
+  pendingPlanKey          String?
   /// trialing | active | past_due | canceled
-  status          String
-  currency        String
-  periodStart     DateTime
-  periodEnd       DateTime
+  status                  String
+  currency                String
+  periodStart             DateTime
+  periodEnd               DateTime
   /// Snapshots of the price the plan was sold at.
-  baseMinor       Int
-  markupMinor     Int           @default(0)
-  chargedMinor    Int?
+  baseMinor               Int
+  markupMinor             Int           @default(0)
+  chargedMinor            Int?
   /// partner_reported | stripe
-  source          String        @default("partner_reported")
-  externalRef     String?
-  pastDueSince    DateTime?
+  source                  String        @default("partner_reported")
+  externalRef             String?
+  pastDueSince            DateTime?
   /// Set once when access ended and subscription.lapsed was queued; cleared by a renewal.
-  lapsedAt        DateTime?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  lapsedAt                DateTime?
+  /// White label: the customer and the subscription on the partner's connected account.
+  providerCustomerRef     String?
+  providerSubscriptionRef String?
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
 
+  @@index([providerSubscriptionRef])
   @@map("tenant_subscriptions")
 }
 
@@ -3322,4 +3332,42 @@ model IdempotencyRecord {
   @@unique([partnerId, key])
   @@index([expiresAt])
   @@map("idempotency_records")
+}
+
+/// White label: what the payment provider moved to the partner, a read-only mirror of its payouts.
+model PartnerPayout {
+  id          String    @id @default(cuid())
+  partnerId   String
+  partner     Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  /// The provider's own id, which makes a repeated event add nothing.
+  providerRef String    @unique
+  currency    String
+  amountMinor Int
+  /// paid | failed
+  status      String
+  arrivedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([partnerId, createdAt])
+  @@map("partner_payouts")
+}
+
+/// A customer's dispute of a white-label payment. The dispute fee is the partner's, as the merchant.
+model PartnerDispute {
+  id              String   @id @default(cuid())
+  partnerId       String
+  partner         Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partnerTenantId String?
+  providerRef     String   @unique
+  paymentRef      String?
+  currency        String
+  amountMinor     Int
+  reason          String
+  /// The provider's state, such as needs_response, won or lost.
+  status          String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([partnerId, createdAt])
+  @@map("partner_disputes")
 }

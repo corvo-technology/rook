@@ -29,6 +29,9 @@ const api = vi.hoisted(() => ({
   removeDomain: vi.fn(),
   setSenderDomain: vi.fn(),
   checkSenderDomain: vi.fn(),
+  payments: vi.fn(),
+  connect: vi.fn(),
+  connectDashboard: vi.fn(),
 }));
 vi.mock("../../lib/rpc", () => ({ rpc: { partnerConsole: api } }));
 vi.mock("@lingui/react/macro", () => {
@@ -521,5 +524,105 @@ describe("partner brand and domain", () => {
       hostname: "app.acme.example.test",
     });
     expect(document.querySelector("[data-testid=domain-panel]")).toBeTruthy();
+describe("receipts of a white label partner", () => {
+  const payments = (over: object = {}) => ({
+    state: "none",
+    accountHint: null,
+    requirementsDue: [],
+    available: true,
+    payouts: [],
+    disputes: [],
+    ...over,
+  });
+
+  it("connects an account that does not exist yet and goes to onboarding", async () => {
+    api.partners.mockResolvedValue([whiteLabel]);
+    api.payments.mockResolvedValue(payments());
+    api.connect.mockResolvedValue({ url: "https://connect.example.test/setup" });
+    const assign = vi.fn();
+    vi.stubGlobal("location", { ...window.location, assign });
+    await render("/app/partner/p2/payments");
+    expect(container.querySelector('[data-testid="partner-connect-state"]')?.textContent).toBe(
+      "Not connected",
+    );
+    expect(byText("Open dashboard")).toBeUndefined();
+    await click(byText("Connect account"));
+    expect(api.connect).toHaveBeenCalledWith({ partnerId: "p2" });
+    expect(assign).toHaveBeenCalledWith("https://connect.example.test/setup");
+  });
+
+  it("shows an active account with its payouts and offers the dashboard, not onboarding", async () => {
+    api.partners.mockResolvedValue([whiteLabel]);
+    api.payments.mockResolvedValue(
+      payments({
+        state: "active",
+        accountHint: "Ab12Cd",
+        payouts: [
+          {
+            id: "po1",
+            amountMinor: 50_000,
+            currency: "BRL",
+            status: "paid",
+            arrivedAt: "2026-11-12T00:00:00.000Z",
+            createdAt: "2026-11-10T00:00:00.000Z",
+          },
+        ],
+        disputes: [
+          {
+            id: "dp1",
+            amountMinor: 13_000,
+            currency: "BRL",
+            reason: "fraudulent",
+            status: "needs_response",
+            createdAt: "2026-11-11T00:00:00.000Z",
+          },
+        ],
+      }),
+    );
+    await render("/app/partner/p2/payments");
+    expect(container.querySelector('[data-testid="partner-connect-state"]')?.textContent).toBe(
+      "Active",
+    );
+    expect(container.textContent).toContain(formatMoney(50_000, "BRL", "en"));
+    expect(container.querySelector('[data-testid="partner-disputes"]')?.textContent).toContain(
+      "Needs response",
+    );
+    expect(byText("Open dashboard")).toBeTruthy();
+    expect(byText("Connect account")).toBeUndefined();
+    expect(byText("Continue setup")).toBeUndefined();
+  });
+
+  it("asks the partner to continue when the provider needs more", async () => {
+    api.partners.mockResolvedValue([whiteLabel]);
+    api.payments.mockResolvedValue(payments({ state: "restricted", requirementsDue: ["x"] }));
+    await render("/app/partner/p2/payments");
+    expect(byText("Continue setup")).toBeTruthy();
+    expect(container.textContent).toContain("More information needed");
+  });
+
+  it("says when payments are off, and starts nothing", async () => {
+    api.partners.mockResolvedValue([whiteLabel]);
+    api.payments.mockResolvedValue(payments({ available: false }));
+    await render("/app/partner/p2/payments");
+    expect(container.querySelector('[data-testid="partner-connect-state"]')?.textContent).toBe(
+      "Unavailable",
+    );
+    expect(byText("Connect account")).toBeUndefined();
+  });
+
+  it("is not a screen of an embedded partner", async () => {
+    api.partners.mockResolvedValue([embedded]);
+    api.overview.mockResolvedValue({
+      currency: "BRL",
+      revenue: { total: 0, commission: 0, markup: 0 },
+      activeCustomers: 0,
+      newCustomers: 0,
+      creditLow: 0,
+      pastDue: 0,
+      monthly: [],
+      attention: [],
+    });
+    await render("/app/partner/p1/payments");
+    expect(api.payments).not.toHaveBeenCalled();
   });
 });

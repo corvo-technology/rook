@@ -10,10 +10,10 @@ const valid = {
   name: "Ana",
   email: "Ana@Acme.example",
   company: "Acme",
-  whatsapp: "+55 14 99999-0000",
+  whatsapp: "+5514999990000",
   website: "https://acme.example",
   partnerType: "embedded",
-  country: "Brasil",
+  country: "BR",
   customers: "50-200",
   message: "We run a clinic system",
   consent: true,
@@ -103,7 +103,8 @@ describe("partner lead", () => {
     expect(rows[0]).toMatchObject({
       name: "Ana",
       email: "ana@acme.example",
-      whatsapp: "+55 14 99999-0000",
+      whatsapp: "+5514999990000",
+      country: "BR",
       partnerType: "embedded",
       customers: "50-200",
       locale: "pt-BR",
@@ -156,6 +157,36 @@ describe("partner lead", () => {
     expect(rows).toHaveLength(0);
   });
 
+  it("stores the country as an ISO code and the number as E.164", async () => {
+    const { app, rows } = setup();
+    const response = await post(app, { ...valid, country: "pt", whatsapp: "+351 912 345 678" });
+    expect(response.status).toBe(200);
+    expect(rows[0]).toMatchObject({ country: "PT", whatsapp: "+351912345678" });
+  });
+
+  it("rejects a country that is not an ISO code and a number that does not fit its country", async () => {
+    const { app, rows } = setup();
+    const bad = [
+      { ...valid, country: "Brasil" },
+      { ...valid, country: "ZZ" },
+      { ...valid, whatsapp: "11912345678" },
+      { ...valid, whatsapp: "+55119123" },
+      { ...valid, whatsapp: "+351912345678" },
+      { ...valid, whatsapp: "+0123456789" },
+    ];
+    for (const [i, payload] of bad.entries()) {
+      expect((await post(app, payload, { "x-test-ip": `192.0.2.${i}` })).status).toBe(400);
+    }
+    expect(rows).toHaveLength(0);
+  });
+
+  it("treats an empty country and number as missing", async () => {
+    const { app, rows } = setup();
+    expect((await post(app, { ...valid, country: "", whatsapp: "" })).status).toBe(200);
+    expect(rows[0]?.country).toBeUndefined();
+    expect(rows[0]?.whatsapp).toBeUndefined();
+  });
+
   it("refuses a body that is not JSON or is too large", async () => {
     const { app } = setup();
     expect((await post(app, valid, { "content-type": "text/plain" })).status).toBe(415);
@@ -205,10 +236,10 @@ describe("partner lead emails", () => {
     for (const value of [
       "Ana",
       "Acme",
-      "+55 14 99999-0000",
+      "+5514999990000",
       "https://acme.example",
       "embedded",
-      "Brasil",
+      "BR",
       "50-200",
     ]) {
       expect(notice?.text).toContain(value);

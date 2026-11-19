@@ -1,5 +1,6 @@
 import type { TransactionalEmail, TransactionalEmailProvider } from "@corvo/adapter-kit";
 import { partnerLeadConfirmationEmail, partnerLeadNotificationEmail } from "@corvo/auth";
+import { isCountryCode, isValidE164 } from "@corvo/core/phone";
 import type { PrismaClient } from "@corvo/db";
 import { runAsSystem } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
@@ -35,22 +36,40 @@ const optional = (max: number) =>
     .optional()
     .transform((value) => value || undefined);
 
-const body = z.object({
-  name: z.string().trim().min(1).max(120),
-  email: z.string().trim().toLowerCase().max(254).pipe(z.email()),
-  company: z.string().trim().min(1).max(120),
-  whatsapp: optional(40),
-  website: optional(300),
-  partnerType: z.enum(PARTNER_TYPES),
-  country: optional(80),
-  customers: z.enum(CUSTOMER_RANGES).optional(),
-  message: optional(2000),
-  consent: z.literal(true),
-  locale: z.string().trim().max(35).optional(),
-  source: z.string().trim().max(40).optional(),
-  // Hidden from people, filled by bots.
-  hp: z.string().max(1000).optional(),
-});
+/** Formatting people type around a number; the stored value is plain E.164. */
+const phone = z
+  .string()
+  .trim()
+  .max(40)
+  .optional()
+  .transform((value) => value?.replace(/[\s().-]/g, "") || undefined);
+
+const country = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .optional()
+  .transform((value) => value || undefined)
+  .refine((value) => value === undefined || isCountryCode(value));
+
+const body = z
+  .object({
+    name: z.string().trim().min(1).max(120),
+    email: z.string().trim().toLowerCase().max(254).pipe(z.email()),
+    company: z.string().trim().min(1).max(120),
+    whatsapp: phone,
+    website: optional(300),
+    partnerType: z.enum(PARTNER_TYPES),
+    country,
+    customers: z.enum(CUSTOMER_RANGES).optional(),
+    message: optional(2000),
+    consent: z.literal(true),
+    locale: z.string().trim().max(35).optional(),
+    source: z.string().trim().max(40).optional(),
+    // Hidden from people, filled by bots.
+    hp: z.string().max(1000).optional(),
+  })
+  .refine(({ whatsapp, country }) => whatsapp === undefined || isValidE164(whatsapp, country));
 
 export interface PartnerLeadInput {
   name: string;

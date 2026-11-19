@@ -183,6 +183,7 @@ const en: PartnersCopy = {
     error: "We couldn't send this right now. Try again in a moment.",
     requiredError: "Fill in this field.",
     emailError: "Enter a valid email.",
+    phoneError: "Enter a valid number for the country.",
     consentError: "We need your consent to continue.",
   },
 };

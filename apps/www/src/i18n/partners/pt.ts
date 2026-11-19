@@ -183,6 +183,7 @@ const pt: PartnersCopy = {
     error: "Não foi possível enviar agora. Tente de novo em instantes.",
     requiredError: "Preencha este campo.",
     emailError: "Digite um e-mail válido.",
+    phoneError: "Digite um número válido para o país.",
     consentError: "Precisamos do seu consentimento para continuar.",
   },
 };

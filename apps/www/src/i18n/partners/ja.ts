@@ -177,6 +177,7 @@ const ja: PartnersCopy = {
     error: "現在送信できません。しばらくしてからもう一度お試しください。",
     requiredError: "この項目を入力してください。",
     emailError: "有効なメールアドレスを入力してください。",
+    phoneError: "この国で有効な番号を入力してください。",
     consentError: "続けるには同意が必要です。",
   },
 };

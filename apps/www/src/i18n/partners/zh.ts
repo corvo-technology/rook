@@ -163,6 +163,7 @@ const zh: PartnersCopy = {
     error: "暂时无法提交，请稍后再试。",
     requiredError: "请填写此项。",
     emailError: "请输入有效的邮箱。",
+    phoneError: "请输入该国家有效的号码。",
     consentError: "需要您的同意才能继续。",
   },
 };

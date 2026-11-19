@@ -482,6 +482,23 @@
   display: none;
 }
 
+.partners-phone {
+  display: flex;
+  gap: 8px;
+}
+
+.partners-phone span {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--muted-2);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
 .partners-form select {
   width: 100%;
   min-height: 46px;

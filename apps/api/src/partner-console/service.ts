@@ -2,6 +2,7 @@ import type {
   PartnerAlertKind,
   PartnerConsoleCustomerDetailSchema,
   PartnerConsoleCustomerSchema,
+  PartnerConsoleEvents,
   PartnerConsoleIntegrationSchema,
   PartnerConsoleOverviewSchema,
   PartnerConsolePartnerSchema,
@@ -572,6 +573,16 @@ export async function getIntegration(
     alerts: await deps.store.alertEmailSettings(partner),
     docsUrl: new URL("/api/partner/v1", deps.webOrigin).toString(),
   };
+}
+
+/** What the partner's system sent lately: counts by type and the latest events with their errors. */
+export async function getEvents(
+  deps: PartnerConsoleDeps,
+  scope: PartnerScope,
+  input: { partnerId: string },
+): Promise<PartnerConsoleEvents> {
+  const partner = await requirePartner(deps, scope, input.partnerId);
+  return deps.store.events(partner, deps.now());
 }
 
 /** Replaces the partner's key: the old one stops working now and the new one is returned once. */

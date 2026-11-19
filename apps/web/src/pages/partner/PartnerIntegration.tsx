@@ -4,6 +4,7 @@ import { useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { rpc } from "../../lib/rpc";
+import { PartnerEvents } from "./PartnerEvents";
 import { Panel, PartnerError, PartnerLoading, useAction } from "./partner-ui";
 
 function useAlertLabel() {
@@ -151,6 +152,7 @@ export function PartnerIntegration({ partner }: { partner: PartnerConsolePartner
         </form>
         {hook.error ? <PartnerError error={hook.error} /> : null}
       </Panel>
+      <PartnerEvents partner={partner} />
       <a
         href={data.docsUrl}
         target="_blank"

@@ -1,7 +1,7 @@
 import { routineWakeupJob } from "@corvo/adapter-kit";
 import { parseRoutineWatch, parseRoutineWatchState } from "@corvo/adapters";
 import type { Actor, CreateRoutineInput, Routine } from "@corvo/contracts";
-import { canonicalPiProviderId } from "@corvo/contracts";
+import { canonicalPiProviderId, RoutineEventTriggerSchema } from "@corvo/contracts";
 import {
   hasMixedOneShotSchedule,
   isOneShotRoutineCrons,
@@ -91,6 +91,7 @@ export function mapRoutine(row: {
   thinkingLevel: string | null;
   watch: unknown;
   watchState: unknown;
+  eventTrigger?: unknown;
   lastRunAt: Date | null;
   nextRunAt: Date | null;
   createdAt: Date;
@@ -112,6 +113,7 @@ export function mapRoutine(row: {
     thinkingLevel: (row.thinkingLevel as Routine["thinkingLevel"]) ?? null,
     watch: parseRoutineWatch(row.watch),
     watchState: parseRoutineWatchState(row.watchState),
+    eventTrigger: RoutineEventTriggerSchema.safeParse(row.eventTrigger).data ?? null,
     lastRunAt: row.lastRunAt?.toISOString() ?? null,
     nextRunAt: row.nextRunAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),

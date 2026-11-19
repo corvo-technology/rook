@@ -23,6 +23,7 @@ import {
   setPartnerTemplateById,
   setPartnerTenantState,
   setPartnerWebhookUrl,
+  summarizePartnerEvents,
 } from "@corvo/db";
 import type {
   ConnectorState,
@@ -547,6 +548,36 @@ export function createPrismaPartnerConsoleStore(prisma: PrismaClient): PartnerCo
       }),
 
     alertEmailSettings: (partner) => system(() => partnerAlertEmailSettings(prisma, partner.id)),
+
+    events: (partner, now) =>
+      system(async () => {
+        const { groups, recent } = await summarizePartnerEvents(prisma, partner.id, now);
+        const count = (status: string) =>
+          groups.filter((g) => g.status === status).reduce((sum, g) => sum + g._count._all, 0);
+        const byType = new Map<string, number>();
+        for (const g of groups) byType.set(g.type, (byType.get(g.type) ?? 0) + g._count._all);
+        return {
+          accepted: count("accepted"),
+          rejected: count("rejected"),
+          byType: [...byType].map(([type, total]) => ({ type, count: total })),
+          recent: recent.map((row) => ({
+            id: row.id,
+            externalTenantId: row.externalTenantId,
+            type: row.type,
+            status: row.status === "rejected" ? ("rejected" as const) : ("accepted" as const),
+            error: row.error,
+            matched: row.matched,
+            // Only what a refusal needs for debugging; an accepted event's data stays unread here.
+            payload:
+              row.status === "rejected" && row.payload !== null
+                ? typeof row.payload === "string"
+                  ? row.payload
+                  : JSON.stringify(row.payload).slice(0, 2_000)
+                : null,
+            createdAt: row.createdAt.toISOString(),
+          })),
+        };
+      }),
 
     setAlertEmail: (partner, kind, email) =>
       system(() => setPartnerAlertEmail(prisma, partner.id, kind, email)),

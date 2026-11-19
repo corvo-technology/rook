@@ -1,6 +1,6 @@
 import type { SecretStore } from "@corvo/adapter-kit";
 import { buildMcpCredentialBlob } from "@corvo/adapters";
-import type { Actor, CreateBotInput } from "@corvo/contracts";
+import type { Actor, CreateBotInput, PartnerEventRoutine } from "@corvo/contracts";
 import type { PrismaClient } from "@corvo/db";
 import { computerContext } from "./routes/shared.js";
 
@@ -14,6 +14,8 @@ export interface PartnerContent {
     usesConnector: boolean;
     starters?: string[];
   }>;
+  /** Routines started by the partner's events; each runs on one of `agents`. */
+  routines?: PartnerEventRoutine[];
 }
 
 export interface PartnerContentDeps {
@@ -128,6 +130,27 @@ export async function installPartnerTenantContent(
         update: {},
       });
     }
+  }
+  // Made once and never changed: a customer who switched one off keeps it off.
+  for (const routine of content.routines ?? []) {
+    const botId = botIds[routine.agent];
+    if (!botId) continue;
+    await deps.prisma.routine.upsert({
+      where: { botId_templateKey: { botId, templateKey: routine.key } },
+      create: {
+        spaceId: actor.spaceId,
+        botId,
+        userId: actor.userId,
+        name: routine.name,
+        prompt: routine.prompt,
+        crons: [],
+        active: routine.active,
+        notify: true,
+        eventTrigger: routine.on,
+        templateKey: routine.key,
+      },
+      update: {},
+    });
   }
   return { botIds };
 }

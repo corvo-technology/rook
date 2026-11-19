@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { AssistPresets } from "./assist.js";
 import { BotStartersSchema } from "./bot-starters.js";
+import { PartnerEventRoutine } from "./partner-events.js";
 
 const Key = z
   .string()
@@ -78,6 +79,8 @@ export const PartnerTemplate = z
     quickActions: z.array(PartnerQuickAction).max(6).optional(),
     /** Tasks the partner's pages run by name (`Rook.ask({ preset })`), as data. */
     assist: AssistPresets.optional(),
+    /** Routines every customer gets, each started by an event the partner's system sends. */
+    routines: z.array(PartnerEventRoutine).max(20).optional(),
     /** The partner's main colour as `#rrggbb`, used when the page that embeds Rook passes none. */
     accent: z
       .string()

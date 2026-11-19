@@ -48,8 +48,24 @@ function fixture(options: { unsafeEndpoint?: boolean } = {}) {
       }),
     },
   };
+  const routines = new Map<string, Record<string, unknown>>();
   const prisma = {
     ...tx,
+    routine: {
+      upsert: vi.fn(
+        async ({
+          where,
+          create,
+        }: {
+          where: { botId_templateKey: { botId: string; templateKey: string } };
+          create: Record<string, unknown>;
+        }) => {
+          const key = `${where.botId_templateKey.botId}:${where.botId_templateKey.templateKey}`;
+          // Like the real upsert with an empty update: an existing row stays as it is.
+          if (!routines.has(key)) routines.set(key, create);
+        },
+      ),
+    },
     $transaction: vi.fn(async (run: (client: typeof tx) => Promise<unknown>) => run(tx)),
   };
   const deps = {
@@ -73,7 +89,7 @@ function fixture(options: { unsafeEndpoint?: boolean } = {}) {
       return { id: bot.id };
     }),
   };
-  return { deps, servers, secrets, assignments, bots, putCalls, tx };
+  return { deps, servers, secrets, assignments, bots, putCalls, tx, routines };
 }
 
 const content: PartnerContent = {
@@ -189,5 +205,47 @@ describe("installPartnerTenantContent", () => {
     expect(Object.keys(result.botIds)).toEqual(["solo"]);
     expect(f.servers).toHaveLength(0);
     expect(f.assignments).toHaveLength(0);
+  });
+
+  it("gives each customer the event routines once and leaves a switched-off one off", async () => {
+    const f = fixture();
+    const withRoutines: PartnerContent = {
+      agents: content.agents,
+      routines: [
+        {
+          key: "no-show",
+          agent: "writer",
+          name: "Reschedule no-shows",
+          prompt: "Draft a message offering a new time, for approval.",
+          on: { type: "appointment.no_show" },
+          active: true,
+        },
+        {
+          key: "ghost",
+          agent: "nobody",
+          name: "Never made",
+          prompt: "x",
+          on: { type: "payment.overdue" },
+          active: true,
+        },
+      ],
+    };
+    const first = await installPartnerTenantContent(f.deps, actor, partnerId, withRoutines);
+    const [row] = [...f.routines.values()];
+    expect(f.routines.size).toBe(1);
+    expect(row).toMatchObject({
+      botId: first.botIds.writer,
+      userId: actor.userId,
+      spaceId: actor.spaceId,
+      crons: [],
+      active: true,
+      templateKey: "no-show",
+      eventTrigger: { type: "appointment.no_show" },
+    });
+    // The customer switched it off; installing the template again must not switch it back on.
+    if (row) row.active = false;
+    await installPartnerTenantContent(f.deps, actor, partnerId, withRoutines);
+    expect(f.routines.size).toBe(1);
+    expect([...f.routines.values()][0]?.active).toBe(false);
   });
 });

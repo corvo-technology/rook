@@ -18,6 +18,7 @@ const api = vi.hoisted(() => ({
   pricing: vi.fn(),
   setPricing: vi.fn(),
   integration: vi.fn(),
+  events: vi.fn(),
   rotateKey: vi.fn(),
   setAlertEmail: vi.fn(),
   template: vi.fn(),
@@ -111,6 +112,7 @@ beforeEach(() => {
   root = createRoot(container);
   for (const fn of Object.values(api)) fn.mockReset();
   api.partners.mockResolvedValue([embedded]);
+  api.events.mockResolvedValue({ accepted: 0, rejected: 0, byType: [], recent: [] });
 });
 afterEach(() => {
   act(() => root.unmount());
@@ -324,6 +326,48 @@ describe("partner console", () => {
       kind: "partner.balance_low",
       email: false,
     });
+  });
+
+  it("lists the events the partner's system sent, with what a refused one got wrong", async () => {
+    api.integration.mockResolvedValue({
+      keys: [],
+      webhook: { url: null, enabled: false },
+      alerts: [],
+      docsUrl: "https://example.test/docs",
+    });
+    api.events.mockResolvedValue({
+      accepted: 7,
+      rejected: 1,
+      byType: [{ type: "appointment.no_show", count: 7 }],
+      recent: [
+        {
+          id: "e1",
+          externalTenantId: "shop-1",
+          type: "appointment.no_show",
+          status: "accepted",
+          error: null,
+          matched: 1,
+          payload: null,
+          createdAt: "2026-12-01T10:00:00.000Z",
+        },
+        {
+          id: "e2",
+          externalTenantId: "shop-1",
+          type: "appointment.exploded",
+          status: "rejected",
+          error: "invalid_event",
+          matched: 0,
+          payload: '{"type":"appointment.exploded"}',
+          createdAt: "2026-12-01T10:01:00.000Z",
+        },
+      ],
+    });
+    await render("/app/partner/p1/integration");
+    const panel = container.querySelector('[data-testid="partner-events"]');
+    expect(panel?.textContent).toContain("24h: 7 received, 1 rejected");
+    expect(panel?.textContent).toContain("appointment.no_show");
+    expect(panel?.textContent).toContain("invalid_event");
+    expect(panel?.textContent).toContain('{"type":"appointment.exploded"}');
   });
 
   it("shows a replaced key once, after asking", async () => {

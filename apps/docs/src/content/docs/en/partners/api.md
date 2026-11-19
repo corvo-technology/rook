@@ -81,6 +81,10 @@ A customer's session ends eight hours after it began, however it is renewed; the
 
 The [consultation recording](/en/partners/consultations/) routes live under `/tenants/{externalTenantId}/consultations`.
 
+## Events
+
+Your system reports what happens (no-show, late payment, finished visit) with `POST /tenants/{externalTenantId}/events`; see [Events](/en/partners/events/).
+
 ## Commerce
 
 Catalog, subscription, top-ups, balance and usage: <span class="soon">coming soon</span>, see [Commerce](/en/partners/commerce/).

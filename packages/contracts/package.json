@@ -31,6 +31,7 @@
     "test": "vitest run --root ../.. packages/contracts/src"
   },
   "dependencies": {
+    "@corvo/ui-tokens": "workspace:*",
     "@orpc/contract": "1.15.7",
     "zod": "4.6.7"
   },

@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { TransactionalEmailProvider } from "@corvo/adapter-kit";
+import type { MailBrand } from "@corvo/auth";
 import { invitationEmail } from "@corvo/auth";
 import type { PrismaClient } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
@@ -13,6 +14,8 @@ export interface TeamDeps {
   /** Absent where no mail is configured: the inviter shares the link instead. */
   email?: TransactionalEmailProvider;
   billing?: Pick<BillingService, "syncSeats">;
+  /** The partner look of mail sent for a space whose organization is a white label customer. */
+  mailBrand?: (spaceId: string) => Promise<MailBrand | undefined>;
 }
 
 type TokenKind = "invite" | "join" | "invite-mail";
@@ -66,16 +69,31 @@ export const joinUrl = (deps: TeamDeps, id: string): string =>
 /** Sends the invitation email without waiting on delivery; a failure is logged, never shown. */
 export async function sendInvitationEmail(
   deps: TeamDeps,
-  input: { id: string; email: string; inviterName: string; spaceName: string },
+  input: { id: string; email: string; inviterName: string; spaceName: string; spaceId?: string },
 ): Promise<boolean> {
   const email = deps.email;
   if (!email) return false;
-  const message = await invitationEmail(deps.webOrigin, {
-    to: input.email,
-    inviterName: input.inviterName,
-    spaceName: input.spaceName,
-    url: invitationEmailUrl(deps, input.id),
-  });
+  const mail =
+    input.spaceId && deps.mailBrand
+      ? await deps.mailBrand(input.spaceId).catch(() => undefined)
+      : undefined;
+  const link = new URL(invitationEmailUrl(deps, input.id));
+  if (mail) {
+    const origin = new URL(mail.origin);
+    link.protocol = origin.protocol;
+    link.host = origin.host;
+  }
+  const message = await invitationEmail(
+    mail?.origin ?? deps.webOrigin,
+    {
+      to: input.email,
+      inviterName: input.inviterName,
+      spaceName: input.spaceName,
+      url: link.href,
+    },
+    mail?.brand,
+  );
+  if (mail?.from) message.from = mail.from;
   void email.send(message).catch((error) => getLogger().error("invitation email failed", error));
   return true;
 }

@@ -2,6 +2,7 @@ import { Button } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useBrand } from "../lib/brand";
 import { MCP_OAUTH_CHANNEL } from "../lib/mcp-connect";
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
@@ -12,6 +13,7 @@ import { errorText } from "../lib/user-error";
 const POPUP_NAME = MCP_OAUTH_CHANNEL;
 
 export function McpOAuthCallbackPage() {
+  const brand = useBrand();
   const { t } = useLingui();
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -58,7 +60,7 @@ export function McpOAuthCallbackPage() {
         {error ? <p className="mt-2 max-w-md text-sm text-muted-foreground">{error}</p> : null}
         {showReturn ? (
           <Button type="button" className="mt-5" onClick={() => navigate("/app")}>
-            <Trans>Return to Rook</Trans>
+            {brand ? <Trans>Return to {brand.name}</Trans> : <Trans>Return to Rook</Trans>}
           </Button>
         ) : (
           <p className="mt-2 text-sm text-muted-foreground">

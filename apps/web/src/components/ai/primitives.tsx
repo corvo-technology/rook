@@ -1,5 +1,6 @@
-import { cn, RookGlyph } from "@corvo/ui-web";
+import { cn } from "@corvo/ui-web";
 import { useEffect, useState } from "react";
+import { BrandGlyph } from "../BrandGlyph";
 import "./beautiful-ui.css";
 
 /* Beautiful UI primitives — hand-ported from beautifului.dev
@@ -41,7 +42,7 @@ function DefaultLoadingState({ label, startedAt }: { label: string; startedAt?: 
   const elapsed = useElapsed(startedAt);
   return (
     <>
-      <RookGlyph state="thinking" size={18} className="text-foreground" />
+      <BrandGlyph state="thinking" size={18} className="text-foreground" />
       <span className="text-[13.5px] font-medium text-muted-foreground">{label}</span>
       <span className="font-mono text-[12px] tabular-nums text-muted-foreground">{elapsed}</span>
     </>

@@ -939,6 +939,9 @@ importers:
 
   packages/contracts:
     dependencies:
+      '@corvo/ui-tokens':
+        specifier: workspace:*
+        version: link:../ui-tokens
       '@orpc/contract':
         specifier: 1.15.7
         version: 1.15.7(@opentelemetry/api@1.9.1)

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { EmailBrand } from "./email.js";
 import {
   accountDeletionEmail,
   invitationEmail,
@@ -83,5 +84,96 @@ describe("account email templates", () => {
     );
     expect(message.text).toContain("nuvem");
     expect(`${message.subject} ${message.text}`).not.toMatch(/cloud/i);
+  });
+});
+
+describe("white label account email", () => {
+  const origin = "https://app.acme.example.test";
+  const to = "user@example.test";
+  const brand: EmailBrand = {
+    name: "Acme",
+    logoUrl: "https://app.acme.example.test/api/brand/assets/p1/logo-abc.png",
+    accent: "#2563eb",
+    supportEmail: "help@acme.example.test",
+    termsUrl: "https://acme.example.test/terms",
+    privacyUrl: "https://acme.example.test/privacy",
+  };
+
+  const all = (b?: EmailBrand) =>
+    Promise.all([
+      verificationEmail(origin, to, `${origin}/verify?token=t`, b),
+      signInCodeEmail(origin, to, "123456", b),
+      passwordResetEmail(origin, { id: "u1", email: to, name: "Ana" }, `${origin}/reset`, b),
+      accountDeletionEmail(origin, to, "123456", b),
+      invitationEmail(
+        origin,
+        { to, inviterName: "Ana", spaceName: "Equipe", url: `${origin}/invite/x` },
+        b,
+      ),
+    ]);
+
+  it("carries the partner's name, logo, colour and legal links, and nothing of Rook's", async () => {
+    for (const message of await all(brand)) {
+      const everything = `${message.subject} ${message.html} ${message.text}`;
+      expect(everything).not.toMatch(/rook/i);
+      expect(everything).toContain("Acme");
+      expect(message.html).toContain(`src="${brand.logoUrl}"`);
+      expect(message.html).toContain("#2563eb");
+      expect(message.html).toContain('href="https://acme.example.test/terms"');
+      expect(message.html).toContain('href="https://acme.example.test/privacy"');
+      expect(message.html).toContain('href="mailto:help@acme.example.test"');
+    }
+  });
+
+  it("names the partner in every subject", async () => {
+    const subjects = (await all(brand)).map((message) => message.subject);
+    expect(subjects).toEqual([
+      "Verify your Acme email",
+      "Your Acme sign-in code",
+      "Reset your Acme password",
+      "Confirm Acme account deletion",
+      "Ana invited you to Equipe on Acme",
+    ]);
+  });
+
+  it("puts a label on the button that reads on the partner's colour", async () => {
+    const dark = await verificationEmail(origin, to, `${origin}/v`, {
+      ...brand,
+      accent: "#1e3a8a",
+    });
+    const light = await verificationEmail(origin, to, `${origin}/v`, {
+      ...brand,
+      accent: "#facc15",
+    });
+    expect(dark.html).toMatch(/background-color:#1e3a8a;color:#ffffff/);
+    expect(light.html).toMatch(/background-color:#facc15;color:#000000/);
+  });
+
+  it("shows only a name when the partner has no logo, and no footer when it has no links", async () => {
+    const plain = await verificationEmail(origin, to, `${origin}/v`, {
+      name: "Acme",
+      logoUrl: null,
+      accent: null,
+      supportEmail: null,
+      termsUrl: null,
+      privacyUrl: null,
+    });
+    expect(plain.html).not.toContain("<img");
+    expect(plain.html).not.toContain("mailto:");
+    expect(plain.html).toContain("Acme");
+  });
+
+  it("keeps Rook's own mail exactly as it was when no partner is given", async () => {
+    for (const message of await all()) {
+      expect(message.html).toContain('src="https://app.acme.example.test/icon-192.png"');
+      expect(`${message.subject} ${message.text}`).toMatch(/rook/i);
+      expect(message.html).not.toContain("mailto:");
+    }
+  });
+
+  it("escapes a partner's name like any other content", async () => {
+    const message = await signInCodeEmail(origin, to, "123456", { ...brand, name: "<b>Acme</b>" });
+    expect(message.html).not.toContain("<b>Acme</b>");
+    expect(message.html).toContain("&lt;b&gt;Acme&lt;/b&gt;");
   });
 });

@@ -6,8 +6,10 @@ import {
   Bot,
   CircleDollarSign,
   FileText,
+  Globe,
   KeyRound,
   LayoutDashboard,
+  Palette,
   Tag,
   Users,
 } from "lucide-react";
@@ -24,6 +26,8 @@ const ICONS: Record<PartnerSection, LucideIcon> = {
   invoices: FileText,
   pricing: Tag,
   revenue: CircleDollarSign,
+  brand: Palette,
+  domain: Globe,
   integration: KeyRound,
 };
 

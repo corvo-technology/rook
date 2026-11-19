@@ -223,6 +223,7 @@ model Organization {
   modelCredits           ModelCreditAccount?
   partnerTenant          PartnerTenant?
   partnerMemberships     PartnerMember[]
+  partnerCustomer        PartnerCustomer?
 
   @@unique([slug])
   @@map("organization")
@@ -2664,6 +2665,9 @@ model Partner {
   auditEvents               PartnerAuditEvent[]
   plan                      PartnerPlan?
   autoTopupAttempts         PartnerAutoTopupAttempt[]
+  brand                     PartnerBrand?
+  domains                   PartnerDomain[]
+  customers                 PartnerCustomer[]
 
   @@map("partners")
 }
@@ -2683,6 +2687,73 @@ model PartnerMember {
   @@unique([partnerId, organizationId])
   @@index([organizationId])
   @@map("partner_members")
+}
+
+/// How a white label partner's app looks: the name, logo, icon, accent and legal links the web app
+/// and every email carry on the partner's host. One row per partner. Assets are object keys.
+model PartnerBrand {
+  id               String   @id @default(cuid())
+  partnerId        String   @unique
+  partner          Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  appName          String
+  logoKey          String?
+  iconKey          String?
+  /// Hex colour, checked for contrast on light and dark before it is saved.
+  accent           String?
+  supportEmail     String?
+  termsUrl         String?
+  privacyUrl       String?
+  /// The mail domain mail is sent from, once verified; null until the partner adds one.
+  senderDomain     String?
+  /// none | pending | verified | failed
+  senderState      String   @default("none")
+  senderProviderId String?
+  /// The DNS records the partner must add: [{ type, name, value, status }].
+  senderRecords    Json?
+  senderError      String?
+  senderCheckedAt  DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("partner_brands")
+}
+
+/// A hostname a white label partner serves its app on. A host belongs to one partner and decides
+/// the brand; nothing else does.
+model PartnerDomain {
+  id            String    @id @default(cuid())
+  partnerId     String
+  partner       Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  hostname      String    @unique
+  /// pending | verified | active | failed
+  state         String    @default("pending")
+  /// The id the domain provider gave the hostname.
+  providerId    String?
+  lastError     String?
+  lastCheckedAt DateTime?
+  activatedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([partnerId])
+  @@index([state])
+  @@map("partner_domains")
+}
+
+/// The white label customer link: this organization signed up through that partner. Written once
+/// at signup and never changed; a customer cannot move to another partner.
+model PartnerCustomer {
+  id             String       @id @default(cuid())
+  partnerId      String
+  partner        Partner      @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// The host the customer signed up on.
+  hostname       String
+  createdAt      DateTime     @default(now())
+
+  @@index([partnerId])
+  @@map("partner_customers")
 }
 
 /// What a partner adds to the catalog price of one plan or pack, kept entirely by the partner.

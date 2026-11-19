@@ -9,6 +9,7 @@ import { DesktopUpdatesProvider } from "./components/DesktopUpdates";
 import { EmbedBridge } from "./components/EmbedBridge";
 import { I18nBootstrap } from "./components/I18nBootstrap";
 import { applyUiDirection } from "./lib/apply-ui-direction";
+import { bootBrand } from "./lib/brand";
 import { clientUpdates } from "./lib/client-update";
 import { applyEmbedAccent, initialEmbedLaunch, isEmbedded } from "./lib/embed";
 import { reportCaughtReactError } from "./lib/monitoring";
@@ -71,28 +72,33 @@ function AppearanceSync() {
   return null;
 }
 
-createRoot(document.getElementById("root")!, { onCaughtError: reportCaughtReactError }).render(
-  <StrictMode>
-    <PerformanceProbe />
-    <AppearanceSync />
-    {isEmbedded() ? <EmbedBridge /> : null}
-    <I18nBootstrap>
-      {/* Router state updates must not be transitions: under sustained urgent
+function mount() {
+  createRoot(document.getElementById("root")!, { onCaughtError: reportCaughtReactError }).render(
+    <StrictMode>
+      <PerformanceProbe />
+      <AppearanceSync />
+      {isEmbedded() ? <EmbedBridge /> : null}
+      <I18nBootstrap>
+        {/* Router state updates must not be transitions: under sustained urgent
           updates (SSE churn while a run streams) a pending navigation is
           preempted indefinitely — useSearchParams/useParams then keep serving
           the stale location, so deep links (?m=) and thread switches never
           land while the URL already moved. */}
-      <BrowserRouter useTransitions={false}>
-        <ClientUpdateOnNavigate />
-        <QueryClientProvider client={queryClient}>
-          <DesktopUpdatesProvider>
-            <TooltipProvider>
-              <App />
-            </TooltipProvider>
-            <Toaster />
-          </DesktopUpdatesProvider>
-        </QueryClientProvider>
-      </BrowserRouter>
-    </I18nBootstrap>
-  </StrictMode>,
-);
+        <BrowserRouter useTransitions={false}>
+          <ClientUpdateOnNavigate />
+          <QueryClientProvider client={queryClient}>
+            <DesktopUpdatesProvider>
+              <TooltipProvider>
+                <App />
+              </TooltipProvider>
+              <Toaster />
+            </DesktopUpdatesProvider>
+          </QueryClientProvider>
+        </BrowserRouter>
+      </I18nBootstrap>
+    </StrictMode>,
+  );
+}
+
+// A partner's host is branded before anything is drawn, so no screen shows another name first.
+void bootBrand().finally(mount);

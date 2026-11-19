@@ -2,6 +2,7 @@ import { mascotHex } from "@corvo/core";
 import { BotAvatar } from "@corvo/ui-web";
 import { Trans } from "@lingui/react/macro";
 import type { FormEvent, ReactNode } from "react";
+import { APP_NAME, useBrand } from "../lib/brand";
 
 /** The team beside the form: three rooks sitting on the panel's lower edge, the middle one in front. */
 const TEAM = [
@@ -23,15 +24,24 @@ export function AuthFrame({
   onSubmit: (event: FormEvent) => void;
   children: ReactNode;
 }) {
+  const brand = useBrand();
   return (
-    <div className="grid min-h-full bg-background text-foreground lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
+    <div
+      className={`grid min-h-full bg-background text-foreground ${brand ? "" : "lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]"}`}
+    >
       <div className="flex min-h-full flex-col px-6 py-8 sm:px-12 lg:px-16">
         <div
           data-testid="auth-brand"
           className="flex items-center gap-2 text-base font-semibold tracking-tight"
         >
-          <BotAvatar color={mascotHex("mint")} identity="ana" size={28} />
-          Rook
+          {brand ? (
+            brand.logoUrl ? (
+              <img src={brand.logoUrl} alt="" className="h-7 max-w-40 object-contain" />
+            ) : null
+          ) : (
+            <BotAvatar color={mascotHex("mint")} identity="ana" size={28} />
+          )}
+          {brand?.name ?? APP_NAME}
         </div>
         <form onSubmit={onSubmit} className="my-auto flex w-full max-w-[400px] flex-col py-12">
           <h1
@@ -42,24 +52,40 @@ export function AuthFrame({
           </h1>
           {children}
         </form>
+        {brand && (brand.termsUrl || brand.privacyUrl) ? (
+          <div data-testid="auth-legal" className="flex gap-4 text-sm text-muted-foreground">
+            {brand.termsUrl ? (
+              <a href={brand.termsUrl} target="_blank" rel="noopener noreferrer">
+                <Trans>Terms</Trans>
+              </a>
+            ) : null}
+            {brand.privacyUrl ? (
+              <a href={brand.privacyUrl} target="_blank" rel="noopener noreferrer">
+                <Trans>Privacy</Trans>
+              </a>
+            ) : null}
+          </div>
+        ) : null}
       </div>
-      <aside
-        data-testid="auth-team"
-        className="relative hidden overflow-hidden border-s border-border bg-card p-14 lg:flex"
-      >
-        <p className="max-w-[22rem] text-[28px] leading-[1.15] font-medium tracking-tight text-balance">
-          <Trans>Bots that handle your inbox and invoices, and ask before they act</Trans>
-        </p>
-        {TEAM.map(({ color, id, size, className }) => (
-          <span
-            key={id}
-            aria-hidden="true"
-            className={`absolute motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 motion-safe:duration-700 ${className}`}
-          >
-            <BotAvatar color={color} identity={id} size={size} />
-          </span>
-        ))}
-      </aside>
+      {brand ? null : (
+        <aside
+          data-testid="auth-team"
+          className="relative hidden overflow-hidden border-s border-border bg-card p-14 lg:flex"
+        >
+          <p className="max-w-[22rem] text-[28px] leading-[1.15] font-medium tracking-tight text-balance">
+            <Trans>Bots that handle your inbox and invoices, and ask before they act</Trans>
+          </p>
+          {TEAM.map(({ color, id, size, className }) => (
+            <span
+              key={id}
+              aria-hidden="true"
+              className={`absolute motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 motion-safe:duration-700 ${className}`}
+            >
+              <BotAvatar color={color} identity={id} size={size} />
+            </span>
+          ))}
+        </aside>
+      )}
     </div>
   );
 }

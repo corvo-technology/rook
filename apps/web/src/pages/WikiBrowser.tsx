@@ -21,7 +21,6 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-  RookGlyph,
   Spinner,
   Switch,
   Textarea,
@@ -41,6 +40,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { BrandGlyph } from "../components/BrandGlyph";
 import { WikiChangeCard } from "../components/WikiChangeCard";
 import { isFileDrag, readFileAsBase64 } from "../lib/pending-attachments";
 import { formatRelativeTime } from "../lib/relative-time";
@@ -537,7 +537,7 @@ export function WikiBrowser({
             className="flex flex-col items-center gap-3 px-1 py-10 text-sm text-muted-foreground"
             data-testid="wiki-empty"
           >
-            <RookGlyph state="asleep" size={32} />
+            <BrandGlyph state="asleep" size={32} />
             <Trans>No pages yet</Trans>
           </p>
         ) : null}

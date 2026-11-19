@@ -802,6 +802,8 @@ msgstr "Aktionen für den Space"
 
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/partner/PartnerCustomers.tsx
+#: src/pages/partner/PartnerDomain.tsx
+#: src/pages/platform/PartnersSection.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/Workflows.tsx
 msgid "Active"
@@ -824,6 +826,7 @@ msgstr "Aktivität"
 #: src/pages/AgentsStore.tsx
 #: src/pages/AppCatalogGrid.tsx
 #: src/pages/connections/McpServerForm.tsx
+#: src/pages/partner/PartnerDomain.tsx
 #: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/Store.tsx
@@ -1012,6 +1015,16 @@ msgstr "Schritt hinzufügen"
 msgid "Add these files again"
 msgstr "Diese Dateien erneut hinzufügen"
 
+#: src/pages/partner/PartnerDomain.tsx
+msgid "Add these records at your DNS provider."
+msgstr "Fügen Sie diese Einträge bei Ihrem DNS-Anbieter hinzu."
+
+
+#: src/pages/partner/PartnerDomain.tsx
+msgid "Add this record at your DNS provider."
+msgstr "Fügen Sie diesen Eintrag bei Ihrem DNS-Anbieter hinzu."
+
+
 #: src/pages/shell/agent-import.tsx
 msgid "Add to an existing bot"
 msgstr "Zu einem bestehenden Bot hinzufügen"
@@ -1031,6 +1044,11 @@ msgstr "Auslöser hinzufügen"
 #: src/pages/HomePage.tsx
 msgid "Add widget"
 msgstr "Widget hinzufügen"
+
+#: src/pages/partner/PartnerDomain.tsx
+msgid "Add your terms and privacy links in Brand to go live."
+msgstr "Fügen Sie unter Marke Ihre Links zu Nutzungsbedingungen und Datenschutz hinzu, um live zu gehen."
+
 
 #: src/lib/server-copy.ts
 msgid "Add: {add}"
@@ -1773,6 +1791,12 @@ msgstr "Bots, Gruppen, Chats, Dateien, Gedächtnis und Integrationen dieses Spac
 msgid "Brain label"
 msgstr "Gehirn-Bezeichnung"
 
+#: src/pages/partner/PartnerConsolePage.tsx
+msgid "Brand"
+msgstr "Marke"
+
+
+#: src/pages/partner/PartnerBrand.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Brand colour"
 msgstr "Markenfarbe"
@@ -1972,6 +1996,7 @@ msgstr "Chats"
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/DesktopControlSettings.tsx
 #: src/pages/HostComputerPrompt.tsx
+#: src/pages/partner/PartnerDomain.tsx
 msgid "Check again"
 msgstr "Erneut prüfen"
 
@@ -3309,6 +3334,11 @@ msgid "Create spaces"
 msgstr "Spaces erstellen"
 
 #: src/pages/Auth.tsx
+msgid "Create your account"
+msgstr "Konto erstellen"
+
+
+#: src/pages/Auth.tsx
 msgid "Create your Rook"
 msgstr "Dein Rook erstellen"
 
@@ -3815,6 +3845,13 @@ msgstr "Erledigt alles ohne Nachfrage. Am besten für Bots, denen Sie vertrauen.
 msgid "Does what fits your request"
 msgstr "Tut, was zu deiner Anfrage passt"
 
+#: src/pages/partner/PartnerConsolePage.tsx
+#: src/pages/partner/PartnerDomain.tsx
+#: src/pages/platform/PartnersSection.tsx
+msgid "Domain"
+msgstr "Domain"
+
+
 #: src/pages/Auth.tsx
 msgid "Don’t have an account?"
 msgstr "Du hast noch kein Konto?"
@@ -3949,6 +3986,11 @@ msgstr "E-Mail-Adressen"
 msgid "Email alerts"
 msgstr "E-Mail-Hinweise"
 
+#: src/pages/partner/PartnerDomain.tsx
+msgid "Email domain"
+msgstr "E-Mail-Domain"
+
+
 #: src/lib/user-error.ts
 msgid "Email is not allowed to register"
 msgstr "Diese E-Mail-Adresse ist nicht zur Registrierung zugelassen"
@@ -3986,6 +4028,11 @@ msgstr "Endet {day}"
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Engage when... Ignore..."
 msgstr "Einsteigen, wenn … Ignorieren …"
+
+#: src/lib/branding-errors.ts
+msgid "Enter a domain such as app.example.com."
+msgstr "Geben Sie eine Domain wie app.example.com ein."
+
 
 #: src/pages/onboarding/WorkspaceStep.tsx
 msgid "Enter a name up to {SPACE_NAME_MAX_LENGTH} characters."
@@ -4183,6 +4230,8 @@ msgstr "fehlgeschlagen"
 #: src/components/PlanCard.tsx
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
+#: src/pages/partner/PartnerDomain.tsx
+#: src/pages/platform/PartnersSection.tsx
 #: src/pages/RoutineCard.tsx
 #: src/pages/RoutineTimeGrid.tsx
 #: src/pages/Workflows.tsx
@@ -4641,6 +4690,11 @@ msgstr "Ich habe angehalten, weil meine Tools immer wieder fehlgeschlagen sind."
 #: src/pages/shell/computer-release-actions.tsx
 msgid "I’m done"
 msgstr "Ich bin fertig"
+
+#: src/pages/partner/PartnerBrand.tsx
+msgid "Icon"
+msgstr "Symbol"
+
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "If you heard that, voice is ready."
@@ -5231,6 +5285,7 @@ msgid "Log out"
 msgstr "Abmelden"
 
 #: src/pages/onboarding/WorkspaceStep.tsx
+#: src/pages/partner/PartnerBrand.tsx
 msgid "Logo"
 msgstr "Logo"
 
@@ -5798,6 +5853,7 @@ msgstr "Meine Startseite"
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/onboarding/YouStep.tsx
+#: src/pages/partner/PartnerBrand.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
@@ -6184,6 +6240,11 @@ msgstr "Normal"
 msgid "Not a valid skill"
 msgstr "Kein gültiger Skill"
 
+#: src/pages/partner/PartnerDomain.tsx
+msgid "Not available"
+msgstr "Nicht verfügbar"
+
+
 #: src/pages/shell/routing-line.tsx
 msgid "Not available to you"
 msgstr "Für dich nicht verfügbar"
@@ -6195,6 +6256,11 @@ msgstr "Noch nicht geprüft"
 #: src/pages/connections/DatabaseForm.tsx
 msgid "Not encrypted"
 msgstr "Nicht verschlüsselt"
+
+#: src/pages/partner/PartnerBrand.tsx
+msgid "Not enough contrast on both light and dark."
+msgstr "Zu wenig Kontrast im hellen und dunklen Design."
+
 
 #: src/pages/shell/agent-import.tsx
 msgid "Not imported"
@@ -6378,8 +6444,10 @@ msgstr "Nur bestimmte Rollen oder Personen"
 msgid "Open"
 msgstr "Öffnen"
 
+#. placeholder {0}: brand.name
 #. placeholder {0}: fullDay.format(day)
 #. placeholder {0}: headerName(group)
+#: src/pages/InvitePage.tsx
 #: src/pages/RoutineTimeGrid.tsx
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Open {0}"
@@ -6735,7 +6803,9 @@ msgstr "Pausiert"
 msgid "Pawn"
 msgstr "Bauer"
 
+#: src/pages/partner/PartnerDomain.tsx
 #: src/pages/platform/IntakeSections.tsx
+#: src/pages/platform/PartnersSection.tsx
 msgid "Pending"
 msgstr "Ausstehend"
 
@@ -6897,6 +6967,7 @@ msgid "Press space to pick up a ticket, the arrow keys to choose a column, and s
 msgstr "Mit der Leertaste ein Ticket aufnehmen, mit den Pfeiltasten eine Spalte wählen und mit der Leertaste erneut ablegen."
 
 #: src/pages/ImportFlow.tsx
+#: src/pages/partner/PartnerBrand.tsx
 msgid "Preview"
 msgstr "Vorschau"
 
@@ -6933,6 +7004,17 @@ msgstr "Preise"
 #: src/pages/Board.tsx
 msgid "Priority"
 msgstr "Priorität"
+
+#: src/components/AuthFrame.tsx
+#: src/pages/partner/PartnerBrand.tsx
+msgid "Privacy"
+msgstr "Datenschutz"
+
+
+#: src/pages/partner/PartnerBrand.tsx
+msgid "Privacy URL"
+msgstr "Datenschutz-URL"
+
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Private"
@@ -7238,6 +7320,8 @@ msgstr "Gemerkt"
 #: src/pages/LocalSpeechSection.tsx
 #: src/pages/MembersSettingsPanel.tsx
 #: src/pages/ModelRoleSettings.tsx
+#: src/pages/partner/PartnerBrand.tsx
+#: src/pages/partner/PartnerDomain.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/bot-credentials.tsx
@@ -7311,6 +7395,11 @@ msgstr "Zeitplan entfernen"
 msgid "Remove skill {0}"
 msgstr "Skill {0} entfernen"
 
+#: src/lib/branding-errors.ts
+msgid "Remove the current domain first."
+msgstr "Entfernen Sie zuerst die aktuelle Domain."
+
+
 #: src/pages/RoutineEditor.tsx
 msgid "Remove webhook"
 msgstr "Webhook entfernen"
@@ -7360,6 +7449,11 @@ msgstr "Erneut öffnen"
 #: src/lib/server-copy.ts
 msgid "Repeats {cron}, next at {when}"
 msgstr "Wiederholt {cron}, nächste Ausführung: {when}"
+
+#: src/pages/partner/PartnerBrand.tsx
+msgid "Replace"
+msgstr "Ersetzen"
+
 
 #: src/pages/model-settings/connection-controls.tsx
 msgid "Replace API key"
@@ -7536,6 +7630,12 @@ msgstr "Jetzt erneut versuchen"
 #: src/pages/shell/use-computer.tsx
 msgid "Retry screen"
 msgstr "Bildschirm erneut versuchen"
+
+#. placeholder {0}: brand.name
+#: src/pages/McpOAuthCallback.tsx
+msgid "Return to {0}"
+msgstr "Zurück zu {0}"
+
 
 #. placeholder {0}: call.botName
 #: src/components/call/CallCard.tsx
@@ -7737,6 +7837,7 @@ msgstr "Samstag"
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/partner/PartnerBrand.tsx
 #: src/pages/partner/PartnerCredits.tsx
 #: src/pages/partner/PartnerIntegration.tsx
 #: src/pages/partner/PartnerPricing.tsx
@@ -7761,6 +7862,11 @@ msgstr "Neuen Wert speichern"
 #: src/pages/shell/bot-panel.tsx
 msgid "Save on its own"
 msgstr "Selbst speichern"
+
+#: src/lib/branding-errors.ts
+msgid "Save the brand first."
+msgstr "Speichern Sie zuerst die Marke."
+
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Save the workspace and install current software."
@@ -8135,6 +8241,12 @@ msgstr "Melde dich bei <0>{0}</0> an und füge dann den Code hier ein."
 #: src/pages/Auth.tsx
 msgid "Sign in or create your account"
 msgstr "Anmelden oder Konto erstellen"
+
+#. placeholder {0}: brand.name
+#: src/pages/Auth.tsx
+msgid "Sign in to {0}"
+msgstr "Bei {0} anmelden"
+
 
 #: src/pages/Auth.tsx
 msgid "Sign in to Rook"
@@ -8544,6 +8656,11 @@ msgstr "Sonntag"
 msgid "Support"
 msgstr "Support"
 
+#: src/pages/partner/PartnerBrand.tsx
+msgid "Support email"
+msgstr "Support-E-Mail"
+
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Supports images"
@@ -8644,6 +8761,17 @@ msgstr "Telegram"
 msgid "Terminal input"
 msgstr "Terminal-Eingabe"
 
+#: src/components/AuthFrame.tsx
+#: src/pages/partner/PartnerBrand.tsx
+msgid "Terms"
+msgstr "Nutzungsbedingungen"
+
+
+#: src/pages/partner/PartnerBrand.tsx
+msgid "Terms URL"
+msgstr "Nutzungsbedingungen-URL"
+
+
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/onboarding/LocalModelChoice.tsx
 msgid "Test"
@@ -8709,6 +8837,11 @@ msgstr "Der Computer hat seine gespeicherten Dateien verloren"
 msgid "The download did not match the published file. Nothing was installed."
 msgstr "Der Download stimmte nicht mit der veröffentlichten Datei überein. Es wurde nichts installiert."
 
+#: src/lib/branding-errors.ts
+msgid "The icon must be a square PNG of at least 512 px."
+msgstr "Das Symbol muss ein quadratisches PNG mit mindestens 512 px sein."
+
+
 #. js-lingui-explicit-id
 #: src/lib/run-error-copy.ts
 msgid "The model couldn't answer"
@@ -8738,6 +8871,11 @@ msgstr "Das Modell hat eine unbrauchbare Antwort geliefert. Versuche es erneut."
 #: src/lib/run-error-copy.ts
 msgid "The model took too long"
 msgstr "Das Modell hat zu lange gebraucht"
+
+#: src/lib/branding-errors.ts
+msgid "The provider did not answer. Try again."
+msgstr "Der Anbieter hat nicht geantwortet. Versuchen Sie es erneut."
+
 
 #: src/lib/computer-screen.ts
 msgid "The screen connection closed."
@@ -8847,6 +8985,11 @@ msgstr "Die gespeicherten Dateien dieses Computers wurden nicht gefunden; er wur
 #: src/lib/run-error.ts
 msgid "This conversation is too long for the model. Retrying won't help. Start a new chat or shorten your message."
 msgstr "Diese Unterhaltung ist zu lang für das Modell. Ein erneuter Versuch hilft nicht. Starte einen neuen Chat oder kürze deine Nachricht."
+
+#: src/lib/branding-errors.ts
+msgid "This domain is already in use."
+msgstr "Diese Domain wird bereits verwendet."
+
 
 #: src/components/ArtifactFileCard.tsx
 msgid "This file is not valid UTF-8 text."
@@ -9314,6 +9457,7 @@ msgstr "Jetzt upgraden"
 msgid "Upgrade your plan to add more computers."
 msgstr "Wechsle den Tarif, um mehr Computer hinzuzufügen."
 
+#: src/pages/partner/PartnerBrand.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Upload"
 msgstr "Hochladen"
@@ -9367,6 +9511,12 @@ msgstr "Verwende {oauthEnvReference} für das Zugriffstoken."
 #: src/pages/Onboarding.tsx
 msgid "Use a found model"
 msgstr "Gefundenes Modell verwenden"
+
+#: src/lib/branding-errors.ts
+#: src/pages/partner/PartnerBrand.tsx
+msgid "Use a PNG, JPEG or WebP image up to 256 KB."
+msgstr "Verwenden Sie ein PNG-, JPEG- oder WebP-Bild bis 256 KB."
+
 
 #: src/pages/connections/DatabaseForm.tsx
 msgid "Use a read-only database role."
@@ -9484,6 +9634,12 @@ msgstr "Dein API-Schlüssel wird verwendet. Kostenloser Tarif endet am {freeUnti
 msgid "Value"
 msgstr "Wert"
 
+#: src/pages/partner/PartnerDomain.tsx
+#: src/pages/platform/PartnersSection.tsx
+msgid "Verified"
+msgstr "Verifiziert"
+
+
 #: src/pages/Store.tsx
 msgid "Verify and add"
 msgstr "Prüfen und hinzufügen"
@@ -9561,6 +9717,11 @@ msgstr "Wartet auf {value}"
 #: src/components/WikiChangeCard.tsx
 msgid "Waiting for approval"
 msgstr "Wartet auf Genehmigung"
+
+#: src/pages/partner/PartnerDomain.tsx
+msgid "Waiting for the certificate."
+msgstr "Warten auf das Zertifikat."
+
 
 #: src/pages/home/EmbeddedHome.tsx
 #: src/pages/HomePage.tsx

@@ -105,7 +105,7 @@ export class SmtpEmailProvider implements TransactionalEmailProvider {
       }
       try {
         await this.transport.sendMail({
-          from: this.config.from,
+          from: message.from ?? this.config.from,
           to: message.to,
           subject: message.subject,
           text: message.text,

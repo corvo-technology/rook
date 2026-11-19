@@ -1,7 +1,8 @@
 import type { SpaceBot, Ticket } from "@corvo/contracts";
-import { BotAvatar, Button, RookGlyph } from "@corvo/ui-web";
+import { BotAvatar, Button } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import type { ReactNode } from "react";
+import { BrandGlyph } from "../components/BrandGlyph";
 import { formatRelativeTime } from "../lib/relative-time";
 import { rosterAttentionLabel, rosterWorkStatusLabel } from "../lib/roster-status";
 import type { Team, TeamMember } from "../lib/team-roster";
@@ -40,7 +41,7 @@ export function TeamBoard({
         data-testid="team-empty"
         className="flex flex-col items-center gap-3 py-16 text-sm text-muted-foreground"
       >
-        <RookGlyph state="asleep" size={36} />
+        <BrandGlyph state="asleep" size={36} />
         {t`No bots`}
       </p>
     );

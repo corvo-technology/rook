@@ -22,6 +22,13 @@ const api = vi.hoisted(() => ({
   setAlertEmail: vi.fn(),
   template: vi.fn(),
   setTemplate: vi.fn(),
+  branding: vi.fn(),
+  setBrand: vi.fn(),
+  addDomain: vi.fn(),
+  checkDomain: vi.fn(),
+  removeDomain: vi.fn(),
+  setSenderDomain: vi.fn(),
+  checkSenderDomain: vi.fn(),
 }));
 vi.mock("../../lib/rpc", () => ({ rpc: { partnerConsole: api } }));
 vi.mock("@lingui/react/macro", () => {
@@ -387,5 +394,132 @@ describe("partner sidebar section", () => {
     const select = container.querySelector<HTMLSelectElement>("select");
     expect(select?.value).toBe("p2");
     expect(container.querySelector('[data-testid="sidebar-partner-pricing"]')).toBeTruthy();
+  });
+});
+
+const emptySender = { domain: null, state: "none" as const, records: [], error: null };
+const brandSaved = {
+  appName: "Acme",
+  accent: "#2563eb",
+  supportEmail: null,
+  termsUrl: null,
+  privacyUrl: null,
+  logoUrl: null,
+  iconUrl: null,
+};
+
+describe("partner brand and domain", () => {
+  beforeEach(() => api.partners.mockResolvedValue([whiteLabel]));
+
+  it("offers Brand and Domain to white label partners only", async () => {
+    await render("/app/partner/p2/overview", <SidebarPartnership onOpen={() => undefined} />);
+    expect(document.querySelector("[data-testid=sidebar-partner-brand]")).toBeTruthy();
+    expect(document.querySelector("[data-testid=sidebar-partner-domain]")).toBeTruthy();
+    api.partners.mockResolvedValue([embedded]);
+    await act(async () => root.unmount());
+    root = createRoot(container);
+    await render("/app/partner/p1/overview", <SidebarPartnership onOpen={() => undefined} />);
+    expect(document.querySelector("[data-testid=sidebar-partner-brand]")).toBeNull();
+  });
+
+  it("previews the brand as it is typed and refuses an accent without contrast", async () => {
+    api.branding.mockResolvedValue({
+      brand: brandSaved,
+      domainsAvailable: true,
+      domain: null,
+      senderAvailable: false,
+      sender: emptySender,
+    });
+    await render("/app/partner/p2/brand");
+    const preview = document.querySelector("[data-testid=brand-preview]");
+    expect(preview?.textContent).toContain("Acme");
+    setValue(document.querySelector<HTMLInputElement>("#brand-name"), "Acme Pro");
+    expect(preview?.textContent).toContain("Acme Pro");
+    const save = byText("Save") as HTMLButtonElement;
+    expect(save.disabled).toBe(false);
+    // Near white: unreadable on the light page.
+    setValue(document.querySelector<HTMLInputElement>("#brand-accent"), "#f5f5f0");
+    expect(document.body.textContent).toContain("Not enough contrast on both light and dark.");
+    expect((byText("Save") as HTMLButtonElement).disabled).toBe(true);
+    setValue(document.querySelector<HTMLInputElement>("#brand-accent"), "#2563eb");
+    expect((byText("Save") as HTMLButtonElement).disabled).toBe(false);
+    api.setBrand.mockResolvedValue({
+      brand: { ...brandSaved, appName: "Acme Pro" },
+      domainsAvailable: true,
+      domain: null,
+      senderAvailable: false,
+      sender: emptySender,
+    });
+    await click(byText("Save"));
+    expect(api.setBrand).toHaveBeenCalledWith(
+      expect.objectContaining({ partnerId: "p2", appName: "Acme Pro", accent: "#2563eb" }),
+    );
+  });
+
+  it("shows the exact CNAME and the one next step, then the legal links step", async () => {
+    api.branding.mockResolvedValue({
+      brand: brandSaved,
+      domainsAvailable: true,
+      domain: {
+        hostname: "app.acme.example.test",
+        state: "pending",
+        cname: { name: "app.acme.example.test", target: "fallback.rook.example" },
+        nextStep: "add_cname",
+        error: null,
+      },
+      senderAvailable: false,
+      sender: emptySender,
+    });
+    await render("/app/partner/p2/domain");
+    const panel = document.querySelector("[data-testid=domain-panel]");
+    expect(panel?.textContent).toContain("app.acme.example.test");
+    expect(panel?.textContent).toContain("CNAME");
+    expect(panel?.textContent).toContain("fallback.rook.example");
+    expect(panel?.textContent).toContain("Add this record at your DNS provider.");
+    expect(document.querySelector("[data-testid=domain-state]")?.getAttribute("data-state")).toBe(
+      "pending",
+    );
+  });
+
+  it("adds a hostname and shows the sender domain records", async () => {
+    api.branding.mockResolvedValue({
+      brand: brandSaved,
+      domainsAvailable: true,
+      domain: null,
+      senderAvailable: true,
+      sender: {
+        domain: "mail.acme.example.test",
+        state: "pending",
+        records: [
+          { type: "TXT", name: "send.mail.acme.example.test", value: "v=spf1", status: "pending" },
+        ],
+        error: null,
+      },
+    });
+    await render("/app/partner/p2/domain");
+    expect(document.querySelector("[data-testid=sender-panel]")?.textContent).toContain("v=spf1");
+    setValue(
+      document.querySelector<HTMLInputElement>('input[aria-label="Domain"]'),
+      "app.acme.example.test",
+    );
+    api.addDomain.mockResolvedValue({
+      brand: brandSaved,
+      domainsAvailable: true,
+      domain: {
+        hostname: "app.acme.example.test",
+        state: "pending",
+        cname: { name: "app.acme.example.test", target: "fallback.rook.example" },
+        nextStep: "add_cname",
+        error: null,
+      },
+      senderAvailable: true,
+      sender: emptySender,
+    });
+    await click(byText("Add"));
+    expect(api.addDomain).toHaveBeenCalledWith({
+      partnerId: "p2",
+      hostname: "app.acme.example.test",
+    });
+    expect(document.querySelector("[data-testid=domain-panel]")).toBeTruthy();
   });
 });

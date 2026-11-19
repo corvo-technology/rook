@@ -3,6 +3,16 @@ import type { Actor } from "@corvo/contracts";
 import { runAsSystem } from "@corvo/db";
 import { ORPCError } from "@orpc/server";
 import { assertMcpRemoteEndpoint } from "../mcp-servers.js";
+import type { BrandingDeps } from "../partner-brand/index.js";
+import {
+  addDomain,
+  checkDomain,
+  checkSenderDomain,
+  getBranding,
+  removeDomain,
+  saveBrand,
+  setSenderDomain,
+} from "../partner-brand/index.js";
 import type { PartnerConsoleDeps, PartnerScope } from "../partner-console/index.js";
 import {
   createPrismaPartnerConsoleStore,
@@ -60,6 +70,21 @@ export function partnerConsoleRoutes(ctx: RouterContext) {
     now: () => new Date(),
     webOrigin: deps.env.webOrigin,
     newCode: () => randomBytes(32).toString("base64url"),
+  };
+
+  const brandingDeps = (): BrandingDeps => {
+    const branding = deps.branding;
+    if (!branding) throw new ORPCError("NOT_FOUND");
+    return {
+      store: branding.store,
+      console: store,
+      assets: branding.assets,
+      domains: branding.domains,
+      senderDomains: branding.senderDomains,
+      reservedHosts: branding.reservedHosts,
+      now: () => new Date(),
+      changed: () => branding.resolver.invalidate(),
+    };
   };
 
   const managed = authed.use(async ({ context, next }) => {
@@ -165,6 +190,27 @@ export function partnerConsoleRoutes(ctx: RouterContext) {
         }
         return run(context.actor, (scope) => setTemplate(service, scope, input));
       }),
+      branding: managed.partnerConsole.branding.handler(({ context, input }) =>
+        run(context.actor, (scope) => getBranding(brandingDeps(), scope, input)),
+      ),
+      setBrand: managed.partnerConsole.setBrand.handler(({ context, input }) =>
+        run(context.actor, (scope) => saveBrand(brandingDeps(), scope, input)),
+      ),
+      addDomain: managed.partnerConsole.addDomain.handler(({ context, input }) =>
+        run(context.actor, (scope) => addDomain(brandingDeps(), scope, input)),
+      ),
+      checkDomain: managed.partnerConsole.checkDomain.handler(({ context, input }) =>
+        run(context.actor, (scope) => checkDomain(brandingDeps(), scope, input)),
+      ),
+      removeDomain: managed.partnerConsole.removeDomain.handler(({ context, input }) =>
+        run(context.actor, (scope) => removeDomain(brandingDeps(), scope, input)),
+      ),
+      setSenderDomain: managed.partnerConsole.setSenderDomain.handler(({ context, input }) =>
+        run(context.actor, (scope) => setSenderDomain(brandingDeps(), scope, input)),
+      ),
+      checkSenderDomain: managed.partnerConsole.checkSenderDomain.handler(({ context, input }) =>
+        run(context.actor, (scope) => checkSenderDomain(brandingDeps(), scope, input)),
+      ),
       setWebhook: managed.partnerConsole.setWebhook.handler(({ context, input }) =>
         run(context.actor, (scope) => setIntegrationWebhook(service, scope, input)),
       ),

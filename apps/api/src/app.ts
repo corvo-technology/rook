@@ -53,6 +53,8 @@ import {
   createMessagingTeamChatHistory,
   createMessagingTeamChatSender,
   createModelCreditReconciler,
+  createObjectStorage,
+  createPartnerDomainReconciler,
   createPartnerWebhookReconciler,
   createProductAnalytics,
   createRunExecutor,
@@ -66,6 +68,7 @@ import {
   creditVoiceKey,
   deliverMessagingOutbound,
   deploymentModelUsageLookup,
+  domainProviderFromEnv,
   EmailEmulator,
   ExpoPushProvider,
   egressCapabilityKey,
@@ -106,6 +109,7 @@ import {
   SpaceMemoryProviderResolver,
   StripeBillingProvider,
   sandboxProviderOptionsFromEnv,
+  senderDomainProviderFromEnv,
   stripeBillingConfigFromEnv,
   toTeamChatInbound,
   verifyModelServesAgents,
@@ -192,6 +196,9 @@ import {
   createClientIpResolver,
   defaultTrustedProxies,
   requestClientIp,
+  requestHost,
+  requestHostMiddleware,
+  withBrandHost,
   withClientIp,
 } from "./client-ip.js";
 import { cspReportRoutes } from "./csp-report.js";
@@ -215,6 +222,7 @@ import { messagingStatusSource } from "./messaging-status.js";
 import { mountMessagingWebhookRoutes } from "./messaging-webhook.js";
 import { monitoringRoutes } from "./monitoring.js";
 import { createPartnerAlertDispatcher } from "./partner-alerts.js";
+import { brandRoutes, createPartnerBranding } from "./partner-brand/index.js";
 import { mountPartnerCommerceRoutes } from "./partner-commerce-routes.js";
 import { createPrismaPartnerToolsPort } from "./partner-console/agent-tools.js";
 import { createAutoTopupRunner } from "./partner-console/index.js";
@@ -670,6 +678,15 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   });
   presence.start();
   const sessionChecks = createInFlight();
+  const branding = createPartnerBranding({
+    prisma,
+    storage: createObjectStorage(prisma),
+    dataDir: env.dataDir,
+    webOrigin: env.webOrigin,
+    emailFrom: env.emailFrom,
+    domains: domainProviderFromEnv(process.env),
+    senderDomains: senderDomainProviderFromEnv(env),
+  });
   const auth = createAuth(prisma, {
     analytics,
     passwordAuth: env.passwordAuth,
@@ -692,6 +709,9 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     signupsEnabled: env.signupsEnabled,
     signupAllowlist: env.signupAllowlist,
     email,
+    mailBrand: branding.mail.mailBrand,
+    hostOrigins: branding.mail.hostOrigins,
+    onSignup: branding.mail.onSignup,
     logger: {
       level: "error",
       log: (_level, _message, ...args) =>
@@ -868,6 +888,11 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
           autoTopup: billing ? createAutoTopupRunner(prisma, billing) : undefined,
           alerts: createPartnerAlertDispatcher({ prisma, email, webOrigin: env.webOrigin }),
         }),
+        reconcilePartnerDomains: createPartnerDomainReconciler({
+          store: branding.store,
+          domains: branding.domains,
+          senderDomains: branding.senderDomains,
+        }),
         reconcileCloudAgents: () => reconcileCloudAgents({ prisma, jobs, cloudAgent }),
         reconcileComputerUpdates: () => reconcileComputerUpdates({ prisma, jobs }),
         reconcileSecurityEventRetention: createSecurityEventPruner(
@@ -886,6 +911,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     webOrigin: env.webOrigin,
     email,
     billing,
+    mailBrand: branding.mail.mailBrandForSpace,
   };
   const router = createRouter({
     speechSummary:
@@ -960,6 +986,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     dataDir: env.dataDir,
     billing,
     team,
+    branding,
     messagingInstallations,
     whatsapp,
     emailAgentPublicUrl,
@@ -996,6 +1023,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   const app = new Hono();
   app.use("*", requestLogging(logger));
   app.use("*", clientIpMiddleware(clientIp, env.clientIpHeader));
+  app.use("*", requestHostMiddleware(clientIp));
   // The marketing site posts here from its own origin, so the route answers its own CORS before
   // the app-wide policy, which only trusts the app's origins.
   const waitlist = waitlistRoutes({
@@ -1034,15 +1062,17 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       c.header("cache-control", "no-store");
     });
   }
-  app.get("/api/auth/capabilities", (c) => {
+  app.get("/api/auth/capabilities", async (c) => {
+    // On a partner's host the reset link must come back to that host, not to ours.
+    const hosted = await branding.resolver.resolve(requestHost(c));
+    const origin = hosted ? `https://${hosted.hostname}` : env.webOrigin;
     return c.json({
       sso: env.oidc
         ? { name: env.oidc.name, availability: auth.ssoAvailability() ?? "checking" }
         : null,
       passwordAuth: env.passwordAuth !== false,
       passwordReset: auth.passwordSignIn && Boolean(email),
-      resetUrl:
-        auth.passwordSignIn && email ? new URL("/reset-password", env.webOrigin).href : null,
+      resetUrl: auth.passwordSignIn && email ? new URL("/reset-password", origin).href : null,
       emailCode: auth.emailCodeSignIn,
       codeOnly: auth.emailCodeSignIn && !auth.passwordSignIn,
       billing: Boolean(billing),
@@ -1053,6 +1083,15 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       localEdition: Boolean(env.desktopStackToken),
     } satisfies AuthCapabilities);
   });
+  app.route(
+    "/",
+    brandRoutes({
+      resolver: branding.resolver,
+      store: branding.store,
+      assets: branding.assets,
+      host: requestHost,
+    }),
+  );
   mountAppAssociation(app, env);
   if (localEmailEmulator && env.nodeEnv === "development") {
     app.get(
@@ -1093,7 +1132,9 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       return c.json({ error: "Not available in version 1" }, 404);
     }
     const ip = requestClientIp(c);
-    const response = await auth.handler(withClientIp(emptyAuthBodyAsJson(c.req.raw), ip));
+    const response = await auth.handler(
+      withBrandHost(withClientIp(emptyAuthBodyAsJson(c.req.raw), ip), requestHost(c)),
+    );
     await auditAuthResponse(path, ip, response);
     return response;
   });

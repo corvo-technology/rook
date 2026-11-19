@@ -1,3 +1,4 @@
+export * from "./contrast.js";
 export const APPEARANCE_PREFERENCES = ["system", "light", "dark"] as const;
 
 export type AppearancePreference = (typeof APPEARANCE_PREFERENCES)[number];

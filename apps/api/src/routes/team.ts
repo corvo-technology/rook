@@ -102,6 +102,7 @@ export function teamRoutes(ctx: RouterContext) {
         email: row.email,
         inviterName: inviter.name,
         spaceName: space.name,
+        spaceId: actor.spaceId,
       });
     }
     return {

@@ -1,5 +1,6 @@
 import { i18n } from "@lingui/core";
 import { applyUiDirection } from "./apply-ui-direction";
+import { currentBrand, rebrandMessages } from "./brand";
 import { importChunk } from "./preload-recovery";
 import type { UiLocale } from "./ui-locale";
 import { persistUiLocale, resolveUiLocale } from "./ui-locale";
@@ -41,7 +42,8 @@ async function loadCatalog(locale: UiLocale): Promise<CatalogMessages> {
 }
 
 function activateLoaded(locale: UiLocale, messages: CatalogMessages): UiLocale {
-  i18n.load(locale, messages);
+  const brand = currentBrand();
+  i18n.load(locale, brand ? rebrandMessages(messages, brand.name) : messages);
   i18n.activate(locale);
   activeLocale = locale;
   applyUiDirection(locale);

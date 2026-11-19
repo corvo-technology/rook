@@ -12,7 +12,6 @@ import {
   returnCreditLots,
   syncLotBalance,
 } from "./model-credit-lots.js";
-import { isPartnerTestOrganization, takePartnerTestCall } from "./partner-test-mode.js";
 
 export const MICROS_PER_DOLLAR = 1_000_000;
 
@@ -150,10 +149,6 @@ export async function reserveModelCredits(
   },
   now = new Date(),
 ) {
-  // A partner's test customer is never charged: the call only counts against the partner's cap.
-  if (await takePartnerTestCall(prisma, organizationId, now)) {
-    return `test:${attribution?.callId ?? randomUUID()}`;
-  }
   if (!Number.isFinite(maxCostUsd) || maxCostUsd <= 0 || maxCostUsd > 10_000)
     throw new Error("This model has no reliable price. Connect your own API key to use it.");
   const amountMicros = BigInt(Math.ceil(maxCostUsd * MICROS_PER_DOLLAR));
@@ -212,8 +207,6 @@ export async function holdCredits(
   now = new Date(),
 ): Promise<"held" | "exists" | "insufficient"> {
   if (amountMicros <= 0n) throw new Error("Invalid credit hold");
-  // Nothing a test customer uses is taken from any credit.
-  if (await isPartnerTestOrganization(prisma, organizationId)) return "exists";
   const source = `hold:${id}`;
   return prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT "organizationId" FROM model_credit_accounts WHERE "organizationId"=${organizationId} FOR UPDATE`;

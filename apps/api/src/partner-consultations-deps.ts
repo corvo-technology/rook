@@ -7,7 +7,6 @@ import {
   addConsultationChunk,
   createConsultation,
   findConsultation,
-  isPartnerTestOrganization,
   recordSecurityEvent,
   settleConsultation,
   spaceHasModelAccess,
@@ -32,10 +31,7 @@ export function partnerConsultationDeps(deps: {
   });
   return {
     ...deps.base,
-    // A test customer needs no credit; its partner's daily cap is the limit.
-    hasCredit: async (organizationId) =>
-      (await isPartnerTestOrganization(prisma, organizationId)) ||
-      spaceHasModelAccess(prisma, organizationId),
+    hasCredit: (organizationId) => spaceHasModelAccess(prisma, organizationId),
     create: async (input) => ({ id: (await createConsultation(prisma, input)).id }),
     find: async (scope) => {
       const row = await findConsultation(prisma, scope);

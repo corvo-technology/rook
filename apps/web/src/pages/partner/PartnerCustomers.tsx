@@ -64,7 +64,6 @@ export function PartnerCustomers({ partner }: { partner: PartnerConsolePartner }
   const { t, i18n } = useLingui();
   const [params, setParams] = useSearchParams();
   const [filter, setFilter] = useState<PartnerConsoleCustomerFilter>("all");
-  const [testMode, setTestMode] = useState(false);
   const [search, setSearch] = useState("");
   const [q, setQ] = useState("");
   const selected = params.get("customer");
@@ -75,13 +74,12 @@ export function PartnerCustomers({ partner }: { partner: PartnerConsolePartner }
   }, [search]);
 
   const customers = useInfiniteQuery({
-    queryKey: ["partner-console", partner.id, "customers", filter, q, testMode],
+    queryKey: ["partner-console", partner.id, "customers", filter, q],
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam }) =>
       rpc.partnerConsole.customers({
         partnerId: partner.id,
         filter,
-        ...(testMode ? { mode: "test" as const } : {}),
         ...(q ? { q } : {}),
         ...(pageParam ? { cursor: pageParam } : {}),
         limit: 25,
@@ -136,15 +134,6 @@ export function PartnerCustomers({ partner }: { partner: PartnerConsolePartner }
               {label(value)}
             </ToggleGroupItem>
           ))}
-        </ToggleGroup>
-        <ToggleGroup
-          aria-label={t`Test`}
-          value={testMode ? ["test"] : []}
-          onValueChange={(value) => setTestMode(value.includes("test"))}
-          variant="outline"
-          size="sm"
-        >
-          <ToggleGroupItem value="test">{t`Test`}</ToggleGroupItem>
         </ToggleGroup>
       </div>
       {customers.isPending ? (

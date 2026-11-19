@@ -31,15 +31,6 @@ it("names the Chief and lists only the tabs it is given", () => {
   }
 });
 
-it("marks a customer made with the partner's test key, and no one else", () => {
-  const marked = renderToString(
-    <EmbedTabs tabs={["home", "chats"]} pathname="/app/home" test onOpen={() => undefined} />,
-  );
-  expect(marked).toContain("embed-test-badge");
-  expect(marked).toContain("Test");
-  expect(render(["home", "chats"])).not.toContain("embed-test-badge");
-});
-
 it("marks the current tab in the accent, which is the app's main colour", () => {
   const html = render(["home", "chats"], "/app/bot-1");
   const chats = html.slice(html.indexOf("embed-tab-chats"));

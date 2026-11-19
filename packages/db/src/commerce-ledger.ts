@@ -58,25 +58,8 @@ export async function recordCommerceEvent(
     payload: Record<string, unknown>;
   },
 ): Promise<string | null> {
-  // What a test customer does is labelled test and goes to the partner's test address, never to
-  // its people or its live webhook.
-  const test = event.externalTenantId
-    ? await prisma.partnerTenant.findUnique({
-        where: {
-          partnerId_externalTenantId: {
-            partnerId: partner.id,
-            externalTenantId: event.externalTenantId,
-          },
-        },
-        select: { testMode: true, partner: { select: { testWebhookUrl: true } } },
-      })
-    : null;
-  if (test?.testMode) {
-    if (!test.partner.testWebhookUrl) return null;
-  } else {
-    await recordPartnerAlert(prisma, partner.id, event);
-    if (!partner.webhookUrl) return null;
-  }
+  await recordPartnerAlert(prisma, partner.id, event);
+  if (!partner.webhookUrl) return null;
   try {
     const row = await prisma.partnerWebhookEvent.create({
       data: {
@@ -86,7 +69,7 @@ export async function recordCommerceEvent(
         period: event.key,
         grantedCents: 0,
         usedCents: 0,
-        payload: (test?.testMode ? { ...event.payload, test: true } : event.payload) as never,
+        payload: event.payload as never,
       },
       select: { id: true },
     });

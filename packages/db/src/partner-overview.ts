@@ -1,6 +1,5 @@
 import type { PlatformPartner } from "@corvo/contracts";
 import type { PrismaClient } from "./client.js";
-import { partnerTestDay } from "./partner-test-mode.js";
 import { partnerWalletOrganization } from "./partner-wallet.js";
 
 const MICROS_PER_CREDIT = 10_000n;
@@ -34,15 +33,11 @@ export async function platformPartnerOverview(
       mode: true,
       planKey: true,
       plan: { select: { tierKey: true, status: true } },
-      testDailyCap: true,
-      testUsage: { where: { day: partnerTestDay(now) }, select: { calls: true } },
-      _count: { select: { tenants: { where: { testMode: true } } } },
     },
   });
   const rows: PlatformPartner[] = [];
   for (const partner of partners) {
     const tenants = await prisma.partnerTenant.findMany({
-      // Test customers are never counted: they cost the partner nothing and carry no revenue.
       where: { partnerId: partner.id, testMode: false },
       select: { organizationId: true, state: true },
     });
@@ -99,9 +94,6 @@ export async function platformPartnerOverview(
       fundPercent: total > 0 ? Math.round((Math.max(balance, 0) / total) * 100) : null,
       chargedCredits,
       costCredits: reported ? Math.round(costUsd * 100) : null,
-      testCustomers: partner._count.tenants,
-      testCallsToday: partner.testUsage[0]?.calls ?? 0,
-      testDailyCap: partner.testDailyCap,
     });
   }
   return rows;

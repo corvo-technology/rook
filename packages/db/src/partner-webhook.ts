@@ -111,10 +111,7 @@ export async function undeliveredPartnerWebhookEvents(
         gte: new Date(now.getTime() - RETRY_FOR_MS),
         lte: new Date(now.getTime() - 15 * 60_000),
       },
-      partner: {
-        enabled: true,
-        OR: [{ webhookUrl: { not: null } }, { testWebhookUrl: { not: null } }],
-      },
+      partner: { enabled: true, webhookUrl: { not: null } },
     },
     orderBy: { createdAt: "desc" },
     select: { id: true },

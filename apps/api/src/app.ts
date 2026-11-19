@@ -134,7 +134,6 @@ import {
   addTenantTopup,
   admitPartnerMember,
   authenticatePartner,
-  authenticatePartnerKey,
   ComputerLimitError,
   commerceBalance,
   commerceUsage,
@@ -154,7 +153,6 @@ import {
   grantPartnerAllowance,
   IsolationError,
   installSecurityEventStore,
-  isPartnerTestSpace,
   ProviderTransactionBusyError,
   parsePositiveInteger,
   partnerIdentityHeaders,
@@ -166,7 +164,6 @@ import {
   pushSessionExpiresAt,
   readCatalog,
   readPartnerMarkups,
-  recordCommerceEvent,
   recordPartnerEvent,
   refundTenantPayment,
   requireMembership,
@@ -835,7 +832,6 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   const executor = createRunExecutor({
     billingEnabled: modelCreditsEnabled,
     spacePartnerState: (spaceId) => partnerSpaceState(prisma, spaceId),
-    spaceIsPartnerTest: (spaceId) => isPartnerTestSpace(prisma, spaceId),
     maxUploadSizeBytes: env.maxUploadSizeBytes,
     contextStrategy,
     prisma,
@@ -1334,12 +1330,12 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     webOrigin: env.webOrigin,
     now: () => new Date(),
     allowRequest: (partnerId) => takePartnerRequest(prisma, partnerId, 120),
-    authenticate: (key) => authenticatePartnerKey(prisma, key),
+    authenticate: (key) => authenticatePartner(prisma, key),
     provision: (partner, input) => provisionPartnerTenant(prisma, partner, input),
-    findTenant: (partnerId, externalTenantId, testMode) =>
-      findPartnerTenant(prisma, partnerId, externalTenantId, testMode),
-    setState: (partnerId, externalTenantId, state, testMode) =>
-      setPartnerTenantState(prisma, partnerId, externalTenantId, state, testMode),
+    findTenant: (partnerId, externalTenantId) =>
+      findPartnerTenant(prisma, partnerId, externalTenantId),
+    setState: (partnerId, externalTenantId, state) =>
+      setPartnerTenantState(prisma, partnerId, externalTenantId, state),
     setTemplate: (partnerId, template) => setPartnerTemplateById(prisma, partnerId, template),
     ensureChief: (actor, locale, options) =>
       ensureStarterTeam(prisma, actor, locale, undefined, {
@@ -1380,17 +1376,10 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   mountPartnerCommerceRoutes(app, {
     now: () => new Date(),
     allowRequest: (partnerId) => takePartnerRequest(prisma, partnerId, 120),
-    authenticate: (key) => authenticatePartnerKey(prisma, key),
-    findTenant: (partnerId, externalTenantId, testMode) =>
-      findPartnerTenant(prisma, partnerId, externalTenantId, testMode),
+    authenticate: (key) => authenticatePartner(prisma, key),
+    findTenant: (partnerId, externalTenantId) =>
+      findPartnerTenant(prisma, partnerId, externalTenantId),
     catalog: (currency) => readCatalog(prisma, currency),
-    testNotice: async (partner, tenant, notice) => {
-      const id = await recordCommerceEvent(prisma, partner, {
-        externalTenantId: tenant.externalTenantId,
-        ...notice,
-      });
-      return id ? [id] : [];
-    },
     markups: (partnerId) => readPartnerMarkups(prisma, partnerId),
     setSubscription: (partner, tenant, input, now) =>
       setTenantSubscription(prisma, partner, tenant, input, now),
@@ -1412,9 +1401,9 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     base: {
       now: () => new Date(),
       allowRequest: (partnerId) => takePartnerRequest(prisma, partnerId, 120),
-      authenticate: (key) => authenticatePartnerKey(prisma, key),
-      findTenant: (partnerId, externalTenantId, testMode) =>
-        findPartnerTenant(prisma, partnerId, externalTenantId, testMode),
+      authenticate: (key) => authenticatePartner(prisma, key),
+      findTenant: (partnerId, externalTenantId) =>
+        findPartnerTenant(prisma, partnerId, externalTenantId),
     },
   });
   mountPartnerConsultationRoutes(app, consultationDeps);
@@ -1426,9 +1415,9 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     partnerAssistDeps({
       prisma,
       allowRequest: (partnerId) => takePartnerRequest(prisma, partnerId, 120),
-      authenticate: (key) => authenticatePartnerKey(prisma, key),
-      findTenant: (partnerId, externalTenantId, testMode) =>
-        findPartnerTenant(prisma, partnerId, externalTenantId, testMode),
+      authenticate: (key) => authenticatePartner(prisma, key),
+      findTenant: (partnerId, externalTenantId) =>
+        findPartnerTenant(prisma, partnerId, externalTenantId),
       session: embedCaller,
       side: {
         prisma,

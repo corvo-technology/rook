@@ -33,7 +33,6 @@ O Rook chama uma URL sua quando um cliente usa **80%** do crédito do mês e de 
 | `X-Rook-Event` | O `type`. |
 | `X-Rook-Delivery` | O `id`, para deduplicar. |
 | `X-Rook-Timestamp` | Segundos desde a época. |
-| `X-Rook-Test` | `true` só nos avisos de clientes de teste, que vão para a URL de teste (veja o [modo de teste](/partners/test-mode/)). |
 | `X-Rook-Signature` | `sha256=<hex>`: HMAC-SHA256, com o segredo, de `<timestamp>.<corpo bruto>`. |
 
 ## Verificar a assinatura

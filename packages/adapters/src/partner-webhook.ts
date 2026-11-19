@@ -49,27 +49,15 @@ export async function deliverPartnerWebhook(
       where: { id: eventId },
       include: {
         partner: {
-          select: {
-            id: true,
-            enabled: true,
-            webhookUrl: true,
-            testWebhookUrl: true,
-            webhookSecretVersion: true,
-          },
+          select: { id: true, enabled: true, webhookUrl: true, webhookSecretVersion: true },
         },
       },
     }),
   );
   if (!event || event.deliveredAt) return;
   const { partner } = event;
-  // A test notice is labelled and goes to the test address; it never reaches the live webhook.
-  const test =
-    typeof event.payload === "object" &&
-    event.payload !== null &&
-    (event.payload as Record<string, unknown>).test === true;
-  const url = test ? partner.testWebhookUrl : partner.webhookUrl;
   // A partner that switched its webhook off, or was disabled, is owed nothing.
-  if (!partner.enabled || !url) return;
+  if (!partner.enabled || !partner.webhookUrl) return;
   if (!(PARTNER_WEBHOOK_EVENTS as readonly string[]).includes(event.kind)) return;
 
   const base = {
@@ -103,7 +91,7 @@ export async function deliverPartnerWebhook(
     allowPrivateEndpoint: deps.allowPrivateEndpoint,
   });
   try {
-    const response = await safeFetch(url, {
+    const response = await safeFetch(partner.webhookUrl, {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -111,7 +99,6 @@ export async function deliverPartnerWebhook(
         "x-rook-delivery": event.id,
         "x-rook-timestamp": timestamp,
         "x-rook-signature": signPartnerWebhook(secret, timestamp, body),
-        ...(test ? { "x-rook-test": "true" } : {}),
       },
       body,
       signal: AbortSignal.timeout(DELIVERY_TIMEOUT_MS),

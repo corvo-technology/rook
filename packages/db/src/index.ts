@@ -61,7 +61,6 @@ export * from "./partner-members.js";
 export * from "./partner-overview.js";
 export * from "./partner-pricing.js";
 export * from "./partner-tenants.js";
-export * from "./partner-test-mode.js";
 export * from "./partner-wallet.js";
 export * from "./partner-webhook.js";
 export * from "./partners.js";

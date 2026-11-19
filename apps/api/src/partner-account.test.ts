@@ -47,7 +47,7 @@ function setup(options: { admins?: string[]; email?: string; owned?: boolean } =
           organization: { name: "Shop One" },
         },
       ]),
-      findUnique: vi.fn(async () => ({ ownerUserId: "owner-1", testMode: false })),
+      findUnique: vi.fn(async () => ({ ownerUserId: "owner-1" })),
       updateMany: vi.fn(async () => ({ count: 1 })),
     },
     partnerTenantMember: { findMany: vi.fn(async () => []) },
@@ -133,7 +133,7 @@ describe("partner account", () => {
       client.partner.setTenantState({ externalTenantId: "shop-1", state: "suspended" }),
     ).resolves.toEqual({ ok: true });
     expect(prisma.partnerTenant.updateMany).toHaveBeenCalledWith({
-      where: { partnerId: "partner-1", externalTenantId: "shop-1", testMode: false },
+      where: { partnerId: "partner-1", externalTenantId: "shop-1" },
       data: { state: "suspended" },
     });
     // Whoever has the customer's frame open is signed out at once.

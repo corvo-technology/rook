@@ -18,7 +18,6 @@ import {
   MODEL_ACCESS_REQUIRED_RUN_ERROR,
   PARTNER_CREDIT_USED_UP_RUN_ERROR,
   PARTNER_MODEL_NOT_ALLOWED_RUN_ERROR,
-  PARTNER_TEST_CAP_RUN_ERROR,
   SPACE_PAUSED_RUN_ERROR,
 } from "@corvo/core";
 import { describe, expect, it } from "vitest";
@@ -75,7 +74,6 @@ describe("classifyRunError", () => {
     [MEMBER_MONTHLY_LIMIT_RUN_ERROR, "monthly_limit", "member"],
     [BOT_DAILY_LIMIT_RUN_ERROR, "daily_credit_limit", "bot"],
     [PARTNER_CREDIT_USED_UP_RUN_ERROR, "daily_credit_limit", "credit"],
-    [PARTNER_TEST_CAP_RUN_ERROR, "daily_credit_limit", "credit"],
     [ACCOUNT_PAUSED_RUN_ERROR, "paused", "account"],
     [SPACE_PAUSED_RUN_ERROR, "paused", "space"],
   ])("maps the app's run error %s", (message, code, scope) => {

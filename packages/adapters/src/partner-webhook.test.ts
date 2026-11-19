@@ -10,7 +10,6 @@ function fixture(
   over: {
     enabled?: boolean;
     webhookUrl?: string | null;
-    testWebhookUrl?: string | null;
     deliveredAt?: Date | null;
     kind?: string;
     payload?: unknown;
@@ -33,8 +32,6 @@ function fixture(
       enabled: over.enabled ?? true,
       webhookUrl:
         over.webhookUrl === undefined ? "https://hooks.example.test/rook" : over.webhookUrl,
-      testWebhookUrl:
-        over.testWebhookUrl === undefined ? "https://hooks.example.test/test" : over.testWebhookUrl,
       webhookSecretVersion: 2,
     },
   };
@@ -80,49 +77,6 @@ describe("partner webhook delivery", () => {
       kind: "topup",
       creditMinor: 5000,
     });
-  });
-
-  it("sends a test customer's notice labelled test, to the test address only", async () => {
-    const f = fixture({
-      kind: "subscription.lapsed",
-      payload: { plan: "team", status: "past_due", currency: "BRL", test: true },
-    });
-    const seen: { url: string; headers: Headers; body: string }[] = [];
-    const fetchFn = vi.fn(async (url: string | URL, init?: RequestInit) => {
-      seen.push({
-        url: String(url),
-        headers: new Headers(init?.headers),
-        body: String(init?.body),
-      });
-      return new Response("ok", { status: 200 });
-    }) as unknown as typeof fetch;
-    await deliverPartnerWebhook(deps(f, fetchFn), "evt-1");
-    expect(seen).toHaveLength(1);
-    expect(seen[0]?.url).toBe("https://hooks.example.test/test");
-    expect(seen[0]?.headers.get("x-rook-test")).toBe("true");
-    expect(JSON.parse(seen[0]?.body ?? "{}")).toMatchObject({ test: true, plan: "team" });
-  });
-
-  it("never sends a test notice to the live webhook when there is no test address", async () => {
-    const f = fixture({
-      kind: "subscription.lapsed",
-      payload: { status: "canceled", test: true },
-      testWebhookUrl: null,
-    });
-    const fetchFn = vi.fn() as unknown as typeof fetch;
-    await deliverPartnerWebhook(deps(f, fetchFn), "evt-1");
-    expect(fetchFn).not.toHaveBeenCalled();
-  });
-
-  it("does not label a live notice or add the test header", async () => {
-    const f = fixture();
-    const seen: Headers[] = [];
-    const fetchFn = vi.fn(async (_url: string | URL, init?: RequestInit) => {
-      seen.push(new Headers(init?.headers));
-      return new Response("ok", { status: 200 });
-    }) as unknown as typeof fetch;
-    await deliverPartnerWebhook(deps(f, fetchFn), "evt-1");
-    expect(seen[0]?.has("x-rook-test")).toBe(false);
   });
 
   it("leaves the customer out of a notice that is about the partner, such as an invoice", async () => {

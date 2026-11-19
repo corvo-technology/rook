@@ -9,7 +9,7 @@ You will create a partner, apply an agent template, provision a customer with `P
 
 ## 1. Create the partner
 
-The Rook team sets up your partner and hands you the **key** (`Authorization: Bearer <key>`). It is shown once; keep it on your backend, never in the browser. To replace it, use **New key** under **Settings > Partnership**: the old one stops working immediately. To build without spending credit, also create a test key: see [test mode](/en/partners/test-mode/).
+The Rook team sets up your partner and hands you the **key** (`Authorization: Bearer <key>`). It is shown once; keep it on your backend, never in the browser. To replace it, use **New key** under **Settings > Partnership**: the old one stops working immediately.
 
 ## 2. Apply a template
 

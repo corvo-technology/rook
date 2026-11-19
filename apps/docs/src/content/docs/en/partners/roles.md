@@ -31,13 +31,13 @@ Each person you let in ([Sessions](/en/partners/api/#sessions-let-a-person-in)) 
 
 ## Template defaults
 
-| Role | Prontu | GreenBarber and Divellas |
+| Role | Clinic template | Salon and retail templates |
 | --- | --- | --- |
 | `owner` | everything | everything |
 | `manager` | every agent, approves | every agent, approves |
 | `reception` | Reception only (agenda and contact), no clinical content | Reception and the customer follow-up agent |
 | `professional` | the records assistant only | Reception and the customer follow-up agent, with their `scope` on agenda and customers |
 
-The Manager agent (numbers and finance) belongs to `owner` and `manager`. Greenflow already gates professionals on its side; the `scope` (for example `professionalId`) reaches your connector on every call so you can filter ([Connector](/en/partners/connector/#who-is-asking)).
+The Manager agent (numbers and finance) belongs to `owner` and `manager`. Your product should gate professionals on its side too; the `scope` (for example `professionalId`) reaches your connector on every call so you can filter ([Connector](/en/partners/connector/#who-is-asking)).
 
 In the partner console, each customer's detail lists its people and each one's role, read-only.

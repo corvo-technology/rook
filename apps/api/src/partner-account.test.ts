@@ -50,6 +50,7 @@ function setup(options: { admins?: string[]; email?: string; owned?: boolean } =
       findUnique: vi.fn(async () => ({ ownerUserId: "owner-1", testMode: false })),
       updateMany: vi.fn(async () => ({ count: 1 })),
     },
+    partnerTenantMember: { findMany: vi.fn(async () => []) },
     session: { deleteMany: vi.fn(async () => ({ count: 2 })) },
   } as unknown as PrismaClient;
   const deps = {
@@ -136,7 +137,9 @@ describe("partner account", () => {
       data: { state: "suspended" },
     });
     // Whoever has the customer's frame open is signed out at once.
-    expect(prisma.session.deleteMany).toHaveBeenCalledWith({ where: { userId: "owner-1" } });
+    expect(prisma.session.deleteMany).toHaveBeenCalledWith({
+      where: { userId: { in: ["owner-1"] } },
+    });
   });
 
   it("saves the limits in whole cents, and null removes one", async () => {

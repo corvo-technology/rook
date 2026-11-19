@@ -1121,6 +1121,7 @@ msgstr "Administrator"
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
+#: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/RoutineSchedule.tsx
 #: src/pages/Settings.tsx
@@ -1674,6 +1675,10 @@ msgstr "Back"
 msgid "Back to sign in"
 msgstr "Back to sign in"
 
+#: src/pages/partner/PartnerTemplatePanel.tsx
+msgid "Barbershop"
+msgstr "Barbershop"
+
 #: src/pages/partner/PartnerPricing.tsx
 msgid "Base"
 msgstr "Base"
@@ -2173,6 +2178,10 @@ msgstr "Clear the purpose"
 #: src/pages/shell/dialogs.tsx
 msgid "Clearing…"
 msgstr "Clearing…"
+
+#: src/pages/partner/PartnerTemplatePanel.tsx
+msgid "Clinic"
+msgstr "Clinic"
 
 #: src/pages/onboarding/labels.ts
 msgid "Clinic or practice"
@@ -7763,6 +7772,10 @@ msgstr "Resume customer?"
 msgid "Resume this space to keep going."
 msgstr "Resume this space to keep going."
 
+#: src/pages/partner/PartnerTemplatePanel.tsx
+msgid "Retail"
+msgstr "Retail"
+
 #: src/components/AccountAccess.tsx
 #: src/components/PasskeySettings.tsx
 #: src/pages/Auth.tsx
@@ -8312,6 +8325,10 @@ msgstr "Shared"
 msgid "Shared memory"
 msgstr "Shared memory"
 
+#: src/pages/PartnerTemplateEditor.tsx
+msgid "Shortcuts, presets, routines and roles (JSON)"
+msgstr "Shortcuts, presets, routines and roles (JSON)"
+
 #: src/pages/GroupPanel.tsx
 msgid "Show all"
 msgstr "Show all"
@@ -8607,6 +8624,10 @@ msgstr "Standard"
 #: src/pages/shell/computer-overlay.tsx
 msgid "Start"
 msgstr "Start"
+
+#: src/pages/partner/PartnerTemplatePanel.tsx
+msgid "Start from"
+msgstr "Start from"
 
 #: src/pages/ImportFlow.tsx
 msgid "Start paused"

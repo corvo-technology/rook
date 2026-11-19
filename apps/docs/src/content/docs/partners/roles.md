@@ -31,13 +31,13 @@ Cada pessoa que você deixa entrar ([Sessões](/partners/api/#sessões-deixar-um
 
 ## Padrões dos modelos
 
-| Papel | Prontu | GreenBarber e Divellas |
+| Papel | Modelo de clínica | Modelos de salão e varejo |
 | --- | --- | --- |
 | `owner` | tudo | tudo |
 | `manager` | todos os agentes, aprova | todos os agentes, aprova |
 | `reception` | só Recepção (agenda e contato), sem conteúdo clínico | Recepção e o agente de clientes |
 | `professional` | só o Assistente de prontuário | Recepção e o agente de clientes, com o seu `scope` na agenda e nos clientes |
 
-O agente Gestor (números e financeiro) é do `owner` e do `manager`. O Greenflow já controla os profissionais do lado dele; o `scope` (por exemplo `professionalId`) chega ao seu conector em cada chamada, para você filtrar ([Conector](/partners/connector/#quem-está-pedindo)).
+O agente Gestor (números e financeiro) é do `owner` e do `manager`. O seu produto também deve controlar os profissionais do lado dele; o `scope` (por exemplo `professionalId`) chega ao seu conector em cada chamada, para você filtrar ([Conector](/partners/connector/#quem-está-pedindo)).
 
 No console do parceiro, o detalhe de cada cliente lista as pessoas e o papel de cada uma, só para leitura.

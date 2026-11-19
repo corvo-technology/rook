@@ -12,7 +12,7 @@ money:
 | | Embedded | White label |
 | --- | --- | --- |
 | Where the customer uses Rook | Inside the partner's product, through the SDK, signed in with the partner's login | A standalone app on the partner's domain, with the partner's brand |
-| Example | Prontu, a clinic EHR | A marketing agency selling its own agent system |
+| Example | A clinic EHR | A marketing agency selling its own agent system |
 | Who sells the subscription | The partner, in its own checkout | Rook, on the partner's behalf, through Stripe Connect |
 | Who collects the money | The partner | Rook, into the partner's connected account |
 | How Rook is paid | A monthly invoice to the partner for Rook's share | An application fee taken from each charge |
@@ -167,12 +167,12 @@ action allowed only when the partner has no active subscription.
 
 ## 4. Customer journeys
 
-### 4.1 Embedded (Prontu example)
+### 4.1 Embedded (clinic EHR example)
 
 ```mermaid
 sequenceDiagram
   participant U as Clinic user
-  participant P as Partner product (Prontu)
+  participant P as Partner product (clinic EHR)
   participant PB as Partner backend
   participant R as Rook API
   participant K as Partner checkout

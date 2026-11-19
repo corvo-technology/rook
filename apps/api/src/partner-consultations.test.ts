@@ -1,4 +1,8 @@
-import { CONSULTATION_CHUNK_MAX_BYTES, CONSULTATION_MAX_CHUNKS } from "@corvo/contracts";
+import {
+  CONSULTATION_CHUNK_MAX_BYTES,
+  CONSULTATION_MAX_CHUNKS,
+  CONSULTATION_TEMPLATES,
+} from "@corvo/contracts";
 import { Hono } from "hono";
 import { describe, expect, it, vi } from "vitest";
 import type { PartnerConsultationDeps } from "./partner-consultations.js";
@@ -13,7 +17,7 @@ const BASE = "/api/partner/v1/tenants/shop-1/consultations";
 
 const body = () => ({
   externalUserId: "doctor-1",
-  template: "prontu_evolution",
+  template: CONSULTATION_TEMPLATES[0],
   context: { clientId: "client-1", appointmentId: "appt-1", clientName: "Maria" },
   consent: { obtained: true, at: "2026-12-01T10:00:00Z", method: "verbal" },
 });
@@ -627,7 +631,7 @@ describe("structured recording for an embedded page", () => {
     expect(
       (
         await f.create({
-          template: "prontu_evolution",
+          template: CONSULTATION_TEMPLATES[0],
           context: { clientId: "c", output: { task: "x" } },
         })
       ).status,

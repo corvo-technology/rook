@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { runContinueJob } from "@corvo/adapter-kit";
+import { routineWakeupJob, runContinueJob } from "@corvo/adapter-kit";
 import {
   persistPreparedSecret,
   prepareApiInstall,
@@ -9,10 +9,15 @@ import {
   verifyMcpInstall,
 } from "@corvo/adapters";
 import type { Actor, OnboardingStep } from "@corvo/contracts";
-import { ONBOARDING_STEPS, signupSurveyAsksTeamSize } from "@corvo/contracts";
+import {
+  listVerticalSummaries,
+  ONBOARDING_STEPS,
+  signupSurveyAsksTeamSize,
+} from "@corvo/contracts";
 import { containsSecret } from "@corvo/core";
 import type { Prisma } from "@corvo/db";
 import {
+  createRepos,
   IsolationError,
   markTourDone,
   readOnboardingAnswers,
@@ -48,6 +53,7 @@ import {
 } from "../onboarding.js";
 import { actorForManaged, connectionOwners, mcpServersWhere } from "../shared-connections.js";
 import { startStarterTeam } from "../starter-team.js";
+import { applyVertical } from "../verticals.js";
 import type { RouterContext } from "./context.js";
 import { computerContext, isUniqueViolation } from "./shared.js";
 
@@ -876,6 +882,21 @@ export function mcpRoutes(ctx: RouterContext) {
         await skipTour(deps.prisma, context.actor.userId);
         return { ok: true as const };
       }),
+      verticals: authed.onboarding.verticals.handler(async ({ input }) =>
+        listVerticalSummaries(input.locale),
+      ),
+      applyVertical: authed.onboarding.applyVertical.handler(async ({ context, input }) =>
+        applyVertical(
+          {
+            prisma: deps.prisma,
+            createBot: (actor, bot) => createRepos(deps.prisma).createBot(actor, bot),
+            scheduleRoutine: (routineId, at) => deps.jobs.enqueue(routineWakeupJob(routineId, at)),
+          },
+          context.actor,
+          input.verticalId,
+          input.selection,
+        ),
+      ),
       ensureTeam: authed.onboarding.ensureTeam.handler(async ({ context, input }) =>
         startStarterTeam(deps, context.actor, input.locale, undefined, input.picks),
       ),

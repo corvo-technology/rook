@@ -1,7 +1,4 @@
-import { readFile } from "node:fs/promises";
-import { resolvePartnerRole } from "@corvo/core";
 import { describe, expect, it, vi } from "vitest";
-import { z } from "zod";
 import { parseTemplateFile, runPartnerCommand } from "./partner-command.js";
 
 function deps() {
@@ -44,7 +41,7 @@ function deps() {
 }
 
 const TEMPLATE = JSON.stringify({
-  connector: { slug: "greenflow", name: "Greenflow", endpoint: "{{MCP_PUBLIC_URL}}" },
+  connector: { slug: "acme-system", name: "Acme System", endpoint: "{{MCP_PUBLIC_URL}}" },
   agents: [{ key: "recepcao", name: "Recepção", instructions: "x", usesConnector: true }],
   chiefName: "Assistente Teste",
 });
@@ -88,27 +85,30 @@ describe("partner command", () => {
   it("makes a partner that draws on a named account's credit", async () => {
     const d = deps();
     await runPartnerCommand(
-      ["create", "divellas", "Divellas", "--wallet-owner", "owner@example.test"],
+      ["create", "acme-clinic", "Acme Clinic", "--wallet-owner", "owner@example.test"],
       d,
     );
     expect(d.createPartner).toHaveBeenCalledWith({
-      slug: "divellas",
-      name: "Divellas",
+      slug: "acme-clinic",
+      name: "Acme Clinic",
       walletOwnerUserId: "user-1",
     });
     await expect(
-      runPartnerCommand(["create", "prontu", "Prontu", "--wallet-owner", "nobody@example.test"], d),
+      runPartnerCommand(
+        ["create", "acme-records", "Acme Records", "--wallet-owner", "nobody@example.test"],
+        d,
+      ),
     ).rejects.toThrow(/no account/i);
   });
 
   it("applies a template, filling in the MCP address, and says what it set", async () => {
     const d = deps();
     const output = await runPartnerCommand(
-      ["apply-template", "greenbarber", "t.json", "--mcp-url", "https://mcp.example.test/"],
+      ["apply-template", "acme-salon", "t.json", "--mcp-url", "https://mcp.example.test/"],
       d,
     );
     expect(d.setTemplate).toHaveBeenCalledWith(
-      "greenbarber",
+      "acme-salon",
       expect.objectContaining({
         chiefName: "Assistente Teste",
         connector: expect.objectContaining({ endpoint: "https://mcp.example.test" }),
@@ -121,7 +121,7 @@ describe("partner command", () => {
     const d = deps();
     const argv = [
       "apply-template",
-      "greenbarber",
+      "acme-salon",
       "t.json",
       "--mcp-url",
       "https://mcp.example.test",
@@ -133,26 +133,26 @@ describe("partner command", () => {
 
   it("refuses a template with an unfilled address, bad JSON or invalid fields, storing nothing", async () => {
     const d = deps();
-    await expect(runPartnerCommand(["apply-template", "greenbarber", "t.json"], d)).rejects.toThrow(
+    await expect(runPartnerCommand(["apply-template", "acme-salon", "t.json"], d)).rejects.toThrow(
       /--mcp-url/,
     );
     await expect(
       runPartnerCommand(
-        ["apply-template", "greenbarber", "t.json", "--mcp-url", "http://evil.test"],
+        ["apply-template", "acme-salon", "t.json", "--mcp-url", "http://evil.test"],
         d,
       ),
     ).rejects.toThrow(/https/);
     d.readFile.mockResolvedValueOnce("{nope");
     await expect(
       runPartnerCommand(
-        ["apply-template", "greenbarber", "t.json", "--mcp-url", "https://m.test"],
+        ["apply-template", "acme-salon", "t.json", "--mcp-url", "https://m.test"],
         d,
       ),
     ).rejects.toThrow(/JSON/);
     d.readFile.mockResolvedValueOnce(JSON.stringify({ agents: [], accent: "red" }));
     await expect(
       runPartnerCommand(
-        ["apply-template", "greenbarber", "t.json", "--mcp-url", "https://m.test"],
+        ["apply-template", "acme-salon", "t.json", "--mcp-url", "https://m.test"],
         d,
       ),
     ).rejects.toThrow(/accent/);
@@ -163,93 +163,46 @@ describe("partner command", () => {
     ).rejects.toThrow(/unknown partner/i);
   });
 
+  it("applies a starter template as the base, without a file or an address", async () => {
+    const d = deps();
+    const output = await runPartnerCommand(
+      ["apply-template", "acme-salon", "--vertical", "barbearia_salao"],
+      d,
+    );
+    expect(d.readFile).not.toHaveBeenCalled();
+    expect(d.setTemplate).toHaveBeenCalledWith(
+      "acme-salon",
+      expect.objectContaining({ hide: ["store"] }),
+    );
+    expect(output).toContain("Reception");
+    await expect(
+      runPartnerCommand(["apply-template", "acme-salon", "--vertical", "spaceship"], d),
+    ).rejects.toThrow(/--vertical is one of/);
+    await expect(
+      runPartnerCommand(["apply-template", "acme-salon", "t.json", "--vertical", "clinica"], d),
+    ).rejects.toThrow(/usage/i);
+    expect(d.setTemplate).toHaveBeenCalledTimes(1);
+  });
+
   it("sets, shows, rotates and removes the webhook, printing the secret only for the partner", async () => {
     const d = deps();
     const set = await runPartnerCommand(
-      ["webhook", "greenbarber", "https://hooks.example.test/rook"],
+      ["webhook", "acme-salon", "https://hooks.example.test/rook"],
       d,
     );
-    expect(d.setWebhookUrl).toHaveBeenCalledWith("greenbarber", "https://hooks.example.test/rook");
+    expect(d.setWebhookUrl).toHaveBeenCalledWith("acme-salon", "https://hooks.example.test/rook");
     expect(set).toContain("whsec_v0");
-    expect(await runPartnerCommand(["webhook-secret", "greenbarber"], d)).toContain("whsec_v0");
-    expect(await runPartnerCommand(["webhook-rotate", "greenbarber"], d)).toContain("whsec_v1");
-    expect(await runPartnerCommand(["webhook", "greenbarber", "off"], d)).not.toContain("whsec_");
-    expect(d.setWebhookUrl).toHaveBeenLastCalledWith("greenbarber", null);
+    expect(await runPartnerCommand(["webhook-secret", "acme-salon"], d)).toContain("whsec_v0");
+    expect(await runPartnerCommand(["webhook-rotate", "acme-salon"], d)).toContain("whsec_v1");
+    expect(await runPartnerCommand(["webhook", "acme-salon", "off"], d)).not.toContain("whsec_");
+    expect(d.setWebhookUrl).toHaveBeenLastCalledWith("acme-salon", null);
     await expect(
-      runPartnerCommand(["webhook", "greenbarber", "http://insecure.test"], d),
+      runPartnerCommand(["webhook", "acme-salon", "http://insecure.test"], d),
     ).rejects.toThrow(/https/);
   });
 });
 
-describe("the shipped templates", () => {
-  const dir = new URL("../partner-templates/", import.meta.url);
-  const expected: Record<string, string[]> = {
-    greenbarber: ["Recepção", "Retorno de clientes", "Gestor"],
-    divellas: ["Recepção", "Pós-atendimento", "Gestor"],
-    prontu: ["Recepção", "Assistente de prontuário", "Gestor"],
-  };
-  const presets: Record<string, string[]> = {
-    greenbarber: ["best_slot", "customer_summary"],
-    divellas: [],
-    prontu: ["evolution", "anamnesis", "prescription_draft"],
-  };
-  for (const [slug, names] of Object.entries(expected)) {
-    it(`${slug} is a valid template with its agents, four starters each, the Store hidden`, async () => {
-      const raw = await readFile(new URL(`${slug}.json`, dir), "utf8");
-      const template = parseTemplateFile(raw, "https://mcp.example.test");
-      expect(template.agents.map((agent) => agent.name)).toEqual(names);
-      expect(template.connector).toEqual({
-        slug: "greenflow",
-        name: "Greenflow",
-        endpoint: "https://mcp.example.test",
-      });
-      expect(template.hide).toEqual(["store"]);
-      expect(template.models).toBeUndefined();
-      expect(template.chiefName).toMatch(/^Assistente /);
-      expect(template.quickActions?.length).toBeGreaterThanOrEqual(3);
-      // The tasks the partner's pages run by name, each with a schema that can check an answer.
-      expect(Object.keys(template.assist ?? {})).toEqual(presets[slug]);
-      for (const preset of Object.values(template.assist ?? {})) {
-        if (preset.schema) expect(() => z.fromJSONSchema(preset.schema as never)).not.toThrow();
-      }
-      for (const agent of template.agents) {
-        expect(agent.usesConnector).toBe(true);
-        expect(agent.starters).toHaveLength(4);
-        expect(agent.instructions).toMatch(/aprovação do dono/);
-        expect(agent.instructions).toMatch(/Nunca assine/);
-      }
-      expect(() => parseTemplateFile(raw)).toThrow(/--mcp-url/);
-    });
-  }
-
-  const roleAgents: Record<string, Record<string, string[]>> = {
-    prontu: { reception: ["recepcao"], professional: ["escriba"] },
-    greenbarber: {
-      reception: ["recepcao", "retorno"],
-      professional: ["recepcao", "retorno"],
-    },
-    divellas: {
-      reception: ["recepcao", "pos-atendimento"],
-      professional: ["recepcao", "pos-atendimento"],
-    },
-  };
-  for (const [slug, roles] of Object.entries(roleAgents)) {
-    it(`${slug} gives reception and professionals their own agents and no clinical or finance one by default`, async () => {
-      const raw = await readFile(new URL(`${slug}.json`, dir), "utf8");
-      const template = parseTemplateFile(raw, "https://mcp.example.test");
-      for (const [role, keys] of Object.entries(roles)) {
-        expect(resolvePartnerRole(template, role).agents).toEqual(keys);
-        expect(resolvePartnerRole(template, role).agents).not.toContain("gestor");
-        expect(resolvePartnerRole(template, role).permissions).toEqual(["talk_to_agents"]);
-      }
-      // The owner has everything, and a manager every agent with the right to approve.
-      expect(resolvePartnerRole(template, "owner").agents).toEqual(
-        template.agents.map((agent) => agent.key),
-      );
-      expect(resolvePartnerRole(template, "manager").permissions).toContain("approve_actions");
-    });
-  }
-
+describe("partner commerce command", () => {
   it("turns a partner into a commerce partner and says what that means", async () => {
     const d = deps();
     const output = await runPartnerCommand(

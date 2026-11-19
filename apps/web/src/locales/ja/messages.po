@@ -1121,6 +1121,7 @@ msgstr "管理者"
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
+#: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/RoutineSchedule.tsx
 #: src/pages/Settings.tsx
@@ -1674,6 +1675,10 @@ msgstr "戻る"
 msgid "Back to sign in"
 msgstr "ログインに戻る"
 
+#: src/pages/partner/PartnerTemplatePanel.tsx
+msgid "Barbershop"
+msgstr "理容室"
+
 #: src/pages/partner/PartnerPricing.tsx
 msgid "Base"
 msgstr "ベース"
@@ -2173,6 +2178,10 @@ msgstr "目的をクリア"
 #: src/pages/shell/dialogs.tsx
 msgid "Clearing…"
 msgstr "クリア中…"
+
+#: src/pages/partner/PartnerTemplatePanel.tsx
+msgid "Clinic"
+msgstr "クリニック"
 
 #: src/pages/onboarding/labels.ts
 msgid "Clinic or practice"
@@ -7763,6 +7772,10 @@ msgstr "顧客を再開しますか？"
 msgid "Resume this space to keep going."
 msgstr "続けるには、このスペースを再開してください。"
 
+#: src/pages/partner/PartnerTemplatePanel.tsx
+msgid "Retail"
+msgstr "小売"
+
 #: src/components/AccountAccess.tsx
 #: src/components/PasskeySettings.tsx
 #: src/pages/Auth.tsx
@@ -8312,6 +8325,10 @@ msgstr "共有"
 msgid "Shared memory"
 msgstr "共有メモリ"
 
+#: src/pages/PartnerTemplateEditor.tsx
+msgid "Shortcuts, presets, routines and roles (JSON)"
+msgstr "ショートカット、プリセット、ルーティン、ロール (JSON)"
+
 #: src/pages/GroupPanel.tsx
 msgid "Show all"
 msgstr "すべて表示"
@@ -8607,6 +8624,10 @@ msgstr "標準"
 #: src/pages/shell/computer-overlay.tsx
 msgid "Start"
 msgstr "開始"
+
+#: src/pages/partner/PartnerTemplatePanel.tsx
+msgid "Start from"
+msgstr "テンプレートから開始"
 
 #: src/pages/ImportFlow.tsx
 msgid "Start paused"

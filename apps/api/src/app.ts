@@ -175,6 +175,7 @@ import {
   runIdempotent,
   SeatLimitError,
   securityEventRetentionDays,
+  setPartnerTemplateById,
   setPartnerTenantState,
   setTenantSubscription,
   settlePartnerEvent,
@@ -1339,6 +1340,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       findPartnerTenant(prisma, partnerId, externalTenantId, testMode),
     setState: (partnerId, externalTenantId, state, testMode) =>
       setPartnerTenantState(prisma, partnerId, externalTenantId, state, testMode),
+    setTemplate: (partnerId, template) => setPartnerTemplateById(prisma, partnerId, template),
     ensureChief: (actor, locale, options) =>
       ensureStarterTeam(prisma, actor, locale, undefined, {
         storeAccess: false,

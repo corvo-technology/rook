@@ -1121,6 +1121,7 @@ msgstr "Administrador"
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
+#: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/RoutineSchedule.tsx
 #: src/pages/Settings.tsx
@@ -1674,6 +1675,10 @@ msgstr "Voltar"
 msgid "Back to sign in"
 msgstr "Voltar para o login"
 
+#: src/pages/partner/PartnerTemplatePanel.tsx
+msgid "Barbershop"
+msgstr "Barbearia"
+
 #: src/pages/partner/PartnerPricing.tsx
 msgid "Base"
 msgstr "Base"
@@ -2173,6 +2178,10 @@ msgstr "Limpar o propósito"
 #: src/pages/shell/dialogs.tsx
 msgid "Clearing…"
 msgstr "Limpeza"
+
+#: src/pages/partner/PartnerTemplatePanel.tsx
+msgid "Clinic"
+msgstr "Clínica"
 
 #: src/pages/onboarding/labels.ts
 msgid "Clinic or practice"
@@ -7763,6 +7772,10 @@ msgstr "Retomar o cliente?"
 msgid "Resume this space to keep going."
 msgstr "Retome este espaço para continuar."
 
+#: src/pages/partner/PartnerTemplatePanel.tsx
+msgid "Retail"
+msgstr "Comércio"
+
 #: src/components/AccountAccess.tsx
 #: src/components/PasskeySettings.tsx
 #: src/pages/Auth.tsx
@@ -8312,6 +8325,10 @@ msgstr "Compartilhado"
 msgid "Shared memory"
 msgstr "Memória compartilhada"
 
+#: src/pages/PartnerTemplateEditor.tsx
+msgid "Shortcuts, presets, routines and roles (JSON)"
+msgstr "Atalhos, predefinições, rotinas e papéis (JSON)"
+
 #: src/pages/GroupPanel.tsx
 msgid "Show all"
 msgstr "Mostrar tudo"
@@ -8607,6 +8624,10 @@ msgstr "Padrão"
 #: src/pages/shell/computer-overlay.tsx
 msgid "Start"
 msgstr "Iniciar"
+
+#: src/pages/partner/PartnerTemplatePanel.tsx
+msgid "Start from"
+msgstr "Começar de"
 
 #: src/pages/ImportFlow.tsx
 msgid "Start paused"

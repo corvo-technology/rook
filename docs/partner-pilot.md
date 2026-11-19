@@ -15,7 +15,7 @@ when a customer's credit runs out, its runs say "This month's credit is used up.
 
 ## Operator: apply a template
 
-Two ways, the same result:
+Three ways, the same result:
 
 - Settings > Partnership > **Import** reads a template `.json` file into the editor. Check the agents,
   type the connector address (the `{{MCP_PUBLIC_URL}}` placeholder is left empty on purpose and
@@ -23,6 +23,10 @@ Two ways, the same result:
 - `partner apply-template <slug> <file.json> --mcp-url <https://...>` stores it for any partner, made
   in the app or on the command line. It validates the file first and stores nothing on any error,
   and running it again with the same file changes nothing.
+- `partner apply-template <slug> --vertical <clinica|barbearia_salao|comercio|...>` starts from a
+  generic starter instead of a file.
+- Scripts can `GET` and `PUT` `/api/partner/v1/template` with the partner key (`{ "template": {...} }`
+  or `{ "vertical": "clinica" }`).
 
 A template applies to customers made from then on. A customer's agents are made once per `key` and
 never overwritten, so existing customers keep what they have.
@@ -102,8 +106,8 @@ have plans. Keys keep `tenants:write` only until given the commerce scopes. Mone
 
 ## One partner per product
 
-A company with several products makes one partner for each (for Greenflow: `greenbarber`,
-`divellas` and `prontu`). Each has its own key, template, Chief name and colour, and customers never
+A company with several products makes one partner for each (for example `acme-clinic`,
+`acme-salon` and `acme-shop`). Each has its own key, template, Chief name and colour, and customers never
 share across partners. The partner's backend picks the key by the customer's product. All of them
 can draw on one credit account with `--wallet-owner`, and the limits and customers shown under
 Settings > Partnership are those of the partner that account owns in the app.
@@ -135,7 +139,7 @@ answer `404`.
 
    The template (Settings > Partnership > **Edit**, or `apply-template`) also holds:
 
-   - `chiefName`: what a new customer's Chief is called, for example `"Assistente GreenBarber"`.
+   - `chiefName`: what a new customer's Chief is called, for example `"Acme Assistant"`.
      Without it the Chief has its localized default. It is set when the customer is first made;
      existing customers keep the name they have.
    - `accent`: the partner's main colour as `#rrggbb`. The embedded assistant and the page a
@@ -143,9 +147,9 @@ answer `404`.
    - `models`: `"fixed"` (the default, the customer cannot change the model) or `"choose"`.
    - `hide`: areas left out of the bar: `routines`, `workflows`, `usage`, `artifacts`, `store`.
 
-   A template is plain JSON, so these fields need no migration. Ready-made templates for Greenflow
-   are in `apps/api/src/partner-templates/` (`greenbarber.json`, `divellas.json`, `prontu.json`). They
-   name the Greenflow MCP address as `{{MCP_PUBLIC_URL}}`, which is filled in when they are applied.
+   A template is plain JSON, so these fields need no migration. It lives in the database, per partner:
+   edit it in the Central or through the template route. The code only ships generic starters by
+   vertical (clinic, salon, retail and more) to begin from.
 
    Agents are made once per `key` and never overwritten, so what the customer edits stays. Define
    the agents and the connector once under Settings > Partnership (**Agents > Edit**) and the call
@@ -181,17 +185,17 @@ answer `404`.
    Redirect the browser to `url` within 60 seconds. The link works once, then signs the person in
    as the customer's owner.
 
-## Greenflow
+## Several products
 
-Greenflow runs three partners on one Rook deployment (`greenbarber`, `divellas`, `prontu`) and its
-backend picks the key by the customer's product. Its environment:
+A company with three products runs three partners on one Rook deployment (`acme-clinic`,
+`acme-salon`, `acme-shop`) and its backend picks the key by the customer's product. Its environment:
 
 ```
 ROOK_API_URL=https://api.rook.team
 ROOK_WEB_URL=https://app.rook.team
-ROOK_PARTNER_KEY_GREENBARBER=<key of greenbarber>
-ROOK_PARTNER_KEY_DIVELLAS=<key of divellas>
-ROOK_PARTNER_KEY_PRONTU=<key of prontu>
+ROOK_PARTNER_KEY_ACME_CLINIC=<key of acme-clinic>
+ROOK_PARTNER_KEY_ACME_SALON=<key of acme-salon>
+ROOK_PARTNER_KEY_ACME_SHOP=<key of acme-shop>
 ```
 
 The session route calls `PUT {ROOK_API_URL}/api/partner/v1/tenants/{tenantId}` with
@@ -200,12 +204,12 @@ from the template), then `POST .../sessions`, and returns only `{ code }`. The p
 `{ROOK_WEB_URL}/sdk.js`. Setup, once, on the Rook server:
 
 ```
-pnpm --filter @corvo/api partner create greenbarber "GreenBarber" --wallet-owner <owner email>
-pnpm --filter @corvo/api partner create divellas "Divellas" --wallet-owner <owner email>
-pnpm --filter @corvo/api partner create prontu "Prontu" --wallet-owner <owner email>
-pnpm --filter @corvo/api partner apply-template greenbarber apps/api/src/partner-templates/greenbarber.json --mcp-url <MCP_PUBLIC_URL>
-pnpm --filter @corvo/api partner apply-template divellas apps/api/src/partner-templates/divellas.json --mcp-url <MCP_PUBLIC_URL>
-pnpm --filter @corvo/api partner apply-template prontu apps/api/src/partner-templates/prontu.json --mcp-url <MCP_PUBLIC_URL>
+pnpm --filter @corvo/api partner create acme-clinic "Acme Clinic" --wallet-owner <owner email>
+pnpm --filter @corvo/api partner create acme-salon "Acme Salon" --wallet-owner <owner email>
+pnpm --filter @corvo/api partner create acme-shop "Acme Shop" --wallet-owner <owner email>
+pnpm --filter @corvo/api partner apply-template acme-clinic --vertical clinica
+pnpm --filter @corvo/api partner apply-template acme-salon --vertical barbearia_salao
+pnpm --filter @corvo/api partner apply-template acme-shop --vertical comercio
 ```
 
 Each `create` prints that partner's key once. The owner's account needs credit in Billing first.

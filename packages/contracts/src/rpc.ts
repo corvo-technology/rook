@@ -272,6 +272,8 @@ import {
   UserMemoryStateSchema,
   UserMemoryTextSchema,
 } from "./user-memory.js";
+import type { VerticalSummary } from "./verticals.js";
+import { VerticalIdSchema, VerticalSelection } from "./verticals.js";
 import {
   WikiApplyAllResultSchema,
   WikiCaptureStateSchema,
@@ -1491,6 +1493,24 @@ export const appContract = {
           created: z.boolean(),
           /** The agent the picks named, with the first task to leave unsent in its composer. */
           pickedAgent: z.object({ botId: Id, task: z.string().nullable() }).optional(),
+        }),
+      ),
+    /** The kinds of business Rook starts a team for, in the person's language. */
+    verticals: oc
+      .input(z.object({ locale: z.string().max(35).default("en") }))
+      .output(z.array(z.custom<VerticalSummary>())),
+    /**
+     * Make the agents and scheduled routines picked from a vertical, and say what to offer next
+     * (channels, Store apps). Safe to repeat: what exists is left as the person changed it.
+     */
+    applyVertical: oc
+      .input(z.object({ verticalId: VerticalIdSchema, selection: VerticalSelection.default({}) }))
+      .output(
+        z.object({
+          botIds: z.record(z.string(), Id),
+          routineIds: z.record(z.string(), Id),
+          channels: z.array(z.object({ kind: z.enum(["whatsapp", "email"]), purpose: z.string() })),
+          connections: z.array(z.object({ app: z.string(), reason: z.string() })),
         }),
       ),
     /** Seed the first-run greeting into the bot's thread (focus card is separate). */

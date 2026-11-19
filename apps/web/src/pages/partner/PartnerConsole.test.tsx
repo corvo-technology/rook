@@ -57,8 +57,8 @@ import { PartnerConsolePage } from "./PartnerConsolePage";
 
 const embedded = {
   id: "p1",
-  slug: "greenbarber",
-  name: "GreenBarber",
+  slug: "acme-salon",
+  name: "Acme Salon",
   mode: "embedded" as const,
   currency: "BRL" as const,
   accent: null,
@@ -492,6 +492,90 @@ describe("partner template", () => {
       partnerId: "p1",
       template: expect.objectContaining({ chiefName: "Ana" }),
     });
+  });
+});
+
+describe("partner template: presets, routines and roles", () => {
+  const stored = {
+    agents: [{ key: "reception", name: "Reception", instructions: "Greet.", usesConnector: false }],
+    assist: { summary: { task: "Summarize." } },
+    routines: [
+      {
+        key: "no-show",
+        agent: "reception",
+        name: "No-show",
+        prompt: "Draft a message.",
+        on: { type: "appointment.no_show" },
+        active: true,
+      },
+    ],
+    roles: { reception: { agents: ["reception"], permissions: ["talk_to_agents"] } },
+  };
+
+  it("keeps them when the template is saved again", async () => {
+    api.template.mockResolvedValue({ template: stored });
+    api.setTemplate.mockResolvedValue({ template: stored });
+    await render("/app/partner/p1/template");
+    await click(byText("Edit"));
+    await click(byText("Save"));
+    expect(api.setTemplate).toHaveBeenCalledWith({
+      partnerId: "p1",
+      template: expect.objectContaining({
+        assist: stored.assist,
+        routines: stored.routines,
+        roles: stored.roles,
+      }),
+    });
+  });
+
+  it("saves them as edited, and refuses text that is not valid", async () => {
+    api.template.mockResolvedValue({ template: stored });
+    api.setTemplate.mockResolvedValue({ template: stored });
+    await render("/app/partner/p1/template");
+    await click(byText("Edit"));
+    const box = container.ownerDocument.querySelector<HTMLTextAreaElement>(
+      'textarea[aria-label="Shortcuts, presets, routines and roles (JSON)"]',
+    );
+    expect(box).toBeTruthy();
+    const write = (value: string) => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set;
+      act(() => {
+        setter?.call(box, value);
+        box?.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    };
+    write('{"roles": {"Bad Name": 1}}');
+    expect(byText("Save")?.hasAttribute("disabled")).toBe(true);
+    write('{"roles": {"manager": {"agents": ["*"]}}}');
+    await click(byText("Save"));
+    const saved = api.setTemplate.mock.calls.at(-1)?.[0].template;
+    expect(saved.roles).toEqual({ manager: { agents: ["*"], permissions: [] } });
+    expect(saved.routines).toBeUndefined();
+  });
+
+  it("starts from a vertical's template, ready to edit and save", async () => {
+    api.template.mockResolvedValue({ template: null });
+    api.setTemplate.mockResolvedValue({ template: null });
+    await render("/app/partner/p1/template");
+    const select = document.body.querySelector<HTMLSelectElement>(
+      'select[aria-label="Start from"]',
+    );
+    expect(select?.querySelectorAll("option")).toHaveLength(8);
+    await act(async () => {
+      if (select) {
+        select.value = "clinica";
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    });
+    await click(byText("Save"));
+    const saved = api.setTemplate.mock.calls.at(-1)?.[0].template;
+    expect(saved.agents.map((agent: { key: string }) => agent.key)).toEqual([
+      "reception",
+      "followup",
+      "manager",
+    ]);
+    expect(saved.routines).toHaveLength(2);
+    expect(saved.connector).toBeUndefined();
   });
 });
 

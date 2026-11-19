@@ -207,7 +207,7 @@ import {
   resolveStrongRunModel,
   runtimeFallbackModel,
 } from "./run-model.js";
-import { routeTurn, strongerTierFor } from "./run-model-routing.js";
+import { resolveTierModel, routeTurn, strongerTierFor } from "./run-model-routing.js";
 import { createReplyState } from "./run-progress.js";
 import { repeatHintForRun } from "./run-repeat.js";
 import { DELEGATED_EMPTY_NOTICE, runAllowsSilentEmpty, runReplyGuidance } from "./run-replies.js";
@@ -612,19 +612,27 @@ export function createRunExecutor(deps: ExecutorDeps) {
             pinned: run.modelPinned,
             hasModel: Boolean(ownChoice.modelProvider && ownChoice.modelId),
           }) && !deps.runtime.describe().capabilities.scripted;
-        const routed = automatic
-          ? await routeTurn({
-              deps,
-              run,
-              bot,
-              task,
-              messages,
-              defaults: {
-                settings,
-                deployment: deps.deploymentModelConfigured ? resolveDeploymentModel() : null,
-              },
-            })
-          : undefined;
+        const modelDefaults = {
+          settings,
+          deployment: deps.deploymentModelConfigured ? resolveDeploymentModel() : null,
+        };
+        // A partner's test customer always runs on the fast tier, so a test costs as little as it
+        // can; a deployment with no fast model keeps the model the agent has.
+        const testRun =
+          !deps.runtime.describe().capabilities.scripted &&
+          (await deps.spaceIsPartnerTest?.(run.spaceId)) === true;
+        const routed = testRun
+          ? await resolveTierModel(deps, run, "fast", modelDefaults)
+          : automatic
+            ? await routeTurn({
+                deps,
+                run,
+                bot,
+                task,
+                messages,
+                defaults: modelDefaults,
+              })
+            : undefined;
         const modelChoice: ModelChoice = routed?.choice ?? ownChoice;
         const hasModelOverride = Boolean(modelChoice.modelProvider && modelChoice.modelId);
         const overrideCredential =
@@ -972,6 +980,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
         }
         if (
           (await modelCreditBillingEnabled(deps)) &&
+          !testRun &&
           !(await spaceHasModelAccess(deps.prisma, run.spaceId))
         ) {
           await failRunBeforeModel(

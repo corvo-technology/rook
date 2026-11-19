@@ -99,6 +99,7 @@ import {
   createThreadEvents,
   describeRowSecurity,
   installSecurityEventStore,
+  isPartnerTestSpace,
   isTooManyDatabaseConnections,
   latestMigrationName,
   parsePositiveInteger,
@@ -311,6 +312,7 @@ async function main() {
   const executor = createRunExecutor({
     shutdownSignal: interruptRuns.signal,
     spacePartnerState: (spaceId) => partnerSpaceState(prisma, spaceId),
+    spaceIsPartnerTest: (spaceId) => isPartnerTestSpace(prisma, spaceId),
     maxUploadSizeBytes: uploadSizeFromEnv(process.env),
     prisma,
     runtime,

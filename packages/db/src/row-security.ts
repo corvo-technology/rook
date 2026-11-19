@@ -113,6 +113,7 @@ export const ROW_SECURITY_MODELS: ReadonlySet<string> = new Set([
   "PartnerEntryCode",
   "PartnerRequestWindow",
   "PartnerWebhookEvent",
+  "PartnerTestUsage",
   "PartnerAlert",
   "PartnerAlertPreference",
   "PartnerMember",

@@ -57,6 +57,9 @@ const partners = [
     fundPercent: 64,
     chargedCredits: 61_000,
     costCredits: 40_000,
+    testCustomers: 0,
+    testCallsToday: 0,
+    testDailyCap: 300,
   },
   {
     id: "p2",
@@ -69,6 +72,9 @@ const partners = [
     fundPercent: 8,
     chargedCredits: 20_000,
     costCredits: 23_500,
+    testCustomers: 0,
+    testCallsToday: 0,
+    testDailyCap: 300,
   },
   {
     id: "p3",
@@ -81,6 +87,9 @@ const partners = [
     fundPercent: null,
     chargedCredits: 0,
     costCredits: null,
+    testCustomers: 0,
+    testCallsToday: 0,
+    testDailyCap: 300,
   },
 ];
 

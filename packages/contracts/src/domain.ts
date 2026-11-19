@@ -1955,6 +1955,8 @@ export const MeSchema = z.object({
       accent: z.string().optional(),
       /** Shortcuts on the embedded Home. */
       quickActions: z.array(PartnerQuickAction).optional(),
+      /** True for a customer made with the partner's test key; the embedded UI marks it. */
+      test: z.boolean().optional(),
     })
     .nullable()
     .optional(),

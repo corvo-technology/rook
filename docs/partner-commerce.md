@@ -874,3 +874,37 @@ The rules are pure functions in `packages/db/src/partner-credit-rules.ts`; the d
 - **Billing entry.** A white-label customer's Billing settings show a link to the plans screen
   (`/app/plans`), which is also the target of "Buy more".
 - **Not yet.** A console refund action.
+
+## 17. Test mode
+
+A partner has a second key, `cpk_test_<prefix>.<secret>`, kept like the live one (prefix and hash
+only, `Partner.testKeyPrefix` and `testKeyHash`). `authenticatePartnerKey` says which mode a key is
+in; the live-only `authenticatePartner` refuses a test key. Everything a test key creates is a
+`PartnerTenant` with `testMode = true`.
+
+- **Isolation.** `findPartnerTenant` and `setPartnerTenantState` only see customers of the key's
+  mode (a mismatch answers as not found). `provisionPartnerTenant` throws
+  `PartnerTenantModeMismatch` for an id that exists in the other mode (409 `tenant_mode`), because
+  `(partnerId, externalTenantId)` stays unique.
+- **No charge.** `reserveModelCredits` and `holdCredits` never debit a test organization;
+  The executor and the consultation credit check skip the credit gate for it, and `partnerSpaceState` lets it run with no plan. Allowance
+  grants are skipped. Metering, credit notices, allowance notices, connector alerts, the console
+  overview, credit usage and the platform overview leave test customers out, so nothing reaches
+  revenue, usage, limits or invoices.
+- **Cheap model, daily cap.** The executor runs a test customer on the fast tier. Each model call
+  takes one place from `PartnerTestUsage(partnerId, day)`; `takePartnerTestCall` only increments
+  while under `Partner.testDailyCap` (default 300), so a refused call is not counted and
+  concurrent calls cannot overshoot. The cap is set per partner by the platform admin
+  (`platform.partners.setTestCap`) and shown beside the day's calls in the partners table.
+- **Commerce.** Commerce calls with a test key answer a simulated body (`test: true`) after the
+  same catalog and period checks; no ledger, grant, invoice or payment is written. A non-active
+  test subscription records `subscription.lapsed` for the test webhook.
+- **Notices.** `recordCommerceEvent` sends a test customer's notice only to
+  `Partner.testWebhookUrl`, with `test: true` in the payload (delivery adds `X-Rook-Test: true`),
+  and never raises a people alert.
+- **Wipe.** `partnerConsole.clearTestData` deletes each test customer's content through the
+  account deletion path, then its record, organization and owner. Live customers are never listed.
+- **Embedded UI.** `me.partner.test` shows a "Test" badge in the embedded bar.
+
+Not done: a deterministic fake model selected by the deployment, and the payment provider's own
+test mode (the simulation never reaches the provider).

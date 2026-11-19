@@ -20,6 +20,13 @@ import type { Context, Hono } from "hono";
 import { readBoundedBody } from "./http-body.js";
 import type { PartnerAuth } from "./partner-routes.js";
 import { PARTNER_MAX_BODY_BYTES, partnerHasScope } from "./partner-routes.js";
+import {
+  simulatedBalance,
+  simulatedRefund,
+  simulatedSubscription,
+  simulatedTopup,
+  simulatedUsage,
+} from "./partner-test-commerce.js";
 
 const MAX_KEY_LENGTH = 128;
 const ID = /^[A-Za-z0-9_.:-]{1,64}$/;
@@ -54,8 +61,21 @@ export interface PartnerCommerceDeps {
   now(): Date;
   allowRequest(partnerId: string): Promise<boolean>;
   authenticate(key: string): Promise<CommercePartnerAuth | null>;
-  /** Only ever finds a customer of the partner asking. */
-  findTenant(partnerId: string, externalTenantId: string): Promise<CommerceTenant | null>;
+  /** Only ever finds a customer of the partner asking, of the mode of its key. */
+  findTenant(
+    partnerId: string,
+    externalTenantId: string,
+    testMode?: boolean,
+  ): Promise<CommerceTenant | null>;
+  /**
+   * Records a notice a test customer's simulated payment owes the partner, labelled test and
+   * addressed to its test webhook; returns the ids to deliver.
+   */
+  testNotice?(
+    partner: CommercePartner,
+    tenant: CommerceTenant,
+    notice: { kind: string; key: string; payload: Record<string, unknown> },
+  ): Promise<string[]>;
   catalog(currency: string): Promise<CatalogView>;
   /** The partner's markups by item id (`plan:<key>`, `pack:<key>`); empty when it set none. */
   markups(partnerId: string): Promise<ReadonlyMap<string, MarkupRule>>;
@@ -89,6 +109,9 @@ export interface PartnerCommerceDeps {
   notify(eventIds: string[]): Promise<void>;
 }
 
+type TopupInputBody = { pack: string; quantity: number };
+type RefundInputBody = { amountMinor?: number };
+
 const notFound = (c: Context) => c.json({ error: "Not found" }, 404);
 
 /**
@@ -114,7 +137,52 @@ export function mountPartnerCommerceRoutes(app: Hono, deps: PartnerCommerceDeps)
   const tenantOf = async (c: Context, partner: CommercePartnerAuth) => {
     const id = c.req.param("externalTenantId") ?? "";
     if (!ID.test(id)) return null;
-    return deps.findTenant(partner.id, id);
+    return deps.findTenant(partner.id, id, partner.testMode === true);
+  };
+
+  /**
+   * What a test key's money call does instead: the same checks, a simulated answer, nothing
+   * recorded. A subscription that is past due or canceled still owes the test webhook its notice,
+   * so a partner can try how it reacts.
+   */
+  const simulate = async (
+    c: Context,
+    partner: CommercePartnerAuth,
+    tenant: CommerceTenant,
+    kind: "subscription" | "topup" | "refund",
+    input: SubscriptionInput | TopupInputBody | RefundInputBody,
+  ): Promise<Response> => {
+    const key = c.req.header("idempotency-key") ?? "";
+    if (!IDEMPOTENCY_KEY.test(key)) return c.json({ error: "idempotency_key_required" }, 400);
+    if (kind === "subscription") {
+      const sub = input as SubscriptionInput;
+      const catalog = await deps.catalog(partner.currency);
+      if (!catalog.plans.some((plan) => plan.key === sub.plan)) {
+        return c.json({ error: "unknown_plan" }, 422);
+      }
+      if (sub.currentPeriodEnd <= sub.currentPeriodStart) {
+        return c.json({ error: "invalid_period" }, 422);
+      }
+      if (sub.status !== "active" && deps.testNotice) {
+        const ids = await deps.testNotice(partner, tenant, {
+          kind: "subscription.lapsed",
+          key: `${sub.currentPeriodStart.toISOString()}:${sub.status}`,
+          payload: { plan: sub.plan, status: sub.status, currency: partner.currency },
+        });
+        if (ids.length > 0) await deps.notify(ids).catch(() => undefined);
+      }
+      return c.json(simulatedSubscription(tenant.id, partner.currency, sub));
+    }
+    if (kind === "topup") {
+      const topup = input as TopupInputBody;
+      const pack = (await deps.catalog(partner.currency)).packs.find(
+        (item) => item.key === topup.pack,
+      );
+      if (!pack) return c.json({ error: "unknown_pack" }, 422);
+      return c.json(simulatedTopup(partner.currency, pack.creditMinor * topup.quantity, key), 201);
+    }
+    const refund = input as RefundInputBody;
+    return c.json(simulatedRefund(partner.currency, refund.amountMinor ?? 0, key), 201);
   };
 
   const readJson = async (c: Context): Promise<unknown | Response> => {
@@ -198,6 +266,15 @@ export function mountPartnerCommerceRoutes(app: Hono, deps: PartnerCommerceDeps)
     const parsed = PartnerSubscriptionInput.safeParse(json);
     if (!parsed.success) return c.json({ error: "Invalid request" }, 400);
     const input = parsed.data;
+    if (partner.testMode) {
+      return simulate(c, partner, tenant, "subscription", {
+        plan: input.plan,
+        status: input.status,
+        currentPeriodStart: new Date(input.currentPeriodStart),
+        currentPeriodEnd: new Date(input.currentPeriodEnd),
+        idempotencyKey: "",
+      });
+    }
     return money(c, partner, tenant, json, 200, (now, key) =>
       deps.setSubscription(
         partner,
@@ -225,6 +302,7 @@ export function mountPartnerCommerceRoutes(app: Hono, deps: PartnerCommerceDeps)
     if (json instanceof Response) return json;
     const parsed = PartnerTopupInput.safeParse(json);
     if (!parsed.success) return c.json({ error: "Invalid request" }, 400);
+    if (partner.testMode) return simulate(c, partner, tenant, "topup", parsed.data);
     return money(c, partner, tenant, json, 201, (now, key) =>
       deps.topup(partner, tenant, { ...parsed.data, idempotencyKey: key }, now),
     );
@@ -239,6 +317,7 @@ export function mountPartnerCommerceRoutes(app: Hono, deps: PartnerCommerceDeps)
     if (json instanceof Response) return json;
     const parsed = PartnerRefundInput.safeParse(json);
     if (!parsed.success) return c.json({ error: "Invalid request" }, 400);
+    if (partner.testMode) return simulate(c, partner, tenant, "refund", parsed.data);
     return money(c, partner, tenant, json, 201, (now, key) =>
       deps.refund(partner, tenant, { ...parsed.data, idempotencyKey: key }, now),
     );
@@ -249,6 +328,7 @@ export function mountPartnerCommerceRoutes(app: Hono, deps: PartnerCommerceDeps)
     if (partner instanceof Response) return partner;
     const tenant = await tenantOf(c, partner);
     if (!tenant) return notFound(c);
+    if (partner.testMode) return c.json(simulatedBalance(partner.currency, deps.now()));
     const balance = await deps.balance(partner, tenant, deps.now());
     return c.json({
       currency: balance.currency,
@@ -273,6 +353,7 @@ export function mountPartnerCommerceRoutes(app: Hono, deps: PartnerCommerceDeps)
     if (!tenant) return notFound(c);
     const query = PartnerUsageQuery.safeParse({ period: c.req.query("period") });
     if (!query.success) return c.json({ error: "Invalid request" }, 400);
+    if (partner.testMode) return c.json(simulatedUsage(partner.currency, query.data.period));
     return c.json((await deps.usage(partner, tenant, query.data.period)) as object);
   });
 }

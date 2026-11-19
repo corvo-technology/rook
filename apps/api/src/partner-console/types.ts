@@ -30,6 +30,9 @@ export interface PartnerRecord {
   checkoutUrl: string | null;
   keyPrefix: string;
   webhookUrl: string | null;
+  /** Test mode: the test key's start (null until one is made) and where test notices go. */
+  testKeyPrefix: string | null;
+  testWebhookUrl: string | null;
   accent: string | null;
   chiefName: string | null;
   /** What every new customer gets; null when the partner has none. */
@@ -52,6 +55,8 @@ export interface CustomerRow {
   since: Date;
   /** The share of plan credit used has reached the notice threshold. */
   lowCredit: boolean;
+  /** Made with the partner's test key. */
+  test?: boolean;
   connector: ConnectorState;
   connectorCheckedAt: Date | null;
   pastDueSince: Date | null;
@@ -103,6 +108,9 @@ export type AuditKind =
   | "support.session_opened"
   | "pricing.changed"
   | "key.rotated"
+  | "test_key.rotated"
+  | "test_webhook.changed"
+  | "test_data.cleared"
   | "webhook.changed"
   | "template.changed"
   | "credit.limit_changed"
@@ -143,7 +151,8 @@ export interface PartnerConsoleStore {
   listPartners(organizationId: string): Promise<PartnerRecord[]>;
   /** Null for a partner the organization does not manage, whether or not it exists. */
   findPartner(organizationId: string, partnerId: string): Promise<PartnerRecord | null>;
-  customerRows(partner: PartnerRecord, now: Date): Promise<CustomerRow[]>;
+  /** The partner's live customers, or with "test" the ones made with its test key. */
+  customerRows(partner: PartnerRecord, now: Date, mode?: "live" | "test"): Promise<CustomerRow[]>;
   customerDetail(
     partner: PartnerRecord,
     row: CustomerRow,
@@ -195,6 +204,17 @@ export interface PartnerConsoleStore {
   keyIssuedAt(partner: PartnerRecord): Promise<Date>;
   rotateKey(partner: PartnerRecord): Promise<{ key: string; prefix: string }>;
   setWebhookUrl(partner: PartnerRecord, url: string | null): Promise<void>;
+  rotateTestKey(partner: PartnerRecord): Promise<{ key: string; prefix: string }>;
+  setTestWebhookUrl(partner: PartnerRecord, url: string | null): Promise<void>;
+  /** The partner's test customers, for the wipe; never a live one. */
+  testTenants(
+    partner: PartnerRecord,
+  ): Promise<Array<{ organizationId: string; ownerUserId: string }>>;
+  /** Removes test customers whose content is already deleted. */
+  removeTestTenants(
+    partner: PartnerRecord,
+    tenants: ReadonlyArray<{ organizationId: string; ownerUserId: string }>,
+  ): Promise<number>;
   /** Whether each alert is also emailed to the partner's people; the app always shows it. */
   alertEmailSettings(
     partner: PartnerRecord,
@@ -217,6 +237,8 @@ export interface PartnerConsoleDeps {
   webOrigin: string;
   /** A fresh unguessable one-use code. */
   newCode(): string;
+  /** Deletes what a test customer's owner left behind (agents, computers, files); absent in tests. */
+  deleteTenantContent?(ownerUserId: string): Promise<void>;
   /** Opens Rook's checkout for a top-up of the partner's fund; absent where nothing bills. */
   topupCheckout?(partner: PartnerRecord, amountMinor: number): Promise<{ url: string }>;
 }

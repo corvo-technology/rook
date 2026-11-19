@@ -1613,6 +1613,12 @@ export const appContract = {
             .default({}),
         )
         .output(z.array(PlatformPartnerSchema)),
+      /** How many model calls a partner's test customers may make per UTC day. */
+      setTestCap: oc
+        .input(
+          z.object({ partnerId: z.string().min(1), cap: z.number().int().min(0).max(1_000_000) }),
+        )
+        .output(z.object({ ok: z.literal(true) })),
       /** Makes a partner and invites its owner (or adds it to the owner's organization). */
       create: oc
         .input(PlatformNewPartnerSchema.extend({ ownerEmail: z.email().max(254) }))
@@ -1743,6 +1749,18 @@ export const appContract = {
     rotateKey: oc
       .input(z.object({ partnerId: Id }))
       .output(z.object({ key: z.string(), prefix: z.string() })),
+    /** Makes or replaces the test key; the live key is untouched and the new key is shown once. */
+    rotateTestKey: oc
+      .input(z.object({ partnerId: Id }))
+      .output(z.object({ key: z.string(), prefix: z.string() })),
+    /** Where notices about test customers go (labelled test); an https address, or null. */
+    setTestWebhook: oc
+      .input(z.object({ partnerId: Id, url: z.string().trim().max(2048).nullable() }).strict())
+      .output(z.object({ url: z.string().nullable() })),
+    /** Deletes the partner's test customers with their data; live customers are never touched. */
+    clearTestData: oc
+      .input(z.object({ partnerId: Id }))
+      .output(z.object({ removed: z.number().int().nonnegative() })),
     /**
      * Embedded partners: the plan, the fund and each customer's use of it, in credits (one credit
      * is one US cent of the fund). White-label and referral partners use pricing instead.

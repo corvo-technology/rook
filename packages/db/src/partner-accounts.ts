@@ -66,7 +66,7 @@ export async function listOwnedPartnerTenants(
   }>
 > {
   const rows = await prisma.partnerTenant.findMany({
-    where: { partnerId },
+    where: { partnerId, testMode: false },
     orderBy: { createdAt: "asc" },
     take: 500,
     select: {

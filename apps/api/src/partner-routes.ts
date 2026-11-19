@@ -6,7 +6,7 @@ import {
   PartnerTemplate,
   PartnerTenantInput,
 } from "@corvo/contracts";
-import { PartnerAllowanceRefused } from "@corvo/db";
+import { PartnerAllowanceRefused, PartnerTenantModeMismatch } from "@corvo/db";
 import type { Context, Hono } from "hono";
 import { readBoundedBody } from "./http-body.js";
 import type { PartnerContent } from "./partner-content.js";
@@ -33,6 +33,8 @@ export interface PartnerAuth {
   template?: unknown;
   scopes?: string[] | null;
   billingModel?: string;
+  /** The key is the partner's test key: it only reaches test customers, and nothing it does costs. */
+  testMode?: boolean;
 }
 
 export interface PartnerRouteDeps {
@@ -43,7 +45,7 @@ export interface PartnerRouteDeps {
   /** The partner a key belongs to, or null for any key that is not usable. */
   authenticate(key: string): Promise<PartnerAuth | null>;
   provision(
-    partner: { id: string },
+    partner: { id: string; testMode?: boolean },
     input: { externalTenantId: string; name: string },
   ): Promise<{
     tenantId: string;
@@ -53,11 +55,16 @@ export interface PartnerRouteDeps {
     created: boolean;
   }>;
   /** Only ever finds a customer of the partner asking. */
-  findTenant(partnerId: string, externalTenantId: string): Promise<TenantRow | null>;
+  findTenant(
+    partnerId: string,
+    externalTenantId: string,
+    testMode?: boolean,
+  ): Promise<TenantRow | null>;
   setState(
     partnerId: string,
     externalTenantId: string,
     state: "enabled" | "suspended",
+    testMode?: boolean,
   ): Promise<boolean>;
   /**
    * The Chief every customer starts with, in front of the partner's agents. Safe to repeat. `name`
@@ -132,7 +139,14 @@ export function mountPartnerRoutes(app: Hono, deps: PartnerRouteDeps): void {
       return c.json({ error: "commerce_partner" }, 409);
     }
 
-    const tenant = await deps.provision(partner, { externalTenantId, name: input.name });
+    let tenant: Awaited<ReturnType<PartnerRouteDeps["provision"]>>;
+    try {
+      tenant = await deps.provision(partner, { externalTenantId, name: input.name });
+    } catch (error) {
+      // The id belongs to a customer of the other mode; a key never reaches across.
+      if (error instanceof PartnerTenantModeMismatch) return c.json({ error: "tenant_mode" }, 409);
+      throw error;
+    }
     // What the call names wins; what it leaves out comes from the partner's template.
     const template = PartnerTemplate.safeParse(partner.template).data;
     const connector =
@@ -161,8 +175,11 @@ export function mountPartnerRoutes(app: Hono, deps: PartnerRouteDeps): void {
         throw error;
       }
     }
-    if (input.state) await deps.setState(partner.id, externalTenantId, input.state);
-    if (input.allowanceCents) {
+    if (input.state) {
+      await deps.setState(partner.id, externalTenantId, input.state, partner.testMode === true);
+    }
+    // A test customer is never given credit: nothing it does is paid for.
+    if (input.allowanceCents && !partner.testMode) {
       try {
         await deps.grantAllowance(
           { organizationId: tenant.organizationId, partnerId: partner.id, externalTenantId },
@@ -181,7 +198,11 @@ export function mountPartnerRoutes(app: Hono, deps: PartnerRouteDeps): void {
         throw error;
       }
     }
-    return c.json({ tenantId: tenant.tenantId, created: tenant.created });
+    return c.json({
+      tenantId: tenant.tenantId,
+      created: tenant.created,
+      ...(partner.testMode ? { test: true } : {}),
+    });
   });
 
   for (const [action, state] of [
@@ -191,7 +212,12 @@ export function mountPartnerRoutes(app: Hono, deps: PartnerRouteDeps): void {
     app.post(`/api/partner/v1/tenants/:externalTenantId/${action}`, async (c) => {
       const partner = await authorize(c);
       if (partner instanceof Response) return partner;
-      const found = await deps.setState(partner.id, c.req.param("externalTenantId"), state);
+      const found = await deps.setState(
+        partner.id,
+        c.req.param("externalTenantId"),
+        state,
+        partner.testMode === true,
+      );
       return found ? c.json({ ok: true }) : notFound(c);
     });
   }
@@ -205,7 +231,7 @@ export function mountPartnerRoutes(app: Hono, deps: PartnerRouteDeps): void {
     if (!parsed.success) return c.json({ error: "Invalid request" }, 400);
     const { externalTenantId, externalUserId, email } = parsed.data;
 
-    const tenant = await deps.findTenant(partner.id, externalTenantId);
+    const tenant = await deps.findTenant(partner.id, externalTenantId, partner.testMode === true);
     if (tenant?.state !== "enabled") return notFound(c);
 
     const code = randomBytes(32).toString("base64url");

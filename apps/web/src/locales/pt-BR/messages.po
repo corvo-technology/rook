@@ -2156,6 +2156,10 @@ msgstr "Limpar conversa"
 msgid "Clear filter {label}"
 msgstr "Limpar filtro {label}"
 
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Clear test data"
+msgstr "Limpar dados de teste"
+
 #: src/lib/server-copy.ts
 msgid "Clear the purpose"
 msgstr "Limpar o propósito"
@@ -3369,6 +3373,10 @@ msgstr "Criar o espaço “{space}”?"
 msgid "Create spaces"
 msgstr "Criar espaços"
 
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Create test key"
+msgstr "Criar chave de teste"
+
 #: src/pages/Auth.tsx
 msgid "Create your account"
 msgstr "Crie sua conta"
@@ -3561,6 +3569,10 @@ msgstr "Limite diário atingido"
 msgid "Daily spending limit"
 msgstr "Limite diário de gasto"
 
+#: src/pages/platform/PartnersSection.tsx
+msgid "Daily test limit"
+msgstr "Limite diário de teste"
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Dark"
 msgstr "Escuro"
@@ -3685,6 +3697,10 @@ msgstr "Excluir {0}?"
 #: src/components/AccountAccess.tsx
 msgid "Delete account"
 msgstr "Excluir conta"
+
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Delete every test customer and their data?"
+msgstr "Apagar todos os clientes de teste e os dados deles?"
 
 #: src/pages/YouMemory.tsx
 msgid "Delete for good"
@@ -8890,6 +8906,10 @@ msgstr "URL dos termos"
 
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/onboarding/LocalModelChoice.tsx
+#: src/pages/partner/PartnerCustomers.tsx
+#: src/pages/partner/PartnerIntegration.tsx
+#: src/pages/platform/PartnersSection.tsx
+#: src/pages/shell/embed-tabs.tsx
 msgid "Test"
 msgstr "Teste"
 
@@ -8910,6 +8930,10 @@ msgstr "Testar conexão"
 #: src/pages/RoutineEditor.tsx
 msgid "Test run"
 msgstr "Execução de teste"
+
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Test webhook URL"
+msgstr "URL do webhook de teste"
 
 #: src/components/ModelConnectionPreflightNotice.tsx
 #: src/pages/ConnectionsPage.tsx

@@ -33,6 +33,7 @@ A `POST` with a JSON body, sent **once per customer, type and month**:
 | `X-Rook-Event` | The `type`. |
 | `X-Rook-Delivery` | The `id`, for de-duplicating. |
 | `X-Rook-Timestamp` | Seconds since the epoch. |
+| `X-Rook-Test` | `true` only on notices about test customers, which go to the test URL (see [test mode](/en/partners/test-mode/)). |
 | `X-Rook-Signature` | `sha256=<hex>`: HMAC-SHA256, keyed by the secret, of `<timestamp>.<raw body>`. |
 
 ## Verify the signature

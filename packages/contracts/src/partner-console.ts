@@ -59,6 +59,8 @@ export const PartnerConsoleCustomerSchema = z.object({
   creditRemaining: z.number().int(),
   state: PartnerConsoleCustomerState,
   since: z.string(),
+  /** True for a customer made with the test key. */
+  test: z.boolean().optional(),
 });
 
 export const PartnerConsoleCustomerDetailSchema = PartnerConsoleCustomerSchema.extend({
@@ -78,6 +80,8 @@ export const PartnerConsoleCustomerDetailSchema = PartnerConsoleCustomerSchema.e
 
 export const PartnerConsoleCustomersInput = z.object({
   partnerId: Id,
+  /** Live customers (the default) or the ones made with the test key. */
+  mode: z.enum(["live", "test"]).default("live"),
   filter: PartnerConsoleCustomerFilter.default("all"),
   q: z.string().trim().max(80).optional(),
   cursor: z.string().max(300).optional(),
@@ -194,7 +198,10 @@ export const PartnerConsoleRevenueSchema = z.object({
 export const PartnerConsoleIntegrationSchema = z.object({
   /** The key itself is shown once, when it is issued; only its start is kept in view. */
   keys: z.array(z.object({ prefix: z.string(), createdAt: z.string() })),
+  /** The test key's start, or null until one is made; and how many test customers exist. */
+  testKey: z.object({ prefix: z.string().nullable(), customers: z.number().int().nonnegative() }),
   webhook: z.object({ url: z.string().nullable(), enabled: z.boolean() }),
+  testWebhook: z.object({ url: z.string().nullable() }),
   /** Whether each kind of alert is also emailed; the app always shows it. */
   alerts: z.array(z.object({ kind: z.enum(PARTNER_ALERT_KINDS), email: z.boolean() })),
   docsUrl: z.string(),

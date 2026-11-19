@@ -26,6 +26,10 @@ export function PartnersSection() {
     ...queries.platform.partnerPlan.set.mutationOptions(),
     onSuccess: () => client.invalidateQueries({ queryKey: queries.platform.partners.key() }),
   });
+  const setTestCap = useMutation({
+    ...queries.platform.partners.setTestCap.mutationOptions(),
+    onSuccess: () => client.invalidateQueries({ queryKey: queries.platform.partners.key() }),
+  });
   const pricing = useQuery(queries.platform.partnerPricing.get.queryOptions());
   const planNames = new Map(
     (pricing.data?.config.tiers ?? []).map((tier) => [tier.key, tier.name]),
@@ -63,9 +67,9 @@ export function PartnersSection() {
       </header>
       {creating ? <NewPartnerDialog onClose={() => setCreating(false)} /> : null}
 
-      {setPlan.error ? (
+      {setPlan.error || setTestCap.error ? (
         <p role="alert" className="text-sm text-destructive">
-          {errorText(setPlan.error, t`Could not save`)}
+          {errorText(setPlan.error ?? setTestCap.error, t`Could not save`)}
         </p>
       ) : null}
       {partners.error ? (
@@ -98,6 +102,7 @@ export function PartnersSection() {
                   <TableHead>{t`Charged`}</TableHead>
                   <TableHead>{t`Cost`}</TableHead>
                   <TableHead>{t`Margin`}</TableHead>
+                  <TableHead>{t`Test`}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -153,6 +158,27 @@ export function PartnersSection() {
                         data-negative={margin !== null && margin < 0 ? "true" : undefined}
                       >
                         {margin === null ? "—" : usd(margin)}
+                      </TableCell>
+                      <TableCell className="tabular-nums">
+                        <span className="flex items-center gap-1.5">
+                          {row.testCallsToday} /
+                          <Input
+                            key={row.testDailyCap}
+                            type="number"
+                            min={0}
+                            max={1_000_000}
+                            className="h-8 w-20"
+                            aria-label={`${row.name} ${t`Daily test limit`}`}
+                            defaultValue={row.testDailyCap}
+                            disabled={setTestCap.isPending}
+                            onBlur={(event) => {
+                              const cap = Number(event.target.value);
+                              if (Number.isInteger(cap) && cap >= 0 && cap !== row.testDailyCap) {
+                                setTestCap.mutate({ partnerId: row.id, cap });
+                              }
+                            }}
+                          />
+                        </span>
                       </TableCell>
                     </TableRow>
                   );

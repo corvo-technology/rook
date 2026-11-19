@@ -177,6 +177,10 @@ export const PlatformPartnerSchema = z.object({
   chargedCredits: z.number().int().nonnegative(),
   /** What the providers charged Rook for that use; null when it is not reported. */
   costCredits: z.number().int().nonnegative().nullable(),
+  /** Test mode: customers made with the test key, the model calls they made today, and the daily cap. */
+  testCustomers: z.number().int().nonnegative(),
+  testCallsToday: z.number().int().nonnegative(),
+  testDailyCap: z.number().int().nonnegative(),
 });
 export type PlatformPartner = z.infer<typeof PlatformPartnerSchema>;
 

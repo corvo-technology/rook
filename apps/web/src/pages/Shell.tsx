@@ -926,6 +926,7 @@ function SpaceShell({ page }: { page?: ReactNode }) {
           })}
           pathname={pathname}
           chief={chiefBot}
+          test={bootstrapMe?.partner?.test === true}
           onOpen={(to) => navigate(to)}
         />
       ) : (

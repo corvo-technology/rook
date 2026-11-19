@@ -41,6 +41,7 @@ async function tenantOf(prisma: PrismaClient, organizationId: string) {
     where: { organizationId },
     select: {
       creditLimitCredits: true,
+      testMode: true,
       partner: { select: { creditAllowedModels: true, mode: true } },
     },
   });
@@ -75,7 +76,8 @@ export async function assertPartnerSpendAllowed(
   now = new Date(),
 ): Promise<void> {
   const tenant = await tenantOf(prisma, organizationId);
-  if (!tenant || tenant.partner.mode !== "embedded") return;
+  // Test customers have no credit limit and run on the cheap model, whatever the partner allows.
+  if (!tenant || tenant.testMode || tenant.partner.mode !== "embedded") return;
   if (
     call.model &&
     !modelAllowed(tenant.partner.creditAllowedModels, call.provider ?? "", call.model)
@@ -163,7 +165,7 @@ export async function claimPartnerCreditNotices(
   const made: string[] = [];
   for (const partner of partners) {
     const tenants = await prisma.partnerTenant.findMany({
-      where: { partnerId: partner.id, creditLimitCredits: { not: null } },
+      where: { partnerId: partner.id, testMode: false, creditLimitCredits: { not: null } },
       select: { externalTenantId: true, organizationId: true, creditLimitCredits: true },
       take: 1000,
     });
@@ -322,7 +324,7 @@ export async function debitPartnerResource(
   now = new Date(),
 ): Promise<number> {
   const tenant = await tenantOf(prisma, organizationId);
-  if (!tenant || tenant.partner.mode !== "embedded") return 0;
+  if (!tenant || tenant.testMode || tenant.partner.mode !== "embedded") return 0;
   const credits = resourceCredits(config, input.resource, input.units);
   if (credits <= 0) return 0;
   const outcome = await holdCredits(
@@ -348,7 +350,7 @@ export async function meterPartnerResources(
   const config = (await livePartnerPricing(prisma))?.config;
   if (!config) return 0;
   const tenants = await prisma.partnerTenant.findMany({
-    where: { partner: { enabled: true, mode: "embedded" } },
+    where: { testMode: false, partner: { enabled: true, mode: "embedded" } },
     select: { organizationId: true },
     take: 2000,
   });

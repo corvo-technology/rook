@@ -39,7 +39,7 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
     runAsSystem("partner customer lookup", () =>
       deps.prisma.partnerTenant.findFirst({
         where: { ownerUserId: actor.userId },
-        select: { partner: { select: { name: true, template: true } } },
+        select: { testMode: true, partner: { select: { name: true, template: true } } },
       }),
     ),
     spaceCreationPolicy(deps.prisma, { spaceId: actor.spaceId, userId: actor.userId }),
@@ -114,6 +114,7 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
     partner: partner
       ? {
           name: partner.partner.name,
+          ...(partner.testMode ? { test: true } : {}),
           hide: partnerTemplate?.hide ?? [],
           models: partnerTemplate?.models === "choose" ? ("choose" as const) : ("fixed" as const),
           ...(partnerTemplate?.quickActions?.length

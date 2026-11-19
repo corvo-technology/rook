@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_PLANS,
   GIB,
+  parsePlanLookupKey,
   planConfigFromEnv,
   resolveEntitlements,
   storageLevel,
@@ -117,5 +118,35 @@ describe("storage level", () => {
     expect(storageLevel(99, 100)).toBe("near");
     expect(storageLevel(100, 100)).toBe("full");
     expect(storageLevel(130, 100)).toBe("full");
+  });
+});
+
+describe("plan price lookup keys", () => {
+  it("names the plan, currency and interval of a catalog plan price", () => {
+    expect(parsePlanLookupKey("plan_team_brl_year")).toEqual({
+      plan: "team",
+      currency: "brl",
+      interval: "year",
+    });
+    expect(parsePlanLookupKey("plan_gold_brl_year")).toBeNull();
+    expect(parsePlanLookupKey("extra_person_brl_year")).toBeNull();
+    expect(parsePlanLookupKey(null)).toBeNull();
+  });
+
+  it("resolves a price missing from PLAN_PRICES by its lookup key, only while paid", () => {
+    const hand = {
+      status: "active",
+      priceId: "price_unlisted",
+      priceLookupKey: "plan_company_usd_month",
+    };
+    expect(resolveEntitlements(config, hand)?.plan).toBe("company");
+    expect(resolveEntitlements(config, { ...hand, status: "canceled" })?.plan).toBe("personal");
+    expect(
+      resolveEntitlements(config, { status: "active", priceId: "price_team", priceLookupKey: null })
+        ?.plan,
+    ).toBe("team");
+    expect(resolveEntitlements(config, { status: "active", priceId: "price_unlisted" })?.plan).toBe(
+      "personal",
+    );
   });
 });

@@ -60,6 +60,11 @@ export function aiAddOnPriceCents(
   return interval === "year" ? monthly * 12 : monthly;
 }
 
+/** Dollars of use, in cents, one charge of an AI add-on buys; a yearly charge covers all twelve months. */
+export function aiUseGrantCents(useCents: AiUseCents, interval: BillingInterval): number {
+  return interval === "year" ? useCents * 12 : useCents;
+}
+
 /** Reais for Brazilian Portuguese, dollars for every other language. */
 export function currencyForLocale(locale: string): BillingCurrency {
   return locale.toLowerCase() === "pt-br" ? "brl" : "usd";

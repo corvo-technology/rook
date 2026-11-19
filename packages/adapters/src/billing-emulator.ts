@@ -3,12 +3,22 @@ import type {
   BillingCheckoutRequest,
   BillingCreditCheckoutRequest,
   BillingCreditPurchase,
+  BillingPlanCheckoutRequest,
   BillingPrice,
   BillingProvider,
   BillingSubscriptionSnapshot,
   BillingSubscriptionStatus,
 } from "@corvo/adapter-kit";
 import { BillingCheckoutCompletedError, BillingCustomerNotFoundError } from "@corvo/adapter-kit";
+import {
+  AI_USE_CENTS,
+  aiLookupKey,
+  BILLING_CURRENCIES,
+  BILLING_INTERVALS,
+  extraPersonLookupKey,
+  PLAN_IDS,
+  planLookupKey,
+} from "@corvo/contracts";
 import {
   holdsBillingSubscription,
   parseStripeWebhook,
@@ -37,6 +47,11 @@ export class BillingEmulator implements BillingProvider {
   readonly creditPurchases = new Map<string, BillingCreditPurchase[]>();
   readonly customers = new Map<string, { email: string; organizationId: string }>();
   readonly checkouts = new Map<string, BillingCheckoutRequest>();
+  readonly planCheckouts = new Map<string, BillingPlanCheckoutRequest>();
+  /** Lookup key to price id, filled by `ensurePlanPrices`. */
+  readonly catalogPrices = new Map<string, string>();
+  /** Every extra-person quantity pushed with `setExtraSeats`, newest last. */
+  readonly extraSeatWrites: Array<{ customerId: string; priceId: string; quantity: number }> = [];
   readonly subscriptions: EmulatedSubscription[] = [];
   private readonly now: () => number;
   private sequence = 0;
@@ -80,6 +95,61 @@ export class BillingEmulator implements BillingProvider {
       throw new BillingCheckoutCompletedError();
     this.checkouts.set(input.customerId, { ...input });
     return { url: `https://billing.emulator.invalid/checkout/${input.customerId}` };
+  }
+
+  async ensurePlanPrices() {
+    const keys: string[] = [];
+    for (const currency of BILLING_CURRENCIES)
+      for (const interval of BILLING_INTERVALS) {
+        for (const plan of PLAN_IDS) keys.push(planLookupKey(plan, currency, interval));
+        keys.push(extraPersonLookupKey(currency, interval));
+        for (const cents of AI_USE_CENTS) keys.push(aiLookupKey(cents, currency, interval));
+      }
+    for (const key of keys)
+      if (!this.catalogPrices.has(key)) this.catalogPrices.set(key, `price_${key}`);
+    return Object.fromEntries(this.catalogPrices);
+  }
+
+  async priceIdForLookupKey(key: string) {
+    return this.catalogPrices.get(key) ?? null;
+  }
+
+  async createPlanCheckout(input: BillingPlanCheckoutRequest) {
+    this.requireCustomer(input.customerId);
+    if (this.forCustomer(input.customerId).some((s) => holdsBillingSubscription(s.status)))
+      throw new BillingCheckoutCompletedError();
+    this.planCheckouts.set(input.customerId, { ...input });
+    return { url: `https://billing.emulator.invalid/plan/${input.customerId}` };
+  }
+
+  /** Test helper: the customer pays for the plan checkout they started. */
+  completePlanCheckout(customerId: string) {
+    const checkout = this.planCheckouts.get(customerId);
+    if (!checkout) throw new Error(`No plan checkout for ${customerId}`);
+    this.planCheckouts.delete(customerId);
+    const n = ++this.sequence;
+    const key = planLookupKey(checkout.plan, checkout.currency, checkout.interval);
+    this.subscriptions.push({
+      customerId,
+      created: Math.floor(this.now() / 1000) + n,
+      subscriptionId: `sub_plan_${n}`,
+      subscriptionItemId: `si_plan_${n}`,
+      priceId: this.catalogPrices.get(key) ?? `price_${key}`,
+      priceLookupKey: key,
+      status: "active",
+      seats: 1,
+      trialEndsAt: null,
+      currentPeriodEndsAt: new Date(
+        this.now() + (checkout.interval === "year" ? 365 : 30) * 86400000,
+      ),
+      cancelAtPeriodEnd: false,
+      endedAt: null,
+    });
+    return `sub_plan_${n}`;
+  }
+
+  async setExtraSeats(customerId: string, input: { priceId: string; quantity: number }) {
+    this.extraSeatWrites.push({ customerId, ...input });
   }
 
   async createCreditCheckout(input: BillingCreditCheckoutRequest) {

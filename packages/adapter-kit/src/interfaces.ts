@@ -15,6 +15,7 @@ import type {
   BillingCheckoutRequest,
   BillingCreditCheckoutRequest,
   BillingCreditPurchase,
+  BillingPlanCheckoutRequest,
   BillingPrice,
   BillingSubscriptionSnapshot,
   BrowserActRequest,
@@ -458,6 +459,13 @@ export interface BillingProvider {
   createCreditCheckout?(input: BillingCreditCheckoutRequest): Promise<{ url: string }>;
   listCreditPurchases?(customerId: string): Promise<BillingCreditPurchase[]>;
   setMonthlyCredits?(customerId: string, amountCents: number): Promise<void>;
+  /**
+   * Creates every missing catalog price once (found by lookup key, so a second run creates none)
+   * and returns lookup key to price id.
+   */
+  ensurePlanPrices?(): Promise<Record<string, string>>;
+  priceIdForLookupKey?(key: string): Promise<string | null>;
+  createPlanCheckout?(input: BillingPlanCheckoutRequest): Promise<{ url: string }>;
   /** Flat monthly own-key plan: access without credits. */
   createByokCheckout?(input: BillingByokCheckoutRequest): Promise<{ url: string }>;
   /** Ends every live own-key plan at its period end. */

@@ -1677,7 +1677,7 @@ msgstr "Zurück zur Anmeldung"
 
 #: src/pages/partner/PartnerTemplatePanel.tsx
 msgid "Barbershop"
-msgstr ""
+msgstr "Barbershop"
 
 #: src/pages/partner/PartnerPricing.tsx
 msgid "Base"
@@ -2181,7 +2181,7 @@ msgstr "Wird geleert…"
 
 #: src/pages/partner/PartnerTemplatePanel.tsx
 msgid "Clinic"
-msgstr ""
+msgstr "Klinik"
 
 #: src/pages/onboarding/labels.ts
 msgid "Clinic or practice"
@@ -7774,7 +7774,7 @@ msgstr "Setze diesen Space fort, um weiterzumachen."
 
 #: src/pages/partner/PartnerTemplatePanel.tsx
 msgid "Retail"
-msgstr ""
+msgstr "Einzelhandel"
 
 #: src/components/AccountAccess.tsx
 #: src/components/PasskeySettings.tsx
@@ -8327,7 +8327,7 @@ msgstr "Gemeinsame Erinnerungen"
 
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Shortcuts, presets, routines and roles (JSON)"
-msgstr ""
+msgstr "Kurzbefehle, Voreinstellungen, Routinen und Rollen (JSON)"
 
 #: src/pages/GroupPanel.tsx
 msgid "Show all"
@@ -8627,7 +8627,7 @@ msgstr "Starten"
 
 #: src/pages/partner/PartnerTemplatePanel.tsx
 msgid "Start from"
-msgstr ""
+msgstr "Starten mit"
 
 #: src/pages/ImportFlow.tsx
 msgid "Start paused"

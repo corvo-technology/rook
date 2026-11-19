@@ -1677,7 +1677,7 @@ msgstr "返回登录"
 
 #: src/pages/partner/PartnerTemplatePanel.tsx
 msgid "Barbershop"
-msgstr ""
+msgstr "理发店"
 
 #: src/pages/partner/PartnerPricing.tsx
 msgid "Base"
@@ -2181,7 +2181,7 @@ msgstr "正在清空…"
 
 #: src/pages/partner/PartnerTemplatePanel.tsx
 msgid "Clinic"
-msgstr ""
+msgstr "诊所"
 
 #: src/pages/onboarding/labels.ts
 msgid "Clinic or practice"
@@ -7774,7 +7774,7 @@ msgstr "请恢复此空间以继续。"
 
 #: src/pages/partner/PartnerTemplatePanel.tsx
 msgid "Retail"
-msgstr ""
+msgstr "零售"
 
 #: src/components/AccountAccess.tsx
 #: src/components/PasskeySettings.tsx
@@ -8327,7 +8327,7 @@ msgstr "共享记忆"
 
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Shortcuts, presets, routines and roles (JSON)"
-msgstr ""
+msgstr "快捷方式、预设、例行任务和角色 (JSON)"
 
 #: src/pages/GroupPanel.tsx
 msgid "Show all"
@@ -8627,7 +8627,7 @@ msgstr "开始"
 
 #: src/pages/partner/PartnerTemplatePanel.tsx
 msgid "Start from"
-msgstr ""
+msgstr "从模板开始"
 
 #: src/pages/ImportFlow.tsx
 msgid "Start paused"

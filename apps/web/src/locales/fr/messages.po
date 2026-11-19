@@ -1677,7 +1677,7 @@ msgstr "Retour à la connexion"
 
 #: src/pages/partner/PartnerTemplatePanel.tsx
 msgid "Barbershop"
-msgstr ""
+msgstr "Salon de coiffure"
 
 #: src/pages/partner/PartnerPricing.tsx
 msgid "Base"
@@ -2181,7 +2181,7 @@ msgstr "Effacement en cours…"
 
 #: src/pages/partner/PartnerTemplatePanel.tsx
 msgid "Clinic"
-msgstr ""
+msgstr "Clinique"
 
 #: src/pages/onboarding/labels.ts
 msgid "Clinic or practice"
@@ -7774,7 +7774,7 @@ msgstr "Reprenez cet espace pour continuer."
 
 #: src/pages/partner/PartnerTemplatePanel.tsx
 msgid "Retail"
-msgstr ""
+msgstr "Commerce"
 
 #: src/components/AccountAccess.tsx
 #: src/components/PasskeySettings.tsx
@@ -8327,7 +8327,7 @@ msgstr "Mémoire partagée"
 
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Shortcuts, presets, routines and roles (JSON)"
-msgstr ""
+msgstr "Raccourcis, préréglages, routines et rôles (JSON)"
 
 #: src/pages/GroupPanel.tsx
 msgid "Show all"
@@ -8627,7 +8627,7 @@ msgstr "Démarrer"
 
 #: src/pages/partner/PartnerTemplatePanel.tsx
 msgid "Start from"
-msgstr ""
+msgstr "Partir de"
 
 #: src/pages/ImportFlow.tsx
 msgid "Start paused"

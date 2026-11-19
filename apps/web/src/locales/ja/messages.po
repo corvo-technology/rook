@@ -1677,7 +1677,7 @@ msgstr "ログインに戻る"
 
 #: src/pages/partner/PartnerTemplatePanel.tsx
 msgid "Barbershop"
-msgstr ""
+msgstr "理容室"
 
 #: src/pages/partner/PartnerPricing.tsx
 msgid "Base"
@@ -2181,7 +2181,7 @@ msgstr "クリア中…"
 
 #: src/pages/partner/PartnerTemplatePanel.tsx
 msgid "Clinic"
-msgstr ""
+msgstr "クリニック"
 
 #: src/pages/onboarding/labels.ts
 msgid "Clinic or practice"
@@ -7774,7 +7774,7 @@ msgstr "続けるには、このスペースを再開してください。"
 
 #: src/pages/partner/PartnerTemplatePanel.tsx
 msgid "Retail"
-msgstr ""
+msgstr "小売"
 
 #: src/components/AccountAccess.tsx
 #: src/components/PasskeySettings.tsx
@@ -8327,7 +8327,7 @@ msgstr "共有メモリ"
 
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Shortcuts, presets, routines and roles (JSON)"
-msgstr ""
+msgstr "ショートカット、プリセット、ルーティン、ロール (JSON)"
 
 #: src/pages/GroupPanel.tsx
 msgid "Show all"
@@ -8627,7 +8627,7 @@ msgstr "開始"
 
 #: src/pages/partner/PartnerTemplatePanel.tsx
 msgid "Start from"
-msgstr ""
+msgstr "テンプレートから開始"
 
 #: src/pages/ImportFlow.tsx
 msgid "Start paused"

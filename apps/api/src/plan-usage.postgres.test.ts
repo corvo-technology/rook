@@ -59,7 +59,7 @@ describePostgres("plan usage (PostgreSQL)", () => {
     expect(usage).toMatchObject({
       plan: "personal",
       computerSize: "small",
-      storage: { usedBytes: 5 * 1024 ** 3, limitBytes: 20 * 1024 ** 3 },
+      storage: { usedBytes: 5 * 1024 ** 3, limitBytes: 25 * 1024 ** 3 },
       computers: { limit: 1 },
       seats: { used: 1, included: 1, max: 1, extraPrice: null },
       canManage: true,

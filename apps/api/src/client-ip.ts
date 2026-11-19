@@ -2,7 +2,7 @@ import { lookup } from "node:dns/promises";
 import { existsSync } from "node:fs";
 import { BlockList, isIP } from "node:net";
 import { networkInterfaces } from "node:os";
-import { CLIENT_IP_HEADER } from "@corvo/auth";
+import { BRAND_HOST_HEADER, CLIENT_IP_HEADER } from "@corvo/auth";
 import { securityRequestBindings } from "@corvo/db";
 import { enrichLogContext } from "@corvo/logging";
 import { getConnInfo } from "@hono/node-server/conninfo";
@@ -100,7 +100,10 @@ export function createClientIpResolver(
   const trusted = (ip: string) =>
     ranges.check(ip, isIP(ip) === 6 ? "ipv6" : "ipv4") || hostAddresses.has(ip);
 
-  return async (request: { peer?: string; forwarded?: string }): Promise<string | undefined> => {
+  const resolver = async (request: {
+    peer?: string;
+    forwarded?: string;
+  }): Promise<string | undefined> => {
     const peer = request.peer ? parseIp(request.peer) : undefined;
     if (!peer) return undefined;
     await refreshHosts();
@@ -114,6 +117,14 @@ export function createClientIpResolver(
     }
     return hops[0] ?? peer;
   };
+  /** Whether the socket peer is a trusted proxy, so what it forwards can be believed. */
+  const trustsPeer = async (peer: string | undefined): Promise<boolean> => {
+    const address = peer ? parseIp(peer) : undefined;
+    if (!address) return false;
+    await refreshHosts();
+    return trusted(address);
+  };
+  return Object.assign(resolver, { trustsPeer });
 }
 
 export type ClientIpResolver = ReturnType<typeof createClientIpResolver>;
@@ -152,6 +163,33 @@ export function clientIpMiddleware(resolver: ClientIpResolver, header: string): 
   };
 }
 
+const REQUEST_HOST_KEY = "corvo.host";
+
+/**
+ * The host the caller asked for. A trusted proxy reports it in `x-forwarded-host` (the web proxy
+ * rewrites `Host` to the API's own); anyone else is taken at their `Host` header. It only ever
+ * picks a brand, and only a registered, active host has one.
+ */
+export function requestHostMiddleware(resolver: ClientIpResolver): MiddlewareHandler {
+  return async (c, next) => {
+    const forwarded = c.req.header("x-forwarded-host");
+    const trusted = forwarded ? await resolver.trustsPeer(socketPeer(c)) : false;
+    const raw = (trusted ? forwarded : c.req.header("host")) ?? "";
+    c.set(REQUEST_HOST_KEY, normalizeRequestHost(raw.split(",")[0] ?? ""));
+    await next();
+  };
+}
+
+/** The lower-case hostname of a `Host` value without its port, or null when it is not a name. */
+export function normalizeRequestHost(value: string): string | null {
+  const host = value.trim().toLowerCase().replace(/:\d+$/, "");
+  return host && HOSTNAME.test(host) ? host : null;
+}
+
+export function requestHost(c: Context): string | null {
+  return (c.get(REQUEST_HOST_KEY) as string | null | undefined) ?? null;
+}
+
 export function requestClientIp(c: Context): string | undefined {
   return c.get(CLIENT_IP_KEY) as string | undefined;
 }
@@ -171,5 +209,14 @@ export function withClientIp(request: Request, ip: string | undefined): Request 
   const headers = new Headers(request.headers);
   headers.delete(CLIENT_IP_HEADER);
   if (ip) headers.set(CLIENT_IP_HEADER, ip);
+  return new Request(request, { headers });
+}
+
+/** The request Better Auth sees names the host the API resolved, and nothing the caller sent. */
+export function withBrandHost(request: Request, host: string | null): Request {
+  if (!host && !request.headers.has(BRAND_HOST_HEADER)) return request;
+  const headers = new Headers(request.headers);
+  headers.delete(BRAND_HOST_HEADER);
+  if (host) headers.set(BRAND_HOST_HEADER, host);
   return new Request(request, { headers });
 }

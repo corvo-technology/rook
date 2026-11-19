@@ -92,6 +92,7 @@ export function PartnersSection() {
                   <TableHead>{t`Partner`}</TableHead>
                   <TableHead>{t`Mode`}</TableHead>
                   <TableHead>{t`Plan`}</TableHead>
+                  <TableHead>{t`Domain`}</TableHead>
                   <TableHead>{t`Active customers`}</TableHead>
                   <TableHead>{t`Fund`}</TableHead>
                   <TableHead>{t`Charged`}</TableHead>
@@ -132,6 +133,13 @@ export function PartnersSection() {
                           "—"
                         )}
                       </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {row.mode === "white_label" ? (
+                          <PartnerDomainState partnerId={row.id} />
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
                       <TableCell className="tabular-nums">{row.activeCustomers}</TableCell>
                       <TableCell className="tabular-nums">
                         {row.fundPercent === null ? "—" : percent(row.fundPercent)}
@@ -155,5 +163,27 @@ export function PartnersSection() {
         </>
       )}
     </div>
+  );
+}
+
+/** What a white label partner has set up, read-only: its host and the state it is in. */
+function PartnerDomainState({ partnerId }: { partnerId: string }) {
+  const { t } = useLingui();
+  const queries = useSpaceQueries();
+  const branding = useQuery(
+    queries.platform.partnerBranding.get.queryOptions({ input: { partnerId } }),
+  );
+  const host = branding.data?.domains[0];
+  if (!host) return <span data-testid={`platform-domain-${partnerId}`}>—</span>;
+  const states = {
+    pending: t`Pending`,
+    verified: t`Verified`,
+    active: t`Active`,
+    failed: t`Failed`,
+  } as const;
+  return (
+    <span data-testid={`platform-domain-${partnerId}`} data-state={host.state}>
+      {host.hostname} · {states[host.state]}
+    </span>
   );
 }

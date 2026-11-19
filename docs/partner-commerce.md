@@ -910,3 +910,55 @@ email and in the app. Webhooks stay an optional technical integration and are un
   language when known, else Portuguese for a BRL partner and English otherwise.
 - **Preferences.** Integration shows one switch per alert kind for the email (default on; no row
   means on, `partner_alert_preferences` stores an off). The inbox cannot be switched off.
+
+## 17. F4 part A as built: brand, domain and branded mail
+
+What makes the app look like the partner's, for white label partners only. No payments here.
+
+- **Tables** (additive, `20261214300000_white_label_brand`): `PartnerBrand` (name, logo and icon keys,
+  accent, support email, terms and privacy URLs, and the sender domain with its state and DNS
+  records), `PartnerDomain` (hostname, `pending | verified | active | failed`, the provider's id,
+  last error) and `PartnerCustomer` (organization to partner, written once; a database trigger
+  refuses any change to it). Assets live in the deployment's object storage under `brand/<partnerId>/`
+  (a folder of the data directory where there is none), keyed by a hash of the bytes. All three tables
+  are system-only under row security.
+- **The host decides.** The API reads the host from `Host`, or from `X-Forwarded-Host` only when the
+  socket peer is a trusted proxy (the same list as the client address). `GET /api/brand` answers
+  that host's brand; a host that is not registered and `active`, or a partner that is off or not
+  white label, answers `{ "brand": null }`, which is the app's own look. No parameter picks a brand.
+  The web app reads it before the first render and paints the name, title, favicon, home-screen
+  icon, `theme-color`, the per-host manifest (`/api/brand/manifest.webmanifest`) and the accent
+  (mapped onto the semantic tokens at runtime, as the embed accent is). On a branded host the sign-in
+  pages show the partner's name, logo and legal links and none of Rook's.
+- **Accent contrast.** One colour serves both themes, so it must reach 3:1 against the light and the
+  dark page (`checkAccent`); the console refuses it otherwise, and the service checks again.
+- **Domains.** Behind `DomainProvider` (`packages/adapter-kit/src/branding.ts`): the Cloudflare for
+  SaaS custom hostnames adapter creates, polls and deletes; `DomainEmulator` is the offline fake and
+  both run the same conformance suite. `nextHostState` is the state machine: `verified` means the
+  provider sees the CNAME and is issuing the certificate; `active` needs the certificate **and** the
+  terms and privacy URLs; a live host stays live while the provider renews; the provider dropping a
+  host or giving up is `failed`, with its reason. The job reconciler polls pending and verified hosts
+  on every pass, failed ones hourly and active ones every six hours; an unreachable provider leaves a
+  host as it was. One host per partner in the console; the database allows more and keeps a host
+  unique across partners.
+- **Sign-up.** The API tells Better Auth which host the request came from in `x-corvo-brand-host`
+  (set from the resolved host, never the caller's). The first sign-in of a person with no workspace
+  on an active partner host creates their organization and links it to that partner as a
+  `PartnerCustomer`. Someone who joins an existing workspace by invitation is not linked. Active
+  partner hosts are added to Better Auth's trusted origins and to the reset-password link.
+- **Mail.** Verification, sign-in code, password reset, account deletion and invitation mail take the
+  brand of the host, or of the customer's partner (an organization linked as a `PartnerCustomer`).
+  A sign-in code asked by address alone never looks the address up, so it cannot reveal whether the
+  address has an account. Sender domain verification goes through `EmailDomainProvider`
+  (`ResendEmailDomains` on the Resend-compatible endpoint from `EMAIL_API_URL`): create, show the
+  records, verify. Until `verified`, mail is sent from the deployment's `EMAIL_FROM` address under the
+  partner's display name; once verified it is `Name <noreply@sender-domain>`.
+- **Console.** `Brand` and `Domain` sections for white label partners only; the platform admin has a
+  read-only `platform.partnerBranding.get`, shown as a Domain column on Partners (the host and its state).
+- **Production.** Set `DOMAIN_PROVIDER=cloudflare`, `DOMAIN_ZONE_ID`, `DOMAIN_API_TOKEN` (Custom
+  Hostnames permission on the zone) and `DOMAIN_FALLBACK_ORIGIN` (the zone's fallback origin, the
+  CNAME target). The edge in front of the app has to accept the fallback origin and every partner
+  host on its way to the web and API upstreams, and pass the public host in `X-Forwarded-Host`
+  (Caddy does by default).
+- **Not here.** Desktop and mobile are not rebranded. Passkeys are still bound to the app's own
+  host. Receipts and notices have no email templates yet: they arrive with payments.

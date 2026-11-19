@@ -5,7 +5,16 @@ import { useCallback, useState } from "react";
 import { errorText } from "../../lib/user-error";
 
 /** A failed load: the coded message of the error and a way to try again. */
-export function PartnerError({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
+export function PartnerError({
+  error,
+  onRetry,
+  message,
+}: {
+  error: unknown;
+  onRetry?: () => void;
+  /** Overrides the text read from the error, for refusals with a reason of their own. */
+  message?: string;
+}) {
   const { t } = useLingui();
   return (
     <div
@@ -13,7 +22,7 @@ export function PartnerError({ error, onRetry }: { error: unknown; onRetry?: () 
       data-testid="partner-error"
       className="flex items-center justify-between gap-3 rounded-xl border border-border px-4 py-3 text-sm text-destructive"
     >
-      <span className="min-w-0">{errorText(error)}</span>
+      <span className="min-w-0">{message ?? errorText(error)}</span>
       {onRetry ? (
         <Button variant="secondary" size="sm" onClick={onRetry}>
           {t`Try again`}

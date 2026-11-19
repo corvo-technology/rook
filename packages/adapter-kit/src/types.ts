@@ -885,6 +885,8 @@ export interface NotificationMessage {
 
 /** A product-authored transactional email, independent of its delivery vendor. */
 export interface TransactionalEmail {
+  /** Overrides the deployment's sender, for a partner's own verified address or display name. */
+  from?: string;
   to: string;
   subject: string;
   text: string;

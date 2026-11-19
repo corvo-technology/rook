@@ -2,6 +2,7 @@ import { Button } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useEffect, useState } from "react";
 import { AuthFrame } from "../components/AuthFrame";
+import { useBrand } from "../lib/brand";
 import { selectSpace } from "../lib/rpc";
 import { inkClass, submitClass } from "./Auth";
 
@@ -23,6 +24,7 @@ type Preview =
  * refusal alike, so a dead link and a forged one read the same.
  */
 export function InvitePage({ kind, token }: { kind: "invite" | "join"; token: string }) {
+  const brand = useBrand();
   const [preview, setPreview] = useState<Preview | "gone" | null>(null);
   const [pending, setPending] = useState(false);
   const [asked, setAsked] = useState(false);
@@ -123,7 +125,7 @@ export function InvitePage({ kind, token }: { kind: "invite" | "join"; token: st
     >
       {dead?.state === "accepted" ? (
         <a href="/app" className="text-[14px] font-medium underline">
-          <Trans>Open Rook</Trans>
+          {brand ? <Trans>Open {brand.name}</Trans> : <Trans>Open Rook</Trans>}
         </a>
       ) : dead?.state === "expired" ? (
         <p className="text-[14px] text-muted-foreground">

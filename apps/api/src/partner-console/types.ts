@@ -110,7 +110,9 @@ export type AuditKind =
   | "credit.autotopup_changed"
   | "credit.topup_started"
   | "credit.autotopup_started"
-  | "credit.autotopup_failed";
+  | "credit.autotopup_failed"
+  | "brand.changed"
+  | "domain.changed";
 
 export interface CreditUsage {
   /** Credits that end with the plan's period, and credits that stay until used. */

@@ -4,8 +4,10 @@ import type { ReactNode } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import type { PartnerSection } from "../../lib/partner-console";
 import { PARTNER_SECTIONS, partnerPath, sectionsFor, usePartners } from "../../lib/partner-console";
+import { PartnerBrand } from "./PartnerBrand";
 import { PartnerCredits } from "./PartnerCredits";
 import { PartnerCustomers } from "./PartnerCustomers";
+import { PartnerDomain } from "./PartnerDomain";
 import { PartnerIntegration } from "./PartnerIntegration";
 import { PartnerInvoices } from "./PartnerInvoices";
 import { PartnerOverview } from "./PartnerOverview";
@@ -32,6 +34,10 @@ export function usePartnerSectionTitle() {
         return t`Pricing`;
       case "revenue":
         return t`Revenue`;
+      case "brand":
+        return t`Brand`;
+      case "domain":
+        return t`Domain`;
       case "integration":
         return t`Integration`;
     }
@@ -78,6 +84,8 @@ export function PartnerConsolePage() {
       {active === "invoices" ? <PartnerInvoices partner={partner} /> : null}
       {active === "pricing" ? <PartnerPricing partner={partner} /> : null}
       {active === "revenue" ? <PartnerRevenue partner={partner} /> : null}
+      {active === "brand" ? <PartnerBrand partner={partner} /> : null}
+      {active === "domain" ? <PartnerDomain partner={partner} /> : null}
       {active === "integration" ? <PartnerIntegration partner={partner} /> : null}
     </Frame>
   );

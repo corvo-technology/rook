@@ -112,6 +112,11 @@ export default defineConfig(async ({ command, mode, isPreview }) => {
         configure: (proxy) => {
           proxy.on("proxyReq", (proxyReq, req) => {
             proxyReq.setHeader("x-forwarded-for", appendForwardedFor(req));
+            // The proxy rewrites Host to the API's own, so the host the person typed (the one a
+            // partner's brand is chosen by) travels in its own header. The API believes it only
+            // from a proxy it trusts.
+            const publicHost = req.headers["x-forwarded-host"] ?? req.headers.host;
+            if (typeof publicHost === "string") proxyReq.setHeader("x-forwarded-host", publicHost);
           });
         },
       } satisfies ProxyOptions,

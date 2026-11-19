@@ -37,6 +37,7 @@ import {
 } from "./account-security.js";
 import { breachedPasswordCheck } from "./breached-password.js";
 import { CENTRAL_SESSION_SECONDS, centralSignIn } from "./central-sign-in.js";
+import type { EmailBrand } from "./email.js";
 import {
   invitationEmail,
   passwordResetEmail,
@@ -53,6 +54,7 @@ import { passkeyRelyingParty } from "./passkey.js";
 import type { TokenKey } from "./token-storage.js";
 import { encryptStoredOAuthTokens, openIdToken, sealIdToken } from "./token-storage.js";
 
+export type { EmailBrand } from "./email.js";
 export {
   invitationEmail,
   noticeEmail,
@@ -104,6 +106,19 @@ export interface AuthEnv {
   passkeyRpId?: string;
   passkeyRelatedOrigins?: string[];
   email?: TransactionalEmailProvider;
+  /**
+   * White label mail: the look, the origin links point at and the sender for a request's host or a
+   * person's partner. Undefined sends Rook's own. `email` is null where asking by address would
+   * reveal whether it has an account.
+   */
+  mailBrand?: (input: {
+    host: string | null;
+    email: string | null;
+  }) => Promise<MailBrand | undefined>;
+  /** The origin of the request's host when it is an active partner host, so its sign-in is trusted. */
+  hostOrigins?: (host: string | null) => Promise<string[]>;
+  /** Runs once, when a sign-in creates the person's own organization, with the host it came from. */
+  onSignup?: (input: { organizationId: string; host: string | null }) => Promise<void>;
   logger?: BetterAuthOptions["logger"];
   onEmailError?: (error: unknown) => void;
   beforeDeleteUser?: (userId: string) => Promise<void>;
@@ -114,6 +129,20 @@ export interface AuthEnv {
 }
 
 type AuthSession = { id: string; userId: string };
+
+export interface MailBrand {
+  brand: EmailBrand;
+  /** Where links in the mail point: the partner's own host. */
+  origin: string;
+  /** The sender, a verified partner address or Rook's with the partner's display name. */
+  from?: string;
+}
+
+/** The host the API resolved for a request; set by the API, never taken from the caller. */
+export const BRAND_HOST_HEADER = "x-corvo-brand-host";
+
+const requestHost = (request: Request | undefined) =>
+  request?.headers.get(BRAND_HOST_HEADER) || null;
 
 const SEND_SIGN_IN_CODE_PATH = "/email-otp/send-verification-otp";
 const CODE_SIGN_IN_PATH = "/sign-in/email-otp";
@@ -177,6 +206,27 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
   if (env.passwordAuth === false && !env.oidc)
     throw new Error("Password auth requires OIDC when disabled");
   const discovery = env.oidc ? oidcDiscovery(env.oidc) : undefined;
+  /** The partner look of a mail, or undefined for Rook's own; a lookup failure sends Rook's. */
+  const mailFor = async (request: Request | undefined, email: string | null) => {
+    if (!env.mailBrand) return undefined;
+    try {
+      return await env.mailBrand({ host: requestHost(request), email });
+    } catch (error) {
+      env.onEmailError?.(error);
+      return undefined;
+    }
+  };
+  /** A link the library built on its own address, moved to the partner's host. */
+  const rebase = (url: string, mail: MailBrand | undefined) => {
+    if (!mail) return url;
+    const moved = new URL(url);
+    const origin = new URL(mail.origin);
+    moved.protocol = origin.protocol;
+    moved.host = origin.host;
+    return moved.href;
+  };
+  const withSender = <T extends object>(message: T, mail: MailBrand | undefined): T =>
+    mail?.from ? { ...message, from: mail.from } : message;
   // SSO-only deployments keep every email credential closed, codes included.
   const emailSignIn = env.passwordAuth !== false;
   const emailCodeSignIn = (Boolean(env.email) || Boolean(env.centralAuthUrl)) && emailSignIn;
@@ -200,7 +250,11 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
     logger: env.logger,
     secret: env.secret,
     baseURL: env.baseURL,
-    trustedOrigins: [...buildTrustedOrigins(env), "corvo://"],
+    trustedOrigins: async (request) => [
+      ...buildTrustedOrigins(env),
+      "corvo://",
+      ...((await env.hostOrigins?.(requestHost(request))) ?? []),
+    ],
     ...(env.centralAuthUrl ? { session: { expiresIn: CENTRAL_SESSION_SECONDS } } : {}),
     account: {
       accountLinking: { enabled: true, disableImplicitLinking: true, trustedProviders: [] },
@@ -234,11 +288,22 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
       },
       resetPasswordTokenExpiresIn: 60 * 60,
       sendResetPassword: env.email
-        ? async ({ user, url }) => {
+        ? async ({ user, url }, request) => {
             // Keep the response timing generic. Production providers track and retry the promise,
             // while the composition root drains accepted delivery during graceful shutdown.
+            const mail = await mailFor(request, user.email);
             void env.email
-              ?.send(await passwordResetEmail(env.webOrigin, user, url))
+              ?.send(
+                withSender(
+                  await passwordResetEmail(
+                    mail?.origin ?? env.webOrigin,
+                    user,
+                    rebase(url, mail),
+                    mail?.brand,
+                  ),
+                  mail,
+                ),
+              )
               .catch((error) => env.onEmailError?.(error));
           }
         : undefined,
@@ -249,14 +314,16 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
       sendOnSignIn: true,
       autoSignInAfterVerification: false,
       sendVerificationEmail: env.email
-        ? async ({ user, url }) => {
-            const verificationUrl = new URL(url);
-            verificationUrl.searchParams.set(
-              "callbackURL",
-              new URL("/sign-in", env.webOrigin).href,
-            );
+        ? async ({ user, url }, request) => {
+            const mail = await mailFor(request, user.email);
+            const origin = mail?.origin ?? env.webOrigin;
+            const verificationUrl = new URL(rebase(url, mail));
+            verificationUrl.searchParams.set("callbackURL", new URL("/sign-in", origin).href);
             await env.email!.send(
-              await verificationEmail(env.webOrigin, user.email, verificationUrl.href),
+              withSender(
+                await verificationEmail(origin, user.email, verificationUrl.href, mail?.brand),
+                mail,
+              ),
             );
           }
         : undefined,
@@ -349,11 +416,18 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
               expiresIn: SIGN_IN_CODE_EXPIRES_IN_SECONDS,
               allowedAttempts: 3,
               storeOTP: "hashed",
-              sendVerificationOTP: async ({ email, otp }) => {
+              sendVerificationOTP: async ({ email, otp }, ctx) => {
                 // Like password reset, do not wait on delivery: a refused address
-                // answers at once, so waiting would reveal which addresses are admitted.
+                // answers at once, so waiting would reveal which addresses are admitted. The brand
+                // comes from the host alone, never from a lookup of the address.
+                const mail = await mailFor(ctx?.request, null);
                 void env.email
-                  ?.send(await signInCodeEmail(env.webOrigin, email, otp))
+                  ?.send(
+                    withSender(
+                      await signInCodeEmail(mail?.origin ?? env.webOrigin, email, otp, mail?.brand),
+                      mail,
+                    ),
+                  )
                   .catch((error) => env.onEmailError?.(error));
               },
             }),
@@ -598,7 +672,12 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
                   });
                 }
               }
-              await bootstrapUserSpace(prisma, user, env);
+              const { spaceId } = await bootstrapUserSpace(prisma, user, env);
+              // A signup on a partner's host makes the new organization that partner's customer.
+              // The workspace exists either way, so a failed link is logged, not a failed sign-in.
+              await env
+                .onSignup?.({ organizationId: spaceId, host: requestHost(ctx?.request) })
+                .catch((error) => env.onEmailError?.(error));
             }
           },
           after: async (session, ctx) => {

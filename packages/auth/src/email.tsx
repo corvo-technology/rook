@@ -1,7 +1,7 @@
 /** @jsxRuntime automatic */
 import type { TransactionalEmail } from "@corvo/adapter-kit";
 import { displayName } from "@corvo/core";
-import { lightTokens } from "@corvo/ui-tokens";
+import { contrastRatio, lightTokens, normalizeHex } from "@corvo/ui-tokens";
 import type { CSSProperties, ReactNode } from "react";
 import {
   Body,
@@ -20,7 +20,7 @@ import {
 
 // Mirrors the landing page (apps/www). Mail clients drop alpha and CSS variables, so these are
 // opaque hex values; everything else comes from the shared tokens.
-const brand = {
+const ink = {
   line: "#ECECEC",
   body: "#3D3D3D",
   muted: "#6B6B6B",
@@ -35,8 +35,77 @@ const note: CSSProperties = {
   margin: 0,
   fontSize: "14px",
   lineHeight: "22px",
-  color: brand.muted,
+  color: ink.muted,
 };
+
+/**
+ * A white label partner's look for the mail its customers get. When one is given the message
+ * carries the partner's name, logo, colour and legal links and nothing of Rook's.
+ */
+export interface EmailBrand {
+  name: string;
+  /** An absolute address, since a mail client has no origin of its own. */
+  logoUrl: string | null;
+  accent: string | null;
+  supportEmail: string | null;
+  termsUrl: string | null;
+  privacyUrl: string | null;
+}
+
+/** Mixes a hex colour toward white; mail clients drop alpha, so tints are opaque. */
+function tint(hex: string, amount: number): string {
+  const n = Number.parseInt(hex.slice(1, 7), 16);
+  const mix = (value: number) =>
+    Math.round(value * (1 - amount) + 255 * amount)
+      .toString(16)
+      .padStart(2, "0");
+  return `#${mix(Math.floor(n / 65536) % 256)}${mix(Math.floor(n / 256) % 256)}${mix(n % 256)}`;
+}
+
+/** The button and code colours: the partner's accent with a legible label, or Rook's own. */
+function palette(brand?: EmailBrand) {
+  const accent = normalizeHex(brand?.accent);
+  if (!accent) {
+    return {
+      fill: lightTokens.primary,
+      label: lightTokens.primaryForeground,
+      codeText: ink.mint,
+      codeFill: ink.mintSoft,
+      codeLine: ink.mintLine,
+    };
+  }
+  return {
+    fill: accent,
+    label:
+      contrastRatio(accent, "#ffffff") >= contrastRatio(accent, "#000000") ? "#ffffff" : "#000000",
+    codeText: accent,
+    codeFill: tint(accent, 0.92),
+    codeLine: tint(accent, 0.75),
+  };
+}
+
+function Footer({ brand }: { brand: EmailBrand }) {
+  const links = [
+    brand.termsUrl ? { href: brand.termsUrl, label: "Terms" } : null,
+    brand.privacyUrl ? { href: brand.privacyUrl, label: "Privacy" } : null,
+    brand.supportEmail ? { href: `mailto:${brand.supportEmail}`, label: brand.supportEmail } : null,
+  ].filter((link) => link !== null);
+  if (links.length === 0) return null;
+  return (
+    <Section style={{ marginTop: "16px" }}>
+      <Text style={{ ...note, fontSize: "12px", textAlign: "center" }}>
+        {links.map((link, index) => (
+          <span key={link.href}>
+            {index > 0 ? " · " : null}
+            <a href={link.href} style={{ color: ink.muted }}>
+              {link.label}
+            </a>
+          </span>
+        ))}
+      </Text>
+    </Section>
+  );
+}
 
 async function message(
   webOrigin: string,
@@ -44,7 +113,9 @@ async function message(
   subject: string,
   content: ReactNode,
   lang = "en",
+  brand?: EmailBrand,
 ): Promise<TransactionalEmail> {
+  const logo = brand ? brand.logoUrl : new URL("/icon-192.png", webOrigin).href;
   const html = await render(
     <Html lang={lang}>
       <Head />
@@ -52,22 +123,24 @@ async function message(
         style={{
           margin: 0,
           backgroundColor: lightTokens.background,
-          color: brand.body,
+          color: ink.body,
           fontFamily: sans,
         }}
       >
         <Container style={{ maxWidth: "480px", padding: "32px 16px" }}>
           <Row style={{ marginBottom: "20px" }}>
-            <Column style={{ width: "32px" }}>
-              <Img
-                src={new URL("/icon-192.png", webOrigin).href}
-                alt=""
-                width="32"
-                height="32"
-                style={{ borderRadius: "9px", display: "block" }}
-              />
-            </Column>
-            <Column style={{ paddingLeft: "9px" }}>
+            {logo ? (
+              <Column style={{ width: "32px" }}>
+                <Img
+                  src={logo}
+                  alt=""
+                  width="32"
+                  height="32"
+                  style={{ borderRadius: "9px", display: "block" }}
+                />
+              </Column>
+            ) : null}
+            <Column style={{ paddingLeft: logo ? "9px" : 0 }}>
               <Text
                 style={{
                   margin: 0,
@@ -77,20 +150,21 @@ async function message(
                   color: lightTokens.foreground,
                 }}
               >
-                Rook
+                {brand?.name ?? "Rook"}
               </Text>
             </Column>
           </Row>
           <Section
             style={{
               backgroundColor: lightTokens.dialog,
-              border: `1px solid ${brand.line}`,
+              border: `1px solid ${ink.line}`,
               borderRadius: "20px",
               padding: "28px",
             }}
           >
             {content}
           </Section>
+          {brand ? <Footer brand={brand} /> : null}
         </Container>
       </Body>
     </Html>,
@@ -98,14 +172,23 @@ async function message(
   return { to, subject, html, text: toPlainText(html) };
 }
 
-function Action({ href, children }: { href: string; children: ReactNode }) {
+function Action({
+  href,
+  children,
+  brand,
+}: {
+  href: string;
+  children: ReactNode;
+  brand?: EmailBrand | undefined;
+}) {
+  const colors = palette(brand);
   return (
     <Section style={{ margin: "0 0 16px" }}>
       <Button
         href={href}
         style={{
-          backgroundColor: lightTokens.primary,
-          color: lightTokens.primaryForeground,
+          backgroundColor: colors.fill,
+          color: colors.label,
           borderRadius: "14px",
           padding: "14px 22px",
           fontSize: "16px",
@@ -119,17 +202,18 @@ function Action({ href, children }: { href: string; children: ReactNode }) {
   );
 }
 
-function Code({ children }: { children: string }) {
+function Code({ children, brand }: { children: string; brand?: EmailBrand | undefined }) {
+  const colors = palette(brand);
   return (
     <Text
       style={{
         margin: "0 0 16px",
         padding: "14px 0",
         textAlign: "center",
-        backgroundColor: brand.mintSoft,
-        border: `1px solid ${brand.mintLine}`,
+        backgroundColor: colors.codeFill,
+        border: `1px solid ${colors.codeLine}`,
         borderRadius: "14px",
-        color: brand.mint,
+        color: colors.codeText,
         fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
         fontSize: "28px",
         fontWeight: 700,
@@ -145,18 +229,24 @@ export function verificationEmail(
   webOrigin: string,
   email: string,
   url: string,
+  brand?: EmailBrand,
 ): Promise<TransactionalEmail> {
+  const name = brand?.name ?? "Rook";
   return message(
     webOrigin,
     email,
-    "Verify your Rook email",
+    `Verify your ${name} email`,
     <>
-      <Action href={url}>Verify email</Action>
-      <Text style={text}>Then return to Rook to sign in.</Text>
+      <Action href={url} brand={brand}>
+        Verify email
+      </Action>
+      <Text style={text}>Then return to {name} to sign in.</Text>
       <Text style={note}>
         This link expires in one hour. If you did not register, ignore this email.
       </Text>
     </>,
+    "en",
+    brand,
   );
 }
 
@@ -164,18 +254,22 @@ export function signInCodeEmail(
   webOrigin: string,
   email: string,
   code: string,
+  brand?: EmailBrand,
 ): Promise<TransactionalEmail> {
+  const name = brand?.name ?? "Rook";
   return message(
     webOrigin,
     email,
-    "Your Rook sign-in code",
+    `Your ${name} sign-in code`,
     <>
-      <Text style={text}>Enter this code to sign in to Rook:</Text>
-      <Code>{code}</Code>
+      <Text style={text}>Enter this code to sign in to {name}:</Text>
+      <Code brand={brand}>{code}</Code>
       <Text style={note}>
         This code expires in ten minutes. If you did not request it, ignore this email.
       </Text>
     </>,
+    "en",
+    brand,
   );
 }
 
@@ -183,19 +277,25 @@ export function passwordResetEmail(
   webOrigin: string,
   user: { id: string; email: string; name: string },
   resetUrl: string,
+  brand?: EmailBrand,
 ): Promise<TransactionalEmail> {
+  const name = brand?.name ?? "Rook";
   return message(
     webOrigin,
     user.email,
-    "Reset your Rook password",
+    `Reset your ${name} password`,
     <>
       <Text style={text}>Hi {displayName(user.name, "there")},</Text>
-      <Text style={text}>Reset your Rook password:</Text>
-      <Action href={resetUrl}>Reset password</Action>
+      <Text style={text}>Reset your {name} password:</Text>
+      <Action href={resetUrl} brand={brand}>
+        Reset password
+      </Action>
       <Text style={note}>
         This link expires in one hour. If you did not request this, you can ignore this email.
       </Text>
     </>,
+    "en",
+    brand,
   );
 }
 
@@ -203,40 +303,49 @@ export function accountDeletionEmail(
   webOrigin: string,
   email: string,
   code: string,
+  brand?: EmailBrand,
 ): Promise<TransactionalEmail> {
+  const name = brand?.name ?? "Rook";
   return message(
     webOrigin,
     email,
-    "Confirm Rook account deletion",
+    `Confirm ${name} account deletion`,
     <>
-      <Text style={text}>Enter this code in Rook to delete your account:</Text>
-      <Code>{code}</Code>
+      <Text style={text}>Enter this code in {name} to delete your account:</Text>
+      <Code brand={brand}>{code}</Code>
       <Text style={note}>
         This code expires in ten minutes. If you did not request deletion, ignore this email.
       </Text>
     </>,
+    "en",
+    brand,
   );
 }
 
 export function invitationEmail(
   webOrigin: string,
   input: { to: string; inviterName: string; spaceName: string; url: string },
+  brand?: EmailBrand,
 ): Promise<TransactionalEmail> {
   return message(
     webOrigin,
     input.to,
-    `${displayName(input.inviterName, "Someone")} invited you to ${displayName(input.spaceName, "a workspace")} on Rook`,
+    `${displayName(input.inviterName, "Someone")} invited you to ${displayName(input.spaceName, "a workspace")} on ${brand?.name ?? "Rook"}`,
     <>
       <Text style={text}>
         {displayName(input.inviterName, "Someone")} invited you to{" "}
         {displayName(input.spaceName, "a workspace")}.
       </Text>
-      <Action href={input.url}>Join</Action>
+      <Action href={input.url} brand={brand}>
+        Join
+      </Action>
       <Text style={note}>
         This link works for seven days and only for this address. If you were not expecting it,
         ignore this email.
       </Text>
     </>,
+    "en",
+    brand,
   );
 }
 

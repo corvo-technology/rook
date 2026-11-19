@@ -39,6 +39,7 @@ import type { BoardEvents, PrismaClient, SpaceHints, ThreadEvents } from "@corvo
 import type { AudioHold } from "./audio-hold.js";
 import type { BillingService } from "./billing.js";
 import type { RouterModel } from "./channel-router.js";
+import type { PartnerBranding } from "./partner-brand/index.js";
 import type { PresenceTracker } from "./presence.js";
 import { accessRoutes } from "./routes/access.js";
 import { accountRoutes } from "./routes/account.js";
@@ -163,6 +164,8 @@ export interface RouterDeps {
   billing?: BillingService;
   /** Inviting people into a space; absent keeps the invitation procedures closed. */
   team?: TeamDeps;
+  /** White label: brand, hosts and sender domains; absent keeps those procedures closed. */
+  branding?: PartnerBranding;
   speechSummary?: VoiceDeps["speechSummary"];
   /** Designs an avatar from a role on the owner's model connection; absent without a model runtime. */
   avatarDesign?: AvatarDesignDeps;

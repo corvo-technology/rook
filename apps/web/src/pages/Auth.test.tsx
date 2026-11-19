@@ -7,6 +7,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { authClient } from "../lib/auth";
 import type { AuthCapabilities } from "../lib/auth-capabilities";
 import { fetchAuthCapabilities } from "../lib/auth-capabilities";
+import { setBrandForTest } from "../lib/brand";
 import { clearSpaceSelection } from "../lib/rpc";
 import { AuthPage } from "./Auth";
 
@@ -400,3 +401,34 @@ it("lines the code boxes up with the button under them, and the way back with th
   const back = [...host.querySelectorAll("button")].find((b) => b.textContent === "Back");
   expect(back?.className).toContain("self-start");
 });
+
+const partnerBrand = {
+  name: "Acme",
+  accent: null,
+  logoUrl: null,
+  iconUrl: null,
+  supportEmail: null,
+  termsUrl: "https://acme.example.test/terms",
+  privacyUrl: "https://acme.example.test/privacy",
+};
+
+it.each(["in", "up"] as const)(
+  "shows the partner's name and legal links, and nothing of Rook's, on %s",
+  async (mode) => {
+    setBrandForTest(partnerBrand);
+    try {
+      vi.mocked(fetchAuthCapabilities).mockResolvedValue({ ...capabilities, passwordAuth: true });
+      await render(mode);
+      expect(host.textContent).toContain("Acme");
+      expect(host.textContent?.toLowerCase()).not.toContain("rook");
+      expect(host.querySelector("[data-testid=avatar]")).toBeNull();
+      const links = [...host.querySelectorAll<HTMLAnchorElement>("[data-testid=auth-legal] a")];
+      expect(links.map((link) => link.href)).toEqual([
+        "https://acme.example.test/terms",
+        "https://acme.example.test/privacy",
+      ]);
+    } finally {
+      setBrandForTest(null);
+    }
+  },
+);

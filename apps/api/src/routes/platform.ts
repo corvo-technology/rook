@@ -26,6 +26,8 @@ import {
   simulatePartnerPricing,
 } from "@corvo/db";
 import { ORPCError } from "@orpc/server";
+import type { PartnerBranding } from "../partner-brand/index.js";
+import { brandingView } from "../partner-brand/index.js";
 import { sendInvitationEmail } from "../team.js";
 import type { RouterContext } from "./context.js";
 import { isPartnerAdmin } from "./partner.js";
@@ -195,6 +197,29 @@ export function platformRoutes(ctx: RouterContext) {
           }),
         ),
       },
+      partnerBranding: {
+        get: admin.platform.partnerBranding.get.handler(({ input }) =>
+          asSystem(async () => {
+            const branding = deps.branding;
+            if (!branding) throw new ORPCError("NOT_FOUND");
+            const [view, domains, customers] = await Promise.all([
+              brandingView(brandingReadDeps(branding), input.partnerId),
+              branding.store.domains(input.partnerId),
+              branding.store.customerCount(input.partnerId),
+            ]);
+            return {
+              brand: view.brand,
+              domains: domains.map((host) => ({
+                hostname: host.hostname,
+                state: host.state,
+                error: host.lastError,
+              })),
+              sender: view.sender,
+              customers,
+            };
+          }),
+        ),
+      },
       invoices: {
         list: admin.platform.invoices.list.handler(({ input }) =>
           asSystem(async () => invoiceViews(await listPartnerInvoices(deps.prisma, input.period))),
@@ -268,4 +293,17 @@ function invoiceViews(rows: Awaited<ReturnType<typeof listPartnerInvoices>>) {
     dueAt: row.dueAt?.toISOString() ?? null,
     externalRef: row.externalRef,
   }));
+}
+
+/** A read-only view needs no console store: nothing is written. */
+function brandingReadDeps(branding: PartnerBranding) {
+  return {
+    store: branding.store,
+    console: { findPartner: async () => null, audit: async () => undefined },
+    assets: branding.assets,
+    domains: branding.domains,
+    senderDomains: branding.senderDomains,
+    reservedHosts: branding.reservedHosts,
+    now: () => new Date(),
+  };
 }

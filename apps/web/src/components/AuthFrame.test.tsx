@@ -12,6 +12,7 @@ vi.mock("@lingui/react/macro", () => ({
   Trans: ({ children }: { children: ReactNode }) => children,
 }));
 
+import { setBrandForTest } from "../lib/brand";
 import { AuthFrame } from "./AuthFrame";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -66,4 +67,30 @@ it("tells wide screens what the product does, beside the form and not over it", 
   for (const crow of crows) expect(crow.parentElement?.getAttribute("aria-hidden")).toBe("true");
   expect(container.querySelector("form")?.contains(panel ?? null)).toBe(false);
   await cleanup();
+});
+
+it("wears the partner's brand: its logo and name, no Rook and no team beside the form", async () => {
+  setBrandForTest({
+    name: "Acme",
+    accent: null,
+    logoUrl: "/api/brand/assets/p1/logo-abc.png",
+    iconUrl: null,
+    supportEmail: null,
+    termsUrl: null,
+    privacyUrl: null,
+  });
+  try {
+    const { container, cleanup } = await render();
+    const brand = container.querySelector("[data-testid='auth-brand']");
+    expect(brand?.textContent).toBe("Acme");
+    expect(brand?.querySelector("img")?.getAttribute("src")).toBe(
+      "/api/brand/assets/p1/logo-abc.png",
+    );
+    expect(container.querySelector("[data-testid=auth-team]")).toBeNull();
+    expect(container.querySelector("[data-testid=avatar]")).toBeNull();
+    expect(container.textContent).not.toContain("Rook");
+    await cleanup();
+  } finally {
+    setBrandForTest(null);
+  }
 });

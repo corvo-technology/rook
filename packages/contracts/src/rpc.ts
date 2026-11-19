@@ -38,6 +38,13 @@ import {
 } from "./board.js";
 import { BotSecretMetadata, BotSecretPutInput, StoredBotSecretName } from "./bot-secrets.js";
 import {
+  PartnerBrandInput,
+  PartnerBrandingSchema,
+  PartnerHostnameInput,
+  PartnerSenderInput,
+  PlatformPartnerBrandingSchema,
+} from "./brand.js";
+import {
   CliEngineIdSchema,
   CliEngineInstallResultSchema,
   CliEngineSetupSchema,
@@ -1525,6 +1532,10 @@ export const appContract = {
         .input(z.object({ organizationId: Id, override: PlanOverrideSchema }))
         .output(z.object({ ok: z.literal(true) })),
     },
+    /** Read-only: a partner's brand, hosts and sender domain, for support. */
+    partnerBranding: {
+      get: oc.input(z.object({ partnerId: Id })).output(PlatformPartnerBrandingSchema),
+    },
     /** The embedded partner credit pricing: versioned, written here and nowhere in code. */
     partnerPricing: {
       get: oc.output(PartnerPricingVersionSchema.nullable()),
@@ -1747,6 +1758,18 @@ export const appContract = {
     setTemplate: oc
       .input(z.object({ partnerId: Id, template: PartnerTemplate.nullable() }))
       .output(z.object({ template: PartnerTemplate.nullable() })),
+    /** White label only: the brand, the host and the sender domain with their states. */
+    branding: oc.input(z.object({ partnerId: Id })).output(PartnerBrandingSchema),
+    /** Saves the brand; an accent that fails contrast on light or dark is refused. */
+    setBrand: oc.input(PartnerBrandInput).output(PartnerBrandingSchema),
+    /** Adds the host at the domain provider; one host per partner. */
+    addDomain: oc.input(PartnerHostnameInput).output(PartnerBrandingSchema),
+    /** Asks the provider again now instead of waiting for the next check. */
+    checkDomain: oc.input(z.object({ partnerId: Id })).output(PartnerBrandingSchema),
+    removeDomain: oc.input(z.object({ partnerId: Id })).output(PartnerBrandingSchema),
+    /** Starts verifying a mail domain, or removes it with null. */
+    setSenderDomain: oc.input(PartnerSenderInput).output(PartnerBrandingSchema),
+    checkSenderDomain: oc.input(z.object({ partnerId: Id })).output(PartnerBrandingSchema),
     /** An https address, or null to stop notices. */
     setWebhook: oc
       .input(z.object({ partnerId: Id, url: z.string().trim().max(2048).nullable() }).strict())

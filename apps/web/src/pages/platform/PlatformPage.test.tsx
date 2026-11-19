@@ -11,6 +11,7 @@ const platform = vi.hoisted(() => ({
   partnerPricing: { get: vi.fn(), history: vi.fn(), publish: vi.fn(), simulate: vi.fn() },
   partners: { list: vi.fn(), create: vi.fn() },
   partnerPlan: { set: vi.fn() },
+  partnerBranding: { get: vi.fn() },
   waitlist: { list: vi.fn(), decide: vi.fn() },
   partnerLeads: { list: vi.fn(), approve: vi.fn(), decline: vi.fn() },
   invoices: { list: vi.fn(), draft: vi.fn(), setState: vi.fn() },
@@ -167,6 +168,12 @@ beforeEach(() => {
   ]);
   platform.partners.create.mockReset().mockResolvedValue({ partnerId: "p9", emailed: true });
   platform.partnerPlan.set.mockReset().mockResolvedValue({ ok: true });
+  platform.partnerBranding.get.mockReset().mockResolvedValue({
+    brand: null,
+    domains: [{ hostname: "app.beta.example.test", state: "active", error: null }],
+    sender: { domain: null, state: "none", records: [], error: null },
+    customers: 1,
+  });
   platform.waitlist.list.mockReset().mockResolvedValue([
     {
       id: "w1",
@@ -314,6 +321,15 @@ it("shows each partner's month and marks a negative margin", async () => {
   expect(alpha?.querySelector("[data-negative]")).toBeNull();
   expect(beta?.textContent).toContain("White label");
   expect(beta?.querySelector("[data-negative]")?.textContent).toBe("-$15.00");
+});
+
+it("reads a white label partner's host and its state, and asks nothing for the others", async () => {
+  await open("/app/platform/partners");
+  expect(container.querySelector('[data-testid="platform-domain-p2"]')?.textContent).toBe(
+    "app.beta.example.test · Active",
+  );
+  expect(platform.partnerBranding.get).toHaveBeenCalledTimes(1);
+  expect(platform.partnerBranding.get).toHaveBeenCalledWith({ partnerId: "p2" }, expect.anything());
 });
 
 it("moves an invoice to the next state, with its document number", async () => {

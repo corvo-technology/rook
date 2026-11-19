@@ -13,6 +13,7 @@ import { PasskeySignIn } from "../components/PasskeySignIn";
 import { authClient } from "../lib/auth";
 import type { AuthCapabilities } from "../lib/auth-capabilities";
 import { fetchAuthCapabilities } from "../lib/auth-capabilities";
+import { useBrand } from "../lib/brand";
 import { clearSpaceSelection } from "../lib/rpc";
 import { runSsoFlow } from "../lib/sso-flow";
 import { authErrorText, credentialIssueText } from "../lib/user-error";
@@ -29,6 +30,7 @@ export { AuthFrame };
 
 export function AuthPage({ mode }: { mode: AuthMode }) {
   const { t } = useLingui();
+  const brand = useBrand();
   const [searchParams, setSearchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -64,9 +66,17 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
     ) : codeOnly ? (
       <Trans>Sign in or create your account</Trans>
     ) : mode === "in" ? (
-      <Trans>Sign in to Rook</Trans>
+      brand ? (
+        <Trans>Sign in to {brand.name}</Trans>
+      ) : (
+        <Trans>Sign in to Rook</Trans>
+      )
     ) : mode === "up" ? (
-      <Trans>Create your Rook</Trans>
+      brand ? (
+        <Trans>Create your account</Trans>
+      ) : (
+        <Trans>Create your Rook</Trans>
+      )
     ) : (
       <Trans>Reset your password</Trans>
     );

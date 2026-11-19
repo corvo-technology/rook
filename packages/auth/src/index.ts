@@ -61,6 +61,7 @@ export {
   partnerLeadConfirmationEmail,
   partnerLeadNotificationEmail,
   passwordResetEmail,
+  paymentNoticeEmail,
   signInCodeEmail,
   verificationEmail,
   waitlistConfirmationEmail,

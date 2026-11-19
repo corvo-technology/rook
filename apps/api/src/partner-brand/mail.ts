@@ -79,6 +79,8 @@ export function createPartnerMail(deps: PartnerMailDeps) {
       if (hosted) return build(hosted.partnerId, hosted.brand, hosted.hostname);
       return input.email ? forOrganization(await deps.organizationOfEmail(input.email)) : undefined;
     },
+    /** The brand of the partner an organization signed up through, for mail the API sends itself. */
+    mailBrandForOrganization: (organizationId: string) => forOrganization(organizationId),
     async mailBrandForSpace(spaceId: string) {
       return forOrganization(await deps.organizationOfSpace(spaceId));
     },

@@ -14,6 +14,7 @@ export * from "./client.js";
 export * from "./coach-tour.js";
 export * from "./commerce-account.js";
 export * from "./commerce-config.js";
+export * from "./commerce-connect.js";
 export * from "./commerce-idempotency.js";
 export * from "./commerce-invoices.js";
 export * from "./commerce-ledger.js";

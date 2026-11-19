@@ -47,6 +47,7 @@ import { IntegrationSetupPage } from "./pages/IntegrationSetup";
 import { InvitePage } from "./pages/InvitePage";
 import { McpOAuthCallbackPage } from "./pages/McpOAuthCallback";
 import { PartnerConsolePage } from "./pages/partner/PartnerConsolePage";
+import { WhiteLabelPlans } from "./pages/plans/WhiteLabelPlans";
 import { ShellPage } from "./pages/Shell";
 import { useBoardNotifications } from "./pages/shell/use-board-notifications";
 
@@ -296,6 +297,7 @@ function SessionApp() {
                   path="/app/partner/:partnerId?/:section?"
                   element={<ShellPage page={<PartnerConsolePage />} />}
                 />
+                <Route path="/app/plans" element={<ShellPage page={<WhiteLabelPlans />} />} />
                 {ticketBoardEnabled ? (
                   <Route path="/app/board" element={<ShellPage page={<BoardPage />} />} />
                 ) : null}

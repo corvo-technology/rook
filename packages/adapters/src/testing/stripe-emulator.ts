@@ -1,4 +1,6 @@
-/** In-process Stripe REST substitute covering exactly the endpoints the billing adapter uses. */
+import { StripeConnectEmulator } from "./stripe-connect-emulator.js";
+
+/** In-process Stripe REST substitute covering exactly the endpoints the billing adapters use. */
 export class StripeEmulator {
   readonly secretKey = "sk_test_fake";
   readonly priceId = "price_fake";
@@ -20,11 +22,14 @@ export class StripeEmulator {
     string,
     { fingerprint: string; status: number; body: string }
   >();
+  /** Connected accounts, direct charges and their events. */
+  readonly connect: StripeConnectEmulator;
   private sequence = 0;
   private readonly now: () => number;
 
-  constructor(options: { now?: () => number } = {}) {
+  constructor(options: { now?: () => number; idSeed?: string } = {}) {
     this.now = options.now ?? Date.now;
+    this.connect = new StripeConnectEmulator(this.now, options.idSeed);
   }
 
   readonly fetch: typeof fetch = async (input, init) => {
@@ -56,7 +61,10 @@ export class StripeEmulator {
         headers: { "content-type": "application/json", "idempotent-replayed": "true" },
       });
     }
-    const response = failure ? stripeError(failure) : this.route(method, url.pathname, form);
+    const response = failure
+      ? stripeError(failure)
+      : (this.connect.handle(method, url.pathname, form, headers.get("stripe-account")) ??
+        this.route(method, url.pathname, form));
     if (key && (response.ok || response.status >= 500)) {
       this.idempotent.set(key, {
         fingerprint,

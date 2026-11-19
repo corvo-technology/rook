@@ -8,6 +8,7 @@ import {
   FileText,
   Globe,
   KeyRound,
+  Landmark,
   LayoutDashboard,
   Palette,
   Tag,
@@ -28,6 +29,7 @@ const ICONS: Record<PartnerSection, LucideIcon> = {
   revenue: CircleDollarSign,
   brand: Palette,
   domain: Globe,
+  payments: Landmark,
   integration: KeyRound,
 };
 

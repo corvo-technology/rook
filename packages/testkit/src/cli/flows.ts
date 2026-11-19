@@ -97,6 +97,7 @@ async function main() {
       STRIPE_SECRET_KEY: "",
       STRIPE_WEBHOOK_SECRET: "",
       STRIPE_PRICE_ID: "",
+      STRIPE_CONNECT_WEBHOOK_SECRET: "",
     });
     // Parallel runs share one generated client: generate it once per schema, under a lock, since
     // generating it from several runs at once collides on its folder.

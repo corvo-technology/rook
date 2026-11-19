@@ -113,3 +113,68 @@ test("The partner area lists the customers and opens one", async ({ page }, test
   await expect(alerts.getByRole("switch", { name: "Automatic top-up started" })).not.toBeChecked();
   await captureScreenshot(page, testInfo, "partner-alerts");
 });
+
+test("A white label partner sees its receipts and connects an account", async ({
+  page,
+}, testInfo) => {
+  const stamp = Date.now();
+  await signup(page, `partner-payments-${stamp}@corvo.test`, "password12", `Partner ${stamp}`);
+  await completeOnboarding(page);
+  const whiteLabel = {
+    ...partner,
+    id: "partner-2",
+    slug: "agency",
+    name: "Agency",
+    mode: "white_label",
+  };
+  const payments = {
+    state: "active",
+    accountHint: "Ab12Cd",
+    requirementsDue: [],
+    available: true,
+    payouts: [
+      {
+        id: "payout-1",
+        amountMinor: 50_000,
+        currency: "BRL",
+        status: "paid",
+        arrivedAt: "2026-11-12T00:00:00.000Z",
+        createdAt: "2026-11-10T00:00:00.000Z",
+      },
+      {
+        id: "payout-2",
+        amountMinor: 32_000,
+        currency: "BRL",
+        status: "paid",
+        arrivedAt: "2026-11-05T00:00:00.000Z",
+        createdAt: "2026-11-03T00:00:00.000Z",
+      },
+    ],
+    disputes: [
+      {
+        id: "dispute-1",
+        amountMinor: 13_000,
+        currency: "BRL",
+        reason: "fraudulent",
+        status: "needs_response",
+        createdAt: "2026-11-11T00:00:00.000Z",
+      },
+    ],
+  };
+  const whiteLabelAnswers: Record<string, unknown> = { partners: [whiteLabel], payments };
+  await page.route("**/rpc/partnerConsole/*", (route) => {
+    const name = new URL(route.request().url()).pathname.split("/").pop() ?? "";
+    return route.fulfill({ json: { json: whiteLabelAnswers[name] ?? null } });
+  });
+
+  await page.goto("/app/home");
+  const nav = page.getByTestId("sidebar-partnership");
+  await expect(nav.getByTestId("sidebar-partner-payments")).toBeVisible();
+  await nav.getByTestId("sidebar-partner-payments").click();
+  const receipts = page.getByTestId("partner-payments");
+  await expect(receipts.getByTestId("partner-connect-state")).toHaveText("Active");
+  await expect(receipts.getByRole("button", { name: "Open dashboard" })).toBeVisible();
+  await expect(receipts.getByRole("button", { name: "Connect account" })).toHaveCount(0);
+  await expect(receipts.getByTestId("partner-disputes")).toContainText("Needs response");
+  await captureScreenshot(page, testInfo, "partner-payments");
+});

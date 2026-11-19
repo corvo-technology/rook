@@ -28,6 +28,7 @@ describe("partner console helpers", () => {
       "template",
       "pricing",
       "revenue",
+      "payments",
       "brand",
       "domain",
       "integration",

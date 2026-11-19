@@ -178,6 +178,11 @@ msgstr "{0} MB"
 msgid "{0} new"
 msgstr "新規 {0}"
 
+#. placeholder {0}: money(plan.creditMinor)
+#: src/pages/plans/WhiteLabelPlans.tsx
+msgid "{0} of credit"
+msgstr "{0} のクレジット"
+
 #. placeholder {0}: new Intl.NumberFormat(locale).format(overview.requestedEscalations)
 #: src/pages/Usage.tsx
 msgid "{0} requested"
@@ -692,6 +697,10 @@ msgstr "{working} 件作業中"
 msgid "@{0}"
 msgstr "@{0}"
 
+#: src/pages/plans/WhiteLabelPlans.tsx
+msgid "/ month"
+msgstr "/ 月"
+
 #. placeholder {0}: (status.byokPriceCents ?? 0) / 100
 #. placeholder {0}: amount / 100
 #: src/components/ModelCredits.tsx
@@ -768,6 +777,7 @@ msgid "Access token (optional)"
 msgstr "アクセストークン（任意）"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/partner/PartnerPayments.tsx
 msgid "Account"
 msgstr "アカウント"
 
@@ -788,6 +798,11 @@ msgstr "アカウントラベル"
 msgid "Account menu for {name}"
 msgstr "{name}のアカウントメニュー"
 
+#: src/pages/partner/PartnerPayments.tsx
+#: src/pages/platform/PlatformConnect.tsx
+msgid "Action needed"
+msgstr "対応が必要です"
+
 #. placeholder {0}: bot.name
 #. placeholder {0}: group.spaceName
 #. placeholder {0}: section.name
@@ -803,7 +818,9 @@ msgstr "スペースの操作"
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/partner/PartnerDomain.tsx
+#: src/pages/partner/PartnerPayments.tsx
 #: src/pages/platform/PartnersSection.tsx
+#: src/pages/platform/PlatformConnect.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/Workflows.tsx
 msgid "Active"
@@ -1019,11 +1036,9 @@ msgstr "これらのファイルをもう一度追加"
 msgid "Add these records at your DNS provider."
 msgstr "これらのレコードをDNSプロバイダーに追加してください。"
 
-
 #: src/pages/partner/PartnerDomain.tsx
 msgid "Add this record at your DNS provider."
 msgstr "このレコードをDNSプロバイダーに追加してください。"
-
 
 #: src/pages/shell/agent-import.tsx
 msgid "Add to an existing bot"
@@ -1048,7 +1063,6 @@ msgstr "ウィジェットを追加"
 #: src/pages/partner/PartnerDomain.tsx
 msgid "Add your terms and privacy links in Brand to go live."
 msgstr "公開するには、ブランドで利用規約とプライバシーのリンクを追加してください。"
-
 
 #: src/lib/server-copy.ts
 msgid "Add: {add}"
@@ -1266,6 +1280,7 @@ msgstr "常に許可済み"
 
 #: src/pages/partner/PartnerCredits.tsx
 #: src/pages/partner/PartnerCustomers.tsx
+#: src/pages/partner/PartnerPayments.tsx
 #: src/pages/platform/SimulatorSection.tsx
 msgid "Amount"
 msgstr "金額"
@@ -1795,7 +1810,6 @@ msgstr "Brainラベル"
 msgid "Brand"
 msgstr "ブランド"
 
-
 #: src/pages/partner/PartnerBrand.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Brand colour"
@@ -1828,6 +1842,7 @@ msgid "Business"
 msgstr "ビジネス"
 
 #: src/pages/home/PartnerBalance.tsx
+#: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Buy more"
 msgstr "追加購入"
 
@@ -2050,6 +2065,10 @@ msgstr "チェックアウトURL"
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Chief name"
 msgstr "チーフの名前"
+
+#: src/pages/plans/WhiteLabelPlans.tsx
+msgid "Choose"
+msgstr "選ぶ"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Choose a bot"
@@ -2386,6 +2405,10 @@ msgstr "リセットを確認しますか？"
 msgid "Confirm your email first, then open this link again"
 msgstr "先にメールを確認してから、このリンクをもう一度開いてください"
 
+#: src/pages/plans/WhiteLabelPlans.tsx
+msgid "Confirming your payment"
+msgstr "お支払いを確認しています"
+
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/ChatAppsRow.tsx
 #: src/pages/connections/ConnectSheet.tsx
@@ -2435,6 +2458,10 @@ msgstr "モデルを接続して開始してください。"
 #: src/pages/HomePage.tsx
 msgid "Connect a tool"
 msgstr "ツールを接続"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Connect account"
+msgstr "アカウントを接続"
 
 #: src/components/MissionList.tsx
 msgid "Connect an app"
@@ -2492,6 +2519,10 @@ msgstr "接続済み"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Connected {0}."
 msgstr "{0}を接続しました。"
+
+#: src/pages/platform/PlatformPage.tsx
+msgid "Connected accounts"
+msgstr "接続済みアカウント"
 
 #: src/pages/connections/DatabaseForm.tsx
 #: src/pages/connections/MailboxForm.tsx
@@ -2558,6 +2589,10 @@ msgstr "コンテキスト上限"
 #: src/pages/shell/agent-import.tsx
 msgid "Continue"
 msgstr "続行"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Continue setup"
+msgstr "設定を続ける"
 
 #: src/components/ModelCredits.tsx
 msgid "Continue to checkout"
@@ -3337,7 +3372,6 @@ msgstr "スペースを作成"
 msgid "Create your account"
 msgstr "アカウントを作成"
 
-
 #: src/pages/Auth.tsx
 msgid "Create your Rook"
 msgstr "Rookを作成"
@@ -3436,6 +3470,10 @@ msgstr "通貨"
 msgid "Current password"
 msgstr "現在のパスワード"
 
+#: src/pages/plans/WhiteLabelPlans.tsx
+msgid "Current plan"
+msgstr "現在のプラン"
+
 #: src/pages/connections/connection-model.ts
 msgid "Custom"
 msgstr "カスタム"
@@ -3484,6 +3522,7 @@ msgid "Customer-owned models are never charged"
 msgstr "顧客自身のモデルには課金されません"
 
 #: src/pages/partner/PartnerConsolePage.tsx
+#: src/pages/platform/PlatformConnect.tsx
 #: src/pages/platform/SimulatorSection.tsx
 msgid "Customers"
 msgstr "顧客"
@@ -3533,6 +3572,10 @@ msgstr "データ"
 #: src/pages/connections/DatabaseForm.tsx
 msgid "Database"
 msgstr "データベース"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Date"
+msgstr "日付"
 
 #: src/lib/billing.ts
 #: src/lib/cron.ts
@@ -3725,6 +3768,10 @@ msgstr "詳細"
 msgid "Development"
 msgstr "開発"
 
+#: src/pages/platform/PlatformConnect.tsx
+msgid "Difference"
+msgstr "差額"
+
 #: src/components/InboxPanel.tsx
 msgid "Direct message"
 msgstr "ダイレクトメッセージ"
@@ -3733,6 +3780,8 @@ msgstr "ダイレクトメッセージ"
 msgid "Disable a tool"
 msgstr "ツールを無効にする"
 
+#: src/pages/partner/PartnerPayments.tsx
+#: src/pages/platform/PlatformConnect.tsx
 #: src/pages/Store.tsx
 #: src/pages/StoreInstalledApps.tsx
 msgid "Disabled"
@@ -3803,6 +3852,11 @@ msgstr "見送りました。接続はいつでも「接続」から再設定で
 msgid "Display name"
 msgstr "表示名"
 
+#: src/pages/partner/PartnerPayments.tsx
+#: src/pages/platform/PlatformConnect.tsx
+msgid "Disputes"
+msgstr "異議申し立て"
+
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/onboarding/ComputerStep.tsx
 msgid "Docker"
@@ -3850,7 +3904,6 @@ msgstr "依頼に合うことを行う"
 #: src/pages/platform/PartnersSection.tsx
 msgid "Domain"
 msgstr "ドメイン"
-
 
 #: src/pages/Auth.tsx
 msgid "Don’t have an account?"
@@ -3990,7 +4043,6 @@ msgstr "メールでのお知らせ"
 msgid "Email domain"
 msgstr "メールドメイン"
 
-
 #: src/lib/user-error.ts
 msgid "Email is not allowed to register"
 msgstr "このメールアドレスは登録できません"
@@ -4032,7 +4084,6 @@ msgstr "対応する場合… 無視する場合…"
 #: src/lib/branding-errors.ts
 msgid "Enter a domain such as app.example.com."
 msgstr "app.example.com のようなドメインを入力してください。"
-
 
 #: src/pages/onboarding/WorkspaceStep.tsx
 msgid "Enter a name up to {SPACE_NAME_MAX_LENGTH} characters."
@@ -4231,6 +4282,7 @@ msgstr "失敗"
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/partner/PartnerDomain.tsx
+#: src/pages/partner/PartnerPayments.tsx
 #: src/pages/platform/PartnersSection.tsx
 #: src/pages/RoutineCard.tsx
 #: src/pages/RoutineTimeGrid.tsx
@@ -4259,6 +4311,10 @@ msgstr "失敗時の対応"
 #: src/pages/Usage.tsx
 msgid "Fast"
 msgstr "高速"
+
+#: src/pages/platform/PlatformConnect.tsx
+msgid "Fees"
+msgstr "手数料"
 
 #: src/pages/TicketFields.tsx
 msgid "Field name"
@@ -4694,7 +4750,6 @@ msgstr "完了しました"
 #: src/pages/partner/PartnerBrand.tsx
 msgid "Icon"
 msgstr "アイコン"
-
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "If you heard that, voice is ready."
@@ -5152,6 +5207,10 @@ msgstr "退出"
 msgid "Leave this space?"
 msgstr "このスペースから退出しますか？"
 
+#: src/pages/platform/PlatformConnect.tsx
+msgid "Ledger"
+msgstr "台帳"
+
 #: src/components/AutonomyPicker.tsx
 msgid "Let {name} act without asking?"
 msgstr "{name}が確認なしで動くことを許可しますか？"
@@ -5296,6 +5355,10 @@ msgstr "画面を見ています"
 #: src/pages/shell/agent-import.tsx
 msgid "Looks like it contains a key"
 msgstr "キーが含まれているようです"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Lost"
+msgstr "敗訴"
 
 #: src/lib/ticket-priority.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -5731,6 +5794,7 @@ msgstr "月"
 #: src/pages/partner/PartnerRevenue.tsx
 #: src/pages/platform/InvoicesSection.tsx
 #: src/pages/platform/PartnersSection.tsx
+#: src/pages/platform/PlatformConnect.tsx
 #: src/pages/Routines.tsx
 msgid "Month"
 msgstr "月"
@@ -5783,6 +5847,10 @@ msgstr "その他"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "More computer actions"
 msgstr "コンピューターのその他の操作"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "More information needed"
+msgstr "追加の情報が必要です"
 
 #: src/pages/NewRoutinePanel.tsx
 msgid "Morning summary"
@@ -5901,6 +5969,10 @@ msgstr "入力が必要"
 #: src/pages/connections/connection-model.ts
 msgid "Needs reconnecting"
 msgstr "再接続が必要"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Needs response"
+msgstr "対応が必要"
 
 #: src/pages/ActivityList.tsx
 msgid "Needs takeover"
@@ -6038,6 +6110,10 @@ msgstr "次へ"
 msgid "Next page"
 msgstr "次のページ"
 
+#: src/pages/plans/WhiteLabelPlans.tsx
+msgid "Next period"
+msgstr "次の期間"
+
 #: src/pages/home/HomeHero.tsx
 msgid "next routine in {n, plural, one {# hour} other {# hours}}"
 msgstr "次のルーティンまで{n, plural, other {#時間}}"
@@ -6094,6 +6170,10 @@ msgstr "一致するボットはありません"
 #: src/pages/partner/PartnerCustomers.tsx
 msgid "No customers"
 msgstr "顧客はいません"
+
+#: src/pages/platform/PlatformConnect.tsx
+msgid "No fees this month"
+msgstr "今月の手数料はありません"
 
 #: src/pages/partner/PartnerInvoices.tsx
 msgid "No invoices"
@@ -6165,9 +6245,17 @@ msgstr "まだページがありません"
 msgid "No partnerships"
 msgstr "パートナーシップはありません"
 
+#: src/pages/partner/PartnerPayments.tsx
+msgid "No payouts yet"
+msgstr "支払いはまだありません"
+
 #: src/pages/platform/LimitsSection.tsx
 msgid "No plan"
 msgstr "プランなし"
+
+#: src/pages/plans/WhiteLabelPlans.tsx
+msgid "No plans"
+msgstr "プランはありません"
 
 #: src/pages/AgentsStore.tsx
 msgid "No public address here, so it checks your inbox on a schedule you approve."
@@ -6228,6 +6316,10 @@ msgstr "この期間の利用はありません。"
 msgid "No voice right now"
 msgstr "今は音声なし"
 
+#: src/pages/platform/PlatformConnect.tsx
+msgid "No white label partners"
+msgstr "ホワイトラベルのパートナーはいません"
+
 #: src/pages/Workflows.tsx
 msgid "No workflows yet"
 msgstr "まだワークフローがありません"
@@ -6244,7 +6336,6 @@ msgstr "有効なスキルではありません"
 msgid "Not available"
 msgstr "利用できません"
 
-
 #: src/pages/shell/routing-line.tsx
 msgid "Not available to you"
 msgstr "あなたは利用できません"
@@ -6253,6 +6344,11 @@ msgstr "あなたは利用できません"
 msgid "Not checked yet"
 msgstr "未確認"
 
+#: src/pages/partner/PartnerPayments.tsx
+#: src/pages/platform/PlatformConnect.tsx
+msgid "Not connected"
+msgstr "未接続"
+
 #: src/pages/connections/DatabaseForm.tsx
 msgid "Not encrypted"
 msgstr "暗号化なし"
@@ -6260,7 +6356,6 @@ msgstr "暗号化なし"
 #: src/pages/partner/PartnerBrand.tsx
 msgid "Not enough contrast on both light and dark."
 msgstr "ライトとダークの両方でコントラストが不足しています。"
-
 
 #: src/pages/shell/agent-import.tsx
 msgid "Not imported"
@@ -6490,6 +6585,10 @@ msgstr "{0}とのチャットを開く"
 msgid "Open computer settings"
 msgstr "コンピューター設定を開く"
 
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Open dashboard"
+msgstr "ダッシュボードを開く"
+
 #: src/components/markdown-link-prompt.tsx
 msgid "Open external link?"
 msgstr "外部リンクを開きますか？"
@@ -6666,6 +6765,7 @@ msgid "Pages"
 msgstr "ページ"
 
 #: src/pages/partner/PartnerInvoices.tsx
+#: src/pages/partner/PartnerPayments.tsx
 #: src/pages/partner/PartnerRevenue.tsx
 #: src/pages/platform/InvoicesSection.tsx
 msgid "Paid"
@@ -6673,6 +6773,7 @@ msgstr "支払い済み"
 
 #: src/pages/platform/InvoicesSection.tsx
 #: src/pages/platform/PartnersSection.tsx
+#: src/pages/platform/PlatformConnect.tsx
 msgid "Partner"
 msgstr "パートナー"
 
@@ -6803,6 +6904,14 @@ msgstr "一時停止中"
 msgid "Pawn"
 msgstr "ポーン"
 
+#: src/pages/plans/WhiteLabelPlans.tsx
+msgid "Payment method"
+msgstr "支払い方法"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Payouts"
+msgstr "支払い"
+
 #: src/pages/partner/PartnerDomain.tsx
 #: src/pages/platform/IntakeSections.tsx
 #: src/pages/platform/PartnersSection.tsx
@@ -6917,7 +7026,9 @@ msgstr "今週を計画"
 msgid "Plan: {plan}"
 msgstr "プラン: {plan}"
 
+#: src/pages/BillingSettingsPanel.tsx
 #: src/pages/partner/PartnerPricing.tsx
+#: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Plans"
 msgstr "プラン"
 
@@ -7010,11 +7121,9 @@ msgstr "優先度"
 msgid "Privacy"
 msgstr "プライバシー"
 
-
 #: src/pages/partner/PartnerBrand.tsx
 msgid "Privacy URL"
 msgstr "プライバシーURL"
-
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Private"
@@ -7054,6 +7163,7 @@ msgstr "保護された入力"
 
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
+#: src/pages/platform/PlatformConnect.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Provider"
 msgstr "プロバイダー"
@@ -7184,6 +7294,10 @@ msgstr "参照と書き込み"
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Recall only"
 msgstr "参照のみ"
+
+#: src/pages/partner/PartnerConsolePage.tsx
+msgid "Receipts"
+msgstr "入金"
 
 #: src/pages/ActivityList.tsx
 msgid "Recent"
@@ -7399,7 +7513,6 @@ msgstr "スキル{0}を削除"
 msgid "Remove the current domain first."
 msgstr "先に現在のドメインを削除してください。"
 
-
 #: src/pages/RoutineEditor.tsx
 msgid "Remove webhook"
 msgstr "Webhookを削除"
@@ -7453,7 +7566,6 @@ msgstr "{cron} に繰り返し、次回は {when}"
 #: src/pages/partner/PartnerBrand.tsx
 msgid "Replace"
 msgstr "置き換える"
-
 
 #: src/pages/model-settings/connection-controls.tsx
 msgid "Replace API key"
@@ -7635,7 +7747,6 @@ msgstr "画面を再試行"
 #: src/pages/McpOAuthCallback.tsx
 msgid "Return to {0}"
 msgstr "{0} に戻る"
-
 
 #. placeholder {0}: call.botName
 #: src/components/call/CallCard.tsx
@@ -7866,7 +7977,6 @@ msgstr "自動で保存"
 #: src/lib/branding-errors.ts
 msgid "Save the brand first."
 msgstr "先にブランドを保存してください。"
-
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Save the workspace and install current software."
@@ -8146,6 +8256,11 @@ msgstr "セットアップ完了"
 msgid "Setup help"
 msgstr "設定ヘルプ"
 
+#: src/pages/partner/PartnerPayments.tsx
+#: src/pages/platform/PlatformConnect.tsx
+msgid "Setup in progress"
+msgstr "設定中"
+
 #: src/pages/WorkspaceModelRow.tsx
 msgid "Share my models with members"
 msgstr "自分のモデルをメンバーと共有"
@@ -8246,7 +8361,6 @@ msgstr "サインインまたはアカウント作成"
 #: src/pages/Auth.tsx
 msgid "Sign in to {0}"
 msgstr "{0} にサインイン"
-
 
 #: src/pages/Auth.tsx
 msgid "Sign in to Rook"
@@ -8486,7 +8600,9 @@ msgstr "状態"
 
 #: src/pages/ActivityList.tsx
 #: src/pages/Board.tsx
+#: src/pages/partner/PartnerPayments.tsx
 #: src/pages/platform/InvoicesSection.tsx
+#: src/pages/platform/PlatformConnect.tsx
 msgid "Status"
 msgstr "ステータス"
 
@@ -8660,7 +8776,6 @@ msgstr "サポート"
 msgid "Support email"
 msgstr "サポートメール"
 
-
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Supports images"
@@ -8766,11 +8881,9 @@ msgstr "ターミナル入力"
 msgid "Terms"
 msgstr "利用規約"
 
-
 #: src/pages/partner/PartnerBrand.tsx
 msgid "Terms URL"
 msgstr "利用規約URL"
-
 
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/onboarding/LocalModelChoice.tsx
@@ -8841,7 +8954,6 @@ msgstr "ダウンロードが公開されたファイルと一致しませんで
 msgid "The icon must be a square PNG of at least 512 px."
 msgstr "アイコンは512px以上の正方形のPNGにしてください。"
 
-
 #. js-lingui-explicit-id
 #: src/lib/run-error-copy.ts
 msgid "The model couldn't answer"
@@ -8875,7 +8987,6 @@ msgstr "モデルの応答に時間がかかりすぎました"
 #: src/lib/branding-errors.ts
 msgid "The provider did not answer. Try again."
 msgstr "プロバイダーから応答がありませんでした。もう一度お試しください。"
-
 
 #: src/lib/computer-screen.ts
 msgid "The screen connection closed."
@@ -8989,7 +9100,6 @@ msgstr "この会話はモデルにとって長すぎます。再試行しても
 #: src/lib/branding-errors.ts
 msgid "This domain is already in use."
 msgstr "このドメインはすでに使用されています。"
-
 
 #: src/components/ArtifactFileCard.tsx
 msgid "This file is not valid UTF-8 text."
@@ -9320,6 +9430,14 @@ msgstr "録画せずに入力"
 msgid "Type your answer"
 msgstr "回答を入力"
 
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Unavailable"
+msgstr "利用できません"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Under review"
+msgstr "審査中"
+
 #: src/components/ApprovalRulesSettings.tsx
 #: src/components/AskCard.tsx
 #: src/components/MemoryFactCard.tsx
@@ -9517,7 +9635,6 @@ msgstr "見つかったモデルを使用"
 msgid "Use a PNG, JPEG or WebP image up to 256 KB."
 msgstr "256 KB以下のPNG、JPEG、WebP画像を使用してください。"
 
-
 #: src/pages/connections/DatabaseForm.tsx
 msgid "Use a read-only database role."
 msgstr "読み取り専用のデータベースロールを使用してください。"
@@ -9639,7 +9756,6 @@ msgstr "値"
 msgid "Verified"
 msgstr "確認済み"
 
-
 #: src/pages/Store.tsx
 msgid "Verify and add"
 msgstr "確認して追加"
@@ -9721,7 +9837,6 @@ msgstr "承認待ち"
 #: src/pages/partner/PartnerDomain.tsx
 msgid "Waiting for the certificate."
 msgstr "証明書を待っています。"
-
 
 #: src/pages/home/EmbeddedHome.tsx
 #: src/pages/HomePage.tsx
@@ -9917,6 +10032,10 @@ msgstr "Wiki"
 #: src/pages/WikiBrowser.tsx
 msgid "Wiki settings"
 msgstr "Wikiの設定"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Won"
+msgstr "勝訴"
 
 #: src/lib/ticket-status.ts
 msgid "Won't do"

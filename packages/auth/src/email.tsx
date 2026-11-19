@@ -349,6 +349,58 @@ export function invitationEmail(
   );
 }
 
+const paymentNoticeCopy = {
+  "pt-BR": {
+    failedSubject: "Seu pagamento não foi concluído",
+    failedBody:
+      "Não conseguimos cobrar seu cartão neste mês. Atualize a forma de pagamento para manter seu plano.",
+    failedAction: "Atualizar pagamento",
+    refundSubject: "Seu reembolso foi feito",
+    refundBody: (amount: string) =>
+      `Reembolsamos ${amount}. Pode levar alguns dias para aparecer na sua fatura.`,
+  },
+  en: {
+    failedSubject: "Your payment did not go through",
+    failedBody:
+      "We could not charge your card for this month. Update your payment method to keep your plan.",
+    failedAction: "Update payment method",
+    refundSubject: "Your refund is on its way",
+    refundBody: (amount: string) =>
+      `We refunded ${amount}. It can take a few days to show on your statement.`,
+  },
+} as const;
+
+/** What a customer of a white label partner is told about its money; the partner's brand, never Rook's. */
+export function paymentNoticeEmail(
+  webOrigin: string,
+  input: {
+    to: string;
+    lang: "pt-BR" | "en";
+    kind: "payment_failed" | "refunded";
+    amount: string;
+    url: string;
+  },
+  brand?: EmailBrand,
+): Promise<TransactionalEmail> {
+  const copy = paymentNoticeCopy[input.lang];
+  const failed = input.kind === "payment_failed";
+  return message(
+    webOrigin,
+    input.to,
+    failed ? copy.failedSubject : copy.refundSubject,
+    <>
+      <Text style={text}>{failed ? copy.failedBody : copy.refundBody(input.amount)}</Text>
+      {failed ? (
+        <Action href={input.url} brand={brand}>
+          {copy.failedAction}
+        </Action>
+      ) : null}
+    </>,
+    input.lang,
+    brand,
+  );
+}
+
 export type WaitlistEmailLocale = "pt-BR" | "en";
 
 const waitlistCopy = {

@@ -59,6 +59,7 @@ export interface PartnerBalance {
   periodEnd: string | null;
   state: string;
   checkoutUrl: string | null;
+  buyInApp?: boolean;
   lowThresholdReached: boolean;
 }
 
@@ -83,6 +84,7 @@ export function parsePartnerBalance(value: unknown): PartnerBalance | null {
     periodEnd: typeof v.periodEnd === "string" ? v.periodEnd : null,
     state: typeof v.state === "string" ? v.state : "active",
     checkoutUrl: typeof v.checkoutUrl === "string" ? v.checkoutUrl : null,
+    ...(v.buyInApp === true ? { buyInApp: true } : {}),
     lowThresholdReached: v.lowThresholdReached === true,
   };
 }

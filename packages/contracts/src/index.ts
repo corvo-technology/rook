@@ -46,6 +46,7 @@ export * from "./openai-compatible-ui.js";
 export * from "./partner.js";
 export * from "./partner-console.js";
 export * from "./partner-credits.js";
+export * from "./partner-payments.js";
 export * from "./plans.js";
 export * from "./reactions.js";
 export * from "./routine-watch.js";

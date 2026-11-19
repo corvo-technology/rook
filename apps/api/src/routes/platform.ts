@@ -19,6 +19,7 @@ import {
   partnerPricingHistory,
   platformPartnerOverview,
   publishPartnerPricing,
+  reconcileApplicationFees,
   runAsSystem,
   setOrganizationOverride,
   setPartnerInvoiceState,
@@ -220,6 +221,60 @@ export function platformRoutes(ctx: RouterContext) {
           }),
         ),
       },
+      connect: {
+        list: admin.platform.connect.list.handler(() =>
+          asSystem(async () => {
+            const partners = await deps.prisma.partner.findMany({
+              where: { mode: "white_label" },
+              orderBy: { name: "asc" },
+              select: {
+                id: true,
+                slug: true,
+                name: true,
+                currency: true,
+                connectAccountId: true,
+                connectState: true,
+                _count: { select: { tenants: true } },
+              },
+            });
+            const open = await deps.prisma.partnerDispute.groupBy({
+              by: ["partnerId"],
+              where: {
+                status: { in: ["needs_response", "warning_needs_response", "under_review"] },
+              },
+              _count: { _all: true },
+            });
+            return partners.map((partner) => ({
+              id: partner.id,
+              slug: partner.slug,
+              name: partner.name,
+              currency: partner.currency === "BRL" ? ("BRL" as const) : ("USD" as const),
+              state: connectStateOf(partner.connectState),
+              accountHint: partner.connectAccountId?.slice(-6) ?? null,
+              customers: partner._count.tenants,
+              disputesOpen: open.find((row) => row.partnerId === partner.id)?._count._all ?? 0,
+            }));
+          }),
+        ),
+        reconcile: admin.platform.connect.reconcile.handler(({ input }) =>
+          asSystem(async () => {
+            if (!deps.payments) throw new ORPCError("PRECONDITION_FAILED");
+            const [year, month] = input.period.split("-").map(Number) as [number, number];
+            const fees = await deps.payments.listApplicationFees({
+              from: new Date(Date.UTC(year, month - 1, 1)),
+              to: new Date(Date.UTC(year, month, 1)),
+            });
+            const rows = await reconcileApplicationFees(deps.prisma, input.period, fees);
+            return {
+              period: input.period,
+              rows: rows.map((row) => ({
+                ...row,
+                currency: row.currency === "BRL" ? ("BRL" as const) : ("USD" as const),
+              })),
+            };
+          }),
+        ),
+      },
       invoices: {
         list: admin.platform.invoices.list.handler(({ input }) =>
           asSystem(async () => invoiceViews(await listPartnerInvoices(deps.prisma, input.period))),
@@ -279,6 +334,11 @@ export function platformRoutes(ctx: RouterContext) {
       },
     },
   };
+}
+
+const CONNECT_STATES = ["none", "pending", "restricted", "active", "disabled"] as const;
+function connectStateOf(value: string): (typeof CONNECT_STATES)[number] {
+  return CONNECT_STATES.find((state) => state === value) ?? "none";
 }
 
 function invoiceViews(rows: Awaited<ReturnType<typeof listPartnerInvoices>>) {

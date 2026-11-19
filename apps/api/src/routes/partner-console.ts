@@ -13,13 +13,19 @@ import {
   saveBrand,
   setSenderDomain,
 } from "../partner-brand/index.js";
-import type { PartnerConsoleDeps, PartnerScope } from "../partner-console/index.js";
+import type {
+  PartnerConsoleDeps,
+  PartnerPaymentsDeps,
+  PartnerScope,
+} from "../partner-console/index.js";
 import {
   createPrismaPartnerConsoleStore,
+  createPrismaPartnerPaymentsStore,
   getCredits,
   getCustomer,
   getIntegration,
   getOverview,
+  getPartnerPayments,
   getPricing,
   getRevenue,
   getRevenueCsv,
@@ -27,6 +33,7 @@ import {
   listCustomers,
   listInvoices,
   listPartners,
+  openPartnerConnectDashboard,
   openSupportSession,
   PartnerConsoleError,
   rotateIntegrationKey,
@@ -38,6 +45,7 @@ import {
   setIntegrationWebhook,
   setPricing,
   setTemplate,
+  startPartnerConnect,
   startTopup,
 } from "../partner-console/index.js";
 import { requireSpacePermission } from "../space-owner.js";
@@ -85,6 +93,13 @@ export function partnerConsoleRoutes(ctx: RouterContext) {
       now: () => new Date(),
       changed: () => branding.resolver.invalidate(),
     };
+  };
+
+  const payments: PartnerPaymentsDeps = {
+    partners: store,
+    store: createPrismaPartnerPaymentsStore(deps.prisma),
+    provider: deps.payments,
+    webOrigin: deps.env.webOrigin,
   };
 
   const managed = authed.use(async ({ context, next }) => {
@@ -216,6 +231,15 @@ export function partnerConsoleRoutes(ctx: RouterContext) {
       ),
       setAlertEmail: managed.partnerConsole.setAlertEmail.handler(({ context, input }) =>
         run(context.actor, (scope) => setIntegrationAlertEmail(service, scope, input)),
+      ),
+      payments: managed.partnerConsole.payments.handler(({ context, input }) =>
+        run(context.actor, (scope) => getPartnerPayments(payments, scope, input)),
+      ),
+      connect: managed.partnerConsole.connect.handler(({ context, input }) =>
+        run(context.actor, (scope) => startPartnerConnect(payments, scope, input)),
+      ),
+      connectDashboard: managed.partnerConsole.connectDashboard.handler(({ context, input }) =>
+        run(context.actor, (scope) => openPartnerConnectDashboard(payments, scope, input)),
       ),
     },
   };

@@ -1,5 +1,6 @@
 import type { PrismaClient } from "./client.js";
 import { Prisma } from "./client.js";
+import { attachWhiteLabelCustomer } from "./commerce-connect.js";
 import { runAsSystem } from "./row-security.js";
 
 /**
@@ -237,6 +238,15 @@ export function createPrismaBrandingStore(prisma: PrismaClient): BrandingStore {
           data: input,
           skipDuplicates: true,
         });
+        if (result.count === 1) {
+          // A white label customer is read-only until it has a plan: it needs its ledger row now.
+          const partner = await prisma.partner.findUnique({ where: { id: input.partnerId } });
+          if (partner?.mode === "white_label" && partner.billingModel === "commerce") {
+            await attachWhiteLabelCustomer(prisma, input.partnerId, {
+              organizationId: input.organizationId,
+            });
+          }
+        }
         return result.count === 1;
       }),
     customerCount: (partnerId) =>

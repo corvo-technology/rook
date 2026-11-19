@@ -863,102 +863,14 @@ The rules are pure functions in `packages/db/src/partner-credit-rules.ts`; the d
   storage above `storageAllowanceGb` once for the closed month, and platform voice through
   `debitPartnerResource`, all at the published rates and once per key (a named hold on the
   customer's credit).
-- **Not yet.** Voice minutes are not wired to a source (consultations store no duration), so only
-  the debit function exists. Auto top-up opens Rook's checkout; unattended charging needs a saved
-  payment method in the billing provider, which the billing interface does not offer, and the
-  worker process has no billing service, so only the API process runs it. The partner plan fee is
-  invoiced but no payment provider collects it (invoices are issued by hand, as in 7.1). The
-  automatic model router can still pick a disallowed hosted model; the call is then refused with the
-  card above.
-
-- **Status.** Built: the config, the simulator, the controls and the RPCs. Not yet: stopping a run at
-  a customer's limit or outside the allowed models, sending the two new webhooks, running auto
-  top-up, and billing the partner plan itself (the console shows no plan until then).
-
-### 16.3 Agent tools (the "Partnership" connection)
-
-Agents work the portfolio through a built-in connection, offered only to an organization that is a member of at least one partner and lent to an agent like any connection (none, read, or read and write; one `bot_partner_grants` row per agent, shown on the Connections page as "Partnership").
-
-- Reads (read level): `partner_list_customers`, `partner_customer_usage`, `partner_attention`, `partner_revenue_summary`, `partner_invoices`. Writes (write level): `partner_add_credit`, `partner_pause_customer`, `partner_resume_customer`, `partner_set_customer_limit`. Every write asks a person each time, whatever the approval mode or an allow rule.
-- The tools are thin wrappers over the console's service functions (`apps/api/src/partner-console/agent-tools.ts`), through the `PartnerToolsPort` of `packages/adapters`, so scoping, idempotency and the audit trail are the console's own. The API and the worker wire the same port.
-- Every tool takes an optional `partner` slug; with one partner it is the default, with several the agent is told which to name.
-- Results are numbers, states and names. Never a customer's conversation, nor the names of their agents.
-- A write is audited twice: by the console (who, which customer, what) and by a `partner.agent_action` security event (which agent, which run).
-- Two installable agents, "Portfolio Manager" and "Customer Success", are added with read access and offered only to such organizations.
-
-### 16.4 Alerts for the partner's people
-
-Partners are often not technical, so what happens is also told to the people who run the partner, by
-email and in the app. Webhooks stay an optional technical integration and are unchanged.
-
-- **One record.** `recordCommerceEvent` also keeps a `PartnerAlert` row (unique per partner,
-  customer, kind and key) for every event that is an alert, whether or not the partner has a webhook.
-  Alerts: `customer.credit_limit_reached`, `partner.balance_low`, `partner.autotopup_started`,
-  `partner.autotopup_failed` (after the last attempt only), `invoice.issued`, `subscription.lapsed`
-  (a payment past due or lapsed) and `customer.connector_down` (noted once a day while a health check
-  fails). The reconciler no longer skips a partner without a webhook for the credit notices.
-- **Who.** Everyone who holds `manage_partner` in a space of an organization that is a
-  `PartnerMember` of the partner. A person in another partner's organization, or without the
-  permission, is never told.
-- **In the app.** Always on: one inbox entry per alert and manager, through the existing
-  notifications (an `alert` with a `partner_*` code, worded by each client in the member's language).
-  It opens the console screen for the alert, such as `/app/partner/<id>/customers?customer=<tenant>`.
-- **By email.** Through the transactional email adapter. Each pass of the reconciler claims the new
-  alerts once (`dispatchedAt`), so one event is never sent twice, and sends one digest per manager:
-  a burst of 20 customers at their limit is one email with a count and a few names, and one button
-  to the screen. The email carries counts and customer names only. Its language is the person's app
-  language when known, else Portuguese for a BRL partner and English otherwise.
-- **Preferences.** Integration shows one switch per alert kind for the email (default on; no row
-  means on, `partner_alert_preferences` stores an off). The inbox cannot be switched off.
-
-## 17. F4 part A as built: brand, domain and branded mail
-
-What makes the app look like the partner's, for white label partners only. No payments here.
-
-- **Tables** (additive, `20261214300000_white_label_brand`): `PartnerBrand` (name, logo and icon keys,
-  accent, support email, terms and privacy URLs, and the sender domain with its state and DNS
-  records), `PartnerDomain` (hostname, `pending | verified | active | failed`, the provider's id,
-  last error) and `PartnerCustomer` (organization to partner, written once; a database trigger
-  refuses any change to it). Assets live in the deployment's object storage under `brand/<partnerId>/`
-  (a folder of the data directory where there is none), keyed by a hash of the bytes. All three tables
-  are system-only under row security.
-- **The host decides.** The API reads the host from `Host`, or from `X-Forwarded-Host` only when the
-  socket peer is a trusted proxy (the same list as the client address). `GET /api/brand` answers
-  that host's brand; a host that is not registered and `active`, or a partner that is off or not
-  white label, answers `{ "brand": null }`, which is the app's own look. No parameter picks a brand.
-  The web app reads it before the first render and paints the name, title, favicon, home-screen
-  icon, `theme-color`, the per-host manifest (`/api/brand/manifest.webmanifest`) and the accent
-  (mapped onto the semantic tokens at runtime, as the embed accent is). On a branded host the sign-in
-  pages show the partner's name, logo and legal links and none of Rook's.
-- **Accent contrast.** One colour serves both themes, so it must reach 3:1 against the light and the
-  dark page (`checkAccent`); the console refuses it otherwise, and the service checks again.
-- **Domains.** Behind `DomainProvider` (`packages/adapter-kit/src/branding.ts`): the Cloudflare for
-  SaaS custom hostnames adapter creates, polls and deletes; `DomainEmulator` is the offline fake and
-  both run the same conformance suite. `nextHostState` is the state machine: `verified` means the
-  provider sees the CNAME and is issuing the certificate; `active` needs the certificate **and** the
-  terms and privacy URLs; a live host stays live while the provider renews; the provider dropping a
-  host or giving up is `failed`, with its reason. The job reconciler polls pending and verified hosts
-  on every pass, failed ones hourly and active ones every six hours; an unreachable provider leaves a
-  host as it was. One host per partner in the console; the database allows more and keeps a host
-  unique across partners.
-- **Sign-up.** The API tells Better Auth which host the request came from in `x-corvo-brand-host`
-  (set from the resolved host, never the caller's). The first sign-in of a person with no workspace
-  on an active partner host creates their organization and links it to that partner as a
-  `PartnerCustomer`. Someone who joins an existing workspace by invitation is not linked. Active
-  partner hosts are added to Better Auth's trusted origins and to the reset-password link.
-- **Mail.** Verification, sign-in code, password reset, account deletion and invitation mail take the
-  brand of the host, or of the customer's partner (an organization linked as a `PartnerCustomer`).
-  A sign-in code asked by address alone never looks the address up, so it cannot reveal whether the
-  address has an account. Sender domain verification goes through `EmailDomainProvider`
-  (`ResendEmailDomains` on the Resend-compatible endpoint from `EMAIL_API_URL`): create, show the
-  records, verify. Until `verified`, mail is sent from the deployment's `EMAIL_FROM` address under the
-  partner's display name; once verified it is `Name <noreply@sender-domain>`.
-- **Console.** `Brand` and `Domain` sections for white label partners only; the platform admin has a
-  read-only `platform.partnerBranding.get`, shown as a Domain column on Partners (the host and its state).
-- **Production.** Set `DOMAIN_PROVIDER=cloudflare`, `DOMAIN_ZONE_ID`, `DOMAIN_API_TOKEN` (Custom
-  Hostnames permission on the zone) and `DOMAIN_FALLBACK_ORIGIN` (the zone's fallback origin, the
-  CNAME target). The edge in front of the app has to accept the fallback origin and every partner
-  host on its way to the web and API upstreams, and pass the public host in `X-Forwarded-Host`
-  (Caddy does by default).
-- **Not here.** Desktop and mobile are not rebranded. Passkeys are still bound to the app's own
-  host. Receipts and notices have no email templates yet: they arrive with payments.
+- **Customers and hosts.** The signup on the partner's host (`PartnerCustomer`) is the one record
+  of whose customer an organization is; it also creates the ledger row (`PartnerTenant`) through
+  `attachWhiteLabelCustomer`, so a customer is read-only until it has a plan. Checkout return
+  addresses use the partner's host. Failed-payment and refund emails to the customer use the
+  partner's brand and sender (`paymentNoticeEmail`); receipts of successful charges are the
+  connected account's own, sent by the provider.
+- **Disputes.** A lost dispute reverses the ledger and Rook's fee on that payment goes back the same
+  way as on a refund (the net fee is trimmed to what the ledger keeps).
+- **Billing entry.** A white-label customer's Billing settings show a link to the plans screen
+  (`/app/plans`), which is also the target of "Buy more".
+- **Not yet.** A console refund action.

@@ -127,6 +127,8 @@ export interface AppEnv {
   stripeSecretKey: string | undefined;
   stripeWebhookSecret: string | undefined;
   stripePriceId: string | undefined;
+  /** White label collection: the secret of the Stripe Connect endpoint; unset leaves it off. */
+  stripeConnectWebhookSecret?: string;
   emailEmulator: boolean;
   slackClientId?: string;
   slackClientSecret?: string;
@@ -317,6 +319,7 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     stripeSecretKey: optional(source.STRIPE_SECRET_KEY),
     stripeWebhookSecret: optional(source.STRIPE_WEBHOOK_SECRET),
     stripePriceId: optional(source.STRIPE_PRICE_ID),
+    stripeConnectWebhookSecret: optional(source.STRIPE_CONNECT_WEBHOOK_SECRET),
     emailEmulator: source.EMAIL_EMULATOR === "true" && source.NODE_ENV !== "production",
     slackClientId: optional(source.SLACK_CLIENT_ID),
     slackClientSecret: optional(source.SLACK_CLIENT_SECRET),

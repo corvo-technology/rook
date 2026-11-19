@@ -12,6 +12,7 @@ export const PARTNER_SECTIONS = [
   "revenue",
   "brand",
   "domain",
+  "payments",
   "integration",
 ] as const;
 export type PartnerSection = (typeof PARTNER_SECTIONS)[number];
@@ -20,7 +21,17 @@ export type PartnerSection = (typeof PARTNER_SECTIONS)[number];
 export function sectionsFor(mode: PartnerConsolePartner["mode"]): PartnerSection[] {
   return mode === "embedded"
     ? ["overview", "customers", "template", "credits", "invoices", "integration"]
-    : ["overview", "customers", "template", "pricing", "revenue", "brand", "domain", "integration"];
+    : [
+        "overview",
+        "customers",
+        "template",
+        "pricing",
+        "revenue",
+        "payments",
+        "brand",
+        "domain",
+        "integration",
+      ];
 }
 
 export function partnerPath(partnerId: string, section: PartnerSection): string {

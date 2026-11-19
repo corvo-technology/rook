@@ -23,7 +23,7 @@ A rota `sessionUrl` é a mesma do [quickstart](/partners/quickstart/): o seu bac
 
 ## Tarefas por nome
 
-Defina tarefas uma vez no [modelo](/partners/central/) do parceiro, em `assist`, e chame pelo nome. O modelo do Prontu traz `evolution`, `anamnesis` e `prescription_draft`; o do GreenBarber, `best_slot` e `customer_summary`.
+Defina tarefas uma vez no [modelo](/partners/central/) do parceiro, em `assist`, e chame pelo nome. Um modelo de clínica pode trazer `evolution`, `anamnesis` e `prescription_draft`; um de salão, `best_slot` e `customer_summary`.
 
 ```json
 {

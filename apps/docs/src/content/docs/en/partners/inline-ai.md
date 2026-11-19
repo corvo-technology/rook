@@ -23,7 +23,7 @@ It is the same `sdk.js` as the `<corvo-assistant>` element, so one script serves
 
 ## Tasks by name
 
-Define tasks once in the partner [template](/en/partners/central/), under `assist`, and call them by name. The Prontu template ships `evolution`, `anamnesis` and `prescription_draft`; GreenBarber's ships `best_slot` and `customer_summary`.
+Define tasks once in the partner [template](/en/partners/central/), under `assist`, and call them by name. A clinic template might ship `evolution`, `anamnesis` and `prescription_draft`; a salon one, `best_slot` and `customer_summary`.
 
 ```json
 {

@@ -26,7 +26,7 @@ WhatsApp without ever seeing Rook, so the work can be planned later.
 | Conversation charges | Meta bills the partner's WABA | Nothing |
 
 No reply, template, link or error ever names Rook. The same model serves embedded partners
-(GreenBarber, Divellas, Prontu) and white-label partners.
+(a clinic EHR, a salon system) and white-label partners.
 
 ## Flow
 

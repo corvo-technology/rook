@@ -185,6 +185,13 @@ const en: PartnersCopy = {
     emailError: "Enter a valid email.",
     phoneError: "Enter a valid number for the country.",
     consentError: "We need your consent to continue.",
+    placeholders: {
+      name: "Jane Smith",
+      email: "jane@company.com",
+      company: "Wellness Clinic",
+      website: "company.com",
+      message: "E.g. we run clinic software with 300 customers and want to offer an assistant.",
+    },
   },
 };
 

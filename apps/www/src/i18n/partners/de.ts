@@ -185,6 +185,13 @@ const de: PartnersCopy = {
     emailError: "Geben Sie eine gültige E-Mail ein.",
     phoneError: "Geben Sie eine gültige Nummer für das Land ein.",
     consentError: "Wir benötigen Ihre Einwilligung, um fortzufahren.",
+    placeholders: {
+      name: "Anna Schmidt",
+      email: "anna@firma.de",
+      company: "Klinik Wohlbefinden",
+      website: "firma.de",
+      message: "Z. B.: Wir betreiben eine Klinik-Software mit 300 Kunden und möchten einen Assistenten anbieten.",
+    },
   },
 };
 

@@ -165,6 +165,13 @@ const zh: PartnersCopy = {
     emailError: "请输入有效的邮箱。",
     phoneError: "请输入该国家有效的号码。",
     consentError: "需要您的同意才能继续。",
+    placeholders: {
+      name: "王小明",
+      email: "xiaoming@company.cn",
+      company: "康悦诊所",
+      website: "company.cn",
+      message: "例如：我们为诊所提供系统，有300位客户，想提供一个助手。",
+    },
   },
 };
 

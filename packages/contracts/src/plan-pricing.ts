@@ -1,4 +1,6 @@
+import * as z from "zod";
 import type { PlanId } from "./plans.js";
+import { PlanIdSchema } from "./plans.js";
 
 /** What each plan costs, in reais and dollars. Sizes and limits live in `plans.ts`. */
 export type BillingCurrency = "usd" | "brl";
@@ -60,3 +62,16 @@ export function aiAddOnPriceCents(
 export function currencyForLocale(locale: string): BillingCurrency {
   return locale.toLowerCase() === "pt-br" ? "brl" : "usd";
 }
+
+export const BillingCurrencySchema = z.enum(BILLING_CURRENCIES);
+export const BillingIntervalSchema = z.enum(BILLING_INTERVALS);
+export const AiUseCentsSchema = z.union(AI_USE_CENTS.map((cents) => z.literal(cents)));
+
+/** What an owner chooses on the plans screen; `aiUseCents: null` means they bring their own AI. */
+export const PlanCheckoutInputSchema = z.object({
+  plan: PlanIdSchema,
+  interval: BillingIntervalSchema,
+  currency: BillingCurrencySchema,
+  aiUseCents: AiUseCentsSchema.nullable(),
+});
+export type PlanCheckoutInput = z.infer<typeof PlanCheckoutInputSchema>;

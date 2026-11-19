@@ -235,6 +235,7 @@ import {
   WhiteLabelCatalogSchema,
   WhiteLabelCheckoutInput,
 } from "./partner-payments.js";
+import { PlanCheckoutInputSchema } from "./plan-pricing.js";
 import { PlanIdSchema, PlanOverrideSchema, PlanUsageSchema } from "./plans.js";
 import { MessageReactionSchema } from "./reactions.js";
 import { RoutineWatchSchema } from "./routine-watch.js";
@@ -393,6 +394,8 @@ export const appContract = {
       .input(z.object({ amountCents: ModelCreditAmountSchema }))
       .output(z.object({ ok: z.literal(true) })),
     checkout: oc.output(z.object({ url: z.string().url() })),
+    /** Opens the checkout of a plan in the chosen currency and interval. */
+    planCheckout: oc.input(PlanCheckoutInputSchema).output(z.object({ url: z.string().url() })),
     portal: oc.output(z.object({ url: z.string().url() })),
     /**
      * A partner's commerce customer reads its plan, credit and checkout link; null for anyone else.

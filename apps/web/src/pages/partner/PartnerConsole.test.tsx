@@ -358,6 +358,7 @@ describe("partner console", () => {
   it("lists the events the partner's system sent, with what a refused one got wrong", async () => {
     api.integration.mockResolvedValue({
       keys: [],
+      testKey: { prefix: null, customers: 0 },
       webhook: { url: null, enabled: false },
       testWebhook: { url: null },
       alerts: [],

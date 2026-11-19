@@ -1,4 +1,4 @@
-import type { PartnerAlertKind, PartnerTemplate } from "@corvo/contracts";
+import type { PartnerAlertKind, PartnerConsoleEvents, PartnerTemplate } from "@corvo/contracts";
 import type { CatalogView, IdempotentOutcome, MarkupKind, MarkupRule } from "@corvo/db";
 
 /**
@@ -200,6 +200,8 @@ export interface PartnerConsoleStore {
     partner: PartnerRecord,
   ): Promise<Array<{ kind: PartnerAlertKind; email: boolean }>>;
   setAlertEmail(partner: PartnerRecord, kind: PartnerAlertKind, email: boolean): Promise<void>;
+  /** The events the partner's system sent in the last day, and the latest ones. */
+  events(partner: PartnerRecord, now: Date): Promise<PartnerConsoleEvents>;
   setTemplate(partner: PartnerRecord, template: PartnerTemplate | null): Promise<void>;
   audit(event: {
     partnerId: string;

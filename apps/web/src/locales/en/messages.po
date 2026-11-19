@@ -719,6 +719,12 @@ msgstr "1 step left"
 msgid "1M tokens in / out"
 msgstr "1M tokens in / out"
 
+#. placeholder {0}: events.data.accepted
+#. placeholder {1}: events.data.rejected
+#: src/pages/partner/PartnerEvents.tsx
+msgid "24h: {0} received, {1} rejected"
+msgstr "24h: {0} received, {1} rejected"
+
 #: src/components/SubscriptionRings.tsx
 msgid "5-hour window"
 msgstr ""
@@ -3264,6 +3270,10 @@ msgstr "Could not update reaction"
 msgid "Could not update the default memory scope"
 msgstr "Could not update the default memory scope"
 
+#: src/pages/EventRoutines.tsx
+msgid "Could not update the routine"
+msgstr "Could not update the routine"
+
 #: src/pages/LocalSpeechSection.tsx
 msgid "Could not update the speech model"
 msgstr "Could not update the speech model"
@@ -4148,6 +4158,10 @@ msgstr "Error details"
 #: src/pages/Usage.tsx
 msgid "Escalated"
 msgstr "Escalated"
+
+#: src/pages/partner/PartnerEvents.tsx
+msgid "Events"
+msgstr "Events"
 
 #: src/lib/cron.ts
 #: src/pages/ExternalConversationSettings.tsx
@@ -6172,6 +6186,10 @@ msgstr "No bots match"
 #: src/pages/partner/PartnerCustomers.tsx
 msgid "No customers"
 msgstr "No customers"
+
+#: src/pages/partner/PartnerEvents.tsx
+msgid "No events yet"
+msgstr "No events yet"
 
 #: src/pages/platform/PlatformConnect.tsx
 msgid "No fees this month"
@@ -9969,6 +9987,26 @@ msgstr "What to return"
 msgid "What to watch"
 msgstr "What to watch"
 
+#: src/pages/EventRoutines.tsx
+msgid "When a consultation ends…"
+msgstr "When a consultation ends…"
+
+#: src/pages/EventRoutines.tsx
+msgid "When a customer doesn't show up…"
+msgstr "When a customer doesn't show up…"
+
+#: src/pages/EventRoutines.tsx
+msgid "When a customer stops coming…"
+msgstr "When a customer stops coming…"
+
+#: src/pages/EventRoutines.tsx
+msgid "When a new customer is added…"
+msgstr "When a new customer is added…"
+
+#: src/pages/EventRoutines.tsx
+msgid "When a payment is overdue…"
+msgstr "When a payment is overdue…"
+
 #: src/lib/routine-trigger.ts
 #: src/pages/RoutineEditor.tsx
 msgid "When a webhook fires"
@@ -9978,6 +10016,14 @@ msgstr "When a webhook fires"
 msgid "When an agent needs you, it asks here and waits."
 msgstr "When an agent needs you, it asks here and waits."
 
+#: src/pages/EventRoutines.tsx
+msgid "When an appointment is booked…"
+msgstr "When an appointment is booked…"
+
+#: src/pages/EventRoutines.tsx
+msgid "When an appointment is cancelled…"
+msgstr "When an appointment is cancelled…"
+
 #: src/pages/shell/bot-panel.tsx
 msgid "When it finishes or needs input"
 msgstr "When it finishes or needs input"
@@ -9986,6 +10032,10 @@ msgstr "When it finishes or needs input"
 #: src/pages/RoutineEditor.tsx
 msgid "When something changes"
 msgstr "When something changes"
+
+#: src/pages/EventRoutines.tsx
+msgid "When something happens…"
+msgstr "When something happens…"
 
 #: src/pages/RoutineEditor.tsx
 msgid "When to run"

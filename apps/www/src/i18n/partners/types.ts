@@ -63,5 +63,7 @@ export type PartnersCopy = {
     emailError: string;
     phoneError: string;
     consentError: string;
+    /** Examples shown in the empty fields. */
+    placeholders: { name: string; email: string; company: string; website: string; message: string };
   };
 };

@@ -1,5 +1,5 @@
 ---
-import { COUNTRY_CODES, callingCode } from "@corvo/core/phone";
+import { COUNTRY_CODES, callingCode, exampleNumber } from "@corvo/core/phone";
 import { LOCALES, LOCALE_HTML_LANG } from "../i18n/locales";
 import type { Locale } from "../i18n/locales";
 import { getLaunchCopy } from "../i18n/launch";
@@ -275,12 +275,12 @@ const RANGES = ["0-50", "50-200", "200-1000", "1000+"] as const;
             <div class="partners-step" data-step="1">
               <label>
                 <span>{form.name}</span>
-                <input type="text" name="name" required maxlength="120" autocomplete="name" />
+                <input type="text" name="name" required maxlength="120" autocomplete="name" placeholder={form.placeholders.name} />
                 <small data-error-for="name" role="alert"></small>
               </label>
               <label>
                 <span>{form.email}</span>
-                <input type="email" name="email" required maxlength="254" autocomplete="email" />
+                <input type="email" name="email" required maxlength="254" autocomplete="email" placeholder={form.placeholders.email} />
                 <small data-error-for="email" role="alert"></small>
               </label>
               <label>
@@ -293,18 +293,18 @@ const RANGES = ["0-50", "50-200", "200-1000", "1000+"] as const;
                 <span>{form.whatsapp}</span>
                 <div class="partners-phone">
                   <span data-dial aria-hidden="true">+{callingCode(DEFAULT_COUNTRY[locale])}</span>
-                  <input type="tel" name="whatsapp" maxlength="24" autocomplete="tel-national" inputmode="tel" />
+                  <input type="tel" name="whatsapp" maxlength="24" autocomplete="tel-national" inputmode="tel" placeholder={exampleNumber(DEFAULT_COUNTRY[locale])} />
                 </div>
                 <small data-error-for="whatsapp" role="alert"></small>
               </label>
               <label>
                 <span>{form.company}</span>
-                <input type="text" name="company" required maxlength="120" autocomplete="organization" />
+                <input type="text" name="company" required maxlength="120" autocomplete="organization" placeholder={form.placeholders.company} />
                 <small data-error-for="company" role="alert"></small>
               </label>
               <label>
                 <span>{form.website}</span>
-                <input type="text" name="website" maxlength="300" autocomplete="url" />
+                <input type="text" name="website" maxlength="300" autocomplete="url" placeholder={form.placeholders.website} />
               </label>
             </div>
             <div class="partners-step" data-step="2" hidden>
@@ -327,7 +327,7 @@ const RANGES = ["0-50", "50-200", "200-1000", "1000+"] as const;
             <div class="partners-step" data-step="3" hidden>
               <label>
                 <span>{form.message}</span>
-                <textarea name="message" rows="4" maxlength="2000"></textarea>
+                <textarea name="message" rows="4" maxlength="2000" placeholder={form.placeholders.message}></textarea>
               </label>
               <label class="partners-consent">
                 <input type="checkbox" name="consent" required />
@@ -379,7 +379,7 @@ const RANGES = ["0-50", "50-200", "200-1000", "1000+"] as const;
 </BaseLayout>
 
 <script>
-  import { callingCode, formatNational, isCountryCode, isValidNational, toE164 } from "@corvo/core/phone";
+  import { callingCode, exampleNumber, formatNational, isCountryCode, isValidNational, toE164 } from "@corvo/core/phone";
 
   // Blocks below the fold rise once as they arrive. Everything stays visible until the first scroll.
   if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches && "IntersectionObserver" in window) {
@@ -432,6 +432,7 @@ const RANGES = ["0-50", "50-200", "200-1000", "1000+"] as const;
     // The prefix and the layout follow the country; the browser's region wins over the page language.
     const layout = () => {
       dial.textContent = `+${callingCode(country.value) ?? ""}`;
+      phone.placeholder = exampleNumber(country.value);
       phone.value = formatNational(country.value, phone.value);
     };
     const region = [...navigator.languages]

@@ -179,6 +179,13 @@ const ja: PartnersCopy = {
     emailError: "有効なメールアドレスを入力してください。",
     phoneError: "この国で有効な番号を入力してください。",
     consentError: "続けるには同意が必要です。",
+    placeholders: {
+      name: "山田 花子",
+      email: "hanako@example.co.jp",
+      company: "ウェルネスクリニック",
+      website: "example.co.jp",
+      message: "例：クリニック向けシステムを300社に提供しており、アシスタントを提供したい。",
+    },
   },
 };
 

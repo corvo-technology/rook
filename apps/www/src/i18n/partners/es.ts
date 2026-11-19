@@ -185,6 +185,13 @@ const es: PartnersCopy = {
     emailError: "Escribe un correo válido.",
     phoneError: "Escribe un número válido para el país.",
     consentError: "Necesitamos tu consentimiento para continuar.",
+    placeholders: {
+      name: "María García",
+      email: "maria@empresa.com",
+      company: "Clínica Bienestar",
+      website: "empresa.com",
+      message: "Ej.: tenemos un sistema para clínicas con 300 clientes y queremos ofrecer un asistente.",
+    },
   },
 };
 

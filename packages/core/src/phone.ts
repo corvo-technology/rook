@@ -296,6 +296,32 @@ export function formatNational(country: string, input: string): string {
   return out;
 }
 
+const EXAMPLES: Record<string, string> = {
+  BR: "11912345678",
+  US: "2015550123",
+  CA: "5065550123",
+  GB: "7400123456",
+  PT: "912345678",
+  ES: "612345678",
+  FR: "612345678",
+  DE: "15123456789",
+  IT: "3123456789",
+  MX: "2221234567",
+  AR: "1123456789",
+  CL: "912345678",
+  CO: "3211234567",
+  AU: "412345678",
+  JP: "9012345678",
+  IN: "8123456789",
+  NL: "612345678",
+};
+
+/** An example national number for the country, laid out the way people type it. */
+export function exampleNumber(country: string): string {
+  const [, max] = lengths(country);
+  return formatNational(country, EXAMPLES[country] ?? "123456789012".slice(0, Math.min(9, max)));
+}
+
 /** Whether the national number is complete for its country. */
 export function isValidNational(country: string, input: string): boolean {
   if (!DIAL.has(country)) return false;

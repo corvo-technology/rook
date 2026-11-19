@@ -482,6 +482,11 @@
   display: none;
 }
 
+.partners-form ::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
 .partners-phone {
   display: flex;
   gap: 8px;

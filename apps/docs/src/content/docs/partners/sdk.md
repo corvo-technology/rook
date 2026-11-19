@@ -112,6 +112,10 @@ el.addEventListener("corvo-action", async (event) => {
 | `setSuggestions(list)` | Define as sugestões da caixa rápida. |
 | `open()`, `close()`, `toggle()` | Controlam o launcher. |
 
+## IA nas suas telas
+
+O mesmo script define também `Rook.ask`, `Rook.recorder` e `Rook.configure` (veja [IA nas suas telas](/partners/inline-ai/)). Com um `<corvo-assistant>` na página, eles entram por ele e compartilham uma só sessão; `element.getToken(force)` devolve o token dessa sessão, se você precisar dele. O `sdk-assist.js` continua funcionando e só carrega o `sdk.js`.
+
 ## Eventos
 
 | Evento | Quando |

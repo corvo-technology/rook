@@ -112,6 +112,10 @@ el.addEventListener("corvo-action", async (event) => {
 | `setSuggestions(list)` | Sets the quick-ask suggestions. |
 | `open()`, `close()`, `toggle()` | Control the launcher. |
 
+## AI in your own screens
+
+The same script also defines `Rook.ask`, `Rook.recorder` and `Rook.configure` (see [AI in your own screens](/en/partners/inline-ai/)). With a `<corvo-assistant>` on the page they sign in through it and share one session; `element.getToken(force)` returns that session's bearer token if you need it yourself. `sdk-assist.js` still works and only loads `sdk.js`.
+
 ## Events
 
 | Event | When |

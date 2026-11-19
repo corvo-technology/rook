@@ -8,9 +8,11 @@ import type {
   SecretStore,
 } from "@corvo/adapter-kit";
 import type { Actor, ConsultationTemplate } from "@corvo/contracts";
+import { CONSULTATION_STRUCTURED } from "@corvo/contracts";
 import type { PrismaClient } from "@corvo/db";
 import {
   beginConsultationPurge,
+  CHIEF_SPAWN_KEY,
   finishConsultationPurge,
   listConsultationChunks,
   listExpiredConsultations,
@@ -97,7 +99,7 @@ function prismaStore(prisma: PrismaClient): ConsultationStore {
         spaceId: row.tenant.organizationId,
         ownerUserId: row.tenant.ownerUserId,
         state: row.state,
-        template: row.template as ConsultationTemplate,
+        template: row.template as ConsultationTemplate | typeof CONSULTATION_STRUCTURED,
         context: row.context as unknown as ConsultationRecord["context"],
         createdAt: row.createdAt,
         resultArtifactId: row.resultArtifactId,
@@ -164,8 +166,23 @@ export function createConsultationProcessor(deps: ConsultationWiringDeps) {
           complete: (record, call) =>
             runAsTenant({ spaceId: record.spaceId, userId: record.ownerUserId }, async () => {
               const found = await target(record);
-              if (!found) throw new Error("No agent holds the record connector");
-              return runModel(deps, record, found.botId, call);
+              if (found) return runModel(deps, record, found.botId, call);
+              // A structured recording needs no record connector: any agent of the customer, the
+              // Chief first, lends its model routing and its name to the usage.
+              const bot =
+                record.template === CONSULTATION_STRUCTURED
+                  ? ((await deps.prisma.bot.findFirst({
+                      where: { spaceId: record.spaceId, spawnKey: CHIEF_SPAWN_KEY },
+                      select: { id: true },
+                    })) ??
+                    (await deps.prisma.bot.findFirst({
+                      where: { spaceId: record.spaceId },
+                      orderBy: { createdAt: "asc" },
+                      select: { id: true },
+                    })))
+                  : null;
+              if (!bot) throw new Error("No agent holds the record connector");
+              return runModel(deps, record, bot.id, call);
             }),
           callTool: (record, tool, args) =>
             runAsTenant({ spaceId: record.spaceId, userId: record.ownerUserId }, async () => {

@@ -2,7 +2,10 @@ import { CONSULTATION_CHUNK_MAX_BYTES, CONSULTATION_MAX_CHUNKS } from "@corvo/co
 import { Hono } from "hono";
 import { describe, expect, it, vi } from "vitest";
 import type { PartnerConsultationDeps } from "./partner-consultations.js";
-import { mountPartnerConsultationRoutes } from "./partner-consultations.js";
+import {
+  mountEmbedConsultationRoutes,
+  mountPartnerConsultationRoutes,
+} from "./partner-consultations.js";
 
 const KEY_A = "cpk_AAAAAAAA.key-for-partner-a";
 const KEY_B = "cpk_BBBBBBBB.key-for-partner-b";
@@ -507,5 +510,160 @@ describe("consultation recording API", () => {
       expect(text).not.toContain("client-1");
       expect(text).not.toContain("doctor-1");
     });
+  });
+});
+
+describe("structured recording for an embedded page", () => {
+  const EMBED = "/api/partner/embed/consultations";
+  const TOKEN = "embed-session-token";
+  const SCHEMA = {
+    type: "object",
+    properties: { chiefComplaint: { type: "string" } },
+    required: ["chiefComplaint"],
+  };
+  const template = { assist: { anamnesis: { task: "Fill the anamnesis", schema: SCHEMA } } };
+
+  function embedFixture() {
+    const f = fixture();
+    mountEmbedConsultationRoutes(f.app, f.deps, async (request) =>
+      request.headers.get("authorization") === `Bearer ${TOKEN}`
+        ? {
+            partner: { id: "partner-a", scribeRetentionDays: 14, template },
+            tenant: { id: "tenant-a1", organizationId: "org-a1" },
+          }
+        : null,
+    );
+    const embed = (path: string, init: RequestInit = {}, token: string | null = TOKEN) =>
+      f.app.request(path, {
+        ...init,
+        headers: {
+          ...(token ? { authorization: `Bearer ${token}` } : {}),
+          ...(init.headers ?? {}),
+        },
+      });
+    const create = (over: Record<string, unknown> = {}) =>
+      embed(EMBED, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          template: "structured",
+          context: { clientId: "client-1", output: { preset: "anamnesis" } },
+          consent: { obtained: true, at: "2026-12-01T10:00:00Z", method: "verbal" },
+          ...over,
+        }),
+      });
+    return { ...f, embed, create };
+  }
+
+  it("records with the session instead of a key, filing nothing: preset resolved from the partner's template", async () => {
+    const f = embedFixture();
+    const response = await f.create();
+    expect(response.status).toBe(200);
+    const { consultationId } = (await response.json()) as { consultationId: string };
+    expect(f.deps.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        partnerId: "partner-a",
+        tenantId: "tenant-a1",
+        externalUserId: "embed",
+        template: "structured",
+        retentionDays: 14,
+        context: {
+          clientId: "client-1",
+          output: { task: "Fill the anamnesis", schema: SCHEMA },
+        },
+      }),
+    );
+    // The same pipeline: chunks, finish, then the status the page polls.
+    const chunk = await f.embed(`${EMBED}/${consultationId}/chunks/0`, {
+      method: "PUT",
+      headers: { "content-type": "audio/webm;codecs=opus" },
+      body: new Uint8Array([1, 2]),
+    });
+    expect(chunk.status).toBe(200);
+    const finish = await f.embed(`${EMBED}/${consultationId}/finish`, { method: "POST" });
+    expect(await finish.json()).toEqual({ state: "processing" });
+    expect(f.enqueued).toEqual([consultationId]);
+    f.rows.get(consultationId)!.state = "drafted";
+    const status = await f.embed(`${EMBED}/${consultationId}`);
+    expect(await status.json()).toMatchObject({
+      state: "drafted",
+      transcript: [expect.objectContaining({ text: "Bom dia." })],
+    });
+  });
+
+  it("answers 401 without a session on every route, and never reaches a consultation of another customer", async () => {
+    const f = embedFixture();
+    const { consultationId } = (await (await f.create()).json()) as { consultationId: string };
+    for (const [method, path] of [
+      ["POST", EMBED],
+      ["PUT", `${EMBED}/${consultationId}/chunks/0`],
+      ["POST", `${EMBED}/${consultationId}/finish`],
+      ["POST", `${EMBED}/${consultationId}/reprocess`],
+      ["GET", `${EMBED}/${consultationId}`],
+      ["DELETE", `${EMBED}/${consultationId}`],
+    ] as const) {
+      expect((await f.embed(path, { method }, null)).status, path).toBe(401);
+      expect((await f.embed(path, { method }, "wrong")).status, path).toBe(401);
+    }
+    // A consultation of the partner's other customer is not found with this session.
+    f.rows.get(consultationId)!.tenantId = "tenant-other";
+    expect((await f.embed(`${EMBED}/${consultationId}`)).status).toBe(404);
+  });
+
+  it("refuses to start without credit, like the partner's own recording does", async () => {
+    const f = embedFixture();
+    vi.mocked(f.deps.hasCredit).mockResolvedValueOnce(false);
+    const response = await f.create();
+    expect(response.status).toBe(402);
+  });
+
+  it("validates what a structured recording asks for", async () => {
+    const f = embedFixture();
+    // Unknown preset, a structured recording with no output, and an output on a template.
+    expect(
+      (await f.create({ context: { clientId: "c", output: { preset: "nope" } } })).status,
+    ).toBe(400);
+    expect((await f.create({ context: { clientId: "c" } })).status).toBe(400);
+    expect(
+      (
+        await f.create({
+          template: "prontu_evolution",
+          context: { clientId: "c", output: { task: "x" } },
+        })
+      ).status,
+    ).toBe(400);
+    // A schema the page registered itself is accepted as sent; a remote reference is not.
+    expect(
+      (
+        await f.create({
+          context: { clientId: "c", output: { task: "Evolution", schema: SCHEMA } },
+        })
+      ).status,
+    ).toBe(200);
+    expect(
+      (
+        await f.create({
+          context: {
+            clientId: "c",
+            output: {
+              task: "x",
+              schema: { type: "object", properties: { a: { $ref: "https://evil.example/s" } } },
+            },
+          },
+        })
+      ).status,
+    ).toBe(400);
+  });
+
+  it("also lets the partner's server ask for a structured recording with its key", async () => {
+    const f = fixture();
+    const response = await f.create({
+      template: "structured",
+      context: { clientId: "client-1", output: { task: "Evolution", schema: SCHEMA } },
+    });
+    expect(response.consultationId).toBeTruthy();
+    expect(f.deps.create).toHaveBeenCalledWith(
+      expect.objectContaining({ externalUserId: "doctor-1", template: "structured" }),
+    );
   });
 });

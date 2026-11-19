@@ -225,11 +225,16 @@ import { messagingStatusSource } from "./messaging-status.js";
 import { mountMessagingWebhookRoutes } from "./messaging-webhook.js";
 import { monitoringRoutes } from "./monitoring.js";
 import { createPartnerAlertDispatcher } from "./partner-alerts.js";
+import { mountEmbedCors, mountPartnerAssistRoutes } from "./partner-assist.js";
+import { embedSessionCaller, partnerAssistDeps } from "./partner-assist-deps.js";
 import { brandRoutes, createPartnerBranding } from "./partner-brand/index.js";
 import { mountPartnerCommerceRoutes } from "./partner-commerce-routes.js";
 import { createPrismaPartnerToolsPort } from "./partner-console/agent-tools.js";
 import { createAutoTopupRunner } from "./partner-console/index.js";
-import { mountPartnerConsultationRoutes } from "./partner-consultations.js";
+import {
+  mountEmbedConsultationRoutes,
+  mountPartnerConsultationRoutes,
+} from "./partner-consultations.js";
 import { partnerConsultationDeps } from "./partner-consultations-deps.js";
 import { installPartnerTenantContent } from "./partner-content.js";
 import { hashEntryCode, mountPartnerEmbedRoute, mountPartnerEntryRoute } from "./partner-entry.js";
@@ -1055,6 +1060,8 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     clientIp: requestClientIp,
   });
   app.route("/", partnerLeads);
+  // The embed routes take a bearer token, so a partner's page may call them from its own origin.
+  mountEmbedCors(app);
   app.use(
     "*",
     cors({
@@ -1340,18 +1347,41 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     },
   });
   // The recording API of the same partners: audio in, a draft note out.
-  mountPartnerConsultationRoutes(
+  const consultationDeps = partnerConsultationDeps({
+    prisma,
+    artifacts,
+    jobs,
+    base: {
+      now: () => new Date(),
+      allowRequest: (partnerId) => takePartnerRequest(prisma, partnerId, 120),
+      authenticate: (key) => authenticatePartner(prisma, key),
+      findTenant: (partnerId, externalTenantId) =>
+        findPartnerTenant(prisma, partnerId, externalTenantId),
+    },
+  });
+  mountPartnerConsultationRoutes(app, consultationDeps);
+  // The page that embeds Rook records and asks with its signed-in session instead of a key.
+  const embedCaller = embedSessionCaller({ prisma, session: requestSession });
+  mountEmbedConsultationRoutes(app, consultationDeps, embedCaller);
+  mountPartnerAssistRoutes(
     app,
-    partnerConsultationDeps({
+    partnerAssistDeps({
       prisma,
-      artifacts,
-      jobs,
-      base: {
-        now: () => new Date(),
-        allowRequest: (partnerId) => takePartnerRequest(prisma, partnerId, 120),
-        authenticate: (key) => authenticatePartner(prisma, key),
-        findTenant: (partnerId, externalTenantId) =>
-          findPartnerTenant(prisma, partnerId, externalTenantId),
+      allowRequest: (partnerId) => takePartnerRequest(prisma, partnerId, 120),
+      authenticate: (key) => authenticatePartner(prisma, key),
+      findTenant: (partnerId, externalTenantId) =>
+        findPartnerTenant(prisma, partnerId, externalTenantId),
+      session: embedCaller,
+      side: {
+        prisma,
+        runtime,
+        secrets,
+        deploymentProvider: env.defaultProvider,
+        deploymentModel: env.defaultModel,
+        deploymentModelKey: env.deploymentModelKey,
+        allowPrivateEndpoint: env.mcpAllowPrivateEndpoint,
+        // The answers fill a professional's record: the strong tier first, as the Escriba does.
+        resolveFastModel: executor.resolveStrongModel,
       },
     }),
   );

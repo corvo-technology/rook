@@ -1,10 +1,14 @@
 import type { ArtifactStore } from "@corvo/adapter-kit";
 import type {
   ConsultationErrorCode,
+  ConsultationOutput,
   ConsultationTemplate,
   ConsultationTurn,
 } from "@corvo/contracts";
-import { ConsultationTurn as ConsultationTurnSchema } from "@corvo/contracts";
+import {
+  CONSULTATION_STRUCTURED,
+  ConsultationTurn as ConsultationTurnSchema,
+} from "@corvo/contracts";
 import { getLogger } from "@corvo/logging";
 import { z } from "zod";
 import type { TranscriptionOutcome } from "./audio-transcription.js";
@@ -24,6 +28,7 @@ import {
   type TranscriptUnit,
   transcriptUnits,
 } from "./consultation-scribe.js";
+import { runStructuredAssist } from "./structured-assist.js";
 
 export interface ConsultationRecord {
   id: string;
@@ -33,8 +38,8 @@ export interface ConsultationRecord {
   spaceId: string;
   ownerUserId: string;
   state: string;
-  template: ConsultationTemplate;
-  context: ConsultationContext & { clientId: string };
+  template: ConsultationTemplate | typeof CONSULTATION_STRUCTURED;
+  context: ConsultationContext & { clientId: string; output?: ConsultationOutput };
   createdAt: Date;
   resultArtifactId: string | null;
   purgedAt: Date | null;
@@ -48,7 +53,7 @@ export interface ConsultationStore {
   settle(
     id: string,
     outcome:
-      | { state: "drafted"; draftEntryId: string; resultArtifactId: string }
+      | { state: "drafted"; draftEntryId: string | null; resultArtifactId: string }
       | { state: "failed"; errorCode: ConsultationErrorCode },
   ): Promise<boolean>;
 }
@@ -205,10 +210,11 @@ export async function processConsultation(
       result = { ...result, note };
       await seal(result);
     }
-    const draftEntryId = await retry(
-      () => fileDraft(deps, record, result?.note ?? {}),
-      "connector_failed",
-    );
+    // A structured recording files nothing: the page that asked fills its own form from the note.
+    const draftEntryId =
+      record.template === CONSULTATION_STRUCTURED
+        ? null
+        : await retry(() => fileDraft(deps, record, result?.note ?? {}), "connector_failed");
     if (!sealed) throw new StepFailure("internal");
     const settled = await deps.store.settle(record.id, {
       state: "drafted",
@@ -298,21 +304,65 @@ async function writeNote(
   record: ConsultationRecord,
   turns: readonly ConsultationTurn[],
 ): Promise<Record<string, unknown>> {
+  const template = record.template;
+  if (template === CONSULTATION_STRUCTURED) return writeStructured(deps, record, turns);
   let answer: string | undefined;
   try {
     answer = await deps.complete(record, {
       tier: "strong",
       operation: "consultation-note",
-      instructions: scribeInstructions(record.template),
+      instructions: scribeInstructions(template),
       prompt: buildScribePrompt(turns, record.context),
     });
   } catch (error) {
     if (error instanceof CreditsExhaustedError) throw error;
     throw new Error("model failed");
   }
-  const note = parseNote(record.template, answer);
+  const note = parseNote(template, answer);
   if (!note) throw new Error("model answered without a note");
   return note;
+}
+
+const SPEAKER_LABEL: Record<ConsultationTurn["speaker"], string> = {
+  professional: "Profissional",
+  patient: "Paciente",
+  unknown: "?",
+};
+
+/** The fields of the schema the page registered, written from the transcript and checked against it. */
+async function writeStructured(
+  deps: ConsultationJobDeps,
+  record: ConsultationRecord,
+  turns: readonly ConsultationTurn[],
+): Promise<Record<string, unknown>> {
+  const output = record.context.output;
+  const outcome = await runStructuredAssist(
+    {
+      complete: (call) => deps.complete(record, { tier: "strong", ...call }),
+    },
+    {
+      task: output?.task ?? "Write the record of this consultation from its transcript.",
+      ...(output?.instructions ? { instructions: output.instructions } : {}),
+      ...(output?.schema ? { schema: output.schema } : {}),
+      context: {
+        ...(record.context.professionalName
+          ? { professional: record.context.professionalName }
+          : {}),
+        ...(record.context.clientName ? { client: record.context.clientName } : {}),
+      },
+      material: {
+        label: "Transcript",
+        text: turns.map((turn) => `${SPEAKER_LABEL[turn.speaker]}: ${turn.text}`).join("\n"),
+      },
+    },
+    "consultation-structured",
+  ).catch((error: unknown) => {
+    if (error instanceof CreditsExhaustedError) throw error;
+    throw new Error("model failed");
+  });
+  // The model was asked twice already; asking again would only pay again for the same refusal.
+  if (!outcome.ok) throw new StepFailure("model_failed");
+  return outcome.result;
 }
 
 /** A failed call throws so the step is retried; an answer without the expected fields is the caller's to judge. */
@@ -371,9 +421,12 @@ async function fileDraft(
   record: ConsultationRecord,
   note: Record<string, unknown>,
 ): Promise<string> {
+  const template = record.template;
+  // A structured recording is never filed; the caller skips this step for it.
+  if (template === CONSULTATION_STRUCTURED) throw new StepFailure("internal");
   const { recordId, existing } = await lookUpRecord(deps, record);
   const content = draftContent({
-    template: record.template,
+    template,
     note: note as Record<string, string | string[]>,
     ...(record.context.appointmentId ? { appointmentId: record.context.appointmentId } : {}),
   });
@@ -393,7 +446,7 @@ async function fileDraft(
   if (existing) return update(existing);
   const outcome = await deps.callTool(record, TOOLS.create, {
     recordId,
-    entryTypeCode: ENTRY_TYPE_CODE[record.template],
+    entryTypeCode: ENTRY_TYPE_CODE[template],
     content,
     occurredAt: record.createdAt.toISOString(),
     ...(record.context.appointmentId ? { appointmentId: record.context.appointmentId } : {}),

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ConsultationOutput } from "./assist.js";
 
 /** The forms a partner's consultation recording can fill. */
 export const CONSULTATION_TEMPLATES = ["prontu_evolution", "salon_service_record"] as const;
@@ -38,30 +39,52 @@ const Id = z
   .max(64)
   .regex(/^[A-Za-z0-9_.:-]+$/);
 
+/**
+ * A recording that fills no template and files nothing in the partner's system: it returns the
+ * fields of a schema the partner's page registered, for the professional to review in its own form.
+ */
+export const CONSULTATION_STRUCTURED = "structured" as const;
+
+const consultationFields = {
+  template: z.union([ConsultationTemplate, z.literal(CONSULTATION_STRUCTURED)]),
+  context: z
+    .object({
+      clientId: Id,
+      appointmentId: Id.optional(),
+      professionalName: z.string().trim().max(120).optional(),
+      clientName: z.string().trim().max(120).optional(),
+      /** What a structured recording must produce; only for that template. */
+      output: ConsultationOutput.optional(),
+    })
+    .strict(),
+  consent: z
+    .object({
+      obtained: z.literal(true),
+      at: z.string().datetime({ offset: true }),
+      method: z.enum(["verbal", "written"]),
+      text: z.string().max(2000).optional(),
+    })
+    .strict(),
+  retentionDays: z.number().int().min(1).max(CONSULTATION_MAX_RETENTION_DAYS).optional(),
+};
+
+const outputMatchesTemplate = (input: {
+  template: string;
+  context: { output?: unknown };
+}): boolean => (input.template === CONSULTATION_STRUCTURED) === Boolean(input.context.output);
+
 export const ConsultationCreateInput = z
-  .object({
-    externalUserId: Id,
-    template: ConsultationTemplate,
-    context: z
-      .object({
-        clientId: Id,
-        appointmentId: Id.optional(),
-        professionalName: z.string().trim().max(120).optional(),
-        clientName: z.string().trim().max(120).optional(),
-      })
-      .strict(),
-    consent: z
-      .object({
-        obtained: z.literal(true),
-        at: z.string().datetime({ offset: true }),
-        method: z.enum(["verbal", "written"]),
-        text: z.string().max(2000).optional(),
-      })
-      .strict(),
-    retentionDays: z.number().int().min(1).max(CONSULTATION_MAX_RETENTION_DAYS).optional(),
-  })
-  .strict();
+  .object({ externalUserId: Id, ...consultationFields })
+  .strict()
+  .refine(outputMatchesTemplate, { message: "Only a structured recording names its output" });
 export type ConsultationCreateInput = z.infer<typeof ConsultationCreateInput>;
+
+/** From an embedded page: the person is the signed-in session, so no user id is sent. */
+export const EmbedConsultationCreateInput = z
+  .object({ externalUserId: Id.optional(), ...consultationFields })
+  .strict()
+  .refine(outputMatchesTemplate, { message: "Only a structured recording names its output" });
+export type EmbedConsultationCreateInput = z.infer<typeof EmbedConsultationCreateInput>;
 
 export const ConsultationSpeaker = z.enum(["professional", "patient", "unknown"]);
 export type ConsultationSpeaker = z.infer<typeof ConsultationSpeaker>;

@@ -225,6 +225,7 @@ export * from "./storage-migration.js";
 export * from "./store-agents.js";
 export * from "./stripe-billing.js";
 export * from "./stripe-connect.js";
+export * from "./structured-assist.js";
 export { SupermemoryMemoryProvider } from "./supermemory-memory-provider.js";
 export * from "./task-catalog.js";
 export * from "./teaching-session.js";

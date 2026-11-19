@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { describe, expect, it, vi } from "vitest";
+import { z } from "zod";
 import { parseTemplateFile, runPartnerCommand } from "./partner-command.js";
 
 function deps() {
@@ -186,6 +187,11 @@ describe("the shipped templates", () => {
     divellas: ["Recepção", "Pós-atendimento", "Gestor"],
     prontu: ["Recepção", "Assistente de prontuário", "Gestor"],
   };
+  const presets: Record<string, string[]> = {
+    greenbarber: ["best_slot", "customer_summary"],
+    divellas: [],
+    prontu: ["evolution", "anamnesis", "prescription_draft"],
+  };
   for (const [slug, names] of Object.entries(expected)) {
     it(`${slug} is a valid template with its agents, four starters each, the Store hidden`, async () => {
       const raw = await readFile(new URL(`${slug}.json`, dir), "utf8");
@@ -200,6 +206,11 @@ describe("the shipped templates", () => {
       expect(template.models).toBeUndefined();
       expect(template.chiefName).toMatch(/^Assistente /);
       expect(template.quickActions?.length).toBeGreaterThanOrEqual(3);
+      // The tasks the partner's pages run by name, each with a schema that can check an answer.
+      expect(Object.keys(template.assist ?? {})).toEqual(presets[slug]);
+      for (const preset of Object.values(template.assist ?? {})) {
+        if (preset.schema) expect(() => z.fromJSONSchema(preset.schema as never)).not.toThrow();
+      }
       for (const agent of template.agents) {
         expect(agent.usesConnector).toBe(true);
         expect(agent.starters).toHaveLength(4);

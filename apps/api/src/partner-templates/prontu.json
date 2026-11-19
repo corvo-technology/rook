@@ -61,5 +61,131 @@
       "label": "Resumo do mês",
       "prompt": "Faça o resumo do mês"
     }
-  ]
+  ],
+  "assist": {
+    "evolution": {
+      "description": "Rascunho da evolução clínica a partir das anotações da tela.",
+      "task": "Redija o rascunho da evolução clínica desta consulta a partir das anotações e dos dados do contexto.",
+      "instructions": "Escreva em português do Brasil, em linguagem técnica objetiva e fiel ao que consta nos dados. Não invente nada: o que não consta fica como string vazia ou lista vazia. O profissional revisa tudo antes de salvar.",
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Título curto da consulta.",
+            "maxLength": 120
+          },
+          "chiefComplaint": {
+            "type": "string",
+            "description": "Queixa principal, nas palavras do paciente."
+          },
+          "history": {
+            "type": "string",
+            "description": "História relevante informada."
+          },
+          "exam": {
+            "type": "string",
+            "description": "O que foi examinado ou medido."
+          },
+          "assessment": {
+            "type": "string",
+            "description": "Avaliação do profissional, só o que foi dito."
+          },
+          "plan": {
+            "type": "string",
+            "description": "Conduta decidida ou orientada."
+          },
+          "prescriptions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Uma prescrição por item, como rascunho."
+          },
+          "followUp": {
+            "type": "string",
+            "description": "Quando e por que o paciente retorna."
+          }
+        },
+        "required": ["chiefComplaint"]
+      }
+    },
+    "anamnesis": {
+      "description": "Preenche os campos da anamnese a partir da conversa ou das anotações.",
+      "task": "Preencha a anamnese do paciente a partir da conversa da consulta ou das anotações do contexto.",
+      "instructions": "Escreva em português do Brasil, em linguagem técnica objetiva e fiel ao que consta nos dados. Não invente nada: o que não consta fica como string vazia ou lista vazia. O profissional revisa tudo antes de salvar.",
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "chiefComplaint": {
+            "type": "string",
+            "description": "Queixa principal."
+          },
+          "currentIllness": {
+            "type": "string",
+            "description": "História da doença atual."
+          },
+          "pastHistory": {
+            "type": "string",
+            "description": "Antecedentes pessoais e familiares."
+          },
+          "medications": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Medicamentos em uso."
+          },
+          "allergies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Alergias informadas."
+          },
+          "habits": {
+            "type": "string",
+            "description": "Hábitos de vida relevantes."
+          }
+        },
+        "required": ["chiefComplaint"]
+      }
+    },
+    "prescription_draft": {
+      "description": "Rascunho de prescrição a partir do que o profissional disse.",
+      "task": "Liste como rascunho as prescrições que o profissional disse ou anotou, sem acrescentar nada.",
+      "instructions": "Escreva em português do Brasil, em linguagem técnica objetiva e fiel ao que consta nos dados. Não invente nada: o que não consta fica como string vazia ou lista vazia. O profissional revisa tudo antes de salvar. Doses, vias e frequências só se foram ditas.",
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "medicine": {
+                  "type": "string",
+                  "description": "Nome do medicamento ou item."
+                },
+                "dosage": {
+                  "type": "string",
+                  "description": "Dose, via e frequência, se ditas."
+                },
+                "notes": {
+                  "type": "string",
+                  "description": "Orientações associadas."
+                }
+              },
+              "required": ["medicine"]
+            }
+          }
+        },
+        "required": ["items"]
+      }
+    }
+  }
 }

@@ -212,7 +212,14 @@ async function resolveSideModel(
 export async function runSideModel(
   deps: SideModelDeps,
   bot: SideModelBot,
-  call: { operation: string; prompt: string; instructions: string; timeoutMs: number },
+  call: {
+    operation: string;
+    prompt: string;
+    instructions: string;
+    timeoutMs: number;
+    /** Told each piece of the answer as it arrives. */
+    onText?: (text: string) => void;
+  },
 ): Promise<string | undefined> {
   let secretsToRedact: string[] = [];
   try {
@@ -257,6 +264,7 @@ export async function runSideModel(
         signal: AbortSignal.timeout(call.timeoutMs),
       },
     )) {
+      if (event.type === "text") call.onText?.(event.text);
       if (event.type === "done" && event.text) text = event.text;
       if (event.type === "usage" && !event.accounted) {
         await recordUsage(deps.prisma, event, usage);

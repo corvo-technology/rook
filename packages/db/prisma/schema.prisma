@@ -2892,6 +2892,7 @@ model PartnerTenant {
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   codes              PartnerEntryCode[]
+  members            PartnerTenantMember[]
   consultations      Consultation[]
   subscription       TenantSubscription?
 
@@ -3022,12 +3023,36 @@ model PartnerEntryCode {
   /// Which of the partner's people asked, kept for audit.
   externalUserId String
   externalEmail  String?
+  /// The role the partner gave the person for this visit; null means owner, as before roles.
+  role           String?
+  /// What the person may reach in the partner's data (professionalId, branchIds, ...).
+  scope          Json?
   expiresAt      DateTime
   usedAt         DateTime?
   createdAt      DateTime      @default(now())
 
   @@index([expiresAt])
   @@map("partner_entry_codes")
+}
+
+/// One of a partner customer's people, as the partner last described them: the role and scope sent
+/// with the latest session. `userId` is who they sign in as: the customer's owner for the owner
+/// role, a user of their own for every other role. Only server code running as the system reads it.
+model PartnerTenantMember {
+  id               String        @id @default(cuid())
+  tenantId         String
+  tenant           PartnerTenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  externalUserId   String
+  userId           String
+  externalEmail    String?
+  role             String
+  scope            Json?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@unique([tenantId, externalUserId])
+  @@index([userId])
+  @@map("partner_tenant_members")
 }
 
 /// The owner lends the models they connected to everyone in a Space: members' runs resolve

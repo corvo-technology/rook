@@ -64,8 +64,10 @@ describePostgres("partner entry codes (PostgreSQL)", () => {
 
   it("gives the customer's owner once, and nothing the second time", async () => {
     const { tenant, code } = await setup();
-    await expect(consumePartnerEntryCode(db, hash(code))).resolves.toEqual({
+    await expect(consumePartnerEntryCode(db, hash(code))).resolves.toMatchObject({
       userId: tenant.ownerUserId,
+      externalUserId: "u1",
+      role: null,
     });
     await expect(consumePartnerEntryCode(db, hash(code))).resolves.toBeNull();
   });

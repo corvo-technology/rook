@@ -28,6 +28,12 @@ describe("the frame's tabs", () => {
     expect(embedTabs({ hidden: ["board"], ticketBoardEnabled: true })).not.toContain("board");
   });
 
+  it("leave out Agents and Routines for a role that does not manage them", () => {
+    expect(
+      embedTabs({ hidden: ["team", "billing", "settings", "routines"], ticketBoardEnabled: true }),
+    ).toEqual(["home", "chats", "board"]);
+  });
+
   it("never offer billing, the workspace switcher, or the store", () => {
     const tabs: string[] = embedTabs({ hidden: [], ticketBoardEnabled: true });
     for (const name of ["billing", "settings", "store", "spaces", "usage", "approvals"]) {

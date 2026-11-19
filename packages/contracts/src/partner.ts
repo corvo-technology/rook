@@ -64,6 +64,44 @@ export const PartnerQuickAction = z
   });
 export type PartnerQuickAction = z.infer<typeof PartnerQuickAction>;
 
+/** A person's role in the partner's own system: `owner`, `manager`, `reception`, `professional` or a name of the partner's. */
+export const PartnerRoleName = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .regex(/^[a-z][a-z0-9_-]{0,31}$/);
+export type PartnerRoleName = z.infer<typeof PartnerRoleName>;
+
+/** The roles every partner shares; any other name is the partner's own. */
+export const PARTNER_ROLES = ["owner", "manager", "reception", "professional"] as const;
+
+const ScopeValue = z.union([Key, z.array(Key).max(50)]);
+
+/** What a person may reach in the partner's data, such as `{ professionalId, branchIds }`. */
+export const PartnerSessionScope = z
+  .record(z.string().regex(/^[A-Za-z][A-Za-z0-9_]{0,31}$/), ScopeValue)
+  .refine((scope) => Object.keys(scope).length <= 10, { message: "Too many scope fields" });
+export type PartnerSessionScope = z.infer<typeof PartnerSessionScope>;
+
+/** Areas of the embedded app a role can lose on top of the partner's own `hide`. */
+export const PARTNER_ROLE_HIDEABLE_AREAS = ["team", "billing", "settings"] as const;
+
+/** What one role gets in a customer: its agents, the rights it holds and what it does not see. */
+export const PartnerRoleDef = z
+  .object({
+    /** The keys of the template agents this role talks to; `*` is all of them. */
+    agents: z.array(z.union([Key, z.literal("*")])).max(10),
+    /** Rights in the customer's space, such as `talk_to_agents` or `approve_actions`. */
+    permissions: z.array(z.string().min(1).max(40)).max(40).default([]),
+    /** Areas the role does not see, on top of the template's own `hide`. */
+    hide: z
+      .array(z.enum([...PARTNER_HIDEABLE_AREAS, ...PARTNER_ROLE_HIDEABLE_AREAS]))
+      .max(10)
+      .optional(),
+  })
+  .strict();
+export type PartnerRoleDef = z.infer<typeof PartnerRoleDef>;
+
 /** What every new customer gets, defined once so the partner's calls only name the customer. */
 export const PartnerTemplate = z
   .object({
@@ -81,6 +119,8 @@ export const PartnerTemplate = z
     assist: AssistPresets.optional(),
     /** Routines every customer gets, each started by an event the partner's system sends. */
     routines: z.array(PartnerEventRoutine).max(20).optional(),
+    /** What each role of the partner's system gets; a role named nowhere here gets no agents. */
+    roles: z.record(PartnerRoleName, PartnerRoleDef).optional(),
     /** The partner's main colour as `#rrggbb`, used when the page that embeds Rook passes none. */
     accent: z
       .string()
@@ -111,6 +151,16 @@ export const PartnerTenantInput = z
   .strict();
 export type PartnerTenantInput = z.infer<typeof PartnerTenantInput>;
 
+/** One person of a customer, as the partner console lists them. */
+export const PartnerMemberSchema = z.object({
+  externalUserId: z.string(),
+  email: z.string().nullable(),
+  role: z.string(),
+  scope: z.record(z.string(), z.unknown()).nullable(),
+  lastSeenAt: z.string(),
+});
+export type PartnerMember = z.infer<typeof PartnerMemberSchema>;
+
 export const PartnerTenantResult = z.object({ tenantId: z.string(), created: z.boolean() });
 export type PartnerTenantResult = z.infer<typeof PartnerTenantResult>;
 
@@ -119,6 +169,10 @@ export const PartnerSessionInput = z
     externalTenantId: Key,
     externalUserId: Key,
     email: z.email().max(320).optional(),
+    /** Left out, the person is the customer's owner, as sessions were before roles. */
+    role: PartnerRoleName.optional(),
+    /** Passed to the partner's connector with every call, so the partner can filter its own data. */
+    scope: PartnerSessionScope.optional(),
   })
   .strict();
 export type PartnerSessionInput = z.infer<typeof PartnerSessionInput>;

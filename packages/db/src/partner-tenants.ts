@@ -189,7 +189,15 @@ export async function setPartnerTenantState(
   });
   if (result.count > 0 && state === "suspended") {
     const tenant = await findPartnerTenant(prisma, partnerId, externalTenantId, testMode);
-    if (tenant) await prisma.session.deleteMany({ where: { userId: tenant.ownerUserId } });
+    if (tenant) {
+      const members = await prisma.partnerTenantMember.findMany({
+        where: { tenantId: tenant.id },
+        select: { userId: true },
+      });
+      await prisma.session.deleteMany({
+        where: { userId: { in: [tenant.ownerUserId, ...members.map((member) => member.userId)] } },
+      });
+    }
   }
   return result.count > 0;
 }

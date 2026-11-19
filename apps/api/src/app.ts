@@ -129,9 +129,11 @@ import {
   SERVER_BUILD_HEADER,
 } from "@corvo/contracts";
 import { isMessagingEmail, signupPolicyFromEnv } from "@corvo/core";
-import type { Pool, PrismaClient } from "@corvo/db";
+import type { Pool, Prisma, PrismaClient } from "@corvo/db";
 import {
   addTenantTopup,
+  admitPartnerMember,
+  authenticatePartner,
   authenticatePartnerKey,
   ComputerLimitError,
   commerceBalance,
@@ -155,6 +157,7 @@ import {
   isPartnerTestSpace,
   ProviderTransactionBusyError,
   parsePositiveInteger,
+  partnerIdentityHeaders,
   partnerSessionExpired,
   partnerSpaceState,
   provisionMessagingIdentity,
@@ -246,6 +249,8 @@ import { installPartnerTenantContent } from "./partner-content.js";
 import { hashEntryCode, mountPartnerEmbedRoute, mountPartnerEntryRoute } from "./partner-entry.js";
 import { deliverPartnerEvent, mountPartnerEventRoutes } from "./partner-events.js";
 import { partnerLeadRoutes, prismaPartnerLeadStore } from "./partner-leads.js";
+import type { PartnerMemberDeps } from "./partner-members.js";
+import { admitPartnerEntry, readTemplate, sealMemberAgents } from "./partner-members.js";
 import { mountPartnerRoutes } from "./partner-routes.js";
 import { PresenceTracker } from "./presence.js";
 import { mountApiRequestBodyLimits } from "./request-body-limit.js";
@@ -490,6 +495,8 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       network: remoteConnectors,
       events,
       allowPrivateEndpoint: env.mcpAllowPrivateEndpoint,
+      // The partner's connector is told who is asking, so it can filter its own data.
+      identityHeaders: partnerIdentityHeaders(prisma),
     },
     mcpOAuth,
   );
@@ -709,6 +716,30 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     domains: domainProviderFromEnv(process.env),
     senderDomains: senderDomainProviderFromEnv(env),
   });
+  const partnerMemberDeps: PartnerMemberDeps = {
+    template: async (partnerId) => {
+      const partner = await prisma.partner.findUnique({
+        where: { id: partnerId },
+        select: { template: true },
+      });
+      return readTemplate(partner?.template);
+    },
+    admit: (input) => admitPartnerMember(prisma, input),
+    installForMember: (actor, partnerId, content) =>
+      installPartnerTenantContent(
+        {
+          prisma,
+          secrets,
+          assertEndpoint: (endpoint) =>
+            assertMcpRemoteEndpoint(endpoint, { remoteConnectors, env }),
+          createBot: (botActor, input) => createRepos(prisma).createBot(botActor, input),
+        },
+        actor,
+        partnerId,
+        content,
+      ),
+    seal: (input) => sealMemberAgents(prisma, input),
+  };
   const auth = createAuth(prisma, {
     analytics,
     passwordAuth: env.passwordAuth,
@@ -719,7 +750,15 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       ? { token: env.desktopStackToken, header: LOCAL_SETTINGS_TOKEN_HEADER }
       : undefined,
     partnerEntry: {
-      consume: (code) => consumePartnerEntryCode(prisma, hashEntryCode(code)),
+      consume: async (code) => {
+        const entry = await consumePartnerEntryCode(prisma, hashEntryCode(code));
+        if (!entry) return null;
+        // The owner, or a person of the customer with the role and scope the partner sent.
+        const { userId } = await runAsSystem("admit a partner's person", () =>
+          admitPartnerEntry(partnerMemberDeps, entry),
+        );
+        return { userId };
+      },
     },
     // Only a real mail provider closes passwords; the local emulator and test doubles keep them.
     codeOnly: Boolean(envEmail),
@@ -1328,6 +1367,8 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
           tenantId: row.tenantId,
           externalUserId: row.externalUserId,
           externalEmail: row.externalEmail,
+          role: row.role,
+          scope: (row.scope ?? undefined) as Prisma.InputJsonValue | undefined,
           expiresAt: row.expiresAt,
         },
       });

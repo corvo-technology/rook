@@ -15,6 +15,18 @@ O conector é um servidor [MCP](https://modelcontextprotocol.io) **seu**, no end
 4. **Um botão ou item de menu** no seu produto que chama `POST /sessions` no backend e leva a pessoa ao assistente (ou o embute pelo [SDK](/partners/sdk/)).
 5. **Uma rota de provisionamento** que faz o `PUT /tenants` quando um cliente se cadastra.
 
+## Quem está pedindo
+
+Quando uma pessoa com `role` (veja [Papéis](/partners/roles/)) conversa com um agente, cada chamada ao seu servidor MCP leva, além do `Authorization`:
+
+| Cabeçalho | Valor |
+| --- | --- |
+| `X-Rook-User` | o `externalUserId` da sessão |
+| `X-Rook-Role` | o papel, como você o enviou (em minúsculas) |
+| `X-Rook-Scope` | o `scope` da sessão, em JSON (omitido se não houve) |
+
+Use-os para filtrar: um profissional vê só a própria agenda e os próprios clientes. O dono do cliente chega só com `X-Rook-Role: owner`, sem usuário nem escopo, porque todos os donos de um cliente entram pela mesma conta. O Rook reabre a conexão quando o papel ou o escopo de uma pessoa muda, então a mudança vale na próxima mensagem. **Confie nesses cabeçalhos apenas junto do token do cliente**: é o token que prova que a chamada vem do Rook.
+
 ## Boas práticas
 
 - Dê às ferramentas de leitura e de escrita nomes diferentes, para que o [nível de acesso](/start/connections/) por agente (Sem acesso, Leitura, Leitura e escrita) faça sentido.

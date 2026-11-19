@@ -213,6 +213,7 @@ describe("tenant isolation", () => {
         "connector",
         "creditRemaining",
         "creditUsedPct",
+        "members",
         "name",
         "plan",
         "priceMinor",

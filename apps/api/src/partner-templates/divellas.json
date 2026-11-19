@@ -79,5 +79,25 @@
       },
       "active": true
     }
-  ]
+  ],
+  "roles": {
+    "reception": {
+      "agents": ["recepcao", "pos-atendimento"],
+      "permissions": ["talk_to_agents"]
+    },
+    "professional": {
+      "agents": ["recepcao", "pos-atendimento"],
+      "permissions": ["talk_to_agents"]
+    },
+    "manager": {
+      "agents": ["*"],
+      "permissions": [
+        "talk_to_agents",
+        "assign_work",
+        "approve_actions",
+        "manage_routines",
+        "view_usage"
+      ]
+    }
+  }
 }

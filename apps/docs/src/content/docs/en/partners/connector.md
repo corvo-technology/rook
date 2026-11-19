@@ -15,6 +15,18 @@ The connector is an [MCP](https://modelcontextprotocol.io) server of **yours**, 
 4. **A button or menu item** in your product that calls `POST /sessions` on your backend and takes the person to the assistant (or embeds it with the [SDK](/en/partners/sdk/)).
 5. **A provisioning route** that does the `PUT /tenants` when a customer signs up.
 
+## Who is asking
+
+When a person with a `role` (see [Roles](/en/partners/roles/)) talks to an agent, every call to your MCP server carries, besides `Authorization`:
+
+| Header | Value |
+| --- | --- |
+| `X-Rook-User` | the session's `externalUserId` |
+| `X-Rook-Role` | the role, as you sent it (lower case) |
+| `X-Rook-Scope` | the session's `scope` as JSON (omitted when there was none) |
+
+Use them to filter: a professional sees only their own agenda and customers. The customer's owner arrives with `X-Rook-Role: owner` only, with no user or scope, because every owner of a customer signs in through the same account. Rook opens the connection again when a person's role or scope changes, so a change holds from the next message. **Trust these headers only together with the customer's token**: the token is what proves the call comes from Rook.
+
 ## Good practice
 
 - Give read tools and write tools different names, so the per-agent [access level](/en/start/connections/) (No access, Read, Read and write) makes sense.

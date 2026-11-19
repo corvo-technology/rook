@@ -9,6 +9,7 @@ import {
   commerceSettings,
   configurePartnerCommerce,
   listOwnedPartnerTenants,
+  listPartnerMembers,
   listPartnerTestTenants,
   PartnerAllowanceRefused,
   partnerAlertEmailSettings,
@@ -249,18 +250,21 @@ export function createPrismaPartnerConsoleStore(prisma: PrismaClient): PartnerCo
     customerDetail: (partner, row, now) =>
       system(async () => {
         const since = new Date(now.getTime() - 30 * MS_PER_DAY);
-        const [bots, runs, balance] = await Promise.all([
+        const [bots, runs, balance, members] = await Promise.all([
           prisma.bot.findMany({
             where: { spaceId: row.organizationId, archivedAt: null },
-            select: { name: true },
+            select: { name: true, spawnKey: true },
             orderBy: { createdAt: "asc" },
-            take: 50,
+            take: 200,
           }),
           prisma.run.count({ where: { spaceId: row.organizationId, createdAt: { gte: since } } }),
           partner.billingModel === "commerce" ? balanceFor(partner, row, now) : null,
+          listPartnerMembers(prisma, row.tenantId),
         ]);
         return {
-          agents: bots.map((bot) => bot.name),
+          // A person's own copy of an agent is not another agent.
+          agents: bots.filter((bot) => !bot.spawnKey?.includes(":m:")).map((bot) => bot.name),
+          members,
           runs30d: runs,
           planRemaining: balance?.plan.remainingMinor ?? row.creditRemaining,
           topupRemaining: balance?.topup.remainingMinor ?? 0,

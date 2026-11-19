@@ -248,6 +248,22 @@ describe("partner console", () => {
       state: "active",
       since: "2026-03-01",
       agents: ["Reception"],
+      members: [
+        {
+          externalUserId: "u-1",
+          email: "ana@example.test",
+          role: "reception",
+          scope: null,
+          lastSeenAt: "2026-11-01T10:00:00.000Z",
+        },
+        {
+          externalUserId: "u-2",
+          email: null,
+          role: "professional",
+          scope: { professionalId: "p-1" },
+          lastSeenAt: "2026-11-02T10:00:00.000Z",
+        },
+      ],
       connector: "ok",
       runs30d: 412,
       balance: {
@@ -265,6 +281,11 @@ describe("partner console", () => {
       replayed: false,
     });
     await render("/app/partner/p1/customers?customer=t1");
+    const members = document.body.querySelector('[data-testid="partner-customer-members"]');
+    expect(members?.textContent).toContain("ana@example.test");
+    expect(members?.textContent).toContain("reception");
+    expect(members?.textContent).toContain("u-2");
+    expect(members?.textContent).toContain("professional");
     setValue(document.body.querySelector('input[aria-label="Amount"]'), "10");
     await click(byText("Add credit"));
     await click(byText("Add credit"));
@@ -288,6 +309,7 @@ describe("partner console", () => {
       state: "active",
       since: "2026-03-01",
       agents: [],
+      members: [],
       connector: "none",
       runs30d: 0,
       balance: {
@@ -336,7 +358,9 @@ describe("partner console", () => {
   it("lists the events the partner's system sent, with what a refused one got wrong", async () => {
     api.integration.mockResolvedValue({
       keys: [],
+      testKey: { prefix: null, customers: 0 },
       webhook: { url: null, enabled: false },
+      testWebhook: { url: null },
       alerts: [],
       docsUrl: "https://example.test/docs",
     });

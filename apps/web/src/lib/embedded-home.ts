@@ -21,7 +21,7 @@ export function embedTabs(input: {
     "chats",
     ...(ticketBoardEnabled && !hidden.includes("board") ? (["board"] as const) : []),
     ...(hidden.includes("routines") ? [] : (["routines"] as const)),
-    "team",
+    ...(hidden.includes("team") ? [] : (["team"] as const)),
   ];
 }
 

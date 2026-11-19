@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PARTNER_ALERT_KINDS } from "./partner.js";
+import { PARTNER_ALERT_KINDS, PartnerMemberSchema } from "./partner.js";
 
 /**
  * The partner console (docs/partner-commerce.md, section 6): what a partner's organization sees
@@ -65,6 +65,8 @@ export const PartnerConsoleCustomerSchema = z.object({
 
 export const PartnerConsoleCustomerDetailSchema = PartnerConsoleCustomerSchema.extend({
   agents: z.array(z.string()),
+  /** The customer's people with the role the partner last gave each; read-only. */
+  members: z.array(PartnerMemberSchema),
   connector: z.enum(["ok", "down", "none"]),
   runs30d: z.number().int().nonnegative(),
   balance: z.object({

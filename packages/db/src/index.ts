@@ -57,6 +57,7 @@ export * from "./partner-entry.js";
 export * from "./partner-events.js";
 export * from "./partner-housekeeping.js";
 export * from "./partner-markup.js";
+export * from "./partner-members.js";
 export * from "./partner-overview.js";
 export * from "./partner-pricing.js";
 export * from "./partner-tenants.js";

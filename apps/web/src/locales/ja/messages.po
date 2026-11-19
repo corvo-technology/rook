@@ -6956,6 +6956,7 @@ msgid "Pending"
 msgstr "保留中"
 
 #: src/pages/Onboarding.tsx
+#: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/shell/channel-members.tsx
 #: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx

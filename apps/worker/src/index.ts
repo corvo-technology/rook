@@ -103,6 +103,7 @@ import {
   isTooManyDatabaseConnections,
   latestMigrationName,
   parsePositiveInteger,
+  partnerIdentityHeaders,
   partnerSpaceState,
   pushSessionExpiresAt,
   rowSecurityWarning,
@@ -225,6 +226,8 @@ async function main() {
       ...mcpStdioOptionsFromEnv(process.env),
       events,
       allowPrivateEndpoint,
+      // The partner's connector is told who is asking, so it can filter its own data.
+      identityHeaders: partnerIdentityHeaders(prisma),
     },
     mcpOAuth,
   );

@@ -86,6 +86,8 @@ export interface PartnerRouteDeps {
     tenantId: string;
     externalUserId: string;
     externalEmail: string | null;
+    role: string | null;
+    scope: Record<string, unknown> | null;
     expiresAt: Date;
   }): Promise<void>;
 }
@@ -230,7 +232,7 @@ export function mountPartnerRoutes(app: Hono, deps: PartnerRouteDeps): void {
     if (json instanceof Response) return json;
     const parsed = PartnerSessionInput.safeParse(json);
     if (!parsed.success) return c.json({ error: "Invalid request" }, 400);
-    const { externalTenantId, externalUserId, email } = parsed.data;
+    const { externalTenantId, externalUserId, email, role, scope } = parsed.data;
 
     const tenant = await deps.findTenant(partner.id, externalTenantId, partner.testMode === true);
     if (tenant?.state !== "enabled") return notFound(c);
@@ -243,6 +245,9 @@ export function mountPartnerRoutes(app: Hono, deps: PartnerRouteDeps): void {
       tenantId: tenant.id,
       externalUserId,
       externalEmail: email ?? null,
+      // Without a role the person is the customer's owner, as sessions were before roles.
+      role: role ?? null,
+      scope: scope ?? null,
       expiresAt,
     });
     const url = new URL("/api/partner/enter", deps.webOrigin);

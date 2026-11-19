@@ -2619,3 +2619,91 @@ it("preserves explicit MCP read-only annotations for unattended consumers", asyn
     await connector.close();
   }
 });
+
+describe("MCP connector identity headers", () => {
+  const baseContext = {
+    operationId: "run-1",
+    traceId: "run-1",
+    spaceId: "w1",
+    userId: "owner",
+    botId: "bot-1",
+    signal: new AbortController().signal,
+  };
+  const prismaFor = () => ({
+    botMcpServer: {
+      findMany: vi.fn(async () => [ASSIGNMENT]),
+      findFirst: vi.fn(async () => ASSIGNMENT),
+    },
+  });
+
+  it("tells the server who is asking, beside the server's own credential", async () => {
+    const state = { failNext: false, initializations: 0, headers: [] as Record<string, string>[] };
+    vi.stubGlobal("fetch", mcpFetch(state));
+    const identityHeaders = vi.fn(async () => ({
+      "X-Rook-User": "u-9",
+      "X-Rook-Role": "professional",
+      "X-Rook-Scope": JSON.stringify({ professionalId: "p-1" }),
+    }));
+    const connector = new McpConnector(prismaFor() as never, {} as never, {
+      network: TEST_NETWORK,
+      identityHeaders,
+    });
+    try {
+      await connector.discoverTools({ ...baseContext, requestedByUserId: "member-1" });
+      expect(identityHeaders).toHaveBeenCalledWith({ spaceId: "w1", userId: "member-1" });
+      const sent = state.headers.at(-1);
+      expect(sent?.["x-rook-user"]).toBe("u-9");
+      expect(sent?.["x-rook-role"]).toBe("professional");
+      expect(JSON.parse(sent?.["x-rook-scope"] ?? "{}")).toEqual({ professionalId: "p-1" });
+    } finally {
+      await connector.close();
+    }
+  });
+
+  it("opens a new session when the person's scope changed, and keeps people apart", async () => {
+    const state = { failNext: false, initializations: 0, headers: [] as Record<string, string>[] };
+    vi.stubGlobal("fetch", mcpFetch(state));
+    const scopes: Record<string, string> = { "member-1": "p-1", "member-2": "p-2" };
+    const connector = new McpConnector(prismaFor() as never, {} as never, {
+      network: TEST_NETWORK,
+      identityHeaders: async ({ userId }) => ({
+        "X-Rook-Scope": JSON.stringify({ professionalId: scopes[userId] }),
+      }),
+    });
+    const ask = (userId: string) =>
+      connector.discoverTools({ ...baseContext, requestedByUserId: userId });
+    try {
+      await ask("member-1");
+      await ask("member-1");
+      expect(state.initializations).toBe(1);
+      await ask("member-2");
+      expect(state.initializations).toBe(2);
+      expect(JSON.parse(state.headers.at(-1)?.["x-rook-scope"] ?? "{}")).toEqual({
+        professionalId: "p-2",
+      });
+      scopes["member-1"] = "p-3";
+      await ask("member-1");
+      expect(state.initializations).toBe(3);
+      expect(JSON.parse(state.headers.at(-1)?.["x-rook-scope"] ?? "{}")).toEqual({
+        professionalId: "p-3",
+      });
+    } finally {
+      await connector.close();
+    }
+  });
+
+  it("sends nothing extra for a person the partner did not describe", async () => {
+    const state = { failNext: false, initializations: 0, headers: [] as Record<string, string>[] };
+    vi.stubGlobal("fetch", mcpFetch(state));
+    const connector = new McpConnector(prismaFor() as never, {} as never, {
+      network: TEST_NETWORK,
+      identityHeaders: async () => null,
+    });
+    try {
+      await connector.discoverTools({ ...baseContext, requestedByUserId: "someone" });
+      expect(state.headers.some((headers) => "x-rook-role" in headers)).toBe(false);
+    } finally {
+      await connector.close();
+    }
+  });
+});

@@ -1363,7 +1363,16 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       authenticate: sessionActor,
     });
   }
-  if (paymentsProvider) mountPaymentsWebhook(app, { prisma, provider: paymentsProvider, jobs });
+  if (paymentsProvider) {
+    mountPaymentsWebhook(app, {
+      prisma,
+      provider: paymentsProvider,
+      jobs,
+      email,
+      mailBrand: branding.mail.mailBrandForOrganization,
+      webOrigin: env.webOrigin,
+    });
+  }
   // Shared with stop so a shutdown during retry delays does not restart polling.
   let messagingStopped = false;
   let stopInstalledBridges: (() => Promise<void>) | undefined;

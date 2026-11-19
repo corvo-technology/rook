@@ -178,6 +178,11 @@ msgstr "{0} MB"
 msgid "{0} new"
 msgstr "{0} novos"
 
+#. placeholder {0}: money(plan.creditMinor)
+#: src/pages/plans/WhiteLabelPlans.tsx
+msgid "{0} of credit"
+msgstr "{0} de crédito"
+
 #. placeholder {0}: new Intl.NumberFormat(locale).format(overview.requestedEscalations)
 #: src/pages/Usage.tsx
 msgid "{0} requested"
@@ -692,6 +697,10 @@ msgstr "{working} trabalhando"
 msgid "@{0}"
 msgstr "@{0}"
 
+#: src/pages/plans/WhiteLabelPlans.tsx
+msgid "/ month"
+msgstr "/ mês"
+
 #. placeholder {0}: (status.byokPriceCents ?? 0) / 100
 #. placeholder {0}: amount / 100
 #: src/components/ModelCredits.tsx
@@ -768,6 +777,7 @@ msgid "Access token (optional)"
 msgstr "Token de acesso (opcional)"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/partner/PartnerPayments.tsx
 msgid "Account"
 msgstr "Conta"
 
@@ -788,6 +798,11 @@ msgstr "Nome da conta"
 msgid "Account menu for {name}"
 msgstr "Menu da conta de {name}"
 
+#: src/pages/partner/PartnerPayments.tsx
+#: src/pages/platform/PlatformConnect.tsx
+msgid "Action needed"
+msgstr "Ação necessária"
+
 #. placeholder {0}: bot.name
 #. placeholder {0}: group.spaceName
 #. placeholder {0}: section.name
@@ -803,7 +818,9 @@ msgstr "Ações do espaço"
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/partner/PartnerDomain.tsx
+#: src/pages/partner/PartnerPayments.tsx
 #: src/pages/platform/PartnersSection.tsx
+#: src/pages/platform/PlatformConnect.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/Workflows.tsx
 msgid "Active"
@@ -1019,11 +1036,9 @@ msgstr "Adicione estes arquivos de novo"
 msgid "Add these records at your DNS provider."
 msgstr "Adicione estes registros no seu provedor de DNS."
 
-
 #: src/pages/partner/PartnerDomain.tsx
 msgid "Add this record at your DNS provider."
 msgstr "Adicione este registro no seu provedor de DNS."
-
 
 #: src/pages/shell/agent-import.tsx
 msgid "Add to an existing bot"
@@ -1048,7 +1063,6 @@ msgstr "Adicionar widget"
 #: src/pages/partner/PartnerDomain.tsx
 msgid "Add your terms and privacy links in Brand to go live."
 msgstr "Adicione os links de termos e privacidade em Marca para publicar."
-
 
 #: src/lib/server-copy.ts
 msgid "Add: {add}"
@@ -1266,6 +1280,7 @@ msgstr "Sempre permitido"
 
 #: src/pages/partner/PartnerCredits.tsx
 #: src/pages/partner/PartnerCustomers.tsx
+#: src/pages/partner/PartnerPayments.tsx
 #: src/pages/platform/SimulatorSection.tsx
 msgid "Amount"
 msgstr "Valor"
@@ -1795,7 +1810,6 @@ msgstr "Nome do cérebro"
 msgid "Brand"
 msgstr "Marca"
 
-
 #: src/pages/partner/PartnerBrand.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Brand colour"
@@ -1828,6 +1842,7 @@ msgid "Business"
 msgstr "Negócio"
 
 #: src/pages/home/PartnerBalance.tsx
+#: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Buy more"
 msgstr "Comprar mais"
 
@@ -2050,6 +2065,10 @@ msgstr "URL do checkout"
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Chief name"
 msgstr "Nome do Chefe"
+
+#: src/pages/plans/WhiteLabelPlans.tsx
+msgid "Choose"
+msgstr "Escolher"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Choose a bot"
@@ -2386,6 +2405,10 @@ msgstr "Confirmar redefinição?"
 msgid "Confirm your email first, then open this link again"
 msgstr "Confirme seu e-mail primeiro e abra este link de novo"
 
+#: src/pages/plans/WhiteLabelPlans.tsx
+msgid "Confirming your payment"
+msgstr "Confirmando seu pagamento"
+
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/ChatAppsRow.tsx
 #: src/pages/connections/ConnectSheet.tsx
@@ -2435,6 +2458,10 @@ msgstr "Conecte um modelo para iniciar."
 #: src/pages/HomePage.tsx
 msgid "Connect a tool"
 msgstr "Conectar uma ferramenta"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Connect account"
+msgstr "Conectar conta"
 
 #: src/components/MissionList.tsx
 msgid "Connect an app"
@@ -2492,6 +2519,10 @@ msgstr "Conectado"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Connected {0}."
 msgstr "Conectado {0}."
+
+#: src/pages/platform/PlatformPage.tsx
+msgid "Connected accounts"
+msgstr "Contas conectadas"
 
 #: src/pages/connections/DatabaseForm.tsx
 #: src/pages/connections/MailboxForm.tsx
@@ -2558,6 +2589,10 @@ msgstr "Limite de contexto"
 #: src/pages/shell/agent-import.tsx
 msgid "Continue"
 msgstr "Continuar"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Continue setup"
+msgstr "Continuar configuração"
 
 #: src/components/ModelCredits.tsx
 msgid "Continue to checkout"
@@ -3337,7 +3372,6 @@ msgstr "Criar espaços"
 msgid "Create your account"
 msgstr "Crie sua conta"
 
-
 #: src/pages/Auth.tsx
 msgid "Create your Rook"
 msgstr "Crie o seu Rook"
@@ -3436,6 +3470,10 @@ msgstr "Moeda"
 msgid "Current password"
 msgstr "Senha atual"
 
+#: src/pages/plans/WhiteLabelPlans.tsx
+msgid "Current plan"
+msgstr "Plano atual"
+
 #: src/pages/connections/connection-model.ts
 msgid "Custom"
 msgstr "Personalizado"
@@ -3484,6 +3522,7 @@ msgid "Customer-owned models are never charged"
 msgstr "Modelos próprios do cliente nunca são cobrados"
 
 #: src/pages/partner/PartnerConsolePage.tsx
+#: src/pages/platform/PlatformConnect.tsx
 #: src/pages/platform/SimulatorSection.tsx
 msgid "Customers"
 msgstr "Clientes"
@@ -3533,6 +3572,10 @@ msgstr "Dados"
 #: src/pages/connections/DatabaseForm.tsx
 msgid "Database"
 msgstr "Banco de dados"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Date"
+msgstr "Data"
 
 #: src/lib/billing.ts
 #: src/lib/cron.ts
@@ -3725,6 +3768,10 @@ msgstr "Detalhes"
 msgid "Development"
 msgstr "Desenvolvimento"
 
+#: src/pages/platform/PlatformConnect.tsx
+msgid "Difference"
+msgstr "Diferença"
+
 #: src/components/InboxPanel.tsx
 msgid "Direct message"
 msgstr "Mensagem direta"
@@ -3733,6 +3780,8 @@ msgstr "Mensagem direta"
 msgid "Disable a tool"
 msgstr "Desativar uma ferramenta"
 
+#: src/pages/partner/PartnerPayments.tsx
+#: src/pages/platform/PlatformConnect.tsx
 #: src/pages/Store.tsx
 #: src/pages/StoreInstalledApps.tsx
 msgid "Disabled"
@@ -3803,6 +3852,11 @@ msgstr "Dispensado. Reconecte quando quiser em Conexões."
 msgid "Display name"
 msgstr "Nome de exibição"
 
+#: src/pages/partner/PartnerPayments.tsx
+#: src/pages/platform/PlatformConnect.tsx
+msgid "Disputes"
+msgstr "Contestações"
+
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/onboarding/ComputerStep.tsx
 msgid "Docker"
@@ -3850,7 +3904,6 @@ msgstr "Faz o que cabe no seu pedido"
 #: src/pages/platform/PartnersSection.tsx
 msgid "Domain"
 msgstr "Domínio"
-
 
 #: src/pages/Auth.tsx
 msgid "Don’t have an account?"
@@ -3990,7 +4043,6 @@ msgstr "Avisos por e-mail"
 msgid "Email domain"
 msgstr "Domínio de e-mail"
 
-
 #: src/lib/user-error.ts
 msgid "Email is not allowed to register"
 msgstr "Este e-mail não tem permissão para se cadastrar"
@@ -4032,7 +4084,6 @@ msgstr "Participar quando... Ignorar..."
 #: src/lib/branding-errors.ts
 msgid "Enter a domain such as app.example.com."
 msgstr "Informe um domínio como app.exemplo.com."
-
 
 #: src/pages/onboarding/WorkspaceStep.tsx
 msgid "Enter a name up to {SPACE_NAME_MAX_LENGTH} characters."
@@ -4231,6 +4282,7 @@ msgstr "falhou"
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/partner/PartnerDomain.tsx
+#: src/pages/partner/PartnerPayments.tsx
 #: src/pages/platform/PartnersSection.tsx
 #: src/pages/RoutineCard.tsx
 #: src/pages/RoutineTimeGrid.tsx
@@ -4259,6 +4311,10 @@ msgstr "Tratamento de falhas"
 #: src/pages/Usage.tsx
 msgid "Fast"
 msgstr "Rápido"
+
+#: src/pages/platform/PlatformConnect.tsx
+msgid "Fees"
+msgstr "Taxas"
 
 #: src/pages/TicketFields.tsx
 msgid "Field name"
@@ -4694,7 +4750,6 @@ msgstr "Eu terminei."
 #: src/pages/partner/PartnerBrand.tsx
 msgid "Icon"
 msgstr "Ícone"
-
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "If you heard that, voice is ready."
@@ -5152,6 +5207,10 @@ msgstr "Sair"
 msgid "Leave this space?"
 msgstr "Sair deste espaço?"
 
+#: src/pages/platform/PlatformConnect.tsx
+msgid "Ledger"
+msgstr "Razão"
+
 #: src/components/AutonomyPicker.tsx
 msgid "Let {name} act without asking?"
 msgstr "Deixar {name} agir sem perguntar?"
@@ -5296,6 +5355,10 @@ msgstr "Olhando a tela"
 #: src/pages/shell/agent-import.tsx
 msgid "Looks like it contains a key"
 msgstr "Parece conter uma chave"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Lost"
+msgstr "Perdida"
 
 #: src/lib/ticket-priority.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -5731,6 +5794,7 @@ msgstr "mês"
 #: src/pages/partner/PartnerRevenue.tsx
 #: src/pages/platform/InvoicesSection.tsx
 #: src/pages/platform/PartnersSection.tsx
+#: src/pages/platform/PlatformConnect.tsx
 #: src/pages/Routines.tsx
 msgid "Month"
 msgstr "Mês"
@@ -5783,6 +5847,10 @@ msgstr "Mais"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "More computer actions"
 msgstr "Mais ações do computador"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "More information needed"
+msgstr "Faltam informações"
 
 #: src/pages/NewRoutinePanel.tsx
 msgid "Morning summary"
@@ -5901,6 +5969,10 @@ msgstr "Precisa de entrada"
 #: src/pages/connections/connection-model.ts
 msgid "Needs reconnecting"
 msgstr "Precisa reconectar"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Needs response"
+msgstr "Requer resposta"
 
 #: src/pages/ActivityList.tsx
 msgid "Needs takeover"
@@ -6038,6 +6110,10 @@ msgstr "Próximo"
 msgid "Next page"
 msgstr "Próxima página"
 
+#: src/pages/plans/WhiteLabelPlans.tsx
+msgid "Next period"
+msgstr "Próximo período"
+
 #: src/pages/home/HomeHero.tsx
 msgid "next routine in {n, plural, one {# hour} other {# hours}}"
 msgstr "próxima rotina em {n, plural, one {# hora} other {# horas}}"
@@ -6094,6 +6170,10 @@ msgstr "Nenhum bot corresponde"
 #: src/pages/partner/PartnerCustomers.tsx
 msgid "No customers"
 msgstr "Nenhum cliente"
+
+#: src/pages/platform/PlatformConnect.tsx
+msgid "No fees this month"
+msgstr "Sem taxas neste mês"
 
 #: src/pages/partner/PartnerInvoices.tsx
 msgid "No invoices"
@@ -6165,9 +6245,17 @@ msgstr "Nenhuma página ainda"
 msgid "No partnerships"
 msgstr "Nenhuma parceria"
 
+#: src/pages/partner/PartnerPayments.tsx
+msgid "No payouts yet"
+msgstr "Nenhum repasse ainda"
+
 #: src/pages/platform/LimitsSection.tsx
 msgid "No plan"
 msgstr "Sem plano"
+
+#: src/pages/plans/WhiteLabelPlans.tsx
+msgid "No plans"
+msgstr "Sem planos"
 
 #: src/pages/AgentsStore.tsx
 msgid "No public address here, so it checks your inbox on a schedule you approve."
@@ -6228,6 +6316,10 @@ msgstr "Nenhum uso neste período."
 msgid "No voice right now"
 msgstr "Sem voz agora"
 
+#: src/pages/platform/PlatformConnect.tsx
+msgid "No white label partners"
+msgstr "Nenhum parceiro white label"
+
 #: src/pages/Workflows.tsx
 msgid "No workflows yet"
 msgstr "Ainda não há fluxos de trabalho"
@@ -6244,7 +6336,6 @@ msgstr "Não é uma habilidade válida"
 msgid "Not available"
 msgstr "Indisponível"
 
-
 #: src/pages/shell/routing-line.tsx
 msgid "Not available to you"
 msgstr "Indisponível para você"
@@ -6253,6 +6344,11 @@ msgstr "Indisponível para você"
 msgid "Not checked yet"
 msgstr "Ainda não verificado"
 
+#: src/pages/partner/PartnerPayments.tsx
+#: src/pages/platform/PlatformConnect.tsx
+msgid "Not connected"
+msgstr "Não conectada"
+
 #: src/pages/connections/DatabaseForm.tsx
 msgid "Not encrypted"
 msgstr "Sem criptografia"
@@ -6260,7 +6356,6 @@ msgstr "Sem criptografia"
 #: src/pages/partner/PartnerBrand.tsx
 msgid "Not enough contrast on both light and dark."
 msgstr "Contraste insuficiente nos temas claro e escuro."
-
 
 #: src/pages/shell/agent-import.tsx
 msgid "Not imported"
@@ -6490,6 +6585,10 @@ msgstr "Abrir conversa com {0}"
 msgid "Open computer settings"
 msgstr "Abrir configurações do computador"
 
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Open dashboard"
+msgstr "Abrir painel"
+
 #: src/components/markdown-link-prompt.tsx
 msgid "Open external link?"
 msgstr "Abrir link externo?"
@@ -6666,6 +6765,7 @@ msgid "Pages"
 msgstr "Páginas"
 
 #: src/pages/partner/PartnerInvoices.tsx
+#: src/pages/partner/PartnerPayments.tsx
 #: src/pages/partner/PartnerRevenue.tsx
 #: src/pages/platform/InvoicesSection.tsx
 msgid "Paid"
@@ -6673,6 +6773,7 @@ msgstr "Pago"
 
 #: src/pages/platform/InvoicesSection.tsx
 #: src/pages/platform/PartnersSection.tsx
+#: src/pages/platform/PlatformConnect.tsx
 msgid "Partner"
 msgstr "Parceiro"
 
@@ -6803,6 +6904,14 @@ msgstr "Pausado"
 msgid "Pawn"
 msgstr "Peão"
 
+#: src/pages/plans/WhiteLabelPlans.tsx
+msgid "Payment method"
+msgstr "Forma de pagamento"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Payouts"
+msgstr "Repasses"
+
 #: src/pages/partner/PartnerDomain.tsx
 #: src/pages/platform/IntakeSections.tsx
 #: src/pages/platform/PartnersSection.tsx
@@ -6917,7 +7026,9 @@ msgstr "Planeje a semana"
 msgid "Plan: {plan}"
 msgstr "Plano: {plan}"
 
+#: src/pages/BillingSettingsPanel.tsx
 #: src/pages/partner/PartnerPricing.tsx
+#: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Plans"
 msgstr "Planos"
 
@@ -7010,11 +7121,9 @@ msgstr "Prioridade"
 msgid "Privacy"
 msgstr "Privacidade"
 
-
 #: src/pages/partner/PartnerBrand.tsx
 msgid "Privacy URL"
 msgstr "URL de privacidade"
-
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Private"
@@ -7054,6 +7163,7 @@ msgstr "Campo protegido"
 
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
+#: src/pages/platform/PlatformConnect.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Provider"
 msgstr "Provedor"
@@ -7184,6 +7294,10 @@ msgstr "Lembrar e escrever"
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Recall only"
 msgstr "Só lembrar"
+
+#: src/pages/partner/PartnerConsolePage.tsx
+msgid "Receipts"
+msgstr "Recebimentos"
 
 #: src/pages/ActivityList.tsx
 msgid "Recent"
@@ -7399,7 +7513,6 @@ msgstr "Remover habilidade {0}"
 msgid "Remove the current domain first."
 msgstr "Remova primeiro o domínio atual."
 
-
 #: src/pages/RoutineEditor.tsx
 msgid "Remove webhook"
 msgstr "Remover webhook"
@@ -7453,7 +7566,6 @@ msgstr "Repete {cron}, próxima execução em {when}"
 #: src/pages/partner/PartnerBrand.tsx
 msgid "Replace"
 msgstr "Trocar"
-
 
 #: src/pages/model-settings/connection-controls.tsx
 msgid "Replace API key"
@@ -7635,7 +7747,6 @@ msgstr "Tentar a tela de novo"
 #: src/pages/McpOAuthCallback.tsx
 msgid "Return to {0}"
 msgstr "Voltar para {0}"
-
 
 #. placeholder {0}: call.botName
 #: src/components/call/CallCard.tsx
@@ -7866,7 +7977,6 @@ msgstr "Salvar sozinho"
 #: src/lib/branding-errors.ts
 msgid "Save the brand first."
 msgstr "Salve a marca primeiro."
-
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Save the workspace and install current software."
@@ -8146,6 +8256,11 @@ msgstr "Configuração concluída"
 msgid "Setup help"
 msgstr "Ajuda"
 
+#: src/pages/partner/PartnerPayments.tsx
+#: src/pages/platform/PlatformConnect.tsx
+msgid "Setup in progress"
+msgstr "Configuração em andamento"
+
 #: src/pages/WorkspaceModelRow.tsx
 msgid "Share my models with members"
 msgstr "Compartilhar meus modelos com os membros"
@@ -8246,7 +8361,6 @@ msgstr "Entre ou crie sua conta"
 #: src/pages/Auth.tsx
 msgid "Sign in to {0}"
 msgstr "Entrar no {0}"
-
 
 #: src/pages/Auth.tsx
 msgid "Sign in to Rook"
@@ -8486,7 +8600,9 @@ msgstr "Estado"
 
 #: src/pages/ActivityList.tsx
 #: src/pages/Board.tsx
+#: src/pages/partner/PartnerPayments.tsx
 #: src/pages/platform/InvoicesSection.tsx
+#: src/pages/platform/PlatformConnect.tsx
 msgid "Status"
 msgstr "Status"
 
@@ -8660,7 +8776,6 @@ msgstr "Atendimento"
 msgid "Support email"
 msgstr "E-mail de suporte"
 
-
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Supports images"
@@ -8766,11 +8881,9 @@ msgstr "Entrada do terminal"
 msgid "Terms"
 msgstr "Termos"
 
-
 #: src/pages/partner/PartnerBrand.tsx
 msgid "Terms URL"
 msgstr "URL dos termos"
-
 
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/onboarding/LocalModelChoice.tsx
@@ -8841,7 +8954,6 @@ msgstr "O download não correspondeu ao arquivo publicado. Nada foi instalado."
 msgid "The icon must be a square PNG of at least 512 px."
 msgstr "O ícone deve ser um PNG quadrado de pelo menos 512 px."
 
-
 #. js-lingui-explicit-id
 #: src/lib/run-error-copy.ts
 msgid "The model couldn't answer"
@@ -8875,7 +8987,6 @@ msgstr "O modelo demorou demais"
 #: src/lib/branding-errors.ts
 msgid "The provider did not answer. Try again."
 msgstr "O provedor não respondeu. Tente de novo."
-
 
 #: src/lib/computer-screen.ts
 msgid "The screen connection closed."
@@ -8989,7 +9100,6 @@ msgstr "Esta conversa é longa demais para o modelo. Tentar novamente não vai a
 #: src/lib/branding-errors.ts
 msgid "This domain is already in use."
 msgstr "Este domínio já está em uso."
-
 
 #: src/components/ArtifactFileCard.tsx
 msgid "This file is not valid UTF-8 text."
@@ -9320,6 +9430,14 @@ msgstr "Digitar sem gravar"
 msgid "Type your answer"
 msgstr "Digite sua resposta"
 
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Unavailable"
+msgstr "Indisponível"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Under review"
+msgstr "Em análise"
+
 #: src/components/ApprovalRulesSettings.tsx
 #: src/components/AskCard.tsx
 #: src/components/MemoryFactCard.tsx
@@ -9517,7 +9635,6 @@ msgstr "Usar um modelo encontrado"
 msgid "Use a PNG, JPEG or WebP image up to 256 KB."
 msgstr "Use uma imagem PNG, JPEG ou WebP de até 256 KB."
 
-
 #: src/pages/connections/DatabaseForm.tsx
 msgid "Use a read-only database role."
 msgstr "Use uma função de banco de dados somente leitura."
@@ -9639,7 +9756,6 @@ msgstr "Valor"
 msgid "Verified"
 msgstr "Verificado"
 
-
 #: src/pages/Store.tsx
 msgid "Verify and add"
 msgstr "Verificar e adicionar"
@@ -9721,7 +9837,6 @@ msgstr "Aguardando aprovação"
 #: src/pages/partner/PartnerDomain.tsx
 msgid "Waiting for the certificate."
 msgstr "Aguardando o certificado."
-
 
 #: src/pages/home/EmbeddedHome.tsx
 #: src/pages/HomePage.tsx
@@ -9917,6 +10032,10 @@ msgstr "Wiki"
 #: src/pages/WikiBrowser.tsx
 msgid "Wiki settings"
 msgstr "Configurações da wiki"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Won"
+msgstr "Ganha"
 
 #: src/lib/ticket-status.ts
 msgid "Won't do"

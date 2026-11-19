@@ -118,12 +118,17 @@ export async function priceWhiteLabelPack(
 export async function attachWhiteLabelCustomer(
   prisma: PrismaClient,
   partnerId: string,
-  input: { organizationId: string; ownerUserId: string },
+  input: { organizationId: string; ownerUserId?: string },
 ) {
   const partner = await prisma.partner.findUnique({ where: { id: partnerId } });
   if (partner?.mode !== "white_label" || partner.billingModel !== "commerce") {
     throw new CommerceError("not_white_label");
   }
+  // The signup link (PartnerCustomer) is the one record of whose customer this is.
+  const link = await prisma.partnerCustomer.findUnique({
+    where: { organizationId: input.organizationId },
+  });
+  if (link && link.partnerId !== partnerId) throw new CommerceError("customer_of_another_partner");
   const existing = await prisma.partnerTenant.findUnique({
     where: { organizationId: input.organizationId },
   });
@@ -131,6 +136,16 @@ export async function attachWhiteLabelCustomer(
     if (existing.partnerId !== partnerId) throw new CommerceError("customer_of_another_partner");
     return existing;
   }
+  const ownerUserId =
+    input.ownerUserId ??
+    (
+      await prisma.member.findFirst({
+        where: { organizationId: input.organizationId, role: "owner" },
+        orderBy: { createdAt: "asc" },
+        select: { userId: true },
+      })
+    )?.userId;
+  if (!ownerUserId) throw new CommerceError("no_owner");
   await prisma.modelCreditAccount.upsert({
     where: { organizationId: input.organizationId },
     create: { organizationId: input.organizationId, mode: "credits" },
@@ -141,7 +156,7 @@ export async function attachWhiteLabelCustomer(
       partnerId,
       externalTenantId: input.organizationId,
       organizationId: input.organizationId,
-      ownerUserId: input.ownerUserId,
+      ownerUserId,
     },
   });
 }
@@ -154,6 +169,13 @@ export interface ConnectEventResult {
   notices: string[];
   /** Rook's exact fee for a renewal invoice that is still a draft. */
   invoiceFee?: { account: string; invoiceRef: string; applicationFeeMinor: number };
+  /** Mail owed to the customer, in the partner's brand; the API sends it. */
+  customerNotices?: Array<{
+    kind: "payment_failed" | "refunded";
+    organizationId: string;
+    amountMinor?: number;
+    currency: string;
+  }>;
   /** The fee Rook should net on a payment, once refunds and disputes are counted. */
   feeTrim?: { account: string; paymentRef: string; targetFeeMinor: number };
   /** A refund the partner made on its own: Rook's fee should follow it. */
@@ -295,7 +317,11 @@ export async function applyPaymentEvent(
       case "subscription.payment_failed": {
         const tenant = await tenantOf(prisma, partner, event);
         if (!tenant) return ignored("unknown_customer");
+        const before = await prisma.tenantSubscription.findUnique({
+          where: { partnerTenantId: tenant.id },
+        });
         const sub = await markSubscription(prisma, tenant.id, "past_due", now);
+        const firstFailure = before?.status !== "past_due";
         if (sub) {
           await notify(tenant.externalTenantId, "payment.failed", `${event.invoiceRef}`, {
             currency: partner.currency,
@@ -314,7 +340,22 @@ export async function applyPaymentEvent(
             },
           );
         }
-        return { status: "applied", notices };
+        return {
+          status: "applied",
+          notices,
+          // One email for a failure, not one for each retry.
+          ...(sub && firstFailure
+            ? {
+                customerNotices: [
+                  {
+                    kind: "payment_failed" as const,
+                    organizationId: tenant.organizationId,
+                    currency: partner.currency,
+                  },
+                ],
+              }
+            : {}),
+        };
       }
 
       case "subscription.updated": {
@@ -439,6 +480,18 @@ export async function applyPaymentEvent(
         return {
           status: "applied",
           notices,
+          ...(amount > 0
+            ? {
+                customerNotices: [
+                  {
+                    kind: "refunded" as const,
+                    organizationId: tenant.organizationId,
+                    amountMinor: amount,
+                    currency: original.currency,
+                  },
+                ],
+              }
+            : {}),
           ...(event.applicationFeeRef
             ? {
                 feeRefund: {

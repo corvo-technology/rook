@@ -178,6 +178,11 @@ msgstr "{0} MB"
 msgid "{0} new"
 msgstr "新增 {0}"
 
+#. placeholder {0}: money(plan.creditMinor)
+#: src/pages/plans/WhiteLabelPlans.tsx
+msgid "{0} of credit"
+msgstr "{0} 额度"
+
 #. placeholder {0}: new Intl.NumberFormat(locale).format(overview.requestedEscalations)
 #: src/pages/Usage.tsx
 msgid "{0} requested"
@@ -692,6 +697,10 @@ msgstr "{working} 个正在工作"
 msgid "@{0}"
 msgstr "@{0}"
 
+#: src/pages/plans/WhiteLabelPlans.tsx
+msgid "/ month"
+msgstr "/ 月"
+
 #. placeholder {0}: (status.byokPriceCents ?? 0) / 100
 #. placeholder {0}: amount / 100
 #: src/components/ModelCredits.tsx
@@ -768,6 +777,7 @@ msgid "Access token (optional)"
 msgstr "访问令牌（可选）"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/partner/PartnerPayments.tsx
 msgid "Account"
 msgstr "账户"
 
@@ -788,6 +798,11 @@ msgstr "账户标签"
 msgid "Account menu for {name}"
 msgstr "{name} 的账户菜单"
 
+#: src/pages/partner/PartnerPayments.tsx
+#: src/pages/platform/PlatformConnect.tsx
+msgid "Action needed"
+msgstr "需要处理"
+
 #. placeholder {0}: bot.name
 #. placeholder {0}: group.spaceName
 #. placeholder {0}: section.name
@@ -803,7 +818,9 @@ msgstr "空间操作"
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/partner/PartnerDomain.tsx
+#: src/pages/partner/PartnerPayments.tsx
 #: src/pages/platform/PartnersSection.tsx
+#: src/pages/platform/PlatformConnect.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/Workflows.tsx
 msgid "Active"
@@ -1019,11 +1036,9 @@ msgstr "重新添加这些文件"
 msgid "Add these records at your DNS provider."
 msgstr "请在你的 DNS 服务商处添加这些记录。"
 
-
 #: src/pages/partner/PartnerDomain.tsx
 msgid "Add this record at your DNS provider."
 msgstr "请在你的 DNS 服务商处添加这条记录。"
-
 
 #: src/pages/shell/agent-import.tsx
 msgid "Add to an existing bot"
@@ -1048,7 +1063,6 @@ msgstr "添加小组件"
 #: src/pages/partner/PartnerDomain.tsx
 msgid "Add your terms and privacy links in Brand to go live."
 msgstr "在“品牌”中添加条款和隐私链接即可上线。"
-
 
 #: src/lib/server-copy.ts
 msgid "Add: {add}"
@@ -1266,6 +1280,7 @@ msgstr "始终允许"
 
 #: src/pages/partner/PartnerCredits.tsx
 #: src/pages/partner/PartnerCustomers.tsx
+#: src/pages/partner/PartnerPayments.tsx
 #: src/pages/platform/SimulatorSection.tsx
 msgid "Amount"
 msgstr "金额"
@@ -1795,7 +1810,6 @@ msgstr "大脑标签"
 msgid "Brand"
 msgstr "品牌"
 
-
 #: src/pages/partner/PartnerBrand.tsx
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Brand colour"
@@ -1828,6 +1842,7 @@ msgid "Business"
 msgstr "业务"
 
 #: src/pages/home/PartnerBalance.tsx
+#: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Buy more"
 msgstr "购买更多"
 
@@ -2050,6 +2065,10 @@ msgstr "结账网址"
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Chief name"
 msgstr "Chief 名称"
+
+#: src/pages/plans/WhiteLabelPlans.tsx
+msgid "Choose"
+msgstr "选择"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Choose a bot"
@@ -2386,6 +2405,10 @@ msgstr "确认重置？"
 msgid "Confirm your email first, then open this link again"
 msgstr "请先确认邮箱，然后重新打开此链接"
 
+#: src/pages/plans/WhiteLabelPlans.tsx
+msgid "Confirming your payment"
+msgstr "正在确认您的付款"
+
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/ChatAppsRow.tsx
 #: src/pages/connections/ConnectSheet.tsx
@@ -2435,6 +2458,10 @@ msgstr "连接模型后即可开始。"
 #: src/pages/HomePage.tsx
 msgid "Connect a tool"
 msgstr "连接工具"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Connect account"
+msgstr "连接账户"
 
 #: src/components/MissionList.tsx
 msgid "Connect an app"
@@ -2492,6 +2519,10 @@ msgstr "已连接"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Connected {0}."
 msgstr "已连接 {0}。"
+
+#: src/pages/platform/PlatformPage.tsx
+msgid "Connected accounts"
+msgstr "已连接账户"
 
 #: src/pages/connections/DatabaseForm.tsx
 #: src/pages/connections/MailboxForm.tsx
@@ -2558,6 +2589,10 @@ msgstr "上下文限制"
 #: src/pages/shell/agent-import.tsx
 msgid "Continue"
 msgstr "继续"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Continue setup"
+msgstr "继续设置"
 
 #: src/components/ModelCredits.tsx
 msgid "Continue to checkout"
@@ -3337,7 +3372,6 @@ msgstr "创建空间"
 msgid "Create your account"
 msgstr "创建你的账户"
 
-
 #: src/pages/Auth.tsx
 msgid "Create your Rook"
 msgstr "创建你的 Rook"
@@ -3436,6 +3470,10 @@ msgstr "币种"
 msgid "Current password"
 msgstr "当前密码"
 
+#: src/pages/plans/WhiteLabelPlans.tsx
+msgid "Current plan"
+msgstr "当前方案"
+
 #: src/pages/connections/connection-model.ts
 msgid "Custom"
 msgstr "自定义"
@@ -3484,6 +3522,7 @@ msgid "Customer-owned models are never charged"
 msgstr "客户自有模型从不收费"
 
 #: src/pages/partner/PartnerConsolePage.tsx
+#: src/pages/platform/PlatformConnect.tsx
 #: src/pages/platform/SimulatorSection.tsx
 msgid "Customers"
 msgstr "客户"
@@ -3533,6 +3572,10 @@ msgstr "数据"
 #: src/pages/connections/DatabaseForm.tsx
 msgid "Database"
 msgstr "数据库"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Date"
+msgstr "日期"
 
 #: src/lib/billing.ts
 #: src/lib/cron.ts
@@ -3725,6 +3768,10 @@ msgstr "详情"
 msgid "Development"
 msgstr "开发"
 
+#: src/pages/platform/PlatformConnect.tsx
+msgid "Difference"
+msgstr "差额"
+
 #: src/components/InboxPanel.tsx
 msgid "Direct message"
 msgstr "私信"
@@ -3733,6 +3780,8 @@ msgstr "私信"
 msgid "Disable a tool"
 msgstr "禁用工具"
 
+#: src/pages/partner/PartnerPayments.tsx
+#: src/pages/platform/PlatformConnect.tsx
 #: src/pages/Store.tsx
 #: src/pages/StoreInstalledApps.tsx
 msgid "Disabled"
@@ -3803,6 +3852,11 @@ msgstr "已忽略。随时可在“连接”中重新连接。"
 msgid "Display name"
 msgstr "显示名称"
 
+#: src/pages/partner/PartnerPayments.tsx
+#: src/pages/platform/PlatformConnect.tsx
+msgid "Disputes"
+msgstr "争议"
+
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/onboarding/ComputerStep.tsx
 msgid "Docker"
@@ -3850,7 +3904,6 @@ msgstr "执行符合你请求的操作"
 #: src/pages/platform/PartnersSection.tsx
 msgid "Domain"
 msgstr "域名"
-
 
 #: src/pages/Auth.tsx
 msgid "Don’t have an account?"
@@ -3990,7 +4043,6 @@ msgstr "邮件提醒"
 msgid "Email domain"
 msgstr "邮件域名"
 
-
 #: src/lib/user-error.ts
 msgid "Email is not allowed to register"
 msgstr "该邮箱不允许注册"
@@ -4032,7 +4084,6 @@ msgstr "何时介入… 忽略…"
 #: src/lib/branding-errors.ts
 msgid "Enter a domain such as app.example.com."
 msgstr "请输入类似 app.example.com 的域名。"
-
 
 #: src/pages/onboarding/WorkspaceStep.tsx
 msgid "Enter a name up to {SPACE_NAME_MAX_LENGTH} characters."
@@ -4231,6 +4282,7 @@ msgstr "失败"
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/partner/PartnerDomain.tsx
+#: src/pages/partner/PartnerPayments.tsx
 #: src/pages/platform/PartnersSection.tsx
 #: src/pages/RoutineCard.tsx
 #: src/pages/RoutineTimeGrid.tsx
@@ -4259,6 +4311,10 @@ msgstr "失败处理"
 #: src/pages/Usage.tsx
 msgid "Fast"
 msgstr "快速"
+
+#: src/pages/platform/PlatformConnect.tsx
+msgid "Fees"
+msgstr "费用"
 
 #: src/pages/TicketFields.tsx
 msgid "Field name"
@@ -4694,7 +4750,6 @@ msgstr "我做完了"
 #: src/pages/partner/PartnerBrand.tsx
 msgid "Icon"
 msgstr "图标"
-
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "If you heard that, voice is ready."
@@ -5152,6 +5207,10 @@ msgstr "退出"
 msgid "Leave this space?"
 msgstr "退出此空间？"
 
+#: src/pages/platform/PlatformConnect.tsx
+msgid "Ledger"
+msgstr "账本"
+
 #: src/components/AutonomyPicker.tsx
 msgid "Let {name} act without asking?"
 msgstr "让{name}无需询问就行动？"
@@ -5296,6 +5355,10 @@ msgstr "正在查看屏幕"
 #: src/pages/shell/agent-import.tsx
 msgid "Looks like it contains a key"
 msgstr "似乎包含密钥"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Lost"
+msgstr "败诉"
 
 #: src/lib/ticket-priority.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -5731,6 +5794,7 @@ msgstr "月"
 #: src/pages/partner/PartnerRevenue.tsx
 #: src/pages/platform/InvoicesSection.tsx
 #: src/pages/platform/PartnersSection.tsx
+#: src/pages/platform/PlatformConnect.tsx
 #: src/pages/Routines.tsx
 msgid "Month"
 msgstr "月"
@@ -5783,6 +5847,10 @@ msgstr "更多"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "More computer actions"
 msgstr "更多电脑操作"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "More information needed"
+msgstr "需要补充信息"
 
 #: src/pages/NewRoutinePanel.tsx
 msgid "Morning summary"
@@ -5901,6 +5969,10 @@ msgstr "需要输入"
 #: src/pages/connections/connection-model.ts
 msgid "Needs reconnecting"
 msgstr "需要重新连接"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Needs response"
+msgstr "需要回应"
 
 #: src/pages/ActivityList.tsx
 msgid "Needs takeover"
@@ -6038,6 +6110,10 @@ msgstr "下一步"
 msgid "Next page"
 msgstr "下一页"
 
+#: src/pages/plans/WhiteLabelPlans.tsx
+msgid "Next period"
+msgstr "下个周期"
+
 #: src/pages/home/HomeHero.tsx
 msgid "next routine in {n, plural, one {# hour} other {# hours}}"
 msgstr "下一个例行任务在 {n, plural, other {# 小时}} 后"
@@ -6094,6 +6170,10 @@ msgstr "没有匹配的机器人"
 #: src/pages/partner/PartnerCustomers.tsx
 msgid "No customers"
 msgstr "暂无客户"
+
+#: src/pages/platform/PlatformConnect.tsx
+msgid "No fees this month"
+msgstr "本月没有费用"
 
 #: src/pages/partner/PartnerInvoices.tsx
 msgid "No invoices"
@@ -6165,9 +6245,17 @@ msgstr "还没有页面"
 msgid "No partnerships"
 msgstr "暂无合作"
 
+#: src/pages/partner/PartnerPayments.tsx
+msgid "No payouts yet"
+msgstr "暂无打款"
+
 #: src/pages/platform/LimitsSection.tsx
 msgid "No plan"
 msgstr "无套餐"
+
+#: src/pages/plans/WhiteLabelPlans.tsx
+msgid "No plans"
+msgstr "没有方案"
 
 #: src/pages/AgentsStore.tsx
 msgid "No public address here, so it checks your inbox on a schedule you approve."
@@ -6228,6 +6316,10 @@ msgstr "此期间没有使用。"
 msgid "No voice right now"
 msgstr "暂时没有语音"
 
+#: src/pages/platform/PlatformConnect.tsx
+msgid "No white label partners"
+msgstr "没有白标合作伙伴"
+
 #: src/pages/Workflows.tsx
 msgid "No workflows yet"
 msgstr "还没有工作流"
@@ -6244,7 +6336,6 @@ msgstr "不是有效的技能"
 msgid "Not available"
 msgstr "不可用"
 
-
 #: src/pages/shell/routing-line.tsx
 msgid "Not available to you"
 msgstr "你无法使用"
@@ -6253,6 +6344,11 @@ msgstr "你无法使用"
 msgid "Not checked yet"
 msgstr "尚未检查"
 
+#: src/pages/partner/PartnerPayments.tsx
+#: src/pages/platform/PlatformConnect.tsx
+msgid "Not connected"
+msgstr "未连接"
+
 #: src/pages/connections/DatabaseForm.tsx
 msgid "Not encrypted"
 msgstr "不加密"
@@ -6260,7 +6356,6 @@ msgstr "不加密"
 #: src/pages/partner/PartnerBrand.tsx
 msgid "Not enough contrast on both light and dark."
 msgstr "在浅色和深色主题下对比度都不足。"
-
 
 #: src/pages/shell/agent-import.tsx
 msgid "Not imported"
@@ -6490,6 +6585,10 @@ msgstr "打开与 {0} 的聊天"
 msgid "Open computer settings"
 msgstr "打开电脑设置"
 
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Open dashboard"
+msgstr "打开控制台"
+
 #: src/components/markdown-link-prompt.tsx
 msgid "Open external link?"
 msgstr "打开外部链接？"
@@ -6666,6 +6765,7 @@ msgid "Pages"
 msgstr "页面"
 
 #: src/pages/partner/PartnerInvoices.tsx
+#: src/pages/partner/PartnerPayments.tsx
 #: src/pages/partner/PartnerRevenue.tsx
 #: src/pages/platform/InvoicesSection.tsx
 msgid "Paid"
@@ -6673,6 +6773,7 @@ msgstr "已付"
 
 #: src/pages/platform/InvoicesSection.tsx
 #: src/pages/platform/PartnersSection.tsx
+#: src/pages/platform/PlatformConnect.tsx
 msgid "Partner"
 msgstr "合作伙伴"
 
@@ -6803,6 +6904,14 @@ msgstr "已暂停"
 msgid "Pawn"
 msgstr "兵"
 
+#: src/pages/plans/WhiteLabelPlans.tsx
+msgid "Payment method"
+msgstr "付款方式"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Payouts"
+msgstr "打款"
+
 #: src/pages/partner/PartnerDomain.tsx
 #: src/pages/platform/IntakeSections.tsx
 #: src/pages/platform/PartnersSection.tsx
@@ -6917,7 +7026,9 @@ msgstr "规划本周"
 msgid "Plan: {plan}"
 msgstr "套餐:{plan}"
 
+#: src/pages/BillingSettingsPanel.tsx
 #: src/pages/partner/PartnerPricing.tsx
+#: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Plans"
 msgstr "套餐"
 
@@ -7010,11 +7121,9 @@ msgstr "优先级"
 msgid "Privacy"
 msgstr "隐私"
 
-
 #: src/pages/partner/PartnerBrand.tsx
 msgid "Privacy URL"
 msgstr "隐私链接"
-
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Private"
@@ -7054,6 +7163,7 @@ msgstr "受保护输入"
 
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
+#: src/pages/platform/PlatformConnect.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Provider"
 msgstr "提供方"
@@ -7184,6 +7294,10 @@ msgstr "读取并写入"
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Recall only"
 msgstr "仅读取"
+
+#: src/pages/partner/PartnerConsolePage.tsx
+msgid "Receipts"
+msgstr "收款"
 
 #: src/pages/ActivityList.tsx
 msgid "Recent"
@@ -7399,7 +7513,6 @@ msgstr "移除技能 {0}"
 msgid "Remove the current domain first."
 msgstr "请先移除当前域名。"
 
-
 #: src/pages/RoutineEditor.tsx
 msgid "Remove webhook"
 msgstr "移除 Webhook"
@@ -7453,7 +7566,6 @@ msgstr "重复 {cron}，下次运行时间 {when}"
 #: src/pages/partner/PartnerBrand.tsx
 msgid "Replace"
 msgstr "替换"
-
 
 #: src/pages/model-settings/connection-controls.tsx
 msgid "Replace API key"
@@ -7635,7 +7747,6 @@ msgstr "重试屏幕"
 #: src/pages/McpOAuthCallback.tsx
 msgid "Return to {0}"
 msgstr "返回 {0}"
-
 
 #. placeholder {0}: call.botName
 #: src/components/call/CallCard.tsx
@@ -7866,7 +7977,6 @@ msgstr "自动保存"
 #: src/lib/branding-errors.ts
 msgid "Save the brand first."
 msgstr "请先保存品牌。"
-
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Save the workspace and install current software."
@@ -8146,6 +8256,11 @@ msgstr "设置完成"
 msgid "Setup help"
 msgstr "设置帮助"
 
+#: src/pages/partner/PartnerPayments.tsx
+#: src/pages/platform/PlatformConnect.tsx
+msgid "Setup in progress"
+msgstr "设置进行中"
+
 #: src/pages/WorkspaceModelRow.tsx
 msgid "Share my models with members"
 msgstr "与成员共享我的模型"
@@ -8246,7 +8361,6 @@ msgstr "登录或创建账户"
 #: src/pages/Auth.tsx
 msgid "Sign in to {0}"
 msgstr "登录 {0}"
-
 
 #: src/pages/Auth.tsx
 msgid "Sign in to Rook"
@@ -8486,7 +8600,9 @@ msgstr "状态"
 
 #: src/pages/ActivityList.tsx
 #: src/pages/Board.tsx
+#: src/pages/partner/PartnerPayments.tsx
 #: src/pages/platform/InvoicesSection.tsx
+#: src/pages/platform/PlatformConnect.tsx
 msgid "Status"
 msgstr "状态"
 
@@ -8660,7 +8776,6 @@ msgstr "支持"
 msgid "Support email"
 msgstr "支持邮箱"
 
-
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Supports images"
@@ -8766,11 +8881,9 @@ msgstr "终端输入"
 msgid "Terms"
 msgstr "条款"
 
-
 #: src/pages/partner/PartnerBrand.tsx
 msgid "Terms URL"
 msgstr "条款链接"
-
 
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/onboarding/LocalModelChoice.tsx
@@ -8841,7 +8954,6 @@ msgstr "下载内容与已发布的文件不一致。未安装任何内容。"
 msgid "The icon must be a square PNG of at least 512 px."
 msgstr "图标必须是至少 512 px 的正方形 PNG。"
 
-
 #. js-lingui-explicit-id
 #: src/lib/run-error-copy.ts
 msgid "The model couldn't answer"
@@ -8875,7 +8987,6 @@ msgstr "模型响应时间过长"
 #: src/lib/branding-errors.ts
 msgid "The provider did not answer. Try again."
 msgstr "服务商没有响应。请重试。"
-
 
 #: src/lib/computer-screen.ts
 msgid "The screen connection closed."
@@ -8989,7 +9100,6 @@ msgstr "此对话对模型来说太长了。重试无济于事。请开始新的
 #: src/lib/branding-errors.ts
 msgid "This domain is already in use."
 msgstr "此域名已被使用。"
-
 
 #: src/components/ArtifactFileCard.tsx
 msgid "This file is not valid UTF-8 text."
@@ -9320,6 +9430,14 @@ msgstr "不录制，直接输入"
 msgid "Type your answer"
 msgstr "输入你的回答"
 
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Unavailable"
+msgstr "不可用"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Under review"
+msgstr "审核中"
+
 #: src/components/ApprovalRulesSettings.tsx
 #: src/components/AskCard.tsx
 #: src/components/MemoryFactCard.tsx
@@ -9517,7 +9635,6 @@ msgstr "使用找到的模型"
 msgid "Use a PNG, JPEG or WebP image up to 256 KB."
 msgstr "请使用不超过 256 KB 的 PNG、JPEG 或 WebP 图片。"
 
-
 #: src/pages/connections/DatabaseForm.tsx
 msgid "Use a read-only database role."
 msgstr "请使用只读数据库角色。"
@@ -9639,7 +9756,6 @@ msgstr "值"
 msgid "Verified"
 msgstr "已验证"
 
-
 #: src/pages/Store.tsx
 msgid "Verify and add"
 msgstr "校验并添加"
@@ -9721,7 +9837,6 @@ msgstr "等待批准"
 #: src/pages/partner/PartnerDomain.tsx
 msgid "Waiting for the certificate."
 msgstr "正在等待证书。"
-
 
 #: src/pages/home/EmbeddedHome.tsx
 #: src/pages/HomePage.tsx
@@ -9917,6 +10032,10 @@ msgstr "Wiki"
 #: src/pages/WikiBrowser.tsx
 msgid "Wiki settings"
 msgstr "Wiki 设置"
+
+#: src/pages/partner/PartnerPayments.tsx
+msgid "Won"
+msgstr "胜诉"
 
 #: src/lib/ticket-status.ts
 msgid "Won't do"

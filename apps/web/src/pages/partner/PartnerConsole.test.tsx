@@ -524,6 +524,9 @@ describe("partner brand and domain", () => {
       hostname: "app.acme.example.test",
     });
     expect(document.querySelector("[data-testid=domain-panel]")).toBeTruthy();
+  });
+});
+
 describe("receipts of a white label partner", () => {
   const payments = (over: object = {}) => ({
     state: "none",

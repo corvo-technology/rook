@@ -7,6 +7,7 @@ import {
   configurePartnerCommerce,
   createDb,
   createPartner,
+  createPrismaBrandingStore,
   partnerSpaceState,
   provisionPartnerTenant,
   recordFxRate,
@@ -51,7 +52,28 @@ describePostgres("white label checkout and webhook (PostgreSQL)", () => {
     });
     const jobs = { enqueue: vi.fn(async () => undefined) };
     const app = new Hono();
-    mountPaymentsWebhook(app, { prisma: db, provider, jobs, now: () => NOW });
+    const sent: Array<{ to: string; subject: string; from?: string; html?: string }> = [];
+    const host = `app.${label}${suffix}.example.test`.toLowerCase();
+    mountPaymentsWebhook(app, {
+      prisma: db,
+      provider,
+      jobs,
+      now: () => NOW,
+      email: { describe: () => ({ id: "fake" }) as never, send: async (m) => void sent.push(m) },
+      mailBrand: async () => ({
+        brand: {
+          name: `Agency ${label}`,
+          logoUrl: null,
+          accent: null,
+          supportEmail: null,
+          termsUrl: null,
+          privacyUrl: null,
+        },
+        origin: `https://${host}`,
+        from: `Agency ${label} <noreply@example.test>`,
+      }),
+      webOrigin: "https://app.example.test",
+    });
     const payments = createWhiteLabelPayments({
       prisma: db,
       provider,
@@ -112,6 +134,14 @@ describePostgres("white label checkout and webhook (PostgreSQL)", () => {
     });
     organizationIds.push(made.organizationId);
     userIds.push(made.ownerUserId);
+    // Signup on the partner's host is the one record of whose customer this is.
+    await db.partnerCustomer.create({
+      data: { partnerId: partner.id, organizationId: made.organizationId, hostname: host },
+    });
+    await db.user.update({
+      where: { id: made.ownerUserId },
+      data: { email: `owner-${label}-${suffix}@customer.example.test` },
+    });
     const actor: Actor = {
       userId: made.ownerUserId,
       spaceId: made.spaceId,
@@ -132,6 +162,8 @@ describePostgres("white label checkout and webhook (PostgreSQL)", () => {
       payments,
       actor,
       account,
+      host,
+      sent,
       partnerId: partner.id,
       tenantId: made.tenantId,
       organizationId: made.organizationId,
@@ -182,6 +214,7 @@ describePostgres("white label checkout and webhook (PostgreSQL)", () => {
     });
   });
   afterAll(async () => {
+    await db.partnerCustomer.deleteMany({ where: { partnerId: { in: partnerIds } } });
     await db.revenueShareEntry.deleteMany({ where: { partnerId: { in: partnerIds } } });
     await db.partner.deleteMany({ where: { id: { in: partnerIds } } });
     await db.organization.deleteMany({ where: { id: { in: organizationIds } } });
@@ -447,5 +480,85 @@ describePostgres("white label checkout and webhook (PostgreSQL)", () => {
     expect(rows.reduce((sum, row) => sum + row.rookShareMinor, 0)).toBe(0);
     const fee = w.wire.connect.fees[0]!;
     expect(fee.amount - fee.amount_refunded).toBe(0);
+  });
+
+  it("sends the customer back to the partner's own host, never to Rook's", async () => {
+    const w = await world("host");
+    await w.payments.checkout(w.actor, { kind: "plan", key: plan });
+    const form = checkoutForm(w).form;
+    expect(form.success_url).toBe(`https://${w.host}/app/plans?checkout=success`);
+    expect(form.cancel_url).toBe(`https://${w.host}/app/plans?checkout=canceled`);
+  });
+
+  it("emails the customer in the partner's brand when a payment fails or is refunded, once", async () => {
+    const w = await world("mail");
+    await w.deliver(await subscribe(w));
+    const sub = w.wire.connect.subscriptions[0]!;
+    for (const envelope of w.wire.connect.failPayment(sub.id)) await w.deliver(envelope);
+    for (const envelope of w.wire.connect.failPayment(sub.id)) await w.deliver(envelope);
+    expect(w.sent).toHaveLength(1);
+    expect(w.sent[0]).toMatchObject({
+      to: `owner-mail-${suffix}@customer.example.test`,
+      subject: "Seu pagamento não foi concluído",
+      from: "Agency mail <noreply@example.test>",
+    });
+    expect(w.sent[0]!.html).toContain(`https://${w.host}/app/plans`);
+    expect(w.sent[0]!.html).not.toContain("Rook");
+    const charge = w.wire.connect.charges[0]!;
+    await w.provider.refund({
+      account: w.account,
+      paymentRef: charge.payment_intent,
+      amountMinor: 6_500,
+      key: "m1",
+    });
+    await w.deliver(w.wire.connect.chargeRefunded(charge.id));
+    expect(w.sent.at(-1)!.subject).toBe("Seu reembolso foi feito");
+    expect(w.sent.at(-1)!.html).toContain("65,00");
+  });
+
+  it("makes the ledger row when signup links a customer, so it is read-only until it has a plan", async () => {
+    const w = await world("link");
+    const org = await db.organization.create({
+      data: { id: `org-link-${suffix}`, name: "Linked", slug: `linked-${suffix}`, createdAt: NOW },
+    });
+    organizationIds.push(org.id);
+    const owner = await db.user.create({
+      data: {
+        id: `u-link-${suffix}`,
+        name: "Ana",
+        email: `ana-${suffix}@customer.example.test`,
+        emailVerified: true,
+      },
+    });
+    userIds.push(owner.id);
+    await db.member.create({
+      data: {
+        id: `m-link-${suffix}`,
+        organizationId: org.id,
+        userId: owner.id,
+        role: "owner",
+        createdAt: NOW,
+      },
+    });
+    await db.space.create({
+      data: {
+        id: org.id,
+        organizationId: org.id,
+        name: "Linked",
+        isDefault: true,
+        createdByUserId: owner.id,
+        createdAt: NOW,
+      },
+    });
+    const linked = await createPrismaBrandingStore(db).linkCustomer({
+      partnerId: w.partnerId,
+      organizationId: org.id,
+      hostname: w.host,
+    });
+    expect(linked).toBe(true);
+    const tenant = await db.partnerTenant.findUniqueOrThrow({ where: { organizationId: org.id } });
+    expect(tenant).toMatchObject({ partnerId: w.partnerId, ownerUserId: owner.id });
+    // No plan yet: runs are refused, data stays readable.
+    expect(await partnerSpaceState(db, org.id, NOW)).toBe("inactive");
   });
 });

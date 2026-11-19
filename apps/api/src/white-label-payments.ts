@@ -1,9 +1,17 @@
-import type { JobPublisher, PaymentsProvider } from "@corvo/adapter-kit";
+import type {
+  JobPublisher,
+  PaymentsProvider,
+  TransactionalEmailProvider,
+} from "@corvo/adapter-kit";
 import { enqueuePartnerWebhook } from "@corvo/adapters";
+import type { MailBrand } from "@corvo/auth";
+import { paymentNoticeEmail } from "@corvo/auth";
 import type { Actor, WhiteLabelCatalogSchema } from "@corvo/contracts";
 import type { PrismaClient } from "@corvo/db";
 import {
   applyPaymentEvent,
+  attachWhiteLabelCustomer,
+  CommerceError,
   commerceSettings,
   priceWhiteLabelPack,
   priceWhiteLabelPlan,
@@ -55,14 +63,37 @@ export function createWhiteLabelPayments(deps: WhiteLabelDeps) {
       select: { organizationId: true },
     });
     if (!space) return null;
-    const tenant = await deps.prisma.partnerTenant.findUnique({
+    const include = { partner: true, subscription: true } as const;
+    let tenant = await deps.prisma.partnerTenant.findUnique({
       where: { organizationId: space.organizationId },
-      include: { partner: true, subscription: true },
+      include,
     });
+    // Signup on the partner's host links the organization (PartnerCustomer); the ledger row it
+    // needs is made at once, and here for a customer linked before it existed.
+    const link = await deps.prisma.partnerCustomer.findUnique({
+      where: { organizationId: space.organizationId },
+      select: { partnerId: true, hostname: true },
+    });
+    if (!tenant && link) {
+      try {
+        await attachWhiteLabelCustomer(deps.prisma, link.partnerId, {
+          organizationId: space.organizationId,
+          ownerUserId: actor.userId,
+        });
+      } catch (error) {
+        if (!(error instanceof CommerceError)) throw error;
+        return null;
+      }
+      tenant = await deps.prisma.partnerTenant.findUnique({
+        where: { organizationId: space.organizationId },
+        include,
+      });
+    }
     if (tenant?.partner.mode !== "white_label" || tenant.partner.billingModel !== "commerce") {
       return null;
     }
-    return tenant;
+    // Back to the partner's own host after paying, never to Rook's.
+    return { ...tenant, origin: link ? `https://${link.hostname}` : deps.webOrigin };
   }
   const asSystem = <T>(fn: () => Promise<T>) => runAsSystem("white label customer payments", fn);
   const mustCustomer = async (actor: Actor) => {
@@ -75,7 +106,7 @@ export function createWhiteLabelPayments(deps: WhiteLabelDeps) {
     if (!connectAccountId || connectState !== "active") throw new WhiteLabelError("unavailable");
     return connectAccountId;
   };
-  const returnUrl = (result: string) => `${deps.webOrigin}/app/plans?checkout=${result}`;
+  const returnUrl = (origin: string, result: string) => `${origin}/app/plans?checkout=${result}`;
 
   return {
     catalog: (actor: Actor): Promise<Catalog | null> =>
@@ -127,8 +158,8 @@ export function createWhiteLabelPayments(deps: WhiteLabelDeps) {
         const base = {
           account,
           customerEmail: actor.email,
-          successUrl: returnUrl("success"),
-          cancelUrl: returnUrl("canceled"),
+          successUrl: returnUrl(customer.origin, "success"),
+          cancelUrl: returnUrl(customer.origin, "canceled"),
           ...(subscription?.providerCustomerRef
             ? { customerRef: subscription.providerCustomerRef }
             : {}),
@@ -235,7 +266,7 @@ export function createWhiteLabelPayments(deps: WhiteLabelDeps) {
         return deps.provider.createCustomerPortal({
           account,
           customerRef,
-          returnUrl: `${deps.webOrigin}/app/plans`,
+          returnUrl: `${customer.origin}/app/plans`,
         });
       }),
   };
@@ -250,7 +281,13 @@ export type WhiteLabelPayments = ReturnType<typeof createWhiteLabelPayments>;
  */
 export function mountPaymentsWebhook(
   app: Hono,
-  deps: Pick<WhiteLabelDeps, "prisma" | "provider" | "jobs" | "now">,
+  deps: Pick<WhiteLabelDeps, "prisma" | "provider" | "jobs" | "now"> & {
+    /** Sends mail to customers; absent where no mail is configured. */
+    email?: TransactionalEmailProvider;
+    /** The partner's brand for mail to one of its customers' organizations. */
+    mailBrand?: (organizationId: string) => Promise<MailBrand | undefined>;
+    webOrigin?: string;
+  },
 ): void {
   app.post(PAYMENTS_WEBHOOK_PATH, async (c) => {
     const raw = await readBoundedBody(c.req.raw, PAYMENTS_WEBHOOK_MAX_BODY_BYTES);
@@ -272,6 +309,11 @@ export function mountPaymentsWebhook(
         // Money may have moved without credit; support needs to see it.
         getLogger().error("payment event refused", { type: event.type, reason: result.reason });
       }
+      for (const notice of result.customerNotices ?? []) {
+        await sendCustomerNotice(deps, notice).catch((error) =>
+          getLogger().error("payment notice email failed", error),
+        );
+      }
       for (const id of result.notices) {
         await enqueuePartnerWebhook(deps.jobs, id).catch(() => undefined);
       }
@@ -281,4 +323,42 @@ export function mountPaymentsWebhook(
     }
     return c.json({ ok: true });
   });
+}
+
+/** Tells the customer, in the partner's brand, that a payment failed or was refunded. */
+async function sendCustomerNotice(
+  deps: {
+    prisma: PrismaClient;
+    email?: TransactionalEmailProvider;
+    mailBrand?: (organizationId: string) => Promise<MailBrand | undefined>;
+    webOrigin?: string;
+  },
+  notice: NonNullable<Awaited<ReturnType<typeof applyPaymentEvent>>["customerNotices"]>[number],
+): Promise<void> {
+  if (!deps.email) return;
+  const tenant = await runAsSystem("payment notice recipient", () =>
+    deps.prisma.partnerTenant.findUnique({
+      where: { organizationId: notice.organizationId },
+      select: { owner: { select: { email: true } } },
+    }),
+  );
+  const to = tenant?.owner.email;
+  if (!to || to.endsWith("@partner.invalid")) return;
+  const mail = await deps.mailBrand?.(notice.organizationId).catch(() => undefined);
+  const origin = mail?.origin ?? deps.webOrigin ?? "";
+  if (!origin) return;
+  const lang = notice.currency === "BRL" ? "pt-BR" : "en";
+  const amount =
+    notice.amountMinor === undefined
+      ? ""
+      : new Intl.NumberFormat(lang, { style: "currency", currency: notice.currency }).format(
+          notice.amountMinor / 100,
+        );
+  const message = await paymentNoticeEmail(
+    origin,
+    { to, lang, kind: notice.kind, amount, url: `${origin}/app/plans` },
+    mail?.brand,
+  );
+  if (mail?.from) message.from = mail.from;
+  await deps.email.send(message);
 }

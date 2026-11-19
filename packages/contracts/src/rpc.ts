@@ -227,6 +227,7 @@ import {
   PlatformPartnerSchema,
   PlatformWaitlistEntrySchema,
 } from "./partner-credits.js";
+import { EventRoutineSchema, PartnerConsoleEventsSchema } from "./partner-events.js";
 import {
   PartnerPaymentsSchema,
   PlatformConnectPartnerSchema,
@@ -1185,6 +1186,8 @@ export const appContract = {
         }),
       )
       .output(RoutineHistorySchema),
+    /** The routines that a partner's events start, for the customer to switch on or off. */
+    events: oc.input(z.object({})).output(z.array(EventRoutineSchema)),
     /** Every routine of the space with the steps that follow its first one. */
     workflows: oc.input(z.object({})).output(z.array(WorkflowSchema)),
     /** Replaces the steps after the first; the routine's own agent and prompt stay step 1. */
@@ -1745,6 +1748,8 @@ export const appContract = {
       .input(z.object({ partnerId: Id, period: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/) }))
       .output(z.object({ url: z.string(), filename: z.string() })),
     integration: oc.input(z.object({ partnerId: Id })).output(PartnerConsoleIntegrationSchema),
+    /** The events this partner's system sent in the last day, and the latest ones with their errors. */
+    events: oc.input(z.object({ partnerId: Id })).output(PartnerConsoleEventsSchema),
     /** Replaces the key; the old one stops working at once and the new one is shown once. */
     rotateKey: oc
       .input(z.object({ partnerId: Id }))

@@ -10,6 +10,7 @@ import {
 import { csvCell, formatMinor, lastPeriods, statementCsv } from "./format.js";
 import {
   getCustomer,
+  getEvents,
   getIntegration,
   getOverview,
   getPricing,
@@ -141,6 +142,7 @@ describe("tenant isolation", () => {
       () => getRevenue(deps, ORG_A, { partnerId: "pb", period: "2026-11" }),
       () => getRevenueCsv(deps, ORG_A, { partnerId: "pb", period: "2026-11" }),
       () => getIntegration(deps, ORG_A, { partnerId: "pb" }),
+      () => getEvents(deps, ORG_A, { partnerId: "pb" }),
       () => getTemplate(deps, ORG_A, { partnerId: "pb" }),
       () => getOverview(deps, ORG_A, { partnerId: "does-not-exist" }),
     ];

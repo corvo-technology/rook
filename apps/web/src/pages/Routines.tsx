@@ -26,6 +26,7 @@ import {
 } from "../lib/routine-calendar";
 import { useSidePanel } from "../lib/side-panel";
 import { errorText } from "../lib/user-error";
+import { EventRoutines } from "./EventRoutines";
 import { NewRoutinePanel } from "./NewRoutinePanel";
 import { RoutineCard } from "./RoutineCard";
 import { blockStyle, RoutineTimeGrid } from "./RoutineTimeGrid";
@@ -194,6 +195,8 @@ export function RoutinesPage() {
           ) : null}
         </div>
       ) : null}
+
+      <EventRoutines />
 
       <div className="flex min-h-0 flex-1 gap-4 px-6 pb-6">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">

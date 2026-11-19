@@ -164,9 +164,10 @@ export function mountPartnerRoutes(app: Hono, deps: PartnerRouteDeps): void {
     const locale = agentCatalogLocale(input.locale ?? "en");
     if (template?.chiefName) await deps.ensureChief(owner, locale, { name: template.chiefName });
     else await deps.ensureChief(owner, locale);
+    const routines = input.agents ? undefined : template?.routines;
     if (connector || agents.length > 0) {
       try {
-        await deps.install(owner, partner.id, { connector, agents });
+        await deps.install(owner, partner.id, { connector, agents, routines });
       } catch (error) {
         // An address this deployment may not call is the partner's input to fix, not a fault.
         if ((error as { code?: unknown })?.code === "BAD_REQUEST") {

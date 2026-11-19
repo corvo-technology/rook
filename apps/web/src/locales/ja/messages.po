@@ -719,6 +719,12 @@ msgstr "残り 1 ステップ"
 msgid "1M tokens in / out"
 msgstr "100万トークン 入力 / 出力"
 
+#. placeholder {0}: events.data.accepted
+#. placeholder {1}: events.data.rejected
+#: src/pages/partner/PartnerEvents.tsx
+msgid "24h: {0} received, {1} rejected"
+msgstr "24時間：受信 {0} 件、拒否 {1} 件"
+
 #: src/components/SubscriptionRings.tsx
 msgid "5-hour window"
 msgstr "5時間枠"
@@ -3268,6 +3274,10 @@ msgstr "リアクションを更新できませんでした"
 msgid "Could not update the default memory scope"
 msgstr "デフォルトのメモリ範囲を更新できませんでした"
 
+#: src/pages/EventRoutines.tsx
+msgid "Could not update the routine"
+msgstr "ルーティンを更新できませんでした"
+
 #: src/pages/LocalSpeechSection.tsx
 msgid "Could not update the speech model"
 msgstr "音声モデルを更新できませんでした"
@@ -4164,6 +4174,10 @@ msgstr "エラーの詳細"
 #: src/pages/Usage.tsx
 msgid "Escalated"
 msgstr "引き上げ"
+
+#: src/pages/partner/PartnerEvents.tsx
+msgid "Events"
+msgstr "イベント"
 
 #: src/lib/cron.ts
 #: src/pages/ExternalConversationSettings.tsx
@@ -6188,6 +6202,10 @@ msgstr "一致するボットはありません"
 #: src/pages/partner/PartnerCustomers.tsx
 msgid "No customers"
 msgstr "顧客はいません"
+
+#: src/pages/partner/PartnerEvents.tsx
+msgid "No events yet"
+msgstr "イベントはまだありません"
 
 #: src/pages/platform/PlatformConnect.tsx
 msgid "No fees this month"
@@ -9993,6 +10011,26 @@ msgstr "返す内容"
 msgid "What to watch"
 msgstr "監視する対象"
 
+#: src/pages/EventRoutines.tsx
+msgid "When a consultation ends…"
+msgstr "診察が終わったとき…"
+
+#: src/pages/EventRoutines.tsx
+msgid "When a customer doesn't show up…"
+msgstr "お客様が来なかったとき…"
+
+#: src/pages/EventRoutines.tsx
+msgid "When a customer stops coming…"
+msgstr "お客様が来なくなったとき…"
+
+#: src/pages/EventRoutines.tsx
+msgid "When a new customer is added…"
+msgstr "新しいお客様が追加されたとき…"
+
+#: src/pages/EventRoutines.tsx
+msgid "When a payment is overdue…"
+msgstr "支払いが遅れているとき…"
+
 #: src/lib/routine-trigger.ts
 #: src/pages/RoutineEditor.tsx
 msgid "When a webhook fires"
@@ -10002,6 +10040,14 @@ msgstr "Webhookが呼び出されたとき"
 msgid "When an agent needs you, it asks here and waits."
 msgstr "エージェントがあなたの助けを必要とすると、ここで尋ねて待ちます。"
 
+#: src/pages/EventRoutines.tsx
+msgid "When an appointment is booked…"
+msgstr "予約が入ったとき…"
+
+#: src/pages/EventRoutines.tsx
+msgid "When an appointment is cancelled…"
+msgstr "予約がキャンセルされたとき…"
+
 #: src/pages/shell/bot-panel.tsx
 msgid "When it finishes or needs input"
 msgstr "完了時または入力が必要なとき"
@@ -10010,6 +10056,10 @@ msgstr "完了時または入力が必要なとき"
 #: src/pages/RoutineEditor.tsx
 msgid "When something changes"
 msgstr "変更があったとき"
+
+#: src/pages/EventRoutines.tsx
+msgid "When something happens…"
+msgstr "何かが起きたとき…"
 
 #: src/pages/RoutineEditor.tsx
 msgid "When to run"

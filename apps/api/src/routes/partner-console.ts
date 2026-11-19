@@ -25,6 +25,7 @@ import {
   createPrismaPartnerPaymentsStore,
   getCredits,
   getCustomer,
+  getEvents,
   getIntegration,
   getOverview,
   getPartnerPayments,
@@ -179,6 +180,9 @@ export function partnerConsoleRoutes(ctx: RouterContext) {
       ),
       integration: managed.partnerConsole.integration.handler(({ context, input }) =>
         run(context.actor, (scope) => getIntegration(service, scope, input)),
+      ),
+      events: managed.partnerConsole.events.handler(({ context, input }) =>
+        run(context.actor, (scope) => getEvents(service, scope, input)),
       ),
       rotateKey: managed.partnerConsole.rotateKey.handler(({ context, input }) =>
         run(context.actor, (scope) => rotateIntegrationKey(service, scope, input)),

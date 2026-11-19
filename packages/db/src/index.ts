@@ -54,6 +54,7 @@ export * from "./partner-brand.js";
 export * from "./partner-credit-enforcement.js";
 export * from "./partner-credit-rules.js";
 export * from "./partner-entry.js";
+export * from "./partner-events.js";
 export * from "./partner-housekeeping.js";
 export * from "./partner-markup.js";
 export * from "./partner-overview.js";

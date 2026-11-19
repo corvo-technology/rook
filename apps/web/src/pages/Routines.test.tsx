@@ -9,7 +9,11 @@ import { beforeEach, expect, it, vi } from "vitest";
 
 const calendar = vi.hoisted(() => vi.fn());
 const testRun = vi.hoisted(() => vi.fn());
-const rpcClient = vi.hoisted(() => ({ routines: { calendar, testRun }, bootstrap: vi.fn() }));
+const events = vi.hoisted(() => vi.fn(async () => []));
+const rpcClient = vi.hoisted(() => ({
+  routines: { calendar, testRun, events },
+  bootstrap: vi.fn(),
+}));
 vi.mock("../lib/rpc", () => ({
   rpc: rpcClient,
   rpcForSpace: () => rpcClient,

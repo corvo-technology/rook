@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import source from "../../public/sdk-assist.js?raw";
+import source from "../../public/sdk.js?raw";
 
 const ORIGIN = "https://app.corvo.test";
 const CONSULTATIONS = "/api/partner/embed/consultations";

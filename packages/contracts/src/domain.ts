@@ -33,6 +33,7 @@ import {
 import { ModelHeadersSchema } from "./model-headers.js";
 import { NavLinkSchema } from "./nav-links.js";
 import { PartnerHiddenArea, PartnerQuickAction } from "./partner.js";
+import { RoutineEventTriggerSchema } from "./partner-events.js";
 import { RoutineWatchSchema, RoutineWatchStateSchema } from "./routine-watch.js";
 import { RunErrorInfoSchema, RunTriggerSchema } from "./runs.js";
 import { SettingsScopeSchema } from "./settings-scope.js";
@@ -633,6 +634,8 @@ export const RoutineSchema = z.object({
   /** Null unless the routine starts when something changes. */
   watch: RoutineWatchSchema.nullable(),
   watchState: RoutineWatchStateSchema.nullable(),
+  /** Set when a partner's system event starts the routine; absent otherwise. */
+  eventTrigger: RoutineEventTriggerSchema.nullable().optional(),
   lastRunAt: z.string().nullable(),
   nextRunAt: z.string().nullable(),
   createdAt: z.string(),

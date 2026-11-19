@@ -137,6 +137,7 @@ import {
   commerceBalance,
   commerceUsage,
   consumePartnerEntryCode,
+  countRecentPartnerEvents,
   createBoardEvents,
   createDb,
   createPool,
@@ -146,6 +147,7 @@ import {
   createThreadEvents,
   describeRowSecurity,
   ensureStarterTeam,
+  findEventRoutines,
   findPartnerTenant,
   grantPartnerAllowance,
   IsolationError,
@@ -162,6 +164,7 @@ import {
   readCatalog,
   readPartnerMarkups,
   recordCommerceEvent,
+  recordPartnerEvent,
   refundTenantPayment,
   requireMembership,
   rowSecurityWarning,
@@ -171,6 +174,7 @@ import {
   securityEventRetentionDays,
   setPartnerTenantState,
   setTenantSubscription,
+  settlePartnerEvent,
   takePartnerRequest,
   verifyContentKeys,
 } from "@corvo/db";
@@ -240,6 +244,7 @@ import {
 import { partnerConsultationDeps } from "./partner-consultations-deps.js";
 import { installPartnerTenantContent } from "./partner-content.js";
 import { hashEntryCode, mountPartnerEmbedRoute, mountPartnerEntryRoute } from "./partner-entry.js";
+import { deliverPartnerEvent, mountPartnerEventRoutes } from "./partner-events.js";
 import { partnerLeadRoutes, prismaPartnerLeadStore } from "./partner-leads.js";
 import { mountPartnerRoutes } from "./partner-routes.js";
 import { PresenceTracker } from "./presence.js";
@@ -1395,6 +1400,21 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       },
     }),
   );
+  // What the partner's system tells a customer's agents: events that start their routines.
+  mountPartnerEventRoutes(app, {
+    now: () => new Date(),
+    allowRequest: (partnerId) => takePartnerRequest(prisma, partnerId, 120),
+    authenticate: (key) => authenticatePartner(prisma, key),
+    findTenant: (partnerId, externalTenantId) =>
+      findPartnerTenant(prisma, partnerId, externalTenantId),
+    idempotent: (partnerId, key, hash, run) => runIdempotent(prisma, partnerId, key, hash, run),
+    countRecent: (partnerId, externalTenantId, since) =>
+      countRecentPartnerEvents(prisma, partnerId, externalTenantId, since),
+    record: (row) => recordPartnerEvent(prisma, row),
+    routinesFor: (organizationId, trigger) => findEventRoutines(prisma, organizationId, trigger),
+    deliver: (routine, event) => deliverPartnerEvent({ events, jobs }, routine, event),
+    settle: (id, counts) => settlePartnerEvent(prisma, id, counts),
+  });
   if (billing && billingProvider) {
     mountBillingRoutes(app, {
       billing,

@@ -1241,6 +1241,10 @@ model Routine {
   watch           Json?
   /// Last check's result (RoutineWatchStateSchema), written by the checker.
   watchState      Json?
+  /// A partner event that starts the routine (RoutineEventTriggerSchema); null for any other routine.
+  eventTrigger    Json?
+  /// The partner template routine this row came from, so installing the template again keeps it as the customer left it.
+  templateKey     String?
   lastRunAt       DateTime?
   nextRunAt       DateTime?
   /// Later steps of a workflow, each run by its own agent after the one before it completes.
@@ -1251,6 +1255,7 @@ model Routine {
   updatedAt       DateTime      @updatedAt
   runs            Run[]
 
+  @@unique([botId, templateKey])
   @@index([active, nextRunAt])
   @@index([spaceId, botId])
   @@map("routines")
@@ -2660,6 +2665,7 @@ model Partner {
   webhookEvents             PartnerWebhookEvent[]
   alerts                    PartnerAlert[]
   alertPreferences          PartnerAlertPreference[]
+  events                    PartnerEvent[]
   consultations             Consultation[]
   /// Embedded credit model: the models this partner's customers may use (empty means all), and
   /// when to buy a top-up on its own. The fund is the partner's credit wallet.
@@ -2950,6 +2956,37 @@ model PartnerAlert {
   @@unique([partnerId, externalTenantId, kind, key])
   @@index([dispatchedAt, createdAt])
   @@map("partner_alerts")
+}
+
+/// What a partner's system told one of its customers, kept for the retention window. A rejected
+/// event keeps its (cut) payload so the partner can see what it got wrong.
+model PartnerEvent {
+  id               String   @id @default(cuid())
+  partnerId        String
+  partner          Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  externalTenantId String
+  /// The customer's organization (its space); null when the customer was not found.
+  organizationId   String?
+  /// The catalogue type, or whatever was sent when it was not one.
+  type             String
+  /// The name of a `custom` event.
+  name             String?
+  /// accepted | rejected
+  status           String
+  error            String?
+  /// The event's data: untrusted, never shown to a model unfenced.
+  payload          Json?
+  /// Routines the event started, and how many of those runs were queued.
+  matched          Int      @default(0)
+  delivered        Int      @default(0)
+  occurredAt       DateTime?
+  createdAt        DateTime @default(now())
+  expiresAt        DateTime
+
+  @@index([partnerId, createdAt])
+  @@index([organizationId, createdAt])
+  @@index([expiresAt])
+  @@map("partner_events")
 }
 
 /// A partner's choice to be emailed about one kind of alert; no row means on. In-app is always on.

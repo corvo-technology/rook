@@ -232,6 +232,7 @@ export function createFakeStore(data: FakeData) {
     },
     alertEmailSettings: async () =>
       PARTNER_ALERT_KINDS.map((kind) => ({ kind, email: !alertsOff.has(kind) })),
+    events: async () => ({ accepted: 0, rejected: 0, byType: [], recent: [] }),
     setAlertEmail: async (_partner, kind, email) => {
       if (email) alertsOff.delete(kind);
       else alertsOff.add(kind);

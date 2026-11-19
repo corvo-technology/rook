@@ -11,6 +11,7 @@ import {
   meterPartnerResources,
   previousPeriod,
   purgeExpiredIdempotency,
+  purgeExpiredPartnerEvents,
   renewPartnerPlans,
   runAsSystem,
   undeliveredPartnerWebhookEvents,
@@ -180,6 +181,9 @@ export function createPartnerWebhookReconciler(deps: {
       }
       await purgeExpiredIdempotency(deps.prisma, now).catch((error) =>
         getLogger().error("idempotency purge", error),
+      );
+      await purgeExpiredPartnerEvents(deps.prisma, now).catch((error) =>
+        getLogger().error("partner event purge", error),
       );
       // The month that just ended gets its draft invoices; issuing stays a manual click.
       await draftPartnerInvoices(deps.prisma, previousPeriod(now)).catch((error) =>

@@ -81,6 +81,10 @@ A sessão de um cliente termina oito horas depois de criada, por mais que seja r
 
 As rotas de [gravação de consultas](/partners/consultations/) vivem sob `/tenants/{externalTenantId}/consultations`.
 
+## Eventos
+
+O seu sistema avisa o que acontece (falta, atraso, consulta finalizada) em `POST /tenants/{externalTenantId}/events`; veja [Eventos](/partners/events/).
+
 ## Comércio
 
 Catálogo, assinatura, recargas, saldo e uso: <span class="soon">em breve</span>, veja [Comércio](/partners/commerce/).

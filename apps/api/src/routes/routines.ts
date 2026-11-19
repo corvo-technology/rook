@@ -6,13 +6,13 @@ import {
   validateRoutineWatch,
 } from "@corvo/adapters";
 import type { Actor } from "@corvo/contracts";
-import { canonicalPiProviderId } from "@corvo/contracts";
+import { canonicalPiProviderId, RoutineEventTriggerSchema } from "@corvo/contracts";
 import {
   expandSkillReferencesInPrompt,
   hasMixedOneShotSchedule,
   isOneShotRoutineCrons,
 } from "@corvo/core";
-import { IsolationError, Prisma } from "@corvo/db";
+import { IsolationError, lastEventsByType, Prisma } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import { ORPCError } from "@orpc/server";
 import { requireCanTalkTo, requireInAudience } from "../agent-audience.js";
@@ -51,6 +51,32 @@ export function routinesRoutes(ctx: RouterContext) {
         const bot = await repos.getBot(context.actor, input.botId);
         await requireInAudience(deps.prisma, context.actor, bot.id, bot);
         return listRoutinesDto(deps, context.actor, input.botId);
+      }),
+      events: authed.routines.events.handler(async ({ context }) => {
+        const rows = await deps.prisma.routine.findMany({
+          where: {
+            spaceId: context.actor.spaceId,
+            bot: { archivedAt: null },
+            eventTrigger: { not: Prisma.DbNull },
+          },
+          orderBy: { createdAt: "asc" },
+        });
+        const last = await lastEventsByType(deps.prisma, context.actor.spaceId);
+        return rows.flatMap((row) => {
+          const on = RoutineEventTriggerSchema.safeParse(row.eventTrigger);
+          if (!on.success) return [];
+          return [
+            {
+              id: row.id,
+              botId: row.botId,
+              name: row.name,
+              active: row.active,
+              on: on.data,
+              lastTriggeredAt:
+                last.get(`${on.data.type}:${on.data.name ?? ""}`)?.toISOString() ?? null,
+            },
+          ];
+        });
       }),
       workflows: authed.routines.workflows.handler(async ({ context }) => {
         const rows = await deps.prisma.routine.findMany({
@@ -216,7 +242,15 @@ export function routinesRoutes(ctx: RouterContext) {
         const watchChanged =
           input.watch !== undefined &&
           stableStringify(input.watch) !== stableStringify(parseRoutineWatch(existing.watch));
-        if (crons.length === 0 && !webhookEnabled && !githubEnabled && !messageProvider && !watch) {
+        const startsOnEvent = existing.eventTrigger !== null;
+        if (
+          crons.length === 0 &&
+          !webhookEnabled &&
+          !githubEnabled &&
+          !messageProvider &&
+          !watch &&
+          !startsOnEvent
+        ) {
           throw new ORPCError("BAD_REQUEST", {
             message: "Add a schedule, webhook, GitHub, message, or change trigger",
           });

@@ -253,7 +253,7 @@ export function messagingWakeIdempotencyKey(provider: string, handle: string): s
 
 /** Client nonce for idempotent inbound deliveries (webhook / github / messaging). */
 export function inboundDeliveryClientNonce(
-  source: "webhook" | "github" | "messaging" | "email",
+  source: "webhook" | "github" | "messaging" | "email" | "partner_event",
   botId: string,
   idempotencyKey: string,
 ): string {
@@ -273,7 +273,7 @@ export async function deliverWebhookEvent(
       modelId: string | null;
       thinkingLevel: string | null;
     }>;
-    source: "webhook" | "github" | "messaging" | "email";
+    source: "webhook" | "github" | "messaging" | "email" | "partner_event";
     idempotencyKey?: string;
     /** Messaging wakes share the live chat thread; keep a separate webhook run. */
     allowParallelRun?: boolean;
@@ -290,7 +290,9 @@ export async function deliverWebhookEvent(
               ? "Inbound messaging event:"
               : input.source === "email"
                 ? "Inbound email event:"
-                : "Inbound webhook payload:",
+                : input.source === "partner_event"
+                  ? "Inbound partner event:"
+                  : "Inbound webhook payload:",
           input.prompt,
         ].join("\n")
       : input.prompt;

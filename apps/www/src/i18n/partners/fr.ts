@@ -185,6 +185,13 @@ const fr: PartnersCopy = {
     emailError: "Saisissez un e-mail valide.",
     phoneError: "Saisissez un numéro valide pour ce pays.",
     consentError: "Nous avons besoin de votre consentement pour continuer.",
+    placeholders: {
+      name: "Marie Dupont",
+      email: "marie@entreprise.fr",
+      company: "Clinique Bien-Être",
+      website: "entreprise.fr",
+      message: "Ex. : nous éditons un logiciel pour cliniques avec 300 clients et voulons proposer un assistant.",
+    },
   },
 };
 

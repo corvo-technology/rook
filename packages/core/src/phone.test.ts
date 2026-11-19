@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   COUNTRY_CODES,
   callingCode,
+  exampleNumber,
   formatNational,
   isCountryCode,
   isValidE164,
@@ -33,6 +34,12 @@ describe("phone", () => {
     expect(formatNational("PT", "912345678")).toBe("912 345 678");
     expect(formatNational("GB", "07911123456")).toBe("7911 123456");
     expect(formatNational("KE", "712345678")).toBe("712 345 678");
+  });
+
+  it("gives each country a valid example number", () => {
+    expect(exampleNumber("BR")).toBe("(11) 91234-5678");
+    for (const country of COUNTRY_CODES)
+      expect(isValidNational(country, exampleNumber(country))).toBe(true);
   });
 
   it("validates per country", () => {

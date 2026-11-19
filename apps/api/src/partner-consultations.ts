@@ -37,11 +37,13 @@ export interface PartnerConsultationDeps {
     id: string;
     scribeRetentionDays?: number | null;
     template?: unknown;
+    testMode?: boolean;
   } | null>;
-  /** Only ever finds a customer of the partner asking. */
+  /** Only ever finds a customer of the partner asking, of the mode of its key. */
   findTenant(
     partnerId: string,
     externalTenantId: string,
+    testMode?: boolean,
   ): Promise<{ id: string; organizationId: string; state: string } | null>;
   /** Whether the customer still has credit to pay for transcription and the models. */
   hasCredit(organizationId: string): Promise<boolean>;
@@ -153,7 +155,7 @@ export function mountPartnerConsultationRoutes(app: Hono, deps: PartnerConsultat
     }
     const externalTenantId = c.req.param("externalTenantId") ?? "";
     const tenant = ID.test(externalTenantId)
-      ? await deps.findTenant(partner.id, externalTenantId)
+      ? await deps.findTenant(partner.id, externalTenantId, partner.testMode === true)
       : null;
     if (tenant?.state !== "enabled") return notFound(c);
     return { partner, tenant };

@@ -2,11 +2,37 @@ import { describe, expect, it } from "vitest";
 import {
   generatePartnerKey,
   hashPartnerKey,
+  isPartnerTestKey,
   partnerKeyPrefix,
   partnerWebhookSecret,
   signPartnerWebhook,
   verifyPartnerKey,
 } from "./partner-key.js";
+
+describe("partner test keys", () => {
+  it("is told from a live key by its prefix and verifies like one", () => {
+    const test = generatePartnerKey({ test: true });
+    expect(test.key.startsWith("cpk_test_")).toBe(true);
+    expect(test.prefix.startsWith("cpk_test_")).toBe(true);
+    expect(isPartnerTestKey(test.key)).toBe(true);
+    expect(partnerKeyPrefix(test.key)).toBe(test.prefix);
+    expect(verifyPartnerKey(test.key, test.hash)).toBe(true);
+  });
+
+  it("never makes a live key that looks like a test key", () => {
+    for (let index = 0; index < 200; index += 1) {
+      const live = generatePartnerKey();
+      expect(live.key.startsWith("cpk_test_")).toBe(false);
+      expect(isPartnerTestKey(live.key)).toBe(false);
+    }
+  });
+
+  it("does not verify a test key against a live key's hash", () => {
+    expect(
+      verifyPartnerKey(generatePartnerKey({ test: true }).key, generatePartnerKey().hash),
+    ).toBe(false);
+  });
+});
 
 describe("partner keys", () => {
   it("makes a key that verifies against the hash it was stored as", () => {

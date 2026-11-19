@@ -20,6 +20,9 @@ const api = vi.hoisted(() => ({
   integration: vi.fn(),
   events: vi.fn(),
   rotateKey: vi.fn(),
+  rotateTestKey: vi.fn(),
+  setTestWebhook: vi.fn(),
+  clearTestData: vi.fn(),
   setAlertEmail: vi.fn(),
   template: vi.fn(),
   setTemplate: vi.fn(),
@@ -309,7 +312,9 @@ describe("partner console", () => {
   it("switches the email for one kind of alert, leaving the others on", async () => {
     api.integration.mockResolvedValue({
       keys: [],
+      testKey: { prefix: null, customers: 0 },
       webhook: { url: null, enabled: false },
+      testWebhook: { url: null },
       alerts: [
         { kind: "partner.balance_low", email: true },
         { kind: "invoice.issued", email: true },
@@ -373,7 +378,9 @@ describe("partner console", () => {
   it("shows a replaced key once, after asking", async () => {
     api.integration.mockResolvedValue({
       keys: [{ prefix: "pk_live_ab", createdAt: "2026-01-01" }],
+      testKey: { prefix: null, customers: 0 },
       webhook: { url: null, enabled: false },
+      testWebhook: { url: null },
       alerts: [],
       docsUrl: "https://example.test/docs",
     });
@@ -386,6 +393,58 @@ describe("partner console", () => {
     expect(container.querySelector('[data-testid="partner-new-key"]')?.textContent).toBe(
       "pk_live_secret_value",
     );
+  });
+});
+
+describe("partner test mode", () => {
+  const integration = (testKey: { prefix: string | null; customers: number }) => ({
+    keys: [{ prefix: "cpk_live_ab", createdAt: "2026-01-01" }],
+    testKey,
+    webhook: { url: null, enabled: false },
+    testWebhook: { url: null },
+    alerts: [],
+    docsUrl: "https://example.test/docs",
+  });
+
+  it("makes the test key and shows it once, apart from the live key", async () => {
+    api.integration.mockResolvedValue(integration({ prefix: null, customers: 0 }));
+    api.rotateTestKey.mockResolvedValue({ key: "cpk_test_secret_value", prefix: "cpk_test_ab" });
+    await render("/app/partner/p1/integration");
+    expect(api.rotateKey).not.toHaveBeenCalled();
+    await click(byText("Create test key"));
+    expect(api.rotateTestKey).toHaveBeenCalledWith({ partnerId: "p1" });
+    expect(container.querySelector('[data-testid="partner-new-test-key"]')?.textContent).toBe(
+      "cpk_test_secret_value",
+    );
+    expect(container.querySelector('[data-testid="partner-new-key"]')).toBeNull();
+  });
+
+  it("clears the test data only after asking", async () => {
+    api.integration.mockResolvedValue(integration({ prefix: "cpk_test_ab", customers: 3 }));
+    api.clearTestData.mockResolvedValue({ removed: 3 });
+    await render("/app/partner/p1/integration");
+    await click(byText("Clear test data"));
+    expect(api.clearTestData).not.toHaveBeenCalled();
+    await click(byText("Delete every test customer and their data?"));
+    expect(api.clearTestData).toHaveBeenCalledWith({ partnerId: "p1" });
+  });
+
+  it("offers no wipe when there are no test customers", async () => {
+    api.integration.mockResolvedValue(integration({ prefix: "cpk_test_ab", customers: 0 }));
+    await render("/app/partner/p1/integration");
+    expect(byText("Clear test data")).toBeUndefined();
+  });
+
+  it("lists the test customers on request, apart from the live ones", async () => {
+    api.customers.mockResolvedValue({ items: [], next: null });
+    await render("/app/partner/p1/customers");
+    expect(api.customers).toHaveBeenLastCalledWith(
+      expect.not.objectContaining({ mode: expect.anything() }),
+    );
+    await click(
+      document.body.querySelector<HTMLElement>('[aria-label="Test"] button') ?? undefined,
+    );
+    expect(api.customers).toHaveBeenLastCalledWith(expect.objectContaining({ mode: "test" }));
   });
 });
 

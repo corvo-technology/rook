@@ -1,10 +1,15 @@
 import type { ModelCallObserver } from "@corvo/adapter-kit";
-import { PARTNER_CREDIT_USED_UP_RUN_ERROR, PARTNER_MODEL_NOT_ALLOWED_RUN_ERROR } from "@corvo/core";
+import {
+  PARTNER_CREDIT_USED_UP_RUN_ERROR,
+  PARTNER_MODEL_NOT_ALLOWED_RUN_ERROR,
+  PARTNER_TEST_CAP_RUN_ERROR,
+} from "@corvo/core";
 import {
   assertPartnerSpendAllowed,
   creditAccount,
   organizationForMember,
   PartnerSpendRefused,
+  PartnerTestCapReached,
   reserveModelCredits,
 } from "@corvo/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -21,6 +26,7 @@ vi.mock("@corvo/db", () => ({
       super(reason);
     }
   },
+  PartnerTestCapReached: class extends Error {},
 }));
 
 const scope = { userId: "user-1", spaceId: "space-1" };
@@ -95,5 +101,22 @@ describe("a partner's rules on Rook-provided models", () => {
       provider: "p",
       model: "m",
     });
+  });
+});
+
+describe("a partner's test customers", () => {
+  it("stops a call with the test limit message when the day's cap is used", async () => {
+    vi.mocked(creditAccount).mockResolvedValue({ mode: "credits" } as never);
+    vi.mocked(reserveModelCredits).mockRejectedValue(new PartnerTestCapReached());
+    const observer = await hostedModelCreditObserver({} as never, scope);
+    await expect(
+      observer.beforeCall({
+        callId: "call-test",
+        maxCostUsd: 0.01,
+        provider: "p",
+        modelId: "m",
+        runId: "run-1",
+      } as Parameters<ModelCallObserver["beforeCall"]>[0]),
+    ).rejects.toThrow(PARTNER_TEST_CAP_RUN_ERROR);
   });
 });

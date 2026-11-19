@@ -42,6 +42,9 @@ export const PLAN_INACTIVE_RUN_ERROR = "Plan inactive.";
 /** A partner's customer has spent its credit for the period. */
 export const PARTNER_CREDIT_USED_UP_RUN_ERROR = "This month's credit is used up.";
 
+/** A partner's test customers used the model calls the platform allows them for the day. */
+export const PARTNER_TEST_CAP_RUN_ERROR = "Today's test limit is reached.";
+
 /** A partner limits the Rook-provided models its customers may use, and this one is not allowed. */
 export const PARTNER_MODEL_NOT_ALLOWED_RUN_ERROR =
   "This model isn't available for this account. Choose another model.";
@@ -176,6 +179,7 @@ const APP_RUN_ERRORS = new Set([
   ACCOUNT_PAUSED_RUN_ERROR,
   PLAN_INACTIVE_RUN_ERROR,
   PARTNER_CREDIT_USED_UP_RUN_ERROR,
+  PARTNER_TEST_CAP_RUN_ERROR,
   PARTNER_MODEL_NOT_ALLOWED_RUN_ERROR,
   BOT_DAILY_LIMIT_RUN_ERROR,
   BOT_MONTHLY_LIMIT_RUN_ERROR,

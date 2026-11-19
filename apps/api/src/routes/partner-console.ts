@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import type { Actor } from "@corvo/contracts";
 import { runAsSystem } from "@corvo/db";
 import { ORPCError } from "@orpc/server";
+import { deleteAccountContent } from "../account-deletion.js";
 import { assertMcpRemoteEndpoint } from "../mcp-servers.js";
 import type { BrandingDeps } from "../partner-brand/index.js";
 import {
@@ -19,6 +20,7 @@ import type {
   PartnerScope,
 } from "../partner-console/index.js";
 import {
+  clearPartnerTestData,
   createPrismaPartnerConsoleStore,
   createPrismaPartnerPaymentsStore,
   getCredits,
@@ -38,11 +40,13 @@ import {
   openSupportSession,
   PartnerConsoleError,
   rotateIntegrationKey,
+  rotateIntegrationTestKey,
   runCustomerAction,
   setAllowedModels,
   setAutoTopup,
   setCustomerCreditLimit,
   setIntegrationAlertEmail,
+  setIntegrationTestWebhook,
   setIntegrationWebhook,
   setPricing,
   setTemplate,
@@ -79,6 +83,8 @@ export function partnerConsoleRoutes(ctx: RouterContext) {
     now: () => new Date(),
     webOrigin: deps.env.webOrigin,
     newCode: () => randomBytes(32).toString("base64url"),
+    deleteTenantContent: (ownerUserId) =>
+      runAsSystem("partner test data wipe", () => deleteAccountContent(deps, ownerUserId)),
   };
 
   const brandingDeps = (): BrandingDeps => {
@@ -180,6 +186,15 @@ export function partnerConsoleRoutes(ctx: RouterContext) {
       ),
       rotateKey: managed.partnerConsole.rotateKey.handler(({ context, input }) =>
         run(context.actor, (scope) => rotateIntegrationKey(service, scope, input)),
+      ),
+      rotateTestKey: managed.partnerConsole.rotateTestKey.handler(({ context, input }) =>
+        run(context.actor, (scope) => rotateIntegrationTestKey(service, scope, input)),
+      ),
+      setTestWebhook: managed.partnerConsole.setTestWebhook.handler(({ context, input }) =>
+        run(context.actor, (scope) => setIntegrationTestWebhook(service, scope, input)),
+      ),
+      clearTestData: managed.partnerConsole.clearTestData.handler(({ context, input }) =>
+        run(context.actor, (scope) => clearPartnerTestData(service, scope, input)),
       ),
       credits: managed.partnerConsole.credits.handler(({ context, input }) =>
         run(context.actor, (scope) => getCredits(service, scope, input)),

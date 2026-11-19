@@ -279,7 +279,7 @@ export async function claimConnectorDownAlerts(
     const slug = (partner.template as { connector?: { slug?: unknown } } | null)?.connector?.slug;
     if (typeof slug !== "string") continue;
     const tenants = await prisma.partnerTenant.findMany({
-      where: { partnerId: partner.id, state: "enabled" },
+      where: { partnerId: partner.id, state: "enabled", testMode: false },
       select: { externalTenantId: true, organizationId: true },
       take: 1000,
     });

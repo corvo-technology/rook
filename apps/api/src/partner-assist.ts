@@ -23,11 +23,12 @@ export interface AssistCaller {
 export interface PartnerAssistDeps {
   /** Counts one request and says whether the partner is still within its limit. */
   allowRequest(partnerId: string): Promise<boolean>;
-  authenticate(key: string): Promise<{ id: string; template?: unknown } | null>;
-  /** Only ever finds a customer of the partner asking. */
+  authenticate(key: string): Promise<{ id: string; template?: unknown; testMode?: boolean } | null>;
+  /** Only ever finds a customer of the partner asking, of the mode of its key. */
   findTenant(
     partnerId: string,
     externalTenantId: string,
+    testMode?: boolean,
   ): Promise<{ id: string; organizationId: string; state: string } | null>;
   /** The partner and customer a bearer session belongs to, or null. */
   session(request: Request): Promise<AssistCaller | null>;
@@ -212,7 +213,7 @@ export function mountPartnerAssistRoutes(app: Hono, deps: PartnerAssistDeps): vo
     if (!(await deps.allowRequest(partner.id))) return c.json({ error: "Too many requests" }, 429);
     const externalTenantId = c.req.param("externalTenantId") ?? "";
     const tenant = ID.test(externalTenantId)
-      ? await deps.findTenant(partner.id, externalTenantId)
+      ? await deps.findTenant(partner.id, externalTenantId, partner.testMode === true)
       : null;
     // The same answer whether a customer is missing, someone else's or not enabled.
     if (tenant?.state !== "enabled") return c.json({ error: "Not found" }, 404);

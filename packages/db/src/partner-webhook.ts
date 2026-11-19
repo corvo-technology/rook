@@ -27,7 +27,7 @@ export async function claimPartnerAllowanceNotices(
   const made: string[] = [];
   for (const partner of partners) {
     const tenants = await prisma.partnerTenant.findMany({
-      where: { partnerId: partner.id, state: "enabled" },
+      where: { partnerId: partner.id, state: "enabled", testMode: false },
       select: { externalTenantId: true, organizationId: true },
       take: 1000,
     });
@@ -111,7 +111,10 @@ export async function undeliveredPartnerWebhookEvents(
         gte: new Date(now.getTime() - RETRY_FOR_MS),
         lte: new Date(now.getTime() - 15 * 60_000),
       },
-      partner: { enabled: true, webhookUrl: { not: null } },
+      partner: {
+        enabled: true,
+        OR: [{ webhookUrl: { not: null } }, { testWebhookUrl: { not: null } }],
+      },
     },
     orderBy: { createdAt: "desc" },
     select: { id: true },

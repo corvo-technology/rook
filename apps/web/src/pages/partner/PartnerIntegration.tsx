@@ -40,6 +40,11 @@ export function PartnerIntegration({ partner }: { partner: PartnerConsolePartner
   const [fresh, setFresh] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
+  const testKey = useAction();
+  const testHook = useAction();
+  const wipe = useAction();
+  const [freshTest, setFreshTest] = useState<string | null>(null);
+  const [testUrl, setTestUrl] = useState<string | null>(null);
   const integration = useQuery({
     queryKey: ["partner-console", partner.id, "integration"],
     queryFn: () => rpc.partnerConsole.integration({ partnerId: partner.id }),
@@ -49,6 +54,7 @@ export function PartnerIntegration({ partner }: { partner: PartnerConsolePartner
     return <PartnerError error={integration.error} onRetry={integration.refetch} />;
   const data = integration.data;
   const webhook = url ?? data.webhook.url ?? "";
+  const testWebhook = testUrl ?? data.testWebhook.url ?? "";
   const refresh = () =>
     queryClient.invalidateQueries({ queryKey: ["partner-console", partner.id, "integration"] });
 
@@ -97,6 +103,117 @@ export function PartnerIntegration({ partner }: { partner: PartnerConsolePartner
             ))}
           </ul>
           {rotate.error ? <PartnerError error={rotate.error} /> : null}
+        </div>
+      </Panel>
+      <Panel title={t`Test`} data-testid="partner-test-mode">
+        <div className="space-y-3">
+          {freshTest ? (
+            <div className="flex items-center gap-2 rounded-xl border border-border px-3 py-2">
+              <code
+                className="min-w-0 flex-1 break-all text-[13px]"
+                data-testid="partner-new-test-key"
+              >
+                {freshTest}
+              </code>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => void navigator.clipboard?.writeText(freshTest)}
+              >
+                {t`Copy`}
+              </Button>
+            </div>
+          ) : null}
+          <div className="flex items-center justify-between gap-3">
+            {data.testKey.prefix ? (
+              <>
+                <code className="text-[13px]">{data.testKey.prefix}…</code>
+                <InlineConfirm
+                  variant="secondary"
+                  size="sm"
+                  disabled={testKey.busy}
+                  confirmLabel={t`Replace key? The old one stops working.`}
+                  onConfirm={() =>
+                    void testKey.run(async () => {
+                      const next = await rpc.partnerConsole.rotateTestKey({
+                        partnerId: partner.id,
+                      });
+                      setFreshTest(next.key);
+                      await refresh();
+                    })
+                  }
+                >
+                  {t`New key`}
+                </InlineConfirm>
+              </>
+            ) : (
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={testKey.busy}
+                onClick={() =>
+                  void testKey.run(async () => {
+                    const next = await rpc.partnerConsole.rotateTestKey({ partnerId: partner.id });
+                    setFreshTest(next.key);
+                    await refresh();
+                  })
+                }
+              >
+                {t`Create test key`}
+              </Button>
+            )}
+          </div>
+          {testKey.error ? <PartnerError error={testKey.error} /> : null}
+          {data.testKey.prefix ? (
+            <>
+              <form
+                className="flex gap-2"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void testHook.run(async () => {
+                    await rpc.partnerConsole.setTestWebhook({
+                      partnerId: partner.id,
+                      url: testWebhook.trim() === "" ? null : testWebhook.trim(),
+                    });
+                    setTestUrl(null);
+                    await refresh();
+                  });
+                }}
+              >
+                <Input
+                  value={testWebhook}
+                  onChange={(event) => setTestUrl(event.target.value)}
+                  placeholder="https://"
+                  inputMode="url"
+                  aria-label={t`Test webhook URL`}
+                />
+                <Button type="submit" variant="secondary" disabled={testHook.busy}>
+                  {t`Save`}
+                </Button>
+              </form>
+              {testHook.error ? <PartnerError error={testHook.error} /> : null}
+              {data.testKey.customers > 0 ? (
+                <InlineConfirm
+                  variant="secondary"
+                  size="sm"
+                  disabled={wipe.busy}
+                  confirmLabel={t`Delete every test customer and their data?`}
+                  onConfirm={() =>
+                    void wipe.run(async () => {
+                      await rpc.partnerConsole.clearTestData({ partnerId: partner.id });
+                      await refresh();
+                      await queryClient.invalidateQueries({
+                        queryKey: ["partner-console", partner.id, "customers"],
+                      });
+                    })
+                  }
+                >
+                  {t`Clear test data`}
+                </InlineConfirm>
+              ) : null}
+              {wipe.error ? <PartnerError error={wipe.error} /> : null}
+            </>
+          ) : null}
         </div>
       </Panel>
       <Panel title={t`Email alerts`} data-testid="partner-alerts">

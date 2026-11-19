@@ -25,7 +25,7 @@ export async function claimCommerceNotices(
   const settings = await commerceSettings(prisma);
   for (const partner of partners) {
     const tenants = await prisma.partnerTenant.findMany({
-      where: { partnerId: partner.id, subscription: { isNot: null } },
+      where: { partnerId: partner.id, testMode: false, subscription: { isNot: null } },
       include: { subscription: true },
       take: 1000,
     });

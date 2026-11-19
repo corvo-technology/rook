@@ -14,8 +14,26 @@ function setup(email: string) {
   const prisma = {
     partner: {
       findMany: vi.fn(async () => [
-        { id: "p-a", slug: "a", name: "Product A", mode: "embedded", planKey: "starter" },
-        { id: "p-b", slug: "b", name: "Product B", mode: "white_label", planKey: null },
+        {
+          id: "p-a",
+          slug: "a",
+          name: "Product A",
+          mode: "embedded",
+          planKey: "starter",
+          testDailyCap: 300,
+          testUsage: [{ calls: 12 }],
+          _count: { tenants: 2 },
+        },
+        {
+          id: "p-b",
+          slug: "b",
+          name: "Product B",
+          mode: "white_label",
+          planKey: null,
+          testDailyCap: 50,
+          testUsage: [],
+          _count: { tenants: 0 },
+        },
       ]),
       findUnique: vi.fn(async ({ where }: { where: { id: string } }) =>
         where.id === "p-a" ? { ownerUserId: "owner-a", walletOwnerUserId: null } : null,
@@ -93,6 +111,9 @@ describe("platform.partners.list", () => {
         fundPercent: 60,
         chargedCredits: 200,
         costCredits: 80,
+        testCustomers: 2,
+        testCallsToday: 12,
+        testDailyCap: 300,
       },
       {
         id: "p-b",
@@ -105,6 +126,9 @@ describe("platform.partners.list", () => {
         fundPercent: null,
         chargedCredits: 0,
         costCredits: null,
+        testCustomers: 0,
+        testCallsToday: 0,
+        testDailyCap: 50,
       },
     ]);
   });

@@ -3,6 +3,7 @@ import {
   HOSTED_MODEL_CREDITS_REQUIRED_ERROR,
   PARTNER_CREDIT_USED_UP_RUN_ERROR,
   PARTNER_MODEL_NOT_ALLOWED_RUN_ERROR,
+  PARTNER_TEST_CAP_RUN_ERROR,
 } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
 import {
@@ -10,6 +11,7 @@ import {
   creditAccount,
   organizationForMember,
   PartnerSpendRefused,
+  PartnerTestCapReached,
   recordModelCreditReceipt,
   reserveModelCredits,
 } from "@corvo/db";
@@ -25,6 +27,14 @@ export class PartnerSpendRefusedError extends Error {
         : PARTNER_CREDIT_USED_UP_RUN_ERROR,
     );
     this.name = "PartnerSpendRefusedError";
+  }
+}
+
+/** A partner's test customers made the day's model calls; the next day starts again. */
+export class PartnerTestCapError extends Error {
+  constructor() {
+    super(PARTNER_TEST_CAP_RUN_ERROR);
+    this.name = "PartnerTestCapError";
   }
 }
 
@@ -67,14 +77,24 @@ export async function hostedModelCreditObserver(
         provider: call.provider,
         model: call.modelId,
       });
-      return reserveModelCredits(prisma, membership.organizationId, call.maxCostUsd ?? Number.NaN, {
-        callId: call.callId,
-        userId: scope.userId,
-        spaceId: scope.spaceId,
-        runId: call.runId,
-        provider: call.provider,
-        model: call.modelId,
-      });
+      try {
+        return await reserveModelCredits(
+          prisma,
+          membership.organizationId,
+          call.maxCostUsd ?? Number.NaN,
+          {
+            callId: call.callId,
+            userId: scope.userId,
+            spaceId: scope.spaceId,
+            runId: call.runId,
+            provider: call.provider,
+            model: call.modelId,
+          },
+        );
+      } catch (error) {
+        if (error instanceof PartnerTestCapReached) throw new PartnerTestCapError();
+        throw error;
+      }
     },
     afterCall: (reservationId, usage) => recordModelCreditReceipt(prisma, reservationId, usage),
     onRequestId: async (id, providerRequestId) => {

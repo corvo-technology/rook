@@ -27,6 +27,8 @@ export function partnerRecord(id: string, overrides: Partial<PartnerRecord> = {}
     checkoutUrl: null,
     keyPrefix: `cpk_${id}`,
     webhookUrl: null,
+    testKeyPrefix: null,
+    testWebhookUrl: null,
     accent: null,
     chiefName: null,
     template: null,
@@ -61,6 +63,8 @@ export interface FakeData {
   members: Record<string, string[]>;
   partners: PartnerRecord[];
   customers: Record<string, CustomerRow[]>;
+  /** The customers made with each partner's test key. */
+  testCustomers?: Record<string, CustomerRow[]>;
   revenue?: Record<string, RevenueEntryRow[]>;
   invoices?: Record<string, InvoiceRow[]>;
   plan?: CreditUsage["plan"];
@@ -97,7 +101,10 @@ export function createFakeStore(data: FakeData) {
     listPartners: async (organizationId) => managed(organizationId),
     findPartner: async (organizationId, partnerId) =>
       managed(organizationId).find((partner) => partner.id === partnerId) ?? null,
-    customerRows: async (partner) => data.customers[partner.id] ?? [],
+    customerRows: async (partner, _now, mode = "live") =>
+      mode === "test"
+        ? (data.testCustomers?.[partner.id] ?? [])
+        : (data.customers[partner.id] ?? []),
     customerDetail: async (_partner, row) => ({
       agents: ["Chief"],
       runs30d: 12,
@@ -200,6 +207,28 @@ export function createFakeStore(data: FakeData) {
     setWebhookUrl: async (partner, url) => {
       writes.webhook += 1;
       partner.webhookUrl = url;
+    },
+    rotateTestKey: async (partner) => {
+      writes.key += 1;
+      partner.testKeyPrefix = "cpk_test_NEWKEY00";
+      return { key: "cpk_test_NEWKEY00.secret", prefix: partner.testKeyPrefix };
+    },
+    setTestWebhookUrl: async (partner, url) => {
+      partner.testWebhookUrl = url;
+    },
+    testTenants: async (partner) =>
+      (data.testCustomers?.[partner.id] ?? []).map((row) => ({
+        organizationId: row.organizationId,
+        ownerUserId: `owner-of-${row.tenantId}`,
+      })),
+    removeTestTenants: async (partner, tenants) => {
+      const gone = new Set(tenants.map((tenant) => tenant.organizationId));
+      if (data.testCustomers) {
+        data.testCustomers[partner.id] = (data.testCustomers[partner.id] ?? []).filter(
+          (row) => !gone.has(row.organizationId),
+        );
+      }
+      return tenants.length;
     },
     alertEmailSettings: async () =>
       PARTNER_ALERT_KINDS.map((kind) => ({ kind, email: !alertsOff.has(kind) })),

@@ -7,6 +7,14 @@ import type { PartnerTenant } from "./generated/prisma/client.js";
 
 export type PartnerTenantState = "enabled" | "suspended";
 
+/** A customer id already belongs to the other mode: a test key never reaches a live customer. */
+export class PartnerTenantModeMismatch extends Error {
+  constructor() {
+    super("tenant_mode");
+    this.name = "PartnerTenantModeMismatch";
+  }
+}
+
 export interface ProvisionedPartnerTenant {
   tenantId: string;
   organizationId: string;
@@ -47,9 +55,10 @@ function tenantDigest(partnerId: string, externalTenantId: string): string {
  */
 export async function provisionPartnerTenant(
   prisma: PrismaClient,
-  partner: { id: string },
+  partner: { id: string; testMode?: boolean },
   input: { externalTenantId: string; name: string },
 ): Promise<ProvisionedPartnerTenant> {
+  const testMode = partner.testMode === true;
   const digest = tenantDigest(partner.id, input.externalTenantId);
   return prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${digest}, 0))`;
@@ -63,6 +72,7 @@ export async function provisionPartnerTenant(
       include: { organization: { select: { id: true } } },
     });
     if (existing) {
+      if (existing.testMode !== testMode) throw new PartnerTenantModeMismatch();
       // A customer made before it ran on credit gets the same footing as a new one.
       await tx.modelCreditAccount.updateMany({
         where: { organizationId: existing.organizationId, mode: null },
@@ -132,6 +142,7 @@ export async function provisionPartnerTenant(
         externalTenantId: input.externalTenantId,
         organizationId: orgId,
         ownerUserId: userId,
+        testMode,
       },
     });
     return {
@@ -144,15 +155,21 @@ export async function provisionPartnerTenant(
   });
 }
 
-/** Only the partner that created a customer can find it; any other partner gets null. */
-export function findPartnerTenant(
+/**
+ * Only the partner that created a customer can find it; any other partner gets null. A key finds
+ * the customers of its own mode only: the test key never sees a live customer, nor the live key a
+ * test one.
+ */
+export async function findPartnerTenant(
   prisma: PrismaClient,
   partnerId: string,
   externalTenantId: string,
+  testMode = false,
 ): Promise<PartnerTenant | null> {
-  return prisma.partnerTenant.findUnique({
+  const tenant = await prisma.partnerTenant.findUnique({
     where: { partnerId_externalTenantId: { partnerId, externalTenantId } },
   });
+  return tenant && tenant.testMode === testMode ? tenant : null;
 }
 
 /**
@@ -164,13 +181,14 @@ export async function setPartnerTenantState(
   partnerId: string,
   externalTenantId: string,
   state: PartnerTenantState,
+  testMode = false,
 ): Promise<boolean> {
   const result = await prisma.partnerTenant.updateMany({
-    where: { partnerId, externalTenantId },
+    where: { partnerId, externalTenantId, testMode },
     data: { state },
   });
   if (result.count > 0 && state === "suspended") {
-    const tenant = await findPartnerTenant(prisma, partnerId, externalTenantId);
+    const tenant = await findPartnerTenant(prisma, partnerId, externalTenantId, testMode);
     if (tenant) await prisma.session.deleteMany({ where: { userId: tenant.ownerUserId } });
   }
   return result.count > 0;
@@ -190,13 +208,15 @@ export async function partnerSpaceState(
     where: { organization: { spaces: { some: { id: spaceId } } } },
     select: {
       state: true,
+      testMode: true,
       partner: { select: { billingModel: true } },
       subscription: { select: { status: true, periodEnd: true, pastDueSince: true } },
     },
   });
   if (!tenant) return null;
   if (tenant.state === "suspended") return "suspended";
-  if (tenant.partner.billingModel !== "commerce") return "enabled";
+  // A test customer has no plan to pay for, so a commerce partner can try it before selling one.
+  if (tenant.testMode || tenant.partner.billingModel !== "commerce") return "enabled";
   const { graceDays } = await commerceSettings(prisma);
   return stateAllowsAccess(subscriptionState(tenant.subscription, now, graceDays))
     ? "enabled"

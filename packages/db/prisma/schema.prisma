@@ -2683,6 +2683,14 @@ model Partner {
   brand                     PartnerBrand?
   domains                   PartnerDomain[]
   customers                 PartnerCustomer[]
+  /// Test mode: a second key whose customers are flagged, never billed and capped per day. Only the
+  /// prefix and a hash are kept, like the live key.
+  testKeyPrefix             String?                @unique
+  testKeyHash               String?
+  testWebhookUrl            String?
+  /// Model calls the partner's test customers may make per UTC day, in all.
+  testDailyCap              Int                    @default(300)
+  testUsage                 PartnerTestUsage[]
 
   @@map("partners")
 }
@@ -2879,6 +2887,8 @@ model PartnerTenant {
   state              String              @default("enabled")
   /// The most credits this customer may use in a month; null means no limit.
   creditLimitCredits Int?
+  /// Made with the partner's test key: isolated from live customers and never billed.
+  testMode           Boolean             @default(false)
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   codes              PartnerEntryCode[]
@@ -2887,6 +2897,19 @@ model PartnerTenant {
 
   @@unique([partnerId, externalTenantId])
   @@map("partner_tenants")
+}
+
+/// Model calls made by a partner's test customers on one UTC day; the daily cap counts here.
+model PartnerTestUsage {
+  partnerId String
+  partner   Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  /// YYYY-MM-DD, UTC.
+  day       String
+  calls     Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@id([partnerId, day])
+  @@map("partner_test_usage")
 }
 
 /// A notice owed to a partner about one customer's credit. One row per partner, customer, kind

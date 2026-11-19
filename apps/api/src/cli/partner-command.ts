@@ -1,4 +1,5 @@
-import { PartnerTemplate } from "@corvo/contracts";
+import type { VerticalId } from "@corvo/contracts";
+import { PartnerTemplate, VERTICAL_IDS, verticalPartnerTemplate } from "@corvo/contracts";
 
 const USAGE = [
   "Usage:",
@@ -9,7 +10,8 @@ const USAGE = [
   "  partner disable <slug>           stop accepting the partner's key",
   "  partner enable <slug>",
   "  partner apply-template <slug> <file.json> [--mcp-url <https://...>]",
-  "                                   set what every new customer gets; safe to repeat",
+  `  partner apply-template <slug> --vertical <${VERTICAL_IDS.join("|")}>`,
+  "                                   set what every new customer gets, from a file or a starter; safe to repeat",
   "  partner webhook <slug> <https://...|off>",
   "                                   tell the partner about customers' credit; prints the signing secret",
   "  partner webhook-secret <slug>    print the signing secret again",
@@ -143,6 +145,7 @@ export async function runPartnerCommand(
   const scopes = takeFlag(args, "--scopes");
   const walletOwner = takeFlag(args, "--wallet-owner");
   const mcpUrl = takeFlag(args, "--mcp-url");
+  const vertical = takeFlag(args, "--vertical");
   const [command, slug, name, ...extra] = args;
   if (!command || !slug || extra.length > 0) throw new Error(USAGE);
   if (!SLUG.test(slug)) {
@@ -152,7 +155,10 @@ export async function runPartnerCommand(
   if (commerceFlags.some((flag) => flag !== undefined) && command !== "commerce") {
     throw new Error(USAGE);
   }
-  if ((walletOwner && command !== "create") || (mcpUrl && command !== "apply-template")) {
+  if (
+    (walletOwner && command !== "create") ||
+    ((mcpUrl || vertical) && command !== "apply-template")
+  ) {
     throw new Error(USAGE);
   }
   switch (command) {
@@ -182,8 +188,13 @@ export async function runPartnerCommand(
       return `${slug} is ${command}d.`;
     }
     case "apply-template": {
-      if (!name) throw new Error(USAGE);
-      const template = parseTemplateFile(await deps.readFile(name), mcpUrl);
+      if (!name === !vertical || (vertical && mcpUrl)) throw new Error(USAGE);
+      if (vertical && !VERTICAL_IDS.includes(vertical as VerticalId)) {
+        throw new Error(`--vertical is one of ${VERTICAL_IDS.join(", ")}.`);
+      }
+      const template = vertical
+        ? verticalPartnerTemplate(vertical as VerticalId)
+        : parseTemplateFile(await deps.readFile(name as string), mcpUrl);
       if (!(await deps.setTemplate(slug, template))) throw new Error(`Unknown partner: ${slug}`);
       const agents = template.agents.map((agent) => agent.name).join(", ") || "none";
       return `Applied the template to ${slug}. Agents: ${agents}.\nCustomers made from now on get it; existing customers keep their own agents.`;

@@ -1,4 +1,6 @@
 import { createHash } from "node:crypto";
+import type { PartnerTemplate } from "@corvo/contracts";
+import { verticalPartnerTemplate } from "@corvo/contracts";
 import { PartnerAllowanceRefused } from "@corvo/db";
 import { Hono } from "hono";
 import { describe, expect, it, vi } from "vitest";
@@ -92,6 +94,7 @@ function fixture(options: { maxRequests?: number; template?: unknown } = {}) {
       row.state = state;
       return true;
     }),
+    setTemplate: vi.fn(async () => undefined),
     ensureChief: vi.fn(async () => undefined),
     install: vi.fn(async (_actor: unknown, partnerId: string, content: unknown) => {
       installs.push({ partnerId, content });
@@ -190,10 +193,10 @@ describe("partner routes: tenants", () => {
   });
 
   it("names the Chief as the partner's template says, in the customer's language", async () => {
-    const f = fixture({ template: { agents: [], chiefName: "Assistente GreenBarber" } });
+    const f = fixture({ template: { agents: [], chiefName: "Assistente Acme" } });
     await f.call("PUT", put, { body: { name: "Shop", locale: "pt-BR" } });
     expect(f.deps.ensureChief).toHaveBeenCalledWith(expect.anything(), "pt-BR", {
-      name: "Assistente GreenBarber",
+      name: "Assistente Acme",
     });
   });
 
@@ -461,6 +464,66 @@ describe("partner routes: sessions", () => {
         })
       ).status,
     ).toBe(400);
+  });
+});
+
+describe("partner routes: the partner's own template", () => {
+  const route = "/api/partner/v1/template";
+
+  it("reads the stored template, or null when there is none or it is no longer valid", async () => {
+    const stored = await fixture({ template: TEMPLATE }).call("GET", route);
+    expect(await stored.json()).toEqual({ template: TEMPLATE });
+    const none = await fixture().call("GET", route);
+    expect(await none.json()).toEqual({ template: null });
+    const broken = await fixture({ template: { agents: "x" } }).call("GET", route);
+    expect(await broken.json()).toEqual({ template: null });
+  });
+
+  it("stores a whole template for the calling partner only", async () => {
+    const f = fixture();
+    const res = await f.call("PUT", route, { body: { template: TEMPLATE } });
+    expect(res.status).toBe(200);
+    expect(f.deps.setTemplate).toHaveBeenCalledWith("partner-a", TEMPLATE);
+    await f.call("PUT", route, { key: KEY_B, body: { template: null } });
+    expect(f.deps.setTemplate).toHaveBeenLastCalledWith("partner-b", null);
+  });
+
+  it("starts from a vertical the code ships, without any connector", async () => {
+    const f = fixture();
+    const res = await f.call("PUT", route, { body: { vertical: "barbearia_salao" } });
+    expect(res.status).toBe(200);
+    const saved = f.deps.setTemplate.mock.calls[0]?.[1] as unknown as PartnerTemplate;
+    expect(saved).toEqual(verticalPartnerTemplate("barbearia_salao"));
+    expect(saved.connector).toBeUndefined();
+    expect(saved.routines?.length).toBeGreaterThan(0);
+  });
+
+  it("refuses an unknown vertical, an invalid template, extra fields and a key without the scope", async () => {
+    const f = fixture();
+    for (const body of [
+      { vertical: "spaceship" },
+      { template: { agents: [], accent: "red" } },
+      { vertical: "clinica", template: null },
+      {},
+    ]) {
+      expect((await f.call("PUT", route, { body })).status).toBe(400);
+    }
+    const noScope = await f.call("PUT", route, {
+      key: KEY_NO_SCOPE,
+      body: { vertical: "clinica" },
+    });
+    expect(noScope.status).toBe(403);
+    expect((await f.call("GET", route, { key: null })).status).toBe(401);
+    expect(f.deps.setTemplate).not.toHaveBeenCalled();
+  });
+
+  it("gives a new customer the partner's own stored template, never another partner's", async () => {
+    const f = fixture({ template: TEMPLATE });
+    await f.call("PUT", put, { key: KEY_B, body: { name: "S" } });
+    expect(f.installs).toEqual([]);
+    await f.call("PUT", put, { body: { name: "S", connectorToken: "t" } });
+    expect(f.installs).toHaveLength(1);
+    expect(f.installs[0]?.partnerId).toBe("partner-a");
   });
 });
 

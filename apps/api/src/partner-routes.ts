@@ -5,9 +5,12 @@ import {
   PartnerSessionInput,
   PartnerTemplate,
   PartnerTenantInput,
+  VERTICAL_IDS,
+  verticalPartnerTemplate,
 } from "@corvo/contracts";
 import { PartnerAllowanceRefused, PartnerTenantModeMismatch } from "@corvo/db";
 import type { Context, Hono } from "hono";
+import { z } from "zod";
 import { readBoundedBody } from "./http-body.js";
 import type { PartnerContent } from "./partner-content.js";
 
@@ -75,6 +78,8 @@ export interface PartnerRouteDeps {
     locale: AgentCatalogLocale,
     options?: { name?: string },
   ): Promise<unknown>;
+  /** Stores what every new customer of the partner gets, or removes it with null. */
+  setTemplate(partnerId: string, template: PartnerTemplate | null): Promise<void>;
   install(actor: Actor, partnerId: string, content: PartnerContent): Promise<unknown>;
   grantAllowance(
     tenant: { organizationId: string; partnerId: string; externalTenantId: string },
@@ -91,6 +96,12 @@ export interface PartnerRouteDeps {
     expiresAt: Date;
   }): Promise<void>;
 }
+
+/** A whole template, a starter to begin from, or null to remove it. */
+const TemplateBody = z.union([
+  z.object({ template: PartnerTemplate.nullable() }).strict(),
+  z.object({ vertical: z.enum(VERTICAL_IDS) }).strict(),
+]);
 
 /** The same answer whether a customer is missing or belongs to someone else. */
 const notFound = (c: Context) => c.json({ error: "Not found" }, 404);
@@ -125,6 +136,27 @@ export function mountPartnerRoutes(app: Hono, deps: PartnerRouteDeps): void {
       return c.json({ error: "Invalid JSON" }, 400);
     }
   };
+
+  app.get("/api/partner/v1/template", async (c) => {
+    const partner = await authorize(c);
+    if (partner instanceof Response) return partner;
+    return c.json({ template: PartnerTemplate.safeParse(partner.template).data ?? null });
+  });
+
+  app.put("/api/partner/v1/template", async (c) => {
+    const partner = await authorize(c);
+    if (partner instanceof Response) return partner;
+    const json = await readJson(c);
+    if (json instanceof Response) return json;
+    const parsed = TemplateBody.safeParse(json);
+    if (!parsed.success) return c.json({ error: "Invalid request" }, 400);
+    const template =
+      "vertical" in parsed.data
+        ? verticalPartnerTemplate(parsed.data.vertical)
+        : parsed.data.template;
+    await deps.setTemplate(partner.id, template);
+    return c.json({ template });
+  });
 
   app.put("/api/partner/v1/tenants/:externalTenantId", async (c) => {
     const partner = await authorize(c);

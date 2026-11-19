@@ -109,6 +109,7 @@ function fixture() {
       row.state = state;
       return true;
     },
+    setTemplate: async () => undefined,
     ensureChief: async () => undefined,
     install: async () => undefined,
     grantAllowance: real.grantAllowance,

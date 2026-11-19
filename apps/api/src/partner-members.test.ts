@@ -12,7 +12,7 @@ import {
 const agent = (key: string) => ({ key, name: key, instructions: "", usesConnector: true });
 
 const TEMPLATE: PartnerTemplate = {
-  connector: { slug: "greenflow", name: "Greenflow", endpoint: "https://mcp.example.test/mcp" },
+  connector: { slug: "acme-system", name: "Acme System", endpoint: "https://mcp.example.test/mcp" },
   agents: [agent("recepcao"), agent("escriba"), agent("gestor")],
   roles: {
     reception: { agents: ["recepcao"], permissions: ["talk_to_agents"] },
@@ -81,7 +81,7 @@ describe("admitPartnerEntry", () => {
     expect(partnerId).toBe("partner-1");
     expect(content.agents.map((a) => a.key)).toEqual(["recepcao"]);
     expect(content.forUserId).toBe("user-of-ext-1");
-    expect(content.connectorSlug).toBe("greenflow");
+    expect(content.connectorSlug).toBe("acme-system");
   });
 
   it("gives two people of the same role their own copies, never a shared one", async () => {

@@ -63,5 +63,6 @@ export * from "./team.js";
 export * from "./team-chat.js";
 export * from "./terminal.js";
 export * from "./user-memory.js";
+export * from "./verticals.js";
 export * from "./voice-errors.js";
 export * from "./wiki.js";

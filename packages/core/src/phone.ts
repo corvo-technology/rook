@@ -272,7 +272,7 @@ function lengths(country: string): [number, number] {
 }
 
 function chunk(digits: string): string {
-  const groups = digits.match(/\d{1,3}/g) ?? [];
+  const groups: string[] = digits.match(/\d{1,3}/g) ?? [];
   if (groups.length > 1 && groups[groups.length - 1]!.length === 1) {
     groups.push(groups.splice(-2).join(""));
   }

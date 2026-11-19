@@ -10,6 +10,7 @@ import {
   configurePartnerCommerce,
   listOwnedPartnerTenants,
   PartnerAllowanceRefused,
+  partnerAlertEmailSettings,
   partnerFund,
   periodLabel,
   purgeExpiredEntryCodes,
@@ -18,6 +19,7 @@ import {
   rotatePartnerKey,
   runAsSystem,
   runIdempotent,
+  setPartnerAlertEmail,
   setPartnerTemplateById,
   setPartnerTenantState,
   setPartnerWebhookUrl,
@@ -543,6 +545,11 @@ export function createPrismaPartnerConsoleStore(prisma: PrismaClient): PartnerCo
       system(async () => {
         await setPartnerWebhookUrl(prisma, partner.slug, url);
       }),
+
+    alertEmailSettings: (partner) => system(() => partnerAlertEmailSettings(prisma, partner.id)),
+
+    setAlertEmail: (partner, kind, email) =>
+      system(() => setPartnerAlertEmail(prisma, partner.id, kind, email)),
 
     setTemplate: (partner, template) =>
       system(() => setPartnerTemplateById(prisma, partner.id, template)),

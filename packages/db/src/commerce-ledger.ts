@@ -15,6 +15,7 @@ import {
   subscriptionState,
 } from "./commerce-money.js";
 import { expireModelCredits, reconcileCreditGrantMicros } from "./model-credits.js";
+import { recordPartnerAlert } from "./partner-alerts.js";
 
 /** A refusal the partner can act on; the route turns the code into a status. */
 export class CommerceError extends Error {
@@ -42,7 +43,10 @@ const short = (value: string) => createHash("sha256").update(value).digest("hex"
 const day = (at: Date) => at.toISOString().slice(0, 10);
 const isUnique = (error: unknown) => (error as { code?: unknown })?.code === "P2002";
 
-/** A notice owed to the partner; only recorded when the partner has a webhook. Returns its id. */
+/**
+ * A notice owed to the partner. Its people are told whatever the partner has set up; the webhook
+ * event is only recorded when the partner has a webhook, and its id returned.
+ */
 export async function recordCommerceEvent(
   prisma: PrismaClient,
   partner: Pick<CommercePartner, "id" | "webhookUrl">,
@@ -54,6 +58,7 @@ export async function recordCommerceEvent(
     payload: Record<string, unknown>;
   },
 ): Promise<string | null> {
+  await recordPartnerAlert(prisma, partner.id, event);
   if (!partner.webhookUrl) return null;
   try {
     const row = await prisma.partnerWebhookEvent.create({
@@ -354,6 +359,15 @@ export async function setTenantSubscription(
       status: input.status,
       currentPeriodEnd: input.currentPeriodEnd.toISOString(),
     });
+    // A failed payment is for the partner's people too, whether or not it has a webhook.
+    if (input.status === "past_due") {
+      await recordPartnerAlert(prisma, partner.id, {
+        externalTenantId: tenant.externalTenantId,
+        kind: "subscription.lapsed",
+        key: `${start.toISOString()}:past_due`,
+        payload: { period, plan: planKey, status: input.status },
+      });
+    }
   }
 
   const balance = await commerceBalance(prisma, partner, tenant, now);

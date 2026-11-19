@@ -178,6 +178,43 @@ export const PARTNER_WEBHOOK_EVENTS = [
 export type PartnerWebhookEventType = (typeof PARTNER_WEBHOOK_EVENTS)[number];
 
 /**
+ * What a partner's people are told, by email and in the app. Webhooks stay a separate, optional
+ * integration; the kinds that exist there use the same names.
+ */
+export const PARTNER_ALERT_KINDS = [
+  "customer.credit_limit_reached",
+  "partner.balance_low",
+  "partner.autotopup_started",
+  "partner.autotopup_failed",
+  "invoice.issued",
+  "subscription.lapsed",
+  "customer.connector_down",
+] as const;
+export type PartnerAlertKind = (typeof PARTNER_ALERT_KINDS)[number];
+
+/** The inbox code of each alert, so every client words it in the member's language. */
+export const PARTNER_ALERT_CODES = {
+  "customer.credit_limit_reached": "partner_limit_reached",
+  "partner.balance_low": "partner_balance_low",
+  "partner.autotopup_started": "partner_autotopup_started",
+  "partner.autotopup_failed": "partner_autotopup_failed",
+  "invoice.issued": "partner_invoice_issued",
+  "subscription.lapsed": "partner_past_due",
+  "customer.connector_down": "partner_connector_down",
+} as const satisfies Record<PartnerAlertKind, string>;
+
+/** The console screen an alert leads to. */
+export const PARTNER_ALERT_SECTIONS = {
+  "customer.credit_limit_reached": "customers",
+  "partner.balance_low": "credits",
+  "partner.autotopup_started": "credits",
+  "partner.autotopup_failed": "credits",
+  "invoice.issued": "invoices",
+  "subscription.lapsed": "customers",
+  "customer.connector_down": "customers",
+} as const satisfies Record<PartnerAlertKind, string>;
+
+/**
  * The pilot's credit notice, in cents. Commerce events (`subscription.*`, `credit.*`,
  * `invoice.issued`, and `tenant.allowance_*` for commerce customers) carry `currency` and minor
  * units instead; see docs/partner-commerce.md.

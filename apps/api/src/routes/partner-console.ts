@@ -24,6 +24,7 @@ import {
   setAllowedModels,
   setAutoTopup,
   setCustomerCreditLimit,
+  setIntegrationAlertEmail,
   setIntegrationWebhook,
   setPricing,
   setTemplate,
@@ -166,6 +167,9 @@ export function partnerConsoleRoutes(ctx: RouterContext) {
       }),
       setWebhook: managed.partnerConsole.setWebhook.handler(({ context, input }) =>
         run(context.actor, (scope) => setIntegrationWebhook(service, scope, input)),
+      ),
+      setAlertEmail: managed.partnerConsole.setAlertEmail.handler(({ context, input }) =>
+        run(context.actor, (scope) => setIntegrationAlertEmail(service, scope, input)),
       ),
     },
   };

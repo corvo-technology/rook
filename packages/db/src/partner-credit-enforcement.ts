@@ -143,7 +143,8 @@ async function fundBalance(prisma: PrismaClient, walletOrganizationId: string) {
 }
 
 /**
- * Records the two notices the credit model owes a partner with a webhook, once each:
+ * Records the two notices the credit model owes a partner, once each, for its people and for its
+ * webhook when it has one:
  * `customer.credit_limit_reached` per customer and period, and `partner.balance_low` once until
  * the fund is refilled. Returns the notices made now, for the caller to queue.
  */
@@ -152,7 +153,7 @@ export async function claimPartnerCreditNotices(
   now = new Date(),
 ): Promise<string[]> {
   const partners = await prisma.partner.findMany({
-    where: { enabled: true, mode: "embedded", webhookUrl: { not: null } },
+    where: { enabled: true, mode: "embedded" },
     select: { id: true, webhookUrl: true, currency: true },
     take: 100,
   });

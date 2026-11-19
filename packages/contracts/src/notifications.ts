@@ -28,7 +28,16 @@ export function unreadBadgeText(count: number): string {
 }
 
 /** Alerts the client words itself in the member's language; `detail` is the English fallback. */
-export const NOTIFICATION_CODES = ["storage_near_limit"] as const;
+export const NOTIFICATION_CODES = [
+  "storage_near_limit",
+  "partner_limit_reached",
+  "partner_balance_low",
+  "partner_autotopup_started",
+  "partner_autotopup_failed",
+  "partner_invoice_issued",
+  "partner_past_due",
+  "partner_connector_down",
+] as const;
 export const NotificationCodeSchema = z.enum(NOTIFICATION_CODES);
 export type NotificationCode = z.infer<typeof NotificationCodeSchema>;
 

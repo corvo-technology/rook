@@ -405,6 +405,10 @@ msgstr "{name} échoué"
 msgid "{name} finished"
 msgstr "{name} terminé"
 
+#: src/lib/server-copy.ts
+msgid "{name} has a payment past due"
+msgstr "{name} a un paiement en retard"
+
 #: src/lib/activity-label.ts
 msgid "{name} is waiting for your approval."
 msgstr "{name} attend votre approbation."
@@ -422,6 +426,10 @@ msgid "{name} options"
 msgstr "Options de {name}"
 
 #: src/lib/server-copy.ts
+msgid "{name} reached the monthly limit"
+msgstr "{name} a atteint la limite mensuelle"
+
+#: src/lib/server-copy.ts
 msgid "{name} routine: no changes"
 msgstr "Routine {name} : aucun changement"
 
@@ -433,6 +441,10 @@ msgstr "Routine {name} : surveille les changements"
 #: src/lib/browser-notifications.ts
 msgid "{name} stopped"
 msgstr "{name} arrêté"
+
+#: src/lib/server-copy.ts
+msgid "{name}'s connector is down"
+msgstr "Le connecteur de {name} est hors service"
 
 #: src/pages/shell/sidebar-team.tsx
 msgid "{people, plural, one {# person} other {# people}}"
@@ -1571,6 +1583,16 @@ msgstr "Automatique"
 #: src/pages/partner/PartnerCredits.tsx
 msgid "Automatic top-up"
 msgstr "Recharge automatique"
+
+#: src/lib/server-copy.ts
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Automatic top-up failed"
+msgstr "La recharge automatique a échoué"
+
+#: src/lib/server-copy.ts
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Automatic top-up started"
+msgstr "Recharge automatique démarrée"
 
 #: src/pages/AppCatalogGrid.tsx
 msgid "Automation"
@@ -3333,6 +3355,10 @@ msgstr "Identifiants : {names}"
 msgid "Credit amount"
 msgstr "Montant du crédit"
 
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Credit fund running low"
+msgstr "Réserve de crédits qui baisse"
+
 #: src/pages/partner/PartnerCustomers.tsx
 msgid "Credit left"
 msgstr "Crédit restant"
@@ -3398,9 +3424,21 @@ msgstr "En-tête personnalisé"
 msgid "Customer"
 msgstr "Client"
 
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Customer connector down"
+msgstr "Connecteur client hors service"
+
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Customer payment past due"
+msgstr "Paiement client en retard"
+
 #: src/pages/partner/PartnerPricing.tsx
 msgid "Customer pays"
 msgstr "Le client paie"
+
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Customer reached the monthly limit"
+msgstr "Client ayant atteint la limite mensuelle"
 
 #: src/pages/onboarding/labels.ts
 #: src/pages/WhatsAppNumbers.tsx
@@ -3906,6 +3944,10 @@ msgstr "E-mail"
 #: src/pages/onboarding/InviteStep.tsx
 msgid "Email addresses"
 msgstr "Adresses e-mail"
+
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Email alerts"
+msgstr "Alertes par e-mail"
 
 #: src/lib/user-error.ts
 msgid "Email is not allowed to register"
@@ -5855,6 +5897,11 @@ msgstr "Nouveau groupe"
 #: src/pages/shell/bot-picker.tsx
 msgid "New group chat"
 msgstr "Nouvelle discussion de groupe"
+
+#: src/lib/server-copy.ts
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "New invoice"
+msgstr "Nouvelle facture"
 
 #: src/pages/partner/PartnerIntegration.tsx
 msgid "New key"
@@ -9830,6 +9877,10 @@ msgstr "Votre Anthropic"
 #: src/pages/StoreInstalledApps.tsx
 msgid "Your apps"
 msgstr "Vos apps"
+
+#: src/lib/server-copy.ts
+msgid "Your credit fund is running low"
+msgstr "Votre réserve de crédits baisse"
 
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Your defaults"

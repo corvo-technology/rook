@@ -405,6 +405,10 @@ msgstr "{name} 失败"
 msgid "{name} finished"
 msgstr "{name} 已完成"
 
+#: src/lib/server-copy.ts
+msgid "{name} has a payment past due"
+msgstr "{name}有一笔逾期付款"
+
 #: src/lib/activity-label.ts
 msgid "{name} is waiting for your approval."
 msgstr "{name} 正在等待你的批准。"
@@ -422,6 +426,10 @@ msgid "{name} options"
 msgstr "{name} 选项"
 
 #: src/lib/server-copy.ts
+msgid "{name} reached the monthly limit"
+msgstr "{name}已达到月度上限"
+
+#: src/lib/server-copy.ts
 msgid "{name} routine: no changes"
 msgstr "{name} 例程：无变化"
 
@@ -433,6 +441,10 @@ msgstr "{name} 例程：正在监视变化"
 #: src/lib/browser-notifications.ts
 msgid "{name} stopped"
 msgstr "{name} 已停止"
+
+#: src/lib/server-copy.ts
+msgid "{name}'s connector is down"
+msgstr "{name}的连接器已中断"
 
 #: src/pages/shell/sidebar-team.tsx
 msgid "{people, plural, one {# person} other {# people}}"
@@ -1571,6 +1583,16 @@ msgstr "自动"
 #: src/pages/partner/PartnerCredits.tsx
 msgid "Automatic top-up"
 msgstr "自动充值"
+
+#: src/lib/server-copy.ts
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Automatic top-up failed"
+msgstr "自动充值失败"
+
+#: src/lib/server-copy.ts
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Automatic top-up started"
+msgstr "自动充值已开始"
 
 #: src/pages/AppCatalogGrid.tsx
 msgid "Automation"
@@ -3333,6 +3355,10 @@ msgstr "凭据：{names}"
 msgid "Credit amount"
 msgstr "额度金额"
 
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Credit fund running low"
+msgstr "额度资金即将用完"
+
 #: src/pages/partner/PartnerCustomers.tsx
 msgid "Credit left"
 msgstr "剩余额度"
@@ -3398,9 +3424,21 @@ msgstr "自定义标头"
 msgid "Customer"
 msgstr "客户"
 
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Customer connector down"
+msgstr "客户连接器中断"
+
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Customer payment past due"
+msgstr "客户付款逾期"
+
 #: src/pages/partner/PartnerPricing.tsx
 msgid "Customer pays"
 msgstr "客户支付"
+
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Customer reached the monthly limit"
+msgstr "客户已达到月度上限"
 
 #: src/pages/onboarding/labels.ts
 #: src/pages/WhatsAppNumbers.tsx
@@ -3906,6 +3944,10 @@ msgstr "邮箱"
 #: src/pages/onboarding/InviteStep.tsx
 msgid "Email addresses"
 msgstr "邮箱地址"
+
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "Email alerts"
+msgstr "邮件提醒"
 
 #: src/lib/user-error.ts
 msgid "Email is not allowed to register"
@@ -5855,6 +5897,11 @@ msgstr "新建群组"
 #: src/pages/shell/bot-picker.tsx
 msgid "New group chat"
 msgstr "新建群聊"
+
+#: src/lib/server-copy.ts
+#: src/pages/partner/PartnerIntegration.tsx
+msgid "New invoice"
+msgstr "新账单"
 
 #: src/pages/partner/PartnerIntegration.tsx
 msgid "New key"
@@ -9830,6 +9877,10 @@ msgstr "你的 Anthropic"
 #: src/pages/StoreInstalledApps.tsx
 msgid "Your apps"
 msgstr "你的应用"
+
+#: src/lib/server-copy.ts
+msgid "Your credit fund is running low"
+msgstr "你的额度资金即将用完"
 
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Your defaults"

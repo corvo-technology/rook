@@ -372,3 +372,39 @@ export function partnerLeadNotificationEmail(
     </>,
   );
 }
+
+/**
+ * A short product notice: a heading, a few lines, one button and a quiet note. The caller words
+ * it in the reader's language; this only lays it out.
+ */
+export function noticeEmail(
+  webOrigin: string,
+  input: {
+    to: string;
+    lang: string;
+    subject: string;
+    title: string;
+    lines: string[];
+    action: { label: string; url: string };
+    note: string;
+  },
+): Promise<TransactionalEmail> {
+  return message(
+    webOrigin,
+    input.to,
+    input.subject,
+    <>
+      <Text style={{ ...text, fontSize: "20px", fontWeight: 700, color: lightTokens.foreground }}>
+        {input.title}
+      </Text>
+      {input.lines.map((line) => (
+        <Text key={line} style={text}>
+          {line}
+        </Text>
+      ))}
+      <Action href={input.action.url}>{input.action.label}</Action>
+      <Text style={note}>{input.note}</Text>
+    </>,
+    input.lang,
+  );
+}

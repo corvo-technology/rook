@@ -2648,6 +2648,8 @@ model Partner {
   codes                     PartnerEntryCode[]
   windows                   PartnerRequestWindow[]
   webhookEvents             PartnerWebhookEvent[]
+  alerts                    PartnerAlert[]
+  alertPreferences          PartnerAlertPreference[]
   consultations             Consultation[]
   /// Embedded credit model: the models this partner's customers may use (empty means all), and
   /// when to buy a top-up on its own. The fund is the partner's credit wallet.
@@ -2821,6 +2823,41 @@ model PartnerWebhookEvent {
 
   @@unique([partnerId, externalTenantId, kind, period])
   @@map("partner_webhook_events")
+}
+
+/// Something the partner's people should know, kept once per (partner, customer, kind, key) so a
+/// repeated check never tells them twice. Webhooks stay a separate, optional integration.
+model PartnerAlert {
+  id               String    @id @default(cuid())
+  partnerId        String
+  partner          Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  /// The customer concerned; empty for a notice about the partner itself.
+  externalTenantId String    @default("")
+  kind             String
+  /// The dedupe key within (partner, customer, kind), such as the month or the invoice.
+  key              String
+  /// Numbers and names only, never what a customer wrote.
+  payload          Json
+  createdAt        DateTime  @default(now())
+  /// When the in-app entries were raised for the partner's managers.
+  dispatchedAt     DateTime?
+  /// When the email that carried it was handed over; null while unsent or switched off.
+  emailedAt        DateTime?
+
+  @@unique([partnerId, externalTenantId, kind, key])
+  @@index([dispatchedAt, createdAt])
+  @@map("partner_alerts")
+}
+
+/// A partner's choice to be emailed about one kind of alert; no row means on. In-app is always on.
+model PartnerAlertPreference {
+  partnerId String
+  partner   Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  kind      String
+  email     Boolean @default(true)
+
+  @@id([partnerId, kind])
+  @@map("partner_alert_preferences")
 }
 
 /// A one-time code that turns a partner's request into a session. Only its hash is stored.

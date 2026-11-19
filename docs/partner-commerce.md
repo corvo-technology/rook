@@ -752,7 +752,7 @@ What shipped, and where it differs from the sketch above.
 - **Webhooks.** New events carry `currency` and minor units: `subscription.updated`,
   `subscription.lapsed`, `credit.granted`, `credit.expired`, `invoice.issued`; `tenant.allowance_low`
   and `tenant.allowance_exhausted` also cover commerce customers (once per period). `payout.paid` is
-  F4. Events are recorded only for partners with a webhook URL and use the existing signed delivery.
+  F4. Webhook events are recorded only for partners with a webhook URL and use the existing signed delivery (alerts for the partner's people do not depend on it: section 16.4).
 - **Not in F2:** the automatic FX source adapter (a rate is written by `partner fx-set`, or any
   writer of `fx_rates`; the lock and spread policy are in place), the daily reconciliation job, and
   suspending a partner's commerce for unpaid invoices. All three are follow-ups.
@@ -885,3 +885,28 @@ Agents work the portfolio through a built-in connection, offered only to an orga
 - Results are numbers, states and names. Never a customer's conversation, nor the names of their agents.
 - A write is audited twice: by the console (who, which customer, what) and by a `partner.agent_action` security event (which agent, which run).
 - Two installable agents, "Portfolio Manager" and "Customer Success", are added with read access and offered only to such organizations.
+
+### 16.4 Alerts for the partner's people
+
+Partners are often not technical, so what happens is also told to the people who run the partner, by
+email and in the app. Webhooks stay an optional technical integration and are unchanged.
+
+- **One record.** `recordCommerceEvent` also keeps a `PartnerAlert` row (unique per partner,
+  customer, kind and key) for every event that is an alert, whether or not the partner has a webhook.
+  Alerts: `customer.credit_limit_reached`, `partner.balance_low`, `partner.autotopup_started`,
+  `partner.autotopup_failed` (after the last attempt only), `invoice.issued`, `subscription.lapsed`
+  (a payment past due or lapsed) and `customer.connector_down` (noted once a day while a health check
+  fails). The reconciler no longer skips a partner without a webhook for the credit notices.
+- **Who.** Everyone who holds `manage_partner` in a space of an organization that is a
+  `PartnerMember` of the partner. A person in another partner's organization, or without the
+  permission, is never told.
+- **In the app.** Always on: one inbox entry per alert and manager, through the existing
+  notifications (an `alert` with a `partner_*` code, worded by each client in the member's language).
+  It opens the console screen for the alert, such as `/app/partner/<id>/customers?customer=<tenant>`.
+- **By email.** Through the transactional email adapter. Each pass of the reconciler claims the new
+  alerts once (`dispatchedAt`), so one event is never sent twice, and sends one digest per manager:
+  a burst of 20 customers at their limit is one email with a count and a few names, and one button
+  to the screen. The email carries counts and customer names only. Its language is the person's app
+  language when known, else Portuguese for a BRL partner and English otherwise.
+- **Preferences.** Integration shows one switch per alert kind for the email (default on; no row
+  means on, `partner_alert_preferences` stores an off). The inbox cannot be switched off.

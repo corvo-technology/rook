@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PARTNER_ALERT_KINDS } from "./partner.js";
 
 /**
  * The partner console (docs/partner-commerce.md, section 6): what a partner's organization sees
@@ -194,6 +195,8 @@ export const PartnerConsoleIntegrationSchema = z.object({
   /** The key itself is shown once, when it is issued; only its start is kept in view. */
   keys: z.array(z.object({ prefix: z.string(), createdAt: z.string() })),
   webhook: z.object({ url: z.string().nullable(), enabled: z.boolean() }),
+  /** Whether each kind of alert is also emailed; the app always shows it. */
+  alerts: z.array(z.object({ kind: z.enum(PARTNER_ALERT_KINDS), email: z.boolean() })),
   docsUrl: z.string(),
 });
 

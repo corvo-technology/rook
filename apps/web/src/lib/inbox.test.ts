@@ -41,6 +41,22 @@ it("leads to the channel, the agent chat or the person, at the message when know
   expect(inboxPath(entry("a", { groupId: "g1", messageId: "m1" }))).toBe("/app/g/g1?m=m1");
   expect(inboxPath(entry("a", { botId: "b1" }))).toBe("/app/b1");
   expect(
+    inboxPath(
+      entry("a", {
+        code: "partner_limit_reached",
+        params: { partnerId: "p1", section: "customers", tenantId: "t1" },
+      }),
+    ),
+  ).toBe("/app/partner/p1/customers?customer=t1");
+  expect(
+    inboxPath(
+      entry("a", {
+        code: "partner_balance_low",
+        params: { partnerId: "p1", section: "credits" },
+      }),
+    ),
+  ).toBe("/app/partner/p1/credits");
+  expect(
     inboxPath(entry("a", { kind: "dm", actor: { userId: "u1", name: "Ana", image: null } })),
   ).toBe("/app/dm/u1");
   expect(inboxPath(entry("a", { kind: "alert" }))).toBeNull();

@@ -187,6 +187,7 @@ import {
   WorkArea,
 } from "./onboarding-profile.js";
 import {
+  PARTNER_ALERT_KINDS,
   PartnerAccountSchema,
   PartnerBalanceSchema,
   PartnerInvoiceSchema,
@@ -1750,6 +1751,10 @@ export const appContract = {
     setWebhook: oc
       .input(z.object({ partnerId: Id, url: z.string().trim().max(2048).nullable() }).strict())
       .output(z.object({ url: z.string().nullable(), enabled: z.boolean() })),
+    /** Turns the email for one kind of alert on or off; the app always shows it. */
+    setAlertEmail: oc
+      .input(z.object({ partnerId: Id, kind: z.enum(PARTNER_ALERT_KINDS), email: z.boolean() }))
+      .output(z.object({ ok: z.literal(true) })),
   },
   /** The email agent: a bot that uses an inbox service's MCP server for its own inbox. */
   emailAgent: {

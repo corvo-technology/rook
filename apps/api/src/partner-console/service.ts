@@ -1,4 +1,5 @@
 import type {
+  PartnerAlertKind,
   PartnerConsoleCustomerDetailSchema,
   PartnerConsoleCustomerSchema,
   PartnerConsoleIntegrationSchema,
@@ -568,6 +569,7 @@ export async function getIntegration(
       },
     ],
     webhook: { url: partner.webhookUrl, enabled: partner.webhookUrl !== null },
+    alerts: await deps.store.alertEmailSettings(partner),
     docsUrl: new URL("/api/partner/v1", deps.webOrigin).toString(),
   };
 }
@@ -634,6 +636,17 @@ export async function setIntegrationWebhook(
     detail: { enabled: url !== null },
   });
   return { url, enabled: url !== null };
+}
+
+/** Turns the email for one kind of alert on or off; the app always shows the alert. */
+export async function setIntegrationAlertEmail(
+  deps: PartnerConsoleDeps,
+  scope: PartnerScope,
+  input: { partnerId: string; kind: PartnerAlertKind; email: boolean },
+): Promise<{ ok: true }> {
+  const partner = await requirePartner(deps, scope, input.partnerId);
+  await deps.store.setAlertEmail(partner, input.kind, input.email);
+  return { ok: true };
 }
 
 /** Embedded partners only: the fund, the plan and each customer's use, in credits. */

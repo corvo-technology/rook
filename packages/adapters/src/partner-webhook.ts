@@ -139,6 +139,8 @@ export function createPartnerWebhookReconciler(deps: {
   now?: () => Date;
   /** Starts the auto top-ups owed; only where there is billing to start them through. */
   autoTopup?: () => Promise<unknown>;
+  /** Tells the partner's people (inbox and email) about what the pass above recorded. */
+  alerts?: () => Promise<unknown>;
 }) {
   return () =>
     runAsSystem("find partner credit notices", async () => {
@@ -157,6 +159,7 @@ export function createPartnerWebhookReconciler(deps: {
         ...(await claimPartnerCreditNotices(deps.prisma, now)),
       ];
       await deps.autoTopup?.().catch((error) => getLogger().error("partner auto top-up", error));
+      await deps.alerts?.().catch((error) => getLogger().error("partner alerts", error));
       for (const id of claimed) {
         await enqueuePartnerWebhook(deps.jobs, id).catch((error) =>
           getLogger().error("partner webhook enqueue", error),

@@ -5,6 +5,7 @@ import {
   failAutoTopup,
   MAX_TOPUP_ATTEMPTS,
   partnerWalletOrganization,
+  recordPartnerAlert,
   runAsSystem,
 } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
@@ -21,6 +22,13 @@ export interface AutoTopupDeps {
     partnerId: string;
     kind: AuditKind;
     detail: Record<string, unknown>;
+  }): Promise<void>;
+  /** Tells the partner's people: a top-up started, or one gave up after its last attempt. */
+  alert(event: {
+    partnerId: string;
+    kind: "partner.autotopup_started" | "partner.autotopup_failed";
+    key: string;
+    payload: Record<string, unknown>;
   }): Promise<void>;
 }
 
@@ -41,6 +49,12 @@ export async function runAutoTopups(deps: AutoTopupDeps): Promise<number> {
         kind: "credit.autotopup_started",
         detail: { amountMinor: due.amountMinor, attempt: due.attempt },
       });
+      await deps.alert({
+        partnerId: due.partnerId,
+        kind: "partner.autotopup_started",
+        key: due.attemptId,
+        payload: { amountMinor: due.amountMinor },
+      });
     } catch (error) {
       getLogger().error("partner auto top-up failed", error);
       await deps.fail(due.attemptId, now);
@@ -53,6 +67,15 @@ export async function runAutoTopups(deps: AutoTopupDeps): Promise<number> {
           final: due.attempt >= MAX_TOPUP_ATTEMPTS,
         },
       });
+      // A retry follows on its own; only the last failure needs a person.
+      if (due.attempt >= MAX_TOPUP_ATTEMPTS) {
+        await deps.alert({
+          partnerId: due.partnerId,
+          kind: "partner.autotopup_failed",
+          key: due.attemptId,
+          payload: { amountMinor: due.amountMinor },
+        });
+      }
     }
   }
   return started;
@@ -104,6 +127,10 @@ export function createAutoTopupRunner(prisma: PrismaClient, billing: TopupBillin
         });
         await billing.purchaseCredits(actor, { amountCents: due.amountMinor, monthly: false });
       },
+      alert: (event) =>
+        system(async () => {
+          await recordPartnerAlert(prisma, event.partnerId, { ...event, externalTenantId: "" });
+        }),
       audit: (event) =>
         system(async () => {
           await prisma.partnerAuditEvent.create({

@@ -47,6 +47,7 @@ export * from "./model-roles.js";
 export * from "./notifications.js";
 export * from "./onboarding-profile.js";
 export * from "./partner-accounts.js";
+export * from "./partner-alerts.js";
 export * from "./partner-allowance.js";
 export * from "./partner-credit-enforcement.js";
 export * from "./partner-credit-rules.js";

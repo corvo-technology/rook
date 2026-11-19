@@ -1,4 +1,5 @@
 ---
+import { COUNTRY_CODES, callingCode } from "@corvo/core/phone";
 import { LOCALES, LOCALE_HTML_LANG } from "../i18n/locales";
 import type { Locale } from "../i18n/locales";
 import { getLaunchCopy } from "../i18n/launch";
@@ -20,6 +21,11 @@ const launch = getLaunchCopy(locale);
 const alternates = Object.fromEntries(LOCALES.map((l) => [l, `${getPartnersCopy(l).path}/`]));
 const form = copy.form;
 const FORM_STEPS = 3;
+const DEFAULT_COUNTRY: Record<Locale, string> = { en: "US", pt: "BR", es: "ES", fr: "FR", de: "DE", ja: "JP", zh: "CN" };
+const countryNames = new Intl.DisplayNames([LOCALE_HTML_LANG[locale]], { type: "region" });
+const countries = COUNTRY_CODES.map((code) => ({ code, name: countryNames.of(code) ?? code })).sort((a, b) =>
+  a.name.localeCompare(b.name, LOCALE_HTML_LANG[locale]),
+);
 const HEROES = ["menta", "azul", "laranja", "violeta", "vermelho"] as const;
 const NAV = [
   { section: "como", hue: "menta", label: copy.nav.how },
@@ -257,6 +263,8 @@ const RANGES = ["0-50", "50-200", "200-1000", "1000+"] as const;
             data-success={form.success}
             data-required-error={form.requiredError}
             data-email-error={form.emailError}
+            data-phone-error={form.phoneError}
+            data-keep-country={locale === "pt" ? "" : undefined}
             data-consent-error={form.consentError}
             data-error={form.error}
           >
@@ -276,8 +284,18 @@ const RANGES = ["0-50", "50-200", "200-1000", "1000+"] as const;
                 <small data-error-for="email" role="alert"></small>
               </label>
               <label>
+                <span>{form.country}</span>
+                <select name="country" autocomplete="country">
+                  {countries.map(({ code, name }) => <option value={code} selected={code === DEFAULT_COUNTRY[locale]}>{name}</option>)}
+                </select>
+              </label>
+              <label>
                 <span>{form.whatsapp}</span>
-                <input type="tel" name="whatsapp" maxlength="40" autocomplete="tel" inputmode="tel" />
+                <div class="partners-phone">
+                  <span data-dial aria-hidden="true">+{callingCode(DEFAULT_COUNTRY[locale])}</span>
+                  <input type="tel" name="whatsapp" maxlength="24" autocomplete="tel-national" inputmode="tel" />
+                </div>
+                <small data-error-for="whatsapp" role="alert"></small>
               </label>
               <label>
                 <span>{form.company}</span>
@@ -304,10 +322,6 @@ const RANGES = ["0-50", "50-200", "200-1000", "1000+"] as const;
                   <option value=""></option>
                   {RANGES.map((value, index) => <option value={value}>{form.customerRanges[index]}</option>)}
                 </select>
-              </label>
-              <label>
-                <span>{form.country}</span>
-                <input type="text" name="country" maxlength="80" autocomplete="country-name" />
               </label>
             </div>
             <div class="partners-step" data-step="3" hidden>
@@ -365,6 +379,8 @@ const RANGES = ["0-50", "50-200", "200-1000", "1000+"] as const;
 </BaseLayout>
 
 <script>
+  import { callingCode, formatNational, isCountryCode, isValidNational, toE164 } from "@corvo/core/phone";
+
   // Blocks below the fold rise once as they arrive. Everything stays visible until the first scroll.
   if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches && "IntersectionObserver" in window) {
     const first = new AbortController();
@@ -402,7 +418,10 @@ const RANGES = ["0-50", "50-200", "200-1000", "1000+"] as const;
     const label = form.querySelector<HTMLElement>("[data-progress-label]")!;
     const bar = form.querySelector<HTMLElement>("[data-progress-bar]")!;
     const failure = form.querySelector<HTMLElement>("[data-form-error]")!;
-    const { requiredError = "", emailError = "", consentError = "" } = form.dataset;
+    const { requiredError = "", emailError = "", phoneError = "", consentError = "" } = form.dataset;
+    const country = form.elements.namedItem("country") as HTMLSelectElement;
+    const phone = control("whatsapp");
+    const dial = form.querySelector<HTMLElement>("[data-dial]")!;
     let current = 0;
 
     const value = (name: string) => control(name).value.trim();
@@ -410,11 +429,33 @@ const RANGES = ["0-50", "50-200", "200-1000", "1000+"] as const;
       form.querySelector<HTMLElement>(`[data-error-for="${name}"]`)!.textContent = message;
       control(name).setAttribute("aria-invalid", message ? "true" : "false");
     };
+    // The prefix and the layout follow the country; the browser's region wins over the page language.
+    const layout = () => {
+      dial.textContent = `+${callingCode(country.value) ?? ""}`;
+      phone.value = formatNational(country.value, phone.value);
+    };
+    const region = [...navigator.languages]
+      .map((tag) => {
+        try {
+          return new Intl.Locale(tag).region;
+        } catch {
+          return undefined;
+        }
+      })
+      .find((code) => code && isCountryCode(code));
+    if (region && form.dataset.keepCountry === undefined) country.value = region;
+    country.addEventListener("change", layout);
+    phone.addEventListener("input", () => {
+      phone.value = formatNational(country.value, phone.value);
+      fail("whatsapp", "");
+    });
+    layout();
     // Each step checks only its own fields; the first bad one takes focus.
     const check: Array<() => void> = [
       () => {
         fail("name", value("name") ? "" : requiredError);
         fail("email", /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value("email")) ? "" : emailError);
+        fail("whatsapp", !value("whatsapp") || isValidNational(country.value, value("whatsapp")) ? "" : phoneError);
         fail("company", value("company") ? "" : requiredError);
       },
       () => {},
@@ -449,11 +490,11 @@ const RANGES = ["0-50", "50-200", "200-1000", "1000+"] as const;
           body: JSON.stringify({
             name: value("name"),
             email: value("email"),
-            whatsapp: value("whatsapp"),
+            whatsapp: toE164(country.value, value("whatsapp")) ?? "",
             company: value("company"),
             website: value("website"),
             partnerType: value("partnerType"),
-            country: value("country"),
+            country: country.value,
             customers: value("customers") || undefined,
             message: value("message"),
             consent: true,

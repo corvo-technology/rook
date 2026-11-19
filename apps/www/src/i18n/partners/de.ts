@@ -183,6 +183,7 @@ const de: PartnersCopy = {
     error: "Das Senden hat gerade nicht geklappt. Versuchen Sie es gleich noch einmal.",
     requiredError: "Bitte füllen Sie dieses Feld aus.",
     emailError: "Geben Sie eine gültige E-Mail ein.",
+    phoneError: "Geben Sie eine gültige Nummer für das Land ein.",
     consentError: "Wir benötigen Ihre Einwilligung, um fortzufahren.",
   },
 };

@@ -9,6 +9,11 @@
       "development": "./src/index.ts",
       "default": "./src/index.ts"
     },
+    "./phone": {
+      "types": "./src/phone.ts",
+      "development": "./src/phone.ts",
+      "default": "./src/phone.ts"
+    },
     "./user-error": {
       "types": "./src/user-error.ts",
       "development": "./src/user-error.ts",

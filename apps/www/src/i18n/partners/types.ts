@@ -61,6 +61,7 @@ export type PartnersCopy = {
     error: string;
     requiredError: string;
     emailError: string;
+    phoneError: string;
     consentError: string;
   };
 };

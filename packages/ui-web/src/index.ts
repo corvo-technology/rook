@@ -54,6 +54,8 @@ export { GroupAvatar, type GroupAvatarMember, type GroupAvatarProps } from "./gr
 export { InlineConfirm, type InlineConfirmProps } from "./inline-confirm.js";
 export { cn } from "./lib/utils.js";
 export { ModelThinkingOptions } from "./model-thinking-options.js";
+export type { PlanCardLabels, PlanCardsProps, PlanChoice } from "./plan-cards.js";
+export { PlanCards } from "./plan-cards.js";
 export type { RookGlyphState } from "./rook-glyph.js";
 export { RookGlyph } from "./rook-glyph.js";
 export {

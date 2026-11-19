@@ -243,6 +243,7 @@ export function unattendedTriggerToolRequiresApproval(
 const OWN_STATE_RESULT_TOOLS = new Set([
   "ask_user",
   "connect_app",
+  "propose_host_action",
   "attach_file",
   "end_call",
   "generate_secret",

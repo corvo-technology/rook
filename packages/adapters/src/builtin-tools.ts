@@ -457,6 +457,20 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "propose_host_action",
+    description:
+      "Offer the person an action the page they are using can carry out, from the list given in this turn. A card shows it and nothing happens until they confirm, so propose it and say what it will do; never say it is done. Use only a listed name, with params that fit its schema.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        action: { type: "string", minLength: 1, maxLength: 40 },
+        params: { type: "object", additionalProperties: true },
+      },
+      required: ["action"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "ask_user",
     description:
       "Ask the user one short multiple-choice question with tappable options, then wait for their selection. Use this instead of asking them to type when two to four concise choices are enough.",

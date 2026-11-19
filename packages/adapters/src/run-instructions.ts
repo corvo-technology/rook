@@ -388,6 +388,8 @@ export function turnNote(parts: {
   repeatHint?: string | undefined;
   redactedTicketContext?: string | undefined;
   redactedRecalledMemory?: string | undefined;
+  /** What the partner page sent for this turn, already fenced. */
+  hostContext?: string | undefined;
 }): string {
   return [
     parts.replyContext,
@@ -403,6 +405,7 @@ export function turnNote(parts: {
     parts.repeatHint,
     parts.redactedTicketContext,
     parts.redactedRecalledMemory,
+    parts.hostContext,
   ]
     .filter(Boolean)
     .join("\n\n");

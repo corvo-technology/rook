@@ -14,6 +14,7 @@ import { databaseTools } from "./run-tools-databases.js";
 import { documentTools } from "./run-tools-documents.js";
 import { fileTools } from "./run-tools-files.js";
 import { fleetTools } from "./run-tools-fleet.js";
+import { hostActionTools } from "./run-tools-host.js";
 import { cloudAgentTool, connectorTool, integrationTools } from "./run-tools-integrations.js";
 import { memoryTools } from "./run-tools-memory.js";
 import { messagingTools } from "./run-tools-messaging.js";
@@ -28,6 +29,7 @@ const TOOL_HANDLERS = new Map<string, ToolHandler>([
   ...Object.entries(wikiTools),
   ...Object.entries(documentTools),
   ...Object.entries(integrationTools),
+  ...Object.entries(hostActionTools),
   ...Object.entries(taskTools),
   ...Object.entries(messagingTools),
   ...Object.entries(secretTools),

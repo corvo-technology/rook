@@ -23,6 +23,7 @@ import { getLogger } from "@corvo/logging";
 import { ORPCError } from "@orpc/server";
 import { accessRevocations } from "../access-revocations.js";
 import { approvalRefusal, approvalThreadId } from "../approval-access.js";
+import { isPartnerCustomer, resolveHostAction } from "../host-actions.js";
 import { listPinnedMessages, pinThreadMessage } from "../message-pins.js";
 import { requireSpacePermission } from "../space-owner.js";
 import { assertTeachingSendAllowed } from "../taught-skills.js";
@@ -215,7 +216,14 @@ export function threadsRoutes(ctx: RouterContext) {
           },
           context.actor,
           target,
-          input,
+          // A page's context and actions are for the frame a partner embedded, nobody else's.
+          {
+            ...input,
+            host:
+              input.host && (await isPartnerCustomer(deps.prisma, context.actor))
+                ? input.host
+                : undefined,
+          },
           target.kind === "bot"
             ? (runId) => releaseComputerControl(deps, context.actor, target.botId, "done", runId)
             : undefined,
@@ -247,6 +255,10 @@ export function threadsRoutes(ctx: RouterContext) {
           });
         }
         return { ok: true as const, runIds: result.runIds };
+      }),
+      resolveHostAction: authed.threads.resolveHostAction.handler(async ({ context, input }) => {
+        await resolveHostAction(deps, context.actor, input);
+        return { ok: true as const };
       }),
       pin: authed.threads.pin.handler(async ({ context, input }) => {
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);

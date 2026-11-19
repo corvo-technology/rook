@@ -2376,6 +2376,7 @@ msgstr "スペースを設定"
 
 #: src/pages/shell/agent-import-undo.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/host-action-card.tsx
 msgid "Confirm"
 msgstr "確認"
 
@@ -3916,6 +3917,7 @@ msgstr "アカウントをお持ちでないですか？"
 #: src/pages/RoutineCard.tsx
 #: src/pages/RoutineTimeGrid.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
+#: src/pages/shell/host-action-card.tsx
 #: src/pages/shell/import-setup-card.tsx
 #: src/pages/SquadPage.tsx
 #: src/pages/Workflows.tsx
@@ -6376,6 +6378,7 @@ msgstr "プラグインカタログにありません"
 #: src/components/AskCard.tsx
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/onboarding/ComputerStep.tsx
+#: src/pages/shell/host-action-card.tsx
 #: src/pages/shell/message-cards.tsx
 msgid "Not now"
 msgstr "今はしない"
@@ -8915,6 +8918,10 @@ msgstr "テスト実行"
 msgid "Testing…"
 msgstr "テスト中…"
 
+#: src/pages/shell/host-action-card.tsx
+msgid "That didn't work"
+msgstr "うまくいきませんでした"
+
 #: src/pages/partner/PartnerTemplatePanel.tsx
 msgid "That file is not a valid template"
 msgstr "このファイルは有効なテンプレートではありません"
@@ -9783,6 +9790,10 @@ msgstr "{relayedVia} 経由"
 #: src/pages/SpaceRolesSettings.tsx
 msgid "View usage"
 msgstr "使用状況を見る"
+
+#: src/pages/shell/host-context-chip.tsx
+msgid "Viewing: {label}"
+msgstr "表示中: {label}"
 
 #: src/pages/platform/PricingSection.tsx
 #: src/pages/platform/SimulatorSection.tsx

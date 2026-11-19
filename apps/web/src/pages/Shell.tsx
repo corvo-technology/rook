@@ -67,7 +67,8 @@ import {
   subscribeComposerEnterToSend,
 } from "../lib/composer-enter-to-send-pref";
 import { desktopBridge } from "../lib/desktop";
-import { isEmbedded } from "../lib/embed";
+import { isCompactEmbed, isEmbedded } from "../lib/embed";
+import { onHostAsk } from "../lib/embed-host";
 import { embedTabs } from "../lib/embedded-home";
 import { findFirstBot } from "../lib/first-bot";
 import { groupRecipient } from "../lib/group-recipient";
@@ -100,6 +101,7 @@ import { ComputerOverlay } from "./shell/computer-overlay";
 import { ComputerPanel } from "./shell/computer-panel";
 import type { CreateBotPanelInput } from "./shell/create-bot-panel";
 import { EmbedTabs } from "./shell/embed-tabs";
+import { HostContextChip } from "./shell/host-context-chip";
 import { ShellDialogs, useShellDialogs } from "./shell/shell-dialogs";
 import { PeerConversationOverlay } from "./shell/shell-overlays";
 import { ShellSidebar } from "./shell/shell-sidebar";
@@ -270,6 +272,7 @@ function SpaceShell({ page }: { page?: ReactNode }) {
     useQuery(queries.voice.status.queryOptions()).data ?? null;
   const { mobileSidebarOpen, setMobileSidebarOpen, swipeHandlers } = useMobileSidebar();
   const embedded = isEmbedded();
+  const compactEmbed = isCompactEmbed();
   const { pathname } = useLocation();
   const chiefId = findFirstBot(bots.map((bot) => ({ ...bot, spawnKey: bot.spawnKey ?? null })))?.id;
   const chiefBot = bots.find((bot) => bot.id === chiefId) ?? bots[0];
@@ -656,6 +659,10 @@ function SpaceShell({ page }: { page?: ReactNode }) {
     flushPendingBrowserNotifications,
   });
   const { sending, sendError, stopRun } = composer;
+  // The partner's own quick-ask box, and the line that follows a confirmed action, send as the
+  // person's next message.
+  const sendHostAsk = composer.sendMessage;
+  useEffect(() => onHostAsk((text) => void sendHostAsk(text, [], newClientId())), [sendHostAsk]);
   function openChatSettings(kind: "bot" | "group", id: string) {
     const destKey =
       userId && bootstrapMe?.spaceId
@@ -911,7 +918,7 @@ function SpaceShell({ page }: { page?: ReactNode }) {
       {bootstrapMe !== undefined ? (
         <HostComputerPrompt initialMe={bootstrapMe ?? undefined} onMeUpdated={setBootstrapMe} />
       ) : null}
-      {embedded ? (
+      {embedded && compactEmbed ? null : embedded ? (
         <EmbedTabs
           tabs={embedTabs({
             hidden: bootstrapMe?.partner?.hide ?? [],
@@ -1160,6 +1167,7 @@ function SpaceShell({ page }: { page?: ReactNode }) {
                     <WorkingLine bots={workingBots} />
                   </div>
                 ) : null}
+                {compactEmbed ? <HostContextChip /> : null}
                 <Composer
                   key={inGroup ? `group:${groupId}` : botDraftKey(String(active?.id))}
                   draftKey={draftKey}

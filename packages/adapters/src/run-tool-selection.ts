@@ -132,6 +132,8 @@ export function selectBuiltinToolsForRun(options: {
   strongerModelAvailable?: boolean;
   /** An outside person's message on a linked number woke this run: only the visitor allowlist. */
   visitorRun?: boolean;
+  /** The partner's page that sent this turn registered actions it can carry out. */
+  hostActionsOffered?: boolean;
 }) {
   const disabled = disabledBuiltinToolSet(options.disabledBuiltinTools);
   const fleetToolsAllowed = isOwnerStartedRun(options.trigger, Boolean(options.followUpFromUser));
@@ -155,6 +157,7 @@ export function selectBuiltinToolsForRun(options: {
       (options.trigger !== "created" || CREATED_RUN_TOOL_NAMES.has(tool.name)) &&
       (!FLEET_TOOL_NAMES_SET.has(tool.name) ||
         (Boolean(options.fleetManagement) && fleetToolsAllowed)) &&
+      (options.hostActionsOffered || tool.name !== "propose_host_action") &&
       (options.workflowContinues || tool.name !== "workflow_stop") &&
       (options.routedRun || tool.name !== "pass") &&
       (options.strongerModelAvailable || tool.name !== "request_stronger_model") &&

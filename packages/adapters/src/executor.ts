@@ -43,7 +43,9 @@ import {
   redactSecrets,
   renderBotDirectory,
   renderBotGroupDirectory,
+  renderHostContext,
   SPACE_PAUSED_RUN_ERROR,
+  sanitizeHostTurn,
   usageTokens,
   userRunError,
   userTurnMessageForRun,
@@ -1259,6 +1261,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
               (await workflowContinuesAfter(deps.prisma, run).catch(() => false)),
             routedRun,
             strongerModelAvailable: strongerTier !== null,
+            hostActionsOffered: Boolean(sanitizeHostTurn(run.hostContext)?.actions?.length),
           }),
           // Cross-owner agent connections only exist for chat-linked bots.
           ...(hasMessagingIdentity &&
@@ -1669,6 +1672,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const redactedRecalledMemory = recalledMemory
           ? redactSecrets(recalledMemory, runSecrets)
           : undefined;
+        const hostContext = renderHostContext(sanitizeHostTurn(run.hostContext));
         // Everything below changes without the bot's setup changing, so it rides in the
         // transcript: the system prompt and the earlier conversation stay byte-stable.
         const liveContext = liveContextBlock({
@@ -1707,6 +1711,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
           repeatHint,
           redactedTicketContext,
           redactedRecalledMemory,
+          hostContext,
         ]
           .filter(Boolean)
           .join("\n\n");
@@ -1734,6 +1739,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
               repeatHint,
               redactedTicketContext,
               redactedRecalledMemory,
+              hostContext,
             })
           : undefined;
 

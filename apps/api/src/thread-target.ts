@@ -4,6 +4,7 @@ import { cancelComputerRunWork, screenLeaseIdForRun, toComputerRef } from "@corv
 import type {
   Actor,
   GroupMember,
+  HostTurn,
   MessageBlock,
   MessageReaction,
   ReplyPreview,
@@ -28,6 +29,7 @@ import {
   resolveMentionedOutsideBotIds,
   runFailureError,
   runReadsThreadHistory,
+  sanitizeHostTurn,
 } from "@corvo/core";
 import { deriveMessageQuote, messageReplyPreview } from "@corvo/core/message-quote";
 import type { Prisma, PrismaClient, ThreadEvents } from "@corvo/db";
@@ -823,6 +825,7 @@ export async function sendThreadMessage(
     replyQuote?: string;
     threadRootId?: string;
     clientNonce?: string;
+    host?: HostTurn;
   },
   releaseTakeover?: (runId: string) => Promise<void>,
 ) {
@@ -837,6 +840,8 @@ export async function sendThreadMessage(
   // paint; without it the bubble shows loose until a refetch reads the nonce.
   const callId = callIdFromClientNonce(input.clientNonce);
   const requestedReplyQuote = input.replyQuote?.trim() || undefined;
+  // What the partner's page said is limited and flattened here, once, before anything stores it.
+  const host = sanitizeHostTurn(input.host);
   if (requestedReplyQuote && !input.replyToMessageId) {
     throw new ORPCError("BAD_REQUEST", { message: "replyQuote requires replyToMessageId." });
   }
@@ -1109,6 +1114,7 @@ export async function sendThreadMessage(
             trigger: "user",
             clientNonce: sendRunClientNonce(input.clientNonce, message.id),
             sourceMessageId: message.id,
+            ...(host ? { hostContext: host as Prisma.InputJsonObject } : {}),
           },
         });
         await tx.message.update({ where: { id: message.id }, data: { runId: run.id } });
@@ -1334,6 +1340,7 @@ export async function sendThreadMessage(
             trigger: "user",
             clientNonce: sendRunClientNonce(input.clientNonce, message.id, botId),
             sourceMessageId: message.id,
+            ...(host ? { hostContext: host as Prisma.InputJsonObject } : {}),
           },
         });
         runs.push(run);

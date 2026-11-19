@@ -170,6 +170,7 @@ import {
   SpaceHintSchema,
   ThreadMessageSchema,
 } from "./events.js";
+import { HostActionOutcomeSchema, HostActionSchema, HostTurnSchema } from "./host.js";
 import { Id, IsoDate } from "./ids.js";
 import {
   IntegrationProviderConfigSchema,
@@ -332,6 +333,8 @@ const threadSendInput = threadTarget
     /** Posts into the thread of this channel message instead of the main column. */
     threadRootId: Id.optional(),
     clientNonce: z.string().min(1).max(200).optional(),
+    /** What the partner's page says about where the person is and what it can do for them. */
+    host: HostTurnSchema.optional(),
   })
   .superRefine((input, ctx) => {
     const text = input.text?.trim() ?? "";
@@ -875,6 +878,17 @@ export const appContract = {
         }),
       )
       .output(z.object({ ok: z.literal(true), runIds: z.array(Id).optional() })),
+    /** The person's decision on an action card; the partner's page reports how it went. */
+    resolveHostAction: oc
+      .input(
+        botId.safeExtend({
+          messageId: Id,
+          actionId: z.string().min(1).max(64),
+          actionName: HostActionSchema.shape.name,
+          outcome: HostActionOutcomeSchema,
+        }),
+      )
+      .output(z.object({ ok: z.literal(true) })),
     /** Pins a message to the channel, or takes it off again. */
     pin: oc
       .input(threadTarget.safeExtend({ messageId: Id, pinned: z.boolean() }))

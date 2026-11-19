@@ -2376,6 +2376,7 @@ msgstr "配置空间"
 
 #: src/pages/shell/agent-import-undo.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/host-action-card.tsx
 msgid "Confirm"
 msgstr "确认"
 
@@ -3916,6 +3917,7 @@ msgstr "还没有账户？"
 #: src/pages/RoutineCard.tsx
 #: src/pages/RoutineTimeGrid.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
+#: src/pages/shell/host-action-card.tsx
 #: src/pages/shell/import-setup-card.tsx
 #: src/pages/SquadPage.tsx
 #: src/pages/Workflows.tsx
@@ -6376,6 +6378,7 @@ msgstr "不在插件目录中"
 #: src/components/AskCard.tsx
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/onboarding/ComputerStep.tsx
+#: src/pages/shell/host-action-card.tsx
 #: src/pages/shell/message-cards.tsx
 msgid "Not now"
 msgstr "暂不"
@@ -8915,6 +8918,10 @@ msgstr "测试运行"
 msgid "Testing…"
 msgstr "正在测试…"
 
+#: src/pages/shell/host-action-card.tsx
+msgid "That didn't work"
+msgstr "没有成功"
+
 #: src/pages/partner/PartnerTemplatePanel.tsx
 msgid "That file is not a valid template"
 msgstr "该文件不是有效的模板"
@@ -9783,6 +9790,10 @@ msgstr "经由 {relayedVia}"
 #: src/pages/SpaceRolesSettings.tsx
 msgid "View usage"
 msgstr "查看用量"
+
+#: src/pages/shell/host-context-chip.tsx
+msgid "Viewing: {label}"
+msgstr "正在查看：{label}"
 
 #: src/pages/platform/PricingSection.tsx
 #: src/pages/platform/SimulatorSection.tsx

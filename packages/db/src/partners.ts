@@ -1,7 +1,6 @@
 import { PARTNER_SCOPES } from "@corvo/contracts";
 import {
   generatePartnerKey,
-  isPartnerTestKey,
   partnerKeyPrefix,
   verifyPartnerKey,
 } from "@corvo/core/node/partner-key";
@@ -79,47 +78,16 @@ export async function setPartnerEnabled(
   if (result.count === 0) throw new Error(`Unknown partner: ${slug}`);
 }
 
-/** Replaces the partner's test key; the live key is untouched and the old test key stops working. */
-export async function rotatePartnerTestKey(
-  prisma: PrismaClient,
-  slug: string,
-): Promise<{ partner: Partner; key: string }> {
-  const issued = generatePartnerKey({ test: true });
-  const result = await prisma.partner.updateMany({
-    where: { slug },
-    data: { testKeyPrefix: issued.prefix, testKeyHash: issued.hash },
-  });
-  if (result.count === 0) throw new Error(`Unknown partner: ${slug}`);
-  const partner = await prisma.partner.findUniqueOrThrow({ where: { slug } });
-  return { partner, key: issued.key };
-}
-
-/**
- * The partner a key belongs to and whether it is the test key, or null for a key that is unknown,
- * wrong or disabled. A test key only ever matches a test key and a live key a live one.
- */
-export async function authenticatePartnerKey(
-  prisma: PrismaClient,
-  key: string,
-): Promise<(Partner & { testMode: boolean }) | null> {
-  const prefix = partnerKeyPrefix(key);
-  if (prefix === null) return null;
-  const test = isPartnerTestKey(key);
-  const partner = await prisma.partner.findUnique({
-    where: test ? { testKeyPrefix: prefix } : { keyPrefix: prefix },
-  });
-  const hash = test ? partner?.testKeyHash : partner?.keyHash;
-  if (!partner?.enabled || !hash || !verifyPartnerKey(key, hash)) return null;
-  return { ...partner, testMode: test };
-}
-
-/** The partner a live key belongs to, or null for a key that is unknown, wrong or disabled. */
+/** The partner a key belongs to, or null for a key that is unknown, wrong or disabled. */
 export async function authenticatePartner(
   prisma: PrismaClient,
   key: string,
 ): Promise<Partner | null> {
-  const found = await authenticatePartnerKey(prisma, key);
-  return found && !found.testMode ? found : null;
+  const prefix = partnerKeyPrefix(key);
+  if (prefix === null) return null;
+  const partner = await prisma.partner.findUnique({ where: { keyPrefix: prefix } });
+  if (!partner?.enabled || !verifyPartnerKey(key, partner.keyHash)) return null;
+  return partner;
 }
 
 /** The account with this email, for naming whose credit pays for a partner. */
@@ -148,20 +116,6 @@ export async function setPartnerTemplateBySlug(
     data: { template: template as Prisma.InputJsonValue },
   });
   return result.count > 0;
-}
-
-/** Sets or removes (null) where the partner is told about what its test customers do. */
-export async function setPartnerTestWebhookUrl(
-  prisma: PrismaClient,
-  slug: string,
-  url: string | null,
-): Promise<Partner> {
-  const result = await prisma.partner.updateMany({
-    where: { slug },
-    data: { testWebhookUrl: url },
-  });
-  if (result.count === 0) throw new Error(`Unknown partner: ${slug}`);
-  return prisma.partner.findUniqueOrThrow({ where: { slug } });
 }
 
 /** Sets or removes (null) where the partner is told about its customers' credit. */

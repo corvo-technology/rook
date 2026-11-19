@@ -9,7 +9,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 
 const platform = vi.hoisted(() => ({
   partnerPricing: { get: vi.fn(), history: vi.fn(), publish: vi.fn(), simulate: vi.fn() },
-  partners: { list: vi.fn(), create: vi.fn(), setTestCap: vi.fn() },
+  partners: { list: vi.fn(), create: vi.fn() },
   partnerPlan: { set: vi.fn() },
   partnerBranding: { get: vi.fn() },
   waitlist: { list: vi.fn(), decide: vi.fn() },
@@ -154,9 +154,6 @@ beforeEach(() => {
       fundPercent: 60,
       chargedCredits: 10_000,
       costCredits: 6_000,
-      testCustomers: 0,
-      testCallsToday: 0,
-      testDailyCap: 300,
     },
     {
       id: "p2",
@@ -168,9 +165,6 @@ beforeEach(() => {
       fundPercent: null,
       chargedCredits: 1_000,
       costCredits: 2_500,
-      testCustomers: 0,
-      testCallsToday: 0,
-      testDailyCap: 300,
     },
   ]);
   platform.partners.create.mockReset().mockResolvedValue({ partnerId: "p9", emailed: true });
@@ -353,25 +347,6 @@ it("shows each partner's month and marks a negative margin", async () => {
   expect(alpha?.querySelector("[data-negative]")).toBeNull();
   expect(beta?.textContent).toContain("White label");
   expect(beta?.querySelector("[data-negative]")?.textContent).toBe("-$15.00");
-});
-
-it("shows a partner's test calls today and saves a new daily cap", async () => {
-  platform.partners.setTestCap.mockReset().mockResolvedValue({ ok: true });
-  await open("/app/platform/partners");
-  const row = container.querySelector('[data-testid="platform-partner-alpha"]');
-  expect(row?.textContent).toContain("0 /");
-  const cap = row?.querySelector('input[type="number"]') as HTMLInputElement;
-  expect(cap.value).toBe("300");
-  await act(async () => change(cap, "50"));
-  await act(async () => {
-    cap.focus();
-    cap.blur();
-  });
-  await settle();
-  expect(platform.partners.setTestCap).toHaveBeenCalledWith(
-    { partnerId: "p1", cap: 50 },
-    expect.anything(),
-  );
 });
 
 it("reads a white label partner's host and its state, and asks nothing for the others", async () => {

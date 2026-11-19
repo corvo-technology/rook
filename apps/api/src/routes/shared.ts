@@ -44,7 +44,6 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
         },
         select: {
           ownerUserId: true,
-          testMode: true,
           partner: { select: { name: true, template: true } },
           members: { where: { userId: actor.userId }, select: { role: true }, take: 1 },
         },
@@ -127,7 +126,6 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
     partner: partner
       ? {
           name: partner.partner.name,
-          ...(partner.testMode ? { test: true } : {}),
           hide: [
             ...new Set([...(partnerTemplate?.hide ?? []), ...(partnerRole?.hide ?? [])]),
           ] as NonNullable<NonNullable<Me["partner"]>["hide"]>,

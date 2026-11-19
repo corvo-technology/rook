@@ -50,8 +50,6 @@ export interface ExecutorDeps {
   billingEnabled?: boolean;
   /** The partner's state for a space that belongs to a partner's customer; null for any other. */
   spacePartnerState?(spaceId: string): Promise<"enabled" | "suspended" | "inactive" | null>;
-  /** True for a customer made with a partner's test key: cheap model, daily cap, never charged. */
-  spaceIsPartnerTest?(spaceId: string): Promise<boolean>;
   deploymentModelKey?: string;
   /** The deployment default model can run; see resolveDeploymentModel. */
   deploymentModelConfigured?: boolean;

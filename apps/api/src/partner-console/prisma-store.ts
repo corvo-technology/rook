@@ -10,7 +10,6 @@ import {
   configurePartnerCommerce,
   listOwnedPartnerTenants,
   listPartnerMembers,
-  listPartnerTestTenants,
   PartnerAllowanceRefused,
   partnerAlertEmailSettings,
   partnerFund,
@@ -18,15 +17,12 @@ import {
   purgeExpiredEntryCodes,
   readCatalog,
   readPartnerMarkups,
-  removePartnerTestTenants,
   rotatePartnerKey,
-  rotatePartnerTestKey,
   runAsSystem,
   runIdempotent,
   setPartnerAlertEmail,
   setPartnerTemplateById,
   setPartnerTenantState,
-  setPartnerTestWebhookUrl,
   setPartnerWebhookUrl,
   summarizePartnerEvents,
 } from "@corvo/db";
@@ -56,8 +52,6 @@ function toRecord(partner: {
   checkoutUrl: string | null;
   keyPrefix: string;
   webhookUrl: string | null;
-  testKeyPrefix: string | null;
-  testWebhookUrl: string | null;
   template: unknown;
   createdAt: Date;
 }): PartnerRecord {
@@ -73,8 +67,6 @@ function toRecord(partner: {
     checkoutUrl: partner.checkoutUrl,
     keyPrefix: partner.keyPrefix,
     webhookUrl: partner.webhookUrl,
-    testKeyPrefix: partner.testKeyPrefix,
-    testWebhookUrl: partner.testWebhookUrl,
     accent: template?.accent ?? null,
     chiefName: template?.chiefName ?? null,
     template: template ?? null,
@@ -123,11 +115,11 @@ export function createPrismaPartnerConsoleStore(prisma: PrismaClient): PartnerCo
         return member ? toRecord(member.partner) : null;
       }),
 
-    customerRows: (partner, now, mode = "live") =>
+    customerRows: (partner, now) =>
       system(async () => {
         const [tenants, settings, template] = await Promise.all([
           prisma.partnerTenant.findMany({
-            where: { partnerId: partner.id, testMode: mode === "test" },
+            where: { partnerId: partner.id, testMode: false },
             orderBy: [{ createdAt: "desc" }, { id: "desc" }],
             take: MAX_CUSTOMERS,
             include: {
@@ -190,19 +182,6 @@ export function createPrismaPartnerConsoleStore(prisma: PrismaClient): PartnerCo
                     : null,
                 };
                 const paused = tenant.state === "suspended";
-                // A test customer has no plan or credit to show.
-                if (tenant.testMode) {
-                  return {
-                    ...base,
-                    plan: null,
-                    planKey: null,
-                    creditUsedPct: null,
-                    creditRemaining: 0,
-                    state: paused ? "paused" : "active",
-                    lowCredit: false,
-                    test: true,
-                  };
-                }
                 if (wallet) {
                   const usage = wallet.get(tenant.externalTenantId);
                   const used = Math.round((usage?.usedUsd ?? 0) * 100);
@@ -571,28 +550,6 @@ export function createPrismaPartnerConsoleStore(prisma: PrismaClient): PartnerCo
       system(async () => {
         await setPartnerWebhookUrl(prisma, partner.slug, url);
       }),
-
-    rotateTestKey: (partner) =>
-      system(async () => {
-        const { key, partner: updated } = await rotatePartnerTestKey(prisma, partner.slug);
-        return { key, prefix: updated.testKeyPrefix ?? "" };
-      }),
-
-    setTestWebhookUrl: (partner, url) =>
-      system(async () => {
-        await setPartnerTestWebhookUrl(prisma, partner.slug, url);
-      }),
-
-    testTenants: (partner) =>
-      system(async () =>
-        (await listPartnerTestTenants(prisma, partner.id)).map((tenant) => ({
-          organizationId: tenant.organizationId,
-          ownerUserId: tenant.ownerUserId,
-        })),
-      ),
-
-    removeTestTenants: (partner, tenants) =>
-      system(() => removePartnerTestTenants(prisma, partner.id, tenants)),
 
     alertEmailSettings: (partner) => system(() => partnerAlertEmailSettings(prisma, partner.id)),
 

@@ -92,7 +92,6 @@ const toItem = (row: CustomerRow): CustomerItem => ({
   creditRemaining: row.creditRemaining,
   state: row.state,
   since: row.since.toISOString(),
-  ...(row.test ? { test: true } : {}),
 });
 
 export async function listPartners(
@@ -199,7 +198,6 @@ export async function listCustomers(
   input: {
     partnerId: string;
     filter?: CustomerFilter;
-    mode?: "live" | "test";
     q?: string;
     cursor?: string;
     limit?: number;
@@ -210,7 +208,7 @@ export async function listCustomers(
   const cursor = input.cursor ? decodeCursor(input.cursor) : null;
   if (input.cursor && !cursor) throw new PartnerConsoleError("invalid", "cursor");
   const query = input.q?.trim().toLowerCase() ?? "";
-  const matching = (await deps.store.customerRows(partner, deps.now(), input.mode ?? "live"))
+  const matching = (await deps.store.customerRows(partner, deps.now()))
     .filter((row) => matchesFilter(row, input.filter ?? "all"))
     .filter((row) => query === "" || row.name.toLowerCase().includes(query))
     .sort(compareCustomers)
@@ -572,12 +570,7 @@ export async function getIntegration(
         createdAt: (await deps.store.keyIssuedAt(partner)).toISOString(),
       },
     ],
-    testKey: {
-      prefix: partner.testKeyPrefix,
-      customers: (await deps.store.customerRows(partner, deps.now(), "test")).length,
-    },
     webhook: { url: partner.webhookUrl, enabled: partner.webhookUrl !== null },
-    testWebhook: { url: partner.testWebhookUrl },
     alerts: await deps.store.alertEmailSettings(partner),
     docsUrl: new URL("/api/partner/v1", deps.webOrigin).toString(),
   };
@@ -608,74 +601,6 @@ export async function rotateIntegrationKey(
     detail: { prefix: issued.prefix },
   });
   return issued;
-}
-
-/** Makes or replaces the test key: the live key is untouched, and the new one is returned once. */
-export async function rotateIntegrationTestKey(
-  deps: PartnerConsoleDeps,
-  scope: PartnerScope,
-  input: { partnerId: string },
-): Promise<{ key: string; prefix: string }> {
-  const partner = await requirePartner(deps, scope, input.partnerId);
-  const issued = await deps.store.rotateTestKey(partner);
-  await deps.store.audit({
-    partnerId: partner.id,
-    actorUserId: scope.actorUserId ?? null,
-    kind: "test_key.rotated",
-    detail: { prefix: issued.prefix },
-  });
-  return issued;
-}
-
-export async function setIntegrationTestWebhook(
-  deps: PartnerConsoleDeps,
-  scope: PartnerScope,
-  input: { partnerId: string; url: string | null },
-): Promise<{ url: string | null }> {
-  const partner = await requirePartner(deps, scope, input.partnerId);
-  const url = input.url === "" ? null : input.url;
-  if (url !== null && (!isHttpsUrl(url) || url.includes("{"))) {
-    throw new PartnerConsoleError("invalid", "url");
-  }
-  await deps.store.setTestWebhookUrl(partner, url);
-  await deps.store.audit({
-    partnerId: partner.id,
-    actorUserId: scope.actorUserId ?? null,
-    kind: "test_webhook.changed",
-    detail: { enabled: url !== null },
-  });
-  return { url };
-}
-
-/**
- * Deletes every test customer of the partner with its data: agents, files, computers and the
- * customer itself. Live customers are never listed, so they are never touched.
- */
-export async function clearPartnerTestData(
-  deps: PartnerConsoleDeps,
-  scope: PartnerScope,
-  input: { partnerId: string },
-): Promise<{ removed: number }> {
-  const partner = await requirePartner(deps, scope, input.partnerId);
-  const tenants = await deps.store.testTenants(partner);
-  const gone: typeof tenants = [];
-  for (const tenant of tenants) {
-    try {
-      await deps.deleteTenantContent?.(tenant.ownerUserId);
-      gone.push(tenant);
-    } catch {
-      // What could not be deleted stays; clearing again resumes from it.
-    }
-  }
-  const removed = await deps.store.removeTestTenants(partner, gone);
-  await deps.store.audit({
-    partnerId: partner.id,
-    actorUserId: scope.actorUserId ?? null,
-    kind: "test_data.cleared",
-    detail: { removed },
-  });
-  if (gone.length < tenants.length) throw new PartnerConsoleError("conflict", "partial");
-  return { removed };
 }
 
 /** What every new customer of the partner gets: agents, connector, Chief name. */

@@ -9,7 +9,7 @@ Você vai criar um cliente, aplicar um modelo de agentes, provisionar o cliente 
 
 ## 1. Crie o parceiro
 
-Com a equipe do Rook você recebe o parceiro e a **chave** (`Authorization: Bearer <chave>`). Ela aparece uma só vez; guarde-a no backend, nunca no navegador. Para trocá-la, use **Nova chave** em **Configurações > Parceria**: a antiga para de funcionar na hora. Para construir sem gastar crédito, crie também uma chave de teste: veja o [modo de teste](/partners/test-mode/).
+Com a equipe do Rook você recebe o parceiro e a **chave** (`Authorization: Bearer <chave>`). Ela aparece uma só vez; guarde-a no backend, nunca no navegador. Para trocá-la, use **Nova chave** em **Configurações > Parceria**: a antiga para de funcionar na hora.
 
 ## 2. Aplique um modelo
 

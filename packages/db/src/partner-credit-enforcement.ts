@@ -76,7 +76,6 @@ export async function assertPartnerSpendAllowed(
   now = new Date(),
 ): Promise<void> {
   const tenant = await tenantOf(prisma, organizationId);
-  // Test customers have no credit limit and run on the cheap model, whatever the partner allows.
   if (!tenant || tenant.testMode || tenant.partner.mode !== "embedded") return;
   if (
     call.model &&

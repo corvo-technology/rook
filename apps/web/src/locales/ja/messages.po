@@ -2167,10 +2167,6 @@ msgstr "会話をクリア"
 msgid "Clear filter {label}"
 msgstr "フィルター{label}を解除"
 
-#: src/pages/partner/PartnerIntegration.tsx
-msgid "Clear test data"
-msgstr "テストデータを消去"
-
 #: src/lib/server-copy.ts
 msgid "Clear the purpose"
 msgstr "目的をクリア"
@@ -3392,10 +3388,6 @@ msgstr "スペース「{space}」を作成しますか？"
 msgid "Create spaces"
 msgstr "スペースを作成"
 
-#: src/pages/partner/PartnerIntegration.tsx
-msgid "Create test key"
-msgstr "テストキーを作成"
-
 #: src/pages/Auth.tsx
 msgid "Create your account"
 msgstr "アカウントを作成"
@@ -3588,10 +3580,6 @@ msgstr "1日の上限に達しました"
 msgid "Daily spending limit"
 msgstr "1日の利用上限"
 
-#: src/pages/platform/PartnersSection.tsx
-msgid "Daily test limit"
-msgstr "1日のテスト上限"
-
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Dark"
 msgstr "ダーク"
@@ -3716,10 +3704,6 @@ msgstr "{0}を削除しますか？"
 #: src/components/AccountAccess.tsx
 msgid "Delete account"
 msgstr "アカウントを削除"
-
-#: src/pages/partner/PartnerIntegration.tsx
-msgid "Delete every test customer and their data?"
-msgstr "すべてのテスト顧客とそのデータを削除しますか？"
 
 #: src/pages/YouMemory.tsx
 msgid "Delete for good"
@@ -8946,10 +8930,6 @@ msgstr "利用規約URL"
 
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/onboarding/LocalModelChoice.tsx
-#: src/pages/partner/PartnerCustomers.tsx
-#: src/pages/partner/PartnerIntegration.tsx
-#: src/pages/platform/PartnersSection.tsx
-#: src/pages/shell/embed-tabs.tsx
 msgid "Test"
 msgstr "テスト"
 
@@ -8970,10 +8950,6 @@ msgstr "接続をテスト"
 #: src/pages/RoutineEditor.tsx
 msgid "Test run"
 msgstr "テスト実行"
-
-#: src/pages/partner/PartnerIntegration.tsx
-msgid "Test webhook URL"
-msgstr "テスト用Webhook URL"
 
 #: src/components/ModelConnectionPreflightNotice.tsx
 #: src/pages/ConnectionsPage.tsx

@@ -1,7 +1,6 @@
 import type { PrismaClient } from "@corvo/db";
 import {
   CHIEF_SPAWN_KEY,
-  isPartnerTestOrganization,
   partnerSpaceState,
   recordSecurityEvent,
   runAsTenant,
@@ -56,9 +55,7 @@ export function partnerAssistDeps(
     session: deps.session,
     hasAccess: async (organizationId) =>
       (await partnerSpaceState(prisma, organizationId)) === "enabled",
-    hasCredit: async (organizationId) =>
-      (await isPartnerTestOrganization(prisma, organizationId)) ||
-      spaceHasModelAccess(prisma, organizationId),
+    hasCredit: (organizationId) => spaceHasModelAccess(prisma, organizationId),
     complete: async (call) => {
       const bot =
         (await prisma.bot.findFirst({

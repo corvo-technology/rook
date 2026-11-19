@@ -1,6 +1,5 @@
 import type { Bot } from "@corvo/contracts";
 import { BotAvatar } from "@corvo/ui-web";
-import { Badge } from "@corvo/ui-web/components/ui/badge";
 import { useLingui } from "@lingui/react/macro";
 import type { LucideIcon } from "lucide-react";
 import { CalendarClock, Home, ListChecks, MessageCircle, Users } from "lucide-react";
@@ -24,14 +23,11 @@ export function EmbedTabs({
   tabs,
   pathname,
   chief,
-  test = false,
   onOpen,
 }: {
   tabs: readonly EmbedTabId[];
   pathname: string;
   chief?: Pick<Bot, "id" | "name" | "color">;
-  /** A customer made with the partner's test key. */
-  test?: boolean;
   onOpen: (to: string) => void;
 }) {
   const { t } = useLingui();
@@ -84,11 +80,6 @@ export function EmbedTabs({
           );
         })}
       </nav>
-      {test ? (
-        <Badge data-testid="embed-test-badge" variant="outline" className="shrink-0">
-          {t`Test`}
-        </Badge>
-      ) : null}
     </header>
   );
 }

@@ -198,10 +198,7 @@ export async function modelCreditBillingEnabled(deps: ExecutorDeps): Promise<boo
 
 export async function resolveModelKey(...args: Parameters<typeof resolveModelKeyMaterial>) {
   const [deps, userId, spaceId, , provider] = args;
-  // A partner's test customer runs on the deployment's model and is counted against the partner's
-  // daily cap, even where nothing else is billed.
-  const testCustomer = (await deps.spaceIsPartnerTest?.(spaceId)) === true;
-  const billingEnabled = (await modelCreditBillingEnabled(deps)) || testCustomer;
+  const billingEnabled = await modelCreditBillingEnabled(deps);
   const scope = { userId, spaceId };
   // On the connections the owner lent to the Space, the key, its refresh and its retirement are
   // the owner's. A personal sign-in (an account login or a coding agent on a computer) is not lent.

@@ -24,7 +24,6 @@ import {
   setOrganizationOverride,
   setPartnerInvoiceState,
   setPartnerPlan,
-  setPartnerTestDailyCap,
   simulatePartnerPricing,
 } from "@corvo/db";
 import { ORPCError } from "@orpc/server";
@@ -145,14 +144,6 @@ export function platformRoutes(ctx: RouterContext) {
       partners: {
         list: admin.platform.partners.list.handler(({ input }) =>
           asSystem(() => platformPartnerOverview(deps.prisma, input.period)),
-        ),
-        setTestCap: admin.platform.partners.setTestCap.handler(({ input }) =>
-          asSystem(async () => {
-            await setPartnerTestDailyCap(deps.prisma, input.partnerId, input.cap).catch(() => {
-              throw new ORPCError("NOT_FOUND");
-            });
-            return { ok: true as const };
-          }),
         ),
         create: admin.platform.partners.create.handler(({ context, input }) =>
           asSystem(async () => {

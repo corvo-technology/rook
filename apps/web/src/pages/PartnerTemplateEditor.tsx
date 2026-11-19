@@ -101,7 +101,8 @@ export function PartnerTemplateEditor({
           !choose &&
           !chiefName.trim() &&
           !accent.trim() &&
-          !template?.quickActions?.length
+          !template?.quickActions?.length &&
+          !template?.roles
           ? null
           : {
               ...(hasConnector
@@ -118,6 +119,7 @@ export function PartnerTemplateEditor({
               ...(choose ? { models: "choose" as const } : {}),
               ...(chiefName.trim() ? { chiefName: chiefName.trim() } : {}),
               ...(template?.quickActions?.length ? { quickActions: template.quickActions } : {}),
+              ...(template?.roles ? { roles: template.roles } : {}),
               ...(accent.trim() ? { accent: accent.trim().toLowerCase() } : {}),
             },
       );

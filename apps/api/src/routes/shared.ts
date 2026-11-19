@@ -9,7 +9,7 @@ import {
 } from "@corvo/adapters";
 import type { Actor, Me } from "@corvo/contracts";
 import { attachmentMaxBytes, canonicalPiProviderId, PartnerTemplate } from "@corvo/contracts";
-import { parseTourDone } from "@corvo/core";
+import { parseTourDone, resolvePartnerRole } from "@corvo/core";
 import { runAsSystem, spaceCreationPolicy } from "@corvo/db";
 import type { RouterDeps } from "../router.js";
 import { isPartnerAdmin } from "./partner.js";
@@ -38,8 +38,16 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
     // Partner tables belong to the system, not to the person asking.
     runAsSystem("partner customer lookup", () =>
       deps.prisma.partnerTenant.findFirst({
-        where: { ownerUserId: actor.userId },
-        select: { testMode: true, partner: { select: { name: true, template: true } } },
+        // The customer's owner, or one of the people the partner let in.
+        where: {
+          OR: [{ ownerUserId: actor.userId }, { members: { some: { userId: actor.userId } } }],
+        },
+        select: {
+          ownerUserId: true,
+          testMode: true,
+          partner: { select: { name: true, template: true } },
+          members: { where: { userId: actor.userId }, select: { role: true }, take: 1 },
+        },
       }),
     ),
     spaceCreationPolicy(deps.prisma, { spaceId: actor.spaceId, userId: actor.userId }),
@@ -57,6 +65,11 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
   const partnerTemplate = partner
     ? PartnerTemplate.safeParse(partner.partner.template).data
     : undefined;
+  // Whoever is not the customer's owner loses what their role does not use.
+  const partnerRole =
+    partner && partner.ownerUserId !== actor.userId
+      ? resolvePartnerRole(partnerTemplate, partner.members?.[0]?.role)
+      : undefined;
   return {
     ticketBoardEnabled: deps.env.ticketBoardEnabled === true,
     phoneCallsEnabled: deps.env.phoneCallsEnabled === true,
@@ -115,7 +128,10 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
       ? {
           name: partner.partner.name,
           ...(partner.testMode ? { test: true } : {}),
-          hide: partnerTemplate?.hide ?? [],
+          hide: [
+            ...new Set([...(partnerTemplate?.hide ?? []), ...(partnerRole?.hide ?? [])]),
+          ] as NonNullable<NonNullable<Me["partner"]>["hide"]>,
+          ...(partnerRole ? { role: partnerRole.name } : {}),
           models: partnerTemplate?.models === "choose" ? ("choose" as const) : ("fixed" as const),
           ...(partnerTemplate?.quickActions?.length
             ? { quickActions: partnerTemplate.quickActions }

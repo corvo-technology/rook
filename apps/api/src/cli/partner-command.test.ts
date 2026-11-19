@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { resolvePartnerRole } from "@corvo/core";
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { parseTemplateFile, runPartnerCommand } from "./partner-command.js";
@@ -218,6 +219,34 @@ describe("the shipped templates", () => {
         expect(agent.instructions).toMatch(/Nunca assine/);
       }
       expect(() => parseTemplateFile(raw)).toThrow(/--mcp-url/);
+    });
+  }
+
+  const roleAgents: Record<string, Record<string, string[]>> = {
+    prontu: { reception: ["recepcao"], professional: ["escriba"] },
+    greenbarber: {
+      reception: ["recepcao", "retorno"],
+      professional: ["recepcao", "retorno"],
+    },
+    divellas: {
+      reception: ["recepcao", "pos-atendimento"],
+      professional: ["recepcao", "pos-atendimento"],
+    },
+  };
+  for (const [slug, roles] of Object.entries(roleAgents)) {
+    it(`${slug} gives reception and professionals their own agents and no clinical or finance one by default`, async () => {
+      const raw = await readFile(new URL(`${slug}.json`, dir), "utf8");
+      const template = parseTemplateFile(raw, "https://mcp.example.test");
+      for (const [role, keys] of Object.entries(roles)) {
+        expect(resolvePartnerRole(template, role).agents).toEqual(keys);
+        expect(resolvePartnerRole(template, role).agents).not.toContain("gestor");
+        expect(resolvePartnerRole(template, role).permissions).toEqual(["talk_to_agents"]);
+      }
+      // The owner has everything, and a manager every agent with the right to approve.
+      expect(resolvePartnerRole(template, "owner").agents).toEqual(
+        template.agents.map((agent) => agent.key),
+      );
+      expect(resolvePartnerRole(template, "manager").permissions).toContain("approve_actions");
     });
   }
 

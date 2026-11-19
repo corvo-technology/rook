@@ -406,6 +406,49 @@ describe("partner routes: sessions", () => {
     expect(f.codes).toHaveLength(0);
   });
 
+  it("stores no role or scope for a session that sends none, so it opens the owner as before", async () => {
+    const f = fixture();
+    await f.call("PUT", put, { body: { name: "Shop" } });
+    await f.call("POST", session, { body: { externalTenantId: "shop-1", externalUserId: "u" } });
+    expect(f.codes[0]).toMatchObject({ role: null, scope: null });
+  });
+
+  it("stores the role and scope the partner sends, and a later session replaces them", async () => {
+    const f = fixture();
+    await f.call("PUT", put, { body: { name: "Shop" } });
+    const body = { externalTenantId: "shop-1", externalUserId: "u-1" };
+    await f.call("POST", session, {
+      body: {
+        ...body,
+        role: " Professional ",
+        scope: { professionalId: "p-1", branchIds: ["b-1", "b-2"] },
+      },
+    });
+    await f.call("POST", session, { body: { ...body, role: "reception" } });
+    expect(f.codes[0]).toMatchObject({
+      role: "professional",
+      scope: { professionalId: "p-1", branchIds: ["b-1", "b-2"] },
+    });
+    expect(f.codes[1]).toMatchObject({ role: "reception", scope: null });
+  });
+
+  it("rejects a role or scope that is not well formed", async () => {
+    const f = fixture();
+    await f.call("PUT", put, { body: { name: "Shop" } });
+    const base = { externalTenantId: "shop-1", externalUserId: "u" };
+    const bad = [
+      { role: "not a role" },
+      { role: "x".repeat(40) },
+      { scope: { "bad key": "x" } },
+      { scope: { professionalId: { nested: true } } },
+      { scope: { branchIds: Array.from({ length: 51 }, (_, i) => `b${i}`) } },
+    ];
+    for (const extra of bad) {
+      expect((await f.call("POST", session, { body: { ...base, ...extra } })).status).toBe(400);
+    }
+    expect(f.codes).toHaveLength(0);
+  });
+
   it("rejects a malformed request", async () => {
     const f = fixture();
     expect((await f.call("POST", session, { body: { externalTenantId: "shop-1" } })).status).toBe(

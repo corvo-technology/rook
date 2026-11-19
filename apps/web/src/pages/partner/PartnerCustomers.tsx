@@ -301,6 +301,21 @@ function CustomerPanel({
             ) : null}
             <dt className="text-muted-foreground">{t`Agents`}</dt>
             <dd>{data.agents.length > 0 ? data.agents.join(", ") : "—"}</dd>
+            {data.members.length > 0 ? (
+              <>
+                <dt className="text-muted-foreground">{t`People`}</dt>
+                <dd>
+                  <ul data-testid="partner-customer-members" className="space-y-0.5">
+                    {data.members.map((member) => (
+                      <li key={member.externalUserId} className="truncate">
+                        {member.email ?? member.externalUserId}
+                        <span className="text-muted-foreground"> · {member.role}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </dd>
+              </>
+            ) : null}
             <dt className="text-muted-foreground">{t`Connection`}</dt>
             <dd>
               {data.connector === "ok" ? t`Working` : data.connector === "down" ? t`Down` : "—"}

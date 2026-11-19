@@ -1,4 +1,9 @@
-import type { PartnerAlertKind, PartnerConsoleEvents, PartnerTemplate } from "@corvo/contracts";
+import type {
+  PartnerAlertKind,
+  PartnerConsoleEvents,
+  PartnerMember,
+  PartnerTemplate,
+} from "@corvo/contracts";
 import type { CatalogView, IdempotentOutcome, MarkupKind, MarkupRule } from "@corvo/db";
 
 /**
@@ -66,6 +71,7 @@ export interface CustomerRow {
 
 export interface CustomerDetailExtras {
   agents: string[];
+  members: PartnerMember[];
   runs30d: number;
   planRemaining: number;
   topupRemaining: number;

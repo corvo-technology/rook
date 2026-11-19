@@ -32,6 +32,7 @@ import type { BillingService } from "../billing.js";
 import { firstModelConnectAnalytics } from "../model-connect-analytics.js";
 import type { RouterDeps } from "../router.js";
 import { withSerializableRetry } from "../serializable-retry.js";
+import { getSpaceMembership, requireSpacePermission } from "../space-owner.js";
 import {
   cancelLocalModelDownload,
   creditVoiceFor,
@@ -68,9 +69,12 @@ export function accountRoutes(ctx: RouterContext) {
       })
     : undefined;
   const customerPayments = async <T>(
+    actor: Actor,
     call: (payments: NonNullable<typeof whiteLabel>) => Promise<T>,
   ) => {
     if (!whiteLabel) throw new ORPCError("PRECONDITION_FAILED");
+    // The plan and the card are the customer's owner's; the people the partner lets in never touch them.
+    await requireSpacePermission(deps.prisma, actor, "manage_billing");
     try {
       return await call(whiteLabel);
     } catch (error) {
@@ -115,6 +119,8 @@ export function accountRoutes(ctx: RouterContext) {
       partnerBalance: authed.billing.partnerBalance.handler(({ context, input }) =>
         // Partner tables belong to the system; the caller's own organization is the only lookup.
         runAsSystem("partner customer balance", async () => {
+          // What the customer has left is for the owner; the people the partner lets in see none.
+          if (!(await getSpaceMembership(deps.prisma, context.actor))?.isOwner) return null;
           const space = await deps.prisma.space.findUnique({
             where: { id: context.actor.spaceId },
             select: { organizationId: true },
@@ -130,13 +136,15 @@ export function accountRoutes(ctx: RouterContext) {
         whiteLabel ? whiteLabel.catalog(context.actor) : null,
       ),
       whiteLabelCheckout: authed.billing.whiteLabelCheckout.handler(({ context, input }) =>
-        customerPayments((payments) => payments.checkout(context.actor, input)),
+        customerPayments(context.actor, (payments) => payments.checkout(context.actor, input)),
       ),
       whiteLabelChangePlan: authed.billing.whiteLabelChangePlan.handler(({ context, input }) =>
-        customerPayments((payments) => payments.changePlan(context.actor, input.key)),
+        customerPayments(context.actor, (payments) =>
+          payments.changePlan(context.actor, input.key),
+        ),
       ),
       whiteLabelPortal: authed.billing.whiteLabelPortal.handler(({ context }) =>
-        customerPayments((payments) => payments.portal(context.actor)),
+        customerPayments(context.actor, (payments) => payments.portal(context.actor)),
       ),
       selectFunding: authed.billing.selectFunding.handler(async ({ context, input }) => {
         const billing = requireBilling(deps);

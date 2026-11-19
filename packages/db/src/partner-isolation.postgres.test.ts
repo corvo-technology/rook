@@ -311,7 +311,7 @@ describePostgres("partner isolation (PostgreSQL, runtime login)", () => {
         }),
       );
       const consumed = await system(() => consumePartnerEntryCode(prisma, codeHash));
-      expect(consumed).toEqual({ userId: t.userId });
+      expect(consumed).toMatchObject({ userId: t.userId });
     }
   });
 

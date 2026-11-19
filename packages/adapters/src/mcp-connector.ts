@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -199,7 +200,18 @@ export type McpConnectorOptions = {
   credentialTempRoot?: string;
   /** How long a run waits for one server's tool list; 0 waits for the transport's own timeouts. */
   discoveryTimeoutMs?: number;
+  /**
+   * Who is asking, as headers a remote server may read to filter its own data. Called with the
+   * person who started the run; null or no headers leaves the server's calls as they were.
+   */
+  identityHeaders?: (person: {
+    spaceId: string;
+    userId: string;
+  }) => Promise<Record<string, string> | null>;
 };
+
+/** What a run's requester sends to remote servers, resolved once per call. */
+type RunIdentity = { key: string; headers: Record<string, string> };
 
 function positiveInteger(value: string | undefined, allowZero = false): number | undefined {
   if (!value?.trim()) return undefined;
@@ -354,6 +366,7 @@ export class McpConnector implements ConnectorProvider {
   // catalog access. Each attempt needs its own executionId.
   private discoverySeq = 0;
   private readonly unsubscribe: () => void;
+  private readonly identities = new WeakMap<AdapterContext, RunIdentity>();
   constructor(
     private readonly prisma: PrismaClient,
     private readonly secrets: SecretStore,
@@ -397,8 +410,30 @@ export class McpConnector implements ConnectorProvider {
     return resolveCatalogCall(call, catalogEntries(await this.authorizedTools(context)));
   }
 
+  /**
+   * Reads who is asking once, before any session key is made: a session is opened with the
+   * headers of the person it was opened for, so the key carries a digest of them. A change in
+   * the person's role or scope makes a new digest and so a new session.
+   */
+  private async resolveIdentity(context: AdapterContext): Promise<void> {
+    const identity = this.options.identityHeaders;
+    if (!identity || !context.requestedByUserId || this.identities.has(context)) return;
+    try {
+      const headers = await identity({
+        spaceId: context.spaceId,
+        userId: context.requestedByUserId,
+      });
+      if (!headers || Object.keys(headers).length === 0) return;
+      const key = createHash("sha256").update(JSON.stringify(headers)).digest("hex").slice(0, 16);
+      this.identities.set(context, { key, headers });
+    } catch (error) {
+      getLogger().warn("mcp identity lookup failed", { error: sanitizedError(error) });
+    }
+  }
+
   private async authorizedTools(context: AdapterContext): Promise<ConnectorTool[]> {
     if (!context.botId) return [];
+    await this.resolveIdentity(context);
     const assignments = await this.prisma.botMcpServer.findMany({
       where: {
         botId: context.botId,
@@ -598,6 +633,7 @@ export class McpConnector implements ConnectorProvider {
       yield { type: "error", message: `MCP route required for ${call.tool}` };
       return;
     }
+    await this.resolveIdentity(context);
     if (!context.botId) {
       yield { type: "error", message: "MCP tools require a bot context" };
       return;
@@ -773,7 +809,8 @@ export class McpConnector implements ConnectorProvider {
   private sessionKey(server: McpServer, context: AdapterContext): string {
     // Identity headers are applied once, at connect time, so a session is only
     // valid for the identity it connected as. The key has to carry that identity.
-    return `${server.id} ${context.spaceId} ${context.userId}`;
+    const identity = server.transport === "stdio" ? undefined : this.identities.get(context);
+    return `${server.id} ${context.spaceId} ${context.userId}${identity ? ` ${identity.key}` : ""}`;
   }
 
   /** Stop stdio processes nobody used for `idleMs`. Returns how many were stopped. */
@@ -1142,7 +1179,10 @@ export class McpConnector implements ConnectorProvider {
             ? material.secret
             : `Bearer ${material.secret}`
           : undefined;
+        // The partner's own credential stays the server's to read; who is asking is added beside
+        // it and can never replace it.
         const headers = {
+          ...(this.identities.get(context)?.headers ?? {}),
           ...(material.headers ?? {}),
           ...(staticToken ? { Authorization: staticToken } : {}),
         };

@@ -2,11 +2,16 @@ import type { SecretStore } from "@corvo/adapter-kit";
 import { buildMcpCredentialBlob } from "@corvo/adapters";
 import type { Actor, CreateBotInput, PartnerEventRoutine } from "@corvo/contracts";
 import type { PrismaClient } from "@corvo/db";
+import { partnerAgentSpawnKey } from "./partner-members.js";
 import { computerContext } from "./routes/shared.js";
 
 export interface PartnerContent {
   /** The partner's own system, as an MCP server this customer's agents can use. */
   connector?: { slug: string; name: string; endpoint: string; token: string };
+  /** Use the customer's own connector, already installed by this slug, instead of a new one. */
+  connectorSlug?: string;
+  /** Make the agents for one person: their own copies, which only they can see or talk to. */
+  forUserId?: string;
   agents: Array<{
     key: string;
     name: string;
@@ -102,6 +107,14 @@ export async function installPartnerTenantContent(
     });
   }
 
+  if (!serverId && content.connectorSlug) {
+    const found = await deps.prisma.mcpServer.findFirst({
+      where: { spaceId: actor.spaceId, userId: actor.userId, slug: content.connectorSlug },
+      select: { id: true },
+    });
+    serverId = found?.id ?? null;
+  }
+
   const botIds: Record<string, string> = {};
   for (const agent of content.agents) {
     const bot = await deps.createBot(actor, {
@@ -112,10 +125,20 @@ export async function installPartnerTenantContent(
       notifyOnFinish: true,
       computerMode: "team",
       ...(agent.starters?.length ? { starters: agent.starters } : {}),
-      spawnKey: `partner:${partnerId}:${agent.key}`,
+      spawnKey: partnerAgentSpawnKey(partnerId, agent.key, content.forUserId),
       intro: false,
     });
     botIds[agent.key] = bot.id;
+    if (content.forUserId) {
+      await deps.prisma.bot.update({
+        where: { id: bot.id },
+        data: {
+          audienceRestricted: true,
+          audienceUserIds: [content.forUserId],
+          audienceRoleIds: [],
+        },
+      });
+    }
     if (serverId && agent.usesConnector) {
       await deps.prisma.botMcpServer.upsert({
         where: { botId_serverId: { botId: bot.id, serverId } },

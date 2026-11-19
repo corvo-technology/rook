@@ -238,6 +238,7 @@ export async function getCustomer(
   return {
     ...toItem(row),
     agents: extras.agents,
+    members: extras.members,
     connector: row.connector,
     runs30d: extras.runs30d,
     balance: {

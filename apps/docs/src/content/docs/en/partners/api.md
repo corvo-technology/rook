@@ -66,16 +66,33 @@ Or use `state` on the `PUT`. A paused customer's runs are refused at once ("This
 
 ```http
 POST /sessions
-{ "externalTenantId": "shop-1", "externalUserId": "user-42", "email": "optional@example.com" }
+{
+  "externalTenantId": "shop-1",
+  "externalUserId": "user-42",
+  "email": "optional@example.com",
+  "role": "professional",
+  "scope": { "professionalId": "p-7", "branchIds": ["b-1"] }
+}
 ```
 
 ```json
 { "url": "https://app.rook.team/api/partner/enter?code=...", "expiresAt": "..." }
 ```
 
-To **redirect**, send the browser to the `url` within 60 seconds; the link works once and signs in as the customer's owner. To **embed**, return only the `code` from the `url` to your page ([SDK](/en/partners/sdk/)).
+To **redirect**, send the browser to the `url` within 60 seconds; the link works once and signs in as the person the `role` describes (without a `role`, as the customer's owner). To **embed**, return only the `code` from the `url` to your page ([SDK](/en/partners/sdk/)).
 
 A customer's session ends eight hours after it began, however it is renewed; the page asks for a new code at least that often.
+
+### Role and scope
+
+Each person sees and does only what their role in your system allows. Both fields are optional; a session without them still signs in as the customer's owner.
+
+- `role`: `owner`, `manager`, `reception`, `professional` or a name of your own (lower case, up to 32 characters: letters, digits, `_` and `-`).
+- `scope`: up to 10 fields, each a string or a list of up to 50 strings (for example `professionalId` and `branchIds`). Rook does not interpret the scope: it passes it to your [connector](/en/partners/connector/#who-is-asking).
+
+The role and scope apply again on **every session**: if a person changes role in your system, the change holds the next time they open the assistant.
+
+Every role other than `owner` signs in as a user of their own in the customer, with their own conversations: nobody sees another person's conversations. `owner` signs in through the customer's account. What each role gets (agents, rights and what stays hidden) comes from the template's `roles`; see [Roles](/en/partners/roles/).
 
 ## Consultation recording
 

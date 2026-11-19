@@ -66,16 +66,33 @@ Ou use `state` no `PUT`. Um cliente pausado tem as execuções recusadas na hora
 
 ```http
 POST /sessions
-{ "externalTenantId": "loja-1", "externalUserId": "user-42", "email": "opcional@exemplo.com" }
+{
+  "externalTenantId": "loja-1",
+  "externalUserId": "user-42",
+  "email": "opcional@exemplo.com",
+  "role": "professional",
+  "scope": { "professionalId": "p-7", "branchIds": ["b-1"] }
+}
 ```
 
 ```json
 { "url": "https://app.rook.team/api/partner/enter?code=...", "expiresAt": "..." }
 ```
 
-Para **redirecionar**, envie o navegador à `url` em até 60 segundos; o link vale uma vez e entra como dono do cliente. Para **embutir**, devolva só o `code` da `url` à sua página ([SDK](/partners/sdk/)).
+Para **redirecionar**, envie o navegador à `url` em até 60 segundos; o link vale uma vez e entra como a pessoa descrita pelo `role` (sem `role`, como dono do cliente). Para **embutir**, devolva só o `code` da `url` à sua página ([SDK](/partners/sdk/)).
 
 A sessão de um cliente termina oito horas depois de criada, por mais que seja renovada; a página pede um novo código ao menos nesse intervalo.
+
+### Papel e escopo
+
+Cada pessoa vê e faz só o que o papel dela no seu sistema permite. Os dois campos são opcionais; uma sessão sem eles continua entrando como dono do cliente.
+
+- `role`: `owner`, `manager`, `reception`, `professional` ou um nome seu (minúsculas, até 32 caracteres: letras, números, `_` e `-`).
+- `scope`: até 10 campos, cada um um texto ou uma lista de até 50 textos (por exemplo `professionalId` e `branchIds`). O Rook não interpreta o escopo: repassa ao seu [conector](/partners/connector/#quem-está-pedindo).
+
+O papel e o escopo valem de novo a **cada sessão**: se a pessoa mudar de papel no seu sistema, a mudança vale na próxima vez que ela abrir o assistente.
+
+Cada papel que não é `owner` entra com um usuário próprio no cliente, com as próprias conversas: ninguém vê as conversas de outra pessoa. O `owner` entra pela conta do cliente. O que cada papel recebe (agentes, direitos e o que fica escondido) vem do `roles` do modelo; veja [Papéis](/partners/roles/).
 
 ## Gravação de consultas
 

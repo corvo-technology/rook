@@ -32,7 +32,7 @@ import {
 } from "./mcp.js";
 import { ModelHeadersSchema } from "./model-headers.js";
 import { NavLinkSchema } from "./nav-links.js";
-import { PartnerHiddenArea, PartnerQuickAction } from "./partner.js";
+import { PARTNER_ROLE_HIDEABLE_AREAS, PartnerHiddenArea, PartnerQuickAction } from "./partner.js";
 import { RoutineEventTriggerSchema } from "./partner-events.js";
 import { RoutineWatchSchema, RoutineWatchStateSchema } from "./routine-watch.js";
 import { RunErrorInfoSchema, RunTriggerSchema } from "./runs.js";
@@ -1952,7 +1952,9 @@ export const MeSchema = z.object({
   partner: z
     .object({
       name: z.string(),
-      hide: z.array(PartnerHiddenArea).optional(),
+      hide: z.array(z.union([PartnerHiddenArea, z.enum(PARTNER_ROLE_HIDEABLE_AREAS)])).optional(),
+      /** The person's role in the partner's system; absent for the customer's owner. */
+      role: z.string().optional(),
       models: z.enum(["fixed", "choose"]).optional(),
       /** The partner's colour for the page when the embedding page passes none; `#rrggbb`. */
       accent: z.string().optional(),

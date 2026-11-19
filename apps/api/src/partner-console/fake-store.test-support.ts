@@ -107,6 +107,7 @@ export function createFakeStore(data: FakeData) {
         : (data.customers[partner.id] ?? []),
     customerDetail: async (_partner, row) => ({
       agents: ["Chief"],
+      members: [],
       runs30d: 12,
       planRemaining: row.creditRemaining,
       topupRemaining: 0,

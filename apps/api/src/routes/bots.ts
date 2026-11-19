@@ -48,6 +48,7 @@ import {
 import { deleteAgentSecret, listAgentSecrets, putAgentSecret } from "../agent-secrets.js";
 import { previewAppImport } from "../import-from-app.js";
 import { assertRoutineModel } from "../model-pins.js";
+import { onlyAgentsSeenBy } from "../partner-members.js";
 import { partnerModelChangeRefused } from "../partner-models.js";
 import type { RouterDeps } from "../router.js";
 import { requireCreatorOrPermission, requireSpacePermission } from "../space-owner.js";
@@ -281,12 +282,20 @@ export function botsRoutes(ctx: RouterContext) {
   };
   return {
     bots: {
-      list: authed.bots.list.handler(async ({ context }) => repos.listBots(context.actor)),
+      list: authed.bots.list.handler(async ({ context }) =>
+        onlyAgentsSeenBy(deps.prisma, context.actor, await repos.listBots(context.actor)),
+      ),
       listArchived: authed.bots.listArchived.handler(async ({ context }) =>
-        repos.listBots(context.actor, { archived: true }),
+        onlyAgentsSeenBy(
+          deps.prisma,
+          context.actor,
+          await repos.listBots(context.actor, { archived: true }),
+        ),
       ),
       get: authed.bots.get.handler(async ({ context, input }) => {
-        const found = (await repos.listBots(context.actor)).find((bot) => bot.id === input.botId);
+        const found = (
+          await onlyAgentsSeenBy(deps.prisma, context.actor, await repos.listBots(context.actor))
+        ).find((bot) => bot.id === input.botId);
         if (!found) throw new IsolationError();
         return found;
       }),

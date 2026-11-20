@@ -272,8 +272,15 @@ export interface ConnectorTool {
   name: string;
   description: string;
   inputSchema: Record<string, unknown>;
-  /** Declared effect. `false` forces approval; `true` never relaxes the name-based gate. */
+  /**
+   * Declared effect. `false` is a declared write; `true` makes a name that is not locked as high
+   * risk (send, delete, pay, deploy...) a read.
+   */
   readOnly?: boolean;
+  /** The provider's destructive hint. `true` makes the tool high risk whatever its name says. */
+  destructive?: boolean;
+  /** The provider's open-world hint: the tool reaches outside the connection. */
+  openWorld?: boolean;
   /** In-process routing metadata. It is never exposed to the model. */
   route?: ConnectorRoute;
 }

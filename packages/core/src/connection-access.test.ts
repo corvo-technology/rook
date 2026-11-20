@@ -35,7 +35,19 @@ describe("mcpToolOffered", () => {
   });
 
   it("keeps a tool that is neither declared nor named as a read out of read access", () => {
-    expect(mcpToolOffered(grant("read"), { name: "whoami" })).toBe(false);
+    expect(mcpToolOffered(grant("read"), { name: "profile_card" })).toBe(false);
+  });
+
+  it("offers a tool declared read-only at read access unless it is destructive", () => {
+    expect(mcpToolOffered(grant("read"), { name: "profile_card", readOnly: true })).toBe(true);
+    expect(
+      mcpToolOffered(grant("read"), { name: "get_thing", readOnly: true, destructive: true }),
+    ).toBe(false);
+  });
+
+  it("offers camelCase and fetch-style reads at read access", () => {
+    expect(mcpToolOffered(grant("read"), { name: "listPets" })).toBe(true);
+    expect(mcpToolOffered(grant("read"), { name: "GMAIL_FETCH_EMAILS" })).toBe(true);
   });
 
   it("lets an explicit tool list from an older version decide alone", () => {

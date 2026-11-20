@@ -99,6 +99,8 @@ function fixture({
   name = "demo_get_item",
   catalog = false,
   readOnly = true,
+  destructive,
+  alwaysAsk = false,
   rules = [] as ActionApprovalRule[],
   confirmationsOverride = false,
   autoReview = false,
@@ -163,7 +165,11 @@ function fixture({
   advanceRevisionAfterRead?: boolean;
   name?: string;
   catalog?: boolean;
-  readOnly?: boolean;
+  readOnly?: boolean | null;
+  /** The provider's destructive hint. */
+  destructive?: boolean;
+  /** The member chose Always ask, instead of the default Only what's risky. */
+  alwaysAsk?: boolean;
   rules?: ActionApprovalRule[];
   /** The Space has its own confirmations; otherwise `rules` and auto review are the account's. */
   confirmationsOverride?: boolean;
@@ -184,7 +190,8 @@ function fixture({
   const tool: ConnectorTool = {
     name,
     description: "Read an item",
-    readOnly,
+    readOnly: readOnly ?? undefined,
+    destructive,
     inputSchema: {
       type: "object",
       properties: { id: { type: "string" } },
@@ -422,12 +429,12 @@ function fixture({
     routine: { findMany: vi.fn(async () => routines) },
     actionAutoReviewPreference: {
       findUnique: vi.fn(async () =>
-        confirmationsOverride ? { enabled: autoReview, skipApprovals } : null,
+        confirmationsOverride ? { enabled: autoReview, skipApprovals, alwaysAsk } : null,
       ),
     },
     userActionAutoReviewPreference: {
       findUnique: vi.fn(async () =>
-        confirmationsOverride ? null : { enabled: autoReview, skipApprovals },
+        confirmationsOverride ? null : { enabled: autoReview, skipApprovals, alwaysAsk },
       ),
     },
     steeringMessage: {
@@ -2621,7 +2628,7 @@ describe("connector waits", () => {
     expect(f.execute).toHaveBeenCalledOnce();
   });
 
-  describe("a status tool that does not read as a read", () => {
+  describe("a status tool declared read-only whose name does not read as a read", () => {
     const poll = { ...statusTool, name: "demo_poll_statement" };
     const allow = [
       { effect: "always_allow", matchKind: "tool", matchValue: "demo_poll_statement" },
@@ -2639,8 +2646,14 @@ describe("connector waits", () => {
       expect(f.execute.mock.calls.length).toBeGreaterThan(1);
     });
 
-    it("is not called without the allow rule", async () => {
+    it("is called for a person's run without a rule, as the agent's own call would run", async () => {
       const f = setup({ trigger: "user", extraTools: [poll] });
+      await f.run();
+      expect(f.execute.mock.calls.length).toBeGreaterThan(1);
+    });
+
+    it("is not called when its server marks it destructive", async () => {
+      const f = setup({ trigger: "user", extraTools: [{ ...poll, destructive: true }] });
       await f.run();
       expect(f.execute).toHaveBeenCalledOnce();
     });
@@ -2956,5 +2969,180 @@ describe("a bot's own approval mode", () => {
         expect(isApprovalPausedResult(f.results[0])).toBe(false);
       }
     }
+  });
+});
+
+describe("asking only for what is risky", () => {
+  const item = { args: { id: "item-1" }, executionId: "call-1" };
+  const search = { name: "web_search", args: { query: "news" }, executionId: "call-0" };
+  const sibling = (name: string, readOnly: boolean): ConnectorTool => ({
+    name,
+    description: name,
+    readOnly,
+    inputSchema: { type: "object", properties: { id: { type: "string" } } },
+    route: { connectorId: "demo", resourceId: "resource-1", toolName: name },
+  });
+
+  beforeEach(() => reviewMock.mockReset());
+
+  const runs = async (options: Parameters<typeof fixture>[0]) => {
+    const f = fixture(options);
+    f.setCalls([item]);
+    await f.run();
+    return f;
+  };
+  const free = (f: Awaited<ReturnType<typeof runs>>) => {
+    expect(f.execute).toHaveBeenCalledOnce();
+    expect(f.pauseRunForInput).not.toHaveBeenCalled();
+  };
+  const asks = (f: Awaited<ReturnType<typeof runs>>) => {
+    expect(f.execute).not.toHaveBeenCalled();
+    expect(isApprovalPausedResult(f.results[0])).toBe(true);
+  };
+
+  it.each([
+    "demo_fetch_emails",
+    "demo_query_rows",
+    "demo_describe_table",
+    "demo_check_domain_availability",
+    "demo_whoami",
+    "demo_getPetById",
+    "demo_listPets",
+    "DEMO_FETCH_EMAILS",
+  ])("runs the read %s without asking, even when declared a write", async (name) => {
+    free(await runs({ name, readOnly: null }));
+  });
+
+  it.each([
+    ["an OpenAPI GET", "getPetById"],
+    ["a GraphQL query", "pets"],
+  ])("runs %s declared read-only without asking", async (_label, name) => {
+    free(await runs({ name, readOnly: true }));
+  });
+
+  it("runs a tool its server declares read-only when its name is not locked", async () => {
+    free(await runs({ name: "demo_profile_card", readOnly: true }));
+  });
+
+  it("still asks for a send declared read-only", async () => {
+    asks(await runs({ name: "demo_send_email", readOnly: true }));
+  });
+
+  it.each(["demo_create_issue", "demo_update_contact", "demo_add_label"])(
+    "runs the low-risk write %s at Only what's risky and asks at Always ask",
+    async (name) => {
+      free(await runs({ name, readOnly: false }));
+      asks(await runs({ name, readOnly: false, alwaysAsk: true }));
+    },
+  );
+
+  it.each([
+    "demo_send_email",
+    "demo_post_message",
+    "demo_create_payment",
+    "demo_charge_card",
+    "demo_delete_record",
+    "demo_merge_pull_request",
+    "demo_deploy",
+    "demo_run_workflow",
+    "demo_do_the_thing",
+  ])("asks for the high-risk or unknown %s at Only what's risky", async (name) => {
+    asks(await runs({ name, readOnly: false }));
+    asks(await runs({ name, readOnly: null }));
+  });
+
+  it("asks for a tool its server marks destructive, whatever it says else", async () => {
+    asks(await runs({ name: "demo_update_contact", readOnly: false, destructive: true }));
+    asks(await runs({ name: "demo_get_contact", readOnly: true, destructive: true }));
+  });
+
+  it("reads a stored Ask on the bot as Only what's risky, and Always ask as asking", async () => {
+    free(await runs({ name: "demo_update_contact", readOnly: false, botApprovalMode: "ask" }));
+    free(await runs({ name: "demo_update_contact", readOnly: false, botApprovalMode: "risky" }));
+    asks(await runs({ name: "demo_update_contact", readOnly: false, botApprovalMode: "always" }));
+  });
+
+  it("follows the Space's Always ask choice, and a bot can choose Only what's risky over it", async () => {
+    const write = { name: "demo_update_contact", readOnly: false, confirmationsOverride: true };
+    asks(await runs({ ...write, alwaysAsk: true }));
+    free(await runs({ ...write, alwaysAsk: true, botApprovalMode: "risky" }));
+  });
+
+  it("keeps Auto judging a low-risk write, and Never ask running a high-risk one", async () => {
+    reviewMock.mockResolvedValue({ decision: "pass", reason: "Fits the task", model: "mock" });
+    const judged = await runs({ name: "demo_update_contact", readOnly: false, autoReview: true });
+    expect(reviewMock).toHaveBeenCalledOnce();
+    free(judged);
+    free(await runs({ name: "demo_send_email", readOnly: false, skipApprovals: true }));
+  });
+
+  it("keeps a deny rule refusing a low-risk write, and an ask rule asking", async () => {
+    const write = { name: "demo_update_contact", readOnly: false } as const;
+    const denied = await runs({
+      ...write,
+      rules: [{ effect: "deny", matchKind: "tool", matchValue: "demo_update_contact" }],
+    });
+    expect(denied.execute).not.toHaveBeenCalled();
+    expect(JSON.stringify(denied.results[0])).toContain("is blocked");
+    asks(
+      await runs({
+        ...write,
+        rules: [
+          { effect: "require_approval", matchKind: "tool", matchValue: "demo_update_contact" },
+        ],
+      }),
+    );
+  });
+
+  describe("after outside content entered the run", () => {
+    const write = { name: "demo_update_contact", readOnly: false } as const;
+
+    it("asks for a low-risk write on a connector the run has not used yet", async () => {
+      const f = fixture(write);
+      f.setCalls([search, item]);
+      await f.run();
+      expect(f.execute).not.toHaveBeenCalled();
+      expect(isApprovalPausedResult(f.results[1])).toBe(true);
+    });
+
+    it("runs a low-risk write on a connector the run used before outside content arrived", async () => {
+      const f = fixture({ ...write, extraTools: [sibling("demo_get_item", true)] });
+      f.setCalls([
+        { name: "demo_get_item", args: { id: "a" }, executionId: "call-1" },
+        search,
+        item,
+      ]);
+      await f.run();
+      expect(f.execute).toHaveBeenCalledTimes(2);
+      expect(f.pauseRunForInput).not.toHaveBeenCalled();
+    });
+
+    it("still asks for a high-risk call on a connector the run used before", async () => {
+      const f = fixture({
+        name: "demo_send_email",
+        readOnly: false,
+        extraTools: [sibling("demo_get_item", true)],
+      });
+      f.setCalls([
+        { name: "demo_get_item", args: { id: "a" }, executionId: "call-1" },
+        search,
+        item,
+      ]);
+      await f.run();
+      expect(f.execute).toHaveBeenCalledTimes(1);
+      expect(isApprovalPausedResult(f.results[2])).toBe(true);
+    });
+  });
+
+  it("keeps a webhook run asking for a low-risk write", async () => {
+    asks(await runs({ name: "demo_update_contact", readOnly: false, trigger: "webhook" }));
+  });
+
+  it("keeps a webhook run asking for a read named like none of the old read words", async () => {
+    asks(await runs({ name: "demo_fetch_emails", readOnly: true, trigger: "webhook" }));
+  });
+
+  it("asks for a low-risk write in a run the owner did not start", async () => {
+    asks(await runs({ name: "demo_update_contact", readOnly: false, trigger: "routine" }));
   });
 });

@@ -154,7 +154,12 @@ async function copyAccountIntoSpace(tx: CopyClient, scope: Scope, setting: Space
     }
     if (autoReview) {
       await tx.actionAutoReviewPreference.create({
-        data: { ...member, enabled: autoReview.enabled, skipApprovals: autoReview.skipApprovals },
+        data: {
+          ...member,
+          enabled: autoReview.enabled,
+          skipApprovals: autoReview.skipApprovals,
+          alwaysAsk: autoReview.alwaysAsk,
+        },
       });
     }
   }

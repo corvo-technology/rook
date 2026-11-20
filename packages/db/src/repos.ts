@@ -1,11 +1,11 @@
 import type { Actor, Bot, BotSection, MessageBlock, SpaceBot } from "@corvo/contracts";
 import {
-  ApprovalModeSchema,
   BotStartersSchema,
   canonicalPiProviderId,
   InstructionVersionSchema,
   initialBotMemory,
   MemoryModeSchema,
+  StoredApprovalModeSchema,
 } from "@corvo/contracts";
 import {
   BACKGROUND_RUN_TRIGGERS,
@@ -180,7 +180,7 @@ function mapBot(
     crossSpaceCommunication: bot.crossSpaceCommunication ?? false,
     fleetManagement: bot.fleetManagement ?? false,
     squadRouting: bot.squadRouting ?? false,
-    approvalMode: ApprovalModeSchema.safeParse(bot.approvalMode).data ?? null,
+    approvalMode: StoredApprovalModeSchema.safeParse(bot.approvalMode).data ?? null,
     memoryMode: MemoryModeSchema.safeParse(bot.memoryMode).data ?? null,
     dailyCapUsd: bot.dailyCapMicros == null ? null : Number(bot.dailyCapMicros) / 1_000_000,
     monthlyTokenLimit: bot.monthlyTokenLimit == null ? null : Number(bot.monthlyTokenLimit),

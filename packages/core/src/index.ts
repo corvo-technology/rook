@@ -123,6 +123,7 @@ export * from "./thread-subscription.js";
 export * from "./thread-summary.js";
 export * from "./time-separators.js";
 export * from "./tool-activity.js";
+export * from "./tool-risk.js";
 export * from "./transient-retry.js";
 export * from "./ui-locale.js";
 export * from "./unread-divider.js";

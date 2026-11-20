@@ -16,7 +16,15 @@ type ConfirmationsClient = Pick<
 >;
 
 export type ApprovalRuleInput = { effect: string; matchKind: string; matchValue: string };
-export type AutoReviewPreference = { enabled: boolean; skipApprovals: boolean };
+/**
+ * `alwaysAsk` is Always ask. A row that sets none of the three, including every row saved before
+ * Only what's risky existed, is Only what's risky.
+ */
+export type AutoReviewPreference = {
+  enabled: boolean;
+  skipApprovals: boolean;
+  alwaysAsk: boolean;
+};
 
 /**
  * Approval rules and auto review are confirmations: the account's copy, or the Space's
@@ -115,7 +123,7 @@ export async function findAutoReviewPreference(
   scope: Scope,
   requested?: SettingsScope,
 ): Promise<AutoReviewPreference | null> {
-  const select = { enabled: true, skipApprovals: true } as const;
+  const select = { enabled: true, skipApprovals: true, alwaysAsk: true } as const;
   return (await confirmationsTarget(prisma, scope, requested)) === "account"
     ? prisma.userActionAutoReviewPreference.findUnique({
         where: { userId: scope.userId },
@@ -138,6 +146,7 @@ export async function saveAutoReviewPreference(
   const create = {
     enabled: update.enabled ?? defaults.enabled,
     skipApprovals: update.skipApprovals ?? defaults.skipApprovals,
+    alwaysAsk: update.alwaysAsk ?? defaults.alwaysAsk,
   };
   await lockSpaceSettings(prisma, scope);
   if ((await confirmationsTarget(prisma, scope, requested)) === "account") {

@@ -100,22 +100,28 @@ describe("auto review", () => {
     client.userActionAutoReviewPreference.findUnique.mockResolvedValue({
       enabled: true,
       skipApprovals: false,
+      alwaysAsk: false,
     });
 
     await expect(findAutoReviewPreference(client.prisma, scope)).resolves.toEqual({
       enabled: true,
       skipApprovals: false,
+      alwaysAsk: false,
+    });
+    expect(client.userActionAutoReviewPreference.findUnique).toHaveBeenCalledWith({
+      where: { userId: "user" },
+      select: { enabled: true, skipApprovals: true, alwaysAsk: true },
     });
     await saveAutoReviewPreference(
       client.prisma,
       scope,
       { skipApprovals: true },
-      { enabled: false, skipApprovals: false },
+      { enabled: false, skipApprovals: false, alwaysAsk: false },
     );
 
     expect(client.userActionAutoReviewPreference.upsert).toHaveBeenCalledWith({
       where: { userId: "user" },
-      create: { userId: "user", enabled: false, skipApprovals: true },
+      create: { userId: "user", enabled: false, skipApprovals: true, alwaysAsk: false },
       update: { skipApprovals: true },
     });
     expect(client.actionAutoReviewPreference.findUnique).not.toHaveBeenCalled();
@@ -129,13 +135,19 @@ describe("auto review", () => {
       client.prisma,
       scope,
       { enabled: true },
-      { enabled: false, skipApprovals: false },
+      { enabled: false, skipApprovals: false, alwaysAsk: false },
       "space",
     );
 
     expect(client.actionAutoReviewPreference.upsert).toHaveBeenCalledWith({
       where: { spaceId_userId: { spaceId: "space", userId: "user" } },
-      create: { spaceId: "space", userId: "user", enabled: true, skipApprovals: false },
+      create: {
+        spaceId: "space",
+        userId: "user",
+        enabled: true,
+        skipApprovals: false,
+        alwaysAsk: false,
+      },
       update: { enabled: true },
     });
     expect(client.userActionAutoReviewPreference.upsert).not.toHaveBeenCalled();

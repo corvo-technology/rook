@@ -115,8 +115,13 @@ export const InstructionVersionSchema = z.object({
 /** Largest monthly token limit a bot may be given. */
 export const BOT_MONTHLY_TOKEN_LIMIT_MAX = 1_000_000_000_000;
 /** How much a space asks before acting; see VISION.md. */
-export const ApprovalModeSchema = z.enum(["never", "auto", "ask"]);
+export const ApprovalModeSchema = z.enum(["never", "auto", "risky", "always"]);
 export type ApprovalMode = z.infer<typeof ApprovalModeSchema>;
+/** A stored mode: "ask", saved before Only what's risky existed, is that level. */
+export const StoredApprovalModeSchema = z.preprocess(
+  (value) => (value === "ask" ? "risky" : value),
+  ApprovalModeSchema,
+);
 
 export const BotSchema = z.object({
   id: Id,

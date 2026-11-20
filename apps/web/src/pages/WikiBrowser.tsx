@@ -532,6 +532,14 @@ export function WikiBrowser({
             <Spinner />
           </div>
         ) : null}
+        {index.isError ? (
+          <div role="alert" className="flex items-center gap-3 px-1 text-sm text-destructive">
+            <span className="min-w-0">{t`Could not load`}</span>
+            <Button variant="secondary" size="sm" onClick={() => void index.refetch()}>
+              <Trans>Try again</Trans>
+            </Button>
+          </div>
+        ) : null}
         {empty ? (
           <p
             className="flex flex-col items-center gap-3 px-1 py-10 text-sm text-muted-foreground"
@@ -543,6 +551,11 @@ export function WikiBrowser({
         ) : null}
         {query.length >= MIN_SEARCH ? (
           <ul className="flex flex-col gap-0.5" data-testid="wiki-hits">
+            {hits.isSuccess && hits.data.length === 0 ? (
+              <li className="px-1 text-sm text-muted-foreground">
+                <Trans>No results</Trans>
+              </li>
+            ) : null}
             {(hits.data ?? []).map((hit) => (
               <li key={hit.title}>
                 <Button
@@ -673,6 +686,10 @@ export function WikiBrowser({
               <div className="flex justify-center py-10">
                 <Spinner />
               </div>
+            ) : page.isError ? (
+              <p role="alert" className="text-sm text-destructive">
+                {t`Could not load`}
+              </p>
             ) : page.data ? (
               <PageBody
                 page={page.data}

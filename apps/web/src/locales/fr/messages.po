@@ -3016,6 +3016,7 @@ msgstr "Impossible de quitter"
 #: src/pages/platform/LimitsSection.tsx
 #: src/pages/platform/PartnersSection.tsx
 #: src/pages/Usage.tsx
+#: src/pages/WikiBrowser.tsx
 #: src/pages/Workflows.tsx
 msgid "Could not load"
 msgstr "Impossible de charger"
@@ -6475,6 +6476,7 @@ msgstr "Aucun serveur MCP distant trouvé"
 #: src/pages/shell/command-palette.tsx
 #: src/pages/SpaceSearch.tsx
 #: src/pages/Store.tsx
+#: src/pages/WikiBrowser.tsx
 msgid "No results"
 msgstr "Aucun résultat"
 
@@ -9670,6 +9672,7 @@ msgstr "Déclencheur"
 #: src/pages/DirectChat.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 #: src/pages/partner/partner-ui.tsx
+#: src/pages/WikiBrowser.tsx
 msgid "Try again"
 msgstr "Réessayer"
 

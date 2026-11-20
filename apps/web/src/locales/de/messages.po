@@ -3016,6 +3016,7 @@ msgstr "Verlassen fehlgeschlagen"
 #: src/pages/platform/LimitsSection.tsx
 #: src/pages/platform/PartnersSection.tsx
 #: src/pages/Usage.tsx
+#: src/pages/WikiBrowser.tsx
 #: src/pages/Workflows.tsx
 msgid "Could not load"
 msgstr "Laden fehlgeschlagen"
@@ -6475,6 +6476,7 @@ msgstr "Keine Remote-MCP-Server gefunden"
 #: src/pages/shell/command-palette.tsx
 #: src/pages/SpaceSearch.tsx
 #: src/pages/Store.tsx
+#: src/pages/WikiBrowser.tsx
 msgid "No results"
 msgstr "Keine Ergebnisse"
 
@@ -9670,6 +9672,7 @@ msgstr "Auslöser"
 #: src/pages/DirectChat.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 #: src/pages/partner/partner-ui.tsx
+#: src/pages/WikiBrowser.tsx
 msgid "Try again"
 msgstr "Erneut versuchen"
 

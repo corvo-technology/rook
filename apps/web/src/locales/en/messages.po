@@ -3016,6 +3016,7 @@ msgstr "Could not leave"
 #: src/pages/platform/LimitsSection.tsx
 #: src/pages/platform/PartnersSection.tsx
 #: src/pages/Usage.tsx
+#: src/pages/WikiBrowser.tsx
 #: src/pages/Workflows.tsx
 msgid "Could not load"
 msgstr "Could not load"
@@ -6475,6 +6476,7 @@ msgstr "No remote MCP servers found"
 #: src/pages/shell/command-palette.tsx
 #: src/pages/SpaceSearch.tsx
 #: src/pages/Store.tsx
+#: src/pages/WikiBrowser.tsx
 msgid "No results"
 msgstr "No results"
 
@@ -9670,6 +9672,7 @@ msgstr "Trigger"
 #: src/pages/DirectChat.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 #: src/pages/partner/partner-ui.tsx
+#: src/pages/WikiBrowser.tsx
 msgid "Try again"
 msgstr "Try again"
 

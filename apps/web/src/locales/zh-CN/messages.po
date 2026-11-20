@@ -3016,6 +3016,7 @@ msgstr "无法退出"
 #: src/pages/platform/LimitsSection.tsx
 #: src/pages/platform/PartnersSection.tsx
 #: src/pages/Usage.tsx
+#: src/pages/WikiBrowser.tsx
 #: src/pages/Workflows.tsx
 msgid "Could not load"
 msgstr "无法加载"
@@ -6475,6 +6476,7 @@ msgstr "未找到远程 MCP 服务器"
 #: src/pages/shell/command-palette.tsx
 #: src/pages/SpaceSearch.tsx
 #: src/pages/Store.tsx
+#: src/pages/WikiBrowser.tsx
 msgid "No results"
 msgstr "无结果"
 
@@ -9670,6 +9672,7 @@ msgstr "触发器"
 #: src/pages/DirectChat.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 #: src/pages/partner/partner-ui.tsx
+#: src/pages/WikiBrowser.tsx
 msgid "Try again"
 msgstr "重试"
 

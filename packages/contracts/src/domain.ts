@@ -41,6 +41,10 @@ import {
   PlanSelectionSchema,
 } from "./plan-pricing.js";
 import { PlanIdSchema } from "./plans.js";
+import { TimeZoneSchema } from "./time-zone.js";
+
+export { isValidTimeZone, TimeZoneSchema } from "./time-zone.js";
+
 import { RoutineWatchSchema, RoutineWatchStateSchema } from "./routine-watch.js";
 import { RunErrorInfoSchema, RunTriggerSchema } from "./runs.js";
 import { SettingsScopeSchema } from "./settings-scope.js";
@@ -59,23 +63,6 @@ export type MemoryScopeValue = z.infer<typeof MemoryScopeSchema>;
  */
 export const AvatarStyleSchema = z.enum(["robot", "organic"]);
 
-/** True for an IANA timezone this runtime can format in, such as "Pacific/Auckland". */
-export function isValidTimeZone(value: string): boolean {
-  // Intl also accepts fixed offsets, which are not IANA timezone names.
-  if (/^[+-]/.test(value)) return false;
-  try {
-    new Intl.DateTimeFormat("en-US", { timeZone: value });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export const TimeZoneSchema = z
-  .string()
-  .min(1)
-  .max(64)
-  .refine(isValidTimeZone, { message: "Unknown timezone" });
 export type AvatarStyle = z.infer<typeof AvatarStyleSchema>;
 
 export const ThinkingLevelSchema = z.enum([

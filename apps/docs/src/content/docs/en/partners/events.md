@@ -68,6 +68,27 @@ Your [template](/en/partners/central/) can ship event routines as defaults for e
 
 `agent` is the `key` of an agent in the same template. The customer sees the routines in **Routines**, in plain language ("When a customer doesn't show up…"), and switches each one on or off; a routine they switched off stays off when the template is applied again.
 
+## Scheduled routines
+
+A routine can also start by the clock. Your template ships them in `scheduledRoutines`, next to `routines`; together the two lists hold at most 20, and every `key` is unique.
+
+```json
+"timezone": "America/Sao_Paulo",
+"scheduledRoutines": [{
+  "key": "confirm-tomorrow",
+  "agent": "reception",
+  "name": "Confirm tomorrow's appointments",
+  "prompt": "List tomorrow's appointments and draft confirmation messages, for approval.",
+  "crons": ["0 18 * * *"],
+  "active": true
+}]
+```
+
+- `crons` are five-field cron expressions with the minute fixed, so a routine never starts more than once an hour; up to 3 per routine. `0 9 * * 1` is Mondays at 9:00.
+- They run in the customer's `timezone` when the call that creates the customer sends one, else the template's `timezone`, else UTC. A routine may carry its own `timezone`.
+- Like event routines, they are made once for each new customer, and a customer's edits and switches stay when the template is applied again. Customers that already exist are not changed.
+- `prompt` is the task the agent is given; it is data for the agent and never gives the platform an order.
+
 ## Limits and errors
 
 | Response | When |

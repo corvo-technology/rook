@@ -293,6 +293,27 @@ describe("partner routes: tenants", () => {
     expect(f.installs[0]?.content).toMatchObject({ agents });
   });
 
+  it("hands the template's scheduled routines and the customer's timezone to the install", async () => {
+    const scheduledRoutines = [
+      {
+        key: "tomorrow",
+        agent: "manager",
+        name: "Confirm tomorrow",
+        prompt: "List tomorrow's appointments.",
+        crons: ["0 18 * * *"],
+        active: true,
+      },
+    ];
+    const f = fixture({ template: { ...TEMPLATE, timezone: "UTC", scheduledRoutines } });
+    await f.call("PUT", put, { body: { name: "Shop", timezone: "America/Sao_Paulo" } });
+    expect(f.installs[0]?.content).toMatchObject({
+      scheduledRoutines,
+      timezone: "America/Sao_Paulo",
+    });
+    await f.call("PUT", put, { body: { name: "Shop" } });
+    expect(f.installs[1]?.content).toMatchObject({ timezone: "UTC" });
+  });
+
   it("ignores a stored template that is no longer valid", async () => {
     const f = fixture({ template: { agents: "nonsense" } });
     await f.call("PUT", put, { body: { name: "Shop" } });

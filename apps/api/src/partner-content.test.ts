@@ -248,4 +248,74 @@ describe("installPartnerTenantContent", () => {
     expect(f.routines.size).toBe(1);
     expect([...f.routines.values()][0]?.active).toBe(false);
   });
+
+  it("gives each customer the scheduled routines once, in its timezone, owned by the right agent", async () => {
+    const f = fixture();
+    const scheduled: PartnerContent = {
+      agents: content.agents,
+      timezone: "America/Sao_Paulo",
+      scheduledRoutines: [
+        {
+          key: "tomorrow",
+          agent: "writer",
+          name: "Confirm tomorrow",
+          prompt: "List tomorrow's appointments.",
+          crons: ["0 18 * * *"],
+          active: true,
+        },
+        {
+          key: "weekly",
+          agent: "manager",
+          name: "Returns",
+          prompt: "List patients due.",
+          crons: ["0 9 * * 1"],
+          timezone: "UTC",
+          active: false,
+        },
+        {
+          key: "ghost",
+          agent: "nobody",
+          name: "x",
+          prompt: "x",
+          crons: ["0 9 * * *"],
+          active: true,
+        },
+        {
+          key: "bad",
+          agent: "writer",
+          name: "x",
+          prompt: "x",
+          crons: ["0 99 * * *"],
+          active: true,
+        },
+      ],
+    };
+    const first = await installPartnerTenantContent(f.deps, actor, partnerId, scheduled);
+    expect(f.routines.size).toBe(2);
+    const rows = [...f.routines.values()];
+    expect(rows[0]).toMatchObject({
+      botId: first.botIds.writer,
+      crons: ["0 18 * * *"],
+      timezone: "America/Sao_Paulo",
+      active: true,
+      templateKey: "tomorrow",
+    });
+    expect(rows[0]?.nextRunAt).toBeInstanceOf(Date);
+    expect(rows[1]).toMatchObject({ timezone: "UTC", active: false, nextRunAt: null });
+    if (rows[0]) rows[0].active = false;
+    await installPartnerTenantContent(f.deps, actor, partnerId, scheduled);
+    expect(f.routines.size).toBe(2);
+    expect([...f.routines.values()][0]?.active).toBe(false);
+  });
+
+  it("runs scheduled routines in UTC when no timezone is known", async () => {
+    const f = fixture();
+    await installPartnerTenantContent(f.deps, actor, partnerId, {
+      agents: content.agents,
+      scheduledRoutines: [
+        { key: "a", agent: "writer", name: "A", prompt: "x", crons: ["0 8 * * *"], active: true },
+      ],
+    });
+    expect([...f.routines.values()][0]?.timezone).toBe("UTC");
+  });
 });

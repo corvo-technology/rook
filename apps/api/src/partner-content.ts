@@ -1,6 +1,13 @@
 import type { SecretStore } from "@corvo/adapter-kit";
 import { buildMcpCredentialBlob } from "@corvo/adapters";
-import type { Actor, CreateBotInput, PartnerEventRoutine } from "@corvo/contracts";
+import type {
+  Actor,
+  CreateBotInput,
+  PartnerEventRoutine,
+  PartnerScheduledRoutine,
+} from "@corvo/contracts";
+import { isValidTimeZone } from "@corvo/contracts";
+import { nextCronDateAcrossStrict } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
 import { partnerAgentSpawnKey } from "./partner-members.js";
 import { computerContext } from "./routes/shared.js";
@@ -21,6 +28,10 @@ export interface PartnerContent {
   }>;
   /** Routines started by the partner's events; each runs on one of `agents`. */
   routines?: PartnerEventRoutine[];
+  /** Routines started by the clock; each runs on one of `agents`. */
+  scheduledRoutines?: PartnerScheduledRoutine[];
+  /** The customer's timezone, else the template's; UTC when neither is given. */
+  timezone?: string;
 }
 
 export interface PartnerContentDeps {
@@ -170,6 +181,40 @@ export async function installPartnerTenantContent(
         active: routine.active,
         notify: true,
         eventTrigger: routine.on,
+        templateKey: routine.key,
+      },
+      update: {},
+    });
+  }
+  // Same rule as event routines: made once, so a customer's edits and switches stay. The
+  // partner's prompt is stored as the routine's task text, which the agent reads as data; it
+  // holds no platform authority. Active ones are picked up by the routine job reconciler.
+  const customerZone =
+    content.timezone && isValidTimeZone(content.timezone) ? content.timezone : "UTC";
+  for (const routine of content.scheduledRoutines ?? []) {
+    const botId = botIds[routine.agent];
+    if (!botId) continue;
+    const timezone = routine.timezone ?? customerZone;
+    let nextRunAt: Date | null;
+    try {
+      nextRunAt = nextCronDateAcrossStrict(routine.crons, new Date(), timezone);
+    } catch {
+      // A schedule that does not parse is the partner's to fix; it must not stop the customer.
+      continue;
+    }
+    await deps.prisma.routine.upsert({
+      where: { botId_templateKey: { botId, templateKey: routine.key } },
+      create: {
+        spaceId: actor.spaceId,
+        botId,
+        userId: actor.userId,
+        name: routine.name,
+        prompt: routine.prompt,
+        crons: routine.crons,
+        timezone,
+        active: routine.active,
+        notify: true,
+        nextRunAt: routine.active ? nextRunAt : null,
         templateKey: routine.key,
       },
       update: {},

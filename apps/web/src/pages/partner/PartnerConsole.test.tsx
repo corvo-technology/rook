@@ -494,6 +494,39 @@ describe("partner template: presets, routines and roles", () => {
     expect(saved.routines).toBeUndefined();
   });
 
+  it("edits scheduled routines in the same text and refuses more than 20 routines in all", async () => {
+    api.template.mockResolvedValue({ template: stored });
+    api.setTemplate.mockResolvedValue({ template: stored });
+    await render("/app/partner/p1/template");
+    await click(byText("Edit"));
+    const write = (value: string) => {
+      const box = container.ownerDocument.querySelector<HTMLTextAreaElement>(
+        'textarea[aria-label="Shortcuts, presets, routines and roles (JSON)"]',
+      );
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set;
+      act(() => {
+        setter?.call(box, value);
+        box?.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    };
+    const scheduled = (n: number) =>
+      Array.from({ length: n }, (_, i) => ({
+        key: `s${i}`,
+        agent: "reception",
+        name: "Daily",
+        prompt: "Confirm.",
+        crons: ["0 18 * * *"],
+      }));
+    write(JSON.stringify({ scheduledRoutines: scheduled(1), timezone: "America/Sao_Paulo" }));
+    await click(byText("Save"));
+    const saved = api.setTemplate.mock.calls.at(-1)?.[0].template;
+    expect(saved.scheduledRoutines).toHaveLength(1);
+    expect(saved.timezone).toBe("America/Sao_Paulo");
+    await click(byText("Edit"));
+    write(JSON.stringify({ routines: stored.routines, scheduledRoutines: scheduled(20) }));
+    expect(byText("Save")?.hasAttribute("disabled")).toBe(true);
+  });
+
   it("starts from a vertical's template, ready to edit and save", async () => {
     api.template.mockResolvedValue({ template: null });
     api.setTemplate.mockResolvedValue({ template: null });

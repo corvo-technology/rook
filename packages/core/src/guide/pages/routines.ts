@@ -23,7 +23,7 @@ A routine can have a different **Model** from its agent's.
 
 ## Steps
 
-**Add step** makes another agent act after the last one finishes, receiving its answer. Use it for work that passes between agents instead of creating a second routine.
+**Add step** makes another agent act after the last one finishes, receiving its answer. Use it for work that passes between agents instead of creating a second routine. The **Flows** tab of **Routines** draws each routine's steps as a flow.
 
 ## Running and history
 
@@ -57,7 +57,7 @@ Uma rotina pode ter um **Modelo** diferente do modelo do agente.
 
 ## Etapas
 
-**Adicionar etapa** faz outro agente agir depois que o último terminar, recebendo a resposta dele. Use para trabalho que passa entre agentes, em vez de criar uma segunda rotina.
+**Adicionar etapa** faz outro agente agir depois que o último terminar, recebendo a resposta dele. Use para trabalho que passa entre agentes, em vez de criar uma segunda rotina. A aba **Fluxos** de **Rotinas** desenha as etapas de cada rotina como um fluxo.
 
 ## Executar e histórico
 

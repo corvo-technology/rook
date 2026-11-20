@@ -30,6 +30,7 @@ describePostgres("extra seats on the subscription (PostgreSQL)", () => {
   const provider = {
     describe: () => ({ capabilities: {} }),
     getCustomerSubscription: async () => snapshot,
+    priceIdForLookupKey: async (key: string) => `price_${key}`,
     getPriceById: vi.fn(async () => ({
       amount: 500,
       currency: "usd",
@@ -121,6 +122,33 @@ describePostgres("extra seats on the subscription (PostgreSQL)", () => {
     await service().syncSeats(owner.spaceId);
     expect(setExtraSeats).not.toHaveBeenCalled();
     expect(updateSeats).not.toHaveBeenCalled();
+  });
+
+  it("bills extra people on the reais yearly price once the subscription is a catalog plan", async () => {
+    vi.stubEnv("PLAN_PRICES", '{"price_team":"team"}');
+    vi.stubEnv("PLAN_LIMITS", '{"team":{"seatsIncluded":2,"maxSeats":10}}');
+    snapshot.priceLookupKey = "plan_team_brl_year";
+    try {
+      await system.billingAccount.update({
+        where: { organizationId: owner.spaceId },
+        data: { priceLookupKey: "plan_team_brl_year", currency: "brl", interval: "year" },
+      });
+      await service().syncSeats(owner.spaceId);
+      expect(setExtraSeats).toHaveBeenLastCalledWith(expect.any(String), {
+        priceId: "price_extra_person_brl_year",
+        quantity: expect.any(Number),
+      });
+      // The sync keeps the currency, so the next seat change still bills in reais.
+      expect(
+        await system.billingAccount.findUnique({ where: { organizationId: owner.spaceId } }),
+      ).toMatchObject({ currency: "brl", interval: "year" });
+    } finally {
+      delete snapshot.priceLookupKey;
+      await system.billingAccount.update({
+        where: { organizationId: owner.spaceId },
+        data: { priceLookupKey: null, currency: null, interval: null },
+      });
+    }
   });
 
   it("looks up the extra seat price once for display", async () => {

@@ -18,7 +18,7 @@ import type { BillingService } from "./billing.js";
 export async function planUsage(
   prisma: PrismaClient,
   actor: Actor,
-  billing?: Pick<BillingService, "extraSeatPrice">,
+  billing?: Pick<BillingService, "extraSeatPriceFor">,
 ): Promise<PlanUsage | null> {
   const config = planConfigFromEnv();
   if (!config) return null;
@@ -30,8 +30,8 @@ export async function planUsage(
     storageUsedBytes(prisma, member.organizationId),
     organizationComputerCount(prisma, member.organizationId),
     organizationSeats(prisma, member.organizationId),
-    limits.extraSeatPriceId && limits.maxSeats > limits.seatsIncluded
-      ? billing?.extraSeatPrice(limits.extraSeatPriceId)
+    limits.maxSeats > limits.seatsIncluded
+      ? billing?.extraSeatPriceFor(member.organizationId, limits.extraSeatPriceId)
       : null,
   ]);
   return {

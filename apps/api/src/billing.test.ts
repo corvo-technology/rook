@@ -267,3 +267,94 @@ describe("plan checkout", () => {
     });
   });
 });
+
+describe("extra people follow the subscription", () => {
+  function seats(account: Record<string, unknown>, people: number) {
+    const prisma = {
+      member: {
+        findMany: vi
+          .fn()
+          .mockResolvedValue(
+            Array.from({ length: people }, (_, i) => ({ user: { email: `p${i}@corvo.test` } })),
+          ),
+      },
+      spaceInvitation: { findMany: vi.fn().mockResolvedValue([]) },
+      organizationLimitOverride: { findUnique: vi.fn().mockResolvedValue(null) },
+      billingAccount: {
+        findUnique: vi
+          .fn()
+          .mockResolvedValue({ organizationId: "org-1", customerId: "cus_1", ...account }),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        count: vi.fn().mockResolvedValue(1),
+      },
+      $queryRaw: vi.fn().mockResolvedValue([{ startedAt: new Date() }]),
+    } as unknown as PrismaClient;
+    const setExtraSeats = vi.fn(async () => undefined);
+    const provider = {
+      describe: () => ({ capabilities: {} }),
+      getCustomerSubscription: vi.fn(async () => null),
+      priceIdForLookupKey: vi.fn(async (key: string) => `price_${key}`),
+      getPriceById: vi.fn(async (id: string) => ({
+        amount: 1900,
+        currency: id.includes("brl") ? "brl" : "usd",
+        interval: "year" as const,
+        intervalCount: 1,
+      })),
+      setExtraSeats,
+    } as unknown as BillingProvider;
+    return {
+      setExtraSeats,
+      provider,
+      billing: createBillingService({ prisma, provider, webOrigin: "https://app.example.com" }),
+    };
+  }
+  const paid = { status: "active", priceId: "price_team" };
+
+  it("bills the eleventh person on the reais yearly price, not a dollar monthly one", async () => {
+    vi.stubEnv("PLAN_PRICES", '{"price_team":"team"}');
+    const { billing, setExtraSeats } = seats(
+      { ...paid, priceLookupKey: "plan_team_brl_year", currency: "brl", interval: "year" },
+      11,
+    );
+    await billing.syncSeats("org-1");
+    expect(setExtraSeats).toHaveBeenCalledWith("cus_1", {
+      priceId: "price_extra_person_brl_year",
+      quantity: 1,
+    });
+    vi.unstubAllEnvs();
+  });
+
+  it("keeps the deployment's extra seat price for a subscription set up by hand", async () => {
+    vi.stubEnv("PLAN_PRICES", '{"price_team":"team"}');
+    vi.stubEnv("PLAN_LIMITS", '{"team":{"extraSeatPriceId":"price_seat"}}');
+    const { billing, setExtraSeats } = seats(paid, 12);
+    await billing.syncSeats("org-1");
+    expect(setExtraSeats).toHaveBeenCalledWith("cus_1", { priceId: "price_seat", quantity: 2 });
+    vi.unstubAllEnvs();
+  });
+
+  it("bills no extra person rather than another currency's price when the catalog one is missing", async () => {
+    vi.stubEnv("PLAN_PRICES", '{"price_team":"team"}');
+    vi.stubEnv("PLAN_LIMITS", '{"team":{"extraSeatPriceId":"price_seat"}}');
+    const { billing, setExtraSeats, provider } = seats(
+      { ...paid, currency: "brl", interval: "year" },
+      12,
+    );
+    (provider.priceIdForLookupKey as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+    await billing.syncSeats("org-1");
+    expect(setExtraSeats).not.toHaveBeenCalled();
+    vi.unstubAllEnvs();
+  });
+
+  it("shows the extra person price in the subscription's currency", async () => {
+    const { billing } = seats({ ...paid, currency: "brl", interval: "year" }, 3);
+    await expect(billing.extraSeatPriceFor("org-1", "price_seat_usd")).resolves.toMatchObject({
+      currency: "brl",
+    });
+    const hand = seats(paid, 3);
+    await expect(hand.billing.extraSeatPriceFor("org-1", "price_seat_usd")).resolves.toMatchObject({
+      currency: "usd",
+    });
+    await expect(hand.billing.extraSeatPriceFor("org-1")).resolves.toBeNull();
+  });
+});

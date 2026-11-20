@@ -6,8 +6,11 @@ import type {
 import { BillingCheckoutCompletedError, BillingCustomerNotFoundError } from "@corvo/adapter-kit";
 import type { Actor, BillingStatus, PlanCheckoutInput } from "@corvo/contracts";
 import {
+  BillingCurrencySchema,
+  BillingIntervalSchema,
   BYOK_MONTHLY_PRICE_CENTS,
   DEFAULT_PLANS,
+  extraPersonLookupKey,
   PLAN_ERROR_CODES,
   parsePlanLookupKey,
   planConfigFromEnv,
@@ -68,6 +71,11 @@ export interface BillingService {
   cancelForDeletedUser(userId: string): Promise<void>;
   /** What one seat above the plan's included ones costs; null when it has no price. */
   extraSeatPrice(priceId: string): Promise<BillingPrice | null>;
+  /**
+   * What one extra seat costs this organization: the price in its subscription's currency and
+   * interval, else `fallbackPriceId`, the deployment's single extra seat price. Null when none.
+   */
+  extraSeatPriceFor(organizationId: string, fallbackPriceId?: string): Promise<BillingPrice | null>;
 }
 
 /**
@@ -245,6 +253,38 @@ export function createBillingService(deps: {
     return catalog
       ? { plan: catalog.plan, currency: catalog.currency, interval: catalog.interval }
       : {};
+  }
+
+  /**
+   * The extra person price to bill: a subscription bought from the catalog follows its own
+   * currency and interval; one set up by hand keeps the deployment's single extra seat price.
+   */
+  async function extraSeatPriceId(
+    account: { currency: string | null; interval: string | null },
+    fallbackPriceId: string | undefined,
+  ): Promise<string | null> {
+    const currency = BillingCurrencySchema.safeParse(account.currency);
+    const interval = BillingIntervalSchema.safeParse(account.interval);
+    if (!currency.success || !interval.success) return fallbackPriceId ?? null;
+    const key = extraPersonLookupKey(currency.data, interval.data);
+    const found = (await provider.priceIdForLookupKey?.(key)) ?? null;
+    // Never another currency's price: the provider would refuse it, or bill it wrongly.
+    if (!found) getLogger().error("extra person price missing", { "billing.lookup_key": key });
+    return found;
+  }
+
+  async function extraSeatPriceById(priceId: string): Promise<BillingPrice | null> {
+    if (!provider.getPriceById) return null;
+    const cached = extraSeatPrices.get(priceId);
+    if (cached && cached.expiresAt > Date.now()) return cached.value;
+    try {
+      const value = await provider.getPriceById(priceId);
+      extraSeatPrices.set(priceId, { value, expiresAt: Date.now() + PRICE_CACHE_MS });
+      return value;
+    } catch (error) {
+      getLogger().error("extra seat price lookup failed", error);
+      return null;
+    }
   }
 
   async function byokCheckout(actor: Actor, organizationId: string) {
@@ -518,18 +558,15 @@ export function createBillingService(deps: {
       if (account) await sync(account.customerId);
     },
 
-    async extraSeatPrice(priceId) {
-      if (!provider.getPriceById) return null;
-      const cached = extraSeatPrices.get(priceId);
-      if (cached && cached.expiresAt > Date.now()) return cached.value;
-      try {
-        const value = await provider.getPriceById(priceId);
-        extraSeatPrices.set(priceId, { value, expiresAt: Date.now() + PRICE_CACHE_MS });
-        return value;
-      } catch (error) {
-        getLogger().error("extra seat price lookup failed", error);
-        return null;
-      }
+    extraSeatPrice: extraSeatPriceById,
+
+    async extraSeatPriceFor(organizationId, fallbackPriceId) {
+      const account = await billingAccountForOrganization(prisma, organizationId);
+      const priceId = await extraSeatPriceId(
+        account ?? { currency: null, interval: null },
+        fallbackPriceId,
+      );
+      return priceId ? extraSeatPriceById(priceId) : null;
     },
 
     async syncSeats(organizationId) {
@@ -538,10 +575,12 @@ export function createBillingService(deps: {
       // Under plans the price includes people; only seats above that are billed, on their own line.
       if (planConfigFromEnv()) {
         const limits = await organizationEntitlements(prisma, planConfigFromEnv(), organizationId);
-        if (!limits?.extraSeatPriceId || !provider.setExtraSeats) return;
+        if (!limits || !provider.setExtraSeats) return;
+        const priceId = await extraSeatPriceId(account, limits.extraSeatPriceId);
+        if (!priceId) return;
         const { total } = await organizationSeats(prisma, organizationId);
         await provider.setExtraSeats(account.customerId, {
-          priceId: limits.extraSeatPriceId,
+          priceId,
           quantity: extraSeats(limits, total),
         });
         await sync(account.customerId);

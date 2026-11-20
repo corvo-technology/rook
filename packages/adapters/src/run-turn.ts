@@ -477,7 +477,7 @@ async function stopStuckToolLoop(ctx: RunContext, toolName: string) {
     blocks: isBackgroundRunTrigger(run.trigger) ? [] : [{ kind: "text", text: stuckText }],
   });
   if (!stopped) return;
-  await endTicketRun(deps, run, { kind: "stopped", error: stuckText });
+  await endTicketRun(deps, run, { kind: "stopped", error: stuckText, cut: true });
   ctx.stopHeartbeatAfterCompletion();
   if (run.trigger === "routine" && run.routineId) {
     await clearRoutineBackoff(deps, run.routineId);
@@ -695,7 +695,10 @@ export async function completeRun(ctx: RunContext) {
     ),
   });
   if (!completed) return;
-  await endTicketRun(deps, run, { kind: "finished" });
+  await endTicketRun(deps, run, {
+    kind: "finished",
+    cut: ctx.state.guards.calls.refusedCalls > 0,
+  });
   ctx.stopHeartbeatAfterCompletion();
   if (run.trigger === "routine" && run.routineId) {
     await clearRoutineBackoff(deps, run.routineId);
@@ -888,7 +891,11 @@ export async function failRun(
     ...(partialReply.length > 0 ? { partialReply } : {}),
   });
   if (!failed) return;
-  await endTicketRun(deps, run, { kind: "stopped", error: message });
+  await endTicketRun(deps, run, {
+    kind: "stopped",
+    error: message,
+    cut: error instanceof TurnGuardStopError,
+  });
   if (
     error instanceof TransientModelError ||
     error instanceof ModelAccountError ||

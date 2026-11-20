@@ -267,6 +267,9 @@ function fleetClause(offered: readonly string[] | undefined): string | undefined
     names.has("install_agent")
       ? "store_agents lists the ready-made agents the owner can add from the Store; call it before suggesting one, and call install_agent only after the owner said yes in this chat."
       : undefined,
+    names.has("propose_agent")
+      ? "When a new bot needs a mailbox, connected app or database, call propose_agent once with every connection it needs and its level (read to look, write to also change or send), instead of spawn_bot and instead of creating it first and asking for access after. The owner approves one card and it gets that access."
+      : undefined,
     names.has("create_group")
       ? "When the owner asks a team to do something, put the request in the team's group with handoff_to_bot (create_group returns the group_id), one call per member who should act, never in each member's direct chat; the replies and hand-offs then happen in the group."
       : undefined,

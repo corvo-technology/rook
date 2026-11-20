@@ -1971,6 +1971,14 @@ msgstr "Anruf läuft…"
 msgid "Calls"
 msgstr "Aufrufe"
 
+#: src/lib/server-copy.ts
+msgid "Can read and write: {write}"
+msgstr "Darf lesen und schreiben: {write}"
+
+#: src/lib/server-copy.ts
+msgid "Can read: {read}"
+msgstr "Darf lesen: {read}"
+
 #: src/App.tsx
 msgid "Can't reach the server."
 msgstr "Server nicht erreichbar."
@@ -3486,6 +3494,10 @@ msgstr "Erstelle einen Abschnitt und verschiebe {0} dorthin."
 msgid "Create account"
 msgstr "Konto erstellen"
 
+#: src/lib/server-copy.ts
+msgid "Create agent “{name}”?"
+msgstr "Agent „{name}“ erstellen?"
+
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Create agents"
 msgstr "Agenten erstellen"
@@ -4594,6 +4606,10 @@ msgstr "Erster Bot"
 msgid "First messages, one per line"
 msgstr "Erste Nachrichten, eine pro Zeile"
 
+#: src/lib/server-copy.ts
+msgid "First task: {task}"
+msgstr "Erste Aufgabe: {task}"
+
 #: src/pages/RoutinesTabs.tsx
 msgid "Flows"
 msgstr "Abläufe"
@@ -5126,6 +5142,10 @@ msgstr "Die Anweisungen sind zu lang. Wähle einige Dateien ab."
 #: src/components/AskCard.tsx
 msgid "Instructions updated"
 msgstr "Anweisungen aktualisiert"
+
+#: src/lib/server-copy.ts
+msgid "Instructions: {instructions}"
+msgstr "Anweisungen: {instructions}"
 
 #: src/pages/partner/PartnerConsolePage.tsx
 msgid "Integration"

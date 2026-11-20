@@ -24,6 +24,7 @@ export * from "./commerce-money.js";
 export * from "./commerce-notices.js";
 export * from "./computer-runs.js";
 export * from "./computers.js";
+export * from "./connection-grants.js";
 export * from "./consultations.js";
 export * from "./content-crypto.js";
 export * from "./content-encryption.js";

@@ -18,6 +18,7 @@ import {
   createFleetGroup,
   listFleet,
   organizeBot,
+  reverifyProposedAgentGrants,
   setChildBotModel,
   setChildInstructions,
   updateChildBot,
@@ -184,6 +185,65 @@ export const fleetTools: ToolHandlers = {
       instructions: args.instructions ? String(args.instructions) : undefined,
       prompt: args.prompt ? String(args.prompt) : undefined,
       computerMode,
+    });
+    if ("error" in spawned) return call.finish(spawned);
+    if (!(await call.persistEffectResult(spawned))) return uncertainEffectResult(name);
+    try {
+      await publishMessage(deps, run, "bot", [
+        {
+          kind: "child_bot",
+          botId: spawned.botId,
+          name: spawned.name,
+          title: spawned.title,
+          status: "created",
+        },
+      ]);
+      await deps.events.append({
+        spaceId: run.spaceId,
+        threadId: thread.id,
+        botId: bot.id,
+        runId: run.id,
+        type: "bot.spawned",
+        payload: { childBotId: spawned.botId, name: spawned.name },
+      });
+    } catch (error) {
+      getLogger().error("spawned bot notification", error);
+    }
+    return spawned;
+  },
+  async propose_agent(ctx, call) {
+    const { deps, run, runId, bot, thread } = ctx;
+    const { name, args, effectKey } = call;
+    // The approved request runs as stored; its connections are checked again before anything exists.
+    const verified = await reverifyProposedAgentGrants(deps.prisma, ctx.fleetRun, args);
+    if (!verified.ok) return call.finish({ error: verified.error });
+    const computerModeArg = args.computer_mode;
+    let computerMode: "team" | "dedicated" | undefined;
+    if (computerModeArg != null && computerModeArg !== "") {
+      const value = String(computerModeArg);
+      if (value !== "team" && value !== "dedicated") {
+        return call.finish({
+          error: 'computer_mode must be "team" or "dedicated".',
+        });
+      }
+      computerMode = value;
+    }
+    const spawned = await spawnBot(deps, {
+      spawnedBy: {
+        id: bot.id,
+        name: bot.name,
+        spaceId: bot.spaceId,
+        userId: run.userId,
+      },
+      runId,
+      spawnKey: effectKey,
+      name: String(args.name ?? ""),
+      title: args.title ? String(args.title) : undefined,
+      description: args.description ? String(args.description) : undefined,
+      instructions: args.instructions ? String(args.instructions) : undefined,
+      prompt: args.prompt ? String(args.prompt) : undefined,
+      computerMode,
+      connectionGrants: verified.grants,
     });
     if ("error" in spawned) return call.finish(spawned);
     if (!(await call.persistEffectResult(spawned))) return uncertainEffectResult(name);

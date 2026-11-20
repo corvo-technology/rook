@@ -14,7 +14,7 @@ import {
   GROUP_MEMBER_MIN,
 } from "@corvo/contracts";
 import { ACTIVE_RUN_STATUSES } from "@corvo/core";
-import type { Prisma, PrismaClient } from "@corvo/db";
+import type { ConnectionGrant, Prisma, PrismaClient } from "@corvo/db";
 import {
   cancelRunsInTransaction,
   clearEndedRunState,
@@ -22,6 +22,8 @@ import {
   createRepos,
   createThreadMessageInTransaction,
   expireComputerExecutionLeases,
+  grantConnectionAccess,
+  IsolationError,
   legacyTeamHomeKey,
   recordComputerRunEnd,
   withTransactionRetry,
@@ -69,6 +71,8 @@ export async function spawnBot(
     instructions?: string;
     prompt?: string;
     computerMode?: ComputerMode;
+    /** Connections lent to the new bot before its first task runs; already checked by the caller. */
+    connectionGrants?: ConnectionGrant[];
   },
 ) {
   const name = input.name.trim();
@@ -133,6 +137,24 @@ export async function spawnBot(
       await deps.jobs.enqueue(botAvatarDesignJob(created.id));
     } catch (error) {
       getLogger().error("spawned bot avatar design enqueue", error);
+    }
+  }
+
+  if (input.connectionGrants?.length) {
+    const { spaceId, userId } = input.spawnedBy;
+    const grants = input.connectionGrants;
+    try {
+      await deps.prisma.$transaction(async (tx) => {
+        for (const grant of grants) {
+          await grantConnectionAccess(tx, { spaceId, userId }, [created.id], grant);
+        }
+      });
+    } catch (error) {
+      if (!(error instanceof IsolationError)) throw error;
+      // Nothing was lent and the first task did not start.
+      return {
+        error: `The agent "${created.name}" was created, but a connection changed and no access was applied.`,
+      };
     }
   }
 

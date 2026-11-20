@@ -18,6 +18,22 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Always ask": "始终询问",
   "Only what's risky": "仅有风险的操作",
   Block: "阻止",
+  "Asks before any change": "任何更改前都会询问",
+  "Asks before risky actions": "有风险的操作前会询问",
+  "Still asks before sending, paying, deleting or deploying, and before opening a site you didn't mention.":
+    "发送、付款、删除或部署前,以及打开你没提到的网站前,仍会询问。",
+  "Does everything without asking": "无需询问,直接执行所有操作",
+  "Does what fits your request": "执行符合你请求的操作",
+  "How much does {name} do on its own?": "{name}可以自行完成多少?",
+  "Let {name} act without asking?": "让{name}无需询问直接执行?",
+  "Let bots act without asking?": "让机器人无需询问直接执行?",
+  "Still asks before a security change after it read outside content. Blocked actions stay blocked.":
+    "读取外部内容后,进行安全更改前仍会询问。被阻止的操作仍然被阻止。",
+  "Still asks before anything that changes something, and before opening a site you didn't mention.":
+    "任何会更改内容的操作前,以及打开你没提到的网站前,仍会询问。",
+  "Still asks when a second model finds it outside your request, and before security changes.":
+    "当第二个模型发现操作超出你的请求时,以及安全更改前,仍会询问。",
+  "Stop asking": "不再询问",
   "Add a model in Settings to use this.": "请在设置中添加模型后再使用。",
   "Approval model": "审批模型",
   "Routing model": "路由模型",

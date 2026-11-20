@@ -21,6 +21,22 @@ export const DE_MESSAGES: Record<string, string> = {
   "Always ask": "Immer fragen",
   "Only what's risky": "Nur das Riskante",
   Block: "Blockieren",
+  "Asks before any change": "Fragt vor jeder Änderung",
+  "Asks before risky actions": "Fragt vor riskanten Aktionen",
+  "Still asks before sending, paying, deleting or deploying, and before opening a site you didn't mention.":
+    "Fragt weiterhin vor Senden, Bezahlen, Löschen oder Veröffentlichen und bevor eine nicht genannte Website geöffnet wird.",
+  "Does everything without asking": "Erledigt alles ohne Nachfrage",
+  "Does what fits your request": "Tut, was zu deiner Anfrage passt",
+  "How much does {name} do on its own?": "Wie viel macht {name} selbstständig?",
+  "Let {name} act without asking?": "{name} ohne Nachfrage handeln lassen?",
+  "Let bots act without asking?": "Bots ohne Nachfrage handeln lassen?",
+  "Still asks before a security change after it read outside content. Blocked actions stay blocked.":
+    "Fragt weiterhin vor einer Sicherheitsänderung, nachdem externe Inhalte gelesen wurden. Blockierte Aktionen bleiben blockiert.",
+  "Still asks before anything that changes something, and before opening a site you didn't mention.":
+    "Fragt weiterhin vor allem, was etwas ändert, und bevor eine nicht genannte Website geöffnet wird.",
+  "Still asks when a second model finds it outside your request, and before security changes.":
+    "Fragt weiterhin, wenn ein zweites Modell etwas außerhalb deiner Anfrage sieht, und vor Sicherheitsänderungen.",
+  "Stop asking": "Nicht mehr fragen",
   "Add a model in Settings to use this.":
     "Füge in den Einstellungen ein Modell hinzu, um dies zu nutzen.",
   "Approval model": "Freigabemodell",

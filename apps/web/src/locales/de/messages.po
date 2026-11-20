@@ -5418,6 +5418,10 @@ msgstr "Hell"
 msgid "Light tasks model"
 msgstr "Modell für leichte Aufgaben"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Limit per payment"
+msgstr "Limit pro Zahlung"
+
 #: src/pages/platform/LimitsSection.tsx
 #: src/pages/platform/PlatformPage.tsx
 msgid "Limits by organization"
@@ -7118,10 +7122,6 @@ msgstr "Pausiert"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Pawn"
 msgstr "Bauer"
-
-#: src/pages/shell/bot-panel.tsx
-msgid "Payment limit"
-msgstr "Limit pro Zahlung"
 
 #: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Payment method"

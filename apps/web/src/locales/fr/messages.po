@@ -5418,6 +5418,10 @@ msgstr "Clair"
 msgid "Light tasks model"
 msgstr "Modèle pour les tâches légères"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Limit per payment"
+msgstr "Limite par paiement"
+
 #: src/pages/platform/LimitsSection.tsx
 #: src/pages/platform/PlatformPage.tsx
 msgid "Limits by organization"
@@ -7118,10 +7122,6 @@ msgstr "En pause"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Pawn"
 msgstr "Pion"
-
-#: src/pages/shell/bot-panel.tsx
-msgid "Payment limit"
-msgstr "Limite par paiement"
 
 #: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Payment method"

@@ -5418,6 +5418,10 @@ msgstr "ライト"
 msgid "Light tasks model"
 msgstr "軽いタスク用モデル"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Limit per payment"
+msgstr "支払いの上限"
+
 #: src/pages/platform/LimitsSection.tsx
 #: src/pages/platform/PlatformPage.tsx
 msgid "Limits by organization"
@@ -7118,10 +7122,6 @@ msgstr "一時停止中"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Pawn"
 msgstr "ポーン"
-
-#: src/pages/shell/bot-panel.tsx
-msgid "Payment limit"
-msgstr "支払いの上限"
 
 #: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Payment method"

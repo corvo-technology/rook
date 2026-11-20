@@ -5418,6 +5418,10 @@ msgstr "Light"
 msgid "Light tasks model"
 msgstr "Light tasks model"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Limit per payment"
+msgstr "Limit per payment"
+
 #: src/pages/platform/LimitsSection.tsx
 #: src/pages/platform/PlatformPage.tsx
 msgid "Limits by organization"
@@ -7118,10 +7122,6 @@ msgstr "Paused"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Pawn"
 msgstr "Pawn"
-
-#: src/pages/shell/bot-panel.tsx
-msgid "Payment limit"
-msgstr "Payment limit"
 
 #: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Payment method"

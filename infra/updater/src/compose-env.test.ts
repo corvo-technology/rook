@@ -122,7 +122,10 @@ const INDIRECT = {
     // core/secrets-guard.ts resolves these by name.
     "SCREEN_PROXY_SECRET",
   ],
-  worker: [],
+  worker: [
+    // api/billing-notices.ts reads it for the renewal reminder job the worker runs.
+    "TERMS_URL",
+  ],
 } as const;
 
 const ENV_NAME = "[A-Z][A-Z0-9_]+";

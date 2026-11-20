@@ -1942,6 +1942,10 @@ msgstr "エージェント別"
 msgid "By model tier"
 msgstr "モデル階層別"
 
+#: src/pages/RoutinesTabs.tsx
+msgid "Calendar"
+msgstr "カレンダー"
+
 #: src/pages/shell/chat-header.tsx
 msgid "Call"
 msgstr "通話"
@@ -4590,6 +4594,10 @@ msgstr "最初のボット"
 msgid "First messages, one per line"
 msgstr "最初のメッセージ（1行に1つ）"
 
+#: src/pages/RoutinesTabs.tsx
+msgid "Flows"
+msgstr "フロー"
+
 #: src/pages/shell/composer-model-choice.tsx
 msgid "For this conversation"
 msgstr "この会話で使う"
@@ -5281,6 +5289,7 @@ msgstr "参加"
 msgid "JSON"
 msgstr "JSON"
 
+#: src/pages/DirectChat.tsx
 #: src/pages/shell/transcript.tsx
 msgid "Jump to latest"
 msgstr "最新へ移動"
@@ -8111,8 +8120,6 @@ msgid "Routine “{0}”"
 msgstr "ルーティン「{0}」"
 
 #: src/pages/PartnerTemplateEditor.tsx
-#: src/pages/shell/command-palette.tsx
-#: src/pages/shell/sidebar-team.tsx
 #: src/pages/Workflows.tsx
 msgid "Routine flows"
 msgstr "ルーティンのフロー"

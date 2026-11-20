@@ -295,7 +295,9 @@ export function SidebarRoster({
                   : (workStatusLabel ??
                     attentionLabel ??
                     (item.kind === "bot"
-                      ? item.chat.title || approvalTextLabel(item.chat.preview)
+                      ? item.chat.title
+                        ? "" // the role pill already shows the title
+                        : approvalTextLabel(item.chat.preview)
                       : approvalTextLabel(item.chat.preview) ||
                         item.chat.members.map((member) => member.name).join(", ")));
                 const rowDropTarget: RosterDropTarget | null =
@@ -555,7 +557,7 @@ export function SidebarRoster({
                               <span>{compactStatusLabel}</span>
                             </div>
                           ) : null
-                        ) : (
+                        ) : rosterLine ? (
                           <div
                             dir="auto"
                             data-roster-preview={
@@ -576,7 +578,7 @@ export function SidebarRoster({
                           >
                             {rosterLine}
                           </div>
-                        )}
+                        ) : null}
                       </div>
                     ) : null}
                   </ContextMenuTrigger>

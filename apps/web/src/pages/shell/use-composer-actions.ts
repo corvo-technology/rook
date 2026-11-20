@@ -22,6 +22,7 @@ import { requestBrowserNotificationPermission } from "../../lib/browser-notifica
 import { setComposerUnsavedWork } from "../../lib/composer-draft";
 import { takeHostTurn } from "../../lib/embed-host";
 import { scheduleFocusPrompt } from "../../lib/focus-prompt";
+import { messageModels } from "../../lib/message-model";
 import {
   readFileAsBase64,
   revokePendingAttachmentPreviews,
@@ -477,9 +478,11 @@ export function useComposerActions({
             artifactIds: artifactIds.length ? artifactIds : undefined,
             replyToMessageId: activeReplyTarget?.id,
             replyQuote: activeReplyQuote ?? undefined,
+            model: messageModels.get(botTarget).model ?? undefined,
             host: takeHostTurn(),
           });
           accepted = true;
+          messageModels.settle(botTarget);
           const { runId, taskId } = sent;
           if (activeBotId.current === botTarget && runId && taskId) {
             updateSnapshot((current) =>

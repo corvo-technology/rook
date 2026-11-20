@@ -66,6 +66,7 @@ import { groupConversationOwner } from "./group-owner.js";
 import { isRecordNotFound } from "./routes/shared.js";
 import { unavailableAgents } from "./routing-availability.js";
 import { withSerializableRetry } from "./serializable-retry.js";
+import { compressForChosenModel } from "./thread-context.js";
 import type { ImageAdmissionRun } from "./thread-image-admission.js";
 import { assertThreadImageInput } from "./thread-image-admission.js";
 import { loadMessagePage } from "./thread-message-pages.js";
@@ -755,6 +756,8 @@ async function assertImageRecipients(
     botId: string;
     runs: Array<ImageAdmissionRun & { id: string }>;
     imageAdmission: Parameters<typeof assertThreadImageInput>[5];
+    /** The model chosen for this message: what a new run would read the image with. */
+    chosen?: ImageAdmissionRun;
   },
 ) {
   if (!attachmentBlocks.some((block) => block.kind === "image")) return;
@@ -772,7 +775,7 @@ async function assertImageRecipients(
   }
   const current =
     runs.find(steersUserMessage) ?? runs.find((run) => STEERABLE_RUN_STATUSES.has(run.status));
-  for (const run of answered.length ? answered : [current]) {
+  for (const run of answered.length ? answered : [current ?? recipient.chosen]) {
     await assertThreadImageInput(
       tx as unknown as PrismaClient,
       actor,
@@ -825,6 +828,8 @@ export async function sendThreadMessage(
     replyQuote?: string;
     threadRootId?: string;
     clientNonce?: string;
+    /** The model for this message's run; the agent's own setting stays as it is. */
+    model?: { provider: string; modelId: string };
     host?: HostTurn;
   },
   releaseTakeover?: (runId: string) => Promise<void>,
@@ -846,6 +851,17 @@ export async function sendThreadMessage(
     throw new ORPCError("BAD_REQUEST", { message: "replyQuote requires replyToMessageId." });
   }
 
+  if (input.model && target.kind !== "bot") {
+    throw new ORPCError("BAD_REQUEST", { message: "Only an agent's own chat takes a model." });
+  }
+  const chosenModel = input.model
+    ? {
+        modelProvider: input.model.provider,
+        modelId: input.model.modelId,
+        thinkingLevel: null,
+        modelPinned: true as const,
+      }
+    : undefined;
   if (input.threadRootId && target.kind !== "group") {
     throw new ORPCError("BAD_REQUEST", { message: "Only a channel has threads." });
   }
@@ -984,6 +1000,7 @@ export async function sendThreadMessage(
             botId: target.botId,
             runs: activeRuns,
             imageAdmission: deps.imageAdmission,
+            chosen: chosenModel && { ...chosenModel, status: "queued", trigger: "user" },
           });
         }
         const blocks = buildUserMessageBlocks(
@@ -1070,6 +1087,14 @@ export async function sendThreadMessage(
               botId: target.botId,
               userId: actor.userId,
               runId: steersUserMessage(active) ? active.id : null,
+              // A message held for the next run carries its model; a steered run keeps its own.
+              ...(!steersUserMessage(active) && chosenModel
+                ? {
+                    modelProvider: chosenModel.modelProvider,
+                    modelId: chosenModel.modelId,
+                    thinkingLevel: null,
+                  }
+                : {}),
             },
           });
           await tx.message.update({ where: { id: message.id }, data: { runId: active.id } });
@@ -1114,6 +1139,7 @@ export async function sendThreadMessage(
             trigger: "user",
             clientNonce: sendRunClientNonce(input.clientNonce, message.id),
             sourceMessageId: message.id,
+            ...(chosenModel ?? {}),
             ...(host ? { hostContext: host as Prisma.InputJsonObject } : {}),
           },
         });
@@ -1414,6 +1440,12 @@ export async function sendThreadMessage(
     for (const run of committed.runs) {
       if (steersUserMessage(run)) await releaseTakeover(run.id);
     }
+  }
+  if (input.model && target.kind === "bot") {
+    // A failed summary must not lose the message; the run still fits what it reads to the window.
+    await compressForChosenModel(deps, actor, target, input.model).catch((error) => {
+      getLogger().error("thread send compaction for chosen model", error);
+    });
   }
   await enqueueRunsNeedingContinue(deps, committed.runs, {
     actor,

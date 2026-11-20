@@ -152,3 +152,24 @@ export async function assertRoutineModel(
   );
   if (message) throw new ORPCError("BAD_REQUEST", { message });
 }
+
+/**
+ * A model chosen for one message must be one the person can run now: a connection of theirs, or
+ * the hosted model while the organization has credits.
+ */
+export async function assertMessageModel(
+  deps: RouterDeps,
+  actor: Actor,
+  model: { provider: string; modelId: string },
+  resolution: { codexCatalog: CodexLiveCatalog; hostedProvider?: string },
+) {
+  const message = await validateConnectedModelChoice(
+    deps.prisma,
+    deps.secrets,
+    actor,
+    model.provider,
+    model.modelId,
+    resolution,
+  );
+  if (message) throw new ORPCError("BAD_REQUEST", { message });
+}

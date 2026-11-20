@@ -13,6 +13,7 @@ import { chatSettingsRoute } from "./chat-settings-route";
 import { cancelFocusPrompt } from "./focus-prompt";
 import { useI18n } from "./i18n";
 import { resumeLiveNotifications } from "./live-notifications";
+import { messageModels } from "./message-model";
 import { currentSessionGeneration } from "./session";
 import { answerThreadMessage } from "./thread-answer";
 import type { useThreadAttachments } from "./thread-attachments";
@@ -160,12 +161,15 @@ export function useThreadSend({
         attachments,
         replyTargetId: replyTarget?.id,
         replyQuote,
+        model: botTarget ? (messageModels.get(botTarget).model ?? undefined) : undefined,
       });
     } catch (error) {
       Alert.alert(t("Failed to send message"), errorText(error));
       return;
     }
     composerRef.current?.reset();
+    // The attempt carries the model it was written for, so a one-message choice is spent now.
+    if (botTarget) messageModels.settle(botTarget);
     setPendingAttachments((current) =>
       current.filter((attachment) => !submitted.attachmentIds.includes(attachment.id)),
     );

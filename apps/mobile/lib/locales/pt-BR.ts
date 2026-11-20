@@ -1,4 +1,5 @@
 export const PT_BR_MESSAGES: Record<string, string> = {
+  "For this conversation": "Para esta conversa",
   Automatic: "Automático",
   "Complex tasks model": "Modelo para tarefas complexas",
   "Not sent. Tap for options": "Não enviada. Toque para ver as opções",

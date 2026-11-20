@@ -4496,6 +4496,10 @@ msgstr "Erster Bot"
 msgid "First messages, one per line"
 msgstr "Erste Nachrichten, eine pro Zeile"
 
+#: src/pages/shell/composer-model-choice.tsx
+msgid "For this conversation"
+msgstr "Für diese Unterhaltung"
+
 #: src/components/PlanChoice.tsx
 msgid "For up to {count} people"
 msgstr "Für bis zu {count} Personen"

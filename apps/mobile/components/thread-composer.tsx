@@ -10,7 +10,7 @@ import {
 import { MAX_FONT_SCALE } from "@corvo/ui-tokens";
 import type { MenuAction } from "@expo/ui/community/menu";
 import { MenuView } from "@expo/ui/community/menu";
-import type { Ref } from "react";
+import type { ReactNode, Ref } from "react";
 import { useImperativeHandle, useMemo, useRef, useState } from "react";
 import type { ViewStyle } from "react-native";
 import {
@@ -46,6 +46,8 @@ type ThreadComposerProps = {
   replyQuote: string | null;
   attachmentIds: string[];
   botId?: string;
+  /** The model menu for the next message; only an agent's own chat has one. */
+  modelMenu?: ReactNode;
   onCall: boolean;
   working: boolean;
   sending: boolean;
@@ -69,6 +71,7 @@ export function ThreadComposer({
   replyQuote,
   attachmentIds,
   botId,
+  modelMenu,
   onCall,
   working,
   sending,
@@ -379,6 +382,7 @@ export function ThreadComposer({
             </View>
           </MenuView>
         ) : null}
+        {modelMenu}
         <GlassSurface
           shape="roundedRectangle"
           style={{

@@ -162,9 +162,8 @@ function PlanCard({
   const hasExtraPeople = entitlements.maxSeats > entitlements.seatsIncluded;
   const muted = dark ? "text-background/70" : "text-muted-foreground";
   const mascots = Math.min(entitlements.seatsIncluded, MAX_MASCOTS);
-  const monthlyTotal =
-    planPriceCents(plan, currency, "month") +
-    (aiOn ? aiAddOnPriceCents(currency, aiUse, "month") : 0);
+  // Only the server has free months yearly; AI costs the same per month either way.
+  const savedCents = planPriceCents(plan, currency, "month") * MONTHS - serverCents;
 
   return (
     <section
@@ -203,7 +202,7 @@ function PlanCard({
         <p className={cn("mt-1 text-sm", muted)}>
           {labels.yearlyTotal(
             money(serverCents + aiCents, currency, locale),
-            money(monthlyTotal * MONTHS - (serverCents + aiCents), currency, locale),
+            money(savedCents, currency, locale),
           )}
         </p>
       ) : null}

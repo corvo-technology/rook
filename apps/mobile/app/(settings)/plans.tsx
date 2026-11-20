@@ -83,6 +83,7 @@ export default function PlansScreen() {
   const size = sizeNames[entitlements.computerSize];
   const people = entitlements.seatsIncluded;
   const files = `${Math.round(entitlements.storageBytes / GIB)} GB`;
+  const savedCents = planPriceCents(plan, currency, "month") * MONTHS - serverCents;
   const canManage = usage.canManage;
 
   async function subscribe() {
@@ -216,24 +217,23 @@ export default function PlansScreen() {
         footer={
           !canManage
             ? t("Only the owner can subscribe")
-            : interval === "year"
-              ? t("{total} billed yearly, {saved} saved", {
-                  total: money(serverCents + aiCents, currency, locale),
-                  saved: money(
-                    (planPriceCents(plan, currency, "month") +
-                      (aiOn ? aiAddOnPriceCents(currency, aiUse, "month") : 0)) *
-                      MONTHS -
-                      (serverCents + aiCents),
-                    currency,
-                    locale,
-                  ),
-                })
-              : aiOn
-                ? t("Server {server} + AI {ai}", {
-                    server: perMonth(serverCents),
-                    ai: perMonth(aiCents),
-                  })
-                : undefined
+            : [
+                aiOn
+                  ? t("Server {server} + AI {ai}", {
+                      server: perMonth(serverCents),
+                      ai: perMonth(aiCents),
+                    })
+                  : null,
+                interval === "year"
+                  ? t("{total} billed yearly, {saved} saved", {
+                      total: money(serverCents + aiCents, currency, locale),
+                      // Only the server has free months yearly; AI costs the same each month.
+                      saved: money(savedCents, currency, locale),
+                    })
+                  : null,
+              ]
+                .filter(Boolean)
+                .join("\n") || undefined
         }
       >
         <SettingsRow

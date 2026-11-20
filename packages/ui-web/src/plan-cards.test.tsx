@@ -171,3 +171,13 @@ it("says the reassurance once, below the cards, and marks Team as recommended", 
   expect(en.card("personal").textContent).not.toContain("Recommended");
   await en.cleanup();
 });
+
+it("gives no yearly discount on AI: the saving counts only the server's free months", async () => {
+  const en = await render({ locale: "en" });
+  await en.click(en.byText("Yearly"));
+  const team = en.card("team").textContent ?? "";
+  expect(team).toContain("$44.50");
+  expect(team).toContain("Server $32.50 + AI $12");
+  expect(team).toContain("$534 a year, $78 saved");
+  await en.cleanup();
+});

@@ -72,6 +72,7 @@ import {
   computerActionSchema,
   computerCommandEnv,
   computerControlTimeoutMs,
+  computerResourcesFromDockerStats,
   containerActionSteps,
   controlHandlesActions,
   createDockerStreamDemuxer,
@@ -390,6 +391,27 @@ app.get("/computers/:id", async (c) => {
       running: Boolean(info.State.Running),
       image: info.Config.Image,
     });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return c.json({ error: message }, 404);
+  }
+});
+
+// What the computer has used: one Docker stats reading plus its writable layer's size.
+app.get("/computers/:id/resources", async (c) => {
+  try {
+    const { container, info } = await managedContainer(
+      c.req.param("id"),
+      c.req.header("x-corvo-bot-id"),
+      c.req.header("x-corvo-space-id"),
+    );
+    if (!info.State.Running) return c.json({ error: "not running" }, 409);
+    const [stats, sized] = await Promise.all([
+      container.stats({ stream: false }),
+      // The typings omit `size`, which makes Docker report the writable layer's SizeRw.
+      container.inspect({ size: true } as never) as unknown as Promise<{ SizeRw?: number | null }>,
+    ]);
+    return c.json(computerResourcesFromDockerStats(stats, sized.SizeRw ?? undefined));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return c.json({ error: message }, 404);

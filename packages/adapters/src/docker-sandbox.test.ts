@@ -40,6 +40,27 @@ describe("Docker sandbox", () => {
     ).rejects.toThrow("fetch failed (127.0.0.1:50635): connect ECONNREFUSED 127.0.0.1:50635");
   });
 
+  it("reads a running computer's resources from the supervisor, and nothing when it cannot", async () => {
+    const fetchMock = vi.fn(async (_url: string) =>
+      Response.json({ cpuSeconds: 3, memoryBytes: 10, networkRxBytes: 1 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const provider = new DockerSandboxProvider("http://supervisor.test", "test-token");
+    const ref = { id: "computer", botId: "bot", kind: "docker" as const, providerRef: "computer" };
+    expect(await provider.sampleResources(ref, context)).toEqual({
+      cpuSeconds: 3,
+      memoryBytes: 10,
+      networkRxBytes: 1,
+    });
+    expect(fetchMock.mock.calls[0]![0]).toBe("http://supervisor.test/computers/computer/resources");
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ error: "gone" }, { status: 404 })),
+    );
+    expect(await provider.sampleResources(ref, context)).toBeUndefined();
+  });
+
   it("rejects a failed interactive screen instead of returning a viewer fallback", async () => {
     vi.stubGlobal(
       "fetch",

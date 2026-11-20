@@ -19,6 +19,7 @@ import { recordComputerRunEnd } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import { expireComputerControl, hasActiveComputerControl } from "./computer-control.js";
 import { toComputerRef } from "./computer-lifecycle.js";
+import { recordStopSample } from "./computer-resources.js";
 import { checkpointComputerWorkspace, deletedTeamBotFolders } from "./computer-workspace.js";
 import { isSandboxDamagedError, isSandboxGoneError } from "./sandbox-errors.js";
 
@@ -512,6 +513,8 @@ export async function sleepComputerIfIdle(
     return;
   }
 
+  // The last measurement of this stretch, while the computer can still be read.
+  if (!damaged) await recordStopSample(deps, computer);
   try {
     // Nothing on a damaged computer can be read, so a provider that cannot save it either stops
     // it anyway, keeping its last good copy, rather than leave it running.

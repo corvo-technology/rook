@@ -176,6 +176,7 @@ export const ROW_SECURITY_MODELS: ReadonlySet<string> = new Set([
   "MailboxSend",
   "Computer",
   "ComputerRun",
+  "ComputerResourceSample",
   "Board",
   "Ticket",
   "TicketComment",

@@ -1367,6 +1367,19 @@ export interface BillingPlanChangeRequest {
  * What a verified billing webhook says about a payment or subscription, kept as evidence of
  * what was charged and accepted. Only the fields the event carries are set.
  */
+/**
+ * What one computer has used so far, as its provider reports it. Counters (`cpuSeconds` and
+ * the network bytes) are cumulative since the sandbox started; memory and disk are levels now.
+ * A provider omits what it cannot measure.
+ */
+export interface ComputerResourceSample {
+  cpuSeconds?: number;
+  memoryBytes?: number;
+  diskBytes?: number;
+  networkRxBytes?: number;
+  networkTxBytes?: number;
+}
+
 export interface BillingEvidence {
   /** The provider's event id; one record per id, so a repeated delivery adds nothing. */
   eventId: string;

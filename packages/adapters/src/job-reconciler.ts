@@ -139,6 +139,7 @@ export function createJobReconciler(
     reconcileHomeStorage?: () => Promise<void>;
     reconcileStorageUsage?: () => Promise<void>;
     reconcileIdleComputers?: () => Promise<void>;
+    reconcileComputerResources?: () => Promise<void>;
     reconcileDeadJobs?: () => Promise<void>;
   },
   options: { intervalMs?: number; batchSize?: number; maxPagesPerPass?: number } = {},
@@ -181,6 +182,7 @@ export function createJobReconciler(
           deps.reconcileHomeStorage,
           deps.reconcileStorageUsage,
           deps.reconcileIdleComputers,
+          deps.reconcileComputerResources,
           deps.reconcileDeadJobs,
         ].map(async (reconcile) => reconcile?.()),
       );

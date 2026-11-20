@@ -1600,6 +1600,32 @@ model ComputerRun {
   @@map("computer_runs")
 }
 
+/// What a running computer used at one moment: every five minutes and once when it stops.
+/// Append-only evidence like `ComputerRun`: no lifecycle foreign keys, ids only. Counters are
+/// the provider's cumulative figures since the sandbox started; memory and disk are levels.
+model ComputerResourceSample {
+  id             String   @id @default(cuid())
+  computerId     String
+  spaceId        String?
+  organizationId String?
+  userId         String?
+  /// `startedAt` of the `ComputerRun` this sample belongs to.
+  runStartedAt   DateTime?
+  /// A five-minute tick for periodic samples (so two writers store one), the moment for a stop.
+  sampledAt      DateTime
+  /// "tick" or "stop".
+  reason         String
+  cpuSeconds     Float?
+  memoryBytes    BigInt?
+  diskBytes      BigInt?
+  networkRxBytes BigInt?
+  networkTxBytes BigInt?
+
+  @@unique([computerId, sampledAt])
+  @@index([organizationId, sampledAt])
+  @@map("computer_resource_samples")
+}
+
 model ComputerExecutionLease {
   id         String   @id @default(cuid())
   computerId String

@@ -39,6 +39,7 @@ import type {
   ComputerInput,
   ComputerObservation,
   ComputerRef,
+  ComputerResourceSample,
   ConnectorCall,
   ConnectorCapabilities,
   ConnectorCatalogItem,
@@ -146,6 +147,11 @@ export interface SandboxProvider {
    * choose between kinds at provision time implement it.
    */
   provisionKind?(): Promise<ComputerRef["kind"]>;
+  /** Optional measurement of what this running computer has used; providers without it record nothing. */
+  sampleResources?(
+    computer: ComputerRef,
+    context: AdapterContext,
+  ): Promise<ComputerResourceSample | undefined>;
   /** Read-only probe: true only when this exact reference is already running. */
   isRunning?(computer: ComputerRef, context: AdapterContext): Promise<boolean>;
   /**

@@ -44,6 +44,7 @@ import {
   createArtifactStore,
   createBackgroundJobHandlers,
   createCloudAgentConnection,
+  createComputerResourceSampler,
   createConnectorStack,
   createConsultationRetentionSweeper,
   createEgressGateway,
@@ -961,6 +962,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
         ),
         reconcileConsultationRetention: createConsultationRetentionSweeper({ prisma, artifacts }),
         reconcileIdleComputers: createIdleComputerSweeper({ prisma, jobs }),
+        reconcileComputerResources: createComputerResourceSampler({ prisma, sandbox }),
       })
     : undefined;
   reconciler?.start();

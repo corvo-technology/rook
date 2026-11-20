@@ -57,12 +57,17 @@ export function createRunSandbox(
 
 export class HostAwareSandbox implements SandboxProvider {
   readonly pageBrowser?: SandboxProvider["pageBrowser"];
+  readonly sampleResources?: SandboxProvider["sampleResources"];
 
   constructor(
     private readonly isolated: SandboxProvider,
     private readonly host: SandboxProvider,
     private readonly hostEnabled: () => Promise<boolean>,
   ) {
+    if (isolated.sampleResources || host.sampleResources) {
+      this.sampleResources = async (computer, context) =>
+        this.route(computer).sampleResources?.(computer, context);
+    }
     if (isolated.pageBrowser || host.pageBrowser) {
       this.pageBrowser = (computer, request, context) => {
         const provider = this.route(computer);

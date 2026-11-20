@@ -36,18 +36,19 @@ function harness(
       update: vi.fn(async () => ({ id: "group-1" })),
     },
     run: {
-      findFirst: vi.fn(async (args: { where: { id?: string } }) =>
-        args.where.id
-          ? {
-              id: run.id,
-              trigger: "user",
-              sourceMessageId: "message-src" as string | undefined,
-              thread: { groupId: "group-1" as string | null },
-              sourceMessage: { blocks: sourceBlocks, role: "user" },
-            }
-          : alreadyWoken
-            ? { id: "run-earlier" }
-            : null,
+      findFirst: vi.fn(
+        async (args: { where: { id?: string } }): Promise<unknown> =>
+          args.where.id
+            ? {
+                id: run.id,
+                trigger: "user",
+                sourceMessageId: "message-src",
+                thread: { groupId: "group-1" as string | null },
+                sourceMessage: { blocks: sourceBlocks, role: "user" },
+              }
+            : alreadyWoken
+              ? { id: "run-earlier" }
+              : null,
       ),
       findUnique: vi.fn(async () => ({ status: "running" })),
       create: runCreate,

@@ -15,8 +15,10 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  BROWSER_SESSION_PERSISTENCE_FLAGS,
   browserCacheFlags,
   browserCloseProgram,
+  browserProfilePathForScreen,
   DEFAULT_DESKTOP_ENV,
   desktopControlCommand,
   desktopTerminalCommand,
@@ -307,6 +309,15 @@ describe("shared Linux desktop lifecycle", () => {
     expect(execAt).toBeGreaterThan(unsetAt);
     // A relaunch keeps the bot's tabs and session cookies, matching corvo-browser.
     expect(lines[execAt]).toContain("--restore-last-session");
+    expect(lines[execAt]).toContain(BROWSER_SESSION_PERSISTENCE_FLAGS);
+  });
+
+  it("keeps every bot's browser profile inside the persisted home", () => {
+    for (const bot of ["bot-a", "bot-b"]) {
+      const profile = browserProfilePathForScreen(bot);
+      expect(profile.startsWith(`${DEFAULT_DESKTOP_ENV.homeDir}/`)).toBe(true);
+      expect(profile).toBe(browserProfilePathForScreen(bot));
+    }
   });
 
   it.each([false, true])(

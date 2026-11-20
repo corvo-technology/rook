@@ -12,6 +12,8 @@ vi.mock("./rpc", () => {
   };
 });
 
+vi.mock("./thread-cache", () => ({ threadCache: { clear: vi.fn(async () => undefined) } }));
+
 import {
   lastChatKey,
   lastChatOf,
@@ -21,6 +23,7 @@ import {
   spaceQueries,
   spaceSeedKey,
 } from "./query";
+import { threadCache } from "./thread-cache";
 
 afterEach(() => {
   queryClient.clear();
@@ -67,6 +70,17 @@ describe("query scopes", () => {
     queryClient.setQueryData(key, { ready: true } as never);
     setQueryUser("user-b");
     expect(queryClient.getQueryData(key)).toBeUndefined();
+  });
+
+  it("wipes the stored chats on sign-out and on an account switch, not on a repeat", () => {
+    setQueryUser("user-a");
+    vi.mocked(threadCache.clear).mockClear();
+    setQueryUser("user-a");
+    expect(threadCache.clear).not.toHaveBeenCalled();
+    setQueryUser("user-b");
+    expect(threadCache.clear).toHaveBeenCalledTimes(1);
+    setQueryUser(null);
+    expect(threadCache.clear).toHaveBeenCalledTimes(2);
   });
 });
 

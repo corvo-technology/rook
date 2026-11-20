@@ -1,5 +1,7 @@
 /** Per-thread composer draft persistence (survives tab reloads and discards). */
 
+import { hasPastedSecret } from "@corvo/contracts";
+
 export const COMPOSER_DRAFT_STORAGE_PREFIX = "corvo.composerDraft.";
 
 type ComposerDraftSubmission = { text: string };
@@ -125,8 +127,10 @@ export function writeComposerDraft(
   pendingSubmissions.delete(threadKey);
   if (!storage || !threadKey) return;
   try {
-    if (draft.length === 0) storage.removeItem(composerDraftStorageKey(threadKey));
-    else storage.setItem(composerDraftStorageKey(threadKey), draft);
+    // A pasted key belongs in the Vault: it is never kept in browser storage, even as a draft.
+    if (draft.length === 0 || hasPastedSecret(draft)) {
+      storage.removeItem(composerDraftStorageKey(threadKey));
+    } else storage.setItem(composerDraftStorageKey(threadKey), draft);
   } catch {
     // Quota or private-mode failures: the draft still lives in memory.
   }

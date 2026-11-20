@@ -475,6 +475,10 @@ msgstr "{percent}% 使用"
 msgid "{percent}% used · {used} of {windowLabel} tokens"
 msgstr "{percent}% 使用中 · {windowLabel} 中 {used} トークン"
 
+#: src/pages/shell/message-versions.tsx
+msgid "{position} of {count}"
+msgstr "{position} / {count}"
+
 #: src/pages/shell/message-view.tsx
 msgid "{position} of {total}"
 msgstr "{position} / {total}"
@@ -841,6 +845,10 @@ msgstr "{name}のアカウントメニュー"
 #: src/pages/platform/PlatformConnect.tsx
 msgid "Action needed"
 msgstr "対応が必要です"
+
+#: src/lib/server-copy.ts
+msgid "Actions already taken by the earlier reply were not undone."
+msgstr "以前の返信で実行済みの操作は元に戻されていません。"
 
 #. placeholder {0}: bot.name
 #. placeholder {0}: group.spaceName
@@ -1995,6 +2003,7 @@ msgstr "画像を読み取れません"
 #: src/pages/platform/NewPartnerDialog.tsx
 #: src/pages/platform/PricingSection.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/shell/message-versions.tsx
 #: src/pages/Store.tsx
 #: src/pages/WhatsAppNumbers.tsx
 #: src/pages/WikiBrowser.tsx
@@ -2286,10 +2295,6 @@ msgstr "チャートを閉じる"
 #: src/pages/shell/computer-overlay.tsx
 msgid "Close computer"
 msgstr "コンピューターを閉じる"
-
-#: src/pages/shell/message-cards.tsx
-msgid "Close image preview"
-msgstr "画像プレビューを閉じる"
 
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Close navigation"
@@ -2682,6 +2687,10 @@ msgstr "コンテキスト上限"
 msgid "Continue"
 msgstr "続行"
 
+#: src/pages/shell/message-hover-actions.tsx
+msgid "Continue in new thread"
+msgstr "新しいスレッドで続ける"
+
 #: src/pages/partner/PartnerPayments.tsx
 msgid "Continue setup"
 msgstr "設定を続ける"
@@ -2864,6 +2873,10 @@ msgstr "コンピューターの画面に接続できませんでした"
 msgid "Could not continue"
 msgstr "続行できませんでした"
 
+#: src/pages/shell/use-composer-actions.ts
+msgid "Could not continue in a new thread"
+msgstr "新しいスレッドで続けられませんでした"
+
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/create-bot-panel.tsx
 msgid "Could not create bot"
@@ -2966,6 +2979,10 @@ msgstr "{0}をダウンロードできませんでした。もう一度お試し
 #: src/components/ArtifactFileCard.tsx
 msgid "Could not download {name}. Try again."
 msgstr "{name}をダウンロードできませんでした。もう一度お試しください。"
+
+#: src/pages/shell/use-composer-actions.ts
+msgid "Could not edit message"
+msgstr "メッセージを編集できませんでした"
 
 #: src/pages/platform/UsageEvidenceExport.tsx
 msgid "Could not export"
@@ -3085,6 +3102,10 @@ msgstr "ログアウトできませんでした。もう一度お試しくださ
 msgid "Could not open billing"
 msgstr "請求ページを開けませんでした"
 
+#: src/components/PlanChoice.tsx
+msgid "Could not open checkout. Try again."
+msgstr "チェックアウトを開けませんでした。もう一度お試しください。"
+
 #: src/pages/DirectChat.tsx
 msgid "Could not open this conversation"
 msgstr "この会話を開けませんでした"
@@ -3118,6 +3139,10 @@ msgstr "このモデルサーバーに接続できませんでした"
 #: src/pages/shell/agent-import.tsx
 msgid "Could not read these files"
 msgstr "これらのファイルを読み込めませんでした"
+
+#: src/pages/shell/use-composer-actions.ts
+msgid "Could not regenerate reply"
+msgstr "返信を再生成できませんでした"
 
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MembersSettingsPanel.tsx
@@ -3247,6 +3272,7 @@ msgid "Could not save that voice"
 msgstr "そのボイスを保存できませんでした"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 msgid "Could not save the credential"
 msgstr "認証情報を保存できませんでした"
 
@@ -3309,6 +3335,10 @@ msgstr "この回答を送信できませんでした"
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Could not switch {failedNames}. Try again."
 msgstr "{failedNames}を切り替えられませんでした。もう一度お試しください。"
+
+#: src/pages/shell/use-composer-actions.ts
+msgid "Could not switch version"
+msgstr "バージョンを切り替えられませんでした"
 
 #: src/pages/shell/use-computer.tsx
 msgid "Could not take control"
@@ -3940,6 +3970,7 @@ msgstr "切断中…"
 #: src/components/PasskeyOffer.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/shell/message-cards.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 #: src/pages/WikiBrowser.tsx
 msgid "Dismiss"
 msgstr "閉じる"
@@ -4105,6 +4136,8 @@ msgstr "{included} 人を超える席は1席あたり {extraCostPrice}"
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/ConnectionsPage.tsx
 #: src/pages/partner/PartnerTemplatePanel.tsx
+#: src/pages/shell/message-cards.tsx
+#: src/pages/shell/message-hover-actions.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/YouMemory.tsx
 msgid "Edit"
@@ -4117,6 +4150,10 @@ msgstr "先に編集"
 #: src/pages/shell/bot-panel.tsx
 msgid "Edit label"
 msgstr "ラベルを編集"
+
+#: src/pages/shell/message-versions.tsx
+msgid "Edit message"
+msgstr "メッセージを編集"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Edit name"
@@ -4530,6 +4567,10 @@ msgstr "最初のボット"
 msgid "First messages, one per line"
 msgstr "最初のメッセージ（1行に1つ）"
 
+#: src/pages/shell/composer-model-choice.tsx
+msgid "For this conversation"
+msgstr "この会話で使う"
+
 #: src/components/PlanChoice.tsx
 msgid "For up to {count} people"
 msgstr "最大 {count} 人向け"
@@ -4864,6 +4905,10 @@ msgstr "来ないものを待ち続けていたため、停止しました。"
 #: src/lib/run-error.ts
 msgid "I stopped because my tools kept failing."
 msgstr "ツールが失敗し続けたため、停止しました。"
+
+#: src/pages/shell/use-composer-actions.ts
+msgid "I want to edit this image."
+msgstr "この画像を編集したいです。"
 
 #: src/pages/shell/computer-release-actions.tsx
 msgid "I’m done"
@@ -5257,6 +5302,10 @@ msgstr "保持"
 msgid "key"
 msgstr "キー"
 
+#: src/pages/shell/pasted-key-prompt.tsx
+msgid "Key in message"
+msgstr "メッセージ内のキー"
+
 #: src/pages/onboarding-quick-connect.tsx
 msgid "Key not recognized. Choose a provider."
 msgstr "キーを認識できません。プロバイダーを選択してください。"
@@ -5527,6 +5576,10 @@ msgstr "メインモデル"
 #: src/pages/shell/channel-members.tsx
 msgid "Make private"
 msgstr "非公開にする"
+
+#: src/pages/shell/use-composer-actions.ts
+msgid "Make variations of this image."
+msgstr "この画像のバリエーションを作ってください。"
 
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/Settings.tsx
@@ -5980,6 +6033,10 @@ msgstr "その他"
 msgid "More computer actions"
 msgstr "コンピューターのその他の操作"
 
+#: src/pages/shell/message-cards.tsx
+msgid "More image actions"
+msgstr "画像のその他の操作"
+
 #: src/pages/partner/PartnerPayments.tsx
 msgid "More information needed"
 msgstr "追加の情報が必要です"
@@ -6061,6 +6118,7 @@ msgstr "マイホーム"
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/create-bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 #: src/pages/SpaceSettingsPanel.tsx
 msgid "Name"
 msgstr "名前"
@@ -6257,6 +6315,10 @@ msgstr "次のルーティンまで{n}分"
 #: src/pages/HomePage.tsx
 msgid "Next routines"
 msgstr "次のルーティン"
+
+#: src/pages/shell/message-versions.tsx
+msgid "Next version"
+msgstr "次のバージョン"
 
 #: src/pages/connections/connection-model.ts
 msgid "No access"
@@ -7245,6 +7307,10 @@ msgstr "前へ"
 msgid "Previous page"
 msgstr "前のページ"
 
+#: src/pages/shell/message-versions.tsx
+msgid "Previous version"
+msgstr "前のバージョン"
+
 #: src/pages/partner/PartnerCustomers.tsx
 msgid "Price"
 msgstr "価格"
@@ -7564,6 +7630,10 @@ msgstr "却下"
 #: src/components/WikiChangeCard.tsx
 msgid "Refused"
 msgstr "却下しました"
+
+#: src/pages/shell/message-hover-actions.tsx
+msgid "Regenerate"
+msgstr "再生成"
 
 #: src/lib/user-error.ts
 msgid "Registration is closed"
@@ -8116,12 +8186,14 @@ msgstr "土曜日"
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/message-versions.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/YouMemory.tsx
 msgid "Save"
 msgstr "保存"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 msgid "Save credential"
 msgstr "認証情報を保存"
 
@@ -8182,6 +8254,7 @@ msgstr "保存中..."
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 msgid "Saving…"
 msgstr "保存中…"
 
@@ -8331,6 +8404,10 @@ msgstr "{linkApp} から10分以内に <1>{linkAddress}</1> へ <0>{linkCode}</0
 #: src/components/AskCard.tsx
 msgid "Send answer"
 msgstr "回答を送信"
+
+#: src/pages/shell/pasted-key-prompt.tsx
+msgid "Send anyway"
+msgstr "このまま送信"
 
 #: src/pages/shell/composer-error.tsx
 msgid "Send as file"
@@ -9317,6 +9394,10 @@ msgstr "まだ送信されていません。編集するか、送信してくだ
 msgid "This link no longer works"
 msgstr "このリンクは無効です"
 
+#: src/pages/shell/pasted-key-prompt.tsx
+msgid "This looks like a key. Save it as a credential instead?"
+msgstr "キーのようです。代わりに認証情報として保存しますか?"
+
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/Onboarding.tsx
 msgid "this Mac"
@@ -9944,6 +10025,10 @@ msgstr "自分の API キーを使用中。無料プランは{freeUntil}に終�
 #: src/pages/shell/bot-credentials.tsx
 msgid "Value"
 msgstr "値"
+
+#: src/pages/shell/message-cards.tsx
+msgid "Variations"
+msgstr "バリエーション"
 
 #: src/pages/partner/PartnerDomain.tsx
 #: src/pages/platform/PartnersSection.tsx

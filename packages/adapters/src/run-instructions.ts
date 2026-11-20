@@ -314,6 +314,20 @@ function offeredBuiltinClause(
 export const REPLY_STYLE =
   'How you reply: open with the answer or the result, add only what supports it, then stop; no recap, no offer of more help, no apology unless you caused the problem. Before asking anything, check what you can already reach (connected apps, memory, this chat) and fill gaps with sensible defaults, naming them in a few words. If something you cannot default is missing, ask for one thing at a time, say why, and do the parts that do not depend on it. Speak in the person\'s words: never name your tools, connectors, servers or settings files; say what you are doing instead, such as "checking your calendar". Write in the language the person uses. When something fails or is refused, say in one line what you did not do and the simplest other way forward.';
 
+/** Connected apps are fast and keep logins; the computer is the slow last resort. */
+export const CONNECTIONS_FIRST_CLAUSE =
+  "Prefer a connected app or API tool over the computer or browser. Use the computer only when no connection can do the task, and say so in one line before you start.";
+export const CONNECT_MISSING_APP_CLAUSE =
+  "If the task names an app that is not connected, call connect_app for it and wait instead of opening it on the computer.";
+
+function connectionsFirstClause(disabled: ReadonlySet<string> | undefined): string | undefined {
+  if (!builtinOffered(disabled, "computer_act") && !builtinOffered(disabled, "computer_observe"))
+    return undefined;
+  return builtinOffered(disabled, "connect_app")
+    ? `${CONNECTIONS_FIRST_CLAUSE} ${CONNECT_MISSING_APP_CLAUSE}`
+    : CONNECTIONS_FIRST_CLAUSE;
+}
+
 function toolUsageLine(parts: {
   computerInstruction: string;
   pageBrowserAllowed: boolean;
@@ -321,6 +335,7 @@ function toolUsageLine(parts: {
 }): string {
   const disabled = parts.disabledBuiltinTools;
   const clauses = [
+    connectionsFirstClause(disabled),
     pageWorkClause(parts.pageBrowserAllowed, disabled),
     webLookupClause(disabled),
     ...secretGuidance(disabled),
@@ -444,6 +459,8 @@ export function userTurnInstructions(
     agentEnvironmentInstruction: string | undefined;
     replyGuidance: string;
     disabledBuiltinTools?: ReadonlySet<string>;
+    /** say_now was offered to this run. */
+    sayNowOffered?: boolean;
     /** The fleet tools the run was offered (see offeredFleetTools). */
     offeredFleetTools?: readonly string[];
   },
@@ -485,6 +502,11 @@ export function userTurnInstructions(
     guideClause(parts.offeredFleetTools),
     offeredBuiltinClause(
       parts.disabledBuiltinTools,
+      "find_in_app",
+      "For questions about this app itself (where something is, what it can do, how to change a setting or plan), call find_in_app before answering and link what it returns; if it finds nothing, say you do not know instead of guessing.",
+    ),
+    offeredBuiltinClause(
+      parts.disabledBuiltinTools,
       "render_plot",
       'For charts and data visualization, use the render_plot tool: it renders bar, line, scatter, histogram, heatmap, faceted and many more chart types from a JSON spec and attaches the PNG to the chat. Call render_plot with {"help": true} before your first chart to read the full guide.',
     ),
@@ -493,6 +515,9 @@ export function userTurnInstructions(
       "add_mcp_server",
       "When the user asks you to add or connect an MCP server (and gives you its details), use add_mcp_server. When add_mcp_server posts an approval card, end with one short sentence asking the user to approve it. You will be told when they connect it.",
     ),
+    parts.sayNowOffered && !parts.disabledBuiltinTools?.has("say_now")
+      ? "Before slow work (using the computer or browser, a long chain of tools, generating media, waiting on a connection), call say_now once with one short plain line saying what you are about to do, in the user's language, then start. Skip it for a quick answer, and never repeat that line in your final reply."
+      : undefined,
     "Never print API keys, access tokens, or secret values. Prefer tools over claiming you already did the work. If your tools cannot do what was asked, say plainly what is missing and what you can do instead.",
     REPLY_STYLE,
     "Treat pagination cursors as opaque: copy the returned continuation value exactly, never calculate or guess it. When the tool reports no next page, stop; if a cursor is rejected, recheck the last successful result before retrying.",

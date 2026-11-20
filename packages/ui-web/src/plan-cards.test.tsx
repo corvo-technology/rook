@@ -195,3 +195,15 @@ it("draws one colored rook per included person, up to five, each in its own colo
   expect(en.card("team").querySelectorAll("[data-mascot]").length).toBe(5);
   await en.cleanup();
 });
+
+it("marks only the busy plan's button busy with a spinner and disables every subscribe button", async () => {
+  const en = await render({ locale: "en", pending: true, busy: "team" });
+  const buttons = [...en.host.querySelectorAll<HTMLButtonElement>("[data-subscribe]")];
+  expect(buttons.every((button) => button.disabled)).toBe(true);
+  const busy = buttons.filter((button) => button.getAttribute("aria-busy") === "true");
+  expect(busy).toHaveLength(1);
+  expect(en.card("team").querySelector("[data-subscribe]")).toBe(busy[0]);
+  expect(busy[0]?.querySelector("[data-slot=spinner]")).not.toBeNull();
+  expect(en.host.querySelectorAll("[data-slot=spinner]")).toHaveLength(1);
+  await en.cleanup();
+});

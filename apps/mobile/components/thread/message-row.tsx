@@ -33,6 +33,7 @@ import { TimeSeparator } from "../time-separator";
 import { UnreadDivider } from "../unread-divider";
 import type { MessageActionProps } from "./message-bubble";
 import { MessageBubble } from "./message-bubble";
+import { VersionSwitcher } from "./version-switcher";
 
 export type MessageRowActions = {
   helperToggle: (
@@ -50,6 +51,14 @@ export type MessageRowActions = {
   markUnread: (message: MobileMessage) => void;
   /** Asks the wiki to keep this message. */
   keepInWiki: (message: MobileMessage) => void;
+  /** Rewrites the person's message as a new version and answers it again. */
+  edit: (message: MobileMessage) => void;
+  /** Answers the last message again, keeping the earlier reply as another version. */
+  regenerate: () => void;
+  /** Carries the chat on in a new one, copied up to this message. */
+  fork: (message: MobileMessage) => void;
+  /** Shows another version of the chat; null is the original. */
+  switchVersion: (branchId: string | null) => void;
   answer: (
     message: MobileMessage,
     answer: string,
@@ -68,8 +77,18 @@ export type MessageRowActions = {
   layout: (messageId: string, y: number, index: number) => void;
 };
 
+/** What this message's menu offers to change; absent in a channel and in read-only history. */
+export type MessageRowVersions = {
+  edit: boolean;
+  regenerate: boolean;
+  fork: boolean;
+  /** A reply is being written, so the versions on screen cannot be switched. */
+  busy: boolean;
+};
+
 type MessageRowProps = {
   message: MobileMessage;
+  versions?: MessageRowVersions;
   actions: MessageRowActions;
   botId?: string;
   bubbleBotId: string;
@@ -108,6 +127,7 @@ type MessageRowProps = {
 
 export const MessageRow = memo(function MessageRow({
   message,
+  versions,
   actions,
   botId,
   bubbleBotId,
@@ -207,6 +227,9 @@ export const MessageRow = memo(function MessageRow({
     };
     const react = (reaction: MessageReaction) => actions.react(message, reaction);
     const markUnread = () => actions.markUnread(message);
+    const editMessage = () => actions.edit(message);
+    const regenerateReply = () => actions.regenerate();
+    const forkChat = () => actions.fork(message);
     const keepInWiki = () => actions.keepInWiki(message);
     // Only a message with words in it can be kept, and not one that is only being streamed.
     const includeWiki =
@@ -220,6 +243,13 @@ export const MessageRow = memo(function MessageRow({
     };
     const menuActions = [
       ...(!readOnly ? [{ name: "reply", text: t("Reply"), onPress: reply }] : []),
+      ...(versions?.edit ? [{ name: "edit", text: t("Edit"), onPress: editMessage }] : []),
+      ...(versions?.regenerate
+        ? [{ name: "regenerate", text: t("Regenerate"), onPress: regenerateReply }]
+        : []),
+      ...(versions?.fork
+        ? [{ name: "fork", text: t("Continue in new thread"), onPress: forkChat }]
+        : []),
       ...(includeThread
         ? [{ name: "thread", text: t("Reply in thread"), onPress: replyInThread }]
         : []),
@@ -264,6 +294,9 @@ export const MessageRow = memo(function MessageRow({
         select: t("Select text"),
         unread: t("Mark as unread"),
         wiki: t("Keep in the wiki"),
+        edit: t("Edit"),
+        regenerate: t("Regenerate"),
+        fork: t("Continue in new thread"),
       },
       reactions: MESSAGE_REACTIONS,
       include: {
@@ -275,6 +308,9 @@ export const MessageRow = memo(function MessageRow({
         select: includeSelect,
         unread: includeUnread,
         wiki: includeWiki,
+        edit: versions?.edit,
+        regenerate: versions?.regenerate,
+        fork: versions?.fork,
       },
     });
     const openSheet = (event: GestureResponderEvent) =>
@@ -302,6 +338,36 @@ export const MessageRow = memo(function MessageRow({
                     text: t("Reply in thread"),
                     icon: "chatbubbles-outline" as const,
                     onPress: replyInThread,
+                  },
+                ]
+              : []),
+            ...(versions?.edit
+              ? [
+                  {
+                    name: "edit",
+                    text: t("Edit"),
+                    icon: "create-outline" as const,
+                    onPress: editMessage,
+                  },
+                ]
+              : []),
+            ...(versions?.regenerate
+              ? [
+                  {
+                    name: "regenerate",
+                    text: t("Regenerate"),
+                    icon: "refresh-outline" as const,
+                    onPress: regenerateReply,
+                  },
+                ]
+              : []),
+            ...(versions?.fork
+              ? [
+                  {
+                    name: "fork",
+                    text: t("Continue in new thread"),
+                    icon: "git-branch-outline" as const,
+                    onPress: forkChat,
                   },
                 ]
               : []),
@@ -381,6 +447,9 @@ export const MessageRow = memo(function MessageRow({
         if (id === "select") select();
         if (id === "unread") markUnread();
         if (id === "wiki") keepInWiki();
+        if (id === "edit") editMessage();
+        if (id === "regenerate") regenerateReply();
+        if (id === "fork") forkChat();
       },
       actionProps: {
         onLongPress: Platform.OS === "ios" ? undefined : openSheet,
@@ -406,6 +475,7 @@ export const MessageRow = memo(function MessageRow({
     waitingForUser,
     hasLike,
     optimisticLike,
+    versions,
   ]);
   const layout = messageRowLayout(message.blocks, { activityBotId, inGroup, columnWidth });
   return (
@@ -494,6 +564,14 @@ export const MessageRow = memo(function MessageRow({
               />
             </ThreadReadOnlyContext.Provider>
           </MessageContextMenu>
+          {message.variants && versions ? (
+            <VersionSwitcher
+              variants={message.variants}
+              disabled={versions.busy}
+              onSwitch={actions.switchVersion}
+              alignEnd={message.role === "user"}
+            />
+          ) : null}
           {thread ? (
             <ThreadFooter thread={thread} onOpen={() => actions.openThread?.(message)} />
           ) : null}

@@ -429,6 +429,9 @@ describe("CreateOSSandboxProvider", () => {
     for (const command of launches) {
       expect(command).not.toContain("pgrep -u desktop");
       expect(command).toContain("--no-first-run");
+      // A login must survive a restart: fixed cookie key and the last session's cookies.
+      expect(command).toContain("--password-store=basic");
+      expect(command).toContain("--restore-last-session");
       expect(command).toContain("--remote-debugging-port=$debug_port");
       expect(command).not.toContain("--remote-debugging-port=9222");
       expect(command).toContain('flag = "--user-data-dir=" + profile');

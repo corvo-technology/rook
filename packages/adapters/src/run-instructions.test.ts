@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  CONNECT_MISSING_APP_CLAUSE,
+  CONNECTIONS_FIRST_CLAUSE,
   LIVE_CONTEXT_GUIDANCE,
   LIVE_CONTEXT_HEADER,
   liveContextBlock,
@@ -54,6 +56,28 @@ describe("stable system prompt", () => {
     const base = system(setup);
     expect(system({ ...setup, botInstructions: "Other." })).not.toBe(base);
     expect(system({ ...setup, disabledBuiltinTools: new Set(["remember"]) })).not.toBe(base);
+  });
+});
+
+describe("connections before the computer", () => {
+  it("carries the rule for every agent that can use the computer", () => {
+    const text = system(setup);
+    expect(text).toContain(CONNECTIONS_FIRST_CLAUSE);
+    expect(text).toContain(CONNECT_MISSING_APP_CLAUSE);
+  });
+
+  it("leaves the rule out when the computer is not offered", () => {
+    const text = system({
+      ...setup,
+      disabledBuiltinTools: new Set(["computer_act", "computer_observe"]),
+    });
+    expect(text).not.toContain(CONNECTIONS_FIRST_CLAUSE);
+  });
+
+  it("does not tell the agent to connect an app when it cannot", () => {
+    const text = system({ ...setup, disabledBuiltinTools: new Set(["connect_app"]) });
+    expect(text).toContain(CONNECTIONS_FIRST_CLAUSE);
+    expect(text).not.toContain(CONNECT_MISSING_APP_CLAUSE);
   });
 });
 

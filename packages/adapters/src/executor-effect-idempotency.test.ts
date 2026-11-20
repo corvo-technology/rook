@@ -191,6 +191,9 @@ function fixture(runId = "run-1") {
         async ({ where }: { where: { id: string } }) =>
           artifactRows.find((row) => row.id === where.id) ?? null,
       ),
+      findMany: vi.fn(async ({ where }: { where: { id: { in: string[] } } }) =>
+        artifactRows.filter((row) => where.id.in.includes(row.id)),
+      ),
     },
     task: {
       findUniqueOrThrow: vi.fn(async () => ({ id: run.taskId, prompt: "Update shared state" })),
@@ -359,7 +362,7 @@ describe("mutating tool effect idempotency keys", () => {
       expect(f.results[0]).toEqual(
         name === "generate_video"
           ? { jobId: "saved-media", status: "queued" }
-          : { status: "completed", artifactId: "saved-image" },
+          : { status: "completed", artifactId: "saved-image", artifactIds: ["saved-image"] },
       );
       expect(f.effects[0]?.status).toBe("completed");
       f.setCalls([{ name, args, executionId: "another-call-after-restart" }]);

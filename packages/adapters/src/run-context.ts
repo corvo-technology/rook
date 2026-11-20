@@ -85,7 +85,13 @@ export interface ReplyState {
   explicitNoResponse: boolean;
   assistantTurnText: string;
   midTurnUserTexts: string[];
+  /** Person messages claimed during the run whose answer is not posted yet, in send order. */
+  answerTargets: string[];
+  /** Person messages this run already answered in a message of their own. */
+  answeredTargets: Set<string>;
   midTurnProgressCount: number;
+  /** say_now already posted its opening line in this run. */
+  sayNowText: string | undefined;
   turnStartedAtMs: number;
   /**
    * Tool calls that land mid-sentence wait here until the narration catches up to a
@@ -219,6 +225,8 @@ export type RunTrust = ReturnType<typeof createRunTrustLoaders> & {
 export interface RunProviders {
   web: WebProvider;
   mediaGeneration: MediaGenerationProvider | undefined;
+  /** Set when pictures run on the account's own connection of this provider, not credits. */
+  mediaOwnConnection?: string;
   browser: BrowserProvider;
   cloudAgent: ExecutorDeps["cloudAgent"];
 }

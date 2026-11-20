@@ -1,4 +1,4 @@
-import type { BillingStatus, PlanUsage } from "@corvo/contracts";
+import type { BillingStatus, PlanId, PlanUsage } from "@corvo/contracts";
 import type { PlanChoice as Choice, PlanCardLabels } from "@corvo/ui-web";
 import { BotAvatar, Button, PlanCards, planMascotColor } from "@corvo/ui-web";
 import { plural } from "@lingui/core/macro";
@@ -62,12 +62,15 @@ export function PlanChoice({
   const { i18n } = useLingui();
   const locale = i18n.locale || "en";
   const labels = usePlanCardLabels(locale);
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState(false);
+  // The plan whose checkout is opening, set until the page leaves.
+  const [busy, setBusy] = useState<PlanId | null>(null);
+  const [error, setError] = useState<"checkout" | "billing" | null>(null);
   const { logOut, signingOut } = useSignOut(
     () => window.location.assign("/sign-in"),
-    () => setError(true),
+    () => setError("billing"),
   );
+  // State updates land a render late, so a second click needs its own guard.
+  const opening = useRef(false);
   // A choice that answers after the plans were closed must not leave the app.
   const closed = useRef(false);
   useEffect(() => {
@@ -78,16 +81,30 @@ export function PlanChoice({
   }, []);
 
   async function subscribe(choice: Choice) {
-    setPending(true);
-    setError(false);
+    if (opening.current) return;
+    opening.current = true;
+    setBusy(choice.plan);
+    setError(null);
     try {
       const { url } = await rpc.billing.planCheckout(choice);
-      if (!closed.current) window.location.assign(url);
+      if (closed.current) return;
+      window.location.assign(url);
+      // Desktop opens the URL in the system browser and this page stays, so
+      // release the buttons when the person comes back; the web page is gone by then.
+      window.addEventListener(
+        "focus",
+        () => {
+          opening.current = false;
+          if (!closed.current) setBusy(null);
+        },
+        { once: true },
+      );
     } catch {
-      setError(true);
-    } finally {
-      // Desktop opens the URL in the system browser and this page stays, so re-enable.
-      setPending(false);
+      opening.current = false;
+      if (!closed.current) {
+        setBusy(null);
+        setError("checkout");
+      }
     }
   }
 
@@ -100,7 +117,7 @@ export function PlanChoice({
         <Button
           className="fixed top-4 right-6 z-10"
           variant="text"
-          disabled={pending || signingOut}
+          disabled={busy !== null || signingOut}
           onClick={() => void logOut()}
         >
           <Trans>Log out</Trans>
@@ -114,13 +131,18 @@ export function PlanChoice({
         plans={usage.plans}
         locale={locale}
         canManage={usage.canManage && status.canManage}
-        pending={pending || signingOut}
+        pending={busy !== null || signingOut}
+        busy={busy}
         labels={labels}
         onSubscribe={(choice) => void subscribe(choice)}
       />
       {error ? (
         <p role="alert" className="text-sm text-destructive">
-          <Trans>Could not open billing</Trans>
+          {error === "checkout" ? (
+            <Trans>Could not open checkout. Try again.</Trans>
+          ) : (
+            <Trans>Could not open billing</Trans>
+          )}
         </p>
       ) : null}
     </div>

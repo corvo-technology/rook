@@ -60,3 +60,18 @@ describe("propose_host_action", () => {
     expect(names({ trigger: "user" })).not.toContain("propose_host_action");
   });
 });
+
+describe("find_in_app", () => {
+  it("is offered to every agent, with or without fleet management, in a chat or a routine", () => {
+    for (const trigger of ["user", "routine"]) {
+      for (const fleetManagement of [true, false]) {
+        expect(names({ trigger, fleetManagement })).toContain("find_in_app");
+      }
+    }
+  });
+
+  it("is not offered to a visitor's run, and a bot may switch it off", () => {
+    expect(names({ visitorRun: true })).not.toContain("find_in_app");
+    expect(names({ disabledBuiltinTools: ["find_in_app"] })).not.toContain("find_in_app");
+  });
+});

@@ -288,7 +288,13 @@ export class FakeComposioClient implements ComposioClient {
     const session: ComposioSession = {
       sessionId,
       toolkits: async (options) => this.toolkitPage(userId, options),
-      tools: async () => [...enabled].flatMap((toolkit) => toolsFor(toolkit)),
+      tools: async () => [
+        functionTool("COMPOSIO_SEARCH_TOOLS", "Search tools for a use case", {
+          type: "object",
+          properties: { queries: { type: "array" } },
+        }),
+        ...[...enabled].flatMap((toolkit) => toolsFor(toolkit)),
+      ],
       execute: async (tool, args = {}, options) => {
         const refused = (error: string) => ({ data: {}, error, logId: "" });
         const toolkit = [...enabled].find((slug) => tool.startsWith(`${slug}_`));
@@ -306,7 +312,8 @@ export class FakeComposioClient implements ComposioClient {
         ) {
           return refused(`Select which ${toolkit} account to use`);
         }
-        const result = this.run(userId, tool, args);
+        const result =
+          tool === "COMPOSIO_SEARCH_TOOLS" ? this.search(enabled) : this.run(userId, tool, args);
         this.executions.push({ userId, tool, args, result: result.data });
         return { ...result, logId: `log_${++this.nextId}` };
       },
@@ -410,6 +417,28 @@ export class FakeComposioClient implements ComposioClient {
       isDisabled: false,
       createdAt: "2026-01-01T00:00:00.000Z",
       updatedAt: "2026-01-01T00:00:00.000Z",
+    };
+  }
+
+  /**
+   * Like production, a search only sees the session's toolkits, so an app that is not connected
+   * never appears and the guidance still says connections are active.
+   */
+  private search(enabled: ReadonlySet<string>): ToolResult {
+    const toolkits = [...enabled];
+    return {
+      data: {
+        successful: true,
+        data: {
+          results: toolkits.map((toolkit) => ({ toolkit: toolkit.toLowerCase() })),
+          toolkit_connection_statuses: toolkits.map((toolkit) => ({
+            toolkit: toolkit.toLowerCase(),
+            has_active_connection: true,
+          })),
+          next_steps_guidance: ["Connections active, proceed to next step"],
+        },
+      },
+      error: null,
     };
   }
 

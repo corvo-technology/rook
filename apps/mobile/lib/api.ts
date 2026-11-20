@@ -1420,6 +1420,16 @@ export function applyMobileThreadEvent(
       activeRuns: [],
     };
   }
+  if (event.type === "thread.branch.changed") {
+    // The messages after the fork belong to a version no longer on screen; the refresh that
+    // follows brings back whichever version was switched to.
+    const forkSeq = typeof event.payload?.forkSeq === "number" ? event.payload.forkSeq : -1;
+    return {
+      ...prev,
+      cursor: event.seq ?? prev.cursor,
+      messages: prev.messages.filter((message) => (message.seq ?? 0) <= forkSeq),
+    };
+  }
   if (event.type === "run.started") {
     const cursor = event.seq ?? prev.cursor;
     const trigger = typeof event.payload?.trigger === "string" ? event.payload.trigger : undefined;

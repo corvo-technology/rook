@@ -1,4 +1,5 @@
 export const ES_MESSAGES: Record<string, string> = {
+  "For this conversation": "Para esta conversación",
   Automatic: "Automático",
   "Complex tasks model": "Modelo para tareas complejas",
   "Not sent. Tap for options": "No enviado. Toca para ver las opciones",
@@ -1185,6 +1186,7 @@ export const ES_MESSAGES: Record<string, string> = {
   Company: "Empresa",
   "Could not load plans": "No se pudieron cargar los planes",
   "Could not open billing": "No se pudo abrir la facturación",
+  "Could not open checkout. Try again.": "No se pudo abrir el pago. Inténtalo de nuevo.",
   Currency: "Moneda",
   "Include AI": "Incluir IA",
   Large: "Grande",
@@ -1203,4 +1205,19 @@ export const ES_MESSAGES: Record<string, string> = {
   "Always allow covers {tool}, for {agent} only.":
     "«Permitir siempre» cubre solo {tool}, para {agent}.",
   "Change when to ask": "Cambiar cuándo preguntar",
+  Regenerate: "Regenerar",
+  "Continue in new thread": "Continuar en un hilo nuevo",
+  "Edit message": "Editar mensaje",
+  "Could not edit message": "No se pudo editar el mensaje",
+  "Could not regenerate reply": "No se pudo regenerar la respuesta",
+  "Could not switch version": "No se pudo cambiar de versión",
+  "Could not continue in a new thread": "No se pudo continuar en un hilo nuevo",
+  "Previous version": "Versión anterior",
+  "Next version": "Versión siguiente",
+  "{position} of {count}": "{position} de {count}",
+  "This looks like a key. Save it as a credential instead?":
+    "Parece una clave. ¿Guardarla como credencial?",
+  "Save credential": "Guardar credencial",
+  "Send anyway": "Enviar de todos modos",
+  "Could not save the credential": "No se pudo guardar la credencial",
 };

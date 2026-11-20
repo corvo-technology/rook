@@ -83,8 +83,60 @@ export function userProgressClientNonce(runId: string, index = 0): string {
   return `${USER_PROGRESS_CLIENT_NONCE_PREFIX}${runId}:${index}:${Date.now().toString(36)}:${Math.random().toString(36).slice(2, 10)}`;
 }
 
+const ANSWER_CLIENT_NONCE_PREFIX = "answer:";
+
+/** One answer per person message and run, so a resumed run cannot post it twice. */
+export function answerClientNonce(runId: string, messageId: string): string {
+  return `${ANSWER_CLIENT_NONCE_PREFIX}${runId}:${messageId}`;
+}
+
+export function isAnswerClientNonce(clientNonce: string | null | undefined): boolean {
+  return Boolean(clientNonce?.startsWith(ANSWER_CLIENT_NONCE_PREFIX));
+}
+
 export function isUserProgressClientNonce(clientNonce: string | null | undefined): boolean {
   return Boolean(clientNonce?.startsWith(USER_PROGRESS_CLIENT_NONCE_PREFIX));
+}
+
+/** The opening line say_now posts before slow work. */
+export const SAY_NOW_MAX_LENGTH = 200;
+
+/** Marks the say_now message: one per run, so the nonce carries no counter or entropy. */
+const SAY_NOW_NONCE_INFIX = "say-now:";
+
+export function sayNowClientNonce(runId: string): string {
+  return `${USER_PROGRESS_CLIENT_NONCE_PREFIX}${SAY_NOW_NONCE_INFIX}${runId}`;
+}
+
+export function isSayNowClientNonce(clientNonce: string | null | undefined): boolean {
+  return Boolean(
+    clientNonce?.startsWith(`${USER_PROGRESS_CLIENT_NONCE_PREFIX}${SAY_NOW_NONCE_INFIX}`),
+  );
+}
+
+/**
+ * Whether a run may open with say_now: only a conversation the owner is reading live. Routines,
+ * webhooks, tickets, bot-to-bot, channel, visitor and voice runs never are. A helper run is
+ * refused per call.
+ */
+export function sayNowAllowed(facts: {
+  ownerStartedRun: boolean;
+  messagingChannelRun: boolean;
+  voiceCall: boolean;
+  visitorRun: boolean;
+}): boolean {
+  return (
+    facts.ownerStartedRun && !facts.messagingChannelRun && !facts.voiceCall && !facts.visitorRun
+  );
+}
+
+/** The final reply without a leading repeat of the say_now line it already follows. */
+export function withoutSayNowRepeat(text: string, line: string): string {
+  const lead = line.trim();
+  if (!lead) return text;
+  const trimmed = text.trimStart();
+  if (!trimmed.toLowerCase().startsWith(lead.toLowerCase())) return text;
+  return trimmed.slice(lead.length).replace(/^[\s\-–—:,;]+/, "");
 }
 
 export function extractNarrationText(

@@ -1,7 +1,9 @@
 import type {
   AdapterContext,
   GeneratedMedia,
+  MediaGenerationInput,
   MediaGenerationProvider,
+  MediaReferenceImage,
   MediaVideoJob,
 } from "@corvo/adapter-kit";
 import { MediaGenerationError } from "@corvo/adapter-kit";
@@ -21,10 +23,28 @@ const MEDIA_EXTENSIONS: Record<GeneratedMedia["mimeType"], string> = {
   "image/webp": ".webp",
   "video/mp4": ".mp4",
 };
-const savedJob = z.object({
-  provider: z.string(),
-  jobId: z.string().optional(),
-  artifactId: z.string().optional(),
+const savedJob = z
+  .object({
+    provider: z.string(),
+    jobId: z.string().optional(),
+    artifactIds: z.array(z.string()).optional(),
+    /** Written by earlier releases, which made one picture per job. */
+    artifactId: z.string().optional(),
+  })
+  .transform(({ artifactId, artifactIds, ...rest }) => ({
+    ...rest,
+    artifactIds: artifactIds ?? (artifactId ? [artifactId] : []),
+  }));
+/** What a job has stored so far; `artifactIds` appears once the first picture is attached. */
+export type MediaJobResult = { provider: string; jobId?: string; artifactIds?: string[] };
+const NO_REFERENCES =
+  "This image model cannot work from reference pictures. Ask for a new image without one.";
+const REFERENCES_UNAVAILABLE =
+  "A reference image is unavailable. Use an image from this conversation.";
+const completed = (artifactIds: string[]) => ({
+  status: "completed",
+  artifactId: artifactIds[0],
+  artifactIds,
 });
 export async function generateMediaFromTool(options: {
   name: "generate_image" | "generate_video";
@@ -35,15 +55,30 @@ export async function generateMediaFromTool(options: {
   provider: MediaGenerationProvider;
   /** Where an image is paid from; without it the deployment bears the cost. */
   credits?: MediaCredits;
+  /**
+   * Called once with what an image call produced and cost, for usage evidence. Used when the
+   * account's own key paid, where no credit entry records it.
+   */
+  recordUsage?: (usage: {
+    jobId: string;
+    model: string | undefined;
+    count: number;
+    costUsd: number | undefined;
+  }) => Promise<void>;
   prisma: PrismaClient;
   context: AdapterContext;
   run: { id: string; threadId: string; botId: string; userId: string; spaceId: string };
+  /**
+   * Reads the pictures an image starts from, or returns undefined when any of them is not one
+   * this conversation can see.
+   */
+  loadReferences?: (ids: string[]) => Promise<MediaReferenceImage[] | undefined>;
   attach: (
     output: GeneratedMedia,
     name: string,
-    job: { id: string; result: { provider: string; jobId?: string } },
+    job: { id: string; result: MediaJobResult },
   ) => Promise<{ artifactId: string; block: MessageBlock }>;
-  publish: (block: MessageBlock, jobId: string, artifactId: string) => Promise<unknown>;
+  publish: (blocks: MessageBlock[], jobId: string, artifactIds: string[]) => Promise<unknown>;
 }) {
   const { provider, prisma, context, run, args } = options;
   const video = options.name === "generate_video";
@@ -62,6 +97,7 @@ export async function generateMediaFromTool(options: {
     }
     let reservation: ExternalEffect | null = null;
     let polling = false;
+    let imageInput: MediaGenerationInput | undefined;
     if (video && typeof args.jobId === "string") {
       reservation = await prisma.externalEffect.findFirst({
         where: {
@@ -78,10 +114,10 @@ export async function generateMediaFromTool(options: {
           error:
             "Video job provider changed or submission is uncertain. Do not resubmit automatically.",
         };
-      if (saved.data.artifactId && reservation.status === "media_completed")
-        return { status: "completed", artifactId: saved.data.artifactId };
+      if (saved.data.artifactIds.length && reservation.status === "media_completed")
+        return completed(saved.data.artifactIds);
       if (reservation.status === "media_failed") return { status: "failed" };
-      if (!saved.data.jobId && !saved.data.artifactId)
+      if (!saved.data.jobId && !saved.data.artifactIds.length)
         return { error: "Submission is uncertain. Do not resubmit automatically." };
     } else {
       const prior = await prisma.externalEffect.findFirst({
@@ -93,9 +129,8 @@ export async function generateMediaFromTool(options: {
       });
       if (prior) {
         const saved = savedJob.safeParse(prior.result);
-        if (saved.success && saved.data.artifactId) {
-          if (prior.status === "media_completed")
-            return { status: "completed", artifactId: saved.data.artifactId };
+        if (saved.success && saved.data.artifactIds.length) {
+          if (prior.status === "media_completed") return completed(saved.data.artifactIds);
           reservation = prior;
         } else {
           if (video && saved.success && saved.data.jobId)
@@ -114,6 +149,21 @@ export async function generateMediaFromTool(options: {
         if (options.recoverOnly) return undefined;
         const input = mediaPromptSchema.safeParse(args);
         if (!input.success) return { error: "A prompt of 1–4000 characters is required." };
+        const count = Math.min(input.data.count, provider.capabilities.maxCount);
+        if (!video) {
+          let references: MediaReferenceImage[] | undefined;
+          if (input.data.referenceArtifactIds.length) {
+            if (!provider.capabilities.references) return { error: NO_REFERENCES };
+            references = await options.loadReferences?.(input.data.referenceArtifactIds);
+            if (!references) return { error: REFERENCES_UNAVAILABLE };
+          }
+          imageInput = {
+            prompt: input.data.prompt,
+            ...(input.data.aspectRatio ? { aspectRatio: input.data.aspectRatio } : {}),
+            count,
+            ...(references ? { references } : {}),
+          };
+        }
         // A unique slot makes the per-run cap durable even across concurrent calls/restarts.
         for (let slot = 0; slot < 2; slot++) {
           try {
@@ -128,6 +178,9 @@ export async function generateMediaFromTool(options: {
                   tool: options.name,
                   prompt: input.data.prompt,
                   executionId: options.executionId,
+                  ...(video
+                    ? {}
+                    : { count, referenceArtifactIds: input.data.referenceArtifactIds }),
                 },
                 result: { provider: provider.id },
               },
@@ -143,13 +196,23 @@ export async function generateMediaFromTool(options: {
       }
     }
     const saved = savedJob.parse(reservation.result);
-    if (saved.artifactId) {
-      const artifact = await prisma.artifact.findFirst({
-        where: { id: saved.artifactId, spaceId: run.spaceId, userId: run.userId, botId: run.botId },
+    if (saved.artifactIds.length) {
+      const rows = await prisma.artifact.findMany({
+        where: {
+          id: { in: saved.artifactIds },
+          spaceId: run.spaceId,
+          userId: run.userId,
+          botId: run.botId,
+        },
       });
-      if (!artifact) return { error: "Generated attachment is unavailable." };
-      await options.publish(messageBlockForArtifact(artifact), reservation.id, artifact.id);
-      return { status: "completed", artifactId: artifact.id };
+      const found = saved.artifactIds.flatMap((id) => rows.find((row) => row.id === id) ?? []);
+      if (!found.length) return { error: "Generated attachment is unavailable." };
+      await options.publish(
+        found.map(messageBlockForArtifact),
+        reservation.id,
+        found.map((row) => row.id),
+      );
+      return completed(found.map((row) => row.id));
     }
     if (video && typeof args.jobId === "string") {
       const claim = await prisma.externalEffect.updateMany({
@@ -171,19 +234,19 @@ export async function generateMediaFromTool(options: {
             };
       polling = true;
     }
-    let output: MediaVideoJob | { status: "completed"; output: GeneratedMedia };
+    let output: MediaVideoJob | { status: "completed"; outputs: GeneratedMedia[] };
     try {
       output = video
-        ? saved.jobId
-          ? await provider.pollVideo(saved.jobId, context)
-          : await provider.generateVideo(mediaPromptSchema.parse(args), context)
+        ? await submitOrPollVideo(provider, saved.jobId, args, context)
         : {
             status: "completed" as const,
-            output: await generateImageOnCredit(
+            outputs: await generateImageOnCredit(
               provider,
               options.credits,
+              options.recordUsage,
               reservation.id,
-              mediaPromptSchema.parse(args),
+              // Only a fresh submission reaches here: a recovered one has its pictures already.
+              imageInput ?? { prompt: mediaPromptSchema.parse(args).prompt },
               context,
             ),
           };
@@ -213,27 +276,37 @@ export async function generateMediaFromTool(options: {
         },
       });
     }
+    const outputs =
+      "outputs" in output ? output.outputs : "output" in output ? [output.output] : [];
     if (output.status !== "completed")
       return {
         jobId: reservation.id,
         status: output.status,
         ...("progress" in output ? { progress: output.progress } : {}),
       };
-    validateGeneratedMedia(
-      output.output,
-      video ? "video/mp4" : ["image/png", "image/jpeg", "image/webp"],
-    );
-    context.signal.throwIfAborted();
-    const attached = await options.attach(
-      output.output,
-      `generated-${reservation.id}${MEDIA_EXTENSIONS[output.output.mimeType]}`,
-      {
-        id: reservation.id,
-        result: { provider: provider.id, ...("id" in output ? { jobId: output.id } : {}) },
-      },
-    );
-    await options.publish(attached.block, reservation.id, attached.artifactId);
-    return { status: "completed", artifactId: attached.artifactId };
+    const attachedBlocks: MessageBlock[] = [];
+    const artifactIds: string[] = [];
+    let result: MediaJobResult = {
+      provider: provider.id,
+      ...("id" in output ? { jobId: output.id } : {}),
+    };
+    for (const [index, generated] of outputs.entries()) {
+      validateGeneratedMedia(
+        generated,
+        video ? "video/mp4" : ["image/png", "image/jpeg", "image/webp"],
+      );
+      context.signal.throwIfAborted();
+      const attached = await options.attach(
+        generated,
+        `generated-${reservation.id}${index ? `-${index + 1}` : ""}${MEDIA_EXTENSIONS[generated.mimeType]}`,
+        { id: reservation.id, result },
+      );
+      attachedBlocks.push(attached.block);
+      artifactIds.push(attached.artifactId);
+      result = { ...result, artifactIds: [...artifactIds] };
+    }
+    await options.publish(attachedBlocks, reservation.id, artifactIds);
+    return completed(artifactIds);
   } catch (error) {
     context.signal.throwIfAborted();
     if (error instanceof MediaCreditsError) return { error: error.message };
@@ -246,29 +319,55 @@ export async function generateMediaFromTool(options: {
   }
 }
 
+async function submitOrPollVideo(
+  provider: MediaGenerationProvider,
+  jobId: string | undefined,
+  args: Record<string, unknown>,
+  context: AdapterContext,
+) {
+  return jobId
+    ? provider.pollVideo(jobId, context)
+    : provider.generateVideo({ prompt: mediaPromptSchema.parse(args).prompt }, context);
+}
+
 /**
- * One image, paid from the customer's credit when there is a wallet: the hold comes first, and
- * is settled at what the provider charged, returned in full when it refused before generating,
- * and left in place when it cannot be known whether the image was made.
+ * The pictures asked for, paid from the customer's credit when there is a wallet: the hold is the
+ * model's worst case for all of them and comes first. It is settled at what the provider
+ * reported (else the catalog price of the pictures made), returned in full when the provider
+ * refused before generating, and left in place when it cannot be known whether they were made.
  */
 async function generateImageOnCredit(
   provider: MediaGenerationProvider,
   credits: MediaCredits | undefined,
+  recordUsage: NonNullable<Parameters<typeof generateMediaFromTool>[0]["recordUsage"]> | undefined,
   jobId: string,
-  input: ReturnType<typeof mediaPromptSchema.parse>,
+  input: MediaGenerationInput,
   context: AdapterContext,
-): Promise<GeneratedMedia> {
-  const hold = await credits?.hold(jobId, provider.imageModel);
-  let output: GeneratedMedia;
+): Promise<GeneratedMedia[]> {
+  const hold = await credits?.hold({
+    jobId,
+    provider: provider.id,
+    model: provider.imageModel,
+    count: input.count ?? 1,
+  });
+  let outputs: GeneratedMedia[];
   try {
-    output = await provider.generateImage(input, context);
+    outputs = await provider.generateImage(input, context);
   } catch (error) {
     if (error instanceof MediaGenerationError && !error.uncertain) await hold?.release();
     throw error;
   }
-  // The image exists; a failed settlement must not lose it. The hold stays and is visible.
+  const reported = outputs.filter((output) => output.costUsd !== undefined);
+  const costUsd = reported.length
+    ? reported.reduce((total, output) => total + (output.costUsd ?? 0), 0)
+    : undefined;
+  // The pictures exist; neither a failed settlement nor a failed record may lose them.
+  await recordUsage?.({ jobId, model: provider.imageModel, count: outputs.length, costUsd }).catch(
+    (error) => getLogger().error("media usage record", error),
+  );
+  // The hold stays and is visible when settlement fails.
   await hold
-    ?.settle(output.costUsd)
+    ?.settle(costUsd, outputs.length)
     .catch((error) => getLogger().error("media credit settlement", error));
-  return output;
+  return outputs;
 }

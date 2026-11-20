@@ -255,6 +255,8 @@ export function ModelPickerList({
               accessibilityHint={item.images === false ? t("Can't read images") : undefined}
               accessibilityState={{ selected }}
               onPress={() => onSelect(item)}
+              disabled={item.disabled}
+              dimmed={item.disabled}
               title={item.title ?? item.label}
               detail={item.detail}
               value={section.connect ? t("Connect") : undefined}

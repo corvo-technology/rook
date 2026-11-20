@@ -1,7 +1,7 @@
 import type { AgentRunRequest, AgentSteeringMessage } from "@corvo/adapter-kit";
 import type { MessageBlock } from "@corvo/contracts";
 import { ATTACHMENT_MAX_BYTES, isAttachmentImageMimeType } from "@corvo/contracts";
-import { blocksToAgentHistoryText } from "@corvo/core";
+import { blocksToAgentHistoryText, replyMarker } from "@corvo/core";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { loadReplyContext } from "./reply-context.js";
 import { currentTurnFilesInstruction, listCurrentTurnFiles } from "./thread-artifacts.js";
@@ -388,7 +388,7 @@ export async function claimRunSteering(
 ): Promise<AgentSteeringMessage[]> {
   const steering = await deps.events.claimSteering({ ...lease, seenIds });
   return Promise.all(
-    steering.map(async (item) => {
+    steering.map(async (item, index) => {
       const { images, files, unavailableInstruction } = await settleSteeringAttachmentLoads(
         loadCurrentTurnImages(deps, item.blocks, context),
         deps.artifacts ? listCurrentTurnFiles(deps, item.blocks, context) : Promise.resolve([]),
@@ -406,6 +406,10 @@ export async function claimRunSteering(
           item.text,
           filesInstruction,
           unavailableInstruction,
+          steering.length > 1 ? `(message id: ${item.messageId})` : undefined,
+          steering.length > 1 && index === steering.length - 1
+            ? `${steering.length} messages are waiting. Answer each one separately, in the order sent. Start each answer with its own line ${replyMarker("<message id>")} using the id shown with that message.`
+            : undefined,
         ]
           .filter(Boolean)
           .join("\n\n"),

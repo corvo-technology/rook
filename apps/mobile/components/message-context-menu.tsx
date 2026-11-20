@@ -17,6 +17,9 @@ const symbols = {
   select: "character.cursor.ibeam",
   unread: "message.badge",
   wiki: "books.vertical",
+  edit: "pencil",
+  regenerate: "arrow.clockwise",
+  fork: "arrow.triangle.branch",
 } as const satisfies Record<MessageMenuSymbol, Extract<NonNullable<MenuAction["image"]>, string>>;
 
 const tapPoint = (event: GestureResponderEvent) => ({

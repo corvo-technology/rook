@@ -22,6 +22,9 @@ import {
   clampUserProgressMessage,
   isProgressMessageTruncated,
   messageUserMaxLength,
+  SAY_NOW_MAX_LENGTH,
+  sayNowAllowed,
+  sayNowClientNonce,
   userProgressClientNonce,
 } from "./user-progress.js";
 
@@ -167,6 +170,45 @@ export const messagingTools: ToolHandlers = {
           }
         : { ok: true },
     );
+  },
+  async say_now(ctx, call) {
+    const { deps, run } = ctx;
+    const { reply } = ctx.state;
+    // Checked per call, not only when the tool is offered: a helper run or a changed run never posts.
+    if (
+      !sayNowAllowed({
+        ownerStartedRun: ctx.source.ownerStartedRun,
+        messagingChannelRun: ctx.source.messagingChannelRun,
+        voiceCall: ctx.source.voiceCall,
+        visitorRun: false,
+      }) ||
+      isSubagentToolExecution(call.executionId)
+    ) {
+      return call.finish({ error: "say_now is not available in this run." });
+    }
+    if (reply.sayNowText !== undefined) {
+      return call.finish({ error: "say_now was already used in this run. Keep working." });
+    }
+    const text = redactSecrets(String(call.args.message ?? ""), ctx.secrets).trim();
+    if (!text) return call.finish({ error: "message is required" });
+    if (text.length > SAY_NOW_MAX_LENGTH) {
+      return call.finish({
+        error: `message is over ${SAY_NOW_MAX_LENGTH} characters. Call say_now again with one shorter line.`,
+      });
+    }
+    await flushProgress(ctx);
+    reply.sayNowText = text;
+    await publishMessage(
+      deps,
+      run,
+      "bot",
+      [{ kind: "text", text }],
+      true,
+      sayNowClientNonce(run.id),
+    );
+    reply.midTurnUserTexts.push(text);
+    reply.publishedMidTurnUserMessage = true;
+    return call.finish({ ok: true });
   },
   async message_bot(ctx, call) {
     const { deps, run, bot } = ctx;

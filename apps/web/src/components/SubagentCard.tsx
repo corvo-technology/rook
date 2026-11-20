@@ -7,7 +7,7 @@ import {
 } from "@corvo/ui-web/components/ui/collapsible";
 import { Trans } from "@lingui/react/macro";
 import { ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type SubagentBlock = Extract<ThreadMessage["blocks"][number], { kind: "subagent" }>;
 
@@ -20,11 +20,35 @@ const openHelpers = new Set<string>();
  * brief or report does not fill the chat. The header opens it to the full task and the result
  * or progress.
  */
-export function SubagentCard({ block }: { block: SubagentBlock }) {
+export function SubagentCard({
+  block,
+  loadFull,
+}: {
+  block: SubagentBlock;
+  /** Reads the whole card, for a report that arrived as a preview. */
+  loadFull?: () => Promise<SubagentBlock | undefined>;
+}) {
   const [open, setOpen] = useState(() => openHelpers.has(block.agentId));
+  const [full, setFull] = useState<SubagentBlock>();
+  const wantsFull = open && block.truncated === true && !full;
+  // The preview shows at once; the rest is read when the card is opened, once.
+  const load = useRef(loadFull);
+  load.current = loadFull;
+  useEffect(() => {
+    if (!wantsFull || !load.current) return;
+    let current = true;
+    load.current().then(
+      (loaded) => current && loaded && setFull(loaded),
+      () => undefined,
+    );
+    return () => {
+      current = false;
+    };
+  }, [wantsFull]);
   const running = block.status === "running";
   const failed = block.status === "failed";
-  const body = block.result || block.progress || "";
+  const shown = full ?? block;
+  const body = shown.result || shown.progress || "";
   return (
     <Collapsible
       open={open}

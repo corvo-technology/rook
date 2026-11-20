@@ -39,6 +39,7 @@ export async function publishMessage(
     status: "failed";
     result: "stopped";
   },
+  replyToMessageId?: string,
 ) {
   if (isBackgroundRunTrigger(run.trigger)) {
     blocks = blocks.filter((block) => block.kind === "ask" || block.kind === "computer");
@@ -73,6 +74,7 @@ export async function publishMessage(
         markUnread,
         clientNonce,
         Boolean(stoppedHelper),
+        replyToMessageId,
       );
     }),
   );
@@ -92,6 +94,7 @@ export async function persistMessageInTransaction(
   markUnread?: boolean,
   clientNonce?: string,
   allowCancelledRun = false,
+  replyToMessageId?: string,
 ) {
   const message = await createThreadMessageInTransaction(tx, {
     threadId: run.threadId,
@@ -102,6 +105,7 @@ export async function persistMessageInTransaction(
     markUnread,
     clientNonce,
     allowCancelledRun,
+    replyToMessageId,
   });
   const event = await appendEventInTransaction(tx, {
     spaceId: run.spaceId,
@@ -116,6 +120,7 @@ export async function persistMessageInTransaction(
       blocks,
       callId: callIdFromClientNonce(clientNonce),
       threadRootId: message.threadRootId ?? undefined,
+      ...(replyToMessageId ? { replyToMessageId } : {}),
     },
   });
   return {

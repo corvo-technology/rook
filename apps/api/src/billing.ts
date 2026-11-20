@@ -53,6 +53,7 @@ import {
 } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import { ORPCError } from "@orpc/server";
+import type { BillingNotices } from "./billing-notices.js";
 
 /**
  * Days of free trial before the first charge, or null for none. Stripe needs at least 1 day, so a
@@ -122,6 +123,8 @@ export function createBillingService(deps: {
   webOrigin: string;
   /** Overrides `TRIAL_DAYS`; null or a non-positive number means no trial. */
   trialDays?: number | null;
+  /** Sends the confirmation when a sync finds a plan became active or changed. */
+  notices?: BillingNotices;
 }): BillingService {
   const { prisma, provider } = deps;
   const configuredDays = deps.trialDays === undefined ? TRIAL_DAYS : deps.trialDays;
@@ -189,6 +192,7 @@ export function createBillingService(deps: {
       return;
     }
     const live = snapshot;
+    if (live) await deps.notices?.confirm(previous, live);
     if (!modelCredits || !live) return;
     // A newly paid own-key plan becomes the funding, wherever its checkout returned.
     if (

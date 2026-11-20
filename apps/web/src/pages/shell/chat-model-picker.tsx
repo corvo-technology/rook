@@ -15,6 +15,7 @@ import {
 } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { ChevronDownIcon } from "lucide-react";
+import type { ReactNode } from "react";
 import { useId, useMemo, useState } from "react";
 import { TextOnlyMark } from "../../components/TextOnlyMark";
 
@@ -28,12 +29,15 @@ export function ChatModelPicker({
   value,
   onChange,
   chip = false,
+  footer,
 }: {
   id: string;
   choices: readonly ChatModelChoice[];
   value: string;
   onChange: (key: string) => void;
   chip?: boolean;
+  /** Under the list, for a setting that belongs to this choice. */
+  footer?: ReactNode;
 }) {
   const { t } = useLingui();
   const imagesHintId = useId();
@@ -123,6 +127,7 @@ export function ChatModelPicker({
                       // cmdk falls back to the row's text for an empty value.
                       value={choice.key || "space-default"}
                       data-checked={choice.key === value}
+                      disabled={choice.disabled}
                       aria-describedby={choice.images === false ? imagesHintId : undefined}
                       onSelect={() => {
                         onChange(choice.key);
@@ -143,6 +148,7 @@ export function ChatModelPicker({
               ))}
             </CommandList>
           </Command>
+          {footer}
         </PopoverContent>
       ) : null}
     </Popover>

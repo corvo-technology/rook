@@ -130,7 +130,11 @@ export function ConnectionNameField({
           </Button>
         ) : null}
       </div>
-      {error ? <p className="mt-2 text-[13.5px] text-destructive">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="mt-2 text-[13.5px] text-destructive">
+          {error}
+        </p>
+      ) : null}
     </form>
   );
 }

@@ -230,7 +230,11 @@ export function ExternalConversationSettings({
           <Trans>{bot.name} will still respond to direct mentions.</Trans>
         </p>
       ) : null}
-      {error ? <p className="mt-3 text-[13px] text-destructive">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="mt-3 text-[13px] text-destructive">
+          {error}
+        </p>
+      ) : null}
       <div className="mt-6 flex min-h-10 items-center gap-3">
         <Button
           disabled={saving}

@@ -5,6 +5,7 @@ import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { AlwaysAllowedRules } from "../../components/always-allowed-rules";
 import { LoadFailure } from "../../components/load-failure";
 import { NativeSegmentedControl } from "../../components/native-segmented-control";
 import { SettingsFooter, SettingsGroup, SettingsRow } from "../../components/settings-group";
@@ -190,6 +191,7 @@ export default function Approvals() {
             );
           })}
         </SettingsGroup>
+        {settings ? <AlwaysAllowedRules /> : null}
       </ScrollView>
     </SafeAreaView>
   );

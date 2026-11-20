@@ -610,3 +610,30 @@ it("falls back to the stored text for a card from an older server", async () => 
   expect(container.textContent).toContain("Add a step?");
   expect(container.textContent).toContain("Old detail");
 });
+
+const sendCard: AskBlock = {
+  kind: "ask",
+  text: "Review before demo_send_email",
+  approvalEffectId: "effect-1",
+  status: "pending",
+  alwaysAllow: { agent: "Ada", connection: "gmail", tool: "demo_send_email" },
+  actions: [
+    { id: "allow", label: "Allow once" },
+    { id: "always", label: "Always allow this tool" },
+    { id: "deny", label: "Deny" },
+  ],
+};
+
+it("says exactly what Always allow covers", async () => {
+  await render(sendCard);
+  expect(button("Always allow")).toBeDefined();
+  expect(container.textContent).toContain(
+    "Always allow covers demo_send_email on gmail, for Ada only.",
+  );
+});
+
+it("offers no coverage line when the card has no always-allow choice", async () => {
+  await render({ ...sendCard, actions: sendCard.actions!.filter((a) => a.id !== "always") });
+  expect(container.textContent).not.toContain("covers");
+  expect(button("Always allow")).toBeUndefined();
+});

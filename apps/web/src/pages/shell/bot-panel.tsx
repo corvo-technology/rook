@@ -46,6 +46,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Download, Settings, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { Suspense, useEffect, useId, useRef, useState } from "react";
+import { AlwaysAllowedRules } from "../../components/AlwaysAllowedRules";
 import { AutonomyPicker } from "../../components/AutonomyPicker";
 import { ErrorBoundary, SectionLoadFailed } from "../../components/ErrorBoundary";
 import { InstructionSettings } from "../../components/InstructionSettings";
@@ -788,7 +789,7 @@ export function BotSettings({
                 </div>
               ) : null}
             </SettingsGroup>
-            <section>
+            <section className="space-y-4">
               <AutonomyPicker
                 name={bot.name}
                 value={approvalMode ?? defaultApprovalMode ?? "risky"}
@@ -802,6 +803,7 @@ export function BotSettings({
                   void enqueueSave({ approvalMode: stored });
                 }}
               />
+              <AlwaysAllowedRules botId={bot.id} />
             </section>
             <SettingsGroup label={t`Memory`}>
               <label

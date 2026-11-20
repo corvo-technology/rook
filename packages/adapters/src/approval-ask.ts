@@ -47,7 +47,15 @@ export function buildApprovalAskBlock(
   toolName: string,
   args: Record<string, unknown>,
   secrets: string[],
-  options?: { reviewReason?: string; summary?: FleetCardSummary },
+  options?: {
+    reviewReason?: string;
+    summary?: FleetCardSummary;
+    /**
+     * What an "Always allow" would keep, or false when none may be offered. Left out, the card
+     * offers the plain choice.
+     */
+    alwaysAllow?: { agent: string; connection: string; tool: string } | false;
+  },
 ): MessageBlock {
   if (options?.summary) {
     // Built from what was resolved before the effect was recorded, not from what the model typed.
@@ -161,6 +169,7 @@ export function buildApprovalAskBlock(
         }
       : {}),
     ...(fetchSite ? { site: fetchSite } : {}),
+    ...(options?.alwaysAllow ? { alwaysAllow: options.alwaysAllow } : {}),
     status: "pending",
     actions:
       toolName === "create_space"
@@ -168,7 +177,7 @@ export function buildApprovalAskBlock(
             { id: "allow", label: "Create space", outcome: "created" },
             { id: "deny", label: "Cancel", outcome: "cancelled" },
           ]
-        : toolRequiresExplicitApproval(toolName)
+        : toolRequiresExplicitApproval(toolName) || options?.alwaysAllow === false
           ? [
               { id: "allow", label: "Allow once" },
               { id: "deny", label: "Deny" },

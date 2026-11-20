@@ -139,6 +139,10 @@ export function metaCopy(code: MetaCode, p: Params): string | undefined {
   switch (code) {
     case "stronger_model":
       return t`Switched to a stronger model`;
+    case "rule_approved": {
+      const tool = p.tool ?? "";
+      return t`Auto-approved by rule: ${tool}`;
+    }
     case "budget_alert": {
       const used = Number(p.used).toLocaleString(locale());
       const limit = Number(p.limit).toLocaleString(locale());

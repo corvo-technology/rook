@@ -1319,13 +1319,31 @@ msgid "Always act"
 msgstr "始终执行"
 
 #: src/components/AskCard.tsx
+msgid "Always allow"
+msgstr "始终允许"
+
+#: src/components/AskCard.tsx
 msgid "Always allow {site}"
 msgstr "始终允许 {site}"
+
+#. placeholder {0}: keeps.tool
+#. placeholder {1}: keeps.connection
+#. placeholder {2}: keeps.agent
+#: src/components/AskCard.tsx
+msgid "Always allow covers {0} on {1}, for {2} only."
+msgstr "“始终允许”仅适用于 {2} 在 {1} 上的 {0}。"
+
+#. placeholder {0}: keeps.tool
+#. placeholder {1}: keeps.agent
+#: src/components/AskCard.tsx
+msgid "Always allow covers {0}, for {1} only."
+msgstr "“始终允许”仅适用于 {1} 的 {0}。"
 
 #: src/components/AskCard.tsx
 msgid "Always allow this tool"
 msgstr "始终允许此工具"
 
+#: src/components/AlwaysAllowedRules.tsx
 #: src/components/AskCard.tsx
 msgid "Always allowed"
 msgstr "始终允许"
@@ -1663,6 +1681,10 @@ msgstr "授权此服务器后，Agent 才能使用其工具。将打开弹窗。
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Auto"
 msgstr "自动"
+
+#: src/lib/server-copy.ts
+msgid "Auto-approved by rule: {tool}"
+msgstr "已按规则自动批准:{tool}"
 
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Automated senders"
@@ -2037,6 +2059,10 @@ msgstr "修改密码"
 #: src/lib/server-copy.ts
 msgid "Change the model of {bot}?"
 msgstr "要更改 {bot} 的模型吗？"
+
+#: src/components/ChangeWhenToAsk.tsx
+msgid "Change when to ask"
+msgstr "更改询问时机"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Changing…"
@@ -3129,6 +3155,7 @@ msgstr "无法移除"
 msgid "Could not remove connector"
 msgstr "无法移除连接器"
 
+#: src/components/AlwaysAllowedRules.tsx
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Could not remove rule"
 msgstr "无法移除规则"
@@ -3179,6 +3206,7 @@ msgstr "无法运行例行任务"
 msgid "Could not run the routine"
 msgstr "无法运行例行任务"
 
+#: src/components/ChangeWhenToAsk.tsx
 #: src/pages/connections/DatabaseForm.tsx
 #: src/pages/connections/MailboxForm.tsx
 #: src/pages/connections/McpServerForm.tsx
@@ -7624,6 +7652,7 @@ msgstr "重新加载"
 msgid "Remembered"
 msgstr "已记住"
 
+#: src/components/AlwaysAllowedRules.tsx
 #: src/components/ApprovalRulesSettings.tsx
 #: src/pages/connections/McpServerForm.tsx
 #: src/pages/ConnectionsSettingsPanel.tsx
@@ -7665,6 +7694,10 @@ msgstr "移除 {name}？"
 #: src/pages/shell/bot-credentials.tsx
 msgid "Remove {secretName}? This bot will no longer be able to use it."
 msgstr "移除 {secretName}？此机器人将无法再使用它。"
+
+#: src/components/AlwaysAllowedRules.tsx
+msgid "Remove {what}"
+msgstr "移除 {what}"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Remove change trigger"
@@ -9673,6 +9706,7 @@ msgstr "审核中"
 
 #: src/components/ApprovalRulesSettings.tsx
 #: src/components/AskCard.tsx
+#: src/components/ChangeWhenToAsk.tsx
 #: src/components/MemoryFactCard.tsx
 #: src/components/WikiChangeCard.tsx
 #: src/pages/Artifacts.tsx

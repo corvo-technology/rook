@@ -13,6 +13,7 @@ import { useId, useState } from "react";
 import { useSpaceQueries } from "../lib/query";
 import { useSpaceRpc } from "../lib/space-rpc";
 import { errorText } from "../lib/user-error";
+import { AlwaysAllowedRules } from "./AlwaysAllowedRules";
 import { NeverAskConfirm } from "./AutonomyPicker";
 import { SettingsGroup, SettingsRow } from "./SettingsRows";
 
@@ -233,6 +234,7 @@ export function ApprovalRulesSettings({ scope }: { scope: SettingsScope }) {
           ))}
         </SettingsGroup>
       ) : null}
+      <AlwaysAllowedRules />
       {error ? <p className="text-[13px] text-destructive">{error}</p> : null}
     </div>
   );

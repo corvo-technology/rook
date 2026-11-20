@@ -37,6 +37,7 @@ import { BotAvatar } from "../bot-avatar";
 import { MessageMentions } from "../bot-mention";
 import { ChoiceCard } from "../ChoiceCard";
 import { ComputerCard } from "../ComputerCard";
+import { ChangeWhenToAsk } from "../change-when-to-ask";
 import type { ImageArtifactPreviewTarget } from "../image-artifact-viewer";
 import { InlineImageAttachment } from "../inline-image-attachment";
 import { InstructionUndo } from "../instruction-undo";
@@ -477,18 +478,24 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
                       )}
                 </Text>
               ) : canAnswer && onAnswer ? (
-                <AskActions
-                  actions={askBlock.actions}
-                  site={askBlock.site}
-                  approval={isApprovalAskBlock(askBlock)}
-                  proposal={askBlock.proposal}
-                  instructions={askBlock.instructionUpdate?.after}
-                  accessibilityActions={actionProps.accessibilityActions}
-                  onAccessibilityAction={actionProps.onAccessibilityAction}
-                  onAnswer={(answer) =>
-                    onAnswer(message, answer, undefined, undefined, askBlock.approvalEffectId)
-                  }
-                />
+                <>
+                  <AskActions
+                    actions={askBlock.actions}
+                    site={askBlock.site}
+                    alwaysAllow={askBlock.alwaysAllow}
+                    approval={isApprovalAskBlock(askBlock)}
+                    proposal={askBlock.proposal}
+                    instructions={askBlock.instructionUpdate?.after}
+                    accessibilityActions={actionProps.accessibilityActions}
+                    onAccessibilityAction={actionProps.onAccessibilityAction}
+                    onAnswer={(answer) =>
+                      onAnswer(message, answer, undefined, undefined, askBlock.approvalEffectId)
+                    }
+                  />
+                  {cardBotId && isApprovalAskBlock(askBlock) ? (
+                    <ChangeWhenToAsk botId={cardBotId} />
+                  ) : null}
+                </>
               ) : (
                 <Text
                   {...actionProps}

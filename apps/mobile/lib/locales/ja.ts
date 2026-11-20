@@ -1225,6 +1225,11 @@ export const JA_MESSAGES: Record<string, string> = {
     "すでに利用中のAI（Claude、ChatGPT、APIキー）を使えます",
   "Yearly · 2 months free": "年払い · 2か月無料",
   Yearly: "年払い",
+  "Always allow covers {tool} on {connection}, for {agent} only.":
+    "「常に許可」の対象は、{agent} の {connection} における {tool} のみです。",
+  "Always allow covers {tool}, for {agent} only.":
+    "「常に許可」の対象は、{agent} の {tool} のみです。",
+  "Change when to ask": "確認のタイミングを変更",
   Regenerate: "再生成",
   "Continue in new thread": "新しいスレッドで続ける",
   "Edit message": "メッセージを編集",

@@ -122,7 +122,7 @@ const PURCHASE_CONNECTOR_SLUGS = new Set(["stripe", "shopify", "paypal", "square
 export type ActionApprovalRule = Pick<
   StoredActionApprovalRule,
   "effect" | "matchKind" | "matchValue"
->;
+> & { id?: string };
 
 export function connectorKindFromToolName(toolName: string, connectorKinds: string[] = []): string {
   const normalizedTool = toolName.toLowerCase();

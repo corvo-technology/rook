@@ -127,6 +127,7 @@ import {
   ROUTINE_MAX_STEPS,
   RoutineSchema,
   RoutineStepInputSchema,
+  ScopedApprovalRuleSchema,
   ScratchpadItemSchema,
   ScratchpadItemStatusSchema,
   ServerUpdateCheckSchema,
@@ -2021,6 +2022,12 @@ export const appContract = {
     remove: oc
       .input(settingsScopeInput.extend({ id: Id }))
       .output(z.object({ ok: z.literal(true) })),
+  },
+  scopedApprovalRules: {
+    list: oc
+      .input(z.object({ botId: Id.optional() }).optional())
+      .output(z.array(ScopedApprovalRuleSchema)),
+    remove: oc.input(z.object({ id: Id })).output(z.object({ ok: z.literal(true) })),
   },
   autoReview: {
     get: oc.input(settingsScopeInput.optional()).output(ActionAutoReviewSettingsSchema),

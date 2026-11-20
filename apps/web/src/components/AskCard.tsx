@@ -18,6 +18,7 @@ import { rpc } from "../lib/rpc";
 import { approvalCardCopy } from "../lib/server-copy";
 import { errorText } from "../lib/user-error";
 import { BuiCard } from "./ai/primitives";
+import { ChangeWhenToAsk } from "./ChangeWhenToAsk";
 import { HoldToApprove } from "./HoldToApprove";
 import { OptionRow, optionLetter } from "./OptionRow";
 
@@ -51,6 +52,7 @@ function approvalActionLabel(
   outcome?: "created" | "cancelled",
   site?: string,
   proposal?: boolean,
+  scoped?: boolean,
 ): string {
   if (outcome === "created") return t`Create space`;
   if (outcome === "cancelled") return t`Cancel`;
@@ -58,7 +60,10 @@ function approvalActionLabel(
   if (proposal && id === "allow") return t`Apply`;
   if (proposal && id === "deny") return t`Dismiss`;
   if (id === "allow") return t`Allow once`;
-  if (id === "always") return site ? t`Always allow ${site}` : t`Always allow this tool`;
+  if (id === "always") {
+    if (site) return t`Always allow ${site}`;
+    return scoped ? t`Always allow` : t`Always allow this tool`;
+  }
   if (id === "deny") return t`Not now`;
   return fallback;
 }
@@ -76,9 +81,12 @@ export function AskCard({
   onAnswer,
   onDismiss,
   approver,
+  agent,
 }: {
   /** Set in a channel: the agent that asks, and whether the reader owns it. */
   approver?: { agentName: string; owns: boolean };
+  /** The agent the approval is for; a waiting card offers to change when that agent asks. */
+  agent?: { id: string; name?: string };
   block: AskBlock;
   canAnswer: boolean;
   canDismiss: boolean;
@@ -118,6 +126,18 @@ export function AskCard({
     : undefined;
   const cardTitle = cardCopy?.title ?? block.text;
   const cardDetail = cardCopy?.lines.length ? cardCopy.lines.join("\n") : block.detail;
+  // What "Always allow" keeps, said once, when the card offers it.
+  const keeps = block.alwaysAllow;
+  const coverage =
+    keeps && approvalActions?.some((action) => action.id === "always")
+      ? keeps.connection
+        ? t`Always allow covers ${keeps.tool} on ${keeps.connection}, for ${keeps.agent} only.`
+        : t`Always allow covers ${keeps.tool}, for ${keeps.agent} only.`
+      : null;
+  const changeWhenToAsk =
+    agent && approvalActions && !answered && canAnswer ? (
+      <ChangeWhenToAsk botId={agent.id} name={agent.name} />
+    ) : null;
   const optionQuestion =
     !approvalActions && !block.instructionUpdate && !secretInput && Boolean(askActions?.length);
   const chosenOption =
@@ -363,6 +383,7 @@ export function AskCard({
                     action.outcome,
                     block.site,
                     block.proposal,
+                    Boolean(block.alwaysAllow),
                   )
                 )}
               </Button>
@@ -372,6 +393,10 @@ export function AskCard({
             <Trans>Anyone with “Approve actions” can also approve</Trans>
           </span>
         </div>
+        {coverage ? (
+          <p className="px-[18px] pb-3 text-[13px] text-muted-foreground">{coverage}</p>
+        ) : null}
+        {changeWhenToAsk ? <div className="px-[18px] pb-3">{changeWhenToAsk}</div> : null}
         {error ? <p className="px-[18px] pb-3 text-[13px] text-destructive">{error}</p> : null}
       </div>
     );
@@ -536,6 +561,7 @@ export function AskCard({
                     action.outcome,
                     block.site,
                     block.proposal,
+                    Boolean(block.alwaysAllow),
                   )
                 )}
               </Button>
@@ -649,6 +675,12 @@ export function AskCard({
           </Button>
         </div>
       )}
+      {!answered && canAnswer && !ownerOnly && !editing ? (
+        <>
+          {coverage ? <p className="mt-2 text-[13px] text-muted-foreground">{coverage}</p> : null}
+          {changeWhenToAsk}
+        </>
+      ) : null}
       {error ? <p className="mt-3 text-[13px] text-destructive">{error}</p> : null}
     </BuiCard>
   );

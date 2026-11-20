@@ -1319,13 +1319,31 @@ msgid "Always act"
 msgstr "Sempre agir"
 
 #: src/components/AskCard.tsx
+msgid "Always allow"
+msgstr "Sempre permitir"
+
+#: src/components/AskCard.tsx
 msgid "Always allow {site}"
 msgstr "Permitir sempre {site}"
+
+#. placeholder {0}: keeps.tool
+#. placeholder {1}: keeps.connection
+#. placeholder {2}: keeps.agent
+#: src/components/AskCard.tsx
+msgid "Always allow covers {0} on {1}, for {2} only."
+msgstr "“Sempre permitir” vale só para {0} em {1}, para {2}."
+
+#. placeholder {0}: keeps.tool
+#. placeholder {1}: keeps.agent
+#: src/components/AskCard.tsx
+msgid "Always allow covers {0}, for {1} only."
+msgstr "“Sempre permitir” vale só para {0}, para {1}."
 
 #: src/components/AskCard.tsx
 msgid "Always allow this tool"
 msgstr "Permitir sempre esta ferramenta"
 
+#: src/components/AlwaysAllowedRules.tsx
 #: src/components/AskCard.tsx
 msgid "Always allowed"
 msgstr "Sempre permitido"
@@ -1663,6 +1681,10 @@ msgstr "Autorize este servidor para que os agentes usem suas ferramentas. Uma ja
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Auto"
 msgstr "Auto"
+
+#: src/lib/server-copy.ts
+msgid "Auto-approved by rule: {tool}"
+msgstr "Aprovado automaticamente pela regra: {tool}"
 
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Automated senders"
@@ -2037,6 +2059,10 @@ msgstr "Alterar senha"
 #: src/lib/server-copy.ts
 msgid "Change the model of {bot}?"
 msgstr "Trocar o modelo de {bot}?"
+
+#: src/components/ChangeWhenToAsk.tsx
+msgid "Change when to ask"
+msgstr "Mudar quando perguntar"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Changing…"
@@ -3129,6 +3155,7 @@ msgstr "Não foi possível remover."
 msgid "Could not remove connector"
 msgstr "Não foi possível remover o conector"
 
+#: src/components/AlwaysAllowedRules.tsx
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Could not remove rule"
 msgstr "Não foi possível remover."
@@ -3179,6 +3206,7 @@ msgstr "Não foi possível executar a rotina"
 msgid "Could not run the routine"
 msgstr "Não foi possível executar a rotina"
 
+#: src/components/ChangeWhenToAsk.tsx
 #: src/pages/connections/DatabaseForm.tsx
 #: src/pages/connections/MailboxForm.tsx
 #: src/pages/connections/McpServerForm.tsx
@@ -7624,6 +7652,7 @@ msgstr "Recarregar"
 msgid "Remembered"
 msgstr "Lembrada"
 
+#: src/components/AlwaysAllowedRules.tsx
 #: src/components/ApprovalRulesSettings.tsx
 #: src/pages/connections/McpServerForm.tsx
 #: src/pages/ConnectionsSettingsPanel.tsx
@@ -7665,6 +7694,10 @@ msgstr "Remover {name}?"
 #: src/pages/shell/bot-credentials.tsx
 msgid "Remove {secretName}? This bot will no longer be able to use it."
 msgstr "Remover {secretName}? Este bot não poderá mais usá-lo."
+
+#: src/components/AlwaysAllowedRules.tsx
+msgid "Remove {what}"
+msgstr "Remover {what}"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Remove change trigger"
@@ -9673,6 +9706,7 @@ msgstr "Em análise"
 
 #: src/components/ApprovalRulesSettings.tsx
 #: src/components/AskCard.tsx
+#: src/components/ChangeWhenToAsk.tsx
 #: src/components/MemoryFactCard.tsx
 #: src/components/WikiChangeCard.tsx
 #: src/pages/Artifacts.tsx

@@ -1244,6 +1244,11 @@ export const DE_MESSAGES: Record<string, string> = {
     "Nutze die KI, die du schon bezahlst: Claude, ChatGPT oder einen API-Schlüssel",
   "Yearly · 2 months free": "Jährlich · 2 Monate gratis",
   Yearly: "Jährlich",
+  "Always allow covers {tool} on {connection}, for {agent} only.":
+    "„Immer erlauben“ gilt nur für {tool} bei {connection}, für {agent}.",
+  "Always allow covers {tool}, for {agent} only.":
+    "„Immer erlauben“ gilt nur für {tool}, für {agent}.",
+  "Change when to ask": "Ändern, wann gefragt wird",
   Regenerate: "Neu generieren",
   "Continue in new thread": "In neuem Thread fortsetzen",
   "Edit message": "Nachricht bearbeiten",

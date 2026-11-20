@@ -65,6 +65,8 @@ vi.mock("@corvo/ui-web", async () => {
   };
 });
 
+vi.mock("./AlwaysAllowedRules", () => ({ AlwaysAllowedRules: () => null }));
+
 import { ApprovalRulesSettings } from "./ApprovalRulesSettings";
 
 const settings = { mode: "risky", enabled: false, skipApprovals: false, checkerAvailable: true };

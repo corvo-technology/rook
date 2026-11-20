@@ -19,10 +19,12 @@ test("the default asks before a risky change, and approvals settings shape what 
 
   await requestDestinationWrite(page, "write this to the destination crm as a note");
   const allowOnce = page.getByRole("button", { name: "Hold to approve", exact: true });
-  const alwaysAllow = page.getByRole("button", { name: "Always allow this tool", exact: true });
+  const alwaysAllow = page.getByRole("button", { name: "Always allow", exact: true });
   const deny = page.getByRole("button", { name: "Not now", exact: true });
   await expect(alwaysAllow).toBeVisible();
   await expect(deny).toBeVisible();
+  // The card says exactly what Always allow keeps: one tool, on one connection, for this agent.
+  await expect(page.getByText(/^Always allow covers .+, for .+ only\.$/)).toBeVisible();
   const allowBox = await allowOnce.boundingBox();
   const alwaysBox = await alwaysAllow.boundingBox();
   const denyBox = await deny.boundingBox();
@@ -58,7 +60,7 @@ test("the default asks before a risky change, and approvals settings shape what 
   await captureScreenshot(page, testInfo, "55-action-confirmation-allowed-once");
 
   await requestDestinationWrite(page, "write this to the destination crm one more time");
-  await page.getByRole("button", { name: "Always allow this tool", exact: true }).click();
+  await page.getByRole("button", { name: "Always allow", exact: true }).click();
   await expect(page.getByText("Always allowed", { exact: true })).toBeVisible();
   await waitForRunIdle(page);
   await expectComposerReady(page);
@@ -69,7 +71,7 @@ test("the default asks before a risky change, and approvals settings shape what 
   await expectComposerReady(page);
   await expect(page.getByRole("button", { name: "Hold to approve", exact: true })).toHaveCount(0);
 
-  // The allowed tool is listed in Approvals, where it can be blocked.
+  // The allowed tool is listed on the agent's page and in Approvals, where it can be removed.
   const settings = await openUserSettings(page);
   await settings.getByTestId("settings-nav-approvals").click();
   const approvals = page.getByTestId("settings-page");
@@ -78,18 +80,11 @@ test("the default asks before a risky change, and approvals settings shape what 
   await expect(
     mode.getByRole("button", { name: "Only what's risky", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
-  const rules = approvals.getByTestId("approval-rules");
-  await expect(rules.getByText("Destination.write", { exact: true })).toBeVisible();
-  await expect(rules.getByRole("button", { name: "Allow", exact: true })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
+  const kept = approvals.getByTestId("always-allowed-rules");
+  await expect(kept.getByText(/Destination\.write/)).toBeVisible();
   await captureScreenshot(page, testInfo, "52-approvals-settings");
-  await rules.getByRole("button", { name: "Block", exact: true }).click();
-  await expect(rules.getByRole("button", { name: "Block", exact: true })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
+  await kept.getByRole("button", { name: /^Remove/ }).click();
+  await expect(kept).toHaveCount(0);
   await mode.getByRole("button", { name: "Never ask", exact: true }).click();
   await expect(mode.getByRole("button", { name: "Never ask", exact: true })).toHaveAttribute(
     "aria-pressed",
@@ -99,6 +94,11 @@ test("the default asks before a risky change, and approvals settings shape what 
   await approvals.getByTestId("settings-back").click();
 
   // A blocked tool is refused without a card, even in Never ask.
+  await rpc(page, "approvalRules/set", {
+    effect: "deny",
+    matchKind: "tool",
+    matchValue: "destination.write",
+  });
   await sendDestinationWrite(page, "write this to the destination crm while it is blocked");
   await waitForRunIdle(page);
   await expectComposerReady(page);

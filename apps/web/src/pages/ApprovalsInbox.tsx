@@ -49,6 +49,7 @@ export function ApprovalsInbox({
               <AskCard
                 block={item.block}
                 canAnswer
+                agent={{ id: item.botId, name: item.botName }}
                 canDismiss={false}
                 onAnswer={(answer, username, approvalEffectId) =>
                   onAnswer(item, answer, username, approvalEffectId)

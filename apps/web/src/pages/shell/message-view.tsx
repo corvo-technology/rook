@@ -886,6 +886,7 @@ export const MessageView = memo(function MessageView({
                 ) : null}
                 <AskCard
                   block={block}
+                  agent={message.botId ? { id: message.botId, name: speakerName } : undefined}
                   canAnswer={canAnswer}
                   canDismiss={canDismiss}
                   onAnswer={(text, username, approvalEffectId) =>

@@ -19,6 +19,7 @@ vi.mock("@lingui/core/macro", () => ({
     parts.reduce((text, part, index) => text + part + (values[index] ?? ""), ""),
 }));
 vi.mock("../lib/rpc", () => ({ rpc: {} }));
+vi.mock("../components/ChangeWhenToAsk", () => ({ ChangeWhenToAsk: () => null }));
 
 import { ApprovalsInbox } from "./ApprovalsInbox";
 import { SidebarNav } from "./shell/sidebar-team";

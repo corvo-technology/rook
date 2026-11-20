@@ -81,6 +81,7 @@ vi.mock("./bot-credentials", () => ({ BotCredentialsSection: () => null }));
 vi.mock("./agent-connections", () => ({ AgentConnectionsList: () => null }));
 vi.mock("../connections/AgentAccessSection", () => ({ AgentAccessSection: () => null }));
 vi.mock("./agent-audience", () => ({ AgentAudienceSection: () => null }));
+vi.mock("../../components/AlwaysAllowedRules", () => ({ AlwaysAllowedRules: () => null }));
 
 import { BotSettings } from "./bot-panel";
 

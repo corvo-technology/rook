@@ -33,6 +33,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { AlwaysAllowedRules } from "../components/always-allowed-rules";
 import { BotAvatar } from "../components/bot-avatar";
 import { BotContextCards } from "../components/bot-context-cards";
 import { ComputerModePicker } from "../components/computer-mode-picker";
@@ -862,6 +863,7 @@ export default function BotSettingsScreen() {
               {autonomyNeedsModel ? (
                 <SettingsFooter>{t("Add a model in Settings to use this.")}</SettingsFooter>
               ) : null}
+              <AlwaysAllowedRules botId={botId} />
             </View>
             <SettingsGroup label={t("Voice")}>
               <View style={styles.row}>

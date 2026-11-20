@@ -2919,6 +2919,74 @@ describeJourneys("required product journeys", () => {
     ]);
   });
 
+  it("20e: always allow covers the agent it was given to, and removing it asks again", async () => {
+    const cookie = await signup(app, `always-scope-j-${stamp}@corvo.test`, "Always Scope");
+    const create = (name: string) =>
+      rpc<Bot>(app, cookie, "bots/create", {
+        name,
+        title: "",
+        description: "",
+        instructions: "",
+        notifyOnFinish: true,
+      });
+    const chief = await create("Chief");
+    const other = await create("Other");
+    const recordsBefore = connector.records.length;
+
+    const first = await rpc<{ runId: string }>(app, cookie, "threads/send", {
+      botId: chief.id,
+      text: "write this to the destination crm as a note",
+    });
+    const waiting = await waitFor(
+      app,
+      cookie,
+      chief.id,
+      (snap) => snap.run?.status === "waiting_input",
+    );
+    await answerPendingApproval(app, cookie, chief.id, first.runId, "always", waiting);
+    await waitFor(
+      app,
+      cookie,
+      chief.id,
+      (snap) => !snap.run || ["completed", "failed", "cancelled"].includes(snap.run.status),
+    );
+    expect(connector.records.length).toBe(recordsBefore + 1);
+
+    // The rule is the agent's own, and the person sees it where it can be removed.
+    const rules = await rpc<Array<{ id: string; botId: string; tool: string }>>(
+      app,
+      cookie,
+      "scopedApprovalRules/list",
+      { botId: chief.id },
+    );
+    expect(rules).toEqual([
+      expect.objectContaining({ botId: chief.id, tool: "destination.write" }),
+    ]);
+    expect(
+      await rpc<unknown[]>(app, cookie, "scopedApprovalRules/list", { botId: other.id }),
+    ).toEqual([]);
+    expect(await rpc<unknown[]>(app, cookie, "approvalRules/list")).toEqual([]);
+
+    // Same agent, same tool: no card. Another agent: still asks.
+    await sendAndWait(app, cookie, chief.id, "write this to the destination crm once more");
+    expect(connector.records.length).toBe(recordsBefore + 2);
+    await rpc(app, cookie, "threads/send", {
+      botId: other.id,
+      text: "write this to the destination crm as a note",
+    });
+    await waitFor(app, cookie, other.id, (snap) => snap.run?.status === "waiting_input");
+    expect(connector.records.length).toBe(recordsBefore + 2);
+
+    // Removing the rule makes the next call ask again.
+    await rpc(app, cookie, "scopedApprovalRules/remove", { id: rules[0]!.id });
+    await rpc(app, cookie, "threads/send", {
+      botId: chief.id,
+      text: "write this to the destination crm after removing the rule",
+    });
+    await waitFor(app, cookie, chief.id, (snap) => snap.run?.status === "waiting_input");
+    expect(connector.records.length).toBe(recordsBefore + 2);
+  });
+
   it("21: in Ask mode, routine destination writes pause on the same approval card", async () => {
     const cookie = await signup(app, `routine-approval-j-${stamp}@corvo.test`, "Routine Approval");
     const bot = await rpc<Bot>(app, cookie, "bots/create", {

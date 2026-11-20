@@ -42,6 +42,16 @@ describe("askActionLabel", () => {
     );
   });
 
+  it("words an always-allow that covers one tool for one agent as Always allow", () => {
+    expect(
+      askActionLabel(
+        { id: "always", label: "Server label" },
+        { approval: true, scoped: true },
+        fakeT,
+      ),
+    ).toBe("Always allow");
+  });
+
   it.each(["allow", "always", "deny", "custom"])(
     "preserves the server label for non-approval action %s",
     (id) => {

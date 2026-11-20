@@ -373,10 +373,18 @@ model ActionApprovalRule {
   effect          String
   matchKind       String
   matchValue      String
+  /// An always-allow kept from an approval card: the agent it covers, the connection it was given
+  /// on and the one tool (matchKind "agent_tool", matchValue "<agentId>:<connection>:<tool>").
+  /// The previous release ignores that kind, so it never reads one as a rule for every agent.
+  botId           String?
+  bot             Bot?     @relation(fields: [botId], references: [id], onDelete: Cascade)
+  connectionKey   String?
+  toolName        String?
   createdAt       DateTime @default(now())
 
   @@unique([spaceId, createdByUserId, effect, matchKind, matchValue])
   @@index([spaceId, createdByUserId])
+  @@index([botId])
   @@map("action_approval_rules")
 }
 
@@ -831,6 +839,7 @@ model Bot {
   @@index([computerId])
   @@index([parentBotId])
   @@map("bots")
+  alwaysAllowRules ActionApprovalRule[]
 }
 
 model BotSection {
@@ -1303,6 +1312,13 @@ model ExternalEffect {
   reviewDecision String?
   reviewReason   String?
   reviewModel    String?
+  /// Hash of tool, connection and canonical params, set when the call is recorded and checked
+  /// again before it runs. Null on rows recorded before it existed.
+  callHash       String?
+  /// What an "Always allow" answer on this call's card covers; null when the card offers none.
+  alwaysScope    Json?
+  /// The rule that let this call run without a card, when one did.
+  approvalRuleId String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

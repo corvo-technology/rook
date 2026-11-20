@@ -93,6 +93,18 @@ type Effect = {
   result?: unknown;
   reviewDecision?: string;
   runId?: string;
+  callHash?: string;
+  alwaysScope?: unknown;
+  approvalRuleId?: string;
+};
+
+/** An always-allow row as the database holds it: one tool on one connection for one agent. */
+type ScopedRuleRow = {
+  id: string;
+  botId: string;
+  connectionKey: string;
+  toolName: string;
+  createdAt: Date;
 };
 
 function fixture({
@@ -102,6 +114,7 @@ function fixture({
   destructive,
   alwaysAsk = false,
   rules = [] as ActionApprovalRule[],
+  scopedRules = [] as ScopedRuleRow[],
   confirmationsOverride = false,
   autoReview = false,
   approvalRole,
@@ -171,6 +184,8 @@ function fixture({
   /** The member chose Always ask, instead of the default Only what's risky. */
   alwaysAsk?: boolean;
   rules?: ActionApprovalRule[];
+  /** Always-allow rules the owner kept from approval cards. */
+  scopedRules?: ScopedRuleRow[];
   /** The Space has its own confirmations; otherwise `rules` and auto review are the account's. */
   confirmationsOverride?: boolean;
   autoReview?: boolean;
@@ -424,7 +439,11 @@ function fixture({
             : null,
       ),
     },
-    actionApprovalRule: { findMany: vi.fn(async () => (confirmationsOverride ? rules : [])) },
+    actionApprovalRule: {
+      findMany: vi.fn(async (query?: { where?: { matchKind?: unknown } }) =>
+        query?.where?.matchKind === "agent_tool" ? scopedRules : confirmationsOverride ? rules : [],
+      ),
+    },
     userActionApprovalRule: { findMany: vi.fn(async () => (confirmationsOverride ? [] : rules)) },
     routine: { findMany: vi.fn(async () => routines) },
     actionAutoReviewPreference: {
@@ -3144,5 +3163,209 @@ describe("asking only for what is risky", () => {
 
   it("asks for a low-risk write in a run the owner did not start", async () => {
     asks(await runs({ name: "demo_update_contact", readOnly: false, trigger: "routine" }));
+  });
+});
+
+describe("kept always-allow rules", () => {
+  const demo = (name: string, readOnly: boolean, resourceId = "resource-1"): ConnectorTool => ({
+    name,
+    description: name,
+    readOnly,
+    inputSchema: { type: "object", properties: { id: { type: "string" } } },
+    route: { connectorId: "demo", resourceId, toolName: name },
+  });
+  const rule = (toolName: string, overrides: Partial<ScopedRuleRow> = {}): ScopedRuleRow => ({
+    id: "rule-1",
+    botId: "bot-1",
+    connectionKey: "resource:demo:resource-1",
+    toolName,
+    createdAt: new Date(0),
+    ...overrides,
+  });
+  const send = { args: { id: "item-1" }, executionId: "call-1" };
+  const card = (f: ReturnType<typeof fixture>) =>
+    (
+      f.pauseRunForInput.mock.calls as unknown as [{ blocks: Array<Record<string, unknown>> }][]
+    )[0]?.[0].blocks[0];
+  const notices = (f: ReturnType<typeof fixture>) =>
+    JSON.stringify(
+      (f.prisma.message.create.mock.calls as unknown as [{ data: unknown }][]).map(
+        ([call]) => call.data,
+      ),
+    );
+
+  beforeEach(() => reviewMock.mockReset());
+
+  it("offers one tool on one connection for this agent, and says so on the card", async () => {
+    const f = fixture({ name: "demo_send_email", readOnly: false });
+    f.setCalls([send]);
+    await f.run();
+    expect(f.execute).not.toHaveBeenCalled();
+    expect(card(f)).toMatchObject({
+      alwaysAllow: { agent: "Assistant", connection: "demo", tool: "demo_send_email" },
+      actions: expect.arrayContaining([{ id: "always", label: "Always allow this tool" }]),
+    });
+    expect(f.effects[0]?.alwaysScope).toEqual({
+      targets: [{ tool: "demo_send_email", connection: "resource:demo:resource-1" }],
+    });
+  });
+
+  it("lets a kept rule run a high-risk call without a card, records it and shows it", async () => {
+    const f = fixture({
+      name: "demo_send_email",
+      readOnly: false,
+      scopedRules: [rule("demo_send_email")],
+    });
+    f.setCalls([send]);
+    await f.run();
+    expect(f.pauseRunForInput).not.toHaveBeenCalled();
+    expect(f.execute).toHaveBeenCalledOnce();
+    expect(f.effects[0]).toMatchObject({ approvalRuleId: "rule-1", status: "completed" });
+    expect(f.effects[0]?.callHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(notices(f)).toContain("rule_approved");
+    expect(notices(f)).toContain("Auto-approved by rule: demo_send_email");
+  });
+
+  it("covers only that agent, that connection and that tool", async () => {
+    for (const scoped of [
+      rule("demo_send_email", { botId: "bot-2" }),
+      rule("demo_send_email", { connectionKey: "resource:demo:resource-2" }),
+      rule("demo_send_sms"),
+    ]) {
+      const f = fixture({ name: "demo_send_email", readOnly: false, scopedRules: [scoped] });
+      f.setCalls([send]);
+      await f.run();
+      expect(f.execute).not.toHaveBeenCalled();
+      expect(isApprovalPausedResult(f.results[0])).toBe(true);
+    }
+  });
+
+  it("never offers or applies a rule for a merge, a deployment, a payment or a deletion", async () => {
+    for (const name of [
+      "demo_merge_pull_request",
+      "demo_deploy_service",
+      "demo_create_payment",
+      "demo_delete_record",
+      "demo_run_workflow",
+    ]) {
+      const f = fixture({ name, readOnly: false, scopedRules: [rule(name)] });
+      f.setCalls([send]);
+      await f.run();
+      expect(f.execute, name).not.toHaveBeenCalled();
+      const shown = card(f) as { actions: Array<{ id: string }>; alwaysAllow?: unknown };
+      expect(
+        shown.actions.map((action) => action.id),
+        name,
+      ).toEqual(["allow", "deny"]);
+      expect(shown.alwaysAllow, name).toBeUndefined();
+    }
+  });
+
+  it("never offers or applies a rule for a tool its provider marks destructive", async () => {
+    const f = fixture({
+      name: "demo_update_record",
+      readOnly: false,
+      destructive: true,
+      scopedRules: [rule("demo_update_record")],
+    });
+    f.setCalls([send]);
+    await f.run();
+    expect(f.execute).not.toHaveBeenCalled();
+    expect((card(f) as { actions: Array<{ id: string }> }).actions.map((a) => a.id)).toEqual([
+      "allow",
+      "deny",
+    ]);
+  });
+
+  it("still asks for a high-risk call once outside content entered the run", async () => {
+    const f = fixture({
+      name: "demo_send_email",
+      readOnly: false,
+      scopedRules: [rule("demo_send_email")],
+      extraTools: [demo("demo_get_item", true)],
+    });
+    f.setCalls([
+      { name: "demo_get_item", args: { id: "a" }, executionId: "call-0" },
+      { name: "web_search", args: { query: "news" }, executionId: "call-1" },
+      { name: "demo_send_email", args: { id: "item-1" }, executionId: "call-2" },
+    ]);
+    await f.run();
+    expect(f.execute).toHaveBeenCalledTimes(1);
+    expect(isApprovalPausedResult(f.results[2])).toBe(true);
+  });
+
+  it("still asks for a high-risk call in a run the owner did not start", async () => {
+    for (const trigger of ["routine", "webhook", "bot_message"]) {
+      const f = fixture({
+        name: "demo_send_email",
+        readOnly: false,
+        trigger,
+        scopedRules: [rule("demo_send_email")],
+      });
+      f.setCalls([send]);
+      await f.run();
+      expect(f.execute, trigger).not.toHaveBeenCalled();
+      expect(isApprovalPausedResult(f.results[0]), trigger).toBe(true);
+    }
+  });
+
+  it("does not override a block", async () => {
+    const f = fixture({
+      name: "demo_send_email",
+      readOnly: false,
+      confirmationsOverride: true,
+      rules: [{ effect: "deny", matchKind: "tool", matchValue: "demo_send_email" }],
+      scopedRules: [rule("demo_send_email")],
+    });
+    f.setCalls([send]);
+    await f.run();
+    expect(f.execute).not.toHaveBeenCalled();
+  });
+
+  describe("an approval is bound to the exact call", () => {
+    const approvedRun = async () => {
+      const f = fixture({ name: "demo_send_email", readOnly: false });
+      f.setCalls([send]);
+      await f.run();
+      expect(f.effects).toHaveLength(1);
+      expect(f.effects[0]?.callHash).toMatch(/^[a-f0-9]{64}$/);
+      f.effects[0]!.status = "approved";
+      return f;
+    };
+
+    it("runs the approved call once", async () => {
+      const f = await approvedRun();
+      f.setCalls([{ args: { id: "model-reconstructed" }, executionId: "call-2" }]);
+      await f.run();
+      expect(f.execute).toHaveBeenCalledOnce();
+      expect(f.execute).toHaveBeenCalledWith(
+        expect.objectContaining({ args: { id: "item-1" } }),
+        expect.anything(),
+      );
+      expect(f.effects[0]?.status).toBe("completed");
+    });
+
+    it("refuses a call whose hash no longer matches what was approved", async () => {
+      const f = await approvedRun();
+      f.effects[0]!.callHash = "0".repeat(64);
+      f.setCalls([send]);
+      await f.run();
+      expect(f.execute).not.toHaveBeenCalled();
+      expect(f.effects[0]?.status).toBe("denied");
+      expect(f.results.at(-1)).toMatchObject({
+        error: expect.stringContaining("no longer matches what was approved"),
+      });
+    });
+
+    it("cannot run a second time once the approval was used", async () => {
+      const f = await approvedRun();
+      f.setCalls([send]);
+      await f.run();
+      expect(f.execute).toHaveBeenCalledOnce();
+      f.setCalls([send]);
+      await f.run();
+      expect(f.execute).toHaveBeenCalledOnce();
+      expect(f.effects).toHaveLength(1);
+    });
   });
 });

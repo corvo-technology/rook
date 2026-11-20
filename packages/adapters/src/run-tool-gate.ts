@@ -7,6 +7,7 @@ import type {
 } from "@corvo/adapter-kit";
 import { runContinueJob } from "@corvo/adapter-kit";
 import {
+  alwaysAllowTargets,
   applyJudgeDecision,
   approvalModeFromPreference,
   composioBatchActions,
@@ -21,12 +22,19 @@ import {
   planActionGate,
   redactSecrets,
   resolveActionApprovalForTools,
+  ruleConnectionLabel,
+  scopedRuleMayApply,
+  scopedRulesCover,
   toolRequiresApproval,
   toolRequiresExplicitApproval,
   unattendedTriggerToolRequiresApproval,
 } from "@corvo/core";
 import { normalizedHttpUrl, urlSite } from "@corvo/core/egress";
-import { approvalEffectKey, toolEffectIdempotencyKey } from "@corvo/core/node/approval-effect-key";
+import {
+  approvalCallHash,
+  approvalEffectKey,
+  toolEffectIdempotencyKey,
+} from "@corvo/core/node/approval-effect-key";
 import { runSecretKind } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import type { FleetCardSummary } from "./approval-ask.js";
@@ -60,6 +68,7 @@ import {
 } from "./run-context.js";
 import { completeEffect, recordEffect, uncertainEffectError } from "./run-effects.js";
 import { renewRunLease } from "./run-lifecycle.js";
+import { publishMessage } from "./run-messages.js";
 import { notifyRun } from "./run-notifications.js";
 import { noteApprovalInParentChat } from "./run-parent-notice.js";
 import { resolveCompletedSecretLeftover } from "./run-secret.js";
@@ -83,6 +92,8 @@ export interface ToolCall {
   readonly effectKey: string;
   /** The effect recorded for this call. Read-only tools that need no approval have none. */
   readonly applied: AppliedEffect | undefined;
+  /** Binds the call to its approval: tool, connection and canonical params. */
+  readonly callHash: string;
   readonly nextApprovedTool: string | undefined;
   /** A gated call that policy or the reviewer allowed without asking. */
   readonly bypassApproval: boolean;
@@ -265,10 +276,41 @@ export async function gateToolCall(
     site: fetchSite,
     rules: await ctx.trust.loadApprovalRules(),
   });
-  const approvalResolved =
+  const baseResolved =
     unidentifiedAction && resolvedRules.decision === "allow"
       ? { ...resolvedRules, decision: "ask" as const }
       : resolvedRules;
+  // One tool on one connection for this agent, the way an "Always allow" card offers it. Never a
+  // fetch, a catalog lookup or an unnamed action, and never a locked kind (see alwaysAllowTargets).
+  const alwaysTargets =
+    fetchUrl || catalogLookup || unidentifiedAction
+      ? null
+      : alwaysAllowTargets(
+          approvalToolNames.map((toolName, index) => ({
+            tool: toolName,
+            connection: viaConnector ? (connectorTrusts[index] ?? connectorTrusts[0]!) : "builtin",
+            builtin: !viaConnector,
+            destructive: declaredDestructiveFor(toolName),
+          })),
+        );
+  const keptRules = alwaysTargets
+    ? scopedRulesCover(await ctx.trust.loadScopedRules(), ctx.bot.id, alwaysTargets)
+    : null;
+  // A kept rule stands in for a card only where no block or ask rule decided, and never for a
+  // high-risk call after outside content entered the run or in a run the owner did not start.
+  const keptRuleApplies =
+    keptRules !== null &&
+    baseResolved.decision === "allow" &&
+    baseResolved.source === "default" &&
+    scopedRuleMayApply({
+      risks: toolRisks,
+      tainted: await isRunTainted(ctx),
+      ownerStartedRun: ctx.source.ownerStartedRun,
+      steeredConnector: await steeredConnector(),
+    });
+  const approvalResolved = keptRuleApplies
+    ? { ...baseResolved, source: "always_allow" as const }
+    : baseResolved;
   const mode = effectiveApprovalMode(
     ctx.bot.approvalMode,
     approvalModeFromPreference(await ctx.trust.loadAutoReviewPreference()),
@@ -319,20 +361,23 @@ export async function gateToolCall(
     requiresMandatoryApproval && mode === "never"
       ? !ctx.source.ownerStartedRun || (await isRunTainted(ctx))
       : undefined;
-  const plan = planActionGate({
-    resolved: approvalResolved,
-    mode,
-    mandatory: requiresMandatoryApproval,
-    steerable,
-    ownerPresent: steerable
-      ? ctx.source.ownerStartedRun && !(await ctx.trust.receivedOutsideMessage())
-      : undefined,
-    consequential: requiresApprovalByDefault,
-    lowRisk,
-    reviewOnly: connectorReadGated,
-    checkerConfigured,
-    newDestination: siteGate === "new",
-  });
+  const ownerPresent = steerable
+    ? ctx.source.ownerStartedRun && !(await ctx.trust.receivedOutsideMessage())
+    : undefined;
+  const planFor = (resolved: typeof approvalResolved) =>
+    planActionGate({
+      resolved,
+      mode,
+      mandatory: requiresMandatoryApproval,
+      steerable,
+      ownerPresent,
+      consequential: requiresApprovalByDefault,
+      lowRisk,
+      reviewOnly: connectorReadGated,
+      checkerConfigured,
+      newDestination: siteGate === "new",
+    });
+  const plan = planFor(approvalResolved);
   if (plan === "deny") {
     return {
       result: {
@@ -343,6 +388,22 @@ export async function gateToolCall(
       },
     };
   }
+  // The call ran because of a rule when nothing else would have let it run unasked.
+  const ruleDecided =
+    plan === "allow" &&
+    approvalResolved.source === "always_allow" &&
+    planFor({ ...approvalResolved, source: "default", matchingRules: [] }) !== "allow";
+  const approvalRuleId = ruleDecided
+    ? keptRuleApplies
+      ? keptRules?.[0]?.id
+      : approvalResolved.matchingRules.find((rule) => rule.effect === "always_allow" && rule.id)?.id
+    : undefined;
+  // What binds the approval to this exact call: tool, connection and canonical params.
+  const callHash = approvalCallHash({
+    tool: replayEffectToolName,
+    connection: viaConnector ? connectorTrusts.join("|") : "builtin",
+    args,
+  });
   let reviewReason: string | undefined;
   let gateDecision: "ask" | "allow" = plan === "ask" ? "ask" : "allow";
   const needsApprovalEarly = plan === "ask" || plan === "judge";
@@ -385,7 +446,23 @@ export async function gateToolCall(
           effectRequest,
           executionId,
           ctx.state.effects.consumedIds,
+          {
+            callHash,
+            ...(alwaysTargets ? { alwaysScope: { targets: alwaysTargets } } : {}),
+            ...(approvalRuleId ? { approvalRuleId } : {}),
+          },
         );
+  if (applied && !applied.duplicate && approvalRuleId) {
+    // Every call a rule let through shows in the conversation, with the tool it ran.
+    await publishMessage(deps, run, "system", [
+      {
+        kind: "meta",
+        text: `Auto-approved by rule: ${approvalToolNames.join(", ")}`,
+        code: "rule_approved",
+        params: { tool: approvalToolNames.join(", ") },
+      },
+    ]).catch((error) => getLogger().error("rule approval notice", error));
+  }
 
   const runAutoReview = async () => {
     const judged = await reviewToolCall(ctx, {
@@ -452,10 +529,24 @@ export async function gateToolCall(
     connectorCall,
     effectKey,
     applied,
+    callHash,
     nextApprovedTool,
     bypassApproval: gateDecision === "allow" && gated,
   });
-  const card = { reviewReason, summary: request.fleetSummary };
+  const card = {
+    reviewReason,
+    summary: request.fleetSummary,
+    // The card says exactly what "Always allow" keeps, or offers none for a locked kind.
+    alwaysAllow: fetchUrl
+      ? undefined
+      : alwaysTargets
+        ? {
+            agent: ctx.bot.name,
+            connection: ruleConnectionLabel(alwaysTargets[0]!),
+            tool: approvalToolNames.join(", "),
+          }
+        : (false as const),
+  };
 
   if (applied?.duplicate) {
     const gate = resolveDuplicateEffectGate(applied.effect, name);
@@ -582,6 +673,18 @@ function createToolCall(
     finish: async (result) =>
       (await call.persistEffectResult(result)) ? result : uncertainEffectResult(name, args),
     claimOrReturn: async (from) => {
+      // The call that runs must be the call the card showed: a different tool, connection or
+      // param than the one approved is refused, and the approval is spent.
+      const approvedHash = applied!.effect.callHash;
+      if (from === "approved" && approvedHash && approvedHash !== fields.callHash) {
+        await deps.prisma.externalEffect.updateMany({
+          where: { id: applied!.effect.id, status: "approved" },
+          data: { status: "denied" },
+        });
+        return {
+          error: `${name} no longer matches what was approved, so it did not run. Ask again if it is still needed.`,
+        };
+      }
       const claim = from === "approved" ? claimApprovedEffect : claimIntendedEffect;
       if (await claim(deps.prisma, applied!.effect.id)) {
         call.claimedEffect = true;
@@ -623,16 +726,18 @@ async function settleToolUncertainty(
 /** Most proposal cards one reply puts on a message; the database enforces it. */
 export { FLEET_CARD_BATCH_MAX } from "@corvo/db";
 
+type CardOptions = {
+  reviewReason: string | undefined;
+  summary: FleetCardSummary | undefined;
+  alwaysAllow: { agent: string; connection: string; tool: string } | false | undefined;
+};
+
 /**
  * Ask the owner through an approval card. Parallel calls share the first call's pause. Fleet
  * proposals from one reply are added to that first card's message, so the owner decides them one
  * by one and the run resumes once every card is decided.
  */
-function requestApproval(
-  ctx: RunContext,
-  call: ToolCall,
-  card: { reviewReason: string | undefined; summary: FleetCardSummary | undefined },
-) {
+function requestApproval(ctx: RunContext, call: ToolCall, card: CardOptions) {
   const { approval } = ctx.state;
   // Parallel calls can need approval at once. Only the first saves the turn and shows
   // its card; the others wait for that pause. Otherwise a later call's save could make
@@ -664,11 +769,7 @@ function requestApproval(
   return approval.request;
 }
 
-async function showApprovalCard(
-  ctx: RunContext,
-  call: ToolCall,
-  card: { reviewReason: string | undefined; summary: FleetCardSummary | undefined },
-) {
+async function showApprovalCard(ctx: RunContext, call: ToolCall, card: CardOptions) {
   const { deps, run, runId, bot, thread } = ctx;
   const { name, args, executionId, applied } = call;
   if (!(await renewRunLease(deps, runId, ctx.workerId, ctx.fence))) {

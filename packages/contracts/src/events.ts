@@ -138,6 +138,7 @@ export const MetaCode = z.enum([
   "routine_check_paused",
   "sandbox_storage_full",
   "computer_home_lost",
+  "rule_approved",
   "branch_effects",
 ]);
 export type MetaCode = z.infer<typeof MetaCode>;
@@ -181,6 +182,10 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     credential: botSecretDestinationSchema({ allowPrivateHttpOrigin: true }).optional(),
     /** On a fetch approval, the site an "always" answer allows. */
     site: z.string().optional(),
+    /** What an "always" answer keeps on any other approval: one tool, on one connection, for one agent. */
+    alwaysAllow: z
+      .object({ agent: z.string(), connection: z.string(), tool: z.string() })
+      .optional(),
     status: z.enum(["pending", "answered"]).optional(),
     answer: z.string().optional(),
     /** A secret request the user dismissed instead of answering. */

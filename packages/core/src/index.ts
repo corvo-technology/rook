@@ -5,6 +5,7 @@ export * from "./agent-catalog-data.js";
 export * from "./agent-import/index.js";
 export * from "./agent-skill.js";
 export * from "./ai-consent.js";
+export * from "./always-allow.js";
 export * from "./answerable-ask.js";
 export * from "./app-catalog.js";
 export * from "./app-catalog-data.js";

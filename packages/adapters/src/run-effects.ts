@@ -140,6 +140,13 @@ export function isSubagentToolExecution(executionId: string): boolean {
   return agent !== undefined && agent !== "main";
 }
 
+/** What binds an effect to the call its card showed, and the rule that let it run unasked. */
+export type EffectApprovalMeta = {
+  callHash?: string;
+  alwaysScope?: { targets: Array<{ tool: string; connection: string }> };
+  approvalRuleId?: string;
+};
+
 export async function recordEffect(
   deps: ExecutorDeps,
   run: { id: string; spaceId: string; threadId: string; botId: string },
@@ -148,6 +155,7 @@ export async function recordEffect(
   request: unknown,
   legacyIdempotencyKey?: string,
   consumedIds?: Set<string>,
+  meta?: EffectApprovalMeta,
 ) {
   if (kind === RUN_TURN_CHECKPOINT_KIND) throw new Error("Unsupported tool effect kind");
   const existing = await deps.prisma.externalEffect.findUnique({
@@ -272,6 +280,9 @@ export async function recordEffect(
       idempotencyKey,
       status: "intended",
       request: request as never,
+      ...(meta?.callHash ? { callHash: meta.callHash } : {}),
+      ...(meta?.alwaysScope ? { alwaysScope: meta.alwaysScope } : {}),
+      ...(meta?.approvalRuleId ? { approvalRuleId: meta.approvalRuleId } : {}),
     },
   });
   consumedIds?.add(effect.id);

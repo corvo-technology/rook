@@ -54,6 +54,21 @@ export function approvalEffectKey(
 }
 
 /**
+ * What an approval is bound to: the tool, the connection it reaches and the canonical params.
+ * Stored when the call is recorded and checked again before it runs, so the call that runs is
+ * exactly the call the card showed. A different tool, connection or param changes the hash.
+ */
+export function approvalCallHash(call: {
+  tool: string;
+  connection: string;
+  args: Record<string, unknown>;
+}): string {
+  return createHash("sha256")
+    .update(stableJsonValue({ tool: call.tool, connection: call.connection, args: call.args }))
+    .digest("hex");
+}
+
+/**
  * Stable mutating-tool key for a run, tool, args, and live occurrence.
  * Model tool-call ids change on replay, so they must not be part of the key.
  * Occurrence 0 keeps the unsuffixed form so existing rows still match.

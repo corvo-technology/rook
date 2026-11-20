@@ -1,4 +1,6 @@
 import type { SettingsScope } from "@corvo/contracts";
+import type { RuleTarget } from "@corvo/core";
+import { SCOPED_RULE_KIND, scopedRuleValue } from "@corvo/core";
 import type { PrismaClient } from "./client.js";
 import { Prisma } from "./client.js";
 import { lockSpaceSettings, settingsTarget } from "./space-settings.js";
@@ -40,12 +42,91 @@ export async function listApprovalRules(
   requested?: SettingsScope,
 ) {
   const orderBy = { createdAt: "asc" } as const;
-  return (await confirmationsTarget(prisma, scope, requested)) === "account"
-    ? prisma.userActionApprovalRule.findMany({ where: { userId: scope.userId }, orderBy })
-    : prisma.actionApprovalRule.findMany({
-        where: { spaceId: scope.spaceId, createdByUserId: scope.userId },
-        orderBy,
-      });
+  if ((await confirmationsTarget(prisma, scope, requested)) === "account") {
+    return prisma.userActionApprovalRule.findMany({ where: { userId: scope.userId }, orderBy });
+  }
+  const rows = await prisma.actionApprovalRule.findMany({
+    where: { spaceId: scope.spaceId, createdByUserId: scope.userId },
+    orderBy,
+  });
+  // A kept always-allow belongs to one agent; it is listed with that agent's own rules.
+  return rows.filter((row) => row.matchKind !== SCOPED_RULE_KIND);
+}
+
+/** The always-allow rules the member kept in this Space: one agent's, or every agent's. */
+export async function listScopedApprovalRules(
+  prisma: Pick<PrismaClient, "actionApprovalRule">,
+  scope: Scope,
+  botId?: string,
+) {
+  const rows = await prisma.actionApprovalRule.findMany({
+    where: {
+      spaceId: scope.spaceId,
+      createdByUserId: scope.userId,
+      matchKind: SCOPED_RULE_KIND,
+      botId: botId ?? { not: null },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+  return rows.flatMap((row) =>
+    row.botId && row.connectionKey && row.toolName
+      ? [
+          {
+            id: row.id,
+            botId: row.botId,
+            connection: row.connectionKey,
+            tool: row.toolName,
+            createdAt: row.createdAt,
+          },
+        ]
+      : [],
+  );
+}
+
+/**
+ * Keeps an always-allow for one tool on one connection for one agent. It is never keyed on the
+ * call's params, and saving it again changes nothing.
+ */
+export async function saveScopedApprovalRule(
+  tx: Pick<Prisma.TransactionClient, "actionApprovalRule">,
+  scope: Scope,
+  botId: string,
+  target: RuleTarget,
+) {
+  const row = {
+    spaceId: scope.spaceId,
+    createdByUserId: scope.userId,
+    effect: "always_allow",
+    matchKind: SCOPED_RULE_KIND,
+    matchValue: scopedRuleValue(botId, target),
+  };
+  return tx.actionApprovalRule.upsert({
+    where: { spaceId_createdByUserId_effect_matchKind_matchValue: row },
+    create: {
+      ...row,
+      botId,
+      connectionKey: target.connection.toLowerCase(),
+      toolName: target.tool.toLowerCase(),
+    },
+    update: {},
+  });
+}
+
+/** Removes one kept always-allow; the next call it covered asks again. */
+export async function removeScopedApprovalRule(
+  prisma: Pick<PrismaClient, "actionApprovalRule">,
+  scope: Scope,
+  id: string,
+) {
+  const removed = await prisma.actionApprovalRule.deleteMany({
+    where: {
+      id,
+      spaceId: scope.spaceId,
+      createdByUserId: scope.userId,
+      matchKind: SCOPED_RULE_KIND,
+    },
+  });
+  return removed.count === 1;
 }
 
 /**

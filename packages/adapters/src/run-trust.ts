@@ -1,5 +1,5 @@
 import type { MessageBlock } from "@corvo/contracts";
-import type { ActionApprovalRule } from "@corvo/core";
+import type { ActionApprovalRule, ScopedRule } from "@corvo/core";
 import {
   composioBatchActions,
   connectorKindFromToolName,
@@ -7,7 +7,7 @@ import {
   siteAlwaysAllowed,
 } from "@corvo/core";
 import { sitesInText, urlSite } from "@corvo/core/egress";
-import { findAutoReviewPreference, listApprovalRules } from "@corvo/db";
+import { findAutoReviewPreference, listApprovalRules, listScopedApprovalRules } from "@corvo/db";
 import { boundDirectApprovalDetails, catalogApprovalDetails } from "./approval-effect.js";
 import { deploymentAutoReviewDefault } from "./auto-review.js";
 import type { ExecutorDeps } from "./executor-deps.js";
@@ -85,6 +85,16 @@ export function createRunTrustLoaders(
       spaceId: run.spaceId,
     }).then((rules) => rules as ActionApprovalRule[]);
     return approvalRulesPromise;
+  };
+  // The always-allow rules the owner kept for this agent, never another agent's.
+  let scopedRulesPromise: Promise<ScopedRule[]> | undefined;
+  const loadScopedRules = () => {
+    scopedRulesPromise ??= listScopedApprovalRules(
+      deps.prisma,
+      { userId: run.userId, spaceId: run.spaceId },
+      botId,
+    );
+    return scopedRulesPromise;
   };
   let approvalModelPromise: Promise<EffectiveModelRole> | undefined;
   const loadApprovalModel = () =>
@@ -202,6 +212,7 @@ export function createRunTrustLoaders(
     );
   return {
     loadApprovalRules,
+    loadScopedRules,
     loadApprovalModel,
     loadAutoReviewPreference,
     loadOwnerWords,

@@ -1186,4 +1186,8 @@ export const ZH_MESSAGES: Record<string, string> = {
     "使用你已付费的 AI：Claude、ChatGPT 或 API 密钥",
   "Yearly · 2 months free": "按年 · 2 个月免费",
   Yearly: "按年",
+  "Always allow covers {tool} on {connection}, for {agent} only.":
+    "“始终允许”仅适用于 {agent} 在 {connection} 上的 {tool}。",
+  "Always allow covers {tool}, for {agent} only.": "“始终允许”仅适用于 {agent} 的 {tool}。",
+  "Change when to ask": "更改询问时机",
 };

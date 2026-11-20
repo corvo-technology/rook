@@ -1311,13 +1311,31 @@ msgid "Always act"
 msgstr "常に対応する"
 
 #: src/components/AskCard.tsx
+msgid "Always allow"
+msgstr "常に許可"
+
+#: src/components/AskCard.tsx
 msgid "Always allow {site}"
 msgstr "{site}を常に許可"
+
+#. placeholder {0}: keeps.tool
+#. placeholder {1}: keeps.connection
+#. placeholder {2}: keeps.agent
+#: src/components/AskCard.tsx
+msgid "Always allow covers {0} on {1}, for {2} only."
+msgstr "「常に許可」の対象は、{2} の {1} における {0} のみです。"
+
+#. placeholder {0}: keeps.tool
+#. placeholder {1}: keeps.agent
+#: src/components/AskCard.tsx
+msgid "Always allow covers {0}, for {1} only."
+msgstr "「常に許可」の対象は、{1} の {0} のみです。"
 
 #: src/components/AskCard.tsx
 msgid "Always allow this tool"
 msgstr "このツールを常に許可"
 
+#: src/components/AlwaysAllowedRules.tsx
 #: src/components/AskCard.tsx
 msgid "Always allowed"
 msgstr "常に許可済み"
@@ -1655,6 +1673,10 @@ msgstr "このサーバーを承認すると、エージェントがそのツー
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Auto"
 msgstr "自動"
+
+#: src/lib/server-copy.ts
+msgid "Auto-approved by rule: {tool}"
+msgstr "ルールにより自動承認: {tool}"
 
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Automated senders"
@@ -2028,6 +2050,10 @@ msgstr "パスワードを変更"
 #: src/lib/server-copy.ts
 msgid "Change the model of {bot}?"
 msgstr "{bot} のモデルを変更しますか？"
+
+#: src/components/ChangeWhenToAsk.tsx
+msgid "Change when to ask"
+msgstr "確認のタイミングを変更"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Changing…"
@@ -3104,6 +3130,7 @@ msgstr "削除できませんでした"
 msgid "Could not remove connector"
 msgstr "コネクタを削除できませんでした"
 
+#: src/components/AlwaysAllowedRules.tsx
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Could not remove rule"
 msgstr "ルールを削除できませんでした"
@@ -3154,6 +3181,7 @@ msgstr "ルーティンを実行できませんでした"
 msgid "Could not run the routine"
 msgstr "ルーティンを実行できませんでした"
 
+#: src/components/ChangeWhenToAsk.tsx
 #: src/pages/connections/DatabaseForm.tsx
 #: src/pages/connections/MailboxForm.tsx
 #: src/pages/connections/McpServerForm.tsx
@@ -7554,6 +7582,7 @@ msgstr "再読み込み"
 msgid "Remembered"
 msgstr "覚えました"
 
+#: src/components/AlwaysAllowedRules.tsx
 #: src/components/ApprovalRulesSettings.tsx
 #: src/pages/connections/McpServerForm.tsx
 #: src/pages/ConnectionsSettingsPanel.tsx
@@ -7595,6 +7624,10 @@ msgstr "{name} を削除しますか?"
 #: src/pages/shell/bot-credentials.tsx
 msgid "Remove {secretName}? This bot will no longer be able to use it."
 msgstr "{secretName}を削除しますか？このボットはこれを使用できなくなります。"
+
+#: src/components/AlwaysAllowedRules.tsx
+msgid "Remove {what}"
+msgstr "{what} を削除"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Remove change trigger"
@@ -9592,6 +9625,7 @@ msgstr "審査中"
 
 #: src/components/ApprovalRulesSettings.tsx
 #: src/components/AskCard.tsx
+#: src/components/ChangeWhenToAsk.tsx
 #: src/components/MemoryFactCard.tsx
 #: src/components/WikiChangeCard.tsx
 #: src/pages/Artifacts.tsx

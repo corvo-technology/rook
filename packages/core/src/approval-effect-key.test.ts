@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  approvalCallHash,
   approvalEffectKey,
   isToolEffectIdempotencyKey,
   legacyScopedToolEffectIdempotencyKey,
@@ -90,5 +91,23 @@ describe("toolEffectIdempotencyKey", () => {
         "computer_act",
       ),
     ).toBe(false);
+  });
+});
+
+describe("approvalCallHash", () => {
+  const call = { tool: "gmail_send", connection: "kind:gmail", args: { to: "a@x.test", n: 1 } };
+
+  it("is the same for the same call whatever the key order", () => {
+    expect(approvalCallHash(call)).toBe(
+      approvalCallHash({ ...call, args: { n: 1, to: "a@x.test" } }),
+    );
+  });
+
+  it("changes with the tool, the connection and any param", () => {
+    const hash = approvalCallHash(call);
+    expect(approvalCallHash({ ...call, tool: "gmail_draft" })).not.toBe(hash);
+    expect(approvalCallHash({ ...call, connection: "kind:outlook" })).not.toBe(hash);
+    expect(approvalCallHash({ ...call, args: { ...call.args, to: "b@x.test" } })).not.toBe(hash);
+    expect(approvalCallHash({ ...call, args: { ...call.args, extra: true } })).not.toBe(hash);
   });
 });

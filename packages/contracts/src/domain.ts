@@ -950,6 +950,17 @@ export const ActionApprovalRuleSchema = z.object({
 });
 export type ActionApprovalRule = z.infer<typeof ActionApprovalRuleSchema>;
 
+/** An always-allow kept from an approval card: one tool on one connection for one agent. */
+export const ScopedApprovalRuleSchema = z.object({
+  id: Id,
+  botId: Id,
+  botName: z.string(),
+  connection: z.string(),
+  tool: z.string(),
+  createdAt: z.string(),
+});
+export type ScopedApprovalRule = z.infer<typeof ScopedApprovalRuleSchema>;
+
 export const ActionAutoReviewSettingsSchema = z.object({
   mode: ApprovalModeSchema,
   /** The stored form of `mode`, kept for clients that predate it. */

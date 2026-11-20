@@ -2238,18 +2238,8 @@ describe("answerRunInput", () => {
     });
   });
 
-  it.each([
-    ["destination.write", {}, "tool", "destination.write", false],
-    ["web_fetch", { url: "https://docs.example.com/a?b=c" }, "site", "example.com", true],
-    [
-      "COMPOSIO_MULTI_EXECUTE_TOOL",
-      { tools: [{ tool_slug: "GMAIL_SEND_EMAIL", arguments: {} }] },
-      "tool",
-      "GMAIL_SEND_EMAIL",
-      false,
-    ],
-  ])(
-    "approves %s and upserts always-allow without overwriting the task prompt",
+  it.each([["web_fetch", { url: "https://docs.example.com/a?b=c" }, "site", "example.com", true]])(
+    "approves %s and upserts the site always-allow without overwriting the task prompt",
     async (kind, request, matchKind, matchValue, spaceOverridesConfirmations) => {
       const fanout = new TestFanout();
       const tx = {
@@ -2376,6 +2366,151 @@ describe("answerRunInput", () => {
       }
     },
   );
+
+  describe("always allow on a card that is not for a site", () => {
+    async function answerAlways(
+      effect: { kind: string; request: unknown; alwaysScope: unknown },
+      answeredByUserId = "user-1",
+    ) {
+      const tx = {
+        $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+        bot: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
+        message: {
+          findFirst: vi.fn().mockResolvedValue({
+            id: "message-1",
+            blocks: [
+              {
+                kind: "ask",
+                approvalEffectId: "effect-1",
+                text: "Review before sending",
+                status: "pending",
+                actions: [
+                  { id: "allow", label: "Allow once" },
+                  { id: "always", label: "Always allow" },
+                  { id: "deny", label: "Deny" },
+                ],
+              },
+            ],
+          }),
+          update: vi.fn().mockResolvedValue({ id: "message-1" }),
+        },
+        run: {
+          findFirst: vi.fn().mockResolvedValue({ botId: "bot-1", userId: "user-1" }),
+          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+          findUnique: vi.fn().mockResolvedValue({ userId: "user-1", status: "queued" }),
+        },
+        task: { updateMany: vi.fn() },
+        externalEffect: {
+          findFirst: vi.fn().mockResolvedValue({ id: "effect-1", status: "intended", ...effect }),
+          update: vi.fn().mockResolvedValue({ id: "effect-1" }),
+        },
+        spaceSettingOverride: { findUnique: vi.fn().mockResolvedValue(null) },
+        actionApprovalRule: { upsert: vi.fn().mockResolvedValue({ id: "rule-1" }) },
+        userActionApprovalRule: { upsert: vi.fn() },
+        $executeRaw: vi.fn(),
+        thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 10 }) },
+        event: {
+          create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({
+            ...event(data.seq),
+            type: data.type,
+          })),
+        },
+      };
+      const prisma = {
+        $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
+      } as unknown as PrismaClient;
+      await answerRunInput(
+        prisma,
+        {
+          spaceId: "workspace-1",
+          threadId: "thread-1",
+          runId: "run-1",
+          messageId: "message-1",
+          answeredByUserId,
+          answer: "always",
+        },
+        new TestFanout(),
+      );
+      return tx;
+    }
+
+    it("keeps one tool on one connection for the agent the card was for, never for the params", async () => {
+      const tx = await answerAlways({
+        kind: "gmail_send_email",
+        request: { to: "someone@example.test", body: "Hello" },
+        alwaysScope: { targets: [{ tool: "gmail_send_email", connection: "kind:gmail" }] },
+      });
+      expect(tx.externalEffect.update).toHaveBeenCalledWith({
+        where: { id: "effect-1" },
+        data: { status: "approved" },
+      });
+      expect(tx.actionApprovalRule.upsert).toHaveBeenCalledOnce();
+      expect(tx.actionApprovalRule.upsert).toHaveBeenCalledWith({
+        where: {
+          spaceId_createdByUserId_effect_matchKind_matchValue: {
+            spaceId: "workspace-1",
+            createdByUserId: "user-1",
+            effect: "always_allow",
+            matchKind: "agent_tool",
+            matchValue: "bot-1:kind:gmail:gmail_send_email",
+          },
+        },
+        create: expect.objectContaining({
+          botId: "bot-1",
+          connectionKey: "kind:gmail",
+          toolName: "gmail_send_email",
+        }),
+        update: {},
+      });
+      expect(JSON.stringify(tx.actionApprovalRule.upsert.mock.calls)).not.toContain("someone@");
+      expect(tx.userActionApprovalRule.upsert).not.toHaveBeenCalled();
+    });
+
+    it("keeps each action of a batch separately", async () => {
+      const tx = await answerAlways({
+        kind: "COMPOSIO_MULTI_EXECUTE_TOOL",
+        request: { tools: [{ tool_slug: "GMAIL_SEND_EMAIL", arguments: {} }] },
+        alwaysScope: {
+          targets: [
+            { tool: "GMAIL_SEND_EMAIL", connection: "kind:composio_multi_execute_tool:gmail" },
+          ],
+        },
+      });
+      expect(tx.actionApprovalRule.upsert).toHaveBeenCalledOnce();
+    });
+
+    it("approves once and keeps nothing when the card covered nothing", async () => {
+      const tx = await answerAlways({
+        kind: "gmail_send_email",
+        request: {},
+        alwaysScope: null,
+      });
+      expect(tx.externalEffect.update).toHaveBeenCalledWith({
+        where: { id: "effect-1" },
+        data: { status: "approved" },
+      });
+      expect(tx.actionApprovalRule.upsert).not.toHaveBeenCalled();
+    });
+
+    it("keeps nothing for a locked kind even when the stored scope says otherwise", async () => {
+      for (const tool of [
+        "github_merge_pull_request",
+        "stripe_create_payment",
+        "crm_delete_record",
+      ]) {
+        const tx = await answerAlways({
+          kind: tool,
+          request: {},
+          alwaysScope: { targets: [{ tool, connection: "kind:crm" }] },
+        });
+        expect(tx.externalEffect.update, tool).toHaveBeenCalledWith({
+          where: { id: "effect-1" },
+          data: { status: "approved" },
+        });
+        expect(tx.actionApprovalRule.upsert, tool).not.toHaveBeenCalled();
+      }
+    });
+  });
 
   it("does not let another workspace member create an always-allow rule for the run owner", async () => {
     const tx = {

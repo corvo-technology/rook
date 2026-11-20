@@ -1192,4 +1192,9 @@ export const PT_BR_MESSAGES: Record<string, string> = {
     "Use a IA que você já paga: Claude, ChatGPT ou uma chave de API",
   "Yearly · 2 months free": "Anual · 2 meses grátis",
   Yearly: "Anual",
+  "Always allow covers {tool} on {connection}, for {agent} only.":
+    "“Sempre permitir” vale só para {tool} em {connection}, para {agent}.",
+  "Always allow covers {tool}, for {agent} only.":
+    "“Sempre permitir” vale só para {tool}, para {agent}.",
+  "Change when to ask": "Mudar quando perguntar",
 };

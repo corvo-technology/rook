@@ -1,5 +1,6 @@
 import { BOT_INSTRUCTIONS_MAX_LENGTH } from "@corvo/contracts";
 import { HOLD_TO_APPROVE_MS, holdsToApprove } from "@corvo/core";
+import { typeScale } from "@corvo/ui-tokens";
 import { useState } from "react";
 import type { ViewProps } from "react-native";
 import { Alert, Pressable, Text, TextInput, View } from "react-native";
@@ -14,6 +15,7 @@ import { NativeActionButton } from "./native-action-button";
 export function AskActions({
   actions,
   site,
+  alwaysAllow,
   approval,
   proposal,
   instructions,
@@ -24,6 +26,8 @@ export function AskActions({
 }: {
   actions: AskAction[];
   site?: string;
+  /** What "Always allow" keeps: one tool on one connection for one agent. */
+  alwaysAllow?: { agent: string; connection: string; tool: string };
   approval: boolean;
   /** A proposed change: its buttons read Apply and Dismiss. */
   proposal?: boolean;
@@ -152,12 +156,23 @@ export function AskActions({
                   ? t("Sending…")
                   : hold
                     ? t("Hold to approve")
-                    : askActionLabel(action, { approval, site, proposal }, t)}
+                    : askActionLabel(
+                        action,
+                        { approval, site, proposal, scoped: Boolean(alwaysAllow) },
+                        t,
+                      )}
               </Text>
             </Pressable>
           );
         })}
       </View>
+      {alwaysAllow && actions.some((action) => action.id === "always") ? (
+        <Text style={{ color: tokens.mutedForeground, ...typeScale.caption }}>
+          {alwaysAllow.connection
+            ? t("Always allow covers {tool} on {connection}, for {agent} only.", alwaysAllow)
+            : t("Always allow covers {tool}, for {agent} only.", alwaysAllow)}
+        </Text>
+      ) : null}
     </View>
   );
 }

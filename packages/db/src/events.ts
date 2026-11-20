@@ -14,13 +14,13 @@ import {
   LoginSecretValue,
   MessageBlock as MessageBlockSchema,
 } from "@corvo/contracts";
-import type { ApprovalBatchClass } from "@corvo/core";
+import type { AlwaysAllowCandidate, ApprovalBatchClass, RuleTarget } from "@corvo/core";
 import {
   ACTIVE_RUN_STATUSES,
+  alwaysAllowTargets,
   approvalBatchClass,
   blocksToAgentHistoryText,
   callIdFromClientNonce,
-  composioBatchActions,
   instructionUpdateDiff,
   isApprovalAskBlock,
   isConversationalRun,
@@ -36,10 +36,10 @@ import {
   toolRequiresExplicitApproval,
 } from "@corvo/core";
 import { urlSite } from "@corvo/core/egress";
-import { approvalEffectKey } from "@corvo/core/node/approval-effect-key";
+import { approvalCallHash, approvalEffectKey } from "@corvo/core/node/approval-effect-key";
 import { getLogger } from "@corvo/logging";
 import { recordActionEvidence } from "./action-evidence.js";
-import { saveApprovalRule } from "./approval-settings.js";
+import { saveApprovalRule, saveScopedApprovalRule } from "./approval-settings.js";
 import { cancelRunsInTransaction } from "./cancel-runs.js";
 import type { Prisma, PrismaClient } from "./client.js";
 import { expireComputerExecutionLeases } from "./computers.js";
@@ -945,7 +945,12 @@ async function commitAnswerRunInput(
   if (login && !login.success) return null;
   if (secretAsk && input.answer.length > BOT_SECRET_VALUE_MAX_LENGTH)
     throw new AnswerTooLongError();
-  let approvalEffect: { id: string; kind: string; request: Prisma.JsonValue } | null = null;
+  let approvalEffect: {
+    id: string;
+    kind: string;
+    request: Prisma.JsonValue;
+    alwaysScope: Prisma.JsonValue;
+  } | null = null;
   let editedInstructions: string | undefined;
   let approvalAnswer = input.answer;
   if (approvalAsk && pendingAsk.instructionUpdate && input.answer.startsWith("{")) {
@@ -1065,6 +1070,12 @@ async function commitAnswerRunInput(
               ...request,
               instructions: editedInstructions,
             }),
+            // The approval stays bound to the call the person edited and approved.
+            callHash: approvalCallHash({
+              tool: approvalEffect!.kind,
+              connection: "builtin",
+              args: { ...request, instructions: editedInstructions },
+            }),
           },
         });
       }
@@ -1079,19 +1090,23 @@ async function commitAnswerRunInput(
       where: { id: approvalEffect!.id },
       data: { status: allowed ? "approved" : "denied" },
     });
-    // "Always" on a fetch card allows that site, never every site the tool can reach, and on a
-    // Composio batch allows each action in it, never every action the batch tool can run.
+    // "Always" on a fetch card allows that site, never every site the tool can reach. On any other
+    // card it keeps one tool on one connection for this agent, as the card said, never the
+    // params. A card that covered nothing (a locked kind, or a card made before this existed)
+    // is approved once.
     const site = alwaysAllowedSite(approvalEffect!);
-    const batch = composioBatchActions(approvalEffect!.kind, approvalEffect!.request);
-    const tools = batch ? (batch.complete ? batch.slugs : []) : [approvalEffect!.kind];
-    if (input.answer === "always" && (site || approvalEffect!.kind !== "web_fetch")) {
-      // Saved where the member's confirmations apply in this Space: the account or its override.
-      for (const tool of site ? [site] : tools) {
-        await saveApprovalRule(
-          tx,
-          { userId: approvalUserId!, spaceId: input.spaceId },
-          { effect: "always_allow", matchKind: site ? "site" : "tool", matchValue: tool },
-        );
+    if (input.answer === "always") {
+      const scope = { userId: approvalUserId!, spaceId: input.spaceId };
+      if (site) {
+        await saveApprovalRule(tx, scope, {
+          effect: "always_allow",
+          matchKind: "site",
+          matchValue: site,
+        });
+      } else {
+        for (const target of keptAlwaysAllowTargets(approvalEffect!)) {
+          await saveScopedApprovalRule(tx, scope, run.botId, target);
+        }
       }
     }
   } else if (dismissed) {
@@ -2406,6 +2421,25 @@ async function captureRunAnalytics(
     // Measurement must never turn a committed run into a failed request or worker job.
     getLogger().warn("Run analytics unavailable.");
   }
+}
+
+/**
+ * What a card's "Always allow" kept: the targets stored when the card was made, checked again so
+ * a locked tool is never kept whatever the stored value says.
+ */
+function keptAlwaysAllowTargets(effect: {
+  kind: string;
+  alwaysScope: Prisma.JsonValue;
+}): RuleTarget[] {
+  const stored = effect.alwaysScope as { targets?: unknown } | null;
+  if (!Array.isArray(stored?.targets)) return [];
+  const candidates: AlwaysAllowCandidate[] = [];
+  for (const target of stored.targets) {
+    const { tool, connection } = (target ?? {}) as { tool?: unknown; connection?: unknown };
+    if (typeof tool !== "string" || typeof connection !== "string") return [];
+    candidates.push({ tool, connection, builtin: connection === "builtin" });
+  }
+  return alwaysAllowTargets(candidates) ?? [];
 }
 
 function alwaysAllowedSite(effect: {

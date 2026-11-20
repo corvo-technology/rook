@@ -7,19 +7,25 @@ import {
   PushSessionEndedError,
 } from "@corvo/adapters";
 import type { ActionApprovalRule, Actor, Me, SettingsScope } from "@corvo/contracts";
-import { approvalModeFromPreference, approvalPreferenceFromMode } from "@corvo/core";
+import {
+  approvalModeFromPreference,
+  approvalPreferenceFromMode,
+  ruleConnectionLabel,
+} from "@corvo/core";
 import {
   findAutoReviewPreference,
   findDefaultVoiceCredential,
   findModelCredential,
   findModelCredentialById,
   listApprovalRules,
+  listScopedApprovalRules,
   listVoicePreferences,
   lockSpaceSettings,
   newestVoiceCredentialOrder,
   Prisma,
   partnerBalanceForOrganization,
   removeApprovalRule,
+  removeScopedApprovalRule,
   runAsSystem,
   saveApprovalRule,
   saveAutoReviewPreference,
@@ -236,6 +242,38 @@ export function accountRoutes(ctx: RouterContext) {
         await deps.prisma.$transaction((tx) =>
           removeApprovalRule(tx, context.actor, input.id, input.scope),
         );
+        return { ok: true as const };
+      }),
+    },
+    scopedApprovalRules: {
+      list: authed.scopedApprovalRules.list.handler(async ({ context, input }) => {
+        const rules = await listScopedApprovalRules(deps.prisma, context.actor, input?.botId);
+        const bots = await deps.prisma.bot.findMany({
+          where: {
+            id: { in: [...new Set(rules.map((rule) => rule.botId))] },
+            spaceId: context.actor.spaceId,
+          },
+          select: { id: true, name: true },
+        });
+        const names = new Map(bots.map((bot) => [bot.id, bot.name]));
+        return rules.flatMap((rule) => {
+          const botName = names.get(rule.botId);
+          return botName === undefined
+            ? []
+            : [
+                {
+                  id: rule.id,
+                  botId: rule.botId,
+                  botName,
+                  connection: ruleConnectionLabel(rule),
+                  tool: rule.tool,
+                  createdAt: rule.createdAt.toISOString(),
+                },
+              ];
+        });
+      }),
+      remove: authed.scopedApprovalRules.remove.handler(async ({ context, input }) => {
+        await removeScopedApprovalRule(deps.prisma, context.actor, input.id);
         return { ok: true as const };
       }),
     },

@@ -41,7 +41,8 @@ currency, reais or dollars, chosen from the app language.
 | Team | up to 10 | up to 15, US$ 3 or R$ 19 each | 39 | 235,90 |
 | Company | up to 25 | up to 50, US$ 3 or R$ 19 each | 89 | 537,90 |
 
-- Yearly price is the monthly price times 10, shown per month.
+- Yearly price is the monthly price times 10, shown per month. Only the server and extra people get it:
+  the AI add-on has no yearly discount, so a year of AI is twelve monthly prices.
 - Reais are US$ at 6,05, rounded down to a price ending in ,90. The table is one source of truth in
   `@corvo/contracts`; there is no live conversion.
 - Sizes, computers, storage and seat limits are the plan entitlements already in `packages/contracts/src/plans.ts`

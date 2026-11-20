@@ -70,17 +70,21 @@ export function parseRouterScores(
 }
 
 /**
- * Nobody when no agent is needed; otherwise the best candidate, or up to three when the message
- * is for everyone. Ids the code did not offer can never be picked.
+ * Nobody only when no agent is needed. Otherwise a question never goes unanswered: the candidates
+ * at or above the threshold, or the single best one when none reaches it (ties keep candidate
+ * order), and up to three when the message is for everyone. Ids the code did not offer can never
+ * be picked.
  */
 export function pickRoutedBots(scores: RouterScores, candidateIds: readonly string[]): string[] {
   if (scores.needsAgent < ROUTER_THRESHOLD) return [];
   const ranked = candidateIds
     .map((id) => ({ id, score: scores.scores[id] ?? 0 }))
-    .filter((entry) => entry.score >= ROUTER_THRESHOLD)
     .sort((a, b) => b.score - a.score);
+  const fits = ranked.filter((entry) => entry.score >= ROUTER_THRESHOLD);
+  // Array.prototype.sort is stable, so ranked[0] is the first candidate among equal best scores.
+  const chosen = fits.length > 0 ? fits : ranked.slice(0, 1);
   const limit = scores.forEveryone >= ROUTER_THRESHOLD ? ROUTER_MAX_PICKS : 1;
-  return ranked.slice(0, limit).map((entry) => entry.id);
+  return chosen.slice(0, limit).map((entry) => entry.id);
 }
 
 /**

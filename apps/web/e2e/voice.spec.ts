@@ -153,6 +153,7 @@ test("voice settings connect a key, speak a reply, and open a call", async ({ pa
   const settings = page.getByTestId("voice-settings");
   await settings.getByPlaceholder(/Paste a replacement key/).fill("leftover-voice-key");
   await settings.getByRole("button", { name: "Disconnect", exact: true }).click();
+  await settings.getByRole("button", { name: /^Disconnect .+\?$/ }).click();
   await expect(settings.getByRole("button", { name: "Disconnect", exact: true })).toHaveCount(0);
   await expect(settings.getByRole("button", { name: "Connect", exact: true })).toBeVisible();
   await expect(settings.getByLabel("API key", { exact: true })).toHaveValue("");

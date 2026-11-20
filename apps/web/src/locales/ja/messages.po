@@ -1221,6 +1221,7 @@ msgstr "エージェントは一時停止中です"
 msgid "Agents that can use it"
 msgstr "使用できるエージェント"
 
+#: src/components/ModelCredits.tsx
 #: src/components/PlanChoice.tsx
 msgid "AI per month"
 msgstr "月額のAI"
@@ -1721,10 +1722,6 @@ msgstr "自動化"
 msgid "Available after the routine is saved"
 msgstr "ルーティンの保存後に利用可能"
 
-#: src/components/ModelCredits.tsx
-msgid "Available credits"
-msgstr "利用可能なクレジット"
-
 #: src/pages/shell/bot-credentials.tsx
 msgid "Available to this bot's shell commands as {commandVariable}"
 msgstr "このボットのシェルコマンドで{commandVariable}として利用可能"
@@ -2056,6 +2053,10 @@ msgstr "モデルを変更"
 msgid "Change password"
 msgstr "パスワードを変更"
 
+#: src/pages/BillingSettingsPanel.tsx
+msgid "Change plan"
+msgstr "プランを変更"
+
 #: src/lib/server-copy.ts
 msgid "Change the model of {bot}?"
 msgstr "{bot} のモデルを変更しますか？"
@@ -2063,6 +2064,10 @@ msgstr "{bot} のモデルを変更しますか？"
 #: src/components/ChangeWhenToAsk.tsx
 msgid "Change when to ask"
 msgstr "確認のタイミングを変更"
+
+#: src/pages/BillingSettingsPanel.tsx
+msgid "Changes to {waitingName} on {waitingDay}"
+msgstr "{waitingDay}に{waitingName}に変更"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Changing…"
@@ -2712,6 +2717,10 @@ msgstr "{0}で続行"
 msgid "Control computers"
 msgstr "コンピューターを操作"
 
+#: src/pages/SpaceSearch.tsx
+msgid "Conversation"
+msgstr "会話"
+
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/markdown-copy.tsx
 #: src/pages/ImportFlow.tsx
@@ -3010,11 +3019,13 @@ msgstr "退出できませんでした"
 
 #: src/components/ErrorBoundary.tsx
 #: src/components/PasskeySettings.tsx
+#: src/pages/ApprovalsPage.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/platform/IntakeSections.tsx
 #: src/pages/platform/InvoicesSection.tsx
 #: src/pages/platform/LimitsSection.tsx
 #: src/pages/platform/PartnersSection.tsx
+#: src/pages/TeamPage.tsx
 #: src/pages/Usage.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/Workflows.tsx
@@ -3377,6 +3388,7 @@ msgid "Could not update agent access"
 msgstr "エージェントのアクセス権を更新できませんでした"
 
 #: src/components/ModelCredits.tsx
+#: src/components/PlanChoice.tsx
 msgid "Could not update billing"
 msgstr "請求情報を更新できませんでした"
 
@@ -3578,6 +3590,7 @@ msgstr "使用済みクレジット"
 msgid "Credit used up"
 msgstr "クレジットを使い切りました"
 
+#: src/components/ModelCredits.tsx
 #: src/pages/partner/PartnerConsolePage.tsx
 #: src/pages/platform/SimulatorSection.tsx
 msgid "Credits"
@@ -3613,6 +3626,7 @@ msgstr "通貨"
 msgid "Current password"
 msgstr "現在のパスワード"
 
+#: src/components/PlanChoice.tsx
 #: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Current plan"
 msgstr "現在のプラン"
@@ -3948,7 +3962,9 @@ msgstr "録音を破棄"
 msgid "Disconnect"
 msgstr "切断"
 
+#: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/VoiceSettingsOverlay.tsx
 msgid "Disconnect {disconnectName}?"
 msgstr "{disconnectName}を切断しますか？"
 
@@ -4488,6 +4504,7 @@ msgid "Fields to compare, e.g. id, modifiedTime (optional)"
 msgstr "比較するフィールド（例: id, modifiedTime）（任意）"
 
 #: src/pages/connections/McpServerForm.tsx
+#: src/pages/SpaceSearch.tsx
 msgid "File"
 msgstr "ファイル"
 
@@ -5419,6 +5436,10 @@ msgstr "ライト"
 msgid "Light tasks model"
 msgstr "軽いタスク用モデル"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Limit per payment"
+msgstr "支払いの上限"
+
 #: src/pages/platform/LimitsSection.tsx
 #: src/pages/platform/PlatformPage.tsx
 msgid "Limits by organization"
@@ -5431,6 +5452,10 @@ msgstr "Linear課題"
 #: src/pages/platform/InvoicesSection.tsx
 msgid "Lines"
 msgstr "明細"
+
+#: src/pages/SpaceSearch.tsx
+msgid "Link"
+msgstr "リンク"
 
 #: src/components/AccountAccess.tsx
 msgid "Link SSO"
@@ -5504,11 +5529,12 @@ msgid "Loading voice providers…"
 msgstr "音声プロバイダーを読み込み中…"
 
 #: src/components/PageLoading.tsx
+#: src/pages/ApprovalsPage.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/RoutineRunHistory.tsx
-#: src/pages/shell/transcript.tsx
+#: src/pages/TeamPage.tsx
 msgid "Loading…"
 msgstr "読み込み中…"
 
@@ -5603,6 +5629,7 @@ msgid "Manage agents"
 msgstr "エージェントを管理"
 
 #: src/components/ModelCredits.tsx
+#: src/pages/BillingSettingsPanel.tsx
 #: src/pages/Paywall.tsx
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Manage billing"
@@ -5825,6 +5852,7 @@ msgstr "言及: {mentions}"
 
 #: src/pages/shell/chat-shared.ts
 #: src/pages/shell/composer.tsx
+#: src/pages/SpaceSearch.tsx
 msgid "Message"
 msgstr "メッセージ"
 
@@ -6472,8 +6500,10 @@ msgstr "ここには公開アドレスがないため、あなたが承認した
 msgid "No remote MCP servers found"
 msgstr "リモートMCPサーバーが見つかりません"
 
+#: src/pages/AgentsStore.tsx
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/shell/command-palette.tsx
+#: src/pages/SkillsStore.tsx
 #: src/pages/SpaceSearch.tsx
 #: src/pages/Store.tsx
 #: src/pages/WikiBrowser.tsx
@@ -7121,10 +7151,6 @@ msgstr "一時停止中"
 msgid "Pawn"
 msgstr "ポーン"
 
-#: src/pages/shell/bot-panel.tsx
-msgid "Payment limit"
-msgstr "支払いの上限"
-
 #: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Payment method"
 msgstr "支払い方法"
@@ -7219,6 +7245,7 @@ msgstr "ピン留め済み"
 msgid "Pinned messages"
 msgstr "ピン留めしたメッセージ"
 
+#: src/pages/BillingSettingsPanel.tsx
 #: src/pages/partner/PartnerCredits.tsx
 #: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/platform/NewPartnerDialog.tsx
@@ -7617,13 +7644,8 @@ msgstr "紹介"
 
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
-#: src/components/ModelCredits.tsx
 msgid "Refresh"
 msgstr "更新"
-
-#: src/components/ModelCredits.tsx
-msgid "Refresh credits"
-msgstr "クレジットを更新"
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Refresh view"
@@ -7708,6 +7730,10 @@ msgstr "{name} を削除しますか?"
 #: src/pages/shell/bot-credentials.tsx
 msgid "Remove {secretName}? This bot will no longer be able to use it."
 msgstr "{secretName}を削除しますか？このボットはこれを使用できなくなります。"
+
+#: src/pages/ConnectionsSettingsPanel.tsx
+msgid "Remove {title}?"
+msgstr "{title} を削除しますか?"
 
 #: src/components/AlwaysAllowedRules.tsx
 msgid "Remove {what}"
@@ -8070,6 +8096,7 @@ msgstr "ルーターのメモ"
 #: src/lib/identity-display.ts
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/use-routine-editor.ts
+#: src/pages/SpaceSearch.tsx
 msgid "Routine"
 msgstr "ルーティン"
 
@@ -9061,6 +9088,10 @@ msgstr "思考に対応"
 msgid "Switch space"
 msgstr "スペースを切り替え"
 
+#: src/components/PlanChoice.tsx
+msgid "Switch to {name}"
+msgstr "{name}に変更"
+
 #: src/lib/server-copy.ts
 msgid "Switched to a stronger model"
 msgstr "より強力なモデルに切り替えました"
@@ -9669,9 +9700,11 @@ msgstr "トリガー"
 #: src/components/RunErrorCard.tsx
 #: src/components/WikiChangeCard.tsx
 #: src/pages/ActivityList.tsx
+#: src/pages/ApprovalsPage.tsx
 #: src/pages/DirectChat.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 #: src/pages/partner/partner-ui.tsx
+#: src/pages/TeamPage.tsx
 #: src/pages/WikiBrowser.tsx
 msgid "Try again"
 msgstr "再試行"

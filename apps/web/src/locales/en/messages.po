@@ -1221,6 +1221,7 @@ msgstr "Agents are paused"
 msgid "Agents that can use it"
 msgstr "Agents that can use it"
 
+#: src/components/ModelCredits.tsx
 #: src/components/PlanChoice.tsx
 msgid "AI per month"
 msgstr "AI per month"
@@ -1721,10 +1722,6 @@ msgstr "Automation"
 msgid "Available after the routine is saved"
 msgstr "Available after the routine is saved"
 
-#: src/components/ModelCredits.tsx
-msgid "Available credits"
-msgstr "Available credits"
-
 #: src/pages/shell/bot-credentials.tsx
 msgid "Available to this bot's shell commands as {commandVariable}"
 msgstr "Available to this bot's shell commands as {commandVariable}"
@@ -2056,6 +2053,10 @@ msgstr "Change model"
 msgid "Change password"
 msgstr "Change password"
 
+#: src/pages/BillingSettingsPanel.tsx
+msgid "Change plan"
+msgstr "Change plan"
+
 #: src/lib/server-copy.ts
 msgid "Change the model of {bot}?"
 msgstr "Change the model of {bot}?"
@@ -2063,6 +2064,10 @@ msgstr "Change the model of {bot}?"
 #: src/components/ChangeWhenToAsk.tsx
 msgid "Change when to ask"
 msgstr "Change when to ask"
+
+#: src/pages/BillingSettingsPanel.tsx
+msgid "Changes to {waitingName} on {waitingDay}"
+msgstr "Changes to {waitingName} on {waitingDay}"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Changing…"
@@ -2712,6 +2717,10 @@ msgstr "Continue with {0}"
 msgid "Control computers"
 msgstr "Control computers"
 
+#: src/pages/SpaceSearch.tsx
+msgid "Conversation"
+msgstr "Conversation"
+
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/markdown-copy.tsx
 #: src/pages/ImportFlow.tsx
@@ -3010,11 +3019,13 @@ msgstr "Could not leave"
 
 #: src/components/ErrorBoundary.tsx
 #: src/components/PasskeySettings.tsx
+#: src/pages/ApprovalsPage.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/platform/IntakeSections.tsx
 #: src/pages/platform/InvoicesSection.tsx
 #: src/pages/platform/LimitsSection.tsx
 #: src/pages/platform/PartnersSection.tsx
+#: src/pages/TeamPage.tsx
 #: src/pages/Usage.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/Workflows.tsx
@@ -3377,6 +3388,7 @@ msgid "Could not update agent access"
 msgstr "Could not update agent access"
 
 #: src/components/ModelCredits.tsx
+#: src/components/PlanChoice.tsx
 msgid "Could not update billing"
 msgstr "Could not update billing"
 
@@ -3578,6 +3590,7 @@ msgstr "Credit used"
 msgid "Credit used up"
 msgstr "Credit used up"
 
+#: src/components/ModelCredits.tsx
 #: src/pages/partner/PartnerConsolePage.tsx
 #: src/pages/platform/SimulatorSection.tsx
 msgid "Credits"
@@ -3613,6 +3626,7 @@ msgstr "Currency"
 msgid "Current password"
 msgstr "Current password"
 
+#: src/components/PlanChoice.tsx
 #: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Current plan"
 msgstr "Current plan"
@@ -3948,7 +3962,9 @@ msgstr "Discard recording"
 msgid "Disconnect"
 msgstr "Disconnect"
 
+#: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/VoiceSettingsOverlay.tsx
 msgid "Disconnect {disconnectName}?"
 msgstr "Disconnect {disconnectName}?"
 
@@ -4488,6 +4504,7 @@ msgid "Fields to compare, e.g. id, modifiedTime (optional)"
 msgstr "Fields to compare, e.g. id, modifiedTime (optional)"
 
 #: src/pages/connections/McpServerForm.tsx
+#: src/pages/SpaceSearch.tsx
 msgid "File"
 msgstr "File"
 
@@ -5419,6 +5436,10 @@ msgstr "Light"
 msgid "Light tasks model"
 msgstr "Light tasks model"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Limit per payment"
+msgstr "Limit per payment"
+
 #: src/pages/platform/LimitsSection.tsx
 #: src/pages/platform/PlatformPage.tsx
 msgid "Limits by organization"
@@ -5431,6 +5452,10 @@ msgstr "Linear issue"
 #: src/pages/platform/InvoicesSection.tsx
 msgid "Lines"
 msgstr "Lines"
+
+#: src/pages/SpaceSearch.tsx
+msgid "Link"
+msgstr "Link"
 
 #: src/components/AccountAccess.tsx
 msgid "Link SSO"
@@ -5504,11 +5529,12 @@ msgid "Loading voice providers…"
 msgstr "Loading voice providers…"
 
 #: src/components/PageLoading.tsx
+#: src/pages/ApprovalsPage.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/RoutineRunHistory.tsx
-#: src/pages/shell/transcript.tsx
+#: src/pages/TeamPage.tsx
 msgid "Loading…"
 msgstr "Loading…"
 
@@ -5603,6 +5629,7 @@ msgid "Manage agents"
 msgstr "Manage agents"
 
 #: src/components/ModelCredits.tsx
+#: src/pages/BillingSettingsPanel.tsx
 #: src/pages/Paywall.tsx
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Manage billing"
@@ -5825,6 +5852,7 @@ msgstr "Mentions: {mentions}"
 
 #: src/pages/shell/chat-shared.ts
 #: src/pages/shell/composer.tsx
+#: src/pages/SpaceSearch.tsx
 msgid "Message"
 msgstr "Message"
 
@@ -6472,8 +6500,10 @@ msgstr "No public address here, so it checks your inbox on a schedule you approv
 msgid "No remote MCP servers found"
 msgstr "No remote MCP servers found"
 
+#: src/pages/AgentsStore.tsx
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/shell/command-palette.tsx
+#: src/pages/SkillsStore.tsx
 #: src/pages/SpaceSearch.tsx
 #: src/pages/Store.tsx
 #: src/pages/WikiBrowser.tsx
@@ -7121,10 +7151,6 @@ msgstr "Paused"
 msgid "Pawn"
 msgstr "Pawn"
 
-#: src/pages/shell/bot-panel.tsx
-msgid "Payment limit"
-msgstr "Payment limit"
-
 #: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Payment method"
 msgstr "Payment method"
@@ -7219,6 +7245,7 @@ msgstr "Pinned"
 msgid "Pinned messages"
 msgstr "Pinned messages"
 
+#: src/pages/BillingSettingsPanel.tsx
 #: src/pages/partner/PartnerCredits.tsx
 #: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/platform/NewPartnerDialog.tsx
@@ -7617,13 +7644,8 @@ msgstr "Referral"
 
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
-#: src/components/ModelCredits.tsx
 msgid "Refresh"
 msgstr "Refresh"
-
-#: src/components/ModelCredits.tsx
-msgid "Refresh credits"
-msgstr "Refresh credits"
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Refresh view"
@@ -7708,6 +7730,10 @@ msgstr "Remove {name}?"
 #: src/pages/shell/bot-credentials.tsx
 msgid "Remove {secretName}? This bot will no longer be able to use it."
 msgstr "Remove {secretName}? This bot will no longer be able to use it."
+
+#: src/pages/ConnectionsSettingsPanel.tsx
+msgid "Remove {title}?"
+msgstr "Remove {title}?"
 
 #: src/components/AlwaysAllowedRules.tsx
 msgid "Remove {what}"
@@ -8070,6 +8096,7 @@ msgstr "Router's note"
 #: src/lib/identity-display.ts
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/use-routine-editor.ts
+#: src/pages/SpaceSearch.tsx
 msgid "Routine"
 msgstr "Routine"
 
@@ -9061,6 +9088,10 @@ msgstr "Supports thinking"
 msgid "Switch space"
 msgstr "Switch space"
 
+#: src/components/PlanChoice.tsx
+msgid "Switch to {name}"
+msgstr "Switch to {name}"
+
 #: src/lib/server-copy.ts
 msgid "Switched to a stronger model"
 msgstr "Switched to a stronger model"
@@ -9669,9 +9700,11 @@ msgstr "Trigger"
 #: src/components/RunErrorCard.tsx
 #: src/components/WikiChangeCard.tsx
 #: src/pages/ActivityList.tsx
+#: src/pages/ApprovalsPage.tsx
 #: src/pages/DirectChat.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 #: src/pages/partner/partner-ui.tsx
+#: src/pages/TeamPage.tsx
 #: src/pages/WikiBrowser.tsx
 msgid "Try again"
 msgstr "Try again"

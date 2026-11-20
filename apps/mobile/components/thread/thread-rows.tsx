@@ -15,7 +15,7 @@ import {
 } from "@corvo/core";
 import { useCallback, useLayoutEffect, useMemo, useRef } from "react";
 import type { ListRenderItemInfo } from "react-native";
-import { Platform, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import type { MobileBot, MobileMessage, MobileSnapshot } from "../../lib/api";
 import { useI18n } from "../../lib/i18n";
 import { threadHeaderFloats } from "../../lib/thread-edges";
@@ -158,8 +158,7 @@ export function useThreadRows({
       inGroup || readOnly
         ? undefined
         : {
-            // Editing asks in a native text alert, which only iOS has.
-            edit: Platform.OS === "ios" && !busy && canEditMessage(message, userId),
+            edit: !busy && canEditMessage(message, userId),
             regenerate: !busy && newestReplyId === message.id,
             fork: !busy && canBranchFromMessage(message),
             busy,

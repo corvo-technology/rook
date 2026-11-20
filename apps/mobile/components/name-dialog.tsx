@@ -23,6 +23,11 @@ export type NameDialogProps = {
   onChange: (value: string) => void;
   onSave: (value: string) => void;
   onClose: () => void;
+  /** Defaults to the account-name wording. */
+  title?: string;
+  label?: string;
+  maxLength?: number;
+  multiline?: boolean;
 };
 
 export function NameDialog(props: NameDialogProps) {
@@ -35,7 +40,18 @@ export function NameDialog(props: NameDialogProps) {
   );
 }
 
-function FallbackNameDialog({ draft, error, saving, onChange, onSave, onClose }: NameDialogProps) {
+function FallbackNameDialog({
+  draft,
+  error,
+  saving,
+  onChange,
+  onSave,
+  onClose,
+  title,
+  label,
+  maxLength = 80,
+  multiline = false,
+}: NameDialogProps) {
   const { t } = useI18n();
   const styles = useThemedStyles(createStyles);
   const disabled = saving || !draft.trim();
@@ -50,21 +66,22 @@ function FallbackNameDialog({ draft, error, saving, onChange, onSave, onClose }:
         />
         <View accessibilityViewIsModal style={styles.dialog}>
           <Text accessibilityRole="header" style={styles.title}>
-            {t("Edit name")}
+            {title ?? t("Edit name")}
           </Text>
           <View style={[styles.field, !!error && styles.fieldError]}>
-            <Text style={styles.label}>{t("Name")}</Text>
+            <Text style={styles.label}>{label ?? t("Name")}</Text>
             <TextInput
-              accessibilityLabel={t("Name")}
+              accessibilityLabel={label ?? t("Name")}
               autoComplete="name"
               autoFocus
               editable={!saving}
-              maxLength={80}
+              maxLength={maxLength}
+              multiline={multiline}
               onChangeText={onChange}
               onSubmitEditing={() => {
                 if (!disabled) onSave(draft);
               }}
-              returnKeyType="done"
+              returnKeyType={multiline ? "default" : "done"}
               selectTextOnFocus
               style={styles.input}
               value={draft}

@@ -194,7 +194,7 @@ export function BoardPage() {
           }}
           onAdd={bots.length > 0 ? (status) => setSelected({ newIn: status }) : undefined}
         />
-        {tickets.length === 0 && !error ? (
+        {ticketsQuery.isSuccess && tickets.length === 0 && !error ? (
           <p className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">
             <Trans>No tickets yet</Trans>
           </p>

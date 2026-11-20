@@ -258,7 +258,11 @@ export function ApprovalRulesSettings({ scope }: { scope: SettingsScope }) {
         </SettingsGroup>
       ) : null}
       <AlwaysAllowedRules />
-      {error ? <p className="text-[13px] text-destructive">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="text-[13px] text-destructive">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

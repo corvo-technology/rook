@@ -113,7 +113,7 @@ function MemberPicker({
               <button
                 type="button"
                 onClick={() => onOpenBot?.(bot.id)}
-                className="flex min-w-0 flex-1 items-center gap-3 text-start"
+                className="flex min-w-0 flex-1 items-center gap-3 rounded-md text-start outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <BotAvatar color={bot.color} identity={bot.id} size={32} status={bot.status} />
                 <span className="flex-1 text-[15px] text-foreground" dir="auto">
@@ -199,6 +199,10 @@ export function CreateGroupForm({
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder={t`Name this group`}
+          autoFocus
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.nativeEvent.isComposing) void create();
+          }}
           maxLength={GROUP_NAME_MAX_LENGTH}
           className="mt-2"
         />

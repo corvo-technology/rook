@@ -16,6 +16,7 @@ import {
   Button,
   Field,
   FieldLabel,
+  InlineConfirm,
   Input,
   NativeSelect,
   NativeSelectOption,
@@ -193,6 +194,7 @@ export function VoiceSettingsOverlay({
     [voices, voiceId],
   );
 
+  const disconnectName = selected?.name ?? "";
   const selfHosted = selected?.id === OPENAI_COMPATIBLE_PROVIDER_ID;
   // "This computer" has models to download instead of a key, and no voices yet.
   const local = selected?.id === LOCAL_VOICE_PROVIDER_ID;
@@ -320,7 +322,11 @@ export function VoiceSettingsOverlay({
           <Spinner aria-label={t`Loading voice providers…`} />
         </p>
       ) : null}
-      {error ? <p className="mb-4 text-sm text-destructive">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="mb-4 text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
       {notice ? <p className="mb-4 text-sm text-success">{notice}</p> : null}
       {catalog.length ? (
         <Field>
@@ -466,20 +472,21 @@ export function VoiceSettingsOverlay({
                 )}
               </Button>
               {credential ? (
-                <Button
+                <InlineConfirm
                   type="button"
                   variant="outline"
                   size="sm"
                   className="mt-3"
                   disabled={busy}
-                  onClick={() => void disconnectProvider()}
+                  confirmLabel={t`Disconnect ${disconnectName}?`}
+                  onConfirm={() => void disconnectProvider()}
                 >
                   {pending === "disconnect" ? (
                     <Trans>Disconnecting…</Trans>
                   ) : (
                     <Trans>Disconnect</Trans>
                   )}
-                </Button>
+                </InlineConfirm>
               ) : null}
             </>
           ) : null}

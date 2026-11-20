@@ -169,7 +169,11 @@ export function AppCatalogGrid({
             ))}
           </div>
         ) : null}
-        {error ? <p className="text-[13px] text-destructive">{error}</p> : null}
+        {error ? (
+          <p role="alert" className="text-[13px] text-destructive">
+            {error}
+          </p>
+        ) : null}
       </div>
     );
   }
@@ -265,7 +269,11 @@ export function AppCatalogGrid({
           </div>
         ))}
       </div>
-      {error ? <p className="mt-2 text-[13px] text-destructive">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="mt-2 text-[13px] text-destructive">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

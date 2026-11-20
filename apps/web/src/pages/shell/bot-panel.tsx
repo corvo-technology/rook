@@ -941,92 +941,66 @@ export function BotSettings({
                   }}
                 />
               </div>
-              <div className="flex min-h-11 items-center justify-between gap-3 text-sm">
-                <label htmlFor={`${ids}-daily-cap`} className={rowLabelClass}>
-                  <Trans>Daily spending limit</Trans>
-                </label>
-                <span className="flex items-center gap-1 text-muted-foreground">
-                  $
-                  <Input
-                    id={`${ids}-daily-cap`}
-                    inputMode="decimal"
-                    className="w-24 text-right"
-                    value={dailyCap}
-                    disabled={saving}
-                    placeholder={t`No limit`}
-                    onChange={(event) => setDailyCap(event.target.value)}
-                    onBlur={() => {
-                      const next = parseDailyCap(dailyCap);
-                      if (next === undefined) return setDailyCap(dailyCapText(bot.dailyCapUsd));
-                      if (next !== (bot.dailyCapUsd ?? null))
-                        void enqueueSave({ dailyCapUsd: next });
-                    }}
-                  />
-                </span>
-              </div>
-              <div className="flex min-h-11 items-center justify-between gap-3 text-sm">
-                <label htmlFor={`${ids}-money-per-call`} className={rowLabelClass}>
-                  <Trans>Payment limit</Trans>
-                </label>
-                <Input
-                  id={`${ids}-money-per-call`}
-                  inputMode="decimal"
-                  className="w-28 text-right"
-                  value={moneyPerCall}
-                  disabled={saving}
-                  placeholder={t`No limit`}
-                  onChange={(event) => setMoneyPerCall(event.target.value)}
-                  onBlur={() => {
-                    const next = parseMoneyCap(moneyPerCall);
-                    if (next === undefined)
-                      return setMoneyPerCall(dailyCapText(bot.moneyCapPerCall));
-                    if (next !== (bot.moneyCapPerCall ?? null))
-                      void enqueueSave({ moneyCapPerCall: next });
-                  }}
-                />
-              </div>
-              <div className="flex min-h-11 items-center justify-between gap-3 text-sm">
-                <label htmlFor={`${ids}-money-per-month`} className={rowLabelClass}>
-                  <Trans>Monthly payment limit</Trans>
-                </label>
-                <Input
-                  id={`${ids}-money-per-month`}
-                  inputMode="decimal"
-                  className="w-28 text-right"
-                  value={moneyPerMonth}
-                  disabled={saving}
-                  placeholder={t`No limit`}
-                  onChange={(event) => setMoneyPerMonth(event.target.value)}
-                  onBlur={() => {
-                    const next = parseMoneyCap(moneyPerMonth);
-                    if (next === undefined)
-                      return setMoneyPerMonth(dailyCapText(bot.moneyCapPerMonth));
-                    if (next !== (bot.moneyCapPerMonth ?? null))
-                      void enqueueSave({ moneyCapPerMonth: next });
-                  }}
-                />
-              </div>
-              <div className="flex min-h-11 items-center justify-between gap-3 text-sm">
-                <label htmlFor={`${ids}-token-limit`} className={rowLabelClass}>
-                  <Trans>Monthly token limit</Trans>
-                </label>
-                <Input
-                  id={`${ids}-token-limit`}
-                  inputMode="numeric"
-                  className="w-32 text-right"
-                  value={tokenLimit}
-                  disabled={saving}
-                  placeholder={t`No limit`}
-                  onChange={(event) => setTokenLimit(event.target.value)}
-                  onBlur={() => {
-                    const next = parseTokenLimit(tokenLimit);
-                    if (next === undefined)
-                      return setTokenLimit(tokenLimitText(bot.monthlyTokenLimit));
-                    if (next !== (bot.monthlyTokenLimit || null))
-                      void enqueueSave({ monthlyTokenLimit: next });
-                  }}
-                />
-              </div>
+              <LimitRow
+                id={`${ids}-daily-cap`}
+                label={t`Daily spending limit`}
+                prefix="$"
+                inputMode="decimal"
+                value={dailyCap}
+                disabled={saving}
+                onChange={setDailyCap}
+                onCommit={() => {
+                  const next = parseDailyCap(dailyCap);
+                  if (next === undefined) return setDailyCap(dailyCapText(bot.dailyCapUsd));
+                  if (next !== (bot.dailyCapUsd ?? null)) void enqueueSave({ dailyCapUsd: next });
+                }}
+              />
+              <LimitRow
+                id={`${ids}-money-per-call`}
+                label={t`Limit per payment`}
+                prefix="$"
+                inputMode="decimal"
+                value={moneyPerCall}
+                disabled={saving}
+                onChange={setMoneyPerCall}
+                onCommit={() => {
+                  const next = parseMoneyCap(moneyPerCall);
+                  if (next === undefined) return setMoneyPerCall(dailyCapText(bot.moneyCapPerCall));
+                  if (next !== (bot.moneyCapPerCall ?? null))
+                    void enqueueSave({ moneyCapPerCall: next });
+                }}
+              />
+              <LimitRow
+                id={`${ids}-money-per-month`}
+                label={t`Monthly payment limit`}
+                prefix="$"
+                inputMode="decimal"
+                value={moneyPerMonth}
+                disabled={saving}
+                onChange={setMoneyPerMonth}
+                onCommit={() => {
+                  const next = parseMoneyCap(moneyPerMonth);
+                  if (next === undefined)
+                    return setMoneyPerMonth(dailyCapText(bot.moneyCapPerMonth));
+                  if (next !== (bot.moneyCapPerMonth ?? null))
+                    void enqueueSave({ moneyCapPerMonth: next });
+                }}
+              />
+              <LimitRow
+                id={`${ids}-token-limit`}
+                label={t`Monthly token limit`}
+                inputMode="numeric"
+                value={tokenLimit}
+                disabled={saving}
+                onChange={setTokenLimit}
+                onCommit={() => {
+                  const next = parseTokenLimit(tokenLimit);
+                  if (next === undefined)
+                    return setTokenLimit(tokenLimitText(bot.monthlyTokenLimit));
+                  if (next !== (bot.monthlyTokenLimit || null))
+                    void enqueueSave({ monthlyTokenLimit: next });
+                }}
+              />
             </SettingsGroup>
             <SettingsGroup label={t`Description`} plain>
               <Textarea
@@ -1117,7 +1091,11 @@ export function BotSettings({
           </div>
         </CollapsibleContent>
       </Collapsible>
-      {error ? <p className="mt-2 text-[13px] text-destructive">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="mt-2 text-[13px] text-destructive">
+          {error}
+        </p>
+      ) : null}
       {dirty ? (
         <Button
           className="sticky bottom-0 mt-5 w-full"
@@ -1217,6 +1195,53 @@ function InlineProfileField({
 }
 
 /** `plain` drops the card for a section whose single control already draws its own frame. */
+/** One limit: a label and a right-aligned amount that saves when it loses focus or Enter is pressed. */
+function LimitRow({
+  id,
+  label,
+  prefix,
+  inputMode,
+  value,
+  disabled,
+  onChange,
+  onCommit,
+}: {
+  id: string;
+  label: string;
+  prefix?: string;
+  inputMode: "decimal" | "numeric";
+  value: string;
+  disabled: boolean;
+  onChange: (value: string) => void;
+  onCommit: () => void;
+}) {
+  const { t } = useLingui();
+  return (
+    <div className="flex min-h-11 items-center justify-between gap-3 text-sm">
+      <label htmlFor={id} className={rowLabelClass}>
+        {label}
+      </label>
+      <span className="flex items-center gap-1 text-muted-foreground">
+        {prefix}
+        <Input
+          id={id}
+          inputMode={inputMode}
+          className="w-28 text-right"
+          value={value}
+          disabled={disabled}
+          placeholder={t`No limit`}
+          onChange={(event) => onChange(event.target.value)}
+          onBlur={onCommit}
+          onKeyDown={(event) => {
+            // Enter that confirms an IME composition is not a commit.
+            if (event.key === "Enter" && !event.nativeEvent.isComposing) event.currentTarget.blur();
+          }}
+        />
+      </span>
+    </div>
+  );
+}
+
 function SettingsGroup({
   label,
   plain = false,

@@ -1,12 +1,13 @@
 import { isRunWorking } from "@corvo/core";
-import { Spinner } from "@corvo/ui-web";
-import { Trans } from "@lingui/react/macro";
+import { Button, Spinner } from "@corvo/ui-web";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { skipToken, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { takeInitialBootstrap } from "../lib/bootstrap";
 import { useSpaceQueries } from "../lib/query";
 import { buildTeamRoster, TICKET_WORK_STATUSES, ticketsByOwner } from "../lib/team-roster";
+import { errorText } from "../lib/user-error";
 import { TeamBoard } from "./TeamBoard";
 
 const FAST_REFRESH_MS = 2_500;
@@ -14,6 +15,7 @@ const IDLE_REFRESH_MS = 15_000;
 
 /** The whole company on one screen: each team, who is in it, and who is working right now. */
 export function TeamPage() {
+  const { t } = useLingui();
   const navigate = useNavigate();
   const queries = useSpaceQueries();
   const bootstrap = useQuery({
@@ -44,16 +46,28 @@ export function TeamPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto bg-background text-foreground">
-      <h1 className="mx-auto w-full max-w-3xl px-6 py-4 text-xl font-light tracking-tight">
+      <h1 className="mx-auto w-full max-w-3xl px-6 pt-6 pb-4 text-xl font-light tracking-tight">
         <Trans>Team</Trans>
       </h1>
-      {bootstrap.isPending ? (
-        <div className="flex justify-center py-10">
-          <Spinner />
-        </div>
-      ) : null}
       <div className="w-full px-6 pb-8">
-        <TeamBoard roster={roster} tickets={tickets} onOpen={(path) => navigate(path)} />
+        {bootstrap.isPending ? (
+          <div className="flex justify-center py-10">
+            <Spinner aria-label={t`Loading…`} />
+          </div>
+        ) : bootstrap.isError ? (
+          // A failed read must not look like a company with no agents.
+          <div
+            role="alert"
+            className="mx-auto flex max-w-3xl items-center gap-3 text-sm text-destructive"
+          >
+            <span className="min-w-0">{errorText(bootstrap.error, t`Could not load`)}</span>
+            <Button variant="secondary" size="sm" onClick={() => void bootstrap.refetch()}>
+              <Trans>Try again</Trans>
+            </Button>
+          </div>
+        ) : (
+          <TeamBoard roster={roster} tickets={tickets} onOpen={(path) => navigate(path)} />
+        )}
       </div>
     </div>
   );

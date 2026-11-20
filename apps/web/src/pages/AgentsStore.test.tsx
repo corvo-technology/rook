@@ -191,6 +191,12 @@ it("filters by what the person searches for, in the language shown", async () =>
   await unmount();
 });
 
+it("says so when nothing matches the search", async () => {
+  const { host, unmount } = await mount({ query: "zzz-no-such-agent" });
+  expect(host.textContent).toContain("No results");
+  await unmount();
+});
+
 it("tells the install which skills the person already has, so they are not installed twice", async () => {
   skillList.current = [{ name: "Project Plan" }];
   const { host, unmount } = await mount();

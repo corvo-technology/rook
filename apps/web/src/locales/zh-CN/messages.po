@@ -1221,6 +1221,7 @@ msgstr "智能体已暂停"
 msgid "Agents that can use it"
 msgstr "可以使用它的智能体"
 
+#: src/components/ModelCredits.tsx
 #: src/components/PlanChoice.tsx
 msgid "AI per month"
 msgstr "每月 AI"
@@ -1721,10 +1722,6 @@ msgstr "自动化"
 msgid "Available after the routine is saved"
 msgstr "保存例行任务后可用"
 
-#: src/components/ModelCredits.tsx
-msgid "Available credits"
-msgstr "可用额度"
-
 #: src/pages/shell/bot-credentials.tsx
 msgid "Available to this bot's shell commands as {commandVariable}"
 msgstr "此机器人的 Shell 命令可通过 {commandVariable} 使用"
@@ -2056,6 +2053,10 @@ msgstr "更换模型"
 msgid "Change password"
 msgstr "修改密码"
 
+#: src/pages/BillingSettingsPanel.tsx
+msgid "Change plan"
+msgstr "更改方案"
+
 #: src/lib/server-copy.ts
 msgid "Change the model of {bot}?"
 msgstr "要更改 {bot} 的模型吗？"
@@ -2063,6 +2064,10 @@ msgstr "要更改 {bot} 的模型吗？"
 #: src/components/ChangeWhenToAsk.tsx
 msgid "Change when to ask"
 msgstr "更改询问时机"
+
+#: src/pages/BillingSettingsPanel.tsx
+msgid "Changes to {waitingName} on {waitingDay}"
+msgstr "将于 {waitingDay} 更改为 {waitingName}"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Changing…"
@@ -2712,6 +2717,10 @@ msgstr "通过 {0} 继续"
 msgid "Control computers"
 msgstr "控制电脑"
 
+#: src/pages/SpaceSearch.tsx
+msgid "Conversation"
+msgstr "对话"
+
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/markdown-copy.tsx
 #: src/pages/ImportFlow.tsx
@@ -3010,11 +3019,13 @@ msgstr "无法退出"
 
 #: src/components/ErrorBoundary.tsx
 #: src/components/PasskeySettings.tsx
+#: src/pages/ApprovalsPage.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/platform/IntakeSections.tsx
 #: src/pages/platform/InvoicesSection.tsx
 #: src/pages/platform/LimitsSection.tsx
 #: src/pages/platform/PartnersSection.tsx
+#: src/pages/TeamPage.tsx
 #: src/pages/Usage.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/Workflows.tsx
@@ -3377,6 +3388,7 @@ msgid "Could not update agent access"
 msgstr "无法更新 Agent 权限"
 
 #: src/components/ModelCredits.tsx
+#: src/components/PlanChoice.tsx
 msgid "Could not update billing"
 msgstr "无法更新账单"
 
@@ -3578,6 +3590,7 @@ msgstr "已用额度"
 msgid "Credit used up"
 msgstr "额度已用完"
 
+#: src/components/ModelCredits.tsx
 #: src/pages/partner/PartnerConsolePage.tsx
 #: src/pages/platform/SimulatorSection.tsx
 msgid "Credits"
@@ -3613,6 +3626,7 @@ msgstr "币种"
 msgid "Current password"
 msgstr "当前密码"
 
+#: src/components/PlanChoice.tsx
 #: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Current plan"
 msgstr "当前方案"
@@ -3948,7 +3962,9 @@ msgstr "放弃录制"
 msgid "Disconnect"
 msgstr "断开"
 
+#: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/VoiceSettingsOverlay.tsx
 msgid "Disconnect {disconnectName}?"
 msgstr "断开 {disconnectName}？"
 
@@ -4488,6 +4504,7 @@ msgid "Fields to compare, e.g. id, modifiedTime (optional)"
 msgstr "要比较的字段，例如 id, modifiedTime（可选）"
 
 #: src/pages/connections/McpServerForm.tsx
+#: src/pages/SpaceSearch.tsx
 msgid "File"
 msgstr "文件"
 
@@ -5419,6 +5436,10 @@ msgstr "浅色"
 msgid "Light tasks model"
 msgstr "轻量任务模型"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Limit per payment"
+msgstr "单笔支付上限"
+
 #: src/pages/platform/LimitsSection.tsx
 #: src/pages/platform/PlatformPage.tsx
 msgid "Limits by organization"
@@ -5431,6 +5452,10 @@ msgstr "Linear 工单"
 #: src/pages/platform/InvoicesSection.tsx
 msgid "Lines"
 msgstr "明细"
+
+#: src/pages/SpaceSearch.tsx
+msgid "Link"
+msgstr "链接"
 
 #: src/components/AccountAccess.tsx
 msgid "Link SSO"
@@ -5504,11 +5529,12 @@ msgid "Loading voice providers…"
 msgstr "正在加载语音提供方…"
 
 #: src/components/PageLoading.tsx
+#: src/pages/ApprovalsPage.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/RoutineRunHistory.tsx
-#: src/pages/shell/transcript.tsx
+#: src/pages/TeamPage.tsx
 msgid "Loading…"
 msgstr "加载中…"
 
@@ -5603,6 +5629,7 @@ msgid "Manage agents"
 msgstr "管理智能体"
 
 #: src/components/ModelCredits.tsx
+#: src/pages/BillingSettingsPanel.tsx
 #: src/pages/Paywall.tsx
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Manage billing"
@@ -5825,6 +5852,7 @@ msgstr "提到：{mentions}"
 
 #: src/pages/shell/chat-shared.ts
 #: src/pages/shell/composer.tsx
+#: src/pages/SpaceSearch.tsx
 msgid "Message"
 msgstr "消息"
 
@@ -6472,8 +6500,10 @@ msgstr "此处没有公开地址，因此它会按你批准的时间表检查收
 msgid "No remote MCP servers found"
 msgstr "未找到远程 MCP 服务器"
 
+#: src/pages/AgentsStore.tsx
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/shell/command-palette.tsx
+#: src/pages/SkillsStore.tsx
 #: src/pages/SpaceSearch.tsx
 #: src/pages/Store.tsx
 #: src/pages/WikiBrowser.tsx
@@ -7121,10 +7151,6 @@ msgstr "已暂停"
 msgid "Pawn"
 msgstr "兵"
 
-#: src/pages/shell/bot-panel.tsx
-msgid "Payment limit"
-msgstr "单笔支付上限"
-
 #: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Payment method"
 msgstr "付款方式"
@@ -7219,6 +7245,7 @@ msgstr "置顶"
 msgid "Pinned messages"
 msgstr "置顶消息"
 
+#: src/pages/BillingSettingsPanel.tsx
 #: src/pages/partner/PartnerCredits.tsx
 #: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/platform/NewPartnerDialog.tsx
@@ -7617,13 +7644,8 @@ msgstr "推荐"
 
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
-#: src/components/ModelCredits.tsx
 msgid "Refresh"
 msgstr "刷新"
-
-#: src/components/ModelCredits.tsx
-msgid "Refresh credits"
-msgstr "刷新额度"
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Refresh view"
@@ -7708,6 +7730,10 @@ msgstr "移除 {name}？"
 #: src/pages/shell/bot-credentials.tsx
 msgid "Remove {secretName}? This bot will no longer be able to use it."
 msgstr "移除 {secretName}？此机器人将无法再使用它。"
+
+#: src/pages/ConnectionsSettingsPanel.tsx
+msgid "Remove {title}?"
+msgstr "移除 {title}？"
 
 #: src/components/AlwaysAllowedRules.tsx
 msgid "Remove {what}"
@@ -8070,6 +8096,7 @@ msgstr "路由备注"
 #: src/lib/identity-display.ts
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/use-routine-editor.ts
+#: src/pages/SpaceSearch.tsx
 msgid "Routine"
 msgstr "例行任务"
 
@@ -9061,6 +9088,10 @@ msgstr "支持思考"
 msgid "Switch space"
 msgstr "切换空间"
 
+#: src/components/PlanChoice.tsx
+msgid "Switch to {name}"
+msgstr "切换到{name}"
+
 #: src/lib/server-copy.ts
 msgid "Switched to a stronger model"
 msgstr "已切换到更强的模型"
@@ -9669,9 +9700,11 @@ msgstr "触发器"
 #: src/components/RunErrorCard.tsx
 #: src/components/WikiChangeCard.tsx
 #: src/pages/ActivityList.tsx
+#: src/pages/ApprovalsPage.tsx
 #: src/pages/DirectChat.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 #: src/pages/partner/partner-ui.tsx
+#: src/pages/TeamPage.tsx
 #: src/pages/WikiBrowser.tsx
 msgid "Try again"
 msgstr "重试"

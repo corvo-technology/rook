@@ -1,5 +1,5 @@
 import type { CorvoDesktopConnections } from "@corvo/contracts";
-import { Button, Input } from "@corvo/ui-web";
+import { Button, InlineConfirm, Input } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useEffect, useState } from "react";
 import { desktopBridge } from "../lib/desktop";
@@ -96,6 +96,7 @@ function KeyRow({
   disabled: boolean;
   onSave: (value: string | null) => Promise<void>;
 }) {
+  const { t } = useLingui();
   const [value, setValue] = useState("");
   return (
     <div className="rounded-xl border border-border px-4 py-4">
@@ -105,16 +106,17 @@ function KeyRow({
           <span className="text-[13px] text-muted-foreground">
             <Trans>Connected</Trans>
           </span>
-          <Button
+          <InlineConfirm
             type="button"
             variant="outline"
             size="sm"
             data-testid={`remove-${id}`}
             disabled={disabled}
-            onClick={() => void onSave(null)}
+            confirmLabel={t`Remove ${title}?`}
+            onConfirm={() => void onSave(null)}
           >
             <Trans>Remove</Trans>
-          </Button>
+          </InlineConfirm>
         </div>
       ) : (
         <form

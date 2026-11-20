@@ -31,6 +31,8 @@ Notes
   account's public details (test and live) before going live; Stripe refuses a checkout with
   required consent while it is empty. The accepted version is `TERMS_VERSION` in
   `packages/contracts/src/terms.ts`: bump it when the published terms change.
+- The billing emails link the same page. Set `TERMS_URL` to the URL you gave Stripe; it defaults
+  to https://rook.team/terms. White label and self-hosted deployments set their own.
 - A customer's currency is fixed by Stripe at their first payment; the API refuses another one.
 - Subscriptions set up before this change keep their price and resolve to their plan through
   `PLAN_PRICES`; leave their price ids in the mapping if they should keep a plan.

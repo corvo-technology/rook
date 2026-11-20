@@ -52,6 +52,7 @@ export function FixtureTranscript({
   header,
   answerableAskIds = NO_IDS,
   bots = [BOT],
+  onImageAsk = noop,
 }: {
   messages: readonly ThreadMessage[];
   running: boolean;
@@ -61,6 +62,7 @@ export function FixtureTranscript({
   answerableAskIds?: Set<string>;
   /** The chat's own bot first, then any peers it mentions or hands off to. */
   bots?: GroupAvatarMember[];
+  onImageAsk?: (message: ThreadMessage, artifactId: string, ask: "variations" | "edit") => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const transcript = useMemo(
@@ -89,6 +91,7 @@ export function FixtureTranscript({
         onOpenBot={noop}
         onAnswer={resolved}
         onReply={noop}
+        onImageAsk={onImageAsk}
         onMarkUnread={noop}
         onQuote={noop}
         onReact={resolved}

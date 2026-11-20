@@ -3,8 +3,9 @@ import { inferAttachmentMimeType, isBackgroundRunTrigger } from "@corvo/core";
 import { resolveBotWorkspacePath } from "./computer-support.js";
 import { desktopProtectionGuardMessage } from "./desktop-command-guard.js";
 import { protectedActivateScriptWriteRefusal } from "./desktop-guard-words.js";
-import { mediaCredits } from "./media-credits.js";
+import { mediaCredits, recordImageUsage } from "./media-credits.js";
 import { generateMediaFromTool } from "./media-generation-tools.js";
+import { loadMediaReferences, withGeneratedImages } from "./media-references.js";
 import type { RunContext } from "./run-context.js";
 import { persistMessageInTransaction, publishMessage } from "./run-messages.js";
 import { modelCreditBillingEnabled } from "./run-model.js";
@@ -39,19 +40,54 @@ export async function callMediaTool(ctx: RunContext, call: ToolCall, recoverOnly
   )
     return { error: "Media generation is unavailable." };
   const artifacts = deps.artifacts;
+  const ownConnection = ctx.providers.mediaOwnConnection;
   return generateMediaFromTool({
     name,
     args,
     executionId: applied?.effect.id ?? executionId,
     recoverOnly,
     provider: mediaGeneration,
-    // With credits on, an image is paid by the customer's account, never by the deployment.
-    credits: (await modelCreditBillingEnabled(deps))
-      ? mediaCredits(deps.prisma, { userId: run.userId, spaceId: run.spaceId, runId: run.id })
-      : undefined,
+    // On the account's own key the provider bills the account, so no credit is held; the call
+    // is still recorded as usage. Otherwise, with credits on, the account's credit pays and
+    // the deployment never does.
+    credits:
+      !ownConnection && (await modelCreditBillingEnabled(deps))
+        ? mediaCredits(deps.prisma, { userId: run.userId, spaceId: run.spaceId, runId: run.id })
+        : undefined,
+    ...(ownConnection
+      ? {
+          recordUsage: ({ jobId, model, count, costUsd }) =>
+            recordImageUsage(deps.prisma, {
+              provider: ownConnection,
+              model,
+              count,
+              costUsd,
+              callId: `media:${jobId}`,
+              attribution: {
+                spaceId: run.spaceId,
+                userId: run.userId,
+                botId: bot.id,
+                runId: run.id,
+                operationId: run.id,
+              },
+            }),
+        }
+      : {}),
     prisma: deps.prisma,
     context,
     run,
+    loadReferences: (ids) =>
+      loadMediaReferences(
+        { prisma: deps.prisma, artifacts },
+        {
+          spaceId: run.spaceId,
+          userId: run.userId,
+          botId: bot.id,
+          groupId: thread.groupId ?? null,
+        },
+        ids,
+        context,
+      ),
     attach: (output, fileName, job) =>
       attachWorkspaceFileToThread(
         { prisma: deps.prisma, artifacts, maxUploadSizeBytes: deps.maxUploadSizeBytes },
@@ -73,25 +109,28 @@ export async function callMediaTool(ctx: RunContext, call: ToolCall, recoverOnly
               },
               data: {
                 status: "media_polling",
-                result: { ...job.result, artifactId: artifact.id },
+                result: {
+                  ...job.result,
+                  artifactIds: [...(job.result.artifactIds ?? []), artifact.id],
+                },
               },
             });
             if (!checkpointed.count) throw new Error("Media attachment was already checkpointed");
           },
         },
       ),
-    publish: async (block, jobId, artifactId) => {
+    publish: async (blocks, jobId, artifactIds) => {
       const committed = await deps.prisma.$transaction(async (tx) => {
         // Commit completion with the message so a restarted poll cannot post twice.
         const claimed = await tx.externalEffect.updateMany({
           where: { id: jobId, status: { not: "media_completed" } },
           data: {
             status: "media_completed",
-            result: { provider: mediaGeneration.id, artifactId },
+            result: { provider: mediaGeneration.id, artifactIds },
           },
         });
         if (!claimed.count) return null;
-        return persistMessageInTransaction(tx, run, "bot", [block]);
+        return persistMessageInTransaction(tx, run, "bot", blocks);
       });
       if (committed)
         await deps.events
@@ -102,7 +141,17 @@ export async function callMediaTool(ctx: RunContext, call: ToolCall, recoverOnly
 }
 
 async function generateMedia(ctx: RunContext, call: ToolCall) {
-  return call.finish(await callMediaTool(ctx, call));
+  const result = await callMediaTool(ctx, call);
+  if (call.name !== "generate_image" || !ctx.computer.acceptsImages || !ctx.deps.artifacts)
+    return call.finish(result);
+  return call.finish(
+    await withGeneratedImages(
+      { prisma: ctx.deps.prisma, artifacts: ctx.deps.artifacts },
+      ctx.run,
+      result,
+      ctx.context,
+    ),
+  );
 }
 
 /** Workspace files, attachments, plots and generated media. */

@@ -1,20 +1,21 @@
+import type { MediaAspectRatio } from "@corvo/contracts";
 import type { AdapterContext } from "./types.js";
 
-/** Proportions an image can ask for, as width:height. */
-export const MEDIA_ASPECT_RATIOS = [
-  "1:1",
-  "4:5",
-  "5:4",
-  "2:3",
-  "3:2",
-  "3:4",
-  "4:3",
-  "9:16",
-  "16:9",
-  "21:9",
-] as const;
-export type MediaAspectRatio = (typeof MEDIA_ASPECT_RATIOS)[number];
-export type MediaGenerationInput = { prompt: string; aspectRatio?: MediaAspectRatio };
+export type { MediaAspectRatio } from "@corvo/contracts";
+export { MEDIA_ASPECT_RATIOS } from "@corvo/contracts";
+/** A picture an image starts from, already read and checked by the caller. */
+export type MediaReferenceImage = {
+  bytes: Uint8Array;
+  mimeType: "image/png" | "image/jpeg" | "image/webp";
+};
+export type MediaGenerationInput = {
+  prompt: string;
+  aspectRatio?: MediaAspectRatio;
+  /** Pictures to edit or vary; only for a provider whose capabilities say `references`. */
+  references?: readonly MediaReferenceImage[];
+  /** How many pictures to make; at most the provider's `maxCount`. */
+  count?: number;
+};
 export type GeneratedMedia = {
   bytes: Uint8Array;
   mimeType: "image/png" | "image/jpeg" | "image/webp" | "video/mp4";
@@ -29,8 +30,17 @@ export interface MediaGenerationProvider {
   readonly id: string;
   /** The image model in use, for the credit record. */
   readonly imageModel?: string;
-  readonly capabilities: { images: boolean; video: boolean; offline: boolean };
-  generateImage(input: MediaGenerationInput, context: AdapterContext): Promise<GeneratedMedia>;
+  readonly capabilities: {
+    images: boolean;
+    video: boolean;
+    offline: boolean;
+    /** Takes reference pictures for edits and variations. */
+    references: boolean;
+    /** Most pictures one call makes. */
+    maxCount: number;
+  };
+  /** One output per picture asked for. */
+  generateImage(input: MediaGenerationInput, context: AdapterContext): Promise<GeneratedMedia[]>;
   generateVideo(input: MediaGenerationInput, context: AdapterContext): Promise<MediaVideoJob>;
   pollVideo(id: string, context: AdapterContext): Promise<MediaVideoJob>;
 }

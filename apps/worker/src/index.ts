@@ -87,6 +87,7 @@ import {
   withRunWorker,
   withSecretPersistence,
 } from "@corvo/adapters";
+import { createBillingReminderJobFromEnv } from "@corvo/api/billing-notices";
 import { createPartnerAlertDispatcherFromEnv } from "@corvo/api/partner-alerts";
 import { createPrismaPartnerToolsPort } from "@corvo/api/partner-tools";
 import { resolveEncryptionKey, resolveSupervisorToken, uploadSizeFromEnv } from "@corvo/core";
@@ -425,6 +426,7 @@ async function main() {
         emailApiUrl: process.env.EMAIL_API_URL,
       }),
     }),
+    reconcileBillingReminders: createBillingReminderJobFromEnv(prisma, process.env),
     reconcileCloudAgents: () => reconcileCloudAgents({ prisma, jobs, cloudAgent }),
     reconcileComputerUpdates: () => reconcileComputerUpdates({ prisma, jobs }),
     reconcileRoutineRetryNotices: inMemoryJobs

@@ -10,6 +10,7 @@ import type { ToolHandler } from "./run-tool-gate.js";
 import { gateToolCall } from "./run-tool-gate.js";
 import { prepareToolRequest, resolveToolRequest } from "./run-tool-request.js";
 import { BUILTIN_AGENT_TOOL_NAMES, PAGE_BROWSER_TOOL_NAMES } from "./run-tool-selection.js";
+import { appMapTools } from "./run-tools-app-map.js";
 import { computerTools, pageBrowserTool } from "./run-tools-computer.js";
 import { databaseTools } from "./run-tools-databases.js";
 import { documentTools } from "./run-tools-documents.js";
@@ -28,6 +29,7 @@ const TOOL_HANDLERS = new Map<string, ToolHandler>([
   ...Object.entries(fileTools),
   ...Object.entries(memoryTools),
   ...Object.entries(wikiTools),
+  ...Object.entries(appMapTools),
   ...Object.entries(documentTools),
   ...Object.entries(integrationTools),
   ...Object.entries(hostActionTools),

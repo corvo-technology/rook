@@ -20,6 +20,12 @@ export const BROWSER_APPLICATIONS = new Set([
   "google-chrome-stable",
   "corvo-browser",
 ]);
+/**
+ * Flags every managed Chromium launch carries so a login survives a restart: a fixed cookie key
+ * (no per-session keyring that a restored home cannot decrypt) and the previous session's
+ * session cookies.
+ */
+export const BROWSER_SESSION_PERSISTENCE_FLAGS = "--password-store=basic --restore-last-session";
 export interface DesktopEnvironment {
   homeDir: string;
   workspaceDir: string;
@@ -232,7 +238,7 @@ function browserLauncherCommand(
     "  unset _kept _rest _entry",
     "fi",
     ...egressLauncherLines(layout.displayNumber, env),
-    `exec "$browser" --test-type --no-sandbox --disable-dev-shm-usage --disable-gpu --enable-unsafe-swiftshader --no-first-run --no-default-browser-check --disable-session-crashed-bubble --hide-crash-restore-bubble --password-store=basic --restore-last-session --start-maximized --remote-debugging-address=127.0.0.1 --remote-debugging-port=${layout.debugPort} --user-data-dir=${shellQuote(browserProfilePathForScreen(screenId, env))} ${browserCacheFlags(screenId)}${env.browserEgress ? EGRESS_BROWSER_FLAGS : ""} "$@"`,
+    `exec "$browser" --test-type --no-sandbox --disable-dev-shm-usage --disable-gpu --enable-unsafe-swiftshader --no-first-run --no-default-browser-check --disable-session-crashed-bubble --hide-crash-restore-bubble ${BROWSER_SESSION_PERSISTENCE_FLAGS} --start-maximized --remote-debugging-address=127.0.0.1 --remote-debugging-port=${layout.debugPort} --user-data-dir=${shellQuote(browserProfilePathForScreen(screenId, env))} ${browserCacheFlags(screenId)}${env.browserEgress ? EGRESS_BROWSER_FLAGS : ""} "$@"`,
   ].join("\n");
 }
 

@@ -232,6 +232,7 @@ export function SettingsPage() {
               const next = await rpc.preferences.update({ timezone });
               patchMe({ timezone: next.timezone });
             }}
+            onLocaleChange={(locale) => rpc.preferences.update({ locale })}
           />
           {/* One space is just the app, so there is nothing to tell apart or manage. */}
           {spaces.length > 1 ? (

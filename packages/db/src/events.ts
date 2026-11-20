@@ -168,6 +168,8 @@ export type FinalizeRunInput = FinalizeRunBase &
     | {
         outcome: "completed";
         blocks: MessageBlock[];
+        /** The reply split per person message it answers; replaces `blocks` as the written reply. */
+        answers?: Array<{ replyToMessageId: string; blocks: MessageBlock[] }>;
         markUnread?: boolean;
       }
     | {
@@ -1953,17 +1955,22 @@ async function finalizeRunOnce(
       });
     }
     let firstResponse = false;
-    const replyBlocks =
+    const replies: Array<{ blocks: MessageBlock[]; replyToMessageId?: string }> =
       input.outcome === "completed"
-        ? completedRunBlocks(input.blocks, writableRun?.startedAt ?? null, now)
-        : (input.partialReply ?? []);
-    if (replyBlocks.length > 0) {
+        ? (input.answers ?? [{ blocks: input.blocks }]).map((answer) => ({
+            ...answer,
+            blocks: completedRunBlocks(answer.blocks, writableRun?.startedAt ?? null, now),
+          }))
+        : [{ blocks: input.partialReply ?? [] }];
+    for (const reply of replies) {
+      if (reply.blocks.length === 0) continue;
       const message = await createThreadMessageInTransaction(tx, {
         threadId: input.threadId,
         role: "bot",
-        blocks: replyBlocks,
+        blocks: reply.blocks,
         botId: input.botId,
         runId: input.runId,
+        replyToMessageId: reply.replyToMessageId,
         ...(input.outcome === "completed"
           ? { markUnread: input.markUnread }
           : { clientNonce: partialReplyClientNonce(input.runId) }),
@@ -1974,9 +1981,14 @@ async function finalizeRunOnce(
         botId: input.botId,
         type: "thread.message.created",
         runId: input.runId,
-        payload: { messageId: message.id, role: "bot", blocks: replyBlocks },
+        payload: {
+          messageId: message.id,
+          role: "bot",
+          blocks: reply.blocks,
+          ...(reply.replyToMessageId ? { replyToMessageId: reply.replyToMessageId } : {}),
+        },
       });
-      firstResponse = response.firstResponse;
+      firstResponse ||= response.firstResponse;
     }
     const lastEvent = await appendEventInTransaction(tx, {
       spaceId: input.spaceId,

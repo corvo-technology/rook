@@ -35,6 +35,8 @@ model User {
   avatarStyle                 String                          @default("organic")
   /// IANA timezone such as "Pacific/Auckland". Null until set; bots then get UTC only.
   timezone                    String?
+  /// The app language the person chose or runs in, such as "pt-BR". Null until an app saves it.
+  locale                      String?
   sessions                    Session[]
   accounts                    Account[]
   passkeys                    Passkey[]
@@ -259,6 +261,23 @@ model BillingAccount {
   updatedAt           DateTime     @updatedAt
 
   @@map("billing_accounts")
+}
+
+/// An email about a subscription that was sent once: the confirmation of a plan and the reminder
+/// before a yearly renewal. The unique key names what it was sent for, so a repeated webhook or a
+/// second run of the daily job finds the row and sends nothing.
+model BillingNotice {
+  id             String   @id @default(cuid())
+  /// "confirmation" or "renewal_reminder".
+  kind           String
+  organizationId String
+  subscriptionId String
+  /// One row per `key`: the subscription, what it holds and, for a reminder, the renewal and threshold.
+  key            String   @unique
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, createdAt])
+  @@map("billing_notices")
 }
 
 /// Bytes an organization keeps in object storage (drive files, attachments, computer homes),
@@ -952,6 +971,8 @@ model Thread {
   wikiCuratedUpToSeq             Int?
   /// The newest message the memory model has read for facts about the person.
   memoryLearnedUpToSeq           Int?
+  /// The branch the conversation shows and continues; null is the original, unbranched line.
+  activeBranchId                 String?
   /// null follows the conversation's kind (channels on, chats with one agent off); true or false is the person's choice.
   wikiCapture                    Boolean?
   unread                         Boolean               @default(false)
@@ -965,6 +986,7 @@ model Thread {
   runs                           Run[]
   routines                       Routine[]
   wikiSources                    WikiSource[]
+  branches                       ThreadBranch[]
 
   @@index([spaceId])
   @@map("threads")
@@ -1017,6 +1039,22 @@ model ThreadMemberRead {
   @@map("thread_member_reads")
 }
 
+/// An alternative continuation of a thread, made by regenerating a reply or editing a message.
+/// It shares the messages of its parent (null is the original line) up to forkSeq and owns the
+/// messages written on it after. Nothing is deleted: the line it left stays reachable.
+model ThreadBranch {
+  id             String   @id @default(cuid())
+  threadId       String
+  thread         Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  spaceId        String
+  parentBranchId String?
+  forkSeq        Int
+  createdAt      DateTime @default(now())
+
+  @@index([threadId, createdAt])
+  @@map("thread_branches")
+}
+
 model Message {
   id                    String            @id @default(cuid())
   threadId              String
@@ -1046,6 +1084,8 @@ model Message {
   pinnedAt              DateTime?
   /// The user who pinned it.
   pinnedBy              String?
+  /// The branch this message was written on; null on the original line, so older rows need no backfill.
+  branchId              String?
   sourceRuns            Run[]             @relation("RunSourceMessage")
   externalTranscriptFor ExternalMessage?
   steeringMessages      SteeringMessage[]
@@ -1057,6 +1097,7 @@ model Message {
   @@index([replyToMessageId])
   @@index([threadRootId])
   @@index([runId, seq])
+  @@index([threadId, branchId, seq])
   @@index([searchTokens], type: Gin)
   @@map("messages")
 }

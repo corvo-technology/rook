@@ -7,6 +7,8 @@ import { McpTransportSchema } from "./mcp.js";
 export const ProductEventType = z.enum([
   "thread.message.created",
   "thread.cleared",
+  /** The conversation now shows another version; the payload carries its branch (null: the original) and fork seq. */
+  "thread.branch.changed",
   "thread.message.updated",
   "thread.message.reaction",
   /** A message was pinned or unpinned; the payload carries its id and `pinnedAt` (null when unpinned). */
@@ -54,6 +56,11 @@ export const ProductEventType = z.enum([
   "group.handoff",
   /** Liveness only: never persisted, never applied to a snapshot, always seq 0. */
   "heartbeat",
+  /**
+   * Too much happened after the client's cursor to replay. Never persisted; its seq is the head the
+   * stream continues from, and the client takes a fresh snapshot instead of the missed events.
+   */
+  "thread.resync",
 ]);
 export type ProductEventType = z.infer<typeof ProductEventType>;
 
@@ -132,6 +139,7 @@ export const MetaCode = z.enum([
   "sandbox_storage_full",
   "computer_home_lost",
   "rule_approved",
+  "branch_effects",
 ]);
 export type MetaCode = z.infer<typeof MetaCode>;
 
@@ -285,6 +293,8 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     status: z.enum(["running", "completed", "failed"]),
     progress: z.string().optional(),
     result: z.string().optional(),
+    /** `progress` and `result` are the start of a longer text; `threads.message` returns it whole. */
+    truncated: z.literal(true).optional(),
   }),
   z.object({
     /** A bot's plan for a request with several stages, kept current as they start and finish. */
@@ -501,6 +511,8 @@ export const ComputerCommandSchema = z.object({
   status: z.enum(["running", "done"]),
   exitCode: z.number().int().nullable(),
   output: z.string(),
+  /** `output` is the start of a longer one; `computer.commandOutput` returns it whole. */
+  outputTruncated: z.literal(true).optional(),
   /** Size written by write_file. */
   bytes: z.number().int().nonnegative().optional(),
 });
@@ -576,6 +588,15 @@ export const RoutingReportSchema = z.object({
 });
 export type RoutingReport = z.infer<typeof RoutingReportSchema>;
 
+export const MessageVariantsSchema = z.object({
+  /** Zero-based place of the version on screen. */
+  index: z.number().int().nonnegative(),
+  count: z.number().int().min(2),
+  /** The branch of each version in order; null is the original line. */
+  branchIds: z.array(Id.nullable()),
+});
+export type MessageVariants = z.infer<typeof MessageVariantsSchema>;
+
 export const ThreadMessageSchema = z.object({
   id: Id,
   threadId: Id,
@@ -593,6 +614,8 @@ export const ThreadMessageSchema = z.object({
   callId: z.string().optional(),
   /** Who wrote a user message in a shared conversation; absent on older messages. */
   authorUserId: Id.optional(),
+  /** On the message that opens one of several versions of a point in the chat (regenerated or edited). */
+  variants: MessageVariantsSchema.optional(),
   authorName: z.string().optional(),
   authorImage: z.string().nullable().optional(),
   /** The routine whose run wrote this message; absent for anything a person or a chat started. */

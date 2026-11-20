@@ -4234,3 +4234,28 @@ describe("stale helper projection", () => {
     });
   });
 });
+
+describe("moving the chat to another version", () => {
+  it("drops the messages after the fork until the refresh brings the version back", () => {
+    const snapshot = {
+      botId: "bot-1",
+      threadId: "thread-1",
+      cursor: 3,
+      messages: [
+        { id: "m1", seq: 0, role: "user", blocks: [{ kind: "text", text: "one" }] },
+        { id: "m2", seq: 1, role: "bot", blocks: [{ kind: "text", text: "reply" }] },
+        { id: "m3", seq: 2, role: "user", blocks: [{ kind: "text", text: "two" }] },
+      ],
+      olderCursor: null,
+      run: null,
+      activeRuns: [],
+    } as unknown as MobileSnapshot;
+    const next = applyMobileThreadEvent(snapshot, {
+      type: "thread.branch.changed",
+      seq: 9,
+      payload: { branchId: "branch-1", forkSeq: 1 },
+    } as never);
+    expect(next?.cursor).toBe(9);
+    expect(next?.messages.map((message) => message.id)).toEqual(["m1", "m2"]);
+  });
+});

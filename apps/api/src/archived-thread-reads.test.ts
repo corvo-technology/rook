@@ -6,6 +6,13 @@ import type { RouterDeps } from "./router.js";
 import { createRouter } from "./router.js";
 
 // These tests are about the thread mechanics; who may talk to an agent has its own tests.
+// Which version of the chat is on screen has its own tests.
+vi.mock("@corvo/db", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@corvo/db")>()),
+  visibleMessagesWhere: async () => ({}),
+  messageVariantsByMessage: async () => new Map(),
+}));
+
 vi.mock("./agent-audience.js", () => ({
   requireInAudience: async () => undefined,
   requireCanTalkTo: async () => undefined,

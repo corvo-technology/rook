@@ -65,6 +65,7 @@ import {
   runTokens,
   settleReleasedTakeoverCards,
   spaceHasModelAccess,
+  threadBranchInclude,
 } from "@corvo/db";
 import { enrichLogContext, getLogger } from "@corvo/logging";
 import { sanitizedError } from "@corvo/logging/monitoring";
@@ -124,7 +125,11 @@ import {
   stableHistoryWindow,
 } from "./history-compaction.js";
 import { alertHomeLost } from "./home-lost-alert.js";
-import { createMediaGenerationProvider } from "./media-generation-factory.js";
+import { resolveRunImageProvider } from "./image-connection.js";
+import {
+  createMediaGenerationProvider,
+  deploymentNamesImageModel,
+} from "./media-generation-factory.js";
 import { memberMonthlyLimitReached } from "./member-monthly-limit.js";
 import { loadAgentMemoryContext } from "./memory-context.js";
 import { botDisabledTools } from "./memory-mode.js";
@@ -157,6 +162,7 @@ import { ROUTER_PASS_INSTRUCTION, routerAnsweredNote } from "./router-pass.js";
 import { backOffRoutineAfterAccountError } from "./routine-backoff.js";
 import { lateRoutineRunInstruction } from "./routine-lateness.js";
 import { startNextRoutineStep, workflowContinuesAfter } from "./routine-steps.js";
+import { noteSteeringClaimed } from "./run-answers.js";
 import { lazyRunComputer } from "./run-computer.js";
 import type {
   RunComputerUseState,
@@ -266,6 +272,7 @@ import { loadAgentTicketContext } from "./ticket-context.js";
 import { startTicketRun } from "./ticket-run-moves.js";
 import { appendToolCompletionAudit } from "./tool-completion-audit.js";
 import { loadUserMemoryContext } from "./user-memory-run.js";
+import { sayNowAllowed } from "./user-progress.js";
 import { createWebProvider } from "./web-provider-factory.js";
 import { loadWikiIndexContext } from "./wiki-context.js";
 import { wikiOfferInstruction } from "./wiki-offer.js";
@@ -273,7 +280,7 @@ import { wikiOfferInstruction } from "./wiki-offer.js";
 export function createRunExecutor(deps: ExecutorDeps) {
   const contextStrategy = deps.contextStrategy ?? DEFAULT_CONTEXT_STRATEGY;
   const web = deps.web ?? createWebProvider();
-  const mediaGeneration = deps.mediaGeneration ?? createMediaGenerationProvider();
+  const deploymentMedia = createMediaGenerationProvider();
   const browser = deps.browser ?? createBrowserProvider(undefined, { sandbox: deps.sandbox });
   const cloudAgent = deps.cloudAgent;
   const resolveConnectedModel = resolveConnectedRunModel.bind(undefined, deps);
@@ -506,9 +513,13 @@ export function createRunExecutor(deps: ExecutorDeps) {
             select: { userId: true },
           })
         ).userId;
+        // The version of the chat on screen is part of what the agent reads, so the thread comes first.
+        const thread = await deps.prisma.thread.findUniqueOrThrow({
+          where: { id: run.threadId },
+          include: threadBranchInclude,
+        });
         const [
           bot,
-          thread,
           messages,
           peerMessage,
           task,
@@ -526,8 +537,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
             where: { id: run.botId },
             include: { computer: true, space: { select: { pausedAt: true } } },
           }),
-          deps.prisma.thread.findUniqueOrThrow({ where: { id: run.threadId } }),
-          loadRunHistoryMessages(deps.prisma, run, PROMPT_HISTORY_WINDOW_SIZE, channelId),
+          loadRunHistoryMessages(deps.prisma, run, PROMPT_HISTORY_WINDOW_SIZE, thread, channelId),
           run.trigger === "bot_message"
             ? loadBotMessageContext(deps.prisma, run.sourceMessageId)
             : Promise.resolve(undefined),
@@ -1234,6 +1244,20 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const pageBrowserAllowed =
           graphical && browser.describe().capabilities.page && !heldForTakeover;
         const disabledBuiltinTools = disabledBuiltinToolSet(botDisabledTools(bot));
+        // Pictures come from the account's own image-capable connection, else the deployment's.
+        const media = isBackgroundRunTrigger(run.trigger)
+          ? undefined
+          : await resolveRunImageProvider({
+              deps,
+              asker: { userId: run.userId, spaceId: run.spaceId },
+              deployment: deploymentMedia,
+              creditsEnabled: await modelCreditBillingEnabled(deps),
+              operatorPays: deploymentNamesImageModel(),
+              onError: (error) =>
+                getLogger().warn("image connection lookup failed", { error: String(error) }),
+            });
+        const mediaGeneration = media?.provider;
+        if (media?.own) runSecrets.push(...media.own.secretValues);
         const builtins = [
           ...selectBuiltinToolsForRun({
             ticketBoardEnabled: deps.ticketBoardEnabled,
@@ -1256,6 +1280,12 @@ export function createRunExecutor(deps: ExecutorDeps) {
             disabledBuiltinTools: botDisabledTools(bot),
             fleetManagement: bot.fleetManagement,
             followUpFromUser: sourceMessage?.role === "user",
+            sayNowOffered: sayNowAllowed({
+              ownerStartedRun,
+              messagingChannelRun,
+              voiceCall,
+              visitorRun,
+            }),
             // An optional tool: if the steps cannot be counted, the run goes on without it.
             workflowContinues:
               run.trigger === "routine" &&
@@ -1441,7 +1471,13 @@ export function createRunExecutor(deps: ExecutorDeps) {
 
         const ctx: RunContext = {
           deps,
-          providers: { web, mediaGeneration, browser, cloudAgent },
+          providers: {
+            web,
+            mediaGeneration,
+            ...(media?.own ? { mediaOwnConnection: media.own.connectionProvider } : {}),
+            browser,
+            cloudAgent,
+          },
           run,
           runId,
           workerId,
@@ -1880,6 +1916,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
                   workspaceInstruction,
                   agentEnvironmentInstruction,
                   replyGuidance: runReplyGuidance(run.trigger),
+                  sayNowOffered: builtins.some((tool) => tool.name === "say_now"),
                   disabledBuiltinTools,
                   offeredFleetTools: offeredFleetTools(builtins),
                 }),
@@ -2013,8 +2050,8 @@ export function createRunExecutor(deps: ExecutorDeps) {
                   runSecrets,
                 );
               },
-              claimSteering: (seenIds) =>
-                claimRunSteering(
+              claimSteering: async (seenIds) => {
+                const claimed = await claimRunSteering(
                   deps,
                   {
                     threadId: thread.id,
@@ -2030,7 +2067,13 @@ export function createRunExecutor(deps: ExecutorDeps) {
                     messageId: currentTurnMessage?.id,
                     hasImages: Boolean(currentTurnImages?.length),
                   },
-                ),
+                );
+                await noteSteeringClaimed(
+                  ctx,
+                  claimed.map((item) => item.messageId),
+                );
+                return claimed;
+              },
             },
             context,
           );

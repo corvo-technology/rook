@@ -306,6 +306,7 @@ describeWithDatabase("Composio catalog reconciliation", () => {
       (candidate) => candidate.route?.connectorId === "composio",
     );
     expect(tools.map((tool) => tool.name)).toEqual([
+      "COMPOSIO_SEARCH_TOOLS",
       "GMAIL_FETCH_EMAILS",
       "GMAIL_FETCH_MESSAGE_BY_MESSAGE_ID",
       "GMAIL_FETCH_MESSAGE_BY_THREAD_ID",

@@ -23,6 +23,13 @@ vi.mock("./agent-audience.js", () => ({
     new Set(ids.filter((id) => !deniedBotIds.has(id))),
 }));
 
+// Which version of the chat is on screen has its own tests; these are about paging and sending.
+vi.mock("@corvo/db", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@corvo/db")>()),
+  visibleMessagesWhere: async () => ({}),
+  messageVariantsByMessage: async () => new Map(),
+}));
+
 // Passthrough mock: every hint derives for real except the sentinel that
 // exercises the "derivation must never cost the send" path.
 vi.mock("@corvo/core/message-quote", async (importOriginal) => {

@@ -114,6 +114,7 @@ describe("ComposioConnector over the fake Composio client", () => {
     );
 
     expect(tools.map((tool) => tool.name)).toEqual([
+      "COMPOSIO_SEARCH_TOOLS",
       "GMAIL_FETCH_EMAILS",
       "GMAIL_FETCH_MESSAGE_BY_MESSAGE_ID",
       "GMAIL_FETCH_MESSAGE_BY_THREAD_ID",
@@ -190,7 +191,11 @@ describe("ComposioConnector over the fake Composio client", () => {
     const ctx = context([connection("GITHUB", await connect(connector, "GITHUB"))]);
 
     const tools = await connector.discoverTools(ctx);
-    expect(tools.map((tool) => tool.name)).toEqual(["GITHUB_LIST_RELEASES", "GITHUB_GET_RELEASE"]);
+    expect(tools.map((tool) => tool.name)).toEqual([
+      "COMPOSIO_SEARCH_TOOLS",
+      "GITHUB_LIST_RELEASES",
+      "GITHUB_GET_RELEASE",
+    ]);
     const events = await run(
       connector,
       "GITHUB_LIST_RELEASES",
@@ -224,6 +229,33 @@ describe("ComposioConnector over the fake Composio client", () => {
       },
     ]);
     expect(fake.executions).toEqual([]);
+  });
+
+  it("tells the agent when a searched app is not connected instead of hiding it", async () => {
+    const { fake, connector } = setup();
+    const gmail = await connect(connector, "GMAIL");
+    const ctx = context([connection("GMAIL", gmail)]);
+    const search = (use_case: string) =>
+      run(connector, "COMPOSIO_SEARCH_TOOLS", { queries: [{ use_case }] }, ctx);
+
+    const [missing] = await search("Google Calendar create event");
+    expect(missing).toMatchObject({
+      type: "result",
+      data: {
+        data: { corvo_not_connected: [{ slug: "GOOGLECALENDAR", name: "Google Calendar" }] },
+      },
+    });
+    expect(JSON.stringify(missing)).toContain("connect_app");
+    expect(JSON.stringify(missing)).not.toContain("Connections active");
+
+    const [connected] = await search("Gmail list labels");
+    expect(JSON.stringify(connected)).not.toContain("corvo_not_connected");
+    expect(JSON.stringify(connected)).toContain("Connections active");
+    // Searching never opens a browser or any other computer path.
+    expect(fake.executions.map((entry) => entry.tool)).toEqual([
+      "COMPOSIO_SEARCH_TOOLS",
+      "COMPOSIO_SEARCH_TOOLS",
+    ]);
   });
 
   it("requires an account in the session when several are pinned", async () => {

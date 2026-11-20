@@ -57,6 +57,7 @@ import { OnboardingStep, TourMark } from "./coach-tour.js";
 import { ConnectionAccessSchema, ConnectionAccessSetInput } from "./connection-access.js";
 import { DatabaseConnectionInput, DatabaseConnectionSchema } from "./database-connection.js";
 import {
+  AccountLocaleSchema,
   ActionApprovalRuleSchema,
   ActionAutoReviewSettingsSchema,
   AgentConnectionSummarySchema,
@@ -65,7 +66,6 @@ import {
   AgentSkillCatalogEntrySchema,
   AgentSkillSchema,
   AppBootstrapSchema,
-  ApprovalModeSchema,
   ArtifactSchema,
   ArtifactVersionSchema,
   ArtifactWithContentSchema,
@@ -141,6 +141,7 @@ import {
   SpaceMemoryConfigSchema,
   SpaceNavigationSchema,
   SpaceSchema,
+  StoredApprovalModeSchema,
   SubscriptionQuotaSchema,
   TaughtSkillSchema,
   TeachRecordingEventSchema,
@@ -338,6 +339,8 @@ const threadSendInput = threadTarget
     /** Posts into the thread of this channel message instead of the main column. */
     threadRootId: Id.optional(),
     clientNonce: z.string().min(1).max(200).optional(),
+    /** Runs the answer on this model instead of the agent's own; the agent's setting is untouched. */
+    model: z.object({ provider: z.string().min(1), modelId: z.string().min(1) }).optional(),
     /** What the partner's page says about where the person is and what it can do for them. */
     host: HostTurnSchema.optional(),
   })
@@ -436,10 +439,15 @@ export const appContract = {
           .object({
             avatarStyle: AvatarStyleSchema.optional(),
             timezone: TimeZoneSchema.nullable().optional(),
+            locale: AccountLocaleSchema.optional(),
           })
-          .refine((input) => input.avatarStyle !== undefined || input.timezone !== undefined, {
-            message: "Nothing to update",
-          }),
+          .refine(
+            (input) =>
+              input.avatarStyle !== undefined ||
+              input.timezone !== undefined ||
+              input.locale !== undefined,
+            { message: "Nothing to update" },
+          ),
       )
       .output(MeSchema),
     /** Saves a detected timezone only while none is saved, so it never replaces a choice. */
@@ -847,7 +855,13 @@ export const appContract = {
         cursor: z.number().int().min(-1),
       }),
     ),
-    get: oc.input(threadTarget).output(ThreadSnapshotSchema),
+    get: oc
+      .input(threadTarget.safeExtend({ preview: z.boolean().optional() }))
+      .output(ThreadSnapshotSchema),
+    /** One message whole, where a read with `preview` cut a helper's long report short. */
+    message: oc
+      .input(threadTarget.safeExtend({ messageId: Id }))
+      .output(ThreadMessageSchema.nullable()),
     /** How much of the model's reading window this chat's last turn used; null where unknown. */
     context: oc.input(z.object({ botId: Id })).output(
       z.object({
@@ -861,6 +875,7 @@ export const appContract = {
       .input(
         threadTarget.safeExtend({
           before: z.number().int().nonnegative().optional(),
+          preview: z.boolean().optional(),
           includePeerRuns: z.boolean().optional(),
           includePeerReceipts: z.boolean().optional(),
           around: z
@@ -884,6 +899,35 @@ export const appContract = {
         runIds: z.array(Id).optional(),
       }),
     ),
+    /** Rewrites one of the person's own messages as a new version of the chat and answers it again. */
+    edit: oc
+      .input(
+        threadTarget.safeExtend({
+          messageId: Id,
+          text: z.string().trim().min(1),
+          clientNonce: z.string().min(1).max(200).optional(),
+        }),
+      )
+      .output(
+        z.object({
+          taskId: Id.optional(),
+          runId: Id.optional(),
+          seq: z.number().int(),
+          runIds: z.array(Id).optional(),
+        }),
+      ),
+    /** Answers the last message again as a new version of the reply; the earlier reply stays. */
+    regenerate: oc
+      .input(threadTarget.safeExtend({ clientNonce: z.string().min(1).max(200).optional() }))
+      .output(z.object({ runId: Id })),
+    /** Shows another version of the chat; null is the original. */
+    switchBranch: oc
+      .input(threadTarget.safeExtend({ branchId: Id.nullable() }))
+      .output(z.object({ ok: z.literal(true) })),
+    /** Copies the chat up to a message into a new agent's chat to carry on there. */
+    fork: oc
+      .input(botId.safeExtend({ messageId: Id }))
+      .output(z.object({ botId: Id, name: z.string() })),
     react: oc
       .input(
         threadTarget.safeExtend({
@@ -1078,9 +1122,14 @@ export const appContract = {
       )
       .output(z.object({ ok: z.literal(true) })),
     terminalUrl: oc.input(botId).output(z.object({ url: z.string().nullable() })),
+    /** Recent commands with their output cut to a preview. */
     commands: oc
       .input(botId)
       .output(z.array(ComputerCommandSchema.extend({ createdAt: z.string() }))),
+    /** One command's whole output, for a command `commands` marked `outputTruncated`. */
+    commandOutput: oc
+      .input(botId.safeExtend({ executionId: z.string().min(1) }))
+      .output(z.object({ output: z.string() }).nullable()),
     screenUrl: oc.input(botId).output(z.object({ url: z.string().nullable() })),
     heartbeat: oc.input(botId).output(z.object({ ok: z.literal(true) })),
   },
@@ -1985,7 +2034,7 @@ export const appContract = {
     set: oc
       .input(
         settingsScopeInput.extend({
-          mode: ApprovalModeSchema.optional(),
+          mode: StoredApprovalModeSchema.optional(),
           enabled: z.boolean().optional(),
           skipApprovals: z.boolean().optional(),
           classifyTools: z.boolean().optional(),

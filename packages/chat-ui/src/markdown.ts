@@ -244,6 +244,25 @@ export function plainTextLinkParts(text: string): PlainTextPart[] {
   return parts.length > 0 ? parts : [{ type: "text", value: text }];
 }
 
+/**
+ * Web renders an app path such as `/settings/billing` as a link on the page itself. Native has no
+ * page to resolve it against, so a markdown link to an app path gets the app's origin, which opens
+ * without the external-link prompt. Paths like `//host` and links inside code are left alone.
+ */
+export function resolveAppPathLinks(markdown: string, appOrigin: string | null | undefined) {
+  if (!appOrigin || !markdown.includes("](/")) return markdown;
+  let origin: string;
+  try {
+    origin = new URL(appOrigin).origin;
+  } catch {
+    return markdown;
+  }
+  return markdown
+    .split(/(```[\s\S]*?```|`[^`\n]*`)/)
+    .map((part, index) => (index % 2 === 1 ? part : part.replace(/\]\(\/(?!\/)/g, `](${origin}/`)))
+    .join("");
+}
+
 export function sanitizeMarkdownUrl(url: string, allowRelative = false): string | undefined {
   const value = url.trim();
   const protocol = value.match(protocolPattern)?.[1]?.toLowerCase();

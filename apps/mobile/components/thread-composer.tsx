@@ -1,4 +1,5 @@
 import type { AgentSkillCatalogEntry } from "@corvo/contracts";
+import { findPastedSecrets } from "@corvo/contracts";
 import type { buildComposerMentionOptions, ComposerMention, SlashActionId } from "@corvo/core";
 import {
   mentionChipKey,
@@ -9,12 +10,22 @@ import {
 import { MAX_FONT_SCALE } from "@corvo/ui-tokens";
 import type { MenuAction } from "@expo/ui/community/menu";
 import { MenuView } from "@expo/ui/community/menu";
-import type { Ref } from "react";
+import type { ReactNode, Ref } from "react";
 import { useImperativeHandle, useMemo, useRef, useState } from "react";
 import type { ViewStyle } from "react-native";
-import { Pressable, ScrollView, Text, TextInput, useWindowDimensions, View } from "react-native";
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import { rpc } from "../lib/api";
 import { useI18n } from "../lib/i18n";
 import { useMobileTokens, useResolvedAppearance } from "../lib/native";
+import { askAboutPastedKey, saveKeyCredential } from "../lib/pasted-key";
 import type { ComposerSnapshot } from "../lib/thread-feedback";
 import { GlassSurface } from "./glass-surface";
 import { NativeSymbol } from "./native-symbol";
@@ -35,6 +46,8 @@ type ThreadComposerProps = {
   replyQuote: string | null;
   attachmentIds: string[];
   botId?: string;
+  /** The model menu for the next message; only an agent's own chat has one. */
+  modelMenu?: ReactNode;
   onCall: boolean;
   working: boolean;
   sending: boolean;
@@ -58,6 +71,7 @@ export function ThreadComposer({
   replyQuote,
   attachmentIds,
   botId,
+  modelMenu,
   onCall,
   working,
   sending,
@@ -81,6 +95,8 @@ export function ThreadComposer({
   const [slashQuery, setSlashQuery] = useState<string | null>(null);
   const [selectedMentions, setSelectedMentions] = useState<ComposerMention[]>([]);
   const [selectedSkill, setSelectedSkill] = useState<AgentSkillCatalogEntry | null>(null);
+  // The key the person chose to send as it is; it is held only until the draft changes it.
+  const approvedKey = useRef<string | null>(null);
   useImperativeHandle(ref, () => ({
     snapshot: () => ({
       promptText: serializeComposerPrompt(draft, selectedSkill, selectedMentions),
@@ -91,6 +107,7 @@ export function ThreadComposer({
       attachmentIds,
     }),
     reset: () => {
+      approvedKey.current = null;
       setDraft("");
       setMentionQuery(null);
       setSlashQuery(null);
@@ -129,7 +146,48 @@ export function ThreadComposer({
           );
         })
       : [];
+  // A key in the draft is offered to the credential store instead of the chat history. Only an
+  // agent's own chat can say whose credential it would be, so groups are not offered it.
+  function askAboutKey(value: string, thenSend = false) {
+    const key = botId ? findPastedSecrets(value)[0] : undefined;
+    if (!botId || !key) return false;
+    const secret = value.slice(key.start, key.end);
+    if (secret === approvedKey.current) return false;
+    askAboutPastedKey({
+      title: t("This looks like a key. Save it as a credential instead?"),
+      save: t("Save credential"),
+      sendAnyway: t("Send anyway"),
+      cancel: t("Cancel"),
+      name: key.name,
+      onSendAnyway: () => {
+        approvedKey.current = secret;
+        if (thenSend) void send();
+      },
+      onSave: (name) => {
+        saveKeyCredential({
+          botId,
+          name,
+          value: secret,
+          rpc: {
+            list: (input) => rpc("botSecrets/list", input),
+            put: (input) => rpc("botSecrets/put", input),
+          },
+        }).then(
+          (reference) => setDraft((current) => current.split(secret).join(reference)),
+          () => Alert.alert(t("Could not save the credential")),
+        );
+      },
+    });
+    return true;
+  }
+
+  function sendGuarded() {
+    if (!askAboutKey(draft, true)) void send();
+  }
+
   function updateDraft(value: string) {
+    // A key that just appeared, such as a paste, is offered right away.
+    if (findPastedSecrets(draft).length === 0) askAboutKey(value);
     setDraft(value);
     const match = /(?:^|\s)@([\w-]*)$/.exec(value);
     if (match) onMentionRequested?.();
@@ -324,6 +382,7 @@ export function ThreadComposer({
             </View>
           </MenuView>
         ) : null}
+        {modelMenu}
         <GlassSurface
           shape="roundedRectangle"
           style={{
@@ -522,7 +581,7 @@ export function ThreadComposer({
               accessibilityLabel={t("Send")}
               disabled={sending || !canSend}
               hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-              onPress={() => void send()}
+              onPress={sendGuarded}
               style={{ marginBottom: 8, opacity: sending || !canSend ? 0.5 : 1 }}
             >
               <GlassSurface

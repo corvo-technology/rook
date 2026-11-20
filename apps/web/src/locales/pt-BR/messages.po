@@ -2929,6 +2929,10 @@ msgstr "Não foi possível baixar o {0}. Tente novamente."
 msgid "Could not download {name}. Try again."
 msgstr "Não foi possível baixar o {name}. Tente novamente."
 
+#: src/pages/platform/UsageEvidenceExport.tsx
+msgid "Could not export"
+msgstr "Não foi possível exportar"
+
 #: src/pages/onboarding/CliEngineRows.tsx
 msgid "Could not install"
 msgstr "Não foi possível instalar"
@@ -3519,6 +3523,10 @@ msgstr "Cron"
 #: src/pages/RoutineSchedule.tsx
 msgid "Cron expression"
 msgstr "Expressão cron"
+
+#: src/pages/platform/UsageEvidenceExport.tsx
+msgid "CSV"
+msgstr "CSV"
 
 #: src/components/PlanChoice.tsx
 #: src/pages/platform/PricingSection.tsx
@@ -4535,6 +4543,7 @@ msgid "Friday"
 msgstr "sexta-feira"
 
 #: src/pages/ActivityList.tsx
+#: src/pages/platform/UsageEvidenceExport.tsx
 msgid "From"
 msgstr "De"
 
@@ -5159,6 +5168,10 @@ msgstr "As ferramentas continuaram falhando."
 #: src/pages/InvitePage.tsx
 msgid "Join"
 msgstr "Entrar"
+
+#: src/pages/platform/UsageEvidenceExport.tsx
+msgid "JSON"
+msgstr "JSON"
 
 #: src/pages/shell/transcript.tsx
 msgid "Jump to latest"
@@ -9370,6 +9383,7 @@ msgid "Title"
 msgstr "Título"
 
 #: src/pages/ActivityList.tsx
+#: src/pages/platform/UsageEvidenceExport.tsx
 msgid "To"
 msgstr "Para"
 
@@ -9713,6 +9727,10 @@ msgstr "Urgente"
 #: src/pages/Usage.tsx
 msgid "Usage"
 msgstr "Uso"
+
+#: src/pages/platform/UsageEvidenceExport.tsx
+msgid "Usage evidence"
+msgstr "Evidência de uso"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error-copy.ts

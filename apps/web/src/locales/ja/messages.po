@@ -2929,6 +2929,10 @@ msgstr "{0}をダウンロードできませんでした。もう一度お試し
 msgid "Could not download {name}. Try again."
 msgstr "{name}をダウンロードできませんでした。もう一度お試しください。"
 
+#: src/pages/platform/UsageEvidenceExport.tsx
+msgid "Could not export"
+msgstr "エクスポートできませんでした"
+
 #: src/pages/onboarding/CliEngineRows.tsx
 msgid "Could not install"
 msgstr "インストールできませんでした"
@@ -3519,6 +3523,10 @@ msgstr "Cron"
 #: src/pages/RoutineSchedule.tsx
 msgid "Cron expression"
 msgstr "Cron式"
+
+#: src/pages/platform/UsageEvidenceExport.tsx
+msgid "CSV"
+msgstr "CSV"
 
 #: src/components/PlanChoice.tsx
 #: src/pages/platform/PricingSection.tsx
@@ -4535,6 +4543,7 @@ msgid "Friday"
 msgstr "金曜日"
 
 #: src/pages/ActivityList.tsx
+#: src/pages/platform/UsageEvidenceExport.tsx
 msgid "From"
 msgstr "開始日"
 
@@ -5159,6 +5168,10 @@ msgstr "ツールが失敗し続けました。"
 #: src/pages/InvitePage.tsx
 msgid "Join"
 msgstr "参加"
+
+#: src/pages/platform/UsageEvidenceExport.tsx
+msgid "JSON"
+msgstr "JSON"
 
 #: src/pages/shell/transcript.tsx
 msgid "Jump to latest"
@@ -9370,6 +9383,7 @@ msgid "Title"
 msgstr "タイトル"
 
 #: src/pages/ActivityList.tsx
+#: src/pages/platform/UsageEvidenceExport.tsx
 msgid "To"
 msgstr "終了日"
 
@@ -9713,6 +9727,10 @@ msgstr "緊急"
 #: src/pages/Usage.tsx
 msgid "Usage"
 msgstr "使用量"
+
+#: src/pages/platform/UsageEvidenceExport.tsx
+msgid "Usage evidence"
+msgstr "利用の証拠"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error-copy.ts

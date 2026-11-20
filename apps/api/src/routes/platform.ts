@@ -25,6 +25,8 @@ import {
   setPartnerInvoiceState,
   setPartnerPlan,
   simulatePartnerPricing,
+  usageEvidenceCsv,
+  usageEvidenceReport,
 } from "@corvo/db";
 import { ORPCError } from "@orpc/server";
 import type { PartnerBranding } from "../partner-brand/index.js";
@@ -32,6 +34,10 @@ import { brandingView } from "../partner-brand/index.js";
 import { sendInvitationEmail } from "../team.js";
 import type { RouterContext } from "./context.js";
 import { isPartnerAdmin } from "./partner.js";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** A report carries every action in its range, so a range is bounded. */
+const MAX_EVIDENCE_DAYS = 366;
 
 /**
  * Custom limits for one organization, set by the platform owner (the people named in
@@ -302,6 +308,38 @@ export function platformRoutes(ctx: RouterContext) {
               throw error;
             }
             return { ok: true as const };
+          }),
+        ),
+      },
+      usageEvidence: {
+        export: admin.platform.usageEvidence.export.handler(({ input }) =>
+          asSystem(async () => {
+            const from = new Date(`${input.from}T00:00:00.000Z`);
+            const to = new Date(new Date(`${input.to}T00:00:00.000Z`).getTime() + DAY_MS);
+            if (
+              Number.isNaN(from.getTime()) ||
+              Number.isNaN(to.getTime()) ||
+              to <= from ||
+              to.getTime() - from.getTime() > MAX_EVIDENCE_DAYS * DAY_MS
+            )
+              throw new ORPCError("BAD_REQUEST");
+            const report = await usageEvidenceReport(deps.prisma, {
+              organizationId: input.organizationId,
+              from,
+              to,
+            });
+            const name = `usage-evidence-${input.organizationId}-${input.from}-${input.to}`;
+            return input.format === "csv"
+              ? {
+                  filename: `${name}.csv`,
+                  contentType: "text/csv",
+                  content: usageEvidenceCsv(report),
+                }
+              : {
+                  filename: `${name}.json`,
+                  contentType: "application/json",
+                  content: JSON.stringify(report, null, 2),
+                };
           }),
         ),
       },

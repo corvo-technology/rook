@@ -2929,6 +2929,10 @@ msgstr "无法下载 {0}。请重试。"
 msgid "Could not download {name}. Try again."
 msgstr "无法下载 {name}。请重试。"
 
+#: src/pages/platform/UsageEvidenceExport.tsx
+msgid "Could not export"
+msgstr "无法导出"
+
 #: src/pages/onboarding/CliEngineRows.tsx
 msgid "Could not install"
 msgstr "无法安装"
@@ -3519,6 +3523,10 @@ msgstr "Cron"
 #: src/pages/RoutineSchedule.tsx
 msgid "Cron expression"
 msgstr "Cron 表达式"
+
+#: src/pages/platform/UsageEvidenceExport.tsx
+msgid "CSV"
+msgstr "CSV"
 
 #: src/components/PlanChoice.tsx
 #: src/pages/platform/PricingSection.tsx
@@ -4535,6 +4543,7 @@ msgid "Friday"
 msgstr "周五"
 
 #: src/pages/ActivityList.tsx
+#: src/pages/platform/UsageEvidenceExport.tsx
 msgid "From"
 msgstr "发件人"
 
@@ -5159,6 +5168,10 @@ msgstr "它的工具一直失败。"
 #: src/pages/InvitePage.tsx
 msgid "Join"
 msgstr "加入"
+
+#: src/pages/platform/UsageEvidenceExport.tsx
+msgid "JSON"
+msgstr "JSON"
 
 #: src/pages/shell/transcript.tsx
 msgid "Jump to latest"
@@ -9370,6 +9383,7 @@ msgid "Title"
 msgstr "标题"
 
 #: src/pages/ActivityList.tsx
+#: src/pages/platform/UsageEvidenceExport.tsx
 msgid "To"
 msgstr "收件人"
 
@@ -9713,6 +9727,10 @@ msgstr "紧急"
 #: src/pages/Usage.tsx
 msgid "Usage"
 msgstr "用量"
+
+#: src/pages/platform/UsageEvidenceExport.tsx
+msgid "Usage evidence"
+msgstr "使用证据"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error-copy.ts

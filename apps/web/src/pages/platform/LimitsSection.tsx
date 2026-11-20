@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { useSpaceQueries } from "../../lib/query";
 import { errorText } from "../../lib/user-error";
 import { NumberInput } from "./fields";
+import { UsageEvidenceExport } from "./UsageEvidenceExport";
 
 interface LimitsForm {
   computerSize: string;
@@ -167,6 +168,7 @@ export function LimitsSection() {
           </div>
         </div>
       ) : null}
+      {organizationId ? <UsageEvidenceExport organizationId={organizationId} /> : null}
     </div>
   );
 }

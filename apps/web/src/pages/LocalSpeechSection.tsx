@@ -156,7 +156,9 @@ export function LocalSpeechSection({
             />
           ) : null}
           {model.state === "failed" && model.error ? (
-            <div className="text-sm text-destructive">{model.error}</div>
+            <div role="alert" className="text-sm text-destructive">
+              {model.error}
+            </div>
           ) : null}
         </div>
         {model.state === "downloading" ? (
@@ -231,7 +233,11 @@ export function LocalSpeechSection({
 
   return (
     <div data-testid="local-speech">
-      {error ? <p className="mb-4 text-sm text-destructive">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="mb-4 text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
       <Field>
         <FieldLabel htmlFor={languageId}>
           <Trans>Language</Trans>

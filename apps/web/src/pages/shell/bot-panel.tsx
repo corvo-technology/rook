@@ -1117,7 +1117,11 @@ export function BotSettings({
           </div>
         </CollapsibleContent>
       </Collapsible>
-      {error ? <p className="mt-2 text-[13px] text-destructive">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="mt-2 text-[13px] text-destructive">
+          {error}
+        </p>
+      ) : null}
       {dirty ? (
         <Button
           className="sticky bottom-0 mt-5 w-full"

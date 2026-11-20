@@ -71,7 +71,11 @@ export function AppAgentAccess({ server }: { server: McpServer }) {
           );
         })}
       </div>
-      {error ? <p className="text-[13px] text-destructive">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="text-[13px] text-destructive">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -320,7 +320,11 @@ export function VoiceSettingsOverlay({
           <Spinner aria-label={t`Loading voice providers…`} />
         </p>
       ) : null}
-      {error ? <p className="mb-4 text-sm text-destructive">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="mb-4 text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
       {notice ? <p className="mb-4 text-sm text-success">{notice}</p> : null}
       {catalog.length ? (
         <Field>

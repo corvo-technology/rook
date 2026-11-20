@@ -41,6 +41,7 @@ const plans = [
 ];
 
 vi.mock("react-native", () => ({
+  ActivityIndicator: () => createElement("span", { role: "progressbar" }),
   Alert: { alert: vi.fn() },
   Linking: { openURL: (url: string) => state.openURL(url) },
   ScrollView: ({ children }: { children?: ReactNode }) => createElement("div", null, children),

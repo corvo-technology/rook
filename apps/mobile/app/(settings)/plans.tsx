@@ -17,8 +17,8 @@ import {
   planPriceCents,
 } from "@corvo/contracts";
 import { MenuView } from "@expo/ui/community/menu";
-import { useEffect, useState } from "react";
-import { Alert, Linking, ScrollView } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Alert, Linking, ScrollView } from "react-native";
 import { SettingsGroup, SettingsRow, SettingsSwitch } from "../../components/settings-group";
 import { rpc } from "../../lib/api";
 import { dateLocaleForUi, useI18n } from "../../lib/i18n";
@@ -47,6 +47,8 @@ export default function PlansScreen() {
   const [aiOn, setAiOn] = useState(true);
   const [aiUse, setAiUse] = useState<AiUseCents>(DEFAULT_AI_USE);
   const [pending, setPending] = useState(false);
+  // State updates land a render late, so a second press needs its own guard.
+  const opening = useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -87,7 +89,8 @@ export default function PlansScreen() {
   const canManage = usage.canManage;
 
   async function subscribe() {
-    if (pending) return;
+    if (opening.current) return;
+    opening.current = true;
     setPending(true);
     try {
       const { url } = await rpc("billing/planCheckout", {
@@ -98,8 +101,9 @@ export default function PlansScreen() {
       });
       await Linking.openURL(url);
     } catch {
-      Alert.alert(t("Could not open billing"));
+      Alert.alert(t("Could not open checkout. Try again."));
     } finally {
+      opening.current = false;
       setPending(false);
     }
   }
@@ -240,6 +244,8 @@ export default function PlansScreen() {
           title={t("Subscribe to {name}", { name: names[plan] })}
           value={t("{price}/month", { price: perMonth(serverCents + aiCents) })}
           disabled={!canManage || pending}
+          accessibilityState={{ busy: pending, disabled: !canManage || pending }}
+          trailing={pending ? <ActivityIndicator /> : undefined}
           onPress={() => void subscribe()}
         />
       </SettingsGroup>

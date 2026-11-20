@@ -3047,6 +3047,10 @@ msgstr "No se pudo cerrar sesión. Inténtalo de nuevo."
 msgid "Could not open billing"
 msgstr "No se pudo abrir la facturación"
 
+#: src/components/PlanChoice.tsx
+msgid "Could not open checkout. Try again."
+msgstr "No se pudo abrir el pago. Inténtalo de nuevo."
+
 #: src/pages/DirectChat.tsx
 msgid "Could not open this conversation"
 msgstr "No se pudo abrir esta conversación"

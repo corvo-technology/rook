@@ -1174,6 +1174,7 @@ export const PT_BR_MESSAGES: Record<string, string> = {
   Company: "Empresa",
   "Could not load plans": "Não foi possível carregar os planos",
   "Could not open billing": "Não foi possível abrir a cobrança",
+  "Could not open checkout. Try again.": "Não foi possível abrir o checkout. Tente de novo.",
   Currency: "Moeda",
   "Include AI": "Incluir IA",
   Large: "Grande",

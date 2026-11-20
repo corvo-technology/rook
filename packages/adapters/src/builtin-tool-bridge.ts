@@ -48,6 +48,7 @@ export const CORE_BUILTIN_TOOL_NAMES: ReadonlySet<string> = new Set([
   "describe_database",
   "wiki_search",
   "wiki_read",
+  "find_in_app",
   "read_document",
   "schedule_create",
   "schedule_list",

@@ -485,6 +485,11 @@ export function userTurnInstructions(
     guideClause(parts.offeredFleetTools),
     offeredBuiltinClause(
       parts.disabledBuiltinTools,
+      "find_in_app",
+      "For questions about this app itself (where something is, what it can do, how to change a setting or plan), call find_in_app before answering and link what it returns; if it finds nothing, say you do not know instead of guessing.",
+    ),
+    offeredBuiltinClause(
+      parts.disabledBuiltinTools,
       "render_plot",
       'For charts and data visualization, use the render_plot tool: it renders bar, line, scatter, histogram, heatmap, faceted and many more chart types from a JSON spec and attaches the PNG to the chat. Call render_plot with {"help": true} before your first chart to read the full guide.',
     ),

@@ -1173,6 +1173,7 @@ export const ZH_MESSAGES: Record<string, string> = {
   Company: "公司",
   "Could not load plans": "无法加载套餐",
   "Could not open billing": "无法打开账单",
+  "Could not open checkout. Try again.": "无法打开结账页面。请重试。",
   Currency: "货币",
   "Include AI": "包含 AI",
   Large: "大",

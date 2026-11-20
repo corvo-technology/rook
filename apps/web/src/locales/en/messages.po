@@ -3059,6 +3059,10 @@ msgstr "Could not log out. Try again."
 msgid "Could not open billing"
 msgstr "Could not open billing"
 
+#: src/components/PlanChoice.tsx
+msgid "Could not open checkout. Try again."
+msgstr "Could not open checkout. Try again."
+
 #: src/pages/DirectChat.tsx
 msgid "Could not open this conversation"
 msgstr "Could not open this conversation"

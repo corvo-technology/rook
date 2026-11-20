@@ -6,7 +6,8 @@
   "exports": {
     "./app": "./src/app.ts",
     "./partner-tools": "./src/partner-console/agent-tools.ts",
-    "./partner-alerts": "./src/partner-alerts.ts"
+    "./partner-alerts": "./src/partner-alerts.ts",
+    "./billing-notices": "./src/billing-notices.ts"
   },
   "scripts": {
     "dev": "node ../../scripts/dev-watch.mjs src/index.ts",

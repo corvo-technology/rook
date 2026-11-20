@@ -261,6 +261,23 @@ model BillingAccount {
   @@map("billing_accounts")
 }
 
+/// An email about a subscription that was sent once: the confirmation of a plan and the reminder
+/// before a yearly renewal. The unique key names what it was sent for, so a repeated webhook or a
+/// second run of the daily job finds the row and sends nothing.
+model BillingNotice {
+  id             String   @id @default(cuid())
+  /// "confirmation" or "renewal_reminder".
+  kind           String
+  organizationId String
+  subscriptionId String
+  /// One row per `key`: the subscription, what it holds and, for a reminder, the renewal and threshold.
+  key            String   @unique
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, createdAt])
+  @@map("billing_notices")
+}
+
 /// Bytes an organization keeps in object storage (drive files, attachments, computer homes),
 /// counted on every put and delete and corrected by a periodic reconcile. Only kept where the
 /// deployment has plans.

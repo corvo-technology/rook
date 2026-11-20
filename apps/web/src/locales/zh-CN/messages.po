@@ -3059,6 +3059,10 @@ msgstr "无法退出登录。请重试。"
 msgid "Could not open billing"
 msgstr "无法打开账单"
 
+#: src/components/PlanChoice.tsx
+msgid "Could not open checkout. Try again."
+msgstr "无法打开结账页面。请重试。"
+
 #: src/pages/DirectChat.tsx
 msgid "Could not open this conversation"
 msgstr "无法打开此对话"

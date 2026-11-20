@@ -1228,6 +1228,8 @@ export const DE_MESSAGES: Record<string, string> = {
   Company: "Unternehmen",
   "Could not load plans": "Pläne konnten nicht geladen werden",
   "Could not open billing": "Abrechnung konnte nicht geöffnet werden",
+  "Could not open checkout. Try again.":
+    "Checkout konnte nicht geöffnet werden. Versuche es erneut.",
   Currency: "Währung",
   "Include AI": "KI einschließen",
   Large: "Groß",

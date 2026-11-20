@@ -1209,6 +1209,8 @@ export const JA_MESSAGES: Record<string, string> = {
   Company: "企業",
   "Could not load plans": "プランを読み込めませんでした",
   "Could not open billing": "請求を開けませんでした",
+  "Could not open checkout. Try again.":
+    "チェックアウトを開けませんでした。もう一度お試しください。",
   Currency: "通貨",
   "Include AI": "AIを含める",
   Large: "大",

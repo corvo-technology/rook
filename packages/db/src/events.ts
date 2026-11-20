@@ -38,6 +38,7 @@ import {
 import { urlSite } from "@corvo/core/egress";
 import { approvalEffectKey } from "@corvo/core/node/approval-effect-key";
 import { getLogger } from "@corvo/logging";
+import { recordActionEvidence } from "./action-evidence.js";
 import { saveApprovalRule } from "./approval-settings.js";
 import { cancelRunsInTransaction } from "./cancel-runs.js";
 import type { Prisma, PrismaClient } from "./client.js";
@@ -2178,6 +2179,7 @@ export async function appendEventInTransaction(
       runId: input.runId,
     },
   });
+  await recordActionEvidence(tx, { ...event, type: input.type }, payload);
   const firstResponse = Boolean(
     input.runId &&
       !firstResponseAt &&

@@ -1,5 +1,6 @@
 import type { BillingProvider } from "@corvo/adapter-kit";
 import type { Actor } from "@corvo/contracts";
+import { TERMS_VERSION } from "@corvo/contracts";
 import type { PrismaClient } from "@corvo/db";
 import { describe, expect, it, vi } from "vitest";
 import { createBillingService } from "./billing.js";
@@ -103,6 +104,14 @@ describe("free trial", () => {
     expect(vi.mocked(provider.createCheckout).mock.calls[0]?.[0]).not.toHaveProperty("trialDays");
   });
 
+  it("asks the provider to collect the current terms version", async () => {
+    const { billing, provider } = seatPlan();
+    await billing.checkout(actor);
+    expect(provider.createCheckout).toHaveBeenCalledWith(
+      expect.objectContaining({ termsVersion: TERMS_VERSION }),
+    );
+  });
+
   it("is offered and sent when days are configured", async () => {
     const { billing, provider } = seatPlan(7);
     await expect(billing.status(actor)).resolves.toMatchObject({
@@ -188,6 +197,14 @@ describe("plan checkout", () => {
     const { billing, provider } = planService({ role: "member" });
     await expect(billing.planCheckout(actor, input)).rejects.toMatchObject({ code: "FORBIDDEN" });
     expect(provider.createPlanCheckout).not.toHaveBeenCalled();
+  });
+
+  it("asks the provider to collect the current terms version", async () => {
+    const { billing, provider } = planService({ people: 3 });
+    await billing.planCheckout(actor, input);
+    expect(provider.createPlanCheckout).toHaveBeenCalledWith(
+      expect.objectContaining({ termsVersion: TERMS_VERSION }),
+    );
   });
 
   it("charges for the people above what the plan includes, never below zero", async () => {

@@ -28,6 +28,7 @@ import {
   planConfigFromEnv,
   resolvePlanChange,
   samePlanSelection,
+  TERMS_VERSION,
 } from "@corvo/contracts";
 import type { BillingAccount, PrismaClient } from "@corvo/db";
 import {
@@ -390,6 +391,7 @@ export function createBillingService(deps: {
         provider.createByokCheckout!({
           customerId,
           amountCents,
+          termsVersion: TERMS_VERSION,
           ...(trialDays !== null && byokTrialAvailable(account, credits) ? { trialDays } : {}),
           successUrl: `${deps.webOrigin}${BILLING_RETURN_PATH}`,
           cancelUrl: appUrl,
@@ -444,6 +446,7 @@ export function createBillingService(deps: {
           provider.createCreditCheckout!({
             customerId,
             ...input,
+            termsVersion: TERMS_VERSION,
             successUrl: `${deps.webOrigin}${BILLING_RETURN_PATH}`,
             cancelUrl: `${appUrl}?billing=canceled`,
           }),
@@ -582,6 +585,7 @@ export function createBillingService(deps: {
             interval: input.interval,
             extraPeople: extraSeats(limits, total),
             aiUseCents: input.aiUseCents,
+            termsVersion: TERMS_VERSION,
             successUrl: `${deps.webOrigin}${BILLING_RETURN_PATH}`,
             cancelUrl: `${appUrl}?billing=canceled`,
           }),
@@ -696,6 +700,7 @@ export function createBillingService(deps: {
             customerId,
             seats,
             ...trial,
+            termsVersion: TERMS_VERSION,
             successUrl: `${deps.webOrigin}${BILLING_RETURN_PATH}`,
             cancelUrl: appUrl,
           }),

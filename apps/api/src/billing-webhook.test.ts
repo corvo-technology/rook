@@ -21,6 +21,7 @@ function mount(
   parseWebhook: BillingProvider["parseWebhook"],
   options: { sync?: () => Promise<void>; actor?: Actor | null } = {},
 ) {
+  const recordEvidence = vi.fn(async () => undefined);
   const sync = vi.fn(options.sync ?? (async () => undefined));
   const syncForActor = vi.fn(async () => undefined);
   const app = new Hono();
@@ -29,8 +30,9 @@ function mount(
     provider: { parseWebhook },
     webOrigin: "https://app.example.com",
     authenticate: async () => (options.actor === undefined ? actor : options.actor),
+    recordEvidence,
   });
-  return { app, sync, syncForActor };
+  return { app, sync, syncForActor, recordEvidence };
 }
 
 function post(body: string) {
@@ -70,6 +72,29 @@ describe("billing webhook", () => {
     expect(res.status).toBe(200);
     expect(parseWebhook).toHaveBeenCalledWith('{"id":"evt_1"}', expect.any(Headers));
     expect(sync).toHaveBeenCalledWith("cus_1");
+  });
+
+  it("records the evidence of a verified event before syncing", async () => {
+    const evidence = {
+      eventId: "evt_1",
+      type: "invoice.paid",
+      occurredAt: new Date("2026-01-01T00:00:00Z"),
+    };
+    const { app, recordEvidence } = mount(() => ({ customerId: "cus_1", evidence }));
+    const res = await app.request(BILLING_WEBHOOK_PATH, post("{}"));
+    expect(res.status).toBe(200);
+    expect(recordEvidence).toHaveBeenCalledWith("cus_1", evidence);
+  });
+
+  it("fails the delivery so the provider retries when the evidence cannot be stored", async () => {
+    const { app, sync, recordEvidence } = mount(() => ({
+      customerId: "cus_1",
+      evidence: { eventId: "e", type: "t", occurredAt: new Date() },
+    }));
+    recordEvidence.mockRejectedValueOnce(new Error("database down"));
+    const res = await app.request(BILLING_WEBHOOK_PATH, post("{}"));
+    expect(res.status).toBe(500);
+    expect(sync).not.toHaveBeenCalled();
   });
 
   it("fails the delivery so the provider retries when sync fails", async () => {

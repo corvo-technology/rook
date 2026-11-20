@@ -359,23 +359,23 @@ export async function meterPartnerResources(
   const runs = await prisma.computerRun.findMany({
     where: {
       endedAt: { gte: new Date(now.getTime() - METER_LOOKBACK_MS), lte: now },
-      space: { organizationId: { in: organizationIds } },
+      organizationId: { in: organizationIds },
     },
     select: {
       id: true,
       startedAt: true,
       endedAt: true,
-      space: { select: { organizationId: true } },
+      organizationId: true,
     },
     take: 2000,
   });
   for (const run of runs) {
-    if (!run.endedAt || !run.space) continue;
+    if (!run.endedAt || !run.organizationId) continue;
     const minutes = Math.ceil((run.endedAt.getTime() - run.startedAt.getTime()) / 60_000);
     debited += await debitPartnerResource(
       prisma,
       config,
-      run.space.organizationId,
+      run.organizationId,
       { resource: "computer", units: minutes, key: run.id },
       now,
     );

@@ -15,6 +15,7 @@ import type {
   BillingCheckoutRequest,
   BillingCreditCheckoutRequest,
   BillingCreditPurchase,
+  BillingEvidence,
   BillingPlanChangeRequest,
   BillingPlanCheckoutRequest,
   BillingPrice,
@@ -38,6 +39,7 @@ import type {
   ComputerInput,
   ComputerObservation,
   ComputerRef,
+  ComputerResourceSample,
   ConnectorCall,
   ConnectorCapabilities,
   ConnectorCatalogItem,
@@ -145,6 +147,11 @@ export interface SandboxProvider {
    * choose between kinds at provision time implement it.
    */
   provisionKind?(): Promise<ComputerRef["kind"]>;
+  /** Optional measurement of what this running computer has used; providers without it record nothing. */
+  sampleResources?(
+    computer: ComputerRef,
+    context: AdapterContext,
+  ): Promise<ComputerResourceSample | undefined>;
   /** Read-only probe: true only when this exact reference is already running. */
   isRunning?(computer: ComputerRef, context: AdapterContext): Promise<boolean>;
   /**
@@ -492,7 +499,10 @@ export interface BillingProvider {
   getPriceById?(priceId: string): Promise<BillingPrice>;
   cancelCustomerSubscriptions(customerId: string): Promise<void>;
   /** Verifies the signature. `null` means the request is not authentic. */
-  parseWebhook(rawBody: string, headers: Headers): { customerId: string } | "ignored" | null;
+  parseWebhook(
+    rawBody: string,
+    headers: Headers,
+  ): { customerId: string; evidence?: BillingEvidence } | "ignored" | null;
 }
 
 export interface ExecutionRunner {

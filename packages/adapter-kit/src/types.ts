@@ -1297,6 +1297,8 @@ export interface BillingCreditCheckoutRequest {
   customerId: string;
   amountCents: number;
   monthly: boolean;
+  /** The terms version the customer must accept to pay; the provider records it with the session. */
+  termsVersion?: string;
   successUrl: string;
   cancelUrl: string;
 }
@@ -1337,6 +1339,8 @@ export interface BillingPlanCheckoutRequest {
   extraPeople: number;
   /** Dollars of model use a month, in cents; null brings their own AI. */
   aiUseCents: AiUseCents | null;
+  /** The terms version the customer must accept to pay; the provider records it with the session. */
+  termsVersion?: string;
   successUrl: string;
   cancelUrl: string;
 }
@@ -1361,11 +1365,48 @@ export interface BillingPlanChangeRequest {
   atRenewal: BillingPlanSelection | null;
 }
 
+/**
+ * What a verified billing webhook says about a payment or subscription, kept as evidence of
+ * what was charged and accepted. Only the fields the event carries are set.
+ */
+/**
+ * What one computer has used so far, as its provider reports it. Counters (`cpuSeconds` and
+ * the network bytes) are cumulative since the sandbox started; memory and disk are levels now.
+ * A provider omits what it cannot measure.
+ */
+export interface ComputerResourceSample {
+  cpuSeconds?: number;
+  memoryBytes?: number;
+  diskBytes?: number;
+  networkRxBytes?: number;
+  networkTxBytes?: number;
+}
+
+export interface BillingEvidence {
+  /** The provider's event id; one record per id, so a repeated delivery adds nothing. */
+  eventId: string;
+  type: string;
+  occurredAt: Date;
+  sessionId?: string;
+  subscriptionId?: string;
+  invoiceId?: string;
+  chargeId?: string;
+  /** In the currency's smallest unit. */
+  amountMinor?: number;
+  currency?: string;
+  priceLookupKeys?: string[];
+  interval?: string;
+  status?: string;
+  termsAccepted?: boolean;
+  termsVersion?: string;
+}
+
 export interface BillingCheckoutRequest {
   customerId: string;
   seats: number;
   /** Omitted when the customer has already used its trial. */
   trialDays?: number;
+  termsVersion?: string;
   successUrl: string;
   cancelUrl: string;
 }

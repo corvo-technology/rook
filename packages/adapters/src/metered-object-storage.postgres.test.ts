@@ -120,6 +120,12 @@ describePostgres("metered object storage (PostgreSQL)", () => {
     expect(total).toBeGreaterThan(800);
     expect(await alerts()).toBe(1);
 
+    // The run left today's snapshot of the reconciled total.
+    expect(
+      (await system.storageSnapshot.findFirstOrThrow({ where: { organizationId: owner.spaceId } }))
+        .bytes,
+    ).toBe(BigInt(total));
+
     // Running it again changes nothing and does not alert again.
     expect(await reconcileStorage(system, bucket, PLANS)).not.toContain(owner.spaceId);
     expect(await alerts()).toBe(1);

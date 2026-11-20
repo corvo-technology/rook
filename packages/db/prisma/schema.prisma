@@ -66,7 +66,6 @@ model User {
   signupSurvey                SignupSurvey?
   coachTour                   CoachTour?
   onboardingProgress          OnboardingProgress?
-  computerRuns                ComputerRun[]
   messagingInstallations      MessagingInstallation[]
   messagingInstallSessions    MessagingInstallSession[]
 
@@ -277,6 +276,49 @@ model StorageUsage {
   @@map("storage_usage")
 }
 
+/// What the agents did on a computer, copied from the thread's events in the same transaction when
+/// they are recorded: commands and tool calls, never their output or arguments. Append-only
+/// evidence with no lifecycle foreign keys, so it outlives the thread, space and organization.
+model ActionEvidence {
+  /// The id of the event it was copied from.
+  id             String   @id
+  spaceId        String
+  organizationId String?
+  botId          String
+  /// The computer the bot was attached to when it acted.
+  computerId     String?
+  runId          String?
+  /// The member whose run it was; the thread's owner when there is no run.
+  userId         String?
+  /// "command", "tool_called" or "tool_completed".
+  kind           String
+  executionId    String?
+  /// The command line, or the tool's name.
+  detail         String?
+  cwd            String?
+  /// A command's "running" or "done", or a tool's outcome ("succeeded", "error", "paused").
+  status         String?
+  exitCode       Int?
+  occurredAt     DateTime
+
+  @@index([organizationId, occurredAt])
+  @@map("action_evidence")
+}
+
+/// One organization's stored bytes on one UTC day, taken once a day. Append-only evidence of what
+/// was stored when: no lifecycle foreign keys, so it outlives the organization.
+model StorageSnapshot {
+  id             String   @id @default(cuid())
+  organizationId String
+  /// UTC day, "YYYY-MM-DD".
+  day            String
+  bytes          BigInt
+  takenAt        DateTime @default(now())
+
+  @@unique([organizationId, day])
+  @@map("storage_snapshots")
+}
+
 /// Custom limits the platform owner gives one organization. A value set here replaces the plan's.
 model OrganizationLimitOverride {
   organizationId  String       @id
@@ -388,7 +430,6 @@ model Space {
   artifacts                   Artifact[]
   notificationPreferences     NotificationPreference[]
   computers                   Computer[]
-  computerRuns                ComputerRun[]
   externalEffects             ExternalEffect[]
   mcpServers                  McpServer[]
   mcpOAuthSessions            McpOAuthSession[]
@@ -1575,27 +1616,57 @@ model Computer {
 ///
 /// `computerId` is deliberately not a relation, so the row outlives a deleted computer. Deleting
 /// the user or space anonymises the row instead of erasing the run time it records.
+/// One stretch a computer was running. Evidence of what was used, so deliberately no lifecycle
+/// foreign keys: space, user and organization ids outlive their rows and may dangle.
 model ComputerRun {
-  id          String    @id @default(cuid())
-  computerId  String
-  spaceId     String?
-  space       Space?    @relation(fields: [spaceId], references: [id], onDelete: SetNull)
-  userId      String?
-  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  id             String    @id @default(cuid())
+  computerId     String
+  spaceId        String?
+  /// Set from the space when the row is written (database trigger), so the run stays
+  /// attributable after the space or the organization is deleted.
+  organizationId String?
+  userId         String?
   /// The provider kind, such as docker or e2b.
-  kind        String
+  kind           String
   /// The provider's id for the sandbox, to match runs with the provider's own usage and billing.
-  providerRef String?
-  startedAt   DateTime
+  providerRef    String?
+  startedAt      DateTime
   /// Null while running. When the end was not seen as it happened, this is when it was detected.
-  endedAt     DateTime?
+  endedAt        DateTime?
   /// How it ended; see `ComputerRunEnd` in packages/db/src/computer-runs.ts.
-  endReason   String?
+  endReason      String?
 
   @@unique([computerId, startedAt])
   @@index([spaceId, userId, startedAt])
+  @@index([organizationId, startedAt])
   // computer_runs_open_idx (open runs by computer) is raw SQL: Prisma cannot express partial indexes.
   @@map("computer_runs")
+}
+
+/// What a running computer used at one moment: every five minutes and once when it stops.
+/// Append-only evidence like `ComputerRun`: no lifecycle foreign keys, ids only. Counters are
+/// the provider's cumulative figures since the sandbox started; memory and disk are levels.
+model ComputerResourceSample {
+  id             String   @id @default(cuid())
+  computerId     String
+  spaceId        String?
+  organizationId String?
+  userId         String?
+  /// `startedAt` of the `ComputerRun` this sample belongs to.
+  runStartedAt   DateTime?
+  /// A five-minute tick for periodic samples (so two writers store one), the moment for a stop.
+  sampledAt      DateTime
+  /// "tick" or "stop".
+  reason         String
+  cpuSeconds     Float?
+  memoryBytes    BigInt?
+  diskBytes      BigInt?
+  networkRxBytes BigInt?
+  networkTxBytes BigInt?
+
+  @@unique([computerId, sampledAt])
+  @@index([organizationId, sampledAt])
+  @@map("computer_resource_samples")
 }
 
 model ComputerExecutionLease {

@@ -7,6 +7,7 @@ import type {
   ComputerInput,
   ComputerObservation,
   ComputerRef,
+  ComputerResourceSample,
   ControlLeaseRef,
   PageBrowserCommand,
   PageBrowserResult,
@@ -184,6 +185,23 @@ export class DockerSandboxProvider implements SandboxProvider {
       fresh: body.resumed !== true,
       ...(body.started === true ? { started: true } : {}),
     };
+  }
+
+  async sampleResources(
+    computer: ComputerRef,
+    context: AdapterContext,
+  ): Promise<ComputerResourceSample | undefined> {
+    if (computer.kind !== "docker") return undefined;
+    const res = await computerFetch(this.url(`/computers/${computer.id}/resources`), {
+      method: "GET",
+      headers: this.headers(context, computer.botId),
+      signal: context.signal,
+    });
+    if (!res.ok) {
+      cancelResponseBody(res);
+      return undefined;
+    }
+    return readSandboxJson<ComputerResourceSample>(res, context.signal);
   }
 
   async isRunning(computer: ComputerRef, context: AdapterContext): Promise<boolean> {

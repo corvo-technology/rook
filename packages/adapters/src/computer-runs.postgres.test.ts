@@ -16,6 +16,7 @@ import {
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { sleepComputerIfIdle } from "./computer-idle.js";
 import { provisionComputer } from "./computer-lifecycle.js";
+import { createComputerResourceSampler } from "./computer-resources.js";
 import { FakeSandboxProvider } from "./fake-sandbox.js";
 import { LocalAgentHomeStore } from "./home.js";
 
@@ -225,7 +226,7 @@ describePostgres("computer runs (PostgreSQL)", () => {
     expect((await o.runs()).map((run) => run.endReason)).toEqual(["reconciled", null]);
   });
 
-  it("keeps the run time but not who it belonged to when the account and space are deleted", async () => {
+  it("keeps the run time and the ids of who it belonged to when the account and space are deleted", async () => {
     const o = await owner();
     await o.start();
     await system.computer.delete({ where: { id: o.id } });
@@ -234,8 +235,56 @@ describePostgres("computer runs (PostgreSQL)", () => {
     await system.user.delete({ where: { id: o.id } });
 
     expect(await o.runs()).toEqual([
-      expect.objectContaining({ computerId: o.id, spaceId: null, userId: null, kind: "fake" }),
+      expect.objectContaining({
+        computerId: o.id,
+        spaceId: o.id,
+        userId: o.id,
+        organizationId: o.id,
+        kind: "fake",
+      }),
     ]);
+  });
+
+  it("samples a running computer on each tick and once more at stop, and keeps them after deletion", async () => {
+    const o = await owner();
+    await o.start();
+    const box = o.sandbox.boxes.get((await o.runs())[0]!.providerRef!)!;
+    box.resources = { cpuSeconds: 4, memoryBytes: 1024, diskBytes: 2048, networkRxBytes: 5 };
+    const samples = () =>
+      system.computerResourceSample.findMany({
+        where: { computerId: o.id },
+        orderBy: { sampledAt: "asc" },
+      });
+    const tick = createComputerResourceSampler({ prisma: db.prisma, sandbox: o.sandbox });
+
+    await runAsSystem("sampler", () => tick(new Date("2026-03-01T10:07:00Z")));
+    // A second writer in the same five minutes stores nothing more.
+    await runAsSystem("sampler", () =>
+      createComputerResourceSampler({ prisma: db.prisma, sandbox: o.sandbox })(
+        new Date("2026-03-01T10:09:00Z"),
+      ),
+    );
+    expect(await samples()).toEqual([
+      expect.objectContaining({
+        spaceId: o.id,
+        organizationId: o.id,
+        userId: o.id,
+        reason: "tick",
+        sampledAt: new Date("2026-03-01T10:05:00Z"),
+        cpuSeconds: 4,
+        memoryBytes: 1024n,
+        diskBytes: 2048n,
+        networkRxBytes: 5n,
+        networkTxBytes: null,
+      }),
+    ]);
+
+    await o.sleep();
+    expect((await samples()).map((sample) => sample.reason)).toEqual(["tick", "stop"]);
+
+    await system.computer.delete({ where: { id: o.id } });
+    await system.organization.delete({ where: { id: o.id } });
+    expect(await samples()).toHaveLength(2);
   });
 
   it("does not record host computers, whose stop only Electron sees", async () => {

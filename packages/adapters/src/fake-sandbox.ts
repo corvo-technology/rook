@@ -5,6 +5,7 @@ import type {
   ComputerFileEntry,
   ComputerInput,
   ComputerRef,
+  ComputerResourceSample,
   ControlLeaseRef,
   PortableFile,
   ProcessEvent,
@@ -27,6 +28,8 @@ import { sandboxCommandEnvironment } from "./sandbox-command-environment.js";
 
 export interface FakeBox {
   ref: ComputerRef;
+  /** What `sampleResources` reports; tests set it. */
+  resources?: ComputerResourceSample;
   files: Map<string, { content: Uint8Array; executable: boolean }>;
   running: boolean;
   screens: Map<string, string>;
@@ -280,6 +283,11 @@ export class FakeSandboxProvider implements SandboxProvider {
     if (context.screenLeaseId && !canReleaseScreenLease(leaseId, context.screenLeaseId)) return;
     box.screens.delete(key);
     box.screenLeases.delete(key);
+  }
+
+  async sampleResources(computer: ComputerRef): Promise<ComputerResourceSample | undefined> {
+    const box = this.boxes.get(computer.id);
+    return box?.running ? box.resources : undefined;
   }
 
   async stop(computer: ComputerRef, _context: AdapterContext): Promise<void> {

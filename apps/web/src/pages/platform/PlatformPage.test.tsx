@@ -17,6 +17,7 @@ const platform = vi.hoisted(() => ({
   invoices: { list: vi.fn(), draft: vi.fn(), setState: vi.fn() },
   connect: { list: vi.fn(), reconcile: vi.fn() },
   limits: { get: vi.fn(), set: vi.fn() },
+  usageEvidence: { export: vi.fn() },
 }));
 const operator = vi.hoisted(() => ({ value: true as boolean | undefined }));
 const rpcClient = vi.hoisted(() => ({ platform }));
@@ -400,6 +401,34 @@ it("reads and saves one organization's limits, leaving blanks to the plan", asyn
     { organizationId: "org-1", override: { computers: 3, maxSeats: 5 } },
     expect.anything(),
   );
+});
+
+it("asks for one organization's usage evidence between two days and downloads the file", async () => {
+  platform.usageEvidence.export.mockReset().mockResolvedValue({
+    filename: "usage-evidence.csv",
+    contentType: "text/csv",
+    content: "# report\n",
+  });
+  const createObjectURL = vi.fn(() => "blob:evidence");
+  Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() });
+  const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+  await open("/app/platform/limits");
+  await act(async () => change(field("Organization ID"), "org-1"));
+  await act(async () => {
+    container.querySelector("form")?.requestSubmit();
+  });
+  await settle();
+  await act(async () => change(field("From"), "2026-03-01"));
+  await act(async () => change(field("To"), "2026-03-31"));
+  await act(async () => button("CSV").click());
+  await settle();
+  expect(platform.usageEvidence.export).toHaveBeenCalledWith(
+    { organizationId: "org-1", from: "2026-03-01", to: "2026-03-31", format: "csv" },
+    expect.anything(),
+  );
+  expect(createObjectURL).toHaveBeenCalled();
+  expect(click).toHaveBeenCalled();
+  click.mockRestore();
 });
 
 const button = (label: string, root: ParentNode = container) =>

@@ -3,6 +3,7 @@ import type {
   BillingCheckoutRequest,
   BillingCreditCheckoutRequest,
   BillingCreditPurchase,
+  BillingEvidence,
   BillingPlanChangeRequest,
   BillingPlanCheckoutRequest,
   BillingPlanSelection,
@@ -184,6 +185,7 @@ export class StripeBillingProvider implements BillingProvider {
       line_items: [{ price: this.config.priceId, quantity: input.seats }],
       payment_method_collection: "always",
       allow_promotion_codes: true,
+      ...termsConsent(input.termsVersion),
       subscription_data: {
         billing_mode: { type: "classic" },
         ...(input.trialDays === undefined ? {} : { trial_period_days: input.trialDays }),
@@ -233,7 +235,7 @@ export class StripeBillingProvider implements BillingProvider {
                 },
               },
         ],
-        metadata,
+        ...termsConsent(input.termsVersion, metadata),
         ...(input.monthly
           ? { subscription_data: { metadata, billing_mode: { type: "classic" } } }
           : { payment_intent_data: { metadata }, invoice_creation: { enabled: true } }),
@@ -301,7 +303,7 @@ export class StripeBillingProvider implements BillingProvider {
             ),
           },
         ],
-        metadata,
+        ...termsConsent(input.termsVersion, metadata),
         subscription_data: {
           metadata,
           billing_mode: { type: "classic" },
@@ -490,6 +492,7 @@ export class StripeBillingProvider implements BillingProvider {
         allowed_payment_method_types: ["card"],
         adaptive_pricing: { enabled: false },
         allow_promotion_codes: true,
+        ...termsConsent(input.termsVersion),
         line_items: lineItems,
         subscription_data: { billing_mode: { type: "classic" } },
         success_url: input.successUrl,
@@ -1224,16 +1227,88 @@ const syncEventTypes = new Set([
   "charge.dispute.closed",
 ]);
 
-/** Verifies a Stripe-signed webhook and extracts the customer to re-sync. */
+type StripeObject = Record<string, unknown>;
+
+/** Paying means accepting the terms; the webhook stores the acceptance as evidence. */
+function termsConsent(termsVersion: string | undefined, metadata: Record<string, string> = {}) {
+  return {
+    consent_collection: { terms_of_service: "required" },
+    metadata: { ...metadata, ...(termsVersion ? { terms_version: termsVersion } : {}) },
+  };
+}
+
+const text = (value: unknown) => (typeof value === "string" ? value : undefined);
+const whole = (value: unknown) => (typeof value === "number" ? value : undefined);
+/** An expandable reference: the id, or the object that carries one. */
+const refId = (value: unknown) => text(value) ?? text((value as StripeObject | undefined)?.id);
+
+/** The facts a verified event carries about what was charged, accepted or disputed. */
+function stripeEvidence(
+  event: { id?: unknown; type?: unknown; created?: unknown },
+  object: StripeObject | undefined,
+): BillingEvidence | undefined {
+  const eventId = text(event.id);
+  const created = whole(event.created);
+  if (!eventId || created === undefined || !object) return undefined;
+  const kind = text(object.object);
+  const lines =
+    (object.lines as { data?: StripeObject[] } | undefined)?.data ??
+    (object.items as { data?: StripeObject[] } | undefined)?.data ??
+    [];
+  const prices = lines.map((line) => (line.price ?? {}) as StripeObject);
+  const keys = prices.flatMap((price) => text(price.lookup_key) ?? []);
+  const interval = prices
+    .map((price) => text((price.recurring as StripeObject | undefined)?.interval))
+    .find(Boolean);
+  const terms = text((object.consent as StripeObject | undefined)?.terms_of_service);
+  const metadata = object.metadata as StripeObject | undefined;
+  const fields: Omit<BillingEvidence, "eventId" | "type" | "occurredAt"> = {
+    ...(kind === "checkout.session" ? { sessionId: text(object.id) } : {}),
+    ...(kind === "invoice" ? { invoiceId: text(object.id) } : {}),
+    ...(kind === "charge" ? { chargeId: text(object.id) } : {}),
+    ...(kind === "dispute" ? { chargeId: refId(object.charge) } : {}),
+    ...(kind === "subscription" ? { subscriptionId: text(object.id) } : {}),
+    ...(kind !== "subscription" && object.subscription
+      ? { subscriptionId: refId(object.subscription) }
+      : {}),
+    ...(kind === "invoice" && object.charge ? { chargeId: refId(object.charge) } : {}),
+    amountMinor:
+      whole(object.amount_total) ??
+      whole(object.amount_paid) ??
+      whole(object.amount_due) ??
+      (kind === "charge" && whole(object.amount_refunded)
+        ? whole(object.amount_refunded)
+        : whole(object.amount)),
+    currency: text(object.currency),
+    ...(keys.length ? { priceLookupKeys: keys } : {}),
+    interval,
+    ...(kind === "subscription" || kind === "dispute" ? { status: text(object.status) } : {}),
+    ...(terms ? { termsAccepted: terms === "accepted" } : {}),
+    termsVersion: text(metadata?.terms_version),
+  };
+  return {
+    eventId,
+    type: text(event.type) ?? "",
+    occurredAt: new Date(created * 1000),
+    ...Object.fromEntries(Object.entries(fields).filter(([, value]) => value !== undefined)),
+  };
+}
+
+/** Verifies a Stripe-signed webhook and extracts the customer to re-sync, plus its evidence. */
 export function parseStripeWebhook(
   secret: string,
   rawBody: string,
   headers: Headers,
   nowMs: number,
-): { customerId: string } | "ignored" | null {
+): { customerId: string; evidence?: BillingEvidence } | "ignored" | null {
   if (!verifyStripeSignature(secret, rawBody, headers, nowMs)) return null;
 
-  let event: { type?: unknown; data?: { object?: Record<string, unknown> } };
+  let event: {
+    id?: unknown;
+    type?: unknown;
+    created?: unknown;
+    data?: { object?: Record<string, unknown> };
+  };
   try {
     event = JSON.parse(rawBody);
   } catch {
@@ -1249,7 +1324,9 @@ export function parseStripeWebhook(
       : typeof (customer as { id?: unknown } | undefined)?.id === "string"
         ? (customer as { id: string }).id
         : undefined;
-  return customerId ? { customerId } : "ignored";
+  if (!customerId) return "ignored";
+  const evidence = stripeEvidence(event, object);
+  return evidence ? { customerId, evidence } : { customerId };
 }
 
 export function stripeBillingConfigFromEnv(env: {

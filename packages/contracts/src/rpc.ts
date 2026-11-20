@@ -1602,6 +1602,22 @@ export const appContract = {
         .input(z.object({ organizationId: Id, override: PlanOverrideSchema }))
         .output(z.object({ ok: z.literal(true) })),
     },
+    /**
+     * What one organization used and paid for between two days (UTC, `to` included), as a file:
+     * for answering a card dispute. Survives the deletion of the organization.
+     */
+    usageEvidence: {
+      export: oc
+        .input(
+          z.object({
+            organizationId: Id,
+            from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+            to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+            format: z.enum(["csv", "json"]),
+          }),
+        )
+        .output(z.object({ filename: z.string(), contentType: z.string(), content: z.string() })),
+    },
     /** Read-only: a partner's brand, hosts and sender domain, for support. */
     partnerBranding: {
       get: oc.input(z.object({ partnerId: Id })).output(PlatformPartnerBrandingSchema),

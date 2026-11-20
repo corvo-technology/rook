@@ -44,6 +44,7 @@ import {
   createArtifactStore,
   createBackgroundJobHandlers,
   createCloudAgentConnection,
+  createComputerResourceSampler,
   createConnectorStack,
   createConsultationRetentionSweeper,
   createEgressGateway,
@@ -164,6 +165,7 @@ import {
   pushSessionExpiresAt,
   readCatalog,
   readPartnerMarkups,
+  recordBillingEvidence,
   recordPartnerEvent,
   refundTenantPayment,
   requireMembership,
@@ -960,6 +962,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
         ),
         reconcileConsultationRetention: createConsultationRetentionSweeper({ prisma, artifacts }),
         reconcileIdleComputers: createIdleComputerSweeper({ prisma, jobs }),
+        reconcileComputerResources: createComputerResourceSampler({ prisma, sandbox }),
       })
     : undefined;
   reconciler?.start();
@@ -1453,6 +1456,8 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       provider: billingProvider,
       webOrigin: env.webOrigin,
       authenticate: sessionActor,
+      recordEvidence: (customerId, evidence) =>
+        runAsSystem("billing evidence", () => recordBillingEvidence(prisma, customerId, evidence)),
     });
   }
   if (paymentsProvider) {

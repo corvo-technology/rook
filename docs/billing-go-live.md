@@ -27,6 +27,10 @@ the deployment's secret store.
 
 Notes
 
+- Plan checkout requires accepting the terms, so set the **Terms of service URL** in the Stripe
+  account's public details (test and live) before going live; Stripe refuses a checkout with
+  required consent while it is empty. The accepted version is `TERMS_VERSION` in
+  `packages/contracts/src/terms.ts`: bump it when the published terms change.
 - A customer's currency is fixed by Stripe at their first payment; the API refuses another one.
 - Subscriptions set up before this change keep their price and resolve to their plan through
   `PLAN_PRICES`; leave their price ids in the mapping if they should keep a plan.

@@ -24,6 +24,7 @@ import {
   createArtifactStore,
   createBackgroundJobHandlers,
   createCloudAgentConnection,
+  createComputerResourceSampler,
   createConnectorStack,
   createConsultationRetentionSweeper,
   createDeadJobPruner,
@@ -439,6 +440,7 @@ async function main() {
     reconcileHomeStorage: homeStorageSweeper(home),
     reconcileStorageUsage: storageUsageReconciler(prisma),
     reconcileIdleComputers: createIdleComputerSweeper({ prisma, jobs }),
+    reconcileComputerResources: createComputerResourceSampler({ prisma, sandbox }),
     reconcileDeadJobs: inMemoryJobs ? undefined : createDeadJobPruner(pool),
   });
   let stopHealth: (() => Promise<void>) | undefined;

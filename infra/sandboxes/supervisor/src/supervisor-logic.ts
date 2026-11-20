@@ -726,3 +726,32 @@ export function computerCommandEnv(layout: { display: string }) {
     "PIP_USER=1",
   ];
 }
+
+interface DockerStatsLike {
+  cpu_stats?: { cpu_usage?: { total_usage?: number } };
+  memory_stats?: { usage?: number; stats?: { inactive_file?: number; cache?: number } };
+  networks?: Record<string, { rx_bytes?: number; tx_bytes?: number }>;
+}
+
+/**
+ * What a container has used, from one Docker stats reading and the size of its writable layer.
+ * CPU and network are the cumulative counters since the container started; memory is what is in
+ * use now without the reclaimable page cache, the way `docker stats` shows it.
+ */
+export function computerResourcesFromDockerStats(stats: DockerStatsLike, diskBytes?: number) {
+  const interfaces = Object.values(stats.networks ?? {});
+  const cpuNanoseconds = stats.cpu_stats?.cpu_usage?.total_usage;
+  const memory = stats.memory_stats;
+  const cache = memory?.stats?.inactive_file ?? memory?.stats?.cache ?? 0;
+  return {
+    ...(cpuNanoseconds === undefined ? {} : { cpuSeconds: cpuNanoseconds / 1e9 }),
+    ...(memory?.usage === undefined ? {} : { memoryBytes: Math.max(0, memory.usage - cache) }),
+    ...(diskBytes === undefined ? {} : { diskBytes }),
+    ...(interfaces.length === 0
+      ? {}
+      : {
+          networkRxBytes: interfaces.reduce((sum, nic) => sum + (nic.rx_bytes ?? 0), 0),
+          networkTxBytes: interfaces.reduce((sum, nic) => sum + (nic.tx_bytes ?? 0), 0),
+        }),
+  };
+}

@@ -433,6 +433,100 @@ describe("Stripe billing HTTP boundary", () => {
     expect(parseStripeWebhook("whsec_fake", body, headers, now)).toEqual({ customerId: "cus_1" });
   });
 
+  describe("evidence carried by a webhook", () => {
+    const now = Date.UTC(2026, 0, 1);
+    const parse = (event: object) => {
+      const body = JSON.stringify(event);
+      const headers = new Headers({
+        "stripe-signature": signStripeWebhook("whsec_fake", body, now / 1000),
+      });
+      return parseStripeWebhook("whsec_fake", body, headers, now);
+    };
+
+    it("reads the accepted terms and the amount from a completed checkout", () => {
+      expect(
+        parse({
+          id: "evt_1",
+          type: "checkout.session.completed",
+          created: 1_700_000_000,
+          data: {
+            object: {
+              id: "cs_1",
+              object: "checkout.session",
+              customer: "cus_1",
+              subscription: "sub_1",
+              amount_total: 4900,
+              currency: "brl",
+              consent: { terms_of_service: "accepted" },
+              metadata: { terms_version: "v7" },
+            },
+          },
+        }),
+      ).toEqual({
+        customerId: "cus_1",
+        evidence: {
+          eventId: "evt_1",
+          type: "checkout.session.completed",
+          occurredAt: new Date(1_700_000_000_000),
+          sessionId: "cs_1",
+          subscriptionId: "sub_1",
+          amountMinor: 4900,
+          currency: "brl",
+          termsAccepted: true,
+          termsVersion: "v7",
+        },
+      });
+    });
+
+    it("reads plan, interval, amount and ids from a paid invoice", () => {
+      expect(
+        parse({
+          id: "evt_2",
+          type: "invoice.paid",
+          created: 1_700_000_100,
+          data: {
+            object: {
+              id: "in_1",
+              object: "invoice",
+              customer: "cus_1",
+              subscription: "sub_1",
+              charge: "ch_1",
+              amount_paid: 9900,
+              currency: "usd",
+              lines: {
+                data: [
+                  {
+                    price: { lookup_key: "plan_team_usd_month", recurring: { interval: "month" } },
+                  },
+                ],
+              },
+            },
+          },
+        }),
+      ).toEqual({
+        customerId: "cus_1",
+        evidence: {
+          eventId: "evt_2",
+          type: "invoice.paid",
+          occurredAt: new Date(1_700_000_100_000),
+          invoiceId: "in_1",
+          subscriptionId: "sub_1",
+          chargeId: "ch_1",
+          amountMinor: 9900,
+          currency: "usd",
+          priceLookupKeys: ["plan_team_usd_month"],
+          interval: "month",
+        },
+      });
+    });
+
+    it("carries none when the event has no id", () => {
+      expect(
+        parse({ type: "invoice.paid", data: { object: { object: "invoice", customer: "cus_1" } } }),
+      ).toEqual({ customerId: "cus_1" });
+    });
+  });
+
   it("accepts any matching v1 signature and ignores malformed JSON", () => {
     const now = Date.UTC(2026, 0, 1);
     const t = now / 1000;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   aiLookupKey,
+  extraComputerLookupKey,
   extraPersonLookupKey,
   parseAiLookupKey,
   planLookupKey,
@@ -12,6 +13,7 @@ describe("catalog lookup keys", () => {
   it("builds the documented shapes", () => {
     expect(planLookupKey("team", "brl", "year")).toBe("plan_team_brl_year");
     expect(extraPersonLookupKey("usd", "month")).toBe("extra_person_usd_month");
+    expect(extraComputerLookupKey("brl", "year")).toBe("extra_computer_brl_year");
     expect(aiLookupKey(1000, "brl", "month")).toBe("ai_1000_brl_month");
   });
 
@@ -27,9 +29,10 @@ describe("catalog lookup keys", () => {
     for (const currency of BILLING_CURRENCIES)
       for (const interval of BILLING_INTERVALS) {
         keys.add(extraPersonLookupKey(currency, interval));
+        keys.add(extraComputerLookupKey(currency, interval));
         for (const cents of AI_USE_CENTS) keys.add(aiLookupKey(cents, currency, interval));
       }
-    expect(keys.size).toBe(12 + 4 + 16);
+    expect(keys.size).toBe(12 + 4 + 4 + 16);
   });
 });
 

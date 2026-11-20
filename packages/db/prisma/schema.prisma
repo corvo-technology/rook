@@ -251,6 +251,8 @@ model BillingAccount {
   pendingAiUseCents   Int?
   status              String?
   seats               Int?
+  /// Computers bought above the plan's own, from the subscription's extra computer line.
+  extraComputers      Int          @default(0)
   trialEndsAt         DateTime?
   currentPeriodEndsAt DateTime?
   cancelAtPeriodEnd   Boolean      @default(false)

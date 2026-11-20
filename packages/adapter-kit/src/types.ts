@@ -1358,6 +1358,8 @@ export interface BillingSubscriptionSnapshot {
   priceLookupKey?: string;
   /** The monthly AI amount the subscription includes, from its AI line. */
   aiUseCents?: AiUseCents;
+  /** Computers above the plan's own, from the extra computer line; absent means none. */
+  extraComputers?: number;
   /** A change that takes effect at the next renewal; the plan and limits above stay until then. */
   pendingChange?: { priceLookupKey: string; aiUseCents: AiUseCents | null };
 }
@@ -1384,6 +1386,8 @@ export interface BillingPlanSelection {
   currency: BillingCurrency;
   interval: BillingInterval;
   extraPeople: number;
+  /** Computers above the plan's own; the line is kept across plan and interval changes. */
+  extraComputers?: number;
   aiUseCents: AiUseCents | null;
 }
 

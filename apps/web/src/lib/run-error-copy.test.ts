@@ -152,7 +152,7 @@ describe("describeRunError", () => {
     ["paused", ["resume"]],
     ["reply_cap", ["adjust-limit", "retry"]],
     ["plan_storage_full", ["open-usage"]],
-    ["plan_computer_limit", ["open-usage"]],
+    ["plan_computer_limit", []],
     ["no_model_access", ["connect"]],
     ["model_not_allowed", ["change-model"]],
     ["turn_stopped", ["retry"]],

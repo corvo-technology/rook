@@ -31,7 +31,9 @@ import { PlanChoice } from "./PlanChoice";
 
 const usage = {
   canManage: true,
-  plans: Object.values(DEFAULT_PLANS).map(({ extraSeatPriceId: _price, ...plan }) => plan),
+  plans: Object.values(DEFAULT_PLANS).map(
+    ({ extraSeatPriceId: _seat, extraComputerPriceId: _computer, ...plan }) => plan,
+  ),
 } as unknown as PlanUsage;
 const status = { canManage: true } as unknown as BillingStatus;
 

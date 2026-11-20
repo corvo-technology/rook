@@ -257,6 +257,7 @@ msgstr "{computerMinutes} 分钟"
 msgid "{computers, plural, one {# computer} other {# computers}}"
 msgstr "{computers, plural, other {# 台电脑}}"
 
+#: src/components/ExtraComputers.tsx
 #: src/pages/usage/plan-usage.tsx
 msgid "{computersUsed} of {computersLimit}"
 msgstr "{computersUsed} / {computersLimit}"
@@ -971,6 +972,10 @@ msgstr "请填写 HTTPS 服务器 URL。"
 #: src/pages/Store.tsx
 msgid "Add another"
 msgstr "添加另一个"
+
+#: src/components/ExtraComputers.tsx
+msgid "Add computer"
+msgstr "添加电脑"
 
 #: src/pages/shell/bot-credentials.tsx
 msgid "Add credential"
@@ -2473,6 +2478,7 @@ msgstr "电脑分钟数"
 msgid "Computer size"
 msgstr "电脑规格"
 
+#: src/components/ExtraComputers.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/LimitsSection.tsx
 #: src/pages/usage/plan-usage.tsx
@@ -6811,6 +6817,10 @@ msgstr "仅读取"
 msgid "Only some roles or people"
 msgstr "仅限部分角色或成员"
 
+#: src/components/ExtraComputers.tsx
+msgid "Only the owner can add computers."
+msgstr "只有所有者可以添加电脑。"
+
 #: src/components/PlanChoice.tsx
 msgid "Only the owner can subscribe"
 msgstr "只有所有者可以订阅"
@@ -7784,6 +7794,10 @@ msgstr "移除 {what}"
 #: src/pages/RoutineEditor.tsx
 msgid "Remove change trigger"
 msgstr "移除变化触发器"
+
+#: src/components/ExtraComputers.tsx
+msgid "Remove computer"
+msgstr "移除电脑"
 
 #: src/pages/TicketFields.tsx
 msgid "Remove field"
@@ -8810,6 +8824,7 @@ msgid "Something went wrong"
 msgstr "出了点问题"
 
 #: src/App.tsx
+#: src/components/ExtraComputers.tsx
 #: src/lib/user-error.ts
 #: src/pages/onboarding/CliEngineRows.tsx
 msgid "Something went wrong. Try again."
@@ -9933,11 +9948,6 @@ msgstr "升级"
 msgid "Upgrade now"
 msgstr "立即升级"
 
-#. js-lingui-explicit-id
-#: src/lib/run-error-copy.ts
-msgid "Upgrade your plan to add more computers."
-msgstr "请升级套餐以添加更多电脑。"
-
 #: src/pages/partner/PartnerBrand.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Upload"
@@ -10606,9 +10616,14 @@ msgstr "你的 OpenAI"
 msgid "Your OpenRouter"
 msgstr "你的 OpenRouter"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Your plan has no room for another computer."
+msgstr "你的套餐已无法再添加电脑。"
+
 #: src/lib/user-error.ts
-msgid "Your plan has no room for another computer. Upgrade to add more."
-msgstr "当前套餐无法再添加电脑。请升级套餐。"
+msgid "Your plan has no room for another computer."
+msgstr "你的套餐已无法再添加电脑。"
 
 #: src/lib/user-error.ts
 msgid "Your plan has no seat for another person. Upgrade to add more."

@@ -3,6 +3,8 @@ import {
   aiAddOnPriceCents,
   aiLookupKey,
   aiUseGrantCents,
+  extraComputerCents,
+  extraComputerLookupKey,
   extraPersonCents,
   extraPersonLookupKey,
   planLookupKey,
@@ -72,8 +74,8 @@ describe("Stripe plan prices by lookup key", () => {
   it("creates every catalog price once, in each currency and interval", async () => {
     const { provider, prices, requests } = stripe();
     const first = await provider.ensurePlanPrices();
-    expect(Object.keys(first)).toHaveLength(12 + 4 + 16);
-    expect(prices).toHaveLength(32);
+    expect(Object.keys(first)).toHaveLength(12 + 4 + 4 + 16);
+    expect(prices).toHaveLength(36);
 
     const team = prices.find((price) => price.lookup_key === planLookupKey("team", "brl", "year"));
     expect(team).toMatchObject({
@@ -85,11 +87,19 @@ describe("Stripe plan prices by lookup key", () => {
       (price) => price.lookup_key === extraPersonLookupKey("usd", "month"),
     );
     expect(person?.unit_amount).toBe(extraPersonCents("usd", "month"));
+    const computer = prices.find(
+      (price) => price.lookup_key === extraComputerLookupKey("brl", "year"),
+    );
+    expect(computer).toMatchObject({
+      unit_amount: extraComputerCents("brl", "year"),
+      currency: "brl",
+      recurring: { interval: "year" },
+    });
 
     const writesBefore = requests.filter((r) => r.method === "POST").length;
     expect(await provider.ensurePlanPrices()).toEqual(first);
     expect(requests.filter((r) => r.method === "POST")).toHaveLength(writesBefore);
-    expect(prices).toHaveLength(32);
+    expect(prices).toHaveLength(36);
   });
 
   it("marks each AI price with the dollars of use it grants a month", async () => {

@@ -18,6 +18,7 @@ const { text, rpcMock } = vi.hoisted(() => ({
       portal: vi.fn(),
       changePlan: vi.fn(),
       planCheckout: vi.fn(),
+      setExtraComputers: vi.fn(),
     },
     usage: { plan: vi.fn() },
   },
@@ -38,7 +39,10 @@ import { BillingSettingsPanel } from "./BillingSettingsPanel";
 const usage = {
   plan: "personal",
   canManage: true,
-  plans: Object.values(DEFAULT_PLANS).map(({ extraSeatPriceId: _price, ...plan }) => plan),
+  computers: { used: 1, limit: 1, included: 1, extra: 0, extraPrice: null },
+  plans: Object.values(DEFAULT_PLANS).map(
+    ({ extraSeatPriceId: _seat, extraComputerPriceId: _computer, ...plan }) => plan,
+  ),
 } as unknown as PlanUsage;
 
 function status(overrides: Partial<BillingStatus> = {}): BillingStatus {
@@ -184,5 +188,66 @@ describe("Billing settings", () => {
     );
     expect(button("Change plan")).toBeUndefined();
     expect(button("Manage billing")).toBeUndefined();
+  });
+
+  describe("extra computers", () => {
+    const active = status({
+      state: "active",
+      plan: "team",
+      currency: "usd",
+      interval: "month",
+      hasCustomer: true,
+    });
+    const withComputers = (computers: Partial<PlanUsage["computers"]>, canManage = true) =>
+      ({
+        ...usage,
+        canManage,
+        computers: {
+          used: 2,
+          limit: 3,
+          included: 1,
+          extra: 2,
+          extraPrice: { amount: 900, currency: "usd", interval: "month" },
+          ...computers,
+        },
+      }) as unknown as PlanUsage;
+
+    it("shows computers in use out of allowed and adds or removes one for the owner", async () => {
+      rpcMock.billing.setExtraComputers.mockResolvedValue({ ok: true });
+      await render(active, withComputers({}));
+      expect(body()).toContain("2 of 3");
+      expect(body()).toContain("$9 / month");
+      await act(async () => button("Add computer")?.click());
+      expect(rpcMock.billing.setExtraComputers).toHaveBeenLastCalledWith({ quantity: 3 });
+      await act(async () => button("Remove computer")?.click());
+      expect(rpcMock.billing.setExtraComputers).toHaveBeenLastCalledWith({ quantity: 1 });
+    });
+
+    it("keeps the computers running: nothing to remove when every place is taken", async () => {
+      await render(active, withComputers({ used: 3 }));
+      expect(button("Remove computer")?.disabled).toBe(true);
+      await render(active, withComputers({ extra: 0, limit: 1, used: 0 }));
+      expect(button("Remove computer")?.disabled).toBe(true);
+    });
+
+    it("opens the portal when the payment needs the owner", async () => {
+      const assign = vi.fn();
+      vi.stubGlobal("location", { assign });
+      rpcMock.billing.setExtraComputers.mockResolvedValue({
+        ok: true,
+        url: "https://billing.example.com/portal",
+      });
+      await render(active, withComputers({}));
+      await act(async () => button("Add computer")?.click());
+      expect(assign).toHaveBeenCalledWith("https://billing.example.com/portal");
+    });
+
+    it("gives a member the count and no buttons, and nothing where none can be bought", async () => {
+      await render(active, withComputers({}, false));
+      expect(body()).toContain("2 of 3");
+      expect(button("Add computer")).toBeUndefined();
+      await render(active, withComputers({ extra: 0, extraPrice: null }));
+      expect(body()).not.toContain("Remove computer");
+    });
   });
 });

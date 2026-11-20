@@ -495,6 +495,16 @@ export interface BillingProvider {
    * still take updates.
    */
   setExtraSeats?(customerId: string, input: { priceId: string; quantity: number }): Promise<void>;
+  /**
+   * Sets how many extra computers the subscription bills at `priceId`, a line separate from the
+   * plan's: adds it, changes its quantity, or removes it at zero. Throws
+   * `BillingPaymentRequiredError` when the added charge cannot be paid; a no-op when no
+   * subscription can still take updates.
+   */
+  setExtraComputers?(
+    customerId: string,
+    input: { priceId: string; quantity: number },
+  ): Promise<void>;
   /** One price's amount and interval, for telling the customer what an extra seat costs. */
   getPriceById?(priceId: string): Promise<BillingPrice>;
   cancelCustomerSubscriptions(customerId: string): Promise<void>;

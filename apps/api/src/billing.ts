@@ -11,6 +11,8 @@ import {
 } from "@corvo/adapter-kit";
 import type {
   Actor,
+  BillingCurrency,
+  BillingInterval,
   BillingStatus,
   PlanCheckoutInput,
   PlanId,
@@ -22,6 +24,7 @@ import {
   BillingIntervalSchema,
   BYOK_MONTHLY_PRICE_CENTS,
   DEFAULT_PLANS,
+  extraComputerLookupKey,
   extraPersonLookupKey,
   PLAN_ERROR_CODES,
   parsePlanLookupKey,
@@ -42,6 +45,7 @@ import {
   hasModelAccess,
   MICROS_PER_DOLLAR,
   needsBillingPortal,
+  organizationComputerCount,
   organizationEntitlements,
   organizationForMember,
   organizationSeatCount,
@@ -98,6 +102,17 @@ export interface BillingService {
    * interval, else `fallbackPriceId`, the deployment's single extra seat price. Null when none.
    */
   extraSeatPriceFor(organizationId: string, fallbackPriceId?: string): Promise<BillingPrice | null>;
+  /** What one extra computer costs this organization, found like `extraSeatPriceFor`. */
+  extraComputerPriceFor(
+    organizationId: string,
+    fallbackPriceId?: string,
+  ): Promise<BillingPrice | null>;
+  /**
+   * Sets how many computers above the plan's the subscription holds; the owner only. Growing
+   * charges now with proration. `url` is set only when the payment needs the owner, and then
+   * nothing has changed.
+   */
+  setExtraComputers(actor: Actor, quantity: number): Promise<{ ok: true; url?: string }>;
 }
 
 /**
@@ -347,13 +362,21 @@ export function createBillingService(deps: {
     account: { currency: string | null; interval: string | null },
     fallbackPriceId: string | undefined,
   ): Promise<string | null> {
+    return extraLinePriceId(account, fallbackPriceId, extraPersonLookupKey);
+  }
+
+  async function extraLinePriceId(
+    account: { currency: string | null; interval: string | null },
+    fallbackPriceId: string | undefined,
+    lookupKey: (currency: BillingCurrency, interval: BillingInterval) => string,
+  ): Promise<string | null> {
     const currency = BillingCurrencySchema.safeParse(account.currency);
     const interval = BillingIntervalSchema.safeParse(account.interval);
     if (!currency.success || !interval.success) return fallbackPriceId ?? null;
-    const key = extraPersonLookupKey(currency.data, interval.data);
+    const key = lookupKey(currency.data, interval.data);
     const found = (await provider.priceIdForLookupKey?.(key)) ?? null;
     // Never another currency's price: the provider would refuse it, or bill it wrongly.
-    if (!found) getLogger().error("extra person price missing", { "billing.lookup_key": key });
+    if (!found) getLogger().error("extra price missing", { "billing.lookup_key": key });
     return found;
   }
 
@@ -375,7 +398,11 @@ export function createBillingService(deps: {
    * Changing people edits the subscription, which drops the waiting change. Put it back with the
    * extra people the new count needs, or let it go when the plan it moves to no longer fits them.
    */
-  async function keepPendingChange(account: BillingAccount, total: number): Promise<void> {
+  async function keepPendingChange(
+    account: BillingAccount,
+    total: number,
+    extraComputers = account.extraComputers,
+  ): Promise<void> {
     const pending = parsePlanLookupKey(account.pendingPlanKey);
     if (!pending || !provider.changePlan) return;
     const ai = AiUseCentsSchema.safeParse(account.pendingAiUseCents);
@@ -391,6 +418,7 @@ export function createBillingService(deps: {
               currency: pending.currency,
               interval: pending.interval,
               extraPeople: extraSeats(limits, total),
+              extraComputers,
               aiUseCents: ai.success ? ai.data : null,
             },
     });
@@ -666,6 +694,7 @@ export function createBillingService(deps: {
         ...chosen,
         currency: input.currency,
         extraPeople: extraSeats(limitsFor(chosen.plan), total),
+        extraComputers: account.extraComputers,
       });
       try {
         await openCheckout(actor, account, true, (customerId) =>
@@ -686,6 +715,65 @@ export function createBillingService(deps: {
         };
       }
       await sync(account.customerId);
+      return { ok: true };
+    },
+
+    async setExtraComputers(actor, quantity) {
+      if (!provider.setExtraComputers) throw new ORPCError("NOT_FOUND");
+      const config = planConfigFromEnv();
+      if (!config) throw new ORPCError("NOT_FOUND");
+      const { organizationId } = await managedOrganization(actor);
+      let account = await billingAccountForOrganization(prisma, organizationId);
+      if (account) {
+        // Decide from the provider, not a snapshot a missed webhook may have left stale.
+        await sync(account.customerId);
+        account = await billingAccountForOrganization(prisma, organizationId);
+      }
+      const onPlan = Boolean(
+        (account?.priceId && config.prices[account.priceId]) ||
+          parsePlanLookupKey(account?.priceLookupKey),
+      );
+      if (account?.status !== "active" || !onPlan)
+        throw new ORPCError("CONFLICT", { message: "Subscribe to a plan first" });
+      if (account.cancelAtPeriodEnd)
+        throw new ORPCError("CONFLICT", { message: "Resume the subscription in billing" });
+      const limits = await organizationEntitlements(prisma, config, organizationId);
+      if (!limits) throw new ORPCError("NOT_FOUND");
+      const included = config.plans[limits.plan].computers;
+      // Computers already running are never taken away: the total must still hold them.
+      if (
+        quantity < account.extraComputers &&
+        (await organizationComputerCount(prisma, organizationId)) > included + quantity
+      )
+        throw new ORPCError("CONFLICT", { message: "Remove a computer before removing its place" });
+      const priceId = await extraLinePriceId(
+        account,
+        limits.extraComputerPriceId,
+        extraComputerLookupKey,
+      );
+      if (!priceId) throw new ORPCError("PRECONDITION_FAILED");
+      const current = account;
+      try {
+        await openCheckout(actor, current, true, (customerId) =>
+          provider.setExtraComputers!(customerId, { priceId, quantity }),
+        );
+      } catch (error) {
+        if (!(error instanceof BillingPaymentRequiredError)) throw error;
+        // The change did not happen; the portal is where the owner fixes how they pay.
+        return {
+          ok: true,
+          ...(await withLiveCustomer(actor, current, (customerId) =>
+            provider.createPortal({ customerId, returnUrl: `${appUrl}?billing=canceled` }),
+          )),
+        };
+      }
+      // Editing the subscription drops a waiting plan change; put it back with the new count.
+      await keepPendingChange(
+        current,
+        (await organizationSeats(prisma, organizationId)).total,
+        quantity,
+      );
+      await sync(current.customerId);
       return { ok: true };
     },
 
@@ -753,6 +841,16 @@ export function createBillingService(deps: {
       const priceId = await extraSeatPriceId(
         account ?? { currency: null, interval: null },
         fallbackPriceId,
+      );
+      return priceId ? extraSeatPriceById(priceId) : null;
+    },
+
+    async extraComputerPriceFor(organizationId, fallbackPriceId) {
+      const account = await billingAccountForOrganization(prisma, organizationId);
+      const priceId = await extraLinePriceId(
+        account ?? { currency: null, interval: null },
+        fallbackPriceId,
+        extraComputerLookupKey,
       );
       return priceId ? extraSeatPriceById(priceId) : null;
     },

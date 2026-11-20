@@ -50,12 +50,14 @@ export function extraPersonCents(currency: BillingCurrency, interval: BillingInt
   return forInterval(MONTHLY_EXTRA_PERSON_CENTS[currency], interval);
 }
 
+/** AI has no yearly discount: a year costs twelve months of the monthly price. */
 export function aiAddOnPriceCents(
   currency: BillingCurrency,
   useCents: AiUseCents,
   interval: BillingInterval,
 ): number {
-  return forInterval(MONTHLY_AI_CENTS[currency][useCents], interval);
+  const monthly = MONTHLY_AI_CENTS[currency][useCents];
+  return interval === "year" ? monthly * 12 : monthly;
 }
 
 /** Reais for Brazilian Portuguese, dollars for every other language. */

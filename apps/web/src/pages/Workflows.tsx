@@ -104,7 +104,7 @@ export function WorkflowsPage() {
           <Spinner />
         ) : workflows.data?.length === 0 ? (
           <p className="m-auto text-sm text-muted-foreground">
-            <Trans>No workflows yet</Trans>
+            <Trans>No routines yet</Trans>
           </p>
         ) : (
           workflows.data?.map((workflow) => (

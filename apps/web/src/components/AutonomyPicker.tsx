@@ -10,6 +10,7 @@ function useSummaryLines(): Record<ApprovalSummary, string> {
   const { t } = useLingui();
   return {
     every_change: t`Still asks before anything that changes something, and before opening a site you didn't mention.`,
+    risky_only: t`Still asks before sending, paying, deleting or deploying, and before opening a site you didn't mention.`,
     reviewed: t`Still asks when a second model finds it outside your request, and before security changes.`,
     steered_only: t`Still asks before a security change after it read outside content. Blocked actions stay blocked.`,
   };
@@ -73,7 +74,8 @@ export function AutonomyPicker({
   const [confirming, setConfirming] = useState(false);
   const lines = useSummaryLines();
   const options: Array<{ mode: ApprovalMode; label: string }> = [
-    { mode: "ask", label: t`Asks before any change` },
+    { mode: "always", label: t`Asks before any change` },
+    { mode: "risky", label: t`Asks before risky actions` },
     // Normal needs an approval model; it stays listed while chosen so the choice stays visible.
     ...(checkerAvailable || value === "auto"
       ? [{ mode: "auto" as const, label: t`Does what fits your request` }]

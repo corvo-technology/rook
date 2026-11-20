@@ -15,6 +15,8 @@ export const JA_MESSAGES: Record<string, string> = {
   "Never ask": "確認しない",
   Auto: "自動",
   Ask: "確認",
+  "Always ask": "常に確認",
+  "Only what's risky": "リスクのあるものだけ",
   Block: "ブロック",
   "Add a model in Settings to use this.": "使用するには設定でモデルを追加してください。",
   "Approval model": "承認モデル",

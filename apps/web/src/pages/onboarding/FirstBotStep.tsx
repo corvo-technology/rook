@@ -35,7 +35,7 @@ export function FirstBotStep({
   const [saveFailed, setSaveFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [setup, setSetup] = useState<Setup | null>(null);
-  const [choice, setChoice] = useState<ApprovalMode>("ask");
+  const [choice, setChoice] = useState<ApprovalMode>("risky");
   const [pending, setPending] = useState(false);
   const continuing = useRef(false);
 

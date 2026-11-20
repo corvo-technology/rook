@@ -17,6 +17,8 @@ export const DE_MESSAGES: Record<string, string> = {
   "Never ask": "Nie fragen",
   Auto: "Auto",
   Ask: "Fragen",
+  "Always ask": "Immer fragen",
+  "Only what's risky": "Nur das Riskante",
   Block: "Blockieren",
   "Add a model in Settings to use this.":
     "Füge in den Einstellungen ein Modell hinzu, um dies zu nutzen.",

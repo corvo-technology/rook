@@ -17,7 +17,7 @@ type Rule = {
 const state = vi.hoisted(() => ({
   rpc: vi.fn(),
   spaceId: undefined as string | undefined,
-  settings: { mode: "ask", enabled: false, skipApprovals: false, checkerAvailable: false },
+  settings: { mode: "risky", enabled: false, skipApprovals: false, checkerAvailable: false },
   rules: [] as Rule[],
   confirm: true,
   alert: vi.fn(),
@@ -158,7 +158,7 @@ async function render() {
 beforeEach(() => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   state.spaceId = undefined;
-  state.settings = { mode: "ask", enabled: false, skipApprovals: false, checkerAvailable: false };
+  state.settings = { mode: "risky", enabled: false, skipApprovals: false, checkerAvailable: false };
   state.rules = [];
   state.confirm = true;
   state.alert.mockReset();
@@ -193,18 +193,18 @@ afterEach(() => {
 
 it("offers Auto only once an approval model can decide, and saves the chosen mode", async () => {
   await render();
-  expect(modes()).toEqual(["Never ask", "Ask*"]);
+  expect(modes()).toEqual(["Never ask", "Only what's risky*", "Always ask"]);
   expect(rows()).toEqual([]);
 
   await act(async () => (container.querySelector('[role="radio"]') as HTMLElement).click());
   expect(state.rpc).toHaveBeenCalledWith("autoReview/set", { scope: "account", mode: "never" });
-  expect(modes()).toEqual(["Never ask*", "Ask"]);
+  expect(modes()).toEqual(["Never ask*", "Only what's risky", "Always ask"]);
 
   act(() => root.unmount());
   root = createRoot(container);
   state.settings = { ...state.settings, mode: "auto" };
   await render();
-  expect(modes()).toEqual(["Never ask", "Auto*", "Ask"]);
+  expect(modes()).toEqual(["Never ask", "Auto*", "Only what's risky", "Always ask"]);
   expect(container.querySelector("small")?.textContent).toBe(
     "Add a model in Settings to use this.",
   );
@@ -219,7 +219,7 @@ it("asks before Never ask and keeps the mode, sending nothing, when cancelled", 
     "Still asks before a security change after it read outside content. Blocked actions stay blocked.",
   );
   expect(state.rpc).not.toHaveBeenCalledWith("autoReview/set", expect.anything());
-  expect(modes()).toEqual(["Never ask", "Ask*"]);
+  expect(modes()).toEqual(["Never ask", "Only what's risky*", "Always ask"]);
 });
 
 it("switches and removes rules, keeping legacy category rules removable only", async () => {
@@ -235,7 +235,7 @@ it("switches and removes rules, keeping legacy category rules removable only", a
     }),
   ];
   await render();
-  expect(modes()).toEqual(["Never ask", "Auto", "Ask*"]);
+  expect(modes()).toEqual(["Never ask", "Auto", "Only what's risky*", "Always ask"]);
   expect(rows()).toEqual(["Send email: Allow", "example.com: Ask", "email: Ask"]);
   expect(menuButton("Send email", "Allow")?.getAttribute("aria-pressed")).toBe("true");
   expect(menuButton("email", "Allow")).toBeUndefined();
@@ -277,7 +277,7 @@ it("keeps a saved mode when a read that started before the save lands after it",
   holdReads();
   await render();
   await act(async () => resolveRead(stale));
-  expect(modes()).toEqual(["Never ask", "Ask*"]);
+  expect(modes()).toEqual(["Never ask", "Only what's risky*", "Always ask"]);
 
   // Coming back starts a refresh; the owner picks Never ask before it lands with the old mode.
   holdReads();
@@ -300,10 +300,10 @@ it("offers a retry when the first load fails, then shows the settings", async ()
   });
   await render();
   expect(container.textContent).toContain("Something went wrong. Try again.");
-  expect(modes()).toEqual(["Never ask", "Ask"]);
+  expect(modes()).toEqual(["Never ask", "Only what's risky", "Always ask"]);
 
   await act(async () => retry()!.click());
-  expect(modes()).toEqual(["Never ask", "Auto", "Ask*"]);
+  expect(modes()).toEqual(["Never ask", "Auto", "Only what's risky*", "Always ask"]);
   expect(retry()).toBeUndefined();
   expect(container.textContent).not.toContain("Something went wrong. Try again.");
 });

@@ -114,7 +114,8 @@ export default function Approvals() {
     ...(settings?.checkerAvailable || settings?.mode === "auto"
       ? [{ value: "auto" as const, label: t("Auto") }]
       : []),
-    { value: "ask", label: t("Ask") },
+    { value: "risky", label: t("Only what's risky") },
+    { value: "always", label: t("Always ask") },
   ];
 
   const failure = error ?? loadError;

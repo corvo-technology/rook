@@ -1322,6 +1322,10 @@ msgstr "Dieses Tool immer erlauben"
 msgid "Always allowed"
 msgstr "Immer erlaubt"
 
+#: src/components/ApprovalRulesSettings.tsx
+msgid "Always ask"
+msgstr "Immer fragen"
+
 #: src/pages/partner/PartnerCredits.tsx
 #: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/partner/PartnerPayments.tsx
@@ -1577,9 +1581,17 @@ msgstr "Erst fragen"
 msgid "Ask to join"
 msgstr "Beitritt anfragen"
 
+#: src/components/ApprovalRulesSettings.tsx
+msgid "Asks before actions with outside effects or that can't be undone."
+msgstr "Fragt vor Aktionen mit Wirkung nach außen oder die sich nicht rückgängig machen lassen."
+
 #: src/components/AutonomyPicker.tsx
 msgid "Asks before any change"
 msgstr "Fragt vor jeder Änderung"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Asks before risky actions"
+msgstr "Fragt vor riskanten Aktionen"
 
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Asks you before it changes anything."
@@ -6631,6 +6643,10 @@ msgstr "Nur bestimmte Rollen oder Personen"
 msgid "Only the owner can subscribe"
 msgstr "Nur der Inhaber kann abonnieren"
 
+#: src/components/ApprovalRulesSettings.tsx
+msgid "Only what's risky"
+msgstr "Nur das Riskante"
+
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/partner/PartnerOverview.tsx
 #: src/pages/platform/LimitsSection.tsx
@@ -8744,6 +8760,10 @@ msgstr "Fragt weiterhin vor einer Sicherheitsänderung, nachdem externe Inhalte 
 #: src/components/AutonomyPicker.tsx
 msgid "Still asks before anything that changes something, and before opening a site you didn't mention."
 msgstr "Fragt weiterhin vor allem, was etwas ändert, und bevor eine Website geöffnet wird, die du nicht genannt hast."
+
+#: src/components/AutonomyPicker.tsx
+msgid "Still asks before sending, paying, deleting or deploying, and before opening a site you didn't mention."
+msgstr "Fragt weiterhin vor dem Senden, Bezahlen, Löschen oder Deployen und bevor eine Seite geöffnet wird, die du nicht erwähnt hast."
 
 #: src/components/AutonomyPicker.tsx
 msgid "Still asks when a second model finds it outside your request, and before security changes."

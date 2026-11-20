@@ -1322,6 +1322,10 @@ msgstr "Always allow this tool"
 msgid "Always allowed"
 msgstr "Always allowed"
 
+#: src/components/ApprovalRulesSettings.tsx
+msgid "Always ask"
+msgstr "Always ask"
+
 #: src/pages/partner/PartnerCredits.tsx
 #: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/partner/PartnerPayments.tsx
@@ -1577,9 +1581,17 @@ msgstr "Ask first"
 msgid "Ask to join"
 msgstr "Ask to join"
 
+#: src/components/ApprovalRulesSettings.tsx
+msgid "Asks before actions with outside effects or that can't be undone."
+msgstr "Asks before actions with outside effects or that can't be undone."
+
 #: src/components/AutonomyPicker.tsx
 msgid "Asks before any change"
 msgstr "Asks before any change"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Asks before risky actions"
+msgstr "Asks before risky actions"
 
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Asks you before it changes anything."
@@ -6631,6 +6643,10 @@ msgstr "Only some roles or people"
 msgid "Only the owner can subscribe"
 msgstr "Only the owner can subscribe"
 
+#: src/components/ApprovalRulesSettings.tsx
+msgid "Only what's risky"
+msgstr "Only what's risky"
+
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/partner/PartnerOverview.tsx
 #: src/pages/platform/LimitsSection.tsx
@@ -8744,6 +8760,10 @@ msgstr "Still asks before a security change after it read outside content. Block
 #: src/components/AutonomyPicker.tsx
 msgid "Still asks before anything that changes something, and before opening a site you didn't mention."
 msgstr "Still asks before anything that changes something, and before opening a site you didn't mention."
+
+#: src/components/AutonomyPicker.tsx
+msgid "Still asks before sending, paying, deleting or deploying, and before opening a site you didn't mention."
+msgstr "Still asks before sending, paying, deleting or deploying, and before opening a site you didn't mention."
 
 #: src/components/AutonomyPicker.tsx
 msgid "Still asks when a second model finds it outside your request, and before security changes."

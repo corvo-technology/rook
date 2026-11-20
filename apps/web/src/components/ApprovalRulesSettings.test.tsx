@@ -67,7 +67,7 @@ vi.mock("@corvo/ui-web", async () => {
 
 import { ApprovalRulesSettings } from "./ApprovalRulesSettings";
 
-const settings = { mode: "ask", enabled: false, skipApprovals: false, checkerAvailable: true };
+const settings = { mode: "risky", enabled: false, skipApprovals: false, checkerAvailable: true };
 
 beforeEach(() => vi.resetAllMocks());
 
@@ -99,7 +99,7 @@ it("sets the mode, and lists Auto only when an approval model is there", async (
   const { container, root } = await render();
   try {
     await vi.waitFor(() =>
-      expect(button(container, "Ask")?.getAttribute("aria-pressed")).toBe("true"),
+      expect(button(container, "Only what's risky")?.getAttribute("aria-pressed")).toBe("true"),
     );
     expect(button(container, "Auto")).toBeUndefined();
     await act(async () => button(container, "Never ask")?.click());
@@ -127,13 +127,13 @@ it("keeps the mode and sends nothing when the Never ask confirmation is cancelle
   const { container, root } = await render();
   try {
     await vi.waitFor(() =>
-      expect(button(container, "Ask")?.getAttribute("aria-pressed")).toBe("true"),
+      expect(button(container, "Only what's risky")?.getAttribute("aria-pressed")).toBe("true"),
     );
     await act(async () => button(container, "Never ask")?.click());
     await act(async () => button(container, "Cancel")?.click());
     expect(rpcMock.autoReview.set).not.toHaveBeenCalled();
     expect(container.querySelector('[role="alertdialog"]')).toBeNull();
-    expect(button(container, "Ask")?.getAttribute("aria-pressed")).toBe("true");
+    expect(button(container, "Only what's risky")?.getAttribute("aria-pressed")).toBe("true");
     await act(async () => root.unmount());
   } finally {
     container.remove();
@@ -227,7 +227,7 @@ it("keeps a saved mode when the revisit's older background read lands after it",
   try {
     const first = await mount();
     await vi.waitFor(() =>
-      expect(button(container, "Ask")?.getAttribute("aria-pressed")).toBe("true"),
+      expect(button(container, "Only what's risky")?.getAttribute("aria-pressed")).toBe("true"),
     );
     await act(async () => first.unmount());
 

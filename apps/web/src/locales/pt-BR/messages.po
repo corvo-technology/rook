@@ -1322,6 +1322,10 @@ msgstr "Permitir sempre esta ferramenta"
 msgid "Always allowed"
 msgstr "Sempre permitido"
 
+#: src/components/ApprovalRulesSettings.tsx
+msgid "Always ask"
+msgstr "Sempre perguntar"
+
 #: src/pages/partner/PartnerCredits.tsx
 #: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/partner/PartnerPayments.tsx
@@ -1577,9 +1581,17 @@ msgstr "Perguntar antes"
 msgid "Ask to join"
 msgstr "Pedir para entrar"
 
+#: src/components/ApprovalRulesSettings.tsx
+msgid "Asks before actions with outside effects or that can't be undone."
+msgstr "Pergunta antes de ações com efeito externo ou que não dá para desfazer."
+
 #: src/components/AutonomyPicker.tsx
 msgid "Asks before any change"
 msgstr "Pergunta antes de qualquer mudança"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Asks before risky actions"
+msgstr "Pergunta antes de ações arriscadas"
 
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Asks you before it changes anything."
@@ -6631,6 +6643,10 @@ msgstr "Só alguns cargos ou pessoas"
 msgid "Only the owner can subscribe"
 msgstr "Só o proprietário pode assinar"
 
+#: src/components/ApprovalRulesSettings.tsx
+msgid "Only what's risky"
+msgstr "Só o arriscado"
+
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/partner/PartnerOverview.tsx
 #: src/pages/platform/LimitsSection.tsx
@@ -8744,6 +8760,10 @@ msgstr "Ainda pergunta antes de uma mudança de segurança depois de ler conteú
 #: src/components/AutonomyPicker.tsx
 msgid "Still asks before anything that changes something, and before opening a site you didn't mention."
 msgstr "Ainda pergunta antes de qualquer coisa que muda algo e antes de abrir um site que você não mencionou."
+
+#: src/components/AutonomyPicker.tsx
+msgid "Still asks before sending, paying, deleting or deploying, and before opening a site you didn't mention."
+msgstr "Ainda pergunta antes de enviar, pagar, apagar ou fazer deploy e antes de abrir um site que você não mencionou."
 
 #: src/components/AutonomyPicker.tsx
 msgid "Still asks when a second model finds it outside your request, and before security changes."

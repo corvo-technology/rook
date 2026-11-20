@@ -23,6 +23,8 @@ import { AutonomyPicker } from "./AutonomyPicker";
 const LINES = {
   every_change:
     "Still asks before anything that changes something, and before opening a site you didn't mention.",
+  risky_only:
+    "Still asks before sending, paying, deleting or deploying, and before opening a site you didn't mention.",
   reviewed:
     "Still asks when a second model finds it outside your request, and before security changes.",
   steered_only:
@@ -63,31 +65,33 @@ const button = (text: string) =>
 const click = (element: HTMLElement) => act(async () => element.click());
 
 describe("AutonomyPicker", () => {
-  it("offers three answers with a model and two without", async () => {
-    await render({ value: "ask", checkerAvailable: true });
-    expect(radios().map((r) => r.dataset.value)).toEqual(["ask", "auto", "never"]);
-    await render({ value: "ask", checkerAvailable: false });
-    expect(radios().map((r) => r.dataset.value)).toEqual(["ask", "never"]);
+  it("offers four answers with a model and three without", async () => {
+    await render({ value: "risky", checkerAvailable: true });
+    expect(radios().map((r) => r.dataset.value)).toEqual(["always", "risky", "auto", "never"]);
+    await render({ value: "risky", checkerAvailable: false });
+    expect(radios().map((r) => r.dataset.value)).toEqual(["always", "risky", "never"]);
   });
 
   it("keeps normal visible and selected without a model, with the hint", async () => {
     await render({ value: "auto", checkerAvailable: false });
-    expect(radios().map((r) => r.dataset.value)).toEqual(["ask", "auto", "never"]);
+    expect(radios().map((r) => r.dataset.value)).toEqual(["always", "risky", "auto", "never"]);
     expect(radio("auto").getAttribute("aria-checked")).toBe("true");
     expect(container.textContent).toContain(LINES.every_change);
     expect(container.textContent).toContain(HINT);
   });
 
   it("names the bot in the question", async () => {
-    await render({ value: "ask", checkerAvailable: true, name: "Ada" });
+    await render({ value: "risky", checkerAvailable: true, name: "Ada" });
     expect(container.textContent).toContain("How much does Ada do on its own?");
     expect(container.textContent).toContain("Asks before any change");
+    expect(container.textContent).toContain("Asks before risky actions");
     expect(container.textContent).toContain("Does what fits your request");
     expect(container.textContent).toContain("Does everything without asking");
   });
 
   it.each([
-    ["ask", true, "every_change"],
+    ["always", true, "every_change"],
+    ["risky", true, "risky_only"],
     ["auto", true, "reviewed"],
     ["never", true, "steered_only"],
   ] as const)("shows exactly one line for %s", async (value, checkerAvailable, summary) => {
@@ -97,7 +101,7 @@ describe("AutonomyPicker", () => {
     expect(container.textContent).not.toContain(HINT);
   });
 
-  it.each(["ask", "auto", "never"] as const)(
+  it.each(["always", "risky", "auto", "never"] as const)(
     "shows the line the gate summary maps to for %s with and without a model",
     async (mode) => {
       for (const checkerAvailable of [true, false]) {
@@ -110,18 +114,18 @@ describe("AutonomyPicker", () => {
 
   it("changes at once to careful and normal", async () => {
     const onChange = await render({ value: "never", checkerAvailable: true });
-    await click(radio("ask"));
-    expect(onChange).toHaveBeenCalledExactlyOnceWith("ask");
+    await click(radio("risky"));
+    expect(onChange).toHaveBeenCalledExactlyOnceWith("risky");
   });
 
   it("does nothing when the current answer is picked again", async () => {
-    const onChange = await render({ value: "ask", checkerAvailable: true });
-    await click(radio("ask"));
+    const onChange = await render({ value: "risky", checkerAvailable: true });
+    await click(radio("risky"));
     expect(onChange).not.toHaveBeenCalled();
   });
 
   it("asks before choosing free, and cancelling changes nothing", async () => {
-    const onChange = await render({ value: "ask", checkerAvailable: true });
+    const onChange = await render({ value: "risky", checkerAvailable: true });
     await click(radio("never"));
     expect(container.querySelector('[role="alert"]')?.textContent).toContain(
       "Let Ada act without asking?",
@@ -131,11 +135,11 @@ describe("AutonomyPicker", () => {
     await click(button("Cancel"));
     expect(container.querySelector('[role="alert"]')).toBeNull();
     expect(onChange).not.toHaveBeenCalled();
-    expect(radio("ask").getAttribute("aria-checked")).toBe("true");
+    expect(radio("risky").getAttribute("aria-checked")).toBe("true");
   });
 
   it("chooses free once confirmed", async () => {
-    const onChange = await render({ value: "ask", checkerAvailable: true });
+    const onChange = await render({ value: "risky", checkerAvailable: true });
     await click(radio("never"));
     await click(button("Stop asking"));
     expect(onChange).toHaveBeenCalledExactlyOnceWith("never");

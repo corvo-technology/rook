@@ -10,6 +10,8 @@ const t = (text: string, values?: Record<string, string | number>) =>
 
 const EVERY_CHANGE =
   "Still asks before anything that changes something, and before opening a site you didn't mention.";
+const RISKY_ONLY =
+  "Still asks before sending, paying, deleting or deploying, and before opening a site you didn't mention.";
 const REVIEWED =
   "Still asks when a second model finds it outside your request, and before security changes.";
 const STEERED_ONLY =
@@ -18,9 +20,10 @@ const STEERED_ONLY =
 beforeEach(() => alert.mockReset());
 
 describe("autonomyOptions", () => {
-  it("lists ask, auto and never with an approval model, marking the current one", () => {
+  it("lists the four levels with an approval model, marking the current one", () => {
     expect(autonomyOptions(t, { value: "auto", checkerAvailable: true })).toEqual([
-      { id: "ask", title: "Asks before any change", state: "off" },
+      { id: "always", title: "Asks before any change", state: "off" },
+      { id: "risky", title: "Asks before risky actions", state: "off" },
       { id: "auto", title: "Does what fits your request", state: "on" },
       { id: "never", title: "Does everything without asking", state: "off" },
     ]);
@@ -28,17 +31,18 @@ describe("autonomyOptions", () => {
 
   it("leaves out auto without a model, unless it is already chosen", () => {
     expect(
-      autonomyOptions(t, { value: "ask", checkerAvailable: false }).map((option) => option.id),
-    ).toEqual(["ask", "never"]);
+      autonomyOptions(t, { value: "risky", checkerAvailable: false }).map((option) => option.id),
+    ).toEqual(["always", "risky", "never"]);
     expect(
       autonomyOptions(t, { value: "auto", checkerAvailable: false }).map((option) => option.id),
-    ).toEqual(["ask", "auto", "never"]);
+    ).toEqual(["always", "risky", "auto", "never"]);
   });
 });
 
 describe("autonomyLine", () => {
   it("says what still asks, as the gate computes it", () => {
-    expect(autonomyLine(t, { mode: "ask", checkerAvailable: true })).toBe(EVERY_CHANGE);
+    expect(autonomyLine(t, { mode: "always", checkerAvailable: true })).toBe(EVERY_CHANGE);
+    expect(autonomyLine(t, { mode: "risky", checkerAvailable: true })).toBe(RISKY_ONLY);
     expect(autonomyLine(t, { mode: "auto", checkerAvailable: true })).toBe(REVIEWED);
     expect(autonomyLine(t, { mode: "auto", checkerAvailable: false })).toBe(EVERY_CHANGE);
     expect(autonomyLine(t, { mode: "never", checkerAvailable: true })).toBe(STEERED_ONLY);

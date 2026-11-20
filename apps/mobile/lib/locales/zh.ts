@@ -14,6 +14,8 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Never ask": "从不询问",
   Auto: "自动",
   Ask: "询问",
+  "Always ask": "始终询问",
+  "Only what's risky": "仅有风险的操作",
   Block: "阻止",
   "Add a model in Settings to use this.": "请在设置中添加模型后再使用。",
   "Approval model": "审批模型",

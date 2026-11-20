@@ -1322,6 +1322,10 @@ msgstr "始终允许此工具"
 msgid "Always allowed"
 msgstr "始终允许"
 
+#: src/components/ApprovalRulesSettings.tsx
+msgid "Always ask"
+msgstr "始终询问"
+
 #: src/pages/partner/PartnerCredits.tsx
 #: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/partner/PartnerPayments.tsx
@@ -1577,9 +1581,17 @@ msgstr "先询问"
 msgid "Ask to join"
 msgstr "申请加入"
 
+#: src/components/ApprovalRulesSettings.tsx
+msgid "Asks before actions with outside effects or that can't be undone."
+msgstr "在会影响外部或无法撤销的操作前询问。"
+
 #: src/components/AutonomyPicker.tsx
 msgid "Asks before any change"
 msgstr "任何更改前都先询问"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Asks before risky actions"
+msgstr "在有风险的操作前询问"
 
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Asks you before it changes anything."
@@ -6631,6 +6643,10 @@ msgstr "仅限部分角色或成员"
 msgid "Only the owner can subscribe"
 msgstr "只有所有者可以订阅"
 
+#: src/components/ApprovalRulesSettings.tsx
+msgid "Only what's risky"
+msgstr "仅有风险的操作"
+
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/partner/PartnerOverview.tsx
 #: src/pages/platform/LimitsSection.tsx
@@ -8744,6 +8760,10 @@ msgstr "读取外部内容后，安全更改前仍会询问。被阻止的操作
 #: src/components/AutonomyPicker.tsx
 msgid "Still asks before anything that changes something, and before opening a site you didn't mention."
 msgstr "任何会更改内容的操作前，以及打开你未提及的网站前，仍会询问。"
+
+#: src/components/AutonomyPicker.tsx
+msgid "Still asks before sending, paying, deleting or deploying, and before opening a site you didn't mention."
+msgstr "在发送、付款、删除或部署之前，以及打开你未提到的网站之前，仍会询问。"
 
 #: src/components/AutonomyPicker.tsx
 msgid "Still asks when a second model finds it outside your request, and before security changes."

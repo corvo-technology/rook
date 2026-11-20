@@ -791,7 +791,7 @@ export function BotSettings({
             <section>
               <AutonomyPicker
                 name={bot.name}
-                value={approvalMode ?? defaultApprovalMode ?? "ask"}
+                value={approvalMode ?? defaultApprovalMode ?? "risky"}
                 checkerAvailable={autoReviewQuery.data?.checkerAvailable ?? false}
                 // The default decides what "same as everyone" means, so it is never guessed.
                 disabled={saving || !defaultApprovalMode}

@@ -11,6 +11,9 @@ function summaryLines(t: Translate): Record<ApprovalSummary, string> {
     every_change: t(
       "Still asks before anything that changes something, and before opening a site you didn't mention.",
     ),
+    risky_only: t(
+      "Still asks before sending, paying, deleting or deploying, and before opening a site you didn't mention.",
+    ),
     reviewed: t(
       "Still asks when a second model finds it outside your request, and before security changes.",
     ),
@@ -26,7 +29,8 @@ export function autonomyOptions(
   input: { value: ApprovalMode; checkerAvailable: boolean },
 ): { id: ApprovalMode; title: string; state: "on" | "off" }[] {
   const options: { id: ApprovalMode; title: string }[] = [
-    { id: "ask", title: t("Asks before any change") },
+    { id: "always", title: t("Asks before any change") },
+    { id: "risky", title: t("Asks before risky actions") },
     // Normal needs an approval model; it stays listed while chosen so the choice stays visible.
     ...(input.checkerAvailable || input.value === "auto"
       ? [{ id: "auto" as const, title: t("Does what fits your request") }]

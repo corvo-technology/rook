@@ -108,6 +108,7 @@ export const ORGANIZATION_SCOPED_TABLES: readonly string[] = [
 
 export const ROW_SECURITY_MODELS: ReadonlySet<string> = new Set([
   "BillingAuditEvent",
+  "BillingNotice",
   "Partner",
   "PartnerTenant",
   "PartnerEntryCode",

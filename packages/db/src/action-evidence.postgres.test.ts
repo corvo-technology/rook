@@ -3,7 +3,7 @@ import type { PrismaClient } from "./client.js";
 import { createDb } from "./client.js";
 import type { AppendEventInput } from "./events.js";
 import { appendEventInTransaction } from "./events.js";
-import { asSystem } from "./row-security.js";
+import { asSystem, runAsTenant } from "./row-security.js";
 
 const dbTests =
   process.env.VERIFY_DATABASE && process.env.DATABASE_URL ? describe.sequential : describe.skip;
@@ -116,6 +116,21 @@ dbTests("action evidence", () => {
     await event("agent.tool.called", { name: "read_file", executionId: "e3" }, run.id);
     const row = (await evidence()).find((r) => r.executionId === "e3");
     expect(row).toMatchObject({ userId: runUserId, runId: run.id });
+  });
+
+  it("records evidence for a run working inside its space, where row-level security applies", async () => {
+    await runAsTenant({ spaceId, userId }, () =>
+      db.prisma.$transaction((tx) =>
+        appendEventInTransaction(tx, {
+          spaceId,
+          threadId,
+          botId,
+          type: "agent.tool.called",
+          payload: { name: "read_file", executionId: "e4" },
+        }),
+      ),
+    );
+    expect((await evidence()).some((r) => r.executionId === "e4")).toBe(true);
   });
 
   it("survives the deletion of the space, user and organization, and refuses edits", async () => {

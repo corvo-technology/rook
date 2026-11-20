@@ -18,6 +18,10 @@ export default function ComposeNameDialog({
   onChange,
   onSave,
   onClose,
+  title,
+  label,
+  maxLength = 80,
+  multiline = false,
 }: NameDialogProps) {
   const { t } = useI18n();
   const scheme = useResolvedAppearance();
@@ -41,15 +45,15 @@ export default function ComposeNameDialog({
         colors={{ containerColor: tokens.card, titleContentColor: tokens.foreground }}
       >
         <AlertDialog.Title>
-          <Text style={{ typography: "headlineSmall" }}>{t("Edit name")}</Text>
+          <Text style={{ typography: "headlineSmall" }}>{title ?? t("Edit name")}</Text>
         </AlertDialog.Title>
         <AlertDialog.Text>
           <OutlinedTextField
             value={value}
             selection={selection}
             autoFocus
-            singleLine
-            maxLength={80}
+            singleLine={!multiline}
+            maxLength={maxLength}
             enabled={!saving}
             isError={!!error}
             onValueChange={onChange}
@@ -70,7 +74,10 @@ export default function ComposeNameDialog({
               errorSupportingTextColor: tokens.destructive,
               errorCursorColor: tokens.destructive,
             }}
-            keyboardOptions={{ capitalization: "words", imeAction: "done" }}
+            keyboardOptions={{
+              capitalization: multiline ? "sentences" : "words",
+              imeAction: multiline ? "default" : "done",
+            }}
             keyboardActions={{
               onDone: (text) => {
                 if (!saving && text.trim()) onSave(text);
@@ -78,7 +85,7 @@ export default function ComposeNameDialog({
             }}
           >
             <OutlinedTextField.Label>
-              <Text>{t("Name")}</Text>
+              <Text>{label ?? t("Name")}</Text>
             </OutlinedTextField.Label>
             {error ? (
               <OutlinedTextField.SupportingText>

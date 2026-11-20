@@ -1297,11 +1297,14 @@ describe("userTurnInstructions", () => {
     "update_bot updates this bot's own name (chat header / list label), title, description, avatar, and notifyOnFinish. Your description is the short public summary teammates see; it does not change your instructions. When the user asks you to rename yourself, change your title or description, change your profile picture, or turn finish notifications on or off, call update_bot — do not claim you changed them without the tool. Pass color for a hex or encoded shape, artifact_id for an image in this space, or use_attached_image when they attached a picture on this message.",
     "run_subagent is a short helper inside this turn only. It is not a bot, has no thread, and does not show in the list. Use it for parallel work you will summarize here.",
   ];
+  const findInApp =
+    "For questions about this app itself (where something is, what it can do, how to change a setting or plan), call find_in_app before answering and link what it returns; if it finds nothing, say you do not know instead of guessing.";
   const archiveBot =
     "archive_bot safely archives another bot in this space. Use it when the user asks to remove that bot or when it is finished and unused. The user can restore it or permanently delete it later. confirm_name must exactly match its name.";
   const replyGuidance =
     "Send progress updates only when the work will take minutes — long computer tasks or multi-step jobs — never for quick replies and never to announce that you are starting. Even then send at most a few brief updates (a sentence or two each), not one per tool call, and do not narrate routine steps. Thinking stays private. message_user is capped at 500 characters and will be silently cut off if you exceed it \u2014 never put your final answer, a report, or any long-form deliverable in it. Always put the complete final answer in your normal reply, never split across message_user calls, and never assume a message_user update already delivered your content.";
   const stableTail = [
+    findInApp,
     'For charts and data visualization, use the render_plot tool: it renders bar, line, scatter, histogram, heatmap, faceted and many more chart types from a JSON spec and attaches the PNG to the chat. Call render_plot with {"help": true} before your first chart to read the full guide.',
     "When the user asks you to add or connect an MCP server (and gives you its details), use add_mcp_server. When add_mcp_server posts an approval card, end with one short sentence asking the user to approve it. You will be told when they connect it.",
     "Never print API keys, access tokens, or secret values. Prefer tools over claiming you already did the work. If your tools cannot do what was asked, say plainly what is missing and what you can do instead.",
@@ -1514,6 +1517,11 @@ describe("userTurnInstructions", () => {
     expect(off.names).not.toContain("guide_read");
     expect(off.names).not.toContain("space_status");
     expect(off.text).not.toContain("Guide pages:");
+    // Questions about the app itself go to find_in_app for every agent, not only fleet managers.
+    for (const { names, text } of [on, off]) {
+      expect(names).toContain("find_in_app");
+      expect(text).toContain("call find_in_app before answering");
+    }
     expect(FLEET_WRITE_TOOL_NAMES).not.toContain("guide_read");
     expect(FLEET_WRITE_TOOL_NAMES).not.toContain("space_status");
   });

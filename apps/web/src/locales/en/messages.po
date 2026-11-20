@@ -3236,6 +3236,7 @@ msgid "Could not save that voice"
 msgstr "Could not save that voice"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 msgid "Could not save the credential"
 msgstr "Could not save the credential"
 
@@ -3933,6 +3934,7 @@ msgstr "Disconnecting…"
 #: src/components/PasskeyOffer.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/shell/message-cards.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 #: src/pages/WikiBrowser.tsx
 msgid "Dismiss"
 msgstr "Dismiss"
@@ -5255,6 +5257,10 @@ msgstr "Kept"
 msgid "key"
 msgstr "key"
 
+#: src/pages/shell/pasted-key-prompt.tsx
+msgid "Key in message"
+msgstr "Key in message"
+
 #: src/pages/onboarding-quick-connect.tsx
 msgid "Key not recognized. Choose a provider."
 msgstr "Key not recognized. Choose a provider."
@@ -6059,6 +6065,7 @@ msgstr "My Home"
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/create-bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 #: src/pages/SpaceSettingsPanel.tsx
 msgid "Name"
 msgstr "Name"
@@ -8124,6 +8131,7 @@ msgid "Save"
 msgstr "Save"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 msgid "Save credential"
 msgstr "Save credential"
 
@@ -8184,6 +8192,7 @@ msgstr "Saving..."
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 msgid "Saving…"
 msgstr "Saving…"
 
@@ -8333,6 +8342,10 @@ msgstr "Send <0>{linkCode}</0> to <1>{linkAddress}</1> from {linkApp} within 10 
 #: src/components/AskCard.tsx
 msgid "Send answer"
 msgstr "Send answer"
+
+#: src/pages/shell/pasted-key-prompt.tsx
+msgid "Send anyway"
+msgstr "Send anyway"
 
 #: src/pages/shell/composer-error.tsx
 msgid "Send as file"
@@ -9314,6 +9327,10 @@ msgstr "This isn't sent yet. Edit it or send it."
 #: src/pages/InvitePage.tsx
 msgid "This link no longer works"
 msgstr "This link no longer works"
+
+#: src/pages/shell/pasted-key-prompt.tsx
+msgid "This looks like a key. Save it as a credential instead?"
+msgstr "This looks like a key. Save it as a credential instead?"
 
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/Onboarding.tsx

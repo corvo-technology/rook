@@ -1251,4 +1251,9 @@ export const DE_MESSAGES: Record<string, string> = {
   "Previous version": "Vorherige Version",
   "Next version": "Nächste Version",
   "{position} of {count}": "{position} von {count}",
+  "This looks like a key. Save it as a credential instead?":
+    "Das sieht nach einem Schlüssel aus. Stattdessen als Zugangsdaten speichern?",
+  "Save credential": "Zugangsdaten speichern",
+  "Send anyway": "Trotzdem senden",
+  "Could not save the credential": "Zugangsdaten konnten nicht gespeichert werden",
 };

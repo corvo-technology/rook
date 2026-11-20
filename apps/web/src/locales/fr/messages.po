@@ -3236,6 +3236,7 @@ msgid "Could not save that voice"
 msgstr "Impossible d'enregistrer cette voix"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 msgid "Could not save the credential"
 msgstr "Impossible d’enregistrer l’identifiant"
 
@@ -3933,6 +3934,7 @@ msgstr "Déconnexion en cours…"
 #: src/components/PasskeyOffer.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/shell/message-cards.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 #: src/pages/WikiBrowser.tsx
 msgid "Dismiss"
 msgstr "Fermer"
@@ -5255,6 +5257,10 @@ msgstr "Conservé"
 msgid "key"
 msgstr "clé"
 
+#: src/pages/shell/pasted-key-prompt.tsx
+msgid "Key in message"
+msgstr "Clé dans le message"
+
 #: src/pages/onboarding-quick-connect.tsx
 msgid "Key not recognized. Choose a provider."
 msgstr "Clé non reconnue. Choisissez un fournisseur."
@@ -6059,6 +6065,7 @@ msgstr "Mon accueil"
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/create-bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 #: src/pages/SpaceSettingsPanel.tsx
 msgid "Name"
 msgstr "Nom"
@@ -8124,6 +8131,7 @@ msgid "Save"
 msgstr "Enregistrer"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 msgid "Save credential"
 msgstr "Enregistrer l’identifiant"
 
@@ -8184,6 +8192,7 @@ msgstr "Enregistrement..."
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 msgid "Saving…"
 msgstr "Enregistrement en cours…"
 
@@ -8333,6 +8342,10 @@ msgstr "Envoyez <0>{linkCode}</0> à <1>{linkAddress}</1> depuis {linkApp} dans 
 #: src/components/AskCard.tsx
 msgid "Send answer"
 msgstr "Envoyer la réponse"
+
+#: src/pages/shell/pasted-key-prompt.tsx
+msgid "Send anyway"
+msgstr "Envoyer quand même"
 
 #: src/pages/shell/composer-error.tsx
 msgid "Send as file"
@@ -9314,6 +9327,10 @@ msgstr "Ce message n'est pas encore envoyé. Modifiez-le ou envoyez-le."
 #: src/pages/InvitePage.tsx
 msgid "This link no longer works"
 msgstr "Ce lien ne fonctionne plus"
+
+#: src/pages/shell/pasted-key-prompt.tsx
+msgid "This looks like a key. Save it as a credential instead?"
+msgstr "On dirait une clé. L’enregistrer plutôt comme identifiant ?"
 
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/Onboarding.tsx

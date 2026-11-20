@@ -4,6 +4,7 @@ import type {
   RunErrorInfo,
   ThreadMessage,
 } from "@corvo/contracts";
+import { findPastedSecrets, hasPastedSecret } from "@corvo/contracts";
 import type {
   AgentImportReader,
   ComposerMention,
@@ -55,6 +56,7 @@ import {
   MentionPicker,
   slashActionLabel,
 } from "./composer-mentions";
+import { PastedKeyPrompt } from "./pasted-key-prompt";
 import { useComposerLayout } from "./use-composer-layout";
 
 const ATTACHMENT_ACCEPT = attachmentPickerAccept(navigator.userAgent);
@@ -103,6 +105,7 @@ export const Composer = memo(function Composer({
   draftKey,
   enterToSend,
   onImportAgent,
+  credentialBotId,
 }: {
   activeName?: string;
   running: boolean;
@@ -157,6 +160,8 @@ export const Composer = memo(function Composer({
   enterToSend: boolean;
   /** When set, a dropped OpenClaw or Hermes folder or backup offers Import or Attach. */
   onImportAgent?: (agent: AgentImportReader) => void;
+  /** The agent a pasted key is saved for; in a group, the one member the message would reach. */
+  credentialBotId?: string;
 }) {
   const { t } = useLingui();
   const [draft, setDraft] = useState(() => readComposerDraft(draftKey));
@@ -187,6 +192,9 @@ export const Composer = memo(function Composer({
   });
   const [selectedSkill, setSelectedSkill] = useState<AgentSkillCatalogEntry | null>(null);
   const [selectedMentions, setSelectedMentions] = useState<ComposerMention[]>([]);
+  const [keyPromptOpen, setKeyPromptOpen] = useState(false);
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
   const editRevision = useRef(0);
   const [agentDrop, setAgentDrop] = useState<{
     agent: AgentImportReader;
@@ -300,6 +308,7 @@ export const Composer = memo(function Composer({
     else clearComposerTyping();
     writeComposerDraft(draftKey, value);
     setDraft(value);
+    if (keyPromptOpen && !hasPastedSecret(value)) setKeyPromptOpen(false);
     const mentionMatch = /(?:^|\s)@([\w-]*)$/.exec(value);
     setMentionQuery(mentionMatch ? (mentionMatch[1] ?? "") : null);
     // `/` only at the start of the draft so forced skills expand (`Use skill:` / `/Name` prefix).
@@ -402,8 +411,21 @@ export const Composer = memo(function Composer({
     mentionQuery === null &&
     (slashSkillOptions.length > 0 || slashActionOptions.length > 0);
 
-  async function send(imageHandling?: "file") {
+  // Where a pasted key would be saved; with no single agent to save it for, nothing is offered.
+  const keyBotId =
+    credentialBotId ??
+    groupRecipient?.(
+      draft,
+      selectedMentions.filter((mention) => mention.kind === "bot").map((mention) => mention.id),
+    )?.botId;
+  const keyMatch = keyPromptOpen && keyBotId ? findPastedSecrets(draft)[0] : undefined;
+
+  async function send(imageHandling?: "file", keyApproved = false) {
     if (!canSend || sending || disabled) return;
+    if (!keyApproved && keyBotId && hasPastedSecret(draft)) {
+      setKeyPromptOpen(true);
+      return;
+    }
     const revision = editRevision.current;
     const clientNonce = retryNonce.current ?? newClientId();
     retryNonce.current = null;
@@ -505,6 +527,8 @@ export const Composer = memo(function Composer({
 
   function handlePaste(event: ClipboardEvent<HTMLTextAreaElement>) {
     const clipboardData = event.clipboardData;
+    const pastedText = clipboardData?.getData("text/plain");
+    if (pastedText && keyBotId && hasPastedSecret(pastedText)) setKeyPromptOpen(true);
     // Only intercept real FileList pastes; leave text-only / empty-files native.
     if (disabled || !clipboardData || !isFilePaste(clipboardData)) return;
     event.preventDefault();
@@ -519,6 +543,13 @@ export const Composer = memo(function Composer({
     window.requestAnimationFrame(() => {
       textareaRef.current?.setSelectionRange(caret, caret);
     });
+  }
+
+  function keySaved(secret: string, reference: string) {
+    // The draft may have changed while the key was saving, so swap in the latest text.
+    updateDraft(draftRef.current.split(secret).join(reference));
+    setKeyPromptOpen(false);
+    focusComposer();
   }
 
   const showComposerPlaceholder =
@@ -600,6 +631,23 @@ export const Composer = memo(function Composer({
         onDismissError={onDismissError}
         textareaRef={textareaRef}
       />
+      {keyMatch && keyBotId ? (
+        <PastedKeyPrompt
+          key={`${keyMatch.kind}:${keyMatch.start}`}
+          botId={keyBotId}
+          match={keyMatch}
+          secret={draft.slice(keyMatch.start, keyMatch.end)}
+          onSaved={(reference) => keySaved(draft.slice(keyMatch.start, keyMatch.end), reference)}
+          onSendAnyway={() => {
+            setKeyPromptOpen(false);
+            void send(undefined, true);
+          }}
+          onDismiss={() => {
+            setKeyPromptOpen(false);
+            focusComposer();
+          }}
+        />
+      ) : null}
       {replyTarget ? (
         <ComposerReplyPreview
           author={replyName}

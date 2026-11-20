@@ -49,6 +49,7 @@ import {
   RemoteImagesContext,
   remoteImageRenders,
   remoteMarkdownImage,
+  resolveAppPathLinks,
   sanitizeMarkdownUrl,
   useLinkFavicon,
 } from "./markdown";
@@ -1371,6 +1372,8 @@ export const ChatMarkdown = memo(function ChatMarkdown({
   colorScheme = "dark",
 }: ChatMarkdownProps & { palette?: ColorTokens; colorScheme?: ResolvedAppearance }) {
   const openLink = useNativeLinkConfirm();
+  const appOrigin = useMarkdownLinkAppOrigin();
+  const source = useMemo(() => resolveAppPathLinks(children, appOrigin), [children, appOrigin]);
   const styles = useMemo(() => markdownStyles(palette), [palette]);
   const diagramSurface = useMemo(
     () => ({ streaming, palette, colorScheme }),
@@ -1395,10 +1398,10 @@ export const ChatMarkdown = memo(function ChatMarkdown({
             <DiagramSurfaceContext.Provider value={diagramSurface}>
               {streaming ? (
                 <MarkdownStream {...sharedProps} cursorColor={palette.mutedForeground} streaming>
-                  {children}
+                  {source}
                 </MarkdownStream>
               ) : (
-                <Markdown {...sharedProps}>{children}</Markdown>
+                <Markdown {...sharedProps}>{source}</Markdown>
               )}
             </DiagramSurfaceContext.Provider>
           </LinkFaviconsPausedContext.Provider>

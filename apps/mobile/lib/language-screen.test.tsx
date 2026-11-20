@@ -7,6 +7,7 @@ import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import Language from "../app/(settings)/language";
+import { rpc } from "./api";
 import * as i18n from "./i18n";
 import { resumeLiveNotifications } from "./live-notifications";
 import { UI_LOCALE_LABELS, UI_LOCALE_STORAGE_KEY, UI_LOCALES } from "./ui-locale";
@@ -16,6 +17,7 @@ vi.mock("./api", () => ({
   currentApiBase: () => "https://corvo.test",
   loadSessionToken: async () => "token",
   selectedSpaceId: () => "space-1",
+  rpc: vi.fn(async () => undefined),
 }));
 vi.mock("./live-notifications", () => ({ resumeLiveNotifications: vi.fn(async () => undefined) }));
 vi.mock("expo-secure-store", () => ({ setItemAsync: vi.fn() }));
@@ -117,6 +119,7 @@ it.each(["pt-BR", "es"] as const)(
       await vi.mocked(i18n.setUiLocale).mock.results[0]!.value;
     });
     expect(i18n.getActiveUiLocale()).toBe(locale);
+    expect(rpc).toHaveBeenCalledWith("preferences/update", { locale });
     expect(resumeLiveNotifications).toHaveBeenCalledWith("https://corvo.test", "token", "space-1");
     expectSelected(UI_LOCALE_LABELS[locale]);
     expect(row("English").getAttribute("aria-pressed")).toBe("false");

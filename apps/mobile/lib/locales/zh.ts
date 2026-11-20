@@ -1195,4 +1195,8 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Previous version": "上一个版本",
   "Next version": "下一个版本",
   "{position} of {count}": "第 {position} / {count}",
+  "This looks like a key. Save it as a credential instead?": "这看起来像密钥。改为保存为凭据吗?",
+  "Save credential": "保存凭据",
+  "Send anyway": "仍然发送",
+  "Could not save the credential": "无法保存凭据",
 };

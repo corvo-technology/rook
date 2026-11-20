@@ -360,6 +360,25 @@ describe("account preferences", () => {
     });
   });
 
+  it("saves the app language on the account, without touching the timezone", async () => {
+    const setup = preferencesDeps("organic");
+
+    const response = await updatePreferences(setup, { locale: "pt-BR" });
+
+    expect(response.status).toBe(200);
+    expect(setup.update).toHaveBeenCalledWith({
+      where: { id: "user-1" },
+      data: { locale: "pt-BR" },
+    });
+  });
+
+  it("rejects a language the apps are not translated into", async () => {
+    const setup = preferencesDeps("organic");
+    const response = await updatePreferences(setup, { locale: "tlh" });
+    expect(response.status).toBeGreaterThanOrEqual(400);
+    expect(setup.update).not.toHaveBeenCalled();
+  });
+
   it.each([null, "Europe/London"])(
     "adopts the browser timezone only while the saved value is null (%s)",
     async (timezone) => {

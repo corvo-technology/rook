@@ -1198,4 +1198,9 @@ export const PT_BR_MESSAGES: Record<string, string> = {
   "Previous version": "Versão anterior",
   "Next version": "Próxima versão",
   "{position} of {count}": "{position} de {count}",
+  "This looks like a key. Save it as a credential instead?":
+    "Parece uma chave. Salvar como credencial?",
+  "Save credential": "Salvar credencial",
+  "Send anyway": "Enviar mesmo assim",
+  "Could not save the credential": "Não foi possível salvar a credencial",
 };

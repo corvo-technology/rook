@@ -1183,6 +1183,7 @@ function SpaceShell({ page }: { page?: ReactNode }) {
                   key={inGroup ? `group:${groupId}` : botDraftKey(String(active?.id))}
                   draftKey={draftKey}
                   enterToSend={enterToSend}
+                  credentialBotId={inGroup ? undefined : active ? String(active.id) : undefined}
                   onImportAgent={(agent) => openImport(agent, false)}
                   activeName={
                     inGroup

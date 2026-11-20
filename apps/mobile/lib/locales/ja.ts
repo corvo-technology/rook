@@ -1232,4 +1232,9 @@ export const JA_MESSAGES: Record<string, string> = {
   "Previous version": "前のバージョン",
   "Next version": "次のバージョン",
   "{position} of {count}": "{position} / {count}",
+  "This looks like a key. Save it as a credential instead?":
+    "キーのようです。代わりに認証情報として保存しますか?",
+  "Save credential": "認証情報を保存",
+  "Send anyway": "このまま送信",
+  "Could not save the credential": "認証情報を保存できませんでした",
 };

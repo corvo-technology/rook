@@ -35,6 +35,8 @@ model User {
   avatarStyle                 String                          @default("organic")
   /// IANA timezone such as "Pacific/Auckland". Null until set; bots then get UTC only.
   timezone                    String?
+  /// The app language the person chose or runs in, such as "pt-BR". Null until an app saves it.
+  locale                      String?
   sessions                    Session[]
   accounts                    Account[]
   passkeys                    Passkey[]

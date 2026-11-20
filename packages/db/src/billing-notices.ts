@@ -26,14 +26,23 @@ export async function releaseBillingNotice(prisma: Db, key: string): Promise<voi
   await prisma.billingNotice.deleteMany({ where: { key } });
 }
 
-/** The people a subscription's emails go to: the organization's owners, with their app language. */
+/**
+ * The people a subscription's emails go to: the organization's owners, with their language. The
+ * language the account saved wins; an owner who never saved one gets the language of their
+ * registered device, and then none (English).
+ */
 export async function billingNoticeRecipients(
   prisma: Pick<PrismaClient, "member">,
   organizationId: string,
 ): Promise<Array<{ email: string; locale: string | null }>> {
   const owners = await prisma.member.findMany({
     where: { organizationId, role: { contains: "owner" } },
-    select: { user: { select: { email: true, pushToken: { select: { locale: true } } } } },
+    select: {
+      user: { select: { email: true, locale: true, pushToken: { select: { locale: true } } } },
+    },
   });
-  return owners.map(({ user }) => ({ email: user.email, locale: user.pushToken?.locale ?? null }));
+  return owners.map(({ user }) => ({
+    email: user.email,
+    locale: user.locale ?? user.pushToken?.locale ?? null,
+  }));
 }

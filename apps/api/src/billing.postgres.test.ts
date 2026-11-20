@@ -1,5 +1,6 @@
 import { BillingEmulator } from "@corvo/adapters";
 import type { Actor } from "@corvo/contracts";
+import { TERMS_VERSION } from "@corvo/contracts";
 import type { PrismaClient } from "@corvo/db";
 import { billingAccountForOrganization, createBillingAccount, createDb } from "@corvo/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -100,6 +101,7 @@ describePostgres("billing service (PostgreSQL)", () => {
       customerId,
       seats: 1,
       trialDays: TRIAL_DAYS,
+      termsVersion: TERMS_VERSION,
       successUrl: `${webOrigin}${BILLING_RETURN_PATH}`,
       cancelUrl: `${webOrigin}/app`,
     });

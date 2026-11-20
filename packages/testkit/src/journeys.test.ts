@@ -2838,7 +2838,7 @@ describeJourneys("required product journeys", () => {
       matchKind: "tool",
       matchValue: "destination.write",
     });
-    for (const mode of ["ask", "never"]) {
+    for (const mode of ["ask", "risky", "always", "auto", "never"]) {
       await rpc(app, cookie, "autoReview/set", { mode });
       const blocked = await sendAndWait(
         app,

@@ -554,7 +554,7 @@ export const UpdateBotInput = z
     fleetManagement: z.boolean().optional(),
     squadRouting: z.boolean().optional(),
     /** null clears the bot's own mode so it follows the default again. */
-    approvalMode: ApprovalModeSchema.nullable().optional(),
+    approvalMode: StoredApprovalModeSchema.nullable().optional(),
     /** null clears the bot's own mode so it asks first again. */
     memoryMode: MemoryModeSchema.nullable().optional(),
     disabledBuiltinTools: DisabledBuiltinToolsSchema.optional(),

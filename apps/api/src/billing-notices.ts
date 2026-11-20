@@ -16,6 +16,11 @@ import {
   planPeople,
   renewalReminderEmail,
 } from "./billing-email.js";
+import { configuredEmailProvider } from "./email.js";
+
+const DAY_MS = 86_400_000;
+/** Days before a yearly renewal that the customer is reminded, earliest first. */
+const REMINDER_DAYS = [30, 7] as const;
 
 const live = (status: string | null) => status === "active" || status === "trialing";
 const ai = (value: number | null | undefined): AiUseCents | null => {
@@ -69,6 +74,81 @@ export function createBillingNotices(deps: {
   }
 
   return {
+    /**
+     * Reminds the owners of every yearly plan that renews within 30 days, once at 30 days and
+     * once at 7 days before the renewal. A plan set to cancel is skipped. The threshold is the
+     * nearest one still ahead, so a run that comes late sends the one that is still useful.
+     */
+    remindRenewals(now = new Date()): Promise<number> {
+      if (!email) return Promise.resolve(0);
+      return runAsSystem("billing renewal reminders", async () => {
+        const accounts = await prisma.billingAccount.findMany({
+          where: {
+            interval: "year",
+            status: "active",
+            cancelAtPeriodEnd: false,
+            endedAt: null,
+            subscriptionId: { not: null },
+            priceLookupKey: { not: null },
+            currentPeriodEndsAt: {
+              gt: now,
+              lte: new Date(now.getTime() + REMINDER_DAYS[0] * DAY_MS),
+            },
+          },
+        });
+        let sent = 0;
+        for (const account of accounts) {
+          const catalog = parsePlanLookupKey(account.priceLookupKey);
+          const renewsAt = account.currentPeriodEndsAt;
+          if (!catalog || !renewsAt || !account.subscriptionId) continue;
+          const daysLeft = (renewsAt.getTime() - now.getTime()) / DAY_MS;
+          const threshold = daysLeft > REMINDER_DAYS[1] ? REMINDER_DAYS[0] : REMINDER_DAYS[1];
+          try {
+            // What renews is the waiting change when there is one.
+            const waiting = parsePlanLookupKey(account.pendingPlanKey);
+            const next = waiting ?? catalog;
+            const people = planPeople(
+              next.plan,
+              (await organizationSeats(prisma, account.organizationId)).total,
+            );
+            const amountCents = planChargeCents({
+              plan: next.plan,
+              currency: catalog.currency,
+              interval: next.interval,
+              people,
+              aiUseCents: waiting ? ai(account.pendingAiUseCents) : ai(account.aiUseCents),
+            });
+            const delivered = await sendOnce(
+              {
+                kind: "renewal_reminder",
+                organizationId: account.organizationId,
+                subscriptionId: account.subscriptionId,
+                key: [
+                  "renewal_reminder",
+                  account.subscriptionId,
+                  renewsAt.toISOString(),
+                  threshold,
+                ].join(":"),
+              },
+              (to) =>
+                renewalReminderEmail(context, {
+                  to: to.email,
+                  locale: to.locale,
+                  plan: next.plan,
+                  currency: catalog.currency,
+                  renewsAt,
+                  amountCents,
+                }),
+            );
+            if (delivered) sent += 1;
+          } catch (error) {
+            getLogger().error("billing renewal reminder", error);
+          }
+        }
+        return sent;
+      });
+    },
+
     /**
      * Called after a sync with the subscription as stored before it and as the provider reports
      * it now. Sends the confirmation when a plan became active or a change to it took effect.
@@ -147,3 +227,32 @@ export function createBillingNotices(deps: {
 }
 
 export type BillingNotices = ReturnType<typeof createBillingNotices>;
+
+/**
+ * The daily reminder job for a process that reads its email settings from the environment, at
+ * most once a day however often the reconciler calls it.
+ */
+export function createBillingReminderJobFromEnv(
+  prisma: PrismaClient,
+  env: Record<string, string | undefined>,
+): () => Promise<void> {
+  const value = (key: string) => env[key]?.trim() || undefined;
+  const notices = createBillingNotices({
+    prisma,
+    webOrigin: value("WEB_ORIGIN") ?? "http://127.0.0.1:5173",
+    email: configuredEmailProvider({
+      emailProvider: value("EMAIL_PROVIDER"),
+      emailApiKey: value("EMAIL_API_KEY"),
+      emailApiUrl: value("EMAIL_API_URL"),
+      emailFrom: value("EMAIL_FROM"),
+      smtpUrl: value("SMTP_URL"),
+    }),
+  });
+  let last: number | undefined;
+  return async () => {
+    const now = Date.now();
+    if (last !== undefined && now - last < DAY_MS) return;
+    last = now;
+    await notices.remindRenewals(new Date(now));
+  };
+}

@@ -33,6 +33,7 @@ describePostgres("subscription emails (PostgreSQL)", () => {
   let prisma: PrismaClient;
   let close: () => Promise<void>;
   let billing: ReturnType<typeof createBillingService>;
+  let notices: ReturnType<typeof createBillingNotices>;
   const created = { organizations: [] as string[], users: [] as string[] };
   let counter = 0;
 
@@ -43,15 +44,16 @@ describePostgres("subscription emails (PostgreSQL)", () => {
       await db.prisma.$disconnect();
       await db.pool.end();
     };
+    notices = createBillingNotices({
+      prisma,
+      email: mailer as never,
+      webOrigin: "https://app.example.com",
+    });
     billing = createBillingService({
       prisma,
       provider: emulator,
       webOrigin: "https://app.example.com",
-      notices: createBillingNotices({
-        prisma,
-        email: mailer as never,
-        webOrigin: "https://app.example.com",
-      }),
+      notices,
     });
     await emulator.ensurePlanPrices();
   });
@@ -179,5 +181,94 @@ describePostgres("subscription emails (PostgreSQL)", () => {
       failing = false;
     }
     expect(to(address)).toHaveLength(0);
+  });
+
+  describe("renewal reminder", () => {
+    /**
+     * Runs the daily job as it would run `days` before the account's renewal, and says how many
+     * emails the owner got from it; other tests' accounts in the same database are reminded too.
+     */
+    async function remindBefore(organizationId: string, days: number) {
+      const account = await billingAccountForOrganization(prisma, organizationId);
+      const owner = `${organizationId}-owner@corvo.test`;
+      const before = to(owner).length;
+      await notices.remindRenewals(new Date(account!.currentPeriodEndsAt!.getTime() - days * DAY));
+      return to(owner).length - before;
+    }
+
+    it("reminds a yearly plan at 30 and at 7 days, once each", async () => {
+      const { id, owner, to: address } = await organization("pt-BR");
+      clock = Date.now();
+      await subscribe(owner, id, input({ currency: "brl", interval: "year", aiUseCents: 1000 }));
+      const confirmations = to(address).length;
+      expect(await remindBefore(id, 31)).toBe(0);
+      expect(await remindBefore(id, 30)).toBe(1);
+      expect(await remindBefore(id, 30)).toBe(0);
+      expect(await remindBefore(id, 12)).toBe(0);
+      expect(await remindBefore(id, 7)).toBe(1);
+      expect(await remindBefore(id, 7)).toBe(0);
+      expect(await remindBefore(id, 1)).toBe(0);
+      const reminders = to(address).slice(confirmations);
+      expect(reminders).toHaveLength(2);
+      const account = await billingAccountForOrganization(prisma, id);
+      const date = new Intl.DateTimeFormat("pt-BR", { dateStyle: "long", timeZone: "UTC" }).format(
+        account!.currentPeriodEndsAt!,
+      );
+      for (const message of reminders) {
+        expect(message.subject).toBe(`Seu plano anual renova em ${date}`);
+        // Team for a year in reais, plus the AI add-on's twelve months.
+        expect(message.text).toMatch(/serão cobrados pelo plano Equipe/);
+        expect(message.text).toMatch(/R\$\s3\.221,80/);
+        expect(message.text).toContain("cancele antes dessa data");
+      }
+    });
+
+    it("sends only the 7 day reminder when the first run comes late", async () => {
+      const { id, owner, to: address } = await organization();
+      clock = Date.now();
+      await subscribe(owner, id, input({ interval: "year" }));
+      const confirmations = to(address).length;
+      expect(await remindBefore(id, 5)).toBe(1);
+      expect(await remindBefore(id, 4)).toBe(0);
+      expect(to(address)).toHaveLength(confirmations + 1);
+    });
+
+    it("never reminds a monthly plan", async () => {
+      const { id, owner, to: address } = await organization();
+      clock = Date.now();
+      await subscribe(owner, id, input({ interval: "month" }));
+      const confirmations = to(address).length;
+      for (const days of [30, 7, 3]) expect(await remindBefore(id, days)).toBe(0);
+      expect(to(address)).toHaveLength(confirmations);
+    });
+
+    it("skips a plan set to cancel", async () => {
+      const { id, owner, to: address } = await organization();
+      clock = Date.now();
+      await subscribe(owner, id, input({ interval: "year" }));
+      const confirmations = to(address).length;
+      await prisma.billingAccount.update({
+        where: { organizationId: id },
+        data: { cancelAtPeriodEnd: true },
+      });
+      expect(await remindBefore(id, 30)).toBe(0);
+      expect(await remindBefore(id, 7)).toBe(0);
+      expect(to(address)).toHaveLength(confirmations);
+    });
+
+    it("gives the claim back when the mailer is down, so the next run sends", async () => {
+      const { id, owner, to: address } = await organization();
+      clock = Date.now();
+      await subscribe(owner, id, input({ interval: "year" }));
+      const confirmations = to(address).length;
+      failing = true;
+      try {
+        expect(await remindBefore(id, 30)).toBe(0);
+      } finally {
+        failing = false;
+      }
+      expect(await remindBefore(id, 29)).toBe(1);
+      expect(to(address)).toHaveLength(confirmations + 1);
+    });
   });
 });

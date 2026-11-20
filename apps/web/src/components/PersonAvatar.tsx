@@ -39,7 +39,11 @@ export function PersonAvatar({
   const [failed, setFailed] = useState<string | null>(null);
   const dot = presenceDotClass(presence);
   return (
-    <span aria-hidden="true" className="relative shrink-0" style={{ width: size, height: size }}>
+    <span
+      aria-hidden="true"
+      className="relative block shrink-0"
+      style={{ width: size, height: size }}
+    >
       <span
         style={{ fontSize: Math.round(size * 0.4) }}
         className="grid size-full place-items-center overflow-hidden rounded-full border border-border bg-muted font-semibold text-foreground"

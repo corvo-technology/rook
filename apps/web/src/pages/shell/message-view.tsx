@@ -977,7 +977,7 @@ function ChannelRow({ avatar, children }: { avatar: ReactNode; children: ReactNo
   if (!avatar) return <>{children}</>;
   return (
     <div className="relative -mx-2 flex gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted/50 focus-within:bg-muted/50 motion-reduce:transition-none">
-      <span className="mt-0.5 shrink-0">{avatar}</span>
+      <span className="mt-0.5 shrink-0 self-start">{avatar}</span>
       <div className="min-w-0 flex-1">{children}</div>
     </div>
   );

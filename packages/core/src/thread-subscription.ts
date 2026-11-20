@@ -91,6 +91,8 @@ export async function runThreadSubscription(options: {
     let cursor = head.cursor;
     let effectsCursor = head.cursor;
     let generation = 0;
+    // The head a resync frame named: no snapshot older than it may stand in for the missed events.
+    let resyncFloor = -1;
     // A snapshot on screen counts as current only if it reaches the head. An older one (say,
     // painted from a cache while its fresh load failed) would otherwise never get the events
     // between its cursor and the head, since the stream starts from the head.
@@ -104,7 +106,7 @@ export async function runThreadSubscription(options: {
     const commitRecovery = () => {
       if (isStopped() || recovery.current.phase !== "snapshot") return;
       const committed = options.currentSnapshot();
-      if (committed?.threadId !== head.threadId) return;
+      if (committed?.threadId !== head.threadId || committed.cursor < resyncFloor) return;
       recovery.current = {
         phase: "replay",
         projectionFloor: committed.cursor,
@@ -166,6 +168,14 @@ export async function runThreadSubscription(options: {
             retryMs = 250;
             // Heartbeats only prove the socket is alive; they carry no state and no cursor.
             if (event.type === "heartbeat") continue;
+            // Too much was missed to replay: leave the stream, take a snapshot, resume from it.
+            // `cursor` stays put, so a refresh that fails is answered with another resync.
+            if (event.type === "thread.resync") {
+              resyncFloor = Math.max(resyncFloor, event.seq);
+              effectsCursor = Math.max(effectsCursor, event.seq);
+              recovery.current = { phase: "snapshot" };
+              break;
+            }
             cursor = Math.max(cursor, event.seq);
             const replay = recovery.current.phase === "replay" ? recovery.current : null;
             const deliverEffects = !replay || event.seq > replay.suppressEffectsThrough;

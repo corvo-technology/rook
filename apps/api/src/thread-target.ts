@@ -14,6 +14,7 @@ import {
   GROUP_MEMBER_MIN,
   MessageBlock as MessageBlockSchema,
   RunErrorInfoSchema,
+  THREAD_READ_BUDGET,
 } from "@corvo/contracts";
 import {
   ACTIVE_RUN_STATUSES,
@@ -452,6 +453,8 @@ export async function threadHead(prisma: PrismaClient, target: ThreadTarget) {
 export async function threadSnapshot(
   deps: { prisma: PrismaClient },
   target: ThreadTarget,
+  /** `preview` cuts a helper's long report; the client reads the whole of it when it is opened. */
+  options?: { preview?: boolean },
 ): Promise<ThreadSnapshot> {
   // Lock the thread row so messages, the event cursor, active runs, and live
   // progress are read from one consistent commit. A torn Promise.all can
@@ -468,7 +471,16 @@ export async function threadSnapshot(
         async (tx) => {
           await tx.$queryRaw`SELECT id FROM threads WHERE id = ${target.threadId} FOR SHARE`;
           const [messagePage, last, activeRuns, busyOrFailed] = await Promise.all([
-            loadMessagePage(tx, target.threadId, undefined, THREAD_MESSAGE_PAGE_SIZE),
+            loadMessagePage(
+              tx,
+              target.threadId,
+              undefined,
+              THREAD_MESSAGE_PAGE_SIZE,
+              undefined,
+              false,
+              false,
+              { budget: THREAD_READ_BUDGET.coldOpen, preview: options?.preview },
+            ),
             tx.event.findFirst({
               where: { threadId: target.threadId },
               orderBy: { seq: "desc" },
@@ -563,7 +575,16 @@ export async function threadSnapshot(
     async (tx) => {
       await tx.$queryRaw`SELECT id FROM threads WHERE id = ${target.threadId} FOR SHARE`;
       const [messagePage, last, activeRuns, recentTerminals] = await Promise.all([
-        loadMessagePage(tx, target.threadId, undefined, THREAD_MESSAGE_PAGE_SIZE),
+        loadMessagePage(
+          tx,
+          target.threadId,
+          undefined,
+          THREAD_MESSAGE_PAGE_SIZE,
+          undefined,
+          false,
+          false,
+          { budget: THREAD_READ_BUDGET.coldOpen, preview: options?.preview },
+        ),
         tx.event.findFirst({
           where: { threadId: target.threadId },
           orderBy: { seq: "desc" },

@@ -862,6 +862,10 @@ function SpaceShell({ page }: { page?: ReactNode }) {
           : null;
       if (target) void rpc.wiki.keep(target).catch(() => undefined);
     },
+    onLoadMessage: async (message) => {
+      const target = groupId ? { groupId } : active ? { botId: active.id } : null;
+      return target ? rpc.threads.message({ ...target, messageId: message.id }) : null;
+    },
     onReact: composer.reactToMessage,
     onPin: inGroup ? composer.pinMessage : undefined,
     onJumpToMessage: jumpToReplyMessage,

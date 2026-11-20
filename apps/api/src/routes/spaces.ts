@@ -296,7 +296,7 @@ export function spacesRoutes(ctx: RouterContext) {
       const [thread, routines] = active
         ? await Promise.all([
             resolveThreadTarget(deps.prisma, actor, { botId: active.id }).then((target) =>
-              threadSnapshot(deps, target),
+              threadSnapshot(deps, target, { preview: true }),
             ),
             listRoutinesDto(deps, actor, active.id),
           ])

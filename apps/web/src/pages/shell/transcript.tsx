@@ -87,6 +87,7 @@ export const Transcript = memo(function Transcript({
   onQuote,
   onReact,
   onPin,
+  onLoadMessage,
   onJumpToMessage,
   onOpenPeerMessages,
   memberName,
@@ -156,6 +157,7 @@ export const Transcript = memo(function Transcript({
   variant?: "chat" | "thread";
   onMarkUnread: (message: ThreadMessage) => void;
   onKeepInWiki?: (message: ThreadMessage) => void;
+  onLoadMessage?: (message: ThreadMessage) => Promise<ThreadMessage | null>;
   markedUnreadMessageId?: string;
   onQuote?: (message: ThreadMessage, quote: string) => void;
   onReact: (message: ThreadMessage, reaction: MessageReaction) => Promise<void>;
@@ -670,6 +672,7 @@ export const Transcript = memo(function Transcript({
                       onKeepInWiki={onKeepInWiki}
                       onReact={onReact}
                       onPin={onPin}
+                      onLoadMessage={onLoadMessage}
                     />
                   </div>
                 </div>

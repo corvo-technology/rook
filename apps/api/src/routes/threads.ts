@@ -1,6 +1,7 @@
 import { runContinueJob, runJobKey } from "@corvo/adapter-kit";
 import { botContextUsage, settleCallRequest } from "@corvo/adapters";
 import type { Actor, ProductEvent } from "@corvo/contracts";
+import { THREAD_READ_BUDGET } from "@corvo/contracts";
 import {
   CALL_CLIENT_NONCE_PREFIX,
   callClientNonce,
@@ -32,11 +33,14 @@ import {
   isBackgroundRun,
   isPeerRun,
   loadMessagePage,
+  replySelection,
   shouldForwardBackgroundThreadEvent,
   shouldForwardPeerThreadEvent,
   withAuthor,
   withEventRoutineName,
+  withRoutineNames,
 } from "../thread-message-pages.js";
+import { planResume, previewCommandEvent } from "../thread-read-budget.js";
 import {
   markThreadRead,
   markThreadUnreadFrom,
@@ -95,7 +99,19 @@ export function threadsRoutes(ctx: RouterContext) {
         const target = await resolveThreadTarget(deps.prisma, context.actor, input, {
           includeArchived: true,
         });
-        return threadSnapshot(deps, target);
+        return threadSnapshot(deps, target, { preview: input.preview });
+      }),
+      message: authed.threads.message.handler(async ({ context, input }) => {
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input, {
+          includeArchived: true,
+        });
+        const row = await deps.prisma.message.findFirst({
+          where: { id: input.messageId, threadId: target.threadId },
+          include: { replyTo: { select: replySelection } },
+        });
+        if (!row) return null;
+        const [message] = await withRoutineNames(deps.prisma, [row]);
+        return message ?? null;
       }),
       messages: authed.threads.messages.handler(async ({ context, input }) => {
         const target = await resolveThreadTarget(deps.prisma, context.actor, input, {
@@ -109,6 +125,7 @@ export function threadsRoutes(ctx: RouterContext) {
           input.around,
           input.includePeerRuns,
           input.includePeerReceipts,
+          { budget: THREAD_READ_BUDGET.historyPage, preview: input.preview },
         );
       }),
       subscribe: authed.threads.subscribe.handler(async function* ({ context, input }) {
@@ -120,7 +137,11 @@ export function threadsRoutes(ctx: RouterContext) {
           Promise<{ name: string; email: string; image: string | null } | null>
         >();
         const routineNameCache = new Map<string, Promise<string | undefined>>();
-        const follow = deps.events.follow(target.threadId, input.cursor, context.signal);
+        // A client that missed more than a replay should carry starts from the head and takes a
+        // fresh snapshot, told so by one `thread.resync` frame.
+        const resume = await planResume(deps.prisma, target.threadId, input.cursor);
+        const start = resume.replay ? input.cursor : resume.head;
+        const follow = deps.events.follow(target.threadId, start, context.signal);
         // A half-open stream looks identical to an idle one, so punctuate silence:
         // the client treats any frame as liveness and reconnects once they stop.
         const revoked = accessRevocations
@@ -136,6 +157,18 @@ export function threadsRoutes(ctx: RouterContext) {
           authorizedAt = Date.now();
         };
         try {
+          if (!resume.replay) {
+            yield {
+              id: "resync",
+              spaceId: context.actor.spaceId,
+              threadId: target.threadId,
+              botId: target.kind === "bot" ? target.botId : target.threadId,
+              seq: resume.head,
+              type: "thread.resync",
+              createdAt: new Date().toISOString(),
+              payload: {},
+            };
+          }
           while (!context.signal?.aborted) {
             pending ??= follow.next();
             let timer: ReturnType<typeof setTimeout> | undefined;
@@ -174,10 +207,12 @@ export function threadsRoutes(ctx: RouterContext) {
             } else if (await isBackgroundRun(deps.prisma, event.runId, backgroundRunCache)) {
               if (!shouldForwardBackgroundThreadEvent(event)) continue;
             }
-            yield await withAuthor(
-              deps.prisma,
-              await withEventRoutineName(deps.prisma, event, routineNameCache),
-              authorCache,
+            yield previewCommandEvent(
+              await withAuthor(
+                deps.prisma,
+                await withEventRoutineName(deps.prisma, event, routineNameCache),
+                authorCache,
+              ),
             );
           }
         } finally {

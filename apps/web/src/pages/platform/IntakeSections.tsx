@@ -14,6 +14,7 @@ import {
 import { useLingui } from "@lingui/react/macro";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { PageTitle } from "../../components/PageHeader";
 import { useSpaceQueries } from "../../lib/query";
 import { errorText } from "../../lib/user-error";
 import { NewPartnerDialog } from "./NewPartnerDialog";
@@ -45,7 +46,7 @@ export function WaitlistSection() {
 
   return (
     <div className="flex flex-col gap-6" data-testid="platform-waitlist">
-      <h1 className="text-2xl font-light tracking-tight">{t`Waitlist`}</h1>
+      <PageTitle>{t`Waitlist`}</PageTitle>
       {list.error || decide.error ? (
         <p role="alert" className="text-sm text-destructive">
           {errorText(list.error ?? decide.error, t`Could not load`)}
@@ -118,7 +119,7 @@ export function PartnerLeadsSection() {
 
   return (
     <div className="flex flex-col gap-6" data-testid="platform-leads">
-      <h1 className="text-2xl font-light tracking-tight">{t`Partner applications`}</h1>
+      <PageTitle>{t`Partner applications`}</PageTitle>
       {list.error ? (
         <p role="alert" className="text-sm text-destructive">
           {errorText(list.error, t`Could not load`)}

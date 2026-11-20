@@ -2,6 +2,7 @@ import { EmptyState } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import type { ReactNode } from "react";
 import { Navigate, useParams } from "react-router-dom";
+import { PageHeader } from "../../components/PageHeader";
 import type { PartnerSection } from "../../lib/partner-console";
 import { PARTNER_SECTIONS, partnerPath, sectionsFor, usePartners } from "../../lib/partner-console";
 import { PartnerBrand } from "./PartnerBrand";
@@ -101,11 +102,7 @@ function Frame({ title, children }: { title?: string; children: ReactNode }) {
       data-testid="partner-console"
       className="flex h-full min-h-0 flex-col overflow-y-auto bg-background text-foreground"
     >
-      {title ? (
-        <h1 className="mx-auto w-full max-w-5xl px-6 pt-6 pb-4 text-xl font-light tracking-tight">
-          {title}
-        </h1>
-      ) : null}
+      {title ? <PageHeader width="wide">{title}</PageHeader> : null}
       <div className="mx-auto w-full max-w-5xl px-6 pb-8 pt-2 first:pt-6">{children}</div>
     </div>
   );

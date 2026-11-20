@@ -154,12 +154,12 @@ export const APP_MAP_SCREENS: readonly AppMapEntry[] = [
     "member",
     COMPUTER,
     {
-      title: "Workflows",
+      title: "Routine flows",
       description: "Multi-step flows that chain agents and tools together.",
       keywords: ["flow", "steps", "pipeline", "chain", "automation"],
     },
     {
-      title: "Fluxos de trabalho",
+      title: "Fluxos das rotinas",
       description: "Fluxos de vários passos que encadeiam agentes e ferramentas.",
       keywords: ["fluxo", "passos", "pipeline", "encadear", "automação"],
     },

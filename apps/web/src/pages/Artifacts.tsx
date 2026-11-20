@@ -34,6 +34,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { IconTooltip } from "../components/IconTooltip";
+import { PageTitle } from "../components/PageHeader";
 import { PdfViewer } from "../components/PdfViewer";
 import { SandboxedHtmlViewer } from "../components/SandboxedHtmlViewer";
 import { decodeArtifactBase64, downloadArtifactBytes } from "../lib/artifact-open";
@@ -228,9 +229,9 @@ export function ArtifactsPage() {
               <ChevronLeft size={16} strokeWidth={1.9} aria-hidden="true" />
               <Trans>Bots</Trans>
             </Link>
-            <h1 className="text-heading2 font-semibold">
+            <PageTitle>
               <Trans>Artifacts</Trans>
-            </h1>
+            </PageTitle>
           </div>
           <div className="app-no-drag flex shrink-0 items-center gap-2">
             <Button

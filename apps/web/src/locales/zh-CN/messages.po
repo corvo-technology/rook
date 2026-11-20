@@ -1942,6 +1942,10 @@ msgstr "按代理"
 msgid "By model tier"
 msgstr "按模型等级"
 
+#: src/pages/RoutinesTabs.tsx
+msgid "Calendar"
+msgstr "日历"
+
 #: src/pages/shell/chat-header.tsx
 msgid "Call"
 msgstr "通话"
@@ -4590,6 +4594,10 @@ msgstr "第一个机器人"
 msgid "First messages, one per line"
 msgstr "首条消息，每行一条"
 
+#: src/pages/RoutinesTabs.tsx
+msgid "Flows"
+msgstr "流程"
+
 #: src/pages/shell/composer-model-choice.tsx
 msgid "For this conversation"
 msgstr "用于此对话"
@@ -5281,6 +5289,7 @@ msgstr "加入"
 msgid "JSON"
 msgstr "JSON"
 
+#: src/pages/DirectChat.tsx
 #: src/pages/shell/transcript.tsx
 msgid "Jump to latest"
 msgstr "跳到最新"
@@ -8111,8 +8120,6 @@ msgid "Routine “{0}”"
 msgstr "例行任务“{0}”"
 
 #: src/pages/PartnerTemplateEditor.tsx
-#: src/pages/shell/command-palette.tsx
-#: src/pages/shell/sidebar-team.tsx
 #: src/pages/Workflows.tsx
 msgid "Routine flows"
 msgstr "例行任务流程"

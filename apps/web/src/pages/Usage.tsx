@@ -4,6 +4,7 @@ import { BotAvatar, Button, Progress, Spinner } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { PageHeader } from "../components/PageHeader";
 import { formatTokens } from "../lib/context-meter";
 import { useSpaceQueries } from "../lib/query";
 import { translateRunError } from "../lib/run-error";
@@ -91,26 +92,30 @@ export function UsagePage() {
     <div className="flex h-full flex-col bg-background text-foreground">
       <div className="min-h-0 flex-1 overflow-auto px-6 pb-10">
         <div className="mx-auto w-full max-w-3xl">
-          <header className="flex flex-wrap items-center justify-between gap-3 py-4">
-            <h1 className="text-base font-medium">{t`Usage`}</h1>
-            <div className="flex gap-1">
-              {periods.map(([value, label]) => (
-                <Button
-                  key={value}
-                  type="button"
-                  size="sm"
-                  variant={period === value ? "secondary" : "ghost"}
-                  aria-pressed={period === value}
-                  onClick={() => {
-                    setPeriod(value);
-                    setAgent(null);
-                  }}
-                >
-                  {label}
-                </Button>
-              ))}
-            </div>
-          </header>
+          <PageHeader
+            flush
+            actions={
+              <div className="flex gap-1">
+                {periods.map(([value, label]) => (
+                  <Button
+                    key={value}
+                    type="button"
+                    size="sm"
+                    variant={period === value ? "secondary" : "ghost"}
+                    aria-pressed={period === value}
+                    onClick={() => {
+                      setPeriod(value);
+                      setAgent(null);
+                    }}
+                  >
+                    {label}
+                  </Button>
+                ))}
+              </div>
+            }
+          >
+            {t`Usage`}
+          </PageHeader>
 
           <PlanUsageSection />
 

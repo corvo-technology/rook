@@ -48,6 +48,7 @@ import { InvitePage } from "./pages/InvitePage";
 import { McpOAuthCallbackPage } from "./pages/McpOAuthCallback";
 import { PartnerConsolePage } from "./pages/partner/PartnerConsolePage";
 import { WhiteLabelPlans } from "./pages/plans/WhiteLabelPlans";
+import { RoutinesTabs } from "./pages/RoutinesTabs";
 import { ShellPage } from "./pages/Shell";
 import { useBoardNotifications } from "./pages/shell/use-board-notifications";
 
@@ -281,8 +282,30 @@ function SessionApp() {
                 <Route path="/settings/:section?" element={<SettingsPage />} />
                 <Route path="/app/store" element={<ShellPage page={<StorePage />} />} />
                 <Route path="/app/usage" element={<ShellPage page={<UsagePage />} />} />
-                <Route path="/app/workflows" element={<ShellPage page={<WorkflowsPage />} />} />
-                <Route path="/app/routines" element={<ShellPage page={<RoutinesPage />} />} />
+                <Route
+                  path="/app/workflows"
+                  element={
+                    <ShellPage
+                      page={
+                        <RoutinesTabs>
+                          <WorkflowsPage />
+                        </RoutinesTabs>
+                      }
+                    />
+                  }
+                />
+                <Route
+                  path="/app/routines"
+                  element={
+                    <ShellPage
+                      page={
+                        <RoutinesTabs>
+                          <RoutinesPage />
+                        </RoutinesTabs>
+                      }
+                    />
+                  }
+                />
                 <Route path="/app/artifacts" element={<ShellPage page={<ArtifactsPage />} />} />
                 <Route
                   path="/app/artifacts/:artifactId"

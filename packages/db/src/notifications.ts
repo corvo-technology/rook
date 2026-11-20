@@ -2,6 +2,7 @@ import type { AppNotification, NotificationKind, NotificationList } from "@corvo
 import { NotificationCodeSchema } from "@corvo/contracts";
 import { hasMentionToken, personName } from "@corvo/core";
 import type { Prisma, PrismaClient } from "./client.js";
+import { conversationAudienceUserIds } from "./conversation-audience.js";
 import { previewFromBlocks } from "./thread-listing.js";
 
 type Writer = Pick<PrismaClient, "notification">;
@@ -58,6 +59,36 @@ function blocksText(blocks: unknown): string {
     .join("\n");
 }
 
+async function raiseMention(
+  tx: Prisma.TransactionClient,
+  input: MessageNotificationInput,
+  userId: string,
+): Promise<void> {
+  await raiseNotification(tx, {
+    spaceId: input.spaceId,
+    userId,
+    kind: "mention",
+    dedupeKey: `mention:${input.message.id}`,
+    threadId: input.thread.id,
+    messageId: input.message.id,
+    botId: input.thread.groupId ? undefined : (input.thread.botId ?? undefined),
+    actorId: input.message.authorUserId ?? undefined,
+  });
+}
+
+/** A chosen mention in an agent's own conversation: told only if the person reads that chat. */
+async function raiseChosenMentions(
+  tx: Prisma.TransactionClient,
+  input: MessageNotificationInput,
+  botId: string,
+): Promise<void> {
+  const audience = new Set(await conversationAudienceUserIds(tx, input.spaceId, { botId }));
+  for (const userId of new Set(input.mentionedUserIds ?? [])) {
+    if (userId === input.message.authorUserId || !audience.has(userId)) continue;
+    await raiseMention(tx, input, userId);
+  }
+}
+
 function firstToken(name: string): string | null {
   const token = name.trim().split(/\s+/)[0] ?? "";
   return token.length >= 2 ? token : null;
@@ -68,6 +99,7 @@ export interface MessageNotificationInput {
   thread: {
     id: string;
     groupId: string | null;
+    botId?: string | null;
     direct: { userAId: string; userBId: string } | null;
   };
   message: {
@@ -77,6 +109,8 @@ export interface MessageNotificationInput {
     threadRootId: string | null;
     blocks: unknown;
   };
+  /** People the sender picked with a mention chip; only those who can see the conversation are told. */
+  mentionedUserIds?: readonly string[];
 }
 
 /**
@@ -110,41 +144,26 @@ export async function notifyForMessage(
     });
     return;
   }
-  if (!thread.groupId) return;
+  const chosen = input.mentionedUserIds ?? [];
+  if (!thread.groupId) {
+    if (!thread.botId || chosen.length === 0) return;
+    await raiseChosenMentions(tx, input, thread.botId);
+    return;
+  }
   const text = blocksText(message.blocks);
   const mayMention = text.includes("@");
-  if (!mayMention && !message.threadRootId) return;
+  if (!mayMention && !message.threadRootId && chosen.length === 0) return;
 
-  const group = await tx.chatGroup.findUnique({
-    where: { id: thread.groupId },
-    select: { userId: true, accessRoleIds: true, people: { select: { userId: true } } },
-  });
-  if (!group) return;
-  const restricted = group.people.length > 0 || group.accessRoleIds.length > 0;
-  let candidateIds: string[];
-  if (restricted) {
-    const holders = group.accessRoleIds.length
-      ? await tx.spaceMemberRole.findMany({
-          where: { spaceId, roleId: { in: group.accessRoleIds } },
-          select: { userId: true },
-        })
-      : [];
-    candidateIds = [
-      ...new Set([
-        group.userId,
-        ...group.people.map((p) => p.userId),
-        ...holders.map((h) => h.userId),
-      ]),
-    ];
-  } else {
-    candidateIds = (
-      await tx.spaceMember.findMany({ where: { spaceId }, select: { userId: true } })
-    ).map((member) => member.userId);
-  }
-  candidateIds = candidateIds.filter((id) => id !== author);
+  const audience = await conversationAudienceUserIds(tx, spaceId, { groupId: thread.groupId });
+  const candidateIds = audience.filter((id) => id !== author);
   if (candidateIds.length === 0) return;
 
   const raised = new Set<string>();
+  for (const userId of chosen) {
+    if (!candidateIds.includes(userId)) continue;
+    raised.add(userId);
+    await raiseMention(tx, input, userId);
+  }
   if (mayMention) {
     const users = await tx.user.findMany({
       where: { id: { in: candidateIds } },
@@ -157,20 +176,13 @@ export async function notifyForMessage(
         first !== null &&
         names.filter((other) => firstToken(other.name)?.toLowerCase() === first.toLowerCase())
           .length === 1;
+      if (raised.has(person.id)) continue;
       if (
         hasMentionToken(text, person.name) ||
         (firstIsUnique && first !== null && hasMentionToken(text, first))
       ) {
         raised.add(person.id);
-        await raiseNotification(tx, {
-          spaceId,
-          userId: person.id,
-          kind: "mention",
-          dedupeKey: `mention:${message.id}`,
-          threadId: thread.id,
-          messageId: message.id,
-          actorId: author ?? undefined,
-        });
+        await raiseMention(tx, input, person.id);
       }
     }
   }

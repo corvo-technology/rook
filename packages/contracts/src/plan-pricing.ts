@@ -23,6 +23,12 @@ const MONTHLY_EXTRA_PERSON_CENTS: Readonly<Record<BillingCurrency, number>> = {
   brl: 1900,
 };
 
+/** One extra computer a month; reais are dollars at 6.05, rounded down to a price ending in ,90. */
+const MONTHLY_EXTRA_COMPUTER_CENTS: Readonly<Record<BillingCurrency, number>> = {
+  usd: 900,
+  brl: 5390,
+};
+
 /** Dollars of model use a person can add, in cents. */
 export const AI_USE_CENTS = [1000, 2000, 5000, 10000] as const;
 export type AiUseCents = (typeof AI_USE_CENTS)[number];
@@ -48,6 +54,10 @@ export function planPriceCents(
 
 export function extraPersonCents(currency: BillingCurrency, interval: BillingInterval): number {
   return forInterval(MONTHLY_EXTRA_PERSON_CENTS[currency], interval);
+}
+
+export function extraComputerCents(currency: BillingCurrency, interval: BillingInterval): number {
+  return forInterval(MONTHLY_EXTRA_COMPUTER_CENTS[currency], interval);
 }
 
 /** AI has no yearly discount: a year costs twelve months of the monthly price. */

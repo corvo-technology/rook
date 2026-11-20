@@ -257,6 +257,7 @@ msgstr "{computerMinutes} min"
 msgid "{computers, plural, one {# computer} other {# computers}}"
 msgstr "{computers, plural, one {# ordinateur} other {# ordinateurs}}"
 
+#: src/components/ExtraComputers.tsx
 #: src/pages/usage/plan-usage.tsx
 msgid "{computersUsed} of {computersLimit}"
 msgstr "{computersUsed} sur {computersLimit}"
@@ -971,6 +972,10 @@ msgstr "Ajoutez une URL de serveur HTTPS."
 #: src/pages/Store.tsx
 msgid "Add another"
 msgstr "En ajouter un autre"
+
+#: src/components/ExtraComputers.tsx
+msgid "Add computer"
+msgstr "Ajouter un ordinateur"
 
 #: src/pages/shell/bot-credentials.tsx
 msgid "Add credential"
@@ -2473,6 +2478,7 @@ msgstr "Minutes d'ordinateur"
 msgid "Computer size"
 msgstr "Taille de l'ordinateur"
 
+#: src/components/ExtraComputers.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/LimitsSection.tsx
 #: src/pages/usage/plan-usage.tsx
@@ -6811,6 +6817,10 @@ msgstr "Lire seulement"
 msgid "Only some roles or people"
 msgstr "Seulement certains rôles ou personnes"
 
+#: src/components/ExtraComputers.tsx
+msgid "Only the owner can add computers."
+msgstr "Seul le propriétaire peut ajouter des ordinateurs."
+
 #: src/components/PlanChoice.tsx
 msgid "Only the owner can subscribe"
 msgstr "Seul le propriétaire peut s'abonner"
@@ -7784,6 +7794,10 @@ msgstr "Retirer {what}"
 #: src/pages/RoutineEditor.tsx
 msgid "Remove change trigger"
 msgstr "Supprimer le déclencheur de changement"
+
+#: src/components/ExtraComputers.tsx
+msgid "Remove computer"
+msgstr "Retirer un ordinateur"
 
 #: src/pages/TicketFields.tsx
 msgid "Remove field"
@@ -8810,6 +8824,7 @@ msgid "Something went wrong"
 msgstr "Une erreur s'est produite"
 
 #: src/App.tsx
+#: src/components/ExtraComputers.tsx
 #: src/lib/user-error.ts
 #: src/pages/onboarding/CliEngineRows.tsx
 msgid "Something went wrong. Try again."
@@ -9933,11 +9948,6 @@ msgstr "Passer à l’offre payante"
 msgid "Upgrade now"
 msgstr "Passer à la version supérieure"
 
-#. js-lingui-explicit-id
-#: src/lib/run-error-copy.ts
-msgid "Upgrade your plan to add more computers."
-msgstr "Changez de forfait pour ajouter des ordinateurs."
-
 #: src/pages/partner/PartnerBrand.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Upload"
@@ -10606,9 +10616,14 @@ msgstr "Votre OpenAI"
 msgid "Your OpenRouter"
 msgstr "Votre OpenRouter"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Your plan has no room for another computer."
+msgstr "Votre forfait n'a pas de place pour un autre ordinateur."
+
 #: src/lib/user-error.ts
-msgid "Your plan has no room for another computer. Upgrade to add more."
-msgstr "Votre offre n’autorise pas d’autre ordinateur. Changez d’offre pour en ajouter."
+msgid "Your plan has no room for another computer."
+msgstr "Votre forfait n'a pas de place pour un autre ordinateur."
 
 #: src/lib/user-error.ts
 msgid "Your plan has no seat for another person. Upgrade to add more."

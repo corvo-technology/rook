@@ -218,6 +218,22 @@ describe("ask history", () => {
   });
 });
 
+describe("proposal card history", () => {
+  const card = { kind: "ask" as const, text: "Create group Sales", proposal: true as const };
+
+  it("tells the model whether a proposal card is waiting, applied or dismissed", () => {
+    expect(blocksToAgentHistoryText([card])).toBe(
+      "[proposal card: Create group Sales (waiting for the owner)]",
+    );
+    expect(blocksToAgentHistoryText([{ ...card, status: "answered", answer: "allow" }])).toBe(
+      "[proposal card: Create group Sales (applied)]",
+    );
+    expect(blocksToAgentHistoryText([{ ...card, status: "answered", answer: "deny" }])).toBe(
+      "[proposal card: Create group Sales (dismissed)]",
+    );
+  });
+});
+
 describe("promptTextForAttachments notes", () => {
   const voice = { name: "memo.ogg", mimeType: "audio/ogg", size: 4000 };
 

@@ -22,6 +22,7 @@ import {
   aiUseGrantCents,
   BILLING_CURRENCIES,
   BILLING_INTERVALS,
+  extraComputerLookupKey,
   extraPersonLookupKey,
   PLAN_IDS,
   parsePlanLookupKey,
@@ -60,6 +61,9 @@ export class BillingEmulator implements BillingProvider {
   readonly catalogPrices = new Map<string, string>();
   /** Every extra-person quantity pushed with `setExtraSeats`, newest last. */
   readonly extraSeatWrites: Array<{ customerId: string; priceId: string; quantity: number }> = [];
+  /** Every extra-computer quantity pushed with `setExtraComputers`, newest last. */
+  readonly extraComputerWrites: Array<{ customerId: string; priceId: string; quantity: number }> =
+    [];
   readonly subscriptions: EmulatedSubscription[] = [];
   /** Test switch: the next immediate plan change cannot be charged. */
   failNextPlanChange = false;
@@ -113,6 +117,7 @@ export class BillingEmulator implements BillingProvider {
       for (const interval of BILLING_INTERVALS) {
         for (const plan of PLAN_IDS) keys.push(planLookupKey(plan, currency, interval));
         keys.push(extraPersonLookupKey(currency, interval));
+        keys.push(extraComputerLookupKey(currency, interval));
         for (const cents of AI_USE_CENTS) keys.push(aiLookupKey(cents, currency, interval));
       }
     for (const key of keys)
@@ -265,6 +270,24 @@ export class BillingEmulator implements BillingProvider {
 
   async setExtraSeats(customerId: string, input: { priceId: string; quantity: number }) {
     this.extraSeatWrites.push({ customerId, ...input });
+  }
+
+  async setExtraComputers(customerId: string, input: { priceId: string; quantity: number }) {
+    this.extraComputerWrites.push({ customerId, ...input });
+    const chosen = pickBillingSubscription(this.forCustomer(customerId));
+    if (
+      !chosen ||
+      !holdsBillingSubscription(chosen.status) ||
+      chosen.priceId === BYOK_PRICE_ID ||
+      chosen.creditAmountCents
+    )
+      return;
+    if (this.failNextPlanChange && input.quantity > (chosen.extraComputers ?? 0)) {
+      this.failNextPlanChange = false;
+      throw new BillingPaymentRequiredError();
+    }
+    if (input.quantity > 0) chosen.extraComputers = input.quantity;
+    else delete chosen.extraComputers;
   }
 
   async createCreditCheckout(input: BillingCreditCheckoutRequest) {

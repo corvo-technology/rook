@@ -256,6 +256,30 @@ describe("Composer", () => {
     },
   );
 
+  it("offers a person and sends them as a person mention", () => {
+    const beatrice: ComposerMention = { kind: "person", id: "user-2", name: "Beatrice Gold" };
+    const onSend = vi.fn();
+    const textarea = renderComposer(onSend, { mentionTargets: [beatrice, bob] });
+    type(textarea, "@Bea");
+    expect(container?.querySelector('[data-testid="mention-picker"]')?.textContent).toContain(
+      "@Beatrice Gold",
+    );
+    expect(container?.querySelector('[data-testid="mention-picker"]')?.textContent).not.toContain(
+      "@Bob",
+    );
+    pressEnter(textarea);
+    expect(container?.querySelector('[data-testid="mention-chip"]')?.textContent).toContain(
+      "Beatrice Gold",
+    );
+    type(textarea, "are you free?");
+    pressEnter(textarea);
+    expect(onSend).toHaveBeenCalledWith(
+      "@Beatrice Gold are you free?",
+      [beatrice],
+      expect.any(String),
+    );
+  });
+
   it("falls back to the first mention when the highlighted target disappears", () => {
     const alice: ComposerMention = { kind: "bot", id: "bot-3", name: "Alice" };
     const textarea = renderComposer(vi.fn(), { mentionTargets: [alice, bob] });

@@ -6,6 +6,7 @@ import {
   computerHomeKey,
   computerScopeKey,
   ensureComputerRecord,
+  resolveComputerQuota,
   resolveMaxComputersPerUser,
   restoreBotUnderComputerQuota,
 } from "./computers.js";
@@ -490,5 +491,50 @@ describe("restoreBotUnderComputerQuota", () => {
       computerId: "computer-a",
     });
     expect(inUse()).toBe(1);
+  });
+});
+
+describe("the computer quota with extra computers", () => {
+  function quotaPrisma(account: Record<string, unknown> | null, override: object | null = null) {
+    return {
+      space: { findUnique: vi.fn(async () => ({ organizationId: "org-1" })) },
+      billingAccount: { findUnique: vi.fn(async () => account) },
+      organizationLimitOverride: { findUnique: vi.fn(async () => override) },
+    } as unknown as Parameters<typeof resolveComputerQuota>[0];
+  }
+  const team = { status: "active", priceId: "price_team", priceLookupKey: null };
+
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("is the plan's computers plus the ones bought", async () => {
+    vi.stubEnv("PLAN_PRICES", '{"price_team":"team"}');
+    await expect(
+      resolveComputerQuota(quotaPrisma({ ...team, extraComputers: 2 }), "space-1"),
+    ).resolves.toMatchObject({ scope: "organization", limit: 3, plan: "team" });
+    await expect(
+      resolveComputerQuota(quotaPrisma({ ...team, extraComputers: 0 }), "space-1"),
+    ).resolves.toMatchObject({ limit: 1 });
+  });
+
+  it("keeps a platform override's computers as the total", async () => {
+    vi.stubEnv("PLAN_PRICES", '{"price_team":"team"}');
+    await expect(
+      resolveComputerQuota(
+        quotaPrisma({ ...team, extraComputers: 2 }, { computers: 6 }),
+        "space-1",
+      ),
+    ).resolves.toMatchObject({ limit: 6 });
+  });
+
+  it("refuses the next computer past that total with the plan's limit error", async () => {
+    vi.stubEnv("PLAN_PRICES", '{"price_team":"team"}');
+    const quota = await resolveComputerQuota(
+      quotaPrisma({ ...team, extraComputers: 1 }),
+      "space-1",
+    );
+    expect(quota).toMatchObject({ limit: 2 });
+    expect(new ComputerLimitError(quota!.limit, "team").message).toBe(
+      "Your plan has no room for another computer",
+    );
   });
 });

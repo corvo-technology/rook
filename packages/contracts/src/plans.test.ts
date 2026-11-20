@@ -111,6 +111,49 @@ describe("seat defaults and overrides", () => {
   });
 });
 
+describe("extra computers", () => {
+  const team = { status: "active", priceId: "price_team" };
+
+  it("keeps one included computer on every plan", () => {
+    for (const plan of Object.values(DEFAULT_PLANS)) expect(plan.computers).toBe(1);
+  });
+
+  it("adds the computers bought to the plan's own while the subscription is paid", () => {
+    expect(resolveEntitlements(config, { ...team, extraComputers: 2 })?.computers).toBe(3);
+    expect(
+      resolveEntitlements(config, { status: "past_due", priceId: "price_team", extraComputers: 1 })
+        ?.computers,
+    ).toBe(2);
+    expect(resolveEntitlements(config, { ...team, extraComputers: 0 })?.computers).toBe(1);
+    expect(resolveEntitlements(config, { ...team, extraComputers: null })?.computers).toBe(1);
+  });
+
+  it("counts none without a paid plan", () => {
+    expect(
+      resolveEntitlements(config, { status: "trialing", priceId: "price_team", extraComputers: 2 })
+        ?.computers,
+    ).toBe(1);
+    expect(
+      resolveEntitlements(config, { status: "canceled", priceId: null, extraComputers: 2 }),
+    ).toMatchObject({ plan: "personal", computers: 1 });
+  });
+
+  it("lets a platform override replace the total", () => {
+    expect(
+      resolveEntitlements(config, { ...team, extraComputers: 2 }, { computers: 8 })?.computers,
+    ).toBe(8);
+  });
+
+  it("takes the extra computer price from configuration", () => {
+    const edited = planConfigFromEnv({
+      PLAN_PRICES: "{}",
+      PLAN_LIMITS: '{"team":{"extraComputerPriceId":"price_computer"}}',
+    })!;
+    expect(edited.plans.team.extraComputerPriceId).toBe("price_computer");
+    expect(edited.plans.personal.extraComputerPriceId).toBeUndefined();
+  });
+});
+
 describe("storage level", () => {
   it("is near from 80% and full at 100%", () => {
     expect(storageLevel(79, 100)).toBe("ok");

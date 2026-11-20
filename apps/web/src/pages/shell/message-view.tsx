@@ -12,6 +12,7 @@ import {
   isSecretAskBlock,
   isToolActivityBlock,
   proposalSteps,
+  splitPersonMentions,
 } from "@corvo/core";
 import { BotAvatar, Button, cn, resolvePersonaColorDef } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
@@ -125,6 +126,7 @@ export const MessageView = memo(function MessageView({
   ownerUserId,
   viewerUserId,
   channelMembers,
+  mentionPeople,
   continued = false,
   face = "still",
   memberName,
@@ -185,6 +187,8 @@ export const MessageView = memo(function MessageView({
   viewerUserId?: string;
   /** The agents of a channel: an `@Name` of theirs in a message is shown as a chip. */
   channelMembers?: readonly { id: string; name: string }[];
+  /** People who can be named here; their `@Name` in a person's message draws as a chip. */
+  mentionPeople?: readonly { id: string; name: string; image: string | null }[];
   /** The same agent as the message above, a moment later: no name or face of its own. */
   continued?: boolean;
   /** Only the latest messages have a moving face, so a long history stays still. */
@@ -824,7 +828,17 @@ export const MessageView = memo(function MessageView({
                   className="max-w-full whitespace-pre-wrap wrap-anywhere text-message text-foreground"
                   dir="auto"
                 >
-                  <LinkifiedText>{block.text}</LinkifiedText>
+                  {splitPersonMentions(block.text, mentionPeople ?? []).map((part, partIndex) =>
+                    typeof part === "string" ? (
+                      <LinkifiedText key={partIndex}>{part}</LinkifiedText>
+                    ) : (
+                      <PersonMention
+                        key={partIndex}
+                        name={part.person.name}
+                        image={mentionPeople?.find((p) => p.id === part.person.id)?.image}
+                      />
+                    ),
+                  )}
                 </div>
                 {i === hoverAnchorIndex ? hoverActions : null}
               </div>
@@ -1013,6 +1027,23 @@ function ChannelRow({ avatar, children }: { avatar: ReactNode; children: ReactNo
       <span className="mt-0.5 shrink-0 self-start">{avatar}</span>
       <div className="min-w-0 flex-1">{children}</div>
     </div>
+  );
+}
+
+/** A person named inline: their picture and name, in no colour. */
+function PersonMention({ name, image }: { name: string; image?: string | null }) {
+  return (
+    <span
+      data-testid="person-mention"
+      className="mx-0.5 inline-flex items-baseline gap-1.5 rounded-full bg-muted px-1.5 py-px align-baseline"
+    >
+      <span className="self-center">
+        <PersonAvatar name={name} image={image} size={16} />
+      </span>
+      <span dir="auto" className="font-medium">
+        {name}
+      </span>
+    </span>
   );
 }
 

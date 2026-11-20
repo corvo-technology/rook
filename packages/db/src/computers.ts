@@ -88,7 +88,11 @@ export class ComputerLimitError extends Error {
     readonly limit: number,
     plan?: PlanId,
   ) {
-    super(plan ? `Your plan allows ${limit} computers` : `User computer limit (${limit}) reached`);
+    super(
+      plan
+        ? "Your plan has no room for another computer"
+        : `User computer limit (${limit}) reached`,
+    );
     this.name = "ComputerLimitError";
     this.plan = plan;
   }

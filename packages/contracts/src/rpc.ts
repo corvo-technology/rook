@@ -238,7 +238,7 @@ import {
   WhiteLabelCheckoutInput,
 } from "./partner-payments.js";
 import { PlanCheckoutInputSchema } from "./plan-pricing.js";
-import { PlanIdSchema, PlanOverrideSchema, PlanUsageSchema } from "./plans.js";
+import { MAX_EXTRA_COMPUTERS, PlanIdSchema, PlanOverrideSchema, PlanUsageSchema } from "./plans.js";
 import { MessageReactionSchema } from "./reactions.js";
 import { RoutineWatchSchema } from "./routine-watch.js";
 import {
@@ -266,6 +266,7 @@ import {
   ChannelPeopleSchema,
   DIRECT_MESSAGE_MAX_LENGTH,
   DirectPersonSchema,
+  MentionPersonSchema,
   PendingApprovalSchema,
 } from "./team-chat.js";
 import {
@@ -322,6 +323,8 @@ const structuredMentionTarget = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("group"), id: Id }),
   z.object({ kind: z.literal("routine"), id: Id }),
   z.object({ kind: z.literal("connector"), id: Id }),
+  /** A member of the space; the server checks they can see the conversation. */
+  z.object({ kind: z.literal("person"), id: Id }),
 ]);
 
 const threadSendInput = threadTarget
@@ -407,6 +410,14 @@ export const appContract = {
      */
     changePlan: oc
       .input(PlanCheckoutInputSchema)
+      .output(z.object({ ok: z.literal(true), url: z.string().url().optional() })),
+    /**
+     * Sets how many extra computers the subscription holds, billed with proration; the owner only.
+     * `url` is set only when the payment needs the owner's action: nothing changed yet, and it
+     * opens the portal.
+     */
+    setExtraComputers: oc
+      .input(z.object({ quantity: z.number().int().min(0).max(MAX_EXTRA_COMPUTERS) }))
       .output(z.object({ ok: z.literal(true), url: z.string().url().optional() })),
     portal: oc.output(z.object({ url: z.string().url() })),
     /**
@@ -862,6 +873,8 @@ export const appContract = {
     message: oc
       .input(threadTarget.safeExtend({ messageId: Id }))
       .output(ThreadMessageSchema.nullable()),
+    /** Members who can see this conversation and may be named in it; never includes the caller. */
+    people: oc.input(threadTarget).output(z.array(MentionPersonSchema)),
     /** How much of the model's reading window this chat's last turn used; null where unknown. */
     context: oc.input(z.object({ botId: Id })).output(
       z.object({

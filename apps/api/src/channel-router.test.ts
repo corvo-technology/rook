@@ -48,10 +48,18 @@ function fixture(options?: {
     model: Parameters<typeof routeGroupMessage>[0]["model"],
     text: string,
     explicitMentions?: string[],
+    mentionedPeople?: string[],
   ) =>
     routeGroupMessage(
       { prisma, model, now: () => now },
-      { groupId: "group-1", threadId: "thread-1", text, members, explicitMentions },
+      {
+        groupId: "group-1",
+        threadId: "thread-1",
+        text,
+        members,
+        explicitMentions,
+        mentionedPeople,
+      },
     );
   return { prisma, route };
 }
@@ -116,6 +124,11 @@ describe("routeGroupMessage", () => {
     });
     const decision = await route(model, "@everyone send me your status");
     expect(decision?.picked).toEqual(["bot-a", "bot-c", "bot-b"]);
+  it("does not apply to a message that names a person", async () => {
+    const { route } = fixture();
+    const model = vi.fn();
+    expect(await route(model, "can you take this?", undefined, ["user-2"])).toBeUndefined();
+    expect(model).not.toHaveBeenCalled();
   });
 
   it("does not apply while a member waits on the person", async () => {

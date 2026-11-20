@@ -7,10 +7,10 @@ describe("plan price setup", () => {
   it("creates every price the first time and none the second, with the same output", async () => {
     const provider = new BillingEmulator();
     const first = await ensurePlanPriceSetup(provider);
-    expect(Object.keys(first.ids)).toHaveLength(32);
-    expect(provider.catalogPrices.size).toBe(32);
+    expect(Object.keys(first.ids)).toHaveLength(36);
+    expect(provider.catalogPrices.size).toBe(36);
     const second = await ensurePlanPriceSetup(provider);
-    expect(provider.catalogPrices.size).toBe(32);
+    expect(provider.catalogPrices.size).toBe(36);
     expect(second).toEqual(first);
   });
 

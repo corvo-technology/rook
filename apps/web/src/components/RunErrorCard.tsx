@@ -6,6 +6,7 @@ import { useState } from "react";
 import type { RunErrorAction } from "../lib/run-error-copy";
 import { describeRunError } from "../lib/run-error-copy";
 import { errorText } from "../lib/user-error";
+import { ComputerLimitAction } from "./ExtraComputers";
 
 export type RunErrorHandlers = {
   onRetry?: () => void;
@@ -144,6 +145,11 @@ export function RunErrorCard({
               </Button>
             );
           })}
+        </div>
+      ) : null}
+      {info.code === "plan_computer_limit" ? (
+        <div className="mt-2.5">
+          <ComputerLimitAction />
         </div>
       ) : null}
       <details className="mt-2">

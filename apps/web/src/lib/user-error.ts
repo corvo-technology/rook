@@ -47,6 +47,15 @@ export function isSeatLimit(error: unknown): boolean {
   );
 }
 
+export function isComputerLimit(error: unknown): boolean {
+  return (
+    Boolean(error) &&
+    typeof error === "object" &&
+    "code" in (error as object) &&
+    (error as { code?: unknown }).code === PLAN_ERROR_CODES.computerLimit
+  );
+}
+
 /** Text for an RPC error whose code says the plan has no room: storage or computers. */
 export function planErrorText(error: unknown): string | undefined {
   const code = error && typeof error === "object" && "code" in error ? error.code : undefined;
@@ -55,7 +64,7 @@ export function planErrorText(error: unknown): string | undefined {
   if (code === PLAN_ERROR_CODES.seatLimit)
     return t`Your plan has no seat for another person. Upgrade to add more.`;
   if (code === PLAN_ERROR_CODES.computerLimit)
-    return t`Your plan has no room for another computer. Upgrade to add more.`;
+    return t`Your plan has no room for another computer.`;
   return undefined;
 }
 

@@ -572,13 +572,14 @@ function SpaceShell({ page }: { page?: ReactNode }) {
   // Routines are listed per agent, so they load once the @-mention list first opens.
   const [mentionsOpened, setMentionsOpened] = useState(false);
   const openMentions = useCallback(() => setMentionsOpened(true), []);
-  const { composerMentionTargets, footerLogos } = useComposerMentions({
+  const { composerMentionTargets, mentionPeople, footerLogos } = useComposerMentions({
     rpc,
     queries,
     bots,
     groups,
     inGroup,
     groupId,
+    botId: active?.id,
     initialBotsLoaded,
     routinesWanted: mentionsOpened,
   });
@@ -1128,6 +1129,7 @@ function SpaceShell({ page }: { page?: ReactNode }) {
               ) : (
                 <Transcript
                   {...transcriptProps}
+                  mentionPeople={mentionPeople}
                   versions={inGroup || !active ? undefined : chatVersions}
                   onApproveAll={composer.approveAll}
                   key={activeSnapshot?.threadId}

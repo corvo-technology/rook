@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { botAvatarDesignJob, runContinueJob, runJobKey } from "@corvo/adapter-kit";
-import type { getBotSecretMetadata } from "@corvo/adapters";
+import type { getBotSecretMetadata, StarterRoutineSetup } from "@corvo/adapters";
 import {
   archiveBot,
   cancelComputerRunWork,
@@ -12,6 +12,7 @@ import {
   normalizeSecretDestination,
   pageUrlOrigin,
   screenLeaseIdForRun,
+  starterRoutinesPrompt,
   storeBotSecret,
   toComputerRef,
   validateBotModelChange,
@@ -53,6 +54,7 @@ import { partnerModelChangeRefused } from "../partner-models.js";
 import type { RouterDeps } from "../router.js";
 import { requireCreatorOrPermission, requireSpacePermission } from "../space-owner.js";
 import { importSpace } from "../space-transfer.js";
+import { setUpCatalogRoutines } from "../starter-routines.js";
 import { loadMessagePage } from "../thread-message-pages.js";
 import type { RouterContext } from "./context.js";
 import { computerContext, modelSetup, THREAD_MESSAGE_PAGE_SIZE } from "./shared.js";
@@ -145,11 +147,28 @@ export function botIntroPrompt(input: {
   disabledBuiltinTools: readonly string[];
   /** Ready-made agents the Chief of a new space may propose; the run has no Store lookup of its own. */
   teamCatalog?: readonly { slug: string; name: string; description: string }[];
+  /** Routines set up before this first message, so it says what is already running. */
+  starterRoutines?: readonly StarterRoutineSetup[];
 }): string {
   const canAsk = !input.disabledBuiltinTools.includes("ask_user");
   const canUpdate = !input.disabledBuiltinTools.includes("update_bot");
   const options =
     "two to four short options that fit your name, anything your title, description or instructions already say, and what you know about them, never a stock list";
+  if (input.starterRoutines?.length) {
+    // Text before ask_user is not kept, so this greeting is plain text, not a question card.
+    return [
+      [
+        "You were just created.",
+        input.userName ? `${input.userName} made you.` : undefined,
+        input.spaceName ? `Their team space is called "${input.spaceName}".` : undefined,
+      ]
+        .filter(Boolean)
+        .join(" "),
+      "Greet them by first name in a few words. Do not call ask_user.",
+      starterRoutinesPrompt(input.starterRoutines),
+      INTRO_VOICE,
+    ].join("\n");
+  }
   return [
     [
       "You were just created.",
@@ -197,7 +216,12 @@ export async function enqueueBotIntroRun(
   deps: RouterDeps,
   actor: Actor,
   bot: Bot,
-  options: { locale?: AgentCatalogLocale; suggestTeam?: boolean } = {},
+  options: {
+    locale?: AgentCatalogLocale;
+    suggestTeam?: boolean;
+    /** Routines already set up for this bot or, for the Chief, its team; the intro says so. */
+    starterRoutines?: readonly StarterRoutineSetup[];
+  } = {},
 ): Promise<void> {
   const threadId = bot.threadId;
   if (!threadId) return;
@@ -222,6 +246,7 @@ export async function enqueueBotIntroRun(
     bot.spawnKey === CHIEF_BOT_SPAWN_KEY;
   const locale = options.locale ?? "en";
   const prompt = botIntroPrompt({
+    ...(options.starterRoutines?.length ? { starterRoutines: options.starterRoutines } : {}),
     userName: displayName(user?.name, ""),
     spaceName,
     disabledBuiltinTools: bot.disabledBuiltinTools ?? [],
@@ -356,8 +381,15 @@ export function botsRoutes(ctx: RouterContext) {
             getLogger().error("bot avatar design enqueue", error);
           });
         }
+        // A catalog agent added from the Store sets up its own routines, and says so in its intro.
+        const starterRoutines = await setUpCatalogRoutines(deps, context.actor, bot).catch(
+          (error) => {
+            getLogger().error("catalog starter routines", error);
+            return [];
+          },
+        );
         if (input.intro !== false) {
-          await enqueueBotIntroRun(deps, context.actor, bot).catch((error) => {
+          await enqueueBotIntroRun(deps, context.actor, bot, { starterRoutines }).catch((error) => {
             getLogger().error("bot intro run enqueue", error);
           });
         }

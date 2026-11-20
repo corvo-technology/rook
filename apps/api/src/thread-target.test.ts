@@ -2410,12 +2410,40 @@ describe("sendThreadMessage", () => {
       text: string,
       model: ReturnType<typeof vi.fn> | undefined,
       options?: {
-        mentions?: Array<{ kind: "bot"; botId: string }>;
+        mentions?: Array<string | { kind: "bot" | "person"; id: string }>;
         paused?: boolean | "error";
       },
     ) => {
+      const raised: Array<{ userId: string; kind: string; dedupeKey: string }> = [];
       const tx = {
-        thread: { update: vi.fn(async () => ({ nextMessageSeq: 2 })) },
+        thread: {
+          update: vi.fn(async () => ({
+            nextMessageSeq: 2,
+            spaceId: "workspace-1",
+            groupId: "group-1",
+            botId: null,
+            direct: null,
+          })),
+        },
+        notification: {
+          upsert: vi.fn(async ({ create }: { create: (typeof raised)[number] }) => {
+            raised.push(create);
+            return { id: `n-${raised.length}` };
+          }),
+        },
+        spaceMember: {
+          findMany: vi.fn(async () => ["user-1", "user-2", "user-3"].map((userId) => ({ userId }))),
+        },
+        spaceMemberRole: { findMany: vi.fn().mockResolvedValue([]) },
+        user: {
+          findMany: vi.fn(async ({ where }: { where: { id: { in: string[] } } }) =>
+            [
+              { id: "user-1", name: "Sender", email: "s@example.test", image: null },
+              { id: "user-2", name: "Beatrice Gold", email: "b@example.test", image: null },
+              { id: "user-3", name: "Cyrus", email: "c@example.test", image: null },
+            ].filter((user) => where.id.in.includes(user.id)),
+          ),
+        },
         message: {
           create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
             id: "msg-1",
@@ -2446,6 +2474,9 @@ describe("sendThreadMessage", () => {
         chatGroup: {
           findFirst: vi.fn().mockResolvedValue({
             id: "group-1",
+            userId: "user-1",
+            accessRoleIds: [],
+            people: [],
             members: [
               { bot: { id: "bot-a", name: "Alpha", color: null } },
               { bot: { id: "bot-b", name: "Beta", color: null } },
@@ -2510,7 +2541,7 @@ describe("sendThreadMessage", () => {
         } satisfies ThreadTarget,
         { text, mentions: options?.mentions, clientNonce: "nonce-router" },
       );
-      return { tx, result };
+      return { tx, result, raised };
     };
     const scores = (body: object) => vi.fn().mockResolvedValue(JSON.stringify(body));
 
@@ -2548,6 +2579,47 @@ describe("sendThreadMessage", () => {
           routing: expect.objectContaining({ strategy: "fallback", error: "down" }),
         }),
       });
+    });
+
+    it("keeps a message that names only a person between people and tells them once", async () => {
+      const model = vi.fn();
+      const { tx, result, raised } = await routedSend("@Beatrice Gold are you free?", model, {
+        mentions: [{ kind: "person", id: "user-2" }],
+      });
+      expect(result).toEqual({ seq: 1, runIds: [] });
+      expect(model).not.toHaveBeenCalled();
+      expect(tx.run.create).not.toHaveBeenCalled();
+      expect(tx.task.create).not.toHaveBeenCalled();
+      expect(raised.map((row) => [row.userId, row.kind, row.dedupeKey])).toEqual([
+        ["user-2", "mention", "mention:msg-1"],
+      ]);
+    });
+
+    it("wakes only the agent when a person and an agent are named", async () => {
+      const model = vi.fn();
+      const { tx, result, raised } = await routedSend("@Beta and @Beatrice Gold, status?", model, {
+        mentions: [
+          { kind: "bot", id: "bot-b" },
+          { kind: "person", id: "user-2" },
+        ],
+      });
+      expect(result).toMatchObject({ runId: "run-bot-b" });
+      expect(tx.run.create).toHaveBeenCalledOnce();
+      expect(raised.map((row) => row.userId)).toEqual(["user-2"]);
+    });
+
+    it("drops a mention of someone who cannot see the channel, and routes as before", async () => {
+      const model = scores({
+        scores: { "bot-a": 0.9 },
+        forEveryone: 0,
+        needsAgent: 1,
+        reason: "x",
+      });
+      const { result, raised } = await routedSend("@Outsider are you free?", model, {
+        mentions: [{ kind: "person", id: "outsider" }],
+      });
+      expect(result).toMatchObject({ runId: "run-bot-a" });
+      expect(raised).toEqual([]);
     });
 
     it("never asks the router when a member is named", async () => {

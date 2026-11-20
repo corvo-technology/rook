@@ -185,9 +185,17 @@ export function mountPartnerRoutes(app: Hono, deps: PartnerRouteDeps): void {
     if (template?.chiefName) await deps.ensureChief(owner, locale, { name: template.chiefName });
     else await deps.ensureChief(owner, locale);
     const routines = input.agents ? undefined : template?.routines;
+    const scheduledRoutines = input.agents ? undefined : template?.scheduledRoutines;
+    const timezone = input.timezone ?? template?.timezone;
     if (connector || agents.length > 0) {
       try {
-        await deps.install(owner, partner.id, { connector, agents, routines });
+        await deps.install(owner, partner.id, {
+          connector,
+          agents,
+          routines,
+          scheduledRoutines,
+          timezone,
+        });
       } catch (error) {
         // An address this deployment may not call is the partner's input to fix, not a fault.
         if ((error as { code?: unknown })?.code === "BAD_REQUEST") {

@@ -35,6 +35,8 @@ export const PlanEntitlementsSchema = z.object({
   maxSeats: z.number().int().positive(),
   /** Billing price of one extra seat above the included ones; absent means extra seats are free. */
   extraSeatPriceId: z.string().min(1).optional(),
+  /** Billing price of one extra computer above the included ones; absent means none are offered by id. */
+  extraComputerPriceId: z.string().min(1).optional(),
 });
 export type PlanEntitlements = z.infer<typeof PlanEntitlementsSchema>;
 
@@ -87,6 +89,7 @@ const LimitOverridesSchema = z.partialRecord(
       seatsIncluded: z.number().int().positive(),
       maxSeats: z.number().int().positive(),
       extraSeatPriceId: z.string().min(1),
+      extraComputerPriceId: z.string().min(1),
     })
     .partial()
     .strict(),
@@ -104,7 +107,7 @@ function parseJson(name: string, raw: string): unknown {
  * `PLAN_PRICES` turns plans on: a JSON object from billing price id to plan id, for example
  * `{"price_a":"team","price_b":"company"}`. `{}` is valid: every organization then has the
  * personal plan. `PLAN_LIMITS` optionally edits the table, for example
- * `{"team":{"computers":5,"storageGb":150,"extraSeatPriceId":"price_seat"}}`. Unset `PLAN_PRICES` means no limits at all.
+ * `{"team":{"computers":5,"storageGb":150,"extraSeatPriceId":"price_seat","extraComputerPriceId":"price_computer"}}`. Unset `PLAN_PRICES` means no limits at all.
  */
 export function planConfigFromEnv(
   env: Record<string, string | undefined> = process.env,
@@ -132,6 +135,9 @@ export function planConfigFromEnv(
         ),
         ...((edit.extraSeatPriceId ?? base.extraSeatPriceId)
           ? { extraSeatPriceId: edit.extraSeatPriceId ?? base.extraSeatPriceId }
+          : {}),
+        ...((edit.extraComputerPriceId ?? base.extraComputerPriceId)
+          ? { extraComputerPriceId: edit.extraComputerPriceId ?? base.extraComputerPriceId }
           : {}),
       };
     }
@@ -176,6 +182,8 @@ export function resolveEntitlements(
     priceId: string | null;
     /** The price's lookup key, which names its plan even when `PLAN_PRICES` does not list the id. */
     priceLookupKey?: string | null;
+    /** Computers bought above the plan's own; counted only while the subscription is paid. */
+    extraComputers?: number | null;
   } | null,
   override?: PlanOverride | null,
 ): PlanEntitlements | null {
@@ -185,8 +193,14 @@ export function resolveEntitlements(
     ? ((billing?.priceId ? config.prices[billing.priceId] : undefined) ??
       parsePlanLookupKey(billing?.priceLookupKey)?.plan)
     : undefined;
-  return applyPlanOverride(config.plans[mapped ?? FALLBACK_PLAN], override);
+  const base = config.plans[mapped ?? FALLBACK_PLAN];
+  const extra = paid ? Math.max(0, billing?.extraComputers ?? 0) : 0;
+  // A platform owner's `computers` override still replaces the total.
+  return applyPlanOverride(extra ? { ...base, computers: base.computers + extra } : base, override);
 }
+
+/** The most extra computers one organization can buy. */
+export const MAX_EXTRA_COMPUTERS = 20;
 
 /** What a plan price's lookup key (`plan_<plan>_<currency>_<interval>`) says; null for any other key. */
 export function parsePlanLookupKey(
@@ -222,7 +236,22 @@ export type PlanErrorCode = (typeof PLAN_ERROR_CODES)[keyof typeof PLAN_ERROR_CO
 export const PlanUsageSchema = z.object({
   plan: PlanIdSchema,
   computerSize: ComputerSizeSchema,
-  computers: z.object({ used: z.number().int().nonnegative(), limit: z.number().int().positive() }),
+  computers: z.object({
+    used: z.number().int().nonnegative(),
+    /** Included computers plus the extra ones bought, unless an override sets the total. */
+    limit: z.number().int().positive(),
+    included: z.number().int().positive(),
+    /** Extra computers the subscription holds. */
+    extra: z.number().int().nonnegative(),
+    /** What one extra computer costs; null where they cannot be bought. */
+    extraPrice: z
+      .object({
+        amount: z.number().int().nonnegative(),
+        currency: z.string(),
+        interval: z.string(),
+      })
+      .nullable(),
+  }),
   storage: z.object({ usedBytes: z.number().nonnegative(), limitBytes: z.number().positive() }),
   seats: z.object({
     /** Members plus pending invites, each person once. */

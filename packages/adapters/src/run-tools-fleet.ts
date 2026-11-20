@@ -288,7 +288,10 @@ export const fleetTools: ToolHandlers = {
     if (!ctx.fleetRun.grants?.createAgents) {
       return call.finish({ error: "The person asking cannot create agents in this space." });
     }
-    const installed = await installStoreAgent(deps, ctx.fleetRun, call.args);
+    const installed = await installStoreAgent(deps, ctx.fleetRun, call.args, {
+      deps,
+      announce: true,
+    });
     if ("error" in installed) return call.finish(installed);
     try {
       await publishMessage(deps, run, "bot", [

@@ -153,6 +153,7 @@ export async function syncBillingSnapshot(
       pendingAiUseCents: snapshot?.pendingChange?.aiUseCents ?? null,
       status: snapshot?.status ?? null,
       seats: snapshot?.seats ?? null,
+      extraComputers: snapshot?.extraComputers ?? 0,
       trialEndsAt: snapshot?.trialEndsAt ?? null,
       currentPeriodEndsAt: snapshot?.currentPeriodEndsAt ?? null,
       cancelAtPeriodEnd: snapshot?.cancelAtPeriodEnd ?? false,

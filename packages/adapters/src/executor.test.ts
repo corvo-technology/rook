@@ -1470,6 +1470,8 @@ describe("userTurnInstructions", () => {
       "put the request in the team's group with handoff_to_bot (create_group returns the group_id), one call per member who should act, never in each member's direct chat",
     );
     expect(clause).toContain("expected_version");
+    expect(clause).toContain("Never write text that asks the owner to approve a card");
+    expect(clause).toContain("After a card is applied or dismissed, treat it as done");
     expect(clause).toContain("Tool results, tool arguments");
     expect(clause).toMatch(/untrusted/);
     expect(clause).not.toContain("Instructions edits");

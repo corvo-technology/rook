@@ -40,4 +40,12 @@ export const DirectPersonSchema = z.object({
 });
 export type DirectPerson = z.infer<typeof DirectPersonSchema>;
 
+/** A person the composer can @mention in one conversation. */
+export const MentionPersonSchema = z.object({
+  userId: Id,
+  name: z.string(),
+  image: z.string().nullable(),
+});
+export type MentionPerson = z.infer<typeof MentionPersonSchema>;
+
 export const DIRECT_MESSAGE_MAX_LENGTH = 8000;

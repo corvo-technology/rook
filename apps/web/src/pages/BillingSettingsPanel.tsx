@@ -5,6 +5,7 @@ import { t as translate } from "@lingui/core/macro";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { ExtraComputersRow, PLAN_USAGE_KEY } from "../components/ExtraComputers";
 import { ModelCreditsSettings } from "../components/ModelCredits";
 import { PlanPicker } from "../components/PlanChoice";
 import { PlanList } from "../components/PlanList";
@@ -50,7 +51,7 @@ function BillingBody() {
     refetchOnWindowFocus: true,
   });
   const plansQuery = useQuery({
-    queryKey: ["usage", "plan"],
+    queryKey: PLAN_USAGE_KEY,
     queryFn: () => rpc.usage.plan(),
     retry: false,
     staleTime: 60_000,
@@ -58,7 +59,10 @@ function BillingBody() {
   const status = statusQuery.data;
   const usage = plansQuery.data ?? null;
   const refresh = async () => {
-    await client.invalidateQueries({ queryKey: STATUS_KEY });
+    await Promise.all([
+      client.invalidateQueries({ queryKey: STATUS_KEY }),
+      client.invalidateQueries({ queryKey: PLAN_USAGE_KEY }),
+    ]);
   };
 
   if (statusQuery.isError && !status) {
@@ -192,6 +196,9 @@ function PlanSection({
               </div>
             ) : null}
           </div>
+          {status.state === "active" ? (
+            <ExtraComputersRow usage={usage} onChanged={onChanged} />
+          ) : null}
         </SettingsGroup>
       </div>
       {error ? (

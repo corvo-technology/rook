@@ -25,6 +25,8 @@ import {
   aiUseGrantCents,
   BILLING_CURRENCIES,
   BILLING_INTERVALS,
+  extraComputerCents,
+  extraComputerLookupKey,
   extraPersonCents,
   extraPersonLookupKey,
   ModelCreditAmountSchema,
@@ -426,6 +428,13 @@ export class StripeBillingProvider implements BillingProvider {
           interval,
           productName: "Rook extra person",
         });
+        prices.push({
+          lookupKey: extraComputerLookupKey(currency, interval),
+          amountCents: extraComputerCents(currency, interval),
+          currency,
+          interval,
+          productName: "Rook extra computer",
+        });
         for (const useCents of AI_USE_CENTS)
           prices.push({
             lookupKey: aiLookupKey(useCents, currency, interval),
@@ -517,6 +526,12 @@ export class StripeBillingProvider implements BillingProvider {
         kind: "extra",
         price: await this.catalogPriceId(extraPersonLookupKey(currency, interval)),
         quantity: selection.extraPeople,
+      });
+    if (selection.extraComputers)
+      items.push({
+        kind: "computer",
+        price: await this.catalogPriceId(extraComputerLookupKey(currency, interval)),
+        quantity: selection.extraComputers,
       });
     if (selection.aiUseCents)
       items.push({
@@ -954,7 +969,21 @@ export class StripeBillingProvider implements BillingProvider {
   }
 
   async setExtraSeats(customerId: string, input: { priceId: string; quantity: number }) {
-    const proration = "create_prorations";
+    await this.setExtraLine(customerId, input, "corvo_extra_seats");
+  }
+
+  async setExtraComputers(customerId: string, input: { priceId: string; quantity: number }) {
+    await this.setExtraLine(customerId, input, "corvo_extra_computers", true);
+  }
+
+  /** Sets the quantity of an extra line (seats or computers) at `input.priceId`. */
+  private async setExtraLine(
+    customerId: string,
+    input: { priceId: string; quantity: number },
+    marker: "corvo_extra_seats" | "corvo_extra_computers",
+    chargeNow = false,
+  ) {
+    const proration = chargeNow ? "always_invoice" : "create_prorations";
     for (;;) {
       const chosen = pickStripeSubscription(await this.listLiveSubscriptions(customerId));
       if (!chosen || !holdsBillingSubscription(chosen.status)) return;
@@ -973,8 +1002,9 @@ export class StripeBillingProvider implements BillingProvider {
             subscription: chosen.subscription.id,
             price: input.priceId,
             quantity: input.quantity,
-            metadata: { corvo_extra_seats: "1" },
+            metadata: { [marker]: "1" },
             proration_behavior: proration,
+            ...(chargeNow ? { payment_behavior: "error_if_incomplete" } : {}),
           });
         } else if (input.quantity < 1) {
           await this.request(
@@ -985,10 +1015,18 @@ export class StripeBillingProvider implements BillingProvider {
           await this.request("POST", `/v1/subscription_items/${encodeURIComponent(extra.id)}`, {
             quantity: input.quantity,
             proration_behavior: proration,
+            ...(chargeNow ? { payment_behavior: "error_if_incomplete" } : {}),
           });
         }
         return;
       } catch (error) {
+        if (
+          chargeNow &&
+          error instanceof StripeRequestError &&
+          (error.type === "card_error" ||
+            error.code === "subscription_payment_intent_requires_action")
+        )
+          throw new BillingPaymentRequiredError();
         await this.rethrowUnlessEnded(error, customerId, chosen.subscription.id);
       }
     }
@@ -1155,14 +1193,16 @@ function baseItem(subscription: StripeSubscription) {
     items.find(
       (item) =>
         !item.metadata?.corvo_extra_seats &&
+        !item.metadata?.corvo_extra_computers &&
         !item.price.lookup_key?.startsWith("extra_person_") &&
+        !item.price.lookup_key?.startsWith("extra_computer_") &&
         !item.price.lookup_key?.startsWith("ai_"),
     ) ??
     items[0]
   );
 }
 
-type ItemKind = "plan" | "extra" | "ai";
+type ItemKind = "plan" | "extra" | "computer" | "ai";
 
 /** Which of a plan's lines an item is; null for one that belongs to no plan. */
 function itemKind(
@@ -1171,6 +1211,7 @@ function itemKind(
 ): ItemKind | null {
   const key = item.price.lookup_key;
   if (key?.startsWith("plan_") || item === base) return "plan";
+  if (key?.startsWith("extra_computer_") || item.metadata?.corvo_extra_computers) return "computer";
   if (key?.startsWith("extra_person_") || item.metadata?.corvo_extra_seats) return "extra";
   if (key?.startsWith("ai_")) return "ai";
   return null;
@@ -1187,6 +1228,12 @@ function toSnapshot(
       .lookup_key,
   );
   const aiUse = aiUseCents ? { aiUseCents } : {};
+  const extraComputers =
+    subscription.items.data.find(
+      (line) =>
+        line.price.lookup_key?.startsWith("extra_computer_") ||
+        line.metadata?.corvo_extra_computers,
+    )?.quantity ?? 0;
   return {
     creditAmountCents: creditAmount(subscription.metadata?.corvo_credit_cents),
     subscriptionId: subscription.id,
@@ -1201,6 +1248,7 @@ function toSnapshot(
     endedAt: fromSeconds(subscription.ended_at),
     ...(isByokPlan(subscription) ? { byokPlan: true } : {}),
     ...aiUse,
+    ...(extraComputers > 0 ? { extraComputers } : {}),
   };
 }
 

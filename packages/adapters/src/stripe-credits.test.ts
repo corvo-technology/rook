@@ -561,3 +561,52 @@ describe("Stripe plan invoices with an AI add-on", () => {
     expect(requests.filter((r) => r.path === "/v1/prices/price_ai")).toHaveLength(1);
   });
 });
+
+describe("Every paid checkout requires the terms", () => {
+  const urls = { successUrl: "https://example.test/return", cancelUrl: "https://example.test/app" };
+  const termsVersion = "2026-01-01";
+  const sent = async (open: (p: StripeBillingProvider) => Promise<unknown>) => {
+    const { provider, requests } = fixture();
+    await open(provider);
+    return requests.filter((r) => r.path === "/v1/checkout/sessions").at(-1)!.params;
+  };
+
+  it.each([
+    [
+      "the legacy plan",
+      (p: StripeBillingProvider) =>
+        p.createCheckout({ customerId: "cus_1", seats: 1, termsVersion, ...urls }),
+    ],
+    [
+      "a credit pack",
+      (p: StripeBillingProvider) =>
+        p.createCreditCheckout({
+          customerId: "cus_1",
+          amountCents: 1000,
+          monthly: false,
+          termsVersion,
+          ...urls,
+        }),
+    ],
+    [
+      "monthly credits",
+      (p: StripeBillingProvider) =>
+        p.createCreditCheckout({
+          customerId: "cus_1",
+          amountCents: 1000,
+          monthly: true,
+          termsVersion,
+          ...urls,
+        }),
+    ],
+    [
+      "the own-key plan",
+      (p: StripeBillingProvider) =>
+        p.createByokCheckout({ customerId: "cus_1", amountCents: 1000, termsVersion, ...urls }),
+    ],
+  ])("asks for acceptance and records the version for %s", async (_name, open) => {
+    const body = await sent(open);
+    expect(body.get("consent_collection[terms_of_service]")).toBe("required");
+    expect(body.get("metadata[terms_version]")).toBe(termsVersion);
+  });
+});

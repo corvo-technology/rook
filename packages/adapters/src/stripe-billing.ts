@@ -185,6 +185,7 @@ export class StripeBillingProvider implements BillingProvider {
       line_items: [{ price: this.config.priceId, quantity: input.seats }],
       payment_method_collection: "always",
       allow_promotion_codes: true,
+      ...termsConsent(input.termsVersion),
       subscription_data: {
         billing_mode: { type: "classic" },
         ...(input.trialDays === undefined ? {} : { trial_period_days: input.trialDays }),
@@ -234,7 +235,7 @@ export class StripeBillingProvider implements BillingProvider {
                 },
               },
         ],
-        metadata,
+        ...termsConsent(input.termsVersion, metadata),
         ...(input.monthly
           ? { subscription_data: { metadata, billing_mode: { type: "classic" } } }
           : { payment_intent_data: { metadata }, invoice_creation: { enabled: true } }),
@@ -302,7 +303,7 @@ export class StripeBillingProvider implements BillingProvider {
             ),
           },
         ],
-        metadata,
+        ...termsConsent(input.termsVersion, metadata),
         subscription_data: {
           metadata,
           billing_mode: { type: "classic" },
@@ -491,9 +492,7 @@ export class StripeBillingProvider implements BillingProvider {
         allowed_payment_method_types: ["card"],
         adaptive_pricing: { enabled: false },
         allow_promotion_codes: true,
-        // Paying means accepting the terms; the webhook stores the acceptance as evidence.
-        consent_collection: { terms_of_service: "required" },
-        ...(input.termsVersion ? { metadata: { terms_version: input.termsVersion } } : {}),
+        ...termsConsent(input.termsVersion),
         line_items: lineItems,
         subscription_data: { billing_mode: { type: "classic" } },
         success_url: input.successUrl,
@@ -1229,6 +1228,14 @@ const syncEventTypes = new Set([
 ]);
 
 type StripeObject = Record<string, unknown>;
+
+/** Paying means accepting the terms; the webhook stores the acceptance as evidence. */
+function termsConsent(termsVersion: string | undefined, metadata: Record<string, string> = {}) {
+  return {
+    consent_collection: { terms_of_service: "required" },
+    metadata: { ...metadata, ...(termsVersion ? { terms_version: termsVersion } : {}) },
+  };
+}
 
 const text = (value: unknown) => (typeof value === "string" ? value : undefined);
 const whole = (value: unknown) => (typeof value === "number" ? value : undefined);

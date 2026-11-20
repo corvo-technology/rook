@@ -104,6 +104,14 @@ describe("free trial", () => {
     expect(vi.mocked(provider.createCheckout).mock.calls[0]?.[0]).not.toHaveProperty("trialDays");
   });
 
+  it("asks the provider to collect the current terms version", async () => {
+    const { billing, provider } = seatPlan();
+    await billing.checkout(actor);
+    expect(provider.createCheckout).toHaveBeenCalledWith(
+      expect.objectContaining({ termsVersion: TERMS_VERSION }),
+    );
+  });
+
   it("is offered and sent when days are configured", async () => {
     const { billing, provider } = seatPlan(7);
     await expect(billing.status(actor)).resolves.toMatchObject({

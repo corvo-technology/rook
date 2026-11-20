@@ -1297,6 +1297,8 @@ export interface BillingCreditCheckoutRequest {
   customerId: string;
   amountCents: number;
   monthly: boolean;
+  /** The terms version the customer must accept to pay; the provider records it with the session. */
+  termsVersion?: string;
   successUrl: string;
   cancelUrl: string;
 }
@@ -1404,6 +1406,7 @@ export interface BillingCheckoutRequest {
   seats: number;
   /** Omitted when the customer has already used its trial. */
   trialDays?: number;
+  termsVersion?: string;
   successUrl: string;
   cancelUrl: string;
 }

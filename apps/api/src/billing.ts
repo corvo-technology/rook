@@ -391,6 +391,7 @@ export function createBillingService(deps: {
         provider.createByokCheckout!({
           customerId,
           amountCents,
+          termsVersion: TERMS_VERSION,
           ...(trialDays !== null && byokTrialAvailable(account, credits) ? { trialDays } : {}),
           successUrl: `${deps.webOrigin}${BILLING_RETURN_PATH}`,
           cancelUrl: appUrl,
@@ -445,6 +446,7 @@ export function createBillingService(deps: {
           provider.createCreditCheckout!({
             customerId,
             ...input,
+            termsVersion: TERMS_VERSION,
             successUrl: `${deps.webOrigin}${BILLING_RETURN_PATH}`,
             cancelUrl: `${appUrl}?billing=canceled`,
           }),
@@ -698,6 +700,7 @@ export function createBillingService(deps: {
             customerId,
             seats,
             ...trial,
+            termsVersion: TERMS_VERSION,
             successUrl: `${deps.webOrigin}${BILLING_RETURN_PATH}`,
             cancelUrl: appUrl,
           }),

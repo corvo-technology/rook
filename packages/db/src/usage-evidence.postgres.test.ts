@@ -49,7 +49,6 @@ dbTests("usage evidence report", () => {
     await prisma.bot.create({
       data: { id: botId, spaceId, userId, name: "Ana", color: "x", computerId },
     });
-    const thread = await prisma.thread.create({ data: { spaceId, userId } });
 
     const call = (id: string, at: string, cost: number, org = spaceId) =>
       prisma.usageRecord.create({
@@ -132,55 +131,49 @@ dbTests("usage evidence report", () => {
         },
       ],
     });
-    await prisma.event.createMany({
-      data: [
-        {
+    const action = (id: string, at: string, row: object) =>
+      prisma.actionEvidence.create({
+        data: {
+          id: `${suffix}-${id}`,
           spaceId,
-          threadId: thread.id,
+          organizationId,
           botId,
-          seq: 1,
-          type: "computer.command",
+          computerId,
+          userId,
           runId: "run-1",
-          createdAt: new Date("2026-03-10T10:10:00Z"),
-          payload: {
-            executionId: "e1",
-            kind: "shell",
-            command: "=cmd|' /C calc'!A0",
-            cwd: ".",
-            status: "done",
-            exitCode: 0,
-            output: "secret output",
-          },
+          occurredAt: new Date(at),
+          kind: "command",
+          ...row,
         },
-        {
-          spaceId,
-          threadId: thread.id,
-          botId,
-          seq: 2,
-          type: "agent.tool.called",
-          runId: "run-1",
-          createdAt: new Date("2026-03-10T10:11:00Z"),
-          payload: { name: "web_search", executionId: "e2" },
-        },
-        {
-          spaceId,
-          threadId: thread.id,
-          botId,
-          seq: 3,
-          type: "computer.command",
-          runId: "run-0",
-          createdAt: new Date("2026-02-10T10:10:00Z"),
-          payload: {
-            executionId: "e0",
-            kind: "shell",
-            command: "old",
-            cwd: ".",
-            status: "done",
-            exitCode: 0,
-            output: "",
-          },
-        },
-      ],
+      });
+    await action("c1a", "2026-03-10T10:10:00Z", {
+      executionId: "e1",
+      detail: "=cmd|' /C calc'!A0",
+      cwd: ".",
+      status: "running",
+    });
+    await action("c1b", "2026-03-10T10:10:05Z", {
+      executionId: "e1",
+      detail: "=cmd|' /C calc'!A0",
+      cwd: ".",
+      status: "done",
+      exitCode: 0,
+    });
+    await action("t2a", "2026-03-10T10:11:00Z", {
+      kind: "tool_called",
+      executionId: "e2",
+      detail: "web_search",
+    });
+    await action("t2b", "2026-03-10T10:11:02Z", {
+      kind: "tool_completed",
+      executionId: "e2",
+      detail: "web_search",
+      status: "succeeded",
+    });
+    await action("old", "2026-02-10T10:10:00Z", {
+      executionId: "e0",
+      detail: "old",
+      status: "done",
     });
     await prisma.storageSnapshot.createMany({
       data: [
@@ -248,11 +241,13 @@ dbTests("usage evidence report", () => {
       ["tick", 3, "100"],
       ["stop", 9, "200"],
     ]);
-    expect(report.actions.map((a) => [a.kind, a.detail, a.computerId])).toEqual([
-      ["command", "=cmd|' /C calc'!A0", computerId],
-      ["tool", "web_search", computerId],
+    // A command shows its last state; a tool call is joined to its outcome.
+    expect(
+      report.actions.map((a) => [a.kind, a.detail, a.status, a.exitCode, a.computerId]),
+    ).toEqual([
+      ["command", "=cmd|' /C calc'!A0", "done", 0, computerId],
+      ["tool", "web_search", "succeeded", null, computerId],
     ]);
-    expect(JSON.stringify(report)).not.toContain("secret output");
     expect(report.termsAcceptances).toEqual([
       expect.objectContaining({ termsVersion: "v7", sessionId: `cs_${suffix}` }),
     ]);
@@ -296,6 +291,7 @@ dbTests("usage evidence report", () => {
     expect(report.modelCalls).toHaveLength(2);
     expect(report.computerRuns).toHaveLength(1);
     expect(report.resourceSamples).toHaveLength(2);
+    expect(report.actions).toHaveLength(2);
     expect(report.termsAcceptances).toHaveLength(1);
     expect(report.storage.snapshotBytes).toBe("300");
     const ledger = await usageEvidenceReport(prisma, { organizationId, ...around });

@@ -276,6 +276,35 @@ model StorageUsage {
   @@map("storage_usage")
 }
 
+/// What the agents did on a computer, copied from the thread's events in the same transaction when
+/// they are recorded: commands and tool calls, never their output or arguments. Append-only
+/// evidence with no lifecycle foreign keys, so it outlives the thread, space and organization.
+model ActionEvidence {
+  /// The id of the event it was copied from.
+  id             String   @id
+  spaceId        String
+  organizationId String?
+  botId          String
+  /// The computer the bot was attached to when it acted.
+  computerId     String?
+  runId          String?
+  /// The member whose run it was; the thread's owner when there is no run.
+  userId         String?
+  /// "command", "tool_called" or "tool_completed".
+  kind           String
+  executionId    String?
+  /// The command line, or the tool's name.
+  detail         String?
+  cwd            String?
+  /// A command's "running" or "done", or a tool's outcome ("succeeded", "error", "paused").
+  status         String?
+  exitCode       Int?
+  occurredAt     DateTime
+
+  @@index([organizationId, occurredAt])
+  @@map("action_evidence")
+}
+
 /// One organization's stored bytes on one UTC day, taken once a day. Append-only evidence of what
 /// was stored when: no lifecycle foreign keys, so it outlives the organization.
 model StorageSnapshot {

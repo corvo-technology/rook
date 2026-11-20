@@ -1,4 +1,3 @@
-import { ComputerCommandSchema, foldComputerCommands } from "@corvo/contracts";
 import type { PrismaClient } from "./client.js";
 import { Prisma } from "./client.js";
 
@@ -34,7 +33,7 @@ export interface UsageEvidenceReport {
   creditLedger: Row[];
   computerRuns: Row[];
   resourceSamples: Row[];
-  /** Commands and tool calls recorded on the organization's computers, without their output. */
+  /** Commands and tool calls the agents made, from the evidence kept when they were recorded; no output. */
   actions: Row[];
   actionsTruncated: boolean;
   /**
@@ -70,7 +69,7 @@ export async function usageEvidenceReport(
   const { organizationId, from, to } = input;
   const inRange = { gte: from, lt: to };
 
-  const [account, journal, calls, runs, samples, spaces, usage, snapshot] = await Promise.all([
+  const [account, journal, calls, runs, samples, actions, usage, snapshot] = await Promise.all([
     prisma.billingAccount.findUnique({ where: { organizationId } }),
     prisma.billingAuditEvent.findMany({
       where: { organizationId, createdAt: inRange },
@@ -99,7 +98,11 @@ export async function usageEvidenceReport(
       where: { organizationId, sampledAt: inRange },
       orderBy: [{ sampledAt: "asc" }, { id: "asc" }],
     }),
-    prisma.space.findMany({ where: { organizationId }, select: { id: true } }),
+    prisma.actionEvidence.findMany({
+      where: { organizationId, occurredAt: inRange },
+      orderBy: [{ occurredAt: "asc" }, { id: "asc" }],
+      take: EVIDENCE_ACTION_LIMIT + 1,
+    }),
     prisma.storageUsage.findUnique({ where: { organizationId } }),
     prisma.storageSnapshot.findFirst({
       where: {
@@ -109,35 +112,6 @@ export async function usageEvidenceReport(
       orderBy: { day: "desc" },
     }),
   ]);
-
-  const spaceIds = spaces.map((space) => space.id);
-  const [bots, events] = spaceIds.length
-    ? await Promise.all([
-        prisma.bot.findMany({
-          where: { spaceId: { in: spaceIds }, computerId: { not: null } },
-          select: { id: true, computerId: true },
-        }),
-        prisma.event.findMany({
-          where: {
-            spaceId: { in: spaceIds },
-            type: { in: ["computer.command", "agent.tool.called"] },
-            createdAt: inRange,
-          },
-          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-          take: EVIDENCE_ACTION_LIMIT + 1,
-          select: {
-            id: true,
-            botId: true,
-            runId: true,
-            type: true,
-            payload: true,
-            createdAt: true,
-            spaceId: true,
-          },
-        }),
-      ])
-    : [[], []];
-  const computerOfBot = new Map(bots.map((bot) => [bot.id, bot.computerId]));
 
   const stripe = journal.filter((event) => event.kind.startsWith("stripe."));
   const detail = (event: { details: unknown }) => event.details as Json;
@@ -247,8 +221,8 @@ export async function usageEvidenceReport(
       networkRxBytes: sample.networkRxBytes?.toString() ?? null,
       networkTxBytes: sample.networkTxBytes?.toString() ?? null,
     })),
-    actions: actionRows(events.slice(0, EVIDENCE_ACTION_LIMIT), computerOfBot),
-    actionsTruncated: events.length > EVIDENCE_ACTION_LIMIT,
+    actions: actionRows(actions.slice(0, EVIDENCE_ACTION_LIMIT)),
+    actionsTruncated: actions.length > EVIDENCE_ACTION_LIMIT,
     storage: {
       snapshotDay: snapshot?.day ?? null,
       snapshotBytes: snapshot?.bytes.toString() ?? null,
@@ -258,69 +232,55 @@ export async function usageEvidenceReport(
   };
 }
 
+/** One row per command or tool call: a command's last state, a tool's call joined to its outcome. */
 function actionRows(
-  events: {
-    botId: string;
-    runId: string | null;
-    type: string;
-    payload: unknown;
-    createdAt: Date;
+  rows: {
+    kind: string;
+    executionId: string | null;
+    occurredAt: Date;
     spaceId: string;
+    botId: string;
+    computerId: string | null;
+    runId: string | null;
+    userId: string | null;
+    detail: string | null;
+    cwd: string | null;
+    status: string | null;
+    exitCode: number | null;
   }[],
-  computerOfBot: Map<string, string | null>,
 ): Row[] {
-  const rows: Row[] = [];
-  const commands = new Map<
-    string,
-    { at: string; botId: string; spaceId: string; runId: string | null }
-  >();
-  const folded = foldComputerCommands(
-    events.flatMap((event) => {
-      if (event.type !== "computer.command") return [];
-      const parsed = ComputerCommandSchema.safeParse(event.payload);
-      if (!parsed.success) return [];
-      if (!commands.has(parsed.data.executionId))
-        commands.set(parsed.data.executionId, {
-          at: event.createdAt.toISOString(),
-          botId: event.botId,
-          spaceId: event.spaceId,
-          runId: event.runId,
-        });
-      return [parsed.data];
-    }),
-  );
-  for (const command of folded) {
-    const origin = commands.get(command.executionId)!;
-    rows.push({
-      time: origin.at,
-      kind: "command",
-      computerId: computerOfBot.get(origin.botId) ?? null,
-      spaceId: origin.spaceId,
-      botId: origin.botId,
-      runId: origin.runId,
-      executionId: command.executionId,
-      detail: command.command,
-      cwd: command.cwd,
-      exitCode: command.exitCode,
-    });
+  const merged = new Map<string, Row>();
+  const out: Row[] = [];
+  for (const row of rows) {
+    const kind = row.kind === "command" ? "command" : "tool";
+    const key = row.executionId ? `${kind}:${row.botId}:${row.executionId}` : null;
+    const found = key ? merged.get(key) : undefined;
+    if (found) {
+      // A command that finished stays finished; a tool's outcome comes from its completion.
+      if (kind === "command" && found.status === "done" && row.status === "running") continue;
+      found.status = row.status ?? found.status ?? null;
+      found.exitCode = row.exitCode ?? found.exitCode ?? null;
+      found.detail = row.detail ?? found.detail ?? null;
+      continue;
+    }
+    const entry: Row = {
+      time: row.occurredAt.toISOString(),
+      kind,
+      computerId: row.computerId,
+      spaceId: row.spaceId,
+      botId: row.botId,
+      userId: row.userId,
+      runId: row.runId,
+      executionId: row.executionId,
+      detail: row.detail,
+      cwd: row.cwd,
+      status: row.status,
+      exitCode: row.exitCode,
+    };
+    if (key) merged.set(key, entry);
+    out.push(entry);
   }
-  for (const event of events) {
-    if (event.type !== "agent.tool.called") continue;
-    const payload = (event.payload ?? {}) as Json;
-    rows.push({
-      time: event.createdAt.toISOString(),
-      kind: "tool",
-      computerId: computerOfBot.get(event.botId) ?? null,
-      spaceId: event.spaceId,
-      botId: event.botId,
-      runId: event.runId,
-      executionId: str(payload.executionId),
-      detail: str(payload.name),
-      cwd: null,
-      exitCode: null,
-    });
-  }
-  return rows.sort((a, b) => String(a.time).localeCompare(String(b.time)));
+  return out;
 }
 
 const csvCell = (value: unknown) => {

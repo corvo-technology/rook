@@ -177,10 +177,12 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
   const {
     routines: mentionRoutines,
     connectors: mentionConnectors,
+    people: mentionPeople,
     onMentionRequested,
   } = useThreadMentionCatalog(
     JSON.stringify([userId, sessionEpoch, botId, groupId, requestedThreadId]),
     mentionBots,
+    groupId ? { groupId } : botId ? { botId } : undefined,
   );
   const attachments = useThreadAttachments({ botId, groupId, readOnly, uploadConfig });
   const echoed = useMemo(
@@ -211,6 +213,11 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
         includeEveryone: inGroup,
         currentGroupId: groupId,
         bots: mentionBots.map((bot) => ({ id: bot.id, name: bot.name, color: bot.color })),
+        people: mentionPeople.map((person) => ({
+          id: person.userId,
+          name: person.name,
+          image: person.image,
+        })),
         groups: mentionGroups.map((group) => ({ id: group.id, name: group.name })),
         routines: mentionRoutines.map((routine) => ({
           id: routine.id,
@@ -222,7 +229,16 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
         connectors: mentionConnectors,
         cronLabels: cronLabels(locale),
       }),
-    [groupId, inGroup, locale, mentionBots, mentionConnectors, mentionGroups, mentionRoutines],
+    [
+      groupId,
+      inGroup,
+      locale,
+      mentionBots,
+      mentionConnectors,
+      mentionGroups,
+      mentionPeople,
+      mentionRoutines,
+    ],
   );
   const currentBot = botId ? mentionBots.find((bot) => bot.id === botId) : undefined;
   // Until the chat's own roster arrives, the bot as the inbox last loaded it.

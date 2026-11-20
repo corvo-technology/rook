@@ -10,6 +10,8 @@ import { queryClient } from "../../lib/query";
 import type { createSpaceRpc } from "../../lib/rpc";
 import { useSpaceHint } from "../../lib/space-hints";
 
+const NO_PEOPLE: Array<{ id: string; name: string; image: string | null }> = [];
+
 function routineListData(results: Array<{ data?: Routine[] }>) {
   return results.map((result) => result.data);
 }
@@ -28,6 +30,7 @@ export function useComposerMentions({
   groups,
   inGroup,
   groupId,
+  botId,
   initialBotsLoaded,
   routinesWanted,
 }: {
@@ -37,6 +40,8 @@ export function useComposerMentions({
   groups: Group[];
   inGroup: boolean;
   groupId: string | undefined;
+  /** The agent whose own chat is open; people can be named there only if they can read it. */
+  botId: string | undefined;
   initialBotsLoaded: boolean;
   /** Routines are one call per agent: read them only once the mention list has been opened. */
   routinesWanted: boolean;
@@ -59,6 +64,20 @@ export function useComposerMentions({
         (routineLists[index] ?? []).map((routine) => ({ ...routine, botName: bot.name })),
       ),
     [bots, routineLists],
+  );
+  const peopleTarget = groupId ? { groupId } : botId ? { botId } : undefined;
+  const peopleQuery = useQuery({
+    ...queries.threads.people.queryOptions({ input: peopleTarget ?? {} }),
+    enabled: initialBotsLoaded && peopleTarget !== undefined,
+  });
+  const mentionPeople = useMemo(
+    () =>
+      (peopleTarget ? peopleQuery.data : undefined)?.map((person) => ({
+        id: person.userId,
+        name: person.name,
+        image: person.image,
+      })) ?? NO_PEOPLE,
+    [peopleQuery.data, peopleTarget],
   );
   const composerConnections = useQuery({
     queryKey: [...queries.connections.catalog.queryKey({ input: {} }), "with-connections"],
@@ -101,6 +120,7 @@ export function useComposerMentions({
         includeEveryone: inGroup,
         currentGroupId: groupId,
         bots: bots.map((bot) => ({ id: bot.id, name: bot.name, color: bot.color })),
+        people: mentionPeople,
         groups: groups.map((group) => ({ id: group.id, name: group.name })),
         routines: mentionRoutines.map((routine) => ({
           id: routine.id,
@@ -112,7 +132,16 @@ export function useComposerMentions({
         connectors: mentionConnectors,
         cronLabels: cronLabels(i18n.locale),
       }),
-    [bots, groupId, groups, i18n.locale, inGroup, mentionConnectors, mentionRoutines],
+    [
+      bots,
+      groupId,
+      groups,
+      i18n.locale,
+      inGroup,
+      mentionConnectors,
+      mentionPeople,
+      mentionRoutines,
+    ],
   );
-  return { composerMentionTargets, footerLogos, setFooterLogos };
+  return { composerMentionTargets, mentionPeople, footerLogos, setFooterLogos };
 }

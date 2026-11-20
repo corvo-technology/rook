@@ -98,6 +98,7 @@ export const Transcript = memo(function Transcript({
   onOpenPeerMessages,
   memberName,
   members,
+  mentionPeople,
   peerBot,
   onRefresh,
   onBotChanged,
@@ -177,6 +178,8 @@ export const Transcript = memo(function Transcript({
   memberName?: (botId: string | undefined) => string | undefined;
   /** The agents of a channel; set only in one, where everyone speaks from a single column. */
   members?: readonly GroupMember[];
+  /** People who can be named here; their `@Name` in a message draws as a chip. */
+  mentionPeople?: readonly { id: string; name: string; image: string | null }[];
   peerBot: (
     botId: string,
   ) =>
@@ -638,6 +641,7 @@ export const Transcript = memo(function Transcript({
                             : undefined
                         }
                         channelMembers={channelMembers}
+                        mentionPeople={mentionPeople}
                         onTogglePeerReplies={togglePeerReplies}
                         onAnswer={onAnswer}
                         continued={continued.has(message.id)}

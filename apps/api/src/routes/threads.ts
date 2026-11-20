@@ -48,6 +48,7 @@ import { planResume, previewCommandEvent } from "../thread-read-budget.js";
 import {
   markThreadRead,
   markThreadUnreadFrom,
+  mentionablePeople,
   reactToThreadMessage,
   resolveThreadTarget,
   sendThreadMessage,
@@ -137,6 +138,10 @@ export function threadsRoutes(ctx: RouterContext) {
       head: authed.threads.head.handler(async ({ context, input }) => {
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);
         return threadHead(deps.prisma, target);
+      }),
+      people: authed.threads.people.handler(async ({ context, input }) => {
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        return mentionablePeople(deps.prisma, context.actor, target);
       }),
       context: authed.threads.context.handler(async ({ context, input }) => {
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);

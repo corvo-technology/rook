@@ -669,3 +669,30 @@ it("marks a pinned message in its name line", () => {
     "Pinned",
   );
 });
+
+it("draws a person's @Name in a message as a neutral chip and keeps the text", () => {
+  mountReply(
+    "Ana",
+    false,
+    {
+      message: { role: "user", blocks: [{ kind: "text", text: "Hi @Beatrice Gold, free?" }] },
+      mentionPeople: [{ id: "u2", name: "Beatrice Gold", image: null }],
+    } as Partial<ComponentProps<typeof MessageView>>,
+    "unused",
+  );
+  const chip = container.querySelector('[data-testid="person-mention"]');
+  expect(chip?.textContent).toContain("Beatrice Gold");
+  expect(container.querySelector('[data-testid="message-user-bubble"]')?.textContent).toBe(
+    "Hi BGBeatrice Gold, free?",
+  );
+});
+
+it("leaves @Name as text when nobody of that name can be mentioned here", () => {
+  mountReply("Ana", false, {
+    message: { role: "user", blocks: [{ kind: "text", text: "Hi @Beatrice Gold" }] },
+  } as Partial<ComponentProps<typeof MessageView>>);
+  expect(container.querySelector('[data-testid="person-mention"]')).toBeNull();
+  expect(container.querySelector('[data-testid="message-user-bubble"]')?.textContent).toBe(
+    "Hi @Beatrice Gold",
+  );
+});

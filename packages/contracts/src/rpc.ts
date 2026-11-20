@@ -266,6 +266,7 @@ import {
   ChannelPeopleSchema,
   DIRECT_MESSAGE_MAX_LENGTH,
   DirectPersonSchema,
+  MentionPersonSchema,
   PendingApprovalSchema,
 } from "./team-chat.js";
 import {
@@ -322,6 +323,8 @@ const structuredMentionTarget = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("group"), id: Id }),
   z.object({ kind: z.literal("routine"), id: Id }),
   z.object({ kind: z.literal("connector"), id: Id }),
+  /** A member of the space; the server checks they can see the conversation. */
+  z.object({ kind: z.literal("person"), id: Id }),
 ]);
 
 const threadSendInput = threadTarget
@@ -862,6 +865,8 @@ export const appContract = {
     message: oc
       .input(threadTarget.safeExtend({ messageId: Id }))
       .output(ThreadMessageSchema.nullable()),
+    /** Members who can see this conversation and may be named in it; never includes the caller. */
+    people: oc.input(threadTarget).output(z.array(MentionPersonSchema)),
     /** How much of the model's reading window this chat's last turn used; null where unknown. */
     context: oc.input(z.object({ botId: Id })).output(
       z.object({

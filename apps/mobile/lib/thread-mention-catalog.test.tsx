@@ -66,8 +66,16 @@ type RequestOptions = { signal: AbortSignal; requestContext: ApiRequestContext }
 
 let root: Root;
 let container: HTMLDivElement;
-function Harness({ owner = "thread-a", roster = bots }: { owner?: string; roster?: typeof bots }) {
-  const catalog = useThreadMentionCatalog(owner, roster);
+function Harness({
+  owner = "thread-a",
+  roster = bots,
+  target,
+}: {
+  owner?: string;
+  roster?: typeof bots;
+  target?: { botId?: string; groupId?: string };
+}) {
+  const catalog = useThreadMentionCatalog(owner, roster, target);
   return (
     <>
       <button type="button" onClick={catalog.onMentionRequested}>
@@ -76,17 +84,25 @@ function Harness({ owner = "thread-a", roster = bots }: { owner?: string; roster
       <output>
         {JSON.stringify({ routines: catalog.routines, connectors: catalog.connectors })}
       </output>
+      <output data-people>{JSON.stringify(catalog.people)}</output>
     </>
   );
 }
-async function render(owner = "thread-a", roster = bots) {
-  await act(async () => root.render(<Harness owner={owner} roster={roster} />));
+async function render(
+  owner = "thread-a",
+  roster = bots,
+  target?: { botId?: string; groupId?: string },
+) {
+  await act(async () => root.render(<Harness owner={owner} roster={roster} target={target} />));
 }
 async function activate() {
   await act(async () => container.querySelector("button")!.click());
 }
 function visible() {
   return JSON.parse(container.querySelector("output")!.textContent!);
+}
+function visiblePeople() {
+  return JSON.parse(container.querySelector("output[data-people]")!.textContent!);
 }
 function routineRequests() {
   return state.rpc.mock.calls.filter(([proc]) => proc === "routines/list");
@@ -133,6 +149,26 @@ describe("screen-owned mention catalog", () => {
     await render("thread-a", []);
     expect(visible()).toEqual({ routines: [], connectors: [] });
     expect(state.rpc).toHaveBeenCalledTimes(7);
+  });
+
+  it("loads the people who can see the conversation only when a target is given", async () => {
+    const person = { userId: "user-2", name: "Beatrice Gold", image: null };
+    state.rpc.mockImplementation(async (proc: string) =>
+      proc === "threads/people" ? [person] : [],
+    );
+    await render("thread-a", bots.slice(0, 1));
+    await activate();
+    expect(visiblePeople()).toEqual([]);
+    expect(state.rpc.mock.calls.map(([proc]) => proc)).not.toContain("threads/people");
+
+    await render("thread-b", bots.slice(0, 1), { groupId: "group-1" });
+    await activate();
+    expect(state.rpc).toHaveBeenCalledWith(
+      "threads/people",
+      { groupId: "group-1" },
+      expect.anything(),
+    );
+    expect(visiblePeople()).toEqual([person]);
   });
 
   it("can reactivate after a space change rolls back before the next render", async () => {

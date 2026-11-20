@@ -9,6 +9,7 @@ import {
   partitionComposerMentions,
   resolveComposerSendPlan,
   routineScheduleSubtitle,
+  splitPersonMentions,
   stripMentionKinds,
   stripMentionToken,
   toThreadMentionPayload,
@@ -279,5 +280,70 @@ describe("mentionConnectorsFrom", () => {
       { id: "c1", name: "Gmail", authStatus: "connected", connectionId: "c1" },
       { id: "catalog:k:notion", name: "Notion", authStatus: "needs_auth" },
     ]);
+  });
+});
+
+describe("people mentions", () => {
+  const people = [
+    { id: "u1", name: "Beatrice Gold", image: null },
+    { id: "u2", name: "Ana", image: null },
+  ];
+
+  it("lists people after the query filter and leaves them out when none can see the chat", () => {
+    const options = buildComposerMentionOptions({
+      query: "b",
+      bots: [{ id: "bot-1", name: "Bruno" }],
+      people,
+      groups: [],
+      routines: [],
+      connectors: [],
+    });
+    expect(options.map((option) => [option.kind, option.name])).toEqual([
+      ["bot", "Bruno"],
+      ["person", "Beatrice Gold"],
+    ]);
+    expect(
+      buildComposerMentionOptions({
+        query: "",
+        bots: [],
+        groups: [],
+        routines: [],
+        connectors: [],
+      }),
+    ).toEqual([]);
+  });
+
+  it("sends a person chip as a person target and a bare name as text", () => {
+    const [chip] = buildComposerMentionOptions({
+      query: "bea",
+      bots: [],
+      people,
+      groups: [],
+      routines: [],
+      connectors: [],
+    });
+    const plan = resolveComposerSendPlan({
+      text: "@Beatrice Gold please look",
+      mentions: [chip!],
+      hasAttachments: false,
+    });
+    expect(plan.mentionPayload).toEqual([{ kind: "person", id: "u1" }]);
+    expect(plan.trimmed).toBe("@Beatrice Gold please look");
+  });
+
+  it("splits message text around each person's @Name", () => {
+    expect(
+      splitPersonMentions("hey @Beatrice Gold and @ana, mail ana@x.test", [
+        { id: "u1", name: "Beatrice Gold" },
+        { id: "u2", name: "Ana" },
+      ]),
+    ).toEqual([
+      "hey ",
+      { person: { id: "u1", name: "Beatrice Gold" } },
+      " and ",
+      { person: { id: "u2", name: "Ana" } },
+      ", mail ana@x.test",
+    ]);
+    expect(splitPersonMentions("no names here", people)).toEqual(["no names here"]);
   });
 });

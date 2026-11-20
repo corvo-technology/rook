@@ -1,4 +1,4 @@
-import type { Connection, ConnectionCatalogItem, Routine } from "@corvo/contracts";
+import type { Connection, ConnectionCatalogItem, MentionPerson, Routine } from "@corvo/contracts";
 import type { MentionPickerConnector } from "@corvo/core";
 import { mentionConnectorsFrom } from "@corvo/core";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
@@ -9,13 +9,20 @@ type MentionBot = { id: string; name: string };
 type MentionCatalog = {
   routines: Array<Routine & { botName: string }>;
   connectors: MentionPickerConnector[];
+  /** Members who can see this conversation, so they can be named in it. */
+  people: MentionPerson[];
 };
 type MentionCatalogState = MentionCatalog & { scope: string; activation: symbol | null };
 
-const EMPTY_CATALOG: MentionCatalog = { routines: [], connectors: [] };
+const EMPTY_CATALOG: MentionCatalog = { routines: [], connectors: [], people: [] };
 const ROUTINE_REQUEST_CONCURRENCY = 4;
 
-export function useThreadMentionCatalog(owner: string, bots: readonly MentionBot[]) {
+export function useThreadMentionCatalog(
+  owner: string,
+  bots: readonly MentionBot[],
+  target?: { botId?: string; groupId?: string },
+) {
+  const targetKey = JSON.stringify(target ?? null);
   const generation = useSyncExternalStore(subscribeSessionGeneration, currentSessionGeneration);
   const apiBase = currentApiBase();
   const spaceId = selectedSpaceId();
@@ -129,17 +136,27 @@ export function useThreadMentionCatalog(owner: string, bots: readonly MentionBot
         if (!isCurrent()) return;
         update({ connectors: mentionConnectorsFrom(connections, catalog) });
       });
-      await Promise.all([routines, connectors]);
+      const peopleTarget: { botId?: string; groupId?: string } | null = JSON.parse(targetKey);
+      const people = peopleTarget
+        ? rpc("threads/people", peopleTarget, options).then(
+            (rows) => update({ people: rows }),
+            () => {
+              failed = true;
+            },
+          )
+        : Promise.resolve();
+      await Promise.all([routines, connectors, people]);
       if (failed) allowRetry();
     }
     void load().catch(allowRetry);
     return () => abort.abort();
-  }, [activation, apiBase, bots, generation, scope, spaceId]);
+  }, [activation, apiBase, bots, generation, scope, spaceId, targetKey]);
 
   const catalog = state.scope === scope ? state : EMPTY_CATALOG;
   return {
     routines: catalog.routines,
     connectors: catalog.connectors,
+    people: catalog.people,
     onMentionRequested,
   };
 }

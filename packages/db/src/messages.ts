@@ -79,6 +79,8 @@ export interface CreateThreadMessageInput {
   routing?: Prisma.InputJsonValue;
   /** Who a channel message was routed to and why, for the line under it. */
   routingReport?: Prisma.InputJsonValue;
+  /** People named with a mention chip; those who can see the conversation get a mention. */
+  mentionedUserIds?: readonly string[];
   /** Terminal echo after the run is already cancelled. Every other write stays rejected. */
   allowCancelledRun?: boolean;
 }
@@ -107,6 +109,7 @@ export async function createThreadMessageInTransaction(
       activeBranchId: true,
       spaceId: true,
       groupId: true,
+      botId: true,
       direct: { select: { userAId: true, userBId: true } },
     },
   });
@@ -139,7 +142,12 @@ export async function createThreadMessageInTransaction(
   });
   await notifyForMessage(tx, {
     spaceId: thread.spaceId,
-    thread: { id: input.threadId, groupId: thread.groupId, direct: thread.direct },
+    thread: {
+      id: input.threadId,
+      groupId: thread.groupId,
+      botId: thread.botId,
+      direct: thread.direct,
+    },
     message: {
       id: created.id,
       role: input.role,
@@ -147,6 +155,7 @@ export async function createThreadMessageInTransaction(
       threadRootId: created.threadRootId,
       blocks: input.blocks,
     },
+    mentionedUserIds: input.mentionedUserIds,
   });
   return created;
 }

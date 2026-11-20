@@ -16,6 +16,7 @@ import {
   RunErrorInfoSchema,
   THREAD_READ_BUDGET,
 } from "@corvo/contracts";
+import type { RouterDecision } from "@corvo/core";
 import {
   ACTIVE_RUN_STATUSES,
   BACKGROUND_RUN_TRIGGERS,
@@ -23,6 +24,7 @@ import {
   callIdFromClientNonce,
   isConversationalRun,
   messageReaction,
+  personName,
   projectMessages,
   QUEUE_HOLDING_RUN_STATUSES,
   resolveGroupTargetBotIds,
@@ -38,6 +40,7 @@ import {
   answerWaitingRunWithTextInTransaction,
   appendEventInTransaction,
   clearEndedRunState,
+  conversationAudienceUserIds,
   createGroupRepos,
   createRepos,
   createThreadMessageInTransaction,
@@ -114,13 +117,16 @@ function steersUserMessage(run: { status: string; trigger?: string | null }) {
   return STEERABLE_RUN_STATUSES.has(run.status) && isConversationalRun(run.trigger);
 }
 
-type MentionTargetInput = string | { kind: "bot" | "group" | "routine" | "connector"; id: string };
+type MentionTargetInput =
+  | string
+  | { kind: "bot" | "group" | "routine" | "connector" | "person"; id: string };
 
 function splitMentionTargets(mentions: MentionTargetInput[] | undefined) {
   const botMentionIds = new Set<string>();
   const groupMentionIds = new Set<string>();
   const routineMentionIds = new Set<string>();
   const connectorMentionIds = new Set<string>();
+  const personMentionIds = new Set<string>();
   for (const mention of mentions ?? []) {
     if (typeof mention === "string") {
       botMentionIds.add(mention);
@@ -130,13 +136,58 @@ function splitMentionTargets(mentions: MentionTargetInput[] | undefined) {
     if (mention.kind === "group") groupMentionIds.add(mention.id);
     if (mention.kind === "routine") routineMentionIds.add(mention.id);
     if (mention.kind === "connector") connectorMentionIds.add(mention.id);
+    if (mention.kind === "person") personMentionIds.add(mention.id);
   }
   return {
     botMentionIds: [...botMentionIds],
     groupMentionIds: [...groupMentionIds],
     routineMentionIds: [...routineMentionIds],
     connectorMentionIds: [...connectorMentionIds],
+    personMentionIds: [...personMentionIds],
   };
+}
+
+/**
+ * The people of this conversation, other than the sender, who can be named in it: members of the
+ * space who see the channel, or read the agent's chat. Anyone else is left out without a word, so
+ * a mention never confirms who has access or tells someone who does not.
+ */
+export async function mentionablePeople(
+  prisma: PrismaClient,
+  actor: Actor,
+  target: ThreadTarget,
+): Promise<Array<{ userId: string; name: string; image: string | null }>> {
+  const ids = (
+    await conversationAudienceUserIds(
+      prisma,
+      actor.spaceId,
+      target.kind === "group" ? { groupId: target.groupId } : { botId: target.botId },
+    )
+  ).filter((id) => id !== actor.userId);
+  if (ids.length === 0) return [];
+  const users = await prisma.user.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, name: true, email: true, image: true },
+  });
+  return users
+    .map((user) => ({
+      userId: user.id,
+      name: personName(user.name, user.email),
+      image: user.image,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function mentionedPeopleIds(
+  prisma: PrismaClient,
+  actor: Actor,
+  target: ThreadTarget,
+  mentions: MentionTargetInput[] | undefined,
+): Promise<string[]> {
+  const wanted = splitMentionTargets(mentions).personMentionIds.filter((id) => id !== actor.userId);
+  if (wanted.length === 0) return [];
+  const allowed = new Set((await mentionablePeople(prisma, actor, target)).map((p) => p.userId));
+  return wanted.filter((id) => allowed.has(id));
 }
 
 async function resolveOwnedConnectorDisplayNames(
@@ -908,6 +959,8 @@ export async function sendThreadMessage(
   if (outsideMentioned.some((botId) => !talkable.has(botId))) {
     throw new ORPCError("FORBIDDEN", { message: "You can't talk to this agent." });
   }
+  // People picked with a mention chip, only those who see this conversation.
+  const mentionedUserIds = await mentionedPeopleIds(deps.prisma, actor, target, input.mentions);
   // The model call happens before the transaction so it never holds the thread's locks.
   // A reply inside a thread stays with that thread's agent, so only the main column is routed.
   // A message that names an agent has no one left to route.
@@ -921,6 +974,7 @@ export async function sendThreadMessage(
             text: input.text ?? "",
             members: target.members.filter((member) => talkable.has(member.botId)),
             explicitMentions: splitMentionTargets(input.mentions).botMentionIds,
+            mentionedPeople: mentionedUserIds,
           },
         )
       : undefined;
@@ -1046,6 +1100,7 @@ export async function sendThreadMessage(
           replyToMessageId,
           replyQuote,
           clientNonce: input.clientNonce,
+          mentionedUserIds,
         });
         const answered: typeof activeRuns = [];
         for (const run of activeRuns.filter((run) => run.status === "waiting_input")) {
@@ -1245,9 +1300,21 @@ export async function sendThreadMessage(
                 (await threadConversationBot(tx, target.threadId, threadRoot, memberBotIds))) ||
               (await groupConversationOwner(tx, target.threadId, memberBotIds)),
           }));
-      const targetBotIds = wantedBotIds.filter((botId) => talkable.has(botId));
+      const namesAnAgent =
+        outsideBotIds.length > 0 ||
+        resolveMentionedBotIds({
+          text: input.text ?? "",
+          members: memberRefs,
+          explicitMentions: mentionTargets.botMentionIds,
+        }).length > 0;
+      // A message that names people and no agent is between people: no agent is woken for it.
+      const betweenPeople = mentionedUserIds.length > 0 && !namesAnAgent;
+      const targetBotIds = betweenPeople ? [] : wantedBotIds.filter((botId) => talkable.has(botId));
+      const decided: RouterDecision | undefined = betweenPeople
+        ? { strategy: "people", picked: [] }
+        : routing;
       // Naming only agents the sender may not talk to is a refusal, not a message nobody hears.
-      if (wantedBotIds.length > 0 && targetBotIds.length === 0) {
+      if (!betweenPeople && wantedBotIds.length > 0 && targetBotIds.length === 0) {
         throw new ORPCError("FORBIDDEN", { message: "You can't talk to this agent." });
       }
       const routingReport = buildRoutingReport({
@@ -1263,7 +1330,7 @@ export async function sendThreadMessage(
           }),
           ...outsideBotIds,
         ],
-        routing,
+        routing: decided,
       }) as unknown as Prisma.InputJsonValue;
       const { blocks: attachmentBlocks, artifacts } = await resolveGroupSendAttachments(
         { prisma: tx },
@@ -1319,8 +1386,9 @@ export async function sendThreadMessage(
         replyQuote,
         threadRootId,
         clientNonce: input.clientNonce,
-        routing: routing && (routing as unknown as Prisma.InputJsonValue),
+        routing: decided && (decided as unknown as Prisma.InputJsonValue),
         routingReport,
+        mentionedUserIds,
       });
       const activeByBotId = new Map<string, (typeof activeRuns)[number]>();
       const answeredByBotId = new Map<string, Array<(typeof activeRuns)[number]>>();
@@ -1447,7 +1515,7 @@ export async function sendThreadMessage(
           routingReport,
         },
       });
-      return { message, runs, eventSeq: event.seq };
+      return { message, runs, eventSeq: event.seq, betweenPeople };
     });
 
   const committed = await withSerializableRetry(commit).catch(async (error) => {
@@ -1491,7 +1559,10 @@ export async function sendThreadMessage(
     attachments: fileMimeTypes(committed.message.blocks),
   });
   return sendResult(committed.message, committed.runs, {
-    allowNone: routing?.strategy === "model" || routing?.strategy === "continuity",
+    allowNone:
+      routing?.strategy === "model" ||
+      routing?.strategy === "continuity" ||
+      ("betweenPeople" in committed && committed.betweenPeople),
   });
 }
 

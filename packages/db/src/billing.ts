@@ -148,6 +148,9 @@ export async function syncBillingSnapshot(
       // up by hand keeps the plan and extra-seat prices it was sold at.
       currency: catalog?.currency ?? null,
       interval: catalog?.interval ?? null,
+      aiUseCents: snapshot?.aiUseCents ?? null,
+      pendingPlanKey: snapshot?.pendingChange?.priceLookupKey ?? null,
+      pendingAiUseCents: snapshot?.pendingChange?.aiUseCents ?? null,
       status: snapshot?.status ?? null,
       seats: snapshot?.seats ?? null,
       trialEndsAt: snapshot?.trialEndsAt ?? null,

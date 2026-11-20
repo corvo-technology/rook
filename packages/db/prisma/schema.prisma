@@ -243,6 +243,11 @@ model BillingAccount {
   currency            String?
   /// "month" or "year", from the catalog price.
   interval            String?
+  /// Monthly AI use, in cents, of the plan's AI line; null when the plan brings no AI.
+  aiUseCents          Int?
+  /// A change that starts at the next renewal: the plan's lookup key and its AI amount.
+  pendingPlanKey      String?
+  pendingAiUseCents   Int?
   status              String?
   seats               Int?
   trialEndsAt         DateTime?

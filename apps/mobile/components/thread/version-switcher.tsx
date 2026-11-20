@@ -2,7 +2,6 @@ import type { MessageVariants } from "@corvo/contracts";
 import { Pressable, Text, View } from "react-native";
 import { useI18n } from "../../lib/i18n";
 import { useMobileTokens } from "../../lib/native";
-import { NativeSymbol } from "../native-symbol";
 
 /** "‹ 1 of 2 ›" under the message that opens one of several versions of the same point. */
 export function VersionSwitcher({
@@ -34,13 +33,12 @@ export function VersionSwitcher({
       onPress={() => step(direction)}
       style={{ opacity: off ? 0.35 : 1, padding: 4 }}
     >
-      <NativeSymbol
-        ios={direction < 0 ? "chevron.left" : "chevron.right"}
-        android={direction < 0 ? "chevron-back" : "chevron-forward"}
-        size={13}
-        weight="semibold"
-        color={tokens.mutedForeground}
-      />
+      <Text
+        accessible={false}
+        style={{ color: tokens.mutedForeground, fontSize: 18, lineHeight: 18, fontWeight: "600" }}
+      >
+        {direction < 0 ? "‹" : "›"}
+      </Text>
     </Pressable>
   );
   return (

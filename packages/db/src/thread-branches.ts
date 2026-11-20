@@ -62,16 +62,30 @@ export function visibleMessageFilter(
   };
 }
 
+/** What a thread read needs to carry for the version on screen to be worked out without another query. */
+export const threadBranchInclude = {
+  branches: {
+    select: { id: true, parentBranchId: true, forkSeq: true, createdAt: true },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+  },
+} as const satisfies Prisma.ThreadInclude;
+
+/** The filter for the version on screen, from a thread read with `threadBranchInclude`. */
+export function visibleFilterOf(thread: {
+  activeBranchId?: string | null;
+  branches?: readonly BranchRow[];
+}): Prisma.MessageWhereInput {
+  const branches = thread.branches ?? [];
+  return visibleMessageFilter(
+    branchSegments(branches, thread.activeBranchId ?? null),
+    branches.length > 0,
+  );
+}
+
 export async function loadBranchState(db: Db, threadId: string) {
   const thread = await db.thread.findUnique({
     where: { id: threadId },
-    select: {
-      activeBranchId: true,
-      branches: {
-        select: { id: true, parentBranchId: true, forkSeq: true, createdAt: true },
-        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-      },
-    },
+    select: { activeBranchId: true, ...threadBranchInclude },
   });
   const branches = thread?.branches ?? [];
   const activeBranchId = thread?.activeBranchId ?? null;

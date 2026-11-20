@@ -7,7 +7,11 @@ import { BranchError, forkThreadBranch, switchThreadBranch } from "./index.js";
 import { createThreadMessage, loadRunHistoryMessages } from "./messages.js";
 import { provisionMessagingIdentity } from "./messaging.js";
 import { asSystem, runAsSystem, runAsTenant } from "./row-security.js";
-import { messageVariantsByMessage, visibleMessagesWhere } from "./thread-branches.js";
+import {
+  messageVariantsByMessage,
+  threadBranchInclude,
+  visibleMessagesWhere,
+} from "./thread-branches.js";
 
 const databaseUrl = process.env.DATABASE_URL;
 const describePostgres =
@@ -153,7 +157,13 @@ describePostgres("thread branches (PostgreSQL)", () => {
     await fork(question.seq);
     await say("bot", "kept");
     const run = { id: randomUUID(), threadId };
-    const history = await tenant(() => loadRunHistoryMessages(prisma, run, 50));
+    const history = await tenant(async () => {
+      const thread = await prisma.thread.findUniqueOrThrow({
+        where: { id: threadId },
+        include: threadBranchInclude,
+      });
+      return loadRunHistoryMessages(prisma, run, 50, thread);
+    });
     expect(history.map((row) => (row.blocks as { text: string }[])[0]?.text).sort()).toEqual([
       "kept",
       "question",

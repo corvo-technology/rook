@@ -64,6 +64,7 @@ import {
   runTokens,
   settleReleasedTakeoverCards,
   spaceHasModelAccess,
+  threadBranchInclude,
 } from "@corvo/db";
 import { enrichLogContext, getLogger } from "@corvo/logging";
 import { sanitizedError } from "@corvo/logging/monitoring";
@@ -505,9 +506,13 @@ export function createRunExecutor(deps: ExecutorDeps) {
             select: { userId: true },
           })
         ).userId;
+        // The version of the chat on screen is part of what the agent reads, so the thread comes first.
+        const thread = await deps.prisma.thread.findUniqueOrThrow({
+          where: { id: run.threadId },
+          include: threadBranchInclude,
+        });
         const [
           bot,
-          thread,
           messages,
           peerMessage,
           task,
@@ -525,8 +530,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
             where: { id: run.botId },
             include: { computer: true, space: { select: { pausedAt: true } } },
           }),
-          deps.prisma.thread.findUniqueOrThrow({ where: { id: run.threadId } }),
-          loadRunHistoryMessages(deps.prisma, run, PROMPT_HISTORY_WINDOW_SIZE, channelId),
+          loadRunHistoryMessages(deps.prisma, run, PROMPT_HISTORY_WINDOW_SIZE, thread, channelId),
           run.trigger === "bot_message"
             ? loadBotMessageContext(deps.prisma, run.sourceMessageId)
             : Promise.resolve(undefined),

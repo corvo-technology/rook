@@ -50,6 +50,7 @@ import { useThreadSend } from "../../lib/thread-send";
 import { threadGroupMembers } from "../../lib/thread-snapshot";
 import { useThreadSync } from "../../lib/thread-sync";
 import { useThreadTranscript } from "../../lib/thread-transcript";
+import { useThreadVersions } from "../../lib/thread-versions";
 import { useAutoSpeakReply, useSpeakMessages, useThreadVoiceCall } from "../../lib/thread-voice";
 import { liveEndRunError } from "../../lib/thread-window";
 import { keepMessageInWiki } from "../../lib/wiki";
@@ -402,6 +403,8 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     setDetailsOpen,
   } = useThreadRunError(snap?.run, botId, groupId, refresh);
 
+  const versions = useThreadVersions({ botId, refresh, openChat: openBot });
+
   // Event actions read the latest committed screen state without invalidating settled rows.
   const rowActions = useLatestRowActions({
     helperToggle: scroll.helperToggle,
@@ -422,6 +425,10 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     keepInWiki: (message) => {
       void keepMessageInWiki(groupId ? { groupId } : { botId }, message.id).catch(() => undefined);
     },
+    edit: versions.edit,
+    regenerate: versions.regenerate,
+    fork: versions.fork,
+    switchVersion: versions.switchVersion,
     answer: composer.answer,
     openBot,
     openComputer,

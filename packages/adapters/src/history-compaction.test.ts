@@ -642,6 +642,20 @@ describe("compactHistory", () => {
     expect(harness.runtime.run).not.toHaveBeenCalled();
   });
 
+  it("leaves a chat with versions alone, so no summary takes in one that is off screen", async () => {
+    const harness = compactionHarness({ deploymentModelKey: "openrouter-key" });
+    const read = harness.deps.prisma.thread.findUniqueOrThrow as unknown as ReturnType<
+      typeof vi.fn<(args: unknown) => Promise<Record<string, unknown>>>
+    >;
+    const unversioned = await read({});
+    read.mockResolvedValue({ ...unversioned, _count: { branches: 1 } });
+
+    await compactHistory(harness.deps, "thread-1");
+
+    expect(harness.runtime.run).not.toHaveBeenCalled();
+    expect(harness.saveMemory).not.toHaveBeenCalled();
+  });
+
   it("keeps compaction summaries private so clearing a shared bot cannot expose stale history", async () => {
     const harness = compactionHarness({
       deploymentModelKey: "openrouter-key",

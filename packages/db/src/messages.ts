@@ -1,19 +1,22 @@
 import type { MessageBlock } from "@corvo/contracts";
 import type { Prisma, PrismaClient } from "./client.js";
 import { notifyForMessage } from "./notifications.js";
+import { visibleMessagesWhere } from "./thread-branches.js";
 import { markUnreadForOtherMembers } from "./thread-reads.js";
 import { withTransactionRetry } from "./transaction-retry.js";
 
 /** Group turns use channel inputs and their own outputs, never private thread history. */
-export function loadRunHistoryMessages(
+export async function loadRunHistoryMessages(
   prisma: PrismaClient,
   run: { id: string; threadId: string },
   limit: number,
   channelId?: string,
 ) {
+  const visible = await visibleMessagesWhere(prisma, run.threadId);
   return prisma.message.findMany({
     where: {
       threadId: run.threadId,
+      ...(Object.keys(visible).length > 0 ? { AND: [visible] } : {}),
       ...(channelId
         ? {
             OR: [
@@ -98,6 +101,7 @@ export async function createThreadMessageInTransaction(
     },
     select: {
       nextMessageSeq: true,
+      activeBranchId: true,
       spaceId: true,
       groupId: true,
       direct: { select: { userAId: true, userBId: true } },
@@ -116,6 +120,7 @@ export async function createThreadMessageInTransaction(
     data: {
       threadId: input.threadId,
       seq: thread.nextMessageSeq - 1,
+      branchId: thread.activeBranchId,
       role: input.role,
       blocks: input.blocks as Prisma.InputJsonValue,
       botId: input.botId,

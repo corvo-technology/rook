@@ -50,6 +50,9 @@ vi.mock("./agent-audience.js", () => ({
 vi.mock("@corvo/db", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@corvo/db")>()),
   spaceCreationPolicy: async () => ({ canCreateSpace: true, membersCanCreateSpaces: null }),
+  // Which version of the chat is on screen has its own tests.
+  visibleMessagesWhere: async () => ({}),
+  messageVariantsByMessage: async () => new Map(),
 }));
 
 const withRoleDeps = (deps: RouterDeps) => {

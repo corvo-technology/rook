@@ -66,6 +66,7 @@ import { groupConversationOwner } from "./group-owner.js";
 import { isRecordNotFound } from "./routes/shared.js";
 import { unavailableAgents } from "./routing-availability.js";
 import { withSerializableRetry } from "./serializable-retry.js";
+import { addEffectsNotice, beginEdit } from "./thread-branching.js";
 import type { ImageAdmissionRun } from "./thread-image-admission.js";
 import { assertThreadImageInput } from "./thread-image-admission.js";
 import { loadMessagePage } from "./thread-message-pages.js";
@@ -826,9 +827,14 @@ export async function sendThreadMessage(
     threadRootId?: string;
     clientNonce?: string;
     host?: HostTurn;
+    /** Sends the text as a new version of this earlier message of the person's, not at the end. */
+    edit?: { messageId: string };
   },
   releaseTakeover?: (runId: string) => Promise<void>,
 ) {
+  if (input.edit && target.kind !== "bot") {
+    throw new ORPCError("BAD_REQUEST", { message: "Only a chat with one agent has versions." });
+  }
   const existing = await replayExistingSend(
     deps,
     target.threadId,
@@ -979,6 +985,10 @@ export async function sendThreadMessage(
             thinkingLevel: true,
           },
         });
+        // Checks the author and that nothing is running, then starts the version the text goes on.
+        const edited = input.edit
+          ? await beginEdit(tx, actor, target, input.edit.messageId)
+          : undefined;
         if (input.imageHandling === "confirm") {
           await assertImageRecipients(tx, actor, target, input.text, attachmentBlocks, {
             botId: target.botId,
@@ -1142,7 +1152,14 @@ export async function sendThreadMessage(
             replyPreview,
           },
         });
-        return { message, runs: [run], eventSeq: event.seq };
+        const noticeSeq = edited?.abandonedHadEffects
+          ? await addEffectsNotice(tx, {
+              spaceId: actor.spaceId,
+              threadId: target.threadId,
+              botId: target.botId,
+            })
+          : undefined;
+        return { message, runs: [run], eventSeq: noticeSeq ?? event.seq };
       }
 
       const members = await lockAndLoadGroupMembers(tx, actor, target);

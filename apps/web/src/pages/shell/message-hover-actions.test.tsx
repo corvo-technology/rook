@@ -177,3 +177,53 @@ describe("pinning a message from its menu", () => {
     expect(items(container)).not.toContain("Pin");
   });
 });
+
+describe("editing, regenerating and branching from a message's menu", () => {
+  async function showVersions(props: {
+    onEdit?: () => void;
+    onRegenerate?: () => void;
+    onFork?: () => void;
+  }) {
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    const container = document.createElement("div");
+    document.body.append(container);
+    root = createRoot(container);
+    await act(async () => {
+      root!.render(
+        <MessageHoverActions
+          message={message}
+          onMarkUnread={vi.fn()}
+          onReact={vi.fn(async () => undefined)}
+          {...props}
+        />,
+      );
+    });
+    return container;
+  }
+  const choose = (container: HTMLElement, label: string) =>
+    act(async () =>
+      (
+        [...container.querySelectorAll('[role="menuitem"]')].find(
+          (item) => item.textContent === label,
+        ) as HTMLElement
+      ).click(),
+    );
+
+  it("offers nothing the message does not allow", async () => {
+    const container = await showVersions({});
+    expect(items(container)).not.toContain("Edit");
+    expect(items(container)).not.toContain("Regenerate");
+    expect(items(container)).not.toContain("Continue in new thread");
+  });
+
+  it("runs the action that was chosen", async () => {
+    const actions = { onEdit: vi.fn(), onRegenerate: vi.fn(), onFork: vi.fn() };
+    const container = await showVersions(actions);
+    await choose(container, "Edit");
+    await choose(container, "Regenerate");
+    await choose(container, "Continue in new thread");
+    expect(actions.onEdit).toHaveBeenCalledTimes(1);
+    expect(actions.onRegenerate).toHaveBeenCalledTimes(1);
+    expect(actions.onFork).toHaveBeenCalledTimes(1);
+  });
+});

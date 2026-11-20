@@ -225,7 +225,7 @@ describePostgres("computer runs (PostgreSQL)", () => {
     expect((await o.runs()).map((run) => run.endReason)).toEqual(["reconciled", null]);
   });
 
-  it("keeps the run time but not who it belonged to when the account and space are deleted", async () => {
+  it("keeps the run time and the ids of who it belonged to when the account and space are deleted", async () => {
     const o = await owner();
     await o.start();
     await system.computer.delete({ where: { id: o.id } });
@@ -234,7 +234,13 @@ describePostgres("computer runs (PostgreSQL)", () => {
     await system.user.delete({ where: { id: o.id } });
 
     expect(await o.runs()).toEqual([
-      expect.objectContaining({ computerId: o.id, spaceId: null, userId: null, kind: "fake" }),
+      expect.objectContaining({
+        computerId: o.id,
+        spaceId: o.id,
+        userId: o.id,
+        organizationId: o.id,
+        kind: "fake",
+      }),
     ]);
   });
 

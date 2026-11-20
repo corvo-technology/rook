@@ -66,7 +66,6 @@ model User {
   signupSurvey                SignupSurvey?
   coachTour                   CoachTour?
   onboardingProgress          OnboardingProgress?
-  computerRuns                ComputerRun[]
   messagingInstallations      MessagingInstallation[]
   messagingInstallSessions    MessagingInstallSession[]
 
@@ -388,7 +387,6 @@ model Space {
   artifacts                   Artifact[]
   notificationPreferences     NotificationPreference[]
   computers                   Computer[]
-  computerRuns                ComputerRun[]
   externalEffects             ExternalEffect[]
   mcpServers                  McpServer[]
   mcpOAuthSessions            McpOAuthSession[]
@@ -1575,25 +1573,29 @@ model Computer {
 ///
 /// `computerId` is deliberately not a relation, so the row outlives a deleted computer. Deleting
 /// the user or space anonymises the row instead of erasing the run time it records.
+/// One stretch a computer was running. Evidence of what was used, so deliberately no lifecycle
+/// foreign keys: space, user and organization ids outlive their rows and may dangle.
 model ComputerRun {
-  id          String    @id @default(cuid())
-  computerId  String
-  spaceId     String?
-  space       Space?    @relation(fields: [spaceId], references: [id], onDelete: SetNull)
-  userId      String?
-  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  id             String    @id @default(cuid())
+  computerId     String
+  spaceId        String?
+  /// Set from the space when the row is written (database trigger), so the run stays
+  /// attributable after the space or the organization is deleted.
+  organizationId String?
+  userId         String?
   /// The provider kind, such as docker or e2b.
-  kind        String
+  kind           String
   /// The provider's id for the sandbox, to match runs with the provider's own usage and billing.
-  providerRef String?
-  startedAt   DateTime
+  providerRef    String?
+  startedAt      DateTime
   /// Null while running. When the end was not seen as it happened, this is when it was detected.
-  endedAt     DateTime?
+  endedAt        DateTime?
   /// How it ended; see `ComputerRunEnd` in packages/db/src/computer-runs.ts.
-  endReason   String?
+  endReason      String?
 
   @@unique([computerId, startedAt])
   @@index([spaceId, userId, startedAt])
+  @@index([organizationId, startedAt])
   // computer_runs_open_idx (open runs by computer) is raw SQL: Prisma cannot express partial indexes.
   @@map("computer_runs")
 }

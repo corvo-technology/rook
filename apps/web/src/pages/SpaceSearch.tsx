@@ -1,6 +1,6 @@
 import type { SearchHit } from "@corvo/contracts";
 import { searchHitListKey } from "@corvo/core";
-import { Trans } from "@lingui/react/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 
 export function SpaceSearchResults({
   hits,
@@ -11,6 +11,21 @@ export function SpaceSearchResults({
   loading: boolean;
   onSelect: (hit: SearchHit) => void;
 }) {
+  const { t } = useLingui();
+  const kindLabel = (kind: SearchHit["kind"]) => {
+    switch (kind) {
+      case "conversation":
+        return t`Conversation`;
+      case "message":
+        return t`Message`;
+      case "file":
+        return t`File`;
+      case "link":
+        return t`Link`;
+      case "routine":
+        return t`Routine`;
+    }
+  };
   if (loading) {
     return (
       <div className="px-3 py-4 text-[14px] text-muted-foreground">
@@ -39,7 +54,7 @@ export function SpaceSearchResults({
               {hit.title}
             </span>
             <span className="shrink-0 text-[12px] uppercase tracking-wide text-muted-foreground/80">
-              {hit.kind}
+              {kindLabel(hit.kind)}
             </span>
           </div>
           <div className="mt-0.5 flex min-w-0 gap-2 text-[13px] text-muted-foreground" dir="auto">

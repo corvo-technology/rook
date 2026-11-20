@@ -2712,6 +2712,10 @@ msgstr "通过 {0} 继续"
 msgid "Control computers"
 msgstr "控制电脑"
 
+#: src/pages/SpaceSearch.tsx
+msgid "Conversation"
+msgstr "对话"
+
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/markdown-copy.tsx
 #: src/pages/ImportFlow.tsx
@@ -4489,6 +4493,7 @@ msgid "Fields to compare, e.g. id, modifiedTime (optional)"
 msgstr "要比较的字段，例如 id, modifiedTime（可选）"
 
 #: src/pages/connections/McpServerForm.tsx
+#: src/pages/SpaceSearch.tsx
 msgid "File"
 msgstr "文件"
 
@@ -5437,6 +5442,10 @@ msgstr "Linear 工单"
 msgid "Lines"
 msgstr "明细"
 
+#: src/pages/SpaceSearch.tsx
+msgid "Link"
+msgstr "链接"
+
 #: src/components/AccountAccess.tsx
 msgid "Link SSO"
 msgstr "关联 SSO"
@@ -5832,6 +5841,7 @@ msgstr "提到：{mentions}"
 
 #: src/pages/shell/chat-shared.ts
 #: src/pages/shell/composer.tsx
+#: src/pages/SpaceSearch.tsx
 msgid "Message"
 msgstr "消息"
 
@@ -6479,8 +6489,10 @@ msgstr "此处没有公开地址，因此它会按你批准的时间表检查收
 msgid "No remote MCP servers found"
 msgstr "未找到远程 MCP 服务器"
 
+#: src/pages/AgentsStore.tsx
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/shell/command-palette.tsx
+#: src/pages/SkillsStore.tsx
 #: src/pages/SpaceSearch.tsx
 #: src/pages/Store.tsx
 msgid "No results"
@@ -8072,6 +8084,7 @@ msgstr "路由备注"
 #: src/lib/identity-display.ts
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/use-routine-editor.ts
+#: src/pages/SpaceSearch.tsx
 msgid "Routine"
 msgstr "例行任务"
 

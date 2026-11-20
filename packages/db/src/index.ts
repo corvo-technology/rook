@@ -3,6 +3,7 @@ export * from "./approval-settings.js";
 export * from "./artifact-versions.js";
 export * from "./billing.js";
 export * from "./billing-evidence.js";
+export * from "./storage-snapshot.js";
 export * from "./board.js";
 export * from "./board-live.js";
 export * from "./bootstrap-user.js";

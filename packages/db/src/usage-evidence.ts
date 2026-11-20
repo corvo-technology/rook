@@ -38,13 +38,14 @@ export interface UsageEvidenceReport {
   actions: Row[];
   actionsTruncated: boolean;
   /**
-   * Storage is kept as a running total with no history: `currentBytes` is exact now, and
-   * `objectBytesAtPeriodEnd` sums the objects still stored that were written before the end.
+   * Bytes stored: the daily snapshot at or before the period's last day (null before the first
+   * snapshot), and the live total, which is null once the organization is deleted.
    */
   storage: {
+    snapshotDay: string | null;
+    snapshotBytes: string | null;
     currentBytes: string | null;
     reconciledAt: string | null;
-    objectBytesAtPeriodEnd: string;
   };
 }
 
@@ -69,7 +70,7 @@ export async function usageEvidenceReport(
   const { organizationId, from, to } = input;
   const inRange = { gte: from, lt: to };
 
-  const [account, journal, calls, runs, samples, spaces, usage, objects] = await Promise.all([
+  const [account, journal, calls, runs, samples, spaces, usage, snapshot] = await Promise.all([
     prisma.billingAccount.findUnique({ where: { organizationId } }),
     prisma.billingAuditEvent.findMany({
       where: { organizationId, createdAt: inRange },
@@ -100,9 +101,12 @@ export async function usageEvidenceReport(
     }),
     prisma.space.findMany({ where: { organizationId }, select: { id: true } }),
     prisma.storageUsage.findUnique({ where: { organizationId } }),
-    prisma.storageObject.aggregate({
-      _sum: { bytes: true },
-      where: { organizationId, recordedAt: { lt: to } },
+    prisma.storageSnapshot.findFirst({
+      where: {
+        organizationId,
+        day: { lte: new Date(to.getTime() - 1).toISOString().slice(0, 10) },
+      },
+      orderBy: { day: "desc" },
     }),
   ]);
 
@@ -246,9 +250,10 @@ export async function usageEvidenceReport(
     actions: actionRows(events.slice(0, EVIDENCE_ACTION_LIMIT), computerOfBot),
     actionsTruncated: events.length > EVIDENCE_ACTION_LIMIT,
     storage: {
+      snapshotDay: snapshot?.day ?? null,
+      snapshotBytes: snapshot?.bytes.toString() ?? null,
       currentBytes: usage?.bytes.toString() ?? null,
       reconciledAt: usage?.reconciledAt?.toISOString() ?? null,
-      objectBytesAtPeriodEnd: (objects._sum.bytes ?? 0n).toString(),
     },
   };
 }
@@ -336,7 +341,8 @@ export function usageEvidenceCsv(report: UsageEvidenceReport): string {
       generatedAt: report.generatedAt,
       actionsTruncated: report.actionsTruncated,
       storageCurrentBytes: report.storage.currentBytes,
-      storageObjectBytesAtPeriodEnd: report.storage.objectBytesAtPeriodEnd,
+      storageSnapshotDay: report.storage.snapshotDay,
+      storageSnapshotBytes: report.storage.snapshotBytes,
     },
   ];
   const sections: [string, Row[]][] = [

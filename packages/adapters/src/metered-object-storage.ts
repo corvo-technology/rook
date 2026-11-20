@@ -12,6 +12,7 @@ import {
   organizationIdForObjectKey,
   reconcileStorageUsage,
   recordStoredObject,
+  snapshotStorageUsage,
   storageUsedBytes,
 } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
@@ -19,6 +20,7 @@ import { objectStorageConfigFromEnv, S3ObjectStorage } from "./s3-object-storage
 
 type Db = Pick<
   PrismaClient,
+  | "$executeRaw"
   | "$transaction"
   | "billingAccount"
   | "computer"
@@ -161,6 +163,8 @@ export async function reconcileStorage(
         yield { key: object.key, size: object.size ?? 0, lastModified: object.lastModified };
   }
   const changed = await reconcileStorageUsage(prisma, objects(), now);
+  // Once a day, kept as evidence of what the organization stored.
+  await snapshotStorageUsage(prisma, now);
   for (const organizationId of changed) {
     const limits = await organizationEntitlements(prisma, plans, organizationId);
     if (!limits) continue;

@@ -276,6 +276,20 @@ model StorageUsage {
   @@map("storage_usage")
 }
 
+/// One organization's stored bytes on one UTC day, taken once a day. Append-only evidence of what
+/// was stored when: no lifecycle foreign keys, so it outlives the organization.
+model StorageSnapshot {
+  id             String   @id @default(cuid())
+  organizationId String
+  /// UTC day, "YYYY-MM-DD".
+  day            String
+  bytes          BigInt
+  takenAt        DateTime @default(now())
+
+  @@unique([organizationId, day])
+  @@map("storage_snapshots")
+}
+
 /// Custom limits the platform owner gives one organization. A value set here replaces the plan's.
 model OrganizationLimitOverride {
   organizationId  String       @id

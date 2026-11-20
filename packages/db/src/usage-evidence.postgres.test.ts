@@ -182,6 +182,13 @@ dbTests("usage evidence report", () => {
         },
       ],
     });
+    await prisma.storageSnapshot.createMany({
+      data: [
+        { organizationId, day: "2026-03-15", bytes: 100n },
+        { organizationId, day: "2026-03-31", bytes: 300n },
+        { organizationId, day: "2026-04-01", bytes: 999n },
+      ],
+    });
     await recordBillingEvidence(prisma, customerId, {
       eventId: `evt_${suffix}`,
       type: "checkout.session.completed",
@@ -252,6 +259,17 @@ dbTests("usage evidence report", () => {
     expect(report.billingEvents.map((e) => e.kind)).toEqual(["stripe.checkout.session.completed"]);
     expect(report.billingEvents[0]).toMatchObject({ amountMinor: 4900, currency: "brl" });
     expect(report.creditLedger).toEqual([]);
+    // The reading of the period's last day, not the next day's.
+    expect(report.storage).toMatchObject({ snapshotDay: "2026-03-31", snapshotBytes: "300" });
+    expect(
+      (
+        await usageEvidenceReport(prisma, {
+          organizationId,
+          from: march.from,
+          to: new Date("2026-03-20T00:00:00Z"),
+        })
+      ).storage,
+    ).toMatchObject({ snapshotDay: "2026-03-15", snapshotBytes: "100" });
 
     const now = await usageEvidenceReport(prisma, { organizationId, ...around });
     expect(now.creditLedger.map((e) => [e.kind, e.amountMicros])).toEqual([
@@ -279,6 +297,7 @@ dbTests("usage evidence report", () => {
     expect(report.computerRuns).toHaveLength(1);
     expect(report.resourceSamples).toHaveLength(2);
     expect(report.termsAcceptances).toHaveLength(1);
+    expect(report.storage.snapshotBytes).toBe("300");
     const ledger = await usageEvidenceReport(prisma, { organizationId, ...around });
     expect(ledger.creditLedger.map((e) => [e.kind, e.amountMicros])).toEqual([
       ["purchase", "10000000"],

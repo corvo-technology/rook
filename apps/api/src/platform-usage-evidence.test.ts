@@ -28,7 +28,7 @@ function setup(email: string) {
     resourceSamples: [],
     actions: [],
     actionsTruncated: false,
-    storage: { currentBytes: null, reconciledAt: null, objectBytesAtPeriodEnd: "0" },
+    storage: { snapshotDay: null, snapshotBytes: null, currentBytes: null, reconciledAt: null },
   });
   const deps = {
     prisma: {} as PrismaClient,

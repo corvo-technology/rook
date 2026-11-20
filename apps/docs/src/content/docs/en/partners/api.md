@@ -33,6 +33,7 @@ PUT /api/partner/v1/tenants/shop-1
 | --- | --- |
 | `name` | The customer's name. |
 | `locale` | The customer's language (`pt-BR`, `en`...). Names the Chief and only matters when the customer is first made. Portuguese reads Portuguese; no `locale` or any other language reads English. |
+| `timezone` | The customer's IANA timezone (`America/Sao_Paulo`). The template's [scheduled routines](/en/partners/events/) run in it; only matters when the customer is first made. |
 | `connector` | `{ slug, name, endpoint, token }`. Optional when the template already defines the connector. |
 | `connectorToken` | This customer's connector token, when the template defines the connector. Follows the latest call. |
 | `agents` | List of `{ key, name, instructions, usesConnector, starters? }`. Optional: usually they come from the template. What the call names wins over the template. |

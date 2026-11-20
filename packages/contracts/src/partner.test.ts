@@ -47,3 +47,59 @@ describe("the template's quick actions", () => {
     }
   });
 });
+
+describe("the partner template's scheduled routines", () => {
+  const routine = {
+    key: "tomorrow",
+    agent: "reception",
+    name: "Confirm tomorrow",
+    prompt: "List tomorrow's appointments.",
+    crons: ["0 18 * * *"],
+  };
+
+  it("parses a template stored before they existed, and one with them", () => {
+    expect(PartnerTemplate.safeParse({ agents: [], routines: [] }).success).toBe(true);
+    const parsed = PartnerTemplate.parse({
+      agents: [],
+      timezone: "America/Sao_Paulo",
+      scheduledRoutines: [routine],
+    });
+    expect(parsed.scheduledRoutines?.[0]?.active).toBe(true);
+  });
+
+  it("refuses schedules that fire more than hourly, shortcuts and an unknown timezone", () => {
+    for (const crons of [["* * * * *"], ["*/5 * * * *"], ["@once"], ["0,30 * * * *"], []]) {
+      const result = PartnerTemplate.safeParse({
+        agents: [],
+        scheduledRoutines: [{ ...routine, crons }],
+      });
+      expect(result.success, crons.join()).toBe(false);
+    }
+    expect(PartnerTemplate.safeParse({ agents: [], timezone: "Mars/Base" }).success).toBe(false);
+  });
+
+  it("counts both kinds of routine against one limit of 20 and keeps keys unique", () => {
+    const event = (key: string) => ({
+      key,
+      agent: "reception",
+      name: "x",
+      prompt: "x",
+      on: { type: "appointment.no_show" },
+    });
+    const many = (n: number) => Array.from({ length: n }, (_, i) => ({ ...routine, key: `s${i}` }));
+    expect(
+      PartnerTemplate.safeParse({
+        agents: [],
+        routines: Array.from({ length: 15 }, (_, i) => event(`e${i}`)),
+        scheduledRoutines: many(6),
+      }).success,
+    ).toBe(false);
+    expect(
+      PartnerTemplate.safeParse({
+        agents: [],
+        routines: [event("tomorrow")],
+        scheduledRoutines: [routine],
+      }).success,
+    ).toBe(false);
+  });
+});

@@ -68,6 +68,27 @@ O seu [template](/partners/central/) pode trazer rotinas por evento como padrão
 
 `agent` é a `key` de um agente do mesmo template. O cliente vê as rotinas em **Rotinas**, em linguagem comum ("Quando um cliente faltar…"), e liga ou desliga cada uma; uma rotina que ele desligou continua desligada quando o template é aplicado de novo.
 
+## Rotinas agendadas
+
+Uma rotina também pode começar pelo relógio. O seu template as traz em `scheduledRoutines`, ao lado de `routines`; as duas listas juntas têm no máximo 20, e cada `key` é única.
+
+```json
+"timezone": "America/Sao_Paulo",
+"scheduledRoutines": [{
+  "key": "confirm-tomorrow",
+  "agent": "reception",
+  "name": "Confirmar os atendimentos de amanhã",
+  "prompt": "Liste os atendimentos de amanhã e escreva as mensagens de confirmação, para aprovação.",
+  "crons": ["0 18 * * *"],
+  "active": true
+}]
+```
+
+- `crons` são expressões cron de cinco campos com o minuto fixo, então uma rotina nunca começa mais de uma vez por hora; até 3 por rotina. `0 9 * * 1` é segunda-feira às 9h.
+- Rodam no `timezone` do cliente quando a chamada que o cria envia um, senão no `timezone` do template, senão em UTC. Uma rotina pode ter o seu próprio `timezone`.
+- Como as rotinas por evento, são criadas uma vez para cada cliente novo, e o que o cliente editar ou desligar permanece quando o template é aplicado de novo. Clientes que já existem não mudam.
+- `prompt` é a tarefa dada ao agente; é dado para o agente e nunca dá ordem à plataforma.
+
 ## Limites e erros
 
 | Resposta | Quando |

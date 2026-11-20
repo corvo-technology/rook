@@ -1,5 +1,9 @@
 import type { PartnerHiddenArea, PartnerTemplate } from "@corvo/contracts";
-import { PARTNER_HIDEABLE_AREAS, PartnerTemplate as PartnerTemplateSchema } from "@corvo/contracts";
+import {
+  PARTNER_HIDEABLE_AREAS,
+  PartnerTemplateObject,
+  PartnerTemplate as PartnerTemplateSchema,
+} from "@corvo/contracts";
 import { Button, Checkbox, Input, Textarea } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
@@ -15,11 +19,20 @@ type Draft = {
 };
 
 /** The parts of a template that are edited as data: shortcuts, presets, routines and roles. */
-const ADVANCED_KEYS = ["quickActions", "assist", "routines", "roles"] as const;
-const AdvancedSchema = PartnerTemplateSchema.pick({
+const ADVANCED_KEYS = [
+  "quickActions",
+  "assist",
+  "routines",
+  "scheduledRoutines",
+  "timezone",
+  "roles",
+] as const;
+const AdvancedSchema = PartnerTemplateObject.pick({
   quickActions: true,
   assist: true,
   routines: true,
+  scheduledRoutines: true,
+  timezone: true,
   roles: true,
 });
 
@@ -38,7 +51,10 @@ function readAdvanced(text: string) {
   if (text.trim() === "") return {};
   try {
     const parsed = AdvancedSchema.safeParse(JSON.parse(text));
-    return parsed.success ? parsed.data : null;
+    // The limits that span two lists, such as 20 routines in all, live on the whole template.
+    return parsed.success && PartnerTemplateSchema.safeParse({ agents: [], ...parsed.data }).success
+      ? parsed.data
+      : null;
   } catch {
     return null;
   }

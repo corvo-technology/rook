@@ -2,6 +2,8 @@ import { z } from "zod";
 import { AssistPresets } from "./assist.js";
 import { BotStartersSchema } from "./bot-starters.js";
 import { PartnerEventRoutine } from "./partner-events.js";
+import { PartnerScheduledRoutine } from "./partner-scheduled.js";
+import { TimeZoneSchema } from "./time-zone.js";
 
 const Key = z
   .string()
@@ -103,7 +105,7 @@ export const PartnerRoleDef = z
 export type PartnerRoleDef = z.infer<typeof PartnerRoleDef>;
 
 /** What every new customer gets, defined once so the partner's calls only name the customer. */
-export const PartnerTemplate = z
+export const PartnerTemplateObject = z
   .object({
     connector: PartnerConnectorInput.omit({ token: true }).optional(),
     agents: z.array(PartnerAgentInput).max(10),
@@ -119,6 +121,10 @@ export const PartnerTemplate = z
     assist: AssistPresets.optional(),
     /** Routines every customer gets, each started by an event the partner's system sends. */
     routines: z.array(PartnerEventRoutine).max(20).optional(),
+    /** Routines every customer gets, each started by the clock. Together with `routines`, at most 20. */
+    scheduledRoutines: z.array(PartnerScheduledRoutine).max(20).optional(),
+    /** The timezone scheduled routines run in when the customer's call names none; UTC when left out. */
+    timezone: TimeZoneSchema.optional(),
     /** What each role of the partner's system gets; a role named nowhere here gets no agents. */
     roles: z.record(PartnerRoleName, PartnerRoleDef).optional(),
     /** The partner's main colour as `#rrggbb`, used when the page that embeds Rook passes none. */
@@ -128,6 +134,29 @@ export const PartnerTemplate = z
       .optional(),
   })
   .strict();
+
+export const PartnerTemplate = PartnerTemplateObject.superRefine((template, ctx) => {
+  if ((template.routines?.length ?? 0) + (template.scheduledRoutines?.length ?? 0) > 20) {
+    ctx.addIssue({
+      code: "custom",
+      message: "A template gives at most 20 routines",
+      path: ["scheduledRoutines"],
+    });
+  }
+  if (!template.scheduledRoutines?.length) return;
+  const keys = new Set<string>();
+  for (const routine of [...(template.routines ?? []), ...template.scheduledRoutines]) {
+    if (keys.has(routine.key)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Routine keys must be unique",
+        path: ["scheduledRoutines"],
+      });
+      break;
+    }
+    keys.add(routine.key);
+  }
+});
 export type PartnerTemplate = z.infer<typeof PartnerTemplate>;
 
 /** What a partner's system sends to create or update one of its customers; sending it again is safe. */
@@ -136,6 +165,8 @@ export const PartnerTenantInput = z
     name: z.string().trim().min(1).max(120),
     /** The customer's language, such as `pt-BR`; names its Chief. Anything else reads as English. */
     locale: z.string().trim().max(35).optional(),
+    /** The customer's IANA timezone, such as `America/Sao_Paulo`; scheduled routines run in it. */
+    timezone: TimeZoneSchema.optional(),
     state: z.enum(["enabled", "suspended"]).optional(),
     connector: PartnerConnectorInput.optional(),
     agents: z.array(PartnerAgentInput).max(10).optional(),

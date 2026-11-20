@@ -513,6 +513,7 @@ describe("Stripe plan invoices with an AI add-on", () => {
       "/v1/prices/price_plan": { id: "price_plan", metadata: {} },
       "/v1/prices/price_ai": {
         id: "price_ai",
+        unit_amount: 7190,
         metadata: { credit_use_cents: overrides.useCents ?? "1000" },
       },
     });

@@ -3,13 +3,19 @@ import type {
   BillingCheckoutRequest,
   BillingCreditCheckoutRequest,
   BillingCreditPurchase,
+  BillingPlanChangeRequest,
   BillingPlanCheckoutRequest,
+  BillingPlanSelection,
   BillingPrice,
   BillingProvider,
   BillingSubscriptionSnapshot,
   BillingSubscriptionStatus,
 } from "@corvo/adapter-kit";
-import { BillingCheckoutCompletedError, BillingCustomerNotFoundError } from "@corvo/adapter-kit";
+import {
+  BillingCheckoutCompletedError,
+  BillingCustomerNotFoundError,
+  BillingPaymentRequiredError,
+} from "@corvo/adapter-kit";
 import type { BillingCurrency, BillingInterval } from "@corvo/contracts";
 import {
   AI_USE_CENTS,
@@ -22,6 +28,7 @@ import {
   extraPersonLookupKey,
   ModelCreditAmountSchema,
   PLAN_IDS,
+  parseAiLookupKey,
   planLookupKey,
   planPriceCents,
 } from "@corvo/contracts";
@@ -65,6 +72,7 @@ const subscriptionSchema = z.object({
   cancel_at_period_end: z.boolean().nullish(),
   cancel_at: z.number().nullish(),
   ended_at: z.number().nullish(),
+  schedule: z.string().nullish(),
   items: z.object({
     data: z.array(
       z.object({
@@ -89,6 +97,22 @@ const checkoutListSchema = z.object({
   has_more: z.boolean(),
 });
 type StripeSubscription = z.infer<typeof subscriptionSchema>;
+const scheduleSchema = z.object({
+  id: z.string(),
+  current_phase: z.object({ start_date: z.number() }).nullish(),
+  phases: z.array(
+    z.object({
+      start_date: z.number(),
+      end_date: z.number().nullish(),
+      items: z.array(z.object({ price: z.string(), quantity: z.number().int().nullish() })),
+    }),
+  ),
+  metadata: z.record(z.string(), z.string()).nullish(),
+});
+type StripeSchedule = z.infer<typeof scheduleSchema>;
+/** Written on a schedule this adapter made; they say what the waiting phase holds. */
+const PENDING_PLAN_METADATA = "corvo_pending_plan";
+const PENDING_AI_METADATA = "corvo_pending_ai";
 
 /** Stripe REST wire format and credentials stay inside this adapter. */
 export class StripeBillingProvider implements BillingProvider {
@@ -97,7 +121,10 @@ export class StripeBillingProvider implements BillingProvider {
   private readonly now: () => number;
   private readonly monthlyPrices = new Map<string, string>();
   private readonly catalogPriceIds = new Map<string, string>();
-  private readonly creditUse = new Map<string, number>();
+  private readonly priceInfos = new Map<
+    string,
+    { use: number; unitAmount: number; catalog: boolean }
+  >();
 
   constructor(config: StripeBillingConfig) {
     this.config = config;
@@ -452,29 +479,10 @@ export class StripeBillingProvider implements BillingProvider {
       )
     )
       throw new BillingCheckoutCompletedError();
-    const { currency, interval } = input;
-    const lineItems = [
-      {
-        price: await this.catalogPriceId(planLookupKey(input.plan, currency, interval)),
-        quantity: 1,
-      },
-      ...(input.extraPeople > 0
-        ? [
-            {
-              price: await this.catalogPriceId(extraPersonLookupKey(currency, interval)),
-              quantity: input.extraPeople,
-            },
-          ]
-        : []),
-      ...(input.aiUseCents
-        ? [
-            {
-              price: await this.catalogPriceId(aiLookupKey(input.aiUseCents, currency, interval)),
-              quantity: 1,
-            },
-          ]
-        : []),
-    ];
+    const lineItems = (await this.selectionItems(input)).map(({ price, quantity }) => ({
+      price,
+      quantity,
+    }));
     const session = urlSchema.parse(
       await this.request("POST", "/v1/checkout/sessions", {
         customer: input.customerId,
@@ -489,6 +497,160 @@ export class StripeBillingProvider implements BillingProvider {
       }),
     );
     return { url: session.url };
+  }
+
+  /** The lines a plan holds, with the catalog price id of each. */
+  private async selectionItems(selection: BillingPlanSelection) {
+    const { currency, interval } = selection;
+    const items: Array<{ kind: ItemKind; price: string; quantity: number }> = [
+      {
+        kind: "plan",
+        price: await this.catalogPriceId(planLookupKey(selection.plan, currency, interval)),
+        quantity: 1,
+      },
+    ];
+    if (selection.extraPeople > 0)
+      items.push({
+        kind: "extra",
+        price: await this.catalogPriceId(extraPersonLookupKey(currency, interval)),
+        quantity: selection.extraPeople,
+      });
+    if (selection.aiUseCents)
+      items.push({
+        kind: "ai",
+        price: await this.catalogPriceId(aiLookupKey(selection.aiUseCents, currency, interval)),
+        quantity: 1,
+      });
+    return items;
+  }
+
+  async changePlan(input: BillingPlanChangeRequest) {
+    const chosen = pickStripeSubscription(await this.listLiveSubscriptions(input.customerId));
+    if (!chosen || !holdsBillingSubscription(chosen.status))
+      throw new Error("No subscription to change");
+    let subscription = chosen.subscription;
+    // A waiting change is replaced, and a subscription under a schedule cannot be edited freely.
+    if (subscription.schedule) await this.releaseSchedule(subscription.schedule);
+    if (input.apply) {
+      subscription = await this.applySelection(subscription, input.apply);
+    }
+    if (input.atRenewal) await this.scheduleSelection(subscription, input.atRenewal);
+  }
+
+  private async releaseSchedule(scheduleId: string) {
+    try {
+      await this.request(
+        "POST",
+        `/v1/subscription_schedules/${encodeURIComponent(scheduleId)}/release`,
+      );
+    } catch (error) {
+      // Already released or completed: nothing is left to hold the subscription.
+      if (!(error instanceof StripeRequestError && error.type === "invalid_request_error"))
+        throw error;
+    }
+  }
+
+  /** Swaps the subscription's lines for the selection's now, charging the difference for the period. */
+  private async applySelection(
+    subscription: StripeSubscription,
+    selection: BillingPlanSelection,
+  ): Promise<StripeSubscription> {
+    const wanted = await this.selectionItems(selection);
+    const base = baseItem(subscription);
+    const taken = new Set<ItemKind>();
+    const items: Array<Record<string, unknown>> = [];
+    for (const item of subscription.items.data) {
+      const kind = itemKind(item, base);
+      const want = kind && !taken.has(kind) ? wanted.find((w) => w.kind === kind) : undefined;
+      if (!want) {
+        items.push({ id: item.id, deleted: true });
+        continue;
+      }
+      taken.add(want.kind);
+      if (item.price.id !== want.price || item.quantity !== want.quantity)
+        items.push({ id: item.id, price: want.price, quantity: want.quantity });
+    }
+    for (const want of wanted)
+      if (!taken.has(want.kind)) items.push({ price: want.price, quantity: want.quantity });
+    // Credits and the own-key plan are marked on the subscription; a plan is neither.
+    const cleared = ["corvo_credit_cents", BYOK_PLAN_METADATA].filter(
+      (key) => subscription.metadata?.[key],
+    );
+    try {
+      return subscriptionSchema.parse(
+        await this.request("POST", `/v1/subscriptions/${encodeURIComponent(subscription.id)}`, {
+          items,
+          ...(cleared.length
+            ? { metadata: Object.fromEntries(cleared.map((key) => [key, ""])) }
+            : {}),
+          proration_behavior: "always_invoice",
+          payment_behavior: "error_if_incomplete",
+        }),
+      );
+    } catch (error) {
+      if (
+        error instanceof StripeRequestError &&
+        (error.type === "card_error" ||
+          error.code === "subscription_payment_intent_requires_action")
+      )
+        throw new BillingPaymentRequiredError();
+      throw error;
+    }
+  }
+
+  /** Holds the subscription as it is until its period ends, then moves it to the selection. */
+  private async scheduleSelection(
+    subscription: StripeSubscription,
+    selection: BillingPlanSelection,
+  ) {
+    const schedule = scheduleSchema.parse(
+      await this.request("POST", "/v1/subscription_schedules", {
+        from_subscription: subscription.id,
+      }),
+    );
+    const current = schedule.phases[0];
+    if (!current?.end_date) throw new Error("Subscription schedule has no current phase");
+    const next = await this.selectionItems(selection);
+    await this.request("POST", `/v1/subscription_schedules/${encodeURIComponent(schedule.id)}`, {
+      end_behavior: "release",
+      proration_behavior: "none",
+      metadata: {
+        [PENDING_PLAN_METADATA]: planLookupKey(
+          selection.plan,
+          selection.currency,
+          selection.interval,
+        ),
+        [PENDING_AI_METADATA]: String(selection.aiUseCents ?? 0),
+      },
+      phases: [
+        {
+          start_date: current.start_date,
+          end_date: current.end_date,
+          items: current.items.map((item) => ({ price: item.price, quantity: item.quantity })),
+        },
+        {
+          items: next.map(({ price, quantity }) => ({ price, quantity })),
+          iterations: 1,
+          billing_cycle_anchor: "phase_start",
+        },
+      ],
+    });
+  }
+
+  /** What a schedule of this adapter's still has waiting; null once its phase has begun. */
+  private pendingFromSchedule(
+    schedule: StripeSchedule,
+  ): BillingSubscriptionSnapshot["pendingChange"] {
+    const key = schedule.metadata?.[PENDING_PLAN_METADATA];
+    const waiting =
+      schedule.phases.length >= 2 &&
+      schedule.current_phase?.start_date === schedule.phases[0]?.start_date;
+    if (!key || !waiting) return undefined;
+    const ai = Number(schedule.metadata?.[PENDING_AI_METADATA]);
+    return {
+      priceLookupKey: key,
+      aiUseCents: AI_USE_CENTS.find((cents) => cents === ai) ?? null,
+    };
   }
 
   /** Re-read settled payments and refund state; webhook payloads never grant money directly. */
@@ -638,19 +800,29 @@ export class StripeBillingProvider implements BillingProvider {
       // the add-on grants none.
       let useCents: number | undefined;
       let periods = subscriptionLines;
+      const infos = await Promise.all(
+        subscriptionLines.map((line) => this.priceInfo(line.pricing?.price_details?.price)),
+      );
       if (!packAmount) {
-        const priced = await Promise.all(
-          subscriptionLines.map(async (line) => ({
-            line,
-            use:
-              (await this.creditUseForPrice(line.pricing?.price_details?.price)) *
-              (line.quantity ?? 1),
-          })),
-        );
-        const withUse = priced.filter((entry) => entry.use > 0);
-        useCents = withUse.reduce((sum, entry) => sum + entry.use, 0);
-        if (!useCents) continue;
-        periods = withUse.map((entry) => entry.line);
+        // Each AI line grants its use in proportion to what the line charged: a whole period
+        // charges the whole price, a change part-way through a period only the share left, and
+        // the unused part of the line it replaces is taken back. Credit never exceeds the money.
+        let granted = 0n;
+        const withUse: typeof subscriptionLines = [];
+        subscriptionLines.forEach((line, index) => {
+          const info = infos[index]!;
+          if (info.use <= 0 || info.unitAmount <= 0) return;
+          granted += floorDiv(BigInt(info.use) * BigInt(line.amount), BigInt(info.unitAmount));
+          withUse.push(line);
+        });
+        if (granted <= 0n) continue;
+        useCents = Number(granted);
+        periods = withUse;
+      } else {
+        // A plan change swaps these lines on a subscription that was a credit pack; the plan's
+        // lines are not the pack's credit.
+        periods = subscriptionLines.filter((_, index) => !infos[index]!.catalog);
+        if (!periods.length) continue;
       }
       if (!periods.length) throw new Error("Monthly credit invoice has no service period");
       const expiresAt = fromSeconds(
@@ -689,18 +861,28 @@ export class StripeBillingProvider implements BillingProvider {
     return purchases;
   }
 
-  /** Dollars of use, in cents, one unit of this price buys; 0 for any other price. */
-  private async creditUseForPrice(priceId: string | undefined): Promise<number> {
-    if (!priceId) return 0;
-    const cached = this.creditUse.get(priceId);
-    if (cached !== undefined) return cached;
+  /** What a price says about credit: the use one unit buys, its unit amount, and whether it is a catalog price. */
+  private async priceInfo(
+    priceId: string | undefined,
+  ): Promise<{ use: number; unitAmount: number; catalog: boolean }> {
+    if (!priceId) return { use: 0, unitAmount: 0, catalog: false };
+    const cached = this.priceInfos.get(priceId);
+    if (cached) return cached;
     const price = z
-      .object({ metadata: z.record(z.string(), z.string()).nullish() })
+      .object({
+        metadata: z.record(z.string(), z.string()).nullish(),
+        unit_amount: z.number().int().nullish(),
+        lookup_key: z.string().nullish(),
+      })
       .parse(await this.request("GET", `/v1/prices/${encodeURIComponent(priceId)}`));
     const parsed = Number(price.metadata?.[CREDIT_USE_METADATA]);
-    const use = Number.isSafeInteger(parsed) && parsed > 0 ? parsed : 0;
-    this.creditUse.set(priceId, use);
-    return use;
+    const info = {
+      use: Number.isSafeInteger(parsed) && parsed > 0 ? parsed : 0,
+      unitAmount: price.unit_amount ?? 0,
+      catalog: /^(plan_|extra_person_|ai_)/.test(price.lookup_key ?? ""),
+    };
+    this.priceInfos.set(priceId, info);
+    return info;
   }
 
   private async listPages<T>(path: string, schema: z.ZodType<T>): Promise<T[]> {
@@ -729,7 +911,17 @@ export class StripeBillingProvider implements BillingProvider {
 
   async getCustomerSubscription(customerId: string): Promise<BillingSubscriptionSnapshot | null> {
     const chosen = pickStripeSubscription(await this.listLiveSubscriptions(customerId));
-    return chosen ? toSnapshot(chosen.subscription, chosen.status) : null;
+    if (!chosen) return null;
+    const snapshot = toSnapshot(chosen.subscription, chosen.status);
+    if (!chosen.subscription.schedule || !holdsBillingSubscription(chosen.status)) return snapshot;
+    const schedule = scheduleSchema.parse(
+      await this.request(
+        "GET",
+        `/v1/subscription_schedules/${encodeURIComponent(chosen.subscription.schedule)}`,
+      ),
+    );
+    const pendingChange = this.pendingFromSchedule(schedule);
+    return pendingChange ? { ...snapshot, pendingChange } : snapshot;
   }
 
   async updateSeats(customerId: string, seats: number) {
@@ -745,6 +937,7 @@ export class StripeBillingProvider implements BillingProvider {
         return;
       const item = baseItem(chosen.subscription);
       if (!item || item.quantity === seats) return;
+      if (chosen.subscription.schedule) await this.releaseSchedule(chosen.subscription.schedule);
       try {
         await this.request("POST", `/v1/subscription_items/${encodeURIComponent(item.id)}`, {
           quantity: seats,
@@ -768,6 +961,8 @@ export class StripeBillingProvider implements BillingProvider {
       )
         return;
       const extra = chosen.subscription.items.data.find((item) => item.price.id === input.priceId);
+      if (chosen.subscription.schedule && (extra?.quantity ?? 0) !== input.quantity)
+        await this.releaseSchedule(chosen.subscription.schedule);
       try {
         if (!extra) {
           if (input.quantity < 1) return;
@@ -964,12 +1159,31 @@ function baseItem(subscription: StripeSubscription) {
   );
 }
 
+type ItemKind = "plan" | "extra" | "ai";
+
+/** Which of a plan's lines an item is; null for one that belongs to no plan. */
+function itemKind(
+  item: StripeSubscription["items"]["data"][number],
+  base: StripeSubscription["items"]["data"][number] | undefined,
+): ItemKind | null {
+  const key = item.price.lookup_key;
+  if (key?.startsWith("plan_") || item === base) return "plan";
+  if (key?.startsWith("extra_person_") || item.metadata?.corvo_extra_seats) return "extra";
+  if (key?.startsWith("ai_")) return "ai";
+  return null;
+}
+
 function toSnapshot(
   subscription: StripeSubscription,
   status: BillingSubscriptionStatus,
 ): BillingSubscriptionSnapshot {
   const item = baseItem(subscription);
   if (!item) throw new Error("Stripe subscription has no items");
+  const aiUseCents = parseAiLookupKey(
+    subscription.items.data.find((line) => line.price.lookup_key?.startsWith("ai_"))?.price
+      .lookup_key,
+  );
+  const aiUse = aiUseCents ? { aiUseCents } : {};
   return {
     creditAmountCents: creditAmount(subscription.metadata?.corvo_credit_cents),
     subscriptionId: subscription.id,
@@ -983,7 +1197,16 @@ function toSnapshot(
     cancelAtPeriodEnd: Boolean(subscription.cancel_at_period_end) || subscription.cancel_at != null,
     endedAt: fromSeconds(subscription.ended_at),
     ...(isByokPlan(subscription) ? { byokPlan: true } : {}),
+    ...aiUse,
   };
+}
+
+/** Integer division that rounds toward negative infinity, so a taken-back share is never rounded away. */
+function floorDiv(numerator: bigint, denominator: bigint): bigint {
+  const quotient = numerator / denominator;
+  return numerator % denominator !== 0n && numerator < 0n !== denominator < 0n
+    ? quotient - 1n
+    : quotient;
 }
 
 function fromSeconds(value: number | null | undefined) {

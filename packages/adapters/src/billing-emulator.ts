@@ -3,20 +3,28 @@ import type {
   BillingCheckoutRequest,
   BillingCreditCheckoutRequest,
   BillingCreditPurchase,
+  BillingPlanChangeRequest,
   BillingPlanCheckoutRequest,
+  BillingPlanSelection,
   BillingPrice,
   BillingProvider,
   BillingSubscriptionSnapshot,
   BillingSubscriptionStatus,
 } from "@corvo/adapter-kit";
-import { BillingCheckoutCompletedError, BillingCustomerNotFoundError } from "@corvo/adapter-kit";
+import {
+  BillingCheckoutCompletedError,
+  BillingCustomerNotFoundError,
+  BillingPaymentRequiredError,
+} from "@corvo/adapter-kit";
 import {
   AI_USE_CENTS,
   aiLookupKey,
+  aiUseGrantCents,
   BILLING_CURRENCIES,
   BILLING_INTERVALS,
   extraPersonLookupKey,
   PLAN_IDS,
+  parsePlanLookupKey,
   planLookupKey,
 } from "@corvo/contracts";
 import {
@@ -53,6 +61,8 @@ export class BillingEmulator implements BillingProvider {
   /** Every extra-person quantity pushed with `setExtraSeats`, newest last. */
   readonly extraSeatWrites: Array<{ customerId: string; priceId: string; quantity: number }> = [];
   readonly subscriptions: EmulatedSubscription[] = [];
+  /** Test switch: the next immediate plan change cannot be charged. */
+  failNextPlanChange = false;
   private readonly now: () => number;
   private sequence = 0;
   private customerSequence = 0;
@@ -136,6 +146,7 @@ export class BillingEmulator implements BillingProvider {
       subscriptionItemId: `si_plan_${n}`,
       priceId: this.catalogPrices.get(key) ?? `price_${key}`,
       priceLookupKey: key,
+      ...(checkout.aiUseCents ? { aiUseCents: checkout.aiUseCents } : {}),
       status: "active",
       seats: 1,
       trialEndsAt: null,
@@ -145,7 +156,111 @@ export class BillingEmulator implements BillingProvider {
       cancelAtPeriodEnd: false,
       endedAt: null,
     });
+    if (checkout.aiUseCents)
+      this.creditPurchases.set(customerId, [
+        ...(this.creditPurchases.get(customerId) ?? []),
+        {
+          id: `plan_${this.namespace}_${n}`,
+          amountCents: aiUseGrantCents(checkout.aiUseCents, checkout.interval),
+          expiresAt: new Date(
+            this.now() + (checkout.interval === "year" ? 365 : 30) * 86400000,
+          ).toISOString(),
+        },
+      ]);
     return `sub_plan_${n}`;
+  }
+
+  async changePlan(input: BillingPlanChangeRequest) {
+    this.requireCustomer(input.customerId);
+    this.renewCredits(input.customerId);
+    const chosen = pickBillingSubscription(this.forCustomer(input.customerId));
+    if (!chosen || !holdsBillingSubscription(chosen.status))
+      throw new Error("No subscription to change");
+    // A waiting change not repeated is dropped.
+    delete chosen.pendingChange;
+    if (input.apply) {
+      if (this.failNextPlanChange) {
+        this.failNextPlanChange = false;
+        throw new BillingPaymentRequiredError();
+      }
+      this.applyPlan(input.customerId, chosen, input.apply);
+    }
+    if (input.atRenewal)
+      chosen.pendingChange = {
+        priceLookupKey: planLookupKey(
+          input.atRenewal.plan,
+          input.atRenewal.currency,
+          input.atRenewal.interval,
+        ),
+        aiUseCents: input.atRenewal.aiUseCents,
+      };
+  }
+
+  /** Mirrors the provider: the AI line charges the share of the period left, and credit follows it. */
+  private applyPlan(customerId: string, sub: EmulatedSubscription, next: BillingPlanSelection) {
+    const previous = parsePlanLookupKey(sub.priceLookupKey);
+    const dayMs = 86400000;
+    const length = (previous?.interval === "year" ? 365 : 30) * dayMs;
+    const end = sub.currentPeriodEndsAt?.getTime() ?? this.now();
+    const left = Math.max(0, Math.min(1, (end - this.now()) / length));
+    const oldUse =
+      previous && sub.aiUseCents ? aiUseGrantCents(sub.aiUseCents, previous.interval) : 0;
+    const newUse = next.aiUseCents ? aiUseGrantCents(next.aiUseCents, next.interval) : 0;
+    const key = planLookupKey(next.plan, next.currency, next.interval);
+    const newPeriod = previous?.interval !== next.interval;
+    const granted = newPeriod
+      ? newUse - Math.floor(oldUse * left)
+      : Math.floor((newUse - oldUse) * left);
+    if (newPeriod)
+      sub.currentPeriodEndsAt = new Date(
+        this.now() + (next.interval === "year" ? 365 : 30) * dayMs,
+      );
+    sub.priceLookupKey = key;
+    sub.priceId = this.catalogPrices.get(key) ?? `price_${key}`;
+    if (next.aiUseCents) sub.aiUseCents = next.aiUseCents;
+    else delete sub.aiUseCents;
+    delete sub.byokPlan;
+    delete sub.creditAmountCents;
+    if (granted > 0)
+      this.creditPurchases.set(customerId, [
+        ...(this.creditPurchases.get(customerId) ?? []),
+        {
+          id: `change_${this.namespace}_${++this.sequence}`,
+          amountCents: granted,
+          expiresAt: sub.currentPeriodEndsAt?.toISOString(),
+        },
+      ]);
+  }
+
+  /** A plan subscription whose period ended moves to its waiting change and grants the new period's AI. */
+  private renewPlans(customerId: string) {
+    for (const sub of this.forCustomer(customerId)) {
+      if (!parsePlanLookupKey(sub.priceLookupKey) || sub.status !== "active") continue;
+      while (sub.currentPeriodEndsAt && sub.currentPeriodEndsAt.getTime() <= this.now()) {
+        const waiting = sub.pendingChange;
+        delete sub.pendingChange;
+        if (waiting) {
+          sub.priceLookupKey = waiting.priceLookupKey;
+          sub.priceId =
+            this.catalogPrices.get(waiting.priceLookupKey) ?? `price_${waiting.priceLookupKey}`;
+          if (waiting.aiUseCents) sub.aiUseCents = waiting.aiUseCents;
+          else delete sub.aiUseCents;
+        }
+        const interval = parsePlanLookupKey(sub.priceLookupKey)!.interval;
+        sub.currentPeriodEndsAt = new Date(
+          sub.currentPeriodEndsAt.getTime() + (interval === "year" ? 365 : 30) * 86400000,
+        );
+        if (sub.aiUseCents)
+          this.creditPurchases.set(customerId, [
+            ...(this.creditPurchases.get(customerId) ?? []),
+            {
+              id: `renewal_${this.namespace}_${++this.sequence}`,
+              amountCents: aiUseGrantCents(sub.aiUseCents, interval),
+              expiresAt: sub.currentPeriodEndsAt.toISOString(),
+            },
+          ]);
+      }
+    }
   }
 
   async setExtraSeats(customerId: string, input: { priceId: string; quantity: number }) {
@@ -346,6 +461,7 @@ export class BillingEmulator implements BillingProvider {
   }
 
   private renewCredits(customerId: string) {
+    this.renewPlans(customerId);
     for (const subscription of this.forCustomer(customerId)) {
       if (!subscription.creditAmountCents || subscription.status !== "active") continue;
       while (

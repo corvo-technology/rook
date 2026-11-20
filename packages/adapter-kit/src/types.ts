@@ -1321,6 +1321,10 @@ export interface BillingSubscriptionSnapshot {
   byokPlan?: boolean;
   /** Lookup key of the plan's price, when it is a catalog price. */
   priceLookupKey?: string;
+  /** The monthly AI amount the subscription includes, from its AI line. */
+  aiUseCents?: AiUseCents;
+  /** A change that takes effect at the next renewal; the plan and limits above stay until then. */
+  pendingChange?: { priceLookupKey: string; aiUseCents: AiUseCents | null };
 }
 
 /** Subscribes to a catalog plan; the prices are found by lookup key in the chosen currency. */
@@ -1335,6 +1339,26 @@ export interface BillingPlanCheckoutRequest {
   aiUseCents: AiUseCents | null;
   successUrl: string;
   cancelUrl: string;
+}
+
+/** One plan as a subscription holds it: the plan line, extra people and the AI line. */
+export interface BillingPlanSelection {
+  plan: PlanId;
+  currency: BillingCurrency;
+  interval: BillingInterval;
+  extraPeople: number;
+  aiUseCents: AiUseCents | null;
+}
+
+/**
+ * Moves the customer's live subscription. `apply` takes effect now, with the difference charged
+ * for the rest of the period; `atRenewal` takes effect when the period ends. A waiting change that
+ * `atRenewal` does not repeat is dropped.
+ */
+export interface BillingPlanChangeRequest {
+  customerId: string;
+  apply: BillingPlanSelection | null;
+  atRenewal: BillingPlanSelection | null;
 }
 
 export interface BillingCheckoutRequest {

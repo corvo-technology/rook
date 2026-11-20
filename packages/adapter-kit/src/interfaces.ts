@@ -15,6 +15,7 @@ import type {
   BillingCheckoutRequest,
   BillingCreditCheckoutRequest,
   BillingCreditPurchase,
+  BillingPlanChangeRequest,
   BillingPlanCheckoutRequest,
   BillingPrice,
   BillingSubscriptionSnapshot,
@@ -466,6 +467,8 @@ export interface BillingProvider {
   ensurePlanPrices?(): Promise<Record<string, string>>;
   priceIdForLookupKey?(key: string): Promise<string | null>;
   createPlanCheckout?(input: BillingPlanCheckoutRequest): Promise<{ url: string }>;
+  /** Throws `BillingPaymentRequiredError` when an immediate change cannot be charged. */
+  changePlan?(input: BillingPlanChangeRequest): Promise<void>;
   /** Flat monthly own-key plan: access without credits. */
   createByokCheckout?(input: BillingByokCheckoutRequest): Promise<{ url: string }>;
   /** Ends every live own-key plan at its period end. */

@@ -15,3 +15,12 @@ export class BillingCheckoutCompletedError extends Error {
     this.name = "BillingCheckoutCompletedError";
   }
 }
+
+/** A plan change that needs the customer's payment could not be charged; nothing was changed. */
+export class BillingPaymentRequiredError extends Error {
+  readonly code = "BILLING_PAYMENT_REQUIRED";
+  constructor() {
+    super("The payment for the plan change did not go through");
+    this.name = "BillingPaymentRequiredError";
+  }
+}

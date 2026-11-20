@@ -75,8 +75,8 @@ msgstr "{0, plural, other {# 件のスキル}}"
 
 #. placeholder {0}: result.tickets
 #: src/pages/ImportFlow.tsx
-msgid "{0, plural, one {# ticket} other {# tickets}}"
-msgstr "{0, plural, other {# 件のチケット}}"
+msgid "{0, plural, one {# task} other {# tasks}}"
+msgstr "{0, plural, other {# 件のタスク}}"
 
 #. placeholder {0}: result.wikiPages
 #: src/pages/ImportFlow.tsx
@@ -952,8 +952,8 @@ msgid "Add a step to “{routine}”?"
 msgstr "「{routine}」にステップを追加しますか？"
 
 #: src/pages/board/BoardLanes.tsx
-msgid "Add a ticket to {lane}"
-msgstr "{lane} にチケットを追加"
+msgid "Add a task to {lane}"
+msgstr "{lane} にタスクを追加"
 
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/use-routine-editor.ts
@@ -6329,8 +6329,8 @@ msgid "New space"
 msgstr "新しいスペース"
 
 #: src/pages/Board.tsx
-msgid "New ticket"
-msgstr "新しいチケット"
+msgid "New task"
+msgstr "新しいタスク"
 
 #: src/pages/MembersSettingsPanel.tsx
 msgid "New workspace"
@@ -6527,6 +6527,7 @@ msgid "No routines scheduled."
 msgstr "予定されているルーティンはありません。"
 
 #: src/pages/Routines.tsx
+#: src/pages/Workflows.tsx
 msgid "No routines yet"
 msgstr "ルーティンはまだありません"
 
@@ -6547,8 +6548,8 @@ msgid "No skills yet"
 msgstr "スキルはまだありません"
 
 #: src/pages/Board.tsx
-msgid "No tickets yet"
-msgstr "チケットはまだありません"
+msgid "No tasks yet"
+msgstr "タスクはまだありません"
 
 #: src/lib/routine-trigger.ts
 msgid "No trigger"
@@ -6565,10 +6566,6 @@ msgstr "今は音声なし"
 #: src/pages/platform/PlatformConnect.tsx
 msgid "No white label partners"
 msgstr "ホワイトラベルのパートナーはいません"
-
-#: src/pages/Workflows.tsx
-msgid "No workflows yet"
-msgstr "まだワークフローがありません"
 
 #: src/lib/ticket-priority.ts
 msgid "Normal"
@@ -7331,8 +7328,8 @@ msgid "Preferences"
 msgstr "環境設定"
 
 #: src/pages/board/BoardLanes.tsx
-msgid "Press space to pick up a ticket, the arrow keys to choose a column, and space again to drop it."
-msgstr "スペースキーでチケットを持ち上げ、矢印キーで列を選び、もう一度スペースキーで置きます。"
+msgid "Press space to pick up a task, the arrow keys to choose a column, and space again to drop it."
+msgstr "スペースキーでタスクをつかみ、矢印キーで列を選び、もう一度スペースキーで置きます。"
 
 #: src/pages/ImportFlow.tsx
 #: src/pages/partner/PartnerBrand.tsx
@@ -8112,6 +8109,13 @@ msgstr "ルーティン"
 #: src/pages/shell/message-view.tsx
 msgid "Routine “{0}”"
 msgstr "ルーティン「{0}」"
+
+#: src/pages/PartnerTemplateEditor.tsx
+#: src/pages/shell/command-palette.tsx
+#: src/pages/shell/sidebar-team.tsx
+#: src/pages/Workflows.tsx
+msgid "Routine flows"
+msgstr "ルーティンのフロー"
 
 #: src/pages/ImportFlow.tsx
 #: src/pages/PartnerTemplateEditor.tsx
@@ -10412,13 +10416,6 @@ msgstr "勝訴"
 #: src/lib/ticket-status.ts
 msgid "Won't do"
 msgstr "対応しない"
-
-#: src/pages/PartnerTemplateEditor.tsx
-#: src/pages/shell/command-palette.tsx
-#: src/pages/shell/sidebar-team.tsx
-#: src/pages/Workflows.tsx
-msgid "Workflows"
-msgstr "ワークフロー"
 
 #: src/pages/shell/message-view.tsx
 msgid "working"

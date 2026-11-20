@@ -54,7 +54,12 @@ test("every place in the sidebar opens in the main pane and leaves the lists in 
   }
 
   const more: Array<{ name: string; url: RegExp; heading: string; shot: string }> = [
-    { name: "Workflows", url: /\/app\/workflows$/, heading: "Workflows", shot: "nav-workflows" },
+    {
+      name: "Routine flows",
+      url: /\/app\/workflows$/,
+      heading: "Routine flows",
+      shot: "nav-workflows",
+    },
     { name: "Usage", url: /\/app\/usage$/, heading: "Usage", shot: "nav-usage" },
     { name: "Artifacts", url: /\/app\/artifacts$/, heading: "Artifacts", shot: "nav-artifacts" },
     { name: "Wiki", url: /\/app\/wiki$/, heading: "Wiki", shot: "nav-wiki" },

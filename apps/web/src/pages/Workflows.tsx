@@ -76,7 +76,7 @@ export function WorkflowsPage() {
     <div className="flex h-full flex-col bg-background text-foreground">
       <header className="flex items-center gap-2 px-6 py-4">
         <h1 className="text-base font-medium">
-          <Trans>Workflows</Trans>
+          <Trans>Routine flows</Trans>
         </h1>
         <Button
           className="ms-auto"
@@ -102,7 +102,7 @@ export function WorkflowsPage() {
           <Spinner />
         ) : workflows.data?.length === 0 ? (
           <p className="m-auto text-sm text-muted-foreground">
-            <Trans>No workflows yet</Trans>
+            <Trans>No routines yet</Trans>
           </p>
         ) : (
           workflows.data?.map((workflow) => (

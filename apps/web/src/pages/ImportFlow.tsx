@@ -277,7 +277,7 @@ function Done({ result, onFinish }: { result: SpaceImportResult; onFinish: () =>
       ? plural(result.wikiPages, { one: "# wiki page", other: "# wiki pages" })
       : null,
     result.channels > 0 ? plural(result.channels, { one: "# channel", other: "# channels" }) : null,
-    result.tickets > 0 ? plural(result.tickets, { one: "# ticket", other: "# tickets" }) : null,
+    result.tickets > 0 ? plural(result.tickets, { one: "# task", other: "# tasks" }) : null,
   ].filter((part) => part !== null);
   return (
     <div className="space-y-4" aria-live="polite">

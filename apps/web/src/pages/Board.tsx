@@ -172,7 +172,7 @@ export function BoardPage() {
           </Button>
         ) : null}
         <Button onClick={() => setSelected({ newIn: "todo" })} disabled={bots.length === 0}>
-          <Trans>New ticket</Trans>
+          <Trans>New task</Trans>
         </Button>
       </header>
       {error ? (
@@ -196,7 +196,7 @@ export function BoardPage() {
         />
         {ticketsQuery.isSuccess && tickets.length === 0 && !error ? (
           <p className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">
-            <Trans>No tickets yet</Trans>
+            <Trans>No tasks yet</Trans>
           </p>
         ) : null}
       </main>
@@ -326,7 +326,7 @@ function TicketPanel({
     <SidePanel
       open
       onClose={onClose}
-      title={ticket?.title ?? t`New ticket`}
+      title={ticket?.title ?? t`New task`}
       closeLabel={t`Close`}
       wide
       data-testid="ticket-panel"

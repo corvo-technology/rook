@@ -92,7 +92,7 @@ async function renderNav(
 it("lists every place once, with the rest behind More", async () => {
   const { labels, more, cleanup } = await renderNav();
   expect(labels()).toEqual(["Home", "Approvals", "Tasks", "Routines", "Activity", "Team", "More"]);
-  expect(await more()).toEqual(["Workflows", "Usage", "Artifacts", "Wiki", "Memory"]);
+  expect(await more()).toEqual(["Routine flows", "Usage", "Artifacts", "Wiki", "Memory"]);
   await cleanup();
 });
 
@@ -204,7 +204,7 @@ it("marks the open page, in the nav or behind More", async () => {
 
 it("keeps account settings out of a partner's frame", async () => {
   const { more, cleanup } = await renderNav({ embedded: true });
-  expect(await more()).toEqual(["Workflows", "Usage", "Artifacts", "Wiki"]);
+  expect(await more()).toEqual(["Routine flows", "Usage", "Artifacts", "Wiki"]);
   await cleanup();
 });
 
@@ -214,7 +214,7 @@ it("leaves out what a partner hides from its customers", async () => {
   });
   const { labels, more, cleanup } = await renderNav();
   expect(labels()).not.toContain("Routines");
-  expect(await more()).toEqual(["Workflows", "Artifacts", "Wiki", "Memory"]);
+  expect(await more()).toEqual(["Routine flows", "Artifacts", "Wiki", "Memory"]);
   await cleanup();
 });
 

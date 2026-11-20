@@ -231,7 +231,7 @@ export function SidebarNavLive({
   ];
   const more: NavTarget[] = [
     ...(visible("workflows")
-      ? [target("workflows", t`Workflows`, "/app/workflows", Workflow)]
+      ? [target("workflows", t`Routine flows`, "/app/workflows", Workflow)]
       : []),
     ...(visible("usage") ? [target("usage", t`Usage`, "/app/usage", Gauge)] : []),
     ...(visible("artifacts")

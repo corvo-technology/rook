@@ -219,10 +219,10 @@ it("creates a ticket without a status picker", async () => {
   api.tickets.create.mockResolvedValue({});
   const page = await renderBoard();
   try {
-    expect(page.container.textContent).toContain("No tickets yet");
+    expect(page.container.textContent).toContain("No tasks yet");
     await act(async () =>
       Array.from(page.container.querySelectorAll("button"))
-        .find((button) => button.textContent === "New ticket")!
+        .find((button) => button.textContent === "New task")!
         .click(),
     );
     expect(

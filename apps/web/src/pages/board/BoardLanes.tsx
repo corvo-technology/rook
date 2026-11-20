@@ -191,7 +191,7 @@ export function BoardLanes({
       accessibility={{
         announcements,
         screenReaderInstructions: {
-          draggable: t`Press space to pick up a ticket, the arrow keys to choose a column, and space again to drop it.`,
+          draggable: t`Press space to pick up a task, the arrow keys to choose a column, and space again to drop it.`,
         },
       }}
       onDragStart={start}
@@ -211,7 +211,7 @@ export function BoardLanes({
               label={lane}
               count={settled[status].length}
               onAdd={onAdd}
-              addLabel={t`Add a ticket to ${lane}`}
+              addLabel={t`Add a task to ${lane}`}
             >
               {rows.flatMap((ticket, index) => {
                 const card = (

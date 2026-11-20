@@ -5,6 +5,7 @@ import type {
   ComputerSize,
   PlanEntitlements,
   PlanId,
+  PlanSelection,
 } from "@corvo/contracts";
 import {
   AI_USE_CENTS,
@@ -13,6 +14,7 @@ import {
   currencyForLocale,
   extraPersonCents,
   planPriceCents,
+  samePlanSelection,
 } from "@corvo/contracts";
 import { BOT_COLOR_LIST, DEFAULT_BOT_AVATAR_COLOR } from "@corvo/core";
 import { useState } from "react";
@@ -45,6 +47,10 @@ export interface PlanCardLabels {
   serverAndAi: (server: string, ai: string) => string;
   yearlyTotal: (total: string, saved: string) => string;
   subscribe: (plan: PlanId) => string;
+  /** The button of a plan that is not the current one, when changing plan. */
+  change: (plan: PlanId) => string;
+  /** The disabled button of the plan the subscription is already on. */
+  current: string;
   computer: (size: ComputerSize) => string;
   computerSpec: (size: ComputerSize) => string;
   people: (count: number) => string;
@@ -78,6 +84,13 @@ export interface PlanCardsProps {
   busy?: PlanId | null;
   labels: PlanCardLabels;
   onSubscribe: (choice: PlanChoice) => void;
+  /**
+   * Set when the organization already subscribes: `null` for a price outside the catalog. The
+   * cards start from what it holds, its currency stays fixed, and the matching card says so.
+   */
+  current?: PlanSelection | null;
+  /** The currency the first payment fixed; only with `current`. */
+  currency?: BillingCurrency;
 }
 
 const RECOMMENDED: PlanId = "team";
@@ -161,15 +174,16 @@ function PlanCard({
   busy,
   labels,
   onSubscribe,
-}: Omit<PlanCardsProps, "plans"> & {
+  current,
+}: Omit<PlanCardsProps, "plans" | "currency"> & {
   entitlements: Omit<PlanEntitlements, "extraSeatPriceId">;
   interval: BillingInterval;
   currency: BillingCurrency;
 }) {
   const { plan } = entitlements;
   const dark = plan === RECOMMENDED;
-  const [aiOn, setAiOn] = useState(true);
-  const [aiUse, setAiUse] = useState<AiUseCents>(DEFAULT_AI_USE);
+  const [aiOn, setAiOn] = useState(current === undefined || Boolean(current?.aiUseCents));
+  const [aiUse, setAiUse] = useState<AiUseCents>(current?.aiUseCents ?? DEFAULT_AI_USE);
   const divisor = interval === "year" ? MONTHS : 1;
   const serverCents = planPriceCents(plan, currency, interval);
   const aiCents = aiOn ? aiAddOnPriceCents(currency, aiUse, interval) : 0;
@@ -179,6 +193,8 @@ function PlanCard({
   const mascots = Math.min(entitlements.seatsIncluded, MAX_MASCOTS);
   const offset = PLAN_ORDER.indexOf(plan) * 2;
   // Only the server has free months yearly; AI costs the same per month either way.
+  const choice: PlanChoice = { plan, interval, currency, aiUseCents: aiOn ? aiUse : null };
+  const isCurrent = Boolean(current && samePlanSelection(current, choice));
   const savedCents = planPriceCents(plan, currency, "month") * MONTHS - serverCents;
 
   return (
@@ -225,16 +241,20 @@ function PlanCard({
       <Button
         data-subscribe
         size="lg"
-        disabled={!canManage || pending}
+        disabled={!canManage || pending || isCurrent}
         aria-busy={busy === plan || undefined}
         className={cn(
           "mt-5 w-full",
           dark && "bg-background text-foreground hover:bg-background/90",
         )}
-        onClick={() => onSubscribe({ plan, interval, currency, aiUseCents: aiOn ? aiUse : null })}
+        onClick={() => onSubscribe(choice)}
       >
         {busy === plan ? <Spinner aria-hidden role="presentation" /> : null}
-        {labels.subscribe(plan)}
+        {isCurrent
+          ? labels.current
+          : current === undefined
+            ? labels.subscribe(plan)
+            : labels.change(plan)}
       </Button>
       <ul className="mt-6 flex list-none flex-col p-0">
         <Row
@@ -326,9 +346,12 @@ export function PlanCards({
   busy,
   labels,
   onSubscribe,
+  current,
+  currency: lockedCurrency,
 }: PlanCardsProps) {
-  const [interval, setInterval] = useState<BillingInterval>("month");
-  const [currency, setCurrency] = useState<BillingCurrency>(currencyForLocale(locale));
+  const [interval, setInterval] = useState<BillingInterval>(current?.interval ?? "month");
+  const [picked, setCurrency] = useState<BillingCurrency>(currencyForLocale(locale));
+  const currency = lockedCurrency ?? picked;
   return (
     <div data-testid="plan-cards" className="flex w-full flex-col items-center gap-8">
       <div className="flex flex-wrap items-center justify-center gap-3">
@@ -341,12 +364,14 @@ export function PlanCards({
             { value: "year", label: labels.yearly, extra: labels.twoMonthsFree },
           ]}
         />
-        <Pills
-          label={labels.currency}
-          value={currency}
-          onChange={setCurrency}
-          items={BILLING_CURRENCIES.map((value) => ({ value, label: value.toUpperCase() }))}
-        />
+        {lockedCurrency ? null : (
+          <Pills
+            label={labels.currency}
+            value={currency}
+            onChange={setCurrency}
+            items={BILLING_CURRENCIES.map((value) => ({ value, label: value.toUpperCase() }))}
+          />
+        )}
       </div>
       <div className="w-full rounded-[2rem] bg-linear-to-r from-band-mint via-band-lavender to-band-peach p-3 sm:p-6">
         <div className="grid gap-4 lg:grid-cols-3">
@@ -362,12 +387,15 @@ export function PlanCards({
               busy={busy}
               labels={labels}
               onSubscribe={onSubscribe}
+              current={current}
             />
           ))}
         </div>
       </div>
       {canManage ? null : <p className="text-sm text-muted-foreground">{labels.ownerOnly}</p>}
-      <p className="text-sm text-muted-foreground">{labels.reassurance}</p>
+      {current === undefined ? (
+        <p className="text-sm text-muted-foreground">{labels.reassurance}</p>
+      ) : null}
     </div>
   );
 }

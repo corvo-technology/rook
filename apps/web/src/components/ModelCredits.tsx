@@ -25,6 +25,7 @@ import { useEffect, useRef, useState } from "react";
 import { formatBillingDate } from "../lib/billing";
 import { rpc } from "../lib/rpc";
 import { useSignOut } from "../lib/sign-out";
+import { SettingsGroup, SettingsRow } from "./SettingsRows";
 
 type CreditAmount = (typeof MODEL_CREDIT_AMOUNTS)[number];
 
@@ -209,14 +210,18 @@ export function CreditChoice({
   );
 }
 
+/** The balance, what tops it up, and how the models are paid for. */
 export function ModelCreditsSettings({
   status,
   refresh,
+  plansOn = false,
 }: {
   status: BillingStatus;
   refresh: () => Promise<void>;
+  /** The deployment sells plans: their AI add-on replaces the separate monthly credits. */
+  plansOn?: boolean;
 }) {
-  const { t, i18n } = useLingui();
+  const { i18n } = useLingui();
   const [amount, setAmount] = useState<CreditAmount>(
     ModelCreditAmountSchema.catch(DEFAULT_MONTHLY_CREDIT_AMOUNT).parse(status.monthlyAmountCents),
   );
@@ -250,65 +255,92 @@ export function ModelCreditsSettings({
   // Switching back to your own key waits for monthly credits to end; switching to credits needs a balance.
   const canUseCredits = status.funding === "byok" && (status.balanceUsd ?? 0) > 0;
   const canUseOwnKey = status.funding !== "byok" && (!recurring || status.cancelAtPeriodEnd);
+  const planAi = plansOn && status.aiUseCents ? status.aiUseCents : null;
+  const planAiAmount = planAi
+    ? new Intl.NumberFormat(i18n.locale, {
+        style: "currency",
+        currency: (status.currency ?? "usd").toUpperCase(),
+        minimumFractionDigits: planAi % 100 === 0 ? 0 : 2,
+      }).format(planAi / 100)
+    : null;
+  const note =
+    status.funding === "byok" && freeUntil ? (
+      <Trans>Using your API key. Free plan ends {freeUntil}.</Trans>
+    ) : status.funding === "byok" ? (
+      <Trans>Using your API key</Trans>
+    ) : recurring || planAi ? (
+      <Trans>Monthly credits expire at renewal. Top-ups do not expire.</Trans>
+    ) : null;
   return (
-    <div data-testid="model-credits" className="space-y-5">
-      <div className="rounded-xl border border-border p-5">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm text-muted-foreground">
-            <Trans>Available credits</Trans>
-          </h3>
-          <Button
-            size="sm"
-            variant="ghost"
-            aria-label={t`Refresh credits`}
-            disabled={pending}
-            onClick={() => void action(refresh)}
-          >
-            <Trans>Refresh</Trans>
-          </Button>
+    <div data-testid="model-credits" className="flex max-w-2xl flex-col gap-8">
+      <SettingsGroup title={<Trans>Credits</Trans>}>
+        <div className="px-4 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+            <p className="text-3xl font-medium tabular-nums">{balance}</p>
+            {status.canManage ? (
+              <div className="flex flex-wrap gap-2">
+                {freeUntil && status.byokPriceCents ? (
+                  <Button
+                    disabled={pending}
+                    onClick={() =>
+                      void action(async () => {
+                        const { url } = await rpc.billing.checkout();
+                        window.location.assign(url);
+                      })
+                    }
+                  >
+                    <Trans>Subscribe for ${status.byokPriceCents / 100} / month</Trans>
+                  </Button>
+                ) : null}
+                <Button
+                  variant={freeUntil ? "secondary" : "default"}
+                  disabled={!status.creditPurchasesEnabled}
+                  onClick={() => setPurchaseOpen(true)}
+                >
+                  <Trans>Add credits</Trans>
+                </Button>
+              </div>
+            ) : null}
+          </div>
+          {note ? <p className="mt-2 text-sm text-muted-foreground">{note}</p> : null}
         </div>
-        <p className="mt-2 text-3xl font-medium tabular-nums">{balance}</p>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {status.funding === "byok" && freeUntil ? (
-            <Trans>Using your API key. Free plan ends {freeUntil}.</Trans>
-          ) : status.funding === "byok" ? (
-            <Trans>Using your API key</Trans>
-          ) : (
-            <Trans>Monthly credits expire at renewal. Top-ups do not expire.</Trans>
-          )}
-        </p>
-        {status.canManage ? (
-          <div className="mt-5 flex flex-wrap gap-3">
-            {freeUntil && status.byokPriceCents ? (
-              <Button
-                disabled={pending}
-                onClick={() =>
+        {planAiAmount ? (
+          <SettingsRow label={<Trans>AI per month</Trans>} control={<span>{planAiAmount}</span>} />
+        ) : null}
+        {status.canManage && (canUseCredits || canUseOwnKey) ? (
+          <SettingsRow
+            label={
+              <Label htmlFor="use-corvo-credits-setting">
+                <Trans>Use Rook credits</Trans>
+              </Label>
+            }
+            control={
+              <Switch
+                id="use-corvo-credits-setting"
+                checked={status.funding !== "byok"}
+                disabled={pending || (canUseCredits && !status.creditPurchasesEnabled)}
+                onCheckedChange={(next) =>
                   void action(async () => {
-                    const { url } = await rpc.billing.checkout();
-                    window.location.assign(url);
+                    if (next) {
+                      await rpc.billing.selectFunding({ funding: "credits" });
+                      window.location.reload();
+                    } else {
+                      const { url } = await rpc.billing.selectFunding({ funding: "byok" });
+                      window.location.assign(url ?? "/onboarding");
+                    }
                   })
                 }
-              >
-                <Trans>Subscribe for ${status.byokPriceCents / 100} / month</Trans>
-              </Button>
-            ) : null}
-            <Button
-              variant={freeUntil ? "secondary" : "default"}
-              disabled={!status.creditPurchasesEnabled}
-              onClick={() => setPurchaseOpen(true)}
-            >
-              <Trans>Add credits</Trans>
-            </Button>
-          </div>
+              />
+            }
+          />
         ) : null}
-      </div>
-      {status.canManage ? (
-        <div className="rounded-xl border border-border p-5">
-          <h3 className="font-medium">
-            <Trans>Monthly credits</Trans>
-          </h3>
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            <CreditAmountSelect monthly value={amount} onChange={setAmount} />
+      </SettingsGroup>
+      {status.canManage && !plansOn ? (
+        <SettingsGroup title={<Trans>Monthly credits</Trans>}>
+          <div className="flex flex-wrap items-center gap-3 px-4 py-3">
+            <div className="min-w-40 flex-1">
+              <CreditAmountSelect monthly value={amount} onChange={setAmount} />
+            </div>
             <Button
               variant="secondary"
               disabled={
@@ -343,46 +375,22 @@ export function ModelCreditsSettings({
                 <Trans>Subscribe</Trans>
               )}
             </Button>
-          </div>
-          {status.hasCustomer ? (
-            <Button
-              className="mt-4"
-              variant="ghost"
-              disabled={pending}
-              onClick={() =>
-                void action(async () => {
-                  const { url } = await rpc.billing.portal();
-                  window.location.assign(url);
-                })
-              }
-            >
-              <Trans>Manage billing</Trans>
-            </Button>
-          ) : null}
-        </div>
-      ) : null}
-      {status.canManage && (canUseCredits || canUseOwnKey) ? (
-        <div className="flex items-center justify-between gap-4 rounded-xl border border-border p-5">
-          <Label htmlFor="use-corvo-credits-setting" className="font-medium">
-            <Trans>Use Rook credits</Trans>
-          </Label>
-          <Switch
-            id="use-corvo-credits-setting"
-            checked={status.funding !== "byok"}
-            disabled={pending || (canUseCredits && !status.creditPurchasesEnabled)}
-            onCheckedChange={(next) =>
-              void action(async () => {
-                if (next) {
-                  await rpc.billing.selectFunding({ funding: "credits" });
-                  window.location.reload();
-                } else {
-                  const { url } = await rpc.billing.selectFunding({ funding: "byok" });
-                  window.location.assign(url ?? "/onboarding");
+            {status.hasCustomer ? (
+              <Button
+                variant="secondary"
+                disabled={pending}
+                onClick={() =>
+                  void action(async () => {
+                    const { url } = await rpc.billing.portal();
+                    window.location.assign(url);
+                  })
                 }
-              })
-            }
-          />
-        </div>
+              >
+                <Trans>Manage billing</Trans>
+              </Button>
+            ) : null}
+          </div>
+        </SettingsGroup>
       ) : null}
       {error ? (
         <p role="alert" className="text-sm text-destructive">

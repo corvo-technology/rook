@@ -1221,6 +1221,7 @@ msgstr "エージェントは一時停止中です"
 msgid "Agents that can use it"
 msgstr "使用できるエージェント"
 
+#: src/components/ModelCredits.tsx
 #: src/components/PlanChoice.tsx
 msgid "AI per month"
 msgstr "月額のAI"
@@ -1721,10 +1722,6 @@ msgstr "自動化"
 msgid "Available after the routine is saved"
 msgstr "ルーティンの保存後に利用可能"
 
-#: src/components/ModelCredits.tsx
-msgid "Available credits"
-msgstr "利用可能なクレジット"
-
 #: src/pages/shell/bot-credentials.tsx
 msgid "Available to this bot's shell commands as {commandVariable}"
 msgstr "このボットのシェルコマンドで{commandVariable}として利用可能"
@@ -2056,6 +2053,10 @@ msgstr "モデルを変更"
 msgid "Change password"
 msgstr "パスワードを変更"
 
+#: src/pages/BillingSettingsPanel.tsx
+msgid "Change plan"
+msgstr "プランを変更"
+
 #: src/lib/server-copy.ts
 msgid "Change the model of {bot}?"
 msgstr "{bot} のモデルを変更しますか？"
@@ -2063,6 +2064,10 @@ msgstr "{bot} のモデルを変更しますか？"
 #: src/components/ChangeWhenToAsk.tsx
 msgid "Change when to ask"
 msgstr "確認のタイミングを変更"
+
+#: src/pages/BillingSettingsPanel.tsx
+msgid "Changes to {waitingName} on {waitingDay}"
+msgstr "{waitingDay}に{waitingName}に変更"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Changing…"
@@ -3376,6 +3381,7 @@ msgid "Could not update agent access"
 msgstr "エージェントのアクセス権を更新できませんでした"
 
 #: src/components/ModelCredits.tsx
+#: src/components/PlanChoice.tsx
 msgid "Could not update billing"
 msgstr "請求情報を更新できませんでした"
 
@@ -3577,6 +3583,7 @@ msgstr "使用済みクレジット"
 msgid "Credit used up"
 msgstr "クレジットを使い切りました"
 
+#: src/components/ModelCredits.tsx
 #: src/pages/partner/PartnerConsolePage.tsx
 #: src/pages/platform/SimulatorSection.tsx
 msgid "Credits"
@@ -3612,6 +3619,7 @@ msgstr "通貨"
 msgid "Current password"
 msgstr "現在のパスワード"
 
+#: src/components/PlanChoice.tsx
 #: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Current plan"
 msgstr "現在のプラン"
@@ -5602,6 +5610,7 @@ msgid "Manage agents"
 msgstr "エージェントを管理"
 
 #: src/components/ModelCredits.tsx
+#: src/pages/BillingSettingsPanel.tsx
 #: src/pages/Paywall.tsx
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Manage billing"
@@ -7217,6 +7226,7 @@ msgstr "ピン留め済み"
 msgid "Pinned messages"
 msgstr "ピン留めしたメッセージ"
 
+#: src/pages/BillingSettingsPanel.tsx
 #: src/pages/partner/PartnerCredits.tsx
 #: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/platform/NewPartnerDialog.tsx
@@ -7615,13 +7625,8 @@ msgstr "紹介"
 
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
-#: src/components/ModelCredits.tsx
 msgid "Refresh"
 msgstr "更新"
-
-#: src/components/ModelCredits.tsx
-msgid "Refresh credits"
-msgstr "クレジットを更新"
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Refresh view"
@@ -9058,6 +9063,10 @@ msgstr "思考に対応"
 #: src/pages/shell/space-switcher.tsx
 msgid "Switch space"
 msgstr "スペースを切り替え"
+
+#: src/components/PlanChoice.tsx
+msgid "Switch to {name}"
+msgstr "{name}に変更"
 
 #: src/lib/server-copy.ts
 msgid "Switched to a stronger model"

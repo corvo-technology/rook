@@ -1,12 +1,19 @@
-import type { BillingStatus } from "@corvo/contracts";
+import type { BillingStatus, PlanUsage } from "@corvo/contracts";
+import { aiAddOnPriceCents, planPriceCents } from "@corvo/contracts";
 import { Button, Skeleton } from "@corvo/ui-web";
+import { t as translate } from "@lingui/core/macro";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
-import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { ModelCreditsSettings } from "../components/ModelCredits";
+import { PlanPicker } from "../components/PlanChoice";
 import { PlanList } from "../components/PlanList";
+import { SettingsGroup } from "../components/SettingsRows";
 import { formatBillingDate, formatBillingPrice } from "../lib/billing";
+import { planName } from "../lib/plan-view";
 import { rpc } from "../lib/rpc";
+
+const STATUS_KEY = ["billing", "status"];
 
 export function BillingSettingsPanel() {
   const { t } = useLingui();
@@ -29,35 +36,191 @@ export function BillingSettingsPanel() {
       </div>
     );
   }
+  return <BillingBody />;
+}
+
+/** Plans exist where the deployment has prices for them; the server answers null elsewhere. */
+function BillingBody() {
+  const { t } = useLingui();
+  const client = useQueryClient();
+  // Refetched when the window regains focus, which is how a checkout in another tab shows up.
+  const statusQuery = useQuery({
+    queryKey: STATUS_KEY,
+    queryFn: () => rpc.billing.status(),
+    refetchOnWindowFocus: true,
+  });
+  const plansQuery = useQuery({
+    queryKey: ["usage", "plan"],
+    queryFn: () => rpc.usage.plan(),
+    retry: false,
+    staleTime: 60_000,
+  });
+  const status = statusQuery.data;
+  const usage = plansQuery.data ?? null;
+  const refresh = async () => {
+    await client.invalidateQueries({ queryKey: STATUS_KEY });
+  };
+
+  if (statusQuery.isError && !status) {
+    return (
+      <p role="alert" className="text-sm text-destructive">
+        {t`Could not load billing`}
+      </p>
+    );
+  }
+  if (!status || plansQuery.isPending) return <Skeleton className="h-24 w-full max-w-2xl" />;
+  if (status.funding === undefined) {
+    return (
+      <div className="flex max-w-2xl flex-col gap-6">
+        <LegacyBillingPanel status={status} />
+        {usage ? <PlanList usage={usage} /> : null}
+      </div>
+    );
+  }
   return (
-    <div className="flex flex-col gap-6">
-      <BillingStatusPanel />
-      <PlanList />
+    <div className="flex flex-col gap-8">
+      {usage ? <PlanSection status={status} usage={usage} onChanged={refresh} /> : null}
+      <ModelCreditsSettings status={status} refresh={refresh} plansOn={usage !== null} />
     </div>
   );
 }
 
-function BillingStatusPanel() {
+const CHANGEABLE: BillingStatus["state"][] = ["active", "trialing"];
+const SUBSCRIBED: BillingStatus["state"][] = [...CHANGEABLE, "past_due", "unpaid", "paused"];
+
+/** The plan first: what it is and how to change it, or the plans to pick one. */
+function PlanSection({
+  status,
+  usage,
+  onChanged,
+}: {
+  status: BillingStatus;
+  usage: PlanUsage;
+  onChanged: () => Promise<void>;
+}) {
   const { t, i18n } = useLingui();
   const locale = i18n.locale || "en";
-  const [status, setStatus] = useState<BillingStatus | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const [error, setError] = useState(false);
   const [pending, setPending] = useState(false);
 
-  useEffect(() => {
-    let active = true;
-    rpc.billing
-      .status()
-      .then((next) => {
-        if (active) setStatus(next);
-      })
-      .catch(() => {
-        if (active) setError(t`Could not load billing`);
-      });
-    return () => {
-      active = false;
-    };
-  }, [t]);
+  if (!SUBSCRIBED.includes(status.state)) {
+    return (
+      <section data-testid="plan-section" className="flex flex-col gap-3">
+        <h3 className="px-1 text-[14px] font-medium text-foreground">{t`Plan`}</h3>
+        <PlanPicker status={status} usage={usage} />
+      </section>
+    );
+  }
+
+  async function openPortal() {
+    if (pending) return;
+    setPending(true);
+    setError(false);
+    try {
+      const { url } = await rpc.billing.portal();
+      window.location.assign(url);
+    } catch {
+      setError(true);
+    } finally {
+      // Desktop opens the URL in the system browser and this page stays, so re-enable.
+      setPending(false);
+    }
+  }
+
+  const { plan, currency, interval } = status;
+  // The catalog price the subscription adds up to; a price set up by hand shows the provider's.
+  const price =
+    plan && currency && interval
+      ? formatBillingPrice(
+          {
+            amount:
+              planPriceCents(plan, currency, interval) +
+              (status.aiUseCents ? aiAddOnPriceCents(currency, status.aiUseCents, interval) : 0),
+            currency,
+            interval,
+            intervalCount: 1,
+          },
+          locale,
+        )
+      : status.price
+        ? formatBillingPrice(status.price, locale)
+        : null;
+  const dateLabel = renewalLabel(status, locale);
+  const waiting = status.pendingChange;
+  const waitingName = waiting ? planName(waiting.plan) : "";
+  const waitingDay = waiting ? formatBillingDate(waiting.effectiveAt, locale) : "";
+  const current =
+    plan && interval ? { plan, interval, aiUseCents: status.aiUseCents ?? null } : null;
+  const canChange = status.canManage && CHANGEABLE.includes(status.state);
+
+  return (
+    <section data-testid="plan-section" className="flex flex-col gap-3">
+      <div className="max-w-2xl">
+        <SettingsGroup title={t`Plan`}>
+          <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3 px-4 py-4">
+            <div className="min-w-0">
+              <p className="text-heading3 font-medium text-foreground">
+                {plan ? planName(plan) : (price ?? t`Plan`)}
+              </p>
+              {plan && price ? (
+                <p className="mt-1 text-[14px] text-foreground/75">{price}</p>
+              ) : null}
+              {dateLabel ? <p className="mt-1 text-sm text-muted-foreground">{dateLabel}</p> : null}
+              {waiting ? (
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {t`Changes to ${waitingName} on ${waitingDay}`}
+                </p>
+              ) : null}
+            </div>
+            {status.canManage ? (
+              <div className="flex flex-wrap gap-2">
+                {canChange ? (
+                  <Button
+                    variant="secondary"
+                    aria-expanded={open}
+                    onClick={() => setOpen((value) => !value)}
+                  >
+                    <Trans>Change plan</Trans>
+                  </Button>
+                ) : null}
+                {status.hasCustomer ? (
+                  <Button variant="secondary" disabled={pending} onClick={() => void openPortal()}>
+                    <Trans>Manage billing</Trans>
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        </SettingsGroup>
+      </div>
+      {error ? (
+        <p role="alert" className="text-sm text-destructive">
+          <Trans>Could not open billing</Trans>
+        </p>
+      ) : null}
+      {open && canChange ? (
+        <PlanPicker
+          status={status}
+          usage={usage}
+          current={current}
+          currency={currency}
+          onChanged={() => {
+            setOpen(false);
+            void onChanged();
+          }}
+        />
+      ) : null}
+    </section>
+  );
+}
+
+/** A deployment on the old single subscription: its state and the way to manage it. */
+function LegacyBillingPanel({ status }: { status: BillingStatus }) {
+  const { t, i18n } = useLingui();
+  const locale = i18n.locale || "en";
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
 
   async function openPortal() {
     if (pending) return;
@@ -74,8 +237,8 @@ function BillingStatusPanel() {
     }
   }
 
-  const stateLabel = status
-    ? status.state === "trialing"
+  const stateLabel =
+    status.state === "trialing"
       ? t`Trial`
       : status.state === "active"
         ? t`Active`
@@ -83,39 +246,16 @@ function BillingStatusPanel() {
           ? t`Past due`
           : status.state === "canceled"
             ? t`Canceled`
-            : t`Inactive`
-    : null;
-
-  const date = status ? billingDate(status) : null;
-  const day = date ? formatBillingDate(date.at, locale) : "";
-  const dateLabel = date
-    ? date.kind === "trial"
-      ? t`Trial ends ${day}`
-      : date.kind === "ends"
-        ? t`Ends ${day}`
-        : t`Renews ${day}`
-    : null;
-
-  const price = status?.price ? formatBillingPrice(status.price, locale) : null;
-  const seats = status?.seats ?? 0;
-
-  if (status?.funding !== undefined)
-    return (
-      <ModelCreditsSettings
-        status={status}
-        refresh={async () => setStatus(await rpc.billing.status())}
-      />
-    );
+            : t`Inactive`;
+  const dateLabel = renewalLabel(status, locale);
+  const price = status.price ? formatBillingPrice(status.price, locale) : null;
+  const seats = status.seats;
 
   return (
     <div data-testid="billing-settings" className="rounded-xl border border-border px-4 py-4">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          {status ? (
-            <h3 className="text-heading3 font-medium text-foreground">{stateLabel}</h3>
-          ) : error ? null : (
-            <Skeleton className="h-5 w-24" />
-          )}
+          <h3 className="text-heading3 font-medium text-foreground">{stateLabel}</h3>
           {price ? (
             <p className="mt-3 flex flex-wrap gap-x-2 text-[14px] text-foreground/75">
               <span>{price}</span>
@@ -130,7 +270,7 @@ function BillingStatusPanel() {
             <p className="mt-2 text-[12.5px] text-muted-foreground/80">{dateLabel}</p>
           ) : null}
         </div>
-        {status?.canManage && status.hasCustomer ? (
+        {status.canManage && status.hasCustomer ? (
           <Button
             variant="secondary"
             size="sm"
@@ -148,6 +288,17 @@ function BillingStatusPanel() {
       ) : null}
     </div>
   );
+}
+
+function renewalLabel(status: BillingStatus, locale: string): string | null {
+  const date = billingDate(status);
+  if (!date) return null;
+  const day = formatBillingDate(date.at, locale);
+  return date.kind === "trial"
+    ? translate`Trial ends ${day}`
+    : date.kind === "ends"
+      ? translate`Ends ${day}`
+      : translate`Renews ${day}`;
 }
 
 function billingDate(

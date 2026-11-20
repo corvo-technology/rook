@@ -4,6 +4,7 @@ import { useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft } from "lucide-react";
 import { Link, Navigate, useParams } from "react-router-dom";
+import { PageHeader } from "../components/PageHeader";
 import { PageLoading } from "../components/PageLoading";
 import { desktopBridge } from "../lib/desktop";
 import { rpc } from "../lib/rpc";
@@ -25,16 +26,20 @@ export function NavLinkPage() {
   if (!link) return <Navigate to="/app" replace />;
   return (
     <div className="flex h-full min-w-0 flex-col overflow-hidden bg-background text-foreground">
-      <header className="flex items-center gap-3 border-b px-4 py-3">
-        <Link
-          to="/app"
-          className={buttonVariants({ variant: "ghost", size: "icon" })}
-          aria-label={t`Back`}
-        >
-          <ChevronLeft />
-        </Link>
-        <h1 className="flex-1 font-medium">{link.label}</h1>
-      </header>
+      <PageHeader
+        width="full"
+        leading={
+          <Link
+            to="/app"
+            className={buttonVariants({ variant: "ghost", size: "icon" })}
+            aria-label={t`Back`}
+          >
+            <ChevronLeft />
+          </Link>
+        }
+      >
+        {link.label}
+      </PageHeader>
       <iframe
         key={link.id}
         title={link.label}

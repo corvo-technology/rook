@@ -13,6 +13,7 @@ import { useLingui } from "@lingui/react/macro";
 import { useQueries } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { PageTitle } from "../../components/PageHeader";
 import type { SimulatorForm } from "../../lib/platform-simulator";
 import { simulationRequests, useDebounced } from "../../lib/platform-simulator";
 import { useSpaceQueries } from "../../lib/query";
@@ -90,7 +91,7 @@ export function SimulatorSection({
   return (
     <div className="flex flex-col gap-6" data-testid="platform-simulator">
       <header className="flex items-center gap-3">
-        <h1 className="text-2xl font-light tracking-tight">{t`Simulator`}</h1>
+        <PageTitle>{t`Simulator`}</PageTitle>
         {draft ? (
           <span className="rounded-full border border-border px-2.5 py-0.5 text-xs text-muted-foreground">
             {t`Draft`}

@@ -3,6 +3,7 @@ import { Button, Spinner } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { PageHeader } from "../components/PageHeader";
 import { useSpaceQueries } from "../lib/query";
 import { rpc } from "../lib/rpc";
 import { usePendingApprovals } from "../lib/use-pending-approvals";
@@ -48,9 +49,9 @@ export function ApprovalsPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto bg-background text-foreground">
-      <h1 className="mx-auto w-full max-w-3xl px-6 pt-6 pb-4 text-xl font-light tracking-tight">
+      <PageHeader>
         <Trans>Approvals</Trans>
-      </h1>
+      </PageHeader>
       <div className="mx-auto w-full max-w-3xl px-6 pb-8">
         {approvals.isPending ? (
           <div className="flex justify-center py-10">

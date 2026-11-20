@@ -37,6 +37,7 @@ import { BookOpen, Bot, ChevronLeft, LayoutGrid, Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { IntegrationSetup } from "../components/integrations/IntegrationSetup";
+import { PageHeader } from "../components/PageHeader";
 import { providerLabel } from "../lib/messaging";
 import { optionalCatalogFeedProbe } from "../lib/optional-catalog-feed";
 import { useSpaceQueries } from "../lib/query";
@@ -777,17 +778,15 @@ export function StorePage() {
         />
       </nav>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <div className="px-8 pt-7">
-          <h1 className="text-title">
-            {section === "apps" ? (
-              <Trans>Apps</Trans>
-            ) : section === "agents" ? (
-              <Trans>Agents</Trans>
-            ) : (
-              <Trans>Skills</Trans>
-            )}
-          </h1>
-        </div>
+        <PageHeader width="full">
+          {section === "apps" ? (
+            <Trans>Apps</Trans>
+          ) : section === "agents" ? (
+            <Trans>Agents</Trans>
+          ) : (
+            <Trans>Skills</Trans>
+          )}
+        </PageHeader>
 
         {section !== "apps" || (!detailItem && !chatDetail) ? (
           <div className="px-8 pt-4">

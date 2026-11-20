@@ -11,6 +11,7 @@ import {
 import { useLingui } from "@lingui/react/macro";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { PageTitle } from "../../components/PageHeader";
 import { useSpaceQueries } from "../../lib/query";
 import { errorText } from "../../lib/user-error";
 import { currentPeriod } from "./fields";
@@ -55,7 +56,7 @@ export function InvoicesSection() {
   return (
     <div className="flex flex-col gap-6" data-testid="platform-invoices">
       <header className="flex flex-wrap items-end justify-between gap-3">
-        <h1 className="text-2xl font-light tracking-tight">{t`Invoices`}</h1>
+        <PageTitle>{t`Invoices`}</PageTitle>
         <div className="flex items-center gap-2">
           <Input
             type="month"

@@ -4,6 +4,7 @@ import { Button, Input, NativeSelect, NativeSelectOption } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { PageTitle } from "../../components/PageHeader";
 import { useSpaceQueries } from "../../lib/query";
 import { errorText } from "../../lib/user-error";
 import { NumberInput } from "./fields";
@@ -74,7 +75,7 @@ export function LimitsSection() {
 
   return (
     <div className="flex max-w-xl flex-col gap-6" data-testid="platform-limits">
-      <h1 className="text-2xl font-light tracking-tight">{t`Limits by organization`}</h1>
+      <PageTitle>{t`Limits by organization`}</PageTitle>
       <form
         className="flex gap-2"
         onSubmit={(event) => {

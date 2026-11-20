@@ -268,3 +268,82 @@ test("choose your own key or monthly credits, then add a one-time top-up", async
   ).toBeChecked();
   expect(purchase).toEqual({ amountCents: 5000, monthly: false });
 });
+
+test("the paywall shows three plans and opens the checkout of the chosen one", async ({
+  page,
+}, testInfo) => {
+  const stamp = Date.now();
+  await signup(page, `plans-${stamp}@corvo.test`, "password12", `Plans ${stamp}`);
+  await completeOnboarding(page);
+
+  await page.route("**/api/auth/capabilities", async (route) => {
+    const response = await route.fetch();
+    await route.fulfill({ response, json: { ...(await response.json()), billing: true } });
+  });
+  await page.route("**/rpc/me", (route) => enableBilling(route, "me"));
+  await page.route("**/rpc/bootstrap", (route) => enableBilling(route, "bootstrap"));
+  await page.route("**/rpc/billing/status", (route) =>
+    route.fulfill({
+      json: { json: billingStatus({ funding: "credits", creditPurchasesEnabled: true }) },
+    }),
+  );
+  const plan = (
+    name: string,
+    seats: number,
+    maxSeats: number,
+    size: string,
+    computers: number,
+    gb: number,
+  ) => ({
+    plan: name,
+    computerSize: size,
+    computers,
+    storageBytes: gb * 1024 ** 3,
+    seatsIncluded: seats,
+    maxSeats,
+  });
+  await page.route("**/rpc/usage/plan", (route) =>
+    route.fulfill({
+      json: {
+        json: {
+          plan: "personal",
+          computerSize: "small",
+          computers: { used: 0, limit: 1 },
+          storage: { usedBytes: 0, limitBytes: 25 * 1024 ** 3 },
+          seats: { used: 1, included: 1, max: 1, extraPrice: null },
+          plans: [
+            plan("personal", 1, 1, "small", 1, 25),
+            plan("team", 10, 15, "medium", 1, 50),
+            plan("company", 25, 50, "large", 1, 200),
+          ],
+          canManage: true,
+        },
+      },
+    }),
+  );
+  let checkoutInput: unknown;
+  await page.route("**/rpc/billing/planCheckout", async (route) => {
+    checkoutInput = (route.request().postDataJSON() as { json: unknown }).json;
+    await route.fulfill({ json: { json: { url: "http://127.0.0.1:1/checkout" } } });
+  });
+  await page.reload();
+
+  const paywall = page.getByTestId("billing-paywall");
+  await expect(paywall.getByRole("heading", { name: "Choose your plan" })).toBeVisible();
+  for (const name of ["Personal", "Team", "Company"]) {
+    await expect(paywall.getByRole("heading", { name })).toBeVisible();
+  }
+  await expect(paywall.getByText("Ready in minutes")).toHaveCount(1);
+  await captureScreenshot(page, testInfo, "billing-plans");
+
+  await paywall.getByRole("button", { name: "Yearly" }).click();
+  await paywall.getByRole("button", { name: "Subscribe to Team" }).click();
+  await expect
+    .poll(() => checkoutInput)
+    .toEqual({
+      plan: "team",
+      interval: "year",
+      currency: "usd",
+      aiUseCents: 1000,
+    });
+});

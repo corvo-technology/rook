@@ -43,7 +43,7 @@ export interface PlanCardLabels {
   serverAndAi: (server: string, ai: string) => string;
   yearlyTotal: (total: string, saved: string) => string;
   subscribe: (plan: PlanId) => string;
-  computers: (count: number, size: ComputerSize) => string;
+  computer: (size: ComputerSize) => string;
   computerSpec: (size: ComputerSize) => string;
   people: (count: number) => string;
   extraPeople: (price: string, max: number) => string;
@@ -222,7 +222,7 @@ function PlanCard({
       <ul className="mt-6 flex list-none flex-col p-0">
         <Row
           dark={dark}
-          title={labels.computers(entitlements.computers, entitlements.computerSize)}
+          title={labels.computer(entitlements.computerSize)}
           detail={labels.computerSpec(entitlements.computerSize)}
         />
         <Row

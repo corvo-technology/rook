@@ -225,6 +225,10 @@ msgstr "{agents, plural, other {# 个智能体}}"
 msgid "{amount} / {period}"
 msgstr "{amount} / {period}"
 
+#: src/components/PlanChoice.tsx
+msgid "{amount} goes to models, at cost"
+msgstr "{amount} 按成本价用于模型"
+
 #: src/lib/plan-view.ts
 msgid "{amount} per month"
 msgstr "每月 {amount}"
@@ -260,6 +264,10 @@ msgstr "{computersUsed} / {computersLimit}"
 #: src/pages/WhatsAppNumbers.tsx
 msgid "{count, plural, one {# number} other {# numbers}}"
 msgstr "{count, plural, other {# 个号码}}"
+
+#: src/components/PlanChoice.tsx
+msgid "{count, plural, one {# person} other {# people}}"
+msgstr "{count, plural, other {# 人}}"
 
 #: src/components/markdown-copy.tsx
 msgid "{count, plural, one {# row} other {# rows}}"
@@ -471,6 +479,14 @@ msgstr "已使用 {percent}% · {used} / {windowLabel} 个令牌"
 msgid "{position} of {total}"
 msgstr "第 {position} 项，共 {total} 项"
 
+#: src/components/PlanChoice.tsx
+msgid "{price}/month"
+msgstr "{price}/月"
+
+#: src/components/PlanChoice.tsx
+msgid "{price}/month per extra person, up to {max}"
+msgstr "每增加一人 {price}/月，最多 {max} 人"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} can't run this model."
@@ -614,9 +630,14 @@ msgstr "{sent, plural, other {已发送 # 个邀请}}"
 msgid "{size} B"
 msgstr "{size} B"
 
+#: src/components/PlanChoice.tsx
 #: src/components/PlanList.tsx
 msgid "{size} computer"
 msgstr "{size}电脑"
+
+#: src/components/PlanChoice.tsx
+msgid "{size} of files"
+msgstr "{size} 文件"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -658,6 +679,10 @@ msgstr "{toolCount, plural, other {#个工具}}"
 #: src/components/ToolActivityDisclosure.tsx
 msgid "{toolCount, plural, one {Used # tool} other {Used # tools}}"
 msgstr "{toolCount, plural, other {使用了 # 个工具}}"
+
+#: src/components/PlanChoice.tsx
+msgid "{total} billed yearly, {saved} saved"
+msgstr "按年计费 {total}，节省 {saved}"
 
 #: src/pages/shell/channel-header.tsx
 msgid "{total} members"
@@ -701,6 +726,10 @@ msgstr "@{0}"
 msgid "/ month"
 msgstr "/ 月"
 
+#: src/components/PlanChoice.tsx
+msgid "/month"
+msgstr "/月"
+
 #. placeholder {0}: (status.byokPriceCents ?? 0) / 100
 #. placeholder {0}: amount / 100
 #: src/components/ModelCredits.tsx
@@ -718,6 +747,10 @@ msgstr "还剩 1 步"
 #: src/pages/platform/PricingSection.tsx
 msgid "1M tokens in / out"
 msgstr "100万词元 输入 / 输出"
+
+#: src/components/PlanChoice.tsx
+msgid "2 months free"
+msgstr "2 个月免费"
 
 #. placeholder {0}: events.data.accepted
 #. placeholder {1}: events.data.rejected
@@ -1179,6 +1212,10 @@ msgstr "智能体已暂停"
 #: src/pages/AppAgentAccess.tsx
 msgid "Agents that can use it"
 msgstr "可以使用它的智能体"
+
+#: src/components/PlanChoice.tsx
+msgid "AI per month"
+msgstr "每月 AI"
 
 #: src/components/InboxPanel.tsx
 msgid "Alert"
@@ -1675,10 +1712,6 @@ msgstr "返回"
 msgid "Back to sign in"
 msgstr "返回登录"
 
-#: src/pages/partner/PartnerTemplatePanel.tsx
-msgid "Barbershop"
-msgstr "理发店"
-
 #: src/pages/partner/PartnerPricing.tsx
 msgid "Base"
 msgstr "基础价"
@@ -1708,6 +1741,10 @@ msgstr "低于额度"
 #: src/pages/Settings.tsx
 msgid "Billing"
 msgstr "账单"
+
+#: src/components/PlanChoice.tsx
+msgid "Billing period"
+msgstr "计费周期"
 
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Bishop"
@@ -1775,6 +1812,7 @@ msgid "Bots"
 msgstr "机器人"
 
 #: src/components/ModelCredits.tsx
+#: src/components/PlanChoice.tsx
 msgid "Bots and browser automation"
 msgstr "机器人和浏览器自动化"
 
@@ -2125,6 +2163,10 @@ msgstr "选择如何使用 Rook"
 msgid "Choose where bots run"
 msgstr "选择机器人的运行位置"
 
+#: src/components/PlanChoice.tsx
+msgid "Choose your plan"
+msgstr "选择你的套餐"
+
 #: src/pages/WikiBrowser.tsx
 msgid "Cited by"
 msgstr "被引用于"
@@ -2174,10 +2216,6 @@ msgstr "清除用途"
 #: src/pages/shell/dialogs.tsx
 msgid "Clearing…"
 msgstr "正在清空…"
-
-#: src/pages/partner/PartnerTemplatePanel.tsx
-msgid "Clinic"
-msgstr "诊所"
 
 #: src/pages/onboarding/labels.ts
 msgid "Clinic or practice"
@@ -2998,6 +3036,7 @@ msgid "Could not log out. Try again."
 msgstr "无法退出登录。请重试。"
 
 #: src/components/ModelCredits.tsx
+#: src/components/PlanChoice.tsx
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/Paywall.tsx
@@ -3481,6 +3520,7 @@ msgstr "Cron"
 msgid "Cron expression"
 msgstr "Cron 表达式"
 
+#: src/components/PlanChoice.tsx
 #: src/pages/platform/PricingSection.tsx
 msgid "Currency"
 msgstr "币种"
@@ -4442,6 +4482,18 @@ msgstr "第一个机器人"
 msgid "First messages, one per line"
 msgstr "首条消息，每行一条"
 
+#: src/components/PlanChoice.tsx
+msgid "For a company"
+msgstr "适合公司"
+
+#: src/components/PlanChoice.tsx
+msgid "For a team"
+msgstr "适合团队"
+
+#: src/components/PlanChoice.tsx
+msgid "For one person"
+msgstr "适合个人"
+
 #: src/pages/YouMemory.tsx
 msgid "Forget"
 msgstr "忘记"
@@ -4859,6 +4911,10 @@ msgstr "收件箱"
 #: src/pages/shell/message-cards.tsx
 msgid "Inbox & email"
 msgstr "收件箱和邮件"
+
+#: src/components/PlanChoice.tsx
+msgid "Include AI"
+msgstr "包含 AI"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Include API keys"
@@ -5363,6 +5419,7 @@ msgid "Local computer access requires the latest desktop app."
 msgstr "访问本地电脑需要最新的桌面应用。"
 
 #: src/components/ModelCredits.tsx
+#: src/components/PlanChoice.tsx
 #: src/components/SidebarFooter.tsx
 #: src/pages/Paywall.tsx
 msgid "Log out"
@@ -5824,6 +5881,7 @@ msgstr "月"
 msgid "Month"
 msgstr "月"
 
+#: src/components/PlanChoice.tsx
 #: src/lib/cron.ts
 msgid "Monthly"
 msgstr "每月"
@@ -6559,6 +6617,10 @@ msgstr "仅读取"
 #: src/pages/shell/agent-audience.tsx
 msgid "Only some roles or people"
 msgstr "仅限部分角色或成员"
+
+#: src/components/PlanChoice.tsx
+msgid "Only the owner can subscribe"
+msgstr "只有所有者可以订阅"
 
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/partner/PartnerOverview.tsx
@@ -7305,6 +7367,10 @@ msgstr "正在阅读页面"
 msgid "Ready"
 msgstr "就绪"
 
+#: src/components/PlanChoice.tsx
+msgid "Ready in minutes · cancel anytime"
+msgstr "几分钟即可就绪 · 随时取消"
+
 #: src/pages/platform/PartnersSection.tsx
 msgid "Real margin"
 msgstr "实际利润"
@@ -7333,6 +7399,10 @@ msgstr "收款"
 #: src/pages/ActivityList.tsx
 msgid "Recent"
 msgstr "最近"
+
+#: src/components/PlanChoice.tsx
+msgid "Recommended"
+msgstr "推荐"
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Reconnect"
@@ -7756,10 +7826,6 @@ msgstr "恢复该客户？"
 msgid "Resume this space to keep going."
 msgstr "请恢复此空间以继续。"
 
-#: src/pages/partner/PartnerTemplatePanel.tsx
-msgid "Retail"
-msgstr "零售"
-
 #: src/components/AccountAccess.tsx
 #: src/components/PasskeySettings.tsx
 #: src/pages/Auth.tsx
@@ -8078,6 +8144,7 @@ msgid "Scheduled"
 msgstr "已排期"
 
 #: src/components/ModelCredits.tsx
+#: src/components/PlanChoice.tsx
 msgid "Scheduled routines"
 msgstr "已计划的例行任务"
 
@@ -8251,6 +8318,10 @@ msgstr "Sentry 告警"
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Serenity endpoint is required."
 msgstr "必须提供 Serenity 端点。"
+
+#: src/components/PlanChoice.tsx
+msgid "Server {server} + AI {ai}"
+msgstr "服务器 {server} + AI {ai}"
 
 #: src/pages/connections/McpServerForm.tsx
 msgid "Server name"
@@ -8777,6 +8848,10 @@ msgstr "订阅"
 #: src/components/ModelCredits.tsx
 msgid "Subscribe for ${0} / month"
 msgstr "以每月 ${0} 订阅"
+
+#: src/components/PlanChoice.tsx
+msgid "Subscribe to {name}"
+msgstr "订阅 {name}"
 
 #: src/components/ModelCredits.tsx
 msgid "Subscribe to Rook credits"
@@ -9726,6 +9801,10 @@ msgstr "使用 Rook 额度"
 msgid "Use space default"
 msgstr "使用空间默认设置"
 
+#: src/components/PlanChoice.tsx
+msgid "Use the AI you already pay for: Claude, ChatGPT or an API key"
+msgstr "使用你已付费的 AI：Claude、ChatGPT 或 API 密钥"
+
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "最多使用 512 个字母、数字、_ 或 -。"
@@ -10181,6 +10260,10 @@ msgstr "正在写入 {value}"
 #: src/lib/billing.ts
 msgid "year"
 msgstr "年"
+
+#: src/components/PlanChoice.tsx
+msgid "Yearly"
+msgstr "按年"
 
 #: src/pages/shell/chat-context.tsx
 msgid "Yesterday"

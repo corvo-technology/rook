@@ -225,6 +225,10 @@ msgstr "{agents, plural, other {# 件のエージェント}}"
 msgid "{amount} / {period}"
 msgstr "{amount} / {period}"
 
+#: src/components/PlanChoice.tsx
+msgid "{amount} goes to models, at cost"
+msgstr "{amount} はモデルに原価で充てられます"
+
 #: src/lib/plan-view.ts
 msgid "{amount} per month"
 msgstr "月額 {amount}"
@@ -260,6 +264,10 @@ msgstr "{computersUsed} / {computersLimit}"
 #: src/pages/WhatsAppNumbers.tsx
 msgid "{count, plural, one {# number} other {# numbers}}"
 msgstr "{count, plural, other {#件の番号}}"
+
+#: src/components/PlanChoice.tsx
+msgid "{count, plural, one {# person} other {# people}}"
+msgstr "{count, plural, other {# 人}}"
 
 #: src/components/markdown-copy.tsx
 msgid "{count, plural, one {# row} other {# rows}}"
@@ -471,6 +479,14 @@ msgstr "{percent}% 使用中 · {windowLabel} 中 {used} トークン"
 msgid "{position} of {total}"
 msgstr "{position} / {total}"
 
+#: src/components/PlanChoice.tsx
+msgid "{price}/month"
+msgstr "{price}/月"
+
+#: src/components/PlanChoice.tsx
+msgid "{price}/month per extra person, up to {max}"
+msgstr "追加1人あたり {price}/月、最大 {max} 人"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} can't run this model."
@@ -614,9 +630,14 @@ msgstr "{sent, plural, other {# 件の招待を送りました}}"
 msgid "{size} B"
 msgstr "{size} B"
 
+#: src/components/PlanChoice.tsx
 #: src/components/PlanList.tsx
 msgid "{size} computer"
 msgstr "{size}のコンピューター"
+
+#: src/components/PlanChoice.tsx
+msgid "{size} of files"
+msgstr "{size} のファイル"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -658,6 +679,10 @@ msgstr "{toolCount, plural, one {#個のツール} other {#個のツール}}"
 #: src/components/ToolActivityDisclosure.tsx
 msgid "{toolCount, plural, one {Used # tool} other {Used # tools}}"
 msgstr "{toolCount, plural, other {#個のツールを使用}}"
+
+#: src/components/PlanChoice.tsx
+msgid "{total} billed yearly, {saved} saved"
+msgstr "年額 {total}、{saved} お得"
 
 #: src/pages/shell/channel-header.tsx
 msgid "{total} members"
@@ -701,6 +726,10 @@ msgstr "@{0}"
 msgid "/ month"
 msgstr "/ 月"
 
+#: src/components/PlanChoice.tsx
+msgid "/month"
+msgstr "/月"
+
 #. placeholder {0}: (status.byokPriceCents ?? 0) / 100
 #. placeholder {0}: amount / 100
 #: src/components/ModelCredits.tsx
@@ -718,6 +747,10 @@ msgstr "残り 1 ステップ"
 #: src/pages/platform/PricingSection.tsx
 msgid "1M tokens in / out"
 msgstr "100万トークン 入力 / 出力"
+
+#: src/components/PlanChoice.tsx
+msgid "2 months free"
+msgstr "2か月無料"
 
 #. placeholder {0}: events.data.accepted
 #. placeholder {1}: events.data.rejected
@@ -1179,6 +1212,10 @@ msgstr "エージェントは一時停止中です"
 #: src/pages/AppAgentAccess.tsx
 msgid "Agents that can use it"
 msgstr "使用できるエージェント"
+
+#: src/components/PlanChoice.tsx
+msgid "AI per month"
+msgstr "月額のAI"
 
 #: src/components/InboxPanel.tsx
 msgid "Alert"
@@ -1675,10 +1712,6 @@ msgstr "戻る"
 msgid "Back to sign in"
 msgstr "ログインに戻る"
 
-#: src/pages/partner/PartnerTemplatePanel.tsx
-msgid "Barbershop"
-msgstr "理容室"
-
 #: src/pages/partner/PartnerPricing.tsx
 msgid "Base"
 msgstr "ベース"
@@ -1708,6 +1741,10 @@ msgstr "クレジットがこの値未満"
 #: src/pages/Settings.tsx
 msgid "Billing"
 msgstr "請求"
+
+#: src/components/PlanChoice.tsx
+msgid "Billing period"
+msgstr "請求期間"
 
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Bishop"
@@ -1775,6 +1812,7 @@ msgid "Bots"
 msgstr "ボット"
 
 #: src/components/ModelCredits.tsx
+#: src/components/PlanChoice.tsx
 msgid "Bots and browser automation"
 msgstr "ボットとブラウザ自動化"
 
@@ -2125,6 +2163,10 @@ msgstr "Rookの使い方を選択"
 msgid "Choose where bots run"
 msgstr "ボットの実行場所を選ぶ"
 
+#: src/components/PlanChoice.tsx
+msgid "Choose your plan"
+msgstr "プランを選択"
+
 #: src/pages/WikiBrowser.tsx
 msgid "Cited by"
 msgstr "引用元"
@@ -2174,10 +2216,6 @@ msgstr "目的をクリア"
 #: src/pages/shell/dialogs.tsx
 msgid "Clearing…"
 msgstr "クリア中…"
-
-#: src/pages/partner/PartnerTemplatePanel.tsx
-msgid "Clinic"
-msgstr "クリニック"
 
 #: src/pages/onboarding/labels.ts
 msgid "Clinic or practice"
@@ -2998,6 +3036,7 @@ msgid "Could not log out. Try again."
 msgstr "ログアウトできませんでした。もう一度お試しください。"
 
 #: src/components/ModelCredits.tsx
+#: src/components/PlanChoice.tsx
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/Paywall.tsx
@@ -3481,6 +3520,7 @@ msgstr "Cron"
 msgid "Cron expression"
 msgstr "Cron式"
 
+#: src/components/PlanChoice.tsx
 #: src/pages/platform/PricingSection.tsx
 msgid "Currency"
 msgstr "通貨"
@@ -4442,6 +4482,18 @@ msgstr "最初のボット"
 msgid "First messages, one per line"
 msgstr "最初のメッセージ（1行に1つ）"
 
+#: src/components/PlanChoice.tsx
+msgid "For a company"
+msgstr "企業向け"
+
+#: src/components/PlanChoice.tsx
+msgid "For a team"
+msgstr "チーム向け"
+
+#: src/components/PlanChoice.tsx
+msgid "For one person"
+msgstr "個人向け"
+
 #: src/pages/YouMemory.tsx
 msgid "Forget"
 msgstr "忘れる"
@@ -4859,6 +4911,10 @@ msgstr "受信トレイ"
 #: src/pages/shell/message-cards.tsx
 msgid "Inbox & email"
 msgstr "受信トレイとメール"
+
+#: src/components/PlanChoice.tsx
+msgid "Include AI"
+msgstr "AIを含める"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Include API keys"
@@ -5363,6 +5419,7 @@ msgid "Local computer access requires the latest desktop app."
 msgstr "ローカルコンピューターへのアクセスには最新のデスクトップアプリが必要です。"
 
 #: src/components/ModelCredits.tsx
+#: src/components/PlanChoice.tsx
 #: src/components/SidebarFooter.tsx
 #: src/pages/Paywall.tsx
 msgid "Log out"
@@ -5824,6 +5881,7 @@ msgstr "月"
 msgid "Month"
 msgstr "月"
 
+#: src/components/PlanChoice.tsx
 #: src/lib/cron.ts
 msgid "Monthly"
 msgstr "毎月"
@@ -6559,6 +6617,10 @@ msgstr "読むだけ"
 #: src/pages/shell/agent-audience.tsx
 msgid "Only some roles or people"
 msgstr "一部のロールまたはメンバーのみ"
+
+#: src/components/PlanChoice.tsx
+msgid "Only the owner can subscribe"
+msgstr "購読できるのはオーナーのみです"
 
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/partner/PartnerOverview.tsx
@@ -7305,6 +7367,10 @@ msgstr "ページを読んでいます"
 msgid "Ready"
 msgstr "準備完了"
 
+#: src/components/PlanChoice.tsx
+msgid "Ready in minutes · cancel anytime"
+msgstr "数分で開始 · いつでも解約可能"
+
 #: src/pages/platform/PartnersSection.tsx
 msgid "Real margin"
 msgstr "実際のマージン"
@@ -7333,6 +7399,10 @@ msgstr "入金"
 #: src/pages/ActivityList.tsx
 msgid "Recent"
 msgstr "最近"
+
+#: src/components/PlanChoice.tsx
+msgid "Recommended"
+msgstr "おすすめ"
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Reconnect"
@@ -7756,10 +7826,6 @@ msgstr "顧客を再開しますか？"
 msgid "Resume this space to keep going."
 msgstr "続けるには、このスペースを再開してください。"
 
-#: src/pages/partner/PartnerTemplatePanel.tsx
-msgid "Retail"
-msgstr "小売"
-
 #: src/components/AccountAccess.tsx
 #: src/components/PasskeySettings.tsx
 #: src/pages/Auth.tsx
@@ -8078,6 +8144,7 @@ msgid "Scheduled"
 msgstr "予定"
 
 #: src/components/ModelCredits.tsx
+#: src/components/PlanChoice.tsx
 msgid "Scheduled routines"
 msgstr "スケジュール済みのルーティン"
 
@@ -8251,6 +8318,10 @@ msgstr "Sentryアラート"
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Serenity endpoint is required."
 msgstr "Serenityのエンドポイントは必須です。"
+
+#: src/components/PlanChoice.tsx
+msgid "Server {server} + AI {ai}"
+msgstr "サーバー {server} + AI {ai}"
 
 #: src/pages/connections/McpServerForm.tsx
 msgid "Server name"
@@ -8777,6 +8848,10 @@ msgstr "申し込む"
 #: src/components/ModelCredits.tsx
 msgid "Subscribe for ${0} / month"
 msgstr "月額 ${0} で登録"
+
+#: src/components/PlanChoice.tsx
+msgid "Subscribe to {name}"
+msgstr "{name} を購読"
 
 #: src/components/ModelCredits.tsx
 msgid "Subscribe to Rook credits"
@@ -9726,6 +9801,10 @@ msgstr "Rookクレジットを使用"
 msgid "Use space default"
 msgstr "スペースのデフォルトを使用"
 
+#: src/components/PlanChoice.tsx
+msgid "Use the AI you already pay for: Claude, ChatGPT or an API key"
+msgstr "すでに利用中のAI（Claude、ChatGPT、APIキー）を使えます"
+
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "英数字、_、-のみで512文字以内で入力してください。"
@@ -10181,6 +10260,10 @@ msgstr "{value} を書き込んでいます"
 #: src/lib/billing.ts
 msgid "year"
 msgstr "年"
+
+#: src/components/PlanChoice.tsx
+msgid "Yearly"
+msgstr "年払い"
 
 #: src/pages/shell/chat-context.tsx
 msgid "Yesterday"

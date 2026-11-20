@@ -31,3 +31,10 @@ Notes
 - Subscriptions set up before this change keep their price and resolve to their plan through
   `PLAN_PRICES`; leave their price ids in the mapping if they should keep a plan.
 - A yearly AI add-on grants the whole year of model use when it is paid.
+- Plan changes (`billing.changePlan`): a bigger plan, a yearly interval or more AI is applied to the
+  subscription at once and invoiced with proration; the AI use granted is the share of the AI price
+  each invoice line charged, so it never exceeds what was paid. A smaller plan, a monthly interval
+  or less AI is held on a Stripe subscription schedule and starts at the next renewal. In test mode,
+  check both, a repeated webhook, and a change while a downgrade is waiting.
+- A subscription on the old own-key plan or monthly credits moves to a plan in place, in dollars
+  only. Its credit balance is not touched.

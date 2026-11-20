@@ -3211,6 +3211,7 @@ msgid "Could not save that voice"
 msgstr "无法保存该语音"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 msgid "Could not save the credential"
 msgstr "无法保存凭据"
 
@@ -3904,6 +3905,7 @@ msgstr "正在断开…"
 #: src/components/PasskeyOffer.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/shell/message-cards.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 #: src/pages/WikiBrowser.tsx
 msgid "Dismiss"
 msgstr "忽略"
@@ -5221,6 +5223,10 @@ msgstr "保留"
 msgid "key"
 msgstr "密钥"
 
+#: src/pages/shell/pasted-key-prompt.tsx
+msgid "Key in message"
+msgstr "消息中的密钥"
+
 #: src/pages/onboarding-quick-connect.tsx
 msgid "Key not recognized. Choose a provider."
 msgstr "无法识别该密钥。请选择服务商。"
@@ -6025,6 +6031,7 @@ msgstr "我的首页"
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/create-bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 #: src/pages/SpaceSettingsPanel.tsx
 msgid "Name"
 msgstr "名称"
@@ -8077,6 +8084,7 @@ msgid "Save"
 msgstr "保存"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 msgid "Save credential"
 msgstr "保存凭据"
 
@@ -8137,6 +8145,7 @@ msgstr "正在保存…"
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 msgid "Saving…"
 msgstr "正在保存…"
 
@@ -8286,6 +8295,10 @@ msgstr "请在 10 分钟内从 {linkApp} 向 <1>{linkAddress}</1> 发送 <0>{lin
 #: src/components/AskCard.tsx
 msgid "Send answer"
 msgstr "发送回答"
+
+#: src/pages/shell/pasted-key-prompt.tsx
+msgid "Send anyway"
+msgstr "仍然发送"
 
 #: src/pages/shell/composer-error.tsx
 msgid "Send as file"
@@ -9267,6 +9280,10 @@ msgstr "这条还没有发送。可以编辑，也可以发送。"
 #: src/pages/InvitePage.tsx
 msgid "This link no longer works"
 msgstr "此链接已失效"
+
+#: src/pages/shell/pasted-key-prompt.tsx
+msgid "This looks like a key. Save it as a credential instead?"
+msgstr "这看起来像密钥。改为保存为凭据吗?"
 
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/Onboarding.tsx

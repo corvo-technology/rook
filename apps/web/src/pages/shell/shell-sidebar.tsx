@@ -198,25 +198,6 @@ export function ShellSidebar({
             }
           />
         ) : null}
-        {mini ? null : (
-          <SidebarNavLive
-            ticketBoardEnabled={ticketBoardEnabled}
-            embedded={isEmbedded()}
-            onQuickSwitch={onQuickSwitch}
-            onOpen={(to) => {
-              setMobileOpen(false);
-              navigate(to);
-            }}
-          />
-        )}
-        {mini ? null : (
-          <SidebarPartnership
-            onOpen={(to) => {
-              setMobileOpen(false);
-              navigate(to);
-            }}
-          />
-        )}
         {mini || !(searchOpen || query) ? null : (
           <InputGroup
             data-testid="sidebar-search"
@@ -240,28 +221,49 @@ export function ShellSidebar({
             />
           </InputGroup>
         )}
-        <div className="rk-scroll flex min-h-0 flex-1 flex-col gap-px overflow-y-auto px-2.5 pb-2.5">
-          {showSpaceSearch && !mini ? (
-            <SpaceSearchResults
-              hits={searchHits}
-              loading={searchLoading}
-              onSelect={(hit) => jumpToSearchHit(hit)}
+        <div className="rk-scroll flex min-h-0 flex-1 flex-col overflow-y-auto">
+          {mini ? null : (
+            <SidebarNavLive
+              ticketBoardEnabled={ticketBoardEnabled}
+              embedded={isEmbedded()}
+              onQuickSwitch={onQuickSwitch}
+              onOpen={(to) => {
+                setMobileOpen(false);
+                navigate(to);
+              }}
             />
-          ) : (
-            <>
-              {roster}
-              {mini ? null : (
-                <SidebarPeopleList
-                  activeUserId={activeDmUserId}
-                  onOpen={(userId) => {
-                    setMobileOpen(false);
-                    navigate(`/app/dm/${userId}`);
-                  }}
-                />
-              )}
-            </>
           )}
-          <div className={mini ? "hidden" : "contents"}>{archived}</div>
+          {mini ? null : (
+            <SidebarPartnership
+              onOpen={(to) => {
+                setMobileOpen(false);
+                navigate(to);
+              }}
+            />
+          )}
+          <div className="flex flex-col gap-px px-2.5 pb-2.5">
+            {showSpaceSearch && !mini ? (
+              <SpaceSearchResults
+                hits={searchHits}
+                loading={searchLoading}
+                onSelect={(hit) => jumpToSearchHit(hit)}
+              />
+            ) : (
+              <>
+                {roster}
+                {mini ? null : (
+                  <SidebarPeopleList
+                    activeUserId={activeDmUserId}
+                    onOpen={(userId) => {
+                      setMobileOpen(false);
+                      navigate(`/app/dm/${userId}`);
+                    }}
+                  />
+                )}
+              </>
+            )}
+            <div className={mini ? "hidden" : "contents"}>{archived}</div>
+          </div>
         </div>
         <div className={mini ? "hidden" : "contents"}>
           <PasskeyOffer />

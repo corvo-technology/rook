@@ -40,7 +40,7 @@ vi.mock("../lib/query", () => ({
     },
   }),
 }));
-const board = vi.hoisted(() => ({ on: false }));
+const board = vi.hoisted(() => ({ on: false, fail: false }));
 const bots = [
   {
     id: "a",
@@ -65,7 +65,9 @@ const groups = [
 ] as SpaceGroup[];
 vi.mock("../lib/bootstrap", () => ({
   takeInitialBootstrap: () =>
-    Promise.resolve({ bots, groups, me: { ticketBoardEnabled: board.on } }),
+    board.fail
+      ? Promise.reject(new Error("Offline"))
+      : Promise.resolve({ bots, groups, me: { ticketBoardEnabled: board.on } }),
 }));
 
 import { TeamPage } from "./TeamPage";
@@ -145,4 +147,31 @@ it("lists the tickets each agent is working on when the board is on, and asks fo
     "Call Ana",
   );
   await on.stop();
+});
+
+it("shows a retry instead of an empty company when the read fails", async () => {
+  (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  board.fail = true;
+  const container = document.createElement("div");
+  const root = createRoot(container);
+  await act(async () => {
+    root.render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <MemoryRouter>
+          <TeamPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+  });
+  for (let i = 0; i < 10 && !container.querySelector('[role="alert"]'); i++) {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    });
+  }
+  board.fail = false;
+  expect(container.querySelector('[role="alert"]')?.textContent).toContain("Try again");
+  expect(container.querySelector('[data-testid="team-empty"]')).toBeNull();
+  await act(async () => root.unmount());
 });

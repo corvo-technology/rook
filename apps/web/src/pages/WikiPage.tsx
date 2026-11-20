@@ -9,7 +9,7 @@ export function WikiPage() {
   const [params, setParams] = useSearchParams();
   return (
     <div className="flex h-full min-h-0 flex-col bg-background text-foreground">
-      <h1 className="px-6 py-4 text-xl font-light tracking-tight">
+      <h1 className="px-6 pt-6 pb-4 text-xl font-light tracking-tight">
         <Trans>Wiki</Trans>
       </h1>
       <WikiBrowser

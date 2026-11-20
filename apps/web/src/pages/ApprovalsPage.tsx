@@ -1,15 +1,17 @@
 import type { PendingApproval } from "@corvo/contracts";
-import { Spinner } from "@corvo/ui-web";
-import { Trans } from "@lingui/react/macro";
+import { Button, Spinner } from "@corvo/ui-web";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useSpaceQueries } from "../lib/query";
 import { rpc } from "../lib/rpc";
 import { usePendingApprovals } from "../lib/use-pending-approvals";
+import { errorText } from "../lib/user-error";
 import { ApprovalsInbox } from "./ApprovalsInbox";
 
 /** The approvals this person may decide, from every channel and agent in one list. */
 export function ApprovalsPage() {
+  const { t } = useLingui();
   const navigate = useNavigate();
   const queries = useSpaceQueries();
   const queryClient = useQueryClient();
@@ -46,17 +48,25 @@ export function ApprovalsPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto bg-background text-foreground">
-      <h1 className="mx-auto w-full max-w-3xl px-6 py-4 text-xl font-light tracking-tight">
+      <h1 className="mx-auto w-full max-w-3xl px-6 pt-6 pb-4 text-xl font-light tracking-tight">
         <Trans>Approvals</Trans>
       </h1>
       <div className="mx-auto w-full max-w-3xl px-6 pb-8">
         {approvals.isPending ? (
           <div className="flex justify-center py-10">
-            <Spinner />
+            <Spinner aria-label={t`Loading…`} />
+          </div>
+        ) : approvals.isError ? (
+          // A failed read must not look like an empty inbox: something may be waiting.
+          <div role="alert" className="flex items-center gap-3 text-sm text-destructive">
+            <span className="min-w-0">{errorText(approvals.error, t`Could not load`)}</span>
+            <Button variant="secondary" size="sm" onClick={() => void approvals.refetch()}>
+              <Trans>Try again</Trans>
+            </Button>
           </div>
         ) : (
           <ApprovalsInbox
-            items={approvals.data ?? []}
+            items={approvals.data}
             onAnswer={answer}
             onOpenChat={(item) =>
               navigate(item.groupId ? `/app/g/${item.groupId}` : `/app/${item.botId}`)

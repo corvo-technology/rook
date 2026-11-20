@@ -170,7 +170,14 @@ export function spacesRoutes(ctx: RouterContext) {
         await asMemberOf(deps.prisma, context.actor, created.id, () =>
           startStarterTeam(deps, { ...context.actor, spaceId: created.id }, input.locale),
         ).catch((error) => getLogger().error("starter team for a new space", error));
-        return created;
+        // Answer with the Space as the sidebar lists it, so the client opens the Chief at once.
+        const listed = await spaceNavigationDto(deps, context.actor, repos, groupRepos)
+          .then((navigation) => navigation.spaces.find((space) => space.id === created.id))
+          .catch((error) => {
+            getLogger().error("list a new space", error);
+            return undefined;
+          });
+        return listed ?? created;
       }),
       setMembersCanCreate: authed.spaces.setMembersCanCreate.handler(async ({ context, input }) => {
         try {

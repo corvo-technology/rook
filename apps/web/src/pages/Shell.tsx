@@ -1465,6 +1465,6 @@ function SpaceShell({ page }: { page?: ReactNode }) {
     </BotsSidebarLayout>
   );
 
-  // Empty chrome until the first bot list lands would flash "Select a bot" before the chat.
+  // Empty chrome until the first bot list lands would flash "Select an agent" before the chat.
   return initialBotsLoaded || initialLoadFailed ? shell : <PageLoading />;
 }

@@ -2362,6 +2362,10 @@ msgstr "折叠 {0}"
 msgid "Collapse {label}"
 msgstr "折叠 {label}"
 
+#: src/pages/shell/sidebar-partner.tsx
+msgid "Collapse {name}"
+msgstr "收起 {name}"
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Color"
 msgstr "颜色"
@@ -4418,6 +4422,10 @@ msgstr "展开 {0}"
 #: src/pages/shell/message-view.tsx
 msgid "Expand {label}"
 msgstr "展开 {label}"
+
+#: src/pages/shell/sidebar-partner.tsx
+msgid "Expand {name}"
+msgstr "展开 {name}"
 
 #: src/components/markdown-copy.tsx
 msgid "Expand table"
@@ -8459,8 +8467,8 @@ msgid "See all"
 msgstr "查看全部"
 
 #: src/pages/shell/chat-header.tsx
-msgid "Select a bot"
-msgstr "选择 Bot"
+msgid "Select an agent"
+msgstr "选择智能体"
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Self-hosted"

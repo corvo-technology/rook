@@ -377,8 +377,10 @@ export function ShellDialogs({
               await refreshBots();
               return;
             }
-            // The new Space already has its Chief, so it opens there instead of asking for a first bot.
-            window.location.assign("/app");
+            // The new Space already has its Chief, so it opens in that chat. One without it (the
+            // Chief could not be made) goes through onboarding instead of an empty shell.
+            const chief = space.bots[0];
+            window.location.assign(chief ? `/app/${chief.id}` : "/onboarding");
           }}
         />
       ) : null}

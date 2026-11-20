@@ -2362,6 +2362,10 @@ msgstr "Contraer {0}"
 msgid "Collapse {label}"
 msgstr "Contraer {label}"
 
+#: src/pages/shell/sidebar-partner.tsx
+msgid "Collapse {name}"
+msgstr "Contraer {name}"
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Color"
 msgstr "Color"
@@ -4418,6 +4422,10 @@ msgstr "Expandir {0}"
 #: src/pages/shell/message-view.tsx
 msgid "Expand {label}"
 msgstr "Expandir {label}"
+
+#: src/pages/shell/sidebar-partner.tsx
+msgid "Expand {name}"
+msgstr "Expandir {name}"
 
 #: src/components/markdown-copy.tsx
 msgid "Expand table"
@@ -8459,8 +8467,8 @@ msgid "See all"
 msgstr "Ver todo"
 
 #: src/pages/shell/chat-header.tsx
-msgid "Select a bot"
-msgstr "Selecciona un bot"
+msgid "Select an agent"
+msgstr "Selecciona un agente"
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Self-hosted"

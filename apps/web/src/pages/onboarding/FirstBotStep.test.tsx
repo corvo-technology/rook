@@ -158,4 +158,12 @@ describe("FirstBotStep", () => {
     expect(container.querySelector('[role="alert"]')).toBeNull();
     expect(container.textContent).toContain("How much does Ana do on its own?");
   });
+  it("says the plan is full instead of the generic failure when the plan refuses a computer", async () => {
+    ensureFirstBot.mockRejectedValueOnce(
+      Object.assign(new Error("Your plan allows 1 computers"), { code: "PLAN_COMPUTER_LIMIT" }),
+    );
+    await mount();
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain("Upgrade");
+    expect(container.textContent).not.toContain("Could not set up your bots");
+  });
 });

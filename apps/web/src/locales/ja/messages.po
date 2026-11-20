@@ -2362,6 +2362,10 @@ msgstr "{0}を折りたたむ"
 msgid "Collapse {label}"
 msgstr "{label}を折りたたむ"
 
+#: src/pages/shell/sidebar-partner.tsx
+msgid "Collapse {name}"
+msgstr "{name} を折りたたむ"
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Color"
 msgstr "色"
@@ -4418,6 +4422,10 @@ msgstr "{0}を展開"
 #: src/pages/shell/message-view.tsx
 msgid "Expand {label}"
 msgstr "{label}を展開"
+
+#: src/pages/shell/sidebar-partner.tsx
+msgid "Expand {name}"
+msgstr "{name} を展開"
 
 #: src/components/markdown-copy.tsx
 msgid "Expand table"
@@ -8459,8 +8467,8 @@ msgid "See all"
 msgstr "すべて表示"
 
 #: src/pages/shell/chat-header.tsx
-msgid "Select a bot"
-msgstr "ボットを選択"
+msgid "Select an agent"
+msgstr "エージェントを選択"
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Self-hosted"

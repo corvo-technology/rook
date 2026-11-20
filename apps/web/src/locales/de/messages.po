@@ -2362,6 +2362,10 @@ msgstr "{0} einklappen"
 msgid "Collapse {label}"
 msgstr "{label} einklappen"
 
+#: src/pages/shell/sidebar-partner.tsx
+msgid "Collapse {name}"
+msgstr "{name} einklappen"
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Color"
 msgstr "Farbe"
@@ -4418,6 +4422,10 @@ msgstr "{0} ausklappen"
 #: src/pages/shell/message-view.tsx
 msgid "Expand {label}"
 msgstr "{label} erweitern"
+
+#: src/pages/shell/sidebar-partner.tsx
+msgid "Expand {name}"
+msgstr "{name} ausklappen"
 
 #: src/components/markdown-copy.tsx
 msgid "Expand table"
@@ -8459,8 +8467,8 @@ msgid "See all"
 msgstr "Alle ansehen"
 
 #: src/pages/shell/chat-header.tsx
-msgid "Select a bot"
-msgstr "Bot auswählen"
+msgid "Select an agent"
+msgstr "Agent auswählen"
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Self-hosted"

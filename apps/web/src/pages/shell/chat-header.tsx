@@ -108,7 +108,7 @@ export function ChatHeader({
         ) : null}
         <span className="flex min-w-0 items-baseline gap-2">
           <span className="truncate text-name font-semibold text-foreground" dir="auto">
-            {active?.name ?? t`Select a bot`}
+            {active?.name ?? t`Select an agent`}
           </span>
           {active?.title ? (
             <span

@@ -2362,6 +2362,10 @@ msgstr "Collapse {0}"
 msgid "Collapse {label}"
 msgstr "Collapse {label}"
 
+#: src/pages/shell/sidebar-partner.tsx
+msgid "Collapse {name}"
+msgstr "Collapse {name}"
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Color"
 msgstr "Color"
@@ -4418,6 +4422,10 @@ msgstr "Expand {0}"
 #: src/pages/shell/message-view.tsx
 msgid "Expand {label}"
 msgstr "Expand {label}"
+
+#: src/pages/shell/sidebar-partner.tsx
+msgid "Expand {name}"
+msgstr "Expand {name}"
 
 #: src/components/markdown-copy.tsx
 msgid "Expand table"
@@ -8459,8 +8467,8 @@ msgid "See all"
 msgstr "See all"
 
 #: src/pages/shell/chat-header.tsx
-msgid "Select a bot"
-msgstr "Select a bot"
+msgid "Select an agent"
+msgstr "Select an agent"
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Self-hosted"

@@ -1,3 +1,4 @@
+import { agentCatalogLocale } from "@corvo/contracts";
 import { Stack, useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, ScrollView, Text, TextInput } from "react-native";
@@ -11,7 +12,7 @@ import { errorText } from "../lib/user-error";
 
 export default function NewSpace() {
   const sideInsets = useSideInsets();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const tokens = useMobileTokens();
   const router = useRouter();
   const [name, setName] = useState("");
@@ -24,7 +25,10 @@ export default function NewSpace() {
     setPending(true);
     setError(null);
     try {
-      const space = await rpc("spaces/create", { name: trimmed });
+      const space = await rpc("spaces/create", {
+        name: trimmed,
+        locale: agentCatalogLocale(locale),
+      });
       if (!(await selectSpace(space.id))) {
         Alert.alert(t("Space created"), t("It could not be opened. Try again from the sidebar."));
         router.dismissAll();
@@ -33,6 +37,10 @@ export default function NewSpace() {
       }
       router.dismissAll();
       router.replace("/");
+      // The new space starts with its Chief; open that chat instead of an inbox with one row.
+      const chief = space.bots[0];
+      if (chief)
+        router.push({ pathname: "/thread", params: { botId: chief.id, name: chief.name } });
     } catch (reason) {
       setError(errorText(reason, t("Could not create space")));
       setPending(false);

@@ -53,7 +53,9 @@ import {
   visitorInstallationId,
 } from "@corvo/core";
 import {
+  ComputerLimitError,
   effectiveMemoryScope,
+  ensureBotComputer,
   isPartialReplyClientNonce,
   isTooManyDatabaseConnections,
   loadRunHistoryMessages,
@@ -1034,8 +1036,18 @@ export function createRunExecutor(deps: ExecutorDeps) {
           });
         }
 
-        if (!bot.computer) throw new Error("Bot has no computer");
-        const storedComputer = bot.computer;
+        // An agent made while the plan's computer quota was full gets its computer now, or the run
+        // stops with the plan's own message.
+        let storedComputer = bot.computer;
+        if (!storedComputer) {
+          try {
+            storedComputer = await ensureBotComputer(deps.prisma, bot);
+          } catch (error) {
+            if (!(error instanceof ComputerLimitError)) throw error;
+            await failRunBeforeModel(error.message);
+            return;
+          }
+        }
         const computerMode = parseComputerMode(storedComputer.scope);
         const artifacts = deps.artifacts;
         let homeLostTold = false;

@@ -21,7 +21,11 @@ import {
   serializeModelSecret,
 } from "@corvo/adapters";
 import type { Actor, Bot, ProductEvent } from "@corvo/contracts";
-import { MODEL_KEY_FORMAT_ERROR, REPLY_QUOTE_MAX_LENGTH } from "@corvo/contracts";
+import {
+  MODEL_KEY_FORMAT_ERROR,
+  REPLY_QUOTE_MAX_LENGTH,
+  THREAD_READ_BUDGET,
+} from "@corvo/contracts";
 import { openScreenCapability } from "@corvo/core/node/screen-capability";
 import type { PrismaClient } from "@corvo/db";
 import { AnswerTooLongError, runProviderTransaction } from "@corvo/db";
@@ -1101,6 +1105,7 @@ describe("thread stream authorization", () => {
         queued.push(event);
       }
     };
+    const $queryRaw = vi.fn(async (): Promise<unknown[]> => []);
     const prisma = {
       spaceMember: { findUnique: vi.fn(async () => ({ role: "owner", roles: [] })) },
       spaceRole: { findMany: vi.fn(async () => []) },
@@ -1114,6 +1119,8 @@ describe("thread stream authorization", () => {
       run: {
         findUnique: vi.fn().mockResolvedValue({ trigger: "bot_message" }),
       },
+      // No events waiting after the cursor, so a stream resumes by replay.
+      $queryRaw,
     } as unknown as PrismaClient;
     const deps = {
       prisma,
@@ -1131,8 +1138,33 @@ describe("thread stream authorization", () => {
     const client = createRouterClient(createRouter(deps), {
       context: { actor, stillAuthorized },
     });
-    return { client, emit, follow, stillAuthorized };
+    return { client, emit, follow, stillAuthorized, queryRaw: $queryRaw, deps };
   }
+
+  it("starts from the head with one resync frame when too much was missed to replay", async () => {
+    const { client, queryRaw, deps } = threadStream();
+    const events = THREAD_READ_BUDGET.resume.maxEvents + 1;
+    queryRaw
+      .mockResolvedValueOnce(Array.from({ length: events }, (_, seq) => ({ seq, bytes: 10 })))
+      .mockResolvedValueOnce([{ seq: 4_321 }]);
+    const stream = await client.threads.subscribe({ botId: "bot-1", cursor: 5 });
+    await expect(stream.next()).resolves.toMatchObject({
+      value: { type: "thread.resync", seq: 4_321, threadId: "thread-1", payload: {} },
+    });
+    expect(vi.mocked(deps.events.follow).mock.calls[0]?.slice(0, 2)).toEqual(["thread-1", 4_321]);
+    await stream.return?.(undefined);
+  });
+
+  it("replays from the cursor when the backlog is small", async () => {
+    const { client, emit, deps } = threadStream();
+    const stream = await client.threads.subscribe({ botId: "bot-1", cursor: 5 });
+    emit(6, "missed");
+    await expect(stream.next()).resolves.toMatchObject({
+      value: { type: "thread.message.created" },
+    });
+    expect(vi.mocked(deps.events.follow).mock.calls[0]?.slice(0, 2)).toEqual(["thread-1", 5]);
+    await stream.return?.(undefined);
+  });
 
   it("stops delivering a busy thread once the session is revoked", async () => {
     const { client, emit, follow, stillAuthorized } = threadStream();

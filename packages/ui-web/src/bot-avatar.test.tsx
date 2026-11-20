@@ -118,6 +118,12 @@ describe("BotAvatar", () => {
     ).toContain("data-needs-you");
   });
 
+  it("can leave the ring out while the bot still counts as working", () => {
+    const html = renderToString(<BotAvatar color="#3B82F6" status="running" ring={false} />);
+    expect(html).toContain('data-working="true"');
+    expect(html).not.toContain("corvo-bot-avatar-ring");
+  });
+
   it("is ring-free when idle", () => {
     const html = renderToString(<BotAvatar color="#F59E0B" status="idle" />);
     expect(html).toContain('data-working="false"');

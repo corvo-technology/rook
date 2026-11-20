@@ -75,7 +75,7 @@ export interface PlanChoice {
 }
 
 export interface PlanCardsProps {
-  plans: Omit<PlanEntitlements, "extraSeatPriceId">[];
+  plans: Omit<PlanEntitlements, "extraSeatPriceId" | "extraComputerPriceId">[];
   locale: string;
   canManage: boolean;
   /** Disables every subscribe button, for any reason. */
@@ -176,7 +176,7 @@ function PlanCard({
   onSubscribe,
   current,
 }: Omit<PlanCardsProps, "plans" | "currency"> & {
-  entitlements: Omit<PlanEntitlements, "extraSeatPriceId">;
+  entitlements: Omit<PlanEntitlements, "extraSeatPriceId" | "extraComputerPriceId">;
   interval: BillingInterval;
   currency: BillingCurrency;
 }) {

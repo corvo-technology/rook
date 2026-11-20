@@ -257,6 +257,7 @@ msgstr "{computerMinutes} 分"
 msgid "{computers, plural, one {# computer} other {# computers}}"
 msgstr "{computers, plural, other {コンピューター#台}}"
 
+#: src/components/ExtraComputers.tsx
 #: src/pages/usage/plan-usage.tsx
 msgid "{computersUsed} of {computersLimit}"
 msgstr "{computersUsed} / {computersLimit}"
@@ -971,6 +972,10 @@ msgstr "HTTPSのサーバーURLを追加してください。"
 #: src/pages/Store.tsx
 msgid "Add another"
 msgstr "別のものを追加"
+
+#: src/components/ExtraComputers.tsx
+msgid "Add computer"
+msgstr "コンピューターを追加"
 
 #: src/pages/shell/bot-credentials.tsx
 msgid "Add credential"
@@ -2473,6 +2478,7 @@ msgstr "コンピューターの分数"
 msgid "Computer size"
 msgstr "コンピューターのサイズ"
 
+#: src/components/ExtraComputers.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/LimitsSection.tsx
 #: src/pages/usage/plan-usage.tsx
@@ -6811,6 +6817,10 @@ msgstr "読むだけ"
 msgid "Only some roles or people"
 msgstr "一部のロールまたはメンバーのみ"
 
+#: src/components/ExtraComputers.tsx
+msgid "Only the owner can add computers."
+msgstr "コンピューターを追加できるのはオーナーだけです。"
+
 #: src/components/PlanChoice.tsx
 msgid "Only the owner can subscribe"
 msgstr "購読できるのはオーナーのみです"
@@ -7784,6 +7794,10 @@ msgstr "{what} を削除"
 #: src/pages/RoutineEditor.tsx
 msgid "Remove change trigger"
 msgstr "変更トリガーを削除"
+
+#: src/components/ExtraComputers.tsx
+msgid "Remove computer"
+msgstr "コンピューターを削除"
 
 #: src/pages/TicketFields.tsx
 msgid "Remove field"
@@ -8810,6 +8824,7 @@ msgid "Something went wrong"
 msgstr "問題が発生しました"
 
 #: src/App.tsx
+#: src/components/ExtraComputers.tsx
 #: src/lib/user-error.ts
 #: src/pages/onboarding/CliEngineRows.tsx
 msgid "Something went wrong. Try again."
@@ -9933,11 +9948,6 @@ msgstr "アップグレード"
 msgid "Upgrade now"
 msgstr "今すぐアップグレード"
 
-#. js-lingui-explicit-id
-#: src/lib/run-error-copy.ts
-msgid "Upgrade your plan to add more computers."
-msgstr "コンピューターを増やすには、プランをアップグレードしてください。"
-
 #: src/pages/partner/PartnerBrand.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Upload"
@@ -10606,9 +10616,14 @@ msgstr "お使いのOpenAI"
 msgid "Your OpenRouter"
 msgstr "お使いのOpenRouter"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Your plan has no room for another computer."
+msgstr "プランにはこれ以上コンピューターを追加する余地がありません。"
+
 #: src/lib/user-error.ts
-msgid "Your plan has no room for another computer. Upgrade to add more."
-msgstr "現在のプランではコンピューターをこれ以上追加できません。アップグレードしてください。"
+msgid "Your plan has no room for another computer."
+msgstr "プランにはこれ以上コンピューターを追加する余地がありません。"
 
 #: src/lib/user-error.ts
 msgid "Your plan has no seat for another person. Upgrade to add more."

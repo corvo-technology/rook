@@ -29,6 +29,10 @@ vi.mock("@corvo/ui-web", async () => ({
   ),
 }));
 
+vi.mock("../../components/ExtraComputers", () => ({
+  ComputerLimitAction: () => <span data-testid="computer-limit-action" />,
+}));
+
 import { FirstBotStep } from "./FirstBotStep";
 
 const onReady = vi.fn();
@@ -163,7 +167,10 @@ describe("FirstBotStep", () => {
       Object.assign(new Error("Your plan allows 1 computers"), { code: "PLAN_COMPUTER_LIMIT" }),
     );
     await mount();
-    expect(container.querySelector('[role="alert"]')?.textContent).toContain("Upgrade");
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain(
+      "no room for another computer",
+    );
+    expect(container.querySelector('[data-testid="computer-limit-action"]')).not.toBeNull();
     expect(container.textContent).not.toContain("Could not set up your bots");
   });
 });

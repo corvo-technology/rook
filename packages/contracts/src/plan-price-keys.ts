@@ -15,6 +15,13 @@ export function extraPersonLookupKey(currency: BillingCurrency, interval: Billin
   return `extra_person_${currency}_${interval}`;
 }
 
+export function extraComputerLookupKey(
+  currency: BillingCurrency,
+  interval: BillingInterval,
+): string {
+  return `extra_computer_${currency}_${interval}`;
+}
+
 export function aiLookupKey(
   useCents: AiUseCents,
   currency: BillingCurrency,

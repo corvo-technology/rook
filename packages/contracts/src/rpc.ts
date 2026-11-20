@@ -238,7 +238,7 @@ import {
   WhiteLabelCheckoutInput,
 } from "./partner-payments.js";
 import { PlanCheckoutInputSchema } from "./plan-pricing.js";
-import { PlanIdSchema, PlanOverrideSchema, PlanUsageSchema } from "./plans.js";
+import { MAX_EXTRA_COMPUTERS, PlanIdSchema, PlanOverrideSchema, PlanUsageSchema } from "./plans.js";
 import { MessageReactionSchema } from "./reactions.js";
 import { RoutineWatchSchema } from "./routine-watch.js";
 import {
@@ -407,6 +407,14 @@ export const appContract = {
      */
     changePlan: oc
       .input(PlanCheckoutInputSchema)
+      .output(z.object({ ok: z.literal(true), url: z.string().url().optional() })),
+    /**
+     * Sets how many extra computers the subscription holds, billed with proration; the owner only.
+     * `url` is set only when the payment needs the owner's action: nothing changed yet, and it
+     * opens the portal.
+     */
+    setExtraComputers: oc
+      .input(z.object({ quantity: z.number().int().min(0).max(MAX_EXTRA_COMPUTERS) }))
       .output(z.object({ ok: z.literal(true), url: z.string().url().optional() })),
     portal: oc.output(z.object({ url: z.string().url() })),
     /**

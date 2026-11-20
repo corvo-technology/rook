@@ -181,6 +181,9 @@ export function accountRoutes(ctx: RouterContext) {
       changePlan: authed.billing.changePlan.handler(async ({ context, input }) =>
         requireBilling(deps).changePlan(context.actor, input),
       ),
+      setExtraComputers: authed.billing.setExtraComputers.handler(async ({ context, input }) =>
+        requireBilling(deps).setExtraComputers(context.actor, input.quantity),
+      ),
     },
     preferences: {
       update: authed.preferences.update.handler(async ({ context, input }): Promise<Me> => {

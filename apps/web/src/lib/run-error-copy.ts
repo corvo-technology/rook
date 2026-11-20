@@ -305,11 +305,11 @@ export function describeRunError(
           message: "Your plan's computer limit is reached",
         }),
         line: i18n._({
-          id: "Upgrade your plan to add more computers.",
-          message: "Upgrade your plan to add more computers.",
+          id: "Your plan has no room for another computer.",
+          message: "Your plan has no room for another computer.",
         }),
         tone: "warning",
-        actions: ["open-usage"],
+        actions: [],
       });
     case "no_model_access":
       return view(info, raw, {

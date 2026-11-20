@@ -4,10 +4,11 @@ import { Button } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useEffect, useRef, useState } from "react";
 import { AutonomyPicker } from "../../components/AutonomyPicker";
+import { ComputerLimitAction } from "../../components/ExtraComputers";
 import type { FirstBot } from "../../lib/first-bot";
 import { ensureFirstBot } from "../../lib/first-bot";
 import { rpc } from "../../lib/rpc";
-import { planErrorText } from "../../lib/user-error";
+import { isComputerLimit, planErrorText } from "../../lib/user-error";
 import { ImportFromApp } from "../ImportFromApp";
 
 type Setup = {
@@ -34,6 +35,7 @@ export function FirstBotStep({
   const { t } = useLingui();
   const [failed, setFailed] = useState(false);
   const [planLimit, setPlanLimit] = useState<string | null>(null);
+  const [computerFull, setComputerFull] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [setup, setSetup] = useState<Setup | null>(null);
@@ -45,6 +47,7 @@ export function FirstBotStep({
   useEffect(() => {
     setFailed(false);
     setPlanLimit(null);
+    setComputerFull(false);
     let live = true;
     void (async () => {
       let first: FirstBot;
@@ -53,6 +56,7 @@ export function FirstBotStep({
       } catch (error) {
         if (live) {
           setPlanLimit(planErrorText(error) ?? null);
+          setComputerFull(isComputerLimit(error));
           setFailed(true);
         }
         return;
@@ -97,7 +101,7 @@ export function FirstBotStep({
 
   if (failed || saveFailed) {
     return (
-      <div role="alert" className="flex items-center gap-3 text-sm text-destructive">
+      <div role="alert" className="flex flex-wrap items-center gap-3 text-sm text-destructive">
         <span>{(failed && planLimit) || t`Could not set up your bots`}</span>
         <Button
           variant="outline"
@@ -106,6 +110,7 @@ export function FirstBotStep({
         >
           {t`Try again`}
         </Button>
+        {failed && computerFull ? <ComputerLimitAction /> : null}
       </div>
     );
   }

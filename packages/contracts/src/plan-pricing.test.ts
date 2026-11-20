@@ -3,6 +3,7 @@ import {
   AI_USE_CENTS,
   aiAddOnPriceCents,
   currencyForLocale,
+  extraComputerCents,
   extraPersonCents,
   planPriceCents,
   resolvePlanChange,
@@ -27,6 +28,13 @@ describe("plan pricing", () => {
     expect(extraPersonCents("usd", "month")).toBe(300);
     expect(extraPersonCents("brl", "month")).toBe(1900);
     expect(extraPersonCents("brl", "year")).toBe(19000);
+  });
+
+  it("prices an extra computer, a year at ten months", () => {
+    expect(extraComputerCents("usd", "month")).toBe(900);
+    expect(extraComputerCents("brl", "month")).toBe(5390);
+    expect(extraComputerCents("usd", "year")).toBe(9000);
+    expect(extraComputerCents("brl", "year")).toBe(53900);
   });
 
   it("prices the AI add-on above the use it buys, with no yearly discount", () => {

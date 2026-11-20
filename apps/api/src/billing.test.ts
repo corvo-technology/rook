@@ -1,4 +1,5 @@
 import type { BillingProvider } from "@corvo/adapter-kit";
+import { BillingPaymentRequiredError } from "@corvo/adapter-kit";
 import type { Actor } from "@corvo/contracts";
 import { TERMS_VERSION } from "@corvo/contracts";
 import type { PrismaClient } from "@corvo/db";
@@ -373,5 +374,110 @@ describe("extra people follow the subscription", () => {
       currency: "usd",
     });
     await expect(hand.billing.extraSeatPriceFor("org-1")).resolves.toBeNull();
+  });
+});
+
+describe("extra computers", () => {
+  function computers(options: {
+    account?: Record<string, unknown>;
+    inUse?: number;
+    role?: string;
+    pay?: boolean;
+  }) {
+    const account = {
+      organizationId: "org-1",
+      customerId: "cus_1",
+      status: "active",
+      priceId: "price_team",
+      priceLookupKey: "plan_team_usd_month",
+      currency: "usd",
+      interval: "month",
+      extraComputers: 1,
+      cancelAtPeriodEnd: false,
+      ...options.account,
+    };
+    const prisma = {
+      space: { findUnique: vi.fn().mockResolvedValue({ organizationId: "org-1" }) },
+      member: {
+        findUnique: vi.fn().mockResolvedValue({ role: options.role ?? "owner" }),
+        findMany: vi.fn().mockResolvedValue([{ user: { email: "a@corvo.test" } }]),
+      },
+      spaceInvitation: { findMany: vi.fn().mockResolvedValue([]) },
+      computer: { count: vi.fn().mockResolvedValue(options.inUse ?? 0) },
+      organizationLimitOverride: { findUnique: vi.fn().mockResolvedValue(null) },
+      billingAccount: {
+        findUnique: vi.fn().mockResolvedValue(account),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        count: vi.fn().mockResolvedValue(1),
+      },
+      $queryRaw: vi.fn().mockResolvedValue([{ startedAt: new Date() }]),
+      $executeRaw: vi.fn(),
+      $transaction: vi.fn(async (run: (tx: unknown) => unknown) => run(prisma)),
+    } as unknown as PrismaClient;
+    const setExtraComputers = vi.fn(async () => {
+      if (options.pay) throw new BillingPaymentRequiredError();
+    });
+    const provider = {
+      describe: () => ({ capabilities: {} }),
+      getCustomerSubscription: vi.fn(async () => null),
+      priceIdForLookupKey: vi.fn(async (key: string) => `price_${key}`),
+      createPortal: vi.fn(async () => ({ url: "https://billing.example.com/portal" })),
+      setExtraComputers,
+    } as unknown as BillingProvider;
+    return {
+      setExtraComputers,
+      billing: createBillingService({ prisma, provider, webOrigin: "https://app.example.com" }),
+    };
+  }
+
+  it("sets the quantity at the catalog price in the subscription's currency and interval", async () => {
+    vi.stubEnv("PLAN_PRICES", '{"price_team":"team"}');
+    const { billing, setExtraComputers } = computers({});
+    await expect(billing.setExtraComputers(actor, 3)).resolves.toEqual({ ok: true });
+    expect(setExtraComputers).toHaveBeenCalledWith("cus_1", {
+      priceId: "price_extra_computer_usd_month",
+      quantity: 3,
+    });
+    vi.unstubAllEnvs();
+  });
+
+  it("is the owner's alone", async () => {
+    vi.stubEnv("PLAN_PRICES", '{"price_team":"team"}');
+    const { billing, setExtraComputers } = computers({ role: "member" });
+    await expect(billing.setExtraComputers(actor, 2)).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(setExtraComputers).not.toHaveBeenCalled();
+    vi.unstubAllEnvs();
+  });
+
+  it("needs a paid plan, and does nothing where plans are off", async () => {
+    vi.stubEnv("PLAN_PRICES", '{"price_team":"team"}');
+    const unpaid = computers({ account: { status: "trialing" } });
+    await expect(unpaid.billing.setExtraComputers(actor, 1)).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    vi.unstubAllEnvs();
+    const off = computers({});
+    await expect(off.billing.setExtraComputers(actor, 1)).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+  });
+
+  it("never removes a place that a running computer holds", async () => {
+    vi.stubEnv("PLAN_PRICES", '{"price_team":"team"}');
+    const { billing, setExtraComputers } = computers({ inUse: 2 });
+    await expect(billing.setExtraComputers(actor, 0)).rejects.toMatchObject({ code: "CONFLICT" });
+    expect(setExtraComputers).not.toHaveBeenCalled();
+    await expect(billing.setExtraComputers(actor, 1)).resolves.toEqual({ ok: true });
+    vi.unstubAllEnvs();
+  });
+
+  it("sends the owner to the portal when the payment needs them", async () => {
+    vi.stubEnv("PLAN_PRICES", '{"price_team":"team"}');
+    const { billing } = computers({ pay: true });
+    await expect(billing.setExtraComputers(actor, 2)).resolves.toEqual({
+      ok: true,
+      url: "https://billing.example.com/portal",
+    });
+    vi.unstubAllEnvs();
   });
 });

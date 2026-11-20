@@ -36,7 +36,7 @@ const GIB = 1024 ** 3;
 const plan = (usedBytes: number, overrides: Partial<PlanUsage> = {}): PlanUsage => ({
   plan: "team",
   computerSize: "medium",
-  computers: { used: 2, limit: 3 },
+  computers: { used: 2, limit: 3, included: 1, extra: 2, extraPrice: null },
   storage: { usedBytes, limitBytes: 100 * GIB },
   seats: { used: 7, included: 10, max: 15, extraPrice: null },
   plans: [],

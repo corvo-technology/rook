@@ -189,7 +189,12 @@ export default function Account() {
 
   useEffect(() => {
     void rpc("me")
-      .then(setMe)
+      .then((next) => {
+        setMe(next);
+        // An account that never saved its language gets the one this app runs in.
+        if (next.locale !== locale)
+          return rpc("preferences/update", { locale }).then(() => undefined);
+      })
       .catch(() => undefined);
     void rpc("usage/summary")
       .then(setUsage)

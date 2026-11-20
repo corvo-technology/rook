@@ -64,6 +64,8 @@ export function ShellSidebar({
   currentSpaceId,
   openSpaceChat,
   roster,
+  partnerOpen,
+  onTogglePartner,
   archived,
   footerLogos,
   user,
@@ -100,6 +102,9 @@ export function ShellSidebar({
   currentSpaceId: string | null;
   openSpaceChat: (spaceId: string, path: string) => void;
   roster: ReactNode;
+  /** Whether the person opened the partner section; it also opens by itself on a partner page. */
+  partnerOpen: boolean;
+  onTogglePartner: () => void;
   archived: ReactNode;
   footerLogos: Array<{ name: string; logo?: string | null }>;
   user: User | undefined;
@@ -235,6 +240,8 @@ export function ShellSidebar({
           )}
           {mini ? null : (
             <SidebarPartnership
+              open={partnerOpen}
+              onToggle={onTogglePartner}
               onOpen={(to) => {
                 setMobileOpen(false);
                 navigate(to);

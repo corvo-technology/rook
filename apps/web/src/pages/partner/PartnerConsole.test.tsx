@@ -521,7 +521,7 @@ describe("partner template: presets, routines and roles", () => {
 });
 
 describe("partner sidebar section", () => {
-  const sidebar = <SidebarPartnership onOpen={() => {}} />;
+  const sidebar = <SidebarPartnership open={false} onToggle={() => {}} onOpen={() => {}} />;
 
   it("is absent for a member the console refuses", async () => {
     api.partners.mockRejectedValue(new Error("FORBIDDEN"));
@@ -567,13 +567,19 @@ describe("partner brand and domain", () => {
   beforeEach(() => api.partners.mockResolvedValue([whiteLabel]));
 
   it("offers Brand and Domain to white label partners only", async () => {
-    await render("/app/partner/p2/overview", <SidebarPartnership onOpen={() => undefined} />);
+    await render(
+      "/app/partner/p2/overview",
+      <SidebarPartnership open={false} onToggle={() => undefined} onOpen={() => undefined} />,
+    );
     expect(document.querySelector("[data-testid=sidebar-partner-brand]")).toBeTruthy();
     expect(document.querySelector("[data-testid=sidebar-partner-domain]")).toBeTruthy();
     api.partners.mockResolvedValue([embedded]);
     await act(async () => root.unmount());
     root = createRoot(container);
-    await render("/app/partner/p1/overview", <SidebarPartnership onOpen={() => undefined} />);
+    await render(
+      "/app/partner/p1/overview",
+      <SidebarPartnership open={false} onToggle={() => undefined} onOpen={() => undefined} />,
+    );
     expect(document.querySelector("[data-testid=sidebar-partner-brand]")).toBeNull();
   });
 

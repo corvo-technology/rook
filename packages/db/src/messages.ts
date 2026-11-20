@@ -1,6 +1,8 @@
 import type { MessageBlock } from "@corvo/contracts";
 import type { Prisma, PrismaClient } from "./client.js";
 import { notifyForMessage } from "./notifications.js";
+import type { BranchRow } from "./thread-branches.js";
+import { visibleFilterOf } from "./thread-branches.js";
 import { markUnreadForOtherMembers } from "./thread-reads.js";
 import { withTransactionRetry } from "./transaction-retry.js";
 
@@ -9,11 +11,15 @@ export function loadRunHistoryMessages(
   prisma: PrismaClient,
   run: { id: string; threadId: string },
   limit: number,
+  /** The thread as read with `threadBranchInclude`, which says what version of the chat is on screen. */
+  thread: { activeBranchId?: string | null; branches?: readonly BranchRow[] },
   channelId?: string,
 ) {
+  const visible = visibleFilterOf(thread);
   return prisma.message.findMany({
     where: {
       threadId: run.threadId,
+      ...(Object.keys(visible).length > 0 ? { AND: [visible] } : {}),
       ...(channelId
         ? {
             OR: [
@@ -98,6 +104,7 @@ export async function createThreadMessageInTransaction(
     },
     select: {
       nextMessageSeq: true,
+      activeBranchId: true,
       spaceId: true,
       groupId: true,
       direct: { select: { userAId: true, userBId: true } },
@@ -116,6 +123,7 @@ export async function createThreadMessageInTransaction(
     data: {
       threadId: input.threadId,
       seq: thread.nextMessageSeq - 1,
+      branchId: thread.activeBranchId,
       role: input.role,
       blocks: input.blocks as Prisma.InputJsonValue,
       botId: input.botId,

@@ -18,6 +18,7 @@ import {
   foldThreadReplies,
   isActive,
   isRunWorking,
+  lastReplyId,
   matchAddedServer,
   memberName,
   newClientId,
@@ -103,6 +104,7 @@ import { ComputerPanel } from "./shell/computer-panel";
 import type { CreateBotPanelInput } from "./shell/create-bot-panel";
 import { EmbedTabs } from "./shell/embed-tabs";
 import { HostContextChip } from "./shell/host-context-chip";
+import type { MessageVersions } from "./shell/message-versions";
 import { ShellDialogs, useShellDialogs } from "./shell/shell-dialogs";
 import { PeerConversationOverlay } from "./shell/shell-overlays";
 import { ShellSidebar } from "./shell/shell-sidebar";
@@ -841,6 +843,14 @@ function SpaceShell({ page }: { page?: ReactNode }) {
     ? transcript.messages.find((message) => message.id === openThreadId)
     : undefined;
   // What the channel's transcript and a thread share: how a message is drawn and answered.
+  const chatVersions: MessageVersions = {
+    busy: composerRunning,
+    lastReplyId: lastReplyId(activeSnapshot?.messages ?? []),
+    onEdit: composer.editMessage,
+    onRegenerate: composer.regenerateReply,
+    onFork: composer.continueInNewThread,
+    onSwitch: composer.switchVersion,
+  };
   const transcriptProps: ThreadTranscriptProps = {
     currentUserId: bootstrapMe?.userId,
     personRole,
@@ -1111,6 +1121,7 @@ function SpaceShell({ page }: { page?: ReactNode }) {
               ) : (
                 <Transcript
                   {...transcriptProps}
+                  versions={inGroup || !active ? undefined : chatVersions}
                   onApproveAll={composer.approveAll}
                   key={activeSnapshot?.threadId}
                   scrollRef={thread.messageScroll}

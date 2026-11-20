@@ -277,6 +277,76 @@ export function useComposerActions({
     },
     [t],
   );
+  /** Rewrites one of the person's own messages as a new version and answers it again. */
+  const editMessage = useCallback(
+    async (message: ThreadMessage, text: string) => {
+      const botId = activeBotId.current;
+      if (!botId) return;
+      try {
+        const sent = await rpc.threads.edit({
+          botId,
+          messageId: message.id,
+          text,
+          clientNonce: newClientId(),
+        });
+        const { runId, taskId } = sent;
+        if (activeBotId.current === botId && runId && taskId) {
+          updateSnapshot((current) =>
+            applyThreadSendReceipt(current, { botId, runId, taskId }, terminalRunReceipts.current),
+          );
+        }
+        if (activeBotId.current === botId) await refreshThreadRef.current(botId);
+      } catch (error) {
+        if (activeBotId.current !== botId) throw error;
+        setSendError(errorText(error, t`Could not edit message`));
+        throw error;
+      }
+    },
+    [t],
+  );
+  /** Answers the last message again; the earlier reply stays as another version. */
+  const regenerateReply = useCallback(async () => {
+    const botId = activeBotId.current;
+    if (!botId) return;
+    try {
+      await rpc.threads.regenerate({ botId, clientNonce: newClientId() });
+      if (activeBotId.current === botId) await refreshThreadRef.current(botId);
+    } catch (error) {
+      if (activeBotId.current !== botId) return;
+      setSendError(errorText(error, t`Could not regenerate reply`));
+    }
+  }, [t]);
+  /** Shows another version of the chat; null is the original. */
+  const switchVersion = useCallback(
+    async (branchId: string | null) => {
+      const botId = activeBotId.current;
+      if (!botId) return;
+      try {
+        await rpc.threads.switchBranch({ botId, branchId });
+        if (activeBotId.current === botId) await refreshThreadRef.current(botId);
+      } catch (error) {
+        if (activeBotId.current !== botId) return;
+        setSendError(errorText(error, t`Could not switch version`));
+      }
+    },
+    [t],
+  );
+  /** Carries the chat on in a new one, copied up to this message. */
+  const continueInNewThread = useCallback(
+    async (message: ThreadMessage) => {
+      const botId = activeBotId.current;
+      if (!botId) return;
+      try {
+        const forked = await rpc.threads.fork({ botId, messageId: message.id });
+        await refreshBots().catch(() => undefined);
+        navigate(`/app/${forked.botId}`);
+      } catch (error) {
+        if (activeBotId.current !== botId) return;
+        setSendError(errorText(error, t`Could not continue in a new thread`));
+      }
+    },
+    [t, refreshBots, navigate],
+  );
   const reactToMessage = useCallback(
     async (message: ThreadMessage, reaction: MessageReaction) => {
       const botId = activeBotId.current;
@@ -666,6 +736,10 @@ export function useComposerActions({
     approveAll,
     reactToMessage,
     pinMessage,
+    editMessage,
+    regenerateReply,
+    switchVersion,
+    continueInNewThread,
     sendError,
     setSendError,
     imageConfirmation,

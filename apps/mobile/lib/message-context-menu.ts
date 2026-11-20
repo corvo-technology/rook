@@ -8,6 +8,9 @@ export const messageMenuSymbols = [
   "select",
   "unread",
   "wiki",
+  "edit",
+  "regenerate",
+  "fork",
 ] as const;
 
 export type MessageMenuSymbol = (typeof messageMenuSymbols)[number];
@@ -47,6 +50,12 @@ export function buildMessageContextMenu({
     select: boolean;
     unread?: boolean;
     wiki?: boolean;
+    /** The person's own text message, while nothing is running. */
+    edit?: boolean;
+    /** The agent's newest reply, while nothing is running. */
+    regenerate?: boolean;
+    /** Carries the chat on in a new one from this message. */
+    fork?: boolean;
   };
 }): MessageMenuEntry[] {
   const secondary: MessageMenuEntry[] = [
@@ -57,6 +66,9 @@ export function buildMessageContextMenu({
   return [
     ...(include.reply !== false ? [entry("reply", labels.reply)] : []),
     ...(include.thread ? [entry("thread", labels.thread)] : []),
+    ...(include.edit ? [entry("edit", labels.edit)] : []),
+    ...(include.regenerate ? [entry("regenerate", labels.regenerate)] : []),
+    ...(include.fork ? [entry("fork", labels.fork)] : []),
     ...(include.unread ? [entry("unread", labels.unread)] : []),
     entry("copy", labels.copy),
     ...(include.wiki ? [entry("wiki", labels.wiki)] : []),

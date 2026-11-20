@@ -22,13 +22,16 @@ import {
 import { getLogger } from "@corvo/logging";
 import { ORPCError } from "@orpc/server";
 import { accessRevocations } from "../access-revocations.js";
+import { requireCanTalkTo } from "../agent-audience.js";
 import { approvalRefusal, approvalThreadId } from "../approval-access.js";
 import { isPartnerCustomer, resolveHostAction } from "../host-actions.js";
 import { listPinnedMessages, pinThreadMessage } from "../message-pins.js";
 import { assertMessageModel } from "../model-pins.js";
 import { requireSpacePermission } from "../space-owner.js";
 import { assertTeachingSendAllowed } from "../taught-skills.js";
+import { regenerateThreadReply, switchThreadVersion } from "../thread-branching.js";
 import { compressThread } from "../thread-context.js";
+import { forkConversation } from "../thread-fork.js";
 import {
   isBackgroundRun,
   isPeerRun,
@@ -49,7 +52,7 @@ import {
   threadHead,
   threadSnapshot,
 } from "../thread-target.js";
-import { mapBotSecretInputError } from "./bots.js";
+import { mapBotSecretInputError, mapSpaceLifecycleError } from "./bots.js";
 import { releaseComputerControl } from "./computer.js";
 import type { RouterContext } from "./context.js";
 import {
@@ -73,8 +76,58 @@ const HANG_UP_PROMPT =
   "The voice call just ended because the user hung up. First call end_call with a short title for the call (leave farewell empty). Then, if anything the user asked for during the call is still unfinished, complete it now as a normal chat reply with full formatting. If nothing is pending, reply with one short sentence.";
 
 export function threadsRoutes(ctx: RouterContext) {
-  const { deps, authed, callsEnabled, codexCatalog } = ctx;
+  const { deps, authed, callsEnabled, codexCatalog, repos } = ctx;
   const talk = (actor: Actor) => requireSpacePermission(deps.prisma, actor, "talk_to_agents");
+  const sendMessage = async (
+    actor: Actor,
+    input: { botId?: string; groupId?: string } & Parameters<typeof sendThreadMessage>[3],
+  ) => {
+    await talk(actor);
+    const setup = await modelSetup(deps, actor);
+    if (setup.needsModel) {
+      throw new ORPCError("BAD_REQUEST", { message: MODEL_REQUIRED_SEND_ERROR });
+    }
+    const target = await resolveThreadTarget(deps.prisma, actor, input);
+    if (target.kind === "bot") {
+      await assertTeachingSendAllowed(deps.prisma, actor.spaceId, target.botId);
+    }
+    const confirmingImages =
+      input.imageHandling === "confirm" && Boolean(input.artifactIds?.length);
+    // Reuse the funding modelSetup resolved; a send never asks billing twice.
+    const { funding } = setup;
+    const deployment = setup.hasDeployment
+      ? { provider: deps.env.defaultProvider, model: deps.env.defaultModel }
+      : null;
+    if (input.model) {
+      await assertMessageModel(deps, actor, input.model, {
+        codexCatalog,
+        hostedProvider: funding?.funding === "credits" ? deployment?.provider : undefined,
+      });
+    }
+    return sendThreadMessage(
+      {
+        ...deps,
+        router: deps.channelRouter,
+        imageAdmission: confirmingImages
+          ? {
+              secrets: deps.secrets,
+              deployment,
+              hostedProvider: funding?.funding === "credits" ? deployment?.provider : undefined,
+            }
+          : undefined,
+      },
+      actor,
+      target,
+      // A page's context and actions are for the frame a partner embedded, nobody else's.
+      {
+        ...input,
+        host: input.host && (await isPartnerCustomer(deps.prisma, actor)) ? input.host : undefined,
+      },
+      target.kind === "bot"
+        ? (runId) => releaseComputerControl(deps, actor, target.botId, "done", runId)
+        : undefined,
+    );
+  };
   return {
     threads: {
       head: authed.threads.head.handler(async ({ context, input }) => {
@@ -186,7 +239,14 @@ export function threadsRoutes(ctx: RouterContext) {
           void follow.return(undefined).catch(() => {});
         }
       }),
-      send: authed.threads.send.handler(async ({ context, input }) => {
+      send: authed.threads.send.handler(async ({ context, input }) =>
+        sendMessage(context.actor, input),
+      ),
+      edit: authed.threads.edit.handler(async ({ context, input }) => {
+        const { messageId, ...rest } = input;
+        return sendMessage(context.actor, { ...rest, edit: { messageId } });
+      }),
+      regenerate: authed.threads.regenerate.handler(async ({ context, input }) => {
         await talk(context.actor);
         const setup = await modelSetup(deps, context.actor);
         if (setup.needsModel) {
@@ -194,46 +254,25 @@ export function threadsRoutes(ctx: RouterContext) {
         }
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);
         if (target.kind === "bot") {
+          await requireCanTalkTo(deps.prisma, context.actor, target.botId);
           await assertTeachingSendAllowed(deps.prisma, context.actor.spaceId, target.botId);
         }
-        const confirmingImages =
-          input.imageHandling === "confirm" && Boolean(input.artifactIds?.length);
-        // Reuse the funding modelSetup resolved; a send never asks billing twice.
-        const { funding } = setup;
-        const deployment = setup.hasDeployment
-          ? { provider: deps.env.defaultProvider, model: deps.env.defaultModel }
-          : null;
-        if (input.model) {
-          await assertMessageModel(deps, context.actor, input.model, {
-            codexCatalog,
-            hostedProvider: funding?.funding === "credits" ? deployment?.provider : undefined,
-          });
-        }
-        return sendThreadMessage(
-          {
-            ...deps,
-            router: deps.channelRouter,
-            imageAdmission: confirmingImages
-              ? {
-                  secrets: deps.secrets,
-                  deployment,
-                  hostedProvider: funding?.funding === "credits" ? deployment?.provider : undefined,
-                }
-              : undefined,
+        return regenerateThreadReply(deps, context.actor, target, input);
+      }),
+      switchBranch: authed.threads.switchBranch.handler(async ({ context, input }) => {
+        await talk(context.actor);
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        await switchThreadVersion(deps, context.actor, target, input.branchId);
+        return { ok: true as const };
+      }),
+      fork: authed.threads.fork.handler(async ({ context, input }) => {
+        await requireSpacePermission(deps.prisma, context.actor, "create_agents");
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        if (target.kind !== "bot") throw new IsolationError();
+        return forkConversation(deps, repos, context.actor, target, input.messageId).catch(
+          (error: unknown) => {
+            throw mapSpaceLifecycleError(error);
           },
-          context.actor,
-          target,
-          // A page's context and actions are for the frame a partner embedded, nobody else's.
-          {
-            ...input,
-            host:
-              input.host && (await isPartnerCustomer(deps.prisma, context.actor))
-                ? input.host
-                : undefined,
-          },
-          target.kind === "bot"
-            ? (runId) => releaseComputerControl(deps, context.actor, target.botId, "done", runId)
-            : undefined,
         );
       }),
       react: authed.threads.react.handler(async ({ context, input }) => {

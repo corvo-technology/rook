@@ -475,6 +475,10 @@ msgstr "{percent}% usado"
 msgid "{percent}% used · {used} of {windowLabel} tokens"
 msgstr "{percent}% usado · {used} de {windowLabel} tokens"
 
+#: src/pages/shell/message-versions.tsx
+msgid "{position} of {count}"
+msgstr "{position} de {count}"
+
 #: src/pages/shell/message-view.tsx
 msgid "{position} of {total}"
 msgstr "{position} de {total}"
@@ -841,6 +845,10 @@ msgstr "Menu da conta de {name}"
 #: src/pages/platform/PlatformConnect.tsx
 msgid "Action needed"
 msgstr "Ação necessária"
+
+#: src/lib/server-copy.ts
+msgid "Actions already taken by the earlier reply were not undone."
+msgstr "As ações da resposta anterior não foram desfeitas."
 
 #. placeholder {0}: bot.name
 #. placeholder {0}: group.spaceName
@@ -1961,6 +1969,7 @@ msgstr "Não pode ler imagens"
 #: src/pages/platform/NewPartnerDialog.tsx
 #: src/pages/platform/PricingSection.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/shell/message-versions.tsx
 #: src/pages/Store.tsx
 #: src/pages/WhatsAppNumbers.tsx
 #: src/pages/WikiBrowser.tsx
@@ -2644,6 +2653,10 @@ msgstr "Limite de contexto"
 msgid "Continue"
 msgstr "Continuar"
 
+#: src/pages/shell/message-hover-actions.tsx
+msgid "Continue in new thread"
+msgstr "Continuar em uma nova conversa"
+
 #: src/pages/partner/PartnerPayments.tsx
 msgid "Continue setup"
 msgstr "Continuar configuração"
@@ -2826,6 +2839,10 @@ msgstr "Não foi possível conectar à tela do computador"
 msgid "Could not continue"
 msgstr "Não foi possível continuar"
 
+#: src/pages/shell/use-composer-actions.ts
+msgid "Could not continue in a new thread"
+msgstr "Não foi possível continuar em uma nova conversa"
+
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/create-bot-panel.tsx
 msgid "Could not create bot"
@@ -2928,6 +2945,10 @@ msgstr "Não foi possível baixar o {0}. Tente novamente."
 #: src/components/ArtifactFileCard.tsx
 msgid "Could not download {name}. Try again."
 msgstr "Não foi possível baixar o {name}. Tente novamente."
+
+#: src/pages/shell/use-composer-actions.ts
+msgid "Could not edit message"
+msgstr "Não foi possível editar a mensagem"
 
 #: src/pages/platform/UsageEvidenceExport.tsx
 msgid "Could not export"
@@ -3084,6 +3105,10 @@ msgstr "Não foi possível acessar este servidor de modelos"
 #: src/pages/shell/agent-import.tsx
 msgid "Could not read these files"
 msgstr "Não foi possível ler estes arquivos"
+
+#: src/pages/shell/use-composer-actions.ts
+msgid "Could not regenerate reply"
+msgstr "Não foi possível gerar a resposta de novo"
 
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MembersSettingsPanel.tsx
@@ -3274,6 +3299,10 @@ msgstr "Não foi possível enviar esta resposta"
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Could not switch {failedNames}. Try again."
 msgstr "Não foi possível trocar {failedNames}. Tente de novo."
+
+#: src/pages/shell/use-composer-actions.ts
+msgid "Could not switch version"
+msgstr "Não foi possível trocar de versão"
 
 #: src/pages/shell/use-computer.tsx
 msgid "Could not take control"
@@ -4071,6 +4100,7 @@ msgstr "Cada vaga acima de {included} custa {extraCostPrice}"
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/ConnectionsPage.tsx
 #: src/pages/partner/PartnerTemplatePanel.tsx
+#: src/pages/shell/message-hover-actions.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/YouMemory.tsx
 msgid "Edit"
@@ -4083,6 +4113,10 @@ msgstr "Editar primeiro"
 #: src/pages/shell/bot-panel.tsx
 msgid "Edit label"
 msgstr "Editar rótulo"
+
+#: src/pages/shell/message-versions.tsx
+msgid "Edit message"
+msgstr "Editar mensagem"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Edit name"
@@ -6233,6 +6267,10 @@ msgstr "próxima rotina em {n} min"
 msgid "Next routines"
 msgstr "Próximas rotinas"
 
+#: src/pages/shell/message-versions.tsx
+msgid "Next version"
+msgstr "Próxima versão"
+
 #: src/pages/connections/connection-model.ts
 msgid "No access"
 msgstr "Sem acesso"
@@ -7216,6 +7254,10 @@ msgstr "Anterior"
 msgid "Previous page"
 msgstr "Página anterior"
 
+#: src/pages/shell/message-versions.tsx
+msgid "Previous version"
+msgstr "Versão anterior"
+
 #: src/pages/partner/PartnerCustomers.tsx
 msgid "Price"
 msgstr "Preço"
@@ -7535,6 +7577,10 @@ msgstr "Recusar"
 #: src/components/WikiChangeCard.tsx
 msgid "Refused"
 msgstr "Recusado"
+
+#: src/pages/shell/message-hover-actions.tsx
+msgid "Regenerate"
+msgstr "Gerar de novo"
 
 #: src/lib/user-error.ts
 msgid "Registration is closed"
@@ -8082,6 +8128,7 @@ msgstr "sábado"
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/message-versions.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/YouMemory.tsx
 msgid "Save"

@@ -891,6 +891,35 @@ export const appContract = {
         runIds: z.array(Id).optional(),
       }),
     ),
+    /** Rewrites one of the person's own messages as a new version of the chat and answers it again. */
+    edit: oc
+      .input(
+        threadTarget.safeExtend({
+          messageId: Id,
+          text: z.string().trim().min(1),
+          clientNonce: z.string().min(1).max(200).optional(),
+        }),
+      )
+      .output(
+        z.object({
+          taskId: Id.optional(),
+          runId: Id.optional(),
+          seq: z.number().int(),
+          runIds: z.array(Id).optional(),
+        }),
+      ),
+    /** Answers the last message again as a new version of the reply; the earlier reply stays. */
+    regenerate: oc
+      .input(threadTarget.safeExtend({ clientNonce: z.string().min(1).max(200).optional() }))
+      .output(z.object({ runId: Id })),
+    /** Shows another version of the chat; null is the original. */
+    switchBranch: oc
+      .input(threadTarget.safeExtend({ branchId: Id.nullable() }))
+      .output(z.object({ ok: z.literal(true) })),
+    /** Copies the chat up to a message into a new agent's chat to carry on there. */
+    fork: oc
+      .input(botId.safeExtend({ messageId: Id }))
+      .output(z.object({ botId: Id, name: z.string() })),
     react: oc
       .input(
         threadTarget.safeExtend({

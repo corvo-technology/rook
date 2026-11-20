@@ -154,6 +154,8 @@ export function metaCopy(code: MetaCode, p: Params): string | undefined {
       return t`Stopped. This was still waiting for an answer.`;
     case "stuck_waiting_takeover":
       return t`Stopped. This was still waiting for you on the screen.`;
+    case "branch_effects":
+      return t`Actions already taken by the earlier reply were not undone.`;
     case "routine_watching":
       return t`${name} routine: watching for changes`;
     case "routine_no_changes":

@@ -15,6 +15,7 @@ import {
 } from "@corvo/core";
 import { messageReplyPreview } from "@corvo/core/message-quote";
 import type { Prisma, PrismaClient } from "@corvo/db";
+import { messageVariantsByMessage, visibleMessagesWhere } from "@corvo/db";
 
 type MessageDb = PrismaClient | Prisma.TransactionClient;
 
@@ -34,11 +35,48 @@ export async function loadMessagePage(
   includePeerRuns = false,
   includePeerReceipts = false,
 ): Promise<ThreadMessagePage> {
+  // Only the version of the chat on screen is paged; the others are reached by switching to them.
+  const visible = await visibleMessagesWhere(prisma, threadId);
+  const page = await loadVisiblePage(
+    prisma,
+    threadId,
+    visible,
+    before,
+    pageSize,
+    around,
+    includePeerRuns,
+    includePeerReceipts,
+  );
+  const variants = await messageVariantsByMessage(prisma, threadId);
+  if (variants.size === 0) return page;
+  return {
+    ...page,
+    messages: page.messages.map((message) => {
+      const found = variants.get(message.id);
+      return found ? { ...message, variants: found } : message;
+    }),
+  };
+}
+
+/** A thread that never branched adds no condition, so its queries stay as they were. */
+const only = (visible: Prisma.MessageWhereInput): Prisma.MessageWhereInput =>
+  Object.keys(visible).length > 0 ? { AND: [visible] } : {};
+
+async function loadVisiblePage(
+  prisma: MessageDb,
+  threadId: string,
+  visible: Prisma.MessageWhereInput,
+  before: number | undefined,
+  pageSize: number,
+  around: { messageId?: string; seq?: number } | undefined,
+  includePeerRuns: boolean,
+  includePeerReceipts: boolean,
+): Promise<ThreadMessagePage> {
   if (around) {
     let targetSeq = around.seq;
     if (targetSeq === undefined && around.messageId) {
       const row = await prisma.message.findFirst({
-        where: { id: around.messageId, threadId },
+        where: { id: around.messageId, threadId, ...only(visible) },
         select: { seq: true },
       });
       targetSeq = row?.seq;
@@ -48,7 +86,7 @@ export async function loadMessagePage(
       const minSeq = Math.max(0, targetSeq - half);
       const maxSeq = targetSeq + half;
       const rows = await prisma.message.findMany({
-        where: { threadId, seq: { gte: minSeq, lte: maxSeq } },
+        where: { threadId, ...only(visible), seq: { gte: minSeq, lte: maxSeq } },
         orderBy: { seq: "asc" },
         take: pageSize,
         include: { replyTo: { select: replySelection } },
@@ -57,7 +95,9 @@ export async function loadMessagePage(
       const coveredThroughSeq = truncated ? (rows[rows.length - 1]?.seq ?? maxSeq) : maxSeq;
       const first = rows[0];
       const hasOlder = first
-        ? (await prisma.message.count({ where: { threadId, seq: { lt: first.seq } } })) > 0
+        ? (await prisma.message.count({
+            where: { threadId, ...only(visible), seq: { lt: first.seq } },
+          })) > 0
         : false;
       // Peer activity stays out of the normal transcript (including the
       // around target). Full peer history belongs in the bot-messages overlay
@@ -77,6 +117,7 @@ export async function loadMessagePage(
     const rows = await prisma.message.findMany({
       where: {
         threadId,
+        ...only(visible),
         ...(cursor === undefined ? {} : { seq: { lt: cursor } }),
       },
       orderBy: { seq: "desc" },

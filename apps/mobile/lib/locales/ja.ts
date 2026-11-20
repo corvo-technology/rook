@@ -1,4 +1,5 @@
 export const JA_MESSAGES: Record<string, string> = {
+  "For this conversation": "この会話で使う",
   Automatic: "自動",
   "Complex tasks model": "複雑なタスク用モデル",
   "Not sent. Tap for options": "未送信。タップしてオプションを表示",

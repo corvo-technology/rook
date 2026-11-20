@@ -4530,6 +4530,10 @@ msgstr "Primer bot"
 msgid "First messages, one per line"
 msgstr "Primeros mensajes, uno por línea"
 
+#: src/pages/shell/composer-model-choice.tsx
+msgid "For this conversation"
+msgstr "Para esta conversación"
+
 #: src/components/PlanChoice.tsx
 msgid "For up to {count} people"
 msgstr "Para hasta {count} personas"

@@ -26,6 +26,7 @@ import { requireCanTalkTo } from "../agent-audience.js";
 import { approvalRefusal, approvalThreadId } from "../approval-access.js";
 import { isPartnerCustomer, resolveHostAction } from "../host-actions.js";
 import { listPinnedMessages, pinThreadMessage } from "../message-pins.js";
+import { assertMessageModel } from "../model-pins.js";
 import { requireSpacePermission } from "../space-owner.js";
 import { assertTeachingSendAllowed } from "../taught-skills.js";
 import { regenerateThreadReply, switchThreadVersion } from "../thread-branching.js";
@@ -75,7 +76,7 @@ const HANG_UP_PROMPT =
   "The voice call just ended because the user hung up. First call end_call with a short title for the call (leave farewell empty). Then, if anything the user asked for during the call is still unfinished, complete it now as a normal chat reply with full formatting. If nothing is pending, reply with one short sentence.";
 
 export function threadsRoutes(ctx: RouterContext) {
-  const { deps, authed, callsEnabled, repos } = ctx;
+  const { deps, authed, callsEnabled, codexCatalog, repos } = ctx;
   const talk = (actor: Actor) => requireSpacePermission(deps.prisma, actor, "talk_to_agents");
   const sendMessage = async (
     actor: Actor,
@@ -97,6 +98,12 @@ export function threadsRoutes(ctx: RouterContext) {
     const deployment = setup.hasDeployment
       ? { provider: deps.env.defaultProvider, model: deps.env.defaultModel }
       : null;
+    if (input.model) {
+      await assertMessageModel(deps, actor, input.model, {
+        codexCatalog,
+        hostedProvider: funding?.funding === "credits" ? deployment?.provider : undefined,
+      });
+    }
     return sendThreadMessage(
       {
         ...deps,

@@ -4,12 +4,13 @@ import { newClientId } from "@corvo/core";
 import { Button, Spinner, Textarea } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUp, Menu } from "lucide-react";
+import { ArrowDown, ArrowUp, Menu } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { PersonAvatar } from "../components/PersonAvatar";
 import { usePresence } from "../lib/presence";
 import { useSpaceQueries } from "../lib/query";
 import { rpc } from "../lib/rpc";
+import { useFollowTail } from "../lib/use-follow-tail";
 import { errorText } from "../lib/user-error";
 
 const RECONNECT_MS = 2_000;
@@ -39,7 +40,7 @@ export function DirectChat({
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const end = useRef<HTMLDivElement>(null);
+  const scroller = useRef<HTMLDivElement>(null);
 
   const opened = useQuery({
     queryKey: ["direct-open", userId],
@@ -81,10 +82,15 @@ export function DirectChat({
     return () => controller.abort();
   }, [threadId, startCursor]);
 
-  const lastSeq = thread.data?.messages.at(-1)?.seq;
+  const newest = thread.data?.messages.at(-1);
+  const lastSeq = newest?.seq;
+  const { atEnd, jumpToLatest, scrollProps } = useFollowTail(
+    scroller,
+    `${threadId}:${newest?.id}`,
+    newest?.authorUserId === currentUserId,
+  );
   useEffect(() => {
     if (!threadId || lastSeq === undefined) return;
-    end.current?.scrollIntoView({ block: "end" });
     void rpc.directMessages
       .markRead({ threadId })
       .then(() => queryClient.invalidateQueries({ queryKey: unreadKey }))
@@ -158,42 +164,60 @@ export function DirectChat({
         />
         <h1 className="text-name font-semibold">{partner.name}</h1>
       </div>
-      <div className="rk-scroll flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3 py-5 md:px-6">
-        {thread.data.messages.map((message) => {
-          const mine = message.authorUserId === currentUserId;
-          const name = mine ? (message.authorName ?? t`You`) : partner.name;
-          return (
-            <div
-              key={message.id}
-              data-testid="direct-message"
-              className="-mx-2 grid max-w-[860px] grid-cols-[32px_minmax(0,1fr)] gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted/50 motion-reduce:transition-none"
-            >
-              <PersonAvatar
-                name={name}
-                image={mine ? message.authorImage : partner.image}
-                size={32}
-              />
-              <div className="flex min-w-0 flex-col">
-                <span className="flex items-baseline gap-2">
-                  <span className="text-name font-semibold">{name}</span>
-                  <time
-                    dateTime={message.createdAt}
-                    className="text-meta tabular-nums text-muted-foreground"
-                  >
-                    {new Date(message.createdAt).toLocaleTimeString(undefined, {
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })}
-                  </time>
-                </span>
-                <div className="text-message text-foreground">
-                  <ChatMarkdown>{textOf(message)}</ChatMarkdown>
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <div
+          ref={scroller}
+          {...scrollProps}
+          className="rk-scroll flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3 py-5 md:px-6"
+        >
+          {thread.data.messages.map((message) => {
+            const mine = message.authorUserId === currentUserId;
+            const name = mine ? (message.authorName ?? t`You`) : partner.name;
+            return (
+              <div
+                key={message.id}
+                data-testid="direct-message"
+                className="-mx-2 grid max-w-[860px] grid-cols-[32px_minmax(0,1fr)] gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted/50 motion-reduce:transition-none"
+              >
+                <PersonAvatar
+                  name={name}
+                  image={mine ? message.authorImage : partner.image}
+                  size={32}
+                />
+                <div className="flex min-w-0 flex-col">
+                  <span className="flex items-baseline gap-2">
+                    <span className="text-name font-semibold">{name}</span>
+                    <time
+                      dateTime={message.createdAt}
+                      className="text-meta tabular-nums text-muted-foreground"
+                    >
+                      {new Date(message.createdAt).toLocaleTimeString(undefined, {
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                    </time>
+                  </span>
+                  <div className="text-message text-foreground">
+                    <ChatMarkdown>{textOf(message)}</ChatMarkdown>
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-        <div ref={end} />
+            );
+          })}
+        </div>
+        <Button
+          variant="floating"
+          size="icon-lg"
+          aria-label={t`Jump to latest`}
+          aria-hidden={atEnd}
+          tabIndex={atEnd ? -1 : 0}
+          onClick={jumpToLatest}
+          className={`absolute bottom-4 left-1/2 z-20 -translate-x-1/2 shadow-md transition-[opacity,transform] duration-200 motion-reduce:transition-none ${
+            atEnd ? "pointer-events-none translate-y-2 opacity-0" : "translate-y-0 opacity-100"
+          }`}
+        >
+          <ArrowDown strokeWidth={1.8} className="size-[17px]" />
+        </Button>
       </div>
       <div className="px-3 pb-5 md:px-6">
         {error ? (

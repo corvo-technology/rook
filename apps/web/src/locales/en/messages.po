@@ -75,8 +75,8 @@ msgstr "{0, plural, one {# skill} other {# skills}}"
 
 #. placeholder {0}: result.tickets
 #: src/pages/ImportFlow.tsx
-msgid "{0, plural, one {# ticket} other {# tickets}}"
-msgstr "{0, plural, one {# ticket} other {# tickets}}"
+msgid "{0, plural, one {# task} other {# tasks}}"
+msgstr "{0, plural, one {# task} other {# tasks}}"
 
 #. placeholder {0}: result.wikiPages
 #: src/pages/ImportFlow.tsx
@@ -952,8 +952,8 @@ msgid "Add a step to “{routine}”?"
 msgstr "Add a step to “{routine}”?"
 
 #: src/pages/board/BoardLanes.tsx
-msgid "Add a ticket to {lane}"
-msgstr "Add a ticket to {lane}"
+msgid "Add a task to {lane}"
+msgstr "Add a task to {lane}"
 
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/use-routine-editor.ts
@@ -6329,8 +6329,8 @@ msgid "New space"
 msgstr "New space"
 
 #: src/pages/Board.tsx
-msgid "New ticket"
-msgstr "New ticket"
+msgid "New task"
+msgstr "New task"
 
 #: src/pages/MembersSettingsPanel.tsx
 msgid "New workspace"
@@ -6527,6 +6527,7 @@ msgid "No routines scheduled."
 msgstr "No routines scheduled."
 
 #: src/pages/Routines.tsx
+#: src/pages/Workflows.tsx
 msgid "No routines yet"
 msgstr "No routines yet"
 
@@ -6547,8 +6548,8 @@ msgid "No skills yet"
 msgstr "No skills yet"
 
 #: src/pages/Board.tsx
-msgid "No tickets yet"
-msgstr "No tickets yet"
+msgid "No tasks yet"
+msgstr "No tasks yet"
 
 #: src/lib/routine-trigger.ts
 msgid "No trigger"
@@ -6565,10 +6566,6 @@ msgstr "No voice right now"
 #: src/pages/platform/PlatformConnect.tsx
 msgid "No white label partners"
 msgstr "No white label partners"
-
-#: src/pages/Workflows.tsx
-msgid "No workflows yet"
-msgstr "No workflows yet"
 
 #: src/lib/ticket-priority.ts
 msgid "Normal"
@@ -7331,8 +7328,8 @@ msgid "Preferences"
 msgstr "Preferences"
 
 #: src/pages/board/BoardLanes.tsx
-msgid "Press space to pick up a ticket, the arrow keys to choose a column, and space again to drop it."
-msgstr "Press space to pick up a ticket, the arrow keys to choose a column, and space again to drop it."
+msgid "Press space to pick up a task, the arrow keys to choose a column, and space again to drop it."
+msgstr "Press space to pick up a task, the arrow keys to choose a column, and space again to drop it."
 
 #: src/pages/ImportFlow.tsx
 #: src/pages/partner/PartnerBrand.tsx
@@ -8112,6 +8109,13 @@ msgstr "Routine"
 #: src/pages/shell/message-view.tsx
 msgid "Routine “{0}”"
 msgstr "Routine “{0}”"
+
+#: src/pages/PartnerTemplateEditor.tsx
+#: src/pages/shell/command-palette.tsx
+#: src/pages/shell/sidebar-team.tsx
+#: src/pages/Workflows.tsx
+msgid "Routine flows"
+msgstr "Routine flows"
 
 #: src/pages/ImportFlow.tsx
 #: src/pages/PartnerTemplateEditor.tsx
@@ -10412,13 +10416,6 @@ msgstr "Won"
 #: src/lib/ticket-status.ts
 msgid "Won't do"
 msgstr "Won't do"
-
-#: src/pages/PartnerTemplateEditor.tsx
-#: src/pages/shell/command-palette.tsx
-#: src/pages/shell/sidebar-team.tsx
-#: src/pages/Workflows.tsx
-msgid "Workflows"
-msgstr "Workflows"
 
 #: src/pages/shell/message-view.tsx
 msgid "working"

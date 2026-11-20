@@ -90,7 +90,7 @@ export function PartnerTemplateEditor({
   const [busy, setBusy] = useState(false);
   const areaLabels: Record<PartnerHiddenArea, string> = {
     routines: t`Routines`,
-    workflows: t`Workflows`,
+    workflows: t`Routine flows`,
     usage: t`Usage`,
     artifacts: t`Artifacts`,
     store: t`Store`,

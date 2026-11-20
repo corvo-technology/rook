@@ -241,10 +241,10 @@ it("moves a step earlier or later by saving the new order", async () => {
   await cleanup();
 });
 
-it("says so when there are no workflows yet", async () => {
+it("says so when there are no routines yet", async () => {
   workflows.mockResolvedValue([]);
   const { container, cleanup } = await renderPage();
-  expect(container.textContent).toContain("No workflows yet");
+  expect(container.textContent).toContain("No routines yet");
   expect(container.querySelector('[data-testid="workflow"]')).toBeNull();
   await cleanup();
 });

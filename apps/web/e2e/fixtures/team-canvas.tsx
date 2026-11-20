@@ -282,7 +282,9 @@ function Canvas() {
             { key: "activity", label: "Activity", to: "/app/activity", icon: Activity },
             { key: "team", label: "Team", to: "/app/team", icon: Users },
           ]}
-          more={[{ key: "workflows", label: "Workflows", to: "/app/workflows", icon: Workflow }]}
+          more={[
+            { key: "workflows", label: "Routine flows", to: "/app/workflows", icon: Workflow },
+          ]}
           pathname={agentView ? "/app/chief" : "/app/team"}
           onOpen={noop}
           onQuickSwitch={noop}

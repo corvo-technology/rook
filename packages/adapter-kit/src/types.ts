@@ -1337,6 +1337,8 @@ export interface BillingPlanCheckoutRequest {
   extraPeople: number;
   /** Dollars of model use a month, in cents; null brings their own AI. */
   aiUseCents: AiUseCents | null;
+  /** The terms version the customer must accept to pay; the provider records it with the session. */
+  termsVersion?: string;
   successUrl: string;
   cancelUrl: string;
 }
@@ -1359,6 +1361,29 @@ export interface BillingPlanChangeRequest {
   customerId: string;
   apply: BillingPlanSelection | null;
   atRenewal: BillingPlanSelection | null;
+}
+
+/**
+ * What a verified billing webhook says about a payment or subscription, kept as evidence of
+ * what was charged and accepted. Only the fields the event carries are set.
+ */
+export interface BillingEvidence {
+  /** The provider's event id; one record per id, so a repeated delivery adds nothing. */
+  eventId: string;
+  type: string;
+  occurredAt: Date;
+  sessionId?: string;
+  subscriptionId?: string;
+  invoiceId?: string;
+  chargeId?: string;
+  /** In the currency's smallest unit. */
+  amountMinor?: number;
+  currency?: string;
+  priceLookupKeys?: string[];
+  interval?: string;
+  status?: string;
+  termsAccepted?: boolean;
+  termsVersion?: string;
 }
 
 export interface BillingCheckoutRequest {

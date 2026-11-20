@@ -28,6 +28,7 @@ import {
   planConfigFromEnv,
   resolvePlanChange,
   samePlanSelection,
+  TERMS_VERSION,
 } from "@corvo/contracts";
 import type { BillingAccount, PrismaClient } from "@corvo/db";
 import {
@@ -582,6 +583,7 @@ export function createBillingService(deps: {
             interval: input.interval,
             extraPeople: extraSeats(limits, total),
             aiUseCents: input.aiUseCents,
+            termsVersion: TERMS_VERSION,
             successUrl: `${deps.webOrigin}${BILLING_RETURN_PATH}`,
             cancelUrl: `${appUrl}?billing=canceled`,
           }),

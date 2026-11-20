@@ -164,6 +164,19 @@ describe("Stripe plan checkout", () => {
     expect(session?.form.get("subscription_data[billing_mode][type]")).toBe("classic");
   });
 
+  it("requires the terms and records which version was shown", async () => {
+    const { provider, requests } = stripe();
+    await provider.createPlanCheckout({
+      ...base,
+      extraPeople: 0,
+      aiUseCents: null,
+      termsVersion: "2026-01-01",
+    });
+    const session = requests.find((r) => r.path === "/v1/checkout/sessions" && r.method === "POST");
+    expect(session?.form.get("consent_collection[terms_of_service]")).toBe("required");
+    expect(session?.form.get("metadata[terms_version]")).toBe("2026-01-01");
+  });
+
   it("refuses to open a second checkout while a subscription is live", async () => {
     const live = {
       id: "sub_1",

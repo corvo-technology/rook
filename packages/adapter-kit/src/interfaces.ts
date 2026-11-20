@@ -16,6 +16,7 @@ import type {
   BillingCreditCheckoutRequest,
   BillingCreditPurchase,
   BillingPlanChangeRequest,
+  BillingEvidence,
   BillingPlanCheckoutRequest,
   BillingPrice,
   BillingSubscriptionSnapshot,
@@ -492,7 +493,10 @@ export interface BillingProvider {
   getPriceById?(priceId: string): Promise<BillingPrice>;
   cancelCustomerSubscriptions(customerId: string): Promise<void>;
   /** Verifies the signature. `null` means the request is not authentic. */
-  parseWebhook(rawBody: string, headers: Headers): { customerId: string } | "ignored" | null;
+  parseWebhook(
+    rawBody: string,
+    headers: Headers,
+  ): { customerId: string; evidence?: BillingEvidence } | "ignored" | null;
 }
 
 export interface ExecutionRunner {

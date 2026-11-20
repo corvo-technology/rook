@@ -164,6 +164,7 @@ import {
   pushSessionExpiresAt,
   readCatalog,
   readPartnerMarkups,
+  recordBillingEvidence,
   recordPartnerEvent,
   refundTenantPayment,
   requireMembership,
@@ -1453,6 +1454,8 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       provider: billingProvider,
       webOrigin: env.webOrigin,
       authenticate: sessionActor,
+      recordEvidence: (customerId, evidence) =>
+        runAsSystem("billing evidence", () => recordBillingEvidence(prisma, customerId, evidence)),
     });
   }
   if (paymentsProvider) {

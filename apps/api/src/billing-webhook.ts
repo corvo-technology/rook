@@ -1,4 +1,4 @@
-import type { BillingProvider } from "@corvo/adapter-kit";
+import type { BillingEvidence, BillingProvider } from "@corvo/adapter-kit";
 import type { Actor } from "@corvo/contracts";
 import { getLogger } from "@corvo/logging";
 import type { Hono } from "hono";
@@ -16,6 +16,8 @@ export function mountBillingRoutes(
     provider: Pick<BillingProvider, "parseWebhook">;
     webOrigin: string;
     authenticate: (request: Request) => Promise<Actor | null>;
+    /** Stores what a verified event says about a payment or the terms accepted; idempotent. */
+    recordEvidence?: (customerId: string, evidence: BillingEvidence) => Promise<void>;
   },
 ): void {
   // The payload only names the customer; sync re-reads the subscription from the provider.
@@ -26,6 +28,7 @@ export function mountBillingRoutes(
     if (parsed === null) return c.json({ error: "Invalid signature" }, 400);
     if (parsed === "ignored") return c.json({ ok: true });
     try {
+      if (parsed.evidence) await deps.recordEvidence?.(parsed.customerId, parsed.evidence);
       await deps.billing.sync(parsed.customerId);
     } catch (error) {
       // A non-2xx makes the provider retry the delivery.

@@ -1188,4 +1188,9 @@ export const PT_BR_MESSAGES: Record<string, string> = {
     "Use a IA que você já paga: Claude, ChatGPT ou uma chave de API",
   "Yearly · 2 months free": "Anual · 2 meses grátis",
   Yearly: "Anual",
+  "This looks like a key. Save it as a credential instead?":
+    "Parece uma chave. Salvar como credencial?",
+  "Save credential": "Salvar credencial",
+  "Send anyway": "Enviar mesmo assim",
+  "Could not save the credential": "Não foi possível salvar a credencial",
 };

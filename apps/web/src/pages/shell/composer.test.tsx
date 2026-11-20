@@ -16,6 +16,15 @@ vi.mock("@lingui/react/macro", () => {
   return { useLingui: () => ({ t }), Trans: ({ children }: { children: ReactNode }) => children };
 });
 
+const botSecrets = vi.hoisted(() => ({
+  list: vi.fn(async (_input: { botId: string }) => [] as Array<{ name: string }>),
+  put: vi.fn(async (_input: unknown) => ({})),
+}));
+vi.mock("../../lib/rpc", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../lib/rpc")>()),
+  rpc: { botSecrets },
+}));
+
 import { dictation } from "../../lib/dictation";
 import { Composer } from "./composer";
 
@@ -1018,4 +1027,111 @@ it("marks the composer as the anchor for the first-message coach mark", () => {
   expect(
     container?.querySelector('fieldset[aria-label="Message composer"]')?.getAttribute("data-coach"),
   ).toBe("first");
+});
+
+describe("a key in the message", () => {
+  // A fake key with a real key's shape.
+  const key = `ghp_${"aB3dE5gH7jK9mN1pQ".repeat(3).slice(0, 36)}`;
+  const prompt = () => container?.querySelector('[data-testid="pasted-key-prompt"]') ?? null;
+  const click = (testId: string) =>
+    act(() => container?.querySelector<HTMLElement>(`[data-testid="${testId}"]`)?.click());
+  const paste = (textarea: HTMLTextAreaElement, text: string) =>
+    act(() => {
+      const event = new Event("paste", { bubbles: true, cancelable: true });
+      Object.defineProperty(event, "clipboardData", {
+        value: { getData: () => text, files: [], types: ["text/plain"], items: [] },
+      });
+      textarea.dispatchEvent(event);
+    });
+
+  beforeEach(() => {
+    botSecrets.list.mockClear();
+    botSecrets.put.mockClear();
+    botSecrets.list.mockResolvedValue([]);
+  });
+
+  it("offers to save it on paste, and never stores the draft", () => {
+    const textarea = renderComposer(vi.fn(), { credentialBotId: "bot-1" });
+    paste(textarea, key);
+    type(textarea, `use ${key}`);
+    expect(prompt()?.textContent).toContain("This looks like a key");
+    expect(localStorage.getItem("corvo.composerDraft.bot:bot-1")).toBeNull();
+    expect(
+      container?.querySelector<HTMLInputElement>('[data-testid="pasted-key-name"]')?.value,
+    ).toBe("github-token");
+  });
+
+  it("holds the send, then saves to the Vault and keeps only a reference", async () => {
+    const onSend = vi.fn(async () => true);
+    const textarea = renderComposer(onSend, { credentialBotId: "bot-1" });
+    type(textarea, `use ${key}`);
+    pressEnter(textarea);
+    expect(onSend).not.toHaveBeenCalled();
+    expect(prompt()).not.toBeNull();
+
+    await act(async () => click("pasted-key-save"));
+    expect(botSecrets.put).toHaveBeenCalledWith({
+      botId: "bot-1",
+      destination: { name: "github-token", auth: { type: "command" } },
+      value: key,
+    });
+    expect(textarea.value).toBe("use $GITHUB_TOKEN");
+    expect(textarea.value).not.toContain(key);
+    expect(prompt()).toBeNull();
+    expect(onSend).not.toHaveBeenCalled();
+    expect(localStorage.getItem("corvo.composerDraft.bot:bot-1")).toBe("use $GITHUB_TOKEN");
+  });
+
+  it("does not overwrite a credential that already has the name", async () => {
+    botSecrets.list.mockResolvedValue([{ name: "github-token" }]);
+    const textarea = renderComposer(vi.fn(), { credentialBotId: "bot-1" });
+    type(textarea, `use ${key}`);
+    pressEnter(textarea);
+    await act(async () => click("pasted-key-save"));
+    expect(botSecrets.put).toHaveBeenCalledWith(
+      expect.objectContaining({
+        destination: { name: "github-token-2", auth: { type: "command" } },
+      }),
+    );
+    expect(textarea.value).toBe("use $GITHUB_TOKEN_2");
+  });
+
+  it("sends the message unchanged on Send anyway", async () => {
+    const onSend = vi.fn(async (_text: string) => true);
+    const textarea = renderComposer(onSend, { credentialBotId: "bot-1" });
+    type(textarea, `use ${key}`);
+    pressEnter(textarea);
+    await act(async () => click("pasted-key-send"));
+    expect(onSend).toHaveBeenCalledTimes(1);
+    expect(onSend.mock.calls[0]?.[0]).toBe(`use ${key}`);
+    expect(botSecrets.put).not.toHaveBeenCalled();
+  });
+
+  it("keeps the key in the draft when saving fails", async () => {
+    botSecrets.put.mockRejectedValueOnce(new Error("boom"));
+    const textarea = renderComposer(vi.fn(), { credentialBotId: "bot-1" });
+    type(textarea, `use ${key}`);
+    pressEnter(textarea);
+    await act(async () => click("pasted-key-save"));
+    expect(textarea.value).toBe(`use ${key}`);
+    expect(prompt()?.querySelector('[role="alert"]')).not.toBeNull();
+  });
+
+  it("leaves publishable keys and ordinary text alone", () => {
+    const onSend = vi.fn(async () => true);
+    const textarea = renderComposer(onSend, { credentialBotId: "bot-1" });
+    type(textarea, "pk_live_51Habcdefghijklmnopqrstuv is public");
+    pressEnter(textarea);
+    expect(prompt()).toBeNull();
+    expect(onSend).toHaveBeenCalledTimes(1);
+  });
+
+  it("offers nothing when there is no single agent to save the key for", () => {
+    const onSend = vi.fn(async () => true);
+    const textarea = renderComposer(onSend, { groupRecipient: () => undefined });
+    type(textarea, `use ${key}`);
+    pressEnter(textarea);
+    expect(prompt()).toBeNull();
+    expect(onSend).toHaveBeenCalledTimes(1);
+  });
 });

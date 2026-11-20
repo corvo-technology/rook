@@ -200,6 +200,7 @@ import { mountAppAssociation, nativePasskeys } from "./app-association.js";
 import { storeInboundAttachment } from "./artifacts.js";
 import { createAudioHold } from "./audio-hold.js";
 import { createBillingService } from "./billing.js";
+import { createBillingNotices } from "./billing-notices.js";
 import { mountBillingRoutes } from "./billing-webhook.js";
 import { sideModelRouter } from "./channel-router.js";
 import { clientBuildMiddleware, readDeployedWebBuild } from "./client-build.js";
@@ -576,6 +577,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
         provider: billingProvider,
         webOrigin: env.webOrigin,
         managedModelsAvailable: resolveDeploymentModel().configured,
+        notices: createBillingNotices({ prisma, email, webOrigin: env.webOrigin }),
       })
     : undefined;
   const stripeConnect = stripeConnectConfigFromEnv(env);

@@ -122,3 +122,26 @@ it("uses Save and Cancel text buttons", async () => {
   expect(onSave).toHaveBeenCalledWith("Latest draft");
   expect(onClose).toHaveBeenCalledOnce();
 });
+
+it("takes its wording and a multi-line field from the caller", () => {
+  const markup = renderToStaticMarkup(
+    <ComposeNameDialog
+      title="Edit message"
+      label="Message"
+      multiline
+      maxLength={20000}
+      draft="Hi"
+      error={null}
+      saving={false}
+      onSave={vi.fn()}
+      onChange={vi.fn()}
+      onClose={vi.fn()}
+    />,
+  );
+  expect(markup).toContain("Edit message");
+  expect(capture.field.mock.lastCall![0]).toMatchObject({
+    singleLine: false,
+    maxLength: 20000,
+    keyboardOptions: { imeAction: "default" },
+  });
+});

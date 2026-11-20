@@ -58,6 +58,7 @@ import { FailedSendBubble } from "../failed-send-bubble";
 import type { MarkdownArtifactPreviewTarget } from "../markdown-artifact-preview";
 import { MarkdownArtifactPreview } from "../markdown-artifact-preview";
 import { MessageModelMenu } from "../message-model-menu";
+import { NameDialog } from "../name-dialog";
 import { RunErrorSheet } from "../run-error-sheet";
 import { SelectTextSheet } from "../select-text-sheet";
 import { ThreadComposer } from "../thread-composer";
@@ -79,6 +80,9 @@ function isActiveStatus(status: string | undefined): boolean {
  * The chat screen. Hook order is effect order: the snapshot, scroll, sync and send hooks run their
  * effects at the positions the screen ran them before they were split out.
  */
+// Keeps the edit field bounded; the server enforces the real limit.
+const MAX_EDIT_LENGTH = 20000;
+
 export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId: string }) {
   const keyboardLayout = useKeyboardLayout();
   const tokens = mobileTokens();
@@ -633,6 +637,20 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
           ) : null}
           {selectableText !== null ? (
             <SelectTextSheet text={selectableText} onClose={() => setSelectableText(null)} />
+          ) : null}
+          {versions.editing ? (
+            <NameDialog
+              title={t("Edit message")}
+              label={t("Message…")}
+              maxLength={MAX_EDIT_LENGTH}
+              multiline
+              draft={versions.editDraft}
+              error={null}
+              saving={false}
+              onChange={versions.setEditDraft}
+              onSave={versions.saveEdit}
+              onClose={versions.cancelEdit}
+            />
           ) : null}
           <RunErrorSheet
             details={detailsOpen ? runError : null}

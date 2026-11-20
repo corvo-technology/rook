@@ -18,6 +18,7 @@ import {
 import { getLogger } from "@corvo/logging";
 import { audienceSelect, personMayTalkTo } from "./agent-audience.js";
 import type { ExecutorDeps } from "./executor-deps.js";
+import { alreadyAnsweringReason, alreadyAnsweringRoot } from "./group-root.js";
 import { updatePlanCard } from "./plan-card.js";
 
 /**
@@ -158,6 +159,9 @@ export async function messageBot(
   });
   if (!target) return { ok: false as const, error: "no bot found with that id or name" };
   if (target.id === sender.id) return { ok: false as const, error: "a bot cannot message itself" };
+  if (!options?.allowTerminalSource && (await alreadyAnsweringRoot(deps.prisma, run, target.id))) {
+    return { ok: false as const, error: alreadyAnsweringReason(target.name) };
+  }
   if (!target.thread)
     return { ok: false as const, error: `${target.name} has no chat to deliver to` };
   // An agent asking for someone reaches what that person may reach, and agents that take

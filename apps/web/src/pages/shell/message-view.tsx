@@ -15,9 +15,9 @@ import {
 } from "@corvo/core";
 import { BotAvatar, Button, cn, resolvePersonaColorDef } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { Pin, UserRound } from "lucide-react";
+import { ChevronRight, Pin, UserRound } from "lucide-react";
 import type { ReactNode } from "react";
-import { Fragment, memo, useMemo } from "react";
+import { Fragment, memo, useMemo, useState } from "react";
 import { ArtifactFileCard } from "../../components/ArtifactFileCard";
 import { AskCard } from "../../components/AskCard";
 import { CollaborationMarker } from "../../components/ai/CollaborationMarker";
@@ -541,18 +541,13 @@ export const MessageView = memo(function MessageView({
                         </time>
                       )}
                     </div>
-                    <div className="text-body1 text-foreground" dir="auto">
-                      <ChatMarkdown renderMention={renderMention}>{block.text}</ChatMarkdown>
-                    </div>
-                    {block.reason ? (
-                      <p
-                        data-testid="handoff-reason"
-                        dir="auto"
-                        className="mt-1 text-body2 text-muted-foreground"
-                      >
-                        {block.reason}
-                      </p>
-                    ) : null}
+                    <HandoffDetail
+                      label={`${from} → ${to}`}
+                      reason={block.reason}
+                      renderMention={renderMention}
+                    >
+                      {block.text}
+                    </HandoffDetail>
                   </div>
                 </div>
               );
@@ -971,6 +966,44 @@ export const MessageView = memo(function MessageView({
     </ChannelRow>
   );
 });
+
+/** A handoff between agents is coordination: the line stays compact and the instruction opens on demand. */
+function HandoffDetail({
+  label,
+  reason,
+  renderMention,
+  children,
+}: {
+  label: string;
+  reason?: string;
+  renderMention: (id: string) => ReactNode | undefined;
+  children: string;
+}) {
+  const { t } = useLingui();
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-label={open ? t`Collapse ${label}` : t`Expand ${label}`}
+        onClick={() => setOpen((value) => !value)}
+        className="flex items-center text-muted-foreground hover:text-foreground"
+      >
+        <ChevronRight
+          aria-hidden="true"
+          className={cn("size-4 transition-transform", open && "rotate-90")}
+        />
+      </button>
+      {open ? (
+        <div className="mt-1 text-body2 text-muted-foreground" dir="auto">
+          <ChatMarkdown renderMention={renderMention}>{children}</ChatMarkdown>
+          {reason ? <p data-testid="handoff-reason">{reason}</p> : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 /** A channel message: the agent's face in a column of its own, the message beside it. Others are as they are. */
 function ChannelRow({ avatar, children }: { avatar: ReactNode; children: ReactNode }) {

@@ -312,15 +312,18 @@ it("names a sender that is not a group member from the bot list", () => {
   expect(container.textContent).toContain("Design");
 });
 
-it("sets a handoff in a channel as a message from the sender to the agent", () => {
+it("collapses a handoff in a channel to one line and opens the instruction on demand", () => {
   renderHandoff(handoff({ reason: "Envolve analisar uma landing" }), named, [
     { id: "design", name: "Design" },
   ]);
   const row = container.querySelector('[data-testid="channel-handoff"]');
   expect(row?.textContent).toContain("Chefe");
   expect(row?.textContent).toContain("Design");
+  expect(row?.textContent).not.toContain("Avaliar o hero");
+  expect(row?.querySelector('[data-testid="handoff-reason"]')).toBeNull();
+  const toggle = row?.querySelector("button[aria-expanded]") as HTMLButtonElement;
+  act(() => toggle.click());
   expect(row?.textContent).toContain("Avaliar o hero");
-  expect(row?.querySelector("time")).not.toBeNull();
   expect(row?.querySelector('[data-testid="handoff-reason"]')?.textContent).toBe(
     "Envolve analisar uma landing",
   );

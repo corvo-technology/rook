@@ -20,6 +20,7 @@ import {
 import { getLogger } from "@corvo/logging";
 import { audienceSelect, personMayTalkTo } from "./agent-audience.js";
 import type { ExecutorDeps } from "./executor-deps.js";
+import { alreadyAnsweringReason, alreadyAnsweringRoot } from "./group-root.js";
 
 export async function handoffToGroupBot(
   deps: Pick<ExecutorDeps, "prisma" | "events" | "jobs">,
@@ -89,6 +90,7 @@ export async function handoffToGroupBot(
       },
       select: {
         id: true,
+        sourceMessageId: true,
         thread: { select: { groupId: true } },
         sourceMessage: { select: { blocks: true } },
       },
@@ -160,6 +162,17 @@ export async function handoffToGroupBot(
     if (!target) return { error: "handoff target is not an agent of this space" } as const;
     const targetId = target.id;
     if (targetId === run.botId) return { error: "cannot hand off to yourself" } as const;
+    // One voice per message: an agent already woken for this one answers it itself.
+    if (
+      inGroup &&
+      (await alreadyAnsweringRoot(
+        tx,
+        { threadId: run.threadId, sourceMessageId: activeSource.sourceMessageId },
+        targetId,
+      ))
+    ) {
+      return { error: alreadyAnsweringReason(target.name) } as const;
+    }
     // The channel shows the stage to everyone in it, so the agent must take the person behind the
     // run as its own audience; consulting it for them goes through message_bot, privately.
     const targetRow = await tx.bot.findFirst({

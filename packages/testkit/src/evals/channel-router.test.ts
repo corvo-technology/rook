@@ -16,12 +16,13 @@ const byId = (id: string) => CHANNEL_ROUTER_CASES.find((c) => c.id === id) as Ch
 const signal = new AbortController().signal;
 const answer = (
   scores: Record<string, number>,
-  extra: { forEveryone?: number; needsAgent?: number } = {},
+  extra: { forEveryone?: number; needsAgent?: number; oneVoice?: number } = {},
 ) =>
   JSON.stringify({
     scores,
     forEveryone: extra.forEveryone ?? 0,
     needsAgent: extra.needsAgent ?? 0.9,
+    oneVoice: extra.oneVoice ?? 0,
     reason: "fits the role",
   });
 const passing: EvalJudge = async () => ({ pass: true, reason: "sound" });
@@ -86,6 +87,15 @@ describe("gradeChannelRouter observable effect", () => {
     const wide = answer({ chief: 0.9, leo: 0.8, cora: 0.7 }, { forEveryone: 0.9 });
     expect((await gradeChannelRouter(everyone, wide)).status).toBe("pass");
     expect((await gradeChannelRouter(everyone, answer({ chief: 0.9 }))).status).toBe("fail");
+  });
+
+  it("passes a broadcast greeting answered by one agent, and fails several", async () => {
+    const greeting = byId("broadcast-greeting-one-voice");
+    const scores = { chief: 0.8, leo: 0.7, cora: 0.6 };
+    const one = answer(scores, { forEveryone: 1, needsAgent: 0.1, oneVoice: 0.9 });
+    expect((await gradeChannelRouter(greeting, one)).status).toBe("pass");
+    const many = answer(scores, { forEveryone: 1, needsAgent: 0.1, oneVoice: 0.1 });
+    expect((await gradeChannelRouter(greeting, many)).status).toBe("fail");
   });
 
   it("never lets an id the case did not offer be picked", async () => {

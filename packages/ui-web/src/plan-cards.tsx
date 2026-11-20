@@ -14,7 +14,9 @@ import {
   extraPersonCents,
   planPriceCents,
 } from "@corvo/contracts";
+import { BOT_COLOR_LIST, DEFAULT_BOT_AVATAR_COLOR } from "@corvo/core";
 import { useState } from "react";
+import { BotAvatar } from "./bot-avatar.js";
 import { Badge } from "./components/ui/badge.js";
 import { Button } from "./components/ui/button.js";
 import {
@@ -27,7 +29,6 @@ import {
 import { Switch } from "./components/ui/switch.js";
 import { ToggleGroup, ToggleGroupItem } from "./components/ui/toggle-group.js";
 import { cn } from "./lib/utils.js";
-import { RookGlyph } from "./rook-glyph.js";
 
 /** The translated strings, so this package stays free of the app's message catalogs. */
 export interface PlanCardLabels {
@@ -39,7 +40,7 @@ export interface PlanCardLabels {
   recommended: string;
   perMonth: string;
   planName: (plan: PlanId) => string;
-  forWhom: (plan: PlanId) => string;
+  forWhom: (plan: PlanId, people: number) => string;
   serverAndAi: (server: string, ai: string) => string;
   yearlyTotal: (total: string, saved: string) => string;
   subscribe: (plan: PlanId) => string;
@@ -76,7 +77,16 @@ export interface PlanCardsProps {
 }
 
 const RECOMMENDED: PlanId = "team";
+const PLAN_ORDER: PlanId[] = ["personal", "team", "company"];
 const MAX_MASCOTS = 5;
+/** Each rook gets its own mascot color, like the bots do. */
+const MASCOT_COLOR_IDS = ["green", "blue", "violet", "magenta", "orange", "yellow", "cyan"];
+
+/** The mascot color at a position, wrapping around the palette. */
+export function planMascotColor(index: number): string {
+  const id = MASCOT_COLOR_IDS[index % MASCOT_COLOR_IDS.length];
+  return BOT_COLOR_LIST.find((color) => color.id === id)?.hex ?? DEFAULT_BOT_AVATAR_COLOR;
+}
 const DEFAULT_AI_USE: AiUseCents = 1000;
 const MONTHS = 12;
 
@@ -162,6 +172,7 @@ function PlanCard({
   const hasExtraPeople = entitlements.maxSeats > entitlements.seatsIncluded;
   const muted = dark ? "text-background/70" : "text-muted-foreground";
   const mascots = Math.min(entitlements.seatsIncluded, MAX_MASCOTS);
+  const offset = PLAN_ORDER.indexOf(plan) * 2;
   // Only the server has free months yearly; AI costs the same per month either way.
   const savedCents = planPriceCents(plan, currency, "month") * MONTHS - serverCents;
 
@@ -178,7 +189,7 @@ function PlanCard({
       <div className="flex items-center justify-between">
         <div aria-hidden className="flex gap-1">
           {Array.from({ length: mascots }, (_, index) => (
-            <RookGlyph key={index} size={22} />
+            <BotAvatar key={index} color={planMascotColor(index + offset)} size={26} />
           ))}
         </div>
         {dark ? (
@@ -186,7 +197,7 @@ function PlanCard({
         ) : null}
       </div>
       <h3 className="mt-5 text-xl font-medium">{labels.planName(plan)}</h3>
-      <p className={cn("text-sm", muted)}>{labels.forWhom(plan)}</p>
+      <p className={cn("text-sm", muted)}>{labels.forWhom(plan, entitlements.seatsIncluded)}</p>
       <p className="mt-5 flex items-baseline gap-1 whitespace-nowrap">
         <span className="text-4xl font-light tracking-tight">
           {perMonth(serverCents + aiCents)}
@@ -329,7 +340,7 @@ export function PlanCards({
           items={BILLING_CURRENCIES.map((value) => ({ value, label: value.toUpperCase() }))}
         />
       </div>
-      <div className="w-full rounded-[2rem] bg-muted p-3 sm:p-6">
+      <div className="w-full rounded-[2rem] bg-linear-to-r from-band-mint via-band-lavender to-band-peach p-3 sm:p-6">
         <div className="grid gap-4 lg:grid-cols-3">
           {plans.map((entitlements) => (
             <PlanCard

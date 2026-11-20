@@ -88,6 +88,10 @@ export type ColorTokens = {
   unread: string;
   /** Working dot on a busy bot's avatar. The one green, in both themes. */
   workingDot: string;
+  /** The soft mint, lavender and peach of the band behind the plan cards; deep and muted in dark. */
+  bandMint: string;
+  bandLavender: string;
+  bandPeach: string;
   overlay: string;
   scrollbar: string;
   scrollbarHover: string;
@@ -134,6 +138,9 @@ export const darkTokens = {
   statusWorking: "#54C398",
   unread: "#0062DB",
   workingDot: "#3FA266",
+  bandMint: "#14261F",
+  bandLavender: "#1E1A2E",
+  bandPeach: "#2A1E17",
   overlay: "#000000B2",
   scrollbar: "#2A2A30",
   scrollbarHover: "#3A3A40",
@@ -180,6 +187,9 @@ export const lightTokens = {
   statusWorking: "#197B56",
   unread: "#0B6DD3",
   workingDot: "#3FA266",
+  bandMint: "#D7F0E4",
+  bandLavender: "#E4DEF7",
+  bandPeach: "#F9E3D3",
   overlay: "#00000080",
   scrollbar: "#D4D4CE",
   scrollbarHover: "#A8A8A2",

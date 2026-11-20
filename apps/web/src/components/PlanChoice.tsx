@@ -1,6 +1,6 @@
 import type { BillingStatus, PlanUsage } from "@corvo/contracts";
 import type { PlanChoice as Choice, PlanCardLabels } from "@corvo/ui-web";
-import { Button, PlanCards, RookGlyph } from "@corvo/ui-web";
+import { BotAvatar, Button, PlanCards, planMascotColor } from "@corvo/ui-web";
 import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useEffect, useRef, useState } from "react";
@@ -19,8 +19,7 @@ function usePlanCardLabels(locale: string): PlanCardLabels {
     recommended: t`Recommended`,
     perMonth: t`/month`,
     planName,
-    forWhom: (plan) =>
-      ({ personal: t`For one person`, team: t`For a team`, company: t`For a company` })[plan],
+    forWhom: (plan, count) => (plan === "personal" ? t`For you` : t`For up to ${count} people`),
     serverAndAi: (server, ai) => t`Server ${server} + AI ${ai}`,
     yearlyTotal: (total, saved) => t`${total} billed yearly, ${saved} saved`,
     subscribe: (plan) => {
@@ -109,7 +108,7 @@ export function PlanChoice({
       )}
       <h1 className="flex items-center gap-4 text-center text-4xl font-light tracking-tight sm:text-6xl">
         <Trans>Choose your plan</Trans>
-        <RookGlyph size={48} />
+        <BotAvatar color={planMascotColor(0)} size={56} />
       </h1>
       <PlanCards
         plans={usage.plans}

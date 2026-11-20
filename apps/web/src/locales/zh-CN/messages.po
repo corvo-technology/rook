@@ -4483,16 +4483,12 @@ msgid "First messages, one per line"
 msgstr "首条消息，每行一条"
 
 #: src/components/PlanChoice.tsx
-msgid "For a company"
-msgstr "适合公司"
+msgid "For up to {count} people"
+msgstr "适合最多 {count} 人"
 
 #: src/components/PlanChoice.tsx
-msgid "For a team"
-msgstr "适合团队"
-
-#: src/components/PlanChoice.tsx
-msgid "For one person"
-msgstr "适合个人"
+msgid "For you"
+msgstr "适合你"
 
 #: src/pages/YouMemory.tsx
 msgid "Forget"

@@ -30,7 +30,7 @@ const labels: PlanCardsProps["labels"] = {
   recommended: "Recommended",
   perMonth: "/month",
   planName: (plan) => names[plan],
-  forWhom: (plan) => `for ${plan}`,
+  forWhom: (plan, people) => `for ${plan} ${people}`,
   serverAndAi: (server, ai) => `Server ${server} + AI ${ai}`,
   yearlyTotal: (total, saved) => `${total} a year, ${saved} saved`,
   subscribe: (plan) => `Subscribe to ${names[plan]}`,
@@ -179,5 +179,19 @@ it("gives no yearly discount on AI: the saving counts only the server's free mon
   expect(team).toContain("$44.50");
   expect(team).toContain("Server $32.50 + AI $12");
   expect(team).toContain("$534 a year, $78 saved");
+  await en.cleanup();
+});
+
+it("states who each plan is for from the included people", async () => {
+  const en = await render({ locale: "en" });
+  expect(en.card("team").textContent).toContain("for team 10");
+  expect(en.card("company").textContent).toContain("for company 25");
+  await en.cleanup();
+});
+
+it("draws one colored rook per included person, up to five, each in its own color", async () => {
+  const en = await render({ locale: "en" });
+  expect(en.card("personal").querySelectorAll("[data-mascot]").length).toBe(1);
+  expect(en.card("team").querySelectorAll("[data-mascot]").length).toBe(5);
   await en.cleanup();
 });

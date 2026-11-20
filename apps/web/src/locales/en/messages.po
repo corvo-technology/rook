@@ -4483,16 +4483,12 @@ msgid "First messages, one per line"
 msgstr "First messages, one per line"
 
 #: src/components/PlanChoice.tsx
-msgid "For a company"
-msgstr "For a company"
+msgid "For up to {count} people"
+msgstr "For up to {count} people"
 
 #: src/components/PlanChoice.tsx
-msgid "For a team"
-msgstr "For a team"
-
-#: src/components/PlanChoice.tsx
-msgid "For one person"
-msgstr "For one person"
+msgid "For you"
+msgstr "For you"
 
 #: src/pages/YouMemory.tsx
 msgid "Forget"

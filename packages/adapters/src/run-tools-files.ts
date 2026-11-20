@@ -3,7 +3,7 @@ import { inferAttachmentMimeType, isBackgroundRunTrigger } from "@corvo/core";
 import { resolveBotWorkspacePath } from "./computer-support.js";
 import { desktopProtectionGuardMessage } from "./desktop-command-guard.js";
 import { protectedActivateScriptWriteRefusal } from "./desktop-guard-words.js";
-import { mediaCredits } from "./media-credits.js";
+import { mediaCredits, recordImageUsage } from "./media-credits.js";
 import { generateMediaFromTool } from "./media-generation-tools.js";
 import { loadMediaReferences, withGeneratedImages } from "./media-references.js";
 import type { RunContext } from "./run-context.js";
@@ -40,16 +40,39 @@ export async function callMediaTool(ctx: RunContext, call: ToolCall, recoverOnly
   )
     return { error: "Media generation is unavailable." };
   const artifacts = deps.artifacts;
+  const ownConnection = ctx.providers.mediaOwnConnection;
   return generateMediaFromTool({
     name,
     args,
     executionId: applied?.effect.id ?? executionId,
     recoverOnly,
     provider: mediaGeneration,
-    // With credits on, an image is paid by the customer's account, never by the deployment.
-    credits: (await modelCreditBillingEnabled(deps))
-      ? mediaCredits(deps.prisma, { userId: run.userId, spaceId: run.spaceId, runId: run.id })
-      : undefined,
+    // On the account's own key the provider bills the account, so no credit is held; the call
+    // is still recorded as usage. Otherwise, with credits on, the account's credit pays and
+    // the deployment never does.
+    credits:
+      !ownConnection && (await modelCreditBillingEnabled(deps))
+        ? mediaCredits(deps.prisma, { userId: run.userId, spaceId: run.spaceId, runId: run.id })
+        : undefined,
+    ...(ownConnection
+      ? {
+          recordUsage: ({ jobId, model, count, costUsd }) =>
+            recordImageUsage(deps.prisma, {
+              provider: ownConnection,
+              model,
+              count,
+              costUsd,
+              callId: `media:${jobId}`,
+              attribution: {
+                spaceId: run.spaceId,
+                userId: run.userId,
+                botId: bot.id,
+                runId: run.id,
+                operationId: run.id,
+              },
+            }),
+        }
+      : {}),
     prisma: deps.prisma,
     context,
     run,

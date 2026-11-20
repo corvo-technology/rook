@@ -1,4 +1,6 @@
 import type { MediaGenerationProvider } from "@corvo/adapter-kit";
+import { DEFAULT_IMAGE_MODEL } from "@corvo/contracts";
+import { openRouterImageModelId } from "./image-connection.js";
 import {
   FakeMediaGenerationProvider,
   OpenAiCompatibleMediaGenerationProvider,
@@ -6,11 +8,13 @@ import {
 } from "./media-generation-provider.js";
 
 /**
- * Images come from the one provider the deployment names: `openrouter` (the default, with the
- * deployment's own key) or `openai-compatible`, which uses the deployment's shared
- * OpenAI-compatible endpoint (`CORVO_LOCAL_MODELS_URL`, and `MEDIA_GENERATION_API_KEY` when it
- * needs a key). `MEDIA_GENERATION_PROVIDER` can switch it off (`disabled`) or swap in the
- * offline `fake`.
+ * The deployment's own image provider, used only when an account has no connection of its own
+ * that can make images: OpenRouter on the deployment's key, with the catalog's default model.
+ *
+ * Deprecated, kept for one release so a deployment that set them still boots and behaves the
+ * same: `MEDIA_GENERATION_IMAGE_MODEL` names the model, `MEDIA_GENERATION_PROVIDER` can pick
+ * `openai-compatible` (the shared `CORVO_LOCAL_MODELS_URL`, with `MEDIA_GENERATION_API_KEY`),
+ * switch images off (`disabled`) or swap in the offline `fake`.
  */
 export function createMediaGenerationProvider(
   env: NodeJS.ProcessEnv = process.env,
@@ -31,6 +35,14 @@ export function createMediaGenerationProvider(
   }
   if (kind && kind !== "openrouter") throw new Error("Unknown media generation provider");
   const apiKey = env.OPENROUTER_API_KEY?.trim();
-  if (!imageModel || !apiKey) return undefined;
-  return new OpenRouterMediaGenerationProvider({ apiKey, imageModel });
+  if (!apiKey) return undefined;
+  return new OpenRouterMediaGenerationProvider({
+    apiKey,
+    imageModel: imageModel || openRouterImageModelId(DEFAULT_IMAGE_MODEL),
+  });
+}
+
+/** Whether the operator named an image model themselves, the old way. */
+export function deploymentNamesImageModel(env: NodeJS.ProcessEnv = process.env): boolean {
+  return Boolean(env.MEDIA_GENERATION_IMAGE_MODEL?.trim());
 }

@@ -1,8 +1,9 @@
 import { imageCatalogUsd, imageWorstCaseUsd } from "@corvo/contracts";
-import type { PrismaClient } from "@corvo/db";
+import type { PrismaClient, UsageAttribution } from "@corvo/db";
 import {
   creditAccount,
   organizationForMember,
+  recordUsage,
   reserveModelCredits,
   settleModelCredits,
 } from "@corvo/db";
@@ -68,4 +69,39 @@ export function mediaCredits(
       };
     },
   };
+}
+
+/**
+ * Usage evidence for pictures the account's own key paid for, shaped like a chat call's record:
+ * no tokens, the provider's reported cost else the catalog price, one record per job.
+ */
+export function recordImageUsage(
+  prisma: PrismaClient,
+  input: {
+    provider: string;
+    model: string | undefined;
+    count: number;
+    costUsd: number | undefined;
+    callId: string;
+    attribution: UsageAttribution;
+  },
+) {
+  const catalogUsd = imageCatalogUsd(input.model, input.count);
+  const costUsd = input.costUsd ?? catalogUsd;
+  return recordUsage(
+    prisma,
+    {
+      type: "usage",
+      provider: input.provider,
+      model: input.model ?? "unknown",
+      callId: input.callId,
+      inputTokens: null,
+      outputTokens: null,
+      costUsd: costUsd ?? null,
+      costSource:
+        input.costUsd !== undefined ? "provider" : costUsd !== undefined ? "catalog" : null,
+      usageSource: "image",
+    },
+    input.attribution,
+  );
 }

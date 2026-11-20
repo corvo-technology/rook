@@ -319,6 +319,40 @@ describe("image tool: several pictures and references", () => {
   });
 });
 
+describe("image tool on the account's own key", () => {
+  it("holds no credit and records the call as usage at the reported cost", async () => {
+    const { options, provider } = toolSetup();
+    vi.spyOn(provider, "generateImage").mockResolvedValue([
+      { bytes: PNG, mimeType: "image/png", costUsd: 0.03 },
+    ]);
+    const recordUsage = vi.fn().mockResolvedValue(undefined);
+    const result = await generateMediaFromTool({
+      ...options,
+      credits: undefined,
+      recordUsage,
+      args: { prompt: "draw" },
+    });
+    expect(result).toMatchObject({ status: "completed" });
+    expect(options.credits.hold).not.toHaveBeenCalled();
+    expect(recordUsage).toHaveBeenCalledWith({
+      jobId: "job",
+      model: undefined,
+      count: 1,
+      costUsd: 0.03,
+    });
+  });
+
+  it("still returns the pictures when the usage record fails", async () => {
+    const { options } = toolSetup();
+    const result = await generateMediaFromTool({
+      ...options,
+      credits: undefined,
+      recordUsage: vi.fn().mockRejectedValue(new Error("db down")),
+    });
+    expect(result).toMatchObject({ status: "completed" });
+  });
+});
+
 describe("loading references", () => {
   const store = (bytes = PNG) =>
     ({ get: vi.fn().mockResolvedValue(bytes) }) as unknown as ArtifactStore;

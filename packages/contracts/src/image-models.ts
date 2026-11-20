@@ -21,7 +21,7 @@ export const IMAGE_MAX_REFERENCES = 4;
 export const IMAGE_UNLISTED_WORST_CASE_USD = 0.3;
 
 export interface ImageModelEntry {
-  /** The id the provider is asked for. */
+  /** The bare model id, without a router prefix such as `openai/` or `google/`. */
   id: string;
   label: string;
   /** Whether it can start from reference pictures (edits and variations). */
@@ -41,17 +41,54 @@ export interface ImageModelEntry {
 
 /**
  * The image models Rook knows. They are not chat models and never reach a chat model picker:
- * the deployment names one, and this list says what it can do and costs. A model that is not
+ * a connection serves one, and this list says what it can do and costs. A model that is not
  * listed still works, held at a cautious price and without references.
  */
 export const IMAGE_MODEL_CATALOG: readonly ImageModelEntry[] = [
   {
-    id: "google/gemini-2.5-flash-image",
+    id: "gemini-3.1-flash-lite-image",
+    label: "Fast image",
+    references: false,
+    aspectRatios: ["1:1", "4:5", "5:4", "2:3", "3:2", "3:4", "4:3", "9:16", "16:9", "21:9"],
+    maxCount: 4,
+    price: { typicalUsd: 0.0336, worstCaseUsd: 0.0336 },
+    pricedOn: "2026-11-20",
+  },
+  {
+    id: "gemini-3.1-flash-image",
+    label: "Balanced image",
+    references: false,
+    aspectRatios: ["1:1", "4:5", "5:4", "2:3", "3:2", "3:4", "4:3", "9:16", "16:9", "21:9"],
+    maxCount: 4,
+    price: { typicalUsd: 0.0672, worstCaseUsd: 0.151 },
+    pricedOn: "2026-11-20",
+  },
+  {
+    id: "gemini-3-pro-image",
+    label: "Pro image",
+    references: false,
+    aspectRatios: ["1:1", "4:5", "5:4", "2:3", "3:2", "3:4", "4:3", "9:16", "16:9", "21:9"],
+    maxCount: 4,
+    price: { typicalUsd: 0.134, worstCaseUsd: 0.24 },
+    pricedOn: "2026-11-20",
+  },
+  {
+    // Deprecated by Google (shuts down 2027-03-15); kept so existing connections still price.
+    id: "gemini-2.5-flash-image",
     label: "Fast image",
     references: false,
     aspectRatios: ["1:1", "4:5", "5:4", "2:3", "3:2", "3:4", "4:3", "9:16", "16:9", "21:9"],
     maxCount: 4,
     price: { typicalUsd: 0.039, worstCaseUsd: 0.039 },
+    pricedOn: "2026-11-20",
+  },
+  {
+    id: "gpt-image-2",
+    label: "Detailed image",
+    references: true,
+    aspectRatios: ["1:1", "2:3", "3:2"],
+    maxCount: 4,
+    price: { typicalUsd: 0.04, worstCaseUsd: 0.22 },
     pricedOn: "2026-11-20",
   },
   {
@@ -83,8 +120,18 @@ export const IMAGE_MODEL_CATALOG: readonly ImageModelEntry[] = [
   },
 ];
 
+/** The model a deployment's own image provider uses when nothing else names one. */
+export const DEFAULT_IMAGE_MODEL = "gemini-3.1-flash-lite-image";
+
+/** `openai/gpt-image-1` and `gpt-image-1` are one model; OpenRouter prefixes, OpenAI does not. */
+export function normalizeImageModelId(id: string): string {
+  return id.trim().replace(/^(?:openai|google)\//, "");
+}
+
 export function imageModelEntry(id: string | undefined): ImageModelEntry | undefined {
-  return id ? IMAGE_MODEL_CATALOG.find((entry) => entry.id === id) : undefined;
+  if (!id) return undefined;
+  const bare = normalizeImageModelId(id);
+  return IMAGE_MODEL_CATALOG.find((entry) => entry.id === bare);
 }
 
 /** The most one call for `count` pictures can cost; what is held on the account first. */

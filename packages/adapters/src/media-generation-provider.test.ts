@@ -42,14 +42,16 @@ function setup(...responses: Response[]) {
 }
 
 describe("media generation connection", () => {
-  it("is off unless an image model and an OpenRouter key are both set", () => {
+  it("is off without an OpenRouter key, and takes the catalog default model with one", () => {
     expect(createMediaGenerationProvider({})).toBeUndefined();
     expect(
       createMediaGenerationProvider({
         MEDIA_GENERATION_IMAGE_MODEL: "google/gemini-2.5-flash-image",
       }),
     ).toBeUndefined();
-    expect(createMediaGenerationProvider({ OPENROUTER_API_KEY: "key" })).toBeUndefined();
+    expect(createMediaGenerationProvider({ OPENROUTER_API_KEY: "key" })?.imageModel).toBe(
+      "google/gemini-3.1-flash-lite-image",
+    );
     expect(
       createMediaGenerationProvider({
         MEDIA_GENERATION_PROVIDER: "disabled",

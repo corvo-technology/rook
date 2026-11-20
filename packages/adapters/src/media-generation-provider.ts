@@ -258,14 +258,26 @@ export class OpenAiCompatibleMediaGenerationProvider implements MediaGenerationP
     private readonly options: {
       baseUrl: string;
       apiKey?: string;
+      /** Extra headers the connection sends, as saved with it. */
+      headers?: Record<string, string>;
+      /** Whether a private address may be named; the operator's choice for a customer's server. */
+      allowPrivate?: boolean;
       imageModel: string;
       fetch?: typeof fetch;
     },
   ) {
     if (!/^[\w.:/@+-]{1,200}$/.test(options.imageModel)) throw new Error("Invalid image model");
-    // The operator named this server, so a private address is allowed; metadata hosts are not.
-    const url = assertAllowedOpenAiCompatibleUrl(options.baseUrl, { allowPrivate: true });
-    assertHttpsForKeyedOpenAiCompatibleUrl(url, options.apiKey);
+    // The deployment's own server is named by the operator, so a private address is allowed by
+    // default; a customer's connection passes the operator's setting. Metadata hosts never are.
+    const url = assertAllowedOpenAiCompatibleUrl(options.baseUrl, {
+      allowPublic: true,
+      allowPrivate: options.allowPrivate ?? true,
+    });
+    assertHttpsForKeyedOpenAiCompatibleUrl(
+      url,
+      options.apiKey,
+      Object.keys(options.headers ?? {}).length > 0,
+    );
     this.baseUrl = normalizeOpenAiCompatibleBaseUrl(options.baseUrl);
     this.imageModel = options.imageModel;
     const entry = imageModelEntry(options.imageModel);
@@ -296,9 +308,10 @@ export class OpenAiCompatibleMediaGenerationProvider implements MediaGenerationP
       n: checked.count,
       size,
     };
-    const headers: Record<string, string> = this.options.apiKey
-      ? { Authorization: `Bearer ${this.options.apiKey}` }
-      : {};
+    const headers: Record<string, string> = {
+      ...this.options.headers,
+      ...(this.options.apiKey ? { Authorization: `Bearer ${this.options.apiKey}` } : {}),
+    };
     const references_ = input.references ?? [];
     const send = () => {
       const signal = AbortSignal.any([context.signal, AbortSignal.timeout(180_000)]);

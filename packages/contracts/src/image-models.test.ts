@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  DEFAULT_IMAGE_MODEL,
   IMAGE_MAX_COUNT,
   IMAGE_MODEL_CATALOG,
   IMAGE_UNLISTED_WORST_CASE_USD,
@@ -28,6 +29,15 @@ describe("image model catalog", () => {
     expect(imageWorstCaseUsd("gpt-image-1", 3)).toBe(0.75);
     expect(imageWorstCaseUsd("acme/unlisted", 2)).toBe(IMAGE_UNLISTED_WORST_CASE_USD * 2);
     expect(imageWorstCaseUsd(undefined, 1)).toBe(IMAGE_UNLISTED_WORST_CASE_USD);
+  });
+
+  it("treats a router prefix as the same model", () => {
+    expect(imageModelEntry("openai/gpt-image-1")).toBe(imageModelEntry("gpt-image-1"));
+    expect(imageModelEntry("google/gemini-3.1-flash-image")?.id).toBe("gemini-3.1-flash-image");
+    expect(imageWorstCaseUsd("openai/gpt-image-1", 1)).toBe(imageWorstCaseUsd("gpt-image-1", 1));
+    expect(imageCatalogUsd("openai/gpt-image-1", 2)).toBe(0.084);
+    expect(imageModelEntry("acme/gpt-image-1")).toBeUndefined();
+    expect(imageModelEntry(DEFAULT_IMAGE_MODEL)).toBeDefined();
   });
 
   it("prices what was made at the usual price, and says nothing for an unlisted model", () => {

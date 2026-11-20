@@ -123,7 +123,11 @@ import {
   stableHistoryWindow,
 } from "./history-compaction.js";
 import { alertHomeLost } from "./home-lost-alert.js";
-import { createMediaGenerationProvider } from "./media-generation-factory.js";
+import { resolveRunImageProvider } from "./image-connection.js";
+import {
+  createMediaGenerationProvider,
+  deploymentNamesImageModel,
+} from "./media-generation-factory.js";
 import { memberMonthlyLimitReached } from "./member-monthly-limit.js";
 import { loadAgentMemoryContext } from "./memory-context.js";
 import { botDisabledTools } from "./memory-mode.js";
@@ -272,7 +276,7 @@ import { wikiOfferInstruction } from "./wiki-offer.js";
 export function createRunExecutor(deps: ExecutorDeps) {
   const contextStrategy = deps.contextStrategy ?? DEFAULT_CONTEXT_STRATEGY;
   const web = deps.web ?? createWebProvider();
-  const mediaGeneration = deps.mediaGeneration ?? createMediaGenerationProvider();
+  const deploymentMedia = createMediaGenerationProvider();
   const browser = deps.browser ?? createBrowserProvider(undefined, { sandbox: deps.sandbox });
   const cloudAgent = deps.cloudAgent;
   const resolveConnectedModel = resolveConnectedRunModel.bind(undefined, deps);
@@ -1233,6 +1237,20 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const pageBrowserAllowed =
           graphical && browser.describe().capabilities.page && !heldForTakeover;
         const disabledBuiltinTools = disabledBuiltinToolSet(botDisabledTools(bot));
+        // Pictures come from the account's own image-capable connection, else the deployment's.
+        const media = isBackgroundRunTrigger(run.trigger)
+          ? undefined
+          : await resolveRunImageProvider({
+              deps,
+              asker: { userId: run.userId, spaceId: run.spaceId },
+              deployment: deploymentMedia,
+              creditsEnabled: await modelCreditBillingEnabled(deps),
+              operatorPays: deploymentNamesImageModel(),
+              onError: (error) =>
+                getLogger().warn("image connection lookup failed", { error: String(error) }),
+            });
+        const mediaGeneration = media?.provider;
+        if (media?.own) runSecrets.push(...media.own.secretValues);
         const builtins = [
           ...selectBuiltinToolsForRun({
             ticketBoardEnabled: deps.ticketBoardEnabled,
@@ -1424,7 +1442,13 @@ export function createRunExecutor(deps: ExecutorDeps) {
 
         const ctx: RunContext = {
           deps,
-          providers: { web, mediaGeneration, browser, cloudAgent },
+          providers: {
+            web,
+            mediaGeneration,
+            ...(media?.own ? { mediaOwnConnection: media.own.connectionProvider } : {}),
+            browser,
+            cloudAgent,
+          },
           run,
           runId,
           workerId,

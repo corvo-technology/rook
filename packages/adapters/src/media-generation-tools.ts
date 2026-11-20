@@ -55,6 +55,16 @@ export async function generateMediaFromTool(options: {
   provider: MediaGenerationProvider;
   /** Where an image is paid from; without it the deployment bears the cost. */
   credits?: MediaCredits;
+  /**
+   * Called once with what an image call produced and cost, for usage evidence. Used when the
+   * account's own key paid, where no credit entry records it.
+   */
+  recordUsage?: (usage: {
+    jobId: string;
+    model: string | undefined;
+    count: number;
+    costUsd: number | undefined;
+  }) => Promise<void>;
   prisma: PrismaClient;
   context: AdapterContext;
   run: { id: string; threadId: string; botId: string; userId: string; spaceId: string };
@@ -233,6 +243,7 @@ export async function generateMediaFromTool(options: {
             outputs: await generateImageOnCredit(
               provider,
               options.credits,
+              options.recordUsage,
               reservation.id,
               // Only a fresh submission reaches here: a recovered one has its pictures already.
               imageInput ?? { prompt: mediaPromptSchema.parse(args).prompt },
@@ -328,6 +339,7 @@ async function submitOrPollVideo(
 async function generateImageOnCredit(
   provider: MediaGenerationProvider,
   credits: MediaCredits | undefined,
+  recordUsage: NonNullable<Parameters<typeof generateMediaFromTool>[0]["recordUsage"]> | undefined,
   jobId: string,
   input: MediaGenerationInput,
   context: AdapterContext,
@@ -349,7 +361,11 @@ async function generateImageOnCredit(
   const costUsd = reported.length
     ? reported.reduce((total, output) => total + (output.costUsd ?? 0), 0)
     : undefined;
-  // The pictures exist; a failed settlement must not lose them. The hold stays and is visible.
+  // The pictures exist; neither a failed settlement nor a failed record may lose them.
+  await recordUsage?.({ jobId, model: provider.imageModel, count: outputs.length, costUsd }).catch(
+    (error) => getLogger().error("media usage record", error),
+  );
+  // The hold stays and is visible when settlement fails.
   await hold
     ?.settle(costUsd, outputs.length)
     .catch((error) => getLogger().error("media credit settlement", error));

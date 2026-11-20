@@ -19,6 +19,11 @@ export const PT_BR_MESSAGES: Record<string, string> = {
   Ask: "Perguntar",
   Block: "Bloquear",
   "Asks before any change": "Pergunta antes de qualquer mudança",
+  "Always ask": "Sempre perguntar",
+  "Only what's risky": "Só o arriscado",
+  "Asks before risky actions": "Pergunta antes de ações arriscadas",
+  "Still asks before sending, paying, deleting or deploying, and before opening a site you didn't mention.":
+    "Ainda pergunta antes de enviar, pagar, apagar ou fazer deploy e antes de abrir um site que você não mencionou.",
   "Does everything without asking": "Faz tudo sem perguntar",
   "Does what fits your request": "Faz o que cabe no seu pedido",
   "How much does {name} do on its own?": "Quanto {name} faz por conta própria?",

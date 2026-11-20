@@ -94,10 +94,11 @@ describe("the partner connection's tools", () => {
     }
   });
 
-  it("still asks for a read-named tool of any other source with the same name", () => {
+  it("asks for the same names from any other source unless it declares them read-only", () => {
     for (const name of ["customer_usage", "attention", "revenue_summary", "invoices"]) {
-      expect(toolRequiresApproval(`partner_${name}`, true, true)).toBe(true);
-      expect(toolRequiresApproval(`partner_${name}`, true, true, false)).toBe(true);
+      expect(toolRequiresApproval(`partner_${name}`, true)).toBe(true);
+      expect(toolRequiresApproval(`partner_${name}`, true, true)).toBe(false);
+      expect(toolRequiresApproval(`partner_${name}`, true, true, false, true)).toBe(true);
     }
   });
 

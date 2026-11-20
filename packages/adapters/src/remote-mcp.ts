@@ -65,6 +65,8 @@ export async function listRemoteMcpTools(options: RemoteMcpOptions): Promise<Con
       description: tool.description ?? tool.title ?? tool.name,
       inputSchema: tool.inputSchema,
       readOnly: tool.annotations?.readOnlyHint,
+      destructive: tool.annotations?.destructiveHint,
+      openWorld: tool.annotations?.openWorldHint,
     })),
   );
 }

@@ -18,7 +18,7 @@ vi.mock("../../lib/rpc", () => {
     me: vi.fn(async () => ({})),
     autoReview: {
       get: vi.fn(async () => ({
-        mode: "ask",
+        mode: "risky",
         enabled: false,
         skipApprovals: false,
         checkerAvailable: false,

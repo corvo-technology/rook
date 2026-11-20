@@ -253,8 +253,13 @@ export function accountRoutes(ctx: RouterContext) {
             context.actor,
             input.mode
               ? approvalPreferenceFromMode(input.mode)
-              : { enabled: input.enabled, skipApprovals: input.skipApprovals },
-            { enabled: deploymentAutoReviewDefault(process.env), skipApprovals: false },
+              : // A client that predates the levels meant Ask, which is now Only what's risky.
+                { enabled: input.enabled, skipApprovals: input.skipApprovals, alwaysAsk: false },
+            {
+              enabled: deploymentAutoReviewDefault(process.env),
+              skipApprovals: false,
+              alwaysAsk: false,
+            },
             input.scope,
           ),
         );
@@ -426,6 +431,7 @@ async function loadAutoReviewSettings(deps: RouterDeps, actor: Actor, scope?: Se
   const stored = {
     enabled: preference?.enabled ?? deploymentAutoReviewDefault(process.env),
     skipApprovals: preference?.skipApprovals ?? false,
+    alwaysAsk: preference?.alwaysAsk ?? false,
   };
   const settings = { ...stored, mode: approvalModeFromPreference(stored) };
   const deploymentChecker = role.primarySource === "deployment" ? role.primary : null;

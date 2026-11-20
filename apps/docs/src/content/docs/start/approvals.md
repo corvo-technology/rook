@@ -13,7 +13,8 @@ Em **Configurações > Aprovações**:
 
 | Modo | Comportamento |
 | --- | --- |
-| **Perguntar** (padrão) | Pede antes de qualquer mudança. |
+| **Sempre perguntar** | Pede antes de qualquer mudança. |
+| **Só o arriscado** (padrão) | Lê e faz pequenas edições sozinho; pede antes de enviar, publicar, pagar, apagar, fazer deploy ou rodar algo. |
 | **Automático** | Um modelo de aprovação libera o que combina com o pedido e pergunta o resto. |
 | **Nunca perguntar** | Executa tudo. Use com cuidado. |
 

@@ -66,7 +66,6 @@ import {
   AgentSkillCatalogEntrySchema,
   AgentSkillSchema,
   AppBootstrapSchema,
-  ApprovalModeSchema,
   ArtifactSchema,
   ArtifactVersionSchema,
   ArtifactWithContentSchema,
@@ -141,6 +140,7 @@ import {
   SpaceMemoryConfigSchema,
   SpaceNavigationSchema,
   SpaceSchema,
+  StoredApprovalModeSchema,
   SubscriptionQuotaSchema,
   TaughtSkillSchema,
   TeachRecordingEventSchema,
@@ -2027,7 +2027,7 @@ export const appContract = {
     set: oc
       .input(
         settingsScopeInput.extend({
-          mode: ApprovalModeSchema.optional(),
+          mode: StoredApprovalModeSchema.optional(),
           enabled: z.boolean().optional(),
           skipApprovals: z.boolean().optional(),
         }),

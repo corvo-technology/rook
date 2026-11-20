@@ -36,7 +36,7 @@ let picks: { use?: "work"; categories: ["sales"] } | null = null;
 let container: HTMLDivElement;
 let root: Root;
 
-const settings = (mode: "ask" | "auto" | "never") => ({
+const settings = (mode: "always" | "risky" | "auto" | "never") => ({
   mode,
   enabled: mode === "auto",
   skipApprovals: mode === "never",
@@ -98,7 +98,7 @@ describe("FirstBotStep", () => {
         }),
     );
     await mount();
-    await act(async () => radio("ask").click());
+    await act(async () => radio("always").click());
     const next = button("Continue");
     await act(async () => {
       next.click();
@@ -106,7 +106,7 @@ describe("FirstBotStep", () => {
     });
     expect(rpc.bots.update).toHaveBeenCalledExactlyOnceWith({
       botId: "chief-1",
-      approvalMode: "ask",
+      approvalMode: "always",
     });
     expect(onReady).not.toHaveBeenCalled();
     expect(next.disabled).toBe(true);
@@ -133,7 +133,7 @@ describe("FirstBotStep", () => {
   it("does not move on when the answer cannot be saved, and tries it again", async () => {
     rpc.bots.update.mockRejectedValueOnce(new Error("offline"));
     await mount();
-    await act(async () => radio("ask").click());
+    await act(async () => radio("always").click());
     await act(async () => button("Continue").click());
     expect(container.querySelector('[role="alert"]')).not.toBeNull();
     expect(onReady).not.toHaveBeenCalled();

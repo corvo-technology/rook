@@ -1,4 +1,6 @@
 import type { ActionApprovalRule as StoredActionApprovalRule } from "@corvo/contracts";
+import type { ToolRisk, ToolRiskHints } from "./tool-risk.js";
+import { classifyConnectorTool } from "./tool-risk.js";
 
 const APPROVAL_EXEMPT_TOOLS = new Set([
   "computer_observe",
@@ -140,12 +142,51 @@ export function connectorToolNamedAsWrite(toolName: string): boolean {
   );
 }
 
+/** The connector tool's declared effect. A hint never lowers a tool the name locks as high risk. */
+export type ConnectorToolHints = Omit<ToolRiskHints, "fromPartnerConnector">;
+
 /**
- * `readOnly` is the connector tool's declared effect (for installed APIs, derived from the stored
- * HTTP method and read-only flag). A declared write always needs approval. A declared read never
- * relaxes the name check: the provider chooses both the name and the hint.
+ * The risk of a connector tool (see `classifyConnectorTool`). `fromPartnerConnector` is true only
+ * for the built-in partner connection, whose reads are exempt; the same name from any other source
+ * is classified like any other tool.
+ */
+export function connectorToolRisk(
+  toolName: string,
+  readOnly?: boolean,
+  fromPartnerConnector = false,
+  destructive?: boolean,
+): ToolRisk {
+  return classifyConnectorTool(toolName, { readOnly, destructive, fromPartnerConnector });
+}
+
+/**
+ * Whether the tool is consequential: anything but a read asks at "Always ask". The provider chooses
+ * both the name and the hints, so neither a read name nor a read-only hint relaxes a locked name,
+ * and a declared write or destructive tool is never a read.
  */
 export function connectorToolRequiresApproval(
+  toolName: string,
+  readOnly?: boolean,
+  fromPartnerConnector = false,
+  destructive?: boolean,
+): boolean {
+  return connectorToolRisk(toolName, readOnly, fromPartnerConnector, destructive) !== "read";
+}
+
+/** Whether a tool may be granted at read level: it is classified as a read. */
+export function connectorToolIsRead(
+  toolName: string,
+  readOnly?: boolean,
+  destructive?: boolean,
+): boolean {
+  return connectorToolRisk(toolName, readOnly, false, destructive) === "read";
+}
+
+/**
+ * Unattended runs keep the strict name check: a declared read never relaxes it, and only
+ * `get`, `list`, `search`, `find` and `read` between underscores count as reads.
+ */
+function unattendedConnectorToolRequiresApproval(
   toolName: string,
   readOnly?: boolean,
   fromPartnerConnector = false,
@@ -156,16 +197,6 @@ export function connectorToolRequiresApproval(
   }
   if (connectorToolNamedAsWrite(toolName)) return true;
   return !READ_ONLY_CONNECTOR_PATTERN.test(toolName);
-}
-
-/**
- * Whether a tool may be granted at read level: not declared a write, not named as one, and either
- * declared read-only or named like a read. The provider chooses both the name and the hint, so a
- * declared read never overrides a write-looking name.
- */
-export function connectorToolIsRead(toolName: string, readOnly?: boolean): boolean {
-  if (readOnly === false || connectorToolNamedAsWrite(toolName)) return false;
-  return readOnly === true || READ_ONLY_CONNECTOR_PATTERN.test(toolName);
 }
 
 /** Unattended watches require explicit read-only metadata and must respect approval rules. */
@@ -197,11 +228,14 @@ export function toolRequiresApproval(
   viaConnector: boolean,
   readOnly?: boolean,
   fromPartnerConnector = false,
+  destructive?: boolean,
 ): boolean {
   if (APPROVAL_EXEMPT_TOOLS.has(toolName)) return false;
   if (toolRequiresExplicitApproval(toolName)) return true;
   if (APPROVAL_REQUIRED_BUILTIN_TOOLS.has(toolName)) return true;
-  if (viaConnector) return connectorToolRequiresApproval(toolName, readOnly, fromPartnerConnector);
+  if (viaConnector) {
+    return connectorToolRequiresApproval(toolName, readOnly, fromPartnerConnector, destructive);
+  }
   return false;
 }
 
@@ -230,7 +264,7 @@ export function unattendedTriggerToolRequiresApproval(
 ): boolean {
   if (trigger !== "webhook") return false;
   return viaConnector
-    ? connectorToolRequiresApproval(toolName, readOnly)
+    ? unattendedConnectorToolRequiresApproval(toolName, readOnly)
     : !UNATTENDED_SAFE_BUILTIN_TOOLS.has(toolName);
 }
 
@@ -509,25 +543,37 @@ export function resolveActionApprovalForTools(input: {
 }
 
 /**
- * How much a space asks before acting. `never` runs everything without waiting, `auto` lets the approval model pass what
- * fits the owner's request, and `ask` asks before anything that changes something.
+ * How much a space asks before acting. `never` runs everything without waiting, `auto` lets the
+ * approval model pass what fits the owner's request, `risky` asks only before actions that reach
+ * outside the product or cannot be undone, and `always` asks before anything that changes something.
  */
-export type ApprovalMode = "never" | "auto" | "ask";
+export type ApprovalMode = "never" | "auto" | "risky" | "always";
 
-/** The mode a stored preference means. Skipping approvals is Never ask, an enabled review is Auto. */
+/**
+ * The mode a stored preference means. Skipping approvals is Never ask, an enabled review is Auto,
+ * and `alwaysAsk` is Always ask. A preference that chose none of them, which includes every one
+ * saved when Ask was the only level, is Only what's risky.
+ */
 export function approvalModeFromPreference(preference: {
   enabled: boolean;
   skipApprovals: boolean;
+  alwaysAsk?: boolean;
 }): ApprovalMode {
   if (preference.skipApprovals) return "never";
-  return preference.enabled ? "auto" : "ask";
+  if (preference.enabled) return "auto";
+  return preference.alwaysAsk ? "always" : "risky";
 }
 
 export function approvalPreferenceFromMode(mode: ApprovalMode): {
   enabled: boolean;
   skipApprovals: boolean;
+  alwaysAsk: boolean;
 } {
-  return { enabled: mode === "auto", skipApprovals: mode === "never" };
+  return {
+    enabled: mode === "auto",
+    skipApprovals: mode === "never",
+    alwaysAsk: mode === "always",
+  };
 }
 
 export type AutoReviewJudgeDecision = "pass" | "ask" | "error";
@@ -551,6 +597,11 @@ export function planActionGate(input: {
   ownerPresent?: boolean;
   consequential: boolean;
   /**
+   * The call is an undoable change inside a connection (see `ToolRisk`). Only what's risky lets it
+   * run; it stays false when outside content may have chosen it.
+   */
+  lowRisk?: boolean;
+  /**
    * A read whose arguments outside content may have chosen (see connectorReadRequiresApproval).
    * It goes to a connection the owner set up, so only the approval model checks it.
    */
@@ -567,6 +618,7 @@ export function planActionGate(input: {
   }
   if (input.mode === "never") return "allow";
   if (input.resolved.decision === "ask") return "ask";
+  // Only auto judges; risky and always ask, and risky first lets an undoable change through.
   const review = input.mode === "auto" && input.checkerConfigured ? "judge" : "ask";
   // A rule for the whole tool is not a choice of sites, so it never allows a new one; only a site
   // rule does, and that makes the site no longer new. The approval model judges a new site on the
@@ -574,7 +626,7 @@ export function planActionGate(input: {
   // injected there cannot argue for the site.
   if (input.newDestination) return review;
   if (input.resolved.source === "always_allow") return "allow";
-  if (input.consequential) return review;
+  if (input.consequential) return input.mode === "risky" && input.lowRisk ? "allow" : review;
   return input.reviewOnly && review === "judge" ? "judge" : "allow";
 }
 

@@ -388,6 +388,8 @@ model ActionAutoReviewPreference {
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   enabled       Boolean  @default(false)
   skipApprovals Boolean  @default(false)
+  /// Always ask. A row with none of the three set is Only what's risky, the default.
+  alwaysAsk     Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -2667,6 +2669,8 @@ model UserActionAutoReviewPreference {
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   enabled       Boolean  @default(false)
   skipApprovals Boolean  @default(false)
+  /// Always ask. A row with none of the three set is Only what's risky, the default.
+  alwaysAsk     Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

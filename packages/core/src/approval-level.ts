@@ -1,18 +1,20 @@
 import type { ActionApprovalResolved, ApprovalMode } from "./action-approval.js";
 import { planActionGate } from "./action-approval.js";
 
-const MODES: readonly string[] = ["never", "auto", "ask"];
+const MODES: readonly string[] = ["never", "auto", "risky", "always"];
 
 /**
  * The mode a bot runs under: its own when it has one, else the default it follows. A stored value
- * that is not a known mode fails closed to asking, never to the default or to Never ask.
+ * that is not a known mode fails closed to Always ask, never to the default or to Never ask. A
+ * stored "ask", from before Only what's risky existed, is that level.
  */
 export function effectiveApprovalMode(
   botMode: string | null | undefined,
   defaultMode: ApprovalMode,
 ): ApprovalMode {
   if (botMode === null || botMode === undefined) return defaultMode;
-  return MODES.includes(botMode) ? (botMode as ApprovalMode) : "ask";
+  if (botMode === "ask") return "risky";
+  return MODES.includes(botMode) ? (botMode as ApprovalMode) : "always";
 }
 
 /** What to store for a bot's choice: nothing when it is the mode the bot would follow anyway. */
@@ -26,6 +28,7 @@ export function storedBotApprovalMode(
 export type ApprovalSituation =
   | "read"
   | "change"
+  | "lowRiskChange"
   | "allowedChange"
   | "askRuleChange"
   | "blockedChange"
@@ -50,6 +53,7 @@ export const APPROVAL_SITUATIONS: Record<
 > = {
   read: { resolved: unruled, consequential: false },
   change: { resolved: unruled, consequential: true },
+  lowRiskChange: { resolved: unruled, consequential: true, lowRisk: true },
   allowedChange: { resolved: resolved("allow", "always_allow"), consequential: true },
   askRuleChange: { resolved: resolved("ask", "require_approval"), consequential: true },
   blockedChange: { resolved: resolved("deny", "deny"), consequential: true },
@@ -88,14 +92,15 @@ export function approvalOutcomes(input: {
   return outcomes;
 }
 
-export type ApprovalSummary = "every_change" | "reviewed" | "steered_only";
+export type ApprovalSummary = "every_change" | "risky_only" | "reviewed" | "steered_only";
 
 /** What still asks at a mode, read off the gate's verdict on an ordinary change. */
 export function approvalModeSummary(input: {
   mode: ApprovalMode;
   checkerConfigured: boolean;
 }): ApprovalSummary {
-  const change = approvalOutcomes(input).change;
+  const { change, lowRiskChange } = approvalOutcomes(input);
   if (change === "judge") return "reviewed";
-  return change === "allow" ? "steered_only" : "every_change";
+  if (change === "allow") return "steered_only";
+  return lowRiskChange === "allow" ? "risky_only" : "every_change";
 }

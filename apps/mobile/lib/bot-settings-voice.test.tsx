@@ -726,12 +726,14 @@ describe("bot settings device voice menu", () => {
     it("saves the careful answer once", async () => {
       await render();
       await act(async () => answer("Asks before any change").click());
-      expect(updates()).toEqual([["bots/update", { botId: "bot-fixture", approvalMode: "ask" }]]);
+      expect(updates()).toEqual([
+        ["bots/update", { botId: "bot-fixture", approvalMode: "always" }],
+      ]);
       expect(container.textContent).toContain("Asks before any change");
     });
 
     it("stores nothing when the default answer is picked again", async () => {
-      mocks.approvalMode = "ask";
+      mocks.approvalMode = "always";
       await render();
       await act(async () => answer("Does what fits your request").click());
       expect(updates()).toEqual([["bots/update", { botId: "bot-fixture", approvalMode: null }]]);
@@ -759,7 +761,7 @@ describe("bot settings device voice menu", () => {
     });
 
     it("keeps normal selected without a model, with the hint", async () => {
-      mocks.defaultMode = { mode: "ask", checkerAvailable: false };
+      mocks.defaultMode = { mode: "risky", checkerAvailable: false };
       mocks.approvalMode = "auto";
       await render();
       expect(container.textContent).toContain("Does what fits your request");

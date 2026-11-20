@@ -40,7 +40,12 @@ export function ApprovalRulesSettings({ scope }: { scope: SettingsScope }) {
   const modeId = useId();
   // The safest choice first.
   const modes: Array<{ mode: ApprovalMode; label: string; detail: string }> = [
-    { mode: "ask", label: t`Ask`, detail: t`Asks you before it changes anything.` },
+    { mode: "always", label: t`Always ask`, detail: t`Asks you before it changes anything.` },
+    {
+      mode: "risky",
+      label: t`Only what's risky`,
+      detail: t`Asks before actions with outside effects or that can't be undone.`,
+    },
     // Auto needs an approval model; it stays listed while chosen so the choice is visible.
     ...(autoReview?.checkerAvailable || autoReview?.mode === "auto"
       ? [

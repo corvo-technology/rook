@@ -109,7 +109,7 @@ import { spaceQueries } from "../../lib/query";
 import { rpc } from "../../lib/rpc";
 import { BotSettings } from "./bot-panel";
 
-const defaultSettings = (mode: "ask" | "auto" | "never", checkerAvailable = true) => ({
+const defaultSettings = (mode: "always" | "risky" | "auto" | "never", checkerAvailable = true) => ({
   mode,
   enabled: mode === "auto",
   skipApprovals: mode === "never",
@@ -871,21 +871,21 @@ describe("BotSettings autonomy", () => {
   });
 
   it("shows the bot's own answer over the default", async () => {
-    await render("Billing", { approvalMode: "ask" });
+    await render("Billing", { approvalMode: "always" });
     await expandAdvanced();
-    expect(checked()?.dataset.value).toBe("ask");
+    expect(checked()?.dataset.value).toBe("always");
   });
 
   it("saves only the chosen answer", async () => {
     await render();
     await expandAdvanced();
-    await act(async () => radio("ask").click());
-    expect(onSave).toHaveBeenCalledExactlyOnceWith({ approvalMode: "ask" });
-    expect(checked()?.dataset.value).toBe("ask");
+    await act(async () => radio("always").click());
+    expect(onSave).toHaveBeenCalledExactlyOnceWith({ approvalMode: "always" });
+    expect(checked()?.dataset.value).toBe("always");
   });
 
   it("stores nothing when the answer is the default", async () => {
-    await render("Billing", { approvalMode: "ask" });
+    await render("Billing", { approvalMode: "always" });
     await expandAdvanced();
     await act(async () => radio("auto").click());
     expect(onSave).toHaveBeenCalledExactlyOnceWith({ approvalMode: null });
@@ -895,7 +895,7 @@ describe("BotSettings autonomy", () => {
     onSave.mockRejectedValueOnce(new Error("nope"));
     await render();
     await expandAdvanced();
-    await act(async () => radio("ask").click());
+    await act(async () => radio("always").click());
     expect(checked()?.dataset.value).toBe("auto");
   });
 
@@ -919,10 +919,15 @@ describe("BotSettings autonomy", () => {
   });
 
   it("keeps normal selected without an approval model", async () => {
-    vi.mocked(rpc.autoReview.get).mockResolvedValue(defaultSettings("ask", false));
+    vi.mocked(rpc.autoReview.get).mockResolvedValue(defaultSettings("risky", false));
     await render("Billing", { approvalMode: "auto" });
     await expandAdvanced();
-    expect(radios().map((node) => node.dataset.value)).toEqual(["ask", "auto", "never"]);
+    expect(radios().map((node) => node.dataset.value)).toEqual([
+      "always",
+      "risky",
+      "auto",
+      "never",
+    ]);
     expect(checked()?.dataset.value).toBe("auto");
     expect(container.textContent).toContain("Add a model in Settings to use this.");
   });

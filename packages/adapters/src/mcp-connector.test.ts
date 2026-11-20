@@ -1275,6 +1275,11 @@ describe("MCP connector session cache", () => {
         annotations: { readOnlyHint: true },
       },
       { name: "whoami", inputSchema: { type: "object" } },
+      {
+        name: "fetch_report",
+        inputSchema: { type: "object" },
+        annotations: { readOnlyHint: true, destructiveHint: true },
+      },
     ];
     const context = {
       spaceId: "w1",
@@ -1311,6 +1316,7 @@ describe("MCP connector session cache", () => {
       expect((await read.connector.discoverTools(context)).map((tool) => tool.name)).toEqual([
         "mcp__demo__lookup",
         "mcp__demo__list_issues",
+        "mcp__demo__whoami",
       ]);
       await read.connector.close();
       const write = setup({ level: "write" });

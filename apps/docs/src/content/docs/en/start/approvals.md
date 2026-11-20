@@ -13,7 +13,8 @@ Under **Settings > Approvals**:
 
 | Mode | Behavior |
 | --- | --- |
-| **Ask** (default) | Asks before any change. |
+| **Always ask** | Asks before any change. |
+| **Only what's risky** (default) | Reads and small edits just happen; asks before sending, posting, paying, deleting, deploying or running something. |
 | **Auto** | An approval model allows what fits the request and asks about the rest. |
 | **Never ask** | Runs everything. Use with care. |
 

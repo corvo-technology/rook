@@ -13,6 +13,7 @@ import {
   connectorKindFromToolName,
   connectorReadRequiresApproval,
   connectorToolRequiresApproval,
+  connectorToolRisk,
   displayName,
   effectiveApprovalMode,
   newSiteOutcome,
@@ -146,6 +147,13 @@ export async function gateToolCall(
   const fromPartnerConnector = viaConnector && connectorCall.route?.connectorId === "partner";
   const declaredReadOnlyFor = (toolName: string) =>
     toolName === name ? declaredReadOnly : ctx.tools.connector.get(toolName)?.readOnly;
+  const declaredDestructiveFor = (toolName: string) =>
+    viaConnector
+      ? (toolName === name
+          ? (resolvedTool ?? ctx.tools.connector.get(name))
+          : ctx.tools.connector.get(toolName)
+        )?.destructive
+      : undefined;
   // Looking a tool up in the catalog runs nothing at the provider, so its name need not read as a
   // read. Taint and trust still apply to it below, as they do to a catalog search.
   const catalogLookup =
@@ -191,24 +199,28 @@ export async function gateToolCall(
           rules: await ctx.trust.loadApprovalRules(),
         })
       : "allow";
-  const connectorReadGated =
-    viaConnector &&
-    !unidentifiedAction &&
-    approvalToolNames.every(
-      (toolName) =>
-        catalogLookup ||
-        !connectorToolRequiresApproval(
-          toolName,
-          declaredReadOnlyFor(toolName),
-          fromPartnerConnector,
-        ),
-    ) &&
+  // Outside content entered this run and it has not used this connector yet: its arguments may
+  // have been chosen by that content.
+  const steeredConnector = async () =>
     connectorReadRequiresApproval({
       tainted: await isRunTainted(ctx),
       connectorTrusted: await ctx.trust
         .loadTrustedConnectors()
         .then((trusted) => connectorTrusts.every((trust) => trusted.has(trust))),
     });
+  const toolRisks = approvalToolNames.map((toolName) =>
+    connectorToolRisk(
+      toolName,
+      declaredReadOnlyFor(toolName),
+      fromPartnerConnector,
+      declaredDestructiveFor(toolName),
+    ),
+  );
+  const connectorReadGated =
+    viaConnector &&
+    !unidentifiedAction &&
+    (catalogLookup || toolRisks.every((risk) => risk === "read")) &&
+    (await steeredConnector());
   // This schedules unattended shell execution; require a person to approve
   // the command once, rather than letting an allow rule or reviewer schedule it.
   const commandWatch = name === "schedule_create" && commandWatchFromTool(args.watch) !== undefined;
@@ -232,6 +244,7 @@ export async function gateToolCall(
           viaConnector,
           declaredReadOnlyFor(toolName),
           fromPartnerConnector,
+          declaredDestructiveFor(toolName),
         ),
       ));
   // A gated read still fails closed when its review errors, and keeps its approval key.
@@ -260,6 +273,16 @@ export async function gateToolCall(
     ctx.bot.approvalMode,
     approvalModeFromPreference(await ctx.trust.loadAutoReviewPreference()),
   );
+  // Only what's risky lets an undoable change inside a connection run. Not when someone else may
+  // have steered it: outside content in the run on a connector it has not used, or a run the owner
+  // did not start.
+  const lowRisk =
+    viaConnector &&
+    !unidentifiedAction &&
+    !catalogLookup &&
+    ctx.source.ownerStartedRun &&
+    toolRisks.every((risk) => risk === "read" || risk === "low") &&
+    !(await steeredConnector());
   const reviewable = mode === "auto" && !requiresMandatoryApproval;
   const injectedReview = reviewable ? deps.autoReview : undefined;
   const reviewSettings = !reviewable || injectedReview ? null : await ctx.trust.loadApprovalModel();
@@ -305,6 +328,7 @@ export async function gateToolCall(
       ? ctx.source.ownerStartedRun && !(await ctx.trust.receivedOutsideMessage())
       : undefined,
     consequential: requiresApprovalByDefault,
+    lowRisk,
     reviewOnly: connectorReadGated,
     checkerConfigured,
     newDestination: siteGate === "new",
@@ -523,7 +547,10 @@ export async function statusCallAllowed(ctx: RunContext, tool: ConnectorTool): P
     rules: await ctx.trust.loadApprovalRules(),
   });
   if (resolved.decision !== "allow") return false;
-  if (resolved.source !== "always_allow" && connectorToolRequiresApproval(tool.name, true))
+  if (
+    resolved.source !== "always_allow" &&
+    connectorToolRequiresApproval(tool.name, true, false, tool.destructive)
+  )
     return false;
   if (unattendedTriggerToolRequiresApproval(ctx.run.trigger, tool.name, true, true)) return false;
   const trusts = connectorTrustKeys(tool.name, {}, tool.route, connectorKind, providers);

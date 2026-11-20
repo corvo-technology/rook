@@ -73,7 +73,10 @@ describe("createRepos.listBots approval mode", () => {
   }
 
   it("maps a stored mode and treats anything else as following the default", async () => {
-    expect(await modeOf("ask")).toBe("ask");
+    expect(await modeOf("always")).toBe("always");
+    expect(await modeOf("risky")).toBe("risky");
+    // Saved before Only what's risky existed.
+    expect(await modeOf("ask")).toBe("risky");
     expect(await modeOf("free")).toBeNull();
     expect(await modeOf(undefined)).toBeNull();
     expect(await modeOf(null)).toBeNull();

@@ -30,13 +30,14 @@ export function mcpGrantLevel(row: {
  */
 export function mcpToolOffered(
   grant: { allowAllTools: boolean; allowedTools: unknown; level: string | null | undefined },
-  tool: { name: string; readOnly?: boolean },
+  tool: { name: string; readOnly?: boolean; destructive?: boolean },
 ): boolean {
   if (!grant.allowAllTools) {
     return Array.isArray(grant.allowedTools) && grant.allowedTools.includes(tool.name);
   }
   return (
-    storedAccessLevel(grant.level) === "write" || connectorToolIsRead(tool.name, tool.readOnly)
+    storedAccessLevel(grant.level) === "write" ||
+    connectorToolIsRead(tool.name, tool.readOnly, tool.destructive)
   );
 }
 

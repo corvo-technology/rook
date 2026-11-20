@@ -95,7 +95,7 @@ export function createRunTrustLoaders(
       {},
     ));
   let autoReviewPreferencePromise:
-    | Promise<{ enabled: boolean; skipApprovals: boolean }>
+    | Promise<{ enabled: boolean; skipApprovals: boolean; alwaysAsk: boolean }>
     | undefined;
   const loadAutoReviewPreference = () => {
     autoReviewPreferencePromise ??= findAutoReviewPreference(deps.prisma, {
@@ -104,6 +104,7 @@ export function createRunTrustLoaders(
     }).then((row) => ({
       enabled: row?.enabled ?? deploymentAutoReviewDefault(),
       skipApprovals: row?.skipApprovals ?? false,
+      alwaysAsk: row?.alwaysAsk ?? false,
     }));
     return autoReviewPreferencePromise;
   };

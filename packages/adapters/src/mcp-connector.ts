@@ -348,8 +348,11 @@ export class McpConnector implements ConnectorProvider {
   private readonly probes = new Map<string, Promise<McpServerHealthUpdate>>();
   /** Last discovery failure per session key, returned by the unavailable stand-in tool. */
   private readonly unavailable = new Map<string, string>();
-  /** The read-only hint each tool declared when last listed, so a call is held to the same level. */
-  private readonly readHints = new Map<string, Map<string, boolean | undefined>>();
+  /** The effect hints each tool declared when last listed, so a call is held to the same level. */
+  private readonly toolHints = new Map<
+    string,
+    Map<string, { readOnly?: boolean; destructive?: boolean }>
+  >();
   private readonly healthWrites = new Map<string, { value: string; at: number }>();
   /** Servers whose last discovery failed; runs skip them until `until`, per revision. */
   private readonly discoveryBackoff = new Map<
@@ -489,15 +492,24 @@ export class McpConnector implements ConnectorProvider {
             toolCount: listed.tools.length,
           });
           reportAllowlistDrift(assignment, listed.tools, context);
-          this.readHints.set(
+          this.toolHints.set(
             key,
-            new Map(listed.tools.map((tool) => [tool.name, tool.annotations?.readOnlyHint])),
+            new Map(
+              listed.tools.map((tool) => [
+                tool.name,
+                {
+                  readOnly: tool.annotations?.readOnlyHint,
+                  destructive: tool.annotations?.destructiveHint,
+                },
+              ]),
+            ),
           );
           return listed.tools
             .filter((tool) =>
               mcpToolOffered(assignment, {
                 name: tool.name,
                 readOnly: tool.annotations?.readOnlyHint,
+                destructive: tool.annotations?.destructiveHint,
               }),
             )
             .map((tool) => ({
@@ -505,6 +517,8 @@ export class McpConnector implements ConnectorProvider {
               description: tool.description ?? tool.name,
               inputSchema: tool.inputSchema as Record<string, unknown>,
               readOnly: tool.annotations?.readOnlyHint,
+              destructive: tool.annotations?.destructiveHint,
+              openWorld: tool.annotations?.openWorldHint,
               route: {
                 connectorId: "mcp",
                 resourceId: assignment.serverId,
@@ -661,7 +675,7 @@ export class McpConnector implements ConnectorProvider {
       !assignment ||
       !mcpToolOffered(assignment, {
         name: call.route.toolName,
-        readOnly: this.readHints
+        ...this.toolHints
           .get(this.sessionKey(assignment.server, context))
           ?.get(call.route.toolName),
       })

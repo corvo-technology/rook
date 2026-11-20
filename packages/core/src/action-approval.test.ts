@@ -95,6 +95,7 @@ describe("toolRequiresApproval", () => {
     expect(toolRequiresApproval("find_user", true)).toBe(false);
     expect(toolRequiresApproval("read_inbox", true)).toBe(false);
     expect(toolRequiresApproval("contacts_get_or_create", true)).toBe(true);
+    expect(toolRequiresApproval("fetch_emails", true)).toBe(false);
     expect(toolRequiresApproval("notion_search_and_update", true)).toBe(true);
     expect(toolRequiresApproval("crm_get_then_upsert", true)).toBe(true);
   });
@@ -122,10 +123,21 @@ describe("connectorToolRequiresApproval", () => {
     expect(connectorToolRequiresApproval("read_profile_card")).toBe(false);
   });
 
-  it("never lets a declared read relax a mutating or ambiguous name", () => {
+  it("never lets a declared read relax a locked name or a destructive tool", () => {
     expect(connectorToolRequiresApproval("delete_item", true)).toBe(true);
-    expect(connectorToolRequiresApproval("get_or_create_contact", true)).toBe(true);
-    expect(connectorToolRequiresApproval("profile_card", true)).toBe(true);
+    expect(connectorToolRequiresApproval("send_email", true)).toBe(true);
+    expect(connectorToolRequiresApproval("get_contact", true, false, true)).toBe(true);
+  });
+
+  it("lets a declared read relax a name that is not locked", () => {
+    expect(connectorToolRequiresApproval("profile_card", true)).toBe(false);
+    expect(connectorToolRequiresApproval("profile_card")).toBe(true);
+  });
+
+  it("recognises reads in any case and by verb", () => {
+    for (const name of ["fetch_emails", "getPetById", "listPets", "GMAIL_FETCH_EMAILS", "whoami"]) {
+      expect(connectorToolRequiresApproval(name), name).toBe(false);
+    }
   });
 });
 
@@ -405,10 +417,21 @@ describe("planActionGate", () => {
       ...overrides,
     });
 
-  it("runs an unlisted change in Never ask, judges it in Auto and asks in Ask", () => {
+  it("runs an unlisted change in Never ask, judges it in Auto and asks otherwise", () => {
     expect(gate("never")).toBe("allow");
     expect(gate("auto")).toBe("judge");
-    expect(gate("ask")).toBe("ask");
+    expect(gate("risky")).toBe("ask");
+    expect(gate("always")).toBe("ask");
+  });
+
+  it("lets Only what's risky run an undoable change, and Always ask still asks", () => {
+    expect(gate("risky", { lowRisk: true })).toBe("allow");
+    expect(gate("always", { lowRisk: true })).toBe("ask");
+    expect(gate("auto", { lowRisk: true })).toBe("judge");
+    expect(gate("risky", { lowRisk: true, resolved: asked })).toBe("ask");
+    expect(gate("risky", { lowRisk: true, newDestination: true })).toBe("ask");
+    expect(gate("risky", { lowRisk: true, mandatory: true })).toBe("ask");
+    expect(gate("risky", { lowRisk: true, resolved: blocked })).toBe("deny");
   });
 
   it("asks in Auto when no approval model is set up", () => {
@@ -416,13 +439,13 @@ describe("planActionGate", () => {
   });
 
   it("runs an allowlisted change in every mode without judging", () => {
-    for (const mode of ["never", "auto", "ask"] as const) {
+    for (const mode of ["never", "auto", "risky", "always"] as const) {
       expect(gate(mode, { resolved: allowed })).toBe("allow");
     }
   });
 
   it("refuses a blocked action in every mode, even one a person must approve", () => {
-    for (const mode of ["never", "auto", "ask"] as const) {
+    for (const mode of ["never", "auto", "risky", "always"] as const) {
       expect(gate(mode, { resolved: blocked })).toBe("deny");
       expect(gate(mode, { resolved: blocked, mandatory: true })).toBe("deny");
       expect(gate(mode, { resolved: blocked, consequential: false })).toBe("deny");
@@ -430,7 +453,7 @@ describe("planActionGate", () => {
   });
 
   it("runs reads in every mode", () => {
-    for (const mode of ["never", "auto", "ask"] as const) {
+    for (const mode of ["never", "auto", "risky", "always"] as const) {
       expect(gate(mode, { consequential: false })).toBe("allow");
     }
   });
@@ -438,12 +461,14 @@ describe("planActionGate", () => {
   it("keeps an older ask rule asking, except in Never ask, which never waits", () => {
     expect(gate("never", { resolved: asked })).toBe("allow");
     expect(gate("auto", { resolved: asked })).toBe("ask");
-    expect(gate("ask", { resolved: asked })).toBe("ask");
+    expect(gate("risky", { resolved: asked })).toBe("ask");
+    expect(gate("always", { resolved: asked })).toBe("ask");
   });
 
   it("asks a person for an approval nothing else may give, in Auto and Ask", () => {
     expect(gate("auto", { mandatory: true, resolved: allowed })).toBe("ask");
-    expect(gate("ask", { mandatory: true, resolved: allowed })).toBe("ask");
+    expect(gate("risky", { mandatory: true, resolved: allowed })).toBe("ask");
+    expect(gate("always", { mandatory: true, resolved: allowed })).toBe("ask");
   });
 
   it("in Never ask runs it for the owner's own run and refuses it when outside text could steer it", () => {
@@ -457,25 +482,36 @@ describe("planActionGate", () => {
     const read = { consequential: false, reviewOnly: true };
     expect(gate("auto", read)).toBe("judge");
     expect(gate("auto", { ...read, checkerConfigured: false })).toBe("allow");
-    expect(gate("ask", read)).toBe("allow");
+    expect(gate("risky", read)).toBe("allow");
+    expect(gate("always", read)).toBe("allow");
     expect(gate("never", read)).toBe("allow");
   });
 
   it("judges a new site in Auto even with a rule for the whole tool, and asks in Ask", () => {
     expect(gate("auto", { resolved: allowed, newDestination: true })).toBe("judge");
     expect(gate("auto", { newDestination: true, checkerConfigured: false })).toBe("ask");
-    expect(gate("ask", { resolved: allowed, newDestination: true })).toBe("ask");
+    expect(gate("risky", { resolved: allowed, newDestination: true })).toBe("ask");
+    expect(gate("always", { resolved: allowed, newDestination: true })).toBe("ask");
     expect(gate("never", { newDestination: true })).toBe("allow");
   });
 });
 
 describe("approval modes from stored preferences", () => {
   it("maps both ways", () => {
-    for (const mode of ["never", "auto", "ask"] as const) {
+    for (const mode of ["never", "auto", "risky", "always"] as const) {
       expect(approvalModeFromPreference(approvalPreferenceFromMode(mode))).toBe(mode);
     }
     expect(approvalModeFromPreference({ enabled: true, skipApprovals: true })).toBe("never");
-    expect(approvalModeFromPreference({ enabled: false, skipApprovals: false })).toBe("ask");
+  });
+
+  it("reads a preference saved before Only what's risky as that level", () => {
+    expect(approvalModeFromPreference({ enabled: false, skipApprovals: false })).toBe("risky");
+    expect(
+      approvalModeFromPreference({ enabled: false, skipApprovals: false, alwaysAsk: false }),
+    ).toBe("risky");
+    expect(
+      approvalModeFromPreference({ enabled: false, skipApprovals: false, alwaysAsk: true }),
+    ).toBe("always");
   });
 });
 

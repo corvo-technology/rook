@@ -133,9 +133,12 @@ const scheduleTimingSpecs = {
   watch: {
     type: ["object", "null"],
     description:
-      'Run only when something changes, checked without a model every everyMinutes (min 5, default 15). kind files: paths on your computer. kind command: a shell command run in your folder each interval without per-run approval; its output is compared. kind tool: a read-only connected tool and its args. Watch one named thing, never a whole account. For a list result set track: the field naming each item, then the fields whose change counts (mail search -> track ["id"]; Drive folder -> ["id", "modifiedTime"]).',
+      'Run only when something changes, checked without a model every everyMinutes (min 5, default 15). kind files: paths on your computer. kind command: a shell command run in your folder each interval without per-run approval; its output is compared. kind tool: a read-only connected tool and its args. Watch one named thing, never a whole account. For a list result set track: the field naming each item, then the fields whose change counts (mail search -> track ["id"]; Drive folder -> ["id", "modifiedTime"]). For the user\'s calendar or inbox set preset instead of track: "calendar" wakes you for a new, moved or cancelled event, an overlap in the next 7 days, or a meeting starting within leadMinutes (default 15); "email" wakes you for new unread mail from a person, not from the user and not automated. Both pick the connected read tool themselves and wake you only on a real change. A calendar tool\'s args may use {{now}} and {{in7d}} for the time range. Offer these once when a calendar or mail is connected and the user would benefit; never silently.',
     properties: {
       kind: { type: "string", enum: ["files", "command", "tool"] },
+      preset: { type: "string", enum: ["calendar", "email"] },
+      leadMinutes: { type: "number", description: "Calendar: briefing lead time, 5 to 120." },
+      userEmails: { type: "array", items: { type: "string" } },
       paths: { type: "array", items: { type: "string" } },
       command: { type: "string" },
       tool: { type: "string" },
@@ -144,7 +147,6 @@ const scheduleTimingSpecs = {
       everyMinutes: { type: "number" },
       loud: { type: "boolean", description: "Also post 'No changes' on quiet checks." },
     },
-    required: ["kind"],
   },
 };
 

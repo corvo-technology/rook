@@ -823,6 +823,43 @@ describe("schedule_create with a watch", () => {
     expect(enqueue).toHaveBeenCalledTimes(1);
   });
 
+  it("turns on a calendar preset with the connected read tool, no tool named", async () => {
+    const { deps: d, create, enqueue } = deps();
+    d.connector = {
+      discoverTools: vi.fn(async () => [
+        { name: "CALENDAR_CREATE_EVENT", readOnly: false },
+        { name: "CALENDAR_EVENTS_LIST", readOnly: true, route: { connectorId: "installed" } },
+      ]),
+    } as never;
+    const result = await createScheduleFromTool(d, {
+      ...base,
+      schedule: { watch: { preset: "calendar", args: { timeMin: "{{now}}" }, leadMinutes: 10 } },
+    });
+    expect(result).toMatchObject({ ok: true });
+    expect(create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        watch: expect.objectContaining({
+          kind: "tool",
+          tool: "CALENDAR_EVENTS_LIST",
+          preset: "calendar",
+          leadMinutes: 10,
+        }),
+      }),
+    });
+    expect(enqueue).toHaveBeenCalledTimes(1);
+  });
+
+  it("says so when no calendar or email integration is connected", async () => {
+    const { deps: d, create } = deps();
+    d.connector = { discoverTools: vi.fn(async () => []) } as never;
+    const result = await createScheduleFromTool(d, {
+      ...base,
+      schedule: { watch: { preset: "email" } },
+    });
+    expect(result).toMatchObject({ error: expect.stringContaining("No connected email") });
+    expect(create).not.toHaveBeenCalled();
+  });
+
   it("rejects a team path escape before persisting", async () => {
     const { deps: d, create } = deps();
     vi.mocked(d.prisma.bot.findFirst).mockResolvedValue({ computer: { scope: "team" } } as never);

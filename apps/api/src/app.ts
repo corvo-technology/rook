@@ -104,6 +104,7 @@ import {
   RunJobPublisher,
   reconcileCloudAgents,
   reconcileComputerUpdates,
+  reconcileResearch,
   removePiUserSessions,
   resolveDeploymentModel,
   routeAgentRuntime,
@@ -962,6 +963,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
           senderDomains: branding.senderDomains,
         }),
         reconcileCloudAgents: () => reconcileCloudAgents({ prisma, jobs, cloudAgent }),
+        reconcileResearch: () => reconcileResearch({ prisma, jobs, events }),
         reconcileComputerUpdates: () => reconcileComputerUpdates({ prisma, jobs }),
         reconcileSecurityEventRetention: createSecurityEventPruner(
           prisma,

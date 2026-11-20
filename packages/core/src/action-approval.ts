@@ -64,6 +64,8 @@ const EXPLICIT_APPROVAL_BUILTIN_TOOLS = new Set([
 const UNATTENDED_SAFE_BUILTIN_TOOLS = new Set([
   "browser_snapshot",
   "cloud_agent_status",
+  "research_start",
+  "research_status",
   "computer_observe",
   "list_files",
   "list_fleet",

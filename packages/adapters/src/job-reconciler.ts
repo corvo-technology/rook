@@ -130,6 +130,7 @@ export function createJobReconciler(
     leadership?: ReconciliationLeadership;
     reconcileComputerUpdates?: () => Promise<void>;
     reconcileCloudAgents?: () => Promise<void>;
+    reconcileResearch?: () => Promise<void>;
     reconcileModelCredits?: () => Promise<void>;
     reconcilePartnerWebhooks?: () => Promise<void>;
     reconcilePartnerDomains?: () => Promise<void>;
@@ -173,6 +174,7 @@ export function createJobReconciler(
           () => reconcileCallRequests(deps),
           () => reconcileComputerRuns(deps.prisma),
           deps.reconcileCloudAgents,
+          deps.reconcileResearch,
           deps.reconcileModelCredits,
           deps.reconcilePartnerWebhooks,
           deps.reconcilePartnerDomains,

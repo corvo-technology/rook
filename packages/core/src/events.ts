@@ -2,6 +2,7 @@ import type { MessageBlock, RunErrorInfo, ThreadMessage } from "@corvo/contracts
 import { RunErrorInfoSchema } from "@corvo/contracts";
 import { cloudAgentBlockFromPayload } from "./cloud-agent.js";
 import { preserveIdentitySource } from "./identity-source.js";
+import { researchBlockFromPayload } from "./research.js";
 import { modelFallbackFailure, parseModelFallbackFailure } from "./run-error.js";
 
 export function projectMessages(
@@ -93,6 +94,16 @@ export function projectMessages(
         if (message.id === payload.messageId)
           message.blocks = message.blocks.map((old) =>
             old.kind === "cloud_agent" && old.agentId === block.agentId ? block : old,
+          );
+      }
+      continue;
+    }
+    if (event.type === "thread.research") {
+      const block = researchBlockFromPayload(payload);
+      for (const message of messages) {
+        if (message.id === payload.messageId)
+          message.blocks = message.blocks.map((old) =>
+            old.kind === "research" && old.researchId === block.researchId ? block : old,
           );
       }
       continue;

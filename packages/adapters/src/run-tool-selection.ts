@@ -43,6 +43,7 @@ export const READ_ONLY_AGENT_TOOLS = new Set([
   "browser_snapshot",
   "list_secrets",
   "cloud_agent_status",
+  "research_status",
   "query_database",
   "describe_database",
 ]);

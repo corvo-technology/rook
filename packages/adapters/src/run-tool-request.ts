@@ -20,6 +20,7 @@ import { validCloudAgentArgs } from "./cloud-agent-tools.js";
 import { sanitizeConnectorError } from "./connector-safety.js";
 import { isFleetApprovalTool, prepareFleetRequest } from "./fleet-tools.js";
 import { assertConnectorToolArgs, CATALOG_EXECUTE } from "./lazy-tool-catalog.js";
+import { validResearchArgs } from "./research-service.js";
 import type { RunContext } from "./run-context.js";
 import {
   approvalReplayEffectToolName,
@@ -91,6 +92,9 @@ export async function resolveToolRequest(
     return {
       error: "Invalid cloud agent arguments. Raw environment variables are not supported.",
     };
+  }
+  if (name.startsWith("research_") && !validResearchArgs(name, args)) {
+    return { error: "Invalid research arguments." };
   }
   let effectRequest: unknown = args;
   if (connectorCall.route && deps.connector?.resolveCall) {

@@ -74,6 +74,7 @@ import {
   RunWorkerHost,
   reconcileCloudAgents,
   reconcileComputerUpdates,
+  reconcileResearch,
   resolveDeploymentModel,
   resolvePiSessionRoot,
   resolveSandboxProvider,
@@ -428,6 +429,7 @@ async function main() {
     }),
     reconcileBillingReminders: createBillingReminderJobFromEnv(prisma, process.env),
     reconcileCloudAgents: () => reconcileCloudAgents({ prisma, jobs, cloudAgent }),
+    reconcileResearch: () => reconcileResearch({ prisma, jobs, events }),
     reconcileComputerUpdates: () => reconcileComputerUpdates({ prisma, jobs }),
     reconcileRoutineRetryNotices: inMemoryJobs
       ? undefined

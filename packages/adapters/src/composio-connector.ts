@@ -143,10 +143,72 @@ export function executeSessionKey(
 }
 
 const COMPOSIO_MULTI_EXECUTE_TOOL = "COMPOSIO_MULTI_EXECUTE_TOOL";
+const COMPOSIO_SEARCH_TOOLS = "COMPOSIO_SEARCH_TOOLS";
 /** Connected-account listings are per user and toolkit; this bounds a runaway cursor. */
 const MAX_ACCOUNT_PAGES = 20;
 /** Folder listings treat a missing path as the account root. */
 const DROPBOX_FOLDER_LIST_TOOLS = new Set(["DROPBOX_LIST_FILES_IN_FOLDER", "DROPBOX_LIST_FOLDERS"]);
+
+function searchText(value: unknown, out: string[] = []): string[] {
+  if (typeof value === "string") out.push(value);
+  else if (Array.isArray(value)) for (const item of value) searchText(item, out);
+  else if (value && typeof value === "object") {
+    for (const item of Object.values(value)) searchText(item, out);
+  }
+  return out;
+}
+
+/**
+ * Apps a tool search names that have no active connection. The session only offers connected
+ * toolkits, so such a search returns other apps' tools and a "connections active" hint; without
+ * this the agent never learns the app it needs is missing and falls back to the browser.
+ */
+export function unconnectedAppsNamedBySearch(
+  args: Record<string, unknown>,
+  directory: readonly { slug: string; name: string }[],
+  connectedToolkits: readonly string[],
+): { slug: string; name: string }[] {
+  const text = searchText(args.queries ?? args)
+    .join(" ")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ");
+  if (!text.trim()) return [];
+  const connected = new Set(connectedToolkits.map(composioSlugKey));
+  const padded = ` ${text} `;
+  return directory.filter((item) => {
+    if (connected.has(composioSlugKey(item.slug))) return false;
+    return [item.name, item.slug].some((word) => {
+      const normalized = word
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+      return normalized.length >= 3 && padded.includes(` ${normalized} `);
+    });
+  });
+}
+
+/** Adds the missing-connection facts to a search result; the connect itself is the agent's tool. */
+export function annotateToolSearch(
+  data: unknown,
+  missing: readonly { slug: string; name: string }[],
+): unknown {
+  if (missing.length === 0 || !data || typeof data !== "object" || Array.isArray(data)) return data;
+  const apps = missing.map((item) => item.name || item.slug).join(", ");
+  const guidance = `Not connected: ${apps}. Their tools are not in these results. Call connect_app for each and wait for the user; do not use the computer or browser for it.`;
+  const record = data as Record<string, unknown>;
+  // Composio nests its payload under `data`; its own "connections active" hint sits there.
+  const inner = record.data;
+  const nested =
+    inner && typeof inner === "object" && !Array.isArray(inner)
+      ? { data: { ...(inner as Record<string, unknown>), next_steps_guidance: guidance } }
+      : {};
+  return {
+    ...record,
+    ...nested,
+    corvo_not_connected: missing.map((item) => ({ slug: item.slug, name: item.name })),
+    next_steps_guidance: guidance,
+  };
+}
 
 export type ComposioExecutionCall = {
   tool: string;
@@ -540,6 +602,16 @@ export class ComposioConnector implements ComposioProvider {
         return;
       }
       const planned = expandComposioMultiExecute(call.tool, call.args ?? {});
+      const missingApps =
+        call.tool === COMPOSIO_SEARCH_TOOLS
+          ? unconnectedAppsNamedBySearch(
+              call.args ?? {},
+              await this.directory().catch(() => []),
+              await this.canonicalizeToolkits(
+                connectedComposioConnections(context).map((connection) => connection.externalId),
+              ),
+            )
+          : [];
       for (const item of planned) {
         const result = await session.execute(
           item.tool,
@@ -566,7 +638,7 @@ export class ComposioConnector implements ComposioProvider {
       yield {
         type: "result",
         data: {
-          data: sanitizePayload(result.data),
+          data: annotateToolSearch(sanitizePayload(result.data), missingApps),
           logId,
           ...(logIds.length > 1 ? { logIds: logIds.slice(1).map((id) => ({ logId: id })) } : {}),
         },

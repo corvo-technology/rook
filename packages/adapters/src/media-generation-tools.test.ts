@@ -43,7 +43,7 @@ function setup() {
     provider,
     prisma: {
       externalEffect,
-      artifact: { findFirst: vi.fn().mockResolvedValue(null) },
+      artifact: { findMany: vi.fn().mockResolvedValue([]) },
     } as unknown as PrismaClient,
     context,
     run,
@@ -87,6 +87,7 @@ describe("bot media tools", () => {
     expect(await generateMediaFromTool(options)).toEqual({
       status: "completed",
       artifactId: "artifact",
+      artifactIds: ["artifact"],
     });
     expect(externalEffect.create.mock.invocationCallOrder[0]).toBeLessThan(
       generate.mock.invocationCallOrder[0]!,
@@ -192,7 +193,7 @@ describe("bot media tools", () => {
         mimeType: "image/png",
         size: 4,
       };
-      vi.mocked(options.prisma.artifact.findFirst).mockResolvedValue(artifact as never);
+      vi.mocked(options.prisma.artifact.findMany).mockResolvedValue([artifact] as never);
       const image = vi.spyOn(provider, "generateImage");
       const poll = vi.spyOn(provider, "pollVideo");
       publish.mockRejectedValueOnce(new Error("publication failed"));
@@ -209,14 +210,14 @@ describe("bot media tools", () => {
           name,
           args: name === "generate_video" ? { jobId: row.id } : { prompt: "draw" },
         }),
-      ).toEqual({ status: "completed", artifactId: artifact.id });
+      ).toEqual({ status: "completed", artifactId: artifact.id, artifactIds: [artifact.id] });
       expect(image).not.toHaveBeenCalled();
       expect(poll).not.toHaveBeenCalled();
       expect(attach).not.toHaveBeenCalled();
       expect(publish).toHaveBeenCalledWith(
-        expect.objectContaining({ artifactId: artifact.id }),
+        [expect.objectContaining({ artifactId: artifact.id })],
         row.id,
-        artifact.id,
+        [artifact.id],
       );
     },
   );
@@ -267,11 +268,10 @@ describe("bot media tools", () => {
   it("rejects oversized or wrong-MIME adapter output before storage", async () => {
     const { options, provider, attach } = setup();
     vi.spyOn(provider, "generateImage")
-      .mockResolvedValueOnce({
-        bytes: new Uint8Array(ATTACHMENT_MAX_BYTES + 1),
-        mimeType: "image/png",
-      })
-      .mockResolvedValueOnce({ bytes: new Uint8Array([1]), mimeType: "video/mp4" });
+      .mockResolvedValueOnce([
+        { bytes: new Uint8Array(ATTACHMENT_MAX_BYTES + 1), mimeType: "image/png" },
+      ])
+      .mockResolvedValueOnce([{ bytes: new Uint8Array([1]), mimeType: "video/mp4" }]);
     expect(await generateMediaFromTool(options)).toHaveProperty("error");
     expect(await generateMediaFromTool(options)).toHaveProperty("error");
     expect(attach).not.toHaveBeenCalled();
@@ -292,13 +292,18 @@ describe("image generation on the customer's credit", () => {
     const { hold, credits: wallet } = credits();
     const generate = vi
       .spyOn(provider, "generateImage")
-      .mockResolvedValue({ bytes: Buffer.from("x"), mimeType: "image/png", costUsd: 0.04 });
+      .mockResolvedValue([{ bytes: Buffer.from("x"), mimeType: "image/png", costUsd: 0.04 }]);
     await generateMediaFromTool({ ...options, credits: wallet });
-    expect(wallet.hold).toHaveBeenCalledWith("local-job", undefined);
+    expect(wallet.hold).toHaveBeenCalledWith({
+      jobId: "local-job",
+      provider: "fake",
+      model: undefined,
+      count: 1,
+    });
     expect(wallet.hold.mock.invocationCallOrder[0]).toBeLessThan(
       generate.mock.invocationCallOrder[0]!,
     );
-    expect(hold.settle).toHaveBeenCalledWith(0.04);
+    expect(hold.settle).toHaveBeenCalledWith(0.04, 1);
     expect(hold.release).not.toHaveBeenCalled();
   });
 
@@ -360,7 +365,7 @@ describe("image generation on the customer's credit", () => {
     const generate = vi.spyOn(provider, "generateImage");
     await generateMediaFromTool({ ...options, args: { prompt: "draw", aspect_ratio: "4:5" } });
     expect(generate).toHaveBeenCalledWith(
-      { prompt: "draw", aspectRatio: "4:5" },
+      { prompt: "draw", aspectRatio: "4:5", count: 1 },
       expect.anything(),
     );
   });
@@ -371,7 +376,9 @@ describe("image generation on the customer's credit", () => {
       ["image/webp", "generated-local-job.webp"],
     ] as const) {
       const { options, provider, attach } = setup();
-      vi.spyOn(provider, "generateImage").mockResolvedValue({ bytes: Buffer.from("x"), mimeType });
+      vi.spyOn(provider, "generateImage").mockResolvedValue([
+        { bytes: Buffer.from("x"), mimeType },
+      ]);
       await generateMediaFromTool(options);
       expect(attach).toHaveBeenCalledWith(
         expect.objectContaining({ mimeType }),

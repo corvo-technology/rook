@@ -1,8 +1,19 @@
 import type { MessageBlock } from "@corvo/contracts";
 import { appConnectedInput, waitForConnection } from "@corvo/core";
-import { Button, Input, SidePanel } from "@corvo/ui-web";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  Input,
+  SidePanel,
+} from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { X } from "lucide-react";
+import { MoreHorizontal, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { BuiCard, SuccessPop } from "../../components/ai/primitives";
 import { OptionRow } from "../../components/OptionRow";
@@ -554,14 +565,19 @@ export function ChartBlockView({
   );
 }
 
+export type ImageAsk = "variations" | "edit";
+
 export function ArtifactImage({
   target,
   artifactId,
   name,
+  onAsk,
 }: {
   target: ArtifactTarget;
   artifactId: string;
   name: string;
+  /** Asks the agent to work from this picture; offered on a picture the agent made. */
+  onAsk?: (artifactId: string, ask: ImageAsk) => void;
 }) {
   const { t } = useLingui();
   const [open, setOpen] = useState(false);
@@ -589,12 +605,13 @@ export function ArtifactImage({
   }, []);
 
   return (
-    <div ref={container}>
+    <div ref={container} className="group/image relative">
       {src ? (
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="max-w-[240px] overflow-hidden rounded-[20px]"
+          aria-label={name}
+          className="block max-w-[240px] overflow-hidden rounded-[20px]"
         >
           <img src={src} alt={name} className="max-h-48 w-full object-cover" />
         </button>
@@ -603,16 +620,44 @@ export function ArtifactImage({
           {name}
         </div>
       )}
+      {src && onAsk ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            aria-label={t`More image actions`}
+            render={
+              <Button
+                variant="secondary"
+                size="icon-sm"
+                className="absolute top-2 right-2 opacity-0 focus-visible:opacity-100 group-hover/image:opacity-100 data-popup-open:opacity-100 [@media(hover:none)]:opacity-100"
+              />
+            }
+          >
+            <MoreHorizontal />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onAsk(artifactId, "variations")}>
+              <Trans>Variations</Trans>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onAsk(artifactId, "edit")}>
+              <Trans>Edit</Trans>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : null}
       {src ? (
-        <SidePanel
-          open={open}
-          onClose={() => setOpen(false)}
-          title={name}
-          closeLabel={t`Close image preview`}
-          wide
-        >
-          <img src={src} alt={name} className="w-full rounded-xl object-contain" />
-        </SidePanel>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent
+            className="w-auto max-w-[calc(100%-2rem)] gap-0 bg-transparent p-0 ring-0 sm:max-w-[min(90vw,64rem)]"
+            showCloseButton
+          >
+            <DialogTitle className="sr-only">{name}</DialogTitle>
+            <img
+              src={src}
+              alt={name}
+              className="max-h-[85vh] max-w-full rounded-xl object-contain"
+            />
+          </DialogContent>
+        </Dialog>
       ) : null}
     </div>
   );

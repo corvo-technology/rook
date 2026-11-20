@@ -7,6 +7,8 @@ import {
   botSecretDestinationSchema,
   FLEET_TOOL_NAMES,
   GenerateSecretInput,
+  IMAGE_MAX_COUNT,
+  IMAGE_MAX_REFERENCES,
   SecretAskPurpose,
   SecretHttpRequest,
   TICKET_COMMENT_MAX_LENGTH,
@@ -199,12 +201,18 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "generate_image",
     description:
-      "Generate one image from a prompt and attach it to chat. It is paid from the account's credit. Pick the proportion the post needs (4:5 for a feed post, 9:16 for a story). Do not retry failed submissions automatically.",
+      "Generate images from a prompt and post them in the chat. Paid from the account's credit, by the picture. Pick the proportion the post needs (4:5 for a feed post, 9:16 for a story). To edit an image or make variations of it, pass its artifact id in reference_artifact_ids (the file name of an attachment without its extension, or an id this tool returned; only images in this conversation; not every model accepts them). Ask for several options with count (up to 4) instead of calling again. Do not retry failed submissions automatically.",
     inputSchema: {
       type: "object",
       properties: {
         prompt: { type: "string", minLength: 1, maxLength: 4000 },
         aspect_ratio: { type: "string", enum: [...MEDIA_ASPECT_RATIOS] },
+        count: { type: "integer", minimum: 1, maximum: IMAGE_MAX_COUNT },
+        reference_artifact_ids: {
+          type: "array",
+          items: { type: "string" },
+          maxItems: IMAGE_MAX_REFERENCES,
+        },
       },
       required: ["prompt"],
     },

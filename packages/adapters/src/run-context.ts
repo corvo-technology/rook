@@ -225,6 +225,8 @@ export type RunTrust = ReturnType<typeof createRunTrustLoaders> & {
 export interface RunProviders {
   web: WebProvider;
   mediaGeneration: MediaGenerationProvider | undefined;
+  /** Set when pictures run on the account's own connection of this provider, not credits. */
+  mediaOwnConnection?: string;
   browser: BrowserProvider;
   cloudAgent: ExecutorDeps["cloudAgent"];
 }

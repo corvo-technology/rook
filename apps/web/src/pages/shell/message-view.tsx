@@ -4,7 +4,7 @@ import {
   withBlockAtMentions,
   withBlockMentions,
 } from "@corvo/chat-ui/web";
-import type { MessageReaction, ThreadMessage } from "@corvo/contracts";
+import type { MessageBlock, MessageReaction, ThreadMessage } from "@corvo/contracts";
 import type { ChildBotBlock } from "@corvo/core";
 import {
   ACTIVE_RUN_STATUSES,
@@ -59,6 +59,7 @@ import {
   ArtifactImage,
   ChartBlockView,
   ChoiceCard,
+  type ImageAsk,
   McpApprovalCard,
 } from "./message-cards";
 import { MessageHoverActions } from "./message-hover-actions";
@@ -142,6 +143,7 @@ export const MessageView = memo(function MessageView({
   onOpenImport,
   showToolActivity,
   onReply,
+  onImageAsk,
   onReplyInThread,
   onMarkUnread,
   onKeepInWiki,
@@ -209,6 +211,8 @@ export const MessageView = memo(function MessageView({
   showToolActivity: boolean;
   /** Quotes this message in the composer; absent where there is none. */
   onReply?: (message: ThreadMessage) => void;
+  /** Asks the agent to work from one of its pictures. */
+  onImageAsk?: (message: ThreadMessage, artifactId: string, ask: ImageAsk) => void;
   /** Opens this message's thread; offered only in a channel's main column. */
   onReplyInThread?: (message: ThreadMessage) => void;
   onMarkUnread: (message: ThreadMessage) => void;
@@ -778,13 +782,26 @@ export const MessageView = memo(function MessageView({
             );
           }
           if (block.kind === "image") {
+            // Pictures posted together sit in one row, under the first of them.
+            if (message.blocks[i - 1]?.kind === "image") return null;
+            const row: Array<[number, Extract<MessageBlock, { kind: "image" }>]> = [];
+            for (let j = i; message.blocks[j]?.kind === "image"; j++)
+              row.push([j, message.blocks[j] as Extract<MessageBlock, { kind: "image" }>]);
             return (
-              <div key={i} className="flex justify-start">
-                <ArtifactImage
-                  target={artifactTarget}
-                  artifactId={block.artifactId}
-                  name={block.name}
-                />
+              <div key={i} className="flex flex-wrap justify-start gap-2">
+                {row.map(([index, image]) => (
+                  <ArtifactImage
+                    key={index}
+                    target={artifactTarget}
+                    artifactId={image.artifactId}
+                    name={image.name}
+                    onAsk={
+                      message.role === "bot" && onImageAsk
+                        ? (artifactId, ask) => onImageAsk(message, artifactId, ask)
+                        : undefined
+                    }
+                  />
+                ))}
               </div>
             );
           }

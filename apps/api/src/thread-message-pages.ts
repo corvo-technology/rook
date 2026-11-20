@@ -15,9 +15,9 @@ import {
 } from "@corvo/core";
 import { messageReplyPreview } from "@corvo/core/message-quote";
 import type { Prisma, PrismaClient } from "@corvo/db";
+import { messageVariantsByMessage, visibleMessagesWhere } from "@corvo/db";
 import type { MessageWindowBudget } from "./thread-read-budget.js";
 import { boundMessageWindow, previewMessage } from "./thread-read-budget.js";
-import { messageVariantsByMessage, visibleMessagesWhere } from "@corvo/db";
 
 type MessageDb = PrismaClient | Prisma.TransactionClient;
 

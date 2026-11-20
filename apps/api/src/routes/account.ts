@@ -172,6 +172,9 @@ export function accountRoutes(ctx: RouterContext) {
       planCheckout: authed.billing.planCheckout.handler(async ({ context, input }) =>
         requireBilling(deps).planCheckout(context.actor, input),
       ),
+      changePlan: authed.billing.changePlan.handler(async ({ context, input }) =>
+        requireBilling(deps).changePlan(context.actor, input),
+      ),
     },
     preferences: {
       update: authed.preferences.update.handler(async ({ context, input }): Promise<Me> => {

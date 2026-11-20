@@ -234,8 +234,13 @@ export function AppConnectCard({
           </span>
         )}
         <span className="min-w-0 flex-1">
-          <span className="block text-[15px] font-medium text-foreground">{block.name}</span>
-          <span className="block truncate text-[13px] text-muted-foreground">
+          <span className="block truncate text-[15px] font-medium text-foreground">
+            {block.name}
+          </span>
+          <span
+            title={block.description}
+            className="block truncate text-[13px] text-muted-foreground"
+          >
             {block.description}
           </span>
         </span>

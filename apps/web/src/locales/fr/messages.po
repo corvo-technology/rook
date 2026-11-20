@@ -1967,6 +1967,14 @@ msgstr "Appel en cours…"
 msgid "Calls"
 msgstr "Appels"
 
+#: src/lib/server-copy.ts
+msgid "Can read and write: {write}"
+msgstr "Peut lire et écrire : {write}"
+
+#: src/lib/server-copy.ts
+msgid "Can read: {read}"
+msgstr "Peut lire : {read}"
+
 #: src/App.tsx
 msgid "Can't reach the server."
 msgstr "Impossible d'atteindre le serveur."
@@ -3482,6 +3490,10 @@ msgstr "Créez une section et déplacez {0} dedans."
 msgid "Create account"
 msgstr "Créer un compte"
 
+#: src/lib/server-copy.ts
+msgid "Create agent “{name}”?"
+msgstr "Créer l’agent « {name} » ?"
+
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Create agents"
 msgstr "Créer des agents"
@@ -4590,6 +4602,10 @@ msgstr "Premier bot"
 msgid "First messages, one per line"
 msgstr "Premiers messages, un par ligne"
 
+#: src/lib/server-copy.ts
+msgid "First task: {task}"
+msgstr "Première tâche : {task}"
+
 #: src/pages/shell/composer-model-choice.tsx
 msgid "For this conversation"
 msgstr "Pour cette conversation"
@@ -5119,6 +5135,10 @@ msgstr "Les instructions sont trop longues. Décochez quelques fichiers."
 msgid "Instructions updated"
 msgstr "Instructions mises à jour"
 
+#: src/lib/server-copy.ts
+msgid "Instructions: {instructions}"
+msgstr "Instructions : {instructions}"
+
 #: src/pages/partner/PartnerConsolePage.tsx
 msgid "Integration"
 msgstr "Intégration"
@@ -5281,6 +5301,7 @@ msgstr "Rejoindre"
 msgid "JSON"
 msgstr "JSON"
 
+#: src/pages/DirectChat.tsx
 #: src/pages/shell/transcript.tsx
 msgid "Jump to latest"
 msgstr "Aller au plus récent"

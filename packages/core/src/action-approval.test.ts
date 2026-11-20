@@ -827,3 +827,12 @@ describe("the wiki tools", () => {
     for (const name of wiki) expect(toolResultTaintsRun(name)).toBe(true);
   });
 });
+
+describe("propose_agent approval", () => {
+  it("always asks, while a plain spawn stays immediate for unattended runs", () => {
+    expect(toolRequiresApproval("propose_agent", false)).toBe(true);
+    expect(toolRequiresExplicitApproval("propose_agent")).toBe(true);
+    expect(toolRequiresApproval("spawn_bot", false)).toBe(false);
+    expect(unattendedTriggerToolRequiresApproval("webhook", "propose_agent", false)).toBe(true);
+  });
+});

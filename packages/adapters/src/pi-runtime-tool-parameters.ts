@@ -104,6 +104,24 @@ function builtinParameters(tool: ConnectorTool) {
       computer_mode: Type.Optional(stringEnum(["team", "dedicated"], {})),
     });
   }
+  if (tool.name === "propose_agent") {
+    return Type.Object({
+      name: Type.String(),
+      title: Type.Optional(Type.String()),
+      description: Type.Optional(Type.String()),
+      instructions: Type.Optional(Type.String()),
+      prompt: Type.Optional(Type.String()),
+      computer_mode: Type.Optional(stringEnum(["team", "dedicated"], {})),
+      connections: Type.Array(
+        Type.Object({
+          kind: stringEnum(["mcp", "mailbox", "database"], {}),
+          connection: Type.String({ minLength: 1 }),
+          level: stringEnum(["read", "write"], {}),
+        }),
+        { minItems: 1, maxItems: 10 },
+      ),
+    });
+  }
   if (tool.name === "update_bot") {
     return Type.Object({
       name: Type.Optional(Type.String()),

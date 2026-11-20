@@ -1491,7 +1491,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "spawn_bot",
     description:
-      "Create a full, regular bot — the same kind the user creates from the + button. It gets its own thread, computer, and memory, and appears as a peer in the bot list. Do not also call run_subagent. Creating the bot is the whole action. Only set prompt if the user asked that new bot to start work immediately.",
+      "Create a full, regular bot — the same kind the user creates from the + button. It gets its own thread, computer, and memory, and appears as a peer in the bot list. Do not also call run_subagent. Creating the bot is the whole action. Only set prompt if the user asked that new bot to start work immediately. If the new bot needs access to a connected app, mailbox or database, call propose_agent instead.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1521,6 +1521,50 @@ export const builtinAgentTools: ConnectorTool[] = [
         },
       },
       required: ["name"],
+    },
+  },
+  {
+    name: "propose_agent",
+    description:
+      "Propose a new bot that needs access to connected apps (a mailbox, an MCP app, a database). The owner sees one card with its name, the access each connection gets and its first task; approving creates the bot and applies exactly that access. Name each connection as the owner knows it and pick read or write (a database is only read). Use spawn_bot when no connection is needed. Needs the owner's approval.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string" },
+        title: { type: "string" },
+        description: {
+          type: "string",
+          maxLength: BOT_DESCRIPTION_MAX_LENGTH,
+          description: "Short public summary of what the new bot is for.",
+        },
+        instructions: {
+          type: "string",
+          maxLength: BOT_INSTRUCTIONS_MAX_LENGTH,
+          description: "Private operating instructions for the new bot, as its system prompt.",
+        },
+        prompt: {
+          type: "string",
+          description: "Optional first task to run in the new bot's thread once it has its access.",
+        },
+        computer_mode: { type: "string", enum: ["team", "dedicated"] },
+        connections: {
+          type: "array",
+          minItems: 1,
+          maxItems: 10,
+          items: {
+            type: "object",
+            properties: {
+              kind: { type: "string", enum: ["mcp", "mailbox", "database"] },
+              connection: { type: "string", description: "The connection's name or id." },
+              level: { type: "string", enum: ["read", "write"] },
+            },
+            required: ["kind", "connection", "level"],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ["name", "connections"],
+      additionalProperties: false,
     },
   },
   {

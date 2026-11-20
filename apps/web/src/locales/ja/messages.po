@@ -1967,6 +1967,14 @@ msgstr "発信中…"
 msgid "Calls"
 msgstr "呼び出し"
 
+#: src/lib/server-copy.ts
+msgid "Can read and write: {write}"
+msgstr "読み取りと書き込み：{write}"
+
+#: src/lib/server-copy.ts
+msgid "Can read: {read}"
+msgstr "読み取り：{read}"
+
 #: src/App.tsx
 msgid "Can't reach the server."
 msgstr "サーバーに接続できません。"
@@ -3482,6 +3490,10 @@ msgstr "セクションを作成して{0}を移動します。"
 msgid "Create account"
 msgstr "アカウントを作成"
 
+#: src/lib/server-copy.ts
+msgid "Create agent “{name}”?"
+msgstr "エージェント「{name}」を作成しますか？"
+
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Create agents"
 msgstr "エージェントを作成"
@@ -4590,6 +4602,10 @@ msgstr "最初のボット"
 msgid "First messages, one per line"
 msgstr "最初のメッセージ（1行に1つ）"
 
+#: src/lib/server-copy.ts
+msgid "First task: {task}"
+msgstr "最初のタスク：{task}"
+
 #: src/pages/shell/composer-model-choice.tsx
 msgid "For this conversation"
 msgstr "この会話で使う"
@@ -5119,6 +5135,10 @@ msgstr "指示が長すぎます。いくつかのファイルのチェックを
 msgid "Instructions updated"
 msgstr "指示を更新しました"
 
+#: src/lib/server-copy.ts
+msgid "Instructions: {instructions}"
+msgstr "指示：{instructions}"
+
 #: src/pages/partner/PartnerConsolePage.tsx
 msgid "Integration"
 msgstr "連携"
@@ -5281,6 +5301,7 @@ msgstr "参加"
 msgid "JSON"
 msgstr "JSON"
 
+#: src/pages/DirectChat.tsx
 #: src/pages/shell/transcript.tsx
 msgid "Jump to latest"
 msgstr "最新へ移動"

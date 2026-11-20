@@ -8,6 +8,7 @@ export const FLEET_TOOL_NAMES = [
   "guide_read",
   "space_status",
   "install_agent",
+  "propose_agent",
   "create_group",
   "update_group",
   "organize_bot",

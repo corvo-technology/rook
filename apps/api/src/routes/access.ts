@@ -1,7 +1,7 @@
 import type { ConnectionAccess } from "@corvo/contracts";
 import { PARTNER_CONNECTION_ID } from "@corvo/contracts";
 import { can, mcpGrantLevel, storedAccessLevel } from "@corvo/core";
-import { IsolationError, runAsSystem } from "@corvo/db";
+import { grantConnectionAccess, IsolationError, runAsSystem } from "@corvo/db";
 import { ORPCError } from "@orpc/server";
 import { revertConnectedMcpApprovals } from "../mcp-approval.js";
 import { createPrismaPartnerConsoleStore } from "../partner-console/index.js";
@@ -130,29 +130,26 @@ export function accessRoutes(ctx: RouterContext) {
               throw new ORPCError("BAD_REQUEST", { message: "A database is only read" });
             }
             if (!manages) throw new ORPCError("FORBIDDEN");
-            const [connection, bots] = await Promise.all([
-              tx.databaseConnection.findFirst({
-                where: { id: input.connectionId, spaceId: actor.spaceId },
-                select: { id: true },
-              }),
-              tx.bot.findMany({
-                where: { id: { in: botIds }, spaceId: actor.spaceId, archivedAt: null },
-                select: { id: true },
-              }),
-            ]);
-            if (!connection || bots.length !== botIds.length) throw new IsolationError();
             if (level === "none") {
+              const [connection, bots] = await Promise.all([
+                tx.databaseConnection.findFirst({
+                  where: { id: input.connectionId, spaceId: actor.spaceId },
+                  select: { id: true },
+                }),
+                tx.bot.findMany({
+                  where: { id: { in: botIds }, spaceId: actor.spaceId, archivedAt: null },
+                  select: { id: true },
+                }),
+              ]);
+              if (!connection || bots.length !== botIds.length) throw new IsolationError();
               await tx.botDatabaseGrant.deleteMany({
                 where: { connectionId: connection.id, botId: { in: botIds } },
               });
             } else {
-              await tx.botDatabaseGrant.createMany({
-                data: botIds.map((botId) => ({
-                  spaceId: actor.spaceId,
-                  botId,
-                  connectionId: connection.id,
-                })),
-                skipDuplicates: true,
+              await grantConnectionAccess(tx, actor, botIds, {
+                kind: "database",
+                connectionId: input.connectionId,
+                level,
               });
             }
             return [];
@@ -179,18 +176,10 @@ export function accessRoutes(ctx: RouterContext) {
                 where: { mailboxId: mailbox.id, botId: { in: botIds } },
               });
             } else {
-              await tx.botMailbox.createMany({
-                data: botIds.map((botId) => ({
-                  spaceId: actor.spaceId,
-                  mailboxId: mailbox.id,
-                  botId,
-                  level,
-                })),
-                skipDuplicates: true,
-              });
-              await tx.botMailbox.updateMany({
-                where: { mailboxId: mailbox.id, botId: { in: botIds } },
-                data: { level },
+              await grantConnectionAccess(tx, actor, botIds, {
+                kind: "mailbox",
+                connectionId: mailbox.id,
+                level,
               });
             }
             return [];
@@ -217,21 +206,10 @@ export function accessRoutes(ctx: RouterContext) {
               )
             ).flat();
           }
-          // Picking a level replaces a per-tool list from an older version.
-          const base = { allowAllTools: true, allowedTools: [], level };
-          await tx.botMcpServer.createMany({
-            data: botIds.map((botId) => ({
-              spaceId: actor.spaceId,
-              userId: actor.userId,
-              botId,
-              serverId: server.id,
-              ...base,
-            })),
-            skipDuplicates: true,
-          });
-          await tx.botMcpServer.updateMany({
-            where: { serverId: server.id, botId: { in: botIds } },
-            data: base,
+          await grantConnectionAccess(tx, actor, botIds, {
+            kind: "mcp",
+            connectionId: server.id,
+            level,
           });
           return [];
         });

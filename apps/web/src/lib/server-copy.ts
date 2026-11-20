@@ -56,6 +56,10 @@ export function approvalCardCopy(
     provider = "",
     address = "",
     reason = "",
+    read = "",
+    write = "",
+    task = "",
+    instructions = "",
   } = p;
   switch (code) {
     case "create_group":
@@ -120,6 +124,16 @@ export function approvalCardCopy(
         lines: [`${provider}: ${address}`],
       };
     }
+    case "create_agent":
+      return {
+        title: t`Create agent “${name}”?`,
+        lines: [
+          ...(read ? [t`Can read: ${read}`] : []),
+          ...(write ? [t`Can read and write: ${write}`] : []),
+          ...(task ? [t`First task: ${task}`] : []),
+          ...(instructions ? [t`Instructions: ${instructions}`] : []),
+        ],
+      };
     case "create_space": {
       const space = name || t`Untitled`;
       return {

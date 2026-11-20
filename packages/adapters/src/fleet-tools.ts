@@ -23,7 +23,7 @@ import {
   redactSecrets,
   toolRequiresExplicitApproval,
 } from "@corvo/core";
-import type { Prisma, PrismaClient, ThreadEvents } from "@corvo/db";
+import type { ConnectionGrant, Prisma, PrismaClient, ThreadEvents } from "@corvo/db";
 import {
   commitBotUpdate,
   createGroupRepos,
@@ -144,6 +144,8 @@ function prepareByTool(
   secrets: readonly string[],
 ): Promise<FleetPrepared> {
   switch (name) {
+    case "propose_agent":
+      return prepareProposedAgent(deps, run, args, secrets);
     case "create_group":
       return prepareCreateGroup(deps, run, args, secrets);
     case "update_group":
@@ -157,6 +159,245 @@ function prepareByTool(
     case "add_routine_step":
       return prepareRoutineStep(deps, run, args, secrets);
   }
+}
+
+const PROPOSED_AGENT_INSTRUCTIONS_MAX = 1_000;
+const PROPOSED_AGENT_CONNECTIONS_MAX = 10;
+const ACCESS_NOT_ALLOWED = "The person asking cannot lend those connections to a new agent.";
+
+type ConnectionRequest = { kind: ConnectionGrant["kind"]; ref: string; level: "read" | "write" };
+export type ResolvedGrant = ConnectionGrant & { label: string };
+
+/**
+ * Find each requested connection inside this space and check the asker may lend it. By name at
+ * proposal time and by the approved id at execution, so what runs is never a wider lookup than what
+ * the owner saw. An MCP server or mailbox is lent only by its owner; a database needs
+ * `manage_connections` and is only read.
+ */
+async function resolveConnectionGrants(
+  prisma: PrismaClient,
+  run: FleetRun,
+  requests: ConnectionRequest[],
+  by: "name" | "id",
+): Promise<{ ok: true; grants: ResolvedGrant[] } | Refusal> {
+  const starter = fleetStarterId(run);
+  const grants: ResolvedGrant[] = [];
+  for (const request of requests) {
+    if (request.kind === "database" && request.level === "write") {
+      return refuse("A database is only read; ask for read access.");
+    }
+    if (request.kind === "database" ? !run.grants?.manageConnections : starter !== run.userId) {
+      return refuse(ACCESS_NOT_ALLOWED);
+    }
+    const owned = { spaceId: run.spaceId, userId: run.userId };
+    const matches: Array<{ id: string; label: string }> = [];
+    if (request.kind === "mcp") {
+      const rows = await prisma.mcpServer.findMany({
+        where: {
+          ...owned,
+          enabled: true,
+          ...(by === "id" ? { id: request.ref } : {}),
+        },
+        select: { id: true, name: true, slug: true },
+      });
+      for (const row of rows) {
+        if (by === "id" || sameName(request.ref, [row.id, row.name, row.slug])) {
+          matches.push({ id: row.id, label: singleLine(row.name) });
+        }
+      }
+    } else if (request.kind === "mailbox") {
+      const rows = await prisma.mailbox.findMany({
+        where: { ...owned, ...(by === "id" ? { id: request.ref } : {}) },
+        select: { id: true, name: true, address: true },
+      });
+      for (const row of rows) {
+        if (by === "id" || sameName(request.ref, [row.id, row.name, row.address])) {
+          matches.push({ id: row.id, label: singleLine(row.name) });
+        }
+      }
+    } else {
+      const rows = await prisma.databaseConnection.findMany({
+        where: { spaceId: run.spaceId, ...(by === "id" ? { id: request.ref } : {}) },
+        select: { id: true, name: true },
+      });
+      for (const row of rows) {
+        if (by === "id" || sameName(request.ref, [row.id, row.name])) {
+          matches.push({ id: row.id, label: singleLine(row.name) });
+        }
+      }
+    }
+    if (matches.length === 0) {
+      return refuse(
+        `No ${request.kind} connection "${singleLine(request.ref)}" is available to lend.`,
+      );
+    }
+    if (matches.length > 1) {
+      return refuse(
+        `More than one ${request.kind} connection is called "${singleLine(request.ref)}". Use its id.`,
+      );
+    }
+    const [match] = matches as [{ id: string; label: string }];
+    if (grants.some((grant) => grant.kind === request.kind && grant.connectionId === match.id)) {
+      return refuse("Each connection can be listed only once.");
+    }
+    grants.push({
+      kind: request.kind,
+      connectionId: match.id,
+      level: request.level,
+      label: match.label,
+    });
+  }
+  return { ok: true, grants };
+}
+
+function sameName(wanted: string, names: string[]): boolean {
+  const target = singleLine(wanted).toLowerCase();
+  return names.some((name) => singleLine(name).toLowerCase() === target);
+}
+
+function parseConnectionRequests(value: unknown): ConnectionRequest[] | Refusal {
+  if (
+    !Array.isArray(value) ||
+    value.length === 0 ||
+    value.length > PROPOSED_AGENT_CONNECTIONS_MAX
+  ) {
+    return refuse(`connections must list 1 to ${PROPOSED_AGENT_CONNECTIONS_MAX} connections.`);
+  }
+  const requests: ConnectionRequest[] = [];
+  for (const item of value) {
+    const entry = record(item);
+    const kind = text(entry?.kind);
+    const ref = text(entry?.connection);
+    const level = text(entry?.level);
+    if (
+      (kind !== "mcp" && kind !== "mailbox" && kind !== "database") ||
+      !ref ||
+      (level !== "read" && level !== "write")
+    ) {
+      return refuse("Each connection needs a kind (mcp, mailbox or database), a name and a level.");
+    }
+    requests.push({ kind, ref, level });
+  }
+  return requests;
+}
+
+async function prepareProposedAgent(
+  deps: FleetPrepareDeps,
+  run: FleetRun,
+  args: Record<string, unknown>,
+  secrets: readonly string[],
+): Promise<FleetPrepared> {
+  if (!run.grants?.createAgents) return refuse(CREATE_NOT_ALLOWED);
+  const name = singleLine(text(args.name) ?? "");
+  if (!name) return refuse("Bot name is required.");
+  const requests = parseConnectionRequests(args.connections);
+  if (!Array.isArray(requests)) return requests;
+  const fields = {
+    name,
+    title: text(args.title),
+    description: text(args.description),
+    instructions: text(args.instructions),
+    prompt: text(args.prompt),
+  };
+  const credential = credentialField(fields, secrets);
+  if (credential) return refuse(credential);
+  const invisible = invisibleField(
+    Object.fromEntries(Object.entries(fields).filter(([, value]) => value !== undefined)) as Record<
+      string,
+      string
+    >,
+  );
+  if (invisible) return refuse(invisible);
+  if ((fields.instructions?.length ?? 0) > PROPOSED_AGENT_INSTRUCTIONS_MAX) {
+    return refuse(
+      `Instructions for a proposed agent take up to ${PROPOSED_AGENT_INSTRUCTIONS_MAX} characters so the card can show them.`,
+    );
+  }
+  const computerMode = text(args.computer_mode);
+  if (computerMode !== undefined && computerMode !== "team" && computerMode !== "dedicated") {
+    return refuse('computer_mode must be "team" or "dedicated".');
+  }
+  const resolved = await resolveConnectionGrants(deps.prisma, run, requests, "name");
+  if (!resolved.ok) return resolved;
+  const names = (level: "read" | "write") =>
+    resolved.grants
+      .filter((grant) => grant.level === level)
+      .map((grant) => grant.label)
+      .join(", ");
+  const read = names("read");
+  const write = names("write");
+  const task = fields.prompt ? singleLine(fields.prompt) : "";
+  const instructions = fields.instructions ? singleLine(fields.instructions) : "";
+  return {
+    ok: true,
+    canonical: {
+      name,
+      ...(fields.title ? { title: fields.title } : {}),
+      ...(fields.description ? { description: fields.description } : {}),
+      ...(fields.instructions ? { instructions: fields.instructions } : {}),
+      ...(fields.prompt ? { prompt: fields.prompt } : {}),
+      ...(computerMode ? { computer_mode: computerMode } : {}),
+      grants: resolved.grants,
+    },
+    summary: {
+      code: "create_agent",
+      params: {
+        name: cardName(name),
+        ...(read ? { read } : {}),
+        ...(write ? { write } : {}),
+        ...(task ? { task } : {}),
+        ...(instructions ? { instructions } : {}),
+      },
+      title: `Create agent “${cardName(name)}”?`,
+      lines: [
+        ...(read ? [`Can read: ${read}`] : []),
+        ...(write ? [`Can read and write: ${write}`] : []),
+        ...(task ? [`First task: ${task}`] : []),
+        ...(instructions ? [`Instructions: ${instructions}`] : []),
+      ],
+    },
+  };
+}
+
+/**
+ * The approved request, checked again before anything is created: the connections are looked up by
+ * the id the owner approved, still in the space and still the asker's to lend, and still called what
+ * the card said. The access applied is the approved list, never a fresh lookup.
+ */
+export async function reverifyProposedAgentGrants(
+  prisma: PrismaClient,
+  run: FleetRun,
+  canonical: Record<string, unknown>,
+): Promise<{ ok: true; grants: ConnectionGrant[] } | Refusal> {
+  if (!run.grants?.createAgents) return refuse(CREATE_NOT_ALLOWED);
+  const approved = Array.isArray(canonical.grants) ? canonical.grants : [];
+  const requests: ConnectionRequest[] = [];
+  const labels: string[] = [];
+  for (const item of approved) {
+    const entry = record(item);
+    const kind = text(entry?.kind);
+    const id = text(entry?.connectionId);
+    const level = text(entry?.level);
+    if (
+      (kind !== "mcp" && kind !== "mailbox" && kind !== "database") ||
+      !id ||
+      (level !== "read" && level !== "write")
+    ) {
+      return refuse("The approved access is incomplete.");
+    }
+    requests.push({ kind, ref: id, level });
+    labels.push(text(entry?.label) ?? "");
+  }
+  if (!requests.length) return refuse("The approved access is incomplete.");
+  const resolved = await resolveConnectionGrants(prisma, run, requests, "id");
+  if (!resolved.ok) return resolved;
+  if (resolved.grants.some((grant, index) => grant.label !== labels[index])) {
+    return refuse("A connection changed while the card waited. Propose the agent again.");
+  }
+  return {
+    ok: true,
+    grants: resolved.grants.map(({ kind, connectionId, level }) => ({ kind, connectionId, level })),
+  };
 }
 
 async function prepareCreateGroup(
@@ -1280,6 +1521,7 @@ export async function createChildRoutine(
   return "error" in created ? created : { ...created, ...target };
 }
 
+const CREATE_NOT_ALLOWED = "The person asking cannot create agents in this space.";
 const ROUTINE_NOT_ALLOWED = "The person asking cannot create routines in this space.";
 
 function actorOf(run: FleetRun): Actor {

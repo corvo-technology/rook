@@ -17,6 +17,7 @@ import type {
 } from "@corvo/adapter-kit";
 import { boundedSandboxCommandTimeoutMs } from "@corvo/core";
 import {
+  BROWSER_SESSION_PERSISTENCE_FLAGS,
   browserProfilePathForScreen,
   DEFAULT_DESKTOP_ENV,
   quiesceBrowserProfilesCommand,
@@ -1204,6 +1205,7 @@ print(json.dumps(out))
         "--disable-session-crashed-bubble",
         "--disable-infobars",
         "--disable-gpu",
+        BROWSER_SESSION_PERSISTENCE_FLAGS,
         "--remote-debugging-address=127.0.0.1",
         "--remote-debugging-port=$debug_port",
         `--user-data-dir=${profileQuoted}`,

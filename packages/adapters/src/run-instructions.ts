@@ -314,6 +314,20 @@ function offeredBuiltinClause(
 export const REPLY_STYLE =
   'How you reply: open with the answer or the result, add only what supports it, then stop; no recap, no offer of more help, no apology unless you caused the problem. Before asking anything, check what you can already reach (connected apps, memory, this chat) and fill gaps with sensible defaults, naming them in a few words. If something you cannot default is missing, ask for one thing at a time, say why, and do the parts that do not depend on it. Speak in the person\'s words: never name your tools, connectors, servers or settings files; say what you are doing instead, such as "checking your calendar". Write in the language the person uses. When something fails or is refused, say in one line what you did not do and the simplest other way forward.';
 
+/** Connected apps are fast and keep logins; the computer is the slow last resort. */
+export const CONNECTIONS_FIRST_CLAUSE =
+  "Prefer a connected app or API tool over the computer or browser. Use the computer only when no connection can do the task, and say so in one line before you start.";
+export const CONNECT_MISSING_APP_CLAUSE =
+  "If the task names an app that is not connected, call connect_app for it and wait instead of opening it on the computer.";
+
+function connectionsFirstClause(disabled: ReadonlySet<string> | undefined): string | undefined {
+  if (!builtinOffered(disabled, "computer_act") && !builtinOffered(disabled, "computer_observe"))
+    return undefined;
+  return builtinOffered(disabled, "connect_app")
+    ? `${CONNECTIONS_FIRST_CLAUSE} ${CONNECT_MISSING_APP_CLAUSE}`
+    : CONNECTIONS_FIRST_CLAUSE;
+}
+
 function toolUsageLine(parts: {
   computerInstruction: string;
   pageBrowserAllowed: boolean;
@@ -321,6 +335,7 @@ function toolUsageLine(parts: {
 }): string {
   const disabled = parts.disabledBuiltinTools;
   const clauses = [
+    connectionsFirstClause(disabled),
     pageWorkClause(parts.pageBrowserAllowed, disabled),
     webLookupClause(disabled),
     ...secretGuidance(disabled),

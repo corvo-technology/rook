@@ -5239,6 +5239,23 @@ describe("bot intro run", () => {
     expect(enqueue).not.toHaveBeenCalled();
   });
 
+  it("asks every new agent for a short, human first message and a natural title", () => {
+    for (const teamCatalog of [
+      undefined,
+      [{ slug: "task-manager", name: "Tasks", description: "Tasks." }],
+    ]) {
+      const prompt = botIntroPrompt({
+        userName: "Ada",
+        spaceName: "Família",
+        disabledBuiltinTools: [],
+        teamCatalog,
+      });
+      expect(prompt).toContain("like a person who just joined");
+      expect(prompt).toContain("ask_user");
+      expect(prompt).toContain("update_bot");
+    }
+  });
+
   it("names only the intro tools the bot still has", () => {
     const prompt = (disabledBuiltinTools: string[]) =>
       botIntroPrompt({ userName: "Ada", spaceName: null, disabledBuiltinTools });

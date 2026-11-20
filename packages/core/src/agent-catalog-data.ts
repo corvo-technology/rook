@@ -36,9 +36,9 @@ export const AGENT_CATALOG: readonly AgentCatalogEntry[] = [
         "Você responde perguntas de pesquisa. Comece repetindo a pergunta e para quem é a resposta. Pesquise na web, leia as fontes e cite cada afirmação com o link. Separe o que as fontes dizem da sua interpretação e liste o que ainda é incerto. Mantenha a resposta curta, com a conclusão primeiro.",
     },
     firstTask: {
-      en: "Research a question for me, with sources. Before searching, ask me the question and what the answer is for.",
+      en: "I have a question to research. Ask me what it is and what it is for, then find sources.",
       "pt-BR":
-        "Pesquise uma pergunta para mim, com fontes. Antes de pesquisar, me pergunte qual é a pergunta e para que serve a resposta.",
+        "Tenho uma pergunta para pesquisar. Me pergunte qual é e para que serve, e depois traga as fontes.",
     },
     color: "#10B981::shape_2",
     apps: [],
@@ -59,9 +59,9 @@ export const AGENT_CATALOG: readonly AgentCatalogEntry[] = [
         "Você faz a triagem de bugs. Veja os erros mais recentes, agrupe os que têm a mesma causa e ordene pelo número de pessoas afetadas. Para cada grupo importante, escreva uma tarefa curta: o que quebra, como reproduzir e a causa mais provável. Não crie tarefa para algo já aberto; aponte a existente.",
     },
     firstTask: {
-      en: "Help me sort out the bugs that matter most. First ask me where my errors are reported and what the product does.",
+      en: "Help me find the bugs that matter most. Ask me where errors show up and what the product does.",
       "pt-BR":
-        "Me ajude a separar os bugs que mais importam. Antes, me pergunte onde meus erros são registrados e o que o produto faz.",
+        "Me ajuda a achar os bugs que mais importam. Pergunte onde os erros aparecem e o que o produto faz.",
     },
     color: "#F59E0B::shape_4",
     apps: ["sentry", "linear"],
@@ -82,9 +82,9 @@ export const AGENT_CATALOG: readonly AgentCatalogEntry[] = [
         "Você transforma objetivos em planos. Pergunte o objetivo, o prazo e quem participa. Proponha uma primeira entrega pequena que prove a ideia e depois os passos seguintes. Para cada passo diga quem cuida, de que depende e como saber que acabou. Mantenha o plano no sistema de tarefas do time e avise o que estiver bloqueado. Para um plano, liste o que pode dar errado, a chance, o custo e o que fazer a respeito dos três principais. Quando pedido, defina duas ou três metas do trimestre, cada uma como um número com data, e revise o avanço todo mês.",
     },
     firstTask: {
-      en: "Turn a goal of mine into a plan. Before planning, ask me the goal, the deadline and who is involved.",
+      en: "Help me turn a goal into a plan. Ask me the goal, the deadline and who is in.",
       "pt-BR":
-        "Transforme um objetivo meu em um plano. Antes de planejar, me pergunte o objetivo, o prazo e quem participa.",
+        "Me ajuda a transformar um objetivo em plano. Pergunte o objetivo, o prazo e quem participa.",
     },
     color: "#8B5CF6::shape_0",
     apps: ["linear"],
@@ -259,9 +259,9 @@ Como você trabalha:
 Limites: não prometa reembolsos, descontos ou exceções; passe isso ao dono. Não compartilhe informações de outro cliente.`,
     },
     firstTask: {
-      en: "Help me reply to customers faster. Before drafting anything, ask me about my product and where the answers live.",
+      en: "Help me answer customers faster. Ask me about my product and where the answers are.",
       "pt-BR":
-        "Me ajude a responder clientes mais rápido. Antes de escrever qualquer resposta, me pergunte sobre meu produto e onde ficam as respostas.",
+        "Me ajuda a responder clientes mais rápido. Pergunte sobre meu produto e onde estão as respostas.",
     },
     color: "#0EA5E9::shape_4",
     apps: ["notion"],
@@ -297,9 +297,9 @@ Como você trabalha:
 Limites: você só escreve o rascunho; quem envia é o dono. Use apenas informação pública e nunca invente fatos sobre uma empresa.`,
     },
     firstTask: {
-      en: "Find companies that fit my ideal customer. Before searching, ask me what I sell and who buys it.",
+      en: "Help me find companies that fit my ideal customer. Ask me what I sell and who buys it.",
       "pt-BR":
-        "Encontre empresas com o perfil do meu cliente ideal. Antes de pesquisar, me pergunte o que eu vendo e quem compra.",
+        "Me ajuda a achar empresas com o perfil do meu cliente ideal. Pergunte o que eu vendo e quem compra.",
     },
     color: "#F59E0B::shape_0",
     apps: [],
@@ -400,9 +400,8 @@ Cada vez que for pedido (ou no horário combinado):
 Mantenha abaixo de 150 palavras, em texto simples, sem títulos. Se a lista de tarefas estiver vazia, diga isso e pergunte o que o dono quer planejar.`,
     },
     firstTask: {
-      en: "Put together my briefing for today. First ask me where my tasks live and what counts as urgent for me.",
-      "pt-BR":
-        "Monte meu resumo de hoje. Antes, me pergunte onde ficam minhas tarefas e o que é urgente para mim.",
+      en: "Put together my day. Ask me where my tasks are and what counts as urgent.",
+      "pt-BR": "Monte o meu dia. Pergunte onde estão minhas tarefas e o que é urgente para mim.",
     },
     color: "#6366F1::shape_7",
     apps: ["todoist"],
@@ -532,9 +531,9 @@ Como você trabalha:
 Limites: não invente números, depoimentos ou funcionalidades; use só o que o dono contou.`,
     },
     firstTask: {
-      en: "Write a post about what I do. Before writing, ask me who it is for and how I like to sound.",
+      en: "Help me write a post about what I do. Ask me who it is for and how I like to sound.",
       "pt-BR":
-        "Escreva um post sobre o que eu faço. Antes de escrever, me pergunte para quem é e qual é o meu tom.",
+        "Me ajuda a escrever um post sobre o que eu faço. Pergunte para quem é e qual é o meu tom.",
     },
     color: "#EC4899::shape_3",
     apps: ["canva"],
@@ -602,9 +601,9 @@ Como você trabalha:
 Limites: avalie apenas habilidades e experiência ligadas à vaga. Nunca use idade, gênero, origem, foto, família ou saúde, e diga isso se o dono pedir.`,
     },
     firstTask: {
-      en: "Help me screen candidates for a role. Before starting, ask me about the role and what a good candidate looks like.",
+      en: "Help me screen candidates for a role. Ask me about the role and what a good fit looks like.",
       "pt-BR":
-        "Me ajude a triar candidatos para uma vaga. Antes de começar, me pergunte sobre a vaga e como é um bom candidato.",
+        "Me ajuda a triar candidatos para uma vaga. Pergunte sobre a vaga e como é um bom candidato.",
     },
     color: "#F97316::shape_4",
     apps: [],
@@ -709,9 +708,9 @@ Como você trabalha:
 Limites: fale do design, nunca do designer. Não copie a identidade de outra marca nem use imagens e fontes que o dono não tem direito de usar. Se houver uma ferramenta de design conectada, nunca sobrescreva os arquivos originais do dono; trabalhe em uma cópia. Para criticar um design que já existe, o dono usa o crítico de design; para os textos da interface, o redator de interface.`,
     },
     firstTask: {
-      en: "Give a screen I am working on a clear visual direction. First ask me what the screen is for and who uses it.",
+      en: "Help me with the look of a screen I am working on. Ask me what it is for and who uses it.",
       "pt-BR":
-        "Dê uma direção visual clara para uma tela em que estou trabalhando. Antes, me pergunte para que serve a tela e quem usa.",
+        "Me ajuda com o visual de uma tela que estou fazendo. Pergunte para que serve e quem usa.",
     },
     color: "#8B5CF6::shape_4",
     apps: ["canva"],
@@ -909,9 +908,8 @@ Como você trabalha:
 Limites: você só lê, calcula e escreve rascunhos. Nunca pague, transfira, cobre, envie nem altere nada, e nunca afirme uma data ou alíquota de imposto como certa. Para preços, mande o dono ao agente de preço; para impostos, folha e qualquer coisa com peso jurídico, mande o dono ao contador. É apoio à gestão, não orientação contábil.`,
     },
     firstTask: {
-      en: "Show me how my cash looks for the next 90 days. Before you start, ask me what you need to know.",
-      "pt-BR":
-        "Me mostre como fica meu caixa nos próximos 90 dias. Antes de começar, me pergunte o que você precisa saber.",
+      en: "Show me how my cash looks for the next 90 days. Ask me whatever you need first.",
+      "pt-BR": "Me mostra como fica meu caixa nos próximos 90 dias. Pergunte o que precisar antes.",
     },
     color: "#10B981::shape_1",
     apps: ["stripe"],

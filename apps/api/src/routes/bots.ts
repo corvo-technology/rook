@@ -16,9 +16,9 @@ import {
   toComputerRef,
   validateBotModelChange,
 } from "@corvo/adapters";
-import type { Actor, Bot, BotSecretMetadata } from "@corvo/contracts";
+import type { Actor, AgentCatalogLocale, Bot, BotSecretMetadata } from "@corvo/contracts";
 import { BotSecretAuth } from "@corvo/contracts";
-import { ACTIVE_RUN_STATUSES, displayName } from "@corvo/core";
+import { ACTIVE_RUN_STATUSES, AGENT_CATALOG, CHIEF_BOT_SPAWN_KEY, displayName } from "@corvo/core";
 import {
   BotSectionNameConflictError,
   botProfileLabelsChanged,
@@ -139,6 +139,8 @@ export function botIntroPrompt(input: {
   userName: string;
   spaceName: string | null;
   disabledBuiltinTools: readonly string[];
+  /** Ready-made agents the Chief of a new space may propose; the run has no Store lookup of its own. */
+  teamCatalog?: readonly { slug: string; name: string; description: string }[];
 }): string {
   const canAsk = !input.disabledBuiltinTools.includes("ask_user");
   const canUpdate = !input.disabledBuiltinTools.includes("update_bot");
@@ -154,10 +156,22 @@ export function botIntroPrompt(input: {
       .join(" "),
     // Text streamed before ask_user is not kept once the run pauses, so the greeting
     // goes in the question itself.
-    canAsk
-      ? `Call ask_user right away, with no text before it. Its question greets them by first name in a few words and asks what they want you for, with ${options}. They can also type their own answer.`
-      : `Greet them by first name in a few words and ask in one sentence what they want you for, suggesting ${options}.`,
-    "If your profile already makes that clear, say in one line what you will do instead of asking.",
+    input.teamCatalog?.length
+      ? [
+          "This space has no other agents yet. Propose a starting team: judge from what a space with this name is for, and pick one to three of the ready-made agents below that fit it best.",
+          ...input.teamCatalog.map(
+            (agent) => `- ${agent.slug}: ${agent.name}. ${agent.description}`,
+          ),
+          canAsk
+            ? "Call ask_user right away, with no text before it. Its question greets them by first name in a few words and names your picks with one line on why, and its options are the picked agents' names. A chosen option is a yes: add that agent with install_agent (its slug, in the language you speak). They can also type their own answer."
+            : "Greet them by first name in a few words and name your picks with one line on why, then ask which they want. When they say yes, add that agent with install_agent (its slug, in the language you speak).",
+        ].join("\n")
+      : canAsk
+        ? `Call ask_user right away, with no text before it. Its question greets them by first name in a few words and asks what they want you for, with ${options}. They can also type their own answer.`
+        : `Greet them by first name in a few words and ask in one sentence what they want you for, suggesting ${options}.`,
+    input.teamCatalog?.length
+      ? undefined
+      : "If your profile already makes that clear, say in one line what you will do instead of asking.",
     canUpdate
       ? "Once you know what you are for, use update_bot to set your title to a short role and your description to one line. Leave them unset if the answer is too vague, and keep your name and look."
       : undefined,
@@ -174,7 +188,12 @@ export function botIntroPrompt(input: {
  * trigger to that question and the bot's own profile (see executor.ts), and
  * answering resumes the run as the user's turn.
  */
-export async function enqueueBotIntroRun(deps: RouterDeps, actor: Actor, bot: Bot): Promise<void> {
+export async function enqueueBotIntroRun(
+  deps: RouterDeps,
+  actor: Actor,
+  bot: Bot,
+  options: { locale?: AgentCatalogLocale; suggestTeam?: boolean } = {},
+): Promise<void> {
   const threadId = bot.threadId;
   if (!threadId) return;
   // Scripted is the deterministic test/eval runtime, not a real deployment: an
@@ -189,10 +208,29 @@ export async function enqueueBotIntroRun(deps: RouterDeps, actor: Actor, bot: Bo
       select: { name: true, isDefault: true },
     }),
   ]);
+  const spaceName = space && !space.isDefault ? space.name.trim() || null : null;
+  // Only a Chief that may use the Store, in a named space it starts alone, proposes a team.
+  const suggestTeam =
+    options.suggestTeam === true &&
+    Boolean(spaceName) &&
+    bot.fleetManagement === true &&
+    bot.spawnKey === CHIEF_BOT_SPAWN_KEY;
+  const locale = options.locale ?? "en";
   const prompt = botIntroPrompt({
     userName: displayName(user?.name, ""),
-    spaceName: space && !space.isDefault ? space.name.trim() || null : null,
+    spaceName,
     disabledBuiltinTools: bot.disabledBuiltinTools ?? [],
+    ...(suggestTeam
+      ? {
+          teamCatalog: AGENT_CATALOG.filter((entry) => !entry.partnerAccess && !entry.setup).map(
+            (entry) => ({
+              slug: entry.slug,
+              name: entry.name[locale],
+              description: entry.description[locale],
+            }),
+          ),
+        }
+      : {}),
   });
   const run = await deps.prisma.$transaction(async (tx) => {
     // An idempotent create (spawnKey) returns the bot it already made; it gets one intro.

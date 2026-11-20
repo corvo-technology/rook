@@ -7,6 +7,7 @@ import { AutonomyPicker } from "../../components/AutonomyPicker";
 import type { FirstBot } from "../../lib/first-bot";
 import { ensureFirstBot } from "../../lib/first-bot";
 import { rpc } from "../../lib/rpc";
+import { planErrorText } from "../../lib/user-error";
 import { ImportFromApp } from "../ImportFromApp";
 
 type Setup = {
@@ -32,6 +33,7 @@ export function FirstBotStep({
 }) {
   const { t } = useLingui();
   const [failed, setFailed] = useState(false);
+  const [planLimit, setPlanLimit] = useState<string | null>(null);
   const [saveFailed, setSaveFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [setup, setSetup] = useState<Setup | null>(null);
@@ -42,13 +44,17 @@ export function FirstBotStep({
   // `attempt` re-runs the call on retry; `onReady` changes every render, so it is left out.
   useEffect(() => {
     setFailed(false);
+    setPlanLimit(null);
     let live = true;
     void (async () => {
       let first: FirstBot;
       try {
         first = await ensureFirstBot(locale, picks ?? undefined);
-      } catch {
-        if (live) setFailed(true);
+      } catch (error) {
+        if (live) {
+          setPlanLimit(planErrorText(error) ?? null);
+          setFailed(true);
+        }
         return;
       }
       try {
@@ -92,7 +98,7 @@ export function FirstBotStep({
   if (failed || saveFailed) {
     return (
       <div role="alert" className="flex items-center gap-3 text-sm text-destructive">
-        <span>{t`Could not set up your bots`}</span>
+        <span>{(failed && planLimit) || t`Could not set up your bots`}</span>
         <Button
           variant="outline"
           size="sm"

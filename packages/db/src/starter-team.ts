@@ -54,6 +54,8 @@ export async function ensureStarterTeam(
       // The coordinator routes a request to the squad that fits, without being a member of each.
       squadRouting: true,
       spawnKey: CHIEF_SPAWN_KEY,
+      // A second space on a one-computer plan still gets its Chief; the computer follows at its first run.
+      allowWithoutComputer: true,
     });
   } catch (error) {
     // Another tab or request won the unique (space, key) race; use that Chief only.

@@ -36,7 +36,8 @@ export async function startStarterTeam(
   if (created && bot) {
     const greet = steps.greet ?? enqueueBotIntroRun;
     try {
-      await greet(deps as RouterDeps, actor, bot);
+      // With no onboarding picks the person has not chosen a team yet, so the Chief proposes one.
+      await greet(deps as RouterDeps, actor, bot, { locale, suggestTeam: !picks });
     } catch (error) {
       // The Chief exists either way; the person can still talk to it.
       getLogger().error("chief intro run enqueue", error);

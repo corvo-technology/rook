@@ -5152,6 +5152,43 @@ describe("bot intro run", () => {
     );
   });
 
+  it("has the Chief of a new named space propose a team from the catalog", async () => {
+    const { create, deps } = introDeps();
+    vi.mocked(deps.prisma.space.findUnique).mockResolvedValue({
+      name: "Família",
+      isDefault: false,
+    } as never);
+    const chief = { ...bot, fleetManagement: true, spawnKey: "onboarding:first" } as Bot;
+
+    await enqueueBotIntroRun(deps, actor, chief, { locale: "pt-BR", suggestTeam: true });
+
+    const [taskCall] = create.mock.calls as Array<[{ data: { prompt?: string } }]>;
+    const prompt = taskCall?.[0].data.prompt ?? "";
+    expect(prompt).toContain('"Família"');
+    expect(prompt).toContain("install_agent");
+    expect(prompt).toContain("- task-manager:");
+    // Agents that need setup or a partner are not offered.
+    expect(prompt).not.toContain("- email-agent:");
+  });
+
+  it("proposes no team without Store access, outside a new space, or without the request", async () => {
+    const named = { name: "Família", isDefault: false } as never;
+    const chief = { ...bot, fleetManagement: true, spawnKey: "onboarding:first" } as Bot;
+    const cases: Array<[Bot, boolean, unknown]> = [
+      [{ ...chief, fleetManagement: false } as Bot, true, named],
+      [chief, true, { name: "Personal", isDefault: true }],
+      [chief, false, named],
+      [{ ...chief, spawnKey: null } as Bot, true, named],
+    ];
+    for (const [target, suggestTeam, space] of cases) {
+      const { create, deps } = introDeps();
+      vi.mocked(deps.prisma.space.findUnique).mockResolvedValue(space as never);
+      await enqueueBotIntroRun(deps, actor, target, { suggestTeam });
+      const [taskCall] = create.mock.calls as Array<[{ data: { prompt?: string } }]>;
+      expect(taskCall?.[0].data.prompt).not.toContain("install_agent");
+    }
+  });
+
   it("leaves a placeholder account name out of the intro", async () => {
     const { create, deps } = introDeps();
     vi.mocked(deps.prisma.user.findUnique).mockResolvedValue({

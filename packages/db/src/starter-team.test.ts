@@ -60,7 +60,12 @@ describe("ensureStarterTeam", () => {
     const f = fixture();
     await run(f);
     expect(f.inputs).toHaveLength(1);
-    expect(f.inputs[0]).toMatchObject({ spawnKey: CHIEF_SPAWN_KEY, squadRouting: true });
+    expect(f.inputs[0]).toMatchObject({
+      spawnKey: CHIEF_SPAWN_KEY,
+      squadRouting: true,
+      // A second space at the plan's computer cap still gets its Chief.
+      allowWithoutComputer: true,
+    });
   });
 
   it("lets the Chief add Store agents unless the caller says otherwise", async () => {

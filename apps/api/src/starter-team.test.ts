@@ -32,7 +32,10 @@ describe("startStarterTeam", () => {
     });
     expect(s.ensure).toHaveBeenCalledWith(expect.anything(), actor, "pt-BR");
     expect(s.greet).toHaveBeenCalledTimes(1);
-    expect(s.greet).toHaveBeenCalledWith(deps, actor, chief);
+    expect(s.greet).toHaveBeenCalledWith(deps, actor, chief, {
+      locale: "pt-BR",
+      suggestTeam: true,
+    });
   });
 
   it("starts nothing when the Chief was already there", async () => {
@@ -132,7 +135,7 @@ describe("startStarterTeam with picks", () => {
     const w = withPicks();
     await startStarterTeam(w.d, actor, "en", w.steps, { categories: ["sales"] });
     expect(w.s.greet).toHaveBeenCalledTimes(1);
-    expect(w.s.greet).toHaveBeenCalledWith(w.d, actor, chief);
+    expect(w.s.greet).toHaveBeenCalledWith(w.d, actor, chief, { locale: "en", suggestTeam: false });
   });
 });
 

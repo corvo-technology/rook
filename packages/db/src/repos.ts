@@ -19,7 +19,7 @@ import { getLogger } from "@corvo/logging";
 import { chooseBotAvatar } from "./bot-avatar-choice.js";
 import type { Prisma, PrismaClient } from "./client.js";
 import type { ComputerMode } from "./computers.js";
-import { ensureComputerRecord, parseComputerMode } from "./computers.js";
+import { ComputerLimitError, ensureComputerRecord, parseComputerMode } from "./computers.js";
 import { createThreadMessageInTransaction } from "./messages.js";
 import { newAgentModelAuto } from "./model-auto.js";
 import { withNewestThreadMessages } from "./preview-messages.js";
@@ -194,6 +194,33 @@ function mapBot(
     starters: BotStartersSchema.safeParse(bot.starters).data ?? [],
     incomingCall,
   };
+}
+
+/**
+ * The team computer of an agent made without one (the plan's quota was reached when it was
+ * created). Throws ComputerLimitError while the quota still refuses it; the space keeps its own
+ * computer, never another space's.
+ */
+export async function ensureBotComputer(
+  prisma: PrismaClient,
+  bot: { id: string; spaceId: string; userId: string },
+) {
+  const settings = await prisma.deploymentSettings.findUnique({ where: { id: "default" } });
+  const envKind = process.env.SANDBOX_PROVIDER ?? "docker";
+  const kind = envKind === "docker" && settings?.computerHost === "this-mac" ? "desktop" : envKind;
+  return withTransactionRetry(() =>
+    prisma.$transaction(async (tx) => {
+      const computer = await ensureComputerRecord(tx, {
+        mode: "team",
+        spaceId: bot.spaceId,
+        userId: bot.userId,
+        botId: bot.id,
+        kind,
+      });
+      await tx.bot.update({ where: { id: bot.id }, data: { computerId: computer.id } });
+      return computer;
+    }),
+  );
 }
 
 export function createRepos(
@@ -588,6 +615,11 @@ export function createRepos(
           blocks: MessageBlock[];
           runId?: string;
         };
+        /**
+         * Creates the agent even when the plan's computer quota is reached; it gets its computer
+         * when it first runs (see ensureBotComputer). For the Chief, so a space always has one.
+         */
+        allowWithoutComputer?: boolean;
         /** Adds content in the creation transaction, after the bot and its MEMORY.md exist. */
         seed?: (tx: Prisma.TransactionClient, botId: string) => Promise<void>;
         isolationLevel?: Prisma.TransactionIsolationLevel;
@@ -649,11 +681,15 @@ export function createRepos(
             input.color,
             { family: input.avatarFamily },
           );
+          // The quota refuses before anything is written, so the transaction stays usable.
           const teamComputer = await ensureComputerRecord(tx, {
             mode: "team",
             spaceId: actor.spaceId,
             userId: actor.userId,
             kind,
+          }).catch((error: unknown) => {
+            if (input.allowWithoutComputer && error instanceof ComputerLimitError) return null;
+            throw error;
           });
           const created = await tx.bot.create({
             data: {
@@ -670,7 +706,7 @@ export function createRepos(
               color: avatar.color,
               position: (positions._max.position ?? -1) + 1,
               parentBotId: input.parentBotId ?? null,
-              computerId: teamComputer.id,
+              computerId: teamComputer?.id ?? null,
               spawnKey: input.spawnKey,
               ...(input.starters?.length ? { starters: input.starters } : {}),
               modelProvider,

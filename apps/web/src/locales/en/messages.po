@@ -2712,6 +2712,10 @@ msgstr "Continue with {0}"
 msgid "Control computers"
 msgstr "Control computers"
 
+#: src/pages/SpaceSearch.tsx
+msgid "Conversation"
+msgstr "Conversation"
+
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/markdown-copy.tsx
 #: src/pages/ImportFlow.tsx
@@ -4487,6 +4491,7 @@ msgid "Fields to compare, e.g. id, modifiedTime (optional)"
 msgstr "Fields to compare, e.g. id, modifiedTime (optional)"
 
 #: src/pages/connections/McpServerForm.tsx
+#: src/pages/SpaceSearch.tsx
 msgid "File"
 msgstr "File"
 
@@ -5431,6 +5436,10 @@ msgstr "Linear issue"
 msgid "Lines"
 msgstr "Lines"
 
+#: src/pages/SpaceSearch.tsx
+msgid "Link"
+msgstr "Link"
+
 #: src/components/AccountAccess.tsx
 msgid "Link SSO"
 msgstr "Link SSO"
@@ -5824,6 +5833,7 @@ msgstr "Mentions: {mentions}"
 
 #: src/pages/shell/chat-shared.ts
 #: src/pages/shell/composer.tsx
+#: src/pages/SpaceSearch.tsx
 msgid "Message"
 msgstr "Message"
 
@@ -6471,8 +6481,10 @@ msgstr "No public address here, so it checks your inbox on a schedule you approv
 msgid "No remote MCP servers found"
 msgstr "No remote MCP servers found"
 
+#: src/pages/AgentsStore.tsx
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/shell/command-palette.tsx
+#: src/pages/SkillsStore.tsx
 #: src/pages/SpaceSearch.tsx
 #: src/pages/Store.tsx
 msgid "No results"
@@ -8068,6 +8080,7 @@ msgstr "Router's note"
 #: src/lib/identity-display.ts
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/use-routine-editor.ts
+#: src/pages/SpaceSearch.tsx
 msgid "Routine"
 msgstr "Routine"
 

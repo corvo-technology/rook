@@ -93,6 +93,11 @@ export function AgentsStore({
   return (
     <div data-testid="agent-catalog">
       <StoreCategoryChips categories={categories} value={category} onChange={setCategory} />
+      {entries.length === 0 ? (
+        <p className="py-10 text-center text-sm text-muted-foreground">
+          <Trans>No results</Trans>
+        </p>
+      ) : null}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {entries.map((entry) => {
           const added = addedBot(entry);
@@ -172,7 +177,11 @@ export function AgentsStore({
           );
         })}
       </div>
-      {error ? <p className="mt-3 text-[13px] text-destructive">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="mt-3 text-[13px] text-destructive">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

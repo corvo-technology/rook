@@ -9,6 +9,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 vi.mock("@lingui/react/macro", () => ({
   Trans: ({ children }: { children: ReactNode }) => children,
+  useLingui: () => ({ t: (parts: TemplateStringsArray) => parts.join("") }),
 }));
 
 import { SpaceSearchResults } from "./SpaceSearch";
@@ -56,4 +57,13 @@ it("renders every file sent in one message without duplicate-key errors", async 
   );
   expect(error).not.toHaveBeenCalled();
   expect(container.querySelectorAll("button")).toHaveLength(2);
+});
+
+it("names what each result is in the person's language", async () => {
+  await act(async () =>
+    root.render(
+      <SpaceSearchResults hits={[file("artifact-1")]} loading={false} onSelect={() => {}} />,
+    ),
+  );
+  expect(container.textContent).toContain("File");
 });

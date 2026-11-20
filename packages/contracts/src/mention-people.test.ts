@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { appContract } from "./rpc.js";
 
-const sendInput = appContract.threads.send["~orpc"].inputSchema;
+const sendInput = appContract.threads.send["~orpc"].inputSchema!;
 
 describe("threads.send mentions", () => {
   it("accepts a person mention beside the older kinds", () => {

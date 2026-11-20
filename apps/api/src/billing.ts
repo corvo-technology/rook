@@ -162,6 +162,19 @@ export function createBillingService(deps: {
   }
 
   async function sync(customerId: string): Promise<void> {
+    try {
+      await syncCustomer(customerId);
+    } catch (error) {
+      if (!(error instanceof BillingCustomerNotFoundError)) throw error;
+      // The provider no longer has this customer (deleted, or billing moved to another provider
+      // account): there is nothing to read, and the next checkout or portal swaps in a new one.
+      getLogger().warn("billing sync for a customer the provider no longer has", {
+        "billing.customer_id": customerId,
+      });
+    }
+  }
+
+  async function syncCustomer(customerId: string): Promise<void> {
     if (modelCredits && provider.listCreditPurchases) {
       const account = await prisma.billingAccount.findUnique({ where: { customerId } });
       if (account) {

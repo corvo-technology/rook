@@ -111,6 +111,17 @@ describePostgres("plan changes (PostgreSQL)", () => {
     return (await billing.status(owner)).balanceUsd;
   }
 
+  it("opens a plan checkout when the saved customer no longer exists at the provider", async () => {
+    const { id, owner } = await organization();
+    const gone = `cus_gone_${id}`;
+    await createBillingAccount(prisma, { organizationId: id, customerId: gone });
+    await expect(billing.planCheckout(owner, input())).resolves.toMatchObject({
+      url: expect.stringContaining("/plan/"),
+    });
+    const account = await billingAccountForOrganization(prisma, id);
+    expect(account?.customerId).not.toBe(gone);
+  });
+
   it("applies a bigger plan and more AI now, and grants the use that was charged for", async () => {
     const { id, owner } = await organization();
     clock = Date.now();

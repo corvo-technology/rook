@@ -225,6 +225,10 @@ msgstr "{agents, plural, one {# Agent} other {# Agenten}}"
 msgid "{amount} / {period}"
 msgstr "{amount} / {period}"
 
+#: src/components/PlanChoice.tsx
+msgid "{amount} goes to models, at cost"
+msgstr "{amount} gehen an die Modelle, zum Selbstkostenpreis"
+
 #: src/lib/plan-view.ts
 msgid "{amount} per month"
 msgstr "{amount} pro Monat"
@@ -260,6 +264,10 @@ msgstr "{computersUsed} von {computersLimit}"
 #: src/pages/WhatsAppNumbers.tsx
 msgid "{count, plural, one {# number} other {# numbers}}"
 msgstr "{count, plural, one {# Nummer} other {# Nummern}}"
+
+#: src/components/PlanChoice.tsx
+msgid "{count, plural, one {# person} other {# people}}"
+msgstr "{count, plural, one {# Person} other {# Personen}}"
 
 #: src/components/markdown-copy.tsx
 msgid "{count, plural, one {# row} other {# rows}}"
@@ -471,6 +479,14 @@ msgstr "{percent} % genutzt · {used} von {windowLabel} Tokens"
 msgid "{position} of {total}"
 msgstr "{position} von {total}"
 
+#: src/components/PlanChoice.tsx
+msgid "{price}/month"
+msgstr "{price}/Monat"
+
+#: src/components/PlanChoice.tsx
+msgid "{price}/month per extra person, up to {max}"
+msgstr "{price}/Monat pro zusätzlicher Person, bis zu {max}"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} can't run this model."
@@ -614,9 +630,14 @@ msgstr "{sent, plural, one {# Einladung gesendet} other {# Einladungen gesendet}
 msgid "{size} B"
 msgstr "{size} B"
 
+#: src/components/PlanChoice.tsx
 #: src/components/PlanList.tsx
 msgid "{size} computer"
 msgstr "{size}er Computer"
+
+#: src/components/PlanChoice.tsx
+msgid "{size} of files"
+msgstr "{size} Dateien"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -658,6 +679,10 @@ msgstr "{toolCount, plural, one {# Tool} other {# Tools}}"
 #: src/components/ToolActivityDisclosure.tsx
 msgid "{toolCount, plural, one {Used # tool} other {Used # tools}}"
 msgstr "{toolCount, plural, one {# Werkzeug genutzt} other {# Werkzeuge genutzt}}"
+
+#: src/components/PlanChoice.tsx
+msgid "{total} billed yearly, {saved} saved"
+msgstr "{total} jährlich abgerechnet, {saved} gespart"
 
 #: src/pages/shell/channel-header.tsx
 msgid "{total} members"
@@ -701,6 +726,10 @@ msgstr "@{0}"
 msgid "/ month"
 msgstr "/ Monat"
 
+#: src/components/PlanChoice.tsx
+msgid "/month"
+msgstr "/Monat"
+
 #. placeholder {0}: (status.byokPriceCents ?? 0) / 100
 #. placeholder {0}: amount / 100
 #: src/components/ModelCredits.tsx
@@ -718,6 +747,10 @@ msgstr "Noch 1 Schritt"
 #: src/pages/platform/PricingSection.tsx
 msgid "1M tokens in / out"
 msgstr "1 Mio. Tokens Ein / Aus"
+
+#: src/components/PlanChoice.tsx
+msgid "2 months free"
+msgstr "2 Monate gratis"
 
 #. placeholder {0}: events.data.accepted
 #. placeholder {1}: events.data.rejected
@@ -1179,6 +1212,10 @@ msgstr "Agenten sind pausiert"
 #: src/pages/AppAgentAccess.tsx
 msgid "Agents that can use it"
 msgstr "Agenten, die es nutzen können"
+
+#: src/components/PlanChoice.tsx
+msgid "AI per month"
+msgstr "KI pro Monat"
 
 #: src/components/InboxPanel.tsx
 msgid "Alert"
@@ -1675,10 +1712,6 @@ msgstr "Zurück"
 msgid "Back to sign in"
 msgstr "Zurück zur Anmeldung"
 
-#: src/pages/partner/PartnerTemplatePanel.tsx
-msgid "Barbershop"
-msgstr "Barbershop"
-
 #: src/pages/partner/PartnerPricing.tsx
 msgid "Base"
 msgstr "Basis"
@@ -1708,6 +1741,10 @@ msgstr "Unter Guthaben"
 #: src/pages/Settings.tsx
 msgid "Billing"
 msgstr "Abrechnung"
+
+#: src/components/PlanChoice.tsx
+msgid "Billing period"
+msgstr "Abrechnungszeitraum"
 
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Bishop"
@@ -1775,6 +1812,7 @@ msgid "Bots"
 msgstr "Bots"
 
 #: src/components/ModelCredits.tsx
+#: src/components/PlanChoice.tsx
 msgid "Bots and browser automation"
 msgstr "Bots und Browser-Automatisierung"
 
@@ -2125,6 +2163,10 @@ msgstr "Wählen Sie, wie Sie Rook nutzen"
 msgid "Choose where bots run"
 msgstr "Auswählen, wo Bots laufen"
 
+#: src/components/PlanChoice.tsx
+msgid "Choose your plan"
+msgstr "Plan wählen"
+
 #: src/pages/WikiBrowser.tsx
 msgid "Cited by"
 msgstr "Zitiert von"
@@ -2174,10 +2216,6 @@ msgstr "Zweck löschen"
 #: src/pages/shell/dialogs.tsx
 msgid "Clearing…"
 msgstr "Wird geleert…"
-
-#: src/pages/partner/PartnerTemplatePanel.tsx
-msgid "Clinic"
-msgstr "Klinik"
 
 #: src/pages/onboarding/labels.ts
 msgid "Clinic or practice"
@@ -2998,6 +3036,7 @@ msgid "Could not log out. Try again."
 msgstr "Abmelden fehlgeschlagen. Bitte erneut versuchen."
 
 #: src/components/ModelCredits.tsx
+#: src/components/PlanChoice.tsx
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/Paywall.tsx
@@ -3481,6 +3520,7 @@ msgstr "Cron"
 msgid "Cron expression"
 msgstr "Cron-Ausdruck"
 
+#: src/components/PlanChoice.tsx
 #: src/pages/platform/PricingSection.tsx
 msgid "Currency"
 msgstr "Währung"
@@ -4442,6 +4482,14 @@ msgstr "Erster Bot"
 msgid "First messages, one per line"
 msgstr "Erste Nachrichten, eine pro Zeile"
 
+#: src/components/PlanChoice.tsx
+msgid "For up to {count} people"
+msgstr "Für bis zu {count} Personen"
+
+#: src/components/PlanChoice.tsx
+msgid "For you"
+msgstr "Für dich"
+
 #: src/pages/YouMemory.tsx
 msgid "Forget"
 msgstr "Vergessen"
@@ -4859,6 +4907,10 @@ msgstr "Posteingang"
 #: src/pages/shell/message-cards.tsx
 msgid "Inbox & email"
 msgstr "Posteingang & E-Mail"
+
+#: src/components/PlanChoice.tsx
+msgid "Include AI"
+msgstr "KI einschließen"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Include API keys"
@@ -5363,6 +5415,7 @@ msgid "Local computer access requires the latest desktop app."
 msgstr "Für den Zugriff auf den lokalen Computer ist die neueste Desktop-App erforderlich."
 
 #: src/components/ModelCredits.tsx
+#: src/components/PlanChoice.tsx
 #: src/components/SidebarFooter.tsx
 #: src/pages/Paywall.tsx
 msgid "Log out"
@@ -5824,6 +5877,7 @@ msgstr "Monat"
 msgid "Month"
 msgstr "Monat"
 
+#: src/components/PlanChoice.tsx
 #: src/lib/cron.ts
 msgid "Monthly"
 msgstr "Monatlich"
@@ -6559,6 +6613,10 @@ msgstr "Nur lesen"
 #: src/pages/shell/agent-audience.tsx
 msgid "Only some roles or people"
 msgstr "Nur bestimmte Rollen oder Personen"
+
+#: src/components/PlanChoice.tsx
+msgid "Only the owner can subscribe"
+msgstr "Nur der Inhaber kann abonnieren"
 
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/partner/PartnerOverview.tsx
@@ -7305,6 +7363,10 @@ msgstr "Liest die Seite"
 msgid "Ready"
 msgstr "Bereit"
 
+#: src/components/PlanChoice.tsx
+msgid "Ready in minutes · cancel anytime"
+msgstr "In Minuten startklar · jederzeit kündbar"
+
 #: src/pages/platform/PartnersSection.tsx
 msgid "Real margin"
 msgstr "Tatsächliche Marge"
@@ -7333,6 +7395,10 @@ msgstr "Einnahmen"
 #: src/pages/ActivityList.tsx
 msgid "Recent"
 msgstr "Kürzlich"
+
+#: src/components/PlanChoice.tsx
+msgid "Recommended"
+msgstr "Empfohlen"
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Reconnect"
@@ -7756,10 +7822,6 @@ msgstr "Kunden fortsetzen?"
 msgid "Resume this space to keep going."
 msgstr "Setze diesen Space fort, um weiterzumachen."
 
-#: src/pages/partner/PartnerTemplatePanel.tsx
-msgid "Retail"
-msgstr "Einzelhandel"
-
 #: src/components/AccountAccess.tsx
 #: src/components/PasskeySettings.tsx
 #: src/pages/Auth.tsx
@@ -8078,6 +8140,7 @@ msgid "Scheduled"
 msgstr "Geplant"
 
 #: src/components/ModelCredits.tsx
+#: src/components/PlanChoice.tsx
 msgid "Scheduled routines"
 msgstr "Geplante Routinen"
 
@@ -8251,6 +8314,10 @@ msgstr "Sentry-Alarm"
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Serenity endpoint is required."
 msgstr "Der Serenity-Endpunkt ist erforderlich."
+
+#: src/components/PlanChoice.tsx
+msgid "Server {server} + AI {ai}"
+msgstr "Server {server} + KI {ai}"
 
 #: src/pages/connections/McpServerForm.tsx
 msgid "Server name"
@@ -8777,6 +8844,10 @@ msgstr "Abonnieren"
 #: src/components/ModelCredits.tsx
 msgid "Subscribe for ${0} / month"
 msgstr "Für ${0} / Monat abonnieren"
+
+#: src/components/PlanChoice.tsx
+msgid "Subscribe to {name}"
+msgstr "{name} abonnieren"
 
 #: src/components/ModelCredits.tsx
 msgid "Subscribe to Rook credits"
@@ -9726,6 +9797,10 @@ msgstr "Rook-Guthaben verwenden"
 msgid "Use space default"
 msgstr "Space-Standard verwenden"
 
+#: src/components/PlanChoice.tsx
+msgid "Use the AI you already pay for: Claude, ChatGPT or an API key"
+msgstr "Nutze die KI, die du schon bezahlst: Claude, ChatGPT oder einen API-Schlüssel"
+
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "Verwenden Sie bis zu 512 Buchstaben, Ziffern, _ oder -."
@@ -10181,6 +10256,10 @@ msgstr "Schreibt {value}"
 #: src/lib/billing.ts
 msgid "year"
 msgstr "Jahr"
+
+#: src/components/PlanChoice.tsx
+msgid "Yearly"
+msgstr "Jährlich"
 
 #: src/pages/shell/chat-context.tsx
 msgid "Yesterday"

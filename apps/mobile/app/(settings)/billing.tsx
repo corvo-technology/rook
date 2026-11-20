@@ -6,7 +6,7 @@ import {
 } from "@corvo/contracts";
 import { MenuView } from "@expo/ui/community/menu";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Alert, AppState, Linking, ScrollView } from "react-native";
 import { SettingsGroup, SettingsRow, SettingsSwitch } from "../../components/settings-group";
 import { rpc } from "../../lib/api";
@@ -21,6 +21,18 @@ export default function BillingScreen() {
   const [status, setStatus] = useState<BillingStatus | null>(null);
   const [amount, setAmount] = useState<Amount>(DEFAULT_MONTHLY_CREDIT_AMOUNT);
   const [pending, setPending] = useState(false);
+  const [hasPlans, setHasPlans] = useState(false);
+  useEffect(() => {
+    let active = true;
+    void rpc("usage/plan")
+      .then((usage) => {
+        if (active) setHasPlans(usage !== null);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
   const refresh = useCallback(async () => {
     const next = await rpc("billing/status");
     setStatus(next);
@@ -84,6 +96,11 @@ export default function BillingScreen() {
     status?.funding !== "byok" && (!recurring || Boolean(status?.cancelAtPeriodEnd));
   return (
     <ScrollView style={sideInsets} contentInsetAdjustmentBehavior="automatic">
+      {hasPlans && status?.canManage ? (
+        <SettingsGroup>
+          <SettingsRow title={t("Plans")} chevron="right" onPress={() => router.push("/plans")} />
+        </SettingsGroup>
+      ) : null}
       <SettingsGroup label={t("Credits")}>
         <SettingsRow
           title={t("Available credits")}

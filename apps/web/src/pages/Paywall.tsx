@@ -1,10 +1,11 @@
-import type { BillingStatus } from "@corvo/contracts";
+import type { BillingStatus, PlanUsage } from "@corvo/contracts";
 import { Button } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { Check } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CreditChoice } from "../components/ModelCredits";
+import { PlanChoice } from "../components/PlanChoice";
 import { formatBillingPrice } from "../lib/billing";
 import { clearSpaceSelection, rpc } from "../lib/rpc";
 import { useSignOut } from "../lib/sign-out";
@@ -19,9 +20,35 @@ export function PaywallPage({
   dismissible?: boolean;
 }) {
   return status.funding !== undefined ? (
-    <CreditChoice status={status} dismissible={dismissible} />
+    <FundingPaywall status={status} dismissible={dismissible} />
   ) : (
     <LegacyPaywallPage status={status} />
+  );
+}
+
+/** Plans where the deployment has them; the single credit choice everywhere else. */
+function FundingPaywall({ status, dismissible }: { status: BillingStatus; dismissible: boolean }) {
+  // undefined while loading, null where there are no plans or they could not be read.
+  const [usage, setUsage] = useState<PlanUsage | null | undefined>(undefined);
+  useEffect(() => {
+    let active = true;
+    Promise.resolve()
+      .then(() => rpc.usage.plan())
+      .then((next) => {
+        if (active) setUsage(next);
+      })
+      .catch(() => {
+        if (active) setUsage(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+  if (usage === undefined) return null;
+  return usage ? (
+    <PlanChoice status={status} usage={usage} dismissible={dismissible} />
+  ) : (
+    <CreditChoice status={status} dismissible={dismissible} />
   );
 }
 

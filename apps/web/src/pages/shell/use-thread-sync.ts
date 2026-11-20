@@ -17,8 +17,10 @@ import type { RefObject } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { markOnce } from "../../lib/performance";
 import type { SpaceQueries } from "../../lib/query";
-import { queryClient } from "../../lib/query";
+import { queryClient, useQueryUserId } from "../../lib/query";
 import type { createSpaceRpc } from "../../lib/rpc";
+import { selectedSpaceId } from "../../lib/rpc";
+import { threadCache } from "../../lib/thread-cache";
 import {
   isComputerStatusEvent,
   isThreadSnapshotEvent,
@@ -136,6 +138,10 @@ export function useThreadSync({
   const groupRefreshEpoch = useRef(0);
   const groupAppliedEpoch = useRef(0);
   const [loadingOlder, setLoadingOlder] = useState(false);
+  // Recent chats are kept on this device for this person in this space, so opening one paints at
+  // once, even after a reload; the server's read still replaces it.
+  const cacheUserId = useQueryUserId();
+  const cacheScope = cacheUserId ? { userId: cacheUserId, spaceId: selectedSpaceId() ?? "" } : null;
   // A very fast run can finish over SSE while its threads.send response is still
   // returning. Do not let that late receipt resurrect terminal work as queued.
   const terminalRunReceipts = useRef(new Set<string>());
@@ -179,6 +185,7 @@ export function useThreadSync({
       expandedHistoryThread.current === snap.threadId,
     );
     commitSnapshot(reconciled.snapshot);
+    if (cacheScope) threadCache.save(cacheScope, { groupId: id }, reconciled.snapshot);
     if (!computerOpenRef.current) commitComputer(null);
     setRoutines([]);
     setRoutinesBotId(null);
@@ -221,6 +228,7 @@ export function useThreadSync({
       expandedHistoryThread.current === snap.threadId,
     );
     commitSnapshot(reconciled.snapshot);
+    if (cacheScope) threadCache.save(cacheScope, { botId: id }, reconciled.snapshot);
     commitComputer(reconciled.computer);
     cacheComputerFor(id, { computer: reconciled.computer });
     if (
@@ -319,11 +327,21 @@ export function useThreadSync({
     const sidebarRefresh = createRefreshCoalescer(() => refreshBots());
     const snapshotRefresh = createRefreshCoalescer(() => refreshThread(active.id));
     const abort = new AbortController();
+    if (!cachedThread && !pendingJump && cacheScope) {
+      void threadCache.read(cacheScope, { botId: active.id }).then((stored) => {
+        // Only a first frame: anything the server or the session already gave wins.
+        if (!stored || abort.signal.aborted || snapshotRef.current?.botId === active.id) return;
+        commitSnapshot(stored);
+      });
+    }
     void runThreadSubscription({
       signal: abort.signal,
       loadInitial: async () => {
         const primed = bootstrappedThread.current;
         bootstrappedThread.current = null;
+        if (primed?.botId === active.id && cacheScope) {
+          threadCache.save(cacheScope, { botId: active.id }, primed);
+        }
         // Pending search jumps load the around-page separately; avoid replacing it with latest.
         return primed?.botId === active.id
           ? primed
@@ -405,7 +423,10 @@ export function useThreadSync({
       snapshotRefresh.dispose();
       abort.abort();
       const left = snapshotRef.current;
-      if (left?.botId === active.id && !left.groupId) queryClient.setQueryData(threadKey, left);
+      if (left?.botId === active.id && !left.groupId) {
+        queryClient.setQueryData(threadKey, left);
+        if (cacheScope) threadCache.save(cacheScope, { botId: active.id }, left);
+      }
     };
   }, [active?.id, markBotReadIfVisible, notifyBrowserForEvent]);
 
@@ -423,6 +444,12 @@ export function useThreadSync({
     const sidebarRefresh = createRefreshCoalescer(() => refreshBots());
     const snapshotRefresh = createRefreshCoalescer(() => refreshGroupThread(groupId));
     const abort = new AbortController();
+    if (!cachedThread && !pendingJump && cacheScope) {
+      void threadCache.read(cacheScope, { groupId }).then((stored) => {
+        if (!stored || abort.signal.aborted || snapshotRef.current?.groupId === groupId) return;
+        commitSnapshot(stored);
+      });
+    }
     void runThreadSubscription({
       signal: abort.signal,
       loadInitial: () =>
@@ -481,7 +508,10 @@ export function useThreadSync({
       snapshotRefresh.dispose();
       abort.abort();
       const left = snapshotRef.current;
-      if (left?.groupId === groupId) queryClient.setQueryData(threadKey, left);
+      if (left?.groupId === groupId) {
+        queryClient.setQueryData(threadKey, left);
+        if (cacheScope) threadCache.save(cacheScope, { groupId }, left);
+      }
     };
   }, [activeGroup?.id, groupId, notifyBrowserForEvent, markGroupReadOnReply]);
 

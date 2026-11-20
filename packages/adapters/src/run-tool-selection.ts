@@ -122,6 +122,8 @@ export function selectBuiltinToolsForRun(options: {
   disabledBuiltinTools?: readonly string[];
   /** The bot's fleet management switch. */
   fleetManagement?: boolean;
+  /** say_now facts: set when the run may open with a line before slow work. */
+  sayNowOffered?: boolean;
   /** A follow-up run whose source message the user wrote. */
   followUpFromUser?: boolean;
   /** A routine run with later workflow steps, which may end the chain early. */
@@ -158,6 +160,7 @@ export function selectBuiltinToolsForRun(options: {
       (!FLEET_TOOL_NAMES_SET.has(tool.name) ||
         (Boolean(options.fleetManagement) && fleetToolsAllowed)) &&
       (options.hostActionsOffered || tool.name !== "propose_host_action") &&
+      (options.sayNowOffered || tool.name !== "say_now") &&
       (options.workflowContinues || tool.name !== "workflow_stop") &&
       (options.routedRun || tool.name !== "pass") &&
       (options.strongerModelAvailable || tool.name !== "request_stronger_model") &&

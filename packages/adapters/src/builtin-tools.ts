@@ -20,7 +20,7 @@ import { GUIDE_PAGES } from "@corvo/core";
 import { z } from "zod";
 import { allowPrivateHttpSecretOrigins } from "./bot-secrets.js";
 import { BROWSER_ACT_KINDS } from "./browser-tools.js";
-import { messageUserMaxLength } from "./user-progress.js";
+import { messageUserMaxLength, SAY_NOW_MAX_LENGTH } from "./user-progress.js";
 
 // The owner flag can land in process.env after static imports run (loadRootEnv
 // parses .env once the entry module is already executing), so the model-facing
@@ -508,6 +508,17 @@ export const builtinAgentTools: ConnectorTool[] = [
         },
         required: ["message"],
       };
+    },
+  },
+  {
+    name: "say_now",
+    description: `Post one short line to the user right now, before slow work such as using the computer or browser, a long chain of tools, generating media or waiting on a connection, so they know it started (for example "I'll open the calendar and create the event."). One line, at most ${SAY_NOW_MAX_LENGTH} characters, plain text in the user's language, no secrets. Once per run, never for a quick answer, and never repeat it in your final reply.`,
+    inputSchema: {
+      type: "object",
+      properties: {
+        message: { type: "string", maxLength: SAY_NOW_MAX_LENGTH },
+      },
+      required: ["message"],
     },
   },
   {

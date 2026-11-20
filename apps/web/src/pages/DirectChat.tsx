@@ -158,7 +158,7 @@ export function DirectChat({
         />
         <h1 className="text-name font-semibold">{partner.name}</h1>
       </div>
-      <div className="rk-scroll flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-6 py-5">
+      <div className="rk-scroll flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3 py-5 md:px-6">
         {thread.data.messages.map((message) => {
           const mine = message.authorUserId === currentUserId;
           const name = mine ? (message.authorName ?? t`You`) : partner.name;
@@ -195,7 +195,7 @@ export function DirectChat({
         })}
         <div ref={end} />
       </div>
-      <div className="px-6 pb-5">
+      <div className="px-3 pb-5 md:px-6">
         {error ? (
           <p role="alert" className="mb-2 text-sm text-destructive">
             {error}
@@ -204,7 +204,10 @@ export function DirectChat({
         <div className="flex items-end gap-2 rounded-2xl border border-border bg-card p-2">
           <Textarea
             value={draft}
-            onChange={(event) => setDraft(event.target.value)}
+            onChange={(event) => {
+              setDraft(event.target.value);
+              if (error) setError(null);
+            }}
             onKeyDown={(event) => {
               if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) return;
               event.preventDefault();

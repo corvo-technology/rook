@@ -3947,7 +3947,9 @@ msgstr "Supprimer l’enregistrement"
 msgid "Disconnect"
 msgstr "Déconnecter"
 
+#: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/VoiceSettingsOverlay.tsx
 msgid "Disconnect {disconnectName}?"
 msgstr "Déconnecter {disconnectName} ?"
 
@@ -7706,6 +7708,10 @@ msgstr "Retirer {name} ?"
 #: src/pages/shell/bot-credentials.tsx
 msgid "Remove {secretName}? This bot will no longer be able to use it."
 msgstr "Supprimer {secretName} ? Ce bot ne pourra plus l’utiliser."
+
+#: src/pages/ConnectionsSettingsPanel.tsx
+msgid "Remove {title}?"
+msgstr "Retirer {title} ?"
 
 #: src/components/AlwaysAllowedRules.tsx
 msgid "Remove {what}"

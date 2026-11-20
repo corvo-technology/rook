@@ -3947,7 +3947,9 @@ msgstr "放弃录制"
 msgid "Disconnect"
 msgstr "断开"
 
+#: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/VoiceSettingsOverlay.tsx
 msgid "Disconnect {disconnectName}?"
 msgstr "断开 {disconnectName}？"
 
@@ -7706,6 +7708,10 @@ msgstr "移除 {name}？"
 #: src/pages/shell/bot-credentials.tsx
 msgid "Remove {secretName}? This bot will no longer be able to use it."
 msgstr "移除 {secretName}？此机器人将无法再使用它。"
+
+#: src/pages/ConnectionsSettingsPanel.tsx
+msgid "Remove {title}?"
+msgstr "移除 {title}？"
 
 #: src/components/AlwaysAllowedRules.tsx
 msgid "Remove {what}"

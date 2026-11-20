@@ -3947,7 +3947,9 @@ msgstr "録音を破棄"
 msgid "Disconnect"
 msgstr "切断"
 
+#: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/VoiceSettingsOverlay.tsx
 msgid "Disconnect {disconnectName}?"
 msgstr "{disconnectName}を切断しますか？"
 
@@ -7706,6 +7708,10 @@ msgstr "{name} を削除しますか?"
 #: src/pages/shell/bot-credentials.tsx
 msgid "Remove {secretName}? This bot will no longer be able to use it."
 msgstr "{secretName}を削除しますか？このボットはこれを使用できなくなります。"
+
+#: src/pages/ConnectionsSettingsPanel.tsx
+msgid "Remove {title}?"
+msgstr "{title} を削除しますか?"
 
 #: src/components/AlwaysAllowedRules.tsx
 msgid "Remove {what}"

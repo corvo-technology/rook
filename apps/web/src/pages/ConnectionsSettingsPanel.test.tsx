@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import type * as UiWeb from "@corvo/ui-web";
 import type { ComponentProps, ReactNode } from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
@@ -9,13 +10,15 @@ const bridge = vi.hoisted(() => ({
 }));
 vi.mock("../lib/desktop", () => ({ desktopBridge: () => bridge }));
 vi.mock("@lingui/react/macro", () => {
-  const t = (parts: TemplateStringsArray) => parts.join("");
+  const t = (parts: TemplateStringsArray, ...values: unknown[]) =>
+    parts.reduce((text, part, index) => text + part + (values[index] ?? ""), "");
   return {
     useLingui: () => ({ t, i18n: { locale: "en" } }),
     Trans: ({ children }: { children: ReactNode }) => children,
   };
 });
-vi.mock("@corvo/ui-web", () => ({
+vi.mock("@corvo/ui-web", async () => ({
+  InlineConfirm: (await vi.importActual<typeof UiWeb>("@corvo/ui-web")).InlineConfirm,
   Button: (props: ComponentProps<"button">) => <button type="button" {...props} />,
   Input: (props: ComponentProps<"input">) => <input {...props} />,
 }));
@@ -66,9 +69,12 @@ it("removes a saved Composio key", async () => {
   bridge.connections.status.mockResolvedValue({ composio: true, telegram: false });
   bridge.connections.save.mockResolvedValue({ composio: false, telegram: false });
   const { container } = await render();
-  await act(async () => {
-    container.querySelector<HTMLButtonElement>('[data-testid="remove-composio"]')!.click();
-  });
+  const remove = () =>
+    container.querySelector<HTMLButtonElement>('[data-testid="remove-composio"]')!;
+  await act(async () => remove().click());
+  expect(bridge.connections.save).not.toHaveBeenCalled();
+  expect(remove().textContent).toBe("Remove Composio?");
+  await act(async () => remove().click());
   expect(bridge.connections.save).toHaveBeenCalledWith({ composioApiKey: null });
   expect(container.querySelector('input[name="composioApiKey"]')).not.toBeNull();
 });

@@ -184,17 +184,6 @@ export function MessageHoverActions({
                 <Trans>Continue in new thread</Trans>
               </DropdownMenuItem>
             ) : null}
-            {onReply ? (
-              <DropdownMenuItem
-                onClick={() => {
-                  setMoreOpen(false);
-                  onReply(message);
-                }}
-              >
-                <Reply size={14} strokeWidth={1.7} />
-                <Trans>Reply</Trans>
-              </DropdownMenuItem>
-            ) : null}
             {onPin && canReactToThreadMessage(message) ? (
               <DropdownMenuItem
                 onClick={() => {

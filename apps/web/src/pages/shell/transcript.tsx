@@ -551,7 +551,7 @@ export const Transcript = memo(function Transcript({
             aria-label={t`Load earlier messages`}
             className="self-center text-muted-foreground"
           >
-            {loadingOlder ? <Spinner aria-label={t`Loading…`} /> : null}
+            {loadingOlder ? <Spinner aria-hidden role="presentation" /> : null}
             {t`Load earlier messages`}
           </Button>
         ) : null}

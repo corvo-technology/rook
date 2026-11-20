@@ -180,6 +180,19 @@ function unframedHistoryText(blocks: MessageBlock[]): string {
       }
       // Without the answer a later turn sees the question as still open and asks it again.
       if (block.kind === "ask") {
+        // A proposal card shows "Applied" or "Dismissed" once decided; the model must read the
+        // same state, or it keeps asking the owner to approve what is already done.
+        if (block.proposal) {
+          const state =
+            block.status !== "answered"
+              ? "waiting for the owner"
+              : block.answer === "allow"
+                ? "applied"
+                : block.answer === "deny"
+                  ? "dismissed"
+                  : "decided";
+          return `[proposal card: ${block.text} (${state})]`;
+        }
         if (block.status !== "answered" || !block.answer) return block.text;
         const choice = block.actions?.find((action) => action.id === block.answer);
         return `${block.text}\nAnswer: ${choice?.label ?? block.answer}`;

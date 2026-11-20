@@ -27,6 +27,21 @@ export const localizedCatalogText = (max: number) =>
   });
 
 /**
+ * A routine a catalog agent sets up for its owner when it is added. It only reads, summarizes,
+ * drafts or reminds: anything it does outside the app is still approved when the routine runs.
+ */
+export const StarterRoutineSchema = z.object({
+  /** Stable within the agent; never shown. */
+  key: z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/),
+  name: localizedCatalogText(60),
+  /** What the agent is asked each time the routine runs. */
+  prompt: localizedCatalogText(600),
+  /** Five-field cron in the owner's timezone, repeating. */
+  cron: z.string().regex(/^\S+ \S+ \S+ \S+ \S+$/),
+});
+export type StarterRoutine = z.infer<typeof StarterRoutineSchema>;
+
+/**
  * A ready-made agent a person can add: a bot with its own instructions and the apps it works
  * with. Text is written once per language; other app languages use the English text.
  */
@@ -50,6 +65,8 @@ export const AgentCatalogEntrySchema = z.object({
   greeting: localizedCatalogText(200).optional(),
   /** A first message that waits unsent in the composer; it asks before acting. */
   firstTask: localizedCatalogText(200).optional(),
+  /** Recurring jobs the agent sets up on its own when it is added, one or two. */
+  routines: z.array(StarterRoutineSchema).max(2).optional(),
   /**
    * Offered only to an organization that is a member of a partner, and added with this access to
    * the Partnership connection.

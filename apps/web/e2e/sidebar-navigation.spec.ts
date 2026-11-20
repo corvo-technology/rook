@@ -53,13 +53,15 @@ test("every place in the sidebar opens in the main pane and leaves the lists in 
     await captureScreenshot(page, testInfo, place.shot);
   }
 
+  // The flows are a tab of Routines, not a second entry.
+  await nav.getByTestId("sidebar-routines").click();
+  await pane.getByRole("tab", { name: "Flows", exact: true }).click();
+  await expect(page).toHaveURL(/\/app\/workflows$/);
+  await expect(pane.getByRole("heading", { name: "Routine flows", exact: true })).toBeVisible();
+  await expect(nav.getByTestId("sidebar-routines")).toHaveAttribute("aria-current", "page");
+  await captureScreenshot(page, testInfo, "nav-workflows");
+
   const more: Array<{ name: string; url: RegExp; heading: string; shot: string }> = [
-    {
-      name: "Routine flows",
-      url: /\/app\/workflows$/,
-      heading: "Routine flows",
-      shot: "nav-workflows",
-    },
     { name: "Usage", url: /\/app\/usage$/, heading: "Usage", shot: "nav-usage" },
     { name: "Artifacts", url: /\/app\/artifacts$/, heading: "Artifacts", shot: "nav-artifacts" },
     { name: "Wiki", url: /\/app\/wiki$/, heading: "Wiki", shot: "nav-wiki" },

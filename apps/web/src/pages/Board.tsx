@@ -22,6 +22,7 @@ import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, Settings2 } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { PageHeader } from "../components/PageHeader";
 import { followBoard } from "../lib/board-stream";
 import { useSpaceQueries } from "../lib/query";
 import { formatRelativeTime } from "../lib/relative-time";
@@ -135,46 +136,52 @@ export function BoardPage() {
 
   return (
     <div className="flex h-full min-w-0 flex-col overflow-hidden bg-background text-foreground">
-      <header className="flex items-center gap-3 border-b px-4 py-3">
-        <Link
-          to="/app"
-          className={buttonVariants({ variant: "ghost", size: "icon" })}
-          aria-label={t`Back`}
-        >
-          <ChevronLeft />
-        </Link>
-        <h1 className="flex-1 font-display text-heading3 font-normal tracking-tight">
-          <Trans>Tasks</Trans>
-        </h1>
-        {bots.length > 1 ? (
-          <NativeSelect
-            aria-label={t`Owner`}
-            className="w-auto"
-            value={ownerFilter}
-            onChange={(event) => setOwnerFilter(event.target.value)}
+      <PageHeader
+        width="full"
+        leading={
+          <Link
+            to="/app"
+            className={buttonVariants({ variant: "ghost", size: "icon" })}
+            aria-label={t`Back`}
           >
-            <NativeSelectOption value="">{t`All`}</NativeSelectOption>
-            {bots.map((bot) => (
-              <NativeSelectOption key={bot.id} value={bot.id}>
-                {bot.name}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-        ) : null}
-        {boardQuery.data ? (
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={t`Task settings`}
-            onClick={() => sidePanel.open("board-settings")}
-          >
-            <Settings2 />
-          </Button>
-        ) : null}
-        <Button onClick={() => setSelected({ newIn: "todo" })} disabled={bots.length === 0}>
-          <Trans>New task</Trans>
-        </Button>
-      </header>
+            <ChevronLeft />
+          </Link>
+        }
+        actions={
+          <>
+            {bots.length > 1 ? (
+              <NativeSelect
+                aria-label={t`Owner`}
+                className="w-auto"
+                value={ownerFilter}
+                onChange={(event) => setOwnerFilter(event.target.value)}
+              >
+                <NativeSelectOption value="">{t`All`}</NativeSelectOption>
+                {bots.map((bot) => (
+                  <NativeSelectOption key={bot.id} value={bot.id}>
+                    {bot.name}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+            ) : null}
+            {boardQuery.data ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={t`Task settings`}
+                onClick={() => sidePanel.open("board-settings")}
+              >
+                <Settings2 />
+              </Button>
+            ) : null}
+            <Button onClick={() => setSelected({ newIn: "todo" })} disabled={bots.length === 0}>
+              <Trans>New task</Trans>
+            </Button>
+          </>
+        }
+      >
+        <Trans>Tasks</Trans>
+      </PageHeader>
       {error ? (
         <p role="alert" className="px-4 py-2 text-sm text-destructive">
           {error}

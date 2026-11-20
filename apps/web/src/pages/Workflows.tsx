@@ -7,6 +7,7 @@ import { Check, ChevronLeft, ChevronRight, Play, Plus, X, Zap } from "lucide-rea
 import type { ReactNode } from "react";
 import { useId, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { PageHeader } from "../components/PageHeader";
 import { takeInitialBootstrap } from "../lib/bootstrap";
 import { cronLabels } from "../lib/cron";
 import { useSpaceQueries } from "../lib/query";
@@ -74,20 +75,21 @@ export function WorkflowsPage() {
 
   return (
     <div className="flex h-full flex-col bg-background text-foreground">
-      <header className="flex items-center gap-2 px-6 py-4">
-        <h1 className="text-base font-medium">
-          <Trans>Routine flows</Trans>
-        </h1>
-        <Button
-          className="ms-auto"
-          size="sm"
-          disabled={bots.length === 0}
-          onClick={() => sidePanel.open("new-routine")}
-        >
-          <Plus />
-          <Trans>New routine</Trans>
-        </Button>
-      </header>
+      <PageHeader
+        width="full"
+        actions={
+          <Button
+            size="sm"
+            disabled={bots.length === 0}
+            onClick={() => sidePanel.open("new-routine")}
+          >
+            <Plus />
+            <Trans>New routine</Trans>
+          </Button>
+        }
+      >
+        <Trans>Routine flows</Trans>
+      </PageHeader>
       <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-auto px-6 pb-6">
         {error && !adding ? (
           <p role="alert" className="text-sm text-destructive">

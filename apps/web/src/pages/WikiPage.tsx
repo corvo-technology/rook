@@ -1,5 +1,6 @@
 import { Trans } from "@lingui/react/macro";
 import { useSearchParams } from "react-router-dom";
+import { PageHeader } from "../components/PageHeader";
 import { useSpaceRpc } from "../lib/space-rpc";
 import { WikiBrowser } from "./WikiBrowser";
 
@@ -9,9 +10,9 @@ export function WikiPage() {
   const [params, setParams] = useSearchParams();
   return (
     <div className="flex h-full min-h-0 flex-col bg-background text-foreground">
-      <h1 className="px-6 pt-6 pb-4 text-xl font-light tracking-tight">
+      <PageHeader width="full">
         <Trans>Wiki</Trans>
-      </h1>
+      </PageHeader>
       <WikiBrowser
         api={rpc.wiki}
         title={params.get("page")}

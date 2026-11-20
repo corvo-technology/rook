@@ -22,6 +22,7 @@ import {
 import { useLingui } from "@lingui/react/macro";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { PageTitle } from "../../components/PageHeader";
 import type { ModelForm, PricingForm, TierForm } from "../../lib/platform-pricing";
 import { debitCredits, PRICING_CURRENCIES, tierKey } from "../../lib/platform-pricing";
 import { useSpaceQueries } from "../../lib/query";
@@ -88,7 +89,7 @@ export function PricingSection({
     <div className="flex flex-col gap-8" data-testid="platform-pricing">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-light tracking-tight">{t`Prices and margins`}</h1>
+          <PageTitle>{t`Prices and margins`}</PageTitle>
           {live ? (
             <p className="mt-1 text-sm text-muted-foreground">
               {t`Version ${version} live since ${since}`}

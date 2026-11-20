@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft } from "lucide-react";
 import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { PageHeader } from "../components/PageHeader";
 import { takeInitialBootstrap } from "../lib/bootstrap";
 import { useSpaceQueries } from "../lib/query";
 import { buildSquadLanes, squadRouter } from "../lib/squad-lanes";
@@ -50,17 +51,21 @@ export function SquadPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto bg-background text-foreground">
-      <header className="flex items-center gap-2 px-6 py-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={t`Back`}
-          onClick={() => navigate(`/app/g/${groupId}`)}
-        >
-          <ChevronLeft />
-        </Button>
-        <h1 className="text-base font-medium">{snapshot?.groupName}</h1>
-      </header>
+      <PageHeader
+        width="full"
+        leading={
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={t`Back`}
+            onClick={() => navigate(`/app/g/${groupId}`)}
+          >
+            <ChevronLeft />
+          </Button>
+        }
+      >
+        {snapshot?.groupName}
+      </PageHeader>
 
       {thread.isPending ? (
         <div className="flex justify-center py-10">

@@ -4,6 +4,7 @@ import {
   appendToolCallSegment,
   createStreamingRedactor,
   endsSentence,
+  holdBackPartialMarker,
   isBackgroundRunTrigger,
   redactSecrets,
 } from "@corvo/core";
@@ -16,6 +17,7 @@ import { isExactNoResponse } from "./silent-reply.js";
 import {
   clampUserProgressMessage,
   extractNarrationText,
+  isAnswerClientNonce,
   isUserProgressClientNonce,
   midTurnProgressBudgetAllows,
   userProgressClientNonce,
@@ -38,6 +40,8 @@ export async function createReplyState(
     explicitNoResponse: false,
     assistantTurnText: "",
     midTurnUserTexts: [],
+    answerTargets: [],
+    answeredTargets: new Set(),
     midTurnProgressCount: 0,
     turnStartedAtMs: run.startedAt?.getTime() ?? Date.now(),
     pendingToolNames: [],
@@ -50,9 +54,13 @@ export async function createReplyState(
   const priorProgress = await deps.prisma.message.findMany({
     where: { runId: run.id, role: "bot" },
     orderBy: { seq: "asc" },
-    select: { blocks: true, clientNonce: true },
+    select: { blocks: true, clientNonce: true, replyToMessageId: true },
   });
   for (const message of priorProgress) {
+    if (isAnswerClientNonce(message.clientNonce) && message.replyToMessageId) {
+      reply.answeredTargets.add(message.replyToMessageId);
+      reply.publishedMidTurnUserMessage = true;
+    }
     if (!isUserProgressClientNonce(message.clientNonce)) continue;
     const blocks = Array.isArray(message.blocks) ? (message.blocks as MessageBlock[]) : [];
     const text = blocks
@@ -117,6 +125,10 @@ export async function flushProgress(ctx: RunContext) {
     isBackgroundRunTrigger(run.trigger)
   )
     return;
+  // Reply markers steer how the final reply is split; people never see them.
+  const { emit, hold } = holdBackPartialMarker(reply.pendingProgress);
+  reply.pendingProgress = hold;
+  if (!emit) return;
   await deps.events.append({
     spaceId: run.spaceId,
     threadId: thread.id,
@@ -126,11 +138,10 @@ export async function flushProgress(ctx: RunContext) {
     // The first flush replaces the "working…" placeholder outright — a delta here
     // would otherwise get appended straight onto it with no separator.
     payload: reply.hasStreamedText
-      ? { delta: reply.pendingProgress, streaming: true, ...threadPayload(ctx) }
-      : { text: reply.pendingProgress, streaming: true, ...threadPayload(ctx) },
+      ? { delta: emit, streaming: true, ...threadPayload(ctx) }
+      : { text: emit, streaming: true, ...threadPayload(ctx) },
   });
   reply.hasStreamedText = true;
-  reply.pendingProgress = "";
   reply.lastProgressAt = Date.now();
 }
 

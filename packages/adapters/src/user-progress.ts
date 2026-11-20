@@ -83,6 +83,17 @@ export function userProgressClientNonce(runId: string, index = 0): string {
   return `${USER_PROGRESS_CLIENT_NONCE_PREFIX}${runId}:${index}:${Date.now().toString(36)}:${Math.random().toString(36).slice(2, 10)}`;
 }
 
+const ANSWER_CLIENT_NONCE_PREFIX = "answer:";
+
+/** One answer per person message and run, so a resumed run cannot post it twice. */
+export function answerClientNonce(runId: string, messageId: string): string {
+  return `${ANSWER_CLIENT_NONCE_PREFIX}${runId}:${messageId}`;
+}
+
+export function isAnswerClientNonce(clientNonce: string | null | undefined): boolean {
+  return Boolean(clientNonce?.startsWith(ANSWER_CLIENT_NONCE_PREFIX));
+}
+
 export function isUserProgressClientNonce(clientNonce: string | null | undefined): boolean {
   return Boolean(clientNonce?.startsWith(USER_PROGRESS_CLIENT_NONCE_PREFIX));
 }

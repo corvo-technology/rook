@@ -2364,7 +2364,7 @@ msgstr "Recolher {label}"
 
 #: src/pages/shell/sidebar-partner.tsx
 msgid "Collapse {name}"
-msgstr ""
+msgstr "Recolher {name}"
 
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Color"
@@ -4425,7 +4425,7 @@ msgstr "Expandir {label}"
 
 #: src/pages/shell/sidebar-partner.tsx
 msgid "Expand {name}"
-msgstr ""
+msgstr "Expandir {name}"
 
 #: src/components/markdown-copy.tsx
 msgid "Expand table"

@@ -2364,7 +2364,7 @@ msgstr "{label}を折りたたむ"
 
 #: src/pages/shell/sidebar-partner.tsx
 msgid "Collapse {name}"
-msgstr ""
+msgstr "{name} を折りたたむ"
 
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Color"
@@ -4425,7 +4425,7 @@ msgstr "{label}を展開"
 
 #: src/pages/shell/sidebar-partner.tsx
 msgid "Expand {name}"
-msgstr ""
+msgstr "{name} を展開"
 
 #: src/components/markdown-copy.tsx
 msgid "Expand table"

@@ -2364,7 +2364,7 @@ msgstr "Réduire {label}"
 
 #: src/pages/shell/sidebar-partner.tsx
 msgid "Collapse {name}"
-msgstr ""
+msgstr "Réduire {name}"
 
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Color"
@@ -4425,7 +4425,7 @@ msgstr "Développer {label}"
 
 #: src/pages/shell/sidebar-partner.tsx
 msgid "Expand {name}"
-msgstr ""
+msgstr "Développer {name}"
 
 #: src/components/markdown-copy.tsx
 msgid "Expand table"

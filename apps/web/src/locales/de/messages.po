@@ -2364,7 +2364,7 @@ msgstr "{label} einklappen"
 
 #: src/pages/shell/sidebar-partner.tsx
 msgid "Collapse {name}"
-msgstr ""
+msgstr "{name} einklappen"
 
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Color"
@@ -4425,7 +4425,7 @@ msgstr "{label} erweitern"
 
 #: src/pages/shell/sidebar-partner.tsx
 msgid "Expand {name}"
-msgstr ""
+msgstr "{name} ausklappen"
 
 #: src/components/markdown-copy.tsx
 msgid "Expand table"

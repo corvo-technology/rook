@@ -313,4 +313,63 @@ describePostgres("plan changes (PostgreSQL)", () => {
       code: "FORBIDDEN",
     });
   });
+
+  describe("funding follows the AI add-on", () => {
+    const funding = async (organizationId: string) =>
+      (await prisma.modelCreditAccount.findUnique({ where: { organizationId } }))?.mode;
+    const setFunding = (organizationId: string, mode: "byok" | "credits") =>
+      prisma.modelCreditAccount.upsert({
+        where: { organizationId },
+        create: { organizationId, mode },
+        update: { mode },
+      });
+
+    it("switches to credits when a plan is bought with AI", async () => {
+      const { id, owner } = await organization();
+      await setFunding(id, "byok");
+      await subscribe(owner, id, input({ aiUseCents: 1000 }));
+      expect(await funding(id)).toBe("credits");
+      expect(await balance(owner)).toBe(10);
+    });
+
+    it("switches to credits when an upgrade adds AI, keeping the balance", async () => {
+      const { id, owner } = await organization();
+      clock = Date.now();
+      await subscribe(owner, id, input());
+      await reconcileCreditPurchase(prisma, id, { id: `topup-${id}`, amountCents: 700 });
+      await setFunding(id, "byok");
+      await billing.changePlan(owner, input({ aiUseCents: 1000 }));
+      expect(await funding(id)).toBe("credits");
+      expect(await balance(owner)).toBe(17);
+    });
+
+    it("goes back to its own AI only when the removal takes effect at renewal", async () => {
+      const { id, owner } = await organization();
+      clock = Date.now();
+      await subscribe(owner, id, input({ aiUseCents: 1000 }));
+      expect(await funding(id)).toBe("credits");
+      await billing.changePlan(owner, input());
+      expect(await funding(id)).toBe("credits");
+      clock += 31 * DAY;
+      await billing.syncForActor(owner);
+      expect(await funding(id)).toBe("byok");
+      // The credit that was paid for stays.
+      expect(await balance(owner)).toBe(10);
+    });
+
+    it("switches once: a repeated sync leaves a later choice alone", async () => {
+      const { id, owner } = await organization();
+      clock = Date.now();
+      const customerId = await subscribe(owner, id, input({ aiUseCents: 1000 }));
+      await billing.changePlan(owner, input());
+      clock += 31 * DAY;
+      await Promise.all([billing.sync(customerId), billing.sync(customerId)]);
+      expect(await funding(id)).toBe("byok");
+      await setFunding(id, "credits");
+      await billing.sync(customerId);
+      await billing.sync(customerId);
+      expect(await funding(id)).toBe("credits");
+      expect(await balance(owner)).toBe(10);
+    });
+  });
 });

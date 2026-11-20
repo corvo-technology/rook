@@ -203,6 +203,27 @@ export function createBillingService(deps: {
         },
         data: { mode: "byok", pendingCreditCheckout: false },
       });
+    // The AI add-on decides the funding, on the change only so a later choice stands: turning it
+    // on moves to Rook's models, and its removal, which takes effect at renewal, back to the
+    // organization's own AI. The balance is never touched.
+    if (hasBillingAccess(live.status) && parsePlanLookupKey(live.priceLookupKey)) {
+      const switchTo =
+        live.aiUseCents && !previous.aiUseCents
+          ? "credits"
+          : !live.aiUseCents && previous.aiUseCents
+            ? "byok"
+            : null;
+      if (switchTo) {
+        await creditAccount(prisma, previous.organizationId);
+        await prisma.modelCreditAccount.updateMany({
+          where: {
+            organizationId: previous.organizationId,
+            organization: { billing: { subscriptionId: live.subscriptionId } },
+          },
+          data: { mode: switchTo, pendingCreditCheckout: false },
+        });
+      }
+    }
     // Monthly credits include the own-key plan, even when they will not renew, and a free plan
     // bills nothing.
     if (

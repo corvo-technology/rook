@@ -111,6 +111,7 @@ import { ShellSidebar } from "./shell/shell-sidebar";
 import { ShellSidePanel } from "./shell/side-panel";
 import { useCreateMenu } from "./shell/sidebar-header";
 import { BotsSidebarLayout } from "./shell/sidebar-layout";
+import { PARTNER_SECTION_KEY } from "./shell/sidebar-partner";
 import { SidebarRoster } from "./shell/sidebar-roster";
 import {
   countUnreadMessages,
@@ -965,6 +966,8 @@ function SpaceShell({ page }: { page?: ReactNode }) {
           spaces={sidebarSpaces}
           currentSpaceId={bootstrapMe?.spaceId ?? null}
           openSpaceChat={openSpaceChat}
+          partnerOpen={collapsedSidebarSections.has(PARTNER_SECTION_KEY)}
+          onTogglePartner={() => toggleSidebarSection(PARTNER_SECTION_KEY)}
           roster={
             <SidebarRoster
               mini={miniSidebar}

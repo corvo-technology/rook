@@ -5420,6 +5420,10 @@ msgstr "浅色"
 msgid "Light tasks model"
 msgstr "轻量任务模型"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Limit per payment"
+msgstr "单笔支付上限"
+
 #: src/pages/platform/LimitsSection.tsx
 #: src/pages/platform/PlatformPage.tsx
 msgid "Limits by organization"
@@ -7122,10 +7126,6 @@ msgstr "已暂停"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Pawn"
 msgstr "兵"
-
-#: src/pages/shell/bot-panel.tsx
-msgid "Payment limit"
-msgstr "单笔支付上限"
 
 #: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Payment method"

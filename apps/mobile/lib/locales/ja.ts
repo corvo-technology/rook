@@ -19,6 +19,22 @@ export const JA_MESSAGES: Record<string, string> = {
   "Always ask": "常に確認",
   "Only what's risky": "リスクのあるものだけ",
   Block: "ブロック",
+  "Asks before any change": "どんな変更も事前に確認します",
+  "Asks before risky actions": "リスクのある操作の前に確認します",
+  "Still asks before sending, paying, deleting or deploying, and before opening a site you didn't mention.":
+    "送信、支払い、削除、デプロイの前や、指定されていないサイトを開く前は引き続き確認します。",
+  "Does everything without asking": "確認なしですべて実行します",
+  "Does what fits your request": "依頼に沿うことは実行します",
+  "How much does {name} do on its own?": "{name}はどこまで自分で行いますか?",
+  "Let {name} act without asking?": "{name}に確認なしで実行させますか?",
+  "Let bots act without asking?": "ボットに確認なしで実行させますか?",
+  "Still asks before a security change after it read outside content. Blocked actions stay blocked.":
+    "外部コンテンツを読んだ後のセキュリティ変更の前は引き続き確認します。ブロックされた操作はブロックされたままです。",
+  "Still asks before anything that changes something, and before opening a site you didn't mention.":
+    "何かを変更する操作の前や、指定されていないサイトを開く前は引き続き確認します。",
+  "Still asks when a second model finds it outside your request, and before security changes.":
+    "2つ目のモデルが依頼の範囲外と判断したときや、セキュリティ変更の前は引き続き確認します。",
+  "Stop asking": "確認をやめる",
   "Add a model in Settings to use this.": "使用するには設定でモデルを追加してください。",
   "Approval model": "承認モデル",
   "Routing model": "ルーティングモデル",

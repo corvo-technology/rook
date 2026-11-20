@@ -2041,6 +2041,7 @@ msgid "Canceled"
 msgstr "Abgebrochen"
 
 #: src/components/CloudAgentCard.tsx
+#: src/components/ResearchCard.tsx
 msgid "cancelled"
 msgstr "abgebrochen"
 
@@ -4476,6 +4477,7 @@ msgid "Facts about you"
 msgstr "Fakten über dich"
 
 #: src/components/CloudAgentCard.tsx
+#: src/components/ResearchCard.tsx
 msgid "failed"
 msgstr "fehlgeschlagen"
 
@@ -4600,6 +4602,7 @@ msgid "Finish subscription sign-in, then test again."
 msgstr "Schließe die Anmeldung per Abonnement ab und teste erneut."
 
 #: src/components/CloudAgentCard.tsx
+#: src/components/ResearchCard.tsx
 msgid "finished"
 msgstr "abgeschlossen"
 
@@ -8210,6 +8213,7 @@ msgid "Run time must be in the future."
 msgstr "Die Ausführungszeit muss in der Zukunft liegen."
 
 #: src/components/CloudAgentCard.tsx
+#: src/components/ResearchCard.tsx
 msgid "running"
 msgstr "läuft"
 

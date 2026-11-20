@@ -209,8 +209,12 @@ describePostgres("plan entitlements (PostgreSQL)", () => {
         kind: "fake",
       });
 
+    // Every default plan has one computer; larger limits show that upgrading lifts the cap.
+    const MORE_COMPUTERS = '{"team":{"computers":3},"company":{"computers":10}}';
+
     it("refuses a computer past the plan with a coded error, and keeps the existing ones", async () => {
       vi.stubEnv("PLAN_PRICES", PLANS);
+      vi.stubEnv("PLAN_LIMITS", MORE_COMPUTERS);
       await subscribe(null, null);
       const first = await liveComputer();
       expect(await organizationComputerCount(system, owner.spaceId)).toBe(1);
@@ -234,6 +238,7 @@ describePostgres("plan entitlements (PostgreSQL)", () => {
     it("lets the plan win over the per-user variable, which stays the cap without plans", async () => {
       vi.stubEnv("SANDBOX_MAX_COMPUTERS_PER_USER", "1");
       vi.stubEnv("PLAN_PRICES", PLANS);
+      vi.stubEnv("PLAN_LIMITS", MORE_COMPUTERS);
       await subscribe("price_company", "active");
       await liveComputer();
       await liveComputer();

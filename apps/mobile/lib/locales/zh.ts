@@ -1,4 +1,5 @@
 export const ZH_MESSAGES: Record<string, string> = {
+  "For this conversation": "用于此对话",
   Automatic: "自动",
   "Complex tasks model": "复杂任务模型",
   "Not sent. Tap for options": "未发送。轻点查看选项",

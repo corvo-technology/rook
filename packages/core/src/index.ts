@@ -63,6 +63,7 @@ export * from "./invite-addresses.js";
 export * from "./markdown-plain.js";
 export * from "./mascot-eyes.js";
 export * from "./mcp.js";
+export * from "./message-model.js";
 export * from "./message-pages.js";
 export * from "./message-reactions.js";
 export * from "./message-replies.js";

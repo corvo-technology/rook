@@ -1,4 +1,5 @@
 export const DE_MESSAGES: Record<string, string> = {
+  "For this conversation": "Für diese Unterhaltung",
   Automatic: "Automatisch",
   "Complex tasks model": "Modell für komplexe Aufgaben",
   "Not sent. Tap for options": "Nicht gesendet. Tippen für Optionen",

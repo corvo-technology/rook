@@ -56,6 +56,7 @@ import { keepMessageInWiki } from "../../lib/wiki";
 import { FailedSendBubble } from "../failed-send-bubble";
 import type { MarkdownArtifactPreviewTarget } from "../markdown-artifact-preview";
 import { MarkdownArtifactPreview } from "../markdown-artifact-preview";
+import { MessageModelMenu } from "../message-model-menu";
 import { RunErrorSheet } from "../run-error-sheet";
 import { SelectTextSheet } from "../select-text-sheet";
 import { ThreadComposer } from "../thread-composer";
@@ -607,6 +608,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
                 (attachment) => attachment.id,
               )}
               botId={botId}
+              modelMenu={botId ? <MessageModelMenu botId={botId} styles={styles} /> : undefined}
               onCall={onCall}
               working={working}
               sending={composer.sending}

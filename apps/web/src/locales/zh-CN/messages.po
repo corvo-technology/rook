@@ -4494,6 +4494,10 @@ msgstr "第一个机器人"
 msgid "First messages, one per line"
 msgstr "首条消息，每行一条"
 
+#: src/pages/shell/composer-model-choice.tsx
+msgid "For this conversation"
+msgstr "用于此对话"
+
 #: src/components/PlanChoice.tsx
 msgid "For up to {count} people"
 msgstr "适合最多 {count} 人"

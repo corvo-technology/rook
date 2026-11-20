@@ -337,6 +337,8 @@ const threadSendInput = threadTarget
     /** Posts into the thread of this channel message instead of the main column. */
     threadRootId: Id.optional(),
     clientNonce: z.string().min(1).max(200).optional(),
+    /** Runs the answer on this model instead of the agent's own; the agent's setting is untouched. */
+    model: z.object({ provider: z.string().min(1), modelId: z.string().min(1) }).optional(),
     /** What the partner's page says about where the person is and what it can do for them. */
     host: HostTurnSchema.optional(),
   })

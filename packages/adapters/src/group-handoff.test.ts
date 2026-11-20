@@ -16,6 +16,8 @@ const run = {
 function harness(
   sourceBlocks: unknown,
   existing?: { id?: string; sourceRuns: { id: string; botId: string }[] },
+  /** The target already has a run for the message that started this chain. */
+  alreadyWoken = false,
 ) {
   const runCreate = vi.fn(async () => ({ id: "run-b" }));
   const messageCreate = vi.fn(async (_args: unknown) => ({ id: "message-1" }));
@@ -34,17 +36,28 @@ function harness(
       update: vi.fn(async () => ({ id: "group-1" })),
     },
     run: {
-      findFirst: vi.fn(async () => ({
-        id: run.id,
-        trigger: "user",
-        thread: { groupId: "group-1" as string | null },
-        sourceMessage: { blocks: sourceBlocks, role: "user" },
-      })),
+      findFirst: vi.fn(
+        async (args: { where: { id?: string } }): Promise<unknown> =>
+          args.where.id
+            ? {
+                id: run.id,
+                trigger: "user",
+                sourceMessageId: "message-src",
+                thread: { groupId: "group-1" as string | null },
+                sourceMessage: { blocks: sourceBlocks, role: "user" },
+              }
+            : alreadyWoken
+              ? { id: "run-earlier" }
+              : null,
+      ),
       findUnique: vi.fn(async () => ({ status: "running" })),
       create: runCreate,
     },
     message: {
-      findUnique: vi.fn(async (_args: unknown) => existing ?? null),
+      findUnique: vi.fn(async (args: { where: { id?: string } }) =>
+        args.where.id ? { seq: 4, threadId: run.threadId } : (existing ?? null),
+      ),
+      findFirst: vi.fn(async () => ({ seq: 3 })),
       create: messageCreate,
     },
     thread: {
@@ -146,6 +159,28 @@ describe("group handoff ownership", () => {
       error:
         "do not hand this stage back to its sender; post the result in the shared thread instead",
     });
+    expect(runCreate).not.toHaveBeenCalled();
+  });
+
+  it("refuses a handoff to an agent already answering the same message", async () => {
+    const { deps, runCreate, messageCreate } = harness(
+      [{ kind: "text", text: "greet Amanda" }],
+      undefined,
+      true,
+    );
+
+    await expect(
+      handoffToGroupBot(
+        deps as never,
+        run,
+        "group-1",
+        { bot_id: "bot-b", message: "Greet Amanda" },
+        MEMBER_ONLY,
+      ),
+    ).resolves.toEqual({
+      error: "BOT-B is already answering this message. Answer it yourself instead of delegating.",
+    });
+    expect(messageCreate).not.toHaveBeenCalled();
     expect(runCreate).not.toHaveBeenCalled();
   });
 

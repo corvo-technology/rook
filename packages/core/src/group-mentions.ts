@@ -36,6 +36,11 @@ export function parseMentionNames(text: string): string[] {
   return [...names];
 }
 
+/** Whether a message addresses the whole channel with @everyone. */
+export function mentionsEveryone(text: string): boolean {
+  return /(?<![\p{L}\p{N}_-])@everyone(?![\p{L}\p{N}_-])/iu.test(text);
+}
+
 /** The members a message names: mention chips, @Name and @everyone. Empty when it names nobody. */
 export function resolveMentionedBotIds(input: {
   text: string;

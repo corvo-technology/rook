@@ -18,6 +18,11 @@ export type RouterScores = {
   scores: Record<string, number>;
   forEveryone: number;
   needsAgent: number;
+  /**
+   * 0..1: how much a message for everyone needs just one answer (a greeting, thanks, an
+   * announcement) rather than something distinct from each agent. Absent reads as 0.
+   */
+  oneVoice: number;
   reason: string;
 };
 
@@ -53,7 +58,7 @@ export function parseRouterScores(
     return undefined;
   }
   if (!parsed || typeof parsed !== "object") return undefined;
-  const { scores, forEveryone, needsAgent, reason } = parsed as Record<string, unknown>;
+  const { scores, forEveryone, needsAgent, oneVoice, reason } = parsed as Record<string, unknown>;
   const everyone = unit(forEveryone);
   const needs = unit(needsAgent);
   if (everyone === undefined || needs === undefined) return undefined;
@@ -68,6 +73,7 @@ export function parseRouterScores(
     scores: kept,
     forEveryone: everyone,
     needsAgent: needs,
+    oneVoice: unit(oneVoice) ?? 0,
     reason: typeof reason === "string" ? reason.slice(0, 240) : "",
   };
 }
@@ -78,15 +84,22 @@ export function parseRouterScores(
  * order), and up to three when the message is for everyone. Ids the code did not offer can never
  * be picked.
  */
-export function pickRoutedBots(scores: RouterScores, candidateIds: readonly string[]): string[] {
-  if (scores.needsAgent < ROUTER_THRESHOLD) return [];
+export function pickRoutedBots(
+  scores: RouterScores,
+  candidateIds: readonly string[],
+  /** The message names everyone, so someone answers whatever needsAgent says. */
+  options: { addressed?: boolean } = {},
+): string[] {
+  if (!options.addressed && scores.needsAgent < ROUTER_THRESHOLD) return [];
   const ranked = candidateIds
     .map((id) => ({ id, score: scores.scores[id] ?? 0 }))
     .sort((a, b) => b.score - a.score);
   const fits = ranked.filter((entry) => entry.score >= ROUTER_THRESHOLD);
   // Array.prototype.sort is stable, so ranked[0] is the first candidate among equal best scores.
   const chosen = fits.length > 0 ? fits : ranked.slice(0, 1);
-  const limit = scores.forEveryone >= ROUTER_THRESHOLD ? ROUTER_MAX_PICKS : 1;
+  // One natural answer for a greeting or announcement; several only when each is asked for something.
+  const everyone = options.addressed || scores.forEveryone >= ROUTER_THRESHOLD;
+  const limit = everyone && scores.oneVoice < ROUTER_THRESHOLD ? ROUTER_MAX_PICKS : 1;
   return chosen.slice(0, limit).map((entry) => entry.id);
 }
 

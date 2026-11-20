@@ -97,6 +97,33 @@ describe("routeGroupMessage", () => {
     expect(model).not.toHaveBeenCalled();
   });
 
+  it("lets one agent answer an @everyone greeting, and skips continuity", async () => {
+    const { route } = fixture({
+      recent: [{ role: "bot", botId: "bot-c", text: "Done.", ageMs: 60_000 }],
+    });
+    const model = answer({
+      scores: { "bot-a": 0.8, "bot-b": 0.6, "bot-c": 0.7 },
+      forEveryone: 1,
+      needsAgent: 0.2,
+      oneVoice: 0.95,
+      reason: "a greeting",
+    });
+    const decision = await route(model, "@everyone greet Amanda");
+    expect(decision).toMatchObject({ strategy: "model", picked: ["bot-a"] });
+    expect(model).toHaveBeenCalledTimes(1);
+  });
+
+  it("wakes several for @everyone only when each is asked for something distinct", async () => {
+    const { route } = fixture();
+    const model = answer({
+      scores: { "bot-a": 0.8, "bot-b": 0.6, "bot-c": 0.7 },
+      forEveryone: 1,
+      needsAgent: 1,
+      oneVoice: 0.1,
+      reason: "each reports",
+    });
+    const decision = await route(model, "@everyone send me your status");
+    expect(decision?.picked).toEqual(["bot-a", "bot-c", "bot-b"]);
   it("does not apply to a message that names a person", async () => {
     const { route } = fixture();
     const model = vi.fn();

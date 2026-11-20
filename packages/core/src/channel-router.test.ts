@@ -15,6 +15,7 @@ const scores = (overrides: Partial<RouterScores>): RouterScores => ({
   scores: {},
   forEveryone: 0,
   needsAgent: 1,
+  oneVoice: 0,
   reason: "",
   ...overrides,
 });
@@ -48,6 +49,26 @@ describe("pickRoutedBots", () => {
     expect(pickRoutedBots(everyone, ids)).toEqual(["b", "d", "c"]);
   });
 
+  it("lets one agent answer a greeting for everyone, the best fit", () => {
+    const greeting = scores({
+      forEveryone: 0.9,
+      oneVoice: 0.9,
+      scores: { a: 0.6, b: 0.9, c: 0.7 },
+    });
+    expect(pickRoutedBots(greeting, ids)).toEqual(["b"]);
+  });
+
+  it("still answers a named @everyone when the model thinks no agent is needed", () => {
+    const greeting = scores({ needsAgent: 0.1, oneVoice: 0.9, scores: { a: 0.2, b: 0.4 } });
+    expect(pickRoutedBots(greeting, ids)).toEqual([]);
+    expect(pickRoutedBots(greeting, ids, { addressed: true })).toEqual(["b"]);
+  });
+
+  it("keeps up to three for @everyone when each is asked something distinct", () => {
+    const distinct = scores({ oneVoice: 0.1, scores: { a: 0.6, b: 0.9, c: 0.7, d: 0.8 } });
+    expect(pickRoutedBots(distinct, ids, { addressed: true })).toEqual(["b", "d", "c"]);
+  });
+
   it("never picks an id the code did not offer", () => {
     expect(pickRoutedBots(scores({ scores: { stranger: 1, a: 0.6 } }), ["a"])).toEqual(["a"]);
     expect(pickRoutedBots(scores({ scores: { stranger: 1 } }), ["a"])).toEqual(["a"]);
@@ -65,6 +86,7 @@ describe("parseRouterScores", () => {
       scores: { a: 0.8 },
       forEveryone: 0.1,
       needsAgent: 0.9,
+      oneVoice: 0,
       reason: "sales",
     });
   });
@@ -164,7 +186,13 @@ describe("buildRoutingReport", () => {
   };
   const reasons = (report: ReturnType<typeof buildRoutingReport>) =>
     Object.fromEntries(report.agents.map((agent) => [agent.botId, agent.reason]));
-  const scores = (reason: string) => ({ scores: {}, forEveryone: 0, needsAgent: 1, reason });
+  const scores = (reason: string) => ({
+    scores: {},
+    forEveryone: 0,
+    needsAgent: 1,
+    oneVoice: 0,
+    reason,
+  });
 
   it("says who the router picked, who it left out and who is not in the audience", () => {
     const report = buildRoutingReport({

@@ -279,6 +279,14 @@ it("says the wiki is empty with one line and one action", async () => {
   await unmount();
 });
 
+it("offers a retry, not an empty wiki, when the pages cannot be read", async () => {
+  const { api } = fakeApi();
+  const unmount = await mount({ ...api, index: () => Promise.reject(new Error("Offline")) });
+  expect(q("wiki-empty")).toBeNull();
+  expect(host.querySelector('[role="alert"]')?.textContent).toContain("Try again");
+  await unmount();
+});
+
 it("lists the pages by kind, each with the sentence that sums it up", async () => {
   const { api } = fakeApi({
     "Ana Souza": { body: "Leads the account.\nMore.", kind: "Person" },

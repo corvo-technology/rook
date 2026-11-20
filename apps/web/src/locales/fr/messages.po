@@ -3027,6 +3027,7 @@ msgstr "Impossible de quitter"
 #: src/pages/platform/PartnersSection.tsx
 #: src/pages/TeamPage.tsx
 #: src/pages/Usage.tsx
+#: src/pages/WikiBrowser.tsx
 #: src/pages/Workflows.tsx
 msgid "Could not load"
 msgstr "Impossible de charger"
@@ -5533,7 +5534,6 @@ msgstr "Chargement des fournisseurs vocaux…"
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/RoutineRunHistory.tsx
-#: src/pages/shell/transcript.tsx
 #: src/pages/TeamPage.tsx
 msgid "Loading…"
 msgstr "Chargement…"
@@ -6506,6 +6506,7 @@ msgstr "Aucun serveur MCP distant trouvé"
 #: src/pages/SkillsStore.tsx
 #: src/pages/SpaceSearch.tsx
 #: src/pages/Store.tsx
+#: src/pages/WikiBrowser.tsx
 msgid "No results"
 msgstr "Aucun résultat"
 
@@ -9704,6 +9705,7 @@ msgstr "Déclencheur"
 #: src/pages/onboarding/FirstBotStep.tsx
 #: src/pages/partner/partner-ui.tsx
 #: src/pages/TeamPage.tsx
+#: src/pages/WikiBrowser.tsx
 msgid "Try again"
 msgstr "Réessayer"
 

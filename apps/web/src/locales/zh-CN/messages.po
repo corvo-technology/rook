@@ -3027,6 +3027,7 @@ msgstr "无法退出"
 #: src/pages/platform/PartnersSection.tsx
 #: src/pages/TeamPage.tsx
 #: src/pages/Usage.tsx
+#: src/pages/WikiBrowser.tsx
 #: src/pages/Workflows.tsx
 msgid "Could not load"
 msgstr "无法加载"
@@ -5533,7 +5534,6 @@ msgstr "正在加载语音提供方…"
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/RoutineRunHistory.tsx
-#: src/pages/shell/transcript.tsx
 #: src/pages/TeamPage.tsx
 msgid "Loading…"
 msgstr "加载中…"
@@ -6506,6 +6506,7 @@ msgstr "未找到远程 MCP 服务器"
 #: src/pages/SkillsStore.tsx
 #: src/pages/SpaceSearch.tsx
 #: src/pages/Store.tsx
+#: src/pages/WikiBrowser.tsx
 msgid "No results"
 msgstr "无结果"
 
@@ -9704,6 +9705,7 @@ msgstr "触发器"
 #: src/pages/onboarding/FirstBotStep.tsx
 #: src/pages/partner/partner-ui.tsx
 #: src/pages/TeamPage.tsx
+#: src/pages/WikiBrowser.tsx
 msgid "Try again"
 msgstr "重试"
 

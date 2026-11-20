@@ -1,4 +1,5 @@
 import type { PartnerConsolePartner } from "@corvo/contracts";
+import { Skeleton } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { rpc } from "../../lib/rpc";
@@ -20,7 +21,9 @@ export function PartnerEvents({ partner }: { partner: PartnerConsolePartner }) {
     <Panel title={t`Events`} data-testid="partner-events">
       {events.isError ? (
         <PartnerError error={events.error} onRetry={events.refetch} />
-      ) : events.isPending ? null : events.data.recent.length === 0 ? (
+      ) : events.isPending ? (
+        <Skeleton className="h-16 w-full rounded-xl" data-testid="partner-loading" />
+      ) : events.data.recent.length === 0 ? (
         <p className="text-[14px] text-muted-foreground">{t`No events yet`}</p>
       ) : (
         <div className="space-y-3">

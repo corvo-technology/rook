@@ -2127,6 +2127,10 @@ msgstr "数値を確認してください"
 msgid "Check this yourself"
 msgstr "ご自身で確認してください"
 
+#: src/components/ApprovalRulesSettings.tsx
+msgid "Check unfamiliar tools with a model"
+msgstr "未知のツールをモデルで確認する"
+
 #: src/pages/Auth.tsx
 msgid "Check your email"
 msgstr "メールを確認してください"
@@ -5956,6 +5960,10 @@ msgstr "{name} の月間上限"
 msgid "Monthly limit reached"
 msgstr "月間の上限に達しました"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Monthly payment limit"
+msgstr "月間の支払い上限"
+
 #: src/pages/platform/PricingSection.tsx
 msgid "Monthly price"
 msgstr "月額料金"
@@ -7048,6 +7056,10 @@ msgstr "一時停止中"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Pawn"
 msgstr "ポーン"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Payment limit"
+msgstr "支払いの上限"
 
 #: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Payment method"

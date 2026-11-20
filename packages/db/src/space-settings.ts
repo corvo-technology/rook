@@ -159,6 +159,7 @@ async function copyAccountIntoSpace(tx: CopyClient, scope: Scope, setting: Space
           enabled: autoReview.enabled,
           skipApprovals: autoReview.skipApprovals,
           alwaysAsk: autoReview.alwaysAsk,
+          classifyTools: autoReview.classifyTools,
         },
       });
     }

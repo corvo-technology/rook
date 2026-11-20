@@ -2127,6 +2127,10 @@ msgstr "请检查数字"
 msgid "Check this yourself"
 msgstr "请自行检查"
 
+#: src/components/ApprovalRulesSettings.tsx
+msgid "Check unfamiliar tools with a model"
+msgstr "用模型检查不熟悉的工具"
+
 #: src/pages/Auth.tsx
 msgid "Check your email"
 msgstr "请查看邮箱"
@@ -5956,6 +5960,10 @@ msgstr "{name} 的每月上限"
 msgid "Monthly limit reached"
 msgstr "已达到每月上限"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Monthly payment limit"
+msgstr "每月支付上限"
+
 #: src/pages/platform/PricingSection.tsx
 msgid "Monthly price"
 msgstr "月价格"
@@ -7048,6 +7056,10 @@ msgstr "已暂停"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Pawn"
 msgstr "兵"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Payment limit"
+msgstr "单笔支付上限"
 
 #: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Payment method"

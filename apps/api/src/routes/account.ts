@@ -282,14 +282,29 @@ export function accountRoutes(ctx: RouterContext) {
         return loadAutoReviewSettings(deps, context.actor, input?.scope);
       }),
       set: authed.autoReview.set.handler(async ({ context, input }) => {
+        // Changing only the classifier leaves the level as the member set it.
+        const classifyOnly =
+          input.classifyTools !== undefined &&
+          input.mode === undefined &&
+          input.enabled === undefined &&
+          input.skipApprovals === undefined;
         await deps.prisma.$transaction((tx) =>
           saveAutoReviewPreference(
             tx,
             context.actor,
-            input.mode
-              ? approvalPreferenceFromMode(input.mode)
-              : // A client that predates the levels meant Ask, which is now Only what's risky.
-                { enabled: input.enabled, skipApprovals: input.skipApprovals, alwaysAsk: false },
+            {
+              ...(input.mode
+                ? approvalPreferenceFromMode(input.mode)
+                : classifyOnly
+                  ? {}
+                  : // A client that predates the levels meant Ask, which is now Only what's risky.
+                    {
+                      enabled: input.enabled,
+                      skipApprovals: input.skipApprovals,
+                      alwaysAsk: false,
+                    }),
+              ...(input.classifyTools !== undefined ? { classifyTools: input.classifyTools } : {}),
+            },
             {
               enabled: deploymentAutoReviewDefault(process.env),
               skipApprovals: false,
@@ -468,7 +483,11 @@ async function loadAutoReviewSettings(deps: RouterDeps, actor: Actor, scope?: Se
     skipApprovals: preference?.skipApprovals ?? false,
     alwaysAsk: preference?.alwaysAsk ?? false,
   };
-  const settings = { ...stored, mode: approvalModeFromPreference(stored) };
+  const settings = {
+    ...stored,
+    mode: approvalModeFromPreference(stored),
+    classifyTools: preference?.classifyTools ?? false,
+  };
   const deploymentChecker = role.primarySource === "deployment" ? role.primary : null;
   const memberChoices = [
     ...(deploymentChecker || !role.primary ? [] : [role.primary]),

@@ -1988,6 +1988,7 @@ export const appContract = {
           mode: ApprovalModeSchema.optional(),
           enabled: z.boolean().optional(),
           skipApprovals: z.boolean().optional(),
+          classifyTools: z.boolean().optional(),
         }),
       )
       .output(ActionAutoReviewSettingsSchema),

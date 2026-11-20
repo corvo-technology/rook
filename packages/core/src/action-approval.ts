@@ -228,11 +228,14 @@ export function toolRequiresApproval(
   readOnly?: boolean,
   fromPartnerConnector = false,
   destructive?: boolean,
+  /** The risk once a classifier weighed in (see applyToolClassification); else from name and hints. */
+  risk?: ToolRisk,
 ): boolean {
   if (APPROVAL_EXEMPT_TOOLS.has(toolName)) return false;
   if (toolRequiresExplicitApproval(toolName)) return true;
   if (APPROVAL_REQUIRED_BUILTIN_TOOLS.has(toolName)) return true;
   if (viaConnector) {
+    if (risk !== undefined) return risk !== "read";
     return connectorToolRequiresApproval(toolName, readOnly, fromPartnerConnector, destructive);
   }
   return false;
@@ -606,7 +609,19 @@ export function planActionGate(input: {
   checkerConfigured: boolean;
   /** A fetch to a site the run was not given (see outboundSiteGate). */
   newDestination?: boolean;
+  /**
+   * A payment over the agent's money cap, or one whose amount cannot be read (see
+   * moneyCapVerdict). A rule, a level or the approval model never lets it run unasked.
+   */
+  overMoneyCap?: boolean;
 }): "ask" | "allow" | "judge" | "deny" {
+  const plan = planGateWithoutCap(input);
+  return input.overMoneyCap && plan !== "deny" ? "ask" : plan;
+}
+
+function planGateWithoutCap(
+  input: Parameters<typeof planActionGate>[0],
+): "ask" | "allow" | "judge" | "deny" {
   if (input.resolved.decision === "deny") return "deny";
   if (input.mandatory) {
     if (input.mode !== "never") return "ask";

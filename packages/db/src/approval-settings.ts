@@ -26,6 +26,8 @@ export type AutoReviewPreference = {
   enabled: boolean;
   skipApprovals: boolean;
   alwaysAsk: boolean;
+  /** Let a model suggest a risk for connector tools whose names say nothing. Off unless chosen. */
+  classifyTools?: boolean;
 };
 
 /**
@@ -204,7 +206,12 @@ export async function findAutoReviewPreference(
   scope: Scope,
   requested?: SettingsScope,
 ): Promise<AutoReviewPreference | null> {
-  const select = { enabled: true, skipApprovals: true, alwaysAsk: true } as const;
+  const select = {
+    enabled: true,
+    skipApprovals: true,
+    alwaysAsk: true,
+    classifyTools: true,
+  } as const;
   return (await confirmationsTarget(prisma, scope, requested)) === "account"
     ? prisma.userActionAutoReviewPreference.findUnique({
         where: { userId: scope.userId },
@@ -228,6 +235,7 @@ export async function saveAutoReviewPreference(
     enabled: update.enabled ?? defaults.enabled,
     skipApprovals: update.skipApprovals ?? defaults.skipApprovals,
     alwaysAsk: update.alwaysAsk ?? defaults.alwaysAsk,
+    ...(update.classifyTools !== undefined ? { classifyTools: update.classifyTools } : {}),
   };
   await lockSpaceSettings(prisma, scope);
   if ((await confirmationsTarget(prisma, scope, requested)) === "account") {

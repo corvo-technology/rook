@@ -2127,6 +2127,10 @@ msgstr "Check the numbers"
 msgid "Check this yourself"
 msgstr "Check this yourself"
 
+#: src/components/ApprovalRulesSettings.tsx
+msgid "Check unfamiliar tools with a model"
+msgstr "Check unfamiliar tools with a model"
+
 #: src/pages/Auth.tsx
 msgid "Check your email"
 msgstr "Check your email"
@@ -5956,6 +5960,10 @@ msgstr "Monthly limit for {name}"
 msgid "Monthly limit reached"
 msgstr "Monthly limit reached"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Monthly payment limit"
+msgstr "Monthly payment limit"
+
 #: src/pages/platform/PricingSection.tsx
 msgid "Monthly price"
 msgstr "Monthly price"
@@ -7048,6 +7056,10 @@ msgstr "Paused"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Pawn"
 msgstr "Pawn"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Payment limit"
+msgstr "Payment limit"
 
 #: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Payment method"

@@ -417,6 +417,19 @@ describe("planActionGate", () => {
       ...overrides,
     });
 
+  it("asks over the money cap in every mode, even with an always-allow rule", () => {
+    for (const mode of ["never", "auto", "risky", "always"] as const) {
+      expect(gate(mode, { resolved: allowed, overMoneyCap: true })).toBe("ask");
+      expect(gate(mode, { overMoneyCap: true, lowRisk: true })).toBe("ask");
+      expect(gate(mode, { overMoneyCap: true, mandatory: true })).toBe("ask");
+    }
+    expect(gate("never", { resolved: allowed })).toBe("allow");
+  });
+
+  it("still refuses a blocked tool over the money cap", () => {
+    expect(gate("risky", { resolved: blocked, overMoneyCap: true })).toBe("deny");
+  });
+
   it("runs an unlisted change in Never ask, judges it in Auto and asks otherwise", () => {
     expect(gate("never")).toBe("allow");
     expect(gate("auto")).toBe("judge");

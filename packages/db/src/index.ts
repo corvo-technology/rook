@@ -88,6 +88,7 @@ export * from "./storage-usage.js";
 export * from "./team.js";
 export { primaryActiveRun } from "./thread-listing.js";
 export * from "./thread-reads.js";
+export * from "./tool-classification.js";
 export * from "./transaction-retry.js";
 export * from "./unread-inbox-chats.js";
 export * from "./usage.js";

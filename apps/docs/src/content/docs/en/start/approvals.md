@@ -20,6 +20,12 @@ Under **Settings > Approvals**:
 
 In any mode you can allow or block specific tools and sites. A space can have its own rules, apart from the account's.
 
+## Safety limits
+
+- **Payment limit**: in an agent's settings you can set the most per payment and per month. Over the limit, or with no readable amount, the agent asks even if the tool is allowed.
+- **Unfamiliar tools**: with an approval model set up, you can let a model suggest whether a tool with an unusual name only reads, makes a small edit or is risky. It is off by default, and when unsure the agent asks.
+- **Links**: the agent will not open a link that carries a key, a very long query or text copied from private data, unless that exact link already appeared in the conversation.
+
 ## Where they show up
 
 - as a card inside the conversation;

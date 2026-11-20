@@ -115,6 +115,7 @@ const defaultSettings = (mode: "always" | "risky" | "auto" | "never", checkerAva
   enabled: mode === "auto",
   skipApprovals: mode === "never",
   checkerAvailable,
+  classifyTools: false,
 });
 
 const longInstructions = "I".repeat(4_000);
@@ -154,6 +155,8 @@ function bot(description = "Billing", overrides: Partial<Bot> = {}): Bot {
     approvalMode: null,
     memoryMode: null,
     dailyCapUsd: null,
+    moneyCapPerCall: null,
+    moneyCapPerMonth: null,
     monthlyTokenLimit: null,
     disabledBuiltinTools: [],
     webhookConfigured: false,
@@ -527,6 +530,51 @@ describe("BotSettings daily spending limit", () => {
     await expandAdvanced();
     await type("5");
     expect(onSave).not.toHaveBeenCalled();
+  });
+});
+
+describe.each([
+  ["moneyCapPerCall", "money-per-call"],
+  ["moneyCapPerMonth", "money-per-month"],
+] as const)("BotSettings payment limit %s", (key, id) => {
+  const field = () => {
+    const input = container.querySelector<HTMLInputElement>(`input[id$="-${id}"]`);
+    if (!input) throw new Error("Missing field");
+    return input;
+  };
+  async function type(value: string) {
+    const input = field();
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(input, value);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => {
+      input.dispatchEvent(new FocusEvent("focusout", { bubbles: true }));
+    });
+  }
+
+  it("starts with no limit and saves only that limit when the field loses focus", async () => {
+    await render();
+    await expandAdvanced();
+    expect(field().value).toBe("");
+    await type("150.5");
+    expect(onSave).toHaveBeenCalledExactlyOnceWith({ [key]: 150.5 });
+  });
+
+  it("clears the limit when the field is emptied", async () => {
+    await render("Billing", { [key]: 80 });
+    await expandAdvanced();
+    expect(field().value).toBe("80");
+    await type("");
+    expect(onSave).toHaveBeenCalledExactlyOnceWith({ [key]: null });
+  });
+
+  it("ignores an amount that cannot be a limit and shows the saved one again", async () => {
+    await render("Billing", { [key]: 80 });
+    await expandAdvanced();
+    for (const bad of ["abc", "0", "-3"]) await type(bad);
+    expect(onSave).not.toHaveBeenCalled();
+    expect(field().value).toBe("80");
   });
 });
 

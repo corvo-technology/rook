@@ -169,6 +169,10 @@ export const BotSchema = z.object({
   memoryMode: MemoryModeSchema.nullable().default(null),
   /** Most the bot may spend on hosted credits in a UTC day, in US dollars; null means no limit. */
   dailyCapUsd: z.number().nullable().default(null),
+  /** Most the bot may move through one payment tool call; null means no limit. */
+  moneyCapPerCall: z.number().nullable().default(null),
+  /** Most the bot may move through payment tools in a calendar month; null means no limit. */
+  moneyCapPerMonth: z.number().nullable().default(null),
   /** Most tokens the bot may use in a UTC month; null means no limit. */
   monthlyTokenLimit: z.number().nullable().default(null),
   disabledBuiltinTools: z.array(z.string()).default([]),
@@ -542,6 +546,8 @@ export const UpdateBotInput = z
     thinkingLevel: ThinkingLevelSchema.nullable().optional(),
     teamChatAmbientEnabled: z.boolean().optional(),
     dailyCapUsd: z.number().positive().max(10_000).nullable().optional(),
+    moneyCapPerCall: z.number().positive().max(1_000_000_000).nullable().optional(),
+    moneyCapPerMonth: z.number().positive().max(1_000_000_000).nullable().optional(),
     monthlyTokenLimit: z
       .number()
       .int()
@@ -967,6 +973,8 @@ export const ActionAutoReviewSettingsSchema = z.object({
   enabled: z.boolean(),
   checkerAvailable: z.boolean(),
   skipApprovals: z.boolean(),
+  /** A model may suggest a risk for tools whose names say nothing. */
+  classifyTools: z.boolean().default(false),
 });
 export type ActionAutoReviewSettings = z.infer<typeof ActionAutoReviewSettingsSchema>;
 

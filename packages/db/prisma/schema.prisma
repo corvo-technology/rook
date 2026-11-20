@@ -379,6 +379,8 @@ model ActionAutoReviewPreference {
   skipApprovals Boolean  @default(false)
   /// Always ask. A row with none of the three set is Only what's risky, the default.
   alwaysAsk     Boolean  @default(false)
+  /// Let a model suggest read, low or high for connector tools whose names say nothing. Opt in.
+  classifyTools Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -403,6 +405,7 @@ model Member {
 }
 
 model Space {
+  toolClassifications         ToolClassification[]
   notifications               Notification[]
   aiDataConsents              AiDataConsent[]
   id                          String                       @id
@@ -780,6 +783,10 @@ model Bot {
   squadRouting             Boolean            @default(false)
   /// This bot's own approval mode (never, auto, ask); null follows the member's default.
   approvalMode             String?
+  /// The most this agent may move through one payment tool call, and in a calendar month. Null is
+  /// no limit. A payment over either, or with no readable amount, asks even with an always-allow.
+  moneyCapPerCall          Float?
+  moneyCapPerMonth         Float?
   /// Most a bot may spend on hosted model credits in a UTC day; null means no limit.
   dailyCapMicros           BigInt?
   /// Tokens the bot may use in a UTC month; null (or 0) means no limit.
@@ -2646,6 +2653,8 @@ model UserActionAutoReviewPreference {
   skipApprovals Boolean  @default(false)
   /// Always ask. A row with none of the three set is Only what's risky, the default.
   alwaysAsk     Boolean  @default(false)
+  /// Let a model suggest read, low or high for connector tools whose names say nothing. Opt in.
+  classifyTools Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -3560,4 +3569,27 @@ model PartnerDispute {
 
   @@index([partnerId, createdAt])
   @@map("partner_disputes")
+}
+
+/// A model's suggestion for one connector tool the name check could not place, kept per
+/// connection and per description so a changed description is classified again. Never read to
+/// lower a tool the name or its hints already settled. Suggestions only; the previous release
+/// never reads this table.
+model ToolClassification {
+  id              String   @id @default(cuid())
+  spaceId         String
+  space           Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  connection      String
+  toolName        String
+  descriptionHash String
+  rubricVersion   String
+  /// read, low, high, or unknown when the model was not sure.
+  risk            String
+  confidence      Float
+  model           String
+  createdAt       DateTime @default(now())
+
+  @@unique([spaceId, connection, toolName, descriptionHash, rubricVersion], map: "tool_classifications_key")
+  @@index([spaceId, connection])
+  @@map("tool_classifications")
 }

@@ -4,6 +4,7 @@ import { IMAGE_RETURNING_COMPUTER_TOOLS, MODEL_CANNOT_SEE_MESSAGE } from "./mode
 import { refuseToolAtCap } from "./reply-budget.js";
 import type { RunContext } from "./run-context.js";
 import { pauseForApproval } from "./run-context.js";
+import { notePrivateResult } from "./run-egress.js";
 import { guardedToolCall } from "./run-guards.js";
 import type { ToolHandler } from "./run-tool-gate.js";
 import { gateToolCall } from "./run-tool-gate.js";
@@ -54,7 +55,7 @@ export async function applyTool(
   observer?: AgentToolExecutionObserver,
 ) {
   try {
-    return await guardedToolCall(
+    const result = await guardedToolCall(
       {
         guards: ctx.state.guards,
         signal: ctx.context.signal,
@@ -66,6 +67,8 @@ export async function applyTool(
       observer,
       (watched) => dispatchOneTool(ctx, name, args, executionId, watched),
     );
+    notePrivateResult(ctx, name, result);
+    return result;
   } finally {
     if (toolResultTaintsRun(name)) ctx.state.tainted = true;
   }

@@ -28,6 +28,22 @@ vi.mock("@corvo/ui-web", async () => {
   });
   return {
     ...(await import("../test-support/ui-web-choice-doubles")).choiceDoubles,
+    Switch: ({
+      checked,
+      onCheckedChange,
+      ...props
+    }: Omit<ComponentProps<"button">, "onChange"> & {
+      checked: boolean;
+      onCheckedChange: (checked: boolean) => void;
+    }) => (
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onCheckedChange(!checked)}
+        {...props}
+      />
+    ),
     undoable: async ({ run }: { run: () => Promise<unknown> }) => run(),
     Button: ({
       variant: _variant,
@@ -69,7 +85,13 @@ vi.mock("./AlwaysAllowedRules", () => ({ AlwaysAllowedRules: () => null }));
 
 import { ApprovalRulesSettings } from "./ApprovalRulesSettings";
 
-const settings = { mode: "risky", enabled: false, skipApprovals: false, checkerAvailable: true };
+const settings = {
+  mode: "risky",
+  enabled: false,
+  skipApprovals: false,
+  checkerAvailable: true,
+  classifyTools: false,
+};
 
 beforeEach(() => vi.resetAllMocks());
 
@@ -305,6 +327,48 @@ it("reads and writes a Space's own approvals apart from the account's", async ()
     await vi.waitFor(() => expect(button(container, "Remove")).toBeUndefined());
   } finally {
     await act(async () => root.unmount());
+    container.remove();
+    vi.unstubAllGlobals();
+  }
+});
+
+it("turns on model suggestions for unfamiliar tools without touching the level", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  rpcMock.approvalRules.list.mockResolvedValue([]);
+  rpcMock.autoReview.get.mockResolvedValue({ ...settings, mode: "always" });
+  rpcMock.autoReview.set.mockResolvedValue({ ...settings, mode: "always", classifyTools: true });
+  const { container, root } = await render();
+  try {
+    const toggle = () =>
+      container.querySelector<HTMLButtonElement>('button[role="switch"]') as HTMLButtonElement;
+    await vi.waitFor(() => expect(toggle()).not.toBeNull());
+    expect(toggle().getAttribute("aria-checked")).toBe("false");
+    expect(container.textContent).toContain("Check unfamiliar tools with a model");
+    await act(async () => toggle().click());
+    expect(rpcMock.autoReview.set).toHaveBeenLastCalledWith({
+      scope: "account",
+      classifyTools: true,
+    });
+    await vi.waitFor(() => expect(toggle().getAttribute("aria-checked")).toBe("true"));
+    await act(async () => root.unmount());
+  } finally {
+    container.remove();
+    vi.unstubAllGlobals();
+  }
+});
+
+it("offers model suggestions only where an approval model is set up", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  rpcMock.approvalRules.list.mockResolvedValue([]);
+  rpcMock.autoReview.get.mockResolvedValue({ ...settings, checkerAvailable: false });
+  const { container, root } = await render();
+  try {
+    await vi.waitFor(() =>
+      expect(button(container, "Only what's risky")?.getAttribute("aria-pressed")).toBe("true"),
+    );
+    expect(container.querySelector('button[role="switch"]')).toBeNull();
+    await act(async () => root.unmount());
+  } finally {
     container.remove();
     vi.unstubAllGlobals();
   }

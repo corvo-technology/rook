@@ -9,6 +9,7 @@ import { runContinueJob } from "@corvo/adapter-kit";
 import {
   alwaysAllowTargets,
   applyJudgeDecision,
+  applyToolClassification,
   approvalModeFromPreference,
   composioBatchActions,
   connectorKindFromToolName,
@@ -19,6 +20,8 @@ import {
   effectiveApprovalMode,
   newSiteOutcome,
   outboundSiteGate,
+  outboundUrlLeak,
+  outboundUrlsOfCall,
   planActionGate,
   redactSecrets,
   resolveActionApprovalForTools,
@@ -69,15 +72,19 @@ import {
 import { completeEffect, recordEffect, uncertainEffectError } from "./run-effects.js";
 import { renewRunLease } from "./run-lifecycle.js";
 import { publishMessage } from "./run-messages.js";
+import { overMoneyCap } from "./run-money-cap.js";
 import { notifyRun } from "./run-notifications.js";
 import { noteApprovalInParentChat } from "./run-parent-notice.js";
 import { resolveCompletedSecretLeftover } from "./run-secret.js";
+import { classifyUnknownTools } from "./run-tool-classification.js";
 import type { ToolRequest } from "./run-tool-request.js";
 import { BUILTIN_AGENT_TOOL_NAMES, READ_ONLY_AGENT_TOOLS } from "./run-tool-selection.js";
 import { callMediaTool } from "./run-tools-files.js";
 import { connectorTrustKeys } from "./run-trust.js";
 import { commandWatchFromTool } from "./schedule-tools.js";
 import { waitTicketRun } from "./ticket-run-moves.js";
+
+const MAX_CLASSIFIED_PER_CONNECTION = 40;
 
 export type AppliedEffect = Awaited<ReturnType<typeof recordEffect>>;
 
@@ -193,6 +200,10 @@ export async function gateToolCall(
     args = { ...args, url: fetchUrl };
     effectRequest = args;
   }
+  // Reads are free, so text an injected instruction made the agent read could leave inside a URL.
+  // This only refuses more: the site checks below still apply to every URL that passes.
+  const leak = leakedOutboundUrl(ctx, name, args);
+  if (leak) return { result: { error: leak } };
   const connectorTrusts = connectorTrustKeys(
     name,
     args,
@@ -219,7 +230,7 @@ export async function gateToolCall(
         .loadTrustedConnectors()
         .then((trusted) => connectorTrusts.every((trust) => trusted.has(trust))),
     });
-  const toolRisks = approvalToolNames.map((toolName) =>
+  const nameRisks = approvalToolNames.map((toolName) =>
     connectorToolRisk(
       toolName,
       declaredReadOnlyFor(toolName),
@@ -227,6 +238,35 @@ export async function gateToolCall(
       declaredDestructiveFor(toolName),
     ),
   );
+  // A tool no name check places may get a model's suggestion, when the owner opted in. It can only
+  // move an unknown tool, never a locked, hinted or already placed one.
+  const calledTool =
+    viaConnector && !composioBatch && !unidentifiedAction && !catalogLookup
+      ? (resolvedTool ?? ctx.tools.connector.get(name))
+      : undefined;
+  const suggestions =
+    calledTool && nameRisks[0] === "unknown"
+      ? await classifyUnknownTools(
+          ctx,
+          connectorTrusts[0]!,
+          unknownToolsOfConnection(ctx, calledTool, connectorTrusts[0]!, connectorProviders),
+        )
+      : undefined;
+  const toolRisks = nameRisks.map((risk, index) =>
+    index === 0 && suggestions
+      ? applyToolClassification(risk, suggestions.get(name), { readOnly: declaredReadOnly })
+      : risk,
+  );
+  const overCap = viaConnector
+    ? await overMoneyCap(ctx, {
+        tools: approvalToolNames.map((toolName, index) => ({
+          name: toolName,
+          risk: toolRisks[index]!,
+        })),
+        args,
+        batch: Boolean(composioBatch),
+      })
+    : false;
   const connectorReadGated =
     viaConnector &&
     !unidentifiedAction &&
@@ -249,13 +289,14 @@ export async function gateToolCall(
     siteGate === "new" ||
     unidentifiedAction ||
     (!catalogLookup &&
-      approvalToolNames.some((toolName) =>
+      approvalToolNames.some((toolName, index) =>
         toolRequiresApproval(
           toolName,
           viaConnector,
           declaredReadOnlyFor(toolName),
           fromPartnerConnector,
           declaredDestructiveFor(toolName),
+          toolRisks[index],
         ),
       ));
   // A gated read still fails closed when its review errors, and keeps its approval key.
@@ -376,6 +417,7 @@ export async function gateToolCall(
       reviewOnly: connectorReadGated,
       checkerConfigured,
       newDestination: siteGate === "new",
+      overMoneyCap: overCap,
     });
   const plan = planFor(approvalResolved);
   if (plan === "deny") {
@@ -624,6 +666,61 @@ export async function gateToolCall(
     for (const trust of connectorTrusts) trusted.add(trust);
   }
   return { call };
+}
+
+/** Why an outbound URL in this call may carry data out, or undefined when it may go. */
+function leakedOutboundUrl(
+  ctx: RunContext,
+  name: string,
+  args: Record<string, unknown>,
+): string | undefined {
+  const { egress } = ctx.state;
+  const known = {
+    has: (url: string) => egress.knownUrls.has(url) || ctx.trust.searchResultUrls.has(url),
+  };
+  for (const url of outboundUrlsOfCall(name, args)) {
+    const refused = outboundUrlLeak({
+      url,
+      privateText: egress.privateText,
+      knownUrls: known,
+      secrets: ctx.secrets,
+    });
+    if (refused) return refused.error;
+  }
+  return undefined;
+}
+
+/**
+ * The connection's tools no name check places, with the called one first, for one batch. The same
+ * set (up to a bound) answers every tool of the connection, so the cache fills in one call.
+ */
+function unknownToolsOfConnection(
+  ctx: RunContext,
+  called: ConnectorTool,
+  connection: string,
+  providers: string[],
+): ConnectorTool[] {
+  const siblings = [...ctx.tools.connector.values()]
+    .filter(
+      (tool) =>
+        tool.name !== called.name &&
+        connectorTrustKeys(
+          tool.name,
+          {},
+          tool.route,
+          connectorKindFromToolName(tool.name, providers),
+          providers,
+        )[0] === connection &&
+        connectorToolRisk(
+          tool.name,
+          tool.readOnly,
+          tool.route?.connectorId === "partner",
+          tool.destructive,
+        ) === "unknown",
+    )
+    .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))
+    .slice(0, MAX_CLASSIFIED_PER_CONNECTION - 1);
+  return [called, ...siblings];
 }
 
 /**

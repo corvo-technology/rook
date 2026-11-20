@@ -571,6 +571,12 @@ export function botsRoutes(ctx: RouterContext) {
                       : BigInt(Math.round(input.dailyCapUsd * 1_000_000)),
                 }
               : {}),
+            ...(input.moneyCapPerCall !== undefined
+              ? { moneyCapPerCall: input.moneyCapPerCall }
+              : {}),
+            ...(input.moneyCapPerMonth !== undefined
+              ? { moneyCapPerMonth: input.moneyCapPerMonth }
+              : {}),
             ...(input.disabledBuiltinTools !== undefined
               ? { disabledBuiltinTools: input.disabledBuiltinTools }
               : {}),

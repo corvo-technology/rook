@@ -2127,6 +2127,10 @@ msgstr "Zahlen prüfen"
 msgid "Check this yourself"
 msgstr "Bitte selbst prüfen"
 
+#: src/components/ApprovalRulesSettings.tsx
+msgid "Check unfamiliar tools with a model"
+msgstr "Unbekannte Tools mit einem Modell prüfen"
+
 #: src/pages/Auth.tsx
 msgid "Check your email"
 msgstr "Prüfe deine E-Mails"
@@ -5956,6 +5960,10 @@ msgstr "Monatslimit für {name}"
 msgid "Monthly limit reached"
 msgstr "Monatslimit erreicht"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Monthly payment limit"
+msgstr "Monatliches Zahlungslimit"
+
 #: src/pages/platform/PricingSection.tsx
 msgid "Monthly price"
 msgstr "Monatspreis"
@@ -7048,6 +7056,10 @@ msgstr "Pausiert"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Pawn"
 msgstr "Bauer"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Payment limit"
+msgstr "Limit pro Zahlung"
 
 #: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Payment method"

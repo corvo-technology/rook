@@ -46,6 +46,27 @@ describe("procedureSecurityEvent", () => {
     );
   });
 
+  it("audits a change to a bot's money cap, naming the limits that changed", () => {
+    expect(
+      procedureSecurityEvent(
+        ["bots", "update"],
+        { botId: "b", moneyCapPerCall: 50, moneyCapPerMonth: null },
+        actor,
+      )?.metadata,
+    ).toEqual({
+      procedure: "bots.update",
+      kind: "bot",
+      botId: "b",
+      changed: "moneyCapPerCall,moneyCapPerMonth",
+    });
+  });
+
+  it("audits the model-suggestion choice with the approval level", () => {
+    expect(
+      procedureSecurityEvent(["autoReview", "set"], { classifyTools: true }, actor)?.metadata,
+    ).toEqual({ procedure: "autoReview.set", classifyTools: true });
+  });
+
   it("keeps secret names but never secret values", () => {
     const event = procedureSecurityEvent(
       ["botSecrets", "put"],

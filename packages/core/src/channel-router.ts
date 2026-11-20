@@ -22,8 +22,11 @@ export type RouterScores = {
 };
 
 export type RouterDecision = {
-  /** `model` and `continuity` pick by judgement; `fallback` is the pre-router rule. */
-  strategy: "model" | "continuity" | "fallback";
+  /**
+   * `model` and `continuity` pick by judgement; `fallback` is the pre-router rule; `people` marks
+   * a message that names people and no agent, which no agent is woken for.
+   */
+  strategy: "model" | "continuity" | "fallback" | "people";
   picked: string[];
   scores?: RouterScores;
   error?: string;

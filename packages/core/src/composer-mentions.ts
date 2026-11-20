@@ -4,7 +4,14 @@ import { ENGLISH_CRON_LABELS, formatCron } from "./cron.js";
 import { displayName } from "./display-name.js";
 import { hasMentionToken } from "./group-mentions.js";
 
-export const COMPOSER_MENTION_KINDS = ["bot", "group", "routine", "connector", "everyone"] as const;
+export const COMPOSER_MENTION_KINDS = [
+  "bot",
+  "person",
+  "group",
+  "routine",
+  "connector",
+  "everyone",
+] as const;
 
 export type ComposerMentionKind = (typeof COMPOSER_MENTION_KINDS)[number];
 
@@ -17,12 +24,15 @@ export type ComposerMention = {
   color?: string;
   /** Owning bot for routine chips (test-run lands on that bot). */
   botId?: string;
+  /** Profile picture of a person chip. */
+  image?: string | null;
   /** Connected connection row id when kind is connector + connected. */
   connectionId?: string;
   authStatus?: "connected" | "needs_auth";
 };
 
 export type MentionPickerBot = { id: string; name: string; color?: string };
+export type MentionPickerPerson = { id: string; name: string; image?: string | null };
 export type MentionPickerGroup = { id: string; name: string };
 export type MentionPickerRoutine = {
   id: string;
@@ -126,27 +136,37 @@ export function partitionComposerMentions(mentions: readonly ComposerMention[]) 
   const groups: ComposerMention[] = [];
   const routines: ComposerMention[] = [];
   const connectors: ComposerMention[] = [];
+  const people: ComposerMention[] = [];
   let everyone = false;
   for (const mention of mentions) {
     if (mention.kind === "bot") bots.push(mention);
     else if (mention.kind === "group") groups.push(mention);
     else if (mention.kind === "routine") routines.push(mention);
     else if (mention.kind === "connector") connectors.push(mention);
+    else if (mention.kind === "person") people.push(mention);
     else if (mention.kind === "everyone") everyone = true;
   }
-  return { bots, groups, routines, connectors, everyone };
+  return { bots, people, groups, routines, connectors, everyone };
 }
+
+type ThreadMentionTarget = {
+  kind: "bot" | "person" | "group" | "routine" | "connector";
+  id: string;
+};
 
 /** Payload entries for `threads/send` mentions (legacy bare bot ids still accepted). */
 export function toThreadMentionPayload(
   mentions: readonly ComposerMention[],
-): Array<string | { kind: "bot" | "group" | "routine" | "connector"; id: string }> {
-  const payload: Array<string | { kind: "bot" | "group" | "routine" | "connector"; id: string }> =
-    [];
+): Array<string | ThreadMentionTarget> {
+  const payload: Array<string | ThreadMentionTarget> = [];
   for (const mention of mentions) {
     if (mention.kind === "everyone") continue;
     if (mention.kind === "bot") {
       payload.push({ kind: "bot", id: mention.id });
+      continue;
+    }
+    if (mention.kind === "person") {
+      payload.push({ kind: "person", id: mention.id });
       continue;
     }
     if (mention.kind === "group") {
@@ -201,6 +221,8 @@ export function routineScheduleSubtitle(
 export function buildComposerMentionOptions(input: {
   query: string;
   bots: readonly MentionPickerBot[];
+  /** Members who can see this conversation; empty when no one but the sender can. */
+  people?: readonly MentionPickerPerson[];
   groups: readonly MentionPickerGroup[];
   routines: readonly MentionPickerRoutine[];
   connectors: readonly MentionPickerConnector[];
@@ -236,6 +258,12 @@ export function buildComposerMentionOptions(input: {
       subtitle: "Bot",
       color: bot.color,
     });
+  }
+
+  for (const person of input.people ?? []) {
+    const name = displayName(person.name, "Person");
+    if (!matches(name)) continue;
+    options.push({ kind: "person", id: person.id, name, image: person.image });
   }
 
   for (const group of input.groups) {
@@ -344,4 +372,43 @@ export function mentionStillInPrompt(
   mention: Pick<ComposerMention, "name">,
 ): boolean {
   return hasMentionToken(text, mention.name);
+}
+
+export type MentionTextPart = string | { person: { id: string; name: string } };
+
+/**
+ * A person's message text cut into plain text and the `@Name` of each of `people`, so a client can
+ * draw the name as a chip. The text itself is untouched: copy, quotes and agents read "@Name".
+ */
+export function splitPersonMentions(
+  text: string,
+  people: readonly { id: string; name: string }[],
+): MentionTextPart[] {
+  const byName = new Map(
+    people.flatMap((person) => {
+      const name = person.name.trim();
+      return name ? [[name.toLowerCase(), { id: person.id, name }] as const] : [];
+    }),
+  );
+  if (byName.size === 0 || !text.includes("@")) return [text];
+  // Longest first, so "@Ana Paula" is not cut at "@Ana".
+  const names = [...byName.values()]
+    .map((p) => escapeRegExp(p.name))
+    .sort((a, b) => b.length - a.length);
+  const pattern = new RegExp(
+    `(^|[^\\p{L}\\p{N}_@-])@(${names.join("|")})(?![\\p{L}\\p{N}_-])`,
+    "giu",
+  );
+  const parts: MentionTextPart[] = [];
+  let last = 0;
+  for (const match of text.matchAll(pattern)) {
+    const person = byName.get(match[2]!.toLowerCase());
+    if (!person) continue;
+    const start = match.index + (match[1]?.length ?? 0);
+    if (start > last) parts.push(text.slice(last, start));
+    parts.push({ person });
+    last = match.index + match[0].length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts.length ? parts : [text];
 }

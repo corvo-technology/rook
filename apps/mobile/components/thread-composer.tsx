@@ -3,6 +3,7 @@ import { findPastedSecrets } from "@corvo/contracts";
 import type { buildComposerMentionOptions, ComposerMention, SlashActionId } from "@corvo/core";
 import {
   mentionChipKey,
+  personInitials,
   SLASH_ACTIONS,
   serializeComposerPrompt,
   truncateSlashDescription,
@@ -620,8 +621,27 @@ export function ThreadComposer({
   );
 }
 
+function PersonMentionIcon({ mention, size }: { mention: ComposerMention; size: number }) {
+  const tokens = useMobileTokens();
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: tokens.muted,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Text style={{ color: tokens.foreground, fontSize: 9 }}>{personInitials(mention.name)}</Text>
+    </View>
+  );
+}
+
 function MentionOptionIcon({ mention }: { mention: ComposerMention }) {
   const tokens = useMobileTokens();
+  if (mention.kind === "person") return <PersonMentionIcon mention={mention} size={16} />;
   if (mention.kind === "routine") {
     return (
       <NativeSymbol ios="clock" android="time-outline" size={16} color={tokens.mutedForeground} />
@@ -683,6 +703,7 @@ function MentionOptionIcon({ mention }: { mention: ComposerMention }) {
 
 function MentionChipIcon({ mention }: { mention: ComposerMention }) {
   const tokens = useMobileTokens();
+  if (mention.kind === "person") return <PersonMentionIcon mention={mention} size={14} />;
   if (mention.kind === "routine") {
     return (
       <NativeSymbol ios="clock" android="time-outline" size={13} color={tokens.mutedForeground} />

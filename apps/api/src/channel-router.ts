@@ -102,6 +102,8 @@ export async function routeGroupMessage(
     text: string;
     members: GroupMember[];
     explicitMentions?: string[];
+    /** People picked with a mention chip: a message to them is not for an agent unless it names one. */
+    mentionedPeople?: string[];
   },
 ): Promise<RouterDecision | undefined> {
   const { model } = deps;
@@ -114,6 +116,7 @@ export async function routeGroupMessage(
   ) {
     return undefined;
   }
+  if (input.mentionedPeople?.length) return undefined;
   const candidateIds = input.members.map((member) => member.botId);
   // A member waiting on the person (an answer, an approval) gets the reply.
   const waiting = await deps.prisma.run.findFirst({

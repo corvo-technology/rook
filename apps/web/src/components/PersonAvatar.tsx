@@ -1,17 +1,8 @@
 import type { PresenceStatus } from "@corvo/contracts";
+import { personInitials } from "@corvo/core";
 import { useState } from "react";
 
-/** Up to two letters: the first of the first and last word, or the first two of a single name. */
-export function personInitials(name: string): string {
-  const words = name.match(/[\p{L}\p{N}]+/gu) ?? [];
-  const first = words[0];
-  if (!first) return "?";
-  const last = words.length > 1 ? words[words.length - 1] : undefined;
-  const letters = last
-    ? `${[...first][0] ?? ""}${[...last][0] ?? ""}`
-    : [...first].slice(0, 2).join("");
-  return letters.toUpperCase();
-}
+export { personInitials };
 
 /** The token a presence dot wears: online is success, away is warning, offline has no dot. */
 export function presenceDotClass(status: PresenceStatus | undefined): string | null {

@@ -4,6 +4,7 @@ import { BotAvatar } from "@corvo/ui-web";
 import { t } from "@lingui/core/macro";
 import { Clock, Puzzle, X } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
+import { PersonAvatar } from "../../components/PersonAvatar";
 import { FALLBACK_BOT_COLOR } from "./chat-shared";
 
 export function slashActionLabel(id: SlashActionId) {
@@ -18,6 +19,13 @@ export function slashActionLabel(id: SlashActionId) {
 }
 
 export function MentionOptionIcon({ mention }: { mention: ComposerMention }) {
+  if (mention.kind === "person") {
+    return (
+      <span className="mt-0.5 shrink-0">
+        <PersonAvatar name={mention.name} image={mention.image} size={16} />
+      </span>
+    );
+  }
   if (mention.kind === "routine") {
     return <Clock size={16} strokeWidth={1.7} className="mt-0.5 shrink-0 text-muted-foreground" />;
   }
@@ -100,6 +108,9 @@ export function MentionPicker({
 }
 
 export function MentionChipIcon({ mention }: { mention: ComposerMention }) {
+  if (mention.kind === "person") {
+    return <PersonAvatar name={mention.name} image={mention.image} size={16} />;
+  }
   if (mention.kind === "routine") {
     return <Clock size={13} strokeWidth={1.7} className="shrink-0 text-muted-foreground/70" />;
   }

@@ -87,7 +87,7 @@ export function ChatModelPicker({
         aria-describedby={textOnly ? imagesHintId : undefined}
         className={
           chip
-            ? "app-no-drag pointer-events-auto flex h-8 max-w-44 items-center gap-1.5 rounded-md border border-border bg-transparent px-2.5 text-nav text-foreground/80 outline-none transition-colors hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50 md:max-w-64"
+            ? "app-no-drag pointer-events-auto flex h-8 max-w-24 min-w-0 items-center gap-1.5 rounded-md border border-border bg-transparent px-2.5 text-nav text-foreground/80 outline-none transition-colors hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50 md:max-w-64"
             : "mt-2 flex h-8 w-full items-center justify-between gap-2 rounded-lg border border-input bg-transparent pr-2.5 pl-2.5 text-start text-sm text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 dark:hover:bg-input/50"
         }
       >

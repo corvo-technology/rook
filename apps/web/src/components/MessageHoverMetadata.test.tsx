@@ -18,6 +18,17 @@ describe("MessageHoverMetadata", () => {
     expect(html).toContain("focus-within:opacity-100");
   });
 
+  it("keeps the rail hidden on touch until the message is tapped", () => {
+    const html = renderToStaticMarkup(
+      <MessageHoverMetadata>
+        <div data-testid="message-actions" />
+      </MessageHoverMetadata>,
+    );
+
+    expect(html).toContain("[@media(hover:none)]:hidden");
+    expect(html).toContain("[@media(hover:none)]:group-data-[actions=open]/message:flex");
+  });
+
   it("drops the rail in-flow below the message on touch", () => {
     const html = renderToStaticMarkup(
       <MessageHoverMetadata>

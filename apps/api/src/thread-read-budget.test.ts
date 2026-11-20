@@ -83,6 +83,8 @@ function fakePrisma(rows: Row[]) {
           .slice(0, take)
           .map((row) => ({ ...row, replyTo: null })),
     },
+    // A thread that never branched: one version, no variants.
+    thread: { findUnique: async () => ({ activeBranchId: null, branches: [] }) },
     run: { findMany: async () => [] },
     user: { findMany: async () => [] },
   } as unknown as PrismaClient;

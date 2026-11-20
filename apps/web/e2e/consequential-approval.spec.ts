@@ -10,7 +10,7 @@ import {
   signup,
 } from "./helpers";
 
-test("Ask mode asks before a change, and approvals settings shape what asks", async ({
+test("the default asks before a risky change, and approvals settings shape what asks", async ({
   page,
 }, testInfo) => {
   const stamp = Date.now();
@@ -75,10 +75,9 @@ test("Ask mode asks before a change, and approvals settings shape what asks", as
   const approvals = page.getByTestId("settings-page");
   await expect(approvals.getByRole("heading", { name: "Approvals", exact: true })).toBeVisible();
   const mode = approvals.getByTestId("approval-mode");
-  await expect(mode.getByRole("button", { name: "Ask", exact: true })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
+  await expect(
+    mode.getByRole("button", { name: "Only what's risky", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
   const rules = approvals.getByTestId("approval-rules");
   await expect(rules.getByText("Destination.write", { exact: true })).toBeVisible();
   await expect(rules.getByRole("button", { name: "Allow", exact: true })).toHaveAttribute(

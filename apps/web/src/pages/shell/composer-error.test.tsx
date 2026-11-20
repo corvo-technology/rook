@@ -29,6 +29,8 @@ const tooLong =
 
 beforeEach(() => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  // jsdom has no layout, so it does not implement elementFromPoint.
+  Object.defineProperty(document, "elementFromPoint", { configurable: true, value: () => null });
   i18n.load("en", {});
   i18n.activate("en");
   container = document.createElement("div");
@@ -39,6 +41,7 @@ beforeEach(() => {
 afterEach(async () => {
   await act(async () => root.unmount());
   container.remove();
+  Reflect.deleteProperty(document, "elementFromPoint");
   vi.unstubAllGlobals();
 });
 

@@ -16,6 +16,7 @@ import { isExactNoResponse } from "./silent-reply.js";
 import {
   clampUserProgressMessage,
   extractNarrationText,
+  isSayNowClientNonce,
   isUserProgressClientNonce,
   midTurnProgressBudgetAllows,
   userProgressClientNonce,
@@ -39,6 +40,7 @@ export async function createReplyState(
     assistantTurnText: "",
     midTurnUserTexts: [],
     midTurnProgressCount: 0,
+    sayNowText: undefined,
     turnStartedAtMs: run.startedAt?.getTime() ?? Date.now(),
     pendingToolNames: [],
     pendingProgress: "",
@@ -63,6 +65,10 @@ export async function createReplyState(
     if (!text) continue;
     reply.midTurnUserTexts.push(text);
     reply.publishedMidTurnUserMessage = true;
+    if (isSayNowClientNonce(message.clientNonce)) {
+      reply.sayNowText = text;
+      continue;
+    }
     reply.midTurnProgressCount += 1;
   }
   return reply;

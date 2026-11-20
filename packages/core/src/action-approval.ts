@@ -252,6 +252,7 @@ const OWN_STATE_RESULT_TOOLS = new Set([
   "guide_read",
   "list_secrets",
   "message_user",
+  "say_now",
   "read_history",
   "recall_memory",
   "remember",

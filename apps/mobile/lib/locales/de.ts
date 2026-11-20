@@ -1,4 +1,5 @@
 export const DE_MESSAGES: Record<string, string> = {
+  "For this conversation": "Für diese Unterhaltung",
   Automatic: "Automatisch",
   "Complex tasks model": "Modell für komplexe Aufgaben",
   "Not sent. Tap for options": "Nicht gesendet. Tippen für Optionen",
@@ -1241,4 +1242,19 @@ export const DE_MESSAGES: Record<string, string> = {
     "Nutze die KI, die du schon bezahlst: Claude, ChatGPT oder einen API-Schlüssel",
   "Yearly · 2 months free": "Jährlich · 2 Monate gratis",
   Yearly: "Jährlich",
+  Regenerate: "Neu generieren",
+  "Continue in new thread": "In neuem Thread fortsetzen",
+  "Edit message": "Nachricht bearbeiten",
+  "Could not edit message": "Nachricht konnte nicht bearbeitet werden",
+  "Could not regenerate reply": "Antwort konnte nicht neu erstellt werden",
+  "Could not switch version": "Version konnte nicht gewechselt werden",
+  "Could not continue in a new thread": "Fortsetzen in neuem Thread nicht möglich",
+  "Previous version": "Vorherige Version",
+  "Next version": "Nächste Version",
+  "{position} of {count}": "{position} von {count}",
+  "This looks like a key. Save it as a credential instead?":
+    "Das sieht nach einem Schlüssel aus. Stattdessen als Zugangsdaten speichern?",
+  "Save credential": "Zugangsdaten speichern",
+  "Send anyway": "Trotzdem senden",
+  "Could not save the credential": "Zugangsdaten konnten nicht gespeichert werden",
 };

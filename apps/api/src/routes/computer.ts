@@ -55,6 +55,7 @@ import {
   toComputerStatus,
 } from "../computer-status.js";
 import type { RouterDeps } from "../router.js";
+import { previewCommand } from "../thread-read-budget.js";
 import type { RouterContext } from "./context.js";
 import { computerContext, isRecordNotFound } from "./shared.js";
 
@@ -649,10 +650,27 @@ export function computerRoutes(ctx: RouterContext) {
           events.reverse().flatMap((event) => {
             const parsed = ComputerCommandSchema.safeParse(event.payload);
             return parsed.success
-              ? [{ ...parsed.data, createdAt: event.createdAt.toISOString() }]
+              ? [{ ...previewCommand(parsed.data), createdAt: event.createdAt.toISOString() }]
               : [];
           }),
         );
+      }),
+      commandOutput: authed.computer.commandOutput.handler(async ({ context, input }) => {
+        const bot = await repos.getBot(context.actor, input.botId);
+        const events = await deps.prisma.event.findMany({
+          where: { spaceId: context.actor.spaceId, botId: bot.id, type: "computer.command" },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          take: COMPUTER_COMMAND_HISTORY_EVENTS,
+          select: { payload: true },
+        });
+        const finished = events.flatMap((event) => {
+          const parsed = ComputerCommandSchema.safeParse(event.payload);
+          return parsed.success && parsed.data.executionId === input.executionId
+            ? [parsed.data]
+            : [];
+        });
+        const command = finished.find((entry) => entry.status === "done") ?? finished[0];
+        return command ? { output: command.output } : null;
       }),
       terminalUrl: authed.computer.terminalUrl.handler(async ({ context, input }) => {
         let bot = await repos.getBot(context.actor, input.botId);

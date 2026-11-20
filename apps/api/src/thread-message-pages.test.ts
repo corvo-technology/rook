@@ -13,6 +13,13 @@ import {
   withRoutineNames,
 } from "./thread-message-pages.js";
 
+// Which version of the chat is on screen has its own tests; these are about paging and sending.
+vi.mock("@corvo/db", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@corvo/db")>()),
+  visibleMessagesWhere: async () => ({}),
+  messageVariantsByMessage: async () => new Map(),
+}));
+
 describe("routine names", () => {
   const row = (id: string, runId: string | null) => ({
     id,

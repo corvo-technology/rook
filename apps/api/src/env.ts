@@ -12,7 +12,7 @@ import {
 } from "@corvo/adapters";
 import type { OidcConfig } from "@corvo/auth";
 import type { MinimumClientBuilds, NavLink } from "@corvo/contracts";
-import { parseMinimumClientBuilds, parseNavLinks } from "@corvo/contracts";
+import { DEFAULT_TERMS_URL, parseMinimumClientBuilds, parseNavLinks } from "@corvo/contracts";
 import { parseCrispWebsiteId } from "@corvo/contracts/content-security-policy";
 import {
   phoneCallSettings,
@@ -42,6 +42,8 @@ export interface AppEnv {
   authSecret: string;
   authUrl: string;
   webOrigin: string;
+  /** Where the terms are published (TERMS_URL); linked from billing emails. */
+  termsUrl: string;
   /** Marketing-site origins that may post to the waitlist (WAITLIST_ALLOWED_ORIGINS); none turns it off. */
   waitlistAllowedOrigins: string[];
   /** Inbox told about each new waitlist entry (WAITLIST_NOTIFY_EMAIL). */
@@ -248,6 +250,7 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     authSecret,
     authUrl: source.BETTER_AUTH_URL ?? source.WEB_ORIGIN ?? "http://127.0.0.1:5173",
     webOrigin: source.WEB_ORIGIN ?? "http://127.0.0.1:5173",
+    termsUrl: optional(source.TERMS_URL) ?? DEFAULT_TERMS_URL,
     waitlistAllowedOrigins: waitlistOrigins(source.WAITLIST_ALLOWED_ORIGINS),
     waitlistNotifyEmail: optional(source.WAITLIST_NOTIFY_EMAIL),
     passkeyAppleAppIds: list(source.PASSKEY_APPLE_APP_IDS),

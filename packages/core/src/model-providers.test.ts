@@ -12,6 +12,8 @@ import {
   filterModelCatalog,
   filterModelChoices,
   groupModelChoices,
+  hostedModelsAvailable,
+  messageModelChoices,
   modelChangePatch,
   pickCatalogModelId,
   popularModelProvidersFirst,
@@ -639,5 +641,36 @@ describe("switching a chat's model", () => {
       modelId: null,
       thinkingLevel: null,
     });
+  });
+});
+
+describe("messageModelChoices", () => {
+  const credentials = [{ provider: "openrouter", label: "OpenRouter" }];
+  const catalog = [
+    { provider: "openrouter", id: "a", label: "A" },
+    { provider: "openrouter", id: "image-only", label: "Painter", protocol: "image" },
+    { provider: "openrouter", id: "judge", label: "Judge", protocol: "decisions" },
+    { provider: "hosted", id: "big", label: "Big", managed: true },
+  ];
+
+  it("lists chat models only, never image or decision models", () => {
+    const choices = messageModelChoices(credentials, catalog, true);
+    expect(choices.map((choice) => choice.modelId)).toEqual(["a", "big"]);
+  });
+
+  it("disables a hosted model without credits and keeps connected ones usable", () => {
+    const choices = messageModelChoices(credentials, catalog, false);
+    expect(choices.find((choice) => choice.modelId === "big")?.disabled).toBe(true);
+    expect(choices.find((choice) => choice.modelId === "a")?.disabled).toBeUndefined();
+  });
+});
+
+describe("hostedModelsAvailable", () => {
+  it("follows billing: open when it does not bill, closed without access or balance", () => {
+    expect(hostedModelsAvailable(null)).toBe(true);
+    expect(hostedModelsAvailable({ access: false })).toBe(false);
+    expect(hostedModelsAvailable({ access: true, funding: "credits", balanceUsd: 0 })).toBe(false);
+    expect(hostedModelsAvailable({ access: true, funding: "credits", balanceUsd: 3 })).toBe(true);
+    expect(hostedModelsAvailable({ access: true, funding: "byok" })).toBe(true);
   });
 });

@@ -1,8 +1,12 @@
 import type { ThreadItem } from "@corvo/core";
 import {
+  ACTIVE_RUN_STATUSES,
   answerableAskMessageIds,
+  canBranchFromMessage,
+  canEditMessage,
   dismissableAskMessageIds,
   groupVoiceChats,
+  lastReplyId,
   memberName,
   threadSummary,
   timeSeparatorIds,
@@ -11,7 +15,7 @@ import {
 } from "@corvo/core";
 import { useCallback, useLayoutEffect, useMemo, useRef } from "react";
 import type { ListRenderItemInfo } from "react-native";
-import { StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import type { MobileBot, MobileMessage, MobileSnapshot } from "../../lib/api";
 import { useI18n } from "../../lib/i18n";
 import { threadHeaderFloats } from "../../lib/thread-edges";
@@ -22,7 +26,7 @@ import type { ThreadFooterData } from "../thread-footer";
 import { TimeSeparator } from "../time-separator";
 import { UnreadDivider } from "../unread-divider";
 import { VoiceChatCard } from "../VoiceChatCard";
-import type { MessageRowActions } from "./message-row";
+import type { MessageRowActions, MessageRowVersions } from "./message-row";
 import { MessageRow } from "./message-row";
 
 const rowStyles = StyleSheet.create({
@@ -49,6 +53,10 @@ export function useLatestRowActions(current: MessageRowActions): MessageRowActio
       react: (message, reaction) => rowActionsRef.current.react(message, reaction),
       markUnread: (message) => rowActionsRef.current.markUnread(message),
       keepInWiki: (message) => rowActionsRef.current.keepInWiki(message),
+      edit: (message) => rowActionsRef.current.edit(message),
+      regenerate: () => rowActionsRef.current.regenerate(),
+      fork: (message) => rowActionsRef.current.fork(message),
+      switchVersion: (branchId) => rowActionsRef.current.switchVersion(branchId),
       answer: (message, answer, username, dismiss) =>
         rowActionsRef.current.answer(message, answer, username, dismiss),
       openBot: (id, name) => rowActionsRef.current.openBot(id, name),
@@ -138,6 +146,26 @@ export function useThreadRows({
     }
     return footers;
   }, [inGroup, peerTranscript, snap?.members, mentionBots]);
+  // A reply being written holds every version where it is; only a chat with one agent has them.
+  const busy =
+    Boolean(snap?.run && ACTIVE_RUN_STATUSES.some((status) => status === snap.run?.status)) ||
+    Boolean(
+      snap?.activeRuns?.some((run) => ACTIVE_RUN_STATUSES.some((status) => status === run.status)),
+    );
+  const newestReplyId = useMemo(() => lastReplyId(snap?.messages ?? []), [snap?.messages]);
+  const versionsOf = useCallback(
+    (message: MobileMessage): MessageRowVersions | undefined =>
+      inGroup || readOnly
+        ? undefined
+        : {
+            // Editing asks in a native text alert, which only iOS has.
+            edit: Platform.OS === "ios" && !busy && canEditMessage(message, userId),
+            regenerate: !busy && newestReplyId === message.id,
+            fork: !busy && canBranchFromMessage(message),
+            busy,
+          },
+    [inGroup, readOnly, busy, newestReplyId, userId],
+  );
   const messagesById = useMemo(
     () => new Map((snap?.messages ?? []).map((message) => [message.id, message])),
     [snap?.messages],
@@ -173,6 +201,7 @@ export function useThreadRows({
         <MessageRow
           key={message.id}
           message={message}
+          versions={versionsOf(message)}
           actions={rowActions}
           botId={botId}
           bubbleBotId={botId ?? snap?.members?.[0]?.botId ?? ""}
@@ -247,6 +276,7 @@ export function useThreadRows({
       unreadDividerId,
       markedUnreadMessageId,
       columnWidth,
+      versionsOf,
       t,
       locale,
     ],

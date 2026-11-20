@@ -85,7 +85,13 @@ export interface ReplyState {
   explicitNoResponse: boolean;
   assistantTurnText: string;
   midTurnUserTexts: string[];
+  /** Person messages claimed during the run whose answer is not posted yet, in send order. */
+  answerTargets: string[];
+  /** Person messages this run already answered in a message of their own. */
+  answeredTargets: Set<string>;
   midTurnProgressCount: number;
+  /** say_now already posted its opening line in this run. */
+  sayNowText: string | undefined;
   turnStartedAtMs: number;
   /**
    * Tool calls that land mid-sentence wait here until the narration catches up to a

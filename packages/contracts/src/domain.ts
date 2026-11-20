@@ -1413,6 +1413,19 @@ export const RunSchema = z.object({
 });
 export type Run = z.infer<typeof RunSchema>;
 
+/**
+ * What one read of a conversation may carry. Opening a chat takes its recent turns, older history
+ * arrives a page at a time, bulky output arrives as a preview until it is opened, and a stream that
+ * missed too much starts from a fresh snapshot. `apps/api/src/thread-read-budget.test.ts` pins these.
+ */
+export const THREAD_READ_BUDGET = {
+  coldOpen: { maxMessages: 100, maxBytes: 1_048_576, maxUserTurns: 10 },
+  historyPage: { maxMessages: 100, maxBytes: 1_048_576 },
+  resume: { maxEvents: 500, maxBytes: 262_144 },
+  /** Characters of a helper's report or a command's output kept in a preview. */
+  previewChars: 2_000,
+} as const;
+
 export const ThreadMessagePageSchema = z.object({
   threadId: Id,
   messages: z.array(ThreadMessageSchema),
@@ -1911,6 +1924,10 @@ export const ServerUpdateRequestSchema = z.object({
 });
 export type ServerUpdateRequest = z.infer<typeof ServerUpdateRequestSchema>;
 
+/** The languages the apps are translated into; the account saves the one its owner uses. */
+export const AccountLocaleSchema = z.enum(["en", "pt-BR", "es", "fr", "de", "ja", "zh-CN"]);
+export type AccountLocale = z.infer<typeof AccountLocaleSchema>;
+
 export const MeSchema = z.object({
   maxUploadSizeBytes: z.number().int().positive().optional(),
   ticketBoardEnabled: z.boolean(),
@@ -1945,6 +1962,8 @@ export const MeSchema = z.object({
    * Absent from servers that predate it.
    */
   timezone: z.string().nullable().optional(),
+  /** The language the person uses the app in, or null until an app saves it. Absent from older servers. */
+  locale: AccountLocaleSchema.nullable().optional(),
   /** True when this deployment bills model usage. */
   billingEnabled: z.boolean(),
   /** True until a user of a billing deployment answers or skips the signup survey. Absent from older servers. */

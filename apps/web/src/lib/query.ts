@@ -8,6 +8,7 @@ import { createContext, useContext } from "react";
 import type { RpcClient } from "./rpc";
 import { createSpaceRpc, rpcForSpace, selectedSpaceId } from "./rpc";
 import { useBoundSpaceId } from "./space-rpc";
+import { threadCache } from "./thread-cache";
 
 /**
  * Screens paint what they last saw and refresh it in the background, so moving between
@@ -121,6 +122,9 @@ let cachedUserId: string | null | undefined;
 
 /** Forgets everything cached for another user, so sign-out or a switch never shows their data. */
 export function setQueryUser(userId: string | null): void {
-  if (cachedUserId !== undefined && cachedUserId !== userId) queryClient.clear();
+  if (cachedUserId !== undefined && cachedUserId !== userId) {
+    queryClient.clear();
+    void threadCache.clear();
+  }
   cachedUserId = userId;
 }

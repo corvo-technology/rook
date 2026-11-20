@@ -733,6 +733,11 @@ describe("toolResultTaintsRun", () => {
     }
   });
 
+  it("lets the app map through without approval or taint, since its result is the product's own catalog", () => {
+    expect(toolResultTaintsRun("find_in_app")).toBe(false);
+    expect(toolRequiresApproval("find_in_app", false)).toBe(false);
+  });
+
   it("lets the guide through but taints on the space status, which carries outside error text", () => {
     expect(toolResultTaintsRun("guide_read")).toBe(false);
     expect(toolResultTaintsRun("space_status")).toBe(true);

@@ -622,6 +622,28 @@ describe("thread event reduction", () => {
     expect(next).toMatchObject({ cursor: 12, messages: [], olderCursor: null, run: null });
   });
 
+  it("drops the messages after the fork when the chat moves to another version", () => {
+    const initial = snapshot([
+      { id: "m1", seq: 0, role: "user", blocks: [{ kind: "text", text: "one" }] },
+      { id: "m2", seq: 1, role: "bot", blocks: [{ kind: "text", text: "reply" }] },
+      { id: "m3", seq: 2, role: "user", blocks: [{ kind: "text", text: "two" }] },
+    ] as never);
+    const next = reduceThreadSnapshot(
+      initial,
+      event({
+        type: "thread.branch.changed",
+        seq: 9,
+        runId: undefined,
+        payload: { branchId: "branch-1", forkSeq: 1 },
+      }),
+    );
+    expect(next?.cursor).toBe(9);
+    expect(next?.messages.map((message) => message.id)).toEqual(["m1", "m2"]);
+    expect(
+      isThreadSnapshotEvent(event({ type: "thread.branch.changed", seq: 9, runId: undefined })),
+    ).toBe(true);
+  });
+
   it("routes clear and terminal events through the snapshot reducer", () => {
     expect(
       isThreadSnapshotEvent(event({ type: "thread.cleared", seq: 12, runId: undefined })),

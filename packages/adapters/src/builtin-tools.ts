@@ -22,7 +22,7 @@ import { GUIDE_PAGES } from "@corvo/core";
 import { z } from "zod";
 import { allowPrivateHttpSecretOrigins } from "./bot-secrets.js";
 import { BROWSER_ACT_KINDS } from "./browser-tools.js";
-import { messageUserMaxLength } from "./user-progress.js";
+import { messageUserMaxLength, SAY_NOW_MAX_LENGTH } from "./user-progress.js";
 
 // The owner flag can land in process.env after static imports run (loadRootEnv
 // parses .env once the entry module is already executing), so the model-facing
@@ -516,6 +516,17 @@ export const builtinAgentTools: ConnectorTool[] = [
         },
         required: ["message"],
       };
+    },
+  },
+  {
+    name: "say_now",
+    description: `Post one short line to the user right now, before slow work such as using the computer or browser, a long chain of tools, generating media or waiting on a connection, so they know it started (for example "I'll open the calendar and create the event."). One line, at most ${SAY_NOW_MAX_LENGTH} characters, plain text in the user's language, no secrets. Once per run, never for a quick answer, and never repeat it in your final reply.`,
+    inputSchema: {
+      type: "object",
+      properties: {
+        message: { type: "string", maxLength: SAY_NOW_MAX_LENGTH },
+      },
+      required: ["message"],
     },
   },
   {
@@ -1612,6 +1623,28 @@ export const builtinAgentTools: ConnectorTool[] = [
         },
       },
       required: ["page", "language"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "find_in_app",
+    description:
+      "Look up where something is in the app itself: a screen, a settings section or an action such as connecting an app, changing the plan or inviting someone. Returns matching screens with links, and the ones this person cannot open with who can. Use it before answering any question about the app, then show each link as a markdown link; if nothing matches, say you do not know.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          minLength: 1,
+          maxLength: 200,
+          description: "What the person wants to do or find, in their own words.",
+        },
+        language: {
+          type: "string",
+          description: "The language you are speaking with the person, such as en or pt-BR.",
+        },
+      },
+      required: ["query"],
       additionalProperties: false,
     },
   },

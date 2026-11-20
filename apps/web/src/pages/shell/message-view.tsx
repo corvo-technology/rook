@@ -150,6 +150,10 @@ export const MessageView = memo(function MessageView({
   markedUnread = false,
   onReact,
   onPin,
+  onLoadMessage,
+  onEdit,
+  onRegenerate,
+  onFork,
 }: {
   artifactTarget: ArtifactTarget;
   canAnswer: boolean;
@@ -218,6 +222,12 @@ export const MessageView = memo(function MessageView({
   onReact: (message: ThreadMessage, reaction: MessageReaction) => Promise<void>;
   /** Pins the message to its channel, or unpins it; absent where there is no pin list. */
   onPin?: (message: ThreadMessage, pinned: boolean) => Promise<void>;
+  /** Reads this message whole, where a long helper report arrived as a preview. */
+  onLoadMessage?: (message: ThreadMessage) => Promise<ThreadMessage | null>;
+  /** The message's own edit, regenerate and branch actions; each is absent when it does not apply. */
+  onEdit?: () => void;
+  onRegenerate?: () => void;
+  onFork?: () => void;
 }) {
   const { t, i18n } = useLingui();
   // Where work handed to another bot stands: answered, being worked on right now, or waiting.
@@ -388,6 +398,9 @@ export const MessageView = memo(function MessageView({
       markedUnread={markedUnread}
       onReact={onReact}
       onPin={onPin}
+      onEdit={onEdit}
+      onRegenerate={onRegenerate}
+      onFork={onFork}
       speech={
         voiceReady && !isLive && message.blocks.some((block) => block.kind === "text")
           ? { speaking, onSpeak }
@@ -654,7 +667,23 @@ export const MessageView = memo(function MessageView({
             );
           }
           if (block.kind === "subagent") {
-            return <SubagentCard key={i} block={block} />;
+            return (
+              <SubagentCard
+                key={i}
+                block={block}
+                loadFull={
+                  onLoadMessage
+                    ? async () => {
+                        const whole = await onLoadMessage(message);
+                        return whole?.blocks.find(
+                          (full): full is typeof block =>
+                            full.kind === "subagent" && full.agentId === block.agentId,
+                        );
+                      }
+                    : undefined
+                }
+              />
+            );
           }
           if (block.kind === "wiki_change") {
             return (

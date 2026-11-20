@@ -87,6 +87,8 @@ export * from "./starter-team.js";
 export * from "./storage-snapshot.js";
 export * from "./storage-usage.js";
 export * from "./team.js";
+export * from "./thread-branch-forks.js";
+export * from "./thread-branches.js";
 export { primaryActiveRun } from "./thread-listing.js";
 export * from "./thread-reads.js";
 export * from "./transaction-retry.js";

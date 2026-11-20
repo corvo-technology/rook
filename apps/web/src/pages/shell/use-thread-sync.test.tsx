@@ -5,14 +5,21 @@ import { runThreadSubscription } from "@corvo/core";
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
+import { threadCache } from "../../lib/thread-cache";
 import { useThreadSync } from "./use-thread-sync";
 
 vi.mock("@corvo/core", async (original) => ({
   ...(await original<typeof import("@corvo/core")>()),
   runThreadSubscription: vi.fn(async () => {}),
 }));
+const cacheState = vi.hoisted(() => ({ userId: null as string | null }));
 vi.mock("../../lib/query", () => ({
   queryClient: { getQueryData: () => undefined, setQueryData: vi.fn() },
+  useQueryUserId: () => cacheState.userId,
+}));
+vi.mock("../../lib/rpc", () => ({ selectedSpaceId: () => "space-1" }));
+vi.mock("../../lib/thread-cache", () => ({
+  threadCache: { read: vi.fn(async () => undefined), save: vi.fn() },
 }));
 vi.mock("@corvo/core/query", () => ({ fetchFresh: vi.fn(async () => []) }));
 
@@ -27,6 +34,7 @@ function deferred<T>() {
 }
 
 afterEach(() => {
+  cacheState.userId = null;
   vi.clearAllMocks();
   vi.unstubAllGlobals();
 });
@@ -165,7 +173,7 @@ async function mountGroupSync(get: ReturnType<typeof vi.fn>, commitSnapshot = vi
   }
   const root = createRoot(document.createElement("div"));
   await act(async () => root.render(createElement(Probe)));
-  return { subscription: vi.mocked(runThreadSubscription).mock.calls[0]![0], root };
+  return { subscription: vi.mocked(runThreadSubscription).mock.calls.at(-1)![0], root };
 }
 
 const groupSnapshot = (cursor: number) =>
@@ -216,4 +224,41 @@ it("does not let an older read replace a newer one that already landed", async (
   expect(commitSnapshot).toHaveBeenCalledTimes(1);
   expect(commitSnapshot).toHaveBeenCalledWith(newest);
   act(() => root.unmount());
+});
+
+it("paints the chat stored on this device while the server's read is still out", async () => {
+  cacheState.userId = "user-1";
+  const stored = groupSnapshot(7);
+  vi.mocked(threadCache.read).mockResolvedValueOnce(stored);
+  const commitSnapshot = vi.fn();
+  const { root } = await mountGroupSync(
+    vi.fn(() => new Promise<ThreadSnapshot>(() => {})),
+    commitSnapshot,
+  );
+  await flush();
+  expect(threadCache.read).toHaveBeenCalledWith(
+    { userId: "user-1", spaceId: "space-1" },
+    { groupId: "group-1" },
+  );
+  expect(commitSnapshot).toHaveBeenCalledWith(stored);
+  act(() => root.unmount());
+});
+
+it("stores what the server returned, and reads nothing without a signed-in person", async () => {
+  const get = vi.fn(async () => groupSnapshot(9));
+  const signedOut = await mountGroupSync(get);
+  await signedOut.subscription.loadInitial();
+  expect(threadCache.read).not.toHaveBeenCalled();
+  expect(threadCache.save).not.toHaveBeenCalled();
+  act(() => signedOut.root.unmount());
+
+  cacheState.userId = "user-1";
+  const signedIn = await mountGroupSync(get);
+  await signedIn.subscription.loadInitial();
+  expect(threadCache.save).toHaveBeenCalledWith(
+    { userId: "user-1", spaceId: "space-1" },
+    { groupId: "group-1" },
+    expect.objectContaining({ cursor: 9 }),
+  );
+  act(() => signedIn.root.unmount());
 });

@@ -14,6 +14,7 @@ import {
   GROUP_MEMBER_MIN,
   MessageBlock as MessageBlockSchema,
   RunErrorInfoSchema,
+  THREAD_READ_BUDGET,
 } from "@corvo/contracts";
 import {
   ACTIVE_RUN_STATUSES,
@@ -66,6 +67,8 @@ import { groupConversationOwner } from "./group-owner.js";
 import { isRecordNotFound } from "./routes/shared.js";
 import { unavailableAgents } from "./routing-availability.js";
 import { withSerializableRetry } from "./serializable-retry.js";
+import { addEffectsNotice, beginEdit } from "./thread-branching.js";
+import { compressForChosenModel } from "./thread-context.js";
 import type { ImageAdmissionRun } from "./thread-image-admission.js";
 import { assertThreadImageInput } from "./thread-image-admission.js";
 import { loadMessagePage } from "./thread-message-pages.js";
@@ -452,6 +455,8 @@ export async function threadHead(prisma: PrismaClient, target: ThreadTarget) {
 export async function threadSnapshot(
   deps: { prisma: PrismaClient },
   target: ThreadTarget,
+  /** `preview` cuts a helper's long report; the client reads the whole of it when it is opened. */
+  options?: { preview?: boolean },
 ): Promise<ThreadSnapshot> {
   // Lock the thread row so messages, the event cursor, active runs, and live
   // progress are read from one consistent commit. A torn Promise.all can
@@ -468,7 +473,16 @@ export async function threadSnapshot(
         async (tx) => {
           await tx.$queryRaw`SELECT id FROM threads WHERE id = ${target.threadId} FOR SHARE`;
           const [messagePage, last, activeRuns, busyOrFailed] = await Promise.all([
-            loadMessagePage(tx, target.threadId, undefined, THREAD_MESSAGE_PAGE_SIZE),
+            loadMessagePage(
+              tx,
+              target.threadId,
+              undefined,
+              THREAD_MESSAGE_PAGE_SIZE,
+              undefined,
+              false,
+              false,
+              { budget: THREAD_READ_BUDGET.coldOpen, preview: options?.preview },
+            ),
             tx.event.findFirst({
               where: { threadId: target.threadId },
               orderBy: { seq: "desc" },
@@ -563,7 +577,16 @@ export async function threadSnapshot(
     async (tx) => {
       await tx.$queryRaw`SELECT id FROM threads WHERE id = ${target.threadId} FOR SHARE`;
       const [messagePage, last, activeRuns, recentTerminals] = await Promise.all([
-        loadMessagePage(tx, target.threadId, undefined, THREAD_MESSAGE_PAGE_SIZE),
+        loadMessagePage(
+          tx,
+          target.threadId,
+          undefined,
+          THREAD_MESSAGE_PAGE_SIZE,
+          undefined,
+          false,
+          false,
+          { budget: THREAD_READ_BUDGET.coldOpen, preview: options?.preview },
+        ),
         tx.event.findFirst({
           where: { threadId: target.threadId },
           orderBy: { seq: "desc" },
@@ -755,6 +778,8 @@ async function assertImageRecipients(
     botId: string;
     runs: Array<ImageAdmissionRun & { id: string }>;
     imageAdmission: Parameters<typeof assertThreadImageInput>[5];
+    /** The model chosen for this message: what a new run would read the image with. */
+    chosen?: ImageAdmissionRun;
   },
 ) {
   if (!attachmentBlocks.some((block) => block.kind === "image")) return;
@@ -772,7 +797,7 @@ async function assertImageRecipients(
   }
   const current =
     runs.find(steersUserMessage) ?? runs.find((run) => STEERABLE_RUN_STATUSES.has(run.status));
-  for (const run of answered.length ? answered : [current]) {
+  for (const run of answered.length ? answered : [current ?? recipient.chosen]) {
     await assertThreadImageInput(
       tx as unknown as PrismaClient,
       actor,
@@ -825,10 +850,17 @@ export async function sendThreadMessage(
     replyQuote?: string;
     threadRootId?: string;
     clientNonce?: string;
+    /** The model for this message's run; the agent's own setting stays as it is. */
+    model?: { provider: string; modelId: string };
     host?: HostTurn;
+    /** Sends the text as a new version of this earlier message of the person's, not at the end. */
+    edit?: { messageId: string };
   },
   releaseTakeover?: (runId: string) => Promise<void>,
 ) {
+  if (input.edit && target.kind !== "bot") {
+    throw new ORPCError("BAD_REQUEST", { message: "Only a chat with one agent has versions." });
+  }
   const existing = await replayExistingSend(
     deps,
     target.threadId,
@@ -846,6 +878,17 @@ export async function sendThreadMessage(
     throw new ORPCError("BAD_REQUEST", { message: "replyQuote requires replyToMessageId." });
   }
 
+  if (input.model && target.kind !== "bot") {
+    throw new ORPCError("BAD_REQUEST", { message: "Only an agent's own chat takes a model." });
+  }
+  const chosenModel = input.model
+    ? {
+        modelProvider: input.model.provider,
+        modelId: input.model.modelId,
+        thinkingLevel: null,
+        modelPinned: true as const,
+      }
+    : undefined;
   if (input.threadRootId && target.kind !== "group") {
     throw new ORPCError("BAD_REQUEST", { message: "Only a channel has threads." });
   }
@@ -979,11 +1022,16 @@ export async function sendThreadMessage(
             thinkingLevel: true,
           },
         });
+        // Checks the author and that nothing is running, then starts the version the text goes on.
+        const edited = input.edit
+          ? await beginEdit(tx, actor, target, input.edit.messageId)
+          : undefined;
         if (input.imageHandling === "confirm") {
           await assertImageRecipients(tx, actor, target, input.text, attachmentBlocks, {
             botId: target.botId,
             runs: activeRuns,
             imageAdmission: deps.imageAdmission,
+            chosen: chosenModel && { ...chosenModel, status: "queued", trigger: "user" },
           });
         }
         const blocks = buildUserMessageBlocks(
@@ -1070,6 +1118,14 @@ export async function sendThreadMessage(
               botId: target.botId,
               userId: actor.userId,
               runId: steersUserMessage(active) ? active.id : null,
+              // A message held for the next run carries its model; a steered run keeps its own.
+              ...(!steersUserMessage(active) && chosenModel
+                ? {
+                    modelProvider: chosenModel.modelProvider,
+                    modelId: chosenModel.modelId,
+                    thinkingLevel: null,
+                  }
+                : {}),
             },
           });
           await tx.message.update({ where: { id: message.id }, data: { runId: active.id } });
@@ -1114,6 +1170,7 @@ export async function sendThreadMessage(
             trigger: "user",
             clientNonce: sendRunClientNonce(input.clientNonce, message.id),
             sourceMessageId: message.id,
+            ...(chosenModel ?? {}),
             ...(host ? { hostContext: host as Prisma.InputJsonObject } : {}),
           },
         });
@@ -1142,7 +1199,14 @@ export async function sendThreadMessage(
             replyPreview,
           },
         });
-        return { message, runs: [run], eventSeq: event.seq };
+        const noticeSeq = edited?.abandonedHadEffects
+          ? await addEffectsNotice(tx, {
+              spaceId: actor.spaceId,
+              threadId: target.threadId,
+              botId: target.botId,
+            })
+          : undefined;
+        return { message, runs: [run], eventSeq: noticeSeq ?? event.seq };
       }
 
       const members = await lockAndLoadGroupMembers(tx, actor, target);
@@ -1414,6 +1478,12 @@ export async function sendThreadMessage(
     for (const run of committed.runs) {
       if (steersUserMessage(run)) await releaseTakeover(run.id);
     }
+  }
+  if (input.model && target.kind === "bot") {
+    // A failed summary must not lose the message; the run still fits what it reads to the window.
+    await compressForChosenModel(deps, actor, target, input.model).catch((error) => {
+      getLogger().error("thread send compaction for chosen model", error);
+    });
   }
   await enqueueRunsNeedingContinue(deps, committed.runs, {
     actor,

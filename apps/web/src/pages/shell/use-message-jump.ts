@@ -82,8 +82,12 @@ export function useMessageJump({
     jumpGeneration.current += 1;
     const jumpId = jumpGeneration.current;
     const [snap, page] = await Promise.all([
-      rpc.threads.get(threadTarget),
-      rpc.threads.messages({ ...threadTarget, around: { messageId: target.messageId } }),
+      rpc.threads.get({ ...threadTarget, preview: true }),
+      rpc.threads.messages({
+        ...threadTarget,
+        around: { messageId: target.messageId },
+        preview: true,
+      }),
     ]);
     // The epoch check drops a jump that raced a conversation clear (or a bot switch): applying
     // the fetched page would pin deleted messages that every later refresh keeps restoring.

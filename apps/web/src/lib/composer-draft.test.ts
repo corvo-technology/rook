@@ -67,3 +67,21 @@ describe("prefillComposerDraft", () => {
     expect(botDraftKey("b1")).toBe("bot:b1");
   });
 });
+
+describe("pasted keys", () => {
+  const key = `ghp_${"aB3dE5gH7jK9mN1pQ".repeat(3).slice(0, 36)}`;
+
+  it("never keeps a draft that holds a key in storage", () => {
+    const storage = memoryStorage();
+    writeComposerDraft("bot:1", "token for the repo", storage);
+    writeComposerDraft("bot:1", `token for the repo ${key}`, storage);
+    expect(readComposerDraft("bot:1", storage)).toBe("");
+  });
+
+  it("stores the draft again once the key is gone", () => {
+    const storage = memoryStorage();
+    writeComposerDraft("bot:1", `use ${key}`, storage);
+    writeComposerDraft("bot:1", "use $GITHUB_TOKEN", storage);
+    expect(readComposerDraft("bot:1", storage)).toBe("use $GITHUB_TOKEN");
+  });
+});

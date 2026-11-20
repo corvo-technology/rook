@@ -51,6 +51,7 @@ export * from "./partner-console.js";
 export * from "./partner-credits.js";
 export * from "./partner-events.js";
 export * from "./partner-payments.js";
+export * from "./pasted-secrets.js";
 export * from "./plan-price-keys.js";
 export * from "./plan-pricing.js";
 export * from "./plans.js";

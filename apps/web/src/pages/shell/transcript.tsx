@@ -1,6 +1,8 @@
 import type { GroupMember, MessageReaction, ThreadMessage } from "@corvo/contracts";
 import type { ApprovalBatchClass, ApprovalBatchItem, FoldedTranscript } from "@corvo/core";
 import {
+  canBranchFromMessage,
+  canEditMessage,
   expandPeerReplies,
   groupVoiceChats,
   isPeerReceiptBlocks,
@@ -51,6 +53,8 @@ import { TimeSeparator, UnreadDivider } from "./chat-context";
 import { ChatEmpty } from "./chat-empty";
 import { FALLBACK_BOT_COLOR } from "./chat-shared";
 import type { ImportSetupTarget } from "./import-setup-card";
+import type { MessageVersions } from "./message-versions";
+import { MessageEditor, messageText, VersionSwitcher } from "./message-versions";
 import type { MessageFace } from "./message-view";
 import { MessageView } from "./message-view";
 import { QuoteSelectionButton } from "./quote-selection-button";
@@ -88,6 +92,8 @@ export const Transcript = memo(function Transcript({
   onQuote,
   onReact,
   onPin,
+  onLoadMessage,
+  versions,
   onJumpToMessage,
   onOpenPeerMessages,
   memberName,
@@ -158,11 +164,14 @@ export const Transcript = memo(function Transcript({
   variant?: "chat" | "thread";
   onMarkUnread: (message: ThreadMessage) => void;
   onKeepInWiki?: (message: ThreadMessage) => void;
+  onLoadMessage?: (message: ThreadMessage) => Promise<ThreadMessage | null>;
   markedUnreadMessageId?: string;
   onQuote?: (message: ThreadMessage, quote: string) => void;
   onReact: (message: ThreadMessage, reaction: MessageReaction) => Promise<void>;
   /** Pins a message to the channel, or unpins it; absent where there is no pin list. */
   onPin?: (message: ThreadMessage, pinned: boolean) => Promise<void>;
+  /** Edit, regenerate and branch for a chat with one agent; absent in a channel. */
+  versions?: MessageVersions;
   onJumpToMessage: (messageId: string) => void;
   onOpenPeerMessages: (peer: { peerBotId: string; peerBotName: string }) => void;
   memberName?: (botId: string | undefined) => string | undefined;
@@ -191,6 +200,7 @@ export const Transcript = memo(function Transcript({
   const lastScrollTop = useRef<number | null>(null);
   const autoScrollTimer = useRef<number | undefined>(undefined);
   const jumpButtonRef = useRef<HTMLButtonElement>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [expandedPeerMarkers, setExpandedPeerMarkers] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
@@ -604,78 +614,117 @@ export const Transcript = memo(function Transcript({
                     data-testid={peerReceipt ? undefined : "message-bubble-frame"}
                     className={peerReceipt ? undefined : "relative w-full min-w-0 max-w-full"}
                   >
-                    <MessageView
-                      artifactTarget={artifactTarget}
-                      message={message}
-                      markedUnread={message.id === markedUnreadMessageId}
-                      mentions={mentionView.mentions.get(message.id)}
-                      canAnswer={answerableAskIds.has(message.id)}
-                      canDismiss={dismissableAskIds.has(message.id)}
-                      onOpenBot={onOpenBot}
-                      onOpenPeerMessages={onOpenPeerMessages}
-                      peerReplies={
-                        !channel && transcript.folded.has(message.id)
-                          ? expandedPeerMarkers.has(message.id)
-                            ? "expanded"
-                            : "collapsed"
-                          : undefined
-                      }
-                      channelMembers={channelMembers}
-                      onTogglePeerReplies={togglePeerReplies}
-                      onAnswer={onAnswer}
-                      continued={continued.has(message.id)}
-                      face={faces.get(message.id)}
-                      speakerName={
-                        peerReceipt
-                          ? undefined
-                          : message.role === "bot"
-                            ? (memberName?.(message.botId) ??
-                              (message.botId ? peerBot(message.botId)?.name : undefined) ??
-                              intro?.name)
-                            : (message.authorName ?? t`You`)
-                      }
-                      speakerRole={
-                        message.role === "bot"
-                          ? message.botId
-                            ? peerBot(message.botId)?.title
-                            : intro?.title
-                          : personRole?.(message.authorUserId ?? currentUserId)
-                      }
-                      relayedVia={peerReceipt ? (intro?.name ?? undefined) : undefined}
-                      speakerImage={message.authorImage}
-                      ownerUserId={message.botId ? peerBot(message.botId)?.ownerUserId : undefined}
-                      viewerUserId={currentUserId}
-                      memberName={memberName}
-                      peerBot={peerBot}
-                      delegation={delegation}
-                      replyParent={
-                        message.replyToMessageId
-                          ? messageById.get(message.replyToMessageId)
-                          : undefined
-                      }
-                      onJumpToMessage={jumpToMessage}
-                      onRefresh={onRefresh}
-                      onBotChanged={onBotChanged}
-                      onAddRoutine={onAddRoutine}
-                      voiceReady={voiceReady}
-                      speaking={speakingMessageId === message.id}
-                      onSpeak={() => onSpeak(message)}
-                      onOpenComputer={onOpenComputer}
-                      onOpenImportSetup={onOpenImportSetup}
-                      onOpenImport={onOpenImport}
-                      showToolActivity={showToolActivity}
-                      onReply={onReply}
-                      onImageAsk={onImageAsk}
-                      onReplyInThread={
-                        onOpenThread && !peerReceipt ? (root) => onOpenThread(root.id) : undefined
-                      }
-                      onMarkUnread={onMarkUnread}
-                      onKeepInWiki={onKeepInWiki}
-                      onReact={onReact}
-                      onPin={onPin}
-                    />
+                    {versions && editingId === message.id ? (
+                      <MessageEditor
+                        initial={messageText(message)}
+                        onSave={(text) => versions.onEdit(message, text)}
+                        onCancel={() => setEditingId(null)}
+                      />
+                    ) : (
+                      <MessageView
+                        artifactTarget={artifactTarget}
+                        message={message}
+                        markedUnread={message.id === markedUnreadMessageId}
+                        mentions={mentionView.mentions.get(message.id)}
+                        canAnswer={answerableAskIds.has(message.id)}
+                        canDismiss={dismissableAskIds.has(message.id)}
+                        onOpenBot={onOpenBot}
+                        onOpenPeerMessages={onOpenPeerMessages}
+                        peerReplies={
+                          !channel && transcript.folded.has(message.id)
+                            ? expandedPeerMarkers.has(message.id)
+                              ? "expanded"
+                              : "collapsed"
+                            : undefined
+                        }
+                        channelMembers={channelMembers}
+                        onTogglePeerReplies={togglePeerReplies}
+                        onAnswer={onAnswer}
+                        continued={continued.has(message.id)}
+                        face={faces.get(message.id)}
+                        speakerName={
+                          peerReceipt
+                            ? undefined
+                            : message.role === "bot"
+                              ? (memberName?.(message.botId) ??
+                                (message.botId ? peerBot(message.botId)?.name : undefined) ??
+                                intro?.name)
+                              : (message.authorName ?? t`You`)
+                        }
+                        speakerRole={
+                          message.role === "bot"
+                            ? message.botId
+                              ? peerBot(message.botId)?.title
+                              : intro?.title
+                            : personRole?.(message.authorUserId ?? currentUserId)
+                        }
+                        relayedVia={peerReceipt ? (intro?.name ?? undefined) : undefined}
+                        speakerImage={message.authorImage}
+                        ownerUserId={
+                          message.botId ? peerBot(message.botId)?.ownerUserId : undefined
+                        }
+                        viewerUserId={currentUserId}
+                        memberName={memberName}
+                        peerBot={peerBot}
+                        delegation={delegation}
+                        replyParent={
+                          message.replyToMessageId
+                            ? messageById.get(message.replyToMessageId)
+                            : undefined
+                        }
+                        onJumpToMessage={jumpToMessage}
+                        onRefresh={onRefresh}
+                        onBotChanged={onBotChanged}
+                        onAddRoutine={onAddRoutine}
+                        voiceReady={voiceReady}
+                        speaking={speakingMessageId === message.id}
+                        onSpeak={() => onSpeak(message)}
+                        onOpenComputer={onOpenComputer}
+                        onOpenImportSetup={onOpenImportSetup}
+                        onOpenImport={onOpenImport}
+                        showToolActivity={showToolActivity}
+                        onReply={onReply}
+                        onReplyInThread={
+                          onOpenThread && !peerReceipt ? (root) => onOpenThread(root.id) : undefined
+                        }
+                        onMarkUnread={onMarkUnread}
+                        onKeepInWiki={onKeepInWiki}
+                        onReact={onReact}
+                        onPin={onPin}
+                        onImageAsk={onImageAsk}
+                        onLoadMessage={onLoadMessage}
+                        onEdit={
+                          versions &&
+                          !versions.busy &&
+                          canEditMessage(message, currentUserId) &&
+                          !peerReceipt
+                            ? () => setEditingId(message.id)
+                            : undefined
+                        }
+                        onRegenerate={
+                          versions && !versions.busy && versions.lastReplyId === message.id
+                            ? () => void versions.onRegenerate()
+                            : undefined
+                        }
+                        onFork={
+                          versions &&
+                          !versions.busy &&
+                          !peerReceipt &&
+                          canBranchFromMessage(message)
+                            ? () => void versions.onFork(message)
+                            : undefined
+                        }
+                      />
+                    )}
                   </div>
                 </div>
+                {versions && message.variants ? (
+                  <VersionSwitcher
+                    variants={message.variants}
+                    disabled={versions.busy}
+                    onSwitch={versions.onSwitch}
+                  />
+                ) : null}
                 {channel && onOpenThread ? (
                   <ChannelThreadFooter
                     replies={transcript.folded.get(message.id)}

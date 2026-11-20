@@ -310,8 +310,14 @@ export async function compactHistory(
   /** Compress all but the newest `keepRecent` messages now, ahead of the usual threshold. */
   options: { keepRecent?: number } = {},
 ): Promise<void> {
-  const thread = await deps.prisma.thread.findUniqueOrThrow({ where: { id: threadId } });
+  const thread = await deps.prisma.thread.findUniqueOrThrow({
+    where: { id: threadId },
+    include: { _count: { select: { branches: true } } },
+  });
   if (!thread.botId) return;
+  // A chat with versions has gaps in the seq of what is on screen, and a summary must never take
+  // in a version that is not. Its history stays as written until it is summarized by a copy.
+  if (thread._count?.branches) return;
   const previousCursor = thread.historyCompactedUpToSeq;
   const previousGeneration = thread.historyCompactionGeneration;
   const previousSummary = thread.historyCompactionSummary?.trim() || null;

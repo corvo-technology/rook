@@ -14,11 +14,14 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import {
   BookOpen,
   Copy,
+  GitBranch,
   MessageSquareDot,
   MessageSquareText,
   MoreHorizontal,
+  Pencil,
   Pin,
   PinOff,
+  RefreshCw,
   Reply,
   Smile,
   Square,
@@ -38,6 +41,9 @@ export function MessageHoverActions({
   markedUnread = false,
   onReact,
   onPin,
+  onEdit,
+  onRegenerate,
+  onFork,
 }: {
   message: ThreadMessage;
   /** Reads the reply aloud; absent where there is no voice or nothing to read. */
@@ -52,6 +58,12 @@ export function MessageHoverActions({
   onReact: (message: ThreadMessage, reaction: MessageReaction) => Promise<void>;
   /** Pins or unpins the message; absent where there is no pin list. */
   onPin?: (message: ThreadMessage, pinned: boolean) => Promise<void>;
+  /** Turns the message into a field to rewrite; absent unless the person may edit it now. */
+  onEdit?: () => void;
+  /** Answers again; absent unless this is the agent's newest reply and nothing is running. */
+  onRegenerate?: () => void;
+  /** Carries the chat on in a new one from here; absent where chats do not branch. */
+  onFork?: () => void;
 }) {
   const { t } = useLingui();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -139,6 +151,39 @@ export function MessageHoverActions({
             <MoreHorizontal size={15} strokeWidth={1.7} />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-auto">
+            {onEdit ? (
+              <DropdownMenuItem
+                onClick={() => {
+                  setMoreOpen(false);
+                  onEdit();
+                }}
+              >
+                <Pencil size={14} strokeWidth={1.7} />
+                <Trans>Edit</Trans>
+              </DropdownMenuItem>
+            ) : null}
+            {onRegenerate ? (
+              <DropdownMenuItem
+                onClick={() => {
+                  setMoreOpen(false);
+                  onRegenerate();
+                }}
+              >
+                <RefreshCw size={14} strokeWidth={1.7} />
+                <Trans>Regenerate</Trans>
+              </DropdownMenuItem>
+            ) : null}
+            {onFork ? (
+              <DropdownMenuItem
+                onClick={() => {
+                  setMoreOpen(false);
+                  onFork();
+                }}
+              >
+                <GitBranch size={14} strokeWidth={1.7} />
+                <Trans>Continue in new thread</Trans>
+              </DropdownMenuItem>
+            ) : null}
             {onReply ? (
               <DropdownMenuItem
                 onClick={() => {

@@ -1,4 +1,5 @@
 export const JA_MESSAGES: Record<string, string> = {
+  "For this conversation": "この会話で使う",
   Automatic: "自動",
   "Complex tasks model": "複雑なタスク用モデル",
   "Not sent. Tap for options": "未送信。タップしてオプションを表示",
@@ -1222,4 +1223,19 @@ export const JA_MESSAGES: Record<string, string> = {
     "すでに利用中のAI（Claude、ChatGPT、APIキー）を使えます",
   "Yearly · 2 months free": "年払い · 2か月無料",
   Yearly: "年払い",
+  Regenerate: "再生成",
+  "Continue in new thread": "新しいスレッドで続ける",
+  "Edit message": "メッセージを編集",
+  "Could not edit message": "メッセージを編集できませんでした",
+  "Could not regenerate reply": "返信を再生成できませんでした",
+  "Could not switch version": "バージョンを切り替えられませんでした",
+  "Could not continue in a new thread": "新しいスレッドで続けられませんでした",
+  "Previous version": "前のバージョン",
+  "Next version": "次のバージョン",
+  "{position} of {count}": "{position} / {count}",
+  "This looks like a key. Save it as a credential instead?":
+    "キーのようです。代わりに認証情報として保存しますか?",
+  "Save credential": "認証情報を保存",
+  "Send anyway": "このまま送信",
+  "Could not save the credential": "認証情報を保存できませんでした",
 };

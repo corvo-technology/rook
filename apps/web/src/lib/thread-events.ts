@@ -267,6 +267,7 @@ export function prependThreadMessagePage(
 export function isThreadSnapshotEvent(event: ProductEvent): boolean {
   return (
     event.type === "thread.cleared" ||
+    event.type === "thread.branch.changed" ||
     event.type === "thread.progress" ||
     event.type === "thread.subagent" ||
     event.type === "thread.cloud_agent" ||
@@ -302,6 +303,16 @@ export function reduceThreadSnapshot(
       olderCursor: null,
       run: null,
       activeRuns: [],
+    };
+  }
+  if (event.type === "thread.branch.changed") {
+    // Everything after the fork belongs to a version no longer on screen; the refresh that
+    // follows brings back whichever version was switched to.
+    const forkSeq = typeof event.payload.forkSeq === "number" ? event.payload.forkSeq : -1;
+    return {
+      ...prev,
+      cursor: event.seq,
+      messages: prev.messages.filter((message) => message.seq <= forkSeq),
     };
   }
   if (event.type === "run.started") {

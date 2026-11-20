@@ -475,6 +475,10 @@ msgstr "{percent}% usado"
 msgid "{percent}% used · {used} of {windowLabel} tokens"
 msgstr "{percent}% usado · {used} de {windowLabel} tokens"
 
+#: src/pages/shell/message-versions.tsx
+msgid "{position} of {count}"
+msgstr "{position} de {count}"
+
 #: src/pages/shell/message-view.tsx
 msgid "{position} of {total}"
 msgstr "{position} de {total}"
@@ -841,6 +845,10 @@ msgstr "Menu da conta de {name}"
 #: src/pages/platform/PlatformConnect.tsx
 msgid "Action needed"
 msgstr "Ação necessária"
+
+#: src/lib/server-copy.ts
+msgid "Actions already taken by the earlier reply were not undone."
+msgstr "As ações da resposta anterior não foram desfeitas."
 
 #. placeholder {0}: bot.name
 #. placeholder {0}: group.spaceName
@@ -1961,6 +1969,7 @@ msgstr "Não pode ler imagens"
 #: src/pages/platform/NewPartnerDialog.tsx
 #: src/pages/platform/PricingSection.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/shell/message-versions.tsx
 #: src/pages/Store.tsx
 #: src/pages/WhatsAppNumbers.tsx
 #: src/pages/WikiBrowser.tsx
@@ -2644,6 +2653,10 @@ msgstr "Limite de contexto"
 msgid "Continue"
 msgstr "Continuar"
 
+#: src/pages/shell/message-hover-actions.tsx
+msgid "Continue in new thread"
+msgstr "Continuar em uma nova conversa"
+
 #: src/pages/partner/PartnerPayments.tsx
 msgid "Continue setup"
 msgstr "Continuar configuração"
@@ -2826,6 +2839,10 @@ msgstr "Não foi possível conectar à tela do computador"
 msgid "Could not continue"
 msgstr "Não foi possível continuar"
 
+#: src/pages/shell/use-composer-actions.ts
+msgid "Could not continue in a new thread"
+msgstr "Não foi possível continuar em uma nova conversa"
+
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/create-bot-panel.tsx
 msgid "Could not create bot"
@@ -2928,6 +2945,10 @@ msgstr "Não foi possível baixar o {0}. Tente novamente."
 #: src/components/ArtifactFileCard.tsx
 msgid "Could not download {name}. Try again."
 msgstr "Não foi possível baixar o {name}. Tente novamente."
+
+#: src/pages/shell/use-composer-actions.ts
+msgid "Could not edit message"
+msgstr "Não foi possível editar a mensagem"
 
 #: src/pages/platform/UsageEvidenceExport.tsx
 msgid "Could not export"
@@ -3085,6 +3106,10 @@ msgstr "Não foi possível acessar este servidor de modelos"
 msgid "Could not read these files"
 msgstr "Não foi possível ler estes arquivos"
 
+#: src/pages/shell/use-composer-actions.ts
+msgid "Could not regenerate reply"
+msgstr "Não foi possível gerar a resposta de novo"
+
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MembersSettingsPanel.tsx
 #: src/pages/ScratchpadSection.tsx
@@ -3211,6 +3236,7 @@ msgid "Could not save that voice"
 msgstr "Não foi possível salvar essa voz"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 msgid "Could not save the credential"
 msgstr "Não foi possível salvar a credencial"
 
@@ -3273,6 +3299,10 @@ msgstr "Não foi possível enviar esta resposta"
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Could not switch {failedNames}. Try again."
 msgstr "Não foi possível trocar {failedNames}. Tente de novo."
+
+#: src/pages/shell/use-composer-actions.ts
+msgid "Could not switch version"
+msgstr "Não foi possível trocar de versão"
 
 #: src/pages/shell/use-computer.tsx
 msgid "Could not take control"
@@ -3904,6 +3934,7 @@ msgstr "Desconectando…"
 #: src/components/PasskeyOffer.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/shell/message-cards.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 #: src/pages/WikiBrowser.tsx
 msgid "Dismiss"
 msgstr "Dispensar"
@@ -4069,6 +4100,7 @@ msgstr "Cada vaga acima de {included} custa {extraCostPrice}"
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/ConnectionsPage.tsx
 #: src/pages/partner/PartnerTemplatePanel.tsx
+#: src/pages/shell/message-hover-actions.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/YouMemory.tsx
 msgid "Edit"
@@ -4081,6 +4113,10 @@ msgstr "Editar primeiro"
 #: src/pages/shell/bot-panel.tsx
 msgid "Edit label"
 msgstr "Editar rótulo"
+
+#: src/pages/shell/message-versions.tsx
+msgid "Edit message"
+msgstr "Editar mensagem"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Edit name"
@@ -4493,6 +4529,10 @@ msgstr "Primeiro bot"
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "First messages, one per line"
 msgstr "Primeiras mensagens, uma por linha"
+
+#: src/pages/shell/composer-model-choice.tsx
+msgid "For this conversation"
+msgstr "Para esta conversa"
 
 #: src/components/PlanChoice.tsx
 msgid "For up to {count} people"
@@ -5220,6 +5260,10 @@ msgstr "Mantido"
 #: src/pages/RoutineEditor.tsx
 msgid "key"
 msgstr "chave"
+
+#: src/pages/shell/pasted-key-prompt.tsx
+msgid "Key in message"
+msgstr "Chave na mensagem"
 
 #: src/pages/onboarding-quick-connect.tsx
 msgid "Key not recognized. Choose a provider."
@@ -6025,6 +6069,7 @@ msgstr "Meu Início"
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/create-bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 #: src/pages/SpaceSettingsPanel.tsx
 msgid "Name"
 msgstr "Nome"
@@ -6221,6 +6266,10 @@ msgstr "próxima rotina em {n} min"
 #: src/pages/HomePage.tsx
 msgid "Next routines"
 msgstr "Próximas rotinas"
+
+#: src/pages/shell/message-versions.tsx
+msgid "Next version"
+msgstr "Próxima versão"
 
 #: src/pages/connections/connection-model.ts
 msgid "No access"
@@ -7205,6 +7254,10 @@ msgstr "Anterior"
 msgid "Previous page"
 msgstr "Página anterior"
 
+#: src/pages/shell/message-versions.tsx
+msgid "Previous version"
+msgstr "Versão anterior"
+
 #: src/pages/partner/PartnerCustomers.tsx
 msgid "Price"
 msgstr "Preço"
@@ -7524,6 +7577,10 @@ msgstr "Recusar"
 #: src/components/WikiChangeCard.tsx
 msgid "Refused"
 msgstr "Recusado"
+
+#: src/pages/shell/message-hover-actions.tsx
+msgid "Regenerate"
+msgstr "Gerar de novo"
 
 #: src/lib/user-error.ts
 msgid "Registration is closed"
@@ -8071,12 +8128,14 @@ msgstr "sábado"
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/message-versions.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/YouMemory.tsx
 msgid "Save"
 msgstr "Salvar"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 msgid "Save credential"
 msgstr "Salvar credencial"
 
@@ -8137,6 +8196,7 @@ msgstr "Salvando..."
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 msgid "Saving…"
 msgstr "Salvando..."
 
@@ -8286,6 +8346,10 @@ msgstr "Envie <0>{linkCode}</0> para <1>{linkAddress}</1> pelo {linkApp} em até
 #: src/components/AskCard.tsx
 msgid "Send answer"
 msgstr "Enviar resposta"
+
+#: src/pages/shell/pasted-key-prompt.tsx
+msgid "Send anyway"
+msgstr "Enviar mesmo assim"
 
 #: src/pages/shell/composer-error.tsx
 msgid "Send as file"
@@ -9267,6 +9331,10 @@ msgstr "Isto ainda não foi enviado. Edite ou envie."
 #: src/pages/InvitePage.tsx
 msgid "This link no longer works"
 msgstr "Este link não funciona mais"
+
+#: src/pages/shell/pasted-key-prompt.tsx
+msgid "This looks like a key. Save it as a credential instead?"
+msgstr "Parece uma chave. Salvar como credencial?"
 
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/Onboarding.tsx

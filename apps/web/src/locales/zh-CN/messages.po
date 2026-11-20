@@ -475,6 +475,10 @@ msgstr "已用 {percent}%"
 msgid "{percent}% used · {used} of {windowLabel} tokens"
 msgstr "已使用 {percent}% · {used} / {windowLabel} 个令牌"
 
+#: src/pages/shell/message-versions.tsx
+msgid "{position} of {count}"
+msgstr "第 {position} / {count}"
+
 #: src/pages/shell/message-view.tsx
 msgid "{position} of {total}"
 msgstr "第 {position} 项，共 {total} 项"
@@ -841,6 +845,10 @@ msgstr "{name} 的账户菜单"
 #: src/pages/platform/PlatformConnect.tsx
 msgid "Action needed"
 msgstr "需要处理"
+
+#: src/lib/server-copy.ts
+msgid "Actions already taken by the earlier reply were not undone."
+msgstr "之前回复已执行的操作没有被撤销。"
 
 #. placeholder {0}: bot.name
 #. placeholder {0}: group.spaceName
@@ -1961,6 +1969,7 @@ msgstr "无法读取图像"
 #: src/pages/platform/NewPartnerDialog.tsx
 #: src/pages/platform/PricingSection.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/shell/message-versions.tsx
 #: src/pages/Store.tsx
 #: src/pages/WhatsAppNumbers.tsx
 #: src/pages/WikiBrowser.tsx
@@ -2644,6 +2653,10 @@ msgstr "上下文限制"
 msgid "Continue"
 msgstr "继续"
 
+#: src/pages/shell/message-hover-actions.tsx
+msgid "Continue in new thread"
+msgstr "在新线程中继续"
+
 #: src/pages/partner/PartnerPayments.tsx
 msgid "Continue setup"
 msgstr "继续设置"
@@ -2826,6 +2839,10 @@ msgstr "无法连接到电脑屏幕"
 msgid "Could not continue"
 msgstr "无法继续"
 
+#: src/pages/shell/use-composer-actions.ts
+msgid "Could not continue in a new thread"
+msgstr "无法在新线程中继续"
+
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/create-bot-panel.tsx
 msgid "Could not create bot"
@@ -2928,6 +2945,10 @@ msgstr "无法下载 {0}。请重试。"
 #: src/components/ArtifactFileCard.tsx
 msgid "Could not download {name}. Try again."
 msgstr "无法下载 {name}。请重试。"
+
+#: src/pages/shell/use-composer-actions.ts
+msgid "Could not edit message"
+msgstr "无法编辑消息"
 
 #: src/pages/platform/UsageEvidenceExport.tsx
 msgid "Could not export"
@@ -3085,6 +3106,10 @@ msgstr "无法连接此模型服务器"
 msgid "Could not read these files"
 msgstr "无法读取这些文件"
 
+#: src/pages/shell/use-composer-actions.ts
+msgid "Could not regenerate reply"
+msgstr "无法重新生成回复"
+
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MembersSettingsPanel.tsx
 #: src/pages/ScratchpadSection.tsx
@@ -3211,6 +3236,7 @@ msgid "Could not save that voice"
 msgstr "无法保存该语音"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 msgid "Could not save the credential"
 msgstr "无法保存凭据"
 
@@ -3273,6 +3299,10 @@ msgstr "无法提交此回答"
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Could not switch {failedNames}. Try again."
 msgstr "无法切换 {failedNames}。请重试。"
+
+#: src/pages/shell/use-composer-actions.ts
+msgid "Could not switch version"
+msgstr "无法切换版本"
 
 #: src/pages/shell/use-computer.tsx
 msgid "Could not take control"
@@ -3904,6 +3934,7 @@ msgstr "正在断开…"
 #: src/components/PasskeyOffer.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/shell/message-cards.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 #: src/pages/WikiBrowser.tsx
 msgid "Dismiss"
 msgstr "忽略"
@@ -4069,6 +4100,7 @@ msgstr "超过 {included} 人的每个席位 {extraCostPrice}"
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/ConnectionsPage.tsx
 #: src/pages/partner/PartnerTemplatePanel.tsx
+#: src/pages/shell/message-hover-actions.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/YouMemory.tsx
 msgid "Edit"
@@ -4081,6 +4113,10 @@ msgstr "先编辑"
 #: src/pages/shell/bot-panel.tsx
 msgid "Edit label"
 msgstr "编辑标签"
+
+#: src/pages/shell/message-versions.tsx
+msgid "Edit message"
+msgstr "编辑消息"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Edit name"
@@ -4493,6 +4529,10 @@ msgstr "第一个机器人"
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "First messages, one per line"
 msgstr "首条消息，每行一条"
+
+#: src/pages/shell/composer-model-choice.tsx
+msgid "For this conversation"
+msgstr "用于此对话"
 
 #: src/components/PlanChoice.tsx
 msgid "For up to {count} people"
@@ -5220,6 +5260,10 @@ msgstr "保留"
 #: src/pages/RoutineEditor.tsx
 msgid "key"
 msgstr "密钥"
+
+#: src/pages/shell/pasted-key-prompt.tsx
+msgid "Key in message"
+msgstr "消息中的密钥"
 
 #: src/pages/onboarding-quick-connect.tsx
 msgid "Key not recognized. Choose a provider."
@@ -6025,6 +6069,7 @@ msgstr "我的首页"
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/create-bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 #: src/pages/SpaceSettingsPanel.tsx
 msgid "Name"
 msgstr "名称"
@@ -6221,6 +6266,10 @@ msgstr "下一个例行任务在 {n} 分钟后"
 #: src/pages/HomePage.tsx
 msgid "Next routines"
 msgstr "接下来的例行任务"
+
+#: src/pages/shell/message-versions.tsx
+msgid "Next version"
+msgstr "下一个版本"
 
 #: src/pages/connections/connection-model.ts
 msgid "No access"
@@ -7205,6 +7254,10 @@ msgstr "上一步"
 msgid "Previous page"
 msgstr "上一页"
 
+#: src/pages/shell/message-versions.tsx
+msgid "Previous version"
+msgstr "上一个版本"
+
 #: src/pages/partner/PartnerCustomers.tsx
 msgid "Price"
 msgstr "价格"
@@ -7524,6 +7577,10 @@ msgstr "拒绝"
 #: src/components/WikiChangeCard.tsx
 msgid "Refused"
 msgstr "已拒绝"
+
+#: src/pages/shell/message-hover-actions.tsx
+msgid "Regenerate"
+msgstr "重新生成"
 
 #: src/lib/user-error.ts
 msgid "Registration is closed"
@@ -8071,12 +8128,14 @@ msgstr "周六"
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/message-versions.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/YouMemory.tsx
 msgid "Save"
 msgstr "保存"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 msgid "Save credential"
 msgstr "保存凭据"
 
@@ -8137,6 +8196,7 @@ msgstr "正在保存…"
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 msgid "Saving…"
 msgstr "正在保存…"
 
@@ -8286,6 +8346,10 @@ msgstr "请在 10 分钟内从 {linkApp} 向 <1>{linkAddress}</1> 发送 <0>{lin
 #: src/components/AskCard.tsx
 msgid "Send answer"
 msgstr "发送回答"
+
+#: src/pages/shell/pasted-key-prompt.tsx
+msgid "Send anyway"
+msgstr "仍然发送"
 
 #: src/pages/shell/composer-error.tsx
 msgid "Send as file"
@@ -9267,6 +9331,10 @@ msgstr "这条还没有发送。可以编辑，也可以发送。"
 #: src/pages/InvitePage.tsx
 msgid "This link no longer works"
 msgstr "此链接已失效"
+
+#: src/pages/shell/pasted-key-prompt.tsx
+msgid "This looks like a key. Save it as a credential instead?"
+msgstr "这看起来像密钥。改为保存为凭据吗?"
 
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/Onboarding.tsx

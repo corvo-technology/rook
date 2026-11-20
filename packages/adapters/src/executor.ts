@@ -64,6 +64,7 @@ import {
   runTokens,
   settleReleasedTakeoverCards,
   spaceHasModelAccess,
+  threadBranchInclude,
 } from "@corvo/db";
 import { enrichLogContext, getLogger } from "@corvo/logging";
 import { sanitizedError } from "@corvo/logging/monitoring";
@@ -156,6 +157,7 @@ import { ROUTER_PASS_INSTRUCTION, routerAnsweredNote } from "./router-pass.js";
 import { backOffRoutineAfterAccountError } from "./routine-backoff.js";
 import { lateRoutineRunInstruction } from "./routine-lateness.js";
 import { startNextRoutineStep, workflowContinuesAfter } from "./routine-steps.js";
+import { noteSteeringClaimed } from "./run-answers.js";
 import { lazyRunComputer } from "./run-computer.js";
 import type {
   RunComputerUseState,
@@ -265,6 +267,7 @@ import { loadAgentTicketContext } from "./ticket-context.js";
 import { startTicketRun } from "./ticket-run-moves.js";
 import { appendToolCompletionAudit } from "./tool-completion-audit.js";
 import { loadUserMemoryContext } from "./user-memory-run.js";
+import { sayNowAllowed } from "./user-progress.js";
 import { createWebProvider } from "./web-provider-factory.js";
 import { loadWikiIndexContext } from "./wiki-context.js";
 import { wikiOfferInstruction } from "./wiki-offer.js";
@@ -505,9 +508,13 @@ export function createRunExecutor(deps: ExecutorDeps) {
             select: { userId: true },
           })
         ).userId;
+        // The version of the chat on screen is part of what the agent reads, so the thread comes first.
+        const thread = await deps.prisma.thread.findUniqueOrThrow({
+          where: { id: run.threadId },
+          include: threadBranchInclude,
+        });
         const [
           bot,
-          thread,
           messages,
           peerMessage,
           task,
@@ -525,8 +532,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
             where: { id: run.botId },
             include: { computer: true, space: { select: { pausedAt: true } } },
           }),
-          deps.prisma.thread.findUniqueOrThrow({ where: { id: run.threadId } }),
-          loadRunHistoryMessages(deps.prisma, run, PROMPT_HISTORY_WINDOW_SIZE, channelId),
+          loadRunHistoryMessages(deps.prisma, run, PROMPT_HISTORY_WINDOW_SIZE, thread, channelId),
           run.trigger === "bot_message"
             ? loadBotMessageContext(deps.prisma, run.sourceMessageId)
             : Promise.resolve(undefined),
@@ -1255,6 +1261,12 @@ export function createRunExecutor(deps: ExecutorDeps) {
             disabledBuiltinTools: botDisabledTools(bot),
             fleetManagement: bot.fleetManagement,
             followUpFromUser: sourceMessage?.role === "user",
+            sayNowOffered: sayNowAllowed({
+              ownerStartedRun,
+              messagingChannelRun,
+              voiceCall,
+              visitorRun,
+            }),
             // An optional tool: if the steps cannot be counted, the run goes on without it.
             workflowContinues:
               run.trigger === "routine" &&
@@ -1863,6 +1875,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
                   workspaceInstruction,
                   agentEnvironmentInstruction,
                   replyGuidance: runReplyGuidance(run.trigger),
+                  sayNowOffered: builtins.some((tool) => tool.name === "say_now"),
                   disabledBuiltinTools,
                   offeredFleetTools: offeredFleetTools(builtins),
                 }),
@@ -1996,8 +2009,8 @@ export function createRunExecutor(deps: ExecutorDeps) {
                   runSecrets,
                 );
               },
-              claimSteering: (seenIds) =>
-                claimRunSteering(
+              claimSteering: async (seenIds) => {
+                const claimed = await claimRunSteering(
                   deps,
                   {
                     threadId: thread.id,
@@ -2013,7 +2026,13 @@ export function createRunExecutor(deps: ExecutorDeps) {
                     messageId: currentTurnMessage?.id,
                     hasImages: Boolean(currentTurnImages?.length),
                   },
-                ),
+                );
+                await noteSteeringClaimed(
+                  ctx,
+                  claimed.map((item) => item.messageId),
+                );
+                return claimed;
+              },
             },
             context,
           );

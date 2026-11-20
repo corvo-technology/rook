@@ -37,6 +37,8 @@ export type SendPayload = {
   attachments: PickedAttachment[];
   replyTargetId?: string;
   replyQuote: string | null;
+  /** The model picked for this message; the agent's own applies when absent. */
+  model?: { provider: string; modelId: string };
 };
 
 export type SendAttempt = {
@@ -104,6 +106,7 @@ export async function deliverSend(
     artifactIds: artifactIds.length ? artifactIds : undefined,
     replyToMessageId: reroutedToGroup ? undefined : payload.replyTargetId,
     replyQuote: reroutedToGroup ? undefined : (payload.replyQuote ?? undefined),
+    ...(botTarget && !groupTarget && payload.model ? { model: payload.model } : {}),
   });
   return sent.seq;
 }

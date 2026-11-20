@@ -7,6 +7,8 @@ import { McpTransportSchema } from "./mcp.js";
 export const ProductEventType = z.enum([
   "thread.message.created",
   "thread.cleared",
+  /** The conversation now shows another version; the payload carries its branch (null: the original) and fork seq. */
+  "thread.branch.changed",
   "thread.message.updated",
   "thread.message.reaction",
   /** A message was pinned or unpinned; the payload carries its id and `pinnedAt` (null when unpinned). */
@@ -136,6 +138,7 @@ export const MetaCode = z.enum([
   "routine_check_paused",
   "sandbox_storage_full",
   "computer_home_lost",
+  "branch_effects",
 ]);
 export type MetaCode = z.infer<typeof MetaCode>;
 
@@ -580,6 +583,15 @@ export const RoutingReportSchema = z.object({
 });
 export type RoutingReport = z.infer<typeof RoutingReportSchema>;
 
+export const MessageVariantsSchema = z.object({
+  /** Zero-based place of the version on screen. */
+  index: z.number().int().nonnegative(),
+  count: z.number().int().min(2),
+  /** The branch of each version in order; null is the original line. */
+  branchIds: z.array(Id.nullable()),
+});
+export type MessageVariants = z.infer<typeof MessageVariantsSchema>;
+
 export const ThreadMessageSchema = z.object({
   id: Id,
   threadId: Id,
@@ -597,6 +609,8 @@ export const ThreadMessageSchema = z.object({
   callId: z.string().optional(),
   /** Who wrote a user message in a shared conversation; absent on older messages. */
   authorUserId: Id.optional(),
+  /** On the message that opens one of several versions of a point in the chat (regenerated or edited). */
+  variants: MessageVariantsSchema.optional(),
   authorName: z.string().optional(),
   authorImage: z.string().nullable().optional(),
   /** The routine whose run wrote this message; absent for anything a person or a chat started. */

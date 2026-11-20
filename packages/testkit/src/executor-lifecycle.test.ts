@@ -373,6 +373,89 @@ describeIntegration("run executor lifecycle", () => {
     expect(userMessages[0]!.seq).toBeLessThan(userMessages[1]!.seq);
   });
 
+  it("answers each message sent during a run in its own reply, in order", async () => {
+    const seeded = await seedRun("one-answer-each", "start the analysis", {
+      status: "running",
+      leaseOwner: "answer-worker",
+      leaseFence: 2,
+      leaseExpiresAt: new Date(Date.now() + 60_000),
+      startedAt: new Date(),
+    });
+    const attempt = await db.attempt.create({
+      data: { runId: seeded.run.id, fence: 2, status: "running" },
+    });
+    const events = createThreadEvents(handles.prisma);
+    for (const message of ["What colour is it?", "How many are there?"]) {
+      await runAsTenant(seeded.me, () =>
+        events.sendUserMessage({
+          spaceId: seeded.me.spaceId,
+          threadId: seeded.thread.id,
+          botId: seeded.bot.id,
+          userId: seeded.me.userId,
+          blocks: [{ kind: "text", text: message }],
+          prompt: message,
+          trigger: "follow_up",
+        }),
+      );
+    }
+    const claimed = await runAsSystem("background job run.continue", () =>
+      events.claimSteering({
+        threadId: seeded.thread.id,
+        botId: seeded.bot.id,
+        runId: seeded.run.id,
+        leaseOwner: "answer-worker",
+        leaseFence: 2,
+        seenIds: [],
+      }),
+    );
+    expect(claimed).toHaveLength(2);
+    const [colour, count] = claimed.map((item) => item.messageId) as [string, string];
+
+    const finalized = await runAsSystem("background job run.continue", () =>
+      events.finalizeRun({
+        spaceId: seeded.me.spaceId,
+        threadId: seeded.thread.id,
+        botId: seeded.bot.id,
+        runId: seeded.run.id,
+        taskId: seeded.task.id,
+        attemptId: attempt.id,
+        leaseOwner: "answer-worker",
+        leaseFence: 2,
+        outcome: "completed",
+        blocks: [
+          { kind: "text", text: "Blue." },
+          { kind: "text", text: "Four." },
+        ],
+        answers: [
+          { replyToMessageId: colour, blocks: [{ kind: "text", text: "Blue." }] },
+          { replyToMessageId: count, blocks: [{ kind: "text", text: "Four." }] },
+        ],
+      }),
+    );
+    expect(finalized).toBeTruthy();
+
+    const replies = await db.message.findMany({
+      where: { threadId: seeded.thread.id, runId: seeded.run.id, role: "bot" },
+      orderBy: { seq: "asc" },
+    });
+    expect(replies.map((reply) => reply.replyToMessageId)).toEqual([colour, count]);
+    expect(replies.map((reply) => reply.blocks)).toEqual([
+      [{ kind: "text", text: "Blue." }],
+      [{ kind: "text", text: "Four." }],
+    ]);
+    const created = await db.event.findMany({
+      where: { threadId: seeded.thread.id, runId: seeded.run.id, type: "thread.message.created" },
+      orderBy: { seq: "asc" },
+    });
+    expect(
+      created
+        .map((event) => event.payload as { role?: string; replyToMessageId?: string })
+        .filter((payload) => payload.role === "bot")
+        .map((payload) => payload.replyToMessageId),
+    ).toEqual([colour, count]);
+    expect(await db.steeringMessage.count({ where: { botId: seeded.bot.id } })).toBe(0);
+  });
+
   it.each([
     { claim: false, fresh: false, outcome: "failed" as const },
     { claim: true, fresh: false, outcome: "failed" as const },
@@ -847,7 +930,7 @@ describeIntegration("run executor lifecycle", () => {
     );
     expect(claimed.map((item) => item.messageId)).toEqual([publicSend.messageId]);
     const history = await runAsSystem("background job run.continue", () =>
-      loadRunHistoryMessages(handles.prisma, seeded.run, 100, channel.channelId),
+      loadRunHistoryMessages(handles.prisma, seeded.run, 100, {}, channel.channelId),
     );
     expect(history.map((message) => message.id).sort()).toEqual(
       [source.id, publicSend.messageId].sort(),
@@ -891,6 +974,7 @@ describeIntegration("run executor lifecycle", () => {
             handles.prisma,
             { ...seeded.run, id: "next-group-run" },
             100,
+            {},
             channel.channelId,
           ),
         )

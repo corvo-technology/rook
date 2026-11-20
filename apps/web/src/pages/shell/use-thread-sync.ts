@@ -364,6 +364,10 @@ export function useThreadSync({
           false,
         );
         if (event.type === "thread.cleared") resetHistory();
+        if (event.type === "thread.branch.changed") {
+          resetHistory();
+          void snapshotRefresh.invalidate().catch(() => undefined);
+        }
         if (event.type === "bot.archived") {
           void refreshBots(true).catch(() => undefined);
         } else if (

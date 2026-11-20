@@ -76,6 +76,8 @@ export type SettingsGeneralProps = {
   /** The user's saved IANA timezone, or null before one is set. */
   timezone?: string | null;
   onTimezoneChange?: (timezone: string) => Promise<void>;
+  /** Saves the chosen app language on the account, so emails follow it. */
+  onLocaleChange?: (locale: UiLocale) => Promise<unknown>;
 };
 
 export function GeneralSettingsPanels({
@@ -84,6 +86,7 @@ export function GeneralSettingsPanels({
   onNameSaved,
   timezone = null,
   onTimezoneChange,
+  onLocaleChange,
 }: SettingsGeneralProps) {
   const { t } = useLingui();
   const account = accountDisplay({ name, email }, t`You`);
@@ -169,6 +172,7 @@ export function GeneralSettingsPanels({
     const requestId = ++localeRequestRef.current;
     setLocale(next);
     void setUiLocale(next).then((activated) => {
+      void onLocaleChange?.(activated)?.catch(() => {});
       if (requestId !== localeRequestRef.current) return;
       setLocale(activated);
     });

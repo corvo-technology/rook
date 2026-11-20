@@ -34,6 +34,7 @@ describe("built-in tool bridge", () => {
       "ask_user",
       "attach_file",
       "connect_app",
+      "find_in_app",
       "find_tool",
       "list_files",
       "message_user",

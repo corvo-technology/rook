@@ -157,6 +157,12 @@ export function useThreadLiveSubscription({
               if (isRunTerminalEvent(event)) {
                 void refreshMentionBots();
               }
+              if (event.type === "thread.branch.changed") {
+                // Older pages belong to the version that left; load the one on screen.
+                expandedHistoryThread.current = null;
+                historyEpoch.current += 1;
+                void snapshotRefresh.invalidate().catch(() => undefined);
+              }
               if (isRunTerminalEvent(event) || event.type === "run.waiting_input") {
                 // Reconcile run ownership for ask cards first seen through live events.
                 void snapshotRefresh.invalidate().catch(() => undefined);

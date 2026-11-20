@@ -149,6 +149,9 @@ export const MessageView = memo(function MessageView({
   onReact,
   onPin,
   onLoadMessage,
+  onEdit,
+  onRegenerate,
+  onFork,
 }: {
   artifactTarget: ArtifactTarget;
   canAnswer: boolean;
@@ -217,6 +220,10 @@ export const MessageView = memo(function MessageView({
   onPin?: (message: ThreadMessage, pinned: boolean) => Promise<void>;
   /** Reads this message whole, where a long helper report arrived as a preview. */
   onLoadMessage?: (message: ThreadMessage) => Promise<ThreadMessage | null>;
+  /** The message's own edit, regenerate and branch actions; each is absent when it does not apply. */
+  onEdit?: () => void;
+  onRegenerate?: () => void;
+  onFork?: () => void;
 }) {
   const { t, i18n } = useLingui();
   // Where work handed to another bot stands: answered, being worked on right now, or waiting.
@@ -387,6 +394,9 @@ export const MessageView = memo(function MessageView({
       markedUnread={markedUnread}
       onReact={onReact}
       onPin={onPin}
+      onEdit={onEdit}
+      onRegenerate={onRegenerate}
+      onFork={onFork}
       speech={
         voiceReady && !isLive && message.blocks.some((block) => block.kind === "text")
           ? { speaking, onSpeak }

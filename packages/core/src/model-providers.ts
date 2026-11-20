@@ -146,10 +146,14 @@ export type ConnectedModelChoice = {
   modelLabel?: string;
   /** The catalog says whether the model reads images; unknown for free-form ids. */
   images?: boolean;
+  /** Runs on the deployment's hosted model and so spends the organization's credits. */
+  managed?: boolean;
 };
 
 type CatalogModelRef = {
   managed?: boolean;
+  /** Left out by older servers and plain chat connections; only "chat" models take a message. */
+  protocol?: string;
   provider: string;
   id: string;
   label: string;
@@ -247,6 +251,7 @@ function catalogChoices(providerModels: readonly CatalogModelRef[]): ConnectedMo
       providerLabel: entry.providerName ?? entry.provider,
       modelLabel: entry.label,
       images: entry.images,
+      ...(entry.managed ? { managed: true } : {}),
     };
   });
 }
@@ -355,6 +360,8 @@ export type ChatModelChoice = {
   title?: string;
   detail?: string;
   images?: boolean;
+  /** Listed but not choosable now, such as a hosted model while the credits are spent. */
+  disabled?: boolean;
 };
 
 /** Filter on full labels before shortening rows; saved/default choices stay first. */
@@ -520,4 +527,33 @@ export function canUseCompatibleModelAsDefault(
   modelId: string,
 ): boolean {
   return savedIds === undefined || savedIds.includes(modelId);
+}
+
+/** What the organization's billing says about running a hosted model now; `null` when it does not bill. */
+export type HostedModelBilling = {
+  access: boolean;
+  funding?: "byok" | "credits" | null;
+  balanceUsd?: number;
+} | null;
+
+/** Whether hosted (credit-funded) models can run: billing is off, or access and balance remain. */
+export function hostedModelsAvailable(billing: HostedModelBilling | undefined): boolean {
+  if (!billing) return true;
+  if (!billing.access) return false;
+  return !(billing.funding === "credits" && (billing.balanceUsd ?? 0) <= 0);
+}
+
+/**
+ * The models one message can be sent on: every connected chat model, a hosted one disabled while
+ * its credits are unavailable. Models that do not answer chat (decision, image) never appear.
+ */
+export function messageModelChoices(
+  credentials: readonly CredentialModelRef[],
+  catalog: readonly CatalogModelRef[],
+  creditsAvailable: boolean,
+): ChatModelChoice[] {
+  const chat = catalog.filter((entry) => !entry.protocol || entry.protocol === "chat");
+  return connectedModelChoices(credentials, chat).map((choice) =>
+    choice.managed && !creditsAvailable ? { ...choice, disabled: true } : choice,
+  );
 }

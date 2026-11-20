@@ -17,6 +17,8 @@ describePostgres("billing notices (PostgreSQL)", () => {
   const organizationId = `notice-org-${suffix}`;
   const ownerId = `notice-owner-${suffix}`;
   const memberId = `notice-member-${suffix}`;
+  const savedOwnerId = `notice-saved-${suffix}`;
+  const bareOwnerId = `notice-bare-${suffix}`;
   let prisma: PrismaClient;
   let close: () => Promise<void>;
 
@@ -27,9 +29,15 @@ describePostgres("billing notices (PostgreSQL)", () => {
       await db.prisma.$disconnect();
       await db.pool.end();
     };
-    for (const id of [ownerId, memberId])
+    for (const id of [ownerId, memberId, savedOwnerId, bareOwnerId])
       await prisma.user.create({
-        data: { id, name: id, email: `${id}@corvo.test`, emailVerified: false },
+        data: {
+          id,
+          name: id,
+          email: `${id}@corvo.test`,
+          emailVerified: false,
+          locale: id === savedOwnerId ? "de" : null,
+        },
       });
     await prisma.organization.create({
       data: { id: organizationId, name: "Notice Org", slug: organizationId, createdAt: new Date() },
@@ -43,6 +51,13 @@ describePostgres("billing notices (PostgreSQL)", () => {
           role: "owner",
           createdAt: new Date(),
         },
+        ...[savedOwnerId, bareOwnerId].map((userId) => ({
+          id: `m-${userId}`,
+          organizationId,
+          userId,
+          role: "owner",
+          createdAt: new Date(),
+        })),
         {
           id: `m-${memberId}`,
           organizationId,
@@ -61,13 +76,24 @@ describePostgres("billing notices (PostgreSQL)", () => {
         locale: "pt-BR",
       },
     });
+    await prisma.pushToken.create({
+      data: {
+        userId: savedOwnerId,
+        ciphertext: "x",
+        tokenDigest: `digest-saved-${suffix}`,
+        sessionId: "s",
+        locale: "fr",
+      },
+    });
   });
 
   afterAll(async () => {
     if (!prisma) return;
     await prisma.billingNotice.deleteMany({ where: { organizationId } });
     await prisma.organization.deleteMany({ where: { id: organizationId } });
-    await prisma.user.deleteMany({ where: { id: { in: [ownerId, memberId] } } });
+    await prisma.user.deleteMany({
+      where: { id: { in: [ownerId, memberId, savedOwnerId, bareOwnerId] } },
+    });
     await close();
   });
 
@@ -90,9 +116,15 @@ describePostgres("billing notices (PostgreSQL)", () => {
     expect(await claimBillingNotice(prisma, notice("retry"))).toBe(true);
   });
 
-  it("finds the owners with their app language and nobody else", async () => {
-    expect(await billingNoticeRecipients(prisma, organizationId)).toEqual([
-      { email: `${ownerId}@corvo.test`, locale: "pt-BR" },
-    ]);
+  it("finds the owners and nobody else, in the account language, then the device's, then none", async () => {
+    const recipients = await billingNoticeRecipients(prisma, organizationId);
+    expect(recipients).toHaveLength(3);
+    expect(recipients).toEqual(
+      expect.arrayContaining([
+        { email: `${ownerId}@corvo.test`, locale: "pt-BR" },
+        { email: `${savedOwnerId}@corvo.test`, locale: "de" },
+        { email: `${bareOwnerId}@corvo.test`, locale: null },
+      ]),
+    );
   });
 });

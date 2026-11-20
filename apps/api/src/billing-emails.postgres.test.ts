@@ -68,12 +68,18 @@ describePostgres("subscription emails (PostgreSQL)", () => {
     await close();
   });
 
-  async function organization(locale?: string) {
+  async function organization(locale?: string, accountLocale?: string) {
     const id = `billing-emails-${suffix}-${++counter}`;
     const spaceId = `${id}-space`;
     const ownerId = `${id}-owner`;
     await prisma.user.create({
-      data: { id: ownerId, name: ownerId, email: `${ownerId}@corvo.test`, emailVerified: false },
+      data: {
+        id: ownerId,
+        name: ownerId,
+        email: `${ownerId}@corvo.test`,
+        emailVerified: false,
+        locale: accountLocale ?? null,
+      },
     });
     await prisma.organization.create({ data: { id, name: id, slug: id, createdAt: new Date() } });
     await prisma.space.create({
@@ -146,6 +152,15 @@ describePostgres("subscription emails (PostgreSQL)", () => {
     const [message] = to(address);
     expect(message?.subject).toBe("Seu plano Equipe está ativo");
     expect(message?.text).toMatch(/Cobrado: R\$\s2\.359,00/);
+  });
+
+  it("prefers the account language over the device's, and links the site's terms", async () => {
+    const { id, owner, to: address } = await organization("pt-BR", "es");
+    clock = Date.now();
+    await subscribe(owner, id, input());
+    const [message] = to(address);
+    expect(message?.subject).toBe("Tu plan Equipo está activo");
+    expect(message?.text).toContain("Términos: https://rook.team/terms");
   });
 
   it("sends another when a change takes effect, and one for each", async () => {

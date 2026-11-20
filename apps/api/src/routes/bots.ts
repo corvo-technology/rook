@@ -19,7 +19,6 @@ import {
 import type { Actor, Bot, BotSecretMetadata } from "@corvo/contracts";
 import { BotSecretAuth } from "@corvo/contracts";
 import { ACTIVE_RUN_STATUSES, displayName } from "@corvo/core";
-import type { Prisma } from "@corvo/db";
 import {
   BotSectionNameConflictError,
   botProfileLabelsChanged,
@@ -46,6 +45,7 @@ import {
   undoAgentImport,
 } from "../agent-import.js";
 import { deleteAgentSecret, listAgentSecrets, putAgentSecret } from "../agent-secrets.js";
+import { duplicateBot, duplicateBotName } from "../bot-duplicate.js";
 import { previewAppImport } from "../import-from-app.js";
 import { assertRoutineModel } from "../model-pins.js";
 import { onlyAgentsSeenBy } from "../partner-members.js";
@@ -58,7 +58,7 @@ import type { RouterContext } from "./context.js";
 import { computerContext, modelSetup, THREAD_MESSAGE_PAGE_SIZE } from "./shared.js";
 
 /** Surface a Space deletion race as a retryable conflict instead of a generic failure. */
-function mapSpaceLifecycleError(error: unknown): unknown {
+export function mapSpaceLifecycleError(error: unknown): unknown {
   if (error instanceof SpaceDeletionInProgressError) {
     return new ORPCError("CONFLICT", { message: error.message });
   }
@@ -429,46 +429,9 @@ export function botsRoutes(ctx: RouterContext) {
       },
       duplicate: authed.bots.duplicate.handler(async ({ context, input }) => {
         await requireSpacePermission(deps.prisma, context.actor, "create_agents");
-        const source = await repos.getBot(context.actor, input.botId);
-        const duplicate = await repos
-          .createBot(context.actor, {
-            name: duplicateBotName(source.name),
-            title: source.title,
-            description: source.description,
-            instructions: source.instructions,
-            notifyOnFinish: source.notifyOnFinish,
-            color: source.color,
-            computerMode: source.computer?.scope === "dedicated" ? "dedicated" : "team",
-            modelProvider: source.modelProvider,
-            modelId: source.modelId,
-            modelAuto: source.modelAuto === true,
-            thinkingLevel: source.thinkingLevel,
-            disabledBuiltinTools: source.disabledBuiltinTools,
-          })
-          .catch((error: unknown) => {
-            throw mapSpaceLifecycleError(error);
-          });
-        const assignments = await deps.prisma.botMcpServer.findMany({
-          where: {
-            botId: source.id,
-            spaceId: context.actor.spaceId,
-          },
+        return duplicateBot(deps, repos, context.actor, input.botId).catch((error: unknown) => {
+          throw mapSpaceLifecycleError(error);
         });
-        if (assignments.length) {
-          await deps.prisma.botMcpServer.createMany({
-            data: assignments.map((assignment) => ({
-              spaceId: context.actor.spaceId,
-              // The copy keeps the connections of whoever connected them for the original.
-              userId: assignment.userId,
-              botId: duplicate.id,
-              serverId: assignment.serverId,
-              allowAllTools: assignment.allowAllTools,
-              allowedTools: assignment.allowedTools as Prisma.InputJsonValue,
-              level: assignment.level,
-            })),
-          });
-        }
-        return duplicate;
       }),
       reorder: authed.bots.reorder.handler(async ({ context, input }) => {
         await requireSpacePermission(deps.prisma, context.actor, "manage_agents");
@@ -985,9 +948,4 @@ export function botsRoutes(ctx: RouterContext) {
       }),
     },
   };
-}
-
-function duplicateBotName(name: string) {
-  const label = displayName(name, "");
-  return label ? `${label.slice(0, 75)} copy` : "";
 }

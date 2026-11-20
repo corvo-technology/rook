@@ -12,6 +12,9 @@ const labels: Record<MessageMenuSymbol, string> = {
   select: "Select text",
   unread: "Mark as unread",
   wiki: "Keep in the wiki",
+  edit: "Edit",
+  regenerate: "Regenerate",
+  fork: "Continue in new thread",
 };
 
 const reactions = ["👍", "👎", "❤️", "😂", "🎉", "😮"] as const;
@@ -131,5 +134,31 @@ describe("message context menu", () => {
   it("reads a reaction id back out of a menu event", () => {
     expect(messageMenuReaction("reaction:🎉")).toBe("🎉");
     expect(messageMenuReaction("reply")).toBeNull();
+  });
+
+  it("offers edit, regenerate and a new thread only where the message allows them", () => {
+    const menu = buildMessageContextMenu({
+      labels,
+      reactions,
+      include: {
+        quote: false,
+        react: false,
+        speak: false,
+        select: false,
+        edit: true,
+        regenerate: true,
+        fork: true,
+      },
+    });
+    expect(ids(menu)).toEqual(["reply", "edit", "regenerate", "fork", "copy"]);
+    expect(
+      ids(
+        buildMessageContextMenu({
+          labels,
+          reactions,
+          include: { quote: false, react: false, speak: false, select: false },
+        }),
+      ),
+    ).toEqual(["reply", "copy"]);
   });
 });

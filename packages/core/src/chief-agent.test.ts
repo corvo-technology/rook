@@ -36,8 +36,8 @@ describe("the Chief", () => {
       it("starts alone: greets, asks what the owner needs, suggests Store agents and adds the ones accepted", () => {
         expect(text).toMatch(
           locale === "en"
-            ? /When you have no teammates yet[\s\S]*ask what they want help with[\s\S]*suggest one to three agents[\s\S]*add the ones the owner accepts/
-            : /Quando você ainda não tem colegas[\s\S]*pergunte com o que ele quer ajuda[\s\S]*sugira de um a três agentes[\s\S]*adicione os que o dono aceitar/,
+            ? /When you have no teammates yet[\s\S]*ask one easy question about what they want help with[\s\S]*suggest one to three agents[\s\S]*add the ones the owner accepts/
+            : /Quando você ainda não tem colegas[\s\S]*faça uma pergunta fácil sobre com o que ele quer ajuda[\s\S]*sugira de um a três agentes[\s\S]*adicione os que o dono aceitar/,
         );
       });
 
@@ -135,5 +135,18 @@ describe("the Chief in a chat app", () => {
 
   it("adds nothing without a chat app", () => {
     expect(chiefInstructions("en")).not.toContain("reached through");
+  });
+});
+
+describe("the Chief's voice", () => {
+  it("asks for a human first message and keeps the store mechanics", () => {
+    const en = chiefInstructions("en");
+    const pt = chiefInstructions("pt-BR");
+    expect(en).toContain("Sound like a person");
+    expect(pt).toContain("Soe como uma pessoa");
+    for (const text of [en, pt]) {
+      expect(text).toContain("store_agents");
+      expect(text).toContain("install_agent");
+    }
   });
 });

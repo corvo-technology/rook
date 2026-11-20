@@ -134,6 +134,10 @@ function botSecretMetadataDto(row: {
   };
 }
 
+/** How every new agent, the Chief included, words its first message. */
+const INTRO_VOICE =
+  'Write it like a person who just joined and is glad to help, in the language they speak: your first name, plain everyday words, two or three short sentences at most. Do not announce your role ("I am X, the Y organizer"), and avoid project-manager phrasing and lists of categories. Offer help lightly and ask at most one easy question.';
+
 /** The creation intro's hidden prompt. It names only the tools this bot still has. */
 export function botIntroPrompt(input: {
   userName: string;
@@ -169,11 +173,12 @@ export function botIntroPrompt(input: {
       : canAsk
         ? `Call ask_user right away, with no text before it. Its question greets them by first name in a few words and asks what they want you for, with ${options}. They can also type their own answer.`
         : `Greet them by first name in a few words and ask in one sentence what they want you for, suggesting ${options}.`,
+    INTRO_VOICE,
     input.teamCatalog?.length
       ? undefined
       : "If your profile already makes that clear, say in one line what you will do instead of asking.",
     canUpdate
-      ? "Once you know what you are for, use update_bot to set your title to a short role and your description to one line. Leave them unset if the answer is too vague, and keep your name and look."
+      ? 'Once you know what you are for, use update_bot to set your title to a short, natural role in everyday words ("helps with the house routine", not "routine organizer") and your description to one line. Leave them unset if the answer is too vague, and keep your name and look.'
       : undefined,
     "Then get started, asking one follow-up only if you cannot start without it.",
   ]

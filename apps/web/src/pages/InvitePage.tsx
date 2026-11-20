@@ -1,4 +1,4 @@
-import { Button } from "@corvo/ui-web";
+import { Button, Spinner } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useEffect, useState } from "react";
 import { AuthFrame } from "../components/AuthFrame";
@@ -25,7 +25,8 @@ type Preview =
  */
 export function InvitePage({ kind, token }: { kind: "invite" | "join"; token: string }) {
   const brand = useBrand();
-  const [preview, setPreview] = useState<Preview | "gone" | null>(null);
+  const [preview, setPreview] = useState<Preview | "gone" | "error" | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [pending, setPending] = useState(false);
   const [asked, setAsked] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -37,19 +38,20 @@ export function InvitePage({ kind, token }: { kind: "invite" | "join"; token: st
   useEffect(() => {
     if (kind !== "invite") return;
     let active = true;
+    setPreview(null);
     fetch(`/api/v1/invitations/${encodeURIComponent(token)}`)
-      .then(
-        async (response): Promise<Preview | "gone"> =>
-          response.ok ? ((await response.json()) as Preview) : "gone",
-      )
-      .catch((): "gone" => "gone")
+      .then(async (response): Promise<Preview | "gone" | "error"> => {
+        if (response.ok) return (await response.json()) as Preview;
+        return response.status >= 500 ? "error" : "gone";
+      })
+      .catch((): "error" => "error")
       .then((next) => {
         if (active) setPreview(next);
       });
     return () => {
       active = false;
     };
-  }, [kind, token]);
+  }, [kind, token, attempt]);
 
   async function submit() {
     if (pending) return;
@@ -83,9 +85,15 @@ export function InvitePage({ kind, token }: { kind: "invite" | "join"; token: st
   }
 
   const gone = preview === "gone" || failed;
+  const loadFailed = preview === "error";
   const pendingPreview =
-    preview && preview !== "gone" && preview.state === "pending" ? preview : null;
-  const dead = preview && preview !== "gone" && preview.state !== "pending" ? preview : null;
+    preview && preview !== "gone" && preview !== "error" && preview.state === "pending"
+      ? preview
+      : null;
+  const dead =
+    preview && preview !== "gone" && preview !== "error" && preview.state !== "pending"
+      ? preview
+      : null;
   const roleLabel = pendingPreview
     ? pendingPreview.roleNames.length > 0
       ? pendingPreview.roleNames.join(", ")
@@ -98,7 +106,9 @@ export function InvitePage({ kind, token }: { kind: "invite" | "join"; token: st
   return (
     <AuthFrame
       title={
-        gone ? (
+        loadFailed ? (
+          <Trans>Could not load</Trans>
+        ) : gone ? (
           <Trans>This link no longer works</Trans>
         ) : asked ? (
           <Trans>Request sent</Trans>
@@ -123,7 +133,17 @@ export function InvitePage({ kind, token }: { kind: "invite" | "join"; token: st
         void submit();
       }}
     >
-      {dead?.state === "accepted" ? (
+      {loadFailed ? (
+        <Button
+          type="button"
+          className={`${submitClass} ${inkClass}`}
+          onClick={() => setAttempt((count) => count + 1)}
+        >
+          <Trans>Try again</Trans>
+        </Button>
+      ) : kind === "invite" && !preview ? (
+        <Spinner className="mx-auto" />
+      ) : dead?.state === "accepted" ? (
         <a href="/app" className="text-[14px] font-medium underline">
           {brand ? <Trans>Open {brand.name}</Trans> : <Trans>Open Rook</Trans>}
         </a>
@@ -131,7 +151,7 @@ export function InvitePage({ kind, token }: { kind: "invite" | "join"; token: st
         <p className="text-[14px] text-muted-foreground">
           <Trans>Ask {dead.inviterName} for a new one</Trans>
         </p>
-      ) : gone || asked || (kind === "invite" && !preview) ? null : (
+      ) : gone || asked ? null : (
         <>
           {pendingPreview ? (
             <p className="mb-6 text-[14px] text-muted-foreground">

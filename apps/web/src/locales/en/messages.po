@@ -3020,6 +3020,7 @@ msgstr "Could not leave"
 #: src/components/ErrorBoundary.tsx
 #: src/components/PasskeySettings.tsx
 #: src/pages/ApprovalsPage.tsx
+#: src/pages/InvitePage.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/platform/IntakeSections.tsx
 #: src/pages/platform/InvoicesSection.tsx
@@ -4821,8 +4822,8 @@ msgid "Hi. I'm the Chief. We'll set up your team in about two minutes."
 msgstr "Hi. I'm the Chief. We'll set up your team in about two minutes."
 
 #: src/pages/home/HomeCard.tsx
-msgid "Hide"
-msgstr "Hide"
+msgid "Hide {name}"
+msgstr "Hide {name}"
 
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Hide from customers"
@@ -5527,13 +5528,13 @@ msgstr "Loading preview…"
 msgid "Loading voice providers…"
 msgstr "Loading voice providers…"
 
+#: src/components/I18nBootstrap.tsx
 #: src/components/PageLoading.tsx
 #: src/pages/ApprovalsPage.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/RoutineRunHistory.tsx
-#: src/pages/shell/transcript.tsx
 #: src/pages/TeamPage.tsx
 msgid "Loading…"
 msgstr "Loading…"
@@ -6092,16 +6093,22 @@ msgstr "Move {0} down"
 msgid "Move {0} up"
 msgstr "Move {0} up"
 
+#: src/pages/home/HomeCard.tsx
+msgid "Move {name} earlier"
+msgstr "Move {name} earlier"
+
+#: src/pages/home/HomeCard.tsx
+msgid "Move {name} later"
+msgstr "Move {name} later"
+
 #: src/pages/ModelRoleSettings.tsx
 msgid "Move down"
 msgstr "Move down"
 
-#: src/pages/home/HomeCard.tsx
 #: src/pages/Workflows.tsx
 msgid "Move earlier"
 msgstr "Move earlier"
 
-#: src/pages/home/HomeCard.tsx
 #: src/pages/Workflows.tsx
 msgid "Move later"
 msgstr "Move later"
@@ -9701,6 +9708,7 @@ msgstr "Trigger"
 #: src/pages/ActivityList.tsx
 #: src/pages/ApprovalsPage.tsx
 #: src/pages/DirectChat.tsx
+#: src/pages/InvitePage.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 #: src/pages/partner/partner-ui.tsx
 #: src/pages/TeamPage.tsx

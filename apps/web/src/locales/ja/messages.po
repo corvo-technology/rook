@@ -3020,6 +3020,7 @@ msgstr "退出できませんでした"
 #: src/components/ErrorBoundary.tsx
 #: src/components/PasskeySettings.tsx
 #: src/pages/ApprovalsPage.tsx
+#: src/pages/InvitePage.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/platform/IntakeSections.tsx
 #: src/pages/platform/InvoicesSection.tsx
@@ -4821,8 +4822,8 @@ msgid "Hi. I'm the Chief. We'll set up your team in about two minutes."
 msgstr "こんにちは、Chief です。2 分ほどでチームを作りましょう。"
 
 #: src/pages/home/HomeCard.tsx
-msgid "Hide"
-msgstr "非表示"
+msgid "Hide {name}"
+msgstr "{name}を非表示"
 
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Hide from customers"
@@ -5527,13 +5528,13 @@ msgstr "プレビューを読み込み中…"
 msgid "Loading voice providers…"
 msgstr "音声プロバイダーを読み込み中…"
 
+#: src/components/I18nBootstrap.tsx
 #: src/components/PageLoading.tsx
 #: src/pages/ApprovalsPage.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/RoutineRunHistory.tsx
-#: src/pages/shell/transcript.tsx
 #: src/pages/TeamPage.tsx
 msgid "Loading…"
 msgstr "読み込み中…"
@@ -6092,16 +6093,22 @@ msgstr "{0}を下へ"
 msgid "Move {0} up"
 msgstr "{0}を上へ"
 
+#: src/pages/home/HomeCard.tsx
+msgid "Move {name} earlier"
+msgstr "{name}を前へ移動"
+
+#: src/pages/home/HomeCard.tsx
+msgid "Move {name} later"
+msgstr "{name}を後ろへ移動"
+
 #: src/pages/ModelRoleSettings.tsx
 msgid "Move down"
 msgstr "下へ移動"
 
-#: src/pages/home/HomeCard.tsx
 #: src/pages/Workflows.tsx
 msgid "Move earlier"
 msgstr "前へ移動"
 
-#: src/pages/home/HomeCard.tsx
 #: src/pages/Workflows.tsx
 msgid "Move later"
 msgstr "後ろへ移動"
@@ -9701,6 +9708,7 @@ msgstr "トリガー"
 #: src/pages/ActivityList.tsx
 #: src/pages/ApprovalsPage.tsx
 #: src/pages/DirectChat.tsx
+#: src/pages/InvitePage.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 #: src/pages/partner/partner-ui.tsx
 #: src/pages/TeamPage.tsx

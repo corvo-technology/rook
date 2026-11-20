@@ -96,6 +96,7 @@ export function EmbeddedHome({
               className="flex-1"
               testId="home-waiting"
               title={t`Waiting for you`}
+              name={t`Waiting for you`}
               action={
                 waiting.total > 0 ? (
                   <button
@@ -120,6 +121,7 @@ export function EmbeddedHome({
               className="flex-1"
               testId="home-working"
               title={t`Working now`}
+              name={t`Working now`}
               band={false}
               organizing={false}
               onMove={noop}

@@ -6,6 +6,7 @@ import { renderToString } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SwitchField } from "./components/ui/field.js";
 import { Input, InputRevealLabelsProvider } from "./components/ui/input.js";
+import { Spinner, SpinnerLabelProvider } from "./components/ui/spinner.js";
 
 const mounted: Array<() => void> = [];
 
@@ -139,5 +140,18 @@ describe("SwitchField", () => {
     );
 
     expect(html).not.toContain("aria-describedby");
+  });
+});
+
+describe("Spinner", () => {
+  it("takes its accessible name from the label provider", () => {
+    const container = render(
+      <SpinnerLabelProvider label="Carregando…">
+        <Spinner />
+      </SpinnerLabelProvider>,
+    );
+    expect(container.querySelector('[role="status"]')?.getAttribute("aria-label")).toBe(
+      "Carregando…",
+    );
   });
 });

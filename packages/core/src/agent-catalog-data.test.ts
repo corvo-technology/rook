@@ -213,3 +213,37 @@ describe("agents that hand work to each other", () => {
     expect(find("post-designer").disabledTools ?? []).not.toContain("generate_image");
   });
 });
+
+describe("starter routines", () => {
+  const withRoutines = AGENT_CATALOG.filter((entry) => entry.routines?.length);
+
+  it("are one or two per agent, each parsing, with a repeating five-field cron", () => {
+    expect(withRoutines.length).toBeGreaterThan(10);
+    for (const entry of withRoutines) {
+      expect(entry.routines!.length).toBeLessThanOrEqual(2);
+      for (const routine of entry.routines!) {
+        expect(routine.cron.split(" ")).toHaveLength(5);
+        expect(routine.cron).not.toMatch(/^\S+ \S+ \S+ \S+ \S+ \S+/);
+        expect(routine.name["pt-BR"]).not.toBe(routine.name.en);
+        expect(routine.prompt["pt-BR"]).not.toBe(routine.prompt.en);
+      }
+      const keys = entry.routines!.map((routine) => routine.key);
+      expect(new Set(keys).size).toBe(keys.length);
+    }
+  });
+
+  it("have names an agent never repeats, so adding twice cannot double them", () => {
+    for (const entry of withRoutines) {
+      const names = entry.routines!.map((routine) => routine.name.en.toLowerCase());
+      expect(new Set(names).size).toBe(names.length);
+    }
+  });
+
+  it("belong only to agents that stand alone: no partner, setup or briefing agent", () => {
+    for (const entry of withRoutines) {
+      expect(entry.partnerAccess).toBeUndefined();
+      expect(entry.setup).toBeUndefined();
+      expect(["daily-briefing", "morning-briefing"]).not.toContain(entry.slug);
+    }
+  });
+});

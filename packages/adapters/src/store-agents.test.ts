@@ -259,3 +259,81 @@ describe("addStoreAgent", () => {
     expect(result).toMatchObject({ duplicate: true, botId: "existing-bot" });
   });
 });
+
+describe("starter routines on install", () => {
+  const entry = AGENT_CATALOG.find((agent) => agent.slug === "payments-watcher")!;
+  const owner = { spaceId: "space-1", userId: "user-1" };
+  function scheduler() {
+    const prisma = {
+      user: { findUnique: vi.fn(async () => ({ timezone: "Europe/Lisbon" })) },
+      routine: {
+        findMany: vi.fn(async () => []),
+        create: vi.fn(async ({ data }: { data: Row }) => ({ id: "r-1", ...data })),
+      },
+      $transaction: async (fn: (tx: unknown) => unknown) =>
+        fn({
+          task: { create: vi.fn(async () => ({ id: "task-1" })) },
+          run: { create: vi.fn(async () => ({ id: "run-1" })) },
+        }),
+    };
+    const jobs = { enqueue: vi.fn(async () => undefined) };
+    return { prisma, jobs, events: { append: vi.fn(async () => undefined) } };
+  }
+
+  it("creates them for a new agent and has the agent say so once", async () => {
+    const f = fixture();
+    const schedule = scheduler();
+    const added = await addStoreAgent(
+      { prisma: f.prisma, createBot: f.createBot as never },
+      owner,
+      { entry, locale: "en", starterRoutines: { deps: schedule as never, announce: true } },
+    );
+    expect(added.routines).toHaveLength(entry.routines!.length);
+    expect(schedule.prisma.routine.create).toHaveBeenCalledTimes(entry.routines!.length);
+    // One wake-up per routine plus the one announcement run.
+    expect(schedule.jobs.enqueue).toHaveBeenCalledTimes(entry.routines!.length + 1);
+  });
+
+  it("does not make or announce them again when the agent was already added", async () => {
+    const f = fixture({
+      createBot: async () => {
+        throw new Error("unique");
+      },
+    });
+    const schedule = scheduler();
+    const added = await addStoreAgent(
+      { prisma: f.prisma, createBot: f.createBot as never },
+      owner,
+      { entry, locale: "en", starterRoutines: { deps: schedule as never, announce: true } },
+    );
+    expect(added.duplicate).toBe(true);
+    expect(added.routines).toEqual([]);
+    expect(schedule.prisma.routine.create).not.toHaveBeenCalled();
+    expect(schedule.jobs.enqueue).not.toHaveBeenCalled();
+  });
+
+  it("makes none unless the caller allows it", async () => {
+    const f = fixture();
+    const added = await addStoreAgent(
+      { prisma: f.prisma, createBot: f.createBot as never },
+      owner,
+      {
+        entry,
+        locale: "en",
+      },
+    );
+    expect(added.routines).toEqual([]);
+  });
+
+  it("makes none when the Chief may not create routines", async () => {
+    const f = fixture();
+    const schedule = scheduler();
+    await installStoreAgent(
+      { prisma: f.prisma, createBot: f.createBot as never },
+      { ...run, grants: { manageRoutines: false } } as never,
+      { slug: "payments-watcher" },
+      { deps: schedule as never, announce: true },
+    );
+    expect(schedule.prisma.routine.create).not.toHaveBeenCalled();
+  });
+});

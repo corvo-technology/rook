@@ -1,4 +1,5 @@
-import { addStoreAgent } from "@corvo/adapters";
+import type { StarterRoutineSetup } from "@corvo/adapters";
+import { addStoreAgent, enqueueRoutineAnnouncement, starterRoutinesPrompt } from "@corvo/adapters";
 import type { Actor, AgentCatalogLocale, Bot, OnboardingPicks } from "@corvo/contracts";
 import { AGENT_CATALOG, agentForPicks } from "@corvo/core";
 import type { MessagingProvisionOptions, PrismaClient } from "@corvo/db";
@@ -6,6 +7,7 @@ import { createGroupRepos, ensureStarterTeam } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import type { RouterDeps } from "./router.js";
 import { enqueueBotIntroRun } from "./routes/bots.js";
+import { starterRoutineDeps } from "./starter-routines.js";
 
 /**
  * Give an account its Chief and starting team, then have the Chief greet the person once, in
@@ -24,6 +26,7 @@ export async function startStarterTeam(
     greet?: typeof enqueueBotIntroRun;
     addAgent?: typeof addStoreAgent;
     createChannel?: (actor: Actor, input: { name: string; botIds: string[] }) => Promise<unknown>;
+    routineDeps?: typeof starterRoutineDeps;
   } = {},
   picks?: OnboardingPicks,
 ): Promise<{
@@ -33,19 +36,62 @@ export async function startStarterTeam(
 }> {
   const ensure = steps.ensure ?? ensureStarterTeam;
   const { botId, created, bot } = await ensure(deps.prisma, actor, locale);
-  if (created && bot) {
-    const greet = steps.greet ?? enqueueBotIntroRun;
+  // The team comes first, so the Chief's one first message can say what the team set up.
+  const schedule = picks
+    ? await (steps.routineDeps ?? starterRoutineDeps)(deps as RouterDeps, actor).catch(
+        () => undefined,
+      )
+    : undefined;
+  const starter = schedule ? { deps: schedule, announce: false } : undefined;
+  const pickedAgent = await addPickedAgent(
+    deps,
+    actor,
+    locale,
+    botId,
+    picks,
+    steps.addAgent,
+    starter,
+  );
+  const teamRoutines = await addSuggestedTeam(
+    deps,
+    actor,
+    locale,
+    botId,
+    picks,
+    steps.addAgent,
+    steps.createChannel,
+    starter,
+  );
+  const routines = [...(pickedAgent?.routines ?? []), ...teamRoutines];
+  if (bot) {
     try {
-      // With no onboarding picks the person has not chosen a team yet, so the Chief proposes one.
-      await greet(deps as RouterDeps, actor, bot, { locale, suggestTeam: !picks });
+      if (created) {
+        const greet = steps.greet ?? enqueueBotIntroRun;
+        // With no onboarding picks the person has not chosen a team yet, so the Chief proposes one.
+        await greet(deps as RouterDeps, actor, bot, {
+          locale,
+          suggestTeam: !picks,
+          ...(routines.length > 0 ? { starterRoutines: routines } : {}),
+        });
+      } else if (routines.length > 0 && schedule) {
+        // The Chief was already there, so this is a separate short message about the new routines.
+        await enqueueRoutineAnnouncement(
+          schedule,
+          actor,
+          { id: bot.id, threadId: bot.threadId ?? null },
+          starterRoutinesPrompt(routines),
+        );
+      }
     } catch (error) {
       // The Chief exists either way; the person can still talk to it.
       getLogger().error("chief intro run enqueue", error);
     }
   }
-  const pickedAgent = await addPickedAgent(deps, actor, locale, botId, picks, steps.addAgent);
-  await addSuggestedTeam(deps, actor, locale, botId, picks, steps.addAgent, steps.createChannel);
-  return { botId, created, ...(pickedAgent ? { pickedAgent } : {}) };
+  return {
+    botId,
+    created,
+    ...(pickedAgent ? { pickedAgent: { botId: pickedAgent.botId, task: pickedAgent.task } } : {}),
+  };
 }
 
 /**
@@ -60,7 +106,8 @@ async function addPickedAgent(
   chiefId: string,
   picks: OnboardingPicks | undefined,
   addAgent: typeof addStoreAgent = addStoreAgent,
-): Promise<{ botId: string; task: string | null } | undefined> {
+  starterRoutines?: Parameters<typeof addStoreAgent>[2]["starterRoutines"],
+): Promise<{ botId: string; task: string | null; routines: StarterRoutineSetup[] } | undefined> {
   const entry = picks ? agentForPicks(picks) : null;
   if (!entry) return undefined;
   try {
@@ -73,7 +120,7 @@ async function addPickedAgent(
     const added = await addAgent(
       { prisma: deps.prisma },
       { spaceId: actor.spaceId, userId: actor.userId },
-      { entry, locale, parentBotId: chiefId },
+      { entry, locale, parentBotId: chiefId, ...(starterRoutines ? { starterRoutines } : {}) },
     );
     const messages = added.threadId
       ? await deps.prisma.message.count({ where: { threadId: added.threadId } })
@@ -81,6 +128,7 @@ async function addPickedAgent(
     return {
       botId: added.botId,
       task: messages === 0 ? (entry.firstTask?.[locale] ?? null) : null,
+      routines: added.routines,
     };
   } catch (error) {
     getLogger().error("onboarding picked agent", error);
@@ -120,14 +168,16 @@ async function addSuggestedTeam(
     who,
     input,
   ) => createGroupRepos(deps.prisma).createGroup(who, input),
-): Promise<void> {
-  if (!picks?.agents?.length) return;
+  starterRoutines?: Parameters<typeof addStoreAgent>[2]["starterRoutines"],
+): Promise<StarterRoutineSetup[]> {
+  const routines: StarterRoutineSetup[] = [];
+  if (!picks?.agents?.length) return routines;
   try {
     const chief = await deps.prisma.bot.findUnique({
       where: { id: chiefId },
       select: { fleetManagement: true },
     });
-    if (!chief?.fleetManagement) return;
+    if (!chief?.fleetManagement) return routines;
     const botBySlug = new Map<string, string>();
     for (const slug of picks.agents) {
       const entry = AGENT_CATALOG.find((candidate) => candidate.slug === slug);
@@ -136,9 +186,10 @@ async function addSuggestedTeam(
         const added = await addAgent(
           { prisma: deps.prisma },
           { spaceId: actor.spaceId, userId: actor.userId },
-          { entry, locale, parentBotId: chiefId },
+          { entry, locale, parentBotId: chiefId, ...(starterRoutines ? { starterRoutines } : {}) },
         );
         botBySlug.set(slug, added.botId);
+        routines.push(...added.routines);
       } catch (error) {
         getLogger().error("onboarding team agent", error);
       }
@@ -165,4 +216,5 @@ async function addSuggestedTeam(
   } catch (error) {
     getLogger().error("onboarding team", error);
   }
+  return routines;
 }

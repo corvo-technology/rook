@@ -1,7 +1,8 @@
 import type { AgentCatalogEntry } from "@corvo/contracts";
+import { STARTER_ROUTINES } from "./agent-catalog-routines.js";
 
 /** Ready-made agents. Wording is original; each entry names the catalog apps it works with. */
-export const AGENT_CATALOG: readonly AgentCatalogEntry[] = [
+const ENTRIES: readonly AgentCatalogEntry[] = [
   {
     slug: "email-agent",
     category: "support",
@@ -1330,3 +1331,8 @@ Limites: você só lê. Você vê números, estados e nomes, nunca o que os clie
     apps: [],
   },
 ];
+
+export const AGENT_CATALOG: readonly AgentCatalogEntry[] = ENTRIES.map((entry) => {
+  const routines = STARTER_ROUTINES[entry.slug];
+  return routines ? { ...entry, routines: [...routines] } : entry;
+});

@@ -20,7 +20,7 @@ function steps(created: boolean) {
     ...(created ? { bot: chief } : {}),
   }));
   const greet = vi.fn(async () => undefined);
-  return { ensure, greet };
+  return { ensure, greet, routineDeps: vi.fn(async () => undefined) };
 }
 
 describe("startStarterTeam", () => {
@@ -69,6 +69,7 @@ describe("startStarterTeam with picks", () => {
       duplicate: false,
       skillsInstalled: [],
       appsToConnect: [],
+      routines: [],
     }));
     const prisma = {
       bot: {
@@ -139,6 +140,82 @@ describe("startStarterTeam with picks", () => {
   });
 });
 
+describe("startStarterTeam starter routines", () => {
+  const setup = {
+    agent: "Payments Watcher",
+    name: "Payments check",
+    schedule: "At 09:00, only on Monday",
+    nextRun: null,
+    timezone: "America/Sao_Paulo",
+    timezoneKnown: true,
+  };
+  function run(over: { fleetManagement?: boolean; created?: boolean } = {}) {
+    const s = steps(over.created ?? true);
+    const schedule = { prisma: {}, jobs: {}, events: {} };
+    const addAgent = vi.fn(async () => ({
+      botId: "agent-1",
+      name: "Payments Watcher",
+      title: "",
+      threadId: "t-2" as string | null,
+      duplicate: false,
+      skillsInstalled: [],
+      appsToConnect: [],
+      routines: [setup],
+    }));
+    const prisma = {
+      bot: { findUnique: vi.fn(async () => ({ fleetManagement: over.fleetManagement ?? true })) },
+      message: { count: vi.fn(async () => 0) },
+      chatGroup: { findMany: vi.fn(async () => []) },
+    };
+    const d = { prisma, jobs: {}, env: {} } as never;
+    const routineDeps = vi.fn(async () => schedule);
+    return { s, addAgent, d, schedule, steps: { ...s, addAgent: addAgent as never, routineDeps } };
+  }
+
+  it("has the agent make its routines and folds them into the Chief's one first message", async () => {
+    const w = run();
+    await startStarterTeam(w.d, actor, "pt-BR", w.steps, {
+      categories: [],
+      agents: ["payments-watcher"],
+    });
+    expect(w.addAgent).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.objectContaining({ starterRoutines: { deps: w.schedule, announce: false } }),
+    );
+    expect(w.s.greet).toHaveBeenCalledTimes(1);
+    expect(w.s.greet).toHaveBeenCalledWith(w.d, actor, chief, {
+      locale: "pt-BR",
+      suggestTeam: false,
+      starterRoutines: [setup],
+    });
+  });
+
+  it("makes no routines when none can run (no model, no permission)", async () => {
+    const w = run();
+    w.steps.routineDeps.mockResolvedValue(undefined as never);
+    await startStarterTeam(w.d, actor, "en", w.steps, {
+      categories: [],
+      agents: ["payments-watcher"],
+    });
+    const input = (w.addAgent.mock.calls as unknown as unknown[][])[0]?.[2] as Record<
+      string,
+      unknown
+    >;
+    expect(input).not.toHaveProperty("starterRoutines");
+  });
+
+  it("makes no routines and adds no agent for a Chief without Store access", async () => {
+    const w = run({ fleetManagement: false });
+    await startStarterTeam(w.d, actor, "en", w.steps, {
+      categories: [],
+      agents: ["payments-watcher"],
+    });
+    expect(w.addAgent).not.toHaveBeenCalled();
+    expect(w.s.greet).toHaveBeenCalledWith(w.d, actor, chief, { locale: "en", suggestTeam: false });
+  });
+});
+
 describe("chiefAsFirstAgent", () => {
   it("makes the Chief for the chat app the message came through, in English, and returns its id", async () => {
     const ensure = vi.fn(async () => ({ botId: "chief-1", created: true }));
@@ -179,6 +256,7 @@ describe("startStarterTeam with a suggested team", () => {
       duplicate: false,
       skillsInstalled: [],
       appsToConnect: [],
+      routines: [],
     }));
     const createChannel = vi.fn(async () => undefined);
     const prisma = {

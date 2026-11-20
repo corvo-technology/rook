@@ -6,6 +6,13 @@ import { createRepos, runAsSystem } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import { fleetStarterId } from "./child-bots.js";
 import type { FleetRun } from "./fleet-tools.js";
+import type { ScheduleToolDeps } from "./schedule-tools.js";
+import type { StarterRoutineSetup } from "./starter-routines.js";
+import {
+  createStarterRoutines,
+  enqueueRoutineAnnouncement,
+  starterRoutinesPrompt,
+} from "./starter-routines.js";
 import { installStoreSkill } from "./store-skills.js";
 
 const appName = (slug: string) => APP_CATALOG.find((app) => app.slug === slug)?.name ?? slug;
@@ -84,6 +91,12 @@ type StoreDeps = {
 };
 
 /**
+ * Who may have the agent's starter routines made, and whether the agent tells the person about
+ * them. Left out, no routines are made (the owner holds no routine permission, or no model is set).
+ */
+export type StarterRoutineOptions = { deps: ScheduleToolDeps; announce: boolean };
+
+/**
  * Add a catalog agent for the owner, as the Store's Add button does: the bot in the owner's
  * language, the apps it uses that are already added, and the skills it works best with. Adding
  * twice returns the agent already there.
@@ -92,6 +105,7 @@ export async function installStoreAgent(
   deps: StoreDeps,
   run: FleetRun,
   args: { slug?: unknown; language?: unknown },
+  starter?: StarterRoutineOptions,
 ) {
   const entry = AGENT_CATALOG.find((agent) => agent.slug === String(args.slug ?? ""));
   if (!entry) return { error: "No agent with that slug. Call store_agents for the list." };
@@ -107,7 +121,13 @@ export async function installStoreAgent(
   const added = await addStoreAgent(
     deps,
     { spaceId: run.spaceId, userId: fleetStarterId(run) },
-    { entry, locale, parentBotId: run.botId },
+    {
+      entry,
+      locale,
+      parentBotId: run.botId,
+      // A run is under way, so a model is set; the Chief's grant decides who may make routines.
+      ...(starter && run.grants?.manageRoutines ? { starterRoutines: starter } : {}),
+    },
   );
   return {
     ok: true as const,
@@ -118,6 +138,9 @@ export async function installStoreAgent(
     threadId: added.threadId,
     skillsInstalled: added.skillsInstalled,
     appsToConnect: added.appsToConnect,
+    ...(added.routines.length
+      ? { routinesSetUp: added.routines.map((routine) => routine.name) }
+      : {}),
   };
 }
 
@@ -128,7 +151,12 @@ export async function installStoreAgent(
 export async function addStoreAgent(
   deps: StoreDeps,
   owner: { spaceId: string; userId: string },
-  input: { entry: AgentCatalogEntry; locale: AgentCatalogLocale; parentBotId?: string },
+  input: {
+    entry: AgentCatalogEntry;
+    locale: AgentCatalogLocale;
+    parentBotId?: string;
+    starterRoutines?: StarterRoutineOptions;
+  },
 ) {
   const { entry, locale } = input;
   const spawnKey = agentCatalogSpawnKey(entry.slug);
@@ -200,9 +228,34 @@ export async function addStoreAgent(
     });
   }
 
+  // Only an agent added now sets up its routines: adding it again, or after the person deleted
+  // them, never brings them back.
+  let routines: StarterRoutineSetup[] = [];
+  if (!duplicate && input.starterRoutines) {
+    const { deps: schedule, announce } = input.starterRoutines;
+    routines = await createStarterRoutines(schedule, {
+      entry,
+      locale,
+      spaceId: owner.spaceId,
+      userId: owner.userId,
+      botId: created.id,
+      threadId: created.threadId,
+      botName: created.name,
+    });
+    if (announce && routines.length > 0) {
+      await enqueueRoutineAnnouncement(
+        schedule,
+        owner,
+        { id: created.id, threadId: created.threadId },
+        starterRoutinesPrompt(routines),
+      ).catch((error) => getLogger().error("starter routines announcement", error));
+    }
+  }
+
   const connected = new Set(servers.map((server) => server.slug));
   return {
     duplicate,
+    routines,
     botId: created.id,
     name: created.name,
     title: created.title,

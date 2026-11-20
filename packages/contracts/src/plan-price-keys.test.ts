@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { aiLookupKey, extraPersonLookupKey, planLookupKey } from "./plan-price-keys.js";
+import {
+  aiLookupKey,
+  extraPersonLookupKey,
+  parseAiLookupKey,
+  planLookupKey,
+} from "./plan-price-keys.js";
 import { AI_USE_CENTS, BILLING_CURRENCIES, BILLING_INTERVALS } from "./plan-pricing.js";
 import { PLAN_IDS, parsePlanLookupKey } from "./plans.js";
 
@@ -25,5 +30,14 @@ describe("catalog lookup keys", () => {
         for (const cents of AI_USE_CENTS) keys.add(aiLookupKey(cents, currency, interval));
       }
     expect(keys.size).toBe(12 + 4 + 16);
+  });
+});
+
+describe("parseAiLookupKey", () => {
+  it("reads the monthly amount an AI price names, and nothing from other keys", () => {
+    expect(parseAiLookupKey(aiLookupKey(5000, "brl", "year"))).toBe(5000);
+    expect(parseAiLookupKey("ai_777_usd_month")).toBeNull();
+    expect(parseAiLookupKey("plan_team_usd_month")).toBeNull();
+    expect(parseAiLookupKey(null)).toBeNull();
   });
 });

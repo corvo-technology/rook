@@ -1,6 +1,6 @@
 import * as z from "zod";
 import type { PlanId } from "./plans.js";
-import { PlanIdSchema } from "./plans.js";
+import { PLAN_IDS, PlanIdSchema } from "./plans.js";
 
 /** What each plan costs, in reais and dollars. Sizes and limits live in `plans.ts`. */
 export type BillingCurrency = "usd" | "brl";
@@ -75,6 +75,12 @@ export const BillingIntervalSchema = z.enum(BILLING_INTERVALS);
 export const AiUseCentsSchema = z.union(AI_USE_CENTS.map((cents) => z.literal(cents)));
 
 /** What an owner chooses on the plans screen; `aiUseCents: null` means they bring their own AI. */
+export const PlanSelectionSchema = z.object({
+  plan: PlanIdSchema,
+  interval: BillingIntervalSchema,
+  aiUseCents: AiUseCentsSchema.nullable(),
+});
+
 export const PlanCheckoutInputSchema = z.object({
   plan: PlanIdSchema,
   interval: BillingIntervalSchema,
@@ -82,3 +88,38 @@ export const PlanCheckoutInputSchema = z.object({
   aiUseCents: AiUseCentsSchema.nullable(),
 });
 export type PlanCheckoutInput = z.infer<typeof PlanCheckoutInputSchema>;
+
+/** What a subscription holds: the plan, how often it renews, and the AI amount a month. */
+export interface PlanSelection {
+  plan: PlanId;
+  interval: BillingInterval;
+  aiUseCents: AiUseCents | null;
+}
+
+export function samePlanSelection(a: PlanSelection, b: PlanSelection): boolean {
+  return a.plan === b.plan && a.interval === b.interval && a.aiUseCents === b.aiUseCents;
+}
+
+/**
+ * Splits a move to `target` into what applies now and what waits for the next renewal. Each part
+ * of a plan moves on its own: a bigger plan, a yearly interval, and more AI apply now (the
+ * difference is charged for the rest of the period); a smaller plan, a monthly interval and less
+ * AI wait, so the current plan and its limits stay until then. `current` is null for a
+ * subscription that is not on a catalog plan, which has nothing to keep.
+ */
+export function resolvePlanChange(
+  current: PlanSelection | null,
+  target: PlanSelection,
+): { now: PlanSelection; pending: PlanSelection | null } {
+  if (!current) return { now: target, pending: null };
+  const now: PlanSelection = {
+    plan:
+      PLAN_IDS.indexOf(target.plan) >= PLAN_IDS.indexOf(current.plan) ? target.plan : current.plan,
+    interval: target.interval === "year" || current.interval === "year" ? "year" : "month",
+    aiUseCents:
+      (target.aiUseCents ?? 0) >= (current.aiUseCents ?? 0)
+        ? target.aiUseCents
+        : current.aiUseCents,
+  };
+  return { now, pending: samePlanSelection(now, target) ? null : target };
+}

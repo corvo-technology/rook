@@ -18,6 +18,7 @@ export const READ_ONLY_AGENT_TOOLS = new Set([
   "store_agents",
   "list_routines",
   "guide_read",
+  "find_in_app",
   "space_status",
   "read_file",
   "read_history",

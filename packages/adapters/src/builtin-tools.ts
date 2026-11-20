@@ -1619,6 +1619,28 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "find_in_app",
+    description:
+      "Look up where something is in the app itself: a screen, a settings section or an action such as connecting an app, changing the plan or inviting someone. Returns matching screens with links, and the ones this person cannot open with who can. Use it before answering any question about the app, then show each link as a markdown link; if nothing matches, say you do not know.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          minLength: 1,
+          maxLength: 200,
+          description: "What the person wants to do or find, in their own words.",
+        },
+        language: {
+          type: "string",
+          description: "The language you are speaking with the person, such as en or pt-BR.",
+        },
+      },
+      required: ["query"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "space_status",
     description:
       "Settings, statuses and error messages across the space: each bot's model and last run, apps and servers in error, routines that failed and provider limits nearly reached. Use it before saying why something does not work. It never shows conversations, prompts, memory or tickets.",

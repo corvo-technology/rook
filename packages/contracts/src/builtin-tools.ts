@@ -67,6 +67,7 @@ export const BUILTIN_TOOL_NAMES = [
   "recall_about_user",
   "web_search",
   "web_fetch",
+  "find_in_app",
   "cloud_agent_launch",
   "cloud_agent_status",
   "cloud_agent_reply",

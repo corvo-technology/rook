@@ -276,6 +276,48 @@ export function useComposerActions({
     },
     [t],
   );
+  const askAboutImage = useCallback(
+    async (message: ThreadMessage, artifactId: string, ask: "variations" | "edit") => {
+      const botId = activeBotId.current;
+      const groupId = activeGroupId.current;
+      if (!botId && !groupId) return;
+      const text =
+        ask === "variations" ? t`Make variations of this image.` : t`I want to edit this image.`;
+      try {
+        const common = {
+          clientNonce: newClientId(),
+          // The agent works from the picture as a file: it never has to see it to pass it on.
+          imageHandling: "file" as const,
+          text,
+          artifactIds: [artifactId],
+        };
+        if (groupId) {
+          await rpc.threads.send({
+            ...common,
+            groupId,
+            mentions: message.botId ? [message.botId] : undefined,
+          });
+          if (activeGroupId.current === groupId) await refreshGroupThreadRef.current(groupId);
+        } else if (botId) {
+          const sent = await rpc.threads.send({ ...common, botId });
+          const { runId, taskId } = sent;
+          if (activeBotId.current === botId && runId && taskId) {
+            updateSnapshot((current) =>
+              applyThreadSendReceipt(
+                current,
+                { botId, runId, taskId },
+                terminalRunReceipts.current,
+              ),
+            );
+          }
+          if (activeBotId.current === botId) await refreshThreadRef.current(botId);
+        }
+      } catch (error) {
+        setSendError(errorText(error, t`Failed to send message`));
+      }
+    },
+    [t, updateSnapshot],
+  );
   const reactToMessage = useCallback(
     async (message: ThreadMessage, reaction: MessageReaction) => {
       const botId = activeBotId.current;
@@ -658,6 +700,7 @@ export function useComposerActions({
     clearReply,
     sending,
     sendMessage,
+    askAboutImage,
     stopRun,
     answerMessage,
     approveAll,

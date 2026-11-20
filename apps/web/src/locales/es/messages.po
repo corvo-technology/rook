@@ -2249,10 +2249,6 @@ msgstr "Cerrar gráfico"
 msgid "Close computer"
 msgstr "Cerrar computadora"
 
-#: src/pages/shell/message-cards.tsx
-msgid "Close image preview"
-msgstr "Cerrar vista previa de imagen"
-
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Close navigation"
 msgstr "Cerrar navegación"
@@ -4069,6 +4065,7 @@ msgstr "Cada puesto por encima de {included} cuesta {extraCostPrice}"
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/ConnectionsPage.tsx
 #: src/pages/partner/PartnerTemplatePanel.tsx
+#: src/pages/shell/message-cards.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/YouMemory.tsx
 msgid "Edit"
@@ -4829,6 +4826,10 @@ msgstr "Me detuve porque seguía esperando algo que no llegaba."
 msgid "I stopped because my tools kept failing."
 msgstr "Me detuve porque mis herramientas seguían fallando."
 
+#: src/pages/shell/use-composer-actions.ts
+msgid "I want to edit this image."
+msgstr "Quiero editar esta imagen."
+
 #: src/pages/shell/computer-release-actions.tsx
 msgid "I’m done"
 msgstr "Listo"
@@ -5492,6 +5493,10 @@ msgstr "Modelo principal"
 msgid "Make private"
 msgstr "Hacer privado"
 
+#: src/pages/shell/use-composer-actions.ts
+msgid "Make variations of this image."
+msgstr "Haz variaciones de esta imagen."
+
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/Settings.tsx
 msgid "Manage"
@@ -5943,6 +5948,10 @@ msgstr "Más"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "More computer actions"
 msgstr "Más acciones de computadora"
+
+#: src/pages/shell/message-cards.tsx
+msgid "More image actions"
+msgstr "Más acciones de la imagen"
 
 #: src/pages/partner/PartnerPayments.tsx
 msgid "More information needed"
@@ -9894,6 +9903,10 @@ msgstr "Usando tu clave de API. El plan gratuito termina el {freeUntil}."
 #: src/pages/shell/bot-credentials.tsx
 msgid "Value"
 msgstr "Valor"
+
+#: src/pages/shell/message-cards.tsx
+msgid "Variations"
+msgstr "Variaciones"
 
 #: src/pages/partner/PartnerDomain.tsx
 #: src/pages/platform/PartnersSection.tsx

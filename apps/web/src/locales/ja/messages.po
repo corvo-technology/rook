@@ -2249,10 +2249,6 @@ msgstr "チャートを閉じる"
 msgid "Close computer"
 msgstr "コンピューターを閉じる"
 
-#: src/pages/shell/message-cards.tsx
-msgid "Close image preview"
-msgstr "画像プレビューを閉じる"
-
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Close navigation"
 msgstr "ナビゲーションを閉じる"
@@ -4069,6 +4065,7 @@ msgstr "{included} 人を超える席は1席あたり {extraCostPrice}"
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/ConnectionsPage.tsx
 #: src/pages/partner/PartnerTemplatePanel.tsx
+#: src/pages/shell/message-cards.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/YouMemory.tsx
 msgid "Edit"
@@ -4829,6 +4826,10 @@ msgstr "来ないものを待ち続けていたため、停止しました。"
 msgid "I stopped because my tools kept failing."
 msgstr "ツールが失敗し続けたため、停止しました。"
 
+#: src/pages/shell/use-composer-actions.ts
+msgid "I want to edit this image."
+msgstr "この画像を編集したいです。"
+
 #: src/pages/shell/computer-release-actions.tsx
 msgid "I’m done"
 msgstr "完了しました"
@@ -5492,6 +5493,10 @@ msgstr "メインモデル"
 msgid "Make private"
 msgstr "非公開にする"
 
+#: src/pages/shell/use-composer-actions.ts
+msgid "Make variations of this image."
+msgstr "この画像のバリエーションを作ってください。"
+
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/Settings.tsx
 msgid "Manage"
@@ -5943,6 +5948,10 @@ msgstr "その他"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "More computer actions"
 msgstr "コンピューターのその他の操作"
+
+#: src/pages/shell/message-cards.tsx
+msgid "More image actions"
+msgstr "画像のその他の操作"
 
 #: src/pages/partner/PartnerPayments.tsx
 msgid "More information needed"
@@ -9894,6 +9903,10 @@ msgstr "自分の API キーを使用中。無料プランは{freeUntil}に終�
 #: src/pages/shell/bot-credentials.tsx
 msgid "Value"
 msgstr "値"
+
+#: src/pages/shell/message-cards.tsx
+msgid "Variations"
+msgstr "バリエーション"
 
 #: src/pages/partner/PartnerDomain.tsx
 #: src/pages/platform/PartnersSection.tsx

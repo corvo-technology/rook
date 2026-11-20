@@ -2249,10 +2249,6 @@ msgstr "关闭图表"
 msgid "Close computer"
 msgstr "关闭电脑"
 
-#: src/pages/shell/message-cards.tsx
-msgid "Close image preview"
-msgstr "关闭图片预览"
-
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Close navigation"
 msgstr "关闭导航"
@@ -4069,6 +4065,7 @@ msgstr "超过 {included} 人的每个席位 {extraCostPrice}"
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/ConnectionsPage.tsx
 #: src/pages/partner/PartnerTemplatePanel.tsx
+#: src/pages/shell/message-cards.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/YouMemory.tsx
 msgid "Edit"
@@ -4829,6 +4826,10 @@ msgstr "我停下来了，因为我一直在等一个没有到来的东西。"
 msgid "I stopped because my tools kept failing."
 msgstr "我停下来了，因为我的工具一直在出错。"
 
+#: src/pages/shell/use-composer-actions.ts
+msgid "I want to edit this image."
+msgstr "我想编辑这张图片。"
+
 #: src/pages/shell/computer-release-actions.tsx
 msgid "I’m done"
 msgstr "我做完了"
@@ -5492,6 +5493,10 @@ msgstr "主模型"
 msgid "Make private"
 msgstr "设为私密"
 
+#: src/pages/shell/use-composer-actions.ts
+msgid "Make variations of this image."
+msgstr "请生成这张图片的变体。"
+
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/Settings.tsx
 msgid "Manage"
@@ -5943,6 +5948,10 @@ msgstr "更多"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "More computer actions"
 msgstr "更多电脑操作"
+
+#: src/pages/shell/message-cards.tsx
+msgid "More image actions"
+msgstr "更多图片操作"
 
 #: src/pages/partner/PartnerPayments.tsx
 msgid "More information needed"
@@ -9894,6 +9903,10 @@ msgstr "正在使用你的 API 密钥。免费方案将于 {freeUntil} 结束。
 #: src/pages/shell/bot-credentials.tsx
 msgid "Value"
 msgstr "值"
+
+#: src/pages/shell/message-cards.tsx
+msgid "Variations"
+msgstr "变体"
 
 #: src/pages/partner/PartnerDomain.tsx
 #: src/pages/platform/PartnersSection.tsx

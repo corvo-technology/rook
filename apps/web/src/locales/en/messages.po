@@ -2249,10 +2249,6 @@ msgstr "Close chart"
 msgid "Close computer"
 msgstr "Close computer"
 
-#: src/pages/shell/message-cards.tsx
-msgid "Close image preview"
-msgstr "Close image preview"
-
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Close navigation"
 msgstr "Close navigation"
@@ -4069,6 +4065,7 @@ msgstr "Each seat above {included} costs {extraCostPrice}"
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/ConnectionsPage.tsx
 #: src/pages/partner/PartnerTemplatePanel.tsx
+#: src/pages/shell/message-cards.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/YouMemory.tsx
 msgid "Edit"
@@ -4829,6 +4826,10 @@ msgstr "I stopped because I kept waiting for something that didn't arrive."
 msgid "I stopped because my tools kept failing."
 msgstr "I stopped because my tools kept failing."
 
+#: src/pages/shell/use-composer-actions.ts
+msgid "I want to edit this image."
+msgstr "I want to edit this image."
+
 #: src/pages/shell/computer-release-actions.tsx
 msgid "I’m done"
 msgstr "I’m done"
@@ -5492,6 +5493,10 @@ msgstr "Main model"
 msgid "Make private"
 msgstr "Make private"
 
+#: src/pages/shell/use-composer-actions.ts
+msgid "Make variations of this image."
+msgstr "Make variations of this image."
+
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/Settings.tsx
 msgid "Manage"
@@ -5943,6 +5948,10 @@ msgstr "More"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "More computer actions"
 msgstr "More computer actions"
+
+#: src/pages/shell/message-cards.tsx
+msgid "More image actions"
+msgstr "More image actions"
 
 #: src/pages/partner/PartnerPayments.tsx
 msgid "More information needed"
@@ -9894,6 +9903,10 @@ msgstr "Using your API key. Free plan ends {freeUntil}."
 #: src/pages/shell/bot-credentials.tsx
 msgid "Value"
 msgstr "Value"
+
+#: src/pages/shell/message-cards.tsx
+msgid "Variations"
+msgstr "Variations"
 
 #: src/pages/partner/PartnerDomain.tsx
 #: src/pages/platform/PartnersSection.tsx

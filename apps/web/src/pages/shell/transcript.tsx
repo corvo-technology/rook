@@ -78,6 +78,7 @@ export const Transcript = memo(function Transcript({
   onAnswer,
   onApproveAll,
   onReply,
+  onImageAsk,
   onOpenThread,
   openThreadId,
   variant = "chat",
@@ -148,6 +149,7 @@ export const Transcript = memo(function Transcript({
   onApproveAll?: (batchClass: ApprovalBatchClass, items: ApprovalBatchItem[]) => Promise<string[]>;
   /** Quotes a message in the composer; absent where there is none to arm. */
   onReply?: (message: ThreadMessage) => void;
+  onImageAsk?: (message: ThreadMessage, artifactId: string, ask: "variations" | "edit") => void;
   /** Opens a thread beside the channel; set only in a channel's main column. */
   onOpenThread?: (rootId: string) => void;
   /** The thread open beside the channel, if any. */
@@ -663,6 +665,7 @@ export const Transcript = memo(function Transcript({
                       onOpenImport={onOpenImport}
                       showToolActivity={showToolActivity}
                       onReply={onReply}
+                      onImageAsk={onImageAsk}
                       onReplyInThread={
                         onOpenThread && !peerReceipt ? (root) => onOpenThread(root.id) : undefined
                       }

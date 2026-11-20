@@ -2128,8 +2128,12 @@ The optional marketing site in `apps/www` can be hosted separately.
 
 ## Image generation
 
-Bot image generation is off by default. It runs on OpenRouter with the deployment's own
-`OPENROUTER_API_KEY` and turns on when you name an image model:
+Bot image generation is off by default. It turns on when you name an image model, and the
+agent can then make up to four pictures per request, in the proportion the post needs (for
+example `4:5` for a feed post or `9:16` for a story). Image models are separate from chat
+models and never appear in a model picker.
+
+The default provider is OpenRouter, with the deployment's own `OPENROUTER_API_KEY`:
 
 ```dotenv
 OPENROUTER_API_KEY=replace-with-openrouter-key
@@ -2137,15 +2141,34 @@ MEDIA_GENERATION_IMAGE_MODEL=replace-with-an-openrouter-image-model-slug
 ```
 
 Pick a model that lists image output on OpenRouter (`GET /api/v1/images/models` lists them).
-`MEDIA_GENERATION_PROVIDER` can be set to `disabled` to switch it off while keeping both
-values, or to `fake` for offline testing only. Credentials stay on the server; never commit
-them.
+OpenRouter takes no reference pictures, so edits and variations are refused with a clear message.
 
-When model credits are enabled, every image is paid from the credit of the account of the
-person who asked: a hold is taken before the image, settled at the cost OpenRouter reports,
-and returned if the request was refused. An account without credits cannot generate images,
-so the deployment never pays for them. The agent can pick the proportion of the picture
-(for example `4:5` for a feed post or `9:16` for a story). Video generation is not available.
+Any server that speaks the OpenAI images protocol (`/images/generations` and `/images/edits`)
+works too, through the same OpenAI-compatible endpoint the deployment already uses for local
+models. This provider takes reference pictures, so an agent can edit an image or make
+variations of one from the conversation:
+
+```dotenv
+MEDIA_GENERATION_PROVIDER=openai-compatible
+MEDIA_GENERATION_IMAGE_MODEL=replace-with-the-image-model-id
+CORVO_LOCAL_MODELS_URL=https://images.example.com/v1
+# Only when the server needs a key.
+MEDIA_GENERATION_API_KEY=replace-with-the-server-key
+```
+
+`MEDIA_GENERATION_PROVIDER` can also be set to `disabled` to switch images off while keeping
+the values, or to `fake` for offline testing only. Credentials stay on the server; never commit
+them. Rook knows the capabilities and prices of a few image models (see the image model catalog
+in `packages/contracts/src/image-models.ts`); a model it does not list still works, held at a
+cautious price and without reference pictures unless the provider is OpenAI-compatible.
+
+When model credits are enabled, every picture is paid from the credit of the account of the
+person who asked. Before the call, the account is held for the model's worst case for all the
+pictures asked for; afterwards the hold is settled at the cost the provider reports, or at the
+catalog price when the provider reports none, and returned if the request was refused. An
+account without credits cannot generate images, so the deployment never pays for them. Video
+generation is offered to agents only when a configured provider can make video; none of the
+real ones can today.
 
 ## Connect mobile clients
 

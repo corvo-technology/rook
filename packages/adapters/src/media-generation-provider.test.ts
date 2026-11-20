@@ -62,7 +62,13 @@ describe("media generation connection", () => {
       MEDIA_GENERATION_IMAGE_MODEL: "google/gemini-2.5-flash-image",
     });
     expect(provider?.id).toBe("openrouter");
-    expect(provider?.capabilities).toEqual({ images: true, video: false, offline: false });
+    expect(provider?.capabilities).toEqual({
+      images: true,
+      video: false,
+      offline: false,
+      references: false,
+      maxCount: 4,
+    });
     expect(provider?.imageModel).toBe("google/gemini-2.5-flash-image");
   });
 
@@ -70,7 +76,8 @@ describe("media generation connection", () => {
     const fake = createMediaGenerationProvider({ MEDIA_GENERATION_PROVIDER: "fake" })!;
     expect(fake.capabilities.offline).toBe(true);
     expect(
-      (await new FakeMediaGenerationProvider().generateImage({ prompt: "x" }, context)).mimeType,
+      (await new FakeMediaGenerationProvider().generateImage({ prompt: "x" }, context))[0]
+        ?.mimeType,
     ).toBe("image/png");
     expect(() => createMediaGenerationProvider({ MEDIA_GENERATION_PROVIDER: "fal" })).toThrow(
       "Unknown media generation provider",
@@ -88,9 +95,12 @@ describe("media generation connection", () => {
 describe("OpenRouter image generation", () => {
   it("asks for one image with the chosen proportion and returns it with its cost", async () => {
     const { provider, fetch } = setup(png());
-    const output = await provider.generateImage({ prompt: "a comb", aspectRatio: "4:5" }, context);
+    const [output] = await provider.generateImage(
+      { prompt: "a comb", aspectRatio: "4:5" },
+      context,
+    );
     expect(output).toMatchObject({ mimeType: "image/png", costUsd: 0.0412 });
-    expect(Buffer.from(output.bytes).equals(PNG)).toBe(true);
+    expect(Buffer.from(output!.bytes).equals(PNG)).toBe(true);
     const [url, init] = fetch.mock.calls[0]!;
     expect(String(url)).toBe("https://openrouter.ai/api/v1/images");
     expect(init?.headers).toMatchObject({ Authorization: "Bearer fake-key" });
@@ -107,8 +117,8 @@ describe("OpenRouter image generation", () => {
     const { provider, fetch } = setup(
       new Response(JSON.stringify({ data: [{ b64_json: PNG.toString("base64") }] })),
     );
-    const output = await provider.generateImage({ prompt: "x" }, context);
-    expect(output.costUsd).toBeUndefined();
+    const [output] = await provider.generateImage({ prompt: "x" }, context);
+    expect(output?.costUsd).toBeUndefined();
     expect(JSON.parse(String(fetch.mock.calls[0]![1]?.body))).not.toHaveProperty("aspect_ratio");
   });
 
@@ -167,9 +177,9 @@ describe("OpenRouter image generation", () => {
       const { provider } = setup(
         new Response(JSON.stringify({ data: [{ b64_json: bytes.toString("base64") }] })),
       );
-      const output = await provider.generateImage({ prompt: "x" }, context);
-      expect(output.mimeType).toBe(mimeType);
-      expect(Buffer.from(output.bytes).equals(bytes)).toBe(true);
+      const [output] = await provider.generateImage({ prompt: "x" }, context);
+      expect(output?.mimeType).toBe(mimeType);
+      expect(Buffer.from(output!.bytes).equals(bytes)).toBe(true);
     }
   });
 
@@ -218,8 +228,26 @@ describe("mediaPromptSchema", () => {
     expect(mediaPromptSchema.parse({ prompt: " hi ", aspect_ratio: "9:16" })).toEqual({
       prompt: "hi",
       aspectRatio: "9:16",
+      count: 1,
+      referenceArtifactIds: [],
     });
-    expect(mediaPromptSchema.parse({ prompt: "hi" })).toEqual({ prompt: "hi" });
+    expect(mediaPromptSchema.parse({ prompt: "hi" })).toEqual({
+      prompt: "hi",
+      count: 1,
+      referenceArtifactIds: [],
+    });
+    expect(mediaPromptSchema.parse({ prompt: "hi", count: 99 }).count).toBe(4);
+    expect(mediaPromptSchema.safeParse({ prompt: "hi", count: 0 }).success).toBe(false);
+    expect(
+      mediaPromptSchema.parse({ prompt: "hi", reference_artifact_ids: ["a", "a", "b"] })
+        .referenceArtifactIds,
+    ).toEqual(["a", "b"]);
+    expect(
+      mediaPromptSchema.parse({
+        prompt: "hi",
+        reference_artifact_ids: ["attachments/cm1x.png", "cm1x", "cm2y.jpg"],
+      }).referenceArtifactIds,
+    ).toEqual(["cm1x", "cm2y"]);
     expect(mediaPromptSchema.safeParse({ prompt: "hi", aspect_ratio: "2:9" }).success).toBe(false);
   });
 });

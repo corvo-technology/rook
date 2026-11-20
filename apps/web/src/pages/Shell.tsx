@@ -1141,6 +1141,7 @@ function SpaceShell({ page }: { page?: ReactNode }) {
                   onStarter={(text) => void composer.sendMessage(text, [], newClientId())}
                   app={emptyChatApp}
                   onLoadOlder={loadOlder}
+                  onImageAsk={composer.askAboutImage}
                   onReply={(message) => {
                     composer.setReplyTarget(message);
                     composer.setReplyQuote(null);

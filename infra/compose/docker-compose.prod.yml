@@ -117,6 +117,7 @@ x-app-environment: &app-environment
   FISH_ASR_MODEL:
   MEDIA_GENERATION_PROVIDER:
   MEDIA_GENERATION_IMAGE_MODEL:
+  MEDIA_GENERATION_API_KEY:
   # Provider keys Pi reads itself when a model has no stored credential
   AI_GATEWAY_API_KEY:
   ANTHROPIC_AUTH_TOKEN:

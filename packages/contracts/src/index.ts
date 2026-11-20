@@ -29,6 +29,7 @@ export * from "./events.js";
 export * from "./history.js";
 export * from "./host.js";
 export * from "./ids.js";
+export * from "./image-models.js";
 export * from "./integration-settings.js";
 export * from "./local-settings.js";
 export * from "./local-setup.js";

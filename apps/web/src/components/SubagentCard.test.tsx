@@ -14,11 +14,14 @@ vi.mock("@corvo/chat-ui/web", () => ({
 
 import { SubagentCard } from "./SubagentCard";
 
-function mountCard(block: Parameters<typeof SubagentCard>[0]["block"]) {
+function mountCard(
+  block: Parameters<typeof SubagentCard>[0]["block"],
+  loadFull?: Parameters<typeof SubagentCard>[0]["loadFull"],
+) {
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
-  flushSync(() => root.render(<SubagentCard block={block} />));
+  flushSync(() => root.render(<SubagentCard block={block} loadFull={loadFull} />));
   const get = (id: string) => container.querySelector(`[data-testid="${id}"]`);
   const toggle = () => container.querySelector<HTMLButtonElement>("button[aria-expanded]");
   const click = () => flushSync(() => toggle()?.click());
@@ -80,6 +83,30 @@ describe("SubagentCard", () => {
     expect(card.toggle()?.getAttribute("aria-expanded")).toBe("false");
     expect(card.get("subagent-task")?.className).toContain("truncate");
     await vi.waitFor(() => expect(card.get("subagent-body")).toBeNull());
+    card.unmount();
+  });
+
+  it("reads the whole report once, only when a previewed card is opened", async () => {
+    const whole = { ...finished, agentId: "agent-cut", result: "A long report, in full" };
+    const loadFull = vi.fn(async () => whole);
+    const card = mountCard({ ...finished, agentId: "agent-cut", truncated: true }, loadFull);
+    expect(loadFull).not.toHaveBeenCalled();
+    card.click();
+    expect(card.get("subagent-body")?.textContent).toBe("A long report");
+    await vi.waitFor(() =>
+      expect(card.get("subagent-body")?.textContent).toBe("A long report, in full"),
+    );
+    card.click();
+    card.click();
+    expect(loadFull).toHaveBeenCalledTimes(1);
+    card.unmount();
+  });
+
+  it("does not read anything for a report that arrived whole", () => {
+    const loadFull = vi.fn(async () => finished);
+    const card = mountCard({ ...finished, agentId: "agent-whole" }, loadFull);
+    card.click();
+    expect(loadFull).not.toHaveBeenCalled();
     card.unmount();
   });
 

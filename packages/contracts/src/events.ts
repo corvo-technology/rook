@@ -56,6 +56,11 @@ export const ProductEventType = z.enum([
   "group.handoff",
   /** Liveness only: never persisted, never applied to a snapshot, always seq 0. */
   "heartbeat",
+  /**
+   * Too much happened after the client's cursor to replay. Never persisted; its seq is the head the
+   * stream continues from, and the client takes a fresh snapshot instead of the missed events.
+   */
+  "thread.resync",
 ]);
 export type ProductEventType = z.infer<typeof ProductEventType>;
 
@@ -283,6 +288,8 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     status: z.enum(["running", "completed", "failed"]),
     progress: z.string().optional(),
     result: z.string().optional(),
+    /** `progress` and `result` are the start of a longer text; `threads.message` returns it whole. */
+    truncated: z.literal(true).optional(),
   }),
   z.object({
     /** A bot's plan for a request with several stages, kept current as they start and finish. */
@@ -499,6 +506,8 @@ export const ComputerCommandSchema = z.object({
   status: z.enum(["running", "done"]),
   exitCode: z.number().int().nullable(),
   output: z.string(),
+  /** `output` is the start of a longer one; `computer.commandOutput` returns it whole. */
+  outputTruncated: z.literal(true).optional(),
   /** Size written by write_file. */
   bytes: z.number().int().nonnegative().optional(),
 });

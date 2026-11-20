@@ -992,4 +992,41 @@ describe("thread subscription recovery", () => {
     await expect(running).resolves.toBeUndefined();
     expect(add.mock.calls.length).toBe(remove.mock.calls.length);
   });
+  it("takes a fresh snapshot and resumes from it when the server says the backlog is too large", async () => {
+    vi.useFakeTimers();
+    const { abort, channel, state, callbacks } = setup();
+    const next = stream();
+    callbacks.subscribe.mockResolvedValueOnce(channel.events).mockResolvedValueOnce(next.events);
+    callbacks.refresh.mockImplementation(async () => {
+      state.committed = { ...head, cursor: 500 };
+    });
+    const running = runThreadSubscription(callbacks);
+    await vi.advanceTimersByTimeAsync(0);
+    channel.send({ ...event(500), type: "thread.resync" });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(callbacks.refresh).toHaveBeenCalledTimes(1);
+    expect(callbacks.applyEvent).not.toHaveBeenCalled();
+    expect(callbacks.onEvent).not.toHaveBeenCalled();
+    expect(callbacks.subscribe).toHaveBeenLastCalledWith(500, expect.any(AbortSignal));
+    abort.abort();
+    await running;
+  });
+
+  it("keeps asking for a snapshot while the refresh after a resync fails", async () => {
+    vi.useFakeTimers();
+    const { abort, channel, state, callbacks } = setup();
+    const next = stream();
+    callbacks.subscribe.mockResolvedValueOnce(channel.events).mockResolvedValueOnce(next.events);
+    callbacks.refresh.mockRejectedValueOnce(Object.assign(new Error("offline"), { status: 503 }));
+    const running = runThreadSubscription(callbacks);
+    await vi.advanceTimersByTimeAsync(0);
+    channel.send({ ...event(500), type: "thread.resync" });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state.committed?.cursor).toBe(10);
+    await vi.advanceTimersByTimeAsync(250);
+    // Still the old cursor, so the server answers with another resync instead of a gap.
+    expect(callbacks.subscribe).toHaveBeenLastCalledWith(10, expect.any(AbortSignal));
+    abort.abort();
+    await running;
+  });
 });

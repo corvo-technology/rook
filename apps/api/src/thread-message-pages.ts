@@ -15,11 +15,13 @@ import {
 } from "@corvo/core";
 import { messageReplyPreview } from "@corvo/core/message-quote";
 import type { Prisma, PrismaClient } from "@corvo/db";
+import type { MessageWindowBudget } from "./thread-read-budget.js";
+import { boundMessageWindow, previewMessage } from "./thread-read-budget.js";
 import { messageVariantsByMessage, visibleMessagesWhere } from "@corvo/db";
 
 type MessageDb = PrismaClient | Prisma.TransactionClient;
 
-const replySelection = {
+export const replySelection = {
   threadId: true,
   role: true,
   botId: true,
@@ -34,6 +36,7 @@ export async function loadMessagePage(
   around?: { messageId?: string; seq?: number },
   includePeerRuns = false,
   includePeerReceipts = false,
+  window?: { budget?: MessageWindowBudget; preview?: boolean },
 ): Promise<ThreadMessagePage> {
   // Only the version of the chat on screen is paged; the others are reached by switching to them.
   const visible = await visibleMessagesWhere(prisma, threadId);
@@ -46,6 +49,7 @@ export async function loadMessagePage(
     around,
     includePeerRuns,
     includePeerReceipts,
+    window,
   );
   const variants = await messageVariantsByMessage(prisma, threadId);
   if (variants.size === 0) return page;
@@ -71,7 +75,10 @@ async function loadVisiblePage(
   around: { messageId?: string; seq?: number } | undefined,
   includePeerRuns: boolean,
   includePeerReceipts: boolean,
+  window: { budget?: MessageWindowBudget; preview?: boolean } | undefined,
 ): Promise<ThreadMessagePage> {
+  const shown = (messages: ThreadMessage[]) =>
+    window?.preview ? messages.map(previewMessage) : messages;
   if (around) {
     let targetSeq = around.seq;
     if (targetSeq === undefined && around.messageId) {
@@ -105,7 +112,7 @@ async function loadVisiblePage(
       const messages = includePeerRuns ? rows : await withoutPeerRunMessages(prisma, rows);
       return {
         threadId,
-        messages: await withRoutineNames(prisma, messages),
+        messages: shown(await withRoutineNames(prisma, messages)),
         olderCursor: hasOlder ? (first?.seq ?? null) : null,
         coveredThroughSeq,
       };
@@ -133,9 +140,18 @@ async function loadVisiblePage(
       (row) => !isPeerReceiptBlocks(row.blocks as MessageBlock[]),
     );
     if (hasSubstantive || includePeerReceipts || !hasOlder || includePeerRuns) {
+      const named = shown(await withRoutineNames(prisma, visibleRows));
+      const bounded = window?.budget ? boundMessageWindow(named, window.budget) : undefined;
+      if (bounded?.trimmed) {
+        return {
+          threadId,
+          messages: bounded.messages,
+          olderCursor: bounded.messages[0]?.seq ?? null,
+        };
+      }
       return {
         threadId,
-        messages: await withRoutineNames(prisma, visibleRows),
+        messages: named,
         olderCursor: hasOlder ? (pageRows[0]?.seq ?? null) : null,
       };
     }

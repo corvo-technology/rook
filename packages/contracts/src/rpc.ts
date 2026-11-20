@@ -854,7 +854,13 @@ export const appContract = {
         cursor: z.number().int().min(-1),
       }),
     ),
-    get: oc.input(threadTarget).output(ThreadSnapshotSchema),
+    get: oc
+      .input(threadTarget.safeExtend({ preview: z.boolean().optional() }))
+      .output(ThreadSnapshotSchema),
+    /** One message whole, where a read with `preview` cut a helper's long report short. */
+    message: oc
+      .input(threadTarget.safeExtend({ messageId: Id }))
+      .output(ThreadMessageSchema.nullable()),
     /** How much of the model's reading window this chat's last turn used; null where unknown. */
     context: oc.input(z.object({ botId: Id })).output(
       z.object({
@@ -868,6 +874,7 @@ export const appContract = {
       .input(
         threadTarget.safeExtend({
           before: z.number().int().nonnegative().optional(),
+          preview: z.boolean().optional(),
           includePeerRuns: z.boolean().optional(),
           includePeerReceipts: z.boolean().optional(),
           around: z
@@ -1114,9 +1121,14 @@ export const appContract = {
       )
       .output(z.object({ ok: z.literal(true) })),
     terminalUrl: oc.input(botId).output(z.object({ url: z.string().nullable() })),
+    /** Recent commands with their output cut to a preview. */
     commands: oc
       .input(botId)
       .output(z.array(ComputerCommandSchema.extend({ createdAt: z.string() }))),
+    /** One command's whole output, for a command `commands` marked `outputTruncated`. */
+    commandOutput: oc
+      .input(botId.safeExtend({ executionId: z.string().min(1) }))
+      .output(z.object({ output: z.string() }).nullable()),
     screenUrl: oc.input(botId).output(z.object({ url: z.string().nullable() })),
     heartbeat: oc.input(botId).output(z.object({ ok: z.literal(true) })),
   },

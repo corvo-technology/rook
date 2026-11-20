@@ -165,7 +165,10 @@ export function useThreadSync({
     const stickToEnd = !scrollElement || transcriptIsNearEnd(scrollElement);
     markOnce("rk:renderer:thread-request-start");
     const request = ++groupRefreshEpoch.current;
-    const snap = await rpc.threads.get({ groupId: id }, signal ? { signal } : undefined);
+    const snap = await rpc.threads.get(
+      { groupId: id, preview: true },
+      signal ? { signal } : undefined,
+    );
     markOnce("rk:renderer:thread-response");
     if (activeGroupId.current !== id || request < groupAppliedEpoch.current) return snap;
     groupAppliedEpoch.current = request;
@@ -198,7 +201,10 @@ export function useThreadSync({
     const request = ++threadRefreshEpoch.current;
     // Apply threads.get as soon as it returns so stop/takeover status is not held behind
     // routines/skills/screen fetches (progress can advance the cursor meanwhile).
-    const snap = await rpc.threads.get({ botId: id }, signal ? { signal } : undefined);
+    const snap = await rpc.threads.get(
+      { botId: id, preview: true },
+      signal ? { signal } : undefined,
+    );
     markOnce("rk:renderer:thread-response");
     if (
       activeBotId.current !== id ||
@@ -276,6 +282,7 @@ export function useThreadSync({
       const page = await rpc.threads.messages({
         ...(targetGroupId ? { groupId: targetGroupId } : { botId: targetBotId! }),
         before,
+        preview: true,
       });
       if (
         epoch !== historyEpoch.current ||
@@ -321,7 +328,10 @@ export function useThreadSync({
         return primed?.botId === active.id
           ? primed
           : pendingJump
-            ? rpc.threads.get({ botId: active.id }, { signal: threadSnapshotSignal(abort.signal) })
+            ? rpc.threads.get(
+                { botId: active.id, preview: true },
+                { signal: threadSnapshotSignal(abort.signal) },
+              )
             : refreshThread(active.id, threadSnapshotSignal(abort.signal));
       },
       loadHead: () =>
@@ -417,7 +427,10 @@ export function useThreadSync({
       signal: abort.signal,
       loadInitial: () =>
         pendingJump
-          ? rpc.threads.get({ groupId }, { signal: threadSnapshotSignal(abort.signal) })
+          ? rpc.threads.get(
+              { groupId, preview: true },
+              { signal: threadSnapshotSignal(abort.signal) },
+            )
           : refreshGroupThread(groupId, threadSnapshotSignal(abort.signal)),
       loadHead: () => rpc.threads.head({ groupId }, { signal: threadSnapshotSignal(abort.signal) }),
       refresh: () =>

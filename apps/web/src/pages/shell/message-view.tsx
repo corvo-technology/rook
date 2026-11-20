@@ -148,6 +148,7 @@ export const MessageView = memo(function MessageView({
   markedUnread = false,
   onReact,
   onPin,
+  onLoadMessage,
   onEdit,
   onRegenerate,
   onFork,
@@ -217,6 +218,8 @@ export const MessageView = memo(function MessageView({
   onReact: (message: ThreadMessage, reaction: MessageReaction) => Promise<void>;
   /** Pins the message to its channel, or unpins it; absent where there is no pin list. */
   onPin?: (message: ThreadMessage, pinned: boolean) => Promise<void>;
+  /** Reads this message whole, where a long helper report arrived as a preview. */
+  onLoadMessage?: (message: ThreadMessage) => Promise<ThreadMessage | null>;
   /** The message's own edit, regenerate and branch actions; each is absent when it does not apply. */
   onEdit?: () => void;
   onRegenerate?: () => void;
@@ -660,7 +663,23 @@ export const MessageView = memo(function MessageView({
             );
           }
           if (block.kind === "subagent") {
-            return <SubagentCard key={i} block={block} />;
+            return (
+              <SubagentCard
+                key={i}
+                block={block}
+                loadFull={
+                  onLoadMessage
+                    ? async () => {
+                        const whole = await onLoadMessage(message);
+                        return whole?.blocks.find(
+                          (full): full is typeof block =>
+                            full.kind === "subagent" && full.agentId === block.agentId,
+                        );
+                      }
+                    : undefined
+                }
+              />
+            );
           }
           if (block.kind === "wiki_change") {
             return (

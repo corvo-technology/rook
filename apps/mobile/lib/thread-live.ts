@@ -118,6 +118,22 @@ export function useThreadLiveSubscription({
             cursor,
             (event) => {
               if (abort.signal.aborted || sessionGeneration !== currentSessionGeneration()) return;
+              if (event.type === "thread.resync") {
+                // Too much was missed to replay: take a fresh snapshot, and move the cursor only
+                // once it lands, so a failed read is answered with another resync on reconnect.
+                expandedHistoryThread.current = null;
+                pinnedAroundRef.current = null;
+                historyEpoch.current += 1;
+                void refresh().then(
+                  () => {
+                    if (abort.signal.aborted) return;
+                    cursor = Math.max(cursor, event.seq ?? -1);
+                    liveCursor.current = cursor;
+                  },
+                  () => undefined,
+                );
+                return;
+              }
               cursor = Math.max(cursor, event.seq ?? -1);
               retryMs = 250;
               if (event.type === "thread.cleared") {

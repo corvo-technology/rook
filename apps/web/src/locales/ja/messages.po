@@ -9068,6 +9068,10 @@ msgstr "返信をストリーミング"
 msgid "Strong"
 msgstr "高性能"
 
+#: src/pages/RoutineEditor.tsx
+msgid "Stuck tickets on the board"
+msgstr "ボードで止まっているチケット"
+
 #: src/components/CoachLayer.tsx
 msgid "Stuck? Ask the Chief."
 msgstr "困ったら、Chief に聞いてください。"

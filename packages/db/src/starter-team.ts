@@ -1,5 +1,7 @@
 import type { Actor, AgentCatalogLocale, Bot } from "@corvo/contracts";
 import { CHIEF_AGENT, chiefInstructions, MASCOT_COLORS } from "@corvo/core";
+import { getLogger } from "@corvo/logging";
+import { ensureChiefWatch } from "./chief-watch.js";
 import type { PrismaClient } from "./client.js";
 import { createRepos } from "./repos.js";
 
@@ -63,5 +65,11 @@ export async function ensureStarterTeam(
     if (!winner) throw error;
     return { botId: winner.id, created: false };
   }
+  // The Chief watches in the background from the start. Never blocks: the reconciler retries it.
+  await ensureChiefWatch(prisma, {
+    id: chief.id,
+    spaceId: actor.spaceId,
+    userId: actor.userId,
+  }).catch((error) => getLogger().error("chief watch", error));
   return { botId: chief.id, created: true, bot: chief };
 }

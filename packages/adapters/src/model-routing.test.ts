@@ -34,7 +34,36 @@ describe("decideTier", () => {
           prompt: "Sort the 12 new messages by urgency.",
         }),
       ),
-    ).toEqual({ tier: "fast", clear: true, reason: "light-agent" });
+    ).toEqual({ tier: "fast", clear: true, reason: "background" });
+  });
+
+  it("starts every background trigger on the fast tier, whatever the title or prompt says", () => {
+    for (const trigger of ["routine", "webhook", "cloud_agent", "tickets"] as const) {
+      expect(
+        decideTier(
+          turn({
+            title: "Developer and research analyst",
+            trigger,
+            prompt: "Check src/server.ts and the deploy status.",
+            contextTokens: 150_000,
+          }),
+        ),
+      ).toEqual({ tier: "fast", clear: true, reason: "background" });
+    }
+    expect(
+      decideTier(turn({ title: "Developer", trigger: "user", prompt: "Fix src/server.ts" })),
+    ).toMatchObject({ tier: "strong" });
+  });
+
+  it("lets a background run escalate: the floor and approvals still win", () => {
+    expect(decideTier(turn({ trigger: "routine", floor: "strong" }))).toMatchObject({
+      tier: "strong",
+      reason: "floor",
+    });
+    expect(decideTier(turn({ trigger: "routine", approvalGated: true }))).toMatchObject({
+      tier: "main",
+      reason: "approval",
+    });
   });
 
   it("sends a coding or computer task to the strong tier", () => {

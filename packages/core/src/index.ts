@@ -9,6 +9,7 @@ export * from "./answerable-ask.js";
 export * from "./app-catalog.js";
 export * from "./app-catalog-data.js";
 export * from "./app-connect.js";
+export * from "./app-map/index.js";
 export * from "./approval-level.js";
 export * from "./artifact-sandbox.js";
 export * from "./async.js";

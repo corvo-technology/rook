@@ -266,6 +266,7 @@ import { loadAgentTicketContext } from "./ticket-context.js";
 import { startTicketRun } from "./ticket-run-moves.js";
 import { appendToolCompletionAudit } from "./tool-completion-audit.js";
 import { loadUserMemoryContext } from "./user-memory-run.js";
+import { sayNowAllowed } from "./user-progress.js";
 import { createWebProvider } from "./web-provider-factory.js";
 import { loadWikiIndexContext } from "./wiki-context.js";
 import { wikiOfferInstruction } from "./wiki-offer.js";
@@ -1256,6 +1257,12 @@ export function createRunExecutor(deps: ExecutorDeps) {
             disabledBuiltinTools: botDisabledTools(bot),
             fleetManagement: bot.fleetManagement,
             followUpFromUser: sourceMessage?.role === "user",
+            sayNowOffered: sayNowAllowed({
+              ownerStartedRun,
+              messagingChannelRun,
+              voiceCall,
+              visitorRun,
+            }),
             // An optional tool: if the steps cannot be counted, the run goes on without it.
             workflowContinues:
               run.trigger === "routine" &&
@@ -1864,6 +1871,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
                   workspaceInstruction,
                   agentEnvironmentInstruction,
                   replyGuidance: runReplyGuidance(run.trigger),
+                  sayNowOffered: builtins.some((tool) => tool.name === "say_now"),
                   disabledBuiltinTools,
                   offeredFleetTools: offeredFleetTools(builtins),
                 }),

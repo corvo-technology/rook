@@ -90,6 +90,8 @@ export interface ReplyState {
   /** Person messages this run already answered in a message of their own. */
   answeredTargets: Set<string>;
   midTurnProgressCount: number;
+  /** say_now already posted its opening line in this run. */
+  sayNowText: string | undefined;
   turnStartedAtMs: number;
   /**
    * Tool calls that land mid-sentence wait here until the narration catches up to a

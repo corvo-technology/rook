@@ -39,7 +39,7 @@ import {
 } from "./routine-backoff.js";
 import { startWorkflowStepAfter } from "./routine-steps.js";
 import { finalAnswers } from "./run-answers.js";
-import type { RunContext } from "./run-context.js";
+import type { ReplyState, RunContext } from "./run-context.js";
 import { persistTurnCheckpoint } from "./run-context.js";
 import { classifyRunError } from "./run-error-code.js";
 import { TurnGuardStopError } from "./run-guards.js";
@@ -91,6 +91,7 @@ import {
   extractNarrationText,
   finalBlocksAfterMidTurnProgress,
   userProgressClientNonce,
+  withoutSayNowRepeat,
 } from "./user-progress.js";
 import { wikiCurateJobAfterTurn } from "./wiki-curator-run.js";
 
@@ -353,6 +354,24 @@ async function pauseForTakeover(ctx: RunContext, event: RuntimeEvent<"takeover">
   });
 }
 
+/** The final reply must not open by repeating the line say_now already posted. */
+function stripSayNowRepeat(reply: ReplyState) {
+  const line = reply.sayNowText;
+  if (!line) return;
+  reply.assembled = withoutSayNowRepeat(reply.assembled, line);
+  reply.currentTextSegment = withoutSayNowRepeat(reply.currentTextSegment, line);
+  const first = reply.messageSegments.findIndex((block) => block.kind === "text");
+  const block = first === -1 ? undefined : reply.messageSegments[first];
+  if (block?.kind !== "text") return;
+  const text = withoutSayNowRepeat(block.text, line);
+  reply.messageSegments =
+    text === block.text
+      ? reply.messageSegments
+      : reply.messageSegments.flatMap((item, index) =>
+          index !== first ? [item] : text ? [{ ...block, text }] : [],
+        );
+}
+
 /** Show the tool step, stop a repeating loop, and run the tool for scripted runtimes. */
 async function onToolCalled(ctx: RunContext, event: RuntimeEvent<"tool">): Promise<boolean> {
   const { deps, run, runId, bot, thread } = ctx;
@@ -362,7 +381,7 @@ async function onToolCalled(ctx: RunContext, event: RuntimeEvent<"tool">): Promi
   await flushProgress(ctx);
   // Promote streamed narration into a durable, replyable chat message before
   // tools continue, so long turns do not look stalled and stay replyable.
-  if (event.name !== "message_user") {
+  if (event.name !== "message_user" && event.name !== "say_now") {
     await publishMidTurnNarration(ctx);
   }
   reply.assistantTurnBreakPending = true;
@@ -605,6 +624,7 @@ export async function completeRun(ctx: RunContext) {
     reply.assembled = reply.lastDiscardedMidTurnNarration;
     reply.currentTextSegment = reply.assembled;
   }
+  stripSayNowRepeat(reply);
   flushPendingTools(reply);
   // Silent-allowed runs can choose an explicit NO_RESPONSE or finish empty.
   // Other runs still drop a stray sentinel at the edges of a real reply.

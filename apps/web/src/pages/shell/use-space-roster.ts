@@ -13,6 +13,7 @@ import { useLingui } from "@lingui/react/macro";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { takeInitialBootstrap } from "../../lib/bootstrap";
+import { getActiveUiLocale } from "../../lib/i18n";
 import { localTimezone } from "../../lib/local-timezone";
 import { markOnce } from "../../lib/performance";
 import type { ChatTarget } from "../../lib/query";
@@ -350,6 +351,10 @@ export function useSpaceBootstrap({
         if (cancelled) return;
         const groupList = bootstrap.groups;
         setBootstrapMe(bootstrap.me);
+        // The account keeps the language this app runs in, so emails are written in it.
+        const uiLocale = getActiveUiLocale();
+        if (bootstrap.me.locale !== uiLocale)
+          void Promise.resolve(rpc.preferences.update({ locale: uiLocale })).catch(() => {});
         // First sign-in with no saved timezone: adopt this browser's, once. A choice made
         // in Settings is never overwritten; a failure just leaves bots on UTC.
         if (bootstrap.me.timezone === null) {

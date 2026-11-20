@@ -10,6 +10,7 @@ import {
   markdownLinkRequiresConfirmation,
   markdownMentionId,
   plainTextLinkParts,
+  resolveAppPathLinks,
   sanitizeMarkdownImageUrl,
   sanitizeMarkdownUrl,
   withAtMentions,
@@ -428,5 +429,27 @@ describe("withAtMentions", () => {
   it("leaves names without @, emails, longer words, code and links alone", () => {
     const text = "Cora said hi to x@Cora.dev, @Coral, `@Cora` and [@Cora](https://example.test)";
     expect(withAtMentions(text, members)).toBe(text);
+  });
+});
+
+describe("resolveAppPathLinks", () => {
+  const origin = "https://app.example.test/";
+
+  it("gives an app path link the app's origin, so it opens without the external prompt", () => {
+    const resolved = resolveAppPathLinks("Open [Billing](/settings/billing) now.", origin);
+    expect(resolved).toBe("Open [Billing](https://app.example.test/settings/billing) now.");
+    expect(
+      markdownLinkRequiresConfirmation("https://app.example.test/settings/billing", origin),
+    ).toBe(false);
+  });
+
+  it("leaves other links, protocol-relative paths and code alone", () => {
+    const text = "[a](https://example.com) [b](//evil.test/x) `[c](/code)`\n```\n[d](/fence)\n```";
+    expect(resolveAppPathLinks(text, origin)).toBe(text);
+  });
+
+  it("changes nothing without a usable origin", () => {
+    expect(resolveAppPathLinks("[a](/x)", null)).toBe("[a](/x)");
+    expect(resolveAppPathLinks("[a](/x)", "not a url")).toBe("[a](/x)");
   });
 });

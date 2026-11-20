@@ -1222,4 +1222,9 @@ export const JA_MESSAGES: Record<string, string> = {
     "すでに利用中のAI（Claude、ChatGPT、APIキー）を使えます",
   "Yearly · 2 months free": "年払い · 2か月無料",
   Yearly: "年払い",
+  "This looks like a key. Save it as a credential instead?":
+    "キーのようです。代わりに認証情報として保存しますか?",
+  "Save credential": "認証情報を保存",
+  "Send anyway": "このまま送信",
+  "Could not save the credential": "認証情報を保存できませんでした",
 };

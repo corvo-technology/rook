@@ -21,6 +21,14 @@ describe("loadEnv", () => {
     }
   });
 
+  it("links the site's terms page unless the operator names their own", () => {
+    expect(loadEnv(base).termsUrl).toBe("https://rook.team/terms");
+    expect(loadEnv({ ...base, TERMS_URL: " https://example.test/legal " }).termsUrl).toBe(
+      "https://example.test/legal",
+    );
+    expect(loadEnv({ ...base, TERMS_URL: " " }).termsUrl).toBe("https://rook.team/terms");
+  });
+
   it("keeps calls off unless explicitly enabled", () => {
     expect(loadEnv(base).phoneCallsEnabled).toBe(false);
     for (const value of ["false", "1", ""]) {

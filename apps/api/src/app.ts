@@ -577,7 +577,12 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
         provider: billingProvider,
         webOrigin: env.webOrigin,
         managedModelsAvailable: resolveDeploymentModel().configured,
-        notices: createBillingNotices({ prisma, email, webOrigin: env.webOrigin }),
+        notices: createBillingNotices({
+          prisma,
+          email,
+          webOrigin: env.webOrigin,
+          termsUrl: env.termsUrl,
+        }),
       })
     : undefined;
   const stripeConnect = stripeConnectConfigFromEnv(env);

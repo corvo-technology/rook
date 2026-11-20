@@ -22,8 +22,8 @@ describe("plan configuration", () => {
     expect(config.plans).toEqual(DEFAULT_PLANS);
     expect(DEFAULT_PLANS.team).toMatchObject({
       computerSize: "medium",
-      computers: 3,
-      storageBytes: 100 * GIB,
+      computers: 1,
+      storageBytes: 50 * GIB,
       seatsIncluded: 10,
       maxSeats: 15,
     });

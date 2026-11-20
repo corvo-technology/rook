@@ -169,6 +169,10 @@ export function accountRoutes(ctx: RouterContext) {
       portal: authed.billing.portal.handler(async ({ context }) =>
         requireBilling(deps).portal(context.actor),
       ),
+      // Plan checkout lands with the billing work that prices plans in Stripe.
+      planCheckout: authed.billing.planCheckout.handler(async () => {
+        throw new ORPCError("NOT_FOUND");
+      }),
     },
     preferences: {
       update: authed.preferences.update.handler(async ({ context, input }): Promise<Me> => {

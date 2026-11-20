@@ -68,6 +68,11 @@ async function canManageFleetRoutines(
 }
 
 /** The task catalog, scratchpad, ticket board, schedules and skills. */
+/** A tool argument that should be a list of strings; anything else is left out. */
+function stringList(value: unknown): string[] | undefined {
+  return Array.isArray(value) ? value.map((item) => String(item)) : undefined;
+}
+
 export const taskTools: ToolHandlers = {
   async task_catalog(ctx) {
     const { deps, run, bot, thread } = ctx;
@@ -170,6 +175,9 @@ export const taskTools: ToolHandlers = {
       description: args.description !== undefined ? String(args.description) : undefined,
       priority: args.priority !== undefined ? String(args.priority) : undefined,
       ownerBotId: args.ownerBotId !== undefined ? String(args.ownerBotId) : undefined,
+      acceptanceCriteria:
+        args.acceptanceCriteria !== undefined ? String(args.acceptanceCriteria) : undefined,
+      blockedBy: stringList(args.blockedBy),
     });
     // The task shows in the conversation as a card, so people see what the agent added.
     if ("ticket" in created && created.ticket) {
@@ -194,6 +202,10 @@ export const taskTools: ToolHandlers = {
         status: args.status !== undefined ? String(args.status) : undefined,
         ownerBotId: args.ownerBotId !== undefined ? String(args.ownerBotId) : undefined,
         fields: ticketFieldsArg(args.fields),
+        acceptanceCriteria:
+          args.acceptanceCriteria !== undefined ? String(args.acceptanceCriteria) : undefined,
+        blockedBy: stringList(args.blockedBy),
+        remaining: args.remaining !== undefined ? String(args.remaining) : undefined,
       }),
     );
   },

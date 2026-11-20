@@ -2480,12 +2480,37 @@ model Ticket {
   completedAt     DateTime?
   /// Named data the people and agents keep on the ticket: a list of { name, value }.
   fields          Json?
+  /// What the agent says is still left when it stops short of the goal; keeps the ticket going.
+  remaining       String?
+  /// Follow-up runs started because the goal was not met; capped so a job cannot loop forever.
+  continuations   Int             @default(0)
+  /// The checklist and measurable target that say the ticket is done.
+  acceptanceCriteria String?
+  /// Times the creator reviewed the delivery; capped so a ticket cannot ping-pong.
+  reviewRounds    Int             @default(0)
   comments        TicketComment[]
+  /// Tickets that must be done before this one starts.
+  blockedBy       TicketDependency[] @relation("TicketBlocked")
+  /// Tickets waiting for this one.
+  blocks          TicketDependency[] @relation("TicketBlocker")
 
   @@unique([boardId, number])
   @@index([spaceId, status])
   @@index([boardId, status])
   @@map("tickets")
+}
+
+/// `ticketId` waits until `blockerId` is done.
+model TicketDependency {
+  ticketId  String
+  ticket    Ticket   @relation("TicketBlocked", fields: [ticketId], references: [id], onDelete: Cascade)
+  blockerId String
+  blocker   Ticket   @relation("TicketBlocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([ticketId, blockerId])
+  @@index([blockerId])
+  @@map("ticket_dependencies")
 }
 
 model TicketComment {

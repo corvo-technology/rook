@@ -347,3 +347,91 @@ test("the paywall shows three plans and opens the checkout of the chosen one", a
       aiUseCents: 1000,
     });
 });
+
+test("settings billing puts the plan first, with the plans inline until one is held", async ({
+  page,
+}, testInfo) => {
+  const stamp = Date.now();
+  await signup(page, `settings-plans-${stamp}@corvo.test`, "password12", `Settings ${stamp}`);
+  await completeOnboarding(page);
+
+  await page.route("**/api/auth/capabilities", async (route) => {
+    const response = await route.fetch();
+    await route.fulfill({ response, json: { ...(await response.json()), billing: true } });
+  });
+  await page.route("**/rpc/me", (route) => enableBilling(route, "me"));
+  await page.route("**/rpc/bootstrap", (route) => enableBilling(route, "bootstrap"));
+  const credits = {
+    access: true,
+    funding: "credits",
+    creditPurchasesEnabled: true,
+    balanceUsd: 10,
+    monthlyAmountCents: null,
+  };
+  let status = billingStatus(credits);
+  await page.route("**/rpc/billing/status", (route) => route.fulfill({ json: { json: status } }));
+  const plan = (
+    name: string,
+    seats: number,
+    maxSeats: number,
+    size: string,
+    computers: number,
+    gb: number,
+  ) => ({
+    plan: name,
+    computerSize: size,
+    computers,
+    storageBytes: gb * 1024 ** 3,
+    seatsIncluded: seats,
+    maxSeats,
+  });
+  await page.route("**/rpc/usage/plan", (route) =>
+    route.fulfill({
+      json: {
+        json: {
+          plan: "team",
+          computerSize: "medium",
+          computers: { used: 0, limit: 1 },
+          storage: { usedBytes: 0, limitBytes: 50 * 1024 ** 3 },
+          seats: { used: 1, included: 10, max: 15, extraPrice: null },
+          plans: [
+            plan("personal", 1, 1, "small", 1, 25),
+            plan("team", 10, 15, "medium", 1, 50),
+            plan("company", 25, 50, "large", 1, 200),
+          ],
+          canManage: true,
+        },
+      },
+    }),
+  );
+  await page.reload();
+
+  // No plan yet: the plans come first, with a button each, and the old monthly credits are gone.
+  const settings = await openUserSettings(page, "billing");
+  const section = settings.getByTestId("plan-section");
+  await expect(section.getByRole("button", { name: "Subscribe to Team" })).toBeVisible();
+  await expect(settings.getByRole("combobox", { name: "Monthly credits" })).toHaveCount(0);
+  await expect(settings.getByText("$10.00", { exact: true })).toBeVisible();
+  await captureScreenshot(page, testInfo, "settings-billing-no-plan");
+
+  // Subscribed: the plan, its renewal and the two actions, then the credits.
+  status = billingStatus({
+    ...credits,
+    state: "active",
+    plan: "team",
+    currency: "usd",
+    interval: "month",
+    aiUseCents: 1000,
+    hasCustomer: true,
+    currentPeriodEndsAt: "2030-01-15T12:00:00.000Z",
+  });
+  await page.reload();
+  const subscribed = page.getByTestId("settings-page").getByTestId("plan-section");
+  await expect(subscribed.getByText("Team", { exact: true })).toBeVisible();
+  await expect(subscribed.getByText(/^Renews /)).toBeVisible();
+  await expect(subscribed.getByRole("button", { name: "Manage billing" })).toBeVisible();
+  await captureScreenshot(page, testInfo, "settings-billing-subscribed");
+  await subscribed.getByRole("button", { name: "Change plan" }).click();
+  await expect(subscribed.getByRole("button", { name: "Current plan" })).toBeDisabled();
+  await captureScreenshot(page, testInfo, "settings-billing-change-plan");
+});

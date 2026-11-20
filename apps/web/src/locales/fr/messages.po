@@ -1221,6 +1221,7 @@ msgstr "Les agents sont en pause"
 msgid "Agents that can use it"
 msgstr "Agents pouvant l'utiliser"
 
+#: src/components/ModelCredits.tsx
 #: src/components/PlanChoice.tsx
 msgid "AI per month"
 msgstr "IA par mois"
@@ -1721,10 +1722,6 @@ msgstr "Automatisation"
 msgid "Available after the routine is saved"
 msgstr "Disponible après l'enregistrement de la routine"
 
-#: src/components/ModelCredits.tsx
-msgid "Available credits"
-msgstr "Crédits disponibles"
-
 #: src/pages/shell/bot-credentials.tsx
 msgid "Available to this bot's shell commands as {commandVariable}"
 msgstr "Disponible pour les commandes shell de ce bot sous le nom {commandVariable}"
@@ -2056,6 +2053,10 @@ msgstr "Changer de modèle"
 msgid "Change password"
 msgstr "Changer le mot de passe"
 
+#: src/pages/BillingSettingsPanel.tsx
+msgid "Change plan"
+msgstr "Changer de formule"
+
 #: src/lib/server-copy.ts
 msgid "Change the model of {bot}?"
 msgstr "Changer le modèle de {bot} ?"
@@ -2063,6 +2064,10 @@ msgstr "Changer le modèle de {bot} ?"
 #: src/components/ChangeWhenToAsk.tsx
 msgid "Change when to ask"
 msgstr "Changer quand demander"
+
+#: src/pages/BillingSettingsPanel.tsx
+msgid "Changes to {waitingName} on {waitingDay}"
+msgstr "Passage à {waitingName} le {waitingDay}"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Changing…"
@@ -3382,6 +3387,7 @@ msgid "Could not update agent access"
 msgstr "Impossible de mettre à jour l'accès de l'agent"
 
 #: src/components/ModelCredits.tsx
+#: src/components/PlanChoice.tsx
 msgid "Could not update billing"
 msgstr "Impossible de mettre à jour la facturation"
 
@@ -3583,6 +3589,7 @@ msgstr "Crédit utilisé"
 msgid "Credit used up"
 msgstr "Crédit épuisé"
 
+#: src/components/ModelCredits.tsx
 #: src/pages/partner/PartnerConsolePage.tsx
 #: src/pages/platform/SimulatorSection.tsx
 msgid "Credits"
@@ -3618,6 +3625,7 @@ msgstr "Devise"
 msgid "Current password"
 msgstr "Mot de passe actuel"
 
+#: src/components/PlanChoice.tsx
 #: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Current plan"
 msgstr "Offre actuelle"
@@ -5621,6 +5629,7 @@ msgid "Manage agents"
 msgstr "Gérer les agents"
 
 #: src/components/ModelCredits.tsx
+#: src/pages/BillingSettingsPanel.tsx
 #: src/pages/Paywall.tsx
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Manage billing"
@@ -7235,6 +7244,7 @@ msgstr "Épinglés"
 msgid "Pinned messages"
 msgstr "Messages épinglés"
 
+#: src/pages/BillingSettingsPanel.tsx
 #: src/pages/partner/PartnerCredits.tsx
 #: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/platform/NewPartnerDialog.tsx
@@ -7633,13 +7643,8 @@ msgstr "Recommandation"
 
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
-#: src/components/ModelCredits.tsx
 msgid "Refresh"
 msgstr "Actualiser"
-
-#: src/components/ModelCredits.tsx
-msgid "Refresh credits"
-msgstr "Actualiser les crédits"
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Refresh view"
@@ -9081,6 +9086,10 @@ msgstr "Prend en charge la réflexion"
 #: src/pages/shell/space-switcher.tsx
 msgid "Switch space"
 msgstr "Changer d’espace"
+
+#: src/components/PlanChoice.tsx
+msgid "Switch to {name}"
+msgstr "Passer à {name}"
 
 #: src/lib/server-copy.ts
 msgid "Switched to a stronger model"

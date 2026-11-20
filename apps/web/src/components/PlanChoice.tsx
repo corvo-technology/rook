@@ -1,4 +1,10 @@
-import type { BillingStatus, PlanId, PlanUsage } from "@corvo/contracts";
+import type {
+  BillingCurrency,
+  BillingStatus,
+  PlanId,
+  PlanSelection,
+  PlanUsage,
+} from "@corvo/contracts";
 import type { PlanChoice as Choice, PlanCardLabels } from "@corvo/ui-web";
 import { BotAvatar, Button, PlanCards, planMascotColor } from "@corvo/ui-web";
 import { plural } from "@lingui/core/macro";
@@ -8,7 +14,7 @@ import { computerSizeName, computerSizeSpec, formatStorage, planName } from "../
 import { rpc } from "../lib/rpc";
 import { useSignOut } from "../lib/sign-out";
 
-function usePlanCardLabels(locale: string): PlanCardLabels {
+export function usePlanCardLabels(locale: string): PlanCardLabels {
   const { t } = useLingui();
   return {
     monthly: t`Monthly`,
@@ -26,6 +32,11 @@ function usePlanCardLabels(locale: string): PlanCardLabels {
       const name = planName(plan);
       return t`Subscribe to ${name}`;
     },
+    change: (plan) => {
+      const name = planName(plan);
+      return t`Switch to ${name}`;
+    },
+    current: t`Current plan`,
     computer: (id) => {
       const size = computerSizeName(id);
       return t`${size} computer`;
@@ -49,26 +60,32 @@ function usePlanCardLabels(locale: string): PlanCardLabels {
   };
 }
 
-/** Three plans with prices in the person's currency; replaces the single choice where plans exist. */
-export function PlanChoice({
+/**
+ * The three plans with prices in the person's currency. Without `current` it opens the checkout of
+ * the chosen plan; with it (`null` for a price outside the catalog) the organization already
+ * subscribes, so the choice moves the subscription instead and `onChanged` runs once it did.
+ */
+export function PlanPicker({
   status,
   usage,
-  dismissible = false,
+  current,
+  currency,
+  onChanged,
+  disabled = false,
 }: {
   status: BillingStatus;
   usage: PlanUsage;
-  dismissible?: boolean;
+  current?: PlanSelection | null;
+  currency?: BillingCurrency;
+  onChanged?: () => void;
+  disabled?: boolean;
 }) {
   const { i18n } = useLingui();
   const locale = i18n.locale || "en";
   const labels = usePlanCardLabels(locale);
   // The plan whose checkout is opening, set until the page leaves.
   const [busy, setBusy] = useState<PlanId | null>(null);
-  const [error, setError] = useState<"checkout" | "billing" | null>(null);
-  const { logOut, signingOut } = useSignOut(
-    () => window.location.assign("/sign-in"),
-    () => setError("billing"),
-  );
+  const [error, setError] = useState<"checkout" | "change" | null>(null);
   // State updates land a render late, so a second click needs its own guard.
   const opening = useRef(false);
   // A choice that answers after the plans were closed must not leave the app.
@@ -86,6 +103,16 @@ export function PlanChoice({
     setBusy(choice.plan);
     setError(null);
     try {
+      if (current !== undefined) {
+        const { url } = await rpc.billing.changePlan(choice);
+        opening.current = false;
+        if (closed.current) return;
+        // A payment that needs the owner opens the portal; nothing changed yet.
+        if (url) window.location.assign(url);
+        else onChanged?.();
+        setBusy(null);
+        return;
+      }
       const { url } = await rpc.billing.planCheckout(choice);
       if (closed.current) return;
       window.location.assign(url);
@@ -103,10 +130,52 @@ export function PlanChoice({
       opening.current = false;
       if (!closed.current) {
         setBusy(null);
-        setError("checkout");
+        setError(current === undefined ? "checkout" : "change");
       }
     }
   }
+
+  return (
+    <div data-testid="plan-picker" className="flex w-full flex-col items-center gap-4">
+      <PlanCards
+        plans={usage.plans}
+        locale={locale}
+        canManage={usage.canManage && status.canManage}
+        pending={busy !== null || disabled}
+        busy={busy}
+        labels={labels}
+        current={current}
+        currency={currency}
+        onSubscribe={(choice) => void subscribe(choice)}
+      />
+      {error ? (
+        <p role="alert" className="text-sm text-destructive">
+          {error === "checkout" ? (
+            <Trans>Could not open checkout. Try again.</Trans>
+          ) : (
+            <Trans>Could not update billing</Trans>
+          )}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/** The paywall: the plans on a page of their own, with the way out. */
+export function PlanChoice({
+  status,
+  usage,
+  dismissible = false,
+}: {
+  status: BillingStatus;
+  usage: PlanUsage;
+  dismissible?: boolean;
+}) {
+  const [error, setError] = useState(false);
+  const { logOut, signingOut } = useSignOut(
+    () => window.location.assign("/sign-in"),
+    () => setError(true),
+  );
 
   return (
     <div
@@ -117,7 +186,7 @@ export function PlanChoice({
         <Button
           className="fixed top-4 right-6 z-10"
           variant="text"
-          disabled={busy !== null || signingOut}
+          disabled={signingOut}
           onClick={() => void logOut()}
         >
           <Trans>Log out</Trans>
@@ -127,22 +196,10 @@ export function PlanChoice({
         <Trans>Choose your plan</Trans>
         <BotAvatar color={planMascotColor(0)} size={56} />
       </h1>
-      <PlanCards
-        plans={usage.plans}
-        locale={locale}
-        canManage={usage.canManage && status.canManage}
-        pending={busy !== null || signingOut}
-        busy={busy}
-        labels={labels}
-        onSubscribe={(choice) => void subscribe(choice)}
-      />
+      <PlanPicker status={status} usage={usage} disabled={signingOut} />
       {error ? (
         <p role="alert" className="text-sm text-destructive">
-          {error === "checkout" ? (
-            <Trans>Could not open checkout. Try again.</Trans>
-          ) : (
-            <Trans>Could not open billing</Trans>
-          )}
+          <Trans>Could not open billing</Trans>
         </p>
       ) : null}
     </div>

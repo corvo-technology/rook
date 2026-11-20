@@ -34,6 +34,8 @@ const labels: PlanCardsProps["labels"] = {
   serverAndAi: (server, ai) => `Server ${server} + AI ${ai}`,
   yearlyTotal: (total, saved) => `${total} a year, ${saved} saved`,
   subscribe: (plan) => `Subscribe to ${names[plan]}`,
+  change: (plan) => `Switch to ${names[plan]}`,
+  current: "Current plan",
   computer: (size) => `${size} computer`,
   computerSpec: (size) => `spec ${size}`,
   people: (count) => `${count} people`,
@@ -205,5 +207,32 @@ it("marks only the busy plan's button busy with a spinner and disables every sub
   expect(en.card("team").querySelector("[data-subscribe]")).toBe(busy[0]);
   expect(busy[0]?.querySelector("[data-slot=spinner]")).not.toBeNull();
   expect(en.host.querySelectorAll("[data-slot=spinner]")).toHaveLength(1);
+  await en.cleanup();
+});
+
+it("starts from the subscription, fixes its currency and marks the current plan", async () => {
+  const held = { plan: "team", interval: "year", aiUseCents: 2000 } as const;
+  const en = await render({ locale: "pt-BR", current: held, currency: "usd" });
+  expect(en.text()).not.toContain("BRL");
+  expect(en.text()).not.toContain("Ready in minutes");
+  expect(en.card("team").textContent).toContain("Current plan");
+  expect((en.card("team").querySelector("[data-subscribe]") as HTMLButtonElement).disabled).toBe(
+    true,
+  );
+  expect(en.card("personal").textContent).toContain("Switch to Personal");
+  await en.click(en.card("company").querySelector("[data-subscribe]"));
+  expect(en.onSubscribe).toHaveBeenCalledWith({
+    plan: "company",
+    interval: "year",
+    currency: "usd",
+    aiUseCents: 2000,
+  });
+  await en.cleanup();
+});
+
+it("offers every plan as a switch when the price is outside the catalog", async () => {
+  const en = await render({ locale: "en", current: null, currency: "usd" });
+  expect(en.text()).not.toContain("Current plan");
+  expect(en.card("team").textContent).toContain("Switch to Team");
   await en.cleanup();
 });

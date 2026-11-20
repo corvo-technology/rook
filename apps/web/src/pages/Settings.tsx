@@ -363,7 +363,15 @@ export function SettingsPage() {
         ]
       : []),
     ...(billingEnabled
-      ? [{ id: "billing", label: t`Billing`, icon: CreditCard, content: <BillingSettingsPanel /> }]
+      ? [
+          {
+            id: "billing",
+            label: t`Billing`,
+            icon: CreditCard,
+            width: "full" as const,
+            content: <BillingSettingsPanel />,
+          },
+        ]
       : []),
     ...(showUpdates
       ? [

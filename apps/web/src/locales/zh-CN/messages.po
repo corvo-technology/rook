@@ -1221,6 +1221,7 @@ msgstr "智能体已暂停"
 msgid "Agents that can use it"
 msgstr "可以使用它的智能体"
 
+#: src/components/ModelCredits.tsx
 #: src/components/PlanChoice.tsx
 msgid "AI per month"
 msgstr "每月 AI"
@@ -1721,10 +1722,6 @@ msgstr "自动化"
 msgid "Available after the routine is saved"
 msgstr "保存例行任务后可用"
 
-#: src/components/ModelCredits.tsx
-msgid "Available credits"
-msgstr "可用额度"
-
 #: src/pages/shell/bot-credentials.tsx
 msgid "Available to this bot's shell commands as {commandVariable}"
 msgstr "此机器人的 Shell 命令可通过 {commandVariable} 使用"
@@ -2056,6 +2053,10 @@ msgstr "更换模型"
 msgid "Change password"
 msgstr "修改密码"
 
+#: src/pages/BillingSettingsPanel.tsx
+msgid "Change plan"
+msgstr "更改方案"
+
 #: src/lib/server-copy.ts
 msgid "Change the model of {bot}?"
 msgstr "要更改 {bot} 的模型吗？"
@@ -2063,6 +2064,10 @@ msgstr "要更改 {bot} 的模型吗？"
 #: src/components/ChangeWhenToAsk.tsx
 msgid "Change when to ask"
 msgstr "更改询问时机"
+
+#: src/pages/BillingSettingsPanel.tsx
+msgid "Changes to {waitingName} on {waitingDay}"
+msgstr "将于 {waitingDay} 更改为 {waitingName}"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Changing…"
@@ -3382,6 +3387,7 @@ msgid "Could not update agent access"
 msgstr "无法更新 Agent 权限"
 
 #: src/components/ModelCredits.tsx
+#: src/components/PlanChoice.tsx
 msgid "Could not update billing"
 msgstr "无法更新账单"
 
@@ -3583,6 +3589,7 @@ msgstr "已用额度"
 msgid "Credit used up"
 msgstr "额度已用完"
 
+#: src/components/ModelCredits.tsx
 #: src/pages/partner/PartnerConsolePage.tsx
 #: src/pages/platform/SimulatorSection.tsx
 msgid "Credits"
@@ -3618,6 +3625,7 @@ msgstr "币种"
 msgid "Current password"
 msgstr "当前密码"
 
+#: src/components/PlanChoice.tsx
 #: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Current plan"
 msgstr "当前方案"
@@ -5621,6 +5629,7 @@ msgid "Manage agents"
 msgstr "管理智能体"
 
 #: src/components/ModelCredits.tsx
+#: src/pages/BillingSettingsPanel.tsx
 #: src/pages/Paywall.tsx
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Manage billing"
@@ -7235,6 +7244,7 @@ msgstr "置顶"
 msgid "Pinned messages"
 msgstr "置顶消息"
 
+#: src/pages/BillingSettingsPanel.tsx
 #: src/pages/partner/PartnerCredits.tsx
 #: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/platform/NewPartnerDialog.tsx
@@ -7633,13 +7643,8 @@ msgstr "推荐"
 
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
-#: src/components/ModelCredits.tsx
 msgid "Refresh"
 msgstr "刷新"
-
-#: src/components/ModelCredits.tsx
-msgid "Refresh credits"
-msgstr "刷新额度"
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Refresh view"
@@ -9081,6 +9086,10 @@ msgstr "支持思考"
 #: src/pages/shell/space-switcher.tsx
 msgid "Switch space"
 msgstr "切换空间"
+
+#: src/components/PlanChoice.tsx
+msgid "Switch to {name}"
+msgstr "切换到{name}"
 
 #: src/lib/server-copy.ts
 msgid "Switched to a stronger model"

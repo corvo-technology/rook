@@ -104,3 +104,13 @@ it("is a row of its own with the name and role on the left, never floating over 
   expect(header.querySelector('button[aria-label="Agent computer"]')).not.toBeNull();
   await unmount();
 });
+
+it("shows no working ring around the agent while it works", async () => {
+  const { unmount } = await render({
+    inGroup: false,
+    activeGroup: undefined,
+    active: { id: "bot-1", name: "Chief", color: "blue", status: "running" } as never,
+  });
+  expect(container.querySelector(".corvo-bot-avatar-ring")).toBeNull();
+  await unmount();
+});

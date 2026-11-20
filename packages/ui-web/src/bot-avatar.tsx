@@ -87,6 +87,8 @@ export interface BotAvatarProps {
   live?: boolean;
   /** Where the avatar looks while it is live, -1..1 per axis (x right, y down). */
   lookAt?: Gaze;
+  /** Whether the working ring shows around the avatar while the bot works. */
+  ring?: boolean;
 }
 
 const RING_DOTS = rookRingDots();
@@ -143,6 +145,7 @@ export const BotAvatar = memo(function BotAvatar({
   className,
   live,
   lookAt,
+  ring = true,
 }: BotAvatarProps) {
   const isWorking = ACTIVE_RUN_STATUSES.some((s) => s === status);
   // Smiles for a moment when work ends well; the timer is kept apart so a later status change
@@ -187,7 +190,7 @@ export const BotAvatar = memo(function BotAvatar({
         <div className="corvo-bot-avatar-picture relative flex h-full w-full items-center justify-center overflow-hidden rounded-full border border-border bg-secondary">
           <img src={parsed.imageUrl} alt="" className="h-full w-full object-cover" />
         </div>
-        {isWorking ? <WorkingRing size={size} /> : null}
+        {isWorking && ring ? <WorkingRing size={size} /> : null}
         {mood === "alert" ? <NeedsYouDot size={size} /> : null}
       </div>
     );
@@ -210,7 +213,7 @@ export const BotAvatar = memo(function BotAvatar({
           live={live}
           lookAt={lookAt}
         />
-        {isWorking ? <WorkingRing size={size} color={parsed.color} /> : null}
+        {isWorking && ring ? <WorkingRing size={size} color={parsed.color} /> : null}
         {mood === "alert" ? <NeedsYouDot size={size} /> : null}
       </div>
     );
@@ -225,7 +228,7 @@ export const BotAvatar = memo(function BotAvatar({
       style={{ width: size, height: size }}
     >
       <RookAvatar color={shade} mood={mood} size={size} live={live} lookAt={lookAt} />
-      {isWorking ? <WorkingRing size={size} color={shade} /> : null}
+      {isWorking && ring ? <WorkingRing size={size} color={shade} /> : null}
       {mood === "alert" ? <NeedsYouDot size={size} /> : null}
     </div>
   );

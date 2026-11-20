@@ -102,6 +102,7 @@ export function ChatHeader({
             identity={active.id}
             size={26}
             status={active.status}
+            ring={false}
             live
           />
         ) : null}

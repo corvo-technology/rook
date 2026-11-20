@@ -13,7 +13,7 @@ export async function organizationEntitlements(
   const [billing, override] = await Promise.all([
     prisma.billingAccount.findUnique({
       where: { organizationId },
-      select: { status: true, priceId: true },
+      select: { status: true, priceId: true, priceLookupKey: true },
     }),
     organizationOverride(prisma, organizationId),
   ]);

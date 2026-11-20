@@ -1,4 +1,5 @@
 import * as z from "zod";
+import type { BillingCurrency, BillingInterval } from "./plan-pricing.js";
 
 /** Provider-neutral computer sizes; each sandbox adapter maps a size to its own mechanism. */
 export const COMPUTER_SIZES = ["small", "medium", "large"] as const;
@@ -170,13 +171,35 @@ export function applyPlanOverride(
  */
 export function resolveEntitlements(
   config: PlanConfig | undefined,
-  billing: { status: string | null; priceId: string | null } | null,
+  billing: {
+    status: string | null;
+    priceId: string | null;
+    /** The price's lookup key, which names its plan even when `PLAN_PRICES` does not list the id. */
+    priceLookupKey?: string | null;
+  } | null,
   override?: PlanOverride | null,
 ): PlanEntitlements | null {
   if (!config) return null;
   const paid = billing?.status === "active" || billing?.status === "past_due";
-  const mapped = paid && billing?.priceId ? config.prices[billing.priceId] : undefined;
+  const mapped = paid
+    ? ((billing?.priceId ? config.prices[billing.priceId] : undefined) ??
+      parsePlanLookupKey(billing?.priceLookupKey)?.plan)
+    : undefined;
   return applyPlanOverride(config.plans[mapped ?? FALLBACK_PLAN], override);
+}
+
+/** What a plan price's lookup key (`plan_<plan>_<currency>_<interval>`) says; null for any other key. */
+export function parsePlanLookupKey(
+  key: string | null | undefined,
+): { plan: PlanId; currency: BillingCurrency; interval: BillingInterval } | null {
+  const match = /^plan_([a-z]+)_(usd|brl)_(month|year)$/.exec(key ?? "");
+  const plan = PlanIdSchema.safeParse(match?.[1]);
+  if (!match || !plan.success) return null;
+  return {
+    plan: plan.data,
+    currency: match[2] as BillingCurrency,
+    interval: match[3] as BillingInterval,
+  };
 }
 
 /** Share of the storage limit at which the owner is told once per period. */

@@ -1,6 +1,10 @@
 import type {
+  AiUseCents,
+  BillingCurrency,
+  BillingInterval,
   CacheCapabilities as ConnectionCacheCapabilities,
   ConnectionCatalogItem,
+  PlanId,
   RunErrorInfo,
   SandboxKind,
 } from "@corvo/contracts";
@@ -1278,7 +1282,13 @@ export interface BillingPrice {
 export interface BillingCreditPurchase {
   /** Stable provider payment identity, including any subsequent refund adjustment. */
   id: string;
+  /** Dollars the payment is worth now, in cents, after any refund. */
   amountCents: number;
+  /**
+   * Dollars of use the price promised, in cents, read from its `credit_use_cents`; a payment in
+   * reais buys this table amount, never a converted one. Absent for amount-based purchases.
+   */
+  useCents?: number;
   /** Subscription service-period end; absent for non-expiring top-ups. */
   expiresAt?: string;
 }
@@ -1309,6 +1319,46 @@ export interface BillingSubscriptionSnapshot {
   endedAt: Date | null;
   /** The flat own-key plan, which grants access without credits. */
   byokPlan?: boolean;
+  /** Lookup key of the plan's price, when it is a catalog price. */
+  priceLookupKey?: string;
+  /** The monthly AI amount the subscription includes, from its AI line. */
+  aiUseCents?: AiUseCents;
+  /** A change that takes effect at the next renewal; the plan and limits above stay until then. */
+  pendingChange?: { priceLookupKey: string; aiUseCents: AiUseCents | null };
+}
+
+/** Subscribes to a catalog plan; the prices are found by lookup key in the chosen currency. */
+export interface BillingPlanCheckoutRequest {
+  customerId: string;
+  plan: PlanId;
+  currency: BillingCurrency;
+  interval: BillingInterval;
+  /** People above the plan's included ones; the extra-person line is added only above zero. */
+  extraPeople: number;
+  /** Dollars of model use a month, in cents; null brings their own AI. */
+  aiUseCents: AiUseCents | null;
+  successUrl: string;
+  cancelUrl: string;
+}
+
+/** One plan as a subscription holds it: the plan line, extra people and the AI line. */
+export interface BillingPlanSelection {
+  plan: PlanId;
+  currency: BillingCurrency;
+  interval: BillingInterval;
+  extraPeople: number;
+  aiUseCents: AiUseCents | null;
+}
+
+/**
+ * Moves the customer's live subscription. `apply` takes effect now, with the difference charged
+ * for the rest of the period; `atRenewal` takes effect when the period ends. A waiting change that
+ * `atRenewal` does not repeat is dropped.
+ */
+export interface BillingPlanChangeRequest {
+  customerId: string;
+  apply: BillingPlanSelection | null;
+  atRenewal: BillingPlanSelection | null;
 }
 
 export interface BillingCheckoutRequest {

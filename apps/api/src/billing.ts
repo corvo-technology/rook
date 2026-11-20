@@ -1,11 +1,34 @@
 import type {
+  BillingPlanSelection,
   BillingPrice,
   BillingProvider,
   BillingSubscriptionSnapshot,
 } from "@corvo/adapter-kit";
-import { BillingCheckoutCompletedError, BillingCustomerNotFoundError } from "@corvo/adapter-kit";
-import type { Actor, BillingStatus } from "@corvo/contracts";
-import { BYOK_MONTHLY_PRICE_CENTS, planConfigFromEnv } from "@corvo/contracts";
+import {
+  BillingCheckoutCompletedError,
+  BillingCustomerNotFoundError,
+  BillingPaymentRequiredError,
+} from "@corvo/adapter-kit";
+import type {
+  Actor,
+  BillingStatus,
+  PlanCheckoutInput,
+  PlanId,
+  PlanSelection,
+} from "@corvo/contracts";
+import {
+  AiUseCentsSchema,
+  BillingCurrencySchema,
+  BillingIntervalSchema,
+  BYOK_MONTHLY_PRICE_CENTS,
+  DEFAULT_PLANS,
+  extraPersonLookupKey,
+  PLAN_ERROR_CODES,
+  parsePlanLookupKey,
+  planConfigFromEnv,
+  resolvePlanChange,
+  samePlanSelection,
+} from "@corvo/contracts";
 import type { BillingAccount, PrismaClient } from "@corvo/db";
 import {
   billingAccountForOrganization,
@@ -50,6 +73,14 @@ export interface BillingService {
   ): Promise<{ url: string }>;
   setMonthlyCredits(actor: Actor, amountCents: number): Promise<{ ok: true }>;
   checkout(actor: Actor): Promise<{ url: string }>;
+  /** Opens the checkout of a plan in the chosen currency; the owner only. */
+  planCheckout(actor: Actor, input: PlanCheckoutInput): Promise<{ url: string }>;
+  /**
+   * Moves a subscribed organization to another plan, interval or AI amount; the owner only. What
+   * grows applies now with proration and what shrinks at the next renewal. `url` is set only when
+   * the payment needs the owner, and then nothing has changed.
+   */
+  changePlan(actor: Actor, input: PlanCheckoutInput): Promise<{ ok: true; url?: string }>;
   portal(actor: Actor): Promise<{ url: string }>;
   /** Re-fetches the customer's subscription from the provider and overwrites the stored snapshot. */
   sync(customerId: string): Promise<void>;
@@ -60,6 +91,11 @@ export interface BillingService {
   cancelForDeletedUser(userId: string): Promise<void>;
   /** What one seat above the plan's included ones costs; null when it has no price. */
   extraSeatPrice(priceId: string): Promise<BillingPrice | null>;
+  /**
+   * What one extra seat costs this organization: the price in its subscription's currency and
+   * interval, else `fallbackPriceId`, the deployment's single extra seat price. Null when none.
+   */
+  extraSeatPriceFor(organizationId: string, fallbackPriceId?: string): Promise<BillingPrice | null>;
 }
 
 /**
@@ -71,6 +107,10 @@ function byokTrialAvailable(
   credits: { byokFreeUntil: Date | null },
 ) {
   return !account?.subscribedAt && !credits.byokFreeUntil;
+}
+
+function limitsFor(plan: PlanId) {
+  return (planConfigFromEnv()?.plans ?? DEFAULT_PLANS)[plan];
 }
 
 export function createBillingService(deps: {
@@ -163,6 +203,27 @@ export function createBillingService(deps: {
         },
         data: { mode: "byok", pendingCreditCheckout: false },
       });
+    // The AI add-on decides the funding, on the change only so a later choice stands: turning it
+    // on moves to Rook's models, and its removal, which takes effect at renewal, back to the
+    // organization's own AI. The balance is never touched.
+    if (hasBillingAccess(live.status) && parsePlanLookupKey(live.priceLookupKey)) {
+      const switchTo =
+        live.aiUseCents && !previous.aiUseCents
+          ? "credits"
+          : !live.aiUseCents && previous.aiUseCents
+            ? "byok"
+            : null;
+      if (switchTo) {
+        await creditAccount(prisma, previous.organizationId);
+        await prisma.modelCreditAccount.updateMany({
+          where: {
+            organizationId: previous.organizationId,
+            organization: { billing: { subscriptionId: live.subscriptionId } },
+          },
+          data: { mode: switchTo, pendingCreditCheckout: false },
+        });
+      }
+    }
     // Monthly credits include the own-key plan, even when they will not renew, and a free plan
     // bills nothing.
     if (
@@ -198,11 +259,11 @@ export function createBillingService(deps: {
   }
 
   /** Opens a checkout; with `serialize`, one per organization at a time across API instances. */
-  async function openCheckout(
+  async function openCheckout<T = { url: string }>(
     actor: Actor,
     account: BillingAccount,
     serialize: boolean,
-    call: (customerId: string) => Promise<{ url: string }>,
+    call: (customerId: string) => Promise<T>,
   ) {
     return prisma.$transaction(
       async (tx) => {
@@ -223,6 +284,98 @@ export function createBillingService(deps: {
         customerId: await newCustomer(actor, organizationId),
       })
     );
+  }
+
+  /** What a subscription says about its plan, for the status. */
+  function planFields(
+    account: {
+      priceLookupKey: string | null;
+      currency: string | null;
+      interval: string | null;
+      aiUseCents: number | null;
+      pendingPlanKey: string | null;
+      pendingAiUseCents: number | null;
+      currentPeriodEndsAt: Date | null;
+    } | null,
+  ): Pick<BillingStatus, "plan" | "currency" | "interval" | "aiUseCents" | "pendingChange"> {
+    const catalog = parsePlanLookupKey(account?.priceLookupKey);
+    if (!account || !catalog) return {};
+    const pending = parsePlanLookupKey(account.pendingPlanKey);
+    const ai = AiUseCentsSchema.safeParse(account.aiUseCents);
+    const pendingAi = AiUseCentsSchema.safeParse(account.pendingAiUseCents);
+    return {
+      plan: catalog.plan,
+      currency: catalog.currency,
+      interval: catalog.interval,
+      ...(ai.success ? { aiUseCents: ai.data } : {}),
+      ...(pending && account.currentPeriodEndsAt
+        ? {
+            pendingChange: {
+              plan: pending.plan,
+              interval: pending.interval,
+              aiUseCents: pendingAi.success ? pendingAi.data : null,
+              effectiveAt: account.currentPeriodEndsAt.toISOString(),
+            },
+          }
+        : {}),
+    };
+  }
+
+  /**
+   * The extra person price to bill: a subscription bought from the catalog follows its own
+   * currency and interval; one set up by hand keeps the deployment's single extra seat price.
+   */
+  async function extraSeatPriceId(
+    account: { currency: string | null; interval: string | null },
+    fallbackPriceId: string | undefined,
+  ): Promise<string | null> {
+    const currency = BillingCurrencySchema.safeParse(account.currency);
+    const interval = BillingIntervalSchema.safeParse(account.interval);
+    if (!currency.success || !interval.success) return fallbackPriceId ?? null;
+    const key = extraPersonLookupKey(currency.data, interval.data);
+    const found = (await provider.priceIdForLookupKey?.(key)) ?? null;
+    // Never another currency's price: the provider would refuse it, or bill it wrongly.
+    if (!found) getLogger().error("extra person price missing", { "billing.lookup_key": key });
+    return found;
+  }
+
+  async function extraSeatPriceById(priceId: string): Promise<BillingPrice | null> {
+    if (!provider.getPriceById) return null;
+    const cached = extraSeatPrices.get(priceId);
+    if (cached && cached.expiresAt > Date.now()) return cached.value;
+    try {
+      const value = await provider.getPriceById(priceId);
+      extraSeatPrices.set(priceId, { value, expiresAt: Date.now() + PRICE_CACHE_MS });
+      return value;
+    } catch (error) {
+      getLogger().error("extra seat price lookup failed", error);
+      return null;
+    }
+  }
+
+  /**
+   * Changing people edits the subscription, which drops the waiting change. Put it back with the
+   * extra people the new count needs, or let it go when the plan it moves to no longer fits them.
+   */
+  async function keepPendingChange(account: BillingAccount, total: number): Promise<void> {
+    const pending = parsePlanLookupKey(account.pendingPlanKey);
+    if (!pending || !provider.changePlan) return;
+    const ai = AiUseCentsSchema.safeParse(account.pendingAiUseCents);
+    const limits = limitsFor(pending.plan);
+    await provider.changePlan({
+      customerId: account.customerId,
+      apply: null,
+      atRenewal:
+        total > limits.maxSeats
+          ? null
+          : {
+              plan: pending.plan,
+              currency: pending.currency,
+              interval: pending.interval,
+              extraPeople: extraSeats(limits, total),
+              aiUseCents: ai.success ? ai.data : null,
+            },
+    });
   }
 
   async function byokCheckout(actor: Actor, organizationId: string) {
@@ -366,6 +519,7 @@ export function createBillingService(deps: {
           currentPeriodEndsAt: account?.currentPeriodEndsAt?.toISOString() ?? null,
           cancelAtPeriodEnd: account?.cancelAtPeriodEnd ?? false,
           hasCustomer: Boolean(account),
+          ...planFields(account),
         };
       }
       const { organizationId, isOwner } = await organization(actor);
@@ -386,7 +540,132 @@ export function createBillingService(deps: {
         currentPeriodEndsAt: account?.currentPeriodEndsAt?.toISOString() ?? null,
         cancelAtPeriodEnd: account?.cancelAtPeriodEnd ?? false,
         hasCustomer: Boolean(account),
+        ...planFields(account),
       };
+    },
+
+    async planCheckout(actor, input) {
+      if (!provider.createPlanCheckout) throw new ORPCError("NOT_FOUND");
+      if (input.aiUseCents !== null && (!modelCredits || deps.managedModelsAvailable === false))
+        throw new ORPCError("PRECONDITION_FAILED");
+      const { organizationId } = await managedOrganization(actor);
+      let account = await billingAccountForOrganization(prisma, organizationId);
+      if (account) {
+        // Decide from the provider, not a snapshot a missed webhook may have left stale.
+        await sync(account.customerId);
+        account = await billingAccountForOrganization(prisma, organizationId);
+      }
+      if (hasBillingAccess(account?.status ?? null))
+        throw new ORPCError("CONFLICT", { message: "Already subscribed" });
+      if (needsBillingPortal(account?.status ?? null))
+        throw new ORPCError("CONFLICT", { message: "Resume the subscription in billing" });
+      // The provider fixes a customer's currency at the first payment.
+      if (account?.currency && account.currency !== input.currency)
+        throw new ORPCError("CONFLICT", {
+          message: "Billing currency is fixed by the first payment",
+        });
+      const limits = (planConfigFromEnv()?.plans ?? DEFAULT_PLANS)[input.plan];
+      const { total } = await organizationSeats(prisma, organizationId);
+      // Never a plan that would leave people without a seat.
+      if (total > limits.maxSeats)
+        throw new ORPCError(PLAN_ERROR_CODES.seatLimit, {
+          status: 402,
+          message: `The ${input.plan} plan allows ${limits.maxSeats} people`,
+        });
+      const target = account ?? (await billingAccountFor(actor, organizationId));
+      try {
+        return await openCheckout(actor, target, true, (customerId) =>
+          provider.createPlanCheckout!({
+            customerId,
+            plan: input.plan,
+            currency: input.currency,
+            interval: input.interval,
+            extraPeople: extraSeats(limits, total),
+            aiUseCents: input.aiUseCents,
+            successUrl: `${deps.webOrigin}${BILLING_RETURN_PATH}`,
+            cancelUrl: `${appUrl}?billing=canceled`,
+          }),
+        );
+      } catch (error) {
+        if (!(error instanceof BillingCheckoutCompletedError)) throw error;
+        await sync(target.customerId);
+        throw new ORPCError("CONFLICT", { message: "Already subscribed" });
+      }
+    },
+
+    async changePlan(actor, input) {
+      if (!provider.changePlan) throw new ORPCError("NOT_FOUND");
+      if (input.aiUseCents !== null && (!modelCredits || deps.managedModelsAvailable === false))
+        throw new ORPCError("PRECONDITION_FAILED");
+      const { organizationId } = await managedOrganization(actor);
+      let account = await billingAccountForOrganization(prisma, organizationId);
+      if (account) {
+        // Decide from the provider, not a snapshot a missed webhook may have left stale.
+        await sync(account.customerId);
+        account = await billingAccountForOrganization(prisma, organizationId);
+      }
+      if (!account || !hasBillingAccess(account.status))
+        throw new ORPCError("CONFLICT", { message: "No subscription to change" });
+      if (account.cancelAtPeriodEnd)
+        throw new ORPCError("CONFLICT", { message: "Resume the subscription in billing" });
+      // The provider fixes a customer's currency at the first payment. A subscription that is
+      // not on a catalog plan, the own-key plan or monthly credits, was paid in dollars.
+      if ((account.currency ?? "usd") !== input.currency)
+        throw new ORPCError("CONFLICT", {
+          message: "Billing currency is fixed by the first payment",
+        });
+      const limits = limitsFor(input.plan);
+      const { total } = await organizationSeats(prisma, organizationId);
+      // Never a plan that would leave people without a seat.
+      if (total > limits.maxSeats)
+        throw new ORPCError(PLAN_ERROR_CODES.seatLimit, {
+          status: 402,
+          message: `The ${input.plan} plan allows ${limits.maxSeats} people`,
+        });
+      const catalog = parsePlanLookupKey(account.priceLookupKey);
+      const ai = AiUseCentsSchema.safeParse(account.aiUseCents);
+      const current: PlanSelection | null = catalog
+        ? {
+            plan: catalog.plan,
+            interval: catalog.interval,
+            aiUseCents: ai.success ? ai.data : null,
+          }
+        : null;
+      const target: PlanSelection = {
+        plan: input.plan,
+        interval: input.interval,
+        aiUseCents: input.aiUseCents,
+      };
+      const { now, pending } = resolvePlanChange(current, target);
+      const waiting = Boolean(account.pendingPlanKey);
+      const apply = !current || !samePlanSelection(current, now);
+      // Nothing to do when the plan is already as chosen and nothing waits to be replaced.
+      if (!apply && !pending && !waiting) return { ok: true };
+      const selection = (chosen: PlanSelection): BillingPlanSelection => ({
+        ...chosen,
+        currency: input.currency,
+        extraPeople: extraSeats(limitsFor(chosen.plan), total),
+      });
+      try {
+        await openCheckout(actor, account, true, (customerId) =>
+          provider.changePlan!({
+            customerId,
+            apply: apply ? selection(now) : null,
+            atRenewal: pending ? selection(pending) : null,
+          }),
+        );
+      } catch (error) {
+        if (!(error instanceof BillingPaymentRequiredError)) throw error;
+        // The change did not happen; the portal is where the owner fixes how they pay.
+        return {
+          ok: true,
+          ...(await withLiveCustomer(actor, account, (customerId) =>
+            provider.createPortal({ customerId, returnUrl: `${appUrl}?billing=canceled` }),
+          )),
+        };
+      }
+      await sync(account.customerId);
+      return { ok: true };
     },
 
     async checkout(actor) {
@@ -445,18 +724,15 @@ export function createBillingService(deps: {
       if (account) await sync(account.customerId);
     },
 
-    async extraSeatPrice(priceId) {
-      if (!provider.getPriceById) return null;
-      const cached = extraSeatPrices.get(priceId);
-      if (cached && cached.expiresAt > Date.now()) return cached.value;
-      try {
-        const value = await provider.getPriceById(priceId);
-        extraSeatPrices.set(priceId, { value, expiresAt: Date.now() + PRICE_CACHE_MS });
-        return value;
-      } catch (error) {
-        getLogger().error("extra seat price lookup failed", error);
-        return null;
-      }
+    extraSeatPrice: extraSeatPriceById,
+
+    async extraSeatPriceFor(organizationId, fallbackPriceId) {
+      const account = await billingAccountForOrganization(prisma, organizationId);
+      const priceId = await extraSeatPriceId(
+        account ?? { currency: null, interval: null },
+        fallbackPriceId,
+      );
+      return priceId ? extraSeatPriceById(priceId) : null;
     },
 
     async syncSeats(organizationId) {
@@ -465,12 +741,15 @@ export function createBillingService(deps: {
       // Under plans the price includes people; only seats above that are billed, on their own line.
       if (planConfigFromEnv()) {
         const limits = await organizationEntitlements(prisma, planConfigFromEnv(), organizationId);
-        if (!limits?.extraSeatPriceId || !provider.setExtraSeats) return;
+        if (!limits || !provider.setExtraSeats) return;
+        const priceId = await extraSeatPriceId(account, limits.extraSeatPriceId);
+        if (!priceId) return;
         const { total } = await organizationSeats(prisma, organizationId);
         await provider.setExtraSeats(account.customerId, {
-          priceId: limits.extraSeatPriceId,
+          priceId,
           quantity: extraSeats(limits, total),
         });
+        await keepPendingChange(account, total);
         await sync(account.customerId);
         return;
       }

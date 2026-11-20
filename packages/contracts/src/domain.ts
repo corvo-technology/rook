@@ -34,6 +34,13 @@ import { ModelHeadersSchema } from "./model-headers.js";
 import { NavLinkSchema } from "./nav-links.js";
 import { PARTNER_ROLE_HIDEABLE_AREAS, PartnerHiddenArea, PartnerQuickAction } from "./partner.js";
 import { RoutineEventTriggerSchema } from "./partner-events.js";
+import {
+  AiUseCentsSchema,
+  BillingCurrencySchema,
+  BillingIntervalSchema,
+  PlanSelectionSchema,
+} from "./plan-pricing.js";
+import { PlanIdSchema } from "./plans.js";
 import { RoutineWatchSchema, RoutineWatchStateSchema } from "./routine-watch.js";
 import { RunErrorInfoSchema, RunTriggerSchema } from "./runs.js";
 import { SettingsScopeSchema } from "./settings-scope.js";
@@ -2060,6 +2067,15 @@ export const BillingStatusSchema = z.object({
   currentPeriodEndsAt: z.string().nullable(),
   cancelAtPeriodEnd: z.boolean(),
   hasCustomer: z.boolean(),
+  /** The catalog plan the subscription is on; absent for a price set up by hand or none. */
+  plan: PlanIdSchema.optional(),
+  /** Fixed by the first plan payment. */
+  currency: BillingCurrencySchema.optional(),
+  interval: BillingIntervalSchema.optional(),
+  /** The monthly AI amount the subscription includes; absent when the people bring their own. */
+  aiUseCents: AiUseCentsSchema.optional(),
+  /** A smaller plan, a monthly interval or less AI that waits for the next renewal. */
+  pendingChange: PlanSelectionSchema.extend({ effectiveAt: z.string() }).optional(),
 });
 export type BillingStatus = z.infer<typeof BillingStatusSchema>;
 

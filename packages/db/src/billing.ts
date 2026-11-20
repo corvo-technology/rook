@@ -1,5 +1,5 @@
 import type { BillingSubscriptionSnapshot } from "@corvo/adapter-kit";
-import { BYOK_MONTHLY_PRICE_CENTS } from "@corvo/contracts";
+import { BYOK_MONTHLY_PRICE_CENTS, parsePlanLookupKey } from "@corvo/contracts";
 import type { BillingAccount, PrismaClient } from "./client.js";
 import { Prisma } from "./client.js";
 
@@ -98,6 +98,9 @@ export async function replaceBillingCustomer(
       subscriptionId: null,
       subscriptionItemId: null,
       priceId: null,
+      priceLookupKey: null,
+      currency: null,
+      interval: null,
       status: null,
       seats: null,
       trialEndsAt: null,
@@ -132,6 +135,7 @@ export async function syncBillingSnapshot(
     Prisma.sql`SELECT clock_timestamp() AS "startedAt"`,
   );
   const snapshot = await load();
+  const catalog = parsePlanLookupKey(snapshot?.priceLookupKey);
   const written = await prisma.billingAccount.updateMany({
     where: { customerId, OR: [{ syncedAt: null }, { syncedAt: { lt: startedAt } }] },
     data: {
@@ -139,6 +143,14 @@ export async function syncBillingSnapshot(
       subscriptionId: snapshot?.subscriptionId ?? null,
       subscriptionItemId: snapshot?.subscriptionItemId ?? null,
       priceId: snapshot?.priceId ?? null,
+      priceLookupKey: snapshot?.priceLookupKey ?? null,
+      // Only a plan bought from the catalog has a currency and interval of its own; a price set
+      // up by hand keeps the plan and extra-seat prices it was sold at.
+      currency: catalog?.currency ?? null,
+      interval: catalog?.interval ?? null,
+      aiUseCents: snapshot?.aiUseCents ?? null,
+      pendingPlanKey: snapshot?.pendingChange?.priceLookupKey ?? null,
+      pendingAiUseCents: snapshot?.pendingChange?.aiUseCents ?? null,
       status: snapshot?.status ?? null,
       seats: snapshot?.seats ?? null,
       trialEndsAt: snapshot?.trialEndsAt ?? null,

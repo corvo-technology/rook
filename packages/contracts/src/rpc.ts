@@ -396,6 +396,14 @@ export const appContract = {
     checkout: oc.output(z.object({ url: z.string().url() })),
     /** Opens the checkout of a plan in the chosen currency and interval. */
     planCheckout: oc.input(PlanCheckoutInputSchema).output(z.object({ url: z.string().url() })),
+    /**
+     * Moves a subscribed organization to another plan, interval or AI amount; the owner only.
+     * What grows applies now with proration, what shrinks at the next renewal. `url` is set only
+     * when the payment needs the owner's action: nothing changed yet, and it opens the portal.
+     */
+    changePlan: oc
+      .input(PlanCheckoutInputSchema)
+      .output(z.object({ ok: z.literal(true), url: z.string().url().optional() })),
     portal: oc.output(z.object({ url: z.string().url() })),
     /**
      * A partner's commerce customer reads its plan, credit and checkout link; null for anyone else.

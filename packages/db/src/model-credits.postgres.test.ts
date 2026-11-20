@@ -298,4 +298,41 @@ dbTests("model credits ledger", () => {
     );
     expect(await balance()).toBe(10_000_000n);
   });
+  describe("a reais plan's AI add-on", () => {
+    const paid = (cents: number, id = `${organizationId}-plan`) =>
+      reconcileCreditPurchase(
+        prisma,
+        organizationId,
+        {
+          id,
+          amountCents: cents,
+          useCents: 1000,
+          expiresAt: renewal.toISOString(),
+        },
+        beforeRenewal,
+      );
+    it("grants the table dollars once however often the invoice is read", async () => {
+      await Promise.all([paid(1000), paid(1000), paid(1000)]);
+      await paid(1000);
+      expect(await balance()).toBe(10_000_000n);
+    });
+    it("never restores credit an earlier refund read removed, whatever the read order", async () => {
+      await paid(500);
+      await paid(1000).catch(() => undefined);
+      expect(await balance()).toBe(5_000_000n);
+      await paid(0);
+      await paid(1000).catch(() => undefined);
+      expect(await balance()).toBe(0n);
+    });
+    it("books a refund of already spent credit as debt against the next grant, and empties the lot", async () => {
+      await paid(1000);
+      const call = await reserve(4);
+      await settleModelCredits(prisma, call, 4, beforeRenewal);
+      expect(await balance()).toBe(6_000_000n);
+      await paid(0);
+      expect(await balance()).toBe(-4_000_000n);
+      const lot = await prisma.modelCreditLot.findFirstOrThrow({ where: { organizationId } });
+      expect(lot.availableMicros).toBe(0n);
+    });
+  });
 });

@@ -101,6 +101,15 @@ describePostgres("plan entitlements (PostgreSQL)", () => {
     expect(await spaceComputerSize(system, undefined, owner.spaceId)).toBeUndefined();
   });
 
+  it("resolves a catalog price missing from PLAN_PRICES by its lookup key", async () => {
+    await subscribe("price_unlisted", "active");
+    await system.billingAccount.update({
+      where: { organizationId: owner.spaceId },
+      data: { priceLookupKey: "plan_company_brl_year" },
+    });
+    expect((await organizationEntitlements(system, plans, owner.spaceId))?.plan).toBe("company");
+  });
+
   it("counts bytes on put and delete, replaces on a repeated put, and never goes below zero", async () => {
     const key = `artifacts/${owner.spaceId}/${randomUUID()}`;
     const other = `artifacts/${owner.spaceId}/${randomUUID()}`;

@@ -3,13 +3,35 @@ import type {
   BillingCheckoutRequest,
   BillingCreditCheckoutRequest,
   BillingCreditPurchase,
+  BillingPlanChangeRequest,
+  BillingPlanCheckoutRequest,
+  BillingPlanSelection,
   BillingPrice,
   BillingProvider,
   BillingSubscriptionSnapshot,
   BillingSubscriptionStatus,
 } from "@corvo/adapter-kit";
-import { BillingCheckoutCompletedError, BillingCustomerNotFoundError } from "@corvo/adapter-kit";
-import { ModelCreditAmountSchema } from "@corvo/contracts";
+import {
+  BillingCheckoutCompletedError,
+  BillingCustomerNotFoundError,
+  BillingPaymentRequiredError,
+} from "@corvo/adapter-kit";
+import type { BillingCurrency, BillingInterval } from "@corvo/contracts";
+import {
+  AI_USE_CENTS,
+  aiAddOnPriceCents,
+  aiLookupKey,
+  aiUseGrantCents,
+  BILLING_CURRENCIES,
+  BILLING_INTERVALS,
+  extraPersonCents,
+  extraPersonLookupKey,
+  ModelCreditAmountSchema,
+  PLAN_IDS,
+  parseAiLookupKey,
+  planLookupKey,
+  planPriceCents,
+} from "@corvo/contracts";
 import { z } from "zod";
 import {
   encodeStripeForm,
@@ -50,6 +72,7 @@ const subscriptionSchema = z.object({
   cancel_at_period_end: z.boolean().nullish(),
   cancel_at: z.number().nullish(),
   ended_at: z.number().nullish(),
+  schedule: z.string().nullish(),
   items: z.object({
     data: z.array(
       z.object({
@@ -57,7 +80,10 @@ const subscriptionSchema = z.object({
         quantity: z.number().int().nullish(),
         metadata: z.record(z.string(), z.string()).nullish(),
         current_period_end: z.number().nullish(),
-        price: idSchema.extend({ product: z.string().optional() }),
+        price: idSchema.extend({
+          product: z.string().optional(),
+          lookup_key: z.string().nullish(),
+        }),
       }),
     ),
   }),
@@ -71,6 +97,22 @@ const checkoutListSchema = z.object({
   has_more: z.boolean(),
 });
 type StripeSubscription = z.infer<typeof subscriptionSchema>;
+const scheduleSchema = z.object({
+  id: z.string(),
+  current_phase: z.object({ start_date: z.number() }).nullish(),
+  phases: z.array(
+    z.object({
+      start_date: z.number(),
+      end_date: z.number().nullish(),
+      items: z.array(z.object({ price: z.string(), quantity: z.number().int().nullish() })),
+    }),
+  ),
+  metadata: z.record(z.string(), z.string()).nullish(),
+});
+type StripeSchedule = z.infer<typeof scheduleSchema>;
+/** Written on a schedule this adapter made; they say what the waiting phase holds. */
+const PENDING_PLAN_METADATA = "corvo_pending_plan";
+const PENDING_AI_METADATA = "corvo_pending_ai";
 
 /** Stripe REST wire format and credentials stay inside this adapter. */
 export class StripeBillingProvider implements BillingProvider {
@@ -78,6 +120,11 @@ export class StripeBillingProvider implements BillingProvider {
   private readonly http: StripeHttp;
   private readonly now: () => number;
   private readonly monthlyPrices = new Map<string, string>();
+  private readonly catalogPriceIds = new Map<string, string>();
+  private readonly priceInfos = new Map<
+    string,
+    { use: number; unitAmount: number; catalog: boolean }
+  >();
 
   constructor(config: StripeBillingConfig) {
     this.config = config;
@@ -180,7 +227,7 @@ export class StripeBillingProvider implements BillingProvider {
             : {
                 quantity: 1,
                 price_data: {
-                  currency: "usd",
+                  currency: CREDIT_CURRENCY,
                   unit_amount: input.amountCents,
                   product_data: { name: "Rook model credits" },
                 },
@@ -293,19 +340,29 @@ export class StripeBillingProvider implements BillingProvider {
   ): Promise<string> {
     const cached = this.monthlyPrices.get(lookupKey);
     if (cached) return cached;
-    const id = await this.findOrCreateMonthlyPrice(lookupKey, amountCents, productName);
+    const id = await this.findOrCreatePrice({
+      lookupKey,
+      amountCents,
+      currency: CREDIT_CURRENCY,
+      interval: "month",
+      productName,
+    });
     this.monthlyPrices.set(lookupKey, id);
     return id;
   }
 
-  private async findOrCreateMonthlyPrice(
-    lookupKey: string,
-    amountCents: number,
-    productName: string,
-  ): Promise<string> {
+  /** The active price with this lookup key, amount, currency and interval, else a new one that takes the key. */
+  private async findOrCreatePrice(input: {
+    lookupKey: string;
+    amountCents: number;
+    currency: string;
+    interval: BillingInterval;
+    productName: string;
+    metadata?: Record<string, string>;
+  }): Promise<string> {
     const query = encodeStripeForm({
       active: true,
-      lookup_keys: [lookupKey],
+      lookup_keys: [input.lookupKey],
       expand: ["data.product"],
     });
     const prices = z
@@ -320,23 +377,280 @@ export class StripeBillingProvider implements BillingProvider {
     const existing = prices.data.find(
       (price) =>
         price.product.active &&
-        price.currency === "usd" &&
-        price.unit_amount === amountCents &&
-        price.recurring.interval === "month" &&
+        price.currency === input.currency &&
+        price.unit_amount === input.amountCents &&
+        price.recurring.interval === input.interval &&
         price.recurring.interval_count === 1,
     );
     if (existing) return existing.id;
     // Checkout's inline products are archived automatically; reusable plans need active products.
     return idSchema.parse(
       await this.request("POST", "/v1/prices", {
-        currency: "usd",
-        unit_amount: amountCents,
-        recurring: { interval: "month" },
-        product_data: { name: productName },
-        lookup_key: lookupKey,
+        currency: input.currency,
+        unit_amount: input.amountCents,
+        recurring: { interval: input.interval },
+        product_data: { name: input.productName },
+        lookup_key: input.lookupKey,
         transfer_lookup_key: true,
+        ...(input.metadata ? { metadata: input.metadata } : {}),
       }),
     ).id;
+  }
+
+  /** Every catalog price, by lookup key. */
+  private catalogPrices() {
+    const prices: Array<{
+      lookupKey: string;
+      amountCents: number;
+      currency: BillingCurrency;
+      interval: BillingInterval;
+      productName: string;
+      metadata?: Record<string, string>;
+    }> = [];
+    for (const currency of BILLING_CURRENCIES) {
+      for (const interval of BILLING_INTERVALS) {
+        for (const plan of PLAN_IDS)
+          prices.push({
+            lookupKey: planLookupKey(plan, currency, interval),
+            amountCents: planPriceCents(plan, currency, interval),
+            currency,
+            interval,
+            productName: `Rook ${plan}`,
+          });
+        prices.push({
+          lookupKey: extraPersonLookupKey(currency, interval),
+          amountCents: extraPersonCents(currency, interval),
+          currency,
+          interval,
+          productName: "Rook extra person",
+        });
+        for (const useCents of AI_USE_CENTS)
+          prices.push({
+            lookupKey: aiLookupKey(useCents, currency, interval),
+            amountCents: aiAddOnPriceCents(currency, useCents, interval),
+            currency,
+            interval,
+            productName: "Rook AI use",
+            metadata: { [CREDIT_USE_METADATA]: String(aiUseGrantCents(useCents, interval)) },
+          });
+      }
+    }
+    return prices;
+  }
+
+  async ensurePlanPrices(): Promise<Record<string, string>> {
+    const ids: Record<string, string> = {};
+    for (const price of this.catalogPrices()) {
+      const id = await this.findOrCreatePrice(price);
+      this.catalogPriceIds.set(price.lookupKey, id);
+      ids[price.lookupKey] = id;
+    }
+    return ids;
+  }
+
+  async priceIdForLookupKey(key: string): Promise<string | null> {
+    const cached = this.catalogPriceIds.get(key);
+    if (cached) return cached;
+    const query = encodeStripeForm({ active: true, lookup_keys: [key] });
+    const found = z
+      .object({ data: z.array(idSchema) })
+      .parse(await this.request("GET", `/v1/prices?${query}`)).data[0];
+    if (found) this.catalogPriceIds.set(key, found.id);
+    return found?.id ?? null;
+  }
+
+  /** The id of a catalog price, creating it first when this Stripe account does not have it yet. */
+  private async catalogPriceId(lookupKey: string): Promise<string> {
+    const cached = this.catalogPriceIds.get(lookupKey);
+    if (cached) return cached;
+    const price = this.catalogPrices().find((candidate) => candidate.lookupKey === lookupKey);
+    if (!price) throw new Error(`Unknown catalog price ${lookupKey}`);
+    const id = await this.findOrCreatePrice(price);
+    this.catalogPriceIds.set(lookupKey, id);
+    return id;
+  }
+
+  async createPlanCheckout(input: BillingPlanCheckoutRequest) {
+    await this.expireOpenCheckouts(input.customerId);
+    // With no open session left, a checkout that completed meanwhile has left its subscription.
+    if (
+      (await this.listSubscriptions(input.customerId)).some((s) =>
+        holdsBillingSubscription(mapStripeSubscriptionStatus(s.status)),
+      )
+    )
+      throw new BillingCheckoutCompletedError();
+    const lineItems = (await this.selectionItems(input)).map(({ price, quantity }) => ({
+      price,
+      quantity,
+    }));
+    const session = urlSchema.parse(
+      await this.request("POST", "/v1/checkout/sessions", {
+        customer: input.customerId,
+        mode: "subscription",
+        allowed_payment_method_types: ["card"],
+        adaptive_pricing: { enabled: false },
+        allow_promotion_codes: true,
+        line_items: lineItems,
+        subscription_data: { billing_mode: { type: "classic" } },
+        success_url: input.successUrl,
+        cancel_url: input.cancelUrl,
+      }),
+    );
+    return { url: session.url };
+  }
+
+  /** The lines a plan holds, with the catalog price id of each. */
+  private async selectionItems(selection: BillingPlanSelection) {
+    const { currency, interval } = selection;
+    const items: Array<{ kind: ItemKind; price: string; quantity: number }> = [
+      {
+        kind: "plan",
+        price: await this.catalogPriceId(planLookupKey(selection.plan, currency, interval)),
+        quantity: 1,
+      },
+    ];
+    if (selection.extraPeople > 0)
+      items.push({
+        kind: "extra",
+        price: await this.catalogPriceId(extraPersonLookupKey(currency, interval)),
+        quantity: selection.extraPeople,
+      });
+    if (selection.aiUseCents)
+      items.push({
+        kind: "ai",
+        price: await this.catalogPriceId(aiLookupKey(selection.aiUseCents, currency, interval)),
+        quantity: 1,
+      });
+    return items;
+  }
+
+  async changePlan(input: BillingPlanChangeRequest) {
+    const chosen = pickStripeSubscription(await this.listLiveSubscriptions(input.customerId));
+    if (!chosen || !holdsBillingSubscription(chosen.status))
+      throw new Error("No subscription to change");
+    let subscription = chosen.subscription;
+    // A waiting change is replaced, and a subscription under a schedule cannot be edited freely.
+    if (subscription.schedule) await this.releaseSchedule(subscription.schedule);
+    if (input.apply) {
+      subscription = await this.applySelection(subscription, input.apply);
+    }
+    if (input.atRenewal) await this.scheduleSelection(subscription, input.atRenewal);
+  }
+
+  private async releaseSchedule(scheduleId: string) {
+    try {
+      await this.request(
+        "POST",
+        `/v1/subscription_schedules/${encodeURIComponent(scheduleId)}/release`,
+      );
+    } catch (error) {
+      // Already released or completed: nothing is left to hold the subscription.
+      if (!(error instanceof StripeRequestError && error.type === "invalid_request_error"))
+        throw error;
+    }
+  }
+
+  /** Swaps the subscription's lines for the selection's now, charging the difference for the period. */
+  private async applySelection(
+    subscription: StripeSubscription,
+    selection: BillingPlanSelection,
+  ): Promise<StripeSubscription> {
+    const wanted = await this.selectionItems(selection);
+    const base = baseItem(subscription);
+    const taken = new Set<ItemKind>();
+    const items: Array<Record<string, unknown>> = [];
+    for (const item of subscription.items.data) {
+      const kind = itemKind(item, base);
+      const want = kind && !taken.has(kind) ? wanted.find((w) => w.kind === kind) : undefined;
+      if (!want) {
+        items.push({ id: item.id, deleted: true });
+        continue;
+      }
+      taken.add(want.kind);
+      if (item.price.id !== want.price || item.quantity !== want.quantity)
+        items.push({ id: item.id, price: want.price, quantity: want.quantity });
+    }
+    for (const want of wanted)
+      if (!taken.has(want.kind)) items.push({ price: want.price, quantity: want.quantity });
+    // Credits and the own-key plan are marked on the subscription; a plan is neither.
+    const cleared = ["corvo_credit_cents", BYOK_PLAN_METADATA].filter(
+      (key) => subscription.metadata?.[key],
+    );
+    try {
+      return subscriptionSchema.parse(
+        await this.request("POST", `/v1/subscriptions/${encodeURIComponent(subscription.id)}`, {
+          items,
+          ...(cleared.length
+            ? { metadata: Object.fromEntries(cleared.map((key) => [key, ""])) }
+            : {}),
+          proration_behavior: "always_invoice",
+          payment_behavior: "error_if_incomplete",
+        }),
+      );
+    } catch (error) {
+      if (
+        error instanceof StripeRequestError &&
+        (error.type === "card_error" ||
+          error.code === "subscription_payment_intent_requires_action")
+      )
+        throw new BillingPaymentRequiredError();
+      throw error;
+    }
+  }
+
+  /** Holds the subscription as it is until its period ends, then moves it to the selection. */
+  private async scheduleSelection(
+    subscription: StripeSubscription,
+    selection: BillingPlanSelection,
+  ) {
+    const schedule = scheduleSchema.parse(
+      await this.request("POST", "/v1/subscription_schedules", {
+        from_subscription: subscription.id,
+      }),
+    );
+    const current = schedule.phases[0];
+    if (!current?.end_date) throw new Error("Subscription schedule has no current phase");
+    const next = await this.selectionItems(selection);
+    await this.request("POST", `/v1/subscription_schedules/${encodeURIComponent(schedule.id)}`, {
+      end_behavior: "release",
+      proration_behavior: "none",
+      metadata: {
+        [PENDING_PLAN_METADATA]: planLookupKey(
+          selection.plan,
+          selection.currency,
+          selection.interval,
+        ),
+        [PENDING_AI_METADATA]: String(selection.aiUseCents ?? 0),
+      },
+      phases: [
+        {
+          start_date: current.start_date,
+          end_date: current.end_date,
+          items: current.items.map((item) => ({ price: item.price, quantity: item.quantity })),
+        },
+        {
+          items: next.map(({ price, quantity }) => ({ price, quantity })),
+          iterations: 1,
+          billing_cycle_anchor: "phase_start",
+        },
+      ],
+    });
+  }
+
+  /** What a schedule of this adapter's still has waiting; null once its phase has begun. */
+  private pendingFromSchedule(
+    schedule: StripeSchedule,
+  ): BillingSubscriptionSnapshot["pendingChange"] {
+    const key = schedule.metadata?.[PENDING_PLAN_METADATA];
+    const waiting =
+      schedule.phases.length >= 2 &&
+      schedule.current_phase?.start_date === schedule.phases[0]?.start_date;
+    if (!key || !waiting) return undefined;
+    const ai = Number(schedule.metadata?.[PENDING_AI_METADATA]);
+    return {
+      priceLookupKey: key,
+      aiUseCents: AI_USE_CENTS.find((cents) => cents === ai) ?? null,
+    };
   }
 
   /** Re-read settled payments and refund state; webhook payloads never grant money directly. */
@@ -368,6 +682,10 @@ export class StripeBillingProvider implements BillingProvider {
     );
     const creditLineSchema = z.object({
       amount: z.number().int(),
+      quantity: z.number().int().nullish(),
+      pricing: z
+        .object({ price_details: z.object({ price: z.string().optional() }).nullish() })
+        .nullish(),
       discount_amounts: z.array(z.object({ amount: z.number().int().nonnegative() })).nullish(),
       period: z.object({ end: z.number().int().positive() }),
       parent: z
@@ -404,23 +722,31 @@ export class StripeBillingProvider implements BillingProvider {
       sessionsPromise,
       invoicesPromise,
     ]);
-    const netPaid = new Map<string, number>();
+    // What each payment still keeps after refunds and disputes, in the currency it was charged in.
+    // A purchase counts only payments in its own currency.
+    const netPaid = new Map<string, { currency: string; cents: number }>();
     for (const charge of charges) {
-      if (!charge.payment_intent || charge.currency !== "usd" || !charge.paid || !charge.captured)
-        continue;
-      netPaid.set(
-        charge.payment_intent,
-        (netPaid.get(charge.payment_intent) ?? 0) +
+      if (!charge.payment_intent || !charge.paid || !charge.captured) continue;
+      const previous = netPaid.get(charge.payment_intent);
+      if (previous && previous.currency !== charge.currency) continue;
+      netPaid.set(charge.payment_intent, {
+        currency: charge.currency,
+        cents:
+          (previous?.cents ?? 0) +
           (charge.disputed ? 0 : Math.max(0, charge.amount - charge.amount_refunded)),
-      );
+      });
     }
+    const paidIn = (paymentIntent: string | undefined, currency: string) => {
+      const payment = netPaid.get(paymentIntent ?? "");
+      return payment?.currency === currency ? payment.cents : 0;
+    };
     const purchases: BillingCreditPurchase[] = [];
     for (const session of sessions) {
       const amount = creditAmount(session.metadata.corvo_credit_cents);
       if (
         session.mode !== "payment" ||
         session.payment_status !== "paid" ||
-        session.currency !== "usd" ||
+        session.currency !== CREDIT_CURRENCY ||
         !amount ||
         session.amount_total !== amount ||
         !session.payment_intent
@@ -428,16 +754,19 @@ export class StripeBillingProvider implements BillingProvider {
         continue;
       purchases.push({
         id: session.id,
-        amountCents: Math.min(amount, netPaid.get(session.payment_intent) ?? 0),
+        amountCents: Math.min(amount, paidIn(session.payment_intent, session.currency)),
       });
     }
     for (const invoice of invoices) {
-      const amount = creditAmount(
+      const packAmount = creditAmount(
         invoice.parent?.subscription_details?.metadata.corvo_credit_cents,
       );
+      // Monthly credit packs are sold in dollars; plan invoices in any catalog currency.
+      const currencyOk = packAmount
+        ? invoice.currency === CREDIT_CURRENCY
+        : (BILLING_CURRENCIES as readonly string[]).includes(invoice.currency);
       if (
-        !amount ||
-        invoice.currency !== "usd" ||
+        !currencyOk ||
         !["subscription_create", "subscription_cycle", "subscription_update"].includes(
           invoice.billing_reason ?? "",
         ) ||
@@ -457,40 +786,103 @@ export class StripeBillingProvider implements BillingProvider {
             ),
       ]);
       const paid = payments.reduce(
-        (sum, payment) => sum + (netPaid.get(payment.payment.payment_intent ?? "") ?? 0),
+        (sum, payment) => sum + paidIn(payment.payment.payment_intent, invoice.currency),
         0,
       );
-      const periods = lines.filter(
+      const subscriptionLines = lines.filter(
         (line) =>
           line.parent?.type === "subscription_item_details" &&
           Boolean(invoice.parent?.subscription_details?.subscription) &&
           line.parent.subscription_item_details?.subscription ===
             invoice.parent?.subscription_details?.subscription,
       );
+      // Credits come from the packs, or from the AI add-on lines of a plan; a plan without
+      // the add-on grants none.
+      let useCents: number | undefined;
+      let periods = subscriptionLines;
+      const infos = await Promise.all(
+        subscriptionLines.map((line) => this.priceInfo(line.pricing?.price_details?.price)),
+      );
+      if (!packAmount) {
+        // Each AI line grants its use in proportion to what the line charged: a whole period
+        // charges the whole price, a change part-way through a period only the share left, and
+        // the unused part of the line it replaces is taken back. Credit never exceeds the money.
+        let granted = 0n;
+        const withUse: typeof subscriptionLines = [];
+        subscriptionLines.forEach((line, index) => {
+          const info = infos[index]!;
+          if (info.use <= 0 || info.unitAmount <= 0) return;
+          granted += floorDiv(BigInt(info.use) * BigInt(line.amount), BigInt(info.unitAmount));
+          withUse.push(line);
+        });
+        if (granted <= 0n) continue;
+        useCents = Number(granted);
+        periods = withUse;
+      } else {
+        // A plan change swaps these lines on a subscription that was a credit pack; the plan's
+        // lines are not the pack's credit.
+        periods = subscriptionLines.filter((_, index) => !infos[index]!.catalog);
+        if (!periods.length) continue;
+      }
       if (!periods.length) throw new Error("Monthly credit invoice has no service period");
       const expiresAt = fromSeconds(
         Math.max(...periods.map((line) => line.period.end)),
       )!.toISOString();
-      const creditAmountCents = Math.max(
-        0,
-        periods.reduce(
-          (sum, line) =>
-            sum +
-            line.amount -
-            (line.discount_amounts ?? []).reduce((discount, item) => discount + item.amount, 0),
+      const settled = Math.min(paid, invoice.amount_paid);
+      let amountCents: number;
+      if (useCents !== undefined) {
+        // The table dollars, shrunk by the share of the invoice no longer paid; never converted.
+        amountCents = Number((BigInt(useCents) * BigInt(settled)) / BigInt(invoice.amount_paid));
+      } else {
+        const creditAmountCents = Math.max(
           0,
-        ),
-      );
-      // Credits cover the subscription lines, excluding tax and other items. Refunds
-      // reduce that paid portion proportionally because charges do not identify a line.
-      const amountCents = Number(
-        (BigInt(Math.min(creditAmountCents, invoice.amount_paid)) *
-          BigInt(Math.min(paid, invoice.amount_paid))) /
-          BigInt(invoice.amount_paid),
-      );
-      purchases.push({ id: invoice.id, amountCents, expiresAt });
+          periods.reduce(
+            (sum, line) =>
+              sum +
+              line.amount -
+              (line.discount_amounts ?? []).reduce((discount, item) => discount + item.amount, 0),
+            0,
+          ),
+        );
+        // Credits cover the subscription lines, excluding tax and other items. Refunds
+        // reduce that paid portion proportionally because charges do not identify a line.
+        amountCents = Number(
+          (BigInt(Math.min(creditAmountCents, invoice.amount_paid)) * BigInt(settled)) /
+            BigInt(invoice.amount_paid),
+        );
+      }
+      purchases.push({
+        id: invoice.id,
+        amountCents,
+        ...(useCents === undefined ? {} : { useCents }),
+        expiresAt,
+      });
     }
     return purchases;
+  }
+
+  /** What a price says about credit: the use one unit buys, its unit amount, and whether it is a catalog price. */
+  private async priceInfo(
+    priceId: string | undefined,
+  ): Promise<{ use: number; unitAmount: number; catalog: boolean }> {
+    if (!priceId) return { use: 0, unitAmount: 0, catalog: false };
+    const cached = this.priceInfos.get(priceId);
+    if (cached) return cached;
+    const price = z
+      .object({
+        metadata: z.record(z.string(), z.string()).nullish(),
+        unit_amount: z.number().int().nullish(),
+        lookup_key: z.string().nullish(),
+      })
+      .parse(await this.request("GET", `/v1/prices/${encodeURIComponent(priceId)}`));
+    const parsed = Number(price.metadata?.[CREDIT_USE_METADATA]);
+    const info = {
+      use: Number.isSafeInteger(parsed) && parsed > 0 ? parsed : 0,
+      unitAmount: price.unit_amount ?? 0,
+      catalog: /^(plan_|extra_person_|ai_)/.test(price.lookup_key ?? ""),
+    };
+    this.priceInfos.set(priceId, info);
+    return info;
   }
 
   private async listPages<T>(path: string, schema: z.ZodType<T>): Promise<T[]> {
@@ -519,7 +911,17 @@ export class StripeBillingProvider implements BillingProvider {
 
   async getCustomerSubscription(customerId: string): Promise<BillingSubscriptionSnapshot | null> {
     const chosen = pickStripeSubscription(await this.listLiveSubscriptions(customerId));
-    return chosen ? toSnapshot(chosen.subscription, chosen.status) : null;
+    if (!chosen) return null;
+    const snapshot = toSnapshot(chosen.subscription, chosen.status);
+    if (!chosen.subscription.schedule || !holdsBillingSubscription(chosen.status)) return snapshot;
+    const schedule = scheduleSchema.parse(
+      await this.request(
+        "GET",
+        `/v1/subscription_schedules/${encodeURIComponent(chosen.subscription.schedule)}`,
+      ),
+    );
+    const pendingChange = this.pendingFromSchedule(schedule);
+    return pendingChange ? { ...snapshot, pendingChange } : snapshot;
   }
 
   async updateSeats(customerId: string, seats: number) {
@@ -535,6 +937,7 @@ export class StripeBillingProvider implements BillingProvider {
         return;
       const item = baseItem(chosen.subscription);
       if (!item || item.quantity === seats) return;
+      if (chosen.subscription.schedule) await this.releaseSchedule(chosen.subscription.schedule);
       try {
         await this.request("POST", `/v1/subscription_items/${encodeURIComponent(item.id)}`, {
           quantity: seats,
@@ -558,6 +961,8 @@ export class StripeBillingProvider implements BillingProvider {
       )
         return;
       const extra = chosen.subscription.items.data.find((item) => item.price.id === input.priceId);
+      if (chosen.subscription.schedule && (extra?.quantity ?? 0) !== input.quantity)
+        await this.releaseSchedule(chosen.subscription.schedule);
       try {
         if (!extra) {
           if (input.quantity < 1) return;
@@ -740,10 +1145,32 @@ export function holdsBillingSubscription(status: BillingSubscriptionStatus) {
 
 /** The plan's own line: the one that is not an extra-seat line this adapter added. */
 function baseItem(subscription: StripeSubscription) {
+  const items = subscription.items.data;
   return (
-    subscription.items.data.find((item) => !item.metadata?.corvo_extra_seats) ??
-    subscription.items.data[0]
+    // A plan checkout puts the plan, extra people and AI on one subscription in no fixed order.
+    items.find((item) => item.price.lookup_key?.startsWith("plan_")) ??
+    items.find(
+      (item) =>
+        !item.metadata?.corvo_extra_seats &&
+        !item.price.lookup_key?.startsWith("extra_person_") &&
+        !item.price.lookup_key?.startsWith("ai_"),
+    ) ??
+    items[0]
   );
+}
+
+type ItemKind = "plan" | "extra" | "ai";
+
+/** Which of a plan's lines an item is; null for one that belongs to no plan. */
+function itemKind(
+  item: StripeSubscription["items"]["data"][number],
+  base: StripeSubscription["items"]["data"][number] | undefined,
+): ItemKind | null {
+  const key = item.price.lookup_key;
+  if (key?.startsWith("plan_") || item === base) return "plan";
+  if (key?.startsWith("extra_person_") || item.metadata?.corvo_extra_seats) return "extra";
+  if (key?.startsWith("ai_")) return "ai";
+  return null;
 }
 
 function toSnapshot(
@@ -752,11 +1179,17 @@ function toSnapshot(
 ): BillingSubscriptionSnapshot {
   const item = baseItem(subscription);
   if (!item) throw new Error("Stripe subscription has no items");
+  const aiUseCents = parseAiLookupKey(
+    subscription.items.data.find((line) => line.price.lookup_key?.startsWith("ai_"))?.price
+      .lookup_key,
+  );
+  const aiUse = aiUseCents ? { aiUseCents } : {};
   return {
     creditAmountCents: creditAmount(subscription.metadata?.corvo_credit_cents),
     subscriptionId: subscription.id,
     subscriptionItemId: item.id,
     priceId: item.price.id,
+    ...(item.price.lookup_key ? { priceLookupKey: item.price.lookup_key } : {}),
     status,
     seats: item.quantity ?? 1,
     trialEndsAt: fromSeconds(subscription.trial_end),
@@ -764,7 +1197,16 @@ function toSnapshot(
     cancelAtPeriodEnd: Boolean(subscription.cancel_at_period_end) || subscription.cancel_at != null,
     endedAt: fromSeconds(subscription.ended_at),
     ...(isByokPlan(subscription) ? { byokPlan: true } : {}),
+    ...aiUse,
   };
+}
+
+/** Integer division that rounds toward negative infinity, so a taken-back share is never rounded away. */
+function floorDiv(numerator: bigint, denominator: bigint): bigint {
+  const quotient = numerator / denominator;
+  return numerator % denominator !== 0n && numerator < 0n !== denominator < 0n
+    ? quotient - 1n
+    : quotient;
 }
 
 function fromSeconds(value: number | null | undefined) {
@@ -834,6 +1276,10 @@ export function stripeBillingConfigFromEnv(env: {
 }
 
 const BYOK_PLAN_METADATA = "corvo_plan";
+/** Credit packs and monthly credits are sold in dollars. */
+const CREDIT_CURRENCY = "usd";
+/** On an AI add-on price: the dollars of use, in cents, one charge of it buys. */
+const CREDIT_USE_METADATA = "credit_use_cents";
 
 function isByokPlan(subscription: StripeSubscription) {
   return subscription.metadata?.[BYOK_PLAN_METADATA] === "byok";

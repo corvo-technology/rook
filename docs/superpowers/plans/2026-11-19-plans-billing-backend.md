@@ -23,7 +23,7 @@
 ## Review Focus
 
 - A webhook delivered twice, or an invoice before its checkout: credits granted once, balance never negative.
-- A reais subscription refunded after a partial credit spend: balance reduced by the table dollars, floored at zero.
+- A reais subscription refunded after a partial credit spend: balance reduced by the table dollars; credit already spent becomes debt that offsets the next grant (the existing ledger rule).
 - A Team subscriber in reais, yearly, invites an eleventh person: the extra seat line uses the `brl` yearly price, not a dollar monthly one.
 - A subscriber whose price id is in `PLAN_PRICES` but has no lookup key (set up by hand before this change) keeps resolving to its plan.
 - A subscriber on the old own-key or credits funding opens billing: nothing changes.
@@ -61,7 +61,7 @@
 **Interfaces:**
 - Produces: `BillingCreditPurchase.useCents: number`, read from `credit_use_cents`; purchases without it keep today's amount-based behavior.
 
-- [ ] **Step 1: Write failing tests**: a paid `brl` invoice with an AI line of `credit_use_cents=1000` grants 1000 cents; the same event twice grants once; invoice before checkout grants once; refunding that charge reduces the balance by 1000, floored at zero.
+- [ ] **Step 1: Write failing tests**: a paid `brl` invoice with an AI line of `credit_use_cents=1000` grants 1000 cents; the same event twice grants once; invoice before checkout grants once; refunding that charge reduces the balance by 1000, any spent part staying as debt against the next grant.
 - [ ] **Step 2: Run** `pnpm vitest run packages/adapters/src/stripe-credits.test.ts packages/db/src/model-credits.test.ts`. Expected: FAIL.
 - [ ] **Step 3: Implement** with the ledger's existing idempotency on the Stripe object id.
 - [ ] **Step 4: Run** the same command. Expected: PASS.

@@ -5,6 +5,7 @@ import {
   currencyForLocale,
   extraPersonCents,
   planPriceCents,
+  resolvePlanChange,
 } from "./index.js";
 
 describe("plan pricing", () => {
@@ -44,5 +45,39 @@ describe("plan pricing", () => {
     expect(currencyForLocale("en")).toBe("usd");
     expect(currencyForLocale("pt-PT")).toBe("usd");
     expect(currencyForLocale("")).toBe("usd");
+  });
+});
+
+describe("resolvePlanChange", () => {
+  const team = { plan: "team", interval: "month", aiUseCents: null } as const;
+
+  it("applies growth now and holds nothing back", () => {
+    const target = { plan: "company", interval: "year", aiUseCents: 2000 } as const;
+    expect(resolvePlanChange(team, target)).toEqual({ now: target, pending: null });
+  });
+
+  it("keeps the current plan until renewal for a smaller plan, monthly or less AI", () => {
+    const yearly = { plan: "company", interval: "year", aiUseCents: 5000 } as const;
+    const target = { plan: "team", interval: "month", aiUseCents: 1000 } as const;
+    expect(resolvePlanChange(yearly, target)).toEqual({ now: yearly, pending: target });
+  });
+
+  it("splits a mixed move: the bigger plan now, the lower AI at renewal", () => {
+    const current = { plan: "team", interval: "month", aiUseCents: 5000 } as const;
+    const target = { plan: "company", interval: "month", aiUseCents: 1000 } as const;
+    expect(resolvePlanChange(current, target)).toEqual({
+      now: { plan: "company", interval: "month", aiUseCents: 5000 },
+      pending: target,
+    });
+  });
+
+  it("treats removing AI as a downgrade and adding it as an upgrade", () => {
+    const withAi = { ...team, aiUseCents: 1000 } as const;
+    expect(resolvePlanChange(withAi, team).pending).toEqual(team);
+    expect(resolvePlanChange(team, withAi)).toEqual({ now: withAi, pending: null });
+  });
+
+  it("moves a subscription that is not on a catalog plan straight to the target", () => {
+    expect(resolvePlanChange(null, team)).toEqual({ now: team, pending: null });
   });
 });

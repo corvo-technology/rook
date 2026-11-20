@@ -448,3 +448,116 @@ describe("Stripe prepaid model credits", () => {
     },
   );
 });
+
+describe("Stripe plan invoices with an AI add-on", () => {
+  function planInvoice(
+    overrides: {
+      currency?: string;
+      amountPaid?: number;
+      chargeCurrency?: string;
+      refunded?: number;
+      useCents?: string;
+      periodEnd?: number;
+      aiLine?: boolean;
+    } = {},
+  ) {
+    const amountPaid = overrides.amountPaid ?? 7190 + 23590;
+    const line = (price: string, amount: number, quantity = 1) => ({
+      amount,
+      quantity,
+      period: { end: overrides.periodEnd ?? 2_000_000_000 },
+      pricing: { price_details: { price } },
+      parent: {
+        type: "subscription_item_details",
+        subscription_item_details: { subscription: "sub_plan" },
+      },
+    });
+    return fixture({
+      "/v1/charges": {
+        data: [
+          {
+            id: "ch_1",
+            payment_intent: "pi_1",
+            currency: overrides.chargeCurrency ?? "brl",
+            paid: true,
+            captured: true,
+            disputed: false,
+            amount: amountPaid,
+            amount_refunded: overrides.refunded ?? 0,
+          },
+        ],
+        has_more: false,
+      },
+      "/v1/invoices": {
+        data: [
+          {
+            id: "in_plan",
+            currency: overrides.currency ?? "brl",
+            amount_paid: amountPaid,
+            billing_reason: "subscription_create",
+            lines: {
+              data: [
+                line("price_plan", 23590),
+                ...(overrides.aiLine === false ? [] : [line("price_ai", 7190)]),
+              ],
+            },
+            parent: { subscription_details: { metadata: {}, subscription: "sub_plan" } },
+          },
+        ],
+        has_more: false,
+      },
+      "/v1/invoice_payments": {
+        data: [{ id: "ip_1", payment: { payment_intent: "pi_1" } }],
+        has_more: false,
+      },
+      "/v1/prices/price_plan": { id: "price_plan", metadata: {} },
+      "/v1/prices/price_ai": {
+        id: "price_ai",
+        unit_amount: 7190,
+        metadata: { credit_use_cents: overrides.useCents ?? "1000" },
+      },
+    });
+  }
+
+  it("grants the table dollars for a paid reais invoice, not a converted amount", async () => {
+    const { provider } = planInvoice();
+    expect(await provider.listCreditPurchases("cus_1")).toEqual([
+      { id: "in_plan", amountCents: 1000, useCents: 1000, expiresAt: expect.any(String) },
+    ]);
+  });
+
+  it("reduces the grant by the share of the invoice refunded, and to zero when all of it is", async () => {
+    const half = planInvoice({ refunded: (7190 + 23590) / 2 });
+    expect(await half.provider.listCreditPurchases("cus_1")).toMatchObject([
+      { amountCents: 500, useCents: 1000 },
+    ]);
+    const all = planInvoice({ refunded: 7190 + 23590 });
+    expect(await all.provider.listCreditPurchases("cus_1")).toMatchObject([
+      { amountCents: 0, useCents: 1000 },
+    ]);
+  });
+
+  it("grants the whole year of use for a yearly add-on", async () => {
+    const { provider } = planInvoice({ useCents: "12000" });
+    expect(await provider.listCreditPurchases("cus_1")).toMatchObject([{ amountCents: 12000 }]);
+  });
+
+  it("grants nothing for an invoice with no AI line, or paid in another currency", async () => {
+    expect(await planInvoice({ aiLine: false }).provider.listCreditPurchases("cus_1")).toEqual([]);
+    expect(
+      await planInvoice({ chargeCurrency: "usd" }).provider.listCreditPurchases("cus_1"),
+    ).toMatchObject([{ amountCents: 0 }]);
+  });
+
+  it("ignores currencies the catalog does not sell", async () => {
+    const { provider } = planInvoice({ currency: "eur", chargeCurrency: "eur" });
+    expect(await provider.listCreditPurchases("cus_1")).toEqual([]);
+  });
+
+  it("reads each price's metadata once however many invoices use it", async () => {
+    const { provider, requests } = planInvoice();
+    await provider.listCreditPurchases("cus_1");
+    await provider.listCreditPurchases("cus_1");
+    expect(requests.filter((r) => r.path === "/v1/prices/price_ai")).toHaveLength(1);
+  });
+});

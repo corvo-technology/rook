@@ -2987,6 +2987,43 @@ describeJourneys("required product journeys", () => {
     expect(connector.records.length).toBe(recordsBefore + 2);
   });
 
+  it("20f: model suggestions are opt-in apart from the level, and a money cap is kept per agent", async () => {
+    const cookie = await signup(app, `classify-cap-j-${stamp}@corvo.test`, "Classify Cap");
+    const settings = () =>
+      rpc<{ mode: string; classifyTools: boolean }>(app, cookie, "autoReview/get");
+    expect((await settings()).classifyTools).toBe(false);
+    await rpc(app, cookie, "autoReview/set", { mode: "always" });
+    await rpc(app, cookie, "autoReview/set", { classifyTools: true });
+    expect(await settings()).toMatchObject({ mode: "always", classifyTools: true });
+    await rpc(app, cookie, "autoReview/set", { mode: "risky" });
+    expect(await settings()).toMatchObject({ mode: "risky", classifyTools: true });
+
+    const bot = await rpc<
+      Bot & { moneyCapPerCall: number | null; moneyCapPerMonth: number | null }
+    >(app, cookie, "bots/create", {
+      name: "Payer",
+      title: "",
+      description: "",
+      instructions: "",
+      notifyOnFinish: true,
+    });
+    expect(bot).toMatchObject({ moneyCapPerCall: null, moneyCapPerMonth: null });
+    const capped = await rpc<{ moneyCapPerCall: number | null; moneyCapPerMonth: number | null }>(
+      app,
+      cookie,
+      "bots/update",
+      { botId: bot.id, moneyCapPerCall: 50, moneyCapPerMonth: 200 },
+    );
+    expect(capped).toMatchObject({ moneyCapPerCall: 50, moneyCapPerMonth: 200 });
+    const cleared = await rpc<{ moneyCapPerCall: number | null; moneyCapPerMonth: number | null }>(
+      app,
+      cookie,
+      "bots/update",
+      { botId: bot.id, moneyCapPerCall: null },
+    );
+    expect(cleared).toMatchObject({ moneyCapPerCall: null, moneyCapPerMonth: 200 });
+  });
+
   it("21: in Ask mode, routine destination writes pause on the same approval card", async () => {
     const cookie = await signup(app, `routine-approval-j-${stamp}@corvo.test`, "Routine Approval");
     const bot = await rpc<Bot>(app, cookie, "bots/create", {

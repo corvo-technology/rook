@@ -288,6 +288,44 @@ export function buildAutoReviewPrompt(input: AutoReviewRequest): string {
   ].join("\n");
 }
 
+/** The model a checker call runs on, from the connection the approval model resolved to. */
+export function checkerRunModel(
+  input: Pick<
+    LlmAutoReviewOptions,
+    | "checker"
+    | "apiKey"
+    | "oauth"
+    | "accountId"
+    | "gatewayId"
+    | "baseUrl"
+    | "headers"
+    | "allowPrivateEndpoint"
+    | "cacheCapabilities"
+    | "contextWindow"
+    | "maxTokens"
+    | "reasoning"
+    | "callObserver"
+  >,
+): AgentRunModel {
+  return {
+    provider: input.checker.provider,
+    id: input.checker.model,
+    apiKey: input.oauth ? undefined : input.apiKey,
+    accountId: input.accountId,
+    gatewayId: input.gatewayId,
+    baseUrl: input.baseUrl,
+    headers: input.headers,
+    allowPrivateEndpoint: input.allowPrivateEndpoint,
+    cacheCapabilities: input.cacheCapabilities,
+    contextWindow: input.contextWindow,
+    maxTokens: input.maxTokens,
+    reasoning: input.reasoning,
+    thinkingLevel: input.checker.thinkingLevel ?? null,
+    oauth: input.oauth,
+    callObserver: input.callObserver,
+  };
+}
+
 export async function runAutoReviewJudge(
   input: LlmAutoReviewOptions & {
     prompt: string;
@@ -317,23 +355,7 @@ export async function runAutoReviewJudge(
         ].join(" "),
         history: [],
         tools: [],
-        model: {
-          provider: input.checker.provider,
-          id: input.checker.model,
-          apiKey: input.oauth ? undefined : input.apiKey,
-          accountId: input.accountId,
-          gatewayId: input.gatewayId,
-          baseUrl: input.baseUrl,
-          headers: input.headers,
-          allowPrivateEndpoint: input.allowPrivateEndpoint,
-          cacheCapabilities: input.cacheCapabilities,
-          contextWindow: input.contextWindow,
-          maxTokens: input.maxTokens,
-          reasoning: input.reasoning,
-          thinkingLevel: input.checker.thinkingLevel ?? null,
-          oauth: input.oauth,
-          callObserver: input.callObserver,
-        },
+        model: checkerRunModel(input),
       },
       {
         operationId: `auto-review:${input.runId}`,

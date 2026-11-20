@@ -6,7 +6,7 @@ import type {
 } from "@corvo/contracts";
 import { humanizeToolName } from "@corvo/core";
 import { writeSaved } from "@corvo/core/query";
-import { Button, ToggleGroup, ToggleGroupItem, undoable } from "@corvo/ui-web";
+import { Button, Switch, ToggleGroup, ToggleGroupItem, undoable } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useId, useState } from "react";
@@ -39,6 +39,7 @@ export function ApprovalRulesSettings({ scope }: { scope: SettingsScope }) {
   const error =
     actionError ?? (loadFailed ? errorText(loadFailed, t`Could not load approval rules`) : null);
   const modeId = useId();
+  const classifyId = useId();
   // The safest choice first.
   const modes: Array<{ mode: ApprovalMode; label: string; detail: string }> = [
     { mode: "always", label: t`Always ask`, detail: t`Asks you before it changes anything.` },
@@ -90,6 +91,12 @@ export function ApprovalRulesSettings({ scope }: { scope: SettingsScope }) {
   const setMode = (mode: ApprovalMode) =>
     save(
       async () => setAutoReview(await rpc.autoReview.set({ scope, mode })),
+      t`Could not save Auto Review`,
+    );
+
+  const setClassifyTools = (classifyTools: boolean) =>
+    save(
+      async () => setAutoReview(await rpc.autoReview.set({ scope, classifyTools })),
       t`Could not save Auto Review`,
     );
 
@@ -176,6 +183,22 @@ export function ApprovalRulesSettings({ scope }: { scope: SettingsScope }) {
           </p>
         ) : null}
       </div>
+      {/* Needs a model to ask, so it shows only where one is set up (or the choice is on). */}
+      {autoReview && (autoReview.checkerAvailable || autoReview.classifyTools) ? (
+        <SettingsGroup>
+          <SettingsRow
+            label={<label htmlFor={classifyId}>{t`Check unfamiliar tools with a model`}</label>}
+            control={
+              <Switch
+                id={classifyId}
+                checked={autoReview.classifyTools}
+                disabled={loading || saving}
+                onCheckedChange={(next) => void setClassifyTools(next)}
+              />
+            }
+          />
+        </SettingsGroup>
+      ) : null}
       {rules.length > 0 ? (
         <SettingsGroup data-testid="approval-rules">
           {rules.map((rule) => (

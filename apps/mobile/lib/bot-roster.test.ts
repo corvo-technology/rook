@@ -38,6 +38,8 @@ function bot(id = "bot-1"): Bot {
     approvalMode: null,
     memoryMode: null,
     dailyCapUsd: null,
+    moneyCapPerCall: null,
+    moneyCapPerMonth: null,
     monthlyTokenLimit: null,
     disabledBuiltinTools: [],
     webhookConfigured: false,

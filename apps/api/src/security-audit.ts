@@ -80,7 +80,7 @@ export const AUDITED_PROCEDURES: Record<string, AuditedProcedure> = {
   "models.setRole": { type: "approval.policy.changed", fields: ["role", "scope"] },
   "autoReview.set": {
     type: "approval.policy.changed",
-    fields: ["mode", "enabled", "skipApprovals"],
+    fields: ["mode", "enabled", "skipApprovals", "classifyTools"],
   },
   "bots.update": {
     type: "approval.policy.changed",
@@ -121,7 +121,13 @@ export function procedureSecurityEvent(
   if (!audited) return undefined;
   const fields = isRecord(input) ? input : {};
   // A bot update is a security event only when it changes the bot's approval mode.
-  if (procedure === "bots.update" && fields.approvalMode === undefined) return undefined;
+  if (
+    procedure === "bots.update" &&
+    fields.approvalMode === undefined &&
+    fields.moneyCapPerCall === undefined &&
+    fields.moneyCapPerMonth === undefined
+  )
+    return undefined;
   const metadata: NonNullable<SecurityEventInput["metadata"]> = { procedure };
   if (audited.kind) metadata.kind = audited.kind;
   for (const field of audited.fields ?? []) {
@@ -136,6 +142,10 @@ export function procedureSecurityEvent(
       .filter((key) => fields[key] !== undefined)
       .sort()
       .join(",");
+  }
+  if (procedure === "bots.update") {
+    const caps = ["moneyCapPerCall", "moneyCapPerMonth"].filter((key) => fields[key] !== undefined);
+    if (caps.length) metadata.changed = caps.join(",");
   }
   if (procedure === "mcp.assignments.approve") metadata.decision = "allow";
   if (procedure === "mcp.assignments.dismiss") metadata.decision = "deny";

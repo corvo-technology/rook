@@ -20,6 +20,12 @@ Em **Configurações > Aprovações**:
 
 Em qualquer modo você pode permitir ou bloquear ferramentas e sites específicos. Um espaço pode ter regras próprias, diferentes das da conta.
 
+## Limites de proteção
+
+- **Limite de pagamento**: nas configurações de um agente você pode definir o máximo por pagamento e por mês. Acima do limite, ou sem um valor legível, o agente pergunta mesmo que a ferramenta esteja liberada.
+- **Ferramentas desconhecidas**: com um modelo de aprovação configurado, você pode deixar que um modelo sugira se uma ferramenta de nome incomum só lê, faz uma edição simples ou é arriscada. Fica desligado por padrão, e na dúvida o agente pergunta.
+- **Links**: o agente não abre um link com uma chave, uma consulta longa demais ou trechos copiados de dados privados, a menos que esse mesmo link já tenha aparecido na conversa.
+
 ## Onde aparecem
 
 - no cartão dentro da conversa;

@@ -2037,6 +2037,7 @@ export const appContract = {
           mode: StoredApprovalModeSchema.optional(),
           enabled: z.boolean().optional(),
           skipApprovals: z.boolean().optional(),
+          classifyTools: z.boolean().optional(),
         }),
       )
       .output(ActionAutoReviewSettingsSchema),

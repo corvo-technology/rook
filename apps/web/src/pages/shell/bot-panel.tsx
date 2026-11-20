@@ -116,6 +116,14 @@ function parseDailyCap(text: string) {
   return Number.isFinite(value) && value > 0 && value <= 10_000 ? value : undefined;
 }
 
+/** An amount typed in a payment limit: null for empty, undefined when it is not a usable amount. */
+function parseMoneyCap(text: string) {
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+  const value = Number(trimmed);
+  return Number.isFinite(value) && value > 0 && value <= 1_000_000_000 ? value : undefined;
+}
+
 export function ComputerModePicker({
   value,
   onChange,
@@ -174,6 +182,8 @@ export function BotSettings({
     crossSpaceCommunication?: boolean;
     dailyCapUsd?: number | null;
     monthlyTokenLimit?: number | null;
+    moneyCapPerCall?: number | null;
+    moneyCapPerMonth?: number | null;
     approvalMode?: ApprovalMode | null;
     memoryMode?: MemoryMode | null;
     voiceId?: string | null;
@@ -234,6 +244,10 @@ export function BotSettings({
   useEffect(() => setDailyCap(dailyCapText(bot.dailyCapUsd)), [bot.dailyCapUsd]);
   const [tokenLimit, setTokenLimit] = useState(tokenLimitText(bot.monthlyTokenLimit));
   useEffect(() => setTokenLimit(tokenLimitText(bot.monthlyTokenLimit)), [bot.monthlyTokenLimit]);
+  const [moneyPerCall, setMoneyPerCall] = useState(dailyCapText(bot.moneyCapPerCall));
+  useEffect(() => setMoneyPerCall(dailyCapText(bot.moneyCapPerCall)), [bot.moneyCapPerCall]);
+  const [moneyPerMonth, setMoneyPerMonth] = useState(dailyCapText(bot.moneyCapPerMonth));
+  useEffect(() => setMoneyPerMonth(dailyCapText(bot.moneyCapPerMonth)), [bot.moneyCapPerMonth]);
   const [approvalMode, setApprovalMode] = useState(bot.approvalMode);
   useEffect(() => setApprovalMode(bot.approvalMode), [bot.approvalMode]);
   const [memoryMode, setMemoryMode] = useState(bot.memoryMode);
@@ -310,6 +324,8 @@ export function BotSettings({
         crossSpaceCommunication?: boolean;
         dailyCapUsd?: number | null;
         monthlyTokenLimit?: number | null;
+        moneyCapPerCall?: number | null;
+        moneyCapPerMonth?: number | null;
         disabledBuiltinTools?: string[];
         baseDisabledBuiltinTools?: string[];
       },
@@ -401,6 +417,8 @@ export function BotSettings({
       crossSpaceCommunication?: boolean;
       dailyCapUsd?: number | null;
       monthlyTokenLimit?: number | null;
+      moneyCapPerCall?: number | null;
+      moneyCapPerMonth?: number | null;
       approvalMode?: ApprovalMode | null;
       memoryMode?: MemoryMode | null;
       disabledBuiltinTools?: string[];
@@ -421,6 +439,14 @@ export function BotSettings({
       }
       if (patchOverrides?.monthlyTokenLimit !== undefined) {
         await onSave({ monthlyTokenLimit: patchOverrides.monthlyTokenLimit });
+        return;
+      }
+      if (patchOverrides?.moneyCapPerCall !== undefined) {
+        await onSave({ moneyCapPerCall: patchOverrides.moneyCapPerCall });
+        return;
+      }
+      if (patchOverrides?.moneyCapPerMonth !== undefined) {
+        await onSave({ moneyCapPerMonth: patchOverrides.moneyCapPerMonth });
         return;
       }
       if (patchOverrides?.approvalMode !== undefined) {
@@ -535,6 +561,10 @@ export function BotSettings({
       if (patchOverrides?.dailyCapUsd !== undefined) setDailyCap(dailyCapText(bot.dailyCapUsd));
       if (patchOverrides?.monthlyTokenLimit !== undefined)
         setTokenLimit(tokenLimitText(bot.monthlyTokenLimit));
+      if (patchOverrides?.moneyCapPerCall !== undefined)
+        setMoneyPerCall(dailyCapText(bot.moneyCapPerCall));
+      if (patchOverrides?.moneyCapPerMonth !== undefined)
+        setMoneyPerMonth(dailyCapText(bot.moneyCapPerMonth));
       if (patchOverrides?.approvalMode !== undefined) setApprovalMode(bot.approvalMode);
       if (patchOverrides?.memoryMode !== undefined) setMemoryMode(bot.memoryMode);
       if (patchOverrides?.fleetManagement !== undefined)
@@ -573,6 +603,8 @@ export function BotSettings({
     crossSpaceCommunication?: boolean;
     dailyCapUsd?: number | null;
     monthlyTokenLimit?: number | null;
+    moneyCapPerCall?: number | null;
+    moneyCapPerMonth?: number | null;
     approvalMode?: ApprovalMode | null;
     memoryMode?: MemoryMode | null;
     disabledBuiltinTools?: string[];
@@ -931,6 +963,48 @@ export function BotSettings({
                     }}
                   />
                 </span>
+              </div>
+              <div className="flex min-h-11 items-center justify-between gap-3 text-sm">
+                <label htmlFor={`${ids}-money-per-call`} className={rowLabelClass}>
+                  <Trans>Payment limit</Trans>
+                </label>
+                <Input
+                  id={`${ids}-money-per-call`}
+                  inputMode="decimal"
+                  className="w-28 text-right"
+                  value={moneyPerCall}
+                  disabled={saving}
+                  placeholder={t`No limit`}
+                  onChange={(event) => setMoneyPerCall(event.target.value)}
+                  onBlur={() => {
+                    const next = parseMoneyCap(moneyPerCall);
+                    if (next === undefined)
+                      return setMoneyPerCall(dailyCapText(bot.moneyCapPerCall));
+                    if (next !== (bot.moneyCapPerCall ?? null))
+                      void enqueueSave({ moneyCapPerCall: next });
+                  }}
+                />
+              </div>
+              <div className="flex min-h-11 items-center justify-between gap-3 text-sm">
+                <label htmlFor={`${ids}-money-per-month`} className={rowLabelClass}>
+                  <Trans>Monthly payment limit</Trans>
+                </label>
+                <Input
+                  id={`${ids}-money-per-month`}
+                  inputMode="decimal"
+                  className="w-28 text-right"
+                  value={moneyPerMonth}
+                  disabled={saving}
+                  placeholder={t`No limit`}
+                  onChange={(event) => setMoneyPerMonth(event.target.value)}
+                  onBlur={() => {
+                    const next = parseMoneyCap(moneyPerMonth);
+                    if (next === undefined)
+                      return setMoneyPerMonth(dailyCapText(bot.moneyCapPerMonth));
+                    if (next !== (bot.moneyCapPerMonth ?? null))
+                      void enqueueSave({ moneyCapPerMonth: next });
+                  }}
+                />
               </div>
               <div className="flex min-h-11 items-center justify-between gap-3 text-sm">
                 <label htmlFor={`${ids}-token-limit`} className={rowLabelClass}>

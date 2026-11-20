@@ -9,7 +9,7 @@ import type {
   WebProvider,
 } from "@corvo/adapter-kit";
 import type { ComputerMode, MessageBlock, ModelTier } from "@corvo/contracts";
-import type { ToolCallStreak } from "@corvo/core";
+import type { ToolCallStreak, ToolClassification } from "@corvo/core";
 import { createStreamingRedactor } from "@corvo/core";
 import { toolEffectIdempotencyKey } from "@corvo/core/node/approval-effect-key";
 import type { Bot, Computer, effectiveMemoryScope, Run, Task, Thread } from "@corvo/db";
@@ -27,6 +27,7 @@ import type { FleetRun } from "./fleet-tools.js";
 import { namedAgentTools } from "./pi-runtime-tools.js";
 import type { ReplyBudget } from "./reply-budget.js";
 import type { lazyRunComputer } from "./run-computer.js";
+import { notePrivateResult } from "./run-egress.js";
 import type { RunGuards } from "./run-guards.js";
 import type { createRunWorkspaceCheckpoint } from "./run-lifecycle.js";
 import { publishMessage } from "./run-messages.js";
@@ -140,6 +141,18 @@ export interface ScreenState {
 }
 
 /** What one attempt changes while it runs. Every piece shares these objects by reference. */
+/**
+ * Text this run holds: results of tools that return private data, which a URL must not copy, and
+ * the owner's own words, whose URLs are ones the agent was given.
+ */
+export interface EgressState {
+  /** Results of tools other than the public web, newest last, bounded. */
+  privateText: string[];
+  privateChars: number;
+  /** Exact URLs the run was given: in what a person wrote, or in any tool result. */
+  knownUrls: Set<string>;
+}
+
 export interface RunState {
   lease: RunLeaseState;
   computerUse: RunComputerUseState;
@@ -163,6 +176,10 @@ export interface RunState {
    */
   tainted: boolean;
   earlierAttempt: Promise<boolean> | undefined;
+  /** What the outbound URL leak check compares a URL with (see outboundUrlLeak). */
+  egress: EgressState;
+  /** A model's suggestions for unknown tools, one lookup per connection per run. */
+  toolClassification: Map<string, Promise<Map<string, ToolClassification>>>;
   handedOff: boolean;
   /** The agent chose to say nothing: the turn ends without a message. */
   passed: boolean;
@@ -433,6 +450,11 @@ export function restoreTurnCheckpointEffects(
             );
         }
       }
+    }
+    // A turn that paused for approval keeps the results it already read, so a URL built after
+    // the pause is still checked against them.
+    for (const message of saved.messages) {
+      if (message.role === "toolResult") notePrivateResult(ctx, message.toolName, message.content);
     }
     return turnCheckpoint;
   } catch {

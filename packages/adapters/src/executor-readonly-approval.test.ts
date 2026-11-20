@@ -4,6 +4,7 @@ import type {
   AutoReviewProvider,
   ConnectorCall,
   ConnectorTool,
+  ToolClassifierProvider,
 } from "@corvo/adapter-kit";
 import { MEMORY_REVISION_CONFLICT_ERROR } from "@corvo/adapter-kit";
 import type { ModelRoleSettings } from "@corvo/contracts";
@@ -33,6 +34,7 @@ import type { ExecutorDeps } from "./executor-deps.js";
 import { FakeWebProvider } from "./fake-web.js";
 import type * as FleetToolsModule from "./fleet-tools.js";
 import { catalogEntries, resolveCatalogCall } from "./lazy-tool-catalog.js";
+import { StaticToolClassifier } from "./tool-classifier.js";
 
 vi.mock("./computer-lifecycle.js", async (importOriginal) => ({
   ...(await importOriginal<typeof ComputerLifecycleModule>()),
@@ -96,6 +98,19 @@ type Effect = {
   callHash?: string;
   alwaysScope?: unknown;
   approvalRuleId?: string;
+  createdAt?: Date;
+};
+
+/** A kept model suggestion, as the cache table holds it. */
+type ClassificationRow = {
+  spaceId: string;
+  connection: string;
+  toolName: string;
+  descriptionHash: string;
+  rubricVersion: string;
+  risk: string;
+  confidence: number;
+  model: string;
 };
 
 /** An always-allow row as the database holds it: one tool on one connection for one agent. */
@@ -148,7 +163,24 @@ function fixture({
   connectorWait,
   runtime: customRuntime,
   cliModel = false,
+  description = "Read an item",
+  classifyTools = false,
+  toolClassifier,
+  classificationRows = [] as ClassificationRow[],
+  moneyCap,
+  priorEffects = [] as Effect[],
 }: {
+  /** The tool's own description, which the classifier reads. */
+  description?: string;
+  /** The owner opted in to model suggestions for tools whose names say nothing. */
+  classifyTools?: boolean;
+  toolClassifier?: ToolClassifierProvider;
+  /** The suggestion cache, shared between fixtures to show a later run reading an earlier one. */
+  classificationRows?: ClassificationRow[];
+  /** The bot's money cap. */
+  moneyCap?: { perCall?: number; perMonth?: number };
+  /** Effects the bot already had, such as payments made earlier this month. */
+  priorEffects?: Effect[];
   /** Connector tools offered next to the fixture's own, on the same installed resource by default. */
   extraTools?: ConnectorTool[];
   /** Test seam for connector waits. */
@@ -204,7 +236,7 @@ function fixture({
   let taskPrompt = prompt;
   const tool: ConnectorTool = {
     name,
-    description: "Read an item",
+    description,
     readOnly: readOnly ?? undefined,
     destructive,
     inputSchema: {
@@ -214,7 +246,7 @@ function fixture({
     },
     route: { connectorId: "demo", resourceId: "resource-1", toolName: name },
   };
-  const effects: Effect[] = [];
+  const effects: Effect[] = [...priorEffects];
   const results: unknown[] = [];
   const sharedMemoryState = {
     content: existingSharedMemory as string | undefined,
@@ -255,9 +287,30 @@ function fixture({
       async ({
         where,
       }: {
-        where?: { id?: string; runId?: string; status?: string; kind?: string };
+        where?: {
+          id?: string;
+          runId?: string;
+          status?: string | { in: string[] };
+          kind?: string;
+          run?: { botId: string };
+          createdAt?: { gte: Date };
+          OR?: Array<{ kind: { contains: string } }>;
+        };
       } = {}) =>
         effects.filter((effect) => {
+          // The money cap's monthly total: this bot's passed payment effects since the month began.
+          if (where?.run) {
+            const passed = typeof where.status === "object" ? where.status.in : [];
+            return (
+              passed.includes(effect.status) &&
+              (where.createdAt === undefined ||
+                (effect.createdAt !== undefined && effect.createdAt >= where.createdAt.gte)) &&
+              (where.OR ?? []).some((word) =>
+                effect.kind.toLowerCase().includes(word.kind.contains),
+              )
+            );
+          }
+          if (typeof where?.status === "object") return false;
           if (where?.status && effect.status !== where.status) return false;
           if (where?.kind && effect.kind !== where.kind) return false;
           if (where?.runId && effect.runId && effect.runId !== where.runId) return false;
@@ -324,6 +377,8 @@ function fixture({
         ...(cliModel ? { modelProvider: "cli-engine", modelId: "claude/sonnet" } : {}),
         fleetManagement,
         approvalMode: botApprovalMode,
+        moneyCapPerCall: moneyCap?.perCall ?? null,
+        moneyCapPerMonth: moneyCap?.perMonth ?? null,
         computerId: "computer-1",
         computer: { id: "computer-1", scope: "dedicated" },
       })),
@@ -448,16 +503,47 @@ function fixture({
     routine: { findMany: vi.fn(async () => routines) },
     actionAutoReviewPreference: {
       findUnique: vi.fn(async () =>
-        confirmationsOverride ? { enabled: autoReview, skipApprovals, alwaysAsk } : null,
+        confirmationsOverride
+          ? { enabled: autoReview, skipApprovals, alwaysAsk, classifyTools }
+          : null,
       ),
     },
     userActionAutoReviewPreference: {
       findUnique: vi.fn(async () =>
-        confirmationsOverride ? null : { enabled: autoReview, skipApprovals, alwaysAsk },
+        confirmationsOverride
+          ? null
+          : { enabled: autoReview, skipApprovals, alwaysAsk, classifyTools },
       ),
     },
     steeringMessage: {
       findFirst: vi.fn(async (_query: unknown) => (outsideSteering ? { id: "steer-1" } : null)),
+    },
+    toolClassification: {
+      findMany: vi.fn(
+        async ({
+          where,
+        }: {
+          where: {
+            spaceId: string;
+            connection: string;
+            rubricVersion: string;
+            toolName: { in: string[] };
+            descriptionHash: { in: string[] };
+          };
+        }) =>
+          classificationRows.filter(
+            (row) =>
+              row.spaceId === where.spaceId &&
+              row.connection === where.connection &&
+              row.rubricVersion === where.rubricVersion &&
+              where.toolName.in.includes(row.toolName) &&
+              where.descriptionHash.in.includes(row.descriptionHash),
+          ),
+      ),
+      createMany: vi.fn(async ({ data }: { data: ClassificationRow[] }) => {
+        classificationRows.push(...data);
+        return { count: data.length };
+      }),
     },
     externalEffect,
   };
@@ -584,6 +670,7 @@ function fixture({
     jobs: { enqueue },
     secrets,
     autoReview: nativeReview ? undefined : autoReviewProvider,
+    toolClassifier,
     secretStore: { load: async () => "fake-review-api-key" },
     shutdownSignal,
     connectorWait,
@@ -3367,5 +3454,474 @@ describe("kept always-allow rules", () => {
       expect(f.execute).toHaveBeenCalledOnce();
       expect(f.effects).toHaveLength(1);
     });
+  });
+});
+
+describe("model suggestions for tools whose names say nothing", () => {
+  const sure = (risk: "read" | "low" | "high", confidence = 0.95) => ({ risk, confidence });
+  const opened = (f: ReturnType<typeof fixture>) => {
+    expect(f.execute).toHaveBeenCalledOnce();
+    expect(f.pauseRunForInput).not.toHaveBeenCalled();
+  };
+  const asked = (f: ReturnType<typeof fixture>) => {
+    expect(f.execute).not.toHaveBeenCalled();
+    expect(f.pauseRunForInput).toHaveBeenCalledOnce();
+  };
+  const tool = (name: string, extra: Partial<ConnectorTool> = {}): ConnectorTool => ({
+    name,
+    description: `${name} description`,
+    inputSchema: { type: "object" },
+    route: { connectorId: "demo", resourceId: "resource-1", toolName: name },
+    ...extra,
+  });
+
+  it("asks about an unknown name when the owner did not opt in, and never consults the model", async () => {
+    const classifier = new StaticToolClassifier({ inbox_overview: sure("read") });
+    const f = fixture({ name: "inbox_overview", readOnly: null, toolClassifier: classifier });
+    await f.run();
+    asked(f);
+    expect(classifier.calls).toHaveLength(0);
+  });
+
+  it("lets a read suggestion run free, and sends the tool's name and description to the model", async () => {
+    const classifier = new StaticToolClassifier({ inbox_overview: sure("read") });
+    const f = fixture({
+      name: "inbox_overview",
+      readOnly: null,
+      classifyTools: true,
+      toolClassifier: classifier,
+      description: "Returns the unread count.",
+    });
+    await f.run();
+    opened(f);
+    expect(classifier.calls).toEqual([
+      {
+        connection: "resource:demo:resource-1",
+        tools: [{ name: "inbox_overview", description: "Returns the unread count." }],
+      },
+    ]);
+  });
+
+  it("lets a low suggestion run at Only what's risky and asks at Always ask", async () => {
+    const classifier = new StaticToolClassifier({ note_pin: sure("low") });
+    const risky = fixture({
+      name: "note_pin",
+      readOnly: null,
+      classifyTools: true,
+      toolClassifier: classifier,
+    });
+    await risky.run();
+    opened(risky);
+    const strict = fixture({
+      name: "note_pin",
+      readOnly: null,
+      classifyTools: true,
+      alwaysAsk: true,
+      toolClassifier: classifier,
+    });
+    await strict.run();
+    asked(strict);
+  });
+
+  it("asks for a high suggestion", async () => {
+    const f = fixture({
+      name: "email_blast",
+      readOnly: null,
+      classifyTools: true,
+      toolClassifier: new StaticToolClassifier({ email_blast: sure("high") }),
+    });
+    await f.run();
+    asked(f);
+  });
+
+  it("keeps asking when the model is not sure, errors, or answers nothing for the tool", async () => {
+    for (const classifier of [
+      new StaticToolClassifier({ inbox_overview: sure("read", 0.5) }),
+      new StaticToolClassifier({ inbox_overview: { risk: "unknown", confidence: 0.99 } }),
+      new StaticToolClassifier({}, { fail: new Error("timed out") }),
+      new StaticToolClassifier({}),
+    ]) {
+      const f = fixture({
+        name: "inbox_overview",
+        readOnly: null,
+        classifyTools: true,
+        toolClassifier: classifier,
+      });
+      await f.run();
+      asked(f);
+    }
+  });
+
+  it("never lowers a locked tool, and does not even ask the model about one", async () => {
+    const classifier = new StaticToolClassifier({
+      delete_item: sure("read"),
+      send_note: sure("low"),
+    });
+    for (const name of ["delete_item", "send_note"]) {
+      const f = fixture({ name, readOnly: null, classifyTools: true, toolClassifier: classifier });
+      await f.run();
+      asked(f);
+    }
+    expect(classifier.calls).toHaveLength(0);
+  });
+
+  it("never lowers a tool its server marked destructive", async () => {
+    const classifier = new StaticToolClassifier({ inbox_overview: sure("read") });
+    const f = fixture({
+      name: "inbox_overview",
+      readOnly: null,
+      destructive: true,
+      classifyTools: true,
+      toolClassifier: classifier,
+    });
+    await f.run();
+    asked(f);
+    expect(classifier.calls).toHaveLength(0);
+  });
+
+  it("does not make a tool its server declared a write into a read", async () => {
+    const classifier = new StaticToolClassifier({ get_item: sure("read") });
+    const f = fixture({
+      name: "get_item",
+      readOnly: false,
+      classifyTools: true,
+      toolClassifier: classifier,
+    });
+    await f.run();
+    asked(f);
+  });
+
+  it("does not change a tool the name check already places", async () => {
+    const classifier = new StaticToolClassifier({ demo_get_item: sure("high") });
+    const f = fixture({ classifyTools: true, toolClassifier: classifier });
+    await f.run();
+    opened(f);
+    expect(classifier.calls).toHaveLength(0);
+  });
+
+  it("classifies the unknown tools of a connection in one batch, once per run", async () => {
+    const classifier = new StaticToolClassifier({
+      inbox_overview: sure("read"),
+      note_pin: sure("low"),
+      card_snooze: sure("low"),
+    });
+    const f = fixture({
+      name: "inbox_overview",
+      readOnly: null,
+      classifyTools: true,
+      toolClassifier: classifier,
+      extraTools: [tool("note_pin"), tool("card_snooze"), tool("demo_get_other")],
+    });
+    f.setCalls([
+      { args: { id: "a" }, executionId: "call-1" },
+      { args: { id: "b" }, executionId: "call-2" },
+      { name: "note_pin", args: { id: "c" }, executionId: "call-3" },
+    ]);
+    await f.run();
+    expect(f.execute).toHaveBeenCalledTimes(3);
+    expect(classifier.calls).toHaveLength(1);
+    expect(classifier.calls[0]!.tools.map((entry) => entry.name).sort()).toEqual([
+      "card_snooze",
+      "inbox_overview",
+      "note_pin",
+    ]);
+  });
+
+  it("keeps a suggestion per connection, tool and description, and classifies a changed description again", async () => {
+    const rows: Parameters<typeof fixture>[0] extends infer _ ? never[] : never[] = [];
+    const classifier = new StaticToolClassifier({ inbox_overview: sure("read") });
+    const base = {
+      name: "inbox_overview",
+      readOnly: null,
+      classifyTools: true,
+      toolClassifier: classifier,
+      classificationRows: rows as never[],
+    };
+    await fixture({ ...base, description: "Returns the unread count." }).run();
+    expect(classifier.calls).toHaveLength(1);
+    expect(rows).toHaveLength(1);
+    const again = fixture({ ...base, description: "Returns the unread count." });
+    await again.run();
+    expect(classifier.calls).toHaveLength(1);
+    opened(again);
+    const changed = fixture({
+      ...base,
+      description: "Returns the unread count and sends a digest to the whole team.",
+    });
+    await changed.run();
+    expect(classifier.calls).toHaveLength(2);
+    expect(rows).toHaveLength(2);
+  });
+
+  it("does not keep what a failed call answered, so a later run tries again", async () => {
+    const rows: never[] = [];
+    const failing = new StaticToolClassifier({}, { fail: new Error("down") });
+    const options = {
+      name: "inbox_overview",
+      readOnly: null,
+      classifyTools: true,
+      classificationRows: rows,
+    };
+    await fixture({ ...options, toolClassifier: failing }).run();
+    expect(rows).toHaveLength(0);
+    const recovered = fixture({
+      ...options,
+      toolClassifier: new StaticToolClassifier({ inbox_overview: sure("read") }),
+    });
+    await recovered.run();
+    opened(recovered);
+  });
+
+  it("still asks after outside content entered the run on a connector it has not used", async () => {
+    const f = fixture({
+      name: "note_pin",
+      readOnly: null,
+      classifyTools: true,
+      toolClassifier: new StaticToolClassifier({ note_pin: sure("low") }),
+    });
+    f.setCalls([
+      { name: "web_search", args: { query: "news" }, executionId: "call-1" },
+      { args: { id: "a" }, executionId: "call-2" },
+    ]);
+    await f.run();
+    expect(f.execute).not.toHaveBeenCalled();
+    expect(isApprovalPausedResult(f.results[1])).toBe(true);
+  });
+
+  it("does not change what a webhook run may do", async () => {
+    const f = fixture({
+      name: "inbox_overview",
+      readOnly: null,
+      trigger: "webhook",
+      classifyTools: true,
+      toolClassifier: new StaticToolClassifier({ inbox_overview: sure("read") }),
+    });
+    await f.run();
+    asked(f);
+  });
+});
+
+describe("outbound URL leak checks", () => {
+  const refusal = (f: ReturnType<typeof fixture>, index: number) =>
+    (f.results[index] as { error?: string }).error ?? "";
+  const privateValue = "Ana Souza owes 1.250 reais now";
+  const encoded = encodeURIComponent(privateValue);
+
+  it("refuses a key-shaped string in a fetched URL, and fetches nothing", async () => {
+    const f = fixture({ builtin: true, prompt: "Look at https://example.com/ for me" });
+    f.setCalls([
+      {
+        name: "web_fetch",
+        args: { url: "https://example.com/?api_key=abcd1234" },
+        executionId: "call-1",
+      },
+    ]);
+    await f.run();
+    expect(f.fetchedUrls).toEqual([]);
+    expect(refusal(f, 0)).toMatch(/key or token/);
+  });
+
+  it("refuses a query longer than 512 characters", async () => {
+    const f = fixture({ builtin: true, prompt: "Look at https://example.com/ for me" });
+    f.setCalls([
+      {
+        name: "web_fetch",
+        args: { url: `https://example.com/?q=${"x".repeat(520)}` },
+        executionId: "call-1",
+      },
+    ]);
+    await f.run();
+    expect(f.fetchedUrls).toEqual([]);
+    expect(refusal(f, 0)).toMatch(/longer than 512/);
+  });
+
+  it("refuses 24 characters copied from a private tool result", async () => {
+    const f = fixture({ prompt: "Look at https://example.com/ for me" });
+    f.setCalls([
+      { args: { id: privateValue }, executionId: "call-1" },
+      {
+        name: "web_fetch",
+        args: { url: `https://example.com/log?d=${encoded}` },
+        executionId: "call-2",
+      },
+    ]);
+    await f.run();
+    expect(f.fetchedUrls).toEqual([]);
+    expect(refusal(f, 1)).toMatch(/private tool result/);
+  });
+
+  it("fetches a URL that appeared in a tool result exactly, but not one extended from it", async () => {
+    const given = `https://example.com/log?d=${encoded}`;
+    const f = fixture({ sourceRole: "user", prompt: "Look at https://example.com/ for me" });
+    f.setCalls([
+      { args: { id: given }, executionId: "call-1" },
+      { name: "web_fetch", args: { url: given }, executionId: "call-2" },
+      { name: "web_fetch", args: { url: `${given}&x=1` }, executionId: "call-3" },
+    ]);
+    await f.run();
+    expect(f.fetchedUrls).toEqual([given]);
+    expect(refusal(f, 2)).toMatch(/private tool result/);
+  });
+
+  it("fetches a URL the owner wrote, even one that carries a key", async () => {
+    const url = "https://example.com/?api_key=abcd1234";
+    const f = fixture({ builtin: true, sourceRole: "user", prompt: `Fetch ${url}` });
+    f.setCalls([{ name: "web_fetch", args: { url }, executionId: "call-1" }]);
+    await f.run();
+    expect(f.fetchedUrls).toEqual([url]);
+  });
+
+  it("refuses a URL an HTTP-like connector tool would send", async () => {
+    const f = fixture({ name: "http_request", prompt: "Call the API" });
+    f.setCalls([
+      {
+        args: { url: "https://example.com/?token=abcdefgh1234" },
+        executionId: "call-1",
+      },
+    ]);
+    await f.run();
+    expect(f.execute).not.toHaveBeenCalled();
+    expect(refusal(f, 0)).toMatch(/key or token/);
+  });
+
+  it("keeps the site check: a clean URL on a site the run was not given still asks", async () => {
+    const f = fixture({ builtin: true, prompt: "Read the news" });
+    f.setCalls([
+      { name: "web_fetch", args: { url: "https://other.example.net/page" }, executionId: "call-1" },
+    ]);
+    await f.run();
+    expect(f.fetchedUrls).toEqual([]);
+    expect(f.pauseRunForInput).toHaveBeenCalledOnce();
+  });
+});
+
+describe("per-agent money cap", () => {
+  beforeEach(() => reviewMock.mockReset());
+  const allowRule: ActionApprovalRule = {
+    effect: "always_allow",
+    matchKind: "tool",
+    matchValue: "create_charge",
+  };
+  const charge = (args: Record<string, unknown>, options: Parameters<typeof fixture>[0] = {}) => {
+    const f = fixture({
+      name: "create_charge",
+      readOnly: null,
+      rules: [allowRule],
+      confirmationsOverride: true,
+      ...options,
+    });
+    f.setCalls([{ args, executionId: "call-1" }]);
+    return f;
+  };
+  const priorCharge = (amount: number, createdAt: Date): Effect => ({
+    id: `prior-${amount}`,
+    kind: "create_charge",
+    idempotencyKey: `prior-${amount}-${createdAt.getTime()}`,
+    status: "completed",
+    request: { amount },
+    createdAt,
+  });
+
+  it("runs a payment within the cap on the owner's rule", async () => {
+    const f = charge({ id: "c1", amount: 40 }, { moneyCap: { perCall: 50 } });
+    await f.run();
+    expect(f.execute).toHaveBeenCalledOnce();
+  });
+
+  it("runs as before when no cap is set", async () => {
+    const f = charge({ id: "c1", amount: 5_000 });
+    await f.run();
+    expect(f.execute).toHaveBeenCalledOnce();
+  });
+
+  it("asks over the per-call cap even with an allow rule", async () => {
+    const f = charge({ id: "c1", amount: 51 }, { moneyCap: { perCall: 50 } });
+    await f.run();
+    expect(f.execute).not.toHaveBeenCalled();
+    expect(f.pauseRunForInput).toHaveBeenCalledOnce();
+  });
+
+  it("asks when the amount cannot be read", async () => {
+    const f = charge({ id: "c1" }, { moneyCap: { perCall: 50 } });
+    await f.run();
+    expect(f.execute).not.toHaveBeenCalled();
+    expect(f.pauseRunForInput).toHaveBeenCalledOnce();
+  });
+
+  it("asks over the monthly cap, counting this month's payments only", async () => {
+    const now = new Date();
+    const thisMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 12));
+    const lastMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 15));
+    const over = charge(
+      { id: "c1", amount: 60 },
+      { moneyCap: { perMonth: 200 }, priorEffects: [priorCharge(150, thisMonth)] },
+    );
+    await over.run();
+    expect(over.execute).not.toHaveBeenCalled();
+    expect(over.pauseRunForInput).toHaveBeenCalledOnce();
+    const earlier = charge(
+      { id: "c1", amount: 60 },
+      { moneyCap: { perMonth: 200 }, priorEffects: [priorCharge(150, lastMonth)] },
+    );
+    await earlier.run();
+    expect(earlier.execute).toHaveBeenCalledOnce();
+  });
+
+  it("asks in Never ask and does not hand the call to the approval model", async () => {
+    const never = charge(
+      { id: "c1", amount: 90 },
+      { moneyCap: { perCall: 50 }, skipApprovals: true },
+    );
+    await never.run();
+    expect(never.execute).not.toHaveBeenCalled();
+    expect(never.pauseRunForInput).toHaveBeenCalledOnce();
+    const auto = charge({ id: "c1", amount: 90 }, { moneyCap: { perCall: 50 }, autoReview: true });
+    await auto.run();
+    expect(reviewMock).not.toHaveBeenCalled();
+    expect(auto.pauseRunForInput).toHaveBeenCalledOnce();
+  });
+
+  it("leaves reads and tools that move no money alone", async () => {
+    for (const name of ["get_charge", "create_task"]) {
+      const f = fixture({ name, readOnly: null, moneyCap: { perCall: 1 } });
+      f.setCalls([{ args: { id: "x", amount: 999 }, executionId: "call-1" }]);
+      await f.run();
+      expect(f.execute).toHaveBeenCalledOnce();
+    }
+  });
+
+  it.each([false, true])("reads the amount of the real call, catalog = %s", async (catalog) => {
+    const over = charge({ id: "c1", amount: 90 }, { moneyCap: { perCall: 50 }, catalog });
+    await over.run();
+    expect(over.execute).not.toHaveBeenCalled();
+    expect(over.pauseRunForInput).toHaveBeenCalledOnce();
+    const within = charge({ id: "c1", amount: 10 }, { moneyCap: { perCall: 50 }, catalog });
+    await within.run();
+    expect(within.execute).toHaveBeenCalledOnce();
+  });
+
+  it("asks for a payment batch, which has no one amount", async () => {
+    const f = fixture({
+      name: "COMPOSIO_MULTI_EXECUTE_TOOL",
+      readOnly: false,
+      moneyCap: { perCall: 50 },
+      rules: [{ effect: "always_allow", matchKind: "tool", matchValue: "stripe_create_charge" }],
+      confirmationsOverride: true,
+    });
+    f.setCalls([
+      {
+        args: { tools: [{ tool_slug: "STRIPE_CREATE_CHARGE", arguments: { amount: 1 } }] },
+        executionId: "call-1",
+      },
+    ]);
+    await f.run();
+    expect(f.execute).not.toHaveBeenCalled();
+    expect(f.pauseRunForInput).toHaveBeenCalledOnce();
+  });
+
+  it("reads cents as a hundredth", async () => {
+    const f = charge({ id: "c1", amount_cents: 4_000 }, { moneyCap: { perCall: 50 } });
+    await f.run();
+    expect(f.execute).toHaveBeenCalledOnce();
   });
 });

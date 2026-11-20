@@ -46,6 +46,7 @@ import {
   renderHostContext,
   SPACE_PAUSED_RUN_ERROR,
   sanitizeHostTurn,
+  urlsInText,
   usageTokens,
   userRunError,
   userTurnMessageForRun,
@@ -1431,6 +1432,22 @@ export function createRunExecutor(deps: ExecutorDeps) {
           overLimitActionCalls: 0,
           tainted: initiallyTainted,
           earlierAttempt: undefined,
+          egress: {
+            privateText: [],
+            privateChars: 0,
+            // What a person wrote, and the task this run took in: URLs there are given, not built.
+            knownUrls: urlsInText(
+              [
+                task.prompt,
+                ...historyMessages.flatMap((message) =>
+                  message.role === "user"
+                    ? message.blocks.flatMap((block) => (block.kind === "text" ? [block.text] : []))
+                    : [],
+                ),
+              ].join("\n"),
+            ),
+          },
+          toolClassification: new Map(),
           handedOff: false,
           passed: false,
           strongerTier,

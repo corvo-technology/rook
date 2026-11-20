@@ -13,6 +13,7 @@ import type {
   NotificationProvider,
   SandboxProvider,
   SecretStore,
+  ToolClassifierProvider,
   WebProvider,
 } from "@corvo/adapter-kit";
 import type { PrismaClient, ThreadEvents } from "@corvo/db";
@@ -81,6 +82,8 @@ export interface ExecutorDeps {
   cloudAgent?: CloudAgentConnection | null;
   /** Optional Auto Review verifier. When omitted, the factory selects from env (llm | jev | scripted). */
   autoReview?: AutoReviewProvider;
+  /** Suggests a risk for connector tools named in a way nothing places. Tests and offline runs inject one; otherwise the approval model connection does it. */
+  toolClassifier?: ToolClassifierProvider;
   /**
    * Live Codex model catalog; when present, a statically excluded Codex model
    * can still run for the OAuth account whose backend lists it.

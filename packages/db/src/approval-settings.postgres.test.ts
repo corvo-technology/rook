@@ -44,7 +44,7 @@ dbTests("approval level storage", () => {
     await db.pool.end();
   });
 
-  const save = (update: Partial<typeof defaults>) =>
+  const save = (update: Partial<typeof defaults> & { classifyTools?: boolean }) =>
     prisma.$transaction((tx) => saveAutoReviewPreference(tx, scope, update, defaults));
 
   it("reads a row the previous release saved as Only what's risky", async () => {
@@ -53,7 +53,12 @@ dbTests("approval level storage", () => {
       data: { userId, enabled: false, skipApprovals: false },
     });
     const stored = await findAutoReviewPreference(prisma, scope);
-    expect(stored).toEqual({ enabled: false, skipApprovals: false, alwaysAsk: false });
+    expect(stored).toEqual({
+      enabled: false,
+      skipApprovals: false,
+      alwaysAsk: false,
+      classifyTools: false,
+    });
     expect(approvalModeFromPreference(stored!)).toBe("risky");
   });
 
@@ -62,6 +67,18 @@ dbTests("approval level storage", () => {
     const stored = await findAutoReviewPreference(prisma, scope);
     expect(approvalModeFromPreference(stored!)).toBe("always");
     expect(stored).toMatchObject({ enabled: false, skipApprovals: false });
+  });
+
+  it("keeps model suggestions off until chosen, apart from the level", async () => {
+    await save({ enabled: true });
+    expect((await findAutoReviewPreference(prisma, scope))!.classifyTools).toBe(false);
+    await save({ classifyTools: true });
+    expect(await findAutoReviewPreference(prisma, scope)).toMatchObject({
+      enabled: true,
+      classifyTools: true,
+    });
+    await save({ enabled: false, skipApprovals: false, alwaysAsk: false });
+    expect((await findAutoReviewPreference(prisma, scope))!.classifyTools).toBe(true);
   });
 
   it("moves between every level", async () => {

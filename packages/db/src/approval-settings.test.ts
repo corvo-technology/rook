@@ -110,7 +110,7 @@ describe("auto review", () => {
     });
     expect(client.userActionAutoReviewPreference.findUnique).toHaveBeenCalledWith({
       where: { userId: "user" },
-      select: { enabled: true, skipApprovals: true, alwaysAsk: true },
+      select: { enabled: true, skipApprovals: true, alwaysAsk: true, classifyTools: true },
     });
     await saveAutoReviewPreference(
       client.prisma,
@@ -126,6 +126,29 @@ describe("auto review", () => {
     });
     expect(client.actionAutoReviewPreference.findUnique).not.toHaveBeenCalled();
     expect(client.actionAutoReviewPreference.upsert).not.toHaveBeenCalled();
+  });
+
+  it("keeps the model-suggestion choice apart from the level", async () => {
+    const client = confirmationsClient();
+
+    await saveAutoReviewPreference(
+      client.prisma,
+      scope,
+      { classifyTools: true },
+      { enabled: false, skipApprovals: false, alwaysAsk: false },
+    );
+
+    expect(client.userActionAutoReviewPreference.upsert).toHaveBeenCalledWith({
+      where: { userId: "user" },
+      create: {
+        userId: "user",
+        enabled: false,
+        skipApprovals: false,
+        alwaysAsk: false,
+        classifyTools: true,
+      },
+      update: { classifyTools: true },
+    });
   });
 
   it("writes the Space's own choice when asked for the Space", async () => {

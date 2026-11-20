@@ -1266,6 +1266,32 @@ export interface AutoReviewResult {
   model: string;
 }
 
+/**
+ * Suggests a risk for connector tools whose names say nothing. A suggestion never lowers a tool the
+ * name or its hints already settled, and an error, timeout or unsure answer leaves a tool unknown,
+ * so it asks. Tool names and descriptions come from the connection's server: untrusted data.
+ */
+export interface ToolClassifierProvider {
+  describe(): AdapterDescriptor<AutoReviewCapabilities>;
+  /** One batch is every unknown tool of one connection. Missing tools stay unknown. */
+  classify(request: ToolClassifierRequest, context: AdapterContext): Promise<ToolClassifierResult>;
+}
+
+export interface ToolClassifierRequest {
+  /** Names the connection for the prompt; not a credential. */
+  connection: string;
+  tools: Array<{ name: string; description: string }>;
+}
+
+export interface ToolClassifierResult {
+  suggestions: Array<{
+    name: string;
+    risk: "read" | "low" | "high" | "unknown";
+    confidence: number;
+  }>;
+  model: string;
+}
+
 /** Provider-neutral subscription state. Vendor-specific states map onto these. */
 export type BillingSubscriptionStatus =
   | "trialing"

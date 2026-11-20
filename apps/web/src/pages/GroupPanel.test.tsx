@@ -133,6 +133,8 @@ function fakeBot(id: string, name: string, title: string): Bot {
     approvalMode: null,
     memoryMode: null,
     dailyCapUsd: null,
+    moneyCapPerCall: null,
+    moneyCapPerMonth: null,
     monthlyTokenLimit: null,
     spawnKey: null,
   };

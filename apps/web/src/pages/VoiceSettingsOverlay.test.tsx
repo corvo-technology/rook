@@ -33,7 +33,8 @@ vi.mock("@lingui/react/macro", () => {
   const t = (parts: TemplateStringsArray) => parts.join("");
   return { useLingui: () => ({ t }), Trans: ({ children }: { children: ReactNode }) => children };
 });
-vi.mock("@corvo/ui-web", () => {
+vi.mock("@corvo/ui-web", async () => {
+  const { useState } = await import("react");
   const Container = ({ children }: { children?: ReactNode }) => <div>{children}</div>;
   return {
     Spinner: (props: ComponentProps<"svg">) => <svg role="status" {...props} />,
@@ -42,6 +43,34 @@ vi.mock("@corvo/ui-web", () => {
       size: _size,
       ...props
     }: ComponentProps<"button"> & { variant?: string; size?: string }) => <button {...props} />,
+    // Two clicks, like the real one: the first only arms it.
+    InlineConfirm: ({
+      variant: _variant,
+      size: _size,
+      confirmLabel,
+      onConfirm,
+      children,
+      ...props
+    }: ComponentProps<"button"> & {
+      variant?: string;
+      size?: string;
+      confirmLabel: string;
+      onConfirm: () => void;
+    }) => {
+      const [armed, setArmed] = useState(false);
+      return (
+        <button
+          {...props}
+          onClick={() => {
+            if (!armed) return setArmed(true);
+            setArmed(false);
+            onConfirm();
+          }}
+        >
+          {armed ? confirmLabel : children}
+        </button>
+      );
+    },
     Dialog: Container,
     DialogClose: Container,
     DialogContent: Container,
@@ -541,6 +570,8 @@ it("shows what a disconnect left, not a read sent before it", async () => {
       (button) => button.textContent === "Disconnect",
     );
     if (!disconnect) throw new Error("Missing disconnect button");
+    await act(async () => disconnect.click());
+    expect(voice.disconnect).not.toHaveBeenCalled();
     await act(async () => disconnect.click());
     await act(async () => releaseStale());
     await vi.waitFor(() =>

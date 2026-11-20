@@ -3953,7 +3953,9 @@ msgstr "Descartar grabación"
 msgid "Disconnect"
 msgstr "Desconectar"
 
+#: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/VoiceSettingsOverlay.tsx
 msgid "Disconnect {disconnectName}?"
 msgstr "¿Desconectar {disconnectName}?"
 
@@ -7722,6 +7724,10 @@ msgstr "¿Quitar a {name}?"
 #: src/pages/shell/bot-credentials.tsx
 msgid "Remove {secretName}? This bot will no longer be able to use it."
 msgstr "¿Quitar {secretName}? Este bot ya no podrá usarlo."
+
+#: src/pages/ConnectionsSettingsPanel.tsx
+msgid "Remove {title}?"
+msgstr "¿Quitar {title}?"
 
 #: src/components/AlwaysAllowedRules.tsx
 msgid "Remove {what}"

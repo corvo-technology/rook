@@ -3,6 +3,7 @@ import {
   Button,
   Field,
   FieldLabel,
+  InlineConfirm,
   NativeSelect,
   NativeSelectOption,
   Spinner,
@@ -147,9 +148,14 @@ export function MemorySettingsOverlay({
     }
   }
 
+  const disconnectName = registration?.name ?? config?.provider ?? "";
   return (
     <div data-testid="memory-settings" className="space-y-5">
-      {error ? <p className="text-[13px] text-destructive">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="text-[13px] text-destructive">
+          {error}
+        </p>
+      ) : null}
 
       <YouMemory api={rpc.you} />
 
@@ -179,15 +185,16 @@ export function MemorySettingsOverlay({
               onChange={(scope) => void updateDefaultScope(scope)}
             />
           </div>
-          <Button
+          <InlineConfirm
             variant="outline"
             type="button"
             disabled={busy}
-            onClick={() => void disconnect()}
+            confirmLabel={t`Disconnect ${disconnectName}?`}
+            onConfirm={() => void disconnect()}
             className="mt-5"
           >
             {pending === "disconnect" ? <Trans>Disconnecting…</Trans> : <Trans>Disconnect</Trans>}
-          </Button>
+          </InlineConfirm>
         </section>
       ) : !addingProvider ? (
         <Button

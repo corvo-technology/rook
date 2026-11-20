@@ -364,6 +364,7 @@ export function HomePage() {
                 <HomeCard
                   className="flex-1"
                   testId={testIds[id]}
+                  name={cardTitles[id]}
                   title={
                     <>
                       {cardTitles[id]}

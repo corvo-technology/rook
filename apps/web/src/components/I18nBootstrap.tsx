@@ -1,4 +1,4 @@
-import { InputRevealLabelsProvider } from "@corvo/ui-web";
+import { InputRevealLabelsProvider, SpinnerLabelProvider } from "@corvo/ui-web";
 import { i18n } from "@lingui/core";
 import { I18nProvider } from "@lingui/react";
 import { useLingui } from "@lingui/react/macro";
@@ -49,7 +49,7 @@ function KitLabels({ children }: { children: ReactNode }) {
   const { t } = useLingui();
   return (
     <InputRevealLabelsProvider show={t`Show password`} hide={t`Hide password`}>
-      {children}
+      <SpinnerLabelProvider label={t`Loading…`}>{children}</SpinnerLabelProvider>
     </InputRevealLabelsProvider>
   );
 }

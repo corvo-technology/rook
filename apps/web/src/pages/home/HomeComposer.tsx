@@ -7,7 +7,6 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  Kbd,
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -17,7 +16,7 @@ import { ArrowUp, ChevronDown } from "lucide-react";
 import type { Ref } from "react";
 import { useState } from "react";
 
-/** The prompt of the page: pick an agent in an inline chip, type, send with Enter or Command+Enter. */
+/** The prompt of the page: pick an agent in an inline chip, type, send with Enter. */
 export function HomeComposer({
   bots,
   target,
@@ -109,7 +108,6 @@ export function HomeComposer({
               }
             }}
           />
-          {ready ? <Kbd className="mb-3 hidden sm:inline-flex">⌘↵</Kbd> : null}
           <button
             type="submit"
             aria-label={t`Send`}

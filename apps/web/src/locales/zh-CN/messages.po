@@ -3020,6 +3020,7 @@ msgstr "无法退出"
 #: src/components/ErrorBoundary.tsx
 #: src/components/PasskeySettings.tsx
 #: src/pages/ApprovalsPage.tsx
+#: src/pages/InvitePage.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/platform/IntakeSections.tsx
 #: src/pages/platform/InvoicesSection.tsx
@@ -4822,8 +4823,8 @@ msgid "Hi. I'm the Chief. We'll set up your team in about two minutes."
 msgstr "你好。我是 Chief。大约两分钟就能搭好你的团队。"
 
 #: src/pages/home/HomeCard.tsx
-msgid "Hide"
-msgstr "隐藏"
+msgid "Hide {name}"
+msgstr "隐藏{name}"
 
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Hide from customers"
@@ -5528,6 +5529,7 @@ msgstr "正在加载预览…"
 msgid "Loading voice providers…"
 msgstr "正在加载语音提供方…"
 
+#: src/components/I18nBootstrap.tsx
 #: src/components/PageLoading.tsx
 #: src/pages/ApprovalsPage.tsx
 #: src/pages/Artifacts.tsx
@@ -6092,16 +6094,22 @@ msgstr "下移 {0}"
 msgid "Move {0} up"
 msgstr "上移 {0}"
 
+#: src/pages/home/HomeCard.tsx
+msgid "Move {name} earlier"
+msgstr "将{name}前移"
+
+#: src/pages/home/HomeCard.tsx
+msgid "Move {name} later"
+msgstr "将{name}后移"
+
 #: src/pages/ModelRoleSettings.tsx
 msgid "Move down"
 msgstr "下移"
 
-#: src/pages/home/HomeCard.tsx
 #: src/pages/Workflows.tsx
 msgid "Move earlier"
 msgstr "前移"
 
-#: src/pages/home/HomeCard.tsx
 #: src/pages/Workflows.tsx
 msgid "Move later"
 msgstr "后移"
@@ -9702,6 +9710,7 @@ msgstr "触发器"
 #: src/pages/ActivityList.tsx
 #: src/pages/ApprovalsPage.tsx
 #: src/pages/DirectChat.tsx
+#: src/pages/InvitePage.tsx
 #: src/pages/onboarding/FirstBotStep.tsx
 #: src/pages/partner/partner-ui.tsx
 #: src/pages/TeamPage.tsx

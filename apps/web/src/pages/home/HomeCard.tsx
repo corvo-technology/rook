@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 /** A soft card of Home with a dithered band at its foot; in organize mode it can move or hide. */
 export function HomeCard({
   title,
+  name,
   testId,
   action,
   organizing,
@@ -15,6 +16,8 @@ export function HomeCard({
   children,
 }: {
   title: ReactNode;
+  /** The title as plain text, for the accessible names of the organize controls. */
+  name: string;
   testId: string;
   action?: ReactNode;
   organizing: boolean;
@@ -40,7 +43,7 @@ export function HomeCard({
             <>
               <button
                 type="button"
-                aria-label={t`Move earlier`}
+                aria-label={t`Move ${name} earlier`}
                 className={tool}
                 onClick={() => onMove(-1)}
               >
@@ -48,13 +51,13 @@ export function HomeCard({
               </button>
               <button
                 type="button"
-                aria-label={t`Move later`}
+                aria-label={t`Move ${name} later`}
                 className={tool}
                 onClick={() => onMove(1)}
               >
                 <ArrowRight aria-hidden className="size-3.5" />
               </button>
-              <button type="button" aria-label={t`Hide`} className={tool} onClick={onHide}>
+              <button type="button" aria-label={t`Hide ${name}`} className={tool} onClick={onHide}>
                 <EyeOff aria-hidden className="size-3.5" />
               </button>
             </>

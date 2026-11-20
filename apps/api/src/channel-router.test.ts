@@ -138,7 +138,8 @@ describe("routeGroupMessage", () => {
       reason: "",
     });
     const decision = await route(model, "who can help with pricing?");
-    expect(decision).toMatchObject({ strategy: "model", picked: [] });
+    expect(decision).toMatchObject({ strategy: "model", picked: ["bot-a"] });
+    expect(model.mock.calls[0]?.[0].instructions).toContain("language of the NEW MESSAGE");
     const prompt = model.mock.calls[0]?.[0].prompt as string;
     expect(prompt).toContain("[bot-a] Ana");
     expect(prompt).not.toContain("stranger");

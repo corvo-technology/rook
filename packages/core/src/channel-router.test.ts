@@ -29,8 +29,18 @@ describe("pickRoutedBots", () => {
     expect(pickRoutedBots(scores({ scores: { a: 0.5 } }), ids)).toEqual(["a"]);
   });
 
-  it("picks nobody when no member clears the threshold", () => {
-    expect(pickRoutedBots(scores({ scores: { a: 0.49, b: 0.2 } }), ids)).toEqual([]);
+  it("picks the best member when an agent is needed but none clears the threshold", () => {
+    expect(pickRoutedBots(scores({ scores: { a: 0.2, b: 0.4, c: 0.1 } }), ids)).toEqual(["b"]);
+    expect(pickRoutedBots(scores({ scores: {} }), ids)).toEqual(["a"]);
+  });
+
+  it("breaks a tie by candidate order", () => {
+    expect(pickRoutedBots(scores({ scores: { b: 0.3, c: 0.3 } }), ids)).toEqual(["b"]);
+  });
+
+  it("keeps the multi-pick for everyone unchanged when scores are low", () => {
+    const everyone = scores({ forEveryone: 0.5, scores: { a: 0.2, b: 0.4 } });
+    expect(pickRoutedBots(everyone, ids)).toEqual(["b"]);
   });
 
   it("picks up to three when the message is for everyone", () => {
@@ -40,7 +50,8 @@ describe("pickRoutedBots", () => {
 
   it("never picks an id the code did not offer", () => {
     expect(pickRoutedBots(scores({ scores: { stranger: 1, a: 0.6 } }), ["a"])).toEqual(["a"]);
-    expect(pickRoutedBots(scores({ scores: { stranger: 1 } }), ["a"])).toEqual([]);
+    expect(pickRoutedBots(scores({ scores: { stranger: 1 } }), ["a"])).toEqual(["a"]);
+    expect(pickRoutedBots(scores({ scores: { stranger: 1 } }), [])).toEqual([]);
   });
 });
 

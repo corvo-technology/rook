@@ -57,6 +57,7 @@ import { OnboardingStep, TourMark } from "./coach-tour.js";
 import { ConnectionAccessSchema, ConnectionAccessSetInput } from "./connection-access.js";
 import { DatabaseConnectionInput, DatabaseConnectionSchema } from "./database-connection.js";
 import {
+  AccountLocaleSchema,
   ActionApprovalRuleSchema,
   ActionAutoReviewSettingsSchema,
   AgentConnectionSummarySchema,
@@ -437,10 +438,15 @@ export const appContract = {
           .object({
             avatarStyle: AvatarStyleSchema.optional(),
             timezone: TimeZoneSchema.nullable().optional(),
+            locale: AccountLocaleSchema.optional(),
           })
-          .refine((input) => input.avatarStyle !== undefined || input.timezone !== undefined, {
-            message: "Nothing to update",
-          }),
+          .refine(
+            (input) =>
+              input.avatarStyle !== undefined ||
+              input.timezone !== undefined ||
+              input.locale !== undefined,
+            { message: "Nothing to update" },
+          ),
       )
       .output(MeSchema),
     /** Saves a detected timezone only while none is saved, so it never replaces a choice. */

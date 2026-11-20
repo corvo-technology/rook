@@ -3211,6 +3211,7 @@ msgid "Could not save that voice"
 msgstr "Não foi possível salvar essa voz"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 msgid "Could not save the credential"
 msgstr "Não foi possível salvar a credencial"
 
@@ -3904,6 +3905,7 @@ msgstr "Desconectando…"
 #: src/components/PasskeyOffer.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/shell/message-cards.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 #: src/pages/WikiBrowser.tsx
 msgid "Dismiss"
 msgstr "Dispensar"
@@ -5225,6 +5227,10 @@ msgstr "Mantido"
 msgid "key"
 msgstr "chave"
 
+#: src/pages/shell/pasted-key-prompt.tsx
+msgid "Key in message"
+msgstr "Chave na mensagem"
+
 #: src/pages/onboarding-quick-connect.tsx
 msgid "Key not recognized. Choose a provider."
 msgstr "Chave não reconhecida. Escolha um provedor."
@@ -6029,6 +6035,7 @@ msgstr "Meu Início"
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/create-bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 #: src/pages/SpaceSettingsPanel.tsx
 msgid "Name"
 msgstr "Nome"
@@ -8081,6 +8088,7 @@ msgid "Save"
 msgstr "Salvar"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 msgid "Save credential"
 msgstr "Salvar credencial"
 
@@ -8141,6 +8149,7 @@ msgstr "Salvando..."
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/pasted-key-prompt.tsx
 msgid "Saving…"
 msgstr "Salvando..."
 
@@ -8290,6 +8299,10 @@ msgstr "Envie <0>{linkCode}</0> para <1>{linkAddress}</1> pelo {linkApp} em até
 #: src/components/AskCard.tsx
 msgid "Send answer"
 msgstr "Enviar resposta"
+
+#: src/pages/shell/pasted-key-prompt.tsx
+msgid "Send anyway"
+msgstr "Enviar mesmo assim"
 
 #: src/pages/shell/composer-error.tsx
 msgid "Send as file"
@@ -9271,6 +9284,10 @@ msgstr "Isto ainda não foi enviado. Edite ou envie."
 #: src/pages/InvitePage.tsx
 msgid "This link no longer works"
 msgstr "Este link não funciona mais"
+
+#: src/pages/shell/pasted-key-prompt.tsx
+msgid "This looks like a key. Save it as a credential instead?"
+msgstr "Parece uma chave. Salvar como credencial?"
 
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/Onboarding.tsx

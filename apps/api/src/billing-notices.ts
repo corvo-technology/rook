@@ -1,6 +1,6 @@
 import type { BillingSubscriptionSnapshot, TransactionalEmailProvider } from "@corvo/adapter-kit";
 import type { AiUseCents } from "@corvo/contracts";
-import { AiUseCentsSchema, parsePlanLookupKey } from "@corvo/contracts";
+import { AiUseCentsSchema, DEFAULT_TERMS_URL, parsePlanLookupKey } from "@corvo/contracts";
 import type { BillingAccount, PrismaClient } from "@corvo/db";
 import {
   billingNoticeRecipients,
@@ -38,13 +38,13 @@ export function createBillingNotices(deps: {
   prisma: PrismaClient;
   email?: TransactionalEmailProvider | undefined;
   webOrigin: string;
-  /** Where the terms are published; defaults to the app's own `/terms/`. */
+  /** Where the terms are published; defaults to the site's terms page. */
   termsUrl?: string;
 }) {
   const { prisma, email } = deps;
   const context = {
     webOrigin: deps.webOrigin,
-    termsUrl: deps.termsUrl ?? new URL("/terms/", deps.webOrigin).href,
+    termsUrl: deps.termsUrl ?? DEFAULT_TERMS_URL,
   };
 
   /** Claims the notice and sends it to the owners; gives the claim back when no one got it. */
@@ -240,6 +240,7 @@ export function createBillingReminderJobFromEnv(
   const notices = createBillingNotices({
     prisma,
     webOrigin: value("WEB_ORIGIN") ?? "http://127.0.0.1:5173",
+    termsUrl: value("TERMS_URL"),
     email: configuredEmailProvider({
       emailProvider: value("EMAIL_PROVIDER"),
       emailApiKey: value("EMAIL_API_KEY"),

@@ -86,6 +86,8 @@ export interface ReplyState {
   assistantTurnText: string;
   midTurnUserTexts: string[];
   midTurnProgressCount: number;
+  /** say_now already posted its opening line in this run. */
+  sayNowText: string | undefined;
   turnStartedAtMs: number;
   /**
    * Tool calls that land mid-sentence wait here until the narration catches up to a

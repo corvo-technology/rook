@@ -1186,4 +1186,8 @@ export const ZH_MESSAGES: Record<string, string> = {
     "使用你已付费的 AI：Claude、ChatGPT 或 API 密钥",
   "Yearly · 2 months free": "按年 · 2 个月免费",
   Yearly: "按年",
+  "This looks like a key. Save it as a credential instead?": "这看起来像密钥。改为保存为凭据吗?",
+  "Save credential": "保存凭据",
+  "Send anyway": "仍然发送",
+  "Could not save the credential": "无法保存凭据",
 };

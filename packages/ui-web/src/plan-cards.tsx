@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./components/ui/select.js";
+import { Spinner } from "./components/ui/spinner.js";
 import { Switch } from "./components/ui/switch.js";
 import { ToggleGroup, ToggleGroupItem } from "./components/ui/toggle-group.js";
 import { cn } from "./lib/utils.js";
@@ -71,7 +72,10 @@ export interface PlanCardsProps {
   plans: Omit<PlanEntitlements, "extraSeatPriceId">[];
   locale: string;
   canManage: boolean;
+  /** Disables every subscribe button, for any reason. */
   pending: boolean;
+  /** The plan whose checkout is opening; only its button shows progress. */
+  busy?: PlanId | null;
   labels: PlanCardLabels;
   onSubscribe: (choice: PlanChoice) => void;
 }
@@ -154,6 +158,7 @@ function PlanCard({
   locale,
   canManage,
   pending,
+  busy,
   labels,
   onSubscribe,
 }: Omit<PlanCardsProps, "plans"> & {
@@ -221,12 +226,14 @@ function PlanCard({
         data-subscribe
         size="lg"
         disabled={!canManage || pending}
+        aria-busy={busy === plan || undefined}
         className={cn(
           "mt-5 w-full",
           dark && "bg-background text-foreground hover:bg-background/90",
         )}
         onClick={() => onSubscribe({ plan, interval, currency, aiUseCents: aiOn ? aiUse : null })}
       >
+        {busy === plan ? <Spinner aria-hidden role="presentation" /> : null}
         {labels.subscribe(plan)}
       </Button>
       <ul className="mt-6 flex list-none flex-col p-0">
@@ -316,6 +323,7 @@ export function PlanCards({
   locale,
   canManage,
   pending,
+  busy,
   labels,
   onSubscribe,
 }: PlanCardsProps) {
@@ -351,6 +359,7 @@ export function PlanCards({
               locale={locale}
               canManage={canManage}
               pending={pending}
+              busy={busy}
               labels={labels}
               onSubscribe={onSubscribe}
             />

@@ -3047,6 +3047,10 @@ msgstr "ログアウトできませんでした。もう一度お試しくださ
 msgid "Could not open billing"
 msgstr "請求ページを開けませんでした"
 
+#: src/components/PlanChoice.tsx
+msgid "Could not open checkout. Try again."
+msgstr "チェックアウトを開けませんでした。もう一度お試しください。"
+
 #: src/pages/DirectChat.tsx
 msgid "Could not open this conversation"
 msgstr "この会話を開けませんでした"

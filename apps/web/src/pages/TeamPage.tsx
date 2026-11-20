@@ -4,6 +4,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { skipToken, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { PageHeader } from "../components/PageHeader";
 import { takeInitialBootstrap } from "../lib/bootstrap";
 import { useSpaceQueries } from "../lib/query";
 import { buildTeamRoster, TICKET_WORK_STATUSES, ticketsByOwner } from "../lib/team-roster";
@@ -46,9 +47,9 @@ export function TeamPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto bg-background text-foreground">
-      <h1 className="mx-auto w-full max-w-3xl px-6 pt-6 pb-4 text-xl font-light tracking-tight">
+      <PageHeader>
         <Trans>Team</Trans>
-      </h1>
+      </PageHeader>
       <div className="w-full px-6 pb-8">
         {bootstrap.isPending ? (
           <div className="flex justify-center py-10">

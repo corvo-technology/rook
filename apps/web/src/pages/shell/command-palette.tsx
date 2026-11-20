@@ -25,7 +25,6 @@ import {
   ListChecks,
   ShieldCheck,
   Users,
-  Workflow,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { PersonAvatar } from "../../components/PersonAvatar";
@@ -59,7 +58,6 @@ const PAGES: Array<{ to: string; label: () => string; icon: LucideIcon }> = [
   { to: "/app/routines", label: () => t`Routines`, icon: CalendarClock },
   { to: "/app/activity", label: () => t`Activity`, icon: Activity },
   { to: "/app/team", label: () => t`Team`, icon: Users },
-  { to: "/app/workflows", label: () => t`Routine flows`, icon: Workflow },
   { to: "/app/usage", label: () => t`Usage`, icon: Gauge },
   { to: "/app/artifacts", label: () => t`Artifacts`, icon: FileText },
   { to: "/app/wiki", label: () => t`Wiki`, icon: BookOpen },

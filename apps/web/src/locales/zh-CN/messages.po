@@ -1942,6 +1942,10 @@ msgstr "按代理"
 msgid "By model tier"
 msgstr "按模型等级"
 
+#: src/pages/RoutinesTabs.tsx
+msgid "Calendar"
+msgstr "日历"
+
 #: src/pages/shell/chat-header.tsx
 msgid "Call"
 msgstr "通话"
@@ -4605,6 +4609,10 @@ msgstr "首条消息，每行一条"
 #: src/lib/server-copy.ts
 msgid "First task: {task}"
 msgstr "首个任务：{task}"
+
+#: src/pages/RoutinesTabs.tsx
+msgid "Flows"
+msgstr "流程"
 
 #: src/pages/shell/composer-model-choice.tsx
 msgid "For this conversation"
@@ -8132,8 +8140,6 @@ msgid "Routine “{0}”"
 msgstr "例行任务“{0}”"
 
 #: src/pages/PartnerTemplateEditor.tsx
-#: src/pages/shell/command-palette.tsx
-#: src/pages/shell/sidebar-team.tsx
 #: src/pages/Workflows.tsx
 msgid "Routine flows"
 msgstr "例行任务流程"

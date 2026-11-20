@@ -1942,6 +1942,10 @@ msgstr "Por agente"
 msgid "By model tier"
 msgstr "Por nível de modelo"
 
+#: src/pages/RoutinesTabs.tsx
+msgid "Calendar"
+msgstr "Calendário"
+
 #: src/pages/shell/chat-header.tsx
 msgid "Call"
 msgstr "Ligar"
@@ -4605,6 +4609,10 @@ msgstr "Primeiras mensagens, uma por linha"
 #: src/lib/server-copy.ts
 msgid "First task: {task}"
 msgstr "Primeira tarefa: {task}"
+
+#: src/pages/RoutinesTabs.tsx
+msgid "Flows"
+msgstr "Fluxos"
 
 #: src/pages/shell/composer-model-choice.tsx
 msgid "For this conversation"
@@ -8132,8 +8140,6 @@ msgid "Routine “{0}”"
 msgstr "Rotina «{0}»"
 
 #: src/pages/PartnerTemplateEditor.tsx
-#: src/pages/shell/command-palette.tsx
-#: src/pages/shell/sidebar-team.tsx
 #: src/pages/Workflows.tsx
 msgid "Routine flows"
 msgstr "Fluxos das rotinas"

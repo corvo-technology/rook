@@ -3,6 +3,7 @@ import { useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { PageHeader } from "../../components/PageHeader";
 import { formatMoney } from "../../lib/partner-console";
 import { rpc } from "../../lib/rpc";
 import { Panel, PartnerError, PartnerLoading, useAction } from "../partner/partner-ui";
@@ -147,12 +148,9 @@ export function WhiteLabelPlans() {
 function Frame({ children }: { children: React.ReactNode }) {
   const { t } = useLingui();
   return (
-    <div
-      data-testid="white-label-plans"
-      className="mx-auto flex h-full w-full max-w-5xl flex-col gap-4 overflow-y-auto px-6 py-6"
-    >
-      <h1 className="text-xl font-light tracking-tight">{t`Plans`}</h1>
-      {children}
+    <div data-testid="white-label-plans" className="flex h-full flex-col overflow-y-auto">
+      <PageHeader width="wide">{t`Plans`}</PageHeader>
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-6 pb-6">{children}</div>
     </div>
   );
 }

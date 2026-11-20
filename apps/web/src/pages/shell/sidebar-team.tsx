@@ -19,7 +19,6 @@ import {
   Search,
   ShieldCheck,
   Users,
-  Workflow,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
@@ -66,7 +65,11 @@ export function SidebarNav({
 }) {
   const { t } = useLingui();
   const [moreOpen, setMoreOpen] = useState(false);
-  const current = (to: string) => (pathname === to ? "page" : undefined);
+  // Routine flows live on a tab of Routines, so the one entry stays lit on both.
+  const current = (to: string) =>
+    pathname === to || (to === "/app/routines" && pathname === "/app/workflows")
+      ? "page"
+      : undefined;
   return (
     <nav
       aria-label={t`Space`}
@@ -230,9 +233,6 @@ export function SidebarNavLive({
     ...(visible("team") ? [target("team", t`Team`, "/app/team", Users)] : []),
   ];
   const more: NavTarget[] = [
-    ...(visible("workflows")
-      ? [target("workflows", t`Routine flows`, "/app/workflows", Workflow)]
-      : []),
     ...(visible("usage") ? [target("usage", t`Usage`, "/app/usage", Gauge)] : []),
     ...(visible("artifacts")
       ? [target("artifacts", t`Artifacts`, "/app/artifacts", FileText)]

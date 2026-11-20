@@ -3,6 +3,7 @@ import { useLingui } from "@lingui/react/macro";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { useId, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { PageHeader } from "../components/PageHeader";
 import type { ActivityListFilters } from "../lib/activity-list-filters";
 import { emptyActivityFilters } from "../lib/activity-list-filters";
 import { ActivityList } from "./ActivityList";
@@ -23,9 +24,7 @@ export function ActivityPage() {
       data-testid="activity-page"
       className="flex h-full min-h-0 flex-col overflow-y-auto bg-background text-foreground"
     >
-      <h1 className="mx-auto w-full max-w-3xl px-6 pt-6 pb-4 text-xl font-light tracking-tight">
-        {t`Activity`}
-      </h1>
+      <PageHeader>{t`Activity`}</PageHeader>
       <div className="mx-auto w-full max-w-3xl px-6 pb-8">
         <InputGroup className="mb-3 w-auto rounded-xl border border-border bg-card text-muted-foreground focus-within:border-ring dark:bg-input">
           <InputGroupAddon>

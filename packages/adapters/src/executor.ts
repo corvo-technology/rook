@@ -157,6 +157,7 @@ import { ROUTER_PASS_INSTRUCTION, routerAnsweredNote } from "./router-pass.js";
 import { backOffRoutineAfterAccountError } from "./routine-backoff.js";
 import { lateRoutineRunInstruction } from "./routine-lateness.js";
 import { startNextRoutineStep, workflowContinuesAfter } from "./routine-steps.js";
+import { noteSteeringClaimed } from "./run-answers.js";
 import { lazyRunComputer } from "./run-computer.js";
 import type {
   RunComputerUseState,
@@ -2008,8 +2009,8 @@ export function createRunExecutor(deps: ExecutorDeps) {
                   runSecrets,
                 );
               },
-              claimSteering: (seenIds) =>
-                claimRunSteering(
+              claimSteering: async (seenIds) => {
+                const claimed = await claimRunSteering(
                   deps,
                   {
                     threadId: thread.id,
@@ -2025,7 +2026,13 @@ export function createRunExecutor(deps: ExecutorDeps) {
                     messageId: currentTurnMessage?.id,
                     hasImages: Boolean(currentTurnImages?.length),
                   },
-                ),
+                );
+                await noteSteeringClaimed(
+                  ctx,
+                  claimed.map((item) => item.messageId),
+                );
+                return claimed;
+              },
             },
             context,
           );

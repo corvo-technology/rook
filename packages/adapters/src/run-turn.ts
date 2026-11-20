@@ -15,6 +15,7 @@ import {
   humanizeToolName,
   isBackgroundRunTrigger,
   redactSecrets,
+  stripReplyMarkers,
   TAKEOVER_COMPUTER_PENDING_STATE,
   usageTokens,
   userRunError,
@@ -37,6 +38,7 @@ import {
   modelAccountRefusal,
 } from "./routine-backoff.js";
 import { startWorkflowStepAfter } from "./routine-steps.js";
+import { finalAnswers } from "./run-answers.js";
 import type { ReplyState, RunContext } from "./run-context.js";
 import { persistTurnCheckpoint } from "./run-context.js";
 import { classifyRunError } from "./run-error-code.js";
@@ -651,7 +653,9 @@ export async function completeRun(ctx: RunContext) {
       );
   const text = endsQuietly(ctx.state)
     ? ""
-    : redactSecrets(completionNotificationBody(silentReply.assembled, blocks), ctx.secrets);
+    : stripReplyMarkers(
+        redactSecrets(completionNotificationBody(silentReply.assembled, blocks), ctx.secrets),
+      );
   if (containsSecret(text, ctx.secrets)) {
     throw new Error("refusing to persist a secret in the thread");
   }
@@ -670,6 +674,8 @@ export async function completeRun(ctx: RunContext) {
     ? botMessageOutcomeFromMidTurn(text, reply.midTurnUserTexts)
     : null;
   await ctx.settleRunningHelpers();
+  // Each person message answered in this turn gets its own reply.
+  const answers = finalAnswers(ctx, blocks);
   const completed = await deps.events.finalizeRun({
     spaceId: run.spaceId,
     threadId: thread.id,
@@ -680,7 +686,8 @@ export async function completeRun(ctx: RunContext) {
     leaseOwner: ctx.workerId,
     leaseFence: ctx.fence,
     outcome: "completed",
-    blocks,
+    blocks: answers ? answers.flatMap((answer) => answer.blocks) : blocks,
+    answers,
     markUnread: completionMarksUnread(
       run.trigger,
       text,

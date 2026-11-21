@@ -24,7 +24,11 @@ export async function listMutes(
   now = new Date(),
 ): Promise<NotificationMute[]> {
   const rows = await prisma.notificationMute.findMany({
-    where: { spaceId: person.spaceId, userId: person.userId, OR: [{ until: null }, { until: { gt: now } }] },
+    where: {
+      spaceId: person.spaceId,
+      userId: person.userId,
+      OR: [{ until: null }, { until: { gt: now } }],
+    },
     select: { targetKey: true, until: true },
     orderBy: { createdAt: "asc" },
   });

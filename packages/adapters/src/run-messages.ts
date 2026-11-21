@@ -7,6 +7,7 @@ import {
   withTransactionRetry,
 } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
+import { replaceSpacedDashes } from "./chat-dashes.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 
 export function redactBlocks(blocks: MessageBlock[], secrets: string[]): MessageBlock[] {
@@ -41,6 +42,11 @@ export async function publishMessage(
   },
   replyToMessageId?: string,
 ) {
+  if (role === "bot") {
+    blocks = blocks.map((block) =>
+      block.kind === "text" ? { ...block, text: replaceSpacedDashes(block.text) } : block,
+    );
+  }
   if (isBackgroundRunTrigger(run.trigger)) {
     blocks = blocks.filter((block) => block.kind === "ask" || block.kind === "computer");
     if (blocks.length === 0 && !stoppedHelper) return null;

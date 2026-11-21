@@ -218,7 +218,8 @@ export async function gateToolCall(
   );
   // A run is steerable when outside content entered it or the owner did not start it; then the
   // URL may have been chosen by someone else.
-  const steeredRun = !ctx.source.ownerStartedRun || (await isRunTainted(ctx));
+  const steeredRun =
+    Boolean(fetchUrl) && (!ctx.source.ownerStartedRun || (await isRunTainted(ctx)));
   const siteGate =
     fetchUrl && fetchSite
       ? outboundSiteGate({

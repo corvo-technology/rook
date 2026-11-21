@@ -16,7 +16,7 @@ const describePostgres =
 
 let pool: Pool | undefined;
 function testPool(): Pool {
-  pool ??= new Pool({ connectionString: databaseUrl, max: 4 });
+  pool ??= new Pool({ connectionString: databaseUrl, max: 6 });
   return pool;
 }
 afterEach(async () => {

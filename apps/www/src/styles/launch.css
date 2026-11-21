@@ -885,40 +885,49 @@ html[data-guided] .guide-slot .avatar {
   text-underline-offset: 3px;
 }
 
-/* The band of live avatars: no text, white, and its size is fixed by the grid so nothing shifts when they go live. */
-.agent-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(20px, 3.4vw, 40px) clamp(32px, 6vw, 88px);
-  max-width: 1040px;
-  margin: clamp(56px, 8vw, 110px) auto 0;
-  padding-block: clamp(32px, 5vw, 64px);
-  background: #fff;
-}
-
-.agent-grid__row {
+/* One row of agents straight on the page: each in its own color, with its job underneath. */
+.agent-row {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: clamp(6px, 1.4vw, 16px);
+  gap: clamp(20px, 4vw, 56px);
+  max-width: 1040px;
+  margin: clamp(72px, 10vw, 140px) auto 0;
+  padding: 0;
+  list-style: none;
 }
 
-.agent-grid__cell {
+.agent-row__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.agent-row__avatar {
   display: block;
+  width: 100%;
+  max-width: 96px;
   aspect-ratio: 1;
-  max-width: 64px;
 }
 
-.agent-grid__cell > svg,
-.agent-grid__cell > canvas {
+.agent-row__avatar > svg,
+.agent-row__avatar > canvas {
   display: block;
   width: 100%;
   height: 100%;
 }
 
+.agent-row__caption {
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+}
+
 @media (max-width: 720px) {
-  .agent-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 14px;
+  .agent-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 36px 16px;
     max-width: 360px;
   }
 }

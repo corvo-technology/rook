@@ -98,7 +98,7 @@ const COPY: LaunchCopy = {
     },
     health: { label: "ヘルスケアと美容", agents: ["受付", "カルテアシスタント", "お客様フォロー"] },
   },
-  agentGrid: { label: "考え、作業し、待ち、完了するRookのエージェント" },
+  agentGrid: { label: "Rookのエージェント" },
   preview: {
     window: "Rook",
     rail: { agents: "エージェント", routines: "ルーティン", workflows: "ワークフロー", more: "その他", store: "ストア" },

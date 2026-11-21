@@ -1,68 +1,39 @@
 ---
-import { CHESS_PIECES, ROOK_AVATAR, ROOK_EYE_COLOR, avatarLook } from "@corvo/core";
-import type { AvatarLook } from "@corvo/core";
+import { CHESS_PIECES, ROOK_AVATAR, ROOK_EYE_COLOR } from "@corvo/core";
 import { renderAvatarSvg } from "open-bot-avatar";
 
-type Props = { label: string };
-const { label } = Astro.props;
+type Props = { label: string; captions: Record<"sales" | "marketing" | "development" | "finance" | "support" | "operations", string> };
+const { label, captions } = Astro.props;
 
-/** One row per piece, in the piece's own color first. */
-const ROWS = [
-  { piece: "rook", definition: ROOK_AVATAR, color: "#e5833a" },
-  { piece: "queen", definition: CHESS_PIECES.queen, color: "#d9a23a" },
-  { piece: "knight", definition: CHESS_PIECES.knight, color: "#3fbf74" },
-  { piece: "bishop", definition: CHESS_PIECES.bishop, color: "#2fc0a6" },
-  { piece: "king", definition: CHESS_PIECES.king, color: "#3b8ff0" },
-  { piece: "pawn", definition: CHESS_PIECES.pawn, color: "#9b55e8" },
+/** Six agents, each piece in its own color, with the job it does. */
+const AGENTS = [
+  { piece: "rook", definition: ROOK_AVATAR, color: "#e5833a", caption: captions.sales },
+  { piece: "queen", definition: CHESS_PIECES.queen, color: "#d9a23a", caption: captions.marketing },
+  { piece: "knight", definition: CHESS_PIECES.knight, color: "#3fbf74", caption: captions.development },
+  { piece: "bishop", definition: CHESS_PIECES.bishop, color: "#2fc0a6", caption: captions.finance },
+  { piece: "king", definition: CHESS_PIECES.king, color: "#3b8ff0", caption: captions.support },
+  { piece: "pawn", definition: CHESS_PIECES.pawn, color: "#9b55e8", caption: captions.operations },
 ] as const;
 
-const INK = "#111111";
-const INK_EYE = "#f4f4f2";
-const IDLE_HAPPY: AvatarLook = { state: "idle", mood: "happy", asleep: false };
-// The ink avatars show what an agent's run status looks like, through the same mapping the app uses.
-const LOOKS: AvatarLook[] = [
-  IDLE_HAPPY,
-  avatarLook("queued", false),
-  avatarLook("running", false),
-  avatarLook("waiting_input", false),
-  avatarLook("idle", true),
-];
-
-const draw = (definition: (typeof ROWS)[number]["definition"], color: string, eyeColor: string, look: Pick<AvatarLook, "state" | "mood">) =>
-  renderAvatarSvg(definition, { color, eyeColor, state: look.state, mood: look.mood, reducedMotion: true })
+const agents = AGENTS.map((agent) => ({
+  ...agent,
+  svg: renderAvatarSvg(agent.definition, { color: agent.color, eyeColor: ROOK_EYE_COLOR, state: "idle", mood: "happy", reducedMotion: true })
     .replace(/ role="img" aria-label="[^"]*"/, ' aria-hidden="true"')
-    .replace(/<title>[^<]*<\/title>/, "");
-
-const rows = ROWS.map((row) => ({
-  piece: row.piece,
-  cells: [
-    { color: row.color, eye: ROOK_EYE_COLOR, state: "idle", mood: "neutral", svg: draw(row.definition, row.color, ROOK_EYE_COLOR, { state: "idle", mood: "neutral" }) },
-    ...LOOKS.map((look) => ({ color: INK, eye: INK_EYE, state: look.state, mood: look.mood, svg: draw(row.definition, INK, INK_EYE, look) })),
-  ],
+    .replace(/<title>[^<]*<\/title>/, ""),
 }));
 ---
 
-<!-- A band with no text: every piece in a row of avatars, the first in its color, the rest in ink, each showing one state. Still pictures from the server; the script makes them live while the band is on screen. -->
-<section class="agent-grid" role="img" aria-label={label} data-agent-grid>
+<!-- Still pictures from the server. The script wakes one agent at a time while the row is on screen. -->
+<ul class="agent-row" aria-label={label} data-agent-row>
   {
-    rows.map((row) => (
-      <div class="agent-grid__row" aria-hidden="true">
-        {row.cells.map((cell, i) => (
-          <span
-            class="agent-grid__cell"
-            data-piece={row.piece}
-            data-color={cell.color}
-            data-eye={cell.eye}
-            data-state={cell.state}
-            data-mood={cell.mood}
-            data-i={i}
-            set:html={cell.svg}
-          />
-        ))}
-      </div>
+    agents.map((agent) => (
+      <li class="agent-row__item">
+        <span class="agent-row__avatar" data-piece={agent.piece} data-color={agent.color} set:html={agent.svg} />
+        <span class="agent-row__caption">{agent.caption}</span>
+      </li>
     ))
   }
-</section>
+</ul>
 
 <script>
   import "../agent-grid";

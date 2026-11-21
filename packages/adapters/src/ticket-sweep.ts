@@ -5,10 +5,12 @@ import {
   TICKET_REVIEW_ROUNDS_MAX,
   ticketRef,
 } from "@corvo/contracts";
+import { ticketCopy } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
 import { ensureBoard, toBoardDto } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import type { TicketChangeNotifier } from "./ticket-changes.js";
+import { runMadeProgress, ticketOwnerLocale } from "./ticket-progress.js";
 import { ticketReviewer, WORKING_RUN_STATUSES, wakeTicketAssignee } from "./ticket-wake.js";
 
 /** A To do ticket this old has missed its wake (the agent was busy), so the sweep starts it. */
@@ -31,7 +33,8 @@ type SweepDeps = {
 /**
  * Keeps tickets moving when nothing else wakes them. Each pass, in order:
  * - a ticket in progress that has no run and has not changed for a while gets a follow-up run,
- *   and after `TICKET_CONTINUATIONS_MAX` of them goes to Blocked with a comment that says why;
+ *   and after `TICKET_CONTINUATIONS_MAX` of them without progress goes to Blocked with a comment
+ *   that says why (a follow-up run that made progress starts the count over);
  * - a delivery in review with no review run is sent to its reviewer, and after
  *   `TICKET_REVIEW_ROUNDS_MAX` rounds to the person;
  * - an agent with nothing running starts its next To do ticket, one at a time.
@@ -174,11 +177,24 @@ type StalledTicket = {
 async function resume(deps: SweepDeps, ticket: StalledTicket, botId: string) {
   const { prisma } = deps;
   const minutes = STALL_MS / 60_000;
-  if (ticket.continuations < TICKET_CONTINUATIONS_MAX) {
+  const copy = ticketCopy(await ticketOwnerLocale(prisma, botId));
+  // Follow-ups that keep moving the ticket forward do not run the cap down.
+  const latest = ticket.continuations
+    ? await prisma.run.findFirst({
+        where: { ticketId: ticket.id },
+        orderBy: { createdAt: "desc" },
+        select: { id: true, botId: true },
+      })
+    : null;
+  const used =
+    latest && (await runMadeProgress(prisma, { ...latest, ticketId: ticket.id }))
+      ? 0
+      : ticket.continuations;
+  if (used < TICKET_CONTINUATIONS_MAX) {
     const claimed = await prisma.$transaction(async (tx) => {
       const updated = await tx.ticket.updateMany({
         where: { id: ticket.id, status: "doing", continuations: ticket.continuations },
-        data: { continuations: { increment: 1 } },
+        data: { continuations: used + 1 },
       });
       if (updated.count !== 1) return false;
       await tx.ticketComment.create({
@@ -186,7 +202,7 @@ async function resume(deps: SweepDeps, ticket: StalledTicket, botId: string) {
           ticketId: ticket.id,
           spaceId: ticket.spaceId,
           authorBotId: botId,
-          body: `No activity for ${minutes} minutes. Continuing (follow-up ${ticket.continuations + 1} of ${TICKET_CONTINUATIONS_MAX}).`,
+          body: copy.idle(minutes, used + 1, TICKET_CONTINUATIONS_MAX),
         },
       });
       return true;
@@ -213,10 +229,7 @@ async function resume(deps: SweepDeps, ticket: StalledTicket, botId: string) {
         ticketId: ticket.id,
         spaceId: ticket.spaceId,
         authorBotId: botId,
-        body: `Stopped: no progress after ${TICKET_CONTINUATIONS_MAX} follow-up runs. It needs a decision or new input before it can go on.`.slice(
-          0,
-          TICKET_COMMENT_MAX_LENGTH,
-        ),
+        body: copy.stalled(TICKET_CONTINUATIONS_MAX).slice(0, TICKET_COMMENT_MAX_LENGTH),
       },
     });
     return true;

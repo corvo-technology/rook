@@ -2,6 +2,7 @@ import type { JobPublisher } from "@corvo/adapter-kit";
 import type { BoardMove, BoardStep } from "@corvo/contracts";
 import { isTicketCompletedStatus, TICKET_REVIEW_ROUNDS_MAX } from "@corvo/contracts";
 import type { BoardEvents, PrismaClient } from "@corvo/db";
+import { runMadeProgress } from "./ticket-progress.js";
 import { ticketReviewer, wakeTicketAssignee } from "./ticket-wake.js";
 
 export type TicketChange = {
@@ -104,7 +105,19 @@ async function followMove(deps: NotifierDeps, change: TicketChange, moved: Board
     change.assigneeBotId &&
     moved.byBotId !== change.assigneeBotId
   ) {
-    await prisma.ticket.update({ where: { id: change.ticketId }, data: { continuations: 0 } });
+    // A delivery that moved the ticket forward but fell short of its criteria does not use up
+    // a review round, so a long ticket can be reviewed again and again while it progresses.
+    const progressed = await lastOwnerRunProgressed(prisma, change.ticketId, change.assigneeBotId);
+    await prisma.ticket.update({
+      where: { id: change.ticketId },
+      data: { continuations: 0 },
+    });
+    if (progressed) {
+      await prisma.ticket.updateMany({
+        where: { id: change.ticketId, reviewRounds: { gt: 0 } },
+        data: { reviewRounds: { decrement: 1 } },
+      });
+    }
     await wakeTicketAssignee(deps, {
       spaceId: change.spaceId,
       ticketId: change.ticketId,
@@ -112,4 +125,18 @@ async function followMove(deps: NotifierDeps, change: TicketChange, moved: Board
       kind: "rework",
     });
   }
+}
+
+/** Whether the owner's latest run on the ticket, the one that made the delivery, moved it forward. */
+async function lastOwnerRunProgressed(
+  prisma: PrismaClient,
+  ticketId: string,
+  botId: string,
+): Promise<boolean> {
+  const run = await prisma.run.findFirst({
+    where: { ticketId, botId },
+    orderBy: { createdAt: "desc" },
+    select: { id: true },
+  });
+  return run ? runMadeProgress(prisma, { id: run.id, botId, ticketId }) : false;
 }

@@ -124,6 +124,56 @@ describe("continuation", () => {
     expect(w.prompts("chief").at(-1)).toContain("Review ticket");
   });
 
+  it("keeps a partly done ticket out of review, in the owner's language", async () => {
+    const w = world();
+    w.person.locale = "pt-BR";
+    const a = await chiefCreates(w, "Base de leads", "rafa");
+    await workerRun(w, a, { kind: "finished", remaining: "733 de 1000 leads" });
+    const ticket = w.ticketByRef(a);
+    expect(ticket.status).toBe("doing");
+    expect(ticket.reviewRounds).toBe(0);
+    expect(w.prompts("chief")).toHaveLength(0);
+    expect(w.prompts("rafa").at(-1)).toContain("Continue ticket");
+    expect(w.comments.at(-1)?.body).toBe(
+      "Continuando (retomada 1 de 8). A execução terminou com trabalho pendente. Falta: 733 de 1000 leads",
+    );
+  });
+
+  it("starts the follow-up count over when a run made progress, but not otherwise", async () => {
+    const w = world();
+    const a = await chiefCreates(w, "Map", "rafa");
+    for (let i = 0; i < TICKET_CONTINUATIONS_MAX - 1; i++) {
+      await workerRun(w, a, { kind: "finished", cut: true });
+    }
+    expect(w.ticketByRef(a).continuations).toBe(TICKET_CONTINUATIONS_MAX - 1);
+
+    // The next run reports a batch, so the count starts over instead of reaching the cap.
+    const run = [...w.runs].reverse().find((row) => row.ticketId === w.ticketByRef(a).id)!;
+    await updateTicket(w.deps, {
+      ...input,
+      botId: "rafa",
+      id: w.ticketByRef(a).id,
+      remaining: "267 of 1000",
+    });
+    w.comments.push({
+      id: "c-batch",
+      ticketId: w.ticketByRef(a).id,
+      authorBotId: "rafa",
+      body: "Added 194 leads.",
+      createdAt: new Date(run.createdAt.getTime() + 500),
+    });
+    await workerRun(w, a, { kind: "finished" });
+    expect(w.ticketByRef(a).status).toBe("doing");
+    expect(w.ticketByRef(a).continuations).toBe(1);
+
+    // Without progress the cap still ends the follow-ups.
+    for (let i = 0; i < TICKET_CONTINUATIONS_MAX; i++) {
+      await workerRun(w, a, { kind: "finished", cut: true });
+    }
+    await workerRun(w, a, { kind: "finished", cut: true });
+    expect(w.ticketByRef(a).status).toBe("review");
+  });
+
   it("goes to review when the work is finished", async () => {
     const w = world();
     const a = await chiefCreates(w, "Map", "rafa");
@@ -170,6 +220,26 @@ describe("creator review", () => {
     expect(last).toContain("2 to 4 sentences");
     expect(last).not.toContain("Review ticket");
     expect(w.ticketByRef(a).status).toBe("review");
+  });
+
+  it("does not spend a review round when the reviewer reopens a delivery that made progress", async () => {
+    const w = world();
+    const a = await chiefCreates(w, "Map", "rafa");
+    for (let round = 1; round <= TICKET_REVIEW_ROUNDS_MAX * 2; round++) {
+      const run = [...w.runs].reverse().find((row) => row.ticketId === w.ticketByRef(a).id)!;
+      w.comments.push({
+        id: `c-batch-${round}`,
+        ticketId: w.ticketByRef(a).id,
+        authorBotId: "rafa",
+        body: `Batch ${round} added.`,
+        createdAt: new Date(run.createdAt.getTime() + 500),
+      });
+      await workerRun(w, a, { kind: "finished" });
+      expect(w.prompts("chief").at(-1)).toContain(`round 1 of ${TICKET_REVIEW_ROUNDS_MAX}`);
+      await updateTicket(w.deps, { ...input, id: w.ticketByRef(a).id, status: "doing" });
+      expect(w.ticketByRef(a).reviewRounds).toBe(0);
+    }
+    expect(w.ticketByRef(a).status).toBe("doing");
   });
 
   it("does not run a review for a ticket the owner parked waiting on a person", async () => {

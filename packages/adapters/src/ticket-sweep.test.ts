@@ -134,6 +134,53 @@ describe("a stalled ticket", () => {
     expect(w.runs).toHaveLength(runs);
   });
 
+  it("starts the follow-up count over when the last run made progress", async () => {
+    const w = world();
+    const ref = await create(w, "Map", "rafa");
+    const ticket = stalledTicket(w, ref);
+    ticket.continuations = TICKET_CONTINUATIONS_MAX;
+    // The last run commented on the ticket after it started, as an agent reporting a batch.
+    w.comments.push({
+      id: "c-progress",
+      ticketId: ticket.id,
+      authorBotId: "rafa",
+      body: "267 of 1000 leads so far.",
+      createdAt: new Date(NOW.getTime() + 3_600_000),
+    });
+    await sweeper(w, minutes(31))();
+    expect(ticket.status).toBe("doing");
+    expect(ticket.continuations).toBe(1);
+    expect(w.comments.at(-1)?.body).toContain("follow-up 1 of");
+    expect(w.prompts("rafa").at(-1)).toContain("Continue ticket");
+  });
+
+  it("keeps the cap for follow-ups that made no progress", async () => {
+    const w = world();
+    const ref = await create(w, "Map", "rafa");
+    const ticket = stalledTicket(w, ref);
+    ticket.continuations = TICKET_CONTINUATIONS_MAX;
+    await sweeper(w, minutes(31))();
+    expect(ticket.status).toBe("blocked");
+  });
+
+  it("writes the follow-up and Blocked comments in the owner's language", async () => {
+    const w = world();
+    w.person.locale = "pt-BR";
+    const ref = await create(w, "Map", "rafa");
+    const ticket = stalledTicket(w, ref);
+    await sweeper(w, minutes(31))();
+    expect(w.comments.at(-1)?.body).toBe(
+      "Sem atividade há 30 minutos. Continuando (retomada 1 de 8).",
+    );
+
+    for (const run of w.runs) run.status = "completed";
+    ticket.continuations = TICKET_CONTINUATIONS_MAX;
+    await sweeper(w, minutes(93))();
+    expect(ticket.status).toBe("blocked");
+    expect(w.comments.at(-1)?.body).toContain("Parado: sem progresso após 8 retomadas");
+    expect(w.comments.at(-1)?.body).not.toContain("Stopped");
+  });
+
   it("is not stalled while its owner waits on a person", async () => {
     const w = world();
     const ref = await create(w, "Map", "rafa");

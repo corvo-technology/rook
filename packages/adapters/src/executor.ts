@@ -223,7 +223,7 @@ import {
 } from "./run-model.js";
 import { routeTurn, strongerTierFor } from "./run-model-routing.js";
 import { createReplyState } from "./run-progress.js";
-import { repeatHintForRun } from "./run-repeat.js";
+import { repeatHintInBackground } from "./run-repeat.js";
 import { DELEGATED_EMPTY_NOTICE, runAllowsSilentEmpty, runReplyGuidance } from "./run-replies.js";
 import {
   notifyRoutineRetryAttemptsExhausted,
@@ -319,42 +319,41 @@ export function createRunExecutor(deps: ExecutorDeps) {
 
       const fence = nextFence(run.leaseFence);
       const now = new Date();
-      const leased = await deps.prisma.run.updateMany({
-        where: {
-          id: runId,
-          ...continueRunClaimFence(run),
-          AND: [{ OR: [{ wakeAt: null }, { wakeAt: { lte: now } }] }],
-          OR: [
-            { status: { in: ["queued", "waiting_input", "waiting_takeover"] } },
-            {
-              status: { in: ["leased", "running"] },
-              leaseExpiresAt: { lte: now },
-            },
-          ],
-        },
-        data: {
-          status: "leased",
-          leaseOwner: workerId,
-          leaseFence: fence,
-          leaseExpiresAt: new Date(Date.now() + RUN_LEASE_TTL_MS),
-          error: null,
-          checkpoint: null,
-          wakeAt: null,
-        },
-      });
+      // The agent row does not depend on the claim, so it is read beside it: one bot read serves
+      // the computer gate, the agent's owner and the whole run.
+      const [leased, bot] = await Promise.all([
+        deps.prisma.run.updateMany({
+          where: {
+            id: runId,
+            ...continueRunClaimFence(run),
+            AND: [{ OR: [{ wakeAt: null }, { wakeAt: { lte: now } }] }],
+            OR: [
+              { status: { in: ["queued", "waiting_input", "waiting_takeover"] } },
+              {
+                status: { in: ["leased", "running"] },
+                leaseExpiresAt: { lte: now },
+              },
+            ],
+          },
+          data: {
+            status: "leased",
+            leaseOwner: workerId,
+            leaseFence: fence,
+            leaseExpiresAt: new Date(Date.now() + RUN_LEASE_TTL_MS),
+            error: null,
+            checkpoint: null,
+            wakeAt: null,
+          },
+        }),
+        deps.prisma.bot.findUniqueOrThrow({
+          where: { id: run.botId },
+          include: { computer: true, space: { select: { pausedAt: true } } },
+        }),
+      ]);
       if (leased.count !== 1) return;
 
-      const current = await deps.prisma.run.findUniqueOrThrow({
-        where: { id: runId },
-      });
-      if (
-        current.status === "queued" ||
-        current.status === "leased" ||
-        current.status === "waiting_input" ||
-        current.status === "waiting_takeover"
-      ) {
-        assertTransition(current.status as RunStatus, "running");
-      }
+      // The claim just set "leased" under this fence, so that is the state that moves to running.
+      assertTransition("leased", "running");
       const started = await deps.prisma.run.updateMany({
         where: {
           id: runId,
@@ -365,16 +364,8 @@ export function createRunExecutor(deps: ExecutorDeps) {
         data: { status: "running" },
       });
       if (started.count !== 1) return;
-      const leaseTarget = await deps.prisma.bot.findUniqueOrThrow({
-        where: { id: run.botId },
-        select: {
-          computerId: true,
-          computerSwitching: true,
-          computer: { select: { scope: true } },
-        },
-      });
-      if (!leaseTarget.computerId) throw new Error("Bot has no computer");
-      if (leaseTarget.computerSwitching) {
+      if (!bot.computerId) throw new Error("Bot has no computer");
+      if (bot.computerSwitching) {
         await requeueComputerRun(deps, runId, workerId, fence, resumeCheckpoint, heldForTakeover);
         return;
       }
@@ -394,14 +385,14 @@ export function createRunExecutor(deps: ExecutorDeps) {
       let computerLease: ComputerExecutionLease | null = null;
       try {
         computerLease = await acquireComputerExecutionLease(deps.prisma, {
-          computerId: leaseTarget.computerId,
+          computerId: bot.computerId,
           runId,
           botId: run.botId,
           resumeHeldLease,
         });
-        if (!computerLease && leaseTarget.computer?.scope === "dedicated") {
+        if (!computerLease && bot.computer?.scope === "dedicated") {
           computerLease = await acquireDedicatedScreenLeaseFence(deps.prisma, {
-            computerId: leaseTarget.computerId,
+            computerId: bot.computerId,
             runId,
             botId: run.botId,
             workerId,
@@ -415,7 +406,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
       }
       let attempt: { id: string };
       // Resumed attempts keep the first start, so lateness reflects when the run began.
-      const executionStartedAt = current.startedAt ?? new Date();
+      const executionStartedAt = run.startedAt ?? new Date();
       try {
         // Acquiring the computer can requeue a busy run. Count that wait as queue
         // time, and only stamp execution once this attempt can use its computer.
@@ -427,12 +418,15 @@ export function createRunExecutor(deps: ExecutorDeps) {
           await releaseComputerExecutionLease(deps.prisma, computerLease).catch(() => undefined);
           return;
         }
+        // The timing read is only for the log line, so the attempt insert does not wait behind it.
+        const attemptInsert = deps.prisma.attempt.create({
+          data: { runId, fence, status: "running" },
+        });
+        attemptInsert.catch(() => undefined);
         getLogger().info("run.execution_started", {
           ...(await readRunTimingFields(deps.prisma, runId)),
         });
-        attempt = await deps.prisma.attempt.create({
-          data: { runId, fence, status: "running" },
-        });
+        attempt = await attemptInsert;
       } catch (error) {
         await releaseComputerExecutionLease(deps.prisma, computerLease).catch(() => undefined);
         throw error;
@@ -525,19 +519,13 @@ export function createRunExecutor(deps: ExecutorDeps) {
             : [],
         );
         // Connections, servers and secrets belong to the agent's owner, not to the member talking.
-        const agentUserId = (
-          await deps.prisma.bot.findUniqueOrThrow({
-            where: { id: run.botId },
-            select: { userId: true },
-          })
-        ).userId;
+        const agentUserId = bot.userId;
         // The version of the chat on screen is part of what the agent reads, so the thread comes first.
         const thread = await deps.prisma.thread.findUniqueOrThrow({
           where: { id: run.threadId },
           include: threadBranchInclude,
         });
         const [
-          bot,
           messages,
           peerMessage,
           task,
@@ -551,10 +539,6 @@ export function createRunExecutor(deps: ExecutorDeps) {
           initialBotCommandEnvironment,
           savedLoginPasswordRedactions,
         ] = await Promise.all([
-          deps.prisma.bot.findUniqueOrThrow({
-            where: { id: run.botId },
-            include: { computer: true, space: { select: { pausedAt: true } } },
-          }),
           loadRunHistoryMessages(deps.prisma, run, PROMPT_HISTORY_WINDOW_SIZE, thread, channelId),
           run.trigger === "bot_message"
             ? loadBotMessageContext(deps.prisma, run.sourceMessageId)
@@ -605,6 +589,31 @@ export function createRunExecutor(deps: ExecutorDeps) {
             : loadBotCommandEnvironment(deps.prisma, deps.secretStore, run),
           loadLoginPasswordRedactions(deps.prisma, deps.secretStore, run),
         ]);
+        // modelPinned distinguishes the captured choice from an attempt's recorded model.
+        const ownChoice = runModelChoice(run, bot);
+        // An automatic agent picks a tier for the turn; a pinned model, or a run that carries
+        // one, is never routed.
+        const automatic =
+          routesAutomatically({
+            modelAuto: bot.modelAuto,
+            pinned: run.modelPinned,
+            hasModel: Boolean(ownChoice.modelProvider && ownChoice.modelId),
+          }) && !deps.runtime.describe().capabilities.scripted;
+        const routedPending = automatic
+          ? routeTurn({
+              deps,
+              run,
+              bot,
+              task,
+              messages,
+              defaults: {
+                settings,
+                deployment: deps.deploymentModelConfigured ? resolveDeploymentModel() : null,
+              },
+            })
+          : undefined;
+        // Routing is a model call at most; it runs beside the live-plugin sync and history lookups.
+        routedPending?.catch(() => undefined);
         // Where this run's live text belongs: in the thread its source was posted in, if any.
         const threadRootId = thread.groupId
           ? await loadRunThreadRoot(deps.prisma, run.sourceMessageId)
@@ -631,48 +640,6 @@ export function createRunExecutor(deps: ExecutorDeps) {
           ...agentEnvironment,
           ...initialBotCommandEnvironment,
         });
-        // modelPinned distinguishes the captured choice from an attempt's recorded model.
-        const ownChoice = runModelChoice(run, bot);
-        // An automatic agent picks a tier for the turn; a pinned model, or a run that carries
-        // one, is never routed.
-        const automatic =
-          routesAutomatically({
-            modelAuto: bot.modelAuto,
-            pinned: run.modelPinned,
-            hasModel: Boolean(ownChoice.modelProvider && ownChoice.modelId),
-          }) && !deps.runtime.describe().capabilities.scripted;
-        const routed = automatic
-          ? await routeTurn({
-              deps,
-              run,
-              bot,
-              task,
-              messages,
-              defaults: {
-                settings,
-                deployment: deps.deploymentModelConfigured ? resolveDeploymentModel() : null,
-              },
-            })
-          : undefined;
-        const modelChoice: ModelChoice = routed?.choice ?? ownChoice;
-        const hasModelOverride = Boolean(modelChoice.modelProvider && modelChoice.modelId);
-        const overrideCredential =
-          hasModelOverride && modelChoice.modelProvider
-            ? await findConnectedModelCredential(
-                deps.prisma,
-                deps.secretStore,
-                run,
-                modelChoice.modelProvider,
-                modelChoice.modelId,
-                routed?.choice?.credentialId ? { credentialId: routed.choice.credentialId } : {},
-              )
-            : null;
-        runAbortController = new AbortController();
-        if (!lease.valid) runAbortController.abort();
-        if (deps.shutdownSignal?.aborted) runAbortController.abort(deps.shutdownSignal.reason);
-        const onShutdown = () => runAbortController?.abort(deps.shutdownSignal?.reason);
-        deps.shutdownSignal?.addEventListener("abort", onShutdown);
-        detachShutdown = () => deps.shutdownSignal?.removeEventListener("abort", onShutdown);
         const composioRows = storedConnections.filter(
           (connection) => connection.connectorId === "composio",
         );
@@ -701,6 +668,26 @@ export function createRunExecutor(deps: ExecutorDeps) {
               return keys.has(row.provider.toLowerCase());
             })
           : allConnectedPlugins;
+        const routed = await routedPending;
+        const modelChoice: ModelChoice = routed?.choice ?? ownChoice;
+        const hasModelOverride = Boolean(modelChoice.modelProvider && modelChoice.modelId);
+        const overrideCredential =
+          hasModelOverride && modelChoice.modelProvider
+            ? await findConnectedModelCredential(
+                deps.prisma,
+                deps.secretStore,
+                run,
+                modelChoice.modelProvider,
+                modelChoice.modelId,
+                routed?.choice?.credentialId ? { credentialId: routed.choice.credentialId } : {},
+              )
+            : null;
+        runAbortController = new AbortController();
+        if (!lease.valid) runAbortController.abort();
+        if (deps.shutdownSignal?.aborted) runAbortController.abort(deps.shutdownSignal.reason);
+        const onShutdown = () => runAbortController?.abort(deps.shutdownSignal?.reason);
+        deps.shutdownSignal?.addEventListener("abort", onShutdown);
+        detachShutdown = () => deps.shutdownSignal?.removeEventListener("abort", onShutdown);
         const context = {
           operationId: runId,
           traceId: runId,
@@ -1231,6 +1218,34 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 select: { clientNonce: true, role: true, blocks: true, seq: true, routing: true },
               })
             : null;
+        // Only a message the owner typed is worth offering a routine for.
+        // The judge runs beside the rest of the preparation; the first model call never waits on it.
+        const readRepeatHint =
+          run.trigger === "user" && sourceMessage?.role === "user"
+            ? repeatHintInBackground(
+                deps,
+                {
+                  runId,
+                  spaceId: run.spaceId,
+                  userId: run.userId,
+                  botId: bot.id,
+                  threadId: thread.id,
+                },
+                {
+                  request: ((sourceMessage.blocks ?? []) as MessageBlock[])
+                    .flatMap((block) => (block.kind === "text" ? [block.text] : []))
+                    .join("\n"),
+                  sourceMessageId: run.sourceMessageId ?? "",
+                  own: {
+                    provider: runModelProvider,
+                    modelId: runModelId,
+                    credentialId: credential?.id,
+                  },
+                  context,
+                  registerSecrets: (values) => runSecrets.push(...values),
+                },
+              )
+            : undefined;
         // Only a run the router woke may pass; a mention, a chat or an answer always replies.
         const routedRun =
           run.trigger === "user" &&
@@ -1744,33 +1759,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 },
               )
             : undefined;
-        // Only a message the owner typed is worth offering a routine for.
-        const repeatHint =
-          run.trigger === "user" && sourceMessage?.role === "user"
-            ? await repeatHintForRun(
-                deps,
-                {
-                  runId,
-                  spaceId: run.spaceId,
-                  userId: run.userId,
-                  botId: bot.id,
-                  threadId: thread.id,
-                },
-                {
-                  request: ((sourceMessage.blocks ?? []) as MessageBlock[])
-                    .flatMap((block) => (block.kind === "text" ? [block.text] : []))
-                    .join("\n"),
-                  sourceMessageId: run.sourceMessageId ?? "",
-                  own: {
-                    provider: runModelProvider,
-                    modelId: runModelId,
-                    credentialId: credential?.id,
-                  },
-                  context,
-                  registerSecrets: (values) => runSecrets.push(...values),
-                },
-              )
-            : undefined;
+        const repeatHint = readRepeatHint?.();
         const redactedTicketContext = ticketContext
           ? redactSecrets(ticketContext, runSecrets)
           : undefined;

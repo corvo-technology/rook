@@ -65,3 +65,18 @@ export async function repeatHintForRun(
     return undefined;
   }
 }
+
+/**
+ * Starts the repeat judge beside the rest of the turn's preparation and returns a reader for what
+ * it has found by then. The first model call never waits for it: a hint that is not ready is
+ * left out of this turn, and the next one offers it.
+ */
+export function repeatHintInBackground(
+  ...args: Parameters<typeof repeatHintForRun>
+): () => string | undefined {
+  let hint: string | undefined;
+  void repeatHintForRun(...args).then((value) => {
+    hint = value;
+  });
+  return () => hint;
+}

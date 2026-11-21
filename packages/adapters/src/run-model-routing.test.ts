@@ -32,6 +32,7 @@ function deps(
     fails?: boolean;
     roles?: Array<{ role: string }>;
     partnerAllowed?: string[];
+    previousTier?: string;
   } = {},
 ) {
   const run = vi.fn(async function* (): AsyncGenerator<AgentRuntimeEvent> {
@@ -51,6 +52,11 @@ function deps(
     deps: {
       runtime: { run },
       prisma: {
+        run: {
+          findFirst: vi.fn(async () =>
+            opts.previousTier ? { modelTier: opts.previousTier } : null,
+          ),
+        },
         partnerTenant: {
           findFirst: vi.fn(async () =>
             opts.partnerAllowed
@@ -195,7 +201,7 @@ describe("routeRunTier", () => {
     title: "Helper",
     description: "",
     trigger: "user" as const,
-    prompt: "tidy this up",
+    prompt: "tidy this up and file the receipts by month",
     contextTokens: 100,
     attachments: 0,
     approvalGated: false,
@@ -229,6 +235,30 @@ describe("routeRunTier", () => {
     });
   });
 
+  it("keeps a short turn on the main tier without asking the classifier", async () => {
+    fast.model = { provider: "cloud", id: "cheap" };
+    const { deps: d, run } = deps({ answer: "strong" });
+    expect(
+      await routeRunTier(d, scope, { ...signals, prompt: "ok thanks" }, defaults),
+    ).toMatchObject({
+      tier: "main",
+    });
+    expect(run).not.toHaveBeenCalled();
+  });
+
+  it("reuses the tier the thread settled on instead of classifying again", async () => {
+    fast.model = { provider: "cloud", id: "cheap" };
+    const { deps: d, run } = deps({ answer: "strong" });
+    expect(await routeRunTier(d, scope, signals, defaults, async () => "fast")).toMatchObject({
+      tier: "fast",
+    });
+    expect(run).not.toHaveBeenCalled();
+    expect(await routeRunTier(d, scope, signals, defaults, async () => null)).toMatchObject({
+      tier: "strong",
+    });
+    expect(run).toHaveBeenCalledOnce();
+  });
+
   it("never classifies an escalated run, which starts on its floor", async () => {
     fast.model = { provider: "cloud", id: "cheap" };
     const { deps: d, run } = deps({ answer: "fast" });
@@ -244,10 +274,11 @@ describe("routeTurn", () => {
     checkpoint: null,
     modelTier: null,
     tierEscalations: 0,
+    threadId: "thread-1",
   };
   const input = {
     bot: { title: "Inbox triage", description: "Sorts email" },
-    task: { prompt: "Sort the new mail" },
+    task: { prompt: "Sort the new mail and tell me what is urgent" },
     messages: [],
     defaults,
   };
@@ -257,6 +288,13 @@ describe("routeTurn", () => {
     expect(
       await routeTurn({ ...input, deps: d, run: { ...run, modelTier: "strong" } }),
     ).toMatchObject({ tier: "strong", choice: { modelId: "big" } });
+    expect(model).not.toHaveBeenCalled();
+  });
+
+  it("keeps the tier the thread's last turn ran on", async () => {
+    fast.model = { provider: "cloud", id: "cheap" };
+    const { deps: d, run: model } = deps({ answer: "strong", previousTier: "fast" });
+    expect(await routeTurn({ ...input, deps: d, run })).toMatchObject({ tier: "fast" });
     expect(model).not.toHaveBeenCalled();
   });
 

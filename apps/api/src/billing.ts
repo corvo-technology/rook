@@ -71,7 +71,11 @@ export const BILLING_RETURN_PATH = "/api/v1/billing/return";
 /** Product-side billing: access rules, checkout, and pull-based sync from the provider. */
 export interface BillingService {
   readonly modelCreditsEnabled: boolean;
-  status(actor: Actor): Promise<BillingStatus>;
+  /**
+   * `expiry: "background"` reads the balance as it stands and settles expired credit after the
+   * call returns, for a caller that must not queue behind the account's lock.
+   */
+  status(actor: Actor, options?: { expiry?: "wait" | "background" }): Promise<BillingStatus>;
   selectFunding(actor: Actor, funding: "byok" | "credits"): Promise<{ ok: true; url?: string }>;
   purchaseCredits(
     actor: Actor,
@@ -128,6 +132,17 @@ function byokTrialAvailable(
 
 function limitsFor(plan: PlanId) {
   return (planConfigFromEnv()?.plans ?? DEFAULT_PLANS)[plan];
+}
+
+const expiring = new Set<string>();
+
+/** Settles an account's expired credit without holding the caller; one pass per account at a time. */
+function expireInBackground(prisma: PrismaClient, organizationId: string) {
+  if (expiring.has(organizationId)) return;
+  expiring.add(organizationId);
+  void expireModelCredits(prisma, organizationId)
+    .catch((error) => getLogger().error("model credit expiry", error))
+    .finally(() => expiring.delete(organizationId));
 }
 
 export function createBillingService(deps: {
@@ -520,10 +535,11 @@ export function createBillingService(deps: {
       return { ok: true };
     },
 
-    async status(actor) {
+    async status(actor, options) {
       if (modelCredits) {
         const { organizationId, isOwner } = await organization(actor);
-        await expireModelCredits(prisma, organizationId);
+        if (options?.expiry === "background") expireInBackground(prisma, organizationId);
+        else await expireModelCredits(prisma, organizationId);
         const [credits, account] = await Promise.all([
           creditAccount(prisma, organizationId),
           billingAccountForOrganization(prisma, organizationId),

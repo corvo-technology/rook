@@ -219,6 +219,58 @@ function sendRunClientNonce(
   return botId ? `send:${messageId}:${botId}` : `send:${messageId}`;
 }
 
+/** An agent already working on the thread takes the message as steering; otherwise it gets a run. */
+async function steerOrQueueRun(
+  tx: Prisma.TransactionClient,
+  input: {
+    actor: Actor;
+    threadId: string;
+    messageId: string;
+    botId: string;
+    active?: { id: string; taskId: string; botId: string; status: string; trigger: string };
+    prompt: string;
+    clientNonce?: string;
+    host?: HostTurn | null;
+  },
+) {
+  const { actor, botId, active } = input;
+  if (active) {
+    await tx.steeringMessage.create({
+      data: {
+        messageId: input.messageId,
+        botId,
+        userId: actor.userId,
+        runId: steersUserMessage(active) ? active.id : null,
+      },
+    });
+    return active;
+  }
+  const task = await tx.task.create({
+    data: {
+      spaceId: actor.spaceId,
+      botId,
+      threadId: input.threadId,
+      userId: actor.userId,
+      prompt: input.prompt,
+      status: "queued",
+    },
+  });
+  return tx.run.create({
+    data: {
+      spaceId: actor.spaceId,
+      botId,
+      threadId: input.threadId,
+      taskId: task.id,
+      userId: actor.userId,
+      status: "queued",
+      trigger: "user",
+      clientNonce: sendRunClientNonce(input.clientNonce, input.messageId, botId),
+      sourceMessageId: input.messageId,
+      ...(input.host ? { hostContext: input.host as Prisma.InputJsonObject } : {}),
+    },
+  });
+}
+
 /** The mime types of the files a message carries, from its stored blocks. */
 function fileMimeTypes(blocks: unknown): Array<{ mimeType: string }> {
   if (!Array.isArray(blocks)) return [];
@@ -878,6 +930,144 @@ function sendAttachmentBlocks(
   });
 }
 
+/**
+ * The second half of a channel send whose recipients a model picks: the message is already stored
+ * and on screen, so this asks the router, then wakes the agents it names the way the send would
+ * have. A failed router keeps the older rule, as it does on a send that waits for it.
+ */
+async function wakeAfterRouting(
+  deps: {
+    prisma: PrismaClient;
+    events: ThreadEvents;
+    jobs: JobPublisher;
+    router?: RouterModel;
+    audio?: AudioHold;
+  },
+  actor: Actor,
+  target: Extract<ThreadTarget, { kind: "group" }>,
+  sent: {
+    message: { id: string; seq: number; blocks: unknown };
+    routeInput: Parameters<typeof routeGroupMessage>[1];
+    mentions: MentionTargetInput[] | undefined;
+    text: string;
+    clientNonce?: string;
+    host?: HostTurn | null;
+    talkable: Set<string>;
+    unavailable: Map<string, "paused" | "over_budget">;
+  },
+) {
+  const routed = await routeGroupMessage(
+    { prisma: deps.prisma, model: deps.router },
+    { ...sent.routeInput, defer: false },
+  );
+  const decision = routed === "deferred" ? undefined : routed;
+  const committed = await withSerializableRetry(() =>
+    deps.prisma.$transaction(async (tx) => {
+      const members = await lockAndLoadGroupMembers(tx, actor, target);
+      const memberBotIds = members.map((member) => member.botId);
+      const memberRefs = members.map((member) => ({ id: member.botId, name: member.name }));
+      const mentionTargets = splitMentionTargets(sent.mentions);
+      const wantedBotIds =
+        decision && decision.strategy !== "fallback"
+          ? decision.picked.filter((botId) => memberBotIds.includes(botId))
+          : resolveGroupTargetBotIds({
+              text: sent.text,
+              members: memberRefs,
+              explicitMentions: mentionTargets.botMentionIds,
+              fallbackBotId: await groupConversationOwner(tx, target.threadId, memberBotIds),
+            });
+      const targetBotIds = wantedBotIds.filter((botId) => sent.talkable.has(botId));
+      const routingReport = buildRoutingReport({
+        candidates: memberBotIds,
+        talkable: sent.talkable,
+        unavailable: sent.unavailable,
+        woken: targetBotIds,
+        mentioned: [],
+        routing: decision,
+      }) as unknown as Prisma.InputJsonValue;
+      const connectorNames = await resolveOwnedConnectorDisplayNames(
+        tx,
+        actor,
+        mentionTargets.connectorMentionIds,
+      );
+      await tx.$queryRaw`SELECT id FROM threads WHERE id = ${target.threadId} FOR UPDATE`;
+      const activeRuns = await tx.run.findMany({
+        where: {
+          threadId: target.threadId,
+          botId: { in: targetBotIds },
+          status: { in: [...ACTIVE_RUN_STATUSES] },
+        },
+        select: { id: true, taskId: true, botId: true, status: true, trigger: true },
+      });
+      const activeByBotId = new Map<string, (typeof activeRuns)[number]>();
+      for (const run of activeRuns) {
+        if (!STEERABLE_RUN_STATUSES.has(run.status)) continue;
+        const current = activeByBotId.get(run.botId);
+        if (!current || (!steersUserMessage(current) && steersUserMessage(run))) {
+          activeByBotId.set(run.botId, run);
+        }
+      }
+      const runs: Array<{ id: string; taskId: string; botId: string; status: string }> = [];
+      for (const botId of targetBotIds) {
+        runs.push(
+          await steerOrQueueRun(tx, {
+            actor,
+            threadId: target.threadId,
+            messageId: sent.message.id,
+            botId,
+            active: activeByBotId.get(botId),
+            prompt: buildSendPrompt(sent.text, [], connectorNames),
+            clientNonce: sent.clientNonce,
+            host: sent.host,
+          }),
+        );
+      }
+      const firstRun = runs[0];
+      await tx.message.update({
+        where: { id: sent.message.id },
+        data: {
+          routing: decision && (decision as unknown as Prisma.InputJsonValue),
+          routingReport,
+          ...(firstRun ? { runId: firstRun.id } : {}),
+        },
+      });
+      const createdRuns = runs.filter((run) => !activeByBotId.has(run.botId));
+      if (createdRuns.length) {
+        await cancelSupersededQueuedRuns(tx, {
+          threadId: target.threadId,
+          botIds: createdRuns.map((run) => run.botId),
+          keepRunIds: createdRuns.map((run) => run.id),
+        });
+      }
+      await touchGroupUpdatedAt(tx, target.groupId);
+      const event = await appendEventInTransaction(tx, {
+        spaceId: actor.spaceId,
+        threadId: target.threadId,
+        botId: firstRun?.botId ?? targetBotIds[0] ?? memberBotIds[0] ?? "",
+        type: "thread.message.updated",
+        runId: firstRun?.id,
+        payload: {
+          messageId: sent.message.id,
+          role: "user",
+          authorUserId: actor.userId,
+          blocks: sent.message.blocks,
+          runIds: runs.map((run) => run.id),
+          routingReport,
+        },
+      });
+      return { runs, eventSeq: event.seq };
+    }),
+  );
+  await deps.events.notify(target.threadId, committed.eventSeq).catch((error) => {
+    getLogger().error("channel routing realtime notification", error);
+  });
+  await enqueueRunsNeedingContinue(deps, committed.runs, {
+    actor,
+    messageId: sent.message.id,
+    attachments: [],
+  });
+}
+
 export async function sendThreadMessage(
   deps: {
     prisma: PrismaClient;
@@ -889,6 +1079,8 @@ export async function sendThreadMessage(
     audio?: AudioHold;
     /** Decides who answers a channel message that names nobody; absent keeps the older rule. */
     router?: RouterModel;
+    /** Holds on to the routing work that follows a send, so a test can wait for it. */
+    background?: (work: Promise<void>) => void;
   },
   actor: Actor,
   target: ThreadTarget,
@@ -903,7 +1095,7 @@ export async function sendThreadMessage(
     clientNonce?: string;
     /** The model for this message's run; the agent's own setting stays as it is. */
     model?: { provider: string; modelId: string };
-    host?: HostTurn;
+    host?: HostTurn | null;
     /** Sends the text as a new version of this earlier message of the person's, not at the end. */
     edit?: { messageId: string };
   },
@@ -964,20 +1156,27 @@ export async function sendThreadMessage(
   // The model call happens before the transaction so it never holds the thread's locks.
   // A reply inside a thread stays with that thread's agent, so only the main column is routed.
   // A message that names an agent has no one left to route.
-  const routing =
+  // A text-only message does not wait for that call: it is stored at once and the agent the model
+  // picks is woken as soon as it answers. One with files must know its recipients to be checked.
+  const deferRouting = !input.artifactIds?.length && input.imageHandling !== "confirm";
+  const routeInput = {
+    groupId: target.kind === "group" ? target.groupId : "",
+    threadId: target.threadId,
+    text: input.text ?? "",
+    members:
+      target.kind === "group" ? target.members.filter((member) => talkable.has(member.botId)) : [],
+    explicitMentions: splitMentionTargets(input.mentions).botMentionIds,
+    mentionedPeople: mentionedUserIds,
+  };
+  const routed =
     target.kind === "group" && !input.threadRootId && outsideMentioned.length === 0
       ? await routeGroupMessage(
           { prisma: deps.prisma, model: deps.router },
-          {
-            groupId: target.groupId,
-            threadId: target.threadId,
-            text: input.text ?? "",
-            members: target.members.filter((member) => talkable.has(member.botId)),
-            explicitMentions: splitMentionTargets(input.mentions).botMentionIds,
-            mentionedPeople: mentionedUserIds,
-          },
+          { ...routeInput, defer: deferRouting },
         )
       : undefined;
+  const routingDeferred = routed === "deferred";
+  const routing = routed === "deferred" ? undefined : routed;
 
   // Which agents cannot take a run right now, for the line that says who answered and why. The
   // line is a courtesy: reading it must never stop a message from being sent.
@@ -1268,8 +1467,9 @@ export async function sendThreadMessage(
       const memberBotIds = members.map((member) => member.botId);
       const mentionTargets = splitMentionTargets(input.mentions);
       // A routed pick is checked against the members now, so a bot removed meanwhile is never woken.
-      const routedBotIds =
-        routing && routing.strategy !== "fallback"
+      const routedBotIds = routingDeferred
+        ? []
+        : routing && routing.strategy !== "fallback"
           ? routing.picked.filter((botId) => memberBotIds.includes(botId))
           : undefined;
       const memberRefs = members.map((member) => ({ id: member.botId, name: member.name }));
@@ -1438,44 +1638,18 @@ export async function sendThreadMessage(
           runs.push(...answered);
           continue;
         }
-        const active = activeByBotId.get(botId);
-        if (active) {
-          await tx.steeringMessage.create({
-            data: {
-              messageId: message.id,
-              botId,
-              userId: actor.userId,
-              runId: steersUserMessage(active) ? active.id : null,
-            },
-          });
-          runs.push(active);
-          continue;
-        }
-        const task = await tx.task.create({
-          data: {
-            spaceId: actor.spaceId,
-            botId,
+        runs.push(
+          await steerOrQueueRun(tx, {
+            actor,
             threadId: target.threadId,
-            userId: actor.userId,
+            messageId: message.id,
+            botId,
+            active: activeByBotId.get(botId),
             prompt: buildSendPrompt(input.text, artifacts, connectorNames),
-            status: "queued",
-          },
-        });
-        const run = await tx.run.create({
-          data: {
-            spaceId: actor.spaceId,
-            botId,
-            threadId: target.threadId,
-            taskId: task.id,
-            userId: actor.userId,
-            status: "queued",
-            trigger: "user",
-            clientNonce: sendRunClientNonce(input.clientNonce, message.id, botId),
-            sourceMessageId: message.id,
-            ...(host ? { hostContext: host as Prisma.InputJsonObject } : {}),
-          },
-        });
-        runs.push(run);
+            clientNonce: input.clientNonce,
+            host,
+          }),
+        );
       }
       const firstRun = runs[0];
       const eventBotId = firstRun?.botId ?? targetBotIds[0] ?? memberBotIds[0];
@@ -1558,8 +1732,25 @@ export async function sendThreadMessage(
     messageId: committed.message.id,
     attachments: fileMimeTypes(committed.message.blocks),
   });
+  if (routingDeferred && target.kind === "group") {
+    const work = wakeAfterRouting(deps, actor, target, {
+      message: committed.message,
+      routeInput,
+      mentions: input.mentions,
+      text: input.text ?? "",
+      clientNonce: input.clientNonce,
+      host,
+      talkable,
+      unavailable,
+    }).catch((error) => {
+      getLogger().error("channel routing wake", error);
+    });
+    if (deps.background) deps.background(work);
+    else void work;
+  }
   return sendResult(committed.message, committed.runs, {
     allowNone:
+      routingDeferred ||
       routing?.strategy === "model" ||
       routing?.strategy === "continuity" ||
       ("betweenPeople" in committed && committed.betweenPeople),

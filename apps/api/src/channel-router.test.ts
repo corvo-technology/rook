@@ -80,6 +80,23 @@ describe("routeGroupMessage", () => {
     expect(decision?.scores?.reason).toBe("pricing");
   });
 
+  it("leaves the model call to the caller when asked to defer", async () => {
+    const { prisma } = fixture();
+    const model = answer({ scores: {}, forEveryone: 0, needsAgent: 0, reason: "x" });
+    const decision = await routeGroupMessage(
+      { prisma, model, now: () => 0 },
+      {
+        groupId: "group-1",
+        threadId: "thread-1",
+        text: "what do we charge?",
+        members,
+        defer: true,
+      },
+    );
+    expect(decision).toBe("deferred");
+    expect(model).not.toHaveBeenCalled();
+  });
+
   it("picks nobody when no agent is needed", async () => {
     const { route } = fixture();
     const decision = await route(

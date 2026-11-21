@@ -1144,9 +1144,11 @@ function pinnedRoutineRunPrisma(modelId: string) {
       updateMany: vi.fn(async () => ({ count: 1 })),
     },
     bot: {
-      findUniqueOrThrow: vi.fn(async (args: { select?: { computerId?: boolean } }) =>
-        args.select?.computerId ? { computerId: "computer-1", computerSwitching: false } : bot,
-      ),
+      findUniqueOrThrow: vi.fn(async () => ({
+        computerId: "computer-1",
+        computerSwitching: false,
+        ...bot,
+      })),
     },
     computer: { findUniqueOrThrow: vi.fn(async () => ({ scope: "private", state: "running" })) },
     attempt: {
@@ -2606,6 +2608,7 @@ description: Prepare standup notes
         })),
         updateMany,
       },
+      bot: { findUniqueOrThrow: vi.fn(async () => ({ computerId: "computer-1" })) },
     } as unknown as PrismaClient;
     const executor = createRunExecutor({ prisma } as Parameters<typeof createRunExecutor>[0]);
 
@@ -2659,6 +2662,7 @@ description: Prepare standup notes
         })),
         updateMany,
       },
+      bot: { findUniqueOrThrow: vi.fn(async () => ({ computerId: "computer-1" })) },
     } as unknown as PrismaClient;
     const executor = createRunExecutor({ prisma } as Parameters<typeof createRunExecutor>[0]);
 
@@ -2871,19 +2875,17 @@ description: Prepare standup notes
         checkpoint: null,
         leaseFence: 0,
       };
-      const botLookup = vi.fn(async (args: { select?: { computerId?: boolean } }) =>
-        args.select?.computerId
-          ? { computerId: "computer-1", computerSwitching: false }
-          : {
-              id: "bot-1",
-              name: "Bot",
-              modelProvider: null,
-              modelId: null,
-              thinkingLevel: null,
-              memoryScope: "isolated",
-              computer: { id: "computer-1", scope: "private" },
-            },
-      );
+      const botLookup = vi.fn(async () => ({
+        computerId: "computer-1",
+        computerSwitching: false,
+        id: "bot-1",
+        name: "Bot",
+        modelProvider: null,
+        modelId: null,
+        thinkingLevel: null,
+        memoryScope: "isolated",
+        computer: { id: "computer-1", scope: "private" },
+      }));
       const prisma = {
         run: {
           findUnique: vi.fn(async () => run),
@@ -3009,19 +3011,17 @@ description: Prepare standup notes
         updateMany: vi.fn(async () => ({ count: 1 })),
       },
       bot: {
-        findUniqueOrThrow: vi.fn(async (args: { select?: { computerId?: boolean } }) =>
-          args.select?.computerId
-            ? { computerId: "computer-1", computerSwitching: false }
-            : {
-                id: "bot-1",
-                name: "Assistant",
-                modelProvider: null,
-                modelId: null,
-                thinkingLevel: null,
-                memoryScope: "isolated",
-                computer: { id: "computer-1", scope: "private" },
-              },
-        ),
+        findUniqueOrThrow: vi.fn(async () => ({
+          computerId: "computer-1",
+          computerSwitching: false,
+          id: "bot-1",
+          name: "Assistant",
+          modelProvider: null,
+          modelId: null,
+          thinkingLevel: null,
+          memoryScope: "isolated",
+          computer: { id: "computer-1", scope: "private" },
+        })),
       },
       computer: {
         findUniqueOrThrow: vi.fn(async () => ({ scope: "private", state: "running" })),
@@ -3114,19 +3114,17 @@ description: Prepare standup notes
         updateMany: vi.fn(async () => ({ count: 1 })),
       },
       bot: {
-        findUniqueOrThrow: vi.fn(async (args: { select?: { computerId?: boolean } }) =>
-          args.select?.computerId
-            ? { computerId: "computer-1", computerSwitching: false }
-            : {
-                id: "bot-1",
-                name: "Assistant",
-                modelProvider: null,
-                modelId: null,
-                thinkingLevel: null,
-                memoryScope: "isolated",
-                computer: { id: "computer-1", scope: "private" },
-              },
-        ),
+        findUniqueOrThrow: vi.fn(async () => ({
+          computerId: "computer-1",
+          computerSwitching: false,
+          id: "bot-1",
+          name: "Assistant",
+          modelProvider: null,
+          modelId: null,
+          thinkingLevel: null,
+          memoryScope: "isolated",
+          computer: { id: "computer-1", scope: "private" },
+        })),
       },
       computer: {
         findUniqueOrThrow: vi.fn(async () => ({ scope: "private", state: "running" })),
@@ -3233,19 +3231,17 @@ description: Prepare standup notes
         updateMany: vi.fn(async () => ({ count: 1 })),
       },
       bot: {
-        findUniqueOrThrow: vi.fn(async (args: { select?: { computerId?: boolean } }) =>
-          args.select?.computerId
-            ? { computerId: "computer-1", computerSwitching: false }
-            : {
-                id: "bot-1",
-                name: "Assistant",
-                modelProvider: null,
-                modelId: null,
-                thinkingLevel: null,
-                memoryScope: "isolated",
-                computer: { id: "computer-1", scope: "private" },
-              },
-        ),
+        findUniqueOrThrow: vi.fn(async () => ({
+          computerId: "computer-1",
+          computerSwitching: false,
+          id: "bot-1",
+          name: "Assistant",
+          modelProvider: null,
+          modelId: null,
+          thinkingLevel: null,
+          memoryScope: "isolated",
+          computer: { id: "computer-1", scope: "private" },
+        })),
       },
       computer: {
         findUniqueOrThrow: vi.fn(async () => ({ scope: "private", state: "running" })),
@@ -3358,19 +3354,17 @@ description: Prepare standup notes
           updateMany: vi.fn(async () => ({ count: 1 })),
         },
         bot: {
-          findUniqueOrThrow: vi.fn(async (args: { select?: { computerId?: boolean } }) =>
-            args.select?.computerId
-              ? { computerId: "computer-1", computerSwitching: false }
-              : {
-                  id: "bot-1",
-                  name: "Assistant",
-                  modelProvider: null,
-                  modelId: null,
-                  thinkingLevel: null,
-                  memoryScope: "isolated",
-                  computer: { id: "computer-1", scope: "private" },
-                },
-          ),
+          findUniqueOrThrow: vi.fn(async () => ({
+            computerId: "computer-1",
+            computerSwitching: false,
+            id: "bot-1",
+            name: "Assistant",
+            modelProvider: null,
+            modelId: null,
+            thinkingLevel: null,
+            memoryScope: "isolated",
+            computer: { id: "computer-1", scope: "private" },
+          })),
         },
         computer: {
           findUniqueOrThrow: vi.fn(async () => ({ scope: "private", state: "running" })),
@@ -3482,20 +3476,18 @@ description: Prepare standup notes
         updateMany: vi.fn(async () => ({ count: 1 })),
       },
       bot: {
-        findUniqueOrThrow: vi.fn(async (args: { select?: { computerId?: boolean } }) =>
-          args.select?.computerId
-            ? { computerId: "computer-1", computerSwitching: false }
-            : {
-                id: "bot-1",
-                name: "Assistant",
-                modelProvider: null,
-                modelId: null,
-                thinkingLevel: null,
-                dailyCapMicros: 1_000_000n,
-                memoryScope: "isolated",
-                computer: { id: "computer-1", scope: "private" },
-              },
-        ),
+        findUniqueOrThrow: vi.fn(async () => ({
+          computerId: "computer-1",
+          computerSwitching: false,
+          id: "bot-1",
+          name: "Assistant",
+          modelProvider: null,
+          modelId: null,
+          thinkingLevel: null,
+          dailyCapMicros: 1_000_000n,
+          memoryScope: "isolated",
+          computer: { id: "computer-1", scope: "private" },
+        })),
       },
       computer: {
         findUniqueOrThrow: vi.fn(async () => ({ scope: "private", state: "running" })),
@@ -4562,21 +4554,19 @@ function gateHarness(
       updateMany: vi.fn(async () => ({ count: 1 })),
     },
     bot: {
-      findUniqueOrThrow: vi.fn(async (args: { select?: { computerId?: boolean } }) =>
-        args.select?.computerId
-          ? { computerId: "computer-1", computerSwitching: false }
-          : {
-              id: "bot-1",
-              name: "Assistant",
-              modelProvider: null,
-              modelId: null,
-              thinkingLevel: null,
-              memoryScope: "isolated",
-              computer: { id: "computer-1", scope: "private" },
-              space: { pausedAt: options.spacePausedAt ?? null },
-              ...options.bot,
-            },
-      ),
+      findUniqueOrThrow: vi.fn(async () => ({
+        computerId: "computer-1",
+        computerSwitching: false,
+        id: "bot-1",
+        name: "Assistant",
+        modelProvider: null,
+        modelId: null,
+        thinkingLevel: null,
+        memoryScope: "isolated",
+        computer: { id: "computer-1", scope: "private" },
+        space: { pausedAt: options.spacePausedAt ?? null },
+        ...options.bot,
+      })),
     },
     computer: {
       findUniqueOrThrow: vi.fn(async () => ({ scope: "private", state: "running" })),

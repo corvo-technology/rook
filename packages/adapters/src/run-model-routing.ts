@@ -171,19 +171,27 @@ export async function classifyTier(
   }
 }
 
+/** A request this short ("ok", "thanks", "and tomorrow?") is not worth a model call to place. */
+const SHORT_TURN_CHARS = 30;
+
 /** The tier a turn runs on, and the model that serves it. */
 export async function routeRunTier(
   deps: ExecutorDeps,
   run: { id: string; spaceId: string; userId: string; botId: string },
   signals: TurnSignals,
   defaults: DeploymentModelDefaults,
+  /** The tier the thread's last turn settled on, read only when a turn would need the classifier. */
+  stickyTier?: () => Promise<ModelTier | null>,
 ): Promise<RoutedModel> {
   const decision = decideTier(signals);
   let tier = decision.tier;
   // Only a turn the structure leaves open pays for the classifier, and only once: the tier is
-  // saved with the run, so a retried attempt reads it back.
-  if (!decision.clear && !signals.floor) {
-    tier = (await classifyTier(deps, run, signals, signals.prompt)) ?? tier;
+  // saved with the run, so a retried attempt reads it back. A short turn stays on the main tier,
+  // and a conversation keeps the tier it settled on, so the classifier stands in front of a reply
+  // at most once per thread.
+  if (!decision.clear && !signals.floor && signals.prompt.trim().length >= SHORT_TURN_CHARS) {
+    const previous = await stickyTier?.();
+    tier = previous ?? (await classifyTier(deps, run, signals, signals.prompt)) ?? tier;
   }
   return resolveTierModel(deps, run, tier, defaults);
 }
@@ -198,6 +206,7 @@ export async function routeTurn(input: {
     spaceId: string;
     userId: string;
     botId: string;
+    threadId: string;
     trigger: string;
     checkpoint: string | null;
     modelTier: string | null;
@@ -234,5 +243,18 @@ export async function routeTurn(input: {
       approvalGated: run.trigger === "resume" || Boolean(run.checkpoint),
     },
     defaults,
+    async () => {
+      const previous = await deps.prisma.run.findFirst({
+        where: {
+          threadId: run.threadId,
+          id: { not: run.id },
+          trigger: "user",
+          modelTier: { not: null },
+        },
+        orderBy: { createdAt: "desc" },
+        select: { modelTier: true },
+      });
+      return MODEL_TIERS.find((tier) => tier === previous?.modelTier) ?? null;
+    },
   );
 }

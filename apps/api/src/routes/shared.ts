@@ -210,7 +210,8 @@ export async function modelSetup(deps: RouterDeps, actor: Actor) {
         (await hasHostedModelCredits(deps.prisma, actor, member.provider))))
       ? member
       : null;
-  const funding = deps.billing ? await deps.billing.status(actor) : null;
+  // Reading the balance is on every send's path, so expired credit is settled after it returns.
+  const funding = deps.billing ? await deps.billing.status(actor, { expiry: "background" }) : null;
   const hasDeployment =
     Boolean(deps.env.deploymentModelConfigured) &&
     (!funding?.creditPurchasesEnabled || funding.funding === "credits");

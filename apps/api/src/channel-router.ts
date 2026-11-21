@@ -106,8 +106,13 @@ export async function routeGroupMessage(
     explicitMentions?: string[];
     /** People picked with a mention chip: a message to them is not for an agent unless it names one. */
     mentionedPeople?: string[];
+    /**
+     * Answers "deferred" instead of calling the model, for a caller that keeps the model call out
+     * of the person's send. Every decision the thread settles without a model is still returned.
+     */
+    defer?: boolean;
   },
-): Promise<RouterDecision | undefined> {
+): Promise<RouterDecision | "deferred" | undefined> {
   const { model } = deps;
   const text = input.text.trim();
   if (!model || !text || input.members.length < 2) return undefined;
@@ -147,6 +152,7 @@ export async function routeGroupMessage(
       ? undefined
       : continuityBotId({ text, now, last: recentRows[0], candidateIds });
     if (continuity) return { strategy: "continuity", picked: [continuity] };
+    if (input.defer) return "deferred";
 
     const [group, bots] = await Promise.all([
       deps.prisma.chatGroup.findUnique({

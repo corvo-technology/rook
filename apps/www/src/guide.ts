@@ -60,6 +60,19 @@ if (root && calm) {
   let pointer: Point | null = null;
   let link: Point | null = null;
   let look: Point | null = null;
+  const agentSection = document.querySelector<HTMLElement>("#agents");
+
+  // Inside the agents section the pointer is what the rook and its piece watch, however far it is.
+  const inAgents = () => {
+    if (!pointer || !agentSection) return false;
+    const r = agentSection.getBoundingClientRect();
+    return pointer.y >= r.top && pointer.y <= r.bottom && pointer.x >= r.left && pointer.x <= r.right;
+  };
+
+  // A small lean toward what it watches, on top of the eyes.
+  const lean = (el: HTMLElement, to: Point | null) => {
+    el.style.transform = to ? `translate(${(to.x * 3).toFixed(1)}px, ${(to.y * 1.5).toFixed(1)}px) rotate(${(to.x * 4).toFixed(1)}deg)` : "";
+  };
 
   const centerOf = (el: HTMLElement): Point => {
     const r = el.getBoundingClientRect();
@@ -219,10 +232,11 @@ if (root && calm) {
     else if (travel) {
       const n = Math.hypot(travel.x, travel.y);
       want = { x: travel.x / n, y: travel.y / n };
-    } else if (pointer && Math.hypot(pointer.x - at.x, pointer.y - at.y) < REACH) want = aim(pointer, 200);
+    } else if (pointer && (inAgents() || Math.hypot(pointer.x - at.x, pointer.y - at.y) < REACH)) want = aim(pointer, 200);
     if ((want === null) !== (look === null) || (want && look && (Math.abs(want.x - look.x) > 0.04 || Math.abs(want.y - look.y) > 0.04))) {
       look = want;
       guide.update({ lookAt: want });
+      lean(host, want && inAgents() ? want : null);
     }
   };
 
@@ -237,10 +251,18 @@ if (root && calm) {
         const dist = Math.hypot(dx, dy);
         if (dist < 520) want = { x: dx / (dist || 1), y: dy / (dist || 1) };
       }
+      if (pointer && inAgents()) {
+        const px = pointer.x - mate.at.x;
+        const py = pointer.y - (mate.at.y - scrollY);
+        const pd = Math.hypot(px, py) || 1;
+        const pull = Math.min(1, pd / 200);
+        want = { x: (px / pd) * pull, y: (py / pd) * pull };
+      }
       const same = want && mate.look ? Math.abs(want.x - mate.look.x) < 0.04 && Math.abs(want.y - mate.look.y) < 0.04 : want === mate.look;
       if (!same) {
         mate.look = want;
         mate.avatar.update({ lookAt: want });
+        lean(mate.host, want && pointer && inAgents() ? want : null);
       }
     }
   };
@@ -268,6 +290,7 @@ if (root && calm) {
           gazeFrame = requestAnimationFrame(() => {
             gazeFrame = 0;
             steer(null);
+            nudgeMates();
           });
       },
       { passive: true },
@@ -276,6 +299,7 @@ if (root && calm) {
       pointer = null;
       link = null;
       steer(null);
+      nudgeMates();
     });
   }
   new ResizeObserver(measure).observe(document.body);

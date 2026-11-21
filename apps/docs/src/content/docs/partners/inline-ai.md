@@ -106,7 +106,8 @@ Estados em `onState`: `idle`, `requesting`, `recording`, `paused`, `uploading`, 
 
 - **Legenda ao vivo.** Enquanto grava, `onTranscript` recebe legendas do próprio navegador (`source: "browser"`, quando ele oferece reconhecimento de voz). Ao fim, chega a transcrição do Rook (`final: true`, `source: "server"`, com `turns`).
 - **Consentimento.** `consent` é obrigatório e fica registrado na consulta, como na API.
-- **Retenção.** Depois do resultado, o Rook apaga o áudio e a transcrição, a menos que você passe `keep: true` (vale então o prazo de retenção da consulta).
+- **Retenção.** Depois do resultado, o Rook apaga o áudio e a transcrição, a menos que você passe `keep: true` (vale então o prazo de retenção da consulta). Também os mantém quando a consulta combinou ações, para que possam ser aplicadas; chame `recorder.discard()` ao terminar.
+- **Ações combinadas.** `onResult(result, { transcript, consultationId, actions })`: `result.actions` e `meta.actions` listam o que a consulta combinou fazer depois (retorno, receita, exame, atestado, mensagem ao paciente), todas `proposed`. Mostre ao profissional e então `Rook.applyConsultationActions(consultationId, actionIds, edits?)` (ou `recorder.applyConsultationActions(actionIds, edits?)`) executa as aprovadas pelo seu conector e devolve `{ actions }` com cada `status`. Nada roda sem essa chamada. Veja [Ações combinadas](/partners/consultations/#a%C3%A7%C3%B5es-combinadas).
 - **Erros de gravação.** `onError(error)` recebe um `RookError` com `error.code` (o que fazer), `error.message` (uma frase para a pessoa, no `lang` ou no idioma do navegador) e, nas respostas do servidor, `error.status`. A mensagem do microfone explica como corrigir nas configurações do site do navegador.
 
 | `error.code` | Causa | O que fazer |

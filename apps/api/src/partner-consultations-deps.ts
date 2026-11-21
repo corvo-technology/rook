@@ -1,6 +1,11 @@
-import type { ArtifactStore, JobPublisher } from "@corvo/adapter-kit";
+import type { ArtifactStore, ConnectorProvider, JobPublisher } from "@corvo/adapter-kit";
 import { consultationProcessJob } from "@corvo/adapter-kit";
-import { deleteConsultationContent, readConsultationResult } from "@corvo/adapters";
+import {
+  consultationActionStates,
+  createConsultationActionApplier,
+  deleteConsultationContent,
+  readConsultationResult,
+} from "@corvo/adapters";
 import { CONSULTATION_MAX_CHUNKS, CONSULTATION_MAX_TOTAL_BYTES } from "@corvo/contracts";
 import type { PrismaClient } from "@corvo/db";
 import {
@@ -8,6 +13,7 @@ import {
   createConsultation,
   findConsultation,
   recordSecurityEvent,
+  runAsSystem,
   settleConsultation,
   spaceHasModelAccess,
   startConsultationProcessing,
@@ -19,9 +25,11 @@ export function partnerConsultationDeps(deps: {
   prisma: PrismaClient;
   artifacts: Pick<ArtifactStore, "get" | "put" | "remove">;
   jobs: Pick<JobPublisher, "enqueue">;
+  connector: Pick<ConnectorProvider, "execute" | "discoverTools">;
   base: Pick<PartnerConsultationDeps, "now" | "allowRequest" | "authenticate" | "findTenant">;
 }): PartnerConsultationDeps {
-  const { prisma, artifacts, jobs } = deps;
+  const { prisma, artifacts, jobs, connector } = deps;
+  const apply = createConsultationActionApplier({ prisma, artifacts, connector });
   const contextFor = (organizationId: string) => ({
     operationId: "consultation",
     traceId: "consultation",
@@ -45,6 +53,7 @@ export function partnerConsultationDeps(deps: {
         draftEntryId: row.draftEntryId,
         errorCode: row.errorCode,
         chunkCount,
+        externalUserId: row.externalUserId,
       };
     },
     storeChunk: async (consultation, chunk) => {
@@ -98,7 +107,29 @@ export function partnerConsultationDeps(deps: {
           resultArtifactId: row.resultArtifactId,
         },
       );
-      return result ? { turns: result.turns, ...(result.note ? { note: result.note } : {}) } : null;
+      if (!result) return null;
+      return {
+        turns: result.turns,
+        ...(result.note ? { note: result.note } : {}),
+        actions: await consultationActionStates(prisma, consultation.id, result.actions ?? []),
+      };
+    },
+    applyActions: async (consultation, request, caller) => {
+      // A call with the partner's key names the person by their id in the partner's own system.
+      const member =
+        !caller.userId && consultation.externalUserId
+          ? await runAsSystem("find the person who recorded", () =>
+              prisma.partnerTenantMember.findFirst({
+                where: {
+                  externalUserId: consultation.externalUserId,
+                  tenant: { organizationId: consultation.organizationId },
+                },
+                select: { userId: true },
+              }),
+            )
+          : null;
+      const requestedByUserId = caller.userId ?? member?.userId;
+      return apply(consultation.id, request, requestedByUserId ? { requestedByUserId } : {});
     },
     remove: async (consultationId) => {
       await deleteConsultationContent({ prisma, artifacts }, consultationId, null);

@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { ConsultationOutput } from "./assist.js";
+import { ConsultationAction } from "./consultation-actions.js";
+import { TimeZoneSchema } from "./time-zone.js";
 
 /** The forms a partner's consultation recording can fill. */
 export const CONSULTATION_TEMPLATES = ["prontu_evolution", "salon_service_record"] as const;
@@ -55,6 +57,8 @@ const consultationFields = {
       appointmentId: Id.optional(),
       professionalName: z.string().trim().max(120).optional(),
       clientName: z.string().trim().max(120).optional(),
+      /** The clinic's IANA timezone, so "next Tuesday at 2pm" becomes an exact moment. */
+      timezone: TimeZoneSchema.optional(),
       /** What a structured recording must produce; only for that template. */
       output: ConsultationOutput.optional(),
     })
@@ -102,6 +106,8 @@ export const ConsultationStatus = z.object({
   state: ConsultationState,
   transcript: z.array(ConsultationTurn).optional(),
   note: z.record(z.string(), z.unknown()).optional(),
+  /** What the conversation agreed to do next, to be applied only by an explicit call. */
+  actions: z.array(ConsultationAction).optional(),
   draftEntryId: z.string().optional(),
   error: z.object({ code: ConsultationErrorCode }).optional(),
 });

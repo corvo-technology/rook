@@ -87,6 +87,61 @@ rec.start(10_000);
 
 Rook concatenates the chunks, transcribes them in Portuguese through the configured speech provider (long recordings are cut into segments transcribed in parallel and stitched in order), labels who speaks (`professional`, `patient` or `unknown`) with a short pass on the fast model, has the Escriba fill the template with an explicit, versioned prompt, and files the draft. Speaker times are estimates. Transcription and model use are charged to the customer's allowance like any other use.
 
+## Agreed actions
+
+Besides the note, Rook lists what the conversation **agreed to do next**, as proposals. Nothing is executed until your product calls `actions/apply` with the actions the professional approved. Only actions actually agreed are listed; Rook never suggests or completes one.
+
+`GET .../consultations/{id}` (state `drafted`) adds `actions`:
+
+```json
+{ "actions": [{
+    "id": "a1", "kind": "follow_up", "title": "Return visit", "detail": "Return next Tuesday at 2 pm.",
+    "status": "proposed", "evidence": [3, 4],
+    "payload": { "startsAt": "2026-12-08T14:00:00-03:00", "durationMinutes": 30, "reason": "Check-up", "whenText": "next Tuesday at 2 pm" },
+    "check": { "available": false, "conflict": "Another appointment", "suggestion": "2026-12-08T15:00:00-03:00" }
+}] }
+```
+
+`evidence` holds zero-based positions in `transcript`. `status` is `proposed`, `applied`, `failed` (with `error`, a short code) or `skipped`. An action without evidence in the transcript is never listed.
+
+| `kind` | `payload` |
+| --- | --- |
+| `follow_up` | `startsAt` (ISO 8601 with offset, worked out from the consultation date and the clinic's time zone) or `range: { from, to }` when the date was vague; `whenText` (the words said), `durationMinutes`, `reason`, `professional`. At least one of `startsAt`, `range`, `whenText`. |
+| `prescription` | `items`: `[{ drug, dose?, posology?, duration? }]`, as said, never filled in. |
+| `exam_request` | `exams`: names as said; `indication?`. |
+| `certificate` | `type?`, `days?`. |
+| `patient_message` | `text`: a short message, only when guidance was given. |
+
+The clinic's time zone is `context.timezone` of the consultation when you send it (an IANA name such as `America/Sao_Paulo`), otherwise the customer's, otherwise the template's `timezone`, otherwise UTC.
+
+**`check`** appears on a `follow_up` with an exact `startsAt` when the connector offers an availability tool and/or a conflicts tool: `{ available, conflict?, suggestion? }`. Without them it is left out.
+
+```http
+POST .../consultations/{id}/actions/apply
+{ "actionIds": ["a1", "a2"], "edits": { "a1": { "startsAt": "2026-12-09T09:00:00-03:00" } } }
+→ { "actions": [ { "id": "a1", "status": "applied", ... }, { "id": "a2", "status": "failed", "error": "connector_failed", ... } ] }
+```
+
+- `edits` changes the named fields of an action, as the professional corrected them (a new `startsAt` replaces a `range`); it is checked against the action's kind (`400 invalid_edit`). An unknown id is `400 unknown_action`. The consultation must be `drafted` (`409 not_drafted`).
+- Each action runs through the connector tool of its kind, **as the person who asked** (the `X-Rook-*` headers of [Who is asking](/en/partners/connector/#who-is-asking)). It carries the payload, `clientId`, `appointmentId`, `consultationId`, `actionId` and `idempotencyKey` (`<consultationId>:<actionId>`).
+- **Idempotent per action id:** applying an `applied` action again does not call the connector again and answers `applied`. A `failed` one may be applied again. One being applied by another call answers `skipped` with `error: "in_progress"`.
+- `skipped` with `error: "no_tool"` means the connector has no tool for that kind.
+- Every execution is audited (ids, kind, tool, outcome; never content).
+
+The tools are found in the connector's tool list by name; set `consultationActions.tools` in the partner template to name them yourself (needed when the connector has more than 20 tools):
+
+| Purpose | Template key | Found by a name like |
+| --- | --- | --- |
+| availability of a time | `availability` | `..._availability` |
+| conflicts at a time | `conflicts` | `..._conflicts` |
+| create the appointment | `follow_up` | `appointments_create` |
+| draft a prescription | `prescription` | `draft_prescription` |
+| draft an exam request | `exam_request` | `draft_exam_request` |
+| draft a certificate | `certificate` | `draft_certificate` |
+| message to the patient | `patient_message` | `draft_message` |
+
+Availability and conflicts receive `{ start, end, durationMinutes, professional?, clientId, timezone }`; answer `{ available: boolean, suggestion? }` and `{ conflicts: [...] }`, without identifying other patients. In the SDK, `Rook.applyConsultationActions(consultationId, actionIds, edits?)` calls this route ([AI in your own screens](/en/partners/inline-ai/)).
+
 ## Privacy and retention
 
 - Audio, transcript and note are stored **only in sealed object storage**, never in database rows, and sent only to the configured speech and model providers and to the customer's connector.

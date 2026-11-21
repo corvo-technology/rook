@@ -4,12 +4,15 @@ import { createDb } from "./client.js";
 import {
   addConsultationChunk,
   beginConsultationPurge,
+  claimConsultationAction,
   createConsultation,
   findConsultation,
   finishConsultationPurge,
+  listConsultationActionRuns,
   listConsultationChunks,
   listExpiredConsultations,
   settleConsultation,
+  settleConsultationAction,
   startConsultationProcessing,
 } from "./consultations.js";
 import { provisionPartnerTenant } from "./partner-tenants.js";
@@ -219,5 +222,41 @@ describePostgres("consultations (PostgreSQL, runtime login)", () => {
       data: { createdAt: old },
     });
     await expect(ids()).resolves.toContain(idle.consultation.id);
+  });
+
+  it("lets one caller run an action, repeats an applied one, and retries a failed one", async () => {
+    const { consultation } = await fixture("actions");
+    const claims = await Promise.all(
+      [1, 2, 3].map(() => claimConsultationAction(db, consultation.id, "a1")),
+    );
+    expect(claims.filter((c) => c === "claimed")).toHaveLength(1);
+    expect(claims.filter((c) => c === "busy")).toHaveLength(2);
+    await settleConsultationAction(db, consultation.id, "a1", {
+      status: "failed",
+      errorCode: "connector_failed",
+    });
+    await expect(claimConsultationAction(db, consultation.id, "a1")).resolves.toBe("claimed");
+    await settleConsultationAction(db, consultation.id, "a1", { status: "applied" });
+    await expect(claimConsultationAction(db, consultation.id, "a1")).resolves.toBe("applied");
+    expect(await listConsultationActionRuns(db, consultation.id)).toEqual([
+      { actionId: "a1", status: "applied", errorCode: null },
+    ]);
+  });
+
+  it("takes over an action whose caller died", async () => {
+    const { consultation } = await fixture("stale");
+    await claimConsultationAction(db, consultation.id, "a1", new Date());
+    await expect(
+      claimConsultationAction(db, consultation.id, "a1", new Date(Date.now() + 10 * 60_000)),
+    ).resolves.toBe("claimed");
+  });
+
+  it("keeps action runs out of a customer's own context", async () => {
+    const { consultation, tenant } = await fixture("actions-rls");
+    await claimConsultationAction(db, consultation.id, "a1");
+    const seen = await runAsTenant({ spaceId: tenant.spaceId, userId: tenant.ownerUserId }, () =>
+      prisma.consultationActionRun.count(),
+    );
+    expect(seen).toBe(0);
   });
 });

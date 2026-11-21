@@ -1430,6 +1430,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     prisma,
     artifacts,
     jobs,
+    connector: stack.connector,
     base: {
       now: () => new Date(),
       allowRequest: (partnerId) => takePartnerRequest(prisma, partnerId, 120),

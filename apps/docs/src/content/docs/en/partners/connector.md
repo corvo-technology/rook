@@ -45,3 +45,5 @@ For [consultation recording](/en/partners/consultations/), the customer's connec
 | `mcp_records_entries_update_draft` | `{ recordId, entryId, expectedRevision, content }` | the updated entry |
 
 Writes carry an `idempotencyKey` (the consultation id). Your system marks the draft with the `aiDraft` badge. When a draft exists, or creating answers `MCP_RECORDS_DRAFT_EXISTS`, Rook **updates** the existing one with `expectedRevision` instead of creating a second. Rook calls the tools as the customer's **Escriba** agent (the template agent with `key: "escriba"`), so the connector's authorization applies. **Rook has no tool to sign**: drafts only.
+
+To carry out the [actions agreed in a consultation](/en/partners/consultations/#agreed-actions), the connector may also offer tools for availability, conflicts, creating the appointment and drafting prescriptions, exam requests, certificates and patient messages. They are all optional: an action whose kind has no tool is skipped, and a follow-up without availability tools is simply not checked.

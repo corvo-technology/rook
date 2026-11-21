@@ -7,13 +7,25 @@ import type {
   ConnectorProvider,
   SecretStore,
 } from "@corvo/adapter-kit";
-import type { Actor, ConsultationTemplate } from "@corvo/contracts";
-import { CONSULTATION_STRUCTURED } from "@corvo/contracts";
+import type {
+  Actor,
+  ConsultationAction,
+  ConsultationActionsApplyInput,
+  ConsultationTemplate,
+} from "@corvo/contracts";
+import {
+  CONSULTATION_ACTION_PAYLOADS,
+  CONSULTATION_STRUCTURED,
+  ConsultationActionTools,
+  isValidTimeZone,
+} from "@corvo/contracts";
 import type { PrismaClient } from "@corvo/db";
 import {
   beginConsultationPurge,
   CHIEF_SPAWN_KEY,
+  claimConsultationAction,
   finishConsultationPurge,
+  listConsultationActionRuns,
   listConsultationChunks,
   listExpiredConsultations,
   recordSecurityEvent,
@@ -22,6 +34,7 @@ import {
   runAsTenant,
   setConsultationResult,
   settleConsultation,
+  settleConsultationAction,
 } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import {
@@ -30,10 +43,16 @@ import {
   transcribeAudioBytes,
 } from "./audio-transcription.js";
 import {
+  applyActions,
+  type ResolvedActionTools,
+  resolveActionTools,
+} from "./consultation-actions.js";
+import {
   type ConsultationRecord,
   type ConsultationStore,
   CreditsExhaustedError,
   processConsultation,
+  readConsultationResult,
 } from "./consultation-job.js";
 import { resolveDeploymentModel } from "./deployment-model.js";
 import { alertPartnerOfCause, alertPartnerOfSetupFailure } from "./partner-run-alerts.js";
@@ -52,7 +71,7 @@ export interface ConsultationWiringDeps {
   resolveModel(scope: Scope & { botId: string }): Promise<AgentRunModel>;
   resolveFastModel(scope: Scope): Promise<AgentRunModel | undefined>;
   resolveStrongModel(scope: Scope): Promise<AgentRunModel | undefined>;
-  connector: Pick<ConnectorProvider, "execute">;
+  connector: Pick<ConnectorProvider, "execute" | "discoverTools">;
   deploymentModelKey?: string;
   allowPrivateEndpoint?: boolean;
   /** The deployment's speech key for customers on credits. */
@@ -91,9 +110,29 @@ function prismaStore(prisma: PrismaClient): ConsultationStore {
     async load(id) {
       const row = await prisma.consultation.findUnique({
         where: { id },
-        include: { tenant: { select: { organizationId: true, ownerUserId: true } } },
+        include: {
+          tenant: {
+            select: {
+              organizationId: true,
+              ownerUserId: true,
+              owner: { select: { timezone: true } },
+            },
+          },
+          partner: { select: { template: true } },
+        },
       });
       if (!row) return null;
+      const template = (row.partner.template ?? {}) as {
+        timezone?: unknown;
+        consultationActions?: { tools?: unknown };
+      };
+      const context = row.context as unknown as ConsultationRecord["context"] & {
+        timezone?: string;
+      };
+      const timezone = [context.timezone, row.tenant.owner.timezone, template.timezone].find(
+        (zone): zone is string => typeof zone === "string" && isValidTimeZone(zone),
+      );
+      const override = ConsultationActionTools.safeParse(template.consultationActions?.tools);
       return {
         id: row.id,
         partnerId: row.partnerId,
@@ -102,10 +141,12 @@ function prismaStore(prisma: PrismaClient): ConsultationStore {
         ownerUserId: row.tenant.ownerUserId,
         state: row.state,
         template: row.template as ConsultationTemplate | typeof CONSULTATION_STRUCTURED,
-        context: row.context as unknown as ConsultationRecord["context"],
+        context,
         createdAt: row.createdAt,
         resultArtifactId: row.resultArtifactId,
         purgedAt: row.purgedAt,
+        ...(timezone ? { timezone } : {}),
+        ...(override.success ? { actionToolOverride: override.data } : {}),
       };
     },
     chunks: (id) => listConsultationChunks(prisma, id),
@@ -186,31 +227,16 @@ export function createConsultationProcessor(deps: ConsultationWiringDeps) {
               if (!bot) throw new Error("No agent holds the record connector");
               return runModel(deps, record, bot.id, call);
             }),
-          callTool: (record, tool, args) =>
+          callTool: (record, tool, args, options) =>
             runAsTenant({ spaceId: record.spaceId, userId: record.ownerUserId }, async () => {
               const found = await target(record);
               if (!found) return { ok: false };
-              const executionId = `consultation:${randomUUID()}`;
-              for await (const event of deps.connector.execute(
-                {
-                  tool,
-                  args,
-                  executionId,
-                  route: { connectorId: "mcp", toolName: tool, resourceId: found.serverId },
-                },
-                {
-                  operationId: executionId,
-                  traceId: executionId,
-                  spaceId: record.spaceId,
-                  userId: record.ownerUserId,
-                  botId: found.botId,
-                  signal: AbortSignal.timeout(TOOL_TIMEOUT_MS),
-                },
-              )) {
-                if (event.type === "result") return { ok: true, data: event.data };
-                if (event.type === "error") return { ok: false, message: event.message };
-              }
-              return { ok: false };
+              return callConnectorTool(deps, record, found, tool, args, options?.requestedByUserId);
+            }),
+          actionTools: (record) =>
+            runAsTenant({ spaceId: record.spaceId, userId: record.ownerUserId }, async () => {
+              const found = await target(record);
+              return found ? discoverActionTools(deps, record, found) : {};
             }),
           onSetupFailure: (record, cause) => alertPartnerOfCause(deps, record.spaceId, cause),
           audit: ({ type, consultationId: id, outcome }) =>
@@ -220,6 +246,176 @@ export function createConsultationProcessor(deps: ConsultationWiringDeps) {
       ),
     );
   };
+}
+
+type ConnectorTarget = { botId: string; serverId: string };
+
+/** One tool call on the customer's connector, as the Escriba and, when given, as one person. */
+async function callConnectorTool(
+  deps: Pick<ConsultationWiringDeps, "connector">,
+  record: ConsultationRecord,
+  found: ConnectorTarget,
+  tool: string,
+  args: Record<string, unknown>,
+  requestedByUserId?: string,
+): Promise<{ ok: true; data: unknown } | { ok: false; message?: string }> {
+  const executionId = `consultation:${randomUUID()}`;
+  for await (const event of deps.connector.execute(
+    {
+      tool,
+      args,
+      executionId,
+      route: { connectorId: "mcp", toolName: tool, resourceId: found.serverId },
+    },
+    {
+      operationId: executionId,
+      traceId: executionId,
+      spaceId: record.spaceId,
+      userId: record.ownerUserId,
+      botId: found.botId,
+      ...(requestedByUserId ? { requestedByUserId } : {}),
+      signal: AbortSignal.timeout(TOOL_TIMEOUT_MS),
+    },
+  )) {
+    if (event.type === "result") return { ok: true, data: event.data };
+    if (event.type === "error") return { ok: false, message: event.message };
+  }
+  return { ok: false };
+}
+
+/**
+ * The connector's tools for actions: the names the partner's template gives, else the ones its
+ * tool list offers by name. A connector with too many tools lists only a catalog; then only the
+ * template's names apply.
+ */
+async function discoverActionTools(
+  deps: Pick<ConsultationWiringDeps, "connector">,
+  record: ConsultationRecord,
+  found: ConnectorTarget,
+): Promise<ResolvedActionTools> {
+  let offered: string[] = [];
+  try {
+    const id = `consultation:${randomUUID()}`;
+    const tools = await deps.connector.discoverTools({
+      operationId: id,
+      traceId: id,
+      spaceId: record.spaceId,
+      userId: record.ownerUserId,
+      botId: found.botId,
+      signal: AbortSignal.timeout(30_000),
+    });
+    offered = tools
+      .filter((tool) => tool.route?.resourceId === found.serverId)
+      .map((tool) => tool.route?.toolName ?? tool.name);
+  } catch {
+    // The template's own names still apply.
+  }
+  return resolveActionTools(offered, record.actionToolOverride);
+}
+
+/**
+ * Carries out the actions of a drafted consultation a person approved, through the customer's
+ * connector, as that person. Each action runs once however many times it is asked for.
+ */
+export function createConsultationActionApplier(
+  deps: Pick<ConsultationWiringDeps, "prisma" | "artifacts" | "connector">,
+) {
+  const store = prismaStore(deps.prisma);
+  return async (
+    consultationId: string,
+    request: ConsultationActionsApplyInput,
+    caller: { requestedByUserId?: string },
+  ): Promise<
+    | { ok: true; actions: ConsultationAction[] }
+    | { ok: false; error: "not_found" | "unknown_action" | "invalid_edit" }
+  > =>
+    runAsSystem("apply the actions of a consultation", async () => {
+      const record = await store.load(consultationId);
+      if (!record || record.purgedAt || record.state !== "drafted") {
+        return { ok: false, error: "not_found" } as const;
+      }
+      const result = await readConsultationResult({ artifacts: deps.artifacts }, record);
+      const proposed = result?.actions ?? [];
+      const edits: Record<string, Record<string, unknown>> = {};
+      for (const id of request.actionIds) {
+        if (!proposed.some((action) => action.id === id)) {
+          return { ok: false, error: "unknown_action" } as const;
+        }
+      }
+      for (const [id, payload] of Object.entries(request.edits ?? {})) {
+        const action = proposed.find((candidate) => candidate.id === id);
+        if (!action || !request.actionIds.includes(id)) {
+          return { ok: false, error: "unknown_action" } as const;
+        }
+        // An edit changes the fields it names; a new exact start replaces a range.
+        const merged: Record<string, unknown> = { ...action.payload, ...payload };
+        if (action.kind === "follow_up" && payload.startsAt) delete merged.range;
+        const parsed = CONSULTATION_ACTION_PAYLOADS[action.kind].safeParse(merged);
+        if (!parsed.success) return { ok: false, error: "invalid_edit" } as const;
+        edits[id] = parsed.data as Record<string, unknown>;
+      }
+      return runAsTenant({ spaceId: record.spaceId, userId: record.ownerUserId }, async () => {
+        const found = await findConnectorTarget(deps.prisma, record);
+        const tools = found ? await discoverActionTools(deps, record, found) : {};
+        const applied = await applyActions(
+          {
+            tools,
+            claim: (actionId) => claimConsultationAction(deps.prisma, record.id, actionId),
+            settle: (actionId, outcome) =>
+              settleConsultationAction(deps.prisma, record.id, actionId, outcome),
+            call: async (tool, args) =>
+              found
+                ? callConnectorTool(deps, record, found, tool, args, caller.requestedByUserId)
+                : { ok: false },
+            audit: (event) =>
+              void recordSecurityEvent({
+                type: event.type,
+                spaceId: record.spaceId,
+                metadata: {
+                  consultationId: record.id,
+                  partnerId: record.partnerId,
+                  actionId: event.actionId,
+                  kind: event.kind,
+                  tool: event.tool,
+                  outcome: event.outcome,
+                },
+              }),
+          },
+          proposed,
+          {
+            actionIds: request.actionIds,
+            edits,
+            consultationId: record.id,
+            context: {
+              clientId: record.context.clientId,
+              ...(record.context.appointmentId
+                ? { appointmentId: record.context.appointmentId }
+                : {}),
+            },
+          },
+        );
+        return { ok: true, actions: applied } as const;
+      });
+    });
+}
+
+/** What became of each proposed action so far, over the actions as they were sealed. */
+export async function consultationActionStates(
+  prisma: PrismaClient,
+  consultationId: string,
+  proposed: readonly ConsultationAction[],
+): Promise<ConsultationAction[]> {
+  const runs = new Map(
+    (await listConsultationActionRuns(prisma, consultationId)).map((run) => [run.actionId, run]),
+  );
+  return proposed.map((action) => {
+    const run = runs.get(action.id);
+    if (run?.status === "applied") return { ...action, status: "applied" };
+    if (run?.status === "failed") {
+      return { ...action, status: "failed", error: run.errorCode ?? "connector_failed" };
+    }
+    return action;
+  });
 }
 
 type ModelCall = {

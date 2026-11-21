@@ -45,3 +45,5 @@ Para a [gravação de consultas](/partners/consultations/), o conector do client
 | `mcp_records_entries_update_draft` | `{ recordId, entryId, expectedRevision, content }` | a entrada atualizada |
 
 As escritas trazem uma `idempotencyKey` (o id da consulta). O seu sistema marca o rascunho com o selo `aiDraft`. Se já existe um rascunho, ou se criar responde `MCP_RECORDS_DRAFT_EXISTS`, o Rook **atualiza** o existente com `expectedRevision` em vez de criar um segundo. O Rook chama as ferramentas como o agente **Escriba** do cliente (o agente do modelo com `key: "escriba"`), então a autorização do conector vale. **O Rook não tem ferramenta para assinar**: só rascunhos.
+
+Para executar as [ações combinadas numa consulta](/partners/consultations/#a%C3%A7%C3%B5es-combinadas), o conector pode oferecer também ferramentas de disponibilidade, conflitos, criação do agendamento e rascunho de receitas, pedidos de exame, atestados e mensagens ao paciente. Todas são opcionais: uma ação cujo tipo não tem ferramenta é ignorada, e um retorno sem ferramentas de disponibilidade apenas não é verificado.

@@ -16,6 +16,7 @@ export function embedSessionCaller(deps: {
 }): (request: Request) => Promise<{
   partner: { id: string; template?: unknown; scribeRetentionDays?: number | null };
   tenant: { id: string; organizationId: string; state: string };
+  userId: string;
 } | null> {
   return async (request) => {
     const session = await deps.session(request);
@@ -32,6 +33,7 @@ export function embedSessionCaller(deps: {
     return {
       partner: tenant.partner,
       tenant: { id: tenant.id, organizationId: tenant.organizationId, state: tenant.state },
+      userId: session.actor.userId,
     };
   };
 }

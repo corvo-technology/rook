@@ -97,7 +97,7 @@ O fluxo para o profissional:
 1. **Gravar consulta** abre uma pergunta: o paciente autorizou a gravação? O profissional confirma **Sim, verbalmente** ou **Sim, por escrito**, ou cancela. Nada é gravado e o microfone não é pedido antes dessa confirmação; o método e o horário seguem para o Rook como o consentimento da consulta.
 2. Durante a gravação a faixa mostra o tempo, **Pausar** e **Parar**.
 3. Ao parar, mostra **Gerando rascunho…** enquanto o Rook transcreve e preenche a nota.
-4. Quando o rascunho fica pronto, o elemento dispara `corvo-consultation` com `{ consultationId, clientId, appointmentId, note, transcript }`. Salve a nota como **rascunho** no prontuário e chame `el.resolveConsultation({ path: "/pacientes/42/evolucao/777" })`: a faixa passa a mostrar **Abrir rascunho**, que dispara `corvo-navigate` com esse caminho.
+4. Quando o rascunho fica pronto, o elemento dispara `corvo-consultation` com `{ consultationId, clientId, appointmentId, note, transcript, actions? }`. Salve a nota como **rascunho** no prontuário e chame `el.resolveConsultation({ path: "/pacientes/42/evolucao/777" })`: a faixa passa a mostrar **Abrir rascunho**, que dispara `corvo-navigate` com esse caminho.
 
 ```js
 el.addEventListener("corvo-consultation", async (event) => {
@@ -107,7 +107,7 @@ el.addEventListener("corvo-consultation", async (event) => {
 });
 ```
 
-O áudio e a transcrição são apagados do Rook assim que o evento é entregue (a nota é sua a partir daí). Se o microfone estiver bloqueado ou a gravação falhar, a faixa diz e oferece **Tentar de novo**. A gravação continua se o painel for fechado, e o botão flutuante ganha um anel vermelho enquanto grava. Para gravar dentro de um formulário seu, sem o painel, use `Rook.recorder` em [IA nas suas telas](/partners/inline-ai/).
+O áudio e a transcrição são apagados do Rook assim que o evento é entregue (a nota é sua a partir daí), a menos que o evento traga `actions` ([ações combinadas](/partners/consultations/#a%C3%A7%C3%B5es-combinadas)). Se o microfone estiver bloqueado ou a gravação falhar, a faixa diz e oferece **Tentar de novo**. A gravação continua se o painel for fechado, e o botão flutuante ganha um anel vermelho enquanto grava. Para gravar dentro de um formulário seu, sem o painel, use `Rook.recorder` em [IA nas suas telas](/partners/inline-ai/).
 
 ## Ações
 
@@ -174,7 +174,7 @@ O mesmo script define também `Rook.ask`, `Rook.recorder` e `Rook.configure` (ve
 | `corvo-open`, `corvo-close` | Só no launcher: ele abriu ou fechou. |
 | `corvo-unavailable` `{ reason }` | Só no launcher: o assistente não pode ser oferecido e o launcher se escondeu. `reason` é `forbidden`, `unavailable`, `network`, `no_code` ou `expired`. |
 | `corvo-action` `{ name, params, id }` | Só no launcher: o cliente confirmou uma ação que você registrou. Execute e depois chame `resolveAction(id, result)`. |
-| `corvo-consultation` `{ consultationId, clientId, appointmentId, note, transcript }` | Só no launcher, com `consultations`: o rascunho de uma consulta gravada no painel está pronto. Salve-o e chame `resolveConsultation`. |
+| `corvo-consultation` `{ consultationId, clientId, appointmentId, note, transcript, actions? }` | Só no launcher, com `consultations`: o rascunho de uma consulta gravada no painel está pronto. Salve-o e chame `resolveConsultation`. |
 | `corvo-consultation-error` `{ code, message, status, consultationId }` | Só no launcher, com `consultations`: a gravação falhou. `code` é um dos [códigos de erro de gravação](/partners/inline-ai/); o painel já mostra `message`. Registre-o ou mostre as suas palavras. |
 
 O elemento pede um novo código à sua rota sempre que o quadro precisa de um, sozinho.

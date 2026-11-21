@@ -241,3 +241,69 @@ export async function setPartnerScribeRetentionDays(
   });
   if (result.count === 0) throw new Error(`Unknown partner: ${slug}`);
 }
+
+export type ActionClaim = "claimed" | "applied" | "busy";
+
+/** An `applying` mark older than this belongs to a call that died, and may be taken over. */
+export const ACTION_CLAIM_STALE_MS = 2 * 60_000;
+
+/**
+ * Takes one action to run it. Only one caller gets `claimed`; a repeat of an applied action says
+ * so instead of running it again, and a failed or abandoned one may be claimed again.
+ */
+export async function claimConsultationAction(
+  prisma: PrismaClient,
+  consultationId: string,
+  actionId: string,
+  now = new Date(),
+): Promise<ActionClaim> {
+  return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`consultation-action:${consultationId}:${actionId}`}, 0))`;
+    const key = { consultationId_actionId: { consultationId, actionId } };
+    const row = await tx.consultationActionRun.findUnique({ where: key });
+    if (!row) {
+      await tx.consultationActionRun.create({
+        data: { consultationId, actionId, status: "applying" },
+      });
+      return "claimed";
+    }
+    if (row.status === "applied") return "applied";
+    if (
+      row.status === "applying" &&
+      now.getTime() - row.updatedAt.getTime() < ACTION_CLAIM_STALE_MS
+    )
+      return "busy";
+    await tx.consultationActionRun.update({
+      where: key,
+      data: { status: "applying", errorCode: null },
+    });
+    return "claimed";
+  });
+}
+
+export async function settleConsultationAction(
+  prisma: PrismaClient,
+  consultationId: string,
+  actionId: string,
+  outcome: { status: "applied" } | { status: "failed"; errorCode: string },
+): Promise<void> {
+  await prisma.consultationActionRun.updateMany({
+    where: { consultationId, actionId },
+    data: {
+      status: outcome.status,
+      errorCode: outcome.status === "failed" ? outcome.errorCode : null,
+    },
+  });
+}
+
+/** What became of each action so far, by action id. */
+export async function listConsultationActionRuns(
+  prisma: PrismaClient,
+  consultationId: string,
+): Promise<Array<{ actionId: string; status: string; errorCode: string | null }>> {
+  const rows = await prisma.consultationActionRun.findMany({
+    where: { consultationId },
+    select: { actionId: true, status: true, errorCode: true },
+  });
+  return rows;
+}

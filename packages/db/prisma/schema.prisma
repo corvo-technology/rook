@@ -3624,6 +3624,7 @@ model Consultation {
   createdAt        DateTime            @default(now())
   updatedAt        DateTime            @updatedAt
   chunks           ConsultationChunk[]
+  actionRuns       ConsultationActionRun[]
 
   @@index([tenantId])
   @@index([state, createdAt])
@@ -3642,6 +3643,22 @@ model ConsultationChunk {
 
   @@id([consultationId, seq])
   @@map("consultation_chunks")
+}
+
+/// What happened to one action agreed in a consultation, so applying it twice runs it once. The
+/// action's content stays in the sealed result; this row holds only ids, a status and a code.
+model ConsultationActionRun {
+  consultationId String
+  consultation   Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  actionId       String
+  /// applying | applied | failed
+  status         String
+  errorCode      String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@id([consultationId, actionId])
+  @@map("consultation_action_runs")
 }
 
 /// Rook's price list. Plan keys reuse the entitlement ids (personal, team, company).

@@ -1573,32 +1573,31 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "run_subagent",
     description:
-      "Run a short-lived helper inside this turn only. It is not a bot: no list entry, no thread, no computer of its own, and it disappears when this turn ends. Use it for short parallel work you will fold into this answer; work that must outlive the turn belongs to a teammate (message_bot) or a schedule. Never call this because the user asked to create a bot — that is spawn_bot, and spawn_bot alone.",
+      "Run a short-lived helper inside this turn only. It is not a bot: no list entry, no thread, no computer of its own, and it ends with this turn. Use it for short parallel work you will fold into this answer; work that must outlive the turn belongs to message_bot or a schedule. Never call this because the user asked to create a bot: that is spawn_bot alone.",
     inputSchema: {
       type: "object",
       properties: {
         name: {
           type: "string",
-          description: "Short label shown in the thread, e.g. scout or reviewer.",
+          description: "Short label.",
         },
-        task: { type: "string", description: "The work the helper should complete." },
+        task: { type: "string", description: "The work to complete." },
         instructions: {
           type: "string",
-          description: "Optional extra system instructions for the helper.",
+          description: "Extra instructions for the helper.",
         },
         model_provider: {
           type: "string",
-          description: "Optional connected model provider. Set together with model_id.",
+          description: "Connected model provider, with model_id.",
         },
         model_id: {
           type: "string",
-          description: "Optional connected model ID. Set together with model_provider.",
+          description: "Connected model ID, with model_provider.",
         },
         tools: {
           type: "array",
           items: { type: "string" },
-          description:
-            "Optional names of this agent's tools the helper may use. By default a helper can only read and search (files, web, memory, history); name more here when the work needs them.",
+          description: "Tools it may use; default read-only.",
         },
       },
       required: ["name", "task"],

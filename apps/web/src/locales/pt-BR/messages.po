@@ -718,6 +718,10 @@ msgstr "{used} de {limit} tokens"
 msgid "{used} tokens"
 msgstr "{used} tokens"
 
+#: src/pages/VaultPage.tsx
+msgid "{variable} is reserved and cannot be used as a command variable. Choose another name."
+msgstr "{variable} é reservada e não pode ser usada como variável de comando. Escolha outro nome."
+
 #: src/pages/platform/SimulatorSection.tsx
 msgid "{voiceMinutes} min"
 msgstr "{voiceMinutes} min"
@@ -806,6 +810,7 @@ msgstr "Sobre {label}"
 msgid "About you"
 msgstr "Sobre você"
 
+#: src/components/McpSettings.tsx
 #: src/pages/connections/AgentAccessSection.tsx
 #: src/pages/ConnectionsPage.tsx
 msgid "Access"
@@ -899,6 +904,7 @@ msgstr "Atividade"
 #: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/Store.tsx
+#: src/pages/VaultPage.tsx
 msgid "Add"
 msgstr "Adicionar"
 
@@ -982,6 +988,7 @@ msgid "Add computer"
 msgstr "Adicionar computador"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Add credential"
 msgstr "Adicionar credencial"
 
@@ -1130,6 +1137,11 @@ msgstr "Adicionar: {add}"
 msgid "Added"
 msgstr "Adicionado"
 
+#. placeholder {0}: new Date(credential.createdAt).toLocaleDateString(i18n.locale)
+#: src/pages/VaultPage.tsx
+msgid "Added {0}"
+msgstr "Adicionada em {0}"
+
 #. placeholder {0}: parts.join(", ")
 #: src/pages/ImportFlow.tsx
 msgid "Added {0}."
@@ -1218,6 +1230,7 @@ msgstr "Modelo de agentes"
 #: src/pages/shell/embed-tabs.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/Store.tsx
+#: src/pages/VaultPage.tsx
 msgid "Agents"
 msgstr "Agentes"
 
@@ -1268,6 +1281,10 @@ msgstr "Tudo certo"
 msgid "All models"
 msgstr "Todos os modelos"
 
+#: src/components/McpSettings.tsx
+msgid "All spaces"
+msgstr "Todos os espaços"
+
 #: src/pages/ActivityList.tsx
 msgid "All statuses"
 msgstr "Todos os status"
@@ -1279,6 +1296,11 @@ msgstr "Todo o período"
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Allow"
 msgstr "Permitir"
+
+#. placeholder {0}: bot.name
+#: src/pages/VaultPage.tsx
+msgid "Allow {0}"
+msgstr "Permitir {0}"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Allow cross-space bot communication"
@@ -1735,6 +1757,10 @@ msgstr "Automação"
 msgid "Available after the routine is saved"
 msgstr "Disponível depois que a rotina for salva"
 
+#: src/pages/VaultPage.tsx
+msgid "Available to shell commands as {variable}"
+msgstr "Disponível para comandos de shell como {variable}"
+
 #: src/pages/shell/bot-credentials.tsx
 msgid "Available to this bot's shell commands as {commandVariable}"
 msgstr "Disponível para os comandos de shell deste bot como {commandVariable}"
@@ -1778,6 +1804,7 @@ msgid "Base URL"
 msgstr "URL Base"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Basic auth"
 msgstr "Autenticação básica"
 
@@ -1788,6 +1815,7 @@ msgstr "Autenticação básica ({username})"
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/Store.tsx
+#: src/pages/VaultPage.tsx
 msgid "Bearer token"
 msgstr "Token portador"
 
@@ -2045,6 +2073,7 @@ msgstr "Não pode ler imagens"
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/message-versions.tsx
 #: src/pages/Store.tsx
+#: src/pages/VaultPage.tsx
 #: src/pages/WhatsAppNumbers.tsx
 #: src/pages/WikiBrowser.tsx
 msgid "Cancel"
@@ -2427,6 +2456,7 @@ msgstr "Comando"
 
 #: src/components/AskCard.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Command variable"
 msgstr "Variável de comando"
 
@@ -2530,6 +2560,10 @@ msgstr "Os computadores estão desligados."
 msgid "Computers are off. Set SANDBOX_PROVIDER=docker with SANDBOX_SUPERVISOR_TOKEN, or set SANDBOX_PROVIDER to e2b, daytona, or boat with its API key. Recreate the stack after changing .env."
 msgstr "Computadores estão desligados. Defina SANDBOX_PROVIDER=docker com SANDBOX_SUPERVISOR_TOKEN, ou SANDBOX_PROVIDER como e2b, daytona ou boat com a chave de API. Recrie o stack após alterar o .env."
 
+#: src/components/McpSettings.tsx
+msgid "Configure"
+msgstr "Configurar"
+
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Configure the space"
 msgstr "Configurar o espaço"
@@ -2561,6 +2595,10 @@ msgstr "Confirmar recuperação?"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Confirm reset?"
 msgstr "Confirmar redefinição?"
+
+#: src/components/McpSettings.tsx
+msgid "Confirm revoke?"
+msgstr "Revogar?"
 
 #: src/pages/InvitePage.tsx
 msgid "Confirm your email first, then open this link again"
@@ -2786,6 +2824,7 @@ msgstr "Conversa"
 msgid "Copied"
 msgstr "Copiado"
 
+#: src/components/McpSettings.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/partner/PartnerIntegration.tsx
@@ -2817,6 +2856,10 @@ msgstr "Copiar prompt"
 #: src/components/markdown-copy.tsx
 msgid "Copy rows"
 msgstr "Copiar linhas"
+
+#: src/components/McpSettings.tsx
+msgid "Copy the key now. It is not shown again."
+msgstr "Copie a chave agora. Ela não será mostrada de novo."
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "corvo-shared and IDs starting with bot- are reserved for Rook."
@@ -2965,6 +3008,10 @@ msgstr "Não foi possível criar a seção"
 msgid "Could not create space"
 msgstr "Não foi possível criar o espaço"
 
+#: src/components/McpSettings.tsx
+msgid "Could not create the key"
+msgstr "Não foi possível criar a chave"
+
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Could not create the link"
 msgstr "Não foi possível criar o link"
@@ -3072,6 +3119,7 @@ msgid "Could not leave"
 msgstr "Não foi possível sair"
 
 #: src/components/ErrorBoundary.tsx
+#: src/components/McpSettings.tsx
 #: src/components/PasskeySettings.tsx
 #: src/pages/ApprovalsPage.tsx
 #: src/pages/InvitePage.tsx
@@ -3108,6 +3156,7 @@ msgid "Could not load bots. Reload to try again."
 msgstr "Não foi possível carregar os bots. Recarregue para tentar de novo."
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Could not load credentials."
 msgstr "Não foi possível carregar as credenciais."
 
@@ -3127,6 +3176,10 @@ msgstr "Não foi possível carregar os membros"
 #: src/pages/model-settings/use-model-settings.ts
 msgid "Could not load model settings"
 msgstr "Não foi possível carregar as configurações do modelo"
+
+#: src/pages/VaultPage.tsx
+msgid "Could not load recent uses"
+msgstr "Não foi possível carregar os usos recentes"
 
 #: src/pages/Routines.tsx
 msgid "Could not load routines."
@@ -3232,6 +3285,7 @@ msgid "Could not remove rule"
 msgstr "Não foi possível remover."
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Could not remove the credential"
 msgstr "Não foi possível remover a credencial"
 
@@ -3267,6 +3321,10 @@ msgstr "Não foi possível restaurar a regra"
 #: src/pages/Store.tsx
 msgid "Could not revoke connection"
 msgstr "Não foi possível revogar a conexão"
+
+#: src/components/McpSettings.tsx
+msgid "Could not revoke the key"
+msgstr "Não foi possível revogar a chave"
 
 #: src/pages/shell/use-routine-editor.ts
 msgid "Could not run routine"
@@ -3345,6 +3403,7 @@ msgstr "Não foi possível salvar essa voz"
 
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/pasted-key-prompt.tsx
+#: src/pages/VaultPage.tsx
 msgid "Could not save the credential"
 msgstr "Não foi possível salvar a credencial"
 
@@ -3440,6 +3499,7 @@ msgstr "Não foi possível atualizar"
 #: src/pages/AppAgentAccess.tsx
 #: src/pages/connections/AccessSheet.tsx
 #: src/pages/connections/AgentAccessSection.tsx
+#: src/pages/VaultPage.tsx
 msgid "Could not update agent access"
 msgstr "Não foi possível atualizar o acesso do agente"
 
@@ -3557,6 +3617,10 @@ msgstr "Criar grupo"
 #: src/lib/server-copy.ts
 msgid "Create group “{name}”?"
 msgstr "Criar o grupo “{name}”?"
+
+#: src/components/McpSettings.tsx
+msgid "Create key"
+msgstr "Criar chave"
 
 #: src/pages/NewRoutinePanel.tsx
 msgid "Create routine"
@@ -3701,6 +3765,7 @@ msgid "Custom color"
 msgstr "Cor personalizada"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Custom header"
 msgstr "Cabeçalho personalizado"
 
@@ -4130,6 +4195,7 @@ msgstr "Domínio"
 msgid "Don’t have an account?"
 msgstr "Não tem uma conta?"
 
+#: src/components/McpSettings.tsx
 #: src/components/PlanCard.tsx
 #: src/lib/ticket-status.ts
 #: src/pages/ActivityList.tsx
@@ -4294,6 +4360,7 @@ msgid "Encrypted"
 msgstr "Criptografada"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Encrypted and never shown again"
 msgstr "Criptografado e nunca mais exibido"
 
@@ -4532,6 +4599,7 @@ msgstr "falhou"
 #: src/pages/platform/PartnersSection.tsx
 #: src/pages/RoutineCard.tsx
 #: src/pages/RoutineTimeGrid.tsx
+#: src/pages/VaultPage.tsx
 #: src/pages/Workflows.tsx
 msgid "Failed"
 msgstr "Falha"
@@ -4668,6 +4736,10 @@ msgstr "Primeira tarefa: {task}"
 #: src/pages/RoutinesTabs.tsx
 msgid "Flows"
 msgstr "Fluxos"
+
+#: src/pages/VaultPage.tsx
+msgid "for {forWhom}"
+msgstr "para {forWhom}"
 
 #: src/pages/BotContextMenu.tsx
 msgid "For 1 hour"
@@ -4877,6 +4949,7 @@ msgstr "Cabeçalho \"{header}\""
 #: src/pages/connections/McpServerForm.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/Store.tsx
+#: src/pages/VaultPage.tsx
 msgid "Header name"
 msgstr "Nome do cabeçalho"
 
@@ -5422,6 +5495,7 @@ msgstr "Chave na mensagem"
 msgid "Key not recognized. Choose a provider."
 msgstr "Chave não reconhecida. Escolha um provedor."
 
+#: src/components/McpSettings.tsx
 #: src/pages/partner/PartnerIntegration.tsx
 msgid "Keys"
 msgstr "Chaves"
@@ -5477,6 +5551,11 @@ msgstr "Mês passado"
 #: src/pages/Workflows.tsx
 msgid "Last run"
 msgstr "Última execução"
+
+#. placeholder {0}: new Date(credential.lastUsedAt).toLocaleDateString(i18n.locale)
+#: src/pages/VaultPage.tsx
+msgid "Last used {0}"
+msgstr "Último uso: {0}"
 
 #: src/components/DesktopUpdates.tsx
 msgid "Later"
@@ -5848,6 +5927,10 @@ msgstr "Máximo de imagens por solicitação"
 msgid "Maximum output tokens"
 msgstr "Máximo de tokens de saída"
 
+#: src/pages/Settings.tsx
+msgid "MCP"
+msgstr "MCP"
+
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "MCP endpoint"
 msgstr "Endpoint MCP"
@@ -6153,6 +6236,7 @@ msgstr "Limite mensal de tokens para {name}"
 #: src/pages/ConnectionsPage.tsx
 #: src/pages/shell/message-hover-actions.tsx
 #: src/pages/shell/sidebar-team.tsx
+#: src/pages/VaultPage.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "More"
 msgstr "Mais"
@@ -6236,6 +6320,7 @@ msgstr "Meu assistente"
 msgid "My Home"
 msgstr "Meu Início"
 
+#: src/components/McpSettings.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
@@ -6255,6 +6340,7 @@ msgstr "Meu Início"
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/pasted-key-prompt.tsx
 #: src/pages/SpaceSettingsPanel.tsx
+#: src/pages/VaultPage.tsx
 msgid "Name"
 msgstr "Nome"
 
@@ -6329,6 +6415,10 @@ msgstr "Nunca"
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Never ask"
 msgstr "Nunca perguntar"
+
+#: src/components/McpSettings.tsx
+msgid "Never used"
+msgstr "Nunca usada"
 
 #: src/components/NewDot.tsx
 #: src/pages/shell/chat-context.tsx
@@ -6734,6 +6824,10 @@ msgstr "Não compatível com o Rook"
 #: src/pages/shell/agent-import.tsx
 msgid "Not used by Rook"
 msgstr "Não usado pelo Rook"
+
+#: src/pages/VaultPage.tsx
+msgid "Not used yet"
+msgstr "Ainda não usada"
 
 #: src/pages/connections/connection-model.ts
 msgid "Not working"
@@ -7161,6 +7255,7 @@ msgstr "Chaves de acesso"
 #: src/pages/connections/DatabaseForm.tsx
 #: src/pages/connections/MailboxForm.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Password"
 msgstr "Senha"
 
@@ -7600,6 +7695,7 @@ msgstr "Reagir"
 msgid "Reactions"
 msgstr "Reações"
 
+#: src/components/McpSettings.tsx
 #: src/pages/connections/connection-model.ts
 msgid "Read"
 msgstr "Ler"
@@ -7668,6 +7764,15 @@ msgstr "Recebimentos"
 #: src/pages/ActivityList.tsx
 msgid "Recent"
 msgstr "Recente"
+
+#: src/pages/VaultPage.tsx
+msgid "Recent uses"
+msgstr "Usos recentes"
+
+#. placeholder {0}: credential.name
+#: src/pages/VaultPage.tsx
+msgid "Recent uses of {0}"
+msgstr "Usos recentes de {0}"
 
 #: src/components/PlanChoice.tsx
 msgid "Recommended"
@@ -7811,6 +7916,7 @@ msgstr "Lembrada"
 #: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/Store.tsx
+#: src/pages/VaultPage.tsx
 #: src/pages/Workflows.tsx
 msgid "Remove"
 msgstr "Remover"
@@ -7830,6 +7936,7 @@ msgstr "Remover {0} do grupo"
 
 #. placeholder {0}: removing?.name
 #: src/pages/ConnectionsPage.tsx
+#: src/pages/VaultPage.tsx
 msgid "Remove {0}?"
 msgstr "Remover {0}?"
 
@@ -7973,8 +8080,14 @@ msgid "Replace the instructions of {bot}?"
 msgstr "Substituir as instruções de {bot}?"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Replace value"
 msgstr "Substituir valor"
+
+#. placeholder {0}: credential.name
+#: src/pages/VaultPage.tsx
+msgid "Replace value of {0}"
+msgstr "Substituir o valor de {0}"
 
 #: src/pages/Usage.tsx
 msgid "Replies"
@@ -8109,6 +8222,7 @@ msgid "Resume this space to keep going."
 msgstr "Retome este espaço para continuar."
 
 #: src/components/AccountAccess.tsx
+#: src/components/McpSettings.tsx
 #: src/components/PasskeySettings.tsx
 #: src/pages/Auth.tsx
 #: src/pages/ModelRoleSettings.tsx
@@ -8166,6 +8280,11 @@ msgstr "Revisar agora"
 #: src/pages/WikiBrowser.tsx
 msgid "Revision {0}"
 msgstr "Revisão {0}"
+
+#. placeholder {0}: key.name
+#: src/components/McpSettings.tsx
+msgid "Revoke {0}"
+msgstr "Revogar {0}"
 
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Role"
@@ -8349,6 +8468,7 @@ msgstr "sábado"
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/message-versions.tsx
+#: src/pages/VaultPage.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/YouMemory.tsx
 msgid "Save"
@@ -8417,6 +8537,7 @@ msgstr "Salvando..."
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/pasted-key-prompt.tsx
+#: src/pages/VaultPage.tsx
 msgid "Saving…"
 msgstr "Salvando..."
 
@@ -8677,6 +8798,10 @@ msgstr "Compartilhado"
 msgid "Shared memory"
 msgstr "Memória compartilhada"
 
+#: src/pages/VaultPage.tsx
+msgid "shell command"
+msgstr "comando de shell"
+
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Shortcuts, presets, routines and roles (JSON)"
 msgstr "Atalhos, predefinições, rotinas e papéis (JSON)"
@@ -8795,6 +8920,7 @@ msgid "Simulator"
 msgstr "Simulador"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Site"
 msgstr "Site"
 
@@ -8918,6 +9044,7 @@ msgstr "Ordenado por {column}, decrescente"
 msgid "Source"
 msgstr "Fonte"
 
+#: src/components/McpSettings.tsx
 #: src/lib/identity-display.ts
 #: src/pages/Settings.tsx
 #: src/pages/shell/sidebar-team.tsx
@@ -9231,6 +9358,10 @@ msgstr "Tabela"
 msgid "Take control"
 msgstr "Assumir o controle"
 
+#: src/components/McpSettings.tsx
+msgid "Talk"
+msgstr "Conversar"
+
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Talk to agents"
 msgstr "Falar com agentes"
@@ -9273,12 +9404,17 @@ msgstr "Ensino em andamento. Pare de ensinar antes de enviar uma nova mensagem."
 #: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/TeamPage.tsx
+#: src/pages/VaultPage.tsx
 msgid "Team"
 msgstr "Equipe"
 
 #: src/pages/shell/computer-view.tsx
 msgid "Team Computer"
 msgstr "Computador da equipe"
+
+#: src/pages/VaultPage.tsx
+msgid "Team credential"
+msgstr "Credencial da equipe"
 
 #: src/lib/routine-trigger.ts
 #: src/pages/RoutineEditor.tsx
@@ -9440,6 +9576,10 @@ msgstr "Estes arquivos são grandes demais para importar."
 #: src/lib/agent-import-errors.ts
 msgid "These files or choices no longer match. Choose the files again."
 msgstr "Estes arquivos ou escolhas não correspondem mais. Escolha os arquivos de novo."
+
+#: src/pages/VaultPage.tsx
+msgid "These saved settings can't be read."
+msgstr "Não é possível ler estas configurações salvas."
 
 #: src/pages/shell/bot-credentials.tsx
 msgid "These saved settings can't be read. Remove it and add it again."
@@ -9854,6 +9994,7 @@ msgstr "Desativar"
 
 #: src/pages/partner/PartnerRevenue.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Type"
 msgstr "Tipo"
 
@@ -10024,6 +10165,10 @@ msgstr "Enviar arquivos"
 msgid "Urgent"
 msgstr "Urgente"
 
+#: src/components/McpSettings.tsx
+msgid "URL"
+msgstr "URL"
+
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/Settings.tsx
 #: src/pages/shell/command-palette.tsx
@@ -10115,6 +10260,10 @@ msgstr "Use o campo protegido para senhas."
 msgid "Use Rook credits"
 msgstr "Usar créditos Rook"
 
+#: src/components/AskCard.tsx
+msgid "Use saved"
+msgstr "Usar salva"
+
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Use space default"
 msgstr "Usar o padrão do espaço"
@@ -10132,6 +10281,7 @@ msgid "Used"
 msgstr "Usado"
 
 #: src/pages/ConnectionsPage.tsx
+#: src/pages/VaultPage.tsx
 msgid "Used by {usedBy}"
 msgstr "Usado por {usedBy}"
 
@@ -10150,6 +10300,7 @@ msgstr "Par humano"
 #: src/components/AskCard.tsx
 #: src/pages/connections/MailboxForm.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Username"
 msgstr "Usuário"
 
@@ -10192,12 +10343,17 @@ msgstr "Usando sua chave de API. O plano gratuito termina em {freeUntil}."
 
 #: src/pages/connections/McpServerForm.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Value"
 msgstr "Valor"
 
 #: src/pages/shell/message-cards.tsx
 msgid "Variations"
 msgstr "Variações"
+
+#: src/pages/Settings.tsx
+msgid "Vault"
+msgstr "Cofre"
 
 #: src/pages/partner/PartnerDomain.tsx
 #: src/pages/platform/PartnersSection.tsx
@@ -10327,6 +10483,7 @@ msgid "Webhook URL"
 msgstr "URL do webhook"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Website login"
 msgstr "Login do site"
 
@@ -10494,8 +10651,10 @@ msgstr "Marca branca"
 msgid "Who can talk to {name}"
 msgstr "Quem pode falar com {name}"
 
+#. placeholder {0}: credential.name
 #. placeholder {0}: item.name
 #: src/pages/connections/AccessSheet.tsx
+#: src/pages/VaultPage.tsx
 msgid "Who can use {0}"
 msgstr "Quem pode usar {0}"
 
@@ -10585,6 +10744,7 @@ msgid "Yesterday"
 msgstr "Ontem"
 
 #: src/pages/shell/channel-members.tsx
+#: src/pages/VaultPage.tsx
 msgid "you"
 msgstr "você"
 

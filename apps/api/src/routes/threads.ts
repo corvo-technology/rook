@@ -711,6 +711,7 @@ export function threadsRoutes(ctx: RouterContext) {
             clientNonce: input.clientNonce,
             username: input.username,
             dismiss: input.dismiss,
+            useExisting: input.useExisting,
             approvalEffectId: input.approvalEffectId,
           })
           .catch((error: unknown) => {

@@ -19,8 +19,19 @@ const actor = {
 
 const FAKE_VALUE = "fake-value-SENTINEL-1";
 
-function matches(row: Row, where: Row = {}) {
-  return Object.entries(where).every(([key, value]) => row[key] === value);
+// Prisma-style filter, enough for the credential queries. A row without a scope is a pre-Vault
+// row (space), and its grants default to none.
+function matches(row: Row, where: Row = {}): boolean {
+  return Object.entries(where).every(([key, value]) => {
+    if (key === "AND") return (value as Row[]).every((part) => matches(row, part));
+    if (key === "OR") return (value as Row[]).some((part) => matches(row, part));
+    if (key === "grants") {
+      const grants = (row.grants ?? []) as Row[];
+      return grants.some((grant) => matches(grant, (value as { some: Row }).some));
+    }
+    const field = key === "scope" ? (row.scope ?? "space") : row[key];
+    return field === value;
+  });
 }
 
 function pick(row: Row, select?: Record<string, boolean>) {
@@ -40,7 +51,7 @@ function botSecretDeps(seed: Row[] = [], role = "owner") {
       rows
         .filter((row) => matches(row, args.where))
         .sort((a, b) => String(a.name).localeCompare(String(b.name)))
-        .map((row) => pick(row, args.select)),
+        .map((row) => pick({ grants: [], ...row }, args.select)),
     ),
     findFirst: vi.fn(async (args: { where: Row; select?: Record<string, boolean> }) => {
       const row = rows.find((entry) => matches(entry, args.where));
@@ -56,6 +67,11 @@ function botSecretDeps(seed: Row[] = [], role = "owner") {
     update: vi.fn(async (args: { where: { id: string }; data: Row }) => {
       const row = rows.find((entry) => entry.id === args.where.id);
       Object.assign(row ?? {}, args.data, { updatedAt: now });
+      return {};
+    }),
+    delete: vi.fn(async (args: { where: { id: string } }) => {
+      const index = rows.findIndex((entry) => entry.id === args.where.id);
+      if (index >= 0) rows.splice(index, 1);
       return {};
     }),
     deleteMany: vi.fn(async (args: { where: Row }) => {
@@ -76,6 +92,7 @@ function botSecretDeps(seed: Row[] = [], role = "owner") {
       }),
     },
     botSecret,
+    botSecretGrant: { deleteMany: vi.fn(async () => ({ count: 0 })) },
     $queryRaw: vi.fn(async () => []),
     $transaction: vi.fn(),
   };
@@ -406,29 +423,36 @@ describe("botSecrets router", () => {
   });
 
   it("removes a non-regex stored name for the owned bot and refuses a member for another member's bot", async () => {
-    const owned = botSecretDeps();
+    const legacy = {
+      id: "secret-legacy",
+      userId: "user-1",
+      spaceId: "space-1",
+      botId: "bot-1",
+      name: "Legacy Name",
+    };
+    const owned = botSecretDeps([legacy]);
     const removed = await owned.call("remove", { botId: "bot-1", name: "Legacy Name" });
     expect(removed.status).toBe(200);
     expect(removed.body.json).toEqual({ ok: true });
-    expect(owned.prisma.botSecret.deleteMany).toHaveBeenCalledWith({
-      where: { spaceId: "space-1", botId: "bot-1", name: "Legacy Name" },
-    });
+    expect(owned.rows).toEqual([]);
 
-    const foreign = botSecretDeps([], "member");
+    const foreign = botSecretDeps([{ ...legacy, botId: "bot-other" }], "member");
     const denied = await foreign.call("remove", { botId: "bot-other", name: "Legacy Name" });
     expect(denied.status).toBeGreaterThanOrEqual(400);
-    expect(foreign.prisma.botSecret.deleteMany).not.toHaveBeenCalled();
+    expect(foreign.rows).toHaveLength(1);
   });
 
   it("removes a credential by name within the owner's bot scope", async () => {
-    const { prisma, call } = botSecretDeps();
+    const { rows, call } = botSecretDeps([
+      { id: "secret-1", userId: "user-1", spaceId: "space-1", botId: "bot-1", name: "router" },
+      { id: "secret-2", userId: "user-1", spaceId: "space-1", botId: "bot-other", name: "router" },
+    ]);
     const result = await call("remove", { botId: "bot-1", name: "router" });
     expect(result.status).toBe(200);
     expect(result.body.json).toEqual({ ok: true });
-    expect(prisma.botSecret.deleteMany).toHaveBeenCalledWith({
-      where: { spaceId: "space-1", botId: "bot-1", name: "router" },
-    });
+    expect(rows.map((row) => row.id)).toEqual(["secret-2"]);
   });
+
   it("stores a command variable with no origin and lists it with its type", async () => {
     const { secrets, rows, call } = botSecretDeps();
     const result = await call("put", {

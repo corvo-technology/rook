@@ -10,10 +10,12 @@ import {
   Cpu,
   CreditCard,
   Gauge,
+  KeyRound,
   Monitor,
   Plug,
   Settings,
   ShieldCheck,
+  SquareTerminal,
   Users,
   Volume2,
 } from "lucide-react";
@@ -21,6 +23,7 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Navigate, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { ApprovalRulesSettings } from "../components/ApprovalRulesSettings";
+import { McpSettings } from "../components/McpSettings";
 import { SETTINGS_CONTENT_WIDTH, SettingsGroup, SettingsRow } from "../components/SettingsRows";
 import { authClient } from "../lib/auth";
 import { takeInitialBootstrap } from "../lib/bootstrap";
@@ -45,6 +48,7 @@ import { MemorySettingsOverlay } from "./MemorySettingsOverlay";
 import { ModelSettingsOverlay } from "./ModelSettingsOverlay";
 import { SpaceSettingsPanel } from "./SpaceSettingsPanel";
 import { commitSpaceRename } from "./shell/space-sidebar";
+import { VaultPage } from "./VaultPage";
 import { VoiceSettingsOverlay } from "./VoiceSettingsOverlay";
 
 type PageSection = SettingsLayoutSection & { content: ReactNode; width?: "prose" | "full" };
@@ -362,6 +366,18 @@ export function SettingsPage() {
           ) : null}
         </div>
       ),
+    },
+    {
+      id: "mcp-access",
+      label: t`MCP`,
+      icon: SquareTerminal,
+      content: <McpSettings spaces={spaces} />,
+    },
+    {
+      id: "vault",
+      label: t`Vault`,
+      icon: KeyRound,
+      content: <VaultPage />,
     },
     ...(showComputer
       ? [

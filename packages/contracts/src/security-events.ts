@@ -30,6 +30,9 @@ export const SECURITY_EVENT_TYPES = [
   "consultation.deleted",
   "consultation.expired",
   "partner.assist",
+  "mcp.key.created",
+  "mcp.key.revoked",
+  "mcp.tool_call",
 ] as const;
 
 export const SecurityEventTypeSchema = z.enum(SECURITY_EVENT_TYPES);

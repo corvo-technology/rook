@@ -57,8 +57,15 @@ export function useLatestRowActions(current: MessageRowActions): MessageRowActio
       regenerate: () => rowActionsRef.current.regenerate(),
       fork: (message) => rowActionsRef.current.fork(message),
       switchVersion: (branchId) => rowActionsRef.current.switchVersion(branchId),
-      answer: (message, answer, username, dismiss) =>
-        rowActionsRef.current.answer(message, answer, username, dismiss),
+      answer: (message, answer, username, dismiss, approvalEffectId, useExisting) =>
+        rowActionsRef.current.answer(
+          message,
+          answer,
+          username,
+          dismiss,
+          approvalEffectId,
+          useExisting,
+        ),
       openBot: (id, name) => rowActionsRef.current.openBot(id, name),
       openComputer: (id, name) => rowActionsRef.current.openComputer(id, name),
       previewMarkdown: (target) => rowActionsRef.current.previewMarkdown(target),

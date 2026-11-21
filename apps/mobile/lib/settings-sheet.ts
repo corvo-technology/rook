@@ -14,6 +14,7 @@ const settingsScreens = new Set([
   "change-password",
   "integration-setup",
   "integrations",
+  "mcp-keys",
   "messaging",
   "language",
   "models",
@@ -21,6 +22,7 @@ const settingsScreens = new Set([
   "signup-survey",
   "space",
   "team-conversation",
+  "vault",
   "voice",
 ]);
 

@@ -19,6 +19,7 @@ export function AskBlock({
   canDismiss,
   onAnswer,
   onDismiss,
+  onUseExisting,
   actionProps,
 }: {
   ask: Extract<MobileMessage["blocks"][number], { kind: "ask" }>;
@@ -27,6 +28,8 @@ export function AskBlock({
   onAnswer: (answer: string, username?: string) => Promise<void>;
   /** Turns down a secret request without a value. */
   onDismiss: () => Promise<void>;
+  /** Lets the agent use the credential already saved in the Vault, for a card that offers it. */
+  onUseExisting?: () => Promise<void>;
   actionProps: MessageActionProps;
 }) {
   const tokens = useMobileTokens();
@@ -62,6 +65,20 @@ export function AskBlock({
     try {
       await onDismiss();
       setDismissed(true);
+    } catch {
+      setError(t("Could not send answer"));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function acceptExisting() {
+    if (submitting) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await onUseExisting?.();
+      setSaved(true);
     } catch {
       setError(t("Could not send answer"));
     } finally {
@@ -128,7 +145,30 @@ export function AskBlock({
             ? t(dismissed || ask.dismissed ? "Dismissed" : "Saved")
             : t("Answered: {answer}", { answer: ask.answer ?? t("Done") })}
         </Text>
-      ) : canAnswer && ownerOnly ? null : canAnswer && loginInput ? (
+      ) : canAnswer && ownerOnly ? null : canAnswer &&
+        secretInput &&
+        ask.existing &&
+        onUseExisting ? (
+        <View style={askInputStyles.buttons}>
+          <NativeActionButton
+            label={t("Use saved")}
+            busy={submitting}
+            fill
+            style={askInputStyles.button}
+            onPress={() => void acceptExisting()}
+          />
+          {canDismiss ? (
+            <NativeActionButton
+              label={t("Dismiss")}
+              disabled={submitting}
+              fill
+              style={askInputStyles.button}
+              prominence="secondary"
+              onPress={() => void dismiss()}
+            />
+          ) : null}
+        </View>
+      ) : canAnswer && loginInput ? (
         <View style={askInputStyles.buttons}>
           <NativeActionButton
             label={t("Continue")}

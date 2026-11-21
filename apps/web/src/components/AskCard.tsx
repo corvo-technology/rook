@@ -80,6 +80,7 @@ export function AskCard({
   canDismiss,
   onAnswer,
   onDismiss,
+  onUseExisting,
   approver,
   agent,
 }: {
@@ -94,6 +95,8 @@ export function AskCard({
   onAnswer: (text: string, username?: string, approvalEffectId?: string) => Promise<void>;
   /** Turns down a secret request without a value. */
   onDismiss: () => Promise<void>;
+  /** Lets the agent use the credential already saved in the Vault, for a card that offers it. */
+  onUseExisting?: () => Promise<void>;
 }) {
   const { t } = useLingui();
   const [editing, setEditing] = useState(false);
@@ -216,6 +219,20 @@ export function AskCard({
           ? t`Could not submit this answer`
           : errorText(err, t`Could not submit this answer`),
       );
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function acceptExisting() {
+    if (submitting || !onUseExisting) return;
+    setPendingAction("existing");
+    setError(null);
+    try {
+      await onUseExisting();
+      setAcceptedAnswer("");
+    } catch {
+      setError(t`Could not submit this answer`);
     } finally {
       setPendingAction(null);
     }
@@ -572,6 +589,22 @@ export function AskCard({
               </Button>
             ),
           )}
+        </div>
+      ) : secretInput && block.existing && onUseExisting ? (
+        <div className="mt-3.5 flex gap-2">
+          <Button type="button" disabled={submitting} onClick={() => void acceptExisting()}>
+            {pendingAction === "existing" ? <Trans>Saving…</Trans> : <Trans>Use saved</Trans>}
+          </Button>
+          {canDismiss ? (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={submitting}
+              onClick={() => void dismissSecret()}
+            >
+              <Trans>Dismiss</Trans>
+            </Button>
+          ) : null}
         </div>
       ) : secretInput ? (
         <form

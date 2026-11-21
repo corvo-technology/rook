@@ -194,7 +194,7 @@ import {
 } from "@corvo/logging";
 import { requestLogging } from "@corvo/logging/hono";
 import { MarkdownMemoryStore } from "@corvo/memory";
-import { ORPCError, onError } from "@orpc/server";
+import { createRouterClient, ORPCError, onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -227,6 +227,9 @@ import { healthRoutes } from "./health.js";
 import { createInFlight } from "./in-flight.js";
 import { mountLocalEntryRoute } from "./local-entry.js";
 import { mountLocalComputerHost } from "./local-settings.js";
+import type { McpAppClient } from "./mcp-server/app-client.js";
+import { createMcpRateLimiter } from "./mcp-server/rate-limit.js";
+import { mountMcpRoute } from "./mcp-server/route.js";
 import { assertMcpRemoteEndpoint } from "./mcp-servers.js";
 import {
   createMessagingInboundHandler,
@@ -1139,7 +1142,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     }),
   );
   // Session and account replies must never be stored by a client or an HTTP cache.
-  for (const path of ["/api/auth/*", "/rpc/*"]) {
+  for (const path of ["/api/auth/*", "/rpc/*", "/mcp"]) {
     app.use(path, async (c, next) => {
       await next();
       c.header("cache-control", "no-store");
@@ -1267,6 +1270,14 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       }
     });
   }
+  // MCP clients such as Claude Code act as a person through a key they made in Settings.
+  mountMcpRoute(app, {
+    prisma,
+    // The app's own router as the key's owner, so every tool meets the checks the app does.
+    client: (actor) =>
+      createRouterClient(router, { context: { actor } }) as unknown as McpAppClient,
+    limiter: createMcpRateLimiter(),
+  });
   app.use(
     "/rpc/*",
     clientBuildMiddleware({

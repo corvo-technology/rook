@@ -404,6 +404,7 @@ it.each([false, true])(
         "Voice",
         "Approvals",
         "Integrations",
+        "Vault",
         "Messaging",
         "AI data sharing",
       ];

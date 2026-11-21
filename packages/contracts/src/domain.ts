@@ -552,6 +552,8 @@ export const UpdateBotInput = z
     /** null clears the bot's own mode so it asks first again. */
     memoryMode: MemoryModeSchema.nullable().optional(),
     disabledBuiltinTools: DisabledBuiltinToolsSchema.optional(),
+    /** Who or what made an instruction change, kept with the version in its history. */
+    reason: z.string().trim().min(1).max(200).optional(),
   })
   .superRefine((value, ctx) => {
     if (value.modelAuto && (value.modelProvider || value.modelId)) {

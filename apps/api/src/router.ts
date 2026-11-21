@@ -57,6 +57,7 @@ import { inboxRoutes } from "./routes/inbox.js";
 import { localSetupRoutes } from "./routes/local-setup.js";
 import { mailboxRoutes } from "./routes/mailboxes.js";
 import { mcpRoutes } from "./routes/mcp.js";
+import { mcpAccessRoutes } from "./routes/mcp-access.js";
 import { memoryRoutes } from "./routes/memory.js";
 import { messagingRoutes } from "./routes/messaging.js";
 import { missionsRoutes } from "./routes/missions.js";
@@ -69,6 +70,7 @@ import { spacesRoutes } from "./routes/spaces.js";
 import { teamRoutes } from "./routes/team.js";
 import { teamChatRoutes } from "./routes/team-chat.js";
 import { threadsRoutes } from "./routes/threads.js";
+import { vaultRoutes } from "./routes/vault.js";
 import { wikiRoutes } from "./routes/wiki.js";
 import { youRoutes } from "./routes/you.js";
 import type { TeamDeps } from "./team.js";
@@ -233,12 +235,14 @@ export function createRouter(deps: RouterDeps) {
     ...routinesRoutes(ctx),
     ...boardsRoutes(ctx),
     ...mcpRoutes(ctx),
+    ...mcpAccessRoutes(ctx),
     ...accessRoutes(ctx),
     ...databaseRoutes(ctx),
     ...connectionsRoutes(ctx),
     ...messagingRoutes(ctx),
     ...emailAgentRoutes(ctx),
     ...mailboxRoutes(ctx),
+    ...vaultRoutes(ctx),
     ...partnerRoutes(ctx),
     ...partnerConsoleRoutes(ctx),
     ...platformRoutes(ctx),

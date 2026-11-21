@@ -13,6 +13,7 @@ import {
   resolveRequestSecretDestination,
   sameSecretDestination,
 } from "./bot-secrets.js";
+import { matchesBotSecretWhere } from "./bot-secrets.test-support.js";
 import { EncryptedSecretStore } from "./secrets.js";
 
 afterEach(() => {
@@ -42,9 +43,7 @@ async function fixture(auth = destination.auth) {
   );
   const row = { ...scope, ...destination, auth, ...encrypted };
   const findFirst = vi.fn(async ({ where }) =>
-    Object.entries(where).every(([key, value]) => row[key as keyof typeof row] === value)
-      ? row
-      : null,
+    matchesBotSecretWhere(row as never, where) ? { ...row, grants: [] } : null,
   );
   const prisma = { botSecret: { findFirst } } as unknown as PrismaClient;
   const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json({ ok: true }));
@@ -217,9 +216,7 @@ describe("authenticated secret requests", () => {
       ...encrypted,
     };
     const findFirst = vi.fn(async ({ where }) =>
-      Object.entries(where).every(([key, value]) => row[key as keyof typeof row] === value)
-        ? row
-        : null,
+      matchesBotSecretWhere(row as never, where) ? { ...row, grants: [] } : null,
     );
     const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json({ ok: true }));
     const input = {
@@ -788,7 +785,7 @@ function matchingRows<T extends Record<string, unknown>>(
         const filter = value as { path: string[]; equals: unknown };
         return (row.auth as Record<string, unknown>)[filter.path[0]!] === filter.equals;
       }
-      return row[key] === value;
+      return matchesBotSecretWhere(row as never, { [key]: value });
     }),
   );
   return take === undefined ? matches : matches.slice(0, take);
@@ -814,9 +811,7 @@ describe("saved website logins", () => {
     );
     const row = { ...scope, ...login, origin, auth, ...encrypted };
     const findFirst = vi.fn(async ({ where }) =>
-      Object.entries(where).every(([key, value]) => row[key as keyof typeof row] === value)
-        ? row
-        : null,
+      matchesBotSecretWhere(row as never, where) ? { ...row, grants: [] } : null,
     );
     const findMany = vi.fn(async (query) => matchingRows([row], query));
     return { prisma: { botSecret: { findFirst, findMany } } as unknown as PrismaClient };

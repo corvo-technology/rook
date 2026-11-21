@@ -406,6 +406,42 @@ export const APP_MAP_SCREENS: readonly AppMapEntry[] = [
     },
   ),
   screen(
+    "settings-mcp-access",
+    "/settings/mcp-access",
+    "member",
+    ALL,
+    {
+      title: "MCP",
+      description:
+        "Make keys that let Claude Code, Codex, Cursor or another MCP client talk to your agents, and revoke them.",
+      keywords: ["mcp", "claude code", "codex", "cursor"],
+    },
+    {
+      title: "MCP",
+      description:
+        "Crie chaves para o Claude Code, Codex, Cursor ou outro cliente MCP conversar com seus agentes, e revogue-as.",
+      keywords: ["mcp", "claude code", "codex", "cursor"],
+    },
+  ),
+  screen(
+    "settings-vault",
+    "/settings/vault",
+    "member",
+    ALL,
+    {
+      title: "Vault",
+      description:
+        "Every saved credential in one place: which agents can use it, and when it was last used.",
+      keywords: ["credential", "api key", "secret", "password", "login", "token", "access"],
+    },
+    {
+      title: "Cofre",
+      description:
+        "Todas as credenciais salvas em um só lugar: quais agentes podem usar cada uma e quando foi usada pela última vez.",
+      keywords: ["credencial", "chave de api", "segredo", "senha", "login", "token", "acesso"],
+    },
+  ),
+  screen(
     "settings-computer",
     "/settings/computer",
     "owner",

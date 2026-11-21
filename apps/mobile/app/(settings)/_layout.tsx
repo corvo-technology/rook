@@ -93,7 +93,15 @@ export default function SettingsLayout() {
           contentStyle: { backgroundColor: native.groupedPage },
         })}
       />
+      <Stack.Screen
+        name="vault"
+        options={{
+          ...glassHeaderOptions(t("Vault")),
+          contentStyle: { backgroundColor: native.groupedPage },
+        }}
+      />
       <Stack.Screen name="messaging" options={glassHeaderOptions(t("Messaging"))} />
+      <Stack.Screen name="mcp-keys" options={glassHeaderOptions(t("MCP"))} />
       <Stack.Screen name="team-conversation" />
       <Stack.Screen name="integrations" options={glassHeaderOptions(t("Integrations"))} />
       <Stack.Screen

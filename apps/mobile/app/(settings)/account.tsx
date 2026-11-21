@@ -735,6 +735,7 @@ export default function Account() {
               { title: t("Voice"), href: "/voice" },
               { title: t("Approvals"), href: "/approvals" },
               { title: t("Integrations"), href: "/integrations" },
+              { title: t("Vault"), href: "/vault" },
               { title: t("Messaging"), href: "/messaging" },
               { title: t("AI data sharing"), href: "/ai-data-sharing" },
             ] as const
@@ -774,6 +775,14 @@ export default function Account() {
               label={loadRemoteImagesLabel}
               value={loadRemoteImages}
               onChange={(checked) => void setRemoteImagesPreference(checked ? "on" : "off")}
+            />
+          ) : null}
+          {advancedOpen ? (
+            <SettingsRow
+              accessibilityRole="button"
+              chevron="right"
+              onPress={() => router.push("/mcp-keys")}
+              title={t("MCP")}
             />
           ) : null}
         </SettingsGroup>

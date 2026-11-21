@@ -183,6 +183,8 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     // an ask persisted before an owner toggles the private-HTTP flag still
     // validates on replay.
     credential: botSecretDestinationSchema({ allowPrivateHttpOrigin: true }).optional(),
+    /** The credential is already saved in the Vault; the card offers it to this agent instead of a value. */
+    existing: z.literal(true).optional(),
     /** On a fetch approval, the site an "always" answer allows. */
     site: z.string().optional(),
     /** What an "always" answer keeps on any other approval: one tool, on one connection, for one agent. */

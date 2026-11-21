@@ -6,7 +6,7 @@ import * as z from "zod";
  */
 
 /** App-owned paths a link must not frame. */
-const RESERVED_PREFIXES = ["/app", "/api", "/rpc", "/novnc", "/health"];
+const RESERVED_PREFIXES = ["/app", "/api", "/rpc", "/mcp", "/novnc", "/health"];
 
 function isSameOriginPath(path: string) {
   if (!path.startsWith("/") || path.startsWith("//") || /[\\\s]/.test(path)) return false;

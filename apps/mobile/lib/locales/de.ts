@@ -235,6 +235,8 @@ export const DE_MESSAGES: Record<string, string> = {
   Routine: "Routine",
   "Server integrations": "Server-Integrationen",
   Thread: "Thread",
+  Vault: "Tresor",
+  "Use saved": "Gespeichertes verwenden",
   Voice: "Stimme",
   // app/sign-in.tsx
   "Already have an account?": "Du hast bereits ein Konto?",
@@ -1289,4 +1291,12 @@ export const DE_MESSAGES: Record<string, string> = {
   "Save credential": "Zugangsdaten speichern",
   "Send anyway": "Trotzdem senden",
   "Could not save the credential": "Zugangsdaten konnten nicht gespeichert werden",
+  MCP: "MCP",
+  Read: "Lesen",
+  Talk: "Sprechen",
+  Configure: "Konfigurieren",
+  "Revoke {name}?": "{name} widerrufen?",
+  "Never used": "Nie verwendet",
+  "Could not revoke the key": "Schlüssel konnte nicht widerrufen werden",
+  "Keys are made in Rook on the web.": "Schlüssel werden in Rook im Web erstellt.",
 };

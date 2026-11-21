@@ -3,6 +3,7 @@ import type { Hono, MiddlewareHandler } from "hono";
 import { cancelBody } from "./http-body.js";
 
 export const MAX_AUTH_REQUEST_BYTES = 64 * 1024;
+export const MAX_MCP_REQUEST_BYTES = 1024 * 1024;
 export const MAX_RPC_REQUEST_BYTES = 16 * 1024 * 1024;
 
 /** Bound JSON entry points before their framework parsers buffer the request. */
@@ -74,4 +75,5 @@ export function mountApiRequestBodyLimits(
     `Request body is too large. Upload limit: ${attachmentSizeLabel(maxUploadSizeBytes)} per file.`,
   );
   app.use("/rpc/*", rpcLimit);
+  app.use("/mcp", requestBodyLimit(MAX_MCP_REQUEST_BYTES));
 }

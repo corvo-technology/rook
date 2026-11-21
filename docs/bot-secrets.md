@@ -95,6 +95,21 @@ The card asks for a username and a password. Both are stored encrypted in the sa
 
 The backend decrypts the value and the page browser types it only if the page is still on the saved origin at that moment, so a login cannot be typed into another site or a page that redirected. The origin must be HTTPS: `CORVO_SECRETS_ALLOW_PRIVATE_HTTP` does not apply to website logins. The password goes only into a password field, and the username only into a text, email or tel input. A site's "show password" control still works normally; revealing a password can make it visible in screenshots. Values travel to the computer over stdin, not command-line arguments. Snapshots never report the value of a field that holds a saved login. In every run, not only the one that filled it, tool results such as page results, command output and file reads are scrubbed of each saved login's password in plain, URL-encoded, form-encoded and base64 form; passwords shorter than 6 characters are only scrubbed in the run that fills them. In the run that fills a login, page results are also scrubbed of its username when it is 6 or more characters, which covers a site that echoes it in page text; shorter usernames are not scrubbed because redaction replaces every occurrence. Later runs leave the username visible, since it is often the user's own email address. Only this bot's own runs scrub its passwords: on a Team Computer, other bots' runs don't, so use a Private Computer for a bot that signs in to sites. A login cannot be used with `secret_request`. Fills need no approval: saving the login is the approval, and it is bound to one site. Use `forget_secret` to remove it.
 
+## The Vault
+
+Settings has one **Vault** page listing every credential you can see in the space: its name, type, site (or the shell variable of a command credential), the agents that can use it, and when it was last used. No part of a value is shown or hinted at. From the Vault you can add a credential (the value is typed once and never shown again), replace its value, remove it, and choose which agents can use it. The Electron desktop app hosts the same page. Mobile lists the credentials and removes them from the account settings; adding and choosing agents are web actions.
+
+A credential has one of two scopes:
+
+- **Personal** (the default): only runs for its owner can use it, meaning runs the owner started and runs that act for the owner. Another member's run of the same agent cannot, even when the agent is granted it.
+- **Team**: runs for any member of the space can use it, through the agents granted it. Only people who hold the credentials permission (owners and administrators included) can create, replace, remove or re-grant a team credential. Members see that it exists and which agents use it, never more.
+
+A credential can be granted to any number of agents of the space. When an agent calls `request_secret` for a name that is already in your Vault as a personal credential (same name and destination) but is not granted to that agent, the card offers **Use saved** instead of asking for the value again. A team credential is never offered this way: someone who manages credentials gives an agent access from the Vault. Accepting adds that agent to the credential; it does not copy the value. `forget_secret` takes only the calling agent's access away; the value is deleted when no agent uses it any more.
+
+Credentials saved before the Vault existed keep working for every run of the agent they were saved for, so they are team credentials granted to that agent. Credentials an agent asks for in chat from now on are personal. A credential added from an agent's own settings is the agent's, for any member's runs.
+
+Every use is logged per credential: the agent, the run, whom the run acted for, the destination (the site, `command` for a shell, or `browser` for a login fill), the time and whether it worked. A shell command variable is logged once per run, on the first command that receives it. The log never holds a value, and entries older than 90 days are removed. The owner (or a team credential's managers) can read it from **Recent uses**.
+
 ## Managing saved credentials
 
 Owners can read back what is saved without asking the bot. In the web app, open a bot's settings,

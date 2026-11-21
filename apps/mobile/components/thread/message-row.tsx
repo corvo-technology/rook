@@ -65,6 +65,7 @@ export type MessageRowActions = {
     username?: string,
     dismiss?: boolean,
     approvalEffectId?: string,
+    useExisting?: boolean,
   ) => Promise<void>;
   openBot: (id: string, name: string) => void;
   openComputer: (id: string, name: string) => void;

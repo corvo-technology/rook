@@ -1229,6 +1229,41 @@ export const UsageCacheSchema = z.object({
 });
 export type UsageCache = z.infer<typeof UsageCacheSchema>;
 
+/** Why runs failed, in the few groups a person can act on. */
+export const USAGE_FAILURE_KINDS = ["billing", "limit", "computer", "error"] as const;
+export const UsageFailureKindSchema = z.enum(USAGE_FAILURE_KINDS);
+export type UsageFailureKind = z.infer<typeof UsageFailureKindSchema>;
+
+/** Who paid for a call: Rook model credits, or the model account the user connected. */
+export const UsageFundingSchema = z.enum(["credits", "own"]);
+export type UsageFunding = z.infer<typeof UsageFundingSchema>;
+
+/**
+ * Money spent in a period. `creditsUsd` was charged to Rook credits. `ownUsd` ran on the
+ * user's own accounts and is what the provider reported or the list price implies;
+ * `ownEstimatedUsd` is the part of it that is a list-price estimate.
+ */
+export const UsageSpendSchema = z.object({
+  creditsUsd: z.number(),
+  ownUsd: z.number(),
+  ownEstimatedUsd: z.number(),
+});
+export type UsageSpend = z.infer<typeof UsageSpendSchema>;
+
+/** One model on one account: where the calls ran and what they cost. */
+export const UsageAccountSchema = z.object({
+  provider: z.string(),
+  model: z.string(),
+  funding: UsageFundingSchema,
+  calls: z.number(),
+  tokens: z.number(),
+  spendUsd: z.number(),
+  /** Some of `spendUsd` is a list-price estimate, not a provider-reported cost. */
+  estimated: z.boolean(),
+  cache: UsageCacheSchema,
+});
+export type UsageAccount = z.infer<typeof UsageAccountSchema>;
+
 export const UsageAgentSchema = z.object({
   id: z.string().nullable(),
   name: z.string(),
@@ -1242,8 +1277,12 @@ export const UsageAgentSchema = z.object({
   failed: z.number().optional(),
   /** Mean seconds a finished run took; absent when none had both times. */
   avgSeconds: z.number().nullable().optional(),
-  /** The error behind the agent's most common failure; absent when there was none to read. */
+  /** The error behind the agent's most common failure; absent when there was none to read. Raw provider text: the page shows `failureKinds` instead. */
   topError: z.string().nullable().optional(),
+  /** Money spent by the agent in the period, in USD; calls with no known cost count as zero. */
+  spendUsd: z.number().optional(),
+  /** Failed runs by kind. */
+  failureKinds: z.record(z.string(), z.number()).optional(),
 });
 
 /** A period of use: totals, how it compares with the same point of the one before, by agent and by day. */
@@ -1257,6 +1296,12 @@ export const UsageOverviewSchema = z.object({
   costUsd: z.number().nullable(),
   cache: UsageCacheSchema.optional(),
   agents: z.array(UsageAgentSchema),
+  /** Money spent, split by who paid. */
+  spend: UsageSpendSchema.optional(),
+  /** What the same stretch of the period before cost, in USD. */
+  previousSpendUsd: z.number().optional(),
+  /** Spend by model and account, largest first. */
+  accounts: z.array(UsageAccountSchema).optional(),
   /** Spend by tier; empty when no agent picked its model in the period. */
   tiers: z.array(UsageTierSchema).optional(),
   /** Runs that moved up a tier after a cheaper one failed. */
@@ -1265,7 +1310,14 @@ export const UsageOverviewSchema = z.object({
   requestedEscalations: z.number().optional(),
   /** UTC days, oldest first; `agents` maps an agent id (or "none") to its tokens that day. */
   days: z.array(
-    z.object({ date: z.string(), tokens: z.number(), agents: z.record(z.string(), z.number()) }),
+    z.object({
+      date: z.string(),
+      tokens: z.number(),
+      agents: z.record(z.string(), z.number()),
+      /** USD spent that day, and by agent (or "none"). */
+      spendUsd: z.number().optional(),
+      agentSpendUsd: z.record(z.string(), z.number()).optional(),
+    }),
   ),
 });
 export type UsageOverview = z.infer<typeof UsageOverviewSchema>;

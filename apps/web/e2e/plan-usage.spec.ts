@@ -74,11 +74,26 @@ test("Usage shows storage against the plan, in light and dark", async ({ page },
   );
 });
 
-test("Usage shows what was billed against what the cache served", async ({ page }, testInfo) => {
+test("Usage leads with the money spent, on credits and on the user's own accounts", async ({
+  page,
+}, testInfo) => {
   const stamp = Date.now();
-  await signup(page, `usage-cache-${stamp}@corvo.test`, "password12", `Usage cache ${stamp}`);
+  await signup(page, `usage-spend-${stamp}@corvo.test`, "password12", `Usage spend ${stamp}`);
   await completeOnboarding(page);
   const cache = { input: 120_000, cacheRead: 880_000, cacheWrite: 40_000, output: 90_000 };
+  const model = (name: string) => [{ provider: "openrouter", model: name, tokens: 600_000 }];
+  const agent = (id: string, name: string, color: string, spendUsd: number, extra = {}) => ({
+    id,
+    name,
+    color,
+    tokens: 600_000,
+    replies: 12,
+    costUsd: spendUsd,
+    spendUsd,
+    cache,
+    models: model("model-a"),
+    ...extra,
+  });
   await page.route("**/rpc/usage/overview", (route) =>
     route.fulfill({
       json: {
@@ -88,31 +103,80 @@ test("Usage shows what was billed against what the cache served", async ({ page 
           to: "2026-11-15T12:00:00.000Z",
           tokens: 1_130_000,
           previousTokens: 900_000,
-          replies: 12,
-          costUsd: null,
+          replies: 36,
+          costUsd: 12.4,
           cache,
+          spend: { creditsUsd: 8, ownUsd: 4.4, ownEstimatedUsd: 4.4 },
+          previousSpendUsd: 9.5,
           agents: [
+            agent("a1", "Pia", "#10B981", 7.1, {
+              failed: 2,
+              failureKinds: { billing: 1, limit: 1 },
+            }),
+            agent("a2", "Nico", "#3B82F6", 4.2),
+            agent("a3", "Ada", "#F59E0B", 1.1),
+          ],
+          accounts: [
             {
-              id: null,
-              name: "Pia",
-              color: "#10B981",
-              tokens: 1_130_000,
-              replies: 12,
-              costUsd: null,
+              provider: "openrouter",
+              model: "model-a",
+              funding: "credits",
+              calls: 120,
+              tokens: 800_000,
+              spendUsd: 8,
+              estimated: false,
               cache,
-              models: [{ provider: "anthropic", model: "Sonnet", tokens: 1_130_000 }],
+            },
+            {
+              provider: "openai-codex",
+              model: "model-b",
+              funding: "own",
+              calls: 64,
+              tokens: 330_000,
+              spendUsd: 4.4,
+              estimated: true,
+              cache,
             },
           ],
-          days: [{ date: "2026-11-02", tokens: 1_130_000, agents: { none: 1_130_000 } }],
+          days: [
+            {
+              date: "2026-11-01",
+              tokens: 200_000,
+              agents: { a1: 200_000 },
+              spendUsd: 2.1,
+              agentSpendUsd: { a1: 2.1 },
+            },
+            {
+              date: "2026-11-02",
+              tokens: 500_000,
+              agents: { a1: 300_000, a2: 200_000 },
+              spendUsd: 6.3,
+              agentSpendUsd: { a1: 3.5, a2: 2.8 },
+            },
+            {
+              date: "2026-11-03",
+              tokens: 430_000,
+              agents: { a2: 230_000, a3: 200_000 },
+              spendUsd: 4,
+              agentSpendUsd: { a2: 3, a3: 1 },
+            },
+          ],
         },
       },
     }),
   );
 
   await page.goto("/app/usage");
-  const billed = page.getByRole("region", { name: "Billed" });
-  await expect(billed.getByText("Cache hit rate")).toBeVisible();
-  await expect(billed.getByText("77%")).toBeVisible();
-  await expect(billed.getByText("Cache writes")).toBeVisible();
-  await captureScreenshot(page, testInfo, "usage-billed-cache");
+  await expect(page.getByText("$12.40")).toBeVisible();
+  await expect(page.getByText("Rook credits").first()).toBeVisible();
+  await expect(page.getByText("≈ $4.40").first()).toBeVisible();
+  const tokens = page.getByRole("region", { name: "Tokens" });
+  await expect(tokens.getByText("Cache hit rate")).toBeVisible();
+  await expect(tokens.getByText("77%")).toBeVisible();
+  await page.getByRole("button", { name: "2 failed" }).click();
+  await expect(page.getByText("Billing 1 · Limit reached 1")).toBeVisible();
+  await expect(page.getByRole("region", { name: "By model" })).toContainText(
+    "ChatGPT subscription",
+  );
+  await captureScreenshot(page, testInfo, "usage-spend");
 });

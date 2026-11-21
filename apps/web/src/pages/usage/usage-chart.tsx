@@ -7,14 +7,14 @@ export function UsageChart({
   locale,
   readout,
   onHover,
-  tokensLabel,
+  valueLabel,
 }: {
   bars: UsageBar[];
   locale: string;
   /** Text for the line above the bars; the page owns the wording. */
   readout: string;
   onHover: (index: number | null) => void;
-  tokensLabel: (tokens: number) => string;
+  valueLabel: (value: number) => string;
 }) {
   const first = bars[0];
   const last = bars.at(-1);
@@ -29,14 +29,14 @@ export function UsageChart({
           <button
             key={bar.date}
             type="button"
-            aria-label={`${usageDayLabel(bar.date, locale)}, ${tokensLabel(bar.tokens)}`}
+            aria-label={`${usageDayLabel(bar.date, locale)}, ${valueLabel(bar.value)}`}
             onMouseEnter={() => onHover(index)}
             onMouseLeave={() => onHover(null)}
             onFocus={() => onHover(index)}
             onBlur={() => onHover(null)}
             className="group relative h-full min-w-0 flex-1 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            {bar.tokens === 0 ? (
+            {bar.value === 0 ? (
               <span
                 className="absolute inset-x-0 bottom-0 h-px bg-foreground/15"
                 aria-hidden="true"
@@ -44,7 +44,7 @@ export function UsageChart({
             ) : null}
             <span
               className="absolute inset-x-0 bottom-0 rounded-t-sm bg-foreground/15 transition-[height] duration-200 ease-out motion-reduce:transition-none"
-              style={{ height: `${Math.max(bar.tokens > 0 ? 2 : 0, bar.height * 100)}%` }}
+              style={{ height: `${Math.max(bar.value > 0 ? 2 : 0, bar.height * 100)}%` }}
             >
               <span
                 className="absolute inset-x-0 bottom-0 rounded-t-sm bg-foreground/80 transition-[height,background-color] duration-200 ease-out group-hover:bg-foreground motion-reduce:transition-none"

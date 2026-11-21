@@ -1320,6 +1320,10 @@ msgstr "已在该空间中"
 msgid "Already in this conversation"
 msgstr "已在此对话中"
 
+#: src/pages/BotContextMenu.tsx
+msgid "Always"
+msgstr "始终"
+
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Always act"
 msgstr "始终执行"
@@ -4267,6 +4271,10 @@ msgstr "已加密，且不再显示"
 msgid "Encrypted, verified"
 msgstr "加密并验证"
 
+#: src/pages/QuietHoursRow.tsx
+msgid "End"
+msgstr "结束"
+
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Ends {day}"
 msgstr "{day} 结束"
@@ -4627,6 +4635,10 @@ msgstr "首个任务：{task}"
 #: src/pages/RoutinesTabs.tsx
 msgid "Flows"
 msgstr "流程"
+
+#: src/pages/BotContextMenu.tsx
+msgid "For 1 hour"
+msgstr "1小时"
 
 #: src/pages/shell/composer-model-choice.tsx
 msgid "For this conversation"
@@ -6174,6 +6186,7 @@ msgid "Moved {ref} to {lane}."
 msgstr "已将 {ref} 移至 {lane}。"
 
 #: src/components/call/CallCard.tsx
+#: src/pages/BotContextMenu.tsx
 msgid "Mute"
 msgstr "静音"
 
@@ -7520,6 +7533,10 @@ msgstr "问题"
 #: src/pages/ActivityList.tsx
 msgid "Queued"
 msgstr "排队中"
+
+#: src/pages/QuietHoursRow.tsx
+msgid "Quiet hours"
+msgstr "静音时段"
 
 #: src/lib/model-problem.ts
 msgid "Raise limit"
@@ -8914,6 +8931,7 @@ msgstr "SSO 暂时不可用，请重试。"
 msgid "Standard"
 msgstr "标准"
 
+#: src/pages/QuietHoursRow.tsx
 #: src/pages/shell/computer-overlay.tsx
 msgid "Start"
 msgstr "开始"
@@ -9851,6 +9869,7 @@ msgid "Unlink"
 msgstr "取消关联"
 
 #: src/components/call/CallCard.tsx
+#: src/pages/BotContextMenu.tsx
 msgid "Unmute"
 msgstr "取消静音"
 
@@ -9864,6 +9883,10 @@ msgstr "取消置顶"
 #: src/pages/shell/use-composer-actions.ts
 msgid "Unsupported file type: {0}"
 msgstr "不支持的文件类型：{0}"
+
+#: src/pages/BotContextMenu.tsx
+msgid "Until tomorrow"
+msgstr "到明天"
 
 #: src/lib/server-copy.ts
 msgid "Untitled"

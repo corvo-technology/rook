@@ -1,6 +1,6 @@
-import type { Bot, ProductEvent } from "@corvo/contracts";
+import type { Bot, NotificationMute, ProductEvent } from "@corvo/contracts";
 import type { RefObject } from "react";
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import {
   deliverBrowserNotification as deliverNativeBrowserNotification,
   shouldNotifyBrowser,
@@ -13,8 +13,41 @@ type PendingBrowserNotification = {
   groupNotification: boolean;
 };
 
-/** Finished-run notifications, held until the browser grants permission. */
-export function useBrowserNotifications(botsRef: RefObject<Bot[]>) {
+/** Whether a running mute covers this agent or conversation. */
+export function mutedNow(
+  mutes: readonly NotificationMute[],
+  target: { botId: string; threadId: string },
+  now = Date.now(),
+): boolean {
+  return mutes.some(
+    (mute) =>
+      (mute.botId === target.botId || mute.threadId === target.threadId) &&
+      (mute.until === null || Date.parse(mute.until) > now),
+  );
+}
+
+/**
+ * Finished-run notifications, held until the browser grants permission. A mute silences them as
+ * it does a push: the person's mutes are read when the tab changes visibility, so a mute set just before leaving counts.
+ */
+export function useBrowserNotifications(
+  botsRef: RefObject<Bot[]>,
+  readMutes?: () => Promise<NotificationMute[]>,
+) {
+  const mutes = useRef<NotificationMute[]>([]);
+  useEffect(() => {
+    if (!readMutes) return;
+    const refresh = () => {
+      void readMutes()
+        .then((next) => {
+          mutes.current = next;
+        })
+        .catch(() => undefined);
+    };
+    refresh();
+    document.addEventListener("visibilitychange", refresh);
+    return () => document.removeEventListener("visibilitychange", refresh);
+  }, [readMutes]);
   const notifiedBrowserEvents = useRef(new Set<string>());
   const pendingBrowserNotifications = useRef(new Map<string, PendingBrowserNotification>());
   const deliverBrowserNotification = useCallback((pending: PendingBrowserNotification): boolean => {
@@ -24,7 +57,9 @@ export function useBrowserNotifications(botsRef: RefObject<Bot[]>) {
       pending.event,
       currentBot.name || pending.botName,
       {
-        enabled: pending.groupNotification || currentBot.notifyOnFinish,
+        enabled:
+          (pending.groupNotification || currentBot.notifyOnFinish) &&
+          !mutedNow(mutes.current, { botId: pending.botId, threadId: pending.event.threadId }),
         pageVisible: document.visibilityState === "visible",
         windowFocused: document.hasFocus(),
         permission: Notification.permission,

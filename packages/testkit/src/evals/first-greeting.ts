@@ -1,9 +1,9 @@
 import type { EvalJudge } from "./judge.js";
 
 /** Bump when the rubric or the reviewed examples change, so earlier reports stay comparable. */
-export const FIRST_GREETING_RUBRIC_VERSION = "first-greeting-v1";
+export const FIRST_GREETING_RUBRIC_VERSION = "first-greeting-v2";
 
-const RUBRIC = `Rubric ${FIRST_GREETING_RUBRIC_VERSION}. The evidence holds the first message a new AI teammate sent to a person. Pass only if it reads like a warm, capable person who just joined to help: (1) it uses the person's language and plain everyday words, (2) it is short, two or three sentences at most, (3) it offers help lightly and asks at most one easy question or offers a few tappable options. Fail if it announces itself by role or title ("I am X, the Y organizer"), sounds like a project manager or a form ("let's map the commitments to build a realistic routine"), lists categories in a row, or explains a plan before the person asked. Equivalent wording and other languages are fine. Do not reward length.`;
+const RUBRIC = `Rubric ${FIRST_GREETING_RUBRIC_VERSION}. The evidence holds the first message a new AI teammate sent to a person. Pass only if it reads like a warm, capable person who just joined to help: (1) it uses the person's language and plain everyday words, (2) it is short, two or three sentences at most, (3) it offers help lightly and asks at most one easy question or offers a few tappable options. Fail if it announces itself by role or title ("I am X, the Y organizer"), sounds like a project manager or a form ("let's map the commitments to build a realistic routine"), lists categories in a row, explains a plan before the person asked, or uses an em dash or en dash as punctuation (a person chatting writes a comma, a period or a new sentence). Equivalent wording and other languages are fine. Do not reward length.`;
 
 export type FirstGreetingExample = {
   id: string;
@@ -30,6 +30,16 @@ export const FIRST_GREETING_EXAMPLES: FirstGreetingExample[] = [
     expected: "fail",
     greeting:
       "Hello! I am your Chief, the workflow coordinator. To get started, please provide your priorities, deadlines, team members and tools so I can build a structured plan.",
+  },
+  {
+    id: "em-dash-chatty",
+    expected: "fail",
+    greeting: "Bem-vinda, Amanda! Que bom ter você aqui — vamos ajudar no dia a dia de vocês.",
+  },
+  {
+    id: "no-dash-human",
+    expected: "pass",
+    greeting: "Bem-vinda, Amanda! Que bom ter você aqui. Por onde quer começar?",
   },
   {
     id: "english-human",

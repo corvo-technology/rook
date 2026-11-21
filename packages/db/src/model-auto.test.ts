@@ -24,7 +24,7 @@ describe("newAgentModelAuto", () => {
 describe("auto routing migration", () => {
   const sql = readFileSync(
     new URL(
-      "../prisma/migrations/20261222100000_auto_routing_default/migration.sql",
+      "../prisma/migrations/20261222110000_auto_routing_default/migration.sql",
       import.meta.url,
     ),
     "utf8",

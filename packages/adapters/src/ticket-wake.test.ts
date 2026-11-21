@@ -1,6 +1,6 @@
 import type { PrismaClient } from "@corvo/db";
 import { describe, expect, it, vi } from "vitest";
-import { ticketWakePrompt, wakeTicketAssignee } from "./ticket-wake.js";
+import { ticketReviewer, ticketWakePrompt, wakeTicketAssignee } from "./ticket-wake.js";
 
 describe("ticketWakePrompt", () => {
   it("keeps the work instruction", () => {
@@ -98,5 +98,46 @@ describe("wakeTicketAssignee", () => {
     const review = setup({ status: "review", openBlockers: 1 });
     await wakeTicketAssignee(review.deps, { ...input, kind: "review" });
     expect(review.create.mock.calls[0]?.[0].data.prompt).toContain("Review ticket RAK-4");
+  });
+
+  it("starts new work only when the agent has no other ticket running, but still continues", async () => {
+    const busy = setup({ activeRun: true });
+    expect(await wakeTicketAssignee(busy.deps, input)).toBe(false);
+    expect(busy.runCreate).not.toHaveBeenCalled();
+    expect(await wakeTicketAssignee(busy.deps, { ...input, kind: "continue" })).toBe(true);
+    const free = setup();
+    expect(await wakeTicketAssignee(free.deps, input)).toBe(true);
+  });
+});
+
+describe("ticketReviewer", () => {
+  const bots = (active: Record<string, string>) =>
+    ({
+      bot: {
+        findFirst: vi.fn(async ({ where }: { where: { id?: string; spawnKey?: string } }) => {
+          const id = where.spawnKey ? active.chief : where.id && active[where.id];
+          return id ? { id } : null;
+        }),
+      },
+    }) as never;
+  const ticket = { spaceId: "ws", assigneeBotId: "rafa" };
+
+  it("is the agent that created the ticket", async () => {
+    const db = bots({ ana: "ana", chief: "chief" });
+    expect(await ticketReviewer(db, { ...ticket, createdByBotId: "ana" })).toBe("ana");
+  });
+
+  it("falls back to the Chief when the agent made it for itself or is gone", async () => {
+    const db = bots({ chief: "chief", rafa: "rafa" });
+    expect(await ticketReviewer(db, { ...ticket, createdByBotId: "rafa" })).toBe("chief");
+    expect(await ticketReviewer(db, { ...ticket, createdByBotId: "old" })).toBe("chief");
+  });
+
+  it("is nobody for a ticket a person made, or when the Chief owns it with no one else", async () => {
+    const db = bots({ chief: "chief" });
+    expect(await ticketReviewer(db, { ...ticket, createdByBotId: null })).toBeNull();
+    expect(
+      await ticketReviewer(db, { spaceId: "ws", assigneeBotId: "chief", createdByBotId: "chief" }),
+    ).toBeNull();
   });
 });

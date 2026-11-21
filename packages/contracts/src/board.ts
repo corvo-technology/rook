@@ -262,3 +262,5 @@ export const BoardEventSchema = z.object({
   createdAt: z.string(),
 });
 export type BoardEvent = z.infer<typeof BoardEventSchema>;
+/** Open To do tickets one agent may have waiting on another agent, before it must batch the rest. */
+export const TICKET_TODO_PER_OWNER_MAX = 10;

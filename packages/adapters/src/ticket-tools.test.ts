@@ -172,7 +172,10 @@ function mutationDeps(ticketBoardEnabled = true) {
   const tx = {
     board: { update: vi.fn(async () => ({ nextNumber: 2 })) },
     ticket: {
-      findFirst: vi.fn(async () => current),
+      findFirst: vi.fn(async ({ where }: { where: Record<string, unknown> }) =>
+        "title" in where ? null : current,
+      ),
+      count: vi.fn(async () => 0),
       create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => {
         current = ticket(data);
         return current;

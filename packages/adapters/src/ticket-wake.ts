@@ -7,6 +7,7 @@ import {
 } from "@corvo/contracts";
 import { escapePromptData } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
+import { CHIEF_SPAWN_KEY } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 
 /**
@@ -54,9 +55,37 @@ export async function openBlockerCount(
   });
 }
 
+/** Run states that mean an agent is working right now. */
+export const WORKING_RUN_STATUSES = ["queued", "leased", "running"];
+
+/**
+ * Who checks a delivery: the agent that created the ticket, or when it made the ticket for itself
+ * (or is gone), the Chief, so a delivery never waits for a reviewer that does not exist. A ticket
+ * a person created is reviewed by that person, so it has no agent reviewer.
+ */
+export async function ticketReviewer(
+  db: Pick<PrismaClient, "bot">,
+  ticket: { spaceId: string; createdByBotId: string | null; assigneeBotId: string | null },
+): Promise<string | null> {
+  if (!ticket.createdByBotId) return null;
+  const creator = await db.bot.findFirst({
+    where: { id: ticket.createdByBotId, spaceId: ticket.spaceId, archivedAt: null },
+    select: { id: true },
+  });
+  if (creator && creator.id !== ticket.assigneeBotId) return creator.id;
+  const chief = await db.bot.findFirst({
+    where: { spaceId: ticket.spaceId, spawnKey: CHIEF_SPAWN_KEY, archivedAt: null },
+    select: { id: true },
+  });
+  return chief && chief.id !== ticket.assigneeBotId ? chief.id : null;
+}
+
 /**
  * Starts a background run on a ticket without posting a chat message. Owner kinds go to the
  * current owner and wait while a blocker is open; `review` and `escalate` go to the creator.
+ * A new `work` run also waits while the agent is busy on another ticket: one active ticket per
+ * agent, and the ticket sweep starts the next one when the agent is free. Returns whether a run
+ * was queued.
  */
 export async function wakeTicketAssignee(
   deps: { prisma: PrismaClient; jobs: JobPublisher; ticketBoardEnabled?: boolean },
@@ -68,8 +97,8 @@ export async function wakeTicketAssignee(
     /** Skip when a run for the ticket is already waiting or running (a blocker finishing twice). */
     skipIfActive?: boolean;
   },
-): Promise<void> {
-  if (!deps.ticketBoardEnabled) return;
+): Promise<boolean> {
+  if (!deps.ticketBoardEnabled) return false;
   const kind = input.kind ?? "work";
   const owner = OWNER_KINDS.has(kind);
   const run = await deps.prisma.$transaction(async (tx) => {
@@ -92,7 +121,20 @@ export async function wakeTicketAssignee(
     if (
       input.skipIfActive &&
       (await tx.run.findFirst({
-        where: { ticketId: ticket.id, status: { in: ["queued", "leased", "running"] } },
+        where: { ticketId: ticket.id, status: { in: WORKING_RUN_STATUSES } },
+        select: { id: true },
+      }))
+    ) {
+      return null;
+    }
+    if (
+      kind === "work" &&
+      (await tx.run.findFirst({
+        where: {
+          botId: input.botId,
+          ticketId: { not: ticket.id },
+          status: { in: WORKING_RUN_STATUSES },
+        },
         select: { id: true },
       }))
     ) {
@@ -131,8 +173,9 @@ export async function wakeTicketAssignee(
       },
     });
   });
-  if (!run) return;
+  if (!run) return false;
   await deps.jobs.enqueue(runContinueJob(run.id)).catch((error) => {
     getLogger().warn("ticket wake deferred to reconciliation", error);
   });
+  return true;
 }

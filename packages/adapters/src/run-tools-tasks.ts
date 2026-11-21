@@ -181,7 +181,7 @@ export const taskTools: ToolHandlers = {
       blockedBy: stringList(args.blockedBy),
     });
     // The task shows in the conversation as a card, so people see what the agent added.
-    if ("ticket" in created && created.ticket) {
+    if ("ticket" in created && created.ticket && !("existing" in created)) {
       await publishMessage(deps, run, "bot", [
         { kind: "ticket", ref: created.ticket.ref, title: created.ticket.title },
       ]).catch(() => undefined);

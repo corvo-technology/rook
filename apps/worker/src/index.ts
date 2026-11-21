@@ -43,6 +43,7 @@ import {
   createRunSandbox,
   createRunSecretWriter,
   createTicketChangeNotifier,
+  createTicketSweeper,
   createWebProvider,
   databaseCapacityBackoffMs,
   deploymentModelUsageLookup,
@@ -431,6 +432,12 @@ async function main() {
     reconcileCloudAgents: () => reconcileCloudAgents({ prisma, jobs, cloudAgent }),
     reconcileResearch: () => reconcileResearch({ prisma, jobs, events }),
     reconcileComputerUpdates: () => reconcileComputerUpdates({ prisma, jobs }),
+    reconcileTickets: createTicketSweeper({
+      prisma,
+      jobs,
+      ticketBoardEnabled,
+      onTicketChange: ticketChanges,
+    }),
     reconcileRoutineRetryNotices: inMemoryJobs
       ? undefined
       : createRoutineRetryNoticeReconciler(pool, (runId) =>

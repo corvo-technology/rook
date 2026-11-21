@@ -29,7 +29,7 @@ function setup(ticketBoardEnabled: boolean, status = "todo") {
     },
     ticketDependency: { count: vi.fn(async () => 0), findMany: vi.fn(async () => []) },
     task: { create: createTask },
-    run: { create: createRun },
+    run: { create: createRun, findFirst: vi.fn(async () => null) },
   };
   const transaction = vi.fn(async (fn: (client: typeof tx) => Promise<unknown>) => fn(tx));
   const changes = createTicketChangeNotifier({

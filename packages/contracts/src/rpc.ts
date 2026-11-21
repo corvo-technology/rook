@@ -187,7 +187,14 @@ import { MailboxInput, MailboxSchema } from "./mailbox.js";
 import { MissionsViewSchema, NavPart } from "./missions.js";
 import { ModelHeadersSchema } from "./model-headers.js";
 import { ModelRoleSchema, ModelRoleUpdateSchema, ModelRoleViewSchema } from "./model-roles.js";
-import { NotificationListSchema, PresenceSchema } from "./notifications.js";
+import {
+  MuteDurationSchema,
+  MuteTargetSchema,
+  NotificationListSchema,
+  NotificationMuteSchema,
+  PresenceSchema,
+  QuietHoursSchema,
+} from "./notifications.js";
 import {
   HomeChecklistSchema,
   OnboardingAnswersSchema,
@@ -451,12 +458,14 @@ export const appContract = {
             avatarStyle: AvatarStyleSchema.optional(),
             timezone: TimeZoneSchema.nullable().optional(),
             locale: AccountLocaleSchema.optional(),
+            quietHours: QuietHoursSchema.optional(),
           })
           .refine(
             (input) =>
               input.avatarStyle !== undefined ||
               input.timezone !== undefined ||
-              input.locale !== undefined,
+              input.locale !== undefined ||
+              input.quietHours !== undefined,
             { message: "Nothing to update" },
           ),
       )
@@ -2129,6 +2138,18 @@ export const appContract = {
       )
       .output(z.object({ ok: z.literal(true) })),
     unregisterPush: oc.output(z.object({ ok: z.literal(true) })),
+    /** The person's running mutes in this space; ended ones are left out. */
+    mutes: oc.output(z.array(NotificationMuteSchema)),
+    /** Silences the pushes of one agent or conversation; the inbox and the thread keep updating. */
+    mute: oc
+      .input(
+        z.object({
+          target: MuteTargetSchema,
+          duration: MuteDurationSchema,
+        }),
+      )
+      .output(NotificationMuteSchema),
+    unmute: oc.input(MuteTargetSchema).output(z.object({ ok: z.literal(true) })),
   },
   search: {
     query: oc

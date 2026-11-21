@@ -29,6 +29,7 @@ function fixture() {
     $transaction: async (action: (tx: unknown) => Promise<unknown>) => action(client),
     run: { updateMany: locked, findMany: vi.fn(async () => []) },
     message: { findMany: vi.fn(async () => []) },
+    runToolResult: { deleteMany: async () => ({ count: 0 }) },
     externalEffect: {
       upsert,
       findMany: async () => (stored ? [{ result: stored }] : []),

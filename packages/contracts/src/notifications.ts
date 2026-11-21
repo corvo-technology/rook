@@ -82,3 +82,29 @@ export const PresenceSchema = z.object({
   lastSeenAt: z.string().nullable(),
 });
 export type Presence = z.infer<typeof PresenceSchema>;
+
+/** The person's night, as minutes after local midnight; pushes from background work wait through it. */
+export const QuietHoursSchema = z.object({
+  enabled: z.boolean(),
+  start: z.number().int().min(0).max(1439),
+  end: z.number().int().min(0).max(1439),
+});
+export type QuietHours = z.infer<typeof QuietHoursSchema>;
+
+export const MUTE_DURATIONS = ["hour", "tomorrow", "forever"] as const;
+export const MuteDurationSchema = z.enum(MUTE_DURATIONS);
+export type MuteDuration = z.infer<typeof MuteDurationSchema>;
+
+/** Where a mute applies: one agent, or one conversation. */
+export const MuteTargetSchema = z.union([
+  z.object({ botId: Id, threadId: z.undefined().optional() }),
+  z.object({ threadId: Id, botId: z.undefined().optional() }),
+]);
+
+/** A running mute; `until` is null when it lasts until the person turns it off. */
+export const NotificationMuteSchema = z.object({
+  botId: Id.nullable(),
+  threadId: Id.nullable(),
+  until: z.string().nullable(),
+});
+export type NotificationMute = z.infer<typeof NotificationMuteSchema>;

@@ -1,4 +1,5 @@
 import type { MessageBlock } from "@corvo/contracts";
+import { isBackgroundRunTrigger } from "@corvo/core";
 import type { PrismaClient } from "./client.js";
 
 const RESPONSE_BLOCK_KINDS = new Set<string>([
@@ -42,11 +43,26 @@ export function isRunResponse(type: string, payload: Record<string, unknown>): b
   });
 }
 
+/**
+ * The first sign of life a person sees: the run starting, or a tool activity line. Background
+ * (ticket) runs show nothing, so they never count.
+ */
+export function isRunActivity(type: string, payload: Record<string, unknown>): boolean {
+  if (type === "run.started") return !isBackgroundRunTrigger(payload.trigger as string | undefined);
+  return (
+    type === "thread.progress" &&
+    payload.activity === true &&
+    typeof payload.text === "string" &&
+    payload.text.trim().length > 0
+  );
+}
+
 export function runTimingFields(run: {
   trigger: string;
   createdAt: Date;
   startedAt: Date | null;
   firstResponseAt: Date | null;
+  firstActivityAt?: Date | null;
   completedAt: Date | null;
   sourceMessage: { createdAt: Date } | null;
 }): Record<string, string | number> {
@@ -56,6 +72,9 @@ export function runTimingFields(run: {
     "run.trigger": run.trigger,
     "run.pre_run_wait_ms": elapsed(run.createdAt, origin),
     ...(run.startedAt ? { "run.queue_wait_ms": elapsed(run.startedAt, run.createdAt) } : {}),
+    ...(run.firstActivityAt
+      ? { "run.first_activity_ms": elapsed(run.firstActivityAt, origin) }
+      : {}),
     ...(run.firstResponseAt
       ? { "run.first_response_ms": elapsed(run.firstResponseAt, origin) }
       : {}),
@@ -81,6 +100,7 @@ export async function readRunTimingFields(prisma: PrismaClient, runId: string) {
         startedAt: true,
         completedAt: true,
         firstResponseAt: true,
+        firstActivityAt: true,
         sourceMessage: { select: { createdAt: true } },
       },
     });

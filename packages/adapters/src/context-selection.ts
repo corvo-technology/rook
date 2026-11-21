@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { AgentContextStrategy, CacheCapabilities } from "@corvo/adapter-kit";
 import { MODEL_CONTEXT_TOO_SMALL_ERROR } from "@corvo/core";
+import { splitResultHandleNote } from "./tool-result-overflow.js";
 
 export type ContextStrategy = AgentContextStrategy;
 export interface ContextMessage {
@@ -466,6 +467,13 @@ export function shortenToolResultText(
   tool: { name?: string; arguments?: unknown } = {},
   options: { afterUse?: boolean } = {},
 ): string {
+  // A result kept whole behind a handle keeps that pointer however far it is shortened.
+  const kept = splitResultHandleNote(source);
+  if (kept) {
+    const room = Math.max(128, size - kept.note.length - 1);
+    if (kept.body.length <= room) return source;
+    return `${shortenToolResultText(kept.body, room, tool, options)}\n${kept.note}`;
+  }
   const afterUse = options.afterUse || source.includes(OMITTED_AFTER_USE);
   const marker = afterUse ? OMITTED_AFTER_USE : OMITTED_BEFORE_USE;
   return (

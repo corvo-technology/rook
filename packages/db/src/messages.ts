@@ -212,13 +212,25 @@ export async function assertRunCanWriteHistory(
   runId?: string,
   options?: { allowCancelled?: boolean },
 ): Promise<
-  | { status: string; startedAt: Date | null; firstResponseAt: Date | null; userId: string }
+  | {
+      status: string;
+      startedAt: Date | null;
+      firstResponseAt: Date | null;
+      firstActivityAt: Date | null;
+      userId: string;
+    }
   | undefined
 > {
   if (!runId) return;
   const run = await tx.run.findUnique({
     where: { id: runId },
-    select: { status: true, startedAt: true, firstResponseAt: true, userId: true },
+    select: {
+      status: true,
+      startedAt: true,
+      firstResponseAt: true,
+      firstActivityAt: true,
+      userId: true,
+    },
   });
   if (!run || (run.status === "cancelled" && !options?.allowCancelled)) {
     throw new RunHistoryWriteError();

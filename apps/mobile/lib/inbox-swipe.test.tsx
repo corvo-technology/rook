@@ -400,6 +400,52 @@ describe("iOS swipe row", () => {
     act(() => root.unmount());
   });
 
+  it("offers a Mute submenu next to notifications and runs its durations", () => {
+    const onMute = vi.fn();
+    const { items, container, root } = render({
+      notifyOnFinish: true,
+      muted: false,
+      onMute,
+    });
+    expect(entries(items).map(([label]) => label)).toEqual([
+      "Mark as Unread",
+      "Pin",
+      "Silence notifications",
+      "Mute",
+      "Move to",
+      "Archive",
+      "Delete…",
+    ]);
+    const mute = container.querySelector('[data-ui="Menu"][data-label="Mute"]')!;
+    expect(mute.getAttribute("data-image")).toBe("bell.slash");
+    expect(entries(mute).map(([label]) => label)).toEqual([
+      "For 1 hour",
+      "Until tomorrow",
+      "Always",
+    ]);
+    for (const label of ["For 1 hour", "Until tomorrow", "Always"]) {
+      act(() => mute.querySelector<HTMLElement>(`[data-label="${label}"]`)!.click());
+    }
+    expect(onMute.mock.calls).toEqual([["hour"], ["tomorrow"], ["forever"]]);
+    act(() => root.unmount());
+  });
+
+  it("offers a single Unmute for a muted chat, and no mute when it cannot be muted", () => {
+    const onMute = vi.fn();
+    const muted = render({ muted: true, onMute });
+    expect(muted.items.querySelector('[data-label="Mute"]')).toBeNull();
+    const unmute = muted.items.querySelector<HTMLElement>('[data-label="Unmute"]')!;
+    expect(unmute.getAttribute("data-image")).toBe("bell");
+    act(() => unmute.click());
+    expect(onMute.mock.calls).toEqual([[null]]);
+    act(() => muted.root.unmount());
+
+    const plain = render({});
+    expect(plain.items.querySelector('[data-label="Mute"]')).toBeNull();
+    expect(plain.items.querySelector('[data-label="Unmute"]')).toBeNull();
+    act(() => plain.root.unmount());
+  });
+
   it("previews the chat's last message as the server sent it, or says there are none", () => {
     // The server already stores the preview as plain text; literal marks in it are content.
     const message = "Run `pnpm test`, then <b>ship</b> *now*";

@@ -194,3 +194,41 @@ export function localizedFailurePush<
     body: copy.lines[message.errorInfo.code],
   };
 }
+
+const DIGEST_TITLE: Record<string, (count: number) => string> = {
+  "pt-BR": (count) => `${count} novidades`,
+  es: (count) => `${count} novedades`,
+  de: (count) => `${count} Neuigkeiten`,
+  fr: (count) => `${count} nouveautés`,
+  ja: (count) => `${count}件の更新`,
+  "zh-CN": (count) => `${count}条更新`,
+};
+
+const DIGEST_NAMES_SHOWN = 3;
+
+/**
+ * The one push that carries what waited for the morning: a count and who it came from, in the
+ * person's language. English is the source text.
+ */
+export function digestPush(
+  count: number,
+  agentNames: string[],
+  locale: string | undefined,
+): { title: string; body: string } {
+  const names = [...new Set(agentNames)];
+  const shown = names.slice(0, DIGEST_NAMES_SHOWN);
+  const more = names.length - shown.length;
+  let list = shown.join(", ");
+  try {
+    list = new Intl.ListFormat(locale ?? "en", {
+      style: "long",
+      type: more > 0 ? "unit" : "conjunction",
+    }).format(shown);
+  } catch {
+    // An unknown locale keeps the plain comma list.
+  }
+  return {
+    title: (locale ? DIGEST_TITLE[locale] : undefined)?.(count) ?? `${count} updates`,
+    body: more > 0 ? `${list} +${more}` : list,
+  };
+}

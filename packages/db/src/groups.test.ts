@@ -237,6 +237,7 @@ describe("archiveGroup", () => {
     eventDeleteMany = vi.fn();
     groupUpdate = vi.fn();
     const tx = {
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
       message: { findMany: vi.fn(async () => []) },
       $queryRaw: queryRaw,

@@ -152,14 +152,15 @@ async function firstCall(options: { chief: boolean }) {
 describe("the first model call stays within its token budget", () => {
   it("normal agent", async () => {
     const call = await firstCall({ chief: false });
-    expect(call.tools).toBeLessThan(8_000);
+    // Two names in the deferred tool index (research_start, research_status) cost about 10 tokens.
+    expect(call.tools).toBeLessThan(8_050);
     expect(call.system).toBeLessThan(3_100);
     expect(call.total).toBeLessThan(22_000);
   });
 
   it("the Chief", async () => {
     const call = await firstCall({ chief: true });
-    expect(call.tools).toBeLessThan(8_100);
+    expect(call.tools).toBeLessThan(8_150);
     expect(call.total).toBeLessThan(23_000);
   });
 

@@ -11,7 +11,7 @@ import type {
   RunStatus,
   RunStopReason,
 } from "@corvo/contracts";
-import { disabledBuiltinToolSet } from "@corvo/contracts";
+import { disabledBuiltinToolSet, RoutineWatchSchema } from "@corvo/contracts";
 import {
   ACCOUNT_PAUSED_RUN_ERROR,
   assertTransition,
@@ -67,6 +67,7 @@ import {
   readRunTimingFields,
   recordUsage,
   runTokens,
+  saveRunToolResult,
   settleReleasedTakeoverCards,
   spaceHasModelAccess,
   surfacedItemsInstruction,
@@ -89,6 +90,7 @@ import { createBrowserProvider } from "./browser-provider-factory.js";
 import { alertIfMonthCrossed } from "./budget-alert.js";
 import { partitionTools } from "./builtin-tool-bridge.js";
 import { agentConnectionTools, builtinAgentTools } from "./builtin-tools.js";
+import { cacheReturnFor, routineGapMinutes } from "./cache-retention-policy.js";
 import { cloudAgentsEnabled } from "./cloud-agent-factory.js";
 import { mergeConnectedPlugins, needsLivePluginSync } from "./composio-connector.js";
 import { scheduleComputerSleep } from "./computer-idle.js";
@@ -485,6 +487,17 @@ export function createRunExecutor(deps: ExecutorDeps) {
         // integration and computer setup must not occupy a queue dispatch slot.
         onRunStarted?.();
         dispatchHandedOff = Boolean(onRunStarted);
+        // The harness's own acknowledgement: no model call stands in front of it, so people see
+        // the agent working at once, not after routing, history and credentials are ready.
+        await deps.events.append({
+          spaceId: run.spaceId,
+          threadId: run.threadId,
+          botId: run.botId,
+          type: "run.started",
+          runId,
+          payload: { trigger: run.trigger, routineId: run.routineId },
+        });
+
         const sourceBlocks =
           run.trigger === "messaging" && run.sourceMessageId
             ? ((
@@ -705,15 +718,6 @@ export function createRunExecutor(deps: ExecutorDeps) {
           ? effectiveMemoryScope(bot.memoryScope, configuredMemory.defaultScope)
           : null;
         const semanticMemory: SemanticMemoryProvider | null = configuredMemory?.provider ?? null;
-
-        await deps.events.append({
-          spaceId: run.spaceId,
-          threadId: thread.id,
-          botId: bot.id,
-          type: "run.started",
-          runId,
-          payload: { trigger: run.trigger, routineId: run.routineId },
-        });
 
         const discoveredPromise = deps.connector
           ? deps.connector.discoverTools(context)
@@ -1622,6 +1626,34 @@ export function createRunExecutor(deps: ExecutorDeps) {
             // Lateness is optional context; a lookup failure must not prevent a run.
           }
         }
+        // Only a repeating routine has a cadence worth planning the prompt cache around.
+        let routineGap: number | undefined;
+        if (run.trigger === "routine" && run.routineId) {
+          try {
+            const routine = await deps.prisma.routine.findUnique({
+              where: { id: run.routineId },
+              select: { crons: true, timezone: true, watch: true },
+            });
+            if (routine) {
+              const watch = RoutineWatchSchema.safeParse(routine.watch);
+              routineGap = routineGapMinutes(
+                {
+                  crons: routine.crons,
+                  timezone: routine.timezone,
+                  watchEveryMinutes: watch.success ? watch.data.everyMinutes : null,
+                },
+                executionStartedAt,
+              );
+            }
+          } catch {
+            // The cadence only tunes cache retention; a lookup failure must not prevent a run.
+          }
+        }
+        const cacheReturn = cacheReturnFor({
+          resumed: Boolean(takeoverResume || approvalContinuation),
+          ticket: Boolean(run.ticketId) || run.trigger === "tickets",
+          routineGapMinutes: routineGap,
+        });
         const historicalContext: AgentRunRequest["history"] = [];
         if (compactedHistory.usedLocalSummary && compactedHistory.summary) {
           historicalContext.push({
@@ -1889,6 +1921,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
               threadId: thread.id,
               runId,
               routineId: run.routineId,
+              cacheReturn,
               sourceMessageId: run.sourceMessageId,
               onUsage: async (event) => {
                 await recordUsage(deps.prisma, event, {
@@ -2046,10 +2079,21 @@ export function createRunExecutor(deps: ExecutorDeps) {
               script,
               allowSilentEmpty: allowSilentEmptyRun,
               emptyResponseText,
+              storeToolResult: scripted
+                ? undefined
+                : ({ name, executionId, text }) =>
+                    saveRunToolResult(
+                      deps.prisma,
+                      { runId, spaceId: run.spaceId },
+                      { toolCallId: executionId, toolName: name, text },
+                    ),
               executeTool: scripted
                 ? undefined
                 : (name, args, executionId, route, observer) =>
                     applyTool(ctx, name, args, executionId, route, observer),
+              resolveSubagentModel: automatic
+                ? () => resolveFastRunModel(deps, { userId: run.userId, spaceId: run.spaceId })
+                : undefined,
               resolveModel: scripted
                 ? undefined
                 : (provider, modelId) =>

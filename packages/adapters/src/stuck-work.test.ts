@@ -575,6 +575,7 @@ function noticePrisma(run: ReturnType<typeof candidate>, stamps: NoticeStamp[]) 
 
 function expireClient(run: ReturnType<typeof candidate>, options?: { cancelled?: number }) {
   const client = {
+    runToolResult: { deleteMany: async () => ({ count: 0 }) },
     externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
     run: {
       findMany: vi.fn(async () => [run]),

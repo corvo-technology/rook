@@ -69,6 +69,7 @@ describe("queued run supersession", () => {
   it("only cancels queued runs started by user messages or reactions", async () => {
     const tx = {
       $queryRaw: vi.fn().mockResolvedValue([]),
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
       run: {
         findMany: vi
@@ -1634,6 +1635,7 @@ describe("sendThreadMessage", () => {
       blocks: [{ kind: "ask", text: "Which city should I use?", status: "pending" }],
     };
     const tx = {
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
       $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
       thread: {
@@ -1827,6 +1829,7 @@ describe("sendThreadMessage", () => {
       blocks: [{ kind: "ask", text: "Which city should I use?", status: "pending" }],
     };
     const tx = {
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
       $queryRaw: vi.fn().mockResolvedValue([{ id: "group-1" }]),
       thread: {
@@ -1965,6 +1968,7 @@ describe("sendThreadMessage", () => {
           ],
         };
         const tx = {
+          runToolResult: { deleteMany: async () => ({ count: 0 }) },
           externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
           $queryRaw: vi.fn().mockResolvedValue([{ id: "group-1" }]),
           thread: { update: vi.fn().mockResolvedValue({ nextMessageSeq: 4, nextEventSeq: 5 }) },
@@ -4239,6 +4243,7 @@ describe("stopThreadRuns", () => {
     });
     let nextEventSeq = 0;
     const transaction = {
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
       $queryRaw: vi.fn(),
       thread: {
@@ -4382,6 +4387,7 @@ describe("stopThreadRuns", () => {
       yield { type: "exit", code: 0 };
     });
     const transaction = {
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
       $queryRaw: vi.fn(),
       thread: {
@@ -4493,6 +4499,7 @@ describe("stopThreadRuns", () => {
     const writes: string[] = [];
     const created: Array<Record<string, unknown>> = [];
     const transaction = {
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
       $queryRaw: vi.fn(),
       thread: {
@@ -4612,6 +4619,7 @@ describe("stopThreadRuns", () => {
 
   it("emits no event and skips the wake when nothing was running", async () => {
     const transaction = {
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
       $queryRaw: vi.fn(),
       thread: { update: vi.fn() },

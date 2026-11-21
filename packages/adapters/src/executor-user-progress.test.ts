@@ -235,6 +235,7 @@ async function runTurn(
     botSecret: { findMany: vi.fn(async () => []) },
     agentSkill: { findMany: vi.fn(async () => []) },
     scratchpadItem: { findMany: vi.fn(async () => []) },
+    runToolResult: { deleteMany: async () => ({ count: 0 }) },
     externalEffect: { findMany: vi.fn(async () => []) },
     computerExecutionLease: {
       updateManyAndReturn: vi.fn(async () => [{ fence: 1 }]),
@@ -853,5 +854,38 @@ describe("a kept partial reply in later history", () => {
     const content = (id: string) => history.find((entry) => entry.id === id)?.content;
     expect(content("m2")).toBe(`Part one. Part tw\n\n${PARTIAL_REPLY_NOTE}`);
     expect(content("m4")).toBe("A whole reply.");
+  });
+});
+
+describe("instant acknowledgement", () => {
+  const activity = { type: "progress" as const, text: "Using calendar", activity: true as const };
+
+  it("announces a user run before the model is called", async () => {
+    const { append, runtimeRun } = await runTurn("Done.", false, "", [], "fyi", {
+      runtimeEvents: [activity, { type: "text", text: "Done." }, { type: "done", text: "Done." }],
+    });
+    const types = append.mock.calls.map(([event]) => event.type);
+    expect(types[0]).toBe("run.started");
+    expect(append.mock.invocationCallOrder[0]!).toBeLessThan(
+      runtimeRun.mock.invocationCallOrder[0]!,
+    );
+  });
+
+  it("shows tool activity while the model has written no text", async () => {
+    const { append } = await runTurn("Done.", false, "", [], "fyi", {
+      runtimeEvents: [activity, { type: "text", text: "Done." }, { type: "done", text: "Done." }],
+    });
+    const progress = append.mock.calls
+      .map(([event]) => event)
+      .filter((event) => event.type === "thread.progress");
+    expect(progress[0]?.payload).toMatchObject({ text: "Using calendar", activity: true });
+  });
+
+  it("shows no activity for a background run", async () => {
+    const { append } = await runTurn("", false, "", [], "fyi", {
+      trigger: "tickets",
+      runtimeEvents: [activity, { type: "done", text: "" }],
+    });
+    expect(append.mock.calls.map(([event]) => event.type)).not.toContain("thread.progress");
   });
 });

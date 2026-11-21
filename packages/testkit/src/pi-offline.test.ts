@@ -329,7 +329,7 @@ describe("real Pi against an offline model HTTP endpoint", () => {
             type: "tool",
             id: "delegate",
             name: "run_subagent",
-            arguments: { name: "helper", task: "Save hello to notes.txt." },
+            arguments: { name: "helper", task: "Save hello to notes.txt.", tools: ["write_file"] },
           },
         },
         {
@@ -376,7 +376,11 @@ describe("real Pi against an offline model HTTP endpoint", () => {
                 description: "Delegate a task",
                 inputSchema: {
                   type: "object",
-                  properties: { name: { type: "string" }, task: { type: "string" } },
+                  properties: {
+                    name: { type: "string" },
+                    task: { type: "string" },
+                    tools: { type: "array", items: { type: "string" } },
+                  },
                   required: ["task"],
                 },
               },

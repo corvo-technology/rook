@@ -13,6 +13,7 @@ vi.mock("./agent-audience.js", () => ({
 
 function setup(options: { stored?: object; threadGone?: boolean } = {}) {
   const tx = {
+    runToolResult: { deleteMany: async () => ({ count: 0 }) },
     externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
     $queryRaw: vi.fn().mockResolvedValue([{ id: "group-1" }]),
     thread: {

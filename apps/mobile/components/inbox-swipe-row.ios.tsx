@@ -42,10 +42,12 @@ export function InboxSwipeRow({
   unread,
   pinned,
   notifyOnFinish,
+  muted,
   sectionId,
   sections,
   preview,
   onAction,
+  onMute,
   onOrganize,
   onEditSection,
   children,
@@ -135,6 +137,15 @@ export function InboxSwipeRow({
                     systemImage={notifyOnFinish ? "bell.slash" : "bell"}
                     onPress={() => onOrganize({ notifyOnFinish: !notifyOnFinish })}
                   />
+                )}
+                {muted === undefined || !onMute ? null : muted ? (
+                  <Button label={t("Unmute")} systemImage="bell" onPress={() => onMute(null)} />
+                ) : (
+                  <Menu label={t("Mute")} systemImage="bell.slash">
+                    <Button label={t("For 1 hour")} onPress={() => onMute("hour")} />
+                    <Button label={t("Until tomorrow")} onPress={() => onMute("tomorrow")} />
+                    <Button label={t("Always")} onPress={() => onMute("forever")} />
+                  </Menu>
                 )}
                 <Menu label={t("Move to")} systemImage="folder">
                   {sections.map((section) => (

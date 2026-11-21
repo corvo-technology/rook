@@ -55,7 +55,8 @@ import {
   RunHistoryWriteError,
 } from "./messages.js";
 import { deleteRunSecretsInTransaction } from "./run-secrets.js";
-import { isRunResponse, readRunTimingFields } from "./run-timing.js";
+import { isRunActivity, isRunResponse, readRunTimingFields } from "./run-timing.js";
+import { clearRunToolResults } from "./run-tool-results.js";
 import { RUN_TURN_CHECKPOINT_KIND } from "./run-turn-checkpoint.js";
 import { recordSecurityEvent } from "./security-events.js";
 import type { SpaceHints } from "./space-hints.js";
@@ -1292,6 +1293,7 @@ export async function retireWaitingQuestionInTransaction(
   await tx.externalEffect.deleteMany({
     where: { runId: input.runId, kind: RUN_TURN_CHECKPOINT_KIND, status: RUN_TURN_CHECKPOINT_KIND },
   });
+  await clearRunToolResults(tx, [input.runId]);
   await deleteRunSecretsInTransaction(tx, [
     { id: input.runId, userId: run.userId, spaceId: input.spaceId },
   ]);
@@ -1909,6 +1911,7 @@ async function finalizeRunOnce(
         status: RUN_TURN_CHECKPOINT_KIND,
       },
     });
+    await clearRunToolResults(tx, [input.runId]);
 
     const attempt = await tx.attempt.updateMany({
       where: {
@@ -2186,12 +2189,15 @@ export async function appendEventInTransaction(
   // run.cancelled is appended after the run row already reads cancelled, so it
   // asserts the terminal status where every other event needs a writable run.
   let firstResponseAt: Date | null | undefined;
+  let firstActivityAt: Date | null | undefined;
   if (input.type === "run.cancelled") {
     await assertRunIsCancelled(tx, input.runId);
   } else {
-    firstResponseAt = (
-      await assertRunCanWriteHistory(tx, input.runId, { allowCancelled: input.allowCancelledRun })
-    )?.firstResponseAt;
+    const written = await assertRunCanWriteHistory(tx, input.runId, {
+      allowCancelled: input.allowCancelledRun,
+    });
+    firstResponseAt = written?.firstResponseAt;
+    firstActivityAt = written?.firstActivityAt;
   }
   // Unpaired UTF-16 surrogates (e.g. a split emoji high half) are invalid JSON for Postgres.
   const payload = sanitizeJsonValue(input.payload);
@@ -2207,6 +2213,13 @@ export async function appendEventInTransaction(
     },
   });
   await recordActionEvidence(tx, { ...event, type: input.type }, payload);
+  // Additive timing: recorded once, and never changes when first_response is stamped.
+  if (input.runId && firstActivityAt === null && isRunActivity(input.type, input.payload)) {
+    await tx.run.updateMany({
+      where: { id: input.runId, firstActivityAt: null },
+      data: { firstActivityAt: event.createdAt },
+    });
+  }
   const firstResponse = Boolean(
     input.runId &&
       !firstResponseAt &&

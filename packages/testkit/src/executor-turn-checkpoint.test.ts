@@ -209,6 +209,7 @@ function fixture(
       },
       $queryRaw: async () => [],
       $transaction: async (action: (tx: unknown) => Promise<unknown>) => action(prisma),
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: {
         ...empty,
         findMany: async ({ where }: { where: Record<string, unknown> }) =>
@@ -852,7 +853,11 @@ describe("executor paused transcript", () => {
             type: "tool",
             id: "delegate",
             name: "run_subagent",
-            arguments: { name: "helper", task: "Write the helper fixture." },
+            arguments: {
+              name: "helper",
+              task: "Write the helper fixture.",
+              tools: ["fixture_write"],
+            },
           },
         },
         {

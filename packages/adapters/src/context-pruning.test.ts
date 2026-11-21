@@ -363,3 +363,30 @@ describe("context pruning on rebuild", () => {
     expect(pruneForRebuild(messages.slice(1, 4))).toEqual(messages.slice(1, 4));
   });
 });
+
+describe("trimmed page state keeps its URL", () => {
+  it("names the page the trimmed result showed, without credentials or fragment", () => {
+    const page = (url: string, filler: string): Message =>
+      ({
+        role: "toolResult",
+        toolCallId: filler,
+        toolName: "browser_snapshot",
+        content: [{ type: "text", text: JSON.stringify({ url, tree: "n".repeat(2_000) }) }],
+        details: { url },
+        isError: false,
+        timestamp: 0,
+      }) as Message;
+    const messages = [
+      page("https://user:pw@example.test/orders?page=2#top", "a"),
+      page("https://example.test/b", "b"),
+      page("https://example.test/c", "c"),
+      page("https://example.test/d", "d"),
+    ];
+    const pruned = pruneStalePageStateContext(messages);
+    const first = (pruned[0] as { content: Array<{ text: string }> }).content[0]!.text;
+    expect(first).toContain("Page: https://example.test/orders?page=2");
+    expect(first).not.toContain("pw");
+    expect(first).not.toContain("#top");
+    expect(pruned[1]).toBe(messages[1]);
+  });
+});

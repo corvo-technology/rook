@@ -39,6 +39,7 @@ function db(rows: Rows) {
         "routineId" in where ? (rows.routineRuns ?? []) : (rows.botRuns ?? []),
       ),
     },
+    runToolResult: { deleteMany: async () => ({ count: 0 }) },
     externalEffect: { findMany: find("externalEffect", () => rows.effects ?? []) },
     connection: { findMany: find("connection", () => rows.connections ?? []) },
     mcpServer: { findMany: find("mcpServer", () => rows.servers ?? []) },

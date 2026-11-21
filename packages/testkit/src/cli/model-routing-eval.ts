@@ -87,6 +87,7 @@ export async function runModelRoutingSuite(
     kind: "model-routing-eval",
     startedAt: new Date().toISOString(),
     rubricVersion: MODEL_ROUTING_RUBRIC_VERSION,
+    tierRubricVersion: null as string | null,
     codeRevision: meta.codeRevision,
     workingDiffHash: meta.workingDiffHash,
     controls: { trials, timeoutMs },
@@ -171,7 +172,15 @@ export async function runModelRoutingSuite(
   if (judgeConnection)
     report.judge = { provider: judgeConnection.provider, model: judgeConnection.modelId! };
 
-  const { decideTier, STRONGER_MODEL_INSTRUCTION } = await import("@corvo/adapters");
+  const {
+    decideTier,
+    parseTierAnswer,
+    STRONGER_MODEL_INSTRUCTION,
+    TIER_CLASSIFIER_INSTRUCTIONS,
+    TIER_RUBRIC_VERSION,
+    tierClassifierPrompt,
+  } = await import("@corvo/adapters");
+  report.tierRubricVersion = TIER_RUBRIC_VERSION;
   const budget = new SpendBudget(report.spendCapUsd, strong.rates);
   const autoCalls = new Map<string, MeasuredCall>();
   const strongCalls = new Map<string, MeasuredCall>();
@@ -269,7 +278,7 @@ export async function runModelRoutingSuite(
   ];
   for (const result of results) {
     const testCase = selected.find((c) => c.id === result.caseId)!;
-    const tier = decideTier({
+    const decision = decideTier({
       title: testCase.title,
       description: testCase.description,
       trigger: "user",
@@ -277,7 +286,19 @@ export async function runModelRoutingSuite(
       contextTokens: 200,
       attachments: 0,
       approvalGated: testCase.id === "approved-send",
-    }).tier;
+    });
+    // What the structure leaves open the fast arm classifies, as the product does; a failed or
+    // unclear answer keeps the main tier.
+    let tier = decision.tier;
+    if (!decision.clear) {
+      const classified = await answer(
+        arms.fast,
+        tierClassifierPrompt(testCase, testCase.prompt),
+        autoCalls,
+        TIER_CLASSIFIER_INSTRUCTIONS,
+      ).catch(() => "");
+      tier = parseTierAnswer(classified) ?? tier;
+    }
     result.tier = tier;
     let grade: RoutingGrade;
     try {

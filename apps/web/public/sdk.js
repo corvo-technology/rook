@@ -13,8 +13,12 @@
 // dark | auto, default auto), locale (en, de, pt-BR, zh-CN, es, fr, ja; default: the visitor's
 // language), accent (your main colour as #rrggbb; default: Rook's own), origin (default: where
 // this file came from). Launcher only: dock (overlay | push, default overlay), radius (a CSS
-// length such as 12px), font-family (default: inherited from your page), name (the panel title,
-// default none), context (JSON, see setContext), shortcut (off to turn the Cmd/Ctrl+J key off).
+// length such as 12px), font-family (default: inherited from your page), context (JSON, see
+// setContext), shortcut (off to turn the Cmd/Ctrl+J key off), consultations (turns on the in-panel
+// "Record consultation" bar, see setConsultation). Both modes: name (what your product calls the
+// assistant: the panel title and the frame's own label; default "Assistant"), icon (an https image
+// for it; default none, the Rook mark is never shown), user-name (what the signed-in person is
+// called, for the greeting and their messages; default none).
 //
 // Headless AI in your own screens, from this same file: Rook.configure({ sessionUrl, origin,
 // getToken }), Rook.ask({ preset | task, schema, context, onText }) and Rook.recorder({ ... })
@@ -24,7 +28,9 @@
 //
 // Methods: setContext({ page, title, entities: [{ type, id, label }], suggestions? }),
 // registerActions([{ name, description, params, confirm }]), resolveAction(id, result),
-// setSuggestions([text]), open(), close(), toggle().
+// setSuggestions([text]), setConsultation({ clientId, appointmentId, clientName,
+// professionalName, preset | schema }), resolveConsultation({ path, label }), open(), close(),
+// toggle().
 //
 // Events (on the element): corvo-ready, corvo-expired, corvo-checkout { url } (the customer
 // tapped "Buy more": cancel it with preventDefault() to handle it yourself, otherwise the address
@@ -32,7 +38,10 @@
 // such as a recording screen), corvo-unread { count } (badge your own menu); launcher mode adds
 // corvo-open, corvo-close, corvo-unavailable { reason } (the assistant cannot be offered; the
 // launcher hides itself) and corvo-action { name, params, id } (the customer confirmed an action
-// you registered: do it, then call resolveAction(id, result)).
+// you registered: do it, then call resolveAction(id, result)) and corvo-consultation
+// { consultationId, clientId, appointmentId, note, transcript } (the draft of a recorded
+// consultation is ready: save it in your record, then call resolveConsultation({ path }) so the
+// panel can link to it).
 (() => {
   const scriptOrigin = (() => {
     try {
@@ -590,6 +599,135 @@
     ja: ["質問や依頼を入力", "会話全体を開く", "閉じる", "拡大", "縮小", "アシスタント"],
     "zh-CN": ["提问或提出请求", "打开完整对话", "关闭", "展开", "收起", "助手"],
   };
+  // The recording bar's words: [record, consent question, verbal, written, cancel, pause, resume,
+  // stop, generating, ready, open draft, failed, microphone blocked, try again, recording].
+  const REC_COPY = {
+    en: [
+      "Record consultation",
+      "Did the patient agree to be recorded?",
+      "Yes, verbally",
+      "Yes, in writing",
+      "Cancel",
+      "Pause",
+      "Resume",
+      "Stop",
+      "Generating draft\u2026",
+      "Draft ready",
+      "Open draft",
+      "Couldn't record. Try again.",
+      "Allow the microphone to record.",
+      "Try again",
+      "Recording",
+    ],
+    "pt-BR": [
+      "Gravar consulta",
+      "O paciente autorizou a gravação?",
+      "Sim, verbalmente",
+      "Sim, por escrito",
+      "Cancelar",
+      "Pausar",
+      "Retomar",
+      "Parar",
+      "Gerando rascunho\u2026",
+      "Rascunho pronto",
+      "Abrir rascunho",
+      "Não foi possível gravar. Tente de novo.",
+      "Permita o microfone para gravar.",
+      "Tentar de novo",
+      "Gravando",
+    ],
+    es: [
+      "Grabar consulta",
+      "¿El paciente autorizó la grabación?",
+      "Sí, verbalmente",
+      "Sí, por escrito",
+      "Cancelar",
+      "Pausar",
+      "Reanudar",
+      "Detener",
+      "Generando borrador\u2026",
+      "Borrador listo",
+      "Abrir borrador",
+      "No se pudo grabar. Inténtalo de nuevo.",
+      "Permite el micrófono para grabar.",
+      "Reintentar",
+      "Grabando",
+    ],
+    fr: [
+      "Enregistrer la consultation",
+      "Le patient a-t-il accepté l'enregistrement ?",
+      "Oui, oralement",
+      "Oui, par écrit",
+      "Annuler",
+      "Pause",
+      "Reprendre",
+      "Arrêter",
+      "Génération du brouillon\u2026",
+      "Brouillon prêt",
+      "Ouvrir le brouillon",
+      "Enregistrement impossible. Réessayez.",
+      "Autorisez le micro pour enregistrer.",
+      "Réessayer",
+      "Enregistrement",
+    ],
+    de: [
+      "Konsultation aufnehmen",
+      "Hat der Patient der Aufnahme zugestimmt?",
+      "Ja, mündlich",
+      "Ja, schriftlich",
+      "Abbrechen",
+      "Pause",
+      "Fortsetzen",
+      "Stopp",
+      "Entwurf wird erstellt\u2026",
+      "Entwurf fertig",
+      "Entwurf öffnen",
+      "Aufnahme nicht möglich. Versuche es erneut.",
+      "Erlaube das Mikrofon für die Aufnahme.",
+      "Erneut versuchen",
+      "Aufnahme läuft",
+    ],
+    ja: [
+      "診察を録音",
+      "患者は録音に同意しましたか？",
+      "はい（口頭）",
+      "はい（書面）",
+      "キャンセル",
+      "一時停止",
+      "再開",
+      "停止",
+      "下書きを作成中\u2026",
+      "下書きができました",
+      "下書きを開く",
+      "録音できませんでした。もう一度お試しください。",
+      "録音するにはマイクを許可してください。",
+      "再試行",
+      "録音中",
+    ],
+    "zh-CN": [
+      "录制问诊",
+      "患者是否同意录音？",
+      "是，口头同意",
+      "是，书面同意",
+      "取消",
+      "暂停",
+      "继续",
+      "停止",
+      "正在生成草稿\u2026",
+      "草稿已就绪",
+      "打开草稿",
+      "无法录音，请重试。",
+      "请允许使用麦克风以录音。",
+      "重试",
+      "录音中",
+    ],
+  };
+  const recCopyFor = (locale) => {
+    const tag = String(locale || "").toLowerCase();
+    if (tag.startsWith("pt")) return REC_COPY["pt-BR"];
+    if (tag.startsWith("zh")) return REC_COPY["zh-CN"];
+    return REC_COPY[tag.slice(0, 2)] || REC_COPY.en;
+  };
   const copyFor = (locale) => {
     const tag = String(locale || "").toLowerCase();
     if (tag.startsWith("pt")) return COPY["pt-BR"];
@@ -634,6 +772,18 @@ button{cursor:pointer}
 .icon{border:0;background:none;padding:6px;border-radius:calc(var(--radius) - 4px);color:var(--muted);display:grid;place-items:center}
 .icon:hover{background:var(--soft);color:var(--fg)}
 .icon svg{width:16px;height:16px}
+.rec{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border-block-end:1px solid var(--line);background:var(--soft)}
+.rec .grow{flex:1;min-width:0}
+.rec .ask{flex-basis:100%;font-weight:600}
+.rec .note{color:var(--muted);font-size:13px}
+.rec .time{font-variant-numeric:tabular-nums;font-weight:600}
+.rec .dot{width:8px;height:8px;border-radius:999px;background:#dc2626;animation:pulse 1.4s ease-in-out infinite}
+.rec[data-phase=paused] .dot{animation:none;background:var(--muted)}
+.btn{border:1px solid var(--line);background:var(--bg);border-radius:var(--radius);padding:7px 12px;font-weight:500}
+.btn:hover{background:var(--soft)}
+.btn.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.btn.primary:hover{opacity:.92}
+.fab[data-rec=true]{box-shadow:0 0 0 3px #dc2626,var(--shadow)}
 .body{position:relative;flex:1;min-height:0}
 .body iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent;opacity:0;transition:opacity .15s}
 .body[data-ready=true] iframe{opacity:1}
@@ -641,7 +791,7 @@ button{cursor:pointer}
 .body[data-ready=true] .skeleton{display:none}
 .bar{border-radius:var(--radius);background:var(--soft);animation:pulse 1.4s ease-in-out infinite}
 @keyframes pulse{50%{opacity:.5}}
-@media (prefers-reduced-motion:reduce){.bar{animation:none}.panel,.fab{transition:none}}
+@media (prefers-reduced-motion:reduce){.bar,.rec .dot{animation:none}.panel,.fab{transition:none}}
 @media (max-width:639px){
   .pop{inset-inline:16px;width:auto;max-width:none}
   .panel{inset-block:auto 0;inset-inline:0;width:100%;height:85dvh;border-radius:calc(var(--radius) + 6px) calc(var(--radius) + 6px) 0 0;border-inline-start:0}
@@ -672,7 +822,19 @@ button{cursor:pointer}
 
   class CorvoAssistant extends HTMLElement {
     static get observedAttributes() {
-      return ["theme", "locale", "accent", "context", "dock", "radius", "font-family", "name"];
+      return [
+        "theme",
+        "locale",
+        "accent",
+        "context",
+        "dock",
+        "radius",
+        "font-family",
+        "name",
+        "icon",
+        "user-name",
+        "consultations",
+      ];
     }
 
     get launcher() {
@@ -700,6 +862,8 @@ button{cursor:pointer}
       window.removeEventListener("message", this.onMessage);
       if (this.onKey) document.removeEventListener("keydown", this.onKey, true);
       this.unpush();
+      clearInterval(this.recTimer);
+      void this.recorder?.cancel?.();
       this.frame?.remove();
       this.frame = null;
       this.root = null;
@@ -710,18 +874,37 @@ button{cursor:pointer}
       if (name === "context") return this.setContext(this.parseContextAttribute(value));
       if (
         this.root &&
-        ["dock", "radius", "font-family", "name", "accent", "theme", "locale"].includes(name)
+        [
+          "dock",
+          "radius",
+          "font-family",
+          "name",
+          "accent",
+          "theme",
+          "locale",
+          "consultations",
+        ].includes(name)
       ) {
         this.paint();
       }
-      if (["theme", "locale", "accent"].includes(name)) {
+      if (["theme", "locale", "accent", "name", "icon", "user-name"].includes(name)) {
         this.send({
           type: "corvo:config",
           theme: this.getAttribute("theme") || "auto",
           locale: this.getAttribute("locale") || undefined,
           accent: this.getAttribute("accent") || undefined,
+          ...this.brand(),
         });
       }
+    }
+
+    /** What your product calls the assistant and the signed-in person; Rook's own name never shows. */
+    brand() {
+      return {
+        assistant: this.getAttribute("name") || undefined,
+        icon: isHttps(this.getAttribute("icon")) ? this.getAttribute("icon") : undefined,
+        user: this.getAttribute("user-name") || undefined,
+      };
     }
 
     get origin() {
@@ -743,6 +926,7 @@ button{cursor:pointer}
       this.pageContext = cleanContext(context);
       this.sendContext();
       this.paintPopover();
+      this.paintRecorder();
     }
 
     sendContext() {
@@ -805,6 +989,204 @@ button{cursor:pointer}
         .slice(0, 3);
     }
 
+    // ---- Consultation recorder (launcher panel) ------------------------------------------------
+
+    /**
+     * Who is being seen: `{ clientId, appointmentId, clientName, professionalName, preset | task |
+     * schema, instructions, lang }`. Without it, the page context's `client` (or `patient`) and
+     * `appointment` entities are used. The bar shows only with the `consultations` attribute and a
+     * client; pass null to clear it.
+     */
+    setConsultation(options) {
+      this.consultationOptions = options && typeof options === "object" ? options : null;
+      this.paintRecorder();
+    }
+
+    /** Where the draft lives in your record: `{ path, label? }`, shown as "Open draft". */
+    resolveConsultation(link) {
+      // The page usually answers the event while the draft is still being handed over.
+      if (!this.rec || !["processing", "done"].includes(this.rec.phase)) return;
+      this.rec.path = link && isPath(link.path) ? link.path : null;
+      this.paintRecorder();
+    }
+
+    consultationTarget() {
+      if (!this.hasAttribute("consultations")) return null;
+      const given = this.consultationOptions || {};
+      const entity = (types) =>
+        this.pageContext?.entities.find((item) => types.includes(item.type.toLowerCase()));
+      const client = entity(["client", "patient"]);
+      const appointment = entity(["appointment"]);
+      const clientId = limit(String(given.clientId ?? client?.id ?? ""), 64);
+      if (!clientId) return null;
+      return {
+        clientId,
+        appointmentId: limit(String(given.appointmentId ?? appointment?.id ?? ""), 64) || undefined,
+        clientName: limit(given.clientName ?? client?.label, 120) || undefined,
+        professionalName: limit(given.professionalName, 120) || undefined,
+        preset: given.preset,
+        task: given.task,
+        schema: given.schema,
+        instructions: given.instructions,
+        lang: given.lang,
+      };
+    }
+
+    /** The first step: the professional says whether the patient agreed, and how. */
+    startConsultation() {
+      if (!this.consultationTarget() || !["idle", "done", "error"].includes(this.rec.phase)) return;
+      this.rec = { phase: "consent", seconds: 0, path: null, error: null };
+      this.paintRecorder();
+    }
+
+    /** Nothing is recorded, and the microphone is not asked for, until this is called. */
+    async confirmConsent(method) {
+      const target = this.consultationTarget();
+      if (this.rec.phase !== "consent" || !target) return;
+      if (method !== "verbal" && method !== "written") return;
+      this.rec = { phase: "starting", seconds: 0, path: null, error: null };
+      this.paintRecorder();
+      const phases = {
+        recording: "recording",
+        paused: "paused",
+        uploading: "processing",
+        processing: "processing",
+        done: "done",
+        idle: "idle",
+        error: "error",
+      };
+      this.recorder = window.Rook.recorder({
+        ...target,
+        consent: { method, at: new Date().toISOString() },
+        onState: (state) => {
+          const phase = phases[state];
+          if (!phase) return;
+          this.rec.phase = phase;
+          clearInterval(this.recTimer);
+          if (phase === "recording") {
+            this.recTimer = setInterval(() => {
+              this.rec.seconds += 1;
+              this.paintRecorder();
+            }, 1000);
+          }
+          this.paintRecorder();
+        },
+        onResult: (note, meta) => {
+          this.dispatchEvent(
+            new CustomEvent("corvo-consultation", {
+              detail: {
+                consultationId: meta.consultationId,
+                clientId: target.clientId,
+                appointmentId: target.appointmentId,
+                note,
+                transcript: meta.transcript,
+              },
+            }),
+          );
+        },
+        onError: (error) => {
+          this.rec.error = error && error.code;
+          this.paintRecorder();
+        },
+      });
+      await this.recorder.start();
+    }
+
+    cancelConsent() {
+      if (this.rec.phase !== "consent") return;
+      this.rec = { phase: "idle", seconds: 0, path: null, error: null };
+      this.paintRecorder();
+    }
+
+    paintRecorder() {
+      if (!this.root) return;
+      const bar = this.shadowRoot.querySelector(".rec");
+      const target = this.consultationTarget();
+      const busy = !["idle", "consent", "done", "error"].includes(this.rec.phase);
+      // A recording in progress keeps its bar even when the page moves on to another screen.
+      bar.hidden = !target && !busy;
+      this.fab.dataset.rec = String(this.rec.phase === "recording" || this.rec.phase === "paused");
+      if (bar.hidden) return;
+      const copy = recCopyFor(this.getAttribute("locale") || navigator.language);
+      const { phase } = this.rec;
+      bar.dataset.phase = phase;
+      const button = (label, onClick, primary) => {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = primary ? "btn primary" : "btn";
+        item.textContent = label;
+        item.addEventListener("click", onClick);
+        return item;
+      };
+      const text = (value, className) => {
+        const item = document.createElement("span");
+        item.className = className;
+        item.textContent = value;
+        return item;
+      };
+      const clock = () => {
+        const total = this.rec.seconds;
+        const pad = (n) => String(n).padStart(2, "0");
+        return `${pad(Math.floor(total / 60))}:${pad(total % 60)}`;
+      };
+      const nodes = [];
+      if (phase === "idle" || phase === "starting") {
+        const label = target?.clientName;
+        nodes.push(button(copy[0], () => this.startConsultation(), true));
+        if (label) nodes.push(text(label, "note grow"));
+        nodes[0].disabled = phase === "starting";
+      } else if (phase === "consent") {
+        nodes.push(
+          text(copy[1], "ask"),
+          button(copy[2], () => void this.confirmConsent("verbal"), true),
+          button(copy[3], () => void this.confirmConsent("written")),
+          button(copy[4], () => this.cancelConsent()),
+        );
+      } else if (phase === "recording" || phase === "paused") {
+        const dot = document.createElement("span");
+        dot.className = "dot";
+        dot.setAttribute("aria-hidden", "true");
+        nodes.push(
+          dot,
+          text(clock(), "time"),
+          text(copy[14], "note grow"),
+          button(phase === "paused" ? copy[6] : copy[5], () =>
+            phase === "paused" ? this.recorder.resume() : this.recorder.pause(),
+          ),
+          button(copy[7], () => void this.recorder.stop(), true),
+        );
+      } else if (phase === "processing") {
+        const status = text(copy[8], "note grow");
+        status.setAttribute("role", "status");
+        nodes.push(status);
+      } else if (phase === "done") {
+        const status = text(copy[9], "grow");
+        status.setAttribute("role", "status");
+        nodes.push(status);
+        if (this.rec.path) {
+          nodes.push(
+            button(
+              copy[10],
+              () =>
+                this.dispatchEvent(
+                  new CustomEvent("corvo-navigate", { detail: { path: this.rec.path } }),
+                ),
+              true,
+            ),
+          );
+        }
+        if (target) nodes.push(button(copy[0], () => this.startConsultation()));
+      } else if (phase === "error") {
+        const status = text(this.rec.error === "permission_denied" ? copy[12] : copy[11], "grow");
+        status.setAttribute("role", "alert");
+        nodes.push(
+          status,
+          button(copy[13], () => this.startConsultation(), true),
+        );
+      }
+      bar.replaceChildren(...nodes);
+    }
+
     // ---- Session ------------------------------------------------------------------------------
 
     /** A fresh one-use code from the partner's own backend: { code } or { error: reason }. */
@@ -838,6 +1220,10 @@ button{cursor:pointer}
       const accent = this.getAttribute("accent");
       if (accent) params.set("accent", accent);
       if (this.launcher) params.set("mode", "compact");
+      const { assistant, icon, user } = this.brand();
+      if (assistant) params.set("assistant", assistant);
+      if (icon) params.set("icon", icon);
+      if (user) params.set("user", user);
       this.prepared = true;
       this.frame.src = `${this.origin}/embed#${params}`;
     }
@@ -973,6 +1359,7 @@ button{cursor:pointer}
       this.expanded = false;
       this.unread = 0;
       this.suggestions = [];
+      this.rec = { phase: "idle", seconds: 0, path: null, error: null };
       this.ready = false;
       this.prepared = false;
       this.loading = false;
@@ -998,6 +1385,7 @@ button{cursor:pointer}
     <div class="head"><span class="title"></span>
       <button class="icon expand" type="button">${ICONS.expand}</button>
       <button class="icon close" type="button">${ICONS.close}</button></div>
+    <div class="rec" hidden></div>
     <div class="body"><div class="skeleton" aria-hidden="true">
       <div class="bar" style="height:36px;width:60%;align-self:flex-end"></div>
       <div class="bar" style="height:64px;width:85%"></div>
@@ -1041,6 +1429,7 @@ button{cursor:pointer}
       const initial = this.parseContextAttribute(this.getAttribute("context"));
       if (initial) this.pageContext = cleanContext(initial);
       this.paintPopover();
+      this.paintRecorder();
       // Warm the session when the browser has nothing better to do.
       const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 1500));
       idle(() => this.prepare());
@@ -1085,6 +1474,7 @@ button{cursor:pointer}
       expand.setAttribute("aria-label", this.expanded ? copy[4] : copy[3]);
       expand.innerHTML = this.expanded ? ICONS.collapse : ICONS.expand;
       this.panel.dataset.expanded = String(this.expanded);
+      if (this.rec) this.paintRecorder();
     }
 
     paintBadge() {

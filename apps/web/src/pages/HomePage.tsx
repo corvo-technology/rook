@@ -13,6 +13,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { takeInitialBootstrap } from "../lib/bootstrap";
 import { isEmbedded, openInHost } from "../lib/embed";
+import { useEmbedBrand } from "../lib/embed-brand";
 import { quickActions } from "../lib/embedded-home";
 import { findFirstBot } from "../lib/first-bot";
 import { daypart, routinesCard, waitingCard, workingCard } from "../lib/home-cards";
@@ -128,7 +129,11 @@ export function HomePage() {
     now,
   });
 
-  const name = greetingName({ name: bootstrap?.me.name, email: bootstrap?.me.email });
+  const brand = useEmbedBrand();
+  // Inside a partner's product the account is the customer's, so only the person's own name greets.
+  const name = isEmbedded()
+    ? greetingName({ displayName: brand.user })
+    : greetingName({ name: bootstrap?.me.name, email: bootstrap?.me.email });
   const part = daypart(opened.getHours());
   const greeting = name
     ? part === "morning"

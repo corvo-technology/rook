@@ -82,7 +82,15 @@ On the page:
 
 ```html
 <script src="https://app.rook.team/sdk.js"></script>
-<corvo-assistant session-url="/rook/session" theme="auto" style="height: 600px"></corvo-assistant>
+<corvo-assistant
+  session-url="/rook/session"
+  theme="auto"
+  name="Assistant"
+  user-name="Maria Silva"
+  style="height: 600px"
+></corvo-assistant>
 ```
+
+`name` (and `icon`) is what your product calls the assistant; `user-name` is whoever is signed in, for the greeting and their messages. Without them the frame shows "Assistant" and does not use the customer account's name.
 
 Done: the customer sees the assistant, already signed in, with the template's agents. Attributes and events are in the [SDK](/en/partners/sdk/).

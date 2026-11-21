@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { priceCeilingFor } from "./model-price-ceiling.js";
+import { priceCeilingFor, pricedModelOnProvider } from "./model-price-ceiling.js";
 import { resolveRuntimeModel } from "./pi-runtime-models.js";
 import { maximumModelCallCost } from "./pi-usage.js";
 
@@ -82,5 +82,18 @@ describe("a router priced -1 never under-reserves", () => {
       apiKey: "k",
     }).model;
     expect(withCeiling?.cost).toEqual(without?.cost);
+  });
+});
+
+describe("a priced model to run on when the chosen one has no price", () => {
+  const router = { provider: "openrouter", modelId: "typesafe/jev-router" };
+
+  it("takes the first deployment model of the same provider the catalog can price", () => {
+    expect(pricedModelOnProvider("openrouter", [router, cheap, pricey])).toBe(cheap.modelId);
+  });
+
+  it("never crosses to another provider, and says so with nothing", () => {
+    expect(pricedModelOnProvider("openai", [router, cheap, null])).toBeUndefined();
+    expect(pricedModelOnProvider("openrouter", [router, null, undefined])).toBeUndefined();
   });
 });

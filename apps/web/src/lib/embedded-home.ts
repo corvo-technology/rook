@@ -131,3 +131,17 @@ export function balanceView(balance: PartnerBalance | null, locale: string): Bal
     ratio: Math.min(1, remaining / balance.planCredit),
   };
 }
+
+/**
+ * What the empty chat offers inside a partner's product: the template's own prompts, else two
+ * that need no context. With the page's own starters or a record on screen, nothing is added.
+ */
+export function embedStarters(input: {
+  quickActions?: readonly PartnerQuickAction[];
+  defaults: readonly string[];
+}): string[] {
+  const prompts = (input.quickActions ?? []).flatMap((action) =>
+    action.prompt ? [action.prompt] : [],
+  );
+  return (prompts.length ? prompts : [...input.defaults]).slice(0, 3);
+}

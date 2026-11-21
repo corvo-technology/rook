@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   activeEmbedTab,
   balanceView,
+  embedStarters,
   embedTabs,
   formatMinor,
   parsePartnerBalance,
@@ -122,5 +123,28 @@ describe("the balance", () => {
   it("keeps cents only when there are some, and never shows a negative balance", () => {
     expect(formatMinor(1850, "BRL", "pt-BR").replace(/\s/g, " ")).toBe("R$ 18,50");
     expect(balanceView({ ...base, remaining: -40 }, "pt-BR")).toMatchObject({ ratio: 0 });
+  });
+});
+
+describe("the empty chat's starters", () => {
+  it("are the template's prompts, in order and at most three", () => {
+    const quickActions = [
+      { label: "a", prompt: "A" },
+      { label: "open", open: "/agenda" },
+      { label: "b", prompt: "B" },
+      { label: "c", prompt: "C" },
+      { label: "d", prompt: "D" },
+    ];
+    expect(embedStarters({ quickActions, defaults: ["x"] })).toEqual(["A", "B", "C"]);
+  });
+
+  it("fall back to the two that need no context", () => {
+    expect(embedStarters({ defaults: ["Schedule", "Unconfirmed"] })).toEqual([
+      "Schedule",
+      "Unconfirmed",
+    ]);
+    expect(embedStarters({ quickActions: [{ label: "o", open: "/x" }], defaults: ["S"] })).toEqual([
+      "S",
+    ]);
   });
 });

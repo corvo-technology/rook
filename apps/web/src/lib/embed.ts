@@ -5,16 +5,33 @@ import { normalizeUiLocale } from "./ui-locale";
 
 export type EmbedTheme = "light" | "dark" | "auto";
 
+/** How the partner names its assistant and the person using it; none of it is Rook's. */
+export interface EmbedBrand {
+  /** The assistant's name in the partner's product. */
+  assistant: string | null;
+  /** An https address for the assistant's icon. */
+  icon: string | null;
+  /** What the signed-in person is called, for the greeting and their messages. */
+  user: string | null;
+}
+
 export interface EmbedLaunch {
   code: string | null;
   theme: EmbedTheme;
   locale: UiLocale | null;
   /** The partner's main colour as `#rrggbb`, or null to keep the app's own. */
   accent: string | null;
+  brand: EmbedBrand;
 }
 
 export type EmbedMessage =
-  | { type: "config"; theme: EmbedTheme | null; locale: UiLocale | null; accent: string | null }
+  | {
+      type: "config";
+      theme: EmbedTheme | null;
+      locale: UiLocale | null;
+      accent: string | null;
+      brand: EmbedBrand;
+    }
   | { type: "code"; code: string }
   /** Where the person is in the partner's product, or null when the page cleared it. */
   | { type: "context"; context: HostContext | null }
@@ -37,6 +54,36 @@ export const isCompactEmbed = (): boolean => compact;
 
 function theme(value: string | null): EmbedTheme | null {
   return value && THEMES.includes(value) ? (value as EmbedTheme) : null;
+}
+
+/** A short plain name: trimmed, one line, never longer than `max`. */
+function label(value: unknown, max: number): string | null {
+  if (typeof value !== "string") return null;
+  const text = value.replace(/\s+/g, " ").trim().slice(0, max);
+  return text || null;
+}
+
+/** Only a web address an image can load from. */
+function iconUrl(value: unknown): string | null {
+  if (typeof value !== "string" || value.length > 2048) return null;
+  try {
+    return new URL(value).protocol === "https:" ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The partner's names for the assistant and the person, from the page's launch or config. */
+export function parseEmbedBrand(raw: {
+  assistant?: unknown;
+  icon?: unknown;
+  user?: unknown;
+}): EmbedBrand {
+  return {
+    assistant: label(raw.assistant, 60),
+    icon: iconUrl(raw.icon),
+    user: label(raw.user, 80),
+  };
 }
 
 /** Only a language the app ships; a regional tag reads as its language, anything else as none. */
@@ -105,6 +152,11 @@ export function parseEmbedLaunch(hash: string): EmbedLaunch {
     theme: theme(params.get("theme")) ?? "auto",
     locale: locale(params.get("locale")),
     accent: accent(params.get("accent")),
+    brand: parseEmbedBrand({
+      assistant: params.get("assistant"),
+      icon: params.get("icon"),
+      user: params.get("user"),
+    }),
   };
 }
 
@@ -121,6 +173,7 @@ export function parseEmbedMessage(data: unknown): EmbedMessage | null {
       theme: typeof message.theme === "string" ? theme(message.theme) : null,
       locale: typeof message.locale === "string" ? locale(message.locale) : null,
       accent: accent(message.accent),
+      brand: parseEmbedBrand(message),
     };
   }
   if (message.type === "corvo:code" && typeof message.code === "string" && message.code) {

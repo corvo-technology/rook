@@ -12,6 +12,7 @@ import { applyUiDirection } from "./lib/apply-ui-direction";
 import { bootBrand } from "./lib/brand";
 import { clientUpdates } from "./lib/client-update";
 import { applyEmbedAccent, initialEmbedLaunch, isEmbedded } from "./lib/embed";
+import { setEmbedBrand } from "./lib/embed-brand";
 import { reportCaughtReactError } from "./lib/monitoring";
 import { markAfterPaint, markOnce } from "./lib/performance";
 import { installPreloadRecovery } from "./lib/preload-recovery";
@@ -36,6 +37,7 @@ applyUiAppearance(
 );
 applyEmbedAccent(initialEmbedLaunch?.accent ?? null);
 if (isEmbedded()) document.documentElement.dataset.embedded = "";
+if (initialEmbedLaunch) setEmbedBrand(initialEmbedLaunch.brand);
 
 function PerformanceProbe() {
   useLayoutEffect(() => {

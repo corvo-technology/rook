@@ -1004,6 +1004,11 @@ msgstr "クレジットを追加"
 msgid "Add credits in Billing to keep using voice."
 msgstr "音声を使い続けるには、請求でクレジットを追加してください。"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Add credits or connect your own API key."
+msgstr "クレジットを追加するか、ご自身のAPIキーを接続してください。"
+
 #: src/pages/Store.tsx
 msgid "Add Executor"
 msgstr "Executorを追加"
@@ -1662,6 +1667,11 @@ msgstr "変更する前に確認します。"
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Assign work"
 msgstr "作業を割り当て"
+
+#: src/pages/Shell.tsx
+#: src/pages/shell/embed-tabs.tsx
+msgid "Assistant"
+msgstr "アシスタント"
 
 #. placeholder {0}: preset.time
 #: src/lib/cron.ts
@@ -7158,6 +7168,11 @@ msgstr "その他のプロバイダー"
 msgid "Other ways to connect"
 msgstr "その他の接続方法"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Out of model credits"
+msgstr "モデルのクレジットがなくなりました"
+
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/PricingSection.tsx
 #: src/pages/usage/usage-sections.tsx
@@ -9303,6 +9318,10 @@ msgstr "私の発言から提案"
 msgid "Suggestions"
 msgstr "候補"
 
+#: src/pages/Shell.tsx
+msgid "Summarize today's schedule"
+msgstr "今日の予定を要約"
+
 #: src/pages/home/HomeComposer.tsx
 msgid "Summary of the day"
 msgstr "今日のまとめ"
@@ -9712,6 +9731,11 @@ msgid "this Mac"
 msgstr "このMac"
 
 #. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "This model can't use credits"
+msgstr "このモデルはクレジットを使えません"
+
+#. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "This model cannot read images. Choose a model that supports images."
 msgstr "このモデルは画像を読み取れません。画像に対応したモデルを選択してください。"
@@ -9719,6 +9743,11 @@ msgstr "このモデルは画像を読み取れません。画像に対応した
 #: src/lib/user-error.ts
 msgid "This model cannot read images. Choose a model that supports images."
 msgstr "このモデルは画像を読み取れません。画像に対応したモデルを選択してください。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "This model has no reliable price. Connect your own API key to use it."
+msgstr "このモデルには信頼できる価格がありません。ご自身のAPIキーを接続して使用してください。"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -10661,6 +10690,10 @@ msgstr "{name} と話せる人"
 #: src/pages/VaultPage.tsx
 msgid "Who can use {0}"
 msgstr "{0} を使えるユーザー"
+
+#: src/pages/Shell.tsx
+msgid "Who hasn't confirmed yet?"
+msgstr "まだ確認していない人は？"
 
 #: src/pages/shell/channel-members.tsx
 msgid "Who sees this channel"

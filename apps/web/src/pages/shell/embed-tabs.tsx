@@ -1,8 +1,7 @@
-import type { Bot } from "@corvo/contracts";
-import { BotAvatar } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import type { LucideIcon } from "lucide-react";
 import { CalendarClock, Home, ListChecks, MessageCircle, Users } from "lucide-react";
+import { embedAssistantName, useEmbedBrand } from "../../lib/embed-brand";
 import type { EmbedTabId } from "../../lib/embedded-home";
 import { activeEmbedTab, EMBED_TAB_PATHS } from "../../lib/embedded-home";
 
@@ -15,22 +14,25 @@ const ICONS: Record<EmbedTabId, LucideIcon> = {
 };
 
 /**
- * What stands in for the sidebar inside a partner's product: the Chief by its name, then the few
- * areas a customer needs. It scrolls sideways on a narrow frame instead of wrapping, and the
+ * What stands in for the sidebar inside a partner's product: the assistant by the partner's name
+ * and icon (never Rook's), then the few areas a customer needs. It scrolls sideways on a narrow frame instead of wrapping, and the
  * current tab is marked in the partner's colour.
  */
 export function EmbedTabs({
   tabs,
   pathname,
-  chief,
+  chiefName,
   onOpen,
 }: {
   tabs: readonly EmbedTabId[];
   pathname: string;
-  chief?: Pick<Bot, "id" | "name" | "color">;
+  /** What the partner's template calls the Chief; Rook's own name is never shown. */
+  chiefName?: string;
   onOpen: (to: string) => void;
 }) {
   const { t } = useLingui();
+  const brand = useEmbedBrand();
+  const name = embedAssistantName(brand, chiefName, t`Assistant`);
   const labels: Record<EmbedTabId, string> = {
     home: t`Home`,
     chats: t`Chats`,
@@ -44,14 +46,19 @@ export function EmbedTabs({
       data-testid="embed-tabs"
       className="flex h-12 shrink-0 items-center gap-4 border-b border-border bg-background px-3 sm:px-4"
     >
-      {chief ? (
-        <div className="hidden min-w-0 items-center gap-2 sm:flex">
-          <BotAvatar color={chief.color} identity={chief.id} size={24} />
-          <span className="max-w-44 truncate text-sm font-semibold">{chief.name}</span>
-        </div>
-      ) : null}
+      <div className="hidden min-w-0 items-center gap-2 sm:flex">
+        {brand.icon ? (
+          <img src={brand.icon} alt="" className="size-6 rounded-md object-contain" />
+        ) : null}
+        <span
+          data-testid="embed-assistant-name"
+          className="max-w-44 truncate text-sm font-semibold"
+        >
+          {name}
+        </span>
+      </div>
       <nav
-        aria-label={chief?.name ?? "Rook"}
+        aria-label={name}
         className="rk-scroll -mb-px flex h-full min-w-0 flex-1 items-stretch gap-1 overflow-x-auto"
       >
         {tabs.map((id) => {

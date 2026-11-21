@@ -59,6 +59,8 @@ export const RUN_ERROR_CODES = [
   "plan_storage_full",
   "plan_computer_limit",
   "no_model_access",
+  "model_credits_empty",
+  "model_unpriced",
   "model_not_allowed",
   "timeout",
   "turn_stopped",

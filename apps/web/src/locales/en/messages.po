@@ -1004,6 +1004,11 @@ msgstr "Add credits"
 msgid "Add credits in Billing to keep using voice."
 msgstr "Add credits in Billing to keep using voice."
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Add credits or connect your own API key."
+msgstr "Add credits or connect your own API key."
+
 #: src/pages/Store.tsx
 msgid "Add Executor"
 msgstr "Add Executor"
@@ -1662,6 +1667,11 @@ msgstr "Asks you before it changes anything."
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Assign work"
 msgstr "Assign work"
+
+#: src/pages/Shell.tsx
+#: src/pages/shell/embed-tabs.tsx
+msgid "Assistant"
+msgstr "Assistant"
 
 #. placeholder {0}: preset.time
 #: src/lib/cron.ts
@@ -7158,6 +7168,11 @@ msgstr "Other providers"
 msgid "Other ways to connect"
 msgstr "Other ways to connect"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Out of model credits"
+msgstr "Out of model credits"
+
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/PricingSection.tsx
 #: src/pages/usage/usage-sections.tsx
@@ -9303,6 +9318,10 @@ msgstr "Suggest from what I say"
 msgid "Suggestions"
 msgstr "Suggestions"
 
+#: src/pages/Shell.tsx
+msgid "Summarize today's schedule"
+msgstr "Summarize today's schedule"
+
 #: src/pages/home/HomeComposer.tsx
 msgid "Summary of the day"
 msgstr "Summary of the day"
@@ -9712,6 +9731,11 @@ msgid "this Mac"
 msgstr "this Mac"
 
 #. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "This model can't use credits"
+msgstr "This model can't use credits"
+
+#. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "This model cannot read images. Choose a model that supports images."
 msgstr "This model cannot read images. Choose a model that supports images."
@@ -9719,6 +9743,11 @@ msgstr "This model cannot read images. Choose a model that supports images."
 #: src/lib/user-error.ts
 msgid "This model cannot read images. Choose a model that supports images."
 msgstr "This model cannot read images. Choose a model that supports images."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "This model has no reliable price. Connect your own API key to use it."
+msgstr "This model has no reliable price. Connect your own API key to use it."
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -10661,6 +10690,10 @@ msgstr "Who can talk to {name}"
 #: src/pages/VaultPage.tsx
 msgid "Who can use {0}"
 msgstr "Who can use {0}"
+
+#: src/pages/Shell.tsx
+msgid "Who hasn't confirmed yet?"
+msgstr "Who hasn't confirmed yet?"
 
 #: src/pages/shell/channel-members.tsx
 msgid "Who sees this channel"

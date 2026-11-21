@@ -1004,6 +1004,11 @@ msgstr "Adicionar créditos"
 msgid "Add credits in Billing to keep using voice."
 msgstr "Adicione créditos em Cobrança para continuar usando a voz."
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Add credits or connect your own API key."
+msgstr "Adicione créditos ou conecte sua própria chave de API."
+
 #: src/pages/Store.tsx
 msgid "Add Executor"
 msgstr "Adicionar Executor"
@@ -1662,6 +1667,11 @@ msgstr "Pergunta a você antes de mudar qualquer coisa."
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Assign work"
 msgstr "Atribuir trabalho"
+
+#: src/pages/Shell.tsx
+#: src/pages/shell/embed-tabs.tsx
+msgid "Assistant"
+msgstr "Assistente"
 
 #. placeholder {0}: preset.time
 #: src/lib/cron.ts
@@ -7158,6 +7168,11 @@ msgstr "Outros provedores"
 msgid "Other ways to connect"
 msgstr "Outras formas de conectar"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Out of model credits"
+msgstr "Créditos do modelo esgotados"
+
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/PricingSection.tsx
 #: src/pages/usage/usage-sections.tsx
@@ -9303,6 +9318,10 @@ msgstr "Sugerir pelo que eu digo"
 msgid "Suggestions"
 msgstr "Sugestões"
 
+#: src/pages/Shell.tsx
+msgid "Summarize today's schedule"
+msgstr "Resumir a agenda de hoje"
+
 #: src/pages/home/HomeComposer.tsx
 msgid "Summary of the day"
 msgstr "Resumo do dia"
@@ -9712,6 +9731,11 @@ msgid "this Mac"
 msgstr "esse Mac"
 
 #. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "This model can't use credits"
+msgstr "Este modelo não pode usar créditos"
+
+#. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "This model cannot read images. Choose a model that supports images."
 msgstr "Este modelo não consegue ler imagens. Escolha um modelo que aceite imagens."
@@ -9719,6 +9743,11 @@ msgstr "Este modelo não consegue ler imagens. Escolha um modelo que aceite imag
 #: src/lib/user-error.ts
 msgid "This model cannot read images. Choose a model that supports images."
 msgstr "Este modelo não consegue ler imagens. Escolha um modelo que aceite imagens."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "This model has no reliable price. Connect your own API key to use it."
+msgstr "Este modelo não tem preço confiável. Conecte sua própria chave de API para usá-lo."
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -10661,6 +10690,10 @@ msgstr "Quem pode falar com {name}"
 #: src/pages/VaultPage.tsx
 msgid "Who can use {0}"
 msgstr "Quem pode usar {0}"
+
+#: src/pages/Shell.tsx
+msgid "Who hasn't confirmed yet?"
+msgstr "Quem ainda não confirmou?"
 
 #: src/pages/shell/channel-members.tsx
 msgid "Who sees this channel"

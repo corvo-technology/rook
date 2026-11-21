@@ -91,3 +91,18 @@ test("the launcher hides itself when the session is refused", async ({ page }) =
   // The session is prepared as soon as the browser is idle; refused, the button goes away.
   await expect(page.getByRole("button", { name: "Rook" })).toBeHidden();
 });
+
+test("the panel offers Gravar consulta for the patient on screen, behind a consent step", async ({
+  page,
+}, testInfo) => {
+  await openHost(page, "?consultations=1");
+  await page.getByRole("button", { name: "Rook" }).click();
+  await page.getByRole("button", { name: "Abrir conversa completa" }).click();
+  await page.getByRole("button", { name: "Gravar consulta" }).click();
+  await expect(page.getByText("O paciente autorizou a gravação?")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Sim, verbalmente" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Sim, por escrito" })).toBeVisible();
+  await captureScreenshot(page, testInfo, "launcher-consultation-consent");
+  await page.getByRole("button", { name: "Cancelar" }).click();
+  await expect(page.getByRole("button", { name: "Gravar consulta" })).toBeVisible();
+});

@@ -8,6 +8,7 @@ import {
   scheduleEmbedRefresh,
   tellParent,
 } from "../lib/embed";
+import { setEmbedBrand } from "../lib/embed-brand";
 import { answerHostAction, hostAsk, setHostActions, setHostContext } from "../lib/embed-host";
 import { activateUiLocale } from "../lib/i18n";
 import { applyUiAppearance } from "../lib/ui-appearance";
@@ -28,6 +29,7 @@ export function EmbedBridge() {
         if (message.theme) applyUiAppearance(message.theme === "auto" ? "system" : message.theme);
         if (message.locale) void activateUiLocale(message.locale);
         applyEmbedAccent(message.accent);
+        setEmbedBrand(message.brand);
         return;
       }
       if (message.type === "context") return setHostContext(message.context);

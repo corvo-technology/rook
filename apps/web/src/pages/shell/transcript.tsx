@@ -62,6 +62,14 @@ import { QuoteSelectionButton } from "./quote-selection-button";
 /** How many of the latest messages show a moving face. */
 export const LIVE_FACE_MESSAGES = 12;
 
+/** A message the viewer wrote: the server names no other author for it, or names the viewer. */
+function isOwnMessage(
+  message: { authorUserId?: string | null },
+  currentUserId: string | undefined,
+): boolean {
+  return !message.authorUserId || message.authorUserId === currentUserId;
+}
+
 export const Transcript = memo(function Transcript({
   scrollRef,
   scrollRequest,
@@ -115,13 +123,25 @@ export const Transcript = memo(function Transcript({
   app,
   currentUserId,
   personRole,
+  embeddedViewer,
 }: {
+  /**
+   * Set inside a partner's product, where the account is the customer's: the viewer's own messages
+   * carry the name the partner gave the person (null: "You"), never the account's name or role.
+   */
+  embeddedViewer?: { name: string | null };
   /** Who is reading; a user message from someone else in a shared conversation shows its author. */
   currentUserId?: string;
   /** What a person is called in the space beside their name in a channel, such as "Owner". */
   personRole?: (userId: string | undefined) => string | undefined;
   /** Who the chat is with, shown with the starters while the chat has no message. */
-  intro?: { id: string; name: string; title: string; color: string };
+  intro?: {
+    id: string;
+    name: string;
+    title: string;
+    color: string;
+    brand?: { icon: string | null };
+  };
   /** Tappable first messages, shown only while the chat has no message. */
   starters?: readonly string[];
   onStarter?: (text: string) => void;
@@ -665,17 +685,25 @@ export const Transcript = memo(function Transcript({
                               ? (memberName?.(message.botId) ??
                                 (message.botId ? peerBot(message.botId)?.name : undefined) ??
                                 intro?.name)
-                              : (message.authorName ?? t`You`)
+                              : embeddedViewer && isOwnMessage(message, currentUserId)
+                                ? (embeddedViewer.name ?? t`You`)
+                                : (message.authorName ?? t`You`)
                         }
                         speakerRole={
                           message.role === "bot"
                             ? message.botId
                               ? peerBot(message.botId)?.title
                               : intro?.title
-                            : personRole?.(message.authorUserId ?? currentUserId)
+                            : embeddedViewer
+                              ? undefined
+                              : personRole?.(message.authorUserId ?? currentUserId)
                         }
                         relayedVia={peerReceipt ? (intro?.name ?? undefined) : undefined}
-                        speakerImage={message.authorImage}
+                        speakerImage={
+                          embeddedViewer && isOwnMessage(message, currentUserId)
+                            ? undefined
+                            : message.authorImage
+                        }
                         ownerUserId={
                           message.botId ? peerBot(message.botId)?.ownerUserId : undefined
                         }

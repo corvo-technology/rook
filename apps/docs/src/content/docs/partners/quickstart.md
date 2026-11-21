@@ -82,7 +82,15 @@ Na página:
 
 ```html
 <script src="https://app.rook.team/sdk.js"></script>
-<corvo-assistant session-url="/rook/session" theme="auto" style="height: 600px"></corvo-assistant>
+<corvo-assistant
+  session-url="/rook/session"
+  theme="auto"
+  name="Assistente"
+  user-name="Maria Silva"
+  style="height: 600px"
+></corvo-assistant>
 ```
+
+`name` (e `icon`) é como o seu produto chama o assistente; `user-name` é quem está logado, para o cumprimento e as mensagens dela. Sem eles o quadro mostra "Assistente" e não usa o nome da conta do cliente.
 
 Pronto: o cliente vê o assistente, já logado, com os agentes do modelo. Atributos e eventos em [SDK](/partners/sdk/).

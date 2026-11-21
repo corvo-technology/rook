@@ -91,7 +91,12 @@ function Page() {
       className="flex flex-col bg-background text-foreground"
       style={{ height: "100vh", width: params.get("width") ? `${params.get("width")}px` : "100%" }}
     >
-      <EmbedTabs tabs={tabs} pathname="/app/home" chief={chief} onOpen={() => undefined} />
+      <EmbedTabs
+        tabs={tabs}
+        pathname="/app/home"
+        chiefName={config.chief}
+        onOpen={() => undefined}
+      />
       <div className="min-h-0 flex-1">
         <EmbeddedHome
           greeting="Bom dia, Ana"

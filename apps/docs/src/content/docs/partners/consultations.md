@@ -44,6 +44,8 @@ DELETE .../consultations/{id}                apaga o áudio e a transcrição ag
 
 O consentimento do paciente é **seu** de obter, antes de criar a consulta, e é guardado com ela. `consent.obtained` precisa ser `true`; `method` é `verbal` ou `written`; `text` é opcional. Sem consentimento a criação é recusada.
 
+Se você usa o painel do launcher, a faixa **Gravar consulta** faz essa pergunta ao profissional (verbalmente ou por escrito) antes de gravar; veja [Gravar consulta no painel](/partners/sdk/#gravar-consulta-no-painel).
+
 ## Modelos de nota
 
 | `template` | Entrada no prontuário | Campos |

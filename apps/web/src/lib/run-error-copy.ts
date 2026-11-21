@@ -327,6 +327,29 @@ export function describeRunError(
         tone: "warning",
         actions: ["connect"],
       });
+    case "model_credits_empty":
+      return view(info, raw, {
+        title: i18n._({ id: "Out of model credits", message: "Out of model credits" }),
+        line: i18n._({
+          id: "Add credits or connect your own API key.",
+          message: "Add credits or connect your own API key.",
+        }),
+        tone: "warning",
+        actions: ["open-usage", "connect"],
+      });
+    case "model_unpriced":
+      return view(info, raw, {
+        title: i18n._({
+          id: "This model can't use credits",
+          message: "This model can't use credits",
+        }),
+        line: i18n._({
+          id: "This model has no reliable price. Connect your own API key to use it.",
+          message: "This model has no reliable price. Connect your own API key to use it.",
+        }),
+        tone: "warning",
+        actions: ["change-model", "connect"],
+      });
     case "model_not_allowed":
       return view(info, raw, {
         title: i18n._({ id: "Model not available", message: "Model not available" }),

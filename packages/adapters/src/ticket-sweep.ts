@@ -35,6 +35,7 @@ type SweepDeps = {
  * - a delivery in review with no review run is sent to its reviewer, and after
  *   `TICKET_REVIEW_ROUNDS_MAX` rounds to the person;
  * - an agent with nothing running starts its next To do ticket, one at a time.
+ * Only tickets with `sweepEligibleAt` are swept: new ones, and old ones a person has touched.
  * An agent with a run on a ticket is left alone, so no agent works two tickets at once.
  */
 export function createTicketSweeper(deps: SweepDeps, options: { now?: () => Date } = {}) {
@@ -61,6 +62,7 @@ export function createTicketSweeper(deps: SweepDeps, options: { now?: () => Date
     const stalled = await prisma.ticket.findMany({
       where: {
         status: "doing",
+        sweepEligibleAt: { not: null },
         assigneeBotId: { not: null },
         updatedAt: { lt: before(STALL_MS) },
         id: { notIn: heldTickets },
@@ -82,6 +84,7 @@ export function createTicketSweeper(deps: SweepDeps, options: { now?: () => Date
     const delivered = await prisma.ticket.findMany({
       where: {
         status: "review",
+        sweepEligibleAt: { not: null },
         reviewRounds: { lte: TICKET_REVIEW_ROUNDS_MAX },
         updatedAt: { lt: before(REVIEW_IDLE_MS) },
         id: { notIn: heldTickets },
@@ -115,6 +118,7 @@ export function createTicketSweeper(deps: SweepDeps, options: { now?: () => Date
       by: ["assigneeBotId"],
       where: {
         status: "todo",
+        sweepEligibleAt: { not: null },
         assigneeBotId: { not: null, notIn: [...busyBots] },
         updatedAt: { lt: before(TODO_IDLE_MS) },
         blockedBy: { none: OPEN_BLOCKER },
@@ -126,6 +130,7 @@ export function createTicketSweeper(deps: SweepDeps, options: { now?: () => Date
         const queue = await prisma.ticket.findMany({
           where: {
             status: "todo",
+            sweepEligibleAt: { not: null },
             assigneeBotId,
             updatedAt: { lt: before(TODO_IDLE_MS) },
             blockedBy: { none: OPEN_BLOCKER },

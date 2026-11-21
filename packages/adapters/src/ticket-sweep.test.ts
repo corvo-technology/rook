@@ -269,3 +269,62 @@ describe("ticket flooding", () => {
     expect(w.ticketByRef("RAK-1").continuations).toBe(0);
   });
 });
+
+describe("tickets from before the sweep", () => {
+  const person = { spaceId: "ws", userId: "u1" };
+
+  async function oldTickets(w: World) {
+    const todo = await create(w, "Old to do", "rafa");
+    const doing = await create(w, "Old doing", "theo");
+    const review = await create(w, "Old review", "rafa", { ...chief, botId: "rafa" });
+    for (const run of w.runs) run.status = "completed";
+    w.ticketByRef(doing).status = "doing";
+    w.ticketByRef(review).status = "review";
+    for (const ref of [todo, doing, review]) w.ticketByRef(ref).sweepEligibleAt = null;
+    return { todo, doing, review };
+  }
+
+  it("are ignored by the to do, stalled and review sweeps", async () => {
+    const w = world();
+    const { todo, doing, review } = await oldTickets(w);
+    const before = w.runs.length;
+    await sweeper(w, minutes(120))();
+    expect(w.runs).toHaveLength(before);
+    expect(w.ticketByRef(todo).status).toBe("todo");
+    expect(w.ticketByRef(doing).status).toBe("doing");
+    expect(w.ticketByRef(doing).continuations).toBe(0);
+    expect(w.ticketByRef(review).reviewRounds).toBe(0);
+  });
+
+  it("are swept again once a person comments or reassigns", async () => {
+    const w = world();
+    const { todo, doing, review } = await oldTickets(w);
+    const before = w.runs.length;
+    await commentTicket(w.deps, { ...person, id: w.ticketByRef(todo).id, body: "Still needed" });
+    await updateTicket(w.deps, { ...person, id: w.ticketByRef(doing).id, ownerBotId: "theo" });
+    await updateTicket(w.deps, { ...person, id: w.ticketByRef(review).id, priority: "high" });
+    for (const run of w.runs) run.status = "completed";
+    expect(w.ticketByRef(todo).sweepEligibleAt).toBeTruthy();
+    expect(w.ticketByRef(doing).sweepEligibleAt).toBeTruthy();
+    expect(w.ticketByRef(review).sweepEligibleAt).toBeTruthy();
+    await sweeper(w, minutes(120))();
+    expect(w.runs.length).toBeGreaterThan(before);
+  });
+
+  it("stay ignored when only an agent comments", async () => {
+    const w = world();
+    const { todo } = await oldTickets(w);
+    await commentTicket(w.deps, { ...chief, id: w.ticketByRef(todo).id, body: "Note" });
+    expect(w.ticketByRef(todo).sweepEligibleAt).toBeNull();
+  });
+
+  it("do not stop a new ticket from being picked up", async () => {
+    const w = world();
+    await oldTickets(w);
+    const fresh = await create(w, "Brand new", "mia");
+    for (const run of w.runs) run.status = "completed";
+    w.ticketByRef(fresh).sweepEligibleAt = new Date(NOW.getTime());
+    await sweeper(w, minutes(10))();
+    expect(w.prompts("mia").length).toBeGreaterThan(0);
+  });
+});

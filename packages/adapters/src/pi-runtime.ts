@@ -70,6 +70,7 @@ import {
   toolCallBudgetExceededMessage,
   toolCallBudgetFor,
 } from "./pi-runtime-tools.js";
+import { withBackgroundServiceTier } from "./pi-service-tier.js";
 import type { PiSessionHandle, PiSessionRecorder } from "./pi-session.js";
 import { PiJsonlSessionRecorder } from "./pi-session.js";
 import { withPiTelemetry } from "./pi-telemetry.js";
@@ -118,9 +119,6 @@ export function cutReplyAtLimitPrompt(cut: string): string {
     `Your previous reply hit the output limit. It ended with: "${quoted}" Continue it: start by repeating those last words exactly, then carry on without repeating anything else.`,
   );
 }
-export const SILENT_ALLOWED_TOOL_CONTINUATION_PROMPT = automated(
-  "Your last turn ended right after a tool result, without a reply. Continue the original task from the latest tool result. If you need information or a decision from the user, ask them instead of guessing, even if you were told to stay silent. Otherwise, if you were instructed to stay silent when there is nothing to report, follow that instruction for the entire final assistant reply; if not, use any remaining tools needed, then give the user the final answer.",
-);
 
 // Shown as a failed-run error, not an assistant message. Asking the user to
 // continue stores that sentence as the reply, and the next "continue" runs
@@ -483,7 +481,13 @@ export class PiAgentRuntime implements AgentRuntime {
               withProviderResponse(
                 request,
                 target.config.provider,
-                withCloudflareAuth(target.config, options),
+                withBackgroundServiceTier(
+                  withCloudflareAuth(target.config, options),
+                  target.model,
+                  request.nonUrgent
+                    ? target.config.cacheCapabilities?.backgroundServiceTier
+                    : undefined,
+                ),
               ),
               target.config.maxTokens,
               () => target.credentials?.accessToken ?? target.apiKey,
@@ -769,14 +773,15 @@ export class PiAgentRuntime implements AgentRuntime {
                 // another model turn that would hide the error.
                 !providerFailureText(event.message) &&
                 !host.pausePending &&
+                // Silent-allowed runs (routines, watches) accept an empty final reply, so
+                // another model call would only buy a sentence nobody reads.
+                !request.allowSilentEmpty &&
                 silentToolContinuations < MAX_SILENT_TOOL_CONTINUATIONS
               ) {
                 silentToolContinuations += 1;
                 agent.followUp({
                   role: "user",
-                  content: request.allowSilentEmpty
-                    ? SILENT_ALLOWED_TOOL_CONTINUATION_PROMPT
-                    : SILENT_TOOL_CONTINUATION_PROMPT,
+                  content: SILENT_TOOL_CONTINUATION_PROMPT,
                   timestamp: Date.now(),
                 });
               }

@@ -537,9 +537,12 @@ export interface AgentRunRequest {
   usageOperationKind?: UsageOperationKind;
   /**
    * Whether this run is likely to be picked up again after the short prompt cache expired.
-   * "later" asks for the long cache where the protocol supports it; omitted means "soon".
+   * "later" asks for the long cache where the protocol supports it, "never" asks for no cache
+   * writes; omitted means "soon".
    */
-  cacheReturn?: "soon" | "later";
+  cacheReturn?: "soon" | "later" | "never";
+  /** Nobody is waiting on this run, so a connection's cheaper service tier may serve it. */
+  nonUrgent?: boolean;
   botId: string;
   threadId: string;
   runId: string;

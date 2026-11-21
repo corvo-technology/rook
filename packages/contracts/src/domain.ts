@@ -1518,6 +1518,8 @@ export const CacheCapabilitiesSchema = z.object({
   inputCostPerMillion: z.number().nonnegative().optional(),
   readCostPerMillion: z.number().nonnegative().optional(),
   writeCostPerMillion: z.number().nonnegative().optional(),
+  /** A cheaper service tier (flex or batch) the connection offers; used for non-urgent background runs only. */
+  backgroundServiceTier: z.string().trim().min(1).max(32).optional(),
 });
 export type CacheCapabilities = z.infer<typeof CacheCapabilitiesSchema>;
 

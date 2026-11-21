@@ -6,7 +6,7 @@ import { resolvePiCacheRetention } from "./pi-cache-retention.js";
 const SHORT_CACHE_MINUTES = 5;
 const LONG_CACHE_MINUTES = 60;
 
-export type CacheReturn = "soon" | "later";
+export type CacheReturn = "soon" | "later" | "never";
 
 type RoutineCadence = {
   crons?: readonly string[];
@@ -38,11 +38,15 @@ export function cacheReturnFor(run: {
   resumed?: boolean;
   /** A continuation or review run of a ticket. */
   ticket?: boolean;
+  /** This is a routine run, whatever its cadence. */
+  routine?: boolean;
   /** Minutes between this routine's runs, when it is one. */
   routineGapMinutes?: number;
 }): CacheReturn {
   if (run.resumed || run.ticket) return "later";
   const gap = run.routineGapMinutes;
+  // A routine that returns after the long cache expired, or never, would pay for a write nobody reads.
+  if (run.routine && (gap === undefined || gap > LONG_CACHE_MINUTES)) return "never";
   return gap !== undefined && gap >= SHORT_CACHE_MINUTES && gap <= LONG_CACHE_MINUTES
     ? "later"
     : "soon";
@@ -50,7 +54,8 @@ export function cacheReturnFor(run: {
 
 /**
  * The retention one run sends on every call. A connection that declares a mode keeps it. Otherwise
- * a run that comes back later asks for the long cache when the protocol supports it and falls
+ * a run that comes back later asks for the long cache, and one that never comes back in time asks for
+ * none, when the protocol supports it and falls
  * back to the default when it does not, so this never makes a call fail. Fixed for the whole run:
  * switching retention mid-run would rewrite the cached prefix.
  */
@@ -59,9 +64,11 @@ export function runCacheRetention(
   declared: SimpleStreamOptions["cacheRetention"],
   cacheReturn: CacheReturn | undefined,
 ): SimpleStreamOptions["cacheRetention"] {
-  if (declared !== undefined || cacheReturn !== "later") return declared;
+  if (declared !== undefined || (cacheReturn !== "later" && cacheReturn !== "never")) {
+    return declared;
+  }
   try {
-    return resolvePiCacheRetention(model, "long");
+    return resolvePiCacheRetention(model, cacheReturn === "later" ? "long" : "none");
   } catch {
     return undefined;
   }

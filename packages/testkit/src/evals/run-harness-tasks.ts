@@ -24,10 +24,10 @@ const parallel = (
 });
 
 /**
- * A model that has nothing to report writes nothing. After tool work, Pi answers an empty turn
- * with up to three automated continuation prompts, and a faithful model stays quiet each time.
+ * A model that has nothing to report writes nothing. A run that may end silent accepts that
+ * empty turn after tool work, with no automated continuation prompt.
  */
-const stayQuiet: Reply[] = [say(""), say(""), say(""), say("")];
+const stayQuiet: Reply[] = [say("")];
 
 const check = (id: string, pass: boolean): Check => ({ id, pass });
 const called = (o: Outcome, name: string) => o.calls.filter((c) => c.name === name);

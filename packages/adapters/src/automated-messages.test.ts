@@ -14,10 +14,7 @@ import {
   OPENAI_COMPATIBLE_PROVIDER_ID,
   registerOpenAiCompatibleRuntime,
 } from "./pi-openai-compatible-provider.js";
-import {
-  SILENT_ALLOWED_TOOL_CONTINUATION_PROMPT,
-  SILENT_TOOL_CONTINUATION_PROMPT,
-} from "./pi-runtime.js";
+import { SILENT_TOOL_CONTINUATION_PROMPT } from "./pi-runtime.js";
 import { reliableModelStream } from "./pi-runtime-stream.js";
 import { formatFinishedShellCommand } from "./shell-command-stream.js";
 
@@ -70,17 +67,9 @@ describe("automated messages are labelled as not from the user", () => {
   });
 
   it("marks Rook's continue nudges and finished shell output, and lets the bot ask the user", () => {
-    for (const prompt of [
-      SILENT_TOOL_CONTINUATION_PROMPT,
-      SILENT_ALLOWED_TOOL_CONTINUATION_PROMPT,
-    ]) {
-      expect(prompt.startsWith(AUTOMATED_MESSAGE_LABEL)).toBe(true);
-      expect(prompt).not.toContain("Do not stop after a tool call");
-      expect(prompt).toContain("ask them instead of guessing");
-    }
-    expect(SILENT_ALLOWED_TOOL_CONTINUATION_PROMPT).toContain(
-      "stay silent when there is nothing to report",
-    );
+    expect(SILENT_TOOL_CONTINUATION_PROMPT.startsWith(AUTOMATED_MESSAGE_LABEL)).toBe(true);
+    expect(SILENT_TOOL_CONTINUATION_PROMPT).not.toContain("Do not stop after a tool call");
+    expect(SILENT_TOOL_CONTINUATION_PROMPT).toContain("ask them instead of guessing");
     const shell = formatFinishedShellCommand({ code: 0, stdout: "done", stderr: "" });
     expect(shell.startsWith(`${AUTOMATED_MESSAGE_LABEL} Shell command finished.`)).toBe(true);
     expect(shell).toContain("stdout:\ndone");

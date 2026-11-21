@@ -27,8 +27,8 @@ describe.each(caddyfiles)("%s HSTS", (filename) => {
     expect(httpsSite).not.toContain("frame-ancestors 'none'");
   });
 
-  it("replaces the client-supplied forwarding header on API and RPC requests", () => {
-    expect(httpsSite.match(/header_up X-Forwarded-For \{client_ip\}/g)).toHaveLength(2);
+  it("replaces the client-supplied forwarding header on API, RPC and MCP requests", () => {
+    expect(httpsSite.match(/header_up X-Forwarded-For \{client_ip\}/g)).toHaveLength(3);
     expect(httpsSite).not.toContain("{remote_host}");
   });
 });

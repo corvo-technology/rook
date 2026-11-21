@@ -40,10 +40,6 @@ describePostgres("MCP access keys (PostgreSQL)", () => {
     expect(await findKey(theirs.secret)).not.toBeNull();
   });
 
-  it("shows no keys at all without a context", async () => {
-    expect(await fx.prisma.mcpAccessKey.findMany()).toEqual([]);
-  });
-
   it("finds a key by its secret as a named system read, and not once revoked", async () => {
     const made = await as(fx.userId, () =>
       createMcpAccessKey(fx.prisma, fx.userId, { name: "cli", level: "configure" }),

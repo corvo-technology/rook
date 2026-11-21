@@ -11,10 +11,13 @@ import {
   IMAGE_MAX_REFERENCES,
   SecretAskPurpose,
   SecretHttpRequest,
+  TICKET_BLOCKERS_MAX,
   TICKET_COMMENT_MAX_LENGTH,
+  TICKET_CRITERIA_MAX_LENGTH,
   TICKET_DESCRIPTION_MAX_LENGTH,
   TICKET_FIELD_VALUE_MAX_LENGTH,
   TICKET_PRIORITIES,
+  TICKET_REMAINING_MAX_LENGTH,
   TICKET_STATUSES,
   TICKET_TITLE_MAX_LENGTH,
 } from "@corvo/contracts";
@@ -1123,7 +1126,8 @@ export const builtinAgentTools: ConnectorTool[] = [
   },
   {
     name: "ticket_create",
-    description: "Create a ticket. Owner defaults to you.",
+    description:
+      "Create a ticket. Owner defaults to you. Always set acceptanceCriteria: a short checklist and, where it applies, a measurable target such as the count and split to deliver. When you create tickets that must run in order, set blockedBy on each one to the tickets it needs first, so it starts only when they are done; independent tickets run at once. The owner works it in batches and moves it to review, and you, as its creator, verify the delivery.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1146,6 +1150,19 @@ export const builtinAgentTools: ConnectorTool[] = [
           type: "string",
           description: "Bot in this space to own it. Defaults to you.",
         },
+        acceptanceCriteria: {
+          type: "string",
+          maxLength: TICKET_CRITERIA_MAX_LENGTH,
+          description:
+            "What done means: a short checklist and, where it applies, a measurable target (for example '1,000 rows: A 400, B 400, C 200').",
+        },
+        blockedBy: {
+          type: "array",
+          items: { type: "string" },
+          maxItems: TICKET_BLOCKERS_MAX,
+          description:
+            "Refs (such as RAK-4) of tickets that must be done before this one starts. Use it for every ticket that needs another's result.",
+        },
       },
       required: ["title"],
     },
@@ -1153,7 +1170,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "ticket_update",
     description:
-      "Update a ticket, including status, owner and fields. Moving it to review or done tells the person.",
+      "Update a ticket, including status, owner, fields, acceptance criteria and blockedBy (replaces the list). Move it to review only when its acceptance criteria are met or you are truly blocked, and say so in a comment; the creator then checks it and sets done or sends it back. If you must stop with work left, set remaining to what is done and what is left instead of changing status: you are woken again to continue.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1163,6 +1180,19 @@ export const builtinAgentTools: ConnectorTool[] = [
         priority: { type: "string", enum: TICKET_PRIORITIES },
         status: { type: "string", enum: TICKET_STATUSES },
         ownerBotId: { type: "string" },
+        acceptanceCriteria: { type: "string", maxLength: TICKET_CRITERIA_MAX_LENGTH },
+        blockedBy: {
+          type: "array",
+          items: { type: "string" },
+          maxItems: TICKET_BLOCKERS_MAX,
+          description: "Replaces the tickets this one waits for.",
+        },
+        remaining: {
+          type: "string",
+          maxLength: TICKET_REMAINING_MAX_LENGTH,
+          description:
+            "Work not finished: what is done and what is left. Keeps the ticket in progress and starts a follow-up run. Do not combine with status.",
+        },
         fields: {
           type: "object",
           additionalProperties: { type: "string", maxLength: TICKET_FIELD_VALUE_MAX_LENGTH },
@@ -1899,7 +1929,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "message_bot",
     description:
-      'Send a useful update, question, or result to another of the user\'s bots. You must call this tool to actually deliver it — writing the message in your own reply text (e.g. "[to Comms] ...") does not send anything and the recipient never sees it. Delivery is async and does not end your turn. Continue independent work; do not poll or send ack-only messages. Later updates only if they add something new.',
+      'Send a useful update, question, or result to another of the user\'s bots. You must call this tool to actually deliver it — writing the message in your own reply text (e.g. "[to Comms] ...") does not send anything and the recipient never sees it. Delivery is async and does not end your turn. Continue independent work; do not poll or send ack-only messages. Keep it to 2 to 4 sentences and point to the full result (file, ticket or wiki page) instead of pasting it. Later updates only if they add something new.',
     inputSchema: {
       type: "object",
       properties: {
@@ -1936,7 +1966,11 @@ export const builtinAgentTools: ConnectorTool[] = [
           type: "string",
           description: "Exact name of the target member when bot_id is omitted.",
         },
-        message: { type: "string", description: "What the receiving bot should do next." },
+        message: {
+          type: "string",
+          description:
+            "What the receiving bot should do next, in 2 to 4 sentences; point to files or tickets for the detail.",
+        },
         reason: {
           type: "string",
           description: "One short sentence on why this group or member fits the work.",

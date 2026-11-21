@@ -1,5 +1,5 @@
 import type { BoardMove, TicketStatus } from "@corvo/contracts";
-import { TICKET_COMMENT_MAX_LENGTH, ticketRef } from "@corvo/contracts";
+import { TICKET_COMMENT_MAX_LENGTH, TICKET_CONTINUATIONS_MAX, ticketRef } from "@corvo/contracts";
 import type { PrismaClient } from "@corvo/db";
 import { coerceTicketStatus, ensureBoard, toBoardDto } from "@corvo/db";
 import type { TicketChangeNotifier } from "./ticket-changes.js";
@@ -27,6 +27,7 @@ async function moveRunTicket(
   deps: TicketRunDeps,
   run: TicketRun,
   move: { from: TicketStatus; placed?: TicketStatus; to: TicketStatus; comment?: string },
+  waiting = false,
 ): Promise<void> {
   if (!deps.ticketBoardEnabled || !run.ticketId) return;
   const ticketId = run.ticketId;
@@ -81,6 +82,7 @@ async function moveRunTicket(
     assigneeBotId: row.assigneeBotId,
     wakeAssignee: false,
     moved,
+    ...(waiting ? { waiting: true } : {}),
   });
 }
 
@@ -96,27 +98,112 @@ export async function startTicketRun(deps: TicketRunDeps, run: TicketRun): Promi
 export async function waitTicketRun(deps: TicketRunDeps, run: TicketRun): Promise<void> {
   if (!deps.ticketBoardEnabled || !run.ticketId) return;
   try {
-    await moveRunTicket(deps, run, { from: "doing", to: "review" });
+    await moveRunTicket(deps, run, { from: "doing", to: "review" }, true);
     await announceTicketStep(deps, run, null);
   } catch {
     // The run is already paused; the board catches up on the next change.
   }
 }
 
-/** The run ended: its step leaves the card, and the ticket moves on from In progress. */
+/**
+ * A run that ends with the goal not met continues instead of ending the ticket: the agent said
+ * work remains (`remaining`), or a run guard cut it short. Each follow-up is a new run that
+ * starts from the checkpoint comment; after `TICKET_CONTINUATIONS_MAX` of them the ticket goes
+ * to review with an honest account of where it stopped.
+ */
+async function continueUnfinished(
+  deps: TicketRunDeps,
+  run: TicketRun,
+  why: { cut: boolean; reason: string },
+): Promise<{ kind: "continued" } | { kind: "capped" } | null> {
+  const ticket = await deps.prisma.ticket.findFirst({
+    where: { id: run.ticketId ?? "", spaceId: run.spaceId, assigneeBotId: run.botId },
+  });
+  if (!ticket || !(ticket.remaining || why.cut)) return null;
+  const open = ticket.status === "doing" || (why.cut && ticket.status === "review");
+  if (!open) return null;
+  const left = ticket.remaining?.trim();
+  if (ticket.continuations >= TICKET_CONTINUATIONS_MAX) {
+    await deps.prisma.ticket.updateMany({
+      where: { id: ticket.id },
+      data: { remaining: null },
+    });
+    await deps.prisma.ticketComment.create({
+      data: {
+        ticketId: ticket.id,
+        spaceId: run.spaceId,
+        authorBotId: run.botId,
+        body: `Stopped after ${TICKET_CONTINUATIONS_MAX} follow-up runs without meeting the acceptance criteria. ${left ? `Still left: ${left} ` : ""}Why it stopped: ${why.reason}`.slice(
+          0,
+          TICKET_COMMENT_MAX_LENGTH,
+        ),
+      },
+    });
+    return { kind: "capped" };
+  }
+  const claimed = await deps.prisma.$transaction(async (tx) => {
+    const updated = await tx.ticket.updateMany({
+      where: { id: ticket.id, continuations: ticket.continuations },
+      data: { continuations: { increment: 1 }, status: "doing", remaining: null },
+    });
+    if (updated.count !== 1) return false;
+    await tx.ticketComment.create({
+      data: {
+        ticketId: ticket.id,
+        spaceId: run.spaceId,
+        authorBotId: run.botId,
+        body: `Continuing (follow-up ${ticket.continuations + 1} of ${TICKET_CONTINUATIONS_MAX}). ${why.reason}${left ? ` Left: ${left}` : ""}`.slice(
+          0,
+          TICKET_COMMENT_MAX_LENGTH,
+        ),
+      },
+    });
+    return true;
+  });
+  if (!claimed) return null;
+  await deps.onTicketChange?.({
+    spaceId: run.spaceId,
+    boardId: ticket.boardId,
+    ticketId: ticket.id,
+    assigneeBotId: ticket.assigneeBotId,
+    wakeAssignee: true,
+    continuation: true,
+  });
+  return { kind: "continued" };
+}
+
+/**
+ * The run ended: its step leaves the card, and the ticket moves on from In progress. Work that
+ * stopped short of its goal continues in a follow-up run instead (`cut`: a run guard ended it).
+ */
 export async function endTicketRun(
   deps: TicketRunDeps,
   run: TicketRun,
-  outcome: { kind: "finished" } | { kind: "stopped"; error: string },
+  outcome: { kind: "finished"; cut?: boolean } | { kind: "stopped"; error: string; cut?: boolean },
 ): Promise<void> {
   if (!deps.ticketBoardEnabled || !run.ticketId) return;
   try {
+    const stopped = outcome.kind === "stopped";
+    const next = await continueUnfinished(deps, run, {
+      cut: outcome.cut === true,
+      reason: stopped
+        ? outcome.error
+        : outcome.cut
+          ? "A tool call limit ended the run."
+          : "The run ended with work left.",
+    });
+    if (next?.kind === "continued") {
+      await announceTicketStep(deps, run, null);
+      return;
+    }
     await moveRunTicket(
       deps,
       run,
-      outcome.kind === "finished"
+      next?.kind === "capped"
         ? { from: "doing", to: "review" }
-        : { from: "doing", placed: "review", to: "blocked", comment: outcome.error },
+        : outcome.kind === "finished"
+          ? { from: "doing", to: "review" }
+          : { from: "doing", placed: "review", to: "blocked", comment: outcome.error },
     );
     await announceTicketStep(deps, run, null);
   } catch {

@@ -633,3 +633,11 @@ describe("web markdown mentions", () => {
     expect(html).not.toContain("<a");
   });
 });
+
+describe("web markdown wiki citations", () => {
+  it("draws [[Title]] as plain text", () => {
+    const html = renderToStaticMarkup(<ChatMarkdown>{"See [[Some Proposal]] now"}</ChatMarkdown>);
+    expect(html).toContain("See Some Proposal now");
+    expect(html).not.toContain("[[");
+  });
+});

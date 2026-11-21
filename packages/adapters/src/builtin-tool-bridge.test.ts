@@ -23,7 +23,11 @@ const ownerChat = selectBuiltinToolsForRun({
 const definitionBytes = (tools: typeof ownerChat) =>
   Buffer.byteLength(
     JSON.stringify(
-      tools.map(({ name, description, inputSchema }) => ({ name, description, inputSchema })),
+      tools.map(({ name, description, inputSchema }) => ({
+        name,
+        description,
+        inputSchema,
+      })),
     ),
   );
 
@@ -106,7 +110,9 @@ describe("built-in tool bridge", () => {
 
   it("finds exact names and ranks a query over names, descriptions and parameters", () => {
     const { deferred } = partitionTools(ownerChat);
-    const plot = findTools(deferred, { names: ["render_plot", "shell", "nope"] });
+    const plot = findTools(deferred, {
+      names: ["render_plot", "shell", "nope"],
+    });
     expect(plot.tools.map((tool) => tool.name)).toEqual(["render_plot"]);
     expect(plot.tools[0]!.inputSchema).toEqual(
       deferred.find((tool) => tool.name === "render_plot")!.inputSchema,
@@ -147,7 +153,31 @@ describe("built-in tool bridge", () => {
 
   it("shows the real tool as activity", () => {
     expect(
-      describeToolActivity(USE_TOOL, { name: "create_space", arguments: { name: "Finance" } }),
+      describeToolActivity(USE_TOOL, {
+        name: "create_space",
+        arguments: { name: "Finance" },
+      }),
     ).toBe("Creating space: Finance");
+  });
+});
+
+describe("recording in the wiki from a channel", () => {
+  const channelRun = selectBuiltinToolsForRun({
+    graphicalToolsAllowed: false,
+    groupId: "group-1",
+    trigger: "user",
+    semanticMemoryEnabled: false,
+    historyRetrievalEnabled: true,
+    messagingChannelRun: false,
+  });
+
+  it("offers the wiki write tool to a team channel run behind find_tool, under a wiki area", () => {
+    const { listed, deferred } = partitionTools(channelRun);
+    expect(deferred.map((tool) => tool.name)).toContain("save_shared_memory");
+    const description = listed.find((tool) => tool.name === FIND_TOOL)!.description;
+    expect(description).toMatch(/wiki:\n[\s\S]*save_shared_memory/);
+    expect(findTools(deferred, { query: "wiki page" }).tools.map((t) => t.name)).toContain(
+      "save_shared_memory",
+    );
   });
 });

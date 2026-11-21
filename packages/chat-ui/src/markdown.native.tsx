@@ -52,6 +52,7 @@ import {
   resolveAppPathLinks,
   sanitizeMarkdownUrl,
   useLinkFavicon,
+  withPlainWikiLinks,
 } from "./markdown";
 
 import { useMarkdownLinkAppOrigin, useMarkdownLinkCopy } from "./markdown-link-prompt";
@@ -1365,7 +1366,7 @@ export const LinkifiedText = memo(function LinkifiedText({
 });
 
 export const ChatMarkdown = memo(function ChatMarkdown({
-  children,
+  children: text,
   streaming = false,
   renderMention,
   palette = darkTokens,
@@ -1373,6 +1374,7 @@ export const ChatMarkdown = memo(function ChatMarkdown({
 }: ChatMarkdownProps & { palette?: ColorTokens; colorScheme?: ResolvedAppearance }) {
   const openLink = useNativeLinkConfirm();
   const appOrigin = useMarkdownLinkAppOrigin();
+  const children = useMemo(() => withPlainWikiLinks(text), [text]);
   const source = useMemo(() => resolveAppPathLinks(children, appOrigin), [children, appOrigin]);
   const styles = useMemo(() => markdownStyles(palette), [palette]);
   const diagramSurface = useMemo(

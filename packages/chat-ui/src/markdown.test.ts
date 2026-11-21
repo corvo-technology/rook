@@ -16,6 +16,7 @@ import {
   withAtMentions,
   withBlockMentions,
   withMentions,
+  withPlainWikiLinks,
 } from "./markdown";
 
 type Token = { type: string; attrGet(name: string): string | null; children: Token[] | null };
@@ -451,5 +452,15 @@ describe("resolveAppPathLinks", () => {
   it("changes nothing without a usable origin", () => {
     expect(resolveAppPathLinks("[a](/x)", null)).toBe("[a](/x)");
     expect(resolveAppPathLinks("[a](/x)", "not a url")).toBe("[a](/x)");
+  });
+});
+
+describe("withPlainWikiLinks", () => {
+  it("reads a wiki citation as its title or label and leaves code alone", () => {
+    expect(withPlainWikiLinks("See [[Some Proposal]] and [[Product - Features|features]].")).toBe(
+      "See Some Proposal and features.",
+    );
+    expect(withPlainWikiLinks("Keep `[[Code]]` as is")).toBe("Keep `[[Code]]` as is");
+    expect(withPlainWikiLinks("No links")).toBe("No links");
   });
 });

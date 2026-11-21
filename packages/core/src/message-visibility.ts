@@ -33,6 +33,20 @@ export type UserVisibleMessagesOptions = {
   includeDelegatedReplyText?: boolean;
 };
 
+/**
+ * A website read that was allowed (once, or by an always-allow rule) and nothing else: the
+ * conversation does not keep a line for it. The approvals page keeps the record. A refused
+ * read stays, since the agent could not do what it meant to.
+ */
+export function isAllowedWebsiteRead(block: MessageBlock): boolean {
+  return (
+    block.kind === "ask" &&
+    block.status === "answered" &&
+    block.card?.code === "open_website" &&
+    (block.answer === "allow" || block.answer === "always")
+  );
+}
+
 export function isPeerReceiptBlocks(blocks: readonly MessageBlock[]): boolean {
   return blocks.some(
     (block) => block.kind === "bot_message_sent" || block.kind === "bot_message_received",
@@ -143,6 +157,7 @@ export function foldPeerReplies<T extends PresentableMessage>(
   };
 
   const visible = messages.filter((message) => {
+    if (message.blocks.length > 0 && message.blocks.every(isAllowedWebsiteRead)) return false;
     if (message.runId && backgroundRunIds.has(message.runId)) {
       return message.blocks.some(isBackgroundInputBlock);
     }

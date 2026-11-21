@@ -1,6 +1,7 @@
 /// <reference path="./linkify-it.d.ts" />
 
 import type { MessageBlock } from "@corvo/contracts";
+import { linkWikiTitles } from "@corvo/core";
 import LinkifyIt from "linkify-it";
 import type { ReactNode } from "react";
 import { createContext, useContext, useEffect, useSyncExternalStore } from "react";
@@ -22,6 +23,14 @@ export function markdownMentionId(href: string | undefined): string | undefined 
   } catch {
     return undefined;
   }
+}
+
+/**
+ * Agents cite wiki pages as `[[Title]]`. The chat does not open pages, so a citation reads as
+ * its label ("Title", or the text after `|`); code keeps its source.
+ */
+export function withPlainWikiLinks(text: string): string {
+  return text.includes("[[") ? linkWikiTitles(text, () => false) : text;
 }
 
 function escapeRegExp(value: string): string {

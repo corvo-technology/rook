@@ -482,3 +482,26 @@ describe("a channel's threads", () => {
     expect(folded.messages.map((m) => m.id)).toEqual(["root", "like"]);
   });
 });
+
+describe("allowed website reads", () => {
+  const read = (id: string, answer: string) =>
+    message(id, "run-1", [
+      {
+        kind: "ask",
+        text: "Open example.test?",
+        status: "answered",
+        answer,
+        card: { code: "open_website", params: { site: "example.test" } },
+      },
+    ]);
+
+  it("leaves no line in the conversation for a read that was allowed", () => {
+    const visible = userVisibleMessages([
+      read("once", "allow"),
+      read("always", "always"),
+      read("refused", "deny"),
+      message("text", "run-1", [{ kind: "text", text: "Here it is." }]),
+    ]);
+    expect(visible.map((entry) => entry.id)).toEqual(["refused", "text"]);
+  });
+});

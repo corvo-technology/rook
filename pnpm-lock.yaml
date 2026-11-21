@@ -896,6 +896,9 @@ importers:
       '@corvo/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@corvo/core':
+        specifier: workspace:*
+        version: link:../core
       '@corvo/ui-tokens':
         specifier: workspace:*
         version: link:../ui-tokens

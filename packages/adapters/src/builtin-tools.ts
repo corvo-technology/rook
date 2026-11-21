@@ -524,7 +524,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   },
   {
     name: "say_now",
-    description: `Post one short line to the user right now, before slow work such as using the computer or browser, a long chain of tools, generating media or waiting on a connection, so they know it started (for example "I'll open the calendar and create the event."). One line, at most ${SAY_NOW_MAX_LENGTH} characters, plain text in the user's language, no secrets. Once per run, never for a quick answer, and never repeat it in your final reply.`,
+    description: `Post one short line to the user right now, as your first action when the work will take more than a few seconds (several tools, the computer or browser, media, a connection to wait on), so they know it started (for example "I'll open the calendar and create the event."). One line, at most ${SAY_NOW_MAX_LENGTH} characters, plain text in the user's language, no secrets. Once per run, never for a quick answer, and never repeat it in your final reply.`,
     inputSchema: {
       type: "object",
       properties: {

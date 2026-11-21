@@ -31,14 +31,25 @@ describe.skipIf(!enabled)("product history diagnostic loop", () => {
     const latest = (request: ModelEmulatorRequest) => {
       expect(JSON.stringify(request.messages)).toContain("Do not deploy.");
       const tools = request.messages.filter((row) => row.role === "tool");
-      const parsed = tools.map(
-        (row) =>
-          JSON.parse(String(row.content)) as {
+      // A long segment reaches the model as its head, tail and a handle, so the leading fields are
+      // read from the head; the short last segment arrives whole.
+      const parsed = tools.map((row) => {
+        const text = String(row.content);
+        if (!text.includes("[Output truncated:")) {
+          return JSON.parse(text) as {
             segment: number;
             nextCursor: string | null;
             diagnostic: string;
-          },
-      );
+          };
+        }
+        const head = /^\{"segment":(\d+),"nextCursor":(null|"[^"]*")/.exec(text);
+        if (!head) throw new Error("A kept result lost its leading fields");
+        return {
+          segment: Number(head[1]),
+          nextCursor: JSON.parse(head[2]!) as string | null,
+          diagnostic: "",
+        };
+      });
       const latestSegment = parsed.at(-1)!.segment;
       expect(parsed.map((row) => row.segment)).toEqual(
         Array.from({ length: latestSegment }, (_, i) => i + 1),
@@ -62,22 +73,19 @@ describe.skipIf(!enabled)("product history diagnostic loop", () => {
       previousToolContent = toolContent;
       const message = tools.at(-1);
       const content = String(message?.content);
-      const result = JSON.parse(content) as {
-        segment: number;
-        nextCursor: string | null;
-        diagnostic: string;
-        contextTruncated?: boolean;
-      };
+      const result = parsed.at(-1)!;
+      const kept = content.includes("[Output truncated:");
       observations.push({
         segment: result.segment,
         bytes: Buffer.byteLength(content),
         keys: Object.keys(result),
-        omitted: Boolean(result.contextTruncated),
+        omitted: kept,
         outgoingBytes: Buffer.byteLength(JSON.stringify(request)),
         toolResults: request.messages.filter((row) => row.role === "tool").length,
       });
       expect(Buffer.byteLength(content)).toBeLessThanOrEqual(12_000);
-      if (result.segment < 12) expect(result.contextTruncated).toBe(true);
+      // A long segment is kept whole behind a handle; only the short last one arrives as is.
+      if (result.segment < 12) expect(content).toMatch(/Full text kept as handle \S+;/);
       expect(result.segment).toBe(observations.length);
       expect(result).toHaveProperty("nextCursor");
       expect(typeof result.diagnostic).toBe("string");

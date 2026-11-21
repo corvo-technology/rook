@@ -806,6 +806,7 @@ msgstr "Über {label}"
 msgid "About you"
 msgstr "Über dich"
 
+#: src/components/McpSettings.tsx
 #: src/pages/connections/AgentAccessSection.tsx
 #: src/pages/ConnectionsPage.tsx
 msgid "Access"
@@ -1267,6 +1268,10 @@ msgstr "Alles in Ordnung"
 #: src/pages/partner/PartnerCredits.tsx
 msgid "All models"
 msgstr "Alle Modelle"
+
+#: src/components/McpSettings.tsx
+msgid "All spaces"
+msgstr "Alle Spaces"
 
 #: src/pages/ActivityList.tsx
 msgid "All statuses"
@@ -2528,6 +2533,10 @@ msgstr "Computer sind ausgeschaltet."
 msgid "Computers are off. Set SANDBOX_PROVIDER=docker with SANDBOX_SUPERVISOR_TOKEN, or set SANDBOX_PROVIDER to e2b, daytona, or boat with its API key. Recreate the stack after changing .env."
 msgstr "Computer sind aus. Setze SANDBOX_PROVIDER=docker mit SANDBOX_SUPERVISOR_TOKEN, oder setze SANDBOX_PROVIDER auf e2b, daytona oder boat mit dem passenden API-Key. Stack nach der Änderung von .env neu erstellen."
 
+#: src/components/McpSettings.tsx
+msgid "Configure"
+msgstr "Konfigurieren"
+
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Configure the space"
 msgstr "Space konfigurieren"
@@ -2559,6 +2568,10 @@ msgstr "Wiederherstellen bestätigen?"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Confirm reset?"
 msgstr "Zurücksetzen bestätigen?"
+
+#: src/components/McpSettings.tsx
+msgid "Confirm revoke?"
+msgstr "Widerrufen?"
 
 #: src/pages/InvitePage.tsx
 msgid "Confirm your email first, then open this link again"
@@ -2784,6 +2797,7 @@ msgstr "Unterhaltung"
 msgid "Copied"
 msgstr "Kopiert"
 
+#: src/components/McpSettings.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/partner/PartnerIntegration.tsx
@@ -2815,6 +2829,10 @@ msgstr "Prompt kopieren"
 #: src/components/markdown-copy.tsx
 msgid "Copy rows"
 msgstr "Zeilen kopieren"
+
+#: src/components/McpSettings.tsx
+msgid "Copy the key now. It is not shown again."
+msgstr "Kopiere den Schlüssel jetzt. Er wird nicht erneut angezeigt."
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "corvo-shared and IDs starting with bot- are reserved for Rook."
@@ -2964,6 +2982,10 @@ msgstr "Abschnitt konnte nicht erstellt werden"
 msgid "Could not create space"
 msgstr "Der Space konnte nicht erstellt werden"
 
+#: src/components/McpSettings.tsx
+msgid "Could not create the key"
+msgstr "Schlüssel konnte nicht erstellt werden"
+
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Could not create the link"
 msgstr "Link konnte nicht erstellt werden"
@@ -3071,6 +3093,7 @@ msgid "Could not leave"
 msgstr "Verlassen fehlgeschlagen"
 
 #: src/components/ErrorBoundary.tsx
+#: src/components/McpSettings.tsx
 #: src/components/PasskeySettings.tsx
 #: src/pages/ApprovalsPage.tsx
 #: src/pages/InvitePage.tsx
@@ -3266,6 +3289,10 @@ msgstr "Regel konnte nicht wiederhergestellt werden"
 #: src/pages/Store.tsx
 msgid "Could not revoke connection"
 msgstr "Verbindung konnte nicht widerrufen werden"
+
+#: src/components/McpSettings.tsx
+msgid "Could not revoke the key"
+msgstr "Schlüssel konnte nicht widerrufen werden"
 
 #: src/pages/shell/use-routine-editor.ts
 msgid "Could not run routine"
@@ -3556,6 +3583,10 @@ msgstr "Gruppe erstellen"
 #: src/lib/server-copy.ts
 msgid "Create group “{name}”?"
 msgstr "Gruppe „{name}“ erstellen?"
+
+#: src/components/McpSettings.tsx
+msgid "Create key"
+msgstr "Schlüssel erstellen"
 
 #: src/pages/NewRoutinePanel.tsx
 msgid "Create routine"
@@ -4129,6 +4160,7 @@ msgstr "Domain"
 msgid "Don’t have an account?"
 msgstr "Du hast noch kein Konto?"
 
+#: src/components/McpSettings.tsx
 #: src/components/PlanCard.tsx
 #: src/lib/ticket-status.ts
 #: src/pages/ActivityList.tsx
@@ -5420,6 +5452,7 @@ msgstr "Schlüssel in der Nachricht"
 msgid "Key not recognized. Choose a provider."
 msgstr "Schlüssel nicht erkannt. Wählen Sie einen Anbieter."
 
+#: src/components/McpSettings.tsx
 #: src/pages/partner/PartnerIntegration.tsx
 msgid "Keys"
 msgstr "Schlüssel"
@@ -5842,6 +5875,10 @@ msgstr "Maximale Bilder pro Anfrage"
 msgid "Maximum output tokens"
 msgstr "Maximale Ausgabetokens"
 
+#: src/pages/Settings.tsx
+msgid "MCP"
+msgstr "MCP"
+
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "MCP endpoint"
 msgstr "MCP-Endpunkt"
@@ -6230,6 +6267,7 @@ msgstr "Mein Assistent"
 msgid "My Home"
 msgstr "Meine Startseite"
 
+#: src/components/McpSettings.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
@@ -6323,6 +6361,10 @@ msgstr "Nie"
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Never ask"
 msgstr "Nie fragen"
+
+#: src/components/McpSettings.tsx
+msgid "Never used"
+msgstr "Nie verwendet"
 
 #: src/components/NewDot.tsx
 #: src/pages/shell/chat-context.tsx
@@ -7594,6 +7636,7 @@ msgstr "Reagieren"
 msgid "Reactions"
 msgstr "Reaktionen"
 
+#: src/components/McpSettings.tsx
 #: src/pages/connections/connection-model.ts
 msgid "Read"
 msgstr "Lesen"
@@ -8103,6 +8146,7 @@ msgid "Resume this space to keep going."
 msgstr "Setze diesen Space fort, um weiterzumachen."
 
 #: src/components/AccountAccess.tsx
+#: src/components/McpSettings.tsx
 #: src/components/PasskeySettings.tsx
 #: src/pages/Auth.tsx
 #: src/pages/ModelRoleSettings.tsx
@@ -8160,6 +8204,11 @@ msgstr "Jetzt prüfen"
 #: src/pages/WikiBrowser.tsx
 msgid "Revision {0}"
 msgstr "Version {0}"
+
+#. placeholder {0}: key.name
+#: src/components/McpSettings.tsx
+msgid "Revoke {0}"
+msgstr "{0} widerrufen"
 
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Role"
@@ -8911,6 +8960,7 @@ msgstr "Nach {column} sortiert, absteigend"
 msgid "Source"
 msgstr "Quelle"
 
+#: src/components/McpSettings.tsx
 #: src/lib/identity-display.ts
 #: src/pages/Settings.tsx
 #: src/pages/shell/sidebar-team.tsx
@@ -9231,6 +9281,10 @@ msgstr "Tabelle"
 #: src/pages/shell/computer-overlay.tsx
 msgid "Take control"
 msgstr "Kontrolle übernehmen"
+
+#: src/components/McpSettings.tsx
+msgid "Talk"
+msgstr "Sprechen"
 
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Talk to agents"
@@ -10023,6 +10077,10 @@ msgstr "Dateien hochladen"
 #: src/lib/ticket-priority.ts
 msgid "Urgent"
 msgstr "Dringend"
+
+#: src/components/McpSettings.tsx
+msgid "URL"
+msgstr "URL"
 
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/Settings.tsx

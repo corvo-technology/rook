@@ -270,6 +270,7 @@ export async function openUserSettings(
     | "billing"
     | "members"
     | "connections"
+    | "mcp-access"
     | "updates",
 ) {
   // A reload keeps the page because the URL holds the section.

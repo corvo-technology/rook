@@ -48,6 +48,7 @@ model User {
   accounts                    Account[]
   passkeys                    Passkey[]
   userMemories                UserMemory[]
+  mcpAccessKeys               McpAccessKey[]
   members                     Member[]
   invitations                 Invitation[]
   modelCredentials            UserModelCredential[]
@@ -433,6 +434,7 @@ model Member {
 }
 
 model Space {
+  mcpAccessKeys               McpAccessKey[]
   toolClassifications         ToolClassification[]
   notificationMutes           NotificationMute[]
   heldNotifications           HeldNotification[]
@@ -1643,6 +1645,29 @@ model MemoryDocument {
 }
 
 /// A short fact or preference about one person in one space, read by all of that person's agents.
+/// A key that lets an MCP client act as its owner. Only a digest of the key is kept.
+model McpAccessKey {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  /// "read", "talk" or "configure"; each includes the ones before it.
+  level      String
+  /// Limits the key to one space; null reaches every space of the owner.
+  spaceId    String?
+  space      Space?    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  /// SHA-256 of the whole key, which is random and long enough that a plain digest suffices.
+  secretHash String    @unique
+  /// The first characters of the key, to tell keys apart.
+  prefix     String
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+
+  @@index([userId, createdAt])
+  @@map("mcp_access_keys")
+}
+
 model UserMemory {
   id          String   @id @default(cuid())
   spaceId     String

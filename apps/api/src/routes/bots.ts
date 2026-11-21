@@ -552,6 +552,7 @@ export function botsRoutes(ctx: RouterContext) {
           botId: input.botId,
           emitBotUpdated: botProfileLabelsChanged(input),
           expectedInstructions: input.expectedInstructions,
+          reason: input.reason,
           data: {
             name: input.name,
             title: input.title,

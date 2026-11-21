@@ -1223,4 +1223,12 @@ export const PT_BR_MESSAGES: Record<string, string> = {
   "Save credential": "Salvar credencial",
   "Send anyway": "Enviar mesmo assim",
   "Could not save the credential": "Não foi possível salvar a credencial",
+  MCP: "MCP",
+  Read: "Ler",
+  Talk: "Conversar",
+  Configure: "Configurar",
+  "Revoke {name}?": "Revogar {name}?",
+  "Never used": "Nunca usada",
+  "Could not revoke the key": "Não foi possível revogar a chave",
+  "Keys are made in Rook on the web.": "As chaves são criadas no Rook na web.",
 };

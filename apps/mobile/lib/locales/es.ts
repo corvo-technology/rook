@@ -1229,4 +1229,12 @@ export const ES_MESSAGES: Record<string, string> = {
   "Save credential": "Guardar credencial",
   "Send anyway": "Enviar de todos modos",
   "Could not save the credential": "No se pudo guardar la credencial",
+  MCP: "MCP",
+  Read: "Leer",
+  Talk: "Hablar",
+  Configure: "Configurar",
+  "Revoke {name}?": "¿Revocar {name}?",
+  "Never used": "Nunca usada",
+  "Could not revoke the key": "No se pudo revocar la clave",
+  "Keys are made in Rook on the web.": "Las claves se crean en Rook en la web.",
 };

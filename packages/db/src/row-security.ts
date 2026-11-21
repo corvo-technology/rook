@@ -219,6 +219,7 @@ export const ROW_SECURITY_MODELS: ReadonlySet<string> = new Set([
   "ThreadBranch",
   "WhatsAppAuthEntry",
   "UserMemory",
+  "McpAccessKey",
   "UserModelRoleChoice",
   "UserModelPreference",
   "UserVoicePreference",

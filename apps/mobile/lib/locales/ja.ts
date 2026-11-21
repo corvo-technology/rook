@@ -1270,4 +1270,12 @@ export const JA_MESSAGES: Record<string, string> = {
   "Save credential": "認証情報を保存",
   "Send anyway": "このまま送信",
   "Could not save the credential": "認証情報を保存できませんでした",
+  MCP: "MCP",
+  Read: "読み取り",
+  Talk: "会話",
+  Configure: "設定",
+  "Revoke {name}?": "{name} を無効にしますか？",
+  "Never used": "未使用",
+  "Could not revoke the key": "キーを無効にできませんでした",
+  "Keys are made in Rook on the web.": "キーは Rook のウェブで作成します。",
 };

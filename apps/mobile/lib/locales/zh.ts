@@ -1231,4 +1231,12 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Save credential": "保存凭据",
   "Send anyway": "仍然发送",
   "Could not save the credential": "无法保存凭据",
+  MCP: "MCP",
+  Read: "只读",
+  Talk: "对话",
+  Configure: "配置",
+  "Revoke {name}?": "撤销 {name}？",
+  "Never used": "从未使用",
+  "Could not revoke the key": "无法撤销密钥",
+  "Keys are made in Rook on the web.": "密钥在网页版 Rook 中创建。",
 };

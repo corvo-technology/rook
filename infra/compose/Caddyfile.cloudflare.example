@@ -85,6 +85,13 @@ http://{$CORVO_HOST:app.example.com} {
 		}
 	}
 
+	handle /mcp {
+		reverse_proxy api:3100 {
+			import deploy_retry
+			header_up X-Forwarded-For {client_ip}
+		}
+	}
+
 	handle {
 		reverse_proxy web:5173 {
 			import deploy_retry

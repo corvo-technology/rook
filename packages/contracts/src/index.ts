@@ -37,6 +37,7 @@ export * from "./local-setup.js";
 export * from "./mailbox.js";
 export * from "./markdown-text.js";
 export * from "./mcp.js";
+export * from "./mcp-access.js";
 export * from "./missions.js";
 export * from "./model-backups.js";
 export * from "./model-headers.js";

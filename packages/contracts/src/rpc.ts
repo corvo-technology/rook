@@ -185,6 +185,11 @@ import {
   LocalSetupReportSchema,
 } from "./local-setup.js";
 import { MailboxInput, MailboxSchema } from "./mailbox.js";
+import {
+  McpAccessKeyCreatedSchema,
+  McpAccessKeyCreateInputSchema,
+  McpAccessKeySchema,
+} from "./mcp-access.js";
 import { MissionsViewSchema, NavPart } from "./missions.js";
 import { ModelHeadersSchema } from "./model-headers.js";
 import { ModelRoleSchema, ModelRoleUpdateSchema, ModelRoleViewSchema } from "./model-roles.js";
@@ -1233,6 +1238,12 @@ export const appContract = {
       get: oc.output(UserMemorySettingsSchema),
       set: oc.input(UserMemorySettingsSchema.partial()).output(UserMemorySettingsSchema),
     },
+  },
+  /** Keys that let an MCP client such as Claude Code act as the person who made them. */
+  mcpAccess: {
+    list: oc.output(z.array(McpAccessKeySchema)),
+    create: oc.input(McpAccessKeyCreateInputSchema).output(McpAccessKeyCreatedSchema),
+    revoke: oc.input(z.object({ keyId: Id })).output(z.object({ ok: z.literal(true) })),
   },
   memory: {
     list: oc

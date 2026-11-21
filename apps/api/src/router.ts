@@ -57,6 +57,7 @@ import { inboxRoutes } from "./routes/inbox.js";
 import { localSetupRoutes } from "./routes/local-setup.js";
 import { mailboxRoutes } from "./routes/mailboxes.js";
 import { mcpRoutes } from "./routes/mcp.js";
+import { mcpAccessRoutes } from "./routes/mcp-access.js";
 import { memoryRoutes } from "./routes/memory.js";
 import { messagingRoutes } from "./routes/messaging.js";
 import { missionsRoutes } from "./routes/missions.js";
@@ -233,6 +234,7 @@ export function createRouter(deps: RouterDeps) {
     ...routinesRoutes(ctx),
     ...boardsRoutes(ctx),
     ...mcpRoutes(ctx),
+    ...mcpAccessRoutes(ctx),
     ...accessRoutes(ctx),
     ...databaseRoutes(ctx),
     ...connectionsRoutes(ctx),

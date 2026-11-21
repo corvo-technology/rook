@@ -482,6 +482,17 @@ export function createRunExecutor(deps: ExecutorDeps) {
         // integration and computer setup must not occupy a queue dispatch slot.
         onRunStarted?.();
         dispatchHandedOff = Boolean(onRunStarted);
+        // The harness's own acknowledgement: no model call stands in front of it, so people see
+        // the agent working at once, not after routing, history and credentials are ready.
+        await deps.events.append({
+          spaceId: run.spaceId,
+          threadId: run.threadId,
+          botId: run.botId,
+          type: "run.started",
+          runId,
+          payload: { trigger: run.trigger, routineId: run.routineId },
+        });
+
         const sourceBlocks =
           run.trigger === "messaging" && run.sourceMessageId
             ? ((
@@ -702,15 +713,6 @@ export function createRunExecutor(deps: ExecutorDeps) {
           ? effectiveMemoryScope(bot.memoryScope, configuredMemory.defaultScope)
           : null;
         const semanticMemory: SemanticMemoryProvider | null = configuredMemory?.provider ?? null;
-
-        await deps.events.append({
-          spaceId: run.spaceId,
-          threadId: thread.id,
-          botId: bot.id,
-          type: "run.started",
-          runId,
-          payload: { trigger: run.trigger, routineId: run.routineId },
-        });
 
         const discoveredPromise = deps.connector
           ? deps.connector.discoverTools(context)

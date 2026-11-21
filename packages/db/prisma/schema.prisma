@@ -1199,6 +1199,8 @@ model Run {
   wakeAt               DateTime?
   // Server-side first visible output, preserved across attempts and resumes.
   firstResponseAt      DateTime?
+  // First thing the person could see the run doing (it started, or a tool activity line), before any reply text.
+  firstActivityAt      DateTime?
   startedAt            DateTime?
   completedAt          DateTime?
   botOutcomeReturnedAt DateTime?

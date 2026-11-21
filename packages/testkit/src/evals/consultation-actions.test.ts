@@ -1,6 +1,7 @@
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { parseActions } from "@corvo/adapters";
 import type { ConsultationAction } from "@corvo/contracts";
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -143,8 +144,10 @@ describe("consultation actions live suite", () => {
   };
 
   it("reads an answer the way the pipeline does", () => {
-    expect(consultationActionsOutcome("no json", visit)).toEqual({ kind: "unparsed" });
-    expect(consultationActionsOutcome('{"actions":[]}', visit)).toEqual({
+    expect(consultationActionsOutcome("no json", visit, parseActions)).toEqual({
+      kind: "unparsed",
+    });
+    expect(consultationActionsOutcome('{"actions":[]}', visit, parseActions)).toEqual({
       kind: "actions",
       actions: [],
     });

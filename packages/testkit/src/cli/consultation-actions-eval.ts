@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import type { AgentRunRequest } from "@corvo/adapter-kit";
-import { actionsInstructions, buildActionsPrompt, parseActions } from "@corvo/adapters";
+import type * as Adapters from "@corvo/adapters";
 import { ModelConnectInputSchema } from "@corvo/contracts";
 import { loadRootEnv } from "@corvo/core/node/load-root-env";
 import type {
@@ -39,6 +39,7 @@ type ConsultationActionsEvalValues = {
 export function consultationActionsOutcome(
   answer: string,
   testCase: ConsultationActionsCase,
+  parseActions: typeof Adapters.parseActions,
 ): ConsultationActionsOutcome {
   if (!answer.includes("{")) return { kind: "unparsed" };
   return {
@@ -52,7 +53,10 @@ export function consultationActionsOutcome(
 }
 
 /** The pipeline's own prompt for a case. */
-function promptFor(testCase: ConsultationActionsCase): string {
+function promptFor(
+  testCase: ConsultationActionsCase,
+  buildActionsPrompt: typeof Adapters.buildActionsPrompt,
+): string {
   return buildActionsPrompt(testCase.transcript, {
     consultedAt: new Date(testCase.consultedAt),
     timeZone: testCase.timeZone,
@@ -146,6 +150,8 @@ export async function runConsultationActionsSuite(
   save();
   if (!values.live) notRun("Live consultation-actions execution requires --live; no case was run");
   loadRootEnv();
+  // Deferred: listing cases must not load the runtime adapters or the database client.
+  const { actionsInstructions, buildActionsPrompt, parseActions } = await import("@corvo/adapters");
 
   const parse = (file: string | undefined) => {
     if (!file) return null;
@@ -245,7 +251,7 @@ export async function runConsultationActionsSuite(
           threadId: id,
           runId: id,
           instructions: actionsInstructions(),
-          prompt: promptFor(testCase),
+          prompt: promptFor(testCase, buildActionsPrompt),
           history: [],
           tools: [],
           model: modelOf(connection),
@@ -264,7 +270,7 @@ export async function runConsultationActionsSuite(
       }
       grade = await gradeConsultationActions(
         testCase,
-        consultationActionsOutcome(answer, testCase),
+        consultationActionsOutcome(answer, testCase, parseActions),
         judge ? { judge, signal: AbortSignal.timeout(timeoutMs) } : undefined,
       );
     } catch (error) {

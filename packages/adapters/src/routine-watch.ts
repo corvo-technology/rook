@@ -106,6 +106,7 @@ export function describeRoutineWatch(watch: RoutineWatch): string {
   if (watch.preset) return `${watch.preset}: ${watch.tool ?? ""}`;
   if (watch.kind === "files") return (watch.paths ?? []).join(", ");
   if (watch.kind === "command") return `\`${watch.command ?? ""}\``;
+  if (watch.kind === "board") return "stuck tickets on the board";
   return watch.tool ?? "";
 }
 
@@ -120,7 +121,9 @@ export async function checkRoutineWatch(
   const reading =
     watch.kind === "tool"
       ? await readTool(deps, routine, watch, now)
-      : await readComputer(deps, routine, watch);
+      : watch.kind === "board"
+        ? await readBoard(deps, routine, now)
+        : await readComputer(deps, routine, watch);
   return compareReading(previous, reading, now);
 }
 
@@ -506,6 +509,44 @@ async function run(
     throw new RoutineWatchError(`The check could not run on the computer: ${errorText(error)}`);
   }
   return { stdout, stderr, code };
+}
+
+/** Doing or in review with no update for this long counts as stuck; blocked always does. */
+export const BOARD_STUCK_AFTER_MS = 48 * 3_600_000;
+const MAX_BOARD_ENTRIES = 100;
+
+/** The space's stuck tickets, read from the database with no model and no computer. */
+async function readBoard(
+  deps: Pick<RoutineWatchDeps, "prisma">,
+  routine: RoutineWatchTarget,
+  now: Date,
+): Promise<Reading> {
+  const staleBefore = new Date(now.getTime() - BOARD_STUCK_AFTER_MS);
+  const tickets = await deps.prisma.ticket.findMany({
+    where: {
+      spaceId: routine.spaceId,
+      OR: [
+        { status: "blocked" },
+        { status: { in: ["doing", "review"] }, updatedAt: { lt: staleBefore } },
+      ],
+    },
+    orderBy: { number: "asc" },
+    take: MAX_BOARD_ENTRIES,
+    select: { id: true, number: true, title: true, status: true },
+  });
+  const entries = Object.fromEntries(
+    tickets.map((ticket) => [
+      ticket.id,
+      `${ITEM_SIGNATURE}${stableStringify({ fields: [ticket.status], title: `#${ticket.number} ${ticket.title.slice(0, 100)}` })}`,
+    ]),
+  );
+  return {
+    fingerprint: sha256(
+      stableStringify(Object.fromEntries(tickets.map((ticket) => [ticket.id, ticket.status]))),
+    ),
+    entries,
+    detail: null,
+  };
 }
 
 async function readTool(

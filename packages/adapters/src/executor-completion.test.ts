@@ -516,6 +516,31 @@ describe("runReplyGuidance", () => {
     expect(runReplyGuidance("routine")).not.toContain("Leave the final reply empty");
   });
 
+  it("lets every background trigger end silent, with the same unconditional guidance", () => {
+    for (const trigger of ["routine", "webhook", "cloud_agent"]) {
+      expect(runAllowsSilentEmpty(trigger)).toBe(true);
+      expect(runPromotesMidTurnNarration(trigger)).toBe(false);
+      expect(runReplyGuidance(trigger)).toBe(ROUTINE_SILENT_REPLY_GUIDANCE);
+      expect(runReplyGuidance(trigger)).toContain(`exactly ${NO_RESPONSE}`);
+      expect(runReplyGuidance(trigger)).not.toContain("prompt says");
+      const silent = stripNoResponseReply(NO_RESPONSE, [{ kind: "text", text: NO_RESPONSE }]);
+      expect(silent.assembled).toBe("");
+      expect(
+        completionMessageSegments(silent.blocks, {
+          allowSilentEmpty: runAllowsSilentEmpty(trigger),
+        }),
+      ).toEqual([]);
+    }
+    for (const trigger of ["user", "messaging", "resume", "follow_up"]) {
+      expect(runAllowsSilentEmpty(trigger)).toBe(false);
+    }
+  });
+
+  it("asks a proactive message for facts, the analysis done and one offer", () => {
+    expect(ROUTINE_SILENT_REPLY_GUIDANCE).toContain("2 to 4 sentences");
+    expect(ROUTINE_SILENT_REPLY_GUIDANCE).toContain("at most one question or offer");
+  });
+
   it("gives the creation intro the profile fields its prompt asks about", () => {
     const bot = {
       name: "Ada",

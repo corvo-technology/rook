@@ -45,7 +45,12 @@ export function ChatModelSwitcher({
   if (choices.length < 2 || me?.partner?.models === "fixed") return null;
 
   return (
-    <div title={error ?? undefined} data-invalid={error ? "" : undefined}>
+    // On a phone the composer's picker is the one model control; the header keeps its room for the name.
+    <div
+      title={error ?? undefined}
+      data-invalid={error ? "" : undefined}
+      className="hidden md:block"
+    >
       <ChatModelPicker
         chip
         id={`chat-model-${bot.id}`}

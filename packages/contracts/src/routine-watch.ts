@@ -13,6 +13,9 @@ import * as z from "zod";
  *   A non-zero exit is a failed check.
  * - `tool`: a read-only tool from a connected integration, called with fixed
  *   arguments; its result is the fingerprint.
+ * - `board`: the space's own task board. The fingerprint is the set of stuck
+ *   tickets (blocked, or doing or in review with no update for a while), so it
+ *   changes when a ticket gets stuck or moves again.
  *
  * A `tool` watch may name a `preset` that knows what to look for in the result,
  * whatever integration it comes from:
@@ -26,7 +29,7 @@ import * as z from "zod";
  * time or a snippet does not count as a change, and the note can say which
  * items are new, updated or gone.
  */
-export const ROUTINE_WATCH_KINDS = ["files", "command", "tool"] as const;
+export const ROUTINE_WATCH_KINDS = ["files", "command", "tool", "board"] as const;
 export const ROUTINE_WATCH_PRESETS = ["calendar", "email"] as const;
 export const CALENDAR_LEAD_DEFAULT_MINUTES = 15;
 export const ROUTINE_WATCH_DEFAULT_MINUTES = 15;
@@ -61,6 +64,13 @@ export const RoutineWatchSchema = z
     }
     if (value.kind === "command" && !value.command) {
       ctx.addIssue({ code: "custom", message: "Add a command to run", path: ["command"] });
+    }
+    if (value.kind === "board" && (value.track || value.paths || value.command || value.tool)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "The board watch takes no settings",
+        path: ["kind"],
+      });
     }
     if (value.kind === "files" && value.track) {
       ctx.addIssue({

@@ -769,6 +769,8 @@ model Bot {
   archivedAt               DateTime?
   parentBotId              String?
   spawnKey                 String?
+  /// When the Chief's default watch routine was set up, so deleting it is not undone.
+  chiefWatchAt             DateTime?
   /// Short first messages shown as buttons while the chat is empty: ["Show today's bookings", ...].
   starters                 Json?
   memoryScope              String?
@@ -817,6 +819,7 @@ model Bot {
   /// What this bot does with facts about the person: "auto" saves them (with Undo), "ask" waits for Save, "read" only reads. Null is "ask".
   memoryMode               String?
   routines                 Routine[]
+  surfacedItems            SurfacedItem[]
   routineSteps             RoutineStep[]
   scratchpadItems          ScratchpadItem[]
   taughtSkills             TaughtSkill[]
@@ -3635,4 +3638,25 @@ model ToolClassification {
   @@unique([spaceId, connection, toolName, descriptionHash, rubricVersion], map: "tool_classifications_key")
   @@index([spaceId, connection])
   @@map("tool_classifications")
+}
+
+/// What an agent already told a person or channel from a background run, so it speaks again only when the item materially changes.
+model SurfacedItem {
+  id          String   @id @default(cuid())
+  spaceId     String
+  botId       String
+  bot         Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
+  /// The thread the agent spoke in: a person's chat or a channel.
+  threadId    String
+  /// Stable name the agent gives the thing, such as "calendar:conflict:2026-11-23".
+  key         String
+  /// Changes when the item changes materially; the same value means nothing new to say.
+  fingerprint String?
+  summary     String
+  runId       String?
+  surfacedAt  DateTime @default(now())
+
+  @@unique([botId, threadId, key])
+  @@index([botId, threadId, surfacedAt])
+  @@map("surfaced_items")
 }

@@ -190,6 +190,8 @@ export interface RunState {
   /** Tokens this run has spent against its reply cap, earlier attempts included. */
   replyBudget: ReplyBudget;
   terminalCheckpointComplete: boolean;
+  /** What a delegated run said is left to do (work_remaining); it becomes a ticket at the end. */
+  workRemaining: string | undefined;
   /** The runtime reported the end of the turn. */
   turnEnded: boolean;
 }

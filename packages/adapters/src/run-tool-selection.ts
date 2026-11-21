@@ -135,6 +135,8 @@ export function selectBuiltinToolsForRun(options: {
   sayNowOffered?: boolean;
   /** A follow-up run whose source message the user wrote. */
   followUpFromUser?: boolean;
+  /** A run another agent delegated: it may hand unfinished work to a ticket. */
+  delegatedRun?: boolean;
   /** A routine run with later workflow steps, which may end the chain early. */
   workflowContinues?: boolean;
   /** The channel router woke this run: nobody named the bot, so it may pass. */
@@ -182,6 +184,7 @@ export function selectBuiltinToolsForRun(options: {
       (options.mediaVideoEnabled || tool.name !== "generate_video") &&
       (options.ticketBoardEnabled ||
         (tool.name !== "board_tickets" && !tool.name.startsWith("ticket_"))) &&
+      ((options.ticketBoardEnabled && options.delegatedRun) || tool.name !== "work_remaining") &&
       (!isBackgroundRunTrigger(options.trigger) ||
         ![
           "message_user",

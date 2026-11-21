@@ -1271,6 +1271,22 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "work_remaining",
+    description:
+      "Only in work another agent delegated to you. Call it before your final reply when the job is not finished (a list only partly processed, a count not reached): say what is done and what is left. The rest becomes a ticket with acceptance criteria that you keep working until it is met. Do not call it when the work is complete.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        remaining: {
+          type: "string",
+          maxLength: TICKET_REMAINING_MAX_LENGTH,
+          description: "What is done and what is left.",
+        },
+      },
+      required: ["remaining"],
+    },
+  },
+  {
     name: "schedule_create",
     description:
       'Create a reminder, recurring job, watch or message trigger for this bot ("remind me in 10 minutes", "every morning send a joke"). Give exactly one timing method: cron, every+unit, runAt, delayMinutes, delaySeconds, watch or onMessage; startAt only with a repeat. A repeating job carries out the user\'s lasting request each time, not a copy of today\'s decision. When the user wants something useful on a rhythm (report, check, digest) or mentions a dated one-off commitment (interview, deadline, trip), offer once with ask_user after helping, naming what and when, with options (derived times, another time, no); skip if they asked for a reminder, said no, or the date is unknown. On a yes, create it and say when it first runs; never silently. When the job is only to check inbox, calendar, a board, deploys or files and speak only on news, use watch (preset email or calendar, or a read-only tool) instead of cron: it runs no model on ticks with no change.',
@@ -2017,7 +2033,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "message_bot",
     description:
-      'Send a useful update, question, or result to another of the user\'s bots. You must call this tool to actually deliver it — writing the message in your own reply text (e.g. "[to Comms] ...") does not send anything and the recipient never sees it. Delivery is async and does not end your turn. Continue independent work; do not poll or send ack-only messages. Keep it to 2 to 4 sentences and point to the full result (file, ticket or wiki page) instead of pasting it. Later updates only if they add something new.',
+      'Send a useful update, question, or result to another of the user\'s bots. You must call this tool to actually deliver it — writing the message in your own reply text (e.g. "[to Comms] ...") does not send anything and the recipient never sees it. Delivery is async and does not end your turn. Continue independent work; do not poll or send ack-only messages. Keep it to 2 to 4 sentences and point to the full result (file, ticket or wiki page) instead of pasting it. Later updates only if they add something new. For long, measurable or multi-batch work (collect N items, process a list) create a ticket with acceptanceCriteria instead; this is for quick questions and short tasks.',
     inputSchema: {
       type: "object",
       properties: {
@@ -2040,7 +2056,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "handoff_to_bot",
     description:
-      "Transfer a genuinely distinct next stage to another current group member. In a group, stay in that group. Outside a group, supply group_id from your groups list to coordinate there. Appends a visible handoff and starts that bot asynchronously. Do not hand a stage back merely to report or repeat the same work; post results in the shared thread.",
+      "Transfer a genuinely distinct next stage to another current group member. In a group, stay in that group. Outside a group, supply group_id from your groups list to coordinate there. Appends a visible handoff and starts that bot asynchronously. Do not hand a stage back merely to report or repeat the same work; post results in the shared thread. Long, measurable or multi-batch work is a ticket with acceptanceCriteria, not a handoff.",
     inputSchema: {
       type: "object",
       properties: {

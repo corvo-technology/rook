@@ -1,9 +1,12 @@
 import type { EvalJudge } from "./judge.js";
 
 /** Bump when a rubric or its reviewed examples change, so earlier reports stay comparable. */
-export const TICKET_RUBRIC_VERSION = "ticket-handoff-v1";
+export const TICKET_RUBRIC_VERSION = "ticket-handoff-v2";
 
-export type TicketGrade = { status: "pass" | "fail" | "unqualified"; reason: string };
+export type TicketGrade = {
+  status: "pass" | "fail" | "unqualified";
+  reason: string;
+};
 
 async function grade(
   rubric: string,
@@ -121,4 +124,66 @@ export function gradeReviewVerdict(
   judged: { judge: EvalJudge; signal: AbortSignal },
 ): Promise<TicketGrade> {
   return grade(REVIEW_RUBRIC, input, judged);
+}
+
+const DELEGATION_RUBRIC = `Rubric ${TICKET_RUBRIC_VERSION}/delegation. The evidence holds what the owner asked the Chief for and what the Chief then did (the tool it called with its arguments). Pass only if the way the Chief delegated fits the size of the work. Work that is long, measurable or in many batches (collect or process a large number of items, research many targets) must go to the agent as a ticket whose acceptance criteria state a measurable target (the count and split to deliver), with blockedBy when parts must run in order. A plain message to the agent is not enough for that work. A quick question or a short task may go as a plain message and must not become a ticket. Fail if big work is sent as a plain message, if the ticket has no measurable criteria, or if a quick question is turned into a ticket. Equivalent wording and other languages are fine.`;
+
+export type DelegationExample = {
+  id: string;
+  expected: "pass" | "fail";
+  request: string;
+  action: string;
+};
+
+export const DELEGATION_EXAMPLES: DelegationExample[] = [
+  {
+    id: "big-collection-as-ticket",
+    expected: "pass",
+    request: "Finish collecting 1,000 barbershops for the SDR team, by region.",
+    action:
+      'ticket_create(title "Collect 1,000 barbershops", ownerBotId "rafa", acceptanceCriteria "1,000 rows in the sheet: SP 500, MG 300, RJ 200, each with name, phone and city; no duplicates")',
+  },
+  {
+    id: "sequenced-tickets",
+    expected: "pass",
+    request: "Collect 500 leads, then write the outreach script for them.",
+    action:
+      'ticket_create(title "Collect 500 leads", acceptanceCriteria "500 rows with name and email") then ticket_create(title "Outreach script", acceptanceCriteria "One script that names the lead source", blockedBy ["RAK-1"])',
+  },
+  {
+    id: "quick-question-as-message",
+    expected: "pass",
+    request: "Ask Rafa which city the last list was about.",
+    action:
+      'message_bot(bot "rafa", intent "question", message "Which city was the last list for?")',
+  },
+  {
+    id: "big-collection-as-message",
+    expected: "fail",
+    request: "Finish collecting 1,000 barbershops for the SDR team, by region.",
+    action:
+      'message_bot(bot "rafa", intent "request", message "Please collect the 1,000 barbershops and tell me when done.")',
+  },
+  {
+    id: "ticket-without-target",
+    expected: "fail",
+    request: "Finish collecting 1,000 barbershops for the SDR team, by region.",
+    action:
+      'ticket_create(title "Barbershops", ownerBotId "rafa", acceptanceCriteria "Do the work well")',
+  },
+  {
+    id: "quick-question-as-ticket",
+    expected: "fail",
+    request: "Ask Rafa which city the last list was about.",
+    action:
+      'ticket_create(title "City of the last list", ownerBotId "rafa", acceptanceCriteria "Answer")',
+  },
+];
+
+/** Judge-only: a judge that errors leaves the case unqualified, never passed. */
+export function gradeDelegation(
+  input: { request: string; action: string },
+  judged: { judge: EvalJudge; signal: AbortSignal },
+): Promise<TicketGrade> {
+  return grade(DELEGATION_RUBRIC, input, judged);
 }

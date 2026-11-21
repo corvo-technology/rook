@@ -102,3 +102,15 @@ describe("find_in_app", () => {
     expect(names({ disabledBuiltinTools: ["find_in_app"] })).not.toContain("find_in_app");
   });
 });
+
+describe("work_remaining", () => {
+  it("is offered only to a delegated run on a space with the board", () => {
+    const on = { ticketBoardEnabled: true, delegatedRun: true };
+    expect(names({ trigger: "bot_message", ...on })).toContain("work_remaining");
+    expect(names({ trigger: "follow_up", ...on })).toContain("work_remaining");
+    expect(names({ trigger: "follow_up", ticketBoardEnabled: true })).not.toContain(
+      "work_remaining",
+    );
+    expect(names({ trigger: "bot_message", delegatedRun: true })).not.toContain("work_remaining");
+  });
+});

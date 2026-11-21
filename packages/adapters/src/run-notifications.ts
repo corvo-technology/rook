@@ -27,7 +27,10 @@ async function runNotice(
 ): Promise<{ enabled: boolean; groupId: string | null }> {
   // A routine carries its own notify setting, which decides on its failures.
   const routine = routineId
-    ? await prisma.routine.findUnique({ where: { id: routineId }, select: { notify: true } })
+    ? await prisma.routine.findUnique({
+        where: { id: routineId },
+        select: { notify: true },
+      })
     : null;
   const source = await prisma.run.findFirst({
     where: {
@@ -48,6 +51,23 @@ async function runNotice(
   };
 }
 
+/**
+ * A run the owner never watches: another agent delegated it (a bot message, or a follow-up
+ * a bot queued). When it stops for the owner, a push is the only way they learn of it.
+ */
+async function runIsDelegated(
+  prisma: PrismaClient,
+  run: { id?: string; trigger: string },
+): Promise<boolean> {
+  if (run.trigger === "bot_message") return true;
+  if (run.trigger !== "follow_up" || !run.id) return false;
+  const row = await prisma.run.findUnique({
+    where: { id: run.id },
+    select: { sourceMessage: { select: { role: true } } },
+  });
+  return row?.sourceMessage?.role === "bot";
+}
+
 export async function notifyRun(
   deps: ExecutorDeps,
   run: {
@@ -60,7 +80,10 @@ export async function notifyRun(
     routineId?: string | null;
   },
   message: NotificationMessage,
-  options: { retryOnFailure?: boolean; inbox?: "approval" | "question" | "alert" } = {},
+  options: {
+    retryOnFailure?: boolean;
+    inbox?: "approval" | "question" | "alert";
+  } = {},
 ) {
   await recordInboxEntry(deps, run, message, options.inbox);
   if (
@@ -74,7 +97,10 @@ export async function notifyRun(
     getLogger().error("notification preference lookup", error);
     return null;
   });
-  if (!notice?.enabled) return;
+  const waitsOnOwner = message.kind === "help" || message.kind === "takeover";
+  const delegated =
+    waitsOnOwner && !notice?.enabled && (await runIsDelegated(deps.prisma, run).catch(() => false));
+  if (!notice || !(notice.enabled || delegated)) return;
   // Muted, or held for the morning digest: the inbox entry and the thread already have it.
   const verdict = await pushVerdict(deps, run, message).catch((error) => {
     if (options.retryOnFailure) throw error;
@@ -199,7 +225,9 @@ export function completionNotificationPreview(text: string): string {
 /** A secret card can ask for a code or a login, so the title stays generic and the label short. */
 export function secretAskNotification(botName: string, label: string, runSecrets: string[]) {
   // Strip and redact before shortening so no protected value is left half-shown.
-  const text = plainTextFromMarkdown(redactSecrets(label, runSecrets), { maxSource: Infinity });
+  const text = plainTextFromMarkdown(redactSecrets(label, runSecrets), {
+    maxSource: Infinity,
+  });
   const body = truncatePlainText(
     redactSecrets(text, runSecrets),
     COMPLETION_NOTIFICATION_MAX_CHARS,

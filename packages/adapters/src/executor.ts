@@ -319,42 +319,41 @@ export function createRunExecutor(deps: ExecutorDeps) {
 
       const fence = nextFence(run.leaseFence);
       const now = new Date();
-      const leased = await deps.prisma.run.updateMany({
-        where: {
-          id: runId,
-          ...continueRunClaimFence(run),
-          AND: [{ OR: [{ wakeAt: null }, { wakeAt: { lte: now } }] }],
-          OR: [
-            { status: { in: ["queued", "waiting_input", "waiting_takeover"] } },
-            {
-              status: { in: ["leased", "running"] },
-              leaseExpiresAt: { lte: now },
-            },
-          ],
-        },
-        data: {
-          status: "leased",
-          leaseOwner: workerId,
-          leaseFence: fence,
-          leaseExpiresAt: new Date(Date.now() + RUN_LEASE_TTL_MS),
-          error: null,
-          checkpoint: null,
-          wakeAt: null,
-        },
-      });
+      // The agent row does not depend on the claim, so it is read beside it: one bot read serves
+      // the computer gate, the agent's owner and the whole run.
+      const [leased, bot] = await Promise.all([
+        deps.prisma.run.updateMany({
+          where: {
+            id: runId,
+            ...continueRunClaimFence(run),
+            AND: [{ OR: [{ wakeAt: null }, { wakeAt: { lte: now } }] }],
+            OR: [
+              { status: { in: ["queued", "waiting_input", "waiting_takeover"] } },
+              {
+                status: { in: ["leased", "running"] },
+                leaseExpiresAt: { lte: now },
+              },
+            ],
+          },
+          data: {
+            status: "leased",
+            leaseOwner: workerId,
+            leaseFence: fence,
+            leaseExpiresAt: new Date(Date.now() + RUN_LEASE_TTL_MS),
+            error: null,
+            checkpoint: null,
+            wakeAt: null,
+          },
+        }),
+        deps.prisma.bot.findUniqueOrThrow({
+          where: { id: run.botId },
+          include: { computer: true, space: { select: { pausedAt: true } } },
+        }),
+      ]);
       if (leased.count !== 1) return;
 
-      const current = await deps.prisma.run.findUniqueOrThrow({
-        where: { id: runId },
-      });
-      if (
-        current.status === "queued" ||
-        current.status === "leased" ||
-        current.status === "waiting_input" ||
-        current.status === "waiting_takeover"
-      ) {
-        assertTransition(current.status as RunStatus, "running");
-      }
+      // The claim just set "leased" under this fence, so that is the state that moves to running.
+      assertTransition("leased", "running");
       const started = await deps.prisma.run.updateMany({
         where: {
           id: runId,
@@ -365,16 +364,8 @@ export function createRunExecutor(deps: ExecutorDeps) {
         data: { status: "running" },
       });
       if (started.count !== 1) return;
-      const leaseTarget = await deps.prisma.bot.findUniqueOrThrow({
-        where: { id: run.botId },
-        select: {
-          computerId: true,
-          computerSwitching: true,
-          computer: { select: { scope: true } },
-        },
-      });
-      if (!leaseTarget.computerId) throw new Error("Bot has no computer");
-      if (leaseTarget.computerSwitching) {
+      if (!bot.computerId) throw new Error("Bot has no computer");
+      if (bot.computerSwitching) {
         await requeueComputerRun(deps, runId, workerId, fence, resumeCheckpoint, heldForTakeover);
         return;
       }
@@ -394,14 +385,14 @@ export function createRunExecutor(deps: ExecutorDeps) {
       let computerLease: ComputerExecutionLease | null = null;
       try {
         computerLease = await acquireComputerExecutionLease(deps.prisma, {
-          computerId: leaseTarget.computerId,
+          computerId: bot.computerId,
           runId,
           botId: run.botId,
           resumeHeldLease,
         });
-        if (!computerLease && leaseTarget.computer?.scope === "dedicated") {
+        if (!computerLease && bot.computer?.scope === "dedicated") {
           computerLease = await acquireDedicatedScreenLeaseFence(deps.prisma, {
-            computerId: leaseTarget.computerId,
+            computerId: bot.computerId,
             runId,
             botId: run.botId,
             workerId,
@@ -415,7 +406,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
       }
       let attempt: { id: string };
       // Resumed attempts keep the first start, so lateness reflects when the run began.
-      const executionStartedAt = current.startedAt ?? new Date();
+      const executionStartedAt = run.startedAt ?? new Date();
       try {
         // Acquiring the computer can requeue a busy run. Count that wait as queue
         // time, and only stamp execution once this attempt can use its computer.
@@ -427,12 +418,13 @@ export function createRunExecutor(deps: ExecutorDeps) {
           await releaseComputerExecutionLease(deps.prisma, computerLease).catch(() => undefined);
           return;
         }
-        getLogger().info("run.execution_started", {
-          ...(await readRunTimingFields(deps.prisma, runId)),
-        });
-        attempt = await deps.prisma.attempt.create({
-          data: { runId, fence, status: "running" },
-        });
+        // The timing read is only for the log line, so it rides beside the attempt insert.
+        const [timingFields, createdAttempt] = await Promise.all([
+          readRunTimingFields(deps.prisma, runId),
+          deps.prisma.attempt.create({ data: { runId, fence, status: "running" } }),
+        ]);
+        getLogger().info("run.execution_started", { ...timingFields });
+        attempt = createdAttempt;
       } catch (error) {
         await releaseComputerExecutionLease(deps.prisma, computerLease).catch(() => undefined);
         throw error;
@@ -525,19 +517,13 @@ export function createRunExecutor(deps: ExecutorDeps) {
             : [],
         );
         // Connections, servers and secrets belong to the agent's owner, not to the member talking.
-        const agentUserId = (
-          await deps.prisma.bot.findUniqueOrThrow({
-            where: { id: run.botId },
-            select: { userId: true },
-          })
-        ).userId;
+        const agentUserId = bot.userId;
         // The version of the chat on screen is part of what the agent reads, so the thread comes first.
         const thread = await deps.prisma.thread.findUniqueOrThrow({
           where: { id: run.threadId },
           include: threadBranchInclude,
         });
         const [
-          bot,
           messages,
           peerMessage,
           task,
@@ -551,10 +537,6 @@ export function createRunExecutor(deps: ExecutorDeps) {
           initialBotCommandEnvironment,
           savedLoginPasswordRedactions,
         ] = await Promise.all([
-          deps.prisma.bot.findUniqueOrThrow({
-            where: { id: run.botId },
-            include: { computer: true, space: { select: { pausedAt: true } } },
-          }),
           loadRunHistoryMessages(deps.prisma, run, PROMPT_HISTORY_WINDOW_SIZE, thread, channelId),
           run.trigger === "bot_message"
             ? loadBotMessageContext(deps.prisma, run.sourceMessageId)

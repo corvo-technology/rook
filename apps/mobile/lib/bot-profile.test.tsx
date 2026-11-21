@@ -118,6 +118,9 @@ vi.mock("./native", () => ({
   useThemedStyles: (createStyles: () => unknown) => createStyles(),
 }));
 vi.mock("./appearance", () => ({ mobileTokens: () => color }));
+vi.mock("../components/agent-loader", () => ({
+  AgentLoader: () => createElement("progress"),
+}));
 vi.mock("./i18n", () => {
   const t = (text: string, values: Record<string, string | number> = {}) =>
     text.replace(/\{(\w+)\}/g, (match, key: string) => String(values[key] ?? match));

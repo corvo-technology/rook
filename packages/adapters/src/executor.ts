@@ -2050,6 +2050,9 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 ? undefined
                 : (name, args, executionId, route, observer) =>
                     applyTool(ctx, name, args, executionId, route, observer),
+              resolveSubagentModel: automatic
+                ? () => resolveFastRunModel(deps, { userId: run.userId, spaceId: run.spaceId })
+                : undefined,
               resolveModel: scripted
                 ? undefined
                 : (provider, modelId) =>

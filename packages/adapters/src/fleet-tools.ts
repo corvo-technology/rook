@@ -1304,9 +1304,11 @@ export async function updateChildBot(
     if ("error" in parsed) return parsed;
     patch = parsed.patch;
   }
-  if (argumentGiven(args.color)) {
+  if (argumentGiven(args.color) || argumentGiven(args.character)) {
     const avatar = await resolveUpdateBotAvatar({
       color: args.color,
+      character: args.character,
+      currentColor: child.color,
       sourceImageArtifactIds: [],
       loadArtifact: async () => null,
     });
@@ -1567,6 +1569,7 @@ const botSelect = {
   modelProvider: true,
   modelId: true,
   thinkingLevel: true,
+  color: true,
   thread: { select: { id: true } },
 } satisfies Prisma.BotSelect;
 
@@ -1782,8 +1785,13 @@ export async function updateOwnBotFromTool(
       sourceImageArtifactIds = attachedImageArtifactIds(source.blocks as MessageBlock[]);
     }
   }
+  const current = argumentGiven(args.character)
+    ? await deps.prisma.bot.findUnique({ where: { id: bot.id }, select: { color: true } })
+    : null;
   const avatar = await resolveUpdateBotAvatar({
     color: args.color,
+    character: args.character,
+    currentColor: current?.color,
     artifactId: args.artifact_id,
     useAttachedImage: args.use_attached_image,
     sourceImageArtifactIds,

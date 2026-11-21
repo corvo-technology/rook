@@ -1,5 +1,11 @@
-import type { MessageBlock } from "@corvo/contracts";
-import { BOT_AVATAR_VALUE_MAX_LENGTH, isBotAvatarValue } from "@corvo/contracts";
+import type { BotAvatarCharacterId, MessageBlock } from "@corvo/contracts";
+import {
+  BOT_AVATAR_CHARACTER_IDS,
+  BOT_AVATAR_VALUE_MAX_LENGTH,
+  composeBotAvatarValue,
+  isBotAvatarValue,
+  parseBotAvatarValue,
+} from "@corvo/contracts";
 
 export const BOT_AVATAR_ENCODE_SIZE = 256;
 
@@ -30,6 +36,10 @@ export async function encodeBotAvatarImage(bytes: Uint8Array): Promise<string> {
 
 export async function resolveUpdateBotAvatar(input: {
   color?: unknown;
+  /** One of `BOT_AVATAR_CHARACTER_IDS`, worn in the new color or else the current one. */
+  character?: unknown;
+  /** The bot's stored avatar value, which a character keeps the color of. */
+  currentColor?: string;
   artifactId?: unknown;
   useAttachedImage?: unknown;
   sourceImageArtifactIds: readonly string[];
@@ -59,6 +69,20 @@ export async function resolveUpdateBotAvatar(input: {
 
   if (useAttachedImage) {
     return { error: "No attached image on this message." };
+  }
+
+  const character = typeof input.character === "string" ? input.character.trim() : undefined;
+  if (character) {
+    if (!(BOT_AVATAR_CHARACTER_IDS as readonly string[]).includes(character)) {
+      return { error: `character must be one of: ${BOT_AVATAR_CHARACTER_IDS.join(", ")}.` };
+    }
+    const base = color ?? input.currentColor ?? "";
+    if (!isBotAvatarValue(base)) {
+      return { error: "color must be a hex value, an encoded shape, or a data image." };
+    }
+    const parsed = parseBotAvatarValue(base);
+    const hex = parsed.kind === "image" || parsed.kind === "other" ? "#F97316" : parsed.color;
+    return { color: composeBotAvatarValue(hex, character as BotAvatarCharacterId) };
   }
 
   if (color !== undefined) {

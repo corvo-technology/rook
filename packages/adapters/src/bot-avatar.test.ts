@@ -83,3 +83,59 @@ describe("bot avatar encoding", () => {
     });
   });
 });
+const characterBase = { sourceImageArtifactIds: [], loadArtifact: async () => null };
+
+describe("resolveUpdateBotAvatar with a character", () => {
+  it("wears the character in the current color", async () => {
+    expect(
+      await resolveUpdateBotAvatar({
+        ...characterBase,
+        character: "ghost",
+        currentColor: "#1FBF68",
+      }),
+    ).toEqual({ color: "#1FBF68::char_ghost" });
+  });
+
+  it("replaces a shape or an earlier character but keeps the color", async () => {
+    expect(
+      await resolveUpdateBotAvatar({
+        ...characterBase,
+        character: "cat",
+        currentColor: "#1FBF68::char_ghost",
+      }),
+    ).toEqual({ color: "#1FBF68::char_cat" });
+    expect(
+      await resolveUpdateBotAvatar({
+        ...characterBase,
+        character: "cat",
+        currentColor: "#1FBF68::shape_2",
+      }),
+    ).toEqual({ color: "#1FBF68::char_cat" });
+  });
+
+  it("prefers a color given with it", async () => {
+    expect(
+      await resolveUpdateBotAvatar({
+        ...characterBase,
+        character: "cat",
+        color: "#8B5CF6",
+        currentColor: "#1FBF68",
+      }),
+    ).toEqual({ color: "#8B5CF6::char_cat" });
+  });
+
+  it("refuses an unknown character, and lists the real ones", async () => {
+    const result = await resolveUpdateBotAvatar({ ...characterBase, character: "dragon" });
+    expect(result).toMatchObject({ error: expect.stringContaining("ghost") });
+  });
+
+  it("falls back to the default color when the agent wears a picture", async () => {
+    expect(
+      await resolveUpdateBotAvatar({
+        ...characterBase,
+        character: "cat",
+        currentColor: "data:image/png;base64,abc",
+      }),
+    ).toEqual({ color: "#F97316::char_cat" });
+  });
+});

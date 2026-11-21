@@ -33,7 +33,6 @@ import { diagnosticWireFetch } from "../evals/wire-observer.js";
 import { runApprovalSuite } from "./approval-eval.js";
 import { runModelRoutingSuite } from "./model-routing-eval.js";
 import { runAvatarPieceSuite, runChannelRouterSuite, runDateReminderSuite } from "./pick-eval.js";
-import { runRunHarnessSuite } from "./run-harness-eval.js";
 import { runToolClassifierSuite } from "./tool-classifier-eval.js";
 import { runWikiCuratorSuite } from "./wiki-curator-eval.js";
 
@@ -75,8 +74,11 @@ async function main() {
   });
   if (values["cases-file"] && values.suite !== "tool-choice")
     throw new Error("--cases-file adds tool-choice cases; use --suite tool-choice");
-  if (values.suite === "harness")
+  if (values.suite === "harness") {
+    // Deferred: the harness drives the runtime, which --list of other suites must not load.
+    const { runRunHarnessSuite } = await import("./run-harness-eval.js");
     return runRunHarnessSuite(values, { codeRevision: codeRevision(), readConnection });
+  }
   if (values.suite === "approval")
     return runApprovalSuite(values, {
       codeRevision: codeRevision(),

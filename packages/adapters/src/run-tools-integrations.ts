@@ -104,7 +104,7 @@ export const integrationTools: ToolHandlers = {
       (name): name is string =>
         typeof name === "string" && name.trim().length > 0 && name.length <= 100,
     );
-    const teammate = named.length > 0 ? named : undefined;
+    const teammate = named.length > 1 ? named : named[0];
     const addedApp =
       typeof args.app === "string" && args.app.trim() && args.app.length <= 100
         ? await requestSpaceAppAccess(
@@ -119,7 +119,7 @@ export const integrationTools: ToolHandlers = {
     // A teammate's access is only ever the workspace's own app; never connect it for this agent.
     if (teammate) {
       return call.finish({
-        error: `No app named "${String(args.app ?? "").slice(0, 100)}" is added to this workspace or in the app catalog, so it cannot be given to ${teammate.join(", ")}. Ask the user which app they mean.`,
+        error: `No app named "${String(args.app ?? "").slice(0, 100)}" is added to this workspace or in the app catalog, so it cannot be given to ${[teammate].flat().join(", ")}. Ask the user which app they mean.`,
       });
     }
     return call.finish(

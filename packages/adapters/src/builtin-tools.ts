@@ -483,7 +483,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "connect_app",
     description:
-      "Show an inline card to connect an app when you need an unconnected one or the user asks. Also use it for a workspace app you cannot use yet (PostHog, Trello) instead of saying it is unavailable. When a delegated teammate cannot use an app, pass the app and the teammate's name in agent so the user can approve it here; never tell the user to do it themselves. Then wait for the user.",
+      "Show an inline card to connect an app when you need an unconnected one or the user asks. Also use it for a workspace app you cannot use yet (PostHog, Trello) instead of saying it is unavailable. When a delegated teammate cannot use an app, pass the app and the teammate's name in agent (several: agents) so the user can approve it here; never tell the user to do it themselves. Then wait for the user.",
     inputSchema: {
       type: "object",
       properties: {
@@ -492,20 +492,14 @@ export const builtinAgentTools: ConnectorTool[] = [
           type: "string",
           minLength: 1,
           maxLength: 100,
-          description: "A teammate to give the app to instead of yourself, by name.",
+          description: "Teammate to give it to, by name.",
         },
-        agents: {
-          type: "array",
-          items: { type: "string", minLength: 1, maxLength: 100 },
-          maxItems: 20,
-          description:
-            "Several teammates to give the app to: one call and one card for all of them, never one each.",
-        },
+        agents: { type: "array", items: { type: "string", maxLength: 100 }, maxItems: 20 },
         level: {
           type: "string",
           enum: ["read", "write"],
           description:
-            "read asks for access to only the app's read tools; leave it out to ask for all of them. Ask for read when reading is enough.",
+            "read: only the app's read tools; leave out for all. Prefer read when enough.",
         },
       },
       required: ["app"],

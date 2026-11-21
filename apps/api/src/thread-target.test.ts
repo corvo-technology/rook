@@ -2527,12 +2527,14 @@ describe("sendThreadMessage", () => {
         { botId: "bot-a", name: "Alpha", color: null },
         { botId: "bot-b", name: "Beta", color: null },
       ];
+      const background: Array<Promise<void>> = [];
       const result = await sendThreadMessage(
         {
           prisma,
           events: { notify: vi.fn().mockResolvedValue(undefined) } as never,
           jobs: { enqueue: vi.fn().mockResolvedValue(undefined) } as never,
           router: model as never,
+          background: (work) => background.push(work),
         },
         { spaceId: "workspace-1", userId: "user-1" } as Actor,
         {
@@ -2545,7 +2547,13 @@ describe("sendThreadMessage", () => {
         } satisfies ThreadTarget,
         { text, mentions: options?.mentions, clientNonce: "nonce-router" },
       );
-      return { tx, result, raised };
+      // What the send returned, before the router has answered.
+      const stored = {
+        create: tx.message.create.mock.calls.length,
+        runs: tx.run.create.mock.calls.length,
+      };
+      await Promise.all(background);
+      return { tx, result, raised, stored };
     };
     const scores = (body: object) => vi.fn().mockResolvedValue(JSON.stringify(body));
 
@@ -2556,10 +2564,16 @@ describe("sendThreadMessage", () => {
         needsAgent: 1,
         reason: "fits",
       });
-      const { tx, result } = await routedSend("who handles refunds?", model);
-      expect(result).toMatchObject({ runId: "run-bot-b" });
+      const { tx, result, stored } = await routedSend("who handles refunds?", model);
+      // The message is stored and returned before the model has answered, with nobody woken yet.
+      expect(result).toEqual({ seq: 1, runIds: [] });
+      expect(stored).toEqual({ create: 1, runs: 0 });
       expect(tx.run.create).toHaveBeenCalledOnce();
-      expect(tx.message.create).toHaveBeenCalledWith({
+      expect(tx.run.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ botId: "bot-b", sourceMessageId: "msg-1" }),
+      });
+      expect(tx.message.update).toHaveBeenCalledWith({
+        where: { id: "msg-1" },
         data: expect.objectContaining({
           routing: expect.objectContaining({ strategy: "model", picked: ["bot-b"] }),
         }),
@@ -2576,9 +2590,12 @@ describe("sendThreadMessage", () => {
 
     it("keeps the older rule when the router fails", async () => {
       const model = vi.fn().mockRejectedValue(new Error("down"));
-      const { tx, result } = await routedSend("anyone there?", model);
-      expect(result).toMatchObject({ runId: "run-bot-a" });
-      expect(tx.message.create).toHaveBeenCalledWith({
+      const { tx } = await routedSend("anyone there?", model);
+      expect(tx.run.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ botId: "bot-a" }),
+      });
+      expect(tx.message.update).toHaveBeenCalledWith({
+        where: { id: "msg-1" },
         data: expect.objectContaining({
           routing: expect.objectContaining({ strategy: "fallback", error: "down" }),
         }),
@@ -2619,10 +2636,12 @@ describe("sendThreadMessage", () => {
         needsAgent: 1,
         reason: "x",
       });
-      const { result, raised } = await routedSend("@Outsider are you free?", model, {
+      const { tx, raised } = await routedSend("@Outsider are you free?", model, {
         mentions: [{ kind: "person", id: "outsider" }],
       });
-      expect(result).toMatchObject({ runId: "run-bot-a" });
+      expect(tx.run.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ botId: "bot-a" }),
+      });
       expect(raised).toEqual([]);
     });
 
@@ -2633,9 +2652,19 @@ describe("sendThreadMessage", () => {
       expect(model).not.toHaveBeenCalled();
     });
 
-    const reportOf = (tx: { message: { create: ReturnType<typeof vi.fn> } }) =>
-      (tx.message.create.mock.calls[0]![0] as { data: { routingReport: unknown } }).data
-        .routingReport;
+    // A routed send records its report when the router has answered, a named one on the send.
+    const reportOf = (tx: {
+      message: { create: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
+    }) => {
+      const calls = [...tx.message.update.mock.calls, ...tx.message.create.mock.calls];
+      return (
+        calls.find(
+          ([call]) => (call as { data: { routingReport?: unknown } }).data.routingReport,
+        )![0] as {
+          data: { routingReport: unknown };
+        }
+      ).data.routingReport;
+    };
 
     it("records who the router picked, who it left out, and its note", async () => {
       const model = scores({

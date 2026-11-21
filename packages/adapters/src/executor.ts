@@ -418,13 +418,15 @@ export function createRunExecutor(deps: ExecutorDeps) {
           await releaseComputerExecutionLease(deps.prisma, computerLease).catch(() => undefined);
           return;
         }
-        // The timing read is only for the log line, so it rides beside the attempt insert.
-        const [timingFields, createdAttempt] = await Promise.all([
-          readRunTimingFields(deps.prisma, runId),
-          deps.prisma.attempt.create({ data: { runId, fence, status: "running" } }),
-        ]);
-        getLogger().info("run.execution_started", { ...timingFields });
-        attempt = createdAttempt;
+        // The timing read is only for the log line, so the attempt insert does not wait behind it.
+        const attemptInsert = deps.prisma.attempt.create({
+          data: { runId, fence, status: "running" },
+        });
+        attemptInsert.catch(() => undefined);
+        getLogger().info("run.execution_started", {
+          ...(await readRunTimingFields(deps.prisma, runId)),
+        });
+        attempt = await attemptInsert;
       } catch (error) {
         await releaseComputerExecutionLease(deps.prisma, computerLease).catch(() => undefined);
         throw error;

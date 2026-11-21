@@ -4,6 +4,7 @@ import type { Prisma } from "@corvo/db";
 import {
   appendEventInTransaction,
   createThreadMessageInTransaction,
+  warmThreadContentKey,
   withTransactionRetry,
 } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
@@ -51,6 +52,7 @@ export async function publishMessage(
     blocks = blocks.filter((block) => block.kind === "ask" || block.kind === "computer");
     if (blocks.length === 0 && !stoppedHelper) return null;
   }
+  await warmThreadContentKey(deps.prisma, run.threadId);
   // Concurrent runs in one thread contend for its sequence counters; Postgres aborts a
   // deadlock victim, which commits nothing, so retry instead of failing the run.
   const committed = await withTransactionRetry(() =>

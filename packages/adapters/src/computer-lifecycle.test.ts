@@ -1733,12 +1733,15 @@ describe("computer execution leases", () => {
     });
     expect(prisma.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({
-          computerId: "computer-1",
-          botId: "bot-1",
-          runId: "run-1",
-          fence: 1,
-        }),
+        data: [
+          expect.objectContaining({
+            computerId: "computer-1",
+            botId: "bot-1",
+            runId: "run-1",
+            fence: 1,
+          }),
+        ],
+        skipDuplicates: true,
         select: { fence: true },
       }),
     );
@@ -1785,7 +1788,7 @@ describe("computer execution leases", () => {
       computer: {
         findUniqueOrThrow: vi.fn().mockResolvedValue({ scope: "team", state: "running" }),
       },
-      computerExecutionLease: { create, updateMany, updateManyAndReturn },
+      computerExecutionLease: { createManyAndReturn: create, updateMany, updateManyAndReturn },
     } as unknown as PrismaClient;
     const lease = {
       computerId: "computer-1",
@@ -1917,7 +1920,7 @@ describe("computer execution leases", () => {
           lease.fence += data.fence.increment;
           return [{ fence: lease.fence }];
         }),
-        create,
+        createManyAndReturn: create,
       },
       computer: {
         findUniqueOrThrow: vi.fn().mockResolvedValue({ scope: "team", state: "running" }),
@@ -2067,7 +2070,7 @@ describe("computer execution leases", () => {
       computerExecutionLease: {
         findUnique: vi.fn().mockResolvedValue(null),
         updateManyAndReturn,
-        create: vi.fn(),
+        createManyAndReturn: vi.fn(),
       },
       run: { aggregate: vi.fn(), findFirst: vi.fn().mockResolvedValue(null) },
     };
@@ -2106,9 +2109,7 @@ describe("computer execution leases", () => {
           .mockResolvedValueOnce([{ id: "run-resumed-card" }]),
         computerExecutionLease: {
           updateManyAndReturn: vi.fn().mockResolvedValue(live ? [] : [{ fence: 8 }]),
-          create: vi
-            .fn()
-            .mockRejectedValue(Object.assign(new Error("lease exists"), { code: "P2002" })),
+          createManyAndReturn: vi.fn().mockResolvedValue([]),
         },
         run: { aggregate: vi.fn().mockResolvedValue({ _max: { leaseFence: 2 } }) },
       };
@@ -2216,10 +2217,7 @@ function leasePrisma(options: {
     .fn()
     .mockResolvedValue(options.reclaim ? [{ fence: options.fence ?? 1 }] : []);
   const create = vi.fn().mockImplementation(async () => {
-    if (options.uniqueConflict) {
-      throw Object.assign(new Error("unique"), { code: "P2002" });
-    }
-    return { fence: 1 };
+    return options.uniqueConflict ? [] : [{ fence: 1 }];
   });
   const findUniqueOrThrow = vi.fn().mockResolvedValue({
     scope: options.scope,
@@ -2232,7 +2230,7 @@ function leasePrisma(options: {
       },
       computerExecutionLease: {
         updateManyAndReturn,
-        create,
+        createManyAndReturn: create,
         updateMany,
         deleteMany,
       },

@@ -92,3 +92,32 @@ describe("createThreadMessage", () => {
     expect(run).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("createThreadMessage content key", () => {
+  it("loads the space key before the transaction takes the thread row", async () => {
+    const order: string[] = [];
+    const ring = {
+      encryptWrites: true,
+      spaceOf: vi.fn(async () => {
+        order.push("space");
+        return "space-1";
+      }),
+      current: vi.fn(async () => {
+        order.push("key");
+      }),
+    };
+    const prisma = {
+      $contentEncryption: () => ({ ring }),
+      $transaction: vi.fn(async (work: (tx: unknown) => unknown) => {
+        order.push("tx");
+        return work(transaction());
+      }),
+    } as unknown as PrismaClient;
+    await createThreadMessage(prisma, {
+      threadId: "thread-1",
+      role: "bot",
+      blocks: [{ kind: "text", text: "Hi" }],
+    });
+    expect(order).toEqual(["space", "key", "tx"]);
+  });
+});

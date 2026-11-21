@@ -709,27 +709,28 @@ export async function acquireDedicatedScreenLeaseFence(
       _max: { leaseFence: true },
     });
     const fence = Math.max(input.runFence, history._max.leaseFence ?? 0) + 1;
-    try {
-      const created = await tx.computerExecutionLease.create({
-        data: {
+    // A held lease is the normal reason for a conflict: skip the insert instead of letting
+    // Postgres log a unique violation for every contended attempt.
+    const [created] = await tx.computerExecutionLease.createManyAndReturn({
+      data: [
+        {
           computerId: input.computerId,
           botId: input.botId,
           runId: input.runId,
           fence,
           expiresAt,
         },
-        select: { fence: true },
-      });
-      return {
-        computerId: input.computerId,
-        botId: input.botId,
-        runId: input.runId,
-        fence: created.fence,
-      };
-    } catch (error) {
-      if (isUniqueConstraintError(error)) throw new ComputerBusyError();
-      throw error;
-    }
+      ],
+      skipDuplicates: true,
+      select: { fence: true },
+    });
+    if (!created) throw new ComputerBusyError();
+    return {
+      computerId: input.computerId,
+      botId: input.botId,
+      runId: input.runId,
+      fence: created.fence,
+    };
   });
 }
 
@@ -770,27 +771,27 @@ export async function acquireComputerExecutionLease(
       fence: reclaimed.fence,
     });
   }
-  try {
-    const created = await prisma.computerExecutionLease.create({
-      data: {
+  const [created] = await prisma.computerExecutionLease.createManyAndReturn({
+    data: [
+      {
         computerId: input.computerId,
         botId: input.botId,
         runId: input.runId,
         fence: 1,
         expiresAt,
       },
-      select: { fence: true },
-    });
-    return validateAcquiredComputerLease(prisma, {
-      computerId: input.computerId,
-      botId: input.botId,
-      runId: input.runId,
-      fence: created.fence,
-    });
-  } catch (error) {
-    if (isUniqueConstraintError(error)) throw new ComputerBusyError();
-    throw error;
-  }
+    ],
+    skipDuplicates: true,
+    select: { fence: true },
+  });
+  // The lease is held by another run of this bot.
+  if (!created) throw new ComputerBusyError();
+  return validateAcquiredComputerLease(prisma, {
+    computerId: input.computerId,
+    botId: input.botId,
+    runId: input.runId,
+    fence: created.fence,
+  });
 }
 
 async function validateAcquiredComputerLease(
@@ -862,10 +863,6 @@ export async function releaseComputerExecutionLease(
     runId: lease.runId,
     fence: lease.fence,
   });
-}
-
-function isUniqueConstraintError(error: unknown) {
-  return Boolean(error && typeof error === "object" && "code" in error && error.code === "P2002");
 }
 
 export type ComputerReplaceMode = "recover" | "reset" | "update";

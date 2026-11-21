@@ -97,6 +97,10 @@ const SANDBOX_NOT_RUNNING =
 // The SDK's wording for a command that outlived its own timeoutMs (gRPC DeadlineExceeded).
 const COMMAND_DEADLINE = /^deadline_exceeded|exceeding 'timeoutMs'/;
 
+const RESUMED_MESSAGE = "computer was not running and has been resumed; try again";
+const RESUME_RETRIES = 3;
+const RESUME_BACKOFF_MS = 500;
+
 function isSandboxNotRunning(error: unknown): boolean {
   return (
     error instanceof Error &&
@@ -143,6 +147,9 @@ export class E2BSandboxProvider implements SandboxProvider {
     private readonly sdk: E2BSandboxSdk = e2bSdk,
     /** Which computer size new computers start as; the caller picks it, for example by plan. */
     private readonly size: E2BComputerSize = E2B_DEFAULT_COMPUTER_SIZE,
+    /** Waits between resume retries; tests pass an instant one. */
+    private readonly sleep: (ms: number) => Promise<void> = (ms) =>
+      new Promise((resolve) => setTimeout(resolve, ms)),
   ) {}
 
   describe() {
@@ -224,18 +231,37 @@ export class E2BSandboxProvider implements SandboxProvider {
     }
     this.drop(id, desktop);
     await this.connect(id);
-    return new Error("computer was not running and has been resumed; try again");
+    return new Error(RESUMED_MESSAGE);
+  }
+
+  /** The sandbox was paused and has just been resumed, so the same work can run again. */
+  private async resumedAfter(
+    computer: ComputerRef,
+    desktop: E2BDesktop,
+    error: unknown,
+  ): Promise<{ resumed: true } | { resumed: false; error: unknown }> {
+    const recovered = await this.recover(computer, desktop, error);
+    return recovered instanceof Error && recovered.message === RESUMED_MESSAGE
+      ? { resumed: true }
+      : { resumed: false, error: recovered };
   }
 
   private async use<T>(
     computer: ComputerRef,
     work: (desktop: E2BDesktop) => Promise<T>,
   ): Promise<T> {
-    const desktop = await this.box(computer);
-    try {
-      return await work(desktop);
-    } catch (error) {
-      throw await this.recover(computer, desktop, error);
+    // A paused computer resumes on demand: wait for it and run the work again, a few times, so
+    // a run is not lost to a computer that merely went to sleep.
+    for (let attempt = 0; ; attempt += 1) {
+      const desktop = await this.box(computer);
+      try {
+        return await work(desktop);
+      } catch (error) {
+        const outcome = await this.resumedAfter(computer, desktop, error);
+        if (!outcome.resumed) throw outcome.error;
+        if (attempt >= RESUME_RETRIES) throw new Error(RESUMED_MESSAGE);
+        await this.sleep(RESUME_BACKOFF_MS * 2 ** attempt);
+      }
     }
   }
 

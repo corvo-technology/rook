@@ -179,7 +179,10 @@ async function continueUnfinished(
 export async function endTicketRun(
   deps: TicketRunDeps,
   run: TicketRun,
-  outcome: { kind: "finished"; cut?: boolean } | { kind: "stopped"; error: string; cut?: boolean },
+  outcome:
+    | { kind: "finished"; cut?: boolean }
+    /** `comment` is what the board shows, in the person's language; `error` stays the English reason. */
+    | { kind: "stopped"; error: string; comment?: string; cut?: boolean },
 ): Promise<void> {
   if (!deps.ticketBoardEnabled || !run.ticketId) return;
   try {
@@ -203,7 +206,12 @@ export async function endTicketRun(
         ? { from: "doing", to: "review" }
         : outcome.kind === "finished"
           ? { from: "doing", to: "review" }
-          : { from: "doing", placed: "review", to: "blocked", comment: outcome.error },
+          : {
+              from: "doing",
+              placed: "review",
+              to: "blocked",
+              comment: outcome.comment ?? outcome.error,
+            },
     );
     await announceTicketStep(deps, run, null);
   } catch {

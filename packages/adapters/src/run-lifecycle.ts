@@ -1,6 +1,6 @@
 import { runContinueJob } from "@corvo/adapter-kit";
 import type { EscalationTrigger, ModelTier, RunStopReason } from "@corvo/contracts";
-import { displayName } from "@corvo/core";
+import { displayName, localizedFailureLine } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import { returnBotMessageOutcome, runReturnsOutcome } from "./bot-messages.js";
@@ -54,6 +54,18 @@ export async function computerScreenToolResult(
   return finish ? finish(result) : result;
 }
 
+async function personLocale(deps: ExecutorDeps, userId: string): Promise<string | undefined> {
+  try {
+    const user = await deps.prisma.user.findUnique({
+      where: { id: userId },
+      select: { locale: true },
+    });
+    return user?.locale ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Fails a run that never reached the model and tells the people waiting on it. */
 export async function failRunBeforeTurn(
   deps: ExecutorDeps,
@@ -93,7 +105,12 @@ export async function failRunBeforeTurn(
     ...(options.stopReason ? { stopReason: options.stopReason } : {}),
   });
   if (!failed) return false;
-  await endTicketRun(deps, run, { kind: "stopped", error: message });
+  const locale = run.ticketId ? await personLocale(deps, run.userId) : undefined;
+  await endTicketRun(deps, run, {
+    kind: "stopped",
+    error: message,
+    comment: errorInfo ? localizedFailureLine(errorInfo.code, locale) : undefined,
+  });
   if (failed.continuationRunId) {
     await deps.jobs
       .enqueue(runContinueJob(failed.continuationRunId))

@@ -135,6 +135,18 @@ describe("a run's own ticket moves", () => {
     expect(changes[0]?.moved).toMatchObject({ status: "blocked", previousStatus: "doing" });
   });
 
+  it("comments in the person's language when the stop has a translated line", async () => {
+    const { deps, comments } = setup({ status: "doing" });
+    await endTicketRun(deps, run, {
+      kind: "stopped",
+      error: "Subscribe in Billing to keep running bots.",
+      comment: "Conecte um modelo para continuar.",
+    });
+    expect(comments).toEqual([
+      expect.objectContaining({ body: "Conecte um modelo para continuar." }),
+    ]);
+  });
+
   it("leaves a ticket a person or the agent already moved, and adds no comment", async () => {
     for (const status of ["todo", "review", "blocked", "done", "closed"]) {
       const finished = setup({ status });

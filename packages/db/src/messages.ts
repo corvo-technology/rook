@@ -1,5 +1,6 @@
 import type { MessageBlock } from "@corvo/contracts";
 import type { Prisma, PrismaClient } from "./client.js";
+import { warmThreadContentKey } from "./content-encryption.js";
 import { notifyForMessage } from "./notifications.js";
 import type { BranchRow } from "./thread-branches.js";
 import { visibleFilterOf } from "./thread-branches.js";
@@ -86,6 +87,7 @@ export interface CreateThreadMessageInput {
 }
 
 export async function createThreadMessage(prisma: PrismaClient, input: CreateThreadMessageInput) {
+  await warmThreadContentKey(prisma, input.threadId);
   return withTransactionRetry(() =>
     prisma.$transaction((tx: Prisma.TransactionClient) =>
       createThreadMessageInTransaction(tx, input),

@@ -577,6 +577,11 @@ export interface AgentRunRequest {
   onModelChange?: (provider: string, modelId: string) => Promise<void>;
   /** Resolve an explicitly requested helper model within the active user and space scope. */
   resolveModel?: (provider: string, modelId: string) => Promise<AgentRunModel>;
+  /**
+   * The model a helper runs on when its call names none: the cheap tier. Absent on a run whose
+   * model was pinned, where helpers keep the run's model.
+   */
+  resolveSubagentModel?: () => Promise<AgentRunModel | undefined>;
   resumeFromCheckpoint?: string;
   /** Opaque runtime transcript, persisted only on the server. */
   turnCheckpoint?: string;

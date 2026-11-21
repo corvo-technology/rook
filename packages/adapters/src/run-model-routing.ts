@@ -10,9 +10,10 @@ import {
   parseTierAnswer,
   TIER_CLASSIFIER_INSTRUCTIONS,
   TIER_CLASSIFIER_MAX_TOKENS,
-  TIER_CLASSIFIER_PROMPT_CHARS,
   TIER_CLASSIFIER_TIMEOUT_MS,
+  TIER_THINKING_LEVEL,
   type TurnSignals,
+  tierClassifierPrompt,
 } from "./model-routing.js";
 import type { ModelChoice } from "./model-selection.js";
 import { catalogModelCost } from "./pi-runtime-models.js";
@@ -72,7 +73,7 @@ export async function resolveTierModel(
     choice: {
       modelProvider: primary.provider,
       modelId: primary.modelId,
-      thinkingLevel: role.primary.thinkingLevel ?? null,
+      thinkingLevel: role.primary.thinkingLevel ?? TIER_THINKING_LEVEL[tier],
       ...(role.primary.credentialId ? { credentialId: role.primary.credentialId } : {}),
     },
     fromDeployment: role.primarySource === "deployment",
@@ -110,14 +111,16 @@ export async function tiersAvailable(
 }
 
 /**
- * One tiny, tool-less call on the fast model that names the tier a request needs. It reads at most
- * a short excerpt and answers one word, so it costs a fraction of the turn it routes. Any failure
- * or unclear answer is "no answer" and the turn runs on the main tier.
+ * One tiny, tool-less call on the fast model that names the tier a request needs, by its meaning
+ * and the agent's role. It reads at most a short excerpt and answers one word, so it costs a
+ * fraction of the turn it routes. Any failure or unclear answer is "no answer" and the turn runs on
+ * the main tier.
  */
 export async function classifyTier(
   deps: ExecutorDeps,
   run: { id: string; spaceId: string; userId: string; botId: string },
-  prompt: string,
+  role: { title: string; description: string },
+  request: string,
 ): Promise<ModelTier | null> {
   try {
     const fast = await resolveFastRunModel(deps, run);
@@ -142,7 +145,7 @@ export async function classifyTier(
         onUsage: async (usage) => {
           await recordUsage(deps.prisma, usage, attribution);
         },
-        prompt: prompt.slice(0, TIER_CLASSIFIER_PROMPT_CHARS),
+        prompt: tierClassifierPrompt(role, request),
         instructions: TIER_CLASSIFIER_INSTRUCTIONS,
         history: [],
         tools: [],
@@ -177,10 +180,10 @@ export async function routeRunTier(
 ): Promise<RoutedModel> {
   const decision = decideTier(signals);
   let tier = decision.tier;
-  // Only an unsettled turn pays for the classifier, and only once: a retried attempt keeps the
-  // tier saved with the run.
+  // Only a turn the structure leaves open pays for the classifier, and only once: the tier is
+  // saved with the run, so a retried attempt reads it back.
   if (!decision.clear && !signals.floor) {
-    tier = (await classifyTier(deps, run, signals.prompt)) ?? tier;
+    tier = (await classifyTier(deps, run, signals, signals.prompt)) ?? tier;
   }
   return resolveTierModel(deps, run, tier, defaults);
 }

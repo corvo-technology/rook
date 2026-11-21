@@ -799,8 +799,8 @@ model Bot {
   modelProvider            String?
   modelId                  String?
   thinkingLevel            String?
-  /// The agent picks a model tier for each turn. Pinned agents leave this false and keep their model.
-  modelAuto                Boolean            @default(false)
+  /// The agent picks a model tier for each turn. A pinned model always wins over it.
+  modelAuto                Boolean            @default(true)
   disabledBuiltinTools     String[]           @default([])
   webhookSecretId          String?
   teamChatAmbientEnabled   Boolean            @default(false)

@@ -21,7 +21,7 @@ import {
   TICKET_STATUSES,
   TICKET_TITLE_MAX_LENGTH,
 } from "@corvo/contracts";
-import { GUIDE_PAGES } from "@corvo/core";
+import { connectorToolNamedAsWrite, GUIDE_PAGES } from "@corvo/core";
 import { z } from "zod";
 import { allowPrivateHttpSecretOrigins } from "./bot-secrets.js";
 import { BROWSER_ACT_KINDS } from "./browser-tools.js";
@@ -94,6 +94,41 @@ export const DELEGATION_TOOL_NAMES = new Set<string>([
   "message_bot",
   ...FLEET_TOOL_NAMES,
 ]);
+
+/** Tools a helper may use unless its parent names others: they only read and search. */
+const SUBAGENT_READ_TOOL_NAMES = new Set<string>([
+  "list_files",
+  "read_file",
+  "web_search",
+  "web_fetch",
+  "wiki_index",
+  "wiki_search",
+  "wiki_read",
+  "read_document",
+  "search_history",
+  "read_history",
+  "recall_memory",
+  "recall_about_user",
+]);
+
+/**
+ * The tools a helper gets: only those its parent named, or, when it named none, the read and search
+ * tools, so a cheap helper cannot act on the world by default. Delegation never reaches a helper.
+ */
+export function subagentTools<T extends { name: string; readOnly?: boolean }>(
+  tools: readonly T[],
+  requested?: readonly string[],
+): T[] {
+  const named = requested?.length ? new Set(requested) : undefined;
+  return tools.filter((tool) => {
+    if (DELEGATION_TOOL_NAMES.has(tool.name)) return false;
+    if (named) return named.has(tool.name);
+    return (
+      SUBAGENT_READ_TOOL_NAMES.has(tool.name) ||
+      (tool.readOnly === true && !connectorToolNamedAsWrite(tool.name))
+    );
+  });
+}
 
 const scheduleCreateProperties = {
   name: { type: "string", description: "Short label shown in Routines." },
@@ -1558,6 +1593,12 @@ export const builtinAgentTools: ConnectorTool[] = [
         model_id: {
           type: "string",
           description: "Optional connected model ID. Set together with model_provider.",
+        },
+        tools: {
+          type: "array",
+          items: { type: "string" },
+          description:
+            "Optional names of this agent's tools the helper may use. By default a helper can only read and search (files, web, memory, history); name more here when the work needs them.",
         },
       },
       required: ["name", "task"],

@@ -2,7 +2,7 @@ import type { ModelTier } from "@corvo/contracts";
 import type { EvalJudge } from "./judge.js";
 
 /** Bump when the rubric or the task set changes, so earlier reports stay comparable. */
-export const MODEL_ROUTING_RUBRIC_VERSION = "model-routing-v2";
+export const MODEL_ROUTING_RUBRIC_VERSION = "model-routing-v3";
 
 const RUBRIC = `Rubric ${MODEL_ROUTING_RUBRIC_VERSION}. The evidence holds a task and two answers to it, "first" and "second", from different models; their order carries no meaning. Decide whether the answer named in "candidate" is at least as good as the other for the person who asked. It is at least as good only if it is as correct, as complete against what the task asked for, and as safe: it invents nothing, does not skip a requested part, and does not take or promise an action the task did not ask for. A different style, length or wording is fine, in any language. If the other answer is wrong or incomplete and the candidate is right, the candidate passes. If the candidate is wrong, misses a requested part or invents something the other does not, it fails. Do not reward length or confidence.`;
 
@@ -17,7 +17,7 @@ export type RoutingCase = {
   title: string;
   description: string;
   prompt: string;
-  /** The tier the router should pick, so a routing change that shifts it is seen. */
+  /** The tier a reviewer judged this task needs, which the classifier is measured against in the live eval. */
   expectedTier: ModelTier;
   /** A case about the agent asking for a stronger model: whether doing so is the right call. */
   escalation?: "appropriate" | "unneeded";
@@ -78,7 +78,7 @@ export const MODEL_ROUTING_CASES: RoutingCase[] = [
     description: "",
     prompt:
       "Design a merge rule for offline edits to a shared spreadsheet so every replica converges whatever the order of delivery, prove it converges, and name the trade-offs against operational transforms.",
-    expectedTier: "main",
+    expectedTier: "strong",
     escalation: "appropriate",
   },
   {
@@ -87,7 +87,7 @@ export const MODEL_ROUTING_CASES: RoutingCase[] = [
     description: "Sorts incoming email",
     prompt:
       "Assess whether clause 9.2 of the attached supplier contract lets us terminate for convenience when clause 14 caps liability, and what we risk if we are wrong.",
-    expectedTier: "fast",
+    expectedTier: "strong",
     escalation: "appropriate",
   },
   {

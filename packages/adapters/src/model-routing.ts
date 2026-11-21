@@ -30,43 +30,38 @@ export interface TurnSignals {
 
 export type TierReason =
   | "floor"
-  | "code"
-  | "heavy-agent"
   | "large-context"
   | "approval"
   | "background"
-  | "light-agent"
+  | "attachments"
   | "ambiguous";
 
 export interface TierDecision {
   tier: ModelTier;
-  /** False when the signals do not settle it, so a tiny classification call may. */
+  /** False when the signals do not settle it, so a tiny classification call decides by meaning. */
   clear: boolean;
   reason: TierReason;
 }
 
-// Agents made for triage, inboxes and summaries do small, routine work. The match is only a lean:
-// anything it does not settle goes to the classifier, and any code in the turn overrides it.
-const LIGHT_AGENT =
-  /\b(e-?mail|inbox|triage|support|summar\w*|classif\w*|newsletter|digest|resumo|triagem|suporte|caixa de entrada|correo|bandeja|trier|boîte|posteingang)\b/i;
-const HEAVY_AGENT =
-  /\b(code|coder|coding|developer|engineer|programm\w*|devops|research\w*|analyst|browser|computer|automation|desenvolv\w*|engenheir\w*|pesquis\w*|programador|investigaci\w*|ingenier\w*|entwickler)\b/i;
-const CODE_IN_TURN =
-  /```|\b[\w./-]+\.(?:ts|tsx|js|jsx|py|rs|go|java|rb|php|sql|sh|ya?ml|json|toml|c|cpp|cs|swift|kt)\b/;
+/**
+ * How hard a tier thinks unless the member's own model choice says otherwise: a little on the cheap
+ * tier, the model default (medium) on main, and a lot only where the tier is strong. It is fixed
+ * for the run, because changing the effort between calls breaks the prompt cache.
+ */
+export const TIER_THINKING_LEVEL = {
+  fast: "low",
+  main: "medium",
+  strong: "high",
+} as const satisfies Record<ModelTier, string>;
 
-const LIGHT_PROMPT_CHARS = 2_000;
-const LIGHT_CONTEXT_TOKENS = 30_000;
 const LARGE_CONTEXT_TOKENS = 100_000;
 
 /**
- * Picks a tier from cheap signals alone. It never reads the agent's tools: every agent has a
- * computer, so the tools say nothing about the turn. Pure, so each rule is easy to check.
+ * Settles a turn from structure alone: where it came from, what it carries, how much history it
+ * reads and whether it continues an approval. What the request means is never judged here: every
+ * turn these signals leave open goes to the classifier. Pure, so each rule is easy to check.
  */
 export function decideTier(signals: TurnSignals): TierDecision {
-  const profile = `${signals.title}\n${signals.description}`;
-  const heavy = HEAVY_AGENT.test(profile);
-  const light = LIGHT_AGENT.test(profile) && !heavy;
-  const code = CODE_IN_TURN.test(signals.prompt);
   const decide = (tier: ModelTier, clear: boolean, reason: TierReason): TierDecision => {
     const raised = atLeast(tier, signals.floor);
     return raised === tier
@@ -79,26 +74,77 @@ export function decideTier(signals: TurnSignals): TierDecision {
   if (isAutonomousRunTrigger(signals.trigger) && !signals.approvalGated) {
     return decide("fast", true, "background");
   }
-  if (code) return decide("strong", true, "code");
-  if (heavy) return decide("strong", true, "heavy-agent");
   if (signals.contextTokens >= LARGE_CONTEXT_TOKENS) return decide("strong", true, "large-context");
   // An action that waits on approval is never the cheap tier's to carry out.
   if (signals.approvalGated) return decide("main", true, "approval");
-  const small =
-    signals.prompt.length <= LIGHT_PROMPT_CHARS &&
-    signals.contextTokens <= LIGHT_CONTEXT_TOKENS &&
-    signals.attachments === 0;
-  if (light && small) return decide("fast", true, "light-agent");
+  // Images and files are read by the tier that is known to handle them.
+  if (signals.attachments > 0) return decide("main", true, "attachments");
   return decide("main", false, "ambiguous");
 }
 
-/** What the classifier is told. A fixed instruction keeps the tiny call cheap and cacheable. */
-export const TIER_CLASSIFIER_INSTRUCTIONS =
-  "Pick the cheapest model tier that can handle the request well. Answer with one word: " +
-  "fast for short, routine work such as summaries, classification, short replies and lookups; " +
-  "main for ordinary tasks that use tools or need some reasoning; " +
-  "strong for code, multi-step plans, ambiguous or high-stakes work. Answer fast, main or strong.";
-/** The classifier reads the request, not the whole conversation. */
+/** Bump when the classifier prompt or its reviewed examples change, so earlier reports stay comparable. */
+export const TIER_RUBRIC_VERSION = "tier-classifier-v1";
+
+/** Reviewed examples the classifier is shown. Short, in different languages, one per kind of work. */
+export const TIER_RUBRIC_EXAMPLES: ReadonlyArray<{
+  role: string;
+  request: string;
+  tier: ModelTier;
+}> = [
+  { role: "Inbox triage", request: "Mark these three emails urgent, normal or low.", tier: "fast" },
+  { role: "Assistant", request: "Resuma essa conversa em duas frases.", tier: "fast" },
+  {
+    role: "Assistant",
+    request: "What time is it in Tokyo when it is 9am in Lisbon?",
+    tier: "fast",
+  },
+  {
+    role: "Assistant",
+    request: "Draft a polite reply declining Thursday's meeting.",
+    tier: "main",
+  },
+  {
+    role: "Sales assistant",
+    request: "Find the three open deals closing this month and list their owners.",
+    tier: "main",
+  },
+  {
+    role: "Assistant",
+    request: "Why does this function return NaN? Here is the code and the stack trace.",
+    tier: "strong",
+  },
+  {
+    role: "Assistant",
+    request: "Plan a zero-downtime move from one database to another and name the risks.",
+    tier: "strong",
+  },
+];
+
+/** What the classifier is told: the rubric, its examples, one word out. */
+export const TIER_CLASSIFIER_INSTRUCTIONS = [
+  `Rubric ${TIER_RUBRIC_VERSION}.`,
+  "Pick the cheapest model tier that can handle the request well, judging by what the request asks for, in any language. The agent's role is context only: the same role can receive easy and hard requests.",
+  "fast: short routine work such as summaries, classification, short replies, simple lookups and conversions.",
+  "main: ordinary tasks that use tools, writing, or some reasoning.",
+  "strong: code, debugging, multi-step planning, long or high-stakes reasoning, ambiguous work where a mistake is costly.",
+  "When unsure between two tiers, pick the higher one. Answer with one word: fast, main or strong.",
+  "Examples:",
+  ...TIER_RUBRIC_EXAMPLES.map(
+    (example) => `Role: ${example.role}\nRequest: ${example.request}\nAnswer: ${example.tier}`,
+  ),
+].join("\n");
+
+/** The classifier reads the agent's role and the request, not the whole conversation. */
+export function tierClassifierPrompt(
+  role: { title: string; description: string },
+  request: string,
+) {
+  const roleLine = [role.title, role.description]
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(": ");
+  return `Role: ${roleLine.slice(0, 300) || "Assistant"}\nRequest: ${request.slice(0, TIER_CLASSIFIER_PROMPT_CHARS)}`;
+}
 export const TIER_CLASSIFIER_PROMPT_CHARS = 1_500;
 export const TIER_CLASSIFIER_TIMEOUT_MS = 6_000;
 export const TIER_CLASSIFIER_MAX_TOKENS = 8;

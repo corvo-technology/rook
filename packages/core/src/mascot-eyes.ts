@@ -33,24 +33,3 @@ export function rookRingDots(
 
 /** The arc the rook folds into while something loads: three quarters of a circle around the middle. */
 export const ROOK_SPINNER_ARC = "M50 16 A34 34 0 1 1 16 50";
-
-export type MascotMood = "idle" | "thinking" | "alert" | "failed" | "happy" | "asleep";
-
-/** How the mascot feels, from what its run is doing and whether work just finished. */
-export function mascotMood(status: string | undefined, justFinished: boolean): MascotMood {
-  switch (status) {
-    case "queued":
-    case "leased":
-    case "running":
-      return "thinking";
-    case "waiting_input":
-    case "waiting_takeover":
-      return "alert";
-    case "failed":
-      return "failed";
-    case "asleep":
-      return "asleep";
-    default:
-      return justFinished ? "happy" : "idle";
-  }
-}

@@ -66,7 +66,7 @@ describe("collaboration transcript markers", () => {
 
     expect(html).toContain('role="status"');
     expect(html).toContain('data-working="true"');
-    expect(html).toContain("corvo-bot-avatar-ring-working");
+    expect(html).toContain('data-state="working"');
   });
 
   it("shows where delegated work stands, and nothing when the marker has no state", () => {

@@ -78,3 +78,16 @@ test("a message's hover actions open its thread, and many agents are counted", a
   await expect(panel.getByText(said)).toBeVisible();
   await expect(panel.getByRole("textbox", { name: "Reply" })).toBeFocused();
 });
+
+for (const theme of ["light", "dark"]) {
+  test(`working agents show their state on their faces, not a ring (${theme})`, async ({
+    page,
+  }, testInfo) => {
+    await page.goto(`/e2e/fixtures/channel-threads.html?theme=${theme}&working=2`);
+    const line = page.getByTestId("working-line");
+    await expect(line).toHaveText("Chief and Bento are working…");
+    await expect(line.locator('[data-state="working"]')).toHaveCount(2);
+    await expect(line.locator(".corvo-bot-avatar-ring")).toHaveCount(0);
+    await captureScreenshot(page, testInfo, `agents-working-${theme}`);
+  });
+}

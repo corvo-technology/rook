@@ -39,7 +39,7 @@ it("shows each working agent's rook and says who is working", () => {
   const html = render(["Bento", "Cora"]);
   expect(html).toContain('role="status"');
   expect(html).toContain("Bento and Cora are working…");
-  expect(html).toContain("corvo-bot-avatar-ring-working");
+  expect(html).toContain('data-state="working"');
 });
 
 it("counts three or more agents instead of naming them", () => {

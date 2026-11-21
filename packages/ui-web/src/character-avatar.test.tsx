@@ -62,13 +62,14 @@ describe("parseBotAvatar with a character", () => {
 });
 
 describe("a character in an agent's color", () => {
-  it("replaces the chick, keeping the sizes, the name and the working ring of any avatar", () => {
+  it("replaces the chick, keeping the sizes and the name, and shows work as a state, not a ring", () => {
     const html = renderToString(
       <BotAvatar color="#1FBF68::char_sprout" size={40} status="running" />,
     );
     expect(html).toContain('data-character="sprout"');
     expect(html).toContain('data-working="true"');
-    expect(html).toContain("corvo-bot-avatar-ring-working");
+    expect(html).toContain('data-state="working"');
+    expect(html).not.toContain("corvo-bot-avatar-ring");
     expect(html).toMatch(/style="[^"]*width:40px;height:40px/);
     expect(html).not.toContain("data-mascot");
     expect(html).not.toContain("<img");
@@ -103,30 +104,51 @@ describe("a character in an agent's color", () => {
     await unmount();
   });
 
-  it("thinks while the agent works, and smiles for a moment when it finishes", async () => {
+  it("shows what the agent is doing, and celebrates for a moment when it finishes", async () => {
     const { rerender, unmount } = await mount("#1FBF68::char_sprout", 78, "idle");
-    expect(lastOptions()).toMatchObject({ mood: "idle" });
+    expect(lastOptions()).toMatchObject({ state: "idle", mood: "neutral" });
+    await rerender({ status: "queued" });
+    expect(dom.handles[0]?.update).toHaveBeenLastCalledWith(
+      expect.objectContaining({ state: "thinking", mood: "neutral" }),
+    );
     await rerender({ status: "running" });
     expect(dom.handles[0]?.update).toHaveBeenLastCalledWith(
-      expect.objectContaining({ mood: "thinking" }),
+      expect.objectContaining({ state: "working" }),
     );
+    await rerender({ status: "waiting_input" });
+    expect(dom.handles[0]?.update).toHaveBeenLastCalledWith(
+      expect.objectContaining({ state: "waiting" }),
+    );
+    await rerender({ status: "running" });
     await rerender({ status: "idle" });
     expect(dom.handles[0]?.update).toHaveBeenLastCalledWith(
-      expect.objectContaining({ mood: "happy" }),
+      expect.objectContaining({ state: "done", mood: "happy" }),
     );
-    await act(async () => vi.advanceTimersByTime(2_000));
+    await act(async () => vi.advanceTimersByTime(4_000));
     expect(dom.handles[0]?.update).toHaveBeenLastCalledWith(
-      expect.objectContaining({ mood: "idle" }),
+      expect.objectContaining({ state: "idle", mood: "neutral" }),
     );
     await unmount();
   });
 
-  it("does not smile after a failure", async () => {
+  it("is blocked, not done, after a failure", async () => {
     const { rerender, unmount } = await mount("#1FBF68::char_sprout", 78, "running");
     await rerender({ status: "failed" });
-    expect(dom.handles[0]?.update).not.toHaveBeenCalledWith(
-      expect.objectContaining({ mood: "happy" }),
+    expect(dom.handles[0]?.update).toHaveBeenLastCalledWith(
+      expect.objectContaining({ state: "blocked", mood: "neutral" }),
     );
+    expect(dom.handles[0]?.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({ state: "done" }),
+    );
+    await unmount();
+  });
+
+  it("moves at a small size while it is doing something, and rests still when idle", async () => {
+    const { rerender, unmount } = await mount("#1FBF68::char_sprout", 24, "running");
+    expect(lastOptions()).toMatchObject({ still: false });
+    await rerender({ status: "idle" });
+    await act(async () => vi.advanceTimersByTime(4_000));
+    expect(lastOptions()).toMatchObject({ still: true });
     await unmount();
   });
 

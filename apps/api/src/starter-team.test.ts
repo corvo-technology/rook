@@ -57,6 +57,67 @@ describe("startStarterTeam", () => {
   });
 });
 
+describe("startStarterTeam Rook routines", () => {
+  const schedule = { prisma: {}, jobs: {}, events: {} };
+  const made = {
+    agent: "Rook",
+    name: "Weekly plan",
+    schedule: "At 08:00, only on Monday",
+    nextRun: null,
+    timezone: "America/Sao_Paulo",
+    timezoneKnown: true,
+  };
+
+  it("makes Rook's routines for a space it was just made for, and folds them into its greeting", async () => {
+    const s = steps(true);
+    const chiefRoutines = vi.fn(async () => [made]);
+    const routineDeps = vi.fn(async () => schedule);
+    await startStarterTeam(deps, actor, "pt-BR", { ...s, routineDeps, chiefRoutines } as never);
+    expect(chiefRoutines).toHaveBeenCalledWith(
+      schedule,
+      expect.objectContaining({
+        entry: expect.objectContaining({ slug: "chief" }),
+        locale: "pt-BR",
+        spaceId: "space-1",
+        userId: "user-1",
+        botId: "chief-1",
+        threadId: "t-1",
+      }),
+    );
+    expect(s.greet).toHaveBeenCalledWith(deps, actor, chief, {
+      locale: "pt-BR",
+      suggestTeam: true,
+      starterRoutines: [made],
+    });
+  });
+
+  it("makes none in a space whose Rook already existed", async () => {
+    const s = steps(false);
+    const chiefRoutines = vi.fn(async () => [made]);
+    const routineDeps = vi.fn(async () => schedule);
+    await startStarterTeam(deps, actor, "en", { ...s, routineDeps, chiefRoutines } as never);
+    expect(chiefRoutines).not.toHaveBeenCalled();
+  });
+
+  it("makes none when routines cannot run, and still greets", async () => {
+    const s = steps(true);
+    const chiefRoutines = vi.fn(async () => [made]);
+    await startStarterTeam(deps, actor, "en", { ...s, chiefRoutines } as never);
+    expect(chiefRoutines).not.toHaveBeenCalled();
+    expect(s.greet).toHaveBeenCalledTimes(1);
+  });
+
+  it("still greets when a routine cannot be made", async () => {
+    const s = steps(true);
+    const chiefRoutines = vi.fn(async () => {
+      throw new Error("scheduler down");
+    });
+    const routineDeps = vi.fn(async () => schedule);
+    await startStarterTeam(deps, actor, "en", { ...s, routineDeps, chiefRoutines } as never);
+    expect(s.greet).toHaveBeenCalledWith(deps, actor, chief, { locale: "en", suggestTeam: true });
+  });
+});
+
 describe("startStarterTeam with picks", () => {
   const prospector = AGENT_CATALOG.find((entry) => entry.slug === "sales-prospector")!;
   function withPicks(over: { fleetManagement?: boolean; messages?: number } = {}) {

@@ -1,7 +1,12 @@
 import type { StarterRoutineSetup } from "@corvo/adapters";
-import { addStoreAgent, enqueueRoutineAnnouncement, starterRoutinesPrompt } from "@corvo/adapters";
+import {
+  addStoreAgent,
+  createStarterRoutines,
+  enqueueRoutineAnnouncement,
+  starterRoutinesPrompt,
+} from "@corvo/adapters";
 import type { Actor, AgentCatalogLocale, Bot, OnboardingPicks } from "@corvo/contracts";
-import { AGENT_CATALOG, agentForPicks } from "@corvo/core";
+import { AGENT_CATALOG, agentForPicks, CHIEF_STARTER_ROUTINES } from "@corvo/core";
 import type { MessagingProvisionOptions, PrismaClient } from "@corvo/db";
 import { createGroupRepos, ensureStarterTeam } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
@@ -10,7 +15,7 @@ import { enqueueBotIntroRun } from "./routes/bots.js";
 import { starterRoutineDeps } from "./starter-routines.js";
 
 /**
- * Give an account its Chief and starting team, then have the Chief greet the person once, in
+ * Give an account Rook (its first agent) and starting team, then have Rook greet the person once, in
  * their language. A second call finds the Chief already there and starts nothing.
  */
 export async function startStarterTeam(
@@ -27,6 +32,7 @@ export async function startStarterTeam(
     addAgent?: typeof addStoreAgent;
     createChannel?: (actor: Actor, input: { name: string; botIds: string[] }) => Promise<unknown>;
     routineDeps?: typeof starterRoutineDeps;
+    chiefRoutines?: typeof createStarterRoutines;
   } = {},
   picks?: OnboardingPicks,
 ): Promise<{
@@ -37,12 +43,28 @@ export async function startStarterTeam(
   const ensure = steps.ensure ?? ensureStarterTeam;
   const { botId, created, bot } = await ensure(deps.prisma, actor, locale);
   // The team comes first, so the Chief's one first message can say what the team set up.
-  const schedule = picks
-    ? await (steps.routineDeps ?? starterRoutineDeps)(deps as RouterDeps, actor).catch(
-        () => undefined,
-      )
-    : undefined;
+  const scheduler = await (steps.routineDeps ?? starterRoutineDeps)(
+    deps as RouterDeps,
+    actor,
+  ).catch(() => undefined);
+  const schedule = picks ? scheduler : undefined;
   const starter = schedule ? { deps: schedule, announce: false } : undefined;
+  // Rook's own routines start on in a space it was just made for, never in an existing one.
+  const chiefRoutines =
+    created && bot && scheduler
+      ? await (steps.chiefRoutines ?? createStarterRoutines)(scheduler, {
+          entry: { slug: "chief", routines: CHIEF_STARTER_ROUTINES },
+          locale,
+          spaceId: actor.spaceId,
+          userId: actor.userId,
+          botId: bot.id,
+          threadId: bot.threadId ?? null,
+          botName: bot.name,
+        }).catch((error) => {
+          getLogger().error("chief starter routines", error);
+          return [] as StarterRoutineSetup[];
+        })
+      : [];
   const pickedAgent = await addPickedAgent(
     deps,
     actor,
@@ -62,7 +84,7 @@ export async function startStarterTeam(
     steps.createChannel,
     starter,
   );
-  const routines = [...(pickedAgent?.routines ?? []), ...teamRoutines];
+  const routines = [...chiefRoutines, ...(pickedAgent?.routines ?? []), ...teamRoutines];
   if (bot) {
     try {
       if (created) {

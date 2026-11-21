@@ -37,6 +37,7 @@ export * from "./call-session.js";
 export * from "./channel-router.js";
 export * from "./chess-set.js";
 export * from "./chief-agent.js";
+export * from "./chief-routines.js";
 export * from "./chief-watch.js";
 export * from "./client-id.js";
 export * from "./cloud-agent.js";

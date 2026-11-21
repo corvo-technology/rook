@@ -726,6 +726,28 @@ describe("outboundSiteGate", () => {
     ).toBe("new");
   });
 
+  it("reads a new site in Only what's risky unless outside text could have chosen a data-carrying URL", () => {
+    const base = { site: "new.test", trusted: false, rules: [], mode: "risky" as const };
+    expect(outboundSiteGate({ ...base, tainted: false, carriesData: true })).toBe("allow");
+    expect(outboundSiteGate({ ...base, tainted: true, carriesData: false })).toBe("allow");
+    expect(outboundSiteGate({ ...base, tainted: true, carriesData: true })).toBe("new");
+  });
+
+  it("keeps new sites new in every other mode", () => {
+    for (const mode of ["always", "auto", "never"] as const) {
+      expect(
+        outboundSiteGate({
+          site: "new.test",
+          trusted: false,
+          rules: [],
+          mode,
+          tainted: false,
+          carriesData: false,
+        }),
+      ).toBe("new");
+    }
+  });
+
   it("allows a site the owner always allowed, and only that site", () => {
     expect(outboundSiteGate({ site: "example.com", trusted: false, rules: [siteRule] })).toBe(
       "allow",

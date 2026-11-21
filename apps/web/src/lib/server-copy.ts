@@ -37,6 +37,7 @@ export function approvalCardCopy(
 ): ApprovalCardCopy | undefined {
   const {
     name = "",
+    site = "",
     members = "",
     purpose = "",
     group = "",
@@ -134,6 +135,8 @@ export function approvalCardCopy(
           ...(instructions ? [t`Instructions: ${instructions}`] : []),
         ],
       };
+    case "open_website":
+      return { title: t`Open ${site}?`, lines: [] };
     case "create_space": {
       const space = name || t`Untitled`;
       return {

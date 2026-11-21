@@ -3,6 +3,7 @@ import {
   MAX_OUTBOUND_QUERY_LENGTH,
   outboundUrlLeak,
   outboundUrlsOfCall,
+  urlMayCarryData,
   urlsInText,
 } from "./url-leak.js";
 
@@ -119,5 +120,36 @@ describe("outboundUrlsOfCall", () => {
     expect(outboundUrlsOfCall("create_task", { url: "https://example.com/e" })).toEqual([]);
     expect(outboundUrlsOfCall("web_fetch", { url: "not a url" })).toEqual([]);
     expect(outboundUrlsOfCall("web_fetch", null)).toEqual([]);
+  });
+});
+
+describe("urlMayCarryData", () => {
+  const carries = (url: string, privateText: string[] = []) =>
+    urlMayCarryData({ url, privateText });
+
+  it("passes a plain address", () => {
+    expect(carries("https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm")).toBe(
+      false,
+    );
+    expect(carries("https://example.com/")).toBe(false);
+  });
+
+  it("flags a query, a fragment, credentials and a long or deep path", () => {
+    expect(carries("https://example.com/a?q=1")).toBe(true);
+    expect(carries("https://example.com/a#x")).toBe(true);
+    expect(carries("https://u:p@example.com/")).toBe(true);
+    expect(carries(`https://example.com/${"a".repeat(130)}`)).toBe(true);
+    expect(carries("https://example.com/a/b/c/d/e/f/g/h/i")).toBe(true);
+  });
+
+  it("flags a token-looking host label or path segment", () => {
+    expect(carries("https://c2VjcmV0c2VjcmV0MTIz.example.com/")).toBe(true);
+    expect(carries("https://example.com/dGhpc2lzc2VjcmV0ZGF0YTEyMw")).toBe(true);
+    expect(carries("https://example.com/0123456789abcdef0123")).toBe(true);
+  });
+
+  it("flags a part seen in private results, and passes it when nothing was seen", () => {
+    expect(carries("https://example.com/anasouza", ["Customer anasouza owes money"])).toBe(true);
+    expect(carries("https://example.com/anasouza")).toBe(false);
   });
 });

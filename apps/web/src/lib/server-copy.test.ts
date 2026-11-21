@@ -81,6 +81,9 @@ describe("approval card wording", () => {
     expect(approvalCardCopy("agent_connection", params)?.title).toBe(
       "Approve connection with “Crew”?",
     );
+    expect(approvalCardCopy("open_website", { site: "planalto.gov.br" })?.title).toBe(
+      "Open planalto.gov.br?",
+    );
     for (const code of ApprovalCardCode.options) {
       expect(approvalCardCopy(code, params)?.title, code).toBeTruthy();
     }

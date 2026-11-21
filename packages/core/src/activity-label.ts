@@ -86,6 +86,13 @@ export function reviewBeforeSummary(text: string): string | undefined {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
+const OPEN_WEBSITE_TITLE = /^Open ([^\s?]+)\?$/;
+
+/** The site an approval titled "Open <site>?" is about, for surfaces that word it themselves. */
+export function openWebsiteTitleSite(text: string): string | undefined {
+  return OPEN_WEBSITE_TITLE.exec(text)?.[1];
+}
+
 const APPROVAL_NOTICE = /^(.+) is waiting for your approval\.$/s;
 
 /**

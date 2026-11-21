@@ -747,6 +747,7 @@ export const DE_MESSAGES: Record<string, string> = {
   "Allow once": "Einmal erlauben",
   "Hold to approve": "Zum Genehmigen gedrückt halten",
   "Review before {summary}": "Vor dem Ausführen prüfen: {summary}",
+  "Open {site}?": "{site} öffnen?",
   "{name} is waiting for your approval.": "{name} wartet auf deine Genehmigung.",
   "Always allow": "Immer erlauben",
   "Always allow this tool": "Dieses Tool immer erlauben",

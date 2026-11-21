@@ -352,15 +352,27 @@ export function connectorReadRequiresApproval(input: {
  * web_fetch sends its whole URL, query string included, to the site it names, so a site this run
  * was not given is a new destination that injected text could have picked. Trusted sites (named in
  * the owner's own words, approved earlier in the run, or the exact URL of a search result) and
- * sites with an always-allow rule go through. Anything else is new: planActionGate decides who
+ * sites with an always-allow rule go through. In Only what's risky so does any other site unless
+ * outside text could have chosen a URL that can carry data. Anything else is new: planActionGate decides who
  * judges it, and newSiteOutcome what happens when nobody passed it.
  */
 export function outboundSiteGate(input: {
   site: string;
   trusted: boolean;
   rules: ActionApprovalRule[];
+  /**
+   * Only what's risky, the mode that does not ask before reading a website. In it a new site is
+   * not a destination worth asking about while its URL cannot have been chosen by outside text:
+   * the run is clean (so the URL came from the owner or the model), or the URL carries no data.
+   */
+  mode?: ApprovalMode;
+  tainted?: boolean;
+  /** The URL has a query, a fragment or a path that could hold data (see urlMayCarryData). */
+  carriesData?: boolean;
 }): "allow" | "new" {
-  return input.trusted || siteAlwaysAllowed(input.rules, input.site) ? "allow" : "new";
+  if (input.trusted || siteAlwaysAllowed(input.rules, input.site)) return "allow";
+  if (input.mode === "risky" && (!input.tainted || !input.carriesData)) return "allow";
+  return "new";
 }
 
 /**

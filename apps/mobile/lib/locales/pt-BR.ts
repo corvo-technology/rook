@@ -712,6 +712,7 @@ export const PT_BR_MESSAGES: Record<string, string> = {
   "Allow once": "Permitir uma vez",
   "Hold to approve": "Segure para aprovar",
   "Review before {summary}": "Confirme antes: {summary}",
+  "Open {site}?": "Abrir {site}?",
   "{name} is waiting for your approval.": "{name} está aguardando a sua aprovação.",
   "Always allow": "Sempre permitir",
   "Always allow this tool": "Permitir sempre esta ferramenta",

@@ -715,6 +715,7 @@ export const ES_MESSAGES: Record<string, string> = {
   "Allow once": "Permitir una vez",
   "Hold to approve": "Mantén pulsado para aprobar",
   "Review before {summary}": "Revisa antes: {summary}",
+  "Open {site}?": "¿Abrir {site}?",
   "{name} is waiting for your approval.": "{name} espera tu aprobación.",
   "Always allow": "Permitir siempre",
   "Always allow this tool": "Permitir siempre esta herramienta",

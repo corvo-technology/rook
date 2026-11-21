@@ -368,8 +368,13 @@ export async function createScheduleFromTool(
     nextRunAt: row.nextRunAt?.toISOString() ?? null,
     oneShot: resolved.oneShot,
     ...describeRoutineTiming(row),
+    ...(resolved.oneShot ? {} : { hint: REPEATING_CHECK_HINT }),
   };
 }
+
+/** A repeating cron job asks the model every tick; a watch asks it only when something changed. */
+const REPEATING_CHECK_HINT =
+  "If this job only checks something (inbox, calendar, a board, deploys, files) and stays quiet unless there is news, a watch does that without a model call on quiet ticks. Offer to switch: cancel this and create it with watch.";
 
 /** A routine that runs when a message arrives on a channel, from `schedule_create` with `onMessage`. */
 async function createMessageRoutineFromTool(

@@ -1487,17 +1487,8 @@ describe("Pi connector tool dispatch", () => {
       events.push(event);
     }
 
-    const followUp = fakeAgentState.followUpMessages[0] as {
-      role: string;
-      content: string;
-    };
-    expect(followUp).toEqual(
-      expect.objectContaining({
-        role: "user",
-        content: expect.stringContaining("stay silent"),
-      }),
-    );
-    expect(followUp.content).not.toContain("NO_RESPONSE");
+    // A silent-allowed run accepts the empty reply instead of paying for another model call.
+    expect(fakeAgentState.followUpMessages).toEqual([]);
     expect(events).not.toContainEqual({
       type: "text",
       text: MISSING_TOOL_FINAL_RESPONSE_ERROR,

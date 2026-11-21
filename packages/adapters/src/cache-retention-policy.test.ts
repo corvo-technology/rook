@@ -28,7 +28,14 @@ describe("cacheReturnFor", () => {
     expect(cacheReturnFor({ routineGapMinutes: 30 })).toBe("later");
     expect(cacheReturnFor({ routineGapMinutes: 60 })).toBe("later");
     expect(cacheReturnFor({ routineGapMinutes: 61 })).toBe("soon");
-    expect(cacheReturnFor({ routineGapMinutes: 24 * 60 })).toBe("soon");
+  });
+
+  it("asks for no cache retention when a routine is sparse or has no cadence", () => {
+    expect(cacheReturnFor({ routine: true, routineGapMinutes: 61 })).toBe("never");
+    expect(cacheReturnFor({ routine: true, routineGapMinutes: 24 * 60 })).toBe("never");
+    expect(cacheReturnFor({ routine: true })).toBe("never");
+    expect(cacheReturnFor({ routine: true, routineGapMinutes: 30 })).toBe("later");
+    expect(cacheReturnFor({ routine: true, ticket: true })).toBe("later");
   });
 });
 
@@ -79,6 +86,12 @@ describe("runCacheRetention", () => {
         "later",
       ),
     ).toBeUndefined();
+  });
+
+  it("requests no retention for a run that never returns in time, when the protocol allows it", () => {
+    expect(runCacheRetention(anthropic, undefined, "never")).toBe("none");
+    expect(runCacheRetention(responsesWithoutLong, undefined, "never")).toBeUndefined();
+    expect(runCacheRetention(anthropic, "short", "never")).toBe("short");
   });
 
   it("gives every call of a run the same answer", () => {

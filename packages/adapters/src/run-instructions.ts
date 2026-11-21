@@ -407,6 +407,8 @@ export function turnNote(parts: {
   repeatHint?: string | undefined;
   redactedTicketContext?: string | undefined;
   redactedRecalledMemory?: string | undefined;
+  /** What this autonomous run already told the person. */
+  surfacedItems?: string | undefined;
   /** What the partner page sent for this turn, already fenced. */
   hostContext?: string | undefined;
 }): string {
@@ -424,6 +426,7 @@ export function turnNote(parts: {
     parts.repeatHint,
     parts.redactedTicketContext,
     parts.redactedRecalledMemory,
+    parts.surfacedItems,
     parts.hostContext,
   ]
     .filter(Boolean)

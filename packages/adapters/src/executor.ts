@@ -1652,6 +1652,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const cacheReturn = cacheReturnFor({
           resumed: Boolean(takeoverResume || approvalContinuation),
           ticket: Boolean(run.ticketId) || run.trigger === "tickets",
+          routine: run.trigger === "routine",
           routineGapMinutes: routineGap,
         });
         const historicalContext: AgentRunRequest["history"] = [];
@@ -1795,6 +1796,16 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const voiceInstruction =
           // A hang-up turn is read, not heard: no spoken-reply constraint.
           voiceCall && !callEndRun ? voiceCallInstruction(disabledBuiltinTools) : undefined;
+        // The ledger changes after every run, so it rides with the turn, not the system prompt.
+        const surfacedItems =
+          isAutonomousRunTrigger(run.trigger) && !isBackgroundRunTrigger(run.trigger)
+            ? surfacedItemsInstruction(
+                await listSurfacedItems(deps.prisma, {
+                  botId: bot.id,
+                  threadId: thread.id,
+                }).catch(() => []),
+              )
+            : undefined;
         const currentTime = formatCurrentTimeInstruction(new Date(), userTimeZone);
         const replyOnlyContext = run.trigger === "reaction" && replyContext;
         // The combined prompt, for turns that cannot send the source message as its own block.
@@ -1811,6 +1822,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
           repeatHint,
           redactedTicketContext,
           redactedRecalledMemory,
+          surfacedItems,
           hostContext,
         ]
           .filter(Boolean)
@@ -1839,6 +1851,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
               repeatHint,
               redactedTicketContext,
               redactedRecalledMemory,
+              surfacedItems,
               hostContext,
             })
           : undefined;
@@ -1922,6 +1935,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
               runId,
               routineId: run.routineId,
               cacheReturn,
+              nonUrgent: run.trigger === "routine",
               sourceMessageId: run.sourceMessageId,
               onUsage: async (event) => {
                 await recordUsage(deps.prisma, event, {
@@ -1969,14 +1983,6 @@ export function createRunExecutor(deps: ExecutorDeps) {
                   offeredFleetTools: offeredFleetTools(builtins),
                 }),
                 passInstruction,
-                isAutonomousRunTrigger(run.trigger) && !isBackgroundRunTrigger(run.trigger)
-                  ? surfacedItemsInstruction(
-                      await listSurfacedItems(deps.prisma, {
-                        botId: bot.id,
-                        threadId: thread.id,
-                      }).catch(() => []),
-                    )
-                  : undefined,
                 strongerTier ? STRONGER_MODEL_INSTRUCTION : undefined,
                 run.tierEscalations > 0 && run.escalationReason
                   ? `A faster model asked for you on this task: ${run.escalationReason} Continue from the conversation; do not start over.`

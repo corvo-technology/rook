@@ -71,6 +71,7 @@ const AREAS: Array<[area: string, matches: (name: string) => boolean]> = [
   ],
   ["skills", (name) => name.startsWith("skill_")],
   ["schedules", (name) => name.startsWith("schedule_")],
+  ["wiki", (name) => name === "save_shared_memory" || name.startsWith("wiki_")],
   ["memory", (name) => name.includes("memory")],
   ["media", (name) => name.startsWith("generate_") || name === "render_plot"],
   ["cloud agents", (name) => name.startsWith("cloud_agent_")],
@@ -112,7 +113,7 @@ function bridgeTools(deferred: readonly ConnectorTool[]): ConnectorTool[] {
   return [
     {
       name: FIND_TOOL,
-      description: `Get the parameters of built-in tools not in your tool list, including ones your instructions name. Search it for secrets and logins, schedules and reminders, databases, teammates and bots, tickets, charts and media, and app admin; do not tell the user you cannot do something before searching. Call it before use_tool. Pass names for exact tools or query to search.\n${formatNameIndexText(groupedNames(searchEntries(deferred)))}`,
+      description: `Get the parameters of built-in tools not in your tool list, including ones your instructions name. Search it for the wiki (saving a page), secrets and logins, schedules and reminders, databases, teammates and bots, tickets, charts and media, and app admin; do not tell the user you cannot do something before searching. Call it before use_tool. Pass names for exact tools or query to search.\n${formatNameIndexText(groupedNames(searchEntries(deferred)))}`,
       inputSchema: {
         type: "object",
         properties: {

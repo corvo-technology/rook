@@ -35,6 +35,7 @@ import {
   remoteMarkdownImage,
   sanitizeMarkdownUrl,
   useLinkFavicon,
+  withPlainWikiLinks,
 } from "./markdown";
 import { useMarkdownCopy } from "./markdown-copy";
 import { useMarkdownLinkCopy } from "./markdown-link-prompt";
@@ -551,11 +552,12 @@ export function LinkifiedText({ children }: { children: string }) {
 }
 
 export const ChatMarkdown = memo(function ChatMarkdown({
-  children,
+  children: text,
   streaming = false,
   renderMention,
 }: ChatMarkdownProps) {
   const { request, dialog } = useExternalLinkConfirm();
+  const children = withPlainWikiLinks(text);
   const source = streaming ? closeUnterminatedFence(children) : children;
 
   return (

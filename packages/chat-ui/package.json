@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@corvo/contracts": "workspace:*",
+    "@corvo/core": "workspace:*",
     "@corvo/ui-tokens": "workspace:*",
     "@corvo/ui-web": "workspace:*",
     "@ronradtke/react-native-markdown-display": "9.0.3",

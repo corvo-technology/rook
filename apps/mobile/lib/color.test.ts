@@ -5,7 +5,7 @@ import { translucentColor, transparentColor } from "./color.js";
 describe("transparentColor", () => {
   it("keeps the hue of six-digit backgrounds", () => {
     expect(transparentColor(darkTokens.background)).toBe("rgba(10, 10, 10, 0)");
-    expect(transparentColor(lightTokens.background)).toBe("rgba(242, 242, 239, 0)");
+    expect(transparentColor(lightTokens.background)).toBe("rgba(244, 245, 247, 0)");
   });
 
   it("reads rgba palette colors and drops their alpha", () => {
@@ -26,7 +26,7 @@ describe("transparentColor", () => {
 
 describe("translucentColor", () => {
   it("gives the label grey at iOS's tertiary 30% in both themes", () => {
-    expect(translucentColor(lightTokens.mutedForeground, 0.3)).toBe("rgba(92, 92, 99, 0.3)");
+    expect(translucentColor(lightTokens.mutedForeground, 0.3)).toBe("rgba(91, 98, 112, 0.3)");
     expect(translucentColor(darkTokens.mutedForeground, 0.3)).toBe("rgba(163, 163, 170, 0.3)");
   });
 

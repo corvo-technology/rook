@@ -32,7 +32,7 @@ import { useMissions } from "../../lib/use-missions";
 import { usePendingApprovals } from "../../lib/use-pending-approvals";
 
 const NAV_ITEM =
-  "flex h-8 w-full items-center gap-2.5 rounded-md px-2 text-start text-nav text-sidebar-foreground/80 outline-none hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-foreground";
+  "flex h-8 w-full items-center gap-2.5 rounded-sm px-2 transition-colors active:bg-sidebar-accent motion-reduce:transition-none text-start text-nav text-sidebar-foreground/80 outline-none hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-foreground";
 
 type NavTarget = {
   key: string;

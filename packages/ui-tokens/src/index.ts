@@ -65,6 +65,8 @@ export type ColorTokens = {
   /** The mint of the Rook mark: an approval's main action, the "waiting for you" label. Used sparingly. */
   brand: string;
   brandForeground: string;
+  /** A faint wash of the brand for selected states, progress tracks and soft accents. */
+  brandSoft: string;
   /** Destructive text and outlines. */
   destructive: string;
   /** Solid destructive fill (Hang up, a filled Delete); its text is `destructiveForeground`. */
@@ -120,6 +122,7 @@ export const darkTokens = {
   accentForeground: "#F4F4F5",
   brand: "#54C398",
   brandForeground: "#0A0A0A",
+  brandSoft: "#12241C",
   destructive: "#FF6463",
   destructiveFill: "#CF2B35",
   destructiveForeground: "#FFFFFF",
@@ -147,39 +150,40 @@ export const darkTokens = {
 } as const satisfies ColorTokens;
 
 export const lightTokens = {
-  background: "#F2F2EF",
+  background: "#F4F5F7",
   dialog: "#FFFFFF",
-  foreground: "#0A0A0A",
+  foreground: "#111318",
   card: "#FFFFFF",
-  cardForeground: "#0A0A0A",
+  cardForeground: "#111318",
   popover: "#FFFFFF",
-  popoverForeground: "#0A0A0A",
+  popoverForeground: "#111318",
   glassFill: "#FFFFFF",
-  glassStroke: "#14141416",
-  primary: "#0A0A0A",
-  primaryForeground: "#FAFAF8",
-  secondary: "#F1F1EE",
-  secondaryForeground: "#0A0A0A",
-  chatUser: "#1C1C1C",
+  glassStroke: "#11131816",
+  primary: "#111318",
+  primaryForeground: "#FFFFFF",
+  secondary: "#F1F2F5",
+  secondaryForeground: "#111318",
+  chatUser: "#111318",
   chatUserForeground: "#FFFFFF",
-  muted: "#F4F4F1",
-  mutedForeground: "#5C5C63",
-  faintForeground: "#85858C",
-  accent: "#F1F1EE",
-  accentForeground: "#0A0A0A",
+  muted: "#FAFAFB",
+  mutedForeground: "#5B6270",
+  faintForeground: "#7C8391",
+  accent: "#F1F2F5",
+  accentForeground: "#111318",
   brand: "#197B56",
   brandForeground: "#FFFFFF",
+  brandSoft: "#E9F6EF",
   destructive: "#CD2834",
   destructiveFill: "#E72E3B",
   destructiveForeground: "#FFFFFF",
-  border: "#E7E7E2",
-  input: "#D4D4CE",
+  border: "#E7E9EE",
+  input: "#D5D9E0",
   ring: "#2FA77A",
-  sidebar: "#E9E9E4",
-  sidebarForeground: "#0A0A0A",
-  sidebarBorder: "#DCDCD6",
-  sidebarAccent: "#DEDED8",
-  sidebarAccentForeground: "#0A0A0A",
+  sidebar: "#F4F5F7",
+  sidebarForeground: "#111318",
+  sidebarBorder: "#E7E9EE",
+  sidebarAccent: "#E9EBF0",
+  sidebarAccentForeground: "#111318",
   link: "#197B56",
   faviconPlate: "#FFFFFF",
   success: "#007A43",
@@ -191,8 +195,8 @@ export const lightTokens = {
   bandLavender: "#E4DEF7",
   bandPeach: "#F9E3D3",
   overlay: "#00000080",
-  scrollbar: "#D4D4CE",
-  scrollbarHover: "#A8A8A2",
+  scrollbar: "#D5D9E0",
+  scrollbarHover: "#A9AFBB",
 } as const satisfies ColorTokens;
 
 /** Web and Electron only: the primary fill's hover and disabled states. Mobile has no hover. */
@@ -212,8 +216,8 @@ export const webDarkOverrides = {
 } as const satisfies Partial<WebColorTokens>;
 
 export const webLightOverrides = {
-  primaryHover: "#262626",
-  primaryDisabled: "#0A0A0A26",
+  primaryHover: "#2A2D35",
+  primaryDisabled: "#11131826",
 } as const satisfies Partial<WebColorTokens>;
 
 export const webDarkTokens: WebColorTokens = { ...darkTokens, ...webDarkOverrides };
@@ -222,8 +226,13 @@ export const webLightTokens: WebColorTokens = { ...lightTokens, ...webLightOverr
 /** Dark palette. Prefer `tokensForAppearance` when theme-aware. */
 export const tokens = darkTokens;
 
-/** Large radii for the Clean look: cards and dialogs take the larger steps (20 to 28px). */
-export const RADIUS = "1rem";
+/**
+ * Radii by role, in px: small controls (buttons, inputs, chips), cards, and the one main content
+ * panel. `--radius` is the card step; the Tailwind steps in `@corvo/ui-web` derive from these.
+ */
+export const radius = { control: 10, card: 18, panel: 20 } as const;
+
+export const RADIUS = `${radius.card}px`;
 
 /**
  * Raised surfaces (panels, popovers, cards) share two layered, soft shadows per theme. Layers
@@ -233,9 +242,9 @@ export const RADIUS = "1rem";
 export const elevation = {
   light: {
     raised:
-      "0 0 0 1px rgb(10 10 10 / 0.04), 0 1px 2px rgb(10 10 10 / 0.04), 0 4px 12px rgb(10 10 10 / 0.05)",
+      "0 0 0 1px rgb(17 19 24 / 0.03), 0 1px 2px rgb(17 19 24 / 0.03), 0 4px 16px rgb(17 19 24 / 0.04)",
     overlay:
-      "0 0 0 1px rgb(10 10 10 / 0.05), 0 2px 4px rgb(10 10 10 / 0.04), 0 12px 32px rgb(10 10 10 / 0.1), 0 32px 64px rgb(10 10 10 / 0.06)",
+      "0 0 0 1px rgb(17 19 24 / 0.04), 0 2px 4px rgb(17 19 24 / 0.03), 0 12px 32px rgb(17 19 24 / 0.08), 0 32px 64px rgb(17 19 24 / 0.05)",
   },
   dark: {
     raised:
@@ -264,18 +273,22 @@ export const atmosphere = {
   },
 } as const;
 
-/** Durations and easing for transitions. Panels slide and fade in `panel`; hovers use `fast`. */
+/**
+ * Durations and easing for transitions. Hovers and presses use `fast`, panels and page content
+ * `panel`, and a one-off reveal `slow`. Components with motion must honour reduced motion.
+ */
 export const motion = {
-  fast: "120ms",
-  panel: "200ms",
-  easeOut: "cubic-bezier(0.22, 1, 0.36, 1)",
+  fast: "150ms",
+  panel: "250ms",
+  slow: "500ms",
+  easeOut: "cubic-bezier(0.2, 0.7, 0.2, 1)",
 } as const;
 
 /**
- * Page and section titles, mirroring the landing: Inter Tight, light, tight tracking. Sizes come
+ * Page and section titles, in the Onest display weight with tight tracking. Sizes come
  * from the type scale; these are only what makes a title read as a title.
  */
-export const titleType = { weight: "300", tracking: "-0.02em", lineHeight: "1.15" } as const;
+export const titleType = { weight: "500", tracking: "-0.025em", lineHeight: "1.15" } as const;
 
 export const fontWeight = { regular: "400", medium: "500", semibold: "600" } as const;
 
@@ -300,25 +313,25 @@ export const typeScale = {
 export const MAX_FONT_SCALE = 23 / typeScale.body.fontSize;
 
 /**
- * The web and Electron type scale, in px, for a dense work app: 14px text, 13px navigation, 12px
+ * The web and Electron type scale, in px, for a calm work app: 15px text, 14px navigation, 13px
  * meta. Names are semibold and meta is muted at the point of use; sizes live only here.
  * `tokens.css` carries them as `--type-<name>-size` and `--type-<name>-line`.
  */
 export const webTypeScale = {
-  caption: { fontSize: 11, lineHeight: 16 },
+  caption: { fontSize: 12, lineHeight: 16 },
   /** Role, time and other meta beside a name. */
-  meta: { fontSize: 12, lineHeight: 16 },
+  meta: { fontSize: 13, lineHeight: 18 },
   /** Navigation rows and the sidebar's lists. */
-  nav: { fontSize: 13, lineHeight: 18 },
-  body2: { fontSize: 13, lineHeight: 18 },
-  /** Text in a conversation and the composer: 14px on a comfortable 22px line. */
-  message: { fontSize: 14, lineHeight: 22 },
+  nav: { fontSize: 14, lineHeight: 20 },
+  body2: { fontSize: 14, lineHeight: 20 },
+  /** Text in a conversation and the composer: 15px on a comfortable 24px line. */
+  message: { fontSize: 15, lineHeight: 24 },
   /** A name above a message or in a header. */
-  name: { fontSize: 14, lineHeight: 20 },
-  body1: { fontSize: 14, lineHeight: 20 },
-  heading3: { fontSize: 17, lineHeight: 24 },
-  heading2: { fontSize: 22, lineHeight: 28 },
-  heading1: { fontSize: 26, lineHeight: 32 },
+  name: { fontSize: 15, lineHeight: 22 },
+  body1: { fontSize: 15, lineHeight: 22 },
+  heading3: { fontSize: 18, lineHeight: 26 },
+  heading2: { fontSize: 24, lineHeight: 30 },
+  heading1: { fontSize: 28, lineHeight: 34 },
 } as const;
 
 /** The ink of a drawn bot's eyes, the same on every body colour and in both themes. */
@@ -444,8 +457,12 @@ function renderBlock(selector: string, colorScheme: ResolvedAppearance, palette:
     `  --atmosphere-pulse: ${atmosphere[colorScheme].pulse};`,
     `  --atmosphere-dither: ${atmosphere[colorScheme].dither};`,
     `  --radius: ${RADIUS};`,
+    `  --radius-control: ${radius.control}px;`,
+    `  --radius-card: ${radius.card}px;`,
+    `  --radius-panel: ${radius.panel}px;`,
     `  --motion-fast: ${motion.fast};`,
     `  --motion-panel: ${motion.panel};`,
+    `  --motion-slow: ${motion.slow};`,
     `  --motion-ease-out: ${motion.easeOut};`,
     `  --title-weight: ${titleType.weight};`,
     `  --title-tracking: ${titleType.tracking};`,

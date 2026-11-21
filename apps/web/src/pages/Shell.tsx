@@ -1037,7 +1037,7 @@ function SpaceShell({ page }: { page?: ReactNode }) {
         data-space-switch="main"
         aria-hidden={mobileSidebarOpen || undefined}
         inert={mobileSidebarOpen}
-        className={`isolate flex min-h-0 min-w-0 flex-1 flex-col bg-background ${embedded ? "overflow-hidden" : `md:my-2 md:me-2 md:overflow-hidden md:rounded-3xl md:border md:border-border md:shadow-raised ${botsSidebarCollapsed ? "md:ms-2" : "md:ms-0"}`}`}
+        className={`isolate flex min-h-0 min-w-0 flex-1 flex-col bg-background ${embedded ? "overflow-hidden" : `md:my-3 md:me-3 md:overflow-hidden md:rounded-xl md:border md:border-border md:shadow-raised ${botsSidebarCollapsed ? "md:ms-3" : "md:ms-0"}`}`}
       >
         {/* Inside main so the composer and its menus stay above it. */}
         {!mobileSidebarOpen ? (
@@ -1063,7 +1063,11 @@ function SpaceShell({ page }: { page?: ReactNode }) {
                 <Menu strokeWidth={1.7} className="size-[19px]" />
               </Button>
             </div>
-            <div className="min-h-0 flex-1" data-testid="shell-page">
+            <div
+              key={pathname.split("/").slice(0, 3).join("/")}
+              className="min-h-0 flex-1 animate-page-in"
+              data-testid="shell-page"
+            >
               <Suspense fallback={<PageLoading />}>{page}</Suspense>
             </div>
           </>

@@ -50,14 +50,14 @@ describe("index.html theme bootstrap", () => {
 
   it("ships its own fonts instead of asking a font service for them", () => {
     const sans = read("../../../../packages/ui-web/src/styles.css");
-    expect(sans).toMatch(/--font-sans:\s*"Inter",/);
-    expect(sans).toMatch(/--font-display:\s*"Inter Tight",/);
+    expect(sans).toMatch(/--font-sans:\s*"Onest",/);
+    expect(sans).toMatch(/--font-display:\s*"Onest",/);
     const app = read("../styles.css");
     const files = [...app.matchAll(/@font-face\s*{[^}]*url\("\/(fonts\/[^"]+\.woff2)"\)/g)].map(
       (match) => match[1],
     );
-    // Inter, Inter Tight and IBM Plex Mono. Only the two text faces block first paint, so only they preload.
-    expect(files).toHaveLength(3);
+    // Onest and IBM Plex Mono. Only the text face blocks first paint, so only it preloads.
+    expect(files).toHaveLength(2);
     expect(sans).toMatch(/--font-mono:\s*"IBM Plex Mono",/);
     for (const file of files) {
       expect(existsSync(fileURLToPath(new URL(`../../public/${file}`, import.meta.url)))).toBe(

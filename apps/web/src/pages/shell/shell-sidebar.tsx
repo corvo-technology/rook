@@ -153,7 +153,7 @@ export function ShellSidebar({
         className={
           isMobile
             ? `absolute inset-y-0 start-0 z-40 flex w-[calc(100%-48px)] max-w-[316px] shrink-0 flex-col border-e border-sidebar-border bg-sidebar transition-transform duration-200 ease-out motion-reduce:transition-none ${mobileOpen ? "translate-x-0" : "-translate-x-full rtl:translate-x-full"}`
-            : "h-full overflow-hidden border-e border-sidebar-border"
+            : "h-full overflow-hidden"
         }
       >
         <SidebarHeader

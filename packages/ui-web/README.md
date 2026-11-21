@@ -76,8 +76,9 @@ Defined in `packages/ui-tokens/src/index.ts`, generated into `tokens.css`
 | Token | Use |
 | --- | --- |
 | `--elevation-raised`, `--elevation-overlay` (`shadow-raised`, `shadow-overlay`) | Layered soft shadows for cards/popovers and panels, per theme |
-| `--motion-fast` 120ms, `--motion-panel` 200ms, `--motion-ease-out` (`ease-out-soft`) | Transitions; `animate-panel-in` slides a layer in and is off under reduced motion |
-| `--title-weight`, `--title-tracking`, `--title-line-height` (`text-title`) | Page titles: Inter Tight, light, tight tracking |
+| `--motion-fast` 150ms, `--motion-panel` 250ms, `--motion-slow` 500ms, `--motion-ease-out` (`ease-out-soft`) | Transitions (every `transition-*` defaults to fast); `animate-panel-in` slides a layer in, `animate-page-in` fades page content in; both are off under reduced motion |
+| `--radius-control` 10px, `--radius-card` 18px, `--radius-panel` 20px (`rounded-sm`, `rounded-lg`, `rounded-xl`) | Radii by role: small controls, cards, the main content panel |
+| `--title-weight`, `--title-tracking`, `--title-line-height` (`text-title`) | Page titles: Onest, tight tracking |
 
-Fonts: Inter (text), Inter Tight (titles), IBM Plex Mono (`font-mono`: numbers, times, keys), all
+Fonts: Onest (text and titles), IBM Plex Mono (`font-mono`: numbers, times, keys), all
 bundled from `apps/web/public/fonts`.

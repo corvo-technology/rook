@@ -1299,6 +1299,9 @@ export function createRunExecutor(deps: ExecutorDeps) {
             disabledBuiltinTools: botDisabledTools(bot),
             fleetManagement: bot.fleetManagement,
             followUpFromUser: sourceMessage?.role === "user",
+            delegatedRun:
+              run.trigger === "bot_message" ||
+              (run.trigger === "follow_up" && sourceMessage?.role !== "user"),
             sayNowOffered: sayNowAllowed({
               ownerStartedRun,
               messagingChannelRun,
@@ -1473,6 +1476,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
           escalation: undefined,
           replyBudget: createReplyBudget(monthUsage.limit, spentBeforeAttempt),
           terminalCheckpointComplete: false,
+          workRemaining: undefined,
           turnEnded: false,
         };
         const { effects } = state;

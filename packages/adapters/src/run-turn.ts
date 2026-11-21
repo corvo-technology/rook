@@ -30,6 +30,7 @@ import { scheduleComputerSleep } from "./computer-idle.js";
 import { holdComputerExecutionLeaseForTakeover } from "./computer-lifecycle.js";
 import { isComputerSetupFailure } from "./computer-setup-error.js";
 import { resolveBotWorkspacePath } from "./computer-support.js";
+import { ticketUnfinishedDelegation } from "./delegated-work.js";
 import { closeHandoffGroup } from "./handoff-summary.js";
 import { compactionJobAfterTurn } from "./history-compaction.js";
 import { addReplyUsage, ReplyCapExceededError } from "./reply-budget.js";
@@ -479,6 +480,10 @@ async function stopStuckToolLoop(ctx: RunContext, toolName: string) {
   });
   if (!stopped) return;
   await endTicketRun(deps, run, { kind: "stopped", error: stuckText, cut: true });
+  await ticketUnfinishedDelegation(deps, run, {
+    remaining: ctx.state.workRemaining,
+    cut: true,
+  });
   ctx.stopHeartbeatAfterCompletion();
   if (run.trigger === "routine" && run.routineId) {
     await clearRoutineBackoff(deps, run.routineId);
@@ -702,9 +707,11 @@ export async function completeRun(ctx: RunContext) {
       getLogger().error("surfaced item", error),
     );
   }
-  await endTicketRun(deps, run, {
-    kind: "finished",
-    cut: ctx.state.guards.calls.refusedCalls > 0,
+  const cutByCap = ctx.state.guards.calls.refusedCalls > 0;
+  await endTicketRun(deps, run, { kind: "finished", cut: cutByCap });
+  await ticketUnfinishedDelegation(deps, run, {
+    remaining: ctx.state.workRemaining,
+    cut: cutByCap,
   });
   ctx.stopHeartbeatAfterCompletion();
   if (run.trigger === "routine" && run.routineId) {
@@ -901,6 +908,10 @@ export async function failRun(
   await endTicketRun(deps, run, {
     kind: "stopped",
     error: message,
+    cut: error instanceof TurnGuardStopError,
+  });
+  await ticketUnfinishedDelegation(deps, run, {
+    remaining: ctx.state.workRemaining,
     cut: error instanceof TurnGuardStopError,
   });
   if (

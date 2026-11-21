@@ -188,6 +188,15 @@ export const taskTools: ToolHandlers = {
     }
     return call.finish(created);
   },
+  async work_remaining(ctx, call) {
+    const left = String(call.args.remaining ?? "").trim();
+    if (!left) return call.finish({ error: "remaining is required." });
+    ctx.state.workRemaining = left;
+    return call.finish({
+      ok: true,
+      note: "Noted. When you finish this turn the rest becomes a ticket you keep working on.",
+    });
+  },
   async ticket_update(ctx, call) {
     const { deps, run, bot } = ctx;
     const { args } = call;

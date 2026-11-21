@@ -141,6 +141,7 @@ import {
   consumePartnerEntryCode,
   countRecentPartnerEvents,
   createBoardEvents,
+  createChiefWatchReconciler,
   createDb,
   createPool,
   createRepos,
@@ -963,6 +964,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
         }),
         reconcileCloudAgents: () => reconcileCloudAgents({ prisma, jobs, cloudAgent }),
         reconcileComputerUpdates: () => reconcileComputerUpdates({ prisma, jobs }),
+        reconcileChiefWatches: createChiefWatchReconciler(prisma),
         reconcileSecurityEventRetention: createSecurityEventPruner(
           prisma,
           securityEventRetentionDays(),

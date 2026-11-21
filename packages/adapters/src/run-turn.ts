@@ -13,6 +13,7 @@ import {
   containsSecret,
   displayName,
   humanizeToolName,
+  isAutonomousRunTrigger,
   isBackgroundRunTrigger,
   redactSecrets,
   stripReplyMarkers,
@@ -20,7 +21,7 @@ import {
   usageTokens,
   userRunError,
 } from "@corvo/core";
-import { recordUsage } from "@corvo/db";
+import { recordSurfacedItem, recordUsage, runSurfacedItems } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import { sanitizedError } from "@corvo/logging/monitoring";
 import { isToolPauseResult } from "./approval-effect.js";
@@ -695,6 +696,12 @@ export async function completeRun(ctx: RunContext) {
     ),
   });
   if (!completed) return;
+  // Whatever a background run said is on the ledger, even when the agent declared no items.
+  if (isAutonomousRunTrigger(run.trigger) && !isBackgroundRunTrigger(run.trigger) && text.trim()) {
+    await noteBackgroundPost(deps.prisma, run, bot.id, thread.id, text).catch((error) =>
+      getLogger().error("surfaced item", error),
+    );
+  }
   await endTicketRun(deps, run, { kind: "finished" });
   ctx.stopHeartbeatAfterCompletion();
   if (run.trigger === "routine" && run.routineId) {
@@ -952,4 +959,23 @@ export async function failRun(
     });
   }
   await closeHandoffGroup(deps, run);
+}
+
+/** A background run's post is put on the ledger under its run unless the agent already declared items. */
+export async function noteBackgroundPost(
+  prisma: Parameters<typeof recordSurfacedItem>[0] & Parameters<typeof runSurfacedItems>[0],
+  run: { id: string; spaceId: string },
+  botId: string,
+  threadId: string,
+  text: string,
+): Promise<void> {
+  if ((await runSurfacedItems(prisma, run.id)) > 0) return;
+  await recordSurfacedItem(prisma, {
+    spaceId: run.spaceId,
+    botId,
+    threadId,
+    key: `run:${run.id}`,
+    summary: text,
+    runId: run.id,
+  });
 }

@@ -1037,3 +1037,52 @@ describe("overlapping tracked identities", () => {
     expect(readItems([list[0]], ["id", "modifiedTime"]).fingerprint).not.toBe(before.fingerprint);
   });
 });
+
+describe("board watch", () => {
+  const routine = {
+    id: "r",
+    spaceId: "s",
+    userId: "u",
+    botId: "b",
+    watch: { kind: "board" },
+    watchState: null,
+  };
+  const check = async (tickets: Array<Record<string, unknown>>, previous: unknown = null) => {
+    const findMany = vi.fn(async () => tickets);
+    const deps = { prisma: { ticket: { findMany } } } as never;
+    const outcome = await checkRoutineWatch(
+      deps,
+      { ...routine, watch: RoutineWatchSchema.parse({ kind: "board" }), watchState: previous },
+      NOW,
+    );
+    return { outcome, findMany };
+  };
+
+  it("needs no settings and never calls a model or a computer", () => {
+    expect(RoutineWatchSchema.safeParse({ kind: "board" }).success).toBe(true);
+    expect(RoutineWatchSchema.safeParse({ kind: "board", tool: "x" }).success).toBe(false);
+  });
+
+  it("reads blocked tickets and ones untouched for two days, scoped to the space", async () => {
+    const { findMany } = await check([]);
+    const where = (findMany.mock.calls[0] as unknown as [{ where: Record<string, unknown> }])[0]
+      .where;
+    expect(where.spaceId).toBe("s");
+    expect(JSON.stringify(where)).toContain("blocked");
+    expect(JSON.stringify(where)).toContain("2026-10-14T12:00:00.000Z");
+  });
+
+  it("stays quiet while the stuck set is unchanged and speaks when a ticket gets stuck", async () => {
+    const stuck = { id: "t1", number: 4, title: "Ship the invoice export", status: "blocked" };
+    const first = await check([stuck]);
+    expect(first.outcome).toMatchObject({ changed: false, state: { outcome: "baseline" } });
+    const same = await check([stuck], first.outcome.state);
+    expect(same.outcome).toMatchObject({ changed: false, state: { outcome: "unchanged" } });
+    const more = await check(
+      [stuck, { id: "t2", number: 7, title: "Reply to the vendor", status: "doing" }],
+      first.outcome.state,
+    );
+    expect(more.outcome.changed).toBe(true);
+    expect(more.outcome.state.detail).toContain("#7 Reply to the vendor");
+  });
+});

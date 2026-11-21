@@ -13,13 +13,16 @@ import * as z from "zod";
  *   A non-zero exit is a failed check.
  * - `tool`: a read-only tool from a connected integration, called with fixed
  *   arguments; its result is the fingerprint.
+ * - `board`: the space's own task board. The fingerprint is the set of stuck
+ *   tickets (blocked, or doing or in review with no update for a while), so it
+ *   changes when a ticket gets stuck or moves again.
  *
  * `track` (tool and command) narrows a JSON result to its items: objects that
  * carry the first field are compared by the listed fields only, so a fetch
  * time or a snippet does not count as a change, and the note can say which
  * items are new, updated or gone.
  */
-export const ROUTINE_WATCH_KINDS = ["files", "command", "tool"] as const;
+export const ROUTINE_WATCH_KINDS = ["files", "command", "tool", "board"] as const;
 export const ROUTINE_WATCH_DEFAULT_MINUTES = 15;
 /** Keep unattended checks from hammering computers or connected services. */
 export const ROUTINE_WATCH_MIN_MINUTES = 5;
@@ -47,6 +50,13 @@ export const RoutineWatchSchema = z
     }
     if (value.kind === "command" && !value.command) {
       ctx.addIssue({ code: "custom", message: "Add a command to run", path: ["command"] });
+    }
+    if (value.kind === "board" && (value.track || value.paths || value.command || value.tool)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "The board watch takes no settings",
+        path: ["kind"],
+      });
     }
     if (value.kind === "files" && value.track) {
       ctx.addIssue({

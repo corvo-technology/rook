@@ -9068,6 +9068,10 @@ msgstr "Transmitir respostas"
 msgid "Strong"
 msgstr "Forte"
 
+#: src/pages/RoutineEditor.tsx
+msgid "Stuck tickets on the board"
+msgstr "Tarefas travadas no quadro"
+
 #: src/components/CoachLayer.tsx
 msgid "Stuck? Ask the Chief."
 msgstr "Travou? Pergunte ao Chief."

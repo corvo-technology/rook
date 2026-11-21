@@ -1180,6 +1180,24 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "note_surfaced",
+    description:
+      "In a background run, record each thing you tell the person so later runs do not repeat it. Call it once per item you raise, before your reply, with a stable key for the thing itself (for example calendar:conflict:2026-11-23, not the date of this run), a version that changes when the thing materially changes, and a short summary. A reminder of something unchanged is not a change.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        key: { type: "string", description: "Stable name of the item." },
+        version: {
+          type: "string",
+          description:
+            "Changes only when the item materially changes, such as a new time or status.",
+        },
+        summary: { type: "string", description: "What you told them, in one short line." },
+      },
+      required: ["key", "summary"],
+    },
+  },
+  {
     name: "request_stronger_model",
     description:
       "Use only when the task needs reasoning, code or planning clearly beyond you and a stronger model would do it better. Never as a reflex, for routine or simple work, or because it is long. Your turn ends and a stronger model continues from here. Possible once.",

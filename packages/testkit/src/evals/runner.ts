@@ -188,6 +188,12 @@ export async function runTrial(
         where: { id: botId },
         select: { userId: true, spaceId: true },
       });
+      // Quiet hours hold a routine's push until morning, so the outcome would depend on the time
+      // of day; these evals grade what the agent decides to say, not when the owner is reached.
+      await prisma.user.update({
+        where: { id: persistedBot.userId },
+        data: { quietHoursEnabled: false },
+      });
       // Register before discard so a timeout still reaches cleanupActors.
       actors.push({ botId, cookie, ...persistedBot });
       await discardBotIntroRun(trial, cookie, botId);

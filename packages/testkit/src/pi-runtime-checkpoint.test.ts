@@ -263,7 +263,16 @@ describe("paused turn context", () => {
             expect(request) {
               pausedPrefix = request.messages;
             },
-            response: { type: "tool", id: "pending-call", name: pendingName, arguments: args },
+            // request_secret is deferred, so the model reaches it through use_tool.
+            response:
+              pause === "request_secret"
+                ? {
+                    type: "tool",
+                    id: "pending-call",
+                    name: "use_tool",
+                    arguments: { name: pendingName, arguments: args },
+                  }
+                : { type: "tool", id: "pending-call", name: pendingName, arguments: args },
           },
           {
             expect(request) {

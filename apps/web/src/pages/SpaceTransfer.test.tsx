@@ -17,6 +17,9 @@ vi.mock("@lingui/react/macro", () => {
 });
 vi.mock("@corvo/ui-web", () => ({
   Spinner: (props: ComponentProps<"svg">) => <svg {...props} />,
+  AgentLoader: ({ label }: { label?: string }) => (
+    <span role="status" aria-label={label ?? "Loading…"} />
+  ),
   Button: (props: ComponentProps<"button">) => <button type="button" {...props} />,
 }));
 vi.mock("./ImportFromApp", () => ({ ImportFromApp: () => <button type="button">Import</button> }));

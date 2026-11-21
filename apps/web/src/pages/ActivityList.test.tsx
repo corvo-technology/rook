@@ -28,6 +28,9 @@ vi.mock("@corvo/ui-web", () => {
     NativeSelect: () => null,
     NativeSelectOption: () => null,
     Spinner: (props: ComponentProps<"svg">) => <svg role="status" {...props} />,
+    AgentLoader: ({ label }: { label?: string }) => (
+      <span role="status" aria-label={label ?? "Loading…"} />
+    ),
   };
 });
 

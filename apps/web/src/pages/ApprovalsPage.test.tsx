@@ -19,6 +19,9 @@ vi.mock("@lingui/react/macro", () => {
 vi.mock("@corvo/ui-web", () => ({
   Button: (props: ComponentProps<"button">) => <button type="button" {...props} />,
   Spinner: (props: ComponentProps<"svg">) => <svg role="status" {...props} />,
+  AgentLoader: ({ label }: { label?: string }) => (
+    <span role="status" aria-label={label ?? "Loading…"} />
+  ),
 }));
 const refetch = vi.hoisted(() => vi.fn());
 vi.mock("../lib/use-pending-approvals", () => ({

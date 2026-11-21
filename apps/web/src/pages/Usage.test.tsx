@@ -30,6 +30,9 @@ vi.mock("@lingui/react/macro", () => {
 });
 vi.mock("@corvo/ui-web", () => ({
   Spinner: (props: ComponentProps<"svg">) => <svg role="status" {...props} />,
+  AgentLoader: ({ label }: { label?: string }) => (
+    <span role="status" aria-label={label ?? "Loading…"} />
+  ),
   Button: (props: ComponentProps<"button">) => <button {...props} />,
   BotAvatar: () => <span data-testid="avatar" />,
   Progress: ({ value, children, ...props }: ComponentProps<"div"> & { value: number }) => (

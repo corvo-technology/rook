@@ -23,6 +23,9 @@ vi.mock("@corvo/ui-web", () => ({
   BotAvatar: () => <span />,
   RookGlyph: () => <i />,
   Spinner: (props: ComponentProps<"svg">) => <svg role="status" {...props} />,
+  AgentLoader: ({ label }: { label?: string }) => (
+    <span role="status" aria-label={label ?? "Loading…"} />
+  ),
   Button: (props: ComponentProps<"button">) => <button type="button" {...props} />,
 }));
 vi.mock("./WindowChrome", () => ({ WindowChrome: () => null }));

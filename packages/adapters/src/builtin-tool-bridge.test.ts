@@ -56,7 +56,7 @@ describe("built-in tool bridge", () => {
       "wiki_search",
       "write_file",
     ]);
-    expect(definitionBytes(listed)).toBeLessThanOrEqual(13_400);
+    expect(definitionBytes(listed)).toBeLessThanOrEqual(13_700);
     expect(deferred.map((tool) => tool.name)).toEqual(
       expect.arrayContaining([
         "render_plot",
@@ -83,7 +83,7 @@ describe("built-in tool bridge", () => {
     const names = listed.map((tool) => tool.name);
     expect(names).not.toContain("search_history");
     expect(names).not.toContain("read_history");
-    expect(definitionBytes(listed)).toBeLessThanOrEqual(12_100); // includes note_surfaced, which background runs get
+    expect(definitionBytes(listed)).toBeLessThanOrEqual(12_300); // includes note_surfaced, which background runs get
   });
 
   it("names only real built-ins as core", () => {

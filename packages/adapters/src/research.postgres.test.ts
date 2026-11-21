@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { AdapterContext, BackgroundJob, JobPublisher } from "@corvo/adapter-kit";
 import type { PrismaClient } from "@corvo/db";
-import { asSystem, createDb, runAsSystem } from "@corvo/db";
+import { asSystem, createDb, runAsSystem, runAsTenant } from "@corvo/db";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   executeResearchStart,
@@ -129,6 +129,28 @@ describePostgres("research jobs (PostgreSQL)", () => {
     expect(message.blocks).toEqual([
       { kind: "research", researchId: firstId, question: row.question, status: "running" },
     ]);
+  });
+
+  it("shows a job and its ledger to its own Space and to no other", async () => {
+    const t = await setup();
+    const other = await setup();
+    const started = idOf(await t.start("Who can see this?"));
+    await runAsSystem("ledger", () =>
+      t.store.addSource(started, {
+        url: "https://news.test/a",
+        title: "A",
+        excerpt: "x",
+        contentHash: "h",
+        fetchedAt: new Date(),
+      }),
+    );
+    const seen = (scope: { spaceId: string; userId: string }) =>
+      runAsTenant(scope, async () => ({
+        jobs: await prisma.researchJob.count({ where: { id: started } }),
+        sources: await prisma.researchSource.count({ where: { researchId: started } }),
+      }));
+    expect(await seen({ spaceId: t.id, userId: t.id })).toEqual({ jobs: 1, sources: 1 });
+    expect(await seen({ spaceId: other.id, userId: other.id })).toEqual({ jobs: 0, sources: 0 });
   });
 
   it("caps the jobs one agent runs at once", async () => {

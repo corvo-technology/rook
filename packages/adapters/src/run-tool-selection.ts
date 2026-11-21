@@ -8,6 +8,7 @@ import {
   isAutonomousRunTrigger,
   isBackgroundRunTrigger,
   isOwnerStartedRun,
+  runReadsThreadHistory,
   isProactiveRunTrigger,
 } from "@corvo/core";
 import { builtinAgentTools } from "./builtin-tools.js";
@@ -27,6 +28,7 @@ export const READ_ONLY_AGENT_TOOLS = new Set([
   "space_status",
   "read_file",
   "read_history",
+  "read_result",
   "search_history",
   "wiki_index",
   "wiki_search",
@@ -189,6 +191,7 @@ export function selectBuiltinToolsForRun(options: {
           "generate_image",
           "generate_video",
         ].includes(tool.name)) &&
+      // Nobody is reading the app during a routine, webhook, ticket or bot-to-bot run.
       (options.voiceCall || tool.name !== "end_call") &&
       // Already on a call, or reached through a messaging channel that cannot ring.
       ((options.phoneCallsEnabled &&
@@ -197,7 +200,7 @@ export function selectBuiltinToolsForRun(options: {
         !options.messagingChannelRun &&
         !isBackgroundRunTrigger(options.trigger)) ||
         tool.name !== "call_user") &&
-      (options.historyRetrievalEnabled ||
+      ((options.historyRetrievalEnabled && runReadsThreadHistory(options.trigger)) ||
         !["search_history", "read_history"].includes(tool.name)) &&
       (!options.messagingChannelRun ||
         (![

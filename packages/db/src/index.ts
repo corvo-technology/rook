@@ -77,6 +77,7 @@ export * from "./repos.js";
 export * from "./row-security.js";
 export * from "./run-secrets.js";
 export * from "./run-timing.js";
+export * from "./run-tool-results.js";
 export * from "./run-turn-checkpoint.js";
 export * from "./scope.js";
 export * from "./seats.js";

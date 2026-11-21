@@ -1,5 +1,6 @@
 import { MessageBlock as MessageBlockSchema } from "@corvo/contracts";
 import type { Prisma, PrismaClient } from "./client.js";
+import { clearRunToolResults } from "./run-tool-results.js";
 import { clearRunTurnCheckpoints } from "./run-turn-checkpoint.js";
 
 /** A secret card's answer waits under this kind until the resumed run reads it once. */
@@ -33,11 +34,12 @@ export async function deleteRunSecretsInTransaction(
  * by id read each run's user and space here for the secrets index.
  */
 export async function clearEndedRunState(
-  prisma: Pick<PrismaClient, "run" | "externalEffect" | "secret" | "message">,
+  prisma: Pick<PrismaClient, "run" | "externalEffect" | "secret" | "message" | "runToolResult">,
   runIds: readonly string[],
 ): Promise<void> {
   if (runIds.length === 0) return;
   await clearRunTurnCheckpoints(prisma, runIds);
+  await clearRunToolResults(prisma, runIds);
   // Only effects behind an unanswered card: a tool that needs no approval also runs as intended.
   const messages = await prisma.message.findMany({
     where: { runId: { in: [...runIds] }, role: "bot" },

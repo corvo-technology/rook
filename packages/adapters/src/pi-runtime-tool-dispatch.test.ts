@@ -890,9 +890,7 @@ describe("Pi connector tool dispatch", () => {
     );
     // A concurrent batch can read the routine list before schedule_create writes
     // the row, so the bot reports "no schedules" for a reminder it just made.
-    expect(modes.get("schedule_create")).toBe("sequential");
-    expect(modes.get("schedule_list")).toBe("sequential");
-    // schedule_cancel is deferred, so the use_tool that runs it is sequential.
+    // The schedule tools are deferred, so the use_tool that runs them is sequential.
     expect(modes.get("use_tool")).toBe("sequential");
     expect(modes.get("remember")).toBe("sequential");
     expect(modes.get("destination_write")).toBe("default");
@@ -2262,6 +2260,53 @@ describe("Pi connector tool dispatch", () => {
     const result = fakeAgentState.toolResult as { content: Array<{ type: string; text: string }> };
     expect(result.content[0]!.text.length).toBeGreaterThan(TOOL_RESULT_TEXT_LIMIT);
     expect(JSON.parse(result.content[0]!.text)).toEqual(listing);
+  });
+
+  it("keeps an over-long result whole behind a handle instead of clipping it", async () => {
+    const rows = Array.from({ length: 2_000 }, (_, i) => `row-${i}`);
+    fakeAgentState.invoke = { name: "web_fetch", args: { url: "https://example.test/rows" } };
+    const storeToolResult = vi.fn(async () => "kept-handle");
+    const runtime = new PiAgentRuntime();
+
+    for await (const _event of runtime.run(
+      {
+        botId: "b",
+        threadId: "t",
+        runId: "overflow",
+        prompt: "collect the rows",
+        instructions: "Collect rows.",
+        history: [],
+        tools: [
+          {
+            name: "web_fetch",
+            description: "Fetch a page",
+            inputSchema: { type: "object", properties: { url: { type: "string" } } },
+          },
+        ],
+        model: { provider: "test", id: "dispatch-test-model" },
+        executeTool: vi.fn(async () => ({ rows })),
+        storeToolResult,
+      },
+      {
+        operationId: "overflow",
+        traceId: "overflow",
+        spaceId: "w",
+        userId: "u",
+        signal: new AbortController().signal,
+      },
+    )) {
+      // Exhaust so the fake agent executes the tool.
+    }
+
+    const text = (fakeAgentState.toolResult as { content: Array<{ text: string }> }).content[0]!
+      .text;
+    expect(storeToolResult).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "web_fetch", text: JSON.stringify({ rows }) }),
+    );
+    expect(text.length).toBeLessThanOrEqual(TOOL_RESULT_TEXT_LIMIT);
+    expect(text).toContain("row-0");
+    expect(text).toContain("row-1999");
+    expect(text).toContain("handle kept-handle");
   });
 
   it("serialises object content instead of writing [object Object] for write_file", async () => {

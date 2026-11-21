@@ -14,6 +14,7 @@ vi.mock("./agent-audience.js", () => ({
 function setup(latestThreadBotId?: string) {
   const root = { id: "root-1", botId: null, blocks: [], threadRootId: null };
   const tx = {
+    runToolResult: { deleteMany: async () => ({ count: 0 }) },
     externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
     $queryRaw: vi.fn().mockResolvedValue([{ id: "group-1" }]),
     thread: { update: vi.fn().mockResolvedValue({ nextMessageSeq: 9, nextEventSeq: 10 }) },

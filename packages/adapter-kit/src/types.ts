@@ -609,6 +609,15 @@ export interface AgentRunRequest {
     route?: ConnectorRoute,
     observer?: AgentToolExecutionObserver,
   ) => Promise<unknown>;
+  /**
+   * Keep the full text of a tool result too big for the model's context, for this run only.
+   * Returns the handle the run's read_result tool pages it with, or undefined to clip as before.
+   */
+  storeToolResult?: (input: {
+    name: string;
+    executionId: string;
+    text: string;
+  }) => Promise<string | undefined>;
   /** Called after a tool returns; implementations must not persist raw result contents. */
   onToolCompleted?: (completion: AgentToolCompletion) => Promise<void> | void;
   /** Atomically claim durable user steering at the runtime's next safe turn boundary. */

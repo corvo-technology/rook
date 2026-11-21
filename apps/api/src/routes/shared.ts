@@ -14,7 +14,7 @@ import {
   canonicalPiProviderId,
   PartnerTemplate,
 } from "@corvo/contracts";
-import { parseTourDone, resolvePartnerRole } from "@corvo/core";
+import { DEFAULT_QUIET_HOURS, parseTourDone, resolvePartnerRole } from "@corvo/core";
 import { runAsSystem, spaceCreationPolicy } from "@corvo/db";
 import type { RouterDeps } from "../router.js";
 import { isPartnerAdmin } from "./partner.js";
@@ -36,6 +36,9 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
         name: true,
         timezone: true,
         locale: true,
+        quietHoursEnabled: true,
+        quietHoursStart: true,
+        quietHoursEnd: true,
         signupSurvey: { select: { userId: true } },
         coachTour: { select: { done: true, skipped: true } },
       },
@@ -121,6 +124,11 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
     avatarStyle: "organic",
     timezone: user.timezone ?? null,
     locale: AccountLocaleSchema.safeParse(user.locale).data ?? null,
+    quietHours: {
+      enabled: user.quietHoursEnabled ?? DEFAULT_QUIET_HOURS.enabled,
+      start: user.quietHoursStart ?? DEFAULT_QUIET_HOURS.start,
+      end: user.quietHoursEnd ?? DEFAULT_QUIET_HOURS.end,
+    },
     billingEnabled: Boolean(deps.billing) && !partner,
     // Only billing deployments ask; self-hosted installs never see the survey.
     needsSignupSurvey: Boolean(deps.billing) && !partner && !user.signupSurvey,

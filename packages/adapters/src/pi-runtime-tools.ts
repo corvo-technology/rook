@@ -387,6 +387,7 @@ function toAgentTool(
           instructions: raw.instructions ? String(raw.instructions) : "",
           model_provider: raw.model_provider ? String(raw.model_provider) : "",
           model_id: raw.model_id ? String(raw.model_id) : "",
+          ...(Array.isArray(raw.tools) ? { tools: raw.tools.map((name) => String(name)) } : {}),
         };
       }
       if (tool.name === "spawn_bot") {

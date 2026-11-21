@@ -1,8 +1,9 @@
 import { Agent } from "@earendil-works/pi-agent-core";
 import type { AssistantMessage } from "@earendil-works/pi-ai";
 import { withAutomatedLabels } from "./automated-messages.js";
-import { DELEGATION_TOOL_NAMES } from "./builtin-tools.js";
+import { subagentTools } from "./builtin-tools.js";
 import { withCloudflareAuth } from "./cloudflare-ai-gateway.js";
+import { TIER_THINKING_LEVEL } from "./model-routing.js";
 import { estimatePiImageTokens } from "./pi-image-context.js";
 import {
   assistantText,
@@ -28,6 +29,8 @@ import { createRuntimeContextPolicy } from "./runtime-context.js";
 import { deliverFinishedShells } from "./shell-command-stream.js";
 
 export const MAX_PARALLEL_SUBAGENTS = 4;
+/** The most a helper hands back to its parent: a summary, not a transcript the parent must pay to read. */
+export const SUBAGENT_RESULT_CHARS = 3_000;
 
 export async function executeSubagent(
   host: ToolHost,
@@ -56,6 +59,9 @@ export async function executeSubagent(
   const requestedModelId = String(args.model_id ?? "").trim();
   const hasBackups = Boolean(host.request.fallbackModels?.length);
   let requestModel = hasBackups ? host.activeModel.config : host.request.model;
+  // A helper does small, scoped work: with no model named it runs on the cheap tier, when the run
+  // routes automatically at all.
+  let cheapDefault = false;
   try {
     if (Boolean(requestedProvider) !== Boolean(requestedModelId)) {
       throw new Error("model_provider and model_id must both be set");
@@ -65,6 +71,12 @@ export async function executeSubagent(
         throw new Error("Per-call subagent model selection is unavailable");
       }
       requestModel = await host.request.resolveModel(requestedProvider, requestedModelId);
+    } else if (host.request.resolveSubagentModel) {
+      const cheap = await host.request.resolveSubagentModel().catch(() => undefined);
+      if (cheap) {
+        requestModel = cheap;
+        cheapDefault = true;
+      }
     }
   } catch (error) {
     const message = sanitizeError(error instanceof Error ? error.message : String(error));
@@ -103,7 +115,10 @@ export async function executeSubagent(
   }
   const subagentModel = modelForCompletion(selectedModel.model, requestModel.maxTokens);
 
-  const childDefs = host.request.tools.filter((tool) => !DELEGATION_TOOL_NAMES.has(tool.name));
+  const requestedTools = Array.isArray(args.tools)
+    ? args.tools.map((name) => String(name).trim()).filter(Boolean)
+    : undefined;
+  const childDefs = subagentTools(host.request.tools, requestedTools);
   const nestedHost: ToolHost = {
     ...host,
     activeModel: {
@@ -236,7 +251,7 @@ export async function executeSubagent(
       systemPrompt: [
         `You are a Rook subagent named "${name}".`,
         "You run inside the parent bot's turn — you are not a separate bot chat.",
-        "Complete the task and return a concise result. Do not spawn bots or further subagents.",
+        "Complete the task and return a concise result of a few short paragraphs at most. Do not spawn bots or further subagents.",
         "Your task comes from the parent bot, not from the human user, and you cannot talk to the user: report your result back to the parent bot.",
         "Messages marked as automated come from Rook, not from the user.",
         extra,
@@ -244,7 +259,10 @@ export async function executeSubagent(
         .filter(Boolean)
         .join(" "),
       model: subagentModel,
-      thinkingLevel: thinkingLevelFor(subagentModel, requestModel.thinkingLevel),
+      thinkingLevel: thinkingLevelFor(
+        subagentModel,
+        requestModel.thinkingLevel ?? (cheapDefault ? TIER_THINKING_LEVEL.fast : undefined),
+      ),
       tools: toAgentTools(childDefs, nestedHost),
       messages: [],
     },
@@ -341,7 +359,7 @@ export async function executeSubagent(
       budgetMessage && streamed.trim()
         ? `${streamed.trim()}\n\n${budgetMessage}`
         : budgetMessage || streamed || assistantText(nested.state.messages.at(-1)) || "done.";
-    const clipped = clipToolResultText(result, 12_000);
+    const clipped = clipToolResultText(result, SUBAGENT_RESULT_CHARS);
     host.queue.push({
       type: "subagent",
       agentId,

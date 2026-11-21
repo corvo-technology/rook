@@ -13,11 +13,13 @@ import {
   ruleConnectionLabel,
 } from "@corvo/core";
 import {
+  clearMute,
   findAutoReviewPreference,
   findDefaultVoiceCredential,
   findModelCredential,
   findModelCredentialById,
   listApprovalRules,
+  listMutes,
   listScopedApprovalRules,
   listVoicePreferences,
   lockSpaceSettings,
@@ -30,6 +32,7 @@ import {
   saveApprovalRule,
   saveAutoReviewPreference,
   selectVoicePreference,
+  setMute,
   voicePreferenceTarget,
 } from "@corvo/db";
 import { ORPCError } from "@orpc/server";
@@ -193,6 +196,13 @@ export function accountRoutes(ctx: RouterContext) {
           data: {
             ...(input.timezone === undefined ? {} : { timezone: input.timezone }),
             ...(input.locale === undefined ? {} : { locale: input.locale }),
+            ...(input.quietHours === undefined
+              ? {}
+              : {
+                  quietHoursEnabled: input.quietHours.enabled,
+                  quietHoursStart: input.quietHours.start,
+                  quietHoursEnd: input.quietHours.end,
+                }),
           },
         });
         return meDto(deps, context.actor);
@@ -336,6 +346,22 @@ export function accountRoutes(ctx: RouterContext) {
       }),
       unregisterPush: authed.notifications.unregisterPush.handler(async ({ context }) => {
         await deps.pushTokens.remove(context.actor.userId);
+        return { ok: true as const };
+      }),
+      mutes: authed.notifications.mutes.handler(({ context }) =>
+        listMutes(deps.prisma, context.actor),
+      ),
+      mute: authed.notifications.mute.handler(async ({ context, input }) => {
+        const { spaceId, userId } = context.actor;
+        const exists = input.target.botId
+          ? await deps.prisma.bot.count({ where: { id: input.target.botId, spaceId } })
+          : await deps.prisma.thread.count({ where: { id: input.target.threadId, spaceId } });
+        if (!exists) throw new ORPCError("NOT_FOUND");
+        return setMute(deps.prisma, { spaceId, userId }, input.target, input.duration);
+      }),
+      unmute: authed.notifications.unmute.handler(async ({ context, input }) => {
+        const { spaceId, userId } = context.actor;
+        await clearMute(deps.prisma, { spaceId, userId }, input);
         return { ok: true as const };
       }),
     },

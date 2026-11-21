@@ -21,7 +21,7 @@ import {
   TICKET_STATUSES,
   TICKET_TITLE_MAX_LENGTH,
 } from "@corvo/contracts";
-import { GUIDE_PAGES } from "@corvo/core";
+import { connectorToolNamedAsWrite, GUIDE_PAGES } from "@corvo/core";
 import { z } from "zod";
 import { allowPrivateHttpSecretOrigins } from "./bot-secrets.js";
 import { BROWSER_ACT_KINDS } from "./browser-tools.js";
@@ -95,6 +95,41 @@ export const DELEGATION_TOOL_NAMES = new Set<string>([
   ...FLEET_TOOL_NAMES,
 ]);
 
+/** Tools a helper may use unless its parent names others: they only read and search. */
+const SUBAGENT_READ_TOOL_NAMES = new Set<string>([
+  "list_files",
+  "read_file",
+  "web_search",
+  "web_fetch",
+  "wiki_index",
+  "wiki_search",
+  "wiki_read",
+  "read_document",
+  "search_history",
+  "read_history",
+  "recall_memory",
+  "recall_about_user",
+]);
+
+/**
+ * The tools a helper gets: only those its parent named, or, when it named none, the read and search
+ * tools, so a cheap helper cannot act on the world by default. Delegation never reaches a helper.
+ */
+export function subagentTools<T extends { name: string; readOnly?: boolean }>(
+  tools: readonly T[],
+  requested?: readonly string[],
+): T[] {
+  const named = requested?.length ? new Set(requested) : undefined;
+  return tools.filter((tool) => {
+    if (DELEGATION_TOOL_NAMES.has(tool.name)) return false;
+    if (named) return named.has(tool.name);
+    return (
+      SUBAGENT_READ_TOOL_NAMES.has(tool.name) ||
+      (tool.readOnly === true && !connectorToolNamedAsWrite(tool.name))
+    );
+  });
+}
+
 const scheduleCreateProperties = {
   name: { type: "string", description: "Short label shown in Routines." },
   prompt: {
@@ -136,7 +171,7 @@ const scheduleTimingSpecs = {
   watch: {
     type: ["object", "null"],
     description:
-      'Run only when something changes, checked without a model every everyMinutes (min 5, default 15). kind files: paths on your computer. kind command: a shell command run in your folder each interval without per-run approval; its output is compared. kind tool: a read-only connected tool and its args. Watch one named thing, never a whole account. For a list result set track: the field naming each item, then the fields whose change counts (mail search -> track ["id"]; Drive folder -> ["id", "modifiedTime"]). Or preset "calendar" (event changes, overlaps, meeting soon; args may use {{now}}, {{in7d}}) or "email" (new unread mail from people); the tool is found for you.',
+      'Run only when something changes, checked without a model every everyMinutes (min 5, default 15). kind files: paths on your computer. kind command: a shell command run in your folder each interval without per-run approval; its output is compared. kind tool: a read-only connected tool and its args. Watch one named thing, never a whole account. For a list result set track: the field naming each item, then the fields whose change counts (mail -> ["id"]; Drive folder -> ["id", "modifiedTime"]). Or preset "calendar" (args may use {{now}}, {{in7d}}) or "email" (new unread mail from people); the tool is found for you.',
     properties: {
       kind: { type: "string", enum: ["files", "command", "tool"] },
       preset: { type: "string", enum: ["calendar", "email"] },
@@ -524,7 +559,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   },
   {
     name: "say_now",
-    description: `Post one short line to the user right now, before slow work such as using the computer or browser, a long chain of tools, generating media or waiting on a connection, so they know it started (for example "I'll open the calendar and create the event."). One line, at most ${SAY_NOW_MAX_LENGTH} characters, plain text in the user's language, no secrets. Once per run, never for a quick answer, and never repeat it in your final reply.`,
+    description: `Post one short line to the user right now, as your first action when the work will take more than a few seconds (several tools, the computer or browser, media, a connection to wait on), so they know it started (for example "I'll open the calendar and create the event."). One line, at most ${SAY_NOW_MAX_LENGTH} characters, plain text in the user's language, no secrets. Once per run, never for a quick answer, and never repeat it in your final reply.`,
     inputSchema: {
       type: "object",
       properties: {
@@ -1225,6 +1260,34 @@ export const builtinAgentTools: ConnectorTool[] = [
     inputSchema: scheduleCreateInputSchema,
   },
   {
+    name: "notify_priority",
+    description:
+      "In a background run (a routine, a webhook), say how its push reaches the person. urgent: it cannot wait for the morning, so it skips quiet hours and the daily cap. low: it goes to the morning digest. Leave it unset for a normal push. The reply is always posted in the chat at once; only the push waits. Use urgent sparingly: the person can mute an agent that cries wolf.",
+    inputSchema: {
+      type: "object",
+      properties: { priority: { type: "string", enum: ["urgent", "low"] } },
+      required: ["priority"],
+    },
+  },
+  {
+    name: "notify_control",
+    description:
+      'Change how this person is notified when they ask in chat: "mute this", "snooze for an hour", "tell me less often", "send it weekly". mute: silence the push of this agent (scope agent) or of this conversation (scope thread) for an hour, until tomorrow, or forever; the inbox and the chat keep updating. unmute: turn it back on. frequency: change how often one of this agent\'s routines runs, with routineId from schedule_list and one of cron or every+unit. To be told only when something gets worse, change the routine\'s prompt with schedule_update instead. Say what you changed.',
+    inputSchema: {
+      type: "object",
+      properties: {
+        action: { type: "string", enum: ["mute", "unmute", "frequency"] },
+        scope: { type: "string", enum: ["agent", "thread"], description: "Default agent." },
+        duration: { type: "string", enum: ["hour", "tomorrow", "forever"] },
+        routineId: { type: "string" },
+        cron: { type: "string" },
+        every: { type: "number" },
+        unit: { type: "string", enum: ["minutes", "hours", "days"] },
+      },
+      required: ["action"],
+    },
+  },
+  {
     name: "workflow_stop",
     description:
       "Use only when you are a step of a workflow and there is nothing for the steps after you to act on, for example nothing new to report. The next steps will not run. Say in your answer why you stopped. Do not use it when you finished your part and the next step should go on.",
@@ -1530,6 +1593,12 @@ export const builtinAgentTools: ConnectorTool[] = [
         model_id: {
           type: "string",
           description: "Optional connected model ID. Set together with model_provider.",
+        },
+        tools: {
+          type: "array",
+          items: { type: "string" },
+          description:
+            "Optional names of this agent's tools the helper may use. By default a helper can only read and search (files, web, memory, history); name more here when the work needs them.",
         },
       },
       required: ["name", "task"],

@@ -1320,6 +1320,10 @@ msgstr "already in the space"
 msgid "Already in this conversation"
 msgstr "Already in this conversation"
 
+#: src/pages/BotContextMenu.tsx
+msgid "Always"
+msgstr "Always"
+
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Always act"
 msgstr "Always act"
@@ -4268,6 +4272,10 @@ msgstr "Encrypted and never shown again"
 msgid "Encrypted, verified"
 msgstr "Encrypted, verified"
 
+#: src/pages/QuietHoursRow.tsx
+msgid "End"
+msgstr "End"
+
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Ends {day}"
 msgstr "Ends {day}"
@@ -4630,6 +4638,10 @@ msgstr "First task: {task}"
 #: src/pages/RoutinesTabs.tsx
 msgid "Flows"
 msgstr "Flows"
+
+#: src/pages/BotContextMenu.tsx
+msgid "For 1 hour"
+msgstr "For 1 hour"
 
 #: src/pages/shell/composer-model-choice.tsx
 msgid "For this conversation"
@@ -6177,6 +6189,7 @@ msgid "Moved {ref} to {lane}."
 msgstr "Moved {ref} to {lane}."
 
 #: src/components/call/CallCard.tsx
+#: src/pages/BotContextMenu.tsx
 msgid "Mute"
 msgstr "Mute"
 
@@ -7523,6 +7536,10 @@ msgstr "Question"
 #: src/pages/ActivityList.tsx
 msgid "Queued"
 msgstr "Queued"
+
+#: src/pages/QuietHoursRow.tsx
+msgid "Quiet hours"
+msgstr "Quiet hours"
 
 #: src/lib/model-problem.ts
 msgid "Raise limit"
@@ -8918,6 +8935,7 @@ msgstr "SSO is temporarily unavailable. Try again."
 msgid "Standard"
 msgstr "Standard"
 
+#: src/pages/QuietHoursRow.tsx
 #: src/pages/shell/computer-overlay.tsx
 msgid "Start"
 msgstr "Start"
@@ -9859,6 +9877,7 @@ msgid "Unlink"
 msgstr "Unlink"
 
 #: src/components/call/CallCard.tsx
+#: src/pages/BotContextMenu.tsx
 msgid "Unmute"
 msgstr "Unmute"
 
@@ -9872,6 +9891,10 @@ msgstr "Unpin"
 #: src/pages/shell/use-composer-actions.ts
 msgid "Unsupported file type: {0}"
 msgstr "Unsupported file type: {0}"
+
+#: src/pages/BotContextMenu.tsx
+msgid "Until tomorrow"
+msgstr "Until tomorrow"
 
 #: src/lib/server-copy.ts
 msgid "Untitled"

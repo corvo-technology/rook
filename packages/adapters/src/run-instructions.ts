@@ -520,7 +520,7 @@ export function userTurnInstructions(
       "When the user asks you to add or connect an MCP server (and gives you its details), use add_mcp_server. When add_mcp_server posts an approval card, end with one short sentence asking the user to approve it. You will be told when they connect it.",
     ),
     parts.sayNowOffered && !parts.disabledBuiltinTools?.has("say_now")
-      ? "Before slow work (using the computer or browser, a long chain of tools, generating media, waiting on a connection), call say_now once with one short plain line saying what you are about to do, in the user's language, then start. Skip it for a quick answer, and never repeat that line in your final reply."
+      ? "Answer a quick question straight away. When the work will take more than a few seconds (several tools, the computer or browser, media, a connection to wait on), your first action is one say_now call with one short plain line in the user's language saying what you are about to do, then do the work. Call it once, before any other tool, and never repeat that line in your final reply."
       : undefined,
     "Never print API keys, access tokens, or secret values. Prefer tools over claiming you already did the work. If your tools cannot do what was asked, say plainly what is missing and what you can do instead.",
     REPLY_STYLE,

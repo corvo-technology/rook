@@ -9,6 +9,7 @@ import {
   isBackgroundRunTrigger,
   isOwnerStartedRun,
   runReadsThreadHistory,
+  isProactiveRunTrigger,
 } from "@corvo/core";
 import { builtinAgentTools } from "./builtin-tools.js";
 import { selectCloudAgentTools } from "./cloud-agent-tools-select.js";
@@ -169,6 +170,8 @@ export function selectBuiltinToolsForRun(options: {
       (options.hostActionsOffered || tool.name !== "propose_host_action") &&
       (options.sayNowOffered || tool.name !== "say_now") &&
       (options.workflowContinues || tool.name !== "workflow_stop") &&
+      (isProactiveRunTrigger(options.trigger) || tool.name !== "notify_priority") &&
+      (fleetToolsAllowed || tool.name !== "notify_control") &&
       (isAutonomousRunTrigger(options.trigger) || tool.name !== "note_surfaced") &&
       (options.routedRun || tool.name !== "pass") &&
       (options.strongerModelAvailable || tool.name !== "request_stronger_model") &&

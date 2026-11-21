@@ -176,6 +176,8 @@ const callbacks = {
   deleteSection: action,
   editSectionFromMenu: action,
   groupAction: action,
+  muted: new Set<string>(),
+  onMute: action,
   openBot: action,
   openGroup: action,
   organizeBot: action,
@@ -352,6 +354,8 @@ it("renders saved bot rows without a title or notification setting", () => {
         day={0}
         onPress={action}
         sections={[]}
+        muted={new Set()}
+        onMute={action}
         onOrganize={action}
         onEditSection={action}
       />
@@ -393,6 +397,8 @@ it("says working only while the bot works, and shows nothing beside the time", (
         day={0}
         onPress={action}
         sections={[]}
+        muted={new Set()}
+        onMute={action}
         onOrganize={action}
         onEditSection={action}
       />

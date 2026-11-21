@@ -115,9 +115,9 @@ export function isSayNowClientNonce(clientNonce: string | null | undefined): boo
 }
 
 /**
- * Whether a run may open with say_now: only a conversation the owner is reading live. Routines,
- * webhooks, tickets, bot-to-bot, channel, visitor and voice runs never are. A helper run is
- * refused per call.
+ * Whether a run may open with say_now: every conversation a person is waiting on, which is the
+ * owner's own message or a channel message. Routines, webhooks, tickets, bot-to-bot, visitor and
+ * voice runs never are. A helper run is refused per call.
  */
 export function sayNowAllowed(facts: {
   ownerStartedRun: boolean;
@@ -126,7 +126,7 @@ export function sayNowAllowed(facts: {
   visitorRun: boolean;
 }): boolean {
   return (
-    facts.ownerStartedRun && !facts.messagingChannelRun && !facts.voiceCall && !facts.visitorRun
+    (facts.ownerStartedRun || facts.messagingChannelRun) && !facts.voiceCall && !facts.visitorRun
   );
 }
 

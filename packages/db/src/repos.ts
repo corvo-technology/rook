@@ -629,7 +629,7 @@ export function createRepos(
       let modelId = input.modelId ?? null;
       let thinkingLevel = input.thinkingLevel ?? null;
       let disabledBuiltinTools = input.disabledBuiltinTools ?? [];
-      let inheritedAuto = false;
+      let inheritedAuto: boolean | undefined;
       if (input.parentBotId) {
         const parent = await prisma.bot.findFirst({
           where: {
@@ -653,7 +653,6 @@ export function createRepos(
         modelId,
         requested: input.modelAuto,
         parentAuto: inheritedAuto,
-        settings,
       });
       const envKind = process.env.SANDBOX_PROVIDER ?? "docker";
       const kind =

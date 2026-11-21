@@ -535,6 +535,11 @@ export interface AgentRunRequest {
   contextStrategy?: AgentContextStrategy;
   /** Exclusive workflow cost bucket; retrieval tool turns are detected for answer calls. */
   usageOperationKind?: UsageOperationKind;
+  /**
+   * Whether this run is likely to be picked up again after the short prompt cache expired.
+   * "later" asks for the long cache where the protocol supports it; omitted means "soon".
+   */
+  cacheReturn?: "soon" | "later";
   botId: string;
   threadId: string;
   runId: string;
@@ -577,6 +582,11 @@ export interface AgentRunRequest {
   onModelChange?: (provider: string, modelId: string) => Promise<void>;
   /** Resolve an explicitly requested helper model within the active user and space scope. */
   resolveModel?: (provider: string, modelId: string) => Promise<AgentRunModel>;
+  /**
+   * The model a helper runs on when its call names none: the cheap tier. Absent on a run whose
+   * model was pinned, where helpers keep the run's model.
+   */
+  resolveSubagentModel?: () => Promise<AgentRunModel | undefined>;
   resumeFromCheckpoint?: string;
   /** Opaque runtime transcript, persisted only on the server. */
   turnCheckpoint?: string;
@@ -819,6 +829,8 @@ export interface BackgroundJobPayloads {
   "research.run": { researchId: string };
   /** Read an Expo push receipt; the token is identified by its digest, never stored. */
   "push.receipt": { userId: string; ticketId: string; tokenDigest: string };
+  /** Send what waited for one person's morning as a single push. */
+  "notification.digest": { userId: string };
   /** Transcribe the audio of a queued run's message, then start the run. */
   "audio.transcribe": { runId: string };
   /** Tell a partner's webhook about one customer's credit; the row holds what happened. */

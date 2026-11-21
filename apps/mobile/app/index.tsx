@@ -1,4 +1,4 @@
-import type { RunActivityRow, SpaceBot, SpaceGroup } from "@corvo/contracts";
+import type { MuteDuration, RunActivityRow, SpaceBot, SpaceGroup } from "@corvo/contracts";
 import { accountDisplay, isRetryableError } from "@corvo/core";
 import type { Href } from "expo-router";
 import {
@@ -57,6 +57,8 @@ import { createInboxBot } from "../lib/create-inbox-bot";
 import { useHeaderHeightIfAny } from "../lib/floating-header";
 import { useForegroundPoll } from "../lib/foreground-poll";
 import { t, useI18n } from "../lib/i18n";
+import type { MuteTarget } from "../lib/inbox-mutes";
+import { useInboxMutes } from "../lib/inbox-mutes";
 import { retainInboxValue } from "../lib/inbox-retention";
 import type { InboxItem, InboxSpace, PinnedChat } from "../lib/inbox-spaces";
 import {
@@ -694,7 +696,23 @@ function Home({ embedded, onSelectSpace }: InboxPaneProps & { embedded: boolean 
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) =>
     avatarViewport.update(viewableItems.map((token) => token.key)),
   ).current;
+  const { muted, load: loadMutes, setMute } = useInboxMutes();
+  useFocusEffect(
+    useCallback(() => {
+      void loadMutes().catch(() => undefined);
+    }, [loadMutes]),
+  );
+  const onMute = useCallback(
+    (target: MuteTarget, duration: MuteDuration | null) => {
+      void setMute(target, duration).catch((err) =>
+        Alert.alert(t("Could not update notifications"), errorText(err, t("Try again."))),
+      );
+    },
+    [setMute, t],
+  );
   const renderItem = useInboxRenderItem({
+    muted,
+    onMute,
     appearance,
     botAction,
     botSections,

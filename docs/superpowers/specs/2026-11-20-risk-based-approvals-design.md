@@ -90,6 +90,14 @@ computer, tasks) never ask at the default level.
    versioned rubric, failure asks); outbound-URL leak checks on fetch; per-agent money cap on
    payment tools.
 
+Reading a website in Only what's risky: a fetch to a site the run was not given does not ask
+while the run is clean (the owner started it and no outside content entered it), because the URL
+then comes from the owner or the model. Once outside content is in the run, or the owner did not
+start it, a new site is still read when the URL cannot carry data: no query or fragment, a short
+path, no token-like host label or path segment, and no part seen in the run's private results.
+Any other fetch to a new site asks, and is refused in a webhook run. Always ask, Auto and Never ask
+keep their earlier behaviour. The card says "Open <site>?" instead of the tool name.
+
 ## Approaches considered
 
 1. **Tiers in code plus hints (chosen).** Deterministic, testable offline, uses what MCP servers

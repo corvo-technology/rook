@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { approvalNoticeBot, parseActivityLabel, reviewBeforeSummary } from "./activity-label.js";
+import {
+  approvalNoticeBot,
+  openWebsiteTitleSite,
+  parseActivityLabel,
+  reviewBeforeSummary,
+} from "./activity-label.js";
 
 describe("parseActivityLabel", () => {
   it.each([
@@ -76,5 +81,12 @@ describe("approvalNoticeBot", () => {
   it("answers nothing for any other text", () => {
     expect(approvalNoticeBot("Waiting for your approval.")).toBeUndefined();
     expect(approvalNoticeBot("Ana is waiting for your approval. Reply soon.")).toBeUndefined();
+  });
+});
+
+describe("openWebsiteTitleSite", () => {
+  it("reads the site of an open-website title and nothing else", () => {
+    expect(openWebsiteTitleSite("Open planalto.gov.br?")).toBe("planalto.gov.br");
+    expect(openWebsiteTitleSite("Review before web_fetch → x.com")).toBeUndefined();
   });
 });

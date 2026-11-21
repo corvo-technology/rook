@@ -25,6 +25,21 @@ describe("buildApprovalAskBlock", () => {
     expect(JSON.stringify(block)).not.toContain("token-secret");
   });
 
+  it("words a website fetch as opening the site, never as the raw tool name", () => {
+    const block = buildApprovalAskBlock(
+      "effect-1",
+      "web_fetch",
+      { url: "https://www.planalto.gov.br/ccivil_03/lei/l13709.htm" },
+      [],
+    );
+    expect(block).toMatchObject({
+      text: "Open planalto.gov.br?",
+      card: { code: "open_website", params: { site: "planalto.gov.br" } },
+      detail: "url: https://www.planalto.gov.br/ccivil_03/lei/l13709.htm",
+    });
+    expect(JSON.stringify(block)).not.toContain("web_fetch");
+  });
+
   it("bounds model-controlled summaries and details", () => {
     const block = buildApprovalAskBlock(
       "effect-1",

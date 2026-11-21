@@ -129,6 +129,42 @@ export function outboundUrlLeak(input: {
   return null;
 }
 
+/** The longest path a URL may have and still count as carrying no data. */
+const MAX_PLAIN_PATH_LENGTH = 120;
+const MAX_PLAIN_PATH_SEGMENTS = 8;
+/** A name part this long, with no separator, and mixing letters with digits reads as a token. */
+const OPAQUE_PART = /^[A-Za-z0-9+/=]{16,}$/;
+/** A part of a name copied from the run's private results, at least this long, is data. */
+const MIN_SEEN_PART_LENGTH = 8;
+
+function opaquePart(part: string): boolean {
+  if (!OPAQUE_PART.test(part)) return false;
+  return (/[A-Za-z]/.test(part) && /\d/.test(part)) || /^[0-9a-f]{16,}$/i.test(part);
+}
+
+/**
+ * Whether a URL could carry data out of a run that outside content has entered: it has a query or
+ * fragment, a long or deep path, a part of its host or path that reads as a token, or a part seen
+ * in the run's private results. A plain address such as a statute's page carries nothing a site
+ * does not already know. Conservative: true when in doubt.
+ */
+export function urlMayCarryData(input: { url: string; privateText: readonly string[] }): boolean {
+  const normalized = normalizedHttpUrl(input.url);
+  if (!normalized) return true;
+  const url = new URL(normalized);
+  if (url.search || url.hash || url.username || url.password) return true;
+  const segments = url.pathname.split("/").filter(Boolean);
+  if (url.pathname.length > MAX_PLAIN_PATH_LENGTH || segments.length > MAX_PLAIN_PATH_SEGMENTS)
+    return true;
+  const parts = [...url.hostname.split("."), ...segments.map(decoded)];
+  if (parts.some(opaquePart)) return true;
+  const corpus = input.privateText.join("\n").toLowerCase();
+  if (!corpus) return false;
+  return parts.some(
+    (part) => part.length >= MIN_SEEN_PART_LENGTH && corpus.includes(part.toLowerCase()),
+  );
+}
+
 const URL_ARGUMENTS = new Set(["url", "uri", "href", "link", "endpoint", "target"]);
 const HTTP_TOOL_WORDS = new Set([
   "http",

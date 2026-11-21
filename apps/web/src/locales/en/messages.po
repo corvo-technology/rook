@@ -6869,6 +6869,10 @@ msgstr "Open {0}"
 msgid "Open {name}"
 msgstr "Open {name}"
 
+#: src/lib/server-copy.ts
+msgid "Open {site}?"
+msgstr "Open {site}?"
+
 #. placeholder {0}: oauth.verificationUri.replace(/^https:\/\//, "")
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx

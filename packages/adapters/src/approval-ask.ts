@@ -146,7 +146,7 @@ export function buildApprovalAskBlock(
     approvalEffectId: effectId,
     text: truncate(
       redactSecrets(
-        toolName === "create_space" ? `${summary}?` : `Review before ${summary}`,
+        toolName === "create_space" || fetchSite ? `${summary}?` : `Review before ${summary}`,
         secrets,
       ),
       MAX_APPROVAL_SUMMARY_LENGTH,
@@ -168,7 +168,9 @@ export function buildApprovalAskBlock(
           },
         }
       : {}),
-    ...(fetchSite ? { site: fetchSite } : {}),
+    ...(fetchSite
+      ? { card: { code: "open_website" as const, params: { site: fetchSite } }, site: fetchSite }
+      : {}),
     ...(options?.alwaysAllow ? { alwaysAllow: options.alwaysAllow } : {}),
     status: "pending",
     actions:
@@ -209,7 +211,9 @@ function describeApprovalAction(toolName: string, args: Record<string, unknown>)
     const name = args.name ? String(args.name) : "Untitled";
     return `Create space “${name}”`;
   }
-  const target = webFetchSite(toolName, args) ?? pickScopeLabel(args);
+  const site = webFetchSite(toolName, args);
+  if (site) return `Open ${site}`;
+  const target = pickScopeLabel(args);
   return target ? `${toolName} → ${target}` : toolName;
 }
 

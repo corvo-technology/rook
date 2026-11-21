@@ -124,6 +124,7 @@ export const ApprovalCardCode = z.enum([
   "agent_connection",
   "create_space",
   "create_agent",
+  "open_website",
 ]);
 export type ApprovalCardCode = z.infer<typeof ApprovalCardCode>;
 

@@ -6869,6 +6869,10 @@ msgstr "{0}を開く"
 msgid "Open {name}"
 msgstr "{name}を開く"
 
+#: src/lib/server-copy.ts
+msgid "Open {site}?"
+msgstr "{site}を開きますか？"
+
 #. placeholder {0}: oauth.verificationUri.replace(/^https:\/\//, "")
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx

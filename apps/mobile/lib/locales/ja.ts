@@ -713,6 +713,7 @@ export const JA_MESSAGES: Record<string, string> = {
   "Allow once": "今回のみ許可",
   "Hold to approve": "長押しして承認",
   "Review before {summary}": "実行前に確認: {summary}",
+  "Open {site}?": "{site}を開きますか？",
   "{name} is waiting for your approval.": "{name} があなたの承認を待っています。",
   "Always allow": "常に許可",
   "Always allow this tool": "このツールを常に許可",

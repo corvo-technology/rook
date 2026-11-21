@@ -31,6 +31,7 @@ import {
   toolRequiresApproval,
   toolRequiresExplicitApproval,
   unattendedTriggerToolRequiresApproval,
+  urlMayCarryData,
 } from "@corvo/core";
 import { normalizedHttpUrl, urlSite } from "@corvo/core/egress";
 import {
@@ -211,6 +212,13 @@ export async function gateToolCall(
     connectorKind,
     connectorProviders,
   );
+  const mode = effectiveApprovalMode(
+    ctx.bot.approvalMode,
+    approvalModeFromPreference(await ctx.trust.loadAutoReviewPreference()),
+  );
+  // A run is steerable when outside content entered it or the owner did not start it; then the
+  // URL may have been chosen by someone else.
+  const steeredRun = !ctx.source.ownerStartedRun || (await isRunTainted(ctx));
   const siteGate =
     fetchUrl && fetchSite
       ? outboundSiteGate({
@@ -219,6 +227,11 @@ export async function gateToolCall(
             ctx.trust.searchResultUrls.has(fetchUrl) ||
             (await ctx.trust.loadTrustedSites()).has(fetchSite),
           rules: await ctx.trust.loadApprovalRules(),
+          mode,
+          tainted: steeredRun,
+          carriesData:
+            steeredRun &&
+            urlMayCarryData({ url: fetchUrl, privateText: ctx.state.egress.privateText }),
         })
       : "allow";
   // Outside content entered this run and it has not used this connector yet: its arguments may
@@ -352,10 +365,6 @@ export async function gateToolCall(
   const approvalResolved = keptRuleApplies
     ? { ...baseResolved, source: "always_allow" as const }
     : baseResolved;
-  const mode = effectiveApprovalMode(
-    ctx.bot.approvalMode,
-    approvalModeFromPreference(await ctx.trust.loadAutoReviewPreference()),
-  );
   // Only what's risky lets an undoable change inside a connection run. Not when someone else may
   // have steered it: outside content in the run on a connector it has not used, or a run the owner
   // did not start.

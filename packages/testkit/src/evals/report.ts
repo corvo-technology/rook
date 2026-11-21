@@ -171,6 +171,7 @@ export function emptyTrial(caseId: string, trial: number): TrialResult {
       compaction: null,
       wiki: null,
       memory: null,
+      research: null,
     },
     trace: [],
     artifacts: {},

@@ -59,7 +59,7 @@ describe("hostAsk", () => {
     const heard = vi.fn();
     const off = onHostAsk(heard);
     hostAsk("Quem vem hoje?");
-    expect(heard).toHaveBeenCalledWith("Quem vem hoje?");
+    expect(heard).toHaveBeenCalledWith("Quem vem hoje?", undefined);
     off();
     hostAsk("again");
     expect(heard).toHaveBeenCalledTimes(1);
@@ -69,7 +69,7 @@ describe("hostAsk", () => {
     hostAsk("early");
     const heard = vi.fn();
     onHostAsk(heard);
-    expect(heard).toHaveBeenCalledWith("early");
+    expect(heard).toHaveBeenCalledWith("early", undefined);
   });
 });
 

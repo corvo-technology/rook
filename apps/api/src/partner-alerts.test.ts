@@ -67,7 +67,7 @@ describe("partner alert email", () => {
 
   it.each(PARTNER_ALERT_LOCALES)("has every line in %s", (locale) => {
     const copy = PARTNER_ALERT_COPY[locale];
-    expect(Object.keys(copy.lines)).toHaveLength(7);
+    expect(Object.keys(copy.lines)).toHaveLength(8);
     for (const line of Object.values(copy.lines)) {
       for (const text of typeof line === "string" ? [line] : [line.one, line.many]) {
         expect(text.length).toBeGreaterThan(5);

@@ -119,7 +119,10 @@ export async function loadAgentTicketContext(
   const [referenced, open] = await Promise.all([
     loadReferencedTicketContext(deps, input, maxBytes),
     deps.ticketBoardEnabled && input.ownerBotId
-      ? loadOpenTicketContext(deps, { spaceId: input.spaceId, botId: input.ownerBotId })
+      ? // A hint only: a failed lookup must never fail the run.
+        loadOpenTicketContext(deps, { spaceId: input.spaceId, botId: input.ownerBotId }).catch(
+          () => undefined,
+        )
       : undefined,
   ]);
   return [referenced, open].filter(Boolean).join("\n\n") || undefined;

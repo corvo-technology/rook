@@ -142,4 +142,17 @@ describe("the agent's own open tickets", () => {
       ),
     ).toBeUndefined();
   });
+
+  it("never fails the run when the lookup fails", async () => {
+    const prisma = find([]);
+    prisma.board.findUnique = vi.fn(async () => {
+      throw new Error("down");
+    });
+    await expect(
+      loadAgentTicketContext(
+        { prisma: prisma as never, ticketBoardEnabled: true },
+        { spaceId: "ws", text: "Hi", ownerBotId: "rafa" },
+      ),
+    ).resolves.toBeUndefined();
+  });
 });

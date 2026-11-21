@@ -776,6 +776,14 @@ export default function Account() {
               onChange={(checked) => void setRemoteImagesPreference(checked ? "on" : "off")}
             />
           ) : null}
+          {advancedOpen ? (
+            <SettingsRow
+              accessibilityRole="button"
+              chevron="right"
+              onPress={() => router.push("/mcp-keys")}
+              title={t("MCP")}
+            />
+          ) : null}
         </SettingsGroup>
 
         <View style={styles.section}>

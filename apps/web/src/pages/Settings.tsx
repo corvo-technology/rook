@@ -14,6 +14,7 @@ import {
   Plug,
   Settings,
   ShieldCheck,
+  SquareTerminal,
   Users,
   Volume2,
 } from "lucide-react";
@@ -21,6 +22,7 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Navigate, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { ApprovalRulesSettings } from "../components/ApprovalRulesSettings";
+import { McpSettings } from "../components/McpSettings";
 import { SETTINGS_CONTENT_WIDTH, SettingsGroup, SettingsRow } from "../components/SettingsRows";
 import { authClient } from "../lib/auth";
 import { takeInitialBootstrap } from "../lib/bootstrap";
@@ -362,6 +364,12 @@ export function SettingsPage() {
           ) : null}
         </div>
       ),
+    },
+    {
+      id: "mcp-access",
+      label: t`MCP`,
+      icon: SquareTerminal,
+      content: <McpSettings spaces={spaces} />,
     },
     ...(showComputer
       ? [

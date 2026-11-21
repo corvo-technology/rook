@@ -710,11 +710,15 @@ export const HARNESS_TASKS: HarnessTask[] = [
     script: [
       {
         steps: [
-          call("d1", "schedule_create", {
-            name: "Weekday email summary",
-            prompt: "Summarize my new email.",
-            cron: "0 8 * * 1-5",
-            timezone: "America/Sao_Paulo",
+          call("d0", "find_tool", { query: "schedule a recurring task" }),
+          call("d1", "use_tool", {
+            name: "schedule_create",
+            arguments: {
+              name: "Weekday email summary",
+              prompt: "Summarize my new email.",
+              cron: "0 8 * * 1-5",
+              timezone: "America/Sao_Paulo",
+            },
           }),
           say("Scheduled: weekdays at 8:00."),
         ],
@@ -778,9 +782,13 @@ export const HARNESS_TASKS: HarnessTask[] = [
     script: [
       {
         steps: [
-          call("y1", "describe_database", {}),
-          call("y2", "query_database", {
-            sql: "select count(*) as paid_orders from orders where status = 'paid'",
+          call("y0", "find_tool", { query: "query a database" }),
+          call("y1", "use_tool", { name: "describe_database", arguments: {} }),
+          call("y2", "use_tool", {
+            name: "query_database",
+            arguments: {
+              sql: "select count(*) as paid_orders from orders where status = 'paid'",
+            },
           }),
           say("There are 42 paid orders."),
         ],
@@ -790,7 +798,8 @@ export const HARNESS_TASKS: HarnessTask[] = [
       finished(o),
       check(
         "read-only-query",
-        called(o, "query_database").every((c) => /^\s*select/i.test(String(c.args.sql))),
+        called(o, "query_database").length === 1 &&
+          called(o, "query_database").every((c) => /^\s*select/i.test(String(c.args.sql))),
       ),
       check("answer", mentions(o.text, "42")),
     ],

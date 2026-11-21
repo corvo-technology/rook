@@ -200,7 +200,7 @@ test("custom connections persist reasoning support and bot thinking", async ({
   expect(cleared?.maxImagesPerPrompt).toBeUndefined();
   expect(cleared?.thinkingLevel ?? null).toBeNull();
   await page.getByTestId("settings-back").click();
-  await page.locator("main").getByRole("button", { name: "Chief", exact: true }).click();
+  await page.locator("main").getByRole("button", { name: "Rook", exact: true }).click();
   const settings = page.getByTestId("bot-settings");
   await expect(settings).toBeVisible();
   await expandAdvancedSection(settings.getByTestId("bot-settings-advanced"));
@@ -223,7 +223,7 @@ test("custom connections persist reasoning support and bot thinking", async ({
   await settings.getByRole("button", { name: "Save", exact: true }).click();
   await saved;
   await page.reload();
-  await page.locator("main").getByRole("button", { name: "Chief", exact: true }).click();
+  await page.locator("main").getByRole("button", { name: "Rook", exact: true }).click();
   await expect(settings).toBeVisible();
   await expandAdvancedSection(settings.getByTestId("bot-settings-advanced"));
   await expect(thinking).toHaveValue("low");
@@ -277,7 +277,7 @@ test("the bot's model picker marks models that cannot read images", async ({ pag
   });
   await signup(page, `bot-text-only-${Date.now()}@corvo.test`, "password12", "Bot Models");
   await completeOnboarding(page);
-  await page.locator("main").getByRole("button", { name: "Chief", exact: true }).click();
+  await page.locator("main").getByRole("button", { name: "Rook", exact: true }).click();
   const settings = page.getByTestId("bot-settings");
   await expect(settings).toBeVisible();
   await expandAdvancedSection(settings.getByTestId("bot-settings-advanced"));
@@ -502,7 +502,7 @@ test("connects, lists, and uses an OpenAI-compatible endpoint", async ({ page },
       .click();
     await expect(saved).toBeHidden();
     await page.getByTestId("settings-back").click();
-    await page.locator("main").getByRole("button", { name: "Chief", exact: true }).click();
+    await page.locator("main").getByRole("button", { name: "Rook", exact: true }).click();
     const settings = page.getByTestId("bot-settings");
     await expect(settings).toBeVisible();
     await expandAdvancedSection(settings.getByTestId("bot-settings-advanced"));
@@ -967,7 +967,7 @@ test("chat settings search a long model list", async ({ page }, testInfo) => {
   });
 
   await page.reload();
-  await page.locator("main").getByRole("button", { name: "Chief", exact: true }).click();
+  await page.locator("main").getByRole("button", { name: "Rook", exact: true }).click();
   const settings = page.getByTestId("bot-settings");
   await expect(settings).toBeVisible();
   await expandAdvancedSection(settings.getByTestId("bot-settings-advanced"));
@@ -1009,7 +1009,7 @@ test("chat settings search a long model list", async ({ page }, testInfo) => {
     "bots/list",
     {},
   );
-  expect(bots.find((bot) => bot.name === "Chief")).toMatchObject({
+  expect(bots.find((bot) => bot.name === "Rook")).toMatchObject({
     modelProvider: "openrouter",
     modelId: target.id,
   });

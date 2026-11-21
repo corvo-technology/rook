@@ -136,7 +136,7 @@ test("Home lets a person hide a card and brings it back", async ({ page }) => {
   await expect(page.getByTestId("home-waiting")).toBeVisible();
 });
 
-test("asking from Home starts the chat with the Chief", async ({ page }) => {
+test("asking from Home starts the chat with the Rook", async ({ page }) => {
   await signup(page, `home-ask-${Date.now()}@corvo.test`, "password12", "Ask");
   await page.goto("/app/home");
   const composer = page.getByTestId("home-composer").getByRole("textbox");

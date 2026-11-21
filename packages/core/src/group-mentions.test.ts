@@ -5,6 +5,7 @@ import {
   inferHandoffTargetName,
   memberName,
   resolveGroupTargetBotIds,
+  resolveMentionedBotIds,
   resolveMentionedOutsideBotIds,
 } from "./group-mentions.js";
 
@@ -326,6 +327,54 @@ describe("resolveMentionedOutsideBotIds", () => {
     expect(resolveMentionedOutsideBotIds({ text: "@BotA @Ghost", members, others })).toEqual([]);
     expect(
       resolveMentionedOutsideBotIds({ text: "hi", members, others, explicitMentions: ["a"] }),
+    ).toEqual([]);
+  });
+});
+
+describe("Rook and its older names", () => {
+  const team = [
+    { id: "rook", name: "Rook" },
+    { id: "w", name: "Writer" },
+  ];
+
+  it("answers to @Rook, and to @Chief and @Chefe from threads written before the rename", () => {
+    for (const text of ["@Rook help", "@Chief help", "@chefe help"]) {
+      expect(resolveMentionedBotIds({ text, members: team })).toEqual(["rook"]);
+      expect(resolveGroupTargetBotIds({ text, members: team, fallbackBotId: "w" })).toEqual([
+        "rook",
+      ]);
+    }
+  });
+
+  it("never lets an alias take a name another member really carries", () => {
+    const withChief = [...team, { id: "c", name: "Chief" }];
+    expect(resolveMentionedBotIds({ text: "@Chief help", members: withChief })).toEqual(["c"]);
+    expect(resolveMentionedBotIds({ text: "@Chefe help", members: withChief })).toEqual(["rook"]);
+  });
+
+  it("wakes Rook from outside the channel by any of its names", () => {
+    for (const text of ["@Rook help", "@Chief help"]) {
+      expect(
+        resolveMentionedOutsideBotIds({
+          text,
+          members: [{ id: "w", name: "Writer" }],
+          others: [{ id: "rook", name: "Rook" }],
+        }),
+      ).toEqual(["rook"]);
+    }
+  });
+
+  it("finds Rook as the target of a handoff written with an older name", () => {
+    expect(inferHandoffTargetBotId("hand this to @Chief", team)).toBe("rook");
+    expect(inferHandoffTargetBotId("@Chefe take it", team)).toBe("rook");
+  });
+
+  it("does not turn other agents named like Rook's old names into Rook", () => {
+    expect(
+      resolveMentionedBotIds({ text: "@Chefe help", members: [{ id: "x", name: "Chefe" }] }),
+    ).toEqual(["x"]);
+    expect(
+      resolveMentionedBotIds({ text: "@Chief help", members: [{ id: "x", name: "Writer" }] }),
     ).toEqual([]);
   });
 });

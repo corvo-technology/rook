@@ -24,8 +24,8 @@ test("the quick-ask popover shows the context, suggestions and a way to the full
   page,
 }, testInfo) => {
   await openHost(page);
-  await page.getByRole("button", { name: "Chief" }).click();
-  const popover = page.getByRole("dialog", { name: "Chief" }).first();
+  await page.getByRole("button", { name: "Rook" }).click();
+  const popover = page.getByRole("dialog", { name: "Rook" }).first();
   await expect(popover.getByText("Carlos Souza")).toBeVisible();
   await expect(popover.getByPlaceholder("Pergunte ou peça")).toBeFocused();
   await expect(popover.getByRole("button", { name: "Esse cliente está sumido?" })).toBeVisible();
@@ -33,7 +33,7 @@ test("the quick-ask popover shows the context, suggestions and a way to the full
   await captureScreenshot(page, testInfo, "launcher-popover");
   await page.keyboard.press("Escape");
   await expect(popover).toBeHidden();
-  await expect(page.getByRole("button", { name: "Chief" })).toBeFocused();
+  await expect(page.getByRole("button", { name: "Rook" })).toBeFocused();
 });
 
 test("Ctrl+J opens and closes the launcher", async ({ page }) => {
@@ -48,7 +48,7 @@ test("the panel shows the chat with the page context, and an action runs only af
   page,
 }, testInfo) => {
   await openHost(page);
-  await page.getByRole("button", { name: "Chief" }).click();
+  await page.getByRole("button", { name: "Rook" }).click();
   await page.getByRole("button", { name: "Abrir conversa completa" }).click();
   const frame = page.frameLocator("iframe");
   await expect(frame.getByText("Vendo: Carlos Souza")).toBeVisible();
@@ -63,7 +63,7 @@ test("the panel shows the chat with the page context, and an action runs only af
 
 test("a suggestion opens the chat and sends it as the person's message", async ({ page }) => {
   await openHost(page);
-  await page.getByRole("button", { name: "Chief" }).click();
+  await page.getByRole("button", { name: "Rook" }).click();
   await page.getByRole("button", { name: "Resumo das últimas visitas" }).click();
   await expect(page.frameLocator("iframe").getByText("Resumo das últimas visitas")).toBeVisible();
 });
@@ -71,9 +71,9 @@ test("a suggestion opens the chat and sends it as the person's message", async (
 test("on a phone the panel is a bottom sheet", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await openHost(page);
-  await page.getByRole("button", { name: "Chief" }).click();
+  await page.getByRole("button", { name: "Rook" }).click();
   await page.getByRole("button", { name: "Abrir conversa completa" }).click();
-  const panel = page.getByRole("dialog", { name: "Chief" }).last();
+  const panel = page.getByRole("dialog", { name: "Rook" }).last();
   await expect(panel).toBeVisible();
   const box = await panel.boundingBox();
   expect(box?.width).toBe(390);
@@ -89,5 +89,5 @@ test("the launcher hides itself when the session is refused", async ({ page }) =
   await page.route("**/demo/session", (route) => route.fulfill({ status: 403, body: "no" }));
   await page.goto("/e2e/fixtures/launcher-host.html");
   // The session is prepared as soon as the browser is idle; refused, the button goes away.
-  await expect(page.getByRole("button", { name: "Chief" })).toBeHidden();
+  await expect(page.getByRole("button", { name: "Rook" })).toBeHidden();
 });

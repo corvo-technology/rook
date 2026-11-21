@@ -40,7 +40,7 @@ test("an agent can be muted for an hour and unmuted from its menu", async ({ pag
   const bot = page
     .locator("aside")
     .first()
-    .getByRole("button", { name: /^Chief/ });
+    .getByRole("button", { name: /^Rook/ });
   await bot.click({ button: "right" });
   await page.getByRole("menuitem", { name: "Mute", exact: true }).hover();
   await expect(page.getByRole("menuitem", { name: "Until tomorrow" })).toBeVisible();

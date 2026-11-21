@@ -185,8 +185,8 @@ export function PartnerTemplateEditor({
         <Input
           value={chiefName}
           onChange={(event) => setChiefName(event.target.value)}
-          aria-label={t`Chief name`}
-          placeholder={t`Chief name`}
+          aria-label={t`Lead agent name`}
+          placeholder={t`Lead agent name`}
           maxLength={80}
         />
         <Input

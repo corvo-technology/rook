@@ -60,11 +60,11 @@ No reply, template, link or error ever names Rook. The same model serves embedde
     processed.
   - Several customers: "Which company?" on the first message, then the last one used is remembered
     with an easy way to switch.
-- The message (text, voice note, photo, PDF, location) becomes a turn for that customer's Chief,
+- The message (text, voice note, photo, PDF, location) becomes a turn for that customer's lead agent,
   with the person's role and scope applied.
 - Writes into the partner system go through the partner connector (MCP) and keep the normal
   approval rules. On WhatsApp the confirmation is an interactive message with reply buttons.
-- Example: a photo of a receipt at the supermarket → the Chief reads amount, store, date and items
+- Example: a photo of a receipt at the supermarket → the lead agent reads amount, store, date and items
   → "Record R$ 87,40 at Mercado Bom Preço under Supplies?" [Record] [Change category] → on Record,
   the expense is created in the partner's finance module with the receipt attached, and the reply
   links to it on the partner's domain.

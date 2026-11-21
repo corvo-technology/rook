@@ -63,7 +63,7 @@ const BOT_DEFAULTS = {
 const agent = (id: string, name: string, title: string, hex: string, extra = {}) =>
   ({ ...BOT_DEFAULTS, id, name, title, color: hex, ...extra }) as unknown as Bot;
 const BOTS = [
-  agent("chief", "Chief", "Team chief", color("purple"), { spawnKey: "onboarding:first" }),
+  agent("chief", "Rook", "Team chief", color("purple"), { spawnKey: "onboarding:first" }),
   agent("bento", "Bento", "Finance", color("blue")),
   agent("cora", "Cora", "Reports", color("green")),
   agent("davi", "Davi", "Sales", color("pink")),
@@ -200,7 +200,7 @@ const report = message(
 );
 const MESSAGES = [morning, question, found, thanks, close, report];
 
-// A chat with the Chief: the person asks, the Chief answers, and CTO's reply is relayed through it.
+// A chat with the Rook: the person asks, the Rook answers, and CTO's reply is relayed through it.
 const askChief = message("user", [said("Is the deploy finished? Ask the CTO if you need to.")], {
   authorUserId: ME,
   authorName: "Pedro Henrique",
@@ -341,7 +341,7 @@ function Canvas() {
           <div className="flex shrink-0 items-center gap-3 border-b border-border bg-background px-[22px] py-1.5">
             <BotAvatar color={BOTS[0]!.color} identity="chief" size={26} />
             <span className="flex items-baseline gap-2">
-              <span className="text-name font-semibold">Chief</span>
+              <span className="text-name font-semibold">Rook</span>
               <span className="text-meta text-muted-foreground">Team chief</span>
             </span>
             <div className="ms-auto flex items-center gap-1">
@@ -387,7 +387,7 @@ function Canvas() {
             artifactTarget={agentView ? { botId: "chief" } : { groupId: "group-1" }}
             intro={
               agentView
-                ? { id: "chief", name: "Chief", title: "Team chief", color: BOTS[0]!.color }
+                ? { id: "chief", name: "Rook", title: "Team chief", color: BOTS[0]!.color }
                 : undefined
             }
             showToolActivity

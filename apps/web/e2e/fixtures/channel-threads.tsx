@@ -20,7 +20,7 @@ applyResolvedAppearance(params.get("theme") === "dark" ? "dark" : "light");
 
 const color = (id: string) => BOT_COLOR_LIST.find((item) => item.id === id)?.hex ?? "#3B82F6";
 const MEMBERS: GroupMember[] = [
-  { botId: "chief", name: "Chief", color: color("purple") },
+  { botId: "chief", name: "Rook", color: color("purple") },
   { botId: "bento", name: "Bento", color: color("green") },
   { botId: "cora", name: "Cora", color: color("red") },
   { botId: "leo", name: "Leo", color: color("blue") },

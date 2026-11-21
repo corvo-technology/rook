@@ -67,7 +67,7 @@ test("billing paywall holds the app until the subscription is active", async ({
     hasCustomer: true,
   });
   await page.evaluate(() => window.dispatchEvent(new Event("focus")));
-  await expect(page.getByText("Chief").first()).toBeVisible();
+  await expect(page.getByText("Rook").first()).toBeVisible();
 
   const settings = await openUserSettings(page, "billing");
   await expect(settings).toHaveAttribute("data-settings-section", "billing");
@@ -140,7 +140,7 @@ test("choose your own key or monthly credits, then add a one-time top-up", async
     await route.fulfill({ json: { json: { url: new URL("/app", page.url()).href } } });
   });
   await page.getByRole("button", { name: "Subscribe to Rook credits", exact: true }).click();
-  await expect(page.getByText("Chief").first()).toBeVisible();
+  await expect(page.getByText("Rook").first()).toBeVisible();
   expect(purchase).toEqual({ amountCents: 2000, monthly: true });
   const settings = await openUserSettings(page, "billing");
   await expect(settings.getByText("$20.00", { exact: true })).toBeVisible();
@@ -155,7 +155,7 @@ test("choose your own key or monthly credits, then add a one-time top-up", async
     page.waitForEvent("load"),
     dialog.getByRole("button", { name: "Continue to checkout" }).click(),
   ]);
-  await expect(page.getByText("Chief").first()).toBeVisible();
+  await expect(page.getByText("Rook").first()).toBeVisible();
   expect(purchase).toEqual({ amountCents: 5000, monthly: false });
 
   status = billingStatus({
@@ -177,7 +177,7 @@ test("choose your own key or monthly credits, then add a one-time top-up", async
   });
   await page.getByRole("switch", { name: "Use Rook credits", exact: true }).click();
   await page.getByRole("button", { name: "Connect my own", exact: true }).click();
-  await expect(page.getByText("Chief").first()).toBeVisible();
+  await expect(page.getByText("Rook").first()).toBeVisible();
 
   // Own-key organizations from before the plan was paid see when their free period ends.
   status = billingStatus({
@@ -205,7 +205,7 @@ test("choose your own key or monthly credits, then add a one-time top-up", async
   await page.keyboard.press("Escape");
   await expect(plans).toHaveCount(0);
   await expect(page).not.toHaveURL(/[?&]plans/);
-  await expect(page.getByText("Chief").first()).toBeVisible();
+  await expect(page.getByText("Rook").first()).toBeVisible();
 
   // The plan choice has its own link, and Subscribe pays for the plan instead of reopening setup.
   await page.goto("/app?plans");
@@ -227,7 +227,7 @@ test("choose your own key or monthly credits, then add a one-time top-up", async
   ]);
   expect(selectedFunding).toBe(false);
   await page.unroute("**/rpc/billing/selectFunding");
-  await expect(page.getByText("Chief").first()).toBeVisible();
+  await expect(page.getByText("Rook").first()).toBeVisible();
   const freePlan = await openUserSettings(page, "billing");
   await expect(
     freePlan.getByText("Using your API key. Free plan ends Jan 15, 2030.", { exact: true }),

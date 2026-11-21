@@ -1916,7 +1916,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "create_group",
     description:
-      "Create a group of 2 to 10 of this user's bots. Pass bot_ids or bot_names (exact). Give the group a purpose so work can be routed to it. Needs the owner's approval. A new space starts with only the Chief, so with fewer than two bots, add agents first with install_agent (store_agents lists them), then create the group.",
+      "Create a group of 2 to 10 of this user's bots. Pass bot_ids or bot_names (exact). Give the group a purpose so work can be routed to it. Needs the owner's approval. A new space starts with only Rook, so with fewer than two bots, add agents first with install_agent (store_agents lists them), then create the group.",
     inputSchema: {
       type: "object",
       properties: {

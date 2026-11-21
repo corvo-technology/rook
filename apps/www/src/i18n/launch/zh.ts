@@ -26,7 +26,7 @@ const COPY: LaunchCopy = {
     heading: "常见问题",
     items: [
       { question: "什么是智能体？", answer: "一个有名字、有岗位说明、有自己的对话、并拥有你交给它的工具的 AI。你像对同事那样和它说话。它在后台工作，做完后带着结果回来。" },
-      { question: "智能体可以一起工作吗？", answer: "可以。把几个智能体放进一个频道，用 @ 提及其中一个，或交给总管：它会读每个小组的目标，把请求交给最合适的那个。智能体之间也可以互相交接工作。" },
+      { question: "智能体可以一起工作吗？", answer: "可以。把几个智能体放进一个频道，用 @ 提及其中一个，或交给 Rook：它会读每个小组的目标，把请求交给最合适的那个。智能体之间也可以互相交接工作。" },
       { question: "智能体会不问我就行动吗？", answer: "你来选择哪些操作需要你点头，比如发送、付款或删除。智能体会停下，把它想做的事原样展示给你，然后等待。" },
       { question: "智能体可以使用电脑吗？", answer: "可以。智能体可以拥有一台带浏览器、终端和文件的 Linux 电脑，运行在 Docker 或云端，你能看到它的屏幕并接管。在你自己的电脑上，经你允许后它在专属文件夹里工作，那里的命令不是隔离的。" },
       { question: "我的数据存在哪里？", answer: "在云端，对话、记忆和文件存放在我们的服务器上，位于你公司的空间里。在你的电脑或你自己的服务器上，它们就存放在那里。只有发给模型提供方的内容才会离开。" },
@@ -79,7 +79,7 @@ const COPY: LaunchCopy = {
   team: {
     heading: "把它们放进一个频道。",
     accent: "谁做什么，它们自己商量。",
-    copy: "把几个智能体加进频道再提要求。用 @ 提及其中一个，或交给总管：它会读每个小组的目标，把请求交给最合适的那个。每一步都会展示，凡是会改变什么的操作都会等你点头。例如，财务智能体完成月结，销售智能体收到报表。",
+    copy: "把几个智能体加进频道再提要求。用 @ 提及其中一个，或交给 Rook：它会读每个小组的目标，把请求交给最合适的那个。每一步都会展示，凡是会改变什么的操作都会等你点头。例如，财务智能体完成月结，销售智能体收到报表。",
   },
   store: {
     heading: "现成智能体的商店。",
@@ -103,8 +103,8 @@ const COPY: LaunchCopy = {
     window: "Rook",
     rail: { agents: "智能体", routines: "例行任务", workflows: "工作流", more: "更多", store: "商店" },
     workspace: "Pedro",
-    chief: "总管",
-    chiefTitle: "智能体团队负责人",
+    chief: "Rook",
+    chiefTitle: "得力助手",
     chiefLine: "我为各小组建了 5 个例行任务。请批准…",
     channels: "频道",
     directMessages: "私信",
@@ -119,7 +119,7 @@ const COPY: LaunchCopy = {
     approved: "已批准",
     denied: "已拒绝",
     agents: [
-      { name: "Chief", role: "团队负责人", hue: "menta" },
+      { name: "Rook", role: "得力助手", hue: "menta" },
       { name: "Davi", role: "邮件智能体", hue: "rosa" },
       { name: "Bento", role: "支付监控", hue: "azul" },
       { name: "Cora", role: "项目规划", hue: "violeta" },

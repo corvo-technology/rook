@@ -212,7 +212,7 @@ test.describe("a chat with one agent uses the channel's rows", () => {
         "rgba(0, 0, 0, 0)",
       );
       // A message another agent sent shows that agent, its role, and who it came through.
-      const relayed = main.locator("[data-message-id]").filter({ hasText: "via Chief" });
+      const relayed = main.locator("[data-message-id]").filter({ hasText: "via Rook" });
       await expect(relayed).toContainText("CTO");
       await expect(relayed).toContainText("Engineering");
       // Unread channels are bold; read ones are not.

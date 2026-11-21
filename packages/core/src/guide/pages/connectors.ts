@@ -9,7 +9,7 @@ export const connectors: GuidePage = {
         "Connecting Store apps, choosing which agents may use them, MCP servers, chat apps and saved credentials.",
       body: `## Store apps
 
-Open the **Store** and go to **Apps**. Use **Add** on an app and sign in; it then shows **Added**. Choose which agents may use it under **Agents that can use it**: an agent that was not given access cannot use the app, even when it is added. Ask the Chief and it can request access for an agent in the chat; you approve the card. **Uninstall** removes the app, and **Remove** drops one signed-in account.
+Open the **Store** and go to **Apps**. Use **Add** on an app and sign in; it then shows **Added**. Choose which agents may use it under **Agents that can use it**: an agent that was not given access cannot use the app, even when it is added. Ask Rook and it can request access for an agent in the chat; you approve the card. **Uninstall** removes the app, and **Remove** drops one signed-in account.
 
 ## MCP servers
 
@@ -33,7 +33,7 @@ An app marked **OAuth expired** needs signing in again. If an agent says it cann
         "Conectar apps da Loja, escolher quais agentes podem usá-los, servidores MCP, apps de chat e credenciais salvas.",
       body: `## Apps da Loja
 
-Abra a **Loja** e vá em **Apps**. Use **Adicionar** em um app e entre na conta; ele passa a mostrar **Adicionado**. Escolha quais agentes podem usá-lo em **Agentes que podem usar**: um agente sem acesso não consegue usar o app, mesmo adicionado. Peça ao Chefe e ele pode solicitar acesso para um agente no chat; você aprova o cartão. **Desinstalar** remove o app, e **Remover** tira uma conta conectada.
+Abra a **Loja** e vá em **Apps**. Use **Adicionar** em um app e entre na conta; ele passa a mostrar **Adicionado**. Escolha quais agentes podem usá-lo em **Agentes que podem usar**: um agente sem acesso não consegue usar o app, mesmo adicionado. Peça ao Rook e ele pode solicitar acesso para um agente no chat; você aprova o cartão. **Desinstalar** remove o app, e **Remover** tira uma conta conectada.
 
 ## Servidores MCP
 

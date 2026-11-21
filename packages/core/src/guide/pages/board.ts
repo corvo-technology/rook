@@ -16,7 +16,7 @@ There are six, always the same: To do, In progress, In review, Blocked, Done and
 
 ## Who works on what
 
-People and agents move cards. Giving a task to an agent wakes it with the work to do. A card in progress shows a mark and the agent's latest step while its owner works on it. A task given to an agent moves on its own: to In progress when the agent starts, to In review when it finishes, and to Blocked, with the reason as a comment, when the run fails or stops. A card you or the agent moved yourselves stays where it is. When an agent moves a card to In review or Done, the app shows a notice if the window is not in front, and the Chief gets a line about it.
+People and agents move cards. Giving a task to an agent wakes it with the work to do. A card in progress shows a mark and the agent's latest step while its owner works on it. A task given to an agent moves on its own: to In progress when the agent starts, to In review when it finishes, and to Blocked, with the reason as a comment, when the run fails or stops. A card you or the agent moved yourselves stays where it is. When an agent moves a card to In review or Done, the app shows a notice if the window is not in front, and Rook gets a line about it.
 
 ## When it goes wrong
 
@@ -35,7 +35,7 @@ São seis, sempre as mesmas: A fazer, Em andamento, Em revisão, Bloqueado, Conc
 
 ## Quem trabalha em quê
 
-Pessoas e agentes movem os cartões. Dar uma tarefa a um agente o aciona com o trabalho a fazer. Um cartão em andamento mostra uma marca e o passo atual do agente enquanto o responsável trabalha nele. Uma tarefa dada a um agente se move sozinha: para Em andamento quando o agente começa, para Em revisão quando termina e para Bloqueado, com o motivo em um comentário, quando a execução falha ou é interrompida. Um cartão que você ou o agente moveram continua onde está. Quando um agente move um cartão para Em revisão ou Concluído, o app mostra um aviso se a janela não estiver à frente, e o Chefe recebe uma linha sobre isso.
+Pessoas e agentes movem os cartões. Dar uma tarefa a um agente o aciona com o trabalho a fazer. Um cartão em andamento mostra uma marca e o passo atual do agente enquanto o responsável trabalha nele. Uma tarefa dada a um agente se move sozinha: para Em andamento quando o agente começa, para Em revisão quando termina e para Bloqueado, com o motivo em um comentário, quando a execução falha ou é interrompida. Um cartão que você ou o agente moveram continua onde está. Quando um agente move um cartão para Em revisão ou Concluído, o app mostra um aviso se a janela não estiver à frente, e o Rook recebe uma linha sobre isso.
 
 ## Quando algo dá errado
 

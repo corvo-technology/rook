@@ -4,11 +4,11 @@ import { captureScreenshot, rpc, signupKeepingTour } from "./helpers";
 
 test.describe.configure({ mode: "serial" });
 
-const CHIEF_MARK = "Stuck? Ask the Chief.";
+const CHIEF_MARK = "Stuck? Ask Rook.";
 const ASK_MARK = "When an agent needs you, it asks here and waits.";
 
 /**
- * A new account that has a Chief and one other bot, opened on the other bot. Opening the Chief's
+ * A new account that has a Rook and one other bot, opened on the other bot. Opening the Rook's
  * chat ends its mark, so the account never lands there on its own.
  */
 async function startTour(page: Page, name: string) {
@@ -26,7 +26,7 @@ async function startTour(page: Page, name: string) {
   return other.id;
 }
 
-test("the chief mark shows after the first reply and ends when the Chief's chat opens", async ({
+test("the chief mark shows after the first reply and ends when the Rook's chat opens", async ({
   page,
 }, testInfo) => {
   const botId = await startTour(page, "Tour chief");

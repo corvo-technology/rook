@@ -56,6 +56,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- The first agent of every space, the Chief, is now Rook, your right hand ("Braço direito" in Portuguese). Spaces that kept the default name and description follow automatically; an agent you renamed is left alone, and `@Chief` and `@Chefe` still reach it in existing channels. New spaces start with four quiet routines for Rook (weekly plan, daily brief, board review, weekly wrap-up) that you can pause or remove; existing spaces get none until you ask Rook to add them.
 - Mobile routine and connector mention suggestions load only when requested, with bounded routine-request concurrency.
 - MCP result truncation no longer allocates an encoded copy of the full oversized result.
 - Sitemap filtering reads blog category counts only for category URLs, without caching content across builds.

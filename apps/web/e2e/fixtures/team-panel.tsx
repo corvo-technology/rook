@@ -47,7 +47,7 @@ const MEMBERS = [
 const AGENTS = [
   { id: "bento", name: "Bento", title: "Finance", color: color("blue") },
   { id: "cora", name: "Cora", title: "Reports", color: color("green") },
-  { id: "chief", name: "Chief", title: "Team chief", color: color("purple") },
+  { id: "chief", name: "Rook", title: "Team chief", color: color("purple") },
 ];
 
 const ask = (id: string, text: string, detail: string): PendingApproval["block"] => ({

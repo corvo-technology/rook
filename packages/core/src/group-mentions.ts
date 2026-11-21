@@ -12,6 +12,21 @@ export function memberName(
   return members.find((member) => member.botId === botId)?.name;
 }
 
+const DEFAULT_CHIEF_NAME = "rook";
+/** What the first agent was called before it became Rook; threads written then still say it. */
+const CHIEF_MENTION_ALIASES = ["Chief", "Chefe"];
+
+/**
+ * The names a member answers to: its own, and, for Rook, the older "@Chief" and "@Chefe". An
+ * alias never takes over a name another member really carries.
+ */
+function mentionNames(member: GroupMemberRef, everyone: readonly GroupMemberRef[]): string[] {
+  const own = member.name.trim();
+  if (own.toLowerCase() !== DEFAULT_CHIEF_NAME) return [own];
+  const taken = new Set(everyone.map((other) => other.name.trim().toLowerCase()));
+  return [own, ...CHIEF_MENTION_ALIASES.filter((alias) => !taken.has(alias.toLowerCase()))];
+}
+
 const MENTION_PATTERN = /@([A-Za-z0-9][A-Za-z0-9_-]{0,39})/g;
 
 function escapeRegExp(value: string): string {
@@ -56,7 +71,10 @@ export function resolveMentionedBotIds(input: {
     if (membersById.has(mentionId)) targetIds.add(mentionId);
   }
 
-  const names = ["everyone", ...input.members.map((member) => member.name.trim())]
+  const names = [
+    "everyone",
+    ...input.members.flatMap((member) => mentionNames(member, input.members)),
+  ]
     .filter(Boolean)
     .sort((a, b) => b.length - a.length);
   // Consume each mention once so a full name cannot also wake its prefix.
@@ -72,7 +90,7 @@ export function resolveMentionedBotIds(input: {
     for (const member of input.members) targetIds.add(member.id);
   } else {
     for (const member of input.members) {
-      if (isMentioned(member.name)) targetIds.add(member.id);
+      if (mentionNames(member, input.members).some(isMentioned)) targetIds.add(member.id);
     }
   }
 
@@ -99,9 +117,10 @@ export function resolveMentionedOutsideBotIds(input: {
   for (const mentionId of input.explicitMentions ?? []) {
     if (outsideIds.has(mentionId)) targetIds.add(mentionId);
   }
-  // Longest first over everyone, so "@Chief of Staff" is not read as "@Chief".
-  const names = [...input.members, ...outside]
-    .map((bot) => bot.name.trim())
+  // Longest first over everyone, so "@Rook Sales" is not read as "@Rook".
+  const everyone = [...input.members, ...outside];
+  const names = everyone
+    .flatMap((bot) => mentionNames(bot, everyone))
     .filter(Boolean)
     .sort((a, b) => b.length - a.length);
   if (names.length === 0) return [...targetIds];
@@ -113,7 +132,9 @@ export function resolveMentionedOutsideBotIds(input: {
     [...input.text.matchAll(pattern)].map((match) => match[1]!.toLowerCase()),
   );
   for (const bot of outside) {
-    if (mentioned.has(bot.name.trim().toLowerCase())) targetIds.add(bot.id);
+    if (mentionNames(bot, everyone).some((name) => mentioned.has(name.toLowerCase()))) {
+      targetIds.add(bot.id);
+    }
   }
   return [...targetIds];
 }
@@ -144,15 +165,23 @@ export function inferHandoffTargetBotId(
   prompt: string,
   members: GroupMemberRef[],
 ): string | undefined {
-  const handedTo = members.find((member) => {
-    const escaped = escapeRegExp(member.name.trim());
-    return escaped
-      ? new RegExp(`\\bto\\s+@?${escaped}(?![\\p{L}\\p{N}_-])`, "iu").test(prompt)
-      : false;
-  });
+  const handedTo = members.find((member) =>
+    mentionNames(member, members).some((name) => {
+      const escaped = escapeRegExp(name);
+      return escaped
+        ? new RegExp(`\\bto\\s+@?${escaped}(?![\\p{L}\\p{N}_-])`, "iu").test(prompt)
+        : false;
+    }),
+  );
   if (handedTo) return handedTo.id;
-  const mentioned = members.find((member) => hasMentionToken(prompt, member.name));
+  const mentioned = members.find((member) =>
+    mentionNames(member, members).some((name) => hasMentionToken(prompt, name)),
+  );
   if (mentioned) return mentioned.id;
   const name = inferHandoffTargetName(prompt)?.toLowerCase();
-  return name ? members.find((member) => member.name.toLowerCase() === name)?.id : undefined;
+  return name
+    ? members.find((member) =>
+        mentionNames(member, members).some((candidate) => candidate.toLowerCase() === name),
+      )?.id
+    : undefined;
 }

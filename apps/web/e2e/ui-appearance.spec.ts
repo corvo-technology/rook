@@ -11,7 +11,7 @@ async function captureSidebarSearchSelected(
   const trigger = aside.getByTestId("sidebar-search-trigger");
   if ((await trigger.getAttribute("aria-pressed")) !== "true") await trigger.click();
   const search = aside.getByTestId("sidebar-search");
-  const selected = aside.getByRole("button", { name: /^Chief/ }).first();
+  const selected = aside.getByRole("button", { name: /^Rook/ }).first();
   await expect(search).toBeVisible();
   await expect(selected).toBeVisible();
   await search.scrollIntoViewIfNeeded();
@@ -376,11 +376,11 @@ test("footer app marks follow the Store", async ({ page }) => {
     (response) => response.url().includes("connections/catalog") && response.status() === 503,
   );
   await page
-    .getByRole("button", { name: /^Chief/ })
+    .getByRole("button", { name: /^Rook/ })
     .first()
     .click({ button: "right" });
   await page.getByRole("menuitem", { name: "Duplicate", exact: true }).click();
-  await expect(page.getByRole("button", { name: /^Chief copy/ }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Rook copy/ }).first()).toBeVisible();
   await failedRefresh;
   await expect(footer.locator("img")).toHaveAttribute("src", logo);
   failCatalog = false;
@@ -389,15 +389,15 @@ test("footer app marks follow the Store", async ({ page }) => {
     (response) => response.url().includes("connections/list") && response.status() === 503,
   );
   await page
-    .getByRole("button", { name: /^Chief copy/ })
+    .getByRole("button", { name: /^Rook copy/ })
     .first()
     .click({ button: "right" });
   await page.getByRole("menuitem", { name: "Duplicate", exact: true }).click();
-  await expect(page.getByRole("button", { name: /^Chief copy copy/ }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Rook copy copy/ }).first()).toBeVisible();
   await failedConnections;
   await expect(footer.locator("img")).toHaveAttribute("src", logo);
   failConnections = false;
-  for (const name of [/^Chief copy copy/, /^Chief copy/, /^Chief/]) {
+  for (const name of [/^Rook copy copy/, /^Rook copy/, /^Rook/]) {
     const bot = page.getByRole("button", { name }).first();
     await bot.click({ button: "right" });
     await page.getByRole("menuitem", { name: "Archive", exact: true }).click();

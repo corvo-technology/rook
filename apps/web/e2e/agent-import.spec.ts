@@ -716,7 +716,7 @@ test("imports into an existing bot only when chosen, keeping its instructions un
   await page.goto("/app");
   await page.waitForURL(/\/app\/[^/]+$/);
   const [chief] = await rpc<Bot[]>(page, "bots/list", {});
-  await rpc(page, "bots/update", { botId: chief!.id, instructions: "Chief's own instructions." });
+  await rpc(page, "bots/update", { botId: chief!.id, instructions: "Rook's own instructions." });
 
   const home = testInfo.outputPath("openclaw-existing");
   writeFolder(home, {
@@ -740,7 +740,7 @@ test("imports into an existing bot only when chosen, keeping its instructions un
   await expect(picker).toHaveValue("");
   await expect(preview.getByRole("button", { name: "Add", exact: true })).toBeDisabled();
   await expect(preview.getByRole("textbox", { name: "Name" })).toHaveCount(0);
-  await picker.selectOption({ label: "Chief" });
+  await picker.selectOption({ label: "Rook" });
   const choice = destination.getByTestId("agent-import-instructions-choice");
   await expect(choice.getByRole("button", { name: "Keep its instructions" })).toHaveAttribute(
     "aria-pressed",
@@ -757,7 +757,7 @@ test("imports into an existing bot only when chosen, keeping its instructions un
   await page.waitForURL(new RegExp(`/app/${chief!.id}$`));
   await expect(page.getByTestId("agent-import")).toHaveCount(0);
   const kept = await rpc<Bot>(page, "bots/get", { botId: chief!.id });
-  expect([kept.name, kept.instructions]).toEqual(["Chief", "Chief's own instructions."]);
+  expect([kept.name, kept.instructions]).toEqual(["Rook", "Rook's own instructions."]);
   const memory = await rpc<MemoryDocument[]>(page, "memory/list", { botId: chief!.id });
   expect(memory.map((doc) => doc.path).sort()).toEqual(["MEMORY-2.md", "MEMORY.md"]);
 
@@ -769,7 +769,7 @@ test("imports into an existing bot only when chosen, keeping its instructions un
     .getByTestId("agent-import-destination")
     .getByRole("button", { name: "Add to an existing bot" })
     .click();
-  await second.getByRole("combobox", { name: "Bot" }).selectOption({ label: "Chief" });
+  await second.getByRole("combobox", { name: "Bot" }).selectOption({ label: "Rook" });
   await second.getByRole("button", { name: "Replace its instructions" }).click();
   await expect(second.getByTestId("agent-import-instructions")).toBeVisible();
   await captureScreenshot(page, testInfo, "agent-import-destination-replace");
@@ -799,7 +799,7 @@ test("imports into an existing bot only when chosen, keeping its instructions un
   );
   await expect(dialog).toHaveCount(0);
   const restored = await rpc<Bot>(page, "bots/get", { botId: chief!.id });
-  expect(restored.instructions).toBe("Chief's own instructions.");
+  expect(restored.instructions).toBe("Rook's own instructions.");
 });
 
 /** Drops a synthetic folder (as file system entries) or files onto the chat composer. */

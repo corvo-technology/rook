@@ -20,7 +20,7 @@ const ago = (ms: number) => new Date(Date.now() - ms).toISOString();
 const bots: SpaceBot[] = [
   [
     "chief",
-    "Chief",
+    "Rook",
     "Orquestra os times e decide quem faz o quê",
     "green",
     "running",

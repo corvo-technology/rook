@@ -20,7 +20,7 @@ for (const theme of ["light", "dark"]) {
     await expect(footer).toHaveAttribute("aria-expanded", "false");
 
     // The working line names who is working, above the composer.
-    await expect(page.getByTestId("working-line")).toHaveText("Chief and Bento are working…");
+    await expect(page.getByTestId("working-line")).toHaveText("Rook and Bento are working…");
 
     await footer.focus();
     await footer.press("Enter");
@@ -85,7 +85,7 @@ for (const theme of ["light", "dark"]) {
   }, testInfo) => {
     await page.goto(`/e2e/fixtures/channel-threads.html?theme=${theme}&working=2`);
     const line = page.getByTestId("working-line");
-    await expect(line).toHaveText("Chief and Bento are working…");
+    await expect(line).toHaveText("Rook and Bento are working…");
     await expect(line.locator('[data-state="working"]')).toHaveCount(2);
     await expect(line.locator(".corvo-bot-avatar-ring")).toHaveCount(0);
     await captureScreenshot(page, testInfo, `agents-working-${theme}`);

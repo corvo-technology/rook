@@ -9,9 +9,9 @@ for (const theme of ["light", "dark"]) {
   }, testInfo) => {
     await page.goto(`/e2e/fixtures/team-board.html?theme=${theme}&locale=en`);
 
-    // The Chief leads, and is not listed again among those with no team.
-    await expect(page.getByTestId("team-chief")).toContainText("Chief");
-    await expect(page.getByTestId("team-unassigned")).not.toContainText("Chief");
+    // The Rook leads, and is not listed again among those with no team.
+    await expect(page.getByTestId("team-chief")).toContainText("Rook");
+    await expect(page.getByTestId("team-unassigned")).not.toContainText("Rook");
     await expect(page.getByTestId("team-unassigned")).toContainText("Not in a team");
 
     // A team says what it is for, how many are in it and how many are working.

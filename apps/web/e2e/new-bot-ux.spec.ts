@@ -21,7 +21,7 @@ test("create opens dialog, then empty chat; picker lists bots; sidebar collapses
   await expect(picker).toBeVisible();
   await expect(picker.getByPlaceholder("Search")).toBeVisible();
   await expect(picker.getByTestId("create-new-bot")).toBeVisible();
-  await expect(picker.getByText("Chief", { exact: true })).toBeVisible();
+  await expect(picker.getByText("Rook", { exact: true })).toBeVisible();
   await captureScreenshot(page, testInfo, "plus-picker-bots");
 
   await picker.getByPlaceholder("Search").focus();
@@ -134,7 +134,7 @@ test("a stale roster refresh started before creation keeps the new bot selected"
 }, testInfo) => {
   await signup(page, `stale-create-${Date.now()}@corvo.test`, "password12", "Stale Create");
   await completeOnboarding(page);
-  await expect(page.getByRole("combobox", { name: "Message Chief", exact: true })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message Rook", exact: true })).toBeVisible();
 
   let markReady!: () => void;
   let releaseList!: () => void;

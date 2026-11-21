@@ -51,7 +51,7 @@ const bot = (id, name, title, color, preview, extra = {}) => ({
 });
 
 export const BOTS = [
-  bot("chief", "Chief", "Team lead", "mint", "Created 5 routines for the squads. Approve…", {
+  bot("chief", "Rook", "Right hand", "mint", "Created 5 routines for the squads. Approve…", {
     spawnKey: "onboarding:first",
     squadRouting: true,
     fleetManagement: true,

@@ -1,26 +1,26 @@
 # Squads
 
-A squad is a group chat with a short purpose. The Chief reads the purposes and sends a request to the
+A squad is a group chat with a short purpose. Rook reads the purposes and sends a request to the
 squad that fits, so you can hand work to the team once instead of naming a group or a bot.
 
 ## Set a purpose
 
 Open a group's settings and fill **Purpose**: one line, up to 300 characters, for example "Analyzes
 competitors, reviews design and writes landing page copy". Clear the field to remove it. A purpose is
-data the Chief reads, not an instruction it follows; it is escaped and labelled untrusted like names.
+data Rook reads, not an instruction it follows; it is escaped and labelled untrusted like names.
 
-## Let the Chief create squads
+## Let Rook create squads
 
-Ask the Chief for a team and it can create the group from bots you already have, adding Store agents
+Ask Rook for a team and it can create the group from bots you already have, adding Store agents
 first when you say yes (the Store's agents bring their skills, which are shared by all your bots). It
 writes a one-line purpose for the group. Every group it creates or changes shows an approval card that
 lists the name, the members and the purpose, and nothing happens until you approve.
 
-## Let the Chief route work
+## Let Rook route work
 
 A bot with **Route work to squads** on can hand a request to any of your groups in the same space, even
 one it is not a member of. The switch is in the bot's **Advanced** settings. It is off for every bot,
-and on for the Chief an account is given. An existing Chief needs it turned on once.
+and on for Rook an account is given. An existing Rook needs it turned on once.
 
 Routing needs all of these at the same time:
 
@@ -31,7 +31,7 @@ Routing needs all of these at the same time:
 
 Approval modes and Allow/Block lists apply to everything the squad does afterwards, exactly as before.
 
-When two squads fit about equally the Chief asks you which one instead of guessing. Each handoff
+When two squads fit about equally Rook asks you which one instead of guessing. Each handoff
 carries a short reason, shown beside it in the group thread.
 
 ## The squad screen

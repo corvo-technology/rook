@@ -7,7 +7,7 @@ sidebar:
 
 O assistente não precisa ser uma janela de chat. Duas chamadas deixam a IA **dentro das suas telas**: `Rook.ask` devolve o resultado de uma tarefa em JSON, e `Rook.recorder` grava a consulta no seu formulário e devolve os campos já preenchidos. O seu produto mostra tudo ao profissional, que revisa e só então salva. **O Rook nunca grava nada no seu sistema.**
 
-As chamadas usam o Chief, os modelos e o crédito do cliente, como qualquer conversa, e valem só enquanto o cliente está ativo e com crédito.
+As chamadas usam o agente principal, os modelos e o crédito do cliente, como qualquer conversa, e valem só enquanto o cliente está ativo e com crédito.
 
 ```html
 <script src="https://app.rook.team/sdk.js"></script>

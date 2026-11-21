@@ -23,9 +23,9 @@ test("focus choice suggests apps and preserves a completed connection", async ({
 
   await page.getByRole("button", { name: /Day-to-day work/ }).click();
   // The focus step suggests apps but must not rename the bot: the name the
-  // user chose during creation ("Chief") is preserved.
-  await expect(page.locator("main").getByText("Chief", { exact: true })).toBeVisible();
-  await expect(page.getByRole("combobox", { name: "Message Chief", exact: true })).toBeVisible();
+  // user chose during creation ("Rook") is preserved.
+  await expect(page.locator("main").getByText("Rook", { exact: true })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message Rook", exact: true })).toBeVisible();
   await expect(page.getByText("Slack", { exact: true })).toBeVisible();
   await expect(page.getByText("Gmail", { exact: true })).toBeVisible();
   const connectionCards = page.getByRole("group", { name: / connection$/ });

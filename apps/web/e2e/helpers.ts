@@ -28,7 +28,7 @@ export async function rpc<T>(page: Page, procedure: string, body: unknown): Prom
 
 /**
  * Moves through the onboarding steps without choosing anything: Continue on each step until Home
- * opens, then the Chief's chat. A no-op once the app is open, and it
+ * opens, then the Rook's chat. A no-op once the app is open, and it
  * stops at the model step when one is due.
  */
 export async function skipOnboardingSteps(page: Page) {
@@ -45,7 +45,7 @@ export async function skipOnboardingSteps(page: Page) {
       .click();
     await page.waitForURL((url) => url.href !== before, { timeout: 20_000 });
   }
-  // The first run ends on Home; specs that go on from there start in the Chief's chat.
+  // The first run ends on Home; specs that go on from there start in the Rook's chat.
   if (new URL(page.url()).pathname === "/app/home") await page.goto("/app");
 }
 
@@ -53,9 +53,9 @@ export async function completeOnboarding(page: Page, testInfo?: TestInfo) {
   await page.waitForURL(/\/(onboarding|app)/, { timeout: 20_000 });
   await skipOnboardingSteps(page);
   // Optional Server integrations step (needsSetup). Skip when shown, then the
-  // first bot is created automatically — land in Chief's chat with no form.
+  // first bot is created automatically — land in Rook's chat with no form.
   const integrations = page.getByRole("heading", { name: "Server integrations", exact: true });
-  const chief = page.getByText("Chief").first();
+  const chief = page.getByText("Rook").first();
   await integrations.or(chief).waitFor({ timeout: 20_000 });
   if ((await chief.isVisible().catch(() => false)) && page.url().includes("/app")) {
     if (testInfo) {
@@ -69,7 +69,7 @@ export async function completeOnboarding(page: Page, testInfo?: TestInfo) {
     await page.getByRole("button", { name: "Skip", exact: true }).click();
   }
   await page.waitForURL(/\/app\//, { timeout: 20_000 });
-  await expect(page.getByText("Chief").first()).toBeVisible();
+  await expect(page.getByText("Rook").first()).toBeVisible();
   if (testInfo) {
     await captureScreenshot(page, testInfo, "03-create-first-bot");
     await captureScreenshot(page, testInfo, "06-onboarding-complete");
@@ -130,7 +130,7 @@ export async function signupKeepingTour(page: Page, email: string, password: str
   await createAccount(page, email, password, name);
 }
 
-/** Creates the account and moves through onboarding to the Chief's chat. */
+/** Creates the account and moves through onboarding to the Rook's chat. */
 export async function signup(
   page: Page,
   email: string,

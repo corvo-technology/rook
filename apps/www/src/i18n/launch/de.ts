@@ -26,7 +26,7 @@ const COPY: LaunchCopy = {
     heading: "Fragen",
     items: [
       { question: "Was ist ein Agent?", answer: "Eine KI mit Namen, Stellenbeschreibung, eigener Unterhaltung und den Tools, die du ihr gibst. Du sprichst mit ihr wie mit einem Kollegen. Sie arbeitet im Hintergrund und kommt mit dem Ergebnis zurück." },
-      { question: "Können Agenten zusammenarbeiten?", answer: "Ja. Setze mehrere in einen Kanal und erwähne einen mit @, oder lass den Chief die Anfrage an das Squad schicken, dessen Zweck passt. Agenten können sich auch gegenseitig Arbeit übergeben." },
+      { question: "Können Agenten zusammenarbeiten?", answer: "Ja. Setze mehrere in einen Kanal und erwähne einen mit @, oder lass Rook die Anfrage an das Squad schicken, dessen Zweck passt. Agenten können sich auch gegenseitig Arbeit übergeben." },
       { question: "Handelt ein Agent, ohne zu fragen?", answer: "Du bestimmst, welche Aktionen dein Ja brauchen, etwa Senden, Bezahlen oder Löschen. Der Agent hält an, zeigt genau, was er tun will, und wartet." },
       { question: "Kann ein Agent einen Computer nutzen?", answer: "Ja. Ein Agent kann einen Linux-Computer mit Browser, Terminal und Dateien bekommen, in Docker oder in der Cloud, und du siehst seinen Bildschirm und kannst übernehmen. Auf deinem eigenen Computer arbeitet er in einem eigenen Ordner, wenn du es erlaubst, und dort sind seine Befehle nicht isoliert." },
       { question: "Wo liegen meine Daten?", answer: "In der Cloud liegen Unterhaltungen, Gedächtnis und Dateien auf unseren Servern, im Bereich deines Unternehmens. Auf deinem Computer oder einem eigenen Server bleiben sie dort. Nur was an den Modellanbieter gesendet wird, verlässt sie." },
@@ -79,7 +79,7 @@ const COPY: LaunchCopy = {
   team: {
     heading: "Setz sie in einen Kanal.",
     accent: "Sie klären, wer was macht.",
-    copy: "Füge mehrere Agenten einem Kanal hinzu und frag. Erwähne einen mit @, oder überlass es dem Chief, der den Zweck jedes Squads liest und die Anfrage an das passende weitergibt. Jeder Schritt wird gezeigt, und alles, was etwas verändert, wartet auf dich. Zum Beispiel schließt der Finanz-Agent den Monat ab und der Vertriebs-Agent erhält den Bericht.",
+    copy: "Füge mehrere Agenten einem Kanal hinzu und frag. Erwähne einen mit @, oder überlass es Rook, der den Zweck jedes Squads liest und die Anfrage an das passende weitergibt. Jeder Schritt wird gezeigt, und alles, was etwas verändert, wartet auf dich. Zum Beispiel schließt der Finanz-Agent den Monat ab und der Vertriebs-Agent erhält den Bericht.",
   },
   store: {
     heading: "Ein Store fertiger Agenten.",
@@ -103,8 +103,8 @@ const COPY: LaunchCopy = {
     window: "Rook",
     rail: { agents: "Agenten", routines: "Routinen", workflows: "Workflows", more: "Mehr", store: "Store" },
     workspace: "Pedro",
-    chief: "Chef",
-    chiefTitle: "Leiter des Agententeams",
+    chief: "Rook",
+    chiefTitle: "Rechte Hand",
     chiefLine: "5 Routinen für die Squads angelegt. Bitte freigeben…",
     channels: "Kanäle",
     directMessages: "Direktnachrichten",
@@ -119,7 +119,7 @@ const COPY: LaunchCopy = {
     approved: "Freigegeben",
     denied: "Abgelehnt",
     agents: [
-      { name: "Chief", role: "Leiter des Teams", hue: "menta" },
+      { name: "Rook", role: "Rechte Hand", hue: "menta" },
       { name: "Davi", role: "E-Mail-Agent", hue: "rosa" },
       { name: "Bento", role: "Zahlungswächter", hue: "azul" },
       { name: "Cora", role: "Projektplaner", hue: "violeta" },

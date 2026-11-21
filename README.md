@@ -43,7 +43,7 @@ development, support, sales, design, knowledge and people. Everything about them
 
 ### Channels and squads
 
-Add several agents to a channel and ask. Mention one with `@`, or leave it to the Chief: it reads each
+Add several agents to a channel and ask. Mention one with `@`, or leave it to Rook: it reads each
 squad's purpose and routes the request to the one that fits. Agents hand work to each other, and every
 step is shown.
 

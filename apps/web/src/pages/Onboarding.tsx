@@ -661,7 +661,7 @@ export function OnboardingPage() {
     {
       business: businessLabels,
       imported: t`Imported`,
-      justTheChief: t`Just the Chief`,
+      justTheChief: t`Just Rook`,
       agents: (count) => (count === 1 ? t`1 agent` : t`${count} agents`),
     },
   );
@@ -676,8 +676,8 @@ export function OnboardingPage() {
   const name = firstName(person.name);
   const narration: Record<OnboardingStepId, string> = {
     workspace: name
-      ? t`Hi, ${name}. I'm the Chief. We'll set up your team in about two minutes.`
-      : t`Hi. I'm the Chief. We'll set up your team in about two minutes.`,
+      ? t`Hi, ${name}. I'm Rook. We'll set up your team in about two minutes.`
+      : t`Hi. I'm Rook. We'll set up your team in about two minutes.`,
     business: t`What does the workspace do? Every agent will know.`,
     you: t`Now a little about you.`,
     start: t`Bring agents you already use, or I'll suggest a team.`,

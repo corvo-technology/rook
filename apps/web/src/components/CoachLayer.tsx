@@ -108,7 +108,7 @@ export function CoachLayer({
   const sentence: Partial<Record<TourMark, string>> = {
     ask: t`When an agent needs you, it asks here and waits.`,
     first: t`This isn't sent yet. Edit it or send it.`,
-    chief: t`Stuck? Ask the Chief.`,
+    chief: t`Stuck? Ask Rook.`,
     missions: t`Each one checks itself off when you do it.`,
   };
   const text = sentence[shown];

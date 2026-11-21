@@ -12,7 +12,7 @@ const labels = {
     other: "Something else",
   },
   imported: "Imported",
-  justTheChief: "Just the Chief",
+  justTheChief: "Just Rook",
   agents: (count: number) => `${count} agents`,
 } as const;
 
@@ -48,7 +48,7 @@ describe("railDetails", () => {
       "Imported",
     );
     expect(railDetails({ ...base, team: { way: "blank", agents: 0 } }, labels).start).toBe(
-      "Just the Chief",
+      "Just Rook",
     );
   });
 });

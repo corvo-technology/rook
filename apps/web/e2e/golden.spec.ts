@@ -29,11 +29,11 @@ test("two users are isolated and a bot completes durable work", async ({ browser
   const stamp = Date.now();
   await signup(pageA, `ada-${stamp}@corvo.test`, "password12", "Ada", testInfo);
   await completeOnboarding(pageA, testInfo);
-  await expect(pageA.getByText("Chief").first()).toBeVisible();
+  await expect(pageA.getByText("Rook").first()).toBeVisible();
 
   await signup(pageB, `bob-${stamp}@corvo.test`, "password12", "Bob");
   await completeOnboarding(pageB);
-  await expect(pageB.getByText("Chief").first()).toBeVisible();
+  await expect(pageB.getByText("Rook").first()).toBeVisible();
   await expect(pageB.getByText("Ada", { exact: true })).toHaveCount(0);
 
   const composer = pageA.getByRole("combobox", { name: /^Message/ });
@@ -359,7 +359,7 @@ test("takeover, routine, plugins, and export are reachable", async ({ page }, te
 
   await page.goBack();
 
-  await page.getByText("Chief").first().click();
+  await page.getByText("Rook").first().click();
   const gear = page.getByRole("button", { name: "Show settings" });
   if (!(await gear.isVisible().catch(() => false))) {
     await page.getByRole("button", { name: "Agent computer", exact: true }).click();
@@ -375,10 +375,10 @@ test("takeover, routine, plugins, and export are reachable", async ({ page }, te
   expect(download.suggestedFilename()).toMatch(/chief-export\.json/i);
   await page.getByRole("button", { name: "Close panel" }).click();
 
-  await page.locator("aside").first().getByRole("button", { name: /Chief/ }).first().click({
+  await page.locator("aside").first().getByRole("button", { name: /Rook/ }).first().click({
     button: "right",
   });
-  const botMenu = page.getByRole("menu", { name: "Actions for Chief" });
+  const botMenu = page.getByRole("menu", { name: "Actions for Rook" });
   await expect(botMenu.getByRole("menuitem", { name: "Archive" })).toBeVisible();
   await botMenu.getByRole("menuitem", { name: "Delete" }).click();
   await expect(page.getByRole("radio", { name: /Keep memories/ })).toBeChecked();
@@ -423,14 +423,14 @@ test("sign-in, spawn, and stop work in the shell", async ({ page }, testInfo) =>
 
   await page
     .locator("[data-sidebar-group]")
-    .getByRole("button", { name: /^Chief/ })
+    .getByRole("button", { name: /^Rook/ })
     .click();
   await composer.fill("keep working until I stop you");
   await page.keyboard.press("Enter");
   await expect(page.getByRole("button", { name: "Stop", exact: true })).toBeVisible({
     timeout: 30_000,
   });
-  await expect(composer).toHaveAttribute("placeholder", "Message Chief");
+  await expect(composer).toHaveAttribute("placeholder", "Message Rook");
   await expect(page.getByRole("button", { name: "Send", exact: true })).toBeVisible();
   const holdToTalk = page
     .getByTestId("composer-bar")
@@ -449,7 +449,7 @@ test("sign-in, spawn, and stop work in the shell", async ({ page }, testInfo) =>
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole("button", { name: "Send", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Stop", exact: true })).toBeVisible();
-  await expect(composer).toHaveAttribute("placeholder", "Message Chief");
+  await expect(composer).toHaveAttribute("placeholder", "Message Rook");
   await captureScreenshot(page, testInfo, "14-active-bot-work-mobile");
   await page.setViewportSize({ width: 1280, height: 720 });
   expect(browserErrors).toEqual([]);
@@ -483,7 +483,7 @@ test("sign-in, spawn, and stop work in the shell", async ({ page }, testInfo) =>
   await page.getByPlaceholder("Password").fill("password12");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await page.waitForURL(/\/app/, { timeout: 20_000 });
-  await expect(sidebarBotButton(page, /^Chief/)).toBeVisible();
+  await expect(sidebarBotButton(page, /^Rook/)).toBeVisible();
   await expect(sidebarBotButton(page, /Scout/)).toBeVisible();
   await captureScreenshot(page, testInfo, "15-restored-session");
 });
@@ -495,16 +495,16 @@ test("bot context menu pins, duplicates, edits, and confirms deletion", async ({
   await signup(page, `menu-${stamp}@corvo.test`, "password12", "Menu");
   await completeOnboarding(page);
 
-  const chief = page.getByRole("button", { name: /Chief/ }).first();
+  const chief = page.getByRole("button", { name: /Rook/ }).first();
   await chief.click({ button: "right" });
-  await expect(page.getByRole("menu", { name: "Actions for Chief" })).toBeVisible();
+  await expect(page.getByRole("menu", { name: "Actions for Rook" })).toBeVisible();
   await expect(page.getByRole("menuitem", { name: "Edit Profile" })).toBeVisible();
   await expect(page.getByRole("menuitem", { name: "Duplicate" })).toBeVisible();
   await expect(page.getByRole("menuitem", { name: "Delete" })).toBeVisible();
   await captureScreenshot(page, testInfo, "16-bot-context-menu");
   await page.getByRole("menuitem", { name: "Mark as Unread" }).click();
 
-  // Chief is the open bot, so the auto-read on window focus must not undo the manual mark.
+  // Rook is the open bot, so the auto-read on window focus must not undo the manual mark.
   await page.evaluate(() => window.dispatchEvent(new Event("focus")));
   await chief.click({ button: "right" });
   await expect(page.getByRole("menuitem", { name: "Mark as Read" })).toBeVisible();
@@ -516,22 +516,22 @@ test("bot context menu pins, duplicates, edits, and confirms deletion", async ({
   await chief.click({ button: "right" });
   await expect(page.getByRole("menuitem", { name: "Unpin", exact: true })).toBeVisible();
   await page.getByRole("menuitem", { name: "Duplicate" }).click();
-  await expect(page.getByText("Chief copy").first()).toBeVisible();
+  await expect(page.getByText("Rook copy").first()).toBeVisible();
   await captureScreenshot(page, testInfo, "17-pinned-and-duplicated-bot");
 
-  const copy = page.getByRole("button", { name: /Chief copy/ }).first();
+  const copy = page.getByRole("button", { name: /Rook copy/ }).first();
   await copy.click({ button: "right" });
   await page.getByRole("menuitem", { name: "Delete" }).click();
-  await expect(page.getByRole("complementary", { name: "Delete Chief copy?" })).toBeVisible();
+  await expect(page.getByRole("complementary", { name: "Delete Rook copy?" })).toBeVisible();
   await captureScreenshot(page, testInfo, "18-delete-confirmation");
   await page
-    .getByRole("complementary", { name: "Delete Chief copy?" })
+    .getByRole("complementary", { name: "Delete Rook copy?" })
     .getByRole("button", { name: "Close", exact: true })
     .click();
 
   await chief.click({ button: "right" });
   await page.getByRole("menuitem", { name: "Edit Profile" }).click();
-  await expect(page.getByRole("button", { name: "Edit name", exact: true })).toHaveText("Chief");
+  await expect(page.getByRole("button", { name: "Edit name", exact: true })).toHaveText("Rook");
   await captureScreenshot(page, testInfo, "19-edit-profile");
 });
 

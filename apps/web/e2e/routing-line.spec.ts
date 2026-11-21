@@ -17,7 +17,7 @@ for (const theme of ["light", "dark"]) {
     await lines.nth(0).click();
     const popover = page.getByTestId("routing-popover");
     await expect(popover).toContainText("CTOPicked for this");
-    await expect(popover).toContainText("ChefeNot available to you");
+    await expect(popover).toContainText("RookNot available to you");
     await expect(popover).toContainText("Router's note: Invoices and a build failure");
     await captureScreenshot(page, testInfo, `routing-popover-${theme}`);
   });

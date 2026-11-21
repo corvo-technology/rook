@@ -90,7 +90,7 @@ export function TeamStep({
         </button>
         <div className="rounded-xl border border-foreground bg-muted p-4">
           <p className="font-medium">
-            {t`I don't use any yet: the Chief builds a team from what you do`}
+            {t`I don't use any yet: Rook builds a team from what you do`}
           </p>
           {suggestion.length > 0 ? (
             <div data-testid="team-suggestion" className="mt-3 flex flex-col gap-3">

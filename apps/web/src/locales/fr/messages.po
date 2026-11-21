@@ -2241,10 +2241,6 @@ msgstr "Paiement"
 msgid "Checkout URL"
 msgstr "URL de paiement"
 
-#: src/pages/PartnerTemplateEditor.tsx
-msgid "Chief name"
-msgstr "Nom du Chief"
-
 #: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Choose"
 msgstr "Choisir"
@@ -4967,16 +4963,16 @@ msgid "Hear a sample"
 msgstr "Écouter un extrait"
 
 #: src/pages/Onboarding.tsx
-msgid "Hi, {name}. I'm the Chief. We'll set up your team in about two minutes."
-msgstr "Bonjour {name}. Je suis le Chief. Nous monterons votre équipe en deux minutes environ."
+msgid "Hi, {name}. I'm Rook. We'll set up your team in about two minutes."
+msgstr "Bonjour {name}. Je suis Rook. Nous monterons votre équipe en deux minutes environ."
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Hi, this is how I'll sound when I read replies out loud."
 msgstr "Bonjour, c'est ainsi que je sonnerai quand je lirai les réponses à voix haute."
 
 #: src/pages/Onboarding.tsx
-msgid "Hi. I'm the Chief. We'll set up your team in about two minutes."
-msgstr "Bonjour. Je suis le Chief. Nous monterons votre équipe en deux minutes environ."
+msgid "Hi. I'm Rook. We'll set up your team in about two minutes."
+msgstr "Bonjour. Je suis Rook. Nous monterons votre équipe en deux minutes environ."
 
 #: src/pages/home/HomeCard.tsx
 msgid "Hide {name}"
@@ -5058,8 +5054,8 @@ msgid "How to check"
 msgstr "Comment vérifier"
 
 #: src/pages/onboarding/TeamStep.tsx
-msgid "I don't use any yet: the Chief builds a team from what you do"
-msgstr "Je n'en utilise pas encore : le Chief monte une équipe à partir de ce que vous faites"
+msgid "I don't use any yet: Rook builds a team from what you do"
+msgstr "Je n'en utilise pas encore : Rook monte une équipe à partir de ce que vous faites"
 
 #: src/pages/Onboarding.tsx
 msgid "I need an AI to think with."
@@ -5456,8 +5452,8 @@ msgid "just now"
 msgstr "à l'instant"
 
 #: src/pages/Onboarding.tsx
-msgid "Just the Chief"
-msgstr "Seulement le Chief"
+msgid "Just Rook"
+msgstr "Seulement Rook"
 
 #: src/pages/YouMemory.tsx
 msgid "Keep"
@@ -5560,6 +5556,10 @@ msgstr "Dernière utilisation : {0}"
 #: src/components/DesktopUpdates.tsx
 msgid "Later"
 msgstr "Plus tard"
+
+#: src/pages/PartnerTemplateEditor.tsx
+msgid "Lead agent name"
+msgstr "Nom de l'agent principal"
 
 #: src/pages/WikiBrowser.tsx
 msgid "Learn from conversations"
@@ -9253,8 +9253,8 @@ msgid "Stuck tickets on the board"
 msgstr "Tickets bloqués sur le tableau"
 
 #: src/components/CoachLayer.tsx
-msgid "Stuck? Ask the Chief."
-msgstr "Bloqué ? Demandez au Chief."
+msgid "Stuck? Ask Rook."
+msgstr "Bloqué ? Demandez à Rook."
 
 #: src/lib/identity-display.ts
 msgid "subagent"

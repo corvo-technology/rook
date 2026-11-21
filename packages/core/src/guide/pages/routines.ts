@@ -29,9 +29,9 @@ A routine can have a different **Model** from its agent's.
 
 **Run now** runs it immediately. **Test run** tries it from the editor without waiting for the trigger. **Run history** lists each run with its result and the runs that **Failed**. Turn **Active** off to pause a routine without deleting it.
 
-## Through the Chief
+## Through Rook
 
-Ask the Chief to schedule something. It first checks the existing routines, adds a step to a matching one, or creates a new one; you approve a card before it is saved.
+Ask Rook to schedule something. It first checks the existing routines, adds a step to a matching one, or creates a new one; you approve a card before it is saved.
 
 ## When it goes wrong
 
@@ -63,9 +63,9 @@ Uma rotina pode ter um **Modelo** diferente do modelo do agente.
 
 **Executar agora** roda na hora. **Execução de teste** tenta pelo editor sem esperar o gatilho. **Histórico de execuções** lista cada execução com o resultado e as que deram **Falha**. Desligue **Ativo** para pausar uma rotina sem excluí-la.
 
-## Pelo Chefe
+## Pelo Rook
 
-Peça ao Chefe para agendar algo. Ele primeiro confere as rotinas existentes, adiciona uma etapa a uma que combine ou cria uma nova; você aprova um cartão antes de salvar.
+Peça ao Rook para agendar algo. Ele primeiro confere as rotinas existentes, adiciona uma etapa a uma que combine ou cria uma nova; você aprova um cartão antes de salvar.
 
 ## Quando algo dá errado
 

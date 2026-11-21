@@ -13,7 +13,7 @@ Open **Settings** › **Models**. Under **Providers**, use **Add provider** and 
 
 ## The default and a bot's own model
 
-**Main model** is the space default. A bot with no model of its own uses it. To give one bot a different model, open that bot's settings, go to **Advanced** and pick a **Model**. **Bot models** lists the bots that have their own, and **Use space default** switches all of them back. The Chief can change a bot's model too, through a card you apply.
+**Main model** is the space default. A bot with no model of its own uses it. To give one bot a different model, open that bot's settings, go to **Advanced** and pick a **Model**. **Bot models** lists the bots that have their own, and **Use space default** switches all of them back. Rook can change a bot's model too, through a card you apply.
 
 ## Thinking
 
@@ -41,7 +41,7 @@ Abra **Configurações** › **Modelos**. Em **Provedores**, use **Adicionar pro
 
 ## O padrão e o modelo próprio de um bot
 
-**Modelo principal** é o padrão do espaço. Um bot sem modelo próprio usa esse. Para dar outro modelo a um bot, abra as configurações dele, vá em **Avançado** e escolha um **Modelo**. **Modelos dos bots** lista os bots que têm modelo próprio, e **Usar o padrão do espaço** volta todos ao padrão. O Chefe também pode mudar o modelo de um bot, por um cartão que você aplica.
+**Modelo principal** é o padrão do espaço. Um bot sem modelo próprio usa esse. Para dar outro modelo a um bot, abra as configurações dele, vá em **Avançado** e escolha um **Modelo**. **Modelos dos bots** lista os bots que têm modelo próprio, e **Usar o padrão do espaço** volta todos ao padrão. O Rook também pode mudar o modelo de um bot, por um cartão que você aplica.
 
 ## Raciocínio
 

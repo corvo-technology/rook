@@ -32,7 +32,7 @@ PUT /api/partner/v1/tenants/loja-1
 | Campo | Descrição |
 | --- | --- |
 | `name` | Nome do cliente. |
-| `locale` | Idioma do cliente (`pt-BR`, `en`...). Nomeia o Chief e só importa na primeira criação. Português lê português; sem `locale` ou outro idioma, lê inglês. |
+| `locale` | Idioma do cliente (`pt-BR`, `en`...). Nomeia o agente principal e só importa na primeira criação. Português lê português; sem `locale` ou outro idioma, lê inglês. |
 | `timezone` | Fuso IANA do cliente (`America/Sao_Paulo`). As [rotinas agendadas](/partners/events/) do modelo rodam nele; só importa na primeira criação. |
 | `connector` | `{ slug, name, endpoint, token }`. Opcional se o modelo já define o conector. |
 | `connectorToken` | Token do conector deste cliente, quando o modelo define o conector. Segue a última chamada. |

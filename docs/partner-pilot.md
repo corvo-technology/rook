@@ -107,7 +107,7 @@ have plans. Keys keep `tenants:write` only until given the commerce scopes. Mone
 ## One partner per product
 
 A company with several products makes one partner for each (for example `acme-clinic`,
-`acme-salon` and `acme-shop`). Each has its own key, template, Chief name and colour, and customers never
+`acme-salon` and `acme-shop`). Each has its own key, template, lead agent name and colour, and customers never
 share across partners. The partner's backend picks the key by the customer's product. All of them
 can draw on one credit account with `--wallet-owner`, and the limits and customers shown under
 Settings > Partnership are those of the partner that account owns in the app.
@@ -131,7 +131,7 @@ answer `404`.
    ```
 
    `"locale"` (optional, for example `"pt-BR"`) is the customer's language: it names the customer's
-   Chief, the agent in front of the partner's agents. Portuguese reads Portuguese; no `locale`, or
+   the lead agent, the agent in front of the partner's agents. Portuguese reads Portuguese; no `locale`, or
    any other language, reads English. It only matters when the customer is first made.
 
    Each agent may also carry `"starters": ["Show today's bookings", ...]` (up to four short
@@ -139,8 +139,8 @@ answer `404`.
 
    The template (Settings > Partnership > **Edit**, or `apply-template`) also holds:
 
-   - `chiefName`: what a new customer's Chief is called, for example `"Acme Assistant"`.
-     Without it the Chief has its localized default. It is set when the customer is first made;
+   - `chiefName`: what a new customer's lead agent is called, for example `"Acme Assistant"`.
+     Without it the lead agent has its localized default. It is set when the customer is first made;
      existing customers keep the name they have.
    - `accent`: the partner's main colour as `#rrggbb`. The embedded assistant and the page a
      redirect opens use it whenever the page that embeds Rook passes no `accent` of its own.
@@ -244,11 +244,11 @@ Instead of redirecting, put the assistant in a frame on your page, signed in as 
 
    Inside your product the frame looks like part of it: no workspace switcher, billing or download
    prompts, a tab bar (Home, Chats, Tasks, Routines, Agents, minus the areas the template hides), the
-   Chief under the template's `chiefName`, your `accent`, and a Home built for your trade: the
+   the lead agent under the template's `chiefName`, your `accent`, and a Home built for your trade: the
    template's `quickActions`, what the agents are doing, and the month's credit with a **Buy more**
    button once the commerce balance is on.
 
-   The template's `quickActions` are shortcuts, each either a `prompt` sent to the Chief or an
+   The template's `quickActions` are shortcuts, each either a `prompt` sent to the lead agent or an
    `open` path in your product (for example `{ "label": "Gravar consulta (abrir no Prontu)",
    "open": "/consultas/gravar" }`); without them the Home shows the first starter of each agent.
 
@@ -294,7 +294,7 @@ pnpm --filter @corvo/api partner:embed-demo
 ```
 
 `PARTNER_DEMO_TEMPLATE=1` sends no agents of its own, so the demo customer gets the partner's
-template (its agents, Chief name and colour); without a `PARTNER_DEMO_CONNECTOR_TOKEN` the template's
+template (its agents, lead agent name and colour); without a `PARTNER_DEMO_CONNECTOR_TOKEN` the template's
 connector is left out. `PARTNER_API_URL` may also be written with the `/api/partner/v1` path. The
 demo customer is real in whatever deployment it points at (`demo-shop`, 5 dollars of credit), so use
 a test partner, and pause the customer when done.

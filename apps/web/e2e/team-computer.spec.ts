@@ -25,7 +25,7 @@ test("Team Computer gives bots a home folder plus shared space while Private sta
 
   await openComputerPanel(page);
   await expect(
-    page.getByTestId("side-panel").getByText("Chief's screen", { exact: true }),
+    page.getByTestId("side-panel").getByText("Rook's screen", { exact: true }),
   ).toBeVisible();
   await captureScreenshot(page, testInfo, "41-team-computer");
 
@@ -94,7 +94,7 @@ test("user control leaves another Team bot's screen available", async ({ page },
   const chiefId = activeBotId(page);
   const workerId = await createBot(page, "Worker", "team");
 
-  await openBot(page, "Chief");
+  await openBot(page, "Rook");
   await page.getByRole("button", { name: "Agent computer", exact: true }).click();
   await page.getByTestId("computer-preview").hover();
   await page.getByTestId("computer-preview-open").click();

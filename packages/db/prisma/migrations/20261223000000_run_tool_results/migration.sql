@@ -17,3 +17,9 @@ CREATE INDEX "run_tool_results_spaceId_idx" ON "run_tool_results"("spaceId");
 
 ALTER TABLE "run_tool_results" ADD CONSTRAINT "run_tool_results_runId_fkey" FOREIGN KEY ("runId") REFERENCES "runs"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "run_tool_results" ADD CONSTRAINT "run_tool_results_spaceId_fkey" FOREIGN KEY ("spaceId") REFERENCES "spaces"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "run_tool_results" ENABLE ROW LEVEL SECURITY;
+CREATE POLICY run_tool_results_tenant ON "run_tool_results"
+  USING ("spaceId" = NULLIF(current_setting('app.space_id', true), ''));
+CREATE POLICY run_tool_results_system ON "run_tool_results"
+  USING (current_setting('app.rls_bypass', true) = 'on');

@@ -72,14 +72,16 @@ describe("say_now offering", () => {
     };
     expect(sayNowAllowed(live)).toBe(true);
     expect(sayNowAllowed({ ...live, ownerStartedRun: false })).toBe(false);
-    expect(sayNowAllowed({ ...live, messagingChannelRun: true })).toBe(false);
+    expect(sayNowAllowed({ ...live, ownerStartedRun: false, messagingChannelRun: true })).toBe(
+      true,
+    );
     expect(sayNowAllowed({ ...live, voiceCall: true })).toBe(false);
     expect(sayNowAllowed({ ...live, visitorRun: true })).toBe(false);
   });
 
   it("is never offered in unattended runs even if the flag were set", () => {
     // Unattended triggers are not owner started, so the executor never sets the flag.
-    for (const trigger of ["routine", "webhook", "tickets", "bot_message", "spawn", "messaging"]) {
+    for (const trigger of ["routine", "webhook", "tickets", "bot_message", "spawn"]) {
       expect(
         sayNowAllowed({
           ownerStartedRun: trigger === "user",
@@ -139,11 +141,7 @@ describe("say_now handler", () => {
 
   it("is refused outside a live person-facing run and in subagents", async () => {
     vi.mocked(publishMessage).mockClear();
-    for (const ctx of [
-      context({ ownerStartedRun: false }),
-      context({ messagingChannelRun: true }),
-      context({ voiceCall: true }),
-    ]) {
+    for (const ctx of [context({ ownerStartedRun: false }), context({ voiceCall: true })]) {
       expect(await sayNow(ctx, call("Starting."))).toEqual({
         error: "say_now is not available in this run.",
       });
@@ -153,6 +151,13 @@ describe("say_now handler", () => {
       error: "say_now is not available in this run.",
     });
     expect(publishMessage).not.toHaveBeenCalled();
+  });
+
+  it("posts in a channel run", async () => {
+    vi.mocked(publishMessage).mockClear();
+    const ctx = context({ ownerStartedRun: false, messagingChannelRun: true });
+    expect(await sayNow(ctx, call("Checking the calendar."))).toEqual({ ok: true });
+    expect(publishMessage).toHaveBeenCalledTimes(1);
   });
 
   it("requires a message", async () => {

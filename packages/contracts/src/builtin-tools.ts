@@ -100,6 +100,8 @@ export const BUILTIN_TOOL_NAMES = [
   "schedule_list",
   "schedule_update",
   "schedule_cancel",
+  "notify_priority",
+  "notify_control",
   "workflow_stop",
   "pass",
   "request_stronger_model",

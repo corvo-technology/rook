@@ -22,6 +22,22 @@ describe("workflow_stop", () => {
   });
 });
 
+describe("notify_priority", () => {
+  it("is offered to the runs no person started, and not to a chat", () => {
+    for (const trigger of ["routine", "webhook", "bot_message"]) {
+      expect(names({ trigger })).toContain("notify_priority");
+    }
+    expect(names({ trigger: "user" })).not.toContain("notify_priority");
+  });
+});
+
+describe("notify_control", () => {
+  it("is offered to a chat the person started, and not to a routine", () => {
+    expect(names({ trigger: "user" })).toContain("notify_control");
+    expect(names({ trigger: "routine" })).not.toContain("notify_control");
+  });
+});
+
 describe("pass", () => {
   it("is offered only to a run the channel router woke", () => {
     expect(names({ trigger: "user", groupId: "group-1", routedRun: true })).toContain("pass");

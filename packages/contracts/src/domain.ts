@@ -45,6 +45,7 @@ import { TimeZoneSchema } from "./time-zone.js";
 
 export { isValidTimeZone, TimeZoneSchema } from "./time-zone.js";
 
+import { QuietHoursSchema } from "./notifications.js";
 import { RoutineWatchSchema, RoutineWatchStateSchema } from "./routine-watch.js";
 import { RunErrorInfoSchema, RunTriggerSchema } from "./runs.js";
 import { SettingsScopeSchema } from "./settings-scope.js";
@@ -1975,6 +1976,8 @@ export const MeSchema = z.object({
   timezone: z.string().nullable().optional(),
   /** The language the person uses the app in, or null until an app saves it. Absent from older servers. */
   locale: AccountLocaleSchema.nullable().optional(),
+  /** Quiet hours for background pushes. Absent from older servers. */
+  quietHours: QuietHoursSchema.optional(),
   /** True when this deployment bills model usage. */
   billingEnabled: z.boolean(),
   /** True until a user of a billing deployment answers or skips the signup survey. Absent from older servers. */

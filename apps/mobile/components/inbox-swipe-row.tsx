@@ -1,3 +1,4 @@
+import type { MuteDuration } from "@corvo/contracts";
 import type { ReactElement } from "react";
 import type { MobileBotSection } from "../lib/api";
 import type { InboxRowAction } from "../lib/inbox-swipe";
@@ -10,10 +11,14 @@ export type InboxSwipeRowProps = {
   pinned?: boolean;
   /** Bots only; groups have no finish notifications. */
   notifyOnFinish?: boolean;
+  /** Muted chats offer Unmute; undefined when the chat cannot be muted. */
+  muted?: boolean;
   sectionId?: string | null;
   sections: readonly MobileBotSection[];
   preview: InboxChatPreviewProps;
   onAction: (action: InboxRowAction) => void;
+  /** A duration mutes the chat; null unmutes it. */
+  onMute?: (duration: MuteDuration | null) => void;
   onOrganize: (update: BotOrganizationUpdate) => void;
   onEditSection: (mode: "create" | "rename") => void;
   children: ReactElement;

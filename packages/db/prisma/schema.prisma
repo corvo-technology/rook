@@ -37,6 +37,13 @@ model User {
   timezone                    String?
   /// The app language the person chose or runs in, such as "pt-BR". Null until an app saves it.
   locale                      String?
+  /// Quiet hours: background pushes wait while it is the person's night. Minutes after local midnight.
+  quietHoursEnabled           Boolean                         @default(true)
+  quietHoursStart             Int                             @default(1320)
+  quietHoursEnd               Int                             @default(480)
+  notificationMutes           NotificationMute[]
+  heldNotifications           HeldNotification[]
+  proactivePushCounts         ProactivePushCount[]
   sessions                    Session[]
   accounts                    Account[]
   passkeys                    Passkey[]
@@ -427,6 +434,9 @@ model Member {
 
 model Space {
   toolClassifications         ToolClassification[]
+  notificationMutes           NotificationMute[]
+  heldNotifications           HeldNotification[]
+  proactivePushCounts         ProactivePushCount[]
   notifications               Notification[]
   aiDataConsents              AiDataConsent[]
   id                          String                       @id
@@ -790,8 +800,8 @@ model Bot {
   modelProvider            String?
   modelId                  String?
   thinkingLevel            String?
-  /// The agent picks a model tier for each turn. Pinned agents leave this false and keep their model.
-  modelAuto                Boolean            @default(false)
+  /// The agent picks a model tier for each turn. A pinned model always wins over it.
+  modelAuto                Boolean            @default(true)
   disabledBuiltinTools     String[]           @default([])
   webhookSecretId          String?
   teamChatAmbientEnabled   Boolean            @default(false)
@@ -1031,6 +1041,61 @@ model Notification {
   @@map("notifications")
 }
 
+/// A person silencing the pushes of one agent or one conversation, for a while or for good. The
+/// inbox and the thread keep updating; only the push stops.
+model NotificationMute {
+  id        String    @id @default(cuid())
+  spaceId   String
+  space     Space     @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// "bot:<id>" or "thread:<id>": one mute per person and target.
+  targetKey String
+  /// Null mutes until the person turns it back on.
+  until     DateTime?
+  createdAt DateTime  @default(now())
+
+  @@unique([userId, targetKey])
+  @@index([spaceId, userId])
+  @@map("notification_mutes")
+}
+
+/// A push that waited for the morning digest, kept until it is sent as one summary.
+model HeldNotification {
+  id        String   @id @default(cuid())
+  spaceId   String
+  space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  botId     String
+  /// The push as it would have been sent.
+  message   Json
+  /// "quiet", "cap" or "low".
+  reason    String
+  /// When the digest that carries it goes out.
+  releaseAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId, releaseAt])
+  @@map("held_notifications")
+}
+
+/// Proactive pushes one agent sent one person on one local day, for the daily cap.
+model ProactivePushCount {
+  spaceId String
+  space   Space  @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  botId   String
+  /// The person's local date, "2026-11-20".
+  day     String
+  count   Int    @default(0)
+
+  @@id([userId, botId, day])
+  @@index([day])
+  @@map("proactive_push_counts")
+}
+
 /// Read state of a shared conversation for every member except its creator, whose state stays on the thread.
 model ThreadMemberRead {
   threadId    String
@@ -1162,6 +1227,9 @@ model Run {
   userId               String
   status               String
   trigger              String
+  /// How the run asked its push to be treated: "urgent" skips the quiet hours and the daily cap,
+  /// "low" goes straight to the morning digest. Null is a normal push.
+  notifyPriority       String?
   modelProvider        String?
   modelId              String?
   thinkingLevel        String?
@@ -1205,6 +1273,8 @@ model Run {
   wakeAt               DateTime?
   // Server-side first visible output, preserved across attempts and resumes.
   firstResponseAt      DateTime?
+  // First thing the person could see the run doing (it started, or a tool activity line), before any reply text.
+  firstActivityAt      DateTime?
   startedAt            DateTime?
   completedAt          DateTime?
   botOutcomeReturnedAt DateTime?

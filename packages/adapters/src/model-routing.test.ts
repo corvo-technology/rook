@@ -8,7 +8,12 @@ import {
   nextTier,
   parseTierAnswer,
   routesAutomatically,
+  TIER_CLASSIFIER_INSTRUCTIONS,
+  TIER_RUBRIC_EXAMPLES,
+  TIER_RUBRIC_VERSION,
+  TIER_THINKING_LEVEL,
   type TurnSignals,
+  tierClassifierPrompt,
 } from "./model-routing.js";
 import { TurnGuardStopError } from "./run-guards.js";
 
@@ -24,20 +29,17 @@ const turn = (overrides: Partial<TurnSignals>): TurnSignals => ({
 });
 
 describe("decideTier", () => {
-  it("sends an email triage agent's routine turn to the fast tier", () => {
-    expect(
-      decideTier(
-        turn({
-          title: "Inbox triage",
-          description: "Sorts incoming email and drafts short replies",
-          trigger: "routine",
-          prompt: "Sort the 12 new messages by urgency.",
-        }),
-      ),
-    ).toEqual({ tier: "fast", clear: true, reason: "background" });
+  it("settles only from structure, never from what the title or prompt says", () => {
+    for (const title of ["Inbox triage", "Developer and research analyst", "Helper"]) {
+      expect(
+        decideTier(
+          turn({ title, prompt: "Fix src/server.ts, then sort the inbox.\n```py\nx\n```" }),
+        ),
+      ).toEqual({ tier: "main", clear: false, reason: "ambiguous" });
+    }
   });
 
-  it("starts every background trigger on the fast tier, whatever the title or prompt says", () => {
+  it("starts every autonomous trigger on the fast tier, whatever the title or prompt says", () => {
     for (const trigger of ["routine", "webhook", "cloud_agent", "tickets"] as const) {
       expect(
         decideTier(
@@ -50,9 +52,6 @@ describe("decideTier", () => {
         ),
       ).toEqual({ tier: "fast", clear: true, reason: "background" });
     }
-    expect(
-      decideTier(turn({ title: "Developer", trigger: "user", prompt: "Fix src/server.ts" })),
-    ).toMatchObject({ tier: "strong" });
   });
 
   it("lets a background run escalate: the floor and approvals still win", () => {
@@ -66,42 +65,30 @@ describe("decideTier", () => {
     });
   });
 
-  it("sends a coding or computer task to the strong tier", () => {
-    expect(
-      decideTier(
-        turn({ title: "Developer", prompt: "Fix the failing test in src/server.ts and push." }),
-      ),
-    ).toMatchObject({ tier: "strong", clear: true });
-    expect(
-      decideTier(turn({ title: "Inbox triage", prompt: "Why does this fail?\n```py\nx = 1\n```" })),
-    ).toMatchObject({ tier: "strong", reason: "code" });
-  });
-
   it("sends a very large context to the strong tier", () => {
-    expect(decideTier(turn({ title: "Support", contextTokens: 150_000 }))).toMatchObject({
+    expect(decideTier(turn({ contextTokens: 150_000 }))).toMatchObject({
       tier: "strong",
       reason: "large-context",
     });
   });
 
   it("never gives an approval-gated action to the fast tier", () => {
-    expect(
-      decideTier(turn({ title: "Inbox triage", approvalGated: true, trigger: "resume" })),
-    ).toEqual({ tier: "main", clear: true, reason: "approval" });
-  });
-
-  it("keeps a light agent off the fast tier when the turn is not small", () => {
-    expect(decideTier(turn({ title: "Support", prompt: "x".repeat(5_000) }))).toMatchObject({
+    expect(decideTier(turn({ approvalGated: true, trigger: "resume" }))).toEqual({
       tier: "main",
-      clear: false,
-    });
-    expect(decideTier(turn({ title: "Support", attachments: 1 }))).toMatchObject({
-      tier: "main",
-      clear: false,
+      clear: true,
+      reason: "approval",
     });
   });
 
-  it("leaves an unremarkable turn to the classifier on the main tier", () => {
+  it("keeps a turn with attachments on the main tier without asking the classifier", () => {
+    expect(decideTier(turn({ attachments: 1 }))).toEqual({
+      tier: "main",
+      clear: true,
+      reason: "attachments",
+    });
+  });
+
+  it("leaves an ordinary turn to the classifier on the main tier", () => {
     expect(decideTier(turn({ title: "Helper" }))).toEqual({
       tier: "main",
       clear: false,
@@ -110,14 +97,41 @@ describe("decideTier", () => {
   });
 
   it("never goes below the floor an escalated run starts on", () => {
-    expect(decideTier(turn({ title: "Inbox triage", floor: "main" }))).toMatchObject({
+    expect(decideTier(turn({ trigger: "routine", floor: "main" }))).toMatchObject({
       tier: "main",
       reason: "floor",
     });
-    expect(decideTier(turn({ title: "Helper", floor: "strong" }))).toMatchObject({
-      tier: "strong",
-      clear: true,
-    });
+    expect(decideTier(turn({ floor: "strong" }))).toMatchObject({ tier: "strong", clear: true });
+  });
+});
+
+describe("classifier rubric", () => {
+  it("is versioned and shows a reviewed example of every tier", () => {
+    expect(TIER_CLASSIFIER_INSTRUCTIONS).toContain(TIER_RUBRIC_VERSION);
+    for (const tier of ["fast", "main", "strong"] as const) {
+      expect(TIER_RUBRIC_EXAMPLES.some((example) => example.tier === tier)).toBe(true);
+    }
+    for (const example of TIER_RUBRIC_EXAMPLES) {
+      expect(TIER_CLASSIFIER_INSTRUCTIONS).toContain(example.request);
+    }
+  });
+
+  it("reads the role and a bounded excerpt of the request", () => {
+    const prompt = tierClassifierPrompt(
+      { title: "Inbox triage", description: "Sorts email" },
+      "x".repeat(10_000),
+    );
+    expect(prompt.startsWith("Role: Inbox triage: Sorts email\nRequest: ")).toBe(true);
+    expect(prompt.length).toBeLessThan(2_000);
+    expect(tierClassifierPrompt({ title: "", description: "" }, "hi")).toBe(
+      "Role: Assistant\nRequest: hi",
+    );
+  });
+});
+
+describe("thinking by tier", () => {
+  it("thinks a little on fast, the default on main, and a lot only on strong", () => {
+    expect(TIER_THINKING_LEVEL).toEqual({ fast: "low", main: "medium", strong: "high" });
   });
 });
 

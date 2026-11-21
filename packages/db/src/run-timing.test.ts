@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isRunResponse, runTimingFields } from "./run-timing.js";
+import { isRunActivity, isRunResponse, runTimingFields } from "./run-timing.js";
 
 const at = (seconds: number) => new Date(Date.UTC(2026, 0, 1, 0, 0, seconds));
 
@@ -65,5 +65,29 @@ describe("run response timing", () => {
         blocks: [{ kind: "meta" }, { kind: "steps" }],
       }),
     ).toBe(false);
+  });
+});
+
+describe("run activity timing", () => {
+  it("reports time to first activity next to time to first response", () => {
+    expect(
+      runTimingFields({
+        trigger: "user",
+        sourceMessage: { createdAt: at(0) },
+        createdAt: at(0),
+        startedAt: at(1),
+        firstActivityAt: at(1),
+        firstResponseAt: at(20),
+        completedAt: at(21),
+      }),
+    ).toMatchObject({ "run.first_activity_ms": 1_000, "run.first_response_ms": 20_000 });
+  });
+
+  it("counts the run starting and tool activity, never background runs or empty lines", () => {
+    expect(isRunActivity("run.started", { trigger: "user" })).toBe(true);
+    expect(isRunActivity("run.started", { trigger: "tickets" })).toBe(false);
+    expect(isRunActivity("thread.progress", { text: "Using calendar", activity: true })).toBe(true);
+    expect(isRunActivity("thread.progress", { text: "", activity: true })).toBe(false);
+    expect(isRunActivity("thread.progress", { text: "reply", streaming: true })).toBe(false);
   });
 });

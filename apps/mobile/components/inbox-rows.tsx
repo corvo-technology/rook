@@ -1,4 +1,4 @@
-import type { SpaceBot, SpaceGroup } from "@corvo/contracts";
+import type { MuteDuration, SpaceBot, SpaceGroup } from "@corvo/contracts";
 import { isRunWorking } from "@corvo/core";
 import { botColors } from "@corvo/ui-tokens";
 import type { ReactNode } from "react";
@@ -16,6 +16,8 @@ import { approvalNoticeText } from "../lib/ask-title";
 import { AvatarRow } from "../lib/avatar-life";
 import { useI18n } from "../lib/i18n";
 import { botTag, formatThreadTime } from "../lib/inbox";
+import type { MuteTarget } from "../lib/inbox-mutes";
+import { muteKey, muteTarget } from "../lib/inbox-mutes";
 import type { PinnedChat } from "../lib/inbox-spaces";
 import type { InboxChatKind, InboxRowAction } from "../lib/inbox-swipe";
 import { INBOX_ROW_ACTIONS, inboxRowActionList } from "../lib/inbox-swipe";
@@ -258,6 +260,9 @@ export const PinnedTiles = memo(function PinnedTiles({
 });
 /** What the iOS row menu needs to organize a chat in place. */
 type RowMenuProps = {
+  /** Keys of the running mutes; see muteKey. */
+  muted: ReadonlySet<string>;
+  onMute: (target: MuteTarget, duration: MuteDuration | null) => void;
   sections: readonly MobileBotSection[];
   onOrganize: (
     kind: InboxChatKind,
@@ -277,6 +282,8 @@ export const BotRow = memo(function BotRow({
   onPress,
   onLongPress,
   onAction,
+  muted,
+  onMute,
   sections,
   onOrganize,
   onEditSection,
@@ -340,6 +347,8 @@ export const BotRow = memo(function BotRow({
       unread={bot.unread}
       pinned={bot.pinned}
       notifyOnFinish={bot.notifyOnFinish}
+      muted={muted.has(muteKey({ botId: bot.id }))}
+      onMute={(duration) => onMute({ botId: bot.id }, duration)}
       sectionId={bot.sectionId}
       sections={sections}
       preview={{
@@ -364,6 +373,8 @@ export const GroupRow = memo(function GroupRow({
   onPress,
   onLongPress,
   onAction,
+  muted,
+  onMute,
   sections,
   onOrganize,
   onEditSection,
@@ -379,6 +390,10 @@ export const GroupRow = memo(function GroupRow({
     previewSnippet(group.preview, 40) || group.members.map((member) => member.name).join(", ");
   const time = group.updatedAt ? formatThreadTime(group.updatedAt, new Date(day)) : "";
   const runAction = (action: InboxRowAction) => onAction?.(action, group);
+  const target = muteTarget("group", {
+    id: group.id,
+    threadId: "threadId" in group ? group.threadId : undefined,
+  });
   const row = (
     <ConversationRow
       chatId={group.id}
@@ -404,6 +419,8 @@ export const GroupRow = memo(function GroupRow({
       rowKey={`group:${group.id}`}
       unread={group.unread}
       pinned={group.pinned}
+      muted={target ? muted.has(muteKey(target)) : undefined}
+      onMute={target ? (duration) => onMute(target, duration) : undefined}
       sectionId={group.sectionId}
       sections={sections}
       preview={{

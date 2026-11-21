@@ -30,6 +30,7 @@ import type {
 import { validateToolArguments } from "@earendil-works/pi-ai";
 import { uncertainEffectResult } from "./approval-effect.js";
 import { automated, withAutomatedLabels } from "./automated-messages.js";
+import { runCacheRetention } from "./cache-retention-policy.js";
 import { withCloudflareAuth } from "./cloudflare-ai-gateway.js";
 import { withCacheBoundary } from "./pi-cache-boundary.js";
 import { estimatePiImageTokens } from "./pi-image-context.js";
@@ -505,7 +506,11 @@ export class PiAgentRuntime implements AgentRuntime {
                     onProviderError: (message) => providerFailures.add(message.content),
                   },
                 ),
-              target.config.cacheCapabilities?.retentionMode,
+              runCacheRetention(
+                target.model,
+                target.config.cacheCapabilities?.retentionMode,
+                request.cacheReturn,
+              ),
             );
           },
           onContextLimit: (contextWindow) => {

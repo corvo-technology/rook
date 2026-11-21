@@ -1,4 +1,4 @@
-import { decideTier } from "@corvo/adapters";
+import { decideTier, TIER_RUBRIC_EXAMPLES } from "@corvo/adapters";
 import { describe, expect, it, vi } from "vitest";
 import { gradeEscalation, gradeRouting, MODEL_ROUTING_CASES } from "./model-routing.js";
 
@@ -6,8 +6,14 @@ const signal = new AbortController().signal;
 const task = MODEL_ROUTING_CASES[0]!;
 
 describe("model routing eval", () => {
-  it("keeps its task set stable and its tiers matching what the router decides", () => {
+  it("keeps its task set stable, with the tier a reviewer expects for each", () => {
     expect(new Set(MODEL_ROUTING_CASES.map((c) => c.id)).size).toBe(MODEL_ROUTING_CASES.length);
+    for (const tier of ["fast", "main", "strong"] as const) {
+      expect(MODEL_ROUTING_CASES.some((c) => c.expectedTier === tier)).toBe(true);
+    }
+  });
+
+  it("leaves what a request means to the classifier: structure settles only the approved send", () => {
     for (const c of MODEL_ROUTING_CASES) {
       const decision = decideTier({
         title: c.title,
@@ -16,10 +22,18 @@ describe("model routing eval", () => {
         prompt: c.prompt,
         contextTokens: 200,
         attachments: 0,
-        // The approved-send case continues an action that waited for approval.
         approvalGated: c.id === "approved-send",
       });
-      expect({ id: c.id, tier: decision.tier }).toEqual({ id: c.id, tier: c.expectedTier });
+      expect({ id: c.id, clear: decision.clear }).toEqual({
+        id: c.id,
+        clear: c.id === "approved-send",
+      });
+    }
+  });
+
+  it("keeps the classifier's reviewed examples out of the eval tasks", () => {
+    for (const example of TIER_RUBRIC_EXAMPLES) {
+      expect(MODEL_ROUTING_CASES.some((c) => c.prompt.includes(example.request))).toBe(false);
     }
   });
 

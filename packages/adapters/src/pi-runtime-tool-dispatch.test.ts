@@ -274,7 +274,7 @@ vi.mock("@earendil-works/pi-agent-core", () => ({
         if (fakeAgentState.mode === "nested-ask-pause") {
           const delegation = this.tools.find((tool) => tool.name === "run_subagent");
           if (delegation) {
-            const args = { name: "helper", task: "ask the user" };
+            const args = { name: "helper", task: "ask the user", tools: ["shell", "ask_user"] };
             this.emit({
               type: "tool_execution_start",
               toolName: delegation.name,
@@ -315,7 +315,7 @@ vi.mock("@earendil-works/pi-agent-core", () => ({
       if (delegation && fakeAgentState.mode === "two-subagents") {
         await Promise.all(
           ["a", "b"].map((name) => {
-            const args = { name, task: "keep calling shell" };
+            const args = { name, task: "keep calling shell", tools: ["shell"] };
             this.emit({ type: "tool_execution_start", toolName: delegation.name, args });
             return delegation.execute(`delegate-${name}`, args);
           }),
@@ -323,7 +323,7 @@ vi.mock("@earendil-works/pi-agent-core", () => ({
         return;
       }
       if (delegation) {
-        const args = { name: "loop", task: "keep calling shell" };
+        const args = { name: "loop", task: "keep calling shell", tools: ["shell"] };
         this.emit({
           type: "tool_execution_start",
           toolName: delegation.name,

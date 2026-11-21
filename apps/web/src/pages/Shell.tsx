@@ -318,8 +318,11 @@ function SpaceShell({ page }: { page?: ReactNode }) {
     navigate,
     redirectKeepingOverlay,
   });
-  const { notifyBrowserForEvent, flushPendingBrowserNotifications } =
-    useBrowserNotifications(botsRef);
+  const readMutes = useCallback(() => rpc.notifications.mutes(), [rpc]);
+  const { notifyBrowserForEvent, flushPendingBrowserNotifications } = useBrowserNotifications(
+    botsRef,
+    readMutes,
+  );
   const { speakingMessageId, speakMessage } = useReadAloud({
     active,
     snapshot,

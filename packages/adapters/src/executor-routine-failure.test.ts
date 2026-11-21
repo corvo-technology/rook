@@ -75,6 +75,8 @@ async function failRun(scenario: Scenario) {
   });
   const prisma = {
     user: { findUnique: vi.fn(async () => null) },
+    notificationMute: { count: vi.fn(async () => 0) },
+    proactivePushCount: { upsert: vi.fn(async () => ({ count: 1 })) },
     run: {
       findUnique: vi.fn(async () => run),
       findUniqueOrThrow: vi.fn(async () => run),
@@ -465,6 +467,8 @@ function retryHarness(scenario: RetryScenario = {}) {
   };
   const prisma = {
     user: { findUnique: vi.fn(async () => null) },
+    notificationMute: { count: vi.fn(async () => 0) },
+    proactivePushCount: { upsert: vi.fn(async () => ({ count: 1 })) },
     run: {
       findUnique: vi.fn(async () => failed),
       findFirst: vi.fn(async ({ select }: { select: { id?: boolean } }) =>

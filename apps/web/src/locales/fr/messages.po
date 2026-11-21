@@ -1320,6 +1320,10 @@ msgstr "est déjà dans l'espace"
 msgid "Already in this conversation"
 msgstr "Déjà dans cette conversation"
 
+#: src/pages/BotContextMenu.tsx
+msgid "Always"
+msgstr "Toujours"
+
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Always act"
 msgstr "Agir toujours"
@@ -4268,6 +4272,10 @@ msgstr "Chiffré et jamais affiché à nouveau"
 msgid "Encrypted, verified"
 msgstr "Chiffrée, vérifiée"
 
+#: src/pages/QuietHoursRow.tsx
+msgid "End"
+msgstr "Fin"
+
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Ends {day}"
 msgstr "Se termine le {day}"
@@ -4630,6 +4638,10 @@ msgstr "Première tâche : {task}"
 #: src/pages/RoutinesTabs.tsx
 msgid "Flows"
 msgstr "Flux"
+
+#: src/pages/BotContextMenu.tsx
+msgid "For 1 hour"
+msgstr "Pendant 1 heure"
 
 #: src/pages/shell/composer-model-choice.tsx
 msgid "For this conversation"
@@ -6177,6 +6189,7 @@ msgid "Moved {ref} to {lane}."
 msgstr "{ref} déplacé vers {lane}."
 
 #: src/components/call/CallCard.tsx
+#: src/pages/BotContextMenu.tsx
 msgid "Mute"
 msgstr "Couper le micro"
 
@@ -7523,6 +7536,10 @@ msgstr "Question"
 #: src/pages/ActivityList.tsx
 msgid "Queued"
 msgstr "En file d'attente"
+
+#: src/pages/QuietHoursRow.tsx
+msgid "Quiet hours"
+msgstr "Heures calmes"
 
 #: src/lib/model-problem.ts
 msgid "Raise limit"
@@ -8918,6 +8935,7 @@ msgstr "SSO est temporairement indisponible. Réessayez."
 msgid "Standard"
 msgstr "Standard"
 
+#: src/pages/QuietHoursRow.tsx
 #: src/pages/shell/computer-overlay.tsx
 msgid "Start"
 msgstr "Démarrer"
@@ -9859,6 +9877,7 @@ msgid "Unlink"
 msgstr "Déconnecter"
 
 #: src/components/call/CallCard.tsx
+#: src/pages/BotContextMenu.tsx
 msgid "Unmute"
 msgstr "Réactiver le micro"
 
@@ -9872,6 +9891,10 @@ msgstr "Désépingler"
 #: src/pages/shell/use-composer-actions.ts
 msgid "Unsupported file type: {0}"
 msgstr "Type de fichier non pris en charge : {0}"
+
+#: src/pages/BotContextMenu.tsx
+msgid "Until tomorrow"
+msgstr "Jusqu'à demain"
 
 #: src/lib/server-copy.ts
 msgid "Untitled"

@@ -23,6 +23,7 @@ import { AppMark } from "../../components/app-mark";
 import { NameDialog } from "../../components/name-dialog";
 import { NativeActionButton } from "../../components/native-action-button";
 import { NativeSegmentedControl } from "../../components/native-segmented-control";
+import { NativeTimePicker } from "../../components/native-time-picker";
 import {
   SettingsGroup,
   SettingsLabel,
@@ -75,6 +76,7 @@ import {
 } from "../../lib/passkey";
 import { registerPushToken } from "../../lib/push";
 import { createQueuedSave } from "../../lib/queued-save";
+import { DEFAULT_QUIET_HOURS } from "../../lib/quiet-hours";
 import {
   getCachedRemoteImagesEnabled,
   setRemoteImagesPreference,
@@ -328,6 +330,21 @@ export default function Account() {
     });
     setNotificationError(null);
     notificationQueue.current.update(next);
+  }
+
+  const quietHours = me?.quietHours ?? DEFAULT_QUIET_HOURS;
+  // Shown at once, then saved; a failed save puts the old setting back.
+  function saveQuietHours(next: typeof quietHours) {
+    const previous = me?.quietHours;
+    setMe((current) => (current ? { ...current, quietHours: next } : current));
+    rpc("preferences/update", { quietHours: next }).then(
+      (saved) =>
+        setMe((current) => (current ? { ...current, quietHours: saved.quietHours } : current)),
+      (err) => {
+        setMe((current) => (current ? { ...current, quietHours: previous } : current));
+        Alert.alert(t("Could not update notifications"), errorText(err, t("Try again.")));
+      },
+    );
   }
 
   async function securityAction(run: () => Promise<void>) {
@@ -596,6 +613,30 @@ export default function Account() {
             title={t("Language")}
             value={UI_LOCALE_LABELS[locale]}
           />
+        </SettingsGroup>
+
+        <SettingsGroup>
+          <SettingsSwitch
+            label={t("Quiet hours")}
+            value={quietHours.enabled}
+            disabled={!me}
+            onChange={(enabled) => saveQuietHours({ ...quietHours, enabled })}
+          />
+          {quietHours.enabled && Platform.OS === "ios"
+            ? (["start", "end"] as const).map((edge) => (
+                <SettingsRow
+                  key={edge}
+                  title={edge === "start" ? t("Start") : t("End")}
+                  trailing={
+                    <NativeTimePicker
+                      accessibilityLabel={edge === "start" ? t("Start") : t("End")}
+                      minutes={quietHours[edge]}
+                      onChange={(minutes) => saveQuietHours({ ...quietHours, [edge]: minutes })}
+                    />
+                  }
+                />
+              ))
+            : null}
         </SettingsGroup>
 
         {Platform.OS === "android" ? (

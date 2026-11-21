@@ -1,4 +1,4 @@
-import type { Bot, BotSection } from "@corvo/contracts";
+import type { Bot, BotSection, MuteDuration } from "@corvo/contracts";
 import {
   ContextMenuContent,
   ContextMenuItem,
@@ -12,6 +12,7 @@ import {
   Archive,
   Bell,
   BellDot,
+  BellOff,
   Check,
   Copy,
   Eraser,
@@ -33,6 +34,8 @@ export function BotContextMenu({
   onCreateSection,
   onRenameSection,
   onToggleUnread,
+  muted,
+  onMute,
   onEdit,
   onDuplicate,
   onClear,
@@ -47,6 +50,10 @@ export function BotContextMenu({
   onCreateSection: () => void;
   onRenameSection?: (sectionId: string) => void;
   onToggleUnread: () => void;
+  /** Whether the pushes are silenced now; unknown until the mutes are read. */
+  muted: boolean | undefined;
+  /** Silences the pushes for a while, or turns them back on with null. */
+  onMute: (duration: MuteDuration | null) => void;
   onEdit: () => void;
   onDuplicate: () => void;
   onClear: () => void;
@@ -99,6 +106,26 @@ export function BotContextMenu({
         {bot.unread ? <BellDot /> : <Bell />}
         {bot.unread ? t`Mark as Read` : t`Mark as Unread`}
       </ContextMenuItem>
+      {muted ? (
+        <ContextMenuItem onClick={() => onMute(null)}>
+          <BellOff />
+          {t`Unmute`}
+        </ContextMenuItem>
+      ) : (
+        <ContextMenuSub>
+          <ContextMenuSubTrigger disabled={muted === undefined}>
+            <BellOff />
+            {t`Mute`}
+          </ContextMenuSubTrigger>
+          <ContextMenuSubContent className="min-w-[180px]">
+            <ContextMenuItem onClick={() => onMute("hour")}>{t`For 1 hour`}</ContextMenuItem>
+            <ContextMenuItem
+              onClick={() => onMute("tomorrow")}
+            >{t`Until tomorrow`}</ContextMenuItem>
+            <ContextMenuItem onClick={() => onMute("forever")}>{t`Always`}</ContextMenuItem>
+          </ContextMenuSubContent>
+        </ContextMenuSub>
+      )}
       <ContextMenuSeparator />
       <ContextMenuItem onClick={onEdit}>
         <Pencil />

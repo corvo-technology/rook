@@ -232,6 +232,11 @@ export function SettingsPage() {
               const next = await rpc.preferences.update({ timezone });
               patchMe({ timezone: next.timezone });
             }}
+            quietHours={me?.quietHours}
+            onQuietHoursChange={async (quietHours) => {
+              const next = await rpc.preferences.update({ quietHours });
+              patchMe({ quietHours: next.quietHours });
+            }}
             onLocaleChange={(locale) => rpc.preferences.update({ locale })}
           />
           {/* One space is just the app, so there is nothing to tell apart or manage. */}

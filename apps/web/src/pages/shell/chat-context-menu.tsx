@@ -1,4 +1,5 @@
-import type { Bot, BotSection, Group } from "@corvo/contracts";
+import type { Bot, BotSection, Group, MuteDuration } from "@corvo/contracts";
+import { useEffect, useState } from "react";
 import { lazyOverlay } from "../../components/ErrorBoundary";
 import type { createSpaceRpc } from "../../lib/rpc";
 import type { ShellDialogsState } from "./shell-dialogs";
@@ -37,7 +38,25 @@ export function ChatContextMenu({
   navigate: (path: string) => void;
 }) {
   const chat = bot ?? group;
-  if (!chat) return null;
+  const muteTarget = bot ? { botId: bot.id } : group ? { threadId: group.threadId } : undefined;
+  const muteKey = bot ? `bot:${bot.id}` : `thread:${group?.threadId}`;
+  const [muted, setMuted] = useState<boolean | undefined>();
+  useEffect(() => {
+    let live = true;
+    rpc.notifications
+      .mutes()
+      .then((mutes) => {
+        const found = mutes.some((mute) =>
+          bot ? mute.botId === bot.id : mute.threadId === group?.threadId,
+        );
+        if (live) setMuted(found);
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [rpc, bot, group, muteKey]);
+  if (!chat || !muteTarget) return null;
   const target = bot
     ? { kind: "bot" as const, chat: bot }
     : { kind: "group" as const, chat: group! };
@@ -65,6 +84,15 @@ export function ChatContextMenu({
         } else {
           read.toggleGroupUnread(group!.id, unread);
         }
+      }}
+      muted={muted}
+      onMute={(duration: MuteDuration | null) => {
+        onClose();
+        void (
+          duration
+            ? rpc.notifications.mute({ target: muteTarget, duration })
+            : rpc.notifications.unmute(muteTarget)
+        ).catch(() => undefined);
       }}
       onMoveToSection={(sectionId) => {
         onClose();

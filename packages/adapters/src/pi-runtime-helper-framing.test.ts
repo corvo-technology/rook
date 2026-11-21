@@ -35,6 +35,7 @@ vi.mock("@earendil-works/pi-agent-core", () => ({
         seen.resultForParent = await delegate.execute("call-1", {
           name: "scout",
           task: "count the files",
+          tools: ["update_bot"],
         });
         return;
       }

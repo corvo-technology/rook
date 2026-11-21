@@ -46,24 +46,57 @@ describe("model credit reconciler", () => {
     installLogger(createLogger({ service: "corvo-worker", level: "off", sinks: [] }));
   });
 
-  it("settles an unsettled hold at an estimate instead of leaving it for review", async () => {
+  it("settles an unpriced hold at zero and leaves it flagged for review", async () => {
     const sink = createTestSink();
     installLogger(createLogger({ service: "corvo-worker", sinks: [sink] }));
     const { prisma, updateMany } = harness({ ...baseCall, reconciliationAttempts: 5 });
 
     await createModelCreditReconciler({ prisma, now: () => new Date(0) })();
 
+    expect(recordUsage).toHaveBeenCalledWith(
+      prisma,
+      expect.objectContaining({ costUsd: 0, costSource: "reconciliation-unpriced" }),
+      expect.objectContaining({ runId: "run-1" }),
+      true,
+    );
+    expect(updateMany).toHaveBeenLastCalledWith({
+      where: { id: "entry-1", reconciliationState: "pending" },
+      data: { reconciliationState: "needs_review", nextReconcileAt: null },
+    });
+    expect(sink.events).toContainEqual(
+      expect.objectContaining({
+        level: "error",
+        message: "Model credit hold requires review",
+        callId: "call-1",
+        reason: "no catalog price; settled at zero",
+      }),
+    );
+  });
+
+  it("settles a hold with a catalog price at the estimate and completes it", async () => {
+    const sink = createTestSink();
+    installLogger(createLogger({ service: "corvo-worker", sinks: [sink] }));
+    catalogCost.mockReturnValueOnce({ input: 1, output: 2, cacheRead: 0.5, cacheWrite: 1 });
+    const { prisma, updateMany } = harness({
+      ...baseCall,
+      reconciliationAttempts: 5,
+      usage: { inputTokens: 1_000_000, outputTokens: 500_000, costUsd: null },
+    });
+
+    await createModelCreditReconciler({ prisma, now: () => new Date(0) })();
+
+    expect(recordUsage).toHaveBeenCalledWith(
+      prisma,
+      expect.objectContaining({ costUsd: 2, costSource: "reconciliation-estimate" }),
+      expect.objectContaining({ runId: "run-1" }),
+      true,
+    );
     expect(updateMany).toHaveBeenLastCalledWith({
       where: { id: "entry-1", reconciliationState: "pending" },
       data: { reconciliationState: "complete", nextReconcileAt: null },
     });
     expect(sink.events).toContainEqual(
-      expect.objectContaining({
-        level: "warn",
-        message: "Model credit hold settled at an estimate",
-        callId: "call-1",
-        reason: "usage unavailable",
-      }),
+      expect.objectContaining({ message: "Model credit hold settled at an estimate" }),
     );
   });
 
@@ -103,7 +136,7 @@ describe("model credit reconciler", () => {
     ]);
   });
 
-  it("settles a hold whose cost never arrives at no more than the amount held", async () => {
+  it("settles a hold with unknown tokens at zero, never at the amount held", async () => {
     const { prisma } = harness({
       ...baseCall,
       reconciliationAttempts: 5,
@@ -115,11 +148,7 @@ describe("model credit reconciler", () => {
     expect(recordUsage).toHaveBeenCalledTimes(1);
     expect(recordUsage).toHaveBeenCalledWith(
       prisma,
-      expect.objectContaining({
-        callId: "call-1",
-        costUsd: 2,
-        costSource: "reconciliation-estimate",
-      }),
+      expect.objectContaining({ callId: "call-1", costUsd: 0 }),
       expect.objectContaining({ runId: "run-1" }),
       true,
     );
@@ -141,10 +170,15 @@ describe("model credit reconciler", () => {
     expect(estimateHeldCallCost(1, usage, "fake", "fake-model")).toBe(1);
   });
 
-  it("never estimates above the hold", () => {
-    expect(estimateHeldCallCost(0.5, null, "fake", "fake-model")).toBe(0.5);
+  it("never estimates above the hold, and does not guess without a price or tokens", () => {
+    catalogCost.mockReturnValueOnce({ input: 1000, output: 1000, cacheRead: 0, cacheWrite: 0 });
+    expect(
+      estimateHeldCallCost(0.5, { inputTokens: 1_000_000, outputTokens: 1 }, "fake", "fake-model"),
+    ).toBe(0.5);
+    expect(estimateHeldCallCost(0.5, null, "fake", "fake-model")).toBeUndefined();
+    catalogCost.mockReturnValueOnce({ input: 1, output: 2, cacheRead: 0, cacheWrite: 0 });
     expect(
       estimateHeldCallCost(0.5, { inputTokens: null, outputTokens: 5 }, "fake", "fake-model"),
-    ).toBe(0.5);
+    ).toBeUndefined();
   });
 });

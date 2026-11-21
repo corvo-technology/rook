@@ -11,28 +11,28 @@ import { getLogger } from "@corvo/logging";
 import { catalogModelCost } from "./pi-runtime-models.js";
 import { maximumModelCallCost } from "./pi-usage.js";
 
-/** Attempts before a hold whose cost never arrives is settled at an estimate. */
+/** Attempts before a hold whose cost never arrives is settled without one. */
 const MAX_RECONCILE_ATTEMPTS = 5;
 
 /**
  * What to charge a call whose provider never reported a cost: the catalog price of the tokens it
- * used when both are known, and never more than the amount held for it. Without either, the hold
- * itself, which was sized as the most the call could cost.
+ * used when both are known, and never more than the amount held for it. Without either there is
+ * nothing to price it by, and the caller must not charge for a guess.
  */
 export function estimateHeldCallCost(
   heldUsd: number,
   usage: AgentUsage | null,
   provider: string,
   model: string,
-): number {
+): number | undefined {
   const cost = catalogModelCost(provider, model);
-  if (!cost || usage?.inputTokens == null || usage.outputTokens == null) return heldUsd;
+  if (!cost || usage?.inputTokens == null || usage.outputTokens == null) return undefined;
   const estimate = maximumModelCallCost(
     cost,
     usage.inputTokens + (usage.cacheReadTokens ?? 0) + (usage.cacheWriteTokens ?? 0),
     usage.outputTokens,
   );
-  return estimate === undefined ? heldUsd : Math.min(heldUsd, estimate);
+  return estimate === undefined ? undefined : Math.min(heldUsd, estimate);
 }
 
 /** Bounded, leased recovery. Missing evidence is flagged rather than converted into free usage. */
@@ -122,8 +122,9 @@ export function createModelCreditReconciler(deps: {
               reason = usage.costUsd == null ? "cost unavailable" : "cost is not final";
             }
             // The provider will not say what the call cost. Holding the full reservation forever
-            // would keep credit out of the account's balance and could stop its runs, so the call
-            // is charged an estimate and the hold is closed.
+            // would keep credit out of the account's balance and could stop its runs, so the hold
+            // is closed: at the catalog estimate when one exists. With no price to estimate by it
+            // is settled at zero, never at the reservation, and left flagged for review.
             if (
               !complete &&
               call.pending &&
@@ -131,12 +132,14 @@ export function createModelCreditReconciler(deps: {
               usage?.costUsd == null
             ) {
               const heldUsd = Number(-call.amountMicros) / 1_000_000;
+              const estimate = estimateHeldCallCost(heldUsd, usage, call.provider, call.model);
               await recordUsage(
                 prisma,
                 {
                   ...(usage ?? { inputTokens: null, outputTokens: null }),
-                  costUsd: estimateHeldCallCost(heldUsd, usage, call.provider, call.model),
-                  costSource: "reconciliation-estimate",
+                  costUsd: estimate ?? 0,
+                  costSource:
+                    estimate === undefined ? "reconciliation-unpriced" : "reconciliation-estimate",
                   type: "usage",
                   provider: call.provider,
                   model: call.model,
@@ -151,13 +154,16 @@ export function createModelCreditReconciler(deps: {
                 },
                 true,
               );
-              complete = true;
-              getLogger().warn("Model credit hold settled at an estimate", {
-                callId: call.callId,
-                reason,
-                provider: call.provider,
-                model: call.model,
-              });
+              if (estimate === undefined) reason = "no catalog price; settled at zero";
+              else {
+                complete = true;
+                getLogger().warn("Model credit hold settled at an estimate", {
+                  callId: call.callId,
+                  reason,
+                  provider: call.provider,
+                  model: call.model,
+                });
+              }
             }
           } catch (error) {
             reason = error instanceof Error ? error.message : String(error);

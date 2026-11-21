@@ -21,6 +21,7 @@ vi.mock("@corvo/db", async (importOriginal) => ({
 }));
 
 const scope = { id: "run-1", spaceId: "space-1", userId: "user-1", botId: "bot-1" };
+const role = { title: "Helper", description: "Does chores" };
 const defaults = {
   deployment: { provider: "cloud", model: "standard", fastModel: "cheap", strongModel: "big" },
 };
@@ -141,17 +142,35 @@ describe("tier models", () => {
   });
 });
 
+describe("thinking by tier", () => {
+  it("gives each tier its own effort, which a member's own choice overrides", async () => {
+    expect((await resolveTierModel(deps().deps, scope, "fast", defaults)).choice).toMatchObject({
+      thinkingLevel: "low",
+    });
+    expect((await resolveTierModel(deps().deps, scope, "strong", defaults)).choice).toMatchObject({
+      thinkingLevel: "high",
+    });
+    const own = await resolveTierModel(
+      deps({ roles: [{ role: "strong", thinkingLevel: "medium" } as never] }).deps,
+      scope,
+      "strong",
+      defaults,
+    );
+    expect(own.choice?.thinkingLevel).toBe("medium");
+  });
+});
+
 describe("classifyTier", () => {
   it("is skipped without a fast model, so an unsettled turn stays on the main tier", async () => {
     const { deps: d, run } = deps({ answer: "strong" });
-    expect(await classifyTier(d, scope, "do the thing")).toBeNull();
+    expect(await classifyTier(d, scope, role, "do the thing")).toBeNull();
     expect(run).not.toHaveBeenCalled();
   });
 
   it("asks once, tool-less and capped, and reads one tier word", async () => {
     fast.model = { provider: "cloud", id: "cheap" };
     const { deps: d, run } = deps({ answer: "strong" });
-    expect(await classifyTier(d, scope, "x".repeat(10_000))).toBe("strong");
+    expect(await classifyTier(d, scope, role, "x".repeat(10_000))).toBe("strong");
     expect(run).toHaveBeenCalledOnce();
     const request = (
       run.mock.calls[0] as unknown as [
@@ -159,14 +178,15 @@ describe("classifyTier", () => {
       ]
     )[0];
     expect(request.tools).toEqual([]);
-    expect(request.prompt.length).toBeLessThanOrEqual(1_500);
+    expect(request.prompt).toContain("Role: Helper: Does chores");
+    expect(request.prompt.length).toBeLessThanOrEqual(2_000);
     expect(request.model.maxTokens).toBeLessThanOrEqual(16);
   });
 
   it("treats a failed or unclear answer as no answer", async () => {
     fast.model = { provider: "cloud", id: "cheap" };
-    expect(await classifyTier(deps({ fails: true }).deps, scope, "hi")).toBeNull();
-    expect(await classifyTier(deps({ answer: "it depends" }).deps, scope, "hi")).toBeNull();
+    expect(await classifyTier(deps({ fails: true }).deps, scope, role, "hi")).toBeNull();
+    expect(await classifyTier(deps({ answer: "it depends" }).deps, scope, role, "hi")).toBeNull();
   });
 });
 
@@ -184,13 +204,29 @@ describe("routeRunTier", () => {
   it("pays for the classifier only when the signals do not settle the turn", async () => {
     fast.model = { provider: "cloud", id: "cheap" };
     const settled = deps({ answer: "fast" });
-    await routeRunTier(settled.deps, scope, { ...signals, title: "Developer" }, defaults);
+    await routeRunTier(settled.deps, scope, { ...signals, attachments: 1 }, defaults);
+    await routeRunTier(settled.deps, scope, { ...signals, trigger: "routine" }, defaults);
     expect(settled.run).not.toHaveBeenCalled();
     const unsettled = deps({ answer: "strong" });
     expect(await routeRunTier(unsettled.deps, scope, signals, defaults)).toMatchObject({
       tier: "strong",
     });
     expect(unsettled.run).toHaveBeenCalledOnce();
+  });
+
+  it("decides by the request, not the agent's title", async () => {
+    fast.model = { provider: "cloud", id: "cheap" };
+    const { deps: d } = deps({ answer: "fast" });
+    expect(
+      await routeRunTier(d, scope, { ...signals, title: "Software engineer" }, defaults),
+    ).toMatchObject({ tier: "fast", choice: { modelId: "cheap", thinkingLevel: "low" } });
+  });
+
+  it("keeps the main tier when the classifier cannot answer", async () => {
+    fast.model = { provider: "cloud", id: "cheap" };
+    expect(await routeRunTier(deps({ fails: true }).deps, scope, signals, defaults)).toMatchObject({
+      tier: "main",
+    });
   });
 
   it("never classifies an escalated run, which starts on its floor", async () => {
@@ -224,9 +260,11 @@ describe("routeTurn", () => {
     expect(model).not.toHaveBeenCalled();
   });
 
-  it("starts an agent made for triage on the fast tier, and a resumed approval on main or higher", async () => {
-    const { deps: d } = deps();
+  it("asks the classifier once for a user turn, and a resumed approval goes to main or higher", async () => {
+    fast.model = { provider: "cloud", id: "cheap" };
+    const { deps: d, run: model } = deps({ answer: "fast" });
     expect(await routeTurn({ ...input, deps: d, run })).toMatchObject({ tier: "fast" });
+    expect(model).toHaveBeenCalledOnce();
     expect(
       await routeTurn({ ...input, deps: d, run: { ...run, trigger: "resume" } }),
     ).toMatchObject({ tier: "main" });

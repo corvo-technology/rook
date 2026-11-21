@@ -253,9 +253,36 @@ export function contentRoutes(ctx: RouterContext) {
             runId: true,
             parentRunId: true,
             modelTier: true,
+            callId: true,
+            costSource: true,
           },
           take: USAGE_OVERVIEW_ROW_LIMIT,
         });
+        // A call that drew Rook model credits has an entry under its id; the rest ran on the
+        // user's own model account.
+        const space = await deps.prisma.space.findUnique({
+          where: { id: context.actor.spaceId },
+          select: { organizationId: true },
+        });
+        const credited = space
+          ? await deps.prisma.modelCreditEntry.findMany({
+              where: {
+                organizationId: space.organizationId,
+                spaceId: context.actor.spaceId,
+                userId: context.actor.userId,
+                callId: { not: null },
+                // The credit is reserved just before the call is recorded.
+                createdAt: {
+                  gte: new Date(window.previousFrom - 3_600_000),
+                  lt: new Date(Math.max(window.to, now.getTime())),
+                },
+              },
+              select: { callId: true },
+            })
+          : [];
+        const creditCallIds = new Set(
+          credited.flatMap((entry) => (entry.callId ? [entry.callId] : [])),
+        );
         const escalatedRuns = {
           spaceId: context.actor.spaceId,
           userId: context.actor.userId,
@@ -308,6 +335,7 @@ export function contentRoutes(ctx: RouterContext) {
           outcomes: buildRunOutcomes(ended),
           escalations,
           requestedEscalations,
+          creditCallIds,
         });
       }),
       plan: authed.usage.plan.handler(async ({ context }) =>

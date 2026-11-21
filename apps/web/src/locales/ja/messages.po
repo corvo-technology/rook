@@ -287,11 +287,15 @@ msgstr "{count} 件のエージェント"
 msgid "{count} agents are working…"
 msgstr "{count}件のエージェントが作業中…"
 
+#: src/pages/usage/usage-sections.tsx
+msgid "{count} calls"
+msgstr "{count} 回の呼び出し"
+
 #: src/lib/billing.ts
 msgid "{count} days"
 msgstr "{count}日"
 
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "{count} failed"
 msgstr "{count} 件失敗"
 
@@ -299,7 +303,7 @@ msgstr "{count} 件失敗"
 msgid "{count} months"
 msgstr "{count}か月"
 
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "{count} replies"
 msgstr "{count} 件の返信"
 
@@ -631,9 +635,13 @@ msgstr "{seatsUsed} / {seatsMax} 人"
 msgid "{sent, plural, one {# invitation sent} other {# invitations sent}}"
 msgstr "{sent, plural, other {# 件の招待を送りました}}"
 
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "{share} cached"
 msgstr "{share} キャッシュ"
+
+#: src/pages/usage/usage-sections.tsx
+msgid "{shown} more"
+msgstr "+{shown}"
 
 #: src/components/ArtifactFileCard.tsx
 msgid "{size} B"
@@ -709,14 +717,6 @@ msgstr "{used} / {limit} トークン"
 #: src/pages/shell/context-meter.tsx
 msgid "{used} tokens"
 msgstr "{used} トークン"
-
-#: src/pages/Usage.tsx
-msgid "{value} min avg"
-msgstr "平均 {value} 分"
-
-#: src/pages/Usage.tsx
-msgid "{value} s avg"
-msgstr "平均 {value} 秒"
 
 #: src/pages/platform/SimulatorSection.tsx
 msgid "{voiceMinutes} min"
@@ -1795,11 +1795,8 @@ msgstr "Bearerトークン"
 msgid "Below credits"
 msgstr "クレジットがこの値未満"
 
-#: src/pages/Usage.tsx
-msgid "Billed"
-msgstr "請求対象"
-
 #: src/pages/Settings.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Billing"
 msgstr "請求"
 
@@ -1961,18 +1958,18 @@ msgid "By agent"
 msgstr "エージェント別"
 
 #: src/pages/Usage.tsx
-msgid "By model tier"
-msgstr "モデル階層別"
+msgid "By model"
+msgstr "モデル別"
 
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Cache hit rate"
 msgstr "キャッシュヒット率"
 
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Cache writes"
 msgstr "キャッシュ書き込み"
 
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Cached"
 msgstr "キャッシュ"
 
@@ -2148,6 +2145,7 @@ msgid "Chat Settings"
 msgstr "チャット設定"
 
 #: src/lib/localized-provider-hint.ts
+#: src/pages/usage/usage-sections.tsx
 msgid "ChatGPT subscription"
 msgstr "ChatGPTサブスクリプション"
 
@@ -2482,6 +2480,10 @@ msgstr "圧縮中…"
 #: src/pages/shell/message-view.tsx
 msgid "Computer"
 msgstr "コンピューター"
+
+#: src/pages/usage/usage-sections.tsx
+msgid "Computer did not start"
+msgstr "コンピューターが起動しませんでした"
 
 #: src/pages/shell/computer-view.tsx
 #: src/pages/shell/use-computer.tsx
@@ -2823,7 +2825,6 @@ msgstr "corvo-sharedおよびbot-で始まるIDはRook用に予約されてい�
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/PartnersSection.tsx
 #: src/pages/platform/SimulatorSection.tsx
-#: src/pages/Usage.tsx
 msgid "Cost"
 msgstr "コスト"
 
@@ -4367,6 +4368,7 @@ msgstr "環境変数: {names}"
 #: src/lib/roster-status.ts
 #: src/pages/shell/agent-connections.tsx
 #: src/pages/shell/sidebar-roster.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Error"
 msgstr "エラー"
 
@@ -4377,6 +4379,10 @@ msgstr "エラーの詳細"
 #: src/pages/Usage.tsx
 msgid "Escalated"
 msgstr "引き上げ"
+
+#: src/pages/usage/usage-sections.tsx
+msgid "Estimated at list price"
+msgstr "定価での概算"
 
 #: src/pages/partner/PartnerEvents.tsx
 msgid "Events"
@@ -4547,10 +4553,6 @@ msgstr "失敗しました。"
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Failure handling"
 msgstr "失敗時の対応"
-
-#: src/pages/Usage.tsx
-msgid "Fast"
-msgstr "高速"
 
 #: src/pages/platform/PlatformConnect.tsx
 msgid "Fees"
@@ -5132,7 +5134,7 @@ msgstr "デフォルトを継承"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/PricingSection.tsx
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Input"
 msgstr "入力"
 
@@ -5527,6 +5529,10 @@ msgstr "軽いタスク用モデル"
 #: src/pages/shell/bot-panel.tsx
 msgid "Limit per payment"
 msgstr "支払いの上限"
+
+#: src/pages/usage/usage-sections.tsx
+msgid "Limit reached"
+msgstr "上限に到達"
 
 #: src/pages/platform/LimitsSection.tsx
 #: src/pages/platform/PlatformPage.tsx
@@ -6136,7 +6142,7 @@ msgid "Monthly price"
 msgstr "月額料金"
 
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Monthly token limit"
 msgstr "月間トークン上限"
 
@@ -7060,7 +7066,7 @@ msgstr "その他の接続方法"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/PricingSection.tsx
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Output"
 msgstr "出力"
 
@@ -8178,6 +8184,7 @@ msgid "Roles of {name}"
 msgstr "{name} のロール"
 
 #: src/pages/Onboarding.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Rook credits"
 msgstr "Rookクレジット"
 
@@ -8963,10 +8970,6 @@ msgstr "SSL"
 msgid "SSO is temporarily unavailable. Try again."
 msgstr "SSOは一時的に利用できません。もう一度お試しください。"
 
-#: src/pages/Usage.tsx
-msgid "Standard"
-msgstr "標準"
-
 #: src/pages/QuietHoursRow.tsx
 #: src/pages/shell/computer-overlay.tsx
 msgid "Start"
@@ -9117,10 +9120,6 @@ msgstr "暗号化して保存済み"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Stream replies"
 msgstr "返信をストリーミング"
-
-#: src/pages/Usage.tsx
-msgid "Strong"
-msgstr "高性能"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Stuck tickets on the board"
@@ -9722,6 +9721,7 @@ msgid "tokens"
 msgstr "トークン"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Usage.tsx
 msgid "Tokens"
 msgstr "トークン"
 
@@ -10633,6 +10633,10 @@ msgstr "このスペースのモデルの月間上限に達しました。"
 #: src/lib/server-copy.ts
 msgid "You were added to the group chat “{name}”. Reply YES in this conversation to join it with your agent."
 msgstr "グループチャット「{name}」に追加されました。エージェントで参加するには、この会話で「はい」と返信してください。"
+
+#: src/pages/usage/usage-sections.tsx
+msgid "Your accounts"
+msgstr "あなたのアカウント"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts

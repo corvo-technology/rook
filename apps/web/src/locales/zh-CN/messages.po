@@ -287,11 +287,15 @@ msgstr "{count} 个代理"
 msgid "{count} agents are working…"
 msgstr "{count}个智能体正在工作…"
 
+#: src/pages/usage/usage-sections.tsx
+msgid "{count} calls"
+msgstr "{count} 次调用"
+
 #: src/lib/billing.ts
 msgid "{count} days"
 msgstr "{count} 天"
 
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "{count} failed"
 msgstr "{count} 次失败"
 
@@ -299,7 +303,7 @@ msgstr "{count} 次失败"
 msgid "{count} months"
 msgstr "{count} 个月"
 
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "{count} replies"
 msgstr "{count} 条回复"
 
@@ -631,9 +635,13 @@ msgstr "{seatsUsed} / {seatsMax} 人"
 msgid "{sent, plural, one {# invitation sent} other {# invitations sent}}"
 msgstr "{sent, plural, other {已发送 # 个邀请}}"
 
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "{share} cached"
 msgstr "{share} 来自缓存"
+
+#: src/pages/usage/usage-sections.tsx
+msgid "{shown} more"
+msgstr "+{shown}"
 
 #: src/components/ArtifactFileCard.tsx
 msgid "{size} B"
@@ -709,14 +717,6 @@ msgstr "{used} / {limit} 个 token"
 #: src/pages/shell/context-meter.tsx
 msgid "{used} tokens"
 msgstr "{used} 个令牌"
-
-#: src/pages/Usage.tsx
-msgid "{value} min avg"
-msgstr "平均{value}分钟"
-
-#: src/pages/Usage.tsx
-msgid "{value} s avg"
-msgstr "平均{value}秒"
 
 #: src/pages/platform/SimulatorSection.tsx
 msgid "{voiceMinutes} min"
@@ -1795,11 +1795,8 @@ msgstr "Bearer token"
 msgid "Below credits"
 msgstr "低于额度"
 
-#: src/pages/Usage.tsx
-msgid "Billed"
-msgstr "已计费"
-
 #: src/pages/Settings.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Billing"
 msgstr "账单"
 
@@ -1961,18 +1958,18 @@ msgid "By agent"
 msgstr "按代理"
 
 #: src/pages/Usage.tsx
-msgid "By model tier"
-msgstr "按模型等级"
+msgid "By model"
+msgstr "按模型"
 
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Cache hit rate"
 msgstr "缓存命中率"
 
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Cache writes"
 msgstr "缓存写入"
 
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Cached"
 msgstr "缓存"
 
@@ -2148,6 +2145,7 @@ msgid "Chat Settings"
 msgstr "聊天设置"
 
 #: src/lib/localized-provider-hint.ts
+#: src/pages/usage/usage-sections.tsx
 msgid "ChatGPT subscription"
 msgstr "ChatGPT 订阅"
 
@@ -2482,6 +2480,10 @@ msgstr "正在压缩…"
 #: src/pages/shell/message-view.tsx
 msgid "Computer"
 msgstr "电脑"
+
+#: src/pages/usage/usage-sections.tsx
+msgid "Computer did not start"
+msgstr "电脑未能启动"
 
 #: src/pages/shell/computer-view.tsx
 #: src/pages/shell/use-computer.tsx
@@ -2823,7 +2825,6 @@ msgstr "corvo-shared 和以 bot- 开头的 ID 为 Rook 保留。"
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/PartnersSection.tsx
 #: src/pages/platform/SimulatorSection.tsx
-#: src/pages/Usage.tsx
 msgid "Cost"
 msgstr "费用"
 
@@ -4367,6 +4368,7 @@ msgstr "环境变量：{names}"
 #: src/lib/roster-status.ts
 #: src/pages/shell/agent-connections.tsx
 #: src/pages/shell/sidebar-roster.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Error"
 msgstr "错误"
 
@@ -4377,6 +4379,10 @@ msgstr "错误详情"
 #: src/pages/Usage.tsx
 msgid "Escalated"
 msgstr "已升级"
+
+#: src/pages/usage/usage-sections.tsx
+msgid "Estimated at list price"
+msgstr "按标价估算"
 
 #: src/pages/partner/PartnerEvents.tsx
 msgid "Events"
@@ -4547,10 +4553,6 @@ msgstr "失败。"
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Failure handling"
 msgstr "失败处理"
-
-#: src/pages/Usage.tsx
-msgid "Fast"
-msgstr "快速"
 
 #: src/pages/platform/PlatformConnect.tsx
 msgid "Fees"
@@ -5132,7 +5134,7 @@ msgstr "沿用默认"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/PricingSection.tsx
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Input"
 msgstr "输入"
 
@@ -5527,6 +5529,10 @@ msgstr "轻量任务模型"
 #: src/pages/shell/bot-panel.tsx
 msgid "Limit per payment"
 msgstr "单笔支付上限"
+
+#: src/pages/usage/usage-sections.tsx
+msgid "Limit reached"
+msgstr "已达上限"
 
 #: src/pages/platform/LimitsSection.tsx
 #: src/pages/platform/PlatformPage.tsx
@@ -6136,7 +6142,7 @@ msgid "Monthly price"
 msgstr "月价格"
 
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Monthly token limit"
 msgstr "每月令牌上限"
 
@@ -7060,7 +7066,7 @@ msgstr "其他连接方式"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/PricingSection.tsx
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Output"
 msgstr "输出"
 
@@ -8178,6 +8184,7 @@ msgid "Roles of {name}"
 msgstr "{name} 的角色"
 
 #: src/pages/Onboarding.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Rook credits"
 msgstr "Rook 额度"
 
@@ -8963,10 +8970,6 @@ msgstr "SSL"
 msgid "SSO is temporarily unavailable. Try again."
 msgstr "SSO 暂时不可用，请重试。"
 
-#: src/pages/Usage.tsx
-msgid "Standard"
-msgstr "标准"
-
 #: src/pages/QuietHoursRow.tsx
 #: src/pages/shell/computer-overlay.tsx
 msgid "Start"
@@ -9117,10 +9120,6 @@ msgstr "已加密存储"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Stream replies"
 msgstr "流式回复"
-
-#: src/pages/Usage.tsx
-msgid "Strong"
-msgstr "强力"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Stuck tickets on the board"
@@ -9722,6 +9721,7 @@ msgid "tokens"
 msgstr "令牌"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Usage.tsx
 msgid "Tokens"
 msgstr "Token"
 
@@ -10633,6 +10633,10 @@ msgstr "你已达到此空间模型的每月上限。"
 #: src/lib/server-copy.ts
 msgid "You were added to the group chat “{name}”. Reply YES in this conversation to join it with your agent."
 msgstr "你已被添加到群聊“{name}”。在此对话中回复“是”即可与你的智能体一起加入。"
+
+#: src/pages/usage/usage-sections.tsx
+msgid "Your accounts"
+msgstr "你的账户"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts

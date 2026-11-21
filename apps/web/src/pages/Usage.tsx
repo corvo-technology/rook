@@ -1,24 +1,25 @@
-import type { UsageCache, UsagePeriod } from "@corvo/contracts";
-import { normalizeRunError } from "@corvo/core";
-import { AgentLoader, BotAvatar, Button, Progress } from "@corvo/ui-web";
+import type { UsagePeriod } from "@corvo/contracts";
+import { AgentLoader, Button } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { PageHeader } from "../components/PageHeader";
 import { formatTokens } from "../lib/context-meter";
 import { useSpaceQueries } from "../lib/query";
-import { translateRunError } from "../lib/run-error";
 import {
+  formatUsd,
+  usageActiveAgents,
   usageAgentKey,
   usageBars,
   usageChange,
   usageDayLabel,
-  usageHitRate,
-  usageShare,
+  usageMetric,
+  usageSpendTotal,
 } from "../lib/usage-view";
 import { errorText } from "../lib/user-error";
 import { PlanUsageSection } from "./usage/plan-usage";
 import { UsageChart } from "./usage/usage-chart";
+import { AccountList, AgentList, SpendLead, TokenStats } from "./usage/usage-sections";
 
 /** What the account has run, by day and by agent, for the month or the last thirty days. */
 export function UsagePage() {
@@ -40,13 +41,16 @@ export function UsagePage() {
     return t`${used} of ${limit}`;
   };
   const budgetOf = (id: string | null) => budgets.data?.find((budget) => budget.botId === id);
-  const bars = useMemo(() => usageBars(overview?.days ?? [], agent), [overview, agent]);
+  const metric = overview ? usageMetric(overview) : "tokens";
+  const bars = useMemo(
+    () => usageBars(overview?.days ?? [], agent, metric),
+    [overview, agent, metric],
+  );
   const periods: Array<[UsagePeriod, string]> = [
     ["month", t`This month`],
     ["last-month", t`Last month`],
     ["30d", t`Last 30 days`],
   ];
-  const currency = new Intl.NumberFormat(locale, { style: "currency", currency: "USD" });
   const change = overview ? usageChange(overview) : null;
   const versus =
     period === "month"
@@ -56,47 +60,28 @@ export function UsagePage() {
         : t`vs. the 30 days before`;
   const chosen = overview?.agents.find((item) => usageAgentKey(item.id) === agent);
   const agentName = (name: string) => name || t`Deleted agent`;
-  const tierLabels = { fast: t`Fast`, main: t`Standard`, strong: t`Strong` } as const;
   const tokensText = (tokens: number) => {
     const count = formatTokens(tokens, locale);
     return t`${count} tokens`;
   };
-  const failedText = (failed: number, topError?: string | null) => {
-    const count = new Intl.NumberFormat(locale).format(failed);
-    const failures = t`${count} failed`;
-    return topError
-      ? `${failures}: ${normalizeRunError(topError, translateRunError, locale).summary}`
-      : failures;
-  };
-  const avgText = (seconds: number) => {
-    const value = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(
-      seconds >= 60 ? seconds / 60 : seconds,
-    );
-    return seconds >= 60 ? t`${value} min avg` : t`${value} s avg`;
-  };
-  const percentText = (fraction: number) =>
-    new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 0 }).format(fraction);
-  const cachedText = (cache: UsageCache | undefined) => {
-    const rate = cache ? usageHitRate(cache) : null;
-    if (!rate) return undefined;
-    const share = percentText(rate);
-    return t`${share} cached`;
-  };
+  const valueText = (value: number) =>
+    metric === "spend" ? formatUsd(value, locale) : tokensText(value);
   const billed = chosen?.cache ?? overview?.cache;
-  const hitRate = billed ? usageHitRate(billed) : null;
-  const repliesText = (replies: number) => {
-    const count = new Intl.NumberFormat(locale).format(replies);
-    return t`${count} replies`;
-  };
+  const agents = useMemo(() => usageActiveAgents(overview?.agents ?? []), [overview]);
 
   let readout = "";
   const bar = hovered === null ? undefined : bars[hovered];
   if (bar) {
     const day = overview?.days[hovered ?? 0];
-    const tokens = agent === null ? bar.tokens : (day?.agents[agent] ?? 0);
-    readout = `${usageDayLabel(bar.date, locale)} · ${tokensText(tokens)}`;
+    const own =
+      agent === null
+        ? bar.value
+        : metric === "spend"
+          ? (day?.agentSpendUsd?.[agent] ?? 0)
+          : (day?.agents[agent] ?? 0);
+    readout = `${usageDayLabel(bar.date, locale)} · ${valueText(own)}`;
   } else if (chosen) {
-    readout = `${agentName(chosen.name)} · ${tokensText(chosen.tokens)}`;
+    readout = `${agentName(chosen.name)} · ${valueText(metric === "spend" ? (chosen.spendUsd ?? 0) : chosen.tokens)}`;
   }
 
   return (
@@ -140,12 +125,16 @@ export function UsagePage() {
             <>
               <section className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
                 <div>
-                  <p className="text-[44px] font-medium leading-none tabular-nums tracking-tight">
-                    {formatTokens(overview.tokens, locale)}
-                    <span className="ms-2 text-base font-normal text-muted-foreground">
-                      {t`tokens`}
-                    </span>
-                  </p>
+                  {metric === "spend" && overview.spend ? (
+                    <SpendLead spend={overview.spend} locale={locale} />
+                  ) : (
+                    <p className="text-[44px] font-medium leading-none tabular-nums tracking-tight">
+                      {formatTokens(overview.tokens, locale)}
+                      <span className="ms-2 text-base font-normal text-muted-foreground">
+                        {t`tokens`}
+                      </span>
+                    </p>
+                  )}
                   {change !== null ? (
                     <p className="mt-2 text-[13px] text-muted-foreground">
                       <span className="tabular-nums text-foreground">
@@ -179,15 +168,6 @@ export function UsagePage() {
                       ) : null}
                     </div>
                   ) : null}
-                  {overview.costUsd ? (
-                    <div>
-                      <dt className="text-muted-foreground">{t`Cost`}</dt>
-                      <dd className="mt-0.5 text-[18px] font-medium tabular-nums">
-                        {overview.costUsd < 0.01 ? "<" : ""}
-                        {currency.format(Math.max(overview.costUsd, 0.01))}
-                      </dd>
-                    </div>
-                  ) : null}
                 </dl>
               </section>
 
@@ -201,152 +181,39 @@ export function UsagePage() {
                       locale={locale}
                       readout={readout}
                       onHover={setHovered}
-                      tokensLabel={tokensText}
+                      valueLabel={valueText}
                     />
                   </div>
 
                   {billed ? (
-                    <section className="mt-10" aria-label={t`Billed`}>
-                      <h2 className="mb-1 text-[13px] font-medium text-muted-foreground">
-                        {chosen ? `${t`Billed`} · ${agentName(chosen.name)}` : t`Billed`}
+                    <section className="mt-10" aria-label={t`Tokens`}>
+                      <h2 className="mb-3 text-[13px] font-medium text-muted-foreground">
+                        {chosen ? `${t`Tokens`} · ${agentName(chosen.name)}` : t`Tokens`}
                       </h2>
-                      <dl className="m-0">
-                        {(
-                          [
-                            [t`Input`, billed.input],
-                            [t`Cached`, billed.cacheRead],
-                            billed.cacheWrite ? [t`Cache writes`, billed.cacheWrite] : null,
-                            [t`Output`, billed.output],
-                          ] as Array<[string, number] | null>
-                        ).map((entry) =>
-                          entry ? (
-                            <div
-                              key={entry[0]}
-                              className="flex items-baseline justify-between gap-4 py-2 text-sm"
-                            >
-                              <dt>{entry[0]}</dt>
-                              <dd className="m-0 tabular-nums text-muted-foreground">
-                                {formatTokens(entry[1], locale)}
-                              </dd>
-                            </div>
-                          ) : null,
-                        )}
-                        {hitRate !== null ? (
-                          <div className="flex items-baseline justify-between gap-4 py-2 text-sm">
-                            <dt>{t`Cache hit rate`}</dt>
-                            <dd className="m-0 tabular-nums">{percentText(hitRate)}</dd>
-                          </div>
-                        ) : null}
-                      </dl>
+                      <TokenStats cache={billed} locale={locale} />
                     </section>
                   ) : null}
 
-                  <section className="mt-10" aria-label={t`By agent`}>
-                    <h2 className="mb-1 text-[13px] font-medium text-muted-foreground">{t`By agent`}</h2>
-                    <ul className="m-0 list-none p-0">
-                      {overview.agents.map((item) => {
-                        const key = usageAgentKey(item.id);
-                        const share = usageShare(item.tokens, overview.tokens);
-                        const selected = agent === key;
-                        const model = item.models[0];
-                        const budget = budgetOf(item.id);
-                        return (
-                          <li key={key}>
-                            <button
-                              type="button"
-                              aria-pressed={selected}
-                              onClick={() => setAgent(selected ? null : key)}
-                              className="grid w-full grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-x-3 rounded-lg px-2 py-2.5 text-start outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring aria-pressed:bg-accent"
-                            >
-                              {item.color ? (
-                                <BotAvatar color={item.color} identity={key} size={28} />
-                              ) : (
-                                <span className="size-7 rounded-lg bg-muted" aria-hidden="true" />
-                              )}
-                              <span className="min-w-0">
-                                <span className="block truncate text-sm font-medium">
-                                  {agentName(item.name)}
-                                </span>
-                                <span className="block truncate text-[12.5px] text-muted-foreground">
-                                  {[
-                                    model?.model,
-                                    repliesText(item.replies),
-                                    cachedText(item.cache),
-                                    item.avgSeconds != null ? avgText(item.avgSeconds) : undefined,
-                                    item.failed
-                                      ? failedText(item.failed, item.topError)
-                                      : undefined,
-                                  ]
-                                    .filter(Boolean)
-                                    .join(" · ")}
-                                </span>
-                              </span>
-                              <span className="text-end">
-                                <span className="block text-sm tabular-nums">
-                                  {formatTokens(item.tokens, locale)}
-                                </span>
-                                <span className="block text-[12.5px] tabular-nums text-muted-foreground">
-                                  {new Intl.NumberFormat(locale, {
-                                    style: "percent",
-                                    maximumFractionDigits: 0,
-                                  }).format(share)}
-                                </span>
-                              </span>
-                              {overview.agents.length > 1 ? (
-                                <span
-                                  className="col-span-3 mt-2 block h-[3px] overflow-hidden rounded-full bg-foreground/10"
-                                  aria-hidden="true"
-                                >
-                                  <span
-                                    className="block h-full rounded-full bg-foreground/80"
-                                    style={{ width: `${share * 100}%` }}
-                                  />
-                                </span>
-                              ) : null}
-                            </button>
-                            {budget ? (
-                              <div className="px-2 pb-2.5">
-                                <Progress
-                                  aria-label={t`Monthly token limit`}
-                                  value={Math.min(
-                                    100,
-                                    Math.round(
-                                      (budget.monthTokens / budget.monthlyTokenLimit) * 100,
-                                    ),
-                                  )}
-                                  className="gap-1"
-                                >
-                                  <span className="text-[12.5px] tabular-nums text-muted-foreground">
-                                    {budgetLine(budget)}
-                                  </span>
-                                </Progress>
-                              </div>
-                            ) : null}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </section>
+                  {agents.length > 0 ? (
+                    <section className="mt-10" aria-label={t`By agent`}>
+                      <h2 className="mb-1 text-[13px] font-medium text-muted-foreground">{t`By agent`}</h2>
+                      <AgentList
+                        agents={agents}
+                        total={metric === "spend" ? usageSpendTotal(overview) : overview.tokens}
+                        selected={agent}
+                        onSelect={setAgent}
+                        agentName={agentName}
+                        budgetOf={budgetOf}
+                        budgetLine={budgetLine}
+                        spendMode={metric === "spend"}
+                      />
+                    </section>
+                  ) : null}
 
-                  {overview.tiers?.length ? (
-                    <section className="mt-10" aria-label={t`By model tier`}>
-                      <h2 className="mb-1 text-[13px] font-medium text-muted-foreground">{t`By model tier`}</h2>
-                      <ul className="m-0 list-none p-0">
-                        {overview.tiers.map((item) => (
-                          <li
-                            key={item.tier}
-                            className="flex items-baseline justify-between gap-4 py-2 text-sm"
-                          >
-                            <span>{tierLabels[item.tier]}</span>
-                            <span className="tabular-nums text-muted-foreground">
-                              {tokensText(item.tokens)}
-                              {item.costUsd
-                                ? ` · ${currency.format(Math.max(item.costUsd, 0.01))}`
-                                : ""}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
+                  {overview.accounts?.length ? (
+                    <section className="mt-10" aria-label={t`By model`}>
+                      <h2 className="mb-1 text-[13px] font-medium text-muted-foreground">{t`By model`}</h2>
+                      <AccountList accounts={overview.accounts} />
                     </section>
                   ) : null}
                 </>

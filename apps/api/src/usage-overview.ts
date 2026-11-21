@@ -1,6 +1,25 @@
-import type { ModelTier, UsageCache, UsageOverview, UsagePeriod } from "@corvo/contracts";
-import { MODEL_TIERS } from "@corvo/contracts";
-import { normalizeRunError, usageTokens } from "@corvo/core";
+import type {
+  ModelTier,
+  UsageAccount,
+  UsageCache,
+  UsageFailureKind,
+  UsageOverview,
+  UsagePeriod,
+} from "@corvo/contracts";
+import { COMPUTER_SETUP_RUN_ERROR, MODEL_TIERS } from "@corvo/contracts";
+import {
+  ACCOUNT_PAUSED_RUN_ERROR,
+  BOT_DAILY_LIMIT_RUN_ERROR,
+  BOT_MONTHLY_LIMIT_RUN_ERROR,
+  BOT_REPLY_CAP_RUN_ERROR,
+  HOSTED_MODEL_CREDITS_REQUIRED_ERROR,
+  MEMBER_MONTHLY_LIMIT_RUN_ERROR,
+  MODEL_ACCESS_REQUIRED_RUN_ERROR,
+  normalizeRunError,
+  PARTNER_CREDIT_USED_UP_RUN_ERROR,
+  PLAN_INACTIVE_RUN_ERROR,
+  usageTokens,
+} from "@corvo/core";
 
 export interface UsageRow {
   botId: string | null;
@@ -17,6 +36,10 @@ export interface UsageRow {
   parentRunId: string | null;
   /** The tier an automatic agent's call ran on; null for any other call. */
   modelTier?: string | null;
+  /** Ties the call to the model credits it drew, when it drew any. */
+  callId?: string | null;
+  /** `provider-reported` is a real cost; anything else with a cost is an estimate. */
+  costSource?: string | null;
 }
 
 const DAY_MS = 86_400_000;
@@ -74,27 +97,64 @@ export interface RunOutcomeRow {
 }
 export type RunOutcome = {
   failed: number;
+  /** Failed runs by kind. */
+  kinds: Partial<Record<UsageFailureKind, number>>;
   avgSeconds: number | null;
   /** The error text behind the most common kind of failure, for the page to put in words. */
   topError: string | null;
 };
 const TOP_ERROR_CHARS = 1_000;
 
+const BILLING_ERRORS = new Set([
+  MODEL_ACCESS_REQUIRED_RUN_ERROR,
+  HOSTED_MODEL_CREDITS_REQUIRED_ERROR,
+  PLAN_INACTIVE_RUN_ERROR,
+  ACCOUNT_PAUSED_RUN_ERROR,
+  PARTNER_CREDIT_USED_UP_RUN_ERROR,
+]);
+const LIMIT_ERRORS = new Set([
+  BOT_DAILY_LIMIT_RUN_ERROR,
+  BOT_MONTHLY_LIMIT_RUN_ERROR,
+  BOT_REPLY_CAP_RUN_ERROR,
+  MEMBER_MONTHLY_LIMIT_RUN_ERROR,
+]);
+
+/** Which group a failed run's error belongs to, so the page can say it in a few words. */
+export function usageFailureKind(error: string | null | undefined): UsageFailureKind {
+  const text = error?.trim();
+  if (!text) return "error";
+  if (text === COMPUTER_SETUP_RUN_ERROR || text.startsWith(`${COMPUTER_SETUP_RUN_ERROR}\n`))
+    return "computer";
+  if (BILLING_ERRORS.has(text)) return "billing";
+  if (LIMIT_ERRORS.has(text)) return "limit";
+  const { kind } = normalizeRunError(text);
+  return kind === "key" || kind === "credit" || kind === "spending" || kind === "rate"
+    ? "limit"
+    : "error";
+}
+
 /** How each agent's ended runs went: how many failed, and how long the finished ones took. */
 export function buildRunOutcomes(runs: readonly RunOutcomeRow[]): Map<string, RunOutcome> {
-  const totals = new Map<
-    string,
-    {
-      failed: number;
-      seconds: number;
-      timed: number;
-      reasons: Map<string, { count: number; error: string }>;
-    }
-  >();
+  type Total = {
+    failed: number;
+    seconds: number;
+    timed: number;
+    kinds: Partial<Record<UsageFailureKind, number>>;
+    reasons: Map<string, { count: number; error: string }>;
+  };
+  const totals = new Map<string, Total>();
   for (const run of runs) {
-    const total = totals.get(run.botId) ?? { failed: 0, seconds: 0, timed: 0, reasons: new Map() };
+    const total: Total = totals.get(run.botId) ?? {
+      failed: 0,
+      seconds: 0,
+      timed: 0,
+      kinds: {},
+      reasons: new Map(),
+    };
     if (run.status === "failed") {
       total.failed += 1;
+      const kind = usageFailureKind(run.error);
+      total.kinds[kind] = (total.kinds[kind] ?? 0) + 1;
       const error = run.error?.trim();
       if (error) {
         // Runs fail for the same reason in different words; the app's own summary groups them.
@@ -115,6 +175,7 @@ export function buildRunOutcomes(runs: readonly RunOutcomeRow[]): Map<string, Ru
       botId,
       {
         failed: total.failed,
+        kinds: total.kinds,
         avgSeconds: total.timed ? total.seconds / total.timed : null,
         topError: [...total.reasons.values()].sort((a, b) => b.count - a.count)[0]?.error ?? null,
       },
@@ -136,24 +197,27 @@ export function buildUsageOverview(input: {
   escalations?: number;
   /** Of those, the runs where the agent asked for the stronger model itself. */
   requestedEscalations?: number;
+  /** Calls that drew Rook model credits; every other call ran on the user's own account. */
+  creditCallIds?: ReadonlySet<string>;
 }): UsageOverview {
-  const { period, now, rows, agents, unknownName, outcomes } = input;
+  const { period, now, rows, agents, unknownName, outcomes, creditCallIds } = input;
   const window = usageWindow(period, now);
   const end = Math.max(window.to, window.from + 1);
   const inWindow = rows.filter((row) => {
     const at = row.createdAt.getTime();
     return at >= window.from && at < end;
   });
-  const previousTokens = rows
-    .filter((row) => {
-      const at = row.createdAt.getTime();
-      return at >= window.previousFrom && at < window.previousTo;
-    })
-    .reduce((sum, row) => sum + rowTokens(row), 0);
+  const previousRows = rows.filter((row) => {
+    const at = row.createdAt.getTime();
+    return at >= window.previousFrom && at < window.previousTo;
+  });
+  const previousTokens = previousRows.reduce((sum, row) => sum + rowTokens(row), 0);
+  const previousSpendUsd = previousRows.reduce((sum, row) => sum + (row.costUsd ?? 0), 0);
 
   type Bucket = {
     id: string | null;
     tokens: number;
+    spend: number;
     runs: Set<string>;
     cost: number;
     costKnown: boolean;
@@ -167,12 +231,27 @@ export function buildUsageOverview(input: {
   let tokens = 0;
   const totalCache = emptyCache();
   const tierTotals = new Map<ModelTier, { tokens: number; cost: number; costKnown: boolean }>();
-  const days = new Map<string, { tokens: number; agents: Record<string, number> }>();
+  const days = new Map<
+    string,
+    {
+      tokens: number;
+      agents: Record<string, number>;
+      spendUsd: number;
+      agentSpendUsd: Record<string, number>;
+    }
+  >();
+  const spend = { creditsUsd: 0, ownUsd: 0, ownEstimatedUsd: 0 };
+  const accounts = new Map<string, UsageAccount>();
   // The running month shows all its days, so a few days of use sit at the start of the axis
   // and not stretched across the whole chart.
   const daysEnd = period === "month" ? startOfUtcMonth(now.getTime(), 1) : end;
   for (let day = startOfUtcDay(window.from); day < daysEnd; day += DAY_MS) {
-    days.set(new Date(day).toISOString().slice(0, 10), { tokens: 0, agents: {} });
+    days.set(new Date(day).toISOString().slice(0, 10), {
+      tokens: 0,
+      agents: {},
+      spendUsd: 0,
+      agentSpendUsd: {},
+    });
   }
 
   for (const row of inWindow) {
@@ -181,12 +260,39 @@ export function buildUsageOverview(input: {
     const bucket = buckets.get(key) ?? {
       id: row.botId,
       tokens: 0,
+      spend: 0,
       runs: new Set<string>(),
       cost: 0,
       costKnown: true,
       cache: emptyCache(),
       models: new Map(),
     };
+    const paid = row.costUsd ?? 0;
+    const funding = row.callId && creditCallIds?.has(row.callId) ? "credits" : "own";
+    const estimated = funding === "own" && paid > 0 && row.costSource !== "provider-reported";
+    if (funding === "credits") spend.creditsUsd += paid;
+    else {
+      spend.ownUsd += paid;
+      if (estimated) spend.ownEstimatedUsd += paid;
+    }
+    const accountKey = `${funding}:${row.provider}:${row.model}`;
+    const account = accounts.get(accountKey) ?? {
+      provider: row.provider,
+      model: row.model,
+      funding,
+      calls: 0,
+      tokens: 0,
+      spendUsd: 0,
+      estimated: false,
+      cache: emptyCache(),
+    };
+    account.calls += 1;
+    account.tokens += used;
+    account.spendUsd += paid;
+    account.estimated ||= estimated;
+    addCache(account.cache, row);
+    accounts.set(accountKey, account);
+    bucket.spend += paid;
     bucket.tokens += used;
     addCache(bucket.cache, row);
     addCache(totalCache, row);
@@ -224,6 +330,8 @@ export function buildUsageOverview(input: {
     if (day) {
       day.tokens += used;
       day.agents[key] = (day.agents[key] ?? 0) + used;
+      day.spendUsd += paid;
+      day.agentSpendUsd[key] = (day.agentSpendUsd[key] ?? 0) + paid;
     }
   }
 
@@ -246,12 +354,16 @@ export function buildUsageOverview(input: {
           tokens: bucket.tokens,
           replies: bucket.runs.size,
           costUsd: bucket.costKnown ? bucket.cost : null,
+          spendUsd: bucket.spend,
           cache: bucket.cache,
           models: [...bucket.models.values()].sort((a, b) => b.tokens - a.tokens),
           ...(bucket.id && outcomes?.get(bucket.id) ? outcomes.get(bucket.id) : {}),
         };
       })
-      .sort((a, b) => b.tokens - a.tokens),
+      .sort((a, b) => b.spendUsd - a.spendUsd || b.tokens - a.tokens),
+    spend,
+    previousSpendUsd,
+    accounts: [...accounts.values()].sort((a, b) => b.spendUsd - a.spendUsd || b.tokens - a.tokens),
     tiers: MODEL_TIERS.flatMap((tier) => {
       const total = tierTotals.get(tier);
       return total

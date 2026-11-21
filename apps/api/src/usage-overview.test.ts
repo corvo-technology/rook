@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { UsageRow } from "./usage-overview.js";
-import { buildRunOutcomes, buildUsageOverview, rowTokens, usageWindow } from "./usage-overview.js";
+import {
+  buildRunOutcomes,
+  buildUsageOverview,
+  rowTokens,
+  usageFailureKind,
+  usageWindow,
+} from "./usage-overview.js";
 
 const NOW = new Date("2026-11-15T12:00:00Z");
 
@@ -110,7 +116,13 @@ describe("buildUsageOverview", () => {
     expect(result.days).toHaveLength(30);
     expect(result.days[0]?.date).toBe("2026-11-01");
     expect(result.days[0]?.tokens).toBe(0);
-    expect(result.days[1]).toEqual({ date: "2026-11-02", tokens: 110, agents: { a: 100, b: 10 } });
+    expect(result.days[1]).toEqual({
+      date: "2026-11-02",
+      tokens: 110,
+      agents: { a: 100, b: 10 },
+      spendUsd: 1,
+      agentSpendUsd: { a: 0.5, b: 0.5 },
+    });
   });
 
   it("reports cost as unknown when any call lacks it, and keeps the agent's models", () => {
@@ -156,13 +168,24 @@ describe("run outcomes", () => {
       run("cancelled"),
       run("completed", "09:00:00", "09:01:00", "b"),
     ]);
-    expect(outcomes.get("a")).toEqual({ failed: 1, avgSeconds: 20, topError: null });
-    expect(outcomes.get("b")).toEqual({ failed: 0, avgSeconds: 60, topError: null });
+    expect(outcomes.get("a")).toEqual({
+      failed: 1,
+      kinds: { error: 1 },
+      avgSeconds: 20,
+      topError: null,
+    });
+    expect(outcomes.get("b")).toEqual({
+      failed: 0,
+      kinds: {},
+      avgSeconds: 60,
+      topError: null,
+    });
   });
 
   it("has no average when no finished run has both times", () => {
     expect(buildRunOutcomes([run("failed")]).get("a")).toEqual({
       failed: 1,
+      kinds: { error: 1 },
       avgSeconds: null,
       topError: null,
     });
@@ -244,5 +267,123 @@ describe("spend by model tier", () => {
       rows: [row({ modelTier: "main", costUsd: null })],
     });
     expect(unknownCost.tiers).toEqual([{ tier: "main", tokens: 100, costUsd: null }]);
+  });
+});
+
+describe("spend", () => {
+  const spendOf = (rows: UsageRow[], creditCallIds: string[] = []) =>
+    buildUsageOverview({
+      period: "month",
+      now: NOW,
+      agents,
+      unknownName: "",
+      rows,
+      creditCallIds: new Set(creditCallIds),
+    });
+
+  it("splits what Rook credits were charged from what ran on the user's own accounts", () => {
+    const result = spendOf(
+      [
+        row({ callId: "c1", costUsd: 2, costSource: "provider-reported" }),
+        row({ callId: "c2", costUsd: 0.5, costSource: "provider-reported", runId: "r2" }),
+        row({
+          callId: "c3",
+          provider: "openai-codex",
+          model: "gpt-test",
+          costUsd: 1.25,
+          costSource: "pi-catalog-estimate",
+          runId: "r3",
+        }),
+      ],
+      ["c1"],
+    );
+    expect(result.spend).toEqual({ creditsUsd: 2, ownUsd: 1.75, ownEstimatedUsd: 1.25 });
+  });
+
+  it("treats a call with no credit entry as the user's own, and no cost as nothing spent", () => {
+    const result = spendOf([row({ callId: null, costUsd: null, costSource: null })]);
+    expect(result.spend).toEqual({ creditsUsd: 0, ownUsd: 0, ownEstimatedUsd: 0 });
+  });
+
+  it("does not call a zero-cost rejection an estimate", () => {
+    const result = spendOf([row({ costUsd: 0, costSource: "provider-rejection" })]);
+    expect(result.accounts?.[0]?.estimated).toBe(false);
+  });
+
+  it("lists each model per account, biggest spend first, marking estimates", () => {
+    const result = spendOf(
+      [
+        row({ callId: "c1", costUsd: 0.1, costSource: "provider-reported" }),
+        row({
+          callId: "c2",
+          costUsd: 3,
+          costSource: "pi-catalog-estimate",
+          model: "big",
+          runId: "r2",
+        }),
+        row({
+          callId: "c3",
+          costUsd: 1,
+          costSource: "provider-reported",
+          model: "big",
+          runId: "r3",
+        }),
+      ],
+      ["c3"],
+    );
+    expect(
+      result.accounts?.map((a) => [a.model, a.funding, a.calls, a.spendUsd, a.estimated]),
+    ).toEqual([
+      ["big", "own", 1, 3, true],
+      ["big", "credits", 1, 1, false],
+      ["sonnet", "own", 1, 0.1, false],
+    ]);
+  });
+
+  it("sorts agents by spend, puts a day's spend on the chart and compares with the period before", () => {
+    const result = spendOf([
+      row({ botId: "a", costUsd: 0.2, totalTokens: 900 }),
+      row({ botId: "b", costUsd: 4, totalTokens: 10, runId: "r2" }),
+      row({ createdAt: new Date("2026-10-03T00:00:00Z"), costUsd: 1.5 }),
+    ]);
+    expect(result.agents.map((a) => [a.name, a.spendUsd])).toEqual([
+      ["Nico", 4],
+      ["Pia", 0.2],
+    ]);
+    expect(result.days[1]?.spendUsd).toBeCloseTo(4.2);
+    expect(result.previousSpendUsd).toBe(1.5);
+  });
+});
+
+describe("usageFailureKind", () => {
+  it("groups the app's own stops and the provider's limits into a few kinds", () => {
+    expect(usageFailureKind("Subscribe in Billing to keep running bots.")).toBe("billing");
+    expect(usageFailureKind("This month's credit is used up.")).toBe("billing");
+    expect(usageFailureKind("This bot reached its monthly token limit.")).toBe("limit");
+    expect(usageFailureKind('402 {"error":{"message":"Insufficient credits"}}')).toBe("limit");
+    expect(usageFailureKind('429 {"error":{"message":"rate limit"}}')).toBe("limit");
+    expect(usageFailureKind("Couldn't start the agent's computer.\nno capacity")).toBe("computer");
+  });
+
+  it("falls back to a generic kind for anything else, or nothing", () => {
+    expect(usageFailureKind("500 upstream exploded")).toBe("error");
+    expect(usageFailureKind(null)).toBe("error");
+    expect(usageFailureKind("  ")).toBe("error");
+  });
+
+  it("counts a failed run's kind per agent", () => {
+    const run = (error: string) => ({
+      botId: "a",
+      status: "failed",
+      startedAt: null,
+      completedAt: null,
+      error,
+    });
+    const outcomes = buildRunOutcomes([
+      run("Subscribe in Billing to keep running bots."),
+      run("Subscribe in Billing to keep running bots."),
+      run("boom"),
+    ]);
+    expect(outcomes.get("a")?.kinds).toEqual({ billing: 2, error: 1 });
   });
 });

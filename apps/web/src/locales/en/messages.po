@@ -287,11 +287,15 @@ msgstr ""
 msgid "{count} agents are working…"
 msgstr "{count} agents are working…"
 
+#: src/pages/usage/usage-sections.tsx
+msgid "{count} calls"
+msgstr "{count} calls"
+
 #: src/lib/billing.ts
 msgid "{count} days"
 msgstr "{count} days"
 
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "{count} failed"
 msgstr "{count} failed"
 
@@ -299,9 +303,9 @@ msgstr "{count} failed"
 msgid "{count} months"
 msgstr "{count} months"
 
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "{count} replies"
-msgstr ""
+msgstr "{count} replies"
 
 #: src/pages/Usage.tsx
 msgid "{count} tokens"
@@ -631,9 +635,13 @@ msgstr "{seatsUsed} of {seatsMax} people"
 msgid "{sent, plural, one {# invitation sent} other {# invitations sent}}"
 msgstr "{sent, plural, one {# invitation sent} other {# invitations sent}}"
 
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "{share} cached"
 msgstr "{share} cached"
+
+#: src/pages/usage/usage-sections.tsx
+msgid "{shown} more"
+msgstr "{shown} more"
 
 #: src/components/ArtifactFileCard.tsx
 msgid "{size} B"
@@ -709,14 +717,6 @@ msgstr "{used} of {limit} tokens"
 #: src/pages/shell/context-meter.tsx
 msgid "{used} tokens"
 msgstr "{used} tokens"
-
-#: src/pages/Usage.tsx
-msgid "{value} min avg"
-msgstr "{value} min avg"
-
-#: src/pages/Usage.tsx
-msgid "{value} s avg"
-msgstr "{value} s avg"
 
 #: src/pages/platform/SimulatorSection.tsx
 msgid "{voiceMinutes} min"
@@ -1795,11 +1795,8 @@ msgstr "Bearer token"
 msgid "Below credits"
 msgstr "Below credits"
 
-#: src/pages/Usage.tsx
-msgid "Billed"
-msgstr "Billed"
-
 #: src/pages/Settings.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Billing"
 msgstr "Billing"
 
@@ -1961,18 +1958,18 @@ msgid "By agent"
 msgstr ""
 
 #: src/pages/Usage.tsx
-msgid "By model tier"
-msgstr "By model tier"
+msgid "By model"
+msgstr "By model"
 
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Cache hit rate"
 msgstr "Cache hit rate"
 
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Cache writes"
 msgstr "Cache writes"
 
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Cached"
 msgstr "Cached"
 
@@ -2148,6 +2145,7 @@ msgid "Chat Settings"
 msgstr "Chat Settings"
 
 #: src/lib/localized-provider-hint.ts
+#: src/pages/usage/usage-sections.tsx
 msgid "ChatGPT subscription"
 msgstr "ChatGPT subscription"
 
@@ -2482,6 +2480,10 @@ msgstr "Compressing…"
 #: src/pages/shell/message-view.tsx
 msgid "Computer"
 msgstr "Computer"
+
+#: src/pages/usage/usage-sections.tsx
+msgid "Computer did not start"
+msgstr "Computer did not start"
 
 #: src/pages/shell/computer-view.tsx
 #: src/pages/shell/use-computer.tsx
@@ -2823,7 +2825,6 @@ msgstr "corvo-shared and IDs starting with bot- are reserved for Rook."
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/PartnersSection.tsx
 #: src/pages/platform/SimulatorSection.tsx
-#: src/pages/Usage.tsx
 msgid "Cost"
 msgstr "Cost"
 
@@ -4367,6 +4368,7 @@ msgstr "Environment variables: {names}"
 #: src/lib/roster-status.ts
 #: src/pages/shell/agent-connections.tsx
 #: src/pages/shell/sidebar-roster.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Error"
 msgstr "Error"
 
@@ -4377,6 +4379,10 @@ msgstr "Error details"
 #: src/pages/Usage.tsx
 msgid "Escalated"
 msgstr "Escalated"
+
+#: src/pages/usage/usage-sections.tsx
+msgid "Estimated at list price"
+msgstr "Estimated at list price"
 
 #: src/pages/partner/PartnerEvents.tsx
 msgid "Events"
@@ -4547,10 +4553,6 @@ msgstr "Failed."
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Failure handling"
 msgstr "Failure handling"
-
-#: src/pages/Usage.tsx
-msgid "Fast"
-msgstr "Fast"
 
 #: src/pages/platform/PlatformConnect.tsx
 msgid "Fees"
@@ -5132,7 +5134,7 @@ msgstr "Inherit default"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/PricingSection.tsx
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Input"
 msgstr "Input"
 
@@ -5527,6 +5529,10 @@ msgstr "Light tasks model"
 #: src/pages/shell/bot-panel.tsx
 msgid "Limit per payment"
 msgstr "Limit per payment"
+
+#: src/pages/usage/usage-sections.tsx
+msgid "Limit reached"
+msgstr "Limit reached"
 
 #: src/pages/platform/LimitsSection.tsx
 #: src/pages/platform/PlatformPage.tsx
@@ -6136,7 +6142,7 @@ msgid "Monthly price"
 msgstr "Monthly price"
 
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Monthly token limit"
 msgstr "Monthly token limit"
 
@@ -7060,7 +7066,7 @@ msgstr "Other ways to connect"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/PricingSection.tsx
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Output"
 msgstr "Output"
 
@@ -8178,6 +8184,7 @@ msgid "Roles of {name}"
 msgstr "Roles of {name}"
 
 #: src/pages/Onboarding.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Rook credits"
 msgstr "Rook credits"
 
@@ -8963,10 +8970,6 @@ msgstr "SSL"
 msgid "SSO is temporarily unavailable. Try again."
 msgstr "SSO is temporarily unavailable. Try again."
 
-#: src/pages/Usage.tsx
-msgid "Standard"
-msgstr "Standard"
-
 #: src/pages/QuietHoursRow.tsx
 #: src/pages/shell/computer-overlay.tsx
 msgid "Start"
@@ -9117,10 +9120,6 @@ msgstr "Stored encrypted"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Stream replies"
 msgstr "Stream replies"
-
-#: src/pages/Usage.tsx
-msgid "Strong"
-msgstr "Strong"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Stuck tickets on the board"
@@ -9722,6 +9721,7 @@ msgid "tokens"
 msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Usage.tsx
 msgid "Tokens"
 msgstr "Tokens"
 
@@ -10633,6 +10633,10 @@ msgstr "You reached your monthly limit on this space's model."
 #: src/lib/server-copy.ts
 msgid "You were added to the group chat “{name}”. Reply YES in this conversation to join it with your agent."
 msgstr "You were added to the group chat “{name}”. Reply YES in this conversation to join it with your agent."
+
+#: src/pages/usage/usage-sections.tsx
+msgid "Your accounts"
+msgstr "Your accounts"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts

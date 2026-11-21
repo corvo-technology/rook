@@ -287,11 +287,15 @@ msgstr "{count} Agenten"
 msgid "{count} agents are working…"
 msgstr "{count} Agenten arbeiten…"
 
+#: src/pages/usage/usage-sections.tsx
+msgid "{count} calls"
+msgstr "{count} Aufrufe"
+
 #: src/lib/billing.ts
 msgid "{count} days"
 msgstr "{count} Tage"
 
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "{count} failed"
 msgstr "{count} fehlgeschlagen"
 
@@ -299,7 +303,7 @@ msgstr "{count} fehlgeschlagen"
 msgid "{count} months"
 msgstr "{count} Monate"
 
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "{count} replies"
 msgstr "{count} Antworten"
 
@@ -631,9 +635,13 @@ msgstr "{seatsUsed} von {seatsMax} Personen"
 msgid "{sent, plural, one {# invitation sent} other {# invitations sent}}"
 msgstr "{sent, plural, one {# Einladung gesendet} other {# Einladungen gesendet}}"
 
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "{share} cached"
 msgstr "{share} aus dem Cache"
+
+#: src/pages/usage/usage-sections.tsx
+msgid "{shown} more"
+msgstr "+{shown}"
 
 #: src/components/ArtifactFileCard.tsx
 msgid "{size} B"
@@ -709,14 +717,6 @@ msgstr "{used} von {limit} Tokens"
 #: src/pages/shell/context-meter.tsx
 msgid "{used} tokens"
 msgstr "{used} Tokens"
-
-#: src/pages/Usage.tsx
-msgid "{value} min avg"
-msgstr "Ø {value} Min."
-
-#: src/pages/Usage.tsx
-msgid "{value} s avg"
-msgstr "Ø {value} Sek."
 
 #: src/pages/platform/SimulatorSection.tsx
 msgid "{voiceMinutes} min"
@@ -1795,11 +1795,8 @@ msgstr "Bearer-Token"
 msgid "Below credits"
 msgstr "Unter Guthaben"
 
-#: src/pages/Usage.tsx
-msgid "Billed"
-msgstr "Abgerechnet"
-
 #: src/pages/Settings.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Billing"
 msgstr "Abrechnung"
 
@@ -1961,18 +1958,18 @@ msgid "By agent"
 msgstr "Nach Agent"
 
 #: src/pages/Usage.tsx
-msgid "By model tier"
-msgstr "Nach Modellstufe"
+msgid "By model"
+msgstr "Nach Modell"
 
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Cache hit rate"
 msgstr "Cache-Trefferquote"
 
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Cache writes"
 msgstr "Cache-Schreibvorgänge"
 
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Cached"
 msgstr "Aus dem Cache"
 
@@ -2148,6 +2145,7 @@ msgid "Chat Settings"
 msgstr "Chat-Einstellungen"
 
 #: src/lib/localized-provider-hint.ts
+#: src/pages/usage/usage-sections.tsx
 msgid "ChatGPT subscription"
 msgstr "ChatGPT-Abonnement"
 
@@ -2482,6 +2480,10 @@ msgstr "Wird komprimiert…"
 #: src/pages/shell/message-view.tsx
 msgid "Computer"
 msgstr "Computer"
+
+#: src/pages/usage/usage-sections.tsx
+msgid "Computer did not start"
+msgstr "Computer wurde nicht gestartet"
 
 #: src/pages/shell/computer-view.tsx
 #: src/pages/shell/use-computer.tsx
@@ -2823,7 +2825,6 @@ msgstr "corvo-shared und IDs, die mit bot- beginnen, sind für Rook reserviert."
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/PartnersSection.tsx
 #: src/pages/platform/SimulatorSection.tsx
-#: src/pages/Usage.tsx
 msgid "Cost"
 msgstr "Kosten"
 
@@ -4367,6 +4368,7 @@ msgstr "Umgebungsvariablen: {names}"
 #: src/lib/roster-status.ts
 #: src/pages/shell/agent-connections.tsx
 #: src/pages/shell/sidebar-roster.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Error"
 msgstr "Fehler"
 
@@ -4377,6 +4379,10 @@ msgstr "Fehlerdetails"
 #: src/pages/Usage.tsx
 msgid "Escalated"
 msgstr "Hochgestuft"
+
+#: src/pages/usage/usage-sections.tsx
+msgid "Estimated at list price"
+msgstr "Zum Listenpreis geschätzt"
 
 #: src/pages/partner/PartnerEvents.tsx
 msgid "Events"
@@ -4547,10 +4553,6 @@ msgstr "Fehlgeschlagen."
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Failure handling"
 msgstr "Fehlerbehandlung"
-
-#: src/pages/Usage.tsx
-msgid "Fast"
-msgstr "Schnell"
 
 #: src/pages/platform/PlatformConnect.tsx
 msgid "Fees"
@@ -5132,7 +5134,7 @@ msgstr "Standard übernehmen"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/PricingSection.tsx
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Input"
 msgstr "Eingabe"
 
@@ -5527,6 +5529,10 @@ msgstr "Modell für leichte Aufgaben"
 #: src/pages/shell/bot-panel.tsx
 msgid "Limit per payment"
 msgstr "Limit pro Zahlung"
+
+#: src/pages/usage/usage-sections.tsx
+msgid "Limit reached"
+msgstr "Limit erreicht"
 
 #: src/pages/platform/LimitsSection.tsx
 #: src/pages/platform/PlatformPage.tsx
@@ -6136,7 +6142,7 @@ msgid "Monthly price"
 msgstr "Monatspreis"
 
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Monthly token limit"
 msgstr "Monatliches Token-Limit"
 
@@ -7060,7 +7066,7 @@ msgstr "Andere Möglichkeiten zum Verbinden"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/PricingSection.tsx
-#: src/pages/Usage.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Output"
 msgstr "Ausgabe"
 
@@ -8178,6 +8184,7 @@ msgid "Roles of {name}"
 msgstr "Rollen von {name}"
 
 #: src/pages/Onboarding.tsx
+#: src/pages/usage/usage-sections.tsx
 msgid "Rook credits"
 msgstr "Rook-Guthaben"
 
@@ -8963,10 +8970,6 @@ msgstr "SSL"
 msgid "SSO is temporarily unavailable. Try again."
 msgstr "SSO ist vorübergehend nicht verfügbar. Versuche es erneut."
 
-#: src/pages/Usage.tsx
-msgid "Standard"
-msgstr "Standard"
-
 #: src/pages/QuietHoursRow.tsx
 #: src/pages/shell/computer-overlay.tsx
 msgid "Start"
@@ -9117,10 +9120,6 @@ msgstr "Verschlüsselt gespeichert"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Stream replies"
 msgstr "Antworten streamen"
-
-#: src/pages/Usage.tsx
-msgid "Strong"
-msgstr "Stark"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Stuck tickets on the board"
@@ -9722,6 +9721,7 @@ msgid "tokens"
 msgstr "Tokens"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Usage.tsx
 msgid "Tokens"
 msgstr "Token"
 
@@ -10633,6 +10633,10 @@ msgstr "Du hast dein monatliches Limit für das Modell dieses Spaces erreicht."
 #: src/lib/server-copy.ts
 msgid "You were added to the group chat “{name}”. Reply YES in this conversation to join it with your agent."
 msgstr "Du wurdest zum Gruppenchat „{name}“ hinzugefügt. Antworte in diesem Gespräch mit JA, um mit deinem Agenten beizutreten."
+
+#: src/pages/usage/usage-sections.tsx
+msgid "Your accounts"
+msgstr "Deine Konten"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts

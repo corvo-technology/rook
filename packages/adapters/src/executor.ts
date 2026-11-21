@@ -11,7 +11,7 @@ import type {
   RunStatus,
   RunStopReason,
 } from "@corvo/contracts";
-import { disabledBuiltinToolSet } from "@corvo/contracts";
+import { disabledBuiltinToolSet, RoutineWatchSchema } from "@corvo/contracts";
 import {
   ACCOUNT_PAUSED_RUN_ERROR,
   assertTransition,
@@ -89,6 +89,7 @@ import { createBrowserProvider } from "./browser-provider-factory.js";
 import { alertIfMonthCrossed } from "./budget-alert.js";
 import { partitionTools } from "./builtin-tool-bridge.js";
 import { agentConnectionTools, builtinAgentTools } from "./builtin-tools.js";
+import { cacheReturnFor, routineGapMinutes } from "./cache-retention-policy.js";
 import { cloudAgentsEnabled } from "./cloud-agent-factory.js";
 import { mergeConnectedPlugins, needsLivePluginSync } from "./composio-connector.js";
 import { scheduleComputerSleep } from "./computer-idle.js";
@@ -1624,6 +1625,34 @@ export function createRunExecutor(deps: ExecutorDeps) {
             // Lateness is optional context; a lookup failure must not prevent a run.
           }
         }
+        // Only a repeating routine has a cadence worth planning the prompt cache around.
+        let routineGap: number | undefined;
+        if (run.trigger === "routine" && run.routineId) {
+          try {
+            const routine = await deps.prisma.routine.findUnique({
+              where: { id: run.routineId },
+              select: { crons: true, timezone: true, watch: true },
+            });
+            if (routine) {
+              const watch = RoutineWatchSchema.safeParse(routine.watch);
+              routineGap = routineGapMinutes(
+                {
+                  crons: routine.crons,
+                  timezone: routine.timezone,
+                  watchEveryMinutes: watch.success ? watch.data.everyMinutes : null,
+                },
+                executionStartedAt,
+              );
+            }
+          } catch {
+            // The cadence only tunes cache retention; a lookup failure must not prevent a run.
+          }
+        }
+        const cacheReturn = cacheReturnFor({
+          resumed: Boolean(takeoverResume || approvalContinuation),
+          ticket: Boolean(run.ticketId) || run.trigger === "tickets",
+          routineGapMinutes: routineGap,
+        });
         const historicalContext: AgentRunRequest["history"] = [];
         if (compactedHistory.usedLocalSummary && compactedHistory.summary) {
           historicalContext.push({
@@ -1891,6 +1920,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
               threadId: thread.id,
               runId,
               routineId: run.routineId,
+              cacheReturn,
               sourceMessageId: run.sourceMessageId,
               onUsage: async (event) => {
                 await recordUsage(deps.prisma, event, {

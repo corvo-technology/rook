@@ -74,6 +74,7 @@ silence), never the exact wording of a reply.
 | wiki-lookup | main | search, read the page, answer from it |
 | ambiguous-request | fast | one question, no action |
 | needs-stronger-model | main to strong | asks for a stronger model once and finishes there |
+| ticket-continuation-after-wait | main | a ticket continuation 20 minutes between calls keeps its prefix cached with the long retention |
 | long-history-followup | fast | a short follow-up on a 24-message thread |
 | large-tool-result | main | a 30 KB web page that the answer barely needs |
 | remember-preference | fast | saves one standing preference |
@@ -119,11 +120,13 @@ more cacheable moves tokens from input and cacheW to cacheR rather than removing
   taken from the definitions the runtime lists after the find_tool/use_tool split.
 - **Token counts** use `estimateTextTokens` from the adapters, a deterministic estimate, not a provider
   tokenizer. Compare offline runs with offline runs.
-- **Cache buckets** come from a deterministic prefix-cache simulation (`prefix-cache-v1`) fed by the
+- **Cache buckets** come from a deterministic prefix-cache simulation (`prefix-cache-v2`) fed by the
   real request: tools and each message are segments; what the previous call of the same leg already sent
   in the same order is a cache read, the new segments before the last message are a cache write, and the
-  last message is uncached input. It models the shape of a provider's prefix cache; it does not predict
-  a provider's bill.
+  last message is uncached input. A task can set `waitBeforeCallMs` (virtual time before each later call)
+  and `cacheReturn`; a cached prefix untouched for longer than its lifetime (five minutes, or one hour
+  when the run asks for the long cache) is gone and the next call writes it again. It models the shape of
+  a provider's prefix cache; it does not predict a provider's bill.
 - **Usage** reaches the report through the product's own usage events, so accounting regressions in the
   runtime show up here.
 - **Wall time and first text** are real timings of a loopback run. Use them live; offline they only show

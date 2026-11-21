@@ -535,6 +535,11 @@ export interface AgentRunRequest {
   contextStrategy?: AgentContextStrategy;
   /** Exclusive workflow cost bucket; retrieval tool turns are detected for answer calls. */
   usageOperationKind?: UsageOperationKind;
+  /**
+   * Whether this run is likely to be picked up again after the short prompt cache expired.
+   * "later" asks for the long cache where the protocol supports it; omitted means "soon".
+   */
+  cacheReturn?: "soon" | "later";
   botId: string;
   threadId: string;
   runId: string;

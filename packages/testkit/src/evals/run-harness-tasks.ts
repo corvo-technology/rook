@@ -104,6 +104,38 @@ export const HARNESS_TASKS: HarnessTask[] = [
     },
   },
   {
+    id: "ticket-continuation-after-wait",
+    covers:
+      "A ticket continuation whose second model call comes 20 minutes after the first, past the short cache",
+    trigger: "tickets",
+    tier: "main",
+    prompt: "Continue the ticket: check the release page and report the version.",
+    cacheReturn: "later",
+    waitBeforeCallMs: 20 * 60_000,
+    world: world((w) => {
+      w.searches.set("acme widget 3 launch date", [
+        {
+          title: "Acme Widget 3 launch",
+          url: "https://example.com/widget-3",
+          snippet: "Launch details",
+        },
+      ]);
+    }),
+    script: [
+      {
+        steps: [
+          call("t1", "web_search", { query: "Acme Widget 3 launch date" }),
+          say("The release page lists Acme Widget 3."),
+        ],
+      },
+    ],
+    grade: (o) => [
+      finished(o),
+      check("searched", called(o, "web_search").length === 1),
+      check("reported", mentions(o.text, "widget")),
+    ],
+  },
+  {
     id: "web-lookup",
     covers: "A web lookup: search, open the page, answer from it",
     trigger: "user",

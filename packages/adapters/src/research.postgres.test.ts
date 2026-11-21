@@ -11,6 +11,12 @@ import {
   reconcileResearch,
 } from "./research-service.js";
 
+/** The id of a started job; a refusal has none. */
+function idOf(result: { id?: string; error?: string }): string {
+  if (!result.id) throw new Error(result.error ?? "start failed");
+  return result.id;
+}
+
 const describePostgres =
   process.env.VERIFY_DATABASE && process.env.DATABASE_URL ? describe.sequential : describe.skip;
 
@@ -85,7 +91,7 @@ describePostgres("research jobs (PostgreSQL)", () => {
       close: async () => undefined,
     };
     const deps = { prisma, jobs, events: { notify: vi.fn(async () => undefined) } };
-    const context = (operationId = randomUUID()): AdapterContext & { botId: string } => ({
+    const context = (operationId: string = randomUUID()): AdapterContext & { botId: string } => ({
       operationId,
       traceId: "test",
       spaceId: id,
@@ -107,21 +113,21 @@ describePostgres("research jobs (PostgreSQL)", () => {
     return { id, bot, thread, deps, enqueue, context, start, store, job, wakes, run };
   }
 
-  it("starts a job with a card, queues it once and answers a repeated call with the same job", async () => {
+  it("starts a job with a card, queues its run and answers a repeated call with the same job", async () => {
     const t = await setup();
     const operationId = randomUUID();
     const first = await t.start("What changed in team pricing?", operationId);
     const again = await t.start("What changed in team pricing?", operationId);
-    if (!("id" in first) || !("id" in again)) throw new Error("start failed");
-    expect(again.id).toBe(first.id);
+    expect(idOf(again)).toBe(idOf(first));
     expect(t.enqueue.mock.calls.filter(([job]) => job.name === "research.run")).not.toHaveLength(0);
-    const row = await t.job(first.id);
+    const firstId = idOf(first);
+    const row = await t.job(firstId);
     expect(row.messageId).toBeTruthy();
     const message = await runAsSystem("read", () =>
       prisma.message.findUniqueOrThrow({ where: { id: row.messageId ?? "" } }),
     );
     expect(message.blocks).toEqual([
-      { kind: "research", researchId: first.id, question: row.question, status: "running" },
+      { kind: "research", researchId: firstId, question: row.question, status: "running" },
     ]);
   });
 
@@ -134,8 +140,7 @@ describePostgres("research jobs (PostgreSQL)", () => {
 
   it("keeps the ledger once per page and finishes with a card update and a wake", async () => {
     const t = await setup();
-    const started = await t.start("What changed in team pricing?");
-    if (!("id" in started)) throw new Error("start failed");
+    const started = idOf(await t.start("What changed in team pricing?"));
     const page = {
       url: "https://news.test/a",
       title: "A",
@@ -143,73 +148,69 @@ describePostgres("research jobs (PostgreSQL)", () => {
       contentHash: "h",
       fetchedAt: new Date(),
     };
-    const one = await runAsSystem("ledger", () => t.store.addSource(started.id, page));
-    const two = await runAsSystem("ledger", () => t.store.addSource(started.id, page));
+    const one = await runAsSystem("ledger", () => t.store.addSource(started, page));
+    const two = await runAsSystem("ledger", () => t.store.addSource(started, page));
     expect(two.position).toBe(one.position);
     await runAsSystem("finish", () =>
-      t.store.finish(started.id, {
+      t.store.finish(started, {
         status: "finished",
         stopReason: "enough",
         report: "Summary [1].",
         changed: true,
       }),
     );
-    expect((await t.job(started.id)).status).toBe("finished");
+    expect((await t.job(started)).status).toBe("finished");
     expect(await t.wakes()).toHaveLength(1);
     expect(t.enqueue.mock.calls.some(([job]) => job.name === "run.continue")).toBe(true);
     // Finishing twice wakes once.
     await runAsSystem("finish", () =>
-      t.store.finish(started.id, { status: "finished", report: "Again [1].", changed: true }),
+      t.store.finish(started, { status: "finished", report: "Again [1].", changed: true }),
     );
     expect(await t.wakes()).toHaveLength(1);
     const status = await runAsSystem("status", () =>
-      executeResearchStatus(t.deps, t.context(), { threadId: t.thread.id }, { id: started.id }),
+      executeResearchStatus(t.deps, t.context(), { threadId: t.thread.id }, { id: started }),
     );
     expect(status).toMatchObject({ status: "finished", report: "Summary [1].", sources: 1 });
   });
 
   it("finds the last report of the same question to compare with", async () => {
     const t = await setup("routine");
-    const first = await t.start("Watch the pricing page");
-    if (!("id" in first)) throw new Error("start failed");
+    const first = idOf(await t.start("Watch the pricing page"));
     // A recurring job leaves no card.
-    expect((await t.job(first.id)).messageId).toBeNull();
+    expect((await t.job(first)).messageId).toBeNull();
     await runAsSystem("finish", () =>
-      t.store.finish(first.id, { status: "finished", report: "Report one [1].", changed: true }),
+      t.store.finish(first, { status: "finished", report: "Report one [1].", changed: true }),
     );
-    const second = await t.start("  watch the PRICING page ");
-    if (!("id" in second)) throw new Error("start failed");
-    const record = await runAsSystem("load", () => t.store.load(second.id));
+    const second = idOf(await t.start("  watch the PRICING page "));
+    const record = await runAsSystem("load", () => t.store.load(second));
     const previous = await runAsSystem("previous", () => t.store.previous(record!));
-    expect(previous).toEqual({ id: first.id, report: "Report one [1]." });
+    expect(previous).toEqual({ id: first, report: "Report one [1]." });
   });
 
   it("wakes nobody when a recurring job found nothing new", async () => {
     const t = await setup("routine");
-    const started = await t.start("Watch the pricing page");
-    if (!("id" in started)) throw new Error("start failed");
+    const started = idOf(await t.start("Watch the pricing page"));
     await runAsSystem("finish", () =>
-      t.store.finish(started.id, { status: "finished", changed: false }),
+      t.store.finish(started, { status: "finished", changed: false }),
     );
     expect(await t.wakes()).toHaveLength(0);
-    expect(await t.job(started.id)).toMatchObject({ status: "finished", changed: false });
+    expect(await t.job(started)).toMatchObject({ status: "finished", changed: false });
   });
 
   it("ends a job that has run for hours and queues one that stalled", async () => {
     const t = await setup();
-    const stalled = await t.start("stalled question");
-    const old = await t.start("old question");
-    if (!("id" in stalled) || !("id" in old)) throw new Error("start failed");
+    const stalled = idOf(await t.start("stalled question"));
+    const old = idOf(await t.start("old question"));
     await runAsSystem("age", async () => {
-      await prisma.$executeRaw`UPDATE research_jobs SET "createdAt" = now() - interval '4 hours' WHERE id = ${old.id}`;
-      await prisma.$executeRaw`UPDATE research_jobs SET "updatedAt" = now() - interval '20 minutes' WHERE id = ${stalled.id}`;
+      await prisma.$executeRaw`UPDATE research_jobs SET "createdAt" = now() - interval '4 hours' WHERE id = ${old}`;
+      await prisma.$executeRaw`UPDATE research_jobs SET "updatedAt" = now() - interval '20 minutes' WHERE id = ${stalled}`;
     });
     t.enqueue.mockClear();
     await reconcileResearch(t.deps);
-    expect((await t.job(old.id)).status).toBe("failed");
+    expect((await t.job(old)).status).toBe("failed");
     expect(
       t.enqueue.mock.calls.some(
-        ([job]) => job.name === "research.run" && job.payload.researchId === stalled.id,
+        ([job]) => job.name === "research.run" && job.payload.researchId === stalled,
       ),
     ).toBe(true);
   });

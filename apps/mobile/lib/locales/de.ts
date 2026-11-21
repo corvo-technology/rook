@@ -235,6 +235,8 @@ export const DE_MESSAGES: Record<string, string> = {
   Routine: "Routine",
   "Server integrations": "Server-Integrationen",
   Thread: "Thread",
+  Vault: "Tresor",
+  "Use saved": "Gespeichertes verwenden",
   Voice: "Stimme",
   // app/sign-in.tsx
   "Already have an account?": "Du hast bereits ein Konto?",

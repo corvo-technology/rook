@@ -91,7 +91,7 @@ export function mapBotSecretInputError(error: unknown): unknown {
 }
 
 /** Map credential validation failures to a bad request without echoing the submitted value. */
-function mapBotSecretStoreError(error: unknown): unknown {
+export function mapBotSecretStoreError(error: unknown): unknown {
   if (error instanceof ORPCError) return error;
   const mapped = mapBotSecretInputError(error);
   if (mapped !== error) return mapped;
@@ -1010,6 +1010,8 @@ export function botsRoutes(ctx: RouterContext) {
             scope,
             destination: site ? { ...input.destination, origin: site } : input.destination,
             plaintext: input.value,
+            // Set up from the agent's settings, so it is the agent's, whoever runs it.
+            visibility: "space",
           });
         } catch (error) {
           throw mapBotSecretStoreError(error);

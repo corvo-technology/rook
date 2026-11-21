@@ -217,6 +217,8 @@ export const JA_MESSAGES: Record<string, string> = {
   Routine: "ルーティン",
   "Server integrations": "サーバー連携",
   Thread: "スレッド",
+  Vault: "保管庫",
+  "Use saved": "保存済みを使う",
   Voice: "音声",
   "Already have an account?": "すでにアカウントをお持ちですか？",
   "Back to sign in": "ログインに戻る",

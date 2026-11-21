@@ -219,6 +219,8 @@ export const PT_BR_MESSAGES: Record<string, string> = {
   Routine: "Rotina",
   "Server integrations": "Integrações do servidor",
   Thread: "Conversa",
+  Vault: "Cofre",
+  "Use saved": "Usar salva",
   Voice: "Voz",
   "Already have an account?": "Você já tem cadastro?",
   "Back to sign in": "Voltar para o login",

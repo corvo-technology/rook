@@ -718,6 +718,10 @@ msgstr "{value} min avg"
 msgid "{value} s avg"
 msgstr "{value} s avg"
 
+#: src/pages/VaultPage.tsx
+msgid "{variable} is reserved and cannot be used as a command variable. Choose another name."
+msgstr "{variable} is reserved and cannot be used as a command variable. Choose another name."
+
 #: src/pages/platform/SimulatorSection.tsx
 msgid "{voiceMinutes} min"
 msgstr "{voiceMinutes} min"
@@ -900,6 +904,7 @@ msgstr "Activity"
 #: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/Store.tsx
+#: src/pages/VaultPage.tsx
 msgid "Add"
 msgstr "Add"
 
@@ -983,6 +988,7 @@ msgid "Add computer"
 msgstr "Add computer"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Add credential"
 msgstr "Add credential"
 
@@ -1131,6 +1137,11 @@ msgstr "Add: {add}"
 msgid "Added"
 msgstr "Added"
 
+#. placeholder {0}: new Date(credential.createdAt).toLocaleDateString(i18n.locale)
+#: src/pages/VaultPage.tsx
+msgid "Added {0}"
+msgstr "Added {0}"
+
 #. placeholder {0}: parts.join(", ")
 #: src/pages/ImportFlow.tsx
 msgid "Added {0}."
@@ -1219,6 +1230,7 @@ msgstr "Agent model"
 #: src/pages/shell/embed-tabs.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/Store.tsx
+#: src/pages/VaultPage.tsx
 msgid "Agents"
 msgstr "Agents"
 
@@ -1284,6 +1296,11 @@ msgstr "All time"
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Allow"
 msgstr "Allow"
+
+#. placeholder {0}: bot.name
+#: src/pages/VaultPage.tsx
+msgid "Allow {0}"
+msgstr "Allow {0}"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Allow cross-space bot communication"
@@ -1740,6 +1757,10 @@ msgstr "Automation"
 msgid "Available after the routine is saved"
 msgstr "Available after the routine is saved"
 
+#: src/pages/VaultPage.tsx
+msgid "Available to shell commands as {variable}"
+msgstr "Available to shell commands as {variable}"
+
 #: src/pages/shell/bot-credentials.tsx
 msgid "Available to this bot's shell commands as {commandVariable}"
 msgstr "Available to this bot's shell commands as {commandVariable}"
@@ -1783,6 +1804,7 @@ msgid "Base URL"
 msgstr "Base URL"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Basic auth"
 msgstr "Basic auth"
 
@@ -1793,6 +1815,7 @@ msgstr "Basic auth ({username})"
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/Store.tsx
+#: src/pages/VaultPage.tsx
 msgid "Bearer token"
 msgstr "Bearer token"
 
@@ -2053,6 +2076,7 @@ msgstr "Can't read images"
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/message-versions.tsx
 #: src/pages/Store.tsx
+#: src/pages/VaultPage.tsx
 #: src/pages/WhatsAppNumbers.tsx
 #: src/pages/WikiBrowser.tsx
 msgid "Cancel"
@@ -2434,6 +2458,7 @@ msgstr "Command"
 
 #: src/components/AskCard.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Command variable"
 msgstr "Command variable"
 
@@ -3130,6 +3155,7 @@ msgid "Could not load bots. Reload to try again."
 msgstr "Could not load bots. Reload to try again."
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Could not load credentials."
 msgstr "Could not load credentials."
 
@@ -3149,6 +3175,10 @@ msgstr "Could not load members"
 #: src/pages/model-settings/use-model-settings.ts
 msgid "Could not load model settings"
 msgstr "Could not load model settings"
+
+#: src/pages/VaultPage.tsx
+msgid "Could not load recent uses"
+msgstr "Could not load recent uses"
 
 #: src/pages/Routines.tsx
 msgid "Could not load routines."
@@ -3254,6 +3284,7 @@ msgid "Could not remove rule"
 msgstr "Could not remove rule"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Could not remove the credential"
 msgstr "Could not remove the credential"
 
@@ -3371,6 +3402,7 @@ msgstr "Could not save that voice"
 
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/pasted-key-prompt.tsx
+#: src/pages/VaultPage.tsx
 msgid "Could not save the credential"
 msgstr "Could not save the credential"
 
@@ -3466,6 +3498,7 @@ msgstr "Could not update"
 #: src/pages/AppAgentAccess.tsx
 #: src/pages/connections/AccessSheet.tsx
 #: src/pages/connections/AgentAccessSection.tsx
+#: src/pages/VaultPage.tsx
 msgid "Could not update agent access"
 msgstr "Could not update agent access"
 
@@ -3731,6 +3764,7 @@ msgid "Custom color"
 msgstr "Custom color"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Custom header"
 msgstr "Custom header"
 
@@ -4325,6 +4359,7 @@ msgid "Encrypted"
 msgstr "Encrypted"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Encrypted and never shown again"
 msgstr "Encrypted and never shown again"
 
@@ -4558,6 +4593,7 @@ msgstr "failed"
 #: src/pages/platform/PartnersSection.tsx
 #: src/pages/RoutineCard.tsx
 #: src/pages/RoutineTimeGrid.tsx
+#: src/pages/VaultPage.tsx
 #: src/pages/Workflows.tsx
 msgid "Failed"
 msgstr "Failed"
@@ -4698,6 +4734,10 @@ msgstr "First task: {task}"
 #: src/pages/RoutinesTabs.tsx
 msgid "Flows"
 msgstr "Flows"
+
+#: src/pages/VaultPage.tsx
+msgid "for {forWhom}"
+msgstr "for {forWhom}"
 
 #: src/pages/BotContextMenu.tsx
 msgid "For 1 hour"
@@ -4907,6 +4947,7 @@ msgstr "Header \"{header}\""
 #: src/pages/connections/McpServerForm.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/Store.tsx
+#: src/pages/VaultPage.tsx
 msgid "Header name"
 msgstr "Header name"
 
@@ -5508,6 +5549,11 @@ msgstr ""
 #: src/pages/Workflows.tsx
 msgid "Last run"
 msgstr "Last run"
+
+#. placeholder {0}: new Date(credential.lastUsedAt).toLocaleDateString(i18n.locale)
+#: src/pages/VaultPage.tsx
+msgid "Last used {0}"
+msgstr "Last used {0}"
 
 #: src/components/DesktopUpdates.tsx
 msgid "Later"
@@ -6184,6 +6230,7 @@ msgstr "Monthly token limit for {name}"
 #: src/pages/ConnectionsPage.tsx
 #: src/pages/shell/message-hover-actions.tsx
 #: src/pages/shell/sidebar-team.tsx
+#: src/pages/VaultPage.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "More"
 msgstr "More"
@@ -6287,6 +6334,7 @@ msgstr "My Home"
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/pasted-key-prompt.tsx
 #: src/pages/SpaceSettingsPanel.tsx
+#: src/pages/VaultPage.tsx
 msgid "Name"
 msgstr "Name"
 
@@ -6771,6 +6819,10 @@ msgstr "Not supported in Rook"
 msgid "Not used by Rook"
 msgstr "Not used by Rook"
 
+#: src/pages/VaultPage.tsx
+msgid "Not used yet"
+msgstr "Not used yet"
+
 #: src/pages/connections/connection-model.ts
 msgid "Not working"
 msgstr "Not working"
@@ -7197,6 +7249,7 @@ msgstr "Passkeys"
 #: src/pages/connections/DatabaseForm.tsx
 #: src/pages/connections/MailboxForm.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Password"
 msgstr "Password"
 
@@ -7706,6 +7759,15 @@ msgstr "Receipts"
 msgid "Recent"
 msgstr "Recent"
 
+#: src/pages/VaultPage.tsx
+msgid "Recent uses"
+msgstr "Recent uses"
+
+#. placeholder {0}: credential.name
+#: src/pages/VaultPage.tsx
+msgid "Recent uses of {0}"
+msgstr "Recent uses of {0}"
+
 #: src/components/PlanChoice.tsx
 msgid "Recommended"
 msgstr "Recommended"
@@ -7848,6 +7910,7 @@ msgstr "Remembered"
 #: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/Store.tsx
+#: src/pages/VaultPage.tsx
 #: src/pages/Workflows.tsx
 msgid "Remove"
 msgstr "Remove"
@@ -7867,6 +7930,7 @@ msgstr "Remove {0} from the group"
 
 #. placeholder {0}: removing?.name
 #: src/pages/ConnectionsPage.tsx
+#: src/pages/VaultPage.tsx
 msgid "Remove {0}?"
 msgstr "Remove {0}?"
 
@@ -8010,8 +8074,14 @@ msgid "Replace the instructions of {bot}?"
 msgstr "Replace the instructions of {bot}?"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Replace value"
 msgstr "Replace value"
+
+#. placeholder {0}: credential.name
+#: src/pages/VaultPage.tsx
+msgid "Replace value of {0}"
+msgstr "Replace value of {0}"
 
 #: src/pages/Usage.tsx
 msgid "Replies"
@@ -8391,6 +8461,7 @@ msgstr "Saturday"
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/message-versions.tsx
+#: src/pages/VaultPage.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/YouMemory.tsx
 msgid "Save"
@@ -8459,6 +8530,7 @@ msgstr "Saving..."
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/pasted-key-prompt.tsx
+#: src/pages/VaultPage.tsx
 msgid "Saving…"
 msgstr "Saving…"
 
@@ -8719,6 +8791,10 @@ msgstr "Shared"
 msgid "Shared memory"
 msgstr "Shared memory"
 
+#: src/pages/VaultPage.tsx
+msgid "shell command"
+msgstr "shell command"
+
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Shortcuts, presets, routines and roles (JSON)"
 msgstr "Shortcuts, presets, routines and roles (JSON)"
@@ -8837,6 +8913,7 @@ msgid "Simulator"
 msgstr "Simulator"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Site"
 msgstr "Site"
 
@@ -9328,12 +9405,17 @@ msgstr "Teaching in progress. Stop teaching before sending a new message."
 #: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/TeamPage.tsx
+#: src/pages/VaultPage.tsx
 msgid "Team"
 msgstr "Team"
 
 #: src/pages/shell/computer-view.tsx
 msgid "Team Computer"
 msgstr "Team Computer"
+
+#: src/pages/VaultPage.tsx
+msgid "Team credential"
+msgstr "Team credential"
 
 #: src/lib/routine-trigger.ts
 #: src/pages/RoutineEditor.tsx
@@ -9495,6 +9577,10 @@ msgstr "These files are too large to import."
 #: src/lib/agent-import-errors.ts
 msgid "These files or choices no longer match. Choose the files again."
 msgstr "These files or choices no longer match. Choose the files again."
+
+#: src/pages/VaultPage.tsx
+msgid "These saved settings can't be read."
+msgstr "These saved settings can't be read."
 
 #: src/pages/shell/bot-credentials.tsx
 msgid "These saved settings can't be read. Remove it and add it again."
@@ -9908,6 +9994,7 @@ msgstr "Turn off"
 
 #: src/pages/partner/PartnerRevenue.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Type"
 msgstr "Type"
 
@@ -10173,6 +10260,10 @@ msgstr "Use Protected input for passwords."
 msgid "Use Rook credits"
 msgstr "Use Rook credits"
 
+#: src/components/AskCard.tsx
+msgid "Use saved"
+msgstr "Use saved"
+
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Use space default"
 msgstr "Use space default"
@@ -10190,6 +10281,7 @@ msgid "Used"
 msgstr "Used"
 
 #: src/pages/ConnectionsPage.tsx
+#: src/pages/VaultPage.tsx
 msgid "Used by {usedBy}"
 msgstr "Used by {usedBy}"
 
@@ -10208,6 +10300,7 @@ msgstr "User peer"
 #: src/components/AskCard.tsx
 #: src/pages/connections/MailboxForm.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Username"
 msgstr "Username"
 
@@ -10250,12 +10343,17 @@ msgstr "Using your API key. Free plan ends {freeUntil}."
 
 #: src/pages/connections/McpServerForm.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Value"
 msgstr "Value"
 
 #: src/pages/shell/message-cards.tsx
 msgid "Variations"
 msgstr "Variations"
+
+#: src/pages/Settings.tsx
+msgid "Vault"
+msgstr "Vault"
 
 #: src/pages/partner/PartnerDomain.tsx
 #: src/pages/platform/PartnersSection.tsx
@@ -10385,6 +10483,7 @@ msgid "Webhook URL"
 msgstr "Webhook URL"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Website login"
 msgstr "Website login"
 
@@ -10552,8 +10651,10 @@ msgstr "White label"
 msgid "Who can talk to {name}"
 msgstr "Who can talk to {name}"
 
+#. placeholder {0}: credential.name
 #. placeholder {0}: item.name
 #: src/pages/connections/AccessSheet.tsx
+#: src/pages/VaultPage.tsx
 msgid "Who can use {0}"
 msgstr "Who can use {0}"
 
@@ -10643,6 +10744,7 @@ msgid "Yesterday"
 msgstr "Yesterday"
 
 #: src/pages/shell/channel-members.tsx
+#: src/pages/VaultPage.tsx
 msgid "you"
 msgstr "you"
 

@@ -223,6 +223,8 @@ export const ES_MESSAGES: Record<string, string> = {
   Routine: "Rutina",
   "Server integrations": "Integraciones del servidor",
   Thread: "Hilo",
+  Vault: "Bóveda",
+  "Use saved": "Usar guardada",
   Voice: "Voz",
   "Already have an account?": "¿Ya tienes una cuenta?",
   "Back to sign in": "Volver a iniciar sesión",

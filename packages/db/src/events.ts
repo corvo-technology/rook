@@ -40,6 +40,7 @@ import { approvalCallHash, approvalEffectKey } from "@corvo/core/node/approval-e
 import { getLogger } from "@corvo/logging";
 import { recordActionEvidence } from "./action-evidence.js";
 import { answeredScope, saveApprovalRule, saveScopedApprovalRule } from "./approval-settings.js";
+import { grantSavedBotSecret } from "./bot-secret-access.js";
 import { cancelRunsInTransaction } from "./cancel-runs.js";
 import type { Prisma, PrismaClient } from "./client.js";
 import { expireComputerExecutionLeases } from "./computers.js";
@@ -289,6 +290,8 @@ export interface AnswerRunInput {
   username?: string;
   /** Turns down a pending secret request; only the run's user can, and nothing is stored. */
   dismiss?: boolean;
+  /** Lets the agent use the credential already saved in the Vault, for a card that offers it. */
+  useExisting?: boolean;
   /** Which card of several pending approvals this answers; required while more than one waits. */
   approvalEffectId?: string;
   /** Set by a batch: only a plain "allow" on an approval card of this class may be applied. */
@@ -937,9 +940,15 @@ async function commitAnswerRunInput(
     !(await tx.externalEffect.findFirst({ where: secretRequest, select: { id: true } }))
   )
     return null;
-  if (secretAsk && !dismissed && !runSecretWriter) return null;
+  const useExisting = Boolean(input.useExisting);
+  // The saved credential is offered, never retyped; and only a card that offers it can use it.
+  if (useExisting && (!secretAsk || !pendingAsk.existing || !pendingAsk.credential)) return null;
+  if (pendingAsk.existing && !dismissed && !useExisting) return null;
+  if (useExisting && (dismissed || input.answer || input.username)) return null;
+  if (secretAsk && !dismissed && !useExisting && !runSecretWriter) return null;
   if (secretAsk && pendingAsk.credential && run.userId !== input.answeredByUserId) return null;
-  const loginAsk = secretAsk && !dismissed && pendingAsk.credential?.auth.type === "login";
+  const loginAsk =
+    secretAsk && !dismissed && !useExisting && pendingAsk.credential?.auth.type === "login";
   // A username belongs only to a login card, which cannot be saved without one.
   if (loginAsk !== Boolean(input.username?.trim())) return null;
   const login = loginAsk
@@ -1130,15 +1139,23 @@ async function commitAnswerRunInput(
     });
     if (task.count !== 1) throw new Error("Run task was not available to answer");
   } else if (secretAsk) {
-    await runSecretWriter!.store({
-      botId: run.botId,
-      credential: pendingAsk.credential,
-      runId: input.runId,
-      userId: run.userId,
-      spaceId: input.spaceId,
-      plaintext: login?.success ? encodeLoginSecret(login.data) : input.answer,
-      tx,
-    });
+    if (useExisting) {
+      await grantSavedBotSecret(
+        tx,
+        { spaceId: input.spaceId, botId: run.botId, userId: run.userId },
+        pendingAsk.credential!,
+      );
+    } else {
+      await runSecretWriter!.store({
+        botId: run.botId,
+        credential: pendingAsk.credential,
+        runId: input.runId,
+        userId: run.userId,
+        spaceId: input.spaceId,
+        plaintext: login?.success ? encodeLoginSecret(login.data) : input.answer,
+        tx,
+      });
+    }
     await tx.externalEffect.updateMany({
       where: {
         runId: input.runId,
@@ -1216,9 +1233,9 @@ export async function answerRunInput(
     prisma.$transaction(async (tx: Prisma.TransactionClient) =>
       commitAnswerRunInput(tx, input, writer),
     );
-  // A dismissal has no secret to prepare.
+  // A dismissal, or the use of a credential already saved, has no secret to prepare.
   const committed =
-    runSecretWriter?.withPrepared && !input.dismiss
+    runSecretWriter?.withPrepared && !input.dismiss && !input.useExisting
       ? await runSecretWriter.withPrepared(prisma, input, commit)
       : await commit();
 

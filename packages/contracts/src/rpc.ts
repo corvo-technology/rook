@@ -37,7 +37,12 @@ import {
   TicketSchema,
   UpdateTicketInput,
 } from "./board.js";
-import { BotSecretMetadata, BotSecretPutInput, StoredBotSecretName } from "./bot-secrets.js";
+import {
+  BOT_SECRET_VALUE_MAX_LENGTH,
+  BotSecretMetadata,
+  BotSecretPutInput,
+  StoredBotSecretName,
+} from "./bot-secrets.js";
 import {
   PartnerBrandInput,
   PartnerBrandingSchema,
@@ -289,6 +294,7 @@ import {
   UserMemoryStateSchema,
   UserMemoryTextSchema,
 } from "./user-memory.js";
+import { VaultCreateInput, VaultCredentialSchema, VaultUseSchema } from "./vault.js";
 import type { VerticalSummary } from "./verticals.js";
 import { VerticalIdSchema, VerticalSelection } from "./verticals.js";
 import {
@@ -1059,15 +1065,20 @@ export const appContract = {
             username: z.string().min(1).max(512).optional(),
             /** Turns down a pending secret request; `answer` is then empty. */
             dismiss: z.literal(true).optional(),
+            /** Lets the agent use the credential already saved in the Vault; `answer` is then empty. */
+            useExisting: z.literal(true).optional(),
             /** Which card of several pending approvals this answers. */
             approvalEffectId: Id.optional(),
           })
           .refine(
             (input) =>
-              input.dismiss
-                ? input.answer === "" && !input.username && !input.clientNonce
+              input.dismiss || input.useExisting
+                ? !(input.dismiss && input.useExisting) &&
+                  input.answer === "" &&
+                  !input.username &&
+                  !input.clientNonce
                 : input.answer.length > 0,
-            "Send either an answer or a dismissal",
+            "Send either an answer, a dismissal or the saved credential",
           ),
       )
       .output(z.object({ ok: z.literal(true) })),
@@ -2330,6 +2341,22 @@ export const appContract = {
     remove: oc.input(z.object({ id: Id })).output(z.object({ ok: z.literal(true) })),
     /** Replaces which agents may use the mailbox. */
     setAgents: oc.input(z.object({ id: Id, botIds: z.array(Id).max(200) })).output(MailboxSchema),
+  },
+  /** Every credential the person can see in the space, and which agents use each. */
+  vault: {
+    list: oc.output(z.array(VaultCredentialSchema)),
+    create: oc.input(VaultCreateInput).output(VaultCredentialSchema),
+    /** Same site and authentication; only the value changes. */
+    replace: oc
+      .input(z.object({ id: Id, value: z.string().min(1).max(BOT_SECRET_VALUE_MAX_LENGTH) }))
+      .output(VaultCredentialSchema),
+    /** Replaces which agents may use the credential. */
+    setAgents: oc
+      .input(z.object({ id: Id, botIds: z.array(Id).max(200) }))
+      .output(VaultCredentialSchema),
+    remove: oc.input(z.object({ id: Id })).output(z.object({ ok: z.literal(true) })),
+    /** Recent uses, newest first. */
+    uses: oc.input(z.object({ id: Id })).output(z.array(VaultUseSchema)),
   },
   botSecrets: {
     list: oc.input(z.object({ botId: Id })).output(z.array(BotSecretMetadata)),

@@ -742,6 +742,8 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Use a found model": "使用找到的模型",
   "Use an http or https URL": "请使用 http 或 https 地址",
   "Use default server": "使用默认服务器",
+  Vault: "保险库",
+  "Use saved": "使用已保存的",
   Voice: "语音",
   Webhook: "Webhook",
   "Waiting for sign-in…": "正在等待登录…",

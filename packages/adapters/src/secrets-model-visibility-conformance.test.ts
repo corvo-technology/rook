@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { buildApprovalAskBlock } from "./approval-ask.js";
 import { redactToolArgsForReview } from "./auto-review.js";
 import { requestWithBotSecret } from "./bot-secrets.js";
+import { matchesBotSecretWhere } from "./bot-secrets.test-support.js";
 import { sanitizeComposioError } from "./composio-connector.js";
 import { redactConnectorPayload, sanitizeConnectorError } from "./connector-safety.js";
 import { McpConnector } from "./mcp-connector.js";
@@ -197,9 +198,7 @@ describe("secrets model-visibility conformance", () => {
       const prisma = {
         botSecret: {
           findFirst: vi.fn(async ({ where }) =>
-            Object.entries(where).every(([key, value]) => row[key as keyof typeof row] === value)
-              ? row
-              : null,
+            matchesBotSecretWhere(row as never, where) ? { ...row, grants: [] } : null,
           ),
         },
       } as unknown as PrismaClient;

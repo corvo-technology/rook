@@ -213,6 +213,7 @@ export function useComposerActions({
       username?: string,
       dismiss?: boolean,
       approvalEffectId?: string,
+      useExisting?: boolean,
     ) => {
       const botId = activeBotId.current;
       const groupId = activeGroupId.current;
@@ -225,6 +226,7 @@ export function useComposerActions({
         answer: text,
         ...(username ? { username } : {}),
         ...(dismiss ? { dismiss: true as const } : {}),
+        ...(useExisting ? { useExisting: true as const } : {}),
         ...(approvalEffectId ? { approvalEffectId } : {}),
       });
       // The answer is saved; live events can reconcile a failed refresh.

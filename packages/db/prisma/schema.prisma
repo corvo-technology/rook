@@ -504,6 +504,8 @@ model Space {
   secrets                     Secret[]
   chatGroups                  ChatGroup[]
   botSecrets                  BotSecret[]
+  botSecretGrants             BotSecretGrant[]
+  botSecretUses               BotSecretUse[]
   externalConversations       ExternalConversation[]
   agentSecrets                AgentSecret[]
   board                       Board?
@@ -852,6 +854,8 @@ model Bot {
   agentImports             AgentImport[]
   groupMembers             ChatGroupMember[]
   botSecrets               BotSecret[]
+  botSecretGrants          BotSecretGrant[]
+  botSecretUses            BotSecretUse[]
   assignedTickets          Ticket[]           @relation("TicketAssigneeBot")
   createdTickets           Ticket[]           @relation("TicketCreatorBot")
   ticketComments           TicketComment[]    @relation("TicketCommentAuthorBot")
@@ -2532,19 +2536,66 @@ model BotSecret {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   spaceId    String
   space      Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
-  botId      String
-  bot        Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
+  /// The agent it was first saved for. Null for a credential added from the Vault; which agents may
+  /// use it is then only `grants`. An agent listed here may always use it.
+  botId      String?
+  bot        Bot?     @relation(fields: [botId], references: [id], onDelete: Cascade)
   name       String
   origin     String
   auth       Json
   ciphertext String
+  /// "personal": only runs for the owner (userId). "space": runs for any member, by granted agents.
+  scope      String   @default("personal")
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  grants     BotSecretGrant[]
+  uses       BotSecretUse[]
 
   @@unique([userId, spaceId, botId, name])
   @@index([botId])
   @@index([spaceId])
   @@map("bot_secrets")
+}
+
+/// An agent allowed to use a credential, besides the one it was first saved for.
+model BotSecretGrant {
+  id        String    @id
+  secretId  String
+  secret    BotSecret @relation(fields: [secretId], references: [id], onDelete: Cascade)
+  botId     String
+  bot       Bot       @relation(fields: [botId], references: [id], onDelete: Cascade)
+  spaceId   String
+  space     Space     @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+
+  @@unique([secretId, botId])
+  @@index([botId])
+  @@index([spaceId])
+  @@map("bot_secret_grants")
+}
+
+/// One use of a credential. Never holds the value.
+model BotSecretUse {
+  id          String    @id
+  spaceId     String
+  space       Space     @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  secretId    String
+  secret      BotSecret @relation(fields: [secretId], references: [id], onDelete: Cascade)
+  name        String
+  botId       String?
+  bot         Bot?      @relation(fields: [botId], references: [id], onDelete: SetNull)
+  runId       String?
+  /// Whom the run acted for.
+  forUserId   String?
+  /// The origin the credential was sent to, or "command" or "browser".
+  destination String
+  /// "ok" or "failed".
+  outcome     String
+  createdAt   DateTime  @default(now())
+
+  @@index([secretId, createdAt])
+  @@index([spaceId])
+  @@map("bot_secret_uses")
 }
 
 model ExternalConversation {

@@ -170,6 +170,7 @@ export const MessageView = memo(function MessageView({
     username?: string,
     dismiss?: boolean,
     approvalEffectId?: string,
+    useExisting?: boolean,
   ) => Promise<void>;
   onOpenBot: (botId: string) => void;
   onOpenPeerMessages: (peer: { peerBotId: string; peerBotName: string }) => void;
@@ -903,6 +904,7 @@ export const MessageView = memo(function MessageView({
                     onAnswer(message, text, username, undefined, approvalEffectId)
                   }
                   onDismiss={() => onAnswer(message, "", undefined, true)}
+                  onUseExisting={() => onAnswer(message, "", undefined, undefined, undefined, true)}
                   approver={
                     speakerName
                       ? {

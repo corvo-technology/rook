@@ -20,6 +20,7 @@ export * from "./bot-daily-limit.js";
 export * from "./bot-messages.js";
 export * from "./bot-monthly-limit.js";
 export {
+  findVaultCredential,
   forgetBotSecret,
   getBotSecretMetadata,
   listBotSecretMetadata,
@@ -249,6 +250,7 @@ export {
   memoryLearnJobAfterTurn,
   postMemoryFactCard,
 } from "./user-memory-run.js";
+export * from "./vault.js";
 export * from "./verified-download.js";
 export * from "./voice-credits.js";
 export * from "./voice-factory.js";

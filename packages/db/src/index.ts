@@ -9,6 +9,7 @@ export * from "./board-live.js";
 export * from "./bootstrap-user.js";
 export * from "./bot-budget.js";
 export * from "./bot-instructions.js";
+export * from "./bot-secret-access.js";
 export * from "./bot-update.js";
 export * from "./cancel-runs.js";
 export * from "./channel-people.js";

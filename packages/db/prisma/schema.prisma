@@ -473,6 +473,7 @@ model Space {
   wikiSettings                WikiSettings?
   wikiSources                 WikiSource[]
   artifactTranscripts         ArtifactTranscript[]
+  runToolResults              RunToolResult[]
   wikiChanges                 WikiChange[]
   wikiImports                 WikiImport[]
   researchJobs                ResearchJob[]
@@ -1218,6 +1219,7 @@ model Run {
   attempts             Attempt[]
   effects              ExternalEffect[]
   steeringMessages     SteeringMessage[]
+  toolResults          RunToolResult[]
   externalMessage      ExternalMessage?
 
   @@unique([spaceId, clientNonce])
@@ -1235,6 +1237,26 @@ model Run {
   // Partial index runs_recent_activity_idx (recent foreground activity) is created in SQL.
   @@index([routineId])
   @@map("runs")
+}
+
+/// The full text of a tool result that was too big for the model's context, kept for the run that
+/// produced it so the agent can page or search it. Cleared when the run ends; encrypted per space.
+model RunToolResult {
+  id         String   @id @default(cuid())
+  runId      String
+  run        Run      @relation(fields: [runId], references: [id], onDelete: Cascade)
+  spaceId    String
+  space      Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  toolCallId String
+  toolName   String
+  /// Length in characters before encryption.
+  totalChars Int
+  text       String
+  createdAt  DateTime @default(now())
+
+  @@unique([runId, toolCallId])
+  @@index([spaceId])
+  @@map("run_tool_results")
 }
 
 model SteeringMessage {

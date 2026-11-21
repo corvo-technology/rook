@@ -21,6 +21,7 @@ import { cloudAgentTool, connectorTool, integrationTools } from "./run-tools-int
 import { memoryTools } from "./run-tools-memory.js";
 import { messagingTools } from "./run-tools-messaging.js";
 import { researchTools } from "./run-tools-research.js";
+import { resultTools } from "./run-tools-results.js";
 import { secretTools } from "./run-tools-secrets.js";
 import { taskTools } from "./run-tools-tasks.js";
 import { wikiTools } from "./run-tools-wiki.js";
@@ -29,6 +30,7 @@ const TOOL_HANDLERS = new Map<string, ToolHandler>([
   ...Object.entries(computerTools),
   ...Object.entries(fileTools),
   ...Object.entries(memoryTools),
+  ...Object.entries(resultTools),
   ...Object.entries(wikiTools),
   ...Object.entries(appMapTools),
   ...Object.entries(documentTools),

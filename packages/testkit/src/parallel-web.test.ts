@@ -87,6 +87,7 @@ function executorFixture(
     scratchpadItem: { findMany: async () => [] },
     userActionApprovalRule: { findMany: async () => [] },
     userActionAutoReviewPreference: { findUnique: async () => ({ enabled: false }) },
+    runToolResult: { deleteMany: async () => ({ count: 0 }) },
     externalEffect: { findMany: async () => [] },
     usageRecord: { createMany: async () => ({ count: 1 }) },
     modelCreditEntry: { findUnique: async () => null },

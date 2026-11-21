@@ -58,6 +58,7 @@ it("isolates main and sibling effects with identical wire IDs and reconciles a c
   >();
   const deps = {
     prisma: {
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: {
         findUnique: async ({ where }: { where: { idempotencyKey: string } }) =>
           effects.get(where.idempotencyKey) ?? null,

@@ -235,6 +235,7 @@ async function runTurn(
     botSecret: { findMany: vi.fn(async () => []) },
     agentSkill: { findMany: vi.fn(async () => []) },
     scratchpadItem: { findMany: vi.fn(async () => []) },
+    runToolResult: { deleteMany: async () => ({ count: 0 }) },
     externalEffect: { findMany: vi.fn(async () => []) },
     computerExecutionLease: {
       updateManyAndReturn: vi.fn(async () => [{ fence: 1 }]),

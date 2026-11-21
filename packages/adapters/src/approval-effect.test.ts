@@ -354,6 +354,7 @@ describe("uncertainEffectResult", () => {
 describe("claimApprovedEffect", () => {
   it("claims approved effects exactly once", async () => {
     const store = {
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: {
         updateMany: vi.fn().mockResolvedValueOnce({ count: 1 }).mockResolvedValueOnce({ count: 0 }),
       },
@@ -371,6 +372,7 @@ describe("claimApprovedEffect", () => {
 describe("claimIntendedEffect", () => {
   it("claims intended effects exactly once", async () => {
     const store = {
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: {
         updateMany: vi.fn().mockResolvedValueOnce({ count: 1 }).mockResolvedValueOnce({ count: 0 }),
       },
@@ -388,6 +390,7 @@ describe("claimIntendedEffect", () => {
 describe("replaceCompletedExternalEffectResult", () => {
   it("updates the stored result for a completed effect", async () => {
     const store = {
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: {
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
@@ -407,6 +410,7 @@ describe("replaceCompletedExternalEffectResult", () => {
 describe("completeExternalEffect", () => {
   it("does not let a stale worker overwrite a reconciled effect", async () => {
     const store = {
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: {
         updateMany: vi.fn().mockResolvedValue({ count: 0 }),
       },
@@ -433,6 +437,7 @@ describe("approved effect resume", () => {
     const storedResult = { ok: true, written: true };
     let effectResult: unknown;
     const store = {
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: {
         updateMany: vi.fn(async ({ where, data }) => {
           if (where.id === effectId && where.status === "approved" && status === "approved") {

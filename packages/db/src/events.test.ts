@@ -98,6 +98,7 @@ describe("finalizeRun", () => {
       const conflict = Object.assign(new Error("serialization conflict"), { code: "P2034" });
       const createEvent = vi.fn(async () => ({ threadId: "thread-1", seq: 0 }));
       const tx = {
+        runToolResult: { deleteMany: async () => ({ count: 0 }) },
         externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
         $queryRaw: vi.fn(async () => []),
         run: {
@@ -158,6 +159,7 @@ describe("finalizeRun", () => {
 
   it("saves the reply a failure cut short before the error, as no answer to steering", async () => {
     const tx = {
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
       $queryRaw: vi.fn(async () => []),
       run: {
@@ -234,6 +236,7 @@ describe("finalizeRun", () => {
   it("saves no message for a failure without a partial reply", async () => {
     const create = vi.fn();
     const tx = {
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
       $queryRaw: vi.fn(async () => []),
       run: {
@@ -279,6 +282,7 @@ describe("finalizeRun", () => {
 
   it("resumes a held messaging inbound as a messaging run", async () => {
     const tx = {
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
       $queryRaw: vi.fn(async () => []),
       run: {
@@ -348,6 +352,7 @@ describe("finalizeRun", () => {
 
   it("pins the continuation when every waited message chose the same model", async () => {
     const tx = {
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
       $queryRaw: vi.fn(async () => []),
       run: {
@@ -429,6 +434,7 @@ describe("finalizeRun", () => {
       text: "What is the status?",
     };
     const tx = {
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
       $queryRaw: vi.fn(async () => []),
       run: {
@@ -2173,6 +2179,7 @@ describe("answerRunInput", () => {
         findUnique: vi.fn().mockResolvedValue({ status: "queued" }),
       },
       task: { updateMany: vi.fn() },
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: {
         findFirst: vi
           .fn()
@@ -2270,6 +2277,7 @@ describe("answerRunInput", () => {
           findUnique: vi.fn().mockResolvedValue({ userId: "user-1", status: "queued" }),
         },
         task: { updateMany: vi.fn() },
+        runToolResult: { deleteMany: async () => ({ count: 0 }) },
         externalEffect: {
           findFirst: vi
             .fn()
@@ -2400,6 +2408,7 @@ describe("answerRunInput", () => {
           findUnique: vi.fn().mockResolvedValue({ userId: "user-1", status: "queued" }),
         },
         task: { updateMany: vi.fn() },
+        runToolResult: { deleteMany: async () => ({ count: 0 }) },
         externalEffect: {
           findFirst: vi.fn().mockResolvedValue({ id: "effect-1", status: "intended", ...effect }),
           update: vi.fn().mockResolvedValue({ id: "effect-1" }),
@@ -2539,6 +2548,7 @@ describe("answerRunInput", () => {
         findUnique: vi.fn().mockResolvedValue({ userId: "run-owner" }),
         updateMany: vi.fn(),
       },
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: {
         findFirst: vi
           .fn()
@@ -2612,6 +2622,7 @@ describe("answerRunInput", () => {
         findFirst: vi.fn().mockResolvedValue({ botId: "bot-1" }),
         updateMany: vi.fn(),
       },
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: { findFirst: vi.fn().mockResolvedValue(null) },
     };
     const prisma = {
@@ -2656,6 +2667,7 @@ describe("answerRunInput", () => {
         findFirst: vi.fn().mockResolvedValue({ botId: "bot-1" }),
         updateMany: vi.fn(),
       },
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: { findFirst: vi.fn() },
     };
     const prisma = {
@@ -2777,6 +2789,7 @@ describe("answerRunInput", () => {
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
       task: { updateMany: vi.fn() },
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
       $executeRaw: vi.fn(),
       thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 10 }) },
@@ -2938,6 +2951,7 @@ describe("answerRunInput", () => {
           updateMany: vi.fn().mockResolvedValue({ count: 1 }),
         },
         task: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+        runToolResult: { deleteMany: async () => ({ count: 0 }) },
         externalEffect: {
           findFirst: vi
             .fn()
@@ -3123,6 +3137,7 @@ describe("answerRunInput", () => {
           updateMany: vi.fn().mockResolvedValue({ count: 1 }),
         },
         task: { updateMany: vi.fn() },
+        runToolResult: { deleteMany: async () => ({ count: 0 }) },
         externalEffect: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
         $executeRaw: vi.fn(),
         thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 10 }) },
@@ -4104,6 +4119,7 @@ describe("clearThread", () => {
     const fanout = new TestFanout();
     const publish = vi.spyOn(fanout, "publish");
     const tx = {
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
       $executeRaw: vi.fn(),
       thread: {
@@ -4176,6 +4192,7 @@ describe("clearThread", () => {
   it("scopes group clear lease cleanup to cancelled run ids", async () => {
     const fanout = new TestFanout();
     const tx = {
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
       $executeRaw: vi.fn(),
       thread: {
@@ -4610,6 +4627,7 @@ describe("instruction proposal answers", () => {
         findFirst: vi.fn(async () => ({ id: "message-1", blocks: [block] })),
         update: vi.fn(async () => ({ id: "message-1" })),
       },
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: {
         findFirst: vi.fn(async () => ({
           id: "effect-1",
@@ -4821,6 +4839,7 @@ describe("several proposal cards on one message", () => {
         findUnique: vi.fn().mockResolvedValue({ status: "waiting_input" }),
       },
       task: { updateMany: vi.fn() },
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: {
         findFirst: vi.fn(async ({ where }: { where: { id: string } }) => ({
           id: where.id,
@@ -5133,6 +5152,7 @@ describe("answerRunInput as part of a batch", () => {
         findUnique: vi.fn().mockResolvedValue({ status: "queued" }),
       },
       task: { updateMany: vi.fn() },
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: {
         findFirst: vi
           .fn()
@@ -5228,6 +5248,7 @@ describe("who decides an agent's approval", () => {
         findUnique: vi.fn().mockResolvedValue({ status: "queued" }),
       },
       task: { updateMany: vi.fn() },
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: {
         findFirst: vi
           .fn()

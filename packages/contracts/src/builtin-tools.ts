@@ -77,6 +77,7 @@ export const BUILTIN_TOOL_NAMES = [
   "research_status",
   "search_history",
   "read_history",
+  "read_result",
   "save_memory",
   "recall_memory",
   "forget_memory",

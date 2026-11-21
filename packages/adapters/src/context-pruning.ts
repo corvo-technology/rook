@@ -51,12 +51,37 @@ export function pruneStalePageStateContext(
       continue;
     }
     transformed ??= [...messages];
+    const url = pageUrlOf(message);
     transformed[index] = {
       ...message,
-      content: [{ type: "text", text: STALE_PAGE_STATE_NOTE }],
+      content: [
+        {
+          type: "text",
+          text: url ? `${STALE_PAGE_STATE_NOTE}\nPage: ${url}` : STALE_PAGE_STATE_NOTE,
+        },
+      ],
     };
   }
   return transformed ?? messages;
+}
+
+/** The page a trimmed result showed, so the model can return to it without a search. */
+function pageUrlOf(message: ToolResultMessage): string | undefined {
+  const fromDetails = (message.details as { url?: unknown } | undefined)?.url;
+  const raw =
+    typeof fromDetails === "string"
+      ? fromDetails
+      : message.content
+          .flatMap((part) => (part.type === "text" ? [part.text] : []))
+          .join("\n")
+          .match(/"url"\s*:\s*"(https?:[^"\s]+)"/)?.[1];
+  if (!raw || !URL.canParse(raw)) return undefined;
+  const url = new URL(raw);
+  if (!/^https?:$/.test(url.protocol)) return undefined;
+  url.username = "";
+  url.password = "";
+  url.hash = "";
+  return url.toString();
 }
 
 function textLength(message: ToolResultMessage): number {

@@ -149,6 +149,7 @@ async function runAfterFill(
       })),
     },
     botSecret: { findMany: vi.fn(async () => botSecrets) },
+    runToolResult: { deleteMany: async () => ({ count: 0 }) },
     externalEffect: {
       findMany: vi.fn(async () => []),
       findFirst: vi.fn(async () => null),

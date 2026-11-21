@@ -56,6 +56,7 @@ import {
 } from "./messages.js";
 import { deleteRunSecretsInTransaction } from "./run-secrets.js";
 import { isRunResponse, readRunTimingFields } from "./run-timing.js";
+import { clearRunToolResults } from "./run-tool-results.js";
 import { RUN_TURN_CHECKPOINT_KIND } from "./run-turn-checkpoint.js";
 import { recordSecurityEvent } from "./security-events.js";
 import type { SpaceHints } from "./space-hints.js";
@@ -1292,6 +1293,7 @@ export async function retireWaitingQuestionInTransaction(
   await tx.externalEffect.deleteMany({
     where: { runId: input.runId, kind: RUN_TURN_CHECKPOINT_KIND, status: RUN_TURN_CHECKPOINT_KIND },
   });
+  await clearRunToolResults(tx, [input.runId]);
   await deleteRunSecretsInTransaction(tx, [
     { id: input.runId, userId: run.userId, spaceId: input.spaceId },
   ]);
@@ -1909,6 +1911,7 @@ async function finalizeRunOnce(
         status: RUN_TURN_CHECKPOINT_KIND,
       },
     });
+    await clearRunToolResults(tx, [input.runId]);
 
     const attempt = await tx.attempt.updateMany({
       where: {

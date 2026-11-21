@@ -36,16 +36,18 @@ export type ModelEmulatorResponse =
   | { type: "disconnect"; text?: string }
   | { type: "hold"; text?: string; onOpen?: () => void; onClose?: () => void };
 
+export interface ModelEmulatorUsage {
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  prompt_tokens_details?: { cached_tokens?: number; cache_write_tokens?: number };
+  completion_tokens_details?: { reasoning_tokens?: number };
+  cost?: number;
+}
+
 export interface ModelEmulatorStep {
   /** Synthetic endpoint usage, including explicit zero and omitted breakdown fields. */
-  usage?: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-    prompt_tokens_details?: { cached_tokens?: number };
-    completion_tokens_details?: { reasoning_tokens?: number };
-    cost?: number;
-  };
+  usage?: ModelEmulatorUsage | ((request: ModelEmulatorRequest) => ModelEmulatorUsage);
   /** Assertions run before the response; failures also make assertComplete fail. */
   expect: (request: ModelEmulatorRequest) => void | Promise<void>;
   response: ModelEmulatorResponse | ((request: ModelEmulatorRequest) => ModelEmulatorResponse);
@@ -127,9 +129,10 @@ export async function startModelEmulator(options: {
         );
       };
       const emitUsage = () => {
-        if (step.usage)
+        const usage = typeof step.usage === "function" ? step.usage(body) : step.usage;
+        if (usage)
           response.write(
-            `data: ${JSON.stringify({ id: `fixture-${stepIndex}`, choices: [], usage: step.usage })}\n\n`,
+            `data: ${JSON.stringify({ id: `fixture-${stepIndex}`, choices: [], usage })}\n\n`,
           );
       };
       emit({ role: "assistant" });

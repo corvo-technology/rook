@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { BotAvatarValueSchema } from "./bot-avatar.js";
 import { BuiltinToolNameSchema } from "./builtin-tools.js";
+import { ROUTINE_WATCH_PRESETS } from "./routine-watch.js";
 
 export const AGENT_CATALOG_LOCALES = ["en", "pt-BR"] as const;
 export type AgentCatalogLocale = (typeof AGENT_CATALOG_LOCALES)[number];
@@ -40,6 +41,21 @@ export const StarterRoutineSchema = z.object({
   cron: z.string().regex(/^\S+ \S+ \S+ \S+ \S+$/),
 });
 export type StarterRoutine = z.infer<typeof StarterRoutineSchema>;
+
+/**
+ * A change trigger an agent gets once a connected integration can serve it, with no model
+ * polling: the integration's capability (a calendar or an inbox), never a vendor. The Chief
+ * turns it on when such an integration is connected, and the person can pause it like any routine.
+ */
+export const AreaWatchSchema = z.object({
+  /** Stable within the agent; never shown. */
+  key: z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/),
+  preset: z.enum(ROUTINE_WATCH_PRESETS),
+  name: localizedCatalogText(60),
+  /** What the agent is asked when the change wakes it. */
+  prompt: localizedCatalogText(600),
+});
+export type AreaWatch = z.infer<typeof AreaWatchSchema>;
 
 /**
  * A ready-made agent a person can add: a bot with its own instructions and the apps it works

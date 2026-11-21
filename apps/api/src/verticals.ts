@@ -2,6 +2,7 @@ import type { Actor, CreateBotInput, VerticalId, VerticalSelection } from "@corv
 import {
   CreateRoutineInput,
   verticalRoutinePrompt,
+  verticalSpawnKey,
   verticalTemplate,
   verticalText,
 } from "@corvo/contracts";
@@ -16,8 +17,7 @@ export interface VerticalDeps {
   scheduleRoutine(routineId: string, at: Date): Promise<void>;
 }
 
-export const verticalSpawnKey = (verticalId: VerticalId, agentKey: string) =>
-  `vertical:${verticalId}:${agentKey}`;
+export { verticalSpawnKey };
 
 export interface AppliedVertical {
   /** Agent key to the bot made (or already there) for it. */

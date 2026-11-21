@@ -133,9 +133,11 @@ const scheduleTimingSpecs = {
   watch: {
     type: ["object", "null"],
     description:
-      'Run only when something changes, checked without a model every everyMinutes (min 5, default 15). kind files: paths on your computer. kind command: a shell command run in your folder each interval without per-run approval; its output is compared. kind tool: a read-only connected tool and its args. Watch one named thing, never a whole account. For a list result set track: the field naming each item, then the fields whose change counts (mail search -> track ["id"]; Drive folder -> ["id", "modifiedTime"]).',
+      'Run only when something changes, checked without a model every everyMinutes (min 5, default 15). kind files: paths on your computer. kind command: a shell command run in your folder each interval without per-run approval; its output is compared. kind tool: a read-only connected tool and its args. Watch one named thing, never a whole account. For a list result set track: the field naming each item, then the fields whose change counts (mail search -> track ["id"]; Drive folder -> ["id", "modifiedTime"]). Or preset "calendar" (event changes, overlaps, meeting soon; args may use {{now}}, {{in7d}}) or "email" (new unread mail from people); the tool is found for you.',
     properties: {
       kind: { type: "string", enum: ["files", "command", "tool"] },
+      preset: { type: "string", enum: ["calendar", "email"] },
+      leadMinutes: { type: "number" },
       paths: { type: "array", items: { type: "string" } },
       command: { type: "string" },
       tool: { type: "string" },
@@ -144,7 +146,6 @@ const scheduleTimingSpecs = {
       everyMinutes: { type: "number" },
       loud: { type: "boolean", description: "Also post 'No changes' on quiet checks." },
     },
-    required: ["kind"],
   },
 };
 

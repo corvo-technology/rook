@@ -17,12 +17,21 @@ import * as z from "zod";
  *   tickets (blocked, or doing or in review with no update for a while), so it
  *   changes when a ticket gets stuck or moves again.
  *
+ * A `tool` watch may name a `preset` that knows what to look for in the result,
+ * whatever integration it comes from:
+ * - `calendar`: the tool lists upcoming events. The agent is woken for a new, moved or
+ *   cancelled event, a new overlap, or a meeting starting within `leadMinutes`.
+ * - `email`: the tool lists inbox messages. The agent is woken for new unread mail that is
+ *   not from the user and not an automated sender, with ids, senders and subjects only.
+ *
  * `track` (tool and command) narrows a JSON result to its items: objects that
  * carry the first field are compared by the listed fields only, so a fetch
  * time or a snippet does not count as a change, and the note can say which
  * items are new, updated or gone.
  */
 export const ROUTINE_WATCH_KINDS = ["files", "command", "tool", "board"] as const;
+export const ROUTINE_WATCH_PRESETS = ["calendar", "email"] as const;
+export const CALENDAR_LEAD_DEFAULT_MINUTES = 15;
 export const ROUTINE_WATCH_DEFAULT_MINUTES = 15;
 /** Keep unattended checks from hammering computers or connected services. */
 export const ROUTINE_WATCH_MIN_MINUTES = 5;
@@ -35,6 +44,11 @@ export const RoutineWatchSchema = z
     tool: z.string().trim().min(1).max(200).optional(),
     args: z.record(z.string(), z.unknown()).optional(),
     track: z.array(z.string().trim().min(1).max(100)).min(1).max(5).optional(),
+    preset: z.enum(ROUTINE_WATCH_PRESETS).optional(),
+    /** Calendar: how long before a meeting to wake the agent for a briefing. */
+    leadMinutes: z.number().int().min(5).max(120).optional(),
+    /** Email: the user's own addresses, so their mail never wakes the agent. */
+    userEmails: z.array(z.string().trim().toLowerCase().min(3).max(200)).max(10).optional(),
     everyMinutes: z
       .number()
       .int()
@@ -63,6 +77,32 @@ export const RoutineWatchSchema = z
         code: "custom",
         message: "Tracked fields apply to a command or tool",
         path: ["track"],
+      });
+    }
+    if (value.preset) {
+      if (value.kind !== "tool") {
+        ctx.addIssue({ code: "custom", message: "A preset reads a tool", path: ["preset"] });
+      }
+      if (value.track) {
+        ctx.addIssue({
+          code: "custom",
+          message: "A preset decides what counts as a change",
+          path: ["track"],
+        });
+      }
+    }
+    if (value.leadMinutes !== undefined && value.preset !== "calendar") {
+      ctx.addIssue({
+        code: "custom",
+        message: "Lead time applies to the calendar preset",
+        path: ["leadMinutes"],
+      });
+    }
+    if (value.userEmails && value.preset !== "email") {
+      ctx.addIssue({
+        code: "custom",
+        message: "Addresses apply to the email preset",
+        path: ["userEmails"],
       });
     }
     if (value.kind === "tool") {

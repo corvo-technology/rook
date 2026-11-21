@@ -33,6 +33,14 @@ describe("the Chief", () => {
         );
       });
 
+      it("asks the owner whether a rule written in the space still applies instead of reporting it as blocked", () => {
+        expect(text).toMatch(
+          locale === "en"
+            ? /only a rule written in the space[\s\S]*Ask the owner one short question naming the rule and its source/
+            : /só uma regra escrita no espaço[\s\S]*pergunta curta com o nome da regra e de onde ela vem/,
+        );
+      });
+
       it("starts alone: greets, asks what the owner needs, suggests Store agents and adds the ones accepted", () => {
         expect(text).toMatch(
           locale === "en"

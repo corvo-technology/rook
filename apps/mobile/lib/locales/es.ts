@@ -350,6 +350,7 @@ export const ES_MESSAGES: Record<string, string> = {
   "Message…": "Mensaje…",
   "No longer active": "Ya no está activo",
   "Photo library": "Fototeca",
+  Avatar: "Avatar",
   "Pull request": "Solicitud de incorporación",
   React: "Reaccionar",
   "Remove mention {name}": "Quitar mención a {name}",

@@ -86,6 +86,7 @@ vi.mock("expo-router", () => {
 });
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: element("div") }));
 vi.mock("../components/app-mark", () => ({ AppMark: () => null }));
+vi.mock("./avatar-photo", () => ({ pickAvatarPhoto: async () => null }));
 vi.mock("../components/native-action-button", () => ({
   NativeActionButton: ({
     label,

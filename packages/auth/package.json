@@ -18,6 +18,7 @@
     "@better-auth/expo": "1.7.12",
     "@better-auth/passkey": "1.7.12",
     "@corvo/adapter-kit": "workspace:*",
+    "@corvo/contracts": "workspace:*",
     "@corvo/core": "workspace:*",
     "@corvo/db": "workspace:*",
     "@corvo/ui-tokens": "workspace:*",

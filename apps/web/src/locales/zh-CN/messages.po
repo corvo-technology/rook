@@ -1735,6 +1735,11 @@ msgstr "保存例行任务后可用"
 msgid "Available to this bot's shell commands as {commandVariable}"
 msgstr "此机器人的 Shell 命令可通过 {commandVariable} 使用"
 
+#: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/SpaceSettingsPanel.tsx
+msgid "Avatar"
+msgstr "头像"
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Avatar Studio"
 msgstr "头像工作室"
@@ -2376,6 +2381,7 @@ msgstr "折叠 {label}"
 msgid "Collapse {name}"
 msgstr "收起 {name}"
 
+#: src/components/AvatarEditor.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Color"
 msgstr "颜色"
@@ -3250,6 +3256,7 @@ msgstr "无法运行例行任务"
 msgid "Could not run the routine"
 msgstr "无法运行例行任务"
 
+#: src/components/AvatarEditor.tsx
 #: src/components/ChangeWhenToAsk.tsx
 #: src/pages/connections/DatabaseForm.tsx
 #: src/pages/connections/MailboxForm.tsx
@@ -3445,6 +3452,7 @@ msgstr "无法更新例程"
 msgid "Could not update the speech model"
 msgstr "无法更新语音模型"
 
+#: src/components/AvatarEditor.tsx
 #: src/pages/onboarding/WorkspaceStep.tsx
 #: src/pages/onboarding/YouStep.tsx
 msgid "Could not use that image"
@@ -7261,6 +7269,7 @@ msgstr "个人"
 msgid "Phone call"
 msgstr "电话"
 
+#: src/components/AvatarEditor.tsx
 #: src/pages/onboarding/YouStep.tsx
 #: src/pages/shell/chat-context.tsx
 #: src/pages/shell/chat-shared.ts
@@ -7762,6 +7771,7 @@ msgstr "已记住"
 
 #: src/components/AlwaysAllowedRules.tsx
 #: src/components/ApprovalRulesSettings.tsx
+#: src/components/AvatarEditor.tsx
 #: src/pages/connections/McpServerForm.tsx
 #: src/pages/ConnectionsSettingsPanel.tsx
 #: src/pages/LocalSpeechSection.tsx

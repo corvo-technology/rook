@@ -1,6 +1,7 @@
 import { expo } from "@better-auth/expo";
 import { passkey } from "@better-auth/passkey";
 import type { ProductAnalytics, TransactionalEmailProvider } from "@corvo/adapter-kit";
+import { isAvatarValue } from "@corvo/contracts";
 import {
   displayName,
   emailAllowed,
@@ -757,9 +758,17 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
           },
         },
         update: {
-          before: async (user) => {
+          before: async (user, ctx) => {
             if (user.email && isMessagingEmail(user.email)) {
               throw new APIError("BAD_REQUEST", { message: "Email is not available" });
+            }
+            // What a person sets for themselves is a color or a small data image, never an
+            // address that would make every viewer's client fetch it. Sign-in providers
+            // supply their own picture address through another path.
+            if (ctx?.path === "/update-user" && typeof user.image === "string") {
+              if (!isAvatarValue(user.image)) {
+                throw new APIError("BAD_REQUEST", { message: "Invalid avatar" });
+              }
             }
             return {
               data: {

@@ -21,6 +21,7 @@ import {
   OPENAI_COMPATIBLE_PROVIDER_ID,
   openAiCompatibleConnectReady,
   openAiCompatibleProbeSuccessMessage,
+  parseAvatar,
   parseModelContextWindow,
   parseModelMaxImagesPerPrompt,
   parseModelMaxTokens,
@@ -236,7 +237,8 @@ export function OnboardingPage() {
         }
         const canRename = spaces?.spaces.find((row) => row.id === current?.id)?.canRename === true;
         if (current) setSpace({ id: current.id, name: current.name });
-        setLogo(spaces?.spaces.find((row) => row.id === current?.id)?.logo ?? null);
+        const storedLogo = spaces?.spaces.find((row) => row.id === current?.id)?.logo;
+        setLogo(storedLogo && parseAvatar(storedLogo).kind === "image" ? storedLogo : null);
         setPerson({ name: me.name, image: null });
         if (me.timezone) setTimezone(me.timezone);
         void authClient

@@ -75,3 +75,25 @@ it("marks the trigger when another space has an unread chat", async () => {
   expect(host.querySelector('[data-testid="space-switcher-unread"]')).not.toBeNull();
   await act(async () => root.unmount());
 });
+
+it("marks each space with its own color, picture or initial", async () => {
+  const picture = "data:image/webp;base64,UklGRg==";
+  const { host, root } = await open({
+    spaces: [
+      { id: "space-a", name: "Personal", logo: "#B45309", bots: [{ id: "bot-a" }] },
+      { id: "space-b", name: "Work", logo: picture, bots: [] },
+      { id: "space-c", name: "Empty", bots: [] },
+    ],
+  });
+  const trigger = host.querySelector('[data-testid="space-switcher"]') as HTMLElement;
+  expect(
+    (trigger.querySelector('[data-testid="space-avatar"]') as HTMLElement).style.backgroundColor,
+  ).toBe("rgb(180, 83, 9)");
+  const item = (id: string) =>
+    document.querySelector(
+      `[data-testid="space-switcher-item-${id}"] [data-testid="space-avatar"]`,
+    );
+  expect(item("space-b")?.querySelector("img")?.getAttribute("src")).toBe(picture);
+  expect(item("space-c")?.textContent).toBe("E");
+  await act(async () => root.unmount());
+});

@@ -372,6 +372,8 @@ export function DeleteBotPanel({
 export type SettingsSpace = {
   id: string;
   name: string;
+  /** The space's avatar: a color or a picture; null shows its initial. */
+  logo?: string | null;
   canRename?: boolean;
   canDelete?: boolean;
   /** True only for an owner of the space. */

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { accountDisplay, displayMessageBlock, displayName } from "./display-name.js";
+import {
+  accountDisplay,
+  displayMessageBlock,
+  displayName,
+  personInitials,
+} from "./display-name.js";
 
 const email = "demo@example.com";
 const opaque = [
@@ -48,6 +53,15 @@ describe("accountDisplay", () => {
       });
     },
   );
+  it.each(["Account", " account ", "User", "Conta", "Usuário", "Admin"])(
+    "does not show the placeholder name %s",
+    (name) => {
+      expect(accountDisplay({ name, email }, "You")).toMatchObject({ label: email, initial: "D" });
+    },
+  );
+  it("keeps a name that only starts with a placeholder word", () => {
+    expect(accountDisplay({ name: "Account Manager", email }, "You").label).toBe("Account Manager");
+  });
   it("compares email-derived names without case sensitivity", () => {
     expect(accountDisplay({ name: " Demo ", email }, "You").label).toBe(email);
   });
@@ -82,4 +96,15 @@ it("guards identity metadata without changing literal message text", () => {
   });
   const text = { kind: "text" as const, text: "__TestTok1__" };
   expect(displayMessageBlock(text)).toBe(text);
+});
+
+describe("personInitials", () => {
+  it("reads an email by what comes before the @", () => {
+    expect(personInitials("demo@example.com")).toBe("DE");
+    expect(personInitials("ada.lovelace@example.com")).toBe("AL");
+  });
+  it("takes the first and last word of a name", () => {
+    expect(personInitials("Ada Byron Lovelace")).toBe("AL");
+    expect(personInitials("")).toBe("?");
+  });
 });

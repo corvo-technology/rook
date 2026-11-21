@@ -7,12 +7,15 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { mobileTokens, resolveMobileAppearance } from "../lib/appearance";
 import { useI18n } from "../lib/i18n";
 import { useThemedStyles } from "../lib/native";
+import { AvatarMark } from "./avatar-mark";
 import { createHomeStyles } from "./home-styles";
 import { NativeSymbol } from "./native-symbol";
 
 /** The inbox's own header where the native Liquid Glass bar is unavailable. */
 export function InboxHeader({
   initials,
+  name,
+  image,
   activityMode,
   toggleActivityMode,
   runCreateAction,
@@ -20,6 +23,9 @@ export function InboxHeader({
   columnInsets,
 }: {
   initials: string;
+  /** With a chosen avatar, the profile button wears it in place of the initials. */
+  name?: string;
+  image?: string | null;
   activityMode: boolean;
   toggleActivityMode: () => void;
   runCreateAction: (action: "bot" | "group" | "space") => void;
@@ -59,7 +65,11 @@ export function InboxHeader({
     >
       <View style={styles.circleButton}>
         <HeaderButton accessibilityLabel={t("Account")} onPress={() => router.push("/account")}>
-          <Text style={styles.profileInitials}>{initials}</Text>
+          {image && name ? (
+            <AvatarMark name={name} value={image} size={44} />
+          ) : (
+            <Text style={styles.profileInitials}>{initials}</Text>
+          )}
         </HeaderButton>
       </View>
       <View style={styles.headerActions}>

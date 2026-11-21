@@ -347,6 +347,7 @@ export const PT_BR_MESSAGES: Record<string, string> = {
   "Message…": "Mensagem…",
   "No longer active": "Não está mais ativo",
   "Photo library": "Fototeca",
+  Avatar: "Avatar",
   "Pull request": "Solicitação de pull",
   React: "Reagir",
   "Remove mention {name}": "Remover menção a {name}",

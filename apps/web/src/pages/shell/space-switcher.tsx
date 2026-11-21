@@ -7,10 +7,12 @@ import {
 } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import { SpaceAvatar } from "../../components/SpaceAvatar";
 
 type SwitcherSpace = {
   id: string;
   name: string;
+  logo?: string | null;
   bots: readonly { id: string; unread?: boolean }[];
 };
 
@@ -52,20 +54,20 @@ export function SpaceSwitcher({
           data-testid="space-switcher"
           className={`app-no-drag relative flex items-center text-start outline-none focus-visible:ring-2 focus-visible:ring-ring ${
             mini
-              ? "size-9 justify-center rounded-xl bg-card text-sm font-medium"
+              ? "size-9 justify-center rounded-xl"
               : `min-h-11 py-1 w-full gap-2.5 rounded-xl px-2.5 hover:bg-accent`
           }`}
         >
           {mini ? (
-            <span aria-hidden="true">{current.name.trim().charAt(0).toUpperCase()}</span>
+            <SpaceAvatar
+              name={current.name}
+              logo={current.logo}
+              size={36}
+              className="bg-card text-foreground"
+            />
           ) : (
             <>
-              <span
-                aria-hidden="true"
-                className="grid size-[34px] shrink-0 place-items-center rounded-[10px] bg-primary font-semibold text-primary-foreground"
-              >
-                {current.name.trim().charAt(0).toUpperCase()}
-              </span>
+              <SpaceAvatar name={current.name} logo={current.logo} />
               <span className="flex min-w-0 flex-1 flex-col leading-tight">
                 <span className="truncate text-name font-semibold">{current.name}</span>
                 {summary ? (
@@ -103,6 +105,7 @@ export function SpaceSwitcher({
               }}
               className="gap-2"
             >
+              <SpaceAvatar name={space.name} logo={space.logo} size={20} />
               <span className="min-w-0 flex-1 truncate">{space.name}</span>
               {space.id !== current.id && space.bots.some((bot) => bot.unread) ? (
                 <span aria-hidden="true" className="size-1.5 rounded-full bg-primary" />

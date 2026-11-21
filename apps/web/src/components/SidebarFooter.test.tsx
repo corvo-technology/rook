@@ -240,7 +240,9 @@ it("keeps at most three marks with the same tile and a missing-logo fallback", a
     { name: "GitHub", logo: "https://example.test/github.svg" },
     { name: "Slack" },
   ]);
-  const tiles = [...host.querySelectorAll('span[aria-hidden="true"] > span')];
+  const tiles = [...host.querySelectorAll('span[aria-hidden="true"] > span')].filter(
+    (tile) => !tile.closest('[data-testid="user-menu-trigger"]'),
+  );
   expect(tiles).toHaveLength(3);
   expect(new Set(tiles.map((tile) => tile.className)).size).toBe(1);
   expect(tiles[1]!.textContent).toBe("N");

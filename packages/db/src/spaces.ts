@@ -66,6 +66,13 @@ export class CannotRenameSpaceAsNonOwnerError extends Error {
   }
 }
 
+export class CannotChangeSpaceAvatarError extends Error {
+  constructor() {
+    super("Only a space admin can change its avatar");
+    this.name = "CannotChangeSpaceAvatarError";
+  }
+}
+
 export class CannotPauseSpaceError extends Error {
   constructor() {
     super("Only members allowed to configure the space can pause its bots");
@@ -689,6 +696,27 @@ export async function renameSpaceForMember(
           data: { name, ...(input.logo !== undefined ? { logo: input.logo } : {}) },
         });
         return { id: input.spaceId, name };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    ),
+  );
+}
+
+/** Set or clear the avatar (a color or a data image, kept in `logo`) of a space the caller may configure. */
+export async function setSpaceAvatarForMember(
+  prisma: PrismaClient,
+  input: SpaceMemberTargetInput & { avatar: string | null },
+): Promise<{ id: string; logo: string | null }> {
+  return withTransactionRetry(() =>
+    prisma.$transaction(
+      async (tx) => {
+        await lockSpaceDeletion(tx, input.spaceId);
+        const owned = await loadActorSpace(tx, input);
+        if (!can(await getSpaceMembershipFor(tx, input), "configure"))
+          throw new CannotChangeSpaceAvatarError();
+        if (owned.deletingAt) throw new SpaceDeletionInProgressError();
+        await tx.space.update({ where: { id: input.spaceId }, data: { logo: input.avatar } });
+        return { id: input.spaceId, logo: input.avatar };
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     ),

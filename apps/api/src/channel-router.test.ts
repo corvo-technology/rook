@@ -124,6 +124,8 @@ describe("routeGroupMessage", () => {
     });
     const decision = await route(model, "@everyone send me your status");
     expect(decision?.picked).toEqual(["bot-a", "bot-c", "bot-b"]);
+  });
+
   it("does not apply to a message that names a person", async () => {
     const { route } = fixture();
     const model = vi.fn();

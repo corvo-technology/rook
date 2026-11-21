@@ -30,18 +30,18 @@ function fakeLedger(clock: { now: Date }) {
         r.key === w.botId_threadId_key.key,
     );
   const surfacedItem = {
-    findUnique: async ({ where }: never) => {
+    findUnique: async ({ where }: any) => {
       const row = find(where);
       return row ? { ...row } : null;
     },
-    upsert: async ({ where, create, update }: never) => {
+    upsert: async ({ where, create, update }: any) => {
       const row = find(where);
       if (row) Object.assign(row, update);
       else rows.push({ id: `s${rows.length}`, surfacedAt: clock.now, ...create });
     },
     count: async ({ where }: { where: { runId: string } }) =>
       rows.filter((r) => r.runId === where.runId).length,
-    findMany: async ({ where }: never) =>
+    findMany: async ({ where }: any) =>
       rows
         .filter(
           (r) =>

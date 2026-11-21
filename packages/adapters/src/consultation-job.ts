@@ -1,5 +1,7 @@
 import type { ArtifactStore } from "@corvo/adapter-kit";
 import type {
+  ConsultationAction,
+  ConsultationActionTools,
   ConsultationErrorCode,
   ConsultationOutput,
   ConsultationTemplate,
@@ -7,11 +9,20 @@ import type {
 } from "@corvo/contracts";
 import {
   CONSULTATION_STRUCTURED,
+  ConsultationAction as ConsultationActionSchema,
   ConsultationTurn as ConsultationTurnSchema,
 } from "@corvo/contracts";
 import { getLogger } from "@corvo/logging";
 import { z } from "zod";
 import type { TranscriptionOutcome } from "./audio-transcription.js";
+import {
+  actionsInstructions,
+  annotateChecks,
+  buildActionsPrompt,
+  DEFAULT_ACTIONS_TIMEZONE,
+  parseActions,
+  type ResolvedActionTools,
+} from "./consultation-actions.js";
 import { concatBytes, planAudioSegments } from "./consultation-audio.js";
 import {
   buildLabelPrompt,
@@ -43,6 +54,10 @@ export interface ConsultationRecord {
   createdAt: Date;
   resultArtifactId: string | null;
   purgedAt: Date | null;
+  /** The clinic's IANA timezone, from the recording, the customer or the partner's template. */
+  timezone?: string;
+  /** Tool names the partner's template sets for actions, over the lookup by name. */
+  actionToolOverride?: ConsultationActionTools;
 }
 
 export interface ConsultationStore {
@@ -77,9 +92,12 @@ export interface ConsultationJobDeps {
     record: ConsultationRecord,
     tool: string,
     args: Record<string, unknown>,
+    options?: { requestedByUserId?: string },
   ): Promise<ToolOutcome>;
   /** Tells the partner's administrators the real cause of a setup failure; best effort. */
   onSetupFailure?(record: ConsultationRecord, cause: "transcription_unavailable"): Promise<void>;
+  /** The connector's tools that check and carry out actions; absent when it cannot be listed. */
+  actionTools?(record: ConsultationRecord): Promise<ResolvedActionTools>;
   /** Content-free audit of what the pipeline did. */
   audit(event: { type: "consultation.accessed"; consultationId: string; outcome: string }): void;
   now?: () => Date;
@@ -110,6 +128,8 @@ const Result = z.object({
   version: z.literal(RESULT_VERSION),
   turns: z.array(ConsultationTurnSchema),
   note: z.record(z.string(), z.unknown()).optional(),
+  /** What was agreed to do next; absent until extracted, an empty list when nothing was agreed. */
+  actions: z.array(ConsultationActionSchema).optional(),
 });
 export type ConsultationResult = z.infer<typeof Result>;
 
@@ -212,6 +232,11 @@ export async function processConsultation(
       result = { ...result, note };
       await seal(result);
     }
+    if (!result.actions) {
+      const actions = await extractActions(deps, record, result.turns, retry);
+      result = { ...result, actions };
+      await seal(result);
+    }
     // A structured recording files nothing: the page that asked fills its own form from the note.
     const draftEntryId =
       record.template === CONSULTATION_STRUCTURED
@@ -309,6 +334,56 @@ async function transcribeAndLabel(
     }
   });
   return mergeTurns(units, labelled.flat());
+}
+
+/**
+ * What the conversation agreed to do next. A model that fails, or answers with nothing usable,
+ * leaves the consultation without actions: the note and transcript are still the result.
+ */
+async function extractActions(
+  deps: ConsultationJobDeps,
+  record: ConsultationRecord,
+  turns: readonly ConsultationTurn[],
+  retry: <T>(step: () => Promise<T>, code?: ConsultationErrorCode) => Promise<T>,
+): Promise<ConsultationAction[]> {
+  const timeZone = record.timezone ?? DEFAULT_ACTIONS_TIMEZONE;
+  try {
+    const answer = await retry(() =>
+      deps.complete(record, {
+        tier: "fast",
+        operation: "consultation-actions",
+        instructions: actionsInstructions(),
+        prompt: buildActionsPrompt(turns, {
+          ...(record.context.professionalName
+            ? { professionalName: record.context.professionalName }
+            : {}),
+          ...(record.context.clientName ? { clientName: record.context.clientName } : {}),
+          consultedAt: record.createdAt,
+          timeZone,
+        }),
+      }),
+    );
+    const actions = parseActions(answer, {
+      turnCount: turns.length,
+      timeZone,
+      consultedAt: record.createdAt,
+    });
+    if (!actions.some((action) => action.kind === "follow_up") || !deps.actionTools) {
+      return actions;
+    }
+    const tools = await deps.actionTools(record).catch(() => ({}) as ResolvedActionTools);
+    return await annotateChecks(actions, (tool, args) => deps.callTool(record, tool, args), tools, {
+      clientId: record.context.clientId,
+      timeZone,
+    });
+  } catch (error) {
+    if (error instanceof CreditsExhaustedError) throw error;
+    getLogger().warn("consultation actions skipped", {
+      "consultation.id": record.id,
+      "error.type": error instanceof Error ? error.name : "unknown",
+    });
+    return [];
+  }
 }
 
 async function writeNote(

@@ -120,7 +120,7 @@ export function createBackgroundJobHandlers(deps: {
   /** Signs partner webhooks; without it a partner webhook job fails and is retried. */
   encryptionKey?: string;
   /** Reaches a customer's connector tools; consultations file their drafts through it. */
-  connector?: Pick<ConnectorProvider, "execute">;
+  connector?: Pick<ConnectorProvider, "execute" | "discoverTools">;
   /** Searches and reads pages for research jobs; the keyless default when absent. */
   web?: WebProvider;
 }): BackgroundJobHandlers {

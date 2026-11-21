@@ -29,6 +29,8 @@ export const SECURITY_EVENT_TYPES = [
   "consultation.accessed",
   "consultation.deleted",
   "consultation.expired",
+  "consultation.action_applied",
+  "consultation.action_failed",
   "partner.assist",
   "mcp.key.created",
   "mcp.key.revoked",

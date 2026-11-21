@@ -106,7 +106,8 @@ States in `onState`: `idle`, `requesting`, `recording`, `paused`, `uploading`, `
 
 - **Live captions.** While recording, `onTranscript` receives captions from the browser itself (`source: "browser"`, when it offers speech recognition). At the end, Rook's own transcript arrives (`final: true`, `source: "server"`, with `turns`).
 - **Consent.** `consent` is required and is stored with the consultation, as in the API.
-- **Retention.** After the result, Rook deletes the audio and transcript unless you pass `keep: true` (the consultation's retention period then applies).
+- **Retention.** After the result, Rook deletes the audio and transcript unless you pass `keep: true` (the consultation's retention period then applies). It also keeps them when the visit agreed on actions, so they can be applied; call `recorder.discard()` when done.
+- **Agreed actions.** `onResult(result, { transcript, consultationId, actions })`: `result.actions` and `meta.actions` list what the visit agreed to do next (return visit, prescription, exam, certificate, patient message), all `proposed`. Show them to the professional, then `Rook.applyConsultationActions(consultationId, actionIds, edits?)` (or `recorder.applyConsultationActions(actionIds, edits?)`) runs the approved ones through your connector and resolves `{ actions }` with each `status`. Nothing runs without that call. See [Agreed actions](/en/partners/consultations/#agreed-actions).
 - **Recording errors.** `onError(error)` gets a `RookError` with `error.code` (what to do), `error.message` (a sentence for the person, in `lang`, or the browser's language) and, for server answers, `error.status`. The microphone message says how to fix it in the browser's site settings.
 
 | `error.code` | Cause | What to do |

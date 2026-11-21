@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { AssistPresets } from "./assist.js";
 import { BotStartersSchema } from "./bot-starters.js";
+import { ConsultationActionTools } from "./consultation-actions.js";
 import { PartnerEventRoutine } from "./partner-events.js";
 import { PartnerScheduledRoutine } from "./partner-scheduled.js";
 import { TimeZoneSchema } from "./time-zone.js";
@@ -125,6 +126,8 @@ export const PartnerTemplateObject = z
     scheduledRoutines: z.array(PartnerScheduledRoutine).max(20).optional(),
     /** The timezone scheduled routines run in when the customer's call names none; UTC when left out. */
     timezone: TimeZoneSchema.optional(),
+    /** Names of the connector tools that check and carry out the actions agreed in a consultation, when the defaults do not fit. */
+    consultationActions: z.object({ tools: ConsultationActionTools }).strict().optional(),
     /** What each role of the partner's system gets; a role named nowhere here gets no agents. */
     roles: z.record(PartnerRoleName, PartnerRoleDef).optional(),
     /** The partner's main colour as `#rrggbb`, used when the page that embeds Rook passes none. */

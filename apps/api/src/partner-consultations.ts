@@ -4,6 +4,8 @@ import {
   CONSULTATION_DEFAULT_RETENTION_DAYS,
   CONSULTATION_MAX_CHUNKS,
   CONSULTATION_STRUCTURED,
+  type ConsultationAction,
+  ConsultationActionsApplyInput,
   ConsultationCreateInput,
   type ConsultationOutput,
   type ConsultationStatus,
@@ -27,6 +29,7 @@ export interface ConsultationView {
   draftEntryId: string | null;
   errorCode: string | null;
   chunkCount: number;
+  externalUserId?: string;
 }
 
 export interface PartnerConsultationDeps {
@@ -68,11 +71,25 @@ export interface PartnerConsultationDeps {
   ): Promise<ChunkOutcome>;
   /** Moves a recording to processing and queues the job. False when it was not recording. */
   finish(consultationId: string): Promise<boolean>;
-  /** The transcript and note of a drafted consultation, from sealed storage. */
-  result(consultation: {
-    id: string;
-    organizationId: string;
-  }): Promise<{ turns: ConsultationTurn[]; note?: Record<string, unknown> } | null>;
+  /** The transcript, note and agreed actions of a drafted consultation, from sealed storage. */
+  result(consultation: { id: string; organizationId: string }): Promise<{
+    turns: ConsultationTurn[];
+    note?: Record<string, unknown>;
+    /** The actions with what became of each so far. */
+    actions?: ConsultationAction[];
+  } | null>;
+  /**
+   * Carries out the approved actions of a drafted consultation through the customer's connector,
+   * as the person who asked. Each action runs once however often it is named.
+   */
+  applyActions(
+    consultation: { id: string; organizationId: string; externalUserId?: string },
+    request: ConsultationActionsApplyInput,
+    caller: { userId?: string },
+  ): Promise<
+    | { ok: true; actions: ConsultationAction[] }
+    | { ok: false; error: "not_found" | "unknown_action" | "invalid_edit" }
+  >;
   remove(consultationId: string): Promise<void>;
   /** Content-free audit of an access or a deletion. */
   audit(event: {
@@ -132,6 +149,8 @@ type ConsultationPartner = {
 export type ConsultationScope = {
   partner: ConsultationPartner;
   tenant: { id: string; organizationId: string };
+  /** The signed-in person of an embedded page; a call with the partner's key has none. */
+  userId?: string;
 };
 /** Who is recording, or the response that refuses the call. */
 type ResolveScope = (
@@ -348,6 +367,7 @@ function mountConsultationRoutes(
       if (result) {
         status.transcript = result.turns;
         if (result.note) status.note = result.note;
+        status.actions = result.actions ?? [];
       }
       if (consultation.draftEntryId) status.draftEntryId = consultation.draftEntryId;
     }
@@ -358,6 +378,40 @@ function mountConsultationRoutes(
     }
     c.header("cache-control", "no-store");
     return c.json(status);
+  });
+
+  // Nothing in a consultation runs without this call: it names the actions a person approved.
+  app.post(`${base}/:consultationId/actions/apply`, async (c) => {
+    const found = await scope(c);
+    if (found instanceof Response) return found;
+    const consultation = await consultationOf(c, found);
+    if (!consultation) return notFound(c);
+    const raw = await readBoundedBytes(c.req.raw, MAX_JSON_BYTES);
+    if (raw === null) return c.json({ error: "Payload too large" }, 413);
+    let json: unknown;
+    try {
+      json = JSON.parse(new TextDecoder().decode(raw) || "{}");
+    } catch {
+      return c.json({ error: "Invalid JSON" }, 400);
+    }
+    const parsed = ConsultationActionsApplyInput.safeParse(json);
+    if (!parsed.success) return c.json({ error: "Invalid request" }, 400);
+    if (consultation.state !== "drafted") return c.json({ error: "not_drafted" }, 409);
+    const outcome = await deps.applyActions(
+      {
+        id: consultation.id,
+        organizationId: found.tenant.organizationId,
+        ...(consultation.externalUserId ? { externalUserId: consultation.externalUserId } : {}),
+      },
+      parsed.data,
+      found.userId ? { userId: found.userId } : {},
+    );
+    if (!outcome.ok) {
+      if (outcome.error === "not_found") return notFound(c);
+      return c.json({ error: outcome.error }, 400);
+    }
+    c.header("cache-control", "no-store");
+    return c.json({ actions: outcome.actions });
   });
 
   app.delete(`${base}/:consultationId`, async (c) => {

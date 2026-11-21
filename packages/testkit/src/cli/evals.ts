@@ -31,6 +31,7 @@ import { TOOL_CHOICE_CASES } from "../evals/tool-choice-cases.js";
 import type { DiagnosticWireObservation } from "../evals/wire-observer.js";
 import { diagnosticWireFetch } from "../evals/wire-observer.js";
 import { runApprovalSuite } from "./approval-eval.js";
+import { runConsultationActionsSuite } from "./consultation-actions-eval.js";
 import { runModelRoutingSuite } from "./model-routing-eval.js";
 import { runAvatarPieceSuite, runChannelRouterSuite, runDateReminderSuite } from "./pick-eval.js";
 import { runToolClassifierSuite } from "./tool-classifier-eval.js";
@@ -103,6 +104,12 @@ async function main() {
       workingDiffHash: workingDiffHash(),
       readConnection,
     });
+  if (values.suite === "consultation-actions")
+    return runConsultationActionsSuite(values, {
+      codeRevision: codeRevision(),
+      workingDiffHash: workingDiffHash(),
+      readConnection,
+    });
   if (values.suite === "channel-router")
     return runChannelRouterSuite(values, {
       codeRevision: codeRevision(),
@@ -129,7 +136,7 @@ async function main() {
   };
   if (!Object.hasOwn(suites, values.suite!))
     throw new Error(
-      "Unknown suite; use product, history, silence, tool-choice, approval, tool-classifier, wiki-curator, model-routing, channel-router, avatar-piece, date-reminder, or harness",
+      "Unknown suite; use product, history, silence, tool-choice, approval, tool-classifier, wiki-curator, consultation-actions, model-routing, channel-router, avatar-piece, date-reminder, or harness",
     );
   const suite = suites[values.suite as keyof typeof suites];
   const extraCases = values["cases-file"] ? loadToolChoiceCases(values["cases-file"]) : [];

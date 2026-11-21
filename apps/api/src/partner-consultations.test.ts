@@ -37,6 +37,7 @@ function fixture(options: { credit?: boolean; maxBytes?: number } = {}) {
   const rows = new Map<string, Row>();
   const audits: Array<Parameters<PartnerConsultationDeps["audit"]>[0]> = [];
   const enqueued: string[] = [];
+  const applyCalls: Array<{ consultation: unknown; request: unknown; caller: unknown }> = [];
   const removed: string[] = [];
   const partners: Record<string, { id: string; scribeRetentionDays?: number | null }> = {
     [KEY_A]: { id: "partner-a", scribeRetentionDays: 14 },
@@ -105,7 +106,40 @@ function fixture(options: { credit?: boolean; maxBytes?: number } = {}) {
     result: vi.fn(async () => ({
       turns: [{ speaker: "professional" as const, startMs: 0, text: "Bom dia." }],
       note: { title: "Consulta" },
+      actions: [
+        {
+          id: "a1",
+          kind: "follow_up" as const,
+          title: "Retorno",
+          detail: "",
+          payload: { startsAt: "2026-12-08T14:00:00-03:00" },
+          status: "proposed" as const,
+          evidence: [0],
+          check: { available: true },
+        },
+      ],
     })),
+    applyActions: vi.fn(async (consultation, request, caller) => {
+      const row = rows.get(consultation.id);
+      if (!row) return { ok: false as const, error: "not_found" as const };
+      applyCalls.push({ consultation, request, caller });
+      if (request.actionIds.some((id) => id !== "a1"))
+        return { ok: false as const, error: "unknown_action" as const };
+      return {
+        ok: true as const,
+        actions: [
+          {
+            id: "a1",
+            kind: "follow_up" as const,
+            title: "Retorno",
+            detail: "",
+            payload: request.edits?.a1 ?? {},
+            status: "applied" as const,
+            evidence: [0],
+          },
+        ],
+      };
+    }),
     remove: vi.fn(async (id) => {
       rows.delete(id);
       removed.push(id);
@@ -142,7 +176,7 @@ function fixture(options: { credit?: boolean; maxBytes?: number } = {}) {
       ...init,
     });
   total = new Map();
-  return { app, deps, rows, audits, enqueued, removed, call, create, chunk };
+  return { app, deps, rows, audits, enqueued, removed, applyCalls, call, create, chunk };
 }
 
 describe("consultation recording API", () => {
@@ -459,6 +493,9 @@ describe("consultation recording API", () => {
         state: "drafted",
         transcript: [{ speaker: "professional", startMs: 0, text: "Bom dia." }],
         note: { title: "Consulta" },
+        actions: [
+          expect.objectContaining({ id: "a1", status: "proposed", check: { available: true } }),
+        ],
         draftEntryId: "entry-9",
       });
       expect(f.audits).toEqual([
@@ -470,6 +507,81 @@ describe("consultation recording API", () => {
           action: "read",
         },
       ]);
+    });
+
+    describe("agreed actions", () => {
+      const apply = (
+        f: ReturnType<typeof fixture>,
+        id: string,
+        body: unknown,
+        key?: string | null,
+      ) =>
+        f.call(`${BASE}/${id}/actions/apply`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(body),
+          ...(key === undefined ? {} : { key }),
+        });
+      const drafted = async () => {
+        const f = fixture();
+        const { consultationId } = await f.create();
+        (f.rows.get(consultationId) as Row).state = "drafted";
+        return { f, consultationId };
+      };
+
+      it("applies only the named actions and returns what became of them, with the edit", async () => {
+        const { f, consultationId } = await drafted();
+        const response = await apply(f, consultationId, {
+          actionIds: ["a1"],
+          edits: { a1: { startsAt: "2026-12-09T09:00:00-03:00" } },
+        });
+        expect(response.status).toBe(200);
+        expect(response.headers.get("cache-control")).toBe("no-store");
+        expect(await response.json()).toEqual({
+          actions: [
+            expect.objectContaining({
+              id: "a1",
+              status: "applied",
+              payload: { startsAt: "2026-12-09T09:00:00-03:00" },
+            }),
+          ],
+        });
+        expect(f.applyCalls).toHaveLength(1);
+      });
+
+      it("never runs anything when reading the consultation", async () => {
+        const { f, consultationId } = await drafted();
+        await f.call(`${BASE}/${consultationId}`);
+        expect(f.deps.applyActions).not.toHaveBeenCalled();
+      });
+
+      it("refuses a bad request, an unknown action, and a consultation that is not drafted yet", async () => {
+        const { f, consultationId } = await drafted();
+        expect((await apply(f, consultationId, {})).status).toBe(400);
+        expect((await apply(f, consultationId, { actionIds: [] })).status).toBe(400);
+        expect((await apply(f, consultationId, { actionIds: ["a1"], extra: 1 })).status).toBe(400);
+        const unknown = await apply(f, consultationId, { actionIds: ["zz"] });
+        expect(unknown.status).toBe(400);
+        expect(await unknown.json()).toEqual({ error: "unknown_action" });
+        const fresh = await f.create();
+        const early = await apply(f, fresh.consultationId, { actionIds: ["a1"] });
+        expect(early.status).toBe(409);
+        expect(await early.json()).toEqual({ error: "not_drafted" });
+      });
+
+      it("needs the partner's key and never reaches another partner's or customer's consultation", async () => {
+        const { f, consultationId } = await drafted();
+        expect((await apply(f, consultationId, { actionIds: ["a1"] }, null)).status).toBe(401);
+        expect((await apply(f, consultationId, { actionIds: ["a1"] }, "bad-key")).status).toBe(401);
+        expect((await apply(f, consultationId, { actionIds: ["a1"] }, KEY_B)).status).toBe(404);
+        expect((await apply(f, "nope", { actionIds: ["a1"] })).status).toBe(404);
+        const other = await f.call(
+          `/api/partner/v1/tenants/paused/consultations/${consultationId}/actions/apply`,
+          { method: "POST", body: JSON.stringify({ actionIds: ["a1"] }) },
+        );
+        expect(other.status).toBe(404);
+        expect(f.deps.applyActions).not.toHaveBeenCalled();
+      });
     });
 
     it("returns only the error code when failed", async () => {
@@ -534,6 +646,7 @@ describe("structured recording for an embedded page", () => {
         ? {
             partner: { id: "partner-a", scribeRetentionDays: 14, template },
             tenant: { id: "tenant-a1", organizationId: "org-a1" },
+            userId: "session-user",
           }
         : null,
     );
@@ -605,6 +718,7 @@ describe("structured recording for an embedded page", () => {
       ["POST", `${EMBED}/${consultationId}/reprocess`],
       ["GET", `${EMBED}/${consultationId}`],
       ["DELETE", `${EMBED}/${consultationId}`],
+      ["POST", `${EMBED}/${consultationId}/actions/apply`],
     ] as const) {
       expect((await f.embed(path, { method }, null)).status, path).toBe(401);
       expect((await f.embed(path, { method }, "wrong")).status, path).toBe(401);
@@ -612,6 +726,19 @@ describe("structured recording for an embedded page", () => {
     // A consultation of the partner's other customer is not found with this session.
     f.rows.get(consultationId)!.tenantId = "tenant-other";
     expect((await f.embed(`${EMBED}/${consultationId}`)).status).toBe(404);
+  });
+
+  it("applies approved actions as the signed-in person, on the same routes", async () => {
+    const f = embedFixture();
+    const { consultationId } = (await (await f.create()).json()) as { consultationId: string };
+    f.rows.get(consultationId)!.state = "drafted";
+    const response = await f.embed(`${EMBED}/${consultationId}/actions/apply`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ actionIds: ["a1"] }),
+    });
+    expect(response.status).toBe(200);
+    expect(f.applyCalls[0]?.caller).toEqual({ userId: "session-user" });
   });
 
   it("refuses to start without credit, like the partner's own recording does", async () => {

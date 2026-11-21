@@ -16,7 +16,16 @@ interface RookGlobal {
     resume(): void;
     stop(): Promise<void>;
     cancel(): Promise<void>;
+    applyConsultationActions(
+      actionIds: string[],
+      edits?: Record<string, Record<string, unknown>>,
+    ): Promise<{ actions: Array<Record<string, unknown>> }>;
   };
+  applyConsultationActions(
+    consultationId: string,
+    actionIds: string[],
+    edits?: Record<string, Record<string, unknown>>,
+  ): Promise<{ actions: Array<Record<string, unknown>> }>;
   RookError: new (code: string, status: number) => Error & { code: string; status: number };
 }
 const rook = () => (window as unknown as { Rook: RookGlobal }).Rook;
@@ -66,6 +75,9 @@ function server(
     if (path === CONSULTATIONS) return Response.json({ consultationId: "cons-1" });
     const chunk = path.match(/\/chunks\/(\d+)$/);
     if (chunk) return over.chunk?.(call, ++chunkTries) ?? Response.json({ ok: true });
+    if (path.endsWith("/actions/apply")) {
+      return Response.json({ actions: [{ id: "a1", status: "applied" }] });
+    }
     if (path.endsWith("/finish")) return Response.json({ state: "processing" });
     if (call.method === "DELETE") return Response.json({ ok: true });
     return Response.json(
@@ -315,6 +327,43 @@ describe("Rook.recorder", () => {
     expect(fake.calls.at(-1)).toMatchObject({
       method: "DELETE",
       path: `${CONSULTATIONS}/cons-1`,
+    });
+  });
+
+  describe("agreed actions", () => {
+    const action = { id: "a1", kind: "follow_up", status: "proposed", payload: {} };
+    const withActions = () => ({
+      state: "drafted",
+      transcript: [{ speaker: "professional", startMs: 0, text: "Bom dia." }],
+      note: { chiefComplaint: "Enxaqueca" },
+      actions: [action],
+    });
+
+    it("hands the actions to onResult and keeps the consultation so they can be applied", async () => {
+      load({ status: withActions });
+      const { recorder, events } = make();
+      await recorder.start();
+      await recorder.stop();
+      expect(events.results[0]?.[0]).toEqual({ chiefComplaint: "Enxaqueca", actions: [action] });
+      expect(events.results[0]?.[1]).toMatchObject({ consultationId: "cons-1", actions: [action] });
+      expect(fake.calls.some((c) => c.method === "DELETE")).toBe(false);
+
+      const applied = await recorder.applyConsultationActions(["a1"], {
+        a1: { startsAt: "2026-12-08T14:00:00-03:00" },
+      });
+      expect(applied.actions[0]?.status).toBe("applied");
+      const call = fake.calls.at(-1);
+      expect(call).toMatchObject({ method: "POST", path: `${CONSULTATIONS}/cons-1/actions/apply` });
+      expect(call?.body).toEqual({
+        actionIds: ["a1"],
+        edits: { a1: { startsAt: "2026-12-08T14:00:00-03:00" } },
+      });
+    });
+
+    it("applies by consultation id without a recorder, sending no edits when there are none", async () => {
+      await rook().applyConsultationActions("cons-9", ["a1", "a2"]);
+      expect(fake.calls.at(-1)?.body).toEqual({ actionIds: ["a1", "a2"] });
+      expect(fake.calls.at(-1)?.path).toBe(`${CONSULTATIONS}/cons-9/actions/apply`);
     });
   });
 

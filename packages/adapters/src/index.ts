@@ -72,6 +72,7 @@ export * from "./computer-support.js";
 export * from "./computer-tools.js";
 export * from "./computer-update.js";
 export * from "./computer-workspace.js";
+export * from "./consultation-actions.js";
 export * from "./consultation-audio.js";
 export * from "./consultation-job.js";
 export * from "./consultation-scribe.js";

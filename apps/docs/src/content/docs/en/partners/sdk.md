@@ -97,7 +97,7 @@ The flow for the professional:
 1. **Record consultation** asks whether the patient agreed to be recorded. The professional confirms **Yes, verbally** or **Yes, in writing**, or cancels. Nothing is recorded and the microphone is not requested before that confirmation; the method and the time go to Rook as the consultation's consent.
 2. While recording, the bar shows the time, **Pause** and **Stop**.
 3. After stopping, it shows **Generating draft…** while Rook transcribes and fills in the note.
-4. When the draft is ready, the element fires `corvo-consultation` with `{ consultationId, clientId, appointmentId, note, transcript }`. Save the note as a **draft** in the record and call `el.resolveConsultation({ path: "/patients/42/notes/777" })`: the bar now shows **Open draft**, which fires `corvo-navigate` with that path.
+4. When the draft is ready, the element fires `corvo-consultation` with `{ consultationId, clientId, appointmentId, note, transcript, actions? }` (`actions` are the [agreed actions](/en/partners/consultations/#agreed-actions); when there are any, the consultation is kept so `Rook.applyConsultationActions` can apply them). Save the note as a **draft** in the record and call `el.resolveConsultation({ path: "/patients/42/notes/777" })`: the bar now shows **Open draft**, which fires `corvo-navigate` with that path.
 
 ```js
 el.addEventListener("corvo-consultation", async (event) => {
@@ -107,7 +107,7 @@ el.addEventListener("corvo-consultation", async (event) => {
 });
 ```
 
-The audio and transcript are deleted from Rook once the event is delivered (the note is yours from then on). If the microphone is blocked or the recording fails, the bar says so and offers **Try again**. Recording continues if the panel is closed, and the floating button gets a red ring while it does. To record inside a form of your own, without the panel, use `Rook.recorder` in [AI in your own screens](/en/partners/inline-ai/).
+The audio and transcript are deleted from Rook once the event is delivered (the note is yours from then on), unless the event carries `actions`. If the microphone is blocked or the recording fails, the bar says so and offers **Try again**. Recording continues if the panel is closed, and the floating button gets a red ring while it does. To record inside a form of your own, without the panel, use `Rook.recorder` in [AI in your own screens](/en/partners/inline-ai/).
 
 ## Actions
 

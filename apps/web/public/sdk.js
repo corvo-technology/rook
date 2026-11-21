@@ -329,6 +329,26 @@
       throw new RookError("failed", 0);
     };
 
+    /**
+     * Carries out the actions of a drafted consultation that the professional approved, through
+     * your connector. `edits` maps an action id to the fields they corrected, such as
+     * `{ a1: { startsAt: "2026-12-08T14:00:00-03:00" } }`. Resolves `{ actions }`, each with a
+     * `status` of applied, failed (with `error`) or skipped. Nothing runs without this call, and
+     * asking again for an applied action does not repeat it.
+     */
+    Rook.applyConsultationActions = async (consultationId, actionIds, edits) => {
+      const response = await call(
+        `/api/partner/embed/consultations/${encodeURIComponent(consultationId)}/actions/apply`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ actionIds, ...(edits ? { edits } : {}) }),
+        },
+      );
+      if (!response.ok) throw await failure(response);
+      return response.json();
+    };
+
     const PREFERRED_TYPES = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus"];
     const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -337,8 +357,11 @@
      * recording, paused, uploading, processing, done, error. `onTranscript({ text, final, source })`
      * carries a live caption from the browser (when it can) and, at the end, the transcript Rook
      * wrote (`source: "server"`, with `turns`). `onResult(result, { transcript, consultationId })`
-     * receives the fields of your schema. Pass `consent` as `{ method: "verbal" | "written" }` or a
-     * function that asks the patient and returns that (or false to stop). `onError(error)` gets a
+     * receives the fields of your schema, plus `actions` (what the visit agreed to do next, each
+     * `proposed`); `meta.actions` has the same list. When there are actions the recording is kept
+     * for `applyConsultationActions` even without `keep`, until you call `discard()` or retention
+     * ends it. Pass `consent` as `{ method: "verbal" | "written" }` or a function that asks the
+     * patient and returns that (or false to stop). `onError(error)` gets a
      * RookError: `error.code` says what to do (permission_denied, permission_blocked,
      * no_microphone, microphone_busy, unsupported_browser, consent_missing, network_error,
      * upload_failed, unauthorized, too_long, too_large, transcription_unavailable, ...) and
@@ -633,9 +656,15 @@
                 source: "server",
                 turns: transcript,
               });
-              onResult?.(status.note || {}, { transcript, consultationId });
+              const actions = Array.isArray(status.actions) ? status.actions : null;
+              onResult?.(actions ? { ...(status.note || {}), actions } : status.note || {}, {
+                transcript,
+                consultationId,
+                ...(actions ? { actions } : {}),
+              });
               set("done");
-              if (!keep) await api.discard();
+              // Applying actions needs the consultation, so one with actions is not deleted here.
+              if (!keep && !(actions && actions.length > 0)) await api.discard();
             } catch (error) {
               if (!failed)
                 fail(error instanceof RookError ? error : new RookError("failed", 0, lang));
@@ -654,6 +683,13 @@
           await uploads.catch(() => {});
           await api.discard();
           set("idle");
+        },
+
+        /** Applies approved actions of this recording; see `Rook.applyConsultationActions`. */
+        applyConsultationActions(actionIds, edits) {
+          const id = consultationId;
+          if (!id) return Promise.reject(new RookError("no_consultation", 0));
+          return Rook.applyConsultationActions(id, actionIds, edits);
         },
 
         /** Deletes the recording, transcript and result held by Rook. */
@@ -1311,7 +1347,8 @@ button{cursor:pointer}
           }
           this.paintRecorder();
         },
-        onResult: (note, meta) => {
+        onResult: (result, meta) => {
+          const { actions, ...note } = result;
           this.dispatchEvent(
             new CustomEvent("corvo-consultation", {
               detail: {
@@ -1320,6 +1357,7 @@ button{cursor:pointer}
                 appointmentId: target.appointmentId,
                 note,
                 transcript: meta.transcript,
+                ...(actions ? { actions } : {}),
               },
             }),
           );

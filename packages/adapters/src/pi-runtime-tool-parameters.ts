@@ -1,5 +1,5 @@
 import type { ConnectorTool } from "@corvo/adapter-kit";
-import { BOT_INSTRUCTIONS_MAX_LENGTH } from "@corvo/contracts";
+import { BOT_AVATAR_CHARACTER_IDS, BOT_INSTRUCTIONS_MAX_LENGTH } from "@corvo/contracts";
 import { GUIDE_PAGES } from "@corvo/core";
 import { getLogger } from "@corvo/logging";
 import { Type } from "@earendil-works/pi-ai";
@@ -129,6 +129,7 @@ function builtinParameters(tool: ConnectorTool) {
       title: Type.Optional(Type.String()),
       description: Type.Optional(Type.String()),
       color: Type.Optional(Type.String()),
+      character: Type.Optional(stringEnum(BOT_AVATAR_CHARACTER_IDS, {})),
       artifact_id: Type.Optional(Type.String()),
       use_attached_image: Type.Optional(Type.Boolean()),
       notifyOnFinish: Type.Optional(Type.Boolean()),
@@ -318,6 +319,7 @@ const FLEET_STRING_ARGS = [
   "title",
   "description",
   "color",
+  "character",
   "artifact_id",
   "provider",
   "model",

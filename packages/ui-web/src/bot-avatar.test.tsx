@@ -82,27 +82,24 @@ describe("BotAvatar", () => {
   it("is gray and keeps the state it is in when it sleeps, in the shade of its color otherwise", () => {
     const moodOf = (status: string) =>
       renderToString(<BotAvatar color="#3B82F6" status={status} />).match(
-        /data-mood="([a-z]+)"/,
+        /data-state="([a-z]+)"/,
       )?.[1];
-    expect(moodOf("waiting_input")).toBe("alert");
-    expect(moodOf("running")).toBe("thinking");
-    expect(moodOf("failed")).toBe("failed");
+    expect(moodOf("waiting_input")).toBe("waiting");
+    expect(moodOf("running")).toBe("working");
+    expect(moodOf("failed")).toBe("blocked");
     const asleep = renderToString(<BotAvatar color="#3B82F6" status="asleep" />);
     expect(asleep).toContain(ROOK_ASLEEP_COLOR);
     expect(asleep).not.toContain(MASCOT_LOOKS.blue.color);
-    const waiting = renderToString(<BotAvatar color="#3B82F6" status="waiting_input" />);
-    expect(waiting).toContain(MASCOT_LOOKS.blue.color);
   });
 
   it.each([...ACTIVE_RUN_STATUSES])(
-    "marks active run status %s as working, with a ring",
+    "marks active run status %s as working, and shows it as a state instead of a ring",
     (status) => {
       const html = renderToString(<BotAvatar color="#3B82F6" status={status} />);
       expect(html).toContain('data-working="true"');
-      expect(html).toContain("corvo-bot-avatar-ring-working");
-      // Eight dots in the rook's own shade.
-      expect(html.match(/<circle/g)).toHaveLength(8);
-      expect(html).toContain(`fill="${MASCOT_LOOKS.blue.color}"`);
+      expect(html).not.toContain("corvo-bot-avatar-ring");
+      // It is alive, so the engine draws it once mounted rather than on the server.
+      expect(html).toContain('data-state="');
     },
   );
 
@@ -118,8 +115,10 @@ describe("BotAvatar", () => {
     ).toContain("data-needs-you");
   });
 
-  it("can leave the ring out while the bot still counts as working", () => {
-    const html = renderToString(<BotAvatar color="#3B82F6" status="running" ring={false} />);
+  it("can leave the ring out of a working photo while the bot still counts as working", () => {
+    const html = renderToString(
+      <BotAvatar color="data:image/png;base64,abc" status="running" ring={false} />,
+    );
     expect(html).toContain('data-working="true"');
     expect(html).not.toContain("corvo-bot-avatar-ring");
   });
@@ -210,19 +209,19 @@ describe("resolvePersonaColorDef", () => {
   });
 });
 
-describe("the mascot's mood", () => {
-  const moodOf = (html: string) => html.match(/data-mood="([a-z]+)"/)?.[1];
+describe("the mascot's state", () => {
+  const stateOf = (html: string) => html.match(/data-state="([a-z]+)"/)?.[1];
 
   it.each([
     [undefined, "idle"],
-    ["running", "thinking"],
+    ["running", "working"],
     ["queued", "thinking"],
-    ["waiting_input", "alert"],
-    ["waiting_takeover", "alert"],
-    ["failed", "failed"],
+    ["waiting_input", "waiting"],
+    ["waiting_takeover", "waiting"],
+    ["failed", "blocked"],
     ["idle", "idle"],
-  ])("shows status %s as %s", (status, mood) => {
-    expect(moodOf(renderToString(<BotAvatar color="#3B82F6" status={status} />))).toBe(mood);
+  ])("shows status %s as %s", (status, state) => {
+    expect(stateOf(renderToString(<BotAvatar color="#3B82F6" status={status} />))).toBe(state);
   });
 
   it("fills the rook with the shade the bot's color gives it", () => {

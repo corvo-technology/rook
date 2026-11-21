@@ -1393,6 +1393,26 @@ describe("updateChildBot", () => {
     },
   );
 
+  it("puts a character on another agent, keeping its color, and refuses an unknown one", async () => {
+    const { prisma } = fakeFleet({
+      bots: bots.map((bot) => (bot.id === "bot-child" ? { ...bot, color: "#1FBF68" } : bot)),
+    });
+    const tx = {
+      $queryRaw: vi.fn(),
+      bot: { update: vi.fn().mockRejectedValueOnce(new Error("write reached")) },
+    };
+    prisma.$transaction.mockImplementation(async (write) => write(tx));
+    await expect(
+      updateChildBot(writeDeps(prisma), run, { bot_id: "bot-child", character: "ghost" }),
+    ).rejects.toThrow("write reached");
+    expect(tx.bot.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { color: "#1FBF68::char_ghost" } }),
+    );
+    expect(
+      await updateChildBot(writeDeps(prisma), run, { bot_id: "bot-child", character: "dragon" }),
+    ).toMatchObject({ error: expect.stringMatching(/^character must be one of/) });
+  });
+
   it("reuses the profile validation of update_bot", async () => {
     const { prisma } = fakeFleet({ bots });
     expect(

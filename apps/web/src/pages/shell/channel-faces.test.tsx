@@ -8,14 +8,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // The character itself is covered in ui-web; here only what the conversation asks of it matters.
 const faces = vi.hoisted(() => ({
-  props: [] as { live?: boolean; lookAt?: { x: number; y: number }; mood: string; size: number }[],
+  props: [] as {
+    live?: boolean;
+    lookAt?: { x: number; y: number };
+    look: { state: string };
+    size: number;
+  }[],
 }));
 vi.mock("../../../../../packages/ui-web/src/character-avatar", () => ({
   LIVELY_FROM: 56,
   CharacterAvatar: (props: {
     live?: boolean;
     lookAt?: { x: number; y: number };
-    mood: string;
+    look: { state: string };
     size: number;
   }) => {
     faces.props.push(props);
@@ -148,8 +153,8 @@ describe("an agent's face in a channel", () => {
 
   it("shows that the agent is at work only on its latest message", () => {
     render(text, { face: "live" });
-    expect(last()?.mood).toBe("idle");
+    expect(last()?.look.state).toBe("idle");
     render(text, { face: "current" });
-    expect(last()?.mood).toBe("thinking");
+    expect(last()?.look.state).toBe("working");
   });
 });

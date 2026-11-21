@@ -1,4 +1,4 @@
-import type { MascotMood } from "@corvo/core";
+import type { AvatarLook } from "@corvo/core";
 import type { AvatarDefinition } from "open-bot-avatar";
 import type { MountedAvatar } from "open-bot-avatar/dom";
 import { mountAvatar } from "open-bot-avatar/dom";
@@ -14,22 +14,16 @@ export const LIVELY_FROM = 56;
 /** Where a character looks, -1..1 per axis, x to the right and y down. */
 export type Gaze = { x: number; y: number };
 
-type CharacterMood = "idle" | "thinking" | "happy";
-
-/** What the character shows for what the mascot would: thinking at work, a smile when done. */
-export function characterMood(mood: MascotMood): CharacterMood {
-  return mood === "thinking" ? "thinking" : mood === "happy" ? "happy" : "idle";
-}
-
 /**
  * A character of Open Bot Avatar in an agent's color, drawn by the project's own renderer into
- * the box it is given. It is mounted once, and a change of color or mood only redraws what changed.
+ * the box it is given. It is mounted once, and a change of color, state or mood only redraws what changed.
+The engine shows each state itself (and holds still under reduced motion), so nothing is drawn around it.
  */
 export function CharacterAvatar({
   definition,
   color,
   eyeColor,
-  mood,
+  look,
   size,
   live = size >= LIVELY_FROM,
   lookAt,
@@ -37,16 +31,21 @@ export function CharacterAvatar({
   definition: AvatarDefinition;
   color: string;
   eyeColor: string;
-  mood: MascotMood;
+  look: Pick<AvatarLook, "state" | "mood">;
   size: number;
   live?: boolean;
   lookAt?: Gaze;
 }) {
   const host = useRef<HTMLSpanElement>(null);
   const mounted = useRef<MountedAvatar | null>(null);
-  const shown = characterMood(mood);
-  const latest = useRef({ color, eyeColor, mood: shown, lookAt: lookAt ?? null });
-  latest.current = { color, eyeColor, mood: shown, lookAt: lookAt ?? null };
+  const latest = useRef({
+    color,
+    eyeColor,
+    state: look.state,
+    mood: look.mood,
+    lookAt: lookAt ?? null,
+  });
+  latest.current = { color, eyeColor, state: look.state, mood: look.mood, lookAt: lookAt ?? null };
 
   useEffect(() => {
     const element = host.current;
@@ -67,8 +66,8 @@ export function CharacterAvatar({
   }, [definition, live]);
 
   useEffect(() => {
-    mounted.current?.update({ color, eyeColor, mood: shown });
-  }, [color, eyeColor, shown]);
+    mounted.current?.update({ color, eyeColor, state: look.state, mood: look.mood });
+  }, [color, eyeColor, look.state, look.mood]);
 
   const lookX = lookAt?.x;
   const lookY = lookAt?.y;

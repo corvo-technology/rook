@@ -1,6 +1,7 @@
 import type { ConnectorTool } from "@corvo/adapter-kit";
 import { MEDIA_ASPECT_RATIOS } from "@corvo/adapter-kit";
 import {
+  BOT_AVATAR_CHARACTER_IDS,
   BOT_DESCRIPTION_MAX_LENGTH,
   BOT_INSTRUCTIONS_MAX_LENGTH,
   BotSecretName,
@@ -1732,43 +1733,46 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "update_bot",
     description:
-      "Update this bot's own name, title, description, avatar (picture or color/shape) or notifyOnFinish when the user asks. Never claim a profile change without calling this.",
+      "Update this bot's own name, title, description, avatar (picture, color/shape, or a character) or notifyOnFinish when the user asks. Never claim a profile change without calling this.",
     inputSchema: {
       type: "object",
       properties: {
         name: {
           type: "string",
-          description: "Display name shown in the chat header and bot list.",
+          description: "Display name.",
         },
         title: {
           type: "string",
-          description: "Short role or headline shown in bot settings.",
+          description: "Short role.",
         },
         description: {
           type: "string",
-          description:
-            "Short public summary shown to teammates. Does not change your instructions.",
+          description: "Public summary; not your instructions.",
         },
         color: {
           type: "string",
-          description:
-            "Avatar color or encoded shape, e.g. #8B5CF6 or #8B5CF6::shape_3. Do not pass http URLs.",
+          description: "Hex color or #hex::shape_N.",
+        },
+        character: {
+          type: "string",
+          enum: [...BOT_AVATAR_CHARACTER_IDS],
+          description: "Avatar character.",
         },
         artifact_id: {
           type: "string",
-          description: "Image artifact in this space to use as the profile picture.",
+          description: "Image artifact to use as the picture.",
         },
         use_attached_image: {
           type: "boolean",
-          description: "Use the image attached on this message as the profile picture.",
+          description: "Use the attached image.",
         },
         notifyOnFinish: {
           type: "boolean",
-          description: "true notifies the user when this bot finishes a run; false silences that.",
+          description: "Notify the user when a run finishes.",
         },
         bot_id: {
           type: "string",
-          description: "A bot in this space, to update its profile instead of yours.",
+          description: "Another bot, instead of yourself.",
         },
       },
     },

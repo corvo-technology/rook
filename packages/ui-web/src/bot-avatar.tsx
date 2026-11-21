@@ -3,13 +3,14 @@ import { botAvatarCharacter } from "@corvo/contracts";
 import type { BotColorDef } from "@corvo/core";
 import {
   ACTIVE_RUN_STATUSES,
+  AVATAR_DONE_MS,
+  avatarLook,
   BOT_AVATAR_COLORS,
   BOT_COLOR_LIST,
   customMascotBody,
   DEFAULT_BOT_AVATAR_COLOR,
   MASCOT_LOOKS,
   mascotForColorDef,
-  mascotMood,
   resolvePersonaColorDef,
   rookRingDots,
 } from "@corvo/core";
@@ -20,9 +21,6 @@ import { botCharacter } from "./bot-characters.js";
 import type { Gaze } from "./character-avatar.js";
 import { CharacterAvatar } from "./character-avatar.js";
 import { RookAvatar } from "./rook-avatar.js";
-
-/** How long the mascot smiles after the work it was doing finished. */
-const HAPPY_MS = 1_600;
 
 export type { BotColorDef };
 export { BOT_AVATAR_COLORS, BOT_COLOR_LIST, DEFAULT_BOT_AVATAR_COLOR, resolvePersonaColorDef };
@@ -87,7 +85,7 @@ export interface BotAvatarProps {
   live?: boolean;
   /** Where the avatar looks while it is live, -1..1 per axis (x right, y down). */
   lookAt?: Gaze;
-  /** Whether the working ring shows around the avatar while the bot works. */
+  /** Whether the working ring shows around a picture while the bot works. A character or rook shows work itself. */
   ring?: boolean;
 }
 
@@ -157,12 +155,16 @@ export const BotAvatar = memo(function BotAvatar({
     if (wasWorking.current && !isWorking && status !== "failed") {
       setHappy(true);
       window.clearTimeout(happyTimer.current);
-      happyTimer.current = window.setTimeout(() => setHappy(false), HAPPY_MS);
+      happyTimer.current = window.setTimeout(() => setHappy(false), AVATAR_DONE_MS);
     }
     wasWorking.current = isWorking;
   }, [isWorking, status]);
   useEffect(() => () => window.clearTimeout(happyTimer.current), []);
-  const mood = mascotMood(status, happy);
+  const look = avatarLook(status, happy);
+  const mood = look.state;
+  // An agent that is doing something moves wherever it is shown; an idle one in a list stays a
+  // still picture, so a long roster does not run dozens of scenes.
+  const animated = live ?? (look.state !== "idle" ? true : undefined);
   const parsed = useMemo(() => parseBotAvatar(color, identity), [color, identity]);
   const mascot = useMemo(
     () =>
@@ -191,7 +193,7 @@ export const BotAvatar = memo(function BotAvatar({
           <img src={parsed.imageUrl} alt="" className="h-full w-full object-cover" />
         </div>
         {isWorking && ring ? <WorkingRing size={size} /> : null}
-        {mood === "alert" ? <NeedsYouDot size={size} /> : null}
+        {mood === "waiting" ? <NeedsYouDot size={size} /> : null}
       </div>
     );
   }
@@ -201,6 +203,7 @@ export const BotAvatar = memo(function BotAvatar({
       <div
         className={cn("corvo-bot-avatar relative shrink-0 select-none", className)}
         data-working={isWorking}
+        data-state={mood}
         data-character={character.id}
         style={{ width: size, height: size }}
       >
@@ -208,13 +211,12 @@ export const BotAvatar = memo(function BotAvatar({
           definition={character.definition}
           color={parsed.color}
           eyeColor={eyeColor}
-          mood={mood}
+          look={look}
           size={size}
-          live={live}
+          live={animated}
           lookAt={lookAt}
         />
-        {isWorking && ring ? <WorkingRing size={size} color={parsed.color} /> : null}
-        {mood === "alert" ? <NeedsYouDot size={size} /> : null}
+        {mood === "waiting" ? <NeedsYouDot size={size} /> : null}
       </div>
     );
   }
@@ -224,12 +226,11 @@ export const BotAvatar = memo(function BotAvatar({
       className={cn("corvo-mascot-avatar relative shrink-0 select-none", className)}
       data-working={isWorking}
       data-mascot={mascot}
-      data-mood={mood}
+      data-state={mood}
       style={{ width: size, height: size }}
     >
-      <RookAvatar color={shade} mood={mood} size={size} live={live} lookAt={lookAt} />
-      {isWorking && ring ? <WorkingRing size={size} color={shade} /> : null}
-      {mood === "alert" ? <NeedsYouDot size={size} /> : null}
+      <RookAvatar color={shade} look={look} size={size} live={animated} lookAt={lookAt} />
+      {mood === "waiting" ? <NeedsYouDot size={size} /> : null}
     </div>
   );
 });

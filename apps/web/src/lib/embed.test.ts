@@ -11,6 +11,8 @@ import {
   resetEmbedForTests,
 } from "./embed";
 
+const NO_BRAND = { assistant: null, icon: null, user: null };
+
 describe("parseEmbedLaunch", () => {
   it("reads the code, theme and locale from the fragment", () => {
     expect(parseEmbedLaunch("#code=abc123&theme=dark&locale=pt-BR")).toEqual({
@@ -18,6 +20,7 @@ describe("parseEmbedLaunch", () => {
       theme: "dark",
       locale: "pt-BR",
       accent: null,
+      brand: NO_BRAND,
     });
   });
 
@@ -27,12 +30,14 @@ describe("parseEmbedLaunch", () => {
       theme: "auto",
       locale: null,
       accent: null,
+      brand: NO_BRAND,
     });
     expect(parseEmbedLaunch("#code=x")).toEqual({
       code: "x",
       theme: "auto",
       locale: null,
       accent: null,
+      brand: NO_BRAND,
     });
   });
 
@@ -42,12 +47,14 @@ describe("parseEmbedLaunch", () => {
       theme: "auto",
       locale: null,
       accent: null,
+      brand: NO_BRAND,
     });
     expect(parseEmbedLaunch("#theme=light")).toEqual({
       code: null,
       theme: "light",
       locale: null,
       accent: null,
+      brand: NO_BRAND,
     });
   });
 
@@ -67,12 +74,14 @@ describe("parseEmbedMessage", () => {
       theme: "light",
       locale: "fr",
       accent: null,
+      brand: NO_BRAND,
     });
     expect(parseEmbedMessage({ type: "corvo:config", theme: "light" })).toEqual({
       type: "config",
       theme: "light",
       locale: null,
       accent: null,
+      brand: NO_BRAND,
     });
     expect(parseEmbedMessage({ type: "corvo:code", code: "new" })).toEqual({
       type: "code",
@@ -240,5 +249,42 @@ describe("what the frame tells the partner's page", () => {
     reportUnread(-2);
     expect(posted).toHaveBeenNthCalledWith(1, { type: "corvo:unread", count: 3 }, "*");
     expect(posted).toHaveBeenNthCalledWith(2, { type: "corvo:unread", count: 0 }, "*");
+  });
+});
+
+describe("the partner's names for the assistant and the person", () => {
+  it("are read from the launch fragment", () => {
+    const { brand } = parseEmbedLaunch(
+      "#code=x&assistant=Dra.%20Ana&icon=https%3A%2F%2Fcdn.example.test%2Fa.png&user=Maria%20Silva",
+    );
+    expect(brand).toEqual({
+      assistant: "Dra. Ana",
+      icon: "https://cdn.example.test/a.png",
+      user: "Maria Silva",
+    });
+  });
+
+  it("keep only a plain name and an https icon", () => {
+    const { brand } = parseEmbedLaunch(
+      `#code=x&assistant=${"A".repeat(200)}&icon=javascript%3Aalert(1)&user=%20%20`,
+    );
+    expect(brand.assistant).toHaveLength(60);
+    expect(brand.icon).toBeNull();
+    expect(brand.user).toBeNull();
+    expect(parseEmbedLaunch("#code=x&icon=http%3A%2F%2Fa.test%2Fi.png").brand.icon).toBeNull();
+  });
+
+  it("can change later through the config message", () => {
+    const message = parseEmbedMessage({
+      type: "corvo:config",
+      theme: "dark",
+      assistant: "Assist",
+      user: "  Maria \n Silva ",
+      icon: "https://cdn.example.test/b.png",
+    });
+    expect(message).toMatchObject({
+      type: "config",
+      brand: { assistant: "Assist", user: "Maria Silva", icon: "https://cdn.example.test/b.png" },
+    });
   });
 });

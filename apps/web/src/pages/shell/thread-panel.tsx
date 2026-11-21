@@ -28,6 +28,7 @@ export type ThreadTranscriptProps = Pick<
   | "artifactTarget"
   | "currentUserId"
   | "personRole"
+  | "embeddedViewer"
   | "showToolActivity"
   | "answerableAskIds"
   | "dismissableAskIds"

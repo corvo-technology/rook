@@ -7,23 +7,22 @@ vi.mock("@lingui/react/macro", () => ({
       parts.reduce((text, part, index) => text + part + (values[index] ?? ""), ""),
   }),
 }));
-vi.mock("@corvo/ui-web", () => ({ BotAvatar: () => <span data-mark /> }));
 
+import { resetEmbedBrandForTests, setEmbedBrand } from "../../lib/embed-brand";
 import { EmbedTabs } from "./embed-tabs";
 
-const render = (tabs: Parameters<typeof EmbedTabs>[0]["tabs"], pathname = "/app/home") =>
+const render = (
+  tabs: Parameters<typeof EmbedTabs>[0]["tabs"],
+  pathname = "/app/home",
+  chiefName: string | undefined = "Assistente Clínica",
+) =>
   renderToString(
-    <EmbedTabs
-      tabs={tabs}
-      pathname={pathname}
-      chief={{ id: "chief", name: "Assistente Prontu", color: "#14B8A6" }}
-      onOpen={() => undefined}
-    />,
+    <EmbedTabs tabs={tabs} pathname={pathname} chiefName={chiefName} onOpen={() => undefined} />,
   );
 
 it("names the Chief and lists only the tabs it is given", () => {
   const html = render(["home", "chats", "team"]);
-  expect(html).toContain("Assistente Prontu");
+  expect(html).toContain("Assistente Clínica");
   expect(html).toContain("embed-tab-home");
   expect(html).not.toContain("embed-tab-routines");
   for (const word of ["Billing", "Settings", "Store", "Download", "Switch", "Add account"]) {
@@ -38,4 +37,20 @@ it("marks the current tab in the accent, which is the app's main colour", () => 
   expect(chats).toContain("text-primary");
   const home = html.slice(html.indexOf("embed-tab-home"), html.indexOf("embed-tab-chats"));
   expect(home).not.toContain("aria-current");
+});
+
+it("never shows Rook's name or mark, only the partner's own or a neutral label", () => {
+  const plain = render(["home"], "/app/home", "Rook");
+  expect(plain).not.toContain("Rook");
+  expect(plain).toContain("Assistant");
+  expect(plain).not.toContain("<img");
+  expect(plain).not.toContain("data-mark");
+});
+
+it("uses the name and icon the partner's page passes", () => {
+  setEmbedBrand({ assistant: "Dra. Ana", icon: "https://cdn.example.test/a.png", user: null });
+  const html = render(["home"], "/app/home", "Rook");
+  expect(html).toContain("Dra. Ana");
+  expect(html).toContain('src="https://cdn.example.test/a.png"');
+  resetEmbedBrandForTests();
 });

@@ -44,6 +44,8 @@ DELETE .../consultations/{id}                deletes the audio and transcript no
 
 The patient's consent is **yours** to obtain, before you create the consultation, and is stored with it. `consent.obtained` must be `true`; `method` is `verbal` or `written`; `text` is optional. Without consent the creation is refused.
 
+If you use the launcher's panel, its **Record consultation** bar asks the professional that question (verbally or in writing) before recording; see [Recording a consultation in the panel](/en/partners/sdk/#recording-a-consultation-in-the-panel).
+
 ## Note templates
 
 | `template` | Record entry | Fields |

@@ -44,3 +44,18 @@ export function priceCeilingFor(
   const callUsd = configuredCallCeilingUsd(env);
   return callUsd ? { callUsd } : undefined;
 }
+
+/**
+ * The first of the deployment's own models, on the provider a funded call already runs on, that
+ * the catalog can price. A customer on platform credits whose chosen model has no reliable price
+ * runs on it instead of failing the hold.
+ */
+export function pricedModelOnProvider(
+  provider: string,
+  candidates: ReadonlyArray<{ provider: string; modelId: string } | null | undefined>,
+): string | undefined {
+  return candidates.find(
+    (choice) =>
+      choice && choice.provider === provider && catalogModelCost(choice.provider, choice.modelId),
+  )?.modelId;
+}

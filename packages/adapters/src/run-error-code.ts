@@ -87,6 +87,10 @@ export function classifyRunError(
   if (exact) return exact;
   if (stopped) return { code: stopped };
   if (context.stopReason) return { code: "turn_stopped", params: { kind: context.stopReason } };
+  if (/Not enough model credits/i.test(trimmed)) return { code: "model_credits_empty" };
+  if (/This model has no reliable price/i.test(trimmed)) {
+    return { code: "model_unpriced", params: providerParams(context) };
+  }
   const storage = causes(error).find((item) => item instanceof SandboxStorageFullError);
   if (storage instanceof SandboxStorageFullError || isSandboxStorageFullError(error)) {
     const params: Record<string, string> = {};

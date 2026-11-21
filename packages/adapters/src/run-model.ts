@@ -22,9 +22,10 @@ import {
   HostedModelCreditsRequiredError,
   hostedModelCreditObserver,
 } from "./model-credit-observer.js";
-import { priceCeilingFor } from "./model-price-ceiling.js";
+import { priceCeilingFor, pricedModelOnProvider } from "./model-price-ceiling.js";
 import {
   type DeploymentModelDefaults,
+  deploymentModelRole,
   effectiveModelRole,
   resolveMemberMainModel,
   selectConfiguredModel,
@@ -601,21 +602,36 @@ export async function resolveRunModel(
   }
   if (!provider || !id) throw new Error(MISSING_MODEL_RUN_ERROR);
   // The key is resolved for the provider that won above, not before it is known.
-  const resolved = await resolveModelKey(
-    deps,
-    scope.userId,
-    scope.spaceId,
-    credential,
-    provider,
-    id,
-  );
-  const priceCeiling = await variablePriceCeiling(
+  let resolved = await resolveModelKey(deps, scope.userId, scope.spaceId, credential, provider, id);
+  let priceCeiling = await variablePriceCeiling(
     deps,
     scope,
     provider,
     id,
     Boolean(resolved.callObserver),
   );
+  // A funded call needs a price to hold credit by. When the chosen model has none, run on the
+  // deployment's own priced model of the same provider rather than refuse the call.
+  if (resolved.callObserver && !priceCeiling && !catalogModelCost(provider, id)) {
+    const defaults = await deploymentModelDefaults(deps);
+    const swap = pricedModelOnProvider(
+      provider,
+      (["main", "fast", "strong"] as const).map(
+        (role) => deploymentModelRole(role, defaults).primary,
+      ),
+    );
+    if (swap) {
+      id = swap;
+      resolved = await resolveModelKey(deps, scope.userId, scope.spaceId, credential, provider, id);
+      priceCeiling = await variablePriceCeiling(
+        deps,
+        scope,
+        provider,
+        id,
+        Boolean(resolved.callObserver),
+      );
+    }
+  }
   return {
     provider,
     id,

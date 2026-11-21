@@ -89,6 +89,13 @@ describe("classifyRunError", () => {
     ).toEqual({ code: "model_not_allowed" });
   });
 
+  it("names a hosted call refused for credits or for a model with no price", () => {
+    const empty = "Not enough model credits. Add credits in Billing or connect your own API key.";
+    const unpriced = "This model has no reliable price. Connect your own API key to use it.";
+    expect(classifyRunError(new Error(empty), empty)).toEqual({ code: "model_credits_empty" });
+    expect(classifyRunError(new Error(unpriced), unpriced).code).toBe("model_unpriced");
+  });
+
   it.each([MODEL_ACCESS_REQUIRED_RUN_ERROR, MISSING_MODEL_RUN_ERROR])(
     "maps %s to no_model_access",
     (message) => {

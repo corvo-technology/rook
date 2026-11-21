@@ -51,11 +51,14 @@
       const params = new URLSearchParams(location.search);
       if (params.get("theme")) el.setAttribute("theme", params.get("theme"));
       if (params.get("dock")) el.setAttribute("dock", params.get("dock"));
+      // ?consultations=1 turns on the in-panel recorder for the patient on screen.
+      const consultations = params.get("consultations");
+      if (consultations) el.setAttribute("consultations", "");
       document.body.append(el);
       el.setContext({
         page: "/clientes/42",
         title: "Cliente",
-        entities: [{ type: "customer", id: "42", label: "Carlos Souza" }],
+        entities: [{ type: consultations ? "patient" : "customer", id: "42", label: "Carlos Souza" }],
       });
       el.setSuggestions(["Esse cliente está sumido?", "Resumo das últimas visitas", "Horários livres do Rafael"]);
       el.registerActions([

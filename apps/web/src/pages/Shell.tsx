@@ -69,8 +69,9 @@ import {
 } from "../lib/composer-enter-to-send-pref";
 import { desktopBridge } from "../lib/desktop";
 import { isCompactEmbed, isEmbedded } from "../lib/embed";
+import { embedAssistantName, useEmbedBrand } from "../lib/embed-brand";
 import { onHostAsk } from "../lib/embed-host";
-import { embedTabs } from "../lib/embedded-home";
+import { embedStarters, embedTabs } from "../lib/embedded-home";
 import { findFirstBot } from "../lib/first-bot";
 import { groupRecipient } from "../lib/group-recipient";
 import { markAfterPaint, markOnce } from "../lib/performance";
@@ -277,6 +278,7 @@ function SpaceShell({ page }: { page?: ReactNode }) {
   const { mobileSidebarOpen, setMobileSidebarOpen, swipeHandlers } = useMobileSidebar();
   const embedded = isEmbedded();
   const compactEmbed = isCompactEmbed();
+  const embedBrand = useEmbedBrand();
   const { pathname } = useLocation();
   const chiefId = findFirstBot(bots.map((bot) => ({ ...bot, spawnKey: bot.spawnKey ?? null })))?.id;
   const chiefBot = bots.find((bot) => bot.id === chiefId) ?? bots[0];
@@ -569,8 +571,12 @@ function SpaceShell({ page }: { page?: ReactNode }) {
     };
   });
   const resolveTranscriptMemberName = useCallback(
-    (botId: string | undefined) => memberName(transcriptMembers, botId),
-    [transcriptMembers],
+    (botId: string | undefined) =>
+      // The partner's own name for the assistant stands in for Rook's inside its product.
+      embedded && botId && botId === chiefId
+        ? embedAssistantName(embedBrand, bots.find((bot) => bot.id === chiefId)?.name, t`Assistant`)
+        : memberName(transcriptMembers, botId),
+    [transcriptMembers, embedded, chiefId, embedBrand, bots, t],
   );
   // Routines are listed per agent, so they load once the @-mention list first opens.
   const [mentionsOpened, setMentionsOpened] = useState(false);
@@ -859,6 +865,7 @@ function SpaceShell({ page }: { page?: ReactNode }) {
   const transcriptProps: ThreadTranscriptProps = {
     currentUserId: bootstrapMe?.userId,
     personRole,
+    embeddedViewer: embedded ? { name: embedBrand.user } : undefined,
     artifactTarget: transcriptArtifactTarget,
     showToolActivity,
     answerableAskIds,
@@ -945,7 +952,7 @@ function SpaceShell({ page }: { page?: ReactNode }) {
             ticketBoardEnabled: Boolean(bootstrapMe?.ticketBoardEnabled),
           })}
           pathname={pathname}
-          chief={chiefBot}
+          chiefName={chiefBot?.name}
           onOpen={(to) => navigate(to)}
         />
       ) : (
@@ -1154,14 +1161,31 @@ function SpaceShell({ page }: { page?: ReactNode }) {
                   intro={
                     inGroup || !active
                       ? undefined
-                      : {
-                          id: active.id,
-                          name: active.name,
-                          title: active.title,
-                          color: active.color,
-                        }
+                      : embedded && active.id === chiefId
+                        ? {
+                            id: active.id,
+                            name: embedAssistantName(embedBrand, active.name, t`Assistant`),
+                            title: "",
+                            color: active.color,
+                            brand: { icon: embedBrand.icon },
+                          }
+                        : {
+                            id: active.id,
+                            name: active.name,
+                            title: active.title,
+                            color: active.color,
+                          }
                   }
-                  starters={inGroup ? undefined : active?.starters}
+                  starters={
+                    inGroup
+                      ? undefined
+                      : embedded && active?.id === chiefId && !active?.starters?.length
+                        ? embedStarters({
+                            quickActions: bootstrapMe?.partner?.quickActions,
+                            defaults: [t`Summarize today's schedule`, t`Who hasn't confirmed yet?`],
+                          })
+                        : active?.starters
+                  }
                   onStarter={(text) => void composer.sendMessage(text, [], newClientId())}
                   app={emptyChatApp}
                   onLoadOlder={loadOlder}

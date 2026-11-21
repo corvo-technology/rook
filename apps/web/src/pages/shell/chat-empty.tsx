@@ -9,7 +9,14 @@ export function ChatEmpty({
   onPick,
   app,
 }: {
-  intro: { id: string; name: string; title: string; color: string };
+  intro: {
+    id: string;
+    name: string;
+    title: string;
+    color: string;
+    /** Inside a partner's product: the partner's own mark, or none; never the agent's avatar. */
+    brand?: { icon: string | null };
+  };
   starters: readonly string[];
   onPick: (text: string) => void;
   /** One app the agent works with that signs in with a click and is not connected yet. */
@@ -17,7 +24,13 @@ export function ChatEmpty({
 }) {
   return (
     <div className="my-auto flex flex-col items-center gap-3 py-8 text-center">
-      <BotAvatar color={intro.color} identity={intro.id} size={72} />
+      {intro.brand ? (
+        intro.brand.icon ? (
+          <img src={intro.brand.icon} alt="" className="size-16 rounded-xl object-contain" />
+        ) : null
+      ) : (
+        <BotAvatar color={intro.color} identity={intro.id} size={72} />
+      )}
       <div className="corvo-message-in min-w-0 max-w-full">
         <h2 dir="auto" className="truncate text-heading2 font-medium text-foreground">
           {intro.name}

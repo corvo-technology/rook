@@ -1004,6 +1004,11 @@ msgstr "添加额度"
 msgid "Add credits in Billing to keep using voice."
 msgstr "在账单中添加额度即可继续使用语音。"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Add credits or connect your own API key."
+msgstr "请充值，或连接你自己的 API 密钥。"
+
 #: src/pages/Store.tsx
 msgid "Add Executor"
 msgstr "添加 Executor"
@@ -1662,6 +1667,11 @@ msgstr "更改任何内容前都会先询问你。"
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Assign work"
 msgstr "分配工作"
+
+#: src/pages/Shell.tsx
+#: src/pages/shell/embed-tabs.tsx
+msgid "Assistant"
+msgstr "助手"
 
 #. placeholder {0}: preset.time
 #: src/lib/cron.ts
@@ -7158,6 +7168,11 @@ msgstr "其他服务商"
 msgid "Other ways to connect"
 msgstr "其他连接方式"
 
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "Out of model credits"
+msgstr "模型额度已用完"
+
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/PricingSection.tsx
 #: src/pages/usage/usage-sections.tsx
@@ -9303,6 +9318,10 @@ msgstr "根据我说的话提出建议"
 msgid "Suggestions"
 msgstr "建议"
 
+#: src/pages/Shell.tsx
+msgid "Summarize today's schedule"
+msgstr "汇总今天的日程"
+
 #: src/pages/home/HomeComposer.tsx
 msgid "Summary of the day"
 msgstr "今日摘要"
@@ -9712,6 +9731,11 @@ msgid "this Mac"
 msgstr "这台 Mac"
 
 #. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "This model can't use credits"
+msgstr "此模型无法使用额度"
+
+#. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "This model cannot read images. Choose a model that supports images."
 msgstr "此模型无法读取图片。请选择支持图片的模型。"
@@ -9719,6 +9743,11 @@ msgstr "此模型无法读取图片。请选择支持图片的模型。"
 #: src/lib/user-error.ts
 msgid "This model cannot read images. Choose a model that supports images."
 msgstr "此模型无法读取图片。请选择支持图片的模型。"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "This model has no reliable price. Connect your own API key to use it."
+msgstr "此模型没有可靠的价格。请连接你自己的 API 密钥后使用。"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -10661,6 +10690,10 @@ msgstr "谁可以与 {name} 对话"
 #: src/pages/VaultPage.tsx
 msgid "Who can use {0}"
 msgstr "谁可以使用 {0}"
+
+#: src/pages/Shell.tsx
+msgid "Who hasn't confirmed yet?"
+msgstr "谁还没有确认？"
 
 #: src/pages/shell/channel-members.tsx
 msgid "Who sees this channel"

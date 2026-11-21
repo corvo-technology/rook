@@ -31,6 +31,9 @@ O SDK é um único script que registra o elemento `<corvo-assistant>`. Ele tem d
 | `locale` | `en`, `de`, `pt-BR`, `zh-CN`, `es`, `fr` ou `ja`. Padrão: o idioma do visitante. |
 | `accent` | A sua cor principal, `#rrggbb`. Botões e o estado atual a usam; o texto sobre ela fica claro ou escuro para manter a leitura. Sem ela vale o `accent` do modelo, ou o verde do Rook. |
 | `origin` | De onde o quadro é carregado. Padrão: de onde veio o `sdk.js`. |
+| `name` | Como o seu produto chama o assistente. É o rótulo no topo do quadro e, no launcher, o título do painel e o nome acessível do botão. Sem ele o quadro mostra "Assistente"; o nome e a marca do Rook nunca aparecem. |
+| `icon` | Um endereço `https` com a imagem do assistente. Sem ele, nenhuma marca é mostrada. |
+| `user-name` | Como a pessoa que está usando se chama, por exemplo `Maria Silva`. É a pessoa que o assistente cumprimenta ("Boa tarde, Maria") e quem assina as mensagens dela na conversa. Sem ele, o quadro cumprimenta sem nome e usa "Você"; nunca usa o nome da conta do cliente. |
 
 Só no launcher:
 
@@ -39,11 +42,11 @@ Só no launcher:
 | `dock` | `overlay` (padrão) cobre a página; `push` abre espaço para o painel. No celular o painel é sempre uma folha na parte de baixo. |
 | `radius` | Um comprimento CSS para os cantos, como `10px`. |
 | `font-family` | Uma pilha de fontes. Sem ela, o launcher usa a fonte da sua página. |
-| `name` | O nome do assistente, usado como título do painel e nome acessível do botão. |
 | `context` | O contexto da página em JSON (veja abaixo). |
+| `consultations` | Liga o botão **Gravar consulta** dentro do painel (veja [Gravar consulta no painel](#gravar-consulta-no-painel)). |
 | `shortcut` | `off` desliga o atalho <kbd>⌘J</kbd> / <kbd>Ctrl+J</kbd>. |
 
-Mude `theme`, `locale`, `accent`, `radius`, `font-family`, `dock` ou `name` e tudo acompanha, sem recarregar.
+Mude `theme`, `locale`, `accent`, `radius`, `font-family`, `dock`, `name`, `icon` ou `user-name` e tudo acompanha, sem recarregar. Como a conta é do cliente e não de uma pessoa, passe `user-name` com o nome de quem está logado no seu produto; o Rook não o guarda.
 
 ## Launcher
 
@@ -68,6 +71,43 @@ el.setContext({
 ```
 
 Ou defina o atributo `context` com o mesmo JSON. Tudo tem tamanho limitado (no máximo 5 entidades, rótulos curtos), aparece para a pessoa como uma etiqueta e chega ao assistente como dado, nunca como instrução. Envie só o que a pessoa já vê no seu produto.
+
+## Gravar consulta no painel
+
+Com o atributo `consultations`, o painel do launcher mostra uma faixa com **Gravar consulta** sempre que a página disser quem está sendo atendido. Sem contexto de paciente, a faixa não aparece e o chat vazio sugere duas perguntas do dia (como o resumo da agenda de hoje), ou os atalhos do seu modelo.
+
+Passe o paciente e a consulta pelo contexto da página, com entidades `patient` (ou `client`) e `appointment`:
+
+```js
+el.setContext({
+  page: "/pacientes/42/evolucao",
+  entities: [
+    { type: "patient", id: "42", label: "Maria Souza" },
+    { type: "appointment", id: "9001", label: "Hoje, 10:00" },
+  ],
+});
+// opcional: quem atende e o que a nota deve conter
+el.setConsultation({ professionalName: "Dra. Ana", preset: "evolution" });
+```
+
+`setConsultation` aceita `clientId`, `appointmentId`, `clientName`, `professionalName` e a saída (`preset`, ou `task` e `schema`, ou `instructions`); o que faltar vem das entidades do contexto.
+
+O fluxo para o profissional:
+
+1. **Gravar consulta** abre uma pergunta: o paciente autorizou a gravação? O profissional confirma **Sim, verbalmente** ou **Sim, por escrito**, ou cancela. Nada é gravado e o microfone não é pedido antes dessa confirmação; o método e o horário seguem para o Rook como o consentimento da consulta.
+2. Durante a gravação a faixa mostra o tempo, **Pausar** e **Parar**.
+3. Ao parar, mostra **Gerando rascunho…** enquanto o Rook transcreve e preenche a nota.
+4. Quando o rascunho fica pronto, o elemento dispara `corvo-consultation` com `{ consultationId, clientId, appointmentId, note, transcript }`. Salve a nota como **rascunho** no prontuário e chame `el.resolveConsultation({ path: "/pacientes/42/evolucao/777" })`: a faixa passa a mostrar **Abrir rascunho**, que dispara `corvo-navigate` com esse caminho.
+
+```js
+el.addEventListener("corvo-consultation", async (event) => {
+  const { appointmentId, note } = event.detail;
+  const draft = await meuApp.saveDraft(appointmentId, note); // sempre rascunho: o profissional revisa
+  el.resolveConsultation({ path: `/pacientes/42/evolucao/${draft.id}` });
+});
+```
+
+O áudio e a transcrição são apagados do Rook assim que o evento é entregue (a nota é sua a partir daí). Se o microfone estiver bloqueado ou a gravação falhar, a faixa diz e oferece **Tentar de novo**. A gravação continua se o painel for fechado, e o botão flutuante ganha um anel vermelho enquanto grava. Para gravar dentro de um formulário seu, sem o painel, use `Rook.recorder` em [IA nas suas telas](/partners/inline-ai/).
 
 ## Ações
 
@@ -110,6 +150,8 @@ el.addEventListener("corvo-action", async (event) => {
 | `registerActions(actions)` | Substitui a lista de ações que a sua página oferece. |
 | `resolveAction(id, result)` | Responde a um `corvo-action`: `{ ok?, message? }` ou um texto. |
 | `setSuggestions(list)` | Define as sugestões da caixa rápida. |
+| `setConsultation(options)` | Quem está sendo atendido e a saída da nota (veja Gravar consulta no painel). |
+| `resolveConsultation({ path })` | Diz onde o rascunho ficou no seu produto; a faixa mostra **Abrir rascunho**. |
 | `open()`, `close()`, `toggle()` | Controlam o launcher. |
 
 ## IA nas suas telas
@@ -128,6 +170,7 @@ O mesmo script define também `Rook.ask`, `Rook.recorder` e `Rook.configure` (ve
 | `corvo-open`, `corvo-close` | Só no launcher: ele abriu ou fechou. |
 | `corvo-unavailable` `{ reason }` | Só no launcher: o assistente não pode ser oferecido e o launcher se escondeu. `reason` é `forbidden`, `unavailable`, `network`, `no_code` ou `expired`. |
 | `corvo-action` `{ name, params, id }` | Só no launcher: o cliente confirmou uma ação que você registrou. Execute e depois chame `resolveAction(id, result)`. |
+| `corvo-consultation` `{ consultationId, clientId, appointmentId, note, transcript }` | Só no launcher, com `consultations`: o rascunho de uma consulta gravada no painel está pronto. Salve-o e chame `resolveConsultation`. |
 
 O elemento pede um novo código à sua rota sempre que o quadro precisa de um, sozinho.
 

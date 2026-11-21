@@ -143,6 +143,7 @@ async function requestSecretWith(origin: string) {
           defaultModelId: "openai/gpt-4o",
         }),
       },
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: {
         create: async ({ data }: { data: Record<string, unknown> }) => ({
           id: `effect-${data.idempotencyKey}`,

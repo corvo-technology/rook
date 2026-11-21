@@ -114,6 +114,7 @@ function fakeFleet(input: {
     },
     user: { findUnique: vi.fn(async () => ({ timezone: input.timezone ?? null })) },
     $transaction: vi.fn(),
+    runToolResult: { deleteMany: async () => ({ count: 0 }) },
     externalEffect: { findMany: vi.fn(async () => input.effects ?? []) },
     routine: {
       findFirst: vi.fn(async () => input.routines?.[0] ?? null),

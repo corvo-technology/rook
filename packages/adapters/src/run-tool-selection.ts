@@ -27,6 +27,7 @@ export const READ_ONLY_AGENT_TOOLS = new Set([
   "space_status",
   "read_file",
   "read_history",
+  "read_result",
   "search_history",
   "wiki_index",
   "wiki_search",

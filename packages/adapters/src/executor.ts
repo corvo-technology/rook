@@ -67,6 +67,7 @@ import {
   readRunTimingFields,
   recordUsage,
   runTokens,
+  saveRunToolResult,
   settleReleasedTakeoverCards,
   spaceHasModelAccess,
   surfacedItemsInstruction,
@@ -2078,6 +2079,14 @@ export function createRunExecutor(deps: ExecutorDeps) {
               script,
               allowSilentEmpty: allowSilentEmptyRun,
               emptyResponseText,
+              storeToolResult: scripted
+                ? undefined
+                : ({ name, executionId, text }) =>
+                    saveRunToolResult(
+                      deps.prisma,
+                      { runId, spaceId: run.spaceId },
+                      { toolCallId: executionId, toolName: name, text },
+                    ),
               executeTool: scripted
                 ? undefined
                 : (name, args, executionId, route, observer) =>

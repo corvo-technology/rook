@@ -212,6 +212,7 @@ export const ROW_SECURITY_MODELS: ReadonlySet<string> = new Set([
   "WikiImport",
   "ResearchJob",
   "ResearchSource",
+  "RunToolResult",
   "ThreadBranch",
   "WhatsAppAuthEntry",
   "UserMemory",

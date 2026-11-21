@@ -209,6 +209,7 @@ function fixture(
       },
       $queryRaw: async () => [],
       $transaction: async (action: (tx: unknown) => Promise<unknown>) => action(prisma),
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: {
         ...empty,
         findMany: async ({ where }: { where: Record<string, unknown> }) =>

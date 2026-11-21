@@ -20,7 +20,11 @@ import { IMAGE_RETURNING_COMPUTER_TOOLS, MODEL_CANNOT_SEE_MESSAGE } from "./mode
 import type { PiAgentRuntimeOptions } from "./pi-runtime.js";
 import { sanitizeSensitiveText } from "./pi-runtime-errors.js";
 import { modelCannotSeeImages } from "./pi-runtime-fallback.js";
-import { clipToolResultContent, clipToolResultText } from "./pi-runtime-limits.js";
+import {
+  clipToolResultContent,
+  clipToolResultText,
+  TOOL_RESULT_TEXT_LIMIT,
+} from "./pi-runtime-limits.js";
 import type { RuntimeModelTarget } from "./pi-runtime-models.js";
 import { sameModelTarget } from "./pi-runtime-models.js";
 import { executeSubagent } from "./pi-runtime-subagent.js";
@@ -29,6 +33,7 @@ import { recordPiTelemetryContent, withPiTelemetrySpan } from "./pi-telemetry.js
 import { VERBATIM_TOOL_RESULTS } from "./runtime-context.js";
 import { SCHEDULE_TOOL_NAMES } from "./schedule-tools.js";
 import type { FinishedShellCommand } from "./shell-command-stream.js";
+import { keepWholeResult } from "./tool-result-overflow.js";
 import { textContentArg } from "./tool-text.js";
 
 export interface ToolCallBudget {
@@ -568,17 +573,18 @@ function toAgentTool(
                 );
                 if (isAgentToolExecutionResult(result)) {
                   if (isToolPauseResult(result)) host.pausePending = true;
-                  return boundAgentToolResult(result);
+                  return keepWholeContent(host.request, result, tool.name, executionId);
                 }
                 return {
                   content: [
                     {
                       type: "text",
-                      text: serializeToolResult(
+                      text: await serializeToolResultKept(
+                        host.request,
                         result,
-                        host.request.contextStrategy,
                         tool.name,
                         args,
+                        executionId,
                       ),
                     },
                   ],
@@ -673,6 +679,48 @@ export function serializeToolResult(
   } catch {
     return "ok";
   }
+}
+
+/** Like serializeToolResult, but an over-long result is kept whole behind a handle when the run can. */
+async function serializeToolResultKept(
+  request: AgentRunRequest,
+  result: unknown,
+  name: string,
+  args: Record<string, unknown>,
+  executionId: string,
+): Promise<string> {
+  try {
+    const text = JSON.stringify(result);
+    if (text && text.length > TOOL_RESULT_TEXT_LIMIT && !VERBATIM_TOOL_RESULTS.has(name)) {
+      const kept = await keepWholeResult(request, { name, executionId, text });
+      if (kept) return kept;
+    }
+  } catch {
+    // Fall through to the bounded serialization, which handles an unserializable result.
+  }
+  return serializeToolResult(result, request.contextStrategy, name, args);
+}
+
+async function keepWholeContent<T>(
+  request: AgentRunRequest,
+  result: AgentToolResult<T>,
+  name: string,
+  executionId: string,
+): Promise<AgentToolResult<T>> {
+  if (!result || !Array.isArray(result.content)) return result;
+  const texts = result.content.filter(
+    (part): part is Extract<typeof part, { type: "text" }> => part?.type === "text",
+  );
+  const text = texts.map((part) => part.text).join("\n");
+  const kept = await keepWholeResult(request, { name, executionId, text });
+  if (kept === undefined) return boundAgentToolResult(result);
+  return {
+    ...result,
+    content: [
+      { type: "text", text: kept },
+      ...result.content.filter((part) => part?.type !== "text"),
+    ] as typeof result.content,
+  };
 }
 
 function boundAgentToolResult<T>(result: AgentToolResult<T>): AgentToolResult<T> {

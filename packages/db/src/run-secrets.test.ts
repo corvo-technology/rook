@@ -5,6 +5,7 @@ import { clearEndedRunState } from "./run-secrets.js";
 describe("clearEndedRunState", () => {
   it("drops each cancelled run's checkpoint and waiting one-time answer", async () => {
     const prisma = {
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: { deleteMany: vi.fn(async () => ({ count: 2 })) },
       message: { findMany: vi.fn(async () => []) },
       run: {
@@ -41,6 +42,7 @@ describe("clearEndedRunState", () => {
       ...(status === "answered" ? { answer: "allow" } : {}),
     });
     const prisma = {
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: { deleteMany: vi.fn(), updateMany: vi.fn(async () => ({ count: 1 })) },
       message: {
         findMany: vi.fn(async () => [
@@ -62,6 +64,7 @@ describe("clearEndedRunState", () => {
 
   it("leaves effects alone when no card is open", async () => {
     const prisma = {
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: { deleteMany: vi.fn(), updateMany: vi.fn() },
       message: { findMany: vi.fn(async () => [{ blocks: [{ kind: "text", text: "Done" }] }]) },
       run: { findMany: vi.fn(async () => []) },
@@ -73,6 +76,7 @@ describe("clearEndedRunState", () => {
 
   it("does nothing without runs", async () => {
     const prisma = {
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: { deleteMany: vi.fn() },
       run: { findMany: vi.fn() },
       secret: { deleteMany: vi.fn() },

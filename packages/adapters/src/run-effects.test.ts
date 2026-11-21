@@ -22,6 +22,7 @@ function fixture(initial: Effect[] = []) {
   const append = vi.fn();
   const deps = {
     prisma: {
+      runToolResult: { deleteMany: async () => ({ count: 0 }) },
       externalEffect: {
         findUnique: vi.fn(
           async ({ where }: { where: { idempotencyKey: string } }) =>

@@ -8,8 +8,8 @@ import {
   isAutonomousRunTrigger,
   isBackgroundRunTrigger,
   isOwnerStartedRun,
-  runReadsThreadHistory,
   isProactiveRunTrigger,
+  runReadsThreadHistory,
 } from "@corvo/core";
 import { builtinAgentTools } from "./builtin-tools.js";
 import { selectCloudAgentTools } from "./cloud-agent-tools-select.js";

@@ -1,4 +1,6 @@
-import { isBackgroundRunTrigger, redactSecrets } from "@corvo/core";
+import type { MessageBlock } from "@corvo/contracts";
+import { MessageReactionSchema } from "@corvo/contracts";
+import { isBackgroundRunTrigger, messageReaction, redactSecrets } from "@corvo/core";
 import { getLogger } from "@corvo/logging";
 import {
   connectAgent,
@@ -11,7 +13,8 @@ import { handoffToGroupBot } from "./group-handoff.js";
 import { updatePlanCard } from "./plan-card.js";
 import type { RunContext } from "./run-context.js";
 import { isSubagentToolExecution } from "./run-effects.js";
-import { publishMessage } from "./run-messages.js";
+import { isUniqueViolation, publishMessage } from "./run-messages.js";
+import { paceBotMessage } from "./run-pacing.js";
 import {
   canPublishDurableProgress,
   flushProgress,
@@ -151,6 +154,7 @@ export const messagingTools: ToolHandlers = {
         note: "This update was not posted. The turn is still fresh, or the chat already has enough interim messages for this run. Do not send more progress updates — keep working and put everything in your final reply.",
       });
     }
+    await paceBotMessage(ctx, text);
     await publishMessage(
       deps,
       run,
@@ -198,6 +202,7 @@ export const messagingTools: ToolHandlers = {
     }
     await flushProgress(ctx);
     reply.sayNowText = text;
+    await paceBotMessage(ctx, text);
     await publishMessage(
       deps,
       run,
@@ -208,6 +213,41 @@ export const messagingTools: ToolHandlers = {
     );
     reply.midTurnUserTexts.push(text);
     reply.publishedMidTurnUserMessage = true;
+    return call.finish({ ok: true });
+  },
+  async react_to_message(ctx, call) {
+    const { deps, run } = ctx;
+    const emoji = MessageReactionSchema.safeParse(call.args.emoji);
+    if (!emoji.success) return call.finish({ error: "emoji must be one of the offered emoji." });
+    const targetId =
+      typeof call.args.message_id === "string" && call.args.message_id
+        ? call.args.message_id
+        : run.sourceMessageId;
+    const target = targetId
+      ? await deps.prisma.message.findFirst({
+          where: { id: targetId, threadId: run.threadId, role: "user" },
+          select: { id: true, role: true, blocks: true, replyToMessageId: true },
+        })
+      : null;
+    if (!target || messageReaction({ ...target, blocks: target.blocks as MessageBlock[] })) {
+      return call.finish({ error: "No message from the person to react to." });
+    }
+    try {
+      // The reaction is a bot message: it shows beneath its target and makes no unread or push.
+      await publishMessage(
+        deps,
+        run,
+        "bot",
+        [{ kind: "text", text: emoji.data }],
+        false,
+        `react:${run.id}:${target.id}:${emoji.data}`,
+        undefined,
+        target.id,
+      );
+    } catch (error) {
+      // A resumed run already posted this reaction.
+      if (!isUniqueViolation(error)) throw error;
+    }
     return call.finish({ ok: true });
   },
   async message_bot(ctx, call) {

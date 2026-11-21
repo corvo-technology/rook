@@ -4,6 +4,7 @@ import {
   scopedRuleMayApply,
   scopedRulesCover,
   scopedRuleValue,
+  shouldSuggestAlways,
 } from "./always-allow.js";
 
 const connector = (tool: string, hints: { destructive?: boolean } = {}) => ({
@@ -163,5 +164,40 @@ describe("scopedRuleMayApply", () => {
 
   it("is high when any action in a batch is", () => {
     expect(scopedRuleMayApply({ ...base, risks: ["low", "high"], tainted: true })).toBe(false);
+  });
+});
+
+describe("shouldSuggestAlways", () => {
+  const target = { tool: "crm_update_contact", connection: "resource:mcp:crm" };
+  const card = (answer: string, extra: { suggested?: boolean; tool?: string } = {}) => ({
+    targets: [{ ...target, ...(extra.tool ? { tool: extra.tool } : {}) }],
+    answer,
+    ...(extra.suggested ? { suggested: true } : {}),
+  });
+
+  it("offers after three allows of the same tool in a row", () => {
+    expect(
+      shouldSuggestAlways("bot", [target], [card("allow"), card("allow"), card("allow")]),
+    ).toBe(true);
+  });
+
+  it("waits for three answers", () => {
+    expect(shouldSuggestAlways("bot", [target], [card("allow"), card("allow")])).toBe(false);
+  });
+
+  it("does not offer when a recent answer was a deny", () => {
+    expect(shouldSuggestAlways("bot", [target], [card("allow"), card("deny"), card("allow")])).toBe(
+      false,
+    );
+  });
+
+  it("ignores cards of other tools", () => {
+    const other = card("allow", { tool: "crm_delete_note" });
+    expect(shouldSuggestAlways("bot", [target], [other, card("allow"), card("allow")])).toBe(false);
+  });
+
+  it("offers only once", () => {
+    const answered = [card("allow"), card("allow"), card("allow", { suggested: true })];
+    expect(shouldSuggestAlways("bot", [target], answered)).toBe(false);
   });
 });

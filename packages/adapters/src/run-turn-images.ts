@@ -374,6 +374,31 @@ export async function withRecentTurnImages(
   });
 }
 
+/** A burst of messages sent a moment apart reaches the agent as one steer. */
+export const STEERING_DEBOUNCE_MS = 500;
+
+async function claimDebouncedSteering(
+  deps: ExecutorDeps,
+  lease: { threadId: string; botId: string; runId: string; leaseOwner: string; leaseFence: number },
+  seenIds: string[],
+  signal: AbortSignal | undefined,
+) {
+  const claimed = await deps.events.claimSteering({ ...lease, seenIds });
+  if (claimed.length === 0) return claimed;
+  const sleep = deps.pacing?.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+  // Each pause may collect one more message; a person typing stops within a few beats.
+  for (let round = 0; round < 3 && !signal?.aborted; round++) {
+    await sleep(STEERING_DEBOUNCE_MS, signal ?? new AbortController().signal);
+    const more = await deps.events.claimSteering({
+      ...lease,
+      seenIds: [...seenIds, ...claimed.map((item) => item.id)],
+    });
+    if (more.length === 0) break;
+    claimed.push(...more);
+  }
+  return claimed;
+}
+
 /**
  * Claims messages the user sent while the run was working and loads their attachments. Each
  * message that brought files queues them for the computer.
@@ -386,7 +411,7 @@ export async function claimRunSteering(
   pendingTurnFiles: MessageBlock[][],
   currentTurn: { messageId?: string; hasImages: boolean },
 ): Promise<AgentSteeringMessage[]> {
-  const steering = await deps.events.claimSteering({ ...lease, seenIds });
+  const steering = await claimDebouncedSteering(deps, lease, seenIds, context.signal);
   return Promise.all(
     steering.map(async (item, index) => {
       const { images, files, unavailableInstruction } = await settleSteeringAttachmentLoads(

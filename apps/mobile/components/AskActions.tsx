@@ -16,6 +16,7 @@ export function AskActions({
   actions,
   site,
   alwaysAllow,
+  suggestAlways,
   approval,
   proposal,
   instructions,
@@ -28,6 +29,8 @@ export function AskActions({
   site?: string;
   /** What "Always allow" keeps: one tool on one connection for one agent. */
   alwaysAllow?: { agent: string; connection: string; tool: string };
+  /** The person allowed this every time lately: the note says so. */
+  suggestAlways?: boolean;
   approval: boolean;
   /** A proposed change: its buttons read Apply and Dismiss. */
   proposal?: boolean;
@@ -168,6 +171,7 @@ export function AskActions({
       </View>
       {alwaysAllow && actions.some((action) => action.id === "always") ? (
         <Text style={{ color: tokens.mutedForeground, ...typeScale.caption }}>
+          {suggestAlways ? `${t("You have allowed this every time.")} ` : null}
           {alwaysAllow.connection
             ? t("Always allow covers {tool} on {connection}, for {agent} only.", alwaysAllow)
             : t("Always allow covers {tool}, for {agent} only.", alwaysAllow)}

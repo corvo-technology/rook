@@ -189,6 +189,8 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     alwaysAllow: z
       .object({ agent: z.string(), connection: z.string(), tool: z.string() })
       .optional(),
+    /** The person allowed this tool every time lately: the card says so, once. */
+    suggestAlways: z.literal(true).optional(),
     status: z.enum(["pending", "answered"]).optional(),
     answer: z.string().optional(),
     /** A secret request the user dismissed instead of answering. */

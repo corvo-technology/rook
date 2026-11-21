@@ -10595,6 +10595,10 @@ msgstr "你已拒绝"
 msgid "You earn"
 msgstr "您的收益"
 
+#: src/components/AskCard.tsx
+msgid "You have allowed this every time."
+msgstr "你每次都允许了。"
+
 #: src/pages/shell/computer-overlay.tsx
 msgid "You have control"
 msgstr "你已接管"

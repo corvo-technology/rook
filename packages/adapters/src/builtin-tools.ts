@@ -10,6 +10,7 @@ import {
   GenerateSecretInput,
   IMAGE_MAX_COUNT,
   IMAGE_MAX_REFERENCES,
+  MESSAGE_REACTIONS,
   SecretAskPurpose,
   SecretHttpRequest,
   TICKET_BLOCKERS_MAX,
@@ -567,6 +568,19 @@ export const builtinAgentTools: ConnectorTool[] = [
         message: { type: "string", maxLength: SAY_NOW_MAX_LENGTH },
       },
       required: ["message"],
+    },
+  },
+  {
+    name: "react_to_message",
+    description:
+      "React to the person's message with one emoji, the way a friend would, when a reply would add nothing: a quick yes, thanks, or a celebration. It posts no text and does not wake anyone. Defaults to the message that started this run; pass message_id for another of their messages. Never use it instead of an answer they asked for.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        emoji: { type: "string", enum: [...MESSAGE_REACTIONS] },
+        message_id: { type: "string" },
+      },
+      required: ["emoji"],
     },
   },
   {

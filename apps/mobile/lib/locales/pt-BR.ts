@@ -1206,6 +1206,7 @@ export const PT_BR_MESSAGES: Record<string, string> = {
     "“Sempre permitir” vale só para {tool} em {connection}, para {agent}.",
   "Always allow covers {tool}, for {agent} only.":
     "“Sempre permitir” vale só para {tool}, para {agent}.",
+  "You have allowed this every time.": "Você sempre permitiu isso.",
   "Change when to ask": "Mudar quando perguntar",
   Regenerate: "Gerar de novo",
   "Continue in new thread": "Continuar em uma nova conversa",

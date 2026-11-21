@@ -172,6 +172,7 @@ export function selectBuiltinToolsForRun(options: {
         (Boolean(options.fleetManagement) && fleetToolsAllowed)) &&
       (options.hostActionsOffered || tool.name !== "propose_host_action") &&
       (options.sayNowOffered || tool.name !== "say_now") &&
+      ((fleetToolsAllowed && options.trigger !== "reaction") || tool.name !== "react_to_message") &&
       (options.workflowContinues || tool.name !== "workflow_stop") &&
       (isProactiveRunTrigger(options.trigger) || tool.name !== "notify_priority") &&
       (fleetToolsAllowed || tool.name !== "notify_control") &&

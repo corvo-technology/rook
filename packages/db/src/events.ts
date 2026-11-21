@@ -39,7 +39,7 @@ import { urlSite } from "@corvo/core/egress";
 import { approvalCallHash, approvalEffectKey } from "@corvo/core/node/approval-effect-key";
 import { getLogger } from "@corvo/logging";
 import { recordActionEvidence } from "./action-evidence.js";
-import { saveApprovalRule, saveScopedApprovalRule } from "./approval-settings.js";
+import { answeredScope, saveApprovalRule, saveScopedApprovalRule } from "./approval-settings.js";
 import { cancelRunsInTransaction } from "./cancel-runs.js";
 import type { Prisma, PrismaClient } from "./client.js";
 import { expireComputerExecutionLeases } from "./computers.js";
@@ -1089,9 +1089,14 @@ async function commitAnswerRunInput(
         });
     }
     const allowed = approvalAnswer === "allow" || approvalAnswer === "always";
+    // The answer stays on the card's scope, so the next card can see how this agent's tool fared.
+    const answeredScopeValue = answeredScope(approvalEffect!.alwaysScope, approvalAnswer);
     await tx.externalEffect.update({
       where: { id: approvalEffect!.id },
-      data: { status: allowed ? "approved" : "denied" },
+      data: {
+        status: allowed ? "approved" : "denied",
+        ...(answeredScopeValue ? { alwaysScope: answeredScopeValue } : {}),
+      },
     });
     // "Always" on a fetch card allows that site, never every site the tool can reach. On any other
     // card it keeps one tool on one connection for this agent, as the card said, never the

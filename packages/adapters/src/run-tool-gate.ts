@@ -28,6 +28,7 @@ import {
   ruleConnectionLabel,
   scopedRuleMayApply,
   scopedRulesCover,
+  shouldSuggestAlways,
   toolRequiresApproval,
   toolRequiresExplicitApproval,
   unattendedTriggerToolRequiresApproval,
@@ -39,7 +40,7 @@ import {
   approvalEffectKey,
   toolEffectIdempotencyKey,
 } from "@corvo/core/node/approval-effect-key";
-import { runSecretKind } from "@corvo/db";
+import { listAnsweredApprovalCards, runSecretKind } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import type { FleetCardSummary } from "./approval-ask.js";
 import { buildApprovalAskBlock, MAX_FETCH_URL_LENGTH } from "./approval-ask.js";
@@ -585,7 +586,7 @@ export async function gateToolCall(
     nextApprovedTool,
     bypassApproval: gateDecision === "allow" && gated,
   });
-  const card = {
+  const card: CardOptions = {
     reviewReason,
     summary: request.fleetSummary,
     // The card says exactly what "Always allow" keeps, or offers none for a locked kind.
@@ -599,6 +600,22 @@ export async function gateToolCall(
           }
         : (false as const),
   };
+  // A person who allowed this agent's tool every time lately is told once they can stop being
+  // asked. The mark stays on the card's scope so the offer is not repeated.
+  if (needsApproval && applied && alwaysTargets && !fetchUrl) {
+    const answered = await listAnsweredApprovalCards(deps.prisma, {
+      spaceId: run.spaceId,
+      botId: ctx.bot.id,
+      kind: replayEffectToolName,
+    }).catch(() => []);
+    if (shouldSuggestAlways(ctx.bot.id, alwaysTargets, answered)) {
+      card.suggestAlways = true;
+      await deps.prisma.externalEffect.updateMany({
+        where: { id: applied.effect.id, status: "intended" },
+        data: { alwaysScope: { targets: alwaysTargets, suggested: true } },
+      });
+    }
+  }
 
   if (applied?.duplicate) {
     const gate = resolveDuplicateEffectGate(applied.effect, name);
@@ -837,6 +854,7 @@ type CardOptions = {
   reviewReason: string | undefined;
   summary: FleetCardSummary | undefined;
   alwaysAllow: { agent: string; connection: string; tool: string } | false | undefined;
+  suggestAlways?: boolean;
 };
 
 /**

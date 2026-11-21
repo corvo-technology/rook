@@ -2,6 +2,7 @@ import type { MessageBlock } from "@corvo/contracts";
 import { redactSecrets, splitReplyByMessage } from "@corvo/core";
 import type { RunContext } from "./run-context.js";
 import { isUniqueViolation, publishMessage } from "./run-messages.js";
+import { paceBotMessage } from "./run-pacing.js";
 import { flushPendingTools, flushProgress } from "./run-progress.js";
 import { answerClientNonce } from "./user-progress.js";
 
@@ -44,6 +45,10 @@ export async function noteSteeringClaimed(ctx: RunContext, messageIds: readonly 
 
 async function publishAnswer(ctx: RunContext, replyToMessageId: string, blocks: MessageBlock[]) {
   try {
+    await paceBotMessage(
+      ctx,
+      blocks.map((block) => (block.kind === "text" ? block.text : "")).join(""),
+    );
     await publishMessage(
       ctx.deps,
       ctx.run,

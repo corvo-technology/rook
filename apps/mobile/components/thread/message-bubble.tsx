@@ -483,6 +483,7 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
                     actions={askBlock.actions}
                     site={askBlock.site}
                     alwaysAllow={askBlock.alwaysAllow}
+                    suggestAlways={askBlock.suggestAlways}
                     approval={isApprovalAskBlock(askBlock)}
                     proposal={askBlock.proposal}
                     instructions={askBlock.instructionUpdate?.after}

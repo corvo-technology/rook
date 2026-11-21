@@ -632,6 +632,13 @@ it("says exactly what Always allow covers", async () => {
   );
 });
 
+it("says once that the person allowed this every time", async () => {
+  await render({ ...sendCard, suggestAlways: true });
+  expect(container.textContent).toContain(
+    "You have allowed this every time. Always allow covers demo_send_email on gmail, for Ada only.",
+  );
+});
+
 it("offers no coverage line when the card has no always-allow choice", async () => {
   await render({ ...sendCard, actions: sendCard.actions!.filter((a) => a.id !== "always") });
   expect(container.textContent).not.toContain("covers");

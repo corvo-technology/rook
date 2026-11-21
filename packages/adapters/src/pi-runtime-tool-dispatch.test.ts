@@ -890,9 +890,7 @@ describe("Pi connector tool dispatch", () => {
     );
     // A concurrent batch can read the routine list before schedule_create writes
     // the row, so the bot reports "no schedules" for a reminder it just made.
-    expect(modes.get("schedule_create")).toBe("sequential");
-    expect(modes.get("schedule_list")).toBe("sequential");
-    // schedule_cancel is deferred, so the use_tool that runs it is sequential.
+    // The schedule tools are deferred, so the use_tool that runs them is sequential.
     expect(modes.get("use_tool")).toBe("sequential");
     expect(modes.get("remember")).toBe("sequential");
     expect(modes.get("destination_write")).toBe("default");

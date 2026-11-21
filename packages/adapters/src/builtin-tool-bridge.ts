@@ -14,8 +14,9 @@ export const USE_TOOL = "use_tool";
 const FIND_TOOL_LIMIT = 3;
 
 /**
- * Built-in tools the model always sees with full schemas: everyday work, and every tool the
- * runtime answers itself. Other built-ins offered to a run are reached through find_tool and
+ * Built-in tools the model always sees with full schemas: everyday work and the tools a turn
+ * cannot wait to look up (asking, pausing, saying something). Everything else offered to a run
+ * (secrets, schedules, databases, fleet and admin) is reached through find_tool and
  * use_tool, so the listed tools stay small and never change mid-run.
  */
 export const CORE_BUILTIN_TOOL_NAMES: ReadonlySet<string> = new Set([
@@ -35,7 +36,6 @@ export const CORE_BUILTIN_TOOL_NAMES: ReadonlySet<string> = new Set([
   "message_user",
   "say_now",
   "request_takeover",
-  "request_secret",
   "connect_app",
   "propose_host_action",
   "run_subagent",
@@ -45,14 +45,10 @@ export const CORE_BUILTIN_TOOL_NAMES: ReadonlySet<string> = new Set([
   "remember_about_user",
   "save_memory",
   "recall_memory",
-  "query_database",
-  "describe_database",
   "wiki_search",
   "wiki_read",
   "find_in_app",
   "read_document",
-  "schedule_create",
-  "schedule_list",
   "workflow_stop",
   "pass",
   "request_stronger_model",
@@ -66,6 +62,7 @@ const FLEET_NAMES: ReadonlySet<string> = new Set(FLEET_TOOL_NAMES);
 
 const AREAS: Array<[area: string, matches: (name: string) => boolean]> = [
   ["secrets", (name) => name.includes("secret")],
+  ["databases", (name) => name.endsWith("_database")],
   ["bots", (name) => FLEET_NAMES.has(name) || name.endsWith("_bot")],
   [
     "tasks",
@@ -115,7 +112,7 @@ function bridgeTools(deferred: readonly ConnectorTool[]): ConnectorTool[] {
   return [
     {
       name: FIND_TOOL,
-      description: `Get the parameters of built-in tools not in your tool list, including ones your instructions name. Call this before use_tool. Pass names for exact tools or query to search.\n${formatNameIndexText(groupedNames(searchEntries(deferred)))}`,
+      description: `Get the parameters of built-in tools not in your tool list, including ones your instructions name. Search it for secrets and logins, schedules and reminders, databases, teammates and bots, tickets, charts and media, and app admin; do not tell the user you cannot do something before searching. Call it before use_tool. Pass names for exact tools or query to search.\n${formatNameIndexText(groupedNames(searchEntries(deferred)))}`,
       inputSchema: {
         type: "object",
         properties: {

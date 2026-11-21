@@ -382,7 +382,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "attach_file",
     description:
-      "Attach a workspace file from this bot's home to the chat thread as an image or common file. The file stays in place; users can open it from the message and from the Artifacts tab. For a self-contained HTML page, document, or anything else meant to be opened and viewed on its own (not just downloaded) — give it name and description: a short human-readable title and a one-line summary of what it is. Skip them for an ordinary attachment like a log file or export. To UPDATE something you already made, call this again with the exact same name — it becomes a new version of that same artifact (visible in a version switcher) instead of a separate one; a different name always starts a new artifact.",
+      "Attach a file from this bot's home to the chat as an image or common file; it stays in place. For a page or document meant to be opened and viewed, give name (short title) and description (one line); skip them for logs and exports. Calling again with the exact same name saves a new version of that artifact; a different name starts a new one.",
     inputSchema: {
       type: "object",
       properties: {
@@ -442,7 +442,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "connect_app",
     description:
-      "Show an inline card to connect an app in this chat when you need an unconnected app or the user asks to connect one. This includes an app already added to the workspace that you cannot use yet, such as PostHog or Trello: call it with the app name instead of saying it is unavailable. When a teammate you delegated to says it cannot use an app, call it with that app and the teammate's name in agent, so the user can approve giving it to them here: never tell the user to do it themselves. Then wait for the user instead of directing them elsewhere.",
+      "Show an inline card to connect an app when you need an unconnected one or the user asks. Also use it for a workspace app you cannot use yet (PostHog, Trello) instead of saying it is unavailable. When a delegated teammate cannot use an app, pass the app and the teammate's name in agent so the user can approve it here; never tell the user to do it themselves. Then wait for the user.",
     inputSchema: {
       type: "object",
       properties: {
@@ -501,7 +501,7 @@ export const builtinAgentTools: ConnectorTool[] = [
     name: "message_user",
     // Read lazily: the cap comes from process.env, which may be filled after import.
     get description() {
-      return `Post a short progress update to the user in this chat immediately. Does not end your turn. Use sparingly during long work for high-signal beats (what you are checking, then a result). Do not dump tool logs, thinking, or a play-by-play of every call. HARD LIMIT: cut off silently at ${messageUserMaxLength()} characters, so never put your final answer, a report, or any long-form content here \u2014 it will arrive mangled and the user will never see the rest. Always write your complete final answer in your normal reply, not here.`;
+      return `Post a short progress update in this chat now; your turn continues. Use sparingly during long work, never for tool logs or a play-by-play. HARD LIMIT: cut off silently at ${messageUserMaxLength()} characters, so never put the final answer or a report here; write it in your normal reply.`;
     },
     get inputSchema() {
       return {
@@ -544,7 +544,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "generate_secret",
     description:
-      'Create a random password or key and save it for this bot and user; you never see the value. For a new website account, use type "login" with the sign-up site and the username, then type both into the form with browser_act fill_secret; add command: true only when a CLI also needs the password and the site has no token or browser sign-in (saved as command variable <name>-password too). For a value shell commands need, such as a database password, use type "command"; it is exported like a request_secret command variable, so pass it from the environment. Set rules only when the site or tool restricts characters (symbols: false inside a URL). An existing credential is never replaced.',
+      'Create a random password or key and save it for this bot and user; you never see the value. For a new website account, use type "login" with the sign-up site and username, then fill both with browser_act fill_secret; add command: true only when a CLI also needs the password and the site has no token or browser sign-in. For a value shell commands need (a database password), use type "command"; it is exported like a request_secret command variable. Set rules only when the site restricts characters (symbols: false inside a URL). An existing credential is never replaced.',
     inputSchema: toolJsonSchema(GenerateSecretInput),
   },
   {
@@ -888,7 +888,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "search_history",
     description:
-      "Search literal keywords in earlier messages in this chat; every query word must match the same message. For paraphrased recollection, start with one distinctive project or topic keyword. Returns at most five matches, newest first. When nextSearch is present, call search_history with those arguments to continue. Coverage applies only to the requested literal query and range; an empty narrower query does not exhaust an unfinished broader query. Use read_history to check surrounding messages and corrections.",
+      "Search literal keywords in earlier messages in this chat; every query word must match the same message. For paraphrased recall, start with one distinctive keyword. Returns at most five matches, newest first; when nextSearch is present, call again with those arguments. An empty narrower query does not exhaust an unfinished broader one. Use read_history to check surrounding messages and corrections.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1161,7 +1161,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "schedule_create",
     description:
-      'Create a reminder, recurring job, watch or message trigger for this bot ("remind me in 10 minutes", "every morning send a joke"). Give exactly one timing method: cron, every+unit, runAt, delayMinutes, delaySeconds, watch or onMessage; startAt only with a repeat. A repeating job carries out the user\'s lasting request each time, not a copy of today\'s decision. Be proactive: when the user wants something useful on a rhythm (report, check, digest) or mentions a dated one-off commitment (interview, deadline, trip), offer once with ask_user after helping, naming what and when, with options (derived times, another time, no). Skip if they asked for a reminder, said no, or the date is unknown. On a yes, create it and say when it first runs; never silently.',
+      'Create a reminder, recurring job, watch or message trigger for this bot ("remind me in 10 minutes", "every morning send a joke"). Give exactly one timing method: cron, every+unit, runAt, delayMinutes, delaySeconds, watch or onMessage; startAt only with a repeat. A repeating job carries out the user\'s lasting request each time, not a copy of today\'s decision. When the user wants something useful on a rhythm (report, check, digest) or mentions a dated one-off commitment (interview, deadline, trip), offer once with ask_user after helping, naming what and when, with options (derived times, another time, no); skip if they asked for a reminder, said no, or the date is unknown. On a yes, create it and say when it first runs; never silently.',
     inputSchema: scheduleCreateInputSchema,
   },
   {
@@ -1673,7 +1673,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "find_in_app",
     description:
-      "Look up where something is in the app itself: a screen, a settings section or an action such as connecting an app, changing the plan or inviting someone. Returns matching screens with links, and the ones this person cannot open with who can. Use it before answering any question about the app, then show each link as a markdown link; if nothing matches, say you do not know.",
+      "Find where something is in the app: a screen, a settings section or an action (connect an app, change the plan, invite someone). Returns matching screens with links, and who can open the ones this person cannot. Use it before answering any question about the app; show each link as markdown; if nothing matches, say you do not know.",
     inputSchema: {
       type: "object",
       properties: {

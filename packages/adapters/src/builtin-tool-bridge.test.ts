@@ -43,11 +43,8 @@ describe("built-in tool bridge", () => {
       "read_history",
       "remember",
       "remember_about_user",
-      "request_secret",
       "request_takeover",
       "run_subagent",
-      "schedule_create",
-      "schedule_list",
       "search_history",
       "shell",
       "skill_read",
@@ -59,16 +56,34 @@ describe("built-in tool bridge", () => {
       "wiki_search",
       "write_file",
     ]);
-    expect(definitionBytes(listed)).toBeLessThanOrEqual(31_600);
+    expect(definitionBytes(listed)).toBeLessThanOrEqual(13_400);
     expect(deferred.map((tool) => tool.name)).toEqual(
       expect.arrayContaining([
         "render_plot",
         "create_space",
         "generate_secret",
+        "request_secret",
+        "schedule_create",
         "scratchpad_add",
         "wiki_index",
       ]),
     );
+  });
+
+  it("sends fewer tool bytes on a routine run, which does not read the thread", () => {
+    const routine = selectBuiltinToolsForRun({
+      graphicalToolsAllowed: false,
+      groupId: null,
+      trigger: "routine",
+      semanticMemoryEnabled: false,
+      historyRetrievalEnabled: true,
+      messagingChannelRun: false,
+    });
+    const { listed } = partitionTools(routine);
+    const names = listed.map((tool) => tool.name);
+    expect(names).not.toContain("search_history");
+    expect(names).not.toContain("read_history");
+    expect(definitionBytes(listed)).toBeLessThanOrEqual(11_300);
   });
 
   it("names only real built-ins as core", () => {

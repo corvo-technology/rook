@@ -72,7 +72,10 @@ function setup(
         updatedAt: new Date(),
       })),
     },
-    bot: { findUnique: vi.fn(async () => ({ name: "Ana" })) },
+    bot: {
+      findUnique: vi.fn(async () => ({ name: "Ana" })),
+      findMany: vi.fn(async () => []),
+    },
   } as unknown as PrismaClient;
   const changes: TicketChange[] = [];
   const deps = {

@@ -9,6 +9,7 @@ type TicketCopy = {
   reasonCut: string;
   reasonLeft: string;
   outOfCredits: string;
+  storageFull: string;
 };
 
 const EN: TicketCopy = {
@@ -24,6 +25,8 @@ const EN: TicketCopy = {
   reasonLeft: "The run ended with work left.",
   outOfCredits:
     "The model connection is out of credits. Add credits to it, or connect another model, to continue.",
+  storageFull:
+    "Paused: this agent's computer is full. Free up space on it and this ticket will continue.",
 };
 
 /** Server-written ticket comments in each language the app is translated into; English is the source. */
@@ -41,6 +44,8 @@ const TICKET_COPY: Record<string, TicketCopy> = {
     reasonLeft: "A execução terminou com trabalho pendente.",
     outOfCredits:
       "A conexão do modelo está sem créditos. Adicione créditos a ela ou conecte outro modelo para continuar.",
+    storageFull:
+      "Pausado: o computador deste agente está cheio. Libere espaço nele e este ticket continua.",
   },
   es: {
     idle: (minutes, step, max) =>
@@ -55,6 +60,8 @@ const TICKET_COPY: Record<string, TicketCopy> = {
     reasonLeft: "La ejecución terminó con trabajo pendiente.",
     outOfCredits:
       "La conexión del modelo se quedó sin créditos. Añade créditos o conecta otro modelo para continuar.",
+    storageFull:
+      "En pausa: el equipo de este agente está lleno. Libera espacio en él y este ticket continuará.",
   },
   de: {
     idle: (minutes, step, max) =>
@@ -69,6 +76,8 @@ const TICKET_COPY: Record<string, TicketCopy> = {
     reasonLeft: "Der Lauf endete mit offener Arbeit.",
     outOfCredits:
       "Die Modellverbindung hat kein Guthaben mehr. Lade Guthaben auf oder verbinde ein anderes Modell, um fortzufahren.",
+    storageFull:
+      "Pausiert: Der Computer dieses Agenten ist voll. Gib dort Speicherplatz frei, dann geht dieses Ticket weiter.",
   },
   fr: {
     idle: (minutes, step, max) =>
@@ -83,6 +92,8 @@ const TICKET_COPY: Record<string, TicketCopy> = {
     reasonLeft: "L'exécution s'est terminée avec du travail restant.",
     outOfCredits:
       "La connexion du modèle n'a plus de crédits. Ajoutez des crédits ou connectez un autre modèle pour continuer.",
+    storageFull:
+      "En pause : l'ordinateur de cet agent est plein. Libérez de l'espace dessus et ce ticket reprendra.",
   },
   ja: {
     idle: (minutes, step, max) =>
@@ -97,6 +108,8 @@ const TICKET_COPY: Record<string, TicketCopy> = {
     reasonLeft: "作業が残ったまま実行が終了しました。",
     outOfCredits:
       "モデル接続のクレジットが残っていません。クレジットを追加するか、別のモデルを接続してください。",
+    storageFull:
+      "一時停止: このエージェントのコンピューターがいっぱいです。空き容量を確保すると、このチケットは再開します。",
   },
   "zh-CN": {
     idle: (minutes, step, max) =>
@@ -109,6 +122,7 @@ const TICKET_COPY: Record<string, TicketCopy> = {
     reasonCut: "工具调用上限结束了这次运行。",
     reasonLeft: "运行结束时仍有工作未完成。",
     outOfCredits: "模型连接的额度已用完。请充值或连接其他模型后继续。",
+    storageFull: "已暂停:此智能体的电脑已满。释放空间后,此工单将继续。",
   },
 };
 
@@ -128,5 +142,6 @@ export function ticketCopy(locale: string | undefined) {
     capped: (max: number, reason: TicketStopReason, left?: string) =>
       copy.capped(max, left, why(reason)),
     outOfCredits: copy.outOfCredits,
+    storageFull: copy.storageFull,
   };
 }

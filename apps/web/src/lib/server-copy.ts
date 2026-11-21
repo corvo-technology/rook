@@ -1,6 +1,7 @@
 import type { ApprovalCardCode, MetaCode, NotificationCode } from "@corvo/contracts";
 import { i18n } from "@lingui/core";
 import { t } from "@lingui/core/macro";
+import { storageUsageParts } from "./run-error-copy";
 
 type Params = Record<string, string>;
 
@@ -182,7 +183,15 @@ export function metaCopy(code: MetaCode, p: Params): string | undefined {
     case "routine_no_changes":
       return t`${name} routine: no changes`;
     case "sandbox_storage_full":
-      return t`This agent's computer is full. Delete files it no longer needs.`;
+      return [
+        t`This agent's computer is full. Delete files it no longer needs.`,
+        ...storageUsageParts(p),
+      ].join(" ");
+    case "sandbox_storage_low":
+      return [
+        t`This agent's computer is almost full. Delete files it no longer needs.`,
+        ...storageUsageParts(p),
+      ].join(" ");
     case "computer_home_lost":
       return t`This computer's saved files couldn't be found; it started fresh.`;
     case "routine_check_paused":

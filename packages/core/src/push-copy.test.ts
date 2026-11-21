@@ -1,6 +1,11 @@
 import { RUN_ERROR_CODES } from "@corvo/contracts";
 import { describe, expect, it } from "vitest";
-import { localizedApprovalPush, localizedFailureLine, localizedFailurePush } from "./push-copy.js";
+import {
+  localizedApprovalPush,
+  localizedFailureLine,
+  localizedFailurePush,
+  localizedStoragePush,
+} from "./push-copy.js";
 
 const approval = {
   kind: "help",
@@ -69,4 +74,27 @@ describe("localizedFailureLine", () => {
     expect(localizedFailureLine("no_model_access", "en")).toBeUndefined();
     expect(localizedFailureLine("no_model_access", undefined)).toBeUndefined();
   });
+});
+
+it("says a computer's disk push in the person's language", () => {
+  const full = {
+    kind: "help",
+    title: "Ana's computer is full",
+    body: "This agent's computer is full.",
+    storage: "full" as const,
+  };
+  expect(localizedStoragePush(full, "pt-BR")).toMatchObject({
+    title: "O computador de Ana",
+    body: "O computador está cheio.",
+  });
+  expect(localizedStoragePush({ ...full, storage: "low" }, "pt-BR").body).toBe(
+    "O computador está quase cheio.",
+  );
+  for (const locale of ["es", "de", "fr", "ja", "zh-CN"]) {
+    expect(localizedStoragePush(full, locale).body).not.toBe(full.body);
+    expect(localizedStoragePush({ ...full, storage: "low" }, locale).title).toContain("Ana");
+  }
+  expect(localizedStoragePush(full, "en")).toBe(full);
+  const other = { title: "Ana needs an answer", body: "x" };
+  expect(localizedStoragePush(other, "pt-BR")).toBe(other);
 });

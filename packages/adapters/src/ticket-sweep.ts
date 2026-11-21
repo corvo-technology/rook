@@ -1,14 +1,17 @@
 import type { JobPublisher } from "@corvo/adapter-kit";
+import type { TicketStatus } from "@corvo/contracts";
 import {
   TICKET_COMMENT_MAX_LENGTH,
   TICKET_CONTINUATIONS_MAX,
   TICKET_REVIEW_ROUNDS_MAX,
+  TicketStatusSchema,
   ticketRef,
 } from "@corvo/contracts";
 import { ticketCopy } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
 import { ensureBoard, toBoardDto } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
+import { botsOnFullComputers } from "./computer-storage-state.js";
 import type { TicketChangeNotifier } from "./ticket-changes.js";
 import { runMadeProgress, ticketOwnerLocale } from "./ticket-progress.js";
 import { ticketReviewer, WORKING_RUN_STATUSES, wakeTicketAssignee } from "./ticket-wake.js";
@@ -37,7 +40,9 @@ type SweepDeps = {
  *   that says why (a follow-up run that made progress starts the count over);
  * - a delivery in review with no review run is sent to its reviewer, and after
  *   `TICKET_REVIEW_ROUNDS_MAX` rounds to the person;
- * - an agent with nothing running starts its next To do ticket, one at a time.
+ * - an agent with nothing running starts its next To do ticket, one at a time;
+ * - an agent whose computer is full starts nothing: its To do and In progress tickets go to
+ *   Blocked with one comment that says why, and go back once there is room.
  * Only tickets with `sweepEligibleAt` are swept: new ones, and old ones a person has touched.
  * An agent with a run on a ticket is left alone, so no agent works two tickets at once.
  */
@@ -62,6 +67,10 @@ export function createTicketSweeper(deps: SweepDeps, options: { now?: () => Date
       runs.filter((run) => WORKING_RUN_STATUSES.includes(run.status)).map((run) => run.botId),
     );
 
+    const full = await botsOnFullComputers(prisma, undefined, now);
+    await resumeAfterStorage(deps, full);
+    await pauseForStorage(deps, full, heldTickets);
+
     const stalled = await prisma.ticket.findMany({
       where: {
         status: "doing",
@@ -75,7 +84,7 @@ export function createTicketSweeper(deps: SweepDeps, options: { now?: () => Date
     });
     for (const ticket of stalled) {
       const botId = ticket.assigneeBotId;
-      if (!botId || busyBots.has(botId)) continue;
+      if (!botId || busyBots.has(botId) || full.has(botId)) continue;
       busyBots.add(botId);
       try {
         await resume(deps, ticket, botId);
@@ -98,7 +107,7 @@ export function createTicketSweeper(deps: SweepDeps, options: { now?: () => Date
     for (const ticket of delivered) {
       try {
         const reviewer = await ticketReviewer(prisma, ticket);
-        if (!reviewer || busyBots.has(reviewer)) continue;
+        if (!reviewer || busyBots.has(reviewer) || full.has(reviewer)) continue;
         const claimed = await prisma.ticket.updateMany({
           where: { id: ticket.id, status: "review", reviewRounds: ticket.reviewRounds },
           data: { reviewRounds: { increment: 1 } },
@@ -122,7 +131,7 @@ export function createTicketSweeper(deps: SweepDeps, options: { now?: () => Date
       where: {
         status: "todo",
         sweepEligibleAt: { not: null },
-        assigneeBotId: { not: null, notIn: [...busyBots] },
+        assigneeBotId: { not: null, notIn: [...busyBots, ...full] },
         updatedAt: { lt: before(TODO_IDLE_MS) },
         blockedBy: { none: OPEN_BLOCKER },
       },
@@ -234,10 +243,31 @@ async function resume(deps: SweepDeps, ticket: StalledTicket, botId: string) {
     });
     return true;
   });
-  if (!blocked || !deps.onTicketChange) return;
+  if (!blocked) return;
+  await announceMove(deps, ticket, botId, "blocked", "doing");
+}
+
+type MovedTicket = {
+  id: string;
+  boardId: string;
+  spaceId: string;
+  number: number;
+  title: string;
+};
+
+/** Tells the board a ticket moved between columns, so open boards show it. */
+async function announceMove(
+  deps: SweepDeps,
+  ticket: MovedTicket,
+  botId: string,
+  status: TicketStatus,
+  previousStatus: TicketStatus,
+) {
+  if (!deps.onTicketChange) return;
+  const { prisma } = deps;
   const board = await ensureBoard(prisma, ticket.spaceId);
   const bot = await prisma.bot.findUnique({ where: { id: botId }, select: { name: true } });
-  const statusLabel = toBoardDto(board).statusLabels.blocked;
+  const statusLabel = toBoardDto(board).statusLabels[status];
   await deps.onTicketChange({
     spaceId: ticket.spaceId,
     boardId: ticket.boardId,
@@ -247,11 +277,92 @@ async function resume(deps: SweepDeps, ticket: StalledTicket, botId: string) {
     moved: {
       ref: ticketRef(board.ticketPrefix, ticket.number),
       title: ticket.title,
-      status: "blocked",
-      previousStatus: "doing",
+      status,
+      previousStatus,
       ...(statusLabel ? { statusLabel } : {}),
       byBotId: botId,
       byName: bot?.name ?? null,
     },
   });
+}
+
+/**
+ * Agents whose computer is full start nothing: their To do and In progress tickets that no run
+ * holds go to Blocked, each with one comment saying why, and remember where they were.
+ */
+async function pauseForStorage(deps: SweepDeps, full: Set<string>, held: string[]) {
+  if (full.size === 0) return;
+  const { prisma } = deps;
+  const tickets = await prisma.ticket.findMany({
+    where: {
+      status: { in: ["todo", "doing"] },
+      sweepEligibleAt: { not: null },
+      assigneeBotId: { in: [...full] },
+      id: { notIn: held },
+      blockedBy: { none: OPEN_BLOCKER },
+    },
+    take: PAGE,
+  });
+  for (const ticket of tickets) {
+    const botId = ticket.assigneeBotId;
+    const previous = TicketStatusSchema.safeParse(ticket.status);
+    if (!botId || !previous.success) continue;
+    try {
+      const copy = ticketCopy(await ticketOwnerLocale(prisma, botId));
+      const paused = await prisma.$transaction(async (tx) => {
+        const updated = await tx.ticket.updateMany({
+          where: { id: ticket.id, status: ticket.status },
+          data: { status: "blocked", storagePausedFrom: ticket.status },
+        });
+        if (updated.count !== 1) return false;
+        await tx.ticketComment.create({
+          data: {
+            ticketId: ticket.id,
+            spaceId: ticket.spaceId,
+            authorBotId: botId,
+            body: copy.storageFull.slice(0, TICKET_COMMENT_MAX_LENGTH),
+          },
+        });
+        return true;
+      });
+      if (paused) await announceMove(deps, ticket, botId, "blocked", previous.data);
+    } catch (error) {
+      getLogger().error("ticket storage pause", error);
+    }
+  }
+}
+
+/** Tickets paused for a full computer go back once it has room; one run per agent starts. */
+async function resumeAfterStorage(deps: SweepDeps, full: Set<string>) {
+  const { prisma } = deps;
+  const paused = await prisma.ticket.findMany({
+    where: { status: "blocked", storagePausedFrom: { not: null } },
+    orderBy: { updatedAt: "asc" },
+    take: PAGE,
+  });
+  const started = new Set<string>();
+  for (const ticket of paused) {
+    const botId = ticket.assigneeBotId;
+    const back = TicketStatusSchema.safeParse(ticket.storagePausedFrom);
+    if (!botId || !back.success || full.has(botId)) continue;
+    try {
+      const moved = await prisma.ticket.updateMany({
+        where: { id: ticket.id, status: "blocked", storagePausedFrom: ticket.storagePausedFrom },
+        data: { status: back.data, storagePausedFrom: null },
+      });
+      if (moved.count !== 1) continue;
+      await announceMove(deps, ticket, botId, back.data, "blocked");
+      if (started.has(botId)) continue;
+      started.add(botId);
+      await wakeTicketAssignee(deps, {
+        spaceId: ticket.spaceId,
+        ticketId: ticket.id,
+        botId,
+        kind: back.data === "doing" ? "continue" : "work",
+        skipIfActive: true,
+      });
+    } catch (error) {
+      getLogger().error("ticket storage resume", error);
+    }
+  }
 }

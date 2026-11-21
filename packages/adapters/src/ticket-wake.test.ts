@@ -50,6 +50,7 @@ describe("wakeTicketAssignee", () => {
       },
       ticketDependency: { count: vi.fn(async () => options.openBlockers ?? 0) },
       bot: {
+        findMany: vi.fn(async () => []),
         findFirst: vi.fn(async () => ({
           id: "bot-2",
           userId: "user-1",

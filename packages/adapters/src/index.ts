@@ -67,6 +67,7 @@ export * from "./computer-lifecycle.js";
 export * from "./computer-resources.js";
 export * from "./computer-screens.js";
 export * from "./computer-storage.js";
+export * from "./computer-storage-state.js";
 export * from "./computer-support.js";
 export * from "./computer-tools.js";
 export * from "./computer-update.js";

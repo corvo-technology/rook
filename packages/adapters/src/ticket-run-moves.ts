@@ -4,6 +4,7 @@ import type { TicketStopReason } from "@corvo/core";
 import { ticketCopy } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
 import { coerceTicketStatus, ensureBoard, toBoardDto } from "@corvo/db";
+import { botsOnFullComputers } from "./computer-storage-state.js";
 import type { TicketChangeNotifier } from "./ticket-changes.js";
 import { runMadeProgress, ticketOwnerLocale } from "./ticket-progress.js";
 
@@ -198,16 +199,21 @@ export async function endTicketRun(
       { id: run.id, botId: run.botId, ticketId: run.ticketId },
       { ticketEdits: true },
     );
-    const next = await continueUnfinished(deps, run, {
-      cut: outcome.cut === true,
-      progressed,
-      ...(outcome.remaining?.trim() ? { remaining: outcome.remaining.trim() } : {}),
-      reason: stopped
-        ? { kind: "text", text: outcome.comment ?? outcome.error }
-        : outcome.cut
-          ? { kind: "cut" }
-          : { kind: "left" },
-    });
+    // A full computer cannot start a follow-up: the ticket is paused below, not continued.
+    const computerFull =
+      stopped && (await botsOnFullComputers(deps.prisma, [run.botId])).has(run.botId);
+    const next = computerFull
+      ? null
+      : await continueUnfinished(deps, run, {
+          cut: outcome.cut === true,
+          progressed,
+          ...(outcome.remaining?.trim() ? { remaining: outcome.remaining.trim() } : {}),
+          reason: stopped
+            ? { kind: "text", text: outcome.comment ?? outcome.error }
+            : outcome.cut
+              ? { kind: "cut" }
+              : { kind: "left" },
+        });
     if (next?.kind === "continued") {
       await announceTicketStep(deps, run, null);
       return;
@@ -226,6 +232,13 @@ export async function endTicketRun(
               comment: outcome.comment ?? outcome.error,
             },
     );
+    // Blocked because the computer is full: the sweep puts it back once there is room.
+    if (computerFull) {
+      await deps.prisma.ticket.updateMany({
+        where: { id: run.ticketId, status: "blocked" },
+        data: { storagePausedFrom: "doing" },
+      });
+    }
     await announceTicketStep(deps, run, null);
   } catch {
     // The run is already finalized; the board catches up on the next change.

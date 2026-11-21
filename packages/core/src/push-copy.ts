@@ -195,6 +195,62 @@ export function localizedFailurePush<
   };
 }
 
+type StorageCopy = { title: (name: string) => string; full: string; low: string };
+
+/** A computer's disk push in each language the app is translated into; English is the message's own text. */
+const STORAGE_PUSH: Record<string, StorageCopy> = {
+  "pt-BR": {
+    title: (name) => `O computador de ${name}`,
+    full: "O computador está cheio.",
+    low: "O computador está quase cheio.",
+  },
+  es: {
+    title: (name) => `El equipo de ${name}`,
+    full: "El equipo está lleno.",
+    low: "El equipo está casi lleno.",
+  },
+  de: {
+    title: (name) => `Der Computer von ${name}`,
+    full: "Der Computer ist voll.",
+    low: "Der Computer ist fast voll.",
+  },
+  fr: {
+    title: (name) => `L'ordinateur de ${name}`,
+    full: "L'ordinateur est plein.",
+    low: "L'ordinateur est presque plein.",
+  },
+  ja: {
+    title: (name) => `${name}のコンピューター`,
+    full: "コンピューターがいっぱいです。",
+    low: "コンピューターの空きがわずかです。",
+  },
+  "zh-CN": {
+    title: (name) => `${name}的电脑`,
+    full: "电脑已满。",
+    low: "电脑空间快满了。",
+  },
+};
+
+/**
+ * A computer disk push in the person's language. The message names its kind, and its title
+ * carries the agent's name before the English wording. Any other push, and any language without
+ * a translation, is unchanged.
+ */
+export function localizedStoragePush<
+  T extends { title: string; body: string; storage?: "full" | "low" },
+>(message: T, locale: string | undefined): T {
+  const copy = locale ? STORAGE_PUSH[locale] : undefined;
+  if (!copy || !message.storage) return message;
+  const marker = "'s computer is";
+  const at = message.title.indexOf(marker);
+  if (at < 0) return message;
+  return {
+    ...message,
+    title: copy.title(message.title.slice(0, at)),
+    body: copy[message.storage],
+  };
+}
+
 /**
  * One line for a failed run in the person's language, for text that is stored and shown as
  * written, such as a board comment. Undefined when the language has no translation.

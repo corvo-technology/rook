@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { ApprovalCardCode, MetaCode } from "@corvo/contracts";
+import { i18n } from "@lingui/core";
 import { describe, expect, it } from "vitest";
 import { approvalCardCopy, metaCopy } from "./server-copy";
 
@@ -114,5 +115,23 @@ describe("system notice wording", () => {
       "Interrompido. Ficou na fila sem começar.",
     );
     expect(portuguese("Switched to a stronger model")).toBeTruthy();
+  });
+
+  it("words the disk notices with the largest directories, and translates them", () => {
+    const params = { top: ".cache 12000 MB, .nvm 229 MB", usedMb: "38912", totalMb: "40960" };
+    i18n.load("en", {});
+    i18n.activate("en");
+    expect(metaCopy("sandbox_storage_low", params)).toContain(
+      "This agent's computer is almost full. Delete files it no longer needs.",
+    );
+    expect(metaCopy("sandbox_storage_full", params)).toContain("Using");
+    for (const locale of ["de", "es", "fr", "ja", "pt-BR", "zh-CN"]) {
+      for (const message of [
+        "This agent's computer is almost full. Delete files it no longer needs.",
+        "This agent's computer is full. Delete files it no longer needs.",
+      ]) {
+        expect(catalog(locale).get(message), `${locale}: ${message}`).toBeTruthy();
+      }
+    }
   });
 });

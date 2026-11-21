@@ -921,6 +921,8 @@ export interface NotificationMessage {
   badge?: number;
   /** Why a failed run failed, so the push can word it in the person's language. */
   errorInfo?: RunErrorInfo;
+  /** A computer's disk notice, so the push can word it in the person's language. */
+  storage?: "full" | "low";
 }
 
 /** A product-authored transactional email, independent of its delivery vendor. */

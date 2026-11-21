@@ -25,6 +25,7 @@ function setup(ticketBoardEnabled: boolean, status = "todo") {
       })),
     },
     bot: {
+      findMany: vi.fn(async () => []),
       findFirst: vi.fn(async () => ({ id: "bot-1", userId: "user-1", thread: { id: "thread-1" } })),
     },
     ticketDependency: { count: vi.fn(async () => 0), findMany: vi.fn(async () => []) },

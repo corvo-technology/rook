@@ -71,7 +71,8 @@ function largestDirectories(raw: string): string {
     .join(", ");
 }
 
-function storageFullLine(params: Record<string, string>): string {
+/** "Using 38 GB of 40 GB. Largest: Browser 12 GB." from a computer notice's params. */
+export function storageUsageParts(params: Record<string, string>): string[] {
   const parts: string[] = [];
   const used = Number(params.usedMb);
   const total = Number(params.totalMb);
@@ -94,6 +95,11 @@ function storageFullLine(params: Record<string, string>): string {
       }),
     );
   }
+  return parts;
+}
+
+function storageFullLine(params: Record<string, string>): string {
+  const parts = storageUsageParts(params);
   return parts.length
     ? parts.join(" ")
     : i18n._({

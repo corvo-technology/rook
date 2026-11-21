@@ -140,6 +140,7 @@ export const MetaCode = z.enum([
   "routine_no_changes",
   "routine_check_paused",
   "sandbox_storage_full",
+  "sandbox_storage_low",
   "computer_home_lost",
   "rule_approved",
   "branch_effects",

@@ -375,3 +375,71 @@ describe("tickets from before the sweep", () => {
     expect(w.prompts("mia").length).toBeGreaterThan(0);
   });
 });
+
+describe("an agent whose computer is full", () => {
+  it("starts no runs, blocks its tickets once with one reason, and resumes when there is room", async () => {
+    const w = world();
+    w.person.locale = "pt-BR";
+    const first = await create(w, "Pesquisar sites", "rafa");
+    const second = await create(w, "Revisar CSV", "rafa");
+    expect(w.prompts("rafa")).toHaveLength(1);
+    for (const run of w.runs) run.status = "completed";
+    w.ticketByRef(first).status = "doing";
+    w.fullBots.add("rafa");
+    const runs = w.runs.length;
+
+    await sweeper(w, minutes(31))();
+    expect(w.runs).toHaveLength(runs);
+    expect(w.ticketByRef(first)).toMatchObject({ status: "blocked", storagePausedFrom: "doing" });
+    expect(w.ticketByRef(second)).toMatchObject({ status: "blocked", storagePausedFrom: "todo" });
+    const reasons = w.comments.filter((comment) => comment.body.includes("computador"));
+    expect(reasons).toHaveLength(2);
+    expect(reasons[0]?.body).toBe(
+      "Pausado: o computador deste agente está cheio. Libere espaço nele e este ticket continua.",
+    );
+
+    // Still full: nothing more is written and nothing starts.
+    const comments = w.comments.length;
+    await sweeper(w, minutes(60))();
+    expect(w.runs).toHaveLength(runs);
+    expect(w.comments).toHaveLength(comments);
+    expect(w.ticketByRef(first).status).toBe("blocked");
+
+    // Room again: tickets go back, and only one run starts for the agent.
+    w.fullBots.delete("rafa");
+    await sweeper(w, minutes(61))();
+    expect(w.ticketByRef(first)).toMatchObject({ status: "doing", storagePausedFrom: null });
+    expect(w.ticketByRef(second)).toMatchObject({ status: "todo", storagePausedFrom: null });
+    expect(w.runs).toHaveLength(runs + 1);
+    expect(w.prompts("rafa").at(-1)).toContain(`Continue ticket ${first}`);
+  });
+
+  it("does not wake an agent for a new ticket or a follow-up", async () => {
+    const w = world();
+    w.fullBots.add("rafa");
+    await create(w, "New", "rafa");
+    expect(w.runs).toHaveLength(0);
+  });
+
+  it("does not continue a run that stopped on a full computer, and pauses the ticket", async () => {
+    const w = world();
+    const ref = await create(w, "Map", "rafa");
+    const ticket = w.ticketByRef(ref);
+    const run = w.runs[0]!;
+    const turn = { id: run.id, spaceId: "ws", botId: "rafa", ticketId: ticket.id };
+    await startTicketRun(w.deps, turn);
+    w.fullBots.add("rafa");
+    await endTicketRun(w.deps, turn, {
+      kind: "stopped",
+      error: "The computer's storage is full.",
+      remaining: "300 sites",
+    });
+    run.status = "failed";
+    expect(ticket).toMatchObject({
+      status: "blocked",
+      storagePausedFrom: "doing",
+      continuations: 0,
+    });
+    expect(w.runs).toHaveLength(1);
+  });
+});

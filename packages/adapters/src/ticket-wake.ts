@@ -9,6 +9,7 @@ import { escapePromptData } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
 import { CHIEF_SPAWN_KEY } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
+import { botsOnFullComputers } from "./computer-storage-state.js";
 
 /**
  * Why a ticket run starts. `work` and `continue` and `rework` go to the owner; `review` and
@@ -102,6 +103,8 @@ export async function wakeTicketAssignee(
   const kind = input.kind ?? "work";
   const owner = OWNER_KINDS.has(kind);
   const run = await deps.prisma.$transaction(async (tx) => {
+    // A full computer cannot start the run; the sweep pauses its tickets and resumes them later.
+    if ((await botsOnFullComputers(tx, [input.botId])).size > 0) return null;
     const ticket = await tx.ticket.findFirst({
       where: {
         id: input.ticketId,

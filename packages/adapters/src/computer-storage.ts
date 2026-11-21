@@ -16,30 +16,84 @@ export const PRUNED_BROWSER_CACHE_NAMES = [
   "GrShaderCache",
   "ShaderCache",
   "DawnCache",
+  "GraphiteDawnCache",
+  "component_crx_cache",
+  "extensions_crx_cache",
+  // Crash dumps and metrics the browser only writes for its vendor.
+  "Crashpad",
+  "Crash Reports",
+  "BrowserMetrics",
 ] as const;
 /** Where profiles live on a cloud computer and, for a local one, directly under the home. */
 const BROWSER_PROFILE_ROOTS = ['"$HOME/corvo-home/.browser-profiles"', '"$HOME/.browser-profiles"'];
 /** Codex CLI session logs and logs older than this are history, not state; auth and config stay. */
 export const CODEX_SESSION_RETENTION_DAYS = 7;
 export const CODEX_LOG_RETENTION_DAYS = 3;
+/** Rook's own screenshots, downloads and scratch files older than this are regenerable. */
+export const ROOK_TEMP_RETENTION_DAYS = 1;
+
+/** Where a cloud computer keeps the home, and, for a local one, the user home itself. */
+const HOME_BASES = ["$HOME", "$HOME/corvo-home"] as const;
+/**
+ * Caches that tools rebuild on demand, relative to the home: package managers (npm, pnpm, pip)
+ * and the browser's own cache directories. Their top-level entries are emptied; the directories
+ * stay. Browser binaries (`.cache/ms-playwright`), logins, settings and workspace files are
+ * not named.
+ */
+export const REGENERABLE_CACHE_DIRS = [
+  ".npm/_cacache",
+  ".npm/_logs",
+  ".cache/pip",
+  ".cache/pnpm",
+  ".local/share/pnpm/store",
+  ".cache/chromium",
+  ".cache/google-chrome",
+  ".config/chromium/Crash Reports",
+  ".config/google-chrome/Crash Reports",
+] as const;
+/** Scratch the browser and Playwright leave directly under /tmp, plus core dumps. */
+const TMP_SCRATCH_NAMES = [
+  "corvo-workspace-archive-*",
+  "corvo-command-*",
+  "corvo-chrome.log",
+  "playwright_chromiumdev_profile-*",
+  "playwright-artifacts-*",
+  ".org.chromium.*",
+  ".com.google.Chrome.*",
+] as const;
+/** Core dumps a crashed process leaves in the home or /tmp; only plain files by these names. */
+const CORE_DUMP_NAMES = ["core", "core.[0-9]*"] as const;
 
 /**
- * Files Rook itself leaves on a computer, or that the browser and Codex CLI rebuild or age out:
- * screenshot scratch directories, command logs and markers, interrupted workspace archives,
- * stale browser caches, and old Codex sessions and logs. Nothing else is named here, so a
+ * Files Rook itself leaves on a computer, or that the browser, package managers and Codex CLI
+ * rebuild or age out: screenshot scratch directories, command logs and markers, interrupted
+ * workspace archives, Rook's temp older than a day, browser caches and crash dumps, npm, pnpm and
+ * pip caches, core dumps, and old Codex sessions and logs. Nothing else is named here, so a
  * clean-up can never reach the person's files, logins or settings. Items younger than a few
  * minutes may still be in use.
  */
 export function managedTempCleanupCommand(): string {
   const stale = "-mmin +3";
   const cacheNames = PRUNED_BROWSER_CACHE_NAMES.map((name) => `-name '${name}'`).join(" -o ");
+  const tmpNames = TMP_SCRATCH_NAMES.map((name) => `-name '${name}'`).join(" -o ");
+  const coreNames = CORE_DUMP_NAMES.map((name) => `-name '${name}'`).join(" -o ");
   return [
     `find /tmp/corvo -mindepth 1 -maxdepth 1 \\( -name 'observe-*' -o -name '*.log' \\) ${stale} -exec rm -rf -- {} + 2>/dev/null`,
-    `find /tmp -maxdepth 1 \\( -name 'corvo-workspace-archive-*' -o -name 'corvo-command-*' -o -name 'corvo-chrome.log' \\) ${stale} -exec rm -rf -- {} + 2>/dev/null`,
+    `find /tmp/corvo -mindepth 1 -maxdepth 1 -mtime +${ROOK_TEMP_RETENTION_DAYS} -exec rm -rf -- {} + 2>/dev/null`,
+    `find /tmp -maxdepth 1 \\( ${tmpNames} \\) ${stale} -exec rm -rf -- {} + 2>/dev/null`,
     ...BROWSER_PROFILE_ROOTS.flatMap((root) => [
       `find ${root} -mindepth 2 -maxdepth 4 -type d \\( ${cacheNames} \\) ${stale} -prune -exec rm -rf -- {} + 2>/dev/null`,
       `find ${root} -mindepth 3 -maxdepth 4 -type d -name 'CacheStorage' -path '*/Service Worker/CacheStorage' ${stale} -prune -exec rm -rf -- {} + 2>/dev/null`,
     ]),
+    ...HOME_BASES.flatMap((base) =>
+      REGENERABLE_CACHE_DIRS.map(
+        (dir) =>
+          `find "${base}/${dir}" -mindepth 1 -maxdepth 1 ${stale} -exec rm -rf -- {} + 2>/dev/null`,
+      ),
+    ),
+    ...["/tmp", '"$HOME"', '"$HOME/corvo-home"'].map(
+      (dir) => `find ${dir} -maxdepth 1 -type f \\( ${coreNames} \\) ${stale} -delete 2>/dev/null`,
+    ),
     `find "$HOME/.codex/sessions" -type f -mtime +${CODEX_SESSION_RETENTION_DAYS} -delete 2>/dev/null`,
     `find "$HOME/.codex/log" -type f -mtime +${CODEX_LOG_RETENTION_DAYS} -delete 2>/dev/null`,
     "true",
@@ -183,42 +237,91 @@ export async function describeLargestDirectories(
   }
 }
 
+const MB = 1024 * 1024;
+/** Below this much free space (or 15% of the disk, if more) the owner is warned before it is full. */
+export const WARN_FREE_BYTES = 3 * 1024 * MB;
+const WARN_FREE_FRACTION = 0.15;
+
+/** Whether the disk is close enough to full that its owner should hear of it. */
+export function isStorageLow(disk: { free: number; total: number }): boolean {
+  return disk.free < Math.max(WARN_FREE_BYTES, disk.total * WARN_FREE_FRACTION);
+}
+
+export type StorageLow = {
+  freeBytes: number;
+  usedBytes: number;
+  totalBytes: number;
+  /** The largest directories, e.g. ".codex 475 MB, .nvm 229 MB". */
+  usage?: string;
+};
+
+/** Disk numbers as structured log fields; names only, never file contents. */
+function diskFields(disk: { free: number; used: number; total: number }, usage?: string) {
+  return {
+    "disk.free_mb": Math.floor(disk.free / MB),
+    "disk.used_mb": Math.floor(disk.used / MB),
+    "disk.total_mb": Math.floor(disk.total / MB),
+    ...(usage ? { "disk.largest": usage } : {}),
+  };
+}
+
 /**
  * Checks the computer's free space before a run or browser starts. Below the threshold Rook's
  * managed clean-up runs first; if that is not enough, the start fails here with the full-computer
  * error and the largest directories, instead of failing partway. An unreadable disk never blocks.
+ * Returns what to warn about when there is room now but not much: the caller tells the owner.
  */
 export async function ensureFreeSpace(
   sandbox: Pick<SandboxProvider, "execute">,
   computer: ComputerRef,
   context: AdapterContext,
   minFree = MIN_FREE_BYTES,
-): Promise<void> {
-  const before = await freeBytes(sandbox, computer, context);
-  if (before === undefined || before >= minFree) return;
-  await freeManagedTemp(sandbox, computer, context);
-  const after = await diskBytes(sandbox, computer, context);
-  if (after === undefined || after.free >= minFree) return;
-  throw new SandboxStorageFullError({
-    cause: new Error(`only ${Math.floor(after.free / 1024 / 1024)} MB free`),
-    usage: await describeLargestDirectories(sandbox, computer, context),
-    disk: { usedBytes: after.used, totalBytes: after.total },
-  });
+): Promise<{ low?: StorageLow }> {
+  const before = await diskBytes(sandbox, computer, context);
+  if (before === undefined) return {};
+  let disk = before;
+  if (before.free < minFree || isStorageLow(before)) {
+    await freeManagedTemp(sandbox, computer, context);
+    disk = (await diskBytes(sandbox, computer, context)) ?? before;
+    getLogger().info("computer.storage.cleaned", {
+      ...diskFields(disk),
+      "disk.freed_mb": Math.max(0, Math.floor((disk.free - before.free) / MB)),
+    });
+  }
+  if (disk.free < minFree) {
+    const usage = await describeLargestDirectories(sandbox, computer, context);
+    getLogger().error("computer.storage.full", diskFields(disk, usage));
+    throw new SandboxStorageFullError({
+      cause: new Error(`only ${Math.floor(disk.free / MB)} MB free`),
+      usage,
+      disk: { usedBytes: disk.used, totalBytes: disk.total },
+    });
+  }
+  if (!isStorageLow(disk)) return {};
+  const usage = await describeLargestDirectories(sandbox, computer, context);
+  getLogger().warn("computer.storage.low", diskFields(disk, usage));
+  return {
+    low: { freeBytes: disk.free, usedBytes: disk.used, totalBytes: disk.total, usage },
+  };
 }
 
 /**
  * Clears Rook's stale temporary files on request and reports the room that opened up, so a
- * person can free a full computer without waiting for the next start to do it.
+ * person can free a full computer without waiting for the next start to do it. `freeBytes` is
+ * what is free afterwards, for clearing the back-off once there is room to start again.
  */
 export async function freeComputerSpace(
   sandbox: Pick<SandboxProvider, "execute">,
   computer: ComputerRef,
   context: AdapterContext,
-): Promise<{ freedBytes: number | null }> {
+): Promise<{ freedBytes: number | null; freeBytes: number | null }> {
   const before = await freeBytes(sandbox, computer, context);
   await freeManagedTemp(sandbox, computer, context);
   const after = await freeBytes(sandbox, computer, context);
-  return {
-    freedBytes: before === undefined || after === undefined ? null : Math.max(0, after - before),
-  };
+  const freedBytes =
+    before === undefined || after === undefined ? null : Math.max(0, after - before);
+  getLogger().info("computer.storage.freed", {
+    "disk.freed_mb": freedBytes === null ? null : Math.floor(freedBytes / MB),
+  });
+  return { freedBytes, freeBytes: after ?? null };
 }

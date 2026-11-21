@@ -174,6 +174,7 @@ export function watchFromDraft(
     if (!draft.command.trim()) return { error: t`Add a command to run` };
     return { watch: { ...base, command: draft.command.trim(), ...track } };
   }
+  if (draft.kind === "board") return { watch: base };
   if (!draft.tool.trim()) return { error: t`Pick a tool to check` };
   let args: unknown;
   try {
@@ -783,6 +784,9 @@ function WatchTriggerCard({
           <NativeSelectOption value="files">{t`Files or folders on the computer`}</NativeSelectOption>
           <NativeSelectOption value="command">{t`A command's output`}</NativeSelectOption>
           <NativeSelectOption value="tool">{t`An integration tool`}</NativeSelectOption>
+          {watch.kind === "board" ? (
+            <NativeSelectOption value="board">{t`Stuck tickets on the board`}</NativeSelectOption>
+          ) : null}
         </NativeSelect>
         {watch.kind === "files" ? (
           <Textarea

@@ -204,6 +204,8 @@ export const Transcript = memo(function Transcript({
   const autoScrollTimer = useRef<number | undefined>(undefined);
   const jumpButtonRef = useRef<HTMLButtonElement>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  // On touch the actions stay out of the way until the message is tapped.
+  const [tappedId, setTappedId] = useState<string | null>(null);
   const [expandedPeerMarkers, setExpandedPeerMarkers] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
@@ -598,8 +600,18 @@ export const Transcript = memo(function Transcript({
               {message.id === unreadDividerId ? (
                 <UnreadDivider afterSeparator={separatorIds.has(message.id)} />
               ) : null}
+              {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: a tap only reveals the row's own buttons on touch screens, which keyboards reach by focus. */}
               <div
                 data-message-id={message.id}
+                data-actions={tappedId === message.id ? "open" : undefined}
+                onClick={(event) => {
+                  if (peerReceipt || !window.matchMedia("(hover: none)").matches) return;
+                  const target = event.target as HTMLElement;
+                  if (target.closest("a,button,input,textarea,select,summary,[role=button]"))
+                    return;
+                  if (window.getSelection()?.toString()) return;
+                  setTappedId((current) => (current === message.id ? null : message.id));
+                }}
                 className={
                   peerReceipt
                     ? "relative py-0.5"

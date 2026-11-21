@@ -2041,6 +2041,7 @@ msgid "Canceled"
 msgstr "Cancelado"
 
 #: src/components/CloudAgentCard.tsx
+#: src/components/ResearchCard.tsx
 msgid "cancelled"
 msgstr "cancelado"
 
@@ -4476,6 +4477,7 @@ msgid "Facts about you"
 msgstr "Datos sobre ti"
 
 #: src/components/CloudAgentCard.tsx
+#: src/components/ResearchCard.tsx
 msgid "failed"
 msgstr "fallido"
 
@@ -4600,6 +4602,7 @@ msgid "Finish subscription sign-in, then test again."
 msgstr "Termina el inicio de sesión por suscripción y vuelve a probar."
 
 #: src/components/CloudAgentCard.tsx
+#: src/components/ResearchCard.tsx
 msgid "finished"
 msgstr "finalizado"
 
@@ -8210,6 +8213,7 @@ msgid "Run time must be in the future."
 msgstr "La hora de ejecución debe ser en el futuro."
 
 #: src/components/CloudAgentCard.tsx
+#: src/components/ResearchCard.tsx
 msgid "running"
 msgstr "en ejecución"
 
@@ -9067,6 +9071,10 @@ msgstr "Transmitir respuestas"
 #: src/pages/Usage.tsx
 msgid "Strong"
 msgstr "Potente"
+
+#: src/pages/RoutineEditor.tsx
+msgid "Stuck tickets on the board"
+msgstr "Tareas atascadas en el tablero"
 
 #: src/components/CoachLayer.tsx
 msgid "Stuck? Ask the Chief."

@@ -164,6 +164,8 @@ function replyBlockText(block: MessageBlock): string {
     case "cloud_agent":
     case "plan":
       return block.title;
+    case "research":
+      return block.question;
     case "call_request":
       return block.reason;
     case "subagent":

@@ -4,7 +4,12 @@ import {
   FLEET_TOOL_NAMES,
   FLEET_WRITE_TOOL_NAMES,
 } from "@corvo/contracts";
-import { isBackgroundRunTrigger, isOwnerStartedRun, runReadsThreadHistory } from "@corvo/core";
+import {
+  isAutonomousRunTrigger,
+  isBackgroundRunTrigger,
+  isOwnerStartedRun,
+  runReadsThreadHistory,
+} from "@corvo/core";
 import { builtinAgentTools } from "./builtin-tools.js";
 import { selectCloudAgentTools } from "./cloud-agent-tools-select.js";
 import { selectMemoryTools } from "./memory-tools.js";
@@ -43,6 +48,7 @@ export const READ_ONLY_AGENT_TOOLS = new Set([
   "browser_snapshot",
   "list_secrets",
   "cloud_agent_status",
+  "research_status",
   "query_database",
   "describe_database",
 ]);
@@ -163,6 +169,7 @@ export function selectBuiltinToolsForRun(options: {
       (options.hostActionsOffered || tool.name !== "propose_host_action") &&
       (options.sayNowOffered || tool.name !== "say_now") &&
       (options.workflowContinues || tool.name !== "workflow_stop") &&
+      (isAutonomousRunTrigger(options.trigger) || tool.name !== "note_surfaced") &&
       (options.routedRun || tool.name !== "pass") &&
       (options.strongerModelAvailable || tool.name !== "request_stronger_model") &&
       (options.databasesGranted ||

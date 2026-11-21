@@ -20,6 +20,7 @@ import { hostActionTools } from "./run-tools-host.js";
 import { cloudAgentTool, connectorTool, integrationTools } from "./run-tools-integrations.js";
 import { memoryTools } from "./run-tools-memory.js";
 import { messagingTools } from "./run-tools-messaging.js";
+import { researchTools } from "./run-tools-research.js";
 import { secretTools } from "./run-tools-secrets.js";
 import { taskTools } from "./run-tools-tasks.js";
 import { wikiTools } from "./run-tools-wiki.js";
@@ -32,6 +33,7 @@ const TOOL_HANDLERS = new Map<string, ToolHandler>([
   ...Object.entries(appMapTools),
   ...Object.entries(documentTools),
   ...Object.entries(integrationTools),
+  ...Object.entries(researchTools),
   ...Object.entries(hostActionTools),
   ...Object.entries(taskTools),
   ...Object.entries(messagingTools),

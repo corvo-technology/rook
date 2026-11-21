@@ -83,7 +83,7 @@ describe("built-in tool bridge", () => {
     const names = listed.map((tool) => tool.name);
     expect(names).not.toContain("search_history");
     expect(names).not.toContain("read_history");
-    expect(definitionBytes(listed)).toBeLessThanOrEqual(11_300);
+    expect(definitionBytes(listed)).toBeLessThanOrEqual(12_100); // includes note_surfaced, which background runs get
   });
 
   it("names only real built-ins as core", () => {

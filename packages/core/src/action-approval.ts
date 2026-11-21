@@ -30,6 +30,7 @@ const APPROVAL_EXEMPT_TOOLS = new Set([
   "schedule_cancel",
   "workflow_stop",
   "pass",
+  "note_surfaced",
   "list_fleet",
   "guide_read",
   "space_status",
@@ -64,6 +65,8 @@ const EXPLICIT_APPROVAL_BUILTIN_TOOLS = new Set([
 const UNATTENDED_SAFE_BUILTIN_TOOLS = new Set([
   "browser_snapshot",
   "cloud_agent_status",
+  "research_start",
+  "research_status",
   "computer_observe",
   "list_files",
   "list_fleet",
@@ -89,6 +92,7 @@ const UNATTENDED_SAFE_BUILTIN_TOOLS = new Set([
   "web_search",
   "workflow_stop",
   "pass",
+  "note_surfaced",
 ]);
 
 /**

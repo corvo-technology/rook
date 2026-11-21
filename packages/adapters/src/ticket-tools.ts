@@ -90,6 +90,70 @@ async function moverOf(
   return { byBotId: null, byName: user?.name ?? null };
 }
 
+type BoardRow = Awaited<ReturnType<typeof ensureBoard>>;
+
+/** Resolves refs (RAK-4) or ids to tickets of this board; an unknown one is an error. */
+async function resolveBlockers(
+  deps: TicketToolDeps,
+  spaceId: string,
+  board: BoardRow,
+  refs: string[],
+): Promise<{ ids: string[] } | { error: string }> {
+  const ids: string[] = [];
+  for (const ref of refs) {
+    const row =
+      (await findTicket(deps.prisma, spaceId, board, { ref })) ??
+      (await findTicket(deps.prisma, spaceId, board, { id: ref }));
+    if (!row) return { error: `blockedBy: ticket ${ref} not found.` };
+    if (!ids.includes(row.id)) ids.push(row.id);
+  }
+  return { ids };
+}
+
+/** True when `target` is reachable by following blockers from `from`, which would make a cycle. */
+async function waitsOn(deps: TicketToolDeps, from: string[], target: string): Promise<boolean> {
+  const seen = new Set<string>();
+  let frontier = from;
+  while (frontier.length > 0 && seen.size < 500) {
+    if (frontier.includes(target)) return true;
+    for (const id of frontier) seen.add(id);
+    const next = await deps.prisma.ticketDependency.findMany({
+      where: { ticketId: { in: frontier } },
+      select: { blockerId: true },
+    });
+    frontier = next.map((row) => row.blockerId).filter((id) => !seen.has(id));
+  }
+  return false;
+}
+
+/** The ticket as an agent reads it: the board's fields plus what gates and finishes it. */
+async function agentTicket(
+  deps: TicketToolDeps,
+  row: Parameters<typeof toTicketDto>[0] & {
+    acceptanceCriteria?: string | null;
+    remaining?: string | null;
+  },
+  prefix: string,
+) {
+  const blockers = await deps.prisma.ticketDependency.findMany({
+    where: { ticketId: row.id },
+    select: { blocker: { select: { number: true, status: true } } },
+  });
+  return {
+    ...toTicketDto(row, prefix),
+    ...(row.acceptanceCriteria ? { acceptanceCriteria: row.acceptanceCriteria } : {}),
+    ...(row.remaining ? { remaining: row.remaining } : {}),
+    ...(blockers.length > 0
+      ? {
+          blockedBy: blockers.map(({ blocker }) => ({
+            ref: ticketRef(prefix, blocker.number),
+            status: blocker.status,
+          })),
+        }
+      : {}),
+  };
+}
+
 const LIST_TICKETS_LIMIT = 50;
 const LIST_DESCRIPTION_CHARS = 200;
 
@@ -193,7 +257,7 @@ export async function getTicket(deps: TicketToolDeps, input: { spaceId: string; 
   if (!row) return { error: `Ticket ${ref} not found.` };
   const comments = await listTicketComments(deps.prisma, input.spaceId, row.id);
   return {
-    ticket: toTicketDto(row, board.ticketPrefix),
+    ticket: await agentTicket(deps, row, board.ticketPrefix),
     comments: comments.map(toTicketCommentDto),
   };
 }
@@ -208,6 +272,8 @@ export async function createTicket(
     description?: string;
     priority?: string;
     ownerBotId?: string;
+    acceptanceCriteria?: string;
+    blockedBy?: string[];
   },
 ) {
   if (!deps.ticketBoardEnabled) return { error: "Board unavailable." };
@@ -219,10 +285,13 @@ export async function createTicket(
   const data = parsed.data;
   if (!(await ownBotInSpace(deps, input, data.assigneeBotId))) return { error: "Unknown bot." };
   const board = await ensureBoard(deps.prisma, input.spaceId);
+  const blockers = await resolveBlockers(deps, input.spaceId, board, data.blockedBy ?? []);
+  if ("error" in blockers) return blockers;
   const row = await deps.prisma.$transaction(async (tx) => {
     const number = await allocateTicketNumber(tx, board.id);
-    return tx.ticket.create({
+    const created = await tx.ticket.create({
       data: {
+        acceptanceCriteria: data.acceptanceCriteria || null,
         boardId: board.id,
         spaceId: input.spaceId,
         number,
@@ -234,7 +303,14 @@ export async function createTicket(
         createdByUserId: input.userId,
       },
     });
+    if (blockers.ids.length > 0) {
+      await tx.ticketDependency.createMany({
+        data: blockers.ids.map((blockerId) => ({ ticketId: created.id, blockerId })),
+      });
+    }
+    return created;
   });
+  // A ticket that waits on others is woken by the last of them finishing, not now.
   await deps.onTicketChange?.({
     spaceId: input.spaceId,
     boardId: board.id,
@@ -242,7 +318,7 @@ export async function createTicket(
     assigneeBotId: row.assigneeBotId,
     wakeAssignee: row.assigneeBotId !== input.botId,
   });
-  return { ticket: toTicketDto(row, board.ticketPrefix) };
+  return { ticket: await agentTicket(deps, row, board.ticketPrefix) };
 }
 
 export async function updateTicket(
@@ -258,15 +334,34 @@ export async function updateTicket(
     status?: string;
     ownerBotId?: string;
     fields?: Record<string, string>;
+    acceptanceCriteria?: string | null;
+    blockedBy?: string[];
+    remaining?: string;
   },
 ) {
   if (!deps.ticketBoardEnabled) return { error: "Board unavailable." };
   const parsed = UpdateTicketInput.safeParse({ ...input, assigneeBotId: input.ownerBotId });
   if (!parsed.success) return { error: ticketInputError(parsed.error) };
   const data = parsed.data;
+  if (data.remaining && data.status !== undefined && data.status !== "doing") {
+    return {
+      error:
+        "remaining keeps the ticket in progress. Drop status, or finish the work and move it to review.",
+    };
+  }
   if (data.assigneeBotId && !(await ownBotInSpace(deps, input, data.assigneeBotId)))
     return { error: "Unknown bot." };
   const board = await ensureBoard(deps.prisma, input.spaceId);
+  let blockerIds: string[] | undefined;
+  if (data.blockedBy !== undefined) {
+    const resolved = await resolveBlockers(deps, input.spaceId, board, data.blockedBy);
+    if ("error" in resolved) return resolved;
+    const self = await findTicket(deps.prisma, input.spaceId, board, { id: data.id });
+    if (self && (resolved.ids.includes(self.id) || (await waitsOn(deps, resolved.ids, self.id)))) {
+      return { error: "blockedBy: a ticket cannot wait on itself, directly or through others." };
+    }
+    blockerIds = resolved.ids;
+  }
   const result = await deps.prisma
     .$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM tickets WHERE id = ${data.id} AND "spaceId" = ${input.spaceId} FOR UPDATE`;
@@ -286,6 +381,13 @@ export async function updateTicket(
           ...(data.description !== undefined ? { description: data.description } : {}),
           ...(data.priority !== undefined ? { priority: data.priority ?? "normal" } : {}),
           ...(data.assigneeBotId !== undefined ? { assigneeBotId: data.assigneeBotId } : {}),
+          ...(data.acceptanceCriteria !== undefined
+            ? { acceptanceCriteria: data.acceptanceCriteria || null }
+            : {}),
+          ...(data.remaining ? { remaining: data.remaining } : {}),
+          ...(data.status !== undefined && data.status !== current.status && !data.remaining
+            ? { remaining: null }
+            : {}),
           ...(data.status !== undefined
             ? {
                 status: data.status,
@@ -296,6 +398,14 @@ export async function updateTicket(
             : {}),
         },
       });
+      if (blockerIds !== undefined) {
+        await tx.ticketDependency.deleteMany({ where: { ticketId: current.id } });
+        if (blockerIds.length > 0) {
+          await tx.ticketDependency.createMany({
+            data: blockerIds.map((blockerId) => ({ ticketId: current.id, blockerId })),
+          });
+        }
+      }
       return {
         row,
         previousStatus: coerceTicketStatus(current.status),
@@ -328,7 +438,7 @@ export async function updateTicket(
     wakeAssignee: result.reassigned && result.row.assigneeBotId !== input.botId,
     ...(moved ? { moved } : {}),
   });
-  return { ticket: toTicketDto(result.row, board.ticketPrefix) };
+  return { ticket: await agentTicket(deps, result.row, board.ticketPrefix) };
 }
 
 export async function commentTicket(

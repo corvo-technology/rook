@@ -59,6 +59,17 @@ body,
     env(safe-area-inset-left);
 }
 
+/* iOS Safari zooms the whole page when a focused field has text under 16px and leaves it zoomed,
+   which shifts the layout and cuts the right edge off. Fields on touch screens stay at 16px. */
+@media (pointer: coarse) {
+  input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"]),
+  textarea,
+  select,
+  [contenteditable="true"] {
+    font-size: 16px;
+  }
+}
+
 /* Switching spaces in place (lib/space-switch.ts): the sidebar holds still while the
    conversation crossfades, instead of the whole screen redrawing. */
 .rk-space-switching [data-space-switch="sidebar"] {

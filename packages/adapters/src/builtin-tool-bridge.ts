@@ -52,6 +52,7 @@ export const CORE_BUILTIN_TOOL_NAMES: ReadonlySet<string> = new Set([
   "workflow_stop",
   "pass",
   "request_stronger_model",
+  "note_surfaced",
   "search_history",
   "read_history",
   "end_call",

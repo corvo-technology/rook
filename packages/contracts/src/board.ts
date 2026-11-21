@@ -178,12 +178,28 @@ export const GetTicketInput = z
   });
 export type GetTicketInput = z.infer<typeof GetTicketInput>;
 
+export const TICKET_CRITERIA_MAX_LENGTH = 5_000;
+export const TICKET_REMAINING_MAX_LENGTH = 2_000;
+/** Most tickets one ticket may wait on. */
+export const TICKET_BLOCKERS_MAX = 20;
+/** Follow-up runs a ticket gets when the goal is not met, before it goes to review as it stands. */
+export const TICKET_CONTINUATIONS_MAX = 8;
+/** Times the creator reviews a delivery before the person is asked to decide. */
+export const TICKET_REVIEW_ROUNDS_MAX = 3;
+/** Ticket refs or ids that must be done first. */
+const TicketBlockedBySchema = z.array(z.string().trim().min(1).max(120)).max(TICKET_BLOCKERS_MAX);
+const TicketCriteriaSchema = z.string().trim().max(TICKET_CRITERIA_MAX_LENGTH);
+
 export const CreateTicketInput = z.object({
   boardId: Id.optional(),
   title: z.string().trim().min(1).max(TICKET_TITLE_MAX_LENGTH),
   description: z.string().max(TICKET_DESCRIPTION_MAX_LENGTH).optional(),
   priority: TicketPrioritySchema.default(DEFAULT_TICKET_PRIORITY),
   assigneeBotId: Id,
+  /** The checklist and measurable target that say the ticket is done. */
+  acceptanceCriteria: TicketCriteriaSchema.optional(),
+  /** The ticket does not start until these are done. */
+  blockedBy: TicketBlockedBySchema.optional(),
 });
 export type CreateTicketInput = z.infer<typeof CreateTicketInput>;
 
@@ -196,6 +212,11 @@ export const UpdateTicketInput = z.object({
   assigneeBotId: Id.optional(),
   /** Set a field by name; an empty value removes it. */
   fields: z.record(TicketFieldNameSchema, TicketFieldValueSchema).optional(),
+  acceptanceCriteria: TicketCriteriaSchema.nullable().optional(),
+  /** Replaces the tickets this one waits for. */
+  blockedBy: TicketBlockedBySchema.optional(),
+  /** What is still left when the agent stops short of the criteria; keeps the ticket in progress. */
+  remaining: z.string().trim().max(TICKET_REMAINING_MAX_LENGTH).optional(),
 });
 export type UpdateTicketInput = z.infer<typeof UpdateTicketInput>;
 

@@ -418,6 +418,8 @@ export async function updateTicket(
           ...(data.status !== undefined
             ? {
                 status: data.status,
+                // Someone moved it: it is no longer waiting on the computer's room.
+                storagePausedFrom: null,
                 completedAt: isTicketCompletedStatus(data.status)
                   ? (current.completedAt ?? new Date())
                   : null,

@@ -1794,6 +1794,10 @@ model Computer {
   screenUrl               String?
   /// When the computer last started running; bounds how long it can stay up in one stretch.
   runningSince            DateTime?
+  /// When a start found no room left; automatic runs wait for a while or until space is freed.
+  storageFullAt           DateTime?
+  /// When the owner was last told the computer is nearly full; at most once a day.
+  storageWarnedAt         DateTime?
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   bots                    Bot[]
@@ -2732,6 +2736,9 @@ model Ticket {
   /// Set when the ticket is created and when a person touches it; the sweep only moves tickets
   /// with a value, so tickets from before it existed stay put until someone acts on them.
   sweepEligibleAt DateTime?
+  /// The status the ticket had when it was blocked because the agent's computer is full; the
+  /// sweep puts it back once there is room.
+  storagePausedFrom String?
   comments        TicketComment[]
   /// Tickets that must be done before this one starts.
   blockedBy       TicketDependency[] @relation("TicketBlocked")

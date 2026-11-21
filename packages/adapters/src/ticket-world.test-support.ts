@@ -54,6 +54,8 @@ export function world() {
   };
   /** The language of the person who owns the agents. */
   const person: { locale: string | undefined } = { locale: undefined };
+  /** Agents whose computer has no room left and is backing off. */
+  const fullBots = new Set<string>();
   const board = {
     id: "b1",
     spaceId: "ws",
@@ -207,6 +209,10 @@ export function world() {
         return { id, userId: "u1", thread: { id: `th-${id}` } };
       },
       findUnique: async ({ where }: Row) => ({ name: where.id, userId: "u1" }),
+      findMany: async ({ where }: Row) =>
+        [...fullBots]
+          .filter((id) => !where.id?.in || where.id.in.includes(id))
+          .map((id) => ({ id })),
     },
     user: { findUnique: async () => ({ name: "Pat", locale: person.locale }) },
     $queryRaw: async () => [],
@@ -234,6 +240,7 @@ export function world() {
     runs,
     artifacts,
     person,
+    fullBots,
     prompts,
     ticketByRef,
     onTicketChange,

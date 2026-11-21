@@ -8,7 +8,7 @@ import type {
   NotificationProvider,
 } from "@corvo/adapter-kit";
 import { pushReceiptJob } from "@corvo/adapter-kit";
-import { localizedApprovalPush, localizedFailurePush } from "@corvo/core";
+import { localizedApprovalPush, localizedFailurePush, localizedStoragePush } from "@corvo/core";
 import { getLogger } from "@corvo/logging";
 import { combineSignals } from "./connector-safety.js";
 import { credentialDigest } from "./credential-digest.js";
@@ -173,8 +173,8 @@ export class ExpoPushProvider implements NotificationProvider {
     const device = await this.deliverableDevice(recipientId);
     if (!device) return "undeliverable";
     const { token } = device;
-    const wording = localizedFailurePush(
-      localizedApprovalPush(message, device.locale),
+    const wording = localizedStoragePush(
+      localizedFailurePush(localizedApprovalPush(message, device.locale), device.locale),
       device.locale,
     );
     const payload = {

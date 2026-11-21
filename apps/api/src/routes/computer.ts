@@ -8,6 +8,7 @@ import {
   COMPUTER_SCREEN_UNAVAILABLE,
   ComputerBusyError,
   checkpointAndStopComputer,
+  clearComputerFullWhenRoom,
   clearInactiveUserComputerControl,
   computerSupportsTerminal,
   computerSupportsUpdate,
@@ -227,11 +228,14 @@ export function computerRoutes(ctx: RouterContext) {
           throw new ORPCError("CONFLICT", { message: "Start the computer first." });
         }
         await keepComputerAwake(deps, computer.id);
-        return freeComputerSpace(
+        const { freedBytes, freeBytes } = await freeComputerSpace(
           deps.sandbox,
           toComputerRef(computer),
           computerContext(context.actor, bot.id, "free-space"),
         );
+        // With room again, automatic runs may start on it without waiting out the cool-down.
+        await clearComputerFullWhenRoom(deps.prisma, computer.id, freeBytes);
+        return { freedBytes };
       }),
       reset: authed.computer.reset.handler(async ({ context, input }) =>
         runComputerReplace(deps, context, input.botId, "reset", "reset"),

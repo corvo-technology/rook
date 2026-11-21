@@ -9616,6 +9616,10 @@ msgid "This agent used its daily budget. Raise the limit or wait until tomorrow.
 msgstr "此智能体已用完当日预算。请提高上限或等到明天。"
 
 #: src/lib/server-copy.ts
+msgid "This agent's computer is almost full. Delete files it no longer needs."
+msgstr "此智能体的电脑空间快满了。请删除不再需要的文件。"
+
+#: src/lib/server-copy.ts
 msgid "This agent's computer is full. Delete files it no longer needs."
 msgstr "此智能体的电脑已满。请删除它不再需要的文件。"
 

@@ -9616,6 +9616,10 @@ msgid "This agent used its daily budget. Raise the limit or wait until tomorrow.
 msgstr "Cet agent a utilisé son budget quotidien. Augmentez la limite ou attendez demain."
 
 #: src/lib/server-copy.ts
+msgid "This agent's computer is almost full. Delete files it no longer needs."
+msgstr "L'ordinateur de cet agent est presque plein. Supprimez les fichiers dont il n'a plus besoin."
+
+#: src/lib/server-copy.ts
 msgid "This agent's computer is full. Delete files it no longer needs."
 msgstr "L'ordinateur de cet agent est plein. Supprimez les fichiers dont il n'a plus besoin."
 

@@ -108,6 +108,11 @@ import {
 } from "./computer-lifecycle.js";
 import { isComputerSetupFailure, markComputerSetupFailure } from "./computer-setup-error.js";
 import { ensureFreeSpace } from "./computer-storage.js";
+import {
+  claimStorageWarning,
+  clearComputerFull,
+  markComputerFull,
+} from "./computer-storage-state.js";
 import { teamBotWorkspaceDirectory } from "./computer-support.js";
 import { checkpointRunComputerWorkspace } from "./computer-workspace.js";
 import {
@@ -262,7 +267,7 @@ import {
 import { loadAgentScratchpadContext } from "./scratchpad-context.js";
 import { inferScript } from "./scripted-runtime.js";
 import { listAgentSkillRecords } from "./skill-tools.js";
-import { alertStorageFull } from "./storage-alert.js";
+import { alertStorageFull, alertStorageLow } from "./storage-alert.js";
 import {
   continueRunClaimFence,
   refreshTakeoverContinuePlan,
@@ -1066,10 +1071,14 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const artifacts = deps.artifacts;
         let homeLostTold = false;
         let storageFullTold = false;
-        const onStorageFull = (usage?: string) => {
+        const onStorageFull = (usage?: string, disk?: SandboxStorageFullError["disk"]) => {
+          // Automatic runs on this computer wait until there is room (or a cool-down passes).
+          void markComputerFull(deps.prisma, storedComputer.id).catch((error) =>
+            getLogger().warn("computer storage back-off", { error }),
+          );
           if (storageFullTold) return;
           storageFullTold = true;
-          void alertStorageFull(deps, run, bot, usage);
+          void alertStorageFull(deps, run, bot, usage, disk);
         };
         const recentFilesInput = {
           context,
@@ -1097,9 +1106,20 @@ export function createRunExecutor(deps: ExecutorDeps) {
             );
             // Fail here, with what fills the disk, rather than partway through the run.
             try {
-              await ensureFreeSpace(deps.sandbox, computer, context);
+              const { low } = await ensureFreeSpace(deps.sandbox, computer, context);
+              await clearComputerFull(deps.prisma, storedComputer.id).catch(() => undefined);
+              if (
+                low &&
+                (await claimStorageWarning(deps.prisma, storedComputer.id).catch(() => false))
+              ) {
+                void alertStorageLow(deps, run, bot, low);
+              }
             } catch (error) {
-              if (error instanceof SandboxStorageFullError) onStorageFull(error.usage);
+              if (error instanceof SandboxStorageFullError) {
+                // Before the run fails, so its ticket sees the back-off when it ends.
+                await markComputerFull(deps.prisma, storedComputer.id).catch(() => undefined);
+                onStorageFull(error.usage, error.disk);
+              }
               throw error;
             }
             computerUse.screenRelease = { computer, context, keepWarm: false };

@@ -47,6 +47,7 @@ function handlers(overrides: Partial<BackgroundJobHandlers> = {}): BackgroundJob
     "cloud_agent.poll": vi.fn(async () => undefined),
     "research.run": vi.fn(async () => undefined),
     "push.receipt": vi.fn(async () => undefined),
+    "notification.digest": vi.fn(async () => undefined),
     "audio.transcribe": vi.fn(async () => undefined),
     "partner.webhook": vi.fn(async () => undefined),
     "consultation.process": vi.fn(async () => undefined),

@@ -1225,6 +1225,34 @@ export const builtinAgentTools: ConnectorTool[] = [
     inputSchema: scheduleCreateInputSchema,
   },
   {
+    name: "notify_priority",
+    description:
+      "In a background run (a routine, a webhook), say how its push reaches the person. urgent: it cannot wait for the morning, so it skips quiet hours and the daily cap. low: it goes to the morning digest. Leave it unset for a normal push. The reply is always posted in the chat at once; only the push waits. Use urgent sparingly: the person can mute an agent that cries wolf.",
+    inputSchema: {
+      type: "object",
+      properties: { priority: { type: "string", enum: ["urgent", "low"] } },
+      required: ["priority"],
+    },
+  },
+  {
+    name: "notify_control",
+    description:
+      'Change how this person is notified when they ask in chat: "mute this", "snooze for an hour", "tell me less often", "send it weekly". mute: silence the push of this agent (scope agent) or of this conversation (scope thread) for an hour, until tomorrow, or forever; the inbox and the chat keep updating. unmute: turn it back on. frequency: change how often one of this agent\'s routines runs, with routineId from schedule_list and one of cron or every+unit. To be told only when something gets worse, change the routine\'s prompt with schedule_update instead. Say what you changed.',
+    inputSchema: {
+      type: "object",
+      properties: {
+        action: { type: "string", enum: ["mute", "unmute", "frequency"] },
+        scope: { type: "string", enum: ["agent", "thread"], description: "Default agent." },
+        duration: { type: "string", enum: ["hour", "tomorrow", "forever"] },
+        routineId: { type: "string" },
+        cron: { type: "string" },
+        every: { type: "number" },
+        unit: { type: "string", enum: ["minutes", "hours", "days"] },
+      },
+      required: ["action"],
+    },
+  },
+  {
     name: "workflow_stop",
     description:
       "Use only when you are a step of a workflow and there is nothing for the steps after you to act on, for example nothing new to report. The next steps will not run. Say in your answer why you stopped. Do not use it when you finished your part and the next step should go on.",

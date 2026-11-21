@@ -1,4 +1,4 @@
-import type { AccountSecurity, UsageSummary } from "@corvo/contracts";
+import type { AccountSecurity, QuietHours, UsageSummary } from "@corvo/contracts";
 import { accountDisplay, displayName, MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from "@corvo/core";
 import {
   Button,
@@ -68,6 +68,7 @@ import type { UiLocale } from "../lib/ui-locale";
 import { UI_LOCALE_LABELS, UI_LOCALES } from "../lib/ui-locale";
 import { authErrorText } from "../lib/user-error";
 import { MemberUsageSection } from "./MemberUsageSection";
+import { QuietHoursRow } from "./QuietHoursRow";
 
 export type SettingsGeneralProps = {
   email?: string | null;
@@ -76,6 +77,9 @@ export type SettingsGeneralProps = {
   /** The user's saved IANA timezone, or null before one is set. */
   timezone?: string | null;
   onTimezoneChange?: (timezone: string) => Promise<void>;
+  /** When background pushes wait; shown with the timezone it is read in. */
+  quietHours?: QuietHours;
+  onQuietHoursChange?: (quietHours: QuietHours) => Promise<unknown>;
   /** Saves the chosen app language on the account, so emails follow it. */
   onLocaleChange?: (locale: UiLocale) => Promise<unknown>;
 };
@@ -86,6 +90,8 @@ export function GeneralSettingsPanels({
   onNameSaved,
   timezone = null,
   onTimezoneChange,
+  quietHours,
+  onQuietHoursChange,
   onLocaleChange,
 }: SettingsGeneralProps) {
   const { t } = useLingui();
@@ -370,6 +376,9 @@ export function GeneralSettingsPanels({
               ) : null}
             </SettingsRow>
           </div>
+        ) : null}
+        {quietHours && onQuietHoursChange ? (
+          <QuietHoursRow value={quietHours} onChange={onQuietHoursChange} />
         ) : null}
       </SettingsGroup>
 

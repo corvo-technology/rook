@@ -376,6 +376,32 @@ describe("account preferences", () => {
     });
   });
 
+  it("saves quiet hours on the account", async () => {
+    const setup = preferencesDeps("organic");
+
+    const response = await updatePreferences(setup, {
+      quietHours: { enabled: false, start: 1380, end: 420 },
+    });
+
+    expect(response.status).toBe(200);
+    expect(setup.update).toHaveBeenCalledWith({
+      where: { id: "user-1" },
+      data: { quietHoursEnabled: false, quietHoursStart: 1380, quietHoursEnd: 420 },
+    });
+  });
+
+  it.each([
+    { enabled: true, start: 1440, end: 480 },
+    { enabled: true, start: -1, end: 480 },
+    { enabled: true, start: 600.5, end: 480 },
+    { start: 600, end: 480 },
+  ])("rejects quiet hours outside the day: %j", async (quietHours) => {
+    const setup = preferencesDeps("organic");
+    const response = await updatePreferences(setup, { quietHours });
+    expect(response.status).toBe(400);
+    expect(setup.update).not.toHaveBeenCalled();
+  });
+
   it("rejects a language the apps are not translated into", async () => {
     const setup = preferencesDeps("organic");
     const response = await updatePreferences(setup, { locale: "tlh" });

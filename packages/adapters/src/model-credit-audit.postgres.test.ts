@@ -270,7 +270,7 @@ dbTests("durable model credit audit", () => {
     ]);
     expect(events.reduce((sum, e) => sum + e.amountMicros, 0n)).toBe(3_000_000n);
   });
-  it("flags unavailable provider evidence for review without releasing the hold", async () => {
+  it("settles a hold with unavailable provider evidence at an estimate after bounded retries", async () => {
     const f = await fixture();
     let now = Date.now() + 10 * 60_000;
     const reconcile = createModelCreditReconciler({ prisma, now: () => new Date(now) });
@@ -279,7 +279,7 @@ dbTests("durable model credit audit", () => {
       now += 60 * 60_000;
     }
     expect(await prisma.modelCreditEntry.findUnique({ where: { callId: f.callId } })).toMatchObject(
-      { pending: true, reconciliationState: "needs_review" },
+      { pending: false, reconciliationState: "complete" },
     );
     expect((await creditAccount(prisma, f.organizationId)).balanceMicros).toBe(8_000_000n);
   });

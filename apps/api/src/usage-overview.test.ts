@@ -55,6 +55,27 @@ describe("rowTokens", () => {
 });
 
 describe("buildUsageOverview", () => {
+  it("keeps what was billed apart from what the cache served, per agent and in all", () => {
+    const result = overview([
+      row({
+        botId: "a",
+        inputTokens: 10,
+        cacheReadTokens: 90,
+        cacheWriteTokens: 5,
+        outputTokens: 4,
+      }),
+      row({ botId: "a", inputTokens: 20, cacheReadTokens: null, outputTokens: 6 }),
+      row({ botId: "b", inputTokens: 1, cacheReadTokens: 9, outputTokens: 2 }),
+    ]);
+    expect(result.cache).toEqual({ input: 31, cacheRead: 99, cacheWrite: 5, output: 12 });
+    expect(result.agents.find((a) => a.id === "a")?.cache).toEqual({
+      input: 30,
+      cacheRead: 90,
+      cacheWrite: 5,
+      output: 10,
+    });
+  });
+
   it("totals the period, splits it by agent and counts replies once per run", () => {
     const result = overview([
       row({ botId: "a", runId: "r1" }),

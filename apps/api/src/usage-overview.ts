@@ -1,4 +1,4 @@
-import type { ModelTier, UsageOverview, UsagePeriod } from "@corvo/contracts";
+import type { ModelTier, UsageCache, UsageOverview, UsagePeriod } from "@corvo/contracts";
 import { MODEL_TIERS } from "@corvo/contracts";
 import { normalizeRunError, usageTokens } from "@corvo/core";
 
@@ -7,6 +7,8 @@ export interface UsageRow {
   createdAt: Date;
   inputTokens: number | null;
   outputTokens: number | null;
+  cacheReadTokens?: number | null;
+  cacheWriteTokens?: number | null;
   totalTokens: number | null;
   costUsd: number | null;
   provider: string;
@@ -51,6 +53,14 @@ export function usageWindow(period: UsagePeriod, now: Date) {
   const previousTo = Math.min(previousFrom + (to - from), from);
   return { from, to, previousFrom, previousTo };
 }
+
+const emptyCache = (): UsageCache => ({ input: 0, cacheRead: 0, cacheWrite: 0, output: 0 });
+const addCache = (total: UsageCache, row: UsageRow) => {
+  total.input += row.inputTokens ?? 0;
+  total.cacheRead += row.cacheReadTokens ?? 0;
+  total.cacheWrite += row.cacheWriteTokens ?? 0;
+  total.output += row.outputTokens ?? 0;
+};
 
 /** Tokens of one call: what the provider totalled, else what went in and out. */
 export const rowTokens = (row: UsageRow): number => usageTokens(row);
@@ -147,6 +157,7 @@ export function buildUsageOverview(input: {
     runs: Set<string>;
     cost: number;
     costKnown: boolean;
+    cache: UsageCache;
     models: Map<string, { provider: string; model: string; tokens: number }>;
   };
   const buckets = new Map<string, Bucket>();
@@ -154,6 +165,7 @@ export function buildUsageOverview(input: {
   let cost = 0;
   let costKnown = true;
   let tokens = 0;
+  const totalCache = emptyCache();
   const tierTotals = new Map<ModelTier, { tokens: number; cost: number; costKnown: boolean }>();
   const days = new Map<string, { tokens: number; agents: Record<string, number> }>();
   // The running month shows all its days, so a few days of use sit at the start of the axis
@@ -172,9 +184,12 @@ export function buildUsageOverview(input: {
       runs: new Set<string>(),
       cost: 0,
       costKnown: true,
+      cache: emptyCache(),
       models: new Map(),
     };
     bucket.tokens += used;
+    addCache(bucket.cache, row);
+    addCache(totalCache, row);
     const run = row.parentRunId ?? row.runId;
     if (run) {
       bucket.runs.add(run);
@@ -220,6 +235,7 @@ export function buildUsageOverview(input: {
     previousTokens,
     replies: allRuns.size,
     costUsd: costKnown ? cost : null,
+    cache: totalCache,
     agents: [...buckets.entries()]
       .map(([key, bucket]) => {
         const known = key === NO_AGENT ? undefined : agents.get(key);
@@ -230,6 +246,7 @@ export function buildUsageOverview(input: {
           tokens: bucket.tokens,
           replies: bucket.runs.size,
           costUsd: bucket.costKnown ? bucket.cost : null,
+          cache: bucket.cache,
           models: [...bucket.models.values()].sort((a, b) => b.tokens - a.tokens),
           ...(bucket.id && outcomes?.get(bucket.id) ? outcomes.get(bucket.id) : {}),
         };

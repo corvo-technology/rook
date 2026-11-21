@@ -73,3 +73,46 @@ test("Usage shows storage against the plan, in light and dark", async ({ page },
     0,
   );
 });
+
+test("Usage shows what was billed against what the cache served", async ({ page }, testInfo) => {
+  const stamp = Date.now();
+  await signup(page, `usage-cache-${stamp}@corvo.test`, "password12", `Usage cache ${stamp}`);
+  await completeOnboarding(page);
+  const cache = { input: 120_000, cacheRead: 880_000, cacheWrite: 40_000, output: 90_000 };
+  await page.route("**/rpc/usage/overview", (route) =>
+    route.fulfill({
+      json: {
+        json: {
+          period: "month",
+          from: "2026-11-01T00:00:00.000Z",
+          to: "2026-11-15T12:00:00.000Z",
+          tokens: 1_130_000,
+          previousTokens: 900_000,
+          replies: 12,
+          costUsd: null,
+          cache,
+          agents: [
+            {
+              id: null,
+              name: "Pia",
+              color: "#10B981",
+              tokens: 1_130_000,
+              replies: 12,
+              costUsd: null,
+              cache,
+              models: [{ provider: "anthropic", model: "Sonnet", tokens: 1_130_000 }],
+            },
+          ],
+          days: [{ date: "2026-11-02", tokens: 1_130_000, agents: { none: 1_130_000 } }],
+        },
+      },
+    }),
+  );
+
+  await page.goto("/app/usage");
+  const billed = page.getByRole("region", { name: "Billed" });
+  await expect(billed.getByText("Cache hit rate")).toBeVisible();
+  await expect(billed.getByText("77%")).toBeVisible();
+  await expect(billed.getByText("Cache writes")).toBeVisible();
+  await captureScreenshot(page, testInfo, "usage-billed-cache");
+});

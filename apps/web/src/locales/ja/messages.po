@@ -631,6 +631,10 @@ msgstr "{seatsUsed} / {seatsMax} 人"
 msgid "{sent, plural, one {# invitation sent} other {# invitations sent}}"
 msgstr "{sent, plural, other {# 件の招待を送りました}}"
 
+#: src/pages/Usage.tsx
+msgid "{share} cached"
+msgstr "{share} キャッシュ"
+
 #: src/components/ArtifactFileCard.tsx
 msgid "{size} B"
 msgstr "{size} B"
@@ -1791,6 +1795,10 @@ msgstr "Bearerトークン"
 msgid "Below credits"
 msgstr "クレジットがこの値未満"
 
+#: src/pages/Usage.tsx
+msgid "Billed"
+msgstr "請求対象"
+
 #: src/pages/Settings.tsx
 msgid "Billing"
 msgstr "請求"
@@ -1955,6 +1963,18 @@ msgstr "エージェント別"
 #: src/pages/Usage.tsx
 msgid "By model tier"
 msgstr "モデル階層別"
+
+#: src/pages/Usage.tsx
+msgid "Cache hit rate"
+msgstr "キャッシュヒット率"
+
+#: src/pages/Usage.tsx
+msgid "Cache writes"
+msgstr "キャッシュ書き込み"
+
+#: src/pages/Usage.tsx
+msgid "Cached"
+msgstr "キャッシュ"
 
 #: src/pages/RoutinesTabs.tsx
 msgid "Calendar"
@@ -5112,6 +5132,7 @@ msgstr "デフォルトを継承"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/PricingSection.tsx
+#: src/pages/Usage.tsx
 msgid "Input"
 msgstr "入力"
 
@@ -7039,6 +7060,7 @@ msgstr "その他の接続方法"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/PricingSection.tsx
+#: src/pages/Usage.tsx
 msgid "Output"
 msgstr "出力"
 

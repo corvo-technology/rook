@@ -631,6 +631,10 @@ msgstr "{seatsUsed} of {seatsMax} people"
 msgid "{sent, plural, one {# invitation sent} other {# invitations sent}}"
 msgstr "{sent, plural, one {# invitation sent} other {# invitations sent}}"
 
+#: src/pages/Usage.tsx
+msgid "{share} cached"
+msgstr "{share} cached"
+
 #: src/components/ArtifactFileCard.tsx
 msgid "{size} B"
 msgstr "{size} B"
@@ -1791,6 +1795,10 @@ msgstr "Bearer token"
 msgid "Below credits"
 msgstr "Below credits"
 
+#: src/pages/Usage.tsx
+msgid "Billed"
+msgstr "Billed"
+
 #: src/pages/Settings.tsx
 msgid "Billing"
 msgstr "Billing"
@@ -1955,6 +1963,18 @@ msgstr ""
 #: src/pages/Usage.tsx
 msgid "By model tier"
 msgstr "By model tier"
+
+#: src/pages/Usage.tsx
+msgid "Cache hit rate"
+msgstr "Cache hit rate"
+
+#: src/pages/Usage.tsx
+msgid "Cache writes"
+msgstr "Cache writes"
+
+#: src/pages/Usage.tsx
+msgid "Cached"
+msgstr "Cached"
 
 #: src/pages/RoutinesTabs.tsx
 msgid "Calendar"
@@ -5112,6 +5132,7 @@ msgstr "Inherit default"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/PricingSection.tsx
+#: src/pages/Usage.tsx
 msgid "Input"
 msgstr "Input"
 
@@ -7039,6 +7060,7 @@ msgstr "Other ways to connect"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/PricingSection.tsx
+#: src/pages/Usage.tsx
 msgid "Output"
 msgstr "Output"
 

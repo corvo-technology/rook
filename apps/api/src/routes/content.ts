@@ -244,6 +244,8 @@ export function contentRoutes(ctx: RouterContext) {
             createdAt: true,
             inputTokens: true,
             outputTokens: true,
+            cacheReadTokens: true,
+            cacheWriteTokens: true,
             totalTokens: true,
             costUsd: true,
             provider: true,

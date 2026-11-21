@@ -631,6 +631,10 @@ msgstr "{seatsUsed} / {seatsMax} 人"
 msgid "{sent, plural, one {# invitation sent} other {# invitations sent}}"
 msgstr "{sent, plural, other {已发送 # 个邀请}}"
 
+#: src/pages/Usage.tsx
+msgid "{share} cached"
+msgstr "{share} 来自缓存"
+
 #: src/components/ArtifactFileCard.tsx
 msgid "{size} B"
 msgstr "{size} B"
@@ -1791,6 +1795,10 @@ msgstr "Bearer token"
 msgid "Below credits"
 msgstr "低于额度"
 
+#: src/pages/Usage.tsx
+msgid "Billed"
+msgstr "已计费"
+
 #: src/pages/Settings.tsx
 msgid "Billing"
 msgstr "账单"
@@ -1955,6 +1963,18 @@ msgstr "按代理"
 #: src/pages/Usage.tsx
 msgid "By model tier"
 msgstr "按模型等级"
+
+#: src/pages/Usage.tsx
+msgid "Cache hit rate"
+msgstr "缓存命中率"
+
+#: src/pages/Usage.tsx
+msgid "Cache writes"
+msgstr "缓存写入"
+
+#: src/pages/Usage.tsx
+msgid "Cached"
+msgstr "缓存"
 
 #: src/pages/RoutinesTabs.tsx
 msgid "Calendar"
@@ -5112,6 +5132,7 @@ msgstr "沿用默认"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/PricingSection.tsx
+#: src/pages/Usage.tsx
 msgid "Input"
 msgstr "输入"
 
@@ -7039,6 +7060,7 @@ msgstr "其他连接方式"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/PricingSection.tsx
+#: src/pages/Usage.tsx
 msgid "Output"
 msgstr "输出"
 

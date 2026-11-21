@@ -1,4 +1,4 @@
-import type { UsagePeriod } from "@corvo/contracts";
+import type { UsageCache, UsagePeriod } from "@corvo/contracts";
 import { normalizeRunError } from "@corvo/core";
 import { AgentLoader, BotAvatar, Button, Progress } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
@@ -13,6 +13,7 @@ import {
   usageBars,
   usageChange,
   usageDayLabel,
+  usageHitRate,
   usageShare,
 } from "../lib/usage-view";
 import { errorText } from "../lib/user-error";
@@ -73,6 +74,16 @@ export function UsagePage() {
     );
     return seconds >= 60 ? t`${value} min avg` : t`${value} s avg`;
   };
+  const percentText = (fraction: number) =>
+    new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 0 }).format(fraction);
+  const cachedText = (cache: UsageCache | undefined) => {
+    const rate = cache ? usageHitRate(cache) : null;
+    if (!rate) return undefined;
+    const share = percentText(rate);
+    return t`${share} cached`;
+  };
+  const billed = chosen?.cache ?? overview?.cache;
+  const hitRate = billed ? usageHitRate(billed) : null;
   const repliesText = (replies: number) => {
     const count = new Intl.NumberFormat(locale).format(replies);
     return t`${count} replies`;
@@ -194,6 +205,42 @@ export function UsagePage() {
                     />
                   </div>
 
+                  {billed ? (
+                    <section className="mt-10" aria-label={t`Billed`}>
+                      <h2 className="mb-1 text-[13px] font-medium text-muted-foreground">
+                        {chosen ? `${t`Billed`} · ${agentName(chosen.name)}` : t`Billed`}
+                      </h2>
+                      <dl className="m-0">
+                        {(
+                          [
+                            [t`Input`, billed.input],
+                            [t`Cached`, billed.cacheRead],
+                            billed.cacheWrite ? [t`Cache writes`, billed.cacheWrite] : null,
+                            [t`Output`, billed.output],
+                          ] as Array<[string, number] | null>
+                        ).map((entry) =>
+                          entry ? (
+                            <div
+                              key={entry[0]}
+                              className="flex items-baseline justify-between gap-4 py-2 text-sm"
+                            >
+                              <dt>{entry[0]}</dt>
+                              <dd className="m-0 tabular-nums text-muted-foreground">
+                                {formatTokens(entry[1], locale)}
+                              </dd>
+                            </div>
+                          ) : null,
+                        )}
+                        {hitRate !== null ? (
+                          <div className="flex items-baseline justify-between gap-4 py-2 text-sm">
+                            <dt>{t`Cache hit rate`}</dt>
+                            <dd className="m-0 tabular-nums">{percentText(hitRate)}</dd>
+                          </div>
+                        ) : null}
+                      </dl>
+                    </section>
+                  ) : null}
+
                   <section className="mt-10" aria-label={t`By agent`}>
                     <h2 className="mb-1 text-[13px] font-medium text-muted-foreground">{t`By agent`}</h2>
                     <ul className="m-0 list-none p-0">
@@ -224,6 +271,7 @@ export function UsagePage() {
                                   {[
                                     model?.model,
                                     repliesText(item.replies),
+                                    cachedText(item.cache),
                                     item.avgSeconds != null ? avgText(item.avgSeconds) : undefined,
                                     item.failed
                                       ? failedText(item.failed, item.topError)

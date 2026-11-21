@@ -1,6 +1,6 @@
 import type { UsageOverview } from "@corvo/contracts";
 import { expect, it } from "vitest";
-import { usageBars, usageChange, usageDayLabel, usageShare } from "./usage-view";
+import { usageBars, usageChange, usageDayLabel, usageHitRate, usageShare } from "./usage-view";
 
 it("compares with the period before, and says nothing when there was none", () => {
   expect(usageChange({ tokens: 150, previousTokens: 100 })).toBe(0.5);
@@ -37,4 +37,9 @@ it("is flat when nothing was used", () => {
 it("writes a day in the person's language", () => {
   expect(usageDayLabel("2026-11-03", "en")).toBe("Nov 3");
   expect(usageDayLabel("2026-11-03", "pt-BR")).toMatch(/3/);
+});
+
+it("rates the cache against all the input, and says nothing when none went in", () => {
+  expect(usageHitRate({ input: 100, cacheRead: 300, cacheWrite: 100, output: 9 })).toBe(0.6);
+  expect(usageHitRate({ input: 0, cacheRead: 0, cacheWrite: 0, output: 9 })).toBeNull();
 });

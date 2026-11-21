@@ -1,4 +1,4 @@
-import type { UsageOverview } from "@corvo/contracts";
+import type { UsageCache, UsageOverview } from "@corvo/contracts";
 
 /** How this period compares with the one before, as a signed fraction; null when there is nothing to compare. */
 export function usageChange(
@@ -47,4 +47,10 @@ export function usageDayLabel(date: string, locale: string): string {
     day: "numeric",
     timeZone: "UTC",
   });
+}
+
+/** Share of the input that came from the prompt cache, 0 to 1; null when nothing went in. */
+export function usageHitRate(cache: UsageCache): number | null {
+  const input = cache.input + cache.cacheRead + cache.cacheWrite;
+  return input > 0 ? cache.cacheRead / input : null;
 }

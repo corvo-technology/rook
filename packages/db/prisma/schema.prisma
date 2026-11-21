@@ -2653,6 +2653,9 @@ model Ticket {
   acceptanceCriteria String?
   /// Times the creator reviewed the delivery; capped so a ticket cannot ping-pong.
   reviewRounds    Int             @default(0)
+  /// Set when the ticket is created and when a person touches it; the sweep only moves tickets
+  /// with a value, so tickets from before it existed stay put until someone acts on them.
+  sweepEligibleAt DateTime?
   comments        TicketComment[]
   /// Tickets that must be done before this one starts.
   blockedBy       TicketDependency[] @relation("TicketBlocked")

@@ -325,6 +325,7 @@ export async function createTicket(
         assigneeBotId: data.assigneeBotId,
         createdByBotId: input.botId ?? null,
         createdByUserId: input.userId,
+        sweepEligibleAt: new Date(),
       },
     });
     if (blockers.ids.length > 0) {
@@ -400,6 +401,8 @@ export async function updateTicket(
       const row = await tx.ticket.update({
         where: { id: current.id },
         data: {
+          // A person acting on a ticket puts it back in the sweep's reach.
+          ...(input.botId ? {} : { sweepEligibleAt: new Date() }),
           ...(fields !== undefined ? { fields } : {}),
           ...(data.title !== undefined ? { title: data.title } : {}),
           ...(data.description !== undefined ? { description: data.description } : {}),
@@ -516,7 +519,10 @@ export async function commentTicket(
         body: parsed.data.body,
       },
     });
-    await tx.ticket.update({ where: { id: ticket.id }, data: { updatedAt: new Date() } });
+    await tx.ticket.update({
+      where: { id: ticket.id },
+      data: { updatedAt: new Date(), ...(input.botId ? {} : { sweepEligibleAt: new Date() }) },
+    });
     return comment;
   });
   await deps.onTicketChange?.({

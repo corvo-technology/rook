@@ -18,7 +18,7 @@ import type { EvalJudge } from "./judge.js";
 import type { HarnessWorld } from "./run-harness-world.js";
 
 /** Bump when the task set, the cache simulation or the metric definitions change. */
-export const RUN_HARNESS_FIXTURE_VERSION = "run-harness-v1";
+export const RUN_HARNESS_FIXTURE_VERSION = "run-harness-v2";
 export const TOKEN_ESTIMATOR = "adapters/context-selection estimateTextTokens";
 
 /**
@@ -33,7 +33,10 @@ export type HarnessDeps = {
   approvalPausedToolResult: () => unknown;
   estimateTokens: (text: string) => number;
 };
-export const CACHE_SIMULATION = "prefix-cache-v1";
+export const CACHE_SIMULATION = "prefix-cache-v2";
+/** Provider cache lifetimes the simulation models: the short default and the one-hour write. */
+export const SHORT_CACHE_TTL_MS = 5 * 60_000;
+export const LONG_CACHE_TTL_MS = 60 * 60_000;
 
 export type Check = { id: string; pass: boolean };
 export type ScriptLeg = { tier?: ModelTier; steps: ModelEmulatorResponse[] };
@@ -65,6 +68,13 @@ export type HarnessTask = {
   selection?: Record<string, unknown>;
   connectors?: ConnectorTool[];
   allowSilentEmpty?: boolean;
+  /**
+   * Virtual time that passes before each model call after the first (a long tool, an approval or
+   * a takeover wait). The simulated cache expires entries older than its lifetime.
+   */
+  waitBeforeCallMs?: number;
+  /** Whether the run is likely to resume after the short cache expired; sent as the real hint. */
+  cacheReturn?: AgentRunRequest["cacheReturn"];
   world: () => HarnessWorld;
   /** Offline script. The first leg runs on `tier`; a later leg is the escalated continuation. */
   script: ScriptLeg[];
@@ -140,9 +150,22 @@ export function schemaTokens(request: Pick<ModelEmulatorRequest, "tools">, token
  * order is a read, what is new except the final message is a write, and the final message is
  * uncached input. The first call of a leg reads nothing.
  */
-export function createCacheSimulation(tokens: Tokens) {
+export function createCacheSimulation(
+  tokens: Tokens,
+  clock: { ttlMs: number; waitBeforeCallMs: number } = {
+    ttlMs: SHORT_CACHE_TTL_MS,
+    waitBeforeCallMs: 0,
+  },
+) {
   let previous: string[] = [];
+  let now = 0;
+  let touchedAt = 0;
+  let calls = 0;
   return (request: ModelEmulatorRequest, reply: ModelEmulatorResponse) => {
+    if (calls++ > 0) now += clock.waitBeforeCallMs;
+    // A cached prefix that was not touched within its lifetime is gone.
+    if (now - touchedAt > clock.ttlMs) previous = [];
+    touchedAt = now;
     const segments = [
       JSON.stringify(request.tools ?? []),
       ...request.messages.map((m) => JSON.stringify(m)),
@@ -245,7 +268,10 @@ export async function runTask(
       let runtime: AgentRuntime;
       let schemaPerCall: number[] = [];
       if (mode.kind === "offline") {
-        const simulate = createCacheSimulation(tokens);
+        const simulate = createCacheSimulation(tokens, {
+          ttlMs: task.cacheReturn === "later" ? LONG_CACHE_TTL_MS : SHORT_CACHE_TTL_MS,
+          waitBeforeCallMs: task.waitBeforeCallMs ?? 0,
+        });
         const steps: ModelEmulatorStep[] = task.script[index]!.steps.map((response) => ({
           expect() {},
           usage: (request) => simulate(request, response),
@@ -281,6 +307,7 @@ export async function runTask(
         threadId: id,
         runId: id,
         trigger: task.trigger,
+        ...(task.cacheReturn ? { cacheReturn: task.cacheReturn } : {}),
         prompt: task.prompt,
         instructions: task.instructions ?? BASE_INSTRUCTIONS,
         history: task.history ?? [],

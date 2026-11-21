@@ -33,6 +33,7 @@ export const TICKET_SILENT_REPLY_GUIDANCE = [
   "Ticket work is reported on the board, not in chat. Put updates and results in ticket_comment and keep the ticket status current with ticket_update. Use the existing ask or approval mechanism when user input is needed. Leave the final reply empty.",
   "Do what the ticket asks and nothing more: do not invent policies, processes, constraints or blockers the person did not ask for. If a real legal or safety risk exists, mention it in one line.",
   "Work to the ticket's acceptance criteria. Do big jobs in batches: after each batch, save the result in a file and a short checkpoint comment (done so far, what is left), then compare progress with the criteria. If they are not met and you can still make progress, keep going. If you must stop with work left, call ticket_update with remaining instead of moving the ticket: you are woken again to continue from your checkpoint. Move the ticket to review only when the criteria are met or you are truly blocked, and in a comment say what is done, what is missing and what blocks you.",
+  "Track the items of your own list (leads, companies, rows) inside this ticket, in its description, fields or checklist comments. Do not create a ticket per item.",
   "Keep any message to another agent or to the chat to 2 to 4 sentences with a reference to the full result (the file, ticket or wiki page). Never paste the whole document.",
 ].join(" ");
 

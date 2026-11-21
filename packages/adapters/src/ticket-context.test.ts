@@ -99,3 +99,47 @@ it("does not query tickets for an out-of-range reference in a message", async ()
   ).resolves.toBeUndefined();
   expect(findMany).not.toHaveBeenCalled();
 });
+
+describe("the agent's own open tickets", () => {
+  const find = (rows: Array<Record<string, unknown>>) => ({
+    board: { findUnique: vi.fn(async () => ({ id: "b1", ticketPrefix: "RAK" })) },
+    ticket: { findMany: vi.fn(async () => rows) },
+    ticketComment: { findMany: vi.fn(async () => []) },
+    bot: { findMany: vi.fn(async () => []) },
+  });
+
+  it("lists them for a chat request from another agent, with how to keep them current", async () => {
+    const prisma = find([{ number: 7, title: "Build the list", status: "doing" }]);
+    const context = await loadAgentTicketContext(
+      { prisma: prisma as never, ticketBoardEnabled: true },
+      { spaceId: "ws", text: "Keep going.", ownerBotId: "rafa" },
+    );
+    expect(context).toContain("<your_open_tickets>");
+    expect(context).toContain("RAK-7 [doing] Build the list");
+    expect(context).toContain("ticket_comment");
+    expect(prisma.ticket.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          assigneeBotId: "rafa",
+          status: { in: ["todo", "doing", "blocked"] },
+        }),
+      }),
+    );
+  });
+
+  it("adds nothing when the agent has none, or the board is off", async () => {
+    const none = find([]);
+    expect(
+      await loadAgentTicketContext(
+        { prisma: none as never, ticketBoardEnabled: true },
+        { spaceId: "ws", text: "Hi", ownerBotId: "rafa" },
+      ),
+    ).toBeUndefined();
+    expect(
+      await loadAgentTicketContext(
+        { prisma: find([]) as never },
+        { spaceId: "ws", text: "Hi", ownerBotId: "rafa" },
+      ),
+    ).toBeUndefined();
+  });
+});

@@ -43,6 +43,31 @@ latest tool, or progress line), and a signal with no step when the run ends. A s
 nothing in the list, so clients do not read it again. The signal is transient, so a card opened
 mid-run shows its step from the next one.
 
+## Tickets that keep moving
+
+A ticket does not wait for someone to remember it. The backend sweeps the board every half minute
+(the job reconciler, one leader at a time) and acts on what has no run:
+
+- An agent works one ticket at a time. Assigning or creating a ticket wakes its owner only when
+  the owner has no other ticket running; otherwise the sweep starts the owner's next To do ticket
+  (urgent first, then oldest) as soon as the owner is free. A ticket that waits on blockers
+  starts when they are done.
+- A ticket in In progress with no run and no change for 30 minutes gets a follow-up run from its
+  checkpoint comment. After the follow-up budget it moves to Blocked with a comment that says why.
+  A ticket whose owner is waiting on a person is not stalled.
+- A delivery in In review with no review run for 10 minutes is sent to its reviewer: the agent
+  that created the ticket, or the Chief when the owner made the ticket for itself. The reviewer
+  sets it to Done or sends it back with what is missing. After the review rounds the person is
+  asked. A ticket a person created is reviewed by that person.
+- A comment from anyone but the owner on a To do, In progress or Blocked ticket wakes the owner
+  (and takes a Blocked ticket back to In progress), so a follow-up goes through the ticket.
+  A chat request from another agent shows the owner its open tickets, so the work lands on the
+  ticket and not only in chat.
+
+One ticket is one deliverable. The items inside it (leads, companies, rows) go in its description
+or checklist. `ticket_create` returns the open ticket when an agent files the same title again for
+the same owner, and refuses once ten tickets that agent created for one owner are still in To do.
+
 ## What agents can do
 
 `board_tickets`, `ticket_get`, `ticket_create`, `ticket_update` and `ticket_comment`. `ticket_update`

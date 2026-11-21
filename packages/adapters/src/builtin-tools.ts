@@ -1193,7 +1193,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "ticket_create",
     description:
-      "Create a ticket. Owner defaults to you. Always set acceptanceCriteria: a short checklist and, where it applies, a measurable target such as the count and split to deliver. When you create tickets that must run in order, set blockedBy on each one to the tickets it needs first, so it starts only when they are done; independent tickets run at once. The owner works it in batches and moves it to review, and you, as its creator, verify the delivery.",
+      "Create a ticket. One ticket per deliverable, never one per item of a list: leads, companies, files or rows to process belong in the checklist or description of one ticket, and the owner works through them. Owner defaults to you. Always set acceptanceCriteria: a short checklist and, where it applies, a measurable target such as the count and split to deliver. When you create tickets that must run in order, set blockedBy on each one to the tickets it needs first, so it starts only when they are done; independent tickets run at once. The owner works it in batches and moves it to review, and you, as its creator, verify the delivery.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1270,7 +1270,8 @@ export const builtinAgentTools: ConnectorTool[] = [
   },
   {
     name: "ticket_comment",
-    description: "Add a ticket comment.",
+    description:
+      "Add a ticket comment. Follow up on a teammate's ticket here instead of messaging them: the owner is woken with your comment.",
     inputSchema: {
       type: "object",
       properties: {

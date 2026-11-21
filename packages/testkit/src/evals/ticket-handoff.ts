@@ -1,7 +1,7 @@
 import type { EvalJudge } from "./judge.js";
 
 /** Bump when a rubric or its reviewed examples change, so earlier reports stay comparable. */
-export const TICKET_RUBRIC_VERSION = "ticket-handoff-v2";
+export const TICKET_RUBRIC_VERSION = "ticket-handoff-v3";
 
 export type TicketGrade = {
   status: "pass" | "fail" | "unqualified";
@@ -186,4 +186,58 @@ export function gradeDelegation(
   judged: { judge: EvalJudge; signal: AbortSignal },
 ): Promise<TicketGrade> {
   return grade(DELEGATION_RUBRIC, input, judged);
+}
+
+const GRANULARITY_RUBRIC = `Rubric ${TICKET_RUBRIC_VERSION}/granularity. The evidence holds the goal an agent was working on and the tickets it created for it (each with a title and its description or checklist). Pass only if there is one ticket per deliverable: the unit of work that has its own result and its own acceptance criteria, such as a list, a report, a script or a campaign. The individual items inside a deliverable (each lead, company, contact, row, file or message) belong in that ticket's checklist or description, not in tickets of their own. Several tickets are fine when each is a different deliverable, or a different stage that must run after another. Fail if the agent made a ticket per item of one list or batch, or if it made near-identical tickets for the same piece of work. Fail also if the one ticket it made has no way to hold the items (no checklist, description or measurable target). Equivalent wording and other languages are fine. Do not reward fewer tickets by themselves.`;
+
+export type GranularityExample = {
+  id: string;
+  expected: "pass" | "fail";
+  goal: string;
+  tickets: string;
+};
+
+export const GRANULARITY_EXAMPLES: GranularityExample[] = [
+  {
+    id: "one-ticket-with-the-items-inside",
+    expected: "pass",
+    goal: "Contact the 12 shops on the list and record each answer.",
+    tickets:
+      'RAK-8 "Contact the 12 shops on the list". Checklist: Shop A, Shop B, Shop C and nine more, each with the answer recorded. Done when all 12 have an answer.',
+  },
+  {
+    id: "separate-deliverables",
+    expected: "pass",
+    goal: "Prepare the spring campaign: a landing page, an email and a short report.",
+    tickets:
+      'RAK-3 "Spring landing page"; RAK-4 "Spring email, after the page" (blocked by RAK-3); RAK-5 "Campaign report". Each has its own acceptance criteria.',
+  },
+  {
+    id: "ticket-per-lead",
+    expected: "fail",
+    goal: "Contact the 12 shops on the list and record each answer.",
+    tickets:
+      'RAK-8 "Shop A"; RAK-9 "Shop B"; RAK-10 "Shop C"; RAK-11 "Shop D"; and eight more tickets, one per shop, each with the same owner.',
+  },
+  {
+    id: "near-identical-repeats",
+    expected: "fail",
+    goal: "Fix the broken checkout link.",
+    tickets:
+      'RAK-20 "Fix checkout link"; RAK-21 "Fix the checkout link"; RAK-22 "Checkout link fix". Same owner and same description.',
+  },
+  {
+    id: "single-ticket-with-no-room-for-the-items",
+    expected: "fail",
+    goal: "Contact the 12 shops on the list and record each answer.",
+    tickets: 'RAK-8 "Shops". No description, no checklist and no target.',
+  },
+];
+
+/** Judge-only: a judge that errors leaves the case unqualified, never passed. */
+export function gradeTicketGranularity(
+  input: { goal: string; tickets: string },
+  judged: { judge: EvalJudge; signal: AbortSignal },
+): Promise<TicketGrade> {
+  return grade(GRANULARITY_RUBRIC, input, judged);
 }

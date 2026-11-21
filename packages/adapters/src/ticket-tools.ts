@@ -4,6 +4,7 @@ import {
   CreateTicketInput,
   isTicketCompletedStatus,
   mergeTicketFields,
+  TICKET_TODO_PER_OWNER_MAX,
   TicketStatusSchema,
   ticketRef,
   UpdateTicketInput,
@@ -287,6 +288,29 @@ export async function createTicket(
   const board = await ensureBoard(deps.prisma, input.spaceId);
   const blockers = await resolveBlockers(deps, input.spaceId, board, data.blockedBy ?? []);
   if ("error" in blockers) return blockers;
+  if (input.botId) {
+    // An agent files one ticket per deliverable: the same one twice, or a pile of them for one
+    // owner, is a list that belongs in a single ticket.
+    const mine = {
+      boardId: board.id,
+      createdByBotId: input.botId,
+      assigneeBotId: data.assigneeBotId,
+    };
+    const same = await deps.prisma.ticket.findFirst({
+      where: {
+        ...mine,
+        status: { in: ["todo", "doing", "review", "blocked"] },
+        title: { equals: data.title, mode: "insensitive" },
+      },
+    });
+    if (same) return { ticket: await agentTicket(deps, same, board.ticketPrefix), existing: true };
+    const waiting = await deps.prisma.ticket.count({ where: { ...mine, status: "todo" } });
+    if (waiting >= TICKET_TODO_PER_OWNER_MAX) {
+      return {
+        error: `${waiting} tickets you created for this owner are still waiting. Put the rest in the checklist of one ticket (acceptanceCriteria or description) instead of one ticket per item.`,
+      };
+    }
+  }
   const row = await deps.prisma.$transaction(async (tx) => {
     const number = await allocateTicketNumber(tx, board.id);
     const created = await tx.ticket.create({
@@ -441,6 +465,30 @@ export async function updateTicket(
   return { ticket: await agentTicket(deps, result.row, board.ticketPrefix) };
 }
 
+/**
+ * A comment from someone other than the owner on a ticket the owner has not finished is a
+ * follow-up, so it goes through the ticket: it wakes the owner (and takes a Blocked ticket back
+ * to In progress) instead of waiting for the next sweep.
+ */
+async function wakeForComment(
+  deps: TicketToolDeps,
+  ticket: { id: string; status: string; assigneeBotId: string | null },
+  commenterBotId: string | undefined,
+) {
+  const follows =
+    ticket.assigneeBotId !== null &&
+    commenterBotId !== ticket.assigneeBotId &&
+    ["todo", "doing", "blocked"].includes(ticket.status);
+  if (!follows) return { wakeAssignee: false };
+  if (ticket.status === "blocked") {
+    await deps.prisma.ticket.updateMany({
+      where: { id: ticket.id, status: "blocked" },
+      data: { status: "doing" },
+    });
+  }
+  return { wakeAssignee: true, continuation: ticket.status !== "todo", skipIfActive: true };
+}
+
 export async function commentTicket(
   deps: TicketToolDeps,
   input: {
@@ -476,7 +524,7 @@ export async function commentTicket(
     boardId: board.id,
     ticketId: ticket.id,
     assigneeBotId: ticket.assigneeBotId,
-    wakeAssignee: false,
+    ...(await wakeForComment(deps, ticket, input.botId)),
   });
   return { comment: toTicketCommentDto(row) };
 }

@@ -858,6 +858,9 @@ export function createRunExecutor(deps: ExecutorDeps) {
             : loadAgentTicketContext(deps, {
                 spaceId: run.spaceId,
                 text: task.prompt,
+                ...(!run.ticketId && (run.trigger === "bot_message" || run.trigger === "follow_up")
+                  ? { ownerBotId: bot.id }
+                  : {}),
               }),
           recallPromise,
         ]);

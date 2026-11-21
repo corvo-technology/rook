@@ -64,6 +64,7 @@ import {
   createRunSecretWriter,
   createSecretStore,
   createTicketChangeNotifier,
+  createTicketSweeper,
   createWebProvider,
   createWhatsAppLinkSurface,
   createWhatsAppOutboxDrain,
@@ -967,6 +968,12 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
         reconcileResearch: () => reconcileResearch({ prisma, jobs, events }),
         reconcileComputerUpdates: () => reconcileComputerUpdates({ prisma, jobs }),
         reconcileChiefWatches: createChiefWatchReconciler(prisma),
+        reconcileTickets: createTicketSweeper({
+          prisma,
+          jobs,
+          ticketBoardEnabled,
+          onTicketChange: ticketChanges,
+        }),
         reconcileSecurityEventRetention: createSecurityEventPruner(
           prisma,
           securityEventRetentionDays(),

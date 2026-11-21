@@ -163,11 +163,19 @@ main h3 {
   font: inherit;
   font-size: 14px;
   cursor: default;
-  transition: border-color 160ms ease, color 160ms ease;
+  transition: border-color 160ms ease, color 160ms ease, transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 200ms ease;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .state:is(:hover, :focus-visible, [data-play]) {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-soft);
+  }
 }
 
 .state:hover,
-.state:focus-visible {
+.state:focus-visible,
+.state[data-play] {
   border-color: var(--line-2);
   color: var(--ink);
 }
@@ -618,6 +626,13 @@ html[data-guided] .guide-slot .avatar {
   visibility: hidden;
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .rook-guide .avatar,
+  .guide-piece .avatar {
+    transition: transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+}
+
 .guide-slot {
   display: block;
   width: 72px;
@@ -922,6 +937,51 @@ html[data-guided] .guide-slot .avatar {
   color: var(--muted);
   font-size: 14px;
   text-align: center;
+}
+
+/* An agent that is pointed at hops (squash, stretch, land) and its caption lights up. Only transforms. */
+.agent-row__caption {
+  transition: color 160ms ease;
+}
+
+.agent-row__item[data-awake] .agent-row__caption {
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .agent-row__avatar {
+    transform-origin: 50% 100%;
+  }
+
+  .agent-row__item[data-awake] .agent-row__avatar {
+    animation: agent-hop 640ms cubic-bezier(0.34, 1.2, 0.64, 1) both;
+  }
+
+  .agent-row__caption {
+    transition: color 160ms ease, transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .agent-row__item[data-awake] .agent-row__caption {
+    transform: translateY(2px);
+  }
+}
+
+@keyframes agent-hop {
+  0% {
+    transform: scale(1, 1);
+  }
+  18% {
+    transform: scale(1.12, 0.86);
+  }
+  45% {
+    transform: translateY(-12px) scale(0.92, 1.12);
+  }
+  72% {
+    transform: translateY(0) scale(1.08, 0.92);
+  }
+  100% {
+    transform: scale(1, 1);
+  }
 }
 
 @media (max-width: 720px) {

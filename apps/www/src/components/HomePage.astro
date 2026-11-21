@@ -400,6 +400,19 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
 <script>
   import "../guide";
 
+  // A tap on a state card plays its state once, where there is no hover to do it.
+  document.querySelectorAll<HTMLElement>(".lp-states .state").forEach((card) => {
+    let timer: number | undefined;
+    card.addEventListener("pointerdown", (event) => {
+      if (event.pointerType !== "touch") return;
+      clearTimeout(timer);
+      card.removeAttribute("data-play");
+      void card.offsetWidth;
+      card.setAttribute("data-play", "");
+      timer = window.setTimeout(() => card.removeAttribute("data-play"), 1800);
+    });
+  });
+
   // Blocks below the fold rise once as they arrive. Everything is visible until the first scroll: only then
   // are the blocks still below the fold hidden, so a page that is never scrolled (a crawler, a preview, a
   // full-page screenshot) shows it all.

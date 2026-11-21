@@ -21,6 +21,10 @@ export const VerticalIdSchema = z.enum(VERTICAL_IDS);
 export const VERTICAL_LOCALES = ["en", "pt-BR", "es", "fr", "de", "ja", "zh-CN"] as const;
 export type VerticalLocale = (typeof VERTICAL_LOCALES)[number];
 
+/** The key a bot made from a starter team carries, so the team can tell it was added. */
+export const verticalSpawnKey = (verticalId: VerticalId, agentKey: string) =>
+  `vertical:${verticalId}:${agentKey}`;
+
 const Text = z.string().trim().min(1).max(4000);
 
 /** A short text in every app language. */

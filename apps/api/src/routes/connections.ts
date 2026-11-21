@@ -16,6 +16,7 @@ import {
 } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import { ORPCError } from "@orpc/server";
+import { enableAreaWatchesFor } from "../area-watches.js";
 import { connectionCreatedEvent } from "../security-audit.js";
 import { actorForManaged, connectionOwners, connectionsWhere } from "../shared-connections.js";
 import type { RouterContext } from "./context.js";
@@ -26,6 +27,7 @@ async function reconcileConnections(
   connectorId: string,
   connectedProviders: string[],
   reconnectRefs: string[],
+  onConnected?: (connectionId: string) => void,
 ): Promise<void> {
   const connectedProviderKeys = new Set(
     connectedProviders.map((provider) => provider.trim().toLowerCase()),
@@ -93,6 +95,7 @@ async function reconcileConnections(
     });
   for (const id of connectedIds) {
     await recordSecurityEvent(connectionCreatedEvent("connections.catalog", id, owner));
+    onConnected?.(id);
   }
 }
 
@@ -233,6 +236,7 @@ export function connectionsRoutes(ctx: RouterContext) {
                   provider.describe().id,
                   nowConnected,
                   reconnectRefs,
+                  (id) => enableAreaWatchesFor(deps, context.actor, id),
                 ).catch((error) => {
                   getLogger().error(
                     `${provider.describe().id} connection reconciliation failed`,
@@ -393,6 +397,7 @@ export function connectionsRoutes(ctx: RouterContext) {
             await recordSecurityEvent(
               connectionCreatedEvent("connections.begin", row.id, context.actor),
             );
+            enableAreaWatchesFor(deps, context.actor, row.id);
           }
           if (!applied) {
             // Revoke won the race, or the result could not be saved in time. Clean up the
@@ -857,6 +862,7 @@ export function connectionsRoutes(ctx: RouterContext) {
           await recordSecurityEvent(
             connectionCreatedEvent("connections.complete", row.id, context.actor),
           );
+          enableAreaWatchesFor(deps, context.actor, row.id);
         }
         return {
           id: row.id,

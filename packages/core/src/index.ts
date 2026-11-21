@@ -12,6 +12,7 @@ export * from "./app-catalog-data.js";
 export * from "./app-connect.js";
 export * from "./app-map/index.js";
 export * from "./approval-level.js";
+export * from "./area-watches.js";
 export * from "./artifact-sandbox.js";
 export * from "./async.js";
 export * from "./attachments.js";

@@ -44,6 +44,7 @@ import { grantSavedBotSecret } from "./bot-secret-access.js";
 import { cancelRunsInTransaction } from "./cancel-runs.js";
 import type { Prisma, PrismaClient } from "./client.js";
 import { expireComputerExecutionLeases } from "./computers.js";
+import { warmThreadContentKey } from "./content-encryption.js";
 import {
   CrossSpaceCommunicationBlockedError,
   crossSpaceCommunicationAllowed,
@@ -1814,6 +1815,7 @@ export async function appendEvent(
   realtime?: RealtimeFanout,
   analytics?: ProductAnalytics,
 ): Promise<ProductEvent> {
+  await warmThreadContentKey(prisma, input.threadId);
   // Concurrent writers in one thread (group members, bot messages) can deadlock on the thread row.
   const event = await withTransactionRetry(() =>
     prisma.$transaction((tx: Prisma.TransactionClient) => appendEventInTransaction(tx, input)),
@@ -1842,6 +1844,7 @@ export async function finalizeRun(
   realtime?: RealtimeFanout,
   analytics?: ProductAnalytics,
 ): Promise<FinalizeRunResult | false> {
+  await warmThreadContentKey(prisma, input.threadId);
   const committed = await withTransactionRetry(() => finalizeRunOnce(prisma, input));
   if (!committed) return false;
   await notifyRealtime(prisma, realtime, committed.threadId, committed.seq);

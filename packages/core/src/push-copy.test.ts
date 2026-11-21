@@ -1,6 +1,6 @@
 import { RUN_ERROR_CODES } from "@corvo/contracts";
-import { expect, it } from "vitest";
-import { localizedApprovalPush, localizedFailurePush } from "./push-copy.js";
+import { describe, expect, it } from "vitest";
+import { localizedApprovalPush, localizedFailureLine, localizedFailurePush } from "./push-copy.js";
 
 const approval = {
   kind: "help",
@@ -59,4 +59,14 @@ it("leaves a failure without a code, English and other pushes alone", () => {
   expect(localizedFailurePush(old, "pt-BR")).toBe(old);
   const other = { ...failure, title: "Ana needs an answer" };
   expect(localizedFailurePush(other, "pt-BR")).toBe(other);
+});
+
+describe("localizedFailureLine", () => {
+  it("returns the billing line in the person's language and nothing for English", () => {
+    expect(localizedFailureLine("no_model_access", "pt-BR")).toBe(
+      "Conecte um modelo para continuar.",
+    );
+    expect(localizedFailureLine("no_model_access", "en")).toBeUndefined();
+    expect(localizedFailureLine("no_model_access", undefined)).toBeUndefined();
+  });
 });

@@ -5,6 +5,7 @@ const appendEventInTransaction = vi.hoisted(() => vi.fn());
 vi.mock("@corvo/db", () => ({
   createThreadMessageInTransaction,
   appendEventInTransaction,
+  warmThreadContentKey: async () => undefined,
   withTransactionRetry: <T>(fn: () => Promise<T>) => fn(),
 }));
 

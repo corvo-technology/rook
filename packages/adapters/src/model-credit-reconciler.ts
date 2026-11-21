@@ -8,6 +8,32 @@ import {
   runAsSystem,
 } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
+import { catalogModelCost } from "./pi-runtime-models.js";
+import { maximumModelCallCost } from "./pi-usage.js";
+
+/** Attempts before a hold whose cost never arrives is settled at an estimate. */
+const MAX_RECONCILE_ATTEMPTS = 5;
+
+/**
+ * What to charge a call whose provider never reported a cost: the catalog price of the tokens it
+ * used when both are known, and never more than the amount held for it. Without either, the hold
+ * itself, which was sized as the most the call could cost.
+ */
+export function estimateHeldCallCost(
+  heldUsd: number,
+  usage: AgentUsage | null,
+  provider: string,
+  model: string,
+): number {
+  const cost = catalogModelCost(provider, model);
+  if (!cost || usage?.inputTokens == null || usage.outputTokens == null) return heldUsd;
+  const estimate = maximumModelCallCost(
+    cost,
+    usage.inputTokens + (usage.cacheReadTokens ?? 0) + (usage.cacheWriteTokens ?? 0),
+    usage.outputTokens,
+  );
+  return estimate === undefined ? heldUsd : Math.min(heldUsd, estimate);
+}
 
 /** Bounded, leased recovery. Missing evidence is flagged rather than converted into free usage. */
 export function createModelCreditReconciler(deps: {
@@ -95,6 +121,44 @@ export function createModelCreditReconciler(deps: {
             } else if (usage) {
               reason = usage.costUsd == null ? "cost unavailable" : "cost is not final";
             }
+            // The provider will not say what the call cost. Holding the full reservation forever
+            // would keep credit out of the account's balance and could stop its runs, so the call
+            // is charged an estimate and the hold is closed.
+            if (
+              !complete &&
+              call.pending &&
+              call.reconciliationAttempts >= MAX_RECONCILE_ATTEMPTS &&
+              usage?.costUsd == null
+            ) {
+              const heldUsd = Number(-call.amountMicros) / 1_000_000;
+              await recordUsage(
+                prisma,
+                {
+                  ...(usage ?? { inputTokens: null, outputTokens: null }),
+                  costUsd: estimateHeldCallCost(heldUsd, usage, call.provider, call.model),
+                  costSource: "reconciliation-estimate",
+                  type: "usage",
+                  provider: call.provider,
+                  model: call.model,
+                  callId: call.callId,
+                },
+                {
+                  userId: call.userId,
+                  spaceId: call.spaceId,
+                  runId: call.runId ?? undefined,
+                  operationId: call.runId ?? call.callId,
+                  operationKind: usage?.operationKind ?? "answer",
+                },
+                true,
+              );
+              complete = true;
+              getLogger().warn("Model credit hold settled at an estimate", {
+                callId: call.callId,
+                reason,
+                provider: call.provider,
+                model: call.model,
+              });
+            }
           } catch (error) {
             reason = error instanceof Error ? error.message : String(error);
             getLogger().warn("Model credit reconciliation could not verify a call", {
@@ -102,7 +166,7 @@ export function createModelCreditReconciler(deps: {
               reason,
             });
           }
-          const needsReview = !complete && call.reconciliationAttempts >= 5;
+          const needsReview = !complete && call.reconciliationAttempts >= MAX_RECONCILE_ATTEMPTS;
           await prisma.modelCreditEntry.updateMany({
             where: { id: call.id, reconciliationState: "pending" },
             data: {

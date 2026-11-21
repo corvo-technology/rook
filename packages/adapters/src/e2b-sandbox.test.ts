@@ -1137,17 +1137,38 @@ describe("E2B sandbox lifecycle", () => {
       fake.files.set(notes, new Uint8Array([1]));
       fake.state = "paused";
 
-      const error = await use(provider, computer).then(
-        () => undefined,
-        (failure: unknown) => failure,
-      );
-      expect(error).toBeInstanceOf(Error);
-      expect(isSandboxGoneError(error)).toBe(false);
+      // The resumed computer runs the work again without failing the caller.
+      await expect(use(provider, computer)).resolves.not.toThrow();
       expect(fake.state).toBe("running");
       expect(fake.calls.connect).toBe(1);
       await expect(use(provider, computer)).resolves.not.toThrow();
     },
   );
+
+  it("retries a resumed computer a bounded number of times with backoff", async () => {
+    const fake = new FakeE2B();
+    const connect = fake.sdk.connect;
+    fake.sdk.connect = async (...args: Parameters<typeof connect>) => {
+      const handle = await connect(...args);
+      fake.state = "paused";
+      return handle;
+    };
+    const waits: number[] = [];
+    const provider = new E2BSandboxProvider("e2b_test", fake.sdk, undefined, async (ms) => {
+      waits.push(ms);
+    });
+    const computer = await provider.provision({ botId: "bot-1", homePath: "/unused" }, context);
+    fake.state = "paused";
+    const error = await provider.listFiles(computer, "", context).then(
+      () => undefined,
+      (failure: unknown) => failure,
+    );
+    expect(error).toBeInstanceOf(Error);
+    expect(isSandboxGoneError(error)).toBe(false);
+    expect((error as Error).message).toMatch(/resumed; try again/);
+    expect(fake.calls.connect).toBe(4);
+    expect(waits).toEqual([500, 1000, 2000]);
+  });
 
   it("reports a sandbox as gone only once resuming it fails", async () => {
     const { fake, provider, computer } = await started();

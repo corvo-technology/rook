@@ -195,6 +195,14 @@ export function localizedFailurePush<
   };
 }
 
+/**
+ * One line for a failed run in the person's language, for text that is stored and shown as
+ * written, such as a board comment. Undefined when the language has no translation.
+ */
+export function localizedFailureLine(code: RunErrorCode, locale: string | undefined) {
+  return locale ? FAILURE_PUSH[locale]?.lines[code] : undefined;
+}
+
 const DIGEST_TITLE: Record<string, (count: number) => string> = {
   "pt-BR": (count) => `${count} novidades`,
   es: (count) => `${count} novedades`,

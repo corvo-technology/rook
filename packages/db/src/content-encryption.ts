@@ -183,6 +183,22 @@ export function contentEncryptionOf(prisma: unknown): ContentEncryption | undefi
 }
 
 /**
+ * Loads the space key a thread's content is sealed with, so the write that follows does not
+ * fetch it from the key store, or unwrap it with the key manager, while its transaction holds
+ * the thread row. A cold key made concurrent writers queue on the small key pool for longer than
+ * the transaction may run. Best effort: the write itself still resolves the key if this fails.
+ */
+export async function warmThreadContentKey(prisma: unknown, threadId: string): Promise<void> {
+  try {
+    const ring = contentEncryptionOf(prisma)?.ring;
+    if (!ring?.encryptWrites) return;
+    await ring.current(await ring.spaceOf("threads", threadId));
+  } catch {
+    // The transaction reports the real error.
+  }
+}
+
+/**
  * Boot check for composition roots. A malformed master key configuration throws,
  * so the process fails at startup instead of on the first message; master key
  * ids that stored space keys need but cannot use are returned for reporting.

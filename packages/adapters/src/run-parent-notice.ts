@@ -1,6 +1,7 @@
 import {
   appendEventInTransaction,
   createThreadMessageInTransaction,
+  warmThreadContentKey,
   withTransactionRetry,
 } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
@@ -33,6 +34,7 @@ export async function noteApprovalInParentChat(
     });
     if (!thread) return;
     const blocks = [{ kind: "text" as const, text: `${bot.name} is waiting for your approval.` }];
+    await warmThreadContentKey(deps.prisma, thread.id);
     const seq = await withTransactionRetry(() =>
       deps.prisma.$transaction(async (tx) => {
         const message = await createThreadMessageInTransaction(tx, {

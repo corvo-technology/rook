@@ -35,7 +35,6 @@ export const CORE_BUILTIN_TOOL_NAMES: ReadonlySet<string> = new Set([
   "ask_user",
   "message_user",
   "say_now",
-  "react_to_message",
   "request_takeover",
   "connect_app",
   "propose_host_action",

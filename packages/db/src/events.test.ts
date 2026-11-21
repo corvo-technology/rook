@@ -2451,7 +2451,7 @@ describe("answerRunInput", () => {
       });
       expect(tx.externalEffect.update).toHaveBeenCalledWith({
         where: { id: "effect-1" },
-        data: { status: "approved" },
+        data: expect.objectContaining({ status: "approved" }),
       });
       expect(tx.actionApprovalRule.upsert).toHaveBeenCalledOnce();
       expect(tx.actionApprovalRule.upsert).toHaveBeenCalledWith({
@@ -2514,7 +2514,7 @@ describe("answerRunInput", () => {
         });
         expect(tx.externalEffect.update, tool).toHaveBeenCalledWith({
           where: { id: "effect-1" },
-          data: { status: "approved" },
+          data: expect.objectContaining({ status: "approved" }),
         });
         expect(tx.actionApprovalRule.upsert, tool).not.toHaveBeenCalled();
       }

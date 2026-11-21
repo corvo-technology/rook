@@ -236,9 +236,18 @@ async function runRoutine(
     artifacts: { get: vi.fn(async () => new Uint8Array([1, 2, 3, 4])) },
     events: {
       append: vi.fn(async () => undefined),
-      claimSteering: vi.fn(async () => [
-        { id: "steering-1", messageId: "message-2", text: "Look at this", blocks: [attachment] },
-      ]),
+      claimSteering: vi.fn(async (input: { seenIds: string[] }) =>
+        input.seenIds.includes("steering-1")
+          ? []
+          : [
+              {
+                id: "steering-1",
+                messageId: "message-2",
+                text: "Look at this",
+                blocks: [attachment],
+              },
+            ],
+      ),
       finalizeRun,
       pauseRunForTakeover: vi.fn(async () => false),
     },

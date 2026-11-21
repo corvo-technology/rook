@@ -1,6 +1,7 @@
 import type * as db from "@corvo/db";
 import { describe, expect, it, vi } from "vitest";
 import {
+  coveredAgents,
   dismissMcpServerApprovals,
   queueMcpConnectedRun,
   resolveMcpApprovalCards,
@@ -551,5 +552,88 @@ describe("queueMcpConnectedRun", () => {
       await expect(queueMcpConnectedRun(tx, actor, forInfra)).resolves.toBeNull();
       expect(tx.run.create).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe("a card for several agents", () => {
+  const actor = {
+    userId: "user",
+    spaceId: "space",
+    email: "user@corvo.test",
+    isDeploymentOwner: true,
+  };
+  const card = {
+    kind: "mcp_approval",
+    serverId: "srv-a",
+    forBotId: "lia",
+    forBots: [
+      { id: "lia", name: "Lia", allowedTools: ["list_appointments"], level: "write" },
+      { id: "caio", name: "Caio", level: "read" },
+    ],
+  };
+  function fixture(bots = ["lia", "caio"]) {
+    const tx = {
+      message: { findMany: vi.fn(async () => [{ blocks: [card] }]) },
+      bot: {
+        findMany: vi.fn(async () =>
+          bots.map((id) => ({ id, name: id === "lia" ? "Lia" : "Caio" })),
+        ),
+      },
+    };
+    return tx as typeof tx & Parameters<typeof coveredAgents>[0];
+  }
+
+  it("covers each agent the card names with that agent's own tools", async () => {
+    const covered = await coveredAgents(fixture(), actor, {
+      botId: "lia",
+      botIds: ["lia", "caio"],
+      serverId: "srv-a",
+      threadId: "thread",
+    });
+    expect(covered).toEqual([
+      { id: "lia", name: "Lia", allowedTools: ["list_appointments"], level: "write" },
+      { id: "caio", name: "Caio", level: "read" },
+    ]);
+  });
+
+  it("refuses an agent the card does not name", async () => {
+    await expect(
+      coveredAgents(fixture(["lia", "mallory"]), actor, {
+        botId: "lia",
+        botIds: ["mallory"],
+        serverId: "srv-a",
+        threadId: "thread",
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("wakes the lead once for all of them and names every agent", async () => {
+    const tx = {
+      bot: {
+        findFirst: vi.fn(async (args: { where: { id: string } }) => ({
+          id: args.where.id,
+          name: "Lia",
+        })),
+      },
+      thread: {
+        findFirst: vi.fn(async (args: { where: { OR?: unknown } }) =>
+          args.where.OR ? null : { id: "thread", botId: "chief" },
+        ),
+      },
+      run: { findFirst: vi.fn(async () => null), create: vi.fn(async () => ({ id: "run" })) },
+      mcpServer: { findFirst: vi.fn(async () => ({ name: "Clinic" })) },
+      task: { create: vi.fn(async () => ({ id: "task" })) },
+    } as unknown as Parameters<typeof queueMcpConnectedRun>[0];
+    await expect(
+      queueMcpConnectedRun(tx, actor, {
+        botId: "lia",
+        serverId: "srv-a",
+        threadId: "thread",
+        teammateNames: ["Lia", "Caio"],
+      }),
+    ).resolves.toBe("run");
+    const prompt = (tx.task.create as ReturnType<typeof vi.fn>).mock.calls[0]?.[0].data.prompt;
+    expect(prompt).toContain("Lia, Caio");
+    expect(prompt).toContain("Carry on with what they asked for");
   });
 });

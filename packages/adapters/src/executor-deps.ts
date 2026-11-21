@@ -1,4 +1,5 @@
 import type {
+  AdapterContext,
   AgentContextStrategy,
   AgentHomeStore,
   AgentRuntime,
@@ -42,6 +43,11 @@ export interface ExecutorDeps {
   home: AgentHomeStore;
   artifacts?: ArtifactStore;
   connector?: ConnectorProvider;
+  /** Lists every tool of one connected MCP server, to scope a new agent's access by its role. */
+  mcpServerTools?(
+    serverId: string,
+    context: AdapterContext,
+  ): Promise<{ name: string; description: string; readOnly?: boolean; destructive?: boolean }[]>;
   connectors?: {
     managed(id: string): ManagedConnectorProvider | undefined;
     managedProviders?(): ManagedConnectorProvider[];

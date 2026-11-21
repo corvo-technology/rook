@@ -171,3 +171,18 @@ describe("the Chief's voice", () => {
     }
   });
 });
+
+describe("Rook access gaps", () => {
+  it.each(["en", "pt-BR"] as const)(
+    "resolves a delegate's missing access itself in %s",
+    (locale) => {
+      const text = chiefInstructions(locale);
+      expect(text).toMatch(/connect_app[\s\S]*agents/);
+      expect(text).toMatch(
+        locale === "en"
+          ? /never tell the owner to connect an app that is already connected/
+          : /nunca mande o dono conectar um app que já está conectado/,
+      );
+    },
+  );
+});

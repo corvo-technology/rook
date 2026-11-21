@@ -1512,6 +1512,8 @@ export const appContract = {
         .input(
           z.object({
             botId: Id,
+            /** Every agent a card for several teammates covers; the card's own list decides each one's tools. */
+            botIds: z.array(Id).max(20).optional(),
             serverId: Id,
             threadId: Id.optional(),
             level: z.enum(["read", "write"]).default("write"),

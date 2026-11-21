@@ -207,6 +207,20 @@ function unframedHistoryText(blocks: MessageBlock[]): string {
         }[block.status];
         return `[you called the user about: ${block.reason}; ${outcome}]${block.status === "answered" ? `\n${block.opening}` : ""}`;
       }
+      // The model reads the card's current state, or it keeps asking the owner to approve a card
+      // that is already approved.
+      if (block.kind === "mcp_approval") {
+        const who = block.forBots?.length
+          ? block.forBots.map((bot) => bot.name).join(", ")
+          : block.forBotName;
+        const state =
+          block.status === "connected"
+            ? "approved, access is granted"
+            : block.status === "dismissed"
+              ? "dismissed by the owner"
+              : "waiting for the owner to approve it in the card";
+        return `[access card: ${block.name}${who ? ` for ${who}` : ""} (${state})]`;
+      }
       if ("text" in block && typeof block.text === "string") return block.text;
       return "";
     })

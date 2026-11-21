@@ -64,6 +64,9 @@ export function McpApprovalCard({
       if (action === "approve") {
         await rpc("mcp/assignments/approve", {
           botId: targetBotId,
+          ...(block.forBots && block.forBots.length > 1
+            ? { botIds: block.forBots.map((bot) => bot.id) }
+            : {}),
           serverId: block.serverId,
           threadId,
         });
@@ -107,7 +110,11 @@ export function McpApprovalCard({
           </Text>
           {block.forBotName ? (
             <Text style={[styles.summary, { color: tokens.foreground }]}>
-              {t("Access for {agent}", { agent: block.forBotName })}
+              {t("Access for {agent}", {
+                agent: block.forBots?.length
+                  ? block.forBots.map((bot) => bot.name).join(", ")
+                  : block.forBotName,
+              })}
             </Text>
           ) : null}
         </View>

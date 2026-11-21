@@ -38,6 +38,8 @@ import {
   teamBrowserProfileName,
   withCleanupDeadline,
 } from "./computer-workspace.js";
+import { grantCreatorServersByRole } from "./connector-role-grants.js";
+import type { ExecutorDeps } from "./executor-deps.js";
 import { removeAgentHome, removeAgentHomeFolders } from "./home.js";
 import { removePiBotSessions } from "./pi-session.js";
 
@@ -55,6 +57,7 @@ export async function spawnBot(
   deps: {
     prisma: PrismaClient;
     jobs: JobPublisher;
+    mcpServerTools?: ExecutorDeps["mcpServerTools"];
   },
   input: {
     spawnedBy: {
@@ -73,6 +76,11 @@ export async function spawnBot(
     computerMode?: ComputerMode;
     /** Connections lent to the new bot before its first task runs; already checked by the caller. */
     connectionGrants?: ConnectionGrant[];
+    /**
+     * Lend the new bot the connected servers its creator uses, by role and never wider than the
+     * creator. Without it, or with explicit grants, the new bot gets only what is given.
+     */
+    inheritConnections?: boolean;
   },
 ) {
   const name = input.name.trim();
@@ -137,6 +145,23 @@ export async function spawnBot(
       await deps.jobs.enqueue(botAvatarDesignJob(created.id));
     } catch (error) {
       getLogger().error("spawned bot avatar design enqueue", error);
+    }
+  }
+
+  if (!duplicate && input.inheritConnections && !input.connectionGrants?.length) {
+    try {
+      await grantCreatorServersByRole(
+        deps,
+        {
+          botId: input.spawnedBy.id,
+          spaceId: input.spawnedBy.spaceId,
+          userId: input.spawnedBy.userId,
+        },
+        { id: created.id, name: created.name, title: created.title },
+      );
+    } catch (error) {
+      // The agent still exists; the creator can lend access with connect_app.
+      getLogger().error("spawned bot connector access", error);
     }
   }
 

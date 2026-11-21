@@ -11,6 +11,7 @@ import {
 import { getLogger } from "@corvo/logging";
 import { uncertainEffectResult } from "./approval-effect.js";
 import { archiveSpawnedBot, spawnBot } from "./child-bots.js";
+import { grantCreatorServersByRole } from "./connector-role-grants.js";
 import { listRoutines } from "./fleet-routines.js";
 import {
   addRoutineStep,
@@ -185,6 +186,7 @@ export const fleetTools: ToolHandlers = {
       instructions: args.instructions ? String(args.instructions) : undefined,
       prompt: args.prompt ? String(args.prompt) : undefined,
       computerMode,
+      inheritConnections: true,
     });
     if ("error" in spawned) return call.finish(spawned);
     if (!(await call.persistEffectResult(spawned))) return uncertainEffectResult(name);
@@ -293,6 +295,13 @@ export const fleetTools: ToolHandlers = {
       announce: true,
     });
     if ("error" in installed) return call.finish(installed);
+    if (!installed.duplicate) {
+      await grantCreatorServersByRole(
+        deps,
+        { botId: bot.id, spaceId: bot.spaceId, userId: run.userId },
+        { id: installed.botId, name: installed.name, title: installed.title },
+      ).catch((error) => getLogger().error("installed agent connector access", error));
+    }
     try {
       await publishMessage(deps, run, "bot", [
         {

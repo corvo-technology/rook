@@ -29,6 +29,7 @@ import { getLogger } from "@corvo/logging";
 import { ORPCError } from "@orpc/server";
 import { searchIntegrationCatalog } from "../integration-catalog.js";
 import {
+  coveredAgents,
   queueMcpConnectedRun,
   resolveMcpApprovalCards,
   revertConnectedMcpApprovals,
@@ -620,24 +621,37 @@ export function mcpRoutes(ctx: RouterContext) {
                 }),
               ]);
               if (!bot || !server) throw new IsolationError();
-              const assignment = await tx.botMcpServer.upsert({
-                where: { botId_serverId: { botId: bot.id, serverId: server.id } },
-                create: {
-                  spaceId: context.actor.spaceId,
-                  userId: context.actor.userId,
-                  botId: bot.id,
-                  serverId: server.id,
-                  allowAllTools: true,
-                  allowedTools: [],
-                  level: input.level,
-                },
-                // A card never narrows an agent's access: it can only add the missing grant.
-                update: {},
-              });
+              // A card for several agents gives each the tools its own entry lists; anything it
+              // does not list for an agent falls back to the card's level.
+              const covered = await coveredAgents(tx, context.actor, input);
+              const assignments = [];
+              for (const entry of covered) {
+                const grant = entry.allowedTools?.length
+                  ? { allowAllTools: false, allowedTools: entry.allowedTools, level: "write" }
+                  : { allowAllTools: true, allowedTools: [], level: entry.level ?? input.level };
+                assignments.push(
+                  await tx.botMcpServer.upsert({
+                    where: { botId_serverId: { botId: entry.id, serverId: server.id } },
+                    create: {
+                      spaceId: context.actor.spaceId,
+                      userId: context.actor.userId,
+                      botId: entry.id,
+                      serverId: server.id,
+                      ...grant,
+                    },
+                    // A card never narrows an agent's access: it can only add the missing grant.
+                    update: {},
+                  }),
+                );
+              }
+              const assignment = assignments.find((row) => row.botId === bot.id) ?? assignments[0];
+              if (!assignment) throw new IsolationError();
               const runId =
                 input.threadId && decision.resolved
                   ? await queueMcpConnectedRun(tx, context.actor, {
                       botId: bot.id,
+                      teammateNames:
+                        covered.length > 1 ? covered.map((entry) => entry.name) : undefined,
                       serverId: server.id,
                       threadId: input.threadId,
                     })

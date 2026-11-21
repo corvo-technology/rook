@@ -308,6 +308,55 @@ function mcpConnectedPrompt(name: string): string {
   return `The user just connected the MCP server ${JSON.stringify(name)} from its approval card, so its tools are available now. Carry on with what they asked for. If nothing is left to do, confirm in one short sentence.`;
 }
 
+/**
+ * The agents one approval covers, each with the tools its own card entry lists. A card for several
+ * agents is the only thing that may widen the list past the agent in the request, so an id the
+ * card does not name is refused.
+ */
+export async function coveredAgents(
+  tx: Prisma.TransactionClient,
+  actor: Actor,
+  input: { botId: string; botIds?: string[]; serverId: string; threadId?: string },
+): Promise<{ id: string; name: string; allowedTools?: string[]; level?: "read" | "write" }[]> {
+  const wanted = [...new Set([input.botId, ...(input.botIds ?? [])])];
+  type Entry = { id: string; name: string; allowedTools?: string[]; level?: "read" | "write" };
+  const listed = new Map<string, Entry>();
+  if (input.threadId) {
+    const messages = await tx.message.findMany({
+      where: {
+        threadId: input.threadId,
+        thread: { spaceId: actor.spaceId, userId: actor.userId },
+        blocks: { array_contains: [{ kind: "mcp_approval", serverId: input.serverId }] },
+      },
+      select: { blocks: true },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    });
+    for (const message of messages) {
+      for (const block of message.blocks as MessageBlock[]) {
+        if (!isApproval(block, input.serverId)) continue;
+        for (const entry of block.forBots ?? [])
+          if (!listed.has(entry.id)) listed.set(entry.id, entry);
+      }
+    }
+  }
+  if (wanted.some((id) => id !== input.botId && !listed.has(id))) throw new IsolationError();
+  const bots = await tx.bot.findMany({
+    where: { id: { in: wanted }, spaceId: actor.spaceId, userId: actor.userId, archivedAt: null },
+    select: { id: true, name: true },
+  });
+  if (bots.length !== wanted.length) throw new IsolationError();
+  return bots.map((bot) => {
+    const entry = listed.get(bot.id);
+    return {
+      id: bot.id,
+      name: bot.name,
+      ...(entry?.allowedTools?.length ? { allowedTools: entry.allowedTools } : {}),
+      ...(entry?.level ? { level: entry.level } : {}),
+    };
+  });
+}
+
 function mcpConnectedForPrompt(name: string, teammate: string): string {
   return `The user just approved giving ${JSON.stringify(teammate)} the MCP server ${JSON.stringify(name)} from your approval card, so its tools are available to them now. Carry on with what they asked for, handing the work back to ${JSON.stringify(teammate)} if it was waiting on this. If nothing is left to do, confirm in one short sentence.`;
 }
@@ -319,7 +368,7 @@ function mcpConnectedForPrompt(name: string, teammate: string): string {
 export async function queueMcpConnectedRun(
   tx: Prisma.TransactionClient,
   actor: Actor,
-  input: { botId: string; serverId: string; threadId: string },
+  input: { botId: string; serverId: string; threadId: string; teammateNames?: string[] },
 ): Promise<string | null> {
   const ownThread = await tx.thread.findFirst({
     where: {
@@ -390,7 +439,7 @@ export async function queueMcpConnectedRun(
       threadId: thread.id,
       userId: actor.userId,
       prompt: teammate
-        ? mcpConnectedForPrompt(server.name, teammate.name)
+        ? mcpConnectedForPrompt(server.name, input.teammateNames?.join(", ") ?? teammate.name)
         : mcpConnectedPrompt(server.name),
       status: "queued",
     },

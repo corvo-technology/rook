@@ -394,6 +394,37 @@ export class McpConnector implements ConnectorProvider {
     };
   }
 
+  /**
+   * Every tool one enabled server of the space offers, whatever any agent may use: what deciding
+   * a new agent's access needs. A server that cannot be listed gives an empty list.
+   */
+  async listServerTools(
+    serverId: string,
+    context: AdapterContext,
+  ): Promise<{ name: string; description: string; readOnly?: boolean; destructive?: boolean }[]> {
+    const server = await this.prisma.mcpServer.findFirst({
+      where: { id: serverId, spaceId: context.spaceId, enabled: true },
+    });
+    if (!server) return [];
+    await this.resolveIdentity(context);
+    try {
+      const listed = await withDeadline(
+        this.withSession(server, context, (session) =>
+          session.listTools({ signal: context.signal }),
+        ),
+        this.options.discoveryTimeoutMs ?? DEFAULT_MCP_DISCOVERY_TIMEOUT_MS,
+      );
+      return listed.tools.map((tool) => ({
+        name: tool.name,
+        description: tool.description ?? "",
+        readOnly: tool.annotations?.readOnlyHint,
+        destructive: tool.annotations?.destructiveHint,
+      }));
+    } catch {
+      return [];
+    }
+  }
+
   async discoverTools(context: AdapterContext): Promise<ConnectorTool[]> {
     const tools = await this.authorizedTools(context);
     if (tools.length <= DIRECT_TOOL_LIMIT) return tools;

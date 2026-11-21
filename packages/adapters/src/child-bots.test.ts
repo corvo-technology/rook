@@ -134,6 +134,52 @@ describe("spawned bot creation", () => {
     expect(enqueue).toHaveBeenCalledOnce();
   });
 
+  it("lends the creator's servers by role to a new agent, once", async () => {
+    const createBot = vi.fn().mockResolvedValue({
+      id: "child-3",
+      name: "Lia",
+      title: "Recepção",
+      threadId: "thread-3",
+    });
+    vi.spyOn(await import("@corvo/db"), "createRepos").mockReturnValue({
+      createBot,
+    } as unknown as ReturnType<typeof createRepos>);
+    const upsert = vi.fn().mockResolvedValue({});
+    const prisma = {
+      botMcpServer: {
+        findMany: vi.fn().mockResolvedValue([{ serverId: "srv" }]),
+        findFirst: vi
+          .fn()
+          .mockResolvedValue({ allowAllTools: true, allowedTools: [], level: "write" }),
+        upsert,
+      },
+    } as unknown as PrismaClient;
+    const mcpServerTools = vi
+      .fn()
+      .mockResolvedValue([{ name: "list_appointments", description: "agenda", readOnly: true }]);
+    const input = {
+      spawnedBy: { id: "parent-1", name: "Rook", spaceId: "workspace-1", userId: "user-1" },
+      runId: "run-1",
+      spawnKey: "tool-call-3",
+      name: "Lia",
+    };
+    const jobs = { enqueue: vi.fn() } as unknown as JobPublisher;
+    await spawnBot({ prisma, jobs, mcpServerTools }, { ...input, inheritConnections: true });
+    expect(upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          botId: "child-3",
+          serverId: "srv",
+          allowedTools: ["list_appointments"],
+        }),
+      }),
+    );
+    // Without the flag (an approved proposal brings its own grants) nothing is inherited.
+    upsert.mockClear();
+    await spawnBot({ prisma, jobs, mcpServerTools }, input);
+    expect(upsert).not.toHaveBeenCalled();
+  });
+
   it("passes computerMode through to createBot", async () => {
     const createBot = vi.fn().mockResolvedValue({
       id: "child-2",

@@ -330,6 +330,7 @@ async function main() {
     artifacts,
     connector: stack.connector,
     connectors: stack.connector,
+    mcpServerTools: (serverId, context) => mcp.listServerTools(serverId, context),
     listConnectedPluginSlugs: async (userId) => {
       const provider = await integrationSettings.resolve("composio");
       if (!provider) return [];

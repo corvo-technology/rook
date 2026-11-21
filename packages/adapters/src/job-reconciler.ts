@@ -129,6 +129,7 @@ export function createJobReconciler(
     notifications?: NotificationProvider;
     leadership?: ReconciliationLeadership;
     reconcileComputerUpdates?: () => Promise<void>;
+    reconcileChiefWatches?: () => Promise<void>;
     reconcileCloudAgents?: () => Promise<void>;
     reconcileModelCredits?: () => Promise<void>;
     reconcilePartnerWebhooks?: () => Promise<void>;
@@ -178,6 +179,7 @@ export function createJobReconciler(
           deps.reconcilePartnerDomains,
           deps.reconcileBillingReminders,
           deps.reconcileComputerUpdates,
+          deps.reconcileChiefWatches,
           deps.reconcileRoutineRetryNotices,
           deps.reconcileSecurityEventRetention,
           deps.reconcileConsultationRetention,

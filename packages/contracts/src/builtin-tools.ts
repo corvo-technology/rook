@@ -100,6 +100,7 @@ export const BUILTIN_TOOL_NAMES = [
   "workflow_stop",
   "pass",
   "request_stronger_model",
+  "note_surfaced",
   "end_call",
   "call_user",
   "skill_read",

@@ -1,3 +1,4 @@
+import { recordSurfacedItem } from "@corvo/db";
 import {
   desktopProtectionGuardMessage,
   protectedComputerLifecycleRefusal,
@@ -298,6 +299,19 @@ export const taskTools: ToolHandlers = {
   async pass(ctx, call) {
     ctx.state.passed = true;
     return call.finish({ ok: true, note: "Passed. End your turn now without writing anything." });
+  },
+  async note_surfaced(ctx, call) {
+    const { args } = call;
+    const noted = await recordSurfacedItem(ctx.deps.prisma, {
+      spaceId: ctx.run.spaceId,
+      botId: ctx.bot.id,
+      threadId: ctx.thread.id,
+      key: String(args.key ?? ""),
+      fingerprint: args.version ? String(args.version) : null,
+      summary: String(args.summary ?? ""),
+      runId: ctx.run.id,
+    });
+    return call.finish("error" in noted ? noted : { ok: true, key: noted.key });
   },
   async request_stronger_model(ctx, call) {
     const { state } = ctx;

@@ -1,0 +1,69 @@
+---
+import { CHESS_PIECES, ROOK_AVATAR, ROOK_EYE_COLOR, avatarLook } from "@corvo/core";
+import type { AvatarLook } from "@corvo/core";
+import { renderAvatarSvg } from "open-bot-avatar";
+
+type Props = { label: string };
+const { label } = Astro.props;
+
+/** One row per piece, in the piece's own color first. */
+const ROWS = [
+  { piece: "rook", definition: ROOK_AVATAR, color: "#e5833a" },
+  { piece: "queen", definition: CHESS_PIECES.queen, color: "#d9a23a" },
+  { piece: "knight", definition: CHESS_PIECES.knight, color: "#3fbf74" },
+  { piece: "bishop", definition: CHESS_PIECES.bishop, color: "#2fc0a6" },
+  { piece: "king", definition: CHESS_PIECES.king, color: "#3b8ff0" },
+  { piece: "pawn", definition: CHESS_PIECES.pawn, color: "#9b55e8" },
+] as const;
+
+const INK = "#111111";
+const INK_EYE = "#f4f4f2";
+const IDLE_HAPPY: AvatarLook = { state: "idle", mood: "happy", asleep: false };
+// The ink avatars show what an agent's run status looks like, through the same mapping the app uses.
+const LOOKS: AvatarLook[] = [
+  IDLE_HAPPY,
+  avatarLook("queued", false),
+  avatarLook("running", false),
+  avatarLook("waiting_input", false),
+  avatarLook("idle", true),
+];
+
+const draw = (definition: (typeof ROWS)[number]["definition"], color: string, eyeColor: string, look: Pick<AvatarLook, "state" | "mood">) =>
+  renderAvatarSvg(definition, { color, eyeColor, state: look.state, mood: look.mood, reducedMotion: true })
+    .replace(/ role="img" aria-label="[^"]*"/, ' aria-hidden="true"')
+    .replace(/<title>[^<]*<\/title>/, "");
+
+const rows = ROWS.map((row) => ({
+  piece: row.piece,
+  cells: [
+    { color: row.color, eye: ROOK_EYE_COLOR, state: "idle", mood: "neutral", svg: draw(row.definition, row.color, ROOK_EYE_COLOR, { state: "idle", mood: "neutral" }) },
+    ...LOOKS.map((look) => ({ color: INK, eye: INK_EYE, state: look.state, mood: look.mood, svg: draw(row.definition, INK, INK_EYE, look) })),
+  ],
+}));
+---
+
+<!-- A band with no text: every piece in a row of avatars, the first in its color, the rest in ink, each showing one state. Still pictures from the server; the script makes them live while the band is on screen. -->
+<section class="agent-grid" role="img" aria-label={label} data-agent-grid>
+  {
+    rows.map((row) => (
+      <div class="agent-grid__row" aria-hidden="true">
+        {row.cells.map((cell, i) => (
+          <span
+            class="agent-grid__cell"
+            data-piece={row.piece}
+            data-color={cell.color}
+            data-eye={cell.eye}
+            data-state={cell.state}
+            data-mood={cell.mood}
+            data-i={i}
+            set:html={cell.svg}
+          />
+        ))}
+      </div>
+    ))
+  }
+</section>
+
+<script>
+  import "../agent-grid";
+</script>

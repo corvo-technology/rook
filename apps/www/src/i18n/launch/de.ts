@@ -98,6 +98,7 @@ const COPY: LaunchCopy = {
     },
     health: { label: "Gesundheit und Schönheit", agents: ["Empfang", "Patientenakte-Assistent", "Kunden-Nachsorge"] },
   },
+  agentGrid: { label: "Rook-Agenten bei der Arbeit: sie denken, warten und sind fertig" },
   preview: {
     window: "Rook",
     rail: { agents: "Agenten", routines: "Routinen", workflows: "Workflows", more: "Mehr", store: "Store" },

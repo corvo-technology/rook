@@ -214,6 +214,11 @@ export function createHomeStyles() {
       paddingHorizontal: 16,
       paddingVertical: 8,
     },
+    spaceTitleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
     spaceTitle: {
       color: native.label,
       fontSize: 14,

@@ -1068,7 +1068,7 @@ export type MobileMe = Pick<
   | "needsSignupSurvey"
   | "billingEnabled"
 > &
-  Partial<Pick<Me, "shortNav" | "canCreateSpace" | "autoModelAvailable" | "quietHours">>;
+  Partial<Pick<Me, "shortNav" | "canCreateSpace" | "autoModelAvailable" | "quietHours" | "image">>;
 
 export type MobileModel = ModelCatalogEntry;
 

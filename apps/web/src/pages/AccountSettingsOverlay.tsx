@@ -26,6 +26,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import type { RefObject } from "react";
 import { useId, useRef, useState, useSyncExternalStore } from "react";
 import { AccountAccess } from "../components/AccountAccess";
+import { AvatarEditor } from "../components/AvatarEditor";
 import { SuccessPop } from "../components/ai/primitives";
 import {
   CHOOSE_COMPUTER_EVENT,
@@ -34,6 +35,7 @@ import {
 import { DesktopControlSettings } from "../components/DesktopControlSettings";
 import { DesktopUpdateSection } from "../components/DesktopUpdates";
 import { PasskeySettings } from "../components/PasskeySettings";
+import { PersonAvatar } from "../components/PersonAvatar";
 import { SettingsGroup, SettingsRow } from "../components/SettingsRows";
 import { authClient } from "../lib/auth";
 import type { BotsSidebarDensity } from "../lib/bots-sidebar-density-pref";
@@ -74,6 +76,10 @@ export type SettingsGeneralProps = {
   email?: string | null;
   name: string;
   onNameSaved?: () => Promise<void>;
+  /** The person's own avatar: a color, a picture or nothing. */
+  image?: string | null;
+  /** Saves their avatar; null goes back to the default look. */
+  onAvatarChange?: (avatar: string | null) => Promise<void>;
   /** The user's saved IANA timezone, or null before one is set. */
   timezone?: string | null;
   onTimezoneChange?: (timezone: string) => Promise<void>;
@@ -88,6 +94,8 @@ export function GeneralSettingsPanels({
   email,
   name,
   onNameSaved,
+  image,
+  onAvatarChange,
   timezone = null,
   onTimezoneChange,
   quietHours,
@@ -275,6 +283,18 @@ export function GeneralSettingsPanels({
             }
           />
         )}
+        {onAvatarChange && !editingName ? (
+          <SettingsRow
+            label={<Trans>Avatar</Trans>}
+            control={
+              <AvatarEditor
+                value={image}
+                preview={(value) => <PersonAvatar name={account.label} image={value} size={36} />}
+                onSave={onAvatarChange}
+              />
+            }
+          />
+        ) : null}
       </SettingsGroup>
 
       <SettingsGroup title={<Trans>Preferences</Trans>}>

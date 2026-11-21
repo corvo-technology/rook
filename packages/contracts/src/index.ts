@@ -8,6 +8,7 @@ export * from "./app-import.js";
 export * from "./assist.js";
 export * from "./attachments.js";
 export * from "./auth.js";
+export * from "./avatar.js";
 export * from "./board.js";
 export * from "./bot-avatar.js";
 export * from "./bot-memory.js";

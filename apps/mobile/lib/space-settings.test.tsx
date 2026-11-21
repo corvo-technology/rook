@@ -66,6 +66,7 @@ vi.mock("react-native", () => ({
   Alert: { alert: state.alert },
 }));
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: element("div") }));
+vi.mock("./avatar-photo", () => ({ pickAvatarPhoto: async () => null }));
 vi.mock("../components/native-action-button", () => ({
   NativeActionButton: ({ label, onPress }: { label: string; onPress: () => void }) =>
     createElement("button", { type: "button", onClick: onPress }, label),

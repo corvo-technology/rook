@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { useSidebarUpdate } from "./DesktopUpdates";
 import { IconTooltip } from "./IconTooltip";
+import { PersonAvatar } from "./PersonAvatar";
 
 type Props = {
   mini?: boolean;
@@ -61,7 +62,6 @@ export function SidebarFooter({
 }: Props) {
   const { t } = useLingui();
   const update = useSidebarUpdate();
-  const [failedImage, setFailedImage] = useState<string | null>(null);
   const pillRef = useRef<HTMLButtonElement>(null);
   const labelRef = useRef<HTMLSpanElement>(null);
   const [markCount, setMarkCount] = useState(3);
@@ -85,19 +85,6 @@ export function SidebarFooter({
     measure();
     return () => observer.disconnect();
   }, [mini]);
-  const avatar =
-    image && failedImage !== image ? (
-      <img
-        src={image}
-        alt=""
-        className="size-full object-cover"
-        onError={() => setFailedImage(image)}
-      />
-    ) : initials ? (
-      initials
-    ) : (
-      <UserRound size={16} aria-hidden="true" />
-    );
   return (
     <div
       data-testid="sidebar-footer"
@@ -123,9 +110,13 @@ export function SidebarFooter({
             aria-label={t`Account menu for ${name}`}
             className={`flex min-w-0 items-center gap-2 rounded-md text-start outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring ${mini ? "p-0.5" : "h-9 flex-1 px-1.5"}`}
           >
-            <span className="grid size-7 shrink-0 place-items-center overflow-hidden rounded-full border border-border bg-sidebar-accent text-meta font-medium text-foreground">
-              {avatar}
-            </span>
+            {initials ? (
+              <PersonAvatar name={name} image={image} size={28} />
+            ) : (
+              <span className="grid size-7 shrink-0 place-items-center rounded-full border border-border bg-sidebar-accent text-foreground">
+                <UserRound size={16} aria-hidden="true" />
+              </span>
+            )}
             {mini ? null : (
               <span className="min-w-0 flex-1 truncate text-nav font-medium text-sidebar-foreground">
                 {name}

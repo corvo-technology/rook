@@ -1,7 +1,9 @@
+import { resolveAvatarValue } from "@corvo/adapters";
 import type { Actor, SpaceHint, SpaceNavigation } from "@corvo/contracts";
 import { ACTIVE_RUN_STATUSES, can } from "@corvo/core";
 import type { createGroupRepos, createRepos, PrismaClient } from "@corvo/db";
 import {
+  CannotChangeSpaceAvatarError,
   CannotDeleteDefaultSpaceError,
   CannotDeleteLastSpaceError,
   CannotDeleteSpaceAsNonOwnerError,
@@ -24,6 +26,7 @@ import {
   SpaceLimitError,
   SpaceNotFoundError,
   setMembersCanCreateSpaces,
+  setSpaceAvatarForMember,
   setSpacePausedForMember,
   setSpaceSettingOverride,
   spaceSettingOverrides,
@@ -215,6 +218,32 @@ export function spacesRoutes(ctx: RouterContext) {
             }
             if (error instanceof InvalidSpaceNameError) {
               throw new ORPCError("BAD_REQUEST", { message: error.message });
+            }
+            if (error instanceof SpaceDeletionInProgressError) {
+              throw new ORPCError("CONFLICT", { message: error.message });
+            }
+            throw error;
+          }
+        }),
+      ),
+      // The picture is re-encoded here, never stored as sent; membership and permission are checked inside.
+      setAvatar: authed.spaces.setAvatar.handler(({ context, input }) =>
+        asMemberOf(deps.prisma, context.actor, input.spaceId, async () => {
+          const resolved = await resolveAvatarValue(input.avatar);
+          if ("error" in resolved) throw new ORPCError("BAD_REQUEST", { message: resolved.error });
+          try {
+            return await setSpaceAvatarForMember(deps.prisma, {
+              currentSpaceId: context.actor.spaceId,
+              userId: context.actor.userId,
+              spaceId: input.spaceId,
+              avatar: resolved.avatar,
+            });
+          } catch (error) {
+            if (error instanceof SpaceNotFoundError) {
+              throw new ORPCError("NOT_FOUND", { message: error.message });
+            }
+            if (error instanceof CannotChangeSpaceAvatarError) {
+              throw new ORPCError("FORBIDDEN", { message: error.message });
             }
             if (error instanceof SpaceDeletionInProgressError) {
               throw new ORPCError("CONFLICT", { message: error.message });

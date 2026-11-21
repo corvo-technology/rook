@@ -1086,6 +1086,28 @@ describe("a deployment where people sign in by emailed code only", () => {
     expect(await f.sessionFor(token)).toMatchObject({ user: { name: "Ada Lovelace" } });
   });
 
+  it("takes a color or a small data image as the person's own avatar, and clears it", async () => {
+    const f = fixture({ codeOnly: true });
+    const token = await sessionToken(f, false);
+    const picture = "data:image/webp;base64,UklGRg==";
+    for (const image of ["#15803D", picture, null]) {
+      expect((await f.request("/update-user", { image }, token)).status).toBe(200);
+      expect(await f.sessionFor(token)).toMatchObject({ user: { image } });
+    }
+  });
+
+  it.each([
+    "http://tracker.example/pixel.gif",
+    "https://example.com/me.png",
+    "data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=",
+    "red",
+  ])("refuses %s as the person's own avatar", async (image) => {
+    const f = fixture({ codeOnly: true });
+    const token = await sessionToken(f, false);
+    expect((await f.request("/update-user", { image }, token)).status).toBe(400);
+    expect(await f.sessionFor(token)).not.toMatchObject({ user: { image } });
+  });
+
   it("keeps a name chosen at sign-up when a client sends one", async () => {
     const f = fixture({ codeOnly: true });
     const token = await sessionToken(f, true);

@@ -24,12 +24,24 @@ export function displayName(name: string | null | undefined, fallback: string): 
   return trimmed && /[\p{L}\p{N}]/u.test(trimmed) && !isOpaqueName(trimmed) ? trimmed : fallback;
 }
 
+/** Names an account gets when nobody chose one; showing or greeting someone by them is wrong. */
+export const PLACEHOLDER_ACCOUNT_NAMES: ReadonlySet<string> = new Set([
+  "account",
+  "user",
+  "usuario",
+  "usuário",
+  "conta",
+  "admin",
+]);
+
 export function accountDisplay(
   account: { name?: string | null; email?: string | null; image?: string | null },
   fallback: string,
 ): { label: string; initial: string | null; image: string | null } {
   const email = account.email?.trim() ?? "";
-  const name = displayName(account.name, "");
+  const named = displayName(account.name, "");
+  // A placeholder is not a name: the email says more about who this is.
+  const name = PLACEHOLDER_ACCOUNT_NAMES.has(named.toLowerCase()) ? "" : named;
   const comparable = name.toLowerCase();
   const emailDerived =
     email &&
@@ -68,7 +80,9 @@ export function displayMessageBlock(
 
 /** Up to two letters: the first of the first and last word, or the first two of a single name. */
 export function personInitials(name: string): string {
-  const words = name.match(/[\p{L}\p{N}]+/gu) ?? [];
+  // An address stands in for a name only until there is one: its own part before the @ is what reads.
+  const words =
+    (name.includes("@") ? (name.split("@")[0] ?? "") : name).match(/[\p{L}\p{N}]+/gu) ?? [];
   const first = words[0];
   if (!first) return "?";
   const last = words.length > 1 ? words[words.length - 1] : undefined;

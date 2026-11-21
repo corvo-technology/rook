@@ -198,13 +198,13 @@ describe("stored account names", () => {
       expect(
         await hooks.create!.before!({ name, email: "demo@example.com" } as never),
       ).toMatchObject({ data: { name: "" } });
-      expect(await hooks.update!.before!({ name })).toMatchObject({ data: { name: "" } });
+      expect(await hooks.update!.before!({ name }, null)).toMatchObject({ data: { name: "" } });
     },
   );
   it("preserves real names and does not change names during unrelated updates", async () => {
     const hook = auth.options.databaseHooks!.user!.update!.before!;
-    expect(await hook({ name: " 李雷 " })).toMatchObject({ data: { name: "李雷" } });
-    const result = await hook({ emailVerified: true });
+    expect(await hook({ name: " 李雷 " }, null)).toMatchObject({ data: { name: "李雷" } });
+    const result = await hook({ emailVerified: true }, null);
     expect(result).toEqual({ data: { emailVerified: true } });
   });
 });

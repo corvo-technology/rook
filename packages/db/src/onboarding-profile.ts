@@ -68,7 +68,8 @@ export async function readOnboardingAnswers(
     areas: (member?.areas ?? []).filter(
       (area): area is WorkArea => WorkAreaSchema.safeParse(area).success,
     ),
-    logo: space?.logo ?? null,
+    // A space may wear a color instead; only a picture is a logo to show and send back.
+    logo: space?.logo?.startsWith("data:image/") ? space.logo : null,
   };
 }
 

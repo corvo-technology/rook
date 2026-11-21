@@ -367,6 +367,7 @@ export const DE_MESSAGES: Record<string, string> = {
   "Message…": "Nachricht…",
   "No longer active": "Nicht mehr aktiv",
   "Photo library": "Fotomediathek",
+  Avatar: "Avatar",
   "Pull request": "Pull Request",
   React: "Reagieren",
   "Remove mention {name}": "Erwähnung {name} entfernen",

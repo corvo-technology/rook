@@ -345,6 +345,7 @@ export const JA_MESSAGES: Record<string, string> = {
   "Message…": "メッセージ…",
   "No longer active": "無効になりました",
   "Photo library": "フォトライブラリ",
+  Avatar: "アバター",
   "Pull request": "プルリクエスト",
   React: "リアクション",
   "Remove mention {name}": "メンション{name}を削除",

@@ -603,6 +603,7 @@ export const ZH_MESSAGES: Record<string, string> = {
   Personal: "个人",
   "Personal credential": "个人凭证",
   "Photo library": "相册",
+  Avatar: "头像",
   Pin: "置顶",
   "Please try again.": "请重试。",
   "Point this app at your self-hosted Rook origin, the same HTTPS URL you open in a browser.":

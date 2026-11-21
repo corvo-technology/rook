@@ -1,4 +1,5 @@
 import type { PresenceStatus } from "@corvo/contracts";
+import { avatarInk, parseAvatar } from "@corvo/contracts";
 import { personInitials } from "@corvo/core";
 import { useState } from "react";
 
@@ -11,7 +12,10 @@ export function presenceDotClass(status: PresenceStatus | undefined): string | n
   return null;
 }
 
-/** A person's picture, or their initials: the one place a person, unlike an agent, wears no colour. */
+/**
+ * A person's picture, or their initials on a chosen color (a quiet gray until they choose one).
+ * Always a circle of initials, never a character: agents are the ones that wear those.
+ */
 export function PersonAvatar({
   name,
   image,
@@ -29,6 +33,9 @@ export function PersonAvatar({
 }) {
   const [failed, setFailed] = useState<string | null>(null);
   const dot = presenceDotClass(presence);
+  const avatar = parseAvatar(image);
+  const src = avatar.kind === "image" ? avatar.src : null;
+  const color = avatar.kind === "color" ? avatar.color : null;
   return (
     <span
       aria-hidden="true"
@@ -36,16 +43,14 @@ export function PersonAvatar({
       style={{ width: size, height: size }}
     >
       <span
-        style={{ fontSize: Math.round(size * 0.4) }}
+        style={{
+          fontSize: Math.round(size * 0.4),
+          ...(color ? { backgroundColor: color, color: avatarInk(color) } : {}),
+        }}
         className="grid size-full place-items-center overflow-hidden rounded-full border border-border bg-muted font-semibold text-foreground"
       >
-        {image && failed !== image ? (
-          <img
-            src={image}
-            alt=""
-            className="size-full object-cover"
-            onError={() => setFailed(image)}
-          />
+        {src && failed !== src ? (
+          <img src={src} alt="" className="size-full object-cover" onError={() => setFailed(src)} />
         ) : (
           personInitials(name)
         )}

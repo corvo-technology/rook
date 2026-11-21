@@ -141,7 +141,9 @@ function Home({ embedded, onSelectSpace }: InboxPaneProps & { embedded: boolean 
   const [spaces, setSpaces] = useState<MobileSpace[]>([]);
   // Whether this person may create spaces; the server refuses them anyway.
   const [canCreateSpace, setCanCreateSpace] = useState(true);
-  const [me, setMe] = useState<Pick<MobileMe, "userId" | "spaceId" | "name"> | null>(null);
+  const [me, setMe] = useState<Pick<MobileMe, "userId" | "spaceId" | "name" | "image"> | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   // Kept apart from action errors so a failed action never borrows the load's title.
   const [inboxLoading, setInboxLoading] = useState(false);
@@ -752,6 +754,8 @@ function Home({ embedded, onSelectSpace }: InboxPaneProps & { embedded: boolean 
       {nativeHeader ? null : (
         <InboxHeader
           initials={initials}
+          name={accountDisplay(me ?? {}, t("You")).label}
+          image={me?.image}
           activityMode={activityMode}
           toggleActivityMode={toggleActivityMode}
           runCreateAction={runCreateAction}

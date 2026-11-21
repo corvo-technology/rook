@@ -22,6 +22,7 @@ import {
   ARTIFACT_NAME_MAX_LENGTH,
   ATTACHMENT_MAX_COUNT,
 } from "./attachments.js";
+import { SetAvatarInputSchema } from "./avatar.js";
 import {
   BoardEventSchema,
   BoardSchema,
@@ -470,6 +471,8 @@ export const appContract = {
           ),
       )
       .output(MeSchema),
+    /** The caller's own avatar: a color, a picture, or null for the default look. */
+    setAvatar: oc.input(SetAvatarInputSchema).output(z.object({ image: z.string().nullable() })),
     /** Saves a detected timezone only while none is saved, so it never replaces a choice. */
     adoptTimezone: oc.input(z.object({ timezone: TimeZoneSchema })).output(MeSchema),
   },
@@ -489,6 +492,10 @@ export const appContract = {
         z.object({ spaceId: Id, name: spaceName, logo: SpaceLogoSchema.nullable().optional() }),
       )
       .output(z.object({ id: Id, name: z.string() })),
+    /** A space's avatar, by anyone who may configure it: a color, a picture, or null for the default. */
+    setAvatar: oc
+      .input(SetAvatarInputSchema.extend({ spaceId: Id }))
+      .output(z.object({ id: Id, logo: z.string().nullable() })),
     /** Pauses or resumes every bot in a space the caller owns; pausing cancels active runs. */
     setPaused: oc
       .input(z.object({ spaceId: Id, paused: z.boolean() }))

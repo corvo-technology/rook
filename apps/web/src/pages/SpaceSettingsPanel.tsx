@@ -2,7 +2,9 @@ import { Button, InlineConfirm, Input, undoable } from "@corvo/ui-web";
 import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useEffect, useId, useState } from "react";
+import { AvatarEditor } from "../components/AvatarEditor";
 import { SettingsGroup, SettingsRow } from "../components/SettingsRows";
+import { SpaceAvatar } from "../components/SpaceAvatar";
 import { SpaceRolesSettings } from "./SpaceRolesSettings";
 import { SpaceSettingOverrides } from "./SpaceSettingOverrides";
 import { SpaceTransfer } from "./SpaceTransfer";
@@ -12,6 +14,7 @@ import type { SettingsSpace } from "./shell/dialogs";
 export function SpaceSettingsPanel({
   space,
   onRename,
+  onSetAvatar,
   onSetPaused,
   onDelete,
   onImported,
@@ -19,6 +22,8 @@ export function SpaceSettingsPanel({
 }: {
   space: SettingsSpace;
   onRename: (name: string) => Promise<void>;
+  /** Saves the space's avatar; null goes back to the default look. */
+  onSetAvatar?: (avatar: string | null) => Promise<void>;
   onSetPaused?: (paused: boolean) => Promise<void>;
   onDelete: () => Promise<void>;
   onImported?: () => void;
@@ -102,6 +107,20 @@ export function SpaceSettingsPanel({
               </p>
             ) : null}
           </SettingsRow>
+          {onSetAvatar ? (
+            <SettingsRow
+              label={<Trans>Avatar</Trans>}
+              control={
+                <AvatarEditor
+                  value={space.logo}
+                  preview={(value) => (
+                    <SpaceAvatar name={draft || space.name} logo={value} size={36} />
+                  )}
+                  onSave={onSetAvatar}
+                />
+              }
+            />
+          ) : null}
         </SettingsGroup>
       ) : null}
       <SpaceRolesSettings />

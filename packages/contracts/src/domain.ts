@@ -1951,6 +1951,8 @@ export const MeSchema = z.object({
   userId: Id,
   email: z.string().email(),
   name: z.string(),
+  /** The person's own avatar: a color, a small picture, or an address their sign-in supplied. */
+  image: z.string().nullable().optional(),
   spaceId: Id,
   /** Deprecated: app accounts never have server administrator privileges. Always false. */
   isDeploymentOwner: z.boolean(),

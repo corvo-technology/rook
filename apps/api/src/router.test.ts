@@ -453,6 +453,57 @@ describe("account preferences", () => {
     expect(setup.updateMany).not.toHaveBeenCalled();
   });
 
+  async function setAvatar(setup: ReturnType<typeof preferencesDeps>, avatar: unknown) {
+    const { response } = await setup.handler.handle(
+      new Request("http://127.0.0.1/rpc/preferences/setAvatar", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ json: { avatar } }),
+      }),
+      { prefix: "/rpc", context: { actor: setup.actor } },
+    );
+    return response;
+  }
+
+  it("saves a color on the caller's own row only", async () => {
+    const setup = preferencesDeps("organic");
+    const response = await setAvatar(setup, "#15803D");
+    expect(response?.status).toBe(200);
+    await expect(response?.json()).resolves.toEqual({ json: { image: "#15803D" } });
+    expect(setup.update).toHaveBeenCalledTimes(1);
+    expect(setup.update).toHaveBeenCalledWith({
+      where: { id: "user-1" },
+      data: { image: "#15803D" },
+    });
+  });
+
+  it("clears the avatar with null", async () => {
+    const setup = preferencesDeps("organic");
+    expect((await setAvatar(setup, null))?.status).toBe(200);
+    expect(setup.update).toHaveBeenCalledWith({ where: { id: "user-1" }, data: { image: null } });
+  });
+
+  it("stores a picture re-encoded rather than as sent", async () => {
+    const setup = preferencesDeps("organic");
+    const png =
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=";
+    expect((await setAvatar(setup, png))?.status).toBe(200);
+    const call = setup.update.mock.calls[0] as unknown as [{ data: { image: string } }];
+    expect(call[0].data.image.startsWith("data:image/webp;base64,")).toBe(true);
+  });
+
+  it.each([
+    "http://tracker.example/pixel.gif",
+    "https://example.com/me.png",
+    "data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=",
+    "red",
+    "",
+  ])("refuses %j as an avatar", async (value) => {
+    const setup = preferencesDeps("organic");
+    expect((await setAvatar(setup, value))?.status).toBeGreaterThanOrEqual(400);
+    expect(setup.update).not.toHaveBeenCalled();
+  });
+
   it.each(["robot", "organic", "custom-cdn"])(
     "always reports the organic style, whatever is stored (%s)",
     async (style) => {

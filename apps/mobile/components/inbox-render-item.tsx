@@ -12,6 +12,7 @@ import type { InboxItem, InboxSpace } from "../lib/inbox-spaces";
 import { canDeleteInboxSpace, inboxItemKey } from "../lib/inbox-spaces";
 import { useThemedStyles } from "../lib/native";
 import type { useInboxChatActions } from "../lib/use-inbox-chat-actions";
+import { AvatarMark } from "./avatar-mark";
 import { createHomeStyles } from "./home-styles";
 import { ArchivedChatsRow, BotRow, GroupRow, PinnedTiles, SectionChevron } from "./inbox-rows";
 import { NativeSymbol } from "./native-symbol";
@@ -118,7 +119,14 @@ export function useInboxRenderItem({
               }}
               style={({ pressed }) => [styles.spaceSelect, pressed && styles.rowPressed]}
             >
-              <Text style={styles.spaceTitle}>{item.title}</Text>
+              {item.space.logo ? (
+                <View style={styles.spaceTitleRow}>
+                  <AvatarMark name={item.title} value={item.space.logo} shape="space" size={22} />
+                  <Text style={styles.spaceTitle}>{item.title}</Text>
+                </View>
+              ) : (
+                <Text style={styles.spaceTitle}>{item.title}</Text>
+              )}
             </Pressable>
             <MenuView
               actions={[

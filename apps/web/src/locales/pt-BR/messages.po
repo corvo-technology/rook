@@ -1735,6 +1735,11 @@ msgstr "Disponível depois que a rotina for salva"
 msgid "Available to this bot's shell commands as {commandVariable}"
 msgstr "Disponível para os comandos de shell deste bot como {commandVariable}"
 
+#: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/SpaceSettingsPanel.tsx
+msgid "Avatar"
+msgstr "Avatar"
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Avatar Studio"
 msgstr "Estúdio de avatar"
@@ -2376,6 +2381,7 @@ msgstr "Recolher {label}"
 msgid "Collapse {name}"
 msgstr "Recolher {name}"
 
+#: src/components/AvatarEditor.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Color"
 msgstr "Cor"
@@ -3250,6 +3256,7 @@ msgstr "Não foi possível executar a rotina"
 msgid "Could not run the routine"
 msgstr "Não foi possível executar a rotina"
 
+#: src/components/AvatarEditor.tsx
 #: src/components/ChangeWhenToAsk.tsx
 #: src/pages/connections/DatabaseForm.tsx
 #: src/pages/connections/MailboxForm.tsx
@@ -3445,6 +3452,7 @@ msgstr "Não foi possível atualizar a rotina"
 msgid "Could not update the speech model"
 msgstr "Não foi possível atualizar o modelo de fala"
 
+#: src/components/AvatarEditor.tsx
 #: src/pages/onboarding/WorkspaceStep.tsx
 #: src/pages/onboarding/YouStep.tsx
 msgid "Could not use that image"
@@ -7261,6 +7269,7 @@ msgstr "Pessoal"
 msgid "Phone call"
 msgstr "Ligação"
 
+#: src/components/AvatarEditor.tsx
 #: src/pages/onboarding/YouStep.tsx
 #: src/pages/shell/chat-context.tsx
 #: src/pages/shell/chat-shared.ts
@@ -7762,6 +7771,7 @@ msgstr "Lembrada"
 
 #: src/components/AlwaysAllowedRules.tsx
 #: src/components/ApprovalRulesSettings.tsx
+#: src/components/AvatarEditor.tsx
 #: src/pages/connections/McpServerForm.tsx
 #: src/pages/ConnectionsSettingsPanel.tsx
 #: src/pages/LocalSpeechSection.tsx

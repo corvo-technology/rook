@@ -1,21 +1,12 @@
 import type { PendingApproval, RoutineOccurrence, RunActivityRow } from "@corvo/contracts";
+import { PLACEHOLDER_ACCOUNT_NAMES } from "@corvo/core";
 import { HOME_CARD_LIMIT } from "./home-cards";
-
-/** Names an account gets when nobody chose one; greeting someone by them would be wrong. */
-const PLACEHOLDER_NAMES: ReadonlySet<string> = new Set([
-  "account",
-  "user",
-  "usuario",
-  "usuário",
-  "conta",
-  "admin",
-]);
 
 const firstWord = (name: string | null | undefined): string => name?.trim().split(/\s+/)[0] ?? "";
 
 function usable(name: string | null | undefined): string {
   const word = firstWord(name);
-  return PLACEHOLDER_NAMES.has(word.toLowerCase()) ? "" : word;
+  return PLACEHOLDER_ACCOUNT_NAMES.has(word.toLowerCase()) ? "" : word;
 }
 
 /**
@@ -30,7 +21,7 @@ export function greetingName(who: {
   const chosen = usable(who.displayName) || usable(who.name);
   if (chosen) return chosen;
   const local = (who.email?.split("@")[0] ?? "").split(/[._+\-\d]+/)[0] ?? "";
-  if (!local || PLACEHOLDER_NAMES.has(local.toLowerCase())) return "";
+  if (!local || PLACEHOLDER_ACCOUNT_NAMES.has(local.toLowerCase())) return "";
   return local.charAt(0).toUpperCase() + local.slice(1);
 }
 

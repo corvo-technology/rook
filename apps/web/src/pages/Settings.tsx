@@ -191,6 +191,17 @@ export function SettingsPage() {
     });
   }
 
+  async function setSpaceAvatar(spaceId: string, avatar: string | null) {
+    const result = await rpc.spaces.setAvatar({ spaceId, avatar });
+    updateBootstrap((current) => ({
+      ...current,
+      spaces: current.spaces.map((space) =>
+        space.id === spaceId ? { ...space, logo: result.logo } : space,
+      ),
+    }));
+    void client.invalidateQueries({ queryKey: bootstrapKey });
+  }
+
   async function setSpacePaused(spaceId: string, paused: boolean) {
     const result = await rpc.spaces.setPaused({ spaceId, paused });
     updateBootstrap((current) => ({
@@ -225,6 +236,11 @@ export function SettingsPage() {
             email={user?.email}
             name={user?.name ?? ""}
             onNameSaved={async () => {
+              await session.refetch({ query: { disableCookieCache: true } });
+            }}
+            image={user?.image}
+            onAvatarChange={async (avatar) => {
+              await rpc.preferences.setAvatar({ avatar });
               await session.refetch({ query: { disableCookieCache: true } });
             }}
             timezone={me?.timezone ?? null}
@@ -415,6 +431,7 @@ export function SettingsPage() {
                 key={space.id}
                 space={space}
                 onRename={(name) => renameSpace(space.id, name)}
+                onSetAvatar={(avatar) => setSpaceAvatar(space.id, avatar)}
                 onSetPaused={(paused) => setSpacePaused(space.id, paused)}
                 onDelete={() => removeSpace(space.id)}
                 onImported={() => void client.invalidateQueries({ queryKey: bootstrapKey })}

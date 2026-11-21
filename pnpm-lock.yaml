@@ -853,6 +853,9 @@ importers:
       '@corvo/adapter-kit':
         specifier: workspace:*
         version: link:../adapter-kit
+      '@corvo/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@corvo/core':
         specifier: workspace:*
         version: link:../core

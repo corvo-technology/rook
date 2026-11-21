@@ -3,6 +3,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { AvatarPicker } from "../../components/avatar-picker";
 import { LoadFailure } from "../../components/load-failure";
 import { NativeSwitch } from "../../components/native-switch";
 import { SettingsGroup, SettingsRow } from "../../components/settings-group";
@@ -27,6 +28,11 @@ export default function SpaceSettings() {
   const styles = useThemedStyles(createStyles);
   const [overrides, setOverrides] = useState<SpaceSetting[] | null>(null);
   const [pause, setPause] = useState<{ canPause: boolean; paused: boolean } | null>(null);
+  const [identity, setIdentity] = useState<{
+    name: string;
+    logo: string | null;
+    canEdit: boolean;
+  } | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -48,8 +54,14 @@ export default function SpaceSettings() {
       void rpc("spaces/list")
         .then((navigation) => {
           const found = navigation.spaces.find((item) => item.id === target.spaceId);
-          if (current && found)
+          if (current && found) {
             setPause({ canPause: found.canPause === true, paused: !!found.pausedAt });
+            setIdentity({
+              name: found.name,
+              logo: found.logo ?? null,
+              canEdit: found.canRename === true,
+            });
+          }
         })
         .catch(() => undefined);
       return () => {
@@ -138,6 +150,19 @@ export default function SpaceSettings() {
           <Text accessibilityRole="alert" style={styles.error}>
             {shownError}
           </Text>
+        ) : null}
+        {identity?.canEdit ? (
+          <SettingsGroup>
+            <AvatarPicker
+              name={identity.name}
+              value={identity.logo}
+              shape="space"
+              onSave={async (avatar) => {
+                const result = await rpc("spaces/setAvatar", { spaceId: space, avatar });
+                setIdentity((current) => (current ? { ...current, logo: result.logo } : current));
+              }}
+            />
+          </SettingsGroup>
         ) : null}
         <SettingsGroup accessibilityLabel={t("Customize")} label={t("Customize")}>
           {row("models", t("Models"))}

@@ -1735,6 +1735,11 @@ msgstr "Available after the routine is saved"
 msgid "Available to this bot's shell commands as {commandVariable}"
 msgstr "Available to this bot's shell commands as {commandVariable}"
 
+#: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/SpaceSettingsPanel.tsx
+msgid "Avatar"
+msgstr "Avatar"
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Avatar Studio"
 msgstr "Avatar Studio"
@@ -2376,6 +2381,7 @@ msgstr "Collapse {label}"
 msgid "Collapse {name}"
 msgstr "Collapse {name}"
 
+#: src/components/AvatarEditor.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Color"
 msgstr "Color"
@@ -3250,6 +3256,7 @@ msgstr "Could not run routine"
 msgid "Could not run the routine"
 msgstr "Could not run the routine"
 
+#: src/components/AvatarEditor.tsx
 #: src/components/ChangeWhenToAsk.tsx
 #: src/pages/connections/DatabaseForm.tsx
 #: src/pages/connections/MailboxForm.tsx
@@ -3445,6 +3452,7 @@ msgstr "Could not update the routine"
 msgid "Could not update the speech model"
 msgstr "Could not update the speech model"
 
+#: src/components/AvatarEditor.tsx
 #: src/pages/onboarding/WorkspaceStep.tsx
 #: src/pages/onboarding/YouStep.tsx
 msgid "Could not use that image"
@@ -7261,6 +7269,7 @@ msgstr "Personal"
 msgid "Phone call"
 msgstr "Phone call"
 
+#: src/components/AvatarEditor.tsx
 #: src/pages/onboarding/YouStep.tsx
 #: src/pages/shell/chat-context.tsx
 #: src/pages/shell/chat-shared.ts
@@ -7762,6 +7771,7 @@ msgstr "Remembered"
 
 #: src/components/AlwaysAllowedRules.tsx
 #: src/components/ApprovalRulesSettings.tsx
+#: src/components/AvatarEditor.tsx
 #: src/pages/connections/McpServerForm.tsx
 #: src/pages/ConnectionsSettingsPanel.tsx
 #: src/pages/LocalSpeechSection.tsx

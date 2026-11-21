@@ -5,6 +5,7 @@ import {
   isAutoReviewCheckerConfigured,
   LOCAL_VOICE_PROVIDER_ID,
   PushSessionEndedError,
+  resolveAvatarValue,
 } from "@corvo/adapters";
 import type { ActionApprovalRule, Actor, Me, SettingsScope } from "@corvo/contracts";
 import {
@@ -206,6 +207,16 @@ export function accountRoutes(ctx: RouterContext) {
           },
         });
         return meDto(deps, context.actor);
+      }),
+      // Only the caller's own row, so no one edits another person's avatar. A picture is re-encoded.
+      setAvatar: authed.preferences.setAvatar.handler(async ({ context, input }) => {
+        const resolved = await resolveAvatarValue(input.avatar);
+        if ("error" in resolved) throw new ORPCError("BAD_REQUEST", { message: resolved.error });
+        await deps.prisma.user.update({
+          where: { id: context.actor.userId },
+          data: { image: resolved.avatar },
+        });
+        return { image: resolved.avatar };
       }),
       adoptTimezone: authed.preferences.adoptTimezone.handler(
         async ({ context, input }): Promise<Me> => {

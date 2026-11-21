@@ -20,6 +20,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppMark } from "../../components/app-mark";
+import { AvatarPicker } from "../../components/avatar-picker";
 import { NameDialog } from "../../components/name-dialog";
 import { NativeActionButton } from "../../components/native-action-button";
 import { NativeSegmentedControl } from "../../components/native-segmented-control";
@@ -479,6 +480,17 @@ export default function Account() {
             {usageModels}
           </>
         ) : null}
+        <SettingsGroup>
+          <AvatarPicker
+            name={account.label}
+            value={me?.image}
+            shape="person"
+            onSave={async (avatar) => {
+              await rpc("preferences/setAvatar", { avatar });
+              setMe(await rpc("me"));
+            }}
+          />
+        </SettingsGroup>
         <SettingsGroup>
           <SettingsRow
             accessibilityRole="button"

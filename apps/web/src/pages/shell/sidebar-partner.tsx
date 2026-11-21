@@ -118,7 +118,7 @@ export function SidebarPartnership({
               data-testid={`sidebar-partner-${section}`}
               aria-current={current ? "page" : undefined}
               onClick={() => onOpen(partnerPath(partner.id, section))}
-              className="flex h-8 w-full items-center gap-2.5 rounded-md px-2 text-start text-nav text-sidebar-foreground/80 outline-none hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-foreground"
+              className="flex h-8 w-full items-center gap-2.5 rounded-sm px-2 transition-colors active:bg-sidebar-accent motion-reduce:transition-none text-start text-nav text-sidebar-foreground/80 outline-none hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-foreground"
             >
               <Icon size={16} strokeWidth={1.75} aria-hidden="true" className="shrink-0" />
               <span className="min-w-0 flex-1 truncate">{title(section)}</span>

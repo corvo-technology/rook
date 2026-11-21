@@ -99,7 +99,8 @@ describe("appearance preference", () => {
     expect(dark.chatUser).not.toBe(dark.muted);
     expect(light.chatUser).not.toBe(light.muted);
     expect(dark.sidebar).not.toBe(dark.background);
-    expect(light.sidebar).not.toBe(light.background);
+    // Light: the sidebar sits directly on the canvas; the hairline and the white panel carry the edge.
+    expect(light.sidebar).toBe(light.background);
   });
 
   it("tolerates a throwing localStorage getter", () => {
@@ -151,10 +152,20 @@ describe("light palette readability", () => {
     },
   );
 
-  it("separates grouped cells at least as much as the iOS grouped palette", () => {
-    expect(contrastRatio(lightTokens.card, lightTokens.background)).toBeGreaterThanOrEqual(
-      contrastRatio("#FFFFFF", "#F2F2F7"),
+  it("lifts the white panel off the porcelain canvas, with a hairline border", () => {
+    expect(contrastRatio(lightTokens.card, lightTokens.background)).toBeGreaterThanOrEqual(1.08);
+    expect(lightTokens.border).not.toBe(lightTokens.card);
+  });
+
+  it.each(["background", "card"] as const)("keeps secondary text at AA on %s", (surface) => {
+    expect(contrastRatio(lightTokens.mutedForeground, lightTokens[surface])).toBeGreaterThanOrEqual(
+      4.5,
     );
+  });
+
+  it("keeps the brand green readable as text on the panel and its soft wash", () => {
+    expect(contrastRatio(lightTokens.brand, lightTokens.card)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(lightTokens.brand, lightTokens.brandSoft)).toBeGreaterThanOrEqual(4.5);
   });
 
   it("keeps enabled password actions readable", () => {
@@ -252,7 +263,8 @@ describe("web palette", () => {
       brand: "#54C398",
     });
     expect(lightTokens.card).toBe("#FFFFFF");
-    expect(lightTokens.foreground).toBe("#0A0A0A");
+    expect(lightTokens.foreground).toBe("#111318");
+    expect(lightTokens.background).toBe("#F4F5F7");
     expect(tokensForAppearance("dark")).toBe(darkTokens);
     expect(tokensForAppearance("light")).toBe(lightTokens);
   });
@@ -296,7 +308,7 @@ describe("web palette", () => {
 
   it.each([
     ["dark", webDarkTokens, { primaryHover: "#E2E2E5", primaryDisabled: "#F4F4F529" }],
-    ["light", webLightTokens, { primaryHover: "#262626", primaryDisabled: "#0A0A0A26" }],
+    ["light", webLightTokens, { primaryHover: "#2A2D35", primaryDisabled: "#11131826" }],
   ] as const)("gives the %s primary fill web-only hover and disabled states", (_, web, states) => {
     expect(web).toMatchObject(states);
     const css = renderTokensCss();

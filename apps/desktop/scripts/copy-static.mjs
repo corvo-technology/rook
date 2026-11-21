@@ -13,7 +13,7 @@ const STATIC_FILES = [
   "setup-strings.js",
   "mascot.svg",
 ];
-const FONT_FILES = ["inter-latin.woff2", "inter-tight-latin.woff2"];
+const FONT_FILES = ["onest-latin.woff2"];
 const FONTS_DIR = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../../web/public/fonts",

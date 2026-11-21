@@ -6,11 +6,14 @@
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-/* Web type: Inter for text and Inter Tight for headings and titles (both bundled by the app, with the
-   system font as fallback) on a 14/20 base scale. Mobile sets its own type natively. */
+/* Web type: Onest for text and headings (bundled by the app, with the system font as fallback) on a
+   15/22 base scale. Mobile sets its own type natively. */
 @theme {
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-display: "Inter Tight", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans: "Onest", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Onest", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  /* Every transition in the app takes the shared motion tokens unless it sets its own. */
+  --default-transition-duration: var(--motion-fast);
+  --default-transition-timing-function: var(--motion-ease-out);
   --font-mono:
     "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
     "Courier New", monospace;
@@ -45,14 +48,27 @@
   --text-heading1--letter-spacing: -0.015em;
 }
 
-/* A page title: the landing's Inter Tight, light, tight tracking (tokens: --title-*). Section titles
-   keep the text-heading sizes. */
+/* A page title: Onest, tight tracking (tokens: --title-*). Section titles keep the text-heading sizes. */
 @utility text-title {
   font-family: var(--font-display);
   font-size: 28px;
   font-weight: var(--title-weight);
   letter-spacing: var(--title-tracking);
   line-height: var(--title-line-height);
+}
+
+/* A page's content fades in and rises a little on every route change; reduced motion shows it at once. */
+@keyframes rk-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@utility animate-page-in {
+  animation: rk-page-in var(--motion-panel) var(--motion-ease-out) backwards;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 }
 
 /* Panels and layers slide in from the trailing edge; reduced motion shows them at once. */
@@ -97,6 +113,7 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
+  --color-brand-soft: var(--brand-soft);
   --color-destructive: var(--destructive);
   --color-destructive-fill: var(--destructive-fill);
   --color-destructive-foreground: var(--destructive-foreground);
@@ -120,11 +137,12 @@
   --color-overlay: var(--overlay);
   --color-scrollbar: var(--scrollbar);
   --color-scrollbar-hover: var(--scrollbar-hover);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
+  /* By role: sm is a small control, lg a card, xl the main content panel. */
+  --radius-sm: var(--radius-control);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-lg: var(--radius-card);
+  --radius-xl: var(--radius-panel);
+  --radius-2xl: calc(var(--radius-panel) + 4px);
   --animate-caret-blink: caret-blink 1.25s ease-out infinite;
 
   @keyframes caret-blink {

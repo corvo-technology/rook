@@ -110,7 +110,7 @@ export function SidebarHeader({
               onClick={onActivity}
               className={`app-no-drag flex h-7 w-7 items-center justify-center rounded-full ${
                 activityOpen
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-sidebar-accent text-foreground"
                   : "text-muted-foreground/70 hover:text-foreground/75"
               }`}
             >

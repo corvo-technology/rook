@@ -27,7 +27,7 @@ The dashboard is less dense than a typical operate surface on purpose: the audie
 ## 3. Visual direction and project bans
 
 - Monochrome. Ink and paper do the work; **green is the only identity color**, and bots carry their own colors.
-- Quiet by default: hairline borders, no stock illustration. The app is an inset panel (large radius, hairline, soft shadow) on a tinted sidebar. Home alone may use the `atmosphere` tokens: a fine dot grid, a focus glow and a monochrome dithered band at the foot of its cards.
+- Quiet by default: hairline borders, no stock illustration. The app is a white inset panel (20px radius, hairline, soft shadow) floating on a porcelain canvas that the sidebar sits on directly. Home alone may use the `atmosphere` tokens: a fine dot grid, a focus glow and a monochrome dithered band at the foot of its cards.
 - Names beat icons. An icon alone is never the only way to learn what something is.
 - Progressive disclosure: advanced controls sit behind "Advanced", never in the first screen.
 - Bans: no hardcoded product hex in components (use semantic tokens); no `[var(--…)]` arbitrary values; no third-party shadcn registries; no font, icon or script loaded from a third party.
@@ -37,7 +37,7 @@ The dashboard is less dense than a typical operate surface on purpose: the audie
 Semantic tokens live in `@corvo/ui-tokens` (one TypeScript source generates `tokens.css`). Components use the names, never the values.
 
 ```design-tokens
-fonts: Inter, Inter Tight, ui-monospace
+fonts: Onest, ui-monospace
 colors: #0a0a0a, #111113, #1f1f23, #f4f4f5, #54c398, #ff6463, #f2f2ef, #ffffff, #197b56, #cd2834, #007a43, #945600
 radii: 1rem, 9999px
 ```
@@ -56,14 +56,14 @@ The theme follows the system unless the person chooses one.
 
 ## 5. Typography
 
-- Text: Inter; titles and headings: Inter Tight (light for big titles, regular to medium for screens and sections). Both bundled with the app, one variable file each. The system font is the fallback. Why: they are the faces of the Clean look shared with the landing page.
+- Text, titles and headings: Onest (medium with tight tracking for titles, regular to medium for screens and sections), bundled with the app as one variable file. The system font is the fallback. Why: a friendly, clear face that stays calm at body size.
 - Mono: the system monospace, for code and credentials.
-- Scale: 11, 12, 13, 14 (body), 17, 22, 26 pixels, defined as tokens (`text-caption` to `text-heading1`). New text uses a token, not a raw size.
+- Scale: 12, 13, 14, 15 (body), 18, 24, 28 pixels, defined as tokens (`text-caption` to `text-heading1`). New text uses a token, not a raw size.
 - Titles balance (`text-balance`), descriptions do not widow (`text-pretty`).
 
 ## 6. Spacing and layout
 
-- Radius by role: buttons are pills, inputs 1.25rem, cards and containers 1.25rem to 1.5rem, avatars round.
+- Radius by role: small controls (buttons, inputs, chips) 10px, cards 18px, the main content panel 20px, avatars round.
 - The main navigation bar is 76 pixels wide; every item has a name under its icon.
 - One idea per screen in onboarding; settings groups, not walls of controls.
 
@@ -110,6 +110,8 @@ Short and functional: 150 to 200 milliseconds for hover and press, `opacity` and
 - **2026-11-01, mascot tile and quiet list:** the mascot's tile takes a wash of its own colour over the card instead of near-black, so a list reads as colours in either theme (the picture is a bust cropped at the base, so the tile stays). A row's time shows on the open chat, an unread one and the row under the pointer.
 
 - **2026-11-11, Clean look:** near-black page, hairline borders, large radii, pill buttons, Inter and Inter Tight, and the ink as the primary color with the rook's mint (`--brand`) kept for the approval moment. Light mode keeps the same treatment on a calm off-white. The mascot becomes the rook: one shape in the agent's color, where only the eyes show state (open at work, up when it waits for you, dashes asleep, arcs when done). Why: one calm language across the landing, the app and the icon.
+
+- **2026-11-21, calm light look:** light mode moves to a porcelain canvas (`#F4F5F7`) with a white content panel, a cool hairline border, ink `#111318` and a soft brand wash (`--brand-soft`) for selected and progress states. Onest replaces Inter and Inter Tight, body text moves to 15px, radii are set by role (10, 18, 20px) and buttons are no longer pills. Motion tokens are 150, 250 and 500ms on one ease, and page content rises in on route change. Why: a calmer, more premium look for clinics and companies on the same structure.
 
 ## 12. References
 

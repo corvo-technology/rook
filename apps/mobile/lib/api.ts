@@ -1068,7 +1068,7 @@ export type MobileMe = Pick<
   | "needsSignupSurvey"
   | "billingEnabled"
 > &
-  Partial<Pick<Me, "shortNav" | "canCreateSpace" | "autoModelAvailable">>;
+  Partial<Pick<Me, "shortNav" | "canCreateSpace" | "autoModelAvailable" | "quietHours">>;
 
 export type MobileModel = ModelCatalogEntry;
 
@@ -1091,7 +1091,7 @@ export type MobileGroup = Pick<
   | "updatedAt"
   | "members"
 > &
-  Partial<Pick<Group, "spaceId" | "purpose">>;
+  Partial<Pick<Group, "spaceId" | "purpose" | "threadId">>;
 
 export type MobileSpace = Space;
 export type MobileSpaceNavigation = SpaceNavigation;

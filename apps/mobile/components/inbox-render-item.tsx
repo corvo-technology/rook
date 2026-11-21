@@ -1,4 +1,4 @@
-import type { SpaceBot, SpaceGroup } from "@corvo/contracts";
+import type { MuteDuration, SpaceBot, SpaceGroup } from "@corvo/contracts";
 import { MenuView } from "@expo/ui/community/menu";
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
@@ -7,6 +7,7 @@ import type { MobileBot, MobileBotSection, MobileGroup } from "../lib/api";
 import type { ResolvedAppearance } from "../lib/appearance";
 import { AvatarRow } from "../lib/avatar-life";
 import { useI18n } from "../lib/i18n";
+import type { MuteTarget } from "../lib/inbox-mutes";
 import type { InboxItem, InboxSpace } from "../lib/inbox-spaces";
 import { canDeleteInboxSpace, inboxItemKey } from "../lib/inbox-spaces";
 import { useThemedStyles } from "../lib/native";
@@ -51,6 +52,8 @@ export function useInboxRenderItem({
   deleteSection,
   editSectionFromMenu,
   groupAction,
+  muted,
+  onMute,
   spaceId,
   openBot,
   openGroup,
@@ -65,6 +68,8 @@ export function useInboxRenderItem({
   "botAction" | "groupAction" | "organizeFromMenu" | "editSectionFromMenu" | "deleteSection"
 > & {
   appearance: ResolvedAppearance;
+  muted: ReadonlySet<string>;
+  onMute: (target: MuteTarget, duration: MuteDuration | null) => void;
   botSections: MobileBotSection[];
   chooseInboxSpace: (spaceId: string) => void;
   confirmDeleteSpace: (space: InboxSpace) => void;
@@ -216,6 +221,8 @@ export function useInboxRenderItem({
           onPress={openGroup}
           onLongPress={!SWIPE_ROWS ? organizeGroup : undefined}
           onAction={SWIPE_ROWS && item.group.spaceId === spaceId ? groupAction : undefined}
+          muted={muted}
+          onMute={onMute}
           sections={botSections}
           onOrganize={organizeFromMenu}
           onEditSection={editSectionFromMenu}
@@ -227,6 +234,8 @@ export function useInboxRenderItem({
           onPress={openBot}
           onLongPress={!SWIPE_ROWS ? organizeBot : undefined}
           onAction={SWIPE_ROWS && item.bot.spaceId === spaceId ? botAction : undefined}
+          muted={muted}
+          onMute={onMute}
           sections={botSections}
           onOrganize={organizeFromMenu}
           onEditSection={editSectionFromMenu}
@@ -242,6 +251,8 @@ export function useInboxRenderItem({
       day,
       editSectionFromMenu,
       groupAction,
+      muted,
+      onMute,
       spaceId,
       openBot,
       openGroup,

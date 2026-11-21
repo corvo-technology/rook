@@ -71,6 +71,13 @@ export type NativeSwitchProps = {
   tintColor?: ColorValue;
 };
 
+export type NativeTimePickerProps = {
+  /** Minutes after local midnight. */
+  minutes: number;
+  onChange: (minutes: number) => void;
+  accessibilityLabel: string;
+};
+
 export type SegmentedOption<T extends string> = {
   value: T;
   label: string;

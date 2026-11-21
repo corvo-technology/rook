@@ -172,7 +172,7 @@ test("Usage leads with the money spent, on credits and on the user's own account
   await expect(page.getByText("≈ $4.40").first()).toBeVisible();
   const tokens = page.getByRole("region", { name: "Tokens" });
   await expect(tokens.getByText("Cache hit rate")).toBeVisible();
-  await expect(tokens.getByText("77%")).toBeVisible();
+  await expect(tokens.getByText("85%")).toBeVisible();
   await page.getByRole("button", { name: "2 failed" }).click();
   await expect(page.getByText("Billing 1 · Limit reached 1")).toBeVisible();
   await expect(page.getByRole("region", { name: "By model" })).toContainText(

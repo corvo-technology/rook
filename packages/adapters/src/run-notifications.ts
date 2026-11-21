@@ -11,6 +11,7 @@ import type { PrismaClient } from "@corvo/db";
 import { countUnreadInboxChats, raiseNotification } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import type { ExecutorDeps } from "./executor-deps.js";
+import { decidePush } from "./notification-policy.js";
 
 export async function runNotificationsEnabled(
   prisma: PrismaClient,
@@ -50,6 +51,7 @@ async function runNotice(
 export async function notifyRun(
   deps: ExecutorDeps,
   run: {
+    id?: string;
     spaceId: string;
     userId: string;
     botId: string;
@@ -73,6 +75,13 @@ export async function notifyRun(
     return null;
   });
   if (!notice?.enabled) return;
+  // Muted, or held for the morning digest: the inbox entry and the thread already have it.
+  const verdict = await pushVerdict(deps, run, message).catch((error) => {
+    if (options.retryOnFailure) throw error;
+    getLogger().error("notification policy", error);
+    return "send" as const;
+  });
+  if (verdict !== "send") return;
   // The icon shows what the inbox shows: unread chats across the user's Spaces. Without a
   // count the push leaves the badge as it is.
   const badge = await countUnreadInboxChats(deps.prisma, {
@@ -102,6 +111,34 @@ export async function notifyRun(
       if (options.retryOnFailure) throw error;
       getLogger().error("run notification", error);
     });
+}
+
+async function pushVerdict(
+  deps: ExecutorDeps,
+  run: {
+    id?: string;
+    spaceId: string;
+    userId: string;
+    botId: string;
+    threadId: string;
+    trigger: string;
+  },
+  message: NotificationMessage,
+) {
+  const priority = run.id
+    ? (
+        await deps.prisma.run.findUnique({
+          where: { id: run.id },
+          select: { notifyPriority: true },
+        })
+      )?.notifyPriority
+    : null;
+  return decidePush(
+    deps,
+    run,
+    message,
+    priority === "urgent" || priority === "low" ? priority : null,
+  );
 }
 
 /**

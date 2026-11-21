@@ -49,6 +49,7 @@ export * from "./missions.js";
 export * from "./model-credentials.js";
 export * from "./model-credits.js";
 export * from "./model-roles.js";
+export * from "./notification-mutes.js";
 export * from "./notifications.js";
 export * from "./onboarding-profile.js";
 export * from "./partner-accounts.js";

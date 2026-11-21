@@ -28,6 +28,8 @@ const APPROVAL_EXEMPT_TOOLS = new Set([
   "schedule_list",
   "schedule_update",
   "schedule_cancel",
+  "notify_priority",
+  "notify_control",
   "workflow_stop",
   "pass",
   "list_fleet",
@@ -87,6 +89,7 @@ const UNATTENDED_SAFE_BUILTIN_TOOLS = new Set([
   "store_skills",
   "web_fetch",
   "web_search",
+  "notify_priority",
   "workflow_stop",
   "pass",
 ]);
@@ -280,6 +283,8 @@ export function unattendedTriggerToolRequiresApproval(
  * and taints the run. New tools taint by default.
  */
 const OWN_STATE_RESULT_TOOLS = new Set([
+  "notify_priority",
+  "notify_control",
   "ask_user",
   "connect_app",
   "propose_host_action",

@@ -60,6 +60,7 @@ const payloadSchemas = {
     ticketId: z.string().min(1),
     tokenDigest: z.string().min(1),
   }),
+  "notification.digest": z.object({ userId: z.string().min(1) }),
   "audio.transcribe": z.object({ runId: z.string().min(1) }),
   "partner.webhook": z.object({ eventId: z.string().min(1) }),
   "consultation.process": z.object({ consultationId: z.string().min(1) }),
@@ -340,6 +341,17 @@ export function pushReceiptJob(
   availableAt: Date,
 ): BackgroundJob {
   return { name: "push.receipt", payload, availableAt, maxAttempts: 8 };
+}
+
+/** One digest job per person, replaced as pushes join it; it runs when their morning begins. */
+export function notificationDigestJob(userId: string, availableAt: Date): BackgroundJob {
+  return {
+    name: "notification.digest",
+    payload: { userId },
+    replaceKey: `notification.digest:${userId}`,
+    availableAt,
+    maxAttempts: 5,
+  };
 }
 
 export function cloudAgentPollJobKey(agentId: string): string {

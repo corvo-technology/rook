@@ -34,6 +34,7 @@ import { compactHistory } from "./history-compaction.js";
 import type { LocalSpeech } from "./local-speech.js";
 import type { MemoryProviderResolver } from "./memory-provider-factory.js";
 import { deliverMessagingOutbound, mirrorMessagingOutbound } from "./messaging-delivery.js";
+import { deliverDigest } from "./notification-policy.js";
 import { deliverPartnerWebhook } from "./partner-webhook.js";
 import { expireTaughtSkillTeaching } from "./teaching-session.js";
 import { learnUserMemories } from "./user-memory-run.js";
@@ -299,6 +300,12 @@ export function createBackgroundJobHandlers(deps: {
     // A receipt belongs to a device's push token, not to a Space.
     "push.receipt": async (payload) => {
       await runAsSystem("check a push receipt", () => deps.notifications?.checkReceipt(payload));
+    },
+    "notification.digest": async (payload) => {
+      await deliverDigest(
+        { prisma: deps.prisma, jobs: deps.jobs, notifications: deps.notifications },
+        payload.userId,
+      );
     },
     "bot.design-avatar": asOwner(bot, async (payload) => {
       await chooseBotPiece(

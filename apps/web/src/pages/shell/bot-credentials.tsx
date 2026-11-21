@@ -23,12 +23,12 @@ type CredentialAuthType = ReadableCredentialAuth["type"];
 const fieldLabelClass = "mt-3 block text-[14px] text-muted-foreground";
 
 /** The stored value: a website login is saved as one encoded username and password pair. */
-function credentialPlaintext(type: CredentialAuthType, username: string, value: string) {
+export function credentialPlaintext(type: CredentialAuthType, username: string, value: string) {
   return type === "login" ? encodeLoginSecret({ username, password: value }) : value;
 }
 
 /** A command variable has no site, so its destination carries no origin. */
-function credentialDestination(name: string, origin: string, auth: ReadableCredentialAuth) {
+export function credentialDestination(name: string, origin: string, auth: ReadableCredentialAuth) {
   return auth.type === "command" ? { name, auth } : { name, origin, auth };
 }
 

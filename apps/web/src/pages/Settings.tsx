@@ -10,6 +10,7 @@ import {
   Cpu,
   CreditCard,
   Gauge,
+  KeyRound,
   Monitor,
   Plug,
   Settings,
@@ -47,6 +48,7 @@ import { MemorySettingsOverlay } from "./MemorySettingsOverlay";
 import { ModelSettingsOverlay } from "./ModelSettingsOverlay";
 import { SpaceSettingsPanel } from "./SpaceSettingsPanel";
 import { commitSpaceRename } from "./shell/space-sidebar";
+import { VaultPage } from "./VaultPage";
 import { VoiceSettingsOverlay } from "./VoiceSettingsOverlay";
 
 type PageSection = SettingsLayoutSection & { content: ReactNode; width?: "prose" | "full" };
@@ -370,6 +372,12 @@ export function SettingsPage() {
       label: t`MCP`,
       icon: SquareTerminal,
       content: <McpSettings spaces={spaces} />,
+    },
+    {
+      id: "vault",
+      label: t`Vault`,
+      icon: KeyRound,
+      content: <VaultPage />,
     },
     ...(showComputer
       ? [

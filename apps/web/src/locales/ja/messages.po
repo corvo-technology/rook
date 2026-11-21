@@ -718,6 +718,10 @@ msgstr "平均 {value} 分"
 msgid "{value} s avg"
 msgstr "平均 {value} 秒"
 
+#: src/pages/VaultPage.tsx
+msgid "{variable} is reserved and cannot be used as a command variable. Choose another name."
+msgstr "{variable} は予約されているため、コマンド変数として使えません。別の名前を選んでください。"
+
 #: src/pages/platform/SimulatorSection.tsx
 msgid "{voiceMinutes} min"
 msgstr "{voiceMinutes} 分"
@@ -900,6 +904,7 @@ msgstr "アクティビティ"
 #: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/Store.tsx
+#: src/pages/VaultPage.tsx
 msgid "Add"
 msgstr "追加"
 
@@ -983,6 +988,7 @@ msgid "Add computer"
 msgstr "コンピューターを追加"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Add credential"
 msgstr "認証情報を追加"
 
@@ -1131,6 +1137,11 @@ msgstr "追加：{add}"
 msgid "Added"
 msgstr "追加済み"
 
+#. placeholder {0}: new Date(credential.createdAt).toLocaleDateString(i18n.locale)
+#: src/pages/VaultPage.tsx
+msgid "Added {0}"
+msgstr "{0} に追加"
+
 #. placeholder {0}: parts.join(", ")
 #: src/pages/ImportFlow.tsx
 msgid "Added {0}."
@@ -1219,6 +1230,7 @@ msgstr "エージェントモデル"
 #: src/pages/shell/embed-tabs.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/Store.tsx
+#: src/pages/VaultPage.tsx
 msgid "Agents"
 msgstr "エージェント"
 
@@ -1284,6 +1296,11 @@ msgstr "全期間"
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Allow"
 msgstr "許可"
+
+#. placeholder {0}: bot.name
+#: src/pages/VaultPage.tsx
+msgid "Allow {0}"
+msgstr "{0} を許可"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Allow cross-space bot communication"
@@ -1740,6 +1757,10 @@ msgstr "自動化"
 msgid "Available after the routine is saved"
 msgstr "ルーティンの保存後に利用可能"
 
+#: src/pages/VaultPage.tsx
+msgid "Available to shell commands as {variable}"
+msgstr "シェルコマンドから {variable} として使えます"
+
 #: src/pages/shell/bot-credentials.tsx
 msgid "Available to this bot's shell commands as {commandVariable}"
 msgstr "このボットのシェルコマンドで{commandVariable}として利用可能"
@@ -1783,6 +1804,7 @@ msgid "Base URL"
 msgstr "ベースURL"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Basic auth"
 msgstr "Basic認証"
 
@@ -1793,6 +1815,7 @@ msgstr "Basic認証（{username}）"
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/Store.tsx
+#: src/pages/VaultPage.tsx
 msgid "Bearer token"
 msgstr "Bearerトークン"
 
@@ -2053,6 +2076,7 @@ msgstr "画像を読み取れません"
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/message-versions.tsx
 #: src/pages/Store.tsx
+#: src/pages/VaultPage.tsx
 #: src/pages/WhatsAppNumbers.tsx
 #: src/pages/WikiBrowser.tsx
 msgid "Cancel"
@@ -2434,6 +2458,7 @@ msgstr "コマンド"
 
 #: src/components/AskCard.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Command variable"
 msgstr "コマンド変数"
 
@@ -3130,6 +3155,7 @@ msgid "Could not load bots. Reload to try again."
 msgstr "ボットを読み込めませんでした。再読み込みしてもう一度お試しください。"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Could not load credentials."
 msgstr "認証情報を読み込めませんでした。"
 
@@ -3149,6 +3175,10 @@ msgstr "メンバーを読み込めませんでした"
 #: src/pages/model-settings/use-model-settings.ts
 msgid "Could not load model settings"
 msgstr "モデル設定を読み込めませんでした"
+
+#: src/pages/VaultPage.tsx
+msgid "Could not load recent uses"
+msgstr "最近の使用を読み込めませんでした"
 
 #: src/pages/Routines.tsx
 msgid "Could not load routines."
@@ -3254,6 +3284,7 @@ msgid "Could not remove rule"
 msgstr "ルールを削除できませんでした"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Could not remove the credential"
 msgstr "認証情報を削除できませんでした"
 
@@ -3371,6 +3402,7 @@ msgstr "そのボイスを保存できませんでした"
 
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/pasted-key-prompt.tsx
+#: src/pages/VaultPage.tsx
 msgid "Could not save the credential"
 msgstr "認証情報を保存できませんでした"
 
@@ -3466,6 +3498,7 @@ msgstr "更新できませんでした"
 #: src/pages/AppAgentAccess.tsx
 #: src/pages/connections/AccessSheet.tsx
 #: src/pages/connections/AgentAccessSection.tsx
+#: src/pages/VaultPage.tsx
 msgid "Could not update agent access"
 msgstr "エージェントのアクセス権を更新できませんでした"
 
@@ -3731,6 +3764,7 @@ msgid "Custom color"
 msgstr "カスタムカラー"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Custom header"
 msgstr "カスタムヘッダー"
 
@@ -4325,6 +4359,7 @@ msgid "Encrypted"
 msgstr "暗号化"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Encrypted and never shown again"
 msgstr "暗号化され、再表示されません"
 
@@ -4558,6 +4593,7 @@ msgstr "失敗"
 #: src/pages/platform/PartnersSection.tsx
 #: src/pages/RoutineCard.tsx
 #: src/pages/RoutineTimeGrid.tsx
+#: src/pages/VaultPage.tsx
 #: src/pages/Workflows.tsx
 msgid "Failed"
 msgstr "失敗"
@@ -4698,6 +4734,10 @@ msgstr "最初のタスク：{task}"
 #: src/pages/RoutinesTabs.tsx
 msgid "Flows"
 msgstr "フロー"
+
+#: src/pages/VaultPage.tsx
+msgid "for {forWhom}"
+msgstr "{forWhom} のため"
 
 #: src/pages/BotContextMenu.tsx
 msgid "For 1 hour"
@@ -4907,6 +4947,7 @@ msgstr "ヘッダー「{header}」"
 #: src/pages/connections/McpServerForm.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/Store.tsx
+#: src/pages/VaultPage.tsx
 msgid "Header name"
 msgstr "ヘッダー名"
 
@@ -5508,6 +5549,11 @@ msgstr "先月"
 #: src/pages/Workflows.tsx
 msgid "Last run"
 msgstr "前回の実行"
+
+#. placeholder {0}: new Date(credential.lastUsedAt).toLocaleDateString(i18n.locale)
+#: src/pages/VaultPage.tsx
+msgid "Last used {0}"
+msgstr "最終使用: {0}"
 
 #: src/components/DesktopUpdates.tsx
 msgid "Later"
@@ -6184,6 +6230,7 @@ msgstr "{name} の月間トークン上限"
 #: src/pages/ConnectionsPage.tsx
 #: src/pages/shell/message-hover-actions.tsx
 #: src/pages/shell/sidebar-team.tsx
+#: src/pages/VaultPage.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "More"
 msgstr "その他"
@@ -6287,6 +6334,7 @@ msgstr "マイホーム"
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/pasted-key-prompt.tsx
 #: src/pages/SpaceSettingsPanel.tsx
+#: src/pages/VaultPage.tsx
 msgid "Name"
 msgstr "名前"
 
@@ -6771,6 +6819,10 @@ msgstr "Rookでは未対応です"
 msgid "Not used by Rook"
 msgstr "Rookでは使用しません"
 
+#: src/pages/VaultPage.tsx
+msgid "Not used yet"
+msgstr "まだ使われていません"
+
 #: src/pages/connections/connection-model.ts
 msgid "Not working"
 msgstr "動作していません"
@@ -7197,6 +7249,7 @@ msgstr "パスキー"
 #: src/pages/connections/DatabaseForm.tsx
 #: src/pages/connections/MailboxForm.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Password"
 msgstr "パスワード"
 
@@ -7706,6 +7759,15 @@ msgstr "入金"
 msgid "Recent"
 msgstr "最近"
 
+#: src/pages/VaultPage.tsx
+msgid "Recent uses"
+msgstr "最近の使用"
+
+#. placeholder {0}: credential.name
+#: src/pages/VaultPage.tsx
+msgid "Recent uses of {0}"
+msgstr "{0} の最近の使用"
+
 #: src/components/PlanChoice.tsx
 msgid "Recommended"
 msgstr "おすすめ"
@@ -7848,6 +7910,7 @@ msgstr "覚えました"
 #: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/Store.tsx
+#: src/pages/VaultPage.tsx
 #: src/pages/Workflows.tsx
 msgid "Remove"
 msgstr "削除"
@@ -7867,6 +7930,7 @@ msgstr "{0}をグループから外す"
 
 #. placeholder {0}: removing?.name
 #: src/pages/ConnectionsPage.tsx
+#: src/pages/VaultPage.tsx
 msgid "Remove {0}?"
 msgstr "{0}を削除しますか？"
 
@@ -8010,8 +8074,14 @@ msgid "Replace the instructions of {bot}?"
 msgstr "{bot} の指示を置き換えますか？"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Replace value"
 msgstr "値を置き換え"
+
+#. placeholder {0}: credential.name
+#: src/pages/VaultPage.tsx
+msgid "Replace value of {0}"
+msgstr "{0} の値を置き換える"
 
 #: src/pages/Usage.tsx
 msgid "Replies"
@@ -8391,6 +8461,7 @@ msgstr "土曜日"
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/message-versions.tsx
+#: src/pages/VaultPage.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/YouMemory.tsx
 msgid "Save"
@@ -8459,6 +8530,7 @@ msgstr "保存中..."
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/pasted-key-prompt.tsx
+#: src/pages/VaultPage.tsx
 msgid "Saving…"
 msgstr "保存中…"
 
@@ -8719,6 +8791,10 @@ msgstr "共有"
 msgid "Shared memory"
 msgstr "共有メモリ"
 
+#: src/pages/VaultPage.tsx
+msgid "shell command"
+msgstr "シェルコマンド"
+
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Shortcuts, presets, routines and roles (JSON)"
 msgstr "ショートカット、プリセット、ルーティン、ロール (JSON)"
@@ -8837,6 +8913,7 @@ msgid "Simulator"
 msgstr "シミュレーター"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Site"
 msgstr "サイト"
 
@@ -9328,12 +9405,17 @@ msgstr "ティーチング中です。新しいメッセージを送信する前
 #: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/TeamPage.tsx
+#: src/pages/VaultPage.tsx
 msgid "Team"
 msgstr "チーム"
 
 #: src/pages/shell/computer-view.tsx
 msgid "Team Computer"
 msgstr "チームのコンピューター"
+
+#: src/pages/VaultPage.tsx
+msgid "Team credential"
+msgstr "チームの認証情報"
 
 #: src/lib/routine-trigger.ts
 #: src/pages/RoutineEditor.tsx
@@ -9495,6 +9577,10 @@ msgstr "これらのファイルは大きすぎてインポートできません
 #: src/lib/agent-import-errors.ts
 msgid "These files or choices no longer match. Choose the files again."
 msgstr "ファイルまたは選択内容が一致しなくなりました。もう一度ファイルを選択してください。"
+
+#: src/pages/VaultPage.tsx
+msgid "These saved settings can't be read."
+msgstr "保存された設定を読み取れません。"
 
 #: src/pages/shell/bot-credentials.tsx
 msgid "These saved settings can't be read. Remove it and add it again."
@@ -9908,6 +9994,7 @@ msgstr "オフにする"
 
 #: src/pages/partner/PartnerRevenue.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Type"
 msgstr "種類"
 
@@ -10173,6 +10260,10 @@ msgstr "パスワードには保護された入力を使用してください。
 msgid "Use Rook credits"
 msgstr "Rookクレジットを使用"
 
+#: src/components/AskCard.tsx
+msgid "Use saved"
+msgstr "保存済みを使う"
+
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Use space default"
 msgstr "スペースのデフォルトを使用"
@@ -10190,6 +10281,7 @@ msgid "Used"
 msgstr "使用済み"
 
 #: src/pages/ConnectionsPage.tsx
+#: src/pages/VaultPage.tsx
 msgid "Used by {usedBy}"
 msgstr "使用中: {usedBy}"
 
@@ -10208,6 +10300,7 @@ msgstr "ユーザーピア"
 #: src/components/AskCard.tsx
 #: src/pages/connections/MailboxForm.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Username"
 msgstr "ユーザー名"
 
@@ -10250,12 +10343,17 @@ msgstr "自分の API キーを使用中。無料プランは{freeUntil}に終�
 
 #: src/pages/connections/McpServerForm.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Value"
 msgstr "値"
 
 #: src/pages/shell/message-cards.tsx
 msgid "Variations"
 msgstr "バリエーション"
+
+#: src/pages/Settings.tsx
+msgid "Vault"
+msgstr "保管庫"
 
 #: src/pages/partner/PartnerDomain.tsx
 #: src/pages/platform/PartnersSection.tsx
@@ -10385,6 +10483,7 @@ msgid "Webhook URL"
 msgstr "Webhook URL"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Website login"
 msgstr "Webサイトのログイン"
 
@@ -10552,8 +10651,10 @@ msgstr "ホワイトラベル"
 msgid "Who can talk to {name}"
 msgstr "{name} と話せる人"
 
+#. placeholder {0}: credential.name
 #. placeholder {0}: item.name
 #: src/pages/connections/AccessSheet.tsx
+#: src/pages/VaultPage.tsx
 msgid "Who can use {0}"
 msgstr "{0} を使えるユーザー"
 
@@ -10643,6 +10744,7 @@ msgid "Yesterday"
 msgstr "昨日"
 
 #: src/pages/shell/channel-members.tsx
+#: src/pages/VaultPage.tsx
 msgid "you"
 msgstr "あなた"
 

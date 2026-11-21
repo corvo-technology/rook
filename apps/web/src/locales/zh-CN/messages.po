@@ -718,6 +718,10 @@ msgstr "平均{value}分钟"
 msgid "{value} s avg"
 msgstr "平均{value}秒"
 
+#: src/pages/VaultPage.tsx
+msgid "{variable} is reserved and cannot be used as a command variable. Choose another name."
+msgstr "{variable} 是保留名称，不能用作命令变量。请换一个名称。"
+
 #: src/pages/platform/SimulatorSection.tsx
 msgid "{voiceMinutes} min"
 msgstr "{voiceMinutes} 分钟"
@@ -900,6 +904,7 @@ msgstr "动态"
 #: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/Store.tsx
+#: src/pages/VaultPage.tsx
 msgid "Add"
 msgstr "添加"
 
@@ -983,6 +988,7 @@ msgid "Add computer"
 msgstr "添加电脑"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Add credential"
 msgstr "添加凭据"
 
@@ -1131,6 +1137,11 @@ msgstr "添加：{add}"
 msgid "Added"
 msgstr "已添加"
 
+#. placeholder {0}: new Date(credential.createdAt).toLocaleDateString(i18n.locale)
+#: src/pages/VaultPage.tsx
+msgid "Added {0}"
+msgstr "添加于 {0}"
+
 #. placeholder {0}: parts.join(", ")
 #: src/pages/ImportFlow.tsx
 msgid "Added {0}."
@@ -1219,6 +1230,7 @@ msgstr "智能体模板"
 #: src/pages/shell/embed-tabs.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/Store.tsx
+#: src/pages/VaultPage.tsx
 msgid "Agents"
 msgstr "智能体"
 
@@ -1284,6 +1296,11 @@ msgstr "全部时间"
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Allow"
 msgstr "允许"
+
+#. placeholder {0}: bot.name
+#: src/pages/VaultPage.tsx
+msgid "Allow {0}"
+msgstr "允许 {0}"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Allow cross-space bot communication"
@@ -1740,6 +1757,10 @@ msgstr "自动化"
 msgid "Available after the routine is saved"
 msgstr "保存例行任务后可用"
 
+#: src/pages/VaultPage.tsx
+msgid "Available to shell commands as {variable}"
+msgstr "可在 shell 命令中以 {variable} 使用"
+
 #: src/pages/shell/bot-credentials.tsx
 msgid "Available to this bot's shell commands as {commandVariable}"
 msgstr "此机器人的 Shell 命令可通过 {commandVariable} 使用"
@@ -1783,6 +1804,7 @@ msgid "Base URL"
 msgstr "Base URL"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Basic auth"
 msgstr "基本认证"
 
@@ -1793,6 +1815,7 @@ msgstr "基本认证（{username}）"
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/Store.tsx
+#: src/pages/VaultPage.tsx
 msgid "Bearer token"
 msgstr "Bearer token"
 
@@ -2053,6 +2076,7 @@ msgstr "无法读取图像"
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/message-versions.tsx
 #: src/pages/Store.tsx
+#: src/pages/VaultPage.tsx
 #: src/pages/WhatsAppNumbers.tsx
 #: src/pages/WikiBrowser.tsx
 msgid "Cancel"
@@ -2434,6 +2458,7 @@ msgstr "命令"
 
 #: src/components/AskCard.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Command variable"
 msgstr "命令变量"
 
@@ -3130,6 +3155,7 @@ msgid "Could not load bots. Reload to try again."
 msgstr "无法加载机器人。请重新加载后再试。"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Could not load credentials."
 msgstr "无法加载凭据。"
 
@@ -3149,6 +3175,10 @@ msgstr "无法加载成员"
 #: src/pages/model-settings/use-model-settings.ts
 msgid "Could not load model settings"
 msgstr "无法加载模型设置"
+
+#: src/pages/VaultPage.tsx
+msgid "Could not load recent uses"
+msgstr "无法加载最近使用记录"
 
 #: src/pages/Routines.tsx
 msgid "Could not load routines."
@@ -3254,6 +3284,7 @@ msgid "Could not remove rule"
 msgstr "无法移除规则"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Could not remove the credential"
 msgstr "无法移除凭据"
 
@@ -3371,6 +3402,7 @@ msgstr "无法保存该语音"
 
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/pasted-key-prompt.tsx
+#: src/pages/VaultPage.tsx
 msgid "Could not save the credential"
 msgstr "无法保存凭据"
 
@@ -3466,6 +3498,7 @@ msgstr "无法更新"
 #: src/pages/AppAgentAccess.tsx
 #: src/pages/connections/AccessSheet.tsx
 #: src/pages/connections/AgentAccessSection.tsx
+#: src/pages/VaultPage.tsx
 msgid "Could not update agent access"
 msgstr "无法更新 Agent 权限"
 
@@ -3731,6 +3764,7 @@ msgid "Custom color"
 msgstr "自定义颜色"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Custom header"
 msgstr "自定义标头"
 
@@ -4325,6 +4359,7 @@ msgid "Encrypted"
 msgstr "加密"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Encrypted and never shown again"
 msgstr "已加密，且不再显示"
 
@@ -4558,6 +4593,7 @@ msgstr "失败"
 #: src/pages/platform/PartnersSection.tsx
 #: src/pages/RoutineCard.tsx
 #: src/pages/RoutineTimeGrid.tsx
+#: src/pages/VaultPage.tsx
 #: src/pages/Workflows.tsx
 msgid "Failed"
 msgstr "失败"
@@ -4698,6 +4734,10 @@ msgstr "首个任务：{task}"
 #: src/pages/RoutinesTabs.tsx
 msgid "Flows"
 msgstr "流程"
+
+#: src/pages/VaultPage.tsx
+msgid "for {forWhom}"
+msgstr "为 {forWhom}"
 
 #: src/pages/BotContextMenu.tsx
 msgid "For 1 hour"
@@ -4907,6 +4947,7 @@ msgstr "标头 \"{header}\""
 #: src/pages/connections/McpServerForm.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/Store.tsx
+#: src/pages/VaultPage.tsx
 msgid "Header name"
 msgstr "请求头名称"
 
@@ -5508,6 +5549,11 @@ msgstr "上个月"
 #: src/pages/Workflows.tsx
 msgid "Last run"
 msgstr "上次运行"
+
+#. placeholder {0}: new Date(credential.lastUsedAt).toLocaleDateString(i18n.locale)
+#: src/pages/VaultPage.tsx
+msgid "Last used {0}"
+msgstr "上次使用：{0}"
 
 #: src/components/DesktopUpdates.tsx
 msgid "Later"
@@ -6184,6 +6230,7 @@ msgstr "{name} 的每月 token 上限"
 #: src/pages/ConnectionsPage.tsx
 #: src/pages/shell/message-hover-actions.tsx
 #: src/pages/shell/sidebar-team.tsx
+#: src/pages/VaultPage.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "More"
 msgstr "更多"
@@ -6287,6 +6334,7 @@ msgstr "我的首页"
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/pasted-key-prompt.tsx
 #: src/pages/SpaceSettingsPanel.tsx
+#: src/pages/VaultPage.tsx
 msgid "Name"
 msgstr "名称"
 
@@ -6771,6 +6819,10 @@ msgstr "Rook 不支持"
 msgid "Not used by Rook"
 msgstr "Rook 不使用"
 
+#: src/pages/VaultPage.tsx
+msgid "Not used yet"
+msgstr "尚未使用"
+
 #: src/pages/connections/connection-model.ts
 msgid "Not working"
 msgstr "无法正常工作"
@@ -7197,6 +7249,7 @@ msgstr "通行密钥"
 #: src/pages/connections/DatabaseForm.tsx
 #: src/pages/connections/MailboxForm.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Password"
 msgstr "密码"
 
@@ -7706,6 +7759,15 @@ msgstr "收款"
 msgid "Recent"
 msgstr "最近"
 
+#: src/pages/VaultPage.tsx
+msgid "Recent uses"
+msgstr "最近使用"
+
+#. placeholder {0}: credential.name
+#: src/pages/VaultPage.tsx
+msgid "Recent uses of {0}"
+msgstr "{0} 的最近使用"
+
 #: src/components/PlanChoice.tsx
 msgid "Recommended"
 msgstr "推荐"
@@ -7848,6 +7910,7 @@ msgstr "已记住"
 #: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/Store.tsx
+#: src/pages/VaultPage.tsx
 #: src/pages/Workflows.tsx
 msgid "Remove"
 msgstr "移除"
@@ -7867,6 +7930,7 @@ msgstr "将 {0} 移出群组"
 
 #. placeholder {0}: removing?.name
 #: src/pages/ConnectionsPage.tsx
+#: src/pages/VaultPage.tsx
 msgid "Remove {0}?"
 msgstr "移除 {0}？"
 
@@ -8010,8 +8074,14 @@ msgid "Replace the instructions of {bot}?"
 msgstr "要替换 {bot} 的指令吗？"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Replace value"
 msgstr "替换值"
+
+#. placeholder {0}: credential.name
+#: src/pages/VaultPage.tsx
+msgid "Replace value of {0}"
+msgstr "替换 {0} 的值"
 
 #: src/pages/Usage.tsx
 msgid "Replies"
@@ -8391,6 +8461,7 @@ msgstr "周六"
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/message-versions.tsx
+#: src/pages/VaultPage.tsx
 #: src/pages/WikiBrowser.tsx
 #: src/pages/YouMemory.tsx
 msgid "Save"
@@ -8459,6 +8530,7 @@ msgstr "正在保存…"
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/pasted-key-prompt.tsx
+#: src/pages/VaultPage.tsx
 msgid "Saving…"
 msgstr "正在保存…"
 
@@ -8719,6 +8791,10 @@ msgstr "共享"
 msgid "Shared memory"
 msgstr "共享记忆"
 
+#: src/pages/VaultPage.tsx
+msgid "shell command"
+msgstr "shell 命令"
+
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Shortcuts, presets, routines and roles (JSON)"
 msgstr "快捷方式、预设、例行任务和角色 (JSON)"
@@ -8837,6 +8913,7 @@ msgid "Simulator"
 msgstr "模拟器"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Site"
 msgstr "网站"
 
@@ -9328,12 +9405,17 @@ msgstr "正在示范，发送新消息前请先停止示范。"
 #: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/TeamPage.tsx
+#: src/pages/VaultPage.tsx
 msgid "Team"
 msgstr "团队"
 
 #: src/pages/shell/computer-view.tsx
 msgid "Team Computer"
 msgstr "团队电脑"
+
+#: src/pages/VaultPage.tsx
+msgid "Team credential"
+msgstr "团队凭据"
 
 #: src/lib/routine-trigger.ts
 #: src/pages/RoutineEditor.tsx
@@ -9495,6 +9577,10 @@ msgstr "这些文件太大，无法导入。"
 #: src/lib/agent-import-errors.ts
 msgid "These files or choices no longer match. Choose the files again."
 msgstr "这些文件或选择已不再匹配。请重新选择文件。"
+
+#: src/pages/VaultPage.tsx
+msgid "These saved settings can't be read."
+msgstr "无法读取这些已保存的设置。"
 
 #: src/pages/shell/bot-credentials.tsx
 msgid "These saved settings can't be read. Remove it and add it again."
@@ -9908,6 +9994,7 @@ msgstr "关闭"
 
 #: src/pages/partner/PartnerRevenue.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Type"
 msgstr "类型"
 
@@ -10173,6 +10260,10 @@ msgstr "密码请使用受保护输入。"
 msgid "Use Rook credits"
 msgstr "使用 Rook 额度"
 
+#: src/components/AskCard.tsx
+msgid "Use saved"
+msgstr "使用已保存的"
+
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Use space default"
 msgstr "使用空间默认设置"
@@ -10190,6 +10281,7 @@ msgid "Used"
 msgstr "已用"
 
 #: src/pages/ConnectionsPage.tsx
+#: src/pages/VaultPage.tsx
 msgid "Used by {usedBy}"
 msgstr "使用者：{usedBy}"
 
@@ -10208,6 +10300,7 @@ msgstr "用户对等方"
 #: src/components/AskCard.tsx
 #: src/pages/connections/MailboxForm.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Username"
 msgstr "用户名"
 
@@ -10250,12 +10343,17 @@ msgstr "正在使用你的 API 密钥。免费方案将于 {freeUntil} 结束。
 
 #: src/pages/connections/McpServerForm.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Value"
 msgstr "值"
 
 #: src/pages/shell/message-cards.tsx
 msgid "Variations"
 msgstr "变体"
+
+#: src/pages/Settings.tsx
+msgid "Vault"
+msgstr "保险库"
 
 #: src/pages/partner/PartnerDomain.tsx
 #: src/pages/platform/PartnersSection.tsx
@@ -10385,6 +10483,7 @@ msgid "Webhook URL"
 msgstr "Webhook 网址"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultPage.tsx
 msgid "Website login"
 msgstr "网站登录"
 
@@ -10552,8 +10651,10 @@ msgstr "白标"
 msgid "Who can talk to {name}"
 msgstr "谁可以与 {name} 对话"
 
+#. placeholder {0}: credential.name
 #. placeholder {0}: item.name
 #: src/pages/connections/AccessSheet.tsx
+#: src/pages/VaultPage.tsx
 msgid "Who can use {0}"
 msgstr "谁可以使用 {0}"
 
@@ -10643,6 +10744,7 @@ msgid "Yesterday"
 msgstr "昨天"
 
 #: src/pages/shell/channel-members.tsx
+#: src/pages/VaultPage.tsx
 msgid "you"
 msgstr "你"
 

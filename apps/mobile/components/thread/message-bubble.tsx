@@ -184,6 +184,7 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
     username?: string,
     dismiss?: boolean,
     approvalEffectId?: string,
+    useExisting?: boolean,
   ) => Promise<void>;
   onOpenBot: (botId: string, name: string) => void;
   onOpenComputer: (botId: string, name: string) => void;
@@ -240,6 +241,7 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
           canDismiss={canDismiss}
           onAnswer={(answer, username) => onAnswer(message, answer, username)}
           onDismiss={() => onAnswer(message, "", undefined, true)}
+          onUseExisting={() => onAnswer(message, "", undefined, undefined, undefined, true)}
         />
         {appConnectBlocks.map((block, index) => (
           <AppConnectCard

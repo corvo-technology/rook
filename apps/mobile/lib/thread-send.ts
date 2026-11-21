@@ -264,6 +264,7 @@ export function useThreadSend({
       username?: string,
       dismiss?: boolean,
       approvalEffectId?: string,
+      useExisting?: boolean,
     ) =>
       answerThreadMessage(
         { botId, groupId, readOnly, rpc, isCurrentTarget, refresh, markRead: markCaughtUp },
@@ -272,6 +273,7 @@ export function useThreadSend({
         username,
         dismiss,
         approvalEffectId,
+        useExisting,
       ),
     [botId, groupId, readOnly],
   );

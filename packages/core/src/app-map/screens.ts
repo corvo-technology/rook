@@ -421,6 +421,9 @@ export const APP_MAP_SCREENS: readonly AppMapEntry[] = [
       description:
         "Crie chaves para o Claude Code, Codex, Cursor ou outro cliente MCP conversar com seus agentes, e revogue-as.",
       keywords: ["mcp", "claude code", "codex", "cursor"],
+    },
+  ),
+  screen(
     "settings-vault",
     "/settings/vault",
     "member",

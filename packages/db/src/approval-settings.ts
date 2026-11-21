@@ -1,5 +1,5 @@
 import type { SettingsScope } from "@corvo/contracts";
-import type { RuleTarget } from "@corvo/core";
+import type { AnsweredApprovalCard, RuleTarget } from "@corvo/core";
 import { SCOPED_RULE_KIND, scopedRuleValue } from "@corvo/core";
 import type { PrismaClient } from "./client.js";
 import { Prisma } from "./client.js";
@@ -251,4 +251,46 @@ export async function saveAutoReviewPreference(
       update,
     });
   }
+}
+
+/** What a person's answer on an approval card is stored as, next to what the card covered. */
+export function answeredScope(
+  scope: Prisma.JsonValue,
+  answer: string,
+): Prisma.InputJsonValue | null {
+  if (!scope || typeof scope !== "object" || Array.isArray(scope)) return null;
+  return { ...(scope as Record<string, Prisma.InputJsonValue>), answer };
+}
+
+/** The cards of this tool a person answered for this agent, newest first. */
+export async function listAnsweredApprovalCards(
+  prisma: Pick<PrismaClient, "externalEffect">,
+  input: { spaceId: string; botId: string; kind: string },
+): Promise<AnsweredApprovalCard[]> {
+  const rows = await prisma.externalEffect.findMany({
+    where: {
+      spaceId: input.spaceId,
+      kind: input.kind,
+      run: { botId: input.botId },
+      alwaysScope: { not: Prisma.DbNull },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 30,
+    select: { alwaysScope: true },
+  });
+  return rows.flatMap((row) => {
+    const scope = row.alwaysScope as {
+      targets?: Array<{ tool?: unknown; connection?: unknown }>;
+      answer?: unknown;
+      suggested?: unknown;
+    } | null;
+    if (!scope || typeof scope.answer !== "string" || !Array.isArray(scope.targets)) return [];
+    const targets = scope.targets.flatMap((target) =>
+      typeof target.tool === "string" && typeof target.connection === "string"
+        ? [{ tool: target.tool, connection: target.connection }]
+        : [],
+    );
+    if (targets.length === 0 || targets.length !== scope.targets.length) return [];
+    return [{ targets, answer: scope.answer, suggested: scope.suggested === true }];
+  });
 }

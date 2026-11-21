@@ -10585,6 +10585,10 @@ msgstr "Vous avez refusé"
 msgid "You earn"
 msgstr "Vous gagnez"
 
+#: src/components/AskCard.tsx
+msgid "You have allowed this every time."
+msgstr "Vous l’avez toujours autorisé."
+
 #: src/pages/shell/computer-overlay.tsx
 msgid "You have control"
 msgstr "Vous avez le contrôle"

@@ -303,6 +303,7 @@ const OWN_STATE_RESULT_TOOLS = new Set([
   "list_secrets",
   "message_user",
   "say_now",
+  "react_to_message",
   "read_history",
   "recall_memory",
   "remember",

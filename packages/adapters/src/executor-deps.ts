@@ -95,6 +95,8 @@ export interface ExecutorDeps {
     now?: () => number;
     limits?: Partial<ConnectorWaitLimits>;
   };
+  /** Test seam for the waits that pace short bot messages and collect steering. */
+  pacing?: { sleep?: (ms: number, signal: AbortSignal) => Promise<void>; now?: () => number };
   /** Writes the closing summary once every run an agent handed work to has finished; absent skips it. */
   handoffSummary?: SummaryModel;
   /** Aborted when createApp stop() begins so in-flight continueRun boot waits exit promptly. */

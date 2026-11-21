@@ -1213,6 +1213,7 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Always allow covers {tool} on {connection}, for {agent} only.":
     "“始终允许”仅适用于 {agent} 在 {connection} 上的 {tool}。",
   "Always allow covers {tool}, for {agent} only.": "“始终允许”仅适用于 {agent} 的 {tool}。",
+  "You have allowed this every time.": "你每次都允许了。",
   "Change when to ask": "更改询问时机",
   Regenerate: "重新生成",
   "Continue in new thread": "在新线程中继续",

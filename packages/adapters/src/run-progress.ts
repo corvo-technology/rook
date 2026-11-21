@@ -12,6 +12,7 @@ import type { Run } from "@corvo/db";
 import type { ExecutorDeps } from "./executor-deps.js";
 import type { ReplyState, RunContext } from "./run-context.js";
 import { publishMessage } from "./run-messages.js";
+import { paceBotMessage } from "./run-pacing.js";
 import { runPromotesMidTurnNarration } from "./run-replies.js";
 import { isExactNoResponse } from "./silent-reply.js";
 import {
@@ -179,6 +180,7 @@ export async function publishMidTurnNarration(ctx: RunContext, beforeConnectCard
     return;
   }
   reply.assembled = "";
+  await paceBotMessage(ctx, narration);
   await publishMessage(
     deps,
     run,

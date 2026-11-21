@@ -124,3 +124,41 @@ export function ruleConnectionLabel(target: RuleTarget): string {
   if (target.connection.startsWith("kind:")) return target.connection.split(":").pop() ?? "";
   return toolNameWords(target.tool)[0] ?? target.connection;
 }
+
+/** How many answers in a row, all "allow", before a card suggests keeping an always-allow. */
+export const APPROVAL_LEARNING_STREAK = 3;
+
+/** An approval card a person already answered, as kept on its effect. */
+export type AnsweredApprovalCard = {
+  targets: readonly RuleTarget[];
+  answer: string;
+  /** The card already suggested an always-allow. */
+  suggested?: boolean;
+};
+
+function targetsKey(botId: string, targets: readonly RuleTarget[]): string {
+  return targets
+    .map((target) => scopedRuleValue(botId, target))
+    .sort()
+    .join("|");
+}
+
+/**
+ * Whether this card should offer, once, to stop asking: the person allowed the same agent, tool
+ * and connection the last few times without a deny in between, and no earlier card for it already
+ * made the offer. Newest answers first.
+ */
+export function shouldSuggestAlways(
+  botId: string,
+  targets: readonly RuleTarget[],
+  answered: readonly AnsweredApprovalCard[],
+): boolean {
+  const key = targetsKey(botId, targets);
+  const same = answered.filter((card) => targetsKey(botId, card.targets) === key);
+  if (same.some((card) => card.suggested)) return false;
+  const recent = same.slice(0, APPROVAL_LEARNING_STREAK);
+  return (
+    recent.length === APPROVAL_LEARNING_STREAK &&
+    recent.every((card) => card.answer === "allow" || card.answer === "always")
+  );
+}

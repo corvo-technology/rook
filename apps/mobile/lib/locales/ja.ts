@@ -1251,6 +1251,7 @@ export const JA_MESSAGES: Record<string, string> = {
     "「常に許可」の対象は、{agent} の {connection} における {tool} のみです。",
   "Always allow covers {tool}, for {agent} only.":
     "「常に許可」の対象は、{agent} の {tool} のみです。",
+  "You have allowed this every time.": "毎回許可しています。",
   "Change when to ask": "確認のタイミングを変更",
   Regenerate: "再生成",
   "Continue in new thread": "新しいスレッドで続ける",

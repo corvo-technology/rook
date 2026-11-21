@@ -1270,6 +1270,7 @@ export const DE_MESSAGES: Record<string, string> = {
     "„Immer erlauben“ gilt nur für {tool} bei {connection}, für {agent}.",
   "Always allow covers {tool}, for {agent} only.":
     "„Immer erlauben“ gilt nur für {tool}, für {agent}.",
+  "You have allowed this every time.": "Du hast das jedes Mal erlaubt.",
   "Change when to ask": "Ändern, wann gefragt wird",
   Regenerate: "Neu generieren",
   "Continue in new thread": "In neuem Thread fortsetzen",

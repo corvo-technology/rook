@@ -101,6 +101,8 @@ export interface ReplyState {
   pendingToolNames: string[];
   pendingProgress: string;
   lastProgressAt: number;
+  /** When the run last posted a chat message; the next short one is paced from it. */
+  lastBotMessageAt?: number;
   hasStreamedText: boolean;
   /**
    * Set by a tool call or a new assistant message: the next text starts a new

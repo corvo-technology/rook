@@ -134,6 +134,8 @@ export function AskCard({
         ? t`Always allow covers ${keeps.tool} on ${keeps.connection}, for ${keeps.agent} only.`
         : t`Always allow covers ${keeps.tool}, for ${keeps.agent} only.`
       : null;
+  // Said once, on the card where the person's pattern first shows.
+  const learned = coverage && block.suggestAlways ? t`You have allowed this every time.` : null;
   const changeWhenToAsk =
     agent && approvalActions && !answered && canAnswer ? (
       <ChangeWhenToAsk botId={agent.id} name={agent.name} />
@@ -394,7 +396,10 @@ export function AskCard({
           </span>
         </div>
         {coverage ? (
-          <p className="px-[18px] pb-3 text-[13px] text-muted-foreground">{coverage}</p>
+          <p className="px-[18px] pb-3 text-[13px] text-muted-foreground">
+            {learned ? `${learned} ` : null}
+            {coverage}
+          </p>
         ) : null}
         {changeWhenToAsk ? <div className="px-[18px] pb-3">{changeWhenToAsk}</div> : null}
         {error ? <p className="px-[18px] pb-3 text-[13px] text-destructive">{error}</p> : null}
@@ -677,7 +682,12 @@ export function AskCard({
       )}
       {!answered && canAnswer && !ownerOnly && !editing ? (
         <>
-          {coverage ? <p className="mt-2 text-[13px] text-muted-foreground">{coverage}</p> : null}
+          {coverage ? (
+            <p className="mt-2 text-[13px] text-muted-foreground">
+              {learned ? `${learned} ` : null}
+              {coverage}
+            </p>
+          ) : null}
           {changeWhenToAsk}
         </>
       ) : null}

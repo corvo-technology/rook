@@ -55,6 +55,8 @@ export function buildApprovalAskBlock(
      * offers the plain choice.
      */
     alwaysAllow?: { agent: string; connection: string; tool: string } | false;
+    /** The person allowed this tool every time lately: say so, once. */
+    suggestAlways?: boolean;
   },
 ): MessageBlock {
   if (options?.summary) {
@@ -170,6 +172,7 @@ export function buildApprovalAskBlock(
       : {}),
     ...(fetchSite ? { site: fetchSite } : {}),
     ...(options?.alwaysAllow ? { alwaysAllow: options.alwaysAllow } : {}),
+    ...(options?.alwaysAllow && options.suggestAlways ? { suggestAlways: true as const } : {}),
     status: "pending",
     actions:
       toolName === "create_space"

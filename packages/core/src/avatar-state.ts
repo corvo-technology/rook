@@ -32,3 +32,6 @@ export function avatarLook(status: string | undefined, justFinished: boolean): A
 
 /** How long a finished agent celebrates before it rests: one turn of the avatar's celebration. */
 export const AVATAR_DONE_MS = 3_900;
+
+/** A wait that outlasts this is more than a blink: the loader's avatar stops thinking and works. */
+export const AGENT_LOADER_WORKING_AFTER_MS = 1_500;

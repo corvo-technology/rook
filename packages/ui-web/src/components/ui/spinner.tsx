@@ -10,6 +10,11 @@ function SpinnerLabelProvider({ label, children }: { label: string; children: Re
   return <SpinnerLabelContext.Provider value={label}>{children}</SpinnerLabelContext.Provider>;
 }
 
+/** The translated accessible name every wait carries, for loaders that are not the spinner. */
+function useSpinnerLabel() {
+  return React.useContext(SpinnerLabelContext);
+}
+
 function Spinner({ className, ...props }: React.ComponentProps<"svg">) {
   const label = React.useContext(SpinnerLabelContext);
   return (
@@ -23,4 +28,4 @@ function Spinner({ className, ...props }: React.ComponentProps<"svg">) {
   );
 }
 
-export { Spinner, SpinnerLabelProvider };
+export { Spinner, SpinnerLabelProvider, useSpinnerLabel };

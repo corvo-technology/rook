@@ -1,7 +1,7 @@
 import { ChatMarkdown } from "@corvo/chat-ui/web";
 import type { ThreadMessage } from "@corvo/contracts";
 import { newClientId } from "@corvo/core";
-import { Button, Spinner, Textarea } from "@corvo/ui-web";
+import { AgentLoader, Button, Textarea } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, Menu } from "lucide-react";
@@ -134,7 +134,7 @@ export function DirectChat({
             </Button>
           </>
         ) : (
-          <Spinner />
+          <AgentLoader size={32} />
         )}
       </div>
     );

@@ -54,6 +54,7 @@ vi.mock("@corvo/ui-web", () => {
       </div>
     ),
     Spinner: (props: ComponentProps<"svg">) => <svg role="status" {...props} />,
+    AgentLoader: () => <span role="status" />,
     Button: (props: ComponentProps<"button">) => <button {...props} />,
     ToggleGroup: Container,
     ToggleGroupItem: Container,

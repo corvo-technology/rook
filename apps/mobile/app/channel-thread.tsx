@@ -1,5 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { View } from "react-native";
+import { AgentLoader } from "../components/agent-loader";
 import { ChannelThread } from "../components/thread/channel-thread-screen";
 import { integrationsCacheScope } from "../lib/integrations-cache";
 import { useMobileTokens } from "../lib/native";
@@ -24,7 +25,7 @@ export default function ChannelThreadRoute() {
   if (!userId) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator color={tokens.foreground} />
+        <AgentLoader />
       </View>
     );
   }

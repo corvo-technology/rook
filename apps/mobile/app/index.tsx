@@ -12,7 +12,6 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { ViewToken } from "react-native";
 import {
-  ActivityIndicator,
   Alert,
   AppState,
   FlatList,
@@ -23,6 +22,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AgentLoader } from "../components/agent-loader";
 import { BotOrganizeModal } from "../components/bot-organize-modal";
 import { HomeErrorState } from "../components/home-error-state";
 import { createHomeStyles } from "../components/home-styles";
@@ -736,7 +736,7 @@ function Home({ embedded, onSelectSpace }: InboxPaneProps & { embedded: boolean 
   if (!ready) {
     return (
       <View style={[styles.screen, styles.centered]}>
-        <ActivityIndicator color={native.secondaryLabel} />
+        <AgentLoader />
       </View>
     );
   }

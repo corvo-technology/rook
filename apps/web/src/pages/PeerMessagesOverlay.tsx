@@ -1,6 +1,6 @@
 import { ChatMarkdown } from "@corvo/chat-ui/web";
 import { loadPeerHistory, peerConversations } from "@corvo/core";
-import { BotAvatar, Button, EmptyState, SidePanel, Spinner } from "@corvo/ui-web";
+import { AgentLoader, BotAvatar, Button, EmptyState, SidePanel } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
@@ -81,7 +81,7 @@ export function PeerMessagesOverlay({
       ) : null}
       {!historyReady ? (
         <div className="grid flex-1 place-items-center text-muted-foreground/80">
-          <Spinner aria-label={t`Loading…`} />
+          <AgentLoader size={32} />
         </div>
       ) : historyFailed ? (
         <div className="grid flex-1 place-items-center text-center text-[13.5px] text-muted-foreground/80">

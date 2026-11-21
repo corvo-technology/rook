@@ -5589,12 +5589,8 @@ msgstr "Loading voice providers…"
 
 #: src/components/I18nBootstrap.tsx
 #: src/components/PageLoading.tsx
-#: src/pages/ApprovalsPage.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/IntegrationSetup.tsx
-#: src/pages/PeerMessagesOverlay.tsx
-#: src/pages/RoutineRunHistory.tsx
-#: src/pages/TeamPage.tsx
 msgid "Loading…"
 msgstr "Loading…"
 

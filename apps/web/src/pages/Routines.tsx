@@ -1,5 +1,6 @@
 import type { Bot, RoutineOccurrence } from "@corvo/contracts";
 import {
+  AgentLoader,
   BotAvatar,
   Button,
   botAccent,
@@ -207,7 +208,7 @@ export function RoutinesPage() {
           ) : null}
           {calendar.isPending ? (
             <div className="flex justify-center py-16">
-              <Spinner />
+              <AgentLoader size={32} />
             </div>
           ) : !calendar.data?.occurrences.length && next.length === 0 ? (
             <EmptyState data-testid="routines-empty" piece="pawn" title={t`No routines yet`} />

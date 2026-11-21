@@ -233,8 +233,9 @@ export function reliableModelStream(
   accessToken?: string | (() => string | undefined),
   runStream?: (options: ModelsSimpleStreamOptions) => AssistantMessageEventStream,
   cacheRetention?: ModelsSimpleStreamOptions["cacheRetention"],
+  idleTimeoutMs: number = MODEL_STREAM_IDLE_TIMEOUT_MS,
 ): AssistantMessageEventStream {
-  const watchdog = modelStreamIdleWatchdog(options?.signal);
+  const watchdog = modelStreamIdleWatchdog(options?.signal, idleTimeoutMs);
   try {
     const preparedOptions = reliableStreamOptions(
       model,
@@ -243,7 +244,7 @@ export function reliableModelStream(
         signal: watchdog.signal,
         fetch: APIS_WITHOUT_CUSTOM_FETCH.has(model.api)
           ? options?.fetch
-          : modelRequestFetch(options?.fetch, MODEL_STREAM_IDLE_TIMEOUT_MS),
+          : modelRequestFetch(options?.fetch, idleTimeoutMs),
         // Only a 2xx arms the shared watchdog. Error bodies are bounded by
         // the fetch wrapper where supported; caller hooks still see every status.
         onResponse: (response, requestModel) => {

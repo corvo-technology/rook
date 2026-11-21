@@ -61,7 +61,11 @@ vi.mock("./pi-openai-compatible-provider.js", () => ({
 import { estimateModelContextTokens } from "./model-context.js";
 import { IMAGE_RETURNING_COMPUTER_TOOLS } from "./model-vision.js";
 import { PiAgentRuntime } from "./pi-runtime.js";
-import { MODEL_STREAM_IDLE_TIMEOUT_MS, MODEL_STREAM_TIMEOUT_MS } from "./pi-runtime-limits.js";
+import {
+  INTERACTIVE_MODEL_STREAM_TIMEOUT_MS,
+  MODEL_STREAM_IDLE_TIMEOUT_MS,
+  MODEL_STREAM_TIMEOUT_MS,
+} from "./pi-runtime-limits.js";
 import { MODEL_STREAM_IDLE_TIMEOUT_MESSAGE } from "./pi-runtime-stream.js";
 import { PiJsonlSessionRecorder } from "./pi-session.js";
 
@@ -613,6 +617,72 @@ describe("Pi runtime transient model retries", () => {
       expect(vi.getTimerCount()).toBe(0);
     },
   );
+});
+
+type ProviderOptions = {
+  timeoutMs?: number;
+  onResponse?: (response: { status: number; headers: Record<string, string> }, m: unknown) => void;
+};
+
+describe("Pi runtime interactive timeouts and cooldowns", () => {
+  it.each([
+    { interactive: true, expected: INTERACTIVE_MODEL_STREAM_TIMEOUT_MS },
+    { interactive: false, expected: MODEL_STREAM_TIMEOUT_MS },
+  ])(
+    "waits $expected ms for response headers when interactive=$interactive",
+    async ({ interactive, expected }) => {
+      providerState.stream.mockImplementation((target: Model<"openai-completions">) =>
+        stream(target, message(target, [{ type: "text", text: "Done." }], "stop")),
+      );
+      const input = request();
+      input.interactive = interactive;
+      await run(input);
+      expect(providerState.stream.mock.calls[0]?.[2]).toMatchObject({ timeoutMs: expected });
+    },
+  );
+
+  it("waits at least as long as the provider's Retry-After before retrying the same model", async () => {
+    let calls = 0;
+    providerState.stream.mockImplementation(
+      (target: Model<"openai-completions">, _context: unknown, options?: ProviderOptions) => {
+        calls += 1;
+        if (calls > 1) {
+          return stream(target, message(target, [{ type: "text", text: "Back." }], "stop"));
+        }
+        options?.onResponse?.({ status: 429, headers: { "Retry-After": "15" } }, target);
+        return stream(target, message(target, [], "error", "429 rate limit"));
+      },
+    );
+    await run(request());
+    expect(providerState.delay.mock.calls[0]?.[0]).toBe(15_000);
+    expect(calls).toBe(2);
+  });
+
+  it("passes over a backup that is still cooling down in a later run", async () => {
+    const input = () =>
+      request([
+        { provider: backupA.provider, id: backupA.id, apiKey: "key-a" },
+        { provider: backupB.provider, id: backupB.id, apiKey: "key-b" },
+      ]);
+    const providers: string[] = [];
+    providerState.stream.mockImplementation(
+      (target: Model<"openai-completions">, _context: unknown, options?: ProviderOptions) => {
+        providers.push(target.provider);
+        if (target.provider === backupB.provider) {
+          return stream(target, message(target, [{ type: "text", text: "Served." }], "stop"));
+        }
+        options?.onResponse?.({ status: 429, headers: { "retry-after": "60" } }, target);
+        return stream(target, message(target, [], "error", "429 rate limit"));
+      },
+    );
+    const runtime = new PiAgentRuntime();
+    await run(input(), [], runtime);
+    expect(providers).toEqual([primary.provider, backupA.provider, backupB.provider]);
+    providers.length = 0;
+    await run(input(), [], runtime);
+    // backup A answered 429 a moment ago: the second run goes straight to backup B.
+    expect(providers).toEqual([primary.provider, backupB.provider]);
+  });
 });
 
 describe("Pi runtime ordered model fallback", () => {

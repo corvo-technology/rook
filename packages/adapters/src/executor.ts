@@ -25,6 +25,7 @@ import {
   isAutonomousRunTrigger,
   isBackgroundRunTrigger,
   isCallClientNonce,
+  isInteractiveRunTrigger,
   isMessagingChannelRun,
   isOwnerStartedRun,
   isRouterWake,
@@ -90,6 +91,7 @@ import { createBrowserProvider } from "./browser-provider-factory.js";
 import { alertIfMonthCrossed } from "./budget-alert.js";
 import { partitionTools } from "./builtin-tool-bridge.js";
 import { agentConnectionTools, builtinAgentTools } from "./builtin-tools.js";
+import { CacheMissTracker } from "./cache-miss.js";
 import { cacheReturnFor, routineGapMinutes } from "./cache-retention-policy.js";
 import { cloudAgentsEnabled } from "./cloud-agent-factory.js";
 import { mergeConnectedPlugins, needsLivePluginSync } from "./composio-connector.js";
@@ -200,11 +202,13 @@ import {
   createRunWorkspaceCheckpoint,
   escalateRunTier,
   failRunBeforeTurn,
+  heartbeatShouldAbort,
   mayOpenModelStream,
   RUN_LEASE_HEARTBEAT_MS,
   RUN_LEASE_TTL_MS,
   RUN_SETUP_FAILURE_LIMIT,
   releaseRunForShutdown,
+  renewLeasesTolerantly,
   renewRunLease,
   requeueComputerRun,
   setupFailureStreak,
@@ -443,35 +447,48 @@ export function createRunExecutor(deps: ExecutorDeps) {
         tool: undefined,
         screenRelease: undefined,
       };
+      const cacheMisses = new CacheMissTracker();
       let runAbortController: AbortController | null = null;
       let guardsToDispose: RunGuards | undefined;
       const runningHelpers = new Map<string, RunningHelper>();
       const settleHelpers = () => settleRunningHelpers(deps, run, runningHelpers);
 
       let detachShutdown: (() => void) | undefined;
+      let lastRenewedAt = Date.now();
       const heartbeat = setInterval(() => {
         if (lease.completed) return;
-        void Promise.all([
-          renewRunLease(deps, runId, workerId, fence),
-          renewComputerExecutionLease(deps.prisma, computerLease),
-        ])
-          .then(([runRenewed, computerRenewed]) => {
-            if (lease.completed) return;
-            if (!runRenewed || !computerRenewed) {
-              lease.valid = false;
-              runAbortController?.abort();
-            }
-          })
-          .catch(() => {
-            if (lease.completed) return;
-            lease.valid = false;
-            runAbortController?.abort();
-          });
+        void renewLeasesTolerantly(() =>
+          Promise.all([
+            renewRunLease(deps, runId, workerId, fence),
+            renewComputerExecutionLease(deps.prisma, computerLease),
+          ]).then(([runRenewed, computerRenewed]) => runRenewed && computerRenewed),
+        ).then((outcome) => {
+          if (lease.completed) return;
+          if (outcome === "held") lastRenewedAt = Date.now();
+          // A database blip leaves the lease alone until it is close to expiring.
+          if (!heartbeatShouldAbort(outcome, lastRenewedAt)) return;
+          lease.valid = false;
+          runAbortController?.abort();
+        });
       }, RUN_LEASE_HEARTBEAT_MS);
       heartbeat.unref?.();
       const stopHeartbeatAfterCompletion = () => {
         lease.completed = true;
         clearInterval(heartbeat);
+      };
+      let computerReleased = false;
+      const releaseComputer = async () => {
+        if (computerReleased || lease.retainComputer) return;
+        computerReleased = true;
+        if (computerUse.screenRelease) {
+          const releaseContext = computerUse.screenRelease.keepWarm
+            ? { ...computerUse.screenRelease.context, keepScreenWarm: true }
+            : computerUse.screenRelease.context;
+          await deps.sandbox
+            .releaseScreen?.(computerUse.screenRelease.computer, releaseContext)
+            .catch(() => undefined);
+        }
+        await releaseComputerExecutionLease(deps.prisma, computerLease).catch(() => undefined);
       };
 
       const runSecrets = [...deps.secrets];
@@ -1571,6 +1588,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
           state,
           settleRunningHelpers: settleHelpers,
           stopHeartbeatAfterCompletion,
+          releaseComputer,
         };
         const pluginLine =
           connectedPlugins.length > 0
@@ -1929,6 +1947,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
               routineId: run.routineId,
               cacheReturn,
               nonUrgent: run.trigger === "routine",
+              interactive: isInteractiveRunTrigger(run.trigger),
               sourceMessageId: run.sourceMessageId,
               onUsage: async (event) => {
                 await recordUsage(deps.prisma, event, {
@@ -1941,6 +1960,13 @@ export function createRunExecutor(deps: ExecutorDeps) {
                   ...(runTier ? { modelTier: runTier } : {}),
                 });
                 addReplyUsage(state.replyBudget, usageTokens(event));
+                const missReason = cacheMisses.observe(
+                  event,
+                  event.routedModel ?? `${runModelProvider}/${runModelId}`,
+                );
+                if (missReason) {
+                  getLogger().info("run.cache.miss", { "run.id": runId, reason: missReason });
+                }
               },
               onProviderResponse: ({ provider, headers }) => {
                 const windows = parseQuotaHeaders(provider, headers);
@@ -2271,6 +2297,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
           throw new Error("Run setup failed; retrying", { cause: reportedSetupError });
         }
       } finally {
+        getLogger().info("run.cache", { "run.id": runId, ...cacheMisses.counters });
         getLogger().info("run.computer", {
           "run.id": runId,
           trigger: run.trigger,
@@ -2281,17 +2308,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
         detachShutdown?.();
         guardsToDispose?.dispose();
         clearInterval(heartbeat);
-        if (!lease.retainComputer) {
-          if (computerUse.screenRelease) {
-            const releaseContext = computerUse.screenRelease.keepWarm
-              ? { ...computerUse.screenRelease.context, keepScreenWarm: true }
-              : computerUse.screenRelease.context;
-            await deps.sandbox
-              .releaseScreen?.(computerUse.screenRelease.computer, releaseContext)
-              .catch(() => undefined);
-          }
-          await releaseComputerExecutionLease(deps.prisma, computerLease).catch(() => undefined);
-        }
+        await releaseComputer();
         await deps.prisma.attempt
           .updateMany({
             where: { id: attempt.id, status: "running" },

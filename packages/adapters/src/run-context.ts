@@ -290,6 +290,8 @@ export interface RunContext {
   state: RunState;
   settleRunningHelpers: () => Promise<void>;
   stopHeartbeatAfterCompletion: () => void;
+  /** Free the computer for the next run; idempotent, and a no-op while a takeover holds it. */
+  releaseComputer: () => Promise<void>;
 }
 
 export async function settleRunningHelpers(

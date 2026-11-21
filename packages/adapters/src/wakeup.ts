@@ -7,6 +7,7 @@ import type {
   JobWorkerHost,
 } from "@corvo/adapter-kit";
 import { dispatchBackgroundJob } from "@corvo/adapter-kit";
+import { isInteractiveRunTrigger } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
 import { isTooManyDatabaseConnections, runAsSystem } from "@corvo/db";
 import { getLogger, runCorrelatedJob, unwrapJobPayload, wrapJobPayload } from "@corvo/logging";
@@ -20,23 +21,28 @@ import { RunExecutionHost } from "./run-execution.js";
 // publishers can keep publishing it while a new worker drains the legacy queue.
 const INTERACTIVE_RUN_TASK = "run.interactive";
 type RunLookup = Pick<PrismaClient, "run">;
-type Workload = "interactive" | "background" | "maintenance";
+type Workload = "interactive" | "background" | "maintenance" | "curation";
+
+/**
+ * Slow model-backed jobs. They get their own lane so a long wiki import or
+ * research report can never sit in front of the quick jobs (computer sleep,
+ * messaging delivery, audio transcription) that runs wait on.
+ */
+export const CURATION_TASKS: readonly BackgroundJobName[] = [
+  "history.compact",
+  "wiki.curate",
+  "wiki.review",
+  "wiki.retry",
+  "wiki.import",
+  "memory.learn",
+  "bot.design-avatar",
+  "research.run",
+  "consultation.process",
+];
 
 async function isInteractiveRun(prisma: RunLookup, runId: string): Promise<boolean> {
   const run = await prisma.run.findUnique({ where: { id: runId }, select: { trigger: true } });
-  return Boolean(
-    run &&
-      [
-        "user",
-        "follow_up",
-        "reaction",
-        "call_end",
-        "messaging",
-        "created",
-        "skill",
-        "resume",
-      ].includes(run.trigger),
-  );
+  return Boolean(run && isInteractiveRunTrigger(run.trigger));
 }
 
 // Share the caller's pg.Pool instead of opening a separate connectionString-based
@@ -235,7 +241,9 @@ export class GraphileJobWorkerHost implements JobWorkerHost {
     const taskList = Object.fromEntries(
       (Object.keys(handlers) as BackgroundJobName[])
         .filter((name) => {
-          if (this.options.workload === "maintenance") return name !== "run.continue";
+          if (this.options.workload === "curation") return CURATION_TASKS.includes(name);
+          if (this.options.workload === "maintenance")
+            return name !== "run.continue" && !CURATION_TASKS.includes(name);
           if (this.options.workload) return name === "run.continue";
           return true;
         })
@@ -327,7 +335,7 @@ export function createReservedGraphileJobWorkerHost(
   pool: Pool,
   options: { concurrency?: number; pollInterval?: number; noHandleSignals?: boolean } = {},
 ): JobWorkerHost {
-  const hosts = (["interactive", "background", "maintenance"] as const).map(
+  const hosts = (["interactive", "background", "maintenance", "curation"] as const).map(
     (workload) =>
       new GraphileJobWorkerHost(pool, {
         ...options,

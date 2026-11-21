@@ -32,6 +32,7 @@ import { uncertainEffectResult } from "./approval-effect.js";
 import { automated, withAutomatedLabels } from "./automated-messages.js";
 import { runCacheRetention } from "./cache-retention-policy.js";
 import { withCloudflareAuth } from "./cloudflare-ai-gateway.js";
+import { ModelCooldowns, retryAfterFromHeaders } from "./model-cooldown.js";
 import { withCacheBoundary } from "./pi-cache-boundary.js";
 import { estimatePiImageTokens } from "./pi-image-context.js";
 import {
@@ -50,6 +51,7 @@ import {
   MAX_CONTINUATION_OVERLAP,
   MAX_SELF_RECOVERIES_PER_RUN,
 } from "./pi-runtime-fallback.js";
+import { modelStreamTimeouts } from "./pi-runtime-limits.js";
 import type { RuntimeModelTarget } from "./pi-runtime-models.js";
 import {
   cardOutputCeiling,
@@ -152,6 +154,7 @@ export class PiAgentRuntime implements AgentRuntime {
   private readonly modelFetch?: typeof globalThis.fetch;
   private readonly modelCallObserver?: ModelCallObserver;
   private readonly onContextDecision?: PiAgentRuntimeOptions["onContextDecision"];
+  private readonly cooldowns = new ModelCooldowns();
 
   constructor(options: PiAgentRuntimeOptions = {}) {
     this.promptSessions = options.promptSessions ?? sharedPromptSessions;
@@ -465,6 +468,7 @@ export class PiAgentRuntime implements AgentRuntime {
           getActive: () => activeStreamTarget,
           signal,
           isProviderFailure: (message) => providerFailures.has(message.content),
+          cooldowns: this.cooldowns,
           attempted: new Set<string>(),
           nextIndex: 0,
           backupOutcomes: new Map(),
@@ -474,6 +478,7 @@ export class PiAgentRuntime implements AgentRuntime {
             if (hasCurrentImages && !target.model.input.includes("image")) {
               throw new Error(MODEL_IMAGE_INPUT_ERROR);
             }
+            const timeouts = modelStreamTimeouts(request.interactive);
             return reliableModelStream(
               target.models,
               target.model,
@@ -482,7 +487,14 @@ export class PiAgentRuntime implements AgentRuntime {
                 request,
                 target.config.provider,
                 withBackgroundServiceTier(
-                  withCloudflareAuth(target.config, options),
+                  withCloudflareAuth(target.config, {
+                    ...options,
+                    timeoutMs: options?.timeoutMs ?? timeouts.headersMs,
+                    onResponse: (response, requestModel) => {
+                      fallbackState.retryAfterMs = retryAfterFromHeaders(response.headers);
+                      return options?.onResponse?.(response, requestModel);
+                    },
+                  }),
                   target.model,
                   request.nonUrgent
                     ? target.config.cacheCapabilities?.backgroundServiceTier
@@ -515,6 +527,7 @@ export class PiAgentRuntime implements AgentRuntime {
                 target.config.cacheCapabilities?.retentionMode,
                 request.cacheReturn,
               ),
+              timeouts.idleMs,
             );
           },
           onContextLimit: (contextWindow) => {

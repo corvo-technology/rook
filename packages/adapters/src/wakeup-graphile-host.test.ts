@@ -29,6 +29,7 @@ vi.mock("graphile-worker", () => ({
 
 import { RunExecutionHost } from "./run-execution.js";
 import {
+  CURATION_TASKS,
   createReservedGraphileJobWorkerHost,
   createRoutineRetryNoticeReconciler,
   databaseCapacityBackoffMs,
@@ -326,17 +327,19 @@ describe("reserved Graphile workloads", () => {
   afterEach(() => run.mockReset());
 
   it("reserves disjoint task lists and stops every runner", async () => {
-    const runners = [mockRunner(), mockRunner(), mockRunner()];
+    const runners = [mockRunner(), mockRunner(), mockRunner(), mockRunner()];
     for (const { runner } of runners) run.mockResolvedValueOnce(runner);
     const host = createReservedGraphileJobWorkerHost({} as Pool, { concurrency: 4 });
     await host.start(handlers());
     const configurations = run.mock.calls.map(([options]) => options);
-    expect(configurations.map(({ concurrency }) => concurrency)).toEqual([4, 1, 1]);
+    expect(configurations.map(({ concurrency }) => concurrency)).toEqual([4, 1, 1, 1]);
     expect(Object.keys(configurations[0].taskList)).toEqual(["run.interactive"]);
     expect(Object.keys(configurations[1].taskList)).toEqual(["run.continue"]);
     expect(Object.keys(configurations[2].taskList)).not.toContain("run.continue");
     expect(Object.keys(configurations[2].taskList)).not.toContain("run.interactive");
     expect(Object.keys(configurations[2].taskList)).toContain("computer.sleep");
+    expect(Object.keys(configurations[2].taskList)).not.toContain("wiki.import");
+    expect(Object.keys(configurations[3].taskList).sort()).toEqual([...CURATION_TASKS].sort());
     await host.stop();
     for (const { runner } of runners) expect(runner.stop).toHaveBeenCalled();
   });
@@ -368,13 +371,13 @@ describe("reserved Graphile workloads", () => {
   });
 
   it("dispatches legacy chat jobs after stopping and restarting", async () => {
-    for (let i = 0; i < 6; i++) run.mockResolvedValueOnce(mockRunner().runner);
+    for (let i = 0; i < 8; i++) run.mockResolvedValueOnce(mockRunner().runner);
     const host = createReservedGraphileJobWorkerHost({} as Pool);
     const target = handlers();
     try {
       for (let cycle = 0; cycle < 2; cycle++) {
         await host.start(target);
-        const background = run.mock.calls[cycle * 3 + 1]?.[0].taskList;
+        const background = run.mock.calls[cycle * 4 + 1]?.[0].taskList;
         await background["run.continue"](wrapJobPayload({ runId: "legacy-chat" }));
         await host.stop();
       }

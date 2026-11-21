@@ -533,6 +533,8 @@ export interface AgentRunRequest {
    */
   onProviderResponse?: (event: { provider: string; headers: Record<string, string> }) => void;
   contextStrategy?: AgentContextStrategy;
+  /** A person is waiting on this run: model calls give up on silence sooner. */
+  interactive?: boolean;
   /** Exclusive workflow cost bucket; retrieval tool turns are detected for answer calls. */
   usageOperationKind?: UsageOperationKind;
   /**

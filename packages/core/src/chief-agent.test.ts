@@ -5,9 +5,22 @@ import { CHANNELS_WITH_NOTES, CHIEF_AGENT, chiefInstructions } from "./chief-age
 import { MESSAGING_PROVIDER_IDS } from "./messaging-providers.js";
 
 describe("the Chief", () => {
-  it("is named and described in both languages", () => {
-    expect(CHIEF_AGENT.name.en).not.toBe(CHIEF_AGENT.name["pt-BR"]);
+  it("is Rook in every language, with the title in the person's own", () => {
+    expect(CHIEF_AGENT.name).toEqual({ en: "Rook", "pt-BR": "Rook" });
+    expect(CHIEF_AGENT.title).toEqual({ en: "Right hand", "pt-BR": "Braço direito" });
     expect(CHIEF_AGENT.description.en).not.toBe(CHIEF_AGENT.description["pt-BR"]);
+    expect(CHIEF_AGENT.description.en).toContain("right hand");
+    expect(CHIEF_AGENT.description["pt-BR"]).toContain("braço direito");
+  });
+
+  it("introduces itself as Rook, never as the Chief", () => {
+    expect(chiefInstructions("en")).toContain("You are Rook, the owner's right hand");
+    expect(chiefInstructions("pt-BR")).toContain("Você é o Rook, o braço direito do dono");
+    for (const locale of ["en", "pt-BR"] as const) {
+      for (const channel of [undefined, ...CHANNELS_WITH_NOTES, "other"]) {
+        expect(chiefInstructions(locale, channel)).not.toMatch(/\b(Chief|Chefe)\b/);
+      }
+    }
   });
 
   for (const locale of ["en", "pt-BR"] as const) {

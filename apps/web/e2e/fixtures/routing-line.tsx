@@ -18,7 +18,7 @@ const color = (id: string) => BOT_COLOR_LIST.find((item) => item.id === id)?.hex
 const MEMBERS: GroupMember[] = [
   { botId: "cto", name: "CTO", color: color("blue") },
   { botId: "fin", name: "Financeiro", color: color("green") },
-  { botId: "chief", name: "Chefe", color: color("purple") },
+  { botId: "chief", name: "Rook", color: color("purple") },
 ];
 const bot = (botId: string | undefined) => MEMBERS.find((member) => member.botId === botId);
 

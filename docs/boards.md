@@ -56,7 +56,7 @@ A ticket does not wait for someone to remember it. The backend sweeps the board 
   checkpoint comment. After the follow-up budget it moves to Blocked with a comment that says why.
   A ticket whose owner is waiting on a person is not stalled.
 - A delivery in In review with no review run for 10 minutes is sent to its reviewer: the agent
-  that created the ticket, or the Chief when the owner made the ticket for itself. The reviewer
+  that created the ticket, or Rook when the owner made the ticket for itself. The reviewer
   sets it to Done or sends it back with what is missing. After the review rounds the person is
   asked. A ticket a person created is reviewed by that person.
 - A comment from anyone but the owner on a To do, In progress or Blocked ticket wakes the owner
@@ -75,7 +75,7 @@ takes `fields` to set named data. Ticket text, comments and field values are dat
 instructions.
 
 When an agent moves a ticket to In review or Done it is asked to say so in its chat and to send the
-Chief a line with `message_bot`. The Chief itself, or a space with no Chief, is not asked.
+Rook a line with `message_bot`. Rook itself, or a space with no Rook, is not asked.
 
 ## Notices
 

@@ -7,7 +7,7 @@ async function expectSidebarIntact(page: Page) {
   const sidebar = page.getByTestId("bots-sidebar");
   await expect(sidebar).toBeVisible();
   await expect(sidebar.getByTestId("sidebar-nav")).toBeVisible();
-  await expect(sidebar.getByText("Chief").first()).toBeVisible();
+  await expect(sidebar.getByText("Rook").first()).toBeVisible();
   await expect(sidebar.getByText("Product").first()).toBeVisible();
   await expect(page.getByTestId("app-rail")).toHaveCount(0);
 }
@@ -31,7 +31,7 @@ test("every place in the sidebar opens in the main pane and leaves the lists in 
   const pane = page.getByTestId("shell-page");
   await expectSidebarIntact(page);
   await expect(nav.getByTestId("sidebar-home")).toHaveAttribute("aria-current", "page");
-  await expect(page.getByTestId("bot-settings-trigger")).toContainText("Chief");
+  await expect(page.getByTestId("bot-settings-trigger")).toContainText("Rook");
   await captureScreenshot(page, testInfo, "nav-home");
 
   const places: Array<{ id: string; url: RegExp; heading?: string; shot: string }> = [
@@ -76,7 +76,7 @@ test("every place in the sidebar opens in the main pane and leaves the lists in 
     await captureScreenshot(page, testInfo, place.shot);
   }
 
-  // Home goes back to the Chief's chat.
+  // Home goes back to the Rook's chat.
   await nav.getByTestId("sidebar-home").click();
   await expect(page).toHaveURL(new RegExp(`/app/${chiefId}$`));
   await expect(page.getByTestId("transcript")).toBeVisible();
@@ -87,7 +87,7 @@ test("the agent header is a solid row above the messages", async ({ page }, test
   await signup(page, `agent-header-${Date.now()}@corvo.test`, "password12", "Agent Header");
   await completeOnboarding(page);
   const trigger = page.getByTestId("bot-settings-trigger");
-  await expect(trigger).toContainText("Chief");
+  await expect(trigger).toContainText("Rook");
   await expect(page.getByRole("button", { name: "Agent computer" })).toBeVisible();
   const header = await trigger.evaluate((node) => {
     const row = node.parentElement as HTMLElement;

@@ -45,16 +45,13 @@ for (const [failing, intact] of [
     await signup(page, `section-load-${stamp}@corvo.test`, "password12", "Section Load");
     await completeOnboarding(page);
 
-    const composer = page.getByRole("combobox", { name: "Message Chief" });
+    const composer = page.getByRole("combobox", { name: "Message Rook" });
     await composer.fill("Keep this draft");
 
     await page.route(new RegExp(`/pages/${failing}\\.tsx`), (route) =>
       route.fulfill({ status: 404 }),
     );
-    await page
-      .locator("main")
-      .getByRole("button", { name: /^Chief/ })
-      .click();
+    await page.locator("main").getByRole("button", { name: /^Rook/ }).click();
 
     const settings = page.getByTestId("bot-settings");
     await expect(settings.getByText("Could not load", { exact: true })).toBeVisible();

@@ -48,9 +48,10 @@ describe("ensureStarterTeam", () => {
     const result = await run(f, "pt-BR");
     expect(result.created).toBe(true);
     // The caller gets the Chief it made, to start its greeting.
-    expect(result.bot).toMatchObject({ name: "Chefe" });
+    expect(result.bot).toMatchObject({ name: "Rook" });
     expect(f.inputs.find((input) => input.spawnKey === CHIEF_SPAWN_KEY)).toMatchObject({
-      name: "Chefe",
+      name: "Rook",
+      title: "Braço direito",
       instructions: chiefInstructions("pt-BR"),
       fleetManagement: true,
     });
@@ -88,7 +89,7 @@ describe("ensureStarterTeam", () => {
 
   it("keeps the localized name when no name is given", async () => {
     const f = fixture();
-    expect((await run(f, "pt-BR")).bot).toMatchObject({ name: "Chefe" });
+    expect((await run(f, "pt-BR")).bot).toMatchObject({ name: "Rook" });
   });
 
   it("writes the Chief for the chat app the person came through", async () => {
@@ -119,7 +120,13 @@ describe("ensureStarterTeam", () => {
     const f = fixture();
     await run(f, "en");
     expect(f.inputs.find((input) => input.spawnKey === CHIEF_SPAWN_KEY)).toMatchObject({
-      name: "Chief",
+      name: "Rook",
+      title: "Right hand",
     });
+  });
+
+  it("still finds an older Chief that was renamed to Rook before it had a spawn key", async () => {
+    const f = fixture([{ id: "old", name: "Rook", spawnKey: null }]);
+    await expect(run(f)).resolves.toEqual({ botId: "old", created: false });
   });
 });

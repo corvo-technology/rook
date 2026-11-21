@@ -7,7 +7,7 @@ sidebar:
 
 The assistant does not have to be a chat window. Two calls put the AI **inside your own screens**: `Rook.ask` returns the result of a task as JSON, and `Rook.recorder` records the visit in your form and hands back the fields already filled in. Your product shows everything to the professional, who reviews it and only then saves. **Rook never writes anything to your system.**
 
-The calls use the customer's Chief, models and credit, like any conversation, and work only while the customer is active and has credit.
+The calls use the customer's lead agent, models and credit, like any conversation, and work only while the customer is active and has credit.
 
 ```html
 <script src="https://app.rook.team/sdk.js"></script>

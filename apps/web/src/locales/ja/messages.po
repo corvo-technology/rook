@@ -2241,10 +2241,6 @@ msgstr "チェックアウト"
 msgid "Checkout URL"
 msgstr "チェックアウトURL"
 
-#: src/pages/PartnerTemplateEditor.tsx
-msgid "Chief name"
-msgstr "チーフの名前"
-
 #: src/pages/plans/WhiteLabelPlans.tsx
 msgid "Choose"
 msgstr "選ぶ"
@@ -4967,16 +4963,16 @@ msgid "Hear a sample"
 msgstr "サンプルを再生"
 
 #: src/pages/Onboarding.tsx
-msgid "Hi, {name}. I'm the Chief. We'll set up your team in about two minutes."
-msgstr "こんにちは、{name} さん。Chief です。2 分ほどでチームを作りましょう。"
+msgid "Hi, {name}. I'm Rook. We'll set up your team in about two minutes."
+msgstr "こんにちは、{name} さん。Rook です。2 分ほどでチームを作りましょう。"
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Hi, this is how I'll sound when I read replies out loud."
 msgstr "こんにちは。返信を読み上げるときは、このような声になります。"
 
 #: src/pages/Onboarding.tsx
-msgid "Hi. I'm the Chief. We'll set up your team in about two minutes."
-msgstr "こんにちは、Chief です。2 分ほどでチームを作りましょう。"
+msgid "Hi. I'm Rook. We'll set up your team in about two minutes."
+msgstr "こんにちは、Rook です。2 分ほどでチームを作りましょう。"
 
 #: src/pages/home/HomeCard.tsx
 msgid "Hide {name}"
@@ -5058,8 +5054,8 @@ msgid "How to check"
 msgstr "確認方法"
 
 #: src/pages/onboarding/TeamStep.tsx
-msgid "I don't use any yet: the Chief builds a team from what you do"
-msgstr "まだ使っていません。Chief があなたの仕事に合わせてチームを作ります"
+msgid "I don't use any yet: Rook builds a team from what you do"
+msgstr "まだ使っていません。Rook があなたの仕事に合わせてチームを作ります"
 
 #: src/pages/Onboarding.tsx
 msgid "I need an AI to think with."
@@ -5456,8 +5452,8 @@ msgid "just now"
 msgstr "たった今"
 
 #: src/pages/Onboarding.tsx
-msgid "Just the Chief"
-msgstr "Chief だけ"
+msgid "Just Rook"
+msgstr "Rook だけ"
 
 #: src/pages/YouMemory.tsx
 msgid "Keep"
@@ -5560,6 +5556,10 @@ msgstr "最終使用: {0}"
 #: src/components/DesktopUpdates.tsx
 msgid "Later"
 msgstr "後で"
+
+#: src/pages/PartnerTemplateEditor.tsx
+msgid "Lead agent name"
+msgstr "メインエージェントの名前"
 
 #: src/pages/WikiBrowser.tsx
 msgid "Learn from conversations"
@@ -9253,8 +9253,8 @@ msgid "Stuck tickets on the board"
 msgstr "ボードで止まっているチケット"
 
 #: src/components/CoachLayer.tsx
-msgid "Stuck? Ask the Chief."
-msgstr "困ったら、Chief に聞いてください。"
+msgid "Stuck? Ask Rook."
+msgstr "困ったら、Rook に聞いてください。"
 
 #: src/lib/identity-display.ts
 msgid "subagent"

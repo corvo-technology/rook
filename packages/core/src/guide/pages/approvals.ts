@@ -12,7 +12,7 @@ Anything that sends, pays, publishes or changes something outside the app, and a
 
 ## The card
 
-A card shows exactly what will happen. Its buttons are **Allow once**, **Always allow this tool** and **Deny**; some cards offer **Edit first**. Proposed changes to existing agents, routines and groups use **Apply** and **Dismiss**. When the Chief proposes several changes in one reply, the cards come one at a time; the reply continues once every card is decided. Changes to agents, groups and routines ask even when a tool is always allowed, and **Auto** cannot approve them. Only **Never ask** lets them through, and only in a run you started that no outside message reached.
+A card shows exactly what will happen. Its buttons are **Allow once**, **Always allow this tool** and **Deny**; some cards offer **Edit first**. Proposed changes to existing agents, routines and groups use **Apply** and **Dismiss**. When Rook proposes several changes in one reply, the cards come one at a time; the reply continues once every card is decided. Changes to agents, groups and routines ask even when a tool is always allowed, and **Auto** cannot approve them. Only **Never ask** lets them through, and only in a run you started that no outside message reached.
 
 ## The rules
 
@@ -38,7 +38,7 @@ Tudo que envia, paga, publica ou muda algo fora do app, e qualquer mudança em s
 
 ## O cartão
 
-Um cartão mostra exatamente o que vai acontecer. Os botões são **Permitir uma vez**, **Permitir sempre esta ferramenta** e **Negar**; alguns cartões oferecem **Editar primeiro**. Mudanças propostas em agentes, rotinas e grupos existentes usam **Aplicar** e **Dispensar**. Quando o Chefe propõe várias mudanças em uma resposta, os cartões vêm um de cada vez; a resposta continua quando todos forem decididos. Mudanças em agentes, grupos e rotinas perguntam mesmo que uma ferramenta esteja sempre permitida, e o **Auto** não pode aprová-las. Só o **Nunca perguntar** as deixa passar, e apenas em uma execução que você iniciou e que nenhuma mensagem externa alcançou.
+Um cartão mostra exatamente o que vai acontecer. Os botões são **Permitir uma vez**, **Permitir sempre esta ferramenta** e **Negar**; alguns cartões oferecem **Editar primeiro**. Mudanças propostas em agentes, rotinas e grupos existentes usam **Aplicar** e **Dispensar**. Quando o Rook propõe várias mudanças em uma resposta, os cartões vêm um de cada vez; a resposta continua quando todos forem decididos. Mudanças em agentes, grupos e rotinas perguntam mesmo que uma ferramenta esteja sempre permitida, e o **Auto** não pode aprová-las. Só o **Nunca perguntar** as deixa passar, e apenas em uma execução que você iniciou e que nenhuma mensagem externa alcançou.
 
 ## As regras
 

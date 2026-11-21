@@ -93,7 +93,7 @@ const conversation: Scenario = {
 const options = bot([
   {
     kind: "ask",
-    text: "Hi there! I'm Chief. What do you want me to help with?",
+    text: "Hi there! I'm Rook. What do you want me to help with?",
     status: "pending",
     actions: [
       { id: "lead", label: "Lead and coordinate my team's work" },

@@ -22,7 +22,7 @@ test("memory and skills are readable and editable in the app", async ({ page }, 
   // memory from chat writes directly, without an approval card.
   const retiredPath = "projects/retired.md";
   const retiredContent = `Retired project ${stamp}`;
-  const setupComposer = page.getByRole("combobox", { name: "Message Chief" });
+  const setupComposer = page.getByRole("combobox", { name: "Message Rook" });
   await setupComposer.fill(`save shared memory ${retiredPath} with: ${retiredContent}`);
   await setupComposer.press("Enter");
   await expect
@@ -107,7 +107,7 @@ test("memory and skills are readable and editable in the app", async ({ page }, 
   expect(exported).toBe(latestMarker);
   expect(exported).not.toContain(retiredContent);
   expect(exported).not.toContain(marker);
-  expect(exported).not.toContain("# Chief");
+  expect(exported).not.toContain("# Rook");
   // Exporting must not hide why Save stays disabled.
   const conflictNotice = spaceDocs.getByText(
     "Document changed. Reopen to edit the latest version.",
@@ -145,12 +145,9 @@ test("memory and skills are readable and editable in the app", async ({ page }, 
   });
   await rpc(page, "memory/update", {
     documentId: seededDocs[0].id,
-    content: "# Chief\n\nA remembered preference.\n",
+    content: "# Rook\n\nA remembered preference.\n",
   });
-  await page
-    .locator("main")
-    .getByRole("button", { name: /^Chief/ })
-    .click();
+  await page.locator("main").getByRole("button", { name: /^Rook/ }).click();
   const settings = page.getByTestId("bot-settings");
   await expect(settings.getByRole("button", { name: "Save", exact: true })).toHaveCount(0);
   const botMemory = settings.getByTestId("bot-knowledge-memory");
@@ -158,9 +155,9 @@ test("memory and skills are readable and editable in the app", async ({ page }, 
   await expect(botMemoryRow).toBeVisible();
   await botMemoryRow.click();
   const botDocEditor = botMemory.locator("textarea");
-  await expect(botDocEditor).toHaveValue(/# Chief/);
+  await expect(botDocEditor).toHaveValue(/# Rook/);
   const botMarker = `Bot memory e2e ${stamp}`;
-  await botDocEditor.fill(`# Chief\n\n${botMarker}\n`);
+  await botDocEditor.fill(`# Rook\n\n${botMarker}\n`);
   await botMemory.getByRole("button", { name: "Save", exact: true }).scrollIntoViewIfNeeded();
   await captureScreenshot(page, testInfo, "80-knowledge-bot-memory");
   const botMemorySaved = page.waitForResponse(
@@ -173,7 +170,7 @@ test("memory and skills are readable and editable in the app", async ({ page }, 
       botId: activeBotId(page),
       scope: "bot",
     }),
-  ).toContainEqual(expect.objectContaining({ content: `# Chief\n\n${botMarker}\n`, revision: 3 }));
+  ).toContainEqual(expect.objectContaining({ content: `# Rook\n\n${botMarker}\n`, revision: 3 }));
   await botMemoryRow.click();
   await expect(botDocEditor).toHaveValue(new RegExp(botMarker));
   await botMemory.getByRole("button", { name: "Cancel", exact: true }).click();

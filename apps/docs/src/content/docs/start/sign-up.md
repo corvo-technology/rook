@@ -13,7 +13,7 @@ sidebar:
 
 ## Onboarding
 
-O onboarding é uma trilha curta, conduzida pelo **Chief**, o agente que coordena os outros. Ele pergunta o que a sua empresa faz, sugere uma equipe inicial a partir de um modelo e mostra uma prévia ao vivo do que será criado. Você ajusta e confirma; nada fica pronto sem o seu aval.
+O onboarding é uma trilha curta, conduzida pelo **Rook**, seu braço direito, o agente que coordena os outros. Ele pergunta o que a sua empresa faz, sugere uma equipe inicial a partir de um modelo e mostra uma prévia ao vivo do que será criado. Você ajusta e confirma; nada fica pronto sem o seu aval.
 
 Você pode pular e voltar depois: tudo o que o onboarding faz também está nas telas normais.
 

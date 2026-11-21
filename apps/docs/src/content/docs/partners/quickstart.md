@@ -13,7 +13,7 @@ Com a equipe do Rook você recebe o parceiro e a **chave** (`Authorization: Bear
 
 ## 2. Aplique um modelo
 
-O modelo define os agentes que todo cliente novo recebe, o nome do Chief, a cor e o conector. Em **Configurações > Parceria > Importar**, carregue o `.json`, confira os agentes, informe o endereço do seu servidor MCP e salve.
+O modelo define os agentes que todo cliente novo recebe, o nome do agente principal, a cor e o conector. Em **Configurações > Parceria > Importar**, carregue o `.json`, confira os agentes, informe o endereço do seu servidor MCP e salve.
 
 ```json
 {

@@ -7,7 +7,7 @@ const NUMBER = {
   id: "inst-1",
   number: "+•••••••0100",
   botId: "bot-1",
-  botName: "Chief",
+  botName: "Rook",
   status: "active",
   paused: false,
   mode: "service",

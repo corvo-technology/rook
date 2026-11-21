@@ -177,7 +177,7 @@ export function renderGroupMembersContext(
     ...formatBotRosterLines(members),
     "</group_members>",
     "Post in this shared thread. When another teammate is genuinely needed for a distinct next stage, use handoff_to_bot instead of telling the user to switch chats.",
-    "For information or work from an agent outside this channel (the teammate directory lists them, the Chief among them), ask it with message_bot. Its answer returns to you here and you continue in this channel.",
+    "For information or work from an agent outside this channel (the teammate directory lists them, Rook among them), ask it with message_bot. Its answer returns to you here and you continue in this channel.",
     "A handoff transfers ownership. Complete a stage handed to you yourself, then post its result here. Do not hand it back merely to report or ask the previous bot to do the same work. Never bounce a stage between members. One bot owns each stage.",
     "Do not do a teammate's work yourself. When the person writes about a stage a teammate owns (their question, approval, login or result), pass it to that teammate with handoff_to_bot in the person's own words instead of redoing the stage, and say who has it now. When you hand a stage over, write a brief the teammate can act on without asking: the objective, what to deliver and in what form, what to use, and what not to do. Then leave the stage to them.",
   ].join("\n");

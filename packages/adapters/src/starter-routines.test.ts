@@ -1,4 +1,4 @@
-import { AGENT_CATALOG } from "@corvo/core";
+import { AGENT_CATALOG, CHIEF_STARTER_ROUTINES } from "@corvo/core";
 import { describe, expect, it, vi } from "vitest";
 import {
   createStarterRoutines,
@@ -81,6 +81,44 @@ describe("createStarterRoutines", () => {
     expect(await createStarterRoutines(f.deps, input({ entry: plain }))).toEqual([]);
     expect(await createStarterRoutines(f.deps, input({ threadId: null }))).toEqual([]);
     expect(f.prisma.routine.create).not.toHaveBeenCalled();
+  });
+});
+
+describe("Rook's starter routines", () => {
+  const rook = { slug: "chief", routines: CHIEF_STARTER_ROUTINES };
+
+  it("makes the four routines active, in the owner's timezone, on their schedule", async () => {
+    const f = fixture({ timezone: "America/Sao_Paulo" });
+    const made = await createStarterRoutines(f.deps, input({ entry: rook, locale: "en" }));
+    expect(made.map((routine) => routine.name)).toEqual([
+      "Weekly plan",
+      "Daily brief",
+      "Board review",
+      "Weekly wrap-up",
+    ]);
+    const created = (
+      f.prisma.routine.create.mock.calls as unknown as { data: Record<string, unknown> }[][]
+    ).map(([call]) => call!.data);
+    expect(created.map((data) => data.crons)).toEqual([
+      ["0 8 * * 1"],
+      ["0 8 * * 2-5"],
+      ["0 14 * * 3"],
+      ["0 17 * * 5"],
+    ]);
+    for (const data of created) {
+      expect(data).toMatchObject({ active: true, timezone: "America/Sao_Paulo", botId: "bot-1" });
+    }
+  });
+
+  it("writes the names in Portuguese for a Portuguese owner", async () => {
+    const f = fixture({ timezone: "America/Sao_Paulo" });
+    const made = await createStarterRoutines(f.deps, input({ entry: rook }));
+    expect(made.map((routine) => routine.name)).toEqual([
+      "Plano da semana",
+      "Resumo do dia",
+      "Revisão do quadro",
+      "Fechamento da semana",
+    ]);
   });
 });
 

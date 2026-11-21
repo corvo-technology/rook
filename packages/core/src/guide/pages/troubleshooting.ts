@@ -27,9 +27,9 @@ An approval waits in the chat where it appeared. With several cards, they come o
 
 Agents read PDFs and plain text, Markdown, CSV, JSON and HTML files. Other file types are not read yet, and a scanned PDF with no text comes back empty.
 
-## When the Chief cannot tell
+## When Rook cannot tell
 
-The Chief can check the space's status: failed runs, apps in error and limits nearly full. If the guide does not cover the question, it says so instead of guessing.`,
+Rook can check the space's status: failed runs, apps in error and limits nearly full. If the guide does not cover the question, it says so instead of guessing.`,
     },
     "pt-BR": {
       title: "Solução de problemas",
@@ -55,9 +55,9 @@ Uma aprovação espera no chat onde apareceu. Com vários cartões, eles vêm um
 
 Os agentes leem PDFs e arquivos de texto, Markdown, CSV, JSON e HTML. Outros tipos de arquivo ainda não são lidos, e um PDF escaneado sem texto volta vazio.
 
-## Quando o Chefe não sabe dizer
+## Quando o Rook não sabe dizer
 
-O Chefe pode conferir o estado do espaço: execuções que falharam, apps com erro e limites quase cheios. Se o guia não cobre a pergunta, ele diz isso em vez de adivinhar.`,
+O Rook pode conferir o estado do espaço: execuções que falharam, apps com erro e limites quase cheios. Se o guia não cobre a pergunta, ele diz isso em vez de adivinhar.`,
     },
   },
 };

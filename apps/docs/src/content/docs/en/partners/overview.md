@@ -41,4 +41,4 @@ Customers subscribe to Rook and Rook bills them. You earn a **20% commission** o
 3. Approved partners receive an invitation by email.
 4. The [partner console](/en/partners/central/) appears inside your own Rook.
 
-A company with several products creates **one partner per product**: each has its own key, template, and Chief name and color, and customers never mix.
+A company with several products creates **one partner per product**: each has its own key, template, and lead agent name and color, and customers never mix.

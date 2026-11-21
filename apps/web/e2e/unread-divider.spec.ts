@@ -26,7 +26,7 @@ test("a chat opens with a New divider above replies that arrived while away", as
   await expect(page.getByTestId("unread-divider")).toHaveCount(0);
   const otherId = await createNamedBot(page, "Elsewhere");
 
-  // Chief answers while the user is in another chat.
+  // Rook answers while the user is in another chat.
   const question = "Plan my week";
   await rpc(page, "threads/send", { botId: chiefId, text: question });
   await expect
@@ -48,7 +48,7 @@ test("a chat opens with a New divider above replies that arrived while away", as
   const divider = page.getByTestId("unread-divider");
   await expect(divider).toBeVisible();
   await expect(divider).toContainText("New messages");
-  // The user's own question stays above the line; Chief's reply starts the new part.
+  // The user's own question stays above the line; Rook's reply starts the new part.
   const lastSeen = divider.locator("xpath=preceding-sibling::div[@data-message-id][1]");
   await expect(lastSeen).toContainText(question);
   const firstNew = divider.locator("xpath=following-sibling::div[@data-message-id][1]");
@@ -63,11 +63,11 @@ test("a chat opens with a New divider above replies that arrived while away", as
 
   // Writing in the chat means the user has caught up.
   const followUp = `Thanks ${stamp}`;
-  await page.getByRole("combobox", { name: "Message Chief", exact: true }).fill(followUp);
+  await page.getByRole("combobox", { name: "Message Rook", exact: true }).fill(followUp);
   await page.keyboard.press("Enter");
   await expect(page.getByTestId("message-user-bubble").filter({ hasText: followUp })).toBeVisible();
   await expect(divider).toHaveCount(0);
-  // Let Chief answer here so its reply is read before leaving.
+  // Let Rook answer here so its reply is read before leaving.
   await expect
     .poll(
       async () => {
@@ -89,7 +89,7 @@ test("a chat opens with a New divider above replies that arrived while away", as
     page.getByRole("combobox", { name: "Message Elsewhere", exact: true }),
   ).toBeVisible();
   await page.goto(`/app/${chiefId}`);
-  await expect(page.getByRole("combobox", { name: "Message Chief", exact: true })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message Rook", exact: true })).toBeVisible();
   await expect(
     page.locator("[data-message-id]").filter({ hasText: question }).first(),
   ).toBeVisible();
@@ -124,7 +124,7 @@ test("a late read answer from a chat you left doesn't remove the divider in the 
     )
     .toBe(true);
 
-  // Hold Elsewhere's read answer until after Chief's divider is showing.
+  // Hold Elsewhere's read answer until after Rook's divider is showing.
   let releaseOther: () => void = () => undefined;
   const otherHeld = new Promise<void>((resolve) => {
     releaseOther = resolve;
@@ -139,7 +139,7 @@ test("a late read answer from a chat you left doesn't remove the divider in the 
     page.getByRole("combobox", { name: "Message Elsewhere", exact: true }),
   ).toBeVisible();
   await page.locator(`[data-roster-bot-id="${chiefId}"]`).click();
-  await expect(page.getByRole("combobox", { name: "Message Chief", exact: true })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message Rook", exact: true })).toBeVisible();
   const divider = page.getByTestId("unread-divider");
   await expect(divider).toBeVisible();
 

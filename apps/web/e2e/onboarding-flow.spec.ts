@@ -16,7 +16,7 @@ for (const theme of ["light", "dark"] as const) {
 
     await expect(page).toHaveURL(/\/onboarding\/workspace$/);
     await expect(rail).toContainText(/Faltam \d+ etapas/);
-    await expect(page.getByTestId("onboarding-narration")).toContainText("Eu sou o Chefe");
+    await expect(page.getByTestId("onboarding-narration")).toContainText("Sou o Rook");
     await page.getByRole("textbox").first().fill("Greenflow");
     await expect(preview.getByTestId("preview-name")).toHaveText("Greenflow");
     await captureScreenshot(page, testInfo, `01-workspace-${theme}`);

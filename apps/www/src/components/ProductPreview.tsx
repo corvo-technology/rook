@@ -141,7 +141,7 @@ export function ProductPreview({ copy }: { copy: Copy }) {
           <div key={index} className="pv-thread">
             {waiting && asked ? (
               <p className="pv-handoff">
-                <Rook hue={agentOf(copy, "Chief").hue} size={18} seed={index} />
+                <Rook hue={agentOf(copy, "Rook").hue} size={18} seed={index} />
                 <span>
                   {copy.chief} → @{asked.name}
                 </span>

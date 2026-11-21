@@ -137,7 +137,7 @@ test("routine editing updates in place, preserves timezone, deletion persists, a
 
   // The deleted routine stays gone after a reload.
   await page.reload();
-  await expect(page.getByRole("combobox", { name: "Message Chief", exact: true })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Message Rook", exact: true })).toBeVisible();
   expect((await rpc<Routine[]>(page, "routines/list", { botId })).map((r) => r.name)).toEqual([
     "Renamed model check",
   ]);
@@ -305,7 +305,7 @@ test("switching bots while a routine save is pending does not reopen stale state
   );
 
   const botList = page.locator("aside").first();
-  await botList.getByRole("button", { name: /^Chief/ }).click();
+  await botList.getByRole("button", { name: /^Rook/ }).click();
   await staleListIntercepted;
   await botList.getByRole("button", { name: /^Second/ }).click();
   await page.waitForURL(new RegExp(`/app/${secondBot.id}$`));

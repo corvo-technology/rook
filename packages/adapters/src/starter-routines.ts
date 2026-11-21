@@ -1,6 +1,6 @@
 import type { JobPublisher } from "@corvo/adapter-kit";
 import { runContinueJob } from "@corvo/adapter-kit";
-import type { AgentCatalogEntry, AgentCatalogLocale } from "@corvo/contracts";
+import type { AgentCatalogEntry, AgentCatalogLocale, StarterRoutine } from "@corvo/contracts";
 import { TimeZoneSchema } from "@corvo/contracts";
 import type { PrismaClient } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
@@ -20,14 +20,15 @@ export type StarterRoutineSetup = {
 };
 
 /**
- * Create the routines a catalog agent starts with, owned by that agent, in the person's own
+ * Create the routines an agent starts with, owned by that agent, in the person's own
  * timezone. Safe to repeat: a routine whose name the agent already has active is left alone, and
  * only newly created ones are returned. Never throws; a routine that cannot be created is logged.
  */
 export async function createStarterRoutines(
   deps: ScheduleToolDeps,
   input: {
-    entry: AgentCatalogEntry;
+    /** A catalog agent, or any agent with a slug and routines of its own, such as Rook. */
+    entry: Pick<AgentCatalogEntry, "slug"> & { routines?: readonly StarterRoutine[] };
     locale: AgentCatalogLocale;
     spaceId: string;
     userId: string;

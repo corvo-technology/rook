@@ -2,8 +2,8 @@ import type { AgentCatalogLocale, OnboardingPicks } from "@corvo/contracts";
 import { rpc } from "./rpc";
 
 export const FIRST_BOT_SPAWN_KEY = "onboarding:first";
-/** The first bot's name before it was localized; older accounts still have it. */
-const LEGACY_FIRST_BOT_NAME = "Chief";
+/** The names an older account's first bot has, before it had a spawn key: its first name and Rook. */
+const LEGACY_FIRST_BOT_NAMES = ["Chief", "Rook"];
 
 export function findFirstBot(
   bots: Array<{ id: string; name: string; spawnKey: string | null }>,
@@ -11,7 +11,7 @@ export function findFirstBot(
   const bySpawnKey = bots.find((bot) => bot.spawnKey === FIRST_BOT_SPAWN_KEY);
   if (bySpawnKey) return { id: bySpawnKey.id };
   // Legacy first-run Chief created before spawnKey was set.
-  const byName = bots.find((bot) => bot.name === LEGACY_FIRST_BOT_NAME);
+  const byName = bots.find((bot) => LEGACY_FIRST_BOT_NAMES.includes(bot.name));
   return byName ? { id: byName.id } : undefined;
 }
 

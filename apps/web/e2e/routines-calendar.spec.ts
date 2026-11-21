@@ -15,7 +15,7 @@ test("routines are a calendar by the hour that says whether everything ran", asy
     routineId: `${name}-${hour}`,
     name,
     botId: "unknown-bot",
-    botName: "Chief",
+    botName: "Rook",
     at: todayAt(hour, dayOffset),
     state,
     runId: null,

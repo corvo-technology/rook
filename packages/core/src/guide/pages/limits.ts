@@ -8,7 +8,7 @@ export const limits: GuidePage = {
       summary: "Provider quota windows, the context meter, usage by agent and credits.",
       body: `## Provider limits
 
-Subscription providers limit use by time windows, such as a **5-hour window** and a **Week**. When a window fills up, replies from models on that subscription fail until it starts over. The Chief can tell which windows are nearly full; ask it. A failed reply names the limit that was reached.
+Subscription providers limit use by time windows, such as a **5-hour window** and a **Week**. When a window fills up, replies from models on that subscription fail until it starts over. Rook can tell which windows are nearly full; ask it. A failed reply names the limit that was reached.
 
 ## Context
 
@@ -31,7 +31,7 @@ If replies fail because a limit was reached, wait for the window to start over, 
       summary: "Janelas de cota dos provedores, o medidor de contexto, uso por agente e créditos.",
       body: `## Limites dos provedores
 
-Provedores por assinatura limitam o uso por janelas de tempo, como uma **Janela de 5 horas** e uma **Semana**. Quando uma janela enche, as respostas dos modelos dessa assinatura falham até ela recomeçar. O Chefe sabe dizer quais janelas estão quase cheias; pergunte a ele. Uma resposta que falhou diz qual limite foi atingido.
+Provedores por assinatura limitam o uso por janelas de tempo, como uma **Janela de 5 horas** e uma **Semana**. Quando uma janela enche, as respostas dos modelos dessa assinatura falham até ela recomeçar. O Rook sabe dizer quais janelas estão quase cheias; pergunte a ele. Uma resposta que falhou diz qual limite foi atingido.
 
 ## Contexto
 

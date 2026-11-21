@@ -65,7 +65,7 @@ test("aged queued work is marked and an expired wait leaves a status line", asyn
             {
               runId: "run-aged",
               botId: "bot-aged",
-              botName: "Chief",
+              botName: "Rook",
               groupId: null,
               groupName: null,
               threadId: "thread-aged",
@@ -90,7 +90,7 @@ test("aged queued work is marked and an expired wait leaves a status line", asyn
   await expect(page.getByRole("status", { name: "Loading activity…" })).toBeHidden({
     timeout: 20_000,
   });
-  const row = activityRow(page, "Chief");
+  const row = activityRow(page, "Rook");
   await expect(row).toBeVisible({ timeout: 20_000 });
   await expect(row).toContainText("2d ago");
   await expect(row).toContainText("Maya asked: finish the report");

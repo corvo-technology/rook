@@ -6,8 +6,8 @@ import type { PrismaClient } from "./client.js";
 import { createRepos } from "./repos.js";
 
 export const CHIEF_SPAWN_KEY = "onboarding:first";
-/** The Chief's name before it was localized; older accounts still have it. */
-const LEGACY_CHIEF_NAME = "Chief";
+/** The names an older account's Chief has, before it had a spawn key: its first name and Rook. */
+const LEGACY_CHIEF_NAMES: readonly string[] = ["Chief", "Rook"];
 
 type Repos = Pick<ReturnType<typeof createRepos>, "createBot">;
 
@@ -33,7 +33,7 @@ export async function ensureStarterTeam(
     });
   const chiefOf = (bots: Awaited<ReturnType<typeof active>>) =>
     bots.find((bot) => bot.spawnKey === CHIEF_SPAWN_KEY) ??
-    bots.find((bot) => bot.name === LEGACY_CHIEF_NAME);
+    bots.find((bot) => LEGACY_CHIEF_NAMES.includes(bot.name));
 
   const before = await active();
   const existing = chiefOf(before);
@@ -45,7 +45,7 @@ export async function ensureStarterTeam(
   try {
     chief = await repos.createBot(actor, {
       name: options.name ?? CHIEF_AGENT.name[locale],
-      title: "",
+      title: CHIEF_AGENT.title[locale],
       description: CHIEF_AGENT.description[locale],
       instructions: chiefInstructions(locale, options.channel),
       notifyOnFinish: true,

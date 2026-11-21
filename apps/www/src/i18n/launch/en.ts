@@ -26,7 +26,7 @@ const COPY: LaunchCopy = {
     heading: "Questions",
     items: [
       { question: "What is an agent?", answer: "An AI with a name, a job description, its own conversation and the tools you give it. You talk to it like a colleague. It works in the background and comes back with the result." },
-      { question: "Can agents work together?", answer: "Yes. Put several in a channel and mention one with @, or let the Chief send the request to the squad whose purpose fits. Agents can also hand work to each other." },
+      { question: "Can agents work together?", answer: "Yes. Put several in a channel and mention one with @, or let Rook send the request to the squad whose purpose fits. Agents can also hand work to each other." },
       { question: "Will an agent act without asking me?", answer: "You choose which actions need your yes, such as sending, paying or deleting. The agent stops, shows exactly what it wants to do and waits." },
       { question: "Can an agent use a computer?", answer: "Yes. An agent can get a Linux computer with a browser, a terminal and files, in Docker or in the cloud, and you can watch its screen and take control. On your own computer it works in a folder of its own when you allow it, and there its commands are not isolated." },
       { question: "Where does my data live?", answer: "In the cloud, conversations, memory and files are stored on our servers, in your company's space. On your computer, or on a server you run, they stay there. Only what is sent to the model provider leaves." },
@@ -79,7 +79,7 @@ const COPY: LaunchCopy = {
   team: {
     heading: "Put them in a channel.",
     accent: "They sort out who does what.",
-    copy: "Add several agents to a channel and ask. Mention one with @, or leave it to the Chief, who reads each squad's purpose and hands the request to the one that fits. Every step is shown, and anything that changes something waits for you. For example, the finance agent closes the month and the sales agent receives the report.",
+    copy: "Add several agents to a channel and ask. Mention one with @, or leave it to Rook, who reads each squad's purpose and hands the request to the one that fits. Every step is shown, and anything that changes something waits for you. For example, the finance agent closes the month and the sales agent receives the report.",
   },
   store: {
     heading: "A Store of ready-made agents.",
@@ -103,8 +103,8 @@ const COPY: LaunchCopy = {
     window: "Rook",
     rail: { agents: "Agents", routines: "Routines", workflows: "Workflows", more: "More", store: "Store" },
     workspace: "Pedro",
-    chief: "Chief",
-    chiefTitle: "Head of the agent team",
+    chief: "Rook",
+    chiefTitle: "Right hand",
     chiefLine: "Set up 5 routines for the squads. Approve…",
     channels: "Channels",
     directMessages: "Direct messages",
@@ -119,7 +119,7 @@ const COPY: LaunchCopy = {
     approved: "Approved",
     denied: "Denied",
     agents: [
-      { name: "Chief", role: "Head of the team", hue: "menta" },
+      { name: "Rook", role: "Right hand", hue: "menta" },
       { name: "Davi", role: "Email agent", hue: "rosa" },
       { name: "Bento", role: "Payments Watcher", hue: "azul" },
       { name: "Cora", role: "Project Planner", hue: "violeta" },

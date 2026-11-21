@@ -13,7 +13,7 @@ sidebar:
 
 ## Onboarding
 
-Onboarding is a short rail led by the **Chief**, the agent that coordinates the others. It asks what your company does, suggests a starting team from a template and shows a live preview of what it will create. You adjust and confirm; nothing is created without your yes.
+Onboarding is a short rail led by **Rook**, your right hand, the agent that coordinates the others. It asks what your company does, suggests a starting team from a template and shows a live preview of what it will create. You adjust and confirm; nothing is created without your yes.
 
 You can skip it and come back: everything it does is also available in the regular screens.
 

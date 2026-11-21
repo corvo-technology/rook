@@ -13,7 +13,7 @@ import { ChannelPresence } from "../../src/pages/shell/channel-presence";
 // without a backend. State lives in the URL (?theme=light|dark).
 
 const COLORS = ["green", "red", "blue", "purple", "orange", "pink"] as const;
-const NAMES = ["Chefe", "Leo", "Nina", "Theo", "Marina", "LinkedIn"];
+const NAMES = ["Rook", "Leo", "Nina", "Theo", "Marina", "LinkedIn"];
 
 function members(working: number[]): GroupMember[] {
   return NAMES.map((name, index) => ({

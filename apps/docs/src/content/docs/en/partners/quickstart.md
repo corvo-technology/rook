@@ -13,7 +13,7 @@ The Rook team sets up your partner and hands you the **key** (`Authorization: Be
 
 ## 2. Apply a template
 
-The template defines the agents every new customer gets, the Chief's name, the color and the connector. Under **Settings > Partnership > Import**, load the `.json`, check the agents, type the address of your MCP server and save.
+The template defines the agents every new customer gets, the lead agent's name, the color and the connector. Under **Settings > Partnership > Import**, load the `.json`, check the agents, type the address of your MCP server and save.
 
 ```json
 {

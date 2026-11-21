@@ -51,14 +51,15 @@ const describePostgres =
   process.env.VERIFY_DATABASE && databaseUrl ? describe.sequential : describe.skip;
 
 describePostgres("the Rook identity migration (PostgreSQL)", () => {
-  const schema = `rook_identity_${String(Date.now()).slice(-8)}`;
   let pool: pg.Pool;
 
-  /** One connection pinned to a scratch schema, so no real table is touched. */
+  /**
+   * One connection holds a temporary table named like the real one, so the migration runs on rows
+   * this test made and no real table is touched; the login needs no right to create anything.
+   */
   const withSchema = async <T>(run: (client: pg.PoolClient) => Promise<T>) => {
     const client = await pool.connect();
     try {
-      await client.query(`SET search_path TO ${schema}`);
       return await run(client);
     } finally {
       client.release();
@@ -88,16 +89,14 @@ describePostgres("the Rook identity migration (PostgreSQL)", () => {
 
   beforeAll(async () => {
     pool = new pg.Pool({ connectionString: databaseUrl, max: 1 });
-    await pool.query(`CREATE SCHEMA ${schema}`);
     await withSchema((client) =>
       client.query(
-        `CREATE TABLE bots (id text PRIMARY KEY, "spaceId" text NOT NULL, name text NOT NULL, title text NOT NULL DEFAULT '', description text NOT NULL DEFAULT '', instructions text NOT NULL DEFAULT '', "spawnKey" text)`,
+        `CREATE TEMP TABLE bots (id text PRIMARY KEY, "spaceId" text NOT NULL, name text NOT NULL, title text NOT NULL DEFAULT '', description text NOT NULL DEFAULT '', instructions text NOT NULL DEFAULT '', "spawnKey" text)`,
       ),
     );
   });
 
   afterAll(async () => {
-    await pool?.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`);
     await pool?.end();
   });
 

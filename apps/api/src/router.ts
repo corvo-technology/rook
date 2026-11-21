@@ -70,6 +70,7 @@ import { spacesRoutes } from "./routes/spaces.js";
 import { teamRoutes } from "./routes/team.js";
 import { teamChatRoutes } from "./routes/team-chat.js";
 import { threadsRoutes } from "./routes/threads.js";
+import { vaultRoutes } from "./routes/vault.js";
 import { wikiRoutes } from "./routes/wiki.js";
 import { youRoutes } from "./routes/you.js";
 import type { TeamDeps } from "./team.js";
@@ -241,6 +242,7 @@ export function createRouter(deps: RouterDeps) {
     ...messagingRoutes(ctx),
     ...emailAgentRoutes(ctx),
     ...mailboxRoutes(ctx),
+    ...vaultRoutes(ctx),
     ...partnerRoutes(ctx),
     ...partnerConsoleRoutes(ctx),
     ...platformRoutes(ctx),

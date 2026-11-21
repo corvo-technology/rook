@@ -175,7 +175,7 @@ export async function pageBrowserTool(ctx: RunContext, call: ToolCall) {
               const resolved = await resolveLoginFill({
                 prisma: deps.prisma,
                 secretStore: deps.secretStore,
-                scope: run,
+                scope: { ...run, runId: ctx.runId },
                 name: step.secret,
                 field: step.field,
               });
@@ -269,7 +269,7 @@ export const computerTools: ToolHandlers = {
     const commandEnvironment = await shellCommandEnvironment({
       prisma: deps.prisma,
       secretStore: deps.secretStore,
-      scope: run,
+      scope: { ...run, runId },
       spaceEnvironment: ctx.agentEnvironment,
       registerRedactions: (values) => addRunSecrets(ctx, values),
     });

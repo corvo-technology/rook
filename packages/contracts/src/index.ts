@@ -71,6 +71,7 @@ export * from "./team-chat.js";
 export * from "./terminal.js";
 export * from "./terms.js";
 export * from "./user-memory.js";
+export * from "./vault.js";
 export * from "./verticals.js";
 export * from "./voice-errors.js";
 export * from "./wiki.js";

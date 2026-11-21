@@ -13,8 +13,8 @@ import {
 import {
   allowPrivateHttpSecretOrigins,
   botSecretToolView,
-  findBotSecret,
   findCommandVariableConflict,
+  findVaultCredential,
   forgetBotSecret,
   generateBotSecret,
   listBotSecrets,
@@ -68,7 +68,7 @@ export const secretTools: ToolHandlers = {
       const result = await requestWithBotSecret({
         prisma: deps.prisma,
         secretStore: deps.secretStore,
-        scope: run,
+        scope: { ...run, runId: ctx.runId },
         request: args,
         signal: context.signal,
         remote: deps.secretHttp,
@@ -87,12 +87,32 @@ export const secretTools: ToolHandlers = {
     if (resolvedSecret.error) return call.finish({ error: resolvedSecret.error });
     const destination = resolvedSecret.destination;
     const connectionId = resolvedSecret.connectionId;
+    let offerExisting = false;
     if (destination) {
-      const existing = await findBotSecret(deps.prisma, run, destination.name);
-      if (existing && !sameSecretDestination(existing, destination)) {
+      const known = await findVaultCredential(deps.prisma, run, destination.name);
+      const existing = known?.usable ? known.destination : null;
+      if (known && !sameSecretDestination(known.destination, destination)) {
         return call.finish({
           error: "Remove the existing credential before changing its destination.",
         });
+      }
+      // A team credential is given to agents by whoever manages them, never from a chat card.
+      if (known && !known.usable && known.scope === "space") {
+        return call.finish({
+          error:
+            "A team credential with this name is saved for other agents. Ask someone who manages credentials to give this agent access in the Vault.",
+        });
+      }
+      // The person's own credential, saved in the Vault but not for this agent: the card offers it
+      // instead of a new value.
+      offerExisting = Boolean(known && !known.usable);
+      if (
+        known?.usable &&
+        args.replace === true &&
+        known.scope === "space" &&
+        known.userId !== run.userId
+      ) {
+        return call.finish({ error: "A team credential is replaced from the Vault." });
       }
       const conflict = await findCommandVariableConflict(deps.prisma, run, destination);
       if (conflict) {
@@ -277,6 +297,7 @@ export const secretTools: ToolHandlers = {
           text: String(args.label ?? "Code"),
           input: "secret",
           ...(destination ? { credential: destination } : {}),
+          ...(offerExisting ? { existing: true as const } : {}),
           purpose: normalizeSecretAskPurpose(args.purpose ? String(args.purpose) : undefined),
           status: "pending",
         },

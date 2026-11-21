@@ -1,4 +1,4 @@
-import { BotSecretPutInput } from "@corvo/contracts";
+import { BotSecretPutInput, VaultCreateInput } from "@corvo/contracts";
 import type * as Db from "@corvo/db";
 import { recordSecurityEvent } from "@corvo/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -85,6 +85,40 @@ describe("procedureSecurityEvent", () => {
       name: "github-deploy",
     });
     expect(JSON.stringify(event)).not.toContain("ghp_secretvalue");
+  });
+
+  it("audits the Vault by name and scope, never by value", () => {
+    const event = procedureSecurityEvent(
+      ["vault", "create"],
+      VaultCreateInput.parse({
+        destination: {
+          name: "github-deploy",
+          origin: "https://api.github.test",
+          auth: { type: "bearer" },
+        },
+        value: "ghp_secretvalue",
+        scope: "space",
+        botIds: ["bot-1"],
+      }),
+      actor,
+    );
+    expect(event?.metadata).toEqual({
+      procedure: "vault.create",
+      kind: "vault_secret",
+      name: "github-deploy",
+      scope: "space",
+    });
+    expect(JSON.stringify(event)).not.toContain("ghp_secretvalue");
+    const replaced = procedureSecurityEvent(
+      ["vault", "replace"],
+      { id: "secret-1", value: "ghp_secretvalue" },
+      actor,
+    );
+    expect(replaced?.metadata).toEqual({
+      procedure: "vault.replace",
+      kind: "vault_secret",
+      id: "secret-1",
+    });
   });
 
   it("lists which deployment settings changed without the allowlist itself", () => {

@@ -303,3 +303,28 @@ describe("history text of a visitor's message", () => {
     expect(blocksToAgentHistoryText([{ kind: "text", text: "plain" }])).toBe("plain");
   });
 });
+
+describe("access cards in the history", () => {
+  const block = {
+    kind: "mcp_approval" as const,
+    name: "Clinic",
+    serverId: "srv",
+    transport: "streamable_http" as const,
+    endpoint: null,
+    needsOAuth: false,
+    forBots: [
+      { id: "a", name: "Lia" },
+      { id: "b", name: "Caio" },
+    ],
+  };
+
+  it("shows the model whether the card is waiting, approved or dismissed", () => {
+    const text = (status: "pending" | "connected" | "dismissed") =>
+      blocksToAgentHistoryText([{ ...block, status }]);
+    expect(text("pending")).toBe(
+      "[access card: Clinic for Lia, Caio (waiting for the owner to approve it in the card)]",
+    );
+    expect(text("connected")).toContain("approved, access is granted");
+    expect(text("dismissed")).toContain("dismissed by the owner");
+  });
+});

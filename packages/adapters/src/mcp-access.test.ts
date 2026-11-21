@@ -17,7 +17,21 @@ const teammates = [
   { id: "bot-3", name: "Marketing" },
 ];
 
-function setup(servers: unknown[], recent: unknown[] = [], createError?: unknown) {
+const clinicTools = [
+  { name: "list_appointments", description: "List the agenda", readOnly: true },
+  { name: "create_appointment", description: "Book an appointment in the agenda" },
+  { name: "list_clients", description: "List clients", readOnly: true },
+  { name: "list_cash_entries", description: "Cash and financial entries", readOnly: true },
+  { name: "refund_payment", description: "Refund a payment" },
+  { name: "list_staff", description: "Staff members", readOnly: true },
+];
+
+function setup(
+  servers: unknown[],
+  recent: unknown[] = [],
+  createError?: unknown,
+  extra: { leadGrant?: unknown; tools?: unknown[]; bots?: unknown[] } = {},
+) {
   const tx = {
     $executeRaw: vi.fn(async () => 1),
     message: { findMany: vi.fn(async () => recent) },
@@ -25,7 +39,8 @@ function setup(servers: unknown[], recent: unknown[] = [], createError?: unknown
   const notify = vi.fn(async () => undefined);
   const deps = {
     prisma: {
-      bot: { findMany: vi.fn(async (_args: unknown) => teammates) },
+      bot: { findMany: vi.fn(async (_args: unknown) => extra.bots ?? teammates) },
+      botMcpServer: { findFirst: vi.fn(async (_args: unknown) => extra.leadGrant ?? null) },
       mcpServer: {
         findMany: vi.fn(async (_args: unknown) => servers),
         create: vi.fn(async (args: { data: Record<string, unknown> }) => {
@@ -36,6 +51,7 @@ function setup(servers: unknown[], recent: unknown[] = [], createError?: unknown
       $transaction: vi.fn(async (work: (client: typeof tx) => unknown) => work(tx)),
     },
     events: { notify },
+    mcpServerTools: vi.fn(async () => extra.tools ?? []),
   } as unknown as ExecutorDeps;
   return { deps, notify, tx };
 }
@@ -47,7 +63,7 @@ const posthog = {
   transport: "streamable_http",
   endpoint: "https://mcp.posthog.com/mcp",
   secretId: "secret-1",
-  assignments: [] as { id: string; allowAllTools?: boolean; level?: string }[],
+  assignments: [] as { id: string; botId?: string; allowAllTools?: boolean; level?: string }[],
 };
 
 beforeEach(() => {
@@ -82,7 +98,10 @@ describe("requestSpaceAppAccess", () => {
 
   it("does not ask again for read when the agent already has write", async () => {
     const { deps } = setup([
-      { ...posthog, assignments: [{ id: "a", allowAllTools: true, level: "write" }] },
+      {
+        ...posthog,
+        assignments: [{ id: "a", botId: "bot-1", allowAllTools: true, level: "write" }],
+      },
     ]);
     expect(await requestSpaceAppAccess(deps, run, "posthog", undefined, "read")).toMatchObject({
       status: "connected",
@@ -92,7 +111,10 @@ describe("requestSpaceAppAccess", () => {
 
   it("asks again for write when the agent only has read", async () => {
     const { deps } = setup([
-      { ...posthog, assignments: [{ id: "a", allowAllTools: true, level: "read" }] },
+      {
+        ...posthog,
+        assignments: [{ id: "a", botId: "bot-1", allowAllTools: true, level: "read" }],
+      },
     ]);
     expect(await requestSpaceAppAccess(deps, run, "posthog")).toMatchObject({ status: "pending" });
     expect(persist).toHaveBeenCalled();
@@ -136,7 +158,7 @@ describe("requestSpaceAppAccess", () => {
   });
 
   it("says it is already available when the agent has it", async () => {
-    const { deps } = setup([{ ...posthog, assignments: [{ id: "a" }] }]);
+    const { deps } = setup([{ ...posthog, assignments: [{ id: "a", botId: "bot-1" }] }]);
     expect(await requestSpaceAppAccess(deps, run, "posthog")).toMatchObject({
       status: "connected",
     });
@@ -236,13 +258,13 @@ describe("requestSpaceAppAccess for a teammate", () => {
     await requestSpaceAppAccess(deps, run, "posthog", "Infraestrutura e SRE");
     const query = (deps.prisma.mcpServer.findMany as ReturnType<typeof vi.fn>).mock.calls[0]?.[0];
     expect(query.select.assignments).toEqual({
-      where: { botId: "bot-2" },
-      select: { id: true, allowAllTools: true, level: true },
+      where: { botId: { in: ["bot-2"] } },
+      select: { id: true, botId: true, allowAllTools: true, level: true },
     });
   });
 
   it("says the teammate already has it instead of asking again", async () => {
-    const { deps } = setup([{ ...posthog, assignments: [{ id: "a-1" }] }]);
+    const { deps } = setup([{ ...posthog, assignments: [{ id: "a-1", botId: "bot-3" }] }]);
     const result = await requestSpaceAppAccess(deps, run, "posthog", "Marketing");
     expect(result).toMatchObject({ status: "connected" });
     expect(String((result as { message: string }).message)).toContain("Marketing");
@@ -285,5 +307,65 @@ describe("requestSpaceAppAccess for a teammate", () => {
     await requestSpaceAppAccess(deps, run, "posthog", "Marketing");
     const query = (deps.prisma.bot.findMany as ReturnType<typeof vi.fn>).mock.calls[0]?.[0];
     expect(query.where).toEqual({ spaceId: "space-1", userId: "user-1", archivedAt: null });
+  });
+});
+
+describe("one card for several agents", () => {
+  const team = [
+    { id: "bot-1", name: "Chefe", title: "" },
+    { id: "bot-2", name: "Lia", title: "Recepção" },
+    { id: "bot-3", name: "Caio", title: "Financeiro" },
+    { id: "bot-4", name: "Nina", title: "Operações" },
+  ];
+  const leadGrant = { allowAllTools: true, allowedTools: [], level: "write" };
+
+  it("is a single card listing every agent with the tools its role needs", async () => {
+    const { deps } = setup([posthog], [], undefined, { leadGrant, tools: clinicTools, bots: team });
+    const result = await requestSpaceAppAccess(deps, run, "posthog", ["Lia", "Caio", "Nina"]);
+    expect(result).toMatchObject({ status: "pending" });
+    expect(persist).toHaveBeenCalledTimes(1);
+    const card = persist.mock.calls[0]?.[3]?.[0];
+    expect(card.forBotId).toBe("bot-2");
+    expect(card.forBots.map((bot: { name: string }) => bot.name)).toEqual(["Lia", "Caio", "Nina"]);
+    const tools = (name: string) =>
+      card.forBots.find((bot: { name: string }) => bot.name === name).allowedTools;
+    expect(tools("Lia")).toEqual(["list_appointments", "create_appointment", "list_clients"]);
+    // Finance reads its domain only; money-moving tools are never lent by role.
+    expect(tools("Caio")).toEqual(["list_cash_entries"]);
+    expect(tools("Nina")).toEqual(["list_staff"]);
+  });
+
+  it("leaves out agents that already have the app", async () => {
+    const withLia = { ...posthog, assignments: [{ id: "a", botId: "bot-2", allowAllTools: true }] };
+    const { deps } = setup([withLia], [], undefined, { leadGrant, tools: clinicTools, bots: team });
+    await requestSpaceAppAccess(deps, run, "posthog", ["Lia", "Caio"]);
+    const card = persist.mock.calls[0]?.[3]?.[0];
+    expect(card.forBotId).toBe("bot-3");
+    expect(card.forBots).toHaveLength(1);
+  });
+
+  it("tells the model access is in place when every agent has it", async () => {
+    const all = {
+      ...posthog,
+      assignments: [
+        { id: "a", botId: "bot-2", allowAllTools: true },
+        { id: "b", botId: "bot-3", allowAllTools: true },
+      ],
+    };
+    const { deps } = setup([all], [], undefined, { bots: team });
+    const result = await requestSpaceAppAccess(deps, run, "posthog", ["Lia", "Caio"]);
+    expect(result).toMatchObject({ status: "connected" });
+    expect(String((result as { message: string }).message)).toContain("Do not ask the user");
+    expect(persist).not.toHaveBeenCalled();
+  });
+
+  it("falls back to read-only when the tools cannot be listed", async () => {
+    const { deps } = setup([posthog], [], undefined, { leadGrant, tools: [], bots: team });
+    await requestSpaceAppAccess(deps, run, "posthog", ["Lia", "Caio"]);
+    const card = persist.mock.calls[0]?.[3]?.[0];
+    for (const bot of card.forBots) {
+      expect(bot.level).toBe("read");
+      expect(bot.allowedTools).toBeUndefined();
+    }
   });
 });

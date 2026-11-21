@@ -494,6 +494,13 @@ export const builtinAgentTools: ConnectorTool[] = [
           maxLength: 100,
           description: "A teammate to give the app to instead of yourself, by name.",
         },
+        agents: {
+          type: "array",
+          items: { type: "string", minLength: 1, maxLength: 100 },
+          maxItems: 20,
+          description:
+            "Several teammates to give the app to: one call and one card for all of them, never one each.",
+        },
         level: {
           type: "string",
           enum: ["read", "write"],

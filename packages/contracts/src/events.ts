@@ -407,6 +407,21 @@ export const MessageBlock = z.discriminatedUnion("kind", [
      */
     forBotId: Id.optional(),
     forBotName: z.string().max(200).optional(),
+    /**
+     * Set when one card asks for access for several teammates at once. `forBotId` is the first of
+     * them; approving gives each its own tools, the ones listed here or the whole server at `level`.
+     */
+    forBots: z
+      .array(
+        z.object({
+          id: Id,
+          name: z.string().max(200),
+          allowedTools: z.array(z.string().max(200)).max(500).optional(),
+          level: z.enum(["read", "write"]).optional(),
+        }),
+      )
+      .max(20)
+      .optional(),
     /** Set when the card asks for read access only. Approving grants exactly this level. */
     level: z.enum(["read", "write"]).optional(),
   }),

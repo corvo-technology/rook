@@ -1,6 +1,7 @@
 import type { MessageBlock } from "@corvo/contracts";
 import { APP_CATALOG, storedAccessLevel } from "@corvo/core";
 import { getLogger } from "@corvo/logging";
+import { roleGrantsForServer } from "./connector-role-grants.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { isUniqueViolation, persistMessageInTransaction } from "./run-messages.js";
 
@@ -24,6 +25,7 @@ type Target = { id: string; spaceId: string; userId: string; threadId: string; b
 const normalize = (value: string) => value.trim().toLowerCase();
 
 const MAX_LISTED_AGENTS = 20;
+const MAX_CARD_AGENTS = 20;
 
 /**
  * The teammate a card is for: one of the owner's agents that is not archived, by id or by name
@@ -32,7 +34,7 @@ const MAX_LISTED_AGENTS = 20;
 async function resolveTeammate(deps: ExecutorDeps, run: Target, agent: string) {
   const agents = await deps.prisma.bot.findMany({
     where: { spaceId: run.spaceId, userId: run.userId, archivedAt: null },
-    select: { id: true, name: true },
+    select: { id: true, name: true, title: true },
   });
   const wanted = normalize(agent);
   const exact = agents.filter(
@@ -64,14 +66,23 @@ export async function requestSpaceAppAccess(
   deps: ExecutorDeps,
   run: Target,
   app: string,
-  agent?: string,
+  agent?: string | readonly string[],
   level: "read" | "write" = "write",
 ) {
-  // The card goes in the asking agent's own chat, where the user is; it is for the teammate named.
-  const teammate = agent?.trim() ? await resolveTeammate(deps, run, agent) : undefined;
-  if (teammate && "error" in teammate) return teammate;
-  const forBot = teammate && teammate.id !== run.botId ? teammate : undefined;
-  const subjectBotId = forBot?.id ?? run.botId;
+  // The card goes in the asking agent's own chat, where the user is; it is for the teammates named.
+  // Several agents for one server are one card.
+  const names = (Array.isArray(agent) ? agent : [agent])
+    .filter((name): name is string => typeof name === "string" && name.trim().length > 0)
+    .slice(0, MAX_CARD_AGENTS);
+  const teammates: { id: string; name: string; title: string }[] = [];
+  for (const name of names) {
+    const found = await resolveTeammate(deps, run, name);
+    if ("error" in found) return found;
+    if (found.id !== run.botId && !teammates.some((item) => item.id === found.id))
+      teammates.push(found);
+  }
+  const forBot = teammates[0];
+  const subjectIds = teammates.length > 0 ? teammates.map((item) => item.id) : [run.botId];
   const wanted = normalize(app);
   const servers = await deps.prisma.mcpServer.findMany({
     where: { spaceId: run.spaceId, userId: run.userId, enabled: true },
@@ -83,8 +94,8 @@ export async function requestSpaceAppAccess(
       endpoint: true,
       secretId: true,
       assignments: {
-        where: { botId: subjectBotId },
-        select: { id: true, allowAllTools: true, level: true },
+        where: { botId: { in: subjectIds } },
+        select: { id: true, botId: true, allowAllTools: true, level: true },
       },
     },
   });
@@ -135,17 +146,43 @@ export async function requestSpaceAppAccess(
     }
   }
   // Read access is met by any grant; write access by write, or a per-tool list set on purpose.
-  const granted = server.assignments.some(
-    (row) => level === "read" || !row.allowAllTools || storedAccessLevel(row.level) === "write",
-  );
+  const hasAccess = (botId: string) =>
+    server.assignments.some(
+      (row) =>
+        row.botId === botId &&
+        (level === "read" || !row.allowAllTools || storedAccessLevel(row.level) === "write"),
+    );
+  const missing = teammates.length > 0 ? teammates.filter((item) => !hasAccess(item.id)) : [];
+  const granted = teammates.length > 0 ? missing.length === 0 : hasAccess(run.botId);
   if (granted) {
+    const who = teammates.map((item) => item.name).join(", ");
     return {
       status: "connected",
       message: forBot
-        ? `${server.name} is already assigned to ${forBot.name}, so its tools are available to them. If they report them missing, the server is unavailable: say so rather than that access is missing.`
+        ? `${server.name} is already assigned to ${who}, so its tools are available to them. Do not ask the user to connect or approve anything; hand them the work again. If they still report the tools missing, the server is unavailable: say so rather than that access is missing.`
         : `${server.name} is already assigned to you, so its tools are available. If they are missing, the server is unavailable: say so rather than that it is missing.`,
     };
   }
+  // Only the agents still without access are on the card, each with the tools its role needs.
+  const cardBots = teammates.length > 0 ? missing : [];
+  const scoped =
+    level === "write" && cardBots.length > 0
+      ? await roleGrantsForServer(
+          deps,
+          { botId: run.botId, spaceId: run.spaceId, userId: run.userId },
+          server.id,
+          cardBots,
+        )
+      : undefined;
+  const forBots = cardBots.map((item) => {
+    const grant = scoped?.get(item.id);
+    return {
+      id: item.id,
+      name: item.name,
+      ...(grant && !grant.allowAllTools ? { allowedTools: grant.allowedTools } : {}),
+      ...(grant ? { level: grant.level } : {}),
+    };
+  });
   const slug = normalize(server.slug);
   const needsKey = server.secretId
     ? undefined
@@ -159,7 +196,8 @@ export async function requestSpaceAppAccess(
     needsOAuth: !needsKey && server.transport !== "stdio" && !server.secretId,
     ...(needsKey ? { needsKey } : {}),
     status: "pending",
-    ...(forBot ? { forBotId: forBot.id, forBotName: forBot.name } : {}),
+    ...(cardBots[0] ? { forBotId: cardBots[0].id, forBotName: cardBots[0].name } : {}),
+    ...(forBots.length > 1 || scoped ? { forBots } : {}),
     ...(level === "read" ? { level } : {}),
   };
   const committed = await deps.prisma.$transaction(async (tx) => {
@@ -176,7 +214,7 @@ export async function requestSpaceAppAccess(
           candidate.kind === "mcp_approval" &&
           candidate.serverId === server.id &&
           candidate.status === "pending" &&
-          candidate.forBotId === forBot?.id,
+          candidate.forBotId === cardBots[0]?.id,
       ),
     );
     return shown ? null : persistMessageInTransaction(tx, run, "bot", [block]);
@@ -186,12 +224,13 @@ export async function requestSpaceAppAccess(
       .notify(run.threadId, committed.eventSeq, committed.firstResponseRunId)
       .catch((error) => getLogger().error("MCP approval realtime notification", error));
   }
-  if (forBot) {
+  if (cardBots.length > 0) {
+    const who = cardBots.map((item) => item.name).join(", ");
     return {
       status: "pending",
       message: needsKey
-        ? `${server.name} is added to the workspace but not assigned to ${forBot.name}, and it needs an API key. A card in this chat asks the user for the key and gives ${forBot.name} the server. End your turn with one short sentence asking them to paste it there; never ask for the key in chat. You will be told when it is connected.`
-        : `${server.name} is added to the workspace but not assigned to ${forBot.name}. A card in this chat asks the user to approve giving it to them. End your turn with one short sentence asking the user to approve it there; you will be told when it is connected, and then ${forBot.name} can use it.`,
+        ? `${server.name} is added to the workspace but not assigned to ${who}, and it needs an API key. One card in this chat asks the user for the key and gives the server to ${cardBots.length > 1 ? "all of them" : who}. End your turn with one short sentence asking them to paste it there; never ask for the key in chat. You will be told when it is connected.`
+        : `${server.name} is added to the workspace but not assigned to ${who}. One card in this chat asks the user to approve giving it to ${cardBots.length > 1 ? "all of them" : "them"}; ask for every agent in one call, never one card each. End your turn with one short sentence asking the user to approve it there. You will be told when it is approved and carry on with the original request then; if the user only types a yes, say the card is how to approve, or that it already is.`,
     };
   }
   return {

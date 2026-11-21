@@ -366,9 +366,11 @@ export function McpApprovalCard({
     needsKey,
     status: savedStatus,
     forBotId,
-    forBotName,
+    forBotName: firstBotName,
+    forBots,
     level,
   } = block;
+  const forBotName = forBots?.length ? forBots.map((bot) => bot.name).join(", ") : firstBotName;
   // An agent can ask in its own chat for a teammate; the access is for the teammate.
   const targetBotId = forBotId ?? botId;
   const [localStatus, setLocalStatus] = useState<McpApprovalState>("pending");
@@ -407,6 +409,7 @@ export function McpApprovalCard({
       if (needsKey) await rpc.mcp.servers.update({ id: serverId, secret: key.trim() });
       await rpc.mcp.assignments.approve({
         botId: targetBotId,
+        ...(forBots && forBots.length > 1 ? { botIds: forBots.map((bot) => bot.id) } : {}),
         serverId,
         threadId,
         level: level ?? "write",

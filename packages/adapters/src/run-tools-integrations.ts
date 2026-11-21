@@ -97,10 +97,14 @@ export const integrationTools: ToolHandlers = {
     await publishMidTurnNarration(ctx, true);
     // An app already added to the workspace only needs an agent given access to it: this one, or a
     // teammate named in `agent`, asked of the user in a card in this chat.
-    const teammate =
-      typeof args.agent === "string" && args.agent.trim() && args.agent.length <= 100
-        ? args.agent
-        : undefined;
+    const named = [
+      ...(Array.isArray(args.agents) ? args.agents : []),
+      ...(typeof args.agent === "string" ? [args.agent] : []),
+    ].filter(
+      (name): name is string =>
+        typeof name === "string" && name.trim().length > 0 && name.length <= 100,
+    );
+    const teammate = named.length > 0 ? named : undefined;
     const addedApp =
       typeof args.app === "string" && args.app.trim() && args.app.length <= 100
         ? await requestSpaceAppAccess(
@@ -115,7 +119,7 @@ export const integrationTools: ToolHandlers = {
     // A teammate's access is only ever the workspace's own app; never connect it for this agent.
     if (teammate) {
       return call.finish({
-        error: `No app named "${String(args.app ?? "").slice(0, 100)}" is added to this workspace or in the app catalog, so it cannot be given to ${teammate}. Ask the user which app they mean.`,
+        error: `No app named "${String(args.app ?? "").slice(0, 100)}" is added to this workspace or in the app catalog, so it cannot be given to ${teammate.join(", ")}. Ask the user which app they mean.`,
       });
     }
     return call.finish(

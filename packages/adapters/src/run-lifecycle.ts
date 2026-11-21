@@ -1,6 +1,6 @@
 import { runContinueJob } from "@corvo/adapter-kit";
 import type { EscalationTrigger, ModelTier, RunStopReason } from "@corvo/contracts";
-import { displayName, localizedFailureLine } from "@corvo/core";
+import { displayName } from "@corvo/core";
 import type { PrismaClient } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import { returnBotMessageOutcome, runReturnsOutcome } from "./bot-messages.js";
@@ -11,6 +11,7 @@ import { classifyRunError } from "./run-error-code.js";
 import { notifyRun } from "./run-notifications.js";
 import type { TakeoverResumeCheckpoint } from "./takeover-resume.js";
 import { TAKEOVER_RESUME_CHECKPOINTS } from "./takeover-resume.js";
+import { ticketFailureComment } from "./ticket-progress.js";
 import { endTicketRun } from "./ticket-run-moves.js";
 
 /**
@@ -109,7 +110,7 @@ export async function failRunBeforeTurn(
   await endTicketRun(deps, run, {
     kind: "stopped",
     error: message,
-    comment: errorInfo ? localizedFailureLine(errorInfo.code, locale) : undefined,
+    comment: ticketFailureComment(errorInfo, locale),
   });
   if (failed.continuationRunId) {
     await deps.jobs

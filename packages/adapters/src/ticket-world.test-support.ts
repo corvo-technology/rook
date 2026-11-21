@@ -27,6 +27,7 @@ function matches(
       if ("in" in want) checks.push(want.in.includes(row[key]));
       if ("notIn" in want) checks.push(!want.notIn.includes(row[key]));
       if ("not" in want) checks.push(row[key] !== want.not);
+      if ("gt" in want) checks.push(row[key] > want.gt);
       if ("lt" in want) checks.push(row[key] < want.lt);
       if ("lte" in want) checks.push(row[key] <= want.lte);
       if ("equals" in want) {
@@ -44,6 +45,15 @@ export function world() {
   const comments: Row[] = [];
   const runs: Row[] = [];
   const tasks: Row[] = [];
+  const artifacts: Row[] = [];
+  // Every run and comment lands a second after the one before, so "since the run started" is exact.
+  let clock = NOW.getTime();
+  const tick = () => {
+    clock += 1000;
+    return new Date(clock);
+  };
+  /** The language of the person who owns the agents. */
+  const person: { locale: string | undefined } = { locale: undefined };
   const board = {
     id: "b1",
     spaceId: "ws",
@@ -69,7 +79,9 @@ export function world() {
       row[key] =
         value && typeof value === "object" && "increment" in value
           ? row[key] + value.increment
-          : value;
+          : value && typeof value === "object" && "decrement" in value
+            ? row[key] - value.decrement
+            : value;
     }
     return row;
   };
@@ -155,23 +167,32 @@ export function world() {
       },
     },
     ticketComment: {
+      findFirst: async ({ where }: Row) =>
+        comments.find((row) => matches(row, where, relation)) ?? null,
       create: async ({ data }: Row) => {
-        const row = { id: `c${comments.length + 1}`, createdAt: NOW, updatedAt: NOW, ...data };
+        const row = { id: `c${comments.length + 1}`, createdAt: tick(), updatedAt: NOW, ...data };
         comments.push(row);
         return { ...row, authorBot: { name: row.authorBotId }, authorUser: null };
       },
     },
     run: {
       create: async ({ data }: Row) => {
-        const row = { id: `r${runs.length + 1}`, ...data };
+        const row = { id: `r${runs.length + 1}`, createdAt: tick(), ...data };
         runs.push(row);
         return row;
       },
-      findFirst: async ({ where }: Row) =>
-        runs.find((row) => matches(row, where, relation)) ?? null,
+      findFirst: async ({ where, orderBy }: Row) => {
+        const hits = runs.filter((row) => matches(row, where, relation));
+        return (orderBy ? hits.at(-1) : hits[0]) ?? null;
+      },
+      findUnique: async ({ where }: Row) => runs.find((row) => row.id === where.id) ?? null,
       findMany: async ({ where }: Row) =>
         runs.filter((row) => matches(row, where, relation)).map((row) => ({ ...row })),
       update: async ({ where, data }: Row) => apply(runs.find((row) => row.id === where.id)!, data),
+    },
+    artifact: {
+      findFirst: async ({ where }: Row) =>
+        artifacts.find((row) => matches(row, where, relation)) ?? null,
     },
     task: {
       create: async ({ data }: Row) => {
@@ -185,9 +206,9 @@ export function world() {
         const id = where.spawnKey ? "chief" : where.id;
         return { id, userId: "u1", thread: { id: `th-${id}` } };
       },
-      findUnique: async ({ where }: Row) => ({ name: where.id }),
+      findUnique: async ({ where }: Row) => ({ name: where.id, userId: "u1" }),
     },
-    user: { findUnique: async () => ({ name: "Pat" }) },
+    user: { findUnique: async () => ({ name: "Pat", locale: person.locale }) },
     $queryRaw: async () => [],
     $transaction: async (fn: (client: Row) => unknown) => fn(prisma),
   };
@@ -204,7 +225,19 @@ export function world() {
       .filter((run) => botId === undefined || run.botId === botId)
       .map((run) => tasks.find((task) => task.id === run.taskId)!.prompt as string);
   const ticketByRef = (ref: string) => find({ number: Number(ref.slice(4)) })!;
-  return { prisma, deps, jobs, tickets, comments, runs, prompts, ticketByRef, onTicketChange };
+  return {
+    prisma,
+    deps,
+    jobs,
+    tickets,
+    comments,
+    runs,
+    artifacts,
+    person,
+    prompts,
+    ticketByRef,
+    onTicketChange,
+  };
 }
 
 export type World = ReturnType<typeof world>;

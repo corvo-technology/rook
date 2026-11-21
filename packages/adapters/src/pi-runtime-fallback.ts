@@ -24,7 +24,7 @@ import {
 import { estimateModelContextTokens } from "./model-context.js";
 import type { ModelCooldowns } from "./model-cooldown.js";
 import { IMAGE_RETURNING_COMPUTER_TOOLS } from "./model-vision.js";
-import { affordableOpenRouterOutput } from "./openrouter-output-budget.js";
+import { affordableOutputTokens } from "./output-reservation-budget.js";
 import { estimatePiImageTokens } from "./pi-image-context.js";
 import { OPENAI_COMPATIBLE_PROVIDER_ID } from "./pi-openai-compatible-provider.js";
 import { assistantText, messageHasToolCall, sanitizeProviderError } from "./pi-runtime-errors.js";
@@ -557,11 +557,7 @@ export function fallbackAwareModelStream(
                 restart = true;
                 break;
               }
-              const affordable = affordableOpenRouterOutput(
-                target.config.provider,
-                event.error.errorMessage,
-                sentMaxTokens,
-              );
+              const affordable = affordableOutputTokens(event.error.errorMessage, sentMaxTokens);
               if (affordable !== undefined && Date.now() - startedAt < timeoutMs) {
                 state.outputCaps ??= new Map();
                 state.outputCaps.set(targetKey, affordable);

@@ -2706,6 +2706,63 @@ describe("Pi runtime output reservation recovery", () => {
     expect(events).toContainEqual(expect.objectContaining({ type: "done", text: "Ready" }));
   });
 
+  const backups = () =>
+    request([{ provider: backupA.provider, id: backupA.id, apiKey: "backup-key" }]).fallbackModels;
+  const plainError = (affordable: number) =>
+    `402 This request requires more credits, or fewer max_tokens. You requested up to 4096 tokens, but can only afford ${affordable}. Add credits.`;
+
+  it("lowers the reservation from a plain-text 402 on any provider", async () => {
+    const input = limitedRequest();
+    const caps: number[] = [];
+    providerState.stream.mockImplementation((target, _context, options) => {
+      caps.push(options.maxTokens);
+      return caps.length === 1
+        ? stream(target, message(target, [], "error", plainError(2048)))
+        : stream(target, message(target, [{ type: "text", text: "Ready" }], "stop"));
+    });
+    const events = await run(input);
+    expect(caps).toEqual([4096, 2048]);
+    expect(events.at(-1)).toEqual({ type: "done", text: "Ready" });
+  });
+
+  it("fails over to the next configured model when the lowered request is still unaffordable", async () => {
+    const input = { ...limitedRequest(), fallbackModels: backups() };
+    providerState.stream.mockImplementation((target: Model<"openai-completions">) =>
+      target.provider === limited.provider
+        ? stream(target, message(target, [], "error", plainError(3000)))
+        : stream(target, message(target, [{ type: "text", text: "backup answer" }], "stop")),
+    );
+    const events = await run(input);
+    expect(events.at(-1)).toEqual({ type: "done", text: "backup answer" });
+    expect(
+      providerState.stream.mock.calls.map(
+        ([target, , options]) =>
+          `${(target as Model<"openai-completions">).provider}:${options.maxTokens}`,
+      ),
+    ).toEqual([`${limited.provider}:4096`, `${limited.provider}:3000`, `${backupA.provider}:2048`]);
+  });
+
+  it("fails over without a retry when the affordable output is too small to be useful", async () => {
+    const input = { ...limitedRequest(), fallbackModels: backups() };
+    providerState.stream.mockImplementation((target: Model<"openai-completions">) =>
+      target.provider === limited.provider
+        ? stream(target, message(target, [], "error", plainError(200)))
+        : stream(target, message(target, [{ type: "text", text: "backup answer" }], "stop")),
+    );
+    const events = await run(input);
+    expect(events.at(-1)).toEqual({ type: "done", text: "backup answer" });
+    expect(providerState.stream).toHaveBeenCalledTimes(2);
+  });
+
+  it("fails with the provider's credit error when no backup is configured", async () => {
+    const input = limitedRequest();
+    providerState.stream.mockImplementation((target) =>
+      stream(target, message(target, [], "error", plainError(200))),
+    );
+    await expect(run(input)).rejects.toThrow("This request requires more credits");
+    expect(providerState.stream).toHaveBeenCalledOnce();
+  });
+
   it("never loops when the reduced request is rejected too", async () => {
     const input = limitedRequest();
     providerState.stream.mockImplementation((target) =>

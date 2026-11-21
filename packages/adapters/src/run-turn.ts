@@ -76,6 +76,7 @@ import { applyTool } from "./run-tools.js";
 import { withRuntimeCleanup } from "./runtime-stream.js";
 import { stripNoResponseReply, stripStrayNoResponse } from "./silent-reply.js";
 import { takeoverCheckpointOf } from "./takeover-resume.js";
+import { ticketFailureComment, ticketOwnerLocale } from "./ticket-progress.js";
 import { announceTicketStep, endTicketRun, waitTicketRun } from "./ticket-run-moves.js";
 import { appendToolCompletionAudit, toolCompletionFromResult } from "./tool-completion-audit.js";
 import {
@@ -479,7 +480,12 @@ async function stopStuckToolLoop(ctx: RunContext, toolName: string) {
     blocks: isBackgroundRunTrigger(run.trigger) ? [] : [{ kind: "text", text: stuckText }],
   });
   if (!stopped) return;
-  await endTicketRun(deps, run, { kind: "stopped", error: stuckText, cut: true });
+  await endTicketRun(deps, run, {
+    kind: "stopped",
+    error: stuckText,
+    cut: true,
+    ...(ctx.state.workRemaining ? { remaining: ctx.state.workRemaining } : {}),
+  });
   await ticketUnfinishedDelegation(deps, run, {
     remaining: ctx.state.workRemaining,
     cut: true,
@@ -708,7 +714,11 @@ export async function completeRun(ctx: RunContext) {
     );
   }
   const cutByCap = ctx.state.guards.calls.refusedCalls > 0;
-  await endTicketRun(deps, run, { kind: "finished", cut: cutByCap });
+  await endTicketRun(deps, run, {
+    kind: "finished",
+    cut: cutByCap,
+    ...(ctx.state.workRemaining ? { remaining: ctx.state.workRemaining } : {}),
+  });
   await ticketUnfinishedDelegation(deps, run, {
     remaining: ctx.state.workRemaining,
     cut: cutByCap,
@@ -908,10 +918,18 @@ export async function failRun(
     ...(partialReply.length > 0 ? { partialReply } : {}),
   });
   if (!failed) return;
+  const ticketComment = run.ticketId
+    ? ticketFailureComment(errorInfo, await ticketOwnerLocale(deps.prisma, bot.id))
+    : undefined;
   await endTicketRun(deps, run, {
     kind: "stopped",
     error: message,
     cut: error instanceof TurnGuardStopError,
+    // An ordinary failure ends the ticket's run even with work left; only a guard cut continues.
+    ...(error instanceof TurnGuardStopError && ctx.state.workRemaining
+      ? { remaining: ctx.state.workRemaining }
+      : {}),
+    ...(ticketComment ? { comment: ticketComment } : {}),
   });
   await ticketUnfinishedDelegation(deps, run, {
     remaining: ctx.state.workRemaining,

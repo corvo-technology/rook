@@ -2037,6 +2037,7 @@ describe("team chat bridge", () => {
     });
     const bridge = new TeamChatBridge({
       prisma: {
+        runToolResult: { deleteMany: async () => ({ count: 0 }) },
         externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
         externalMessage: {
           updateMany,

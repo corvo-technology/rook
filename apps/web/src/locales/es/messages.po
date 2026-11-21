@@ -631,6 +631,10 @@ msgstr "{seatsUsed} de {seatsMax} personas"
 msgid "{sent, plural, one {# invitation sent} other {# invitations sent}}"
 msgstr "{sent, plural, one {# invitación enviada} other {# invitaciones enviadas}}"
 
+#: src/pages/Usage.tsx
+msgid "{share} cached"
+msgstr "{share} en caché"
+
 #: src/components/ArtifactFileCard.tsx
 msgid "{size} B"
 msgstr "{size} B"
@@ -1786,6 +1790,10 @@ msgstr "Token Bearer"
 msgid "Below credits"
 msgstr "Por debajo de créditos"
 
+#: src/pages/Usage.tsx
+msgid "Billed"
+msgstr "Facturado"
+
 #: src/pages/Settings.tsx
 msgid "Billing"
 msgstr "Facturación"
@@ -1950,6 +1958,18 @@ msgstr "Por agente"
 #: src/pages/Usage.tsx
 msgid "By model tier"
 msgstr "Por nivel de modelo"
+
+#: src/pages/Usage.tsx
+msgid "Cache hit rate"
+msgstr "Tasa de aciertos de caché"
+
+#: src/pages/Usage.tsx
+msgid "Cache writes"
+msgstr "Escrituras en caché"
+
+#: src/pages/Usage.tsx
+msgid "Cached"
+msgstr "En caché"
 
 #: src/pages/RoutinesTabs.tsx
 msgid "Calendar"
@@ -5104,6 +5124,7 @@ msgstr "Heredar predeterminado"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/PricingSection.tsx
+#: src/pages/Usage.tsx
 msgid "Input"
 msgstr "Entrada"
 
@@ -7031,6 +7052,7 @@ msgstr "Otras formas de conectar"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/platform/PricingSection.tsx
+#: src/pages/Usage.tsx
 msgid "Output"
 msgstr "Salida"
 

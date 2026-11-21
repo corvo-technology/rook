@@ -1218,6 +1218,15 @@ export const UsageTierSchema = z.object({
   costUsd: z.number().nullable(),
 });
 
+/** What a period was billed per kind: input excludes the cached buckets, so the four add up. */
+export const UsageCacheSchema = z.object({
+  input: z.number(),
+  cacheRead: z.number(),
+  cacheWrite: z.number(),
+  output: z.number(),
+});
+export type UsageCache = z.infer<typeof UsageCacheSchema>;
+
 export const UsageAgentSchema = z.object({
   id: z.string().nullable(),
   name: z.string(),
@@ -1226,6 +1235,7 @@ export const UsageAgentSchema = z.object({
   replies: z.number(),
   costUsd: z.number().nullable(),
   models: z.array(z.object({ provider: z.string(), model: z.string(), tokens: z.number() })),
+  cache: UsageCacheSchema.optional(),
   /** Runs that ended in failure in the period; absent when none were counted. */
   failed: z.number().optional(),
   /** Mean seconds a finished run took; absent when none had both times. */
@@ -1243,6 +1253,7 @@ export const UsageOverviewSchema = z.object({
   previousTokens: z.number(),
   replies: z.number(),
   costUsd: z.number().nullable(),
+  cache: UsageCacheSchema.optional(),
   agents: z.array(UsageAgentSchema),
   /** Spend by tier; empty when no agent picked its model in the period. */
   tiers: z.array(UsageTierSchema).optional(),

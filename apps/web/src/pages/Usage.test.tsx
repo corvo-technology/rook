@@ -51,9 +51,11 @@ const data = {
   previousTokens: 1_000_000,
   replies: 12,
   costUsd: 0,
+  cache: { input: 100_000, cacheRead: 900_000, cacheWrite: 0, output: 500_000 },
   agents: [
     {
       id: "a",
+      cache: { input: 100_000, cacheRead: 300_000, cacheWrite: 100_000, output: 500_000 },
       name: "Pia",
       color: "#10B981",
       tokens: 1_000_000,
@@ -113,12 +115,30 @@ it("shows the period's tokens, how it compares and who used them", async () => {
   expect(host.textContent).toContain("+50%");
   expect(host.textContent).toContain("vs. the same days last month");
   expect(host.textContent).toContain("Pia");
-  expect(host.textContent).toContain("Sonnet · 8 replies · 12 s avg · 2 failed: ");
+  expect(host.textContent).toContain("Sonnet · 8 replies · 60% cached · 12 s avg · 2 failed: ");
   expect(host.textContent).toContain("rate limiting requests");
   // An agent with no failures says nothing about them.
   expect(host.textContent).not.toContain("0 failed");
   // An agent that no longer exists is still listed, with a name for it.
   expect(host.textContent).toContain("Deleted agent");
+  await act(async () => root.unmount());
+});
+
+it("splits what was billed from what the prompt cache served, for the period and one agent", async () => {
+  overview.mockResolvedValue(data);
+  const { host, root } = await render();
+  const billed = () => host.querySelector('section[aria-label="Billed"]')?.textContent ?? "";
+  expect(billed()).toContain("Input100K");
+  expect(billed()).toContain("Cached900K");
+  expect(billed()).not.toContain("Cache writes");
+  expect(billed()).toContain("Cache hit rate90%");
+  expect(host.textContent).toContain("60% cached");
+  const row = [...host.querySelectorAll("button[aria-pressed]")].find((b) =>
+    b.textContent?.includes("Pia"),
+  );
+  await act(async () => (row as HTMLElement).click());
+  expect(billed()).toContain("Cache writes100K");
+  expect(billed()).toContain("Cache hit rate60%");
   await act(async () => root.unmount());
 });
 

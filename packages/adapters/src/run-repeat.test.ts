@@ -1,7 +1,7 @@
 import type { AdapterContext } from "@corvo/adapter-kit";
 import { describe, expect, it, vi } from "vitest";
 import type { ExecutorDeps } from "./executor-deps.js";
-import { repeatHintForRun } from "./run-repeat.js";
+import { repeatHintForRun, repeatHintInBackground } from "./run-repeat.js";
 
 const context = {
   operationId: "op",
@@ -53,5 +53,20 @@ describe("repeatHintForRun", () => {
       },
     } as unknown as ExecutorDeps;
     expect(await repeatHintForRun(deps, scope, input)).toBeUndefined();
+  });
+});
+
+describe("repeatHintInBackground", () => {
+  it("never holds the turn: the hint is read when ready and absent before", async () => {
+    let release: (rows: { blocks: unknown }[]) => void = () => undefined;
+    const findMany = vi.fn(
+      () => new Promise<{ blocks: unknown }[]>((resolve) => (release = resolve)),
+    );
+    const deps = { prisma: { message: { findMany } } } as unknown as ExecutorDeps;
+    const read = repeatHintInBackground(deps, scope, input);
+    expect(read()).toBeUndefined();
+    release([]);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(read()).toBeUndefined();
   });
 });

@@ -223,7 +223,7 @@ import {
 } from "./run-model.js";
 import { routeTurn, strongerTierFor } from "./run-model-routing.js";
 import { createReplyState } from "./run-progress.js";
-import { repeatHintForRun } from "./run-repeat.js";
+import { repeatHintInBackground } from "./run-repeat.js";
 import { DELEGATED_EMPTY_NOTICE, runAllowsSilentEmpty, runReplyGuidance } from "./run-replies.js";
 import {
   notifyRoutineRetryAttemptsExhausted,
@@ -587,6 +587,31 @@ export function createRunExecutor(deps: ExecutorDeps) {
             : loadBotCommandEnvironment(deps.prisma, deps.secretStore, run),
           loadLoginPasswordRedactions(deps.prisma, deps.secretStore, run),
         ]);
+        // modelPinned distinguishes the captured choice from an attempt's recorded model.
+        const ownChoice = runModelChoice(run, bot);
+        // An automatic agent picks a tier for the turn; a pinned model, or a run that carries
+        // one, is never routed.
+        const automatic =
+          routesAutomatically({
+            modelAuto: bot.modelAuto,
+            pinned: run.modelPinned,
+            hasModel: Boolean(ownChoice.modelProvider && ownChoice.modelId),
+          }) && !deps.runtime.describe().capabilities.scripted;
+        const routedPending = automatic
+          ? routeTurn({
+              deps,
+              run,
+              bot,
+              task,
+              messages,
+              defaults: {
+                settings,
+                deployment: deps.deploymentModelConfigured ? resolveDeploymentModel() : null,
+              },
+            })
+          : undefined;
+        // Routing is a model call at most; it runs beside the live-plugin sync and history lookups.
+        routedPending?.catch(() => undefined);
         // Where this run's live text belongs: in the thread its source was posted in, if any.
         const threadRootId = thread.groupId
           ? await loadRunThreadRoot(deps.prisma, run.sourceMessageId)
@@ -613,48 +638,6 @@ export function createRunExecutor(deps: ExecutorDeps) {
           ...agentEnvironment,
           ...initialBotCommandEnvironment,
         });
-        // modelPinned distinguishes the captured choice from an attempt's recorded model.
-        const ownChoice = runModelChoice(run, bot);
-        // An automatic agent picks a tier for the turn; a pinned model, or a run that carries
-        // one, is never routed.
-        const automatic =
-          routesAutomatically({
-            modelAuto: bot.modelAuto,
-            pinned: run.modelPinned,
-            hasModel: Boolean(ownChoice.modelProvider && ownChoice.modelId),
-          }) && !deps.runtime.describe().capabilities.scripted;
-        const routed = automatic
-          ? await routeTurn({
-              deps,
-              run,
-              bot,
-              task,
-              messages,
-              defaults: {
-                settings,
-                deployment: deps.deploymentModelConfigured ? resolveDeploymentModel() : null,
-              },
-            })
-          : undefined;
-        const modelChoice: ModelChoice = routed?.choice ?? ownChoice;
-        const hasModelOverride = Boolean(modelChoice.modelProvider && modelChoice.modelId);
-        const overrideCredential =
-          hasModelOverride && modelChoice.modelProvider
-            ? await findConnectedModelCredential(
-                deps.prisma,
-                deps.secretStore,
-                run,
-                modelChoice.modelProvider,
-                modelChoice.modelId,
-                routed?.choice?.credentialId ? { credentialId: routed.choice.credentialId } : {},
-              )
-            : null;
-        runAbortController = new AbortController();
-        if (!lease.valid) runAbortController.abort();
-        if (deps.shutdownSignal?.aborted) runAbortController.abort(deps.shutdownSignal.reason);
-        const onShutdown = () => runAbortController?.abort(deps.shutdownSignal?.reason);
-        deps.shutdownSignal?.addEventListener("abort", onShutdown);
-        detachShutdown = () => deps.shutdownSignal?.removeEventListener("abort", onShutdown);
         const composioRows = storedConnections.filter(
           (connection) => connection.connectorId === "composio",
         );
@@ -683,6 +666,26 @@ export function createRunExecutor(deps: ExecutorDeps) {
               return keys.has(row.provider.toLowerCase());
             })
           : allConnectedPlugins;
+        const routed = await routedPending;
+        const modelChoice: ModelChoice = routed?.choice ?? ownChoice;
+        const hasModelOverride = Boolean(modelChoice.modelProvider && modelChoice.modelId);
+        const overrideCredential =
+          hasModelOverride && modelChoice.modelProvider
+            ? await findConnectedModelCredential(
+                deps.prisma,
+                deps.secretStore,
+                run,
+                modelChoice.modelProvider,
+                modelChoice.modelId,
+                routed?.choice?.credentialId ? { credentialId: routed.choice.credentialId } : {},
+              )
+            : null;
+        runAbortController = new AbortController();
+        if (!lease.valid) runAbortController.abort();
+        if (deps.shutdownSignal?.aborted) runAbortController.abort(deps.shutdownSignal.reason);
+        const onShutdown = () => runAbortController?.abort(deps.shutdownSignal?.reason);
+        deps.shutdownSignal?.addEventListener("abort", onShutdown);
+        detachShutdown = () => deps.shutdownSignal?.removeEventListener("abort", onShutdown);
         const context = {
           operationId: runId,
           traceId: runId,
@@ -1213,6 +1216,34 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 select: { clientNonce: true, role: true, blocks: true, seq: true, routing: true },
               })
             : null;
+        // Only a message the owner typed is worth offering a routine for.
+        // The judge runs beside the rest of the preparation; the first model call never waits on it.
+        const readRepeatHint =
+          run.trigger === "user" && sourceMessage?.role === "user"
+            ? repeatHintInBackground(
+                deps,
+                {
+                  runId,
+                  spaceId: run.spaceId,
+                  userId: run.userId,
+                  botId: bot.id,
+                  threadId: thread.id,
+                },
+                {
+                  request: ((sourceMessage.blocks ?? []) as MessageBlock[])
+                    .flatMap((block) => (block.kind === "text" ? [block.text] : []))
+                    .join("\n"),
+                  sourceMessageId: run.sourceMessageId ?? "",
+                  own: {
+                    provider: runModelProvider,
+                    modelId: runModelId,
+                    credentialId: credential?.id,
+                  },
+                  context,
+                  registerSecrets: (values) => runSecrets.push(...values),
+                },
+              )
+            : undefined;
         // Only a run the router woke may pass; a mention, a chat or an answer always replies.
         const routedRun =
           run.trigger === "user" &&
@@ -1721,33 +1752,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 },
               )
             : undefined;
-        // Only a message the owner typed is worth offering a routine for.
-        const repeatHint =
-          run.trigger === "user" && sourceMessage?.role === "user"
-            ? await repeatHintForRun(
-                deps,
-                {
-                  runId,
-                  spaceId: run.spaceId,
-                  userId: run.userId,
-                  botId: bot.id,
-                  threadId: thread.id,
-                },
-                {
-                  request: ((sourceMessage.blocks ?? []) as MessageBlock[])
-                    .flatMap((block) => (block.kind === "text" ? [block.text] : []))
-                    .join("\n"),
-                  sourceMessageId: run.sourceMessageId ?? "",
-                  own: {
-                    provider: runModelProvider,
-                    modelId: runModelId,
-                    credentialId: credential?.id,
-                  },
-                  context,
-                  registerSecrets: (values) => runSecrets.push(...values),
-                },
-              )
-            : undefined;
+        const repeatHint = readRepeatHint?.();
         const redactedTicketContext = ticketContext
           ? redactSecrets(ticketContext, runSecrets)
           : undefined;

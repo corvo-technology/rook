@@ -4,6 +4,17 @@ import { OpenRouterUsageLookup } from "./openrouter-usage.js";
 
 export const DEFAULT_OPENROUTER_MODEL_ID = "openai/gpt-6-luna";
 
+/** The model a provider runs when the deployment names none. */
+const BUILTIN_DEFAULT_MODELS: Record<string, string> = {
+  openrouter: DEFAULT_OPENROUTER_MODEL_ID,
+  anthropic: "claude-sonnet-5",
+};
+
+/** The model the platform ships for a provider, undefined for one it has no default for. */
+export function builtinDefaultModel(provider: string): string | undefined {
+  return BUILTIN_DEFAULT_MODELS[provider];
+}
+
 /**
  * What Pi reports for a provider that authenticates from the host instead of a key: an AWS
  * profile or task role for Amazon Bedrock, Application Default Credentials for Vertex.
@@ -40,10 +51,6 @@ export function resolveDeploymentModel(env: NodeJS.ProcessEnv = process.env) {
     openrouter: env.OPENROUTER_API_KEY,
     anthropic: env.ANTHROPIC_API_KEY,
   };
-  const models: Record<string, string> = {
-    openrouter: DEFAULT_OPENROUTER_MODEL_ID,
-    anthropic: "claude-sonnet-5",
-  };
   const explicitModel = env.PI_DEFAULT_MODEL?.trim();
   const key = keys[provider];
   const hostCredentials =
@@ -57,7 +64,7 @@ export function resolveDeploymentModel(env: NodeJS.ProcessEnv = process.env) {
     /** The models of the fast and strong tiers on this provider; empty leaves the tier on the main model. */
     fastModel: env.PI_FAST_MODEL?.trim() || null,
     strongModel: env.PI_STRONG_MODEL?.trim() || null,
-    model: explicitModel || models[provider] || models.openrouter!,
+    model: explicitModel || builtinDefaultModel(provider) || DEFAULT_OPENROUTER_MODEL_ID,
     key,
     configured: Boolean(key) || hostCredentials,
     hostCredentials,

@@ -525,7 +525,7 @@ export function userTurnInstructions(
     parts.sayNowOffered && !parts.disabledBuiltinTools?.has("say_now")
       ? "Answer a quick question straight away. When the work will take more than a few seconds (several tools, the computer or browser, media, a connection to wait on), your first action is one say_now call with one short plain line in the user's language saying what you are about to do, then do the work. Call it once, before any other tool, and never repeat that line in your final reply."
       : undefined,
-    "Never print API keys, access tokens, or secret values. Prefer tools over claiming you already did the work. If your tools cannot do what was asked, say plainly what is missing and what you can do instead.",
+    "Never print API keys, access tokens, or secret values. Never claim to have scheduled, sent, created or changed anything without a tool result confirming it. If no tool can, say so and offer the closest real step.",
     REPLY_STYLE,
     "Treat pagination cursors as opaque: copy the returned continuation value exactly, never calculate or guess it. When the tool reports no next page, stop; if a cursor is rejected, recheck the last successful result before retrying.",
     replyGuidanceForOfferedTools(parts.replyGuidance, parts.disabledBuiltinTools),

@@ -31,6 +31,8 @@ export type TranscriptionFailure =
   | "busy"
   | "credits-used-up"
   | "provider-failed"
+  /** No speech provider is set up for the account, and none can be used on its credits. */
+  | "not-configured"
   | "unavailable";
 
 export type TranscriptionOutcome =
@@ -132,7 +134,7 @@ async function chooseProvider(deps: AudioTranscriptionDeps, actor: Actor): Promi
           ? await hostedVoiceFunding(deps.prisma, deps.voiceCredits, actor)
           : undefined;
       const recipient = aiRecipient({ provider: OPENROUTER_VOICE_PROVIDER_ID, use: "voice" });
-      if (!funding || !deps.voiceCredits || !recipient) return { failure: "provider-failed" };
+      if (!funding || !deps.voiceCredits || !recipient) return { failure: "not-configured" };
       if (!(await deps.hasConsent(actor, recipient.key))) return { failure: "provider-failed" };
       return {
         kind: "credits",
@@ -355,6 +357,7 @@ const REASON_TEXT: Record<TranscriptionFailure, string> = {
   busy: "too many audio messages were sent at once",
   "credits-used-up": "the account's credit is used up",
   "provider-failed": "transcription is not available",
+  "not-configured": "transcription is not set up",
   unavailable: "the file is not available",
 };
 

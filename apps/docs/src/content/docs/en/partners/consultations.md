@@ -79,7 +79,7 @@ rec.start(10_000);
 | `recording` | Accepting chunks. |
 | `processing` | After `finish`. Poll the `GET` every few seconds. |
 | `drafted` | The note is in the record; `draftEntryId` names it. |
-| `failed` | With `error.code`: `no_audio`, `no_speech`, `transcription_failed`, `model_failed`, `connector_failed`, `record_not_found`, `credit_exhausted` or `internal`. |
+| `failed` | With `error.code`: `no_audio`, `no_speech`, `transcription_failed`, `transcription_unavailable` (no speech provider is set up for the customer; Rook tells the partner's administrators), `model_failed`, `connector_failed`, `record_not_found`, `credit_exhausted` or `internal`. |
 
 `finish` twice answers the current state. `finish` or `reprocess` on a `failed` consultation processes it again from the stored chunks. Creating or finishing when the customer's credit is used up answers `402 { "error": "allowance_exhausted" }`.
 

@@ -141,9 +141,9 @@ describe("transcribeAudioArtifact", () => {
     );
   });
 
-  it("with no provider and no local engine, reports a provider failure", async () => {
+  it("with no provider and no local engine, reports that transcription is not set up", async () => {
     const { deps, get } = setup({ localEngine: false });
-    expect(await run(deps)).toEqual({ status: "failed", reason: "provider-failed" });
+    expect(await run(deps)).toEqual({ status: "failed", reason: "not-configured" });
     expect(get).not.toHaveBeenCalled();
   });
 

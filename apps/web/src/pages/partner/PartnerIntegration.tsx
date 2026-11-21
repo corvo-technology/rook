@@ -25,6 +25,8 @@ function useAlertLabel() {
         return t`Customer payment past due`;
       case "customer.connector_down":
         return t`Customer connector down`;
+      case "customer.assistant_unavailable":
+        return t`Customer assistant unavailable`;
     }
   };
 }

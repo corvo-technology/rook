@@ -1,5 +1,6 @@
 import type { ModelPriceCeiling } from "@corvo/adapter-kit";
-import { catalogModelCost } from "./pi-runtime-models.js";
+import { builtinDefaultModel } from "./deployment-model.js";
+import { catalogModelCost, cheapestCatalogModelId } from "./pi-runtime-models.js";
 
 /** A flat cap for one call to a model with no price to size a hold by, when nothing else bounds it. */
 export function configuredCallCeilingUsd(env: NodeJS.ProcessEnv = process.env): number | undefined {
@@ -58,4 +59,23 @@ export function pricedModelOnProvider(
     (choice) =>
       choice && choice.provider === provider && catalogModelCost(choice.provider, choice.modelId),
   )?.modelId;
+}
+
+/**
+ * The priced model a funded call runs on when its own has no price: the deployment's models first,
+ * then the platform's built-in default for the provider, then the cheapest the catalog prices. A
+ * deployment whose own default is newer than the catalog prices none of its models, so the first
+ * step alone would leave the call refused.
+ */
+export function pricedFallbackModel(
+  provider: string,
+  deploymentModels: ReadonlyArray<{ provider: string; modelId: string } | null | undefined>,
+): string | undefined {
+  const builtin = builtinDefaultModel(provider);
+  return (
+    pricedModelOnProvider(provider, [
+      ...deploymentModels,
+      builtin ? { provider, modelId: builtin } : null,
+    ]) ?? cheapestCatalogModelId(provider)
+  );
 }

@@ -93,7 +93,7 @@ const recorder = Rook.recorder({
     form.chiefComplaint.value = fields.chiefComplaint;
     form.allergies.value = fields.allergies.join(", ");
   },
-  onError: (error) => showMessage(error.code),
+  onError: (error) => showMessage(error.message), // error.code diz o que fazer
 });
 
 recordButton.onclick = () => (recorder.state === "recording" ? recorder.stop() : recorder.start());
@@ -107,7 +107,33 @@ Estados em `onState`: `idle`, `requesting`, `recording`, `paused`, `uploading`, 
 - **Legenda ao vivo.** Enquanto grava, `onTranscript` recebe legendas do próprio navegador (`source: "browser"`, quando ele oferece reconhecimento de voz). Ao fim, chega a transcrição do Rook (`final: true`, `source: "server"`, com `turns`).
 - **Consentimento.** `consent` é obrigatório e fica registrado na consulta, como na API.
 - **Retenção.** Depois do resultado, o Rook apaga o áudio e a transcrição, a menos que você passe `keep: true` (vale então o prazo de retenção da consulta).
-- **Erros de gravação:** `permission_denied`, `too_long`, `upload_failed`, `allowance_exhausted`, `no_speech`, `model_failed`.
+- **Erros de gravação.** `onError(error)` recebe um `RookError` com `error.code` (o que fazer), `error.message` (uma frase para a pessoa, no `lang` ou no idioma do navegador) e, nas respostas do servidor, `error.status`. A mensagem do microfone explica como corrigir nas configurações do site do navegador.
+
+| `error.code` | Causa | O que fazer |
+| --- | --- | --- |
+| `permission_denied` | A pessoa recusou, ou o navegador negou o microfone desta vez. | Mostre `error.message`: permitir o microfone nas configurações do site e tentar de novo. |
+| `permission_blocked` | O navegador ou a `Permissions-Policy` da sua página bloqueia o microfone neste site (um iframe precisa de `allow="microphone"`). | O mesmo, e recarregar a página. |
+| `no_microphone` | Nenhum dispositivo de entrada. | Pedir para conectar um. |
+| `microphone_busy` | Outro aplicativo usa o microfone. | Pedir para fechá-lo. |
+| `insecure_context` | A página não é HTTPS. | Servir a página em HTTPS. |
+| `unsupported_browser` | Sem `MediaRecorder`, ou sem codec `audio/webm` ou `audio/ogg`. | Pedir um Chrome, Edge, Firefox ou Safari recente. |
+| `consent_missing` | `consent` não foi passado, ou não tem `method`. | Passe `consent` (veja acima). |
+| `network_error` | Não foi possível alcançar o servidor. | Verificar a conexão e tentar de novo. |
+| `upload_failed` | Um pedaço falhou três vezes. | Verificar a conexão e tentar de novo. |
+| `unauthorized` (401) | A sessão expirou e não pôde ser renovada. | Recarregar, ou corrigir a sua rota de sessão. |
+| `forbidden` (403) | Este acesso não pode gravar consultas. | Conferir o acesso do cliente. |
+| `not_found` (404) | A consulta não existe (ou é de outra pessoa). | Começar outra gravação. |
+| `too_long` (413) | Passou do tempo máximo de gravação. | Parar e começar outra. |
+| `too_large` (413) | O áudio ficou grande demais. | Começar outra gravação. |
+| `invalid_request` (400) | O pedido foi recusado por estar malformado. | Recarregar e tentar de novo; avise se persistir. |
+| `too_many_requests` (429) | Limite de requisições. | Esperar e tentar de novo. |
+| `server_error` (5xx) | O Rook teve um problema. | Tentar de novo em instantes. |
+| `no_audio`, `no_speech` | Nada gravado, ou nenhuma fala ouvida. | Gravar de novo. |
+| `transcription_failed` | Não foi possível transcrever o áudio. | Tentar de novo. |
+| `processing_failed` | Não foi possível gerar o rascunho (modelo, conector ou prontuário). | Tentar de novo. |
+| `transcription_unavailable`, `allowance_exhausted`, `credit_exhausted`, `no_model` | A conta não está configurada para transcrever ou responder (sem provedor de fala, crédito acabou, sem modelo). | O Rook já avisou os seus administradores com a causa real. `error.message` é neutra para o profissional: "O assistente está indisponível agora. Avisamos o administrador." Nunca peça para ele conectar uma chave. |
+| `timeout` | O processamento demorou demais. | Tentar de novo. |
+| `recorder_failed` | O navegador parou de gravar. | Tentar de novo. |
 
 ## Do seu servidor
 

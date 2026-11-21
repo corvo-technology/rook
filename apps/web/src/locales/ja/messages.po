@@ -461,6 +461,14 @@ msgid "{name} stopped"
 msgstr "{name}が停止しました"
 
 #: src/lib/server-copy.ts
+msgid "{name}'s assistant is unavailable"
+msgstr "{name}のアシスタントが利用できません"
+
+#: src/lib/server-copy.ts
+msgid "{name}'s assistant is unavailable: {why}"
+msgstr "{name}のアシスタントが利用できません: {why}"
+
+#: src/lib/server-copy.ts
 msgid "{name}'s connector is down"
 msgstr "{name}のコネクターが停止しています"
 
@@ -3782,6 +3790,10 @@ msgid "Customer"
 msgstr "顧客"
 
 #: src/pages/partner/PartnerIntegration.tsx
+msgid "Customer assistant unavailable"
+msgstr "お客様のアシスタントが利用できません"
+
+#: src/pages/partner/PartnerIntegration.tsx
 msgid "Customer connector down"
 msgstr "お客様のコネクターが停止"
 
@@ -4211,6 +4223,7 @@ msgstr "アカウントをお持ちでないですか？"
 #: src/pages/shell/avatar-studio-popover.tsx
 #: src/pages/shell/host-action-card.tsx
 #: src/pages/shell/import-setup-card.tsx
+#: src/pages/shell/transcript.tsx
 #: src/pages/SquadPage.tsx
 #: src/pages/Workflows.tsx
 msgid "Done"
@@ -6149,6 +6162,10 @@ msgstr "モデル「{modelId}」は一覧にありませんでした。"
 msgid "Model connections"
 msgstr "モデル接続"
 
+#: src/lib/server-copy.ts
+msgid "model credits are used up"
+msgstr "モデルのクレジットを使い切りました"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Model id"
@@ -6652,6 +6669,10 @@ msgstr "{peerBotName}とのメッセージはまだありません。"
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "No model catalog is available."
 msgstr "利用できるモデルカタログがありません。"
+
+#: src/lib/server-copy.ts
+msgid "no model is connected"
+msgstr "モデルが接続されていません"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error-copy.ts
@@ -9492,6 +9513,7 @@ msgid "Testing…"
 msgstr "テスト中…"
 
 #: src/pages/shell/host-action-card.tsx
+#: src/pages/shell/transcript.tsx
 msgid "That didn't work"
 msgstr "うまくいきませんでした"
 
@@ -9507,6 +9529,11 @@ msgstr "変更チェックに失敗したため、ルーティン {name} を一�
 #: src/lib/run-error-copy.ts
 msgid "The agent stopped"
 msgstr "エージェントが停止しました"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "The assistant is unavailable right now."
+msgstr "アシスタントは現在利用できません。"
 
 #: src/pages/shell/agent-import-undo.tsx
 msgid "The bot and what its import added will be removed."
@@ -9539,6 +9566,10 @@ msgstr "アイコンは512px以上の正方形のPNGにしてください。"
 msgid "The model couldn't answer"
 msgstr "モデルが応答できませんでした"
 
+#: src/lib/server-copy.ts
+msgid "the model has no price"
+msgstr "モデルに価格がありません"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "The model hit its output limit before finishing its reply."
@@ -9548,6 +9579,10 @@ msgstr "モデルが返信を書き終える前に出力上限に達しました
 #: src/lib/run-error-copy.ts
 msgid "The model is busy"
 msgstr "モデルが混み合っています"
+
+#: src/lib/server-copy.ts
+msgid "the model is not allowed"
+msgstr "モデルは許可されていません"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -9964,6 +9999,10 @@ msgstr "文字起こし中…"
 #: src/components/call/CallCard.tsx
 msgid "Transcript"
 msgstr "文字起こし"
+
+#: src/lib/server-copy.ts
+msgid "transcription is not set up"
+msgstr "文字起こしが設定されていません"
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Transcription model"
@@ -10497,6 +10536,11 @@ msgstr "待機中…"
 #: src/pages/platform/PlatformPage.tsx
 msgid "Waitlist"
 msgstr "ウェイトリスト"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "We told the administrator."
+msgstr "管理者に連絡しました。"
 
 #: src/components/ModelCredits.tsx
 msgid "Web, desktop and mobile"

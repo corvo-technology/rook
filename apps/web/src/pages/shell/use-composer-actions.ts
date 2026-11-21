@@ -474,6 +474,8 @@ export function useComposerActions({
       mentions: ComposerMention[],
       clientNonce: string,
       imageHandling?: "file",
+      /** A line that reports what a confirmed page action did; stored as a system line. */
+      hostResult?: { outcome: "done" | "denied" | "failed" },
     ) => {
       const initialBotTarget = activeBotId.current;
       const initialGroupTarget = activeGroupId.current;
@@ -594,6 +596,7 @@ export function useComposerActions({
             replyQuote: activeReplyQuote ?? undefined,
             model: messageModels.get(botTarget).model ?? undefined,
             host: takeHostTurn(),
+            ...(hostResult ? { hostResult } : {}),
           });
           accepted = true;
           messageModels.settle(botTarget);

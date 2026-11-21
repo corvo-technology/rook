@@ -78,6 +78,8 @@ export interface ConsultationJobDeps {
     tool: string,
     args: Record<string, unknown>,
   ): Promise<ToolOutcome>;
+  /** Tells the partner's administrators the real cause of a setup failure; best effort. */
+  onSetupFailure?(record: ConsultationRecord, cause: "transcription_unavailable"): Promise<void>;
   /** Content-free audit of what the pipeline did. */
   audit(event: { type: "consultation.accessed"; consultationId: string; outcome: string }): void;
   now?: () => Date;
@@ -239,6 +241,9 @@ export async function processConsultation(
       "consultation.error": code,
       "error.type": error instanceof Error ? error.name : "unknown",
     });
+    if (code === "transcription_unavailable") {
+      await deps.onSetupFailure?.(record, "transcription_unavailable").catch(() => undefined);
+    }
     await deps.store.settle(record.id, { state: "failed", errorCode: code });
     deps.audit({ type: "consultation.accessed", consultationId: record.id, outcome: code });
   }
@@ -263,6 +268,13 @@ async function transcribeAndLabel(
       if (outcome.reason === "credits-used-up") throw new CreditsExhaustedError();
       // Silence is a finding about the recording, not a fault to retry.
       if (outcome.reason === "no-speech") return "";
+      // Nothing set up to listen with: retrying cannot help, and the partner is told.
+      if (outcome.reason === "not-configured") throw new StepFailure("transcription_unavailable");
+      // The reason is one of a fixed list, never content, so it is safe to keep.
+      getLogger().warn("consultation transcription failed", {
+        "consultation.id": record.id,
+        "transcription.reason": outcome.reason,
+      });
       throw new Error("transcription failed");
     }, "transcription_failed"),
   );

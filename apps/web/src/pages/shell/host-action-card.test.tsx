@@ -89,7 +89,23 @@ it("hands the action to the page only after Confirm, then records how it went", 
     outcome: "done",
   });
   expect(hostState().results).toEqual([{ name: "open_agenda", outcome: "done", result: "Opened" }]);
-  expect(asked).toHaveBeenCalledWith("Done");
+  // The agent hears exactly what the page reported, and it is a system line, not the person's words.
+  expect(asked).toHaveBeenCalledWith(
+    expect.stringContaining('The page carried out "Abrir na agenda" and reported: Opened.'),
+    { hostResult: { outcome: "done" } },
+  );
+  expect(asked.mock.calls[0]?.[0]).not.toBe("Done");
+});
+
+it("tells the agent that nothing was created when the page reports no more than opening a screen", async () => {
+  const asked = vi.fn();
+  onHostAsk(asked);
+  await render(block());
+  await act(async () => button("Confirm").click());
+  await act(async () => answerHostAction("a1", { ok: true }));
+  const text = String(asked.mock.calls[0]?.[0]);
+  expect(text).toContain("nothing was scheduled, sent, created or changed");
+  expect(asked.mock.calls[0]?.[1]).toEqual({ hostResult: { outcome: "done" } });
 });
 
 it("records a failure the page reports", async () => {
@@ -99,7 +115,12 @@ it("records a failure the page reports", async () => {
   await act(async () => button("Confirm").click());
   await act(async () => answerHostAction("a1", { ok: false, result: "No slot" }));
   expect(resolveHostAction).toHaveBeenCalledWith(expect.objectContaining({ outcome: "failed" }));
-  expect(asked).toHaveBeenCalledWith("That didn't work");
+  expect(asked).toHaveBeenCalledWith(
+    expect.stringContaining(
+      'The page could not carry out "Abrir na agenda": No slot. Nothing was done.',
+    ),
+    { hostResult: { outcome: "failed" } },
+  );
 });
 
 it("never reaches the page when the person says Not now", async () => {

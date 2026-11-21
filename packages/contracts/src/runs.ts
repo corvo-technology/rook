@@ -66,6 +66,17 @@ export const RUN_ERROR_CODES = [
   "turn_stopped",
   "unknown",
 ] as const;
+/**
+ * Failures that are the account's setup, not something the person using a partner's product can
+ * fix: no model, no credit, a model that cannot be priced. They show the person one neutral line
+ * and tell the partner's administrators the real cause.
+ */
+export const ASSISTANT_SETUP_RUN_ERRORS = [
+  "no_model_access",
+  "model_credits_empty",
+  "model_unpriced",
+  "model_not_allowed",
+] as const satisfies readonly (typeof RUN_ERROR_CODES)[number][];
 export const RunErrorCodeSchema = z.enum(RUN_ERROR_CODES);
 export type RunErrorCode = z.infer<typeof RunErrorCodeSchema>;
 

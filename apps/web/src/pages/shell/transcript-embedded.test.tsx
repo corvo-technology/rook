@@ -64,7 +64,7 @@ const MESSAGES: ThreadMessage[] = [
   },
 ];
 
-function render(embeddedViewer?: { name: string | null }) {
+function render(embeddedViewer?: { name: string | null }, messages: ThreadMessage[] = MESSAGES) {
   const noop = () => undefined;
   const resolved = async () => undefined;
   const props: ComponentProps<typeof Transcript> = {
@@ -72,7 +72,7 @@ function render(embeddedViewer?: { name: string | null }) {
     scrollRequest: null,
     onScrollRequestHandled: noop,
     artifactTarget: { botId: "bot" },
-    transcript: foldThreadReplies(foldPeerReplies(MESSAGES, { includePeerReceipts: true })),
+    transcript: foldThreadReplies(foldPeerReplies(messages, { includePeerReceipts: true })),
     showToolActivity: false,
     olderCursor: null,
     unreadAfterSeq: null,
@@ -121,5 +121,39 @@ describe("who a message is from inside a partner's product", () => {
     render(undefined);
     expect(container.textContent).toContain("Clinic Account");
     expect(container.textContent).toContain("Owner");
+  });
+});
+
+describe("what a confirmed page action did", () => {
+  const resultMessage: ThreadMessage = {
+    id: "m2",
+    threadId: "thread",
+    seq: 2,
+    role: "user",
+    authorUserId: "owner",
+    authorName: "Clinic Account",
+    createdAt: "2026-11-10T09:01:00.000Z",
+    blocks: [
+      { kind: "text", text: 'The page carried out "Open the agenda". Nothing was created.' },
+      { kind: "host_result", outcome: "done" },
+    ],
+  };
+
+  it("is a system chip, not a message the person typed", () => {
+    render({ name: "Dra. Ana" }, [resultMessage]);
+    const chip = container.querySelector('[data-testid="host-result-chip"]');
+    expect(chip?.textContent).toBe("Done");
+    // Neither the person's name nor the text the agent reads is shown as their words.
+    expect(container.textContent).not.toContain("Dra. Ana");
+    expect(container.textContent).not.toContain("Nothing was created");
+  });
+
+  it("says when it did not work", () => {
+    render({ name: null }, [
+      { ...resultMessage, blocks: [{ kind: "host_result", outcome: "failed" }] },
+    ]);
+    expect(container.querySelector('[data-testid="host-result-chip"]')?.textContent).toBe(
+      "That didn't work",
+    );
   });
 });

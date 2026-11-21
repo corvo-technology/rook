@@ -7,6 +7,7 @@ import { returnBotMessageOutcome, runReturnsOutcome } from "./bot-messages.js";
 import { withComputerScreenAvailability } from "./computer-screens.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { closeHandoffGroup } from "./handoff-summary.js";
+import { alertPartnerOfSetupFailure } from "./partner-run-alerts.js";
 import { classifyRunError } from "./run-error-code.js";
 import { notifyRun } from "./run-notifications.js";
 import type { TakeoverResumeCheckpoint } from "./takeover-resume.js";
@@ -106,6 +107,7 @@ export async function failRunBeforeTurn(
     ...(options.stopReason ? { stopReason: options.stopReason } : {}),
   });
   if (!failed) return false;
+  await alertPartnerOfSetupFailure(deps, run.spaceId, errorInfo);
   const locale = run.ticketId ? await personLocale(deps, run.userId) : undefined;
   await endTicketRun(deps, run, {
     kind: "stopped",

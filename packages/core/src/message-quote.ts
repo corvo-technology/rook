@@ -185,6 +185,8 @@ function replyBlockText(block: MessageBlock): string {
       return block.name;
     case "host_action":
       return block.label;
+    case "host_result":
+      return "";
     case "import_setup":
       if (block.undone) return "";
       return block.items.map((item) => ("name" in item ? item.name : item.title)).join(", ");

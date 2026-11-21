@@ -39,6 +39,10 @@ export const PARTNER_ALERT_COPY: Record<PartnerAlertLocale, PartnerAlertCopy> = 
         one: "{name}'s connector is down.",
         many: "{n} customers have a connector down",
       },
+      "customer.assistant_unavailable": {
+        one: "{name}'s assistant is unavailable.",
+        many: "{n} customers have an unavailable assistant",
+      },
     },
     customer: "A customer",
     several: "{n} alerts",
@@ -62,6 +66,10 @@ export const PARTNER_ALERT_COPY: Record<PartnerAlertLocale, PartnerAlertCopy> = 
       "customer.connector_down": {
         one: "O conector de {name} está fora do ar.",
         many: "{n} clientes estão com o conector fora do ar",
+      },
+      "customer.assistant_unavailable": {
+        one: "O assistente de {name} está indisponível.",
+        many: "{n} clientes estão com o assistente indisponível",
       },
     },
     customer: "Um cliente",
@@ -87,6 +95,10 @@ export const PARTNER_ALERT_COPY: Record<PartnerAlertLocale, PartnerAlertCopy> = 
         one: "El conector de {name} está caído.",
         many: "{n} clientes tienen el conector caído",
       },
+      "customer.assistant_unavailable": {
+        one: "El asistente de {name} no está disponible.",
+        many: "{n} clientes tienen el asistente no disponible",
+      },
     },
     customer: "Un cliente",
     several: "{n} avisos",
@@ -110,6 +122,10 @@ export const PARTNER_ALERT_COPY: Record<PartnerAlertLocale, PartnerAlertCopy> = 
       "customer.connector_down": {
         one: "Le connecteur de {name} est hors service.",
         many: "{n} clients ont un connecteur hors service",
+      },
+      "customer.assistant_unavailable": {
+        one: "L'assistant de {name} est indisponible.",
+        many: "{n} clients ont un assistant indisponible",
       },
     },
     customer: "Un client",
@@ -135,6 +151,10 @@ export const PARTNER_ALERT_COPY: Record<PartnerAlertLocale, PartnerAlertCopy> = 
         one: "Der Connector von {name} ist ausgefallen.",
         many: "Bei {n} Kunden ist der Connector ausgefallen",
       },
+      "customer.assistant_unavailable": {
+        one: "Der Assistent von {name} ist nicht verfügbar.",
+        many: "Bei {n} Kunden ist der Assistent nicht verfügbar",
+      },
     },
     customer: "Ein Kunde",
     several: "{n} Hinweise",
@@ -159,6 +179,10 @@ export const PARTNER_ALERT_COPY: Record<PartnerAlertLocale, PartnerAlertCopy> = 
         one: "{name}のコネクターが停止しています。",
         many: "{n}件のお客様のコネクターが停止しています",
       },
+      "customer.assistant_unavailable": {
+        one: "{name}のアシスタントが利用できません。",
+        many: "{n}件のお客様でアシスタントが利用できません",
+      },
     },
     customer: "お客様",
     several: "{n}件のお知らせ",
@@ -182,6 +206,10 @@ export const PARTNER_ALERT_COPY: Record<PartnerAlertLocale, PartnerAlertCopy> = 
       "customer.connector_down": {
         one: "{name}的连接器已中断。",
         many: "{n}位客户的连接器已中断",
+      },
+      "customer.assistant_unavailable": {
+        one: "{name}的助手不可用。",
+        many: "{n}位客户的助手不可用",
       },
     },
     customer: "一位客户",

@@ -509,3 +509,80 @@ describe("inline mode", () => {
     expect(new URLSearchParams(new URL(frame.src).hash.slice(1)).get("mode")).toBeNull();
   });
 });
+
+describe("launcher: navigation suggestions", () => {
+  const lines = (element: Element) =>
+    [...pop(element).querySelectorAll(".suggest button")] as HTMLButtonElement[];
+
+  it("opens a place itself, without a message to the assistant", async () => {
+    const element = mount({ locale: "pt-BR" });
+    const navigated: string[] = [];
+    element.addEventListener("corvo-navigate", (event) =>
+      navigated.push((event as CustomEvent).detail.path),
+    );
+    fab(element).dispatchEvent(new Event("pointerenter"));
+    await settle();
+    const { post } = spyFrame(element);
+    fromFrame(element, { type: "corvo:ready" });
+    post.mockClear();
+    element.setContext({
+      page: "/agenda",
+      suggestions: [
+        { label: "Abrir a ficha do paciente", path: "/pacientes/42" },
+        "Quem vem hoje?",
+      ],
+    });
+    post.mockClear();
+    lines(element)[0]?.click();
+    expect(navigated).toEqual(["/pacientes/42"]);
+    expect(post).not.toHaveBeenCalledWith(expect.objectContaining({ type: "corvo:ask" }), ORIGIN);
+    // A plain line is still a question for the assistant.
+    lines(element)[1]?.click();
+    expect(post).toHaveBeenCalledWith({ type: "corvo:ask", text: "Quem vem hoje?" }, ORIGIN);
+  });
+
+  it("never suggests the screen the person is already on", () => {
+    const element = mount();
+    element.setContext({
+      page: "/pacientes/42?tab=1",
+      suggestions: [
+        { label: "Open the patient file", path: "/pacientes/42" },
+        { label: "Open the agenda", path: "/agenda" },
+      ],
+    });
+    expect(lines(element).map((b) => b.textContent)).toEqual(["Open the agenda"]);
+  });
+
+  it("offers a shortcut to each entity that has a place, from the page's context, without sending the path", async () => {
+    const element = mount({ locale: "pt-BR" });
+    const { post } = await (async () => {
+      fab(element).dispatchEvent(new Event("pointerenter"));
+      await settle();
+      const spy = spyFrame(element);
+      fromFrame(element, { type: "corvo:ready" });
+      spy.post.mockClear();
+      return spy;
+    })();
+    element.setContext({
+      page: "/agenda",
+      entities: [
+        { type: "patient", id: "42", label: "Maria", path: "/pacientes/42" },
+        { type: "appointment", id: "7", label: "Retorno", path: "/agenda" },
+      ],
+    });
+    // The agenda is where the person is, so only the patient is offered.
+    expect(lines(element).map((b) => b.textContent)).toEqual(["Abrir Maria"]);
+    const sent = post.mock.calls.at(-1)?.[0] as { context: { entities: unknown[] } };
+    expect(sent.context.entities).toEqual([
+      { type: "patient", id: "42", label: "Maria" },
+      { type: "appointment", id: "7", label: "Retorno" },
+    ]);
+  });
+
+  it("titles the panel with the neutral name when the page gave none", () => {
+    const element = mount({ locale: "pt-BR" });
+    expect((shadow(element).querySelector(".title") as HTMLElement).textContent).toBe("Assistente");
+    element.setAttribute("name", "Prontu IA");
+    expect((shadow(element).querySelector(".title") as HTMLElement).textContent).toBe("Prontu IA");
+  });
+});

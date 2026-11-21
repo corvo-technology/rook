@@ -365,6 +365,8 @@ const threadSendInput = threadTarget
     model: z.object({ provider: z.string().min(1), modelId: z.string().min(1) }).optional(),
     /** What the partner's page says about where the person is and what it can do for them. */
     host: HostTurnSchema.optional(),
+    /** The message reports what a confirmed page action did; it is shown as a system line. */
+    hostResult: z.object({ outcome: z.enum(["done", "denied", "failed"]) }).optional(),
   })
   .superRefine((input, ctx) => {
     const text = input.text?.trim() ?? "";

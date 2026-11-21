@@ -214,14 +214,20 @@ describe("the recording bar in the launcher's panel", () => {
   });
 
   it("asks for the microphone only after consent, and says when it is blocked", async () => {
-    getUserMedia.mockRejectedValueOnce(new Error("NotAllowedError"));
+    getUserMedia.mockRejectedValueOnce(
+      Object.assign(new Error("denied"), { name: "NotAllowedError" }),
+    );
     const element = mount();
     element.setContext(patient);
     press(element, "Record consultation");
     press(element, "Yes, verbally");
     await settle();
     expect(getUserMedia).toHaveBeenCalledTimes(1);
-    expect(bar(element).textContent).toContain("Allow the microphone to record.");
+    // It says why and how to fix it, not only that it failed.
+    expect(bar(element).textContent).toContain("Open the site settings");
+    expect(bar(element).querySelector("[data-code]")?.getAttribute("data-code")).toBe(
+      "permission_denied",
+    );
     expect(calls.some((call) => call.path === "/api/partner/embed/consultations")).toBe(false);
     expect(buttons(element).map((button) => button.textContent)).toEqual(["Try again"]);
   });

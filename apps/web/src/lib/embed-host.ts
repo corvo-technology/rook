@@ -21,8 +21,13 @@ interface HostState {
 
 let state: HostState = { context: null, actions: [], results: [] };
 const listeners = new Set<() => void>();
-const asks = new Set<(text: string) => void>();
-const early: string[] = [];
+/** How a line the page or a card adds to the chat is sent: `hostResult` makes it a system line. */
+export interface HostAskOptions {
+  hostResult?: { outcome: HostActionOutcome };
+}
+type AskListener = (text: string, options?: HostAskOptions) => void;
+const asks = new Set<AskListener>();
+const early: Array<{ text: string; options?: HostAskOptions }> = [];
 const pending = new Map<string, (answer: { ok: boolean; result?: string }) => void>();
 
 function set(next: Partial<HostState>) {
@@ -63,16 +68,16 @@ export function takeHostTurn(): HostTurn | undefined {
 }
 
 /** The person asked something in the page's own box; the chat sends it as their message. */
-export function onHostAsk(listener: (text: string) => void): () => void {
+export function onHostAsk(listener: AskListener): () => void {
   asks.add(listener);
   // A question that came while the chat was still loading is sent now.
-  for (const text of early.splice(0)) listener(text);
+  for (const item of early.splice(0)) listener(item.text, item.options);
   return () => asks.delete(listener);
 }
 
-export function hostAsk(text: string) {
-  if (asks.size === 0) early.push(text);
-  for (const listener of asks) listener(text);
+export function hostAsk(text: string, options?: HostAskOptions) {
+  if (asks.size === 0) early.push({ text, options });
+  for (const listener of asks) listener(text, options);
 }
 
 const ACTION_TIMEOUT_MS = 30_000;

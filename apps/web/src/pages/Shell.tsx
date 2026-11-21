@@ -282,6 +282,8 @@ function SpaceShell({ page }: { page?: ReactNode }) {
   const { pathname } = useLocation();
   const chiefId = findFirstBot(bots.map((bot) => ({ ...bot, spawnKey: bot.spawnKey ?? null })))?.id;
   const chiefBot = bots.find((bot) => bot.id === chiefId) ?? bots[0];
+  // Inside a partner's product the Chief is the partner's assistant, never Rook's lead agent.
+  const chiefDisplayName = embedAssistantName(embedBrand, chiefBot?.name, t`Assistant`);
   const isMobileSidebar = useIsMobile();
   const miniSidebar = botsSidebarCollapsed && !isMobileSidebar;
   const dialogs = useShellDialogs();
@@ -566,7 +568,7 @@ function SpaceShell({ page }: { page?: ReactNode }) {
     return {
       botId: run.botId,
       color: bot?.color ?? FALLBACK_BOT_COLOR,
-      name: bot?.name,
+      name: embedded && run.botId === chiefId ? chiefDisplayName : bot?.name,
       status: run.status,
     };
   });
@@ -676,7 +678,14 @@ function SpaceShell({ page }: { page?: ReactNode }) {
   // The partner's own quick-ask box, and the line that follows a confirmed action, send as the
   // person's next message.
   const sendHostAsk = composer.sendMessage;
-  useEffect(() => onHostAsk((text) => void sendHostAsk(text, [], newClientId())), [sendHostAsk]);
+  useEffect(
+    () =>
+      onHostAsk(
+        (text, options) =>
+          void sendHostAsk(text, [], newClientId(), undefined, options?.hostResult),
+      ),
+    [sendHostAsk],
+  );
   function openChatSettings(kind: "bot" | "group", id: string) {
     const destKey =
       userId && bootstrapMe?.spaceId
@@ -1233,7 +1242,9 @@ function SpaceShell({ page }: { page?: ReactNode }) {
                   activeName={
                     inGroup
                       ? `#${activeGroup?.name ?? activeSnapshot?.groupName ?? ""}`
-                      : active?.name
+                      : embedded && active?.id === chiefId
+                        ? chiefDisplayName
+                        : active?.name
                   }
                   running={composerRunning}
                   disabled={Boolean(recordingSkill)}

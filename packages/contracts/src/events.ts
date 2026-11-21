@@ -238,6 +238,12 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     status: z.enum(["pending", "done", "denied", "failed"]),
   }),
   z.object({
+    /** What a confirmed action did, as the page reported it. Shown as a small system line, never as
+        something the person typed; the message's text is what the agent reads. */
+    kind: z.literal("host_result"),
+    outcome: z.enum(["done", "denied", "failed"]),
+  }),
+  z.object({
     kind: z.literal("connect"),
     name: z.string(),
     initial: z.string(),

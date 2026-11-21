@@ -140,7 +140,11 @@ el.addEventListener("corvo-action", async (event) => {
 
 ## Suggestions
 
-`el.setSuggestions(["Who is coming today?", "Overdue customers"])` sets the lines in the quick-ask box. Without it, the `suggestions` of the context apply, then the descriptions of your registered actions.
+`el.setSuggestions(["Who is coming today?", "Overdue customers"])` sets the lines in the quick-ask box. Without it, the `suggestions` of the context apply, then a shortcut for each entity that has a `path`, then the descriptions of your registered actions.
+
+A plain string is a question sent to the assistant. A place in your product is `{ label, path }`: tapping it fires `corvo-navigate` with the path and nothing is sent to the assistant. Suggestions whose `path` is the page the person is on (your context's `page`, or the current address) are hidden. An entity with a `path` (`{ type: "patient", id: "42", label: "Maria", path: "/patients/42" }`) becomes an "Open Maria" shortcut without you listing it; the `path` stays in your page and is never sent to Rook.
+
+The panel's title is your `name` attribute, or "Assistant" when you pass none; Rook's own name is never shown.
 
 ## Methods
 
@@ -171,6 +175,7 @@ The same script also defines `Rook.ask`, `Rook.recorder` and `Rook.configure` (s
 | `corvo-unavailable` `{ reason }` | Launcher only: the assistant cannot be offered, so the launcher hid itself. `reason` is `forbidden`, `unavailable`, `network`, `no_code` or `expired`. |
 | `corvo-action` `{ name, params, id }` | Launcher only: the customer confirmed an action you registered. Do it, then call `resolveAction(id, result)`. |
 | `corvo-consultation` `{ consultationId, clientId, appointmentId, note, transcript }` | Launcher only, with `consultations`: the draft of a consultation recorded in the panel is ready. Save it and call `resolveConsultation`. |
+| `corvo-consultation-error` `{ code, message, status, consultationId }` | Launcher only, with `consultations`: the recording failed. `code` is one of the [recording error codes](/en/partners/inline-ai/); the panel already shows `message`. Log it or show your own words. |
 
 The element asks your route for a new code whenever the frame needs one, on its own.
 

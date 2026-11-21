@@ -3,8 +3,9 @@ import type { ModelProblemOptions } from "@corvo/core";
 import { Button, InlineConfirm } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { useState } from "react";
+import { isEmbedded } from "../lib/embed";
 import type { RunErrorAction } from "../lib/run-error-copy";
-import { describeRunError } from "../lib/run-error-copy";
+import { describeEmbeddedSetupError, describeRunError } from "../lib/run-error-copy";
 import { errorText } from "../lib/user-error";
 import { ComputerLimitAction } from "./ExtraComputers";
 
@@ -38,7 +39,9 @@ export function RunErrorCard({
   authKind?: ModelProblemOptions["authKind"];
 } & RunErrorHandlers) {
   const { t } = useLingui();
-  const view = describeRunError(info, raw, authKind);
+  const view =
+    (isEmbedded() ? describeEmbeddedSetupError(info) : null) ??
+    describeRunError(info, raw, authKind);
   const [pending, setPending] = useState<"free-space" | "recover" | null>(null);
   // The action that worked, so the card can offer to run the failed turn again.
   const [done, setDone] = useState<"free-space" | "recover" | null>(null);
@@ -152,15 +155,17 @@ export function RunErrorCard({
           <ComputerLimitAction />
         </div>
       ) : null}
-      <details className="mt-2">
-        <summary className="w-fit cursor-pointer text-muted-foreground">{t`Details`}</summary>
-        <pre
-          data-testid="run-error-details"
-          className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-words text-xs text-muted-foreground"
-        >
-          {view.details}
-        </pre>
-      </details>
+      {view.details ? (
+        <details className="mt-2">
+          <summary className="w-fit cursor-pointer text-muted-foreground">{t`Details`}</summary>
+          <pre
+            data-testid="run-error-details"
+            className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-words text-xs text-muted-foreground"
+          >
+            {view.details}
+          </pre>
+        </details>
+      ) : null}
     </div>
   );
 }

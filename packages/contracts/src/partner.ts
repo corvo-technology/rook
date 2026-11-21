@@ -284,6 +284,7 @@ export const PARTNER_ALERT_KINDS = [
   "invoice.issued",
   "subscription.lapsed",
   "customer.connector_down",
+  "customer.assistant_unavailable",
 ] as const;
 export type PartnerAlertKind = (typeof PARTNER_ALERT_KINDS)[number];
 
@@ -296,6 +297,7 @@ export const PARTNER_ALERT_CODES = {
   "invoice.issued": "partner_invoice_issued",
   "subscription.lapsed": "partner_past_due",
   "customer.connector_down": "partner_connector_down",
+  "customer.assistant_unavailable": "partner_assistant_unavailable",
 } as const satisfies Record<PartnerAlertKind, string>;
 
 /** The console screen an alert leads to. */
@@ -307,7 +309,21 @@ export const PARTNER_ALERT_SECTIONS = {
   "invoice.issued": "invoices",
   "subscription.lapsed": "customers",
   "customer.connector_down": "customers",
+  "customer.assistant_unavailable": "customers",
 } as const satisfies Record<PartnerAlertKind, string>;
+
+/**
+ * Why a customer's assistant could not answer, as the partner's administrators are told. The
+ * person using the product only ever sees that it is unavailable.
+ */
+export const ASSISTANT_UNAVAILABLE_CAUSES = [
+  "no_model",
+  "credits_empty",
+  "model_unpriced",
+  "model_not_allowed",
+  "transcription_unavailable",
+] as const;
+export type AssistantUnavailableCause = (typeof ASSISTANT_UNAVAILABLE_CAUSES)[number];
 
 /**
  * The pilot's credit notice, in cents. Commerce events (`subscription.*`, `credit.*`,

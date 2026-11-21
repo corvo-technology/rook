@@ -33,6 +33,7 @@ import { resolveBotWorkspacePath } from "./computer-support.js";
 import { ticketUnfinishedDelegation } from "./delegated-work.js";
 import { closeHandoffGroup } from "./handoff-summary.js";
 import { compactionJobAfterTurn } from "./history-compaction.js";
+import { alertPartnerOfSetupFailure } from "./partner-run-alerts.js";
 import { addReplyUsage, ReplyCapExceededError } from "./reply-budget.js";
 import {
   backOffRoutineAfterAccountError,
@@ -918,6 +919,7 @@ export async function failRun(
     ...(partialReply.length > 0 ? { partialReply } : {}),
   });
   if (!failed) return;
+  await alertPartnerOfSetupFailure(deps, run.spaceId, errorInfo);
   const ticketComment = run.ticketId
     ? ticketFailureComment(errorInfo, await ticketOwnerLocale(deps.prisma, bot.id))
     : undefined;

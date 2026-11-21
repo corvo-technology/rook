@@ -26,9 +26,9 @@
 // through it (its session-url, origin and one shared token); without one, with a session of their
 // own from the sessionUrl you configure. sdk-assist.js remains as an alias that loads this file.
 //
-// Methods: setContext({ page, title, entities: [{ type, id, label }], suggestions? }),
+// Methods: setContext({ page, title, entities: [{ type, id, label, path? }], suggestions? }),
 // registerActions([{ name, description, params, confirm }]), resolveAction(id, result),
-// setSuggestions([text]), setConsultation({ clientId, appointmentId, clientName,
+// setSuggestions([text | { label, path }]), setConsultation({ clientId, appointmentId, clientName,
 // professionalName, preset | schema }), resolveConsultation({ path, label }), open(), close(),
 // toggle().
 //
@@ -66,24 +66,135 @@
     const Rook = window.Rook;
     // A stub left by the sdk-assist.js alias, which waits for this file, does not count.
     if (Rook.ask && !Rook.ask.stub) return;
-    const settings = { sessionUrl: null, origin: null, getToken: null };
+    const settings = { sessionUrl: null, origin: null, getToken: null, lang: null };
     let cached = null;
 
-    /** `sessionUrl`, `origin` (where Rook runs; default: where this file came from), `getToken`. */
+    /** `sessionUrl`, `origin` (where Rook runs; default: where this file came from), `getToken`, `lang`. */
     Rook.configure = (options = {}) => {
       Object.assign(settings, options);
       cached = null;
     };
 
+    // What each failure says to the person using your product, by `error.code`. The administrator
+    // is told about configuration problems; the person is never asked to fix them.
+    const UNAVAILABLE = {
+      en: "The assistant is unavailable right now. We told the administrator.",
+      "pt-BR": "O assistente est\u00e1 indispon\u00edvel agora. Avisamos o administrador.",
+      es: "El asistente no est\u00e1 disponible ahora. Avisamos al administrador.",
+    };
+    const ERRORS = {
+      en: {
+        permission_denied:
+          "Microphone permission was denied. Open the site settings in your browser (the icon next to the address), allow the microphone and try again.",
+        permission_blocked:
+          "Your browser blocks the microphone on this site. Open the site settings (the icon next to the address), allow the microphone and reload the page.",
+        no_microphone: "No microphone found. Connect one and try again.",
+        microphone_busy: "Another app is using the microphone. Close it and try again.",
+        insecure_context: "The microphone only works on secure (HTTPS) pages.",
+        unsupported_browser:
+          "This browser can't record audio. Use a recent Chrome, Edge, Firefox or Safari.",
+        consent_missing: "Record the patient's consent before recording.",
+        network_error: "Can't reach the server. Check the connection and try again.",
+        upload_failed: "Couldn't upload the audio. Check the connection and try again.",
+        unauthorized: "The session expired. Reload the page and try again.",
+        session_failed: "Couldn't open the session. Reload the page and try again.",
+        no_session: "Couldn't open the session. Reload the page and try again.",
+        forbidden: "This access can't record consultations.",
+        not_found: "This recording was not found. Start a new one.",
+        too_long: "The consultation passed the maximum recording length.",
+        too_large: "The audio is too large to upload.",
+        invalid_request: "Couldn't start the recording. Reload the page and try again.",
+        unsupported_audio: "This audio format is not supported.",
+        too_many_requests: "Too many attempts. Wait a moment and try again.",
+        server_error: "The service is having trouble. Try again in a moment.",
+        no_audio: "No audio was recorded.",
+        no_speech: "No speech could be heard in the recording.",
+        transcription_failed: "Couldn't transcribe the audio. Try again.",
+        processing_failed: "Couldn't generate the draft. Try again.",
+        timeout: "Processing took too long. Try again.",
+        recorder_failed: "The recording was interrupted. Try again.",
+        failed: "Couldn't record. Try again.",
+      },
+      "pt-BR": {
+        permission_denied:
+          "A permiss\u00e3o do microfone foi negada. Abra as configura\u00e7\u00f5es do site no navegador (o \u00edcone ao lado do endere\u00e7o), permita o microfone e tente de novo.",
+        permission_blocked:
+          "O navegador bloqueou o microfone neste site. Abra as configura\u00e7\u00f5es do site (o \u00edcone ao lado do endere\u00e7o), permita o microfone e recarregue a p\u00e1gina.",
+        no_microphone: "Nenhum microfone encontrado. Conecte um e tente de novo.",
+        microphone_busy: "Outro aplicativo est\u00e1 usando o microfone. Feche-o e tente de novo.",
+        insecure_context: "O microfone s\u00f3 funciona em p\u00e1ginas seguras (HTTPS).",
+        unsupported_browser:
+          "Este navegador n\u00e3o consegue gravar \u00e1udio. Use uma vers\u00e3o recente do Chrome, Edge, Firefox ou Safari.",
+        consent_missing: "Registre o consentimento do paciente antes de gravar.",
+        network_error: "Sem conex\u00e3o com o servidor. Verifique a internet e tente de novo.",
+        upload_failed:
+          "N\u00e3o foi poss\u00edvel enviar o \u00e1udio. Verifique a internet e tente de novo.",
+        unauthorized: "A sess\u00e3o expirou. Recarregue a p\u00e1gina e tente de novo.",
+        session_failed:
+          "N\u00e3o foi poss\u00edvel abrir a sess\u00e3o. Recarregue a p\u00e1gina e tente de novo.",
+        no_session:
+          "N\u00e3o foi poss\u00edvel abrir a sess\u00e3o. Recarregue a p\u00e1gina e tente de novo.",
+        forbidden: "Este acesso n\u00e3o permite gravar consultas.",
+        not_found: "Esta grava\u00e7\u00e3o n\u00e3o foi encontrada. Comece uma nova.",
+        too_long: "A consulta passou do tempo m\u00e1ximo de grava\u00e7\u00e3o.",
+        too_large: "O \u00e1udio ficou grande demais para enviar.",
+        invalid_request:
+          "N\u00e3o foi poss\u00edvel iniciar a grava\u00e7\u00e3o. Recarregue a p\u00e1gina e tente de novo.",
+        unsupported_audio: "Este formato de \u00e1udio n\u00e3o \u00e9 aceito.",
+        too_many_requests: "Muitas tentativas. Espere um instante e tente de novo.",
+        server_error: "O servi\u00e7o est\u00e1 inst\u00e1vel. Tente de novo em instantes.",
+        no_audio: "Nenhum \u00e1udio foi gravado.",
+        no_speech: "N\u00e3o foi poss\u00edvel ouvir fala na grava\u00e7\u00e3o.",
+        transcription_failed: "N\u00e3o foi poss\u00edvel transcrever o \u00e1udio. Tente de novo.",
+        processing_failed: "N\u00e3o foi poss\u00edvel gerar o rascunho. Tente de novo.",
+        timeout: "O processamento demorou demais. Tente de novo.",
+        recorder_failed: "A grava\u00e7\u00e3o foi interrompida. Tente de novo.",
+        failed: "N\u00e3o foi poss\u00edvel gravar. Tente de novo.",
+      },
+      es: {
+        permission_denied:
+          "Se neg\u00f3 el permiso del micr\u00f3fono. Abre la configuraci\u00f3n del sitio en el navegador (el icono junto a la direcci\u00f3n), permite el micr\u00f3fono e int\u00e9ntalo de nuevo.",
+        permission_blocked:
+          "El navegador bloquea el micr\u00f3fono en este sitio. Abre la configuraci\u00f3n del sitio (el icono junto a la direcci\u00f3n), permite el micr\u00f3fono y recarga la p\u00e1gina.",
+        no_microphone:
+          "No se encontr\u00f3 ning\u00fan micr\u00f3fono. Conecta uno e int\u00e9ntalo de nuevo.",
+        failed: "No se pudo grabar. Int\u00e9ntalo de nuevo.",
+      },
+    };
+    // Codes where the cause is the account's setup, not the person's: they see one neutral line.
+    const UNAVAILABLE_CODES = [
+      "transcription_unavailable",
+      "credit_exhausted",
+      "allowance_exhausted",
+      "no_model",
+      "model_unpriced",
+      "model_credits_empty",
+      "access_inactive",
+    ];
+    const langTable = (table, lang) => {
+      const tag = String(lang || "").toLowerCase();
+      if (tag.startsWith("pt")) return table["pt-BR"];
+      return table[tag.slice(0, 2)] || table.en;
+    };
+    /** The sentence for a failure code in a language (default: the browser's). */
+    const errorMessage = (code, lang) => {
+      const language = lang || settings.lang || navigator.language;
+      if (UNAVAILABLE_CODES.includes(code)) return langTable(UNAVAILABLE, language);
+      return (
+        langTable(ERRORS, language)[code] || ERRORS.en[code] || langTable(ERRORS, language).failed
+      );
+    };
+
     class RookError extends Error {
-      constructor(code, status) {
-        super(code);
+      constructor(code, status, lang) {
+        super(errorMessage(code, lang));
         this.name = "RookError";
         this.code = code;
         this.status = status;
       }
     }
     Rook.RookError = RookError;
+    Rook.errorMessage = errorMessage;
 
     const origin = () => {
       const element = document.querySelector("corvo-assistant");
@@ -104,13 +215,19 @@
         settings.sessionUrl ||
         document.querySelector("corvo-assistant")?.getAttribute("session-url");
       if (!url) throw new RookError("no_session", 0);
-      const response = await fetch(url, { method: "POST", credentials: "same-origin" });
-      const { code } = response.ok ? await response.json() : {};
+      const response = await fetch(url, { method: "POST", credentials: "same-origin" }).catch(
+        () => {
+          throw new RookError("network_error", 0);
+        },
+      );
+      const { code } = response.ok ? await response.json().catch(() => ({})) : {};
       if (typeof code !== "string") throw new RookError("session_failed", response.status);
       const exchange = await fetch(`${origin()}/api/partner/embed/exchange`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ code }),
+      }).catch(() => {
+        throw new RookError("network_error", 0);
       });
       const body = exchange.ok ? await exchange.json() : {};
       if (typeof body.token !== "string") throw new RookError("session_failed", exchange.status);
@@ -128,15 +245,32 @@
         const response = await fetch(`${origin()}${path}`, {
           ...init,
           headers: { ...(init.headers || {}), authorization: `Bearer ${bearer}` },
+        }).catch(() => {
+          throw new RookError("network_error", 0);
         });
         if (response.status !== 401 || force) return response;
       }
       throw new RookError("unauthorized", 401);
     }
 
+    const BY_STATUS = {
+      400: "invalid_request",
+      401: "unauthorized",
+      402: "allowance_exhausted",
+      403: "forbidden",
+      404: "not_found",
+      413: "too_large",
+      415: "unsupported_audio",
+      429: "too_many_requests",
+    };
+    /** A refused call as an error: the server's own code, else one for its status. */
     async function failure(response) {
       const body = await response.json().catch(() => ({}));
-      return new RookError(typeof body.error === "string" ? body.error : "failed", response.status);
+      const given = typeof body.error === "string" && /^[a-z][a-z0-9_]*$/.test(body.error);
+      const code = given
+        ? body.error
+        : BY_STATUS[response.status] || (response.status >= 500 ? "server_error" : "failed");
+      return new RookError(code, response.status);
     }
 
     /** Reads server-sent events from a response, one { event, data } at a time. */
@@ -204,7 +338,11 @@
      * carries a live caption from the browser (when it can) and, at the end, the transcript Rook
      * wrote (`source: "server"`, with `turns`). `onResult(result, { transcript, consultationId })`
      * receives the fields of your schema. Pass `consent` as `{ method: "verbal" | "written" }` or a
-     * function that asks the patient and returns that (or false to stop).
+     * function that asks the patient and returns that (or false to stop). `onError(error)` gets a
+     * RookError: `error.code` says what to do (permission_denied, permission_blocked,
+     * no_microphone, microphone_busy, unsupported_browser, consent_missing, network_error,
+     * upload_failed, unauthorized, too_long, too_large, transcription_unavailable, ...) and
+     * `error.message` is a sentence for the person, in `lang`.
      */
     Rook.recorder = (options = {}) => {
       const {
@@ -248,6 +386,8 @@
         onState?.(next);
       };
       const fail = (error) => {
+        // Said in the recorder's language, with the code the page can act on.
+        if (error instanceof RookError && lang) error.message = errorMessage(error.code, lang);
         failed = failed || error;
         cleanup();
         set("error");
@@ -289,7 +429,7 @@
               ) {
                 return fail(error);
               }
-              if (attempt >= 2) return fail(new RookError("upload_failed", 0));
+              if (attempt >= 2) return fail(new RookError("upload_failed", 0, lang));
             }
             await wait(retryMs * (attempt + 1));
           }
@@ -316,16 +456,54 @@
         }
       };
 
+      // The codes the server reports for a failed consultation; any other is a failed draft.
+      const KNOWN_PROCESSING = [
+        "no_audio",
+        "no_speech",
+        "transcription_failed",
+        "transcription_unavailable",
+        "credit_exhausted",
+      ];
+      const processingCode = (code) =>
+        KNOWN_PROCESSING.includes(code) ? code : "processing_failed";
+
+      /** Why the microphone was refused, as a code the page and the person can act on. */
+      const microphoneCode = async (error) => {
+        const name = error && error.name;
+        if (
+          name === "NotFoundError" ||
+          name === "DevicesNotFoundError" ||
+          name === "OverconstrainedError"
+        )
+          return "no_microphone";
+        if (name === "NotReadableError" || name === "TrackStartError" || name === "AbortError")
+          return "microphone_busy";
+        if (name === "SecurityError") return "permission_blocked";
+        // Blocked in the site settings (no prompt can appear) versus dismissed this time; a
+        // refusal with no known name is read the same way.
+        try {
+          const status = await navigator.permissions?.query({ name: "microphone" });
+          if (status?.state === "denied") return "permission_blocked";
+        } catch {}
+        return "permission_denied";
+      };
+
       const poll = async () => {
         for (let i = 0; i < pollLimit; i++) {
           const response = await call(`/api/partner/embed/consultations/${consultationId}`);
           if (!response.ok) throw await failure(response);
           const status = await response.json();
           if (status.state === "drafted") return status;
-          if (status.state === "failed") throw new RookError(status.error?.code || "failed", 0);
+          if (status.state === "failed") throw new RookError(processingCode(status.error?.code), 0);
           await wait(pollMs);
         }
         throw new RookError("timeout", 0);
+      };
+
+      const mimeTypeOrNull = () => {
+        if (typeof Recorder !== "function") return null;
+        if (typeof Recorder.isTypeSupported !== "function") return "";
+        return PREFERRED_TYPES.find((type) => Recorder.isTypeSupported(type)) || null;
       };
 
       const api = {
@@ -343,17 +521,26 @@
           uploads = Promise.resolve();
           set("requesting");
           try {
+            if (consent === undefined || consent === null)
+              throw new RookError("consent_missing", 0, lang);
             const given = typeof consent === "function" ? await consent() : consent;
-            if (!given?.method) {
+            // The person answered no (or closed the question): nothing to report.
+            if (given === false || given === null || given === undefined) {
               set("idle");
               return;
             }
+            if (!given.method) throw new RookError("consent_missing", 0, lang);
+            if (window.isSecureContext === false) throw new RookError("insecure_context", 0, lang);
+            if (!mediaDevices?.getUserMedia || mimeTypeOrNull() === null)
+              throw new RookError("unsupported_browser", 0, lang);
             onPermission?.("requesting");
             try {
               stream = await mediaDevices.getUserMedia({ audio: true });
-            } catch {
-              onPermission?.("denied");
-              throw new RookError("permission_denied", 0);
+            } catch (error) {
+              const code = await microphoneCode(error);
+              if (code === "permission_denied" || code === "permission_blocked")
+                onPermission?.("denied");
+              throw new RookError(code, 0, lang);
             }
             onPermission?.("granted");
             const output = {
@@ -383,17 +570,21 @@
             });
             if (!created.ok) throw await failure(created);
             consultationId = (await created.json()).consultationId;
-            const mimeType = PREFERRED_TYPES.find((type) => Recorder.isTypeSupported?.(type));
-            media = new Recorder(stream, mimeType ? { mimeType } : undefined);
+            const mimeType = mimeTypeOrNull();
+            try {
+              media = new Recorder(stream, mimeType ? { mimeType } : undefined);
+            } catch {
+              throw new RookError("unsupported_browser", 0, lang);
+            }
             media.ondataavailable = (event) => {
               if (event.data && event.data.size > 0) upload(event.data, seq++);
             };
-            media.onerror = () => fail(new RookError("recorder_failed", 0));
+            media.onerror = () => fail(new RookError("recorder_failed", 0, lang));
             media.start(chunkMs);
             startCaptions();
             set("recording");
           } catch (error) {
-            fail(error instanceof RookError ? error : new RookError("failed", 0));
+            fail(error instanceof RookError ? error : new RookError("failed", 0, lang));
           }
         },
 
@@ -446,7 +637,8 @@
               set("done");
               if (!keep) await api.discard();
             } catch (error) {
-              if (!failed) fail(error instanceof RookError ? error : new RookError("failed", 0));
+              if (!failed)
+                fail(error instanceof RookError ? error : new RookError("failed", 0, lang));
             }
           })();
           return finished;
@@ -485,6 +677,30 @@
   const PARAM_NAME = /^[a-zA-Z_][a-zA-Z0-9_]{0,31}$/;
   const PARAM_TYPES = ["string", "number", "integer", "boolean"];
 
+  /**
+   * A suggestion is a line to ask the assistant (a string, or `{ label }`), or a place in your
+   * product (`{ label, path }`): that one opens the place itself and never reaches the model.
+   */
+  function cleanSuggestion(item) {
+    const label = limit(typeof item === "string" ? item : item && item.label, 80).trim();
+    if (!label) return null;
+    return item && typeof item === "object" && isPath(item.path)
+      ? { label, path: item.path }
+      : { label };
+  }
+  const cleanSuggestions = (list) =>
+    (Array.isArray(list) ? list : []).map(cleanSuggestion).filter(Boolean).slice(0, 4);
+  const OPEN_COPY = {
+    en: "Open %s",
+    "pt-BR": "Abrir %s",
+    es: "Abrir %s",
+    fr: "Ouvrir %s",
+    de: "%s \u00f6ffnen",
+    ja: "%s\u3092\u958b\u304f",
+    "zh-CN": "\u6253\u5f00%s",
+  };
+  const strip = (path) => String(path).split(/[?#]/)[0].replace(/\/+$/, "") || "/";
+
   /** Keeps only what the assistant may be told: short strings, a few entities. */
   function cleanContext(value) {
     if (!value || typeof value !== "object") return null;
@@ -494,14 +710,14 @@
         const type = entity && /^[a-z][a-z0-9_-]{0,31}$/i.test(entity.type) ? entity.type : "";
         const id = limit(entity && String(entity.id ?? ""), 64);
         const label = limit(entity && entity.label, 120);
-        return type && id && label ? [{ type, id, label }] : [];
+        // `path` is where your product shows it; it stays in the page and is never sent.
+        return type && id && label
+          ? [{ type, id, label, ...(isPath(entity.path) ? { path: entity.path } : {}) }]
+          : [];
       });
     const page = limit(value.page, 200);
     const title = limit(value.title, 120);
-    const suggestions = (Array.isArray(value.suggestions) ? value.suggestions : [])
-      .map((text) => limit(text, 80))
-      .filter(Boolean)
-      .slice(0, 4);
+    const suggestions = cleanSuggestions(value.suggestions);
     if (!page && !title && !entities.length && !suggestions.length) return null;
     return { page, title, entities, suggestions };
   }
@@ -728,6 +944,12 @@
     if (tag.startsWith("zh")) return REC_COPY["zh-CN"];
     return REC_COPY[tag.slice(0, 2)] || REC_COPY.en;
   };
+  const copyKey = (locale) => {
+    const tag = String(locale || "").toLowerCase();
+    if (tag.startsWith("pt")) return "pt-BR";
+    if (tag.startsWith("zh")) return "zh-CN";
+    return OPEN_COPY[tag.slice(0, 2)] ? tag.slice(0, 2) : "en";
+  };
   const copyFor = (locale) => {
     const tag = String(locale || "").toLowerCase();
     if (tag.startsWith("pt")) return COPY["pt-BR"];
@@ -937,7 +1159,7 @@ button{cursor:pointer}
           ? {
               page: context.page || undefined,
               title: context.title || undefined,
-              entities: context.entities,
+              entities: context.entities.map(({ type, id, label }) => ({ type, id, label })),
             }
           : null,
       });
@@ -973,20 +1195,37 @@ button{cursor:pointer}
 
     /** The lines the quick-ask popover offers; without them, the page's suggestions or actions. */
     setSuggestions(list) {
-      this.suggestions = (Array.isArray(list) ? list : [])
-        .map((text) => limit(text, 80))
-        .filter(Boolean)
-        .slice(0, 4);
+      this.suggestions = cleanSuggestions(list);
       this.paintPopover();
     }
 
+    /** Whether a place is the screen the person is already on. */
+    isHere(path) {
+      const here = [this.pageContext?.page, location.pathname].filter(isPath).map(strip);
+      return here.includes(strip(path));
+    }
+
+    /**
+     * What the popover offers: your suggestions, else a shortcut to each entity of the page that
+     * has a place of its own, else your actions. Never the screen the person is already on.
+     */
     suggestionList() {
-      if (this.suggestions?.length) return this.suggestions;
-      if (this.pageContext?.suggestions.length) return this.pageContext.suggestions;
-      return [...this.actions.values()]
-        .map((action) => action.description)
-        .filter(Boolean)
-        .slice(0, 3);
+      const explicit = this.suggestions?.length ? this.suggestions : this.pageContext?.suggestions;
+      let list = explicit || [];
+      if (!list.length) {
+        const open = OPEN_COPY[copyKey(this.getAttribute("locale") || navigator.language)];
+        list = (this.pageContext?.entities || [])
+          .filter((entity) => entity.path)
+          .map((entity) => ({ label: open.replace("%s", entity.label), path: entity.path }));
+      }
+      if (!list.length) {
+        list = [...this.actions.values()]
+          .map((action) => action.description)
+          .filter(Boolean)
+          .slice(0, 3)
+          .map((label) => ({ label }));
+      }
+      return list.filter((item) => !item.path || !this.isHere(item.path));
     }
 
     // ---- Consultation recorder (launcher panel) ------------------------------------------------
@@ -1058,6 +1297,7 @@ button{cursor:pointer}
       this.recorder = window.Rook.recorder({
         ...target,
         consent: { method, at: new Date().toISOString() },
+        lang: target.lang || this.getAttribute("locale") || undefined,
         onState: (state) => {
           const phase = phases[state];
           if (!phase) return;
@@ -1085,7 +1325,18 @@ button{cursor:pointer}
           );
         },
         onError: (error) => {
-          this.rec.error = error && error.code;
+          this.rec.error = error ? { code: error.code, message: error.message } : null;
+          // The page can log it or show its own words; the panel shows the sentence below.
+          this.dispatchEvent(
+            new CustomEvent("corvo-consultation-error", {
+              detail: {
+                code: error && error.code,
+                message: error && error.message,
+                status: error && error.status,
+                consultationId: this.recorder?.consultationId ?? null,
+              },
+            }),
+          );
           this.paintRecorder();
         },
       });
@@ -1177,7 +1428,8 @@ button{cursor:pointer}
         }
         if (target) nodes.push(button(copy[0], () => this.startConsultation()));
       } else if (phase === "error") {
-        const status = text(this.rec.error === "permission_denied" ? copy[12] : copy[11], "grow");
+        const status = text(this.rec.error?.message || copy[11], "grow");
+        status.dataset.code = this.rec.error?.code || "failed";
         status.setAttribute("role", "alert");
         nodes.push(
           status,
@@ -1463,7 +1715,7 @@ button{cursor:pointer}
       this.input.placeholder = copy[0];
       this.input.setAttribute("aria-label", copy[0]);
       this.shadowRoot.querySelector(".full").textContent = copy[1];
-      this.shadowRoot.querySelector(".title").textContent = name;
+      this.shadowRoot.querySelector(".title").textContent = name || copy[5];
       this.frame.title = name || copy[5];
       this.fab.setAttribute("aria-label", name || copy[5]);
       this.pop.setAttribute("aria-label", name || copy[5]);
@@ -1492,12 +1744,19 @@ button{cursor:pointer}
       chip.textContent = label;
       const list = this.pop.querySelector(".suggest");
       list.replaceChildren(
-        ...this.suggestionList().map((text) => {
+        ...this.suggestionList().map((suggestion) => {
           const item = document.createElement("li");
           const button = document.createElement("button");
           button.type = "button";
-          button.textContent = text;
-          button.addEventListener("click", () => this.ask(text));
+          button.textContent = suggestion.label;
+          // A place opens in your product; only a question goes to the assistant.
+          button.addEventListener("click", () =>
+            suggestion.path
+              ? this.dispatchEvent(
+                  new CustomEvent("corvo-navigate", { detail: { path: suggestion.path } }),
+                )
+              : this.ask(suggestion.label),
+          );
           item.append(button);
           return item;
         }),

@@ -461,6 +461,14 @@ msgid "{name} stopped"
 msgstr "{name} 已停止"
 
 #: src/lib/server-copy.ts
+msgid "{name}'s assistant is unavailable"
+msgstr "{name}的助手不可用"
+
+#: src/lib/server-copy.ts
+msgid "{name}'s assistant is unavailable: {why}"
+msgstr "{name}的助手不可用：{why}"
+
+#: src/lib/server-copy.ts
 msgid "{name}'s connector is down"
 msgstr "{name}的连接器已中断"
 
@@ -3782,6 +3790,10 @@ msgid "Customer"
 msgstr "客户"
 
 #: src/pages/partner/PartnerIntegration.tsx
+msgid "Customer assistant unavailable"
+msgstr "客户的助手不可用"
+
+#: src/pages/partner/PartnerIntegration.tsx
 msgid "Customer connector down"
 msgstr "客户连接器中断"
 
@@ -4211,6 +4223,7 @@ msgstr "还没有账户？"
 #: src/pages/shell/avatar-studio-popover.tsx
 #: src/pages/shell/host-action-card.tsx
 #: src/pages/shell/import-setup-card.tsx
+#: src/pages/shell/transcript.tsx
 #: src/pages/SquadPage.tsx
 #: src/pages/Workflows.tsx
 msgid "Done"
@@ -6149,6 +6162,10 @@ msgstr "模型“{modelId}”未列出。"
 msgid "Model connections"
 msgstr "模型连接"
 
+#: src/lib/server-copy.ts
+msgid "model credits are used up"
+msgstr "模型额度已用完"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Model id"
@@ -6652,6 +6669,10 @@ msgstr "还没有与 {peerBotName} 的消息。"
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "No model catalog is available."
 msgstr "没有可用的模型目录。"
+
+#: src/lib/server-copy.ts
+msgid "no model is connected"
+msgstr "未连接任何模型"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error-copy.ts
@@ -9492,6 +9513,7 @@ msgid "Testing…"
 msgstr "正在测试…"
 
 #: src/pages/shell/host-action-card.tsx
+#: src/pages/shell/transcript.tsx
 msgid "That didn't work"
 msgstr "没有成功"
 
@@ -9507,6 +9529,11 @@ msgstr "例程 {name} 已暂停，因为其变化检查失败：{reason}"
 #: src/lib/run-error-copy.ts
 msgid "The agent stopped"
 msgstr "智能体已停止"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "The assistant is unavailable right now."
+msgstr "助手暂时不可用。"
 
 #: src/pages/shell/agent-import-undo.tsx
 msgid "The bot and what its import added will be removed."
@@ -9539,6 +9566,10 @@ msgstr "图标必须是至少 512 px 的正方形 PNG。"
 msgid "The model couldn't answer"
 msgstr "模型无法回答"
 
+#: src/lib/server-copy.ts
+msgid "the model has no price"
+msgstr "模型没有价格"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "The model hit its output limit before finishing its reply."
@@ -9548,6 +9579,10 @@ msgstr "模型在完成回复前达到了输出上限。"
 #: src/lib/run-error-copy.ts
 msgid "The model is busy"
 msgstr "模型正忙"
+
+#: src/lib/server-copy.ts
+msgid "the model is not allowed"
+msgstr "不允许使用该模型"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -9964,6 +9999,10 @@ msgstr "正在转录…"
 #: src/components/call/CallCard.tsx
 msgid "Transcript"
 msgstr "文字记录"
+
+#: src/lib/server-copy.ts
+msgid "transcription is not set up"
+msgstr "未设置转录"
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Transcription model"
@@ -10497,6 +10536,11 @@ msgstr "等待中…"
 #: src/pages/platform/PlatformPage.tsx
 msgid "Waitlist"
 msgstr "候补名单"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "We told the administrator."
+msgstr "我们已通知管理员。"
 
 #: src/components/ModelCredits.tsx
 msgid "Web, desktop and mobile"

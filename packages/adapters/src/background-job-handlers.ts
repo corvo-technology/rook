@@ -9,6 +9,7 @@ import type {
   MessagingSurface,
   SandboxProvider,
   SecretStore,
+  WebProvider,
 } from "@corvo/adapter-kit";
 import { messagingDeliverJob } from "@corvo/adapter-kit";
 import type { PrismaClient, SpaceHints, ThreadEvents } from "@corvo/db";
@@ -35,9 +36,12 @@ import type { LocalSpeech } from "./local-speech.js";
 import type { MemoryProviderResolver } from "./memory-provider-factory.js";
 import { deliverMessagingOutbound, mirrorMessagingOutbound } from "./messaging-delivery.js";
 import { deliverPartnerWebhook } from "./partner-webhook.js";
+import { runResearch } from "./research-run.js";
+import { prismaResearchStore, researchSpendDeps } from "./research-service.js";
 import { expireTaughtSkillTeaching } from "./teaching-session.js";
 import { learnUserMemories } from "./user-memory-run.js";
 import type { HostedVoice } from "./voice-credits.js";
+import { createWebProvider } from "./web-provider-factory.js";
 import { WHATSAPP_THREAD_PREFIX } from "./whatsapp/link-surface.js";
 import { curateWiki } from "./wiki-curator-run.js";
 import { importFileToWiki } from "./wiki-import-run.js";
@@ -116,7 +120,10 @@ export function createBackgroundJobHandlers(deps: {
   encryptionKey?: string;
   /** Reaches a customer's connector tools; consultations file their drafts through it. */
   connector?: Pick<ConnectorProvider, "execute">;
+  /** Searches and reads pages for research jobs; the keyless default when absent. */
+  web?: WebProvider;
 }): BackgroundJobHandlers {
+  let researchWeb = deps.web;
   const audioTranscription = {
     prisma: deps.prisma,
     artifacts: deps.artifacts,
@@ -194,6 +201,8 @@ export function createBackgroundJobHandlers(deps: {
     deps.prisma.taughtSkill.findUnique({ where: { id: skillId }, select: OWNER });
   const cloudAgent = ({ agentId }: { agentId: string }) =>
     deps.prisma.cloudAgent.findUnique({ where: { id: agentId }, select: OWNER });
+  const researchJob = ({ researchId }: { researchId: string }) =>
+    deps.prisma.researchJob.findUnique({ where: { id: researchId }, select: OWNER });
   const wikiImport = ({ importId }: { importId: string }) =>
     deps.prisma.wikiImport.findUnique({ where: { id: importId }, select: OWNER });
   const updatedComputer = async ({ updateId }: { updateId: string }) =>
@@ -294,6 +303,21 @@ export function createBackgroundJobHandlers(deps: {
       await pollCloudAgent(
         { prisma: deps.prisma, jobs: deps.jobs, events: deps.events, cloudAgent: deps.cloudAgent },
         payload,
+      );
+    }),
+    "research.run": asOwner(researchJob, async (payload) => {
+      researchWeb ??= createWebProvider();
+      await runResearch(
+        {
+          store: prismaResearchStore({ prisma: deps.prisma, jobs: deps.jobs, events: deps.events }),
+          runtime: deps.runtime,
+          web: researchWeb,
+          resolveFastModel: deps.executor.resolveFastModel,
+          resolveStrongModel: deps.executor.resolveStrongModel,
+          resolveModel: deps.executor.resolveModel,
+          ...researchSpendDeps(deps.prisma),
+        },
+        payload.researchId,
       );
     }),
     // A receipt belongs to a device's push token, not to a Space.

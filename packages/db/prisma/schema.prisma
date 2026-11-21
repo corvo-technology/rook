@@ -475,6 +475,8 @@ model Space {
   artifactTranscripts         ArtifactTranscript[]
   wikiChanges                 WikiChange[]
   wikiImports                 WikiImport[]
+  researchJobs                ResearchJob[]
+  researchSources             ResearchSource[]
   userMemories                UserMemory[]
   botMcpServers               BotMcpServer[]
   databaseConnections         DatabaseConnection[]
@@ -2106,6 +2108,74 @@ model WikiImport {
 
   @@index([spaceId, state])
   @@map("wiki_imports")
+}
+
+/// A background research job an agent started in a thread: it plans, searches, reads and takes
+/// notes inside a step and token budget, then writes a report whose numbers cite its sources.
+model ResearchJob {
+  id           String           @id @default(cuid())
+  spaceId      String
+  space        Space            @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId       String
+  botId        String
+  threadId     String
+  /// The card in the thread that shows the job.
+  messageId    String?
+  /// The tool call that started it, so a repeated call is one job.
+  operationKey String           @unique
+  question     String
+  scope        String?
+  /// "quick" or "deep": the budget the job gets.
+  depth        String           @default("quick")
+  /// Same question asked again finds the job to compare against.
+  queryKey     String
+  /// A recurring run reports only what changed and says nothing when nothing did.
+  watch        Boolean          @default(false)
+  /// "running", "finished", "failed" or "cancelled".
+  status       String           @default("running")
+  /// Why gathering stopped: "enough", "steps", "tokens" or "monthly_limit".
+  stopReason   String?
+  steps        Int              @default(0)
+  tokens       Int              @default(0)
+  maxSteps     Int
+  maxTokens    Int
+  /// Sub-questions still to ask and the notes taken so far.
+  state        Json             @default("{}")
+  report       String?
+  /// False when a watching job found nothing new against `previousId`.
+  changed      Boolean?
+  error        String?
+  previousId   String?
+  wakeDone     Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  finishedAt   DateTime?
+  sources      ResearchSource[]
+
+  @@index([spaceId, botId, queryKey, status])
+  @@index([spaceId, userId, id])
+  @@map("research_jobs")
+}
+
+/// A page a research job read. Its position is the number a citation in the report uses.
+model ResearchSource {
+  id          String      @id @default(cuid())
+  researchId  String
+  research    ResearchJob @relation(fields: [researchId], references: [id], onDelete: Cascade)
+  spaceId     String
+  space       Space       @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  position    Int
+  url         String
+  title       String
+  fetchedAt   DateTime    @default(now())
+  /// A short passage that supports what the notes took from the page.
+  excerpt     String
+  /// Of the text read, so a later job can tell a page changed without keeping it.
+  contentHash String
+
+  @@unique([researchId, url])
+  @@index([spaceId, researchId])
+  @@map("research_sources")
 }
 
 model ProviderQuota {

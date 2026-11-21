@@ -98,6 +98,7 @@ export * from "./push-copy.js";
 export * from "./refresh-coalescer.js";
 export * from "./remote-images.js";
 export * from "./reply-split.js";
+export * from "./research.js";
 export * from "./response-bytes.js";
 export * from "./retry-policy.js";
 export * from "./room-settings.js";

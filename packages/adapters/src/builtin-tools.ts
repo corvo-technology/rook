@@ -774,6 +774,35 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "research_start",
+    description:
+      "Start a background research job on one question: it plans sub-questions, searches, reads pages, takes notes with sources, and writes a short answer with numbered citations. Use it when the answer needs several sources and more than a quick search; for one fact use web_search. Returns at once; you are woken to post the result in this thread when it is ready. Say what the research is for in scope, and pick deep only for broad questions.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        question: { type: "string", description: "The question to answer." },
+        scope: {
+          type: "string",
+          description: "What to focus on or leave out, such as a market, period or kind of source.",
+        },
+        depth: { type: "string", enum: ["quick", "deep"], description: "Defaults to quick." },
+      },
+      required: ["question"],
+    },
+  },
+  {
+    name: "research_status",
+    description:
+      "How a research job is going, or what it found once finished. Without an id it reads the latest job you started in this thread.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Research id from research_start." },
+      },
+    },
+    readOnly: true,
+  },
+  {
     name: "query_database",
     description:
       "Run one read-only SQL query (SELECT, WITH ... SELECT or EXPLAIN) against a database connection granted to you. Only reads work: writes, DDL, SET, several statements and side-effect functions are refused. Results are capped in rows and size; aggregate or filter in SQL rather than fetching everything. Call describe_database first when you do not know the tables.",

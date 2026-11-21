@@ -2041,6 +2041,7 @@ msgid "Canceled"
 msgstr "キャンセル済み"
 
 #: src/components/CloudAgentCard.tsx
+#: src/components/ResearchCard.tsx
 msgid "cancelled"
 msgstr "キャンセル済み"
 
@@ -4476,6 +4477,7 @@ msgid "Facts about you"
 msgstr "あなたについての情報"
 
 #: src/components/CloudAgentCard.tsx
+#: src/components/ResearchCard.tsx
 msgid "failed"
 msgstr "失敗"
 
@@ -4600,6 +4602,7 @@ msgid "Finish subscription sign-in, then test again."
 msgstr "サブスクリプションのログインを完了してから、もう一度テストしてください。"
 
 #: src/components/CloudAgentCard.tsx
+#: src/components/ResearchCard.tsx
 msgid "finished"
 msgstr "完了"
 
@@ -8210,6 +8213,7 @@ msgid "Run time must be in the future."
 msgstr "実行日時は未来の日時を指定してください。"
 
 #: src/components/CloudAgentCard.tsx
+#: src/components/ResearchCard.tsx
 msgid "running"
 msgstr "実行中"
 

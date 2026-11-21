@@ -1106,7 +1106,8 @@ button{cursor:pointer}
       if (this.launcher) return this.mountLauncher();
       if (!this.style.display) this.style.display = "block";
       this.frame = document.createElement("iframe");
-      this.frame.title = "Rook";
+      this.frame.title =
+        this.getAttribute("name") || copyFor(this.getAttribute("locale") || navigator.language)[5];
       this.frame.allow = "clipboard-write";
       this.frame.style.cssText =
         "border:0;width:100%;height:100%;display:block;background:transparent";
@@ -1515,6 +1516,9 @@ button{cursor:pointer}
       if (icon) params.set("icon", icon);
       if (user) params.set("user", user);
       this.prepared = true;
+      // Posting before the embed has loaded only lands on the host's own blank frame.
+      this.frameLoaded = false;
+      this.frame.addEventListener("load", () => (this.frameLoaded = true), { once: true });
       this.frame.src = `${this.origin}/embed#${params}`;
     }
 
@@ -1571,7 +1575,7 @@ button{cursor:pointer}
     }
 
     send(message) {
-      if (this.frame?.contentWindow && this.origin) {
+      if (this.frame?.contentWindow && this.origin && (this.frameLoaded || this.ready)) {
         this.frame.contentWindow.postMessage(message, this.origin);
       }
     }
@@ -1584,6 +1588,7 @@ button{cursor:pointer}
       ) {
         return;
       }
+      this.frameLoaded = true;
       const type = event.data && event.data.type;
       const data = event.data || {};
       if (type === "corvo:ready") {

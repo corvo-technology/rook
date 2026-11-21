@@ -119,12 +119,38 @@ describe("<corvo-assistant>", () => {
     const frame = frameOf(element);
     const post = vi.fn();
     Object.defineProperty(frame, "contentWindow", { value: { postMessage: post } });
+    frame.dispatchEvent(new Event("load"));
     element.setAttribute("theme", "dark");
     expect(post).toHaveBeenCalledWith(
       { type: "corvo:config", theme: "dark", locale: undefined },
       ORIGIN,
     );
     expect(fetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("<corvo-assistant> inline frame", () => {
+  it("names the frame with the page's name for the assistant, never Rook's", async () => {
+    const named = mount({ name: "Assistente Prontu" });
+    await settle();
+    expect(frameOf(named).title).toBe("Assistente Prontu");
+    document.body.innerHTML = "";
+    const unnamed = mount({ locale: "pt-BR" });
+    await settle();
+    expect(frameOf(unnamed).title).toBe("Assistente");
+  });
+
+  it("does not post to the frame before the embed has loaded", async () => {
+    const element = mount({ theme: "light" });
+    await settle();
+    const frame = frameOf(element);
+    const post = vi.fn();
+    Object.defineProperty(frame, "contentWindow", { value: { postMessage: post } });
+    element.setAttribute("theme", "dark");
+    expect(post).not.toHaveBeenCalled();
+    frame.dispatchEvent(new Event("load"));
+    element.setAttribute("theme", "light");
+    expect(post).toHaveBeenCalledTimes(1);
   });
 });
 

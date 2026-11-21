@@ -16,7 +16,7 @@ import {
 } from "@corvo/core";
 import { BotAvatar, Button, cn, resolvePersonaColorDef } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { ChevronRight, Pin, UserRound } from "lucide-react";
+import { Pin, UserRound } from "lucide-react";
 import type { ReactNode } from "react";
 import { Fragment, memo, useMemo, useState } from "react";
 import { ArtifactFileCard } from "../../components/ArtifactFileCard";
@@ -981,7 +981,7 @@ export const MessageView = memo(function MessageView({
   );
 });
 
-/** A handoff between agents is coordination: the line stays compact and the instruction opens on demand. */
+/** A handoff between agents is coordination: the instruction reads as a short preview and opens in full on tap. */
 function HandoffDetail({
   label,
   reason,
@@ -996,24 +996,31 @@ function HandoffDetail({
   const { t } = useLingui();
   const [open, setOpen] = useState(false);
   return (
-    <div>
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-label={open ? t`Collapse ${label}` : t`Expand ${label}`}
-        onClick={() => setOpen((value) => !value)}
-        className="flex items-center text-muted-foreground hover:text-foreground"
-      >
-        <ChevronRight
-          aria-hidden="true"
-          className={cn("size-4 transition-transform", open && "rotate-90")}
-        />
-      </button>
-      {open ? (
-        <div className="mt-1 text-body2 text-muted-foreground" dir="auto">
-          <ChatMarkdown renderMention={renderMention}>{children}</ChatMarkdown>
-          {reason ? <p data-testid="handoff-reason">{reason}</p> : null}
-        </div>
+    // biome-ignore lint/a11y/useSemanticElements: the preview holds rendered markdown blocks, which a <button> cannot contain.
+    <div
+      role="button"
+      tabIndex={0}
+      aria-expanded={open}
+      aria-label={open ? t`Collapse ${label}` : t`Expand ${label}`}
+      onClick={(event) => {
+        if ((event.target as HTMLElement).closest("a")) return;
+        setOpen((value) => !value);
+      }}
+      onKeyDown={(event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        setOpen((value) => !value);
+      }}
+      className="block w-full cursor-pointer text-start text-body2 text-muted-foreground hover:text-foreground"
+      dir="auto"
+    >
+      <div className={cn(!open && "line-clamp-2")}>
+        <ChatMarkdown renderMention={renderMention}>{children}</ChatMarkdown>
+      </div>
+      {open && reason ? (
+        <p data-testid="handoff-reason" className="mt-1">
+          {reason}
+        </p>
       ) : null}
     </div>
   );

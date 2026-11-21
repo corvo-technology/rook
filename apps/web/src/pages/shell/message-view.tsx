@@ -26,6 +26,7 @@ import { CloudAgentCard } from "../../components/CloudAgentCard";
 import { MemoryFactBlock } from "../../components/MemoryFactBlock";
 import { PersonAvatar } from "../../components/PersonAvatar";
 import { PlanCard } from "../../components/PlanCard";
+import { ResearchCard } from "../../components/ResearchCard";
 import { SubagentCard } from "../../components/SubagentCard";
 import { TaskCard } from "../../components/TaskCard";
 import {
@@ -916,6 +917,7 @@ export const MessageView = memo(function MessageView({
             );
           }
           if (block.kind === "cloud_agent") return <CloudAgentCard key={i} block={block} />;
+          if (block.kind === "research") return <ResearchCard key={i} block={block} />;
           if (block.kind === "plan") return <PlanCard key={i} block={block} />;
           if (block.kind === "skill_draft") {
             return (

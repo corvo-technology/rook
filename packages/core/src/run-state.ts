@@ -47,6 +47,18 @@ export function isBackgroundRunTrigger(trigger: string | null | undefined): bool
   return BACKGROUND_RUN_TRIGGER_SET.has(trigger ?? "");
 }
 
+/**
+ * Runs nobody started by talking to an agent: schedules and watches, inbound webhooks and partner
+ * events, a cloud agent's wake and ticket work. They may end silent, and they start on the fast
+ * model tier. Unlike the background triggers above they keep their chat transcript.
+ */
+export const AUTONOMOUS_RUN_TRIGGERS = ["routine", "webhook", "cloud_agent", "tickets"] as const;
+const AUTONOMOUS_RUN_TRIGGER_SET = new Set<string>(AUTONOMOUS_RUN_TRIGGERS);
+
+export function isAutonomousRunTrigger(trigger: string | null | undefined): boolean {
+  return AUTONOMOUS_RUN_TRIGGER_SET.has(trigger ?? "");
+}
+
 const allowed: Record<RunStatus, RunStatus[]> = {
   queued: ["leased", "cancelled"],
   leased: ["running", "queued", "cancelled"],

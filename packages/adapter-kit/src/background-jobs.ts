@@ -55,6 +55,7 @@ const payloadSchemas = {
     ref: z.string().min(1),
   }),
   "cloud_agent.poll": z.object({ agentId: z.string().min(1) }),
+  "research.run": z.object({ researchId: z.string().min(1) }),
   "push.receipt": z.object({
     userId: z.string().min(1),
     ticketId: z.string().min(1),
@@ -355,5 +356,18 @@ export function cloudAgentPollJob(
     payload,
     replaceKey: cloudAgentPollJobKey(payload.agentId),
     ...(availableAt ? { availableAt } : {}),
+  };
+}
+
+/** Progress is saved after every step, so a second try resumes and pays only for what is left. */
+export const RESEARCH_RUN_MAX_ATTEMPTS = 2;
+
+/** Keyed to the job, so a repeated enqueue is one run. */
+export function researchRunJob(researchId: string): BackgroundJob {
+  return {
+    name: "research.run",
+    payload: { researchId },
+    replaceKey: `research.run:${researchId}`,
+    maxAttempts: RESEARCH_RUN_MAX_ATTEMPTS,
   };
 }

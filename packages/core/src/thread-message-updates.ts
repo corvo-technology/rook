@@ -1,5 +1,6 @@
 import type { MessageBlock } from "@corvo/contracts";
 import { cloudAgentBlockFromPayload } from "./cloud-agent.js";
+import { researchBlockFromPayload } from "./research.js";
 
 /** Computer-card state while a takeover is still waiting on the user. */
 export const TAKEOVER_COMPUTER_PENDING_STATE = "Needs you";
@@ -77,4 +78,22 @@ export function updateCloudAgentMessages<Message extends { id: string; blocks: M
     }
     return message;
   });
+}
+
+export function updateResearchMessages<Message extends { id: string; blocks: MessageBlock[] }>(
+  messages: readonly Message[],
+  payload: Record<string, unknown>,
+): Message[] {
+  const block = researchBlockFromPayload(payload);
+  const messageId = String(payload.messageId ?? "");
+  const same = (existing: MessageBlock) =>
+    existing.kind === "research" && existing.researchId === block.researchId;
+  return messages.map((message) =>
+    (messageId && message.id === messageId) || message.blocks.some(same)
+      ? {
+          ...message,
+          blocks: message.blocks.map((existing) => (same(existing) ? block : existing)),
+        }
+      : message,
+  );
 }

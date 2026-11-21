@@ -27,6 +27,7 @@ import {
   subagentBlockFromPayload,
   takeLiveMessage,
   updateCloudAgentMessages,
+  updateResearchMessages,
   upsertMessageById,
 } from "@corvo/core";
 
@@ -271,6 +272,7 @@ export function isThreadSnapshotEvent(event: ProductEvent): boolean {
     event.type === "thread.progress" ||
     event.type === "thread.subagent" ||
     event.type === "thread.cloud_agent" ||
+    event.type === "thread.research" ||
     event.type === "agent.tool.called" ||
     event.type === "agent.tool.completed" ||
     event.type === "thread.message.created" ||
@@ -558,6 +560,13 @@ export function reduceThreadSnapshot(
       ...prev,
       cursor: event.seq,
       messages: updateCloudAgentMessages(prev.messages, event.payload ?? {}),
+    };
+  }
+  if (event.type === "thread.research") {
+    return {
+      ...prev,
+      cursor: event.seq,
+      messages: updateResearchMessages(prev.messages, event.payload ?? {}),
     };
   }
   if (event.type === "thread.message.pinned") {

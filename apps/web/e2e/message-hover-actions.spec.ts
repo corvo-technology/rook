@@ -452,7 +452,9 @@ test("reply preview jumps to parent outside the loaded page", async ({ page }) =
 test.describe("touch message actions", () => {
   test.use({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 } });
 
-  test("More exposes actions without simulated hover", async ({ page }, testInfo) => {
+  test("tapping a message reveals its actions without simulated hover", async ({
+    page,
+  }, testInfo) => {
     await signup(page, `touch-actions-${Date.now()}@corvo.test`, "password12", "Touch Actions");
     await completeOnboarding(page);
     expect(
@@ -470,6 +472,9 @@ test.describe("touch message actions", () => {
       .filter({ has: botText })
       .first();
     const rail = row.getByTestId("message-hover-rail");
+    // Touch keeps the actions out of the way until the message is tapped.
+    await expect(rail).toBeHidden();
+    await botText.tap();
     await expect(rail).toHaveCSS("opacity", "1");
     await expect(rail.getByRole("button", { name: "Reply", exact: true })).toBeVisible();
     // Touch puts the action row in-flow under the bubble, not beside it.

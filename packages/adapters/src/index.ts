@@ -193,6 +193,7 @@ export * from "./railway-sandbox.js";
 export * from "./realtime.js";
 export * from "./release-watch.js";
 export * from "./remote-mcp.js";
+export { reconcileResearch } from "./research-service.js";
 export * from "./resend-email.js";
 export * from "./resend-email-domains.js";
 export * from "./routine-watch.js";

@@ -99,7 +99,8 @@ export default defineConfig(async ({ command, mode, isPreview }) => {
     [
       "/api",
       "/rpc",
-      "/mcp",
+      // Only the MCP server endpoint itself; /mcp/oauth/callback is a web page.
+      "^/mcp(?:\\?.*)?$",
       // Native app domain association, served by the API from deployment settings.
       "/.well-known/apple-app-site-association",
       "/.well-known/assetlinks.json",
@@ -216,7 +217,10 @@ export default defineConfig(async ({ command, mode, isPreview }) => {
           if (!Number.isFinite(performanceAssetDelayMs) || performanceAssetDelayMs <= 0) return;
           server.middlewares.use((req, _res, next) => {
             const pathname = req.url?.split("?", 1)[0] ?? "/";
-            if (["/api", "/rpc", "/mcp", "/novnc"].some((prefix) => pathname.startsWith(prefix))) {
+            if (
+              pathname === "/mcp" ||
+              ["/api", "/rpc", "/novnc"].some((prefix) => pathname.startsWith(prefix))
+            ) {
               next();
               return;
             }

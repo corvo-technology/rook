@@ -32,6 +32,9 @@ vi.mock("@corvo/ui-web", () => ({
     <button type="button" {...props} />
   ),
   Spinner: (props: ComponentProps<"svg">) => <svg role="status" {...props} />,
+  AgentLoader: ({ label }: { label?: string }) => (
+    <span role="status" aria-label={label ?? "Loading…"} />
+  ),
 }));
 
 import { RoutineRunHistory } from "./RoutineRunHistory";

@@ -1,5 +1,5 @@
 import { isRunWorking } from "@corvo/core";
-import { Button, Spinner } from "@corvo/ui-web";
+import { AgentLoader, Button } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { skipToken, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
@@ -53,7 +53,7 @@ export function TeamPage() {
       <div className="w-full px-6 pb-8">
         {bootstrap.isPending ? (
           <div className="flex justify-center py-10">
-            <Spinner aria-label={t`Loading…`} />
+            <AgentLoader size={32} />
           </div>
         ) : bootstrap.isError ? (
           // A failed read must not look like a company with no agents.

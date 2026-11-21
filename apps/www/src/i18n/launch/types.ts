@@ -120,6 +120,8 @@ export type LaunchCopy = {
     /** Not in the product's catalog yet, so the page names its agents itself. */
     health: { label: string; agents: [string, string, string] };
   };
+  /** The one label of the band of live avatars; the band has no visible text. */
+  agentGrid: { label: string };
   preview: {
     window: string;
     rail: { agents: string; routines: string; workflows: string; more: string; store: string };

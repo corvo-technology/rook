@@ -1,5 +1,5 @@
 import { isRunWorking } from "@corvo/core";
-import { BotAvatar, Button, Spinner } from "@corvo/ui-web";
+import { AgentLoader, BotAvatar, Button } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft } from "lucide-react";
@@ -69,7 +69,7 @@ export function SquadPage() {
 
       {thread.isPending ? (
         <div className="flex justify-center py-10">
-          <Spinner />
+          <AgentLoader size={32} />
         </div>
       ) : null}
 

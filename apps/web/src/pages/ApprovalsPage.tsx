@@ -1,5 +1,5 @@
 import type { PendingApproval } from "@corvo/contracts";
-import { Button, Spinner } from "@corvo/ui-web";
+import { AgentLoader, Button } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -55,7 +55,7 @@ export function ApprovalsPage() {
       <div className="mx-auto w-full max-w-3xl px-6 pb-8">
         {approvals.isPending ? (
           <div className="flex justify-center py-10">
-            <Spinner aria-label={t`Loading…`} />
+            <AgentLoader size={32} />
           </div>
         ) : approvals.isError ? (
           // A failed read must not look like an empty inbox: something may be waiting.

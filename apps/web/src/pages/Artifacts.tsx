@@ -3,6 +3,7 @@ import type { Artifact, Bot } from "@corvo/contracts";
 import { isAttachmentImageMimeType } from "@corvo/contracts";
 import { writeSaved } from "@corvo/core/query";
 import {
+  AgentLoader,
   BotAvatar,
   Button,
   EmptyState,
@@ -384,7 +385,7 @@ function BrowsingPane({
   if (items === null) {
     return (
       <div className="grid flex-1 place-items-center text-sm text-muted-foreground/80">
-        {loadError ?? <Spinner aria-label={t`Loading…`} />}
+        {loadError ?? <AgentLoader size={32} />}
       </div>
     );
   }
@@ -502,7 +503,7 @@ function IndexPane({
     <aside className="flex w-[320px] shrink-0 flex-col overflow-y-auto border-e border-border">
       {items === null ? (
         <div className="grid flex-1 place-items-center p-6 text-center text-sm text-muted-foreground/80">
-          {loadError ?? <Spinner aria-label={t`Loading…`} />}
+          {loadError ?? <AgentLoader size={32} />}
         </div>
       ) : items.length === 0 ? (
         <EmptyArtifacts
@@ -857,7 +858,7 @@ function PreviewPane({
       <div className="min-h-0 flex-1 p-5">
         {state.status === "loading" ? (
           <div className="grid h-full place-items-center text-sm text-muted-foreground/80">
-            <Spinner aria-label={t`Loading…`} />
+            <AgentLoader size={32} />
           </div>
         ) : state.status === "error" ? (
           <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-destructive">

@@ -15,6 +15,9 @@ vi.mock("@lingui/react/macro", () => ({
 vi.mock("@corvo/ui-web", () => ({
   Button: (props: React.ComponentProps<"button">) => <button {...props} />,
   Spinner: () => <span role="status" />,
+  AgentLoader: ({ label }: { label?: string }) => (
+    <span role="status" aria-label={label ?? "Loading…"} />
+  ),
 }));
 vi.mock("../components/AuthFrame", () => ({
   AuthFrame: ({ title, children }: { title: ReactNode; children: ReactNode }) => (

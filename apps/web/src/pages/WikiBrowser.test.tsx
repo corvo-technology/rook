@@ -55,6 +55,9 @@ vi.mock("@corvo/ui-web", () => ({
   Input: (props: ComponentProps<"input">) => <input {...props} />,
   Textarea: (props: ComponentProps<"textarea">) => <textarea {...props} />,
   Spinner: () => <span role="status" />,
+  AgentLoader: ({ label }: { label?: string }) => (
+    <span role="status" aria-label={label ?? "Loading…"} />
+  ),
   RookGlyph: ({ state }: { state: string }) => <i data-rook={state} />,
   DropdownMenu: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DropdownMenuTrigger: ({ render, children }: { render: ReactElement; children: ReactNode }) =>

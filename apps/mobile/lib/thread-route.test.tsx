@@ -40,6 +40,9 @@ vi.mock("./api", () => ({
   selectedSpaceId: () => state.selected,
   selectSpace: state.selectSpace,
 }));
+vi.mock("../components/agent-loader", () => ({
+  AgentLoader: () => createElement("progress"),
+}));
 vi.mock("./i18n", () => {
   const t = (text: string) => text;
   return { t, useI18n: () => ({ t }) };

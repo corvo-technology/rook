@@ -1,6 +1,6 @@
 import type { UsagePeriod } from "@corvo/contracts";
 import { normalizeRunError } from "@corvo/core";
-import { BotAvatar, Button, Progress, Spinner } from "@corvo/ui-web";
+import { AgentLoader, BotAvatar, Button, Progress } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -124,7 +124,7 @@ export function UsagePage() {
               {errorText(usage.error, t`Could not load`)}
             </p>
           ) : !overview ? (
-            <Spinner />
+            <AgentLoader size={32} />
           ) : (
             <>
               <section className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">

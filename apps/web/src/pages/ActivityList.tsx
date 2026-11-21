@@ -1,6 +1,7 @@
 import type { RunActivityRow, RunStatus } from "@corvo/contracts";
 import { isAgedStuckWork, isRetryableError } from "@corvo/core";
 import {
+  AgentLoader,
   Button,
   Collapsible,
   CollapsibleContent,
@@ -8,7 +9,6 @@ import {
   Label,
   NativeSelect,
   NativeSelectOption,
-  Spinner,
 } from "@corvo/ui-web";
 import { t } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
@@ -111,7 +111,7 @@ export function ActivityList({
 
       {loading && !hasAnyRuns ? (
         <p className="px-2.5 py-2 text-[13px] text-muted-foreground/80">
-          <Spinner aria-label={t`Loading activity…`} />
+          <AgentLoader size={20} label={t`Loading activity…`} />
         </p>
       ) : !loading && !error && !hasAnyRuns && !filtersOn ? (
         <p

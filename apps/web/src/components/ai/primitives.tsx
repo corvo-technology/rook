@@ -1,6 +1,5 @@
-import { cn } from "@corvo/ui-web";
+import { AgentLoader, cn } from "@corvo/ui-web";
 import { useEffect, useState } from "react";
-import { BrandGlyph } from "../BrandGlyph";
 import "./beautiful-ui.css";
 
 /* Beautiful UI primitives — hand-ported from beautifului.dev
@@ -37,12 +36,12 @@ function useElapsed(startedAtMs?: number): string {
   return formatElapsed(startedAtMs ?? mountedAt, now);
 }
 
-/** The thinking rook with its label and a live elapsed timer. */
+/** The rook, thinking and then working, with its label and a live elapsed timer. */
 function DefaultLoadingState({ label, startedAt }: { label: string; startedAt?: number }) {
   const elapsed = useElapsed(startedAt);
   return (
     <>
-      <BrandGlyph state="thinking" size={18} className="text-foreground" />
+      <AgentLoader size={22} label={label} />
       <span className="text-[13.5px] font-medium text-muted-foreground">{label}</span>
       <span className="font-mono text-[12px] tabular-nums text-muted-foreground">{elapsed}</span>
     </>

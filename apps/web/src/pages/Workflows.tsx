@@ -1,6 +1,6 @@
 import type { Bot, StepRun, Workflow } from "@corvo/contracts";
 import { ROUTINE_MAX_STEPS } from "@corvo/contracts";
-import { BotAvatar, Button, Spinner } from "@corvo/ui-web";
+import { AgentLoader, BotAvatar, Button, Spinner } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronLeft, ChevronRight, Play, Plus, X, Zap } from "lucide-react";
@@ -101,7 +101,7 @@ export function WorkflowsPage() {
             {errorText(workflows.error, t`Could not load`)}
           </p>
         ) : workflows.isPending ? (
-          <Spinner />
+          <AgentLoader size={32} />
         ) : workflows.data?.length === 0 ? (
           <p className="m-auto text-sm text-muted-foreground">
             <Trans>No routines yet</Trans>

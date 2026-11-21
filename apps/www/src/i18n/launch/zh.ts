@@ -98,6 +98,7 @@ const COPY: LaunchCopy = {
     },
     health: { label: "健康与美容", agents: ["前台接待", "病历助手", "客户回访"] },
   },
+  agentGrid: { label: "Rook 智能体在思考、工作、等待和完成" },
   preview: {
     window: "Rook",
     rail: { agents: "智能体", routines: "例行任务", workflows: "工作流", more: "更多", store: "商店" },

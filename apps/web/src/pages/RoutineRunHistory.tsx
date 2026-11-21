@@ -6,7 +6,7 @@ import {
   routineHistoryPage,
   routineRunAt,
 } from "@corvo/core";
-import { Button, Spinner } from "@corvo/ui-web";
+import { AgentLoader, Button } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -42,7 +42,7 @@ export function RoutineRunHistory({ routineId }: { routineId: string }) {
       {runs === null ? (
         history.isPending ? (
           <p className="mt-2 text-[13.5px]">
-            <Spinner aria-label={t`Loading…`} />
+            <AgentLoader size={20} />
           </p>
         ) : null
       ) : runs.length === 0 ? (

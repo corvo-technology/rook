@@ -4,6 +4,7 @@ import Header from "./Header.astro";
 import GuideSlot from "./GuideSlot.astro";
 import Avatar from "./Avatar.astro";
 import Piece from "./Piece.astro";
+import AgentGrid from "./AgentGrid.astro";
 import { MASCOT_COLOR } from "../mascot";
 import { Rook } from "./Rook";
 import { ProductPreview } from "./ProductPreview";
@@ -122,6 +123,8 @@ const [featureCards, plainItems] = [works.cards.slice(0, 3), works.cards.slice(3
           <ProductPreview copy={copy.preview} client:visible={{ rootMargin: "300px" }} />
         </div>
       </section>
+
+      <AgentGrid label={copy.agentGrid.label} />
 
       <section id="agents" class="lp-agent" aria-labelledby="agent-heading">
         <GuideSlot row class="guide-slot--perch guide-slot--mid" />

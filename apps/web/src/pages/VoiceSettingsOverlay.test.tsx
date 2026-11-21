@@ -38,6 +38,9 @@ vi.mock("@corvo/ui-web", async () => {
   const Container = ({ children }: { children?: ReactNode }) => <div>{children}</div>;
   return {
     Spinner: (props: ComponentProps<"svg">) => <svg role="status" {...props} />,
+    AgentLoader: ({ label }: { label?: string }) => (
+      <span role="status" aria-label={label ?? "Loading…"} />
+    ),
     Button: ({
       variant: _variant,
       size: _size,

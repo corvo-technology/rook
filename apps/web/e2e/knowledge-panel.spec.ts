@@ -147,10 +147,7 @@ test("memory and skills are readable and editable in the app", async ({ page }, 
     documentId: seededDocs[0].id,
     content: "# Rook\n\nA remembered preference.\n",
   });
-  await page
-    .locator("main")
-    .getByRole("button", { name: /^Rook/ })
-    .click();
+  await page.locator("main").getByRole("button", { name: /^Rook/ }).click();
   const settings = page.getByTestId("bot-settings");
   await expect(settings.getByRole("button", { name: "Save", exact: true })).toHaveCount(0);
   const botMemory = settings.getByTestId("bot-knowledge-memory");

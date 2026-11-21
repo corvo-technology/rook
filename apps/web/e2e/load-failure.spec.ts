@@ -51,10 +51,7 @@ for (const [failing, intact] of [
     await page.route(new RegExp(`/pages/${failing}\\.tsx`), (route) =>
       route.fulfill({ status: 404 }),
     );
-    await page
-      .locator("main")
-      .getByRole("button", { name: /^Rook/ })
-      .click();
+    await page.locator("main").getByRole("button", { name: /^Rook/ }).click();
 
     const settings = page.getByTestId("bot-settings");
     await expect(settings.getByText("Could not load", { exact: true })).toBeVisible();

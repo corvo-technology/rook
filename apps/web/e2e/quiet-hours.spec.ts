@@ -37,10 +37,7 @@ test("an agent can be muted for an hour and unmuted from its menu", async ({ pag
   await page.goto("/app");
   await page.waitForURL(/\/app\/[^/]+$/);
 
-  const bot = page
-    .locator("aside")
-    .first()
-    .getByRole("button", { name: /^Rook/ });
+  const bot = page.locator("aside").first().getByRole("button", { name: /^Rook/ });
   await bot.click({ button: "right" });
   await page.getByRole("menuitem", { name: "Mute", exact: true }).hover();
   await expect(page.getByRole("menuitem", { name: "Until tomorrow" })).toBeVisible();

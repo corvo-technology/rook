@@ -421,10 +421,7 @@ test("sign-in, spawn, and stop work in the shell", async ({ page }, testInfo) =>
   });
   await captureScreenshot(page, testInfo, "13-spawned-bot");
 
-  await page
-    .locator("[data-sidebar-group]")
-    .getByRole("button", { name: /^Rook/ })
-    .click();
+  await page.locator("[data-sidebar-group]").getByRole("button", { name: /^Rook/ }).click();
   await composer.fill("keep working until I stop you");
   await page.keyboard.press("Enter");
   await expect(page.getByRole("button", { name: "Stop", exact: true })).toBeVisible({

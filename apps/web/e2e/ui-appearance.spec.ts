@@ -375,10 +375,7 @@ test("footer app marks follow the Store", async ({ page }) => {
   const failedRefresh = page.waitForResponse(
     (response) => response.url().includes("connections/catalog") && response.status() === 503,
   );
-  await page
-    .getByRole("button", { name: /^Rook/ })
-    .first()
-    .click({ button: "right" });
+  await page.getByRole("button", { name: /^Rook/ }).first().click({ button: "right" });
   await page.getByRole("menuitem", { name: "Duplicate", exact: true }).click();
   await expect(page.getByRole("button", { name: /^Rook copy/ }).first()).toBeVisible();
   await failedRefresh;

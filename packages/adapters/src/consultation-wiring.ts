@@ -36,6 +36,8 @@ import {
   processConsultation,
 } from "./consultation-job.js";
 import { resolveDeploymentModel } from "./deployment-model.js";
+import { alertPartnerOfCause, alertPartnerOfSetupFailure } from "./partner-run-alerts.js";
+import { classifyRunError } from "./run-error-code.js";
 import type { HostedVoice } from "./voice-credits.js";
 import { creditVoiceKey } from "./voice-credits.js";
 
@@ -210,6 +212,7 @@ export function createConsultationProcessor(deps: ConsultationWiringDeps) {
               }
               return { ok: false };
             }),
+          onSetupFailure: (record, cause) => alertPartnerOfCause(deps, record.spaceId, cause),
           audit: ({ type, consultationId: id, outcome }) =>
             void recordSecurityEvent({ type, metadata: { consultationId: id, outcome } }),
         },
@@ -219,11 +222,38 @@ export function createConsultationProcessor(deps: ConsultationWiringDeps) {
   };
 }
 
+type ModelCall = {
+  tier: "fast" | "strong";
+  operation: string;
+  instructions: string;
+  prompt: string;
+};
+
+/** One model call; a failure that is the customer's setup (no model, no credit) also reaches the partner. */
 async function runModel(
   deps: ConsultationWiringDeps,
   record: ConsultationRecord,
   botId: string,
-  call: { tier: "fast" | "strong"; operation: string; instructions: string; prompt: string },
+  call: ModelCall,
+): Promise<string | undefined> {
+  try {
+    return await runModelOnce(deps, record, botId, call);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (/No model is configured/i.test(message)) {
+      await alertPartnerOfCause(deps, record.spaceId, "no_model");
+    } else {
+      await alertPartnerOfSetupFailure(deps, record.spaceId, classifyRunError(error, message));
+    }
+    throw error;
+  }
+}
+
+async function runModelOnce(
+  deps: ConsultationWiringDeps,
+  record: ConsultationRecord,
+  botId: string,
+  call: ModelCall,
 ): Promise<string | undefined> {
   const scope = { userId: record.ownerUserId, spaceId: record.spaceId };
   const tiered =

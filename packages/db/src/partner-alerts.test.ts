@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import type { PrismaClient } from "./client.js";
 import type { PartnerAlertDigest } from "./partner-alerts.js";
-import { dispatchPartnerAlerts, recordPartnerAlert } from "./partner-alerts.js";
+import {
+  dispatchPartnerAlerts,
+  recordAssistantUnavailable,
+  recordPartnerAlert,
+} from "./partner-alerts.js";
 
 const NOW = new Date("2026-11-18T12:00:00Z");
 
@@ -290,5 +294,46 @@ describe("partner alerts", () => {
     });
     expect(result.emails).toBe(0);
     expect(notifications.size).toBe(1);
+  });
+});
+
+describe("recordAssistantUnavailable", () => {
+  const make = (
+    tenant: { partnerId: string; externalTenantId: string; testMode: boolean } | null,
+  ) => {
+    const rows: Array<{ partnerId: string; kind: string; key: string; payload: unknown }> = [];
+    const prisma = {
+      partnerTenant: { findUnique: async () => tenant },
+      partnerAlert: {
+        create: async ({ data }: { data: (typeof rows)[number] }) => {
+          if (rows.some((row) => row.key === data.key && row.kind === data.kind)) {
+            throw Object.assign(new Error("unique"), { code: "P2002" });
+          }
+          rows.push(data);
+        },
+      },
+    } as unknown as PrismaClient;
+    return { prisma, rows };
+  };
+
+  it("notes the cause for the partner once per day and cause", async () => {
+    const { prisma, rows } = make({ partnerId: "p1", externalTenantId: "shop-1", testMode: false });
+    expect(await recordAssistantUnavailable(prisma, "org-1", "no_model", NOW)).toBe(true);
+    expect(await recordAssistantUnavailable(prisma, "org-1", "no_model", NOW)).toBe(false);
+    expect(await recordAssistantUnavailable(prisma, "org-1", "credits_empty", NOW)).toBe(true);
+    expect(rows.map((row) => [row.kind, row.key])).toEqual([
+      ["customer.assistant_unavailable", "2026-11-18:no_model"],
+      ["customer.assistant_unavailable", "2026-11-18:credits_empty"],
+    ]);
+    expect(rows[0]?.payload).toEqual({ cause: "no_model", day: "2026-11-18" });
+  });
+
+  it("does nothing for an organization that is not a partner's customer, or a test customer", async () => {
+    expect(await recordAssistantUnavailable(make(null).prisma, "org-1", "no_model", NOW)).toBe(
+      false,
+    );
+    const test = make({ partnerId: "p1", externalTenantId: "t", testMode: true });
+    expect(await recordAssistantUnavailable(test.prisma, "org-1", "no_model", NOW)).toBe(false);
+    expect(test.rows).toEqual([]);
   });
 });

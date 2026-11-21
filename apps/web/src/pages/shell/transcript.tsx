@@ -610,6 +610,25 @@ export const Transcript = memo(function Transcript({
           }
           const message = item.message;
           if (!messageHasVisibleBlocks(message.blocks, showToolActivity)) return null;
+          // What a confirmed page action did is the page's report, not something the person said.
+          const hostResult =
+            message.role === "user"
+              ? message.blocks.find((block) => block.kind === "host_result")
+              : undefined;
+          if (hostResult?.kind === "host_result") {
+            return (
+              <div
+                key={message.id}
+                data-message-id={message.id}
+                data-testid="host-result-chip"
+                className="flex justify-center py-1"
+              >
+                <span className="rounded-full border border-border px-3 py-0.5 text-[12px] text-muted-foreground">
+                  {hostResult.outcome === "done" ? t`Done` : t`That didn't work`}
+                </span>
+              </div>
+            );
+          }
           const peerReceipt = isPeerReceiptBlocks(message.blocks);
           const messageReactions = reactionView.reactions.get(message.id);
           return (

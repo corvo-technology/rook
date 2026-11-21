@@ -508,7 +508,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "propose_host_action",
     description:
-      "Offer the person an action the page they are using can carry out, from the list given in this turn. A card shows it and nothing happens until they confirm, so propose it and say what it will do; never say it is done. Use only a listed name, with params that fit its schema.",
+      "Offer an action the page can carry out, from this turn's list. It only navigates or prefills the page and creates or changes nothing, so use it only when the person asks to open or go somewhere; to do something, use a connected tool. Nothing happens until they confirm; never say it is done. Use only a listed name.",
     inputSchema: {
       type: "object",
       properties: {

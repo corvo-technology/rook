@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { priceCeilingFor, pricedModelOnProvider } from "./model-price-ceiling.js";
+import { DEFAULT_OPENROUTER_MODEL_ID, resolveDeploymentModel } from "./deployment-model.js";
+import {
+  priceCeilingFor,
+  pricedFallbackModel,
+  pricedModelOnProvider,
+} from "./model-price-ceiling.js";
+import { deploymentModelRole } from "./model-roles.js";
 import { resolveRuntimeModel } from "./pi-runtime-models.js";
 import { maximumModelCallCost } from "./pi-usage.js";
 
@@ -95,5 +101,31 @@ describe("a priced model to run on when the chosen one has no price", () => {
   it("never crosses to another provider, and says so with nothing", () => {
     expect(pricedModelOnProvider("openai", [router, cheap, null])).toBeUndefined();
     expect(pricedModelOnProvider("openrouter", [router, null, undefined])).toBeUndefined();
+  });
+});
+
+describe("a space on platform credits whose auto model is not in the catalog", () => {
+  // The deployment names a model newer than the catalog for every role, so none of its own
+  // models can be priced and there is no connection of the space's own to fall back on.
+  const env = { PI_DEFAULT_PROVIDER: "openrouter", PI_DEFAULT_MODEL: "openai/gpt-6.1-terra" };
+  const deployment = resolveDeploymentModel({ ...env, OPENROUTER_API_KEY: "k" });
+  const roles = (["main", "fast", "strong"] as const).map(
+    (role) => deploymentModelRole(role, { settings: null, deployment }).primary,
+  );
+
+  it("has no priced model among the deployment's own", () => {
+    expect(pricedModelOnProvider("openrouter", roles)).toBeUndefined();
+  });
+
+  it("runs on the platform's priced default instead of refusing the hold", () => {
+    const swap = pricedFallbackModel("openrouter", roles);
+    expect(swap).toBe(DEFAULT_OPENROUTER_MODEL_ID);
+    const { model } = resolveRuntimeModel({ provider: "openrouter", id: swap!, apiKey: "k" });
+    expect(model && maximumModelCallCost(model.cost, 10_000, 4_000)).toBeGreaterThan(0);
+  });
+
+  it("still finds a priced catalog model on a provider with no built-in default", () => {
+    const swap = pricedFallbackModel("openai", []);
+    expect(swap).toBeTruthy();
   });
 });

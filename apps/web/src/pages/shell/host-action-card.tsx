@@ -1,4 +1,5 @@
 import type { MessageBlock } from "@corvo/contracts";
+import { hostResultSentence } from "@corvo/core";
 import { Button } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { useState } from "react";
@@ -49,8 +50,12 @@ export function HostActionCard({
       params: block.params,
     });
     await decide(answer.outcome, answer.result);
-    // The agent hears how it went as the person's next message, so the conversation goes on.
-    hostAsk(answer.outcome === "done" ? t`Done` : t`That didn't work`);
+    // The agent hears what the page reported, in words that claim nothing more, as a system line
+    // rather than something the person typed; the conversation goes on from it.
+    hostAsk(
+      hostResultSentence({ label: block.label, outcome: answer.outcome, result: answer.result }),
+      { hostResult: { outcome: answer.outcome } },
+    );
     setBusy(false);
   }
 

@@ -14,6 +14,8 @@ export type ConsultationState = z.infer<typeof ConsultationState>;
 export const CONSULTATION_ERROR_CODES = [
   "no_audio",
   "transcription_failed",
+  /** No speech-to-text is set up for the customer; the partner's administrators are told. */
+  "transcription_unavailable",
   "no_speech",
   "credit_exhausted",
   "model_failed",

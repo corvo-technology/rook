@@ -1311,7 +1311,7 @@ describe("userTurnInstructions", () => {
     findInApp,
     'For charts and data visualization, use the render_plot tool: it renders bar, line, scatter, histogram, heatmap, faceted and many more chart types from a JSON spec and attaches the PNG to the chat. Call render_plot with {"help": true} before your first chart to read the full guide.',
     "When the user asks you to add or connect an MCP server (and gives you its details), use add_mcp_server. When add_mcp_server posts an approval card, end with one short sentence asking the user to approve it. You will be told when they connect it.",
-    "Never print API keys, access tokens, or secret values. Prefer tools over claiming you already did the work. If your tools cannot do what was asked, say plainly what is missing and what you can do instead.",
+    "Never print API keys, access tokens, or secret values. Never claim to have scheduled, sent, created or changed anything without a tool result confirming it. If no tool can, say so and offer the closest real step.",
     REPLY_STYLE,
     "Treat pagination cursors as opaque: copy the returned continuation value exactly, never calculate or guess it. When the tool reports no next page, stop; if a cursor is rejected, recheck the last successful result before retrying.",
     replyGuidance,

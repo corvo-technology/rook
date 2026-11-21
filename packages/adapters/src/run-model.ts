@@ -22,7 +22,7 @@ import {
   HostedModelCreditsRequiredError,
   hostedModelCreditObserver,
 } from "./model-credit-observer.js";
-import { priceCeilingFor, pricedModelOnProvider } from "./model-price-ceiling.js";
+import { priceCeilingFor, pricedFallbackModel } from "./model-price-ceiling.js";
 import {
   type DeploymentModelDefaults,
   deploymentModelRole,
@@ -614,7 +614,7 @@ export async function resolveRunModel(
   // deployment's own priced model of the same provider rather than refuse the call.
   if (resolved.callObserver && !priceCeiling && !catalogModelCost(provider, id)) {
     const defaults = await deploymentModelDefaults(deps);
-    const swap = pricedModelOnProvider(
+    const swap = pricedFallbackModel(
       provider,
       (["main", "fast", "strong"] as const).map(
         (role) => deploymentModelRole(role, defaults).primary,

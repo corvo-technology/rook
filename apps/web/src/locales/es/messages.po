@@ -461,6 +461,14 @@ msgid "{name} stopped"
 msgstr "{name} se detuvo"
 
 #: src/lib/server-copy.ts
+msgid "{name}'s assistant is unavailable"
+msgstr "El asistente de {name} no está disponible"
+
+#: src/lib/server-copy.ts
+msgid "{name}'s assistant is unavailable: {why}"
+msgstr "El asistente de {name} no está disponible: {why}"
+
+#: src/lib/server-copy.ts
 msgid "{name}'s connector is down"
 msgstr "El conector de {name} está caído"
 
@@ -3782,6 +3790,10 @@ msgid "Customer"
 msgstr "Cliente"
 
 #: src/pages/partner/PartnerIntegration.tsx
+msgid "Customer assistant unavailable"
+msgstr "Asistente del cliente no disponible"
+
+#: src/pages/partner/PartnerIntegration.tsx
 msgid "Customer connector down"
 msgstr "Conector de cliente caído"
 
@@ -4211,6 +4223,7 @@ msgstr "¿No tienes una cuenta?"
 #: src/pages/shell/avatar-studio-popover.tsx
 #: src/pages/shell/host-action-card.tsx
 #: src/pages/shell/import-setup-card.tsx
+#: src/pages/shell/transcript.tsx
 #: src/pages/SquadPage.tsx
 #: src/pages/Workflows.tsx
 msgid "Done"
@@ -6149,6 +6162,10 @@ msgstr "El modelo \"{modelId}\" no aparece en la lista."
 msgid "Model connections"
 msgstr "Conexiones de modelos"
 
+#: src/lib/server-copy.ts
+msgid "model credits are used up"
+msgstr "se agotaron los créditos del modelo"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Model id"
@@ -6652,6 +6669,10 @@ msgstr "Aún no hay mensajes con {peerBotName}."
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "No model catalog is available."
 msgstr "No hay un catálogo de modelos disponible."
+
+#: src/lib/server-copy.ts
+msgid "no model is connected"
+msgstr "no hay ningún modelo conectado"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error-copy.ts
@@ -9492,6 +9513,7 @@ msgid "Testing…"
 msgstr "Probando…"
 
 #: src/pages/shell/host-action-card.tsx
+#: src/pages/shell/transcript.tsx
 msgid "That didn't work"
 msgstr "No funcionó"
 
@@ -9507,6 +9529,11 @@ msgstr "La rutina {name} se pausó porque falló su comprobación de cambios: {r
 #: src/lib/run-error-copy.ts
 msgid "The agent stopped"
 msgstr "El agente se detuvo"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "The assistant is unavailable right now."
+msgstr "El asistente no está disponible ahora."
 
 #: src/pages/shell/agent-import-undo.tsx
 msgid "The bot and what its import added will be removed."
@@ -9539,6 +9566,10 @@ msgstr "El icono debe ser un PNG cuadrado de al menos 512 px."
 msgid "The model couldn't answer"
 msgstr "El modelo no pudo responder"
 
+#: src/lib/server-copy.ts
+msgid "the model has no price"
+msgstr "el modelo no tiene precio"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "The model hit its output limit before finishing its reply."
@@ -9548,6 +9579,10 @@ msgstr "El modelo alcanzó su límite de salida antes de terminar la respuesta."
 #: src/lib/run-error-copy.ts
 msgid "The model is busy"
 msgstr "El modelo está ocupado"
+
+#: src/lib/server-copy.ts
+msgid "the model is not allowed"
+msgstr "el modelo no está permitido"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -9964,6 +9999,10 @@ msgstr "Transcribiendo…"
 #: src/components/call/CallCard.tsx
 msgid "Transcript"
 msgstr "Transcripción"
+
+#: src/lib/server-copy.ts
+msgid "transcription is not set up"
+msgstr "la transcripción no está configurada"
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Transcription model"
@@ -10497,6 +10536,11 @@ msgstr "Esperando…"
 #: src/pages/platform/PlatformPage.tsx
 msgid "Waitlist"
 msgstr "Lista de espera"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error-copy.ts
+msgid "We told the administrator."
+msgstr "Avisamos al administrador."
 
 #: src/components/ModelCredits.tsx
 msgid "Web, desktop and mobile"

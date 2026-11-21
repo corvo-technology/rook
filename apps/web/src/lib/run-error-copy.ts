@@ -1,5 +1,5 @@
 import type { RunErrorInfo } from "@corvo/contracts";
-import { COMPUTER_SETUP_RUN_ERROR } from "@corvo/contracts";
+import { ASSISTANT_SETUP_RUN_ERRORS, COMPUTER_SETUP_RUN_ERROR } from "@corvo/contracts";
 import type { ModelProblemAction } from "@corvo/core";
 import { maskSecrets, normalizeRunError } from "@corvo/core";
 import { i18n } from "@lingui/core";
@@ -131,6 +131,28 @@ function view(
 ): RunErrorView {
   const message = supportMessage(info, raw);
   return { ...fields, details: message ? `${info.code}\n${message}` : info.code };
+}
+
+/**
+ * What a person inside a partner's product sees when the account's setup failed the run: one
+ * neutral line, no action and no cause. Null for any other failure. The partner's administrators
+ * are told the real cause by the server.
+ */
+export function describeEmbeddedSetupError(info: RunErrorInfo): RunErrorView | null {
+  if (!(ASSISTANT_SETUP_RUN_ERRORS as readonly string[]).includes(info.code)) return null;
+  return {
+    title: i18n._({
+      id: "The assistant is unavailable right now.",
+      message: "The assistant is unavailable right now.",
+    }),
+    line: i18n._({
+      id: "We told the administrator.",
+      message: "We told the administrator.",
+    }),
+    tone: "warning",
+    actions: [],
+    details: "",
+  };
 }
 
 /**

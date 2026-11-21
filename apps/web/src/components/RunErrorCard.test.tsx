@@ -143,3 +143,48 @@ describe("RunErrorCard", () => {
     expect(container.querySelector("[role=alert]")?.className).toContain("border-destructive");
   });
 });
+
+describe("inside a partner's product", () => {
+  const setup = [
+    "no_model_access",
+    "model_credits_empty",
+    "model_unpriced",
+    "model_not_allowed",
+  ] as const;
+
+  it.each(setup)(
+    "shows one neutral line for %s, with no cause, action or details",
+    async (code) => {
+      vi.resetModules();
+      vi.doMock("../lib/embed", () => ({ isEmbedded: () => true }));
+      const { RunErrorCard: Embedded } = await import("./RunErrorCard");
+      await act(async () =>
+        root.render(
+          <Embedded
+            info={{ code }}
+            raw="Connect your own API key to use it."
+            onConnect={vi.fn()}
+          />,
+        ),
+      );
+      const text = container.textContent ?? "";
+      expect(text).toContain("The assistant is unavailable right now.");
+      expect(text).toContain("We told the administrator.");
+      expect(text).not.toMatch(/API key|credits|connect|model/i);
+      expect(container.querySelector("button")).toBeNull();
+      expect(container.querySelector("details")).toBeNull();
+      vi.doUnmock("../lib/embed");
+    },
+  );
+
+  it("leaves other failures as they are", async () => {
+    vi.resetModules();
+    vi.doMock("../lib/embed", () => ({ isEmbedded: () => true }));
+    const { RunErrorCard: Embedded } = await import("./RunErrorCard");
+    await act(async () =>
+      root.render(<Embedded info={{ code: "unknown" }} raw="boom" onRetry={vi.fn()} />),
+    );
+    expect(container.textContent).toContain("Something went wrong");
+    vi.doUnmock("../lib/embed");
+  });
+});

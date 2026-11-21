@@ -93,7 +93,7 @@ const recorder = Rook.recorder({
     form.chiefComplaint.value = fields.chiefComplaint;
     form.allergies.value = fields.allergies.join(", ");
   },
-  onError: (error) => showMessage(error.code),
+  onError: (error) => showMessage(error.message), // error.code says what to do
 });
 
 recordButton.onclick = () => (recorder.state === "recording" ? recorder.stop() : recorder.start());
@@ -107,7 +107,33 @@ States in `onState`: `idle`, `requesting`, `recording`, `paused`, `uploading`, `
 - **Live captions.** While recording, `onTranscript` receives captions from the browser itself (`source: "browser"`, when it offers speech recognition). At the end, Rook's own transcript arrives (`final: true`, `source: "server"`, with `turns`).
 - **Consent.** `consent` is required and is stored with the consultation, as in the API.
 - **Retention.** After the result, Rook deletes the audio and transcript unless you pass `keep: true` (the consultation's retention period then applies).
-- **Recording errors:** `permission_denied`, `too_long`, `upload_failed`, `allowance_exhausted`, `no_speech`, `model_failed`.
+- **Recording errors.** `onError(error)` gets a `RookError` with `error.code` (what to do), `error.message` (a sentence for the person, in `lang`, or the browser's language) and, for server answers, `error.status`. The microphone message says how to fix it in the browser's site settings.
+
+| `error.code` | Cause | What to do |
+| --- | --- | --- |
+| `permission_denied` | The person declined, or the browser denied the microphone this time. | Show `error.message`: allow the microphone in the site settings, then try again. |
+| `permission_blocked` | The browser or your page's `Permissions-Policy` blocks the microphone on this site (an iframe needs `allow="microphone"`). | Same, and reload the page. |
+| `no_microphone` | No input device. | Ask to connect one. |
+| `microphone_busy` | Another app holds the microphone. | Ask to close it. |
+| `insecure_context` | The page is not HTTPS. | Serve the page over HTTPS. |
+| `unsupported_browser` | No `MediaRecorder`, or no `audio/webm` or `audio/ogg` codec. | Ask for a recent Chrome, Edge, Firefox or Safari. |
+| `consent_missing` | `consent` was not given, or has no `method`. | Pass `consent` (see above). |
+| `network_error` | The server could not be reached. | Check the connection and try again. |
+| `upload_failed` | A chunk failed three times. | Check the connection and try again. |
+| `unauthorized` (401) | The session expired and could not be renewed. | Reload, or fix your session route. |
+| `forbidden` (403) | This access cannot record consultations. | Check the customer's access. |
+| `not_found` (404) | The consultation does not exist (or belongs to someone else). | Start a new recording. |
+| `too_long` (413) | Past the maximum recording length. | Stop and start another. |
+| `too_large` (413) | The audio is too large. | Start another recording. |
+| `invalid_request` (400) | The request was refused as malformed. | Reload and try again; report it if it persists. |
+| `too_many_requests` (429) | Rate limit. | Wait and try again. |
+| `server_error` (5xx) | Rook had a problem. | Try again shortly. |
+| `no_audio`, `no_speech` | Nothing recorded, or no speech heard. | Record again. |
+| `transcription_failed` | The audio could not be transcribed. | Try again. |
+| `processing_failed` | The draft could not be generated (model, connector or record). | Try again. |
+| `transcription_unavailable`, `allowance_exhausted`, `credit_exhausted`, `no_model` | The account is not set up to transcribe or answer (no speech provider, credit used up, no model). | Rook already told your administrators the real cause. `error.message` is neutral for the professional: "The assistant is unavailable right now. We told the administrator." Never ask them to connect a key. |
+| `timeout` | Processing took too long. | Try again. |
+| `recorder_failed` | The browser stopped recording. | Try again. |
 
 ## From your server
 

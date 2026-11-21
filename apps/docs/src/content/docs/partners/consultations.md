@@ -79,7 +79,7 @@ rec.start(10_000);
 | `recording` | Aceita pedaços. |
 | `processing` | Depois do `finish`. Consulte o `GET` a cada poucos segundos. |
 | `drafted` | A nota está no prontuário; `draftEntryId` a nomeia. |
-| `failed` | Com `error.code`: `no_audio`, `no_speech`, `transcription_failed`, `model_failed`, `connector_failed`, `record_not_found`, `credit_exhausted` ou `internal`. |
+| `failed` | Com `error.code`: `no_audio`, `no_speech`, `transcription_failed`, `transcription_unavailable` (o cliente não tem provedor de fala configurado; o Rook avisa os administradores do parceiro), `model_failed`, `connector_failed`, `record_not_found`, `credit_exhausted` ou `internal`. |
 
 `finish` duas vezes responde o estado atual. `finish` ou `reprocess` numa consulta `failed` a processa de novo a partir dos pedaços guardados. Criar ou finalizar com o crédito do cliente esgotado responde `402 { "error": "allowance_exhausted" }`.
 

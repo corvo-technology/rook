@@ -199,6 +199,24 @@ export function metaCopy(code: MetaCode, p: Params): string | undefined {
   }
 }
 
+/** What stopped a customer's assistant, for the partner's administrators. */
+function assistantCauseWords(cause: string | undefined): string | undefined {
+  switch (cause) {
+    case "no_model":
+      return t`no model is connected`;
+    case "credits_empty":
+      return t`model credits are used up`;
+    case "model_unpriced":
+      return t`the model has no price`;
+    case "model_not_allowed":
+      return t`the model is not allowed`;
+    case "transcription_unavailable":
+      return t`transcription is not set up`;
+    default:
+      return undefined;
+  }
+}
+
 /** The line an inbox alert shows, worded in the viewer's language from its code. */
 export function notificationCopy(code: NotificationCode, p: Params): string {
   const name = p.name ?? "";
@@ -221,5 +239,11 @@ export function notificationCopy(code: NotificationCode, p: Params): string {
       return t`${name} has a payment past due`;
     case "partner_connector_down":
       return t`${name}'s connector is down`;
+    case "partner_assistant_unavailable": {
+      const why = assistantCauseWords(p.cause);
+      return why
+        ? t`${name}'s assistant is unavailable: ${why}`
+        : t`${name}'s assistant is unavailable`;
+    }
   }
 }

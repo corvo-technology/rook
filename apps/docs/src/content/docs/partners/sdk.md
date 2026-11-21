@@ -140,7 +140,11 @@ el.addEventListener("corvo-action", async (event) => {
 
 ## Sugestões
 
-`el.setSuggestions(["Quem vem hoje?", "Clientes sumidos"])` define as linhas da caixa rápida. Sem isso valem as `suggestions` do contexto e, depois, as descrições das ações registradas.
+`el.setSuggestions(["Quem vem hoje?", "Clientes sumidos"])` define as linhas da caixa rápida. Sem isso valem as `suggestions` do contexto, depois um atalho para cada entidade que tenha `path` e, por fim, as descrições das ações registradas.
+
+Uma string simples é uma pergunta enviada ao assistente. Um lugar do seu produto é `{ label, path }`: ao tocar, dispara `corvo-navigate` com o caminho e nada é enviado ao assistente. Sugestões cujo `path` é a página em que a pessoa já está (o `page` do contexto ou o endereço atual) ficam ocultas. Uma entidade com `path` (`{ type: "patient", id: "42", label: "Maria", path: "/pacientes/42" }`) vira o atalho "Abrir Maria" sem você listá-lo; o `path` fica na sua página e nunca é enviado ao Rook.
+
+O título do painel é o atributo `name`, ou "Assistente" quando você não passa nenhum; o nome do próprio Rook nunca aparece.
 
 ## Métodos
 
@@ -171,6 +175,7 @@ O mesmo script define também `Rook.ask`, `Rook.recorder` e `Rook.configure` (ve
 | `corvo-unavailable` `{ reason }` | Só no launcher: o assistente não pode ser oferecido e o launcher se escondeu. `reason` é `forbidden`, `unavailable`, `network`, `no_code` ou `expired`. |
 | `corvo-action` `{ name, params, id }` | Só no launcher: o cliente confirmou uma ação que você registrou. Execute e depois chame `resolveAction(id, result)`. |
 | `corvo-consultation` `{ consultationId, clientId, appointmentId, note, transcript }` | Só no launcher, com `consultations`: o rascunho de uma consulta gravada no painel está pronto. Salve-o e chame `resolveConsultation`. |
+| `corvo-consultation-error` `{ code, message, status, consultationId }` | Só no launcher, com `consultations`: a gravação falhou. `code` é um dos [códigos de erro de gravação](/partners/inline-ai/); o painel já mostra `message`. Registre-o ou mostre as suas palavras. |
 
 O elemento pede um novo código à sua rota sempre que o quadro precisa de um, sozinho.
 

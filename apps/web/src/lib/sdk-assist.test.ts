@@ -484,3 +484,134 @@ describe("Rook.recorder", () => {
     expect(mic.mediaDevices.getUserMedia).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("Rook.recorder failure reasons", () => {
+  const micFailing = (name: string) => ({
+    mediaDevices: {
+      getUserMedia: vi.fn(async () => {
+        throw Object.assign(new Error("x"), { name });
+      }),
+    },
+  });
+  const run = async (over: Record<string, unknown>) => {
+    const errors: Array<{ code: string; message: string; status?: number }> = [];
+    const recorder = rook().recorder({
+      preset: "anamnesis",
+      clientId: "client-1",
+      consent: { method: "verbal", at: "2026-12-01T10:00:00Z" },
+      mediaDevices: fakeMic().mediaDevices,
+      MediaRecorder: FakeRecorder,
+      pollMs: 0,
+      retryMs: 0,
+      lang: "pt-BR",
+      onError: (e: { code: string; message: string; status?: number }) => errors.push(e),
+      ...over,
+    });
+    await recorder.start();
+    return { recorder, errors };
+  };
+
+  it.each([
+    ["NotAllowedError", "permission_denied", "configurações do site"],
+    ["SecurityError", "permission_blocked", "configurações do site"],
+    ["NotFoundError", "no_microphone", "Nenhum microfone"],
+    ["NotReadableError", "microphone_busy", "Outro aplicativo"],
+  ])(
+    "maps a %s from the browser to %s with a sentence in the person's language",
+    async (name, code, words) => {
+      const { errors } = await run({ mediaDevices: micFailing(name).mediaDevices });
+      expect(errors).toHaveLength(1);
+      expect(errors[0]?.code).toBe(code);
+      expect(errors[0]?.message).toContain(words);
+    },
+  );
+
+  it("reports a site-level block when the browser says the microphone is denied", async () => {
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      language: "en",
+      permissions: { query: async () => ({ state: "denied" }) },
+    });
+    const { errors } = await run({ mediaDevices: micFailing("NotAllowedError").mediaDevices });
+    expect(errors[0]?.code).toBe("permission_blocked");
+    vi.unstubAllGlobals();
+  });
+
+  it("reports a browser that cannot record before asking for anything", async () => {
+    const mic = fakeMic();
+    const { errors } = await run({ MediaRecorder: undefined, mediaDevices: mic.mediaDevices });
+    expect(errors[0]?.code).toBe("unsupported_browser");
+    expect(mic.mediaDevices.getUserMedia).not.toHaveBeenCalled();
+
+    const NoCodec = Object.assign(class extends FakeRecorder {}, {
+      isTypeSupported: (_type: string) => false,
+    });
+    const codec = await run({ MediaRecorder: NoCodec });
+    expect(codec.errors[0]?.code).toBe("unsupported_browser");
+  });
+
+  it("reports missing consent instead of recording", async () => {
+    const mic = fakeMic();
+    const { errors } = await run({ consent: undefined, mediaDevices: mic.mediaDevices });
+    expect(errors[0]?.code).toBe("consent_missing");
+    expect(mic.mediaDevices.getUserMedia).not.toHaveBeenCalled();
+  });
+
+  it("reports a network failure when the server cannot be reached", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (String(url).endsWith(CONSULTATIONS)) throw new TypeError("Failed to fetch");
+        return fake.handler(String(url), init);
+      }),
+    );
+    const { errors } = await run({});
+    expect(errors[0]?.code).toBe("network_error");
+    expect(errors[0]?.message).toContain("Sem conexão");
+  });
+
+  it.each([
+    [401, { error: "Unauthorized" }, "unauthorized"],
+    [403, { error: "Forbidden" }, "forbidden"],
+    [404, { error: "Not found" }, "not_found"],
+    [400, { error: "Invalid request" }, "invalid_request"],
+    [413, { error: "too_long" }, "too_long"],
+    [413, { error: "too_large" }, "too_large"],
+    [503, {}, "server_error"],
+  ])("maps a %s answer to %s", async (status, body, code) => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init?: RequestInit) =>
+        String(url).endsWith(CONSULTATIONS) && init?.method === "POST"
+          ? Response.json(body, { status })
+          : fake.handler(String(url), init),
+      ),
+    );
+    // A 401 is retried once with a fresh token, then reported.
+    const { errors } = await run({});
+    expect(errors[0]).toMatchObject({ code, status });
+  });
+
+  it("shows the neutral sentence, with the cause as the code, when the account's setup fails", async () => {
+    load({ status: () => ({ state: "failed", error: { code: "transcription_unavailable" } }) });
+    const { recorder, errors } = await run({});
+    await recorder.stop();
+    expect(errors[0]?.code).toBe("transcription_unavailable");
+    expect(errors[0]?.message).toBe(
+      "O assistente está indisponível agora. Avisamos o administrador.",
+    );
+    expect(errors[0]?.message).not.toMatch(/chave|API|key/i);
+  });
+
+  it("reports a failed draft as processing_failed and keeps specific causes", async () => {
+    load({ status: () => ({ state: "failed", error: { code: "model_failed" } }) });
+    const first = await run({});
+    await first.recorder.stop();
+    expect(first.errors[0]?.code).toBe("processing_failed");
+
+    load({ status: () => ({ state: "failed", error: { code: "transcription_failed" } }) });
+    const second = await run({});
+    await second.recorder.stop();
+    expect(second.errors[0]?.code).toBe("transcription_failed");
+  });
+});

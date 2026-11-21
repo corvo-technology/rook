@@ -86,6 +86,18 @@ describe("propose_host_action", () => {
     expect(names({ trigger: "user", hostActionsOffered: true })).toContain("propose_host_action");
     expect(names({ trigger: "user" })).not.toContain("propose_host_action");
   });
+
+  it("is described as navigation only, so a connected tool is the way to do the work", () => {
+    const tools = selectBuiltinToolsForRun({
+      ...base,
+      trigger: "user",
+      hostActionsOffered: true,
+    });
+    const host = tools.find((tool) => tool.name === "propose_host_action");
+    expect(host?.description).toContain("only navigates or prefills");
+    expect(host?.description).toContain("use a connected tool");
+    expect(host?.description).toContain("only when the person asks to open or go somewhere");
+  });
 });
 
 describe("find_in_app", () => {

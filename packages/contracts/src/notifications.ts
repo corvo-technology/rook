@@ -37,6 +37,7 @@ export const NOTIFICATION_CODES = [
   "partner_invoice_issued",
   "partner_past_due",
   "partner_connector_down",
+  "partner_assistant_unavailable",
 ] as const;
 export const NotificationCodeSchema = z.enum(NOTIFICATION_CODES);
 export type NotificationCode = z.infer<typeof NotificationCodeSchema>;

@@ -414,6 +414,32 @@ describe("processConsultation", () => {
       expect(f.settled).toEqual([{ state: "failed", errorCode: "transcription_failed" }]);
     });
 
+    it("transcription_unavailable when nothing is set up to listen with, without retrying, and tells the partner", async () => {
+      const transcribe = vi.fn(
+        async () => ({ status: "failed", reason: "not-configured" }) as const,
+      );
+      const f = fixture({ transcribe });
+      const onSetupFailure = vi.fn(async () => undefined);
+      f.deps.onSetupFailure = onSetupFailure;
+      await processConsultation(f.deps, "cons-1");
+      expect(transcribe).toHaveBeenCalledTimes(1);
+      expect(f.settled).toEqual([{ state: "failed", errorCode: "transcription_unavailable" }]);
+      expect(onSetupFailure).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "cons-1" }),
+        "transcription_unavailable",
+      );
+    });
+
+    it("logs why a transcription failed, as a reason and never content", async () => {
+      const transcribe = vi.fn(
+        async () => ({ status: "failed", reason: "unsupported-format" }) as const,
+      );
+      const f = fixture({ transcribe });
+      await processConsultation(f.deps, "cons-1");
+      expect(JSON.stringify(logged)).toContain("unsupported-format");
+      expect(f.settled).toEqual([{ state: "failed", errorCode: "transcription_failed" }]);
+    });
+
     it("credit_exhausted when the transcription hold is refused, without retrying", async () => {
       const transcribe = vi.fn(
         async () => ({ status: "failed", reason: "credits-used-up" }) as const,

@@ -5,7 +5,7 @@ import { clampThinkingLevel } from "@earendil-works/pi-ai";
 import { builtinModels } from "@earendil-works/pi-ai/providers/all";
 import { DEFAULT_OPENROUTER_MODEL_ID } from "./deployment-model.js";
 import { PiRuntimeCredentialStore, toOAuthCredential } from "./pi-credentials.js";
-import { liveModelSibling } from "./pi-live-model.js";
+import { isChatModelId, liveModelSibling } from "./pi-live-model.js";
 import { registerLocalProvider } from "./pi-local-provider.js";
 import { applyPiModelCompatibility } from "./pi-model-compat.js";
 import {
@@ -83,6 +83,16 @@ export function catalogModelCost(
 ): Model<Api>["cost"] | undefined {
   const cost = catalogModels().getModel(canonicalPiProviderId(provider), modelId)?.cost;
   return cost && hasReliablePrice(cost) ? cost : undefined;
+}
+
+/** The catalog's cheapest chat model of a provider that has a reliable price, by output then input rate. */
+export function cheapestCatalogModelId(provider: string): string | undefined {
+  const models =
+    catalogModels()
+      .getProvider?.(canonicalPiProviderId(provider))
+      ?.getModels()
+      .filter((model) => isChatModelId(model.id) && hasReliablePrice(model.cost)) ?? [];
+  return models.sort((a, b) => a.cost.output - b.cost.output || a.cost.input - b.cost.input)[0]?.id;
 }
 
 /**

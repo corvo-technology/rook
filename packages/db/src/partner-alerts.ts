@@ -1,4 +1,4 @@
-import type { PartnerAlertKind } from "@corvo/contracts";
+import type { AssistantUnavailableCause, PartnerAlertKind } from "@corvo/contracts";
 import { PARTNER_ALERT_CODES, PARTNER_ALERT_KINDS, PARTNER_ALERT_SECTIONS } from "@corvo/contracts";
 import { can } from "@corvo/core";
 import type { PrismaClient } from "./client.js";
@@ -39,6 +39,31 @@ export async function recordPartnerAlert(
     if (isUnique(error)) return false;
     throw error;
   }
+}
+
+/**
+ * Tells the partner of the customer that owns an organization that its assistant could not answer
+ * and why, once per day and cause. Nothing happens for an organization that is not a partner's
+ * customer. Call with a client that runs as the system.
+ */
+export async function recordAssistantUnavailable(
+  prisma: PrismaClient,
+  organizationId: string,
+  cause: AssistantUnavailableCause,
+  now = new Date(),
+): Promise<boolean> {
+  const tenant = await prisma.partnerTenant.findUnique({
+    where: { organizationId },
+    select: { partnerId: true, externalTenantId: true, testMode: true },
+  });
+  if (!tenant || tenant.testMode) return false;
+  const day = now.toISOString().slice(0, 10);
+  return recordPartnerAlert(prisma, tenant.partnerId, {
+    externalTenantId: tenant.externalTenantId,
+    kind: "customer.assistant_unavailable",
+    key: `${day}:${cause}`,
+    payload: { cause, day },
+  });
 }
 
 /** A person who runs the partner, and the space the app shows them its alerts in. */
@@ -212,6 +237,9 @@ export async function dispatchPartnerAlerts(
               section: PARTNER_ALERT_SECTIONS[kind],
               ...(tenant ? { tenantId: tenant.id } : {}),
               ...(name ? { name } : {}),
+              ...(typeof (alert.payload as { cause?: unknown } | null)?.cause === "string"
+                ? { cause: (alert.payload as { cause: string }).cause }
+                : {}),
             },
           },
           update: {},

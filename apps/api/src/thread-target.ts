@@ -1096,6 +1096,8 @@ export async function sendThreadMessage(
     /** The model for this message's run; the agent's own setting stays as it is. */
     model?: { provider: string; modelId: string };
     host?: HostTurn | null;
+    /** The text reports what a confirmed page action did. */
+    hostResult?: { outcome: "done" | "denied" | "failed" };
     /** Sends the text as a new version of this earlier message of the person's, not at the end. */
     edit?: { messageId: string };
   },
@@ -1287,10 +1289,16 @@ export async function sendThreadMessage(
             chosen: chosenModel && { ...chosenModel, status: "queued", trigger: "user" },
           });
         }
-        const blocks = buildUserMessageBlocks(
-          input.text,
-          sendAttachmentBlocks(attachmentBlocks, artifacts, input.imageHandling),
-        );
+        const blocks: MessageBlock[] = [
+          ...buildUserMessageBlocks(
+            input.text,
+            sendAttachmentBlocks(attachmentBlocks, artifacts, input.imageHandling),
+          ),
+          // Only a turn that carries the page's own report may be shown as one.
+          ...(input.hostResult && host?.results?.length
+            ? [{ kind: "host_result" as const, outcome: input.hostResult.outcome }]
+            : []),
+        ];
         const message = await createThreadMessageInTransaction(tx, {
           threadId: target.threadId,
           role: "user",
